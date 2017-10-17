@@ -327,8 +327,8 @@
           do i = 1, rc_list_size(istra)          
             Phi_app = get_phi_applied(boundary_namelist,
      .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore = isymm.ne.0 .and.
-     .       mod(region(rc_list_x(i,istra),rc_list_y(i,istra),0),4).eq.1 ! xpb: no sputtering in core!
+            lcore = on_closed_surface(rc_list_x(i,istra),
+     .                                rc_list_y(i,istra)) ! xpb: no sputtering in core!
 *   ..compute 2-D target temperature evolution
             if(plate_model.eq.2 .and. .not.lcore .and. main_call 
      &       .and. i.eq.1) then
@@ -374,8 +374,8 @@
           do i = 1, rc_list_size(istra)
             Phi_app = get_phi_applied(boundary_namelist,
      .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore=region(rc_list_x(i,istra),rc_list_y(i,istra),0).eq.5 
-     &       .and.periodic_bc.eq.1
+            lcore=on_closed_surface(rc_list_x(i,istra),
+     .                              rc_list_y(i,istra))
 *   ..compute 2-D target temperature evolution
             if(plate_model.eq.2 .and. .not.lcore .and. main_call 
      &       .and. i.eq.1) then
@@ -647,7 +647,7 @@ c lcore           is this a core element?
       logical lcore, found
 
       integer is0, is1, is2, is, js, k, iwall, itrack
-      real (kind=R8) :: tef, tif, zaf(0:ns-1), rpf(0:ns-1), ptf,
+      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf,
      &     sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, eself,
      &     sput_frac_chem_sum, be_frac, be_suppression_factor,
      &     ytmp, ztmp, wrk(ndepth_nml)
@@ -659,7 +659,7 @@ c lcore           is this a core element?
      &  abs(am(is)-am(js)).lt.amtol
 
       iwall=xymap(ix,iy)
-c-dpc-exp
+cdpc-exp
       if(sput_frac_flag.eq.0.or.lcore.or.ntargsp.eq.0.or.
      .   iwall.eq.0) then
 c no mixed materials
@@ -754,12 +754,12 @@ c Be suppression of chemical sputtering
           write(*,*) 'b2stbr_phys.recycle: sput_frac_chem_sum', 
      &         sput_frac_chem_sum
         endif
-c-xpb  Contributions from the bulk
+cxpb  Contributions from the bulk
         layer_nrelconstituents(iwall,1:matsurf_nconstituents(iwall))=
      1    matsurf_nrelconstituents
      .    (iwall,1:matsurf_nconstituents(iwall))*
      2   sput_frac(0)
-c-xpb  Contributions from the deposited species
+cxpb  Contributions from the deposited species
         do itrack=1,ntargsp
            layer_nzconstituents
      .      (iwall,matsurf_nconstituents(iwall)+itrack)=
@@ -768,8 +768,8 @@ c-xpb  Contributions from the deposited species
      .      (iwall,matsurf_nconstituents(iwall)+itrack)=
      .      sput_frac(itrack)
         enddo
-c-xpb  Update layer thickness (deposited - eroded) and layer depth
-c-xpb  (sum of deposition), minimum depth over which material mixing occurs
+cxpb  Update layer thickness (deposited - eroded) and layer depth
+cxpb  (sum of deposition), minimum depth over which material mixing occurs
         layer_thickness(iwall)=0.0_R8
         layer_depth(iwall)=0.0_R8
         do itrack=1,ntargsp
@@ -781,15 +781,15 @@ c-xpb  (sum of deposition), minimum depth over which material mixing occurs
         enddo
         call add_layer_thickness(ns,iwall)
         call compose_layer(iwall,sput_frac)
-c-xpb  Update layer mass density 
-c-xpb  with bulk and deposited contributions
+cxpb  Update layer mass density
+cxpb  with bulk and deposited contributions
         layer_mass_density(iwall)=mass_density(iwall,2)*sput_frac(0)
         do itrack=1,ntargsp
           layer_mass_density(iwall)=layer_mass_density(iwall)+
      &     sput_frac(itrack)*(tgdns(itrack)*1.0e3_R8)
         enddo
       endif
-c-dpc-end
+cdpc-end
       tef = (te(ix,iy)*hhn+te(ixn,iyn)*hh)/(hhn+hh)
       tif = (ti(ix,iy)*hhn+ti(ixn,iyn)*hh)/(hhn+hh)
       if (potential_at_guard_cell.eq.1) then
@@ -807,16 +807,20 @@ c-dpc-end
      &                        fhi_ext(ixf,iyf,idir)))/area
       do is=0,ns-1
          qin=qin+max(0.0_R8,isign*fna(ixf,iyf,idir,is))
-     &        *(kinrgy(ix,iy,is)*(1.0_R8-BoRiS) + rpf(is)*ev)/area
+     &        *((kinrgy(ix,iy,is)+tif)*(1.0_R8-BoRiS) + rpf(is)*ev)/area
       enddo
       do is=0,ns_ext-1
-         ptf = 
+         ptf =
      &    (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/(hhn+hh)
+         taf =
+     &    (ta_ext(ix,iy,is)*hhn+ta_ext(ixn,iyn,is)*hh)/(hhn+hh)
          qin=qin+max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))
-     &        *(0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2*(1.0_R8-BoRiS) 
+     &        *((0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+taf)*
+     &          (1.0_R8-BoRiS)
      &          + ptf*ev)/area
       enddo
-      qel = max(0.0_R8,isign*fhe(ixf,iyf,idir))/area
+      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir)+
+     &  fne(ixf,iyf,idir)*tef*(1.0_R8-BoRiS)))/area
       if(lcore) then
          surface_temp = 0.0_R8
       else
@@ -847,7 +851,7 @@ c-dpc-end
          if (zn(is0).ne.zn(is).or.amtol.lt.abs(am(is0)-am(is))) then
             is0 = is
          endif
-c-dpc
+cdpc
          if(is_neutral(is)) is1=is
          if(zn(is1).ne.zn(is).or.amtol.lt.abs(am(is1)-am(is))) then
             write(*,*) 'b2stbr problem: is, is0, is1 ',is,is0,is1
@@ -867,7 +871,7 @@ c-dpc
            end if
            k = k + 1
          enddo
-c-dpc 
+cdpc
 *       (species (is) recycles into is0)
 *       (is0 corresponds to CX species is2)
          t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
@@ -882,7 +886,7 @@ c-dpc
          endif
          sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+recyc(is,istra)*t0
          itrack=track_index(is0)
-c-xpb Whatever is not recycled is counted as deposition
+cxpb Whatever is not recycled is counted as deposition
          if(itrack.gt.0.and.itrack.le.ntrack
      1        .and.iwall.gt.0.and.main_call) then
             deposition(iwall,itrack)=deposition(iwall,itrack)+
@@ -895,11 +899,11 @@ c     (toroidal piec only, because poloidal piece of parallel velocity flips sig
      &        am(is)*mp*ua(ix,iy,is)*bb(ix,iy,2)**2/bb(ix,iy,3)**2*
      &        recyc(is,istra)*t0*hz(ix,iy)
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          if (is2.ne.-1) shi0_ff(ix,iy,is2) = shi0_ff(ix,iy,is2)+
      &        recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
          if(.not.lcore) then    ! xpb: no sputtering in core!
@@ -957,8 +961,8 @@ c chemical sputtering
                tchem(is)=tchem(is)+t1
                if (sput_dst_bulk.ne.-1) sna0(ix,iy,0,sput_dst_bulk) = 
      &              sna0(ix,iy,0,sput_dst_bulk) + t1
-c-xpb  Erosion from the bulk material if chemically sputtered
-c-xpb  without mixed materials model
+cxpb  Erosion from the bulk material if chemically sputtered
+cxpb  without mixed materials model
                if(sput_frac_flag.eq.0) then
                   if (sput_dst_bulk.eq.-1) then
                     itrack=0
@@ -977,15 +981,15 @@ c-xpb  without mixed materials model
                      else
                        itrack=track_index(sput_dst_bulk)
                      endif
-c-xpb  Erosion from the bulk material if chemically sputtered
-c-xpb  with mixed materials model
+cxpb  Erosion from the bulk material if chemically sputtered
+cxpb  with mixed materials model
                      if(itrack.gt.0.and.itrack.le.ntrack)
      &                    erosion(iwall,itrack) = 
      &                    erosion(iwall,itrack) +
      1                    dtim*plate_time_factor(iwall)*t1*
      &                    sput_frac_chem(0)/sput_frac_chem_sum
-c-xpb  Removal from the deposited material if chemically sputtered
-c-xpb  with mixed materials model
+cxpb  Removal from the deposited material if chemically sputtered
+cxpb  with mixed materials model
                      do itrack=1,ntargsp
                         if(itrack.gt.0.and.itrack.le.ntrack)
      &                       deposition(iwall,itrack) = 
@@ -1069,7 +1073,7 @@ cxpb We first treat the bulk material
                   tphys(is) = tphys(is) + t1
                   sna0(ix,iy,0,sput_dst_bulk) = 
      &              sna0(ix,iy,0,sput_dst_bulk) + t1
-c-xpb  Erosion from the bulk material if physically sputtered
+cxpb  Erosion from the bulk material if physically sputtered
                   if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call) then
 cxpb  We count here as eroded all the sputtered material, including the promptly redeposited fraction
@@ -1144,8 +1148,8 @@ cxpb  We add this promptly redeposited fraction in the deposited material
                     tphys(is) = tphys(is) + t1
                     sna0(ix,iy,0,target_intcode(itrack)) = 
      &                    sna0(ix,iy,0,target_intcode(itrack)) + t1
-c-xpb  Removal from the deposited material if physically sputtered
-c-xpb  with mixed materials model
+cxpb  Removal from the deposited material if physically sputtered
+cxpb  with mixed materials model
                     if(iwall.gt.0.and.main_call)
      1                    deposition(iwall,itrack) = 
      &                    deposition(iwall,itrack) -
@@ -1279,7 +1283,7 @@ c thermal evaporation     ! no fix for mixed materials yet
                t1=GammaEvap*area*therm_evap
                t2=t1*(1.5_R8+BoRiS)*surface_temp*KBolt
                sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + t1
-c-xpb  Erosion from the bulk material if thermally evaporated
+cxpb  Erosion from the bulk material if thermally evaporated
                if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call)
      1              erosion(iwall,itrack) = erosion(iwall,itrack) +
@@ -1318,8 +1322,8 @@ c radiation enhanced sublimation
                endif
                if(sput_dst_bulk.ne.-1) sna0(ix,iy,0,sput_dst_bulk) = 
      &              sna0(ix,iy,0,sput_dst_bulk) + t1
-c-xpb  Erosion from the bulk material if RES sputtered
-c-xpb  without mixed materials model
+cxpb  Erosion from the bulk material if RES sputtered
+cxpb  without mixed materials model
                if(sput_frac_flag.eq.0) then
                   if (sput_dst_bulk.eq.-1) then
                     itrack=0
@@ -1338,15 +1342,15 @@ c-xpb  without mixed materials model
                      else
                        itrack=track_index(sput_dst_bulk)
                      endif
-c-xpb  Erosion from the bulk material if RES sputtered
-c-xpb  with mixed materials model
+cxpb  Erosion from the bulk material if RES sputtered
+cxpb  with mixed materials model
                      if(itrack.gt.0.and.itrack.le.ntrack)
      &                    erosion(iwall,itrack) = 
      &                    erosion(iwall,itrack) +
      1                    dtim*plate_time_factor(iwall)*t1*
      &                    sput_frac_chem(0)/sput_frac_chem_sum
-c-xpb  Removal from the deposited material if RES sputtered
-c-xpb  with mixed materials model
+cxpb  Removal from the deposited material if RES sputtered
+cxpb  with mixed materials model
                      do itrack=1,ntargsp
                         if(itrack.gt.0.and.itrack.le.ntrack)
      &                    deposition(iwall,itrack) = 
@@ -1374,9 +1378,9 @@ c back scattering ! mixed materials included thru layer constituents definitions
                t1=t0 * local_reflection
                t2=t0 * reflect2(is,Ei*ev,iwall)*Ei*ev
                itrack=track_index(is0)
-c-xpb  Removal from the deposited material if backscattered
-c-xpb  because incoming non-recycling flux was originally counted
-c-xpb  as deposition
+cxpb  Removal from the deposited material if backscattered
+cxpb  because incoming non-recycling flux was originally counted
+cxpb  as deposition
                if(itrack.gt.0.and.itrack.le.ntrack
      1              .and.iwall.gt.0.and.main_call) then
                   deposition(iwall,itrack)=deposition(iwall,itrack)-
@@ -1417,7 +1421,7 @@ c-xpb  as deposition
      &           amtol.lt.abs(am(is0)-am(is))) then
                is0 = is
             endif
-c-xpb
+cxpb
             if(zamax(is).eq.zn(is)) is1=is
             if(zn(is1).ne.zn(is).or.amtol.lt.abs(am(is1)-am(is))) then
               write(*,'(a,3i3)') 
@@ -1428,7 +1432,7 @@ c-xpb
      1          write(*,'(a,2i3)') 'b2stbr: setting is0 to is1 ',is0,is1
                is0=is1
             endif
-c-xpb 
+cxpb
 *          (species (is) recycles into is0)
             t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
      .           core_sources_rescale ! xpb: 2002.02.01

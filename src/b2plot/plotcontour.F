@@ -957,7 +957,7 @@ C            CALL CPCLDR(z,RWRK,IWRK)
         ENDDO
         i=ncont+2
         LFIN(I)=choose_color(i-1,0)
-        LBLS(I)=' '
+        LBLS(I:100)=' '
         CALL GSLWSC(1.0)
         if(noax.gt.0) then
           if(rlo.gt.clval(1).and.rhi.le.clval(ncont+1)) then

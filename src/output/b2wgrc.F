@@ -33,7 +33,7 @@
 *
 *     This subroutine displays a table of atomic rate coefficients
 *     for ionisation, electron energy loss, recombination, and
-*     charge-exchange. The table has a two-dimensional structure,
+*     charge exchange. The table has a two-dimensional structure,
 *     with density and temperature as independent variables, but
 *     in this routine only one-dimensional data are displayed:
 *     the rate coefficients as function of of temperature for several

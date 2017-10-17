@@ -11,6 +11,7 @@
       real (kind=R8), save ::
      * cum_volrec
       logical, save :: feedback_namelist_used
+      logical, save :: feedback_read, control_read
 
 *   ..namelists
       integer, save :: vacuum_communication,
@@ -56,7 +57,8 @@
      & na_feedback_puff_min, na_feedback_puff_max,
      & na_feedback_overshoot
       data 
-     & feedback_namelist_used/.false./,
+     & feedback_namelist_used/.false./, feedback_read/.false./,
+     & control_read/.false./,
      1 saved_cbshe_core/0.0_R8/, saved_cbshi_core/0.0_R8/,
      2 saved_cbsna_core/0.0_R8/, saved_cbsch_core/0.0_R8/,
      3 saved_cbsna_pfr1/0.0_R8/, saved_cbsna_pfr2/0.0_R8/,
@@ -86,12 +88,12 @@
       logical file_ok
 
       if (edition.eq.'    ') then
-        filename = '../b2.feedback_save.parameters'
+        filename = 'b2.feedback_save.parameters'
       else
         filename = 'b2.feedback_save.parameters.'//edition
       endif
-      inquire(file=trim(filename),exist=file_ok)
-      if(file_ok) then
+      call find_file(filename,file_ok)
+      if(file_ok.and.(.not.feedback_read.or.edition.ne.'    ')) then
         open(nread,file=trim(filename))
         write(6,*) 'Reading ',trim(filename)
 #ifdef USE_MPI
@@ -101,8 +103,9 @@
 #endif
         write(6,*) 'Read ',trim(filename)
         close(nread)
+        if (edition.eq.'    ') feedback_read = .true.
       else
-        write(6,*) 'No ',trim(filename)
+        if (.not.file_ok) write(6,*) 'No ',trim(filename)
       endif
       found = max(saved_cbshe_core, saved_cbshi_core, 
      .            saved_cbsna_core, saved_cbsch_core, 
@@ -123,7 +126,8 @@
       character*256 filename
 
       if (edition.eq.'    ') then
-        filename = '../b2.feedback_save.parameters'
+        filename = 'b2.feedback_save.parameters'
+        feedback_read = .false.
       else
         filename = 'b2.feedback_save.parameters.'//edition
       endif
@@ -159,7 +163,10 @@ cxpb size is changed in DIMENSIONS.F
       subroutine read_b2mod_feedback_control(nread)
       implicit none
       integer nread
+      character*256 filename
       logical file_ok
+
+      if (control_read) return
       vacuum_communication = 0
       vacuum_communication_nreg = 0
       vacuum_communication_method = 0
@@ -168,20 +175,34 @@ cxpb size is changed in DIMENSIONS.F
       vacuum_communication_ix2 = -2
       vacuum_communication_alpha = 0.0
       vacuum_communication_beta = 1.0
-      inquire(file='../b2.feedback_control.parameters',exist=file_ok)
+      filename='b2.feedback_control.parameters'
+      call find_file(filename,file_ok)
       if(file_ok) then
-        open(nread,file='../b2.feedback_control.parameters')
+        open(nread,file=filename)
+        write(6,*) 'Reading ',trim(filename)
+#ifdef USE_MPI
+        read(nread,feedback_control,err=999)
+#else
         read(nread,feedback_control)
+#endif
+        write(6,*) 'Read ',trim(filename)
         close(nread)
+        control_read = .true.
+      else
+        write(6,*) 'No ',trim(filename)
       endif
+      return
+
+ 999  call xerrab ('Error while reading FEEDBACK_CONTROL namelist!')
       end subroutine read_b2mod_feedback_control
 
       subroutine write_b2mod_feedback_control(nwrite)
       implicit none
       integer nwrite
-      open(nwrite,file='../b2.feedback_control.parameters')
+      open(nwrite,file='b2.feedback_control.parameters')
       write(nwrite,feedback_control)
       close(nwrite)
+      control_read = .false.
       end subroutine write_b2mod_feedback_control
 
       end module b2mod_feedback

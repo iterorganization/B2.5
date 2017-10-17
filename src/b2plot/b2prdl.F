@@ -3,7 +3,7 @@ c
 c  version : 14.05.96 23:27
 c
 c=====================================================
-c*** b2prdl: post-processor for B2-Eirene
+c*** b2prdl: postprocessor for B2-Eirene
 c***
 c***  Produces files with
 c***   (a) distribution of the radiation source for calculation of the

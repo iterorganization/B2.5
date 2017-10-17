@@ -13,6 +13,7 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
+#include "DIMENSIONS.F"
 c
 c  version : 19.07.2001 18:46
 c
@@ -110,12 +111,14 @@ c***
 c*** lcbs: boundary segments representing the core boundary in B2
 c*** lcns: 'non-default surfaces' for the core boundary (Eirene)
 c*** ltns: 'non-default surfaces' for the targets (Eirene)
-c*** lsns: Eirene surfaces related to the recycling sources
-c*** msns: their index
+c*** lsns: list of Eirene surfaces comprising the recycling sources
+c*** msns: msns(1,k): index of first surface in lsns list for Eirene
+c***                  recycling source k
+c***       msns(2,k): number of surfaces for Eirene recycling source k
 c*** mlcmp: composition of molecules.
 c***        Molecule of kind j contains mlcmp(i,j) atoms of kind i
 c*** gpfc: composition of gas puff sources.
-c***       gpfc(i,j)=(fraction of nuclei of kind i in stratum number j)
+c***       gpfc(i,j)=(fraction of atoms of kind i in stratum number j)
 c*** sclstra: scaling factors for species and strata
 c*** lmolscl: pointer to the species with which these molecules scale
 c----------------------------------------------------------------------
@@ -170,20 +173,20 @@ c*** Initialisation
 c
         do j=1,nstrat
           hlp=0.0_R8
-          do i=1,nspecies
+          do i=1,nnatmi
             hlp=hlp+gpfc(i,j)
           end do
           if(hlp.gt.0.0_R8) then
-            do i=1,nspecies
+            do i=1,nnatmi
               gpfc(i,j)=gpfc(i,j)/hlp
             end do
           else
-            do i=1,nspecies
+            do i=1,nnatmi
               gpfc(i,j)=0.0_R8
             end do
           end if
         end do
-        do j=1,nstrat
+        do j=1,DEF_NSRFS*nstrat
           if(lsns(j).lt.0) lsns(j)=nlim-lsns(j)
         end do
         first=.false.
@@ -450,33 +453,39 @@ c
 c*** Flux across the core boundary
         do is=1,ncns
           js=lcns(is)+nnlimi
-csw 18nov2013 check for nnatmi (known after 1st EIRENE call)
-          if(nnatmi > 0)
-     .      hlpnc=hlpnc-wldna(js,ls,0)+wldra(js,ls,0)
-          do j=1,nnmoli
-            if(mlcmp(ls,j).gt.0) hlpnc=hlpnc-
-     -                        mlcmp(ls,j)*(wldnm(js,j,0)-wldrm(js,j,0))
+          do j=1,nnatmi
+            if(latmscl(j).eq.ls) then
+              hlpnc=hlpnc-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
+              do ic=1,nnmoli
+                if(mlcmp(j,ic).gt.0) hlpnc=hlpnc-mlcmp(j,ic)*
+     .                (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
+              end do
+            end if
           end do
         end do
 c*** Flux across the targets
         do is=1,ntns
           js=ltns(is)+nnlimi
-csw 18nov2013 check for nnatmi (known after 1st EIRENE call)
-          if(nnatmi > 0)
-     .      hlpnt=hlpnt-wldna(js,ls,0)+wldra(js,ls,0)
-          do j=1,nnmoli
-            if(mlcmp(ls,j).gt.0) hlpnt=hlpnt-
-     -                        mlcmp(ls,j)*(wldnm(js,j,0)-wldrm(js,j,0))
+          do j=1,nnatmi
+            if(latmscl(j).eq.ls) then
+              hlpnt=hlpnt-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
+              do ic=1,nnmoli
+                if(mlcmp(j,ic).gt.0) hlpnt=hlpnt-mlcmp(j,ic)*
+     .                (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
+              end do
+            end if
           end do
         end do
 c*** Flux across the side walls
         do js=1,nnlimi
-csw 18nov2013 check for nnatmi  (known after 1st EIRENE call)
-          if(nnatmi > 0)
-     .      hlpnw=hlpnw-wldna(js,ls,0)+wldra(js,ls,0)
-          do j=1,nnmoli
-            if(mlcmp(ls,j).gt.0) hlpnw=hlpnw-
-     -                        mlcmp(ls,j)*(wldnm(js,j,0)-wldrm(js,j,0))
+          do j=1,nnatmi
+            if(latmscl(j).eq.ls) then
+              hlpnw=hlpnw-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
+              do ic=1,nnmoli
+                if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
+     .           (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
+              end do
+            end if
           end do
         end do
 c*** Gas puffing source and recycling
@@ -489,7 +498,10 @@ c*** Gas puffing source and recycling
             recyctmp=recyc(kks,ic)
           endif
           if (crcstra(ic).eq.'C') then
-            hlpnp=hlpnp+userfluxparm(ic,1)*gpfc(ls,ic)*recyctmp
+            do j=1,nnatmi
+              if(latmscl(j).eq.ls)
+     >          hlpnp=hlpnp+userfluxparm(ic,1)*gpfc(j,ic)*recyctmp
+            end do
           else
             hlp_lw = crcstra(ic).eq.'S' .or. crcstra(ic).eq.'N'
             hlp_lt = crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W'
@@ -515,27 +527,34 @@ c<<<
                       hlp_wldpp=hlp_wldpp+wldpp(k,ii,ic)
                     end do
                     print '(1x,a,2i5,1p,40e12.4)',
-     ,                 '%%# i,k,hlp,wldpp,wldpa,sclstra= ',
-     ,                  i,k,hlp,hlp_wldpp,wldpa(k,ls,ic),sclstra(ls,ic)
+     ,                 '%%# i,k,hlp,wldpp= ',
+     ,                  i,k,hlp,hlp_wldpp
                   end if
 c>>>
-                  hlp=hlp+wldpa(k,ls,ic)*sclstra(ls,ic)
+                  do j=1,nnatmi
+                    if (latmscl(j).eq.ls) then
+                      hlp=hlp+wldpa(k,j,ic)*sclstra(j,ic)
 c<<<
-                  if(hlp_tt) print *,'%%% wldpa(',k,ls,ic,') =',
-     ,                                    wldpa(k,ls,ic)*sclstra(ls,ic)
+                      if(hlp_tt) print *,
+     ,                 '%%% wldpa(',k,',',j,',',ic,') =',
+     ,                      wldpa(k,j,ic)*sclstra(j,ic)
 c>>>
+                    end if
+                  end do
                   do j=1,nnmoli
+                    do ii=1,nnatmi
+                      if (latmscl(ii).eq.ls) then
+                        hlp=hlp+mlcmp(ii,j)*wldpm(k,j,ic)*sclstra(ii,ic)
 c<<<
-                    if(hlp_tt) print '(1x,a,2i3,1p,40e12.4)',
+                        if(hlp_tt) print '(1x,a,2i3,1p,40e12.4)',
      ,                       '%%# j,mlcmp,wldpm,sclstra= ',
-     ,                       j,mlcmp(ls,j),wldpm(k,j,ic),sclstra(ls,ic)
+     ,                       j,mlcmp(ii,j),wldpm(k,j,ic),sclstra(ii,ic)
+                        if(hlp_tt .and. mlcmp(ii,j).gt.0) print *,
+     ,                       '%%% wldpm(',k,',',j,',',ic,') =',
+     ,                            wldpm(k,j,ic)*sclstra(ii,ic)
 c>>>
-                    hlp=hlp+mlcmp(ls,j)*wldpm(k,j,ic)*sclstra(ls,ic)
-c<<<
-                    if(hlp_tt .and. mlcmp(ls,j).gt.0) print *,
-     ,                                    '%%% wldpm(',k,j,ic,') =',
-     ,                                     wldpm(k,j,ic)*sclstra(ls,ic)
-c>>>
+                      end if
+                    end do
                   end do
                 end if
               end do
@@ -557,10 +576,14 @@ c<<<
      ,                                hlpit, hlpiw, hlpic, hlpid, hlpnp
           print *,'%%# Recycling sources. ls= ',ls
           print '(a4,8x,20(5x,i3,4x))',' %%#',(i,i=1,kst_hlp)
-          print '(1x,a,1p,20e12.5)','%%# sclrtio= ',
-     ,                                       (sclrtio(ls,i),i=1,nstrat)
-          print '(1x,a,1p,20e12.5)','%%# sclstra= ',
-     ,                                       (sclstra(ls,i),i=1,nstrat)
+          do j=1,nnatmi
+            if (latmscl(j).eq.ls) then
+              print '(1x,a,i3,a,1p,20e12.5)','%%# sclrtio(',j,':)= ',
+     ,                                       (sclrtio(j,i),i=1,nstrat)
+              print '(1x,a,i3,a,1p,20e12.5)','%%# sclstra(',j,':)= ',
+     ,                                       (sclstra(j,i),i=1,nstrat)
+            end if
+          end do
           print '(1x,a8,1p,20e12.4)','%%# plasma  ',
      ,                                      (hlp_pls(i,ls),i=1,kst_hlp)
           print '(1x,a8,1p,20e12.4)','%%# neutrals',
@@ -635,19 +658,20 @@ c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_bln)=.true.
 c----------------------------------------------------------------------
 c
-      allocate(hlpit_lp(natm),hlpit_rp(natm),hlpit_pl(natm))
-      allocate(hlp_neu(nstra,natm))
-      allocate(hlpic_s(natm),hlpiw_s(natm),hlpit_s(natm))
-      allocate(flxic_tmp(natm),flxnc_tmp(natm),flxit_tmp(natm),
-     ,         flxnt_tmp(natm),flxiw_tmp(natm),flxnw_tmp(natm),
-     ,         flxnp_tmp(natm),flxps_tmp(natm),blnna_tmp(natm),
-     ,         blnnd_tmp(natm),blnnc_tmp(natm),blnnt_tmp(natm),
-     ,         blnnw_tmp(natm),blnns_tmp(natm),blnne_tmp(natm),
-     ,         blnnr_tmp(natm),
+      allocate(hlpit_lp(nspecies),hlpit_rp(nspecies),hlpit_pl(nspecies))
+      allocate(hlp_neu(nstra,nspecies))
+      allocate(hlpic_s(nspecies),hlpiw_s(nspecies),hlpit_s(nspecies))
+      allocate(
+     , flxic_tmp(nspecies),flxnc_tmp(nspecies),flxit_tmp(nspecies),
+     , flxnt_tmp(nspecies),flxiw_tmp(nspecies),flxnw_tmp(nspecies),
+     , flxnp_tmp(nspecies),flxps_tmp(nspecies),blnna_tmp(nspecies),
+     , blnnd_tmp(nspecies),blnnc_tmp(nspecies),blnnt_tmp(nspecies),
+     , blnnw_tmp(nspecies),blnns_tmp(nspecies),blnne_tmp(nspecies),
+     , blnnr_tmp(nspecies),
 c*** from 960727 on
-     ,         flxid_tmp(natm),flxbl_tmp(natm),flxbr_tmp(natm),
+     , flxid_tmp(nspecies),flxbl_tmp(nspecies),flxbr_tmp(nspecies),
 c*** from 960808 on
-     ,         flxrl_tmp(natm))
+     , flxrl_tmp(nspecies))
       if(.not.filedata(ntrc_bln)) return
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
@@ -707,8 +731,8 @@ c*** It was a major change of the file format - impossible to continue
         write(hlp_frm,'(9h(5h#time,,i3,16h(1h'//tab//',a8,1h_,a2)))')
      ,                                                  np_tmp*nspecies
 c       print *,'b2blnc: nspecies= ',nspecies                   !###
-c       print *,'atoms_list :',(atoms_list(j),':',j=1,nspecies) !###
-        write(lun,hlp_frm) ((hlp_h(i),atoms_list(j),i=1,np_tmp),
+c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
+        write(lun,hlp_frm) ((hlp_h(i),species_list(j),i=1,np_tmp),
      ,                                                    j=1,nspecies)
       end if
       write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')

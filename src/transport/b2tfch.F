@@ -6,7 +6,7 @@
      1  vol, gs, hx, hy, qz, bb, te, po, ne,                    	 !xpb
      1  ti, na, fna, uadia, vedia, wadia, vaecrb, veecrb, ua,
      2  fne_32, fne_52, csig, csigin, chce, chve,               	 !xpb
-     &  calf, chvemx, cvsa, fch, conc, fchdia,
+     &  calf, chvemx, cvsa, fch, conc, fchstoch, fchdia,                 !srv 17.12.13
      &  fch_p, fchvispar, fchvisq, fchin, fch_32, fch_52,                !srv 25.11.08
      1  avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
       use b2mod_types
@@ -16,6 +16,8 @@
       use b2mod_constants
       use b2mod_anomalous_transport                             	 !xpb
       use b2mod_geo_corner                                      	 !xpb
+      use b2mod_plasma
+     , , only: fch_pi_f, fch_pi_c                                    !srv 13.01.17
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       implicit none
@@ -49,7 +51,8 @@
      4  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
      5  avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
      6  cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1),
-     7  fchvisq(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1)                 !srv 25.11.08
+     7  fchvisq(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),                !srv 25.11.08
+     &  fchstoch(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -69,6 +72,9 @@
       integer, save :: iout = 0                                         !srv 18.06.08
       integer, save :: lim_flux = 0, drift_style = 1
       integer, save :: conductive_limit = 1
+      integer, save :: style = 2                                        !srv 13.01.17
+      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 {
+      real (kind=R8) :: csig_stoch(-1:nx,-1:ny)                          !lk 31.01.08 }
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, t0,
      &   tex, tex0, ehx_po, ehy_po,
@@ -77,7 +83,8 @@
      * fch_ion_neutral, fch_anomalous, vis_par,                         !xpb
      * dvpar(-1:nx,-1:ny), vis_per,                                     !xpb
      * va(-1:nx,-1:ny), dva(-1:nx,-1:ny),
-     * fnadspl(-1:nx,-1:ny,0:1,0:ns-1)
+     * fnadspl(-1:nx,-1:ny,0:1,0:ns-1),
+     * ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny), zeff(-1:nx,-1:ny)          !srv 13.01.17
       character*1 charnc
 #ifdef CLASSICAL_CURRENT
       real (kind=R8) ::
@@ -108,6 +115,7 @@
       if (ncall.eq.0) then                                      	!xpb
        call ipgetr ('b2tfhe_neutral', fch_ion_neutral)          	!xpb
        call ipgetr ('b2tfhe_anomalous', fch_anomalous)          	!xpb
+       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
        call ipgeti ('b2tfhe_lim_flux', lim_flux)
        call ipgeti ('b2trcl_conductive_limit', conductive_limit) 
        if (fch_anomalous.eq.1.0_R8)
@@ -133,6 +141,7 @@
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                          !xpb
        call ipgeti ('b2tfch_iout', iout)                                !srv 18.06.08
        call ipgeti ('b2tfnb_drift_style', drift_style)
+       call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
       endif                                                             !xpb
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -168,6 +177,13 @@
        call b2xvff (nx, ny, chve, 'chve')
        call b2xvfx (nx, ny, chvemx, 'chvemx')
       endif
+
+      if(fch_stochastic.ne.0.0e0_R8 ) then                               !lk 31.01.08 {
+        call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,   !srv 07.07.14
+     &      fchstoch)
+      else
+        fchstoch = 0.0e0_R8
+      endif                                                            !lk 31.01.08 }
 
 c Drift terms
       fchdia=0.0_R8
@@ -563,7 +579,23 @@ c       call xerrab (' ')
           endif
         enddo
       endif
-        
+
+*   ..compute parallel current
+      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                        !srv 13.01.17 {
+      if (no_current.ne.1) then
+        call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
+        if (style.eq.2) then
+          call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
+          call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
+          call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
+        else
+          fch_pi_f = 0.0_R8
+        end if
+        fch_p = fch_p - fch_pi_f
+      else
+        fch_p = 0.0_R8
+      endif                                                             !srv 13.01.17 }
+
 * ..compute fluxes and linearisation
 *  ..do not forget equivalent code in B2TFHE !!!!!!!!!!!!!!!!!!!!!
 *   ..compute fchx, concx
@@ -572,7 +604,6 @@ c       call xerrab (' ')
           if(leftix(ix,iy).eq.-2) then
             conc(ix,iy,0) = 0.0_R8
             fch(ix,iy,0) = 0.0_R8
-            fch_p(ix,iy,0) = 0.0_R8                                  !srv 10.06.08
             fch_32(ix,iy,0) = 0.0_R8
             fch_52(ix,iy,0) = 0.0_R8
           else
@@ -585,11 +616,7 @@ c       call xerrab (' ')
               ehx = 0.0_R8
               ehx_po = 0.0_R8
             else
-              ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+     	 !xpb
-     &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+      	 !xpb
-     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5_R8*    	 !xpb
-     &         (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy))))  	 !xpb
-     &         )/qe                                             	 !xpb
+              ehx = ehx_(ix,iy)                                          !srv 13.01.17
               ehx_po = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))   	 !xpb
             endif
             tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
@@ -636,21 +663,16 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             endif
             tex0 = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)
-            fch(ix,iy,0) = csig_cl(ix,iy,0)*ehx+csig_an(ix,iy,0)*ehx_po
-     &       -calf(ix,iy,0)*tex0 	                                 !xpb
-     &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0) 	 !xpb
+            fch(ix,iy,0) = fch_p(ix,iy,0)                                !srv 13.01.17
+     &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0)          !xpb
      &       +fchvisper(ix,iy,0)
             fch_32(ix,iy,0) = csig_cl(ix,iy,0)*ehx
      1       +fchin(ix,iy,0)+fchvispar(ix,iy,0)
      &       +fchvisper(ix,iy,0)
             fch_52(ix,iy,0) = csig_an(ix,iy,0)*ehx_po
      &                       -calf(ix,iy,0)*tex0_nd
-            if (no_current.ne.1) then
-              fch_p(ix,iy,0) = csig_cl(ix,iy,0)*ehx
-     &                        -calf(ix,iy,0)*tex0                        !srv 10.06.08
-            endif
             conc(ix,iy,0) = csig(ix,iy,0)
-            if(fch_ion_neutral.ne.0.0_R8) then                  	 !xpb
+            if(fch_ion_neutral.ne.0.0_R8) then                  	     !xpb
               do is = 0, ns-1
                 if (.not.is_neutral(is)) then
                   do is0 = 0, ns-1
@@ -659,17 +681,17 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
                   enddo
                 endif
               enddo
-            endif                                               	 !xpb
+            endif                                               	     !xpb
           endif
         enddo
       enddo
 *   ..compute fchy, concy
+      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)                     !srv 13.01.17
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then
             conc(ix,iy,1) = 0.0_R8
             fch(ix,iy,1) = 0.0_R8
-            fch_p(ix,iy,1) = 0.0_R8                                  !srv 10.06.08
             fch_32(ix,iy,1) = 0.0_R8
             fch_52(ix,iy,1) = 0.0_R8
           else
@@ -677,11 +699,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               ehy = 0.0_R8
               ehy_po = 0.0_R8
             else
-              ehy = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &         (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy))+
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))*0.5_R8*
-     &         (log(ne(ix,iy))-log(ne(bottomix(ix,iy),bottomiy(ix,iy))))
-     &         )/qe    
+              ehy = ehy_(ix,iy)                                          !srv 13.01.17
               ehy_po = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))  !xpb
             endif
             fch(ix,iy,1)= csig_cl(ix,iy,1)*ehy+csig_an(ix,iy,1)*ehy_po
@@ -689,7 +707,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))             !xpb
      .       +fchdia(ix,iy,1)+fchin(ix,iy,1)+fchvispar(ix,iy,1)          !xpb
      &       +fchvisper(ix,iy,1)
-            fch_p(ix,iy,1)= 0.0_R8                                       !srv 10.06.08
+     8       +fchstoch(ix,iy)                                            !lk 31.01.08
             fch_32(ix,iy,1)= csig_cl(ix,iy,1)*ehy
      .       +fchin(ix,iy,1)+fchvispar(ix,iy,1)                          !xpb
      &       +fchvisper(ix,iy,1)
@@ -706,6 +724,9 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
                 endif
               enddo
             endif
+            if(fch_stochastic.ne.0.0e0_R8 ) then                         !lk 31.01.08 {
+              conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy)
+            endif                                                        !lk 31.01.08 }
           endif                                                 	 !xpb
         enddo
       enddo
@@ -730,7 +751,7 @@ cxpb turn off flows between boundary cells
 
 cxpb turn off poloidal flows in core boundary
         do ix = -1, nx
-          if(mod(region(ix,-1,0),4).eq.1) then
+          if(on_closed_surface(ix,-1)) then
             conc(ix,-1,0) = 0.0_R8
             fch(ix,-1,0) = 0.0_R8
             fch_32(ix,-1,0) = 0.0_R8
@@ -813,6 +834,7 @@ cxpb turn off current terms if requested
        call my_out(70,nx,ny,bvisper(-1,-1,1),'b2tfch_bvispery')
        call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch_cvisperx')
        call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch_cvispery')
+       call my_out(70,nx,ny,fchstoch,'fchstochy')                    !lk 31.01.08
       endif                                                          !srv 18.06.08 }
 
 * ..return

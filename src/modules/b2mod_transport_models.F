@@ -48,11 +48,11 @@
       call xertst (transport_models_allocated,
      .	'Error: transport_models not yet allocated')
       if (edition.eq.'    ') then
-        filename = '../b2.transport_models_save.parameters'
+        filename = 'b2.transport_models_save.parameters'
       else
         filename = 'b2.transport_models_save.parameters.'//edition
       endif
-      inquire(file=trim(filename),exist=file_ok)
+      call find_file(filename,file_ok)
       if(file_ok) then
 	if (edition.eq.'    ') open(nread,file=trim(filename))
 	write(*,*) 'Reading namelist transport_models from ',
@@ -83,7 +83,7 @@
 
       if(.not.transport_models_allocated) return
       if (edition.eq.'    ') then
-        filename = '../b2.transport_models_save.parameters'
+        filename = 'b2.transport_models_save.parameters'
       else
         filename = 'b2.transport_models_save.parameters.'//edition
       endif

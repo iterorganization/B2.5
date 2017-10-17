@@ -7,6 +7,7 @@
       use b2mod_version
       use b2mod_b2cmgs
       implicit none
+#include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nget, nx1, ny1
 *   ..output arguments (unspecified on entry)
@@ -206,7 +207,7 @@
       call cfrure (nget, n2, hy1, 'hy')
 *   ..read qz, qc, gs
       call cfrure (nget, n2*2, qz1, 'qz')
-c-xpb
+cxpb
       if(b2fgmtry_version.ge.'01.001.022') then
         call cfrure (nget, n2, qc1, 'qc')
       else
@@ -245,7 +246,7 @@ c-xpb
         enddo
        enddo
       endif
-c-xpb-end
+cxpb-end
       call cfrure (nget, n2*3, gs1, 'gs')
 *   ..read /b2cmgs/
       call cfruin (nget, 1, idum, 'nlreg')
@@ -256,12 +257,12 @@ c-xpb-end
       call cfruin (nget, nlreg, nlylo, 'nlylo')
       call cfruin (nget, nlreg, nlyhi, 'nlyhi')
       call cfruin (nget, nlreg, nlloc, 'nlloc')
-c-dpc
+cdpc
       call cfruin (nget, 1, idum, 'nncut')
       nncut = idum(0)
       call xertst (0.le.nncut,'faulty input nncut')
-      call xertst (nncut.le.10,
-     . 'increase nncutmax=10 in b2yt and b2ytgm!')
+      call xertst (nncut.le.DEF_NCUT,
+     . 'increase DEF_NCUT in DIMENSIONS.F!')
       call cfruin (nget, nncut, leftcut1, 'leftcut')
       call cfruin (nget, nncut, rightcut1, 'rightcut')
       call cfruin (nget, nncut, topcut1, 'topcut')
@@ -277,15 +278,15 @@ c-dpc
       call cfruin (nget, n2*3, region1, 'region')
       call cfruin (nget, 3, nnreg, 'nnreg')
       call cfruin (nget, n2*2, resignore1, 'resignore')
-c-dpc-end 
-c-xpb
+cdpc-end
+cxpb
       if(b2fgmtry_version.ge.'01.001.000') then
         call cfruin (nget, 1, idum, 'periodic_bc')
         periodic_bc=idum(0)
       else
         periodic_bc=0
       endif
-c-xpb-end
+cxpb-end
 *  ..interpolate magnetic field to cell faces
 c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!!
       call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)

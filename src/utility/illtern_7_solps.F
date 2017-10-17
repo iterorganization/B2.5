@@ -64,7 +64,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
         S1(I+(J-1)*N1)=0.0e0_R8
        enddo
       enddo
-c-dpc
+cdpc
       if(nwrite_fmt.gt.0) then
         if(nwrite_fmt.gt.ncall) then
           if(ncall.eq.0) then

@@ -22,7 +22,7 @@ C     X,Y   -arrays of given abscissa and ordinates
 C     B,C,D -arrays of given spline coefficients, calculated
 C            with subprogramme 'spline'
 C
-C  if in comparisson with previous call U isn't
+C  if in comparison with previous call U is not
 C  in the same interval, then for determination
 C  proper interval double (binary) search should be used.
 C

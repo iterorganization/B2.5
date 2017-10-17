@@ -20,7 +20,7 @@
 *
 *  1. purpose
 *
-*     B2YP (main program) is a post-processor for b2. It displays the
+*     B2YP (main program) is a postprocessor for b2. It displays the
 *     plasma state. This program calls the driver routine b2ypdr for
 *     the actual computation.
 *
@@ -32,7 +32,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     The complete program b2yp performs post-processing of the
+*     The complete program b2yp performs postprocessing of the
 *     result of a b2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls

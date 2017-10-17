@@ -1274,9 +1274,9 @@ C
 C-----------------------------------------------------------------------
 C
 C-----------------------------------------------------------------------
-C  IDENTIFY ADAS SOURCE DATA USER ID, GROUPNAME , TYPENAME
+C  IDENTIFY ADAS SOURCE DATA USER ID, GROUPNAME, TYPENAME
 C  AND FILE EXTENSION
-CA NOTE THAT UNDER UNIX TYPENAME IS AN OPTIONAL SUBDIRECTORY.
+C  NOTE THAT UNDER UNIX TYPENAME IS AN OPTIONAL SUBDIRECTORY.
 C-----------------------------------------------------------------------
 C
       USERID = '?'
@@ -2610,7 +2610,7 @@ C                     2) ONLY IGNORE TRAILING BLANKS FOR SSTRNG
 C                        (KEEP LEADING BLANKS).
 C                     3) MODIFY DO LOOP INDEX RANGE TO ENSURE THAT
 C                        YOU DO NOT GO BEYOND THE END OF CSTRNG.
-C                     4) VERIFY LENGTH OF SSTRNG IS NON-ZERO.
+C                     4) VERIFY LENGTH OF SSTRNG IS NONZERO.
 C
 C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------

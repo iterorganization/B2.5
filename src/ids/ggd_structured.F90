@@ -1,17 +1,23 @@
 module ggd_structured
 
-  !> Service routines for accssing structured grids and associated data
+  !> Service routines for accessing structured grids and associated data
 
   use b2mod_types
   use ggd_assert
   use combinations
 
+#ifdef IMAS
+  use ids_schemas ! IGNORE
+#else
+#ifdef ITM
   use ggd_common
   use ggd_object
   use ggd_access
   use ggd_subgrid
   use ggd_data
   use ggd_transform
+#endif
+#endif
 
   implicit none
 
@@ -48,8 +54,6 @@ module ggd_structured
 
 #endif
 
-contains
-
   !> Write a n-dimensional structured grid 
   !> into a grid descriptor, as well as the default subgrids for objects of all dimensions.
   !>
@@ -63,7 +67,7 @@ contains
   !>                  has shape(i) grid points.
   !> @param x         Dimension( maxval( gshape(n) ), n ). 
   !>                  Grid node coordinates in the individual dimensions. 
-  !>                  The node positions in  space i are given by 
+  !>                  The node positions in space i are given by
   !>                  x( 1 : gshape( i ), id ).
   !> @param createSubgrids Optional flag controlling whether default subgrids
   !>                  are created. Default is .true.
@@ -80,6 +84,8 @@ contains
   !> of a simple 1d structured grid with standard connectivity
 
 #ifdef IMAS
+
+contains
 
   subroutine gridSetupStruct1dSpace( space, coordtype, nodes, periodic )
     type(ids_generic_grid_dynamic_space), intent(inout) :: space !> The space descriptor to fill
@@ -191,6 +197,8 @@ contains
 #else
 #ifdef ITM
 
+contains
+
   !> @see gridSetupStructuredSep
   subroutine gridSetupStructured( grid, coordtype, gshape, x, id, createSubgrids, periodicSpaces, uid, computeMeasures )
     type(type_complexgrid), intent(out) :: grid 
@@ -214,7 +222,7 @@ contains
     if (present(computeMeasures)) lcomputeMeasures = computeMeasures
 
     call assert( size( coordtype ) == size( gshape ), &
-         & "gridWriteStructured: size of coordtype and gshape don't match" )
+         & "gridWriteStructured: size of coordtype and gshape do not match" )
     call assert( maxval( shape( x ) ) == maxval( gshape ), &
          & "gridWriteStructured: shape of x seems to be inconsistent with gshape" )
 

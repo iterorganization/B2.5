@@ -317,6 +317,8 @@
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
+      redef_pbs = 1 ! In version 3.0.6, we apply the pbsx correction by default
+      call ipgeti ('b2agdr_redef_pbs', redef_pbs)
 *   ..use parg, obtain isymm and lblgm
       call b2xxid ('b2ag', lblgm(1:60))
       call b2agsi (nx, ny, parg, isymm, lblgm(61:120), istyle)
@@ -401,14 +403,22 @@
 *   ..project metric coefficients to proper mesh
       call b2agmx (nx1, ny1, nx, ny, 
      & vol1, hx1, hy1, qz1, qc1, qcb1,
-     & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1, wbbc1,
+     & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
+     & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
      & vol, hx, hy, qz, qc, qcb,
-     & gs, crx, cry, bb, pbs, fpsi, ffbz, wbbc,
+     & gs, crx, cry, bb, pbs, fpsi, ffbz,
+     & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
      1 leftix1,leftiy1,rightix1,rightiy1,
      2 topix1,topiy1,bottomix1,bottomiy1,
      3 leftcut1,rightcut1,bottomcut1,topcut1,cflags1)
+*   ..correct pbsx on the proper mesh
+      if(redef_pbs.ne.0) then
+        call b2agbs (nx, ny, nncutmax, leftix, rightix, region,
+     1   bb, wbbl, gs, qz, qc, hx, hy, vol, pbs,
+     2   cell_width, cell_height)
+      end if
 *   ..establish an isolated region if needed
       call ipgeti('b2agdr_nxiso1', nxiso1)
       call ipgeti('b2agdr_nxiso2', nxiso2)
@@ -482,28 +492,30 @@
      >     topiy(ix,nyiso2) = nyiso1
         end do
       endif
-c-dpc-debug
+cdpc-debug
       if(nx1.eq.nx.and.ny1.eq.ny) then
 	write(*,*) 'b2agdr sanity check: vol ',
      1	 maxval(abs(vol1-vol))
-	write(*,*) 'b2agdr sanity check: hx ',
+	write(*,*) 'b2agdr sanity check: hx  ',
      1	 maxval(abs(hx1-hx))
-	write(*,*) 'b2agdr sanity check: hy ',
+	write(*,*) 'b2agdr sanity check: hy  ',
      1	 maxval(abs(hy1-hy))
-	write(*,*) 'b2agdr sanity check: qz ',
+	write(*,*) 'b2agdr sanity check: qz  ',
      1	 maxval(abs(qz1-qz))
-	write(*,*) 'b2agdr sanity check: qc ',
+	write(*,*) 'b2agdr sanity check: qc  ',
      1	 maxval(abs(qc1-qc))
 	write(*,*) 'b2agdr sanity check: qcb ',
      1	 maxval(abs(qcb1-qcb))
-	write(*,*) 'b2agdr sanity check: gs ',
+	write(*,*) 'b2agdr sanity check: gs  ',
      1	 maxval(abs(gs1-gs))
 	write(*,*) 'b2agdr sanity check: crx ',
      1	 maxval(abs(crx1-crx))
 	write(*,*) 'b2agdr sanity check: cry ',
      1	 maxval(abs(cry1-cry))
-	write(*,*) 'b2agdr sanity check: bb ',
+	write(*,*) 'b2agdr sanity check: bb  ',
      1	 maxval(abs(bb1-bb))
+	write(*,*) 'b2agdr sanity check: pbs ',
+     1	 maxval(abs(pbs1-pbs))
       endif
       write(*,*) 'b2agdr1: bb(nx,ny,0) ',bb(nx,ny,0)
       if(istyle.ge.0) then

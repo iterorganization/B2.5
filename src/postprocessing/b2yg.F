@@ -15,7 +15,7 @@
 *
 *  1. purpose
 *
-*     B2YG (main program) is a post-processor for b2. It reads and
+*     B2YG (main program) is a postprocessor for b2. It reads and
 *     displays the geometry and magnetic field. This program calls the
 *     driver routine b2ygdr for the actual computation.
 *

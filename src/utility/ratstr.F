@@ -160,7 +160,7 @@
 *
 *  8. further comments
 *
-*     The present code calculates charge-exchange rate coefficients
+*     The present code calculates charge exchange rate coefficients
 *     that are manifestly independent of density.  Furthermore, the
 *     STRAHL calculation does not consider the density dependence of
 *     the ionisation rate coefficients.

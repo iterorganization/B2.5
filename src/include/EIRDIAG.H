@@ -15,7 +15,8 @@ c  version : 27.07.2000 22:52
      .	wldra(nlimps,natm,0:nstra),    wldrm(nlimps,nmol,0:nstra),
      .	wldpp(nlimps,npls,0:nstra),    wldpa(nlimps,natm,0:nstra),
      .	wldpm(nlimps,nmol,0:nstra),    wldpeb(nlimps,0:nstra),
-     .	wldspt(nlimps,0:nstra),        
+     .	wldspt(nlimps,0:nstra),
+     .  wldspta(nlimps,natm,0:nstra),  wldsptm(nlimps,nmol,0:nstra),
      .  eneutrad(0:ndxp,0:ndyp,natm,0:nstra),
      .  wlarea(nlimps),                wlabsrp(nspz,nlimps),
      .  wldna_res(natm,nsgmx),     !incident atom flux
@@ -27,6 +28,10 @@ c  version : 27.07.2000 22:52
      .  ewldrp_res(nsgmx),         !kinetic energy of reflected neutrals originated from ions
      .  ewldmr_res(nmol,nsgmx),    !energy due to recombination of atoms into molecules
      .  wldspt_res(nsgmx),         !flux of sputtered wall material
+     .  wldspta_res(natm,nsgmx),   !sputtered flux for each type of emitted atom
+     .  wldsptm_res(nmol,nsgmx),   !sputtered flux for each type of emitted molecule
+     .  wlpump(nspz,nlimps),       ! pumped flux for each type of pumped particle
+     .  wlpump_res(nspz,nsgmx),    ! pumped flux for each type of pumped particle
      .  sarea_res(nsgmx)           !area of the surface elements
 
 CVK NEUTRAL FLUXES, SPATIALLY RESOLVED ON NON-DEFAULT STANDARD SURFACES (NDS)
@@ -70,10 +75,11 @@ c
      2 pfluxa,pfluxm,pefluxa,pefluxm,
      3 emiss,emissmol,eneutrad,
      4 srcml,edissml,wldnek,wldnep,wldna,ewlda,wldnm,ewldm,wldra,wldrm,
-     5 wldpp,wldpa,wldpm,wldpeb,wldspt,
-     6 wlarea, wlabsrp,
+     5 wldpp,wldpa,wldpm,wldpeb,wldspt,wldspta,wldsptm,
+     6 wlarea, wlabsrp, wlpump,
      7 wldna_res, wldnm_res, ewlda_res, ewldm_res, wldspt_res,
      8 ewldea_res, ewldem_res, ewldrp_res, ewldmr_res, sarea_res,
+     9 wldspta_res, wldsptm_res, wlpump_res,
      i nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi,isrftype,
      2 lkindp,lkindm,lkindi,
      3 eirdiag_nds_ind,eirdiag_nds_typ,eirdiag_nds_srf,

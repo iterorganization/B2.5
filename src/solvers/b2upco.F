@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2upco (nx, ny, nregionv, ua_solve, solvereg, 
+      subroutine b2upco (nx, ny, nregionv, ua_solve, solvereg,
      &  rxf, pcm0, vol, corpb, pccb0, pb, nb, ub)
       use b2mod_indirect
       use b2mod_types
@@ -34,10 +34,12 @@
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
-      real (kind=R8) ::
-     *  t0
+      real (kind=R8), save :: c_corr_core_dn = 1.0_R8                     !lk 30.06.17
+      real (kind=R8) :: t0,
+     *  pb_(-1:nx,-1:ny), nb_(-1:nx,-1:ny),                               !lk 30.06.17
+     *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny)                                !lk 30.06.17
 *   ..procedures
-      external subini, subend, xertst, b2xxgs
+      external subini, subend, xertst, ipgetr, b2xxgs
 *   ..initialisation
       data ncall/0/
 
@@ -49,11 +51,12 @@
       call subini ('b2upco')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       call ipgetr ('b2upco_c_corr_core_dn', c_corr_core_dn)              !lk 30.06.2017
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test rxf, pcm0
-      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8, 
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      .  'faulty argument rxf')
       call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
 
@@ -77,10 +80,41 @@
         else
          t0 = 1.0_R8/(1.0_R8-rxf*corpb(ix,iy)/pb(ix,iy))
         endif
-        nb(ix,iy) = t0*nb(ix,iy)
-        pb(ix,iy) = t0*pb(ix,iy)
+        nb_(ix,iy) = t0*nb(ix,iy)                        !lk 30.06.2017
+        pb_(ix,iy) = t0*pb(ix,iy)                        !lk 30.06.2017
        enddo
       enddo
+      if(c_corr_core_dn.eq.1.0_R8) then                  !srv 25.07.17 {
+        nb = nb_
+        pb = pb_
+      else                                               !srv 25.07.17 }
+*   ..smooth the correction for inner flux surfaces      !lk 30.06.2017{
+        tt0 = 0.0e0_R8
+        tt1 = 0.0e0_R8
+        tt2 = 0.0e0_R8
+        do iy = -1,ny
+          do ix = -1,nx
+            if(on_closed_surface(ix,iy)) then
+              tt0(iy) = tt0(iy) + vol(ix,iy)
+              tt1(iy) = tt1(iy) + vol(ix,iy)*(nb_(ix,iy)-nb(ix,iy))
+              tt2(iy) = tt2(iy) + vol(ix,iy)*(pb_(ix,iy)-pb(ix,iy))
+            endif
+          enddo
+        enddo
+        do iy = -1,ny
+          do ix = -1,nx
+            if(on_closed_surface(ix,iy)) then
+              nb(ix,iy) = nb(ix,iy)+tt1(iy)/tt0(iy) +
+     *         c_corr_core_dn*(nb_(ix,iy)-nb(ix,iy)-tt1(iy)/tt0(iy))
+              pb(ix,iy) = pb(ix,iy)+tt2(iy)/tt0(iy) +
+     *         c_corr_core_dn*(pb_(ix,iy)-pb(ix,iy)-tt2(iy)/tt0(iy))
+            else                                          !srv 25.07.17 {
+              nb(ix,iy) = nb_(ix,iy)
+              pb(ix,iy) = pb_(ix,iy)                      !srv 25.07.17 }
+            endif
+          enddo
+        enddo                                             !lk 30.06.2017}
+      endif                                               !srv 25.07.17
 *   ..compute new ub
       if (ua_solve) then
        do iy = -1, ny
@@ -90,7 +124,7 @@
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &      solvereg(ireg))
      &    ub(ix,iy) = ub(ix,iy)-pcm0*rxf*pccb0(ix,iy)*vol(ix,iy)*
-     &    (wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+ 
+     &    (wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
      &     wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
      &      vol(rightix(ix,iy),rightiy(ix,iy))))
         enddo

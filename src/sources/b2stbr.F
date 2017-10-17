@@ -38,7 +38,7 @@
 #ifdef ASTRA
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 20.02.12 11.06.13
-#endif	                       
+#endif
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
@@ -92,7 +92,8 @@
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
-     &                 ncall_iout = -1                               !srv 23.03.12
+     &                 ncall_iout = -1, iout_b2wdat = 0              !srv 23.03.12
+      integer, save :: ird_aver=0                                    !pb 30.09.16
 #ifdef B25_EIRENE
       integer ia, im
       character ch3*3
@@ -106,18 +107,19 @@
       real (kind=R8) ::                                              !srv 29.04.10 {
      &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),         
+     &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),
      &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
-     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol) !IYS 27.01.2017 
-      integer ncall, sput_src, first_flight, 
+     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),  !IYS 27.01.17
+     &  flxtmp(0:nx+1,0:ny+1)
+      integer ncall, sput_src, first_flight,
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
      2  sput_chem_model, boundary_namelist,
-     3  reflection_on, sputter_energy_on, 
+     3  reflection_on, sputter_energy_on,
      4  b2wall_netcdf, potential_at_guard_cell,
      5  sput_frac_flag
       real (kind=R8) ::
-     *  sput_phys, sput_frc, sput_chem_alpha, 
+     *  sput_phys, sput_frc, sput_chem_alpha,
      1  sput_phys_alpha, in_dl, alpha, therm_evap, sput_res,
      3  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      4  sput_mixed_alpha, sput_mixed_beta, redep_alpha
@@ -148,30 +150,30 @@
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 *   ..initialisation
-      save ncall, sput_src, sput_frc, sput_phys, 
-     *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl, 
-     *     in_no_of_angles, in_size_of_table, in_no_of_start_points, 
+      save ncall, sput_src, sput_frc, sput_phys,
+     *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,
+     *     in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1     use_eirene, neutral_rescale, neutral_sources_rescale, output,
      2     coreregno, coreregn2, core_sources_rescale, alpha,
-     3     neutrals_namelist, therm_evap, sput_res, 
-     5     sput_chem_model, boundary_namelist, 
-     7     reflection_on, sputter_energy_on, 
+     3     neutrals_namelist, therm_evap, sput_res,
+     5     sput_chem_model, boundary_namelist,
+     7     reflection_on, sputter_energy_on,
      8     b2wall_netcdf, sput_frac_flag,
      9     potential_at_guard_cell,
      1     sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      4     sput_mixed_alpha, sput_mixed_beta, redep_alpha
       data ncall/0/, sput_src/1/, sput_frc/0.0_R8/,
-     1     sput_phys/0.0_R8/, sput_chem_alpha/1.0e-2_R8/, 
+     1     sput_phys/0.0_R8/, sput_chem_alpha/1.0e-2_R8/,
      *     sput_phys_alpha/1.0e-2_R8/, first_flight/0/,
      *     in_dl/0.001_R8/, in_no_of_angles/9/, alpha/0.25_R8/,
-     *     in_size_of_table/200000/, 
-     1     use_eirene/0/, neutral_rescale/1.0_R8/, 
+     *     in_size_of_table/200000/,
+     1     use_eirene/0/, neutral_rescale/1.0_R8/,
      *     neutral_sources_rescale/1.0_R8/, output/0/,
      1     coreregno/1/, coreregn2/4/, core_sources_rescale/1.0_R8/,
      2     neutrals_namelist/0/, therm_evap/0.0_R8/, sput_res/0.0_R8/,
      7     sput_chem_model/0/, boundary_namelist/0/,
-     8     reflection_on/1/, sputter_energy_on/1/, b2wall_netcdf/0/, 
-     2     sput_frac_flag/0/, sput_chem_cutoff_alpha/1.0_R8/, 
+     8     reflection_on/1/, sputter_energy_on/1/, b2wall_netcdf/0/,
+     2     sput_frac_flag/0/, sput_chem_cutoff_alpha/1.0_R8/,
      3     sput_chem_cutoff_beta/3.0_R8/,
      4     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
      5     redep_alpha/0.0_R8/, potential_at_guard_cell/1/
@@ -196,6 +198,7 @@
         if (use_eirene.eq.1) out_tfiles=0
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
         call ipgeti ('b2stbr_iout', iout)                            !srv 11.09.09 {
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)
@@ -204,18 +207,18 @@
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
-        call ipgetr ('b2stbr_recycled_neutrals_contr',               !srv 12.04.08 
+        call ipgetr ('b2stbr_recycled_neutrals_contr',               !srv 12.04.08
      &                      recycled_neutrals_contr)
-        call xertst (0.0_R8.le.recycled_neutrals_contr, 
+        call xertst (0.0_R8.le.recycled_neutrals_contr,
      &      'faulty internal parameter recycled_neutrals_contr')
         call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
         call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
         call ipgeti ('b2stbr_first_flight', first_flight)
         if(first_flight.ne.0) then
            call ipgetr ('b2stbr_first_flight_dl', in_dl)
-           call ipgeti ('b2stbr_first_flight_no_of_flights', 
+           call ipgeti ('b2stbr_first_flight_no_of_flights',
      *          in_no_of_angles)
-           call ipgeti ('b2stbr_first_flight_table_size', 
+           call ipgeti ('b2stbr_first_flight_table_size',
      *          in_size_of_table)
            in_no_of_start_points = 2*(nx+2)+2*max(nncut,1)*(ny+2)
            call ipgeti ('b2stbr_first_flight_no_of_start_points',
@@ -243,7 +246,7 @@
              enddo
            enddo
            call cpu_time(end_time)
-           write(*,'(a,i8,a,i8,a,g10.3,a,g12.5,a)') 
+           write(*,'(a,i8,a,i8,a,g10.3,a,g12.5,a)')
      *          'Used ',ptr_table,' out of ',size_of_table,
      *          ' (',real(ptr_table)/real(size_of_table)*100,'%)',
      *          end_time-start_time,' cpu-seconds'
@@ -264,11 +267,11 @@
           call ipgetr ('b2stbr_sput_chem_alpha', sput_chem_alpha)
           call xertst (0.0_R8.le.sput_chem_alpha,
      1     'faulty b2stbr_sput_chem_alpha')
-          call ipgetr ('b2stbr_sput_chem_cutoff_alpha', 
+          call ipgetr ('b2stbr_sput_chem_cutoff_alpha',
      1     sput_chem_cutoff_alpha)
           call xertst (0.0_R8.le.sput_chem_cutoff_alpha,
      1     'faulty b2stbr_sput_chem_cutoff_alpha')
-          call ipgetr ('b2stbr_sput_chem_cutoff_beta', 
+          call ipgetr ('b2stbr_sput_chem_cutoff_beta',
      1     sput_chem_cutoff_beta)
           call xertst (0.0_R8.le.sput_chem_cutoff_beta,
      1     'faulty b2stbr_sput_chem_cutoff_beta')
@@ -307,7 +310,7 @@
      1     coreregn2.le.cbirso+cbnrso-1,
      2     'faulty internal parameter coreregn2')
         endif
-        call ipgetr ('b2stbr_core_sources_rescale', 
+        call ipgetr ('b2stbr_core_sources_rescale',
      1   core_sources_rescale)
         call xertst (0.0_R8.le.core_sources_rescale,
      1   'faulty internal parameter core_sources_rescale')
@@ -315,8 +318,9 @@
         call ipgetr ('b2stbr_redep_alpha', redep_alpha)
         call xertst (0.0_R8.le.redep_alpha,
      1   'faulty internal parameter redep_alpha')
-        call ipgeti ('b2stbr_potential_at_guard_cell', 
+        call ipgeti ('b2stbr_potential_at_guard_cell',
      &                potential_at_guard_cell)
+        call ipgeti ('b2mndr_av_read', ird_aver)      !pb 29.09.16
         allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       else
@@ -329,7 +333,7 @@
             neutrals_count=tim/neutrals_time_mod
             call read_neutrals_namelist(nx, ny, ns, .true.)
             new_sputter_namelist=.true.
-            call xertst (nstrat.le.nstraid, 
+            call xertst (nstrat.le.nstraid,
      &       'Increase DEF_NSTRA in DIMENSIONS.F')
             call write_b2mod_neutrals_namelist
           endif
@@ -348,10 +352,10 @@
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *    ..test range of qz
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
+     &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
      &   'faulty argument range qz(,,0)')
        call xertst ( 0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &   smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
+     &   smax(n2,qz(-1,-1,1),1).le.1.0_R8,
      &   'faulty argument range qz(,,1)')
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
@@ -445,10 +449,10 @@ c   --> better solution wanted here..
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
-     &   neutral_sources_rescale, core_sources_rescale,  
+     &   neutral_sources_rescale, core_sources_rescale,
      &   sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
-     &   sput_chem_model, therm_evap, sput_res,  
-     &   reflection_on, sputter_energy_on, main_call, output, 
+     &   sput_chem_model, therm_evap, sput_res,
+     &   reflection_on, sputter_energy_on, main_call, output,
      &   sput_frac_flag, sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      1   sput_mixed_alpha, sput_mixed_beta,
      2   new_sputter_namelist, shi0_ff, f_redep,
@@ -475,10 +479,10 @@ c   --> better solution wanted here..
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &   coreregno, coreregn2, output,
-     &   neutral_sources_rescale, core_sources_rescale,  
+     &   neutral_sources_rescale, core_sources_rescale,
      &   sput_src, sput_frc, sput_phys,
      &   sput_chem_alpha, sput_phys_alpha, alpha,
-     &   sput_chem_model, therm_evap, sput_res, 
+     &   sput_chem_model, therm_evap, sput_res,
      &   reflection_on, sputter_energy_on, main_call,
      &   sput_chem_cutoff_alpha, sput_chem_cutoff_beta, shi0_ff,
      &   f_redep, potential_at_guard_cell, recycled_neutrals_contr)
@@ -572,7 +576,7 @@ c   --> better solution wanted here..
      .       +work(:,:,1)*sum_start/sum_end
             she0(:,:,0)=she0(:,:,0)+wrk3(:,:)*sum_start/sum_end
           endif
-          if (sum_ndi.ne.0.0_R8) 
+          if (sum_ndi.ne.0.0_R8)
      >     shi0(:,:,0)=shi0(:,:,0)+wrk2(:,:)*sum_strti/sum_ndi
           if (output.gt.1) then
             do iy=-1,ny
@@ -584,9 +588,9 @@ c   --> better solution wanted here..
             enddo
           endif
           if (main_call) then
-            write(*,*) 'Total first-flight-source na:', iscx(is), 
+            write(*,*) 'Total first-flight-source na:', iscx(is),
      &       sum(sna0(:,:,0,iscx(is)))
-            write(*,*) 'Total first-flight-source na:', iscx(is)+1, 
+            write(*,*) 'Total first-flight-source na:', iscx(is)+1,
      &       sum(sna0(:,:,0,iscx(is)+1))
           endif
         enddo
@@ -644,6 +648,11 @@ c   --> better solution wanted here..
         smo0 = smo0 + smo0_eir
         she0 = she0 + she0_eir
         shi0 = shi0 + shi0_eir
+
+*   get averaged sources
+        if (ird_aver > 0) 
+     &    call run_av_get_sources(sna0, smo0, she0, shi0, sch0, sne0,
+     &                            nx, ny, ns)
 #ifdef ASTRA
         if (use_astra.ne.0) then
           do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
@@ -662,7 +671,7 @@ c   --> better solution wanted here..
      &     shi0_eir(:,:,3)*ni(:,:,0)*ti
           call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
         endif
-#endif	                       
+#endif
         do ia = 1, nnatmi
 !         is = eb2spcr(ia)  ! IYS 27.01.2017
          do iy = -1,ny
@@ -676,10 +685,12 @@ c   --> better solution wanted here..
          enddo
 ! IYS 27.01.2017
 ! interpolate atom fluxes to cell faces (for output only)
+         flxtmp(0:nx+1,0:ny+1) = pfluxa(0:nx+1,0:ny+1,ia,1)
          call intfaceh(nx,ny,leftix,leftiy,vol,
-     &                 pfluxa(0:nx+1,0:ny+1,ia,1),fatm_eir(:,:,0,ia))
-         call intfacev(nx, ny, bottomix, bottomiy, vol,
-     &                 rfluxa(0:nx+1,0:ny+1,ia,1),fatm_eir(:,:,1,ia))
+     &                 flxtmp,fatm_eir(:,:,0,ia))
+         flxtmp(0:nx+1,0:ny+1) = rfluxa(0:nx+1,0:ny+1,ia,1)
+         call intfacev(nx,ny,bottomix,bottomiy,vol,
+     &                 flxtmp,fatm_eir(:,:,1,ia))
 ! IYS 27.01.2017
         enddo
 ! IYS 27.01.2017
@@ -690,10 +701,12 @@ c   --> better solution wanted here..
           enddo
          enddo
 ! interpolate molecule fluxes to cell faces (for output only)
+         flxtmp(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,im,1)
          call intfaceh(nx,ny,leftix,leftiy,vol,
-     &                  pfluxm(0:nx+1,0:ny+1,im,1),fmol_eir(:,:,0,im))
-         call intfacev(nx, ny, bottomix, bottomiy, vol,
-     &                  rfluxm(0:nx+1,0:ny+1,im,1),fmol_eir(:,:,1,im))
+     &                 flxtmp,fmol_eir(:,:,0,im))
+         flxtmp(0:nx+1,0:ny+1) = rfluxm(0:nx+1,0:ny+1,im,1)
+         call intfacev(nx,ny,bottomix,bottomiy,vol,
+     &                 flxtmp,fmol_eir(:,:,1,im))
         enddo
 ! IYS 27.01.2017
 
@@ -702,7 +715,7 @@ c   --> better solution wanted here..
 #endif
       else
 cwdk remove this if-test, to allow runs without Eirene if code is compiled with Eirene
-        call eirene_mc_init             ! EIRDIAG = 0   !srv 03.04.13
+        call eirene_mc_init(nx,ny)             ! EIRDIAG = 0   !srv 03.04.13
       endif
 
 * ..sources
@@ -748,22 +761,22 @@ cwdk remove this if-test, to allow runs without Eirene if code is compiled with 
      1         (deposition(ibnd,itrack)-old_deposition(ibnd,itrack))-
      2         (erosion(ibnd,itrack)-old_erosion(ibnd,itrack))
             else ! case of continuous erosion of deposited species
-c-xpb  This only has meaning if we are following multiple mixed species and
-c-xpb  this is not the first timestep 
+cxpb  This only has meaning if we are following multiple mixed species and
+cxpb  this is not the first timestep
               t0 = 0.0_R8
               equilibrium(itrack) = ntargsp.gt.1 .and. ncall.gt.0 .and.
      &         sput_frac_flag.ne.0
             endif
             if (t0.lt.0.0_R8) then  ! we have over-eroded, so we correct
               if (itrack.ne.itrack_0(ibnd)) then  ! over-erosion of a deposited species
-                t_frac = min(t_frac, 
+                t_frac = min(t_frac,
      1            particle_inventory(ibnd,itrack) /
      2           (particle_inventory(ibnd,itrack) - t0))
                 over_erosion = .true.
               else  ! we are keeping track of the bulk and eroded it all
-c-xpb  sput_frac_flag.eq.0 means we are not following mixed materials
-c-xpb  plate_thickness.eq.0 means we are not doing full inventories 
-                call xertst (sput_frac_flag.eq.0 .or. 
+cxpb  sput_frac_flag.eq.0 means we are not following mixed materials
+cxpb  plate_thickness.eq.0 means we are not doing full inventories
+                call xertst (sput_frac_flag.eq.0 .or.
      .                       plate_thickness(ibnd).eq.0.0_R8,
      1           'Eroded the entire bulk contents of the target!')
               endif
@@ -774,7 +787,7 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
      1       dtim*plate_time_factor(ibnd)
             do itrack = 1, ntargsp
               if (.not.equilibrium(itrack)) then
-                if (sput_frac_flag.ne.0) 
+                if (sput_frac_flag.ne.0)
      >           particle_inventory(ibnd,itrack)=
      .            particle_inventory(ibnd,itrack)+
      1               (    deposition(ibnd,itrack)-
@@ -793,7 +806,7 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
                 endif
               endif
             enddo
-          else 
+          else
             plate_time(ibnd)=plate_time(ibnd)+
      1       dtim*plate_time_factor(ibnd)*t_frac
             do itrack = 1, ntargsp
@@ -867,16 +880,16 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
 #endif
       endif
 
-      if (iout.eq.1 .or. iout_b2npmo.eq.1) then                       !srv 11.09.09 {
+      if (iout.eq.1 .or. iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then   !srv 11.09.09 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if (use_eirene.ne.0) then
-         if(.not.is_neutral(is)) then
-          do k=0,1 ! 3                                                  !srv 29.04.10 {
-           write (chk,'(i1)') k
-           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
-     *              'b2stbr_smo_eir'//chk//chns)
-          enddo
+         if(.not.is_neutral(is) .and. iout_b2wdat.eq.4) then
+!          do k=0,1 ! 3                                                  !srv 29.04.10 {
+!           write (chk,'(i1)') k
+!           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
+!     *              'b2stbr_smo_eir'//chk//chns)
+!          enddo
           wrk0=smo0_eir(:,:,0,is)+
      &         smo0_eir(:,:,1,is)*ua(:,:,is)+
      &         smo0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
@@ -884,35 +897,38 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
           call my_out(70,nx,ny,wrk0,'b2stbr_smo_eir'//chns)
          endif
         else
-!	  do k=0,3
-!	   write (chk,'(i1)') k
-!	   call my_out(70,nx,ny,smo0(-1,-1,k,is),'b2stbr_smo'//chk//chns)
-!	  enddo
+!        do k=0,3
+!         write (chk,'(i1)') k
+!         call my_out(70,nx,ny,smo0(-1,-1,k,is),'b2stbr_smo'//chk//chns)
+!        enddo
          call my_out(70,nx,ny,b2stbr_smo(-1,-1,is),'b2stbr_smo'//chns)
         endif
-!	   call my_out(70,nx,ny,ua(-1,-1,is),'b2stbr_ua'//chns)
-!	   call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
+!       call my_out(70,nx,ny,ua(-1,-1,is),'b2stbr_ua'//chns)
+!       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
        enddo                                                          !srv 29.04.10 }
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+     &         .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-!	  call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
+!       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
         if(use_eirene.ne.0) then
          if(.not.is_neutral(is)) then
-          do k=0,1                                                      !srv 29.04.10
-           write (chk,'(i1)') k
-           call my_out(70,nx,ny,sna0_eir(-1,-1,k,is),
+          if (iout_b2wdat.ne.4) then
+           do k=0,1                                                   !srv 29.04.10
+            write (chk,'(i1)') k
+            call my_out(70,nx,ny,sna0_eir(-1,-1,k,is),
      *               'b2stbr_sna_eir'//chk//chns)
-          enddo
+           enddo
+          endif
           wrk0=sna0_eir(:,:,0,is)+sna0_eir(:,:,1,is)*na(:,:,is)
           call my_out(70,nx,ny,wrk0,'b2stbr_sna_eir'//chns)
          endif
         else
-!	  do k=0,1
-!	   write (chk,'(i1)') k
-!	   call my_out(70,nx,ny,sna0(-1,-1,k,is),'b2stbr_sna'//chk//chns)
-!	  enddo
+!        do k=0,1
+!         write (chk,'(i1)') k
+!         call my_out(70,nx,ny,sna0(-1,-1,k,is),'b2stbr_sna'//chk//chns)
+!        enddo
          call my_out(70,nx,ny,b2stbr_sna(-1,-1,is),'b2stbr_sna'//chns)
         endif
        enddo                                                          !srv 29.04.10
@@ -924,11 +940,11 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
         call my_out(70,nx,ny,tfluxa(0:nx+1,0:ny+1,ia,1),      ! IYS 27.01.2017
      &                'b2stbr_tfluxa_eir'//chns)
         call my_out(70,nx,ny,fatm_eir(:,:,1,ia),              ! IYS 27.01.2017
-     &              'b2stbr_fatmy_eir'//chns)
+     &                'b2stbr_fatmy_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_pfluxa_eir'//chns)
         call my_out(70,nx,ny,fatm_eir(:,:,0,ia),              ! IYS 27.01.2017
-     &              'b2stbr_fatmx_eir'//chns)
+     &                'b2stbr_fatmx_eir'//chns)
         call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_dab2_eir'//chns)
         call my_out(70,nx,ny,tab2(0:nx+1,0:ny+1,ia,1),
@@ -953,13 +969,16 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
        enddo
 #endif
       endif
-      if (iout.eq.1 .or. (iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)) then
+      if (iout.eq.1 .or. (iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)
+     &         .or. iout_b2wdat.eq.4 ) then
        if (use_eirene.ne.0) then
-        do k=0,1  ! 3
-         write (chk,'(i1)') k
-         call my_out(70,nx,ny,she0_eir(-1,-1,k),'b2stbr_she_eir'//chk)
-         call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
-        enddo
+        if (iout_b2wdat.ne.4) then
+         do k=0,1  ! 3
+          write (chk,'(i1)') k
+          call my_out(70,nx,ny,she0_eir(-1,-1,k),'b2stbr_she_eir'//chk)
+          call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
+         enddo
+        endif
         wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*ti+
      &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*ti*ne
         call my_out(70,nx,ny,wrk0,'b2stbr_she_eir')
@@ -967,20 +986,21 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
      &       shi0_eir(:,:,2)*ni(:,:,0)+shi0_eir(:,:,3)*ti*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2stbr_shi_eir')
        endif
-!	 do k=0,3
-!	  write (chk,'(i1)') k
-!	  call my_out(70,nx,ny,she0(-1,-1,k),'b2stbr_she'//chk)
-!	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbr_shi'//chk)
-!	 enddo
+!      do k=0,3
+!       write (chk,'(i1)') k
+!       call my_out(70,nx,ny,she0(-1,-1,k),'b2stbr_she'//chk)
+!       call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbr_shi'//chk)
+!      enddo
        call my_out(70,nx,ny,b2stbr_she,'b2stbr_she')
        call my_out(70,nx,ny,b2stbr_shi,'b2stbr_shi')               !srv 29.04.10
       endif
-      if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
+      if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)
+     &         .or. iout_b2wdat.eq.4 ) then
        if (use_eirene.eq.0) then
-!	 do k=0,3
-!	  write (chk,'(i1)') k
-!	  call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbr_sch'//chk)
-!	 enddo
+!        do k=0,3
+!          write (chk,'(i1)') k
+!          call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbr_sch'//chk)
+!       enddo
         call my_out(70,nx,ny,b2stbr_sch,'b2stbr_sch')
        endif
       endif                                                           !srv 11.09.09 }
@@ -1064,7 +1084,7 @@ c        write(*,*) 'Called neutr_scl'
       intrinsic mod, nint
       external subini, subend, xertst, xerrab, ipgeti, ipgetr
 *   ..initialisation
-      data use_eirene/0/, neutrals_namelist/0/, 
+      data use_eirene/0/, neutrals_namelist/0/,
      *  sput_src/1/, sput_chem_model/0/, sput_frc/0.0_R8/
 *-----------------------------------------------------------------------
 *.computation
@@ -1095,11 +1115,11 @@ c        write(*,*) 'Called neutr_scl'
         if(sput_dst.ge.0 .and. use_eirene.eq.0 .and.
      .     neutrals_namelist.eq.0) then
           if (sput_chem_model.eq.1) then
-            write(*,'(1x,a,i3,a,i3,a,g10.3)') 
+            write(*,'(1x,a,i3,a,i3,a,g10.3)')
      .       'Chemical sputtering from ',sput_src,
      1       ' producing ',sput_dst,' at rate ',sput_frc
           else if (sput_chem_model.eq.0) then
-            write(*,'(1x,a,i3,a,i3,a,g10.3)') 
+            write(*,'(1x,a,i3,a,i3,a,g10.3)')
      .       'Chemical sputtering from ',sput_src,
      1       ' producing ',sput_dst,
      2       ' with empirical formula multiplier ',sput_frc
@@ -1112,7 +1132,7 @@ c        write(*,*) 'Called neutr_scl'
       endif
       call ipgeti ('b2stbr_plate_model', plate_model)
       if (plate_model.eq.0) then
-        write(*,*) 
+        write(*,*)
      .     'Using O-D time-independent plate temperature model'
       else if (plate_model.eq.1) then
         write(*,*) 'Using 1-D time-dependent plate temperature model'
@@ -1129,11 +1149,11 @@ c        write(*,*) 'Called neutr_scl'
       call ipgetr ('b2stbr_plate_thick', plate_thick)
       call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
 
-c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
+cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       new_sputter_namelist=neutrals_namelist.eq.1.or.use_eirene.ne.0
       call read_neutrals_namelist
      1   (nx, ny, ns, new_sputter_namelist)
-      call xertst (nstrat.le.nstraid, 
+      call xertst (nstrat.le.nstraid,
      &   'Increase DEF_NSTRA in DIMENSIONS.F')
       call alloc_b2mod_neutr_src_scaling(ns,nstrat)
       if(new_sputter_namelist) call write_b2mod_neutrals_namelist
@@ -1148,7 +1168,7 @@ c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
           write(*,*) 'b2stbr_init: catching up ...'
           call read_neutrals_namelist(nx, ny, ns, .true.)
           new_sputter_namelist=.true.
-          call xertst (nstrat.le.nstraid, 
+          call xertst (nstrat.le.nstraid,
      &       'Increase DEF_NSTRA in DIMENSIONS.F')
           call write_b2mod_neutrals_namelist
           catch_up=neutrals_time_mod.gt.0.0_R8
@@ -1163,27 +1183,27 @@ c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
             write(6,'(a,i2,a)') 'For recycling boundary ',istra,' : '
             do is = 0, ns-1
               if (phys_sput(is,istra).gt.0.0_R8) then
-                write(6,'(a,i3,a,i3,a,g10.3)') 
+                write(6,'(a,i3,a,i3,a,g10.3)')
      .           'Physical sputtering from species ', is,
-     &           ' producing species ', sput_dst, 
+     &           ' producing species ', sput_dst,
      &           ' with rate multiplied by ', phys_sput(is,istra)
               else
-                write(6,'(a,i3,a)') 
+                write(6,'(a,i3,a)')
      &           'No physical sputtering due to species ', is,'.'
               end if
               if (chem_sput(is,istra).gt.0.0_R8 .and.
      &            targsp(istra,1).ne.-1) then
                 if (sput_chem_model.eq.0) then
-                  write(6,'(a,i3,a,g10.3)')  
+                  write(6,'(a,i3,a,g10.3)')
      .             'Chemical sputtering from species ', is,
      &             ' with rate multiplied by ', chem_sput(is,istra)
                 else if (sput_chem_model.eq.1) then
-                  write(6,'(a,i3,a,g10.3)')  
+                  write(6,'(a,i3,a,g10.3)')
      .             'Constant chemical sputtering from species ', is,
      &             ' with rate ', chem_sput(is,istra)
                 end if
               else
-                write(6,'(a,i3,a)') 
+                write(6,'(a,i3,a)')
      &           'No chemical sputtering due to species ', is,'.'
               end if
             end do
@@ -1204,7 +1224,7 @@ c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
       call alloc_b2mod_wall(ns,natm,nmol,nion)
       call init_wall(nx,ny)
       call read_b2mod_wall_namelist(99,'    ',wall_namelist_used)
-      call xertst (ndepth_nml.gt.1.or.plate_model.eq.0, 
+      call xertst (ndepth_nml.gt.1.or.plate_model.eq.0,
      .   'Inconsistent values of ndepth_nml and plate_model')
       call get_wall_data (nx,ny,ns,BoRiS,wall_namelist_used)
 #ifdef ALLOCATE_AND_NAMELIST
@@ -1217,8 +1237,7 @@ c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
       ns_tmp = DEF_NSD
 #endif
       filename='b2.sputter_save.parameters'
-      inquire(file='../b2.sputter_save.parameters',
-     1 exist=sputter_namelist_used)
+      call find_file(filename,sputter_namelist_used)
       if (sputter_namelist_used) then
         call read_b2mod_sputter_namelist
      .     (99,'    ',sputter_namelist_used)
@@ -1228,7 +1247,7 @@ c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
       endif
       nx_sp = nx_tmp
       ny_sp = ny_tmp
-      ns_sp = ns_tmp  
+      ns_sp = ns_tmp
 
       call subend ()
       return

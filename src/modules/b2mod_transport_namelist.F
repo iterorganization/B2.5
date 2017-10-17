@@ -36,7 +36,7 @@
       character*256,  save :: transport_filename
       real (kind=R8), save :: transport_time_mod
       real (kind=R8), save :: transport_time_switch
-      real (kind=R8), save :: cflme, cflmi, cflmv
+      real (kind=R8), save :: cflme, cflmi, cflmv, cflal, cflab
       real (kind=R8), save :: vout_cnv(0:NSDMAX-1), 
      .  pw0_cnv(0:NSDMAX-1), pw1_cnv(0:NSDMAX-1), pw2_cnv(0:NSDMAX-1)
 
@@ -54,7 +54,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
      3   parm_dna,parm_dpa,parm_vla,parm_vsa,parm_hci,
      4   parm_hce,parm_sig,parm_alf,
      5   transport_filename,transport_time_mod,transport_time_switch,
-     6   cflme,cflmi,cflmv,
+     6   cflme,cflmi,cflmv,cflal,cflab,
      7   vout_cnv,pw0_cnv,pw1_cnv,pw2_cnv, write_nml_transp
 
       
@@ -116,12 +116,14 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       logical :: file_ok
       character*260 filename
 
-      filename='../' // transport_filename
-      inquire(file=filename,exist=file_ok)
+      filename=transport_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         cflme=cflim(0)
         cflmi=cflim(1)
         cflmv=cflim(2)
+        cflal=cflim(3)
+        cflab=cflim(4)
         open(99,file=filename)
         write(*,*) 'Reading namelist transport from ',trim(filename)
 #ifdef USE_MPI
@@ -133,11 +135,15 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
         cflim(0)=cflme
         cflim(1)=cflmi
         cflim(2)=cflmv
+        cflim(3)=cflal
+        cflim(4)=cflab
       else
         write(*,*) 'No ',trim(filename)
         cflme=-1.0_R8
         cflmi=-1.0_R8
         cflmv=-1.0_R8
+        cflal=-1.0_R8
+        cflab=-1.0_R8
       endif
 
       return
@@ -153,6 +159,8 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       cflme=cflim(0)
       cflmi=cflim(1)
       cflmv=cflim(2)
+      cflal=cflim(3)
+      cflab=cflim(4)
       if (write_nml_transp) write(*,transport)
 
       return

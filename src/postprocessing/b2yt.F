@@ -15,13 +15,14 @@
 #ifdef USE_MPI
       include 'mpif.h'
 #endif
+#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2YT (main program) is a post-processor for b2. It transfers
+*     B2YT (main program) is a postprocessor for b2. It transfers
 *     the plasma state to a mesh of different size and/or a different
 *     species bundling. It also attempts
 *     to re-write a new set of input files consistent with the new
@@ -187,7 +188,7 @@
 *   ..call principal driver routine
       call alloc_b2mod_plasma(nx,ny,ns)
       call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_geo2(nx1,ny1,10)
+      call alloc_b2mod_geo2(nx1,ny1,DEF_NCUT)
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)

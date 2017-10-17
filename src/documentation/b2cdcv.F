@@ -846,7 +846,7 @@
 *     to reach superstage k from superstage k-1. rtlpi has dimension eV. 
 *
 *     nscx - integer.
-*     nscx is the number of charge-exchanging neutral hydrogen species
+*     nscx is the number of charge exchanging neutral hydrogen species
 *     that are present in the calculation.  (So, usually nscx.eq.1).
 *     It will hold that 0.le.nscx.lt.10.
 *
@@ -1278,8 +1278,12 @@
 *     transport. cflim(1)=cflmi specifies the flux limit factor for
 *     poloidal all atom heat transport. cflim(2)=cflmv specifies the
 *     flux limit factor for poloidal atom momentum transport.
+*     cflim(3)=cflal specifies the flux limit factor for the
+*     thermo-electric coefficient.
+*     cflim(4)=cflab specifies the flux limit factor for the
+*     friction force.
 *     Zero settings turn off these flux limits.
-*     cflim(3:7) are not used in the default version of the code.
+*     cflim(5:7) are not used in the default version of the code.
 *
 *   ..transport coefficients, differential
 *

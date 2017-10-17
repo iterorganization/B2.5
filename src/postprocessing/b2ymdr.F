@@ -24,13 +24,13 @@
 *
 *  1. purpose
 *
-*     B2YMDR is a post-processor for b2. It is meant to produce movie
+*     B2YMDR is a postprocessor for b2. It is meant to produce movie
 *     output.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a post-processor for the b2 code. It displays the
+*     This routine is a postprocessor for the b2 code. It displays the
 *     evolution of the plasma state. This routine does not require any
 *     metric information.
 *

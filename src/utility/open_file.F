@@ -177,3 +177,35 @@ c
       return
 c
       end
+
+      subroutine find_file(filename,exist)
+      implicit none
+
+! this routine checks whether the file exists in the present directory, 
+! one level up, or in baserun (assumed parallel to the directory one
+! level up) and returns a new filename if found, and exist set to true
+! if the file is found
+
+      character(len=*) filename
+      logical exist
+
+      inquire(file=filename, exist=exist)
+      if(exist) return
+
+      inquire(file='../'//filename, exist=exist)
+      if(exist) then
+         filename='../'//filename
+         return
+      endif
+
+      inquire(file='../baserun/'//filename, exist=exist)
+      if(exist) then
+         filename='../baserun/'//filename
+         return
+      endif
+
+      return
+      end
+
+
+      

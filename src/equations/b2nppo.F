@@ -49,7 +49,7 @@
 
 *   ..local variables
       integer ncall, n2
-      integer, save :: iout = 0
+      integer, save :: iout = 0, iout_b2wdat = 0
       real (kind=R8) ::
      *  aa5(-1:nx,-1:ny,-2:2), wrk0(-1:nx,-1:ny)
       save ncall
@@ -68,6 +68,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2nppo_iout', iout)                            !srv 08.07.08
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -111,12 +112,13 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
 *   ..apply correction
       call b2uppo (nx, ny, rxf, corpo, po)
 
-      if(iout .eq. 1) then                                          !srv 11.09.09 {
+      if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                    !srv 11.09.09 {
 !       call my_out(70,nx,ny,te,'b2nppo_te')
 !       call my_out(70,nx,ny,ne,'b2nppo_ne')
         call my_out(70,nx,ny,po,'b2nppo_po')
         call my_out(70,nx,ny,respo,'b2nppo_respo')
-        call my_out(70,nx,ny,fch,'b2nppo_fch')
+        call my_out(70,nx,ny,fch(-1,-1,0),'b2nppo_fchx')
+        call my_out(70,nx,ny,fch(-1,-1,1),'b2nppo_fchy')
 !       call my_out(70,nx,ny,sch(-1,-1,0),'b2nppo_sch0')
 !       call my_out(70,nx,ny,sch(-1,-1,1),'b2nppo_sch1')
 !       call my_out(70,nx,ny,sch(-1,-1,2),'b2nppo_sch2')

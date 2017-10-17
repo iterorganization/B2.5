@@ -254,8 +254,8 @@ cxpb lb and ub and lower and upper interval bounds
       return
       end subroutine b2yt_wall_init
 
-      subroutine b2yt_wall(nx1,ny1,ns,ns1,natm,natm1,nmol,nion,
-     *   is_neutral1,iatm1,bundle_frac,zn1,l_chem_sput,
+      subroutine b2yt_wall(nx1,ny1,ns,ns1,natm,natm1,nmol,nmol1,nion,
+     *   is_neutral1,iatm1,imol1,bundle_frac,zn1,l_chem_sput,
      *   itrack1,itrack2,itrack3)
       use b2mod_types
       use b2mod_wall
@@ -267,16 +267,17 @@ cxpb lb and ub and lower and upper interval bounds
 #     include "DIMENSIONS.F"
       implicit none
 
-      integer nx1, ny1, ns, ns1, natm, natm1, nmol, nion
+      integer nx1, ny1, ns, ns1, natm, natm1, nmol, nmol1, nion
+      integer nwrite
       integer itrack1, itrack2, itrack3
-      integer iatm1(natm)
+      integer iatm1(natm), imol1(nmol)
       real (kind=R8) :: bundle_frac(0:ns1-1,0:ns-1), zn1(0:ns1-1)
       logical is_neutral1(0:ns1-1), l_chem_sput
 
       integer ix, iy, iz, is, ibnd, ibnd1, imax, i, itrack
       integer ibegin, iend, iw, iw1, ifail
       integer ndepth1
-      integer nsm, natmm, nbndm, nwallm
+      integer nsm, natmm, nbndm, nmolm, nwallm
       real (kind=R8) :: sum
       real (kind=R8), allocatable :: wall_data(:,:)
       real (kind=R8), allocatable :: data_tmp(:)
@@ -289,6 +290,7 @@ cxpb lb and ub and lower and upper interval bounds
       save layer_model
       data layer_model/.false./
       character*400 line
+      character*256 filename
       character*17 numstr
       logical found
 
@@ -300,8 +302,8 @@ cxpb lb and ub and lower and upper interval bounds
       call subini('b2yt_wall')
       call alloc_b2mod_wall(ns,natm,nmol,nion)
       
-      inquire(file='../b2.wall_save.parameters',
-     1 exist=wall_namelist_used)
+      filename='b2.wall_save.parameters'
+      call find_file(filename,wall_namelist_used)
       if(wall_namelist_used) then
         call read_b2mod_wall_namelist(99,'    ',wall_namelist_used)
         call xertst(ndepth_nml.le.ndepth .and. ndepth_nml.ge.1,
@@ -371,9 +373,10 @@ cxpb  normalise the layer constituents relative concentrations
 cxpb Fill up the new wall arrays
       nsm = max(ns,ns1)
       natmm = max(natm,natm1)
+      nmolm = max(nmol,nmol1)
       nbndm = max(nbnd,nbnd1)
       nwallm= max(nwall,nwall1)
-      allocate(wall_data(nwall,0:nsm-1+natmm+nmol+DEF_NION))
+      allocate(wall_data(nwall,0:nsm-1+natmm+nmolm+DEF_NION))
       allocate(data_tmp(nwallm))
 cxpb We map per segment
 cxpb We interpolate according to the area along the segment
@@ -530,54 +533,54 @@ cxpb Copy data arrays into new geometry
       wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
      . physical_sputtering(1:nbnd,0:ns-1+natm+nmol+nion)
       call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     . natm,natm1,natmm,nmol,nion,iatm1,nwall,nwall1,wall_data,
-     . contr_area,plate_area)
-      physical_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol+nion) =
-     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol+nion)
+     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     . wall_data,contr_area,plate_area)
+      physical_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
+     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
       wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
      . physical_sputtering_energy(1:nbnd,0:ns-1+natm+nmol+nion)
       call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     . natm,natm1,natmm,nmol,nion,iatm1,nwall,nwall1,wall_data,
-     . contr_area,plate_area)
-      physical_sputtering_energy1(1:nbnd1,0:ns1-1+natm1+nmol+nion) =
-     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol+nion)
+     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     . wall_data,contr_area,plate_area)
+      physical_sputtering_energy1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
+     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
       if (l_chem_sput) then
         wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
      .   chemical_sputtering(1:nbnd,0:ns-1+natm+nmol+nion)
         call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     .   natm,natm1,natmm,nmol,nion,iatm1,nwall,nwall1,wall_data,
-     .   contr_area,plate_area)
-        chemical_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol+nion) =
-     .   wall_data(1:nbnd1,0:ns1-1+natm1+nmol+nion)
+     .   natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,
+     .   nwall,nwall1,wall_data,contr_area,plate_area)
+        chemical_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
+     .   wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
         wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
      .   RES_sputtering(1:nbnd,0:ns-1+natm+nmol+nion)
         call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     .   natm,natm1,natmm,nmol,nion,iatm1,nwall,nwall1,wall_data,
-     .   contr_area,plate_area)
-        RES_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol+nion) =
-     .   wall_data(1:nbnd1,0:ns1-1+natm1+nmol+nion)
+     .   natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,
+     .   nwall,nwall1,wall_data,contr_area,plate_area)
+        RES_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
+     .   wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
       endif
       wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
      . thermal_evaporation(1:nbnd,0:ns-1+natm+nmol+nion)
       call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     . natm,natm1,natmm,nmol,nion,iatm1,nwall,nwall1,wall_data,
-     . contr_area,plate_area)
-      thermal_evaporation1(1:nbnd1,0:ns1-1+natm1+nmol+nion) =
-     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol+nion)
+     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     . wall_data,contr_area,plate_area)
+      thermal_evaporation1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
+     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
       wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
      . backscattering(1:nbnd,0:ns-1+natm+nmol+nion)
       call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     . natm,natm1,natmm,nmol,nion,iatm1,nwall,nwall1,wall_data,
-     . contr_area,plate_area)
-      backscattering1(1:nbnd1,0:ns1-1+natm1+nmol+nion) =
-     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol+nion)
+     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     . wall_data,contr_area,plate_area)
+      backscattering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
+     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
       wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
      . backscattering_energy(1:nbnd,0:ns-1+natm+nmol+nion)
       call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     . natm,natm1,natmm,nmol,nion,iatm1,nwall,nwall1,wall_data,
-     . contr_area,plate_area)
-      backscattering_energy1(1:nbnd1,0:ns1-1+natm1+nmol+nion) =
-     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol+nion)
+     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     . wall_data,contr_area,plate_area)
+      backscattering_energy1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
+     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
       do is = 1, nsegments
         do ibnd1 = wall_begin1(is), wall_end1(is)
 cxpb We do a simple interpolation of the target temperature,
@@ -689,7 +692,7 @@ cxpb but in computational space
       return
 
 * ..finalise time-dependent wall data
-      entry b2yt_wall_final(nx1,ny1,ns1)
+      entry b2yt_wall_final(nwrite,nx1,ny1,ns1)
       wall_namelist_used = ntargsp.gt.0 .or.
      .  layer_thermal_contact.ne.1.0_R8 .or. 
      .  maxval(target_temp1(1:nbnd1,1)).gt.plate_temp .or.
@@ -699,8 +702,9 @@ cxpb but in computational space
      .  maxval(RES_sputtering1(1:nbnd1,0:ns1-1)).gt.0.0_R8 .or.
      .  maxval(backscattering1(1:nbnd1,0:ns1-1)).gt.0.0_R8
       if (.not.wall_namelist_used) return
-      open(99,file='../b2.wall_save.parameters.2')
-      write(6,*) 'Writing ../b2.wall_save.parameters.2'
+      write(nwrite,'(a)') 'b2.wall_save.parameters.2'
+      open(99,file='b2.wall_save.parameters.2')
+      write(6,*) 'Writing b2.wall_save.parameters.2'
       write(99,'(a10)') '&WALL_SAVE'
       do itrack=1,nalloys
         if(layer_alloys(itrack).ne.' ') write(99,'(a13,i1,a4,a6,a2)')
@@ -928,20 +932,22 @@ cxpb  Use explicit writing of non-default elements only
       end subroutine b2yt_wall
 
       subroutine b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     .  natm,natm1,natmm,nmol,nion,iatm1,nwall,nwall1,wall_data,
-     .  contr_area,plate_area)
+     .  natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     .  wall_data,contr_area,plate_area)
       use b2mod_types
       implicit none
-      integer ns,ns1,nsm,natm,natm1,natmm,nmol,nion,nwall,nwall1
+      integer ns,ns1,nsm,natm,natm1,natmm,nmol,nmol1,nmolm,nion
+      integer nwall,nwall1
       integer iatm1(natm)
+      integer imol1(nmol)
       logical is_neutral1(0:ns1-1)
       real (kind=R8) bundle_frac(0:ns1-1,0:ns-1)
       real (kind=R8) contr_area(nwall,nwall1)
       real (kind=R8) plate_area(nwall)
-      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmol+nion)
-      integer iw, iatm
+      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmolm+nion)
+      integer iw, iatm, imol
       real (kind=R8) wall_source(0:ns-1+natm+nmol+nion)
-      real (kind=R8) wall_map(0:ns1-1+natm1+nmol+nion)
+      real (kind=R8) wall_map(0:ns1-1+natm1+nmol1+nion)
       real (kind=R8) wall_tmp(0:nsm-1)
       real (kind=R8) species_source(nwall)
       real (kind=R8) species_map(nwall1)
@@ -960,13 +966,19 @@ cxpb We do the species mapping first
             wall_map(ns1-1+iatm1(iatm)) = wall_source(ns-1+iatm)
           end if
         end do
-        wall_map(ns1+natm1:ns1-1+natm1+nmol+nion) = 
-     .   wall_source(ns+natm:ns-1+natm+nmol+nion)
-        wall_data(iw,0:ns1-1+natm1+nmol+nion) =
-     .   wall_map(0:ns1-1+natm1+nmol+nion)
+        do imol = 1, nmol
+          if (imol1(imol).gt.0 .and. imol1(imol).le.nmol1) then
+            wall_map(ns1-1+natm1+imol1(imol)) =
+     .       wall_source(ns-1+natm+imol)
+          end if
+        end do
+        wall_map(ns1+natm1+nmol1:ns1-1+natm1+nmol1+nion) =
+     .   wall_source(ns+natm+nmol:ns-1+natm+nmol+nion)
+        wall_data(iw,0:ns1-1+natm1+nmol1+nion) =
+     .   wall_map(0:ns1-1+natm1+nmol1+nion)
       end do
 cxpb Now for each new species, we do the space mapping
-      do iatm = 0, ns1-1+natm1+nmol+nion
+      do iatm = 0, ns1-1+natm1+nmol1+nion
         species_map = 0.0_R8
         species_source(1:nwall) = wall_data(1:nwall,iatm)
         call b2yt_wall_average(nwall,nwall1,contr_area,plate_area,
@@ -1032,26 +1044,27 @@ cxpb Now for each new species, we do the space mapping
       end subroutine b2yt_wall_sum
 
       subroutine b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,
-     .  bundle_frac,natm,natm1,natmm,nmol,nion,iatm1,
+     .  bundle_frac,natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,
      .  nwall,nwall1,nwallm,wall_data,contr_area)
       use b2mod_types
       implicit none
-      integer ns,ns1,nsm,natm,natm1,natmm,nmol,nion,nwall,nwall1,nwallm
-      integer iatm1(natm)
+      integer ns,ns1,nsm,natm,natm1,natmm,nmol,nmol1,nmolm,nion
+      integer nwall,nwall1,nwallm
+      integer iatm1(natm),imol1(nmol)
       logical is_neutral1(0:ns1-1)
       real (kind=R8) bundle_frac(0:ns1-1,0:ns-1)
       real (kind=R8) contr_area(nwall,nwall1)
-      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmol+nion)
-      integer iw, iatm
+      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmolm+nion)
+      integer iw, iatm, imol
       real (kind=R8) wall_source(0:ns-1+natm+nmol+nion)
-      real (kind=R8) wall_map(0:ns1-1+natm1+nmol+nion)
+      real (kind=R8) wall_map(0:ns1-1+natm1+nmol1+nion)
       real (kind=R8) wall_tmp(0:nsm-1)
       real (kind=R8) species_source(nwallm)
 
 cxpb We do the species mapping first
       do iw = 1, nwall
         wall_map = 0.0_R8
-        wall_source(0:ns-1+natm+nmol+nion) = 
+        wall_source(0:ns-1+natm+nmol+nion) =
      .   wall_data(iw,0:ns-1+natm+nmol+nion)
         wall_tmp(0:ns-1) = wall_source(0:ns-1)
         call sum_bundle
@@ -1062,13 +1075,19 @@ cxpb We do the species mapping first
             wall_map(ns1-1+iatm1(iatm)) = wall_source(ns-1+iatm)
           end if
         end do
-        wall_map(ns1+natm1:ns1-1+natm1+nmol+nion) = 
-     .   wall_source(ns+natm:ns-1+natm+nmol+nion)
-        wall_data(iw,0:ns1-1+natm1+nmol+nion) =
-     .   wall_map(0:ns1-1+natm1+nmol+nion)
+        do imol = 1, nmol
+          if (imol1(imol).gt.0 .and. imol1(imol).le.nmol1) then
+            wall_map(ns1-1+natm1+imol1(imol)) =
+     .       wall_source(ns-1+natm+imol)
+          end if
+        end do
+        wall_map(ns1+natm1+nmol1:ns1-1+natm1+nmol1+nion) = 
+     .   wall_source(ns+natm+nmol:ns-1+natm+nmol+nion)
+        wall_data(iw,0:ns1-1+natm1+nmol1+nion) =
+     .   wall_map(0:ns1-1+natm1+nmol1+nion)
       end do
 cxpb Now for each new species, we do the space mapping
-      do iatm = 0, ns1-1+natm1+nmol+nion
+      do iatm = 0, ns1-1+natm1+nmol1+nion
         species_source(1:nwall) = wall_data(1:nwall,iatm)
         call b2yt_wall_sum(nwall,nwall1,nwallm,
      .   contr_area,species_source)

@@ -7,6 +7,7 @@ module b2mod_connectivity
   use helper
 
   implicit none
+#include "DIMENSIONS.F"
 
   ! constant to mark in connectivity arrays that no connectivity available
   integer, parameter :: NO_CONNECTIVITY = huge(0)
@@ -587,14 +588,14 @@ contains
 
        nncut=max(nncut,ic)
        if(nncut.gt.nncutmax) then
-          write(*,*) ' Increase nncutmax in b2mod_geo!'
-          write(*,*) ' nncut = ',nncut,' nncutmax = ',nncutmax
+          write(*,*) ' Increase DEF_NCUT in DIMENSIONS.F!'
+          write(*,*) ' nncut = ',nncut,' DEF_NCUT = ',DEF_NCUT
 #ifdef BUILDING_CARRE
-          if (.not.(nncut.le.nncutmax)) then
-             stop 'faulty parameter nncutmax'
+          if (.not.(nncut.le.DEF_NCUT)) then
+             stop 'faulty parameter DEF_NCUT'
           end if
 #else
-          call xertst (nncut.le.nncutmax,'faulty parameter nncutmax')
+          call xertst (nncut.le.DEF_NCUT,'faulty parameter DEF_NCUT')
 #endif
           
        end if
@@ -1265,7 +1266,7 @@ contains
 !!$        end do
 !!$    end do
 !!$
-!!$    ! Check all valid cells have a non-zero region number
+!!$    ! Check all valid cells have a nonzero region number
 !!$    do ix=-1,nx
 !!$        do iy=-1,ny
 !!$            if(.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE)) .and. &

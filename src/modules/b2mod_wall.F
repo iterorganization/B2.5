@@ -478,12 +478,12 @@ cxpb Data file material properties
       external xertst
 
       if (edition.eq.'    ') then
-        filename = '../b2.wall_save.parameters'
+        filename = 'b2.wall_save.parameters'
       else
         filename = 'b2.wall_save.parameters.'//edition
       endif
       track_species_save=track_species
-      inquire(file=trim(filename),exist=file_ok)
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(nread,file=trim(filename))
         write(*,*) 'Reading ', trim(filename)
@@ -523,7 +523,7 @@ cxpb Data file material properties
       external streql
 
       if (edition.eq.'    ') then
-        filename = '../b2.wall_save.parameters'
+        filename = 'b2.wall_save.parameters'
       else
         filename = 'b2.wall_save.parameters.'//edition
       endif
@@ -889,7 +889,7 @@ cxpb  Use explicit writing of non-default elements only
      .      1:matsurf_nconstituents(old_file))
         endif
       enddo
-c-xpb Normalise surface constituents
+cxpb Normalise surface constituents
       do ibnd = 1, nbnd
         sum = 0.0_R8
         do i = 1, matsurf_nconstituents(ibnd)

@@ -9,7 +9,7 @@
      &  ma, mi, x(-1:nx)
       character*(*) :: y1a,y2a,z1a,z2a,z3a,z4a
       character*12 :: a1
-      open(99,file=a1)
+      open(99,file=trim(a1))
       
       
       write (99,*) y1a,'start'

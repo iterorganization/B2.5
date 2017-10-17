@@ -75,11 +75,11 @@
       call b2xvsg (ns, zamin, 1, 'zamin', '.ge.')
       call b2xvsg (ns, zamax, 1, 'zamax', '.ge.')
       do is = 0, ns-1
-       call xertst (zn(is).eq.nint(zn(is)),
+       call xertst (zn(is).eq.anint(zn(is)),
      &   'faulty argument zn; not integral')
-       call xertst (zamin(is).eq.nint(zamin(is)),
+       call xertst (zamin(is).eq.anint(zamin(is)),
      &   'faulty argument zamin; not integral')
-       call xertst (zamax(is).eq.nint(zamax(is)),
+       call xertst (zamax(is).eq.anint(zamax(is)),
      &   'faulty argument zamax; not integral')
        call xertst (0.0_R8.le.zamin(is).and.zamin(is).le.zamax(is),
      &   'faulty species range zamin, zamax')
@@ -183,7 +183,7 @@
        call xertst (cfalf(i)**2.le.cfhce(i)*cfsig(i),
      &   'faulty argument, cfhce*cfsig.lt.cfalf**2')
       enddo
-      call b2xvsg (3, cflim(0), 1, 'cflim', '.ge.')
+      call b2xvsg (5, cflim(0), 1, 'cflim', '.ge.')
 
 * ..return
       call subend ()

@@ -29,6 +29,7 @@
      *  cr(:,:),
      *  cz(:,:),
      *  nh(:,:),
+     *  zeff(:,:),
      *  uutraj(:,:,:),
      *  vvtraj(:,:,:),
      *  targetx(:,:),
@@ -181,6 +182,7 @@ cank
       allocate(cr(-1:nxd,-1:nyd))
       allocate(cz(-1:nxd,-1:nyd))
       allocate(nh(-1:nxd,-1:nyd))
+      allocate(zeff(-1:nxd,-1:nyd))
       allocate(uutraj(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vvtraj(-1:nxd,-1:nyd,0:nsd-1))
 #ifndef PSR
@@ -283,6 +285,7 @@ cank
       deallocate(cr)
       deallocate(cz)
       deallocate(nh)
+      deallocate(zeff)
       deallocate(uutraj)
       deallocate(vvtraj)
 #ifndef PSR

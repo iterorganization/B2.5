@@ -103,7 +103,7 @@
       integer ncall, n2, ix, iy, is, ic, k, new_df0, ixref, diagno,
      1  transport_namelist, user_transport, transport_inputfile,
      2  jsep, jxi, jxa
-      integer, save :: model_sig = 0, iout = 0                    !srv 02.12.04
+      integer, save :: model_sig = 0, iout = 0, iout_b2wdat = 0   !srv 02.12.04
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  ballooning, bb_ref, ballooning_rescale, pfr_rescale,
@@ -198,6 +198,7 @@
         call ipgetr ('b2tqna_cfvma', cfvma)                       !srv 15.12.05
         call ipgeti ('b2tqna_model_sig', model_sig)               !srv 02.12.04
         call ipgeti ('b2tqna_iout', iout)                         !srv 10.11.09
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
       else
         if(transport_namelist.eq.1.and.
      1   transport_time_mod.gt.0.0_R8) then
@@ -458,13 +459,15 @@ cxpb Corrected for dimensionality
           write (chns,'(i3.3)') is
           call my_out(70,nx,ny,dna0(-1,-1,is),'b2tqna_in_dna0'//chns)
           call my_out(70,nx,ny,dpa0(-1,-1,is),'b2tqna_in_dpa0'//chns)
-          call my_out(70,nx,ny,vsa0(-1,-1,is),'b2tqna_in_vsa0'//chns)
+          wrk0=vsa0(:,:,is)/(mp*am(is)*na(:,:,is))
+          call my_out(70,nx,ny,wrk0,'b2tqna_in_vsa0'//chns)
           call my_out(70,nx,ny,vla0(-1,-1,0,is),'b2tqna_in_vla0x'//chns)
           call my_out(70,nx,ny,vla0(-1,-1,1,is),'b2tqna_in_vla0y'//chns)
-          call my_out(70,nx,ny,hcib(-1,-1,is),'b2tqna_in_hcib'//chns)
+          wrk0=hcib(:,:,is)/na(:,:,is)
+          call my_out(70,nx,ny,wrk0,'b2tqna_in_hcib'//chns)
         enddo
-        call my_out(70,nx,ny,hci0,'b2tqna_in_hci0')
-        call my_out(70,nx,ny,hce0,'b2tqna_in_hce0')
+!       call my_out(70,nx,ny,hci0,'b2tqna_in_hci0')
+        call my_out(70,nx,ny,hce0/ne,'b2tqna_in_hce0')
         call my_out(70,nx,ny,sig0,'b2tqna_in_sig0')
         call my_out(70,nx,ny,alf0,'b2tqna_in_alf0')
       endif                                                           !srv 10.11.09 }
@@ -514,7 +517,7 @@ c ank added blobby transport
         write(*,*) 'user_transport = ',user_transport,' not coded'
         call xerrab ('user_transport value not coded')
       endif
-ccc-dpc
+cdpc
       if(ballooning.ne.0.0_R8) then
         do iy=-1,ny
           do ix=-1,nx
@@ -594,7 +597,24 @@ ccc-dpc
           enddo
         enddo
       endif
-ccc-dpc
+      if(iout_b2wdat.eq.4) then                                            !srv 10.11.09 {
+        do is = 0,ns-1
+          write (chns,'(i3.3)') is
+          call my_out(70,nx,ny,dna0(-1,-1,is),'b2tqna_dna0'//chns)
+          call my_out(70,nx,ny,dpa0(-1,-1,is),'b2tqna_dpa0'//chns)
+          wrk0 = vsa0(:,:,is)/(mp*am(is)*na(:,:,is))
+          call my_out(70,nx,ny,wrk0,'b2tqna_vsa0'//chns)
+!          call my_out(70,nx,ny,vla0(-1,-1,0,is),'b2tqna_vla0x'//chns)
+          call my_out(70,nx,ny,vla0(-1,-1,1,is),'b2tqna_vla0y'//chns)
+          wrk0 = hcib(:,:,is)/na(:,:,is)
+          call my_out(70,nx,ny,wrk0,'b2tqna_hcib'//chns)
+        enddo
+!        call my_out(70,nx,ny,hci0,'b2tqna_in_hci0')
+        call my_out(70,nx,ny,hce0/ne,'b2tqna_hce0')
+        call my_out(70,nx,ny,sig0,'b2tqna_sig0')
+        call my_out(70,nx,ny,alf0,'b2tqna_alf0')
+      endif                                                           !srv 10.11.09 }
+cdpc
 * ..return
       ncall = ncall+1
       call subend ()
@@ -702,8 +722,8 @@ ccc-dpc
       do iy=-1,ny
         do ix=-1,nx
           hce0(ix,iy)=d_new*ne(ix,iy)
-c-dpc     hci0(ix,iy)=d_new  ! cxpb *ni(ix,iy,0) ?
-c-xpb     hcib(ix,iy,is)=d_new*na(in,is)
+cdpc     hci0(ix,iy)=d_new  ! cxpb *ni(ix,iy,0) ?
+cxpb     hcib(ix,iy,is)=d_new*na(in,is)
         enddo
       enddo
       do is=0,ns-1
@@ -954,7 +974,7 @@ c
       endif
 #endif
 *   ..compute special factor for dna0, vsa0, hci0, hce0               !srv 13.11.02
-      call defdc(nx, ny, itype, ns, fdnc, fvsc, ftec, ftic)           !srv 13.11.02 17.04.06 01.03.07
+      call defdc(nx, ny, itype, ns, fdnc, fvlc, fvsc, ftec, ftic)     !srv 13.11.02 17.04.06 01.03.07 09.03.17
       if(iout.ne.0 .and. ncall.eq.0) then                             !srv 09.10.01
        do is = 0,ns-1
         write (chns,'(i3.3)') is                                      !srv 09.10.01
@@ -1042,10 +1062,11 @@ c
          endif
        end function barier2
 
-       subroutine defdc(nx, ny, itype, ns, fdnc, fvsc, ftec, ftic)    !srv 13.11.02 01.03.07
+       subroutine defdc(nx, ny, itype, ns, fdnc, fvlc, fvsc, ftec, ftic) !srv 13.11.02 01.03.07 09.03.17
         implicit none
         integer :: nx, ny, itype, ns
-        real(kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1)                     !srv 17.04.06 {
+        real(kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1)                    !srv 17.04.06 {
+        real(kind=R8) :: fvlc(-1:nx,-1:ny,0:1,0:ns-1)                !srv 09.03.17
         real(kind=R8) :: fvsc(-1:nx,-1:ny,0:ns-1)
         real(kind=R8) :: ftec(-1:nx,-1:ny), ftic(-1:nx,-1:ny,0:ns-1) !srv 17.04.06 }
 
@@ -1065,10 +1086,10 @@ c
         select case (itype)
          case(9)                                                !srv 22.05.09 {
           mintopcut=minval(topcut(1:nncut))
-*   ..modification of case (5). It is used barer function
+*   ..modification of case (5). It is used barrier function
           do iy = -1, ny                  ! for SOL and PR region
            do ix = -1, nx
-            if(mod(region(ix,iy,0),4).ne.1) then
+            if(.not.on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is) =    alfa3
@@ -1108,7 +1129,7 @@ c
           step = maxval(hy(nmdpl,-1:mintopcut-1))
           do iy = -1, mintopcut-1   ! for inner surfaces
            do ix=-1,nx
-            if(mod(region(ix,iy,0),4).eq.1) then
+            if(on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy),
@@ -1241,7 +1262,7 @@ c
             mintopcut=min(topcut(1)-1,topcut(2)-1)
             do iy = 0,mintopcut    ! for inner surfaces
              do ix=0,nx
-              if(mod(region(ix,iy,0),4).eq.1) then
+              if(on_closed_surface(ix,iy)) then
                t0 = t0 +bb(ix,iy,3)*vol(ix,iy)/hy1(ix,iy)
                t1 = t1 +vol(ix,iy)/hy1(ix,iy)
               endif
@@ -1250,7 +1271,7 @@ c
             bbaverage=t0/t1
             do iy = -1, ny                   ! for all surfaces
              do ix = -1, nx
-              if(mod(region(ix,iy,0),4).eq.1 .and. iy.le.mintopcut) then
+              if(on_closed_surface(ix,iy) .and. iy.le.mintopcut) then
                fdnc(ix,iy,is)=1.0e0_R8
               else
                fdnc(ix,iy,is)=1.0e0_R8+cdf*(bbaverage/bb(ix,iy,3))**alf
@@ -1270,7 +1291,7 @@ c
              do iy = 0, topcut(1)-1   ! for inner surfaces
 !           do ix = leftcut(1), rightcut(1)-1
               do ix=0,nx
-               if(mod(region(ix,iy,0),4).eq.1) then
+               if(on_closed_surface(ix,iy)) then
                 t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
                 t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
                endif
@@ -1341,7 +1362,7 @@ c
 
           do iy = -1, ny                  ! for SOL and PR region  !srv 13.03.07
            do ix = -1, nx
-            if(mod(region(ix,iy,0),4).ne.1) then
+            if(.not.on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is)  =    alfa3
@@ -1373,7 +1394,7 @@ c
 
           do iy = bottomdelta1, mintopcut-1   ! for inner surfaces
            do ix=-1,nx                                          !srv 10.03.06
-            if(mod(region(ix,iy,0),4).eq.1) then
+            if(on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is) = alfa1
@@ -1390,7 +1411,7 @@ c
           do iy = -1, ny                  ! correction for   !IYS 29.11.12
            do ix = -1, nx
             if(mod(region(ix,iy,0),4).ne.1 .and.    ! NOT Core
-     &                mod(region(ix,iy,0),4).ne.2) then   ! NOT SOL
+     &         mod(region(ix,iy,0),4).ne.2) then    ! NOT SOL
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is)   =    alfa4
@@ -1410,7 +1431,7 @@ c
            t1 = 0.0e0_R8
            do iy = 0, mintopcut-1   ! for inner surfaces
             do ix=0,nx
-             if(mod(region(ix,iy,0),4).eq.1) then
+             if(on_closed_surface(ix,iy)) then
               t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
               t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
              endif
@@ -1440,7 +1461,7 @@ c
 
            do iy = -1, bottomdelta1-1                 ! for inner surfaces
             do ix = -1,nx
-             if(mod(region(ix,iy,0),4).eq.1) then
+             if(on_closed_surface(ix,iy)) then
               do is = 0, ns-1
                if(.not.is_neutral(is)) then
                 fdnc(ix,iy,is)  = fdnc(ix,iy,is)*
@@ -1762,7 +1783,8 @@ c
 
       do iy=-1,ny
         do ix=-1,nx
-          if(mod(region(ix,iy,0),4).le.2) then
+          if(on_closed_surface(ix,iy) .or.
+     .       mod(region(ix,iy,0),4).eq.2) then
             hce0(ix,iy)=hce0(ix,iy)*eta_hce_mult(iy)
           endif
         enddo
@@ -1868,7 +1890,7 @@ cxpb
       R = 0.0_R8
       ir = 0
       do ix = -1, nx
-        if (mod(region(ix,0,0),4).eq.1) then
+        if (on_closed_surface(ix,0)) then
           ir = ir + 1
           perimeter = perimeter + hx(ix,0)
           R = R + 0.5_R8*(crx(ix,0,0)+crx(ix,0,1))*hx(ix,0)
@@ -2867,7 +2889,7 @@ c      enddo
           thet=0._R8
           ilp(iy)=0._R8
           do ix=ixref,-1,-1
-           if (mod(region(ix,iy,0),4).eq.1) then
+           if (on_closed_surface(ix,iy)) then
              theta(ix,iy)=thet
              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
      &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
@@ -2897,7 +2919,7 @@ c      enddo
            endif
           enddo
           do ix=nx,ixref+1,-1
-           if (mod(region(ix,iy,0),4).eq.1) then
+           if (on_closed_surface(ix,iy)) then
              theta(ix,iy)=thet
              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
      &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
@@ -2929,7 +2951,7 @@ c      enddo
           theta(ixref,iy)=thet
           ilpb=thet
           do ix=-1,nx
-           if (mod(region(ix,iy,0),4).eq.1) then
+           if (on_closed_surface(ix,iy)) then
             theta(ix,iy)=2._R8*pi*theta(ix,iy)/ilpb
            endif
           enddo
@@ -2943,7 +2965,7 @@ c      enddo
 *   ..calculate neoclassical transport only for closed flux surfaces
          closedf=.false.
          do ix=-1,nx
-          if (mod(region(ix,iy,0),4).eq.1) then
+          if (on_closed_surface(ix,iy)) then
             closedf=.true.
           endif
          enddo
@@ -2969,7 +2991,7 @@ c      enddo
 
            bmax=0._R8
            do ix=-1,nx
-             if (mod(region(ix,iy,0),4).eq.1) then
+             if (on_closed_surface(ix,iy)) then
                if (bb(ix,iy,3).gt.bmax) then
                  bmax=bb(ix,iy,3)
                endif
@@ -3041,7 +3063,7 @@ c      enddo
 *   ..calculate neoclassical transport only for closed flux surfaces
         closedf=.false.
         do ix=-1,nx
-         if (mod(region(ix,iy,0),4).eq.1) then
+         if (on_closed_surface(ix,iy)) then
            closedf=.true.
          endif
         enddo
@@ -3202,7 +3224,7 @@ c      close(14)
        enddo
 
        do iy=0,ny
-         if (mod(region(ixref,iy,0),4).eq.1) then
+         if (on_closed_surface(ixref,iy)) then
            if (iy.eq.ny) then
              prefactor=-hy1(ixref,iy)/(2.0_R8*
      &                  hy1(bottomix(ixref,iy),bottomiy(ixref,iy)))
@@ -3210,7 +3232,7 @@ c      close(14)
      &                  hy1(bottomix(ixref,iy),bottomiy(ixref,iy)))
              ishift=bottomiy(ixref,iy)
             else
-             if (mod(region(topix(ixref,iy),topiy(ixref,iy),0),4).eq.1)
+             if (on_closed_surface(topix(ixref,iy),topiy(ixref,iy)))
      >        then
                prefactor=0.5_R8
                postfactor=0.5_R8
@@ -3254,7 +3276,7 @@ c      close(14)
      &       topiy(topix(ixref,-1),topiy(ixref,-1))))
        do ispecies=0, nsl-1
          do istate=0, ncl(ispecies)-1
-           if (mod(region(ixref,-1,0),4).eq.1) then
+           if (on_closed_surface(ixref,-1)) then
              dd(ispecies,istate,-1)=dd(ispecies,istate,
      &          topiy(ixref,-1))+prefactor*(dd(ispecies,istate,
      &          topiy(ixref,-1))-dd(ispecies,istate,
@@ -3366,7 +3388,7 @@ c      close(14)
 
       do ix=-1,nx
        do iy=-1,ny
-        if (mod(region(ix,iy,0),4).eq.1) then
+        if (on_closed_surface(ix,iy)) then
          do ispecies=0,nsl-2
           do istate=0,ncl(ispecies)-1
            is=isort(ispecies,istate)
@@ -3392,7 +3414,7 @@ c      close(14)
      &      vwt(nsl-1,0,iy)*(hy1(ix,iy)/hy1(ixref,iy))
 
 *   ..set constant anomalous transport in the SOL and divertor regions
-        elseif (mod(region(ix,iy,0),4).gt.1) then
+        elseif (.not.on_closed_surface(ix,iy)) then
          do ispecies=0,nsl-2
           do istate=0,ncl(ispecies)-1
            is=isort(ispecies,istate)

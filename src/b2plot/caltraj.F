@@ -156,8 +156,8 @@ c     Getting the values for globaltime and deltat
         iret = nf_open(moviename,NCNOWRIT,ncid)
         imap(1)=1
         imap(2)=nx+2
-        tstepn(1) = ntstep
         call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
+        ntstep = nint(tstepn(1))
         nplot=ntstep+1
         itstep=0
         dumarr(1)=starttime
@@ -1300,7 +1300,7 @@ c      IMPLICIT REAL*8 (A-H,O-Z)
       COMMON /RASET2/ FLAG
 *
       LOGICAL FIRST
-c-dpc split logical and data
+cdpc split logical and data
       data first /.TRUE./
       DATA CHECK /'H1RN INITIALISED'/
 *

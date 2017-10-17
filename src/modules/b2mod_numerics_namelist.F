@@ -80,9 +80,9 @@
       allocate(last_solve_9(0:nnreg(0)))
 #else
       call xertst (nsd.le.nsdmax,
-     1 'increase NSDMAX in b2mod_numerics_namelist')
+     1 'increase DEF_NSD in DIMENSIONS.F')
       call xertst (nnreg(0).le.nnregmax,
-     1 'increase NNREGMAX in b2mod_numerics_namelist')
+     1 'increase NNREGMAX in b2mod_indirect')
 #endif
       dtco=1.0_R8
       dtmo=1.0_R8
@@ -143,8 +143,8 @@
       real (kind=R8) :: ttf
       character*260 filename
 
-      filename='../' // numerics_filename
-      inquire(file=filename,exist=file_ok)
+      filename=numerics_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist numerics from ',trim(filename)
@@ -189,7 +189,7 @@ c additional time-modification factor
       do iy=-1,ny
         if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
         do ix=-1,nx
-          if(mod(region(ix,iy,0),4).eq.1) then
+          if(on_closed_surface(ix,iy)) then
             time_factor(ix,iy)=ttf
           else
             time_factor(ix,iy)=1.0_R8

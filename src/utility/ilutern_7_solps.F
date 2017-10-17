@@ -183,7 +183,7 @@ c       IF (A1HN.EQ.0.0e0_R8) THEN
         enddo
         close(82)
       endif                                                    !srv 18.05.02 }
-c-dpc
+cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
           if(ncall.eq.0) then
@@ -204,7 +204,7 @@ c-dpc
           close(81)                                            !srv 11.01.00
         endif
       endif
-c-dpc
+cdpc
       if(nltrsol.eq.0) then
       elseif(nltrsol.eq.1) then
          WRITE(6,*) 'ILUTERN'

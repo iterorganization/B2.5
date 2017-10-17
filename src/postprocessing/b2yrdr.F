@@ -18,7 +18,7 @@
 *
 *  1. purpose
 *
-*     B2YRDR is a post-processor for b2. It reads and displays a table
+*     B2YRDR is a postprocessor for b2. It reads and displays a table
 *     of atomic rate coefficients.
 *
 *

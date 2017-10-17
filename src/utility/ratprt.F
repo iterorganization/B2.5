@@ -33,7 +33,7 @@
 *
 *     This subroutine writes to a formatted file an excerpt of a table
 *     of atomic rate coefficients for ionisation, electron energy loss,
-*     recombination, charge-exchange, and radiation. The table provides 
+*     recombination, charge exchange, and radiation. The table provides
 *     the rate coefficients as a function of density and temperature, but 
 *     in this routine only one-dimensional data are displayed: the rate
 *     coefficients as function of of temperature for several values

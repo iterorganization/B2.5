@@ -137,6 +137,7 @@ cxpb  Allocate dummy arrays needed by b2xpfe
       integer nx,ny
       integer, save :: ikmn,ikmx
       real (kind=R8), allocatable :: pdum(:), pot(:), dext(:,:)
+      character*256 filename
       logical toread
       logical open_file
       integer lnblnk
@@ -145,9 +146,10 @@ cxpb  Allocate dummy arrays needed by b2xpfe
 cxpb
 cxpb  First read ns_ext
 cpxb
-      inquire(file='../W.nut',exist=toread)
+      filename='W.nut'
+      call find_file(filename,toread)
       if (.not.toread) goto 974
-      open(unit=74,file='../W.nut')
+      open(unit=74,file=filename)
       if (.not.initialised_externals) then
         read(74,*) nx, ny, ikmn, ikmx
         call xertst(nx.eq.nxd.and.ny.eq.nyd,

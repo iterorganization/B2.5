@@ -20,6 +20,7 @@
       use b2mod_ppout
       use b2mod_par_opt
       use b2mod_exp_file_names
+      use b2mod_driver
       implicit none
 #ifdef USE_MPI
       include 'mpif.h'
@@ -33,7 +34,7 @@
 *     B2MN_OPT is the main program for the b2 code. The code solves a
 *     system of fluid equations that models a multi-species plasma
 *     in a two-dimensional geometry. This program calls the driver
-*     routine b2mndr for the actual computation.
+*     routines b2mndr_[0-2] for the actual computation.
 *
 *
 *  2. specification
@@ -52,16 +53,16 @@
 *     b2ag (prepares a geometry and magnetic field), b2ah (prepares
 *     a table of default physics parameters), b2ai (prepares an
 *     initial plasma state), b2mn (principal calculation), and b2yp
-*     (post-processing).
+*     (postprocessing).
 *     Additional programs may prepare tables of rate coefficients for
 *     atomic processes, tables of plasma-wall interaction processes,
 *     external source terms, and other physics, or may perform further
-*     post-processing.
+*     postprocessing.
 *
 *     The complete program b2mn is designed to solve the equations.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
-*     routine b2mndr to control the actual computation.
+*     routines b2mndr_[0-2] to control the actual computation.
 *
 *     The input units are:
 *     ninp(0): formatted; provides physics and numerics parameters.
@@ -81,7 +82,7 @@
 *     nout(6): un*formatted; save file for restart
 *     nout(7): un*formatted; full plasma description with derived quantities
 *     nout(8): un*formatted; ASTRA coupling data file
-*     nout(9): formatted; post-processor output. [JET]
+*     nout(9): formatted; postprocessor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -138,8 +139,7 @@
       logical file_open
       real (kind=R8) :: cpu_s, cpu_f
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
-      external b2mndr
+      external prgini, prgend, xerset, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                                !srv 02.05.07
 #ifdef JET
@@ -226,7 +226,10 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
-      call b2mndr (ninp, nout, nx, ny, ns, ns0)
+*   ..call driver routines
+      call b2mndr_0 (ninp, nout, nx, ny, ns, ns0)
+      call b2mndr_1 (nout, nx, ny, ns, 0)
+      call b2mndr_2 (nout, nx, ny, ns)
 *   ..write plasma state
       call cfopen (nout(7),'b2fplasma','replace','unformatted')  !srv 02.05.09 }
       call cfverw(nout(7), newversion)

@@ -9,7 +9,7 @@
       logical :: want_transpose
       real (kind=R8) :: ds(2048), da(2048,7:10)
       integer :: status, len_da(7:10)
-      integer :: i,il
+      integer :: i, il
       logical :: exists
 #ifndef NO_CDF
       integer :: idim, ivar, i1, i2, iatt,
@@ -22,6 +22,7 @@
       character*2 :: cdf_suffix(6)
       character :: mds_signal_name*(64), units*(24),
      1 tdi*(172), mds_signal_prefix*(8), mds_signal_suffix*(8)
+      character*256 filename
 #endif
 
       character*4 :: ds_filename(11)
@@ -81,7 +82,9 @@ c first handle x-coordinate of profiles (and areas)
 
 #ifndef NO_CDF
 c access the b2time.nc file
-      status=nf_open('../b2time.nc',NF_NOWRITE,ncid)
+      filename='b2time.nc'
+      call find_file(filename,exists)
+      status=nf_open(filename,NF_NOWRITE,ncid)
       call check_cdf_status(status)
 
       status=nf_inq(ncid,ndims,nvars,natts,unlimid)

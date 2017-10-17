@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npht (nx, ny, ns, nregionv, itcnt, solving,
+      subroutine b2npht (nx, ny, ns, nregionv, itcnt, ismain, solving,   !srv 05.07.17
      &  solvereg, solvireg, solvpreg, solvmreg,
      1  rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
@@ -18,7 +18,7 @@
      &          balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nregionv, itcnt
+      integer nx, ny, ns, nregionv, itcnt, ismain                        !srv 05.07.17
       real (kind=R8) ::
      *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),
      *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
@@ -76,9 +76,8 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is
-      integer, save :: iout = 0                                        !srv 17.07.05
+      integer, save :: iout = 0, iout_b2wdat = 0                       !srv 17.07.05
       integer, save :: style = 1                                       !srv 09.07.08
-      integer, save :: style_shei = 0                                  !srv 18.09.09 30.01.10
       character chns*3                                                 !srv 17.07.05
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
@@ -128,8 +127,8 @@
        call xertst (0.0_R8.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.0_R8.le.pcm1, 'faulty internal parameter pcm1')
        call ipgeti ('b2npht_iout', iout)                              !srv 02.01.07
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2npht_style', style)                            !srv 09.07.08
-       call ipgeti ('b2npht_style_shei', style_shei)                  !srv 18.09.09 15.02.10
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -194,13 +193,14 @@
 * ..main computation
 *   ..compute final heat sources
       if(style.eq.0) then
-       call b2sihs (nx, ny, ns, BoRiS, fac_ExB, hx, hy, qz, vol,        !xpb
-     &  bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni, fch,            !srv 01.07.09
-     &  cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0, wrk0)           !xpb
+       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, vol,  !xpb !srv 05.07.17
+     &  bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni, fch,              !srv 01.07.09
+     &  cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0, wrk0)             !xpb
       else
-       call b2sihs_ (nx, ny, ns, fac_ExB, hx, hy, qz, vol, bb, pbs,     !srv 07.06.00 02.06.99 28.06.03
-     *  lnlam, na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, fchdia,  !srv 28.06.03 01.07.09 05.03.11
-     *  uadia, vadia, vaecrb, she0, shi0, wrk0)                         !srv 07.06.00 02.06.99 07.07.09
+       call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                  !srv 07.06.00 02.06.99 28.06.03 05.07.17
+     *  hx, hy, qz, vol, bb, pbs, lnlam,
+     *  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa,                   !srv 28.06.03 01.07.09 05.03.11
+     *  fchdia, uadia, vadia, vaecrb, she0, shi0, wrk0)                   !srv 07.06.00 02.06.99 07.07.09
       endif
 csw 21feb2014 remove sources in ghostcells (SOLPS4)
       do ix=-1,nx
@@ -243,26 +243,17 @@ cdjm Jan2017 update particle source components for balance
       call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
       call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
 *   ..compute heat source due to electron-ions collisions            !srv 18.09.09 30.01.10 {
-      if(style_shei.eq.0) then
-       do iy = -1, ny
-        do ix = -1, nx
-           shei(ix,iy) = ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
+      do iy = -1, ny
+       do ix = -1, nx
+        if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
+     &     bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
+         shei(ix,iy) = 0.0_R8
+        else
+         shei(ix,iy) = ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
      &                (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
-        enddo
+        endif
        enddo
-      else
-       do iy = -1, ny
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
-     &               bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
-           shei(ix,iy) = 0.0_R8
-         else
-           shei(ix,iy) = ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
-     &                 (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
-         endif
-        enddo
-       enddo
-      endif
+      enddo
 
 csw 21feb2014 remove source in ghostcells (SOLPS4)
       do ix=-1,nx
@@ -287,7 +278,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
         reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
        enddo
       enddo                                                           !srv 18.09.09 30.01.10 }
-      if(iout .eq. 1) then                                            !srv 17.07.05 {
+      if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                      !srv 17.07.05 {
        call my_out(70,nx,ny,shei,'b2npht_shei')
        call my_out(70,nx,ny,te,'b2npht_te')
        call my_out(70,nx,ny,ti,'b2npht_ti')

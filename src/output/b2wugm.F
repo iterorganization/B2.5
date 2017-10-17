@@ -125,7 +125,7 @@
         if (nyiso1.eq.-2) nyiso1 = -1
       endif
 
-c-dpc
+cdpc
       write(*,*) 'Checking CRX'
       errors=0
       do iy=-1,ny
@@ -422,7 +422,7 @@ cxpb
         write(*,*) errors,' errors found in the geometry'
       endif
       call xertst (errors.eq.0, 'Errors found in geometry')
-c-dpc-end
+cdpc-end
 
 * ..save geometry
 *   ..save coordinates
@@ -439,11 +439,11 @@ c-dpc-end
       call cfwure (nput, n2, hy, 'hy')
 *   ..save qz, qc, gs
       call cfwure (nput, n2*2, qz, 'qz')
-c-xpb
+cxpb
       if(newversion.ge.'01.001.022') then
 	call cfwure (nput, n2, qc, 'qc')
       endif
-c-xpb-end
+cxpb-end
       call cfwure (nput, n2*3, gs, 'gs')
 *   ..save /b2cmgs/
       idum(0) = nlreg
@@ -453,7 +453,7 @@ c-xpb-end
       call cfwuin (nput, nlreg, nlylo, 'nlylo')
       call cfwuin (nput, nlreg, nlyhi, 'nlyhi')
       call cfwuin (nput, nlreg, nlloc, 'nlloc')
-c-dpc
+cdpc
       idum(0)=nncut
       call cfwuin (nput, 1, idum, 'nncut')
       call cfwuin (nput, nncut, leftcut, 'leftcut')
@@ -471,15 +471,19 @@ c-dpc
       call cfwuin (nput, n2*3, region, 'region')
       call cfwuin (nput, 3, nnreg, 'nnreg')
       call cfwuin (nput, n2*2, resignore, 'resignore')
-c-dpc-end                                               
-c-xpb
+cdpc-end
+cxpb
       if(newversion.ge.'01.001.000') then
 	idum(0)=periodic_bc
 	call cfwuin (nput, 1, idum, 'periodic_bc')
       endif
-c-xpb-end
+cxpb-end
       if(newversion.ge.'01.001.063') then          !srv 15.02.11
 	call cfwure (nput, n2*2, pbs, 'pbs')
+      endif
+      if(newversion.ge.'03.000.006') then
+        idum(0)=redef_pbs
+        call cfwuin (nput, 1, idum, 'redef_pbs')
       endif
 * ..return
       call subend ()

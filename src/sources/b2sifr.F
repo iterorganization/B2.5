@@ -92,7 +92,7 @@
        call ipgetr ('b2sifr_phm3', phm3)
        call ipgetr ('b2sifr_limthii', limthii)
        call ipgetr ('b2sifr_limthee', limthee)
-       call xertst (0.le.styl0.and.styl0.lt.9.and.0.le.styl1.and.
+       call xertst (0.le.styl0.and.styl0.le.2.and.0.le.styl1.and.
      &  styl1.lt.2, 'faulty internal parameter styl0, styl1')
        call xertst (0.0_R8.le.phm0.and.0.0_R8.le.phm1.and.
      &  0.0_R8.le.phm2.and.0.0_R8.le.phm3,
@@ -205,7 +205,7 @@
         enddo
        else
 *     ..contribution from friction involving neutral species
-*       (We ignore such a term, except for charge-exchange friction
+*       (We ignore such a term, except for charge exchange friction
 *       between H0 and H1. That term is calculated via the atomic
 *       physics routines.)
        endif

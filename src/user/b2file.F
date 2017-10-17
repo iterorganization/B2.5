@@ -23,7 +23,7 @@ c***    tracing/sources.trc     to  ntrc(ntrc_src)
 c----------------------------------------------------------------------
       implicit none
 c
-      integer ns,nnreg(0:2), it
+      integer ns, nnreg(0:2), it
 c
       integer, save ::  i, j, k, l, m, n, lf_tmp, nis_tmp
       integer :: mh_tmp(0:ns-1), nh_tmp, nf_tmp, lvr, lvs, lvt
@@ -73,7 +73,7 @@ c*** written to the files if the files do not exist.
 c----------------------------------------------------------------------
       call subini('b2filei')
 c
-      write(*,*) 'b2file: nstrai, natm = ', nstrai, natm
+      write(*,*) 'b2file: nstrai, nnatmi = ', nstrai, nnatmi
       tab=char(9)
       lf_tmp=ntrc_used
 c
@@ -107,25 +107,25 @@ c*** Old file - check it
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
-        if(n.ne.nspecies) then
-          write(*,*) '!! b2file: current number of species (nspecies=',
-     ,     nspecies,')  differs from that in the file ',f
+        if(n.ne.nnatmi) then
+          write(*,*) '!! b2file: current number of atoms (nnatmi=',
+     ,     nnatmi,')  differs from that in the file ',f
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
       else
 c*** New file - write the headers
         l=4
-        write(ntrc(ntrc_tst),700,err=900) '#',lvt,nstrai,nspecies
+        write(ntrc(ntrc_tst),700,err=900) '#',lvt,nstrai,nnatmi
         write(ntrc(ntrc_tst),710,err=900) '## ',label
 
         if(nstrai.gt.0) then
 c          write(hlp_frmt,'(7h(3h#it,,i3,21h(1h'//tab//
 c     /     ',a8,i2.2,1h_,a2)))')
-c     -                          nstrai*5*(nspecies+1)
+c     -                          nstrai*5*(nnatmi+1)
           write(hlp_frmt,'(a,i3,a)')
      /         '(''#it'',',
-     -                          nstrai*5*(nspecies+1),
+     -                          nstrai*5*(nnatmi+1),
      /         '('''//tab//''',a8,i2.2,''_'',a2))'
 c<<<
           print *,'%%% b2file: header format'   !###
@@ -133,20 +133,20 @@ c<<<
 c>>>
           write(ntrc(ntrc_tst),hlp_frmt,err=900)
      -     ('sclstra_',i,'  ',
-     ,     ('sclstra_',i,atoms_list(k),k=1,nspecies),
+     ,     ('sclstra_',i,atoms_list(k),k=1,nnatmi),
      ,     'sclalph_',i,'  ',
-     ,     ('sclalph_',i,atoms_list(k),k=1,nspecies),
+     ,     ('sclalph_',i,atoms_list(k),k=1,nnatmi),
      ,      'sclbase_',i,'  ',
-     ,     ('sclbase_',i,atoms_list(k),k=1,nspecies),
+     ,     ('sclbase_',i,atoms_list(k),k=1,nnatmi),
      ,      'sclrtio_',i,'  ',
-     ,     ('sclrtio_',i,atoms_list(k),k=1,nspecies),
+     ,     ('sclrtio_',i,atoms_list(k),k=1,nnatmi),
      ,      'sclsrcn_',i,'  ',
-     ,     ('sclsrcn_',i,atoms_list(k),k=1,nspecies),i=1,nstrai)
+     ,     ('sclsrcn_',i,atoms_list(k),k=1,nnatmi),i=1,nstrai)
         end if
       end if
       if (nstrai.gt.0)
      > write(hlp_frmt,'(12h(1x,i3.3,1p,,i3,12h(1h'//tab//',e12.4)))')
-     -                          nstrai*5*(nspecies+1)
+     -                          nstrai*5*(nnatmi+1)
       filedata(ntrc_tst)=.true.
       go to 1000
 c
@@ -191,7 +191,7 @@ c*** New file - write the headers
           do i=1,nfluids(j)
             k=k+1
             mh_tmp(k)=i
-            hlp_al(k)=atoms_list(j)
+            hlp_al(k)=species_list(j)
           end do
         end do
         l=4
@@ -280,7 +280,7 @@ c<<<
 c>>>
         write(ntrc(ntrc_src),hlp_frms,err=30)
      ,   ((('src',hlp_h(i),j,hlp_s(l),l=1,3),j=0,nnreg(0)),i=-1,2),
-     ,   (((('src',hlp_h(i),j,hlp_s(l),atoms_list(k),l=1,3),
+     ,   (((('src',hlp_h(i),j,hlp_s(l),species_list(k),l=1,3),
      ,   j=0,nnreg(0)),i=5,6),k=1,nspecies)
       end if
       write(hlp_frms,'(12h(1x,i3.3,1p,,i3,12h(1h'//tab//',e12.4)))')
@@ -319,9 +319,9 @@ c----------------------------------------------------------------------
         if(.not.op) go to 62
         l=4
         if (nstrai.gt.0) write(ntrc(ntrc_tst),hlp_frmt,err=62) it,
-     ,    ((sclstra(i,k),i=0,nspecies),(sclalph(i,k),i=0,nspecies),
-     ,     (sclbase(i,k),i=0,nspecies),(sclrtio(i,k),i=0,nspecies),
-     ,     (sclsrcn(i,k),i=0,nspecies),k=1,nstrai)
+     ,    ((sclstra(i,k),i=0,nnatmi),(sclalph(i,k),i=0,nnatmi),
+     ,     (sclbase(i,k),i=0,nnatmi),(sclrtio(i,k),i=0,nnatmi),
+     ,     (sclsrcn(i,k),i=0,nnatmi),k=1,nstrai)
         go to 65
  62     write(*,*) 'b2file: ',hlp_emsg(l),f
         filedata(ntrc_tst)=.false.

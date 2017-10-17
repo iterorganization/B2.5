@@ -181,10 +181,15 @@ c              wwp=max(wwp,pwrctff)
                 wwe(k)=max(ewldm(is,ii,0),enrctff)
               end do
 c*** Calculate the net and gross erosion
-c*** (temporary solution, no molecules involved)
               if(ic .gt. 0) then
                 wwyg=wldspt(is,0)/a
-                wwyn=(wldra(is,ic,0)-wldna(is,ic,0))/a
+                wwyn=(wldra(is,ic,0)-wldna(is,ic,0)
+     .                              -wldpa(is,ic,0))/a
+                do ii=1,nmoli
+                  if (mlcmp(ic,ii).gt.0)
+     >             wwyn=wwyn+mlcmp(ic,ii)*(wldrm(is,ii,0)-wldnm(is,ii,0)
+     .                                    -wldpm(is,ii,0))/a
+                end do
               else
                 wwyn=flxctff
                 wwyg=flxctff
@@ -223,12 +228,14 @@ c          if(is .le. 0  .or.  is .gt. nlimi) then
 c            print *,'=== Wrong segment number for the duct ',is
 c            go to 999
 c          end if
-c          a=a+wldna(is,2,0)
+c          a=a+wldna(is,j_he_at,0)
 c          do i=1,natmi
 c            aa=aa+wldna(is,i,0)
 c          end do
 c          do i=1,nmoli
-c            aa=aa+wldnm(is,i,0)*2.e0_R8
+c            do j=1,natmi
+c              aa=aa+wldnm(is,i,0)*mlcmp(j,i)
+c            end do
 c          end do
 c        end do
 c        a=a/(a+aa)
@@ -250,8 +257,20 @@ c      end if
      ,               ewlda(nlim+ltns(1),i,0),ewlda(nlim+ltns(2),i,0)
       end do
       if(ic .gt. 0) then
-        wwyn=wldra(nlim+ltns(1),ic,0)-wldna(nlim+ltns(1),ic,0)
-        wwyg=wldra(nlim+ltns(2),ic,0)-wldna(nlim+ltns(2),ic,0)
+        wwyn=wldra(nlim+ltns(1),ic,0)+wldpa(nlim+ltns(1),ic,0)
+     .      -wldna(nlim+ltns(1),ic,0)
+        wwyg=wldra(nlim+ltns(2),ic,0)+wldpa(nlim+ltns(2),ic,0)
+     .      -wldna(nlim+ltns(2),ic,0)
+        do i=1,nmoli
+          if (mlcmp(ic,i).gt.0) then
+            wwyn=wwyn+mlcmp(ic,i)*(wldrm(nlim+ltns(1),i,0)
+     .                            +wldpm(nlim+ltns(1),i,0)
+     .                            -wldnm(nlim+ltns(1),i,0))
+            wwyg=wwyg+mlcmp(ic,i)*(wldrm(nlim+ltns(2),i,0)
+     .                            +wldpm(nlim+ltns(2),i,0)
+     .                            -wldnm(nlim+ltns(2),i,0))
+          end if
+        end do
         write(*,700) 'Net   C erosion',wwyn,wwyg
         write(*,700) 'Gross C erosion',wldspt(nlim+ltns(1),0),
      .                                 wldspt(nlim+ltns(2),0)
@@ -302,12 +321,13 @@ c
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
 #include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/EIRDIAG.F"
 #endif
 c
 c*** Local variables

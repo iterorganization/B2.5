@@ -29,7 +29,7 @@ C 2002.11.01
      *  xnorm(:,:,:),
      *  crxe(:,:,:), crye(:,:,:),
      *  cxpp(:,:),   cypp(:,:),
-     *  psi(:,:),
+     *  psi(:,:),    zeff(:,:),
      *  rho(:,:),    hrho(:,:),
      *  theta(:,:),  htheta(:,:),
      *  bfi(:,:),    sh(:,:),
@@ -107,6 +107,7 @@ c   ..allocate
       allocate(sh(-1:nxd,-1:nyd))
 
       allocate(dm(-1:nxd,-1:nyd))
+      allocate(zeff(-1:nxd,-1:nyd))
 
       allocate(rsepx(1:nxd+3))
       allocate(zsepx(1:nxd+3))
@@ -158,6 +159,7 @@ c   ..deallocate
       deallocate(sh)
 
       deallocate(dm)
+      deallocate(zeff)
 
       deallocate(rsepx)
       deallocate(zsepx)
@@ -204,14 +206,14 @@ c     ------------------------------------------------------------------
 
 c   ..locals
       integer ix , iy , is , i , j
-c-dpc+xpb
+cdpc+xpb
       integer imin, imax
       real (kind=R8) rmin, rmax
-c-dpc+xpb-end
+cdpc+xpb-end
 
       logical lok
 
-c   ..conditions for not producing a post-processor file
+c   ..conditions for not producing a postprocessor file
       if( bottomcut(1).ne.-1 .or. nncut.ne.1 ) then
           labort = .true.
           return
@@ -291,6 +293,7 @@ c   ..mach number of each species
 
       call b2xppr( nxpp, nypp, nspp, ne, na, te, ti, pr )
       call b2xpro( nxpp, nypp, nspp, mp, am, na, ro )
+      call b2xzef( nx, ny, ns, rz2, na, ne, zeff)
 
       do is = 0, nspp - 1
          call b2xpmc( nxpp, nypp
@@ -407,13 +410,13 @@ c   ..x-point
 
 c   ..plasma centre
 
-c-dpc+xpb
+cdpc+xpb
       rmin=1e20_R8
       rmax=-1e20_R8
       imin=-2
       imax=-2
       do ix=-1,nxpp
-         if(mod(region(ix,-1,0),4).eq.1) then
+         if(on_closed_surface(ix,-1)) then
             if(crx(ix,-1,2).lt.rmin) then
                rmin=crx(ix,-1,2)
                imin=ix
@@ -425,7 +428,7 @@ c-dpc+xpb
          endif
       enddo
       if(imin.eq.-2.or.imax.eq.-2) then
-c-dpc+xpb-end
+cdpc+xpb-end
          i    = 0
          r0   = 0.0_R8
          z0   = 0.0_R8
@@ -440,11 +443,16 @@ c-dpc+xpb-end
                z0 = z0 + cry(ix,iy,0)
             endif
          enddo
-         r0 = r0 / float(i)
-         z0 = z0 / float(i)
-         write(*,*)
+         if (i.gt.0) then
+           r0 = r0 / float(i)
+           z0 = z0 / float(i)
+           write(*,*)
      *        'Used initial approach for calculating magnetic axis'
-c-dpc+xpb
+         else
+           r0 = crx(-1,-1,0)
+           z0 = cry(-1,-1,0)
+         endif
+cdpc+xpb
       else
         r0=(rmin+rmax)/2.0_R8
         z0=(cry(imin,-1,1)+cry(imax,-1,1))/2.0_R8
@@ -1191,7 +1199,7 @@ c=======================================================================
 
 c     ------------------------------------------------------------------
 c     WRITE_B2MOD_PPOUT is a front-end to a series of routines for
-c     writing data to the post-processor transfer file.
+c     writing data to the postprocessor transfer file.
 c     ------------------------------------------------------------------
       call write_pproc_header(nwrite)
 
@@ -1224,7 +1232,7 @@ c=======================================================================
       integer nwrite
 
 c     ------------------------------------------------------------------
-c     WRITE_PPROC_HEADER writes header section of post-processor
+c     WRITE_PPROC_HEADER writes header section of postprocessor
 c     transfer file.
 c     ------------------------------------------------------------------
 
@@ -1256,7 +1264,7 @@ c=======================================================================
 *     external on AIX or HP-UX it returns some non-printing garbage,
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 c     ------------------------------------------------------------------
-c     WRITE_PPROC_VERSION writes version section of post-processor
+c     WRITE_PPROC_VERSION writes version section of postprocessor
 c     transfer file.
 c     ------------------------------------------------------------------
 
@@ -1294,7 +1302,7 @@ c=======================================================================
 
 c     ------------------------------------------------------------------
 c     WRITE_B2MOD_CONTROL writes data which controls the run to the
-c     post-processor transfer file.
+c     postprocessor transfer file.
 c     ------------------------------------------------------------------
 
       call ppcstr(nwrite,'*')
@@ -1314,7 +1322,7 @@ c=======================================================================
 
 c     ------------------------------------------------------------------
 c     WRITE_B2MOD_CONTROL_FORM writes formatted control data for the
-c     run to the post-processor transfer file.
+c     run to the postprocessor transfer file.
 c     ------------------------------------------------------------------
 
 c   ..locals
@@ -1370,7 +1378,7 @@ c=======================================================================
 
 c     ------------------------------------------------------------------
 c     WRITE_B2MOD_GEOMETRY is a front-end to writing geometry data to
-c     the post-processor transfer file.
+c     the postprocessor transfer file.
 c     ------------------------------------------------------------------
 
       call ppcstr(nwrite,'*')
@@ -1396,7 +1404,7 @@ c=======================================================================
 
 c     ------------------------------------------------------------------
 c     WRITE_PPROC_TIMESTEP writes time step section of the
-c     post-processor transfer file.
+c     postprocessor transfer file.
 c     ------------------------------------------------------------------
 
 c   ..locals
@@ -1455,7 +1463,7 @@ c   ..plasma state
      *                     , te     , 1.0_R8/ev , 1 , 0 )
       call ppwure_conv_grid( nwrite
      *                     , 'ZEFF' , 'Z EFFECTIVE' , ' '
-     *                     , ne2/ne , 1.0_R8    , 1 , 0 )
+     *                     , zeff   , 1.0_R8    , 1 , 0 )
 
       if( ism.ge.0 ) then
           call ppwure_conv_grid( nwrite
@@ -1548,7 +1556,7 @@ c=======================================================================
 
 c     ------------------------------------------------------------------
 c     WRITE_PPROC_TIMETRACE writes time trace section of the
-c     post-processor transfer file.
+c     postprocessor transfer file.
 c     ------------------------------------------------------------------
 
 c   ..locals
@@ -1583,7 +1591,7 @@ c=======================================================================
 
 c     ------------------------------------------------------------------
 c     WRITE_PPROC_BOUNDARY writes boundary section of the
-c     post-processor transfer file.
+c     postprocessor transfer file.
 c     ------------------------------------------------------------------
 
 c   ..header
@@ -1623,7 +1631,7 @@ c=======================================================================
       integer nwrite
 
 c     ------------------------------------------------------------------
-c     WRITE_PPROC_EOF writes terminal section of post-processor
+c     WRITE_PPROC_EOF writes terminal section of postprocessor
 c     transfer file.
 c     ------------------------------------------------------------------
 
@@ -1645,7 +1653,7 @@ c=======================================================================
       character*80 cbuff
 
 c     ------------------------------------------------------------------
-c     WRITE_GMTRY writes geometry data of post-processor transfer file.
+c     WRITE_GMTRY writes geometry data of postprocessor transfer file.
 c     ------------------------------------------------------------------
 
 c   ..name of geometry file
@@ -1689,7 +1697,7 @@ c   ..separatrix
      *           , 'ZSEPX' , 'Z FOR SEPARATRIX' , 'M'
      *           , zsepx   , 1.0_R8 , nsepx , 0 )
 
-c   ..(r,z) coordinates (convert to post-processor grid)
+c   ..(r,z) coordinates (convert to postprocessor grid)
       call ppwure_conv_grid( nwrite
      *                     , 'RMESH' , 'R-COORD' , 'M'
      *                     , cxpp    , 1.0_R8 , 0 , 0 )
@@ -1717,12 +1725,12 @@ c   ..theta
      *                     , 'THETA' , 'THETA' , ''
      *                     , theta   , 1.0_R8 , 0 , 0 )
 
-c   ..hrho (1.0E+02 factor due to post-processor patch)
+c   ..hrho (1.0E+02 factor due to postprocessor patch)
       call ppwure_conv_grid( nwrite
      *                     , 'HRHO' , 'HRHO' , ''
      *                     , hrho   , 1.0E+02_R8 , 0 , 0 )
 
-c   ..htheta (1.0E+02 factor due to post-processor patch)
+c   ..htheta (1.0E+02 factor due to postprocessor patch)
       call ppwure_conv_grid( nwrite
      *                     , 'HTETA' , 'HTETA' , ''
      *                     , htheta  , 1.0E+02_R8  , 0 , 0 )
@@ -1753,7 +1761,7 @@ c=======================================================================
       character*(*) cstr
 
 c     ------------------------------------------------------------------
-c     PPCSTR is a general routine to write a line to the post-processor
+c     PPCSTR is a general routine to write a line to the postprocessor
 c     transfer file.
 c     ------------------------------------------------------------------
 
@@ -1858,7 +1866,7 @@ c=======================================================================
 
 c     ------------------------------------------------------------------
 c     PPWURE_CONV_GRID converts real*8 data (on B2 grid) to a data
-c     (on EDGE2D grid) then writes to the post-processor transfer file.
+c     (on EDGE2D grid) then writes to the postprocessor transfer file.
 c     ------------------------------------------------------------------
 
 c   ..locals
@@ -1874,7 +1882,7 @@ c   ..initialise
       allocate( nj(1:nc) )
       allocate( kory(1:nc,1:nrow) )
 
-c   ..convert b2 mesh to edge2d mesh (necessary for post-processor)
+c   ..convert b2 mesh to edge2d mesh (necessary for postprocessor)
       call ppre_conv_grid( rdat , rconv , iextrp , nj , kory )
 
 c   ..stagger edge2d mesh (if required)
@@ -1907,7 +1915,7 @@ c=======================================================================
 
 c     ------------------------------------------------------------------
 c     PPWUIN_CONV_GRID converts integer data (on B2 grid) to a data
-c     (on EDGE2D grid) then writes to the post-processor transfer file.
+c     (on EDGE2D grid) then writes to the postprocessor transfer file.
 c     ------------------------------------------------------------------
 
 c   ..locals
@@ -1917,7 +1925,7 @@ c   ..locals
 c   ..initialise
       allocate( iconv(1:np) )
 
-c   ..convert b2 mesh to edge2d mesh (necessary for post-processor)
+c   ..convert b2 mesh to edge2d mesh (necessary for postprocessor)
       call ppin_conv_grid( idat , iconv )
 
 c   ..process
@@ -1944,7 +1952,7 @@ c=======================================================================
      *  rsf
 
 c     ------------------------------------------------------------------
-c     PPWURE writes real*8 data (on EDGE2D grid) to post-processor
+c     PPWURE writes real*8 data (on EDGE2D grid) to postprocessor
 c     trabsfer file.
 c     ------------------------------------------------------------------
 
@@ -2009,7 +2017,7 @@ c=======================================================================
      *  isf
 
 c     ------------------------------------------------------------------
-c     PPWUIN writes integer data (on EDGE2D grid) to post-processor
+c     PPWUIN writes integer data (on EDGE2D grid) to postprocessor
 c     trabsfer file.
 c     ------------------------------------------------------------------
 
@@ -2288,7 +2296,7 @@ c=======================================================================
       integer nwrite
 
 c     ------------------------------------------------------------------
-c     WRITE_POLY writes polygons data to post-processor transfer file.
+c     WRITE_POLY writes polygons data to postprocessor transfer file.
 c     ------------------------------------------------------------------
 
 c   ..locals

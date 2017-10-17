@@ -32,7 +32,7 @@
 *
 *     This subroutine writes to unit nprt a table of atomic rate
 *     coefficients for ionisation, electron energy loss, recombination,
-*     and charge-exchange. Unit nprt must be connected to a formatted
+*     and charge exchange. Unit nprt must be connected to a formatted
 *     file.
 *
 *     The table has a two-dimensional structure, with density and

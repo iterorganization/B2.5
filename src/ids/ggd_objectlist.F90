@@ -8,20 +8,20 @@ module ggd_objectlist
 #else
 #ifdef ITM
   use euitm_schemas ! IGNORE
-#endif
-#endif
-
   use ggd_common
   use ggd_access
   use ggd_object
+#endif
+#endif
 
   implicit none
+
+#ifdef ITM
 
 contains
 
   ! Routines for index sets
 
-#ifdef ITM
   !> Basic setup of structure (required because all arrays in 
   !> the ITM CPO data structures are pointers, we cannot have fixed size arrays.
   subroutine allocateIndexList( iList )

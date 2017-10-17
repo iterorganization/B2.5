@@ -32,22 +32,22 @@ endif
 
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
-FCOPTS     = -g -C -traceback ${MPI_CPP}
+FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS     = -g -C -traceback ${MPI_CPP}
+FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore ${MPI_CPP}
 else
-FCOPTS     = -g -C -debug all -traceback -check all
+FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all
 endif
 endif
 else
 ifdef USE_MPI
-FCOPTS     = -O2 -vec_report0 ${MPI_CPP}
+FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS     = -O2 -vec_report0 ${MPI_CPP}
+FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
 else
-FCOPTS     = -O2 -vec_report0
+FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore
 endif
 endif
 endif
@@ -66,7 +66,8 @@ GRLIBES    = ${LD_NCARG} ${LD_MSCL}
 LDLIBES    = ${LD_NETCDF} ${LD_NAG}
 
 ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
+CXX = c++
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 #wd: removed; seems to be unused
@@ -80,10 +81,6 @@ endif
 ifdef IMAS_PREFIX
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
 LDLIBES   += ${LD_UAL}
-endif
-
-ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
 endif
 
 LD         = ${FC}

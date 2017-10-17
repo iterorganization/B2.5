@@ -20,6 +20,7 @@ module b2mod_ual_io_grid
   use itm_constants , pi => itm_pi ! IGNORE
 # endif
 #endif
+  use ggd_common
   use helper
   use logging , only: logmsg, LOGDEBUG
   use ggd_assert
@@ -93,9 +94,10 @@ module b2mod_ual_io_grid
 
 !dpc  private :: R8
 
+#ifdef IMAS
+
 contains
 
-#ifdef IMAS
   !> Routine that fills in a grid description which is part of a CPO
   !> using the given grid data and prepared mappings
   subroutine b2IMASFillGridDescription( gmap,ggd_grid, &
@@ -534,6 +536,9 @@ contains
 
 #else
 #ifdef ITM
+
+contains
+
   !> Routine that fills in a grid description which is part of a CPO
   !> using the given grid data and prepared mappings
   subroutine b2ITMFillGridDescription( gmap,itmgrid, &

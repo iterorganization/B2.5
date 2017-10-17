@@ -44,6 +44,7 @@ c
       real (kind=R8) :: recyctmp
       real (kind=R8), allocatable :: ft44data(:,:)
       character charns*3
+      character*18 hlp_frm
       logical ex
 #endif
       integer, save :: use_recyceir, iout
@@ -77,8 +78,13 @@ C
 C
       READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
-      write(*,'(a,5i4)') 
+#ifndef HPUX
+      write(*,'(a,5i4)')
      . ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
+#else
+      write(*,'(a,5i4)')
+     . ' Dimensions in ftn44 = ',nnx,nny,natmi,nmoli,nioni
+#endif
       write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
@@ -88,14 +94,27 @@ C
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
       allocate(ft44data(0:nx+1,0:ny+1))
       inquire(file='input.dat',exist=ex)
+#ifndef HPUX
       if (.not.ex) inquire(file='fort.33',exist=nlwrmsh)
+#else
+      if (.not.ex) inquire(file='ftn33',exist=nlwrmsh)
+#endif
 c
 * labels
 * neutral atoms
 C
       do 11 IS = 1, NATMI
         READ(44,'(A8)',END=99,ERR=99) TEXTAN(IS-1)
+        charns=textan(is-1)(1:3)
+        call strip_spaces(charns)
+        atoms_list(is)=charns(1:2)
    11 CONTINUE
+      write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natmi,'(a2,1x))'
+#ifndef HPUX
+      write(*,hlp_frm) 'atoms_list (fort.44) : ', atoms_list(1:natmi)
+#else
+      write(*,hlp_frm) 'atoms_list (ftn44) : ', atoms_list(1:natmi)
+#endif
 C
 * neutral molecules
 C
@@ -232,8 +251,8 @@ cank 960511
       end if
       if(jvft44 .ge. 960513) then
         read(44,'(3i6)') nlimi,nstsi,nstrai
-        print '(a,5i6)','nlimi,nstsi,nstrai,nlimps,nlmpgs:',
-     .                   nlimi,nstsi,nstrai,nlimps,nlmpgs
+        print '(1x,a,5i6)','nlimi,nstsi,nstrai,nlimps,nlmpgs:',
+     .                      nlimi,nstsi,nstrai,nlimps,nlmpgs
         call xertst(nlimi  .le. nlim , 'NGREAD:  NLIMI > NLIM ')
         call xertst(nstsi  .le. nsts , 'NGREAD:  NSTSI > NSTS ')
         call xertst(nstrai .le. nstra, 'NGREAD: NSTRAI > NSTRA')
@@ -284,76 +303,76 @@ cank-960727
             end do
           end do
         end if
-        if(nspecies .eq. natmi) then
-          do ix=1,nlimps
-            wldnek(ix,0)=0.0_R8
-            wldnep(ix,0)=0.0_R8
+        do ix=1,nlimps
+          wldnek(ix,0)=0.0_R8
+          wldnep(ix,0)=0.0_R8
+          do is=1,natmi
+            wldna(ix,is,0)=0.0_R8
+            wldra(ix,is,0)=0.0_R8
+            ewlda(ix,is,0)=0.0_R8
+          end do
+          do is=1,nmoli
+            wldnm(ix,is,0)=0.0_R8
+            wldrm(ix,is,0)=0.0_R8
+            ewldm(ix,is,0)=0.0_R8
+          end do
+          do istra=1,nstrai
+            if(use_recyceir.gt.0) then
+              recyctmp=recyceir(istra)
+            else
+              recyctmp=recyc(ismain,istra)
+            endif
+            wldnek(ix,0)=wldnek(ix,0)+
+     +       wldnek(ix,istra)*recyctmp
+            wldnep(ix,0)=wldnep(ix,0)+
+     +       wldnep(ix,istra)*recyctmp
             do is=1,natmi
-              wldna(ix,is,0)=0.0_R8
-              wldra(ix,is,0)=0.0_R8
-              ewlda(ix,is,0)=0.0_R8
+              iy=eb2atcr(is)
+              if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
+              wldna(ix,is,0)=wldna(ix,is,0)+
+     +                             wldna(ix,is,istra)*recyctmp
+              wldra(ix,is,0)=wldra(ix,is,0)+
+     +                             wldra(ix,is,istra)*recyctmp
+              ewlda(ix,is,0)=ewlda(ix,is,0)+
+     +                             ewlda(ix,is,istra)*recyctmp
             end do
             do is=1,nmoli
-              wldnm(ix,is,0)=0.0_R8
-              wldrm(ix,is,0)=0.0_R8
-              ewldm(ix,is,0)=0.0_R8
-            end do
-            do istra=1,nstrai
-              if(use_recyceir.gt.0) then
-                recyctmp=recyceir(istra)
-              else
-                recyctmp=recyc(ismain,istra)
-              endif
-              wldnek(ix,0)=wldnek(ix,0)+
-     +         wldnek(ix,istra)*recyctmp
-              wldnep(ix,0)=wldnep(ix,0)+
-     +         wldnep(ix,istra)*recyctmp
-              do is=1,natmi
-                iy=b2espcr(is)
+              if (lmolscl(is).gt.0 .and. lmolscl(is).le.natmi) then
+                iy=eb2atcr(lmolscl(is))
                 if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
-                wldna(ix,is,0)=wldna(ix,is,0)+
-     +                             wldna(ix,is,istra)*recyctmp
-                wldra(ix,is,0)=wldra(ix,is,0)+
-     +                             wldra(ix,is,istra)*recyctmp
-                ewlda(ix,is,0)=ewlda(ix,is,0)+
-     +                             ewlda(ix,is,istra)*recyctmp
-              end do
-              do is=1,nmoli
-                if (lmolscl(is).gt.0 .and. lmolscl(is).le.natmi) then
-                  iy=eb2spcr(lmolscl(is))+1
-                  if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
-                  wldnm(ix,is,0)=wldnm(ix,is,0)+
-     +             wldnm(ix,is,istra)*recyctmp
-                  wldrm(ix,is,0)=wldrm(ix,is,0)+
-     +             wldrm(ix,is,istra)*recyctmp
-                  ewldm(ix,is,0)=ewldm(ix,is,0)+
-     +             ewldm(ix,is,istra)*recyctmp
-                else if (use_recyceir.gt.0) then !here we are rescaling by stratum, not by species
-                  wldnm(ix,is,0)=wldnm(ix,is,0)+
-     +             wldnm(ix,is,istra)*recyctmp
-                  wldrm(ix,is,0)=wldrm(ix,is,0)+
-     +             wldrm(ix,is,istra)*recyctmp
-                  ewldm(ix,is,0)=ewldm(ix,is,0)+
-     +             ewldm(ix,is,istra)*recyctmp
-                else
-                  if (ix.eq.1 .and. istra.eq.1) then
-                    write(*,*) 'Faulty or missing LMOLSCL assignment:'
-                    write(*,*) 'LMOLSCL(',is,')=',lmolscl(is)
-                    write(*,*) 'Should be valued between 1 and NATM'
-                    write(*,*) 'Modify in b2.neutrals.parameters'
-                    write(*,*) 'See manual or b2cdcn.f file for usage'
-                    write(*,*) 'Skipping scaling of molecular arrays'
-                  endif
-                  wldnm(ix,is,0)=wldnm(ix,is,0)+wldnm(ix,is,istra)
-                  wldrm(ix,is,0)=wldrm(ix,is,0)+wldrm(ix,is,istra)
-                  ewldm(ix,is,0)=ewldm(ix,is,0)+ewldm(ix,is,istra)
+                wldnm(ix,is,0)=wldnm(ix,is,0)+
+     +           wldnm(ix,is,istra)*recyctmp
+                wldrm(ix,is,0)=wldrm(ix,is,0)+
+     +           wldrm(ix,is,istra)*recyctmp
+                ewldm(ix,is,0)=ewldm(ix,is,0)+
+     +           ewldm(ix,is,istra)*recyctmp
+              else if (use_recyceir.gt.0) then !here we are rescaling by stratum, not by species
+                wldnm(ix,is,0)=wldnm(ix,is,0)+
+     +           wldnm(ix,is,istra)*recyctmp
+                wldrm(ix,is,0)=wldrm(ix,is,0)+
+     +           wldrm(ix,is,istra)*recyctmp
+                ewldm(ix,is,0)=ewldm(ix,is,0)+
+     +           ewldm(ix,is,istra)*recyctmp
+              else
+                if (ix.eq.1 .and. istra.eq.1) then
+                  write(*,*) 'Faulty or missing LMOLSCL assignment:'
+                  write(*,*) 'LMOLSCL(',is,')=',lmolscl(is)
+                  write(*,*) 'Should be valued between 1 and NATM'
+                  write(*,*) 'Modify in b2.neutrals.parameters'
+                  write(*,*) 'See manual or b2cdcn.f file for usage'
+                  write(*,*) 'Skipping scaling of molecular arrays'
                 endif
-              end do
+                wldnm(ix,is,0)=wldnm(ix,is,0)+wldnm(ix,is,istra)
+                wldrm(ix,is,0)=wldrm(ix,is,0)+wldrm(ix,is,istra)
+                ewldm(ix,is,0)=ewldm(ix,is,0)+ewldm(ix,is,istra)
+              endif
             end do
           end do
-        else
-          print *,'natmi, nspecies= ',natmi,nspecies
-          print *,'        --> no source rescaling!'
+        end do
+        if(nspecies .ne. natmi) then
+          print *,'Warning: natmi, nspecies= ',natmi,nspecies
+          print *,'Source rescaling for additional atomic species ',
+     .            'may be incomplete'
         end if
       end if
       if(jvft44 .ge. 961228) then
@@ -362,6 +381,10 @@ cank-960727
         call rdneutrs(44,wldpm,nmoli)
         call rdneutrs(44,wldpeb,1)
         call rdneutrs(44,wldspt,1)
+        if (jvft44 .ge. 20170328) then
+          call rdneutrs(44,wldspta,natmi)
+          call rdneutrs(44,wldsptm,nmoli)
+        end if
         if(nstrai .gt. 1) then
           do istra=1,nstrai
             call rdneutrs(44,wldpp(:,:,istra),nplsi)
@@ -369,6 +392,10 @@ cank-960727
             call rdneutrs(44,wldpm(:,:,istra),nmoli)
             call rdneutrs(44,wldpeb(1,istra),1)
             call rdneutrs(44,wldspt(1,istra),1)
+            if (jvft44 .ge. 20170328) then
+              call rdneutrs(44,wldspta(:,:,istra),natmi)
+              call rdneutrs(44,wldsptm(:,:,istra),nmoli)
+            end if
           end do
         end if
       end if
@@ -411,36 +438,64 @@ cank
      ,                          i=1,nstsi)
         end if
 
+        if(jvft44 .ge. 20170328) then
+          k=0
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,natmi),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,natmi),
+     ,                                                       i=1,nstsi)
+          k=k+natmi
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nmoli),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nmoli),
+     ,                                                       i=1,nstsi)
+          k=k+nmoli
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nioni),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nioni),
+     ,                                                       i=1,nstsi)
+          k=k+nioni
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
+     ,                          i=1,nstsi)
+        end if
+
         if(jvft44 .ge. 20071209) then
           do is = 1, natmi
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
           end do
         end if
-      
+
         if(jvft44 .ge. 20080706) then
           call read_title(44)
-          READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)        
-          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)    
-          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)    
-          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)    
-          READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi) 
-      
+          READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
+          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)
+          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)
+          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)
+          READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi)
+
           NCL=eirdiag_nds_ind(nstsi+1)
           IF (NCL.GT.0) THEN
-            IF(.NOT.ALLOCATED(wldna_res)) 
-! FIXME: replace NATM, etc.. by actual values from file 
-     >       ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
-     .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
-     .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
-     .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
-     .                wldspt_res(NCL), sarea_res(NCL) )
- 
+            IF(.NOT.ALLOCATED(wldna_res))
+     >         ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
+     .                  ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL),
+     .                  ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL),
+     .                  ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
+     .                  wldspt_res(NCL), sarea_res(NCL),
+     .                  wldspta_res(natmi,NCL), wldsptm_res(nmoli,NCL),
+     .                  wlpump_res(nspz,NCL) )
+
             call read_title(44)
             READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
             call read_title(44)
             READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natmi),i=1,NCL)
             call read_title(44)
-            READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
+            READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL)
             call read_title(44)
             READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natmi),i=1,NCL)
             call read_title(44)
@@ -456,6 +511,34 @@ cank
             if (jvft44.ge.20170228) then
               call read_title(44)
               READ (44,'(6e15.7)') (wldspt_res(i),i=1,NCL)
+            end if
+            if (jvft44.ge.20170328) then
+              call read_title(44)
+              READ (44,'(6e15.7)')
+     .              ((wldspta_res(j,i),j=1,natmi),i=1,NCL)
+              call read_title(44)
+              READ (44,'(6e15.7)')
+     .              ((wldsptm_res(j,i),j=1,nmoli),i=1,NCL)
+              k=0
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,natmi),
+     ,                                i=1,NCL)
+              k=k+natmi
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nmoli),
+     ,                                i=1,NCL)
+              k=k+nmoli
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nioni),
+     ,                                i=1,NCL)
+              k=k+nioni
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
+     ,                                i=1,NCL)
             end if
           ELSE
             call read_title(44)
@@ -477,6 +560,20 @@ cank
             call read_title(44)
             READ (44,1028)
             if (jvft44.ge.20170228) then
+              call read_title(44)
+              READ (44,1028)
+            end if
+            if (jvft44.ge.20170328) then
+              call read_title(44)
+              READ (44,1028)
+              call read_title(44)
+              READ (44,1028)
+              call read_title(44)
+              READ (44,1028)
+              call read_title(44)
+              READ (44,1028)
+              call read_title(44)
+              READ (44,1028)
               call read_title(44)
               READ (44,1028)
             end if
@@ -521,7 +618,7 @@ cank
           do is = 1, natmi
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
           end do
-        end if      
+        end if
       end if
 
 cc<<<

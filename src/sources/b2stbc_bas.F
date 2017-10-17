@@ -231,8 +231,8 @@
 !       endif                                                            !xpb
        fchy_dia = 0.0_R8                                                 !sv 01.07.99
        if(maxval(facdrift) .ne. 0.0_R8) then                             !xpb
-         if (mod(region(ix,-1,0),4).ne.1) then                           !sv
-           if(periodic_bc.ne.1 .or. rightix(ix,iy).eq.ix+1) then         !xpb
+         if (.not.on_closed_surface(ix,-1)) then                         !sv
+           if(periodic_bc.ne.1 .or. rightix(ix,-1).eq.ix+1) then         !xpb
              fchy_dia = -wdiaf                                           !xpb
      &        *(vol(topix(ix,-1),topiy(ix,-1))+vol(ix,-1))
      &        /(gs(topix(ix,-1),topiy(ix,-1),2)+gs(ix,-1,2))             !sv 01.07.99
@@ -248,8 +248,8 @@
      &         -OnedBsqc(topix(ix,-1),topiy(ix,-1)))                     !xpb
      &        *facdrift(ix,-1)*b2stbc_fchy_dia                           !xpb
            endif                                                         !xpb
-         elseif (mod(region(ix,-1,0),4).eq.1 .and. nnreg(0).gt.1) then   !xpb
-           if(periodic_bc.ne.1 .or. rightix(ix,iy).eq.ix+1) then         !xpb
+         elseif (on_closed_surface(ix,-1)) then                          !xpb
+           if(periodic_bc.ne.1 .or. rightix(ix,-1).eq.ix+1) then         !xpb
  !              fchy_dia = -praverage(1)*wbbv(topix(ix,-1),topiy(ix,-1),2)       !xpb
  !      &        *(vol(topix(ix,-1),topiy(ix,-1))+vol(ix,-1))
  !      &        /(gs(topix(ix,-1),topiy(ix,-1),2)+gs(ix,-1,2))          !sv 01.07.99
@@ -274,8 +274,8 @@
           endif                                                          !xpb
          endif                                                           !sv
        elseif (b2stbc_neoclassical .ne. 0.0_R8 .and.                     !xpb
-     &         mod(region(ix,-1,0),4).eq.1 .and. nnreg(0).gt.1) then     !xpb
-         if(periodic_bc.ne.1 .or. rightix(ix,iy).eq.ix+1) then           !xpb
+     &         on_closed_surface(ix,-1)) then                            !xpb
+         if(periodic_bc.ne.1 .or. rightix(ix,-1).eq.ix+1) then           !xpb
            fchy_dia = -praverage(1)                                      !xpb
      &      *(OnedBsqc(rightix(topix(ix,-1),topiy(ix,-1)),
      &                 rightiy(topix(ix,-1),topiy(ix,-1)))
@@ -290,9 +290,8 @@
        else                                                              !xpb
          fchy_dia = 0.0_R8                                               !xpb
        endif                                                             !sv
-       if(lbndusr.or.
-     &  (mod(region(ix,-1,0),4).ne.1.and.b2stbc_fchy_dia_coreonly.eq.1))
-     1  fchy_dia = 0.0_R8
+       if(lbndusr.or.(.not.on_closed_surface(ix,-1).and.
+     &                b2stbc_fchy_dia_coreonly.eq.1)) fchy_dia = 0.0_R8
 *    ..loop over species
        do is = 0, ns-1
 *     ..compute csb
@@ -478,7 +477,7 @@
      &       *(OnedBsqc(rightix(ix,ny),rightiy(ix,ny))-OnedBsqc(ix,ny))  !sv
          endif                                                           !xpb
        elseif (b2stbc_neoclassical .ne. 0.0_R8 .and.                     !xpb
-     &  region(ix,ny,0).eq.5) then                                       !xpb
+     &         on_closed_surface(ix,ny)) then                            !xpb
          fchy_dia = -praverage(2)
      .    *(OnedBsqc(rightix(ix,ny),rightiy(ix,ny))-OnedBsqc(ix,ny))
      .    *b2stbc_neoclassical                                           !xpb

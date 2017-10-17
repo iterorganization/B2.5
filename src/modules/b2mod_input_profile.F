@@ -166,10 +166,10 @@
       endif
  
       if (new_files) then
-        open (96,file='../dx2')
-        open (95,file='../dx1')
-        open (94,file='../da1')
-        open (93,file='../da2')
+        if (maxval(nsdata).gt.0) open (96,file='dx2')
+        if (maxval(nxdata).gt.0) open (95,file='dx1')
+        if (maxval(nsdata).gt.0) open (94,file='da1')
+        if (maxval(nsdata).gt.0) open (93,file='da2')
       end if
 
       do kind_source=1,nkind_source
@@ -350,7 +350,7 @@
       goto 100
  98   write (*,*) 'Error in computing axial profile'
       goto 100
- 99   write (*,*) 'Error in reading the dsa file'
+ 99   write (*,*) 'Error in reading the dsp file'
  100  continue
 
       ext_sna(:,:,:)=sna0(:,:,0,:)
@@ -369,10 +369,10 @@ cdjm Jan2017 Keep linearised sources for balance
       endif
        
       if (new_files) then
-        close(93)
-        close(94)
-        close(95)
-        close(96)
+        if (maxval(nsdata).gt.0) close(93)
+        if (maxval(nsdata).gt.0) close(94)
+        if (maxval(nxdata).gt.0) close(95)
+        if (maxval(nsdata).gt.0) close(96)
         new_files = .false.
       end if
 
@@ -389,8 +389,8 @@ cdjm Jan2017 Keep linearised sources for balance
      . sources_time_mod,sources_time_switch,sources_filename
 
 !  read the profile data
-      filename='../' // trim(sources_filename)
-      inquire(file=filename,exist=file_ok)
+      filename=sources_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(92,file=filename)
         write(*,*) 
@@ -454,11 +454,12 @@ cdjm Jan2017 Keep linearised sources for balance
       integer, save :: scaling_ix_begin(nscale), scaling_ix_end(nscale)
       integer, save :: elm_ix_begin, elm_ix_end
       logical, save :: region_flags(NNREGMAX,nkind_coeff), no_pflux,
-     1 poloidal_scaling(nscale), elm_time, elm_region, elm_data
+     1 poloidal_scaling(nscale), elm_time, elm_region, elm_data,
+     2 no_div
       character*260 filename
       character*26 hlp_frm
       integer, save :: elm_count
-      logical catch_up, lpflux
+      logical catch_up, lpflux, ldiv
       logical, save :: new_files
       intrinsic sqrt
       namelist /transport/ ndata, tdata, addspec,
@@ -466,7 +467,7 @@ cdjm Jan2017 Keep linearised sources for balance
      2   scaling_ix_begin, scaling_ix_end, scaling_strength,
      3   region_flags, no_pflux, poloidal_scaling, scaling_width,
      4   elm_time_begin, elm_time_end, elm_time_period,
-     5   elm_ix_begin, elm_ix_end
+     5   elm_ix_begin, elm_ix_end, no_div
 
       data transport_filename/'b2.transport.inputfile'/,
      1 transport_time_mod/0.0_R8/,transport_time_switch/0.0_R8/
@@ -474,7 +475,7 @@ cdjm Jan2017 Keep linearised sources for balance
       if(ncall.eq.0) then
         call xertst(NNREGMAX.ge.nnreg(0),
      1   'Increase NNREGMAX in b2mod_numerics_namelist')
-        filename='../' // transport_filename
+        filename=transport_filename
         new_files = .true.
         call read_transport_input         
 !  read the profile data
@@ -488,7 +489,7 @@ cdjm Jan2017 Keep linearised sources for balance
           if(mod(tim,transport_time_mod).gt.transport_time_switch)
      1     then           
             write(*,*) 'transport_input: catching up ...'
-            filename='../' // transport_filename
+            filename=transport_filename
             call read_transport_input
             catch_up=transport_time_mod.gt.0.0_R8
           else
@@ -503,7 +504,7 @@ cdjm Jan2017 Keep linearised sources for balance
           if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
      1     int(tim/transport_time_mod).gt.elm_count) then
             elm_count=tim/transport_time_mod
-            filename='../' // transport_filename
+            filename=transport_filename
             new_files = .true.
             call read_transport_input
           endif
@@ -511,8 +512,8 @@ cdjm Jan2017 Keep linearised sources for balance
       endif
 
       if (new_files) then
-        open (94,file='../da1')
-        open (93,file='../da2')
+        open (94,file='da1')
+        open (93,file='da2')
       end if
 
       do isc=1,nscale
@@ -607,6 +608,7 @@ cdjm Jan2017 Keep linearised sources for balance
      3               iiy.lt.topcut(1)).or.(nnreg(0).eq.8.and.
      4               ix.ge.leftcut(2).and.ix.lt.rightcut(2).and.
      5               iiy.lt.topcut(2)))
+                  ldiv=mod(iir-1,4)+1.ge.3
                   poloidal_scale_factor = 1.0_R8
                   do isc=1,nscale
                     if (poloidal_scaling(isc) .and.
@@ -624,7 +626,8 @@ cdjm Jan2017 Keep linearised sources for balance
 
                   if(.not.
      1             (.not.region_flags(iir,kind_coeff).or.
-     1             (lpflux.and.no_pflux))) then
+     1             (lpflux.and.no_pflux).or.
+     1             (ldiv.and.no_div))) then
 
                     if (elm_region) then
                       prof(1:ndim)=pelm(1:ndim)
@@ -761,7 +764,7 @@ cdjm Jan2017 Keep linearised sources for balance
        
        
       goto 100
- 99   write (*,*) 'Error in reading the dsa file'
+ 99   write (*,*) 'Error in reading the dsp file'
  100  continue
        
       if (new_files) then
@@ -786,6 +789,7 @@ c*** Clear data to forget previous profiles
       addspec(:,:,:)=-5
       region_flags=.true.
       no_pflux=.false.
+      no_div=.false.
       poloidal_scaling=.false.
       scaling_strength=0.0_R8
       scaling_width=0.0_R8
@@ -796,7 +800,7 @@ c*** Clear data to forget previous profiles
       elm_time_period=0.0_R8
       elm_ix_begin=-2
       elm_ix_end=-2
-      inquire(file=filename,exist=file_ok)
+      call find_file(filename,file_ok)
       if (file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist transport from ',trim(filename)
@@ -832,6 +836,8 @@ c*** Clear data to forget previous profiles
       real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
       integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
       integer ixref, iyref
+      character*256 filename
+      logical exist
       external ipgetr, subini, subend
       external get_jsep
       save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
@@ -854,11 +860,19 @@ c*** Clear data to forget previous profiles
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
         call output_ds(crx,cry,nx,ny,ixref,0,
-     1   iyref,iyastrt,iyaend,'../dsp')
+     1   iyref,iyastrt,iyaend,'dsp')
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 
-      open (91,file='../dsp')
+      filename='dsp'
+      call find_file(filename,exist)
+      if (exist) then
+        open(unit=91,file=filename)
+      else
+        ifa=1
+        call subend()
+        return
+      end if
       i = 0
       nya = 0
  91   continue
@@ -894,11 +908,11 @@ c*** Clear data to forget previous profiles
       do i=1,ndim
         pr(i)=pra(nfitanf-1+i)
       enddo
-      close (91)
       goto 108
  97   ifa=1
          
  108  continue
+      close (91)
       ncall=ncall+1
       call subend ()
       return

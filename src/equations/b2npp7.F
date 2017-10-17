@@ -52,7 +52,7 @@
 
 *   ..local variables
       integer ncall, n2
-      integer, save :: style = 1, iout = 0
+      integer, save :: style = 1, iout = 0, iout_b2wdat = 0
       real (kind=R8) ::
      *   aa7(-1:nx,-1:ny,-3:3), wrk0(-1:nx,-1:ny)              !srv 11.01.00
       save ncall
@@ -67,11 +67,12 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2npp7')                                   !srv 06.07.00
+      call subini ('b2npp7')                                          !srv 06.07.00
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2npp7_style', style)                            !srv 08.07.08
-       call ipgeti ('b2npp7_iout', iout)                            !srv 08.07.08
+       call ipgeti ('b2npp7_iout', iout)                              !srv 08.07.08
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -115,20 +116,20 @@
 *   ..apply correction
       call b2uppo (nx, ny, rxf, corpo, po)
 
-      if(iout .eq. 1) then                                        !srv 11.09.09 {
-!	 call my_out(70,nx,ny,te,'b2npp7_te')
-!	 call my_out(70,nx,ny,ne,'b2npp7_ne')
-	 call my_out(70,nx,ny,po,'b2npp7_po')
-	 call my_out(70,nx,ny,respo,'b2npp7_respo')
-	 call my_out(70,nx,ny,fch(-1,-1,0),'b2npp7_fchx')
-	 call my_out(70,nx,ny,fch(-1,-1,1),'b2npp7_fchy')
-!	 call my_out(70,nx,ny,sch(-1,-1,0),'b2npp7_sch0')
-!	 call my_out(70,nx,ny,sch(-1,-1,1),'b2npp7_sch1')
-!	 call my_out(70,nx,ny,sch(-1,-1,2),'b2npp7_sch2')
-!	 call my_out(70,nx,ny,sch(-1,-1,3),'b2npp7_sch3')
-         wrk0=sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
-     &        sch(:,:,3)*ne*po
-	 call my_out(70,nx,ny,wrk0,'b2npp7_sch')
+      if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                !srv 11.09.09 {
+!       call my_out(70,nx,ny,te,'b2npp7_te')
+!       call my_out(70,nx,ny,ne,'b2npp7_ne')
+        call my_out(70,nx,ny,po,'b2npp7_po')
+	    call my_out(70,nx,ny,respo,'b2npp7_respo')
+        call my_out(70,nx,ny,fch(-1,-1,0),'b2npp7_fchx')
+	    call my_out(70,nx,ny,fch(-1,-1,1),'b2npp7_fchy')
+!       call my_out(70,nx,ny,sch(-1,-1,0),'b2npp7_sch0')
+!       call my_out(70,nx,ny,sch(-1,-1,1),'b2npp7_sch1')
+!       call my_out(70,nx,ny,sch(-1,-1,2),'b2npp7_sch2')
+!       call my_out(70,nx,ny,sch(-1,-1,3),'b2npp7_sch3')
+        wrk0=sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
+     &       sch(:,:,3)*ne*po
+        call my_out(70,nx,ny,wrk0,'b2npp7_sch')
       endif                                                       !srv 11.09.09 }
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xertst)

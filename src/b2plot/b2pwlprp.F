@@ -83,7 +83,7 @@ c       write(lun_w,*)
 c      end do !}
 c      close(lun_w)
 c>>>
-      lim_cnf=nncut.eq.1 .and. nnreg(0).eq.2
+      lim_cnf=nncut.eq.0 .and. nnreg(0).eq.2
       nytg=ny
       lytg=0
       if(lim_cnf) then !{
@@ -588,10 +588,10 @@ c!###}
 c*** Go along the list analysing the intersections. Here
 c***   kn      is the counter for the new list
 c***   j       is the counter for the old list
-c***   k       if non-zero, the target number k is "open"
-c***   kb      if non-zero, the CW edge number kb is encountered
-c***   ke      if non-zero, the CCW edge number ke is encountered
-c***   kke     if non-zero, the first segment was CCW edge abs(kke)
+c***   k       if nonzero, the target number k is "open"
+c***   kb      if nonzero, the CW edge number kb is encountered
+c***   ke      if nonzero, the CCW edge number ke is encountered
+c***   kke     if nonzero, the first segment was CCW edge abs(kke)
 c***           if negative, the corresponding target has been added
 c***
 c*** It is assumed here that CW and CCW edges differ

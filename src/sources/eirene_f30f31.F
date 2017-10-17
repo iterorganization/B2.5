@@ -48,16 +48,17 @@ c
 #ifndef SOLPS4_3
       use eirmod_parmmod
       use eirmod_braeir
+      use eirmod_extrab25
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
 #endif
-      use eirmod_extrab25
+#else
+      use b2mod_braeir
 #endif
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
-#     include <COUPLE/BRAEIR.F>
 #endif
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
@@ -564,12 +565,21 @@ c
 #endif
       data format_string/ '(1P,4E15.7)', '(1P,4E16.8)' /
 
+#ifndef HPUX
       inquire(file='fort.30',exist=ex)
       if (ex) then
         write(*,*)
      .   'Skipping writing fort.30 because file already present'
         return
       endif
+#else
+      inquire(file='ftn30',exist=ex)
+      if (ex) then
+        write(*,*)
+     .   'Skipping writing ftn30 because file already present'
+        return
+      endif
+#endif
       nniso=nncut-1
       if(nncut.eq.1) then
         if (nnreg(0).eq.1) then
@@ -619,7 +629,11 @@ c
 
 #ifdef B25_EIRENE
 cxpb Deduce from fort.33 triangle vertices files which format precision to use
+#ifndef HPUX
       if (nrknot.gt.0 .and. open_file(33,'fort.33','')) then
+#else
+      if (nrknot.gt.0 .and. open_file(33,'ftn33','')) then
+#endif
         rewind(33)
         read(33,1028)
         read(33,'(A80)') line
@@ -641,18 +655,31 @@ cxpb Deduce from fort.33 triangle vertices files which format precision to use
           else if (exp_location-dot_location.eq.9) then
             new_format = 2
           else
+#ifndef HPUX
             call xerrab ('Unrecognized format (1) in fort.33 file')
+#else
+            call xerrab ('Unrecognized format (1) in ftn33 file')
+#endif
           end if
         else
+#ifndef HPUX
           call xerrab ('Unrecognized format (2) in fort.33 file')
+#else
+          call xerrab ('Unrecognized format (2) in ftn33 file')
+#endif
         end if
         close(33)
       else
         new_format = 2
       end if
 #endif
+#ifndef HPUX
       write(*,'(a,a)')
      . 'Writing fort.30 with ', format_string(new_format)
+#else
+      write(*,'(a,a)')
+     . 'Writing ftn30 with ', format_string(new_format)
+#endif
       rewind(30)
       write (30,*) 'Geometry from B2'
       write (30,*) ' '
@@ -692,16 +719,17 @@ c
 #ifndef SOLPS4_3
       use eirmod_parmmod
       use eirmod_braeir
+      use eirmod_extrab25
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
 #endif
-      use eirmod_extrab25
+#else
+      use b2mod_braeir
 #endif
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
-#     include <COUPLE/BRAEIR.F>
 #endif
       integer nx,ny
       integer nxx,nyy

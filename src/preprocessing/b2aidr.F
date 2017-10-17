@@ -95,6 +95,7 @@
      *  amtol, naini(0:ns-1), ttini, na_min
       parameter (amtol=1.0e-2_R8)
       logical oldversion, ex
+      character*256 filename
 *   ..procedures
       logical streql, is_comment
       logical ltst                                                  !srv 22.12.09
@@ -507,21 +508,36 @@
      &   'Initial densities must be larger than na_min!')
       end do
 
+*   ..initialise time
+      tim = 0.0_R8
+*   ..obtain version number                                          !xpb
+      call cfverr (ninp(2), b2fgmtry_version)                        !xpb
+*   ..obtain nx, ny from geometry file
+      call cfruin (ninp(2), 2, idum, 'nx,ny')
+      call xertst (idum(0).eq.nx.and.idum(1).eq.ny,
+     &  'faulty input nx, ny from geometry file')
+*   ..read header for geometry
+      call cfruch (ninp(2), 120, lblgm, 'label')
+      call cfruin (ninp(2), 1, idum, 'isymm')
+      isymm = idum(0)
+*     (isymm is now stored in the b2cmfs common)                     !xpb 10.08.00
+*   ..read geometry
+      call b2rugm (ninp(2), nx, ny, crx, cry, fpsi, ffbz,
+     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
+
       if(read_b2fstate.ne.0) then
 *  .. copy the data of first n=min(ns0,ns1) species
 *     from the plasma state file b2fstate for ns0 species
 *     into the initial plasma state file b2fstati for ns1 species
-       write(*,*) ' Opening b2fstate'
+       filename='b2fstate'
+       call find_file(filename,ex)
        inquire(file='b2fstate',exist=ex)
        if (ex) then
-         call cfopen (ninp(3),'b2fstate','old','un*formatted')
+         write(*,*) ' Opening '//trim(filename)
+         call cfopen (ninp(3),filename,'old','un*formatted')
        else
-         inquire(file='../b2fstate',exist=ex)
-         if (ex) then
-           call cfopen (ninp(3),'../b2fstate','old','un*formatted')
-         else
-           call xerrab ('Could not find old b2fstate file')
-         end if
+         call xerrab ('Could not find old b2fstate file')
        end if
 *   ..obtain version number
        call cfverr (ninp(3), b2fstate_version)
@@ -732,24 +748,6 @@
        call sfill (n2*2, 0.0_R8, floe_noc, 1)
        call sfill (n2*2, 0.0_R8, floi_noc, 1)
       endif                                                          !srv 22.12.09
-*   ..initialise time
-      tim = 0.0_R8
-*   ..obtain version number                                          !xpb
-      call cfverr (ninp(2), b2fgmtry_version)                        !xpb
-*   ..obtain nx, ny from geometry file
-      call cfruin (ninp(2), 2, idum, 'nx,ny')
-      call xertst (idum(0).eq.nx.and.idum(1).eq.ny,
-     &  'faulty input nx, ny from geometry file')
-*   ..read header for geometry
-      call cfruch (ninp(2), 120, lblgm, 'label')
-      call cfruin (ninp(2), 1, idum, 'isymm')
-      isymm = idum(0)
-*     (isymm is now stored in the b2cmfs common)                     !xpb 10.08.00
-*   ..read geometry
-      call b2rugm (ninp(2), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
-
 * ..output
 *   ..write label
       write (nout(0),'(/2x,a)') 'label for the initial state:'

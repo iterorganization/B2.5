@@ -9,21 +9,19 @@ module ggd_subgrid
 #else
 #ifdef ITM
   use euitm_schemas ! IGNORE
-#endif
-#endif
-
   use combinations
-
   use ggd_common
   use ggd_access
   use ggd_object
   use ggd_objectlist
+#endif
+#endif
 
   implicit none
 
-contains
-
 #ifdef ITM
+
+contains
 
   !> Create a subgrid for a given number of object lists
   subroutine createSubGrid( sg, nobjlist, id )
@@ -183,7 +181,7 @@ contains
         offset = offset + listsize
     end do
 
-    ! didn't find anything
+    ! did not find anything
     index = GRID_UNDEFINED
   end function subGridGetIndexForObject
 

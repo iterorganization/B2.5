@@ -19,13 +19,13 @@
 *
 *  1. purpose
 *
-*     B2YHDR is a post-processor for b2. It reads and displays the table
+*     B2YHDR is a postprocessor for b2. It reads and displays the table
 *     of physics parameters.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a post-processor for the b2 code. It reads the
+*     This routine is a postprocessor for the b2 code. It reads the
 *     file containing the physics parameters and produces printed
 *     output.
 *
@@ -287,8 +287,12 @@
 *     transport. cflim(1)=cflmi specifies the flux limit factor for
 *     poloidal all atom heat transport. cflim(2)=cflmv specifies the
 *     flux limit factor for poloidal atom momentum transport.
+*     cflim(3)=cflal specifies the flux limit factor for the
+*     thermo-electric coefficient.
+*     cflim(4)=cflab specifies the flux limit factor for the
+*     friction force.
 *     Zero settings turn off these flux limits.
-*     cflim(3:7) are not used in the default version of the code.
+*     cflim(5:7) are not used in the default version of the code.
 *
 *     Description of some local variables (including arrays in w(0:*):
 *

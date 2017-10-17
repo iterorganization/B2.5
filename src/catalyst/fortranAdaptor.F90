@@ -9,7 +9,7 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,&
      &                 fchvisper,gs,bb,na,ua,kinrgy,rra,rqa,fna,fna_mdf,&
      &                 fna_fcor,uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,&
      &                 rlpi, rightix, topiy)
-!Coprocessor is called each time step in b2mndr to output
+!Coprocessor is called each time step in b2mndr_1 to output
 !simulation data to ParaView Catalyst.
 
   implicit none

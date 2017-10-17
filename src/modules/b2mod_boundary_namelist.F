@@ -7,8 +7,15 @@ c* Parameters controlling the source scaling procedure are added:
 c*  lcbs          : boundary segments representing the core boundary in B2
 c*  ncbs          : number of these boundary segments
 cank }
+#     include "DIMENSIONS.F"
+#ifndef DEF_NBC
+#define DEF_NBC 20
+#endif
+#ifndef DEF_NISO
+#define DEF_NISO 10
+#endif
       integer NBCD, NNISOD
-      parameter (NBCD=20,NNISOD=10)
+      parameter (NBCD=DEF_NBC,NNISOD=DEF_NISO)
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
      *   CONPAR(:,:,:), 
@@ -37,7 +44,6 @@ cank }
       character*1, allocatable, save ::
      *   BCCHAR(:)
 #else
-#     include "DIMENSIONS.F"
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
       real (kind=R8), save :: CONPAR(0:nsdmax-1,NBCD,3)
@@ -101,9 +107,9 @@ csw 18feb2014 added for correct implementation of boundary conditions
 
       call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
       call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-      call xertst (nbc.le.nbcd, 'increase size in b2stbc for nbcd')
+      call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
       call xertst (nniso.le.nnisod, 
-     1     'increase size in b2stbc for nnisod')
+     1     'increase DEF_NISO in DIMENSIONS.F')
       call write_b2mod_boundary_namelist
       if(boundary_time_mod.gt.0.0_R8) then
          bc_elm_count=tim/boundary_time_mod
@@ -117,9 +123,9 @@ csw 18feb2014 added for correct implementation of boundary conditions
             write(*,*) 'b2stbc: catching up ...'
             call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
             call xertst (nbc.le.nbcd, 
-     1           'increase size in b2stbc for nbcd')
+     1           'increase DEF_NBC in DIMENSIONS.F')
             call xertst (nniso.le.nnisod, 
-     1           'increase size in b2stbc for nnisod')
+     1           'increase DEF_NISO in DIMENSIONS.F')
             call write_b2mod_boundary_namelist
             catch_up=boundary_time_mod.gt.0.0_R8
          else
@@ -226,9 +232,9 @@ cxpb overwrite the defaults with the namelist data
             bc_elm_count=tim/boundary_time_mod
             call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
             call xertst (nbc.le.nbcd, 
-     1           'increase size in b2stbc for nbcd')
+     1           'increase DEF_NBC in DIMENSIONS.F')
             call xertst (nniso.le.nnisod, 
-     1           'increase size in b2stbc for nnisod')
+     1           'increase DEF_NISO in DIMENSIONS.F')
             call write_b2mod_boundary_namelist
          endif
       endif
@@ -244,38 +250,36 @@ cxpb overwrite the defaults with the namelist data
 #endif
 
 #ifdef ALLOCATE_AND_NAMELIST
-      NBCD=nbcd_in
-      NNISOD=nnisod_in
-      allocate(CONPAR(0:nsd-1,NBCD,3))
-      allocate(MOMPAR(0:nsd-1,NBCD,2))
-      allocate(ENEPAR(NBCD,2))
-      allocate(ENIPAR(NBCD,2))
-      allocate(POTPAR(NBCD,2))
-      allocate(BCPOS(NBCD))
-      allocate(BCSTART(NBCD))
-      allocate(BCEND(NBCD))
-      allocate(BC_LIST_SIZE(NBCD))
-      allocate(BC_LIST_X(2*(NXD+NYD),NBCD))
-      allocate(BC_LIST_Y(2*(NXD+NYD),NBCD))
-      allocate(BCCON(0:nsd-1,NBCD))
-      allocate(BCMOM(0:nsd-1,NBCD))
-      allocate(BCENE(NBCD))
-      allocate(BCENI(NBCD))
-      allocate(BCPOT(NBCD))
-      allocate(BCCHAR(NBCD))
-      allocate(NXISO1(NNISOD))
-      allocate(NXISO2(NNISOD))
-      allocate(NYISO1(NNISOD))
-      allocate(NYISO2(NNISOD))
+      allocate(CONPAR(0:nsd-1,nbcd_in,3))
+      allocate(MOMPAR(0:nsd-1,nbcd_in,2))
+      allocate(ENEPAR(nbcd_in,2))
+      allocate(ENIPAR(nbcd_in,2))
+      allocate(POTPAR(nbcd_in,2))
+      allocate(BCPOS(nbcd_in))
+      allocate(BCSTART(nbcd_in))
+      allocate(BCEND(nbcd_in))
+      allocate(BC_LIST_SIZE(nbcd_in))
+      allocate(BC_LIST_X(2*(NXD+NYD),nbcd_in))
+      allocate(BC_LIST_Y(2*(NXD+NYD),nbcd_in))
+      allocate(BCCON(0:nsd-1,nbcd_in))
+      allocate(BCMOM(0:nsd-1,nbcd_in))
+      allocate(BCENE(nbcd_in))
+      allocate(BCENI(nbcd_in))
+      allocate(BCPOT(nbcd_in))
+      allocate(BCCHAR(nbcd_in))
+      allocate(NXISO1(nnisod_in))
+      allocate(NXISO2(nnisod_in))
+      allocate(NYISO1(nnisod_in))
+      allocate(NYISO2(nnisod_in))
       allocate(NIISO(0:nsd-1))
-      allocate(lcbs(NBCD))
+      allocate(lcbs(nbcd_in))
 #else
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
       call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
       call xertst (nsd.le.nsdmax, 'faulty parameter nsd')
+#endif
       call xertst (nbcd_in.le.nbcd, 'faulty parameter nbcd_in')
       call xertst (nnisod_in.le.nnisod, 'faulty parameter nnisod_in')
-#endif
       allocate(iffboundx(-1:nxd,-1:nyd))
       allocate(iffboundy(-1:nxd,-1:nyd))
       allocate(ifenebound(-1:nxd,-1:nyd))
@@ -300,7 +304,7 @@ cxpb overwrite the defaults with the namelist data
       enepar=0.0_R8
       enipar=0.0_R8
       potpar=0.0_R8
-      gammai=5.0_R8/3.0_R8
+      gammai=1.0_R8
       gammae=0.5_R8
       lbndusr=.false.
 !DPC-2003-10-23 set as a ipget parameter      lfeedback=.false.
@@ -403,8 +407,9 @@ cxpb Have to do this here already in case the namelist is not used
       logical :: file_ok, todo, assigned
       logical, allocatable :: old_style(:), done(:)
       character*260 filename
-      filename='../' // boundary_filename
-      inquire(file=filename,exist=file_ok)
+
+      filename=boundary_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
         call cfverr(99,boundary_version)
@@ -456,8 +461,8 @@ c.. Make a list of core boundaries
         do ib=1,nbc
           if(bcchar(ib).eq.'S') then
             if(old_style(ib)) then
-              if(mod(region(bcstart(ib),bcpos(ib),0),4).eq.1 .and.
-     .           mod(region(bcend(ib),bcpos(ib),0),4).eq.1) then
+              if(on_closed_surface(bcstart(ib),bcpos(ib)) .and.
+     .           on_closed_surface(bcend(ib),bcpos(ib))) then
                 if (.not.todo) then
                   ncbs=ncbs+1
                   lcbs(ncbs)=ib
@@ -487,7 +492,7 @@ c.. Make a list of core boundaries
               found = .true.
               do ix = 1, bc_list_size(ib)
                 found = found .and.
-     .           mod(region(bc_list_x(ix,ib),bc_list_y(ix,ib),0),4).eq.1
+     .           on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib))
               end do
               if (found) then
                 if (.not.todo) then
@@ -518,7 +523,11 @@ c.. Make a list of core boundaries
             endif
           endif
         enddo
-        call xertst (1.le.ncbs.or.ny.eq.1, 'faulty parameter ncbs')
+        if (ny.gt.1) then
+          if (nnreg(0).gt.1 .or. periodic_bc.eq.1) then
+            call xertst(1.le.ncbs, 'faulty parameters ncbs')
+          end if
+        end if
         do ib = 1, ncbs
           call xertst (done(ib), 
      .     'Did not find all declared core boundaries!')

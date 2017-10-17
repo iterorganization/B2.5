@@ -7,11 +7,10 @@ module ggd_object
 #else
 #ifdef ITM
   use euitm_schemas ! IGNORE
-#endif
-#endif
-
   use ggd_common
   use ggd_access
+#endif
+#endif
 
   implicit none
 
@@ -186,7 +185,7 @@ contains
   end function getObjectByGlobalIndex
 
 
-  !> For a given object desriptor, retrieves a list that holds the object descriptors
+  !> For a given object descriptor, retrieves a list that holds the object descriptors
   !> describing the lower-dimensional objects composing the given object
   subroutine getComposingObjects( grid, object, objlist )
     type(type_complexgrid), intent(in) :: grid
