@@ -723,48 +723,63 @@ contains
         !>      &   gsBaseIndex, gsName, gsDescription)
 
         call createGridSubsetForClass(  ggd_grid,               &
-            &   ggd_grid%grid_subset(1), 1, 1, 1, "Nodes B2.5", &
+            &   ggd_grid%grid_subset( B2_GSUBSET_NODES ), 1, 1, &
+            &   B2_GSUBSET_NODES, "Nodes B2.5",                 &
             &   "All nodes (0D objects) in the domain."  )
-        ! call createGridSubsetForClass(  ggd_grid,                   &
-        !     &   ggd_grid%grid_subset(1), CLASS_NODE(1:SPACE_COUNT), 1, 1, "Nodes B2.5",     &
+        ! call createGridSubsetForClass(  ggd_grid,           &
+        !     &   ggd_grid%grid_subset( B2_GSUBSET_NODES ),   &
+        !     &   CLASS_NODE(1:SPACE_COUNT), 1, B2_GSUBSET_NODES, "Nodes B2.5",   &
         !     &   "All nodes (0D objects) in the domain."  )
 
         !> B2_GSUBSET_FACES: all faces, one implicit object list
         call createGridSubsetForClass(  ggd_grid,               &
-            &   ggd_grid%grid_subset(2), 2, 1, 2, "Faces",      &
+            &   ggd_grid%grid_subset( B2_GSUBSET_FACES ), 2, 1, &
+            &   B2_GSUBSET_FACES, "Faces",      &
             &   "All faces (1D objects) in the domain."  )
-        ! call createGridSubsetForClass(  ggd_grid,                               &
-        !     &   ggd_grid%grid_subset(2), CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1, 2, "Faces",     &
+        ! call createGridSubsetForClass(  ggd_grid,         &
+        !     &   ggd_grid%grid_subset( B2_GSUBSET_FACES ), &
+        !     &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1, &
+        !     &   B2_GSUBSET_FACES, "Faces",     &
         !     &   "All faces (1D objects) in the domain."  )
+
+        !> B2_GSUBSET_X_ALIGNED_FACES: x-aligned faces. One implicit object list, range 
+        !> over x faces
+        !> Create grid subset with one object list
+        call createEmptyGridSubset(                                     &
+            &   ggd_grid%grid_subset( B2_GSUBSET_X_ALIGNED_FACES ), 1,  &
+            &   'x-aligned faces' )
+        !> Initialize implicit object list for faces (class (/2/) )
+        call createExplicitObjectListSingleSpace( ggd_grid,     &
+            &   ggd_grid%grid_subset( B2_GSUBSET_X_ALIGNED_FACES),   &
+            &   B2_GSUBSET_X_ALIGNED_FACES, (/ 1:gmap%nfcx /), 2, 1)
+
+        ! call createImplicitObjectList( ggd_grid, ggd_grid%grid_subset( B2_GSUBSET_X_ALIGNED_FACES )%list(1), &
+        !     & CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) )
+        ! ggd_grid%grid_subset( B2_GSUBSET_X_ALIGNED_FACES )%list(1)%indset(1) &
+        !     & = createIndexListForRange( 1, gmap%nfcx )
+        ! if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
+        !     ggd_grid%grid_subset( B2_GSUBSET_X_ALIGNED_FACES )%list(1)%indset(2) &
+        !         & = createIndexListForRange( 1, 1 )
+        ! end if
+
 #if 0
 
-      !> B2_GSUBSET_CELLS: all 2d cells, one implicit object list
-      call createSubGridForClass( ggd_grid, ggd_grid%grid_subset( B2_GSUBSET_CELLS ), &
-          & CLASS_CELL(1:SPACE_COUNT), 'Cells' )
+        !> B2_GSUBSET_FACES_Y: y-aligned faces. One implicit object list, range over y faces. Same procedure.
+        call createSubGrid( ggd_grid%grid_subset( B2_GSUBSET_FACES_Y ), 1, 'y-aligned faces' )
+        call createImplicitObjectList( ggd_grid, ggd_grid%grid_subset( B2_GSUBSET_FACES_Y )%list(1)&
+            & , CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) )
+        ggd_grid%grid_subset( B2_GSUBSET_FACES_Y )%list(1)%indset(1) &
+            & = createIndexListForRange( gmap%nfcx + 1, gmap%nfcx + gmap%nfcy )
+        if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
+            ggd_grid%grid_subset( B2_GSUBSET_FACES_Y )%list(1)%indset(2) &
+                & = createIndexListForRange( 1, 1 )
+        end if
 
-      !> B2_GSUBSET_FACES_X: x-aligned faces. One implicit object list, range over x faces
-      !> Create subgrid with one object list
-      call createSubGrid( ggd_grid%grid_subset( B2_GSUBSET_FACES_X ), 1, 'x-aligned faces' )
-      !> Initialize implicit object list for faces (class (/1/) )
-      call createImplicitObjectList( ggd_grid, ggd_grid%grid_subset( B2_GSUBSET_FACES_X )%list(1), &
-          & CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) )
-      ggd_grid%grid_subset( B2_GSUBSET_FACES_X )%list(1)%indset(1) &
-          & = createIndexListForRange( 1, gmap%nfcx )
-      if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
-          ggd_grid%grid_subset( B2_GSUBSET_FACES_X )%list(1)%indset(2) &
-              & = createIndexListForRange( 1, 1 )
-      end if
+        !> B2_GSUBSET_CELLS: all 2d cells, one implicit object list
+        call createSubGridForClass( ggd_grid, ggd_grid%grid_subset( B2_GSUBSET_CELLS ), &
+            & CLASS_CELL(1:SPACE_COUNT), 'Cells' )
 
-      !> B2_GSUBSET_FACES_Y: y-aligned faces. One implicit object list, range over y faces. Same procedure.
-      call createSubGrid( ggd_grid%grid_subset( B2_GSUBSET_FACES_Y ), 1, 'y-aligned faces' )
-      call createImplicitObjectList( ggd_grid, ggd_grid%grid_subset( B2_GSUBSET_FACES_Y )%list(1)&
-          & , CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) )
-      ggd_grid%grid_subset( B2_GSUBSET_FACES_Y )%list(1)%indset(1) &
-          & = createIndexListForRange( gmap%nfcx + 1, gmap%nfcx + gmap%nfcy )
-      if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
-          ggd_grid%grid_subset( B2_GSUBSET_FACES_Y )%list(1)%indset(2) &
-              & = createIndexListForRange( 1, 1 )
-      end if
+      
 
       !> Subgrid of all x-points (in one poloidal plane at toroidal index 1)
       !> Assemble object descriptor for x-points
