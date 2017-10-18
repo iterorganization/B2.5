@@ -27,8 +27,8 @@ module b2mod_ual_io
 
   ! UAL Access
 #ifdef IMAS
-  use ids_schemas  ! IGNORE
-  use ids_routines ! IGNORE
+!  use ids_schemas  ! IGNORE
+!  use ids_routines ! IGNORE
 #else
 #ifdef ITM
   use euITM_schemas  ! IGNORE

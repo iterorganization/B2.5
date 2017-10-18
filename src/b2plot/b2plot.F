@@ -6611,7 +6611,7 @@ cdpc still in testing phase
             eirene_stack(i,0,iewrk)=
      1       eirene_stack(i,izstrt,iewrk)
           end do
-          nwdim(2,iewrk)=1
+          nedim(2,iewrk)=1
           if(izstrt .ne. izend) then
             eirene_label(iewrk)=
      1       eirene_label(iewrk)(1:lnblnk(eirene_label(iwwrk)))
@@ -6880,7 +6880,7 @@ cdpc still in testing phase
           stack_req=(/1,0,0,0,1,0,0/)
           if(bad_args(stack_req)) return
           is1=istack(iistack)
-          if(0.gt.is1.or.is1.ge.nwdim(2,iwwrk)) then
+          if(0.gt.is1.or.is1.ge.nedim(2,iewrk)) then
             write(*,*) 'Faulty parameter is = ',is1,' for ezsel!'
             return
           endif

@@ -24,8 +24,8 @@ program b2_ual_write
 
   ! UAL Access
 #ifdef IMAS
-  use ids_schemas  ! IGNORE
-  use ids_routines ! IGNORE
+!  use ids_schemas  ! IGNORE
+!  use ids_routines ! IGNORE
 #else
 #ifdef ITM
   use euITM_schemas  ! IGNORE

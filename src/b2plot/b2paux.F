@@ -102,7 +102,7 @@ c***  Produces a file with coordinates of the grid cell centers and
 c***  the plasma parameters (density, temperatures, neutral density)
 c***  in these points - for V. Abramov
 c***
-c*** ig > 999
+c*** ig > 999 :
 c***
 c***  Adds a line to the file ../sum_tmp/spec_pwr.dat with the power
 c***  entering both divertors, power radiated along the divertor legs,
