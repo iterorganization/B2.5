@@ -1,5 +1,4 @@
       logical function streql (str0, str1)
-      use b2mod_types
       implicit none
       character str0*(*), str1*(*)
 *     ------------------------------------------------------------------

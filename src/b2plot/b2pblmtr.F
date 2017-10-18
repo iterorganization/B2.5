@@ -44,7 +44,6 @@ c
             hlp_al(j)='T'
           end if !}
         end if !}
-c        if(hlp_al(j)(2:2).eq.' ') hlp_al(j)(2:2)='_'
       end do !}
 
       open(lun,file='radsources.dat')

@@ -730,6 +730,28 @@ contains
         tpsepi(2) = 0.0_R8
       endif
       posepi(2) = 0.5_R8 * (po(ixtl-target_offset,jsep) + po(topix(ixtl-target_offset,jsep),topiy(ixtl-target_offset,jsep)))
+    else
+      nesepa(2) = 0.0_R8
+      tesepa(2) = 0.0_R8
+      tisepa(2) = 0.0_R8
+      tpsepa(2) = 0.0_R8
+      posepa(2) = 0.0_R8
+      nesepm(2) = 0.0_R8
+      tesepm(2) = 0.0_R8
+      tisepm(2) = 0.0_R8
+      posepm(2) = 0.0_R8
+      dnsepm(2) = 0.0_R8
+      dpsepm(2) = 0.0_R8
+      kesepm(2) = 0.0_R8
+      kisepm(2) = 0.0_R8
+      vxsepm(2) = 0.0_R8
+      vysepm(2) = 0.0_R8
+      vssepm(2) = 0.0_R8
+      nesepi(2) = 0.0_R8
+      tesepi(2) = 0.0_R8
+      tisepi(2) = 0.0_R8
+      tpsepi(2) = 0.0_R8
+      posepi(2) = 0.0_R8
     endif
 #endif
     !

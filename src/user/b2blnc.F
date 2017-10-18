@@ -684,9 +684,9 @@ c*** f     :  the associated file name
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex) then
-        read(lun,700,err=40) nv,j,nc,hlp_c
+        read(lun,710,err=40) nv,j,nc,hlp_c
         go to 42
- 40     read(lun,700,err=92) i,j
+ 40     read(lun,710,err=92) i,j
         lv_trc(ltrc)=lv
         if(i.lt.960727) then
           nc=16
@@ -764,5 +764,6 @@ c
       return
 c======================================================================
   700 format('#   ',3i8,'  ##  ',a)
+  710 format(4x,3i8,6x,a)
 c======================================================================
       end subroutine b2blnc
