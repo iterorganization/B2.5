@@ -12,10 +12,11 @@ module b2mod_ual_io_grid
 
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
 #ifdef IMAS
-    use ids_schemas  ! IGNORE
-    use ids_routines ! IGNORE
-    use ids_grid_common ! IGNORE
-    use ids_string   ! IGNORE
+    use ids_schemas         ! IGNORE
+    use ids_routines        ! IGNORE
+    use ids_grid_common     ! IGNORE
+    use ids_string          ! IGNORE
+    use ids_grid_subgrid    ! IGNORE
 #else
 # ifdef ITM
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
@@ -183,7 +184,7 @@ contains
 
         !> Allocate the number of objects of each type
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(1)%object( (nx+1)*(ny+1)) )       !> nodes
+            &   objects_per_dimension(1)%object( (nx+1)*(ny+1) - 1) )   !> nodes
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(2)%object( nx*(ny+1)+(nx+1)*ny) ) !> edges
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
@@ -698,62 +699,70 @@ contains
     ! Part 2: define grid subsets
     subroutine fillInGridSubsetDescription
 
-! #if 0
-      !> internal
-      integer :: geoId, iRegion, GSubsetCount, iType, nGSubset
-      integer :: xIn, yIn, xOut, yOut, iCoreGS
-      integer :: cls(SPACE_COUNT_MAX)
-      integer, allocatable :: xpoints(:,:)
+        !> internal
+        integer :: geoId, iRegion, GSubsetCount, iType, nGSubset
+        integer :: xIn, yIn, xOut, yOut, iCoreGS
+        integer :: cls(SPACE_COUNT_MAX)
+        integer, allocatable :: xpoints(:,:)
 
-      geoId = geometryId(nnreg, periodic_bc, topcut)
+        geoId = geometryId(nnreg, periodic_bc, topcut)
     
-      !> Figure out total number of subgrids
-      !> Do generic subgrids + subgrids
-      nGSubset = B2_GENERIC_GSUBSET_COUNT + regionCountTotal(geoId)
-      !> Inner/outer midplane subgrids
-      nGSubset = nGSubset + 2
+        !> Figure out total number of subgrids
+        !> Do generic subgrids + subgrids
+        nGSubset = B2_GENERIC_GSUBSET_COUNT + regionCountTotal(geoId)
+        !> Inner/outer midplane subgrids
+        ! nGSubset = nGSubset + 2
 
-      call logmsg( LOGDEBUG, "b2IMASFillGridDescription: expecting total of "   &
-          &//idsInt2str(nGSubset)//" grid subsets" )
-      allocate( ggd_grid%grid_subset( nGSubset ) )
+        call logmsg( LOGDEBUG, "b2IMASFillGridDescription: expecting total of " &
+            &//idsInt2str(nGSubset)//" grid subsets" )
+        allocate( ggd_grid%grid_subset( nGSubset ) )
 
+        !> Set up generic grid subsets
+        !> B2_GSUBSET_NODES: all nodes, one implicit object list
+        !> subroutine createGridSubsetForClass(grid, gridSubset, cls, ispace, &
+        !>      &   gsBaseIndex, gsName, gsDescription)
+
+        call createGridSubsetForClass(  ggd_grid,               &
+            &   ggd_grid%grid_subset(1), 1, 1, 1, "Nodes B2.5", &
+            &   "All nodes (0D objects) in the domain."  )
+        ! call createGridSubsetForClass(  ggd_grid,                   &
+        !     &   ggd_grid%grid_subset(1), CLASS_NODE(1:SPACE_COUNT), 1, 1, "Nodes B2.5",     &
+        !     &   "All nodes (0D objects) in the domain."  )
+
+        !> B2_GSUBSET_FACES: all faces, one implicit object list
+        call createGridSubsetForClass(  ggd_grid,               &
+            &   ggd_grid%grid_subset(2), 2, 1, 2, "Faces",      &
+            &   "All faces (1D objects) in the domain."  )
+        ! call createGridSubsetForClass(  ggd_grid,                               &
+        !     &   ggd_grid%grid_subset(2), CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1, 2, "Faces",     &
+        !     &   "All faces (1D objects) in the domain."  )
 #if 0
 
-      !> Set up generic grid subsets
-
       !> B2_GSUBSET_CELLS: all 2d cells, one implicit object list
-      call createSubGridForClass( ggd_grid, ggd_grid%subgrids( B2_GSUBSET_CELLS ), &
+      call createSubGridForClass( ggd_grid, ggd_grid%grid_subset( B2_GSUBSET_CELLS ), &
           & CLASS_CELL(1:SPACE_COUNT), 'Cells' )
-
-      !> B2_GSUBSET_NODES: all nodes, one implicit object list
-      call createSubGridForClass( ggd_grid, ggd_grid%subgrids( B2_GSUBSET_NODES ), &
-          & CLASS_NODE(1:SPACE_COUNT), 'Nodes' )
-
-      !> B2_GSUBSET_FACES: all faces, one implicit object list
-      call createSubGridForClass( ggd_grid, ggd_grid%subgrids( B2_GSUBSET_FACES ), &
-          & CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 'Faces' )
 
       !> B2_GSUBSET_FACES_X: x-aligned faces. One implicit object list, range over x faces
       !> Create subgrid with one object list
-      call createSubGrid( ggd_grid%subgrids( B2_GSUBSET_FACES_X ), 1, 'x-aligned faces' )
+      call createSubGrid( ggd_grid%grid_subset( B2_GSUBSET_FACES_X ), 1, 'x-aligned faces' )
       !> Initialize implicit object list for faces (class (/1/) )
-      call createImplicitObjectList( ggd_grid, ggd_grid%subgrids( B2_GSUBSET_FACES_X )%list(1), &
+      call createImplicitObjectList( ggd_grid, ggd_grid%grid_subset( B2_GSUBSET_FACES_X )%list(1), &
           & CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) )
-      ggd_grid%subgrids( B2_GSUBSET_FACES_X )%list(1)%indset(1) &
+      ggd_grid%grid_subset( B2_GSUBSET_FACES_X )%list(1)%indset(1) &
           & = createIndexListForRange( 1, gmap%nfcx )
       if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
-          ggd_grid%subgrids( B2_GSUBSET_FACES_X )%list(1)%indset(2) &
+          ggd_grid%grid_subset( B2_GSUBSET_FACES_X )%list(1)%indset(2) &
               & = createIndexListForRange( 1, 1 )
       end if
 
       !> B2_GSUBSET_FACES_Y: y-aligned faces. One implicit object list, range over y faces. Same procedure.
-      call createSubGrid( ggd_grid%subgrids( B2_GSUBSET_FACES_Y ), 1, 'y-aligned faces' )
-      call createImplicitObjectList( ggd_grid, ggd_grid%subgrids( B2_GSUBSET_FACES_Y )%list(1)&
+      call createSubGrid( ggd_grid%grid_subset( B2_GSUBSET_FACES_Y ), 1, 'y-aligned faces' )
+      call createImplicitObjectList( ggd_grid, ggd_grid%grid_subset( B2_GSUBSET_FACES_Y )%list(1)&
           & , CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) )
-      ggd_grid%subgrids( B2_GSUBSET_FACES_Y )%list(1)%indset(1) &
+      ggd_grid%grid_subset( B2_GSUBSET_FACES_Y )%list(1)%indset(1) &
           & = createIndexListForRange( gmap%nfcx + 1, gmap%nfcx + gmap%nfcy )
       if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
-          ggd_grid%subgrids( B2_GSUBSET_FACES_Y )%list(1)%indset(2) &
+          ggd_grid%grid_subset( B2_GSUBSET_FACES_Y )%list(1)%indset(2) &
               & = createIndexListForRange( 1, 1 )
       end if
 
@@ -762,7 +771,7 @@ contains
       allocate( xpoints(gmap%nsv, SPACE_COUNT) )
       xpoints = 1
       xpoints(:, SPACE_POLOIDALPLANE) = gmap%svi(1:gmap%nsv)
-      call createSubGridForExplicitList( ggd_grid, ggd_grid%subgrids( B2_GSUBSET_XPOINTS ), &
+      call createSubGridForExplicitList( ggd_grid, ggd_grid%grid_subset( B2_GSUBSET_XPOINTS ), &
           & CLASS_NODE(1:SPACE_COUNT), xpoints, 'x-points' )
 
       !> Set up specific subgrids by collection faces for regions
@@ -787,7 +796,7 @@ contains
                   & " for iType "//idsInt2str(iType)//&
                   &", iRegion "//idsInt2str(iRegion)//": "//regionName(geoId, iType, iRegion) )
 
-              call createSubGridForExplicitList( ggd_grid, ggd_grid%subgrids( GSubsetCount ), &
+              call createSubGridForExplicitList( ggd_grid, ggd_grid%grid_subset( GSubsetCount ), &
                   & cls(1:SPACE_COUNT), &
                   & collectIndexListForRegion(gmap, region, iType, iRegion), &
                   & regionName(geoId, iType, iRegion) )
@@ -807,22 +816,22 @@ contains
           & did not find core boundary subgrid for assembling outer midplane subgrid"
 
       !> Figure out starting points for inner and outer midplane on core boundary
-      call findMidplaneCells(ggd_grid%subgrids(iCoreGS), gmap, crx, xIn, yIn, xOut, yOut)
+      call findMidplaneCells(ggd_grid%grid_subset(iCoreGS), gmap, crx, xIn, yIn, xOut, yOut)
 
       GSubsetCount = GSubsetCount + 1
-      call createSubGridForExplicitList( ggd_grid, ggd_grid%subgrids( GSubsetCount ), &
+      call createSubGridForExplicitList( ggd_grid, ggd_grid%grid_subset( GSubsetCount ), &
           & CLASS_NODE(1:SPACE_COUNT), &
           & collectRadialVertexIndexList(gmap, cflag, xIn, yIn, topix, topiy), &
           & "Inner midplane" )
       
       GSubsetCount = GSubsetCount + 1
-      call createSubGridForExplicitList( ggd_grid, ggd_grid%subgrids( GSubsetCount ), &
+      call createSubGridForExplicitList( ggd_grid, ggd_grid%grid_subset( GSubsetCount ), &
           & CLASS_NODE(1:SPACE_COUNT), &
           & collectRadialVertexIndexList(gmap, cflag, xOut, yOut, topix, topiy), &
           & "Outer midplane" )      
 
       call logmsg( LOGDEBUG, "b2IMASFillGridDescription: wrote total of "&
-          &//idsInt2str(GSubsetCount)//" subgrids (expected was "//idsInt2str(size(ggd_grid%subgrids))//')' )
+          &//idsInt2str(GSubsetCount)//" subgrids (expected was "//idsInt2str(size(ggd_grid%grid_subset))//')' )
 
       call assert( GSubsetCount == size(ggd_grid%subgrids) )
 #endif
