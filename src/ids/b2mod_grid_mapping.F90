@@ -43,6 +43,7 @@ module b2mod_grid_mapping
         !>  ncv  - Number of all cells in the domain (2D objects)
         !>  nfcx - Number of x-aligned faces/edges in the domain (1D objects)
         !>  nfcy - Number of y-aligned faces/edges in the domain (1D objects)
+        !>  nsv  - Number of special vertices
         !>  nvx  - Number of all vertices/nodes in the domain (0D objects)
         integer :: ncv, nfcx, nfcy, nvx
         integer :: b2nx, b2ny
