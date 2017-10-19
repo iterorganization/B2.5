@@ -6,9 +6,10 @@
 !> DOCUMENTATION:
 !> 1. purpose
 !>
-!>      b2_ual_write_gsl.f90 script is used to generate b2_ual_write_gsl.exe 
+!>      b2_ual_write_b2mod.f90 script is used to generate b2_ual_write_b2mod.exe 
 !>      (main program), which is a post-processor for b2. It reads the plasma 
-!>      state and writes it to IDS database using GSL (Grid Service Library).
+!>      state and writes it to IDS database using b2mod files/routines and 
+!>      GSL (Grid Service Library).
 !>
 !>
 !> 2. specification
@@ -73,7 +74,7 @@ program b2_ual_write
     ! use b2mod_neutr_src_scaling
     ! use b2mod_b2cmfs
     ! use b2mod_constants
-    ! use b2mod_grid_mapping
+    use b2mod_grid_mapping
     ! use b2mod_ual_io_grid
     ! use b2mod_ual_io_data
     ! use ggd
@@ -95,7 +96,8 @@ program b2_ual_write
                         !> IDS structures 
     use ids_assert, IDS_R8 => R8, IDS_R4 => R4  ! IGNORE
     use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &   ! IGNORE
-        &   IDS_COORDTYPE_Z_ => COORDTYPE_Z                      ! IGNORE
+        &   IDS_COORDTYPE_Z_ => COORDTYPE_Z   
+        ! &   GRID_UNDEFINED  => B2_GRID_UNDEFINED                ! IGNORE
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
     use ids_grid_objectlist     ! IGNORE
@@ -121,6 +123,8 @@ program b2_ual_write
     character(len=24)           ::  treename, username, device, version
     !> character(len=255)          ::  imas_connect_url
     type(ids_edge_profiles)     ::  edge_profiles
+    type(ids_edge_sources)      ::  edge_sources
+    type(ids_edge_transport)    ::  edge_transport
     !>  ..procedures
     external prgini, prgend, xerset, xertst, cfopen, cfruin
     !>  ..initialize input/output units
@@ -162,15 +166,22 @@ program b2_ual_write
     call read_additional(ninp, nout, nx, ny, ns, ne1, te1, ti1)
 
     treename    = "ids"
-    shot        = 16151
-    run         = 1001
+    ! shot        = 16151
+    ! run         = 1001
+    shot    = 100
+    run     = 6
     username    = "penkod"
     device     = "solps-iter"
     version     = "3"
 
     !> Set the data to edge_profiles IDS
-    call write_ids_edge_profiles(treename, shot, run, idx, username, &
-                                        & device, version, ne1, te1, ti1)
+    ! call write_ids_edge_profiles(edge_profiles, treename, shot, run, idx, username, &
+                                        ! & device, version, ne1, te1, ti1)
+    !> b2mod routine write_ids                     
+    call write_ids(edge_profiles, edge_sources, edge_transport)
+
+    call put_ids_edge_profiles(edge_profiles, treename, shot, run, idx,     &
+                            &   username, & device, version)
 
     ! call read_ids(treename, shot, run, idx, username, &
     !                                     & device, version)
@@ -371,8 +382,8 @@ contains
 
     end function read_additional_sizes
 
-
-    subroutine write_ids_edge_profiles(treename, shot, run, idx, username, &
+    !! Subroutine used to set data for edge_profiles IDS
+    subroutine write_ids_edge_profiles(edge_profiles, treename, shot, run, idx, username, &
                                         & device, version, ne, te, ti)
         integer ::  shot, run, idx
         integer ::  num_nodes_all, num_nodes, num_gridSubsets
@@ -395,14 +406,14 @@ contains
         character(len=255)          ::  grid_description
         character(len=132)          ::  gridSubset_name
         real (kind=B2R8), intent(in)    :: ne(:), te(:), ti(:)
-        !> TODO: get time out from b2fstate
+        !> TODO: read "time" out from b2fstate file
         ! real(B2R8)    ::  time
         real(IDS_R8)    ::  time
         real(IDS_R8), allocatable   ::  nodesGeoList(:,:)
         real(IDS_R8)    ::  scalarCells(2)    
-        type(ids_edge_profiles)     ::  edge_profiles
-        type (ids_edge_sources)     ::  edge_sources
-        type (ids_edge_transport)   ::  edge_transport
+        type(ids_edge_profiles), intent(inout)     ::  edge_profiles
+        type(ids_edge_sources)      ::  edge_sources
+        type(ids_edge_transport)    ::  edge_transport
         type(ids_edge_profiles_time_slice), pointer      ::  ggd
         type(ids_generic_grid_dynamic), pointer          ::  grid
         type(ids_generic_grid_dynamic_space), pointer    ::  space
@@ -420,7 +431,7 @@ contains
         !> so we can safely assume that num_nodes == size(crx)
         num_nodes_all   = size(crx) !> Number of all available coordinates
 
-        write(0,*) "Setting data for edge_profiles IDS"
+        write(0,*) "Setting data for edge_profiles IDS shot:", shot, ", run:", run
 
         !> Preparing database for writing
         !> Through practice it was disclosed that there are some mandatory 
@@ -482,12 +493,63 @@ contains
 
         !> --- (TODO) Set up connectivity array of grid space objects for   ---
         !> --- Class 2 objects - edges                                      ---
-        !> TODO! Currently only placeholder edges are given 
+        ! !> TODO! Currently only placeholder edges are given 
 
-        !> Set (placeholder) list of indices for nodes defining each edge object
-        allocate(edgesNodesList(1,2))
-        edgesNodesList(1,1) = 0  
-        edgesNodesList(1,2) = 0 
+        ! !> Set (placeholder) list of indices for nodes defining each edge object
+        ! allocate(edgesNodesList(1,2))
+        ! edgesNodesList(1,1) = 0  
+        ! edgesNodesList(1,2) = 0 
+
+        !! b2CreateMap: map contains  3724 unique cells
+        !! b2CreateMap: map contains  3822 unique x-aligned faces
+        !! b2CreateMap: map contains  3762 unique y-aligned faces
+        !! b2CreateMap: map contains  3860 unique vertices
+
+        numEdgesX = nx + 2
+        numEdgesY = ny + 2
+        !num_edges = ((numCellsX * numCellsY) + 98) * 2  !! (3860)
+        ! num_edges = numEdgesX * numEdgesY  !! x-aligned (3724)
+        ! num_edges = numEdgesX * numEdgesY - 98 !! x-aligned (3626)
+        num_edges = numEdgesX * numEdgesY + 98 !! x-aligned (3822)
+        !! TODO: have to fix circular connectivity 
+        allocate(edgesNodesList( num_edges, 2))
+
+        edgeId = 1
+        count = 0
+        count2 = 1
+        ! do j = 1, numEdgesY - 1
+        !     do i = 1, numEdgesX
+        !         edgesNodesList(edgeId, 1) = edgeId
+        !         edgesNodesList(edgeId, 2) = edgeId + 1
+        !         edgeId = edgeId + 1
+        !     end do
+        ! end do
+
+        ! allocate(edgeIndicesRepeat(95))
+        allocate(edgeIndicesRepeat(95))
+        do j = 1, 24
+            edgeIndicesRepeat(j) = j
+        end do
+        do j = 25, 71
+            edgeIndicesRepeat(j) = j + 1
+        end do
+        do j = 72, 95
+            edgeIndicesRepeat(j) = j + 2
+        end do
+        write(*,*) edgeIndicesRepeat
+
+        do j = 1, 3822
+            ! if( j/95 == count + 1) then
+            if (count2 == 96) then 
+                ! write(*,*) j/95, count + 1, count2
+                count = count + 1
+                count2 = 1
+            end if 
+            write(*,*) j, count, count2, count + count * 97 + edgeIndicesRepeat(count2), count + count * 97 + edgeIndicesRepeat(count2) + 1
+            edgesNodesList(j, 1) = count + count * 97 + edgeIndicesRepeat(count2)
+            edgesNodesList(j, 2) = count + count * 97 + edgeIndicesRepeat(count2) + 1
+            count2 = count2 + 1  
+        end do 
 
         !> --- Set up connectivity array of grid space objects for      ---
         !> --- Class 3 objects - 2D cells                               ---
@@ -550,6 +612,15 @@ contains
         call gridStructWriteData1d( grid, idsField, gridSubset_index,   &
             &   ti*6.242e18) 
 
+    end subroutine write_ids_edge_profiles
+
+    !! Subroutine used to put data to edge_profiles IDS
+    subroutine put_ids_edge_profiles(edge_profiles, treename, shot, run, idx,   &
+                            &   username, & device, version)
+        integer ::  shot, run, idx
+        type(ids_edge_profiles), intent(inout)     ::  edge_profiles
+        character(len=24)           ::  treename, username, device, version
+
         !> Set data to edge_profiles IDS
         write(0,*) "Writing to edge_profiles IDS"
 
@@ -571,7 +642,7 @@ contains
 
         write(0,*) "IDS write finished"
 
-    end subroutine write_ids_edge_profiles
+    end subroutine put_ids_edge_profiles
 
     !> subroutine for reading edge_profiles IDS
     subroutine read_ids(treename, shot, run, idx, username, &
