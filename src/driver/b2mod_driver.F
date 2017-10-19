@@ -22,6 +22,7 @@
       use b2mod_neoclassical
       use b2mod_first_flight
       use b2mod_input_profile
+      use b2mod_user_namelist
       use b2mod_ma28_for_7diag
       use b2mod_ma28_for_9diag
       use b2mod_transport_models
@@ -2139,7 +2140,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call find_file(filename,found)
           if (found) call write_b2mod_transport_models(99,
      >     savefile(13:16))
-          if (ank_tracing.ne.0) call b2filef(ns)
+          if (ank_tracing.ne.0) call b2filef(0,ns,nnreg)
 
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) then

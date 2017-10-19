@@ -6658,6 +6658,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>FILEDATA</name>
+				<default>.true.</default>
+				<type>logical array of size 10</type>
+				<description>
+					Switches to turn on/off the tracing files controlled by the ank_tracing switch. The files are defined in b2mod_diag, in order, starting with element 2 of the filedata array: test.trc, residuals.trc, sources.trc, blnn.trc, blne.trc, integral.trc, user.trc, blnm.trc, sepdata.trc.
+					If there is no b2.user.parameters file present, the flag for user.trc is set to .false..
+				</description>
+			</switch>
+			<switch>
 				<name>USER_FILENAME</name>
 				<default>b2.user.parameters</default>
 				<type>character*80</type>

@@ -761,6 +761,8 @@ c
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst(nstrat.le.nstraid, 
      . 'Increase DEF_NSTRA in DIMENSIONS.F')
+      if(.not.allocated(iz))
+     > call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
       call alloc_b2mod_user(nlim,nmol,ntns)
       call read_b2mod_user_namelist(nx,ns)
 cxpb  Bring in wall data and compute oft-needed wall quantities
