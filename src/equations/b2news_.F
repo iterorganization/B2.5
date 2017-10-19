@@ -316,6 +316,10 @@ csw 01oct2012 initialize potential if necessary
      &                       facdrift, fchvispar)
       call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+!      call b2tvspr (nx, ny, ns, factdrift, vol, hx, hy, qz, bb,         !srv 10.10.17
+!     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
+!      call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,      !srv 10.10.17
+!     &                 lnlam,  te, ti, ni, chci, fchvisq)
 
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                              !srv 01.10.99
@@ -478,6 +482,10 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
      &                       facdrift, fchvispar)
       call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+!      call b2tvspr (nx, ny, ns, factdrift, vol, hx, hy, qz, bb,          !srv 10.10.17
+!     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
+!      call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
+!     &                  lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
 !      do is = 0, ns-1
@@ -652,7 +660,7 @@ csw 16oct2012 init ier0
      1     vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,      !srv 11.07.99 18.01.02 01.07.09
      1     ti, ni(-1,-1,1), na, fna, vadia,                              !srv 17.05.99 25.01.02
      &     ua, fne, csig, csig_cl, csigin, chce,                         !srv 17.05.99
-     &     chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi,             !srv 05.07.00 11.07.99
+     &     chve, chci, calf, chvemx, cvsa_cl, cdna, cdpa, cddi,          !srv 05.07.00 11.07.99 16.10.17
      &     fch, fhe, fhe_mdf, fhePSch, conc,  avisper, bvisper, cvisper, !srv 05.07.00 13.10.06
      &     floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,       !srv 30.09.02
      &     fchvisq, fchinert, fchanml,                                   !srv 07.07.99 11.07.99 22.11.99 24.03.07
@@ -705,6 +713,10 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &                         facdrift, fchvispar)
           call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+!          call b2tvspr (nx, ny, ns, factdrift, vol, hx, hy, qz, bb,     !srv 10.10.17
+!     &            po, ti, na, avisper, bvisper, cvisper, fchvisper)
+!          call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,  !srv 10.10.17
+!     &                lnlam, te, ti, ni, chci, fchvisq)
 
           if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
             call b2xpro (nx, ny, ns, mp, am, na, ro)
@@ -783,7 +795,7 @@ c      with diamagnetic drift part                                       !srv 13
      1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,         !srv 11.07.99 18.01.02 01.07.09
      1  ti, ni(-1,-1,1), na, fna, vadia,                                 !srv 17.05.99 25.01.02
      &  ua, fne, csig, csig_cl, csigin, chce,                            !srv
-     &  chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi,                !srv 05.07.00 11.07.99
+     &  chve, chci, calf, chvemx, cvsa_cl, cdna, cdpa, cddi,             !srv 05.07.00 11.07.99 16.10.17
      &  fch, fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,     !srv 05.07.00 11.07.99 13.10.06
      &  floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,          !srv 30.09.02
      &  fchvisq, fchinert, fchanml,                                      !srv 07.07.99 11.07.99 22.11.99 24.03.07

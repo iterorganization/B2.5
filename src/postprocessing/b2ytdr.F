@@ -758,30 +758,26 @@ c 2002-09-11: logic revised
       call ipgetc ('solps_version', solps_version)
       write(*,*) 'Incoming SOLPS version entered : ', solps_version
 #ifndef HPUX
-      if (streql(solps_version,'iter')) then
-        write(*,*)
-     .   'Assuming standard SOLPS-ITER fort.44 format (default)'
-      else if (streql(solps_version,'4.3')) then
-        write(*,*) 'Assuming SOLPS4.3 fort.44 format'
-      else if (streql(solps_version,'5.0')) then
-        write(*,*) 'Assuming SOLPS5.0 fort.44 format'
-      else if (streql(solps_version,'5.1')) then
-        write(*,*) 'Assuming SOLPS5.1 fort.44 format'
-      else if (streql(solps_version,'5.2')) then
-        write(*,*) 'Assuming SOLPS5.2 fort.44 format'
+      filename='fort.44'
 #else
-      if (streql(solps_version,'iter')) then
-        write(*,*)
-     .   'Assuming standard SOLPS-ITER ftn44 format (default)'
-      else if (streql(solps_version,'4.3')) then
-        write(*,*) 'Assuming SOLPS4.3 ftn44 format'
-      else if (streql(solps_version,'5.0')) then
-        write(*,*) 'Assuming SOLPS5.0 ftn44 format'
-      else if (streql(solps_version,'5.1')) then
-        write(*,*) 'Assuming SOLPS5.1 ftn44 format'
-      else if (streql(solps_version,'5.2')) then
-        write(*,*) 'Assuming SOLPS5.2 ftn44 format'
+      filename='ftn44'
 #endif
+      inquire(file=trim(filename),exist=ex)
+      if (streql(solps_version,'iter')) then
+        if (ex) write(*,*) 'Assuming standard SOLPS-ITER '
+     .   //trim(filename)//' format (default)'
+      else if (streql(solps_version,'4.3')) then
+        if (ex) write(*,*) 'Assuming SOLPS4.3 '
+     .   //trim(filename)//' format'
+      else if (streql(solps_version,'5.0')) then
+        if (ex) write(*,*) 'Assuming SOLPS5.0 '
+     .   //trim(filename)//' format'
+      else if (streql(solps_version,'5.1')) then
+        if (ex) write(*,*) 'Assuming SOLPS5.1 '
+     .   //trim(filename)//' format'
+      else if (streql(solps_version,'5.2')) then
+        if (ex) write(*,*) 'Assuming SOLPS5.2 '
+     .   //trim(filename)//' format'
       else
         write(*,*) 'Accepted values are (case-insensitive): '
         write(*,*) '"ITER", "4.3", "5.0", "5.1", "5.2"'

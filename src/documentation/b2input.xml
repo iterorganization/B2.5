@@ -1014,6 +1014,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2siav_style_qip</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If style_qip.eq.1, adds a classical ion heat conductivity term to the heat flux used to compute the heat viscosity current (see manual for full details).
+				</description>
+			</switch>
+			<switch>
 				<name>b2npmo_b2sifr_</name>
 				<default>1</default>
 				<type>integer</type>
@@ -1094,6 +1102,14 @@
 				<description>
 					Real parameter which multiplies ion-neutral current. 
 					If b2tfhe_neutral is 0 then ion-neutral current is switched off otherwise ion-neutral current is switched on.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfhe_PSch</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Real parameter which multiplies the Pfirsch-Schlueter electron heat flux and conductivity.
 				</description>
 			</switch>
 			<switch>

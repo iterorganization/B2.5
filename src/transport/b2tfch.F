@@ -6,7 +6,7 @@
      1  vol, gs, hx, hy, qz, bb, te, po, ne,                    	 !xpb
      1  ti, na, fna, uadia, vedia, wadia, vaecrb, veecrb, ua,
      2  fne_32, fne_52, csig, csigin, chce, chve,               	 !xpb
-     &  calf, chvemx, cvsa, fch, conc, fchstoch, fchdia,                 !srv 17.12.13
+     &  calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,              !srv 17.12.13 16.10.17
      &  fch_p, fchvispar, fchvisq, fchin, fch_32, fch_52,                !srv 25.11.08
      1  avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
       use b2mod_types
@@ -35,7 +35,7 @@
      & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),                   	 !xpb
      & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
-     & cvsa(-1:nx,-1:ny,0:1,0:ns-1),na(-1:nx,-1:ny,0:ns-1),
+     & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),          !srv 16.10.17
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), 
      2 facdrift(-1:nx,-1:ny), BoRiS,
@@ -339,7 +339,7 @@ cxpb  Island X-point cells
      &            region(ix,iy,0).ne.0) then
                  dvpar(ix,iy)=dvpar(ix,iy)                               !srv 24.06.99
      &             +wbbl(ix,iy,3)**2/sqrt(wbbl(ix,iy,3))/wbbl(ix,iy,0)   !srv
-     &             *cvsa(ix,iy,0,is)*                                    !xpb
+     &             *cvsa_cl(ix,iy,0,is)*                                 !xpb !srv 16.10.17
      &             ((ua(ix,iy,is)+bb(ix,iy,3)/bb(ix,iy,0)*               !srv 11.01.13
      &              (wadia(ix,iy,0,is)+vaecrb(ix,iy,0,is)))
      &              *sqrt(bb(ix,iy,3))             

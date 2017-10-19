@@ -335,6 +335,10 @@
      &                       facdrift, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+!        call b2tvspr (nx, ny, ns, factdrift, vol, hx, hy, qz, bb,       !srv 10.10.17
+!     &          po, ti, na, avisper, bvisper, cvisper, fchvisper)
+!        call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,    !srv 10.10.17
+!     &                  lnlam, te, ti, ni, chci, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
           call b2xpro (nx, ny, ns, mp, am, na, ro)
@@ -455,6 +459,10 @@ cxpb
      &                       facdrift, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+!        call b2tvspr (nx, ny, ns, factdrift, vol, hx, hy,  qz, bb,       !srv 10.10.17
+!     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
+!        call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb,          !srv 10.10.17
+!     &                 ne2, lnlam,  te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
 !        do is = 0, ns-1
@@ -665,7 +673,7 @@ cxpb
      1         vol, gs, hx, hy, qz, bb, te, po, ne,                      !xpb
      1         ti, na, fna, uadia, vedia, wadia, vaecrb,                 !xpb
      &         veecrb, ua, fne_32, fne_52, csig, csigin, chce,
-     &         chve, calf, chvemx, cvsa, fch, conc, fchstoch,            !srv 17.12.13
+     &         chve, calf, chvemx, cvsa_cl, fch, conc, fchstoch,         !srv 17.12.13 16.10.17
      &         fchdia, fch_p, fchvispar, fchvisq, fchin,                 !srv 25.11.08
      1         fch_32, fch_52, avisper, bvisper, cvisper, fchvisper,
      2         csig_cl, calf_cl)
@@ -876,7 +884,7 @@ c     with diamagnetic drift part                                        !xpb
      1   vol, gs, hx, hy, qz, bb, te, po, ne,                            !xpb
      1   ti, na, fna, uadia, vedia, wadia, vaecrb, veecrb,               !xpb
      &   ua, fne_32, fne_52, csig, csigin, chce,                         !xpb
-     &   chve, calf, chvemx, cvsa, fch, conc, fchstoch,                  !srv 17.12.13
+     &   chve, calf, chvemx, cvsa_cl, fch, conc, fchstoch,               !srv 17.12.13 16.10.17
      &   fchdia, fch_p, fchvispar, fchvisq, fchin, fch_32, fch_52,       !srv 25.11.08
      1   avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
         call b2tfhe (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
