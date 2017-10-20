@@ -57,7 +57,8 @@ implicit none
     !> Will have at maximum so many spaces
     integer, parameter :: SPACE_COUNT_MAX = 2
 
-    !> Number of points in toroidal direction (only 1 makes sense here, this is for playing around)
+    !> Number of points in toroidal direction (only 1 makes sense here, this is 
+    !> for playing around)
     integer, parameter :: NNODES_TOROIDAL = 1
 
     !> Flag controlling whether the toroidal space is set up periodic or not.
@@ -65,18 +66,40 @@ implicit none
     !> If not periodic, an additional node at 2 pi is added
     logical, parameter :: TOROIDAL_PERIODIC = .false.
 
-
-    !> Object class tuples
+    !> Object class tuples (ITM classes)
     integer, dimension(SPACE_COUNT_MAX), parameter :: CLASS_NODE = (/ 0, 0 /)
-
     integer, dimension(SPACE_COUNT_MAX), parameter :: CLASS_RZ_EDGE = (/ 1, 0 /)
     integer, dimension(SPACE_COUNT_MAX), parameter :: CLASS_PHI_EDGE = (/ 0, 1 /)
+    integer, dimension(SPACE_COUNT_MAX), parameter ::   &
+        &   CLASS_POLOIDALRADIAL_FACE = (/ 1, 1 /)
+    integer, dimension(SPACE_COUNT_MAX), parameter ::   &
+        &   CLASS_TOROIDAL_FACE = (/ 2, 0 /)
+    integer, dimension(SPACE_COUNT_MAX), parameter :: CLASS_CELL = (/ 2, 1 /)  
 
-    integer, dimension(SPACE_COUNT_MAX), parameter :: CLASS_POLOIDALRADIAL_FACE = (/ 1, 1 /)
-    integer, dimension(SPACE_COUNT_MAX), parameter :: CLASS_TOROIDAL_FACE = (/ 2, 0 /)
-
-    integer, dimension(SPACE_COUNT_MAX), parameter :: CLASS_CELL = (/ 2, 1 /)
-
+    !> Object class tuples (one digit IDS classes, transformed from the above 
+    !> ITM classes )
+    !> Primary IDS classes are:
+    !>      Class 1 - nodes/vertices (0D objects)
+    !>      Class 2 - edges/faces (1D objects)
+    !>      Class 2 - 2D cells (2D objects)
+    !> Fortran90 does not allow initialization of constants using SUM. This is 
+    !> permitted in newer Fortran 2003. Current workaraund is to directly 
+    !> specify the primary IDS class constants
+    
+    ! integer, parameter :: IDS_CLASS_NODE = sum(CLASS_NODE) + 1 
+    integer, parameter :: IDS_CLASS_NODE = 1
+    ! integer, parameter :: IDS_CLASS_RZ_EDGE = sum(CLASS_RZ_EDGE) + 1
+    integer, parameter :: IDS_CLASS_RZ_EDGE = 2
+    ! integer, parameter :: IDS_CLASS_PHI_EDGE = sum(CLASS_PHI_EDGE) + 1
+    integer, parameter :: IDS_CLASS_PHI_EDGE = 2
+    ! integer, parameter :: IDS_CLASS_POLOIDALRADIAL_FACE =   &
+        ! &   sum(CLASS_POLOIDALRADIAL_FACE) 
+    integer, parameter :: IDS_CLASS_POLOIDALRADIAL_FACE = 2
+    ! integer, parameter :: IDS_CLASS_TOROIDAL_FACE =         &
+        ! &   sum(CLASS_TOROIDAL_FACE) 
+    integer, parameter :: IDS_CLASS_TOROIDAL_FACE = 2
+    ! integer, parameter :: IDS_CLASS_CELL = sum(IDS_CLASS_CELL) 
+    integer, parameter :: IDS_CLASS_CELL = 3
 
     !> Subgrid/Grid subset name constants
 
@@ -730,9 +753,9 @@ contains
         !> CLASS_CELL parameters, using CPO class definitions, which might not 
         !> work with the current IMAS GSL
 
-        call createGridSubsetForClass(  ggd_grid,               &
-            &   ggd_grid%grid_subset( GRID_SUBSET_NODES ), 1, 1, &
-            &   GRID_SUBSET_NODES, "Nodes B2.5",                 &
+        call createGridSubsetForClass(  ggd_grid,                   &
+            &   ggd_grid%grid_subset( GRID_SUBSET_NODES ),          & 
+            &   IDS_CLASS_NODE, 1, GRID_SUBSET_NODES, "Nodes",      &
             &   "All nodes (0D objects) in the domain."  )
         ! call createGridSubsetForClass(  ggd_grid,           &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_NODES ),   &
@@ -740,10 +763,10 @@ contains
         !     &   "All nodes (0D objects) in the domain."  )
 
         !> GRID_SUBSET_FACES: all faces, one implicit object list
-        call createGridSubsetForClass(  ggd_grid,               &
-            &   ggd_grid%grid_subset( GRID_SUBSET_FACES ), 2, 1, &
-            &   GRID_SUBSET_FACES, "Faces",      &
-            &   "All faces (1D objects) in the domain."  )
+        call createGridSubsetForClass(  ggd_grid,                       &
+            &   ggd_grid%grid_subset( GRID_SUBSET_FACES ),              &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, 1, GRID_SUBSET_FACES,    &
+            &   "Faces", "All faces (1D objects) in the domain."  )
         ! call createGridSubsetForClass(  ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_FACES ), &
         !     &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1, &
@@ -754,12 +777,13 @@ contains
         !> list, range over x faces
         !> Create grid subset with one object list
         call createEmptyGridSubset(                                     &
-            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES ), 1,  &
+            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES ), 1, &
             &   'x-aligned faces' )
         !> Initialize implicit object list for faces (class (/2/) )
         call createExplicitObjectListSingleSpace( ggd_grid,         &
-            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),  &
-            &   GRID_SUBSET_X_ALIGNED_FACES, (/ 1:gmap%nfcx /), 2, 1)
+            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
+            &   GRID_SUBSET_X_ALIGNED_FACES, (/ 1:gmap%nfcx /),     &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),  &
         !     &   GRID_SUBSET_X_ALIGNED_FACES, (/ 1:gmap%nfcx /),      &
@@ -767,8 +791,9 @@ contains
 
         if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
             call createExplicitObjectListSingleSpace( ggd_grid,         &
-                &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),  &
-                &   GRID_SUBSET_X_ALIGNED_FACES, (/ 1:1 /), 2, 1)
+                &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
+                &   GRID_SUBSET_X_ALIGNED_FACES, (/ 1:1 /),             &
+                &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),  &
         !     &   GRID_SUBSET_X_ALIGNED_FACES, (/ 1:1 /),      &
@@ -779,13 +804,14 @@ contains
         !> list, range over y faces
         !> Create grid subset with one object list
         call createEmptyGridSubset(                                     &
-            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES ), 1,  &
+            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES ), 1, &
             &   'y-aligned faces' )
         !> Initialize implicit object list for faces (class (/2/) )
-        call createExplicitObjectListSingleSpace( ggd_grid,         &
-            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),  &
-            &   GRID_SUBSET_Y_ALIGNED_FACES,                         &
-            &   (/ ( gmap%nfcx + 1 ) : ( gmap%nfcx + gmap%nfcy ) /), 2, 1)
+        call createExplicitObjectListSingleSpace( ggd_grid,             &
+            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),     &
+            &   GRID_SUBSET_Y_ALIGNED_FACES,                            &
+            &   (/ ( gmap%nfcx + 1 ) : ( gmap%nfcx + gmap%nfcy ) /),    &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),  &
         !     &   GRID_SUBSET_Y_ALIGNED_FACES, (/ 1:gmap%nfcy /),      &
@@ -793,8 +819,9 @@ contains
 
         if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
         call createExplicitObjectListSingleSpace( ggd_grid,         &
-            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),  &
-            &   GRID_SUBSET_Y_ALIGNED_FACES, (/ 1:1 /), 2, 1)
+            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES), &
+            &   GRID_SUBSET_Y_ALIGNED_FACES, (/ 1:1 /),             &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),  &
         !     &   GRID_SUBSET_Y_ALIGNED_FACES, (/ 1:1 /),      &
@@ -802,9 +829,9 @@ contains
         end if
 
         !> GRID_SUBSET_CELLS: all 2d cells, one implicit object list
-        call createGridSubsetForClass(  ggd_grid,               &
-            &   ggd_grid%grid_subset( GRID_SUBSET_CELLS ), 3, 1, &
-            &   GRID_SUBSET_CELLS, "Faces",      &
+        call createGridSubsetForClass(  ggd_grid,           &
+            &   ggd_grid%grid_subset( GRID_SUBSET_CELLS ),  &
+            &   IDS_CLASS_CELL, 1, GRID_SUBSET_CELLS, "Cells",  &
             &   "All faces (1D objects) in the domain."  )
         ! call createGridSubsetForClass(  ggd_grid,               &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_CELLS ),       &
@@ -823,8 +850,8 @@ contains
         !> TODO: xpoints(:, 1 ) -> taking values for first space only. Set for 
         !> all spaces.
         call createExplicitObjectListSingleSpace( ggd_grid,         &
-                &   ggd_grid%grid_subset( GRID_SUBSET_X_POINTS),  &
-                &   GRID_SUBSET_X_POINTS, xpoints(:, 1), 1, 1)
+                &   ggd_grid%grid_subset( GRID_SUBSET_X_POINTS),    &
+                &   GRID_SUBSET_X_POINTS, xpoints(:, 1), IDS_CLASS_NODE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !       &   ggd_grid%grid_subset( GRID_SUBSET_X_POINTS),  &
         !       &   GRID_SUBSET_X_POINTS, xpoints, CLASS_NODE(1:SPACE_COUNT), 1)
