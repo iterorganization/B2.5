@@ -29,9 +29,9 @@ module b2mod_ual_io
 #ifdef IMAS
     use ids_schemas  ! IGNORE
     use ids_routines ! IGNORE
-    use ids_assert, IDS_R8 => R8, IDS_R4 => R4  ! IGNORE
+    use ids_assert   ! IGNORE
     use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &   ! IGNORE
-        &   IDS_COORDTYPE_Z => COORDTYPE_R ! IGNORE
+        &   IDS_COORDTYPE_Z => COORDTYPE_Z ! IGNORE
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
     use ids_grid_objectlist     ! IGNORE
@@ -66,13 +66,13 @@ contains
             &   gs_bnd_core
         integer :: is, ns, nx, ny, i, j
         logical, parameter :: B2_WRITE_DATA = .true.
-        real(IDS_R8), dimension(-1:ubound(crx,1),-1:ubound(crx,2),3,3) :: e
+        real(IDS_real), dimension(-1:ubound(crx,1),-1:ubound(crx,2),3,3) :: e
         integer :: iGsCore, iGsInnerMidplane, iGsOuterMidplane
 
-        real(IDS_R8) :: tmpFace(-1:ubound(na, 1), -1:ubound(na, 2), 0:1)
-        real(IDS_R8) :: tmpVx(-1:ubound(na, 1), -1:ubound(na, 2))
+        real(IDS_real) :: tmpFace(-1:ubound(na, 1), -1:ubound(na, 2), 0:1)
+        real(IDS_real) :: tmpVx(-1:ubound(na, 1), -1:ubound(na, 2))
         integer ::  homogeneous_time
-        real(IDS_R8)    ::  time
+        real(IDS_real)    ::  time
 
 
         !> ===  SET UP IDS ===
@@ -85,7 +85,7 @@ contains
         !> process of writing to IDS are to be expected.
         !> This can be done using exampleSetIDSFundamentals routine
         homogeneous_time = 1
-        time = 0.0_IDS_R8
+        time = 0.0_IDS_real
         call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time) 
 
         !> Allocate ggd slice

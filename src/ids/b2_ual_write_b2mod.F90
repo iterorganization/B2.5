@@ -94,9 +94,9 @@ program b2_ual_write
     use ids_routines    ! IGNORE
                         !> These are the Access Layer routines + management of 
                         !> IDS structures 
-    use ids_assert, IDS_R8 => R8, IDS_R4 => R4  ! IGNORE
+    use ids_assert      ! IGNORE
     use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &   ! IGNORE
-        &   IDS_COORDTYPE_Z_ => COORDTYPE_Z   
+        &   IDS_COORDTYPE_Z => COORDTYPE_Z   
         ! &   GRID_UNDEFINED  => B2_GRID_UNDEFINED                ! IGNORE
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
@@ -408,9 +408,9 @@ contains
         real (kind=B2R8), intent(in)    :: ne(:), te(:), ti(:)
         !> TODO: read "time" out from b2fstate file
         ! real(B2R8)    ::  time
-        real(IDS_R8)    ::  time
-        real(IDS_R8), allocatable   ::  nodesGeoList(:,:)
-        real(IDS_R8)    ::  scalarCells(2)    
+        real(IDS_real)    ::  time
+        real(IDS_real), allocatable   ::  nodesGeoList(:,:)
+        real(IDS_real)    ::  scalarCells(2)    
         type(ids_edge_profiles), intent(inout)     ::  edge_profiles
         type(ids_edge_sources)      ::  edge_sources
         type(ids_edge_transport)    ::  edge_transport
@@ -440,7 +440,7 @@ contains
         !> process of writing to IDS are to be expected.
         !> This can be done using exampleSetIDSFundamentals routine
         homogeneous_time = 1
-        time = 0.0_IDS_R8
+        time = 0.0_IDS_real
         call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time) 
         
         !> Allocate ggd slice
@@ -467,7 +467,7 @@ contains
         !> The 2D structured grid is in our case composed out of one 2D 
         !> structured space
         !> Set definition of the coordinate system of the space
-        coordtype(:) = (/ IDS_COORDTYPE_R, IDS_COORDTYPE_Z_ /) 
+        coordtype(:) = (/ IDS_COORDTYPE_R, IDS_COORDTYPE_Z /) 
 
         !> --- Set up grid space objects for Class 1 objects - points ---
 
