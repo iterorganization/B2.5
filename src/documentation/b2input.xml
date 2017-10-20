@@ -1144,7 +1144,8 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Width of the stochastic current layer (in meters), measured from the separatrix inward, along the outer midplane.
+					Width of the stochastic current layer (in meters), measured from the separatrix inward, along the poloidal index ixref (given by b2tqna_ixref).
+					If b2tfhe_stochastic.ne.0, then b2tstch_delta must be greater than zero.
 				</description>
 			</switch>
 			<switch>
@@ -1152,7 +1153,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier to the stochastic conductivity.
+					Multiplier to the magnetic field line stochastic diffusion coefficient, describing the stochastic conductivity.
 				</description>
 			</switch>
 			<switch>

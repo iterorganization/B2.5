@@ -34,16 +34,18 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, ix, iy, bottomdelta1, ixout
+      integer ncall, ix, iy, bottomdelta1, ixref
+      integer jxi, jxa, jsep
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 }
       real (kind=R8) :: sig_stoch, delta_stoch, width
-      save ncall, sig_stoch, delta_stoch, bottomdelta1
+      save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
       intrinsic max, abs
       real (kind=R8) ::
      *   hy1                                                            !srv 07.07.14
-      external subini, subend, xertst, xerrab
+      external subini, subend, ipgetr, ipgeti, xertst, xerrab
       external b2xvsg, b2xvff, b2xvfx
+      external get_jsep
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 04.07.14
 *   ..initialization
       data ncall/0/, delta_stoch/0.0e0_R8/, sig_stoch/1.0e0_R8/
@@ -62,40 +64,31 @@
         call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
         call xertst (0.0_R8.lt.delta_stoch.or.fch_stochastic.eq.0.0_R8,
      &	 'faulty internal parameter delta_stoch')
-        if(nncut.eq.2) then
-          ixout = rightcut(nncut)
-          do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
-            if(abs(bb(ix,ny,2)) .lt. abs(bb(ixout,ny,2))) ixout = ix  !srv 11.01.13
-          enddo
-        elseif(nncut.eq.1) then
-          ixout = leftcut(nncut)
-          do ix = leftcut(nncut)+1, rightcut(nncut)-1
-            if(abs(bb(ix,ny,2)) .lt. abs(bb(ixout,ny,2))) ixout = ix  !srv 11.01.13
-          enddo
-        else
-          write(*,*) ' b2tqna: nncut not equal 1 or 2'
-          call xerrab ('Not available outside SN and DN geometries')
-        endif
+        call get_jsep(nx,ny,jxi,jxa,jsep)
+        ixref=jxa
+        call ipgeti ('b2tqna_ixref', ixref)
+        call xertst (-1.le.ixref.and.ixref.le.nx,
+     1   'faulty argument b2tqna_ixref')
 
-        bottomdelta1 = topcut(1)
+        bottomdelta1 = jsep+1
         width = 0.0e0_R8
-        do iy =topcut(1)-1,0,-1
-          width = width + hy(ixout,iy)
+        do iy = jsep,0,-1
+          width = width + hy1(ixref,iy)
           if(width.gt.delta_stoch) then
             bottomdelta1 = iy+1
             exit
           endif
         enddo
         bottomdelta1 = bottomdelta1 + 1         !srv 17.12.13   plus 1 specially
-!       write(*,"(a,3i5)") ' b2tstch: ixout, bottomdelta1, topcut(1)',
-!     &                               ixout, bottomdelta1, topcut(1)
+!       write(*,"(a,3i5)") ' b2tstch: ixref, bottomdelta1, topcut(1)',
+!     &                               ixref, bottomdelta1, topcut(1)
       endif
 
       csig_stoch = 0.0e0_R8
       fchstoch   = 0.0e0_R8
       if (fch_stochastic .ne. 0.0e0_R8 ) then                           !lk 31.01.08 {
 
-        do iy = bottomdelta1, topcut(1)
+        do iy = bottomdelta1, jsep+1
           do ix = -1, nx
            if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
             csig_stoch(ix,iy) = sig_stoch*
