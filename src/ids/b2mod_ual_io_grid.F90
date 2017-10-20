@@ -777,12 +777,12 @@ contains
         !> list, range over x faces
         !> Create grid subset with one object list
         call createEmptyGridSubset(                                     &
-            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES ), 1, &
-            &   'x-aligned faces' )
+            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES ),    &
+            &   GRID_SUBSET_X_ALIGNED_FACES, 'x-aligned faces' )
         !> Initialize implicit object list for faces (class (/2/) )
         call createExplicitObjectListSingleSpace( ggd_grid,         &
             &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
-            &   GRID_SUBSET_X_ALIGNED_FACES, (/ 1:gmap%nfcx /),     &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, (/ 1:gmap%nfcx /),   &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),  &
@@ -792,7 +792,7 @@ contains
         if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
             call createExplicitObjectListSingleSpace( ggd_grid,         &
                 &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
-                &   GRID_SUBSET_X_ALIGNED_FACES, (/ 1:1 /),             &
+                &   IDS_CLASS_POLOIDALRADIAL_FACE, (/ 1:1 /),           &
                 &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),  &
@@ -804,12 +804,12 @@ contains
         !> list, range over y faces
         !> Create grid subset with one object list
         call createEmptyGridSubset(                                     &
-            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES ), 1, &
-            &   'y-aligned faces' )
+            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES ),    & 
+            &   GRID_SUBSET_Y_ALIGNED_FACES, 'y-aligned faces' )
         !> Initialize implicit object list for faces (class (/2/) )
         call createExplicitObjectListSingleSpace( ggd_grid,             &
             &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),     &
-            &   GRID_SUBSET_Y_ALIGNED_FACES,                            &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE,                          &
             &   (/ ( gmap%nfcx + 1 ) : ( gmap%nfcx + gmap%nfcy ) /),    &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
@@ -820,7 +820,7 @@ contains
         if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
         call createExplicitObjectListSingleSpace( ggd_grid,         &
             &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES), &
-            &   GRID_SUBSET_Y_ALIGNED_FACES, (/ 1:1 /),             &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, (/ 1:1 /),           &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),  &
@@ -833,6 +833,7 @@ contains
             &   ggd_grid%grid_subset( GRID_SUBSET_CELLS ),  &
             &   IDS_CLASS_CELL, 1, GRID_SUBSET_CELLS, "Cells",  &
             &   "All faces (1D objects) in the domain."  )
+
         ! call createGridSubsetForClass(  ggd_grid,               &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_CELLS ),       &
         !     &   CLASS_CELL(1:SPACE_COUNT), 1, GRID_SUBSET_CELLS, &
@@ -845,17 +846,17 @@ contains
         xpoints(:, SPACE_POLOIDALPLANE) = gmap%svi(1:gmap%nsv)
         !> Create grid subset with one object list
         call createEmptyGridSubset(                                     &
-                &   ggd_grid%grid_subset( GRID_SUBSET_X_POINTS ), 1, 'x-points' )
+            &   ggd_grid%grid_subset( GRID_SUBSET_X_POINTS ),           &
+            &   GRID_SUBSET_X_POINTS, 'x-points' )
         !> Initialize explicit object list for faces (class (/1/) )
         !> TODO: xpoints(:, 1 ) -> taking values for first space only. Set for 
         !> all spaces.
         call createExplicitObjectListSingleSpace( ggd_grid,         &
                 &   ggd_grid%grid_subset( GRID_SUBSET_X_POINTS),    &
-                &   GRID_SUBSET_X_POINTS, xpoints(:, 1), IDS_CLASS_NODE, 1)
+                &   IDS_CLASS_NODE , xpoints(:, 1), IDS_CLASS_NODE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !       &   ggd_grid%grid_subset( GRID_SUBSET_X_POINTS),  &
         !       &   GRID_SUBSET_X_POINTS, xpoints, CLASS_NODE(1:SPACE_COUNT), 1)
-
 #if 0
       !> Set up specific grid subset by collection faces for regions
 
