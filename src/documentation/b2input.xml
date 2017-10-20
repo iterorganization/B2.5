@@ -1140,6 +1140,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tstch_delta</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Width of the stochastic current layer (in meters), measured from the separatrix inward, along the outer midplane.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tstch_sig</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the stochastic conductivity.
+				</description>
+			</switch>
+			<switch>
 				<name>b2trno_con_e_stochastic</name>
 				<default>1.0</default>
 				<type>real</type>

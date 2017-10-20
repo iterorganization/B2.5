@@ -46,7 +46,7 @@
       external b2xvsg, b2xvff, b2xvfx
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 04.07.14
 *   ..initialization
-      data ncall/0/, delta_stoch/0.0e0_R8/, sig_stoch/0.0e0_R8/ 
+      data ncall/0/, delta_stoch/0.0e0_R8/, sig_stoch/1.0e0_R8/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -57,11 +57,11 @@
       if (ncall.eq.0) then
         call ipgetr ('b2tstch_delta', delta_stoch)
         call ipgetr ('b2tstch_sig', sig_stoch)
-        call xertst (0.0_R8.lt.delta_stoch,
-     &	 'faulty internal parameter delta_stoch')
         call xertst (0.0_R8.le.sig_stoch,
      &	 'faulty internal parameter sig_stoch')
         call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
+        call xertst (0.0_R8.lt.delta_stoch.or.fch_stochastic.eq.0.0_R8,
+     &	 'faulty internal parameter delta_stoch')
         if(nncut.eq.2) then
           ixout = rightcut(nncut)
           do ix = rightcut(nncut)+1, rightcut(nncut-1)-1

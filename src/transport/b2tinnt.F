@@ -48,7 +48,7 @@
       integer ia, im
       character chns*3
 #endif
-      integer, save :: ncall =0, style = 1
+      integer, save :: ncall = 0, style = 1
       real (kind=R8), save :: fch_ion_neutral = 0.0_R8
       real (kind=R8) ::
      *   fnac(-1:nx,-1:ny,0:1,0:ns-1), vntrc(-1:nx,-1:ny,0:1),            !srv 08.07.09
@@ -309,7 +309,7 @@
             enddo
           endif
 *   ..calculate the contribution of ion-neutral current
-          fchin     = 0.0e0_R8
+          fchin = 0.0e0_R8
           do is0 = 0, ns-1
             if (is_neutral(is0)) then
 *       X-COMPONENT OF ION-NEUTRAL CURRENT
