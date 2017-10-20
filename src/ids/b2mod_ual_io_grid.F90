@@ -734,6 +734,8 @@ contains
         integer :: xIn, yIn, xOut, yOut, iCoreGS
         integer :: cls(SPACE_COUNT_MAX)
         integer, allocatable :: xpoints(:,:)
+        integer, allocatable :: indArray(:)
+        integer :: i
 
         geoId = geometryId(nnreg, periodic_bc, topcut)
     
@@ -780,9 +782,11 @@ contains
             &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES ),    &
             &   GRID_SUBSET_X_ALIGNED_FACES, 'x-aligned faces' )
         !> Initialize implicit object list for faces (class (/2/) )
+        allocate(indArray(gmap%nfcx))
+        indArray = (/ (i, i = 1, gmap%nfcx) /)
         call createExplicitObjectListSingleSpace( ggd_grid,         &
             &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
-            &   IDS_CLASS_POLOIDALRADIAL_FACE, (/ 1:gmap%nfcx /),   &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, indArray,            &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),  &
@@ -790,13 +794,16 @@ contains
         !     &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1)
 
         if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
+            deallocate(indArray)
+            allocate(indArray(1))
+            indArray = (/ 1 /)
             call createExplicitObjectListSingleSpace( ggd_grid,         &
                 &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
-                &   IDS_CLASS_POLOIDALRADIAL_FACE, (/ 1:1 /),           &
+                &   IDS_CLASS_POLOIDALRADIAL_FACE, indArray,            &
                 &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),  &
-        !     &   GRID_SUBSET_X_ALIGNED_FACES, (/ 1:1 /),      &
+        !     &   GRID_SUBSET_X_ALIGNED_FACES, indArray,      &
         !     &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1)
         end if
 
@@ -807,24 +814,29 @@ contains
             &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES ),    & 
             &   GRID_SUBSET_Y_ALIGNED_FACES, 'y-aligned faces' )
         !> Initialize implicit object list for faces (class (/2/) )
+        deallocate(indArray)
+        allocate(indArray(gmap%nfcy))
+        indArray = (/ (i, i = gmap%nfcx + 1, gmap%nfcx + gmap%nfcy) /)
         call createExplicitObjectListSingleSpace( ggd_grid,             &
             &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),     &
             &   IDS_CLASS_POLOIDALRADIAL_FACE,                          &
-            &   (/ ( gmap%nfcx + 1 ) : ( gmap%nfcx + gmap%nfcy ) /),    &
-            &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
+            &   indArray, IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),  &
         !     &   GRID_SUBSET_Y_ALIGNED_FACES, (/ 1:gmap%nfcy /),      &
         !     &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1)
 
         if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
+        deallocate(indArray)
+        allocate(indArray(1))
+        indArray = (/ 1 /)
         call createExplicitObjectListSingleSpace( ggd_grid,         &
             &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES), &
-            &   IDS_CLASS_POLOIDALRADIAL_FACE, (/ 1:1 /),           &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, indArray,           &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),  &
-        !     &   GRID_SUBSET_Y_ALIGNED_FACES, (/ 1:1 /),      &
+        !     &   GRID_SUBSET_Y_ALIGNED_FACES, indArray,      &
         !     &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1)
         end if
 
