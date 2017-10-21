@@ -95,9 +95,10 @@ program b2_ual_write
                         !> These are the Access Layer routines + management of 
                         !> IDS structures 
     use ids_assert      ! IGNORE
-    use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &   ! IGNORE
-        &   IDS_COORDTYPE_Z => COORDTYPE_Z   
-        ! &   GRID_UNDEFINED  => B2_GRID_UNDEFINED                ! IGNORE
+    use ids_grid_common &       ! IGNORE
+        & , IDS_COORDTYPE_R => COORDTYPE_R    &
+        & , IDS_COORDTYPE_Z => COORDTYPE_Z
+        ! &   GRID_UNDEFINED  => B2_GRID_UNDEFINED
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
     use ids_grid_objectlist     ! IGNORE
@@ -121,7 +122,7 @@ program b2_ual_write
     integer     ::  ix, ixx
     integer     ::  shot, run
     character(len=24)           ::  treename, username, device, version
-    !> character(len=255)          ::  imas_connect_url
+    !> character(len=255)       ::  imas_connect_url
     type(ids_edge_profiles)     ::  edge_profiles
     type(ids_edge_sources)      ::  edge_sources
     type(ids_edge_transport)    ::  edge_transport
@@ -181,7 +182,7 @@ program b2_ual_write
     call write_ids(edge_profiles, edge_sources, edge_transport)
 
     call put_ids_edge_profiles(edge_profiles, treename, shot, run, idx,     &
-                            &   username, & device, version)
+                            &   username, device, version)
 
     ! call read_ids(treename, shot, run, idx, username, &
     !                                     & device, version)
@@ -545,9 +546,13 @@ contains
                 count = count + 1
                 count2 = 1
             end if 
-            write(*,*) j, count, count2, count + count * 97 + edgeIndicesRepeat(count2), count + count * 97 + edgeIndicesRepeat(count2) + 1
-            edgesNodesList(j, 1) = count + count * 97 + edgeIndicesRepeat(count2)
-            edgesNodesList(j, 2) = count + count * 97 + edgeIndicesRepeat(count2) + 1
+            write(*,*) j, count, count2, &
+             &  count + count * 97 + edgeIndicesRepeat(count2), &
+             &  count + count * 97 + edgeIndicesRepeat(count2) + 1
+            edgesNodesList(j, 1) = &
+             &  count + count * 97 + edgeIndicesRepeat(count2)
+            edgesNodesList(j, 2) = &
+             &  count + count * 97 + edgeIndicesRepeat(count2) + 1
             count2 = count2 + 1  
         end do 
 
@@ -616,7 +621,7 @@ contains
 
     !! Subroutine used to put data to edge_profiles IDS
     subroutine put_ids_edge_profiles(edge_profiles, treename, shot, run, idx,   &
-                            &   username, & device, version)
+                            &   username, device, version)
         integer ::  shot, run, idx
         type(ids_edge_profiles), intent(inout)     ::  edge_profiles
         character(len=24)           ::  treename, username, device, version
@@ -679,3 +684,6 @@ contains
 
 end program b2_ual_write
 
+!!!Local Variables:
+!!! mode: f90
+!!! End:

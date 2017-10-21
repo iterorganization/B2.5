@@ -95,8 +95,8 @@ program b2_ual_write
                         !> IDS structures 
     use ids_assert      ! IGNORE
     use ids_grid_common &       ! IGNORE
-        & , IDS_COORDTYPE_R => COORDTYPE_R,    &
-        &   IDS_COORDTYPE_Z => COORDTYPE_R
+        & , IDS_COORDTYPE_R => COORDTYPE_R    &
+        & , IDS_COORDTYPE_Z => COORDTYPE_Z
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
     use ids_grid_objectlist     ! IGNORE
