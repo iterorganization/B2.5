@@ -67,9 +67,8 @@ c
 c----------------------------------------------------------------------
 c*** Initialisation call.
 c*** Check whether the directory "tracing" exists and the files can
-c*** be opened. If yes, then the data will be written to the files,
-c*** if no, then they will appear on "b2.log". The file headers are
-c*** written to the files if the files do not exist.
+c*** be opened. If yes, then the data will be written to the files.
+c*** The file headers are written to the files if the files are empty.
 c----------------------------------------------------------------------
       call subini('b2filei')
 c

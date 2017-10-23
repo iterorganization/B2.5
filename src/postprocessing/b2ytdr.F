@@ -9604,8 +9604,7 @@ cxpb as they no longer necessarily point to the same species
      .   (.not.same_atoms.or.nx.ne.nx1.or.non_commensurate.eq.1)) then
         if(.not.allocated(iz))
      >   call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
-        call alloc_b2mod_user(nlimi,nmoli,ntns)
-        call read_b2mod_user_namelist(nx,ns)
+        call alloc_b2mod_user(nx,ns,nlimi,nmoli,ntns)
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
@@ -9767,9 +9766,9 @@ cxpb as they no longer necessarily point to the same species
         if (scale_He) write(99,'(a,l1,a)') 'SCALE_HE=',SCALE_HE,','
         if (print_isat)
      >   write(99,'(a,l1,a)') 'PRINT_ISAT=',PRINT_ISAT,','
-        write(hlp_frm,'(a,i2,a)') '(a,',len_ntrc,'l1,a)'
+        write(hlp_frm,'(a,i2,a)') '(a,',len_ntrc,'(l1,a))'
         write(99,hlp_frm)
-     >   'FILEDATA=',(FILEDATA(i),i=1,len_ntrc),','
+     >   'FILEDATA=',((FILEDATA(i),','),i=1,len_ntrc)
         if (.not.write_nml_user) write(99, '(a,l1,a)')
      >   'WRITE_NML_USER=',write_nml_user,','
         if (.not.streql(user_filename,'b2.user.parameters'))

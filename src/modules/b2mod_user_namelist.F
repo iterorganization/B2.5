@@ -24,6 +24,7 @@
       logical scale_He, print_isat
       logical user_namelist_used, written
       logical, save :: write_nml_user = .true.
+      logical, save :: user_initialised = .false.
 
       private :: user
       namelist /user/
@@ -67,10 +68,11 @@ c----------------------------------------------------------------------
 
       contains
 
-      subroutine alloc_b2mod_user(nlim,nmol,ntns)
+      subroutine alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
       implicit none
-      integer nlim, nmol, ntns
+      integer nx, ns, nlim, nmol, ntns
 
+      if (user_initialised) return
 #ifdef ALLOCATE_AND_NAMELIST
       nhetrgtx=nlim
       allocate(lhetrgts(nhetrgtx),lpfrgrp(nlim),lntrgrp(nlim))
@@ -104,6 +106,8 @@ c***  Standard setup:
       scale_He=.false.
       print_isat=.false.
       user_filename='b2.user.parameters'
+      call read_b2mod_user_namelist(nx,ns)
+      user_initialised = .true.
 
       return
       end subroutine alloc_b2mod_user
@@ -114,6 +118,7 @@ c***  Standard setup:
       deallocate(lhetrgts,lpfrgrp,lntrgrp)
       deallocate(l_h_mol)
 #endif
+      user_initialised = .false.
       return
       end subroutine dealloc_b2mod_user
 

@@ -763,8 +763,7 @@ c
      . 'Increase DEF_NSTRA in DIMENSIONS.F')
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
-      call alloc_b2mod_user(nlim,nmol,ntns)
-      call read_b2mod_user_namelist(nx,ns)
+      call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)
