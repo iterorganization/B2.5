@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tinnt (nx, ny, ns, ismain, ismain0,
-     &                    vol, gs, hx, hy, qz, qc, bb,                    !srv 08.07.09 {
-     &                    te, po, ti, na, fna, csigin, fchin)             !srv 08.03.99 16.06.09
+      subroutine b2tinnt (nx, ny, ns, facdrift,
+     &       ismain, ismain0, vol, gs, hx, hy, qz, qc, bb,               !srv 08.07.09 { !srv 20.10.17
+     &       te, po, ti, na, fna, csigin, fchin)                         !srv 08.03.99 16.06.09
       use b2mod_types
       use b2mod_indirect
       use b2mod_rates
@@ -19,7 +19,8 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
       real (kind=R8) ::
-     *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny), 
+     &   facdrift(-1:nx,-1:ny),                                          !srv 20.10.17
+     * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
      1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), 
      1 te(-1:nx,-1:ny), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1), 
@@ -58,7 +59,7 @@
      *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
      &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), csigia(-1:nx,-1:ny,0:1),   !srv 15.02.11
-     &   sigi(-1:nx,-1:ny) !, dab2_(-1:nx,-1:ny)
+     &   sigi(-1:nx,-1:ny), facdriftm                                     !srv 20.10.17
 *   ..procedures
       real (kind=R8) ::
      *   hy1                                                              !srv 07.07.14
@@ -87,6 +88,7 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       fchin     = 0.0e0_R8                                                !srv 09.07.99
+      facdriftm = maxval(facdrift)                                        !srv 20.10.17
       if(pot_eq.ne.0 .and. fch_ion_neutral .ne. 0.0e0_R8) then            !srv 26.07.06 01.07.99
         if (use_eirene.ne.0) then
           fchin = 0.0e0_R8                                                !srv 15.02.11 {
@@ -311,7 +313,8 @@
 *   ..calculate the contribution of ion-neutral current
           fchin = 0.0e0_R8
           do is0 = 0, ns-1
-            if (is_neutral(is0)) then
+!            if (is_neutral(is0)) then
+            if (is_neutral(is0).and.nint(zn(is0)).eq.1) then             !srv 20.10.17
 *       X-COMPONENT OF ION-NEUTRAL CURRENT
 *      ..get fluxes divided by area
               do iy=-1,ny
@@ -341,7 +344,8 @@
               call intfaceh(nx,ny,leftix,leftiy,vol,vntrc(-1,-1,0),
      &                                                         vntrl)
               do is = 0, ns-1
-                if (.not.is_neutral(is)) then
+!                if (.not.is_neutral(is)) then
+                if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then       !srv 20.10.17
                   if(style.eq.0) then
                     do iy=0,ny-1
                       do ix=-1,nx
@@ -384,7 +388,8 @@
               call intfacev(nx,ny,bottomix,bottomiy,vol,
      .                    vntrc(-1,-1,1),vntrb)
               do is = 0, ns-1
-                if (.not.is_neutral(is)) then
+!                if (.not.is_neutral(is)) then
+                if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then      !srv 20.10.17
                   if(style.eq.0) then
                     do iy=0,ny
                       do ix=-1,nx

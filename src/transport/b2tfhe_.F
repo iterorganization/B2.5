@@ -81,8 +81,6 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..global named constants
-      
 *   ..local variables
       integer ncall, n2, ix, iy, ib, is, ixl, iyl, ixb, iyb, is0
       integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
@@ -93,16 +91,16 @@
       integer, save :: pot_eq = 1                                        !srv 26.07.06
       integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
       integer, save :: style = 2                                         !srv 13.01.17
-      integer, save :: no_current=0                                      !srv 27.02.13
+      integer, save :: no_current= 0                                     !srv 27.02.13
 csw 10oct2012
-      integer, save :: b2_upwind =0     
-      integer, save :: b2tfhe_hybr2=0, flo53=0
+      integer, save :: b2_upwind = 0
+      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
 
       character(3) :: charns, charns0
       real (kind=R8), save :: alfTeEh = 0.0_R8                           !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny),                         !lk 31.01.08 {
-     &                  fchstoch(-1:nx,-1:ny)       
+     &                  fchstoch(-1:nx,-1:ny)
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 }
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
@@ -133,7 +131,7 @@ csw aug2014 fix hy1 as suggested by xpb (multiply qz instead divide)
 csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialization
-      data ncall/0/, fch_ion_neutral/0.0e0_R8/, fch_inert/1.0e0_R8/      !srv 07.07.99 22.03.02    
+      data ncall/0/, fch_ion_neutral/0.0e0_R8/, fch_inert/1.0e0_R8/      !srv 07.07.99 22.03.02
      *        , fch_anomalous/1.0e0_R8/                                  !srv 22.03.02
      *        , dia_cur/1.0e0_R8/, vis_par/0.0e0_R8/, vdia_par/1.0e0_R8/ !srv 17.05.99 22.03.02
      *        , vis_q/1.0e0_R8/, vis_per/0.0e0_R8/                       !srv 11.07.99 22.11.99 22.03.02
@@ -214,22 +212,23 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
 
       facdriftm = maxval(facdrift)
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nx, ny, ns, ismain, ismain0, vol, gs, hx, hy,
-     &                 qz, qc, bb, te, po, ti, na, fna, csigin, fchin)   !srv 11.05.09
+      call b2tinnt (nx, ny, ns, facdrift, ismain, ismain0,
+     &              vol, gs, hx, hy, qz, qc, bb,
+     &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 c Drift terms
 *   .. compute x,y-components of divergent part of diamagnetic current
-       call b2tdia(nx, ny, vol, gs, bb, pz, facdrift, fchdia)
+      call b2tdia(nx, ny, vol, gs, bb, pz, facdrift, fchdia)
 *   .. calculate  x,y-components of viscosity parallel current
-       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua,
+      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua,
      &       cvsa_cl, facdrift, fchvispar)                               !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
-       call b2tvspr(nx, ny, ns, facdrift, vol, hx, hy, qz, bb,           !srv 10.10.17
+      call b2tvspr(nx, ny, ns, facdrift, vol, hx, hy, qz, bb,            !srv 10.10.17
      &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
-       call  b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,     !srv 10.10.17
+      call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
      &        lnlam, te, ti, ni, chci, fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99
-       call b2tiner (nx, ny, ns, vol, gs, hx, hy, bb, na, ua,            !srv 22.11.12
+      call b2tiner (nx, ny, ns, vol, gs, hx, hy, bb, na, ua,             !srv 22.11.12
      &                     facdrift, fchinert)
 *  .. calculate the x,y-components of anomalous current
       call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)
@@ -237,7 +236,7 @@ c Drift terms
 *     stochastization of magnetic field
       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,     !srv 07.07.14
      &      fchstoch)
-       
+
       fledia = 0.0_R8                                                    !srv 25.01.02 {
       if(facdriftm.ne.0.0e0_R8) then                                     !srv 18.01.07
        do is = 0,ns-1                                                    !srv 12.05.11
@@ -247,7 +246,7 @@ c Drift terms
          do iy = -1, ny
           do ix = 0, nx
            if(leftix(ix,iy).ne.-2) then                                  !srv 26.11.02
-            fledia(ix,iy,0) = 
+            fledia(ix,iy,0) =
      &       -(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))              !srv 25.01.02 was 5/2
      &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))                !srv 17.05.99 11.03.00
      &       *(te(leftix(ix,iy),leftiy(ix,iy))                           !srv 17.05.99 11.03.00
@@ -263,7 +262,7 @@ c Drift terms
 * ..compute flediay
          do iy = 0, ny
           do ix = -1, nx
-           fledia(ix,iy,1) = 
+           fledia(ix,iy,1) =
      &      -(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))           !srv 17.05.99 11.03.00 25.01.02 was 5/2
      &      /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))           !srv 17.05.99 11.03.00
      &      *(te(bottomix(ix,iy),bottomiy(ix,iy))                        !srv 17.05.99 11.03.00 13.09.02
@@ -292,7 +291,7 @@ c Drift terms
       call b2tepsch(nx, ny, ns, facdrift, cddi, te, ne, cone, fhePSch)   !srv 16.10.17
 
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
- 
+
 * ..compute parallel current
       call b2xehx (nx, ny, hx, te, po, ne, ehx_)                         !srv 13.01.17 {
       call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
@@ -306,8 +305,8 @@ c Drift terms
           end do
         end do
       else
-        fch_pi_f = 0.0_R8                                                !srv 04.04.17
-        c071 = 0.71e0_R8                                                 !srv 13.01.17
+        fch_pi_f = 0.0_R8                                              !srv 04.04.17
+        c071 = 0.71e0_R8                                               !srv 13.01.17
       endif
       fch_p = fch_p - fch_pi_f                                         !srv 13.01.17 }
 
@@ -319,7 +318,7 @@ c Drift terms
          floe(ix,iy,0)    = 0.0e0_R8
          cone(ix,iy,0,0)  = 0.0e0_R8                                   !srv 02.01.07
          fhe(ix,iy,0)     = 0.0e0_R8
-         fhe_mdf(ix,iy,0) = 0.0e0_R8                                   !srv 13.10.06 
+         fhe_mdf(ix,iy,0) = 0.0e0_R8                                   !srv 13.10.06
          conc(ix,iy,0)    = 0.0e0_R8
          fch(ix,iy,0)     = 0.0e0_R8
          if (balance.and.(balance_netcdf.ne.0)) then
@@ -352,9 +351,9 @@ c Drift terms
         if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 04.02.03 17.01.12
 
           if(no_Ptncr_x_he.eq.0) then
-           cone0 = hybr(floe0,chce(ix,iy,0))-abs(floe0/2.0)
+           cone0 = hybr(floe0,chce(ix,iy,0))-abs(floe0/2.0_R8)
           else
-           cone0 = chce(ix,iy,0)-abs(floe0/2.0)
+           cone0 = chce(ix,iy,0)-abs(floe0/2.0_R8)
           endif
 
           if (chce(ix,iy,0).eq.0) then
@@ -393,7 +392,7 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
           if(b2_upwind .ne. 0) then
              fhe(ix,iy,0) =
      &        upwind(floe0,te(leftix(ix,iy),leftiy(ix,iy)), te(ix,iy))
-     &         -cone0*(te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))) 
+     &         -cone0*(te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))
      &         + alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
              if (balance.and.
@@ -463,7 +462,7 @@ csw 30apr2014
               cone(ix,iy,0,0) = cone0
             else
               floe(ix,iy,0) = floe0
-              cone(ix,iy,0,0) = abs(floe0/2.0)+cone0/(1+t0)             !srv 02.01.07
+              cone(ix,iy,0,0) = abs(floe0/2.0_R8)+cone0/(1.0_R8+t0)     !srv 02.01.07
             endif
 
           else
@@ -471,9 +470,9 @@ csw 30apr2014
 csw 17feb2012
             if(no_Ptncr_x_he.eq.0) then
               cone0_mdf = hybr(floe0_mdf,chce(ix,iy,0))-
-     &                    abs(floe0_mdf/2.0)
+     &                    abs(floe0_mdf/2.0_R8)
             else
-              cone0_mdf = chce(ix,iy,0)-abs(floe0_mdf/2.0)
+              cone0_mdf = chce(ix,iy,0)-abs(floe0_mdf/2.0_R8)
             endif
 
 csw 13mar2013 SOLPS4 modified f. flux limited hybrid style (overwrite cone0_mdf)
@@ -567,9 +566,9 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
               endif
             endif
             floe(ix,iy,0) = floe0_mdf
-            cone(ix,iy,0,0) = cone0_mdf/(1.0_R8+t0_mdf) !srv 02.01.07
+            cone(ix,iy,0,0) = cone0_mdf/(1.0_R8+t0_mdf)                  !srv 02.01.07
           endif                                                          !srv 17.06.09 }
- 
+
           if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                            .or. iout_b2wdat.eq.4) then            !srv 16.09.02 {
             w1(ix,iy)=1.5e0_R8*fne(ix,iy,0)
@@ -658,7 +657,7 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      &          alfTeEh*alfe0*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
               fhe_ecrb(ix,iy,0) = 0.0_R8
-            endif       
+            endif
           else
             fhe(ix,iy,0) =
      &         upwind(floe0,te(leftix(ix,iy),leftiy(ix,iy)) , te(ix,iy))
@@ -782,19 +781,22 @@ csw 13mar2013 added check upwind (SOLPS4 style)
 !     &   +bb(leftix(ix,iy),leftiy(ix,iy),0)/
 !     &    bb(leftix(ix,iy),leftiy(ix,iy),2))                            !srv
 !     &  /(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))                  !srv
-!     &  *(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0                !srv 11.10.02 } 
+!     &  *(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8             !srv 11.10.02 }
          conc(ix,iy,0) = csig(ix,iy,0)
-         if(fch_ion_neutral .ne. 0.0e0_R8 ) then                         !srv
+         if(fch_ion_neutral.ne.0.0e0_R8 ) then                           !srv
           do is = 0, ns-1                                                !srv 24.06.08 {
-           if (.not.is_neutral(is)) then
-            do is0 = 0, ns-1
-             conc(ix,iy,0) = conc(ix,iy,0) + csigin(ix,iy,0,is,is0) !*facdrift    !srv 07.02.03
-     &        *(wbbl(ix,iy,2)/wbbl(ix,iy,3))**2                          !srv 15.02.11
+!           if (.not.is_neutral(is)) then
+            if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then          !srv 20.10.17
+             do is0 = 0, ns-1
+              if (is_neutral(is0).and.nint(zn(is0)).eq.1) then           !srv 20.10.17
+               conc(ix,iy,0) = conc(ix,iy,0) + csigin(ix,iy,0,is,is0) !*facdrift    !srv 07.02.03
+     &          *(wbbl(ix,iy,2)/wbbl(ix,iy,3))**2                        !srv 15.02.11
 !     1        *((bb(ix,iy,2)/bb(ix,iy,3))**2+                           !srv 25.02.03 {
 !     2        (bb(leftix(ix,iy),leftiy(ix,iy),2)/
 !     3        bb(leftix(ix,iy),leftiy(ix,iy),3))**2)*0.5e0_R8           !srv 25.02.03 }
-            enddo
-           endif
+              endif                                                      !srv 20.10.17
+             enddo
+            endif
           enddo                                                          !srv 24.06.08 }
          endif                                                           !srv
         endif                                                            !srv 26.11.02
@@ -841,7 +843,7 @@ csw 13mar2013 added check upwind (SOLPS4 style)
       do iy = 0, ny
        do ix = -1, nx
         if(pot_eq.eq.1 .and. no_current.eq.0) then                       !srv 27.02.13
-         ehy = ehy_(ix,iy)                                               !srv 13.01.17    
+         ehy = ehy_(ix,iy)                                               !srv 13.01.17
         else
          ehy=0.0_R8
         endif                                                            !srv 27.02.13
@@ -863,7 +865,7 @@ csw 13mar2013 added check upwind (SOLPS4 style)
         else
           cone0     = chce(ix,iy,1)
           cone0_mdf = chce(ix,iy,1)
-        endif 
+        endif
 
 csw 13mar2013 overwrite cone0 (SOLPS4 style)
         if(b2tfhe_hybr2 .ne. 0) then
@@ -975,29 +977,29 @@ csw 13mar2013 added check upwind (SOLPS4 style)
          endif
         else
          fhe(ix,iy,1) = floe0*
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
      &         -cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &        +alfTeEh*calf(ix,iy,1)*                                    !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy   !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
          fhe_mdf(ix,iy,1) = floe0_mdf*                                   !srv 13.10.06 {
-     &        (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+     &        (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
      &      -cone0_mdf*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -fhePSch(ix,iy,1)                                            !srv 13.10.06 }
      &        +alfTeEh*calf(ix,iy,1)*                                    !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy   !iyv 12.05.08 !srv 03.10.08
          if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
            fhe_32(ix,iy,1) = 1.5e0_R8*fne(ix,iy,1)*
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
            fhe_52(ix,iy,1) = 0.0_R8
            fhe_strange(ix,iy,1) = chve(ix,iy,1)*
      &         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
            if (mdf_fhe.eq.0) then
              fhe_cond(ix,iy,1) = -cone0*
      &                (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
              fhe_dia(ix,iy,1) = 2.5e0_R8*fledia(ix,iy,1)*
      &         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2 
+     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
           else
              fhe_cond(ix,iy,1) = -cone0_mdf*
      &                (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -1025,25 +1027,28 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      5      +fchinert(ix,iy,1)                                           !srv 07.07.99
      6      +fchvisper(ix,iy,1)                                          !srv 22.11.99
      7      +fchanml(ix,iy,1)                                            !srv 24.03.07
-     8      +fchstoch(ix,iy)                                             !lk 31.01.08 
+     8      +fchstoch(ix,iy)                                             !lk 31.01.08
         conc(ix,iy,1) = csig(ix,iy,1)                                    !srv
-        if(fch_ion_neutral .ne. 0.0e0_R8 ) then                          !srv
+        if(fch_ion_neutral.ne.0.0e0_R8 ) then                            !srv
          do is = 0, ns-1                                                 !srv 24.06.08 {
-          if (.not.is_neutral(is)) then
+!          if (.not.is_neutral(is)) then
+          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then            !srv 20.10.17
            do is0 = 0, ns-1
-            conc(ix,iy,1) = conc(ix,iy,1) + csigin(ix,iy,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
+            if (is_neutral(is0).and.nint(zn(is0)).eq.1) then             !srv 20.10.17
+             conc(ix,iy,1) = conc(ix,iy,1) + csigin(ix,iy,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
+            endif                                                        !srv 20.10.17
            enddo
           endif
          enddo                                                           !srv 24.06.08 }
         endif                                                            !srv
-        if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 { 
+        if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 {
           conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy)
         endif                                                            !lk 31.01.08 }
-         
+
        enddo
       enddo
 
-csw 18feb2014 remove fluxes between guard cells 
+csw 18feb2014 remove fluxes between guard cells
       do ix=-1,nx
        do iy=-1,ny
          if(iffboundx(ix,iy).ne.0) then
@@ -1197,10 +1202,10 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,ne,'b2tfhe__ne')
        call my_out(70,nx,ny,po,'b2tfhe__po')
        do is = 0, ns-1
-        write (charns,'(i3.3)') is 
+        write (charns,'(i3.3)') is
         call my_out(70,nx,ny,na(-1,-1,is),'b2tfhe__na'//charns)
         do is0=0,ns-1
-         write (charns0,'(i3.3)') is0 
+         write (charns0,'(i3.3)') is0
          call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'b2tfhe__csiginx'
      &        //charns//'_'//charns0)
          call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),'b2tfhe__csiginy'
@@ -1227,7 +1232,7 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fhePSch(-1,-1,1),'b2tfhe__fhePSchy')
       endif
 
-      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0 
+      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
      &                          .or. iout_b2wdat.eq.4) then
 !       call my_out(70,nx,ny,fch(-1,-1,0),'b2tfhe__fchx')
 !       call my_out(70,nx,ny,fch(-1,-1,1),'b2tfhe__fchy')
