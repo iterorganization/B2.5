@@ -734,7 +734,8 @@ contains
         integer :: xIn, yIn, xOut, yOut, iCoreGS
         integer :: cls(SPACE_COUNT_MAX)
         integer, allocatable :: xpoints(:,:)
-        integer, allocatable :: indArray(:)
+        integer, allocatable :: indexList1d(:)
+        integer, dimension(:,:), allocatable :: indexList2d
         integer :: i
 
         geoId = geometryId(nnreg, periodic_bc, topcut)
@@ -782,11 +783,11 @@ contains
             &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES ),    &
             &   GRID_SUBSET_X_ALIGNED_FACES, 'x-aligned faces' )
         !> Initialize implicit object list for faces (class (/2/) )
-        allocate(indArray(gmap%nfcx))
-        indArray = (/ (i, i = 1, gmap%nfcx) /)
+        allocate(indexList1d(gmap%nfcx))
+        indexList1d = (/ (i, i = 1, gmap%nfcx) /)
         call createExplicitObjectListSingleSpace( ggd_grid,         &
             &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
-            &   IDS_CLASS_POLOIDALRADIAL_FACE, indArray,            &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,            &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),  &
@@ -794,16 +795,16 @@ contains
         !     &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1)
 
         if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
-            deallocate(indArray)
-            allocate(indArray(1))
-            indArray = (/ 1 /)
+            deallocate(indexList1d)
+            allocate(indexList1d(1))
+            indexList1d = (/ 1 /)
             call createExplicitObjectListSingleSpace( ggd_grid,         &
                 &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
-                &   IDS_CLASS_POLOIDALRADIAL_FACE, indArray,            &
+                &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,            &
                 &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),  &
-        !     &   GRID_SUBSET_X_ALIGNED_FACES, indArray,      &
+        !     &   GRID_SUBSET_X_ALIGNED_FACES, indexList1d,      &
         !     &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1)
         end if
 
@@ -814,29 +815,29 @@ contains
             &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES ),    & 
             &   GRID_SUBSET_Y_ALIGNED_FACES, 'y-aligned faces' )
         !> Initialize implicit object list for faces (class (/2/) )
-        deallocate(indArray)
-        allocate(indArray(gmap%nfcy))
-        indArray = (/ (i, i = gmap%nfcx + 1, gmap%nfcx + gmap%nfcy) /)
+        deallocate(indexList1d)
+        allocate(indexList1d(gmap%nfcy))
+        indexList1d = (/ (i, i = gmap%nfcx + 1, gmap%nfcx + gmap%nfcy) /)
         call createExplicitObjectListSingleSpace( ggd_grid,             &
             &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),     &
             &   IDS_CLASS_POLOIDALRADIAL_FACE,                          &
-            &   indArray, IDS_CLASS_POLOIDALRADIAL_FACE, 1)
+            &   indexList1d, IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),  &
         !     &   GRID_SUBSET_Y_ALIGNED_FACES, (/ 1:gmap%nfcy /),      &
         !     &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1)
 
         if ( SPACE_COUNT == SPACE_TOROIDALANGLE ) then
-        deallocate(indArray)
-        allocate(indArray(1))
-        indArray = (/ 1 /)
+        deallocate(indexList1d)
+        allocate(indexList1d(1))
+        indexList1d = (/ 1 /)
         call createExplicitObjectListSingleSpace( ggd_grid,         &
             &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES), &
-            &   IDS_CLASS_POLOIDALRADIAL_FACE, indArray,           &
+            &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,           &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !     &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),  &
-        !     &   GRID_SUBSET_Y_ALIGNED_FACES, indArray,      &
+        !     &   GRID_SUBSET_Y_ALIGNED_FACES, indexList1d,      &
         !     &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT), 1)
         end if
 
@@ -869,73 +870,89 @@ contains
         ! call createExplicitObjectListSingleSpace( ggd_grid,         &
         !       &   ggd_grid%grid_subset( GRID_SUBSET_X_POINTS),  &
         !       &   GRID_SUBSET_X_POINTS, xpoints, CLASS_NODE(1:SPACE_COUNT), 1)
-#if 0
-      !> Set up specific grid subset by collection faces for regions
 
-      !> Start counting from end of generic grid subset
-      GSubsetCount = B2_GENERIC_GSUBSET_COUNT
+        !> Set up specific grid subset by collection faces for regions
 
-      !> Cell + face grid subset
-      do iType = REGIONTYPE_CELL, REGIONTYPE_YFACE
+        !> Start counting from end of generic grid subset
+        GSubsetCount = B2_GENERIC_GSUBSET_COUNT
+
+        !> Cell + face grid subset
+        do iType = REGIONTYPE_CELL, REGIONTYPE_YFACE
           
-          select case(iType)
-          case( REGIONTYPE_CELL )
-              cls = CLASS_CELL
-          case( REGIONTYPE_YFACE, REGIONTYPE_XFACE )
-              cls = CLASS_POLOIDALRADIAL_FACE
-          end select
+            select case(iType)
+            case( REGIONTYPE_CELL )
+                cls = CLASS_CELL
+            case( REGIONTYPE_YFACE, REGIONTYPE_XFACE )
+                cls = CLASS_POLOIDALRADIAL_FACE
+            end select
 
-          do iRegion = 1, regionCount(geoId, iType)              
-              GSubsetCount = GSubsetCount + 1
+            do iRegion = 1, regionCount(geoId, iType)              
+                GSubsetCount = GSubsetCount + 1
 
-              call logmsg( LOGDEBUG, "b2IMASFillGridDescription: add subgrid #"//idsInt2str(GSubsetCount)//&
-                  & " for iType "//idsInt2str(iType)//&
-                  &", iRegion "//idsInt2str(iRegion)//": "//regionName(geoId, iType, iRegion) )
+                call logmsg( LOGDEBUG,                                  &
+                    &   "b2IMASFillGridDescription: add subgrid #"//    &
+                    &   idsInt2str(GSubsetCount)//                      &
+                    &   " for iType "//idsInt2str(iType)//              &
+                    &   ", iRegion "//idsInt2str(iRegion)//": "//       &
+                    &   regionName(geoId, iType, iRegion) )
 
-              call createSubGridForExplicitList( ggd_grid, ggd_grid%grid_subset( GSubsetCount ), &
-                  & cls(1:SPACE_COUNT), &
-                  & collectIndexListForRegion(gmap, region, iType, iRegion), &
-                  & regionName(geoId, iType, iRegion) )
+                !> Create grid subset with one object list
+                call createEmptyGridSubset(                     &
+                    &   ggd_grid%grid_subset( GSubsetCount ),   &
+                    &       GSubsetCount, regionName(geoId, iType, iRegion) )
 
-          end do
-      end do
+                !> Get explicit object list of the grid subset using 
+                !> subroutine collectIndexListForRegionSubroutine
+                !> (function collectIndexListForRegion transferred to subroutine,
+                !> as array of certain dimension is required as an output)
+                call collectIndexListForRegionSubroutine(gmap, region, iType,   &
+                    &   iRegion, indexList2d)
 
-      !> Add midplane node subgrids
+                !> Initialize explicit object list for grid subset
+                !> TODO: Currently taking object indices only from space 1
+                !>      ( %space(1) ). Set  
+                !>       to search all spaces  
+                call createExplicitObjectListSingleSpace( ggd_grid,         &
+                    &   ggd_grid%grid_subset( GSubsetCount ), sum(cls) - 1, &
+                    &   indexList2d(:,1), sum(cls), 1)
+            end do
+        end do
+# if 0
+
+        !> Add midplane node subgrids
       
-      !> Find the core boundary subgrid by looking for its name as defined in b2mod_connectivity
-      iCoreGS = gridFindSubGridByName(ggd_grid, "Core boundary")
-      !> For double null, we need the outer half of the core boundary
-      if (iCoreGS == GRID_UNDEFINED) then 
-          iCoreGS = gridFindSubGridByName(ggd_grid, "Outer core boundary")          
-      end if
-      if (iCoreGS == GRID_UNDEFINED) stop "fillInGridSubsetDescription: &
-          & did not find core boundary subgrid for assembling outer midplane subgrid"
+        !> Find the core boundary subgrid by looking for its name as defined in b2mod_connectivity
+        iCoreGS = gridFindSubGridByName(ggd_grid, "Core boundary")
+        !> For double null, we need the outer half of the core boundary
+        if (iCoreGS == B2_GRID_UNDEFINED) then 
+            iCoreGS = gridFindSubGridByName(ggd_grid, "Outer core boundary")          
+        end if
+        if (iCoreGS == B2_GRID_UNDEFINED) stop "fillInGridSubsetDescription: &
+            & did not find core boundary subgrid for assembling outer midplane subgrid"
 
-      !> Figure out starting points for inner and outer midplane on core boundary
-      call findMidplaneCells(ggd_grid%grid_subset(iCoreGS), gmap, crx, xIn, yIn, xOut, yOut)
+        !> Figure out starting points for inner and outer midplane on core boundary
+        call findMidplaneCells(ggd_grid%grid_subset(iCoreGS), gmap, crx, xIn, yIn, xOut, yOut)
 
-      GSubsetCount = GSubsetCount + 1
-      call createSubGridForExplicitList( ggd_grid, ggd_grid%grid_subset( GSubsetCount ), &
-          & CLASS_NODE(1:SPACE_COUNT), &
-          & collectRadialVertexIndexList(gmap, cflag, xIn, yIn, topix, topiy), &
-          & "Inner midplane" )
+        GSubsetCount = GSubsetCount + 1
+        call createSubGridForExplicitList( ggd_grid, ggd_grid%grid_subset( GSubsetCount ), &
+            & CLASS_NODE(1:SPACE_COUNT), &
+            & collectRadialVertexIndexList(gmap, cflag, xIn, yIn, topix, topiy), &
+            & "Inner midplane" )
       
-      GSubsetCount = GSubsetCount + 1
-      call createSubGridForExplicitList( ggd_grid, ggd_grid%grid_subset( GSubsetCount ), &
-          & CLASS_NODE(1:SPACE_COUNT), &
-          & collectRadialVertexIndexList(gmap, cflag, xOut, yOut, topix, topiy), &
-          & "Outer midplane" )      
+        GSubsetCount = GSubsetCount + 1
+        call createSubGridForExplicitList( ggd_grid, ggd_grid%grid_subset( GSubsetCount ), &
+            & CLASS_NODE(1:SPACE_COUNT), &
+            & collectRadialVertexIndexList(gmap, cflag, xOut, yOut, topix, topiy), &
+            & "Outer midplane" )      
 
-      call logmsg( LOGDEBUG, "b2IMASFillGridDescription: wrote total of "&
-          &//idsInt2str(GSubsetCount)//" subgrids (expected was "//idsInt2str(size(ggd_grid%grid_subset))//')' )
+        call logmsg( LOGDEBUG, "b2IMASFillGridDescription: wrote total of "&
+            &//idsInt2str(GSubsetCount)//" subgrids (expected was "//idsInt2str(size(ggd_grid%grid_subset))//')' )
 
-      call assert( GSubsetCount == size(ggd_grid%subgrids) )
+        call assert( GSubsetCount == size(ggd_grid%subgrids) )
 #endif
     end subroutine fillInGridSubsetDescription
 
-
-
-  end subroutine b2IMASFillGridDescription
+    end subroutine b2IMASFillGridDescription
 
 #else
 #ifdef ITM
@@ -1460,87 +1477,169 @@ contains
 
   end function collectRadialVertexIndexList
 
+#endif
+#endif
 
-  !> Build an index list of all objects of a given region type (b2mod_connectivity.REGIONTYPE_*)
-  !> for a given region id.
-  !> @param gmap the B2<->CPO grid map, as built by b2CreateMap
-  !> @param region the B2 region array
-  !> @param iRegionType The region type
-  !> @param iRegion The region 
-  !> @result The list of indices for all objects that constitute this grid region. The array
-  !>  has two dimensions because it is given as a list of object descriptors.
-  function collectIndexListForRegion(gmap, region, iRegionType, iRegion) result( indexList )
-    integer, allocatable, dimension(:,:) :: indexList
 
-    type(B2GridMap), intent(in) :: gmap
-    integer, intent(in) :: region(-1:gmap%b2nx,-1:gmap%b2ny,0:2)
-    integer, intent(in) :: iRegionType, iRegion
+    !> Build an index list of all objects of a given region type 
+    !> (b2mod_connectivity.REGIONTYPE_*) for a given region id.
+    !> @param gmap the B2<->CPO grid map, as built by b2CreateMap
+    !> @param region the B2 region array
+    !> @param iRegionType The region type
+    !> @param iRegion The region 
+    !> @result The list of indices for all objects that constitute this grid 
+    !> region. The array has two dimensions because it is given as a list of 
+    !> object descriptors.
+    function collectIndexListForRegion(gmap, region, iRegionType,   &
+        &   iRegion) result( indexList )
+        integer, allocatable, dimension(:,:) :: indexList
 
-    ! internal
-    integer :: ix, iy, nInd, iInd, ind
+        type(B2GridMap), intent(in) :: gmap
+        integer, intent(in) :: region(-1:gmap%b2nx,-1:gmap%b2ny,0:2)
+        integer, intent(in) :: iRegionType, iRegion
 
-    ! Figure out how many indices to expect. A simple count of the form
-    ! nInd = count( region(:,:,iRegionType) == iRegion )
-    ! will not do, because we have to account for removed objects (ghost cells/faces).
+        !> internal
+        integer :: ix, iy, nInd, iInd, ind
 
-    ! search the relevant objects and count them
-    nInd = 0
-    do ix = -1, gmap%b2nx
-        do iy = -1, gmap%b2ny
+        !> Figure out how many indices to expect. A simple count of the form
+        !> nInd = count( region(:,:,iRegionType) == iRegion )
+        !> will not do, because we have to account for removed objects (ghost cells/faces).
 
-            if ( region(ix, iy, iRegionType) == iRegion ) then
-                ! Get index depending on what object type we're looking at
-                select case (iRegionType) 
-                case (REGIONTYPE_CELL)
-                    ind = gmap%mapCvI(ix, iy)
-                case (REGIONTYPE_XFACE)
-                    ind = gmap%mapFcI(ix, iy, LEFT)
-                case (REGIONTYPE_YFACE)
-                    ind = gmap%mapFcI(ix, iy, BOTTOM)
-                end select
+        !> search the relevant objects and count them
+        nInd = 0
+        do ix = -1, gmap%b2nx
+            do iy = -1, gmap%b2ny
 
-                ! Only count this index if not undefined
-                if ( ind /= GRID_UNDEFINED ) nInd = nInd + 1
-            end if
+                if ( region(ix, iy, iRegionType) == iRegion ) then
+                    !> Get index depending on what object type we're looking at
+                    select case (iRegionType) 
+                    case (REGIONTYPE_CELL)
+                        ind = gmap%mapCvI(ix, iy)
+                    case (REGIONTYPE_XFACE)
+                        ind = gmap%mapFcI(ix, iy, LEFT)
+                    case (REGIONTYPE_YFACE)
+                        ind = gmap%mapFcI(ix, iy, BOTTOM)
+                    end select
 
-        end do
-    end do
-
-    allocate( indexList(nInd, SPACE_COUNT) )
-    indexList = 1
-
-    ! search the relevant objects and store their index consecutively
-    iInd = 0
-    do ix = -1, gmap%b2nx
-        do iy = -1, gmap%b2ny
-
-            if ( region(ix, iy, iRegionType) == iRegion ) then
-                ! Get index depending on what object type we're looking at
-                select case (iRegionType) 
-                case (REGIONTYPE_CELL)
-                    ind = gmap%mapCvI(ix, iy)
-                case (REGIONTYPE_XFACE)
-                    ind = gmap%mapFcI(ix, iy, LEFT)
-                case (REGIONTYPE_YFACE)
-                    ind = gmap%mapFcI(ix, iy, BOTTOM)
-                end select
-
-                if ( ind /= GRID_UNDEFINED ) then
-                    iInd = iInd + 1                  
-                    call assert(iInd <= nInd)
-                    indexList( iInd, SPACE_POLOIDALPLANE ) = ind
+                    !> Only count this index if not undefined
+                    if ( ind /= B2_GRID_UNDEFINED ) nInd = nInd + 1
                 end if
-            end if
 
+            end do
         end do
-    end do
 
-    call assert( iInd == nInd )
+        allocate( indexList(nInd, SPACE_COUNT) )
+        indexList = 1
 
-  end function collectIndexListForRegion
+        !> search the relevant objects and store their index consecutively
+        iInd = 0
+        do ix = -1, gmap%b2nx
+            do iy = -1, gmap%b2ny
 
-#endif
-#endif
+                if ( region(ix, iy, iRegionType) == iRegion ) then
+                    !> Get index depending on what object type we're looking at
+                    select case (iRegionType) 
+                    case (REGIONTYPE_CELL)
+                        ind = gmap%mapCvI(ix, iy)
+                    case (REGIONTYPE_XFACE)
+                        ind = gmap%mapFcI(ix, iy, LEFT)
+                    case (REGIONTYPE_YFACE)
+                        ind = gmap%mapFcI(ix, iy, BOTTOM)
+                    end select
+
+                    if ( ind /= B2_GRID_UNDEFINED ) then
+                        iInd = iInd + 1                  
+                        call assert(iInd <= nInd)
+                        indexList( iInd, SPACE_POLOIDALPLANE ) = ind
+                    end if
+                end if
+
+            end do
+        end do
+
+        call assert( iInd == nInd )
+
+    end function collectIndexListForRegion
+
+    !> Build an index list of all objects of a given region type 
+    !> (b2mod_connectivity.REGIONTYPE_*) for a given region id.
+    !> @param gmap the B2<->CPO grid map, as built by b2CreateMap
+    !> @param region the B2 region array
+    !> @param iRegionType The region type
+    !> @param iRegion The region 
+    !> @result The list of indices for all objects that constitute this grid 
+    !> region. The array has two dimensions because it is given as a list of 
+    !> object descriptors.
+    subroutine collectIndexListForRegionSubroutine(gmap, region, iRegionType,   &
+        &   iRegion, indexlist)
+        integer, allocatable, dimension(:,:), intent(out) :: indexList
+
+        type(B2GridMap), intent(in) :: gmap
+        integer, intent(in) :: region(-1:gmap%b2nx,-1:gmap%b2ny,0:2)
+        integer, intent(in) :: iRegionType, iRegion
+
+        !> internal
+        integer :: ix, iy, nInd, iInd, ind
+
+        !> Figure out how many indices to expect. A simple count of the form
+        !> nInd = count( region(:,:,iRegionType) == iRegion )
+        !> will not do, because we have to account for removed objects (ghost cells/faces).
+
+        !> search the relevant objects and count them
+        nInd = 0
+        do ix = -1, gmap%b2nx
+            do iy = -1, gmap%b2ny
+
+                if ( region(ix, iy, iRegionType) == iRegion ) then
+                    !> Get index depending on what object type we're looking at
+                    select case (iRegionType) 
+                    case (REGIONTYPE_CELL)
+                        ind = gmap%mapCvI(ix, iy)
+                    case (REGIONTYPE_XFACE)
+                        ind = gmap%mapFcI(ix, iy, LEFT)
+                    case (REGIONTYPE_YFACE)
+                        ind = gmap%mapFcI(ix, iy, BOTTOM)
+                    end select
+
+                    !> Only count this index if not undefined
+                    if ( ind /= B2_GRID_UNDEFINED ) nInd = nInd + 1
+                end if
+
+            end do
+        end do
+
+        allocate( indexList(nInd, SPACE_COUNT) )
+        indexList = 1
+
+        !> search the relevant objects and store their index consecutively
+        iInd = 0
+        do ix = -1, gmap%b2nx
+            do iy = -1, gmap%b2ny
+
+                if ( region(ix, iy, iRegionType) == iRegion ) then
+                    !> Get index depending on what object type we're looking at
+                    select case (iRegionType) 
+                    case (REGIONTYPE_CELL)
+                        ind = gmap%mapCvI(ix, iy)
+                    case (REGIONTYPE_XFACE)
+                        ind = gmap%mapFcI(ix, iy, LEFT)
+                    case (REGIONTYPE_YFACE)
+                        ind = gmap%mapFcI(ix, iy, BOTTOM)
+                    end select
+
+                    if ( ind /= B2_GRID_UNDEFINED ) then
+                        iInd = iInd + 1                  
+                        call assert(iInd <= nInd)
+                        indexList( iInd, SPACE_POLOIDALPLANE ) = ind
+                    end if
+                end if
+
+            end do
+        end do
+
+        call assert( iInd == nInd )
+
+    end subroutine collectIndexListForRegionSubroutine
 
 end module b2mod_ual_io_grid
 
