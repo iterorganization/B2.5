@@ -415,7 +415,7 @@ csw 18nov2013 check alloc
 #ifdef B25_EIRENE
           if (i.gt.0) then
             Na_stra_tmp(i,j) = pdena_int(i,j)
-            ssna_stra_tmp(i,j) = ssnistra(i,j)
+            ssna_stra_tmp(i,j) = ssnastra(i,j)
             do imol = 1, nnmoli
               if (mlcmp(i,imol).gt.0)
      >         Na_stra_tmp(i,j) = Na_stra_tmp(i,j) +
