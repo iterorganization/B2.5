@@ -1,14 +1,14 @@
 module b2mod_ual_io_grid
 
-  !> This module provides:
-  !>
-  !> 2. A routine (b2ITMFillGridDescription/b2IMASFillGridDescription) to write 
-  !> the B2 grid into an ITM/IMAS IDS grid description data structure (which 
-  !> usually is part of a CPO/IDS). It also sets up the default subgrids for 
-  !> the B2 grid.
-  !> 
-  !> 3. Routines to transform variables stored in the B2 data structure into
-  !> the form expected CPO data structure.
+    !> This module provides:
+    !>
+    !> 2. A routine (b2ITMFillGridDescription/b2IMASFillGridDescription) to write 
+    !> the B2 grid into an ITM/IMAS IDS grid description data structure (which 
+    !> usually is part of a CPO/IDS). It also sets up the default subgrids for 
+    !> the B2 grid.
+    !> 
+    !> 3. Routines to transform variables stored in the B2 data structure into
+    !> the form expected CPO data structure.
 
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
 #ifdef IMAS
@@ -67,14 +67,17 @@ implicit none
     logical, parameter :: TOROIDAL_PERIODIC = .false.
 
     !> Object class tuples (ITM classes)
-    integer, dimension(SPACE_COUNT_MAX), parameter :: CLASS_NODE = (/ 0, 0 /)
-    integer, dimension(SPACE_COUNT_MAX), parameter :: CLASS_RZ_EDGE = (/ 1, 0 /)
-    integer, dimension(SPACE_COUNT_MAX), parameter :: CLASS_PHI_EDGE = (/ 0, 1 /)
-    integer, dimension(SPACE_COUNT_MAX), parameter ::   &
+    integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_NODE =        &
+        &   (/ 0, 0 /)
+    integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_RZ_EDGE =     &
+        &   (/ 1, 0 /)
+    integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_PHI_EDGE =    &
+        &   (/ 0, 1 /)
+    integer, dimension( SPACE_COUNT_MAX ), parameter ::   &
         &   CLASS_POLOIDALRADIAL_FACE = (/ 1, 1 /)
-    integer, dimension(SPACE_COUNT_MAX), parameter ::   &
+    integer, dimension( SPACE_COUNT_MAX ), parameter ::   &
         &   CLASS_TOROIDAL_FACE = (/ 2, 0 /)
-    integer, dimension(SPACE_COUNT_MAX), parameter :: CLASS_CELL = (/ 2, 1 /)  
+    integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_CELL = (/ 2, 1 /)  
 
     !> Object class tuples (one digit IDS classes, transformed from the above 
     !> ITM classes )
@@ -141,11 +144,9 @@ contains
 
     !> Routine that fills in a grid description which is part of a CPO
     !> using the given grid data and prepared mappings
-    subroutine b2IMASFillGridDescription( gmap,ggd_grid, &
-        & nx,ny,crx,cry, &
-        & leftix,leftiy,rightix,rightiy, &
-        & topix,topiy,bottomix,bottomiy,&
-        & nnreg,topcut,region,cflag,includeGhostCells,vol,gs,qc )
+    subroutine b2IMASFillGridDescription( gmap, ggd_grid, nx, ny, crx, cry,     &
+        &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix, bottomiy, &
+        &   nnreg, topcut, region, cflag, includeGhostCells, vol, gs, qc )
 
         type(B2GridMap), intent(in) :: gmap
         type(ids_generic_grid_dynamic), intent(out) :: ggd_grid
@@ -154,29 +155,25 @@ contains
         integer, intent(in) :: nx, ny
         !>   .. output arguments
         !> vertex coordinates
-        real (R8), intent(in) :: &
-            & crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
+        real(R8), intent(in) :: crx( -1:nx, -1:ny, 0:3 ), cry( -1:nx, -1:ny, 0:3 )
         !> B2 connectivity array
-        integer, intent(in) :: &
-            & leftix(-1:nx,-1:ny),leftiy(-1:nx,-1:ny),&
-            & rightix(-1:nx,-1:ny),rightiy(-1:nx,-1:ny),&
-            & topix(-1:nx,-1:ny),topiy(-1:nx,-1:ny),&
-            & bottomix(-1:nx,-1:ny),bottomiy(-1:nx,-1:ny)
+        integer, intent(in) :: leftix( -1:nx, -1:ny), leftiy( -1:nx, -1:ny ),   &
+            &   rightix( -1:nx, -1:ny ), rightiy( -1:nx, -1:ny ),               &
+            &   topix( -1:nx, -1:ny ), topiy( -1:nx, -1:ny ),                   &
+            &   bottomix( -1:nx, -1:ny ), bottomiy( -1:nx, -1:ny ) 
         !> B2 region & cut information
-        integer, intent(in) :: &
-            & nnreg(0:2), topcut(:), &
-            & region(-1:nx,-1:ny,0:2)
+        integer, intent(in) :: nnreg(0:2), topcut(:), region( -1:nx, -1:ny, 0:2 )
         !> Cell flags 
-        integer cflag(-1:nx,-1:ny, CARREOUT_NCELLFLAGS)
+        integer cflag( -1:nx, -1:ny,  CARREOUT_NCELLFLAGS )
         logical, intent(in) :: includeGhostCells
         !> Optional B2 measure information
-        real(R8), intent(in), optional :: vol(-1:nx,-1:ny,0:4),     &
-            &   gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
+        real(R8), intent(in), optional :: vol( -1:nx, -1:ny, 0:4),  &
+            &   gs( -1:nx, -1:ny, 0:2), qc(-1:nx,-1:ny)
 
         !> internal
         integer, parameter :: NDIM = 2
 
-        call assert( present(gs) .EQV. present(qc) )
+        call assert( present( gs ) .EQV. present( qc ) )
 
         call fillInGridDescription()
 #if 1
@@ -196,7 +193,7 @@ contains
         integer ::  ivx, ifc, icv, ix, iy, nix, niy, i, j, dir, nfc
         real(16), parameter :: PI_16 = 4 * atan (1.0_16)
 
-        allocate( ggd_grid%space(SPACE_COUNT) )
+        allocate( ggd_grid%space( SPACE_COUNT ) )
 
         !> Coordinate types
         !> (dimension of space = NDIM = size( coordtype ) 
@@ -209,16 +206,19 @@ contains
         ggd_grid%space( SPACE_POLOIDALPLANE )%coordinates_type(2) = COORDTYPE_Z
 
         !> Have two types of objects: 0d nodes, 1d edges, 2d cells
-        allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%  &
-            &   objects_per_dimension(NDIM + 1) )
+        allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
+            &   objects_per_dimension( NDIM + 1 ) )
 
         !> Allocate the number of objects of each type
+        !> nodes
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(1)%object( (nx+1)*(ny+1) - 1) )   !> nodes
+            &   objects_per_dimension(1)%object( ( nx+1 )*( ny+1 ) - 1) ) 
+        !> edges  
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(2)%object( nx*(ny+1)+(nx+1)*ny) ) !> edges
+            &   objects_per_dimension(2)%object( nx * ( ny+1 ) + ( nx+1 ) * ny ) )
+        !> cells 
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(3)%object( nx*ny ) )              !> cells
+            &   objects_per_dimension(3)%object( nx*ny ) )              
       
         !> Fill in node information
         !> Set number of nodes (0D objects)
@@ -227,7 +227,7 @@ contains
         do ivx = 1, gmap % nvx
             !> Allocate goometry leaf for each node
             allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(1)%object( ivx )%geometry(2)) 
+                &   objects_per_dimension(1)%object( ivx )%geometry(2) ) 
 #if 1       
             !> Set geometry (R and Z coordinates) of each node
             !> The way of writing nodes data identically to the to IDS converted 
@@ -272,35 +272,35 @@ contains
                 ggd_grid%space( SPACE_POLOIDALPLANE )%    &
                     &   objects_per_dimension(1)%object(ivx)%geometry(2) =  &
                     &   cry(ix,iy,0)
-                if (ivx .eq. ((nx+1)*(ny+1) - 1) ) exit
-                if (ix.eq.nx-1) then
+                if( ivx .eq. ( ( nx+1 )*( ny+1 ) - 1) ) exit
+                if( ix.eq.nx-1) then
                     ivx = ivx + 1  !> Lower right corners
                     ggd_grid%space( SPACE_POLOIDALPLANE )%    &
                         &   objects_per_dimension(1)%object(ivx)%geometry(1) =  &
-                        &   crx(ix,iy,1)
+                        &   crx( ix, iy, 1)
                     ggd_grid%space( SPACE_POLOIDALPLANE )%    &
                         &   objects_per_dimension(1)%object(ivx)%geometry(2) =  &
-                        &   cry(ix,iy,1)
-                    if (ivx .eq. ((nx+1)*(ny+1) - 1) ) exit
+                        &   cry( ix, iy, 1)
+                    if( ivx .eq. ((nx+1)*(ny+1) - 1) ) exit
                 end if
-                if (iy.eq.ny-1) then
+                if( iy.eq.ny-1) then
                     ivx = ivx + 1  !> Upper left corners
-                    ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-                        &   objects_per_dimension(1)%object(ivx)%geometry(1) =  &
-                        &   crx(ix,iy,2)
-                    ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-                        &   objects_per_dimension(1)%object(ivx)%geometry(2) =  &
-                        &   cry(ix,iy,2)
-                    if (ivx .eq. ((nx+1)*(ny+1) - 1) ) exit
-                    if (ix.eq.nx-1) then
+                    ggd_grid%space( SPACE_POLOIDALPLANE )%                      &
+                        &   objects_per_dimension(1)%object( ivx )%geometry(1) =&
+                        &   crx( ix, iy, 2 )
+                    ggd_grid%space( SPACE_POLOIDALPLANE )%                      &
+                        &   objects_per_dimension(1)%object( ivx )%geometry(2) =&
+                        &   cry( ix, iy, 2 )
+                    if( ivx .eq. ((nx+1)*(ny+1) - 1) ) exit
+                    if( ix.eq.nx-1) then
                         ivx = ivx + 1  !> Upper right corners
                         ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-                            &   objects_per_dimension(1)%object(ivx)%   &
-                            &   geometry(1) = crx(ix,iy,3)
+                            &   objects_per_dimension(1)%object( ivx )% &
+                            &   geometry(1) = crx( ix, iy, 3 )
                         ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-                            &   objects_per_dimension(1)%object(ivx)%   &
-                            &   geometry(2) = cry(ix,iy,3)
-                        if (ivx .eq. ((nx+1)*(ny+1) - 1) ) exit
+                            &   objects_per_dimension(1)%object( ivx )% &
+                            &   geometry(2) = cry( ix, iy, 3 )
+                        if( ivx .eq. ( ( nx+1 )*( ny+1 ) - 1) ) exit
                     end if
                 end if
             end do
@@ -1014,14 +1014,15 @@ contains
         do iObj = 1, getGridSubsetSize(coreBndGridSubset)  
             obj = getGridSubsetObject(coreBndGridSubset, iObj)
             !> Expect a face
-            !> TODO: fix asserts
-            ! call assert( all(obj%cls(1:SPACE_COUNT) ==  &
-                ! &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT)) )        
+            call assert( all( obj%cls( 1:SPACE_COUNT ) ==               &
+                &   IDS_CLASS_POLOIDALRADIAL_FACE ), "b2mod_ual_io_grid &
+                &   findMidplaneCells: assertion failure." )        
             !> ...which is aligned along the x-direction
-            ! call assert( gmap % mapFcIFace(obj%ind(SPACE_POLOIDALPLANE)) ==     &
-                ! &   BOTTOM )
-            ix = gmap % mapFcix( obj%ind(SPACE_POLOIDALPLANE) )
-            iy = gmap % mapFciy( obj%ind(SPACE_POLOIDALPLANE) )
+            call assert( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==   &
+                &   BOTTOM, "b2mod_ual_io_grid findMidplaneCells: assertion     &
+                &   failure." )
+            ix = gmap % mapFcix( obj%ind( SPACE_POLOIDALPLANE ) )
+            iy = gmap % mapFciy( obj%ind( SPACE_POLOIDALPLANE ) )
             
             !> We want the vertex associated with the cell at ix, iy, which is number 0
             if ( crx(ix, iy, 0) < rMin ) then
@@ -1036,14 +1037,11 @@ contains
             end if
         end do
 
-        !>TODO: fix the assert below
-        ! call assert(xIn /= huge(xIn),   &
-        !     &   "findMidplaneCells: did not find inner midplane position")
-        ! call assert(xOut /= huge(xOut), 
-        !     &   "findMidplaneCells: did not find outer midplane position")
-    end subroutine
-
-
+        call assert( xIn /= huge( xIn ),    &
+            &   "findMidplaneCells: did not find inner midplane position")
+        call assert( xOut /= huge( xOut ),  &
+            &   "findMidplaneCells: did not find outer midplane position")
+    end subroutine findMidplaneCells
 
 #else
 #ifdef ITM
