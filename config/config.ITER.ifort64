@@ -79,8 +79,8 @@ LDLIBES   += -L${SOLPSLIB} -lperf
 endif
 
 ifdef IMAS_PREFIX
-INCMODS   += -I${IMAS_PREFIX}/include/ifort -I${SOLPSTOP}/modules/ggd/f90/build/${HOST_NAME}.${COMPILER}
-LDLIBES   += ${LD_UAL} -L${SOLPSTOP}/modules/ggd/f90/build/${HOST_NAME}.${COMPILER} -lggd
+INCMODS   += -I${IMAS_PREFIX}/include/ifort -I${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/include/${COMPILER}
+LDLIBES   += ${LD_UAL} -L${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/lib -lggd-${COMPILER}
 endif
 
 LD         = ${FC}

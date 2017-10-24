@@ -1,13 +1,9 @@
 module b2mod_interp
 
-  use b2mod_types   ! IGNORE
-  use b2mod_connectivity   ! IGNORE
-  use carre_constants   ! IGNORE
+  use b2mod_types
+  use b2mod_connectivity
+  use carre_constants
 
-  ! use b2mod_types
-  ! use b2mod_connectivity
-  ! use carre_constants
-  
   implicit none
 
   real(R8), parameter :: BB_INVALID = 1e5_R8
@@ -223,10 +219,9 @@ contains
   end subroutine interp_volume1
 
   subroutine interp_volume(idir,nx,ny,vol,gs,qc,qcb,centre,face)
-  use b2mod_indirect   ! IGNORE
-  use b2mod_cellhelper   ! IGNORE
-  ! use b2mod_indirect
-  ! use b2mod_cellhelper
+  use b2mod_indirect
+  use b2mod_cellhelper
+
   implicit none
   integer, intent(in) ::  idir
   integer, intent(in) ::  nx, ny
@@ -592,11 +587,9 @@ contains
   end subroutine interp_magnetic_field
 
   subroutine interp_from_face(isflux,isparallel,nx,ny,flux,centre)
-  use b2mod_geo , only: crx, cry, gs, qz, qc, pbs   ! IGNORE
-  use b2mod_indirect   ! IGNORE
+  use b2mod_geo , only: crx, cry, gs, qz, qc, pbs
+  use b2mod_indirect
 
-  ! use b2mod_geo , only: crx, cry, gs, qz, qc, pbs 
-  ! use b2mod_indirect
   implicit none
   logical, intent(in) :: isflux, isparallel
   integer, intent(in) :: nx, ny
@@ -1163,10 +1156,8 @@ contains
 
   subroutine value_on_faces(nx,ny,weight,centre,face)
 ! This subroutine computes an interpolated value on the existing faces only
-  use b2mod_geo   ! IGNORE
-  use b2mod_indirect   ! IGNORE
-  ! use b2mod_geo
-  ! use b2mod_indirect
+  use b2mod_geo
+  use b2mod_indirect
   implicit none
 ! input arguments
   integer, intent(in) :: nx, ny
@@ -1213,10 +1204,8 @@ contains
   subroutine face_velocity_from_flow(nx,ny,ns,flow,density,velocity)
 ! This subroutine computes a FACE-CENTERED velocity by dividing a flow
 ! by a projected area and a FACE-CENTERED density
-  use b2mod_geo ! IGNORE
-  use b2mod_indirect    ! IGNORE
-  ! use b2mod_geo
-  ! use b2mod_indirect
+  use b2mod_geo
+  use b2mod_indirect
   implicit none
 ! input arguments
   integer, intent(in) :: nx, ny, ns
@@ -1319,10 +1308,8 @@ contains
 ! This subroutine computes a CELL-CENTERED 2-component velocity by dividing 
 ! FACE-CENTERED flows by a cross-sectional area and a CELL-CENTERED density
 ! If isparallel is .true., then the flow is purely poloidal
-  use b2mod_geo ! IGNORE
-  use b2mod_indirect ! IGNORE
-  ! use b2mod_geo
-  ! use b2mod_indirect
+  use b2mod_geo
+  use b2mod_indirect
   implicit none
 ! input arguments
   integer, intent(in) :: nx, ny, ns
@@ -1383,10 +1370,8 @@ contains
 ! The flow produced is a cell-faced quantity
 ! The flow is positive in the usual directions, thus the sign of pbs appears
 ! We interpolate internally to the cell faces
-  use b2mod_geo ! IGNORE
-  use b2mod_indirect ! IGNORE
-  ! use b2mod_geo
-  ! use b2mod_indirect
+  use b2mod_geo
+  use b2mod_indirect
   implicit none
 ! input arguments
   integer, intent(in) :: nx, ny, ns
@@ -1503,8 +1488,7 @@ contains
 
   ! Interpolate a cell quantity cv to all cell vertices
   function interpolateToAllVertices( nx, ny, cv ) result ( vx )
-    use b2mod_cellhelper       ! IGNORE
-    ! use b2mod_cellhelper
+    use b2mod_cellhelper
     implicit none
     integer, intent(in) :: nx, ny
     real (kind=R8), intent(in), dimension(-1:nx,-1:ny) :: cv
@@ -1521,18 +1505,11 @@ contains
     
   ! Interpolate a cell quantity cv to a particular vertex
   function interpolateToVertices( nx, ny, vx_index, cv ) result( vx )
-    use b2mod_geo   ! IGNORE
-    use b2mod_b2cmfs   ! IGNORE
-    use b2mod_indirect   ! IGNORE
-    use b2mod_constants   ! IGNORE
-    use b2mod_cellhelper   ! IGNORE
-
-    ! use b2mod_geo   
-    ! use b2mod_b2cmfs
-    ! use b2mod_indirect
-    ! use b2mod_constants
-    ! use b2mod_cellhelper
-    ! use ggd_assert
+    use b2mod_geo
+    use b2mod_b2cmfs
+    use b2mod_indirect
+    use b2mod_constants
+    use b2mod_cellhelper
     implicit none
     integer, intent(in) :: nx, ny, vx_index
     real (kind=R8), intent(in), dimension(-1:nx,-1:ny) :: cv
@@ -1594,13 +1571,9 @@ contains
   end function interpolateToVertices
 
   subroutine value_to_side(nx, ny, weight, centre, side)
-  use b2mod_geo , only: crx, cry, gs, qc, pbs   ! IGNORE
-  use b2mod_indirect   ! IGNORE
-  use b2mod_cellhelper   ! IGNORE
-
-  ! use b2mod_geo , only: crx, cry, gs, qc, pbs
-  ! use b2mod_indirect
-  ! use b2mod_cellhelper
+  use b2mod_geo , only: crx, cry, gs, qc, pbs
+  use b2mod_indirect
+  use b2mod_cellhelper
   implicit none
   integer, intent(in) :: nx, ny
   real(R8), intent(in) :: centre(-1:nx,-1:ny)
