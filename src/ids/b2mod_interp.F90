@@ -1,8 +1,12 @@
 module b2mod_interp
 
-  use b2mod_types
-  use b2mod_connectivity
-  use carre_constants
+  use b2mod_types   ! IGNORE
+  use b2mod_connectivity   ! IGNORE
+  use carre_constants   ! IGNORE
+
+  ! use b2mod_types
+  ! use b2mod_connectivity
+  ! use carre_constants
   
   implicit none
 
@@ -98,7 +102,8 @@ contains
 ! Obsolete: did not take properly into account trapezoidal and triangle cells
 ! Use interp_volume below instead
   subroutine interp_width(xory,nx,ny,hx,hy,gs,qc,qcb,centre,face)
-  use b2mod_indirect
+  use b2mod_indirect   ! IGNORE
+  ! use b2mod_indirect
   implicit none
   integer xory
   integer nx, ny
@@ -218,8 +223,10 @@ contains
   end subroutine interp_volume1
 
   subroutine interp_volume(idir,nx,ny,vol,gs,qc,qcb,centre,face)
-  use b2mod_indirect
-  use b2mod_cellhelper
+  use b2mod_indirect   ! IGNORE
+  use b2mod_cellhelper   ! IGNORE
+  ! use b2mod_indirect
+  ! use b2mod_cellhelper
   implicit none
   integer, intent(in) ::  idir
   integer, intent(in) ::  nx, ny
@@ -585,8 +592,11 @@ contains
   end subroutine interp_magnetic_field
 
   subroutine interp_from_face(isflux,isparallel,nx,ny,flux,centre)
-  use b2mod_geo , only: crx, cry, gs, qz, qc, pbs 
-  use b2mod_indirect
+  use b2mod_geo , only: crx, cry, gs, qz, qc, pbs   ! IGNORE
+  use b2mod_indirect   ! IGNORE
+
+  ! use b2mod_geo , only: crx, cry, gs, qz, qc, pbs 
+  ! use b2mod_indirect
   implicit none
   logical, intent(in) :: isflux, isparallel
   integer, intent(in) :: nx, ny
@@ -1153,8 +1163,10 @@ contains
 
   subroutine value_on_faces(nx,ny,weight,centre,face)
 ! This subroutine computes an interpolated value on the existing faces only
-  use b2mod_geo
-  use b2mod_indirect
+  use b2mod_geo   ! IGNORE
+  use b2mod_indirect   ! IGNORE
+  ! use b2mod_geo
+  ! use b2mod_indirect
   implicit none
 ! input arguments
   integer, intent(in) :: nx, ny
@@ -1201,8 +1213,10 @@ contains
   subroutine face_velocity_from_flow(nx,ny,ns,flow,density,velocity)
 ! This subroutine computes a FACE-CENTERED velocity by dividing a flow
 ! by a projected area and a FACE-CENTERED density
-  use b2mod_geo
-  use b2mod_indirect
+  use b2mod_geo ! IGNORE
+  use b2mod_indirect    ! IGNORE
+  ! use b2mod_geo
+  ! use b2mod_indirect
   implicit none
 ! input arguments
   integer, intent(in) :: nx, ny, ns
@@ -1305,8 +1319,10 @@ contains
 ! This subroutine computes a CELL-CENTERED 2-component velocity by dividing 
 ! FACE-CENTERED flows by a cross-sectional area and a CELL-CENTERED density
 ! If isparallel is .true., then the flow is purely poloidal
-  use b2mod_geo
-  use b2mod_indirect
+  use b2mod_geo ! IGNORE
+  use b2mod_indirect ! IGNORE
+  ! use b2mod_geo
+  ! use b2mod_indirect
   implicit none
 ! input arguments
   integer, intent(in) :: nx, ny, ns
@@ -1367,8 +1383,10 @@ contains
 ! The flow produced is a cell-faced quantity
 ! The flow is positive in the usual directions, thus the sign of pbs appears
 ! We interpolate internally to the cell faces
-  use b2mod_geo
-  use b2mod_indirect
+  use b2mod_geo ! IGNORE
+  use b2mod_indirect ! IGNORE
+  ! use b2mod_geo
+  ! use b2mod_indirect
   implicit none
 ! input arguments
   integer, intent(in) :: nx, ny, ns
@@ -1483,95 +1501,106 @@ contains
   return
   end subroutine flow_from_velocity
 
-!!$  ! Interpolate a cell quantity cv to all cell vertices
-!!$  function interpolateToAllVertices( nx, ny, cv ) result ( vx )
-!!$    use b2mod_cellhelper
-!!$    implicit none
-!!$    integer, intent(in) :: nx, ny
-!!$    real (kind=R8), intent(in), dimension(-1:nx,-1:ny) :: cv
-!!$    real (kind=R8), dimension(-1:nx,-1:ny,0:3) :: vx
-!!$
-!!$    ! internal
-!!$    integer ivertex
-!!$
-!!$    do ivertex = VX_LOWERLEFT, VX_UPPERRIGHT
-!!$      vx(:,:,ivertex) = interpolateToVertices( nx, ny, ivertex, cv)
-!!$    end do
-!!$    return
-!!$  end function interpolateToAllVertices
-!!$    
-!!$  ! Interpolate a cell quantity cv to a particular vertex
-!!$  function interpolateToVertices( nx, ny, vx_index, cv ) result( vx )
-!!$    use b2mod_geo
-!!$    use b2mod_b2cmfs
-!!$    use b2mod_indirect
-!!$    use b2mod_constants
-!!$    use b2mod_cellhelper
-!!$    use ggd_assert
-!!$    implicit none
-!!$    integer, intent(in) :: nx, ny, vx_index
-!!$    real (kind=R8), intent(in), dimension(-1:nx,-1:ny) :: cv
-!!$    real (kind=R8), dimension(-1:nx,-1:ny) :: vx
-!!$
-!!$    ! internal
-!!$    integer :: ix, iy, is, ixx, iyy
-!!$    real (kind=R8) :: av, wTot, minVal, maxVal, w, d, centroid(0:1)
-!!$
-!!$    ! For every vertex, find connected cells and average values
-!!$    do ix = -1, nx
-!!$       do iy = -1, ny
-!!$
-!!$          if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) then
-!!$             vx(ix,iy) = cv(ix,iy)
-!!$             cycle
-!!$          end if
-!!$
-!!$          wTot = 0.0_R8
-!!$          av = 0.0_R8
-!!$          minVal = huge(1.0_R8)
-!!$          maxVal =-huge(1.0_R8)
-!!$          do is = 1, 8
-!!$            if ( gmap%mapCvixVx( gmap%mapVxI(ix,iy,vx_index), is ) == B2_GRID_UNDEFINED .or. &
-!!$               & gmap%mapCviyVx( gmap%mapVxI(ix,iy,vx_index), is ) == B2_GRID_UNDEFINED) cycle
-!!$            ixx = gmap%mapCvixVx( gmap%mapVxI(ix,iy,vx_index), is ) 
-!!$            iyy = gmap%mapCviyVx( gmap%mapVxI(ix,iy,vx_index), is ) 
-!!$            centroid = quadCentroid(crx(ixx,iyy,0),cry(ixx,iyy,0), &
-!!$                                  & crx(ixx,iyy,1),cry(ixx,iyy,1), &
-!!$                                  & crx(ixx,iyy,2),cry(ixx,iyy,2), &
-!!$                                  & crx(ixx,iyy,3),cry(ixx,iyy,3))
-!!$            d = sqrt ( (centroid(0) - crx(ix,iy,vx_index))**2 + &
-!!$                     & (centroid(1) - cry(ix,iy,vx_index))**2 )
-!!$            w = 1.0_R8/d  
-!!$            av = av + cv(ixx, iyy) * w
-!!$            wTot = wTot + w
-!!$            minVal = min(minVal, cv(ixx, iyy))
-!!$            maxVal = max(maxVal, cv(ixx, iyy))
-!!$
-!!$          end do
-!!$
-!!$          vx(ix, iy) = av / wTot
-!!$          d = vx(ix,iy) - minVal
-!!$          if (minVal.ne.0.0_R8) then
-!!$            call assert( d/abs(minVal) >= - 1.0e-15_R8, "Interpolated value smaller than minimum" )
-!!$          else
-!!$            call assert ( d.ge.minVal, "Interpolated value smaller than minimum" )
-!!$          end if
-!!$          d = vx(ix,iy) - maxVal
-!!$          if (maxVal.ne.0.0_R8) then
-!!$            call assert( d/abs(maxVal) <=   1.0e-15_R8, "Interpolated value bigger than maximum" )
-!!$          else
-!!$            call assert( d.le.maxVal, "Interpolated value bigger than maximum" )
-!!$          end if
-!!$       end do
-!!$    end do
-!!$    return
-!!$
-!!$  end function interpolateToVertices
+  ! Interpolate a cell quantity cv to all cell vertices
+  function interpolateToAllVertices( nx, ny, cv ) result ( vx )
+    use b2mod_cellhelper       ! IGNORE
+    ! use b2mod_cellhelper
+    implicit none
+    integer, intent(in) :: nx, ny
+    real (kind=R8), intent(in), dimension(-1:nx,-1:ny) :: cv
+    real (kind=R8), dimension(-1:nx,-1:ny,0:3) :: vx
+
+    ! internal
+    integer ivertex
+
+    do ivertex = VX_LOWERLEFT, VX_UPPERRIGHT
+      vx(:,:,ivertex) = interpolateToVertices( nx, ny, ivertex, cv)
+    end do
+    return
+  end function interpolateToAllVertices
+    
+  ! Interpolate a cell quantity cv to a particular vertex
+  function interpolateToVertices( nx, ny, vx_index, cv ) result( vx )
+    use b2mod_geo   ! IGNORE
+    use b2mod_b2cmfs   ! IGNORE
+    use b2mod_indirect   ! IGNORE
+    use b2mod_constants   ! IGNORE
+    use b2mod_cellhelper   ! IGNORE
+
+    ! use b2mod_geo   
+    ! use b2mod_b2cmfs
+    ! use b2mod_indirect
+    ! use b2mod_constants
+    ! use b2mod_cellhelper
+    ! use ggd_assert
+    implicit none
+    integer, intent(in) :: nx, ny, vx_index
+    real (kind=R8), intent(in), dimension(-1:nx,-1:ny) :: cv
+    real (kind=R8), dimension(-1:nx,-1:ny) :: vx
+
+    ! internal
+    integer :: ix, iy, is, ixx, iyy
+    real (kind=R8) :: av, wTot, minVal, maxVal, w, d, centroid(0:1)
+
+    ! For every vertex, find connected cells and average values
+    do ix = -1, nx
+       do iy = -1, ny
+
+          if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+             vx(ix,iy) = cv(ix,iy)
+             cycle
+          end if
+
+          wTot = 0.0_R8
+          av = 0.0_R8
+          minVal = huge(1.0_R8)
+          maxVal =-huge(1.0_R8)
+          do is = 1, 8
+            if ( gmap%mapCvixVx( gmap%mapVxI(ix,iy,vx_index), is ) == B2_GRID_UNDEFINED .or. &
+               & gmap%mapCviyVx( gmap%mapVxI(ix,iy,vx_index), is ) == B2_GRID_UNDEFINED) cycle
+            ixx = gmap%mapCvixVx( gmap%mapVxI(ix,iy,vx_index), is ) 
+            iyy = gmap%mapCviyVx( gmap%mapVxI(ix,iy,vx_index), is ) 
+            centroid = quadCentroid(crx(ixx,iyy,0),cry(ixx,iyy,0), &
+                                  & crx(ixx,iyy,1),cry(ixx,iyy,1), &
+                                  & crx(ixx,iyy,2),cry(ixx,iyy,2), &
+                                  & crx(ixx,iyy,3),cry(ixx,iyy,3))
+            d = sqrt ( (centroid(0) - crx(ix,iy,vx_index))**2 + &
+                     & (centroid(1) - cry(ix,iy,vx_index))**2 )
+            w = 1.0_R8/d  
+            av = av + cv(ixx, iyy) * w
+            wTot = wTot + w
+            minVal = min(minVal, cv(ixx, iyy))
+            maxVal = max(maxVal, cv(ixx, iyy))
+
+          end do
+
+          vx(ix, iy) = av / wTot
+          d = vx(ix,iy) - minVal
+          if (minVal.ne.0.0_R8) then
+            call assert( d/abs(minVal) >= - 1.0e-15_R8, "Interpolated value smaller than minimum" )
+          else
+            call assert ( d.ge.minVal, "Interpolated value smaller than minimum" )
+          end if
+          d = vx(ix,iy) - maxVal
+          if (maxVal.ne.0.0_R8) then
+            call assert( d/abs(maxVal) <=   1.0e-15_R8, "Interpolated value bigger than maximum" )
+          else
+            call assert( d.le.maxVal, "Interpolated value bigger than maximum" )
+          end if
+       end do
+    end do
+    return
+
+  end function interpolateToVertices
 
   subroutine value_to_side(nx, ny, weight, centre, side)
-  use b2mod_geo , only: crx, cry, gs, qc, pbs
-  use b2mod_indirect
-  use b2mod_cellhelper
+  use b2mod_geo , only: crx, cry, gs, qc, pbs   ! IGNORE
+  use b2mod_indirect   ! IGNORE
+  use b2mod_cellhelper   ! IGNORE
+
+  ! use b2mod_geo , only: crx, cry, gs, qc, pbs
+  ! use b2mod_indirect
+  ! use b2mod_cellhelper
   implicit none
   integer, intent(in) :: nx, ny
   real(R8), intent(in) :: centre(-1:nx,-1:ny)
