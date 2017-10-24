@@ -19,6 +19,7 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_neoclassical
+      use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_numerics_namelist
       implicit none
