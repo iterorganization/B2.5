@@ -758,30 +758,26 @@ c 2002-09-11: logic revised
       call ipgetc ('solps_version', solps_version)
       write(*,*) 'Incoming SOLPS version entered : ', solps_version
 #ifndef HPUX
-      if (streql(solps_version,'iter')) then
-        write(*,*)
-     .   'Assuming standard SOLPS-ITER fort.44 format (default)'
-      else if (streql(solps_version,'4.3')) then
-        write(*,*) 'Assuming SOLPS4.3 fort.44 format'
-      else if (streql(solps_version,'5.0')) then
-        write(*,*) 'Assuming SOLPS5.0 fort.44 format'
-      else if (streql(solps_version,'5.1')) then
-        write(*,*) 'Assuming SOLPS5.1 fort.44 format'
-      else if (streql(solps_version,'5.2')) then
-        write(*,*) 'Assuming SOLPS5.2 fort.44 format'
+      filename='fort.44'
 #else
-      if (streql(solps_version,'iter')) then
-        write(*,*)
-     .   'Assuming standard SOLPS-ITER ftn44 format (default)'
-      else if (streql(solps_version,'4.3')) then
-        write(*,*) 'Assuming SOLPS4.3 ftn44 format'
-      else if (streql(solps_version,'5.0')) then
-        write(*,*) 'Assuming SOLPS5.0 ftn44 format'
-      else if (streql(solps_version,'5.1')) then
-        write(*,*) 'Assuming SOLPS5.1 ftn44 format'
-      else if (streql(solps_version,'5.2')) then
-        write(*,*) 'Assuming SOLPS5.2 ftn44 format'
+      filename='ftn44'
 #endif
+      inquire(file=trim(filename),exist=ex)
+      if (streql(solps_version,'iter')) then
+        if (ex) write(*,*) 'Assuming standard SOLPS-ITER '
+     .   //trim(filename)//' format (default)'
+      else if (streql(solps_version,'4.3')) then
+        if (ex) write(*,*) 'Assuming SOLPS4.3 '
+     .   //trim(filename)//' format'
+      else if (streql(solps_version,'5.0')) then
+        if (ex) write(*,*) 'Assuming SOLPS5.0 '
+     .   //trim(filename)//' format'
+      else if (streql(solps_version,'5.1')) then
+        if (ex) write(*,*) 'Assuming SOLPS5.1 '
+     .   //trim(filename)//' format'
+      else if (streql(solps_version,'5.2')) then
+        if (ex) write(*,*) 'Assuming SOLPS5.2 '
+     .   //trim(filename)//' format'
       else
         write(*,*) 'Accepted values are (case-insensitive): '
         write(*,*) '"ITER", "4.3", "5.0", "5.1", "5.2"'
@@ -9606,8 +9602,9 @@ cxpb as they no longer necessarily point to the same species
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or.nx.ne.nx1.or.non_commensurate.eq.1)) then
-        call alloc_b2mod_user(nlimi,nmoli,ntns)
-        call read_b2mod_user_namelist(nx,ns)
+        if(.not.allocated(iz))
+     >   call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
+        call alloc_b2mod_user(nx,ns,nlimi,nmoli,ntns)
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
@@ -9769,6 +9766,15 @@ cxpb as they no longer necessarily point to the same species
         if (scale_He) write(99,'(a,l1,a)') 'SCALE_HE=',SCALE_HE,','
         if (print_isat)
      >   write(99,'(a,l1,a)') 'PRINT_ISAT=',PRINT_ISAT,','
+        line='FILEDATA='
+        len=9
+        do i = 1, len_ntrc
+          write(line(len+1:len+2),'(l1,a)') FILEDATA(i),','
+          len = len+2
+        end do
+        write(99,'(a)') trim(line)
+        if (.not.write_nml_user) write(99, '(a,l1,a)')
+     >   'WRITE_NML_USER=',write_nml_user,','
         if (.not.streql(user_filename,'b2.user.parameters'))
      >   write(99,'(a,a,a)')
      .    'USER_FILENAME=''',trim(user_filename),''','

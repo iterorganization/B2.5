@@ -19,6 +19,7 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_neoclassical
+      use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_numerics_namelist
       implicit none
@@ -326,6 +327,10 @@ ctmp.dpc
      &                    facdrift, fchvispar)
             call b2tiner (nx, ny, ns, vol,
      &                    gs, hx, hy, bb, na, ua, facdrift, fchinert)
+!            call b2tvspr (nx, ny, ns, facdrift, vol, hx, hy, qz, bb,    !srv 10.10.17
+!     &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
+!            call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb,     !srv 10.10.17
+!     &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
           endif                                                          !srv 18.06.08 }
           src_ni=0.0_R8
           src_ne=0.0_R8
@@ -453,7 +458,10 @@ ctmp.dpc
            endif
 *      ..write the tracing data
            if (ank_tracing.ne.0) then
-             if (ncall.eq.0) call b2filei(ns,nnreg)
+             if (ncall.eq.0) then
+               call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+               call b2filei(1,ns,nnreg)
+             end if
              if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
      >        call b2filew(istg(2),ns,nnreg)
            endif

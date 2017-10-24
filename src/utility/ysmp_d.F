@@ -899,6 +899,12 @@ C
         INTEGER K, J, JMIN, JMAX, I, NEXTI, ILI, MU, JUMUJ               !srv 11.01.07
 C        REAL  A(NNZ), D(N), U(UMAX),  DK, UKIDI
          real (kind=R8) ::  A(NNZ),  D(N), U(UMAX), DK, UKIDI            !srv 11.01.07
+#ifdef DBG
+         real (kind=R8) :: product
+         real (kind=R8), save :: cutlo
+
+         cutlo = log(tiny(1.0_R8))
+#endif
 C
 C----CHECK FOR SUFFICIENT STORAGE FOR U
         IF (IU(N+1)-1 .GT. UMAX)  GO TO 107
@@ -930,7 +936,17 @@ C
 C--------COMPUTE MULTIPLIER AND UPDATE DIAGONAL ELEMENT
             ILI = IL(I)
             UKIDI = - U(ILI) * D(I)
+#ifdef DBG
+            IF((ABS(UKIDI) .ge. tiny(1.0_R8).or.
+     &          ABS(UKIDI) .le.-tiny(1.0_R8)).and.
+     &         (ABS(U(ILI)).ge. tiny(1.0_R8).or.
+     &          ABS(U(ILI)).le.-tiny(1.0_R8))) then
+              product = log(abs(ukidi)) + log(abs(u(ili)))
+              if (product.ge.cutlo) DK = DK + UKIDI * U(ILI)
+            END IF
+#else
             DK = DK + UKIDI * U(ILI)
+#endif
             U(ILI) = UKIDI
 C
 C--------ADD MULTIPLE OF ROW I TO K-TH ROW ...
@@ -939,7 +955,19 @@ C--------ADD MULTIPLE OF ROW I TO K-TH ROW ...
             IF (JMIN.GT.JMAX)  GO TO 8
               MU = IJU(I) - IU(I)
               DO 7 J=JMIN,JMAX
-   7            D(JU(MU+J)) = D(JU(MU+J)) + UKIDI * U(J)
+#ifdef DBG
+                IF((ABS(UKIDI).ge. tiny(1.0_R8).or.
+     &              ABS(UKIDI).le.-tiny(1.0_R8)).and.
+     &             (ABS(U(J)) .ge. tiny(1.0_R8).or.
+     &              ABS(U(J)) .le.-tiny(1.0_R8))) then
+                  product = log(abs(ukidi)) + log(abs(u(j)))
+                  if (product.ge.cutlo)
+     >             D(JU(MU+J)) = D(JU(MU+J)) + UKIDI * U(J)
+                END IF
+#else
+                D(JU(MU+J)) = D(JU(MU+J)) + UKIDI * U(J)
+#endif
+   7          CONTINUE
 C
 C--------... AND ADD I TO ROW LIST FOR NEXT NONZERO ENTRY
               IL(I) = JMIN

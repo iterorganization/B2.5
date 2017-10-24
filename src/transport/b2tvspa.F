@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,  !srv 20.09.06 {
-     &                    facdrift, fchvispar)                        !srv 22.06.08
+      subroutine b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,  !srv 20.09.06 { 16.10.17
+     &                    facdrift, fchvispar)                           !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -16,9 +16,9 @@
       real (kind=R8) ::
      & vol(-1:nx,-1:ny), 
      & ua(-1:nx,-1:ny,0:ns-1),
-     & cvsa(-1:nx,-1:ny,0:1,0:ns-1),
+     & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),                                  !srv 16.10.17
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     1 bb(-1:nx,-1:ny,0:3), facdrift(-1:nx,-1:ny)                     !srv 22.06.08
+     1 bb(-1:nx,-1:ny,0:3), facdrift(-1:nx,-1:ny)                        !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &     fchvispar(-1:nx,-1:ny,0:1)
@@ -28,7 +28,8 @@
 *
 *  1. purpose
 *
-*     B2TVSPA computes the X,Y-COMPONENTS OF VISCOSITY PARALLEL CURRENT
+*     B2TVSPA computes the X and Y components of the parallel viscosity
+*     current
 *
 *
 *  8. further comments
@@ -70,12 +71,12 @@
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test edge values of cvsa
-       call b2xvff (nx, ny, cvsa, 'cvsa')
+*    ..test edge values of cvsa_cl
+       call b2xvff (nx, ny, cvsa_cl, 'cvsa_cl')                          !srv 16.10.17
       endif
 
 c Drift terms
-      fchvispar =0.0e0_R8
+      fchvispar =0.0e0_R8                                                !srv 09.07.99
       dvpar=0.0e0_R8                                                     !srv 24.06.99
       if (vis_par.ne.0.0e0_R8.and.maxval(facdrift).ne.0.0_R8) then       !srv
         do is = 0, ns-1                                                  !srv 24.06.99
@@ -84,18 +85,18 @@ c Drift terms
 	    do iy = -1, ny						 !srv 18.02.00
               do ix = 0, nx
 	        if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02 23.07.05 {
-!             it has been considered that cvsa was multiplied by bx**2
+!             it has been considered that cvsa_cl was multiplied by bx**2
                   dvpar(ix,iy)=dvpar(ix,iy) +                            !srv 24.06.99
      &		     (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+ 
      &              bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &              sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
      &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8
-     &		   *cvsa(ix,iy,0,is)*(ua(ix,iy,is)*sqrt(bb(ix,iy,3))
+     &		     *cvsa_cl(ix,iy,0,is)*(ua(ix,iy,is)*sqrt(bb(ix,iy,3))  !srv16.10.17
      &                             -ua(leftix(ix,iy),leftiy(ix,iy),is)*
      &                        sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))   !srv 18.02.00 23.07.05 }
 !              dvpar(ix,iy)=dvpar(ix,iy)                                 !srv 24.06.99
-!     &		   + bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)           !srv 
-!     &		   *cvsa(ix,iy,0,is)*                                    !srv 18.02.00 
+!     &		   + bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)           !srv
+!     &		   *cvsa_cl(ix,iy,0,is)*                                 !srv 18.02.00
 !     &        (ua(rightix(ix,iy),rightiy(ix,iy),is)                     !srv
 !     &         *sqrt((bb(rightix(ix,iy),rightiy(ix,iy),3)               !srv 18.02.00
 !     &             +bb(ix,iy,3))*0.5e0_R8)                              !srv 18.02.00
@@ -110,7 +111,8 @@ c Drift terms
 	do iy = 0, ny-1                                                  !srv
 	  do ix = 0, nx                                                  !srv 01.07.99
 	    if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
-	      fchvispar(ix,iy,0)= - vis_par*facdrift(ix,iy)*    !signmf* !srv 25.04.00 05.02.05 22.06.08 11.01.13
+	      fchvispar(ix,iy,0)= fchvispar(ix,iy,0) -                   !srv 16.10.17
+     &        vis_par*facdrift(ix,iy)*                        !signmf*   !srv 25.04.00 05.02.05 22.06.08 11.01.13
      &        2.0e0_R8*dvpar(ix,iy)                                      !srv 23.07.05
      &       /(hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy))              !srv 18.02.00
      &       *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))      !srv
@@ -135,7 +137,8 @@ c Drift terms
 	do iy = 0, ny                                                    !srv 01.07.99
 	  do ix = 0, nx-1
 	    if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
-	      fchvispar(ix,iy,1)= vis_par*facdrift(ix,iy)*    ! signmf*  !srv 25.04.00 21.04.00 22.06.08 11.01.13
+	      fchvispar(ix,iy,1)= fchvispar(ix,iy,1) +                   !srv 16.10.17
+     &        vis_par*facdrift(ix,iy)*                      ! signmf*    !srv 25.04.00 21.04.00 22.06.08 11.01.13
      &       (wrk0(ix,iy)+wrk0(bottomix(ix,iy),bottomiy(ix,iy)))         !srv 23.07.05
      &       /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))          !srv 18.02.00
      &       *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))  !srv

@@ -390,6 +390,12 @@ C
 
 * Direction normals
 C
+      if (.not.allocated(pux)) then
+        allocate(pux(ntrii))
+        allocate(puy(ntrii))
+        allocate(pvx(ntrii))
+        allocate(pvy(ntrii))
+      end if
       if(jvft46.ge.20170930) then
         call read_title(46)
         read(46,'(6e15.7)') (PUX(j),j=1,ntrii)
@@ -415,6 +421,7 @@ C
       write(47,'(6e15.7)') (PVY(j),j=1,ntrii)
 
       deallocate(field1)
+      deallocate(pux,puy,pvx,pvy)
 #endif
 
 *  ---------------------------------------------------------------------

@@ -22,7 +22,9 @@
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
       character*80 user_filename
       logical scale_He, print_isat
-      logical user_namelist_used
+      logical user_namelist_used, written
+      logical, save :: write_nml_user = .true.
+      logical, save :: user_initialised = .false.
 
       private :: user
       namelist /user/
@@ -31,8 +33,8 @@
      ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
-     ,  Spmp_nom,scale_He,print_isat,
-     ,  user_filename
+     ,  Spmp_nom,scale_He,print_isat,write_nml_user,
+     ,  filedata,user_filename
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -60,14 +62,17 @@ c*** nntrgrp   :  actual number of surface groups for neutral data
 c*** lntrgrp   :  list of surface segments for neutral data
 c*** [ij]ntrgrp:  first and last positions in this list for each group
 c*** gntrgrp   :  identifiers for the neutral data surface groups
+c*** filedata  :  flag to turn on/off individual tracing files
+c***              (see b2mod_diag for their definition)
 c----------------------------------------------------------------------
 
       contains
 
-      subroutine alloc_b2mod_user(nlim,nmol,ntns)
+      subroutine alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
       implicit none
-      integer nlim, nmol, ntns
+      integer nx, ns, nlim, nmol, ntns
 
+      if (user_initialised) return
 #ifdef ALLOCATE_AND_NAMELIST
       nhetrgtx=nlim
       allocate(lhetrgts(nhetrgtx),lpfrgrp(nlim),lntrgrp(nlim))
@@ -101,6 +106,8 @@ c***  Standard setup:
       scale_He=.false.
       print_isat=.false.
       user_filename='b2.user.parameters'
+      call read_b2mod_user_namelist(nx,ns)
+      user_initialised = .true.
 
       return
       end subroutine alloc_b2mod_user
@@ -111,6 +118,7 @@ c***  Standard setup:
       deallocate(lhetrgts,lpfrgrp,lntrgrp)
       deallocate(l_h_mol)
 #endif
+      user_initialised = .false.
       return
       end subroutine dealloc_b2mod_user
 
@@ -222,10 +230,13 @@ c*** Set default values according to current species list
      . 'faulty input j_ne_at')
 
       call subend ()
+      return
 
-      entry write_b2mod_user_namelist
+      entry write_b2mod_user_namelist(nx,ns)
 
-      if (user_namelist_used) write(*,user)
+      if (written) return
+      if (user_namelist_used.and.write_nml_user) write(*,user)
+      written = .true.
       return
 
  999  call xerrab ('Error while reading FEEDBACK namelist!')

@@ -68,6 +68,7 @@
       integer, save :: icase = 0
       integer, save :: istyle_Joule_heating = 1                       !srv 17.01.14
       integer, save :: b2sigp_style = 2                               !srv 05.07.17
+      integer, save :: use_eirene = 0
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
      &  phm4, phm5, phm6, wrk0(-1:nx,-1:ny),                          !srv 02.06.99
@@ -156,6 +157,7 @@
        call ipgeti ('b2sihs_istyle_Joule_heating', 
      &                      istyle_Joule_heating)                  !srv 17.01.14
        call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
+       call ipgeti ('b2mndr_eirene', use_eirene)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -426,37 +428,36 @@
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
       do is = 0, ns-1
-       if(.not.is_neutral(is)) then                                   !srv 29.08.02
-        wrk0 = 0.0e0_R8                                               !srv 28.08.02 21.07.05 {
-        do iy = 0, ny-1
-         do ix = 0, nx
+       if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
+        do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
+         do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
-           wrk0(ix,iy)=0.0e0_R8
+            wrk0(ix,iy)=0.0e0_R8
           else
-           wrk0(ix,iy)=4.0e0_R8/3.0e0_R8*cvsa(ix,iy,0,is)*
+            wrk0(ix,iy) = cvsa(ix,iy,0,is)*                           !srv 16.10.17
      &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
           endif
          enddo
         enddo
-        wrk1 = 0.0e0_R8
-        do iy = 0, ny
-         do ix = 0, nx-1
-          if(leftix(ix,iy).ne.-2) then
-           wrk1(ix,iy)=4.0e0_R8*
-     *      (ua(ix,iy,is)-ua(bottomix(ix,iy),bottomiy(ix,iy),is))**2/
-     &      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))**2
+        do iy = -1, ny
+         do ix = -1, nx
+          if(bottomiy(ix,iy).eq.-2) then
+            wrk1(ix,iy) = 0.0e0_R8
+          else
+            wrk1(ix,iy) = cvsa(ix,iy,1,is)*                             !srv 16.10.17
+     *      (ua(ix,iy,is)-ua(bottomix(ix,iy),bottomiy(ix,iy),is))**2
           endif
          enddo
-        enddo                                                         !srv 28.08.02 21.07.05 }
+        enddo                                                         !srv 28.08.02 21.07.05 16.10.17 }
         do iy = 0, ny-1
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
            t0 = phm2*(1.0_R8-BoRiS)*
      &       (wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))        !srv 21.07.05 }
      &           *0.5e0_R8
-           t1 = phm8*(1.0_R8-BoRiS)*vsa0(ix,iy,is)*vol(ix,iy)*
+           t1 = phm8*(1.0_R8-BoRiS)*!                                 vsa0(ix,iy,is)*vol(ix,iy)*
      &       (wrk1(ix,iy)+wrk1(topix(ix,iy),topiy(ix,iy)))
-     &           *0.5e0_R8                                            !srv 21.07.05 }
+     &           *0.5e0_R8                                            !srv 21.07.05 16.10.17 }
            shivc(ix,iy,0) = shivc(ix,iy,0)+(1.0e0_R8+rf2)*t0
            shivc(ix,iy,3) = shivc(ix,iy,3)-
      &                        rf2*t0/(ni(ix,iy,0)*ti(ix,iy))

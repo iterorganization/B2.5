@@ -94,7 +94,7 @@
         tt2 = 0.0e0_R8
         do iy = -1,ny
           do ix = -1,nx
-            if(on_closed_surface(ix,iy)) then
+            if(on_closed_surface(ix,iy).and.bottomiy(ix,iy).ne.-2) then
               tt0(iy) = tt0(iy) + vol(ix,iy)
               tt1(iy) = tt1(iy) + vol(ix,iy)*(nb_(ix,iy)-nb(ix,iy))
               tt2(iy) = tt2(iy) + vol(ix,iy)*(pb_(ix,iy)-pb(ix,iy))
@@ -103,7 +103,7 @@
         enddo
         do iy = -1,ny
           do ix = -1,nx
-            if(on_closed_surface(ix,iy)) then
+            if(on_closed_surface(ix,iy).and.bottomiy(ix,iy).ne.-2) then
               nb(ix,iy) = nb(ix,iy)+tt1(iy)/tt0(iy) +
      *         c_corr_core_dn*(nb_(ix,iy)-nb(ix,iy)-tt1(iy)/tt0(iy))
               pb(ix,iy) = pb(ix,iy)+tt2(iy)/tt0(iy) +

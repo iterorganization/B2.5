@@ -107,6 +107,7 @@ C    ZUWEISUNG
       IK=0
       ICNH=0
       IRNH=0
+      A1H=0.0_R8
       DO K=1,NC0
         IF (IJSH(K).EQ.0) A1HN=ASO(ISH(K),JSH(K))
         IF (IJSH(K).EQ.1) A1HN=AWE(ISH(K),JSH(K))

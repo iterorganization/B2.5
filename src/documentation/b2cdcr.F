@@ -334,6 +334,12 @@
 *
 *     B2TBFL computes the total flux through the boundaries
 *
+*     B2TDIA computes the X and Y components of the divergent part of
+*     the diamagnetic current
+*
+*     B2ETPSCH computes the X and Y components of the Pfirsch-Schlueter
+*     heat flux
+*
 *     B2TFCH computes the electric current between neighboring cells,
 *     and the coefficients that specify its linearisation.
 *
@@ -382,6 +388,15 @@
 *
 *     B2TRNO computes the anomalous transport coefficients, including
 *     geometric factors such as vol/hx**2 and vol/hy**2.
+*
+*     B2TVSPA computes the X and Y components of the parallel viscosity
+*     current
+*
+*     B2TVSPR computes the X and Y components of the perpendicular viscosity
+*     current
+*
+*     B2TVSQ computes the X and Y components of the heat viscosity
+*     current
 *
 *     B2TXCV computes viscous conductances between neighbouring
 *     staggered cells, given the viscosities (not used anymore).
