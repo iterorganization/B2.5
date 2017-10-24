@@ -14,7 +14,7 @@ module b2mod_ual_io_grid
 #ifdef IMAS
     use ids_schemas         ! IGNORE
     use ids_routines        ! IGNORE
-
+    use ids_types           ! IGNORE
     !> IMAS constants definitions (coordinate types identifiers, grid subset 
     !> identifiers ...)
     use ids_grid_common     ! IGNORE
@@ -103,7 +103,7 @@ implicit none
 
     !> Subgrid/Grid subset name constants
 
-    !> Number of generic subgrids
+    !> Number of generic grid subsets
     integer, parameter :: B2_GENERIC_GSUBSET_COUNT = 6
 
     !> Generic grid subsets (all cells, all faces)
@@ -740,11 +740,11 @@ contains
 
         geoId = geometryId(nnreg, periodic_bc, topcut)
     
-        !> Figure out total number of subgrids
-        !> Do generic subgrids + subgrids
+        !> Figure out total number of grid subsets
+        !> Do generic grid subsets + grid subsets
         nGSubset = B2_GENERIC_GSUBSET_COUNT + regionCountTotal(geoId)
-        !> Inner/outer midplane subgrids
-        ! nGSubset = nGSubset + 2
+        !> Inner/outer midplane grid subsets
+        nGSubset = nGSubset + 2
 
         call logmsg( LOGDEBUG, "b2IMASFillGridDescription: expecting total of " &
             &//idsInt2str(nGSubset)//" grid subsets" )
@@ -889,70 +889,161 @@ contains
             do iRegion = 1, regionCount(geoId, iType)              
                 GSubsetCount = GSubsetCount + 1
 
-                call logmsg( LOGDEBUG,                                  &
-                    &   "b2IMASFillGridDescription: add subgrid #"//    &
-                    &   idsInt2str(GSubsetCount)//                      &
-                    &   " for iType "//idsInt2str(iType)//              &
-                    &   ", iRegion "//idsInt2str(iRegion)//": "//       &
+                call logmsg( LOGDEBUG,                                      &
+                    &   "b2IMASFillGridDescription: add grid subset #"//    &
+                    &   idsInt2str(GSubsetCount)//                          &
+                    &   " for iType "//idsInt2str( iType )//                &
+                    &   ", iRegion "//idsInt2str( iRegion )//": "//         &
                     &   regionName(geoId, iType, iRegion) )
 
                 !> Create grid subset with one object list
                 call createEmptyGridSubset(                     &
                     &   ggd_grid%grid_subset( GSubsetCount ),   &
-                    &       GSubsetCount, regionName(geoId, iType, iRegion) )
+                    &   GSubsetCount, regionName( geoId, iType, iRegion ) )
 
                 !> Get explicit object list of the grid subset using 
                 !> subroutine collectIndexListForRegionSubroutine
                 !> (function collectIndexListForRegion transferred to subroutine,
                 !> as array of certain dimension is required as an output)
-                call collectIndexListForRegionSubroutine(gmap, region, iType,   &
-                    &   iRegion, indexList2d)
+                call collectIndexListForRegionSubroutine( gmap, region, iType,  &
+                    &   iRegion, indexList2d )
 
                 !> Initialize explicit object list for grid subset
                 !> TODO: Currently taking object indices only from space 1
                 !>      ( %space(1) ). Set  
                 !>       to search all spaces  
-                call createExplicitObjectListSingleSpace( ggd_grid,         &
-                    &   ggd_grid%grid_subset( GSubsetCount ), sum(cls) - 1, &
+                call createExplicitObjectListSingleSpace( ggd_grid,             &
+                    &   ggd_grid%grid_subset( GSubsetCount ), sum( cls ) - 1,   &
                     &   indexList2d(:,1), sum(cls), 1)
             end do
         end do
-# if 0
 
-        !> Add midplane node subgrids
-      
-        !> Find the core boundary subgrid by looking for its name as defined in b2mod_connectivity
-        iCoreGS = gridFindSubGridByName(ggd_grid, "Core boundary")
+        deallocate(indexList2d)
+        !> Add midplane node grid subsets
+        !> Find the core boundary grid subset by looking for its name as defined in b2mod_connectivity
+        iCoreGS = findGridSubsetByName(ggd_grid, "Core boundary")
         !> For double null, we need the outer half of the core boundary
         if (iCoreGS == B2_GRID_UNDEFINED) then 
-            iCoreGS = gridFindSubGridByName(ggd_grid, "Outer core boundary")          
+            iCoreGS = findGridSubsetByName(ggd_grid, "Outer core boundary")          
         end if
-        if (iCoreGS == B2_GRID_UNDEFINED) stop "fillInGridSubsetDescription: &
-            & did not find core boundary subgrid for assembling outer midplane subgrid"
+        if (iCoreGS == B2_GRID_UNDEFINED) stop "fillInGridSubsetDescription:    &
+            &   did not find core boundary grid subset for assembling outer     &
+            &   midplane  grid subset"
 
-        !> Figure out starting points for inner and outer midplane on core boundary
-        call findMidplaneCells(ggd_grid%grid_subset(iCoreGS), gmap, crx, xIn, yIn, xOut, yOut)
+        !> Figure out starting points for inner and outer midplane on core 
+        !> boundary
+        call findMidplaneCells(ggd_grid%grid_subset( iCoreGS ), gmap, crx,  &
+            &   xIn, yIn, xOut, yOut)
 
         GSubsetCount = GSubsetCount + 1
-        call createSubGridForExplicitList( ggd_grid, ggd_grid%grid_subset( GSubsetCount ), &
-            & CLASS_NODE(1:SPACE_COUNT), &
-            & collectRadialVertexIndexList(gmap, cflag, xIn, yIn, topix, topiy), &
-            & "Inner midplane" )
-      
+        !> Create grid subset with one object list
+        call createEmptyGridSubset(                     &
+            &   ggd_grid%grid_subset( GSubsetCount ),   &
+            &       GSubsetCount, "Inner Midplane" )
+
+        !> Get explicit object list of the grid subset using 
+        !> subroutine collectRadialVertexIndexListSubroutine
+        !> (function collectRadialVertexIndexList transferred to subroutine,
+        !> as array of certain dimension is required as an output)
+        call collectRadialVertexIndexListSubroutine(gmap, cflag, xIn, yIn,  &
+            &   topix, topiy, indexList2d)
+
+        !> Initialize explicit object list for grid subset
+        !> TODO: Currently taking object indices only from space 1
+        !>      ( %space(1) ). Set  
+        !>       to search all spaces  
+        call createExplicitObjectListSingleSpace( ggd_grid,                 &
+            &   ggd_grid%grid_subset( GSubsetCount ), IDS_CLASS_NODE - 1,   &
+            &   indexList2d(:,1), IDS_CLASS_NODE, 1)
+
         GSubsetCount = GSubsetCount + 1
-        call createSubGridForExplicitList( ggd_grid, ggd_grid%grid_subset( GSubsetCount ), &
-            & CLASS_NODE(1:SPACE_COUNT), &
-            & collectRadialVertexIndexList(gmap, cflag, xOut, yOut, topix, topiy), &
-            & "Outer midplane" )      
 
-        call logmsg( LOGDEBUG, "b2IMASFillGridDescription: wrote total of "&
-            &//idsInt2str(GSubsetCount)//" subgrids (expected was "//idsInt2str(size(ggd_grid%grid_subset))//')' )
+        !> Create grid subset with one object list
+        call createEmptyGridSubset(                     &
+            &   ggd_grid%grid_subset( GSubsetCount ),   &
+            &       GSubsetCount, "Outer Midplane" )
 
-        call assert( GSubsetCount == size(ggd_grid%subgrids) )
-#endif
+        !> Get explicit object list of the grid subset using 
+        !> subroutine collectRadialVertexIndexListSubroutine
+        !> (function collectRadialVertexIndexList transferred to subroutine,
+        !> as array of certain dimension is required as an output)
+        call collectRadialVertexIndexListSubroutine(gmap, cflag, xOut, yOut,  &
+            &   topix, topiy, indexList2d)
+
+        !> Initialize explicit object list for grid subset
+        !> TODO: Currently taking object indices only from space 1
+        !>      ( %space(1) ). Set  
+        !>       to search all spaces  
+        call createExplicitObjectListSingleSpace( ggd_grid,                 &
+            &   ggd_grid%grid_subset( GSubsetCount ), IDS_CLASS_NODE - 1,   &
+            &   indexList2d(:,1), IDS_CLASS_NODE, 1)
+
+        call logmsg( LOGDEBUG, "b2IMASFillGridDescription: wrote total of " &
+            &//idsInt2str(GSubsetCount)//" grid subsets (expected was "     &
+            &   //idsInt2str(size(ggd_grid%grid_subset))//')' )
+
+        call assert( GSubsetCount == size(ggd_grid%grid_subset) )
     end subroutine fillInGridSubsetDescription
 
     end subroutine b2IMASFillGridDescription
+
+    !> Figure out starting cells for inner and outer midplane on core boundary
+    !> by finding the points on the core boundary with minimum and maximum r 
+    !> positions
+    subroutine findMidplaneCells(coreBndGridSubset, gmap, crx, xIn, yIn,    &
+            &   xOut, yOut)   
+        type(ids_generic_grid_dynamic_grid_subset), intent(in) :: coreBndGridSubset
+        type(B2GridMap), intent(in) :: gmap
+        !> x/radial vertex coordinates
+        real(IDS_real), intent(in) :: crx(-1:gmap%b2nx,-1:gmap%b2ny,0:3)
+        integer, intent(out) :: xIn, yIn, xOut, yOut
+
+
+        !> internal
+        real(IDS_real) :: rMin, rMax
+        type(GridObject) :: obj
+        integer :: ix, iy, iObj
+
+        rMin = huge(rMin)
+        rMax = -huge(rMax)
+
+        xIn = huge(xIn)
+        xOut = huge(xOut)
+
+        !> Loop over all faces in core boundary subgrid
+        do iObj = 1, getGridSubsetSize(coreBndGridSubset)  
+            obj = getGridSubsetObject(coreBndGridSubset, iObj)
+            !> Expect a face
+            !> TODO: fix asserts
+            ! call assert( all(obj%cls(1:SPACE_COUNT) ==  &
+                ! &   CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT)) )        
+            !> ...which is aligned along the x-direction
+            ! call assert( gmap % mapFcIFace(obj%ind(SPACE_POLOIDALPLANE)) ==     &
+                ! &   BOTTOM )
+            ix = gmap % mapFcix( obj%ind(SPACE_POLOIDALPLANE) )
+            iy = gmap % mapFciy( obj%ind(SPACE_POLOIDALPLANE) )
+            
+            !> We want the vertex associated with the cell at ix, iy, which is number 0
+            if ( crx(ix, iy, 0) < rMin ) then
+                rMin = crx(ix, iy, 0)
+                xIn = ix
+                yIn = iy
+            end if
+            if ( crx(ix, iy, 0) > rMax ) then
+                rMax = crx(ix, iy, 0)
+                xOut = ix
+                yOut = iy
+            end if
+        end do
+
+        !>TODO: fix the assert below
+        ! call assert(xIn /= huge(xIn),   &
+        !     &   "findMidplaneCells: did not find inner midplane position")
+        ! call assert(xOut /= huge(xOut), 
+        !     &   "findMidplaneCells: did not find outer midplane position")
+    end subroutine
+
+
 
 #else
 #ifdef ITM
@@ -1353,18 +1444,17 @@ contains
 
   end subroutine b2ITMFillGridDescription
 
-
-  ! Figure out starting cells for inner and outer midplane on core boundary
-  ! by finding the points on the core boundary with minimum and maximum r positions
+  !> Figure out starting cells for inner and outer midplane on core boundary
+  !> by finding the points on the core boundary with minimum and maximum r positions
   subroutine findMidplaneCells(coreBndSubgrid, gmap, crx, xIn, yIn, xOut, yOut)   
     type(type_complexgrid_subgrid), intent(in) :: coreBndSubgrid
     type(B2GridMap), intent(in) :: gmap
-    ! x/radial vertex coordinates
+    !> x/radial vertex coordinates
     real (ITM_R8), intent(in) :: crx(-1:gmap%b2nx,-1:gmap%b2ny,0:3)
     integer, intent(out) :: xIn, yIn, xOut, yOut
 
 
-    ! internal
+    !> internal
     real(ITM_R8) :: rMin, rMax
     type(GridObject) :: obj
     integer :: ix, iy, iObj
@@ -1375,17 +1465,17 @@ contains
     xIn = huge(xIn)
     xOut = huge(xOut)
 
-    ! Loop over all faces in core boundary subgrid
+    !> Loop over all faces in core boundary subgrid
     do iObj = 1, gridSubGridSize(coreBndSubgrid)    
         obj = subGridGetObject(coreBndSubgrid, iObj)
-        ! Expect a face
+        !> Expect a face
         call assert( all(obj%cls(1:SPACE_COUNT) == CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT)) )        
-        ! ...which is aligned along the x-direction
+        !> ...which is aligned along the x-direction
         call assert( gmap % mapFcIFace(obj%ind(SPACE_POLOIDALPLANE)) == BOTTOM )
         ix = gmap % mapFcix( obj%ind(SPACE_POLOIDALPLANE) )
         iy = gmap % mapFciy( obj%ind(SPACE_POLOIDALPLANE) )
         
-        ! We want the vertex associated with the cell at ix, iy, which is number 0
+        !> We want the vertex associated with the cell at ix, iy, which is number 0
         if ( crx(ix, iy, 0) < rMin ) then
             rMin = crx(ix, iy, 0)
             xIn = ix
@@ -1398,87 +1488,169 @@ contains
         end if
     end do
 
-    call assert(xIn /= huge(xIn), "findMidplaneCells: did not find inner midplane position")
-    call assert(xOut /= huge(xOut), "findMidplaneCells: did not find outer midplane position")
+    call assert(xIn /= huge(xIn),   &
+        &   "findMidplaneCells: did not find inner midplane position")
+    call assert(xOut /= huge(xOut), 
+        &   "findMidplaneCells: did not find outer midplane position")
   end subroutine
 
+#endif
+#endif
 
-  !> Collect the grid indices of all vertices on the radial grid line outward 
-  !> starting at the vertex at position six,siy in computational space.
-  function collectRadialVertexIndexList(gmap, cflag, six, siy, topix, topiy) result( indexList )
-    integer, allocatable, dimension(:,:) :: indexList
+    !> Collect the grid indices of all vertices on the radial grid line outward 
+    !> starting at the vertex at position six,siy in computational space.
+    function collectRadialVertexIndexList(gmap, cflag, six, siy, topix,     &
+        &   topiy) result( indexList )
+        integer, allocatable, dimension(:,:) :: indexList
 
-    type(B2GridMap), intent(in) :: gmap
-    integer, intent(in) :: six, siy
-    integer, intent(in) ::  cflag(-1:gmap%b2nx,-1:gmap%b2ny, CARREOUT_NCELLFLAGS)
+        type(B2GridMap), intent(in) :: gmap
+        integer, intent(in) :: six, siy
+        integer, intent(in) ::  cflag(-1:gmap%b2nx,-1:gmap%b2ny, CARREOUT_NCELLFLAGS)
 
-    ! B2 connectivity array
-    integer, intent(in) :: &
-        & topix(-1:gmap%b2nx,-1:gmap%b2ny),topiy(-1:gmap%b2nx,-1:gmap%b2ny)
+        !> B2 connectivity array
+        integer, intent(in) :: &
+            & topix(-1:gmap%b2nx,-1:gmap%b2ny),topiy(-1:gmap%b2nx,-1:gmap%b2ny)
 
-    ! internal
-    integer :: ix, iy, nix, niy, nVx, iVx
+        !> internal
+        integer :: ix, iy, nix, niy, nVx, iVx
 
-    ! First figure out how many points we have: start at six, siy, 
-    ! go towards top until running out of physical domain
-    nVx = 1
-    ix = six
-    iy = siy
-    do
-        ! Take a step upwards
-        nix = topix(ix, iy)
-        niy = topiy(ix, iy)
-        ! Stepped outside grid or into ghost cell?
-        if (isUnneededCell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then
-            exit
-        else
-            nVx = nVx + 1
+        !> First figure out how many points we have: start at six, siy, 
+        !> go towards top until running out of physical domain
+        nVx = 1
+        ix = six
+        iy = siy
+        do
+            !> Take a step upwards
+            nix = topix(ix, iy)
+            niy = topiy(ix, iy)
+            !> Stepped outside grid or into ghost cell?
+            if (isUnneededCell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then
+                exit
+            else
+                nVx = nVx + 1
+                ix = nix
+                iy = niy
+            end if
+        end do
+    
+        allocate( indexList(nVx, SPACE_COUNT) )   
+        if (SPACE_COUNT == SPACE_TOROIDALANGLE)&
+            & indexList(:,SPACE_TOROIDALANGLE) = 1
+
+        !> collect indices: repeat above loop with storing indices
+        ix = six
+        iy = siy
+        !> Store starting point index
+        iVx = 1    
+        indexList(iVx, SPACE_POLOIDALPLANE) = gmap%mapVxI(ix, iy, VX_LOWERLEFT)
+        do
+            !> take a step
+            nix = topix(ix, iy)
+            niy = topiy(ix, iy)
+
+            !> Stepped outside grid?
+            if (isUnneededCell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then          
+                exit
+            end if
+
+            !> Store index for new point
+            iVx = iVx + 1
+            if (gmap%mapVxI(nix, niy, VX_LOWERLEFT) /= B2_GRID_UNDEFINED) then
+               indexList(iVx, SPACE_POLOIDALPLANE) =    &
+                &   gmap%mapVxI(nix, niy, VX_LOWERLEFT)
+            else if (gmap%mapVxI(ix, iy, VX_UPPERLEFT) /= B2_GRID_UNDEFINED &
+                 & .and. iVx == nVx) then
+               indexList(iVx, SPACE_POLOIDALPLANE) =    &
+                &   gmap%mapVxI(ix, iy, VX_UPPERLEFT)
+            else
+               stop "collectRadialVertexIndexList: cannot find expected vertex index"
+            end if
+
             ix = nix
             iy = niy
-        end if
-    end do
+        end do
+
+        call assert( iVx == nVx )
+
+    end function collectRadialVertexIndexList
+
+    !> Collect the grid indices of all vertices on the radial grid line outward 
+    !> starting at the vertex at position six,siy in computational space.
+    subroutine collectRadialVertexIndexListSubroutine(gmap, cflag, six, siy,  &
+            &   topix, topiy, indexList)
+        integer, allocatable, dimension(:,:), intent(out) :: indexList
+
+        type(B2GridMap), intent(in) :: gmap
+        integer, intent(in) :: six, siy
+        integer, intent(in) ::  cflag(-1:gmap%b2nx,-1:gmap%b2ny, CARREOUT_NCELLFLAGS)
+
+        !> B2 connectivity array
+        integer, intent(in) :: &
+            & topix(-1:gmap%b2nx,-1:gmap%b2ny),topiy(-1:gmap%b2nx,-1:gmap%b2ny)
+
+        !> internal
+        integer :: ix, iy, nix, niy, nVx, iVx
+
+        !> First figure out how many points we have: start at six, siy, 
+        !> go towards top until running out of physical domain
+        nVx = 1
+        ix = six
+        iy = siy
+        do
+            !> Take a step upwards
+            nix = topix(ix, iy)
+            niy = topiy(ix, iy)
+            !> Stepped outside grid or into ghost cell?
+            if (isUnneededCell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then
+                exit
+            else
+                nVx = nVx + 1
+                ix = nix
+                iy = niy
+            end if
+        end do
     
-    allocate( indexList(nVx, SPACE_COUNT) )   
-    if (SPACE_COUNT == SPACE_TOROIDALANGLE)&
-        & indexList(:,SPACE_TOROIDALANGLE) = 1
+        allocate( indexList(nVx, SPACE_COUNT) )   
+        if (SPACE_COUNT == SPACE_TOROIDALANGLE)&
+            & indexList(:,SPACE_TOROIDALANGLE) = 1
 
-    ! collect indices: repeat above loop with storing indices
-    ix = six
-    iy = siy
-    ! Store starting point index
-    iVx = 1    
-    indexList(iVx, SPACE_POLOIDALPLANE) = gmap%mapVxI(ix, iy, VX_LOWERLEFT)
-    do
-        ! take a step
-        nix = topix(ix, iy)
-        niy = topiy(ix, iy)
+        !> collect indices: repeat above loop with storing indices
+        ix = six
+        iy = siy
+        !> Store starting point index
+        iVx = 1    
+        indexList(iVx, SPACE_POLOIDALPLANE) = gmap%mapVxI(ix, iy, VX_LOWERLEFT)
+        do
+            !> take a step
+            nix = topix(ix, iy)
+            niy = topiy(ix, iy)
 
-        ! Stepped outside grid?
-        if (isUnneededCell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then          
-            exit
-        end if
+            !> Stepped outside grid?
+            if (isUnneededCell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then          
+                exit
+            end if
 
-        ! Store index for new point
-        iVx = iVx + 1
-        if (gmap%mapVxI(nix, niy, VX_LOWERLEFT) /= GRID_UNDEFINED) then
-           indexList(iVx, SPACE_POLOIDALPLANE) = gmap%mapVxI(nix, niy, VX_LOWERLEFT)
-        else if (gmap%mapVxI(ix, iy, VX_UPPERLEFT) /= GRID_UNDEFINED &
-             & .and. iVx == nVx) then
-           indexList(iVx, SPACE_POLOIDALPLANE) = gmap%mapVxI(ix, iy, VX_UPPERLEFT)
-        else
-           stop "collectRadialVertexIndexList: cannot find expected vertex index"
-        end if
+            !> Store index for new point
+            iVx = iVx + 1
+            if (gmap%mapVxI(nix, niy, VX_LOWERLEFT) /= B2_GRID_UNDEFINED) then
+                indexList(iVx, SPACE_POLOIDALPLANE) =   &
+                    &   gmap%mapVxI(nix, niy, VX_LOWERLEFT)
+            else if (gmap%mapVxI(ix, iy, VX_UPPERLEFT) /= B2_GRID_UNDEFINED &
+                    & .and. iVx == nVx) then
+                indexList(iVx, SPACE_POLOIDALPLANE) =   &
+                    &   gmap%mapVxI(ix, iy, VX_UPPERLEFT)
+            else
+                stop "collectRadialVertexIndexListSubroutine: cannot find    &
+                    &   expected vertex index"
+            end if
 
-        ix = nix
-        iy = niy
-    end do
+            ix = nix
+            iy = niy
+        end do
 
-    call assert( iVx == nVx )
+        call assert( iVx == nVx )
 
-  end function collectRadialVertexIndexList
-
-#endif
-#endif
+    end subroutine collectRadialVertexIndexListSubroutine
 
 
     !> Build an index list of all objects of a given region type 
