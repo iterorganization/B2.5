@@ -9766,9 +9766,13 @@ cxpb as they no longer necessarily point to the same species
         if (scale_He) write(99,'(a,l1,a)') 'SCALE_HE=',SCALE_HE,','
         if (print_isat)
      >   write(99,'(a,l1,a)') 'PRINT_ISAT=',PRINT_ISAT,','
-        write(hlp_frm,'(a,i2,a)') '(a,',len_ntrc,'(l1,a))'
-        write(99,hlp_frm)
-     >   'FILEDATA=',((FILEDATA(i),','),i=1,len_ntrc)
+        line='FILEDATA='
+        len=9
+        do i = 1, len_ntrc
+          write(line(len+1:len+2),'(l1,a)') FILEDATA(i),','
+          len = len+2
+        end do
+        write(99,'(a)') trim(line)
         if (.not.write_nml_user) write(99, '(a,l1,a)')
      >   'WRITE_NML_USER=',write_nml_user,','
         if (.not.streql(user_filename,'b2.user.parameters'))
