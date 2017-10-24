@@ -66,11 +66,12 @@ contains
             &   gs_bnd_core
         integer :: is, ns, nx, ny, i, j
         logical, parameter :: B2_WRITE_DATA = .true.
-        real(IDS_real), dimension(-1:ubound(crx,1),-1:ubound(crx,2),3,3) :: e
+        real(IDS_real),   &
+            &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
         integer :: iGsCore, iGsInnerMidplane, iGsOuterMidplane
 
-        real(IDS_real) :: tmpFace(-1:ubound(na, 1), -1:ubound(na, 2), 0:1)
-        real(IDS_real) :: tmpVx(-1:ubound(na, 1), -1:ubound(na, 2))
+        real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2 ), 0:1)
+        real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2 ))
         integer ::  homogeneous_time
         real(IDS_real)    ::  time
 
@@ -89,50 +90,202 @@ contains
         call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time) 
 
         !> Allocate ggd slice
-        allocate(edge_profiles%ggd(1))
+        allocate( edge_profiles%ggd(1) )
 
         !> allocate and init the IDS
-        allocate(edge_profiles%code%name(1))
+        allocate( edge_profiles%code%name(1) )
 # ifdef B25_EIRENE
         edge_profiles%code%name = "SOLPS-ITER"
 # else
         edge_profiles%code%name = "B2.5"
 # endif
-        allocate(edge_profiles%code%version(1))
+        allocate( edge_profiles%code%version(1) )
         edge_profiles%code%version = git_version_B25
 
-        ns = size(na, 3) 
-        nx = ubound(na, 1)
-        ny = ubound(na, 2)
+        ns = size( na, 3 ) 
+        nx = ubound( na, 1 )
+        ny = ubound( na, 2 )
 
         !> List of species
-        allocate(edge_profiles%ggd(1)%ion(ns))
+        allocate( edge_profiles%ggd(1)%ion( ns ) )
         do is = 0, ns-1
-            allocate(edge_profiles%ggd(1)%ion(is+1)%state(1))
-            allocate(edge_profiles%ggd(1)%ion(is+1)%element(1))
+            allocate( edge_profiles%ggd(1)%ion( is + 1 )%state(1) )
+            allocate( edge_profiles%ggd(1)%ion( is + 1 )%element(1) )
 
-            call species(is, edge_profiles%ggd(1)%ion(is+1)%state(1)%label,     &
+            call species( is, edge_profiles%ggd(1)%ion( is + 1 )%state(1)%label,&
                 &   .false.)
-            edge_profiles%ggd(1)%ion(is+1)%element(1)%a = am(is)
-            edge_profiles%ggd(1)%ion(is+1)%element(1)%z_n = zn(is)
-            edge_profiles%ggd(1)%ion(is+1)%state(1)%z_min = zamin(is)
-            edge_profiles%ggd(1)%ion(is+1)%state(1)%z_max = zamax(is)
+            edge_profiles%ggd(1)%ion( is + 1 )%element(1)%a = am( is )
+            edge_profiles%ggd(1)%ion( is + 1 )%element(1)%z_n = zn( is )
+            edge_profiles%ggd(1)%ion( is + 1 )%state(1)%z_min = zamin( is )
+            edge_profiles%ggd(1)%ion( is + 1 )%state(1)%z_max = zamax( is )
  
         enddo
 
         write(*,*) "Running b2CreateMap subroutine"
         !> Set up the B2<->IDS mappings
-        call b2CreateMap( nx,ny,crx(-1:nx,-1:ny,:),cry(-1:nx,-1:ny,:),  &
-            &   cflags,leftix,leftiy,rightix,rightiy, &
-            &   topix,topiy,bottomix,bottomiy, INCLUDE_GHOST_CELLS, gmap )
+        call b2CreateMap( nx, ny, crx( -1:nx, -1:ny, : ),             &
+            &   cry( -1:nx, -1:ny, : ), cflags, leftix, leftiy,       &
+            &   rightix, rightiy, topix, topiy, bottomix,bottomiy,    & 
+            &   INCLUDE_GHOST_CELLS, gmap )
         mapInitialized = .true.
 
         !> Write grid & grid subsets/subgrids
-        call b2IMASFillGridDescription( gmap, edge_profiles%ggd(1)%grid, &
-            & nx,ny,crx(-1:nx,-1:ny,:),cry(-1:nx,-1:ny,:), &
-            & leftix,leftiy,rightix,rightiy, &
-            & topix,topiy,bottomix,bottomiy, &
-            & nnreg, topcut, region, cflags, INCLUDE_GHOST_CELLS, vol, gs, qc )
+        call b2IMASFillGridDescription( gmap, edge_profiles%ggd(1)%grid,    &
+            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+            &   bottomiy, nnreg, topcut, region, cflags,                    &
+            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+
+#if 0
+
+    call assert( geometryId( nnreg, periodic_bc, topcut ) ==    ¸&
+        &   GEOMETRY_SN, "write_ids: can only do single null" )
+
+    !> Write plasma state 
+
+    if ( B2_WRITE_DATA ) then
+
+        write (*,*) "b2mod_ual_io.write_ids: writing plasma state"
+        
+        iSgCore = gridFindSubGridByName( edge_profiles%grid, "Core boundary" )
+        iSgInnerMidplane =  &
+            &   gridFindSubGridByName( edge_profiles%grid, "Inner midplane" )
+        iSgOuterMidplane =  &
+            &   gridFindSubGridByName( edge_profiles%grid, "Outer midplane" )
+
+        !> TODO: The fluxes are currently in the edge_transport. They are 
+        !> supposed to be in the edge_profiles (24.10.2017)
+
+        !> edge_transport fundamentals
+        !> TODO: create it as a subroutine
+        allocate( edge_transport%model(1) )
+        allocate( edge_transport%model(1)%ggd(1) )
+        allocate( edge_transport%model(1)%ggd(1)%electrons%energy%flux(1) )
+
+        !> ne
+        call write_quantity( edge_profiles%electrons%density%values,    &
+            &   edge_transport%model(1)%ggd(1)%electrons%energy%flux(1), ne, fne )
+! #if 0
+        call write_cell_scalar( edge_profiles%fluid%ne%source,  &
+            &   sne(:,:,0) + sne(:,:,1) * ne )
+
+        !> na
+        allocate( edge_profiles%fluid%ni( ns ) )
+        do is = 1, ns
+            call write_quantity( edge_profiles%fluid%ni(is)%value,          &
+                &   edge_profiles%fluid%ni( is )%flux, na(:,:, is - 1 ),    &
+                &   fna(:,:,:, is - 1 ) )
+            call write_cell_scalar( edge_profiles%fluid%ni( is )%source,    &
+                &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) * na(:,:, is - 1 ) )
+        end do
+
+!!$    !> ue TODO: must be computed, refactor code from b2news into function
+!!$    allocate(edge_profiles%fluid%ve%comps(1))
+!!$    allocate(edge_profiles%fluid%ve%align(1))
+!!$    allocate(edge_profiles%fluid%ve%alignid(1))
+!!$    edge_profiles%fluid%ve%align(1) = VEC_ALIGN_PARALLEL
+!!$    edge_profiles%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
+!!$    call write_cell_scalar( edge_profiles%fluid%ve%comps(1)%value, ue(:,:) )
+
+        !> ua
+        allocate( edge_profiles%fluid%vi( ns ) )
+        do is = 1, ns
+            allocate( edge_profiles%fluid%vi( is )%comps(1) )
+            allocate( edge_profiles%fluid%vi( is )%align(1) )
+            allocate( edge_profiles%fluid%vi( is )%alignid(1) )
+            edge_profiles%fluid%vi( is )%align(1) = VEC_ALIGN_PARALLEL
+            edge_profiles%fluid%vi( is )%alignid(1) = VEC_ALIGN_PARALLEL_ID
+
+            call write_cell_scalar( edge_profiles%fluid%vi( is )%comps(1)%value,&
+                &   ua(:,:, is - 1 ) )
+        end do
+
+        !> te
+        call write_quantity( edge_profiles%fluid%te%value,  &
+            &   edge_profiles%fluid%te%flux, te/qe, fhe )
+
+        !> ti
+        allocate( edge_profiles%fluid%ti(1) )
+        call write_quantity( edge_profiles%fluid%ti(1)%value,   &
+            &   edge_profiles%fluid%ti(1)%flux, ti/qe, fhi )
+
+        !> po
+        call write_cell_scalar( edge_profiles%fluid%po%value, po )
+
+        !> B (magnetic field vector)        
+        allocate( edge_profiles%fluid%te_aniso%comps(4) )
+
+        !> Compute unit basis vectors along the field directions
+        call computeCoordinateUnitVectors(crx, cry, e(:,:,:,1), e(:,:,:,2),     &
+            &   e(:,:,:,3))
+
+        !> Write the three unit basis vectors
+        do i = 1, 3
+            allocate( edge_profiles%fluid%te_aniso%comps(i)%flux(1) )
+            call write_cell_vector( &
+                &   edge_profiles%fluid%te_aniso%comps(i)%flux(1), &
+                & (/ VEC_ALIGN_DEFAULT, VEC_ALIGN_DEFAULT, VEC_ALIGN_DEFAULT /), &
+                & (/ VEC_ALIGN_DEFAULT_ID, VEC_ALIGN_DEFAULT_ID, VEC_ALIGN_DEFAULT_ID /), &
+                & e(:,:,:,i) )
+        end do
+
+        !> write the magnetic field vector in the b2 coordinate system
+        allocate( edge_profiles%fluid%te_aniso%comps(4)%flux(1) )
+        call write_cell_vector( edge_profiles%fluid%te_aniso%comps(4)%flux(1),  &
+            & (/ VEC_ALIGN_POLOIDAL, VEC_ALIGN_RADIAL, VEC_ALIGN_TOROIDAL /),   &
+            & (/ VEC_ALIGN_POLOIDAL_ID, VEC_ALIGN_RADIAL_ID,                    &
+            &   VEC_ALIGN_TOROIDAL_ID /), bb(:,:,0:2) )
+      
+    end if
+
+    call logmsg( LOGDEBUG, "b2mod_ual_io.write_cpo: done" )
+
+    contains
+
+#if 0
+        !> Write a scalar B2 cell quantity to a complexgrid_scalar
+        subroutine write_quantity( values, fluxes, value, flux )
+            use b2mod_interp
+            type(ids_generic_grid_scalar), pointer, intent(inout) :: values(:)
+            type(ids_edge_transport_model_energy), pointer, intent(inout) ::    &
+                &   fluxes(:)
+            real(IDS_real), intent(in) :: value( -1:gmap%b2nx, -1:gmap%b2ny )
+            real(IDS_real), intent(in) :: flux( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )                     
+            real(IDS_real), dimension(:), pointer :: idsdata
+
+            allocate( values(5) )
+            idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%grid,  &
+                &   B2_GRID_SUBSET_CELLS, gmap, value )
+            call gridWriteData( values(1), B2_GRID_SUBSET_CELLS, idsdata ) 
+            deallocate( idsdata )
+            tmpFace = 0.0_IDS_real
+            call value_on_faces( nx, ny, vol, value, tmpFace)
+            idsdata => b2IMASTransformDataB2ToIDS(  &
+                &   edge_profiles%grid, iGsCore, gmap, tmpFace )
+            call gridWriteData( values(2), iGsCore, idsdata )
+            deallocate( idsdata )
+            tmpVx = interpolateToVertices(  &
+                &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
+            idsdata => b2IMASTransformDataB2ToIDSVertex(    &
+                &   edge_profiles%grid, iGsInnerMidplane, gmap, tmpVx  )
+            call gridWriteData( values(3), iGsInnerMidplane, idsdata )
+            deallocate( idsdata )
+            idsdata => b2IMASTransformDataB2ToIDSVertex(    &
+                &   edge_profiles%grid, iGsOuterMidplane, gmap, tmpVx )
+            call gridWriteData( values(4), iGsOuterMidplane, idsdata )
+            deallocate( idsdata )
+            idsdata => b2IMASTransformDataB2ToIDSVertex(    &
+                &   edge_profiles%grid, B2_GRID_SUBSET_NODES, gmap, tmpVx )
+            call gridWriteData( values(5), B2_GRID_SUBSET_NODES, idsdata )
+            deallocate( idsdata )
+            allocate( fluxes(2) )
+            call write_face_vector( fluxes(1), flux )
+            call write_face_vector( fluxes(2), flux, gridSubsetId = iGsCore )
+        end subroutine write_quantity
+#endif
+
+
+#endif
 
         return
     end subroutine write_ids
@@ -183,7 +336,7 @@ contains
 
 
     ! set up the B2<->CPO mappings
-    call b2ITMCreateMap( nx,ny,crx(-1:nx,-1:ny,:),cry(-1:nx,-1:ny,:),&
+    call b2ITMCreateMap( nx,ny,crx(-1:nx,-1:ny,: ),cry(-1:nx,-1:ny,:),&
         & cflags,leftix,leftiy,rightix,rightiy, &
         & topix,topiy,bottomix,bottomiy, INCLUDE_GHOST_CELLS, gmap )
     mapInitialized = .true.
