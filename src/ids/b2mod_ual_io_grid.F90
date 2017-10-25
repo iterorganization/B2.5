@@ -11,6 +11,7 @@ module b2mod_ual_io_grid
     !> the form expected CPO data structure.
 
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
+    use b2mod_constants , B2_PI => PI
 #ifdef IMAS
     use ids_schemas         ! IGNORE
     use ids_routines        ! IGNORE
@@ -33,7 +34,7 @@ module b2mod_ual_io_grid
     ! use ggd_assert
     use string
     ! use ggd , GGD_UNDEFINED => GRID_UNDEFINED
-    ! use ggd_structured
+    use ggd_structured , only: gridSetupStruct1dSpace
     use b2mod_connectivity , REMOVED_B2_R8 => R8
     use carre_constants
     use b2mod_cellhelper
@@ -191,7 +192,6 @@ contains
 
         !> internal
         integer ::  ivx, ifc, icv, ix, iy, nix, niy, i, j, dir, nfc
-        real(16), parameter :: PI_16 = 4 * atan (1.0_16)
 
         allocate( ggd_grid%space( SPACE_COUNT ) )
 
@@ -626,12 +626,12 @@ contains
             if ( TOROIDAL_PERIODIC ) then
             call gridSetupStruct1dSpace( ggd_grid%space(SPACE_TOROIDALANGLE), &
                 & COORDTYPE_PHI, &
-                    & (/  ( ( 2*PI_16 / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL - 1 ) /), &
+                    & (/  ( ( 2*B2_PI / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL - 1 ) /), &
                     & .true. ) !> periodic = .true.
             else
                 call gridSetupStruct1dSpace( ggd_grid%space(SPACE_TOROIDALANGLE), &
                     & COORDTYPE_PHI, &
-                    & (/  ( ( 2*PI_16 / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL ) /) )
+                    & (/  ( ( 2*B2_PI / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL ) /) )
             end if
         end if
 
