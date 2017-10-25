@@ -39,7 +39,7 @@ c*** nf_tmp: number of files which are written in b2filew
 c*** lf_tmp: number of files whose buffers should be flushed in b2filef
 c***        (must be consistent with ntrc assignment)
 c***
-c***    Current assignment is (see default.F):
+c***    Current assignment is (see b2mod_diag.F):
 c***        ntrc(ntrc_res)     'tracing/residuals.trc'
 c***        ntrc(ntrc_src)     'tracing/sources.trc'
 c***        ntrc(ntrc_tst)     'tracing/test.trc'
@@ -149,7 +149,7 @@ c>>>
       filedata(ntrc_tst)=.true.
       go to 1000
 c
- 900  write(*,*) 'b2file: ',hlp_emsg(l),f
+ 900  write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
 c----------------------------------------------------------------------
 c*** Residuals
 c
@@ -177,11 +177,13 @@ c
           write(*,*) ' --  Remove the file first!'
           go to 10
         end if
-        if(k.ne.ns) then
-          write(*,*) '!! b2file: current number of species (ns=',
-     ,                ns,')  differs from that in the file ',f
+        if(k.ne.ns-nspecies) then
+          write(*,*) '!! b2file: current number of ion species (nis=',
+     ,                ns-nspecies,')  differs from that in the file ',f
           write(*,*) ' --  Remove the file first!'
           go to 10
+        else
+          nis_tmp=k
         end if
       else
 c*** New file - write the headers
@@ -196,7 +198,7 @@ c*** New file - write the headers
         l=4
         nis_tmp=k
 
-        write(ntrc(ntrc_res),700,err=5) '#',lvr,nnreg(0),ns
+        write(ntrc(ntrc_res),700,err=5) '#',lvr,nnreg(0),nis_tmp
         write(ntrc(ntrc_res),710,err=5) '## ',label
 
 c       write(hlp_frmr,'(7h(3h#it,,i3,17h(1h'//tab//
@@ -223,7 +225,7 @@ c>>>
       filedata(ntrc_res)=.true.
       go to 10
 c
-  5   write(*,*) 'b2file: ',hlp_emsg(l),f
+  5   write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
 c----------------------------------------------------------------------
 c*** Sources
 c
@@ -288,7 +290,7 @@ c>>>
       filedata(ntrc_src)=.true.
       go to 35
 
- 30   write(*,*) 'b2file: ',hlp_emsg(l),f
+ 30   write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
 c----------------------------------------------------------------------
 c*** Position the files for appending the data
 c
@@ -322,7 +324,7 @@ c----------------------------------------------------------------------
      ,     (sclbase(i,k),i=0,nnatmi),(sclrtio(i,k),i=0,nnatmi),
      ,     (sclsrcn(i,k),i=0,nnatmi),k=1,nstrai)
         go to 65
- 62     write(*,*) 'b2file: ',hlp_emsg(l),f
+ 62     write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
         filedata(ntrc_tst)=.false.
       end if
 c
@@ -338,7 +340,7 @@ c
      ,    ((rescoreg(i,ions_list(j)),i=1,nnreg(0)),
      ,     (resmoreg(i,ions_list(j)),i=1,nnreg(0)),j=1,nis_tmp)
         go to 75
- 72     write(*,*) 'b2file: ',hlp_emsg(l),f
+ 72     write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
         filedata(ntrc_res)=.false.
       end if
 c
@@ -356,7 +358,7 @@ c
      ,         (((src_ni(i,k,j),k=1,3),i=0,nnreg(0)),
      ,          ((src_mo(i,k,j),k=1,3),i=0,nnreg(0)),j=1,nspecies)
         return
- 77     write(*,*) 'b2file: ',hlp_emsg(l),f
+ 77     write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
         filedata(ntrc_src)=.false.
       end if
       return
@@ -368,29 +370,30 @@ c*** flush the buffers
 c----------------------------------------------------------------------
 c
 c
-      do 100 k=1,lf_tmp
-        if(filedata(k)) then
-          f=fn_ntrc(k)
+      do 100 k=1,nf_tmp
+        j=k+1
+        if(filedata(j)) then
+          f=fn_ntrc(j)
 #ifdef IBMaix
-          call flush_(ntrc(k))
+          call flush_(ntrc(j))
 #else
           l=5
-          close(ntrc(k),err=86)
+          close(ntrc(j),err=86)
 #ifndef F77
           l=1
-          open(ntrc(k),file=f,err=86,position='append')
+          open(ntrc(j),file=f,err=86,position='append')
 #else
           l=1
-          open(ntrc(k),file=f,err=86)
- 80       read(ntrc(k),'(a1)',end=82) hlp_c
+          open(ntrc(j),file=f,err=86)
+ 80       read(ntrc(j),'(a1)',end=82) hlp_c
           go to 80
- 82       backspace ntrc(k)
+ 82       backspace ntrc(j)
 #endif
 #endif
           go to 100
 c
- 86       write(*,*) 'b2file: ',hlp_emsg(l),f
-          filedata(k)=.false.
+ 86       write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
+          filedata(j)=.false.
         end if
  100  continue
       return

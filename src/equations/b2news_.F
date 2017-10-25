@@ -319,7 +319,7 @@ csw 01oct2012 initialize potential if necessary
 !      call b2tvspr (nx, ny, ns, factdrift, vol, hx, hy, qz, bb,         !srv 10.10.17
 !     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
 !      call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,      !srv 10.10.17
-!     &                 lnlam,  te, ti, ni, chci, fchvisq)
+!     &             lnlam, te, ti, ni, chci, fchvisq)
 
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                              !srv 01.10.99
@@ -485,7 +485,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 !      call b2tvspr (nx, ny, ns, factdrift, vol, hx, hy, qz, bb,          !srv 10.10.17
 !     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
 !      call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
-!     &                  lnlam, te, ti, ni, chci, fchvisq)
+!     &             lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
 !      do is = 0, ns-1
@@ -658,7 +658,7 @@ csw 16oct2012 init ier0
      &     rza, za_ext, fna_he, fa_ext, fch_p, fne)                      !srv 21.01.00 11.10.02
           call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,
      1     vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,      !srv 11.07.99 18.01.02 01.07.09
-     1     ti, ni(-1,-1,1), na, fna, vadia,                              !srv 17.05.99 25.01.02
+     1     ti, ni(-1,-1,1), na, fna, uadia, vadia,                       !srv 17.05.99 25.01.02
      &     ua, fne, csig, csig_cl, csigin, chce,                         !srv 17.05.99
      &     chve, chci, calf, chvemx, cvsa_cl, cdna, cdpa, cddi,          !srv 05.07.00 11.07.99 16.10.17
      &     fch, fhe, fhe_mdf, fhePSch, conc,  avisper, bvisper, cvisper, !srv 05.07.00 13.10.06
@@ -793,7 +793,7 @@ c      with diamagnetic drift part                                       !srv 13
 *   ..compute heat fluxes
       call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,
      1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,         !srv 11.07.99 18.01.02 01.07.09
-     1  ti, ni(-1,-1,1), na, fna, vadia,                                 !srv 17.05.99 25.01.02
+     1  ti, ni(-1,-1,1), na, fna, uadia, vadia,                          !srv 17.05.99 25.01.02
      &  ua, fne, csig, csig_cl, csigin, chce,                            !srv
      &  chve, chci, calf, chvemx, cvsa_cl, cdna, cdpa, cddi,             !srv 05.07.00 11.07.99 16.10.17
      &  fch, fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,     !srv 05.07.00 11.07.99 13.10.06

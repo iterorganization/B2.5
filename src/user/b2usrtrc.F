@@ -1485,40 +1485,40 @@ c*** f     :  the associated file name
         if(nv.ne.lv) then !{
           warn_tmp=.true.
           write(*,*) '!!! b2usrtrc: current version ',lv,
-     ,                         '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
           if(nv .lt. lvmj) then !{
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
-     ,                              'remove the existing file first: ',f
+     ,                 'remove the existing file first: ',trim(f)
             filedata(ltrc)=.false.
             return
           end if !}
           if(nv .lt. 20000727 .and. npfrgrp.gt.0) then !{
             write(*,*) 'No tracing file - ',
-     ,                              'remove the existing file first: ',f
+     ,                 'remove the existing file first: ',trim(f)
             filedata(ltrc)=.false.
             return
           end if !}
         end if !}
         if(na_tmp.ne.npfrgrp) then !{
           write(*,*) '!!! b2usrtrc: current number of PFR surface ',
-     ,          'groups ',npfrgrp,'  differs from that in the file ',f
+     ,     'groups ',npfrgrp,' differs from that in the file ',trim(f)
           filedata(ltrc)=.false.
         end if !}
         if(npfrgrp.gt.0) then !{
           if(ng_tmp.ne.nglb_tmp) then !{
             write(*,*) '!!! b2usrtrc: current number of global values ',
-     ,                  nglb_tmp,'  differs from that in the file ',f
+     ,       nglb_tmp,' differs from that in the file ',trim(f)
             filedata(ltrc)=.false.
           end if !}
           if(np_tmp.ne.npff_tmp) then !{
             write(*,*) '!!! b2usrtrc: current number of PFR values ',
-     ,                  npff_tmp,'  differs from that in the file ',f
+     ,       npff_tmp,' differs from that in the file ',trim(f)
             filedata(ltrc)=.false.
           end if !}
           if(ns_tmp.ne.nspecies) then !{
             write(*,*) '!!! b2usrtrc: current number of species ',
-     ,                  nspecies,'  differs from that in the file ',f
+     ,       nspecies,' differs from that in the file ',trim(f)
             filedata(ltrc)=.false.
           end if !}
         end if !}
@@ -1528,7 +1528,7 @@ c*** It was a major change of the file format - impossible to continue
      ,                                'remove the existing file first!'
           return
         end if !}
-        if(warn_tmp) write(*,*) '  You should remove the file!'
+        if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
  50     read(lun,'(a1)',end=55) hlp_c
         go to 50
@@ -1567,11 +1567,11 @@ c        print *,'b2usrtrc frm:',hlp_frm  !###
      -                                ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp
       return
 c=======================================================================
- 90   write(*,*) 'b2usrtrc: cannot open a file ',f
+ 90   write(*,*) 'b2usrtrc: cannot open a file ',trim(f)
       filedata(ltrc)=.false.
       return
 
- 92   write(*,*) 'b2usrtrc: wrong format of the file ',f
+ 92   write(*,*) 'b2usrtrc: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 
@@ -1580,7 +1580,7 @@ c=======================================================================
       filedata(ltrc)=.false.
       return
 
- 94   write(*,*) 'b2usrtrc: cannot write in the file ',f
+ 94   write(*,*) 'b2usrtrc: cannot write in the file ',trim(f)
       filedata(ltrc)=.false.
       return
 

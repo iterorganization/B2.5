@@ -490,7 +490,7 @@ c Check version
         if(nv .ne. lv) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current version ',lv,
-     ,                         '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
 c          if(nv .lt. 20010716) then
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -504,7 +504,7 @@ c Check the number of global values
         if(ng_tmp.ne.nglb_tmp) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of global values ',
-     ,                nglb_tmp,'  differs from that in the file ',f
+     ,                nglb_tmp,' differs from that in the file ',trim(f)
           if(ng_tmp .gt. nglb_tmp) filedata(ltrc)=.false.
         end if
 
@@ -512,7 +512,7 @@ c Check the number of quantities computed for each region
         if(nr_tmp .ne. nrgn_tmp) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of values by region ',
-     ,                nrgn_tmp,'  differs from that in the file ',f
+     ,                nrgn_tmp,' differs from that in the file ',trim(f)
           if(nr_tmp .gt. nrgn_tmp) filedata(ltrc) = .false.
         end if
 
@@ -520,7 +520,7 @@ c Check the number of regions
         if(nrg_tmp .ne. nregionv) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of regions ',
-     ,                nregionv,'  differs from that in the file ',f
+     ,                nregionv,' differs from that in the file ',trim(f)
           filedata(ltrc) = .false.
         end if
 
@@ -528,14 +528,14 @@ c Check the number of quantities computed for each species
         if(ns_tmp .ne. nspc_tmp) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of values by species',
-     ,                nspc_tmp,'  differs from that in the file ',f
+     ,                nspc_tmp,' differs from that in the file ',trim(f)
           if(ns_tmp .gt. nspc_tmp) filedata(ltrc)=.false.
         end if
 c#ifdef SCL_IMP_RCI
 c       if(ns1_tmp.ne.nspc1_tmp) then
 c         warn_tmp=.true.
 c         write(*,*) '!!! b2wrint: current number of values by species',
-c     ,          ' (ext1)',nspc1_tmp,'  differs from that in the file ',f
+c     ,    ' (ext1)',nspc1_tmp,' differs from that in the file ',trim(f)
 c         if(ns_tmp.gt.nspc_tmp) filedata(ltrc)=.false.
 c       end if
 c#endif
@@ -544,7 +544,7 @@ c Check the number of species
         if(nsp_tmp .ne. nspecies) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of species ',
-     ,                nspecies,'  differs from that in the file ',f
+     ,                nspecies,' differs from that in the file ',trim(f)
           filedata(ltrc) = .false.
         end if
 
@@ -553,7 +553,7 @@ c Check the number quantities computed for each species in each region
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of values ',
      ,               'by species and region ',
-     ,               nsar_tmp,'  differs from that in the file ',f
+     ,               nsar_tmp,' differs from that in the file ',trim(f)
           if(na_tmp .gt. nsar_tmp) filedata(ltrc) = .false.
         end if
 
@@ -561,7 +561,7 @@ c Check the number of quantities computed for each stratum
         if(nf_tmp .ne. nstr_tmp) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of values by strata',
-     ,               nstr_tmp,'  differs from that in the file ',f
+     ,               nstr_tmp,' differs from that in the file ',trim(f)
           if(nf_tmp .gt. nstr_tmp) filedata(ltrc) = .false.
         end if
 
@@ -569,7 +569,7 @@ c Check the number of strata
         if(nfl_tmp .ne. nstrai) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of strata ',
-     ,               nfl_tmp,'  differs from that in the file ',f
+     ,               nfl_tmp,' differs from that in the file ',trim(f)
           filedata(ltrc) = .false.
         end if
 
@@ -578,7 +578,7 @@ c Check the number quantities computed for each species and for each stratum
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of values ',
      ,               'by species and strata ',
-     ,               nssb_tmp,'  differs from that in the file ',f
+     ,               nssb_tmp,' differs from that in the file ',trim(f)
           if(nb_tmp .gt. nssb_tmp) filedata(ltrc) = .false.
         end if
 c
@@ -589,7 +589,7 @@ c If inconsistency is found, generate an error message
      ,                                'remove the existing file first!'
           return
         end if
-        if(warn_tmp) write(*,*) '  You should remove the file!'
+        if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
  50     read(lun,'(a1)',end=55) hlp_c
         go to 50
@@ -680,15 +680,15 @@ c      print *,hlp_frm    !###
 
       return
 c=======================================================================
- 90   write(*,*) 'b2wrint: cannot open a file ',f
+ 90   write(*,*) 'b2wrint: cannot open a file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2wrint: wrong format of the file ',f
+ 92   write(*,*) 'b2wrint: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 94   write(*,*) 'b2wrint: cannot write in the file ',f
+ 94   write(*,*) 'b2wrint: cannot write in the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c=======================================================================

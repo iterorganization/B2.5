@@ -3,7 +3,7 @@
 
       subroutine b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,         !srv 23.11.10
      1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,          !srv 11.07.99 18.01.02 01.07.09
-     1 ti, ni, na, fna, vadia, ua, fne,
+     1 ti, ni, na, fna, uadia, vadia, ua, fne,
      2 csig, csig_cl, csigin, chce, chve, chci, calf,                    !srv 17.05.99 11.07.99
      & chvemx, cvsa_cl, cdna, cdpa, cddi, fch, fhe, fhe_mdf, fhePSch,    !srv 27.01.00 13.10.06 16.10.17
      & conc, avisper, bvisper, cvisper, floe, cone, fchdia, fchin,       !srv 27.01.00 30.09.02
@@ -31,6 +31,7 @@
      *   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      &   vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:ns-1),
      &   gs(-1:nx,-1:ny,0:2), ne2(-1:nx,-1:ny), pz(-1:nx,-1:ny),         !srv 11.07.99 18.01.02
+     &   uadia(-1:nx,-1:ny,0:1,0:ns-1),
      &   vadia(-1:nx,-1:ny,0:1,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),          !srv 17.05.99 25.01.02
      &   fne(-1:nx,-1:ny,0:1), csig(-1:nx,-1:ny,0:1),
      &   csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), chci(-1:nx,-1:ny,0:1),   !srv 11.07.99 24.06.08
@@ -217,25 +218,26 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 c Drift terms
 *   .. compute x,y-components of divergent part of diamagnetic current
-      call b2tdia(nx, ny, vol, gs, bb, pz, facdrift, fchdia)
-*   .. calculate  x,y-components of viscosity parallel current
+      call b2tdia(nx, ny, ns, vol, gs, hy, qz, bb,
+     &            pz, fna, uadia, facdrift, fchdia)
+*   .. calculate x,y-components of viscosity parallel current
       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua,
-     &       cvsa_cl, facdrift, fchvispar)                               !srv 20.09.06 16.10.17
+     &              cvsa_cl, facdrift, fchvispar)                        !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, facdrift, vol, hx, hy, qz, bb,            !srv 10.10.17
-     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
+     &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
-     &        lnlam, te, ti, ni, chci, fchvisq)
+     &             lnlam, te, ti, ni, chci, fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99
       call b2tiner (nx, ny, ns, vol, gs, hx, hy, bb, na, ua,             !srv 22.11.12
-     &                     facdrift, fchinert)
+     &              facdrift, fchinert)
 *  .. calculate the x,y-components of anomalous current
       call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,     !srv 07.07.14
-     &      fchstoch)
+     &              fchstoch)
 
       fledia = 0.0_R8                                                    !srv 25.01.02 {
       if(facdriftm.ne.0.0e0_R8) then                                     !srv 18.01.07

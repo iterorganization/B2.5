@@ -407,7 +407,7 @@ c*** f     :  the associated file name
         if(nv.ne.lv) then
           warn_tmp=.true.
           write(*,*) '!!! b2wrsep: current version ',lv,
-     ,                         '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
 c          if(nv .lt. 970212) then
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -419,32 +419,32 @@ c          end if
         if(ng_tmp.ne.nglb_tmp) then
           warn_tmp=.true.
           write(*,*) '!!! b2wrsep: current number of global values ',
-     ,                nglb_tmp,'  differs from that in the file ',f
+     ,                nglb_tmp,' differs from that in the file ',trim(f)
           if(ng_tmp.gt.nglb_tmp) filedata(ltrc)=.false.
         end if
         if(ns_tmp.ne.nspc_tmp) then
           warn_tmp=.true.
           write(*,*) '!!! b2wrsep: current number of values by species',
-     ,                nspc_tmp,'  differs from that in the file ',f
+     ,                nspc_tmp,' differs from that in the file ',trim(f)
           if(ns_tmp.gt.nspc_tmp) filedata(ltrc)=.false.
         end if
         if(nsp_tmp.ne.nspecies) then
           warn_tmp=.true.
           write(*,*) '!!! b2wrsep: current number of species ',
-     ,                nspecies,'  differs from that in the file ',f
+     ,                nspecies,' differs from that in the file ',trim(f)
           filedata(ltrc)=.false.
         end if
         if(ni_tmp.ne.nion_tmp) then
           warn_tmp=.true.
           write(*,*) '!!! b2wrsep: current number of values ',
      ,               'by ion charge state ',
-     ,               nion_tmp,'  differs from that in the file ',f
+     ,               nion_tmp,' differs from that in the file ',trim(f)
           if(ni_tmp.gt.nion_tmp) filedata(ltrc)=.false.
         end if
         if(nii_tmp.ne.nis_tmp) then
           warn_tmp=.true.
           write(*,*) '!!! b2wrsep: current number of ion charge states',
-     ,     ' ',ns-nspecies,'  differs from that in the file ',f
+     ,     ' ',ns-nspecies,' differs from that in the file ',trim(f)
           filedata(ltrc)=.false.
         end if
 
@@ -453,7 +453,7 @@ c          end if
      ,                                'remove the existing file first!'
           return
         end if
-        if(warn_tmp) write(*,*) '  You should remove the file!'
+        if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
  50     read(lun,'(a1)',end=55) hlp_c
         go to 50
@@ -518,15 +518,15 @@ c      print *,hlp_frm
 c>>>
       return
 c======================================================================
- 90   write(*,*) 'b2wrsep: cannot open a file ',f
+ 90   write(*,*) 'b2wrsep: cannot open a file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2wrsept: wrong format of the file ',f
+ 92   write(*,*) 'b2wrsept: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 94   write(*,*) 'b2wrsep: cannot write in the file ',f
+ 94   write(*,*) 'b2wrsep: cannot write in the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================
