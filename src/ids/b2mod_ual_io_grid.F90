@@ -30,7 +30,6 @@ module b2mod_ual_io_grid
 #endif
     use helper
     use logging , only: logmsg, LOGDEBUG
-    use string
     use b2mod_connectivity , REMOVED_B2_R8 => R8
     use carre_constants
     use b2mod_cellhelper

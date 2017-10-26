@@ -168,7 +168,7 @@ cxpb  This performs an average over the whole domain of valid cells on the secon
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
-      use ggd_assert
+      use ids_assert ! IGNORE
       implicit none
       integer, intent(in) :: nx1, ny1, vx_index
       real (kind=R8), intent(in), dimension(-1:nx1,-1:ny1) :: cv
