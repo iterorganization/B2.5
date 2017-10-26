@@ -76,7 +76,6 @@ program b2_ual_write
     ! use b2mod_grid_mapping
     ! use b2mod_ual_io_grid
     ! use b2mod_ual_io_data
-    ! use ggd
     ! use b2mod_ual
     use b2mod_ual_io
     ! use b2mod_geo_corner
@@ -375,6 +374,8 @@ contains
 
     subroutine write_ids_edge_profiles(treename, shot, run, idx, username, &
                                         & device, version, ne, te, ti)
+        use ids_grid_unstructured   ! IGNORE
+
         integer ::  shot, run, idx
         integer ::  num_nodes_all, num_nodes, num_gridSubsets
         integer ::  gridSubset_index
@@ -515,11 +516,12 @@ contains
 
         !> --- Set the grid space objects and grid subsets ---
         !> For that we use GSL routine gridSetup2dSpace
-        call gridSetup2dSpace(  grid, coordtype,                &
-                            &   geo_0dObj   = nodesGeoList,     &
-                            &   conn_1dObj  = edgesNodesList,   &
-                            &   conn_2dObj  = cellsNodesList,   &
-                            &   createGridSubsets = .true. )
+        call gridSetupUnstruct2dSpace(  grid,               &
+                                    &   coordtype,          &
+                                    &   nodesGeoList,       &
+                                    &   edgesNodesList,     &
+                                    &   cellsNodesList,     &
+                                    &   .true. )
         !> --- (Optional) Set grid subsets custom description   ---
         grid%grid_subset(1)%identifier%description = "All nodes in the domain."
         grid%grid_subset(3)%identifier%description = "All cells in the domain."

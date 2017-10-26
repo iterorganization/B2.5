@@ -37,7 +37,6 @@ program b2_ual_write
   use b2mod_grid_mapping
   use b2mod_ual_io_grid
   use b2mod_ual_io_data
-  use ggd
   use b2mod_ual
   use b2mod_ual_io
 

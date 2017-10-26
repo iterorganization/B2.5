@@ -21,10 +21,9 @@ module b2mod_ual_io_data
 #endif
     use helper
     use logging , only: logmsg, LOGDEBUG
-    ! use ggd_assert
-    use string
-    ! use ggd , GGD_UNDEFINED => GRID_UNDEFINED
-    ! use ggd_structured
+    ! use ids_assert
+    use ids_string  ! IGNORE
+    ! use ids_grid_structured
     use b2mod_connectivity , REMOVED_B2_R8 => R8
     use carre_constants
     use b2mod_cellhelper
