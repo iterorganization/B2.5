@@ -209,7 +209,7 @@ c*** Column headers:
      1          'SSEE_tot','SSEI_tot','SNI_rcmb','SEE_rcmb','SEI_rcmb',
      2          'Zeff_cor','Zeff_crs','Zeff_crn', 'Brmsreg ','imp_rad ',
      2          'neu_rad ','tot_rad '/
-      data hlp_hr / ! These are headers for 10 quantities computed in each region
+      data hlp_hr / ! These are headers for 11 quantities computed in each region
      1          'Brmsreg_','imp_rad_','neu_rad_','tot_rad_','SSEEreg_',
      2          'SSEIreg_','th_enre_','th_enri_',
      3          'K_en_ri_','N_e_reg_','vol_reg_'/

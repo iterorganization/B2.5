@@ -325,7 +325,7 @@ c
      ,                                'remove the existing file first!'
           go to 98
         end if
-        if(warn_tmp) write(*,*) '  You should remove the file!'
+        if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
  50     read(lun,'(a1)',end=55) hlp_c
         go to 50

@@ -96,19 +96,19 @@ c*** Old file - check it
         read(ntrc(ntrc_tst),700,err=900) hlp_c,i,m,n,j
         if(i.ne.lvt) then
           write(*,*) '!! b2file: current version ',lvt,
-     ,                     '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
         if(m.ne.nstrai) then
           write(*,*) '!! b2file: current number of strata (nstrai=',
-     ,     nstrai,')  differs from that in the file ',f
+     ,     nstrai,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
         if(n.ne.nnatmi) then
           write(*,*) '!! b2file: current number of atoms (nnatmi=',
-     ,     nnatmi,')  differs from that in the file ',f
+     ,     nnatmi,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
@@ -167,19 +167,19 @@ c
         read(ntrc(ntrc_res),700,err=5) hlp_c,i,j,k
         if(i.ne.lvr) then
           write(*,*) '!! b2file: current version ',lvr,
-     ,                     '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 10
         end if
         if(j.ne.nnreg(0)) then
           write(*,*) '!! b2file: current number of regions ',
-     ,                nnreg(0),'  differs from that in the file ',f
+     ,                nnreg(0),' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 10
         end if
         if(k.ne.ns-nspecies) then
           write(*,*) '!! b2file: current number of ion species (nis=',
-     ,                ns-nspecies,')  differs from that in the file ',f
+     ,     ns-nspecies,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 10
         else
@@ -242,19 +242,19 @@ c
         read(ntrc(ntrc_src),700,err=30) hlp_c,i,j,k
         if(i.ne.lvs) then
           write(*,*) '!! b2file: current version ',lvs,
-     ,     '  differs from that in the file ',f
+     ,     ' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
         if(j.ne.nnreg(0)) then
           write(*,*) '!! b2file: current number of regions ',
-     ,                nnreg(0),'  differs from that in the file ',f
+     ,                nnreg(0),' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
         if(k.ne.nspecies) then
           write(*,*) '!! b2file: current number of species (nspecies=',
-     ,     nspecies,')  differs from that in the file ',f
+     ,     nspecies,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
