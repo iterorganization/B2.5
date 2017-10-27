@@ -120,7 +120,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
      *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average
 cank 960511
       integer, save ::
-     *  nlimi,nstsi,natmi,nmoli,nioni
+     *  nlimi,nstsi,natmi,nmoli,nioni,nlim1
 cank
       integer, save ::
      *  mcol,scol,vcol,ocol,ecol,acol,zcol,y_transform_l,

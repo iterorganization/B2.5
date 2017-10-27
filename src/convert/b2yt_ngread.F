@@ -616,7 +616,28 @@ C
       end if
 
       if(jvft44 .ge. 960513) then
+        nlim1 = nlimi
         read (44,'(3i6)') nlimi,nstsi,nstrai
+        if (nlim1.ne.nlimi) then
+          if (nlimi.eq.nlim1+1) then
+#ifndef HPUX
+            write(0,*) 'NLIM in fort.44 file is 1 greater than '//
+     ,                 'NLIM in Eirene input file'
+#else
+            write(0,*) 'NLIM in ftn44 file is 1 greater than '//
+     ,                 'NLIM in Eirene input file'
+#endif
+            write(0,*) 'Assuming dummy wall to be removed!'
+          else
+#ifndef HPUX
+            call xerrab
+     .       ('Mismatched NLIM between fort.44 and input file')
+#else
+            call xerrab
+     .       ('Mismatched NLIM between ftn44 and input file')
+#endif
+          end if
+        end if
         nstra1 = 0
         do istra = 1, nstrai
           if (savestratum(istra)) nstra1 = nstra1 + 1
@@ -625,11 +646,11 @@ C
         allocate(ewlda1(nlimps,natm1,0:nstrai+1))
         allocate(wldnm1(nlimps,nmol1,0:nstrai+1))
         allocate(ewldm1(nlimps,nmol1,0:nstrai+1))
-        write(45,'(3i6)') nlimi,nstsi,nstra1
-        nnlimi=nlimi
+        write(45,'(3i6)') nlim1,nstsi,nstra1
+        nnlimi=nlim1
         nnstsi=nstsi
         print '(1x,a,4i6)','nlimi,nstsi,nstrai,nstra1:',
-     *                      nlimi,nstsi,nstrai,nstra1
+     *                      nlim1,nstsi,nstrai,nstra1
         call rdneutrs(44,wldnek,1)
         call rdneutrs(44,wldnep,1)
         call rdneutrs(44,wldna,natmi)
@@ -666,7 +687,7 @@ c*** read the wall geometry
      ,                        p2(1,ix), p2(2,ix), ix=1,nlimi)
         call write_title(45,'wall_geometry',4*nnlimi)
         write(45,'(8f10.4)') (p1(1,ix), p1(2,ix),
-     ,                        p2(1,ix), p2(2,ix), ix=1,nlimi)
+     ,                        p2(1,ix), p2(2,ix), ix=1,nlim1)
       end if
 cank
 cank-960727
@@ -863,7 +884,7 @@ cank
         read (44,'(18i4)') (isrftype(i),i=1,nlimi)
         read (44,'(18i4)') (isrftype(nlim+i),i=1,nstsi)
         call write_title(45,'isrftype',nnlimi+nnstsi)
-        write(45,'(18i4)') (isrftype(i),i=1,nlimi)
+        write(45,'(18i4)') (isrftype(i),i=1,nlim1)
         write(45,'(18i4)') (isrftype(nlim+i),i=1,nstsi)
       end if
       if (NLWRMSH .and. streql(solps_version,'4.3')) then
@@ -872,7 +893,7 @@ cank
           read (44,'(6e13.5)') (wlarea(i),i=1,nlimi)
           read (44,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
           call write_title(45,'wlarea',nnlimi+nnstsi)
-          write(45,'(6e13.5)') (wlarea(i),i=1,nlimi)
+          write(45,'(6e13.5)') (wlarea(i),i=1,nlim1)
           write(45,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
         end if
         if(jvft44 .ge. 20060206) then
@@ -902,7 +923,7 @@ cank
      ,                          i=1,nstsi)
 
           allocate (eirtxt1(natm1+nmol1+nioni+npls1))
-          allocate (wlabsrp1(natm1+nmol1+nioni+npls1,nlimi+nstsi))
+          allocate (wlabsrp1(natm1+nmol1+nioni+npls1,nlim+nstsi))
           do k = 1, natmi
             if (iatm1(k).ne.0) then
               eirtxt1(iatm1(k)) = eirtxt(k)
@@ -938,35 +959,35 @@ cank
      .                              natmi+nmoli+nioni+nplsi,nlim+i)
             call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
      .           wd_old,wd_new,2)
-           wlabsrp1(natm1+nmol1+nioni+1:natm1+nmol1+nioni+npls1,nlim+i)=
-     .      wd_new(1:npls1)
+           wlabsrp1(natm1+nmol1+nioni+1:
+     .              natm1+nmol1+nioni+npls1,nlim+i)=wd_new(1:npls1)
           end do
           k=0
           call write_title(45,'wlabsrp(A)',(nnlimi+nnstsi)*natm1)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,natm1)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,natm1),
-     ,                                                       i=1,nlimi)
+     ,                                                       i=1,nlim1)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,natm1),
      ,                                                       i=1,nstsi)
           k=k+natm1
           call write_title(45,'wlabsrp(M)',(nnlimi+nnstsi)*nmol1)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,nmol1)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,nmol1),
-     ,                                                       i=1,nlimi)
+     ,                                                       i=1,nlim1)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,nmol1),
      ,                                                       i=1,nstsi)
           k=k+nmol1
           call write_title(45,'wlabsrp(I)',(nnlimi+nnstsi)*nioni)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,nioni)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,nioni),
-     ,                                                       i=1,nlimi)
+     ,                                                       i=1,nlim1)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,nioni),
      ,                                                       i=1,nstsi)
           k=k+nioni
           call write_title(45,'wlabsrp(P)',(nnlimi+nnstsi)*npls1)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,npls1)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,npls1),
-     ,                                                       i=1,nlimi)
+     ,                                                       i=1,nlim1)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,npls1),
      ,                          i=1,nstsi)
           deallocate (wlabsrp1)
@@ -998,7 +1019,7 @@ cank
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
      ,                          i=1,nstsi)
 
-          allocate (wlpump1(natm1+nmol1+nioni+npls1,nlimi+nstsi))
+          allocate (wlpump1(natm1+nmol1+nioni+npls1,nlim+nstsi))
           do k = 1, natmi
             if (iatm1(k).ne.0) wlpump1(iatm1(k),:) = wlpump(k,:)
           end do
@@ -1022,35 +1043,35 @@ cank
      .                             natmi+nmoli+nioni+nplsi,nlim+i)
             call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
      .           wd_old,wd_new,2)
-           wlpump1(natm1+nmol1+nioni+1:natm1+nmol1+nioni+npls1,nlim+i)=
-     .      wd_new(1:npls1)
+           wlpump1(natm1+nmol1+nioni+1:
+     .             natm1+nmol1+nioni+npls1,nlim+i)=wd_new(1:npls1)
           end do
           k=0
           call write_title(45,'wlpump(A)',(nnlimi+nnstsi)*natm1)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,natm1)
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,natm1),
-     ,                                                       i=1,nlimi)
+     ,                                                       i=1,nlim1)
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,natm1),
      ,                                                       i=1,nstsi)
           k=k+natm1
           call write_title(45,'wlpump(M)',(nnlimi+nnstsi)*nmol1)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,nmol1)
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,nmol1),
-     ,                                                       i=1,nlimi)
+     ,                                                       i=1,nlim1)
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,nmol1),
      ,                                                       i=1,nstsi)
           k=k+nmol1
           call write_title(45,'wlpump(I)',(nnlimi+nnstsi)*nioni)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,nioni)
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,nioni),
-     ,                                                       i=1,nlimi)
+     ,                                                       i=1,nlim1)
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,nioni),
      ,                                                       i=1,nstsi)
           k=k+nioni
           call write_title(45,'wlpump(P)',(nnlimi+nnstsi)*npls1)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,npls1)
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,npls1),
-     ,                                                       i=1,nlimi)
+     ,                                                       i=1,nlim1)
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,npls1),
      ,                          i=1,nstsi)
           deallocate (wlpump1)
@@ -1473,6 +1494,7 @@ cank
           end if
         end if
       end if
+      if(jvft44.ge.960513) nlimi = nlim1
 
 #endif
 
