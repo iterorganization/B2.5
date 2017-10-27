@@ -515,13 +515,13 @@ contains
         enddo
 
         !> --- Set the grid space objects and grid subsets ---
-        !> For that we use GSL routine gridSetup2dSpace
-        call gridSetupUnstruct2dSpace(  grid,               &
-                                    &   coordtype,          &
-                                    &   nodesGeoList,       &
-                                    &   edgesNodesList,     &
-                                    &   cellsNodesList,     &
-                                    &   .true. )
+        !! For that we use GSL routine gridSetup2dSpace
+        call gridSetup2dSpace(  grid, coordtype,        &
+                            &   geo_0dObj   = nodesGeoList,     &
+                            &   conn_1dObj  = edgesNodesList,   &
+                            &   conn_2dObj  = cellsNodesList,   &
+                            &   createGridSubsets = .true. )
+                                    
         !> --- (Optional) Set grid subsets custom description   ---
         grid%grid_subset(1)%identifier%description = "All nodes in the domain."
         grid%grid_subset(3)%identifier%description = "All cells in the domain."
