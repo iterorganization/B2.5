@@ -168,7 +168,6 @@ cxpb  This performs an average over the whole domain of valid cells on the secon
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
-      use ids_assert ! IGNORE
       implicit none
       integer, intent(in) :: nx1, ny1, vx_index
       real (kind=R8), intent(in), dimension(-1:nx1,-1:ny1) :: cv
@@ -215,18 +214,18 @@ cxpb  This performs an average over the whole domain of valid cells on the secon
           vx(ix, iy) = av / wTot
           d = vx(ix,iy) - minVal
           if (minVal.ne.0.0_R8) then
-            call assert( d/abs(minVal) >= - 1.0e-15_R8,
+            call xertst( d/abs(minVal) >= - 1.0e-15_R8,
      .       "Interpolated value smaller than minimum" )
           else
-            call assert( d.ge.minVal,
+            call xertst( d.ge.minVal,
      .       "Interpolated value smaller than minimum" )
           end if
           d = vx(ix,iy) - maxVal
           if (maxVal.ne.0.0_R8) then
-            call assert( d/abs(maxVal) <=   1.0e-15_R8,
+            call xertst( d/abs(maxVal) <=   1.0e-15_R8,
      .       "Interpolated value bigger than maximum" )
           else
-            call assert( d.le.minVal,
+            call xertst( d.le.minVal,
      .       "Interpolated value bigger than minimum" )
           end if
         end do
