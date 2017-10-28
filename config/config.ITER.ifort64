@@ -82,8 +82,7 @@ ifdef IMAS_PREFIX
 INCMODS   += -I${IMAS_PREFIX}/include/ifort \
 	-I${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/include/${COMPILER}
 LDLIBES   += ${LD_UAL} \
-	-L${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/lib -lggd-${COMPILER} \
-	-Wl,-rpath,${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/lib
+	-L${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/lib -lggd-${COMPILER}
 endif
 
 LD         = ${FC}

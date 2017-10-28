@@ -21,6 +21,7 @@ module b2mod_ual_io_grid
     use ids_grid_common     ! IGNORE
     use ids_string          ! IGNORE
     use ids_grid_subgrid    ! IGNORE
+    use ids_grid_structured ! IGNORE
 #else
 # ifdef ITM
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
