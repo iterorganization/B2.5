@@ -12,7 +12,7 @@
      &  fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      &  fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  cdna, cdpa, cvsa, cvla, chce, chve, chci, chvi, calf,            !xpb
+     &  cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,         !xpb
      &  rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rza, rz2, rpt, rpi,
      &  sna, smo, smq, she, shi, sch, sne,
@@ -80,7 +80,7 @@
      1  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),                    !xpb
      2  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),                    !xpb
      3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1),             !xpb
-     4  cvsa(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
+     4  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
      5  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *     (log-log rate coefficients)
       real (kind=R8) ::
