@@ -13,6 +13,9 @@ c  version : 29.08.2000 00:26
 c
 c======================================================================
 c*** Output of tracing information at the end of each outer iteration
+c*** If an error occurs while opening the files, the balance output is
+c*** redirected to the log file for the first call and there is no
+c*** further output
 c----------------------------------------------------------------------
       implicit none
       integer nx, ny, ns, nxtl, nxtr, ismain

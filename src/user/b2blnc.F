@@ -139,13 +139,13 @@ c----------------------------------------------------------------------
      3 hlpit_l,hlpit_r,hlpit_lp,hlpit_rp,hlpit_pl,
      4 hlpic,hlpiw,hlpit,hlpia,hlpid,hlpnc,hlpnw,hlpnt,hlpis,hlpnp,
      5 hlpdt,hlp,hlpids,hlpic_s,hlpiw_s,hlpit_s,
-     8  flxic_tmp,flxnc_tmp,flxit_tmp,flxnt_tmp,
-     ,     flxiw_tmp,flxnw_tmp,flxnp_tmp,flxps_tmp,
-     ,     blnna_tmp,blnnd_tmp,blnnc_tmp,blnnt_tmp,
-     ,     blnnw_tmp,blnns_tmp,blnne_tmp,blnnr_tmp,
-     ,     flxid_tmp,flxbl_tmp,flxbr_tmp,
-     ,     flxrl_tmp,
-     1     f, hlp_c, hlp_h, hlp_frm, tab
+     8 flxic_tmp,flxnc_tmp,flxit_tmp,flxnt_tmp,
+     , flxiw_tmp,flxnw_tmp,flxnp_tmp,flxps_tmp,
+     , blnna_tmp,blnnd_tmp,blnnc_tmp,blnnt_tmp,
+     , blnnw_tmp,blnns_tmp,blnne_tmp,blnnr_tmp,
+     , flxid_tmp,flxbl_tmp,flxbr_tmp,
+     , flxrl_tmp,
+     1 f, hlp_c, hlp_h, hlp_frm, tab
 c======================================================================
 
       if(first_time_step) return
@@ -695,7 +695,7 @@ c*** f     :  the associated file name
         end if
  42     if(nv.ne.lv) then
           write(*,*) '!!! b2blnc: current version ',lv,
-     ,                         '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
           if(nv .lt. 960727) then
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -706,18 +706,18 @@ c*** It was a major change of the file format - impossible to continue
         end if
         if(nc.ne.np_tmp) then
           write(*,*) '!!! b2blnc: current number of columns',np_tmp,
-     ,                         '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
           if(nc.gt.np_tmp) then
             write(*,*) 'No tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
           end if
-          write(*,*) '  You should remove the file!'
+          write(*,*) ' You should remove the file!'
         end if
         if(j.ne.nspecies) then
           write(*,*) '!!! b2blnc: current number of species ',
-     ,                nspecies,'  differs from that in the file ',f
+     ,                nspecies,' differs from that in the file ',trim(f)
           write(*,*) 'No tracing file - remove the existing file first!'
           filedata(ltrc)=.false.
           return
@@ -739,11 +739,11 @@ c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
      ,                                                  np_tmp*nspecies
       return
 c======================================================================
- 90   write(*,*) 'b2blnc: cannot open a file ',f
+ 90   write(*,*) 'b2blnc: cannot open a file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2blnc: wrong format of the file ',f
+ 92   write(*,*) 'b2blnc: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================

@@ -7806,7 +7806,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
      .                    nlstadds,mtreadds,ngwties
         end if
         NCHOR1 = 0
-        IF (NCHORI.LE.0) GOTO 1230
+        IF (NCHORI.LE.0) GOTO 1228
         DO 1220 I=1,NCHORI
           call xertst(ILINE+6.le.100,
      .     'increase size of ZEILEN in b2ytdr!')
@@ -7840,11 +7840,11 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
  1220   CONTINUE
         if (streql(eirene_format,'iter') .or.
      .      streql(eirene_format,'new')) THEN
-          READ (ZEILEN(1),6666) NCHOR1,NCHENI
+          WRITE(ZEILEN(1),6666) NCHOR1,NCHENI
         else if (streql(eirene_format,'juelich') .or.
      .           streql(eirene_format,'facelift') .or.
      .           streql(eirene_format,'old')) THEN
-          READ (ZEILEN(1),6666) NCHOR1,NCHENI,lntspec,lntsput,nmcsput,
+          WRITE(ZEILEN(1),6666) NCHOR1,NCHENI,lntspec,lntsput,nmcsput,
      .                    nlstadds,mtreadds,ngwties
         end if
         DO I = 1, ILINE
@@ -7887,6 +7887,8 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:3).EQ.'CH4') GOTO 1227
         IREAD=1
+        GOTO 1230
+ 1228   WRITE(IUNOT,'(A80)') ZEILE
  1230   CONTINUE
 CVK DATA FOR POSTPROCESSING WINDOWS
         READ (IUNIN,'(A80)') ZEILE
