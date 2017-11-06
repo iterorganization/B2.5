@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfch (nx, ny, ns, ismain, ismain0,
-     1  guard_flows, facdrift, fac_vis, BoRiS,
+     1  guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,
      1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,       	 !xpb
      1  ti, ni, na, fna, uadia, vedia, wadia, vaecrb,
      2  veecrb, ua, fne_32, fne_52, csig, csigin, chce, chve, chci,   	 !xpb
@@ -40,7 +40,7 @@
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), 
      2 facdrift(-1:nx,-1:ny), BoRiS,
-     3 fac_vis(-1:nx,-1:ny),
+     3 fac_ExB(-1:nx,-1:ny), fac_vis(-1:nx,-1:ny),
      4 csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -188,7 +188,7 @@
 
 c Drift terms
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nx, ny, ns, facdrift, ismain, ismain0,
+      call b2tinnt (nx, ny, ns, facdrift, fac_ExB, ismain, ismain0,
      &              vol, gs, hx, hy, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
@@ -196,12 +196,12 @@ c Drift terms
      & pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua,
-     & cvsa_cl, facdrift, fchvispar)                                     !srv 20.09.06 16.10.17
+     & cvsa_cl, fac_vis, fchvispar)                                      !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
-      call b2tvspr(nx, ny, ns, facdrift, vol, hx, hy, qz, bb,            !srv 10.10.17
+      call b2tvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,             !srv 10.10.17
      & po, ti, na, avisper, bvisper, cvisper, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
-      call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
+      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,        !srv 10.10.17
      & lnlam, te, ti, ni, chci, fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99
       call b2tiner (nx, ny, ns, vol, gs, hx, hy, bb, na, ua,             !srv 22.11.12

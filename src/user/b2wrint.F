@@ -330,15 +330,17 @@ csw 20sep2013 added
       do iy=0,ny-1
         do ix=0,nx-1
           ir=region(ix,iy,0)
-          eesum(ir)  = eesum(ir)  + 1.5*te(ix,iy)*ne(ix,iy)*vol(ix,iy)
-          eisum(ir)  = eisum(ir)  + 1.5*ti(ix,iy)*ni(ix,iy,0)*vol(ix,iy)
+          eesum(ir)  = eesum(ir)  +
+     &                 1.5_R8*te(ix,iy)*ne(ix,iy)*vol(ix,iy)
+          eisum(ir)  = eisum(ir)  +
+     &                 1.5_R8*ti(ix,iy)*ni(ix,iy,0)*vol(ix,iy)
           nesum(ir)  = nesum(ir)  + ne(ix,iy)*vol(ix,iy)
           volsum(ir) = volsum(ir) + vol(ix,iy)
           do is=0,ns-1
             nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
      .                          na(ix,iy,is)*vol(ix,iy)
             kisum(ir) = kisum(ir) +
-     &       0.5*mp*am(is)*na(ix,iy,is)*(ua(ix,iy,is)**2)*vol(ix,iy)
+     &       0.5_R8*mp*am(is)*na(ix,iy,is)*(ua(ix,iy,is)**2)*vol(ix,iy)
             if (is_neutral(is)) then
               nasum(b2espcr(is),ir) = nasum(b2espcr(is),ir) +
      .                                na(ix,iy,is)*vol(ix,iy)
@@ -669,7 +671,7 @@ c#endif
       if (nfl_tmp.gt.0) then
         write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.4)))')
      -      ng_tmp + nr_tmp*nrg_tmp + ns_tmp*nsp_tmp +
-     +        na_tmp*nrg_tmp*nsp_tmp  + nf_tmp*nfl_tmp +
+     +      na_tmp*nrg_tmp*nsp_tmp  + nf_tmp*nfl_tmp +
      +          (nsp_tmp+1)*nfl_tmp*nb_tmp
       end if
 c#ifdef SCL_IMP_RCI

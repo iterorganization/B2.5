@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2news (nx, ny, ns, nscx, iscx, ismain, ismain0,
+      subroutine b2news (nx, ny, ns, nxtl, nxtr,
+     &  nscx, iscx, ismain, ismain0,
      &  dtim, rxf, ierr, wrong_flow, ramp_call)
       use b2mod_types
       use b2mod_geo
@@ -21,7 +22,8 @@
       use b2mod_neoclassical
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nscx, iscx(0:nscxmax-1), ismain, ismain0
+      integer nx, ny, ns, nxtl, nxtr
+      integer nscx, iscx(0:nscxmax-1), ismain, ismain0
       real (kind=R8) ::
      *   dtim, rxf
 *   ..output arguments                                                   !xpb
@@ -301,8 +303,9 @@
 *   ..re-compute source terms if necessary                               !xpb
         if((wrong_flow .and. ipass.ne.0) .or. ncall.eq.0) then           !xpb
 *     ..re-compute source linearisation                                  !xpb
-          call b2sral (nx, ny, ns, nscx, nscxmax, nsmin, nsmax,
-     &     iscx, ismain, ismain0, dtim, BoRiS, facdrift, fac_ExB,        !xpb
+          call b2sral (nx, ny, ns, nxtl, nxtr,
+     &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
+     &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,                      !xpb
      &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, na,         !srv 09.01.01
      &     ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
@@ -331,13 +334,13 @@
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
         endif                                                            !xpb
         call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,         !srv 20.09.06 {
-     &                       facdrift, fchvispar)
+        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
+     &                       fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!        call b2tvspr (nx, ny, ns, factdrift, vol, hx, hy, qz, bb,       !srv 10.10.17
+!        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,         !srv 10.10.17
 !     &          po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!        call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,    !srv 10.10.17
+!        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,     !srv 10.10.17
 !     &               lnlam, te, ti, ni, chci, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
@@ -375,8 +378,9 @@
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
      &    te, po, vedia, veecrb)
 *     ..re-compute source linearisation                                  !xpb
-        call b2sral (nx, ny, ns, nscx, nscxmax, nsmin, nsmax,
-     &    iscx, ismain, ismain0, dtim, BoRiS, facdrift, fac_ExB,         !xpb
+        call b2sral (nx, ny, ns, nxtl, nxtr,
+     &    nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
+     &    dtim, BoRiS, facdrift, fac_ExB, fac_vis,                       !xpb
      &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,              !srv 09.01.01
      &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                !srv 28.10.02
@@ -455,13 +459,13 @@ cxpb
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
         call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,         !srv 20.09.06 {
-     &                       facdrift, fchvispar)
+        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
+     &                       fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!        call b2tvspr (nx, ny, ns, factdrift, vol, hx, hy,  qz, bb,       !srv 10.10.17
+!        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy,  qz, bb,        !srv 10.10.17
 !     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!        call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb,          !srv 10.10.17
+!        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
 !     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
@@ -670,7 +674,7 @@ cxpb
      &         vol, hx, hy, qz, bb,
      &         te, po, vedia, veecrb)
               call b2tfch (nx, ny, ns, ismain, ismain0,
-     1         guard_flows, facdrift, fac_vis, BoRiS,                    !xpb
+     1         guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,           !xpb
      1         vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,  !xpb
      1         ti, ni(-1,-1,1), na, fna, uadia, vedia, wadia, vaecrb,    !xpb
      &         veecrb, ua, fne_32, fne_52,
@@ -696,8 +700,9 @@ cxpb
      2         fhm, fhp, fhj, fht)
               if(recalculate_contributions.ne.0) then
 *     ..update sources                                                   !xpb
-                call b2sral (nx, ny, ns, nscx, nscxmax, nsmin, nsmax,
-     &           iscx, ismain, ismain0, dtim, BoRiS, facdrift, fac_ExB,  !xpb
+                call b2sral (nx, ny, ns, nxtl, nxtr,
+     &           nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
+     &           dtim, BoRiS, facdrift, fac_ExB, fac_vis,                !xpb
      &           vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,
      &           na, ua,                                                 !srv 09.01.01
      &           uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
@@ -883,7 +888,7 @@ c     with diamagnetic drift part                                        !xpb
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
      &   te, po, vedia, veecrb)
         call b2tfch (nx, ny, ns, ismain, ismain0,
-     1   guard_flows, facdrift, fac_vis, BoRiS,                          !xpb
+     1   guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,                 !xpb
      1   vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,        !xpb
      1   ti, ni(-1,-1,1), na, fna, uadia, vedia, wadia, vaecrb,          !xpb
      &   veecrb, ua, fne_32, fne_52, csig, csigin, chce, chve, chci,

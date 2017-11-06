@@ -17,7 +17,7 @@
      1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &    csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)
+     & csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation

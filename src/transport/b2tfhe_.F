@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,         !srv 23.11.10
+      subroutine b2tfhe_ (nx, ny, ns, ismain, ismain0,
+     & facdrift, fac_ExB, fac_vis,                                       !srv 23.11.10
      1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,          !srv 11.07.99 18.01.02 01.07.09
      1 ti, ni, na, fna, uadia, vadia, ua, fne,
      2 csig, csig_cl, csigin, chce, chve, chci, calf,                    !srv 17.05.99 11.07.99
@@ -42,7 +43,8 @@
      &   cddi(-1:nx,-1:ny,0:1,0:ns-1), lnlam(-1:nx,-1:ny),               !srv 13.10.06 01.07.09
      1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1   bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny),
-     2   facdrift(-1:nx,-1:ny), qc(-1:nx,-1:ny),
+     2   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
+     2   fac_vis(-1:nx,-1:ny), qc(-1:nx,-1:ny),
      3   csig_cl(-1:nx,-1:ny,0:1)
       real (kind=R8) :: cutlo
       parameter (cutlo = 1.0e-60_R8)
@@ -154,7 +156,7 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call ipgetr ('b2tfhe_vis_per', vis_per)                           !srv 22.11.99
        call ipgetr ('b2tfhe_vis_q', vis_q)                               !srv 11.07.99
        call ipgetr ('b2tfhe_vdia_par', vdia_par)                         !srv 17.05.99
-       call ipgetr ('b2tfhe_inert', fch_inert)                           !srv 07.07.99
+       call ipgetr ('b2tiner_inert', fch_inert)                          !srv 07.07.99
        call ipgeti ('b2tfhe_lim_flux', lim_flux)                         !srv 04.02.03
        call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31.01.08
        call xertst(fch_ion_neutral .ne. 0.0e0_R8 .or.                    !srv
@@ -213,7 +215,7 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
 
       facdriftm = maxval(facdrift)
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nx, ny, ns, facdrift, ismain, ismain0,
+      call b2tinnt (nx, ny, ns, facdrift, fac_ExB, ismain, ismain0,
      &              vol, gs, hx, hy, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 c Drift terms
@@ -222,12 +224,12 @@ c Drift terms
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua,
-     &              cvsa_cl, facdrift, fchvispar)                        !srv 20.09.06 16.10.17
+     &              cvsa_cl, fac_vis, fchvispar)                         !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
-      call b2tvspr(nx, ny, ns, facdrift, vol, hx, hy, qz, bb,            !srv 10.10.17
+      call b2tvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,             !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
-      call b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
+      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,        !srv 10.10.17
      &             lnlam, te, ti, ni, chci, fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99
       call b2tiner (nx, ny, ns, vol, gs, hx, hy, bb, na, ua,             !srv 22.11.12

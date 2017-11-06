@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tinnt (nx, ny, ns, facdrift,
+      subroutine b2tinnt (nx, ny, ns, facdrift, fac_ExB,
      &       ismain, ismain0, vol, gs, hx, hy, qz, qc, bb,               !srv 08.07.09 { !srv 20.10.17
      &       te, po, ti, na, fna, csigin, fchin)                         !srv 08.03.99 16.06.09
       use b2mod_types
@@ -19,7 +19,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
       real (kind=R8) ::
-     &   facdrift(-1:nx,-1:ny),                                          !srv 20.10.17
+     & facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                       !srv 20.10.17
      * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
      1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), 
      1 te(-1:nx,-1:ny), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
@@ -59,7 +59,7 @@
      *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
      &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), csigia(-1:nx,-1:ny,0:1),   !srv 15.02.11
-     &   sigi(-1:nx,-1:ny), facdriftm                                     !srv 20.10.17
+     &   sigi(-1:nx,-1:ny), facdriftm, fac_ExBm                           !srv 20.10.17
 *   ..procedures
       real (kind=R8) ::
      *   hy1                                                              !srv 07.07.14
@@ -89,7 +89,9 @@
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       fchin     = 0.0e0_R8                                                !srv 09.07.99
       facdriftm = maxval(facdrift)                                        !srv 20.10.17
-      if(pot_eq.ne.0 .and. fch_ion_neutral .ne. 0.0e0_R8) then            !srv 26.07.06 01.07.99
+      fac_ExBm  = maxval(fac_ExB)
+      if(pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)
+     .               .and. fch_ion_neutral .ne. 0.0e0_R8) then            !srv 26.07.06 01.07.99
         if (use_eirene.ne.0) then
           fchin = 0.0e0_R8                                                !srv 15.02.11 {
 *   ..calculate section

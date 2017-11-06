@@ -1,4 +1,4 @@
-      subroutine b2tvsq (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ne2,
+      subroutine b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,
      &           lnlam, te, ti, ni, chci, fchvisq)
       use b2mod_types
       use b2mod_indirect
@@ -10,7 +10,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     &   facdrift(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), 
+     &   fac_vis(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &   hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      &   ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), te(-1:nx,-1:ny),
      &   ti(-1:nx,-1:ny), ni(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1) 
@@ -30,7 +30,7 @@
       real (kind=R8), save :: cvsa_mltpl = 1.0e0_R8                     !iyv 06.12.13
       real (kind=R8) :: tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny)       !lk
      &                  , conn(-1:ny), tt2(-1:ny), tt3(-1:ny)
-     &                  , eps1(-1:ny), facdriftm                        !srv 16.10.17
+     &                  , eps1(-1:ny), fac_vism                         !srv 16.10.17
       real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
      &                  , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
      &                  , nu1(-1:nx,-1:ny)                              !lk 23.05.06 05.07.07 }
@@ -63,8 +63,8 @@
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       
       fchvisq   = 0.0e0_R8                                              !srv 11.07.99
-      facdriftm = maxval(facdrift)
-      if(facdriftm.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8) then              !srv 16.10.17
+      fac_vism = maxval(fac_vis)
+      if(fac_vism.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8) then               !srv 16.10.17
          do is = 0,ns-1                                                 !srv 12.05.11
           if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then           !srv 12.05.11
 !           is = ismain    ! 1                                  
@@ -241,7 +241,7 @@
              if(on_closed_surface(bottomix(ix,iy),
      .                            bottomiy(ix,iy))) then
               fchvisq(ix,iy,0) = fchvisq(ix,iy,0)-                      !srv 16.10.17
-     &         facdrift(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*   !srv 11.01.13 16.10.17
+     &         fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
      &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &         *tauia1(ix,iy)
      &         *alpha1(ix,iy)
@@ -271,7 +271,7 @@
      .                            bottomiy(ix,iy))) then
               if(rightix(ix,iy).ne.nx+1) then
                fchvisq(ix,iy,1) = fchvisq(ix,iy,1)+                     !srv 16.10.17 
-     &          facdrift(ix,iy)*0.24e0_R8*vis_q*(           ! signmf*   !srv 11.01.13 16.10.17
+     &          fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*   !srv 11.01.13 16.10.17
      &          vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &          *tauia1(ix,iy)
      &          *alpha1(ix,iy)

@@ -1,4 +1,4 @@
-      subroutine eirene_mc(nx, ny, ns, ismain, dtim, BoRiS,
+      subroutine eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,
      1 sna0, smo0, she0, shi0, main_call)
 
 c  version : 26.07.2002 23:39
@@ -44,7 +44,7 @@ c  version : 26.07.2002 23:39
       use b2mod_eirbra
 #endif
       implicit none
-      integer nx,ny,ns,ismain
+      integer nx,ny,ns,nxtl,nxtr,ismain
       real (kind=R8) ::
      * dtim, BoRiS,
      * sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
