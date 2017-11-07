@@ -2,10 +2,10 @@ module b2mod_ual_io_data
 
     !> This module provides:
     !>
-    !> 2. A routine (b2ITMFillGridDescription) to write the B2 grid into an ITM 
+    !> 2. A routine (b2ITMFillGridDescription) to write the B2 grid into an ITM
     !> grid description data structure (which usually is part of a CPO). It also
     !> sets up the default subgrids for the B2 grid.
-    !> 
+    !>
     !> 3. Routines to transform variables stored in the B2 data structure into
     !> the form expected CPO data structure.
 
@@ -66,7 +66,7 @@ contains
             &   gmap, b2FaceData = b2FaceData )
     end function b2IMASTransformDataB2ToIDSFace
 
-    !> TODO: find a way to include this subroutine in the 
+    !> TODO: find a way to include this subroutine in the
     !> b2IMASTransformDataB2ToIDS interface
 
     function b2IMASTransformDataB2ToIDSVertex( grid, gridSubsetId, gmap,     &
@@ -81,9 +81,9 @@ contains
             &   gmap, b2VertexData = b2VertexData )
     end function b2IMASTransformDataB2ToIDSVertex
 
-    !> Transform a quantity stored on faces from a 2d B2 array into a 1d IMAS 
-    !> IDS array for a given grid subset id. Either b2CellData or b2FaceData 
-    !> must be given. Do not use this directly, use the provided general 
+    !> Transform a quantity stored on faces from a 2d B2 array into a 1d IMAS
+    !> IDS array for a given grid subset id. Either b2CellData or b2FaceData
+    !> must be given. Do not use this directly, use the provided general
     !> interface b2IMASTransformDataB2ToIDS instead.
     !>
     !> @param grid The IMAS IDS grid description
@@ -109,7 +109,7 @@ contains
         integer :: nobjs, iobj, ifc, icv, ivx
         type(GridObject) :: curObj
 
-        !> .neqv. is xor (exclusive or) 
+        !> .neqv. is xor (exclusive or)
         !> (http://de.wikibooks.org/wiki/Fortran:_Fortran_95:_Logische_Ausdr%C3%BCcke)
         !> TODO: FIX
         !call assert( present(b2CellData) .neqv. present(b2FaceData) )
@@ -127,7 +127,7 @@ contains
                 !> Cell data case
                 !> check that it is a cell
                 call assert( all( curObj%cls == CLASS_CELL(1:SPACE_COUNT) ) )
-                !> get the subobject index for the face in the 2d poloidal 
+                !> get the subobject index for the face in the 2d poloidal
                 !> plane space
                 icv = curObj%ind(SPACE_POLOIDALPLANE)
                 !> copy data
@@ -138,7 +138,7 @@ contains
                 !> check that it is a face
                 call assert( all( curObj%cls == &
                     &   CLASS_POLOIDALRADIAL_FACE( 1:SPACE_COUNT ) ) )
-                !> get the subobject index for the face in the 2d poloidal 
+                !> get the subobject index for the face in the 2d poloidal
                 !> plane space
                 ifc = curObj%ind( SPACE_POLOIDALPLANE )
                 !> copy data
@@ -148,7 +148,7 @@ contains
                 !> Vertex/Node data case
                 !> check that it is a vertex
                 call assert( all( curObj%cls == CLASS_NODE( 1:SPACE_COUNT ) ) )
-                !> get the subobject index for the face in the 2d poloidal 
+                !> get the subobject index for the face in the 2d poloidal
                 !> plane space
                 ivx = curObj%ind( SPACE_POLOIDALPLANE )
                 !> copy data
@@ -231,7 +231,7 @@ contains
     integer :: nobjs, iobj, ifc, icv, ivx
     type(GridObject) :: curObj
 
-    ! .neqv. is xor (exclusive or) 
+    ! .neqv. is xor (exclusive or)
     ! (http://de.wikibooks.org/wiki/Fortran:_Fortran_95:_Logische_Ausdr%C3%BCcke)
     ! TODO: FIX
     !call assert( present(b2CellData) .neqv. present(b2FaceData) )

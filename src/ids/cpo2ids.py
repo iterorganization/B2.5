@@ -2,16 +2,16 @@
 """
 -----------------------------------------------------------------------------
 DESCRIPTION
-This utility converts edge CPO to IMAS edge_profiles IDS. It opens an 
+This utility converts edge CPO to IMAS edge_profiles IDS. It opens an
 existing CPO, reads it and writes data to IDS.
 Quick start:
 Definition of the class structures is in file imas.py!
 To run this converter use:
 module load imas/3.7.4/ual/3.4.0
 imasdb solps-iter
-Run example (terminal): 
+Run example (terminal):
      python cpo2ids.py --ishot=16151 --irun=1000 --iuser=g2penkod
-     --idevice=aug --iversion=4.10a --oshot=16151 --orun=1000 
+     --idevice=aug --iversion=4.10a --oshot=16151 --orun=1000
      --ouser=g2penkod --odevice=solps-iter --oversion=3
 Resulting files are stored under $HOME/public/imasdb/solps-iter/3/0
 as ids_161511000.*
@@ -21,7 +21,7 @@ imasdb -l # should show solps-iter with asterisk
 ----------------------------------------------------------------------------
 """
 
-import ual 
+import ual
 import imas
 import numpy
 import sys
@@ -41,7 +41,7 @@ def read_ids():
     reference shot and run and is used when the a new database is
     created, as in this example
     """
-    
+
     print('Reading IDS: ')
     my_ids_obj = imas.ids(oshot, orun, oshot, orun)
 
@@ -92,8 +92,8 @@ def write_ids():
     edge_profiles.putNonTimed()
     edge_profiles.ggd[0].grid.space.resize(1)
     edge_profiles.ggd[0].grid.space[0].objects_per_dimension.resize(3)
-    edge_profiles.ids_properties.homogeneous_time = 1 
-    edge_profiles.time.resize(1) 
+    edge_profiles.ids_properties.homogeneous_time = 1
+    edge_profiles.time.resize(1)
 
     """Get number of coordinate types in CPO edge"""
     num_coordtype = len(edge.grid.spaces[0].coordtype)
@@ -116,15 +116,15 @@ def write_ids():
 
     """--- OBJECTS OF ALL DIMENSIONS (0D, 1D, 2D) ---"""
     num_dim = 3
-    """Get number of 0D objects - grid nodes  out from grid subset 
+    """Get number of 0D objects - grid nodes  out from grid subset
     holding list of all 0D objects"""
     #num_obj_0D_all = edge.grid.subgrids[1].list[0].indset[0].range[1]
     num_obj_0D_all = len(edge.grid.spaces[0].objects[0].geo)
-    """Get number of 1D objects - edges  out from grid subset holding 
+    """Get number of 1D objects - edges  out from grid subset holding
     list of all 1D objects"""
     # num_obj_1D_all = edge.grid.subgrids[2].list[0].indset[0].range[1]
     num_obj_1D_all = len(edge.grid.spaces[0].objects[1].boundary)
-    """Get number of 2D objects - cells/faces  out from grid subset 
+    """Get number of 2D objects - cells/faces  out from grid subset
     holding list of all 2D objects"""
     # num_obj_2D_all = edge.grid.subgrids[0].list[0].indset[0].range[1]
     num_obj_2D_all = len(edge.grid.spaces[0].objects[2].boundary)
@@ -153,8 +153,8 @@ def write_ids():
                 edge.grid.spaces[0].objects[0].geo[i, j]
         """Fill nodes of the 0D objects """
         """(in Fortran notation. i_Fortran = i_Python + 1) """
-        ids_dim_0D.object[i].nodes[0] = i + 1 
-    
+        ids_dim_0D.object[i].nodes[0] = i + 1
+
     """Set and fill 1D objects"""
     """ "Shortcut" variable to ...objects_per_dimension[1] node"""
     ids_dim_1D = \
@@ -168,7 +168,7 @@ def write_ids():
         ids_dim_1D.object[i].boundary.resize(num_boundary_1D)
         for j in range(num_boundary_1D):
             ids_dim_1D.object[i].boundary[j].index = \
-                edge.grid.spaces[0].objects[1].boundary[i,j] 
+                edge.grid.spaces[0].objects[1].boundary[i,j]
             # Fill nodes of the 1D objects
             ids_dim_1D.object[i].nodes[j] = \
                 edge.grid.spaces[0].objects[1].boundary[i,j]
@@ -180,7 +180,7 @@ def write_ids():
     obj_2d_all_array = numpy.array([], dtype='int')
     ids_dim_2D.object.resize(num_obj_2D_all)
 
-    """Get 2D objects geometry (nodes) data from CPO, sort them into more 
+    """Get 2D objects geometry (nodes) data from CPO, sort them into more
     orderly form  and put them into the IDS"""
     num_gridNodes_2D    = 4
     num_boundary_2D = 4
@@ -221,7 +221,7 @@ def write_ids():
             assert loop_count < 3
             loop_count += 1
         """Fill grid nodes of the 2D objects"""
-        ids_dim_2D.object[i].nodes[0]= node_idx[0] + 1 
+        ids_dim_2D.object[i].nodes[0]= node_idx[0] + 1
         """+1 because of Fortran indices notation (1,2,3...)"""
         ids_dim_2D.object[i].nodes[1] = node_idx[3] + 1
         ids_dim_2D.object[i].nodes[2] = node_idx[2] + 1
@@ -230,7 +230,7 @@ def write_ids():
         ids_dim_2D.object[i].boundary.resize(num_boundary_2D)
         for j in range(num_boundary_2D):
             ids_dim_2D.object[i].boundary[j].index = \
-                edge.grid.spaces[0].objects[2].boundary[i,j] 
+                edge.grid.spaces[0].objects[2].boundary[i,j]
 
     """--- GRID SUBSETS ---"""
 
@@ -266,8 +266,8 @@ def write_ids():
         gridSubset_ind   = i + 1
         """Get name of the grid subset"""
         gridSubset_name = edge.grid.subgrids[i].id
-        """Get class/dimension of objects which form the grid subset. 
-	In CPO edge its marked with 0,1,2..., in IDS we want it in 
+        """Get class/dimension of objects which form the grid subset.
+	In CPO edge its marked with 0,1,2..., in IDS we want it in
 	Fortran notation """
         gridSubset_dim  = edge.grid.subgrids[i].list[0].cls[0] + 1
 
@@ -281,7 +281,7 @@ def write_ids():
         """In this case grid subsets contain only 1 element"""
         ids_grid_subset.element.resize(1)
 
-        """Get the object indices from either range of indices or explicit 
+        """Get the object indices from either range of indices or explicit
         list of indices"""
         gridSubset_indset_found = len(edge.grid.subgrids[i].list[0].indset)
 
@@ -315,7 +315,7 @@ def write_ids():
         else:
             for j in range(0, num_obj_index):
                 """python_index = Fortran_index - 1"""
-                object_index = edge.grid.subgrids[i].list[0].ind[j,0] - 1 
+                object_index = edge.grid.subgrids[i].list[0].ind[j,0] - 1
                 gridSubset_object_index_array = numpy.insert(
                     gridSubset_object_index_array, j, object_index)
 
@@ -340,10 +340,10 @@ def write_ids():
 
     """---- Set and put to IDS: Electron density (ne) --- """
     num_ne_gridSubset = len(edge.fluid.ne.value)
-    num_ne_gridSubset_new = num_ne_gridSubset + 4   
-    """+4 because we add also 
-    values for new gridSubsets 
-    CORE, SOL, inner divertor 
+    num_ne_gridSubset_new = num_ne_gridSubset + 4
+    """+4 because we add also
+    values for new gridSubsets
+    CORE, SOL, inner divertor
     and outer divertor
     """
     edge_profiles.ggd[0].electrons.density.resize(num_ne_gridSubset_new)
@@ -358,23 +358,23 @@ def write_ids():
             ids_ne.values.resize(ne_gridSubset_scalar_size)
             for k in range (ne_gridSubset_scalar_size):
                 ids_ne.values[k] = edge.fluid.ne.value[j].scalar[k]
-        else: 
-            """In CPO we got scalars for gridSubsets CORE, SOL, inner/outer 
-            divertor via indices, stored in 
+        else:
+            """In CPO we got scalars for gridSubsets CORE, SOL, inner/outer
+            divertor via indices, stored in
             edge.grid.subgrids[:].list[0].ind[0...N].
-            In IDS we don't have this option (or it was not found) and one 
-            way is to directly store scalars under new electron density 
+            In IDS we don't have this option (or it was not found) and one
+            way is to directly store scalars under new electron density
             gridSubsets values
             """
-            ids_ne.grid_subset_index = j + 2    
-            """TODO: currently hardcoded,  
-            (to get grid subset 
-            indices 7,8,9,10) 
-            since this grid subset 
+            ids_ne.grid_subset_index = j + 2
+            """TODO: currently hardcoded,
+            (to get grid subset
+            indices 7,8,9,10)
+            since this grid subset
             electron density values
             are not set in given CPO.
             Idea: combine search of grid
-            subset name and getting the 
+            subset name and getting the
             index
             """
             gridSubset_index = ids_ne.grid_subset_index
@@ -382,19 +382,19 @@ def write_ids():
                 len(edge.grid.subgrids[j + 2 - 1].list[0].ind)
             ids_ne.values.resize(ne_gridSubset_scalar_size)
             for k in range(ne_gridSubset_scalar_size):
-                """Read scalar index in Fortran notation (1,2,3,...) 
+                """Read scalar index in Fortran notation (1,2,3,...)
                 but use it in python notation (0,1,2,...)
                 """
                 scalar_index = edge.grid.subgrids[j + 2 - 1].list[0].ind[k]
                 ids_ne.values[k] = \
                     edge.fluid.ne.value[0].scalar[scalar_index - 1]
-    
+
     """---- Set and put to IDS: Electron Temperature (te) ----"""
     num_te_gridSubset = len(edge.fluid.te.value)
-    num_te_gridSubset_new = num_te_gridSubset + 4   
-    """ +4 because we add also 
-    values for new gridSubsets 
-    CORE, SOL, inner divertor 
+    num_te_gridSubset_new = num_te_gridSubset + 4
+    """ +4 because we add also
+    values for new gridSubsets
+    CORE, SOL, inner divertor
     and outer divertor
     """
     edge_profiles.ggd[0].electrons. \
@@ -408,23 +408,23 @@ def write_ids():
             ids_te.values.resize(te_gridSubset_scalar_size)
             for k in range(te_gridSubset_scalar_size):
                 ids_te.values[k] = edge.fluid.te.value[j].scalar[k]
-        else: 
+        else:
             """In CPO we got scalars for gridSubsets CORE, SOL, inner/outer
-            divertor via indices, stored in 
+            divertor via indices, stored in
             edge.grid.subgrids[:].list[0].ind[0...N].
-            In IDS we don't have this option (or it was not found) and one 
-            way is to directly store scalars under new electron temperature 
+            In IDS we don't have this option (or it was not found) and one
+            way is to directly store scalars under new electron temperature
             gridSubsets values
             """
-            ids_te.grid_subset_index = j + 2    
-            """TODO: currently hardcoded, 
-            (to get grid subset 
-            indices 7,8,9,10)  
-            since this grid subset 
+            ids_te.grid_subset_index = j + 2
+            """TODO: currently hardcoded,
+            (to get grid subset
+            indices 7,8,9,10)
+            since this grid subset
             electron density values
             are not set in given CPO.
             Idea: combine search of grid
-            subset name and getting the 
+            subset name and getting the
             index
             """
             gridSubset_index = ids_te.grid_subset_index
@@ -432,29 +432,29 @@ def write_ids():
                 len(edge.grid.subgrids[j + 2 - 1].list[0].ind)
             ids_te.values.resize(te_gridSubset_scalar_size)
             for k in range(te_gridSubset_scalar_size):
-                """Read scalar index in Fortran notation (1,2,3,...) 
+                """Read scalar index in Fortran notation (1,2,3,...)
                 but use it in python notation (0,1,2,...)
                 """
                 scalar_index = edge.grid.subgrids[j + 2 - 1].list[0].ind[k]
                 ids_te.values[k] = \
                     edge.fluid.te.value[0].scalar[scalar_index - 1]
-    
+
     """---- Set and put to IDS: Ion Density (ni) ----"""
     ni_species_num = len(edge.fluid.ni)
     """print "ni_species_num", ni_species_num"""
     edge_profiles.ggd[0].ion.resize(ni_species_num)
     for n in range (ni_species_num):
         num_ni_gridSubset = len(edge.fluid.ni[n].value)
-        num_ni_gridSubset_new = num_ni_gridSubset + 4   
-        """+4 because we add also 
-        values for new gridSubsets 
-        CORE, SOL, inner divertor 
+        num_ni_gridSubset_new = num_ni_gridSubset + 4
+        """+4 because we add also
+        values for new gridSubsets
+        CORE, SOL, inner divertor
         and outer divertor
         """
 
         ids_ion = edge_profiles.ggd[0].ion[n]
 
-        """Put ion charge names. This label goes together with ion density and 
+        """Put ion charge names. This label goes together with ion density and
         also ion temperature
         """
         ids_ion.label = edge.species[n].label
@@ -470,23 +470,23 @@ def write_ids():
                 ids_ni.values.resize(ni_gridSubset_scalar_size)
                 for k in range(ni_gridSubset_scalar_size):
                     ids_ni.values[k] = edge.fluid.ni[n].value[j].scalar[k]
-            else: 
-                """In CPO we got scalars for gridSubsets CORE, SOL, 
-                inner/outer divertor via indices, stored in 
+            else:
+                """In CPO we got scalars for gridSubsets CORE, SOL,
+                inner/outer divertor via indices, stored in
                 edge.grid.gridSubsets[:].list[0].ind[0...N]
-                In IDS we don't have this option (or it was not found) 
-                and one way is to directly store scalars under new ion 
+                In IDS we don't have this option (or it was not found)
+                and one way is to directly store scalars under new ion
                 density gridSubsets values
                 """
-                ids_ni.grid_subset_index = j + 2    
+                ids_ni.grid_subset_index = j + 2
                 """TODO: currently hardcoded,
-                (to get grid subset 
-                indices 7,8,9,10)  
-                since this grid subset 
+                (to get grid subset
+                indices 7,8,9,10)
+                since this grid subset
                 electron density values
                 are not set in given CPO.
                 Idea: combine search of grid
-                subset name and getting the 
+                subset name and getting the
                 index
                 """
                 gridSubset_base_id = ids_ni.grid_subset_index
@@ -494,24 +494,24 @@ def write_ids():
                     len(edge.grid.subgrids[j + 2 - 1].list[0].ind)
                 ids_ni.values.resize(ni_gridSubset_scalar_size)
                 for k in range(ni_gridSubset_scalar_size):
-                    """Read scalar index in Fortran notation (1,2,3,...) 
+                    """Read scalar index in Fortran notation (1,2,3,...)
                     but use it in python notation (0,1,2,...)
                     """
                     scalar_index = edge.grid.subgrids[j + 2 - 1].list[0].ind[k]
                     ids_ni.values[k] = \
                         edge.fluid.ni[n].value[0].scalar[scalar_index - 1]
-    
+
     """---- Set and put to IDS: Ion Temperature (ni) ----"""
     ti_species_num = len(edge.fluid.ti)
-    # edge_profiles.ggd[0].ion.resize(ti_species_num)  
+    # edge_profiles.ggd[0].ion.resize(ti_species_num)
     """it has the same number of species as ion density"""
 
     for n in range(ti_species_num):
         num_ti_gridSubset = len(edge.fluid.ti[n].value)
-        num_ti_gridSubset_new = num_ti_gridSubset + 4   
-        """+4 because we add also 
-        values for new gridSubsets 
-        CORE, SOL, inner divertor 
+        num_ti_gridSubset_new = num_ti_gridSubset + 4
+        """+4 because we add also
+        values for new gridSubsets
+        CORE, SOL, inner divertor
         and outer divertor
         """
         edge_profiles.ggd[0].ion[n]. \
@@ -525,23 +525,23 @@ def write_ids():
                 ids_ti.values.resize(ti_gridSubset_scalar_size)
                 for k in range(ti_gridSubset_scalar_size):
                     ids_ti.values[k] = edge.fluid.ti[n].value[j].scalar[k]
-            else: 
-                """In CPO we got scalars for gridSubsets CORE, SOL, inner/outer 
-                divertor via indices, stored in 
+            else:
+                """In CPO we got scalars for gridSubsets CORE, SOL, inner/outer
+                divertor via indices, stored in
                 edge.grid.gridSubsets[:].list[0].ind[0...N]
-                In IDS we don't have this option (or it was not found) 
-                and one way is to directly store scalars under new ion 
+                In IDS we don't have this option (or it was not found)
+                and one way is to directly store scalars under new ion
                 temperature gridSubsets values
                 """
-                ids_ti.grid_subset_index = j + 2    
+                ids_ti.grid_subset_index = j + 2
                 """TODO: currently hardcoded,
-                (to get grid subset 
-                indices 7,8,9,10)  
-                since this grid subset 
+                (to get grid subset
+                indices 7,8,9,10)
+                since this grid subset
                 electron density values
                 are not set in given CPO.
                 Idea: combine search of grid
-                subset name and getting the 
+                subset name and getting the
                 index
                 """
                 gridSubset_base_id = ids_ti.grid_subset_index
@@ -549,14 +549,14 @@ def write_ids():
                     len(edge.grid.subgrids[j + 2 - 1].list[0].ind)
                 ids_ti.values.resize(ti_gridSubset_scalar_size)
                 for k in range(ti_gridSubset_scalar_size):
-                    """Read scalar index in Fortran notation (1,2,3,...) 
+                    """Read scalar index in Fortran notation (1,2,3,...)
                     but use it in python notation (0,1,2,...)
                     """
                     scalar_index = \
-                        edge.grid.subgrids[j + 2 - 1].list[0].ind[k]  
+                        edge.grid.subgrids[j + 2 - 1].list[0].ind[k]
                     ids_ti.values[k] =  \
                         edge.fluid.ti[n].value[0].scalar[scalar_index - 1]
-    
+
     """Write put data do IDS"""
     edge_profiles.putSlice()
     """Close IDS"""
@@ -581,7 +581,7 @@ if __name__ == '__main__':
             ["ishot=", "irun=", "iuser=", "idevice=", "iversion=", \
              "oshot=", "orun=", "ouser=", "odevice=", "oversion=", \
             "help"])
-        """ Input CPO parameters (shot, run, user, device, itm version) and 
+        """ Input CPO parameters (shot, run, user, device, itm version) and
         output IDS parameters (shot, run, user, device, imas version)
         """
         for opt, arg in opts:
@@ -592,7 +592,7 @@ if __name__ == '__main__':
             elif opt in ('-iu', '--iuser'):
                 iuser = arg
             elif opt in ('-id', '--idevice'):
-                idevice = arg   
+                idevice = arg
             elif opt in ('-iv', '--iversion'):
                 iversion = arg
             elif opt in ('-os', '--oshot'):
@@ -637,6 +637,6 @@ if __name__ == '__main__':
 
 
 
-    
-      
+
+
 

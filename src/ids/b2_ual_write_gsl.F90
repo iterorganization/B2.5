@@ -1,13 +1,13 @@
 !> Legend:
-!>     !> .......... Variables description, 
+!>     !> .......... Variables description,
 !>                   additional (helpful) information etc.
 !>     !  .......... Commented part of code
 !> -----------------------------------------------------------------------------
 !> DOCUMENTATION:
 !> 1. purpose
 !>
-!>      b2_ual_write_gsl.f90 script is used to generate b2_ual_write_gsl.exe 
-!>      (main program), which is a post-processor for b2. It reads the plasma 
+!>      b2_ual_write_gsl.f90 script is used to generate b2_ual_write_gsl.exe
+!>      (main program), which is a post-processor for b2. It reads the plasma
 !>      state and writes it to IDS database using GSL (Grid Service Library).
 !>
 !>
@@ -21,7 +21,7 @@
 !>      The complete program performs post-processing of the
 !>      result of a b2 calculation.
 !>      This program unit opens and closes the input/output units, and
-!>      may perform some other system-dependent operations. 
+!>      may perform some other system-dependent operations.
 !>
 !>      The input units are:
 !>      ninp(0): formatted; provides output control parameters.
@@ -87,11 +87,11 @@ program b2_ual_write
     ! use b2mod_b2cmwg
 
     use ids_schemas     ! IGNORE
-                        !> These are the Fortran type definitions for the 
+                        !> These are the Fortran type definitions for the
                         !> Physics Data Model
     use ids_routines    ! IGNORE
-                        !> These are the Access Layer routines + management of 
-                        !> IDS structures 
+                        !> These are the Access Layer routines + management of
+                        !> IDS structures
     use ids_assert      ! IGNORE
     use ids_grid_common &       ! IGNORE
         & , IDS_COORDTYPE_R => COORDTYPE_R    &
@@ -126,7 +126,7 @@ program b2_ual_write
     !>  ..initialize input/output units
     data ninp/50, 51, 52, 53, 54, 55, 56/
     data nout/60, 61, 62/
-    
+
     !>--------------------------------------------------------------------------
     !>.documentation-internal
     !>
@@ -151,7 +151,7 @@ program b2_ual_write
     !>      ns specifies the number of atomic species in the calculation.
     !>      The species are indexed by (0:ns-1).
     !>      It will hold that 1.le.ns.
-    !>          
+    !>
     !>--------------------------------------------------------------------------
     !>.computation
 
@@ -175,7 +175,7 @@ program b2_ual_write
     ! call read_ids(treename, shot, run, idx, username, &
     !                                     & device, version)
 
-contains 
+contains
 
     subroutine read_b2fgmtry_b2fstate()
 
@@ -229,7 +229,7 @@ contains
 
         call xertst(size(crx).eq.size(cry), &
             & "The number of x and y coordinates is not the same.")
-        
+
         corner: do k = 0, 3, 1
             xi: do j = -1, ny, 1
                 yi: do i = -1, nx, 1
@@ -247,7 +247,7 @@ contains
     subroutine read_additional(ninp, nout, nx, ny, ns, ne, te, ti)
 
         !> Read and compute additional data (taken from b2mddr.F)
-        
+
         implicit none
 
         !>   ..input arguments (unchanged on exit)
@@ -273,7 +273,7 @@ contains
         real (kind=B2R8)    ::  time
         integer             ::  cf_sizes(22)
 
-        namelist /b2md_namelist/ exp, shot, time, comment, timedep, snapshot, & 
+        namelist /b2md_namelist/ exp, shot, time, comment, timedep, snapshot, &
             & tallies, movies, overwrite_shotnumber
 
         !>   ..subprogram start-up calls
@@ -291,10 +291,10 @@ contains
 
         call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
 
-        !> Get array sizes from the b2fstate. We open the file again as a new 
+        !> Get array sizes from the b2fstate. We open the file again as a new
         !> unit to not disrupt the old unit.
         !> A routine should exist to do all that work but so far with no success
-        !> of finding/properly use it. 
+        !> of finding/properly use it.
         cf_sizes = read_additional_sizes(22)
 
         ! allocate(lblgm(cf_sizes(2)))
@@ -311,13 +311,13 @@ contains
         allocate(po(cf_sizes(13)))
         allocate(fna(cf_sizes(14)))
         allocate(fhe(cf_sizes(15)))
-        allocate(fhi(cf_sizes(16))) 
+        allocate(fhi(cf_sizes(16)))
         allocate(fch(cf_sizes(17)))
         allocate(fch_32(cf_sizes(18)))
         allocate(fch_52(cf_sizes(19)))
-        !> The program gives an error saying the kinrgy and fch_p are 
+        !> The program gives an error saying the kinrgy and fch_p are
         !> already allocated. Where, when?
-        ! allocate(kinrgy(cf_sizes(20))) 
+        ! allocate(kinrgy(cf_sizes(20)))
         ! allocate(fch_p(cf_sizes(22)))
 
         ! call cfruch(ninp(3), cf_sizes(2), lblgm, 'label')
@@ -357,7 +357,7 @@ contains
 
         cfcount = 0
         open(1,file='b2fstate', status="old")
-        do  
+        do
             read(1,'(A)', iostat=io) rdline
             if (io/=0) exit
             if (rdline(1:3).eq."*cf") then
@@ -401,14 +401,14 @@ contains
         ! real(B2R8)    ::  time
         real(IDS_real)    ::  time
         real(IDS_real), allocatable   ::  nodesGeoList(:,:)
-        real(IDS_real)    ::  scalarCells(2)    
+        real(IDS_real)    ::  scalarCells(2)
         type(ids_edge_profiles)     ::  edge_profiles
         type (ids_edge_sources)     ::  edge_sources
         type (ids_edge_transport)   ::  edge_transport
         type(ids_edge_profiles_time_slice), pointer      ::  ggd
         type(ids_generic_grid_dynamic), pointer          ::  grid
         type(ids_generic_grid_dynamic_space), pointer    ::  space
-        type(ids_generic_grid_scalar), pointer    :: idsField     
+        type(ids_generic_grid_scalar), pointer    :: idsField
 
         !> ===  SET UP IDS ===
         write(0,*) "IDS parameters"
@@ -425,22 +425,22 @@ contains
         write(0,*) "Setting data for edge_profiles IDS"
 
         !> Preparing database for writing
-        !> Through practice it was disclosed that there are some mandatory 
-        !> steps to be done in order to assure for data to be successfully 
-        !> written to IDS. Without going through those steps errors and failed 
+        !> Through practice it was disclosed that there are some mandatory
+        !> steps to be done in order to assure for data to be successfully
+        !> written to IDS. Without going through those steps errors and failed
         !> process of writing to IDS are to be expected.
         !> This can be done using exampleSetIDSFundamentals routine
         homogeneous_time = 1
         time = 0.0_IDS_real
-        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time) 
-        
+        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time)
+
         !> Allocate ggd slice
         allocate(edge_profiles%ggd(1))
         !> Set pointers to top IDS nodes/structures
         ggd => edge_profiles%ggd(1)
         grid => ggd%grid
 
-        !> Set IDS grid description 
+        !> Set IDS grid description
         grid_description = "This IDS was written by b2_ual_write_gsl"
         grid%identifier%description = grid_description
 
@@ -455,14 +455,14 @@ contains
 
         !> === SET UP GRID===
 
-        !> The 2D structured grid is in our case composed out of one 2D 
+        !> The 2D structured grid is in our case composed out of one 2D
         !> structured space
         !> Set definition of the coordinate system of the space
-        coordtype(:) = (/ IDS_COORDTYPE_R, IDS_COORDTYPE_Z /) 
+        coordtype(:) = (/ IDS_COORDTYPE_R, IDS_COORDTYPE_Z /)
 
         !> --- Set up grid space objects for Class 1 objects - points ---
 
-        !> We are in 2D dimension space and the nodes are defined by coordinates 
+        !> We are in 2D dimension space and the nodes are defined by coordinates
         !> in a way
         !> n1=[r1, z1], n2=[r2,z2], ..., nn=[rn, zn].
 
@@ -484,12 +484,12 @@ contains
 
         !> --- (TODO) Set up connectivity array of grid space objects for   ---
         !> --- Class 2 objects - edges                                      ---
-        !> TODO! Currently only placeholder edges are given 
+        !> TODO! Currently only placeholder edges are given
 
         !> Set (placeholder) list of indices for nodes defining each edge object
         allocate(edgesNodesList(1,2))
-        edgesNodesList(1,1) = 0  
-        edgesNodesList(1,2) = 0 
+        edgesNodesList(1,1) = 0
+        edgesNodesList(1,2) = 0
 
         !> --- Set up connectivity array of grid space objects for      ---
         !> --- Class 3 objects - 2D cells                               ---
@@ -516,12 +516,12 @@ contains
 
         !> --- Set the grid space objects and grid subsets ---
         !! For that we use GSL routine gridSetup2dSpace
-        call gridSetup2dSpace(  grid, coordtype,        &
+        call gridSetup2dSpace(  grid, coordtype,                &
                             &   geo_0dObj   = nodesGeoList,     &
                             &   conn_1dObj  = edgesNodesList,   &
                             &   conn_2dObj  = cellsNodesList,   &
                             &   createGridSubsets = .true. )
-                                    
+
         !> --- (Optional) Set grid subsets custom description   ---
         grid%grid_subset(1)%identifier%description = "All nodes in the domain."
         grid%grid_subset(3)%identifier%description = "All cells in the domain."
@@ -534,30 +534,30 @@ contains
         gridSubset_index = 3
 
         !> --- Set ne (electron density) ---
-        allocate(ggd%electrons%density(1))                                                                
-        idsField => ggd%electrons%density(1)                                                                
-        call gridStructWriteData1d( grid, idsField, gridSubset_index, ne)  
+        allocate(ggd%electrons%density(1))
+        idsField => ggd%electrons%density(1)
+        call gridStructWriteData1d( grid, idsField, gridSubset_index, ne)
 
         !> --- Set te (electron temperature) ---
-        allocate(ggd%electrons%temperature(1))                                                                
+        allocate(ggd%electrons%temperature(1))
         idsField => ggd%electrons%temperature(1)
-        !> convert to eV (1 J = 6.242e18 eV)                                 
+        !> convert to eV (1 J = 6.242e18 eV)
         call gridStructWriteData1d( grid, idsField, gridSubset_index,   &
-            &   te*6.242e18) 
+            &   te*6.242e18)
 
         !> --- Set ti (ion temperature) ---
         allocate(ggd%ion(1))
-        allocate(ggd%ion(1)%temperature(1))                                                                
+        allocate(ggd%ion(1)%temperature(1))
         idsField => ggd%ion(1)%temperature(1)
-        !> convert to eV (1 J = 6.242e18 eV)                                 
+        !> convert to eV (1 J = 6.242e18 eV)
         call gridStructWriteData1d( grid, idsField, gridSubset_index,   &
-            &   ti*6.242e18) 
+            &   ti*6.242e18)
 
         !> Set data to edge_profiles IDS
         write(0,*) "Writing to edge_profiles IDS"
 
         !> Create and modify new shot/run
-        call imas_create_env(treename, shot, run, 0, 0, idx, username, & 
+        call imas_create_env(treename, shot, run, 0, 0, idx, username, &
             device, version)
 
         !> Or open and modify existing shot/run (might work much faster than
@@ -567,7 +567,7 @@ contains
         !> Put data to IDS
         call ids_put_slice(idx,"edge_profiles",edge_profiles)
         call ids_put(idx,"edge_profiles",edge_profiles)
-        
+
         !> Close IDS
         call ids_deallocate(edge_profiles)
         call imas_close(idx)
@@ -585,7 +585,7 @@ contains
         character(len=24)       ::  treename, username, device, version
         type(ids_edge_profiles) ::  edge_profiles
         character(len=255)      ::  imas_connect_url
-        
+
         gridSubset_index = 3
 
         !> Open input datafile from local database
@@ -594,13 +594,13 @@ contains
         call imas_open_env('treename', shot, run, idx, username, device, version)
         call ids_get(idx, 'edge_profiles', edge_profiles)
 
-        write(0,*) 'homogeneous_time = ', & 
+        write(0,*) 'homogeneous_time = ', &
             & edge_profiles%ids_properties%homogeneous_time
-        write(0,*) "Grid subset 3 name = ", & 
-            & edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)% & 
+        write(0,*) "Grid subset 3 name = ", &
+            & edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)% &
             & identifier%name
-        write(0,*) "Grid subset 3 index = ", & 
-            & edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)% & 
+        write(0,*) "Grid subset 3 index = ", &
+            & edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)% &
             & identifier%index
         ! write(0,*) "Time = ", edge_profiles%time(1)
         call ids_deallocate(edge_profiles)

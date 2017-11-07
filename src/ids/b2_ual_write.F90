@@ -62,7 +62,7 @@ program b2_ual_write
   !     The complete program performs postprocessing of the
   !     result of a b2 calculation.
   !     This program unit opens and closes the input/output units, and
-  !     may perform some other system-dependent operations. 
+  !     may perform some other system-dependent operations.
   !
   !     The input units are:
   !     ninp(0): formatted; provides output control parameters.
@@ -311,7 +311,7 @@ contains
 
 
   end subroutine read_b2fplasma
-  
+
   subroutine read_additional(ninp, nout, nx, ny, ns)
 
     ! read and compute additional data (taken from b2mddr.F)
@@ -425,7 +425,7 @@ contains
          & ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
     !   ..read atomic rate data
 !!    call cfruch (ninp(6), 120, lblrc, 'label')
-!!    adpak_used = index(lblrc,'ADPAK').gt.0 
+!!    adpak_used = index(lblrc,'ADPAK').gt.0
 !!    call read_b2mod_ppout('rates', ninp(6), lblrc)
 !!    call b2rurc (ninp(6), b2frates_version)
     !   ..test rtns, rtzmin, rtzmax, rtzn

@@ -2,7 +2,7 @@ module helper
 
   implicit none
 
-contains  
+contains
 
   function int2str(intval) result(string)
     integer , intent(in) :: intval
