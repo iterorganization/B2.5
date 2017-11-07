@@ -1860,8 +1860,8 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
-          call b2mndt (nout, nx, ny, ns, ismain, ismain0, nscx, iscx,
-     &     itim, dtim, ntim, ierr)
+          call b2mndt (nout, nx, ny, ns, nxtl, nxtr,
+     &     ismain, ismain0, nscx, iscx, itim, dtim, ntim, ierr)
 
           if(ierr.eq.10) then
             stack_ptr=stack_ptr+1

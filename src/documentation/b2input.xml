@@ -761,7 +761,8 @@
 			<switchgroup>
 				<name>b2news_facdrift*</name>
 				<description>
-					Ramping parameters for facdrift, which multiplies the diamagnetic terms. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
+					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
+					The ion-neutral friction current requires either facdrift or fac_ExB to be turned on as well.
 				</description>
 				<switch>
 					<name>b2news_facdrift_dec</name>
@@ -1112,12 +1113,21 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tfhe_vdia_par</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Real parameter which multiplies the convective heat flux due to grad B-drift of guiding centers in non-modified heat fluxes of electrons and ions.
+				</description>
+			</switch>
+			<switch>
 				<name>b2tfhe_neutral</name>
 				<default>0.0</default>
 				<type>real</type>
 				<description>
 					Real parameter which multiplies the ion-neutral current.
 					If b2tfhe_neutral is 0 then the ion-neutral current is switched off otherwise the ion-neutral current is switched on.
+					The ion-neutral current also requires either the diamagnetic or ExB drifts to be turned on as well.
 				</description>
 			</switch>
 			<switch>
@@ -2034,7 +2044,7 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '0', in the expression of the electron particle flux (fne) the particle flux with drift terms is used and temporary drift velocities on the first call are calculated. When set to '1' or '2', the particle flux without drift terms is used in fne. It is recommended '2'.
+					When set to '0' or '2', the code calls the standard b2stbc routine, which uses the particle flux with drift terms included in the expression of the electron particle flux (fne). When set to '1', the code calls the b2stbc_spb routine instead, which uses the particle flux without drift terms in fne. It is recommended '2'.
 				</description>
 			</switch>
 			<switchgroup>
@@ -3977,12 +3987,35 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2tfnb_fnb_nodrift_style</name>
-				<default>1</default>
-				<type>integer</type>
+				<name>b2tfnb_poleldr</name>
+				<default>1.0</default>
+				<type>real</type>
 				<description>
-					When set to '1', SPb's form of calculating no drift part of the particle fluxes is used. 
-					It is recommended '1'.
+					Multiplier to the poloidal electrical drift velocity.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfnb_radeldr</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the radial electrical drift velocity.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfnb_poldidr</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the poloidal diamagnetic drift velocity.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfnb_raddidr</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the radial diamagnetic drift velocity.
 				</description>
 			</switch>
 			<switch>

@@ -1205,8 +1205,8 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,w5,'b2tfhi__qidiay')
        call my_out(70,nx,ny,w6,'b2tfhi__chciy_Pat')                     !srv 16.09.02 }
        call my_out(70,nx,ny,fhiPSch(-1,-1,1),'b2tfhi__fhiPSchy')
-       call my_out(70,nx,ny,fhi(-1,-1,0),'fhix')
-       call my_out(70,nx,ny,fhi(-1,-1,1),'fhiy')
+       call my_out(70,nx,ny,fhi(-1,-1,0),'b2tfhi__fhix')
+       call my_out(70,nx,ny,fhi(-1,-1,1),'b2tfhi__fhiy')
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &           .or. iout_b2wdat.eq.4) then
@@ -1259,20 +1259,34 @@ csw 18feb2014 remove fluxes between guard cells
        enddo
       enddo
       if(iout.ne.0) then                                                !srv 18.06.08 {
-       call my_out(70,nx,ny,floi(-1,-1,0),'floix')
-       call my_out(70,nx,ny,floi(-1,-1,1),'floiy')
-       call my_out(70,nx,ny,coni(-1,-1,0,0),'conix0')
-       call my_out(70,nx,ny,coni(-1,-1,0,1),'conix1')
-       call my_out(70,nx,ny,coni(-1,-1,0,2),'conix2')
-       call my_out(70,nx,ny,coni(-1,-1,1,0),'coniy0')
-       call my_out(70,nx,ny,coni(-1,-1,1,1),'coniy1')
-       call my_out(70,nx,ny,coni(-1,-1,1,2),'coniy2')
-       call my_out(70,nx,ny,fhi(-1,-1,0),'fhix')
-       call my_out(70,nx,ny,fhi(-1,-1,1),'fhiy')
-       call my_out(70,nx,ny,fhi_mdf(-1,-1,0),'fhi_mdfx')
-       call my_out(70,nx,ny,fhi_mdf(-1,-1,1),'fhi_mdfy')
-       call my_out(70,nx,ny,fhiPSch(-1,-1,0),'fhiPSchx')
-       call my_out(70,nx,ny,fhiPSch(-1,-1,1),'fhiPSchy')
+       call my_out(70,nx,ny,floi(-1,-1,0),'b2tfhi__floix')
+       call my_out(70,nx,ny,floi(-1,-1,1),'b2tfhi__floiy')
+       call my_out(70,nx,ny,coni(-1,-1,0,0),'b2tfhi__conix0')
+       call my_out(70,nx,ny,coni(-1,-1,0,1),'b2tfhi__conix1')
+       call my_out(70,nx,ny,coni(-1,-1,0,2),'b2tfhi__conix2')
+       call my_out(70,nx,ny,coni(-1,-1,1,0),'b2tfhi__coniy0')
+       call my_out(70,nx,ny,coni(-1,-1,1,1),'b2tfhi__coniy1')
+       call my_out(70,nx,ny,coni(-1,-1,1,2),'b2tfhi__coniy2')
+       call my_out(70,nx,ny,fhi(-1,-1,0),'b2tfhi__fhix')
+       call my_out(70,nx,ny,fhi(-1,-1,1),'b2tfhi__fhiy')
+       call my_out(70,nx,ny,fhi_mdf(-1,-1,0),'b2tfhi__fhi_mdfx')
+       call my_out(70,nx,ny,fhi_mdf(-1,-1,1),'b2tfhi__fhi_mdfy')
+       call my_out(70,nx,ny,fhiPSch(-1,-1,0),'b2tfhi__fhiPSchx')
+       call my_out(70,nx,ny,fhiPSch(-1,-1,1),'b2tfhi__fhiPSchy')
+       call my_out(70,nx,ny,fchvispar(-1,-1,0),'b2tfhi__fchvisparx')
+       call my_out(70,nx,ny,fchvispar(-1,-1,1),'b2tfhi__fchvispary')
+       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfhi__fchvisqx')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfhi__fchvisqy')
+       call my_out(70,nx,ny,fchvisper(-1,-1,0),'b2tfhi__fchvisperx')
+       call my_out(70,nx,ny,fchvisper(-1,-1,1),'b2tfhi__fchvispery')
+       call my_out(70,nx,ny,fchinert(-1,-1,0),'b2tfhi__fchinertx')
+       call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfhi__fchinerty')
+       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfhi__fchanmlx')
+       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfhi__fchanmly')
+       call my_out(70,nx,ny,fni(-1,-1,0),'b2tfhi__fnix')
+       call my_out(70,nx,ny,fni(-1,-1,1),'b2tfhi__fniy')
+       call my_out(70,nx,ny,ni(-1,-1,0),'b2tfhi__ni0')
+       call my_out(70,nx,ny,ni(-1,-1,1),'b2tfhi__ni1')
       endif                                                             !srv 18.06.08 }
 * ..return
       ncall = ncall+1

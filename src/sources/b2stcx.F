@@ -43,7 +43,7 @@
 
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is, js, k
-      integer, save :: iout = 0, iout_b2wdat = 0,                       !srv 30.06.08 11.09.09
+      integer, save :: iout = 0, !iout_b2wdat = 0,                      !srv 30.06.08 11.09.09
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
@@ -85,7 +85,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                       !srv 11.09.09 }
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
+!       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -292,45 +292,47 @@ ctmp.dpc
 #endif
 
       write (chcx,'(i3.3)') is0
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
-     &              .or. iout_b2wdat.eq.4) then
-        do is = 0, ns-1
-          write (chns,'(i3.3)') is
-!         do k=0,1
-!          write (chk,'(i1)') k
-!          call my_out(70,nx,ny,sna0(-1,-1,k,is),
-!     &     'b2stcx_sna'//chk//'_'//chcx//'_'//chns)
-!         enddo
-          wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
-          call my_out(70,nx,ny,wrk0,'b2stcx_sna_'//chcx//'_'//chns)
-        enddo
-      endif
-      if (iout.eq.1 .or. iout_b2npmo.eq.1 .or. iout_b2wdat .eq.4) then
-        do is = 0, ns-1
-          write (chns,'(i3.3)') is
-!         do k=0,1
-!          write (chk,'(i1)') k
-!          call my_out(70,nx,ny,smq0(-1,-1,k,is),
-!     &     'b2stcx_smq'//chk//'_'//chcx//'_'//chns)
-!         enddo
-          wrk0=smq0(:,:,0,is)+                                          !srv 28.02.17
-     &         smq0(:,:,1,is)*ua(:,:,is)+
-     &         smq0(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &         smq0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-!	  call my_out(70,nx,ny,wrk0,'b2stcx_smq'//chns)
-          call my_out(70,nx,ny,wrk0,'b2stcx_smq_'//chcx//'_'//chns)
-        enddo
-      endif
-      if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)
-     & .or. iout_b2wdat .eq.4) then
-!        do k=0,1
-!         write (chk,'(i1)') k
-!         call my_out(70,nx,ny,shi0(-1,-1,k),'b2stcx_shi'//chk//'_'//chcx)
+!      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+!     &              .or. iout_b2wdat.eq.4) then
+!        do is = 0, ns-1
+!          write (chns,'(i3.3)') is
+!!         do k=0,1
+!!          write (chk,'(i1)') k
+!!          call my_out(70,nx,ny,sna0(-1,-1,k,is),
+!!     &     'b2stcx_sna'//chk//'_'//chcx//'_'//chns)
+!!         enddo
+!          wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
+!!          call my_out(70,nx,ny,wrk0,'b2stcx_sna_'//chcx//'_'//chns)
+!!          call my_out(70,nx,ny,wrk0,'b2stcx_sna_'//chns)
 !        enddo
-        wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
-     &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2stcx_shi_'//chcx)
-      endif
+!      endif
+!      if (iout.eq.1 .or. iout_b2npmo.eq.1 .or. iout_b2wdat .eq.4) then
+!        do is = 0, ns-1
+!          write (chns,'(i3.3)') is
+!!         do k=0,1
+!!          write (chk,'(i1)') k
+!!          call my_out(70,nx,ny,smq0(-1,-1,k,is),
+!!     &     'b2stcx_smq'//chk//'_'//chcx//'_'//chns)
+!!         enddo
+!          wrk0=smq0(:,:,0,is)+                                          !srv 28.02.17
+!     &         smq0(:,:,1,is)*ua(:,:,is)+
+!     &         smq0(:,:,2,is)*na(:,:,is)*mp*am(is)+
+!     &         smq0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+!!	  call my_out(70,nx,ny,wrk0,'b2stcx_smq'//chns)
+!!          call my_out(70,nx,ny,wrk0,'b2stcx_smq_'//chcx//'_'//chns)
+!        enddo
+!      endif
+!      if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)
+!     & .or. iout_b2wdat .eq.4) then
+!!        do k=0,1
+!!         write (chk,'(i1)') k
+!!         call my_out(70,nx,ny,shi0(-1,-1,k),'b2stcx_shi'//chk//'_'//chcx)
+!!        enddo
+!        wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
+!     &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
+!!        call my_out(70,nx,ny,wrk0,'b2stcx_shi_'//chcx)
+!!        call my_out(70,nx,ny,wrk0,'b2stcx_shi')
+!      endif
       if (iout.gt.0) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
