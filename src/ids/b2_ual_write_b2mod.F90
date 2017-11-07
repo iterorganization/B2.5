@@ -36,7 +36,7 @@
 !>      The output units are:
 !>      nout(0): formatted; provides printed output.
 !>
-!>      (See routine b2cdca for the meaning of 'un*formatted'.)
+!>      (See routine b2cdca for the meaning of "un*formatted".)
 !>
 !>
 !> 4. parameters (see also routine b2cdcv)
@@ -53,9 +53,12 @@
 !> -----------------------------------------------------------------------------
 
 
-!>.specification
+!>.specificatioN
+
+
 
 program b2_ual_write
+
     use b2mod_types , B2R8 => R8
     ! use b2mod_version
     ! use b2mod_geo
@@ -115,16 +118,16 @@ program b2_ual_write
 
     !>..local variables
     integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
-    real (kind=B2R8), allocatable   ::  ne1(:), te1(:), ti1(:)
-    integer     ::  cf_size1(22)
-    integer     ::  idx
-    integer     ::  ix, ixx
-    integer     ::  shot, run
-    character(len=24)           ::  treename, username, device, version
-    !> character(len=255)       ::  imas_connect_url
-    type(ids_edge_profiles)     ::  edge_profiles
-    type(ids_edge_sources)      ::  edge_sources
-    type(ids_edge_transport)    ::  edge_transport
+    real (kind=B2R8), allocatable ::  ne1(:), te1(:), ti1(:)
+    integer ::  cf_size1(22)
+    integer ::  idx
+    integer ::  ix, ixx
+    integer ::  shot, run
+    character(len=24)        ::  treename, username, device, version
+    !> character(len=255)    ::  imas_connect_url
+    type(ids_edge_profiles)  ::  edge_profiles
+    type(ids_edge_sources)   ::  edge_sources
+    type(ids_edge_transport) ::  edge_transport
     !>  ..procedures
     external prgini, prgend, xerset, xertst, cfopen, cfruin
     !>  ..initialize input/output units
@@ -165,7 +168,7 @@ program b2_ual_write
 
     !> Read additional data
     write(*,*) "START read_additional"
-    call read_additional(ninp, nout, nx, ny, ns, ne1, te1, ti1)
+    call read_additional( ninp, nout, nx, ny, ns, ne1, te1, ti1 )
 
     treename    = "ids"
     ! shot        = 16151
@@ -177,78 +180,77 @@ program b2_ual_write
     version     = "3"
 
     !> Set the data to edge_profiles IDS
-    ! call write_ids_edge_profiles(edge_profiles, treename, shot, run, idx, username, &
+    ! call write_ids_edge_profiles( edge_profiles, treename, shot, run, idx, username, &
                                         ! & device, version, ne1, te1, ti1)
     !> b2mod routine write_ids
     write(*,*) "START write_ids"
-    call write_ids(edge_profiles, edge_sources, edge_transport)
+    call write_ids( edge_profiles, edge_sources, edge_transport )
 
     write(*,*) "START put_ids_edge_profiles"
-    call put_ids_edge_profiles(edge_profiles, treename, shot, run, idx,     &
-                            &   username, device, version)
+    call put_ids_edge_profiles( edge_profiles, treename, shot, run, idx,    &
+        &   username, device, version )
 
     ! call read_ids(treename, shot, run, idx, username, &
-    !                                     & device, version)
+    !                                     & device, version )
 
 contains
 
     subroutine read_b2fgmtry_b2fstate()
 
-        integer                 ::  i, j, k
-        character(len=120)      ::  lblgm
+        integer            ::  i, j, k
+        character(len=120) ::  lblgm
 
         !>..program start_up calls
-        call prgini('b2_ual_write')
+        call prgini( "b2_ual_write" )
 
         !>..open files
         !>...input files
-        ! call cfopen (ninp(0),'b2_ual_write.dat','old','formatted')
-        call cfopen(ninp(1),'b2fgmtry','old','un*formatted')
-        ! call cfopen (ninp(2),'b2fparam','old','un*formatted')
-        call cfopen(ninp(3),'b2fstate','old','un*formatted')
-        ! call cfopen (ninp(4),'b2fplasma','old','unformatted')
-        ! call cfopen (ninp(5),'b2mn.dat','old','formatted')
-        ! call cfopen (ninp(6),'b2frates','old','formatted')
+        ! call cfopen ( ninp(0), "b2_ual_write.dat", "old", "formatted" )
+        call cfopen( ninp(1), "b2fgmtry", "old", "un*formatted" )
+        ! call cfopen ( ninp(2), "b2fparam", "old", "un*formatted" )
+        call cfopen( ninp(3), "b2fstate", "old", "un*formatted" )
+        ! call cfopen ( ninp(4), "b2fplasma", "old", "unformatted" )
+        ! call cfopen ( ninp(5), "b2mn.dat", "old", "formatted" )
+        ! call cfopen ( ninp(6), "b2frates", "old", "formatted" )
         !>...output files
-        call cfopen(nout(0),'b2_ual_write.prt','new','formatted')
-        call cfopen(nout(1),'b2_ual_writ2.prt','new','formatted')
+        call cfopen( nout(0), "b2_ual_write.prt", "new", "formatted" )
+        call cfopen( nout(1), "b2_ual_write2.prt", "new", "formatted" )
 
         !>..mark output unit for error messages
         call xerset(0)
         !>..obtain version numbers
-        call cfverr(ninp(1), b2fgmtry_version)
-        ! call cfverr (ninp(2), b2fparam_version)
-        call cfverr(ninp(3), b2fstate_version)
-        ! call cfverr (ninp(6), b2frates_version)
+        call cfverr( ninp(1), b2fgmtry_version )
+        ! call cfverr ( ninp(2), b2fparam_version )
+        call cfverr( ninp(3), b2fstate_version )
+        ! call cfverr ( ninp(6), b2frates_version )
         !>..obtain nx, ny, ns
-        call cfruin(ninp(3), 3, idum, 'nx,ny,ns')
+        call cfruin( ninp(3), 3, idum, "nx,ny,ns" )
         nx = idum(0)
         ny = idum(1)
         ns = idum(2)
-        call xertst(0.le.nx.and.0.le.ny.and.1.le.ns, &
-            & 'faulty input nx, ny, ns from plasma state file')
-        call cfruin (ninp(1), 2, idum(0), 'nx,ny')
-        call xertst(idum(0).eq.nx.and.idum(1).eq.ny, &
-            & 'faulty input nx, ny from geometry file')
+        call xertst( 0.le.nx .and. 0.le.ny .and. 1.le.ns,   &
+            &   "faulty input nx, ny, ns from plasma state file" )
+        call cfruin ( ninp(1), 2, idum(0), "nx,ny" )
+        call xertst( idum(0) .eq. nx .and. idum(1) .eq. ny, &
+            &   "faulty input nx, ny from geometry file" )
 
-        call alloc_b2mod_geo(nx,ny)
-        call alloc_b2mod_plasma(nx,ny,ns)
-        call alloc_b2mod_indirect(nx,ny,nncutmax)
-        call alloc_b2mod_sources(nx,ny,ns)
+        call alloc_b2mod_geo( nx, ny)
+        call alloc_b2mod_plasma( nx, ny, ns )
+        call alloc_b2mod_indirect( nx, ny, nncutmax )
+        call alloc_b2mod_sources( nx,ny,ns)
 
-        call cfruch (ninp(1), 120, lblgm, 'label')
-        call cfruin (ninp(1), 1, idum, 'isymm')
-        call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz, &
+        call cfruch ( ninp(1), 120, lblgm, "label" )
+        call cfruin ( ninp(1), 1, idum, "isymm" )
+        call b2rugm ( ninp(1), nx, ny, crx, cry, fpsi, ffbz, &
          & bb, vol, hx, hy, qz, qc, qcb, gs, pbs, &
-         & wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
-
-        call xertst(size(crx).eq.size(cry), &
-            & "The number of x and y coordinates is not the same.")
+         & wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap )
+        call xertst( size( crx ) .eq. size( cry ),  &
+            &   "The number of x and y coordinates is not the same." )
 
         corner: do k = 0, 3, 1
             xi: do j = -1, ny, 1
                 yi: do i = -1, nx, 1
-                    write (nout(0),*) i, j, k, crx(i, j, k)
+                    write ( nout(0),*) i, j, k, crx(i, j, k)
                 end do yi
             end do xi
         end do corner
@@ -259,7 +261,7 @@ contains
 
     end subroutine read_b2fgmtry_b2fstate
 
-    subroutine read_additional(ninp, nout, nx, ny, ns, ne, te, ti)
+    subroutine read_additional( ninp, nout, nx, ny, ns, ne, te, ti )
 
         !> Read and compute additional data (taken from b2mddr.F)
 
@@ -268,7 +270,7 @@ contains
         !>   ..input arguments (unchanged on exit)
         integer ninp(0:6), nout(0:2), nx, ny, ns
         !>   ..output arguments (unspecified on entry)
-        !     (none)
+        !     ( none)
         !>   ..common blocks
 
         !>   ..local variables
@@ -281,10 +283,10 @@ contains
         character   :: exp*128, comment*128
         integer     :: shot, overwrite_shotnumber
         logical     :: timedep, snapshot, tallies, movies
-        real (kind=B2R8), allocatable   ::  zamin(:), zamax(:), zn(:), am(:),   &
-            &   na(:), ua(:), uadia(:), po(:), fna(:), fhe(:), fhi(:), fch(:),  &
-            &   fch_32(:), fch_52(:), kinrgy(:), fch_p(:)
-        real (kind=B2R8), intent(inout), allocatable    :: ne(:), te(:), ti(:)
+        real (kind=B2R8), allocatable ::  zamin(:), zamax(:), zn(:),  &
+            &   am(:), na(:), ua(:), uadia(:), po(:), fna(:), fhe(:),   &
+            &   fhi(:), fch(:), fch_32(:), fch_52(:), kinrgy(:), fch_p(:)
+        real (kind=B2R8), intent(inout), allocatable :: ne(:), te(:), ti(:)
         real (kind=B2R8)    ::  time
         integer             ::  cf_sizes(22)
 
@@ -292,19 +294,16 @@ contains
             & tallies, movies, overwrite_shotnumber
 
         !>   ..subprogram start-up calls
-        call subini ('b2mddr')
+        call subini("b2mddr" )
         !>   ..test ninp, nout
-
-        call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.&
-             & 1.le.ninp(3).and.1.le.ninp(5).and.1.le.ninp(6).and.&
-             & 1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2),&
-             & 'faulty argument ninp, nout')
+        call xertst( 1.le.ninp(0) .and. 1.le.ninp(1) .and. 1.le.ninp(2)     &
+            &   .and. 1.le.ninp(3) .and. 1.le.ninp(5) .and. 1.le.ninp(6)    &
+            &   .and. 1.le.nout(0) .and. 1.le.nout(1) .and. 1.le.nout(2),   &
+            &   "faulty argument ninp, nout" )
         !>   ..test dimensions
-
-        call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-        call xertst (1.le.ns, 'faulty argument ns')
-
-        call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
+        call xertst(0.le.nx .and. 0.le.ny, "faulty argument nx, ny" )
+        call xertst(1.le.ns, "faulty argument ns" )
+        call xertst( ns.le.nsdecl, "faulty parameter nsdecl" )
 
         !> Get array sizes from the b2fstate. We open the file again as a new
         !> unit to not disrupt the old unit.
@@ -312,73 +311,73 @@ contains
         !> of finding/properly use it.
         cf_sizes = read_additional_sizes(22)
 
-        ! allocate(lblgm(cf_sizes(2)))
-        allocate(zamin(cf_sizes(3)))
-        allocate(zamax(cf_sizes(4)))
-        allocate(zn(cf_sizes(5)))
-        allocate(am(cf_sizes(6)))
-        allocate(na(cf_sizes(7)))
-        allocate(ne(cf_sizes(8)))
-        allocate(ua(cf_sizes(9)))
-        allocate(uadia(cf_sizes(10)))
-        allocate(te(cf_sizes(11)))
-        allocate(ti(cf_sizes(12)))
-        allocate(po(cf_sizes(13)))
-        allocate(fna(cf_sizes(14)))
-        allocate(fhe(cf_sizes(15)))
-        allocate(fhi(cf_sizes(16)))
-        allocate(fch(cf_sizes(17)))
-        allocate(fch_32(cf_sizes(18)))
-        allocate(fch_52(cf_sizes(19)))
+        ! allocate( lblgm( cf_sizes(2) ) )
+        allocate( zamin( cf_sizes(3) ) )
+        allocate( zamax( cf_sizes(4) ) )
+        allocate( zn( cf_sizes(5) ) )
+        allocate( am( cf_sizes(6) ) )
+        allocate( na( cf_sizes(7) ) )
+        allocate( ne( cf_sizes(8) ) )
+        allocate( ua( cf_sizes(9) ) )
+        allocate( uadia( cf_sizes(10) ) )
+        allocate( te( cf_sizes(11) ) )
+        allocate( ti( cf_sizes(12) ) )
+        allocate( po( cf_sizes(13) ) )
+        allocate( fna( cf_sizes(14) ) )
+        allocate( fhe( cf_sizes(15) ) )
+        allocate( fhi( cf_sizes(16) ) )
+        allocate( fch( cf_sizes(17) ) )
+        allocate( fch_32( cf_sizes(18) ) )
+        allocate( fch_52( cf_sizes(19) ) )
         !> The program gives an error saying the kinrgy and fch_p are
         !> already allocated. Where, when?
         ! allocate(kinrgy(cf_sizes(20)))
         ! allocate(fch_p(cf_sizes(22)))
 
-        ! call cfruch(ninp(3), cf_sizes(2), lblgm, 'label')
-        call cfruch(ninp(3), 120, lblgm, 'label')
-        call cfrure(ninp(3), cf_sizes(3), zamin, 'zamin')
-        call cfrure(ninp(3), cf_sizes(4), zamax, 'zamax')
-        call cfrure(ninp(3), cf_sizes(5), zn, 'zn')
-        call cfrure(ninp(3), cf_sizes(6), am, 'am')
-        call cfrure(ninp(3), cf_sizes(7), na, 'na')
-        call cfrure(ninp(3), cf_sizes(8), ne, 'ne')
-        call cfrure(ninp(3), cf_sizes(9), ua,'ua')
-        call cfrure(ninp(3), cf_sizes(10), uadia,'uadia')
-        call cfrure(ninp(3), cf_sizes(11), te, 'te')
-        call cfrure(ninp(3), cf_sizes(12), ti, 'ti')
-        call cfrure(ninp(3), cf_sizes(13), po, 'po')
-        call cfrure(ninp(3), cf_sizes(14), fna, 'fna')
-        call cfrure(ninp(3), cf_sizes(15), fhe, 'fhe')
-        call cfrure(ninp(3), cf_sizes(16), fhi, 'fhi')
-        call cfrure(ninp(3), cf_sizes(17), fch,'fch')
-        call cfrure(ninp(3), cf_sizes(18), fch_32, 'fch_32')
-        call cfrure(ninp(3), cf_sizes(19), fch_52, 'fch_52')
-        ! call cfrure(ninp(3), cf_sizes(20), kinrgy, 'kinrgy')
-        ! call cfrure(ninp(3), 1, time, 'time')
-        ! call cfrure(ninp(3), cf_sizes(22), fch_p, 'fch_p')
+        ! call cfruch( ninp(3), cf_sizes(2), lblgm, "label" )
+        call cfruch( ninp(3), 120, lblgm, "label" )
+        call cfrure( ninp(3), cf_sizes(3), zamin, "zamin" )
+        call cfrure( ninp(3), cf_sizes(4), zamax, "zamax" )
+        call cfrure( ninp(3), cf_sizes(5), zn, "zn" )
+        call cfrure( ninp(3), cf_sizes(6), am, "am" )
+        call cfrure( ninp(3), cf_sizes(7), na, "na" )
+        call cfrure( ninp(3), cf_sizes(8), ne, "ne" )
+        call cfrure( ninp(3), cf_sizes(9), ua, "ua" )
+        call cfrure( ninp(3), cf_sizes(10), uadia, "uadia" )
+        call cfrure( ninp(3), cf_sizes(11), te, "te" )
+        call cfrure( ninp(3), cf_sizes(12), ti, "ti" )
+        call cfrure( ninp(3), cf_sizes(13), po, "po" )
+        call cfrure( ninp(3), cf_sizes(14), fna, "fna" )
+        call cfrure( ninp(3), cf_sizes(15), fhe, "fhe" )
+        call cfrure( ninp(3), cf_sizes(16), fhi, "fhi" )
+        call cfrure( ninp(3), cf_sizes(17), fch, "fch" )
+        call cfrure( ninp(3), cf_sizes(18), fch_32, "fch_32" )
+        call cfrure( ninp(3), cf_sizes(19), fch_52, "fch_52" )
+        ! call cfrure( ninp(3), cf_sizes(20), kinrgy, "kinrgy" )
+        ! call cfrure( ninp(3), 1, time, "time" )
+        ! call cfrure( ninp(3), cf_sizes(22), fch_p, "fch_p" )
 
     end subroutine read_additional
 
     !> Get array sizes from the b2fstate.
-    function read_additional_sizes(array_size)
-        integer, intent(in)     ::  array_size
-        character(len=256)      ::  rdline, rdstring
-        integer                 ::  cfcount, stat
-        integer    ::  cf_sizes(array_size)
-        integer, dimension(:), allocatable     ::  read_additional_sizes
+    function read_additional_sizes( array_size )
+        integer, intent(in )    :: array_size
+        character(len=256)      :: rdline, rdstring
+        integer                 :: cfcount, stat
+        integer ::  cf_sizes( array_size )
+        integer, dimension(:), allocatable :: read_additional_sizes
 
-        allocate(read_additional_sizes(array_size))
+        allocate( read_additional_sizes( array_size ) )
 
         cfcount = 0
-        open(1,file='b2fstate', status="old")
+        open( 1, file = "b2fstate", status = "old" )
         do
-            read(1,'(A)', iostat=io) rdline
+            read(1,"(A)", iostat=io) rdline
             if (io/=0) exit
-            if (rdline(1:3).eq."*cf") then
+            if (rdline(1:3).eq."*cf" ) then
                 cfcount = cfcount + 1
-                rdstring = adjustl(rdline(20:28))
-                read(rdstring,*, iostat=stat)  cf_sizes(cfcount)
+                rdstring = adjustl( rdline(20:28) )
+                read( rdstring, *, iostat = stat) cf_sizes( cfcount )
             end if
         end do
         close(1)
@@ -387,41 +386,41 @@ contains
     end function read_additional_sizes
 
     !! Subroutine used to set data for edge_profiles IDS
-    subroutine write_ids_edge_profiles(edge_profiles, treename, shot, run, idx, username, &
-                                        & device, version, ne, te, ti)
-        integer ::  shot, run, idx
-        integer ::  num_nodes_all, num_nodes, num_gridSubsets
-        integer ::  gridSubset_index
-        integer ::  numCellsX, numCellsY, num_cells, cellId
-        integer ::  numEdgesX, numEdgesY, num_edges, edgeId, count, count2
-        integer ::  num_ne_gridSubset, num_ne_values
-        integer ::  num_te_gridSubset, num_te_values
-        integer ::  num_ti_gridSubset, num_ti_values, num_ti_species, ion_specie
-        integer ::  num_obj_0D, obj_0D_id
-        integer ::  num_obj_2D, obj_2D_id
-        integer ::  gridSubset_dim_index
-        integer ::  i, j, k, icount, n
-        integer ::  homogeneous_time
-        integer ::  coordtype(2)
-        integer, allocatable        ::  edgesNodesList(:,:), cellsNodesList(:,:)
-        integer, allocatable        ::  edgeIndicesRepeat(:)
-        character(len=24)           ::  treename, username, device, version
-        character(len=255)          ::  imas_connect_url
-        character(len=255)          ::  grid_description
-        character(len=132)          ::  gridSubset_name
-        real (kind=B2R8), intent(in)    :: ne(:), te(:), ti(:)
+    subroutine write_ids_edge_profiles( edge_profiles, treename, shot, run, idx, username, &
+                                        & device, version, ne, te, ti )
+        integer :: shot, run, idx
+        integer :: num_nodes_all, num_nodes, num_gridSubsets
+        integer :: gridSubset_index
+        integer :: numCellsX, numCellsY, num_cells, cellId
+        integer :: numEdgesX, numEdgesY, num_edges, edgeId, count, count2
+        integer :: num_ne_gridSubset, num_ne_values
+        integer :: num_te_gridSubset, num_te_values
+        integer :: num_ti_gridSubset, num_ti_values, num_ti_species, ion_specie
+        integer :: num_obj_0D, obj_0D_id
+        integer :: num_obj_2D, obj_2D_id
+        integer :: gridSubset_dim_index
+        integer :: i, j, k, icount, n
+        integer :: homogeneous_time
+        integer :: coordtype(2)
+        integer, allocatable ::  edgesNodesList(:,:), cellsNodesList(:,:)
+        integer, allocatable ::  edgeIndicesRepeat(:)
+        character(len=24)    ::  treename, username, device, version
+        character(len=255)   ::  imas_connect_url
+        character(len=255)   ::  grid_description
+        character(len=132)   ::  gridSubset_name
+        real (kind=B2R8), intent(in ) :: ne(:), te(:), ti(:)
         !> TODO: read "time" out from b2fstate file
         ! real(B2R8)    ::  time
-        real(IDS_real)    ::  time
-        real(IDS_real), allocatable   ::  nodesGeoList(:,:)
-        real(IDS_real)    ::  scalarCells(2)
-        type(ids_edge_profiles), intent(inout)     ::  edge_profiles
-        type(ids_edge_sources)      ::  edge_sources
-        type(ids_edge_transport)    ::  edge_transport
-        type(ids_edge_profiles_time_slice), pointer      ::  ggd
-        type(ids_generic_grid_dynamic), pointer          ::  grid
-        type(ids_generic_grid_dynamic_space), pointer    ::  space
-        type(ids_generic_grid_scalar), pointer    :: idsField
+        real(IDS_real) :: time
+        real(IDS_real), allocatable :: nodesGeoList(:,:)
+        real(IDS_real) :: scalarCells(2)
+        type(ids_edge_profiles), intent(inout) :: edge_profiles
+        type(ids_edge_sources)   :: edge_sources
+        type(ids_edge_transport) :: edge_transport
+        type(ids_edge_profiles_time_slice), pointer   :: ggd
+        type(ids_generic_grid_dynamic), pointer       :: grid
+        type(ids_generic_grid_dynamic_space), pointer :: space
+        type(ids_generic_grid_scalar), pointer        :: idsField
 
         !> ===  SET UP IDS ===
         write(0,*) "IDS parameters"
@@ -435,7 +434,8 @@ contains
         !> so we can safely assume that num_nodes == size(crx)
         num_nodes_all   = size(crx) !> Number of all available coordinates
 
-        write(0,*) "Setting data for edge_profiles IDS shot:", shot, ", run:", run
+        write(0,*) "Setting data for edge_profiles IDS shot:", shot,    &
+            &   ", run:", run
 
         !> Preparing database for writing
         !> Through practice it was disclosed that there are some mandatory
@@ -445,10 +445,10 @@ contains
         !> This can be done using exampleSetIDSFundamentals routine
         homogeneous_time = 1
         time = 0.0_IDS_real
-        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time)
+        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time )
 
         !> Allocate ggd slice
-        allocate(edge_profiles%ggd(1))
+        allocate( edge_profiles%ggd(1) )
         !> Set pointers to top IDS nodes/structures
         ggd => edge_profiles%ggd(1)
         grid => ggd%grid
@@ -460,8 +460,8 @@ contains
         !> Set IDS comment under ids_properties substructure
         allocate( edge_profiles%ids_properties%comment(1) )
         edge_profiles%ids_properties%comment(1) = &
-            &   "This IDS was created by b2_ual_write_gsl using Grid Service    &
-            &   Library (GSL)."
+            &   "This IDS was created by b2_ual_write_gsl using Grid Service&
+            & Library (GSL)."
         !> Set IDS code name
         allocate( edge_profiles%code%name(1) )
         edge_profiles%code%name(1) = "b2_ual_write_gsl"
@@ -481,7 +481,7 @@ contains
 
         !> Set geometry (R,Z) coordinate of each node object
         num_nodes = num_nodes_all
-        allocate(nodesGeoList( num_nodes_all, 2))
+        allocate( nodesGeoList( num_nodes_all, 2) )
 
         !> To get nodes coordinates to 2D array in correct order
         icount = 0
@@ -500,7 +500,7 @@ contains
         ! !> TODO! Currently only placeholder edges are given
 
         ! !> Set (placeholder) list of indices for nodes defining each edge object
-        ! allocate(edgesNodesList(1,2))
+        ! allocate( edgesNodesList(1,2))
         ! edgesNodesList(1,1) = 0
         ! edgesNodesList(1,2) = 0
 
@@ -511,26 +511,26 @@ contains
 
         numEdgesX = nx + 2
         numEdgesY = ny + 2
-        !num_edges = ((numCellsX * numCellsY) + 98) * 2  !! (3860)
+        !num_edges = (( numCellsX * numCellsY) + 98) * 2  !! (3860)
         ! num_edges = numEdgesX * numEdgesY  !! x-aligned (3724)
         ! num_edges = numEdgesX * numEdgesY - 98 !! x-aligned (3626)
         num_edges = numEdgesX * numEdgesY + 98 !! x-aligned (3822)
         !! TODO: have to fix circular connectivity
-        allocate(edgesNodesList( num_edges, 2))
+        allocate( edgesNodesList( num_edges, 2) )
 
         edgeId = 1
         count = 0
         count2 = 1
         ! do j = 1, numEdgesY - 1
         !     do i = 1, numEdgesX
-        !         edgesNodesList(edgeId, 1) = edgeId
-        !         edgesNodesList(edgeId, 2) = edgeId + 1
+        !         edgesNodesList( edgeId, 1) = edgeId
+        !         edgesNodesList( edgeId, 2) = edgeId + 1
         !         edgeId = edgeId + 1
         !     end do
         ! end do
 
-        ! allocate(edgeIndicesRepeat(95))
-        allocate(edgeIndicesRepeat(95))
+        ! allocate( edgeIndicesRepeat(95))
+        allocate( edgeIndicesRepeat(95) )
         do j = 1, 24
             edgeIndicesRepeat(j) = j
         end do
@@ -549,13 +549,13 @@ contains
                 count = count + 1
                 count2 = 1
             end if
-            write(*,*) j, count, count2, &
-             &  count + count * 97 + edgeIndicesRepeat(count2), &
-             &  count + count * 97 + edgeIndicesRepeat(count2) + 1
-            edgesNodesList(j, 1) = &
-             &  count + count * 97 + edgeIndicesRepeat(count2)
-            edgesNodesList(j, 2) = &
-             &  count + count * 97 + edgeIndicesRepeat(count2) + 1
+            write(*,*) j, count, count2,    &
+                &   count + count * 97 + edgeIndicesRepeat(count2), &
+                &   count + count * 97 + edgeIndicesRepeat(count2) + 1
+            edgesNodesList(j, 1) =  &
+                &   count + count * 97 + edgeIndicesRepeat(count2)
+            edgesNodesList(j, 2) =  &
+                &   count + count * 97 + edgeIndicesRepeat(count2) + 1
             count2 = count2 + 1
         end do
 
@@ -569,15 +569,15 @@ contains
         numCellsX = nx + 2
         numCellsY = ny + 2
         num_cells = numCellsX * numCellsY
-        allocate(cellsNodesList( num_cells, 4))
+        allocate(cellsNodesList( num_cells, 4) )
 
         cellId = 1
         do j = 1,numCellsY
             do i = 1, numCellsX
-                cellsNodesList(cellId, 1) = cellId+0*numCellsX*numCellsY
-                cellsNodesList(cellId, 2) = cellId+1*numCellsX*numCellsY
-                cellsNodesList(cellId, 3) = cellId+3*numCellsX*numCellsY
-                cellsNodesList(cellId, 4) = cellId+2*numCellsX*numCellsY
+                cellsNodesList(cellId, 1) = cellId + 0 * numCellsX * numCellsY
+                cellsNodesList(cellId, 2) = cellId + 1 * numCellsX * numCellsY
+                cellsNodesList(cellId, 3) = cellId + 3 * numCellsX * numCellsY
+                cellsNodesList(cellId, 4) = cellId + 2 * numCellsX * numCellsY
                 cellId = cellId + 1
             enddo
         enddo
@@ -596,65 +596,64 @@ contains
         !> (optional) Change name of the second grid subset
         grid%grid_subset(2)%identifier%name = "Edges - empty."
 
-        !> === SET VALUES (ne, te, ti) for "Cells" grid subset ===
+        !> === SET VALUES ( ne, te, ti) for "Cells" grid subset ===
         !> For that we use GSL routine gridStructWriteData1d
         gridSubset_index = 3
 
-        !> --- Set ne (electron density) ---
-        allocate(ggd%electrons%density(1))
+        !> --- Set ne ( electron density) ---
+        allocate( ggd%electrons%density(1) )
         idsField => ggd%electrons%density(1)
-        call gridStructWriteData1d( grid, idsField, gridSubset_index, ne)
+        call gridStructWriteData1d( grid, idsField, gridSubset_index, ne )
 
-        !> --- Set te (electron temperature) ---
-        allocate(ggd%electrons%temperature(1))
+        !> --- Set te ( electron temperature) ---
+        allocate( ggd%electrons%temperature(1) )
         idsField => ggd%electrons%temperature(1)
         !> convert to eV (1 J = 6.242e18 eV)
         call gridStructWriteData1d( grid, idsField, gridSubset_index,   &
-            &   te*6.242e18)
+            &   te*6.242e18 )
 
         !> --- Set ti (ion temperature) ---
-        allocate(ggd%ion(1))
-        allocate(ggd%ion(1)%temperature(1))
+        allocate( ggd%ion(1) )
+        allocate( ggd%ion(1)%temperature(1) )
         idsField => ggd%ion(1)%temperature(1)
         !> convert to eV (1 J = 6.242e18 eV)
         call gridStructWriteData1d( grid, idsField, gridSubset_index,   &
-            &   ti*6.242e18)
+            &   ti*6.242e18 )
 
     end subroutine write_ids_edge_profiles
 
     !! Subroutine used to put data to edge_profiles IDS
-    subroutine put_ids_edge_profiles(edge_profiles, treename, shot, run, idx,   &
-                            &   username, device, version)
-        integer ::  shot, run, idx
-        type(ids_edge_profiles), intent(inout)     ::  edge_profiles
-        character(len=24)           ::  treename, username, device, version
+    subroutine put_ids_edge_profiles( edge_profiles, treename, shot, run, idx,   &
+                            &   username, device, version )
+        integer :: shot, run, idx
+        type(ids_edge_profiles), intent(inout) :: edge_profiles
+        character(len=24) :: treename, username, device, version
 
         !> Set data to edge_profiles IDS
         write(0,*) "Writing to edge_profiles IDS"
 
         !> Create and modify new shot/run
         call imas_create_env(treename, shot, run, 0, 0, idx, username, &
-            device, version)
+            device, version )
 
         !> Or open and modify existing shot/run (might work much faster than
         !> imas_create_env)
-        ! call imas_open_env('treename', shot, run, idx, username, device, version)
+        ! call imas_open_env('treename', shot, run, idx, username, device, version )
 
         !> Put data to IDS
-        call ids_put_slice(idx,"edge_profiles",edge_profiles)
-        call ids_put(idx,"edge_profiles",edge_profiles)
+        call ids_put_slice( idx, "edge_profiles", edge_profiles )
+        call ids_put( idx, "edge_profiles", edge_profiles )
 
         !> Close IDS
-        call ids_deallocate(edge_profiles)
-        call imas_close(idx)
+        call ids_deallocate( edge_profiles )
+        call imas_close( idx )
 
         write(0,*) "IDS write finished"
 
     end subroutine put_ids_edge_profiles
 
     !> subroutine for reading edge_profiles IDS
-    subroutine read_ids(treename, shot, run, idx, username, &
-                                        & device, version)
+    subroutine read_ids( treename, shot, run, idx, username, device, version )
         !> Example for reading IDS database in Fortran90
         integer                 ::  shot, run, idx
         integer                 ::  gridSubset_index
@@ -667,20 +666,18 @@ contains
         !> Open input datafile from local database
         write (0,*) "Started reading input IDS", idx, shot, run
 
-        call imas_open_env('treename', shot, run, idx, username, device, version)
-        call ids_get(idx, 'edge_profiles', edge_profiles)
+        call imas_open_env('treename', shot, run, idx, username, device, version )
+        call ids_get(idx, "edge_profiles", edge_profiles)
 
-        write(0,*) 'homogeneous_time = ', &
-            & edge_profiles%ids_properties%homogeneous_time
-        write(0,*) "Grid subset 3 name = ", &
-            & edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)% &
-            & identifier%name
-        write(0,*) "Grid subset 3 index = ", &
-            & edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)% &
-            & identifier%index
+        write(0,*) "homogeneous_time = ",   &
+            &   edge_profiles%ids_properties%homogeneous_time
+        write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
+            &   grid_subset(gridSubset_index)%identifier%name
+        write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &
+            &   grid_subset(gridSubset_index)%identifier%index
         ! write(0,*) "Time = ", edge_profiles%time(1)
-        call ids_deallocate(edge_profiles)
-        call imas_close(idx)
+        call ids_deallocate( edge_profiles )
+        call imas_close( idx )
         write (0,*) "Finished reading input IDS"
 
     end subroutine read_ids

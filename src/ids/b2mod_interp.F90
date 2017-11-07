@@ -3,6 +3,7 @@ module b2mod_interp
   use b2mod_types
   use b2mod_connectivity
   use carre_constants
+  use ids_assert ! IGNORE
 
   implicit none
 
@@ -220,7 +221,6 @@ contains
   subroutine interp_volume(idir,nx,ny,vol,gs,qc,qcb,centre,face)
   use b2mod_indirect
   use b2mod_cellhelper
-
   implicit none
   integer, intent(in) ::  idir
   integer, intent(in) ::  nx, ny

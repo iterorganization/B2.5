@@ -180,8 +180,8 @@ contains
         allocate( edge_profiles%ggd( ggd_slice )%electrons% &
             &   density( num_ne_slices ) )
         call write_quantity( edge_profiles%ggd( ggd_slice )%electrons%  &
-            &   density, edge_transport%model(1)%    &
-            &   ggd( ggd_slice )%electrons%energy%flux, ne, fne, ggd_slice )
+            &   density, edge_transport%model(1)%ggd( ggd_slice )%      &
+            &   electrons%energy%flux, ne, fne, ggd_slice )
         ! call write_quantity( edge_profiles%ggd( ggd_slice )%electrons%  &
         !     &   density( ne_slice )%values, edge_transport%model(1)%    &
         !     &   ggd( ggd_slice )%electrons%energy%flux, ne, fne, ggd_slice )
@@ -265,7 +265,7 @@ contains
 
         !> Write a scalar B2 cell quantity to a ids_generic_grid_scalar
         subroutine write_quantity( val, fluxes, value, flux, ggd_slice )
-            use b2mod_interp    ! IGNORE
+            use b2mod_interp
             type(ids_generic_grid_scalar), pointer, intent(inout) :: val(:)
             ! real(IDS_real), pointer, intent(inout)  :: val(:)
             type (ids_generic_grid_scalar), pointer, intent(inout) :: fluxes(:)
@@ -275,11 +275,12 @@ contains
             real(IDS_real), dimension(:), pointer :: idsdata
 
             allocate( val(5) )
-#if 0
-            idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%ggd( ggd_slice )%grid,  &
-                &   GRID_SUBSET_CELLS, gmap, value )
-            call gridWriteDataScalar( val(1), GRID_SUBSET_CELLS, idsdata )
+            idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%   &
+                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS, gmap, value )
+
+            call gridWriteData( val(1), GRID_SUBSET_CELLS, idsdata )
             deallocate( idsdata )
+#if 0
             tmpFace = 0.0_IDS_real
             call value_on_faces( nx, ny, vol, value, tmpFace)
             idsdata => b2IMASTransformDataB2ToIDS(  &
