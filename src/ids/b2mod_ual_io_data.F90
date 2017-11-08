@@ -123,7 +123,7 @@ contains
             !> Get the object descriptor
             curObj = getGridSubsetObject( grid%grid_subset( gridSubsetId ), iobj )
 
-            if (present(b2CellData)) then
+            if( present( b2CellData ) ) then
                 !> Cell data case
                 !> check that it is a cell
                 call assert( all( curObj%cls == IDS_CLASS_CELL ),   &
@@ -134,7 +134,7 @@ contains
                 !> copy data
                 idsdata( iobj ) =   &
                     &   b2CellData( gmap%mapCvix( icv ), gmap%mapCviy( icv ) )
-            else if (present(b2FaceData)) then
+            else if( present( b2FaceData ) ) then
                 !> Face data case
                 !> check that it is a face
                 call assert( all( curObj%cls ==             &
@@ -146,7 +146,7 @@ contains
                 !> copy data
                 idsdata( iobj ) = b2FaceData( gmap%mapFcix( ifc ),  &
                     &   gmap%mapFciy( ifc ), gmap%mapFcIFace( ifc ) )
-            else if (present(b2VertexData)) then
+            else if( present( b2VertexData )) then
                 !> Vertex/Node data case
                 !> check that it is a vertex
                 call assert( all( curObj%cls == IDS_CLASS_NODE ),   &
@@ -156,7 +156,7 @@ contains
                 ivx = curObj%ind( SPACE_POLOIDALPLANE )
                 !> copy data
                 idsdata( iobj ) =   &
-                    &   b2VertexData( gmap%mapVxix(ivx), gmap%mapVxiy( ivx ) )
+                    &   b2VertexData( gmap%mapVxix( ivx ), gmap%mapVxiy( ivx ) )
             end if
         end do
     end function b2IMASTransformDataB2ToIDSGeneral

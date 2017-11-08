@@ -56,7 +56,6 @@
 
 program b2_ual_write
 
-    use b2mod_drive
     use b2mod_types , B2R8 => R8
     use b2mod_version
     use b2mod_geo
@@ -188,9 +187,9 @@ program b2_ual_write
     write(*,*) "START write_ids"
     call write_ids( edge_profiles, edge_sources, edge_transport )
 
-    write(*,*) "START put_ids_edge_profiles"
-    call put_ids_edge_profiles( edge_profiles, treename, shot, run, idx,    &
-        &   username, device, version )
+    write(*,*) "START put_ids_edge"
+    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,    &
+        &   shot, run, idx, username, device, version )
 
     ! call read_ids(treename, shot, run, idx, username, &
     !                                     & device, version )
@@ -265,18 +264,18 @@ contains
     end subroutine read_b2fgmtry_b2fstate
 
     !> Subroutine intended for reading plasma state (electron density etc.)
-    subroutine read_b2fplasma(ninp, nx, ny, ns)
+    subroutine read_b2fplasma( ninp, nx, ny, ns )
         integer ninp(0:6), nx, ny, ns
         character lblgm*120
 
         !! allocate module data structures and read b2fplasma file
         !! (taken from b2md.F)
 
-        call alloc_b2mod_rates(nx,ny,ns)
-        call alloc_b2mod_residuals(nx,ny,ns)
-        call alloc_b2mod_transport(nx,ny,ns)
-        call alloc_b2mod_anomalous_transport(nx,ny,ns)
-        call alloc_b2mod_work(nx,ny,ns)
+        call alloc_b2mod_rates( nx, ny, ns)
+        call alloc_b2mod_residuals( nx, ny, ns)
+        call alloc_b2mod_transport( nx, ny, ns)
+        call alloc_b2mod_anomalous_transport( nx, ny, ns)
+        call alloc_b2mod_work( nx, ny, ns)
         !! ..read geometry
         ! call cfruch (ninp(1), 120, lblgm, 'label')
         ! call cfruin (ninp(1), 1, idum, 'isymm')
@@ -285,15 +284,15 @@ contains
             ! &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs,       &
             ! &  wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
         !!     ..read plasma state
-        call cfverr(ninp(4), b2fplasma_version)
-        call read_b2mod_geo(nx,ny,ninp(4))
-        call read_b2mod_plasma(nx,ny,ns,ninp(4))
-        call read_b2mod_residuals(ninp(4))
-        call read_b2mod_sources(ninp(4))
+        call cfverr( ninp(4), b2fplasma_version )
+        call read_b2mod_geo( nx, ny, ninp(4) )
+        call read_b2mod_plasma( nx, ny, ns, ninp(4) )
+        call read_b2mod_residuals( ninp(4) )
+        call read_b2mod_sources( ninp(4) )
     !!$    call read_b2mod_transport(nx,ny,ns,ninp(4))
         ! call read_b2mod_anomalous_transport(ninp(4))
         ! call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrai)
-        call alloc_b2mod_ppout(nx,ny,ns)
+        call alloc_b2mod_ppout( nx, ny, ns )
 
     end subroutine read_b2fplasma
 
@@ -662,14 +661,16 @@ contains
     end subroutine write_ids_edge_profiles
 
     !! Subroutine used to put data to edge_profiles IDS
-    subroutine put_ids_edge_profiles( edge_profiles, treename, shot, run, idx,   &
-                            &   username, device, version )
+    subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &
+            &   treename, shot, run, idx, username, device, version )
         integer :: shot, run, idx
         type(ids_edge_profiles), intent(inout) :: edge_profiles
+        type(ids_edge_sources), intent(inout) :: edge_sources
+        type(ids_edge_transport), intent(inout) :: edge_transport
         character(len=24) :: treename, username, device, version
 
         !> Set data to edge_profiles IDS
-        write(0,*) "Writing to edge_profiles IDS"
+        write(0,*) "Writing to edge_profiles, edge_sources and edge_transport IDS"
 
         !> Create and modify new shot/run
         call imas_create_env(treename, shot, run, 0, 0, idx, username, &
@@ -681,15 +682,21 @@ contains
 
         !> Put data to IDS
         call ids_put_slice( idx, "edge_profiles", edge_profiles )
+        call ids_put_slice( idx, "edge_transport", edge_sources )
+        call ids_put_slice( idx, "edge_transport", edge_transport )
         call ids_put( idx, "edge_profiles", edge_profiles )
+        call ids_put( idx, "edge_transport", edge_sources )
+        call ids_put( idx, "edge_transport", edge_transport )
 
         !> Close IDS
         call ids_deallocate( edge_profiles )
+        call ids_deallocate( edge_sources )
+        call ids_deallocate( edge_transport )
         call imas_close( idx )
 
         write(0,*) "IDS write finished"
 
-    end subroutine put_ids_edge_profiles
+    end subroutine put_ids_edge
 
     !> subroutine for reading edge_profiles IDS
     subroutine read_ids( treename, shot, run, idx, username, device, version )
