@@ -31,6 +31,11 @@ FCOPTS = -fast -Mbackslash
 FCOPTS = -fast -Mvect=nofuse -Mbackslash
 endif
 
+ifdef IMAS_PREFIX
+INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
+IMASLIBS = ${LD_UAL} -lggd-pgi
+endif
+
 DBLFC = ${FC}
 DBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g

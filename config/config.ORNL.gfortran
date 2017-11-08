@@ -38,6 +38,11 @@ else
 FCOPTS = -O2 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
 endif
 
+ifdef IMAS_PREFIX
+INCMODS  = -I${IMAS_PREFIX}/include/gfortran
+IMASLIBS = ${LD_UAL} -lggd-${COMPILER}
+endif
+
 DBLFC = ${FC}
 DBLOPTION =
 DBLSED =

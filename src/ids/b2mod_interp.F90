@@ -3,7 +3,6 @@ module b2mod_interp
   use b2mod_types
   use b2mod_connectivity
   use carre_constants
-  use ids_assert ! IGNORE
 
   implicit none
 
@@ -1553,15 +1552,15 @@ contains
           vx(ix, iy) = av / wTot
           d = vx(ix,iy) - minVal
           if (minVal.ne.0.0_R8) then
-            call assert( d/abs(minVal) >= - 1.0e-15_R8, "Interpolated value smaller than minimum" )
+            call xertst ( d/abs(minVal) >= - 1.0e-15_R8, "Interpolated value smaller than minimum" )
           else
-            call assert ( d.ge.minVal, "Interpolated value smaller than minimum" )
+            call xertst ( d.ge.minVal, "Interpolated value smaller than minimum" )
           end if
           d = vx(ix,iy) - maxVal
           if (maxVal.ne.0.0_R8) then
-            call assert( d/abs(maxVal) <=   1.0e-15_R8, "Interpolated value bigger than maximum" )
+            call xertst ( d/abs(maxVal) <=   1.0e-15_R8, "Interpolated value bigger than maximum" )
           else
-            call assert( d.le.maxVal, "Interpolated value bigger than maximum" )
+            call xertst ( d.le.maxVal, "Interpolated value bigger than maximum" )
           end if
        end do
     end do

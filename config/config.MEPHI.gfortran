@@ -32,6 +32,11 @@ else
 FCOPTS = -O2 -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 endif
 
+ifdef IMAS_PREFIX
+INCMODS  = -I${IMAS_PREFIX}/include/gfortran
+IMASLIBS = ${LD_UAL} -lggd-${COMPILER}
+endif
+
 DBLFC = ${FC}
 DDBLOPTION = -Ad # ???
 DBLSED = sed -e s:\#PREC\#:d:g

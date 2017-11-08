@@ -46,10 +46,8 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifdef IMAS_PREFIX
-INCMODS  = -I${IMAS_PREFIX}/include/gfortran \
-	-I${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/include/${COMPILER}
-LDLIBES += ${LD_UAL} \
-	-L${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/lib -lggd-${COMPILER}
+INCMODS  = -I${IMAS_PREFIX}/include/gfortran
+IMASLIBS = ${LD_UAL} -lggd-${COMPILER} -Wl,-rpath,${EBROOTANACONDA3}/lib
 endif
 
 ifdef LD_CATALYST

@@ -72,6 +72,11 @@ ifdef LD_CATALYST
 CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
+ifdef IMAS_PREFIX
+INCMODS   += -I${IMAS_PREFIX}/include/ifort
+IMASLIBS   = ${LD_UAL} -lggd-ifort
+endif
+
 #wd: removed; seems to be unused
 #ifdef B25_EIRENE
 #LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag

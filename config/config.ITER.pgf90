@@ -52,10 +52,8 @@ CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef IMAS_PREFIX
-INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags` \
-	-I${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/include/${COMPILER}
-LDLIBES += ${LD_UAL} \
-	-L${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/lib -lggd-${COMPILER}
+INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
+IMASLIBS = ${LD_UAL} -lggd-pgi
 endif
 
 LD = pgf90

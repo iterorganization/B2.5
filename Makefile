@@ -11,9 +11,6 @@ SRCDIR  = ${SRCB2}/src
 DOCDIR  = ${SRCDIR}/documentation
 PYTHON  = python
 
-GSLDIR = ${HOME}/ggd
-GSLLIBIDR = ${GSLDIR}/f90/imas.ifort64
-
 MAKES = ${SRCB2}/Makefile
 # Include global SOLPS compiler settings
 ifndef SOLPS_CPP
@@ -110,11 +107,6 @@ endif
 ifdef LD_CATALYST
 SRCCAT = ${SRCDIR}/catalyst
 INCLUDE += $(shell paraview-config --include)
-
-#LDLIBES += ${LD_CATALYST}
-
-# LDLIBES += -I${GSLDIR}/f90/imas.ifort64
-# LDLIBES += ${GSLDIR}/f90/imas.ifort64/libggd.a
 endif
 
 # Local includes
@@ -758,10 +750,10 @@ ${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${OBJDIR}/libsolps4.a
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${OBJDIR}/libsolps4.a ${LCPP} ${GRLIBES} ${LDLIBES} ${LDEXTRA} ${LDOPTSend}
 
 ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_MDSPLUS} ${IMASLIBS} ${LDOPTSend}
 
 ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${LDLIBES} ${LDOPTSend}
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}
