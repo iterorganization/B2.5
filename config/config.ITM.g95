@@ -55,10 +55,8 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifdef IMAS_PREFIX
-INCMODS   = `pkg-config --cflags imas-g95` \
-	-I${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/include/${COMPILER}
-LDLIBES  += ${LD_UAL} \
-	-L${SOLPSTOP}/modules/ggd/staging/${IMAS_VERSION}/lib -lggd-${COMPILER}
+INCMODS  += `pkg-config --cflags imas-g95`
+IMASLIBS += ${LD_UAL} -lggd-${COMPILER}
 endif
 
 LD = $(FC)
