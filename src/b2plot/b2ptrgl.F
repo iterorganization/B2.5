@@ -140,6 +140,7 @@ c***  ftrg    filenames for the profiles along the targets
 c***  fsumm   filenames for the summaries
       integer n_intgrs
       parameter (n_intgrs=8)
+      character*16 hlp_frm
       character*12 ftrg(ntrgsx,2),fsumm(4),fn_hlp
       character fmt_peak*80,tab*1,tl*1,
      ,  trg_label(ntrgsx)*9,trg_short(ntrgsx)*2,hlp_trg(ntrgsx)*2,
@@ -730,11 +731,17 @@ c            eb2atm will be [1 4 2 3]
           end if
         end do
       end do
-      print *, 'eb2spcr',eb2spcr
-      print *, 'b2ptrgl: list of species according to B2: ',species_list
-      print *, 'list of atoms according to Eirene: ',TEXTA   
-      print *, 'ordering of B2 atoms according to Eirene: ',
-     ,          (atoms_list(eb2atm(i)),i=1,nspecies)
+      write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,i3))'
+      write(6,hlp_frm) 'eb2spcr',(eb2spcr(is),is=1,nspecies)
+      write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,a2))'
+      write(6,hlp_frm) 'b2ptrgl: list of species according to B2: ',
+     ,                 (species_list(is),is=1,nspecies)
+      write(hlp_frm,'(a,i2,a)') '(a,',natmi,'(1x,a8))'
+      write(6,hlp_frm) 'list of atoms according to Eirene: ',
+     .                 (TEXTA(is),is=1,natmi)
+      write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,a2))'
+      write(6,hlp_frm) 'ordering of B2 atoms according to Eirene: ',
+     ,                 (atoms_list(eb2atm(i)),i=1,nspecies)
 c*** Calculate the particle fluxes
 
 c      print *,'Particle fluxes...' !###
@@ -996,8 +1003,12 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
             end if
           end do !loop on targets
         else
-          print *, 'b2ptrgl, no sputtering calculated:'
-          print *, '         track_species=0 or no ft44 available'
+          print *, 'b2ptrgl, no sputtering calculated:',
+#ifndef HPUX
+     ,     ' track_species=0 or no fort.44 file available'
+#else
+     ,     ' track_species=0 or no ftn44 file available'
+#endif
         end if 
         
         if (do_sput(j)) then
@@ -1012,7 +1023,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           fpt_str(3+3*(ia-1))=trim(TEXTA(ia))//'_pres_atm'
         end do
         do is=1,nspecies
-          fpt_str(is+3*natmi)=trim(TEXTAN(is-1))//'_flux_ion'
+          fpt_str(is+3*natmi)=species_list(is)//'_flux_ion'
         end do
         do k=1,ntrgts
           if (do_sput(k)) then
@@ -1143,7 +1154,7 @@ c
   730     format('(1p,1x,a12,',i3,'(1h',a1,',e12.4))')
           write(lun,*) 'Particle fluxes [1/s]'
           do is=1,nspecies
-            write(lun,fmt_peak) trim(TEXTAN(is))//' ions on',
+            write(lun,fmt_peak) trim(species_list(is))//' ions on',
      ,                          (sjp_w(i,is),i=1,ntrgts),sjp_w(0,is)
           end do
           do ia=1,natmi
@@ -1151,7 +1162,7 @@ c
      ,                          (sja_w(i,ia),i=1,ntrgts),sja_w(0,ia)
           end do
           do is=1,nspecies
-            write(lun,fmt_peak) trim(TEXTAN(is))//' total on',
+            write(lun,fmt_peak) trim(species_list(is))//' total on',
      ,                          (sjt_w(i,is),i=1,ntrgts),sjt_w(0,is)
           end do
           write(lun,*)

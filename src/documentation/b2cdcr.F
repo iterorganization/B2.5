@@ -337,7 +337,7 @@
 *     B2TDIA computes the X and Y components of the divergent part of
 *     the diamagnetic current
 *
-*     B2ETPSCH computes the X and Y components of the Pfirsch-Schlueter
+*     B2TEPSCH computes the X and Y components of the Pfirsch-Schlueter
 *     heat flux
 *
 *     B2TFCH computes the electric current between neighboring cells,
