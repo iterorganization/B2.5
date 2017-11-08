@@ -1,98 +1,108 @@
 module b2mod_interp
 
-  use b2mod_types
-  use b2mod_connectivity
-  use carre_constants
+    use b2mod_types
+    use b2mod_connectivity
+    use carre_constants
 
-  implicit none
+    implicit none
 
-  real(R8), parameter :: BB_INVALID = 1e5_R8
+    real(R8), parameter :: BB_INVALID = 1e5_R8
 
 contains
 
-  subroutine compute_b_at_faces(nx,ny,bb,wbbl,wbbr,wbbv, &
-       & leftix,leftiy,rightix,rightiy,bottomix,bottomiy, &
-       & topix,topiy,vol,gs,qc,qcb,cflags)
+    subroutine compute_b_at_faces( nx, ny, bb, wbbl, wbbr, wbbv,    &
+        &   leftix, leftiy, rightix, rightiy, bottomix, bottomiy,   &
+        &   topix, topiy, vol, gs, qc, qcb, cflags )
 
-    implicit none
-    integer, intent(in) :: nx, ny
-    real(R8), intent(in) :: bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny,0:4), &
-                         &  gs(-1:nx,-1:ny,0:2), &
-                         &  qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny)
-    real(R8), intent(out) :: wbbl(-1:nx,-1:ny,0:3), &
-         & wbbr(-1:nx,-1:ny,0:3), wbbv(-1:nx,-1:ny,0:3)
-    integer, intent(in) :: cflags(-1:nx,-1:ny,CARREOUT_NCELLFLAGS)
-    integer, intent(in) :: &
-         & leftix(-1:nx,-1:ny),leftiy(-1:nx,-1:ny), &
-         & rightix(-1:nx,-1:ny),rightiy(-1:nx,-1:ny), &
-         & topix(-1:nx,-1:ny),topiy(-1:nx,-1:ny), &
-         & bottomix(-1:nx,-1:ny),bottomiy(-1:nx,-1:ny)
+        implicit none
+        integer, intent(in)  :: nx, ny
+        real(R8), intent(in) :: bb( -1:nx, -1:ny, 0:3 ),            &
+            &   vol( -1:nx ,-1:ny ,0:4 ), gs( -1:nx, -1:ny, 0:2 ),  &
+            &   qc( -1:nx, -1:ny ), qcb( -1:nx, -1:ny )
+        real(R8), intent(out) :: wbbl( -1:nx, -1:ny, 0:3 ),         &
+            &   wbbr( -1:nx, -1:ny, 0:3 ), wbbv( -1:nx, -1:ny, 0:3 )
+        integer, intent(in) :: cflags( -1:nx, -1:ny, CARREOUT_NCELLFLAGS )
+        integer, intent(in) ::  &
+            &   leftix( -1:nx, -1:ny ),leftiy( -1:nx, -1:ny ),      &
+            &   rightix( -1:nx, -1:ny ),rightiy( -1:nx, -1:ny ),    &
+            &   topix( -1:nx, -1:ny ),topiy( -1:nx, -1:ny ),        &
+            &   bottomix( -1:nx, -1:ny ),bottomiy( -1:nx, -1:ny )
 
-    ! internal
-    integer :: ix, iy
+        !! internal
+        integer :: ix, iy
 
-    !    ..interpolate magnetic field to cell faces
-    call interp_magnetic_field(nx,ny,bb,wbbl,wbbr,wbbv, &
-       & leftix,leftiy,rightix,rightiy,bottomix,bottomiy, &
-       & topix,topiy,vol,gs,qc,qcb,cflags)
+        !!    ..interpolate magnetic field to cell faces
+        call interp_magnetic_field( nx, ny, bb, wbbl, wbbr, wbbv,       &
+            &   leftix, leftiy, rightix, rightiy, bottomix, bottomiy,   &
+            &   topix, topiy, vol, gs, qc, qcb, cflags )
 
-    !    ..extrapolate magnetic field to edges
-    do iy = -1, ny
-        do ix = -1, nx
-            if (isUnusedCell(cflags(ix, iy, CELLFLAG_TYPE))) cycle
-            ! Left face
-            if (.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
-                if (.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
-                    ! Not really an extrapolation, have nothing to work with.
-                    wbbl(ix,iy,0:2) = bb(ix,iy,0:2)
-                else
-                    wbbl(ix,iy,0:2) = bb(ix,iy,0:2) -(wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
+        !!    ..extrapolate magnetic field to edges
+        do iy = -1, ny
+            do ix = -1, nx
+                if ( isUnusedCell( cflags( ix, iy, CELLFLAG_TYPE ))) cycle
+                !! Left face
+                if ( .not. isInDomain(  &
+                    &   nx, ny, leftix( ix, iy ), leftiy( ix, iy ))) then
+                    if ( .not. isInDomain(  &
+                        &   nx, ny, rightix( ix, iy ), rightiy( ix, iy ))) then
+                        !! Not really an extrapolation, have nothing to
+                        !! work with.
+                        wbbl( ix, iy, 0:2 ) = bb( ix, iy, 0:2 )
+                    else
+                        wbbl( ix, iy, 0:2 ) = bb( ix, iy, 0:2 ) -   &
+                            &   ( wbbr( ix, iy, 0:2 )-bb( ix, iy, 0:2 ))
+                    endif
                 endif
-            endif
-            ! Right face
-            if (.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
-                if (.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
-                    wbbr(ix,iy,0:2) = bb(ix,iy,0:2)
-                else
-                    wbbr(ix,iy,0:2) = bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
+                !! Right face
+                if ( .not. isInDomain(  &
+                    &   nx, ny, rightix( ix, iy ), rightiy( ix, iy ))) then
+                    if ( .not. isInDomain(  &
+                        &   nx, ny, leftix( ix, iy ), leftiy( ix, iy ))) then
+                        wbbr( ix, iy, 0:2 ) = bb( ix, iy, 0:2 )
+                    else
+                        wbbr( ix, iy, 0:2 ) = bb( ix, iy, 0:2 ) -   &
+                            &   ( wbbl( ix, iy, 0:2 ) - bb( ix, iy, 0:2 ))
+                    endif
                 endif
-            endif
-            ! Bottom face
-            if (.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
-                if (.not.isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy))) then
-                    wbbv(ix,iy,0:2) = bb(ix,iy,0:2)
-                else
-                    wbbv(ix,iy,0:2) = bb(ix,iy,0:2) &
-                         & - (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
+                !! Bottom face
+                if ( .not. isInDomain(  &
+                    &   nx, ny, bottomix( ix, iy), bottomiy( ix, iy ))) then
+                    if ( .not. isInDomain(  &
+                        &   nx, ny, topix( ix, iy), topiy( ix, iy ))) then
+                        wbbv( ix, iy, 0:2 ) = bb( ix, iy, 0:2 )
+                    else
+                        wbbv( ix, iy, 0:2 ) = bb( ix, iy, 0:2 ) &
+                            & -1- ( wbbv( topix( ix, iy ),      &
+                            &   topiy( ix, iy ), 0:2 ) - bb( ix, iy, 0:2 ))
+                    endif
                 endif
-            endif
-            ! TODO: might have to introduce wbbu (upper face) here.
+                !! TODO: might have to introduce wbbu (upper face) here.
+            enddo
         enddo
-    enddo
 
-    !   ..compute extrapolated wbb.(:,:,3) components
-    wbbl(:,:,3)=sqrt(wbbl(:,:,0)**2+wbbl(:,:,1)**2+wbbl(:,:,2)**2)
-    wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
-    wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
+        !!   ..compute extrapolated wbb.(:,:,3) components
+        wbbl(:,:,3) = sqrt( wbbl(:,:,0)**2 + wbbl(:,:,1)**2 + wbbl(:,:,2)**2)
+        wbbr(:,:,3) = sqrt( wbbr(:,:,0)**2 + wbbr(:,:,1)**2 + wbbr(:,:,2)**2)
+        wbbv(:,:,3) = sqrt( wbbv(:,:,0)**2 + wbbv(:,:,1)**2 + wbbv(:,:,2)**2)
 
-    ! On all unused cells, set magnetic field to some big positive value
-    where (isUnusedCell(cflags(:, :, CELLFLAG_TYPE)))
-        wbbl(:,:,0) = BB_INVALID
-        wbbl(:,:,1) = BB_INVALID
-        wbbl(:,:,2) = BB_INVALID
-        wbbl(:,:,3) = BB_INVALID
-        wbbr(:,:,0) = BB_INVALID
-        wbbr(:,:,1) = BB_INVALID
-        wbbr(:,:,2) = BB_INVALID
-        wbbr(:,:,3) = BB_INVALID
-        wbbv(:,:,0) = BB_INVALID
-        wbbv(:,:,1) = BB_INVALID
-        wbbv(:,:,2) = BB_INVALID
-        wbbv(:,:,3) = BB_INVALID
-    end where
+        !! On all unused cells, set magnetic field to some big positive value
+        where( isUnusedCell( cflags(:, :, CELLFLAG_TYPE )))
+            wbbl(:,:,0) = BB_INVALID
+            wbbl(:,:,1) = BB_INVALID
+            wbbl(:,:,2) = BB_INVALID
+            wbbl(:,:,3) = BB_INVALID
+            wbbr(:,:,0) = BB_INVALID
+            wbbr(:,:,1) = BB_INVALID
+            wbbr(:,:,2) = BB_INVALID
+            wbbr(:,:,3) = BB_INVALID
+            wbbv(:,:,0) = BB_INVALID
+            wbbv(:,:,1) = BB_INVALID
+            wbbv(:,:,2) = BB_INVALID
+            wbbv(:,:,3) = BB_INVALID
+        end where
 
-  return
-  end subroutine compute_b_at_faces
+        return
+    end subroutine compute_b_at_faces
 
 ! Use this instead of left-right and top-bottom interpolation
 ! Obsolete: did not take properly into account trapezoidal and triangle cells

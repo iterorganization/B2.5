@@ -52,25 +52,23 @@
 !>
 !> -----------------------------------------------------------------------------
 
-
-!>.specificatioN
-
-
+!>.specification
 
 program b2_ual_write
 
+    use b2mod_drive
     use b2mod_types , B2R8 => R8
-    ! use b2mod_version
-    ! use b2mod_geo
-    ! use b2mod_plasma
+    use b2mod_version
+    use b2mod_geo
+    use b2mod_plasma
     use b2mod_rates
-    ! use b2mod_residuals
+    use b2mod_residuals
     ! use b2mod_sources
     ! use b2mod_transport
     ! use b2mod_anomalous_transport
-    ! use b2mod_work
+    use b2mod_work
     ! use b2mod_time
-    ! use b2mod_ppout
+    use b2mod_ppout
     ! use b2mod_tallies
     ! use b2mod_indirect
     ! use b2mod_neutrals_namelist
@@ -120,7 +118,7 @@ program b2_ual_write
     integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
     real (kind=B2R8), allocatable ::  ne1(:), te1(:), ti1(:)
     integer ::  cf_size1(22)
-    integer ::  idx
+    integer ::  idx, i
     integer ::  ix, ixx
     integer ::  shot, run
     character(len=24)        ::  treename, username, device, version
@@ -166,9 +164,13 @@ program b2_ual_write
     write(*,*) "START read_b2fgmtry_b2fstate"
     call read_b2fgmtry_b2fstate()
 
+    !> Read plasma state
+    write(*,*) "START read_b2fplasma"
+    call read_b2fplasma( ninp, nx, ny, ns )
+
     !> Read additional data
-    write(*,*) "START read_additional"
-    call read_additional( ninp, nout, nx, ny, ns, ne1, te1, ti1 )
+    ! write(*,*) "START read_additional"
+    ! call read_additional( ninp, nout, nx, ny, ns, ne1, te1, ti1 )
 
     treename    = "ids"
     ! shot        = 16151
@@ -195,6 +197,7 @@ program b2_ual_write
 
 contains
 
+    !> Subroutine intended for reading grid geometry
     subroutine read_b2fgmtry_b2fstate()
 
         integer            ::  i, j, k
@@ -207,11 +210,11 @@ contains
         !>...input files
         ! call cfopen ( ninp(0), "b2_ual_write.dat", "old", "formatted" )
         call cfopen( ninp(1), "b2fgmtry", "old", "un*formatted" )
-        ! call cfopen ( ninp(2), "b2fparam", "old", "un*formatted" )
+        call cfopen ( ninp(2), "b2fparam", "old", "un*formatted" )
         call cfopen( ninp(3), "b2fstate", "old", "un*formatted" )
-        ! call cfopen ( ninp(4), "b2fplasma", "old", "unformatted" )
+        call cfopen ( ninp(4), "b2fplasma", "old", "unformatted" )
         ! call cfopen ( ninp(5), "b2mn.dat", "old", "formatted" )
-        ! call cfopen ( ninp(6), "b2frates", "old", "formatted" )
+        call cfopen ( ninp(6), "b2frates", "old", "formatted" )
         !>...output files
         call cfopen( nout(0), "b2_ual_write.prt", "new", "formatted" )
         call cfopen( nout(1), "b2_ual_write2.prt", "new", "formatted" )
@@ -220,9 +223,9 @@ contains
         call xerset(0)
         !>..obtain version numbers
         call cfverr( ninp(1), b2fgmtry_version )
-        ! call cfverr ( ninp(2), b2fparam_version )
+        call cfverr ( ninp(2), b2fparam_version )
         call cfverr( ninp(3), b2fstate_version )
-        ! call cfverr ( ninp(6), b2frates_version )
+        call cfverr ( ninp(6), b2frates_version )
         !>..obtain nx, ny, ns
         call cfruin( ninp(3), 3, idum, "nx,ny,ns" )
         nx = idum(0)
@@ -237,7 +240,7 @@ contains
         call alloc_b2mod_geo( nx, ny)
         call alloc_b2mod_plasma( nx, ny, ns )
         call alloc_b2mod_indirect( nx, ny, nncutmax )
-        call alloc_b2mod_sources( nx,ny,ns)
+        call alloc_b2mod_sources( nx, ny, ns)
 
         call cfruch ( ninp(1), 120, lblgm, "label" )
         call cfruin ( ninp(1), 1, idum, "isymm" )
@@ -261,6 +264,42 @@ contains
 
     end subroutine read_b2fgmtry_b2fstate
 
+    !> Subroutine intended for reading plasma state (electron density etc.)
+    subroutine read_b2fplasma(ninp, nx, ny, ns)
+        integer ninp(0:6), nx, ny, ns
+        character lblgm*120
+
+        !! allocate module data structures and read b2fplasma file
+        !! (taken from b2md.F)
+
+        call alloc_b2mod_rates(nx,ny,ns)
+        call alloc_b2mod_residuals(nx,ny,ns)
+        call alloc_b2mod_transport(nx,ny,ns)
+        call alloc_b2mod_anomalous_transport(nx,ny,ns)
+        call alloc_b2mod_work(nx,ny,ns)
+        !! ..read geometry
+        ! call cfruch (ninp(1), 120, lblgm, 'label')
+        ! call cfruin (ninp(1), 1, idum, 'isymm')
+        ! isymm = idum(0)
+        ! call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz, &
+            ! &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs,       &
+            ! &  wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
+        !!     ..read plasma state
+        call cfverr(ninp(4), b2fplasma_version)
+        call read_b2mod_geo(nx,ny,ninp(4))
+        call read_b2mod_plasma(nx,ny,ns,ninp(4))
+        call read_b2mod_residuals(ninp(4))
+        call read_b2mod_sources(ninp(4))
+    !!$    call read_b2mod_transport(nx,ny,ns,ninp(4))
+        ! call read_b2mod_anomalous_transport(ninp(4))
+        ! call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrai)
+        call alloc_b2mod_ppout(nx,ny,ns)
+
+    end subroutine read_b2fplasma
+
+    !> Subroutine to read additional data
+    !> Currently it reads the same data as read_b2fplasma subroutine
+    !> but uses 'manual' approach of reading data
     subroutine read_additional( ninp, nout, nx, ny, ns, ne, te, ti )
 
         !> Read and compute additional data (taken from b2mddr.F)
