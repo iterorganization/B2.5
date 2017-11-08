@@ -294,7 +294,8 @@ cdjm compute b2sigp_pstat0to3 on left cell face
           enddo
         endif
       else                                                            !srv 23.03.10 {
-        call xertst(pot_eq.eq.1, 'b2sigp_style.eq.2 requires pot_eq.1!')
+        call xertst(pot_eq.eq.1,
+     &   'b2sigp_style.eq.2 requires pot_eq.eq.1!')
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then

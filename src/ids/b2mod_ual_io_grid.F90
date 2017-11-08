@@ -38,7 +38,7 @@ module b2mod_ual_io_grid
     use b2mod_grid_mapping
     use b2mod_indirect
 
-implicit none
+    implicit none
 
     !> Constants for use with the ITM grid description
 
@@ -135,9 +135,9 @@ implicit none
 
 !dpc  private :: R8
 
-#ifdef IMAS
-
 contains
+
+#ifdef IMAS
 
     !> Routine that fills in a grid description which is part of a CPO
     !> using the given grid data and prepared mappings
@@ -1041,8 +1041,6 @@ contains
 
 #else
 #ifdef ITM
-
-contains
 
   !> Routine that fills in a grid description which is part of a CPO
   !> using the given grid data and prepared mappings
