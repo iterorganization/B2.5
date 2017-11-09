@@ -113,6 +113,9 @@ module b2mod_ual_io_grid
     !> IMAS uses GGD grid subset identifier definitions defined in GSL
     !> (in ids_grid_common)
 #ifdef ITM
+    !> Number of generic grid subsets
+    integer, parameter :: B2_GENERIC_SUBGRID_COUNT = 6
+
     !> Unspecified grid subset
     integer, parameter :: B2_GSUBSET_UNSPECIFIED = 0
     !> Grid subset containing all nodes (0D objects) belonging to associated
