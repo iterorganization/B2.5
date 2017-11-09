@@ -118,22 +118,29 @@ module b2mod_ual_io_grid
 
     !> Unspecified grid subset
     integer, parameter :: B2_SUBGRID_UNSPECIFIED = 0
+    integer, parameter :: B2_GSUBSET_UNSPECIFIED = 0
     !> Grid subset containing all nodes (0D objects) belonging to associated
     !> space
     integer, parameter :: B2_SUBGRID_NODES = 1
+    integer, parameter :: B2_GSUBSET_NODES = 1
     !> Grid subset containing all faces (first x-aligned, then y-aligned)
     !> belonging to the associated space (order given by grid map)
     integer, parameter :: B2_SUBGRID_FACES = 2
+    integer, parameter :: B2_GSUBSET_FACES = 2
     !> Grid subset containing all x-aligned (poloidally) aligned faces belonging
     !>  to the associated space (order given by grid map)
-    integer, parameter :: B2_SUBGRID_X_ALIGNED_FACES = 3
+    integer, parameter :: B2_SUBGRID_FACES_X  = 3
+    integer, parameter :: B2_GSUBSET_X_ALIGNED_FACES = 3
     !> Grid subset containing all y-aligned (radially) aligned faces belonging
     !> to the associated space (order given by grid map)
-    integer, parameter :: B2_SUBGRID_Y_ALIGNED_FACES = 4
+    integer, parameter :: B2_SUBGRID_FACES_Y = 4
+    integer, parameter :: B2_GSUBSET_Y_ALIGNED_FACES = 4
     !> Grid subset containing all cells belonging to the associated space
     integer, parameter :: B2_SUBGRID_CELLS = 5
+    integer, parameter :: B2_GSUBSET_CELLS = 5
     !> Grid subset containing nodes defining x-points
-    integer, parameter :: B2_SUBGRID_X_POINTS = 6
+    integer, parameter :: B2_SUBGRID_XPOINTS = 6
+    integer, parameter :: B2_GSUBSET_X_POINTS = 6
 #endif
 
 !dpc  private :: R8
