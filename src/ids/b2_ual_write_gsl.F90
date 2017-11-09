@@ -6,9 +6,18 @@
 !> DOCUMENTATION:
 !> 1. purpose
 !>
+!>      Note:   This script is OUTDATED! The development continued under new
+!>              script b2_ual_write_b2mod.
+!>              The development 'moved' to new script due to different
+!>              approach of writing data to IDS using b2mod routines.
+!>
 !>      b2_ual_write_gsl.f90 script is used to generate b2_ual_write_gsl.exe
-!>      (main program), which is a post-processor for b2. It reads the plasma
-!>      state and writes it to IDS database using GSL (Grid Service Library).
+!>      (main program), which is a post-processor for b2.
+!>      Same as b2_ual_write.F90 the script it reads the plasma grid geometry
+!>      ( including Nodes and Cells grid subsets) and
+!>      plasma state (electron density, electron temperature, ion temperature)
+!>      and writes it to IDS database but with the use of IMAS GGD Grid
+!>      Service Library routines.
 !>
 !>
 !> 2. specification
@@ -54,7 +63,7 @@
 
 !>.specification
 
-program b2_ual_write
+program b2_ual_write_gsl
     use b2mod_types , B2R8 => R8
     ! use b2mod_version
     ! use b2mod_geo
@@ -609,7 +618,7 @@ contains
 
     end subroutine read_ids
 
-end program b2_ual_write
+end program b2_ual_write_gsl
 
 !!!Local Variables:
 !!! mode: f90
