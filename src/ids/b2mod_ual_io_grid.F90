@@ -25,8 +25,16 @@ module b2mod_ual_io_grid
 #else
 # ifdef ITM
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
-    Use euITM_schemas ! IGNORE
+    use euITM_schemas ! IGNORE
     use itm_constants , pi => itm_pi ! IGNORE
+    use itm_grid_object , only : GridObject ! IGNORE
+    use itm_grid_common & ! IGNORE
+     & , only : COORDTYPE_R, COORDTYPE_Z, COORDTYPE_PHI
+    use itm_grid_objectlist & ! IGNORE
+     & , only : createIndexListForRange
+    use itm_grid_subgrid & ! IGNORE
+     & , only : gridFindSubGridByName, gridSubGridSize, gridSubGridSize, &
+     &          subGridGetObject
 # endif
 #endif
     use helper
@@ -630,14 +638,15 @@ contains
         !> If requested, add a second space for the toroidal angle
         if (SPACE_COUNT == SPACE_TOROIDALANGLE) then
             if ( TOROIDAL_PERIODIC ) then
-            call gridSetupStruct1dSpace( ggd_grid%space(SPACE_TOROIDALANGLE), &
-                & COORDTYPE_PHI, &
+                call gridSetupStruct1dSpace( ggd_grid%space(SPACE_TOROIDALANGLE), &
+                    & COORDTYPE_PHI, &
                     & (/  ( ( 2*B2_PI / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL - 1 ) /), &
                     & .true. ) !> periodic = .true.
             else
                 call gridSetupStruct1dSpace( ggd_grid%space(SPACE_TOROIDALANGLE), &
                     & COORDTYPE_PHI, &
-                    & (/  ( ( 2*B2_PI / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL ) /) )
+                    & (/  ( ( 2*B2_PI / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL ) /) , &
+                    & .false. ) !> periodic = .false.
             end if
         end if
 
@@ -1020,11 +1029,11 @@ contains
         do iObj = 1, getGridSubsetSize(coreBndGridSubset)
             obj = getGridSubsetObject(coreBndGridSubset, iObj)
             !> Expect a face
-            call assert( all( obj%cls( 1:SPACE_COUNT ) ==               &
+            call xertst( all( obj%cls( 1:SPACE_COUNT ) ==               &
                 &   IDS_CLASS_POLOIDALRADIAL_FACE ), "b2mod_ual_io_grid &
                 &   findMidplaneCells: assertion failure." )
             !> ...which is aligned along the x-direction
-            call assert( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==   &
+            call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==   &
                 &   BOTTOM, "b2mod_ual_io_grid findMidplaneCells: assertion     &
                 &   failure." )
             ix = gmap % mapFcix( obj%ind( SPACE_POLOIDALPLANE ) )
@@ -1043,9 +1052,9 @@ contains
             end if
         end do
 
-        call assert( xIn /= huge( xIn ),    &
+        call xertst( xIn /= huge( xIn ),    &
             &   "findMidplaneCells: did not find inner midplane position")
-        call assert( xOut /= huge( xOut ),  &
+        call xertst( xOut /= huge( xOut ),  &
             &   "findMidplaneCells: did not find outer midplane position")
     end subroutine findMidplaneCells
 
@@ -1300,14 +1309,15 @@ contains
       if (SPACE_COUNT == SPACE_TOROIDALANGLE) then
 
           if ( TOROIDAL_PERIODIC ) then
-          call gridSetupStruct1dSpace( itmgrid%spaces(SPACE_TOROIDALANGLE), &
-              & COORDTYPE_PHI, &
+              call gridSetupStruct1dSpace( itmgrid%spaces(SPACE_TOROIDALANGLE), &
+                  & COORDTYPE_PHI, &
                   & (/  ( ( 2*pi / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL - 1 ) /), &
-                  & periodic = .true. )
+                  & .true. ) !> periodic = .true.
           else
               call gridSetupStruct1dSpace( itmgrid%spaces(SPACE_TOROIDALANGLE), &
                   & COORDTYPE_PHI, &
-                  & (/  ( ( 2*pi / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL ) /) )
+                  & (/  ( ( 2*pi / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL ) /) , &
+                  & .false. ) !> periodic = .false.
           end if
 
       end if
@@ -1490,9 +1500,9 @@ contains
         end if
     end do
 
-    call assert(xIn /= huge(xIn),   &
+    call xertst(xIn /= huge(xIn),   &
         &   "findMidplaneCells: did not find inner midplane position")
-    call assert(xOut /= huge(xOut),
+    call xertst(xOut /= huge(xOut), &
         &   "findMidplaneCells: did not find outer midplane position")
   end subroutine
 

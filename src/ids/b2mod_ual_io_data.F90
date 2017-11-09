@@ -126,7 +126,7 @@ contains
             if( present( b2CellData ) ) then
                 !> Cell data case
                 !> check that it is a cell
-                call assert( all( curObj%cls == IDS_CLASS_CELL ),   &
+                call xertst( all( curObj%cls == IDS_CLASS_CELL ),   &
                     &   "Assert error 1 in b2IMASTransformDataB2ToIDSGeneral!" )
                 !> get the subobject index for the face in the 2d poloidal
                 !> plane space
@@ -137,7 +137,7 @@ contains
             else if( present( b2FaceData ) ) then
                 !> Face data case
                 !> check that it is a face
-                call assert( all( curObj%cls ==             &
+                call xertst( all( curObj%cls ==             &
                     &   IDS_CLASS_POLOIDALRADIAL_FACE ),    &
                     &   "Assert error 2 in b2IMASTransformDataB2ToIDSGeneral!" )
                 !> get the subobject index for the face in the 2d poloidal
@@ -149,7 +149,7 @@ contains
             else if( present( b2VertexData )) then
                 !> Vertex/Node data case
                 !> check that it is a vertex
-                call assert( all( curObj%cls == IDS_CLASS_NODE ),   &
+                call xertst( all( curObj%cls == IDS_CLASS_NODE ),   &
                     &   "Assert error 3 in b2IMASTransformDataB2ToIDSGeneral!" )
                 !> get the subobject index for the face in the 2d poloidal
                 !> plane space
@@ -180,7 +180,7 @@ contains
 
     type(type_complexgrid), intent(in) :: grid
     integer, intent(in) :: subgridId
-    type(B2ITMGridMap), intent(in) :: gmap
+    type(B2GridMap), intent(in) :: gmap
     real(ITM_R8), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
 
     cpodata => b2ITMTransformDataB2ToCPOGeneral( grid, subgridId, gmap, b2CellData = b2CellData )
@@ -191,7 +191,7 @@ contains
 
     type(type_complexgrid), intent(in) :: grid
     integer, intent(in) :: subgridId
-    type(B2ITMGridMap), intent(in) :: gmap
+    type(B2GridMap), intent(in) :: gmap
     real(ITM_R8), intent(in) :: b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
 
     cpodata => b2ITMTransformDataB2ToCPOGeneral( grid, subgridId, gmap, b2FaceData = b2FaceData )
@@ -204,7 +204,7 @@ contains
 
     type(type_complexgrid), intent(in) :: grid
     integer, intent(in) :: subgridId
-    type(B2ITMGridMap), intent(in) :: gmap
+    type(B2GridMap), intent(in) :: gmap
     real(ITM_R8), intent(in) :: b2VertexData(-1:gmap%b2nx, -1:gmap%b2ny)
 
     cpodata => b2ITMTransformDataB2ToCPOGeneral( grid, subgridId, gmap, b2VertexData = b2VertexData )
@@ -225,7 +225,7 @@ contains
 
     type(type_complexgrid), intent(in) :: grid
     integer, intent(in) :: subgridId
-    type(B2ITMGridMap), intent(in) :: gmap
+    type(B2GridMap), intent(in) :: gmap
     real(ITM_R8), intent(in), optional :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
     real(ITM_R8), intent(in), optional :: b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
     real(ITM_R8), intent(in), optional :: b2VertexData(-1:gmap%b2nx, -1:gmap%b2ny)

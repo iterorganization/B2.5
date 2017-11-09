@@ -80,6 +80,11 @@ endif
 ifdef IMAS_PREFIX
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
 IMASLIBS   = ${LD_UAL} -lggd-ifort
+else
+ifdef ITM_ENVIRONMENT_LOADED
+INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
+IMASLIBS = ${LD_UAL} -lUALFORTRANInterface_ifort
+endif
 endif
 
 ifdef LD_CATALYST

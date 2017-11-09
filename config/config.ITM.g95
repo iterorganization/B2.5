@@ -56,7 +56,12 @@ endif
 
 ifdef IMAS_PREFIX
 INCMODS  += `pkg-config --cflags imas-g95`
-IMASLIBS += ${LD_UAL} -lggd-${COMPILER}
+IMASLIBS  = ${LD_UAL} -lggd-${COMPILER}
+else
+ifdef ITM_ENVIRONMENT_LOADED
+INCMODS  += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_g95_0.93 -I${ITM_GGD_HOME}/include/amd64_g95_0.93 -I${UAL_INCLUDE}/amd64_g95 -I${ITM_ITMCONSTANTS_DIR}/include/amd64_g95_0.93
+IMASLIBS  = ${LD_UAL} -lUALFORTRANInterface_g95
+endif
 endif
 
 LD = $(FC)

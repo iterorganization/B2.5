@@ -42,8 +42,9 @@ module b2mod_ual_io
     use ids_grid_data           ! IGNORE
 #else
 #ifdef ITM
-    use euITM_schemas  ! IGNORE
-    use euITM_routines ! IGNORE
+    use euITM_schemas   ! IGNORE
+    use euITM_routines  ! IGNORE
+    use itm_grid_common ! IGNORE
 #endif
 #endif
   ! use ggd , GGD_UNDEFINED => GRID_UNDEFINED
@@ -184,7 +185,7 @@ contains
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
-        call assert( geometryId( nnreg, periodic_bc, topcut ) ==    &
+        call xertst( geometryId( nnreg, periodic_bc, topcut ) ==    &
             &   GEOMETRY_SN, "write_ids: can only do single null" )
 
         !> Write plasma state
@@ -431,7 +432,7 @@ contains
     type (type_edge) :: edgecpo
 
     ! internal
-    type(B2ITMGridMap) :: gmap
+    type(B2GridMap) :: gmap
     type(type_complexgrid_subgrid) :: sg_cell, sg_face, sg_bnd_core
     integer :: is, ns, nx, ny, i
     logical, parameter :: B2_WRITE_DATA = .true.
@@ -481,7 +482,7 @@ contains
         & nnreg, topcut, region, cflags, INCLUDE_GHOST_CELLS, vol, gs, qc )
 
 
-    call assert( geometryId( nnreg, periodic_bc, topcut ) == GEOMETRY_SN, "write_cpo: can only do single null" )
+    call xertst( geometryId( nnreg, periodic_bc, topcut ) == GEOMETRY_SN, "write_cpo: can only do single null" )
 
     ! Write plasma state
 
