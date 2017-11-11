@@ -682,7 +682,7 @@ c      print *,hlp_frm    !###
 
       return
 c=======================================================================
- 90   write(*,*) 'b2wrint: cannot open a file ',trim(f)
+ 90   write(*,*) 'b2wrint: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c

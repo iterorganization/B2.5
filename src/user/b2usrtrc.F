@@ -1567,7 +1567,7 @@ c        print *,'b2usrtrc frm:',hlp_frm  !###
      -                                ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp
       return
 c=======================================================================
- 90   write(*,*) 'b2usrtrc: cannot open a file ',trim(f)
+ 90   write(*,*) 'b2usrtrc: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 
