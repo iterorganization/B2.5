@@ -518,7 +518,7 @@ c      print *,hlp_frm
 c>>>
       return
 c======================================================================
- 90   write(*,*) 'b2wrsep: cannot open a file ',trim(f)
+ 90   write(*,*) 'b2wrsep: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c

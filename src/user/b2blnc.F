@@ -739,7 +739,7 @@ c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
      ,                                                  np_tmp*nspecies
       return
 c======================================================================
- 90   write(*,*) 'b2blnc: cannot open a file ',trim(f)
+ 90   write(*,*) 'b2blnc: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c

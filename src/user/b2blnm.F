@@ -344,7 +344,7 @@ c*** New file
      -                                                   nd_tmp*ndv_tmp
       return
 c======================================================================
- 90   write(*,*) 'b2blnm: cannot open a file ',trim(f)
+ 90   write(*,*) 'b2blnm: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       go to 98
 c

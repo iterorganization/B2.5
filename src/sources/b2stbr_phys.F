@@ -876,7 +876,7 @@ cdpc
 *       (is0 corresponds to CX species is2)
          t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
      1        neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
-         Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))     
+         Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
          Pflx = t0/area          ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then

@@ -766,7 +766,7 @@ c*** New file
      -                                    ng_tmp+ns_tmp*n+nt_tmp*nz_tmp
       return
 c=======================================================================
- 90   write(*,*) 'b2blne: cannot open a file ',trim(f)
+ 90   write(*,*) 'b2blne: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
