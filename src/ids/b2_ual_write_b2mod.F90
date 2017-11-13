@@ -196,11 +196,11 @@ contains
         ! call imas_open_env('treename', shot, run, idx, username, device, version )
 
         !> Put data to IDS
-        call ids_put_slice( idx, "edge_profiles", edge_profiles )
-        call ids_put_slice( idx, "edge_transport", edge_sources )
-        call ids_put_slice( idx, "edge_transport", edge_transport )
+        ! call ids_put_slice( idx, "edge_profiles", edge_profiles )
+        ! call ids_put_slice( idx, "edge_transport", edge_sources )
+        ! call ids_put_slice( idx, "edge_transport", edge_transport )
         call ids_put( idx, "edge_profiles", edge_profiles )
-        call ids_put( idx, "edge_transport", edge_sources )
+        call ids_put( idx, "edge_sources", edge_sources )
         call ids_put( idx, "edge_transport", edge_transport )
 
         !> Close IDS

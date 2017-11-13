@@ -123,10 +123,10 @@ contains
         allocate( edge_profiles%ggd( num_ggd_slice ) )
         allocate( edge_transport%model(1) )
         edge_transport%model(1)%identifier%index = 1
-        ! allocate( edge_sources%source(1) )
-        ! edge_sources%source(1)%identifier%index = 1
+        allocate( edge_sources%source(1) )
+        edge_sources%source(1)%identifier%index = 1
         allocate( edge_transport%model(1)%ggd( num_ggd_slice ) )
-        ! allocate( edge_sources%source(1)%ggd( num_ggd_slice ) )
+        allocate( edge_sources%source(1)%ggd( num_ggd_slice ) )
         allocate( edge_transport%model(1)%ggd( num_ggd_slice )%electrons%   &
             &   energy%flux(1) )
 
@@ -135,19 +135,19 @@ contains
 # ifdef B25_EIRENE
         edge_profiles%code%name = "SOLPS-ITER"
         edge_transport%code%name = "SOLPS-ITER"
-        ! edge_sources%code%name = "SOLPS-ITER"
+        edge_sources%code%name = "SOLPS-ITER"
 # else
         edge_profiles%code%name = "B2.5"
         edge_transport%code%name = "B2.5"
-        ! edge_sources%code%name = "B2.5"
+        edge_sources%code%name = "B2.5"
 # endif
         allocate( edge_profiles%code%version(1) )
         edge_profiles%code%version = git_version_B25
         allocate( edge_transport%code%version(1) )
         edge_transport%code%version = git_version_B25
 
-        ! allocate( edge_sources%code%version(1) )
-        ! edge_sources%code%version = git_version_B25
+        allocate( edge_sources%code%version(1) )
+        edge_sources%code%version = git_version_B25
 
         ns = size( na, 3 )
         nx = ubound( na, 1 )
@@ -221,13 +221,8 @@ contains
             call write_quantity( edge_profiles%ggd( ggd_slice )%electrons%  &
                 &   density, edge_transport%model(1)%ggd( ggd_slice )%      &
                 &   electrons%energy%flux, ne, fne, ggd_slice )
-#if 0
-            ! call write_cell_scalar( edge_profiles%fluid%ne%source,  &
-                ! &   sne(:,:,0) + sne(:,:,1) * ne )
-
             call write_cell_scalar( edge_sources%source(1)%ggd( ggd_slice )%    &
                 &   electrons%energy, sne(:,:,0) + sne(:,:,1) * ne )
-#endif
 #if 0
             !> ni
             num_ni_slices = 1
@@ -385,7 +380,6 @@ contains
             ! type(ids_generic_grid_scalar), intent(inout), pointer :: scalar(:)
             real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
             real(IDS_real), dimension(:), pointer :: idsdata
-
             allocate( scalar(1) )
 
             !! TODO: add checks whether already allocated
@@ -396,15 +390,50 @@ contains
             deallocate(idsdata)
         end subroutine write_cell_scalar
 
-        !! TODO write_cell_vector
+#if 0
+        !> Write a vector B2 cell quantity to a complexgrid_vector
+        subroutine write_cell_vector(vector, align, alignid, vecdata)
+            type(ids_generic_grid_vector), intent(inout) :: vector
+            real(IDS_real), intent(in) :: vecdata(-1:gmap%b2nx, &
+                &   -1:gmap%b2ny, 0:2)
+            integer, intent(in) :: align(3)
+            character(LEN=132), intent(in) :: alignid(3)
+            real(IDS_real), dimension(:), pointer :: idsdata
+
+            !! internal
+            integer :: dim, i
+
+            dim = size(vecdata, 3)
+
+            !! TODO: add checks whether already allocated
+            !! TODO: solve the vector%comp etc., found in the ITM
+            !! type_complexgrid_vector, for the IDS
+            ! allocate( vector%comp( dim ))
+            ! allocate( vector%align( dim ))
+            ! allocate( vector%alignid( dim ))
+
+            !! Fill in alignment information for vector components
+            ! vector%align = align
+            ! vector%alignid = alignid
+
+            !> Fill in vector component data
+            do i = 1, dim
+                idsdata => b2IMASTransformDataB2ToIDS(          &
+                    &   edge_profiles%ggd( ggd_slice )%grid,    &
+                    &   GRID_SUBSET_CELLS, gmap, vecdata(:,:,i-1))
+                call gridWriteData( vector, GRID_SUBSET_CELLS, idsdata )
+                ! call gridWriteData( vector%comp(i), GRID_SUBSET_CELLS, idsdata )
+                deallocate(idsdata)
+            end do
+
+        end subroutine write_cell_vector
+#endif
 
         !> Write a vector B2 face quantity to a ids_generic_grid_vector
         subroutine write_face_vector( vector, b2FaceData, ggd_slice,    &
                 &   gridSubsetId )
             use ids_grid_data ! IGNORE
             type(ids_generic_grid_scalar), intent(inout) :: vector
-            ! type(ids_generic_grid_vector), intent(inout) :: vector
-            ! type(type_complexgrid_vector), intent(inout) :: vector
             real(IDS_real), intent(in) ::   &
                 &   b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
             integer, intent(in), optional :: gridSubsetId
@@ -414,8 +443,8 @@ contains
             if ( .not. present(gridSubsetId) ) then
 
                 !! TODO: add checks whether already allocated
-                !! TODO: solve the vector%comp etc., found in the old
-                !! type_complexgrid_vector
+                !! TODO: solve the vector%comp etc., found in the ITM
+                !! type_complexgrid_vector, for the IDS
                 ! allocate(vector%comp(2))
                 ! allocate(vector%align(2))
                 ! allocate(vector%alignid(2))
