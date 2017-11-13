@@ -5,7 +5,7 @@ C***********************************************************************
         SUBROUTINE ODRV
      *     (N, NNZ, IA, JA, A, P, IP, NSP, ISP, PATH, FLAG)
         use b2mod_types
-        IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !srv 11.01.07
 C
 C  DESCRIPTION
 C
@@ -127,12 +127,12 @@ C    DECLARATIONS.
 C
 C-----------------------------------------------------------------------
 C
-        INTEGER  N, NNZ, IA(N+1), JA(NNZ), P(N), IP(N), NSP, ISP(NSP),   !sv 11.01.07
+        INTEGER  N, NNZ, IA(N+1), JA(NNZ), P(N), IP(N), NSP, ISP(NSP),   !srv 11.01.07
      *      PATH, FLAG, V, L, HEAD, TMP, Q
 C...        REAL  A(1)
         real (kind=R8) ::  A(NNZ)
         LOGICAL  DFLAG
-        INTEGER  MAX, NEXT                                               !sv 11.01.07
+        INTEGER  MAX, NEXT                                               !srv 11.01.07
 C
 C----INITIALIZE ERROR FLAG AND VALIDATE PATH SPECIFICATION
         FLAG = 0
@@ -181,7 +181,7 @@ C***********************************************************************
         SUBROUTINE  MD
      *     (N, NNZ, IA, JA, MAX, V, L, HEAD, LAST, NEXT, MARK, FLAG)
         use b2mod_types
-        IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !srv 11.01.07
 C
 C  DESCRIPTION
 C
@@ -260,11 +260,11 @@ C             \       < MARK(VK)            \
 C
 C-----------------------------------------------------------------------
 C
-        INTEGER  N, NNZ, IA(N+1), JA(NNZ), MAX, V(MAX), L(MAX),            !sv 11.01.07
+        INTEGER  N, NNZ, IA(N+1), JA(NNZ), MAX, V(MAX), L(MAX),            !srv 11.01.07
      *      HEAD(N), LAST(N), NEXT(N), MARK(N),
      *      FLAG, TAG, DMIN, VK, EK, TAIL
         EQUIVALENCE (VK,EK)
-        INTEGER K                                                          !sv 11.01.07
+        INTEGER K                                                          !srv 11.01.07
 C
 C----INITIALIZATION
         TAG = 0
@@ -325,11 +325,11 @@ C***********************************************************************
      *     (N, NNZ, IA, JA, MAX, V, L,
      *      HEAD, LAST, NEXT, MARK, TAG, FLAG)
         use b2mod_types
-        IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !srv 11.01.07
         INTEGER  N, NNZ, IA(N+1), JA(NNZ), MAX, V(MAX), L(MAX),
      *     HEAD(N), LAST(N), NEXT(N), MARK(N),
      *     TAG, FLAG, SFS, VI, DVI, VJ
-        INTEGER JMIN, JMAX, J                                            !sv 11.01.07
+        INTEGER JMIN, JMAX, J                                            !srv 11.01.07
 C
 C----INITIALIZE DEGREES, ELEMENT LISTS, AND DEGREE LISTS
         DO 1 VI=1,N
@@ -387,7 +387,7 @@ C***********************************************************************
         SUBROUTINE MDM
      *     (N, MAX, VK, TAIL, V, L, LAST, NEXT, MARK)
         use b2mod_types
-        IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !srv 11.01.07
         INTEGER N, MAX, VK, TAIL,
      *     V(MAX), L(MAX), LAST(N), NEXT(N), MARK(N),
      *     TAG, S, LS, VS, ES, B, LB, VB, BLP, BLPMAX
@@ -446,11 +446,11 @@ C***********************************************************************
         SUBROUTINE MDP
      *     (N, MAX, K, EK, TAIL, V, L, HEAD, LAST, NEXT, MARK)
         use b2mod_types
-        IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !srv 11.01.07
         INTEGER N, MAX, EK, TAIL,
      *     V(MAX), L(MAX), HEAD(N), LAST(N), NEXT(N),
      *     MARK(N), TAG, FREE, LI, VI, LVI, EVI, S, LS, ES, ILP, ILPMAX
-        INTEGER I, K                                                     !sv 11.01.07
+        INTEGER I, K                                                     !srv 11.01.07
 C
 C----INITIALIZE TAG
         TAG = MARK(EK)
@@ -540,12 +540,12 @@ C***********************************************************************
         SUBROUTINE MDU
      *     (N, MAX, EK, DMIN, V, L, HEAD, LAST, NEXT, MARK)
         use b2mod_types
-        IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !srv 11.01.07
         INTEGER  N, MAX, EK, DMIN,
      *     V(MAX), L(MAX), HEAD(N), LAST(N), NEXT(N), MARK(N),
      *     TAG, VI, EVI, DVI, S, VS, ES, B, VB, ILP, ILPMAX,
      *     BLP, BLPMAX
-        INTEGER I                                                        !sv 11.01.07
+        INTEGER I                                                        !srv 11.01.07
         EQUIVALENCE  (VS, ES)
 C
 C----INITIALIZE TAG
@@ -631,7 +631,7 @@ C***********************************************************************
      *     (N, NNZ, P, IP, IA, JA, A, B, Z, NSP, ISP, RSP,
      *      ESP, PATH, FLAG)
         use b2mod_types
-        IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !srv 11.01.07
 C
 C  DESCRIPTION
 C
@@ -804,8 +804,8 @@ C
 C        REAL  A(1),  B(1),  Z(1),  RSP(1)
 C        DATA  RATIO/1/
         real (kind=R8) ::  A(NNZ),  B(N),  Z(N),  RSP(NSP)
-        INTEGER IJU, IU, IL, JL, JU, JUMAX                               !sv 11.01.07
-        integer, save :: RATIO = kind(1.0e0_R8)/kind(1)                  !sv 11.01.07
+        INTEGER IJU, IU, IL, JL, JU, JUMAX                               !srv 11.01.07
+        integer, save :: RATIO = kind(1.0e0_R8)/kind(1)                  !srv 11.01.07
 C
 C----VALIDATE PATH SPECIFICATION
         IF (PATH.LT.1 .OR. 6.LT.PATH)  GO TO 111
@@ -870,7 +870,7 @@ C***********************************************************************
      *     (N, NNZ, P, IP, IA, JA, A, D, IJU, JU, IU, U, UMAX, JUMAX,
      *      IL, JL, FLAG)
         use b2mod_types
-        IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !srv 11.01.07
 C
 C  ADDITIONAL PARAMETERS
 C
@@ -893,19 +893,25 @@ C      IN EITHER CASE, JL(I) = 0 INDICATES THE END OF A LIST
 C
 C-----------------------------------------------------------------------
 C
-        INTEGER  N, NNZ,
+        INTEGER  N, NNZ, JUMAX,                                          !srv 27.02.17
      *     P(N), IP(N), IA(N+1), JA(NNZ), IJU(N), JU(JUMAX), IU(N+1),
-     *     UMAX, JUMAX, IL(N), JL(N), FLAG, VJ
-        INTEGER K, J, JMIN, JMAX, I, NEXTI, ILI, MU, JUMUJ               !sv 11.01.07
+     *     UMAX, IL(N), JL(N), FLAG, VJ
+        INTEGER K, J, JMIN, JMAX, I, NEXTI, ILI, MU, JUMUJ               !srv 11.01.07
 C        REAL  A(NNZ), D(N), U(UMAX),  DK, UKIDI
-         real (kind=R8) ::  A(NNZ),  D(N), U(UMAX), DK, UKIDI            !sv 11.01.07
+         real (kind=R8) ::  A(NNZ),  D(N), U(UMAX), DK, UKIDI            !srv 11.01.07
+#ifdef DBG
+         real (kind=R8) :: product
+         real (kind=R8), save :: cutlo
+
+         cutlo = log(tiny(1.0_R8))
+#endif
 C
 C----CHECK FOR SUFFICIENT STORAGE FOR U
         IF (IU(N+1)-1 .GT. UMAX)  GO TO 107
 C
 C----INITIALIZATION
         DO 1 K=1,N
-          D(K) = 0.0e0_R8                                                !sv 11.01.07
+          D(K) = 0.0e0_R8                                                !srv 11.01.07
    1      JL(K) = 0
 C
 C----FOR EACH ROW K
@@ -930,7 +936,17 @@ C
 C--------COMPUTE MULTIPLIER AND UPDATE DIAGONAL ELEMENT
             ILI = IL(I)
             UKIDI = - U(ILI) * D(I)
+#ifdef DBG
+            IF((ABS(UKIDI) .ge. tiny(1.0_R8).or.
+     &          ABS(UKIDI) .le.-tiny(1.0_R8)).and.
+     &         (ABS(U(ILI)).ge. tiny(1.0_R8).or.
+     &          ABS(U(ILI)).le.-tiny(1.0_R8))) then
+              product = log(abs(ukidi)) + log(abs(u(ili)))
+              if (product.ge.cutlo) DK = DK + UKIDI * U(ILI)
+            END IF
+#else
             DK = DK + UKIDI * U(ILI)
+#endif
             U(ILI) = UKIDI
 C
 C--------ADD MULTIPLE OF ROW I TO K-TH ROW ...
@@ -939,7 +955,19 @@ C--------ADD MULTIPLE OF ROW I TO K-TH ROW ...
             IF (JMIN.GT.JMAX)  GO TO 8
               MU = IJU(I) - IU(I)
               DO 7 J=JMIN,JMAX
-   7            D(JU(MU+J)) = D(JU(MU+J)) + UKIDI * U(J)
+#ifdef DBG
+                IF((ABS(UKIDI).ge. tiny(1.0_R8).or.
+     &              ABS(UKIDI).le.-tiny(1.0_R8)).and.
+     &             (ABS(U(J)) .ge. tiny(1.0_R8).or.
+     &              ABS(U(J)) .le.-tiny(1.0_R8))) then
+                  product = log(abs(ukidi)) + log(abs(u(j)))
+                  if (product.ge.cutlo)
+     >             D(JU(MU+J)) = D(JU(MU+J)) + UKIDI * U(J)
+                END IF
+#else
+                D(JU(MU+J)) = D(JU(MU+J)) + UKIDI * U(J)
+#endif
+   7          CONTINUE
 C
 C--------... AND ADD I TO ROW LIST FOR NEXT NONZERO ENTRY
               IL(I) = JMIN
@@ -951,8 +979,8 @@ C
             GO TO 6
 C
 C------CHECK FOR ZERO PIVOT AND SAVE DIAGONAL ELEMENT
-   9      IF (DK.EQ.0.0e0_R8)  GO TO 108                                 !sv 11.01.07
-          D(K) = 1.0e0_R8 / DK                                           !sv 11.01.07
+   9      IF (DK.EQ.0.0e0_R8)  GO TO 108                                 !srv 11.01.07
+          D(K) = 1.0e0_R8 / DK                                           !srv 11.01.07
 C
 C------SAVE NONZERO ENTRIES IN K-TH ROW OF U ...
           JMIN = IU(K)
@@ -962,7 +990,7 @@ C------SAVE NONZERO ENTRIES IN K-TH ROW OF U ...
             DO 10 J=JMIN,JMAX
               JUMUJ = JU(MU+J)
               U(J) = D(JUMUJ)
-  10          D(JUMUJ) = 0.0e0_R8                                        !sv 11.01.07
+  10          D(JUMUJ) = 0.0e0_R8                                        !srv 11.01.07
 C
 C------... AND ADD K TO ROW LIST FOR FIRST NONZERO ENTRY IN K-TH ROW
             IL(K) = JMIN
@@ -989,10 +1017,10 @@ C***********************************************************************
         SUBROUTINE SNS
      *     (N, UMAX, JUMAX, P, D, IJU, JU, IU, U, Z, B, TMP)
         use b2mod_types
-        IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !srv 11.01.07
         INTEGER  N, UMAX, JUMAX, P(N),  IJU(N), JU(JUMAX), IU(N+1)
 C        REAL D(N), U(N), Z(N), B(N), TMP(N), TMPK, SUM
-        real (kind=R8) ::  D(N), U(UMAX), Z(N), B(N), TMP(N), TMPK, SUM  !sv 11.01.07
+        real (kind=R8) ::  D(N), U(UMAX), Z(N), B(N), TMP(N), TMPK, SUM  !srv 11.01.07
         INTEGER K, JMIN, JMAX, MU, I, J
 C
 C  ADDITIONAL PARAMETERS
@@ -1039,7 +1067,7 @@ C***********************************************************************
         SUBROUTINE SRO
      *     (N, NNZ, IP, IA, JA, A, Q, R, DFLAG)
         use b2mod_types
-        IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !srv 11.01.07
 C
 C  DESCRIPTION
 C
@@ -1071,7 +1099,7 @@ C
 C...        REAL A(NNZ), AK
         real (kind=R8) ::  A(NNZ), AK
         LOGICAL  DFLAG
-        INTEGER I, J, K, JAK, JDUMMY, JMIN, JMAX, ILAST                  !sv 11.01.07
+        INTEGER I, J, K, JAK, JDUMMY, JMIN, JMAX, ILAST                  !srv 11.01.07
 C
 C
 C--PHASE 1 -- FIND ROW IN WHICH TO STORE EACH NONZERO
@@ -1228,7 +1256,7 @@ C***********************************************************************
      *     (N, NNZ, P, IP, IA, JA, IJU, JU, IU, JUMAX, Q, MARK, JL,
      *      FLAG)
         use b2mod_types
-        IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !srv 11.01.07
 C
 C  ADDITIONAL PARAMETERS
 C
@@ -1261,11 +1289,11 @@ C    LUK IS THE NUMBER OF NONZERO ENTRIES IN THE K-TH ROW
 C
 C-----------------------------------------------------------------------
 C
-        INTEGER  N, NNZ,
+        INTEGER  N, NNZ,  JUMAX,                                  !srv 27.02.17
      *     P(N), IP(N), IA(N+1), JA(NNZ), IJU(N), JU(JUMAX), IU(N+1),
      *     Q(N), MARK(N), JL(N), FLAG, TAG, VJ, QM
         LOGICAL  CLIQUE
-        INTEGER JUMIN, JUMAX, JUPTR, I, J, K, M, LUK, JMIN, JMAX, LMAX,  !sv 11.01.07
+        INTEGER JUMIN, JUPTR, I, J, K, M, LUK, JMIN, JMAX, LMAX,  !srv 11.01.07
      *     LUI
 C
 C----INITIALIZATION

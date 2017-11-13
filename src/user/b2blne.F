@@ -128,7 +128,7 @@ c-----------------------------------------------------------------------
 
       integer lun, ltrc
       parameter (ltrc=ntrc_ble)
-      integer i, j, k, l, m, n, ic, is, ix, iy, 
+      integer i, j, k, l, m, n, ic, is, ix, iy,
      .        ixr, iyr, ixf, iyf, js, nv
       real (kind=R8) :: hlp_h, hlp_p, hlp
       logical lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
@@ -146,8 +146,10 @@ c***
 c*** lcbs: boundary segments representing the core boundary in B2
 c*** lcns: 'non-default surfaces' for the core boundary (Eirene)
 c*** ltns: 'non-default surfaces' for the targets (Eirene)
-c*** lsns: Eirene surfaces related to the recycling sources
-c*** msns: their index
+c*** lsns: list of Eirene surfaces comprising the recycling sources
+c*** msns: msns(1,k): index of first surface in lsns list for Eirene
+c***                  recycling source k
+c***       msns(2,k): number of surfaces for Eirene recycling source k
 c-----------------------------------------------------------------------
 c*** Identification suffices:
       data hlp_trgs / 'il','ol','wl','  ','  ',
@@ -458,21 +460,21 @@ csw 18nov2013 check for nnatmi (known after 1st EIRENE call)
       if(nnatmi > 0) then
 
 c*** flux across the core boundary
-      do is=1,ncns !{
+       do is=1,ncns !{
         js=lcns(is)+nnlimi
         pwcrn_tmp=pwcrn_tmp+wldnek(js,0)+wldnep(js,0)
-      end do !}
+       end do !}
 c*** flux across the targets
-      do is=1,ntns !{
+       do is=1,ntns !{
         js=ltns(is)+nnlimi
         pwtgn_tmp=pwtgn_tmp+wldnek(js,0)+wldnep(js,0)
-      end do !}
+       end do !}
 c*** flux across the side walls
-      do js=1,nnlimi !{
+       do js=1,nnlimi !{
         pwwln_tmp=pwwln_tmp+wldnek(js,0)+wldnep(js,0)
-      end do !}
+       end do !}
 c*** flux across the specified zones
-      do j=1,ntrgf_tmp !{
+       do j=1,ntrgf_tmp !{
         do l=1,ntgs(j) !{
           js=ltgs(l,j)
           if(js.lt.0) js=nnlimi-js
@@ -486,7 +488,7 @@ c*** flux across the specified zones
             end do !}
           end if !}
         end do !}
-      end do !}
+       end do !}
       endif !nnatmi
 #endif
 c
@@ -544,11 +546,11 @@ c
 c
 c*** ... or just print out the data
 c
-      write(6,'(8x,20(1x,a8,1x))') '   sum  ','targ_tot',
+        write(6,'(8x,20(1x,a8,1x))') '   sum  ','targ_tot',
      ,         'wall_tot',' rad_tot',' plsm s ',' ioniz s',' plsm tg',
      ,         ' plsm wl',' neut tg',' neut wl','Bremsstr',' rad neu',
      ,         'rad imp:'
-      write(6,'(a8,1p,20e10.2)') 'power >>', pwtot_tmp, pwtgt_tmp,
+        write(6,'(a8,1p,20e10.2)') 'power >>', pwtot_tmp, pwtgt_tmp,
      ,        pwwlt_tmp, pwrdt_tmp, pwcrh_tmp, pwcrp_tmp, pwtgp_tmp,
      ,        pwwlp_tmp, pwtgn_tmp, pwwln_tmp, radbr_tmp, radnu_tmp,
      ,                                     (radim_tmp(i),i=1,n)
@@ -563,9 +565,9 @@ c*** Only called with filedata(ntrc_ble)=.true.
 c-----------------------------------------------------------------------
 c
       allocate(ltgs(nlim,ntrgs_tmp))
-      allocate(limp_tmp(natm))
-      allocate(radim_tmp(natm))
-      allocate(hlp_spc(natm))
+      allocate(limp_tmp(nspecies))
+      allocate(radim_tmp(nspecies))
+      allocate(hlp_spc(nspecies))
 c
       tab=char(9)
       nimp_tmp=0
@@ -573,7 +575,7 @@ c
         if(nfluids(is).gt.1) then !{
           nimp_tmp=nimp_tmp+1
           limp_tmp(nimp_tmp)=is
-          hlp_spc(nimp_tmp)=atoms_list(is)
+          hlp_spc(nimp_tmp)=species_list(is)
         end if !}
       end do !}
       if(nimp_tmp.le.0) hlp_spc(1)='-'
@@ -684,7 +686,7 @@ c
         if(nv.ne.lv) then !{
           warn_tmp=.true.
           write(*,*) '!!! b2blne: current version ',lv,
-     ,                         '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
           if(nv.lt.960825 .or. (nv.le.961229 .and. ni_tmp.eq.0)) then !{
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -696,20 +698,20 @@ c*** It was a major change of the file format - impossible to continue
         if(ni_tmp.ne.nimp_tmp) then !{
           warn_tmp=.true.
           write(*,*) '!!! b2blne: current number of impurity species ',
-     ,                nimp_tmp,'  differs from that in the file ',f
+     ,                nimp_tmp,' differs from that in the file ',trim(f)
           filedata(ltrc)=.false.
         end if !}
         if(nz_tmp.ne.ntrgf_tmp) then !{
           warn_tmp=.true.
           write(*,*) '!!! b2blne: current number of targets ',
-     ,               ntrgf_tmp,'  differs from that in the file ',f
+     ,               ntrgf_tmp,' differs from that in the file ',trim(f)
           filedata(ltrc)=.false.
         end if !}
         if(ng_tmp.ne.nglb_tmp) then !{
           warn_tmp=.true.
           write(*,*) '!!! b2blne: current number of columns',
      ,                ' for general data',nglb_tmp,
-     ,                         '  differs from that in the file ',f
+     ,                ' differs from that in the file ',trim(f)
           if(ng_tmp.gt.nglb_tmp) then !{
             filedata(ltrc)=.false.
           end if !}
@@ -718,7 +720,7 @@ c*** It was a major change of the file format - impossible to continue
           warn_tmp=.true.
           write(*,*) '!!! b2blne: current number of columns',
      ,                ' for impurity data',nspc_tmp,
-     ,                         '  differs from that in the file ',f
+     ,                ' differs from that in the file ',trim(f)
           if(ns_tmp.gt.nspc_tmp) then !{
             filedata(ltrc)=.false.
           end if !}
@@ -727,7 +729,7 @@ c*** It was a major change of the file format - impossible to continue
           warn_tmp=.true.
           write(*,*) '!!! b2blne: current number of columns',
      ,                ' for impurity data',ntrg_tmp,
-     ,                         '  differs from that in the file ',f
+     ,                ' differs from that in the file ',trim(f)
           if(nt_tmp.gt.ntrg_tmp) then !{
             filedata(ltrc)=.false.
           end if !}
@@ -737,7 +739,7 @@ c*** It was a major change of the file format - impossible to continue
      ,                                'remove the existing file first!'
           return
         end if !}
-        if(warn_tmp) write(*,*) '  You should remove the file!'
+        if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
  50     read(lun,'(a1)',end=55) hlp_c
         go to 50
@@ -764,11 +766,11 @@ c*** New file
      -                                    ng_tmp+ns_tmp*n+nt_tmp*nz_tmp
       return
 c=======================================================================
- 90   write(*,*) 'b2blne: cannot open a file ',f
+ 90   write(*,*) 'b2blne: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2blne: wrong format of the file ',f
+ 92   write(*,*) 'b2blne: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c=======================================================================

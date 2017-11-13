@@ -553,9 +553,9 @@ cxpb  We must account for the case when the user does not want all bundles
          write(*,*) 'CX data ''fixed'' for nuclear charge ',nz(inuc)
          write(nout(0),'(/a,i3)')
      1    'CX data ''fixed'' for nuclear charge ',nz(inuc)
-         write(*,*) 'Fix based on the fit in ratsr.F by B.J.Braams'
+         write(*,*) 'Fix based on the fit in ratstr.F by B.J.Braams'
          write(nout(0),'(a)')
-     1    'Fix based on the fit in ratsr.F by B.J.Braams'
+     1    'Fix based on the fit in ratstr.F by B.J.Braams'
          if(nz(inuc).eq.1) then
            write(*,*) 'which is probably OK for hydrogenic species'
            write(nout(0),'(a/)')

@@ -3,10 +3,12 @@
 
       subroutine b2agmx (nx1, ny1, nx, ny, 
      & vol1, hx1, hy1, qz1, qc1, qcb1,
-     & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1, wbbc1,
+     & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
+     & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
      & vol, hx, hy, qz, qc, qcb,
-     & gs, crx, cry, bb, pbs, fpsi, ffbz, wbbc,
+     & gs, crx, cry, bb, pbs, fpsi, ffbz,
+     & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
      1 leftix1,leftiy1,rightix1,rightiy1,
      2 topix1,topiy1,bottomix1,bottomiy1,
@@ -28,7 +30,8 @@
      1	crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
      2	bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
      3  fpsi1(-1:nx1,-1:ny1,0:3), ffbz1(-1:nx1,-1:ny1,0:3),
-     4  wbbc1(-1:nx1+1,-1:ny1+1,0:3),
+     4  wbbl1(-1:nx1,-1:ny1,0:3), wbbr1(-1:nx1,-1:ny1,0:3),
+     &  wbbv1(-1:nx1,-1:ny1,0:3), wbbc1(-1:nx1+1,-1:ny1+1,0:3),
      5  cell_width1(-1:nx1,-1:ny1), cell_height1(-1:nx1,-1:ny1)
       integer
      *  leftix1(-1:nx1,-1:ny1), leftiy1(-1:nx1,-1:ny1),
@@ -45,7 +48,8 @@
      1	gs(-1:nx,-1:ny,0:2), crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      2	bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
      3  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
-     4  wbbc(-1:nx+1,-1:ny+1,0:3) ,
+     4  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
+     &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
      5  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
@@ -150,9 +154,6 @@
       integer pbs_from_basis_mesh, geometryType
       real (kind=R8) ::
      *   p0x, p0y
-      real (kind=R8) ::
-     *   wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
-     *   wbbv(-1:nx,-1:ny,0:3)
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -808,7 +809,7 @@ cxpb  extra test since cases beyond double-null are not yet coded
 
 cxpb  extra code to allow for overwriting the pbs array with the 
 cxpb  working mesh values
-      if (pbs_from_basis_mesh.eq.0) then
+      if (pbs_from_basis_mesh.eq.0 .or. redef_pbs.eq.1) then
 *  ..interpolate magnetic field to cell faces
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)

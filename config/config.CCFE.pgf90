@@ -55,7 +55,12 @@ GRLIBES = ${LD_NCARG} ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
+endif
+
+ifdef IMAS_PREFIX
+INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
+IMASLIBS = ${LD_UAL} -lggd-pgi
 endif
 
 LD = pgf90

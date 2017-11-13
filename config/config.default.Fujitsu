@@ -54,7 +54,7 @@ LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 LD = /opt/Fujitsu/bin/f90

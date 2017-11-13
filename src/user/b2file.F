@@ -23,7 +23,7 @@ c***    tracing/sources.trc     to  ntrc(ntrc_src)
 c----------------------------------------------------------------------
       implicit none
 c
-      integer ns,nnreg(0:2), it
+      integer ns, nnreg(0:2), it
 c
       integer, save ::  i, j, k, l, m, n, lf_tmp, nis_tmp
       integer :: mh_tmp(0:ns-1), nh_tmp, nf_tmp, lvr, lvs, lvt
@@ -39,7 +39,7 @@ c*** nf_tmp: number of files which are written in b2filew
 c*** lf_tmp: number of files whose buffers should be flushed in b2filef
 c***        (must be consistent with ntrc assignment)
 c***
-c***    Current assignment is (see default.F):
+c***    Current assignment is (see b2mod_diag.F):
 c***        ntrc(ntrc_res)     'tracing/residuals.trc'
 c***        ntrc(ntrc_src)     'tracing/sources.trc'
 c***        ntrc(ntrc_tst)     'tracing/test.trc'
@@ -63,17 +63,16 @@ c----------------------------------------------------------------------
      5      'unexpected error. Cannot close' /
 c======================================================================
 c
-      entry b2filei(ns,nnreg)
+      entry b2filei(it,ns,nnreg)
 c----------------------------------------------------------------------
 c*** Initialisation call.
 c*** Check whether the directory "tracing" exists and the files can
-c*** be opened. If yes, then the data will be written to the files,
-c*** if no, then they will appear on "b2.log". The file headers are
-c*** written to the files if the files do not exist.
+c*** be opened. If yes, then the data will be written to the files.
+c*** The file headers are written to the files if the files are empty.
 c----------------------------------------------------------------------
       call subini('b2filei')
 c
-      write(*,*) 'b2file: nstrai, natm = ', nstrai, natm
+      write(*,*) 'b2file: nstrai, nnatmi = ', nstrai, nnatmi
       tab=char(9)
       lf_tmp=ntrc_used
 c
@@ -97,35 +96,35 @@ c*** Old file - check it
         read(ntrc(ntrc_tst),700,err=900) hlp_c,i,m,n,j
         if(i.ne.lvt) then
           write(*,*) '!! b2file: current version ',lvt,
-     ,                     '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
         if(m.ne.nstrai) then
           write(*,*) '!! b2file: current number of strata (nstrai=',
-     ,     nstrai,')  differs from that in the file ',f
+     ,     nstrai,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
-        if(n.ne.nspecies) then
-          write(*,*) '!! b2file: current number of species (nspecies=',
-     ,     nspecies,')  differs from that in the file ',f
+        if(n.ne.nnatmi) then
+          write(*,*) '!! b2file: current number of atoms (nnatmi=',
+     ,     nnatmi,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
       else
 c*** New file - write the headers
         l=4
-        write(ntrc(ntrc_tst),700,err=900) '#',lvt,nstrai,nspecies
+        write(ntrc(ntrc_tst),700,err=900) '#',lvt,nstrai,nnatmi
         write(ntrc(ntrc_tst),710,err=900) '## ',label
 
         if(nstrai.gt.0) then
 c          write(hlp_frmt,'(7h(3h#it,,i3,21h(1h'//tab//
 c     /     ',a8,i2.2,1h_,a2)))')
-c     -                          nstrai*5*(nspecies+1)
+c     -                          nstrai*5*(nnatmi+1)
           write(hlp_frmt,'(a,i3,a)')
      /         '(''#it'',',
-     -                          nstrai*5*(nspecies+1),
+     -                          nstrai*5*(nnatmi+1),
      /         '('''//tab//''',a8,i2.2,''_'',a2))'
 c<<<
           print *,'%%% b2file: header format'   !###
@@ -133,24 +132,24 @@ c<<<
 c>>>
           write(ntrc(ntrc_tst),hlp_frmt,err=900)
      -     ('sclstra_',i,'  ',
-     ,     ('sclstra_',i,atoms_list(k),k=1,nspecies),
+     ,     ('sclstra_',i,atoms_list(k),k=1,nnatmi),
      ,     'sclalph_',i,'  ',
-     ,     ('sclalph_',i,atoms_list(k),k=1,nspecies),
+     ,     ('sclalph_',i,atoms_list(k),k=1,nnatmi),
      ,      'sclbase_',i,'  ',
-     ,     ('sclbase_',i,atoms_list(k),k=1,nspecies),
+     ,     ('sclbase_',i,atoms_list(k),k=1,nnatmi),
      ,      'sclrtio_',i,'  ',
-     ,     ('sclrtio_',i,atoms_list(k),k=1,nspecies),
+     ,     ('sclrtio_',i,atoms_list(k),k=1,nnatmi),
      ,      'sclsrcn_',i,'  ',
-     ,     ('sclsrcn_',i,atoms_list(k),k=1,nspecies),i=1,nstrai)
+     ,     ('sclsrcn_',i,atoms_list(k),k=1,nnatmi),i=1,nstrai)
         end if
       end if
       if (nstrai.gt.0)
      > write(hlp_frmt,'(12h(1x,i3.3,1p,,i3,12h(1h'//tab//',e12.4)))')
-     -                          nstrai*5*(nspecies+1)
+     -                          nstrai*5*(nnatmi+1)
       filedata(ntrc_tst)=.true.
       go to 1000
 c
- 900  write(*,*) 'b2file: ',hlp_emsg(l),f
+ 900  write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
 c----------------------------------------------------------------------
 c*** Residuals
 c
@@ -168,21 +167,23 @@ c
         read(ntrc(ntrc_res),700,err=5) hlp_c,i,j,k
         if(i.ne.lvr) then
           write(*,*) '!! b2file: current version ',lvr,
-     ,                     '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 10
         end if
         if(j.ne.nnreg(0)) then
           write(*,*) '!! b2file: current number of regions ',
-     ,                nnreg(0),'  differs from that in the file ',f
+     ,                nnreg(0),' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 10
         end if
-        if(k.ne.ns) then
-          write(*,*) '!! b2file: current number of species (ns=',
-     ,                ns,')  differs from that in the file ',f
+        if(k.ne.ns-nspecies) then
+          write(*,*) '!! b2file: current number of ion species (nis=',
+     ,     ns-nspecies,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 10
+        else
+          nis_tmp=k
         end if
       else
 c*** New file - write the headers
@@ -191,13 +192,13 @@ c*** New file - write the headers
           do i=1,nfluids(j)
             k=k+1
             mh_tmp(k)=i
-            hlp_al(k)=atoms_list(j)
+            hlp_al(k)=species_list(j)
           end do
         end do
         l=4
         nis_tmp=k
 
-        write(ntrc(ntrc_res),700,err=5) '#',lvr,nnreg(0),ns
+        write(ntrc(ntrc_res),700,err=5) '#',lvr,nnreg(0),nis_tmp
         write(ntrc(ntrc_res),710,err=5) '## ',label
 
 c       write(hlp_frmr,'(7h(3h#it,,i3,17h(1h'//tab//
@@ -224,7 +225,7 @@ c>>>
       filedata(ntrc_res)=.true.
       go to 10
 c
-  5   write(*,*) 'b2file: ',hlp_emsg(l),f
+  5   write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
 c----------------------------------------------------------------------
 c*** Sources
 c
@@ -241,19 +242,19 @@ c
         read(ntrc(ntrc_src),700,err=30) hlp_c,i,j,k
         if(i.ne.lvs) then
           write(*,*) '!! b2file: current version ',lvs,
-     ,     '  differs from that in the file ',f
+     ,     ' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
         if(j.ne.nnreg(0)) then
           write(*,*) '!! b2file: current number of regions ',
-     ,                nnreg(0),'  differs from that in the file ',f
+     ,                nnreg(0),' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
         if(k.ne.nspecies) then
           write(*,*) '!! b2file: current number of species (nspecies=',
-     ,     nspecies,')  differs from that in the file ',f
+     ,     nspecies,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
@@ -280,7 +281,7 @@ c<<<
 c>>>
         write(ntrc(ntrc_src),hlp_frms,err=30)
      ,   ((('src',hlp_h(i),j,hlp_s(l),l=1,3),j=0,nnreg(0)),i=-1,2),
-     ,   (((('src',hlp_h(i),j,hlp_s(l),atoms_list(k),l=1,3),
+     ,   (((('src',hlp_h(i),j,hlp_s(l),species_list(k),l=1,3),
      ,   j=0,nnreg(0)),i=5,6),k=1,nspecies)
       end if
       write(hlp_frms,'(12h(1x,i3.3,1p,,i3,12h(1h'//tab//',e12.4)))')
@@ -289,7 +290,7 @@ c>>>
       filedata(ntrc_src)=.true.
       go to 35
 
- 30   write(*,*) 'b2file: ',hlp_emsg(l),f
+ 30   write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
 c----------------------------------------------------------------------
 c*** Position the files for appending the data
 c
@@ -319,11 +320,11 @@ c----------------------------------------------------------------------
         if(.not.op) go to 62
         l=4
         if (nstrai.gt.0) write(ntrc(ntrc_tst),hlp_frmt,err=62) it,
-     ,    ((sclstra(i,k),i=0,nspecies),(sclalph(i,k),i=0,nspecies),
-     ,     (sclbase(i,k),i=0,nspecies),(sclrtio(i,k),i=0,nspecies),
-     ,     (sclsrcn(i,k),i=0,nspecies),k=1,nstrai)
+     ,    ((sclstra(i,k),i=0,nnatmi),(sclalph(i,k),i=0,nnatmi),
+     ,     (sclbase(i,k),i=0,nnatmi),(sclrtio(i,k),i=0,nnatmi),
+     ,     (sclsrcn(i,k),i=0,nnatmi),k=1,nstrai)
         go to 65
- 62     write(*,*) 'b2file: ',hlp_emsg(l),f
+ 62     write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
         filedata(ntrc_tst)=.false.
       end if
 c
@@ -339,7 +340,7 @@ c
      ,    ((rescoreg(i,ions_list(j)),i=1,nnreg(0)),
      ,     (resmoreg(i,ions_list(j)),i=1,nnreg(0)),j=1,nis_tmp)
         go to 75
- 72     write(*,*) 'b2file: ',hlp_emsg(l),f
+ 72     write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
         filedata(ntrc_res)=.false.
       end if
 c
@@ -357,41 +358,42 @@ c
      ,         (((src_ni(i,k,j),k=1,3),i=0,nnreg(0)),
      ,          ((src_mo(i,k,j),k=1,3),i=0,nnreg(0)),j=1,nspecies)
         return
- 77     write(*,*) 'b2file: ',hlp_emsg(l),f
+ 77     write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
         filedata(ntrc_src)=.false.
       end if
       return
 c======================================================================
 c
-      entry b2filef(ns)
+      entry b2filef(it,ns,nnreg)
 c----------------------------------------------------------------------
 c*** flush the buffers
 c----------------------------------------------------------------------
 c
 c
-      do 100 k=1,lf_tmp
-        if(filedata(k)) then
-          f=fn_ntrc(k)
+      do 100 k=1,nf_tmp
+        j=k+1
+        if(filedata(j)) then
+          f=fn_ntrc(j)
 #ifdef IBMaix
-          call flush_(ntrc(k))
+          call flush_(ntrc(j))
 #else
           l=5
-          close(ntrc(k),err=86)
+          close(ntrc(j),err=86)
 #ifndef F77
           l=1
-          open(ntrc(k),file=f,err=86,position='append')
+          open(ntrc(j),file=f,err=86,position='append')
 #else
           l=1
-          open(ntrc(k),file=f,err=86)
- 80       read(ntrc(k),'(a1)',end=82) hlp_c
+          open(ntrc(j),file=f,err=86)
+ 80       read(ntrc(j),'(a1)',end=82) hlp_c
           go to 80
- 82       backspace ntrc(k)
+ 82       backspace ntrc(j)
 #endif
 #endif
           go to 100
 c
- 86       write(*,*) 'b2file: ',hlp_emsg(l),f
-          filedata(k)=.false.
+ 86       write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
+          filedata(j)=.false.
         end if
  100  continue
       return

@@ -166,10 +166,10 @@
       endif
  
       if (new_files) then
-        open (96,file='dx2')
-        open (95,file='dx1')
-        open (94,file='da1')
-        open (93,file='da2')
+        if (maxval(nsdata).gt.0) open (96,file='dx2')
+        if (maxval(nxdata).gt.0) open (95,file='dx1')
+        if (maxval(nsdata).gt.0) open (94,file='da1')
+        if (maxval(nsdata).gt.0) open (93,file='da2')
       end if
 
       do kind_source=1,nkind_source
@@ -369,10 +369,10 @@ cdjm Jan2017 Keep linearised sources for balance
       endif
        
       if (new_files) then
-        close(93)
-        close(94)
-        close(95)
-        close(96)
+        if (maxval(nsdata).gt.0) close(93)
+        if (maxval(nsdata).gt.0) close(94)
+        if (maxval(nxdata).gt.0) close(95)
+        if (maxval(nsdata).gt.0) close(96)
         new_files = .false.
       end if
 

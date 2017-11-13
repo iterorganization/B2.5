@@ -342,7 +342,7 @@
           thet=0.0_R8
           ilp(iy)=0.0_R8
           do ix=ixref,-1,-1
-            if (mod(region(ix,iy,0),4).eq.1) then
+            if (on_closed_surface(ix,iy)) then
               theta(ix,iy)=thet
               hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
      &               vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
@@ -372,7 +372,7 @@
             endif
           enddo
           do ix=nx,ixref+1,-1
-            if (mod(region(ix,iy,0),4).eq.1) then
+            if (on_closed_surface(ix,iy)) then
               theta(ix,iy)=thet
               hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
      &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
@@ -404,7 +404,7 @@
           theta(ixref,iy)=thet
           ilpb=thet
           do ix=-1,nx
-            if (mod(region(ix,iy,0),4).eq.1) then
+            if (on_closed_surface(ix,iy)) then
               theta(ix,iy)=2.0_R8*pi*theta(ix,iy)/ilpb
             endif
           enddo
@@ -421,8 +421,7 @@
 *   ..calculate the connection length
         conn(iy)=0.0_R8
         do ix=-1,nx
-          if(mod(region(ix,iy,0),4).eq.1.and.closedf(iy))
-     .      conn(iy)=conn(iy)+
+          if(on_closed_surface(ix,iy)) conn(iy)=conn(iy)+
      1         hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))
         enddo
 
@@ -446,7 +445,7 @@
 
           bmax=0.0_R8
           do ix=-1,nx
-            if (mod(region(ix,iy,0),4).eq.1) then          
+            if (on_closed_surface(ix,iy)) then
               if (bb(ix,iy,3).gt.bmax) then
                 bmax=bb(ix,iy,3)
               endif
@@ -645,7 +644,7 @@
        enddo
 
        do iy=0,ny
-         if (mod(region(ixref,iy,0),4).eq.1) then
+         if (on_closed_surface(ixref,iy)) then
            if (iy.eq.ny) then
              prefactor=-hy1(ixref,iy)/(2.0_R8*
      &                  hy1(bottomix(ixref,iy),bottomiy(ixref,iy)))
@@ -653,7 +652,7 @@
      &                  hy1(bottomix(ixref,iy),bottomiy(ixref,iy)))
              ishift=bottomiy(ixref,iy)
             else
-             if (mod(region(topix(ixref,iy),topiy(ixref,iy),0),4).eq.1)
+             if (on_closed_surface(topix(ixref,iy),topiy(ixref,iy)))
      >        then
                prefactor=0.5_R8
                postfactor=0.5_R8
@@ -697,7 +696,7 @@
      &       topiy(topix(ixref,-1),topiy(ixref,-1))))
        do ispecies=0, nsl-1
          do istate=0, ncl(ispecies)-1
-           if (mod(region(ixref,-1,0),4).eq.1) then
+           if (on_closed_surface(ixref,-1)) then
              dd(ispecies,istate,-1)=dd(ispecies,istate,
      &          topiy(ixref,-1))+prefactor*(dd(ispecies,istate,
      &          topiy(ixref,-1))-dd(ispecies,istate,
@@ -744,7 +743,7 @@
 
       do ix=-1,nx
        do iy=-1,ny
-        if (mod(region(ix,iy,0),4).eq.1) then
+        if (on_closed_surface(ix,iy)) then
          do ispecies=0,nsl-2
           do istate=0,ncl(ispecies)-1
            is=isort(ispecies,istate)
@@ -771,7 +770,7 @@
          vw_neo(ix,iy,ns)=vwt(nsl-1,0,iy)*(hy1(ix,iy)/hy1(ixref,iy))
 
 *   ..set transport to zero in the SOL and divertor regions
-        elseif (mod(region(ix,iy,0),4).gt.1) then
+        elseif (.not.on_closed_surface(ix,iy)) then
          do ispecies=0,nsl-1
           do istate=0,ncl(ispecies)-1
            is=isort(ispecies,istate)

@@ -55,7 +55,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, use_eirene
-      integer, save :: iout = 0                                    !srv 04.07.08
+      integer, save :: iout = 0, iout_b2wdat = 0                   !srv 04.07.08
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0        !srv 06.07.06
       character chns*3                                             !srv 04.07.08
       real (kind=R8) ::
@@ -104,6 +104,7 @@
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
        call ipgeti ('b2npco_iout', iout)                              !srv 04.07.08
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2mndr_eirene', use_eirene)
       endif
 *   ..set n2
@@ -213,6 +214,15 @@ csw 11dec2012, check for solv flags
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)
       endif                                                          !srv 12.07.02 }
+
+      if (iout_b2wdat.eq.4) then
+        call my_out(70,nx,ny,nb,'b2npco_na'//chns)
+        call my_out(70,nx,ny,rescb,'b2npco_resco'//chns)
+        wrk0=snb(:,:,0)+nb*snb(:,:,1)
+        call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)
+      endif
 
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)

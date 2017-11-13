@@ -9,12 +9,24 @@
       integer ix, iy
       integer, save :: ncall = 0
       integer, save :: iappend = 0
+      logical ex                                          !srv 26.09.17
+      character(7), save :: folder                        !srv 26.09.17
 
       if (ncall.eq.0) then
         call ipgeti('b2wdat_append', iappend)
         ncall = 1
+*    ..try to create a file in optional output folder
+        open(70,file='output/__1__.dat',err=10)
+*    ..folder exists: future output will be done in folder
+        folder='output/'
+        write(70,*) 'Test file to check on output folder'
+        close(70)
+        go to 20
+*    ..folder does not exist: future output will be done in current folder
+ 10     folder=''
+ 20     continue
       end if
-      filename = trim(first_name)//'.dat'
+      filename = trim(folder)//trim(first_name)//'.dat'   !srv 26.09.17
       if (iappend.eq.0) then
         open (nwrite,file=filename)
       else

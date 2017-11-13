@@ -12,7 +12,7 @@ c
       integer nwldprtx,nadsrcm,ntrgsx,mskipel,lnwlmtrl,mlblprtx
       integer nsptmx
       parameter (ntrgsx=4,nwldprtx=ntrgsx+12, nadsrcm=400)
-      parameter (mskipel=DEF_NLIM,lnwlmtrl=4, mlblprtx=8)
+      parameter (mskipel=DEF_NLIM,lnwlmtrl=8, mlblprtx=8)
       parameter (nsptmx=3)
       integer ildparm, irdparm, lppp, nwldprt,
      ,  lwldstrt(nwldprtx), nwldlis(nwldprtx),

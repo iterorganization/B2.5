@@ -29,7 +29,7 @@ C 2002.11.01
      *  xnorm(:,:,:),
      *  crxe(:,:,:), crye(:,:,:),
      *  cxpp(:,:),   cypp(:,:),
-     *  psi(:,:),
+     *  psi(:,:),    zeff(:,:),
      *  rho(:,:),    hrho(:,:),
      *  theta(:,:),  htheta(:,:),
      *  bfi(:,:),    sh(:,:),
@@ -107,6 +107,7 @@ c   ..allocate
       allocate(sh(-1:nxd,-1:nyd))
 
       allocate(dm(-1:nxd,-1:nyd))
+      allocate(zeff(-1:nxd,-1:nyd))
 
       allocate(rsepx(1:nxd+3))
       allocate(zsepx(1:nxd+3))
@@ -158,6 +159,7 @@ c   ..deallocate
       deallocate(sh)
 
       deallocate(dm)
+      deallocate(zeff)
 
       deallocate(rsepx)
       deallocate(zsepx)
@@ -291,6 +293,7 @@ c   ..mach number of each species
 
       call b2xppr( nxpp, nypp, nspp, ne, na, te, ti, pr )
       call b2xpro( nxpp, nypp, nspp, mp, am, na, ro )
+      call b2xzef( nx, ny, ns, rz2, na, ne, zeff)
 
       do is = 0, nspp - 1
          call b2xpmc( nxpp, nypp
@@ -413,7 +416,7 @@ cdpc+xpb
       imin=-2
       imax=-2
       do ix=-1,nxpp
-         if(mod(region(ix,-1,0),4).eq.1) then
+         if(on_closed_surface(ix,-1)) then
             if(crx(ix,-1,2).lt.rmin) then
                rmin=crx(ix,-1,2)
                imin=ix
@@ -440,10 +443,15 @@ cdpc+xpb-end
                z0 = z0 + cry(ix,iy,0)
             endif
          enddo
-         r0 = r0 / float(i)
-         z0 = z0 / float(i)
-         write(*,*)
+         if (i.gt.0) then
+           r0 = r0 / float(i)
+           z0 = z0 / float(i)
+           write(*,*)
      *        'Used initial approach for calculating magnetic axis'
+         else
+           r0 = crx(-1,-1,0)
+           z0 = cry(-1,-1,0)
+         endif
 cdpc+xpb
       else
         r0=(rmin+rmax)/2.0_R8
@@ -1455,7 +1463,7 @@ c   ..plasma state
      *                     , te     , 1.0_R8/ev , 1 , 0 )
       call ppwure_conv_grid( nwrite
      *                     , 'ZEFF' , 'Z EFFECTIVE' , ' '
-     *                     , ne2/ne , 1.0_R8    , 1 , 0 )
+     *                     , zeff   , 1.0_R8    , 1 , 0 )
 
       if( ism.ge.0 ) then
           call ppwure_conv_grid( nwrite

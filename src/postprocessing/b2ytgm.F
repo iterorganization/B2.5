@@ -7,6 +7,7 @@
       use b2mod_version
       use b2mod_b2cmgs
       implicit none
+#include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nget, nx1, ny1
 *   ..output arguments (unspecified on entry)
@@ -260,8 +261,8 @@ cdpc
       call cfruin (nget, 1, idum, 'nncut')
       nncut = idum(0)
       call xertst (0.le.nncut,'faulty input nncut')
-      call xertst (nncut.le.10,
-     . 'increase nncutmax=10 in b2yt and b2ytgm!')
+      call xertst (nncut.le.DEF_NCUT,
+     . 'increase DEF_NCUT in DIMENSIONS.F!')
       call cfruin (nget, nncut, leftcut1, 'leftcut')
       call cfruin (nget, nncut, rightcut1, 'rightcut')
       call cfruin (nget, nncut, topcut1, 'topcut')

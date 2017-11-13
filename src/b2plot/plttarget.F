@@ -138,7 +138,7 @@ C =====================================================================
       ENDDO
       i=ncont+2
       LFIN(I)=choose_color(i-1,1)
-      LBLS(I)=' '
+      LBLS(I:100)=' '
 #ifndef PLPLOT
       CALL GSLWSC(1.0)
       call gsfais(1)

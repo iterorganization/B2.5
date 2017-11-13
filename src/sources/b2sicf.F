@@ -163,7 +163,7 @@ cdjm Store linearised source for balance
         do k=0,3
           write (chark,'(i1)') k
           call my_out(70,nx,ny,smbcf(-1,-1,k),
-     .                         'b2sicf_smbcf'//chark//chns)
+     .                         'b2sicf_smocf'//chark//chns)
         enddo
         wrks=smbcf(:,:,0)+smbcf(:,:,1)*ub(:,:)+
      &       smbcf(:,:,2)*nb(:,:)*mb+smbcf(:,:,3)*ub(:,:)*nb(:,:)*mb

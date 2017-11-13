@@ -29,6 +29,7 @@
      *  cr(:,:),
      *  cz(:,:),
      *  nh(:,:),
+     *  zeff(:,:),
      *  uutraj(:,:,:),
      *  vvtraj(:,:,:),
      *  targetx(:,:),
@@ -119,7 +120,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
      *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average
 cank 960511
       integer, save ::
-     *  nlimi,nstsi,natmi,nmoli,nioni
+     *  nlimi,nstsi,natmi,nmoli,nioni,nlim1
 cank
       integer, save ::
      *  mcol,scol,vcol,ocol,ecol,acol,zcol,y_transform_l,
@@ -181,6 +182,7 @@ cank
       allocate(cr(-1:nxd,-1:nyd))
       allocate(cz(-1:nxd,-1:nyd))
       allocate(nh(-1:nxd,-1:nyd))
+      allocate(zeff(-1:nxd,-1:nyd))
       allocate(uutraj(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vvtraj(-1:nxd,-1:nyd,0:nsd-1))
 #ifndef PSR
@@ -283,6 +285,7 @@ cank
       deallocate(cr)
       deallocate(cz)
       deallocate(nh)
+      deallocate(zeff)
       deallocate(uutraj)
       deallocate(vvtraj)
 #ifndef PSR

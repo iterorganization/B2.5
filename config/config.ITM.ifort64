@@ -66,7 +66,7 @@ GRLIBES  = ${LD_NCARG} ${LD_MSCL}
 LDLIBES  = ${LD_NETCDF} ${LD_NAG}
 
 ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 #wd: removed; seems to be unused
@@ -79,11 +79,16 @@ endif
 
 ifdef IMAS_PREFIX
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
-LDLIBES   += ${LD_UAL}
+IMASLIBS   = ${LD_UAL} -lggd-ifort
+else
+ifdef ITM_ENVIRONMENT_LOADED
+INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
+IMASLIBS = ${LD_UAL} -lUALFORTRANInterface_ifort
+endif
 endif
 
 ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 

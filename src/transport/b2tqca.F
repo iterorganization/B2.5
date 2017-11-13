@@ -63,7 +63,7 @@
 *   ..local variables
       integer ncall, model, n2, ix, iy, is, js
       integer, save :: icase = 0                                      !srv 20.09.11
-      integer, save :: iout = 0,                                      !srv 16.06.08
+      integer, save :: iout = 0, iout_b2wdat=0,                       !srv 16.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0, iout_b2npmo = 0
       character chns*3                                                !srv 16.06.08
       real (kind=R8) :: 
@@ -112,6 +112,7 @@
         call ipgetr ('b2tqca_phm0', phm0)
         call xertst (0.0_R8.le.phm0, 'faulty input phm0')
         call ipgeti ('b2tqca_iout', iout)                            !srv 16.06.08                       
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgeti ('b2npmo_iout', iout_b2npmo)                     !srv 30.01.10
@@ -196,7 +197,8 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
           endif
          enddo
         enddo
-	if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                      .or. iout_b2wdat.eq.4) then
          write (chns,'(i3.3)') is
          call my_out(70,nx,ny,tau,'b2tqca_taua'//chns)
 	endif
@@ -211,7 +213,7 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
 
       if(iout_b2npmo.ne.0) then                                        !srv 16.06.08 30.01.10 {
        do is = 0, ns-1
-	  write (chns,'(i3.3)') is 
+        write (chns,'(i3.3)') is
         call my_out(70,nx,ny,vsa(-1,-1,0,is),'b2tqca_vsax'//chns)
         call my_out(70,nx,ny,vsa(-1,-1,1,is),'b2tqca_vsay'//chns)
 !        call my_out(70,nx,ny,na(-1,-1,is),'b2tqca_na'//chns)
@@ -222,11 +224,16 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
 !        call my_out(70,nx,ny,ne2,'b2tqca_ne2')
 !        call my_out(70,nx,ny,bb(-1,-1,0),'b2tqca_Bx')
 !        call my_out(70,nx,ny,bb(-1,-1,3),'b2tqca_BB')
-	endif                                                          !srv 16.06.08 }
-	if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      endif                                                          !srv 16.06.08 }
+
+      if(iout_b2wdat.eq.4) then                                      !srv 16.06.08 30.01.10 {
+        call my_out(70,nx,ny,lnlam,'b2tqca_lnlam')
+      endif
+
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
         call my_out(70,nx,ny,hci(-1,-1,0),'b2tqca_hcix')
         call my_out(70,nx,ny,hci(-1,-1,1),'b2tqca_hciy')
-	endif                                                          !srv 16.06.08 30.01.10 }
+      endif                                                          !srv 16.06.08 30.01.10 }
 
 * ..return
       ncall = ncall+1

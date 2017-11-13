@@ -481,6 +481,10 @@ cxpb-end
       if(newversion.ge.'01.001.063') then          !srv 15.02.11
 	call cfwure (nput, n2*2, pbs, 'pbs')
       endif
+      if(newversion.ge.'03.000.006') then
+        idum(0)=redef_pbs
+        call cfwuin (nput, 1, idum, 'redef_pbs')
+      endif
 * ..return
       call subend ()
       return

@@ -26,7 +26,7 @@ c
 c*** Local variables
 c
       integer ix,iy,k
-      real (kind=R8) :: x, y, z, hlp_q, hlp_qp, hlp_si, hlp_je, zeff
+      real (kind=R8) :: x, y, z, hlp_q, hlp_qp, hlp_si, hlp_je
       real (kind=R8) :: area, pit
 c----------------------------------------------------------------------
       area(ix,iy)=gs(ix,iy,0)*qc(ix,iy)
@@ -56,22 +56,18 @@ c
         hlp_qp=hlp_q/pit(ix,ig)
         hlp_si=0.0_R8
         hlp_je=0.0_R8
-        zeff=0.0_R8
         do k=0,ns-1
           hlp_je=hlp_je+fna(ix,ig,0,k)*rza(ix,ig,k)
           hlp_si=hlp_si+b2stbr_sna(ix,ig,k)
-          zeff=zeff+rz2(ix,ig,k)*na(ix,ig,k)
         end do
         do k=0,ns_ext-1
           hlp_je=hlp_je+fa_ext(ix,ig,0,k)*za_ext(ix,ig,k)
-          zeff=zeff+za2_ext(ix,ig,k)*na_ext(ix,ig,k)
         end do
         hlp_je=hlp_je/(area(ix,ig)*pit(ix,ig))
         hlp_si=hlp_si/vol(ix,ig)
-        zeff=zeff/ne(ix,ig)
 c
         write(lun,700) z,x,ne(ix,ig),te(ix,ig)/ev,hlp_q,hlp_qp,hlp_si,
-     ,                                               zeff,hlp_je
+     ,                                             zeff(ix,ig),hlp_je
         x=x+0.5_R8*hx(ix,ig)
         z=z+y
   700   format(1p,48e12.4)

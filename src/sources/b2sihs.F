@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sihs (nx, ny, ns, BoRiS, fac_ExB, hx, hy, qz,         !xpb
+      subroutine b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, !xpb !srv 05.07.17
      1  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,             !xpb !srv 01.07.09
      2  fch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0, vti32)
       use b2mod_types
@@ -17,12 +17,16 @@
      &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
      &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
      &          balance_netcdf
+      use b2mod_transport_fun                                            !srv 05.07.17
+      use b2mod_external                                                 !srv 05.07.17
+      use b2mod_geo
+     , , only : hz                                                       !srv 05.07.17
 #ifdef WITH_FTIMINGS
       use timings
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns                                                 !xpb
+      integer nx, ny, ns, ismain                                         !xpb !srv 05.07.15
       real (kind=R8) ::
      *  BoRiS, fac_ExB(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
      &  vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), na(-1:nx,-1:ny,0:ns-1),
@@ -58,19 +62,35 @@
 *   ..local variables
       integer ncall, style, n2, ix, iy, is, isb, nsmin, nsmax
       integer, save :: icase = 0
-      integer, save :: istyle_Joule_heating = 1                       !srv 17.01.14
+      integer, save :: istyle_Joule_heating = 1                         !srv 17.01.14
+      integer, save :: b2sigp_style = 2                                 !srv 05.07.17
+      integer, save :: use_eirene = 0
+      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 {
+      real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)  !lk 31.01.08 }
+      character chns*3                                                  !srv 05.07.17
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
      &  phm4, phm5, phm6, phm7, work(-1:nx,-1:ny), 
-     &  wpov(-1:nx,-1:ny), wpoh(-1:nx,-1:ny)
+     &  wpov(-1:nx,-1:ny), wpoh(-1:nx,-1:ny),
+     *  ehx(-1:nx,-1:ny), ehy(-1:nx,-1:ny)                              !srv 13.01.17
+      real (kind=R8) ::
+     3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny), ce1(-1:nx,-1:ny),         !srv 13.01.17 05.07.17 {
+     4  ce2(-1:nx,-1:ny), cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny),
+     5  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
+     6  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
+     &  shefr(-1:nx,-1:ny,0:3), shifr(-1:nx,-1:ny,0:3),                 !srv 05.07.17
+     &  smbch(-1:nx,-1:ny), smbtf(-1:nx,-1:ny),
+     &  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
+     &  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3),             !srv 13.01.17 05.07.17 }
+     &  shest(-1:nx,-1:ny,0:3)                                          !srv 17.12.13
       save ncall, style, rf0, rf1, rf2, rf3, rf4, 
      &  phm0, phm1, phm2, phm3, phm4, phm5, phm6, phm7, nsmin, nsmax
       real (kind=R8) ::
-     *  t0, t1, ctaup, coef
+     *  t0, t1, ctaup, coef, czetap, czetae                             !srv 05.07.17
 *   ..procedures
       intrinsic min, max, sqrt, log, mod
       real (kind=R8) ::
-     *  uasx, uesx, uasy, ehx, ehy, hy1
+     *  uasx, uesx, uasy, hy1                                           !srv 13.01.17
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvsg, intfacev, intfaceh
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
@@ -83,16 +103,6 @@
       uasy(ix,iy,is)=(hy1(ix,iy)*ua(bottomix(ix,iy),bottomiy(ix,iy),is)+
      1  hy1(bottomix(ix,iy),bottomiy(ix,iy))*ua(ix,iy,is))/
      2 (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))*pbs(ix,iy,1)
-      ehx(ix,iy) = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &  (ne(ix,iy)*te(ix,iy)-
-     &   ne(leftix(ix,iy),leftiy(ix,iy))*
-     &   te(leftix(ix,iy),leftiy(ix,iy)))*(2.0_R8/qe)/
-     &  (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))
-      ehy(ix,iy) = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &  (ne(ix,iy)*te(ix,iy)-
-     &   ne(bottomix(ix,iy),bottomiy(ix,iy))*
-     &   te(bottomix(ix,iy),bottomiy(ix,iy)))*(2.0_R8/qe)/
-     &  (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))
 *   ..initialisation
       data ncall/0/, style/0/
       data rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/,
@@ -142,6 +152,7 @@
        call ipgeti ('b2tlnl_ii', icase)
        call xertst (0.eq.icase .or. 1.eq.icase, 
      &               'faulty input b2tlnl_ii')
+       call ipgetr ('b2tfhe_stochastic', fch_stochastic)           !lk 31.01.08
        call ipgeti ('b2sihs_istyle_Joule_heating', istyle_Joule_heating)  !srv 17.01.14
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
@@ -156,6 +167,8 @@
           nsmax=0
        endif
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
+       call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
+       call ipgeti ('b2mndr_eirene', use_eirene)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -196,7 +209,7 @@
 !xpb vary with space and species.
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
-      ctaup = t0*sqrt(mp)                                          !xpb
+      ctaup = t0*sqrt(mp)                                                !xpb
 *   ..compute vti32
       do iy = -1, ny
        do ix = -1, nx
@@ -208,8 +221,32 @@
 *   ..initialise sources to zero
       call sfill (n2*4, 0.0_R8, she0, 1)
       call sfill (n2*4, 0.0_R8, shi0, 1)
+      call sfill (n2*4, 0.0e0_R8, shest, 1)                        !srv 17.12.13
 *   ..compute the Coulomb logarithm
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
+*   ..contribution from stochastic electron flow
+      if(fch_stochastic.ne.0.0e0_R8) then                          !lk 31.01.08 { !srv 17.12.13
+       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
+     &      fchstoch)
+       do iy = 0, ny-1
+        do ix = 0, nx-1
+         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+          shest(ix,iy,0) = shest(ix,iy,0)-
+     &    (ne(topix(ix,iy),topiy(ix,iy))*te(topix(ix,iy),topiy(ix,iy))
+     &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
+     &    *te(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
+     &    *(fchstoch(ix,iy)*(hy(ix,iy)
+     &    +hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    +fchstoch(topix(ix,iy),topiy(ix,iy))*(hy(ix,iy)
+     &    +hy(topix(ix,iy),topiy(ix,iy)))
+     &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
+          endif
+        enddo
+       enddo
+      endif                                                               !lk 31.01.08 }
+      call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
 *   ..contribution from divergence(ue,ve)
 !xpb !!! The radial derivative terms uesy are non-conservative !!!
 cxpb    t0 = -phm0*((uesx(rightix(ix,iy),rightiy(ix,iy))-uesx(ix,iy))    !xpb
@@ -335,69 +372,176 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         shitmp=shi0
       endif
       do is = 0, ns-1
-       do iy = -1, ny
-        do ix = -1, nx
-         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &      region(ix,iy,0).ne.0) then
-          t0 = phm2*vol(ix,iy)*(1.0_R8-BoRiS)*4.0e0_R8/3.0e0_R8*
+       if(.not.is_neutral(is).or.use_eirene.eq.0) then
+        do iy = -1, ny
+         do ix = -1, nx
+          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &       bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
+     &       region(ix,iy,0).ne.0) then
+           t0 = phm2*vol(ix,iy)*(1.0_R8-BoRiS)*     ! 4.0e0_R8/3.0e0_R8* cvsa already has 4/3 !srv 16.10.17
      &      (cvsa(ix,iy,0,is)*(ua(ix,iy,is)-
      &          ua(leftix(ix,iy),leftiy(ix,iy),is))**2/
      &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
      &       cvsa(rightix(ix,iy),rightiy(ix,iy),0,is)*
      &  (ua(rightix(ix,iy),rightiy(ix,iy),is)-ua(ix,iy,is))**2/
      &       (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy))))
-          shi0(ix,iy,0) = shi0(ix,iy,0)+(1.0_R8+rf2)*t0
-          shi0(ix,iy,3) = shi0(ix,iy,3)-rf2*t0/(ni(ix,iy,0)*ti(ix,iy))
-          b2visa(region(ix,iy,0))=b2visa(region(ix,iy,0))+t0
-          b2sihs_visa(ix,iy)=b2sihs_visa(ix,iy)+t0
+           shi0(ix,iy,0) = shi0(ix,iy,0)+(1.0_R8+rf2)*t0
+           shi0(ix,iy,3) = shi0(ix,iy,3)-rf2*t0/(ni(ix,iy,0)*ti(ix,iy))
+           b2visa(region(ix,iy,0))=b2visa(region(ix,iy,0))+t0
+           b2sihs_visa(ix,iy)=b2sihs_visa(ix,iy)+t0
 *!!      (viscous heating from d/dy is temporarily ignored)
-         endif
+          endif
+         enddo
         enddo
-       enddo
+       endif
       enddo
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_visa0to3=shi0-shitmp
       endif
-*   ..contribution from electron-atom friction
-*     (a.k.a. Joule heating)
-      b2joule=0.0_R8
-      b2sihs_joule=0.0_R8
-      if (balance_netcdf.ne.0) then !djm Jan2017
-        shetmp=she0
-      endif
-      do iy = -1, ny
-       do ix = -1, nx
-        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+
+*   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
+*     in case of small impurity amount see below for b2sigp_style.ne.2
+      if(b2sigp_style.eq.2) then                                         !srv 05.07.17
+       call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
+       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                       !srv 13.01.17 {
+       call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+       do iy = -1, ny
+         do ix = -1, nx
+           ce1(ix,iy)=fce1(zeff(ix,iy))
+           ce2(ix,iy)=fce2(zeff(ix,iy))
+           cimp1(ix,iy)=fce1(zmff(ix,iy))
+           cimp2(ix,iy)=fce2(zmff(ix,iy))
+         enddo
+       enddo                                                             !srv 13.01.17 }
+*   ..compute the Coulomb logarithm
+       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
+*   ..compute zetap and zetae
+       t1 = (4.0_R8*pi*eps0/qe)/qe
+       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
+       czetap = t0*sqrt(mp)
+       czetae = t0*sqrt(me)
+       zetap = czetap*(ti/ev)*sqrt(ti/ev)/lnlam
+       zetae = czetae*(te/ev)*sqrt(te/ev)/lnlam
+*   ..compute gti,gte
+       do iy = -1, ny
+         do ix = -1, nx
+           if(leftix(ix,iy).eq.-2) then
+             gti(ix,iy) = 0.0_R8
+             gte(ix,iy) = 0.0_R8
+           else
+             gti(ix,iy) = (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))/
+     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
+             gte(ix,iy) = (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
+     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
+           endif
+         enddo
+       enddo
+       shifr = 0.0_R8
+       shefr = 0.0_R8
+       do is = 0,ns-1
+         if(.not. is_neutral(is)) then
+           call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,
+     &      ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2,   !srv 05.07.17
+     &      cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,      !srv 05.07.17
+     &      smbch, smbtf)
+           work =
+     &      (smbfrea(:,:,0)+
+     &       smbfrea(:,:,1)*ua(:,:,is)+
+     &       smbfrea(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbfrea(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is))+
+     &      (smbtfea(:,:,0)+
+     &       smbtfea(:,:,1)*ua(:,:,is)+
+     &       smbtfea(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbtfea(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is))
+           shefr(:,:,0) = shefr(:,:,0) + work
+           shifr(:,:,0) = shifr(:,:,0) + ua(:,:,is)*(work+
+     &      (smbfria(:,:,0)+
+     &       smbfria(:,:,1)*ua(:,:,is)+
+     &       smbfria(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbfria(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is))+
+     &      (smbtfia(:,:,0)+
+     &       smbtfia(:,:,1)*ua(:,:,is)+
+     &       smbtfia(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbtfia(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is))
+     &                                               )
+         endif
+       enddo
+       shefr(:,:,0) =  ue*shefr(:,:,0)
+
+       b2joule=0.0_R8
+       b2sihs_joule=0.0_R8
+       b2fraa=0.0_R8
+       b2sihs_fraa=0.0_R8
+       do iy = 0,ny-1
+         do ix =0,nx-1
+           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &     bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &     region(ix,iy,0).ne.0) then
-         t0 = fch(ix,iy,0)*ehx(ix,iy)/
+             t0 = phm3*vol(ix,iy)*shefr(ix,iy,0)
+!            shefr(ix,iy,0) = t0
+             shefr(ix,iy,0) = max(0.0e0_R8,t0)+rf3*abs(t0)
+             shefr(ix,iy,3) =
+     &        (min(0.0e0_R8,t0)-rf3*abs(t0))/(ne(ix,iy)*te(ix,iy))
+             b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
+             b2sihs_joule(ix,iy)=t0
+             t0 = - phm4*vol(ix,iy)*shifr(ix,iy,0)
+!            shifr(ix,iy,0) = t0
+!             shifr(ix,iy,0) = (2.5e0_R8+rf4)*t0
+!             shifr(ix,iy,3) = -(1.5e0_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
+             shifr(ix,iy,0) = max(0.0e0_R8,t0)+rf4*abs(t0)
+             shifr(ix,iy,3) =
+     &        (min(0.0e0_R8,t0)-rf4*abs(t0))/(ni(ix,iy,0)*ti(ix,iy))
+             b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
+             b2sihs_fraa(ix,iy)=t0
+           endif
+         enddo
+       enddo
+       call b2saxpy (n2*4, 1.0e0_R8, shefr, 1, she0, 1)
+       call b2saxpy (n2*4, 1.0e0_R8, shifr, 1, shi0, 1)
+      else                                                               !srv 05.07.17
+
+*    ..contribution from electron-atom friction
+*      (a.k.a. Joule heating)
+       call b2xehx (nx, ny, hx, te, po, ne, ehx)                         !srv 13.01.17
+       if (istyle_Joule_heating.eq.0)
+     &   call b2xehy (nx, ny, hy, qz, te, po, ne, ehy)                   !srv 13.01.17
+       b2joule=0.0_R8
+       b2sihs_joule=0.0_R8
+       if (balance_netcdf.ne.0) then !djm Jan2017
+        shetmp=she0
+       endif
+       do iy = -1, ny
+        do ix = -1, nx
+         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &     bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
+     &     region(ix,iy,0).ne.0) then
+          t0 = fch(ix,iy,0)*ehx(ix,iy)/
      &     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
      &      fch(rightix(ix,iy),rightiy(ix,iy),0)*
      &      ehx(rightix(ix,iy),rightiy(ix,iy))/
      &     (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
-         if (istyle_Joule_heating.eq.0) t0 = t0 +
+          if (istyle_Joule_heating.eq.0) t0 = t0 +
      &      fch(ix,iy,1)*ehy(ix,iy)/
      &     (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
      &      fch(topix(ix,iy),topiy(ix,iy),1)*
      &      ehy(topix(ix,iy),topiy(ix,iy))/
      &     (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
-         t0 = phm3*vol(ix,iy)*t0
-         she0(ix,iy,0) = she0(ix,iy,0)+max(0.0_R8,t0)+rf3*abs(t0)
-         she0(ix,iy,3) = she0(ix,iy,3)+
+          t0 = phm3*vol(ix,iy)*t0
+          she0(ix,iy,0) = she0(ix,iy,0)+max(0.0_R8,t0)+rf3*abs(t0)
+          she0(ix,iy,3) = she0(ix,iy,3)+
      &     (min(0.0_R8,t0)-rf3*abs(t0))/(ne(ix,iy)*te(ix,iy))
-         b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
-         b2sihs_joule(ix,iy)=t0
-        endif
+          b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
+          b2sihs_joule(ix,iy)=t0
+         endif
+        enddo
        enddo
-      enddo
-      if (balance_netcdf.ne.0) then !djm Jan2017
+       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_joule0to3=she0-shetmp
-      endif
+       endif
 *   ..contribution from atom-atom friction
-      b2fraa=0.0_R8
-      b2sihs_fraa=0.0_R8
-      if (balance_netcdf.ne.0) then !djm Jan2017
+       b2fraa=0.0_R8
+       b2sihs_fraa=0.0_R8
+       if (balance_netcdf.ne.0) then !djm Jan2017
         shitmp=shi0
       endif
 
@@ -564,7 +708,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
             write(*,*) 'str t0=0 ix,iy,is,uasy(ix,iy,is) ',
      1       ix,iy,is,uasy(ix,iy,is)
             write(*,*)
-     1       hy1(ix,iy),ua(bottomix(ix,iy),bottomiy(ix,iy),is),
+     &       hy1(ix,iy),ua(bottomix(ix,iy),bottomiy(ix,iy),is),
      1       hy1(bottomix(ix,iy),bottomiy(ix,iy)),ua(ix,iy,is),
      2       pbs(ix,iy,1)
             write(*,*) 'T1, T2 ',

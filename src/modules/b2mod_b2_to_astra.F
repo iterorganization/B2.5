@@ -10,7 +10,7 @@ csw 09jan2014 extra module to define some arrays
       use b2mod_types
       use b2mod_astra_to_b2
       use b2mod_neutrals_namelist
-     , ,only: b2espcr, mlcmp
+     , ,only: b2eatcr, mlcmp
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_extrab25
@@ -217,6 +217,7 @@ csw 09jan2014 add extra allocates
          do iy = 0,mintopcut   ! for closed surfaces and through separatrix
           sfna(iy,is)     = 0.0_R8
           sfna_mdf(iy,is) = 0.0_R8
+          if(nnreg(0).eq.1.and.periodic_bc.eq.0) cycle
           if(.not.is_neutral(is)) then
            do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
@@ -262,25 +263,26 @@ csw 09jan2014 add extra allocates
          enddo
 
 #ifdef B25_EIRENE
-         if (is_neutral(is)) isa = b2espcr(is)
-         if (is_neutral(is) .and. isa.ne.-1) then
+         if (is_neutral(is)) isa = b2eatcr(is)
+         if (is_neutral(is) .and. isa.gt.0) then
           do iy = 0,mintopcut   ! for closed surfaces and through separatrix
+           if (nnreg(0).eq.1 .and. periodic_bc.eq.0) cycle
            do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
      &         mod(region(ix,iy,0),4).eq.2) then
-             sfna(iy,is) = sfna(iy,is) + 
+             sfna(iy,is) = sfna(iy,is) +
      &                     rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-             sfna_mdf(iy,is) = sfna_mdf(iy,is) + 
+             sfna_mdf(iy,is) = sfna_mdf(iy,is) +
      &                     rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
+             do ism = 1,nnmoli
+              if (mlcmp(isa,ism).gt.0) then
+               sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
+     &                       rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+               sfna_mdf(iy,is) = sfna_mdf(iy,is) + mlcmp(isa,ism)*
+     &                       rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+              endif
+             enddo
             endif
-            do ism = 1,nnmoli
-             if (mlcmp(isa,ism).gt.0) then
-              sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
-     &                      rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
-              sfna_mdf(iy,is) = sfna_mdf(iy,is) + mlcmp(isa,ism)*
-     &                      rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
-             endif
-            enddo
            enddo
           enddo
 
@@ -294,12 +296,10 @@ csw 09jan2014 add extra allocates
      &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) 
      >        then
-              do isa = 1,nnatmi
                sfna(iy,is) = sfna(iy,is) + 
      &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
                sfna_mdf(iy,is) = sfna_mdf(iy,is) + 
      &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-              enddo
               do ism = 1,nnmoli
                if (mlcmp(isa,ism).gt.0) then
                 sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
@@ -319,10 +319,8 @@ csw 09jan2014 add extra allocates
      &        (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
      &         region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
-              do isa = 1,nnatmi
-               sfna(iy,is) = sfna(iy,is) + 
-     &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-              enddo
+              sfna(iy,is) = sfna(iy,is) +
+     &                      rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
               do ism = 1,nnmoli
                if (mlcmp(isa,ism).gt.0) then
                 sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
@@ -341,6 +339,7 @@ csw 09jan2014 add extra allocates
           sfne(iy) = 0.0_R8
           sfhe_mdf(iy) = 0.0_R8
           sfhi_mdf(iy) = 0.0_R8
+          if (nnreg(0).eq.1.and.periodic_bc.eq.0) cycle
           do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
      &         mod(region(ix,iy,0),4).eq.2) then
@@ -552,11 +551,11 @@ csw 09jan2014 add extra allocates
           enddo
           call my_out(70,nxd,nyd,wrk0,
      .     'write_b2_to_astra_rfluxasy'//chns)
-!         call my_out(70,nxd,nyd,refluxa(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,refluxa(0:nxd+1,0:nyd+1,isa,1),
 !     &   'write_b2_to_astra_refluxa'//chns)
-!         call my_out(70,nxd,nyd,pfluxa(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,pfluxa(0:nxd+1,0:nyd+1,isa,1),
 !     &   'write_b2_to_astra_pfluxa'//chns)
-!         call my_out(70,nxd,nyd,pefluxa(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,pefluxa(0:nxd+1,0:nyd+1,isa,1),
 !     &   'write_b2_to_astra_pefluxa'//chns)
          enddo
          do ism = 1,nnmoli
@@ -585,19 +584,19 @@ csw 09jan2014 add extra allocates
            enddo
           enddo
          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_rfluxmsy'//chns)
-!         call my_out(70,nxd,nyd,refluxm(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,refluxm(0:nxd+1,0:nyd+1,ism,1),
 !     &   'write_b2_to_astra_refluxm'//chns)
-!         call my_out(70,nxd,nyd,pfluxm(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,pfluxm(0:nxd+1,0:nyd+1,ism,1),
 !     &   'write_b2_to_astra_pfluxm'//chns)
-!         call my_out(70,nxd,nyd,pefluxm(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,pefluxm(0:nxd+1,0:nyd+1,ism,1),
 !     &   'write_b2_to_astra_pefluxm'//chns)
         enddo
         open(70,file='write_b2_to_astra_intrl.dat')
-         write(70,*)' Index of neutral in write_b2_to_astra_intrl',intrl  
+        write(70,*)' Index of neutral in write_b2_to_astra_intrl',intrl
         close(70)
        endif                                                       !srv 14.03.12 }
 #endif         
-        ncall = ncall +1
+       ncall = ncall +1
 
 csw 09jan2014 remove contains: fun
 c        contains
@@ -608,34 +607,34 @@ c          fun = -DSEVAL(np+1,arg,p,x,CB,CC,CD)
 c         end function fun
 
 csw 09jan2014 add dealloc
-         deallocate(p,x,cb,cc,cd)
+       deallocate(p,x,cb,cc,cd)
        end subroutine write_b2_to_astra
 
 csw 09jan2014 add 'fun' function
        function fun(arg)
-         use b2mod_b2_to_astra_com  ! IGNORE
-         real(kind=R8) :: fun,arg,DSEVAL
-         fun=-DSEVAL(np+1,arg,p,x,cb,cc,cd)
+       use b2mod_b2_to_astra_com  ! IGNORE
+       real(kind=R8) :: fun,arg,DSEVAL
+       fun=-DSEVAL(np+1,arg,p,x,cb,cc,cd)
        end function fun
 
        subroutine b2_to_astra_src(nxd, nyd, vol, source, svol, src)   !srv 11.06.13
-        use b2mod_indirect
-        implicit none
+       use b2mod_indirect
+       implicit none
 !       integrated source   [1/s]
-        integer :: nxd, nyd
-        real (kind=R8) :: src(-1:nyd), source(-1:nxd,-1:nyd),
-     &                    svol(-1:nyd), vol(-1:nxd,-1:nyd)
-        integer :: ix, iy 
-        integer, save :: ncall = 0, mintopcut
+       integer :: nxd, nyd
+       real (kind=R8) :: src(-1:nyd), source(-1:nxd,-1:nyd),
+     &                   svol(-1:nyd), vol(-1:nxd,-1:nyd)
+       integer :: ix, iy
+       integer, save :: ncall = 0, mintopcut
 
 
-        if(ncall.eq.0) then
+       if(ncall.eq.0) then
          mintopcut = nyd                                    !srv 25.02.16
          if (nncut > 0) mintopcut = minval(topcut(1:nncut)) !srv 25.02.16
          do iy = 0, mintopcut-1    ! closed surfaces
           svol(iy) = 0.0_R8
           do ix = -1, nxd
-           if(mod(region(ix,iy,0),4).eq.1) then
+           if(on_closed_surface(ix,iy)) then
             svol(iy) = svol(iy) + vol(ix,iy)
            endif
           enddo
@@ -648,28 +647,28 @@ csw 09jan2014 add 'fun' function
          enddo
 !         write (*,"(a, i5)") '    svol ncall=', ncall
 !         write (*,"(es15.7)") svol 
-        endif
+       endif
 
-        do iy = 0, mintopcut-1
+       do iy = 0, mintopcut-1
          do ix = -1, nxd
-          if(mod(region(ix,iy,0),4).eq.1) then   ! closed surfaces
+          if(on_closed_surface(ix,iy)) then   ! closed surfaces
 !          src(iy) = src(iy) + vol(ix,iy)*source(ix,iy)
            src(iy) = src(iy) + source(ix,iy)   ! source has been multiplied by vol
           endif
          enddo
-        enddo
-        do iy = mintopcut,nyd-1   ! open surfaces
+       enddo
+       do iy = mintopcut,nyd-1   ! open surfaces
          do ix = 0,nxd-1          !   -1, nxd
 !          src(iy) = src(iy) + vol(ix,iy)*source(ix,iy)
            src(iy) = src(iy) + source(ix,iy)   ! source has been multiplied by vol
          enddo
-        enddo
+       enddo
 !         write (*,"(a, i5)") '       src         svol      ncall=', ncall
 !         do iy = 0, nyd-1
 !          write (*,"(2es15.7)") src(iy),svol(iy) 
 !        enddo
 
-        ncall = ncall + 1
+       ncall = ncall + 1
        end subroutine b2_to_astra_src
 
       end module b2mod_b2_to_astra                                  !srv 28.07.11 }

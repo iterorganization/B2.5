@@ -71,7 +71,11 @@ C
       call xertst (0.le.isymm.and.isymm.le.4,
      &  'faulty argument isymm')
 
+#ifndef HPUX
       inquire(file='fort.46',exist=ex)
+#else
+      inquire(file='ftn46',exist=ex)
+#endif
       if (.not.ex) then
         call subend ()
         return
@@ -99,7 +103,11 @@ C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
         WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
         WRITE (*,*) ' IN ELEMENTS AND NEIGHBOR FILES'
         WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
+#ifndef HPUX
         call xerrab('Mismatch between fort.34 and fort.35 files!')
+#else
+        call xerrab('Mismatch between ftn34 and ftn35 files!')
+#endif
       END IF
 
       CALL EIRENE_ALLOC_CTRIG
@@ -115,7 +123,11 @@ C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
       READ(33,*,IOSTAT=IO) (YTRIAN(I),I=1,NRKNOT)
       IF(IO.GT.0) THEN
 C TO READ THE FILE PRODUCED BY DOS
+#ifndef HPUX
         WRITE(*,*) "Cannot read fort.33 in regular way"
+#else
+        WRITE(*,*) "Cannot read ftn33 in regular way"
+#endif
         WRITE(*,*) "Trying to read line by line..."
         REWIND 33
         READ(33,*) NRKNOT
@@ -185,11 +197,20 @@ C
         WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
         WRITE (*,*) ' IN GRID AND DATA FILES'
         WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
+#ifndef HPUX
         call xerrab('Mismatch between fort.34 and fort.46 files!')
+#else
+        call xerrab('Mismatch between ftn34 and ftn46 files!')
+#endif
       END IF
       READ(46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
-      write(*,'(a,4i6)') 
+#ifndef HPUX
+      write(*,'(a,4i6)')
      . ' Dimensions in fort.46 = ',ntrii,natmi,nmoli,nioni
+#else
+      write(*,'(a,4i6)')
+     . ' Dimensions in ftn46 = ',ntrii,natmi,nmoli,nioni
+#endif
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
@@ -259,6 +280,27 @@ C
       call read_title(46)
       read(46,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,nioni)
 
+* Volumes
+C
+      if (jvft46.ge.20170930) then
+        call read_title(46)
+        read(46,'(6e15.7)') (triangle_vol(j),j=1,ntrii)
+        triangle_vol = triangle_vol/1.0e6_R8   ! convert to m^3
+        if (.not.allocated(pux)) then
+          allocate(pux(ntrii))
+          allocate(puy(ntrii))
+          allocate(pvx(ntrii))
+          allocate(pvy(ntrii))
+        end if
+        call read_title(46)
+        read(46,'(6e15.7)') (pux(j),j=1,ntrii)
+        call read_title(46)
+        read(46,'(6e15.7)') (puy(j),j=1,ntrii)
+        call read_title(46)
+        read(46,'(6e15.7)') (pvx(j),j=1,ntrii)
+        call read_title(46)
+        read(46,'(6e15.7)') (pvy(j),j=1,ntrii)
+      end if
 #endif
 
 *  ---------------------------------------------------------------------
@@ -270,6 +312,7 @@ C
 *=======================================================================
 *//END NTREAD//
 
+#ifndef HPUX
 1983  WRITE(*,*)
      w     "ERROR IN NTREAD: CANNOT OPEN FORT.33 ",
      .     "(NODES OF TRIANGULAR GRID)"
@@ -281,6 +324,19 @@ C
 1985  WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FORT.35 ",
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
       call xerrab('Cannot open fort.35 file!')
+#else
+1983  WRITE(*,*)
+     w     "ERROR IN NTREAD: CANNOT OPEN FTN33 ",
+     .     "(NODES OF TRIANGULAR GRID)"
+      call xerrab('Cannot open ftn33 file!')
+1984  WRITE(*,*)
+     w     "ERROR IN NTREAD: CANNOT OPEN FTN34 ",
+     .     "(TABLE OF CELLS OF TRIANGULAR GRID)"
+      call xerrab('Cannot open ftn34 file!')
+1985  WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FTN35 ",
+     .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
+      call xerrab('Cannot open ftn35 file!')
+#endif
       END
 
 

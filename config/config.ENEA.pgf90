@@ -37,6 +37,11 @@ FCOPTS = -fast -Mvect=nofuse -Mbackslash -mp=nonuma
 endif
 endif
 
+ifdef IMAS_PREFIX
+INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
+IMASLIBS = ${LD_UAL} -lggd-pgi
+endif
+
 DBLFC = ${FC}
 DBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
@@ -55,7 +60,7 @@ LDLIBES = ${LD_NAG} ${LD_NETCDF} -L/afs/efda-itm.eu/project/switm/netcdf/amd64_p
 	-rpath /afs/efda-itm.eu/project/lsf/7.0/linux2.6-glibc2.3-x86_64/lib
 
 ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 LD = pgf90

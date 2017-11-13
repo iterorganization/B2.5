@@ -1274,9 +1274,9 @@ C
 C-----------------------------------------------------------------------
 C
 C-----------------------------------------------------------------------
-C  IDENTIFY ADAS SOURCE DATA USER ID, GROUPNAME , TYPENAME
+C  IDENTIFY ADAS SOURCE DATA USER ID, GROUPNAME, TYPENAME
 C  AND FILE EXTENSION
-CA NOTE THAT UNDER UNIX TYPENAME IS AN OPTIONAL SUBDIRECTORY.
+C  NOTE THAT UNDER UNIX TYPENAME IS AN OPTIONAL SUBDIRECTORY.
 C-----------------------------------------------------------------------
 C
       USERID = '?'

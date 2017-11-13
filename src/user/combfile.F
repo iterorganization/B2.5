@@ -543,8 +543,8 @@ c*** Dummy data transformation routine
       use b2mod_types
       use b2mod_diag
       implicit none
+      integer :: nmrk, nhdr 
       real (kind=R8) :: data(nhdr)
-      integer :: nmrk, nhdr
       integer :: mrks(nmrk)
       character*(mhdr) chdr(nhdr)
       logical first

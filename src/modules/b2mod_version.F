@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10 :: newversion ='03.000.005'
+      character*10 :: newversion ='03.000.006'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',
@@ -134,7 +134,7 @@ c                                 corrected the diagnostic output of fhe and fhi
 c    Version 01.001.054  12.04.10 corrected the calculation of thermal force in b2sifr_.F
 c    Version 01.001.055  19.04.10 added the calculation of anomalous velocity for H-regime in b2tqna.F
 c                                 added additional diagnostic into b2stbr.F for B2-Eirene case
-c                                 corrected output of dab2, dmb2 and tab2,tmb2 in b2wdat.F
+c                                 corrected output of dab2,dmb2 and tab2,tmb2 in b2wdat.F
 c    Version 01.001.056  06.07.10 modified the condition of solving of equations for Ua in b2npmo.F
 c                        12.07.10 corrected the calculation of transport parameters for H-regime
 c                                 for UDND and LDND cases in b2tqna.F
@@ -267,4 +267,9 @@ c                                 fna_eir, fne_eir, fhe_eir, fhi_eir,
 c                                 fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
 c                                 fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c                                 vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
+c    Version 03.000.006  29.06.19 New default model b2sigp_style.eq.2
+c                                 Added redef_pbs switch to b2fgmtry file
+c                                 Added cflim(3:4) flux limit factors for
+c                                 thermo-electric coefficient and friction terms
+c                                 Added flux limit coefficients to b2mod_transport
 c

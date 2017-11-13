@@ -39,6 +39,8 @@
 !
 
 #define DEF_NSD 42
+#define DEF_NBC 6*(DEF_NCUT/2+1)
+#define DEF_NISO 10
 
 !
 ! parameters that are unique to Eirene

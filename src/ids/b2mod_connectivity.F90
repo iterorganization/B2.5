@@ -7,6 +7,7 @@ module b2mod_connectivity
   use helper
 
   implicit none
+#include "DIMENSIONS.F"
 
   ! constant to mark in connectivity arrays that no connectivity available
   integer, parameter :: NO_CONNECTIVITY = huge(0)
@@ -60,7 +61,7 @@ module b2mod_connectivity
       &  /), &
       &  (/ REGIONTYPE_COUNT, GEOMETRY_COUNT /) )
 
-  ! Region names 
+  ! Region names
   ! First dimension: geometry type (given in comments)
   ! Second dimension: region type
   ! Third dimension: region index
@@ -195,11 +196,11 @@ contains
   !> rightcut(i) holds the right boundary index + 1 of a region which is cut
   !> This means the region range in the x direction is (leftcut(i):rightcut(i))
 
-  subroutine init_connectivity(nx1,ny1,crx1,cry1,cflag,& 
-      & leftix1,leftiy1,rightix1,rightiy1, & 
-      & topix1,topiy1,bottomix1,bottomiy1, & 
-      & leftcut1,rightcut1,bottomcut1,topcut1, & 
-      & periodic_bc,nncut,nncutmax,inseltop,inselbot, & 
+  subroutine init_connectivity(nx1,ny1,crx1,cry1,cflag,&
+      & leftix1,leftiy1,rightix1,rightiy1, &
+      & topix1,topiy1,bottomix1,bottomiy1, &
+      & leftcut1,rightcut1,bottomcut1,topcut1, &
+      & periodic_bc,nncut,nncutmax,inseltop,inselbot, &
       & geom_match_dist,istyle)
 
     use b2mod_types
@@ -208,17 +209,17 @@ contains
     !   ..input arguments (unchanged on exit)
     integer, intent(in) ::  nx1, ny1, nncutmax, istyle, periodic_bc
     real(R8), intent(in) :: geom_match_dist
-    real (kind=R8), intent(in) :: & 
+    real (kind=R8), intent(in) :: &
         & crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3)
     integer cflag(-1:nx1,-1:ny1,CARREOUT_NCELLFLAGS)
     !   .. output arguments
-    integer, intent(out) :: & 
-        & leftix1(-1:nx1,-1:ny1),leftiy1(-1:nx1,-1:ny1), & 
-        & rightix1(-1:nx1,-1:ny1),rightiy1(-1:nx1,-1:ny1), & 
-        & topix1(-1:nx1,-1:ny1),topiy1(-1:nx1,-1:ny1), & 
-        & bottomix1(-1:nx1,-1:ny1),bottomiy1(-1:nx1,-1:ny1), & 
-        & leftcut1(nncutmax),rightcut1(nncutmax), & 
-        & bottomcut1(nncutmax),topcut1(nncutmax), & 
+    integer, intent(out) :: &
+        & leftix1(-1:nx1,-1:ny1),leftiy1(-1:nx1,-1:ny1), &
+        & rightix1(-1:nx1,-1:ny1),rightiy1(-1:nx1,-1:ny1), &
+        & topix1(-1:nx1,-1:ny1),topiy1(-1:nx1,-1:ny1), &
+        & bottomix1(-1:nx1,-1:ny1),bottomiy1(-1:nx1,-1:ny1), &
+        & leftcut1(nncutmax),rightcut1(nncutmax), &
+        & bottomcut1(nncutmax),topcut1(nncutmax), &
         & nncut, inseltop, inselbot
 
     ! internal
@@ -227,20 +228,20 @@ contains
     integer :: xstep, ystep, nNb
     logical :: cutFound, cellFound, fullGrid
 
-    real (kind=R8) :: & 
+    real (kind=R8) :: &
         &  dist
     integer ix1,iy1,ip1,ix2,iy2,ip2
-    dist(ix1,iy1,ip1,ix2,iy2,ip2)= & 
-        & sqrt((crx1(ix1,iy1,ip1)-crx1(ix2,iy2,ip2))**2+ & 
+    dist(ix1,iy1,ip1,ix2,iy2,ip2)= &
+        & sqrt((crx1(ix1,iy1,ip1)-crx1(ix2,iy2,ip2))**2+ &
         & (cry1(ix1,iy1,ip1)-cry1(ix2,iy2,ip2))**2)
     ! Matches right face of cell ix1, iy1 to left face of ix1, ix2
     logical matchLeft, matchBottom
-    matchLeft(ix1,iy1,ix2,iy2)= & 
-        & (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt. & 
+    matchLeft(ix1,iy1,ix2,iy2)= &
+        & (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt. &
         & geom_match_dist
     ! Matches top face of cell ix1, iy1 to bottom face of ix2, ix2
-    matchBottom(ix1,iy1,ix2,iy2)= & 
-        & (dist(ix1,iy1,2,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,1)).lt. & 
+    matchBottom(ix1,iy1,ix2,iy2)= &
+        & (dist(ix1,iy1,2,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,1)).lt. &
         & geom_match_dist
 
     nncut=0
@@ -332,7 +333,7 @@ contains
         end do
     end do
 
-    ! Fix connectivity to match B2 convention   
+    ! Fix connectivity to match B2 convention
     do iy=-1,ny1
         do ix=-1,nx1
             if (leftix1(ix, iy) == NO_CONNECTIVITY) then
@@ -354,9 +355,9 @@ contains
         end do
     end do
 
-    ! second step (only for "classical" grids with no cell type information): 
+    ! second step (only for "classical" grids with no cell type information):
     ! identify ghost cells
-    
+
     if ( count(isGhostCell(cflag(:,:,CELLFLAG_TYPE))) == 0 ) then
 
        ! find guard cells
@@ -377,7 +378,7 @@ contains
        ! mark boundary cells
        do iy=-1,ny1
           do ix=-1,nx1
-             
+
              if (.not. isGhostCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
 
              if (isInDomain(nx1, ny1, leftix1(ix, iy), leftiy1(ix, iy))) then
@@ -414,13 +415,13 @@ contains
 
           end do
        end do
-    
+
     else
 
-    ! second step (for "extended" grids with no cell face information): 
+    ! second step (for "extended" grids with no cell face information):
     ! make sure ghost cells are not connected across different walls
     ! for full grids, we wish to allow corner cells to be connected
-    
+
       fullGrid = (count(isUnusedCell(cflag(0:nx1-1,0:ny1-1,CELLFLAG_TYPE))) == 0)
 
       do ix = -1, nx1
@@ -524,7 +525,7 @@ contains
           end if
         end do
       end do
-     
+
     end if
 
 
@@ -550,7 +551,7 @@ contains
           ! do bookkeeping for cut
           if ( (.not. (isGhostCell(cflag(ix,iy,CELLFLAG_TYPE)) &
                &  .or. isGhostCell(cflag(ixNb,iyNb,CELLFLAG_TYPE)))) &
-               & .and. (iy == iyNb) .and. (ix /= ixNb + 1) ) then               
+               & .and. (iy == iyNb) .and. (ix /= ixNb + 1) ) then
 
              ! Found a left neighbour inside the domain on same line but not directly
              ! left of the cell -> there is a cut at the left face of the cell
@@ -587,34 +588,34 @@ contains
 
        nncut=max(nncut,ic)
        if(nncut.gt.nncutmax) then
-          write(*,*) ' Increase nncutmax in b2mod_geo!'
-          write(*,*) ' nncut = ',nncut,' nncutmax = ',nncutmax
+          write(*,*) ' Increase DEF_NCUT in DIMENSIONS.F!'
+          write(*,*) ' nncut = ',nncut,' DEF_NCUT = ',DEF_NCUT
 #ifdef BUILDING_CARRE
-          if (.not.(nncut.le.nncutmax)) then
-             stop 'faulty parameter nncutmax'
+          if (.not.(nncut.le.DEF_NCUT)) then
+             stop 'faulty parameter DEF_NCUT'
           end if
 #else
-          call xertst (nncut.le.nncutmax,'faulty parameter nncutmax')
+          call xertst (nncut.le.DEF_NCUT,'faulty parameter DEF_NCUT')
 #endif
-          
+
        end if
     end do
 
     write(*,*) 'istyle',istyle,'nncut',nncut
     if(nncut.eq.0) write(*,*) 'No cuts found'
-    if(nncut.ge.1) write(*,'(1x,a,4i5)') & 
-        & 'Calculated leftcut1, rightcut1, topcut1, bottomcut1 = ', & 
+    if(nncut.ge.1) write(*,'(1x,a,4i5)') &
+        & 'Calculated leftcut1, rightcut1, topcut1, bottomcut1 = ', &
         & leftcut1(1), rightcut1(1), topcut1(1), bottomcut1(1)
-    if(nncut.ge.2) write(*,'(1x,a,4i5)') & 
-        & 'Calculated leftcut2, rightcut2, topcut2, bottomcut2 = ', & 
+    if(nncut.ge.2) write(*,'(1x,a,4i5)') &
+        & 'Calculated leftcut2, rightcut2, topcut2, bottomcut2 = ', &
         & leftcut1(2), rightcut1(2), topcut1(2), bottomcut1(2)
 
   end subroutine init_connectivity
 
 
   !> Check the connectivity for errors.
-  subroutine test_connectivity(nx,ny,crx,cry,cflag,& 
-      & leftix,leftiy,rightix,rightiy, & 
+  subroutine test_connectivity(nx,ny,crx,cry,cflag,&
+      & leftix,leftiy,rightix,rightiy, &
       & topix,topiy,bottomix,bottomiy)
 
     use b2mod_types
@@ -623,12 +624,12 @@ contains
     !   ..input arguments (unchanged on exit)
     integer, intent(in) ::  nx, ny
     integer cflag(-1:nx,-1:ny,CARREOUT_NCELLFLAGS)
-    real (kind=R8), intent(in) :: & 
+    real (kind=R8), intent(in) :: &
         & crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
-    integer, intent(in) :: & 
-        & leftix(-1:nx,-1:ny),leftiy(-1:nx,-1:ny), & 
-        & rightix(-1:nx,-1:ny),rightiy(-1:nx,-1:ny), & 
-        & topix(-1:nx,-1:ny),topiy(-1:nx,-1:ny), & 
+    integer, intent(in) :: &
+        & leftix(-1:nx,-1:ny),leftiy(-1:nx,-1:ny), &
+        & rightix(-1:nx,-1:ny),rightiy(-1:nx,-1:ny), &
+        & topix(-1:nx,-1:ny),topiy(-1:nx,-1:ny), &
         & bottomix(-1:nx,-1:ny),bottomiy(-1:nx,-1:ny)
 
     ! internal
@@ -643,7 +644,7 @@ contains
         do iy = -1, ny
 
             if ( isUnusedCell( cflag(ix, iy, CELLFLAG_TYPE) ) ) cycle
-            
+
             leftFace = .not. points_match(crx(ix,iy,0), cry(ix,iy,0), &
                  & crx(ix,iy,2), cry(ix,iy,2))
             botFace = .not. points_match(crx(ix,iy,0), cry(ix,iy,0), &
@@ -704,7 +705,7 @@ contains
 
             if (thisCellError) then
                 write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
-                write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)                           
+                write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
                 error = .true.
             end if
 
@@ -717,26 +718,26 @@ contains
 
 
 
-!!$  subroutine init_region(nx,ny,nncut,nncutmax, & 
-!!$      & leftcut,rightcut,topcut,bottomcut, & 
-!!$      & leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy, & 
-!!$      & region,nnreg,resignore, & 
+!!$  subroutine init_region(nx,ny,nncut,nncutmax, &
+!!$      & leftcut,rightcut,topcut,bottomcut, &
+!!$      & leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy, &
+!!$      & region,nnreg,resignore, &
 !!$      & crx,cry,periodic_bc,cflag)
 !!$    use b2mod_types
 !!$    implicit none
 !!$    integer, intent(in) :: nx,ny,nncut,nncutmax
-!!$    integer, intent(in) :: leftcut(nncutmax),rightcut(nncutmax), & 
-!!$        & topcut(nncutmax),bottomcut(nncutmax), & 
+!!$    integer, intent(in) :: leftcut(nncutmax),rightcut(nncutmax), &
+!!$        & topcut(nncutmax),bottomcut(nncutmax), &
 !!$        & leftix(-1:nx,-1:ny),leftiy(-1:nx,-1:ny),&
-!!$        & rightix(-1:nx,-1:ny),rightiy(-1:nx,-1:ny), & 
+!!$        & rightix(-1:nx,-1:ny),rightiy(-1:nx,-1:ny), &
 !!$        & topix(-1:nx,-1:ny),topiy(-1:nx,-1:ny),&
 !!$        & bottomix(-1:nx,-1:ny),bottomiy(-1:nx,-1:ny), periodic_bc
 !!$    integer, intent(inout) :: cflag(-1:nx,-1:ny,CARREOUT_NCELLFLAGS)
-!!$    real (kind=R8), intent(in) :: & 
+!!$    real (kind=R8), intent(in) :: &
 !!$        & crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 !!$
 !!$    integer, intent(out) :: &
-!!$        & region(-1:nx,-1:ny,0:2),nnreg(0:2), & 
+!!$        & region(-1:nx,-1:ny,0:2),nnreg(0:2), &
 !!$        & resignore(-1:nx,-1:ny,1:2)
 !!$    !
 !!$    !      Cylindrical slab (core) case
@@ -747,7 +748,7 @@ contains
 !!$    !    ||                             ||
 !!$    !    ||                             ||
 !!$    !    ++-----------------------------++
-!!$    !                               
+!!$    !
 !!$    !    ++-----------------------------++
 !!$    !    ||                             ||
 !!$    !    ||                             ||
@@ -755,7 +756,7 @@ contains
 !!$    !    ||                             ||
 !!$    !    ||                             ||
 !!$    !    ++-----------------------------++
-!!$    !                                
+!!$    !
 !!$    !    ++--------------2--------------++
 !!$    !    ||                             ||
 !!$    !    ||                             ||
@@ -763,7 +764,7 @@ contains
 !!$    !    ||                             ||
 !!$    !    ||                             ||
 !!$    !    ++--------------1--------------++
-!!$    !                                                                  
+!!$    !
 !!$    !            Limiter case (ID=1)
 !!$    !    +-------------------------------+
 !!$    !    |                               |
@@ -986,37 +987,37 @@ contains
 !!$    ! region 8 === right outboard divertor
 !!$    !
 !!$    ! For extended grid cases, the logic is to give the same number as in the
-!!$    ! rectangular grid case for the same topological boundary, although this 
+!!$    ! rectangular grid case for the same topological boundary, although this
 !!$    ! means mixing x- and y- directed faces for the faces in contact with the
-!!$    ! targets and the vacuum vessel walls. To do so, when a y-directed face 
-!!$    ! should be included in a traditionally x-directed surface (or vice versa), 
-!!$    ! we assign it a negative number being minus the number of the x-directed 
+!!$    ! targets and the vacuum vessel walls. To do so, when a y-directed face
+!!$    ! should be included in a traditionally x-directed surface (or vice versa),
+!!$    ! we assign it a negative number being minus the number of the x-directed
 !!$    ! region it should belong to.
-!!$    ! 
+!!$    !
 !!$
 !!$    integer ix,iy,inseliy,inselix1,inselix2,iyt,geoType, iFace, offset
 !!$    integer ixpt,ixbreak
 !!$    integer lefttargetindex(2), righttargetindex(2)
 !!$    logical CellToTest
-!!$    real (kind=R8) :: & 
+!!$    real (kind=R8) :: &
 !!$        & geom_match_dist
 !!$    data geom_match_dist/1.0e-6_R8/
 !!$    !
-!!$    real (kind=R8) :: & 
+!!$    real (kind=R8) :: &
 !!$        &  dist
 !!$    integer ix1,iy1,ip1,ix2,iy2,ip2
-!!$    dist(ix1,iy1,ip1,ix2,iy2,ip2)= & 
-!!$        & sqrt((crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2))**2+ & 
+!!$    dist(ix1,iy1,ip1,ix2,iy2,ip2)= &
+!!$        & sqrt((crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2))**2+ &
 !!$        &      (cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))**2)
 !!$    logical match
-!!$    match(ix1,iy1,ix2,iy2)= & 
-!!$        & (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt. & 
+!!$    match(ix1,iy1,ix2,iy2)= &
+!!$        & (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt. &
 !!$        & geom_match_dist
 !!$    intrinsic min, max
 !!$    !
 !!$#ifndef BUILDING_CARRE
 !!$    call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
-!!$    call xertst (geom_match_dist.gt.0.0_R8, & 
+!!$    call xertst (geom_match_dist.gt.0.0_R8, &
 !!$        &  'faulty argument geom_match_dist')
 !!$#endif
 !!$    ! if stellarator island, limiter or cylindrical slab case, find periodicity domain coordinate
@@ -1057,7 +1058,7 @@ contains
 !!$              end do
 !!$              if(ix1.eq.-2) cycle
 !!$              ix = nx
-!!$              ix2 = -2    
+!!$              ix2 = -2
 !!$              do while (ix2.eq.-2 .and. ix.gt.-2)
 !!$                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
 !!$                CellToTest = cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .or.  &
@@ -1140,13 +1141,13 @@ contains
 !!$                do ix=-1,leftcut(1)-1
 !!$                    do iy=-1,ny
 !!$                        if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
-!!$                        if (periodic_bc.ne.1.or.iy.lt.topcut(1)) & 
+!!$                        if (periodic_bc.ne.1.or.iy.lt.topcut(1)) &
 !!$                            &           region(ix,iy,0)=3
-!!$                        if(periodic_bc.eq.1.and. & 
-!!$                            &           iy.ge.topcut(1).and.iy.lt.inseliy) & 
+!!$                        if(periodic_bc.eq.1.and. &
+!!$                            &           iy.ge.topcut(1).and.iy.lt.inseliy) &
 !!$                            &           region(ix,iy,0)=2
-!!$                        if(periodic_bc.eq.1.and.iy.ge.inseliy.and. & 
-!!$                            &           ix.ge.inselix1.and.ix.le.inselix2) & 
+!!$                        if(periodic_bc.eq.1.and.iy.ge.inseliy.and. &
+!!$                            &           ix.ge.inselix1.and.ix.le.inselix2) &
 !!$                            &           region(ix,iy,0)=5
 !!$                    enddo
 !!$                enddo
@@ -1171,13 +1172,13 @@ contains
 !!$                do ix=rightcut(1),nx
 !!$                    do iy=-1,ny
 !!$                        if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
-!!$                        if (periodic_bc.eq.0.or.iy.lt.topcut(1)) & 
+!!$                        if (periodic_bc.eq.0.or.iy.lt.topcut(1)) &
 !!$                            &           region(ix,iy,0)=4
-!!$                        if(periodic_bc.eq.1.and. & 
-!!$                            &           iy.ge.topcut(1).and.iy.lt.inseliy) & 
+!!$                        if(periodic_bc.eq.1.and. &
+!!$                            &           iy.ge.topcut(1).and.iy.lt.inseliy) &
 !!$                            &           region(ix,iy,0)=2
-!!$                        if(periodic_bc.eq.1.and.iy.ge.inseliy.and. & 
-!!$                            &           ix.ge.inselix1.and.ix.le.inselix2) & 
+!!$                        if(periodic_bc.eq.1.and.iy.ge.inseliy.and. &
+!!$                            &           ix.ge.inselix1.and.ix.le.inselix2) &
 !!$                            &           region(ix,iy,0)=5
 !!$                    enddo
 !!$                enddo
@@ -1241,7 +1242,7 @@ contains
 !!$        do iy=-1,ny
 !!$            if ( cflag(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY ) cycle
 !!$            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
-!!$            
+!!$
 !!$            if ( cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED &
 !!$                 & .and. geoType /= CGEO_TRIA_NOLEFT ) &
 !!$                 & region(leftix(ix,iy), leftiy(ix,iy), 0) = region(ix,iy,0)
@@ -1273,8 +1274,8 @@ contains
 !!$        enddo
 !!$    enddo
 !!$
-!!$    ! After we know the volumetric region numbers, we fix the boundary indices for 
-!!$    ! non-structure boundaries. CARRE2 sets them to -1 for all boundary faces not 
+!!$    ! After we know the volumetric region numbers, we fix the boundary indices for
+!!$    ! non-structure boundaries. CARRE2 sets them to -1 for all boundary faces not
 !!$    ! on a structure. Here they are set to -REGION.
 !!$    ! The corresponding face of the guard cell receives the same number.
 !!$
@@ -1574,8 +1575,8 @@ contains
 !!$          if (iy.ne.-2) then
 !!$            ix = ix + 1
 !!$          else
-!!$            ixbreak = ix 
-!!$          end if          
+!!$            ixbreak = ix
+!!$          end if
 !!$        end do
 !!$#ifdef BUILDING_CARRE
 !!$        if (ixbreak.eq.-2) &
@@ -1678,7 +1679,7 @@ contains
 !!$            endif
 !!$            ix = ix - 1
 !!$          enddo
-!!$! We find the cells contacting the second right target: x-region 4 
+!!$! We find the cells contacting the second right target: x-region 4
 !!$          ix = -1
 !!$          do while (ix.lt.ixbreak)
 !!$            if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
@@ -1701,7 +1702,7 @@ contains
 !!$! We find the location of the inner divertor throat: x-region 2
 !!$        geoType = cellGeoType(crx(leftcut(1),iy,:), cry(leftcut(1),iy,:))
 !!$        if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE)) &
-!!$                 & .and. geoType /= CGEO_TRIA_NOLEFT) & 
+!!$                 & .and. geoType /= CGEO_TRIA_NOLEFT) &
 !!$     &   region(leftcut(1),iy,1) = 2
 !!$! We find the location of the outer divertor throat: x-region 3 (1 X-point) or 7 (2 X-points)
 !!$        geoType = cellGeoType(crx(rightcut(1),iy,:), cry(rightcut(1),iy,:))
@@ -1725,7 +1726,7 @@ contains
 !!$      end if
 !!$! We find the core and PFR bottom periodicity lines: x-regions 5 and 6 (1 X-point)
 !!$!                                                  : x-regions 9 and 12 (2 X-points)
-!!$! x-region 13 is the connection between the two halves of the SOL section between the two separatrices 
+!!$! x-region 13 is the connection between the two halves of the SOL section between the two separatrices
 !!$      do iy=bottomcut(1),topcut(1)-1
 !!$        if(nncut.eq.1) then
 !!$          if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE))) &
@@ -1747,7 +1748,7 @@ contains
 !!$        endif
 !!$      enddo
 !!$! We find the core and PFR top periodicity lines: x-regions 10 and 11 (2 X-points)
-!!$! x-region 13 is the connection between the two halves of the SOL section between the two separatrices 
+!!$! x-region 13 is the connection between the two halves of the SOL section between the two separatrices
 !!$      if(nncut.eq.2) then
 !!$        do iy=bottomcut(2),topcut(2)-1
 !!$          geoType = cellGeoType(crx(leftcut(2),iy,:), cry(leftcut(2),iy,:))
@@ -2210,7 +2211,7 @@ contains
 !!$      call xertst(lefttargetindex(1).ne.GRID_UNDEFINED, 'Left target not found!')
 !!$#endif
 !!$! We identify the structure index of the right target
-!!$      ix = nx       
+!!$      ix = nx
 !!$      righttargetindex(1)=GRID_UNDEFINED
 !!$      do while (ix.ge.-1 .and. righttargetindex(1).eq.GRID_UNDEFINED)
 !!$        if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
@@ -2241,7 +2242,7 @@ contains
 !!$          if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
 !!$            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
 !!$            if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(1) .and. &
-!!$              & geoType /= CGEO_TRIA_NOLEFT) & 
+!!$              & geoType /= CGEO_TRIA_NOLEFT) &
 !!$              & region(ix,iy,1)=1
 !!$            if (cflag(ix, iy, CELLFLAG_TOPFACE) == lefttargetindex(1) .and. &
 !!$              & geoType /= CGEO_TRIA_NOTOP) &
@@ -2350,7 +2351,7 @@ contains
     data first/.true./
 
     if (nnreg(0) == 1 .and. periodic_bc.le.0) then
-        geometryId = GEOMETRY_LINEAR      
+        geometryId = GEOMETRY_LINEAR
         if (first) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LINEAR")
             first = .false.
@@ -2359,7 +2360,7 @@ contains
     end if
 
     if (nnreg(0) == 1 .and. periodic_bc == 1) then
-        geometryId = GEOMETRY_CYLINDER    
+        geometryId = GEOMETRY_CYLINDER
         if (first) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CYLINDER")
             first = .false.
@@ -2438,9 +2439,9 @@ contains
   end function regionCount
 
 
-  !> Return total number of regions (both cell and face regions) for 
+  !> Return total number of regions (both cell and face regions) for
   !> the given geometry
-  integer function regionCountTotal( geometryId ) 
+  integer function regionCountTotal( geometryId )
     integer, intent(in) :: geometryId
 
     ! internal
@@ -2491,11 +2492,11 @@ contains
     isBoundaryCell = (celltype == GRID_BOUNDARY)
   end function isBoundaryCell
 
-  ! Identify cells inside computational domain  
+  ! Identify cells inside computational domain
   elemental logical function isRealCell(celltype)
     integer, intent(in) :: celltype
 
-     isRealCell = (celltype == GRID_INTERNAL) .or. (celltype == GRID_BOUNDARY) 
+     isRealCell = (celltype == GRID_INTERNAL) .or. (celltype == GRID_BOUNDARY)
   end function isRealCell
 
   logical function isClassicalGrid(cflags)
@@ -2516,7 +2517,7 @@ contains
 
 !!$  !> Check if points (x1,y1) and (x2,y2) are identical
 !!$  !> (i.e, very very close to each other)
-!!$  logical function pointsIdentical( x1, y1, x2, y2, absTol )     
+!!$  logical function pointsIdentical( x1, y1, x2, y2, absTol )
 !!$    real(R8), intent(in) :: x1, y1, x2, y2
 !!$    real(R8), intent(in), optional :: absTol
 !!$

@@ -311,6 +311,20 @@ cxpb
         periodic_bc=0
       endif
 cxpb-end
+      do iy = -1, ny
+        do ix = -1, nx
+          if (nnreg(0).eq.1) then
+            on_closed_surface(ix,iy) = periodic_bc.eq.1
+          else if (nnreg(0).eq.2 .or. nnreg(0).eq.4) then
+            on_closed_surface(ix,iy) = region(ix,iy,0).eq.1
+          else if (nnreg(0).eq.5 .or. nnreg(0).eq.8) then
+            on_closed_surface(ix,iy) = mod(region(ix,iy,0),4).eq.1
+          else
+            call xerrab ('Unknown number of regions!')
+          end if
+        end do
+      end do
+
 *  ..interpolate magnetic field to cell faces
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
@@ -361,6 +375,12 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         call cfrure (nget, n2*2, pbs, 'pbs')
       else
         call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
+      endif
+      if(b2fgmtry_version.ge.'03.000.006') then
+        call cfruin (nget, 1, idum, 'redef_pbs')
+        redef_pbs=idum(0)
+      else
+        redef_pbs=0
       endif
 *   ..read extended grid cell flags
       cflags = 0
