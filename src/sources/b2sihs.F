@@ -21,9 +21,6 @@
       use b2mod_external                                                 !srv 05.07.17
       use b2mod_geo
      , , only : hz                                                       !srv 05.07.17
-#ifdef WITH_FTIMINGS
-      use timings
-#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                         !xpb !srv 05.07.15
@@ -322,7 +319,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &       -(wpoh(rightix(ix,iy),rightiy(ix,iy))-wpoh(ix,iy))*
      &       (1.0_R8/wbbv(topix(ix,iy),topiy(ix,iy),3)**2-
      &        1.0_R8/wbbv(ix,iy,3)**2))
-            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                     !xpb
+            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                  	 !xpb
             she0(ix,iy,0) = she0(ix,iy,0)+
      &       (max(0.0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
             she0(ix,iy,3) = she0(ix,iy,3)+min(0.0_R8,t0)-rf0*abs(t0)
@@ -543,95 +540,48 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
        b2sihs_fraa=0.0_R8
        if (balance_netcdf.ne.0) then !djm Jan2017
         shitmp=shi0
-      endif
-
-#ifdef WITH_FTIMINGS
-      call timer%start("parallel")
-#endif
-#ifndef NO_OPENMP_B2SIHS
-!$OMP  PARALLEL
-!$OMP& DEFAULT(none)
-!$OMP& PRIVATE(ix,iy,coef)
-!$OMP& SHARED(nx,ny,ns,nsmin,nsmax)
-!$OMP& SHARED(leftix,rightix,bottomiy,topiy,region)
-!$OMP$ SHARED(is_neutral,ctaup,phm4,am,ne,ni,na,ti,ua,rz2,BoRiS)
-!$OMP$ SHARED(balance_netcdf)
-!$OMP$ SHARED(vti32,rf4,wadia,vaecrb,lnlam,work)
-! These here are written to, represent the results:
-!$OMP& SHARED(shi0,shitmp,b2fraa,b2sihs_fraa,b2sihs_fraa0to3)
-#endif /* NO_OPENMP_B2SIHS */
-      do isb = nsmin, nsmax-1
-       do is = isb+1, ns-1
-*     ..consider distinct cases
-        if (.not.is_neutral(is).and..not.is_neutral(isb)) then
-*      ..contribution from friction between charged species
-         coef = phm4*(1.0_R8/ctaup)*
+       endif
+!      do isb = 0, ns-1
+       do isb = nsmin, nsmax-1
+        do is = isb+1, ns-1
+*      ..consider distinct cases
+         if (.not.is_neutral(is).and..not.is_neutral(isb)) then
+*       ..contribution from friction between charged species
+          coef = phm4*(1.0_R8/ctaup)*
      &     mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))
-#ifndef NO_OPENMP_B2SIHS
-!$OMP DO SCHEDULE(static)
-#endif
-         do iy = -1, ny
-          do ix = -1, nx
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+          do iy = -1, ny
+           do ix = -1, nx
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &        bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &        region(ix,iy,0).ne.0) then
-            work(ix,iy) = rz2(ix,iy,isb)*rz2(ix,iy,is)*
-     &       (coef*lnlam(ix,iy)/4.0_R8)*(1.0_R8-BoRiS)*       !srv 03.05.10
-     &        na(ix,iy,is)*na(ix,iy,isb)*vti32(ix,iy)*
-     &       ((ua(ix,iy,is)-ua(ix,iy,isb))**2+
-     &        (wadia(ix,iy,0,is )+vaecrb(ix,iy,0,is )-
-     &         wadia(ix,iy,0,isb)-vaecrb(ix,iy,0,isb))**2+
-     &        (wadia(ix,iy,1,is )+vaecrb(ix,iy,1,is )-
-     &         wadia(ix,iy,1,isb)-vaecrb(ix,iy,1,isb))**2)
-            shi0(ix,iy,0) = shi0(ix,iy,0)+(2.5_R8+rf4)*work(ix,iy)
-            shi0(ix,iy,3) = shi0(ix,iy,3)-
-     &       (1.5_R8+rf4)*work(ix,iy)/(ni(ix,iy,0)*ti(ix,iy))
-            ! b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+work(ix,iy)  <-  this is now done in the OMP SINGLE block below
-            b2sihs_fraa(ix,iy)=b2sihs_fraa(ix,iy)+work(ix,iy)
-           endif
+             t0 = rz2(ix,iy,isb)*rz2(ix,iy,is)*
+     &        (coef*lnlam(ix,iy)/4.0_R8)*(1.0_R8-BoRiS)*                 !srv 03.05.10
+     &         na(ix,iy,is)*na(ix,iy,isb)*vti32(ix,iy)*
+     &        ((ua(ix,iy,is)-ua(ix,iy,isb))**2+
+     &         (wadia(ix,iy,0,is )+vaecrb(ix,iy,0,is )-
+     &          wadia(ix,iy,0,isb)-vaecrb(ix,iy,0,isb))**2+
+     &         (wadia(ix,iy,1,is )+vaecrb(ix,iy,1,is )-
+     &          wadia(ix,iy,1,isb)-vaecrb(ix,iy,1,isb))**2)
+             shi0(ix,iy,0) = shi0(ix,iy,0)+(2.5_R8+rf4)*t0
+             shi0(ix,iy,3) = shi0(ix,iy,3)-
+     &        (1.5_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
+             b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
+             b2sihs_fraa(ix,iy)=b2sihs_fraa(ix,iy)+t0
+            endif
+           enddo
           enddo
-         enddo
-#ifndef NO_OPENMP_B2SIHS
-!$OMP END DO
-#endif
-
-
-#ifndef NO_OPENMP_B2SIHS
-         ! Due to the indirect addressing of the array b2fraa,
-         ! there is no immediately obvious parallelization over
-         ! ix, iy possible here, this assignment is done in the
-         ! following OMP SINGLE section
-!$OMP SINGLE
-#endif
-         do iy = -1, ny
-          do ix = -1, nx
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &        bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &        region(ix,iy,0).ne.0) then
-            b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+work(ix,iy)
-           endif
-          enddo
-         enddo
-#ifndef NO_OPENMP_B2SIHS
-!$OMP END SINGLE
-#endif
-        else
-*      ..contribution from friction involving neutral species
-*        (We ignore such a term, except for charge exchange friction
-*        between H0 and H1. That term is calculated via the atomic
-*        physics routines.)
-        endif
+         else
+*       ..contribution from friction involving neutral species
+*         (We ignore such a term, except for charge exchange friction
+*         between H0 and H1. That term is calculated via the atomic
+*         physics routines.)
+         endif
+        enddo
        enddo
-      enddo
-      if (balance_netcdf.ne.0) then !djm Jan2017
-        b2sihs_fraa0to3=shi0-shitmp
-      endif
-#ifndef NO_OPENMP_B2SIHS
-!$OMP END PARALLEL
-#endif
-#ifdef WITH_FTIMINGS
-      call timer%stop("parallel")
-#endif
+       if (balance_netcdf.ne.0) then !djm Jan2017
+         b2sihs_fraa0to3=shi0-shitmp
+       endif
+      endif                                                              !srv 05.07.17
 
       b2str=0.0_R8
       b2sihs_str=0.0_R8
