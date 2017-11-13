@@ -77,8 +77,6 @@ contains
         integer ::  homogeneous_time
         real(IDS_real)    ::  time
         integer :: ggd_slice, num_ggd_slice
-        integer :: ne_slice, num_ne_slices, eflux_slice, num_eflux_slices
-        integer :: ni_slice, num_ni_slices, iflux_slice, num_iflux_slices
 
         !> ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
@@ -210,52 +208,32 @@ contains
             allocate( edge_transport%model(1) )
             allocate( edge_transport%model(1)%ggd( num_ggd_slice ) )
 
-            !> ne
-            num_ne_slices = 1
-            ne_slice = 1
-            num_eflux_slices = 1
-            eflux_slice = 1
-            allocate( edge_profiles%ggd( ggd_slice )%electrons%density(     &
-                &   num_ne_slices ) )
-
+            !> ne: Electron Density
             call write_quantity( edge_profiles%ggd( ggd_slice )%electrons%  &
                 &   density, edge_transport%model(1)%ggd( ggd_slice )%      &
                 &   electrons%energy%flux, ne, fne, ggd_slice )
             call write_cell_scalar( edge_sources%source(1)%ggd( ggd_slice )%    &
                 &   electrons%energy, sne(:,:,0) + sne(:,:,1) * ne )
-#if 0
-            !> ni
-            num_ni_slices = 1
-            ni_slice = 1
-            num_iflux_slices = 1
-            iflux_slice = 1
 
+            !> ni: Ion Density
             allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
-            ! allocate( edge_profiles%fluid%ni( ns ) )
-            do is = 1, ns
-                allocate( edge_profiles%ggd( ggd_slice )%ion( is )% &
-                    &   density( num_ni_slices ) )
-                ! call write_quantity( edge_profiles%fluid%ni(is)%value,      &
-                !     &   edge_profiles%fluid%ni( is )%flux, na(:,:, is - 1 ),&
-                !     &   fna(:,:,:, is - 1 ) )
-                ! call write_cell_scalar( edge_profiles%fluid%ni( is )%source,&
-                !     &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *         &
-                !     &   na(:,:, is - 1 ) )
+            allocate( edge_transport%model(1)%ggd( ggd_slice )%ion( ns ) )
+            allocate( edge_sources%source(1)%ggd( ggd_slice )%ion( ns ) )
 
+            do is = 1, ns
                 call write_quantity( edge_profiles%ggd( ggd_slice )%    &
                     &   ion(is)%density, edge_transport%model(1)%       &
                     &   ggd( ggd_slice )%ion( is )%energy%flux,         &
                     &   na(:,:, is - 1 ), fna(:,:,:, is - 1 ), ggd_slice )
-! #if 0
                 call write_cell_scalar( edge_sources%source(1)%             &
-                    &   ggd( ggd_slice )%ion(is)%energy,                    &
+                    &   ggd( ggd_slice )%ion( is )%energy,                  &
                     &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *         &
                     &   na(:,:, is - 1 ) )
             end do
-#endif
 #if 0
 
-!!$    !> ue TODO: must be computed, refactor code from b2news into function
+!!$    !> ue: Parallel Electron Velocity
+!!$    TODO: must be computed, refactor code from b2news into function
 !!$    allocate(edge_profiles%fluid%ve%comps(1))
 !!$    allocate(edge_profiles%fluid%ve%align(1))
 !!$    allocate(edge_profiles%fluid%ve%alignid(1))
@@ -263,33 +241,42 @@ contains
 !!$    edge_profiles%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
 !!$    call write_cell_scalar( edge_profiles%fluid%ve%comps(1)%value, ue(:,:) )
 
-            !> ua
-            allocate( edge_profiles%fluid%vi( ns ) )
+            !> ua: Parallel Velocity
+            allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
             do is = 1, ns
-                allocate( edge_profiles%fluid%vi( is )%comps(1) )
-                allocate( edge_profiles%fluid%vi( is )%align(1) )
-                allocate( edge_profiles%fluid%vi( is )%alignid(1) )
-                edge_profiles%fluid%vi( is )%align(1) = VEC_ALIGN_PARALLEL
-                edge_profiles%fluid%vi( is )%alignid(1) = VEC_ALIGN_PARALLEL_ID
+                allocate( edge_profiles%ggd( ggd_slice )%ion( ns )%velocity(1) )
 
-                call write_cell_scalar( edge_profiles%fluid%vi( is )%comps(1)%value,&
+                !! TODO: find where to IDS this data belongs
+                allocate( edge_profiles%ggd( ggd_slice )%ion( ns )% &
+                    &   velocity(1)%comps(1) )
+                allocate( edge_profiles%ggd( ggd_slice )%ion( ns )% &
+                    &   velocity(1)%align(1) )
+                allocate( edge_profiles%ggd( ggd_slice )%ion( ns )% &
+                    &   velocity(1)%alignid(1) )
+                edge_profiles%ggd( ggd_slice )%ion( ns )%           &
+                    &   velocity(1)%align(1) = VEC_ALIGN_PARALLEL
+                edge_profiles%ggd( ggd_slice )%ion( ns )%           &
+                    &   velocity(1)%alignid(1) = VEC_ALIGN_PARALLEL_ID
+
+                call write_cell_scalar( edge_profiles%ggd( ggd_slice )% &
+                    &   ion( ns )%velocity(1)%comps(1)%value,           &
                     &   ua(:,:, is - 1 ) )
             end do
 
-            !> te
-            call write_quantity( edge_profiles%fluid%te%value,  &
-                &   edge_profiles%fluid%te%flux, te/qe, fhe )
+            !> te: Electron Temperature
+            call write_quantity( edge_profiles%ggd( ggd_slice )%fluid%te%value,  &
+                &   edge_profiles%ggd( ggd_slice )%fluid%te%flux, te/qe, fhe )
 
-            !> ti
-            allocate( edge_profiles%fluid%ti(1) )
-            call write_quantity( edge_profiles%fluid%ti(1)%value,   &
-                &   edge_profiles%fluid%ti(1)%flux, ti/qe, fhi )
+            !> ti: Ion Temperature
+            allocate( edge_profiles%ggd( ggd_slice )%fluid%ti(1) )
+            call write_quantity( edge_profiles%ggd( ggd_slice )%fluid%ti(1)%value,   &
+                &   edge_profiles%ggd( ggd_slice )%fluid%ti(1)%flux, ti/qe, fhi )
 
-            !> po
-            call write_cell_scalar( edge_profiles%fluid%po%value, po )
+            !> po: Electric Potential
+            call write_cell_scalar( edge_profiles%ggd( ggd_slice )%fluid%po%value, po )
 
             !> B (magnetic field vector)
-            allocate( edge_profiles%fluid%te_aniso%comps(4) )
+            allocate( edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(4) )
 
             !> Compute unit basis vectors along the field directions
             call computeCoordinateUnitVectors(crx, cry, e(:,:,:,1), e(:,:,:,2),     &
@@ -297,17 +284,17 @@ contains
 
             !> Write the three unit basis vectors
             do i = 1, 3
-                allocate( edge_profiles%fluid%te_aniso%comps(i)%flux(1) )
+                allocate( edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(i)%flux(1) )
                 call write_cell_vector( &
-                    &   edge_profiles%fluid%te_aniso%comps(i)%flux(1), &
+                    &   edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(i)%flux(1), &
                     & (/ VEC_ALIGN_DEFAULT, VEC_ALIGN_DEFAULT, VEC_ALIGN_DEFAULT /), &
                     & (/ VEC_ALIGN_DEFAULT_ID, VEC_ALIGN_DEFAULT_ID, VEC_ALIGN_DEFAULT_ID /), &
                     & e(:,:,:,i) )
             end do
 
             !> write the magnetic field vector in the b2 coordinate system
-            allocate( edge_profiles%fluid%te_aniso%comps(4)%flux(1) )
-            call write_cell_vector( edge_profiles%fluid%te_aniso%comps(4)%flux(1),  &
+            allocate( edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(4)%flux(1) )
+            call write_cell_vector( edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(4)%flux(1),  &
                 & (/ VEC_ALIGN_POLOIDAL, VEC_ALIGN_RADIAL, VEC_ALIGN_TOROIDAL /),   &
                 & (/ VEC_ALIGN_POLOIDAL_ID, VEC_ALIGN_RADIAL_ID,                    &
                 &   VEC_ALIGN_TOROIDAL_ID /), bb(:,:,0:2) )
@@ -331,6 +318,7 @@ contains
             real(IDS_real), dimension(:), pointer :: idsdata
             integer ::  ival
 
+            !! Allocate data fields for 5 grid subsets
             allocate( val(5) )
             idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%   &
                 &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS, gmap, value )
@@ -362,6 +350,7 @@ contains
                 &   gmap, tmpVx )
             call gridWriteData( val( ival ), iGsOuterMidplane, idsdata )
             deallocate( idsdata )
+
             ival = ival + 1
             idsdata => b2IMASTransformDataB2ToIDSVertex(                    &
                 &   edge_profiles%ggd( ggd_slice )%grid, GRID_SUBSET_NODES, &
@@ -518,7 +507,6 @@ contains
     allocate(edgecpo%codeparam%codename(1))
     edgecpo%codeparam%codename(1)="B2.5"
     edgecpo%time= 0.0D0
-
 
     ns = size(na, 3)
     nx = ubound(na, 1)
