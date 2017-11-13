@@ -126,6 +126,14 @@ program b2_ual_write_b2mod
     !>--------------------------------------------------------------------------
     !>.computation
 
+    !> Check if supposed new file already exists and delete it
+    call checkFileAndDelete( "b2fparam" )
+    call checkFileAndDelete( "b2mn.prt" )
+    call checkFileAndDelete( "b2fstate" )
+    call checkFileAndDelete( "b2fmovie" )
+    call checkFileAndDelete( "b2ftrace" )
+    call checkFileAndDelete( "b2ftrack" )
+
     !> Run main b2 routine to process and read the b2 data
     call b2mn_init
 
@@ -150,6 +158,22 @@ program b2_ual_write_b2mod
     !                                     & device, version )
 
 contains
+
+    !> Subroutine intended to check if supposed new file already exists
+    !> and then delete it
+    subroutine checkFileAndDelete( fileName )
+        character(len=*), intent(in) :: fileName
+        logical :: file_exists
+        integer :: stat
+
+        inquire( file=fileName, exist=file_exists )
+        if ( file_exists ) then
+            write(*,*) "Deleting old ", fileName
+            open(unit=1234, iostat=stat, file=fileName, status='old')
+            if (stat == 0) close(1234, status='delete')
+        endif
+
+    end subroutine
 
     !! Subroutine used to put data to edge_profiles IDS
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &

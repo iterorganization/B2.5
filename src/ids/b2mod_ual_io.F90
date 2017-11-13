@@ -47,7 +47,6 @@ module b2mod_ual_io
     use itm_grid_common ! IGNORE
 #endif
 #endif
-  ! use ggd , GGD_UNDEFINED => GRID_UNDEFINED
 
   implicit none
 
@@ -78,8 +77,8 @@ contains
         integer ::  homogeneous_time
         real(IDS_real)    ::  time
         integer :: ggd_slice, num_ggd_slice
-        integer :: ne_slice, num_ne_slices
-        integer :: eflux_slice, num_eflux_slices
+        integer :: ne_slice, num_ne_slices, eflux_slice, num_eflux_slices
+        integer :: ni_slice, num_ni_slices, iflux_slice, num_iflux_slices
 
         !> ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
@@ -131,7 +130,7 @@ contains
         allocate( edge_transport%model(1)%ggd( num_ggd_slice )%electrons%   &
             &   energy%flux(1) )
 
-        !> allocate and init the IDS
+        ! > allocate and init the IDS
         allocate( edge_profiles%code%name(1) )
 # ifdef B25_EIRENE
         edge_profiles%code%name = "SOLPS-ITER"
@@ -146,6 +145,7 @@ contains
         edge_profiles%code%version = git_version_B25
         allocate( edge_transport%code%version(1) )
         edge_transport%code%version = git_version_B25
+
         ! allocate( edge_sources%code%version(1) )
         ! edge_sources%code%version = git_version_B25
 
@@ -196,9 +196,9 @@ contains
                 &   edge_profiles%ggd( ggd_slice )%grid,    &
                 &   "Core boundary" )
             iGsInnerMidplane = findGridSubsetByName( edge_profiles% &
-                &   ggd( ggd_slice )%grid, "Inner midplane" )
+                &   ggd( ggd_slice )%grid, "Inner Midplane" )
             iGsOuterMidplane = findGridSubsetByName( edge_profiles% &
-                &   ggd( ggd_slice )%grid, "Outer midplane" )
+                &   ggd( ggd_slice )%grid, "Outer Midplane" )
 
             !> TODO: The fluxes are currently in the edge_transport. They are
             !> supposed to be in the edge_profiles (24.10.2017)
@@ -214,7 +214,7 @@ contains
             num_ne_slices = 1
             ne_slice = 1
             num_eflux_slices = 1
-            eflux_slice = 0
+            eflux_slice = 1
             allocate( edge_profiles%ggd( ggd_slice )%electrons%density(     &
                 &   num_ne_slices ) )
 
@@ -222,19 +222,43 @@ contains
                 &   density, edge_transport%model(1)%ggd( ggd_slice )%      &
                 &   electrons%energy%flux, ne, fne, ggd_slice )
 #if 0
-            call write_cell_scalar( edge_profiles%fluid%ne%source,  &
-                &   sne(:,:,0) + sne(:,:,1) * ne )
+            ! call write_cell_scalar( edge_profiles%fluid%ne%source,  &
+                ! &   sne(:,:,0) + sne(:,:,1) * ne )
 
-            !> na
-            allocate( edge_profiles%fluid%ni( ns ) )
+            call write_cell_scalar( edge_sources%source(1)%ggd( ggd_slice )%    &
+                &   electrons%energy, sne(:,:,0) + sne(:,:,1) * ne )
+#endif
+#if 0
+            !> ni
+            num_ni_slices = 1
+            ni_slice = 1
+            num_iflux_slices = 1
+            iflux_slice = 1
+
+            allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
+            ! allocate( edge_profiles%fluid%ni( ns ) )
             do is = 1, ns
-                call write_quantity( edge_profiles%fluid%ni(is)%value,      &
-                    &   edge_profiles%fluid%ni( is )%flux, na(:,:, is - 1 ),&
-                    &   fna(:,:,:, is - 1 ) )
-                call write_cell_scalar( edge_profiles%fluid%ni( is )%source,&
+                allocate( edge_profiles%ggd( ggd_slice )%ion( is )% &
+                    &   density( num_ni_slices ) )
+                ! call write_quantity( edge_profiles%fluid%ni(is)%value,      &
+                !     &   edge_profiles%fluid%ni( is )%flux, na(:,:, is - 1 ),&
+                !     &   fna(:,:,:, is - 1 ) )
+                ! call write_cell_scalar( edge_profiles%fluid%ni( is )%source,&
+                !     &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *         &
+                !     &   na(:,:, is - 1 ) )
+
+                call write_quantity( edge_profiles%ggd( ggd_slice )%    &
+                    &   ion(is)%density, edge_transport%model(1)%       &
+                    &   ggd( ggd_slice )%ion( is )%energy%flux,         &
+                    &   na(:,:, is - 1 ), fna(:,:,:, is - 1 ), ggd_slice )
+! #if 0
+                call write_cell_scalar( edge_sources%source(1)%             &
+                    &   ggd( ggd_slice )%ion(is)%energy,                    &
                     &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *         &
                     &   na(:,:, is - 1 ) )
             end do
+#endif
+#if 0
 
 !!$    !> ue TODO: must be computed, refactor code from b2news into function
 !!$    allocate(edge_profiles%fluid%ve%comps(1))
@@ -310,54 +334,71 @@ contains
             real(IDS_real), intent(in) :: flux( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )
             integer, intent(in) ::  ggd_slice
             real(IDS_real), dimension(:), pointer :: idsdata
+            integer ::  ival
 
             allocate( val(5) )
             idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%   &
                 &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS, gmap, value )
 
-            call gridWriteData( val(1), GRID_SUBSET_CELLS, idsdata )
+            ival = 1
+            call gridWriteData( val( ival ), GRID_SUBSET_CELLS, idsdata )
             deallocate( idsdata )
 
+            ival = ival + 1
             tmpFace = 0.0_IDS_real
             call value_on_faces( nx, ny, vol, value, tmpFace)
-            idsdata => b2IMASTransformDataB2ToIDS(  &
+            idsdata => b2IMASTransformDataB2ToIDS( &
                 &   edge_profiles%ggd( ggd_slice )%grid, iGsCore, gmap, tmpFace )
-            call gridWriteData( val(2), iGsCore, idsdata )
+            call gridWriteData( val( ival ), iGsCore, idsdata )
             deallocate( idsdata )
-#if 0
+
+            ival = ival + 1
             tmpVx = interpolateToVertices(  &
                 &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
             idsdata => b2IMASTransformDataB2ToIDSVertex(    &
-                &   edge_profiles%ggd( ggd_slice )%grid, iGsInnerMidplane, gmap, tmpVx  )
-            call gridWriteData( val(3), iGsInnerMidplane, idsdata )
+                &   edge_profiles%ggd( ggd_slice )%grid,    &
+                &   iGsInnerMidplane, gmap, tmpVx )
+            call gridWriteData( val( ival ), iGsInnerMidplane, idsdata )
             deallocate( idsdata )
-#endif
-# if 0
-            idsdata => b2IMASTransformDataB2ToIDSVertex(    &
-                &   edge_profiles%ggd( ggd_slice )%grid, iGsOuterMidplane, gmap, tmpVx )
-            call gridWriteData( val(3), iGsOuterMidplane, idsdata )
-            ! call gridWriteData( val(4), iGsOuterMidplane, idsdata )
+
+            ival = ival + 1
+            idsdata => b2IMASTransformDataB2ToIDSVertex(                    &
+                &   edge_profiles%ggd( ggd_slice )%grid, iGsOuterMidplane,  &
+                &   gmap, tmpVx )
+            call gridWriteData( val( ival ), iGsOuterMidplane, idsdata )
             deallocate( idsdata )
-#endif
-#if 1
-            idsdata => b2IMASTransformDataB2ToIDSVertex(    &
-                &   edge_profiles%ggd( ggd_slice )%grid, GRID_SUBSET_NODES, gmap, tmpVx )
-            call gridWriteData( val(3), GRID_SUBSET_NODES, idsdata )
-            ! call gridWriteData( val(5), GRID_SUBSET_NODES, idsdata )
+            ival = ival + 1
+            idsdata => b2IMASTransformDataB2ToIDSVertex(                    &
+                &   edge_profiles%ggd( ggd_slice )%grid, GRID_SUBSET_NODES, &
+                &   gmap, tmpVx )
+            call gridWriteData( val( ival ), GRID_SUBSET_NODES, idsdata )
             deallocate( idsdata )
-#endif
-#if 1
             allocate( fluxes(2) )
             call write_face_vector( fluxes(1), flux, ggd_slice)
-            call write_face_vector( fluxes(2), flux, ggd_slice, gridSubsetId = iGsCore )
-#endif
+            call write_face_vector( fluxes(2), flux, ggd_slice,     &
+                &   gridSubsetId = iGsCore )
         end subroutine write_quantity
 
-        !! TODO write_cell_scalar
+        !> Write a scalar B2 cell quantity to a ids_generic_grid_scalar
+        subroutine write_cell_scalar(scalar, b2CellData)
+            type(ids_generic_grid_scalar), intent(inout), pointer :: scalar(:)
+            ! type(ids_generic_grid_scalar), intent(inout), pointer :: scalar(:)
+            real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
+            real(IDS_real), dimension(:), pointer :: idsdata
+
+            allocate( scalar(1) )
+
+            !! TODO: add checks whether already allocated
+            idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%   &
+                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,       &
+                &   gmap, b2CellData )
+            call gridWriteData( scalar(1), GRID_SUBSET_CELLS, idsdata )
+            deallocate(idsdata)
+        end subroutine write_cell_scalar
+
         !! TODO write_cell_vector
 
-#if 1
-        ! Write a vector B2 face quantity to a ids_generic_grid_vector
+        !> Write a vector B2 face quantity to a ids_generic_grid_vector
         subroutine write_face_vector( vector, b2FaceData, ggd_slice,    &
                 &   gridSubsetId )
             use ids_grid_data ! IGNORE
@@ -419,7 +460,6 @@ contains
             end if
 
         end subroutine write_face_vector
-#endif
         ! return
     end subroutine write_ids
 
