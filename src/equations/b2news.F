@@ -935,9 +935,15 @@ c     with diamagnetic drift part                                        !xpb
              endif
            end do
          end do
+
+!!FR loop (4) over ns suitable for OpenMP parallelisation
+!$OMP PARALLEL DO DEFAULT(none) SHARED(rza,ua,na,ns) REDUCTION(+:ue)
          do is=0,ns-1
            ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
          enddo
+!$OMP END PARALLEL DO
+!!FR end of loop (4)
+
          ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
          ue(:,:)=ue(:,:)/ne(:,:)
         else
