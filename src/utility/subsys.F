@@ -37,6 +37,9 @@
 #ifdef WITH_FTIMINGS
       call timer%start(srname)
 #endif
+#ifdef _OPENMP
+      return !!FR do not do the stack tracing if running in parallel
+#endif
 *   ..test nchs
       call xertst (nchs.ne.nchmx, 'subini--error, nchs.eq.nchmx')
 *   ..get base addresses for free workspace
@@ -53,6 +56,9 @@ cdpc      write(*,*) 'subini: ',srname,nchs
       entry subend ()
 #ifdef WITH_FTIMINGS
       call timer%stop()
+#endif
+#ifdef _OPENMP
+      return  !!FR do not do the stack tracing if running in parallel
 #endif
 *   ..test nchs
       call xertst (nchs.gt.0, 'subend--error, nchs.le.0')
