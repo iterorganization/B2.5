@@ -352,6 +352,17 @@
         else
           cssb = 0.0_R8
         endif                                                            !iyv 06.02.14
+!! FR possible loop (1) for use with OpenMP
+!$OMP PARALLEL DO DEFAULT(none) FIRSTPRIVATE(flob, conb, pb)
+!$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, am)
+!$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
+!$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
+!$OMP& SHARED(cddi, cvlahz, cvmahz, cdnahz, cdpahz, fchvispar)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fna_PSch, fna_mdf)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(kinrgy, fllim0fna) 
 !        do is = 0, ns-1
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
@@ -374,6 +385,8 @@
      1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.true.)                !djm Jan2017
         enddo
+!$OMP END PARALLEL DO
+!! FR end of loop (1)
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
      &    te, po, vedia, veecrb)
