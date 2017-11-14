@@ -354,13 +354,13 @@
         endif                                                            !iyv 06.02.14
 !! FR possible loop (1) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none) FIRSTPRIVATE(flob, conb, pb)
-!$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax)
-!$OMP& SHARED(guard_flows, facdrift, fac_ExB, am)
+!$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax, ismain)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
 !$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
 !$OMP& SHARED(cddi, cvlahz, cvmahz, cdnahz, cdpahz, fchvispar)
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
-!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fna_PSch, fna_mdf)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
 !$OMP& SHARED(kinrgy, fllim0fna) 
 !        do is = 0, ns-1
