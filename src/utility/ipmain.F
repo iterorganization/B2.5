@@ -31,7 +31,7 @@
       integer iptinc, iptbmx, ipgtmx, ipcnt, ip, i, k
       real (kind=R8) ::
      *   xdmx
-      parameter (iptinc=233, iptbmx=377, ipgtmx=40, xdmx=0.8_R8)
+      parameter (iptinc=233, iptbmx=377, ipgtmx=400, xdmx=0.8_R8)
       character ipnam(0:iptbmx-1)*80, ipval(0:iptbmx-1)*80, cnam0*80
       integer ipstat(0:iptbmx-1)
       save ipcnt, ipnam, ipval, ipstat
@@ -85,10 +85,12 @@
 *    ..extend the table
        call xertst (ipcnt.lt.xdmx*iptbmx,
      &   'ipsetc--error, internal parameter table overflow')
+!$OMP CRITICAL(ipsetc_lock)
        ipnam(ip) = cnam0
        ipval(ip) = cval
        ipstat(ip) = 0
        ipcnt = ipcnt+1
+!$OMP END CRITICAL(ipsetc_lock)
       endif
       return
 *     ------------------------------------------------------------------
@@ -115,6 +117,7 @@
        call xertst (ipstat(ip).lt.ipgtmx,
      &   'ipgetc--error, entry is read too often: '//cnam0)
        cval = ipval(ip)
+!$OMP ATOMIC
        ipstat(ip) = ipstat(ip)+1
       else
 *      (no action, return cval unchanged)
