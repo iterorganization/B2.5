@@ -259,8 +259,9 @@ contains
 
                 call write_cell_vector_component(       &
                     &   edge_profiles%ggd( ggd_slice )% &
-                    &   ion( is )%velocity,          &
-                    &   ua(:,:, is - 1 ) )
+                    &   ion( is )%velocity,             &
+                    &   ua(:,:, is - 1 ),               &
+                    &   vectorLabel = "parallel" )
             end do
 
             !> te: Electron Temperature
@@ -269,7 +270,6 @@ contains
                 &   electrons%energy%flux, te/qe, fhe, ggd_slice )
 
             !> ti: Ion Temperature
-            allocate( edge_profiles%ggd( ggd_slice )%ion(1) )
             allocate( edge_profiles%ggd( ggd_slice )%ion(1)%temperature(1) )
             allocate( edge_transport%model(1)%ggd( ggd_slice )%ion( 1 ) )
             call write_quantity( edge_profiles%ggd( ggd_slice )%ion(1)%     &
@@ -280,13 +280,13 @@ contains
             call write_cell_scalar( edge_profiles%ggd( ggd_slice )% &
                 &   phi_potential, po )
 
-# if 0
             !> B (magnetic field vector)
-            allocate( edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(4) )
-
+            allocate( edge_profiles%ggd( ggd_slice )%e_field(1) )
             !> Compute unit basis vectors along the field directions
-            call computeCoordinateUnitVectors(crx, cry, e(:,:,:,1), e(:,:,:,2),     &
-                &   e(:,:,:,3))
+            call computeCoordinateUnitVectors(crx, cry, e(:,:,:,1), &
+                &   e(:,:,:,2), e(:,:,:,3))
+
+# if 0
 
             !> Write the three unit basis vectors
             do i = 1, 3
@@ -385,56 +385,78 @@ contains
             deallocate(idsdata)
         end subroutine write_cell_scalar
 
-        !> Write a vector component B2 cell quantity to
-        !> ids_generic_grid_vector components
-        subroutine write_cell_vector_component( vectorComponent, b2CellData)
+        !> Write a vector component B2 cell quantity to ids_generic_grid_vector
+        !> components
+        !> @note: Currently works only with parallel velocity data field
+        !> @note: Available IDS vector component data fields:
+        !>          - radial,
+        !>          - diamagnetic,
+        !>          - parallel,
+        !>          - poloidal,
+        !>          - toroidal
+        subroutine write_cell_vector_component( vectorComponent, b2CellData,    &
+                &   vectorLabel)
             type(ids_generic_grid_vector_components), intent(inout),    &
                 &   pointer :: vectorComponent(:)
             real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
             real(IDS_real), dimension(:), pointer :: idsdata
+            character(len=*), intent(in) :: vectorLabel
             allocate( vectorComponent(1) )
 
             !! TODO: add checks whether already allocated
             idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%   &
                 &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,       &
                 &   gmap, b2CellData )
-            call gridWriteDataVectorComponents( vectorComponent(1), &
-                &   GRID_SUBSET_CELLS, idsdata )
+
+            ! select case( vectorLabel)
+            ! case ( "parallel")
+            if( vectorLabel .eq. "parallel" ) then
+                call gridWriteDataVectorComponents( vectorComponent(1), &
+                    &   GRID_SUBSET_CELLS, vectorLabel, idsdata )
+            end if
             deallocate(idsdata)
         end subroutine write_cell_vector_component
 
         !!$> TODO: add to GGD itself (ids_grid_data)!
         !> Write a scalar data field given as a scalar data representation to a
-        !> generic grid vector component IDS data field.
+        !> generic grid vector component IDS data fields.
         !>
-        !> @note: the routine will make sure the required storage is allocated, and
-        !> will deallocate and re-allocate fields as necessary.
-        !> @note: currently works only with parallel velocity data field
-        subroutine gridWriteDataVectorComponents( idsField_vcomp,   &
-                &   grid_subset_index, data )
+        !> @note: the routine will make sure the required storage is allocated,
+        !> and will deallocate and re-allocate fields as necessary.
+        !> @note: Currently works only with parallel velocity data field
+        !> @note: Available IDS vector component data fields:
+        !>          - radial,
+        !>          - diamagnetic,
+        !>          - parallel,
+        !>          - poloidal,
+        !>          - toroidal
+        subroutine gridWriteDataVectorComponents( idsField_vcomp,       &
+                &   grid_subset_index, vectorLabel, data)
             type(ids_generic_grid_vector_components), intent(inout) ::  &
                 &   idsField_vcomp
             integer, intent(in) :: grid_subset_index
+            character(len=*), intent(in) :: vectorLabel
             real(ids_real), intent(in) :: data(:)
 
             !! set grid subset index
             idsField_vcomp%grid_subset_index = grid_subset_index
 
-            !! Writing parallel coefficients
-            !! Make sure the data field is properly allocated
-            if ( associated(idsField_vcomp%parallel) ) then
-                if ( .not. all( shape(idsField_vcomp%parallel) ==   &
-                    &   shape(data) )) then
-                    deallocate( idsField_vcomp%parallel )
+            if( vectorLabel .eq. "parallel" ) then
+                !! Writing parallel coefficients
+                !! Make sure the data field is properly allocated
+                if ( associated(idsField_vcomp%parallel) ) then
+                    if ( .not. all( shape(idsField_vcomp%parallel) ==   &
+                        &   shape(data) )) then
+                        deallocate( idsField_vcomp%parallel )
+                    end if
                 end if
+                !! If required, allocate storage
+                if ( .not. associated(idsField_vcomp%parallel) ) then
+                    allocate(idsField_vcomp%parallel( size(data, 1) ))
+                end if
+                !! copy parallel data field
+                idsField_vcomp%parallel = data
             end if
-            !! If required, allocate storage
-            if ( .not. associated(idsField_vcomp%parallel) ) then
-                allocate(idsField_vcomp%parallel( size(data, 1) ))
-            end if
-
-            !! copy data
-            idsField_vcomp%parallel = data
 
         end subroutine gridWriteDataVectorComponents
 
@@ -542,6 +564,126 @@ contains
         end subroutine write_face_vector
         ! return
     end subroutine write_ids
+
+    !> From the B2 grid, compute the coordinate unit vectors
+    !> (poloidal, radial. toroidal)
+    subroutine computeCoordinateUnitVectors(crx, cry, e1, e2, e3)
+        real(IDS_real), intent(in), dimension(-1:,-1:,0:) :: crx, cry
+        real(IDS_real), intent(out),    &
+            &   dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e1, e2, e3
+
+        !! internal
+        integer :: ix, iy, ixn, iyn, nx, ny
+        real(IDS_real), dimension(0:1) :: cC, cN
+        real(IDS_real) :: dir
+
+        e1 = 0.0
+        e2 = 0.0
+        e3 = 0.0
+
+        !> poloidal vectors
+
+        nx = ubound(crx,1)
+        ny = ubound(crx,2)
+        do ix = -1, nx
+            do iy = -1, ny
+
+                cC = quadCentroid( &
+                    & crx(ix, iy, 0), cry(ix, iy, 0), &
+                    & crx(ix, iy, 1), cry(ix, iy, 1), &
+                    & crx(ix, iy, 2), cry(ix, iy, 2), &
+                    & crx(ix, iy, 3), cry(ix, iy, 3) )
+
+                !> poloidal direction
+                !> Try to find right neighbour
+                dir = 1.0
+                ixn = rightix( ix, iy )
+                iyn = rightiy( ix, iy )
+
+                if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
+                    !> If not found, try to find left neighbour
+                    !> ...and note to invert vector direction
+                    dir = -1.0
+                    ixn = leftix( ix, iy )
+                    iyn = leftiy( ix, iy )
+                end if
+                if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
+                    ! stop "computeCoordinateUnitVectors: not able to find&
+                    ! &   poloidal neighbour for cell"
+                    !> skip cell
+                    cycle
+                end if
+
+                cN = quadCentroid( &
+                    & crx(ixn, iyn, 0), cry(ixn, iyn, 0), &
+                    & crx(ixn, iyn, 1), cry(ixn, iyn, 1), &
+                    & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
+                    & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
+
+                !> compute vector from one centroid to the other
+                e1(ix,iy,1) = cN(0) - cC(0)   !> R
+                e1(ix,iy,2) = 0.0             !> phi
+                e1(ix,iy,3) = cN(1) - cC(1)   !> Z
+
+                e1(ix,iy,:) = e1(ix,iy,:) * dir  !> fix direction
+
+                !> radial direction
+                !> Try to find top neighbour
+                dir = 1.0
+                ixn = topix( ix, iy )
+                iyn = topiy( ix, iy )
+
+                if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
+                    !> If not found, try to find bottom neighbour
+                    !> ...and note to invert vector direction
+                    dir = -1.0
+                    ixn = bottomix( ix, iy )
+                    iyn = bottomiy( ix, iy )
+                end if
+                if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
+                    ! stop "computeCoordinateUnitVectors: not able to find&
+                        ! &    toroidal neighbour for cell"
+                    !> skip cell
+                    cycle
+                end if
+
+                cN = quadCentroid( &
+                    & crx(ixn, iyn, 0), cry(ixn, iyn, 0), &
+                    & crx(ixn, iyn, 1), cry(ixn, iyn, 1), &
+                    & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
+                    & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
+
+                !> compute vector from one centroid to the other
+                e2(ix,iy,1) = cN(0) - cC(0)   !> R
+                e2(ix,iy,2) = 0.0             !> phi
+                e2(ix,iy,3) = cN(1) - cC(1)   !> Z
+
+                e2(ix,iy,:) = e2(ix,iy,:) * dir  !> fix direction
+
+
+                !> toroidal direction
+                e3(ix,iy,1) = 0.0   !> R
+                e3(ix,iy,2) = 1.0   !> phi
+                e3(ix,iy,3) = 0.0   !> Z
+
+
+                !> make unit vectors
+                e1(ix,iy,:) = unitVector(e1(ix,iy,:))
+                e2(ix,iy,:) = unitVector(e2(ix,iy,:))
+                e3(ix,iy,:) = unitVector(e3(ix,iy,:))
+
+            end do
+        end do
+
+    end subroutine computeCoordinateUnitVectors
+
+    !> Return unit vector along direction of given vector
+    function unitVector(v) result(unitV)
+        real(IDS_real), intent(in) :: v(:)
+        real(IDS_real) :: unitV(size(v))
+
+        unitV = v / sqrt( sum( v**2 ) )
+    end function unitVector
 
 #else
 # ifdef ITM
