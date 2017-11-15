@@ -543,7 +543,7 @@ c
 #endif
       implicit none
       integer nx,ny
-      integer ix,iy,i,nniso
+      integer ix,iy,i,nniso,idum
 
       integer nxcut1(nncutmax),nxcut2(nncutmax),
      &        nycut1(nncutmax),nycut2(nncutmax),
@@ -635,7 +635,8 @@ cxpb Deduce from fort.33 triangle vertices files which format precision to use
       if (open_file(33,'ftn33','')) then
 #endif
         rewind(33)
-        if (nrknot.eq.0) read(33,*) nrknot
+        read(33,*,end=933,err=933) idum
+        if (nrknot.eq.0) nrknot = idum
         if (nrknot.gt.0) then
           read(33,'(A80)') line
           exp_location = 81
@@ -672,6 +673,9 @@ cxpb Deduce from fort.33 triangle vertices files which format precision to use
         else
           new_format = 2
         end if
+        goto 939
+ 933    new_format = 2
+ 939    continue
         close(33)
       else
         new_format = 2
