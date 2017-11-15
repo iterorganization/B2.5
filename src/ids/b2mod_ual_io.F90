@@ -166,7 +166,6 @@ contains
                 &   zamin( is )
             edge_profiles%ggd( ggd_slice )%ion( is + 1 )%state(1)%z_max =   &
                 &   zamax( is )
-
         enddo
 
         write(*,*) "Running b2CreateMap subroutine"
@@ -215,7 +214,8 @@ contains
             call write_cell_scalar( edge_sources%source(1)%ggd( ggd_slice )%    &
                 &   electrons%energy, sne(:,:,0) + sne(:,:,1) * ne )
 
-            !> ni: Ion Density
+            !> ni (SOLPS 4.x) /
+            !> na (SOLPS 5.x): Ion Density
             allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
             allocate( edge_transport%model(1)%ggd( ggd_slice )%ion( ns ) )
             allocate( edge_sources%source(1)%ggd( ggd_slice )%ion( ns ) )
@@ -230,7 +230,7 @@ contains
                     &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *         &
                     &   na(:,:, is - 1 ) )
             end do
-#if 0
+! #if 0
 
 !!$    !> ue: Parallel Electron Velocity
 !!$    TODO: must be computed, refactor code from b2news into function
@@ -241,27 +241,30 @@ contains
 !!$    edge_profiles%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
 !!$    call write_cell_scalar( edge_profiles%fluid%ve%comps(1)%value, ue(:,:) )
 
-            !> ua: Parallel Velocity
-            allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
+            !> ua: Parallel Ion Velocity
+            ! allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
             do is = 1, ns
-                allocate( edge_profiles%ggd( ggd_slice )%ion( ns )%velocity(1) )
+                allocate( edge_profiles%ggd( ggd_slice )%ion( is )%velocity(1) )
+                write(*,*) "Parallel velocity ", is
 
-                !! TODO: find where to IDS this data belongs
-                allocate( edge_profiles%ggd( ggd_slice )%ion( ns )% &
-                    &   velocity(1)%comps(1) )
-                allocate( edge_profiles%ggd( ggd_slice )%ion( ns )% &
-                    &   velocity(1)%align(1) )
-                allocate( edge_profiles%ggd( ggd_slice )%ion( ns )% &
-                    &   velocity(1)%alignid(1) )
-                edge_profiles%ggd( ggd_slice )%ion( ns )%           &
-                    &   velocity(1)%align(1) = VEC_ALIGN_PARALLEL
-                edge_profiles%ggd( ggd_slice )%ion( ns )%           &
-                    &   velocity(1)%alignid(1) = VEC_ALIGN_PARALLEL_ID
+                !! TODO: find out where in the IDS fits the following data
+                ! allocate( edge_profiles%ggd( ggd_slice )%ion( is )% &
+                !     &   velocity(1)%comps(1) )
+                ! allocate( edge_profiles%ggd( ggd_slice )%ion( is )% &
+                !     &   velocity(1)%align(1) )
+                ! allocate( edge_profiles%ggd( ggd_slice )%ion( is )% &
+                !     &   velocity(1)%alignid(1) )
+                ! edge_profiles%ggd( ggd_slice )%ion( is )%           &
+                !     &   velocity(1)%align(1) = VEC_ALIGN_PARALLEL
+                ! edge_profiles%ggd( ggd_slice )%ion( is )%           &
+                !     &   velocity(1)%alignid(1) = VEC_ALIGN_PARALLEL_ID
 
-                call write_cell_scalar( edge_profiles%ggd( ggd_slice )% &
-                    &   ion( ns )%velocity(1)%comps(1)%value,           &
+                call write_cell_vector_component(       &
+                    &   edge_profiles%ggd( ggd_slice )% &
+                    &   ion( is )%velocity,          &
                     &   ua(:,:, is - 1 ) )
             end do
+# if 0
 
             !> te: Electron Temperature
             call write_quantity( edge_profiles%ggd( ggd_slice )%fluid%te%value,  &
@@ -363,7 +366,7 @@ contains
                 &   gridSubsetId = iGsCore )
         end subroutine write_quantity
 
-        !> Write a scalar B2 cell quantity to a ids_generic_grid_scalar
+        !> Write a scalar B2 cell quantity to ids_generic_grid_scalar
         subroutine write_cell_scalar(scalar, b2CellData)
             type(ids_generic_grid_scalar), intent(inout), pointer :: scalar(:)
             ! type(ids_generic_grid_scalar), intent(inout), pointer :: scalar(:)
@@ -378,6 +381,59 @@ contains
             call gridWriteData( scalar(1), GRID_SUBSET_CELLS, idsdata )
             deallocate(idsdata)
         end subroutine write_cell_scalar
+
+        !> Write a vector component B2 cell quantity to
+        !> ids_generic_grid_vector components
+        subroutine write_cell_vector_component( vectorComponent, b2CellData)
+            type(ids_generic_grid_vector_components), intent(inout),    &
+                &   pointer :: vectorComponent(:)
+            real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
+            real(IDS_real), dimension(:), pointer :: idsdata
+            allocate( vectorComponent(1) )
+
+            !! TODO: add checks whether already allocated
+            idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%   &
+                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,       &
+                &   gmap, b2CellData )
+            call gridWriteDataVectorComponents( vectorComponent(1), &
+                &   GRID_SUBSET_CELLS, idsdata )
+            deallocate(idsdata)
+        end subroutine write_cell_vector_component
+
+        !!$> TODO: add to GGD itself (ids_grid_data)!
+        !> Write a scalar data field given as a scalar data representation to a
+        !> generic grid vector component IDS data field.
+        !>
+        !> @note: the routine will make sure the required storage is allocated, and
+        !> will deallocate and re-allocate fields as necessary.
+        !> @note: currently works only with parallel velocity data field
+        subroutine gridWriteDataVectorComponents( idsField_vcomp,   &
+                &   grid_subset_index, data )
+            type(ids_generic_grid_vector_components), intent(inout) ::  &
+                &   idsField_vcomp
+            integer, intent(in) :: grid_subset_index
+            real(ids_real), intent(in) :: data(:)
+
+            !! set grid subset index
+            idsField_vcomp%grid_subset_index = grid_subset_index
+
+            !! Writing parallel coefficients
+            !! Make sure the data field is properly allocated
+            if ( associated(idsField_vcomp%parallel) ) then
+                if ( .not. all( shape(idsField_vcomp%parallel) ==   &
+                    &   shape(data) )) then
+                    deallocate( idsField_vcomp%parallel )
+                end if
+            end if
+            !! If required, allocate storage
+            if ( .not. associated(idsField_vcomp%parallel) ) then
+                allocate(idsField_vcomp%parallel( size(data, 1) ))
+            end if
+
+            !! copy data
+            idsField_vcomp%parallel = data
+
+        end subroutine gridWriteDataVectorComponents
 
 #if 0
         !> Write a vector B2 cell quantity to a complexgrid_vector
@@ -395,8 +451,9 @@ contains
             dim = size(vecdata, 3)
 
             !! TODO: add checks whether already allocated
-            !! TODO: solve the vector%comp etc., found in the ITM
-            !! type_complexgrid_vector, for the IDS
+            !! TODO: find out where in the IDS fits the following data.
+            !!       solve the vector%comp etc., found in the ITM
+            !!       type_complexgrid_vector, for the IDS
             ! allocate( vector%comp( dim ))
             ! allocate( vector%align( dim ))
             ! allocate( vector%alignid( dim ))
@@ -432,8 +489,9 @@ contains
             if ( .not. present(gridSubsetId) ) then
 
                 !! TODO: add checks whether already allocated
-                !! TODO: solve the vector%comp etc., found in the ITM
-                !! type_complexgrid_vector, for the IDS
+                !! TODO: find out where in the IDS fits the following data
+                !!       solve the vector%comp etc., found in the ITM
+                !!       type_complexgrid_vector, for the IDS
                 ! allocate(vector%comp(2))
                 ! allocate(vector%align(2))
                 ! allocate(vector%alignid(2))
@@ -461,6 +519,7 @@ contains
                 ! call gridWriteData( vector%comp(2), GRID_SUBSET_X_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
             else
+                !! TODO: find out where in the IDS fits the following data
                 ! allocate(vector%comp(1))
                 ! allocate(vector%align(1))
                 ! allocate(vector%alignid(1))
