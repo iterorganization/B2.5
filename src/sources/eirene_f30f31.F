@@ -630,43 +630,47 @@ c
 #ifdef B25_EIRENE
 cxpb Deduce from fort.33 triangle vertices files which format precision to use
 #ifndef HPUX
-      if (nrknot.gt.0 .and. open_file(33,'fort.33','')) then
+      if (open_file(33,'fort.33','')) then
 #else
-      if (nrknot.gt.0 .and. open_file(33,'ftn33','')) then
+      if (open_file(33,'ftn33','')) then
 #endif
         rewind(33)
-        read(33,1028)
-        read(33,'(A80)') line
-        exp_location = 81
-        dot_location = 0
-        if (index(line,'E').ne.0)
-     .   exp_location = min(exp_location,index(line,'E'))
-        if (index(line,'e').ne.0)
-     .   exp_location = min(exp_location,index(line,'e'))
-        if (index(line,'d').ne.0)
-     .   exp_location = min(exp_location,index(line,'d'))
-        if (index(line,'D').ne.0)
-     .   exp_location = min(exp_location,index(line,'D'))
-        if (exp_location.ne.81)
-     .   dot_location = index(line(1:exp_location),'.')
-        if (dot_location.ne.0) then
-          if (exp_location-dot_location.eq.8) then
-            new_format = 1
-          else if (exp_location-dot_location.eq.9) then
-            new_format = 2
+        if (nrknot.eq.0) read(33,*) nrknot
+        if (nrknot.gt.0) then
+          read(33,'(A80)') line
+          exp_location = 81
+          dot_location = 0
+          if (index(line,'E').ne.0)
+     .     exp_location = min(exp_location,index(line,'E'))
+          if (index(line,'e').ne.0)
+     .     exp_location = min(exp_location,index(line,'e'))
+          if (index(line,'d').ne.0)
+     .     exp_location = min(exp_location,index(line,'d'))
+          if (index(line,'D').ne.0)
+     .     exp_location = min(exp_location,index(line,'D'))
+          if (exp_location.ne.81)
+     .     dot_location = index(line(1:exp_location),'.')
+          if (dot_location.ne.0) then
+            if (exp_location-dot_location.eq.8) then
+              new_format = 1
+            else if (exp_location-dot_location.eq.9) then
+              new_format = 2
+            else
+#ifndef HPUX
+              call xerrab ('Unrecognized format (1) in fort.33 file')
+#else
+              call xerrab ('Unrecognized format (1) in ftn33 file')
+#endif
+            end if
           else
 #ifndef HPUX
-            call xerrab ('Unrecognized format (1) in fort.33 file')
+            call xerrab ('Unrecognized format (2) in fort.33 file')
 #else
-            call xerrab ('Unrecognized format (1) in ftn33 file')
+            call xerrab ('Unrecognized format (2) in ftn33 file')
 #endif
           end if
         else
-#ifndef HPUX
-          call xerrab ('Unrecognized format (2) in fort.33 file')
-#else
-          call xerrab ('Unrecognized format (2) in ftn33 file')
-#endif
+          new_format = 2
         end if
         close(33)
       else
