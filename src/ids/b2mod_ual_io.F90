@@ -210,9 +210,9 @@ contains
             !> ne: Electron Density
             call write_quantity( edge_profiles%ggd( ggd_slice )%electrons%  &
                 &   density, edge_transport%model(1)%ggd( ggd_slice )%      &
-                &   electrons%energy%flux, ne, fne, ggd_slice )
+                &   electrons%particles%flux, ne, fne, ggd_slice )
             call write_cell_scalar( edge_sources%source(1)%ggd( ggd_slice )%    &
-                &   electrons%energy, sne(:,:,0) + sne(:,:,1) * ne )
+                &   electrons%particles, sne(:,:,0) + sne(:,:,1) * ne )
 
             !> ni (SOLPS 4.x) /
             !> na (SOLPS 5.x): Ion Density
@@ -223,14 +223,13 @@ contains
             do is = 1, ns
                 call write_quantity( edge_profiles%ggd( ggd_slice )%    &
                     &   ion(is)%density, edge_transport%model(1)%       &
-                    &   ggd( ggd_slice )%ion( is )%energy%flux,         &
+                    &   ggd( ggd_slice )%ion( is )%particles%flux,         &
                     &   na(:,:, is - 1 ), fna(:,:,:, is - 1 ), ggd_slice )
                 call write_cell_scalar( edge_sources%source(1)%             &
-                    &   ggd( ggd_slice )%ion( is )%energy,                  &
+                    &   ggd( ggd_slice )%ion( is )%particles,               &
                     &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *         &
                     &   na(:,:, is - 1 ) )
             end do
-! #if 0
 
 !!$    !> ue: Parallel Electron Velocity
 !!$    TODO: must be computed, refactor code from b2news into function
@@ -245,7 +244,6 @@ contains
             ! allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
             do is = 1, ns
                 allocate( edge_profiles%ggd( ggd_slice )%ion( is )%velocity(1) )
-                write(*,*) "Parallel velocity ", is
 
                 !! TODO: find out where in the IDS fits the following data
                 ! allocate( edge_profiles%ggd( ggd_slice )%ion( is )% &
@@ -264,20 +262,25 @@ contains
                     &   ion( is )%velocity,          &
                     &   ua(:,:, is - 1 ) )
             end do
-# if 0
 
             !> te: Electron Temperature
-            call write_quantity( edge_profiles%ggd( ggd_slice )%fluid%te%value,  &
-                &   edge_profiles%ggd( ggd_slice )%fluid%te%flux, te/qe, fhe )
+            call write_quantity( edge_profiles%ggd( ggd_slice )%electrons%  &
+                &   temperature, edge_transport%model(1)%ggd( ggd_slice )%  &
+                &   electrons%energy%flux, te/qe, fhe, ggd_slice )
 
             !> ti: Ion Temperature
-            allocate( edge_profiles%ggd( ggd_slice )%fluid%ti(1) )
-            call write_quantity( edge_profiles%ggd( ggd_slice )%fluid%ti(1)%value,   &
-                &   edge_profiles%ggd( ggd_slice )%fluid%ti(1)%flux, ti/qe, fhi )
+            allocate( edge_profiles%ggd( ggd_slice )%ion(1) )
+            allocate( edge_profiles%ggd( ggd_slice )%ion(1)%temperature(1) )
+            allocate( edge_transport%model(1)%ggd( ggd_slice )%ion( 1 ) )
+            call write_quantity( edge_profiles%ggd( ggd_slice )%ion(1)%     &
+                &   temperature, edge_transport%model(1)% ggd( ggd_slice )% &
+                &   ion(1)%energy%flux, ti/qe, fhi, ggd_slice )
 
             !> po: Electric Potential
-            call write_cell_scalar( edge_profiles%ggd( ggd_slice )%fluid%po%value, po )
+            call write_cell_scalar( edge_profiles%ggd( ggd_slice )% &
+                &   phi_potential, po )
 
+# if 0
             !> B (magnetic field vector)
             allocate( edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(4) )
 
