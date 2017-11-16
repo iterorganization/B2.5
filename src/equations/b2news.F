@@ -482,6 +482,26 @@ cxpb
 !     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
+
+!!FR Possible loop (2) for use with OpenMP
+!$OMP PARALLEL DO DEFAULT(none)
+!$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, ix, iy, new_matrix)
+!$OMP& PRIVATE(ireg)
+!$OMP& FIRSTPRIVATE(pb, flob, conb)
+!$OM1& SHARED(nsmin, nsmax, na_min, ismain)
+!$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
+!$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
+!$OMP& SHARED(is_neutral, uadia, ncall, ncallout, resmo, corua)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, vol, pbs, pbshz)
+!$OMP& SHARED(cssb, vaecrb, vadia)
+!$OMP& SHARED(wadia, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
+!$OMP& SHARED(cddi, cvlahz, cvmahz, cdnahz, cdpahz, fchvispar)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
+!$OMP& SHARED(rxf0, sna, pcca, resco, corpa, b2stbr_sna, b2stbm_sna) 
+!$OMP& SHARED(ext_sna, use_b2npc9)
 !        do is = 0, ns-1
         do is = nsmin, nsmax-1
 *    ..DPC
@@ -632,6 +652,9 @@ cxpb
      1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.false.)            !djm Jan2017
           endif
         enddo
+!$OMP END PARALLEL DO
+!! FR End of loop (2)
+
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
            call print_wrong_flows(
      &          'Before potential loop: fna(ions) at plates')
