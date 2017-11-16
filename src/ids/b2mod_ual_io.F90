@@ -318,14 +318,11 @@ contains
                 &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
                 &   b2CellData = e(:,:,:,3),                                    &
                 &   vectorID = VEC_ALIGN_TOROIDAL_ID )
-# if 0
             !> write the magnetic field vector in the b2 coordinate system
-            allocate( edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(4)%flux(1) )
-            call write_cell_vector( edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(4)%flux(1),  &
-                & (/ VEC_ALIGN_POLOIDAL, VEC_ALIGN_RADIAL, VEC_ALIGN_TOROIDAL /),   &
-                & (/ VEC_ALIGN_POLOIDAL_ID, VEC_ALIGN_RADIAL_ID,                    &
-                &   VEC_ALIGN_TOROIDAL_ID /), bb(:,:,0:2) )
-#endif
+            call write_cell_vector_component(                                   &
+                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   b2CellData = bb(:,:,0:2),                                   &
+                &   vectorID = "diamagnetic" )
 
         end if
 
@@ -480,7 +477,7 @@ contains
                 end if
                 !! copy radial data field
                 idsField_vcomp%radial = data
-            case( "diamagnetic")
+            case( "diamagnetic" )
                 !! Writing diamagnetic quantity
                 !! Make sure the data field is properly allocated
                 if ( associated( idsField_vcomp%diamagnetic ) ) then
