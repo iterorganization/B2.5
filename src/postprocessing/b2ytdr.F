@@ -433,7 +433,7 @@ c 2002-09-11: logic revised
      *  neutral_rescale, BoRiS, divheat, rswitch,
      .  scaling_width(nscale), scaling_strength(nscale),
      .  ixfb, iyfb, ixfb1, iyfb1,
-     .  xfrhie, xfrhiehz, xfrhie_no_drift,
+     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
      .  elm_time_begin, elm_time_end, elm_time_period,
      .  sources_time_mod, sources_time_switch,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
@@ -1323,6 +1323,7 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfnb_xfrhie', xfrhie)
       call ipgetr ('b2tfnb_xfrhiehz', xfrhiehz)
       call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)
+      call ipgetr ('b2tfhe_inert', b2tfhe_inert)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1605,10 +1606,11 @@ c 2002-09-11: logic revised
         case('b2trcl_conductive limit')
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
-        case('b2news_coriolis')  ! Now obsolete, needs to be removed from the list
+        case('b2news_coriolis','b2npht_style_shei',
+      &                        'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
-        case('eirene_fixmap')    ! No longer needed
+        case('eirene_fixmap','b2tfnb_fnb_nodrift_style')  ! No longer needed
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
@@ -1656,6 +1658,9 @@ c 2002-09-11: logic revised
           else
             wait = .true.
           endif
+        case ('b2tfhe_inert') ! needs to be rewritten as b2tiner_inert
+          rswitch = b2tfhe_inert
+          cnamip = 'b2tiner_inert'
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
