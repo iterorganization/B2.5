@@ -208,11 +208,17 @@ contains
             allocate( edge_transport%model(1)%ggd( num_ggd_slice ) )
 
             !> ne: Electron Density
-            call write_quantity( edge_profiles%ggd( ggd_slice )%electrons%  &
-                &   density, edge_transport%model(1)%ggd( ggd_slice )%      &
-                &   electrons%particles%flux, ne, fne, ggd_slice )
-            call write_cell_scalar( edge_sources%source(1)%ggd( ggd_slice )%    &
-                &   electrons%particles, sne(:,:,0) + sne(:,:,1) * ne )
+            call write_quantity(                                            &
+                &   val = edge_profiles%ggd( ggd_slice )%electrons%density, &
+                &   fluxes = edge_transport%model(1)%ggd( ggd_slice )%      &
+                &            electrons%particles%flux,                      &
+                &   value = ne,                                             &
+                &   flux = fne,                                             &
+                &   ggd_slice = ggd_slice )
+            call write_cell_scalar(                                         &
+                &   scalar = edge_sources%source(1)%ggd( ggd_slice )%       &
+                &            electrons%particles,                           &
+                &   b2CellData = sne(:,:,0) + sne(:,:,1) * ne )
 
             !> ni (SOLPS 4.x) /
             !> na (SOLPS 5.x): Ion Density
@@ -221,13 +227,16 @@ contains
             allocate( edge_sources%source(1)%ggd( ggd_slice )%ion( ns ) )
 
             do is = 1, ns
-                call write_quantity( edge_profiles%ggd( ggd_slice )%    &
-                    &   ion(is)%density, edge_transport%model(1)%       &
-                    &   ggd( ggd_slice )%ion( is )%particles%flux,         &
-                    &   na(:,:, is - 1 ), fna(:,:,:, is - 1 ), ggd_slice )
-                call write_cell_scalar( edge_sources%source(1)%             &
+                call write_quantity(                                            &
+                    &   val = edge_profiles%ggd( ggd_slice )%ion(is)%density,   &
+                    &   fluxes = edge_transport%model(1)%ggd( ggd_slice )%      &
+                    &   ion( is )%particles%flux,                               &
+                    &   value = na(:,:, is - 1 ),                               &
+                    &   flux = fna(:,:,:, is - 1 ),                             &
+                    &   ggd_slice = ggd_slice )
+                call write_cell_scalar( scalar = edge_sources%source(1)%             &
                     &   ggd( ggd_slice )%ion( is )%particles,               &
-                    &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *         &
+                    &   b2CellData = sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *         &
                     &   na(:,:, is - 1 ) )
             end do
 
@@ -257,47 +266,59 @@ contains
                 ! edge_profiles%ggd( ggd_slice )%ion( is )%           &
                 !     &   velocity(1)%alignid(1) = VEC_ALIGN_PARALLEL_ID
 
-                call write_cell_vector_component(       &
-                    &   edge_profiles%ggd( ggd_slice )% &
-                    &   ion( is )%velocity,             &
-                    &   ua(:,:, is - 1 ),               &
-                    &   vectorLabel = "parallel" )
+                call write_cell_vector_component(                           &
+                    &   vectorComponent = edge_profiles%ggd( ggd_slice )%   &
+                    &                     ion( is )%velocity,               &
+                    &   b2CellData = ua(:,:, is - 1 ),                      &
+                    &   vectorID = VEC_ALIGN_PARALLEL_ID )
             end do
 
             !> te: Electron Temperature
-            call write_quantity( edge_profiles%ggd( ggd_slice )%electrons%  &
-                &   temperature, edge_transport%model(1)%ggd( ggd_slice )%  &
-                &   electrons%energy%flux, te/qe, fhe, ggd_slice )
+            call write_quantity(                                        &
+                &   val = edge_profiles%ggd( ggd_slice )%electrons%     &
+                &         temperature,                                  &
+                &   fluxes = edge_transport%model(1)%ggd( ggd_slice )%  &
+                &            electrons%energy%flux,                     &
+                &   value = te/qe,                                      &
+                &   flux = fhe,                                         &
+                &   ggd_slice = ggd_slice )
 
             !> ti: Ion Temperature
             allocate( edge_profiles%ggd( ggd_slice )%ion(1)%temperature(1) )
             allocate( edge_transport%model(1)%ggd( ggd_slice )%ion( 1 ) )
-            call write_quantity( edge_profiles%ggd( ggd_slice )%ion(1)%     &
-                &   temperature, edge_transport%model(1)% ggd( ggd_slice )% &
-                &   ion(1)%energy%flux, ti/qe, fhi, ggd_slice )
+            call write_quantity(                                            &
+                &   val = edge_profiles%ggd( ggd_slice )%ion(1)%temperature,&
+                &   fluxes = edge_transport%model(1)% ggd( ggd_slice )%     &
+                &   ion(1)%energy%flux,                                     &
+                &   value = ti/qe,                                          &
+                &   flux = fhi,                                             &
+                &   ggd_slice = ggd_slice )
 
             !> po: Electric Potential
             call write_cell_scalar( edge_profiles%ggd( ggd_slice )% &
                 &   phi_potential, po )
 
             !> B (magnetic field vector)
-            allocate( edge_profiles%ggd( ggd_slice )%e_field(1) )
             !> Compute unit basis vectors along the field directions
             call computeCoordinateUnitVectors(crx, cry, e(:,:,:,1), &
                 &   e(:,:,:,2), e(:,:,:,3))
 
-# if 0
-
             !> Write the three unit basis vectors
-            do i = 1, 3
-                allocate( edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(i)%flux(1) )
-                call write_cell_vector( &
-                    &   edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(i)%flux(1), &
-                    & (/ VEC_ALIGN_DEFAULT, VEC_ALIGN_DEFAULT, VEC_ALIGN_DEFAULT /), &
-                    & (/ VEC_ALIGN_DEFAULT_ID, VEC_ALIGN_DEFAULT_ID, VEC_ALIGN_DEFAULT_ID /), &
-                    & e(:,:,:,i) )
-            end do
+            call write_cell_vector_component(                                   &
+                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   b2CellData = e(:,:,:,1),                                    &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
 
+            call write_cell_vector_component(                                   &
+                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   b2CellData = e(:,:,:,2),                                    &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
+
+            call write_cell_vector_component(                                   &
+                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   b2CellData = e(:,:,:,3),                                    &
+                &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+# if 0
             !> write the magnetic field vector in the b2 coordinate system
             allocate( edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(4)%flux(1) )
             call write_cell_vector( edge_profiles%ggd( ggd_slice )%fluid%te_aniso%comps(4)%flux(1),  &
@@ -389,31 +410,33 @@ contains
         !> components
         !> @note: Currently works only with parallel velocity data field
         !> @note: Available IDS vector component data fields:
-        !>          - radial,
-        !>          - diamagnetic,
-        !>          - parallel,
-        !>          - poloidal,
-        !>          - toroidal
+        !>          - VEC_ALIGN_RADIAL_ID ( "radial" ),
+        !>          - "diamagnetic",
+        !>          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
+        !>          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
+        !>          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
         subroutine write_cell_vector_component( vectorComponent, b2CellData,    &
-                &   vectorLabel)
+                &   vectorID)
             type(ids_generic_grid_vector_components), intent(inout),    &
                 &   pointer :: vectorComponent(:)
             real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
             real(IDS_real), dimension(:), pointer :: idsdata
-            character(len=*), intent(in) :: vectorLabel
-            allocate( vectorComponent(1) )
+            character(len=*), intent(in) :: vectorID
+
+            !! If required, allocate storage
+            if ( .not. associated( vectorComponent ) ) then
+                allocate( vectorComponent(1) )
+            end if
 
             !! TODO: add checks whether already allocated
             idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%   &
                 &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,       &
                 &   gmap, b2CellData )
 
-            ! select case( vectorLabel)
-            ! case ( "parallel")
-            if( vectorLabel .eq. "parallel" ) then
-                call gridWriteDataVectorComponents( vectorComponent(1), &
-                    &   GRID_SUBSET_CELLS, vectorLabel, idsdata )
-            end if
+            ! if( vectorID .eq. VEC_ALIGN_PARALLEL_ID ) then
+            call gridWriteDataVectorComponents( vectorComponent(1), &
+                &   GRID_SUBSET_CELLS, vectorID, idsdata )
+            ! end if
             deallocate(idsdata)
         end subroutine write_cell_vector_component
 
@@ -425,44 +448,105 @@ contains
         !> and will deallocate and re-allocate fields as necessary.
         !> @note: Currently works only with parallel velocity data field
         !> @note: Available IDS vector component data fields:
-        !>          - radial,
-        !>          - diamagnetic,
-        !>          - parallel,
-        !>          - poloidal,
-        !>          - toroidal
+        !>          - VEC_ALIGN_RADIAL_ID ( "radial" ),
+        !>          - "diamagnetic",
+        !>          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
+        !>          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
+        !>          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
         subroutine gridWriteDataVectorComponents( idsField_vcomp,       &
-                &   grid_subset_index, vectorLabel, data)
+                &   grid_subset_index, vectorID, data)
             type(ids_generic_grid_vector_components), intent(inout) ::  &
                 &   idsField_vcomp
             integer, intent(in) :: grid_subset_index
-            character(len=*), intent(in) :: vectorLabel
+            character(len=*), intent(in) :: vectorID
             real(ids_real), intent(in) :: data(:)
 
             !! set grid subset index
             idsField_vcomp%grid_subset_index = grid_subset_index
 
-            if( vectorLabel .eq. "parallel" ) then
-                !! Writing parallel coefficients
+            select case( vectorID )
+            case( VEC_ALIGN_RADIAL_ID )
+                !! Writing radial quantity
                 !! Make sure the data field is properly allocated
-                if ( associated(idsField_vcomp%parallel) ) then
-                    if ( .not. all( shape(idsField_vcomp%parallel) ==   &
+                if ( associated( idsField_vcomp%radial ) ) then
+                    if ( .not. all( shape( idsField_vcomp%radial ) ==   &
+                        &   shape(data) )) then
+                        deallocate( idsField_vcomp%radial )
+                    end if
+                end if
+                !! If required, allocate storage
+                if ( .not. associated( idsField_vcomp%radial ) ) then
+                    allocate(idsField_vcomp%radial( size(data, 1) ))
+                end if
+                !! copy radial data field
+                idsField_vcomp%radial = data
+            case( "diamagnetic")
+                !! Writing diamagnetic quantity
+                !! Make sure the data field is properly allocated
+                if ( associated( idsField_vcomp%diamagnetic ) ) then
+                    if ( .not. all( shape( idsField_vcomp%diamagnetic) ==   &
+                        &   shape(data) )) then
+                        deallocate( idsField_vcomp%diamagnetic )
+                    end if
+                end if
+                !! If required, allocate storage
+                if ( .not. associated( idsField_vcomp%diamagnetic ) ) then
+                    allocate( idsField_vcomp%diamagnetic( size(data, 1) ) )
+                end if
+                !! copy diamagnetic data field
+                idsField_vcomp%diamagnetic = data
+            case( VEC_ALIGN_PARALLEL_ID )
+                !! Writing parallel quantity
+                !! Make sure the data field is properly allocated
+                if ( associated( idsField_vcomp%parallel ) ) then
+                    if ( .not. all( shape( idsField_vcomp%parallel ) ==  &
                         &   shape(data) )) then
                         deallocate( idsField_vcomp%parallel )
                     end if
                 end if
                 !! If required, allocate storage
-                if ( .not. associated(idsField_vcomp%parallel) ) then
+                if ( .not. associated( idsField_vcomp%parallel ) ) then
                     allocate(idsField_vcomp%parallel( size(data, 1) ))
                 end if
                 !! copy parallel data field
                 idsField_vcomp%parallel = data
-            end if
+            case( VEC_ALIGN_POLOIDAL_ID )
+                !! Writing poloidal quantity
+                !! Make sure the data field is properly allocated
+                if ( associated( idsField_vcomp%poloidal ) ) then
+                    if ( .not. all( shape( idsField_vcomp%poloidal ) == &
+                        &   shape(data) )) then
+                        deallocate( idsField_vcomp%poloidal )
+                    end if
+                end if
+                !! If required, allocate storage
+                if ( .not. associated( idsField_vcomp%poloidal ) ) then
+                    allocate( idsField_vcomp%poloidal( size(data, 1) ) )
+                end if
+                !! copy poloidal data field
+                idsField_vcomp%poloidal = data
+            case( VEC_ALIGN_TOROIDAL_ID )
+                !! Writing toroidal quantity
+                !! Make sure the data field is properly allocated
+                if ( associated( idsField_vcomp%toroidal ) ) then
+                    if ( .not. all( shape( idsField_vcomp%toroidal ) ==  &
+                        &   shape(data) )) then
+                        deallocate( idsField_vcomp%toroidal )
+                    end if
+                end if
+                !! If required, allocate storage
+                if ( .not. associated( idsField_vcomp%toroidal ) ) then
+                    allocate(idsField_vcomp%toroidal( size(data, 1) ))
+                end if
+                !! copy toroidal data field
+                idsField_vcomp%toroidal = data
+            end select
 
         end subroutine gridWriteDataVectorComponents
 
 #if 0
         !> Write a vector B2 cell quantity to a complexgrid_vector
-        subroutine write_cell_vector(vector, align, alignid, vecdata)
+        subroutine write_cell_vector( vector, align, alignid, vecdata )
             type(ids_generic_grid_vector), intent(inout) :: vector
             real(IDS_real), intent(in) :: vecdata(-1:gmap%b2nx, &
                 &   -1:gmap%b2ny, 0:2)
