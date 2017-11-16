@@ -1607,7 +1607,7 @@ c 2002-09-11: logic revised
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
         case('b2news_coriolis','b2npht_style_shei',
-      &                        'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
+     &                         'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
         case('eirene_fixmap','b2tfnb_fnb_nodrift_style')  ! No longer needed
