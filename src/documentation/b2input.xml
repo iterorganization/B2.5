@@ -1131,6 +1131,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tinnt_fchin_in_core</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Integer switch to turn off or on the ion-neutral current in the core region (applies to coupled runs only). This is recommended in cases where the neutral densities are very low in the core region and the ion-neutral current is likely to vary widely from one iteration to the next as a result of Monte-Carlo noise.
+					If fchin_in_core.eq.0 (default), then fchin is set to zero in the core.
+					If fchin_in_core.eq.1, then fchin is unchanged.
+				</description>
+			</switch>
+			<switch>
 				<name>b2tfhe_PSch</name>
 				<default>1.0</default>
 				<type>real</type>

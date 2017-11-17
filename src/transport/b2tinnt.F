@@ -44,6 +44,7 @@
       integer, save :: mode = 1
       integer, save :: iout = 0
       integer, save :: use_eirene, area_fix
+      integer, save :: fchin_in_core = 0                                  !srv 16.11.17
       integer n2, ix, iy, is, is0, iamain
 #ifdef B25_EIRENE
       integer ia, im
@@ -82,6 +83,7 @@
         call ipgeti ('b2news_area_fix', area_fix)
         call ipgeti ('b2news_poteq', pot_eq)                              !srv 26.07.06
         call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
+        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 16.11.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -286,6 +288,17 @@
               enddo
             enddo
           endif                                                           !srv 15.02.11 }
+
+          if(fchin_in_core.eq.0) then                                     !srv 16.11.17 {
+            do iy=-1,ny
+              do ix=-1,nx
+                if(on_closed_surface(ix,iy)) then
+                  fchin(ix,iy,:) = 0.0_R8
+                endif
+              enddo
+            enddo
+          endif                                                           !srv 16.11.17 }
+
         else
 *   ..extensive tests on first few calls
           if (ncall.lt.3) then
