@@ -430,10 +430,8 @@ contains
                 &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,       &
                 &   gmap, b2CellData )
 
-            ! if( vectorID .eq. VEC_ALIGN_PARALLEL_ID ) then
-            call gridWriteDataVectorComponents( vectorComponent(1), &
+            call B2gridWriteDataVectorComponents( vectorComponent(1), &
                 &   GRID_SUBSET_CELLS, vectorID, idsdata )
-            ! end if
             deallocate(idsdata)
         end subroutine write_cell_vector_component
 
@@ -450,7 +448,7 @@ contains
         !>          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
         !>          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
         !>          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
-        subroutine gridWriteDataVectorComponents( idsField_vcomp,       &
+        subroutine B2gridWriteDataVectorComponents( idsField_vcomp,       &
                 &   grid_subset_index, vectorID, data)
             type(ids_generic_grid_vector_components), intent(inout) ::  &
                 &   idsField_vcomp
@@ -539,7 +537,7 @@ contains
                 idsField_vcomp%toroidal = data
             end select
 
-        end subroutine gridWriteDataVectorComponents
+        end subroutine B2gridWriteDataVectorComponents
 
 #if 0
         !> Write a vector B2 cell quantity to a complexgrid_vector
