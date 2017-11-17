@@ -37,6 +37,7 @@
       logical, save :: last_solve_5(0:NNREGMAX)
       logical, save :: last_solve_9(0:NNREGMAX)
 #endif
+!$OMP THREADPRIVATE (last_solve_5, last_solve_9)
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
       real (kind=R8), allocatable, save :: time_factor(:,:)

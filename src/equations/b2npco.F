@@ -17,6 +17,7 @@
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_balance
+!$    use omp_lib       ! IGNORE
      & ,only : update_balance_sources_particles, balance_netcdf       !djm Jan2017
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -73,6 +74,7 @@
      *  aa5(-1:nx,-1:ny,-2:2), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1, use_eirene
 !$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
+      logical in_parallel
 *   ..procedures
       external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2ursc, b2usco, b2upco
@@ -212,7 +214,17 @@ csw 11dec2012, check for solv flags
        endif                                                            !srv 06.07.08 }
       endif
 
+#ifdef _OPENMP
+      in_parallel = omp_in_parallel()
+#else
+      in_parallel = .false.
+#endif
       if (iout.ne.0) then                                            !srv 12.07.02 {
+       if (in_parallel) then
+         !$OMP MASTER
+         write(*,*) 'B2NPCO will not write to file in parallel mode'
+         !$OMP END MASTER
+       else
         call my_out(70,nx,ny,pb,'b2npco_pa'//chns)
         call my_out(70,nx,ny,nb,'b2npco_na'//chns)
         call my_out(70,nx,ny,ub,'b2npco_ua'//chns)
@@ -223,15 +235,22 @@ csw 11dec2012, check for solv flags
         call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)
+       endif
       endif                                                          !srv 12.07.02 }
 
       if (iout_b2wdat.eq.4) then
+       if (in_parallel) then
+         !$OMP MASTER
+         write(*,*) 'B2NPCO will not write to file in parallel mode'
+         !$OMP END MASTER
+       else
         call my_out(70,nx,ny,nb,'b2npco_na'//chns)
         call my_out(70,nx,ny,rescb,'b2npco_resco'//chns)
         wrk0=snb(:,:,0)+nb*snb(:,:,1)
         call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)
+       endif
       endif
 
 *   ..set error parameter
