@@ -8,7 +8,7 @@
       use b2mod_indirect
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
-!$    use omp_lib                       ! IGNORE
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
@@ -237,13 +237,9 @@ cxpb
         corpb(ix,iy) = corpb(ix,iy)*rscal(pb(ix,iy))
        enddo
       enddo
-#ifdef _OPENMP
-      in_parallel = omp_in_parallel()
-#else
-      in_parallel = .false.
-#endif
+      
       if (iout.ne.0) then                                              !srv 17.06.02 {
-       if (in_parallel) then
+       if (in_parallel()) then
         !$OMP MASTER
          write(*,*)'OpenMP warning from b2usco: not writing files ',
      &        'in parallel mode',

@@ -3,7 +3,7 @@
       use b2mod_types
       use b2mod_ma28
       use b2mod_indirect
-!$    use omp_lib         ! IGNORE      
+      use b2mod_openmp
       IMPLICIT NONE
       external bd1
 C
@@ -53,7 +53,6 @@ c
       EXTERNAL XERRAB, b2sasum
 
       logical lfirst
-      logical in_parallel
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                                !srv 18.03.10
       integer, save :: kwrite_bnr = -1                                !srv 18.03.10
@@ -149,13 +148,8 @@ c             (maybe necessary in case of multi-fluid?)
       if(b2swtest.eq.1) lfirst=.true.
 !!FR The b2_matrix file will not write out correctly if code runs in parallel 
 !!FR thus ensure that the code will not be executed if accessed in parallel region.
-#ifdef _OPENMP
-      in_parallel = omp_in_parallel()
-#else
-      in_parallel = .false.
-#endif
       if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
-        if (in_parallel) then !!FR in parallel do not write this file
+        if (in_parallel()) then !!FR in parallel do not write this file
           !$OMP MASTER
            write(*,*)'OpenMP: warning: running in parallel the ',
      1      'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ', 
@@ -182,7 +176,7 @@ c             (maybe necessary in case of multi-fluid?)
       endif
 
       if(kwrite_fmt.eq.ncall) then
-        if (in_parallel) then !!FR in parallel do not write this file
+        if (in_parallel()) then !!FR in parallel do not write this file
           !$OMP MASTER
            write(*,*)'OpenMP: warning: running in parallel the ',
      1      'b2_5_rhs_ and b2_5_matrix_ files will not be written out'
@@ -207,7 +201,7 @@ c             (maybe necessary in case of multi-fluid?)
 cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
-          if (in_parallel) then !!FR in parallel do not write this file
+          if (in_parallel()) then !!FR in parallel do not write this file
             !$OMP MASTER
             write(*,*)'OpenMP: warning: running in parallel the ',
      1      'b2_matrix_ files will not be written out'
