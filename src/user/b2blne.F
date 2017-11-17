@@ -676,7 +676,7 @@ c*** f     :  the associated file name
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
 c
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex) then !{

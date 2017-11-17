@@ -1071,6 +1071,7 @@ c
         real(kind=R8) :: ftec(-1:nx,-1:ny), ftic(-1:nx,-1:ny,0:ns-1) !srv 17.04.06 }
 
         logical :: exist_file(0:2)
+        character*256 :: filename(0:2)
         integer ix, iy, is, nc_c_m_f(1)                           !srv 05.07.04
         integer, save :: ncall = 0, bottomdelta1, topdelta2, mintopcut !srv 28.07.10
         real (kind=R8) :: width, bbaverage, t0, t1, step
@@ -1179,30 +1180,33 @@ c
 *          shift coordinates in order to separatrix is located in zero
            coord(-1:ny) = lengthy(nmdpl,-1:ny)-lengthy(nmdpl,topcut(1))
 
-           inquire (file = 'b2tdnc.dat', exist = exist_file(0))
-           inquire (file = 'b2thic.dat', exist = exist_file(1))
-           inquire (file = 'b2thec.dat', exist = exist_file(2))
+           filename(0) = 'b2tdnc.dat'
+           filename(1) = 'b2thic.dat'
+           filename(2) = 'b2thec.dat'
+           call find_file(filename(0),exist_file(0))
+           call find_file(filename(1),exist_file(1))
+           call find_file(filename(2),exist_file(2))
            call xertst (all(exist_file),
      1      'There are no b2tdnc.dat or b2thic.dat or b2thec.dat files')
 
-           call set_profile('b2tdnc.dat', ny, coord, fun(-1,0))
+           call set_profile(filename(0), ny, coord, fun(-1,0))
            do iy = -1, ny
              call xertst (fun(iy,0).gt. 0.0e0_R8,
-     1        'Approximation of data from file '//'b2tdnc.dat'//
+     1        'Approximation of data from file '//trim(filename(0))//
      2        ' has given '//'negative coefficient')
            enddo
 
-           call set_profile('b2thic.dat', ny, coord, fun(-1,1))
+           call set_profile(filename(1), ny, coord, fun(-1,1))
            do iy = -1, ny
              call xertst (fun(iy,1).gt. 0.0e0_R8,
-     1        'Approximation of data from file '//'b2thic.dat'//
+     1        'Approximation of data from file '//trim(filename(1))//
      2        ' has given '//'negative coefficient')
            enddo
 
-           call set_profile('b2thec.dat', ny, coord, fun(-1,2))
+           call set_profile(filename(2), ny, coord, fun(-1,2))
            do iy = -1, ny-1
              call xertst (fun(iy,2).gt. 0.0e0_R8,
-     1        'Approximation of data from file '//'b2thec.dat'//
+     1        'Approximation of data from file '//trim(filename(2))//
      2        ' has given '//'negative coefficient')
            enddo
 

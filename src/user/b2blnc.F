@@ -680,7 +680,7 @@ c*** f     :  the associated file name
       nc=0
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex) then

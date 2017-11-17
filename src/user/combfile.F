@@ -156,7 +156,7 @@ c*** is present.
  10   continue
 
       ex=.true.
-      inquire(file=fn,exist=ex)
+      call find_file(fn,ex)
 c      write(0,*) 'ex,fn,iv,ivmax=',ex,trim(fn),iv,ivmax !###
       if(ex) then !{
         op=.true.
@@ -164,7 +164,7 @@ c      write(0,*) 'ex,fn,iv,ivmax=',ex,trim(fn),iv,ivmax !###
         do while (op .and. i.le.ivmax) !{
           i=i+1
           write(f,frmi22) trim(fbn)//'.n.',i
-          inquire(file=f,exist=op)
+          call find_file(f,op)
 c          write(0,*) 'op,f=',op,'  ',trim(f) !###
           if(op) fn=f
         end do !}
@@ -204,7 +204,7 @@ c          write(0,*) 'mrks: ',mrks !###
               do while (ex .and. iv.lt.ivmax) !{
                 iv=iv+1
                 write(fn,frmi22) trim(fbn)//'.n.',iv
-                inquire(file=fn,exist=ex)
+                call find_file(fn,ex)
               end do !}
               if(ex) then !{
                 write(*,*) 'combfile: too many versions of ',trim(fbn),
@@ -315,7 +315,7 @@ c***    look for the name for a new file
           do while (ex .and. iv.lt.ivmax) !{
             iv=iv+1
             write(fn,frmi22) trim(fbn)//'.n.',iv
-            inquire(file=fn,exist=ex)
+            call find_file(fn,ex)
           end do !}
           if(ex) then !{
             write(*,*) 'combfile: too many versions of ',trim(fbn),

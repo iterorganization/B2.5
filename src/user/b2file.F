@@ -86,7 +86,7 @@ c
 c
       filedata(ntrc_tst)=.false.
       f=fn_ntrc(ntrc_tst)
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       l=1
       open(ntrc(ntrc_tst),file=f,err=900)
       rewind(ntrc(ntrc_tst))
@@ -158,7 +158,7 @@ c
 c
       filedata(ntrc_res)=.false.
       f=fn_ntrc(ntrc_res)
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       l=1
       open(ntrc(ntrc_res),file=f,err=5)
       rewind(ntrc(ntrc_res))
@@ -233,7 +233,7 @@ c
 c
       filedata(ntrc_src)=.false.
       f=fn_ntrc(ntrc_src)
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       l=1
       open(ntrc(ntrc_src),file=f,err=30)
       rewind(ntrc(ntrc_src))
@@ -276,8 +276,8 @@ c     -                          (nnreg(0)+1)*12,(nnreg(0)+1)*nspecies*6
      /        '('''//tab//''',a3,a2,i2.2,a1,''_'',a2))'
 
 c<<<
-         print *,'%%% b2file: header format'
-         print *,trim(hlp_frms)
+        print *,'%%% b2file: header format'
+        print *,trim(hlp_frms)
 c>>>
         write(ntrc(ntrc_src),hlp_frms,err=30)
      ,   ((('src',hlp_h(i),j,hlp_s(l),l=1,3),j=0,nnreg(0)),i=-1,2),

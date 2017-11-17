@@ -254,9 +254,10 @@ c Function to check the correct parameters!
 c
       call subini ('b2plot')
 #ifdef B25_EIRENE
-      inquire(file='input.dat',exist=ex)
+      filename='input.dat'
+      call find_file(filename,ex)
       if (ex) then
-        open(unit=45,file='input.dat')
+        open(unit=45,file=filename)
         read(45,'(A72)',END=6999) ZEILE
         rewind(45)
         CALL EIRENE_FIND_PARAM(45)
@@ -982,10 +983,11 @@ c
 c
 #ifdef B25_EIRENE
 #ifndef HPUX
-      inquire(file='fort.44',exist=ex)
+      filename='fort.44'
 #else
-      inquire(file='ftn44',exist=ex)
+      filename='ftn44'
 #endif
+      call find_file(filename,ex)
 #else
       ex = .false.
 #endif
@@ -1002,6 +1004,7 @@ c
         p1=0.0_R8
         p2=0.0_R8
       else
+        open(unit=44,file=filename)
         call ngread(ismain,iflag)
         textwl(ns:ns+natmi-1)=textan(0:natmi-1)
         textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
@@ -1011,11 +1014,13 @@ c
 
 #ifdef B25_EIRENE
 #ifndef HPUX
-      inquire(file='fort.46',exist=ex)
+      filename='fort.46'
 #else
-      inquire(file='ftn46',exist=ex)
+      filename='ftn46'
 #endif
+      call find_file(filename,ex)
       if(ex.and.use_eirene.ne.0) then
+        open(unit=46,file=filename)
         call ntread
         allocate(emach(max(natmi,nmoli,nioni),ntrii))
         DO I = 1, ntrii
