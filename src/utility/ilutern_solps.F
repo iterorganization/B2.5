@@ -149,13 +149,18 @@ c             (maybe necessary in case of multi-fluid?)
       if(b2swtest.eq.1) lfirst=.true.
 !!FR The b2_matrix file will not write out correctly if code runs in parallel 
 !!FR thus ensure that the code will not be executed if accessed in parallel region.
-      in parallel = .false.
-!$    in_parallel = OMP_IN_PARALLEL()
+#ifdef _OPENMP
+      in_parallel = omp_in_parallel()
+#else
+      in_parallel = .false.
+#endif
       if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
         if (in_parallel) then !!FR in parallel do not write this file
+          !$OMP MASTER
            write(*,*)'OpenMP: warning: running in parallel the ',
      1      'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ', 
      2      'will not be written out'
+          !$OMP END MASTER
         else
           write(*,*) 'Opening 76'
           open(76,file='b2_5_rhs_binary_'//trim(name)//'.dat',
@@ -178,8 +183,10 @@ c             (maybe necessary in case of multi-fluid?)
 
       if(kwrite_fmt.eq.ncall) then
         if (in_parallel) then !!FR in parallel do not write this file
+          !$OMP MASTER
            write(*,*)'OpenMP: warning: running in parallel the ',
      1      'b2_5_rhs_ and b2_5_matrix_ files will not be written out'
+          !$OMP END MASTER
         else
           write(*,*) 'Opening 76'
           open(76,file='b2_5_rhs_'//trim(name)//'.dat')
@@ -201,8 +208,10 @@ cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
           if (in_parallel) then !!FR in parallel do not write this file
+            !$OMP MASTER
             write(*,*)'OpenMP: warning: running in parallel the ',
      1      'b2_matrix_ files will not be written out'
+            !$OMP END MASTER
           else
             if(ncall.eq.0) then
               write(*,*) 'Opening 69'
