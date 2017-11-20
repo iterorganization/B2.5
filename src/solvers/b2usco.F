@@ -242,7 +242,7 @@ cxpb
        if (in_parallel()) then
         !$OMP MASTER
          write(*,*)'OpenMP warning from b2usco: not writing files ',
-     &        'in parallel mode',
+     &        'in parallel mode'
         !$OMP END MASTER
        else
         write (chns,'(i3.3)') isb

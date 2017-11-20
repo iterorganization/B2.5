@@ -228,7 +228,7 @@ cdpc
      .         IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
             enddo
           end if
-        elseif(nwrite.eq.ncall .and. .not. in_parallel) then
+        elseif(nwrite.eq.ncall .and. .not. in_parallel()) then
           write(*,*) 'Closing 69'
           close(69)
         endif

@@ -488,7 +488,7 @@ cxpb
 !$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, ix, iy, new_matrix)
 !$OMP& PRIVATE(ireg)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
-!$OM1& SHARED(nsmin, nsmax, na_min, ismain)
+!$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb)
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
 !$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
 !$OMP& SHARED(is_neutral, uadia, ncall, ncallout, resmo, corua)

@@ -1046,8 +1046,8 @@ c
 #ifdef DBG
       real (kind=R8) :: product, cutlo
       save cutlo
-#endif
 !$OMP THREADPRIVATE(cutlo)
+#endif
 c
       data umax/.999999999e0_R8/
       data zero /0.0e0_R8/
@@ -2061,8 +2061,8 @@ c
 #ifdef DBG
       real (kind=R8) :: product, cutlo
       save cutlo
-#endif
 !$OMP THREADPRIVATE(cutlo)
+#endif
 c
       data zero /0.0e0_R8/, one /1.0e0_R8/
 #ifdef DBG
@@ -2271,8 +2271,8 @@ c see block data for comments on variables in common.
 #ifdef DBG
       real (kind=R8) :: product, cutlo
       save cutlo
-#endif
 !$OMP THREADPRIVATE(cutlo)
+#endif
 c
       integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2, 
      * iend, iback, ifirst, ilast, iblock, iblend, 

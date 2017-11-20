@@ -17,8 +17,8 @@
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_balance
-      use b2mod_openmp
      & ,only : update_balance_sources_particles, balance_netcdf       !djm Jan2017
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb               !srv 05.07.08
