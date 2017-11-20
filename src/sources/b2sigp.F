@@ -8,6 +8,7 @@
       use b2mod_constants                                         !srv 23.03.10
       use b2mod_balance                                           !djm Jan2017
      & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -44,6 +45,8 @@
       character chns*3 !, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *   t0
+!$OMP THREADPRIVATE(ncall, style, iout, iout_b2npmo, iout_b2wdat)
+!$OMP THREADPRIVATE(pot_eq, no_current)
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -392,18 +395,27 @@ cxpb apply restriction to pressure gradient for minority ions
       enddo                                                           !lk 23.06.17}
 
       if (iout.ne.0 .or. iout_b2wdat.eq.4) then                       !srv 17.06.02 {
-       write (chns,'(i3.3)') isb
-!      do k=0,3
-!        write (chk,'(i1)') k
-!        call my_out(70,nx,ny,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
-!      enddo
-       if(style.eq.0 .or. style.eq.1 ) then
+       if (in_parallel()) then
+          !$OMP MASTER
+          if (ncall==0) then
+            write(*,*) 'b2sigp OpenMP warning: no file output '
+     &                 'in prallel mode'
+          end if
+          !$OMP END MASTER
+       else
+        write (chns,'(i3.3)') isb
+!       do k=0,3
+!         write (chk,'(i1)') k
+!         call my_out(70,nx,ny,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
+!       enddo
+        if(style.eq.0 .or. style.eq.1 ) then
           call my_out(70,nx,ny,wrk5,'b2sigp_smogpi'//chns)
           call my_out(70,nx,ny,wrk6,'b2sigp_smogpe'//chns)
-       elseif(style.eq.2) then
+        elseif(style.eq.2) then
           call my_out(70,nx,ny,wrk5,'b2sigp_smogpi'//chns)
           call my_out(70,nx,ny,wrk6,'b2sigp_smogpo'//chns)
-       endif
+        endif
+       end if
       endif                                                           !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised source for balance

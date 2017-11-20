@@ -8,6 +8,7 @@
       use b2mod_types
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
@@ -49,6 +50,7 @@
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
      *  cfc0, t0, t1, flo, dif, csb, csb1
+!$OMP THREADPRIVATE(ncall, cfc0, no_Ptncr_x_co, no_Ptncr_y_co, iout)
       save ncall, cfc0
 *   ..procedures
       intrinsic max, abs, sqrt
@@ -74,6 +76,12 @@
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
        call ipgeti ('b2usmo_iout', iout)                              !srv 17.06.02
+       if (in_parallel() .and. iout.ne.0) then
+!$OMP MASTER
+         write(*.*) 'b2usmo OpenMP warning: no file IO in parallel mode'
+!$OMP END MASTER
+         iout = 0
+       endif
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

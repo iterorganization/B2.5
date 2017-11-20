@@ -15,6 +15,7 @@
 *     ------------------------------------------------------------------
       integer ncall, ix, iy
       integer, save :: style = 1                                       !srv 26.10.08
+!$OMP THREADPRIVATE(ncall, style)
       save ncall
       external subini, subend, xertst
 *   ..initialisation
