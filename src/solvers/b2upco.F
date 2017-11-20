@@ -31,10 +31,12 @@
       integer ncall, ix, iy, ireg
 !      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       save ncall
+!$OMP THREADPRIVATE (ncall)
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
       real (kind=R8), save :: c_corr_core_dn = 1.0_R8                     !lk 30.06.17
+!$OMP THREADPRIVATE(c_corr_core_dn)
       real (kind=R8) :: t0,
      *  pb_(-1:nx,-1:ny), nb_(-1:nx,-1:ny),                               !lk 30.06.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny)                                !lk 30.06.17
