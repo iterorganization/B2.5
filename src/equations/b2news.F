@@ -844,7 +844,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                   cssb = 0.0_R8
                 endif                                                    !iyv 06.02.14
 !! FR possible loop (3) for use with OpenMP
-!$OMP PARALLEL DO DEFAULT(none) FIRSTPRIVATE(flob, conb, pb)
+!$OMP PARALLEL DO DEFAULT(none) LASTPRIVATE(flob, conb, pb)
 !$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax, ismain)
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
 !$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
