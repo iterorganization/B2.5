@@ -240,10 +240,12 @@ cxpb
       
       if (iout.ne.0) then                                              !srv 17.06.02 {
        if (in_parallel()) then
+        if (ncall==0) then
         !$OMP MASTER
          write(*,*)'OpenMP warning from b2usco: not writing files ',
      &        'in parallel mode'
         !$OMP END MASTER
+        end if
        else
         write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2'//chns)
