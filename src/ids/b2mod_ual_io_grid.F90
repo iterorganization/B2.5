@@ -191,9 +191,7 @@ contains
         call assert( present( gs ) .EQV. present( qc ) )
 
         call fillInGridDescription()
-#if 1
         call fillInGridSubsetDescription()
-#endif
 
 contains
 
@@ -242,7 +240,6 @@ contains
             !> Allocate goometry leaf for each node
             allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
                 &   objects_per_dimension(1)%object( ivx )%geometry(2) )
-#if 1
             !> Set geometry (R and Z coordinates) of each node
             !> The way of writing nodes data identically to the to IDS converted
             !> CPO 16151/1000 case, available on (written in 11th October 2017)
@@ -262,7 +259,6 @@ contains
                 &   object( ivx )%geometry(2) = cry(    gmap%mapVxix( ivx ),    &
                                                     &   gmap%mapVxiy( ivx ),    &
                                                     &   gmap%mapVxIVx( ivx ))
-#endif
 
             !> Set additional node index (REQUIRED!)
             allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
@@ -320,7 +316,6 @@ contains
             end do
         end do
 #endif
-
 
         !> Fill in object definitions (i.e. what objects compose an object)
         !> 1D objects: faces/edges

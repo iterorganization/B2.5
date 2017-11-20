@@ -254,18 +254,6 @@ contains
             do is = 1, ns
                 allocate( edge_profiles%ggd( ggd_slice )%ion( is )%velocity(1) )
 
-                !! TODO: find out where in the IDS fits the following data
-                ! allocate( edge_profiles%ggd( ggd_slice )%ion( is )% &
-                !     &   velocity(1)%comps(1) )
-                ! allocate( edge_profiles%ggd( ggd_slice )%ion( is )% &
-                !     &   velocity(1)%align(1) )
-                ! allocate( edge_profiles%ggd( ggd_slice )%ion( is )% &
-                !     &   velocity(1)%alignid(1) )
-                ! edge_profiles%ggd( ggd_slice )%ion( is )%           &
-                !     &   velocity(1)%align(1) = VEC_ALIGN_PARALLEL
-                ! edge_profiles%ggd( ggd_slice )%ion( is )%           &
-                !     &   velocity(1)%alignid(1) = VEC_ALIGN_PARALLEL_ID
-
                 call write_cell_vector_component(                           &
                     &   vectorComponent = edge_profiles%ggd( ggd_slice )%   &
                     &                     ion( is )%velocity,               &
@@ -318,12 +306,12 @@ contains
                 &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
                 &   b2CellData = e(:,:,:,3),                                    &
                 &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+
             !> write the magnetic field vector in the b2 coordinate system
             call write_cell_vector_component(                                   &
                 &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
                 &   b2CellData = bb(:,:,0:2),                                   &
                 &   vectorID = "diamagnetic" )
-
         end if
 
         call logmsg( LOGDEBUG, "b2mod_ual_io.write_ids: done" )
@@ -554,17 +542,33 @@ contains
 
             dim = size(vecdata, 3)
 
-            !! TODO: add checks whether already allocated
-            !! TODO: find out where in the IDS fits the following data.
-            !!       solve the vector%comp etc., found in the ITM
-            !!       type_complexgrid_vector, for the IDS
-            ! allocate( vector%comp( dim ))
-            ! allocate( vector%align( dim ))
-            ! allocate( vector%alignid( dim ))
-
-            !! Fill in alignment information for vector components
-            ! vector%align = align
-            ! vector%alignid = alignid
+            !> ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
+            !> vector%align and vector%alignid:
+            !> - ITM vector%comp:
+            !>      Holds data on one of the vector components
+            !>      ( parallel, poloidal, toroidal etc.). The %comp(:)
+            !>      node can hold data for any of those components.
+            !>      However the data inside that node must be properly
+            !>      specified in order to provide necessary information
+            !>      to which component this data relates to.
+            !>      IDS does that differently. IDS has specially designed
+            !>      nodes with node names being the same as names of the
+            !>      components (for example
+            !>      edge_profiles.ggd(:)%e_field(:)%parallel).
+            !>      Each of those nodes hold data for its intended
+            !>      component.
+            !> - ITM vector%alignid:
+            !>      Alignment information for vector components.
+            !>      Describes vector component ID or label
+            !>      ("parallel", "toroidal", etc.). In IDS this is not
+            !>      needed as a node itself indicates to what vector
+            !>      component the data relates to.
+            !> - ITM vector%align:
+            !>      Alignment information for vector components.
+            !>      Holds vector component label (number tag). In IDS this
+            !>      is probably not required as, same as for %alignid, a
+            !>      node itself indicates to what vector component
+            !>      the data relates to.
 
             !> Fill in vector component data
             do i = 1, dim
@@ -572,7 +576,6 @@ contains
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   GRID_SUBSET_CELLS, gmap, vecdata(:,:,i-1))
                 call gridWriteData( vector, GRID_SUBSET_CELLS, idsdata )
-                ! call gridWriteData( vector%comp(i), GRID_SUBSET_CELLS, idsdata )
                 deallocate(idsdata)
             end do
 
@@ -592,20 +595,33 @@ contains
 
             if ( .not. present(gridSubsetId) ) then
 
-                !! TODO: add checks whether already allocated
-                !! TODO: find out where in the IDS fits the following data
-                !!       solve the vector%comp etc., found in the ITM
-                !!       type_complexgrid_vector, for the IDS
-                ! allocate(vector%comp(2))
-                ! allocate(vector%align(2))
-                ! allocate(vector%alignid(2))
-
-                !> Fill in alignment information for vector components
-                ! vector%align(1) = VEC_ALIGN_POLOIDAL
-                ! vector%alignid(1) = VEC_ALIGN_POLOIDAL_ID
-
-                ! vector%align(2) = VEC_ALIGN_RADIAL
-                ! vector%alignid(2) = VEC_ALIGN_RADIAL_ID
+                !> ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
+                !> vector%align and vector%alignid:
+                !> - ITM vector%comp:
+                !>      Holds data on one of the vector components
+                !>      ( parallel, poloidal, toroidal etc.). The %comp(:)
+                !>      node can hold data for any of those components.
+                !>      However the data inside that node must be properly
+                !>      specified in order to provide necessary information
+                !>      to which component this data relates to.
+                !>      IDS does that differently. IDS has specially designed
+                !>      nodes with node names being the same as names of the
+                !>      components (for example
+                !>      edge_profiles.ggd(:)%e_field(:)%parallel).
+                !>      Each of those nodes hold data for its intended
+                !>      component.
+                !> - ITM vector%alignid:
+                !>      Alignment information for vector components.
+                !>      Describes vector component ID or label
+                !>      ("parallel", "toroidal", etc.). In IDS this is not
+                !>      needed as a node itself indicates to what vector
+                !>      component the data relates to.
+                !> - ITM vector%align:
+                !>      Alignment information for vector components.
+                !>      Holds vector component label (number tag). In IDS this
+                !>      is probably not required as, same as for %alignid, a
+                !>      node itself indicates to what vector component
+                !>      the data relates to.
 
                 !> Fill in vector component data
                 idsdata => b2IMASTransformDataB2ToIDS(          &
@@ -623,25 +639,14 @@ contains
                 ! call gridWriteData( vector%comp(2), GRID_SUBSET_X_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
             else
-                !! TODO: find out where in the IDS fits the following data
-                ! allocate(vector%comp(1))
-                ! allocate(vector%align(1))
-                ! allocate(vector%alignid(1))
-
-                ! vector%align(1) = GRID_UNDEFINED
-                ! vector%alignid(1) = ""
-
                 idsdata => b2IMASTransformDataB2ToIDS(          &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   gridSubsetId, gmap, b2FaceData)
                 call gridWriteData( vector, gridSubsetId, idsdata )
-                ! call gridWriteData( vector%values(:,1), gridSubsetId, idsdata )
-                ! call gridWriteData( vector%comp(1), gridSubsetId, idsdata )
                 deallocate(idsdata)
             end if
 
         end subroutine write_face_vector
-        ! return
     end subroutine write_ids
 
     !> From the B2 grid, compute the coordinate unit vectors
@@ -661,7 +666,6 @@ contains
         e3 = 0.0
 
         !> poloidal vectors
-
         nx = ubound(crx,1)
         ny = ubound(crx,2)
         do ix = -1, nx
@@ -739,12 +743,10 @@ contains
 
                 e2(ix,iy,:) = e2(ix,iy,:) * dir  !> fix direction
 
-
                 !> toroidal direction
                 e3(ix,iy,1) = 0.0   !> R
                 e3(ix,iy,2) = 1.0   !> phi
                 e3(ix,iy,3) = 0.0   !> Z
-
 
                 !> make unit vectors
                 e1(ix,iy,:) = unitVector(e1(ix,iy,:))
@@ -982,7 +984,6 @@ contains
       end do
 
     end subroutine write_cell_vector
-
 
     ! Write a vector B2 face quantity to a complexgrid_vector
     subroutine write_face_vector(vector, b2FaceData, subgridInd)
