@@ -135,13 +135,23 @@ program b2_ual_write_b2mod
     call checkFileAndDelete( "b2ftrack" )
 
     !> Run main b2 routine to process and read the b2 data
+    write(0,*) "Running b2mn_init"
     call b2mn_init
+    write(0,*) "b2mn_init completed"
+
+    write(0,*) "Running b2mn_step(0)"
+    call b2mn_step(0)
+    write(0,*) "b2mn_step(0) completed"
+
+    ! write(0,*) " Running b2mn_fin"
+    ! call b2mn_fin
+    ! write(0,*) "b2mn_fin completed"
 
     treename    = "ids"
     ! shot        = 16151
     ! run         = 1001
     shot    = 100
-    run     = 6
+    run     = 7
     username    = "penkod"
     device     = "solps-iter"
     version     = "3"

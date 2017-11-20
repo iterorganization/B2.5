@@ -248,9 +248,13 @@ contains
 !!$    edge_profiles%fluid%ve%align(1) = VEC_ALIGN_PARALLEL
 !!$    edge_profiles%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
 !!$    call write_cell_scalar( edge_profiles%fluid%ve%comps(1)%value, ue(:,:) )
+            !!$ call write_cell_vector_component(                           &
+            !!$     &   vectorComponent = edge_profiles%ggd( ggd_slice )%   &
+            !!$     &                     electrons%velocity,               &
+            !!$     &   b2CellData = ue(:,:),                               &
+            !!$     &   vectorID = VEC_ALIGN_PARALLEL_ID )
 
             !> ua: Parallel Ion Velocity
-            ! allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
             do is = 1, ns
                 allocate( edge_profiles%ggd( ggd_slice )%ion( is )%velocity(1) )
 
