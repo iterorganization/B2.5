@@ -158,8 +158,10 @@
 !$OMP END MASTER
         else
          write (chns,'(i3.3)') isb
-         call my_out(70,nx,ny,flv(-1,-1,0),'b2urmo_etaPat_graduax'//chns)
-         call my_out(70,nx,ny,flv(-1,-1,1),'b2urmo_etaPat_graduay'//chns)
+         call my_out(70,nx,ny,flv(-1,-1,0),
+     &        'b2urmo_etaPat_graduax'//chns)
+         call my_out(70,nx,ny,flv(-1,-1,1),
+     &        'b2urmo_etaPat_graduay'//chns)
 !         call my_out(70,nx,ny,con(-1,-1,0),'b2urmo_etaPatx')
  !        call my_out(70,nx,ny,con(-1,-1,1),'b2urmo_etaPaty')
         end if

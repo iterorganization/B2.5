@@ -8,6 +8,7 @@
       use b2mod_indirect
       use b2mod_balance !djm Jan2017
      & , only : b2sicf_smo0to3, balance_netcdf
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb                                             !srv 28.01.02

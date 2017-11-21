@@ -78,7 +78,7 @@
        call ipgeti ('b2usmo_iout', iout)                              !srv 17.06.02
        if (in_parallel() .and. iout.ne.0) then
 !$OMP MASTER
-         write(*.*) 'b2usmo OpenMP warning: no file IO in parallel mode'
+         write(*,*) 'b2usmo OpenMP warning: no file IO in parallel mode'
 !$OMP END MASTER
          iout = 0
        endif

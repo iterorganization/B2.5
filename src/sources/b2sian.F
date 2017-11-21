@@ -9,6 +9,7 @@
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
      & , only : b2sian_smo0to3, balance_netcdf
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb

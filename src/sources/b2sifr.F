@@ -105,7 +105,8 @@
        call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
        if ((iout.ne.0) .and. in_parallel()) then
          !$OMP MASTER
-          write(*,*) 'B2SIFR OpenMP warning: no file out in parallel mode'
+          write(*,*) 'B2SIFR OpenMP warning: no file out in ',
+     &               'parallel mode'
          !$OMP END MASTER
          iout = 0
        end if
