@@ -285,14 +285,14 @@
 
 !!FR smt, resmt, cvct & flct accumulate by species and thus need
 !!FR to be reduction variables. 
-!!FR rob, pb, smbf, smbg, flub, flcb, cvcb, smbv, wrkf, smb are all
+!!FR rob, pb, flub, flcb, cvcb, wrkf, smb are all
 !!FR local to the parallel region and thus are private
 !!FR wrk0 is used outside parallel region but is zeroed before use
 !!FR aa5, wrk1 are used outside parallel region but are output arguments 
 !!FR and thus their contents should not matter
 !!FR all other variables are shared
 !$OMP PARALLEL DO DEFAULT(none)
-!$OMP& PRIVATE(rob, pb, smbf, wrk0, smbg, flub, flcb, cvcb, smbv)
+!$OMP& PRIVATE(rob, pb, wrk0, flub, flcb, cvcb)
 !$OMP& PRIVATE(wrkf, aa5, wrk1, smb, solvedum, ix, iy)
 !$OMP& PRIVATE(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf) 
 !$OMP& PRIVATE(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
@@ -300,7 +300,7 @@
 !$OMP& LASTPRIVATE(kt_neo)
 !$OMP& REDUCTION(+:resmt,flct,cvct,smt, ctcft)
 !$OMP& SHARED(ns, n2, na, am, nx, ny, rza, ne, te, ti, vol, hx, hz, bb)
-!$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, pbs, cvsa, zn, fna)
+!$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, pbs, cvsa, zn)
 !$OMP& SHARED(zamax, cvsa_cl, wadia, vaecrb, smo, smq, smqdu, resmo)
 !$OMP$ SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
 !$OMP& SHARED(b2npmo_smav, fmo, solving, ro, solvemo)
