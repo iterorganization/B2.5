@@ -307,7 +307,8 @@
 !$OMP& SHARED(nsmin, nsmax, ismain, style, b2sifr_ver, lnlam)
 !$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl, balance_netcdf, fmo_b2nxfv)
 !$OMP& SHARED(pbshz, cvsahz, hy, qz, chci, smcf, fchanml, smof)
-!$OMP& SHARED(is_neutral)
+!$OMP& SHARED(is_neutral, ue, zetap, zetae, gti, gte, ce1, ce2, cimp1)
+!$OMP& SHARED(cimp2, zeff, fna_fcor, iout, iout_b2wdat, rxg)
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
 *    ..compute rob, pb
