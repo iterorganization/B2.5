@@ -114,7 +114,7 @@
        call ipgeti ('b2sifrtf_iout', iout)
        if ((iout.ne.0) .and. in_parallel()) then
 !$OMP MASTER
-          write(*,*) 'b2sifrtf OpenMP warning: no file out in '
+          write(*,*) 'b2sifrtf OpenMP warning: no file out in ',
      &               'parallel mode'
 !$OMP END MASTER
           iout = 0
@@ -122,7 +122,7 @@
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        if ((iout_b2wdat==4) .and. in_parallel()) then
 !$OMP MASTER
-          write(*,*) 'b2sifrtf OpenMP warning: no file out in '
+          write(*,*) 'b2sifrtf OpenMP warning: no file out in ',
      &               'parallel mode (b2wdat)'
 !$OMP END MASTER
           iout_b2wdat = 0

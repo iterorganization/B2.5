@@ -60,7 +60,7 @@
        call ipgeti ('b2sian_iout', iout)
         if ((iout.ne.0) .and. in_parallel()) then
          !$OMP MASTER
-         write(*,*) 'B2SIAN OpenMP warning: no file out in '
+         write(*,*) 'B2SIAN OpenMP warning: no file out in ',
      &              'parallel mode'
          !$OMP END MASTER
          iout = 0

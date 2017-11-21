@@ -152,7 +152,7 @@
         if (in_parallel()) then
 !$OMP MASTER
           if (ncall==0) then
-            write(*,*) 'b2urmo OpenMP warning: no file output '
+            write(*,*) 'b2urmo OpenMP warning: no file output ',
      &                 'in prallel mode'
           end if
 !$OMP END MASTER

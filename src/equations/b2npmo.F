@@ -149,7 +149,7 @@
         call ipgeti ('b2npmo_diagno', diagno)
         call ipgeti ('b2npmo_iout', iout)                              !srv 04.07.08
         if ((iout.ne.0) .and. in_parallel()) then
-          write(*,*) 'b2npmo OpenMP warning: no file out in parallel '
+          write(*,*) 'b2npmo OpenMP warning: no file out in parallel ',
      &               'mode'
           iout = 0
         end if
@@ -157,7 +157,7 @@
         call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
         call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
         if ((iout_b2wdat==4) .and. in_parallel()) then
-          write(*,*) 'b2npmo OpenMP warning: no file out in parallel '
+          write(*,*) 'b2npmo OpenMP warning: no file out in parallel ',
      &               'mode (b2wdat)'
           iout_b2wdat = 0
         end if
