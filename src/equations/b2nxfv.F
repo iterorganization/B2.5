@@ -30,6 +30,7 @@
       real (kind=R8) ::
      *   ft                                                            !srv 16.10.17
       save ncall
+!$OMP THREADPRIVATE(ncall)
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization

@@ -18,6 +18,7 @@
       use b2mod_external
       use b2mod_geo
      , , only : hz, vol                                                 !srv 05.07.17
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
@@ -64,6 +65,7 @@
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is, k
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
+!$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
       character chns*3, chk*1, chis*3
       real (kind=R8) ::
      *  phm0, phm1, phm2, phm3, coef, t0, calfab, fllim_al_ab, jabmax
@@ -87,6 +89,7 @@
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                           !srv 01.07.05
 *   ..initialization
       save ncall, styl0, phm0, phm1, phm2, phm3
+!$OMP THREADPRIVATE(ncall, styl0, phm0, phm1, phm2, phm3)
       data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
      &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/ 
 
@@ -109,7 +112,21 @@
      &              0.0_R8.le.phm2.and.0.0_R8.le.phm3,
      &  'faulty internal parameter phm0, phm1, phm2, phm3')
        call ipgeti ('b2sifrtf_iout', iout)
+       if ((iout.ne.0) .and. in_parallel()) then
+!$OMP MASTER
+          write(*,*) 'b2sifrtf OpenMP warning: no file out in '
+     &               'parallel mode'
+!$OMP END MASTER
+          iout = 0
+        end if
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
+       if ((iout_b2wdat==4) .and. in_parallel()) then
+!$OMP MASTER
+          write(*,*) 'b2sifrtf OpenMP warning: no file out in '
+     &               'parallel mode (b2wdat)'
+!$OMP END MASTER
+          iout_b2wdat = 0
+        end if
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
 *   ..set n2

@@ -12,7 +12,9 @@
       integer nx, ny, isb
       real (kind=R8) ::
      *   pbs(-1:nx,-1:ny,0:1), rob(-1:nx,-1:ny), ub(-1:nx,-1:ny),
-     &  flub(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny)
+     &   vol(-1:nx,-1:ny)
+*   ..inout argument
+      real (kind=R8) :: cvsb(-1:nx,-1:ny,0:1), flub(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   flcb(-1:nx,-1:ny,0:1), cvcb(-1:nx,-1:ny,0:1)

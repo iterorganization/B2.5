@@ -23,6 +23,7 @@
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
       use b2mod_external
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, itcnt                                !srv 13.01.17
@@ -119,7 +120,7 @@
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
      *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)             !srv 13.01.17 05.07.17
       logical new_matrix, solvedum(0:NNREGMAX), main_lightest
-      save ncall, rxg, diagno, solvedum, nsmin, nsmax
+      save ncall, rxg, diagno, nsmin, nsmax
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
@@ -147,9 +148,19 @@
         call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
         call ipgeti ('b2npmo_diagno', diagno)
         call ipgeti ('b2npmo_iout', iout)                              !srv 04.07.08
+        if ((iout.ne.0) .and. in_parallel()) then
+          write(*,*) 'b2npmo OpenMP warning: no file out in parallel '
+     &               'mode'
+          iout = 0
+        end if
         call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 17.01.14
         call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
         call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
+        if ((iout_b2wdat==4) .and. in_parallel()) then
+          write(*,*) 'b2npmo OpenMP warning: no file out in parallel '
+     &               'mode (b2wdat)'
+          iout_b2wdat = 0
+        end if
         call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.07.08
         call ipgeti ('b2news_nsmin', nsmin)
         if(nsmin.gt.ns) then
@@ -271,6 +282,32 @@
 
 * ..main computation
 *   ..compute individual species corrections
+
+!!FR smt, resmt, cvct & flct accumulate by species and thus need
+!!FR to be reduction variables. 
+!!FR rob, pb, smbf, smbg, flub, flcb, cvcb, smbv, wrkf, smb are all
+!!FR local to the parallel region and thus are private
+!!FR wrk0 is used outside parallel region but is zeroed before use
+!!FR aa5, wrk1 are used outside parallel region but are output arguments 
+!!FR and thus their contents should not matter
+!!FR all other variables are shared
+!$OMP PARALLEL DO DEFAULT(none)
+!$OMP& PRIVATE(rob, pb, smbf, wrk0, smbg, flub, flcb, cvcb, smbv)
+!$OMP& PRIVATE(wrkf, aa5, wrk1, smb, solvedum, ix, iy)
+!$OMP& PRIVATE(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf) 
+!$OMP& PRIVATE(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
+!$OMP& PRIVATE(chns, wrks, new_matrix)
+!$OMP& LASTPRIVATE(kt_neo)
+!$OMP& REDUCTION(+:resmt,flct,cvct,smt, ctcft)
+!$OMP& SHARED(ns, n2, na, am, nx, ny, rza, ne, te, ti, vol, hx, hz, bb)
+!$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, pbs, cvsa, zn, fna)
+!$OMP& SHARED(zamax, cvsa_cl, wadia, vaecrb, smo, smq, smqdu, resmo)
+!$OMP$ SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
+!$OMP& SHARED(b2npmo_smav, fmo, solving, ro, solvemo)
+!$OMP& SHARED(nsmin, nsmax, ismain, style, b2sifr_ver, lnlam)
+!$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl, balance_netcdf, fmo_b2nxfv)
+!$OMP& SHARED(pbshz, cvsahz, hy, qz, chci, smcf, fchanml, smof)
+!$OMP& SHARED(is_neutral)
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
 *    ..compute rob, pb
@@ -475,6 +512,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
        endif
       enddo
+!$OMP END PARALLEL DO
 
 csw 21feb2014, execute simultaneous corrections always
 c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.07.10
