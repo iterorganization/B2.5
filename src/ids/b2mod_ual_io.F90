@@ -234,9 +234,9 @@ contains
                     &   value = na(:,:, is - 1 ),                               &
                     &   flux = fna(:,:,:, is - 1 ),                             &
                     &   ggd_slice = ggd_slice )
-                call write_cell_scalar( scalar = edge_sources%source(1)%             &
+                call write_cell_scalar( scalar = edge_sources%source(1)%        &
                     &   ggd( ggd_slice )%ion( is )%particles,               &
-                    &   b2CellData = sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *         &
+                    &   b2CellData = sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *&
                     &   na(:,:, is - 1 ) )
             end do
 

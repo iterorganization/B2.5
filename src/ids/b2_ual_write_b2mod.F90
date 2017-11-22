@@ -161,7 +161,7 @@ program b2_ual_write_b2mod
     call write_ids( edge_profiles, edge_sources, edge_transport )
 
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,    &
+    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,   &
         &   shot, run, idx, username, device, version )
 
     ! call read_ids(treename, shot, run, idx, username, &
