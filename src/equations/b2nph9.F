@@ -189,12 +189,11 @@
      &  hx, hy, qz, vol, bb, pbs,                                       !xpb !srv 05.07.17
      &  lnlam, na, ua, ue, te, ti, po, ne, ni,                          !srv 01.07.09
      &  fch, cvsa, fchdia, uadia, wadia, vaecrb,                        !xpb
-     &  she0, shi0, wrk0)                                               !xpb
+     &  she0, shi0)                                                     !xpb
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                !srv 07.06.00 02.06.99 28.06.03 05.07.17
-     *  hx, hy, qz, vol, bb, pbs,
-     *  lnlam, na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa,          !srv 28.06.03 01.07.09 05.03.11
-     *  fchdia, uadia, vadia, vaecrb, she0, shi0, wrk0)                 !srv 07.06.00 02.06.99 07.07.09
+     *  hx, hy, qz, vol, bb, pbs, lnlam,
+     *  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, she0, shi0)     !srv 07.06.00 02.06.99 07.07.09
       endif
       call b2saxpy (n2*4, 1.0e0_R8, she, 1, she0, 1)
       call b2saxpy (n2*4, 1.0e0_R8, shi, 1, shi0, 1)

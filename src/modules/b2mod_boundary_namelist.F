@@ -420,6 +420,7 @@ cxpb Have to do this here already in case the namelist is not used
         read(99,boundary)
 #endif
         write(*,*) 'Read namelist boundary from ',trim(filename)
+        close(99)
       else
         call xerrab ('No '//trim(filename))
       endif

@@ -5279,8 +5279,7 @@
 						13 : particle density to achieve specified total flux, 
 							CONPAR(,,1) is the specified flux crossing the flux surface 'b2stbc_type13_ref' steps away from the boundary,
 							CONPAR(,,2) is the strength of the feedback,
-							CONPAR(,,3)) when running with Eirene and the 'ionising core' switch is used, 
-							CONPAR(,,2) is set internally to match the re-entering flux of ionised neutrals that crossed the core boundary (when running with Eirene and the 'ionising_core' option).
+							CONPAR(,,3), when running with Eirene and the 'ionising core' switch is used, is set internally to match the re-entering flux of ionised neutrals that crossed the core boundary (one must then have 'ionising_core'.eq.-IB where IB is the boundary index).
 							The feedback scheme can be further tweaked with the switches 'b2stbc_type13_norm' and 'b2stbc_type13_fac'. See code for details.
 						14 : sound speed velocity flux, CONPAR(,,1) is a multiplier to the outgoing sound speed C<sub>s</sub>.
 						15 : prescribe a radial leakage velocity, CONPAR(,,1) specifies the leakage velocity in units of the local thermal velocity.

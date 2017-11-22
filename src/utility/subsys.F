@@ -1,5 +1,4 @@
       subroutine subsys (lbot, srname, srnam1)
-      use b2mod_types
       implicit none
       logical lbot
       character srname*(*), srnam1*8

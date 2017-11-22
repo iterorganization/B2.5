@@ -1,5 +1,4 @@
       subroutine chcase (ind, chtxt)
-      use b2mod_types
       implicit none
       integer ind
       character chtxt*(*)
@@ -10,10 +9,9 @@
 *     ------------------------------------------------------------------
       integer k, ichr
       intrinsic len, char, ichar
-      external subini, subend, xerrab, xertst
+      external xerrab, xertst
 *     ------------------------------------------------------------------
 *   ..test installation
-      call subini ('chcase')
 *     (protection against errors of case conversion.)
       call xertst (ichar('a').ne.ichar('A'),
      . 'chcase--installation error')
@@ -37,7 +35,6 @@
       else
        call xerrab ('chcase--faulty argument ind')
       endif
-      call subend ()
       return
 *     ------------------------------------------------------------------
       end

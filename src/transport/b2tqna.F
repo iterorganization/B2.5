@@ -467,7 +467,8 @@ cxpb Corrected for dimensionality
           call my_out(70,nx,ny,wrk0,'b2tqna_in_hcib'//chns)
         enddo
 !       call my_out(70,nx,ny,hci0,'b2tqna_in_hci0')
-        call my_out(70,nx,ny,hce0/ne,'b2tqna_in_hce0')
+        wrk0=hce0/ne
+        call my_out(70,nx,ny,wrk0,'b2tqna_in_hce0')
         call my_out(70,nx,ny,sig0,'b2tqna_in_sig0')
         call my_out(70,nx,ny,alf0,'b2tqna_in_alf0')
       endif                                                           !srv 10.11.09 }
@@ -610,7 +611,8 @@ cdpc
           call my_out(70,nx,ny,wrk0,'b2tqna_hcib'//chns)
         enddo
 !        call my_out(70,nx,ny,hci0,'b2tqna_in_hci0')
-        call my_out(70,nx,ny,hce0/ne,'b2tqna_hce0')
+        wrk0=hce0/ne
+        call my_out(70,nx,ny,wrk0,'b2tqna_hce0')
         call my_out(70,nx,ny,sig0,'b2tqna_sig0')
         call my_out(70,nx,ny,alf0,'b2tqna_alf0')
       endif                                                           !srv 10.11.09 }
