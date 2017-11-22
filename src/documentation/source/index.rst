@@ -7,29 +7,11 @@ Welcome to B2.5 IDS's documentation!
 ====================================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Contents:
 
    List of programs <list_of_programs>
-
-List of programs:
-==================
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Contents:
-
-.. f:autoprogram:: b2_ual_write_b2mod
-
-List of modules
-===============
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Contents:
-
-.. f:automodule:: b2mod_ual_io
-
+   List of modules <list_of_modules>
 
 Indices and tables
 ==================

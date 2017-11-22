@@ -184,7 +184,17 @@ texinfo_documents = [
 
 #fortran_src = "../../ids/b2_ual_write_b2mod.F90"
 #fortran_src = os.path.abspath("../../ids/")
-fortran_src = [ os.path.abspath("../../ids/b2mod_ual_io.F90"),
-    os.path.abspath("../../ids/b2_ual_write_b2mod.F90") ]
+fortran_src = [ os.path.abspath("../../ids/b2_ual_write.F90"),
+    os.path.abspath("../../ids/b2_ual_write_gsl.F90"),
+    os.path.abspath("../../ids/b2_ual_write_b2mod.F90"),
+    os.path.abspath("../../ids/b2mod_cellhelper.F90"),
+    os.path.abspath("../../ids/b2mod_connectivity.F90"),
+    os.path.abspath("../../ids/b2mod_grid_mapping.F90"),
+    os.path.abspath("../../ids/b2mod_interp.F90"),
+    os.path.abspath("../../ids/b2mod_ual.F90"),
+    os.path.abspath("../../ids/b2mod_ual_io.F90"),
+    os.path.abspath("../../ids/b2mod_ual_io_data.F90"),
+    os.path.abspath("../../ids/b2mod_ual_io_grid.F90")
+]
 
 fortran_ext = ['f90', 'F90', 'F']

@@ -990,7 +990,7 @@ contains
 
         call logmsg( LOGDEBUG, "b2IMASFillGridDescription: wrote total of " &
             &//idsInt2str(GSubsetCount)//" grid subsets (expected was "     &
-            &   //idsInt2str(size(ggd_grid%grid_subset))//')' )
+            &   //idsInt2str(size(ggd_grid%grid_subset))//")" )
 
         call assert( GSubsetCount == size(ggd_grid%grid_subset) )
     end subroutine fillInGridSubsetDescription
@@ -1444,7 +1444,7 @@ contains
           & "Outer midplane" )
 
       call logmsg( LOGDEBUG, "b2ITMFillGridDescription: wrote total of "&
-          &//int2str(subgridCount)//" subgrids (expected was "//int2str(size(itmgrid%subgrids))//')' )
+          &//int2str(subgridCount)//" subgrids (expected was "//int2str(size(itmgrid%subgrids))//")" )
 
       call assert( subgridCount == size(itmgrid%subgrids) )
     end subroutine fillInSubGridDescription

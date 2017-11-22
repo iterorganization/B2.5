@@ -59,7 +59,6 @@
 !>
 !> -----------------------------------------------------------------------------
 
-
 !>.specification
 
 program b2_ual_write
@@ -84,7 +83,6 @@ program b2_ual_write
     ! use b2mod_grid_mapping
     ! use b2mod_ual_io_grid
     ! use b2mod_ual_io_data
-    ! use ggd
     ! use b2mod_ual
     use b2mod_ual_io
     ! use b2mod_geo_corner
@@ -177,7 +175,6 @@ program b2_ual_write
 contains
 
     subroutine read_b2fgmtry_b2fstate()
-
         integer                 ::  i, j, k
         character(len=120)      ::  lblgm
 
