@@ -56,6 +56,7 @@ module b2mod_ual_io
 
 contains
 
+    !> Write B2.5 data to IMAS IDS
     subroutine write_ids( edge_profiles, edge_sources, edge_transport )
 #       include <git_version_B25.h>
         type (ids_edge_profiles)    :: edge_profiles
@@ -322,8 +323,10 @@ contains
 
         contains
 
-        !> Write a scalar B2 cell quantity to a ids_generic_grid_scalar
+        !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
+        !> IMAS IDS data tree node.
         subroutine write_quantity( val, fluxes, value, flux, ggd_slice )
+
             use b2mod_interp
             type(ids_generic_grid_scalar), pointer, intent(inout) :: val(:)
             ! real(IDS_real), pointer, intent(inout)  :: val(:)

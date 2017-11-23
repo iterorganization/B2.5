@@ -1,9 +1,16 @@
-!> Legend:
-!>     !> .......... Variables description,
-!>                   additional (helpful) information etc.
-!>     !  .......... Commented part of code
-!> -----------------------------------------------------------------------------
-!> DOCUMENTATION:
+!!  Legend:
+!!     !> ................ Documentation comment (file description, function
+!!                         description etc.). Also intended for doxygen
+!!                         generated documentation
+!!     !> @note .......... Documentation notes, intended for doxygen generated
+!!                         documentation
+!!     !!  ............... variables description, additional (helpful)
+!!                         information etc.
+!!     ! IGNORE    ....... Used to ignore this module in list dependency when
+!!                         building
+!!     !   ............... Commented part of code
+!! -----------------------------------------------------------------------------
+!! DOCUMENTATION:
 !> 1. purpose
 !>
 !>      Note:   This script is OUTDATED! The development continued under new
@@ -58,10 +65,7 @@
 !>      routine xerrab. This causes an error message to be printed,
 !>      after which the program halts.
 !>
-!> -----------------------------------------------------------------------------
-
-
-!>.specification
+!! -----------------------------------------------------------------------------
 
 program b2_ual_write_gsl
     use b2mod_types , B2R8 => R8

@@ -1,9 +1,16 @@
-!> Legend:
-!>     !> .......... Variables description,
-!>                   additional (helpful) information etc.
-!>     !  .......... Commented part of code
-!> -----------------------------------------------------------------------------
-!> DOCUMENTATION:
+!!  Legend:
+!!     !> ................ Documentation comment (file description, function
+!!                         description etc.). Also intended for doxygen
+!!                         generated documentation
+!!     !> @note .......... Documentation notes, intended for doxygen generated
+!!                         documentation
+!!     !!  ............... variables description, additional (helpful)
+!!                         information etc.
+!!     ! IGNORE    ....... Used to ignore this module in list dependency when
+!!                         building
+!!     !   ............... Commented part of code
+!!-----------------------------------------------------------------------------
+!! DOCUMENTATION:
 !> 1. purpose
 !>
 !>      b2_ual_write_b2mod.f90 script is used to generate b2_ual_write_b2mod.exe
@@ -53,9 +60,7 @@
 !>      routine xerrab. This causes an error message to be printed,
 !>      after which the program halts.
 !>
-!> -----------------------------------------------------------------------------
-
-!>.specification
+!!-----------------------------------------------------------------------------
 
 program b2_ual_write_b2mod
 
@@ -83,13 +88,13 @@ program b2_ual_write_b2mod
 
     implicit none
 
-    !>--------------------------------------------------------------------------
+    !!--------------------------------------------------------------------------
 
-    !>.declarations
+    !!.declarations
 
-    !>..common blocks
+    !!..common blocks
 
-    !>..local variables
+    !!..local variables
     integer ::  idx, i
     integer ::  shot, run
     character(len=24)        ::  treename, username, device, version
@@ -98,35 +103,35 @@ program b2_ual_write_b2mod
     type(ids_edge_sources)   ::  edge_sources
     type(ids_edge_transport) ::  edge_transport
 
-    !>--------------------------------------------------------------------------
-    !>.documentation-internal
-    !>
-    !>      The following common blocks have their outermost declaration in
-    !>      this routine; they need not be preserved between calls.
-    !>
-    !>      Description of some local variables:
-    !>
-    !>      ninp - (0:6) integer array.
-    !>      ninp specifies the input unit numbers.
-    !>
-    !>      nout - (0:2) integer array.
-    !>      nout specifies the output unit numbers.
-    !>
-    !>      nx, ny - integer.
-    !>      nx and ny specify the number of interior cells along the first
-    !>      and the second coordinate, respectively. The total number of
-    !>      cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
-    !>      It will hold that 0.le.nx and 0.le.ny.
-    !>
-    !>      ns - integer.
-    !>      ns specifies the number of atomic species in the calculation.
-    !>      The species are indexed by (0:ns-1).
-    !>      It will hold that 1.le.ns.
-    !>
-    !>--------------------------------------------------------------------------
-    !>.computation
+    !!--------------------------------------------------------------------------
+    !!.documentation-internal
+    !!
+    !!      The following common blocks have their outermost declaration in
+    !!      this routine; they need not be preserved between calls.
+    !!
+    !!      Description of some local variables:
+    !!
+    !!      ninp - (0:6) integer array.
+    !!      ninp specifies the input unit numbers.
+    !!
+    !!      nout - (0:2) integer array.
+    !!      nout specifies the output unit numbers.
+    !!
+    !!      nx, ny - integer.
+    !!      nx and ny specify the number of interior cells along the first
+    !!      and the second coordinate, respectively. The total number of
+    !!      cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
+    !!      It will hold that 0.le.nx and 0.le.ny.
+    !!
+    !!      ns - integer.
+    !!      ns specifies the number of atomic species in the calculation.
+    !!      The species are indexed by (0:ns-1).
+    !!      It will hold that 1.le.ns.
+    !!
+    !!--------------------------------------------------------------------------
+    !!.computation
 
-    !> Check if supposed new file already exists and delete it
+    !! Check if supposed new file already exists and delete it
     call checkFileAndDelete( "b2fparam" )
     call checkFileAndDelete( "b2mn.prt" )
     call checkFileAndDelete( "b2fstate" )
@@ -134,7 +139,7 @@ program b2_ual_write_b2mod
     call checkFileAndDelete( "b2ftrace" )
     call checkFileAndDelete( "b2ftrack" )
 
-    !> Run main b2 routine to process and read the b2 data
+    !! Run main b2 routine to process and read the b2 data
     write(0,*) "Running b2mn_init"
     call b2mn_init
     write(0,*) "b2mn_init completed"
@@ -156,7 +161,7 @@ program b2_ual_write_b2mod
     device     = "solps-iter"
     version     = "3"
 
-    !> b2mod routine write_ids
+    !! b2mod routine write_ids
     write(*,*) "START write_ids"
     call write_ids( edge_profiles, edge_sources, edge_transport )
 
@@ -185,7 +190,7 @@ contains
 
     end subroutine
 
-    !! Subroutine used to put data to edge_profiles IDS
+    !> Subroutine used to put data to edge_profiles IDS
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &
             &   treename, shot, run, idx, username, device, version )
         integer :: shot, run, idx
@@ -194,18 +199,18 @@ contains
         type(ids_edge_transport), intent(inout) :: edge_transport
         character(len=24) :: treename, username, device, version
 
-        !> Set data to edge_profiles IDS
+        !! Set data to edge_profiles IDS
         write(0,*) "Writing to edge_profiles, edge_sources and edge_transport IDS"
 
-        !> Create and modify new shot/run
+        !! Create and modify new shot/run
         call imas_create_env(treename, shot, run, 0, 0, idx, username, &
             device, version )
 
-        !> Or open and modify existing shot/run (might work much faster than
-        !> imas_create_env)
+        !! Or open and modify existing shot/run (might work much faster than
+        !! imas_create_env)
         ! call imas_open_env('treename', shot, run, idx, username, device, version )
 
-        !> Put data to IDS
+        !! Put data to IDS
         ! call ids_put_slice( idx, "edge_profiles", edge_profiles )
         ! call ids_put_slice( idx, "edge_transport", edge_sources )
         ! call ids_put_slice( idx, "edge_transport", edge_transport )
@@ -213,7 +218,7 @@ contains
         call ids_put( idx, "edge_sources", edge_sources )
         call ids_put( idx, "edge_transport", edge_transport )
 
-        !> Close IDS
+        !! Close IDS
         call ids_deallocate( edge_profiles )
         call ids_deallocate( edge_sources )
         call ids_deallocate( edge_transport )
@@ -234,7 +239,7 @@ contains
 
         gridSubset_index = 3
 
-        !> Open input datafile from local database
+        !! Open input datafile from local database
         write (0,*) "Started reading input IDS", idx, shot, run
 
         call imas_open_env('treename', shot, run, idx, username, device, version )
