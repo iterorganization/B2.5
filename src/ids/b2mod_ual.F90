@@ -1,6 +1,19 @@
+!!  Legend:
+!!     !> ................ Documentation comment (file description, function
+!!                         description etc.). Also intended for doxygen
+!!                         generated documentation
+!!     !> @note .......... Documentation notes, intended for doxygen generated
+!!                         documentation
+!!     !!  ............... variables description, additional (helpful)
+!!                         information etc.
+!!     ! IGNORE    ....... Used to ignore this module in list dependency when
+!!                         building
+!!     !   ............... Commented part of code
+!!-----------------------------------------------------------------------------
+
 module b2mod_ual
 
-  ! Basic UAL routines shared by the entire SOLPS application chain
+  !! Basic UAL routines shared by the entire SOLPS application chain
 
   use b2mod_types
 #ifdef IMAS
@@ -22,6 +35,9 @@ module b2mod_ual
 
 contains
 
+  !> Routine to open UAL database.
+  !> @note For IMAS IDS is recommended use of IMAS GGD library routine
+  !> "exampleOpenIDS"
   subroutine open_ual(idx, shot, run, time, user, tokamak, dataversion, &
         &   doCreate, useHdf5, nmlFile)
     integer, intent(out) :: idx
@@ -37,7 +53,7 @@ contains
     logical, intent(in), optional :: useHdf5
     character(*), intent(in), optional :: nmlFile
 
-    ! internal
+    !! internal
 
     character(*), parameter :: NAMELIST_FILE = "ual.namelist"
     integer, parameter :: NAMELIST_UNIT = 979
@@ -74,8 +90,8 @@ contains
 
     if (present(user)) openEnv = .true.
 
-    ! If file exists, read namelist from configuration file
-    ! If not, write out namelist
+    !! If file exists, read namelist from configuration file
+    !! If not, write out namelist
     if (present(nmlFile)) then
         inquire(file=nmlFile, exist=namelistExists)
     else
@@ -100,7 +116,7 @@ contains
         close(unit=NAMELIST_UNIT)
     end if
 
-    ! establish UAL access
+    !! establish UAL access
     if (lDoCreate) then
 #ifdef IMAS
         if (lUseHdf5) then
@@ -153,12 +169,15 @@ contains
 #endif
     end if
 
-    ! Return time if requested
+    !! Return time if requested
     if (present(time)) time = lTime
 
   end subroutine open_ual
 
-
+  !> Close UAL.
+  !> @note  For IMAS edge_profiles IDS "examplePutIDS" IMAS GGD library routine
+  !> can be used instead (that routine also writes the set data to IDS and then
+  !> closes the IDS)
   subroutine close_ual(idx)
     integer, intent(in) :: idx
 

@@ -1,6 +1,18 @@
+!!  Legend:
+!!     !> ................ Documentation comment (file description, function
+!!                         description etc.). Also intended for doxygen
+!!                         generated documentation
+!!     !> @note .......... Documentation notes, intended for doxygen generated
+!!                         documentation
+!!     !!  ............... variables description, additional (helpful)
+!!                         information etc.
+!!     ! IGNORE    ....... Used to ignore this module in list dependency when
+!!                         building
+!!     !   ............... Commented part of code
+!!-----------------------------------------------------------------------------
 module b2mod_ual_io
 
-    !> B2 modules
+    !! B2 modules
 
     use b2mod_types
     !use b2mod_version
@@ -20,13 +32,13 @@ module b2mod_ual_io
     !use b2mod_neutr_src_scaling
     use b2mod_interp
 
-    !> B2/CPO Mapping
+    !! B2/CPO Mapping
     use b2mod_ual_io_data
     use b2mod_ual_io_grid
 
     use logging
 
-    !> UAL Access
+    !! UAL Access
 #ifdef IMAS
     use ids_schemas  ! IGNORE
     use ids_routines ! IGNORE
@@ -79,15 +91,15 @@ contains
         real(IDS_real)    ::  time
         integer :: ggd_slice, num_ggd_slice
 
-        !> ===  SET UP IDS ===
+        !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
 
-        !> Preparing database for writing
-        !> Through practice it was disclosed that there are some mandatory
-        !> steps to be done in order to assure for data to be successfully
-        !> written to IDS. Without going through those steps errors and failed
-        !> process of writing to IDS are to be expected.
-        !> This can be done using exampleSetIDSFundamentals routine
+        !! Preparing database for writing
+        !! Through practice it was disclosed that there are some mandatory
+        !! steps to be done in order to assure for data to be successfully
+        !! written to IDS. Without going through those steps errors and failed
+        !! process of writing to IDS are to be expected.
+        !! This can be done using exampleSetIDSFundamentals routine
         homogeneous_time = 1
         time = 0.0_IDS_real
         call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time)
@@ -116,7 +128,7 @@ contains
         allocate(edge_sources%time(1))
         edge_sources%time(1) = time
 
-        !> Allocate ggd slice
+        !! Allocate ggd slice
         num_ggd_slice = 1
         ggd_slice = 1
         allocate( edge_profiles%ggd( num_ggd_slice ) )
@@ -129,7 +141,7 @@ contains
         allocate( edge_transport%model(1)%ggd( num_ggd_slice )%electrons%   &
             &   energy%flux(1) )
 
-        ! > allocate and init the IDS
+        !! allocate and init the IDS
         allocate( edge_profiles%code%name(1) )
 # ifdef B25_EIRENE
         edge_profiles%code%name = "SOLPS-ITER"
@@ -152,7 +164,7 @@ contains
         nx = ubound( na, 1 )
         ny = ubound( na, 2 )
 
-        !> List of species
+        !! List of species
         allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
         do is = 0, ns-1
             allocate( edge_profiles%ggd( ggd_slice )%ion( is + 1 )%state(1) )
@@ -170,14 +182,14 @@ contains
         enddo
 
         write(*,*) "Running b2CreateMap subroutine"
-        !> Set up the B2<->IDS mappings
+        !! Set up the B2<->IDS mappings
         call b2CreateMap( nx, ny, crx( -1:nx, -1:ny, : ),             &
             &   cry( -1:nx, -1:ny, : ), cflags, leftix, leftiy,       &
             &   rightix, rightiy, topix, topiy, bottomix,bottomiy,    &
             &   INCLUDE_GHOST_CELLS, gmap )
         mapInitialized = .true.
 
-        !> Write grid & grid subsets/subgrids
+        !! Write grid & grid subsets/subgrids
         call b2IMASFillGridDescription( gmap, edge_profiles%ggd( ggd_slice )%grid,    &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
@@ -186,7 +198,7 @@ contains
         call xertst( geometryId( nnreg, periodic_bc, topcut ) ==    &
             &   GEOMETRY_SN, "write_ids: can only do single null" )
 
-        !> Write plasma state
+        !! Write plasma state
         if ( B2_WRITE_DATA ) then
             write (*,*) "b2mod_ual_io.write_ids: writing plasma state"
 
@@ -198,17 +210,17 @@ contains
             iGsOuterMidplane = findGridSubsetByName( edge_profiles% &
                 &   ggd( ggd_slice )%grid, "Outer Midplane" )
 
-            !> TODO: The fluxes are currently in the edge_transport. They are
-            !> supposed to be in the edge_profiles (24.10.2017)
-            !> use electrons%particles or electrons%energy node? Currently using
-            !> electrons%energy node
+            !! TODO: The fluxes are currently in the edge_transport. They are
+            !! supposed to be in the edge_profiles (24.10.2017)
+            !! use electrons%particles or electrons%energy node? Currently using
+            !! electrons%energy node
 
-            !> edge_transport fundamentals
-            !> TODO: create it as a subroutine
+            !! edge_transport fundamentals
+            !! TODO: create it as a subroutine
             allocate( edge_transport%model(1) )
             allocate( edge_transport%model(1)%ggd( num_ggd_slice ) )
 
-            !> ne: Electron Density
+            !! ne: Electron Density
             call write_quantity(                                            &
                 &   val = edge_profiles%ggd( ggd_slice )%electrons%density, &
                 &   fluxes = edge_transport%model(1)%ggd( ggd_slice )%      &
@@ -221,8 +233,8 @@ contains
                 &            electrons%particles,                           &
                 &   b2CellData = sne(:,:,0) + sne(:,:,1) * ne )
 
-            !> ni (SOLPS 4.x) /
-            !> na (SOLPS 5.x): Ion Density
+            !! ni (SOLPS 4.x) /
+            !! na (SOLPS 5.x): Ion Density
             allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
             allocate( edge_transport%model(1)%ggd( ggd_slice )%ion( ns ) )
             allocate( edge_sources%source(1)%ggd( ggd_slice )%ion( ns ) )
@@ -241,7 +253,7 @@ contains
                     &   na(:,:, is - 1 ) )
             end do
 
-!!$    !> ue: Parallel Electron Velocity
+!!$    !! ue: Parallel Electron Velocity
 !!$    TODO: must be computed, refactor code from b2news into function
 !!$    allocate(edge_profiles%fluid%ve%comps(1))
 !!$    allocate(edge_profiles%fluid%ve%align(1))
@@ -255,7 +267,7 @@ contains
             !!$     &   b2CellData = ue(:,:),                               &
             !!$     &   vectorID = VEC_ALIGN_PARALLEL_ID )
 
-            !> ua: Parallel Ion Velocity
+            !! ua: Parallel Ion Velocity
             do is = 1, ns
                 allocate( edge_profiles%ggd( ggd_slice )%ion( is )%velocity(1) )
 
@@ -266,7 +278,7 @@ contains
                     &   vectorID = VEC_ALIGN_PARALLEL_ID )
             end do
 
-            !> te: Electron Temperature
+            !! te: Electron Temperature
             call write_quantity(                                        &
                 &   val = edge_profiles%ggd( ggd_slice )%electrons%     &
                 &         temperature,                                  &
@@ -276,7 +288,7 @@ contains
                 &   flux = fhe,                                         &
                 &   ggd_slice = ggd_slice )
 
-            !> ti: Ion Temperature
+            !! ti: Ion Temperature
             allocate( edge_profiles%ggd( ggd_slice )%ion(1)%temperature(1) )
             allocate( edge_transport%model(1)%ggd( ggd_slice )%ion( 1 ) )
             call write_quantity(                                            &
@@ -287,16 +299,16 @@ contains
                 &   flux = fhi,                                             &
                 &   ggd_slice = ggd_slice )
 
-            !> po: Electric Potential
+            !! po: Electric Potential
             call write_cell_scalar( edge_profiles%ggd( ggd_slice )% &
                 &   phi_potential, po )
 
-            !> B (magnetic field vector)
-            !> Compute unit basis vectors along the field directions
+            !! B (magnetic field vector)
+            !! Compute unit basis vectors along the field directions
             call computeCoordinateUnitVectors(crx, cry, e(:,:,:,1), &
                 &   e(:,:,:,2), e(:,:,:,3))
 
-            !> Write the three unit basis vectors
+            !! Write the three unit basis vectors
             call write_cell_vector_component(                                   &
                 &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
                 &   b2CellData = e(:,:,:,1),                                    &
@@ -312,7 +324,7 @@ contains
                 &   b2CellData = e(:,:,:,3),                                    &
                 &   vectorID = VEC_ALIGN_TOROIDAL_ID )
 
-            !> write the magnetic field vector in the b2 coordinate system
+            !! write the magnetic field vector in the b2 coordinate system
             call write_cell_vector_component(                                   &
                 &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
                 &   b2CellData = bb(:,:,0:2),                                   &
@@ -400,8 +412,8 @@ contains
 
         !> Write a vector component B2 cell quantity to ids_generic_grid_vector
         !> components
-        !> @note: Currently works only with parallel velocity data field
-        !> @note: Available IDS vector component data fields:
+        !> @note Currently works only with parallel velocity data field
+        !> @note Available IDS vector component data fields:
         !>          - VEC_ALIGN_RADIAL_ID ( "radial" ),
         !>          - "diamagnetic",
         !>          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
@@ -434,10 +446,11 @@ contains
         !> Write a scalar data field given as a scalar data representation to a
         !> generic grid vector component IDS data fields.
         !>
-        !> @note: the routine will make sure the required storage is allocated,
-        !> and will deallocate and re-allocate fields as necessary.
-        !> @note: Currently works only with parallel velocity data field
-        !> @note: Available IDS vector component data fields:
+        !> @note    the routine will make sure the required storage is
+        !>          allocated, and will deallocate and re-allocate fields as
+        !>          necessary.
+        !> @note Currently works only with parallel velocity data field
+        !> @note Available IDS vector component data fields:
         !>          - VEC_ALIGN_RADIAL_ID ( "radial" ),
         !>          - "diamagnetic",
         !>          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
@@ -549,35 +562,35 @@ contains
 
             dim = size(vecdata, 3)
 
-            !> ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
-            !> vector%align and vector%alignid:
-            !> - ITM vector%comp:
-            !>      Holds data on one of the vector components
-            !>      ( parallel, poloidal, toroidal etc.). The %comp(:)
-            !>      node can hold data for any of those components.
-            !>      However the data inside that node must be properly
-            !>      specified in order to provide necessary information
-            !>      to which component this data relates to.
-            !>      IDS does that differently. IDS has specially designed
-            !>      nodes with node names being the same as names of the
-            !>      components (for example
-            !>      edge_profiles.ggd(:)%e_field(:)%parallel).
-            !>      Each of those nodes hold data for its intended
-            !>      component.
-            !> - ITM vector%alignid:
-            !>      Alignment information for vector components.
-            !>      Describes vector component ID or label
-            !>      ("parallel", "toroidal", etc.). In IDS this is not
-            !>      needed as a node itself indicates to what vector
-            !>      component the data relates to.
-            !> - ITM vector%align:
-            !>      Alignment information for vector components.
-            !>      Holds vector component label (number tag). In IDS this
-            !>      is probably not required as, same as for %alignid, a
-            !>      node itself indicates to what vector component
-            !>      the data relates to.
+            !! ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
+            !! vector%align and vector%alignid:
+            !! - ITM vector%comp:
+            !!      Holds data on one of the vector components
+            !!      ( parallel, poloidal, toroidal etc.). The %comp(:)
+            !!      node can hold data for any of those components.
+            !!      However the data inside that node must be properly
+            !!      specified in order to provide necessary information
+            !!      to which component this data relates to.
+            !!      IDS does that differently. IDS has specially designed
+            !!      nodes with node names being the same as names of the
+            !!      components (for example
+            !!      edge_profiles.ggd(:)%e_field(:)%parallel).
+            !!      Each of those nodes hold data for its intended
+            !!      component.
+            !! - ITM vector%alignid:
+            !!      Alignment information for vector components.
+            !!      Describes vector component ID or label
+            !!      ("parallel", "toroidal", etc.). In IDS this is not
+            !!      needed as a node itself indicates to what vector
+            !!      component the data relates to.
+            !! - ITM vector%align:
+            !!      Alignment information for vector components.
+            !!      Holds vector component label (number tag). In IDS this
+            !!      is probably not required as, same as for %alignid, a
+            !!      node itself indicates to what vector component
+            !!      the data relates to.
 
-            !> Fill in vector component data
+            !! Fill in vector component data
             do i = 1, dim
                 idsdata => b2IMASTransformDataB2ToIDS(          &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
@@ -602,48 +615,44 @@ contains
 
             if ( .not. present(gridSubsetId) ) then
 
-                !> ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
-                !> vector%align and vector%alignid:
-                !> - ITM vector%comp:
-                !>      Holds data on one of the vector components
-                !>      ( parallel, poloidal, toroidal etc.). The %comp(:)
-                !>      node can hold data for any of those components.
-                !>      However the data inside that node must be properly
-                !>      specified in order to provide necessary information
-                !>      to which component this data relates to.
-                !>      IDS does that differently. IDS has specially designed
-                !>      nodes with node names being the same as names of the
-                !>      components (for example
-                !>      edge_profiles.ggd(:)%e_field(:)%parallel).
-                !>      Each of those nodes hold data for its intended
-                !>      component.
-                !> - ITM vector%alignid:
-                !>      Alignment information for vector components.
-                !>      Describes vector component ID or label
-                !>      ("parallel", "toroidal", etc.). In IDS this is not
-                !>      needed as a node itself indicates to what vector
-                !>      component the data relates to.
-                !> - ITM vector%align:
-                !>      Alignment information for vector components.
-                !>      Holds vector component label (number tag). In IDS this
-                !>      is probably not required as, same as for %alignid, a
-                !>      node itself indicates to what vector component
-                !>      the data relates to.
+                !! ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
+                !! vector%align and vector%alignid:
+                !! - ITM vector%comp:
+                !!      Holds data on one of the vector components
+                !!      ( parallel, poloidal, toroidal etc.). The %comp(:)
+                !!      node can hold data for any of those components.
+                !!      However the data inside that node must be properly
+                !!      specified in order to provide necessary information
+                !!      to which component this data relates to.
+                !!      IDS does that differently. IDS has specially designed
+                !!      nodes with node names being the same as names of the
+                !!      components (for example
+                !!      edge_profiles.ggd(:)%e_field(:)%parallel).
+                !!      Each of those nodes hold data for its intended
+                !!      component.
+                !! - ITM vector%alignid:
+                !!      Alignment information for vector components.
+                !!      Describes vector component ID or label
+                !!      ("parallel", "toroidal", etc.). In IDS this is not
+                !!      needed as a node itself indicates to what vector
+                !!      component the data relates to.
+                !! - ITM vector%align:
+                !!      Alignment information for vector components.
+                !!      Holds vector component label (number tag). In IDS this
+                !!      is probably not required as, same as for %alignid, a
+                !!      node itself indicates to what vector component
+                !!      the data relates to.
 
-                !> Fill in vector component data
+                !! Fill in vector component data
                 idsdata => b2IMASTransformDataB2ToIDS(          &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   GRID_SUBSET_Y_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
-                ! call gridWriteData( vector%values(:,1), GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
-                ! call gridWriteData( vector%comp(1), GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
                 idsdata => b2IMASTransformDataB2ToIDS(          &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   GRID_SUBSET_X_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_FACES, idsdata )
-                ! call gridWriteData( vector%values(:,2), GRID_SUBSET_X_ALIGNED_FACES, idsdata )
-                ! call gridWriteData( vector%comp(2), GRID_SUBSET_X_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
             else
                 idsdata => b2IMASTransformDataB2ToIDS(          &
@@ -672,7 +681,7 @@ contains
         e2 = 0.0
         e3 = 0.0
 
-        !> poloidal vectors
+        !! poloidal vectors
         nx = ubound(crx,1)
         ny = ubound(crx,2)
         do ix = -1, nx
@@ -684,15 +693,15 @@ contains
                     & crx(ix, iy, 2), cry(ix, iy, 2), &
                     & crx(ix, iy, 3), cry(ix, iy, 3) )
 
-                !> poloidal direction
-                !> Try to find right neighbour
+                !! poloidal direction
+                !! Try to find right neighbour
                 dir = 1.0
                 ixn = rightix( ix, iy )
                 iyn = rightiy( ix, iy )
 
                 if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                    !> If not found, try to find left neighbour
-                    !> ...and note to invert vector direction
+                    !! If not found, try to find left neighbour
+                    !! ...and note to invert vector direction
                     dir = -1.0
                     ixn = leftix( ix, iy )
                     iyn = leftiy( ix, iy )
@@ -700,7 +709,7 @@ contains
                 if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
                     ! stop "computeCoordinateUnitVectors: not able to find&
                     ! &   poloidal neighbour for cell"
-                    !> skip cell
+                    !! skip cell
                     cycle
                 end if
 
@@ -710,22 +719,22 @@ contains
                     & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
                     & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
 
-                !> compute vector from one centroid to the other
-                e1(ix,iy,1) = cN(0) - cC(0)   !> R
-                e1(ix,iy,2) = 0.0             !> phi
-                e1(ix,iy,3) = cN(1) - cC(1)   !> Z
+                !! compute vector from one centroid to the other
+                e1(ix,iy,1) = cN(0) - cC(0)   !! R
+                e1(ix,iy,2) = 0.0             !! phi
+                e1(ix,iy,3) = cN(1) - cC(1)   !! Z
 
-                e1(ix,iy,:) = e1(ix,iy,:) * dir  !> fix direction
+                e1(ix,iy,:) = e1(ix,iy,:) * dir  !! fix direction
 
-                !> radial direction
-                !> Try to find top neighbour
+                !! radial direction
+                !! Try to find top neighbour
                 dir = 1.0
                 ixn = topix( ix, iy )
                 iyn = topiy( ix, iy )
 
                 if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                    !> If not found, try to find bottom neighbour
-                    !> ...and note to invert vector direction
+                    !! If not found, try to find bottom neighbour
+                    !! ...and note to invert vector direction
                     dir = -1.0
                     ixn = bottomix( ix, iy )
                     iyn = bottomiy( ix, iy )
@@ -733,7 +742,7 @@ contains
                 if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
                     ! stop "computeCoordinateUnitVectors: not able to find&
                         ! &    toroidal neighbour for cell"
-                    !> skip cell
+                    !! skip cell
                     cycle
                 end if
 
@@ -743,19 +752,19 @@ contains
                     & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
                     & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
 
-                !> compute vector from one centroid to the other
-                e2(ix,iy,1) = cN(0) - cC(0)   !> R
-                e2(ix,iy,2) = 0.0             !> phi
-                e2(ix,iy,3) = cN(1) - cC(1)   !> Z
+                !! compute vector from one centroid to the other
+                e2(ix,iy,1) = cN(0) - cC(0)   !! R
+                e2(ix,iy,2) = 0.0             !! phi
+                e2(ix,iy,3) = cN(1) - cC(1)   !! Z
 
-                e2(ix,iy,:) = e2(ix,iy,:) * dir  !> fix direction
+                e2(ix,iy,:) = e2(ix,iy,:) * dir  !! fix direction
 
-                !> toroidal direction
-                e3(ix,iy,1) = 0.0   !> R
-                e3(ix,iy,2) = 1.0   !> phi
-                e3(ix,iy,3) = 0.0   !> Z
+                !! toroidal direction
+                e3(ix,iy,1) = 0.0   !! R
+                e3(ix,iy,2) = 1.0   !! phi
+                e3(ix,iy,3) = 0.0   !! Z
 
-                !> make unit vectors
+                !! make unit vectors
                 e1(ix,iy,:) = unitVector(e1(ix,iy,:))
                 e2(ix,iy,:) = unitVector(e2(ix,iy,:))
                 e3(ix,iy,:) = unitVector(e3(ix,iy,:))
@@ -781,7 +790,7 @@ contains
   subroutine write_cpo(edgecpo)
     type (type_edge) :: edgecpo
 
-    ! internal
+    !! internal
     type(B2GridMap) :: gmap
     type(type_complexgrid_subgrid) :: sg_cell, sg_face, sg_bnd_core
     integer :: is, ns, nx, ny, i
@@ -793,7 +802,7 @@ contains
     real(ITM_R8) :: tmpVx(-1:ubound(na, 1), -1:ubound(na, 2))
 
 
-    ! allocate and init the cpo
+    !! allocate and init the cpo
     allocate(edgecpo%datainfo%dataprovider(1))
     edgecpo%datainfo%dataprovider="IPP"
     allocate(edgecpo%codeparam%codename(1))
@@ -805,7 +814,7 @@ contains
     ny = ubound(na, 2)
 
 
-! species block
+!! species block
     allocate(edgecpo%species(ns))
     do is = 0, ns-1
        allocate(edgecpo%species(is+1)%label(1))
@@ -817,13 +826,13 @@ contains
     enddo
 
 
-    ! set up the B2<->CPO mappings
+    !! set up the B2<->CPO mappings
     call b2ITMCreateMap( nx,ny,crx(-1:nx,-1:ny,: ),cry(-1:nx,-1:ny,:),&
         & cflags,leftix,leftiy,rightix,rightiy, &
         & topix,topiy,bottomix,bottomiy, INCLUDE_GHOST_CELLS, gmap )
     mapInitialized = .true.
 
-    ! write grid & subgrids
+    !! write grid & subgrids
     call b2ITMFillGridDescription( gmap, edgecpo%grid, &
         & nx,ny,crx(-1:nx,-1:ny,:),cry(-1:nx,-1:ny,:), &
         & leftix,leftiy,rightix,rightiy, &
@@ -833,7 +842,7 @@ contains
 
     call xertst( geometryId( nnreg, periodic_bc, topcut ) == GEOMETRY_SN, "write_cpo: can only do single null" )
 
-    ! Write plasma state
+    !! Write plasma state
 
     if ( B2_WRITE_DATA ) then
 
@@ -843,11 +852,11 @@ contains
         iSgInnerMidplane = gridFindSubGridByName( edgecpo%grid, "Inner midplane" )
         iSgOuterMidplane = gridFindSubGridByName( edgecpo%grid, "Outer midplane" )
 
-        ! ne
+        !! ne
         call write_quantity( edgecpo%fluid%ne%value, edgecpo%fluid%ne%flux, ne, fne )
         call write_cell_scalar( edgecpo%fluid%ne%source, sne(:,:,0) + sne(:,:,1)*ne )
 
-        ! na
+        !! na
         allocate(edgecpo%fluid%ni(ns))
         do is = 1, ns
             call write_quantity( edgecpo%fluid%ni(is)%value, edgecpo%fluid%ni(is)%flux, na(:,:,is-1), fna(:,:,:,is-1) )
@@ -862,7 +871,7 @@ contains
 !!$    edgecpo%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
 !!$    call write_cell_scalar( edgecpo%fluid%ve%comps(1)%value, ue(:,:) )
 
-        ! ua
+        !! ua
         allocate(edgecpo%fluid%vi(ns))
         do is = 1, ns
             allocate(edgecpo%fluid%vi(is)%comps(1))
@@ -874,24 +883,24 @@ contains
             call write_cell_scalar( edgecpo%fluid%vi(is)%comps(1)%value, ua(:,:,is-1) )
         end do
 
-        ! te
+        !! te
         call write_quantity( edgecpo%fluid%te%value, edgecpo%fluid%te%flux, te/qe, fhe )
 
-        ! ti
+        !! ti
         allocate(edgecpo%fluid%ti(1))
         call write_quantity( edgecpo%fluid%ti(1)%value, edgecpo%fluid%ti(1)%flux, ti/qe, fhi )
 
 
-        ! po
+        !! po
         call write_cell_scalar( edgecpo%fluid%po%value, po )
 
-        ! B (magnetic field vector)
+        !! B (magnetic field vector)
         allocate(edgecpo%fluid%te_aniso%comps(4))
 
-        ! Compute unit basis vectors along the field directions
+        !! Compute unit basis vectors along the field directions
         call computeCoordinateUnitVectors(crx, cry, e(:,:,:,1), e(:,:,:,2), e(:,:,:,3))
 
-        ! Write the three unit basis vectors
+        !! Write the three unit basis vectors
         do i = 1, 3
             allocate(edgecpo%fluid%te_aniso%comps(i)%flux(1))
             call write_cell_vector( edgecpo%fluid%te_aniso%comps(i)%flux(1), &
@@ -900,7 +909,7 @@ contains
                 & e(:,:,:,i) )
         end do
 
-        ! write the magnetic field vector in the b2 coordinate system
+        !! write the magnetic field vector in the b2 coordinate system
         allocate(edgecpo%fluid%te_aniso%comps(4)%flux(1))
         call write_cell_vector( edgecpo%fluid%te_aniso%comps(4)%flux(1), &
             & (/ VEC_ALIGN_POLOIDAL, VEC_ALIGN_RADIAL, VEC_ALIGN_TOROIDAL /), &
@@ -913,7 +922,7 @@ contains
 
   contains
 
-    ! Write a scalar B2 cell quantity to a complexgrid_scalar
+    !> Write a scalar B2 cell quantity to a complexgrid_scalar
     subroutine write_quantity( values, fluxes, value, flux )
       use b2mod_interp
       type(type_complexgrid_scalar), pointer, intent(inout) :: values(:)
@@ -947,13 +956,13 @@ contains
     end subroutine write_quantity
 
 
-    ! Write a scalar B2 cell quantity to a complexgrid_scalar
+    !> Write a scalar B2 cell quantity to a complexgrid_scalar
     subroutine write_cell_scalar(scalar, b2CellData)
       type(type_complexgrid_scalar), intent(inout), pointer :: scalar(:)
       real(ITM_R8), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
       real(ITM_R8), dimension(:), pointer :: cpodata
 
-      ! TODO: add checks whether already allocated
+      !! TODO: add checks whether already allocated
       allocate(scalar(1))
       cpodata => b2ITMTransformDataB2ToCpo( edgecpo%grid, B2_SUBGRID_CELLS, gmap, b2CellData )
       call gridWriteData( scalar(1), B2_SUBGRID_CELLS, cpodata )
@@ -961,7 +970,7 @@ contains
     end subroutine write_cell_scalar
 
 
-    ! Write a vector B2 cell quantity to a complexgrid_vector
+    !> Write a vector B2 cell quantity to a complexgrid_vector
     subroutine write_cell_vector(vector, align, alignid, vecdata)
       type(type_complexgrid_vector), intent(inout) :: vector
       real(ITM_R8), intent(in) :: vecdata(-1:gmap%b2nx, -1:gmap%b2ny, 0:2)
@@ -969,21 +978,21 @@ contains
       character(LEN=132), intent(in) :: alignid(3)
       real(ITM_R8), dimension(:), pointer :: cpodata
 
-      ! internal
+      !! internal
       integer :: dim, i
 
       dim = size(vecdata, 3)
 
-      ! TODO: add checks whether already allocated
+      !! TODO: add checks whether already allocated
       allocate(vector%comp(dim))
       allocate(vector%align(dim))
       allocate(vector%alignid(dim))
 
-      ! Fill in alignment information for vector components
+      !! Fill in alignment information for vector components
       vector%align = align
       vector%alignid = alignid
 
-      ! Fill in vector component data
+      !! Fill in vector component data
       do i = 1, dim
          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_CELLS, gmap, vecdata(:,:,i-1))
          call gridWriteData( vector%comp(i), B2_SUBGRID_CELLS, cpodata )
@@ -992,7 +1001,7 @@ contains
 
     end subroutine write_cell_vector
 
-    ! Write a vector B2 face quantity to a complexgrid_vector
+    !> Write a vector B2 face quantity to a complexgrid_vector
     subroutine write_face_vector(vector, b2FaceData, subgridInd)
       type(type_complexgrid_vector), intent(inout) :: vector
       real(ITM_R8), intent(in) :: b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
@@ -1041,7 +1050,7 @@ contains
     real(ITM_R8), intent(in), dimension(-1:,-1:,0:) :: crx, cry
     real(ITM_R8), intent(out), dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e1, e2, e3
 
-    ! internal
+    !! internal
     integer :: ix, iy, ixn, iyn, nx, ny
     real(ITM_R8), dimension(0:1) :: cC, cN
     real(ITM_R8) :: dir
@@ -1050,7 +1059,7 @@ contains
     e2 = 0.0
     e3 = 0.0
 
-    ! poloidal vectors
+    !! poloidal vectors
 
     nx = ubound(crx,1)
     ny = ubound(crx,2)
@@ -1063,22 +1072,22 @@ contains
                 & crx(ix, iy, 2), cry(ix, iy, 2), &
                 & crx(ix, iy, 3), cry(ix, iy, 3) )
 
-            ! poloidal direction
-            ! Try to find right neighbour
+            !! poloidal direction
+            !! Try to find right neighbour
             dir = 1.0
             ixn = rightix( ix, iy )
             iyn = rightiy( ix, iy )
 
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                ! If not found, try to find left neighbour
-                ! ...and note to invert vector direction
+                !! If not found, try to find left neighbour
+                !! ...and note to invert vector direction
                 dir = -1.0
                 ixn = leftix( ix, iy )
                 iyn = leftiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
                 !stop "computeCoordinateUnitVectors: not able to find poloidal neighbour for cell"
-                ! skip cell
+                !! skip cell
                 cycle
             end if
 
@@ -1088,30 +1097,30 @@ contains
                 & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
                 & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
 
-            ! compute vector from one centroid to the other
-            e1(ix,iy,1) = cN(0) - cC(0)   ! R
-            e1(ix,iy,2) = 0.0             ! phi
-            e1(ix,iy,3) = cN(1) - cC(1)   ! Z
+            !! compute vector from one centroid to the other
+            e1(ix,iy,1) = cN(0) - cC(0)   !! R
+            e1(ix,iy,2) = 0.0             !! phi
+            e1(ix,iy,3) = cN(1) - cC(1)   !! Z
 
-            e1(ix,iy,:) = e1(ix,iy,:) * dir  ! fix direction
+            e1(ix,iy,:) = e1(ix,iy,:) * dir  !! fix direction
 
 
-            ! radial direction
-            ! Try to find top neighbour
+            !! radial direction
+            !! Try to find top neighbour
             dir = 1.0
             ixn = topix( ix, iy )
             iyn = topiy( ix, iy )
 
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                ! If not found, try to find bottom neighbour
-                ! ...and note to invert vector direction
+                !! If not found, try to find bottom neighbour
+                !! ...and note to invert vector direction
                 dir = -1.0
                 ixn = bottomix( ix, iy )
                 iyn = bottomiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
                 !stop "computeCoordinateUnitVectors: not able to find toroidal neighbour for cell"
-                ! skip cell
+                !! skip cell
                 cycle
             end if
 
@@ -1121,21 +1130,21 @@ contains
                 & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
                 & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
 
-            ! compute vector from one centroid to the other
-            e2(ix,iy,1) = cN(0) - cC(0)   ! R
-            e2(ix,iy,2) = 0.0             ! phi
-            e2(ix,iy,3) = cN(1) - cC(1)   ! Z
+            !! compute vector from one centroid to the other
+            e2(ix,iy,1) = cN(0) - cC(0)   !! R
+            e2(ix,iy,2) = 0.0             !! phi
+            e2(ix,iy,3) = cN(1) - cC(1)   !! Z
 
-            e2(ix,iy,:) = e2(ix,iy,:) * dir  ! fix direction
-
-
-            ! toroidal direction
-            e3(ix,iy,1) = 0.0   ! R
-            e3(ix,iy,2) = 1.0   ! phi
-            e3(ix,iy,3) = 0.0   ! Z
+            e2(ix,iy,:) = e2(ix,iy,:) * dir  !! fix direction
 
 
-            ! make unit vectors
+            !! toroidal direction
+            e3(ix,iy,1) = 0.0   !! R
+            e3(ix,iy,2) = 1.0   !! phi
+            e3(ix,iy,3) = 0.0   !! Z
+
+
+            !! make unit vectors
             e1(ix,iy,:) = unitVector(e1(ix,iy,:))
             e2(ix,iy,:) = unitVector(e2(ix,iy,:))
             e3(ix,iy,:) = unitVector(e3(ix,iy,:))
