@@ -3,16 +3,18 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+====================================
 Welcome to B2.5 IDS's documentation!
 ====================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+    :maxdepth: 3
+    :numbered:
+    :caption: Contents:
 
-   List of programs <list_of_programs>
-   List of modules <list_of_modules>
+    Files <code/index.rst>
 
+==================
 Indices and tables
 ==================
 

@@ -184,7 +184,8 @@ texinfo_documents = [
 
 #fortran_src = "../../ids/b2_ual_write_b2mod.F90"
 #fortran_src = os.path.abspath("../../ids/")
-fortran_src = [ os.path.abspath("../../ids/b2_ual_write.F90"),
+fortran_src = [
+    os.path.abspath("../../ids/b2_ual_write.F90"),
     os.path.abspath("../../ids/b2_ual_write_gsl.F90"),
     os.path.abspath("../../ids/b2_ual_write_b2mod.F90"),
     os.path.abspath("../../ids/b2mod_cellhelper.F90"),
