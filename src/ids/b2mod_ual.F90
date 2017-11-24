@@ -10,10 +10,16 @@
 !!                         building
 !!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
-
+!! DOCUMENTATION:
+!>
+!> Module providing Basic UAL routines shared by the entire SOLPS application
+!> chain.
+!>
+!> @note    For IMAS: IMAS GGD (GSL) library provides similar and greater
+!>          number of routines that are being used for the same purposes.
+!>
+!!-----------------------------------------------------------------------------
 module b2mod_ual
-
-  !! Basic UAL routines shared by the entire SOLPS application chain
 
   use b2mod_types
 #ifdef IMAS

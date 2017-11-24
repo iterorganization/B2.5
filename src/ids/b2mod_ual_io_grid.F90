@@ -11,15 +11,14 @@
 !!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!> This module provides:
+!> Module providing routines to set the B2 grid geometry, including grid
+!> subsets (subgrids), to ITM CPO or IMAS IDS grid description data
+!> structure.
 !>
-!> 2. A routine (b2ITMFillGridDescription/b2IMASFillGridDescription) to write
-!> the B2 grid into an ITM/IMAS IDS grid description data structure (which
-!> usually is part of a CPO/IDS). It also sets up the default subgrids for
-!> the B2 grid.
-!>
-!> 3. Routines to transform variables stored in the B2 data structure into
-!> the form expected by CPO/IDS data structure.
+!> The main two routines are:
+!>  -   b2IMASFillGridDescription (for ITM edge CPO)
+!>  -   b2ITMFillGridDescription  (for IMAS edge_profiles, edge_sources and
+!>      edge_transport IDSs)
 !>
 !!-----------------------------------------------------------------------------
 

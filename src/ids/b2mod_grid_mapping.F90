@@ -11,20 +11,11 @@
 !!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!> This module provides:
 !>
-!> 1. A mechanism to map from the B2 data structure to the IDS and CPO data
-!> structures, consisting of a routine to set up the map (b2CreateMap), a
-!> data structure to hold the map information (B2GridMap) and some service
-!> routines to handle this data structure.
-!>
-!> 2. Two routines (b2IMASFillGridDescription and b2ITMFillGridDescription)
-!> to write the B2 grid into an IMAS or ITM grid description data structure
-!> (which usually is part of an IDS or a CPO). It also  sets up the default
-!> grid subsets for the B2 grid.
-!>
-!> 3. Routines to transform variables stored in the B2 data structure into
-!> the form expected by IDS or CPO data structure.
+!> Module providing a mechanism to map from the B2 data structure to the
+!> IDS and CPO data structures, consisting of a routine to set up the map
+!> (b2CreateMap), a data structure to hold the map information (B2GridMap)
+!> and some service routines to handle this data structure.
 !>
 !!-----------------------------------------------------------------------------
 

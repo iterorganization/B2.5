@@ -10,7 +10,12 @@
 !!                         building
 !!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
-
+!! DOCUMENTATION:
+!>
+!> Module providing Basic connectivity routines and routines for obtaining
+!> cell and grid characterization information.
+!>
+!!----------------------------------------------------------------------------
 module b2mod_connectivity
 
   use b2mod_types

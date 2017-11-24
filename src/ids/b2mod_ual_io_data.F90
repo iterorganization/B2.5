@@ -11,13 +11,8 @@
 !!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!> This module provides:
 !>
-!> 2. A routine (b2ITMFillGridDescription) to write the B2 grid into an ITM
-!> grid description data structure (which usually is part of a CPO). It also
-!> sets up the default subgrids for the B2 grid.
-!>
-!> 3. Routines to transform variables stored in the B2 data structure into
+!> Module providing routines to transform variables stored in the B2 data structure into
 !> the form expected by CPO/IDS data structure.
 !>
 !!-----------------------------------------------------------------------------
