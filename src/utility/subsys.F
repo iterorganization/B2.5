@@ -40,7 +40,7 @@
       lcstck(0,nchs) = lcr0
       lcstck(1,nchs) = lci0
       nchs = nchs+1
-cdpc      write(*,*) 'subini: ',srname,nchs
+cxpb      write(*,'(a,a8,i3)') 'subini: ',trim(srname),nchs
       return
 *     ------------------------------------------------------------------
       entry subend ()
@@ -49,10 +49,10 @@ cdpc      write(*,*) 'subini: ',srname,nchs
 *   ..pop data from the stack
 *     (lcr0 and lci0 are the base addresses at invocation of the present
 *     subprogram)
-cdpc      write(*,*) 'subend: ',chstck(nchs)
       nchs = nchs-1
       lcr0 = lcstck(0,nchs)
       lci0 = lcstck(1,nchs)
+cxpb      write(*,'(a,a8,i3)') 'subend: ',trim(chstck(nchs)),nchs
 *   ..reset base addresses for free workspace
       call lwset (lcr0)
       call lwiset (lci0)

@@ -117,7 +117,7 @@
       call check_cdf_status(iret)
       index(1)=1
       ntstep=0
-      write(*,*) 'put_cdf: ',ntstep
+      write(*,*) 'create_cdf_end: ',ntstep
       iret=nf_put_var1_int(ncid,varid,index,ntstep)
       call check_cdf_status(iret)
       iret = nf_close (ncid)
@@ -142,7 +142,7 @@ c
       iret=nf_get_var1_int(ncid,varid,index,ntstep)
       call check_cdf_status(iret)
       ntstep=ntstep+1
-      write(*,*) 'put_cdf: ',filename,ntstep
+      write(*,*) 'put_cdf_start: ',filename,ntstep
       iret=nf_put_var1_int(ncid,varid,index,ntstep)
       call check_cdf_status(iret)
 c
@@ -315,7 +315,7 @@ c     1 lnblnk(units), units, iret)
       call check_cdf_status(iret)
 * set the initial timestep index (0)
       ntstep=0
-      write(*,*) 'put_cdf: ',filename,ntstep
+      write(*,*) 'create_cdf: ',filename,ntstep
       iret=nf_put_var1_int(ncid,ntstepid,index,ntstep)
       call check_cdf_status(iret)
       iret = nf_close (ncid)

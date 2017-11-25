@@ -125,8 +125,6 @@ c
      +  hlp_c, tab, f, hlp_frm, hlp_frf
 c======================================================================
 
-      if(first_time_step) return
-
       do i=1,ndivx
         do j=1,nqudiv
           equdiv(i,j)=0.0_R8

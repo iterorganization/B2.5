@@ -262,8 +262,6 @@ c#endif
      +  tab, hlp_c, f, hlp_frm, hlp_frf
 c=======================================================================
 
-      if(first_time_step) return
-
 c*** Initialise the arrays
 c
       equg_tmp=0.0_R8

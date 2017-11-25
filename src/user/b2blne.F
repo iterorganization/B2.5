@@ -192,8 +192,6 @@ c
      +  f, hlp_c, hlp_frm, tab, hlp_frf
 c=======================================================================
 
-      if(first_time_step) return
-
 c*** Initialisation
       do i=1,nglb_tmp !{
         equg_tmp(i)=0.0_R8

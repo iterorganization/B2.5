@@ -148,8 +148,6 @@ c----------------------------------------------------------------------
      1 f, hlp_c, hlp_h, hlp_frm, tab
 c======================================================================
 
-      if(first_time_step) return
-
       if(first) then
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
