@@ -1468,7 +1468,7 @@ c*** f     :  the associated file name
       i0=0                                                           !srv 05.11.10
       if(npfrgrp.le.1) i0=1                                          !srv 05.11.10
 
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex) then !{

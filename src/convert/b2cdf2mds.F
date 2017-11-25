@@ -53,7 +53,7 @@
 c first handle x-coordinate of profiles (and areas)
       len_da=0
       do i=1,11
-        inquire(file=trim(ds_filename(i)),exist=exists)
+        call find_file(ds_filename(i),exists)
         if(exists) then
           open(1,file=trim(ds_filename(i)),status='old')
           do il=1,2048

@@ -1716,6 +1716,7 @@ c   --> better way doing this is necessary)
       call xertst (etim.eq.0.0_R8 .or. etim.gt.tim,
      & 'faulty input etim')
       save_plasma_time = tim + delta_plasma_time
+      save_cdfmovie_time = tim
 *   ..initialise tracing routines
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
@@ -1733,16 +1734,20 @@ cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 #ifdef B25_EIRENE
 #ifndef HPUX
-      inquire(file='fort.44',exist=ex)
+      filename='fort.44'
 #else
-      inquire(file='ftn44',exist=ex)
+      filename='ftn44'
 #endif
+      call find_file(filename,ex)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
       if (ex) then
         call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      .                          natm,nmol,nion,nlimps)
-        if (use_eirene.ne.0) call ngread(ismain,iflag)
+        if (use_eirene.ne.0) then
+          open(unit=44,file=filename)
+          call ngread(ismain,iflag)
+        endif
       endif
 #endif
 c new CDF movie option (1st frame at t=0)

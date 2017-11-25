@@ -47,13 +47,15 @@
       integer is,iss,is1,ix,iy,len
       integer, save::ikmn,ikmx
       real(kind=R8), allocatable::pdum (:), pot(:)
+      character*256 filename
       logical open_file
       integer lnblnk
       external xertst, xerrab, open_file, lnblnk
       logical brestarted
       integer fd
  
-      inquire ( file = 'use_impgyro' , exist = use_impgyro )
+      filename='use_impgyro'
+      call find_file(filename,use_impgyro)
       if ( .not. use_impgyro ) return
 
       write (*,*) 'b2ig: Entering impgyro_init'

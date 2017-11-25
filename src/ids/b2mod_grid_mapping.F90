@@ -407,13 +407,13 @@ contains
         if( svc - svcDuplicates .eq. 1 ) then
             call logmsg( LOGDEBUG, "b2CreateMap: found "            &
                 &   //int2str( svc - svcDuplicates )//              &
-                &   " special vertex (x-point),"//int2str( svc )    &
+                &   " special vertex (x-point), "//int2str( svc )   &
                 &   //" including duplicates." )
         else
-            call logmsg( LOGDEBUG, "b2CreateMap: found "                &
-                &   //int2str( svc - svcDuplicates )                    &
-                &   //" special vertices (x-points),"//int2str( svc )// &
-                &   " including duplicates." )
+            call logmsg( LOGDEBUG, "b2CreateMap: found "            &
+                &   //int2str( svc - svcDuplicates )                &
+                &   //" special vertices (x-points), "              &
+                &   //int2str( svc )//" including duplicates." )
         end if
 
         !! number of unique cells
@@ -548,8 +548,8 @@ contains
         end do
 
         if( count( gd%mapFcI == B2_GRID_UNDEFINED) > 0) then
-            call logmsg( LOGKNOWNWARNING, "b2CreateMap: have faces with     &
-                &   missing mapping data (ignored)" )
+            call logmsg( LOGKNOWNWARNING, "b2CreateMap: have faces with "//  &
+                &  "missing mapping data (ignored)" )
             ! call xerrab ( "b2CreateMap: have faces with missing mapping data" )
         endif
 

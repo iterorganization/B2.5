@@ -148,7 +148,7 @@ c      print *,'spwr : ',hlp_spwr
 
 c*** Produce the output
 
-      inquire(file=hlp_fn,exist=ex)
+      call find_file(hlp_fn,ex)
       open(lun,file=hlp_fn,err=900)
       write(hlp_frm,'(10h(1x,i4,1p,, i3, 9he12.4,i5))') n_hlp
 c      print *,'hlp_frm: ',hlp_frm

@@ -125,8 +125,6 @@ c
      +  hlp_c, tab, f, hlp_frm, hlp_frf
 c======================================================================
 
-      if(first_time_step) return
-
       do i=1,ndivx
         do j=1,nqudiv
           equdiv(i,j)=0.0_R8
@@ -284,7 +282,7 @@ c*** f     :  the associated file name
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
 c
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex) then
