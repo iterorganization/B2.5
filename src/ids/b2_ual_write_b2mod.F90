@@ -34,21 +34,27 @@
 !!      @subsection pv    Parameters/variables
 !!      @note   see also routine b2cdcv
 !!
-!!      @param  ninp - Specifies the input unit numbers
-!!              <i> ( (0:6) integer array) </i>
-!!
-!!      @param  nout - Specifies the output unit numbers
-!!              <i> ( (0:2) integer array) </i>
-!!
-!!      @param  nx, ny - Specifies the number of interior cells along the
-!!              first and the second coordinate, respectively.
-!!              The total number of cells is (nx+2)*(ny+2); they are indexed
-!!              by (-1:nx,-1:ny). It will hold that 0.le.nx and 0.le.ny
-!!              <i> (integer) </i>
-!!
-!!      @param  ns - Specifies the number of atomic species in the calculation.
-!!              The species are indexed by (0:ns-1). It will hold that 1.le.ns.
-!!              <i> (integer) </i>
+!!      @param  device - Device name of the IMAS IDS database
+!!              (i. e. solps-iter, iter, aug)
+!!      @param  edge_profiles - IDS designed to store data on edge plasma
+!!              profiles  (includes the scrape-off layer and possibly part
+!!              of the confined plasma)
+!!      @param  edge_sources - IDS designed to store data on edge plasma
+!!              sources. Energy terms correspond to the full kinetic energy
+!!              equation (i.e. the energy flux takes into account the energy
+!!              transported by the particle flux)
+!!      @param  edge_transport - IDS designed to store data on edge plasma
+!!              transport. Energy terms correspond to the full kinetic energy
+!!              equation (i.e. the energy flux takes into account the energy
+!!              transported by the particle flux)
+!!      @param  idx - The returned identifier to be used in the subsequent
+!!                    data access operation
+!!      @param  run - The run number of the database being created
+!!      @param  shot - The shot number of the database being created
+!!      @param  treename - the name of the IMAS IDS database,
+!!              (i.e. "edge_profiles" (mandatory) )
+!!      @param  username - Creator/owner of the IMAS IDS database
+!!      @param  version - Major version of the IMAS IDS database
 !!
 !!      @subsection eind  Error indicators
 !!      In case an error condition is detected, a call is made to the
@@ -68,13 +74,12 @@ program b2_ual_write_b2mod
     use b2mod_main
     use b2mod_grid_mapping
     use b2mod_ual_io
-
     use ids_schemas     ! IGNORE
-                        !> These are the Fortran type definitions for the
-                        !> Physics Data Model
+                        !! These are the Fortran type definitions for the
+                        !! Physics Data Model
     use ids_routines    ! IGNORE
-                        !> These are the Access Layer routines + management of
-                        !> IDS structures
+                        !! These are the Access Layer routines + management of
+                        !! IDS structures
     use ids_assert      ! IGNORE
     use ids_grid_common &       ! IGNORE
         & , IDS_COORDTYPE_R => COORDTYPE_R    &
@@ -89,30 +94,14 @@ program b2_ual_write_b2mod
 
     implicit none
 
-    !!--------------------------------------------------------------------------
-
-    !!.declarations
-
-    !!..common blocks
-
     !!..local variables
     integer ::  idx, i
     integer ::  shot, run
     character(len=24)        ::  treename, username, device, version
-    !> character(len=255)    ::  imas_connect_url
+    ! character(len=255)    ::  imas_connect_url
     type(ids_edge_profiles)  ::  edge_profiles
     type(ids_edge_sources)   ::  edge_sources
     type(ids_edge_transport) ::  edge_transport
-
-    !!--------------------------------------------------------------------------
-    !!.documentation-internal
-    !!
-    !!      The following common blocks have their outermost declaration in
-    !!      this routine; they need not be preserved between calls.
-    !!
-    !!
-    !!--------------------------------------------------------------------------
-    !!.computation
 
     !! Check if supposed new file already exists and delete it
     call checkFileAndDelete( "b2fparam" )
@@ -157,8 +146,9 @@ program b2_ual_write_b2mod
 
 contains
 
-    !> Subroutine intended to check if supposed new file already exists
-    !> and then delete it
+    !> Subroutine intended to check if supposed new file already exists. If
+    !! the file exists it deletes it.
+    !! @param   filename - Name of the file to be checked
     subroutine checkFileAndDelete( fileName )
         character(len=*), intent(in) :: fileName
         logical :: file_exists
@@ -173,7 +163,29 @@ contains
 
     end subroutine
 
-    !> Subroutine used to put data to edge_profiles IDS
+    !> Subroutine used to put data to edge_profiles, edge_sources and
+    !! edge_transport IDSs.
+    !!      @param  edge_profiles - IDS designed to store data on edge plasma
+    !!              profiles  (includes the scrape-off layer and possibly part
+    !!              of the confined plasma)
+    !!      @param  edge_sources - IDS designed to store data on edge plasma
+    !!              sources. Energy terms correspond to the full kinetic energy
+    !!              equation (i.e. the energy flux takes into account the energy
+    !!              transported by the particle flux)
+    !!      @param  edge_transport - IDS designed to store data on edge plasma
+    !!              transport. Energy terms correspond to the full kinetic energy
+    !!              equation (i.e. the energy flux takes into account the energy
+    !!              transported by the particle flux)
+    !!      @param  treename - the name of the IMAS IDS database,
+    !!              (i.e. "edge_profiles" (mandatory) )
+    !!      @param  shot - The shot number of the database being created
+    !!      @param  run - The run number of the database being created
+    !!      @param  idx - The returned identifier to be used in the subsequent
+    !!                    data access operation
+    !!      @param  username - Creator/owner of the IMAS IDS database
+    !!      @param  device - Device name of the IMAS IDS database
+    !!              (i. e. solps-iter, iter, aug)
+    !!      @param  version - Major version of the IMAS IDS database
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &
             &   treename, shot, run, idx, username, device, version )
         integer :: shot, run, idx
@@ -211,7 +223,17 @@ contains
 
     end subroutine put_ids_edge
 
-    !> Example subroutine for reading edge_profiles IDS
+    !> Example subroutine for reading edge_profiles IDS.
+    !!      @param  treename - the name of the IMAS IDS database,
+    !!              (i.e. "edge_profiles" (mandatory) )
+    !!      @param  shot - The shot number of the database being created
+    !!      @param  run - The run number of the database being created
+    !!      @param  idx - The returned identifier to be used in the subsequent
+    !!                    data access operation
+    !!      @param  username - Creator/owner of the IMAS IDS database
+    !!      @param  device - Device name of the IMAS IDS database
+    !!              (i. e. solps-iter, iter, aug)
+    !!      @param  version - Major version of the IMAS IDS database
     subroutine read_ids( treename, shot, run, idx, username, device, version )
         !> Example for reading IDS database in Fortran90
         integer                 ::  shot, run, idx

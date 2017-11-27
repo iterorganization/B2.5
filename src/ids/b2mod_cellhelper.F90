@@ -1,20 +1,9 @@
-!!  Legend:
-!!     !> ................ Documentation comment (file description, function
-!!                         description etc.). Also intended for doxygen
-!!                         generated documentation
-!!     !> @note .......... Documentation notes, intended for doxygen generated
-!!                         documentation
-!!     !!  ............... variables description, additional (helpful)
-!!                         information etc.
-!!     ! IGNORE    ....... Used to ignore this module in list dependency when
-!!                         building
-!!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
-!! DOCUMENTATION:
-!>
-!> Module providing routines for point distance measure and cell geometry
-!> type recognition.
-!>
+!! DOCUMENTATION (doxygen 1.8.8):
+!>      @section desc   Description
+!!      Module providing routines for point distance measure and cell geometry
+!!      type recognition.
+!!
 !!-----------------------------------------------------------------------------
 module b2mod_cellhelper
     use b2mod_types
