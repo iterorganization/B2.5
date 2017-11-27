@@ -15,8 +15,8 @@
 !> Module providing main routines for setting processed B2.5 data for ITM CPO
 !> edge or IMAS edge_profiles, edge_sources and edge_transport IDSs.
 !>
-!> The data comprises of grid geometry, grid subsets and data fields of
-!> various quantities.
+!> @detail  The data comprises of grid geometry, grid subsets and data fields
+!>          of various quantities.
 !>
 !!-----------------------------------------------------------------------------
 module b2mod_ual_io

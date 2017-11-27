@@ -1,69 +1,54 @@
-!!  Legend:
-!!     !> ................ Documentation comment (file description, function
-!!                         description etc.). Also intended for doxygen
-!!                         generated documentation
-!!     !> @note .......... Documentation notes, intended for doxygen generated
-!!                         documentation
-!!     !!  ............... variables description, additional (helpful)
-!!                         information etc.
-!!     ! IGNORE    ....... Used to ignore this module in list dependency when
-!!                         building
-!!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
-!! DOCUMENTATION:
-!> 1. purpose
-!>
-!>      Note:   This script is OUTDATED! The development continued under new
-!>              codes named b2_ual_write_gsl and the latest b2_ual_write_b2mod.
-!>              The development 'moved' to new codes due to different
-!>              approach of writing data to IDS using IMAS GGD routines and
-!>              b2mod scripts.
-!>
-!>      b2_ual_write.f90 code is used to generate b2_ual_write.exe (main
-!>      program), which is a post-processor for b2. It reads the plasma
-!>      grid geometry (including Nodes and Cells grid subsets) and plasma
-!>      state (electron density, electron temperature, ion temperature) and
-!>      writes it to IDS database.
-!>
-!>
-!> 2. specification
-!>
-!>      Main program.
-!>
-!>
-!> 3. description (see also routine b2cdca)
-!>
-!>      The complete program performs post-processing of the
-!>      result of a b2 calculation.
-!>      This program unit opens and closes the input/output units, and
-!>      may perform some other system-dependent operations.
-!>
-!>      The input units are:
-!>      ninp(0): formatted; provides output control parameters.
-!>      ninp(1): un*formatted; provides the geometry.
-!>      ninp(2): un*formatted; provides the run parameters.
-!>      ninp(3): un*formatted; provides the plasma state.
-!>      ninp(4): unformatted; provides the detailed plasma state.
-!>      ninp(5): formatted; provides the run switches.
-!>      ninp(6): un*formatted; provides the atomic data.
-!>
-!>      The output units are:
-!>      nout(0): formatted; provides printed output.
-!>
-!>      (See routine b2cdca for the meaning of 'un*formatted'.)
-!>
-!>
-!> 4. parameters (see also routine b2cdcv)
-!>
-!>      None.
-!>
-!>
-!> 5. error indicators
-!>
-!>      In case an error condition is detected, a call is made to the
-!>      routine xerrab. This causes an error message to be printed,
-!>      after which the program halts.
-!>
+!! DOCUMENTATION (doxygen 1.8.8):
+!>      @section desc1  Description
+!!      @note   This script is OUTDATED! The development continued under new
+!!              codes named b2_ual_write_gsl and the latest b2_ual_write_b2mod.
+!!              The development 'moved' to new codes due to different
+!!              approach of writing data to IDS using IMAS GGD routines and
+!!              b2mod scripts.
+!!
+!!      b2_ual_write.f90 code is used to generate b2_ual_write.exe (main
+!!      program), which is a post-processor for b2. It reads the plasma
+!!      grid geometry (including Nodes and Cells grid subsets) and plasma
+!!      state (electron density, electron temperature, ion temperature) and
+!!      writes it to IDS database.
+!!
+!!      @subsection det1  Details
+!!      For more information see also routine b2cdca.
+!!
+!!      The complete program performs post-processing of the
+!!      result of a b2 calculation.
+!!      This program unit opens and closes the input/output units, and
+!!      may perform some other system-dependent operations.
+!!
+!!      The input units are:
+!!          - ninp(0): formatted; provides output control parameters.
+!!          - ninp(1): un*formatted; provides the geometry.
+!!          - ninp(2): un*formatted; provides the run parameters.
+!!          - ninp(3): un*formatted; provides the plasma state.
+!!          - ninp(4): unformatted; provides the detailed plasma state.
+!!          - ninp(5): formatted; provides the run switches.
+!!          - ninp(6): un*formatted; provides the atomic data.
+!!
+!!      The output units are:
+!!          - nout(0): formatted; provides printed output.
+!!
+!!      @note   See routine b2cdca for the meaning of 'un*formatted'.
+!!
+!!      @subsection pv1   Parameters/variables
+!!      None.
+!!
+!!      @subsection eind1 Error indicators
+!!      In case an error condition is detected, a call is made to the
+!!      routine \b xerrab. This causes an error message to be printed,
+!!      after which the program halts.
+!!
+!!      @subsection syx1    Exceptional syntax explanation
+!!      @code
+!!          ! IGNORE    !! syntax used to ignore this module in list
+!!                      !! dependency when compiling the code
+!!      @endcode
+!!
 !!-----------------------------------------------------------------------------
 
 program b2_ual_write
