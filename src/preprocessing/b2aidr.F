@@ -532,7 +532,6 @@
 *     into the initial plasma state file b2fstati for ns1 species
        filename='b2fstate'
        call find_file(filename,ex)
-       inquire(file='b2fstate',exist=ex)
        if (ex) then
          write(*,*) ' Opening '//trim(filename)
          call cfopen (ninp(3),filename,'old','un*formatted')

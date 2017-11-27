@@ -730,29 +730,28 @@ contains
         tpsepi(2) = 0.0_R8
       endif
       posepi(2) = 0.5_R8 * (po(ixtl-target_offset,jsep) + po(topix(ixtl-target_offset,jsep),topiy(ixtl-target_offset,jsep)))
-    else
-      nesepa(2) = 0.0_R8
-      tesepa(2) = 0.0_R8
-      tisepa(2) = 0.0_R8
-      tpsepa(2) = 0.0_R8
-      posepa(2) = 0.0_R8
-      nesepm(2) = 0.0_R8
-      tesepm(2) = 0.0_R8
-      tisepm(2) = 0.0_R8
-      posepm(2) = 0.0_R8
-      dnsepm(2) = 0.0_R8
-      dpsepm(2) = 0.0_R8
-      kesepm(2) = 0.0_R8
-      kisepm(2) = 0.0_R8
-      vxsepm(2) = 0.0_R8
-      vysepm(2) = 0.0_R8
-      vssepm(2) = 0.0_R8
-      nesepi(2) = 0.0_R8
-      tesepi(2) = 0.0_R8
-      tisepi(2) = 0.0_R8
-      tpsepi(2) = 0.0_R8
-      posepi(2) = 0.0_R8
     endif
+    nesepa(nncut+1:nncutmax) = 0.0_R8
+    tesepa(nncut+1:nncutmax) = 0.0_R8
+    tisepa(nncut+1:nncutmax) = 0.0_R8
+    tpsepa(nncut+1:nncutmax) = 0.0_R8
+    posepa(nncut+1:nncutmax) = 0.0_R8
+    nesepm(nncut+1:nncutmax) = 0.0_R8
+    tesepm(nncut+1:nncutmax) = 0.0_R8
+    tisepm(nncut+1:nncutmax) = 0.0_R8
+    posepm(nncut+1:nncutmax) = 0.0_R8
+    dnsepm(nncut+1:nncutmax) = 0.0_R8
+    dpsepm(nncut+1:nncutmax) = 0.0_R8
+    kesepm(nncut+1:nncutmax) = 0.0_R8
+    kisepm(nncut+1:nncutmax) = 0.0_R8
+    vxsepm(nncut+1:nncutmax) = 0.0_R8
+    vysepm(nncut+1:nncutmax) = 0.0_R8
+    vssepm(nncut+1:nncutmax) = 0.0_R8
+    nesepi(nncut+1:nncutmax) = 0.0_R8
+    tesepi(nncut+1:nncutmax) = 0.0_R8
+    tisepi(nncut+1:nncutmax) = 0.0_R8
+    tpsepi(nncut+1:nncutmax) = 0.0_R8
+    posepi(nncut+1:nncutmax) = 0.0_R8
 #endif
     !
     temxip(1:nc) = temxip(1:nc)/ev

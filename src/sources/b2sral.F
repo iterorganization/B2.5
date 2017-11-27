@@ -492,8 +492,8 @@ csw 30sep2013, added cdpa in call, uadia
       enddo
 
       if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
+        write(*,*) 'Writing cx sources'
         do is = 0,ns-1
-          write(*,*) 'Writing cx sources'
           write (chns,'(i3.3)') is
           wrk(:,:) = sna0_cx(:,:,0,is)+sna0_cx(:,:,1,is)*na(:,:,is)
           call my_out(70,nx,ny,wrk,'b2stcx_sna_'//chns)

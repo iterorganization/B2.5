@@ -491,6 +491,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
         read(99,neutrals)
 #endif
         write(*,*) 'Read namelist neutrals from ',trim(filename)
+        close(99)
       else
         call xerrab ('No '//trim(filename))
       endif

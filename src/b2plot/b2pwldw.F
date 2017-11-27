@@ -252,6 +252,7 @@ c***  wllersf   : ratio of erosion to sputtering for different meterials
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m),
      .                  wllersf(nsptmx)
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
+      character*256 filename
       logical streql
       external streql
       data srfs_m /'Be','C','CFC','Fe','SS','ss','Mo' ,'W'/
@@ -278,10 +279,11 @@ c-----------------------------------------------------------------------
 c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         tab=char(9)
 #ifndef HPUX
-        inquire(file='fort.44',exist=ft44)
+        filename='fort.44'
 #else
-        inquire(file='ftn44',exist=ft44)
+        filename='ftn44'
 #endif
+        call find_file(filename,ft44)
         do_trg=.true.
         write(frmt_hlp,'(7h(1p,1x,,i5,11h(e12.5,a1)))') n_line_x
         

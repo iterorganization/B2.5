@@ -54,7 +54,7 @@
      *  Total_current(-1:ny), B0out, Total_flux(-1:ny),            !srv 31.08.00 19.02.02
      *  Total_abscurrent(-1:ny), Total_absflux(-1:ny),
      *  Total_energy_flux_i(-1:ny), Total_energy_flux_e(-1:ny),    !srv 23.11.00
-     *  wrk2(-1:nx,-1:ny),                                         !srv 23.11.00
+     *  wrk2(-1:nx,-1:ny), wrkt(-1:ny,-1:nx),                      !srv 23.11.00
      *  Total_energy_flux(-1:ny), power,                           !srv 23.11.00
      *  Total_energy_flux_mdf(-1:ny),
      *  Total_energy_flux_i_mdf(-1:ny),
@@ -218,7 +218,7 @@
      7       *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
           enddo
         enddo
-        call my_out(70,nx,ny,wrk0(-1,-1),'fvaecrbx'//chns)        !srv
+        call my_out(70,nx,ny,wrk0,'fvaecrbx'//chns)               !srv
 
         wrk1=0.0d0
         do iy = -1,ny
@@ -231,10 +231,10 @@
      7       *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
           enddo
         enddo
-        call my_out(70,nx,ny,wrk1(-1,-1),'fvadiax'//chns)         !srv
+        call my_out(70,nx,ny,wrk1,'fvadiax'//chns)                !srv
 
         wrk0=fna(:,:,0,is)-wrk0-wrk1
-        call my_out(70,nx,ny,wrk0(-1,-1),'fdifx'//chns)           !srv
+        call my_out(70,nx,ny,wrk0,'fdifx'//chns)                  !srv
 
         wrk0=0.0d0
         do iy = -1, ny
@@ -246,7 +246,7 @@
      6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))    !srv 01.03.00
           enddo
         enddo
-        call my_out(70,nx,ny,wrk0(-1,-1),'fvaecrby'//chns)        !srv
+        call my_out(70,nx,ny,wrk0,'fvaecrby'//chns)               !srv
         wrk1=0.0d0
         do iy = -1, ny
           do ix = -1, nx
@@ -257,9 +257,9 @@
      6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))    !srv 01.03.00
           enddo
         enddo
-        call my_out(70,nx,ny,wrk1(-1,-1),'fvadiay'//chns)         !srv
+        call my_out(70,nx,ny,wrk1,'fvadiay'//chns)                !srv
         wrk0=fna(:,:,1,is)-wrk0-wrk1
-        call my_out(70,nx,ny,wrk0(-1,-1),'fdify'//chns)           !srv
+        call my_out(70,nx,ny,wrk0,'fdify'//chns)                  !srv
 
         call my_out(70,nx,ny,fmo(-1,-1,0,is),'fmox'//chns)        !srv 24.02.10
         call my_out(70,nx,ny,fmo(-1,-1,1,is),'fmoy'//chns)
@@ -401,7 +401,7 @@
       call my_out(70,nx,ny,sch(-1,-1,2),'sch2')                    !srv
       call my_out(70,nx,ny,sch(-1,-1,3),'sch3')                    !srv
       wrk0=sna(:,:,0,ismain)+sna(:,:,1,ismain)*na(:,:,ismain)
-      call my_out(70,nx,ny,wrk0(-1,-1),'sour_ni')                  !srv
+      call my_out(70,nx,ny,wrk0,'sour_ni')                         !srv
 
       open(70,file=trim(folder)//'Total_current'//'.dat')          !srv 31.08.00 23.07.10 { 26.09.17
       write (70,*) '  N      Total_current  Total_|current| '
@@ -1349,10 +1349,13 @@
        end if
 
        call my_out(70,nx,ny,ne,'ne')                               !srv
-       call my_out(70,nx,ny,te/ev,'te_eV')
-       call my_out(70,nx,ny,ti/ev,'ti_eV')
+       wrk0=te/ev
+       call my_out(70,nx,ny,wrk0,'te_eV')
+       wrk0=ti/ev
+       call my_out(70,nx,ny,wrk0,'ti_eV')
        call my_out(70,nx,ny,lengthx,'lengthx')                     !srv 13.02.17
-       call my_out(70,ny,nx,transpose(lengthx),'lengthxTrans')     !srv 13.02.17
+       wrkt=transpose(lengthx)
+       call my_out(70,ny,nx,wrkt,'lengthxTrans')                   !srv 13.02.17
        call my_out(70,nx,ny,lengthy,'lengthy')                     !srv
        wrk0=0.0d0                                                  !srv 18.03.09 26.04.09 {
        do ix=-1,nx
@@ -1635,7 +1638,7 @@ c     calculate coordinates of cell centre
        wrk1=0.25_R8*(cry(:,:,0)+cry(:,:,1)+cry(:,:,2)+cry(:,:,3))
        call my_out(70,nx,ny,wrk1,'czc_')
        open(70,file=trim(folder)//'czc.dat')   ! Z-coordinate of the (ix,iy) cell centre !srv 26.09.17
-       write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'               !srv 07.08.15
+       write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'                !srv 07.08.15
        do iy = -1, ny
          write(70,hlp_frm) (wrk1(ix,iy),ix = -1, nx)                   !srv 07.08.15
        enddo

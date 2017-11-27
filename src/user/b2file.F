@@ -86,7 +86,7 @@ c
 c
       filedata(ntrc_tst)=.false.
       f=fn_ntrc(ntrc_tst)
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       l=1
       open(ntrc(ntrc_tst),file=f,err=900)
       rewind(ntrc(ntrc_tst))
@@ -149,7 +149,7 @@ c>>>
       filedata(ntrc_tst)=.true.
       go to 1000
 c
- 900  write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
+ 900  write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Residuals
 c
@@ -158,7 +158,7 @@ c
 c
       filedata(ntrc_res)=.false.
       f=fn_ntrc(ntrc_res)
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       l=1
       open(ntrc(ntrc_res),file=f,err=5)
       rewind(ntrc(ntrc_res))
@@ -225,7 +225,7 @@ c>>>
       filedata(ntrc_res)=.true.
       go to 10
 c
-  5   write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
+  5   write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Sources
 c
@@ -233,7 +233,7 @@ c
 c
       filedata(ntrc_src)=.false.
       f=fn_ntrc(ntrc_src)
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       l=1
       open(ntrc(ntrc_src),file=f,err=30)
       rewind(ntrc(ntrc_src))
@@ -276,8 +276,8 @@ c     -                          (nnreg(0)+1)*12,(nnreg(0)+1)*nspecies*6
      /        '('''//tab//''',a3,a2,i2.2,a1,''_'',a2))'
 
 c<<<
-         print *,'%%% b2file: header format'
-         print *,trim(hlp_frms)
+        print *,'%%% b2file: header format'
+        print *,trim(hlp_frms)
 c>>>
         write(ntrc(ntrc_src),hlp_frms,err=30)
      ,   ((('src',hlp_h(i),j,hlp_s(l),l=1,3),j=0,nnreg(0)),i=-1,2),
@@ -290,7 +290,7 @@ c>>>
       filedata(ntrc_src)=.true.
       go to 35
 
- 30   write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
+ 30   write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Position the files for appending the data
 c
@@ -324,7 +324,7 @@ c----------------------------------------------------------------------
      ,     (sclbase(i,k),i=0,nnatmi),(sclrtio(i,k),i=0,nnatmi),
      ,     (sclsrcn(i,k),i=0,nnatmi),k=1,nstrai)
         go to 65
- 62     write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
+ 62     write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_tst)=.false.
       end if
 c
@@ -340,7 +340,7 @@ c
      ,    ((rescoreg(i,ions_list(j)),i=1,nnreg(0)),
      ,     (resmoreg(i,ions_list(j)),i=1,nnreg(0)),j=1,nis_tmp)
         go to 75
- 72     write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
+ 72     write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_res)=.false.
       end if
 c
@@ -358,7 +358,7 @@ c
      ,         (((src_ni(i,k,j),k=1,3),i=0,nnreg(0)),
      ,          ((src_mo(i,k,j),k=1,3),i=0,nnreg(0)),j=1,nspecies)
         return
- 77     write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
+ 77     write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_src)=.false.
       end if
       return
@@ -392,7 +392,7 @@ c
 #endif
           go to 100
 c
- 86       write(*,'(2a,1x,a)') 'b2file: ',hlp_emsg(l),trim(f)
+ 86       write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
           filedata(j)=.false.
         end if
  100  continue

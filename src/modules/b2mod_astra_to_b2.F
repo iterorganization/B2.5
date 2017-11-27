@@ -198,7 +198,7 @@
        fSeNBI_astra = SeNBI_astra(-1)
 *   .. get Ratb
        fname = 'datahead.tmpl'
-       inquire(file=trim(fname),exist=ex)
+       call find_file(fname,ex)
        if(ex) then
          LRTOR =.false.
          LZRD45=.false.

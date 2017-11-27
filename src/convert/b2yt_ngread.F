@@ -92,6 +92,7 @@ c
       character*16, allocatable :: textan1(:), textmn1(:)
       character*8, allocatable :: eirtxt1(:)
       character*3 stnum
+      character*256 filename
       logical ex
 
 *  -- PROCEDURES --
@@ -161,12 +162,14 @@ C
       call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
       n2 = nx1*ny1
-      inquire(file='input.dat',exist=ex)
+      filename='input.dat'
+      call find_file(filename,ex)
 #ifndef HPUX
-      if (.not.ex) inquire(file='fort.33',exist=nlwrmsh)
+      filename='fort.33'
 #else
-      if (.not.ex) inquire(file='ftn33',exist=nlwrmsh)
+      filename='ftn33'
 #endif
+      if (.not.ex) call find_file(filename,nlwrmsh)
 c
 * labels
 * neutral atoms

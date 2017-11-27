@@ -397,7 +397,7 @@ c*** f     :  the associated file name
 
       allocate(ii(ns))
       allocate(hlp_a(ns))
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex) then

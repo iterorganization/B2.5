@@ -141,6 +141,7 @@ c***  fsumm   filenames for the summaries
       integer n_intgrs
       parameter (n_intgrs=8)
       character*16 hlp_frm
+      character*256 filename
       character*12 ftrg(ntrgsx,2),fsumm(4),fn_hlp
       character fmt_peak*80,tab*1,tl*1,
      ,  trg_label(ntrgsx)*9,trg_short(ntrgsx)*2,hlp_trg(ntrgsx)*2,
@@ -170,10 +171,11 @@ c      print *,'Starting b2ptrgl...'
 c      print *,'ers_factor= ',ers_factor
       tab=char(9)
 #ifndef HPUX
-      inquire(file='fort.44',exist=ft44)
+      filename='fort.44'
 #else
-      inquire(file='ftn44',exist=ft44)
+      filename='ftn44'
 #endif
+      call find_file(filename,ft44)
 
 c----------------------------------------------------------------------
 c*** Power loading:

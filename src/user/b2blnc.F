@@ -148,8 +148,6 @@ c----------------------------------------------------------------------
      1 f, hlp_c, hlp_h, hlp_frm, tab
 c======================================================================
 
-      if(first_time_step) return
-
       if(first) then
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
@@ -680,7 +678,7 @@ c*** f     :  the associated file name
       nc=0
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex) then
