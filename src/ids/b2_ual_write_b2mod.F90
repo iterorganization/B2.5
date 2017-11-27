@@ -49,10 +49,25 @@
 !>      (See routine b2cdca for the meaning of "un*formatted".)
 !>
 !>
-!> 4. parameters (see also routine b2cdcv)
+!> 4. parameters/variables
+!>      @note   see also routine b2cdcv
 !>
-!>      None.
+!>      @param  ninp - (0:6) integer array.
+!>              ninp specifies the input unit numbers.
 !>
+!>      @param  nout - (0:2) integer array.
+!>      nout specifies the output unit numbers.
+!>
+!>      @param  nx, ny - integer.
+!>              nx and ny specify the number of interior cells along the first
+!>              and the second coordinate, respectively. The total number of
+!>              cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
+!>              It will hold that 0.le.nx and 0.le.ny.
+!>
+!>      @param  ns - integer.
+!>              ns specifies the number of atomic species in the calculation.
+!>              The species are indexed by (0:ns-1).
+!>              It will hold that 1.le.ns.
 !>
 !> 5. error indicators
 !>
@@ -109,24 +124,6 @@ program b2_ual_write_b2mod
     !!      The following common blocks have their outermost declaration in
     !!      this routine; they need not be preserved between calls.
     !!
-    !!      Description of some local variables:
-    !!
-    !!      ninp - (0:6) integer array.
-    !!      ninp specifies the input unit numbers.
-    !!
-    !!      nout - (0:2) integer array.
-    !!      nout specifies the output unit numbers.
-    !!
-    !!      nx, ny - integer.
-    !!      nx and ny specify the number of interior cells along the first
-    !!      and the second coordinate, respectively. The total number of
-    !!      cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
-    !!      It will hold that 0.le.nx and 0.le.ny.
-    !!
-    !!      ns - integer.
-    !!      ns specifies the number of atomic species in the calculation.
-    !!      The species are indexed by (0:ns-1).
-    !!      It will hold that 1.le.ns.
     !!
     !!--------------------------------------------------------------------------
     !!.computation

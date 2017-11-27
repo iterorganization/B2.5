@@ -41,6 +41,8 @@ module b2mod_ual_io_data
     use b2mod_ual_io_grid
 
 #ifdef IMAS
+    !> Provides service routines to transform data from B2 to IMAS IDS
+    !> (data in form of vertex, face or cell)
     interface b2IMASTransformDataB2ToIDS
         module procedure b2IMASTransformDataB2ToIDSCell,    &
             &   b2IMASTransformDataB2ToIDSFace

@@ -40,8 +40,8 @@ module b2mod_grid_mapping
     !! Maximum number of special vertices expected in the grid
     integer, parameter :: MAX_SPECIAL_VERTICES = 10
 
-    !! Data structure holding an intermediate grid description to be
-    !! transferred into a CPO
+    !> Data structure holding an intermediate grid description to be
+    !> transferred into a CPO or IDS
     type B2GridMap
         !! Description of some variables:
         !!  ncv  - Number of all cells in the domain (2D objects)

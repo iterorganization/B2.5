@@ -10,9 +10,13 @@
 !!                         building
 !!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
+!! DOCUMENTATION:
+!>
+!> Module providing routines for point distance measure and cell geometry
+!> type recognition.
+!>
+!!-----------------------------------------------------------------------------
 module b2mod_cellhelper
-    !! Module b2mod_cellhelper
-
     use b2mod_types
 
     implicit none

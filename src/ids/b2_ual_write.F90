@@ -14,12 +14,12 @@
 !> 1. purpose
 !>
 !>      Note:   This script is OUTDATED! The development continued under new
-!>              scripts b2_ual_write_gsl and the latest b2_ual_write_b2mod.
-!>              The development 'moved' to new scripts due to different
+!>              codes named b2_ual_write_gsl and the latest b2_ual_write_b2mod.
+!>              The development 'moved' to new codes due to different
 !>              approach of writing data to IDS using IMAS GGD routines and
 !>              b2mod scripts.
 !>
-!>      b2_ual_write.f90 script is used to generate b2_ual_write.exe (main
+!>      b2_ual_write.f90 code is used to generate b2_ual_write.exe (main
 !>      program), which is a post-processor for b2. It reads the plasma
 !>      grid geometry (including Nodes and Cells grid subsets) and plasma
 !>      state (electron density, electron temperature, ion temperature) and

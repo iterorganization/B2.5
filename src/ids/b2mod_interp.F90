@@ -1,3 +1,22 @@
+!!  Legend:
+!!     !> ................ Documentation comment (file description, function
+!!                         description etc.). Also intended for doxygen
+!!                         generated documentation
+!!     !> @note .......... Documentation notes, intended for doxygen generated
+!!                         documentation
+!!     !!  ............... variables description, additional (helpful)
+!!                         information etc.
+!!     ! IGNORE    ....... Used to ignore this module in list dependency when
+!!                         building
+!!     !   ............... Commented part of code
+!!-----------------------------------------------------------------------------
+!! DOCUMENTATION:
+!>
+!> Module providing routines for interpolation of a cell-centred quantity to
+!> cell faces, computing flow velocity quantities, providing values for
+!> cell-centered quantities etc.
+!>
+!!-----------------------------------------------------------------------------
 module b2mod_interp
 
     use b2mod_types
@@ -10,6 +29,7 @@ module b2mod_interp
 
 contains
 
+    !> Routine for computing magnetic field at faces
     subroutine compute_b_at_faces( nx, ny, bb, wbbl, wbbr, wbbv,    &
         &   leftix, leftiy, rightix, rightiy, bottomix, bottomiy,   &
         &   topix, topiy, vol, gs, qc, qcb, cflags )
