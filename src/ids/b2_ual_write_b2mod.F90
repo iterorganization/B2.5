@@ -97,14 +97,13 @@ program b2_ual_write_b2mod
 
     implicit none
 
-    !!..local variables
-    integer ::  idx, i
-    integer ::  shot, run
-    character(len=24)        ::  treename, username, device, version
-    ! character(len=255)    ::  imas_connect_url
-    type(ids_edge_profiles)  ::  edge_profiles
-    type(ids_edge_sources)   ::  edge_sources
-    type(ids_edge_transport) ::  edge_transport
+    !! Local variables
+    character(len=24) :: treename, username, device, version
+    integer :: idx, i
+    integer :: shot, run
+    type(ids_edge_profiles) :: edge_profiles
+    type(ids_edge_sources) :: edge_sources
+    type(ids_edge_transport) :: edge_transport
 
     !! Check if supposed new file already exists and delete it
     call checkFileAndDelete( "b2fparam" )
@@ -127,14 +126,12 @@ program b2_ual_write_b2mod
     ! call b2mn_fin
     ! write(0,*) "b2mn_fin completed"
 
-    treename    = "ids"
-    ! shot        = 16151
-    ! run         = 1001
-    shot    = 100
-    run     = 7
-    username    = "penkod"
-    device     = "solps-iter"
-    version     = "3"
+    treename = "ids"
+    shot = 100
+    run = 7
+    username = "penkod"
+    device = "solps-iter"
+    version = "3"
 
     !! b2mod routine write_ids
     write(*,*) "START write_ids"
@@ -153,9 +150,11 @@ contains
     !! the file exists it deletes it.
     !! @param   filename - Name of the file to be checked
     subroutine checkFileAndDelete( fileName )
+        !! Internal variables
         character(len=*), intent(in) :: fileName
-        logical :: file_exists
+        !! Local variables
         integer :: stat
+        logical :: file_exists
 
         inquire( file=fileName, exist=file_exists )
         if ( file_exists ) then
@@ -191,6 +190,7 @@ contains
     !!      @param  version - Major version of the IMAS IDS database
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &
             &   treename, shot, run, idx, username, device, version )
+        !! Internal variables
         integer :: shot, run, idx
         type(ids_edge_profiles), intent(inout) :: edge_profiles
         type(ids_edge_sources), intent(inout) :: edge_sources
@@ -201,7 +201,7 @@ contains
         write(0,*) "Writing to edge_profiles, edge_sources and edge_transport IDS"
 
         !! Create and modify new shot/run
-        call imas_create_env(treename, shot, run, 0, 0, idx, username, &
+        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
             device, version )
 
         !! Or open and modify existing shot/run (might work much faster than
@@ -226,7 +226,8 @@ contains
 
     end subroutine put_ids_edge
 
-    !> Example subroutine for reading edge_profiles IDS.
+    !> Example subroutine for reading edge_profiles IDS
+    !! with Fortran90
     !!      @param  treename - the name of the IMAS IDS database,
     !!              (i.e. "edge_profiles" (mandatory) )
     !!      @param  shot - The shot number of the database being created
@@ -238,12 +239,12 @@ contains
     !!              (i. e. solps-iter, iter, aug)
     !!      @param  version - Major version of the IMAS IDS database
     subroutine read_ids( treename, shot, run, idx, username, device, version )
-        !> Example for reading IDS database in Fortran90
+        !! Internal variables
+        character(len=24)       ::  treename, username, device, version
         integer                 ::  shot, run, idx
         integer                 ::  gridSubset_index
-        character(len=24)       ::  treename, username, device, version
+        !! Local variables
         type(ids_edge_profiles) ::  edge_profiles
-        character(len=255)      ::  imas_connect_url
 
         gridSubset_index = 3
 

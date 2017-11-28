@@ -4,7 +4,6 @@
 !>      Dejan Penko
 !!
 !>      @section desc2  Description
-!!
 !!      @note   This code is OUTDATED! The development continued under new
 !!              script b2_ual_write_b2mod.
 !!              The development 'moved' to new code due to different
@@ -190,7 +189,7 @@ contains
         ns = idum(2)
         call xertst( 0.le.nx .and. 0.le.ny .and. 1.le.ns,   &
             &   'faulty input nx, ny, ns from plasma state file' )
-        call cfruin( ninp(1), 2, idum(0), 'nx, ny' )
+        call cfruin( ninp(1), 2, idum(0), 'nx,ny' )
         call xertst( idum(0).eq.nx .and. idum(1).eq.ny, &
             &   'faulty input nx, ny from geometry file' )
 
@@ -373,7 +372,7 @@ contains
     subroutine write_ids_edge_profiles( treename, shot, run, idx, username, &
             &   device, version, ne, te, ti )
         use ids_grid_unstructured   ! IGNORE
-
+        !! Internal variables
         character(len=24) :: treename, username, device, version
         integer :: shot, run, idx
         real (kind=B2R8), intent(in) :: ne(:), te(:), ti(:)
@@ -585,6 +584,7 @@ contains
     !!              (i. e. solps-iter, iter, aug)
     !! @param[in]   version - Major version of the IMAS IDS database
     subroutine read_ids( treename, shot, run, idx, username, device, version )
+        !! Internal variables
         integer                 ::  shot, run, idx
         integer                 ::  gridSubset_index
         !! Local variables

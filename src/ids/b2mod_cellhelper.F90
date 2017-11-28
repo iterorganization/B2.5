@@ -4,6 +4,26 @@
 !!      Module providing routines for point distance measure and cell geometry
 !!      type recognition.
 !!
+!!      @subsection pv    Parameters/variables
+!!      @note   see also routine b2cdcv
+!!
+!!      @param  crx, cry - For (ix,iy) in (-1:nx,-1:ny), crx(ix,iy,0:3) specify
+!!              the horizontal coordinates and cry(ix,iy,0:3) specify the
+!!              vertical coordinates (in the physical plane) of the four
+!!              corners of the (ix,iy) cell, mapped as follows:
+!!              (,,0): lower left corner, (,,1): lower right corner,
+!!              (,,2): upper left corner, (,,3): upper right corner.
+!!              One expects the following identities to hold away from the
+!!              boundaries:
+!!              crx(ix,iy,0)=crx(ix-1,iy,1)=crx(ix,iy-1,2)=crx(ix-1,iy-1,3),
+!!              cry(ix,iy,0)=cry(ix-1,iy,1)=cry(ix,iy-1,2)=cry(ix-1,iy-1,3),
+!!              However, there may be cuts in the geometry, in which case these
+!!              identities need not hold.
+!!      @param  x1 - First coordinate of the first point
+!!      @param  y1 - Second coordinate of the first point
+!!      @param  x2 - First coordinate of the second point
+!!      @param  y2 - Second coordinate of the second point
+!!
 !!-----------------------------------------------------------------------------
 module b2mod_cellhelper
     use b2mod_types
@@ -36,7 +56,6 @@ module b2mod_cellhelper
     integer, parameter :: B2_GRID_UNDEFINED = -2
 
     !! Circling around vertices, following connectivity in the B2 grid
-
     integer, parameter :: CLOCKWISE = 1
     integer, parameter :: COUNTERCLOCKWISE = 2
 
@@ -66,7 +85,6 @@ module b2mod_cellhelper
       &    VX_UPPERRIGHT, VX_UNDEFINED, VX_UNDEFINED, VX_LOWERLEFT, &
       &    VX_UNDEFINED, VX_UNDEFINED, VX_UPPERLEFT, VX_LOWERRIGHT /),  &
       & (/4, 4/) )
-
 
     !! Start and end vertices of faces
     integer, parameter :: VX_START = 0
@@ -100,26 +118,40 @@ module b2mod_cellhelper
 contains
 
     !> Compute distance between points
-    real(R8) function points_dist(x1,y1,x2,y2)
+    !! @param[in]   x1 - First coordinate of the first point
+    !! @param[in]   y1 - Second coordinate of the first point
+    !! @param[in]   x2 - First coordinate of the second point
+    !! @param[in]   y2 - Second coordinate of the second point
+    real(R8) function points_dist( x1, y1, x2, y2 )
+        !! Internal variables
         real(R8), intent(in) :: x1, y1, x2, y2
 
-        points_dist = sqrt( (x1-x2)**2+(y1-y2)**2 )
+        points_dist = sqrt( (x1-x2)**2 + (y1-y2)**2 )
     end function points_dist
 
     !> Check whether to points coincide
-    !> It tests whether their distance is closter than geom_match_dist.
-    logical function points_match(x1,y1,x2,y2)
+    !! It tests whether their distance is closer than geom_match_dist.
+    !! @param[in]   x1 - First coordinate of the first point
+    !! @param[in]   y1 - Second coordinate of the first point
+    !! @param[in]   x2 - First coordinate of the second point
+    !! @param[in]   y2 - Second coordinate of the second point
+    logical function points_match( x1, y1, x2, y2 )
+        !! Internal variables
         real(R8), intent(in) :: x1, y1, x2, y2
 
-        points_match = points_dist(x1,y1,x2,y2).lt.geom_match_dist
+        points_match = points_dist( x1, y1, x2, y2 ).lt.geom_match_dist
     end function points_match
 
 
     !> Determine the geometry type of a cell
-    integer function cellGeoType(crx, cry)
+    !! @param[in]   crx - horizontal coordinate of the four corners of
+    !!              the (ix,iy) cell
+    !! @param[in]   cry - vertical coordinate of the four corners of
+    !!              the (ix,iy) cell
+    integer function cellGeoType( crx, cry )
         real(R8), dimension(0:3), intent(in) :: crx, cry
 
-        !! internal
+        !! Internal variable
         logical :: leftFace, botFace, rightFace, topFace
         integer :: fcount
 
@@ -130,35 +162,36 @@ contains
         topFace =   .not. points_match(crx(2), cry(2), crx(3), cry(3))
 
         fcount = 0
-        if (leftFace) fcount = fcount + 1
-        if (botFace) fcount = fcount + 1
-        if (rightFace) fcount = fcount + 1
-        if (topFace) fcount = fcount + 1
+        if( leftFace ) fcount = fcount + 1
+        if( botFace ) fcount = fcount + 1
+        if( rightFace ) fcount = fcount + 1
+        if( topFace ) fcount = fcount + 1
 
         select case (fcount)
         case (0:2)
             cellGeoType = CGEO_BROKEN
         case (3)
-            if (.not. leftFace) cellGeoType = CGEO_TRIA_NOLEFT
-            if (.not. botFace) cellGeoType = CGEO_TRIA_NOBOT
-            if (.not. rightFace) cellGeoType = CGEO_TRIA_NORIGHT
-            if (.not. topFace) cellGeoType = CGEO_TRIA_NOTOP
+            if( .not. leftFace ) cellGeoType = CGEO_TRIA_NOLEFT
+            if( .not. botFace ) cellGeoType = CGEO_TRIA_NOBOT
+            if( .not. rightFace ) cellGeoType = CGEO_TRIA_NORIGHT
+            if( .not. topFace ) cellGeoType = CGEO_TRIA_NOTOP
         case (4)
             cellGeoType = CGEO_QUAD
         end select
 
     end function cellGeoType
 
-
     !> Check whether a cell geometry type returned by cellGeoType
-    !> indicates a triangular cell
+    !! indicates a triangular cell
+    !! @param[in]   cellGeoType - Cell type ID (e.g. CGEO_TRIA_NOLEFT)
     logical function isTriangleCell( cellGeoType )
+        !! Internal variables
         integer, intent(in) :: cellGeoType
 
-        isTriangleCell = (cellGeoType == CGEO_TRIA_NOLEFT) .or. &
-                    &   (cellGeoType == CGEO_TRIA_NOBOT) .or.   &
-                    &   (cellGeoType == CGEO_TRIA_NORIGHT) .or. &
-                    &   (cellGeoType == CGEO_TRIA_NOTOP)
+        isTriangleCell = ( cellGeoType == CGEO_TRIA_NOLEFT ) .or.   &
+            &   ( cellGeoType == CGEO_TRIA_NOBOT ) .or.             &
+            &   ( cellGeoType == CGEO_TRIA_NORIGHT ) .or.           &
+            &   ( cellGeoType == CGEO_TRIA_NOTOP )
 
     end function isTriangleCell
 

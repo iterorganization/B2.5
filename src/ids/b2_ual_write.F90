@@ -358,6 +358,7 @@ contains
     !!              Ion temperature
     subroutine write_ids_edge_profiles( treename, shot, run, idx, username, &
             &   device, version, ne, te, ti )
+        !! Internal variables
         character(len=24) :: treename, username, device, version
         character(len=255) :: grid_description
         character(len=132) :: gridSubset_name
@@ -671,6 +672,7 @@ contains
     !!              (i. e. solps-iter, iter, aug)
     !! @param[in]   version - Major version of the IMAS IDS database
     subroutine read_ids( treename, shot, run, idx, username, device, version )
+        !! Internal variables
         character(len=24)       ::  treename, username, device, version
         integer                 ::  shot, run, idx
         !! Local variables
