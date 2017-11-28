@@ -1,5 +1,8 @@
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION (doxygen 1.8.8):
+!>      @author
+!>      Dejan Penko
+!!
 !>      @section desc1  Description
 !!      @note   This script is OUTDATED! The development continued under new
 !!              codes named b2_ual_write_gsl and the latest b2_ual_write_b2mod.
@@ -35,7 +38,7 @@
 !!
 !!      @note   See routine b2cdca for the meaning of 'un*formatted'.
 !!
-!!      @subsection pv    Parameters/variables
+!!      @subsection pv  Parameters/variables
 !!      @note   see also routine b2cdcv
 !!
 !!      @param  device - Device name of the IMAS IDS database
@@ -103,19 +106,16 @@ program b2_ual_write
 
     implicit none
 
-    !!--------------------------------------------------------------------------
-
-    !!..local variables
+    !! Local variables
     integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
     real(kind=B2R8), allocatable   ::  ne1(:), te1(:), ti1(:)
     integer     ::  idx
     integer     ::  shot, run
     character(len=24)           ::  treename, username, device, version
-    !! character(len=255)          ::  imas_connect_url
     type(ids_edge_profiles)     ::  edge_profiles
-    !!  ..procedures
+    !! Procedures
     external prgini, prgend, xerset, xertst, cfopen, cfruin
-    !!  ..initialize input/output units
+    !! Initialize input/output units
     data ninp/50, 51, 52, 53, 54, 55, 56/
     data nout/60, 61, 62/
 
@@ -133,8 +133,8 @@ program b2_ual_write
     version     = "3"
 
     !! Set the data to edge_profiles IDS
-    call write_ids_edge_profiles(treename, shot, run, idx, username, &
-                                        & device, version, ne1, te1, ti1)
+    call write_ids_edge_profiles( treename, shot, run, idx, username,   &
+        &   device, version, ne1, te1, ti1 )
 
     ! call read_ids(treename, shot, run, idx, username, &
     !                                     & device, version)
@@ -143,118 +143,120 @@ contains
 
     !> Subroutine used to read \b b2fgmrty (file holding grid geometry data).
     subroutine read_b2fgmtry()
-        integer                 ::  i, j, k
-        character(len=120)      ::  lblgm
+        !! Local variables
+        character(len=120) :: lblgm
+        integer ::  i, j, k
 
-        !!..program start_up calls
-        call prgini('b2_ual_write')
+        !! Program start_up calls
+        call prgini( 'b2_ual_write' )
 
-        !!..open files
-        !!...input files
-        ! call cfopen (ninp(0),'b2_ual_write.dat','old','formatted')
-        call cfopen(ninp(1),'b2fgmtry','old','un*formatted')
-        ! call cfopen (ninp(2),'b2fparam','old','un*formatted')
-        call cfopen(ninp(3),'b2fstate','old','un*formatted')
-        ! call cfopen (ninp(4),'b2fplasma','old','unformatted')
-        ! call cfopen (ninp(5),'b2mn.dat','old','formatted')
-        ! call cfopen (ninp(6),'b2frates','old','formatted')
+        !! Open files
+        !! Input files
+        ! call cfopen( ninp(0), 'b2_ual_write.dat', 'old', 'formatted' )
+        call cfopen( ninp(1), 'b2fgmtry', 'old', 'un*formatted' )
+        ! call cfopen( ninp(2), 'b2fparam', 'old', 'un*formatted' )
+        call cfopen( ninp(3), 'b2fstate', 'old', 'un*formatted' )
+        ! call cfopen( ninp(4), 'b2fplasma', 'old', 'unformatted' )
+        ! call cfopen( ninp(5), 'b2mn.dat', 'old', 'formatted' )
+        ! call cfopen( ninp(6), 'b2frates', 'old', 'formatted' )
         !!...output files
-        call cfopen(nout(0),'b2_ual_write.prt','new','formatted')
-        call cfopen(nout(1),'b2_ual_writ2.prt','new','formatted')
+        call cfopen( nout(0), 'b2_ual_write.prt', 'new', 'formatted' )
+        call cfopen( nout(1), 'b2_ual_writ2.prt', 'new', 'formatted' )
 
         !!..mark output unit for error messages
         call xerset(0)
         !!..obtain version numbers
-        call cfverr(ninp(1), b2fgmtry_version)
-        ! call cfverr (ninp(2), b2fparam_version)
-        call cfverr(ninp(3), b2fstate_version)
-        ! call cfverr (ninp(6), b2frates_version)
+        call cfverr( ninp(1), b2fgmtry_version )
+        ! call cfverr ( ninp(2), b2fparam_version )
+        call cfverr( ninp(3), b2fstate_version )
+        ! call cfverr ( ninp(6), b2frates_version )
         !!..obtain nx, ny, ns
-        call cfruin(ninp(3), 3, idum, 'nx,ny,ns')
+        call cfruin( ninp(3), 3, idum, 'nx,ny,ns' )
         nx = idum(0)
         ny = idum(1)
         ns = idum(2)
-        call xertst(0.le.nx.and.0.le.ny.and.1.le.ns, &
-            & 'faulty input nx, ny, ns from plasma state file')
-        call cfruin (ninp(1), 2, idum(0), 'nx,ny')
-        call xertst(idum(0).eq.nx.and.idum(1).eq.ny, &
-            & 'faulty input nx, ny from geometry file')
+        call xertst( 0.le.nx .and. 0.le.ny .and. 1.le.ns,   &
+            &   'faulty input nx, ny, ns from plasma state file' )
+        call cfruin ( ninp(1), 2, idum(0), 'nx,ny' )
+        call xertst( idum(0).eq.nx .and. idum(1).eq.ny, &
+            &   'faulty input nx, ny from geometry file' )
 
-        call alloc_b2mod_geo(nx,ny)
-        call alloc_b2mod_plasma(nx,ny,ns)
-        call alloc_b2mod_indirect(nx,ny,nncutmax)
-        call alloc_b2mod_sources(nx,ny,ns)
+        call alloc_b2mod_geo( nx, ny )
+        call alloc_b2mod_plasma( nx, ny, ns )
+        call alloc_b2mod_indirect( nx, ny, nncutmax )
+        call alloc_b2mod_sources( nx, ny, ns )
 
-        call cfruch (ninp(1), 120, lblgm, 'label')
-        call cfruin (ninp(1), 1, idum, 'isymm')
-        call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz, &
-         & bb, vol, hx, hy, qz, qc, qcb, gs, pbs, &
-         & wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
+        call cfruch( ninp(1), 120, lblgm, 'label' )
+        call cfruin( ninp(1), 1, idum, 'isymm' )
+        call b2rugm( ninp(1), nx, ny, crx, cry, fpsi, ffbz, &
+            &   bb, vol, hx, hy, qz, qc, qcb, gs, pbs, &
+            &   wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap )
 
         call xertst(size(crx).eq.size(cry), &
-            & "The number of x and y coordinates is not the same.")
+            &   "The number of x and y coordinates is not the same." )
 
         corner: do k = 0, 3, 1
             xi: do j = -1, ny, 1
                 yi: do i = -1, nx, 1
-                    write (nout(0),*) i, j, k, crx(i, j, k)
+                    write(nout(0),*) i, j, k, crx(i, j, k)
                 end do yi
             end do xi
         end do corner
 
         call prgend()
 
-        ! stop 'b2_ual_write'
-
     end subroutine read_b2fgmtry
 
     !> Subroutine used to read \b b2fstate (file holding quantity data fields).
-    subroutine read_b2fstate(ninp, nout, nx, ny, ns, ne, te, ti)
-
-        !! Read and compute additional data (taken from b2mddr.F)
-
-        implicit none
-
-        !!   ..input arguments (unchanged on exit)
+    !! @param[in]   ninp - Specifies the input unit numbers
+    !! @param[in]   nout - Specifies the output unit numbers
+    !! @param[in]   nx - Specifies the number of interior cells along the
+    !!              first coordinate
+    !! @param[in]   ny - Specifies the number of interior cells along the
+    !!              second coordinate
+    !! @param[in]   ns - Specifies the number of atomic species in the
+    !!              calculation.
+    !! @param[out]  ne - Data field holding values in relation to quantity:
+    !!              Electron density
+    !! @param[out]  te - Data field holding values in relation to quantity:
+    !!              Electron temperature
+    !! @param[out]  ti - Data field holding values in relation to quantity:
+    !!              Ion temperature
+    subroutine read_b2fstate( ninp, nout, nx, ny, ns, ne, te, ti )
+        !! Global variables
         integer ninp(0:6), nout(0:2), nx, ny, ns
-        !!   ..output arguments (unspecified on entry)
-        !     (none)
-        !!   ..common blocks
-
-        !!   ..local variables
-        integer k, is, idum(0:9) !!, nscx, iscx(0:nscxmax-1), ismain
-        character lblgm*120, lblcp*120, lblmn*120, lblrc*120
-        character cnamip*80, cvalip*80
-        !!   ..procedures
+        integer idum(0:9)   !! nscx, iscx(0:nscxmax-1), ismain
+        real(kind=B2R8), intent(inout), allocatable :: ne(:), te(:), ti(:)
+        !! Local variables
+        character :: lblgm*120, lblcp*120, lblmn*120, lblrc*120,    &
+            &   exp*128, comment*128
+        integer :: shot, overwrite_shotnumber
+        integer :: cf_sizes(22)
+        logical :: timedep, snapshot, tallies, movies
+        real (kind=B2R8), allocatable :: zamin(:), zamax(:), zn(:),  &
+            &   am(:), na(:), ua(:), uadia(:), po(:), fna(:), fhe(:),   &
+            &   fhi(:), fch(:), fch_32(:), fch_52(:), kinrgy(:), fch_p(:)
+        real(kind=B2R8) :: time
+        !! Procedures
         external subini, subend, xertst, xerrab, cfruch, cfruin, cfrure
-        !!   ..namelist
-        character   :: exp*128, comment*128
-        integer     :: shot, overwrite_shotnumber
-        logical     :: timedep, snapshot, tallies, movies
-        real (kind=B2R8), allocatable   ::  zamin(:), zamax(:), zn(:), am(:),   &
-            &   na(:), ua(:), uadia(:), po(:), fna(:), fhe(:), fhi(:), fch(:),  &
-            &   fch_32(:), fch_52(:), kinrgy(:), fch_p(:)
-        real (kind=B2R8), intent(inout), allocatable    :: ne(:), te(:), ti(:)
-        real (kind=B2R8)    ::  time
-        integer             ::  cf_sizes(22)
+        !! Namelist
+        namelist /b2md_namelist/ exp, shot, time, comment, timedep,     &
+            &   snapshot, tallies, movies, overwrite_shotnumber
 
-        namelist /b2md_namelist/ exp, shot, time, comment, timedep, snapshot, &
-            & tallies, movies, overwrite_shotnumber
+        !! Subprogram start-up calls
+        call subini( 'b2mddr' )
+        !! Test ninp, nout
 
-        !!   ..subprogram start-up calls
-        call subini ('b2mddr')
-        !!   ..test ninp, nout
+        call xertst( 1 .le.ninp(0) .and. 1 .le.ninp(1) .and.                  &
+            &   1 .le.ninp(2) .and. 1 .le.ninp(3) .and. 1 .le.ninp(5) .and.    &
+            &   1 .le.ninp(6) .and. 1 .le.nout(0) .and. 1 .le.nout(1) .and.    &
+            &   1 .le.nout(2), 'faulty argument ninp, nout' )
+        !! Test dimensions
 
-        call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.&
-             & 1.le.ninp(3).and.1.le.ninp(5).and.1.le.ninp(6).and.&
-             & 1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2),&
-             & 'faulty argument ninp, nout')
-        !!   ..test dimensions
+        call xertst( 0.le.nx .and. 0.le.ny, 'faulty argument nx, ny' )
+        call xertst( 1.le.ns, 'faulty argument ns' )
 
-        call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-        call xertst (1.le.ns, 'faulty argument ns')
-
-        call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
+        call xertst( ns .le.nsdecl, 'faulty parameter nsdecl' )
 
         !! Get array sizes from the b2fstate. We open the file again as a new
         !! unit to not disrupt the old unit.
@@ -262,73 +264,74 @@ contains
         !! of finding/properly use it.
         cf_sizes = read_additional_sizes(22)
 
-        ! allocate(lblgm(cf_sizes(2)))
-        allocate(zamin(cf_sizes(3)))
-        allocate(zamax(cf_sizes(4)))
-        allocate(zn(cf_sizes(5)))
-        allocate(am(cf_sizes(6)))
-        allocate(na(cf_sizes(7)))
-        allocate(ne(cf_sizes(8)))
-        allocate(ua(cf_sizes(9)))
-        allocate(uadia(cf_sizes(10)))
-        allocate(te(cf_sizes(11)))
-        allocate(ti(cf_sizes(12)))
-        allocate(po(cf_sizes(13)))
-        allocate(fna(cf_sizes(14)))
-        allocate(fhe(cf_sizes(15)))
-        allocate(fhi(cf_sizes(16)))
-        allocate(fch(cf_sizes(17)))
-        allocate(fch_32(cf_sizes(18)))
-        allocate(fch_52(cf_sizes(19)))
+        ! allocate( lblgm(cf_sizes(2) ) )
+        allocate( zamin( cf_sizes(3) ) )
+        allocate( zamax( cf_sizes(4) ) )
+        allocate( zn( cf_sizes(5) ) )
+        allocate( am( cf_sizes(6) ) )
+        allocate( na( cf_sizes(7) ) )
+        allocate( ne( cf_sizes(8) ) )
+        allocate( ua( cf_sizes(9) ) )
+        allocate( uadia( cf_sizes(10) ) )
+        allocate( te( cf_sizes(11) ) )
+        allocate( ti( cf_sizes(12) ) )
+        allocate( po( cf_sizes(13) ) )
+        allocate( fna( cf_sizes(14) ) )
+        allocate( fhe( cf_sizes(15) ) )
+        allocate( fhi( cf_sizes(16) ) )
+        allocate( fch( cf_sizes(17) ) )
+        allocate( fch_32( cf_sizes(18) ) )
+        allocate( fch_52( cf_sizes(19) ) )
         !! The program gives an error saying the kinrgy is already allocated.
         !! Where, when?
-        ! allocate(kinrgy(cf_sizes(20)))
-        ! allocate(fch_p(cf_sizes(22)))
+        ! allocate( kinrgy( cf_sizes(20) ) )
+        ! allocate( fch_p( cf_sizes(22) ) )
 
-        ! call cfruch(ninp(3), cf_sizes(2), lblgm, 'label')
-        call cfruch(ninp(3), 120, lblgm, 'label')
-        call cfrure(ninp(3), cf_sizes(3), zamin, 'zamin')
-        call cfrure(ninp(3), cf_sizes(4), zamax, 'zamax')
-        call cfrure(ninp(3), cf_sizes(5), zn, 'zn')
-        call cfrure(ninp(3), cf_sizes(6), am, 'am')
-        call cfrure(ninp(3), cf_sizes(7), na, 'na')
-        call cfrure(ninp(3), cf_sizes(8), ne, 'ne')
-        call cfrure(ninp(3), cf_sizes(9), ua,'ua')
-        call cfrure(ninp(3), cf_sizes(10), uadia,'uadia')
-        call cfrure(ninp(3), cf_sizes(11), te, 'te')
-        call cfrure(ninp(3), cf_sizes(12), ti, 'ti')
-        call cfrure(ninp(3), cf_sizes(13), po, 'po')
-        call cfrure(ninp(3), cf_sizes(14), fna, 'fna')
-        call cfrure(ninp(3), cf_sizes(15), fhe, 'fhe')
-        call cfrure(ninp(3), cf_sizes(16), fhi, 'fhi')
-        call cfrure(ninp(3), cf_sizes(17), fch,'fch')
-        call cfrure(ninp(3), cf_sizes(18), fch_32, 'fch_32')
-        call cfrure(ninp(3), cf_sizes(19), fch_52, 'fch_52')
-        ! call cfrure(ninp(3), cf_sizes(20), kinrgy, 'kinrgy')
-        ! call cfrure(ninp(3), 1, time, 'time')
-        ! call cfrure(ninp(3), cf_sizes(22), fch_p, 'fch_p')
+        ! call cfruch( ninp(3), cf_sizes(2), lblgm, 'label' )
+        call cfruch( ninp(3), 120, lblgm, 'label' )
+        call cfrure( ninp(3), cf_sizes(3), zamin, 'zamin' )
+        call cfrure( ninp(3), cf_sizes(4), zamax, 'zamax' )
+        call cfrure( ninp(3), cf_sizes(5), zn, 'zn' )
+        call cfrure( ninp(3), cf_sizes(6), am, 'am' )
+        call cfrure( ninp(3), cf_sizes(7), na, 'na' )
+        call cfrure( ninp(3), cf_sizes(8), ne, 'ne' )
+        call cfrure( ninp(3), cf_sizes(9), ua,'ua' )
+        call cfrure( ninp(3), cf_sizes(10), uadia,'uadia' )
+        call cfrure( ninp(3), cf_sizes(11), te, 'te' )
+        call cfrure( ninp(3), cf_sizes(12), ti, 'ti' )
+        call cfrure( ninp(3), cf_sizes(13), po, 'po' )
+        call cfrure( ninp(3), cf_sizes(14), fna, 'fna' )
+        call cfrure( ninp(3), cf_sizes(15), fhe, 'fhe' )
+        call cfrure( ninp(3), cf_sizes(16), fhi, 'fhi' )
+        call cfrure( ninp(3), cf_sizes(17), fch,'fch' )
+        call cfrure( ninp(3), cf_sizes(18), fch_32, 'fch_32' )
+        call cfrure( ninp(3), cf_sizes(19), fch_52, 'fch_52' )
+        ! call cfrure( ninp(3), cf_sizes(20), kinrgy, 'kinrgy' )
+        ! call cfrure( ninp(3), 1, time, 'time' )
+        ! call cfrure( ninp(3), cf_sizes(22), fch_p, 'fch_p' )
 
     end subroutine read_b2fstate
 
     !> Get array sizes from the b2fstate.
-    function read_additional_sizes(array_size)
-        integer, intent(in)     ::  array_size
-        character(len=256)      ::  rdline, rdstring
-        integer                 ::  cfcount, stat
-        integer    ::  cf_sizes(array_size)
-        integer, dimension(:), allocatable     ::  read_additional_sizes
+    !! @param[in] array_size - Size of the array
+    function read_additional_sizes( array_size )
+        integer, intent(in) :: array_size
+        character(len=256) :: rdline, rdstring
+        integer :: cfcount, stat
+        integer :: cf_sizes(array_size)
+        integer, dimension(:), allocatable :: read_additional_sizes
 
-        allocate(read_additional_sizes(array_size))
+        allocate( read_additional_sizes( array_size ) )
 
         cfcount = 0
-        open(1,file='b2fstate', status="old")
+        open( 1, file='b2fstate', status="old" )
         do
             read(1,'(A)', iostat=io) rdline
-            if (io/=0) exit
-            if (rdline(1:3).eq."*cf") then
+            if( io/=0 ) exit
+            if( rdline(1:3) .eq. "*cf") then
                 cfcount = cfcount + 1
-                rdstring = adjustl(rdline(20:28))
-                read(rdstring,*, iostat=stat)  cf_sizes(cfcount)
+                rdstring = adjustl( rdline(20:28) )
+                read( rdstring, *, iostat=stat )  cf_sizes( cfcount )
             end if
         end do
         close(1)
@@ -337,25 +340,39 @@ contains
     end function read_additional_sizes
 
     !> Subroutine used to put data to edge_profiles IDS
-    subroutine write_ids_edge_profiles(treename, shot, run, idx, username, &
-                                        & device, version, ne, te, ti)
+    !!  @param[in]  treename - the name of the IMAS IDS database,
+    !!              (i.e. "edge_profiles" (mandatory) )
+    !!  @param[in]  shot - The shot number of the database being created
+    !!  @param[in]  run - The run number of the database being created
+    !!  @param[in]  idx - The returned identifier to be used in the
+    !!              subsequent data access operation
+    !!  @param[in]  username - Creator/owner of the IMAS IDS database
+    !!  @param[in]  device - Device name of the IMAS IDS database
+    !!              (i. e. solps-iter, iter, aug)
+    !! @param[in]   version - Major version of the IMAS IDS database
+    !! @param[out]  ne - Data field holding values in relation to quantity:
+    !!              Electron density
+    !! @param[out]  te - Data field holding values in relation to quantity:
+    !!              Electron temperature
+    !! @param[out]  ti - Data field holding values in relation to quantity:
+    !!              Ion temperature
+    subroutine write_ids_edge_profiles( treename, shot, run, idx, username, &
+            &   device, version, ne, te, ti )
+        character(len=24) :: treename, username, device, version
+        character(len=255) :: grid_description
+        character(len=132) :: gridSubset_name
         integer ::  shot, run, idx
-        integer ::  num_nodes_all, num_nodes, num_gridSubsets
-        integer ::  gridSubset_index
-        integer ::  numCellsX, numCellsY, num_cells, cellId
-        integer ::  num_ne_gridSubset, num_ne_values
-        integer ::  num_te_gridSubset, num_te_values
-        integer ::  num_ti_gridSubset, num_ti_values, num_ti_species, ion_specie
-        integer ::  num_obj_0D, obj_0D_id
-        integer ::  num_obj_2D, obj_2D_id
-        integer ::  gridSubset_dim_index
+        real (kind=B2R8), intent(in) :: ne(:), te(:), ti(:)
+        !! Local variables
         integer ::  i, j, k, icount, n
-        character(len=24)           ::  treename, username, device, version
-        character(len=255)          ::  imas_connect_url
-        character(len=255)          ::  grid_description
-        character(len=132)          ::  gridSubset_name
-        real(B2R8)                  ::  time
-        real (kind=B2R8), intent(in)    :: ne(:), te(:), ti(:)
+        integer ::  num_nodes_all, num_nodes, num_gridSubsets
+        integer ::  gridSubset_index, gridSubset_dim_index
+        integer ::  numCellsX, numCellsY, num_cells, cellId
+        integer ::  num_ne_gridSubset, num_ne_values, num_te_gridSubset,    &
+            &   num_te_values, num_ti_gridSubset, num_ti_values,            &
+            &   num_ti_species, ion_specie
+        integer ::  num_obj_0D, obj_0D_id, num_obj_2D, obj_2D_id
+        real(B2R8) ::  time
         type(ids_edge_profiles)     ::  edge_profiles
         type (ids_edge_sources)     ::  edge_sources
         type (ids_edge_transport)   ::  edge_transport
@@ -382,24 +399,24 @@ contains
         !! absolutely neccessary to do, otherwise writing to IDS database
         !! will surely fail
         !! 1. Allocate profiles_1d
-        allocate(edge_profiles%profiles_1d(1))
+        allocate( edge_profiles%profiles_1d(1) )
         !! 2. Set homogeneous_time
         edge_profiles%ids_properties%homogeneous_time = 1
         !! 3. Allocate edge_profiles.time and Set desired value
-        allocate(edge_profiles%time(1))
+        allocate( edge_profiles%time(1) )
         edge_profiles%time(1) = 1
         ! edge_profiles%time(1) = time
 
         !! Allocate ggd slice
-        allocate(edge_profiles%ggd(1))
+        allocate( edge_profiles%ggd(1) )
         !! Set pointers to top IDS nodes/structures
         ggd => edge_profiles%ggd(1)
         grid => ggd%grid
 
         !! Allocate space
-        allocate(grid%space(1))
+        allocate( grid%space(1) )
         !! Allocate objects_per_dimension substructure
-        allocate(grid%space(1)%objects_per_dimension(3))
+        allocate( grid%space(1)%objects_per_dimension(3) )
         !! Set IDS grid description
         grid_description = "This IDS was written by b2_ual_write"
         grid%identifier%description = grid_description
@@ -410,7 +427,7 @@ contains
         !! Set definition of the coordinate system of the space
 
         !! Allocate coordinates_type
-        allocate(grid%space(1)%coordinates_type(2))
+        allocate( grid%space(1)%coordinates_type(2) )
         !! Set coordinate types
         grid%space(1)%coordinates_type(1) = 4 !! R
         grid%space(1)%coordinates_type(2) = 5 !! Z
@@ -424,15 +441,15 @@ contains
         !! in a way
         !! n1=[r1, z1], n2=[r2,z2], ..., nn=[rn, zn].
 
-        allocate(grid%space(1)%objects_per_dimension(1)%object(num_obj_0D))
+        allocate( grid%space(1)%objects_per_dimension(1)%object(num_obj_0D) )
 
         !! Set geometry (R,Z) coordinate of each node object
         do i = 1, num_obj_0D
             !! Set and fill list of indices for nodes
-            allocate(grid%space(1)%objects_per_dimension(1)%object(i)%nodes(1))
+            allocate( grid%space(1)%objects_per_dimension(1)%object(i)%nodes(1) )
             grid%space(1)%objects_per_dimension(1)%object(i)%nodes(1) = i
             !! Set geometry (R,Z) coordinate of each node object
-            allocate(grid%space(1)%objects_per_dimension(1)%object(i)%geometry(2))
+            allocate( grid%space(1)%objects_per_dimension(1)%object(i)%geometry(2) )
         enddo
 
         !! Get nodes coordinates
@@ -442,10 +459,10 @@ contains
                 do i = -1, nx
                     icount = icount + 1
                     !! Fill geometry (R,Z) coordinate of each node object
-                    grid%space(1)%objects_per_dimension(1)% &
-                        & object(icount)%geometry(1) = crx(i,j,k)
-                    grid%space(1)%objects_per_dimension(1)% &
-                        & object(icount)%geometry(2) = cry(i,j,k)
+                    grid%space(1)%objects_per_dimension(1)%     &
+                        &   object(icount)%geometry(1) = crx(i,j,k)
+                    grid%space(1)%objects_per_dimension(1)%     &
+                        &   object(icount)%geometry(2) = cry(i,j,k)
                 enddo
             enddo
         enddo
@@ -455,11 +472,11 @@ contains
         !! TODO! Currently only placeholder edges are given
 
         !! Set (placeholder) list of indices for nodes defining each edge object
-        allocate(grid%space(1)%objects_per_dimension(2)%object(1))
-        allocate(grid%space(1)%objects_per_dimension(2)% &
-            & object(1)%nodes(1))
-        grid%space(1)%objects_per_dimension(2)% &
-            & object(1)%nodes(1) = 0
+        allocate( grid%space(1)%objects_per_dimension(2)%object(1) )
+        allocate( grid%space(1)%objects_per_dimension(2)%   &
+            &   object(1)%nodes(1) )
+        grid%space(1)%objects_per_dimension(2)%     &
+            &   object(1)%nodes(1) = 0
 
         !! --- Set up connectivity array of grid space objects for      ---
         !! --- Class 3 objects - 2D cells                               ---
@@ -474,24 +491,24 @@ contains
         num_cells = numCellsX * numCellsY
         num_obj_2D = num_cells
 
-        allocate(grid%space(1)%objects_per_dimension(3)%object(num_obj_2D))
+        allocate( grid%space(1)%objects_per_dimension(3)%object(num_obj_2D) )
 
         do i = 1, num_obj_2D
             !! Set list of indices
-            allocate(grid%space(1)%objects_per_dimension(3)%object(i)%  &
-                &   nodes(4)) !! Each cell is formed by 4 nodes
+            allocate( grid%space(1)%objects_per_dimension(3)%object(i)% &
+                &   nodes(4) ) !! Each cell is formed by 4 nodes
         enddo
         cellId = 1
         do j = 1,numCellsY
             do i = 1, numCellsX
                 !! Fill list of indices
-                grid%space(1)%objects_per_dimension(3)%object(cellId)% &
+                grid%space(1)%objects_per_dimension(3)%object(cellId)%  &
                     &   nodes(1) = cellId+0*numCellsX*numCellsY
-                grid%space(1)%objects_per_dimension(3)%object(cellId)% &
+                grid%space(1)%objects_per_dimension(3)%object(cellId)%  &
                     &   nodes(2) = cellId+1*numCellsX*numCellsY
-                grid%space(1)%objects_per_dimension(3)%object(cellId)% &
+                grid%space(1)%objects_per_dimension(3)%object(cellId)%  &
                     &   nodes(3) = cellId+3*numCellsX*numCellsY
-                grid%space(1)%objects_per_dimension(3)%object(cellId)% &
+                grid%space(1)%objects_per_dimension(3)%object(cellId)%  &
                     &   nodes(4) = cellId+2*numCellsX*numCellsY
                 cellId = cellId + 1
             enddo
@@ -508,7 +525,7 @@ contains
         num_gridSubsets = 2         !! Number of grid subsets to write
                                     !! (Cells and Nodes)
         !! Allocate grid subsets
-        allocate(grid%grid_subset(num_gridSubsets))
+        allocate( grid%grid_subset(num_gridSubsets) )
 
         !! --- Set up grid_subset "Cells" for all cells in the domain ---
         !! (grid subset index: 1, objects forming the grid subset: cells, 2D)
@@ -519,13 +536,13 @@ contains
                                 !! shot: 1, run:1, # device: iter; and
                                 !! shot: 16151, run: 1000; device: aug
         gridSubset_name = "Cells"
-        gridSubset_dim_index = 3    !! Grid subset Nodes consists of
-                                    !! points -> 0D objects -> dimension index = 1
-                                    !! (edges -> 1D objects -> dimension index = 2
-                                    !! cells  -> 2D objects -> dimension index = 3)
+        gridSubset_dim_index = 3 !! Grid subset Nodes consists of
+                                 !! points -> 0D objects -> dimension index = 1
+                                 !! (edges -> 1D objects -> dimension index = 2
+                                 !! cells  -> 2D objects -> dimension index = 3)
 
         !! Set and fill grid subset name
-        allocate(grid%grid_subset(gridSubset_index)%identifier%name(1))
+        allocate( grid%grid_subset(gridSubset_index)%identifier%name(1) )
         grid%grid_subset(gridSubset_index)%identifier%name = gridSubset_name
         !! Fill subset base index ( this is special index, each subset has its
         !! unique index!)
@@ -533,9 +550,9 @@ contains
 
         !! Set subset element object reference to to appropriate space object
         !! node
-        allocate(grid%grid_subset(gridSubset_index)%element(num_obj_2D))
+        allocate( grid%grid_subset(gridSubset_index)%element(num_obj_2D) )
         do i = 1, num_obj_2D
-            allocate(grid%grid_subset(gridSubset_index)%element(i)%object(1))
+            allocate( grid%grid_subset(gridSubset_index)%element(i)%object(1) )
             !! Fill subset space node index
             grid%grid_subset(gridSubset_index)%element(i)%object(1)%space = 1
             !! Fill subset object dimension i.e. object class
@@ -559,18 +576,17 @@ contains
                                     !! (edges -> 1D objects -> dimension index = 2
                                     !! cells  -> 2D objects -> dimension index = 3)
 
-        allocate(grid%grid_subset(gridSubset_index)%identifier%name(1))
+        allocate( grid%grid_subset(gridSubset_index)%identifier%name(1) )
         grid%grid_subset(gridSubset_index)%identifier%name = gridSubset_name
         grid%grid_subset(gridSubset_index)%identifier%index = gridSubset_index
 
-        allocate(grid%grid_subset(gridSubset_index)%element(num_obj_0D))
+        allocate( grid%grid_subset(gridSubset_index)%element(num_obj_0D) )
         do i = 1, num_obj_0D
-            allocate(grid%grid_subset(gridSubset_index)%element(i)%object(1))
+            allocate( grid%grid_subset(gridSubset_index)%element(i)%object(1) )
             grid%grid_subset(gridSubset_index)%element(i)%object(1)%space = 1
-            grid%grid_subset(gridSubset_index)%element(i)%object(1)%dimension = &
-                & gridSubset_dim_index
-            grid%grid_subset(gridSubset_index)%element(i)%object(1)%index = &
-                & i
+            grid%grid_subset(gridSubset_index)%element(i)%object(1)%    &
+                &   dimension = gridSubset_dim_index
+            grid%grid_subset(gridSubset_index)%element(i)%object(1)%index = i
         enddo
 
         !! === SET VALUES (ne, te, ti) for "Cells" grid subset ===
@@ -578,10 +594,10 @@ contains
         gridSubset_index = 1
         num_ne_gridSubset = 1
         num_ne_values = size(ne)
-        allocate(ggd%electrons%density(num_ne_gridSubset))
-        ggd%electrons%density(num_ne_gridSubset)%grid_subset_index = &
-            & gridSubset_index
-        allocate(ggd%electrons%density(num_ne_gridSubset)%values(num_ne_values))
+        allocate( ggd%electrons%density(num_ne_gridSubset) )
+        ggd%electrons%density(num_ne_gridSubset)%grid_subset_index =    &
+            &   gridSubset_index
+        allocate( ggd%electrons%density(num_ne_gridSubset)%values(num_ne_values) )
         do n = 1, num_ne_values
             ggd%electrons%density(num_ne_gridSubset)%values(n) = ne(n)
         enddo
@@ -589,10 +605,10 @@ contains
         !! --- Set te (electron temperature) ---
         num_te_gridSubset = 1
         num_te_values = size(te)
-        allocate(ggd%electrons%temperature(num_te_gridSubset))
-        ggd%electrons%temperature(num_te_gridSubset)%grid_subset_index = &
-            & gridSubset_index
-        allocate(ggd%electrons%temperature(num_te_gridSubset)%values(num_te_values))
+        allocate( ggd%electrons%temperature(num_te_gridSubset) )
+        ggd%electrons%temperature(num_te_gridSubset)%grid_subset_index =    &
+            &   gridSubset_index
+        allocate( ggd%electrons%temperature(num_te_gridSubset)%values(num_te_values) )
         do n = 1, num_te_values
             !! convert to eV (1 J = 6.242e18 eV)
             ggd%electrons%temperature(num_te_gridSubset)%values(n) =    &
@@ -607,50 +623,59 @@ contains
         ion_specie = 1
         !! Ion specie is linked with the ion density of each ion charge,
         !! as ion temperature is taken as the same for all ion charges.
-        allocate(ggd%ion(num_ti_species))
-        allocate(ggd%ion(ion_specie)%temperature(num_ti_gridSubset))
-        ggd%ion(ion_specie)%temperature(num_ti_gridSubset)%grid_subset_index = &
-            & gridSubset_index
-        allocate(ggd%ion(ion_specie)%temperature(num_ti_gridSubset)% &
-            & values(num_ti_values))
+        allocate( ggd%ion(num_ti_species) )
+        allocate( ggd%ion(ion_specie)%temperature(num_ti_gridSubset) )
+        ggd%ion(ion_specie)%temperature(num_ti_gridSubset)%grid_subset_index =  &
+            &   gridSubset_index
+        allocate( ggd%ion(ion_specie)%temperature(num_ti_gridSubset)%   &
+            &   values(num_ti_values) )
         do n = 1, num_ti_values
             !! convert to eV (1 J = 6.242e18 eV)
-            ggd%ion(ion_specie)%temperature(num_ti_gridSubset)%values(n) = &
-                & ti(n) * (6.242e18)
+            ggd%ion(ion_specie)%temperature(num_ti_gridSubset)%values(n) =  &
+                &   ti(n) * (6.242e18)
         enddo
 
         !! Set data to edge_profiles IDS
         write(0,*) "Writing to edge_profiles IDS"
 
         !! Create and modify new shot/run
-        call imas_create_env(treename, shot, run, 0, 0, idx, username, &
-            device, version)
+        call imas_create_env(treename, shot, run, 0, 0, idx, username,  &
+            &   device, version)
 
         !! Or open and modify existing shot/run (might work much faster than
         !! imas_create_env)
         ! call imas_open_env('treename', shot, run, idx, username, device, version)
 
         !! Put data to IDS
-        call ids_put_slice(idx,"edge_profiles",edge_profiles)
-        call ids_put(idx,"edge_profiles",edge_profiles)
+        call ids_put_slice( idx, "edge_profiles", edge_profiles )
+        call ids_put( idx, "edge_profiles", edge_profiles )
 
         !! Close IDS
-        call ids_deallocate(edge_profiles)
+        call ids_deallocate( edge_profiles )
         call imas_close(idx)
 
         write(0,*) "IDS write finished"
 
     end subroutine write_ids_edge_profiles
 
-    !> subroutine for reading edge_profiles IDS
-    subroutine read_ids(treename, shot, run, idx, username, &
-                                        & device, version)
-        !! Example for reading IDS database in Fortran90
-        integer                 ::  shot, run, idx
-        integer                 ::  gridSubset_index
+    !> Example subroutine for reading data out from the edge_profiles IDS
+    !! with Fortran90
+    !!  @param[in]  treename - the name of the IMAS IDS database,
+    !!              (i.e. "edge_profiles" (mandatory) )
+    !!  @param[in]  shot - The shot number of the database being created
+    !!  @param[in]  run - The run number of the database being created
+    !!  @param[in]  idx - The returned identifier to be used in the
+    !!              subsequent data access operation
+    !!  @param[in]  username - Creator/owner of the IMAS IDS database
+    !!  @param[in]  device - Device name of the IMAS IDS database
+    !!              (i. e. solps-iter, iter, aug)
+    !! @param[in]   version - Major version of the IMAS IDS database
+    subroutine read_ids( treename, shot, run, idx, username, device, version )
         character(len=24)       ::  treename, username, device, version
+        integer                 ::  shot, run, idx
+        !! Local variables
+        integer                 ::  gridSubset_index
         type(ids_edge_profiles) ::  edge_profiles
-        character(len=255)      ::  imas_connect_url
 
         gridSubset_index = 2
 
@@ -660,16 +685,16 @@ contains
         call imas_open_env('treename', shot, run, idx, username, device, version)
         call ids_get(idx, 'edge_profiles', edge_profiles)
 
-        write(0,*) 'homogeneous_time = ', &
-            & edge_profiles%ids_properties%homogeneous_time
+        write(0,*) 'homogeneous_time = ',   &
+            &   edge_profiles%ids_properties%homogeneous_time
         write(0,*) "Grid subset 2 name = ", &
-            & edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)% &
-            & identifier%name
-        write(0,*) "Grid subset 2 index = ", &
-            & edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)% &
-            & identifier%index
+            &   edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)%    &
+            &   identifier%name
+        write(0,*) "Grid subset 2 index = ",    &
+            &   edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)%    &
+            &   identifier%index
         ! write(0,*) "Time = ", edge_profiles%time(1)
-        call ids_deallocate(edge_profiles)
+        call ids_deallocate( edge_profiles )
         call imas_close(idx)
         write (0,*) "Finished reading input IDS"
 

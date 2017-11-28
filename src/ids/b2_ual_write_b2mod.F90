@@ -1,5 +1,8 @@
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION (doxygen 1.8.8):
+!>      @author
+!>      Dejan Penko
+!!
 !>      @section desc   Description
 !!      b2_ual_write_b2mod.f90 script is used to generate b2_ual_write_b2mod.exe
 !!      (main program), which is a post-processor for b2.
@@ -181,7 +184,7 @@ contains
     !!      @param  shot - The shot number of the database being created
     !!      @param  run - The run number of the database being created
     !!      @param  idx - The returned identifier to be used in the subsequent
-    !!                    data access operation
+    !!              data access operation
     !!      @param  username - Creator/owner of the IMAS IDS database
     !!      @param  device - Device name of the IMAS IDS database
     !!              (i. e. solps-iter, iter, aug)
