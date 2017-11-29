@@ -38,9 +38,9 @@ c
       end do
 c
       open(lun,file='abramov.dat')
-  710 format(9h   ix  iy,5x,5hR (m),7x,5hZ (m),4x,10hne (m**-3),4x,
-     ,       7hTe (eV),5x,7hTi (eV),7x,2hvr,10x,2hvz,10x,2hvt,
-     ,       10x,2hnH,10x,3hnH2/)
+  710 format('   ix  iy',5x,'R (m)',7x,'Z (m)',4x,'ne (m**-3)',4x,
+     ,       'Te (eV)',5x,'Ti (eV)',7x,'vr',10x,'vz',10x,'vt',
+     ,       10x,'nH',10x,'nH2'/)
       write (lun,710)
 c
       do ix=0,nx-1

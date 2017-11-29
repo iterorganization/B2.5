@@ -53,9 +53,9 @@ c
 c
       open(lun,file='zaveraev.dat')
       write (lun,710)
-  710 format(9h   ix  iy,5x,5hR (m),7x,5hZ (m),5x,10hnH (m**-3),
-     ,       5x,2hne,8x,7hTe (eV),5x,7hTi (eV),
-     ,       6x,5hnHe++,7x,4hnHe+,8x,3hnHe/)
+  710 format('   ix  iy',5x,'R (m)',7x,'Z (m)',5x,'nH (m**-3)',
+     ,       5x,'ne',8x,'Te (eV)',5x,'Ti (eV)',
+     ,       6x,'nHe++',7x,'nHe+',8x,'nHe'/)
 c
       do ix=0,nx-1
         do iy=0,ny-1

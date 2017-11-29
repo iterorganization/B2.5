@@ -530,8 +530,8 @@ c*** Write the header
       if(allocated(cline)) deallocate(cline)
 
       write(frmd,700)lwfs+8,lwfs,csep,lnrw-1,lwfr+8,lwfr,csep
-  700 format(8h(1p,1x,e,i2,1h.,i2,3h,1h,a1,1h,,
-     ,  i4,2h(e,i2,1h.,i2,3h,1h,a1,2h)))
+  700 format('(1p,1x,e',i2,'.',i2,',1h',a1,',',
+     ,  i4,'(e',i2,'.',i2,',1h',a1,'))')
 c      write(0,*) 'leaving combfile. lnrw,frmd=',lnrw,'  ',trim(frmd) !###
 c=======================================================================
       end

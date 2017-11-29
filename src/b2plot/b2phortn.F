@@ -36,9 +36,9 @@ c
       end do
 c
       open(lun,file='horton.dat')
-  710 format(9h   ix  iy,5x,5hR (m),7x,5hZ (m),4x,10hne (m**-3),4x,
-     ,       7hTe (eV),5x,7hTi (eV),7x,
-     ,       2hnH,10x,2hTH,10x,3hnH2/)
+  710 format('   ix  iy',5x,5hR (m),7x,'Z (m)',4x,'ne (m**-3)',4x,
+     ,       'Te (eV)',5x,'Ti (eV)',7x,
+     ,       'nH',10x,'TH',10x,'nH2'/)
       write (lun,*) 'ix, iy : x and y indices in the grid;'
       write (lun,*) 'R , Z  : R and Z coordinates of the cell ',
      ,                                                       'centres;'

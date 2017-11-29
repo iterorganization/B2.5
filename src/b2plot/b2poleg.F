@@ -43,8 +43,8 @@ c*** Write the header
 c
       open(lun,file='oleg.dat')
       write (lun,710)
-  710 format(6x,1hx,9x,4hXpol,9x,2hne,10x,2hTe,8x,6hqpol_e,6x,6hqpar_e,
-     ,                               6x,5hS_ion,8x,4hZeff,7x,6hjpar_e/)
+  710 format(6x,'x',9x,'Xpol',9x,'ne',10x,'Te',8x,'qpol_e',6x,'qpar_e',
+     ,                               6x,'S_ion',8x,'Zeff',7x,'jpar_e'/)
 c
       x=0.0_R8
       z=0.0_R8
