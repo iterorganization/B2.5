@@ -96,7 +96,7 @@
      2  calf0(-1:nx,-1:ny,0:1), chci0(-1:nx,-1:ny,0:1),
      3  cvsa0(-1:nx,-1:ny,0:1,0:ns-1), cvsahz0(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
      4  chce0(-1:nx,-1:ny,0:1), chve0(-1:nx,-1:ny,0:1),
-     1	pol_anom_scale, 
+     1	pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
       logical solving(4)
@@ -162,11 +162,21 @@
      1  qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,   !srv 01.07.09
      2  chvemx, chvimx, cvsahz0,                                  !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, csigin,
-     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,          !srv 09.01.01
+     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                !srv 09.01.01
      5  csig_cl, calf_cl)
 *   ..add to previous contributions
-      call b2saxpy (n2*2*ns, 1.0_R8, cvsahz0, 1, cvsahz, 1)       !srv 09.01.01
-      call b2saxpy (n2*2*ns, 1.0_R8, cvsa0, 1, cvsa, 1)
+      ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17 {
+      do is = 0, ns-1
+        if (.not.is_neutral(is)) then
+          cvsa(:,:,0,is)   = ft*cvsa_cl(:,:,0,is)   + cvsa(:,:,0,is)
+          cvsa(:,:,1,is)   =    cvsa_cl(:,:,1,is)   + cvsa(:,:,1,is)
+          cvsahz(:,:,0,is) = ft*cvsahz_cl(:,:,0,is) + cvsahz(:,:,0,is)
+          cvsahz(:,:,1,is) =    cvsahz_cl(:,:,1,is) + cvsahz(:,:,1,is)
+        else
+          cvsa(:,:,:,is)   =    cvsa_cl(:,:,:,is) + cvsa(:,:,:,is)
+          cvsahz(:,:,:,is) =  cvsahz_cl(:,:,:,is) + cvsahz(:,:,:,is)
+        end if
+      end do                                                      !srv 16.10.17 }
       if (fch_anomalous.ne.1.0_R8) then
         csig = csig * fch_anomalous
         calf = calf * fch_anomalous
@@ -179,13 +189,6 @@
       call b2saxpy (n2*2, 1.0_R8, chvi0, 1, chvi, 1)
       call b2saxpy (n2*2, 1.0_R8, csig0, 1, csig, 1)
       call b2saxpy (n2*2, 1.0_R8, calf0, 1, calf, 1)
-*   ..multiply x-component cvsahz by 4/3 for all ions             !srv 31.07.02 {
-cwdk  now unified treatment for all values of b2tqca_model
-      do is = 0, ns-1
-        if (.not.is_neutral(is)) then
-          call b2sscal (n2, 4.0e0_R8/3.0e0_R8, cvsahz(-1,-1,0,is), 1)
-        end if
-      end do
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
       do is = 0, ns-1
        if(is_neutral(is)) then

@@ -52,7 +52,7 @@ LDLIBES = ${LD_NAG} ${LD_NETCDF}
 # LDLIBES = -lblas ${NAG} -lmass
 
 ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 LD = xlf90

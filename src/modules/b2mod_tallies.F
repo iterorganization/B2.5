@@ -197,9 +197,13 @@
       allocate(b2wrong3(0:nnreg(0)))
       b2wrong3=0.0_R8
       allocate(b2she(0:nnreg(0)))
+      b2she=0.0_R8
       allocate(b2shi(0:nnreg(0)))
+      b2shi=0.0_R8
       allocate(b2she0(0:nnreg(0)))
+      b2she0=0.0_R8
       allocate(b2shi0(0:nnreg(0)))
+      b2shi0=0.0_R8
       allocate(b2radreg(0:nnreg(0)))
       b2radreg=0.0_R8
       allocate(b2bremreg(0:nnreg(0)))

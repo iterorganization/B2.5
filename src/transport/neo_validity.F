@@ -160,7 +160,7 @@ c     conversion of constants to CGS units
 *   ..calculate major radius of closed flux surfaces
       do iy=-1,jsep
 	ix=jxa
-	call xertst (mod(region(ix,iy,0),4).eq.1, 'Not in core!')
+	call xertst (on_closed_surface(ix,iy), 'Not in core!')
 	irmin=jxa
 	irmax=jxa
 	crmin=cr(ix,iy)
@@ -344,7 +344,7 @@ c     conversion of constants to CGS units
        if (.not. is_neutral(is)) then
         do ix=-1,nx
          do iy=-1,ny
-          if (mod(region(ix,iy,0),4).eq.1) then
+          if (on_closed_surface(ix,iy)) then
            nustar(ix,iy,is)=nua(ix,iy,is)*safetyfactor(iy)*
      &      rmaj_(iy)*cm/(vtha(ix,iy,is)*(1.-fc_(iy))**3)
           else
@@ -356,7 +356,7 @@ c     conversion of constants to CGS units
       enddo
       do ix=-1,nx
        do iy=-1,ny
-        if (mod(region(ix,iy,0),4).eq.1) then
+        if (on_closed_surface(ix,iy)) then
          nustar(ix,iy,ns)=nua(ix,iy,ns)*safetyfactor(iy)*
      &    rmaj_(iy)*cm/(vtha(ix,iy,ns)*(1.-fc_(iy))**3)
         else
@@ -472,7 +472,7 @@ c#     include "b2cmpa.h"
       do iy=-1,jsep
 	if (b2plot_debug.ge.8) write(*,*) 'iy: ',iy
 	ix=jxa
-	call xertst (mod(region(ix,iy,0),4).eq.1, 'Not in core')
+	call xertst (on_closed_surface(ix,iy), 'Not in core')
 	irmin=jxa
 	irmax=jxa
 	crmin=cr(ix,iy)

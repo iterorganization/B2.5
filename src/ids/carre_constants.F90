@@ -2,7 +2,7 @@ module carre_constants
 
   implicit none
 
-  private 
+  private
 
   integer, parameter, public :: GRID_UNDEFINED = 0
 
@@ -28,7 +28,7 @@ module carre_constants
   integer, parameter, public :: CELLFLAG_TOPFACE = 5
 
   ! Face number marking face on a generic boundary (i.e. not on a specific
-  ! structure). This is used to mark boundary faces in standard grids that 
+  ! structure). This is used to mark boundary faces in standard grids that
   ! do not touch the wall.
   integer, parameter, public :: BOUNDARY_NOSTRUCTURE = -1
 

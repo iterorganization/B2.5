@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=340,nfns=204,nsparameters=32,nelabels=32,
+      parameter(nlabels=350,nfns=204,nsparameters=32,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -87,7 +87,7 @@
      8  'ne_ext'  , 'bmna'    , 'bmne'    , 'bmmo'    , 'bmhe'    ,
      9  'bmhi'    , 'bmch'    , 'fax_ext' , 'fay_ext' , 'lnlam'   ,
      *  'zn_ext'  , 'rc'      , 'srcml'   , 'edissml' , 'neutrad' /
-      data labels(301:340) /
+      data labels(301:350) /
      1  'fnaxnodr', 'fnaynodr', 'ne2'     , 'smth'    , 'ixle'    ,
      2  'ixge'    , 'iyle'    , 'iyge'    , 'isle'    , 'isge'    ,
      3  'smcf'    , 'fnaxmdf' , 'fnaymdf' , 'fhexmdf' , 'fheymdf' ,
@@ -95,7 +95,9 @@
      5  'fhiyps'  , 'fnaxps'  , 'fnayps'  , 'fnaxfcor', 'fnayfcor',
      6  'fnaxhe'  , 'fnayhe'  , 'fchxvisq', 'fchyvisq', 'fchxinrt',
      7  'fchyinrt', 'vedia.x' , 'vedia.y' , 'veexb.x' , 'veexb.y' ,
-     8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      /
+     8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      ,
+     9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
+     *  'flke'    , 'flki'    , 'flal'    , 'flalc'   , 'b2eatcr' /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -172,14 +174,14 @@
      7    'Electron cooling rate (W) [rqahe]',
      8    'Ionisation ion energy losses (W) [rsahi]',
      9    'Ionisation particle losses (s^{-1}) [rsana]',
-     *    'Ionisation parallel momentum losses (m.s^{-2}) [rsamo]'/
+     *    'Ionisation parallel momentum losses (N) [rsamo]'/
       data descriptions(71:80) /
      1    'Recombination particle losses (s^{-1}) [rrana]',
      2    'Recombination ion energy losses (W) [rrahi]',
-     3    'Recombination parallel momentum losses (m.s^{-2}) [rramo]',
+     3    'Recombination parallel momentum losses (N) [rramo]',
      4    'Particle neutral losses (s^{-1}) [rcxna]',
      5    'Ion energy neutral losses (W) [rcxhi]',
-     6    'Ion parallel momentum neutral losses (m.s^{-2}) [rcxmo]',
+     6    'Ion parallel momentum neutral losses (N) [rcxmo]',
      7    'Bremsstrahlung losses (W)',
      8    'Total poloidal internal energy flux (W)',
      9    'Total radial internal energy flux (W)',
@@ -346,14 +348,14 @@
      5    'External charge source (A)',
      6    'Radiation rate (W)',
      7    'Mach number (SOLPS4.0)',
-     8    'Electron heat flux limit factor',
-     9    'Ion heat flux limit factor',
-     *    'fllim0fna_x'/
+     8    'Electron heat flow flux limit factor',
+     9    'Ion heat flux flow limit factor',
+     *    'Poloidal neutral particle flux limit factor'/
       data descriptions(231:240) /
-     1    'fllim0fna_y',
-     2    'fllim0fhi_x',
-     3    'fllim0fhi_y',
-     4    'fllimvisc',
+     1    'Radial neutral particle flux limit factor',
+     2    'Poloidal neutral ion energy flux limit factor',
+     3    'Radial neutral ion energy flux limit factor',
+     4    'Viscosity flux limit factor',
      5    'Particle source (#.s^{-1})',
      6    'Electron heat source (W)',
      7    'Ion heat source (W)',
@@ -370,7 +372,7 @@
      7    'Squared ion charge (e^{2})',
      8    'X-directed flux region',
      9    'Y-directed flux region',
-     *    'Eirene species index'/
+     *    'Nuclear sequence index'/
       data descriptions(251:260) /
      1    'qc',
      2    'Boundary condition number',
@@ -470,6 +472,17 @@
      8    'isne',
      9    'Total density (m^{-3})',
      *    'sz (m^{2})'/
+      data descriptions(341:350) /
+     1    'Electron heat diffusivity Luciani flux limit factor',
+     2    'Ion heat diffusivity Luciani flux limit factor',
+     3    'Viscosity Luciani flux limit factor',
+     4    'Electric conductivity Luciani flux limit factor',
+     5    'Thermo-electric Luciani flux limit factor',
+     6    'Electron heat diffusivity classical flux limit factor',
+     7    'Ion heat diffusivity classical flux limit factor',
+     8    'Thermo-electric classical flux limit factor',
+     9    'Thermo-electric coefficient limit factor',
+     *    'Eirene atomic species index'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
      2    3,      3,      3,      3,      3,
@@ -536,7 +549,7 @@
      8    2,      3,      2,      3,      2,
      9    2,      2,      3,      3,      2,
      *    3,      2,      3,      3,      3/  
-      data dimensions(301:340) /
+      data dimensions(301:350) /
      1    3,      3,      2,      3,      2,
      2    2,      2,      2,      3,      3,
      3    3,      3,      3,      2,      2,
@@ -544,7 +557,9 @@
      5    2,      3,      3,      3,      3,
      6    3,      3,      2,      2,      2,
      7    2,      2,      2,      2,      2,
-     8    2,      2,      3,      3,      2/
+     8    2,      2,      3,      3,      2,
+     9    2,      2,      2,      2,      2,
+     *    2,      2,      2,      2,      3/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
@@ -790,7 +805,8 @@
      4 'triarea' , 'triavol' , 'tr'      , 'tz'      , 'tindex'  ,
      5 'vxa'     , 'vxm'     , 'vxi'     , 'vya'     , 'vym'     ,
      6 'vyi'     , 'vza'     , 'vzm'     , 'vzi'     , 'massa'   ,
-     7 'massm'   , 'massi'   /
+     7 'massm'   , 'massi'   , 'pux'     , 'puy'     , 'pvx'     ,
+     8 'pvy'     /
       data edimensions /
      1     2, 2, 2, 2, 2,
      2     2, 2, 2, 2, 2,
@@ -798,7 +814,8 @@
      4     1, 1, 1, 1, 1,
      5     2, 2, 2, 2, 2,
      6     2, 2, 2, 2, 2,
-     7     2, 2/                 
+     7     2, 2, 1, 1, 1,
+     8     1/
       data edescriptions(1:10) /
      1 'Atoms particle density (m^{-3})',
      2 'Molecules particle density (m^{-3})',
@@ -832,9 +849,13 @@
      8 'Molecules Z-directed velocity (m.s^{-1})',
      9 'Test ions Z-directed velocity (m.s^{-1})',
      * 'Atom mass (kg)'/
-      data edescriptions(31:32) /
+      data edescriptions(31:36) /
      1 'Molecule mass (kg)',
-     2 'Molecular ion mass (kg)'/
+     2 'Molecular ion mass (kg)',
+     3 'PUX',
+     4 'PUY',
+     5 'PVX',
+     6 'PVY'/
       data sparameters /
      1 'extl'    , 'cltb' , 'chor', 'chpl'    , 'cmd' ,
      2 'cmdcdf'  , 'chbx' , 'chvl', 'flux'    , 'chmp',

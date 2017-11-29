@@ -6,12 +6,15 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_boundary_namelist
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
       real (kind=R8) ::
      *   pbs(-1:nx,-1:ny,0:1), rob(-1:nx,-1:ny), ub(-1:nx,-1:ny),
-     &  flub(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny)
+     &   vol(-1:nx,-1:ny)
+*   ..inout argument
+      real (kind=R8) :: cvsb(-1:nx,-1:ny,0:1), flub(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   flcb(-1:nx,-1:ny,0:1), cvcb(-1:nx,-1:ny,0:1)
@@ -34,6 +37,7 @@
       integer ncall, style, n2, ix, iy, ncallout, ib
       integer, save :: iout = 0                                     !srv 17.06.02
       character charns*3                                            !srv 17.06.02
+   !$OMP THREADPRIVATE(ncall, style, ncallout, iout)
       save ncall, style, ncallout
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
@@ -64,6 +68,12 @@
      &   'faulty internal parameter style')
        call ipgeti ('b2news_ncallout', ncallout)
        call ipgeti ('b2nxfc_iout', iout)                             !srv 17.06.02
+       if ((iout.ne.0) .and. in_parallel()) then
+!$OMP MASTER
+        write(*,*) 'B2NXFC OpenMP warning: no file out in parallel mode'
+!$OMP END MASTER
+        iout = 0
+       end if
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

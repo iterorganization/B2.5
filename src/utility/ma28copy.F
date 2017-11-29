@@ -1035,9 +1035,16 @@ c
      * jcount, jdiff, jroom, jmore, jzer, jzero, 
      * jcost, kcost, kdrop, lenpp, lenpiv, msrch, morei, 
      * nblock, num, nnm1, nzcol, nzmin, nzrow
+#ifdef DBG
+      real (kind=R8) :: product
+      real (kind=R8), save :: cutlo
+#endif
 c
       data umax/.999999999e0_R8/
       data zero /0.0e0_R8/
+#ifdef DBG
+      cutlo = log(tiny(1.0_R8))
+#endif
       msrch = nsrch
       ndrop = 0
       do 1272 kk=1,10
@@ -1583,7 +1590,16 @@ c innermost loop.
               if (iq(j).gt.0) go to 590
               iop = iop + 1
               pivrow = ijpos - iq(j)
+#ifdef DBG
+              if ((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)).and.
+     &            (a(pivrow).ge. tiny(1.0_R8).or.
+     &             a(pivrow).le.-tiny(1.0_R8))) then
+                product = log(abs(au)) + log(abs(a(pivrow)))
+                if (product.ge.cutlo) a(jj) = a(jj) + au*a(pivrow)
+              end if
+#else
               a(jj) = a(jj) + au*a(pivrow)
+#endif
               if (lbig) big = max(abs(a(jj)),big)
               icn(pivrow) = -icn(pivrow)
               if (abs(a(jj)).lt.tol) idrop = idrop + 1
@@ -1724,8 +1740,25 @@ c innermost fill-in loop which also resets icn.
             do 830 jj=ijp1,pivend
               j = icn(jj)
               if (j.lt.0) go to 820
+#ifdef DBG
+              if((au   .ge.tiny(1.0_R8).or.au   .le.-tiny(1.0_R8)).and.
+     &           (a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8))) then
+                product = log(abs(au)) + log(abs(a(jj)))
+                if (product.ge.cutlo) then
+                  anew = au*a(jj)
+                  aanew = abs(anew)
+                else
+                  anew = 0.0_R8
+                  aanew = 0.0_R8
+                end if
+              else
+                anew = 0.0_R8
+                aanew = 0.0_R8
+              end if
+#else
               anew = au*a(jj)
               aanew = abs(anew)
+#endif
               if (aanew.ge.tol) go to 760
               idrop = idrop + 1
               ndrop = ndrop + 1
@@ -2016,8 +2049,15 @@ c see block data for comments on variables in common.
 c
       integer i, j, jj, jay, jayjay, ifin, jfin, istart, 
      * ilend, ipivj, ising
+#ifdef DBG
+      real (kind=R8) :: product
+      real (kind=R8), save :: cutlo
+#endif
 c
       data zero /0.0e0_R8/, one /1.0e0_R8/
+#ifdef DBG
+      cutlo = log(tiny(1.0_R8))
+#endif
       stab = eps.le.one
       rmin = eps
       ising = 0
@@ -2056,7 +2096,22 @@ c add multiples of appropriate rows of  i to i-1  to row i.
 c ipivj is position of pivot in row j.
           ipivj = iw(j) + lenrl(j)
 c form multiplier au.
+#ifdef DBG
+          if((w(j).ge.tiny(1.0_R8).or.w(j).le.-tiny(1.0_R8)).and.
+     &        (a(ipivj).ge. tiny(1.0_R8).or.
+     &         a(ipivj).le.-tiny(1.0_R8))) then
+            product = log(abs(w(j))) - log(abs(a(ipivj)))
+            if (product.ge.cutlo) then
+              au = -w(j)/a(ipivj)
+            else
+              au = 0.0_R8
+            end if
+          else
+            au = 0.0_R8
+          end if
+#else
           au = -w(j)/a(ipivj)
+#endif
           if (lbig) big = max(abs(au),big)
           w(j) = au
 c au * row j (u part) is added to row i.
@@ -2067,7 +2122,16 @@ c innermost loop.
           if (lbig) go to 50
           do 40 jayjay=ipivj,jfin
             jay = icn(jayjay)
+#ifdef DBG
+            if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)).and.
+     &         (a(jayjay).ge. tiny(1.0_R8).or.
+     &          a(jayjay).le.-tiny(1.0_R8))) then
+              product = log(abs(au)) + log(abs(a(jayjay)))
+              if (product.ge.cutlo) w(jay) = w(jay) + au*a(jayjay)
+            end if
+#else
             w(jay) = w(jay) + au*a(jayjay)
+#endif
    40     continue
           go to 70
    50     do 60 jayjay=ipivj,jfin
@@ -2199,9 +2263,16 @@ c
       integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2, 
      * iend, iback, ifirst, ilast, iblock, iblend, 
      * jpiv, jpivp1, lt, ltend, numblk
+#ifdef DBG
+      real (kind=R8) :: product
+      real (kind=R8), save :: cutlo
+#endif
 c
       data zero /0.0e0_R8/
 c
+#ifdef DBG
+      cutlo = log(tiny(1.0_R8))
+#endif
 c the final value of resid is the maximum residual for an inconsistent
 c     set of equations.
       resid = zero
@@ -2260,7 +2331,15 @@ c iend is the end of the l part of row i in the lu decomposition.
         iend = iblock + lenrl(i) - 1
         do 40 jj=iblock,iend
           j = icn(jj)
+#ifdef DBG
+          if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
+     &       (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
+            product = log(abs(a(jj))) + log(abs(w(j)))
+            if (product.ge.cutlo) wi = wi + a(jj)*w(j)
+          end if
+#else
           wi = wi + a(jj)*w(j)
+#endif
    40   continue
 c iblock is adjusted to point to the start of the next row.
    50   iblock = iblock + lenr(i)
@@ -2300,7 +2379,15 @@ c jump if row  ii of u has no nonzeros.
           wii = w(ii)
           do 80 jj=jpivp1,j2
             j = icn(jj)
+#ifdef DBG
+            if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
+     &         (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
+              product = log(abs(a(jj))) + log(abs(w(j)))
+              if (product.ge.cutlo) wii = wii - a(jj)*w(j)
+            end if
+#else
             wii = wii - a(jj)*w(j)
+#endif
    80     continue
           w(ii) = wii
    90     w(ii) = w(ii)/a(jpiv)

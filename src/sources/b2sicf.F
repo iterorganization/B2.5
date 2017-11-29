@@ -8,6 +8,7 @@
       use b2mod_indirect
       use b2mod_balance !djm Jan2017
      & , only : b2sicf_smo0to3, balance_netcdf
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb                                             !srv 28.01.02
@@ -39,6 +40,7 @@
      *    phm0, phm1
       real (kind=R8) :: wrks(-1:nx,-1:ny)
       save ncall, style, phm0, phm1
+!$OMP THREADPRIVATE(ncall, style, phm0, phm1, iout)
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr
       external b2xvff, b2xvsg
@@ -59,6 +61,13 @@
        call xertst (0.le.style.and.style.lt.2,
      &   'faulty internal parameter style')
        call ipgeti ('b2sicf_iout', iout)
+       if ((iout.ne.0) .and. in_parallel()) then
+         !$OMP MASTER
+         write(*,*) 'B2SICF OpenMP warning: no file out in ',
+     &              'parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       end if
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -163,7 +172,7 @@ cdjm Store linearised source for balance
         do k=0,3
           write (chark,'(i1)') k
           call my_out(70,nx,ny,smbcf(-1,-1,k),
-     .                         'b2sicf_smbcf'//chark//chns)
+     .                         'b2sicf_smocf'//chark//chns)
         enddo
         wrks=smbcf(:,:,0)+smbcf(:,:,1)*ub(:,:)+
      &       smbcf(:,:,2)*nb(:,:)*mb+smbcf(:,:,3)*ub(:,:)*nb(:,:)*mb

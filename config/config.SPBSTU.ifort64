@@ -33,23 +33,23 @@ ifdef USE_MPI
 FCOPTS   = -g -C -traceback -fpe0
 else
 ifdef USE_IMPGYRO
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore ${MPI_CPP}
+FCOPTS   = -g -C -debug all -traceback -fPIC -assume no2underscore ${MPI_CPP}
 else
 FCOPTS   = -g -C -debug all -traceback -check all -fpe0
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all -fpe0
+FCOPTS   = -g -C -debug all -traceback -fPIC -assume no2underscore -check all
+FCOPTS   = -g -C -debug all -traceback -fPIC -assume no2underscore -check all -fpe0
 endif
 endif
 else
 ifdef USE_MPI
-FCOPTS   = -O3 -vec_report0 -traceback -fpe0
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
+FCOPTS   = -O3 -traceback -fpe0
+FCOPTS   = -O2 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
+FCOPTS   = -O2 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
 else
-FCOPTS   = -O3 -vec_report0 -traceback
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore
+FCOPTS   = -O3 -traceback
+FCOPTS   = -O2 -fPIC -fp-model precise -assume no2underscore
 endif
 endif
 endif
@@ -69,7 +69,12 @@ GRLIBES  = ${LD_NCARG} ${LD_MSCL}
 LDLIBES  = ${LD_NETCDF} ${LD_NAG}
 
 ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
+endif
+
+ifdef IMAS_PREFIX
+INCMODS   += -I${IMAS_PREFIX}/include/ifort
+IMASLIBS   = ${LD_UAL} -lggd-ifort
 endif
 
 #wd: removed; seems to be unused

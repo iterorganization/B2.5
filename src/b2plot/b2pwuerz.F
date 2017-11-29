@@ -42,6 +42,7 @@ c
       do is=0,ns-1
         mz_hlp(is)=nint((zamin(is)+zamax(is))/2.0_R8)
         hlp_al(is)=is_codes(is)
+        if (hlp_al(is)(2:2).eq.' ') hlp_al(is)(2:2) = '_'
       end do
 c
       open(lun,file='wuerz-d.dat')

@@ -7,6 +7,7 @@ c*** Calculate and write down the profiles of ion fluxes on the targets
 c=======================================================================
       use b2mod_types
       use b2mod_diag
+      use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_plasma
       use b2mod_b2plot_wall_loading
@@ -53,7 +54,8 @@ c     ,         ntrgts,lytg,nytg,lrdlsp                      !###
 c        print *,trim(fmt_peak)  !###
         write(lun,740) 'Ion fluxes on the target - ',trg_label(jj),label
         write(lun,fmt_peak) 'cell',
-     ,    ((trim(adjustl(textan(is-1))),i,i=0,nfluids(is)),is=1,natmi)
+     ,    ((trim(adjustl(species_list(is))),i,i=0,nfluids(is)),
+     ,                                          is=1,nspecies)
         write(fmt_peak,720) ns,tab
 c        print *,trim(fmt_peak)  !###
         if(ntrgts.eq.4) then !{

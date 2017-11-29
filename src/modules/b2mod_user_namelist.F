@@ -22,7 +22,9 @@
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
       character*80 user_filename
       logical scale_He, print_isat
-      logical user_namelist_used
+      logical user_namelist_used, written
+      logical, save :: write_nml_user = .true.
+      logical, save :: user_initialised = .false.
 
       private :: user
       namelist /user/
@@ -31,8 +33,8 @@
      ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
-     ,  Spmp_nom,scale_He,print_isat,
-     ,  user_filename
+     ,  Spmp_nom,scale_He,print_isat,write_nml_user,
+     ,  filedata,user_filename
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -60,14 +62,17 @@ c*** nntrgrp   :  actual number of surface groups for neutral data
 c*** lntrgrp   :  list of surface segments for neutral data
 c*** [ij]ntrgrp:  first and last positions in this list for each group
 c*** gntrgrp   :  identifiers for the neutral data surface groups
+c*** filedata  :  flag to turn on/off individual tracing files
+c***              (see b2mod_diag for their definition)
 c----------------------------------------------------------------------
 
       contains
 
-      subroutine alloc_b2mod_user(nlim,nmol)
+      subroutine alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
       implicit none
-      integer nlim, nmol
+      integer nx, ns, nlim, nmol, ntns
 
+      if (user_initialised) return
 #ifdef ALLOCATE_AND_NAMELIST
       nhetrgtx=nlim
       allocate(lhetrgts(nhetrgtx),lpfrgrp(nlim),lntrgrp(nlim))
@@ -95,22 +100,25 @@ c***  Standard setup:
       intrgrp=0
       jntrgrp=0
       lhetrgts(1:nhetrgtx)=0
-      lhetrgts(1)=-2
-      lhetrgts(2)=-3
+      lhetrgts(1:nsts)=-ltns(1:nsts)
       gpfrgrp=' '
       gntrgrp=' '
       scale_He=.false.
       print_isat=.false.
       user_filename='b2.user.parameters'
+      call read_b2mod_user_namelist(nx,ns)
+      user_initialised = .true.
 
       return
       end subroutine alloc_b2mod_user
 
       subroutine dealloc_b2mod_user
+      implicit none
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(lhetrgts,lpfrgrp,lntrgrp)
       deallocate(l_h_mol)
 #endif
+      user_initialised = .false.
       return
       end subroutine dealloc_b2mod_user
 
@@ -132,21 +140,21 @@ c*** Set default values according to current species list
       is = 0
       do while (.not.hydrogen .and. is.lt.ns)
         hydrogen = is_neutral(is) .and. nint(zn(is)).eq.1
-        if (hydrogen) j_h_at = b2espcr(is)
+        if (hydrogen) j_h_at = b2eatcr(is)
         is = is + 1
       end do
       helium = .false.
       is = 0
       do while (.not.helium .and. is.lt.ns)
         helium = is_neutral(is) .and. nint(zn(is)).eq.2
-        if (helium) j_he_at = b2espcr(is)
+        if (helium) j_he_at = b2eatcr(is)
         is = is + 1
       end do
       neon = .false.
       is = 0
       do while (.not.neon .and. is.lt.ns)
         neon = is_neutral(is) .and. nint(zn(is)).eq.10
-        if (neon) j_ne_at = b2espcr(is)
+        if (neon) j_ne_at = b2eatcr(is)
         is = is + 1
       end do
 *  -- USER --
@@ -199,27 +207,36 @@ c*** Set default values according to current species list
      .   'faulty inputs intrgrp, jntrgrp')
       end do
       if (hydrogen) then
-        call xertst(nint(zn(eb2spcr(j_h_at))).eq.1,
+        call xertst(nint(zn(eb2atcr(j_h_at))).eq.1,
      .   'faulty input j_h_at')
 #ifdef B25_EIRENE
         if (user_namelist_used) then
-          do is = 1, nnmoli
-            call xertst(l_h_mol(is).eq.mlcmp(j_h_at,is),
-     .       'faulty inputs l_h_mol, mlcmp')
-          end do
+          if (maxval(l_h_mol).gt.0) then
+            do is = 1, nnmoli
+              call xertst(l_h_mol(is).eq.mlcmp(j_h_at,is),
+     .         'faulty inputs l_h_mol, mlcmp')
+            end do
+          else
+            do is = 1, nnmoli
+              l_h_mol(is) = mlcmp(j_h_at,is)
+            end do
+          end if
         end if
 #endif
       end if
-      if (helium) call xertst(nint(zn(eb2spcr(j_he_at))).eq.2,
+      if (helium) call xertst(nint(zn(eb2atcr(j_he_at))).eq.2,
      . 'faulty input j_he_at')
-      if (neon) call xertst(nint(zn(eb2spcr(j_ne_at))).eq.10,
+      if (neon) call xertst(nint(zn(eb2atcr(j_ne_at))).eq.10,
      . 'faulty input j_ne_at')
 
       call subend ()
+      return
 
-      entry write_b2mod_user_namelist
+      entry write_b2mod_user_namelist(nx,ns)
 
-      if (user_namelist_used) write(*,user)
+      if (written) return
+      if (user_namelist_used.and.write_nml_user) write(*,user)
+      written = .true.
       return
 
  999  call xerrab ('Error while reading FEEDBACK namelist!')

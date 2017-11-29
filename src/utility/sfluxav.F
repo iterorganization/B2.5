@@ -51,7 +51,7 @@
 *   ..working variable quantn
       quantn=quant
       do ix=-1,nx
-       if (mod(region(ix,iy,0),4).eq.1) then
+       if (on_closed_surface(ix,iy)) then
         quantn(ix,iy)=sqrt(1._R8-nlambda*bb(ix,iy,3)/bmax)
         if (1._R8-nlambda*bb(topix(ix,iy),topiy(ix,iy),3)/bmax.lt.0) 
      &   then

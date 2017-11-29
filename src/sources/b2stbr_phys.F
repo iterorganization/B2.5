@@ -327,8 +327,8 @@
           do i = 1, rc_list_size(istra)          
             Phi_app = get_phi_applied(boundary_namelist,
      .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore = isymm.ne.0 .and.
-     .       mod(region(rc_list_x(i,istra),rc_list_y(i,istra),0),4).eq.1 ! xpb: no sputtering in core!
+            lcore = on_closed_surface(rc_list_x(i,istra),
+     .                                rc_list_y(i,istra)) ! xpb: no sputtering in core!
 *   ..compute 2-D target temperature evolution
             if(plate_model.eq.2 .and. .not.lcore .and. main_call 
      &       .and. i.eq.1) then
@@ -374,8 +374,8 @@
           do i = 1, rc_list_size(istra)
             Phi_app = get_phi_applied(boundary_namelist,
      .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore=region(rc_list_x(i,istra),rc_list_y(i,istra),0).eq.5 
-     &       .and.periodic_bc.eq.1
+            lcore=on_closed_surface(rc_list_x(i,istra),
+     .                              rc_list_y(i,istra))
 *   ..compute 2-D target temperature evolution
             if(plate_model.eq.2 .and. .not.lcore .and. main_call 
      &       .and. i.eq.1) then
@@ -647,7 +647,7 @@ c lcore           is this a core element?
       logical lcore, found
 
       integer is0, is1, is2, is, js, k, iwall, itrack
-      real (kind=R8) :: tef, tif, zaf(0:ns-1), rpf(0:ns-1), ptf,
+      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf,
      &     sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, eself,
      &     sput_frac_chem_sum, be_frac, be_suppression_factor,
      &     ytmp, ztmp, wrk(ndepth_nml)
@@ -807,16 +807,20 @@ cdpc-end
      &                        fhi_ext(ixf,iyf,idir)))/area
       do is=0,ns-1
          qin=qin+max(0.0_R8,isign*fna(ixf,iyf,idir,is))
-     &        *(kinrgy(ix,iy,is)*(1.0_R8-BoRiS) + rpf(is)*ev)/area
+     &        *((kinrgy(ix,iy,is)+tif)*(1.0_R8-BoRiS) + rpf(is)*ev)/area
       enddo
       do is=0,ns_ext-1
-         ptf = 
+         ptf =
      &    (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/(hhn+hh)
+         taf =
+     &    (ta_ext(ix,iy,is)*hhn+ta_ext(ixn,iyn,is)*hh)/(hhn+hh)
          qin=qin+max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))
-     &        *(0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2*(1.0_R8-BoRiS) 
+     &        *((0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+taf)*
+     &          (1.0_R8-BoRiS)
      &          + ptf*ev)/area
       enddo
-      qel = max(0.0_R8,isign*fhe(ixf,iyf,idir))/area
+      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir)+
+     &  fne(ixf,iyf,idir)*tef*(1.0_R8-BoRiS)))/area
       if(lcore) then
          surface_temp = 0.0_R8
       else
@@ -872,7 +876,7 @@ cdpc
 *       (is0 corresponds to CX species is2)
          t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
      1        neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
-         Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))     
+         Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
          Pflx = t0/area          ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then
@@ -895,11 +899,11 @@ c     (toroidal piec only, because poloidal piece of parallel velocity flips sig
      &        am(is)*mp*ua(ix,iy,is)*bb(ix,iy,2)**2/bb(ix,iy,3)**2*
      &        recyc(is,istra)*t0*hz(ix,iy)
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          if (is2.ne.-1) shi0_ff(ix,iy,is2) = shi0_ff(ix,iy,is2)+
      &        recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
          if(.not.lcore) then    ! xpb: no sputtering in core!

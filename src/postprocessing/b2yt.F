@@ -15,6 +15,7 @@
 #ifdef USE_MPI
       include 'mpif.h'
 #endif
+#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -187,7 +188,7 @@
 *   ..call principal driver routine
       call alloc_b2mod_plasma(nx,ny,ns)
       call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_geo2(nx1,ny1,10)
+      call alloc_b2mod_geo2(nx1,ny1,DEF_NCUT)
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)

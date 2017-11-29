@@ -5,15 +5,13 @@ c  version : 24.07.2002 17:08
       use b2mod_types
       use b2mod_version
       real (kind=R8), allocatable, save ::
-c      real sclstra(0:nsd,nstra),sclalph(0:nsd,nstra),
-c     ,	 sclsrcn(0:nsd,nstra),sclbase(0:nsd,nstra),sclrtio(0:nsd,nstra)
      *  sclstra(:,:),
      *  sclalph(:,:),
      *  sclsrcn(:,:),
      *  sclbase(:,:),
      *  sclrtio(:,:),
-     1	tflux(:),
-     2	flux_scale(:)
+     1  tflux(:),
+     2  flux_scale(:)
 
       contains
 
@@ -21,6 +19,7 @@ c     ,	 sclsrcn(0:nsd,nstra),sclbase(0:nsd,nstra),sclrtio(0:nsd,nstra)
       implicit none
       integer nsd, nstra
 
+cxpb The actual used size is (0:natmi,nstra) but natmi is not known yet
       allocate(sclstra(0:nsd,nstra))
       allocate(sclalph(0:nsd,nstra))
       allocate(sclsrcn(0:nsd,nstra))

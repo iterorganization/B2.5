@@ -7,6 +7,7 @@
       use b2mod_indirect
       use b2mod_balance                                                 !djm Jan2017
      & , only : fmo_flua, fmo_cvsa, balance_netcdf
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -51,10 +52,12 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !sv 06.07.06
-      integer, save :: iout_b2npmo = 0                            !srv 11.09.09
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0       !srv 06.07.06
+      integer, save :: iout_b2npmo = 0, iout_b2wdat = 0           !srv 11.09.09
       character chns*3                                            !srv 02.06.11
       save ncall
+!$OMP THREADPRIVATE(ncall, no_Ptncr_x_co , no_Ptncr_y_co, iout_b2npmo)
+!$OMP THREADPRIVATE(iout_b2wdat)
       real (kind=R8) ::
      *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo, dif     !srv 11.09.09
 *   ..procedures
@@ -80,6 +83,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgeti ('b2npmo_iout', iout_b2npmo)
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                              !iys 17.04.17
         call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
         call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
       endif
@@ -144,12 +148,23 @@
         fmo_cvsa(:,:,:,isb)=flv(-1:nx,-1:ny,0:1)
         fmo_flua(:,:,:,isb)=fmb(-1:nx,-1:ny,0:1)-flv(-1:nx,-1:ny,0:1)
       endif
-      if(iout_b2npmo.eq.1) then
-       write (chns,'(i3.3)') isb
-       call my_out(70,nx,ny,flv(-1,-1,0),'b2urmo_etaPat_graduax'//chns)
-       call my_out(70,nx,ny,flv(-1,-1,1),'b2urmo_etaPat_graduay'//chns)
-!       call my_out(70,nx,ny,con(-1,-1,0),'b2urmo_etaPatx')
- !      call my_out(70,nx,ny,con(-1,-1,1),'b2urmo_etaPaty')
+      if(iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then
+        if (in_parallel()) then
+!$OMP MASTER
+          if (ncall==0) then
+            write(*,*) 'b2urmo OpenMP warning: no file output ',
+     &                 'in prallel mode'
+          end if
+!$OMP END MASTER
+        else
+         write (chns,'(i3.3)') isb
+         call my_out(70,nx,ny,flv(-1,-1,0),
+     &        'b2urmo_etaPat_graduax'//chns)
+         call my_out(70,nx,ny,flv(-1,-1,1),
+     &        'b2urmo_etaPat_graduay'//chns)
+!         call my_out(70,nx,ny,con(-1,-1,0),'b2urmo_etaPatx')
+ !        call my_out(70,nx,ny,con(-1,-1,1),'b2urmo_etaPaty')
+        end if
       endif      
 * ..compute residual
 *   ..contribution from right hand side

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfv (nx, ny, isb, hz, cvsb, flubv)               !srv 19.01.05 01.07.05 11.09.09 {
+      subroutine b2nxfv (nx, ny, isb, hz, cvsbhz_cl, flubv)            !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmpa
@@ -9,7 +9,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
       real (kind=R8) ::
-     *   hz(-1:nx,-1:ny), cvsb(-1:nx,-1:ny,0:1)
+     *   hz(-1:nx,-1:ny), cvsbhz_cl(-1:nx,-1:ny,0:1)                   !srv 16.10.17
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   flubv(-1:nx,-1:ny,0:1)
@@ -27,7 +27,10 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
+      real (kind=R8) ::
+     *   ft                                                            !srv 16.10.17
       save ncall
+!$OMP THREADPRIVATE(ncall)
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
@@ -53,12 +56,13 @@
       endif
 
 * ..compute convection term
+      ft = 4.0_R8/3.0_R8
 *   ..compute flubvx
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then         !srv 26.10.08
        do iy = -1, ny
         do ix = -1, nx
 	   if(leftix(ix,iy).ne.-2) then
-          flubv(ix,iy,0) = cvsb(ix,iy,0)*
+          flubv(ix,iy,0) = ft*cvsbhz_cl(ix,iy,0)*                     !srv 16.10.17
      &      (log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))
 	   else
           flubv(ix,iy,0) = 0.0e0_R8

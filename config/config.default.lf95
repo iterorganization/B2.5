@@ -47,7 +47,7 @@ GRLIBES = ${LD_NCARG} ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef USE_EIRENE

@@ -4,7 +4,7 @@
       subroutine b2wsax (nsav, nx, ny, ns, lblgm, 
      &  crx, cry, bb, vol,
      &  hx, hy, qz, qc, qcb, gs, pbs, cell_width, cell_height,
-     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ne2, pr, uac)
+     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ne2, rz2, pr, uac)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -27,7 +27,7 @@
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), pr(-1:nx,-1:ny),
-     &  uac(-1:nx,-1:ny,0:ns-1)
+     &  rz2(-1:nx,-1:ny,0:ns-1), uac(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -83,15 +83,15 @@
       integer nmax, n2, ix, iy, i, is
       parameter (nmax=300)
       real (kind=R8) ::
-     *   t0, t1, zff(1:6), zxx(-1:nmax,1:6), zyy(-1:nmax,1:6)
+     *   t0, t1, zff(1:6), zxx(-1:nmax,1:6), zyy(-1:nmax,1:6),
+     *   zeff(-1:nx,-1:ny)
 *   ..procedures
       real (kind=R8) ::
-     *   b2ssum, pit, hy1, zeff, uax, uay, uaz, crxc, cryc
+     *   b2ssum, pit, hy1, uax, uay, uaz, crxc, cryc
       external subini, subend, xertst, b2ssum
       external b2xvsg, b2xvgm, b2xvps, b2xgxy
       pit(ix,iy) = bb(ix,iy,0)/bb(ix,iy,3)
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      zeff(ix,iy) = ne2(ix,iy)/ne(ix,iy)
       uax(ix,iy,is) = fna(ix,iy,0,is)*
      &  (hx(ix,iy)/na(leftix(ix,iy),leftiy(ix,iy),is)+
      1	 hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/
@@ -128,6 +128,7 @@
 *   ..test plasma state
       call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+      call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
 
 * ..compute zxx and zyy
 *   ..compute zxx(1:2) and zyy(1:2)

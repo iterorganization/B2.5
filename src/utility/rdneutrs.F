@@ -68,7 +68,7 @@ c
       real (kind=R8) :: dummy(nlimps,*)
       do iif=1,ldmf
         if(nlimi.gt.0) write(kard,'(5(e16.8))') 
-     &                 (dummy(is,iif),is=1,nlimi)
+     &                 (dummy(is,iif),is=1,nlim1)
         if(nstsi.gt.0) write(kard,'(5(e16.8))') 
      &                 (dummy(is+nlim,iif),is=1,nstsi)
       enddo

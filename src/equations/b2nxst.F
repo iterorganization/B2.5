@@ -26,6 +26,7 @@
 
 *   ..local variables
       integer ncall, ix, iy
+!$OMP THREADPRIVATE(ncall)
       save ncall
 *   ..procedures
       external subini, subend, xertst

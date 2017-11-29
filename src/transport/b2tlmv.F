@@ -78,7 +78,7 @@ c       fl(ix,iy)=1.0d0
         do ix = -1, nx
          if(leftix(ix,iy).ne.-2) then
           if(.not.(.not.is_neutral(isb) .and. 
-     &              mod(region(ix,iy,0),4).eq.1)) then               !srv 12.04.08
+     &              on_closed_surface(ix,iy))) then                  !srv 12.04.08
            qcl = -cvsbx(ix,iy)*
      &          (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
            qfl = cflmv*abs(pbsx(ix,iy))*                             !srv 11.01.13
@@ -94,6 +94,8 @@ c       fl(ix,iy)=1.0d0
            cvsbx(ix,iy) = cvsbx(ix,iy)/tfl
            cvsbxhz(ix,iy) = cvsbxhz(ix,iy)/tfl
            fl(ix,iy) = tfl
+          else
+           fl(ix,iy) = 1.0_R8
           endif                                                      !srv 12.04.08
          else
           fl(ix,iy) = 1.0_R8

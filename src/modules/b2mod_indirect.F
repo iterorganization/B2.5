@@ -5,6 +5,7 @@
       use b2mod_cellhelper
       use b2mod_connectivity
       implicit none
+#include "DIMENSIONS.F"
 
       integer, parameter :: NNREGMAX=8
 
@@ -24,9 +25,11 @@
      *  topcut(:),
      *  bottomcut(:)
       integer, save ::
-     *  nncut, nnreg(0:2), periodic_bc, nncutmax
+     *  nncut, nnreg(0:2), periodic_bc, nncutmax, redef_pbs
       integer, allocatable, save ::
      *  cflags(:,:,:)
+      logical, allocatable, save ::
+     *  on_closed_surface(:,:)
 
       logical, save :: b2mod_indirect_allocated = .false.
 
@@ -46,19 +49,21 @@
       allocate(bottomix(-1:nxd,-1:nyd))
       allocate(bottomiy(-1:nxd,-1:nyd))
       allocate(region(-1:nxd,-1:nyd,0:2))
+      allocate(on_closed_surface(-1:nxd,-1:nyd))
       nnreg=0
       allocate(resignore(-1:nxd,-1:nyd,2))
-      nncutmax=10
+      nncutmax=DEF_NCUT
       allocate(leftcut(1:nncutmax))
       allocate(rightcut(1:nncutmax))
       allocate(topcut(1:nncutmax))
       allocate(bottomcut(1:nncutmax))
       allocate(cflags(-1:nxd,-1:nyd,GRID_N_CELLFLAGS))
-      bottomcut=nyd+1
-      topcut   =-2
-      rightcut =-2
-      leftcut  =nxd+1
-      cflags = 0
+      bottomcut = nyd+1
+      topcut    = -2
+      rightcut  = -2
+      leftcut   = nxd+1
+      redef_pbs = 0
+      cflags    = 0
       b2mod_indirect_allocated = .true.
 
       return
@@ -77,6 +82,7 @@
         deallocate(bottomix)
         deallocate(bottomiy)
         deallocate(region)
+        deallocate(on_closed_surface)
         deallocate(resignore)
         deallocate(leftcut)
         deallocate(rightcut)

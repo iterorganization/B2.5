@@ -18,7 +18,8 @@ c
       real (kind=R8), allocatable :: rdneureg(:),
      2  b2radirreg(:), b2radlrreg(:),
      3  recycereg(:), recycireg(:),
-     4  sseereg(:), sseireg(:), ssnireg(:,:)
+     4  sseereg(:), sseireg(:), ssnireg(:,:),
+     5  ssnastra(:,:)   ! IYS 29.09.2017
       REAL (kind=R8), allocatable :: 
      .      FEEXGT(:,:), FEEYGT(:,:),
      .      FEIXGT(:,:), FEIYGT(:,:)
@@ -52,7 +53,7 @@ c*** Specification of the output files and units
 c***
 c*** ntrc    : unit numbers for tracing files
 c*** lv_trc  : their versions
-c*** filedata: if true, produce the file, else dump into b2.log
+c*** filedata: if true, produce the file
 c*** fn_ntrc :  file names for the tracing data
 c***
 c***  ntrc_tst  :  tracing/test.trc       :  test data (can be absent)
@@ -81,6 +82,7 @@ c***                    tracing
       parameter (lenfnm=120, mhdr=24)
       character fn_ntrc(len_ntrc)*(lenfnm)
       character*2, allocatable :: atoms_list(:)
+      character*2, allocatable :: species_list(:)
       integer, allocatable :: ions_list(:), fluids_list(:)
       character*120 label
       integer :: ank_tracing = 0
@@ -95,6 +97,8 @@ c
       integer nxd,nyd,nsd,nregionv,nstra,natm
       integer i, is, iss
       character*18 hlp_frm
+      logical streql
+      external streql
 
       call xertst(1.le.nxd, 'faulty input nxd')
       call xertst(1.le.nyd, 'faulty input nyd')
@@ -108,27 +112,32 @@ c
       if (allocated(IZ)) return
       allocate(IZ(-1:NXD,-1:NYD))
       allocate(RESHLP(-1:NXD,-1:NYD))
-      allocate(rad_imp(1:natm))
+      allocate(rad_imp(1:nspecies))
       allocate(rdneureg(nregionv),
      2  b2radirreg(nregionv),b2radlrreg(nregionv),
      3  recycereg(nregionv), recycireg(nregionv),
-     4  sseereg(nregionv), sseireg(nregionv), ssnireg(natm,nregionv))
+     4  sseereg(nregionv), sseireg(nregionv),
+     5  ssnireg(nspecies,nregionv))
+      allocate(ssnastra(natm,nstra))      ! IYS 29.09.2017
       allocate( 
      .      FEEXGT(-1:NXD,-1:NYD), FEEYGT(-1:NXD,-1:NYD),
      .      FEIXGT(-1:NXD,-1:NYD), FEIYGT(-1:NXD,-1:NYD))
       allocate(RADARR(0:NXD+1,0:NYD+1))
+      allocate(species_list(1:nspecies))
       allocate(atoms_list(1:natm))
       allocate(ions_list(1:nsd))
       allocate(fluids_list(0:nsd-1))
-      allocate(nfluids(1:natm))
+      allocate(nfluids(1:nspecies))
       allocate(
      ,     src_ee(0:nregionv,3)   , src_ei(0:nregionv,3),
      ,     src_es(0:nregionv,3)   , src_ms(0:nregionv,3),
-     ,     src_ni(0:nregionv,3,natm), src_mo(0:nregionv,3,natm),
+     ,     src_ni(0:nregionv,3,nspecies),
+     ,     src_mo(0:nregionv,3,nspecies),
      ,     src_ne(0:nregionv,3))
       allocate(
      ,     cor_ee(-1:nxd,-1:nyd)     , cor_ei(-1:nxd,-1:nyd),
-     ,     cor_ni(-1:nxd,-1:nyd,natm), cor_mo(-1:nxd,-1:nyd,natm),
+     ,     cor_ni(-1:nxd,-1:nyd,nspecies),
+     ,     cor_mo(-1:nxd,-1:nyd,nspecies),
      ,     cor_ne(-1:nxd,-1:nyd))
       allocate(
      ,     rescoreg(0:nregionv,0:nsd-1), resmoreg(0:nregionv,0:nsd-1),
@@ -137,6 +146,7 @@ c
       call xertst(1.le.nspecies.and.nspecies.le.natm,
      . 'faulty parameter nspecies')
 
+      species_list(1:nspecies)='  '
       atoms_list(1:natm)='  '
       ions_list(1:nsd)=-1
       fluids_list(0:nsd-1)=0
@@ -145,8 +155,8 @@ c
       iss=0
       nstages=0
       do is = 0, nsd-1
-        if(atoms_list(b2espcr(is)).eq.'  ') then
-          atoms_list(b2espcr(is))=is_codes(is)
+        if(species_list(b2espcr(is)).eq.'  ') then
+          species_list(b2espcr(is))=is_codes(is)
           iss=0
         endif
         if (.not.is_neutral(is)) then
@@ -157,15 +167,23 @@ c
           fluids_list(is)=i
         endif
         nstages=max(nstages,iss)
-      enddo 
+      enddo
+      do is = 1, natm
+        if (latmscl(is).ne.0.and.streql(atoms_list(is),' ')) then
+          atoms_list(is)=species_list(latmscl(is))
+        end if
+      end do
       write(*,'(1x,a,3(i3,1x))') 'natm, nsd, nstages ',
      .                            natm, nsd, nstages
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'i3)'
       write(*,hlp_frm) 'b2espcr : ', b2espcr(0:nsd-1)
+      write(*,hlp_frm) 'b2eatcr : ', b2eatcr(0:nsd-1)
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',nsd,'(a2,1x))'
       write(*,hlp_frm) 'is_codes : ', is_codes
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',nspecies,'(a2,1x))'
-      write(*,hlp_frm) 'atoms_list : ', atoms_list(1:nspecies)
+      write(*,hlp_frm) 'species_list : ', species_list(1:nspecies)
+      write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natm,'(a2,1x))'
+      write(*,hlp_frm) 'atoms_list (B2) : ', atoms_list(1:natm)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',i,'i4)'
       write(*,hlp_frm) 'ions_list : ', ions_list(1:i)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nspecies,'i4)'
@@ -216,6 +234,7 @@ c>>>
       sseereg=0.0_R8
       sseireg=0.0_R8
       ssnireg=0.0_R8
+      ssnastra=0.0_R8
       rescoreg=0.0_R8
       resmoreg=0.0_R8
       reshereg=0.0_R8
@@ -233,27 +252,18 @@ c>>>
       deallocate(rdneureg,
      2  b2radirreg, b2radlrreg,
      3  recycereg, recycireg,
-     4  sseereg, sseireg, ssnireg)
-      deallocate( 
-     .      FEEXGT, FEEYGT,
-     .      FEIXGT, FEIYGT)
+     4  sseereg, sseireg, ssnireg,
+     5  ssnastra)
+      deallocate(FEEXGT, FEEYGT, FEIXGT, FEIYGT)
       deallocate(RADARR)
+      deallocate(species_list)
       deallocate(atoms_list)
       deallocate(ions_list)
       deallocate(fluids_list)
       deallocate(nfluids)
-      deallocate(
-     ,     src_ee, src_ei,
-     ,     src_es, src_ms,
-     ,     src_ni, src_mo,
-     ,     src_ne)
-      deallocate(
-     ,     cor_ee, cor_ei,
-     ,     cor_ni, cor_mo,
-     ,     cor_ne)
-      deallocate(
-     ,     rescoreg, resmoreg,
-     ,     reshereg, reshireg)
+      deallocate(src_ee, src_ei, src_es, src_ms, src_ni, src_mo, src_ne)
+      deallocate(cor_ee, cor_ei, cor_ni, cor_mo, cor_ne)
+      deallocate(rescoreg, resmoreg, reshereg, reshireg)
 
       return
       end subroutine dealloc_b2mod_diag

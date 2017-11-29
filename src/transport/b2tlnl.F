@@ -33,6 +33,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy
       real (kind=R8), save :: lambda=-5.0e0_R8
+!$OMP THREADPRIVATE(ncall, lambda)
       save ncall
 *   ..procedures
       intrinsic sqrt

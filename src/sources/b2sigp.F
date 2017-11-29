@@ -8,6 +8,7 @@
       use b2mod_constants                                         !srv 23.03.10
       use b2mod_balance                                           !djm Jan2017
      & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -22,7 +23,8 @@
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      * wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
-     * wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny)                       !djm Jan2017
+     * wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny),                      !djm Jan2017
+     * wrk5(-1:nx,-1:ny), wrk6(-1:nx,-1:ny)                       !srv 28.03.17
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -37,12 +39,14 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, k
-      integer, save :: style = 1
-      integer, save :: iout = 0, iout_b2npmo = 0
+      integer, save :: style = 2                                     !srv 13.01.17
+      integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
-!      character chns*3, chk*1                                        !srv 17.06.02
+      character chns*3 !, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *   t0
+!$OMP THREADPRIVATE(ncall, style, iout, iout_b2npmo, iout_b2wdat)
+!$OMP THREADPRIVATE(pot_eq, no_current)
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -60,6 +64,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2sigp_iout', iout)                             !srv 17.06.02
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
        call ipgeti ('b2sigp_style', style)                           !srv 02.07.08
        call ipgeti ('b2npmo_iout', iout_b2npmo)                      !srv 11.09.09
        call ipgeti ('b2news_poteq', pot_eq)                          !srv 23.03.10
@@ -89,7 +94,7 @@
           if(leftix(ix,iy).eq.-2) then
            wrk0(ix,iy) = 0.0_R8
            wrk1(ix,iy) = 0.0_R8
-           wrk2(ix,iy) = 0.0_R8
+           wrk2(ix,iy) = rzb(ix,iy)*nb(ix,iy)/ne(ix,iy)
           else
            wrk0(ix,iy) = nb(ix,iy)*ti(ix,iy)-
      &      nb(leftix(ix,iy),leftiy(ix,iy))*
@@ -103,9 +108,9 @@
      &                   nb(leftix(ix,iy),leftiy(ix,iy))/
      &                   ne(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy))/
      &                 (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-           wrk3(ix,iy) = nb(ix,iy)*ti(ix,iy)                          !djm Jan2017
-           wrk4(ix,iy) = ne(ix,iy)*te(ix,iy)*wrk2(ix,iy)
           endif
+          wrk3(ix,iy) = nb(ix,iy)*ti(ix,iy)                          !djm Jan2017
+          wrk4(ix,iy) = ne(ix,iy)*te(ix,iy)*wrk2(ix,iy)
          enddo
         enddo
         call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
@@ -115,28 +120,50 @@
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
-              smbgp(ix,iy,0) = -hz(ix,iy)*
+              wrk5(ix,iy) = -hz(ix,iy)*
      &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
      &          bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                   !srv 11.01.13
-     &         (wrk0(rightix(ix,iy),rightiy(ix,iy))+
-     &          wrk1(rightix(ix,iy),rightiy(ix,iy))*
-     &          wrk2(rightix(ix,iy),rightiy(ix,iy)))/
+     &         (wrk0(rightix(ix,iy),rightiy(ix,iy)))/
      &         (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
+              wrk6(ix,iy) = -hz(ix,iy)*
+     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
+     &          bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                   !srv 11.01.13
+     &          wrk1(rightix(ix,iy),rightiy(ix,iy))*
+     &          wrk2(rightix(ix,iy),rightiy(ix,iy))/
+     &         (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
+              smbgp(ix,iy,0) = wrk5(ix,iy) + wrk6(ix,iy)
               smbgp(ix,iy,1) = 0.0_R8
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
               if (balance_netcdf.ne.0) then !djm Jan2017
-                b2sigp_pstat0to3(ix,iy,0,isb) = 0.0_R8
+!     djm Mar2017 NB - THE FOLLOWING DOES NOT GIVE EXACT BALANCE! FOR EXACT PRESSURE BALANCE IN
+!                      THIS REGION, USE B2SIGP_STYLE = 1
+                if (ncall.lt.3) then
+                 write(*,'(a,i4,a,i4)')
+     &       'warning, tot. press. balance will not be exact at ix=',
+     &            ix,',iy=',iy
+                 write(*,*) 'Use b2sigp_style.eq.1 or 2'
+                end if
+                b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
+     &           (vol(ix,iy)/hx(ix,iy))*
+     &           bb(ix,iy,0)/bb(ix,iy,3)*
+     &           (wrk3(ix,iy)+wrk4(ix,iy))
                 b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
               endif
             elseif(rightix(ix,iy).eq.nx+1) then
-              smbgp(ix,iy,0) = -hz(ix,iy)*
+              wrk5(ix,iy) = -hz(ix,iy)*
      &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
-     &         (wrk0(ix,iy)+wrk1(ix,iy)*wrk2(ix,iy))/
+     &         wrk0(ix,iy)/
      &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
+              wrk6(ix,iy) = -hz(ix,iy)*
+     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
+     &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
+     &         wrk1(ix,iy)*wrk2(ix,iy)/
+     &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
+              smbgp(ix,iy,0) = wrk5(ix,iy) + wrk6(ix,iy)
               smbgp(ix,iy,1) = 0.0_R8
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
@@ -154,14 +181,20 @@
                 b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
               endif
             else
-              smbgp(ix,iy,0) = -hz(ix,iy)*(vol(ix,iy)/hx(ix,iy))*     !srv 16.06.09
+              wrk5(ix,iy) = -hz(ix,iy)*(vol(ix,iy)/hx(ix,iy))*        !srv 16.06.09
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
-     &        ((wrk0(ix,iy)+wrk1(ix,iy)*wrk2(ix,iy))/
+     &        (wrk0(ix,iy)/
      &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &         (wrk0(rightix(ix,iy),rightiy(ix,iy))+
-     &          wrk1(rightix(ix,iy),rightiy(ix,iy))*
-     &          wrk2(rightix(ix,iy),rightiy(ix,iy)))/
+     &         wrk0(rightix(ix,iy),rightiy(ix,iy))/
      &         (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy))))
+              wrk6(ix,iy) = -hz(ix,iy)*(vol(ix,iy)/hx(ix,iy))*        !srv 16.06.09
+     &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
+     &        (wrk1(ix,iy)*wrk2(ix,iy)/
+     &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
+     &         wrk1(rightix(ix,iy),rightiy(ix,iy))*
+     &          wrk2(rightix(ix,iy),rightiy(ix,iy))/
+     &         (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy))))
+              smbgp(ix,iy,0) = wrk5(ix,iy) + wrk6(ix,iy)
               smbgp(ix,iy,1) = 0.0_R8
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
@@ -178,23 +211,6 @@
                 b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
               endif
-            endif
-!     djm Mar2017 NB - THE FOLLOWING DOES NOT GIVE EXACT BALANCE! FOR EXACT PRESSURE BALANCE IN
-!                      THIS REGION, USE B2SIGP_STYLE = 1
-            if((leftix(ix,iy).eq.-1).and.(balance_netcdf.ne.0)) then
-              if (ncall.lt.3) then
-                write(*,'(a,i4,a,i4)') 
-     &         'warning, tot. press. balance will not be exact at ix=',
-     &           ix,',iy=',iy
-                write(*,*) 'Use b2sigp_style.eq.1'
-              end if
-              b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy))*
-     &         bb(ix,iy,0)/bb(ix,iy,3)*
-     &         (wrk3(ix,iy)+wrk4(ix,iy))
-              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
             endif
           enddo
         enddo
@@ -235,12 +251,16 @@
             smbgp(ix,iy,1) = 0.0e0_R8
             smbgp(ix,iy,2) = 0.0e0_R8
             smbgp(ix,iy,3) = 0.0e0_R8
+            wrk5(ix,iy) = 0.0e0_R8
+            wrk6(ix,iy) = 0.0e0_R8
           else                                                        !srv 26.11.02 }
             t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)           !srv 18.10.02 10.06.05
-            smbgp(ix,iy,0) =
+            wrk5(ix,iy) =
      &      -t0*(wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
+            wrk6(ix,iy) =
      &      -t0*rzb(ix,iy)*(nb(ix,iy)/ne(ix,iy))*
      &       (wrk1(ix,iy)+wrk1(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8 !srv 01.07.05 }
+            smbgp(ix,iy,0) = wrk5(ix,iy) + wrk6(ix,iy)
             smbgp(ix,iy,1) = 0.0e0_R8
             smbgp(ix,iy,2) = 0.0e0_R8
             smbgp(ix,iy,3) = 0.0e0_R8
@@ -277,8 +297,8 @@ cdjm compute b2sigp_pstat0to3 on left cell face
           enddo
         endif
       else                                                            !srv 23.03.10 {
-        call xertst (pot_eq.eq.1,
-     &   'This case works when potential equation is solved')
+        call xertst(pot_eq.eq.1,
+     &   'b2sigp_style.eq.2 requires pot_eq.eq.1!')
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
@@ -309,25 +329,93 @@ cdjm compute b2sigp_pstat0to3 on left cell face
             smbgp(ix,iy,1) = 0.0e0_R8
             smbgp(ix,iy,2) = 0.0e0_R8
             smbgp(ix,iy,3) = 0.0e0_R8
+            wrk5(ix,iy) = 0.0e0_R8
+            wrk6(ix,iy) = 0.0e0_R8
           else
             t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
-            smbgp(ix,iy,0) =
+            wrk5(ix,iy) =
      &      -t0*(wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
+            wrk6(ix,iy) =
      &      -t0*qe*rzb(ix,iy)*nb(ix,iy)*
      &       (wrk1(ix,iy)+wrk1(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
+            smbgp(ix,iy,0) = wrk5(ix,iy) + wrk6(ix,iy)
             smbgp(ix,iy,1) = 0.0e0_R8
             smbgp(ix,iy,2) = 0.0e0_R8
             smbgp(ix,iy,3) = 0.0e0_R8
           endif
          enddo
         enddo                                                         !srv 23.03.10 }
+cdjm compute b2sigp_pstat0to3 on left cell face
+        if (balance_netcdf.ne.0) then
+          b2sigp_pstat0to3 = 0.0_R8
+          do iy = -1, ny
+           do ix = -1, nx
+            if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
+     &         bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
+              b2sigp_pstat0to3(ix,iy,0,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+            else
+              t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
+              b2sigp_pstat0to3(ix,iy,0,isb) =
+     &         -t0*wrk0(ix,iy)
+     &         -t0*qe*wrk1(ix,iy)*
+     &         (rzb(ix,iy)*nb(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy))+
+     &          rzb(leftix(ix,iy),leftiy(ix,iy))*
+     &          nb(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy))/
+     &         (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
+              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+            endif
+           enddo
+          enddo
+        endif
       endif                                                           !srv 02.07.08 }
-      if (iout.ne.0 .or. iout_b2npmo.eq.1) then                       !srv 17.06.02 {
-!      write (chns,'(i3.3)') isb
-!      do k=0,3
-!        write (chk,'(i1)') k
-!        call my_out(70,nx,ny,smbgp(-1,-1,k),'b2sigp_smbgp'//chk//chns)
-!      enddo
+
+cxpb apply restriction to pressure gradient for minority ions
+      do iy = -1, ny                                                  !lk 23.06.17{  
+       do ix = -1, nx
+        if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1 .and.
+     &     bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1 .and.
+     &     nb(ix,iy)/ne(ix,iy) .lt. 0.1e0_R8) then
+          smbgp(ix,iy,0) = smbgp(ix,iy,0)*min(1.0e0_R8, 
+     &    (2.0e0_R8*hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))
+     &                       +hx(rightix(ix,iy),rightiy(ix,iy)))*
+     &     nb(ix,iy)*ti(ix,iy)/
+     &    ((hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &     nb(rightix(ix,iy),rightiy(ix,iy))
+     &    *ti(rightix(ix,iy),rightiy(ix,iy))+
+     &    (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*
+     &     nb(leftix(ix,iy),leftiy(ix,iy))
+     &    *ti(leftix(ix,iy),leftiy(ix,iy))))     
+        endif   
+       enddo
+      enddo                                                           !lk 23.06.17}
+
+      if (iout.ne.0 .or. iout_b2wdat.eq.4) then                       !srv 17.06.02 {
+       if (in_parallel()) then
+          !$OMP MASTER
+          if (ncall==0) then
+            write(*,*) 'b2sigp OpenMP warning: no file output ',
+     &                 'in prallel mode'
+          end if
+          !$OMP END MASTER
+       else
+        write (chns,'(i3.3)') isb
+!       do k=0,3
+!         write (chk,'(i1)') k
+!         call my_out(70,nx,ny,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
+!       enddo
+        if(style.eq.0 .or. style.eq.1 ) then
+          call my_out(70,nx,ny,wrk5,'b2sigp_smogpi'//chns)
+          call my_out(70,nx,ny,wrk6,'b2sigp_smogpe'//chns)
+        elseif(style.eq.2) then
+          call my_out(70,nx,ny,wrk5,'b2sigp_smogpi'//chns)
+          call my_out(70,nx,ny,wrk6,'b2sigp_smogpo'//chns)
+        endif
+       end if
       endif                                                           !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised source for balance

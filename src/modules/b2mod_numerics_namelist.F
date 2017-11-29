@@ -37,6 +37,7 @@
       logical, save :: last_solve_5(0:NNREGMAX)
       logical, save :: last_solve_9(0:NNREGMAX)
 #endif
+!$OMP THREADPRIVATE (last_solve_5, last_solve_9)
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
       real (kind=R8), allocatable, save :: time_factor(:,:)
@@ -80,9 +81,9 @@
       allocate(last_solve_9(0:nnreg(0)))
 #else
       call xertst (nsd.le.nsdmax,
-     1 'increase NSDMAX in b2mod_numerics_namelist')
+     1 'increase DEF_NSD in DIMENSIONS.F')
       call xertst (nnreg(0).le.nnregmax,
-     1 'increase NNREGMAX in b2mod_numerics_namelist')
+     1 'increase NNREGMAX in b2mod_indirect')
 #endif
       dtco=1.0_R8
       dtmo=1.0_R8
@@ -189,7 +190,7 @@ c additional time-modification factor
       do iy=-1,ny
         if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
         do ix=-1,nx
-          if(mod(region(ix,iy,0),4).eq.1) then
+          if(on_closed_surface(ix,iy)) then
             time_factor(ix,iy)=ttf
           else
             time_factor(ix,iy)=1.0_R8

@@ -95,8 +95,7 @@ c     the line format common
       xsize=xwidth/real(nx_page)
       ysize=yheight/real(ny_page)
       if(globalheader.ne.' ') then
-        xsize=xsize*0.98
-        ysize=ysize*0.98
+        ysize=ysize*(1.00-0.02*lbsz)
       endif
       xpos=(ix_page-1)*xsize
       ypos=(ny_page-iy_page)*ysize
@@ -185,6 +184,7 @@ c     the line format common
           colorbar_left=1.0-reserve_right
           reserve_right=reserve_right+0.02
         endif
+        if(extralabel.ne.' ') reserve_top=reserve_top+txtwdth*2/ysize
         if(reserve_right.eq.0.0) reserve_right=0.05*lbsz
       else
         reserve_bottom=0.0
@@ -237,7 +237,8 @@ c     the line format common
      1     0.0*YHEIGHT,1.0*YHEIGHT,
      2     0.0,1.0,0.0,1.0,1)
           if(noax.gt.0)
-     1     CALL PLCHHQ(0.5,0.99,GLOBALHEADER(1:LNBLNK(GLOBALHEADER)),
+     1     CALL PLCHHQ(0.5,1.0-0.01*lbsz,
+     1     GLOBALHEADER(1:LNBLNK(GLOBALHEADER)),
      1     1.0/real(max(50,lnblnk(globalheader)))*xwidth/1.25,0.0,0.0)
           call gsplci(1)
         endif

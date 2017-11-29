@@ -1,20 +1,22 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usp7_ (nx, ny, nregionv, solvereg, itcnt,          !sv 27.01.00
-     &    ne, te, conc, avisper, bvisper, cvisper,                    !sv 27.01.00
-     &    sch, respo, corpo, aa7)                                     !sv 27.01.00
+      subroutine b2usp7_ (nx, ny, nregionv, solvereg, itcnt,          !srv 27.01.00
+     &    ne, te, conc, avisper, bvisper, cvisper,                    !srv 27.01.00
+     &    sch, respo, corpo, aa7)                                     !srv 27.01.00
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_plasma
+     * , only : fac_vis
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, itcnt
       real (kind=R8) ::
      *   ne(-1:nx,-1:ny), te(-1:nx,-1:ny), conc(-1:nx,-1:ny,0:1),
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),          !sv 27.01.00
-     4   cvisper(-1:nx,-1:ny,0:1),                                    !sv 27.01.00
+     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),          !srv 27.01.00
+     4   cvisper(-1:nx,-1:ny,0:1),                                    !srv 27.01.00
      &   sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)
       logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
@@ -22,7 +24,7 @@
      *   corpo(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   aa7(-1:nx,-1:ny,-3:3)                                        !sv 11.01.00
+     *   aa7(-1:nx,-1:ny,-3:3)                                        !srv 11.01.00
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -36,30 +38,30 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k                !sv 26.01.00
-      integer, save :: iout = 0                                       !sv 08.07.08
-      character chark*1                                               !sv 08.07.08
+      integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k                !srv 26.01.00
+      integer, save :: iout = 0                                       !srv 08.07.08
+      character chark*1                                               !srv 08.07.08
       integer ireg, ileft, ibot, itop
-      real (kind=R8) :: vis_per, aa7p2, aa7m2                         !sv 27.01.00
-      save ncall, vis_per                                             !sv 27.01.00
+      real (kind=R8) :: vis_per, aa7p2, aa7m2                         !srv 27.01.00
+      save ncall, vis_per                                             !srv 27.01.00
 *   ..procedures
       intrinsic min, abs
       external subini, subend, xertst, sfill
-      external b2xvsg, b2xvff, b2ux7p                                 !sv 11.01.00
+      external b2xvsg, b2xvff, b2ux7p                                 !srv 11.01.00
 *   ..initialization
-      data ncall/0/, vis_per/0.0e0_R8/                                !sv 27.01.00
+      data ncall/0/, vis_per/0.0e0_R8/                                !srv 27.01.00
 
 *-----------------------------------------------------------------------
 *.computation
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2usp7_')                                         !sv 06.07.00
-*   ..set internal parameters on first call                           !sv
-      if (ncall.eq.0) then                                            !sv
-       call ipgetr ('b2tfhe_vis_per', vis_per)                        !sv 27.01.00 08.07.08
-       call ipgeti ('b2usp7_iout', iout)                              !sv 08.07.08
-      endif                                                           !sv
+      call subini ('b2usp7_')                                         !srv 06.07.00
+*   ..set internal parameters on first call                           !srv
+      if (ncall.eq.0) then                                            !srv
+       call ipgetr ('b2tfhe_vis_per', vis_per)                        !srv 27.01.00 08.07.08
+       call ipgeti ('b2usp7_iout', iout)                              !srv 08.07.08
+      endif                                                           !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -91,7 +93,7 @@
        enddo
       enddo
       do iy = -1, ny
-       do ix = -1, nx                                                 !sv 26.11.02
+       do ix = -1, nx                                                 !srv 26.11.02
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
          aa7(ix,iy,-1) = 0.0e0_R8
@@ -106,9 +108,9 @@
      &       aa7(leftix(ix,iy),leftiy(ix,iy),0)+conc(ix,iy,0)
          if (solvereg(ireg))
      >    aa7(ix,iy,-1) = -conc(ix,iy,0)
-        endif                                                         !sv 26.11.02
+        endif                                                         !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
-     >   aa7(ix,iy,1) = 0.0e0_R8                                      !sv 26.11.02
+     >   aa7(ix,iy,1) = 0.0e0_R8                                      !srv 26.11.02
        enddo
       enddo
       do iy = -1, ny
@@ -134,82 +136,82 @@
        enddo
       enddo
 
-*   ..compute the seven-point matrix                                  !sv 26.01.00
+*   ..compute the seven-point matrix                                  !srv 26.01.00
       aa7(:,:,-3) = 0.0e0_R8
       aa7(:,:, 3) = 0.0e0_R8
 
       do iy = -1, ny
-       do ix = -1, nx                                                 !sv 26.11.02
+       do ix = -1, nx                                                 !srv 26.11.02
          ireg = region(ix,iy,0)
          ixt = topix(ix,iy)
          iyt = topiy(ix,iy)
          ixb = bottomix(ix,iy)
          iyb = bottomiy(ix,iy)
          if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1.or.
-     &      iyt.eq.ny+1 .or. iyb.eq.-2 .or. .not.solvereg(ireg)) then !sv 26.11.02
-           aa7(ix,iy, 3) = 0.0e0_R8                                   !sv 27.01.00
-           aa7(ix,iy,-3) = 0.0e0_R8                                   !sv 27.01.00
+     &      iyt.eq.ny+1 .or. iyb.eq.-2 .or. .not.solvereg(ireg)) then !srv 26.11.02
+           aa7(ix,iy, 3) = 0.0e0_R8                                   !srv 27.01.00
+           aa7(ix,iy,-3) = 0.0e0_R8                                   !srv 27.01.00
          else if (topiy(ixt,iyt).eq.ny+1) then
-           aa7(ix,iy, 3) = 0.0e0_R8                                   !sv 27.01.00
-           aa7(ix,iy,-3) = vis_per*(                                  !sv 27.01.00
-     &       avisper(ix,iy,1)*bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1)   !sv 27.01.00
-     &                                            )                   !sv 27.01.00
-           aa7m2 =   vis_per*(                                        !sv 27.01.00
-     &       avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1) !sv 27.01.00
-     &      +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1) !sv 27.01.00
-     &                                                      )         !sv 27.01.00
-           aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3) - aa7m2      !sv 27.01.00  06.05.02
-           aa7p2 = 0.0e0_R8                                           !sv 06.05.02
-           aa7(ix,iy,2) = aa7(ix,iy,2) - aa7p2                        !sv 27.01.00
-           aa7(ix,iy,0) = aa7(ix,iy,0) + aa7p2 + aa7m2                !sv 27.01.00
+           aa7(ix,iy, 3) = 0.0e0_R8                                   !srv 27.01.00
+           aa7(ix,iy,-3) = vis_per*fac_vis(ix,iy)*(                   !srv 27.01.00
+     &       avisper(ix,iy,1)*bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1)   !srv 27.01.00
+     &                                            )                   !srv 27.01.00
+           aa7m2 =   vis_per*fac_vis(ix,iy)*(                         !srv 27.01.00
+     &       avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1) !srv 27.01.00
+     &      +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1) !srv 27.01.00
+     &                                                      )         !srv 27.01.00
+           aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3) - aa7m2      !srv 27.01.00  06.05.02
+           aa7p2 = 0.0e0_R8                                           !srv 06.05.02
+           aa7(ix,iy,2) = aa7(ix,iy,2) - aa7p2                        !srv 27.01.00
+           aa7(ix,iy,0) = aa7(ix,iy,0) + aa7p2 + aa7m2                !srv 27.01.00
          else if (bottomiy(ixb,iyb).eq.-2) then
-           aa7(ix,iy,-3) = 0.0e0_R8                                   !sv 27.01.00
-           aa7(ix,iy,3) = vis_per*(                                   !sv 27.01.00
+           aa7(ix,iy,-3) = 0.0e0_R8                                   !srv 27.01.00
+           aa7(ix,iy,3) = vis_per*fac_vis(ix,iy)*(                    !srv 27.01.00
      &         avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)
-     &        *cvisper(topix(ixt,iyt),topiy(ixt,iyt),1) )             !sv 27.01.00
-           aa7p2 =     vis_per*(                                      !sv 27.01.00
-     &       avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1) !sv 27.01.00
-     &      +avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1))!sv 27.01.00
-           aa7(ix,iy,2) = aa7(ix,iy,2) - aa7(ix,iy,3) - aa7p2         !sv 27.01.00
-           aa7m2 = 0.0e0_R8                                           !sv 06.05.02
-           aa7(ix,iy,-2) = aa7(ix,iy,-2)  - aa7m2                     !sv 27.01.00
-           aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2                 !sv 27.01.00
+     &        *cvisper(topix(ixt,iyt),topiy(ixt,iyt),1) )             !srv 27.01.00
+           aa7p2 =     vis_per*fac_vis(ix,iy)*(                       !srv 27.01.00
+     &       avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1) !srv 27.01.00
+     &      +avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1))!srv 27.01.00
+           aa7(ix,iy,2) = aa7(ix,iy,2) - aa7(ix,iy,3) - aa7p2         !srv 27.01.00
+           aa7m2 = 0.0e0_R8                                           !srv 06.05.02
+           aa7(ix,iy,-2) = aa7(ix,iy,-2)  - aa7m2                     !srv 27.01.00
+           aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2                 !srv 27.01.00
          else
-           if (topiy(ixt,iyt).lt.ny) then                             !sv 06.05.02
-             aa7(ix,iy,3) = vis_per*(                                 !sv 27.01.00
-     &        avisper(ixt,iyt,1)                                      !sv 27.01.00
-     &       *bvisper(ixt,iyt,1)*cvisper(topix(ixt,iyt),              !sv 27.01.00
-     &                                   topiy(ixt,iyt),1))           !sv 27.01.00
-           else                                                       !sv 06.05.02
-             aa7(ix,iy,3) = 0.0e0_R8                                  !sv 06.05.02
-           endif                                                      !sv 06.05.02
-           if (bottomiy(ixb,iyb).ge.0) then                           !sv 06.05.02
-             aa7(ix,iy,-3) = vis_per*(                                !sv 27.01.00
-     &        avisper(ix,iy,1)*bvisper(ixb,iyb,1)                     !sv 27.01.00
-     &       *cvisper(ixb,iyb,1))                                     !sv 27.01.00
-           else                                                       !sv 06.05.02
-             aa7(ix,iy,-3) = 0.0e0_R8  !sv because of boundary condition  06.05.02
-           endif                                                      !sv 06.05.02
-           aa7p2 =     vis_per*(                                      !sv 27.01.00
-     &        avisper(ixt,iyt,1)                                      !sv 27.01.00
-     &       *bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1)                   !sv 27.01.00
-     &       +avisper(ixt,iyt,1)                                      !sv 27.01.00
-     &       *bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)                   !sv 27.01.00
-     &       +avisper(ix ,iy ,1)                                      !sv 27.01.00
-     &       *bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)                   !sv 27.01.00
-     &                                                     )          !sv 27.01.00
-           aa7(ix,iy,2) = aa7(ix,iy,2) - aa7(ix,iy,3) - aa7p2         !sv 27.01.00
-           aa7m2 =   vis_per*(                                        !sv 27.01.00
-     &        avisper(ixt,iyt,1)                                      !sv 27.01.00
-     &       *bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)                   !sv 27.01.00
-     &       +avisper(ix ,iy ,1)                                      !sv 27.01.00
-     &       *bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)                   !sv 27.01.00
-     &       +avisper(ix ,iy ,1)                                      !sv 27.01.00
-     &       *bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1)                   !sv 27.01.00
-     &                                                     )          !sv 27.01.00
-           aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3) - aa7m2      !sv 27.01.00
-           aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2                 !sv 27.01.00
-         endif                                                        !sv 26.11.02
+           if (topiy(ixt,iyt).lt.ny) then                             !srv 06.05.02
+             aa7(ix,iy,3) = vis_per*fac_vis(ix,iy)*(                  !srv 27.01.00
+     &        avisper(ixt,iyt,1)                                      !srv 27.01.00
+     &       *bvisper(ixt,iyt,1)*cvisper(topix(ixt,iyt),              !srv 27.01.00
+     &                                   topiy(ixt,iyt),1))           !srv 27.01.00
+           else                                                       !srv 06.05.02
+             aa7(ix,iy,3) = 0.0e0_R8                                  !srv 06.05.02
+           endif                                                      !srv 06.05.02
+           if (bottomiy(ixb,iyb).ge.0) then                           !srv 06.05.02
+             aa7(ix,iy,-3) = vis_per*fac_vis(ix,iy)*(                 !srv 27.01.00
+     &        avisper(ix,iy,1)*bvisper(ixb,iyb,1)                     !srv 27.01.00
+     &       *cvisper(ixb,iyb,1))                                     !srv 27.01.00
+           else                                                       !srv 06.05.02
+             aa7(ix,iy,-3) = 0.0e0_R8  !srv because of boundary condition  06.05.02
+           endif                                                      !srv 06.05.02
+           aa7p2 =     vis_per*(                                      !srv 27.01.00
+     &        avisper(ixt,iyt,1)                                      !srv 27.01.00
+     &       *bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1)                   !srv 27.01.00
+     &       +avisper(ixt,iyt,1)                                      !srv 27.01.00
+     &       *bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)                   !srv 27.01.00
+     &       +avisper(ix ,iy ,1)                                      !srv 27.01.00
+     &       *bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)                   !srv 27.01.00
+     &                                                     )          !srv 27.01.00
+           aa7(ix,iy,2) = aa7(ix,iy,2) - aa7(ix,iy,3) - aa7p2         !srv 27.01.00
+           aa7m2 =   vis_per*fac_vis(ix,iy)*(                         !srv 27.01.00
+     &        avisper(ixt,iyt,1)                                      !srv 27.01.00
+     &       *bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)                   !srv 27.01.00
+     &       +avisper(ix ,iy ,1)                                      !srv 27.01.00
+     &       *bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)                   !srv 27.01.00
+     &       +avisper(ix ,iy ,1)                                      !srv 27.01.00
+     &       *bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1)                   !srv 27.01.00
+     &                                                     )          !srv 27.01.00
+           aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3) - aa7m2      !srv 27.01.00
+           aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2                 !srv 27.01.00
+         endif                                                        !srv 26.11.02
        enddo
       enddo
 
@@ -228,7 +230,7 @@
        enddo
       enddo
 
-      if (iout.ne.0) then                                             !sv 08.07.08 {
+      if (iout.ne.0) then                                             !srv 08.07.08 {
         do k=0,3
           write (chark,'(i1)') k  
           call my_out(70,nx,ny,sch(-1,-1,k),'b2usp7__sch'//chark)
@@ -242,10 +244,10 @@
         call my_out(70,nx,ny,aa7(-1,-1, 3),'b2usp7__aa7p3')
         call my_out(70,nx,ny,respo,'b2usp7__respo')
         call my_out(70,nx,ny,corpo,'b2usp7__corpo')
-      endif                                                           !sv 08.07.08 }
+      endif                                                           !srv 08.07.08 }
 
 *   ..solve the correction equation
-      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo, 'b2usp7_')       !sv 11.01.00
+      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo, 'b2usp7_')       !srv 11.01.00
 
 * ..return
       ncall = ncall+1

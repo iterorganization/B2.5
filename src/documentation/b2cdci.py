@@ -51,8 +51,8 @@ for category in root.find('module[@name="b2mn.dat"]').findall('category'):
             switch_name = switch.findtext('name')
             switch_default = switch.findtext('default')
             switch_note = switch.findtext('note')
-            b2cdci_switches[switch_name] = (switch_default, 
-                                            switch_description, 
+            b2cdci_switches[switch_name] = (switch_default,
+                                            switch_description,
                                             switch_note,
                                             category.attrib['name'])
 
@@ -142,13 +142,14 @@ for switch_name in switch_list:
     category = b2cdci_switches[switch_name][3]
     fort += fort_switch(switch_name, default, category, note)
 
-fort += '*  -----------------------------------------------------------------' 
+fort += '*  -----------------------------------------------------------------'
 fort += '\n*\n*\n*\n'
 fort += '*  1. Purpose of individual parameters\n*\n'
 
 
 counter = 1
-for section in category_section[1:]: # TODO remove first category
+
+for section in category_section:
     category = section[0]
     section_title = '*   ' + '1.' + str(counter) + '. ' + category + ' switches'
     counter+=1

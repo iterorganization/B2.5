@@ -18,7 +18,7 @@
 *   ..main computation
       call subini ('b2wuzd')
 *   ..test input
-      call xertst (1.le.nput, 'faulty input nput')
+!pb       call xertst (1.le.nput, 'faulty input nput')
       call xertst (1.le.ns, 'faulty input ns')
       
       if (version.lt.'01.001.024') then

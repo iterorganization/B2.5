@@ -77,7 +77,7 @@ CXX = g++
 endif
 ${OBJDIR}/%.o : %.cxx	#cxx source files
 	@- /bin/rm -f ${OBJDIR}/$*.cxx ${OBJDIR}/$*.o
-	${CXX} -c -o  $@ ${CXXFLAGS} $^
+	${CXX} -c -o $@ ${CXXFLAGS} $^
 	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
 
 # Local Variables:

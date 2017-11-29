@@ -8,6 +8,7 @@
      * wbbr(:,:,:),
      * wbbv(:,:,:),
      * wbbc(:,:,:),
+     * lengthx(:,:),                                                 !srv 13.02.17
      * lengthy(:,:),                                                 !srv 24.04.02
      * lengthy1(:,:),                                                !srv 21.05.08
      * bzb(:,:),                                                     !srv 13.10.06
@@ -25,6 +26,7 @@
       allocate (wbbr(-1:nxd,-1:nyd,0:3))
       allocate (wbbv(-1:nxd,-1:nyd,0:3))
       allocate (wbbc(-1:nxd+1,-1:nyd+1,0:3))
+      allocate (lengthx(-1:nxd,-1:nyd))                              !srv 13.02.17
       allocate (lengthy(-1:nxd,-1:nyd))                              !srv 24.04.02
       allocate (lengthy1(-1:nxd,-1:nyd))                             !srv 21.05.08
       allocate (len_surf(-1:nxd,-1:nyd))                             !srv 02.05.09
@@ -44,6 +46,7 @@
       deallocate(wbbr)
       deallocate(wbbv)
       deallocate(wbbc)
+      deallocate(lengthx)                                            !srv 13.02.17
       deallocate(lengthy)                                            !srv 24.04.02
       deallocate(lengthy1)                                           !srv 21.05.08
       deallocate(len_surf)                                           !srv 02.05.09
