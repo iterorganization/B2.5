@@ -83,7 +83,7 @@
       real (kind=R8) ::
      *  smbfrial(-1:nx,-1:ny,0:3), smbfreal(-1:nx,-1:ny,0:3),
      *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)              !srv 13.01.17 }
-     logical :: do_parallel
+      logical :: do_parallel
 *   ..procedures
       intrinsic sqrt
       real (kind=R8) ::
@@ -163,11 +163,11 @@
       if (do_parallel) call timer%start("parallel")
 #endif
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALELL DO IF(do_parallel)
-!$OMP& DEFAULT NONE
+!$OMP PARALLEL DO IF (.not. OMP_IN_PARALLEL())
+!$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(is, KabVp, ix, iy, coef, t0)
-!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, reghtix, phm0,
-!$OMP&   rz2, am, zetap, na, styl0, ua)
+!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix, 
+!$OMP&   rz2, am, zetap, na, ua)
 !$OMP& REDUCTION(+: smbfrial)
 #endif
       do is = 0, ns-1
@@ -244,12 +244,12 @@
       if (do_parallel) call timer%start("parallel")
 #endif
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALELL DO IF(do_parallel)
-!$OMP& DEFAULT NONE
-!$OMP& PRIVATE(is, KabVp, Kbatf, ka, kb, KabVp, ix, iy, coef, t0
+!$OMP PARALLEL DO IF (.not.OMP_IN_PARALLEL()) 
+!$OMP& DEFAULT(NONE)
+!$OMP& PRIVATE(is, KabVp, Kbatf, Kabtf, ka, kb, ix, iy, coef, t0,
 !$OMP&   calfab, delti, jabmax, fllim_al_ab)
-!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, reghtix,
-!$OMP&   rz2, am, zetap, na, styl0, ua, bb, phm3, gti, clifm
+!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix,
+!$OMP&   rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy,
 !$OMP&   on_closed_surface)
 !$OMP& REDUCTION(+: smbtfial)
 #endif

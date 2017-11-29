@@ -24,7 +24,7 @@
 
 #ifndef NO_OPENMP_SFILL
       do_parallel =
-     &  (.not. omp_in_parallel())
+     &  (.not. in_parallel())
      &  .and. (n > 16384)
 #endif
 
