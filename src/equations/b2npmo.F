@@ -24,6 +24,9 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_openmp
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, itcnt                                !srv 13.01.17
@@ -282,7 +285,9 @@
 
 * ..main computation
 *   ..compute individual species corrections
-
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 !!FR smt, resmt, cvct & flct accumulate by species and thus need
 !!FR to be reduction variables. 
 !!FR rob, pb, flub, flcb, cvcb, wrkf, smb are all
@@ -514,7 +519,9 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
        endif
       enddo
 !$OMP END PARALLEL DO
-
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
 csw 21feb2014, execute simultaneous corrections always
 c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.07.10
       if (solving) then

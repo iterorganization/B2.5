@@ -20,6 +20,9 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_neoclassical
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nxtl, nxtr
@@ -352,6 +355,9 @@
         else
           cssb = 0.0_R8
         endif                                                            !iyv 06.02.14
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 !! FR possible loop (1) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none) FIRSTPRIVATE(flob, conb, pb)
 !$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax, ismain)
@@ -387,6 +393,9 @@
         enddo
 !$OMP END PARALLEL DO
 !! FR end of loop (1)
+#ifdef WITH_FTIMINGS
+        call timer%stop("parallel")
+#endif
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
      &    te, po, vedia, veecrb)
@@ -482,7 +491,9 @@ cxpb
 !     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
-
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 !!FR Possible loop (2) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none)
 !$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, ix, iy, new_matrix)
@@ -654,7 +665,9 @@ cxpb
         enddo
 !$OMP END PARALLEL DO
 !! FR End of loop (2)
-
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
            call print_wrong_flows(
      &          'Before potential loop: fna(ions) at plates')
@@ -843,6 +856,9 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                 else
                   cssb = 0.0_R8
                 endif                                                    !iyv 06.02.14
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 !! FR possible loop (3) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none) LASTPRIVATE(flob, conb, pb)
 !$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax, ismain)
@@ -880,6 +896,9 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                 enddo
 !$OMP END PARALLEL DO
 !!FR End of loop (3)
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
                 if(wrong_flow .or. ipass.ne.0) then                      !xpb
                    call print_wrong_flows(
      &                  'In potential loop: fna(ions) at plates')
@@ -984,7 +1003,9 @@ c     with diamagnetic drift part                                        !xpb
              endif
            end do
          end do
-
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 !!FR loop (4) over ns suitable for OpenMP parallelisation
 !$OMP PARALLEL DO DEFAULT(none) SHARED(rza,ua,na,ns) REDUCTION(+:ue)
          do is=0,ns-1
@@ -992,7 +1013,9 @@ c     with diamagnetic drift part                                        !xpb
          enddo
 !$OMP END PARALLEL DO
 !!FR end of loop (4)
-
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
          ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
          ue(:,:)=ue(:,:)/ne(:,:)
         else
