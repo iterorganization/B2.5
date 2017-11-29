@@ -3,7 +3,8 @@
 !>      @author
 !>      Dejan Penko
 !!
-!>      @section desc   Description
+!>      @page b2uw_b2mod b2_ual_write_b2mod
+!>      @section b2uw_b2mod_desc   Description
 !!      b2_ual_write_b2mod.f90 script is used to generate b2_ual_write_b2mod.exe
 !!      (main program), which is a post-processor for b2.
 !!      The script currently reads the plasma grid
@@ -12,13 +13,24 @@
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
 !!      Library routines.
 !!
-!!      @subsection det   Details
+!!      References:
+!!          - @ref b2uw_b2mod_prog "b2_ual_write_b2mod file reference"
+!!
+!!-----------------------------------------------------------------------------
+
+!!-----------------------------------------------------------------------------
+!>      @section b2uw_b2mod_prog Program b2_ual_write_b2mod
+!!      References:
+!!          - @ref b2uw_b2mod "b2_ual_write_b2mod main page"
+!!
+!!      @subsection b2uw_b2mod_det   Details
 !!      For more information see also routine b2cdca.
 !!
 !!      The complete program performs post-processing of the
 !!      result of a b2 calculation.
 !!      This program unit opens and closes the input/output units, and
 !!      may perform some other system-dependent operations.
+
 !!
 !!      The input units are:
 !!          - ninp(0): formatted; provides output control parameters.
@@ -34,7 +46,7 @@
 !!
 !!      @note   See routine b2cdca for the meaning of "un*formatted".
 !!
-!!      @subsection pv    Parameters/variables
+!!      @subsection b2uw_b2mod_pv    Parameters/variables
 !!      @note   see also routine b2cdcv
 !!
 !!      @param  device - Device name of the IMAS IDS database
@@ -59,12 +71,12 @@
 !!      @param  username - Creator/owner of the IMAS IDS database
 !!      @param  version - Major version of the IMAS IDS database
 !!
-!!      @subsection eind  Error indicators
+!!      @subsection b2uw_b2mod_eind  Error indicators
 !!      In case an error condition is detected, a call is made to the
 !!      routine \b xerrab. This causes an error message to be printed,
 !!      after which the program halts.
 !!
-!!      @subsection syx     Exceptional syntax explanation
+!!      @subsection b2uw_b2mod_syx     Exceptional syntax explanation
 !!      @code
 !!          ! IGNORE    !! syntax used to ignore this module in list
 !!                      !! dependency when compiling the code

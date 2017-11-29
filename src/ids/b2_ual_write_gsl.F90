@@ -3,9 +3,10 @@
 !>      @author
 !>      Dejan Penko
 !!
+!>      @page b2uw_gsl b2_ual_write_gsl
 !>      @section desc2  Description
 !!      @note   This code is OUTDATED! The development continued under new
-!!              script b2_ual_write_b2mod.
+!!              script @ref b2uw_b2mod "b2_ual_write_b2mod".
 !!              The development 'moved' to new code due to different
 !!              approach of writing data to IDS using b2mod routines.
 !!
@@ -17,7 +18,18 @@
 !!      and writes it to IDS database but with the use of IMAS GGD Grid
 !!      Service Library routines.
 !!
-!!      @subsection det2  Details
+!!      References:
+!!          - @ref b2uw_gsl_prog "b2_ual_write_gsl file reference"
+!!          - @ref b2uw_b2mod "b2_ual_write_b2mod"
+!!
+!!-----------------------------------------------------------------------------
+
+!!-----------------------------------------------------------------------------
+!>      @section b2uw_gsl_prog Program b2_ual_write_gsl
+!!      References:
+!!          - @ref b2uw_gsl "b2_ual_write_gsl main page"
+!!
+!!      @subsection b2uw_gsl_det  Details
 !!      For more information see also routine b2cdca.
 !!
 !!      The complete program performs post-processing of the
@@ -39,7 +51,7 @@
 !!
 !!      @note   See routine b2cdca for the meaning of 'un*formatted'.
 !!
-!!      @subsection pv    Parameters/variables
+!!      @subsection b2uw_gsl_pv    Parameters/variables
 !!      @note   see also routine b2cdcv
 !!
 !!      @param  device - Device name of the IMAS IDS database
@@ -80,19 +92,16 @@
 !!      @param  username - Creator/owner of the IMAS IDS database
 !!      @param  version - Major version of the IMAS IDS database
 !!
-!!      @subsection eind2 Error indicators
+!!      @subsection b2uw_gsl_eind Error indicators
 !!      In case an error condition is detected, a call is made to the
 !!      routine \b xerrab. This causes an error message to be printed,
 !!      after which the program halts.
 !!
-!!      @subsection syx1    Exceptional syntax explanation
+!!      @subsection b2uw_gsl_syx    Exceptional syntax explanation
 !!      @code
 !!          ! IGNORE    !! syntax used to ignore this module in list
 !!                      !! dependency when compiling the code
 !!      @endcode
-!!
-!! -----------------------------------------------------------------------------
-
 program b2_ual_write_gsl
     use b2mod_types , B2R8 => R8
     use b2mod_rates

@@ -1,22 +1,17 @@
-!!  Legend:
-!!     !> ................ Documentation comment (file description, function
-!!                         description etc.). Also intended for doxygen
-!!                         generated documentation
-!!     !> @note .......... Documentation notes, intended for doxygen generated
-!!                         documentation
-!!     !!  ............... variables description, additional (helpful)
-!!                         information etc.
-!!     ! IGNORE    ....... Used to ignore this module in list dependency when
-!!                         building
-!!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>
-!> Module providing a mechanism to map from the B2 data structure to the
-!> IDS and CPO data structures, consisting of a routine to set up the map
-!> (b2CreateMap), a data structure to hold the map information (B2GridMap)
-!> and some service routines to handle this data structure.
-!>
+!>      @section desc  Description
+!!      Module providing a mechanism to map from the B2 data structure to the
+!!      IDS and CPO data structures, consisting of a routine to set up the map
+!!      (b2CreateMap), a data structure to hold the map information (B2GridMap)
+!!      and some service routines to handle this data structure.
+!!
+!!      @subsection pv  Parameters/variables
+!!      @param  geom_match_dist - Distance between two points at which the
+!!              points are declared to be equal
+!!      @param  ALIGNX, ALIGNY - Alignment index (for example in B2 flux arrays)
+!!      @param  MAX_SPECIAL_VERTICES - Maximum number of special vertices
+!!              expected in the grid
 !!-----------------------------------------------------------------------------
 
 module b2mod_grid_mapping
@@ -41,14 +36,17 @@ module b2mod_grid_mapping
     integer, parameter :: MAX_SPECIAL_VERTICES = 10
 
     !> Data structure holding an intermediate grid description to be
-    !> transferred into a CPO or IDS
+    !! transferred into a CPO or IDS
+    !!
+    !> Description of some variables:
+    !!  @param  ncv  - Number of all cells in the domain (2D objects)
+    !!  @param  nfcx - Number of x-aligned faces/edges in the domain
+    !!          (1D objects)
+    !!  @param  nfcy - Number of y-aligned faces/edges in the domain
+    !!          (1D objects)
+    !!  @param  nsv  - Number of special vertices
+    !!  @param  nvx  - Number of all vertices/nodes in the domain (0D objects)
     type B2GridMap
-        !! Description of some variables:
-        !!  ncv  - Number of all cells in the domain (2D objects)
-        !!  nfcx - Number of x-aligned faces/edges in the domain (1D objects)
-        !!  nfcy - Number of y-aligned faces/edges in the domain (1D objects)
-        !!  nsv  - Number of special vertices
-        !!  nvx  - Number of all vertices/nodes in the domain (0D objects)
         integer :: ncv, nfcx, nfcy, nvx
         integer :: b2nx, b2ny
 

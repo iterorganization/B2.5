@@ -3,9 +3,12 @@
 !>      @author
 !>      Dejan Penko
 !!
-!>      @section desc1  Description
+!>      @page b2uw b2_ual_write
+!>      @section b2uw_desc  Description
 !!      @note   This script is OUTDATED! The development continued under new
-!!              codes named b2_ual_write_gsl and the latest b2_ual_write_b2mod.
+!!              codes named
+!!              @ref b2uw_gsl "b2_ual_write_gsl" and the latest
+!!              @ref b2uw_b2mod "b2_ual_write_b2mod".
 !!              The development 'moved' to new codes due to different
 !!              approach of writing data to IDS using IMAS GGD routines and
 !!              b2mod scripts.
@@ -16,7 +19,19 @@
 !!      state (electron density, electron temperature, ion temperature) and
 !!      writes it to IDS database.
 !!
-!!      @subsection det1  Details
+!!      References:
+!!          - @ref b2uw_prog "b2_ual_write file reference"
+!!          - @ref b2uw_gsl "b2_ual_write_gsl"
+!!          - @ref b2uw_b2mod "b2_ual_write_b2mod"
+!!
+!!-----------------------------------------------------------------------------
+
+!!-----------------------------------------------------------------------------
+!>      @section b2uw_prog Program b2_ual_write
+!!      References:
+!!          - @ref b2uw "b2_ual_write main page"
+!!
+!!      @subsection b2uw_det  Details
 !!      For more information see also routine b2cdca.
 !!
 !!      The complete program performs post-processing of the
@@ -38,7 +53,7 @@
 !!
 !!      @note   See routine b2cdca for the meaning of 'un*formatted'.
 !!
-!!      @subsection pv  Parameters/variables
+!!      @subsection b2uw_pv  Parameters/variables
 !!      @note   see also routine b2cdcv
 !!
 !!      @param  device - Device name of the IMAS IDS database
@@ -79,19 +94,16 @@
 !!      @param  username - Creator/owner of the IMAS IDS database
 !!      @param  version - Major version of the IMAS IDS database
 !!
-!!      @subsection eind1 Error indicators
+!!      @subsection b2uw_eind Error indicators
 !!      In case an error condition is detected, a call is made to the
 !!      routine \b xerrab. This causes an error message to be printed,
 !!      after which the program halts.
 !!
-!!      @subsection syx1    Exceptional syntax explanation
+!!      @subsection b2uw_syx    Exceptional syntax explanation
 !!      @code
 !!          ! IGNORE    !! syntax used to ignore this module in list
 !!                      !! dependency when compiling the code
 !!      @endcode
-!!
-!!-----------------------------------------------------------------------------
-
 program b2_ual_write
     use b2mod_types , B2R8 => R8
     use b2mod_rates
