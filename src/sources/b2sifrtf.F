@@ -19,6 +19,9 @@
       use b2mod_geo
      , , only : hz, vol                                                 !srv 05.07.17
       use b2mod_openmp
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
@@ -80,6 +83,7 @@
       real (kind=R8) ::
      *  smbfrial(-1:nx,-1:ny,0:3), smbfreal(-1:nx,-1:ny,0:3),
      *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)              !srv 13.01.17 }
+     logical :: do_parallel
 *   ..procedures
       intrinsic sqrt
       real (kind=R8) ::
@@ -129,6 +133,7 @@
         end if
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
+      do_parallel = in_parallel()
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -154,6 +159,17 @@
       call sfill (n2*4, 0.0e0_R8, smbtfeal, 1)                          !srv 13.01.17 }
 * ..compute friction
 *   ..loop over all other species
+#ifdef WITH_FTIMINGS
+      if (do_parallel) call timer%start("parallel")
+#endif
+#ifndef NO_OPENMP_B2SIFRTF
+!$OMP PARALELL DO IF(do_parallel)
+!$OMP& DEFAULT NONE
+!$OMP& PRIVATE(is, KabVp, ix, iy, coef, t0)
+!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, reghtix, phm0,
+!$OMP&   rz2, am, zetap, na, styl0, ua)
+!$OMP& REDUCTION(+: smbfrial)
+#endif
       do is = 0, ns-1
        if(isb.ne.is .and. 
      &    .not.is_neutral(isb).and. .not.is_neutral(is)) then
@@ -184,7 +200,9 @@
         enddo
        endif
       enddo
-
+#ifdef WITH_FTIMINGS
+      if (do_parallel) call timer%stop("parallel")
+#endif
 !*   ..compute ue, electron parallel velocity
 !      call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,       !srv 05.07.17
 !     &             ne, te, na, ua, ue_ext, ne_ext, ue)
@@ -222,6 +240,19 @@
        enddo
       endif
 *   ..contribution from ions thermal force
+#ifdef WITH_FTIMINGS
+      if (do_parallel) call timer%start("parallel")
+#endif
+#ifndef NO_OPENMP_B2SIFRTF
+!$OMP PARALELL DO IF(do_parallel)
+!$OMP& DEFAULT NONE
+!$OMP& PRIVATE(is, KabVp, Kbatf, ka, kb, KabVp, ix, iy, coef, t0
+!$OMP&   calfab, delti, jabmax, fllim_al_ab)
+!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, reghtix,
+!$OMP&   rz2, am, zetap, na, styl0, ua, bb, phm3, gti, clifm
+!$OMP&   on_closed_surface)
+!$OMP& REDUCTION(+: smbtfial)
+#endif
       do is = 0, ns-1
        if(isb.ne.is .and. 
      &    .not.is_neutral(isb) .and. .not.is_neutral(is)) then
@@ -263,7 +294,9 @@ c   .. apply flux limit
         enddo
        endif
       enddo
-
+#ifdef WITH_FTIMINGS
+      if (do_parallel) call timer%stop("parallel")
+#endif
       smbtf = smbtfeal + smbtfial
 
       smbfria = smbfrial
