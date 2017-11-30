@@ -196,7 +196,7 @@ contains
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
         type(ids_generic_grid_dynamic), intent(out) :: ggd_grid !< Type of IDS
-            !< data structure, designed for handling data grid geometry
+            !< data structure, designed for handling grid geometry data
 
         integer, intent(in) :: nx   !< Number of interior cells
             !< along the first coordinate (used to define size of grid arrays:
@@ -301,7 +301,7 @@ contains
 
         !! Fill in node information
         do ivx = 1, gmap%nvx
-            !! Allocate goometry leaf for each node
+            !! Allocate geometry leaf for each node
             allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
                 &   objects_per_dimension(1)%object( ivx )%geometry(2) )
             !! Set geometry (R and Z coordinates) of each node
@@ -718,7 +718,7 @@ contains
     !> Set connectivity array for cells by defining nodes that form each cell
     subroutine setCellsConnectivityArrayNodes(ggd_grid)
         type(ids_generic_grid_dynamic), intent(inout) :: ggd_grid !< Type of IDS
-            !< data structure, designed for handling data grid geometry
+            !< data structure, designed for handling grid geometry data
         !! Internal variables
         integer, allocatable :: objects2Darray(:,:)
         integer :: num_nodes_2D     !< Total number of nodes forming one cell

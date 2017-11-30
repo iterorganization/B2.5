@@ -30,7 +30,7 @@
 !!          - @ref b2uw_gsl "b2_ual_write_gsl main page"
 !!
 !!      @subsection b2uw_gsl_det  Details
-!!      For more information see also routine b2cdca.
+!!      For more information see also routine \b b2cdca.
 !!
 !!      The complete program performs post-processing of the
 !!      result of a b2 calculation.
@@ -52,7 +52,7 @@
 !!      @note   See routine b2cdca for the meaning of 'un*formatted'.
 !!
 !!      @subsection b2uw_gsl_pv    Parameters/variables
-!!      @note   see also routine b2cdcv
+!!      @note   see also routine \b b2cdcv
 !!
 !!      @param  device - Device name of the IMAS IDS database
 !!              (i. e. solps-iter, iter, aug)
@@ -127,13 +127,37 @@ program b2_ual_write_gsl
     implicit none
 
     !! Local variables
-    character(len=24) ::  treename, username, device, version
-    integer :: cf_size1(22)
-    integer :: idx
-    integer :: shot, run
-    integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
-    real (kind=B2R8), allocatable   ::  ne1(:), te1(:), ti1(:)
-    type(ids_edge_profiles) ::  edge_profiles
+    character(len=24) :: treename   !< The name of the IMAS IDS database
+        !< (i.e. "edge_profiles" (mandatory) )
+    character(len=24) :: username   !< Creator/owner of the IMAS IDS database
+    character(len=24) :: device     !< Device name of the IMAS IDS database
+        !< (i. e. solps-iter, iter, aug)
+    character(len=24) :: version    !< Major version of the IMAS IDS database
+    integer :: cf_size1(22)     !< Number of '*cf' occurrences in read file
+    integer :: idx  !< The returned identifier to be used in the subsequent
+        !< data access operation
+    integer :: shot !< The shot number of the database being created
+    integer :: run  !< The run number of the database being created
+    integer :: ninp(0:6)    !< Specifies the input unit numbers
+    integer :: nout(0:2)    !< Specifies the output unit numbers
+    integer :: nx   !< Specifies the number of interior cells along the \b first
+        !< coordinate, respectively. The total number of cells is
+        !< (nx+2)*(ny+2)
+    integer :: ny   !< Specifies the number of interior cells along the \b
+        !< second coordinate, respectively. The total number of cells is
+        !< (nx+2)*(ny+2)
+    integer :: ns   !< Specifies the number of atomic species in the
+    integer :: idum(0:9)
+    integer :: io   !< iostat value
+    real (kind=B2R8), allocatable :: ne1(:) !< Data field holding values in
+        !< relation to quantity: Electron density
+    real (kind=B2R8), allocatable :: te1(:) !< Data field holding values in
+        !< relation to quantity: Electron temperature
+    real (kind=B2R8), allocatable :: ti1(:) !< Data field holding values in
+        !< relation to quantity: Ion temperature
+    type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store data on
+        !< edge plasma profiles  (includes the scrape-off layer and possibly
+        !< part of the confined plasma)
     !! Procedures
     external prgini, prgend, xerset, xertst, cfopen, cfruin
     !! Initialize input/output units
@@ -164,7 +188,7 @@ contains
 
     !> Subroutine used to read \b b2fgmrty (file holding grid geometry data).
     subroutine read_b2fgmtry()
-        !! Local variables
+        !! Internal variables
         character(len=120) :: lblgm
         integer :: i, j, k
 
@@ -229,35 +253,63 @@ contains
     end subroutine read_b2fgmtry
 
     !> Subroutine used to read \b b2fstate (file holding quantity data fields).
-    !! @param[in]   ninp - Specifies the input unit numbers
-    !! @param[in]   nout - Specifies the output unit numbers
-    !! @param[in]   nx - Specifies the number of interior cells along the
-    !!              first coordinate
-    !! @param[in]   ny - Specifies the number of interior cells along the
-    !!              second coordinate
-    !! @param[in]   ns - Specifies the number of atomic species in the
-    !!              calculation.
-    !! @param[out]  ne - Data field holding values in relation to quantity:
-    !!              Electron density
-    !! @param[out]  te - Data field holding values in relation to quantity:
-    !!              Electron temperature
-    !! @param[out]  ti - Data field holding values in relation to quantity:
-    !!              Ion temperature
-    subroutine read_b2fstate(ninp, nout, nx, ny, ns, ne, te, ti)
-        !! Global variables
-        integer ninp(0:6), nout(0:2), nx, ny, ns
-        integer k, is, idum(0:9) !!, nscx, iscx(0:nscxmax-1), ismain
-        real (kind=B2R8), intent(inout), allocatable :: ne(:), te(:), ti(:)
-        !! Local variables
-        character :: lblgm*120, lblcp*120, lblmn*120, lblrc*120
-        character :: cnamip*80, cvalip*80
-        character :: exp*128, comment*128
-        integer :: shot, overwrite_shotnumber
+    subroutine read_b2fstate( ninp, nout, nx, ny, ns, ne, te, ti )
+        integer :: ninp(0:6)    !< Specifies the input unit numbers
+        integer :: nout(0:2)    !< Specifies the output unit numbers
+        integer :: nx   !< Specifies the number of interior cells along the
+                        !< first coordinate
+        integer :: ny   !< Specifies the number of interior cells along the
+                        !< second coordinate
+        integer :: ns   !< Specifies the number of atomic species in the
+                        !< calculation
+        integer :: k
+        integer :: is
+        integer :: idum(0:9) !!, nscx, iscx(0:nscxmax-1), ismain
+        real(kind=B2R8), intent(inout), allocatable :: ne(:)    !< Data field
+            !< holding values in relation to quantity: Electron density
+        real(kind=B2R8), intent(inout), allocatable :: te(:)    !< Data field
+            !< holding values in relation to quantity: Electron temperature
+        real(kind=B2R8), intent(inout), allocatable :: ti(:)    !< Data field
+            !< holding values in relation to quantity: ion temperature
+        !! Internal variables
+        character :: lblgm*120
+        character :: lblcp*120
+        character :: lblmn*120
+        character :: lblrc*120
+        character :: cnamip*80
+        character :: cvalip*80
+        character :: exp*128
+        character :: comment*128
+        integer :: shot
+        integer :: overwrite_shotnumber
         integer :: cf_sizes(22)
-        logical :: timedep, snapshot, tallies, movies
-        real (kind=B2R8), allocatable :: zamin(:), zamax(:), zn(:),     &
-            &   am(:), na(:), ua(:), uadia(:), po(:), fna(:), fhe(:),   &
-            &   fhi(:), fch(:),  fch_32(:), fch_52(:), kinrgy(:), fch_p(:)
+        logical :: timedep
+        logical :: snapshot
+        logical :: tallies
+        logical :: movies
+        !! Full description of most of the variables below is available
+        !! in b2cdcv.F
+        real (kind=B2R8), allocatable :: zamin(:)   !< Minimal atomic charge
+                                                    !< range pf specie (is)
+        real (kind=B2R8), allocatable :: zamax(:)   !< Maximum atomic charge
+                                                    !< range pf specie (is)
+        real (kind=B2R8), allocatable :: zn(:) !< Nuclear charge of specie (is)
+        real (kind=B2R8), allocatable :: am(:) !< Atomic mass of specie (is)
+        real (kind=B2R8), allocatable :: na(:) !< Ion density [particles/mˆ3].
+        real (kind=B2R8), allocatable :: ua(:) !< Parallel velocity [m/s].
+        real (kind=B2R8), allocatable :: uadia(:)   !< The total effective
+            !< drift velocity of specie
+        real (kind=B2R8), allocatable :: po(:)  !< Electric potential
+        real (kind=B2R8), allocatable :: fna(:) !< Flux of atoms
+        real (kind=B2R8), allocatable :: fhe(:) !< Electron heat flux
+        real (kind=B2R8), allocatable :: fhi(:) !< All atom heat flux
+        real (kind=B2R8), allocatable :: fch(:) !< Electric current
+        real (kind=B2R8), allocatable :: fch_32(:)
+        real (kind=B2R8), allocatable :: fch_52(:)
+        real (kind=B2R8), allocatable :: kinrgy(:)
+        real (kind=B2R8), allocatable :: fch_p(:) !< The product of the
+            !< Parallel electric current and the poloidal magnetic field
+            !< component.
         real (kind=B2R8) :: time
         !! Procedures
         external subini, subend, xertst, xerrab, cfruch, cfruin, cfrure
@@ -335,10 +387,11 @@ contains
     end subroutine read_b2fstate
 
     !> Get array sizes from the b2fstate.
-    !! @param[in] array_size - Size of the array
-    function read_additional_sizes(array_size)
-        integer, intent(in) :: array_size
-        character(len=256) :: rdline, rdstring
+    function read_additional_sizes( array_size )
+        integer, intent(in) :: array_size !< Size of the array
+        !! Internal variables
+        character(len=256) :: rdline
+        character(len=256) :: rdstring
         integer ::  cfcount, stat
         integer :: cf_sizes(array_size)
         integer, dimension(:), allocatable :: read_additional_sizes
@@ -381,37 +434,75 @@ contains
     subroutine write_ids_edge_profiles( treename, shot, run, idx, username, &
             &   device, version, ne, te, ti )
         use ids_grid_unstructured   ! IGNORE
+        character(len=24) :: treename   !< The name of the IMAS IDS database
+            !< (i.e. "edge_profiles" (mandatory) )
+        character(len=24) :: username   !< Creator/owner of the IMAS IDS database
+        character(len=24) :: device !< Device name of the IMAS IDS database
+            !< (i. e. solps-iter, iter, aug)
+        character(len=24) :: version    !< Major version of the IMAS IDS database
+        integer :: shot !< The shot number of the database being created
+        integer :: run  !< The run number of the database being created
+        integer :: idx  !< The returned identifier to be used in the subsequent
+        real (kind=B2R8), intent(in) :: ne(:)   !< Data field holding values in
+            !< relation to quantity: Electron density
+        real (kind=B2R8), intent(in) :: te(:)   !< Data field holding values in
+            !< relation to quantity: Electron temperature
+        real (kind=B2R8), intent(in) :: ti(:)   !< Data field holding values in
+            !< relation to quantity: Ion temperature
         !! Internal variables
-        character(len=24) :: treename, username, device, version
-        integer :: shot, run, idx
-        real (kind=B2R8), intent(in) :: ne(:), te(:), ti(:)
-        !! Local variables
-        character(len=255) :: grid_description, gridSubset_name
-        integer :: num_nodes_all, num_nodes, num_gridSubsets
-        integer :: gridSubset_index, gridSubset_dim_index
-        integer :: numCellsX, numCellsY, num_cells, cellId
-        integer :: numEdgesX, numEdgesY, num_edges, edgeId, count, count2
-        integer :: num_ne_gridSubset, num_ne_values, num_te_gridSubset,    &
-            &   num_te_values, num_ti_gridSubset, num_ti_values,            &
-            &   num_ti_species, ion_specie
-        integer :: num_obj_0D, obj_0D_id, num_obj_2D, obj_2D_id
+        character(len=255) :: grid_description
+        character(len=255) :: gridSubset_name
+        integer :: num_nodes_all
+        integer :: num_nodes
+        integer :: num_gridSubsets
+        integer :: gridSubset_index
+        integer :: gridSubset_dim_index
+        integer :: numCellsX
+        integer :: numCellsY
+        integer :: num_cells
+        integer :: cellId
+        integer :: numEdgesX
+        integer :: numEdgesY
+        integer :: num_edges
+        integer :: edgeId
+        integer :: count
+        integer :: count2
+        integer :: num_ne_gridSubset
+        integer :: num_ne_values
+        integer :: num_te_gridSubset
+        integer :: num_te_values
+        integer :: num_ti_gridSubset
+        integer :: num_ti_values
+        integer :: num_ti_species
+        integer :: ion_specie
+        integer :: num_obj_0D
+        integer :: obj_0D_id
+        integer :: num_obj_2D
+        integer :: obj_2D_id
         integer :: i, j, k, icount, n
         integer :: homogeneous_time
         integer :: coordtype(2)
-        integer, allocatable :: edgesNodesList(:,:), cellsNodesList(:,:),   &
-            &   edgeIndicesRepeat(:)
+        integer, allocatable :: edgesNodesList(:,:)
+        integer, allocatable :: cellsNodesList(:,:)
+        integer, allocatable :: edgeIndicesRepeat(:)
         !! TODO: get time out from b2fstate
         ! real(B2R8)    ::  time
-        real(IDS_real) :: time
+        real(IDS_real) :: time  !< Generic time
         real(IDS_real), allocatable :: nodesGeoList(:,:)
         real(IDS_real) :: scalarCells(2)
-        type(ids_edge_profiles) :: edge_profiles
-        type (ids_edge_sources) :: edge_sources
-        type (ids_edge_transport) :: edge_transport
-        type(ids_edge_profiles_time_slice), pointer :: ggd
-        type(ids_generic_grid_dynamic), pointer :: grid
-        type(ids_generic_grid_dynamic_space), pointer :: space
-        type(ids_generic_grid_scalar), pointer :: idsField
+        type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
+            !< data on edge plasma profiles  (includes the scrape-off layer and
+            !< possibly part of the confined plasma)
+        type(ids_edge_profiles_time_slice), pointer :: ggd  !< Type of IDS
+            !< data structure, designed to store edge plasma quantities
+            !< represented using the general grid description, for various
+            !< time slices
+        type(ids_generic_grid_dynamic), pointer :: grid !< Type of IDS
+            !< data structure, designed for handling grid geometry data
+        type(ids_generic_grid_dynamic_space), pointer :: space  !< Type of IDS
+            !< data structure, designed for handling set of grid space data
+        type(ids_generic_grid_scalar), pointer :: idsField  !< Type of IDS
+            !< data structure, designed for handling scalar data fields
 
         !! ===  SET UP IDS ===
         write(0,*) "IDS parameters"
@@ -582,23 +673,20 @@ contains
     !> subroutine for reading edge_profiles IDS
     !> Example subroutine for reading data out from the edge_profiles IDS
     !! with Fortran90
-    !!  @param[in]  treename - the name of the IMAS IDS database,
-    !!              (i.e. "edge_profiles" (mandatory) )
-    !!  @param[in]  shot - The shot number of the database being created
-    !!  @param[in]  run - The run number of the database being created
-    !!  @param[in]  idx - The returned identifier to be used in the
-    !!              subsequent data access operation
-    !!  @param[in]  username - Creator/owner of the IMAS IDS database
-    !!  @param[in]  device - Device name of the IMAS IDS database
-    !!              (i. e. solps-iter, iter, aug)
-    !! @param[in]   version - Major version of the IMAS IDS database
     subroutine read_ids( treename, shot, run, idx, username, device, version )
+        character(len=24) :: treename   !< The name of the IMAS IDS database
+        integer :: shot !< The shot number of the database being created
+        integer :: run  !< The run number of the database being created
+        integer :: idx  !< The returned identifier to be used in the subsequent
+        character(len=24) :: username   !< Creator/owner of the IMAS IDS database
+        character(len=24) :: device !< Device name of the IMAS IDS database
+            !< (i. e. solps-iter, iter, aug)
+        character(len=24) :: version    !< Major version of the IMAS IDS database
         !! Internal variables
-        integer                 ::  shot, run, idx
-        integer                 ::  gridSubset_index
-        !! Local variables
-        character(len=24)       ::  treename, username, device, version
-        type(ids_edge_profiles) ::  edge_profiles
+        integer :: gridSubset_index !< >Grid subset base index
+        type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
+            !< data in edge plasma profiles  (includes the scrape-off layer and
+            !<  possibly part of the confined plasma)
 
         gridSubset_index = 3
 

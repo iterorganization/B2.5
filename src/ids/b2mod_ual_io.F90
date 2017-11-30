@@ -75,14 +75,14 @@ contains
     !> Write B2.5 data to IMAS IDS
     subroutine write_ids( edge_profiles, edge_sources, edge_transport )
 #       include <git_version_B25.h>
-        type (ids_edge_profiles)    :: edge_profiles    !< IDS designed to
+        type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
             !< store data on edge plasma profiles  (includes the scrape-off
             !< layer and possibly part of the confined plasma)
-        type (ids_edge_sources)     :: edge_sources !< IDS designed to store
+        type (ids_edge_sources) :: edge_sources !< IDS designed to store
             !< data on edge plasma sources. Energy terms correspond to the full
             !< kinetic energy equation (i.e. the energy flux takes into account
             !< the energy transported by the particle flux)
-        type (ids_edge_transport)   :: edge_transport !< IDS designed to store
+        type (ids_edge_transport) :: edge_transport !< IDS designed to store
             !< data on edge plasma transport. Energy terms correspond to the
             !< full kinetic energy equation (i.e. the energy flux takes into
             !< account the energy transported by the particle flux)

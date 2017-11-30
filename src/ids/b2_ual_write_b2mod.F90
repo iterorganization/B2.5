@@ -24,7 +24,7 @@
 !!          - @ref b2uw_b2mod "b2_ual_write_b2mod main page"
 !!
 !!      @subsection b2uw_b2mod_det   Details
-!!      For more information see also routine b2cdca.
+!!      For more information see also routine \b b2cdca.
 !!
 !!      The complete program performs post-processing of the
 !!      result of a b2 calculation.
@@ -47,7 +47,7 @@
 !!      @note   See routine b2cdca for the meaning of "un*formatted".
 !!
 !!      @subsection b2uw_b2mod_pv    Parameters/variables
-!!      @note   see also routine b2cdcv
+!!      @note   see also routine \b b2cdcv
 !!
 !!      @param  device - Device name of the IMAS IDS database
 !!              (i. e. solps-iter, iter, aug)
@@ -110,12 +110,28 @@ program b2_ual_write_b2mod
     implicit none
 
     !! Local variables
-    character(len=24) :: treename, username, device, version
-    integer :: idx, i
-    integer :: shot, run
-    type(ids_edge_profiles) :: edge_profiles
-    type(ids_edge_sources) :: edge_sources
-    type(ids_edge_transport) :: edge_transport
+    character(len=24) :: treename   !< The name of the IMAS IDS database
+        !< (i.e. "edge_profiles" (mandatory) )
+    character(len=24) :: username   !< Creator/owner of the IMAS IDS database
+    character(len=24) :: device     !< Device name of the IMAS IDS database
+        !< (i. e. solps-iter, iter, aug)
+    character(len=24) :: version    !< Major version of the IMAS IDS database
+    integer :: idx  !< The returned identifier to be used in the subsequent
+        !< data access operation
+    integer :: i    !< Iterator
+    integer :: shot !< The shot number of the database being created
+    integer :: run  !< The run number of the database being created
+    type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store data on
+        !< edge plasma profiles  (includes the scrape-off layer and possibly
+        !< part of the confined plasma)
+    type (ids_edge_sources) :: edge_sources !< IDS designed to store
+        !< data on edge plasma sources. Energy terms correspond to the full
+        !< kinetic energy equation (i.e. the energy flux takes into account
+        !< the energy transported by the particle flux)
+    type (ids_edge_transport) :: edge_transport !< IDS designed to store
+        !< data on edge plasma transport. Energy terms correspond to the
+        !< full kinetic energy equation (i.e. the energy flux takes into
+        !< account the energy transported by the particle flux)
 
     !! Check if supposed new file already exists and delete it
     call checkFileAndDelete( "b2fparam" )
@@ -160,11 +176,10 @@ contains
 
     !> Subroutine intended to check if supposed new file already exists. If
     !! the file exists it deletes it.
-    !! @param   filename - Name of the file to be checked
     subroutine checkFileAndDelete( fileName )
+        character(len=*), intent(in) :: fileName    !< Name of the file to be
+                                                    !< checked
         !! Internal variables
-        character(len=*), intent(in) :: fileName
-        !! Local variables
         integer :: stat
         logical :: file_exists
 
@@ -179,35 +194,33 @@ contains
 
     !> Subroutine used to put data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
-    !!      @param  edge_profiles - IDS designed to store data on edge plasma
-    !!              profiles  (includes the scrape-off layer and possibly part
-    !!              of the confined plasma)
-    !!      @param  edge_sources - IDS designed to store data on edge plasma
-    !!              sources. Energy terms correspond to the full kinetic energy
-    !!              equation (i.e. the energy flux takes into account the energy
-    !!              transported by the particle flux)
-    !!      @param  edge_transport - IDS designed to store data on edge plasma
-    !!              transport. Energy terms correspond to the full kinetic energy
-    !!              equation (i.e. the energy flux takes into account the energy
-    !!              transported by the particle flux)
-    !!      @param  treename - the name of the IMAS IDS database,
-    !!              (i.e. "edge_profiles" (mandatory) )
-    !!      @param  shot - The shot number of the database being created
-    !!      @param  run - The run number of the database being created
-    !!      @param  idx - The returned identifier to be used in the subsequent
-    !!              data access operation
-    !!      @param  username - Creator/owner of the IMAS IDS database
-    !!      @param  device - Device name of the IMAS IDS database
-    !!              (i. e. solps-iter, iter, aug)
-    !!      @param  version - Major version of the IMAS IDS database
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &
             &   treename, shot, run, idx, username, device, version )
-        !! Internal variables
-        integer :: shot, run, idx
-        type(ids_edge_profiles), intent(inout) :: edge_profiles
-        type(ids_edge_sources), intent(inout) :: edge_sources
-        type(ids_edge_transport), intent(inout) :: edge_transport
-        character(len=24) :: treename, username, device, version
+        type(ids_edge_profiles), intent(inout)  :: edge_profiles    !< IDS
+            !< designed to store data on edge plasma profiles  (includes the
+            !< scrape-off layer and possibly part of the confined plasma)
+        type (ids_edge_sources), intent(inout)  :: edge_sources     !< IDS
+            !< designed to store data on edge plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_edge_transport), intent(inout)  :: edge_transport !< IDS
+            !< designed to store  data on edge plasma transport. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+            !< (i.e. "edge_profiles" (mandatory) )
+        integer, intent(in) :: shot !< The shot number of the database being created
+        integer, intent(in) :: run  !< The run number of the database being created
+        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
+            !< data access operation
+        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
+            !< database
+        character(len=24), intent(in) :: device     !< Device name of the IMAS IDS database
+            !< (i. e. solps-iter, iter, aug)
+        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+            !< database
 
         !! Set data to edge_profiles IDS
         write(0,*) "Writing to edge_profiles, edge_sources and edge_transport IDS"
@@ -240,23 +253,20 @@ contains
 
     !> Example subroutine for reading edge_profiles IDS
     !! with Fortran90
-    !!      @param  treename - the name of the IMAS IDS database,
-    !!              (i.e. "edge_profiles" (mandatory) )
-    !!      @param  shot - The shot number of the database being created
-    !!      @param  run - The run number of the database being created
-    !!      @param  idx - The returned identifier to be used in the subsequent
-    !!                    data access operation
-    !!      @param  username - Creator/owner of the IMAS IDS database
-    !!      @param  device - Device name of the IMAS IDS database
-    !!              (i. e. solps-iter, iter, aug)
-    !!      @param  version - Major version of the IMAS IDS database
     subroutine read_ids( treename, shot, run, idx, username, device, version )
+        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+        integer, intent(in) :: shot !< The shot number of the database being created
+        integer, intent(in) :: run  !< The run number of the database being created
+        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
+        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS database
+        character(len=24), intent(in) :: device !< Device name of the IMAS IDS database
+            !< (i. e. solps-iter, iter, aug)
+        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS database
         !! Internal variables
-        character(len=24)       ::  treename, username, device, version
-        integer                 ::  shot, run, idx
-        integer                 ::  gridSubset_index
-        !! Local variables
-        type(ids_edge_profiles) ::  edge_profiles
+        integer :: gridSubset_index !< >Grid subset base index
+        type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
+            !< data in edge plasma profiles  (includes the scrape-off layer and
+            !<  possibly part of the confined plasma)
 
         gridSubset_index = 3
 
