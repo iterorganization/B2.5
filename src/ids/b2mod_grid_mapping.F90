@@ -45,7 +45,7 @@ module b2mod_grid_mapping
         integer :: nfcy !< Number of y-aligned faces/edges in the domain
                         !< (1D objects)
         integer :: nvx  !< Number of all vertices/nodes in the domain
-                        !<(0D objects)
+                        !<(0D objects) (nvx = ( nx+1 )*( ny+1 ) - 1 )
         integer :: b2nx
         integer :: b2ny
 

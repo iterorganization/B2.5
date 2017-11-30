@@ -1,6 +1,6 @@
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>      @page b2uw_ualio_grid_desc Description
+!>      @section b2uw_ualio_grid_desc Description
 !!      Module providing routines to set the B2 grid geometry, including grid
 !!      subsets (subgrids), to ITM CPO or IMAS IDS grid description data
 !!      structure.
@@ -253,7 +253,6 @@ contains
         call fillInGridSubsetDescription()
 
 contains
-
     !> Fill in the general grid description
     subroutine fillInGridDescription()
         !! Internal variables
@@ -288,17 +287,17 @@ contains
 
         !! Allocate the number of objects of each type
         !! nodes
+        !! gmap%nvx = ( nx+1 )*( ny+1 ) - 1)
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(1)%object( ( nx+1 )*( ny+1 ) - 1) )
-        !!$ TODO: use 'gmap%nvx' instead of '( nx+1 )*( ny+1 ) - 1)''
-        ! allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-            ! &   objects_per_dimension(1)%object( gmap%nvx ) )
+            &   objects_per_dimension(1)%object( gmap%nvx ) )
         !! edges
+        !! gmap%nfcx + gmap%nfcy = nx*( ny+1 ) + ( nx+1 ) * ny
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(2)%object( nx * ( ny+1 ) + ( nx+1 ) * ny ) )
+            &   objects_per_dimension(2)%object( gmap%nfcx + gmap%nfcy ) )
         !! cells
+        !! gmap%ncv = nx*ny
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(3)%object( nx*ny ) )
+            &   objects_per_dimension(3)%object( gmap%ncv ) )
 
         !! Fill in node information
         do ivx = 1, gmap%nvx
@@ -698,15 +697,19 @@ contains
         !! If requested, add a second space for the toroidal angle
         if (SPACE_COUNT == SPACE_TOROIDALANGLE) then
             if ( TOROIDAL_PERIODIC ) then
-                call gridSetupStruct1dSpace( ggd_grid%space(SPACE_TOROIDALANGLE), &
-                    & COORDTYPE_PHI, &
-                    & (/  ( ( 2*B2_PI / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL - 1 ) /), &
-                    & .true. ) !! periodic = .true.
+                call gridSetupStruct1dSpace(                                    &
+                    &   ggd_grid%space(SPACE_TOROIDALANGLE), COORDTYPE_PHI,     &
+                    &   (/                                                      &
+                    &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL-1 )   &
+                    &   /),                                                     &
+                    &   .true. ) !! periodic = .true.
             else
-                call gridSetupStruct1dSpace( ggd_grid%space(SPACE_TOROIDALANGLE), &
-                    & COORDTYPE_PHI, &
-                    & (/  ( ( 2*B2_PI / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL ) /) , &
-                    & .false. ) !! periodic = .false.
+                call gridSetupStruct1dSpace(                                    &
+                    &   ggd_grid%space( SPACE_TOROIDALANGLE ), COORDTYPE_PHI,   &
+                    &   (/                                                      &
+                    &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL ) &
+                    &   /),                                                     &
+                    &   .false. ) !! periodic = .false.
             end if
         end if
 
@@ -741,8 +744,8 @@ contains
         ! ids_dim_2D.object.resize(ncv)
 
         ! Already done
-        allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)% &
-                &   object( gmap%ncv ) )
+        allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%  &
+            &   objects_per_dimension(3)%object( gmap%ncv ) )
 
         !! Get 2D objects geometry (nodes) data from CPO, sort them into more
         !! orderly form  and put them into the IDS
@@ -754,19 +757,21 @@ contains
         do icv = 1, gmap%ncv
             ix = gmap%mapCvix( icv )
             iy = gmap%mapCviy( icv )
-            allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)% &
-                &   object(icv)%nodes(num_nodes_2D) )
+            allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%  &
+                &   objects_per_dimension(3)%object(icv)%nodes(num_nodes_2D) )
 
             edge_idx = gmap%mapFcI( ix, iy, LEFT )
             free_edge(1) = gmap%mapFcI( ix, iy, BOTTOM )
             free_edge(2) = gmap%mapFcI( ix, iy, RIGHT )
             free_edge(3) = gmap%mapFcI( ix, iy, TOP )
 
-            node_idx(1) = ggd_grid%space( SPACE_POLOIDALPLANE )%   &
-                &   objects_per_dimension(2)%object( edge_idx )%boundary(1)%index
+            node_idx(1) = ggd_grid%space( SPACE_POLOIDALPLANE )%    &
+                &   objects_per_dimension(2)%object( edge_idx )%    &
+                &   boundary(1)%index
             last_idx = 2
-            node_idx(last_idx) = ggd_grid%space( SPACE_POLOIDALPLANE )%   &
-                &   objects_per_dimension(2)%object( edge_idx )%boundary(2)%index
+            node_idx(last_idx) = ggd_grid%space( SPACE_POLOIDALPLANE )% &
+                &   objects_per_dimension(2)%object( edge_idx )%        &
+                &   boundary(2)%index
 
             do loop_count = 1, 4
                 if (last_idx < 4) then
@@ -814,10 +819,17 @@ contains
 
     !> Define grid subsets
     subroutine fillInGridSubsetDescription
-
         !! Internal variables
-        integer :: geoId, iRegion, GSubsetCount, iType, nGSubset
-        integer :: xIn, yIn, xOut, yOut, iCoreGS
+        integer :: geoId
+        integer :: iRegion
+        integer :: GSubsetCount
+        integer :: iType
+        integer :: nGSubset !< Total number of grid subsets
+        integer :: xIn
+        integer :: yIn
+        integer :: xOut
+        integer :: yOut
+        integer :: iCoreGS !< Core grid subset ID
         integer :: cls(SPACE_COUNT_MAX)
         integer, allocatable :: xpoints(:,:)
         integer, allocatable :: indexList1d(:)
@@ -908,7 +920,8 @@ contains
             &   IDS_CLASS_CELL, 1, GRID_SUBSET_CELLS, "Cells",  &
             &   "All faces (1D objects) in the domain."  )
 
-        !! Grid subset of all x-points (in one poloidal plane at toroidal index 1)
+        !! Grid subset of all x-points (in one poloidal plane at toroidal
+        !! index 1)
         !! Assemble object descriptor for x-points
         allocate( xpoints(gmap%nsv, SPACE_COUNT) )
         xpoints = 1
@@ -1041,21 +1054,31 @@ contains
     end subroutine b2IMASFillGridDescription
 
     !> Figure out starting cells for inner and outer midplane on core boundary
-    !> by finding the points on the core boundary with minimum and maximum r
-    !> positions
-    subroutine findMidplaneCells(coreBndGridSubset, gmap, crx, xIn, yIn,    &
-            &   xOut, yOut)
-        type(ids_generic_grid_dynamic_grid_subset), intent(in) :: coreBndGridSubset
-        type(B2GridMap), intent(in) :: gmap
-        !! x/radial vertex coordinates
-        real(IDS_real), intent(in) :: crx(-1:gmap%b2nx,-1:gmap%b2ny,0:3)
-        integer, intent(out) :: xIn, yIn, xOut, yOut
+    !! by finding the points on the core boundary with minimum and maximum r
+    !! positions
+    subroutine findMidplaneCells( GridSubset, gmap, crx, xIn, yIn,  &
+            &   xOut, yOut )
+        type(ids_generic_grid_dynamic_grid_subset), intent(in) :: GridSubset
+            !< Type of IDS data structure, designed for handling grid subset
+            !< definitions
+        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
+            !< b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
+        real(IDS_real), intent(in) :: crx( -1:gmap%b2nx, -1:gmap%b2ny, 0:3 )
+            !< Horizontal (x/radial) vertex coordinates of the four corners
+            !< of the (ix, iy) cell
+        integer, intent(out) :: xIn
+        integer, intent(out) :: yIn
+        integer, intent(out) :: xOut
+        integer, intent(out) :: yOut
 
-
-        !! internal
-        real(IDS_real) :: rMin, rMax
-        type(GridObject) :: obj
-        integer :: ix, iy, iObj
+        !! Internal variables
+        real(IDS_real) :: rMin
+        real(IDS_real) :: rMax
+        type(GridObject) :: obj !< GGD grid object
+        integer :: ix   !< x-aligned cell index
+        integer :: iy   !< y-aligned cell index
+        integer :: iObj !< Object index
 
         rMin = huge(rMin)
         rMax = -huge(rMax)
@@ -1063,9 +1086,9 @@ contains
         xIn = huge(xIn)
         xOut = huge(xOut)
 
-        !! Loop over all faces in core boundary subgrid
-        do iObj = 1, getGridSubsetSize(coreBndGridSubset)
-            obj = getGridSubsetObject(coreBndGridSubset, iObj)
+        !! Loop over all faces in core boundary grid subset
+        do iObj = 1, getGridSubsetSize(GridSubset)
+            obj = getGridSubsetObject(GridSubset, iObj)
             !! Expect a face
             call xertst( all( obj%cls( 1:SPACE_COUNT ) ==               &
                 &   IDS_CLASS_POLOIDALRADIAL_FACE ), "b2mod_ual_io_grid &
@@ -1548,21 +1571,32 @@ contains
 #endif
 
     !> Collect the grid indices of all vertices on the radial grid line outward
-    !> starting at the vertex at position six,siy in computational space.
-    function collectRadialVertexIndexList(gmap, cflag, six, siy, topix,     &
-        &   topiy) result( indexList )
-        integer, allocatable, dimension(:,:) :: indexList
+    !! starting at the vertex at position six,siy in computational space.
+    function collectRadialVertexIndexList( gmap, cflag, six, siy, topix,    &
+        &   topiy ) result( indexList )
+        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
+            !< b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
+        integer, allocatable, dimension(:,:) :: indexList   !< 2D index list
 
-        type(B2GridMap), intent(in) :: gmap
-        integer, intent(in) :: six, siy
-        integer, intent(in) ::  cflag(-1:gmap%b2nx,-1:gmap%b2ny, CARREOUT_NCELLFLAGS)
+        integer, intent(in) :: six  !< First vertex position
+        integer, intent(in) :: siy  !< Second vertex position
+        integer, intent(in) ::  &
+            &   cflag( -1:gmap%b2nx, -1:gmap%b2ny, CARREOUT_NCELLFLAGS )
 
         !! B2 connectivity array
-        integer, intent(in) :: &
-            & topix(-1:gmap%b2nx,-1:gmap%b2ny),topiy(-1:gmap%b2nx,-1:gmap%b2ny)
+        integer, intent(in) :: topix( -1:gmap%b2nx, -1:gmap%b2ny ) !< Top
+            !< neighbour poloidal (first coordinate) index array
+        integer, intent(in) :: topiy( -1:gmap%b2nx, -1:gmap%b2ny ) !< Top
+            !< neighbour radial (second coordinate) index
 
-        !! internal
-        integer :: ix, iy, nix, niy, nVx, iVx
+        !! Internal variables
+        integer :: ix   !< x-aligned cell index
+        integer :: iy   !< y-aligned cell index
+        integer :: nix
+        integer :: niy
+        integer :: nVx
+        integer :: iVx
 
         !! First figure out how many points we have: start at six, siy,
         !! go towards top until running out of physical domain
@@ -1625,21 +1659,33 @@ contains
     end function collectRadialVertexIndexList
 
     !> Collect the grid indices of all vertices on the radial grid line outward
-    !> starting at the vertex at position six,siy in computational space.
+    !! starting at the vertex at position six,siy in computational space.
     subroutine collectRadialVertexIndexListSubroutine(gmap, cflag, six, siy,  &
             &   topix, topiy, indexList)
-        integer, allocatable, dimension(:,:), intent(out) :: indexList
+        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
+            !< b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
+        integer, allocatable, dimension(:,:), intent(out) :: indexList !< 2D
+            !< index list
 
-        type(B2GridMap), intent(in) :: gmap
-        integer, intent(in) :: six, siy
-        integer, intent(in) ::  cflag(-1:gmap%b2nx,-1:gmap%b2ny, CARREOUT_NCELLFLAGS)
+        integer, intent(in) :: six  !< First vertex position
+        integer, intent(in) :: siy  !< Second vertex position
+        integer, intent(in) ::  &
+            &   cflag( -1:gmap%b2nx, -1:gmap%b2ny, CARREOUT_NCELLFLAGS )
 
         !! B2 connectivity array
-        integer, intent(in) :: &
-            & topix(-1:gmap%b2nx,-1:gmap%b2ny),topiy(-1:gmap%b2nx,-1:gmap%b2ny)
+        integer, intent(in) :: topix( -1:gmap%b2nx, -1:gmap%b2ny ) !< Top
+            !< neighbour poloidal (first coordinate) index array
+        integer, intent(in) :: topiy( -1:gmap%b2nx, -1:gmap%b2ny ) !< Top
+            !< neighbour radial (second coordinate) index
 
-        !! internal
-        integer :: ix, iy, nix, niy, nVx, iVx
+        !! Internal variables
+        integer :: ix   !< x-aligned cell index
+        integer :: iy   !< y-aligned cell index
+        integer :: nix
+        integer :: niy
+        integer :: nVx
+        integer :: iVx
 
         !! First figure out how many points we have: start at six, siy,
         !! go towards top until running out of physical domain
@@ -1704,14 +1750,10 @@ contains
 
 
     !> Build an index list of all objects of a given region type
-    !> (b2mod_connectivity.REGIONTYPE_*) for a given region id.
-    !> @param gmap the B2<->CPO grid map, as built by b2CreateMap
-    !> @param region the B2 region array
-    !> @param iRegionType The region type
-    !> @param iRegion The region
-    !> @result The list of indices for all objects that constitute this grid
-    !> region. The array has two dimensions because it is given as a list of
-    !> object descriptors.
+    !! (b2mod_connectivity.REGIONTYPE_*) for a given region id.
+    !! @result The list of indices for all objects that constitute this grid
+    !! region. The array has two dimensions because it is given as a list of
+    !! object descriptors.
     function collectIndexListForRegion(gmap, region, iRegionType,   &
         &   iRegion) result( indexList )
         integer, allocatable, dimension(:,:) :: indexList
@@ -1784,28 +1826,32 @@ contains
     end function collectIndexListForRegion
 
     !> Build an index list of all objects of a given region type
-    !> (b2mod_connectivity.REGIONTYPE_*) for a given region id.
-    !> @param gmap the B2<->CPO grid map, as built by b2CreateMap
-    !> @param region the B2 region array
-    !> @param iRegionType The region type
-    !> @param iRegion The region
-    !> @result The list of indices for all objects that constitute this grid
-    !> region. The array has two dimensions because it is given as a list of
-    !> object descriptors.
+    !! (b2mod_connectivity.REGIONTYPE_*) for a given region id.
+    !! @result The list of indices for all objects that constitute this grid
+    !! region. The array has two dimensions because it is given as a list of
+    !! object descriptors.
     subroutine collectIndexListForRegionSubroutine(gmap, region, iRegionType,   &
         &   iRegion, indexlist)
-        integer, allocatable, dimension(:,:), intent(out) :: indexList
+        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
+            !< b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
+        integer, allocatable, dimension(:,:), intent(out) :: indexList !< 2D
+            !< index list
+        integer, intent(in) :: region( -1:gmap%b2nx, -1:gmap%b2ny, 0:2 )
+        integer, intent(in) :: iRegionType
+        integer, intent(in) :: iRegion
 
-        type(B2GridMap), intent(in) :: gmap
-        integer, intent(in) :: region(-1:gmap%b2nx,-1:gmap%b2ny,0:2)
-        integer, intent(in) :: iRegionType, iRegion
-
-        !! internal
-        integer :: ix, iy, nInd, iInd, ind
+        !! Internal variables
+        integer :: ix   !< x-aligned cell index
+        integer :: iy   !< y-aligned cell index
+        integer :: nInd
+        integer :: iInd
+        integer :: ind
 
         !! Figure out how many indices to expect. A simple count of the form
         !! nInd = count( region(:,:,iRegionType) == iRegion )
-        !! will not do, because we have to account for removed objects (ghost cells/faces).
+        !! will not do, because we have to account for removed objects
+        !! (ghost cells/faces).
 
         !! search the relevant objects and count them
         nInd = 0

@@ -13,7 +13,7 @@
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
 !!      Library routines.
 !!
-!!      References:
+!!      \b References:
 !!          - @ref b2uw_b2mod_prog "b2_ual_write_b2mod file reference"
 !!
 !!-----------------------------------------------------------------------------

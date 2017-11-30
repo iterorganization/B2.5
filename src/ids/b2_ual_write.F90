@@ -19,7 +19,7 @@
 !!      state (electron density, electron temperature, ion temperature) and
 !!      writes it to IDS database.
 !!
-!!      References:
+!!      \b References:
 !!          - @ref b2uw_prog "b2_ual_write file reference"
 !!          - @ref b2uw_gsl "b2_ual_write_gsl"
 !!          - @ref b2uw_b2mod "b2_ual_write_b2mod"
@@ -119,12 +119,40 @@ program b2_ual_write
     implicit none
 
     !! Local variables
-    integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
-    real(kind=B2R8), allocatable   ::  ne1(:), te1(:), ti1(:)
-    integer     ::  idx
-    integer     ::  shot, run
-    character(len=24)           ::  treename, username, device, version
-    type(ids_edge_profiles)     ::  edge_profiles
+    integer :: ninp(0:6)    !< Specifies the input unit numbers
+    integer :: nout(0:2)    !< Specifies the output unit numbers
+    integer :: nx   !< Specifies the number of interior cells along the \b first
+        !< coordinate, respectively. The total number of cells is
+        !< (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny). It will hold
+        !< that 0.le.nx and 0.le.ny
+    integer :: ny   !< Specifies the number of interior cells along the \b
+        !< second coordinate, respectively. The total number of cells is
+        !< (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny). It will hold
+        !< that 0.le.nx and 0.le.ny
+    integer :: ns   !< Specifies the number of atomic species in the
+        !< calculation. The species are indexed by (0:ns-1). It will hold
+        !< that 1.le.ns.
+    integer :: idum(0:9)
+    integer :: io   !< iostat value
+    real(kind=B2R8), allocatable :: ne1(:)  !< Data field holding values in
+        !< relation to quantity: Electron density
+    real(kind=B2R8), allocatable :: te1(:)  !< Data field holding values in
+        !< relation to quantity: Electron temperature
+    real(kind=B2R8), allocatable :: ti1(:)  !< Data field holding values in
+        !< relation to quantity: Ion temperature
+    integer :: idx  !< The returned identifier to be used in the subsequent
+        !< data access operation
+    integer :: shot !< The shot number of the database being created
+    integer :: run  !< The run number of the database being created
+    character(len=48) :: treename !< The name of the IMAS IDS database
+        !< (i.e. "edge_profiles" (mandatory) )
+    character(len=48) :: username   !< Creator/owner of the IMAS IDS database
+    character(len=48) :: device !< Device name of the IMAS IDS database
+        !< (i. e. solps-iter, iter, aug)
+    character(len=48) :: version    !< Major version of the IMAS IDS database
+    type(ids_edge_profiles) :: edge_profiles !< IDS designed to store data on
+        !< edge plasma profiles  (includes the scrape-off layer and possibly
+        !< part of the confined plasma)
     !! Procedures
     external prgini, prgend, xerset, xertst, cfopen, cfruin
     !! Initialize input/output units

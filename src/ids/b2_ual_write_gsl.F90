@@ -18,7 +18,7 @@
 !!      and writes it to IDS database but with the use of IMAS GGD Grid
 !!      Service Library routines.
 !!
-!!      References:
+!!      \b References:
 !!          - @ref b2uw_gsl_prog "b2_ual_write_gsl file reference"
 !!          - @ref b2uw_b2mod "b2_ual_write_b2mod"
 !!

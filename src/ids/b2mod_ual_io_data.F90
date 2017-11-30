@@ -1,6 +1,6 @@
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>      @page b2uw_ualio_data_desc Description
+!>      @section b2uw_ualio_data_desc Description
 !!      Module providing routines to transform variables stored in the B2
 !!      data structure into the form expected by CPO/IDS data structure.
 !!
@@ -51,7 +51,7 @@ contains
     function b2IMASTransformDataB2ToIDSCell( grid, gridSubsetId, gmap,  &
             &   b2CellData ) result( idsdata )
         type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS data
-            !< structure, designed for handling data grid geometry
+            !< structure, designed for handling grid geometry data
         integer, intent(in) :: gridSubsetId !< ID (base index) of the
             !< grid subset the data is to be stored onx
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
@@ -69,7 +69,7 @@ contains
     function b2IMASTransformDataB2ToIDSFace( grid, gridSubsetId, gmap,  &
             &   b2FaceData ) result( idsdata )
         type(ids_generic_grid_dynamic), intent(in)  :: grid !< Type of IDS data
-            !< structure, designed for handling data grid geometry
+            !< structure, designed for handling grid geometry data
         integer, intent(in) :: gridSubsetId !< ID (base index) of the
             !< grid subset the data is to be stored on
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
@@ -92,7 +92,7 @@ contains
     function b2IMASTransformDataB2ToIDSVertex( grid, gridSubsetId, gmap,     &
             &   b2VertexData ) result( idsdata )
         type(ids_generic_grid_dynamic), intent(in)  :: grid !< Type of IDS data
-            !< structure, designed for handling data grid geometry
+            !< structure, designed for handling grid geometry data
         integer, intent(in)         :: gridSubsetId !< ID (base index) of the
             !< grid subset the data is to be stored on
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
@@ -114,7 +114,7 @@ contains
     function b2IMASTransformDataB2ToIDSGeneral( grid, gridSubsetId, gmap,   &
             &   b2CellData, b2FaceData, b2VertexData ) result( idsdata )
         type(ids_generic_grid_dynamic), intent(in)  :: grid !< Type of IDS data
-            !< structure, designed for handling data grid geometry
+            !< structure, designed for handling grid geometry data
         integer, intent(in) :: gridSubsetId !< Base grid subset index
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be

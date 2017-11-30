@@ -1,6 +1,6 @@
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>      @page b2uw_ualio_desc Description
+!>      @section b2uw_ualio_desc Description
 !!      Module providing main routines for setting processed B2.5 data for
 !!      ITM CPO edge or IMAS edge_profiles, edge_sources and edge_transport IDSs.
 !!
