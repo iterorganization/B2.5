@@ -133,7 +133,7 @@
         end if
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
-      do_parallel = in_parallel()
+      do_parallel = .not. in_parallel()
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
