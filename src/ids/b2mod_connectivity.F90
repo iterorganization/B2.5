@@ -1,7 +1,6 @@
-!!  Legend:
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>      @section desc Description
+!>      @section b2mod_conn_desc Description
 !!      Module providing Basic connectivity routines and routines for obtaining
 !!      cell and grid characterization information.
 !!

@@ -1,20 +1,15 @@
-!!  Legend:
-!!     !> ................ Documentation comment (file description, function
-!!                         description etc.). Also intended for doxygen
-!!                         generated documentation
-!!     !> @note .......... Documentation notes, intended for doxygen generated
-!!                         documentation
-!!     !!  ............... variables description, additional (helpful)
-!!                         information etc.
-!!     ! IGNORE    ....... Used to ignore this module in list dependency when
-!!                         building
-!!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>
-!> Module providing routines to transform variables stored in the B2 data structure into
-!> the form expected by CPO/IDS data structure.
-!>
+!>      @page b2uw_ualio_data_desc Description
+!!      Module providing routines to transform variables stored in the B2
+!!      data structure into the form expected by CPO/IDS data structure.
+!!
+!!      @subsection b2uw_ualio_data_syx     Exceptional syntax explanation
+!!      @code
+!!          ! IGNORE    !! syntax used to ignore this module in list
+!!                      !! dependency when compiling the code
+!!      @endcode
+!!
 !!-----------------------------------------------------------------------------
 module b2mod_ual_io_data
 
@@ -42,7 +37,7 @@ module b2mod_ual_io_data
 
 #ifdef IMAS
     !> Provides service routines to transform data from B2 to IMAS IDS
-    !> (data in form of vertex, face or cell)
+    !! (data in form of vertex, face or cell)
     interface b2IMASTransformDataB2ToIDS
         module procedure b2IMASTransformDataB2ToIDSCell,    &
             &   b2IMASTransformDataB2ToIDSFace
@@ -55,11 +50,16 @@ contains
     !> Transform data from B2 to IDS cell
     function b2IMASTransformDataB2ToIDSCell( grid, gridSubsetId, gmap,  &
             &   b2CellData ) result( idsdata )
-        real(IDS_real), dimension(:), pointer       :: idsdata
-        type(ids_generic_grid_dynamic), intent(in)  :: grid
-        integer, intent(in)         :: gridSubsetId
-        type(B2GridMap), intent(in) :: gmap
+        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS data
+            !< structure, designed for handling data grid geometry
+        integer, intent(in) :: gridSubsetId !< ID (base index) of the
+            !< grid subset the data is to be stored onx
+        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
+            !< by b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
         real(IDS_real), intent(in)  :: b2CellData( -1:gmap%b2nx, -1:gmap%b2ny )
+        real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
+                !< handing data field values
 
         idsdata => b2IMASTransformDataB2ToIDSGeneral( grid, gridSubsetId,   &
             &   gmap, b2CellData = b2CellData )
@@ -68,12 +68,18 @@ contains
     !> Transform data from B2 to IDS face
     function b2IMASTransformDataB2ToIDSFace( grid, gridSubsetId, gmap,  &
             &   b2FaceData ) result( idsdata )
-        real(IDS_real), dimension(:), pointer       :: idsdata
-        type(ids_generic_grid_dynamic), intent(in)  :: grid
-        integer, intent(in)         :: gridSubsetId
-        type(B2GridMap), intent(in) :: gmap
-        real(IDS_real), intent(in)  ::  &
-            &   b2FaceData( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )
+        type(ids_generic_grid_dynamic), intent(in)  :: grid !< Type of IDS data
+            !< structure, designed for handling data grid geometry
+        integer, intent(in) :: gridSubsetId !< ID (base index) of the
+            !< grid subset the data is to be stored on
+        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
+            !< by b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
+        real(IDS_real), intent(in) ::   &
+            &   b2FaceData( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )   !< Face data
+            !< given on the 2D B2 data structure
+        real(IDS_real), dimension(:), pointer :: idsdata !< Array for
+            !< handing data field values
 
         idsdata => b2IMASTransformDataB2ToIDSGeneral( grid, gridSubsetId,   &
             &   gmap, b2FaceData = b2FaceData )
@@ -85,41 +91,52 @@ contains
     !> Transform data from B2 to IDS vertex
     function b2IMASTransformDataB2ToIDSVertex( grid, gridSubsetId, gmap,     &
             &   b2VertexData ) result( idsdata )
-        real(IDS_real), dimension(:), pointer       :: idsdata
-        type(ids_generic_grid_dynamic), intent(in)  :: grid
-        integer, intent(in)         :: gridSubsetId
-        type(B2GridMap), intent(in) :: gmap
+        type(ids_generic_grid_dynamic), intent(in)  :: grid !< Type of IDS data
+            !< structure, designed for handling data grid geometry
+        integer, intent(in)         :: gridSubsetId !< ID (base index) of the
+            !< grid subset the data is to be stored on
+        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
+            !< b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
         real(IDS_real), intent(in)  :: b2VertexData( -1:gmap%b2nx, -1:gmap%b2ny )
+            !< Array holding vertex coordinates (2D space)
+        real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
+            !< handing data field values
 
         idsdata => b2IMASTransformDataB2ToIDSGeneral( grid, gridSubsetId,   &
             &   gmap, b2VertexData = b2VertexData )
     end function b2IMASTransformDataB2ToIDSVertex
 
     !> Transform a quantity stored on faces from a 2d B2 array into a 1d IMAS
-    !> IDS array for a given grid subset id. Either b2CellData or b2FaceData
-    !> must be given. Do not use this directly, use the provided general
-    !> interface b2IMASTransformDataB2ToIDS instead.
-    !>
-    !> @param grid The IMAS IDS grid description
-    !> @param gridSubsetId Id of the grid subset the data is to be stored on.
-    !> @param gmap The grid mapping as computed by b2CreateMap
-    !> @param b2CellData Cell data given on the 2d b2 data structure
-    !> @param b2FaceData Face data given on the 2d b2 data structure
+    !! IDS array for a given grid subset id. Either b2CellData or b2FaceData
+    !! must be given. Do not use this directly, use the provided general
+    !! interface b2IMASTransformDataB2ToIDS instead.
     function b2IMASTransformDataB2ToIDSGeneral( grid, gridSubsetId, gmap,   &
             &   b2CellData, b2FaceData, b2VertexData ) result( idsdata )
-        real(IDS_real), dimension(:), pointer       :: idsdata
-        type(ids_generic_grid_dynamic), intent(in)  :: grid
-        integer, intent(in)         :: gridSubsetId
-        type(B2GridMap), intent(in) :: gmap
+        type(ids_generic_grid_dynamic), intent(in)  :: grid !< Type of IDS data
+            !< structure, designed for handling data grid geometry
+        integer, intent(in) :: gridSubsetId !< Base grid subset index
+        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
+            !< by b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
         real(IDS_real), intent(in), optional :: &
-            &   b2CellData( -1:gmap%b2nx, -1:gmap%b2ny )
+            &   b2CellData( -1:gmap%b2nx, -1:gmap%b2ny )    !< Cell data given
+            !< on the 2D B2 data structure
         real(IDS_real), intent(in), optional :: &
-            &   b2FaceData( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )
+            &   b2FaceData( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )   !< Face data
+            !< given on the 2D B2 data structure
         real(IDS_real), intent(in), optional :: &
-            &   b2VertexData( -1:gmap%b2nx, -1:gmap%b2ny )
+            &   b2VertexData( -1:gmap%b2nx, -1:gmap%b2ny )  !< Vertex data
+            !< given on the 2D B2 data structure
+        real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
+            !< handing data field values
 
-        !! internal
-        integer :: nobjs, iobj, ifc, icv, ivx
+        !! Internal variables
+        integer :: nobjs    !< Total number of objects
+        integer :: iobj     !< Object index (iterator)
+        integer :: ifc      !< Face index
+        integer :: icv      !< Cell index
+        integer :: ivx      !< vertex index
         type(GridObject) :: curObj
 
         !! .neqv. is xor (exclusive or)

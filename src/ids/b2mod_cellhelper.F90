@@ -1,10 +1,10 @@
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION (doxygen 1.8.8):
-!>      @section desc   Description
+!>      @section b2mod_ch_desc   Description
 !!      Module providing routines for point distance measure and cell geometry
 !!      type recognition.
 !!
-!!      @subsection pv    Parameters/variables
+!!      @subsection b2mod_ch_pv    Parameters/variables
 !!      @note   see also routine b2cdcv
 !!
 !!      @param  crx, cry - For (ix,iy) in (-1:nx,-1:ny), crx(ix,iy,0:3) specify

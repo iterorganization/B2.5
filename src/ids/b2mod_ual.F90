@@ -1,23 +1,12 @@
-!!  Legend:
-!!     !> ................ Documentation comment (file description, function
-!!                         description etc.). Also intended for doxygen
-!!                         generated documentation
-!!     !> @note .......... Documentation notes, intended for doxygen generated
-!!                         documentation
-!!     !!  ............... variables description, additional (helpful)
-!!                         information etc.
-!!     ! IGNORE    ....... Used to ignore this module in list dependency when
-!!                         building
-!!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>
-!> Module providing Basic UAL routines shared by the entire SOLPS application
-!> chain.
-!>
-!> @note    For IMAS: IMAS GGD (GSL) library provides similar and greater
-!>          number of routines that are being used for the same purposes.
-!>
+!>      @section b2mod_ual_desc  Description
+!!      Module providing Basic UAL routines shared by the entire SOLPS
+!!      application chain.
+!!
+!!      @note   For IMAS: IMAS GGD (GSL) library provides similar and greater
+!!              number of routines that are being used for the same purposes.
+!!
 !!-----------------------------------------------------------------------------
 module b2mod_ual
 
@@ -42,24 +31,32 @@ module b2mod_ual
 contains
 
   !> Routine to open UAL database.
-  !> @note For IMAS IDS is recommended use of IMAS GGD library routine
-  !> "exampleOpenIDS"
-  subroutine open_ual(idx, shot, run, time, user, tokamak, dataversion, &
-        &   doCreate, useHdf5, nmlFile)
-    integer, intent(out) :: idx
-    integer, intent(in), optional :: shot, run
-    real(R8), intent(out), optional :: time     !> Time is special: it is not
-                                                !> used here, but can be read
-                                                !> from the namelist and
-                                                !> returned
-    character(*), intent(in), optional :: user
-    character(*), intent(in), optional :: tokamak
-    character(*), intent(in), optional :: dataversion
+  !! @note For IMAS IDS is recommended use of IMAS GGD library routine
+  !! "exampleOpenIDS"
+  subroutine open_ual( idx, shot, run, time, user, tokamak, dataversion,    &
+        &   doCreate, useHdf5, nmlFile )
+    integer, intent(out) :: idx !< The returned identifier to be used in the
+                                !< subsequent data access operation
+    integer, intent(in), optional :: shot   !< The shot number of the database
+                                            !< being created
+    integer, intent(in), optional :: run    !< The run number of the database
+                                            !< being created
+    real(R8), intent(out), optional :: time !< Generic time.
+                                            !! Time is special: it is not
+                                            !! used here, but can be read
+                                            !! from the namelist and
+                                            !! returned
+    character(*), intent(in), optional :: user  !< Creator/owner of the
+                                                !< database
+    character(*), intent(in), optional :: tokamak !< Device name of the
+        !< database (i. e. solps-iter, iter, aug)
+    character(*), intent(in), optional :: dataversion   !< Major version of the
+                                                        !< database
     logical, intent(in), optional :: doCreate
     logical, intent(in), optional :: useHdf5
     character(*), intent(in), optional :: nmlFile
 
-    !! internal
+    !! Internal variables
 
     character(*), parameter :: NAMELIST_FILE = "ual.namelist"
     integer, parameter :: NAMELIST_UNIT = 979
@@ -86,49 +83,49 @@ contains
     namelist /ual_namelist/ lTreename, lShot, lRun, lTime, lRefshot,    &
         &   lRefrun, lUser, lTokamak, lDataversion, openEnv, lDoCreate, lUseHdf5
 
-    if (present(shot)) lShot = shot
-    if (present(run)) lRun = run
-    if (present(user)) lUser = user
-    if (present(tokamak)) lTokamak = tokamak
-    if (present(dataversion)) lDataversion = dataversion
-    if (present(doCreate)) lDoCreate = doCreate
-    if (present(useHdf5)) lUseHdf5 = useHdf5
+    if( present( shot ) ) lShot = shot
+    if( present( run ) ) lRun = run
+    if( present( user ) ) lUser = user
+    if( present( tokamak ) ) lTokamak = tokamak
+    if( present( dataversion ) ) lDataversion = dataversion
+    if( present( doCreate ) ) lDoCreate = doCreate
+    if( present( useHdf5 ) ) lUseHdf5 = useHdf5
 
-    if (present(user)) openEnv = .true.
+    if( present( user ) ) openEnv = .true.
 
     !! If file exists, read namelist from configuration file
     !! If not, write out namelist
-    if (present(nmlFile)) then
-        inquire(file=nmlFile, exist=namelistExists)
+    if( present( nmlFile ) ) then
+        inquire( file=nmlFile, exist=namelistExists )
     else
-        inquire(file=NAMELIST_FILE, exist=namelistExists)
+        inquire( file=NAMELIST_FILE, exist=namelistExists )
     end if
-    if (namelistExists) then
-        if (present(nmlFile)) then
-            open(unit=NAMELIST_UNIT, file=nmlFile)
+    if( namelistExists ) then
+        if( present( nmlFile ) ) then
+            open( unit=NAMELIST_UNIT, file=nmlFile )
         else
-            open(unit=NAMELIST_UNIT, file=NAMELIST_FILE)
+            open( unit=NAMELIST_UNIT, file=NAMELIST_FILE )
         end if
-        read (NAMELIST_UNIT, nml=ual_namelist)
-        close(unit=NAMELIST_UNIT)
+        read( NAMELIST_UNIT, nml=ual_namelist )
+        close( unit=NAMELIST_UNIT )
     else
-        if (present(nmlFile)) then
-            open(unit=NAMELIST_UNIT, file=nmlFile, status="new", action="write")
+        if( present( nmlFile ) ) then
+            open( unit=NAMELIST_UNIT, file=nmlFile, status="new", action="write")
         else
-            open(unit=NAMELIST_UNIT, file=NAMELIST_FILE, status="new",  &
-                &   action="write")
+            open( unit=NAMELIST_UNIT, file=NAMELIST_FILE, status="new", &
+                &   action="write" )
         end if
-        write (NAMELIST_UNIT, nml=ual_namelist)
-        close(unit=NAMELIST_UNIT)
+        write( NAMELIST_UNIT, nml=ual_namelist )
+        close( unit=NAMELIST_UNIT )
     end if
 
     !! establish UAL access
-    if (lDoCreate) then
+    if( lDoCreate) then
 #ifdef IMAS
-        if (lUseHdf5) then
+        if( lUseHdf5) then
             call imas_create_hdf5(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
         else
-            if (openEnv) then
+            if( openEnv) then
                 call imas_create_env(lTreename, lShot, lRun, lRefshot,  &
                     &   lRefrun, idx, lUser, lTokamak, lDataversion)
             else
@@ -136,10 +133,10 @@ contains
             end if
         end if
     else
-        if (lUseHdf5) then
+        if( lUseHdf5) then
             call imas_open_hdf5(lTreename, lShot, lRun, idx)
         else
-            if (openEnv) then
+            if( openEnv) then
                 call imas_open_env(lTreename, lShot, lRun, idx,  lUser, &
                     &   lTokamak, lDataversion)
             else
@@ -148,10 +145,10 @@ contains
         end if
 #else
 #ifdef ITM
-        if (lUseHdf5) then
+        if( lUseHdf5) then
             call euITM_create_hdf5(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
         else
-            if (openEnv) then
+            if( openEnv) then
                 call euITM_create_env(lTreename, lShot, lRun, lRefshot, &
                     &   lRefrun, idx, lUser, lTokamak, lDataversion)
             else
@@ -159,10 +156,10 @@ contains
             end if
         end if
     else
-        if (lUseHdf5) then
+        if( lUseHdf5) then
             call euITM_open_hdf5(lTreename, lShot, lRun, idx)
         else
-            if (openEnv) then
+            if( openEnv) then
                 call euITM_open_env(lTreename, lShot, lRun, idx,  lUser,    &
                     &   lTokamak, lDataversion)
             else
@@ -176,16 +173,17 @@ contains
     end if
 
     !! Return time if requested
-    if (present(time)) time = lTime
+    if( present( time ) ) time = lTime
 
   end subroutine open_ual
 
   !> Close UAL.
-  !> @note  For IMAS edge_profiles IDS "examplePutIDS" IMAS GGD library routine
-  !> can be used instead (that routine also writes the set data to IDS and then
-  !> closes the IDS)
+  !! @note  For IMAS edge_profiles IDS "examplePutIDS" IMAS GGD library routine
+  !! can be used instead (that routine also writes the set data to IDS and then
+  !! closes the IDS)
   subroutine close_ual(idx)
-    integer, intent(in) :: idx
+    integer, intent(in) :: idx  !< The returned identifier to be used in the
+                                !< subsequent data access operation
 
 #ifdef IMAS
     call imas_close(idx)

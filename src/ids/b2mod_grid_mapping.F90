@@ -1,17 +1,18 @@
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>      @section desc  Description
+!>      @section b2mod_gmap_desc  Description
 !!      Module providing a mechanism to map from the B2 data structure to the
 !!      IDS and CPO data structures, consisting of a routine to set up the map
 !!      (b2CreateMap), a data structure to hold the map information (B2GridMap)
 !!      and some service routines to handle this data structure.
 !!
-!!      @subsection pv  Parameters/variables
+!!      @subsection b2mod_gmap_pv  Parameters/variables
 !!      @param  geom_match_dist - Distance between two points at which the
 !!              points are declared to be equal
 !!      @param  ALIGNX, ALIGNY - Alignment index (for example in B2 flux arrays)
 !!      @param  MAX_SPECIAL_VERTICES - Maximum number of special vertices
 !!              expected in the grid
+!!
 !!-----------------------------------------------------------------------------
 
 module b2mod_grid_mapping
@@ -37,51 +38,53 @@ module b2mod_grid_mapping
 
     !> Data structure holding an intermediate grid description to be
     !! transferred into a CPO or IDS
-    !!
-    !> Description of some variables:
-    !!  @param  ncv  - Number of all cells in the domain (2D objects)
-    !!  @param  nfcx - Number of x-aligned faces/edges in the domain
-    !!          (1D objects)
-    !!  @param  nfcy - Number of y-aligned faces/edges in the domain
-    !!          (1D objects)
-    !!  @param  nsv  - Number of special vertices
-    !!  @param  nvx  - Number of all vertices/nodes in the domain (0D objects)
     type B2GridMap
-        integer :: ncv, nfcx, nfcy, nvx
-        integer :: b2nx, b2ny
+        integer :: ncv  !< Number of all cells in the domain (2D objects)
+        integer :: nfcx !< Number of x-aligned faces/edges in the domain
+                        !< (1D objects)
+        integer :: nfcy !< Number of y-aligned faces/edges in the domain
+                        !< (1D objects)
+        integer :: nvx  !< Number of all vertices/nodes in the domain
+                        !<(0D objects)
+        integer :: b2nx
+        integer :: b2ny
 
-        !! Mapping arrays:
-        !! 1d CPO lists -> 2d B2 data structure ( i -> (ix, iy) )
-        ! b2cv( mapCvix(i), mapCviy(i) ) = cpocv(i)
-        ! b2fc( mapFcix(i), mapFciy(i), mapFciFace(i) ) = cpofc(i)
-        !! for "normal" faces, mapFcIFace will be LEFT or BOTTOM
-
-        ! b2vx( mapVxix(i), mapVxiy(i), mapVxIVx(i) ) = cpovx(i)
-        !! for "normal" vertices, mapVxIVx(i) will be 1 (lower left vertex)
-
-        integer, dimension(:), allocatable :: mapCvix, mapCviy
-        integer, dimension(:), allocatable :: mapFcix, mapFciy, mapFcIFace
-        integer, dimension(:), allocatable :: mapVxix, mapVxiy, mapVxIVx
-
-        !! 2d B2 data structure -> 1d CPO lists ( (ix, iy) -> i )
-        ! cpocv( mapCvI(ix, iy) ) = b2cv(ix, iy)
-        ! cpofc( mapFcI(ix, iy, iFace) ) = b2fc(ix, iy, iFace)
-        ! cpovx( mapVxI(ix, iy, iVertex) ) = b2vx(ix, iy, iVertex)
-
+        integer, dimension(:), allocatable :: mapCvix !< Array of horizontal
+            !< (x-aligned) cell position in computational space
+        integer, dimension(:), allocatable :: mapCviy !< Array of vertical
+            !< (y-aligned) cell position in computational space
+        integer, dimension(:), allocatable :: mapFcix !< Array of horizontal
+            !< (x-aligned) face/edge position in computational space
+        integer, dimension(:), allocatable :: mapFciy !< Array of vertical
+            !< (y-aligned) face/edge position in computational space
+        integer, dimension(:), allocatable :: mapFcIFace
+        integer, dimension(:), allocatable :: mapVxix !< Array of horizontal
+            !< (x-aligned) vertex/node position in computational space
+        integer, dimension(:), allocatable :: mapVxiy !< Array of vertical
+            !< (y-aligned) vertex/node position in computational space
+        integer, dimension(:), allocatable :: mapVxIVx
         integer, dimension(:,:), allocatable :: mapCvI
-        integer, dimension(:,:,:), allocatable :: mapFcI, mapVxI
+        integer, dimension(:,:,:), allocatable :: mapFcI !< 3D array of faces
+            !< composing the quadliateral in the list.
+            !< gmap%mapFcI( ix, iy, POSITION ), where POSITION is LEFT, BOTTOM,
+            !< RIGHT OR TOP
+        integer, dimension(:,:,:), allocatable ::mapVxI
 
         !! Special vertices (x-points)
-        !! number of special vertices
-        integer :: nsv
+        integer :: nsv !< Number of special vertices
         !! svix, sviy : positions of special vertices in B2 data structure
         !! (lower left corner of svix, sviy cell)
-        !! svi: indices of special vertices in the CPO data structure
-        integer, dimension(:), allocatable :: svix, sviy, svi
+        integer, dimension(:), allocatable :: svix !< Array of horizontal
+            !< (x-aligned) positions of special vertices in B2 data structure
+        integer, dimension(:), allocatable :: sviy !< Array of vertical
+            !< (y-aligned) positions of special vertices in B2 data structure
+        integer, dimension(:), allocatable :: svi !< Array of indices of
+            !< special vertices in the CPO/IDS data structure
 
-        !! Correspondence between vertices and cells
-        integer, dimension(:,:), allocatable :: mapCvixVx
-        integer, dimension(:,:), allocatable :: mapCviyVx
+        integer, dimension(:,:), allocatable :: mapCvixVx !< Correspondence
+            !< between vertices and cells
+        integer, dimension(:,:), allocatable :: mapCviyVx !< Correspondence
+            !< between vertices and cells
     end type B2GridMap
 
     logical, save :: mapInitialized = .false.
@@ -89,20 +92,46 @@ module b2mod_grid_mapping
 
     private :: R8
 
+!!$        !! Mapping arrays:
+!!$        !! 1d lists -> 2d B2 data structure ( i -> (ix, iy) )
+!!$        ! b2cv( mapCvix(i), mapCviy(i) ) = cpocv(i)
+!!$        ! b2fc( mapFcix(i), mapFciy(i), mapFciFace(i) ) = cpofc(i)
+!!$        !! for "normal" faces, mapFcIFace will be LEFT or BOTTOM
+
+!!$        ! b2vx( mapVxix(i), mapVxiy(i), mapVxIVx(i) ) = cpovx(i)
+!!$        !! for "normal" vertices, mapVxIVx(i) will be 1 (lower left vertex)
+
+!!$        !! 2d B2 data structure -> 1d CPO lists ( (ix, iy) -> i )
+!!$        ! cpocv( mapCvI(ix, iy) ) = b2cv(ix, iy)
+!!$        ! cpofc( mapFcI(ix, iy, iFace) ) = b2fc(ix, iy, iFace)
+!!$        ! cpovx( mapVxI(ix, iy, iVertex) ) = b2vx(ix, iy, iVertex)
+
 contains
 
     !! service routines for B2GridData
 
     !> Set B2GridMap type, intended to be filled with grid geometry information
-    !> using b2CreateMap subroutine
+    !! using b2CreateMap subroutine
     subroutine allocateB2GridMap( gd, nx, ny, ncv, nfcx, nfcy, nvx )
-        type(B2GridMap), intent(inout) :: gd
-        integer, intent(in) ::  nx, ny, ncv, nfcx, nfcy, nvx
+        type(B2GridMap), intent(inout) :: gd    !< The grid mapping as computed
+            !< by b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
+        integer, intent(in) ::  nx  !< Specifies the number of interior cells
+                                    !< along the first coordinate
+        integer, intent(in) ::  ny  !< Specifies the number of interior cells
+                                    !< along the second coordinate
+        integer, intent(in) ::  ncv !< Number of all cells (2D objects)
+        integer, intent(in) ::  nfcx    !< Number of x-aligned faces/edges
+                                        !< (1D objects)
+        integer, intent(in) ::  nfcy    !< Number of y-aligned faces/edges
+                                        !< (1D objects)
+        integer, intent(in) ::  nvx     !< Number of all vertices/nodes
+                                        !< (0D objects)
 
         gd%ncv = ncv
-        gd%nfcx = nfcx  !! Number of x-aligned faces/edges (1D objects)
-        gd%nfcy = nfcy  !! Number of y-aligned faces/edges (1D objects)
-        gd%nvx = nvx    !! Number of all vertices/nodes (0D objects)
+        gd%nfcx = nfcx
+        gd%nfcy = nfcy
+        gd%nvx = nvx
 
         gd%b2nx = nx
         gd%b2ny = ny
@@ -142,7 +171,9 @@ contains
 
     !> Deallocate B2GridMap
     subroutine deallocateB2GridMap( gd )
-        type(B2GridMap), intent(inout) :: gd
+        type(B2GridMap), intent(inout) :: gd   !< The grid mapping as computed
+            !< by b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
 
         deallocate( gd%mapCvI )
         deallocate( gd%mapFcI )
@@ -165,44 +196,77 @@ contains
 
         use b2mod_cellhelper
 
-        !!   ..input arguments (unchanged on exit)
-
+        !! Input arguments (unchanged on exit)
         !! Size of grid arrays: (-1:nx, -1:ny)
-        integer :: nx, ny
-        !!   .. output arguments
+        integer :: nx   !< Specifies the number of interior cells
+                        !< along the first coordinate (poloidal)
+        integer :: ny   !< Specifies the number of interior cells
+                        !< along the second coordinate (radial)
+
+        !! Output arguments
         !! vertex coordinates
-        real(R8), intent(in) :: crx( -1:nx, -1:ny, 0:3 ), cry( -1:nx, -1:ny, 0:3 )
+        real(R8), intent(in) :: crx( -1:nx, -1:ny, 0:3 ) !< Horizontal vertex
+            !< coordinates of the four corners of the (ix, iy) cell
+        real(R8), intent(in) :: cry( -1:nx, -1:ny, 0:3 ) !< Vertical vertex
+            !< coordinates of the four corners of the (ix, iy) cell
         integer cflag( -1:nx, -1:ny, CARREOUT_NCELLFLAGS )
-        integer, intent(in) :: leftix( -1:nx, -1:ny), leftiy( -1:nx, -1:ny ),   &
-            &   rightix( -1:nx, -1:ny ), rightiy( -1:nx, -1:ny ),               &
-            &   topix( -1:nx, -1:ny ), topiy( -1:nx, -1:ny ),                   &
-            &   bottomix( -1:nx, -1:ny ), bottomiy( -1:nx, -1:ny )
-        logical, intent(in) :: includeGhostCells
+        integer, intent(in) :: leftix( -1:nx, -1:ny)    !< Left neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: leftiy( -1:nx, -1:ny )   !< Left neighbour radial
+            !< (second coordinate) index
+        integer, intent(in) :: rightix( -1:nx, -1:ny )  !< Right neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: rightiy( -1:nx, -1:ny )  !< Right neighbour
+            !< radial (second coordinate) index
+        integer, intent(in) :: topix( -1:nx, -1:ny )    !< Top neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: topiy( -1:nx, -1:ny )    !< Top neighbour radial
+            !< (second coordinate) index
+        integer, intent(in) :: bottomix( -1:nx, -1:ny ) !< Bottom neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: bottomiy( -1:nx, -1:ny ) !< Bottom neighbour
+            !< radial (second coordinate) index
+        logical, intent(in) :: includeGhostCells    !< Include "fake" cells
 
-        type(B2GridMap), intent(inout) :: gd
+        type(B2GridMap), intent(inout) :: gd    !< The grid mapping as computed
+            !< by b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
 
-        !! internal
-        integer :: ix, iy, ic, ifcx, ifcy, ivx, i1, i2, nbix, nbiy, nbix2,  &
-            &   nbiy2, iFace
-        integer :: iCorner, index, iPass
-        !! cvi ... control volume index
-        !! fc[x,y]i ... x/y-aligned face index (fcxi: only BOTTOM and TOP used,
-        !!              fcyi: only LEFT and RIGHT used)
-        !! vxi ... vertex index
+        !! internal variables
+        integer :: ix   !< x-aligned (poloidal) cell index
+        integer :: iy   !< y-aligned (radial) cell index
+        integer :: ic   !< Cell index
+        integer :: ifcx !< x-aligned face index
+        integer :: ifcy !< y-aligned face index
+        integer :: ivx  !< Vertex/node index
+        integer :: i1   !< Iterator
+        integer :: i2   !< Iterator
+        integer :: nbix
+        integer :: nbiy
+        integer :: nbix2
+        integer :: nbiy2
+        integer :: iFace !< Face/edge index
+        integer :: iCorner
+        integer :: index
+        integer :: iPass
+
         !! There is an additional strip of "fake" cells (even faker than
         !! ghost cells) at the top and right to be able to also write out the
         !! ghost cells
-        integer, dimension(-1:nx, -1:ny) :: cvi
-        integer, dimension(-1:nx, -1:ny, 0:3) :: fcxi, fcyi
-        integer, dimension(-1:nx+1, -1:ny+1, 0:3) :: vxi
+        integer, dimension(-1:nx, -1:ny) :: cvi !< Control volume index
+        integer, dimension(-1:nx, -1:ny, 0:3) :: fcxi   !< x-aligned face index
+            !< (only BOTTOM and TOP used)
+        integer, dimension(-1:nx, -1:ny, 0:3) :: fcyi   !< Y-aligned face index
+            !< (only LEFT and RIGHT used)
+        integer, dimension(-1:nx+1, -1:ny+1, 0:3) :: vxi !< vertex index
 
-        logical :: cvNeeded( (nx + 2) * (ny + 2) ), &
-            &   vxNeeded( (nx + 2) * (ny + 2) * 4)
-        logical :: fcXNeeded( (nx + 2) * (ny + 2) * 2), &
-            &   fcYNeeded( (nx + 2) * (ny + 2) * 2)
+        logical :: cvNeeded( (nx + 2) * (ny + 2) )
+        logical :: vxNeeded( (nx + 2) * (ny + 2) * 4)
+        logical :: fcXNeeded( (nx + 2) * (ny + 2) * 2)
+        logical :: fcYNeeded( (nx + 2) * (ny + 2) * 2)
 
-        integer :: fcxiReduce((nx + 2) * (ny + 2) * 2), &
-            &   fcyiReduce((nx + 2) * (ny + 2) * 2)
+        integer :: fcxiReduce((nx + 2) * (ny + 2) * 2)
+        integer :: fcyiReduce((nx + 2) * (ny + 2) * 2)
         integer :: vxiReduce((nx + 2) * (ny + 2) * 4)
         integer :: nsector((nx + 2) * (ny + 2) * 4)
 
@@ -210,15 +274,20 @@ contains
 
         !! list of identified special vertices
         !! vertex indices (ix, iy)
-        integer, dimension(MAX_SPECIAL_VERTICES) :: svix, sviy, &
-            &   svixAlias, sviyAlias
-        !! number of special vertices
-        integer :: svc
-        !! number of duplicate special vertices
-        integer :: svcDuplicates
+        integer, dimension(MAX_SPECIAL_VERTICES) :: svix !< Array of horizontal
+            !< (x-aligned) positions of special vertices in B2 data structure
+        integer, dimension(MAX_SPECIAL_VERTICES) :: sviy !< Array of vertical
+            !< (y-aligned) positions of special vertices in B2 data structure
+        integer, dimension(MAX_SPECIAL_VERTICES) :: svixAlias
+        integer, dimension(MAX_SPECIAL_VERTICES) :: sviyAlias
+        integer :: svc  !< Number of special vertices
+        integer :: svcDuplicates    !< number of duplicate special vertices
 
         !! numbers of unique objects
-        integer :: ncv, nfcx, nfcy, nvx
+        integer :: ncv  !< Number of all cells (2D objects)
+        integer :: nfcx !< Number of x-aligned faces/edges (1D objects)
+        integer :: nfcy !< Number of y-aligned faces/edges (1D objects)
+        integer :: nvx  !< Number of all vertices/nodes (0D objects)
 
         call logmsg( LOGDEBUG, "b2CreateMap: create map for a nx="  &
             &   //int2str(nx)//", ny="//int2str(ny)//" b2 grid" )
@@ -696,15 +765,26 @@ contains
 contains
 
     !> For a given corner vertex of a cell, check whether in any connected
-    !> cell a vertex index was already assigned to this vertex
+    !! cell a vertex index was already assigned to this vertex
     subroutine findExistingVertexIndex( ix, iy, iCorner, index, &
             &   stopOnUnneededCells)
-        integer, intent(in) :: ix, iy, iCorner
+        integer, intent(in) :: ix   !< Specifies index of interior cell along
+                                    !< the first coordinate
+        integer, intent(in) :: iy   !< Specifies index of interior cell along
+                                    !< the second coordinate
+        integer, intent(in) :: iCorner
         integer, intent(out) :: index
         logical, intent(in), optional :: stopOnUnneededCells
 
         !! internal
-        integer :: iRot, iStep, nix, niy, nix2, niy2, iDir, nICorner
+        integer :: iRot
+        integer :: iStep
+        integer :: nix
+        integer :: niy
+        integer :: nix2
+        integer :: niy2
+        integer :: iDir
+        integer :: nICorner
         logical :: lStopOnUnneededCells
 
         lStopOnUnneededCells = .false.
@@ -750,12 +830,15 @@ contains
         index = GRID_UNDEFINED
     end subroutine findExistingVertexIndex
 
-    !! Test whether the vertex associated with the cell (ix, iy) is special,
+    !> Test whether the vertex associated with the cell (ix, iy) is special,
     !! i.e. a x-point
     !! This steps around the vertex (left-bottom-right-top) and checks
     !! whether the resulting position is equal to the starting position
     logical function isSpecialVertex( ix, iy )
-        integer, intent(in) :: ix, iy
+        integer, intent(in) :: ix   !< Specifies index of interior cell along
+                                    !< the first coordinate
+        integer, intent(in) :: iy   !< Specifies index of interior cell along
+                                    !< the second coordinate
 
         !! internal
         integer :: x, y, xn, yn
@@ -834,11 +917,17 @@ contains
 
     !> test whether cell (ix,iy) is actually used
     function isUnneededCell( nx, ny, cflag, includeGhostCells, ix, iy )
-        logical isUnneededCell
-        integer, intent(in) :: nx, ny
-        integer, intent(in) :: ix, iy
+        integer, intent(in) :: nx   !< Specifies the number of interior cells
+                                    !< along the first coordinate
+        integer, intent(in) :: ny   !< Specifies the number of interior cells
+                                    !< along the second coordinate
+        integer, intent(in) :: ix   !< Specifies index of interior cell along
+                                    !< the first coordinate
+        integer, intent(in) :: iy   !< Specifies index of interior cell along
+                                    !< the second coordinate
         integer, intent(in) :: cflag(-1:nx,-1:ny, CARREOUT_NCELLFLAGS)
-        logical, intent(in) :: includeGhostCells
+        logical, intent(in) :: includeGhostCells    !< Include "fake" cells
+        logical isUnneededCell
 
         !! Only cells inside the "normal" B2 domain can be needed
         !! (this catches fake cells and connectivity pointing outside the domain)
@@ -865,16 +954,23 @@ contains
 
 
     !> Check whether the cell at position (ix,iy) is inside the 'classical'
-    !> B2 grid.
-    !> The default is to check whether it is inside  the extended grid
-    !> (including the ghost cells).
-    !> If the optional parameter extended is given, extended = .false. will
-    !> check whether the position is inside the actual physical domain of the
-    !> grid.
+    !! B2 grid.
+    !! The default is to check whether it is inside  the extended grid
+    !! (including the ghost cells).
+    !! If the optional parameter extended is given, extended = .false. will
+    !! check whether the position is inside the actual physical domain of the
+    !! grid.
     function isCellInDomain( nx, ny, ix, iy, extended )
-        logical :: isCellInDomain
-        integer, intent(in) :: nx, ny, ix, iy
+        integer, intent(in) :: nx   !< Specifies the number of interior cells
+                                    !< along the first coordinate
+        integer, intent(in) :: ny   !< Specifies the number of interior cells
+                                    !< along the second coordinate
+        integer, intent(in) :: ix   !< Specifies index of interior cell along
+                                    !< the first coordinate
+        integer, intent(in) :: iy   !< Specifies index of interior cell along
+                                    !< the second coordinate
         logical, intent(in), optional :: extended
+        logical :: isCellInDomain
 
         !! internal
         logical :: lExtended
@@ -894,11 +990,18 @@ contains
 
 
     !> Check whether the node associate with the cell at position (ix,iy) is
-    !> included in the grid.
+    !! included in the grid.
     function isNodeInDomain( nx, ny, ix, iy, extended )
-        logical :: isNodeInDomain
-        integer, intent(in) :: nx, ny, ix, iy
+        integer, intent(in) :: nx   !< Specifies the number of interior cells
+                                    !< along the first coordinate
+        integer, intent(in) :: ny   !< Specifies the number of interior cells
+                                    !< along the second coordinate
+        integer, intent(in) :: ix   !< Specifies index of interior cell along
+                                    !< the first coordinate
+        integer, intent(in) :: iy   !< Specifies index of interior cell along
+                                    !< the second coordinate
         logical, intent(in), optional :: extended
+        logical :: isNodeInDomain
 
         !! internal
         logical :: lExtended
@@ -919,13 +1022,33 @@ contains
     !> extended neighbourhood mappings
     subroutine getNeighbour(nx, ny, leftix, leftiy, rightix, rightiy,   &
             &   topix, topiy, bottomix,bottomiy, ix, iy, dir, nbix, nbiy )
-        integer, intent(in) :: nx, ny, ix, iy, dir
-        integer, intent(in) :: leftix( -1:nx, -1:ny ),              &
-            &   leftiy( -1:nx, -1:ny ), rightix( -1:nx, -1:ny ),    &
-            &   rightiy( -1:nx, -1:ny ),  topix( -1:nx, -1:ny ),    &
-            &   topiy( -1:nx, -1:ny ), bottomix( -1:nx, -1:ny ),    &
-            &   bottomiy( -1:nx, -1:ny )
-         integer, intent(out) :: nbix, nbiy
+        integer, intent(in) :: nx   !< Specifies the number of interior cells
+                                    !< along the first coordinate
+        integer, intent(in) :: ny   !< Specifies the number of interior cells
+                                    !< along the second coordinate
+        integer, intent(in) :: ix   !< Specifies index of interior cell along
+                                    !< the first coordinate
+        integer, intent(in) :: iy   !< Specifies index of interior cell along
+                                    !< the second coordinate
+        integer, intent(in) :: dir
+        integer, intent(in) :: leftix( -1:nx, -1:ny)    !< Left neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: leftiy( -1:nx, -1:ny )   !< Left neighbour radial
+            !< (second coordinate) index
+        integer, intent(in) :: rightix( -1:nx, -1:ny )  !< Right neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: rightiy( -1:nx, -1:ny )  !< Right neighbour
+            !< radial (second coordinate) index
+        integer, intent(in) :: topix( -1:nx, -1:ny )    !< Top neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: topiy( -1:nx, -1:ny )    !< Top neighbour radial
+            !< (second coordinate) index
+        integer, intent(in) :: bottomix( -1:nx, -1:ny ) !< Bottom neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: bottomiy( -1:nx, -1:ny ) !< Bottom neighbour
+            !< radial (second coordinate) index
+        integer, intent(out) :: nbix
+        integer, intent(out) :: nbiy
 
         select case(dir)
         case(LEFT)
@@ -943,7 +1066,6 @@ contains
         end select
 
     end subroutine getNeighbour
-
 
 end module b2mod_grid_mapping
 

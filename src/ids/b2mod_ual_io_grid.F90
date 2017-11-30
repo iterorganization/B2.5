@@ -1,25 +1,21 @@
-!!  Legend:
-!!     !> ................ Documentation comment (file description, function
-!!                         description etc.). Also intended for doxygen
-!!                         generated documentation
-!!     !> @note .......... Documentation notes, intended for doxygen generated
-!!                         documentation
-!!     !!  ............... variables description, additional (helpful)
-!!                         information etc.
-!!     ! IGNORE    ....... Used to ignore this module in list dependency when
-!!                         building
-!!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!> Module providing routines to set the B2 grid geometry, including grid
-!> subsets (subgrids), to ITM CPO or IMAS IDS grid description data
-!> structure.
-!>
-!> The main two routines are:
-!>  -   b2IMASFillGridDescription (for ITM edge CPO)
-!>  -   b2ITMFillGridDescription  (for IMAS edge_profiles, edge_sources and
-!>      edge_transport IDSs)
-!>
+!>      @page b2uw_ualio_grid_desc Description
+!!      Module providing routines to set the B2 grid geometry, including grid
+!!      subsets (subgrids), to ITM CPO or IMAS IDS grid description data
+!!      structure.
+!!
+!!      The main two routines are:
+!!          - b2IMASFillGridDescription (for ITM edge CPO)
+!!          - b2ITMFillGridDescription  (for IMAS edge_profiles, edge_sources
+!!          and edge_transport IDSs)
+!!
+!!      @subsection b2uw_ualio_grid_syx     Exceptional syntax explanation
+!!      @code
+!!          ! IGNORE    !! syntax used to ignore this module in list
+!!                      !! dependency when compiling the code
+!!      @endcode
+!!
 !!-----------------------------------------------------------------------------
 
 module b2mod_ual_io_grid
@@ -64,38 +60,44 @@ module b2mod_ual_io_grid
     !! Constants for use with the ITM grid description
 
     !! Space indices
-    integer, parameter :: SPACE_POLOIDALPLANE = 1
-    integer, parameter :: SPACE_TOROIDALANGLE = 2
-
-    !! Space setup:
-    !  SPACE_COUNT = SPACE_POLOIDALPLANE: do only do the poloidal plane space,
-    !  SPACE_COUNT = SPACE_TOROIDALANGLE: will do the full 3d grid with two spaces.
-    integer, parameter :: SPACE_COUNT = SPACE_POLOIDALPLANE
-
+    integer, parameter :: SPACE_POLOIDALPLANE = 1   !< Space indice
+                                                    !< (polodal plane)
+    integer, parameter :: SPACE_TOROIDALANGLE = 2   !< Space indice
+                                                    !< (toroidal angle)
+    integer, parameter :: SPACE_COUNT = SPACE_POLOIDALPLANE !< Space count
+        !< setup:
+        !< SPACE_COUNT = SPACE_POLOIDALPLANE: do only the poloidal plane space;
+        !< SPACE_COUNT = SPACE_TOROIDALANGLE: will do the full 3d grid with two
+        !< spaces
     !! Will have at maximum so many spaces
     integer, parameter :: SPACE_COUNT_MAX = 2
 
     !! Number of points in toroidal direction (only 1 makes sense here, this is
     !! for playing around)
-    integer, parameter :: NNODES_TOROIDAL = 1
+    integer, parameter :: NNODES_TOROIDAL = 1   !< Number of points in toroidal
+        !< direction (only 1 makes sense here, this is for playing around)
 
-    !! Flag controlling whether the toroidal space is set up periodic or not.
-    !! If periodic, the last node is connect to the first by an edge.
-    !! If not periodic, an additional node at 2 pi is added
-    logical, parameter :: TOROIDAL_PERIODIC = .false.
+    logical, parameter :: TOROIDAL_PERIODIC = .false.   !< Flag controlling
+        !< whether the toroidal space is set up periodic or not.
+        !< If periodic, the last node is connect to the first by an edge.
+        !< If not periodic, an additional node at 2 pi is added
 
-    !! Object class tuples (ITM classes)
+    !! Object class tuples (ITM class definition)
     integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_NODE =        &
-        &   (/ 0, 0 /)
+        &   (/ 0, 0 /)  !< Object class tuple (ITM class definition): Node
     integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_RZ_EDGE =     &
-        &   (/ 1, 0 /)
+        &   (/ 1, 0 /)  !< Object class tuple (ITM class definition): Edge (R, Z)
     integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_PHI_EDGE =    &
-        &   (/ 0, 1 /)
+        &   (/ 0, 1 /)  !< Object class tuple (ITM class definition): Edge (phi)
     integer, dimension( SPACE_COUNT_MAX ), parameter ::   &
-        &   CLASS_POLOIDALRADIAL_FACE = (/ 1, 1 /)
+        &   CLASS_POLOIDALRADIAL_FACE = (/ 1, 1 /)  !< Object class tuple
+        !< (ITM class definition): Poloidalradial face (in observed existing
+        !< CPO cases this class refers to 2D cells)
     integer, dimension( SPACE_COUNT_MAX ), parameter ::   &
-        &   CLASS_TOROIDAL_FACE = (/ 2, 0 /)
+        &   CLASS_TOROIDAL_FACE = (/ 2, 0 /)    !< Object class tuple
+        !< (ITM class definition): Toroidal face
     integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_CELL = (/ 2, 1 /)
+        !< Object class tuple (ITM class definition): Cell
 
     !! Object class tuples (one digit IDS classes, transformed from the above
     !! ITM classes )
@@ -108,24 +110,30 @@ module b2mod_ual_io_grid
     !! specify the primary IDS class constants
 
     ! integer, parameter :: IDS_CLASS_NODE = sum(CLASS_NODE) + 1
-    integer, parameter :: IDS_CLASS_NODE = 1
+    integer, parameter :: IDS_CLASS_NODE = 1    !< Object class tuple (IMAS
+        !< class definition): Node
     ! integer, parameter :: IDS_CLASS_RZ_EDGE = sum(CLASS_RZ_EDGE) + 1
-    integer, parameter :: IDS_CLASS_RZ_EDGE = 2
+    integer, parameter :: IDS_CLASS_RZ_EDGE = 2 !< Object class tuple (IMAS
+        !< class definition): Edge
     ! integer, parameter :: IDS_CLASS_PHI_EDGE = sum(CLASS_PHI_EDGE) + 1
-    integer, parameter :: IDS_CLASS_PHI_EDGE = 2
+    integer, parameter :: IDS_CLASS_PHI_EDGE = 2    !< Object class tuple (IMAS
+        !< class definition): Edge
     ! integer, parameter :: IDS_CLASS_POLOIDALRADIAL_FACE =   &
         ! &   sum(CLASS_POLOIDALRADIAL_FACE)
-    integer, parameter :: IDS_CLASS_POLOIDALRADIAL_FACE = 2
+    integer, parameter :: IDS_CLASS_POLOIDALRADIAL_FACE = 2 !< Object class
+        !< tuple (IMAS class definition): Edge
     ! integer, parameter :: IDS_CLASS_TOROIDAL_FACE =         &
         ! &   sum(CLASS_TOROIDAL_FACE)
-    integer, parameter :: IDS_CLASS_TOROIDAL_FACE = 2
+    integer, parameter :: IDS_CLASS_TOROIDAL_FACE = 2 !< Object class tuple
+        !< (IMAS !< class definition): Edge
     ! integer, parameter :: IDS_CLASS_CELL = sum(IDS_CLASS_CELL)
-    integer, parameter :: IDS_CLASS_CELL = 3
+    integer, parameter :: IDS_CLASS_CELL = 3 !< Object class tuple (IMAS class
+        !< definition): Cell (2D)
 
     !! Subgrid/Grid subset name constants
 
-    !! Number of generic grid subsets
-    integer, parameter :: B2_GENERIC_GSUBSET_COUNT = 6
+    integer, parameter :: B2_GENERIC_GSUBSET_COUNT = 6  !< Total number of
+        !< generic grid subsets
 
     !! Generic grid subsets (all cells, all faces)
     !! Note: special grid subsets (given by region ids) do not have specific
@@ -134,96 +142,140 @@ module b2mod_ual_io_grid
     !! IMAS uses GGD grid subset identifier definitions defined in GSL
     !! (in ids_grid_common)
 #ifdef ITM
-    !! Number of generic grid subsets
-    integer, parameter :: B2_GENERIC_SUBGRID_COUNT = 6
+    !! For ITM duplicates were made (old and new variable) in case of ITM code
+    !! requiring old variables
+    integer, parameter :: B2_GENERIC_SUBGRID_COUNT = 6  !< Total number of
+        !< generic grid subsets
 
-    !! Unspecified grid subset
-    integer, parameter :: B2_SUBGRID_UNSPECIFIED = 0
-    integer, parameter :: B2_GSUBSET_UNSPECIFIED = 0
-    !! Grid subset containing all nodes (0D objects) belonging to associated
-    !! space
-    integer, parameter :: B2_SUBGRID_NODES = 1
-    integer, parameter :: B2_GSUBSET_NODES = 1
-    !! Grid subset containing all faces (first x-aligned, then y-aligned)
-    !! belonging to the associated space (order given by grid map)
-    integer, parameter :: B2_SUBGRID_FACES = 2
-    integer, parameter :: B2_GSUBSET_FACES = 2
-    !! Grid subset containing all x-aligned (poloidally) aligned faces belonging
-    !!  to the associated space (order given by grid map)
-    integer, parameter :: B2_SUBGRID_FACES_X  = 3
-    integer, parameter :: B2_GSUBSET_X_ALIGNED_FACES = 3
-    !! Grid subset containing all y-aligned (radially) aligned faces belonging
-    !! to the associated space (order given by grid map)
-    integer, parameter :: B2_SUBGRID_FACES_Y = 4
-    integer, parameter :: B2_GSUBSET_Y_ALIGNED_FACES = 4
-    !! Grid subset containing all cells belonging to the associated space
-    integer, parameter :: B2_SUBGRID_CELLS = 5
-    integer, parameter :: B2_GSUBSET_CELLS = 5
-    !! Grid subset containing nodes defining x-points
-    integer, parameter :: B2_SUBGRID_XPOINTS = 6
-    integer, parameter :: B2_GSUBSET_X_POINTS = 6
+    integer, parameter :: B2_SUBGRID_UNSPECIFIED = 0    !< Unspecified grid
+                                                        !< subset
+    integer, parameter :: B2_GSUBSET_UNSPECIFIED = 0    !< Unspecified grid
+                                                        !< subset
+    integer, parameter :: B2_SUBGRID_NODES = 1  !< Grid subset containing all
+        !< nodes (0D objects) belonging to associated space
+    integer, parameter :: B2_GSUBSET_NODES = 1  !< Grid subset containing all
+        !< nodes (0D objects) belonging to associated space
+    integer, parameter :: B2_SUBGRID_FACES = 2  !< Grid subset containing all
+        !< faces (first x-aligned, then y-aligned) belonging to the
+        !< associated space (order given by grid map)
+    integer, parameter :: B2_GSUBSET_FACES = 2  !< Grid subset containing all
+        !< faces (first x-aligned, then y-aligned) belonging to the
+        !< associated space (order given by grid map)
+    integer, parameter :: B2_SUBGRID_FACES_X  = 3   !< Grid subset containing
+        !< all x-aligned (poloidally) aligned faces belonging to the associated
+        !< space (order given by grid map)
+    integer, parameter :: B2_GSUBSET_X_ALIGNED_FACES = 3    !< Grid subset
+        !< containing  all x-aligned (poloidally) aligned faces belonging to
+        !< the associated  space (order given by grid map)
+    integer, parameter :: B2_SUBGRID_FACES_Y = 4    !< Grid subset containing
+        !< all y-aligned (radially) aligned faces belonging to the associated
+        !< space (order given by grid map)
+    integer, parameter :: B2_GSUBSET_Y_ALIGNED_FACES = 4 !< Grid subset
+        !< containing  all y-aligned (radially) aligned faces belonging to
+        !< the associated  space (order given by grid map)
+    integer, parameter :: B2_SUBGRID_CELLS = 5 !< Grid subset containing all
+        !< cells belonging to the associated space
+    integer, parameter :: B2_GSUBSET_CELLS = 5 !< Grid subset containing all
+        !< cells belonging to the associated space
+    integer, parameter :: B2_SUBGRID_XPOINTS = 6    !< Grid subset containing
+                                                    !< nodes defining x-points
+    integer, parameter :: B2_GSUBSET_X_POINTS = 6   !< Grid subset containing
+                                                    !< nodes defining x-points
 #endif
-
-!dpc  private :: R8
 
 contains
 
 #ifdef IMAS
 
     !> Routine that fills in a grid description which is part of a CPO
-    !> using the given grid data and prepared mappings
+    !! using the given grid data and prepared mappings
     subroutine b2IMASFillGridDescription( gmap, ggd_grid, nx, ny, crx, cry,     &
         &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix, bottomiy, &
         &   nnreg, topcut, region, cflag, includeGhostCells, vol, gs, qc )
+        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
+            !< by b2CreateMap holding an intermediate grid description to be
+            !< transferred into a CPO or IDS
+        type(ids_generic_grid_dynamic), intent(out) :: ggd_grid !< Type of IDS
+            !< data structure, designed for handling data grid geometry
 
-        type(B2GridMap), intent(in) :: gmap
-        type(ids_generic_grid_dynamic), intent(out) :: ggd_grid
+        integer, intent(in) :: nx   !< Number of interior cells
+            !< along the first coordinate (used to define size of grid arrays:
+            !< (-1:nx, -1:ny)
+        integer, intent(in) :: ny   !< Number of interior cells
+            !< along the second coordinate (used to define size of grid arrays:
+            !< (-1:nx, -1:ny)
 
-        !! Size of grid arrays: (-1:nx, -1:ny)
-        integer, intent(in) :: nx, ny
-        !!   .. output arguments
-        !! vertex coordinates
-        real(R8), intent(in) :: crx( -1:nx, -1:ny, 0:3 ), cry( -1:nx, -1:ny, 0:3 )
+        !! Output arguments
+        real(R8), intent(in) :: crx( -1:nx, -1:ny, 0:3 )    !< Horizontal vertex
+            !< coordinates of the four corners of the (ix, iy) cell
+        real(R8), intent(in) :: cry( -1:nx, -1:ny, 0:3 )    !< Vertical vertex
+            !< coordinates of the four corners of the (ix, iy) cell
+
         !! B2 connectivity array
-        integer, intent(in) :: leftix( -1:nx, -1:ny), leftiy( -1:nx, -1:ny ),   &
-            &   rightix( -1:nx, -1:ny ), rightiy( -1:nx, -1:ny ),               &
-            &   topix( -1:nx, -1:ny ), topiy( -1:nx, -1:ny ),                   &
-            &   bottomix( -1:nx, -1:ny ), bottomiy( -1:nx, -1:ny )
-        !! B2 region & cut information
-        integer, intent(in) :: nnreg(0:2), topcut(:), region( -1:nx, -1:ny, 0:2 )
-        !! Cell flags
-        integer cflag( -1:nx, -1:ny,  CARREOUT_NCELLFLAGS )
-        logical, intent(in) :: includeGhostCells
-        !! Optional B2 measure information
-        real(R8), intent(in), optional :: vol( -1:nx, -1:ny, 0:4),  &
-            &   gs( -1:nx, -1:ny, 0:2), qc(-1:nx,-1:ny)
+        integer, intent(in) :: leftix( -1:nx, -1:ny)    !< Left neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: leftiy( -1:nx, -1:ny )   !< Left neighbour radial
+            !< (second coordinate) index
+        integer, intent(in) :: rightix( -1:nx, -1:ny )  !< Right neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: rightiy( -1:nx, -1:ny )  !< Right neighbour
+            !< radial (second coordinate) index
+        integer, intent(in) :: topix( -1:nx, -1:ny )    !< Top neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: topiy( -1:nx, -1:ny )    !< Top neighbour radial
+            !< (second coordinate) index
+        integer, intent(in) :: bottomix( -1:nx, -1:ny ) !< Bottom neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: bottomiy( -1:nx, -1:ny ) !< Bottom neighbour
+            !< radial (second coordinate) index
 
-        !! internal
-        integer, parameter :: NDIM = 2
+        !! B2 region & cut information
+        integer, intent(in) :: nnreg(0:2)
+        integer, intent(in) :: topcut(:)
+        integer, intent(in) :: region( -1:nx, -1:ny, 0:2 )
+        !! Cell flags
+        integer cflag( -1:nx, -1:ny,  CARREOUT_NCELLFLAGS ) !< Cell flag
+        logical, intent(in) :: includeGhostCells    !< Include "fake" cells
+        !! Optional B2 measure information
+        real(R8), intent(in), optional :: vol( -1:nx, -1:ny, 0:4) !< Cell volume
+        real(R8), intent(in), optional :: gs( -1:nx, -1:ny, 0:2)
+        real(R8), intent(in), optional :: qc(-1:nx,-1:ny)   !< Cosine of the
+            !< angle between flux line direction and left cell face
+
+        !! Internal variables
+        integer, parameter :: NDIM = 2  !< Dimension of the space
 
         call assert( present( gs ) .EQV. present( qc ) )
 
+        !! Set GGD grid geometry
         call fillInGridDescription()
+        !! Set grid subsets
         call fillInGridSubsetDescription()
 
 contains
 
-    !! Part 1: fill in general grid description
     !> Fill in the general grid description
-    !! Description of some variables:
-    !> @param   ifc - Face/edge index
-    !> @param   ivx - Vertex/node index
-    !> @param   nfc - Number of all faces/edges (x + y aligned)
     subroutine fillInGridDescription()
-        !! internal
-        integer ::  ivx, ifc, icv, ix, iy, nix, niy, i, j, dir, nfc
+        !! Internal variables
+        integer :: ivx  !< Vertex/node index
+        integer :: ifc  !< Face/edge index
+        integer :: icv  !< Cell index
+        integer :: ix   !< x-aligned (poloidal) cell index
+        integer :: iy   !< y-aligned (radial) cell index
+        integer :: nix
+        integer :: niy
+        integer :: i    !< Iterator
+        integer :: j    !< Iterator
+        integer :: dir
+        integer :: nfc  !< Number of all faces/edges (x + y aligned)
 
         allocate( ggd_grid%space( SPACE_COUNT ) )
 
         !! Coordinate types
         !! (dimension of space = NDIM = size( coordtype )
 
-        ! ggd_grid%space(SPACE_POLOIDALPLANE)%geometry_type%name = 'Poloidal'
+        allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%geometry_type%name(1) )
+        ggd_grid%space(SPACE_POLOIDALPLANE)%geometry_type%name = 'Poloidal'
 
         !! Set the space coordinates, also defining the dimension of the space
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%coordinates_type(NDIM) )
@@ -238,6 +290,9 @@ contains
         !! nodes
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(1)%object( ( nx+1 )*( ny+1 ) - 1) )
+        !!$ TODO: use 'gmap%nvx' instead of '( nx+1 )*( ny+1 ) - 1)''
+        ! allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
+            ! &   objects_per_dimension(1)%object( gmap%nvx ) )
         !! edges
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(2)%object( nx * ( ny+1 ) + ( nx+1 ) * ny ) )
@@ -246,10 +301,7 @@ contains
             &   objects_per_dimension(3)%object( nx*ny ) )
 
         !! Fill in node information
-        !! Set number of nodes (0D objects)
-        ! allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-            ! &   objects_per_dimension(1)%object( gmap%nvx ) )
-        do ivx = 1, gmap % nvx
+        do ivx = 1, gmap%nvx
             !! Allocate goometry leaf for each node
             allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
                 &   objects_per_dimension(1)%object( ivx )%geometry(2) )
@@ -662,14 +714,24 @@ contains
 
     !> Set connectivity array for cells by defining nodes that form each cell
     subroutine setCellsConnectivityArrayNodes(ggd_grid)
-        type(ids_generic_grid_dynamic), intent(inout) :: ggd_grid
-        !! internal
-        integer, allocatable    ::  objects2Darray(:,:)
-        integer ::  num_nodes_2D, num_boundary_2D, node1, node2
-        integer, allocatable ::  node_idx(:)
-        integer, allocatable    ::  free_edge(:)
-        integer ::  edge_idx, last_idx
-        integer ::  icv, ix, iy, m, loop_count
+        type(ids_generic_grid_dynamic), intent(inout) :: ggd_grid !< Type of IDS
+            !< data structure, designed for handling data grid geometry
+        !! Internal variables
+        integer, allocatable :: objects2Darray(:,:)
+        integer :: num_nodes_2D     !< Total number of nodes forming one cell
+        integer :: num_boundary_2D  !< Total number of boundary edges forming
+            !< one cell
+        integer :: node1
+        integer :: node2
+        integer, allocatable :: node_idx(:)
+        integer, allocatable :: free_edge(:)
+        integer :: edge_idx
+        integer :: last_idx
+        integer :: icv  !< Cell index
+        integer :: ix   !< x-aligned (poloidal) cell index
+        integer :: iy   !< y-aligned (radial) cell index
+        integer :: m    !< Iterator
+        integer :: loop_count   !< Loop counter
 
 
         !! Get the list of 0D objects forming the 2D objects and wirte it to IDS
@@ -750,11 +812,10 @@ contains
     end subroutine setCellsConnectivityArrayNodes
 
 
-    !! Part 2: define grid subsets
-    !> Set grid subsets
+    !> Define grid subsets
     subroutine fillInGridSubsetDescription
 
-        !! internal
+        !! Internal variables
         integer :: geoId, iRegion, GSubsetCount, iType, nGSubset
         integer :: xIn, yIn, xOut, yOut, iCoreGS
         integer :: cls(SPACE_COUNT_MAX)

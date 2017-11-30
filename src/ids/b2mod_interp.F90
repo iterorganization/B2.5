@@ -1,21 +1,13 @@
-!!  Legend:
-!!     !> ................ Documentation comment (file description, function
-!!                         description etc.). Also intended for doxygen
-!!                         generated documentation
-!!     !> @note .......... Documentation notes, intended for doxygen generated
-!!                         documentation
-!!     !!  ............... variables description, additional (helpful)
-!!                         information etc.
-!!     ! IGNORE    ....... Used to ignore this module in list dependency when
-!!                         building
-!!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>
-!> Module providing routines for interpolation of a cell-centred quantity to
-!> cell faces, computing flow velocity quantities, providing values for
-!> cell-centered quantities etc.
-!>
+!>      @section b2mod_interp_desc Description
+!!      Module providing routines for interpolation of a cell-centred quantity to
+!!      cell faces, computing flow velocity quantities, providing values for
+!!      cell-centered quantities etc.
+!!
+!!      @subsection b2mod_gmap_pv  Parameters/variables
+!!      @param  BB_INVALID
+!!
 !!-----------------------------------------------------------------------------
 module b2mod_interp
 
@@ -35,28 +27,47 @@ contains
         &   topix, topiy, vol, gs, qc, qcb, cflags )
 
         implicit none
-        integer, intent(in)  :: nx, ny
-        real(R8), intent(in) :: bb( -1:nx, -1:ny, 0:3 ),            &
-            &   vol( -1:nx ,-1:ny ,0:4 ), gs( -1:nx, -1:ny, 0:2 ),  &
-            &   qc( -1:nx, -1:ny ), qcb( -1:nx, -1:ny )
-        real(R8), intent(out) :: wbbl( -1:nx, -1:ny, 0:3 ),         &
-            &   wbbr( -1:nx, -1:ny, 0:3 ), wbbv( -1:nx, -1:ny, 0:3 )
+        integer, intent(in)  :: nx  !< Specifies the number of interior cells
+                                    !< along the first coordinate
+        integer, intent(in)  :: ny  !< Specifies the number of interior cells
+                                    !< along the second coordinate
+        real(R8), intent(in) :: bb( -1:nx, -1:ny, 0:3 ) !< Magnetic field
+        real(R8), intent(in) :: vol( -1:nx ,-1:ny ,0:4 )    !< Cell volume
+        real(R8), intent(in) :: gs( -1:nx, -1:ny, 0:2 )
+        real(R8), intent(in) :: qc( -1:nx, -1:ny ) !< Cosine of the angle
+            !< between flux line direction and left cell face
+        real(R8), intent(in) :: qcb( -1:nx, -1:ny )
+        real(R8), intent(out) :: wbbl( -1:nx, -1:ny, 0:3 )
+        real(R8), intent(out) :: wbbr( -1:nx, -1:ny, 0:3 )
+        real(R8), intent(out) :: wbbv( -1:nx, -1:ny, 0:3 )
         integer, intent(in) :: cflags( -1:nx, -1:ny, CARREOUT_NCELLFLAGS )
-        integer, intent(in) ::  &
-            &   leftix( -1:nx, -1:ny ),leftiy( -1:nx, -1:ny ),      &
-            &   rightix( -1:nx, -1:ny ),rightiy( -1:nx, -1:ny ),    &
-            &   topix( -1:nx, -1:ny ),topiy( -1:nx, -1:ny ),        &
-            &   bottomix( -1:nx, -1:ny ),bottomiy( -1:nx, -1:ny )
+        integer, intent(in) :: leftix( -1:nx, -1:ny)    !< Left neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: leftiy( -1:nx, -1:ny )   !< Left neighbour radial
+            !< (second coordinate) index
+        integer, intent(in) :: rightix( -1:nx, -1:ny )  !< Right neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: rightiy( -1:nx, -1:ny )  !< Right neighbour
+            !< radial (second coordinate) index
+        integer, intent(in) :: topix( -1:nx, -1:ny )    !< Top neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: topiy( -1:nx, -1:ny )    !< Top neighbour radial
+            !< (second coordinate) index
+        integer, intent(in) :: bottomix( -1:nx, -1:ny ) !< Bottom neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: bottomiy( -1:nx, -1:ny ) !< Bottom neighbour
+            !< radial (second coordinate) index
 
-        !! internal
-        integer :: ix, iy
+        !! Internal variables
+        integer :: ix   !< x-aligned (poloidal) cell index
+        integer :: iy   !< y-aligned (radial) cell index
 
-        !!    ..interpolate magnetic field to cell faces
+        !! Interpolate magnetic field to cell faces
         call interp_magnetic_field( nx, ny, bb, wbbl, wbbr, wbbv,       &
             &   leftix, leftiy, rightix, rightiy, bottomix, bottomiy,   &
             &   topix, topiy, vol, gs, qc, qcb, cflags )
 
-        !!    ..extrapolate magnetic field to edges
+        !! Extrapolate magnetic field to edges
         do iy = -1, ny
             do ix = -1, nx
                 if ( isUnusedCell( cflags( ix, iy, CELLFLAG_TYPE ))) cycle
@@ -100,7 +111,7 @@ contains
             enddo
         enddo
 
-        !!   ..compute extrapolated wbb.(:,:,3) components
+        !! Compute extrapolated wbb.(:,:,3) components
         wbbl(:,:,3) = sqrt( wbbl(:,:,0)**2 + wbbl(:,:,1)**2 + wbbl(:,:,2)**2)
         wbbr(:,:,3) = sqrt( wbbr(:,:,0)**2 + wbbr(:,:,1)**2 + wbbr(:,:,2)**2)
         wbbv(:,:,3) = sqrt( wbbv(:,:,0)**2 + wbbv(:,:,1)**2 + wbbv(:,:,2)**2)
@@ -125,25 +136,36 @@ contains
     end subroutine compute_b_at_faces
 
     !> This routine performs interpolation of a cell-centered quantity to cell
-    !> faces with special treatment for triangular cells at the edges.
-    !> The interpolation is done according to the cell widths given by hx and hy.
-    !> xory.eq.1: interpolation in the x-direction
-    !> xory.eq.2: interpolation in the y-direction
+    !! faces with special treatment for triangular cells at the edges.
+    !! The interpolation is done according to the cell widths given by hx and hy.
+    !! xory.eq.1: interpolation in the x-direction
+    !! xory.eq.2: interpolation in the y-direction
     !! Use this instead of left-right and top-bottom interpolation
     !! Obsolete: did not take properly into account trapezoidal and triangle cells
     !! Use interp_volume below instead
-    subroutine interp_width(xory,nx,ny,hx,hy,gs,qc,qcb,centre,face)
+    subroutine interp_width( xory, nx, ny, hx, hy, gs, qc, qcb, centre, face )
         use b2mod_indirect
         implicit none
-        integer xory
-        integer nx, ny
-        real (kind=R8) :: hx(-1:nx,-1:ny), hy(-1:nx,-1:ny)
+        integer :: xory
+        integer :: nx   !< Specifies the number of interior cells
+                        !< along the first coordinate (poloidal)
+        integer :: ny   !< Specifies the number of interior cells
+                        !< along the second coordinate (radial)
+        real (kind=R8) :: hx(-1:nx,-1:ny)
+        real (kind=R8) :: hy(-1:nx,-1:ny)
         real (kind=R8) :: gs(-1:nx,-1:ny,0:2)
-        real (kind=R8) :: qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny)
-        real (kind=R8) :: centre(-1:nx,-1:ny), face(-1:nx,-1:ny)
+        real (kind=R8) :: qc(-1:nx,-1:ny) !< Cosine of the angle
+            !< between flux line direction and left cell face
+        real (kind=R8) :: qcb(-1:nx,-1:ny)
+        real (kind=R8) :: centre(-1:nx,-1:ny)
+        real (kind=R8) :: face(-1:nx,-1:ny)
 
-        integer ix, iy
-        real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
+        integer :: ix   !< x-aligned (poloidal) cell index
+        integer :: iy   !< y-aligned (radial) cell index
+        real (kind=R8) :: area_to_top
+        real (kind=R8) :: area_to_bottom
+        real (kind=R8) :: area_to_left
+        real (kind=R8) :: area_to_right
         intrinsic sqrt
 
         face = INVALID_DOUBLE
@@ -229,47 +251,57 @@ contains
         return
     end subroutine interp_width
 
-  subroutine interp_volume1(idir,nx,ny,ns,vol,gs,qc,qcb,centre,face)
+  subroutine interp_volume1( idir, nx, ny, ns, vol, gs, qc, qcb, centre, face )
   implicit none
   integer, intent(in) :: idir
-  integer, intent(in) :: nx, ny, ns
-  real (kind=R8), intent(in) :: vol(-1:nx,-1:ny,0:4)
+  integer, intent(in) :: nx !< Specifies the number of interior cells
+                            !< along the first coordinate (poloidal)
+  integer, intent(in) :: ny !< Specifies the number of interior cells
+                            !< along the second coordinate (radial)
+  integer, intent(in) :: ns
+  real (kind=R8), intent(in) :: vol(-1:nx,-1:ny,0:4)    !< Cell volume
   real (kind=R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
-  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny)
+  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny) !< Cosine of the angle
+    !< between flux line direction and left cell face
   real (kind=R8), intent(in) :: qcb(-1:nx,-1:ny)
   real (kind=R8), intent(in) :: centre(-1:nx,-1:ny,0:ns-1)
   real (kind=R8), intent(out) :: face(-1:nx,-1:ny,0:ns-1)
   integer is
 
   do is = 0, ns-1
-    call interp_volume(idir,nx,ny,vol,gs,qc,qcb,centre(-1,-1,is),face(-1,-1,is))
+    call interp_volume( idir, nx, ny, vol, gs, qc, qcb, centre(-1,-1,is),   &
+        &   face(-1,-1,is) )
   end do
 
   return
   end subroutine interp_volume1
 
   !> This routine performs interpolation of a cell-centred quantity to cell faces
-  !> with special treatment for triangular cells at the edges.
-  !> This routine is to be used when the result must also be present on
-  !> non-existent 'virtual' faces that are missing in triangle cells.
-  !> If one only needs the values on existing valid faces, then one should use
-  !> values_on_faces instead.
-  !> The interpolation is done according to the cell volumes given by vol.
-  !> For trapezoidal cells, the volume used is that which corresponds to
-  !> the projected area of contact between the cells being interpolated.
-  !> idir.eq.TO_LEFT: interpolation to the LEFT
-  !> idir.eq.TO_BOTTOM: interpolation in the BOTTOM
-  !> idir.eq.TO_RIGHT: interpolation to the RIGHT
-  !> idir.eq.TO_TOP: interpolation in the TOP
-  subroutine interp_volume(idir,nx,ny,vol,gs,qc,qcb,centre,face)
+  !! with special treatment for triangular cells at the edges.
+  !! This routine is to be used when the result must also be present on
+  !! non-existent 'virtual' faces that are missing in triangle cells.
+  !! If one only needs the values on existing valid faces, then one should use
+  !! values_on_faces instead.
+  !! The interpolation is done according to the cell volumes given by vol.
+  !! For trapezoidal cells, the volume used is that which corresponds to
+  !! the projected area of contact between the cells being interpolated.
+  !! idir.eq.TO_LEFT: interpolation to the LEFT
+  !! idir.eq.TO_BOTTOM: interpolation in the BOTTOM
+  !! idir.eq.TO_RIGHT: interpolation to the RIGHT
+  !! idir.eq.TO_TOP: interpolation in the TOP
+  subroutine interp_volume( idir, nx, ny, vol, gs, qc, qcb, centre, face )
   use b2mod_indirect
   use b2mod_cellhelper
   implicit none
   integer, intent(in) ::  idir
-  integer, intent(in) ::  nx, ny
+  integer, intent(in) ::  nx    !< Specifies the number of interior cells
+                                !< along the first coordinate (poloidal)
+  integer, intent(in) ::  ny    !< Specifies the number of interior cells
+                                !< along the second coordinate (radial)
   real (kind=R8), intent(in) :: vol(-1:nx,-1:ny,0:4)
   real (kind=R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
-  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny)
+  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny) !< Cosine of the angle
+    !< between flux line direction and left cell face
   real (kind=R8), intent(in) :: qcb(-1:nx,-1:ny)
   real (kind=R8), intent(in) :: centre(-1:nx,-1:ny)
   real (kind=R8), intent(out) :: face(-1:nx,-1:ny)
@@ -457,27 +489,47 @@ contains
   end subroutine interp_volume
 
   !> Identical code to interp_volume, but needs to refer to the
-  !> geometric arrays explicitly
-  subroutine interp_magnetic_field(nx,ny,bb,wbbl,wbbr,wbbv, &
-       & leftix,leftiy,rightix,rightiy,bottomix,bottomiy, &
-       & topix,topiy,vol,gs,qc,qcb,cflags)
+  !! geometric arrays explicitly
+  subroutine interp_magnetic_field( nx, ny, bb, wbbl, wbbr, wbbv,   &
+        &    leftix, leftiy, rightix, rightiy, bottomix, bottomiy,  &
+        &    topix, topiy, vol, gs, qc, qcb, cflags)
 
     implicit none
-    integer, intent(in) :: nx, ny
-    real(R8), intent(in) :: bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny,0:4), &
-                         &  gs(-1:nx,-1:ny,0:2), &
-                         &  qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny)
-    real(R8), intent(out) :: wbbl(-1:nx,-1:ny,0:3), &
-         & wbbr(-1:nx,-1:ny,0:3), wbbv(-1:nx,-1:ny,0:3)
+    integer, intent(in) :: nx   !< Specifies the number of interior cells
+                                !< along the first coordinate (poloidal)
+    integer, intent(in) :: ny   !< Specifies the number of interior cells
+                                !< along the second coordinate (radial)
+    real(R8), intent(in) :: bb(-1:nx,-1:ny,0:3)
+    real(R8), intent(in) :: vol(-1:nx,-1:ny,0:4)
+    real(R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
+    real(R8), intent(in) :: qc(-1:nx,-1:ny)
+    real(R8), intent(in) :: qcb(-1:nx,-1:ny)
+    real(R8), intent(out) :: wbbl(-1:nx,-1:ny,0:3)
+    real(R8), intent(out) :: wbbr(-1:nx,-1:ny,0:3)
+    real(R8), intent(out) :: wbbv(-1:nx,-1:ny,0:3)
     integer, intent(in) :: cflags(-1:nx,-1:ny,CARREOUT_NCELLFLAGS)
-    integer, intent(in) :: &
-         & leftix(-1:nx,-1:ny),leftiy(-1:nx,-1:ny), &
-         & rightix(-1:nx,-1:ny),rightiy(-1:nx,-1:ny), &
-         & topix(-1:nx,-1:ny),topiy(-1:nx,-1:ny), &
-         & bottomix(-1:nx,-1:ny),bottomiy(-1:nx,-1:ny)
+    integer, intent(in) :: leftix( -1:nx, -1:ny)    !< Left neighbour
+        !< poloidal (first coordinate) index array
+    integer, intent(in) :: leftiy( -1:nx, -1:ny )   !< Left neighbour radial
+        !< (second coordinate) index
+    integer, intent(in) :: rightix( -1:nx, -1:ny )  !< Right neighbour
+        !< poloidal (first coordinate) index array
+    integer, intent(in) :: rightiy( -1:nx, -1:ny )  !< Right neighbour
+        !< radial (second coordinate) index
+    integer, intent(in) :: topix( -1:nx, -1:ny )    !< Top neighbour
+        !< poloidal (first coordinate) index array
+    integer, intent(in) :: topiy( -1:nx, -1:ny )    !< Top neighbour radial
+        !< (second coordinate) index
+    integer, intent(in) :: bottomix( -1:nx, -1:ny ) !< Bottom neighbour
+        !< poloidal (first coordinate) index array
+    integer, intent(in) :: bottomiy( -1:nx, -1:ny ) !< Bottom neighbour
+        !< radial (second coordinate) index
 
-  integer ix, iy, ixn, iyn
-  real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
+    integer :: ix   !< x-aligned (poloidal) cell index
+    integer :: iy   !< y-aligned (radial) cell index
+    integer :: ixn
+    integer :: iyn
+    real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
   intrinsic sqrt
 
   wbbl = BB_INVALID
@@ -617,13 +669,13 @@ contains
   end subroutine interp_magnetic_field
 
   !> This routine performs an interpolation of cell-faced quantities to cell centres
-  !> with special treatment for non-rectangular cells and attention to the direction
-  !> of slanted faces.
-  !> If the cell-faced quantity is a flux where the directional sign matters, we
-  !> take it into account
-  !> The cell-centered is bi-directional (0: poloidal, 1: radial)
-  !> For a positive slant value, a positive poloidal flux in a slanted face is
-  !> directed towards the top
+  !! with special treatment for non-rectangular cells and attention to the direction
+  !! of slanted faces.
+  !! If the cell-faced quantity is a flux where the directional sign matters, we
+  !! take it into account
+  !! The cell-centered is bi-directional (0: poloidal, 1: radial)
+  !! For a positive slant value, a positive poloidal flux in a slanted face is
+  !! directed towards the top
   subroutine interp_from_face(isflux,isparallel,nx,ny,flux,centre)
   use b2mod_geo , only: crx, cry, gs, qz, qc, pbs
   use b2mod_indirect

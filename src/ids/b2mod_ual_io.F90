@@ -1,23 +1,18 @@
-!!  Legend:
-!!     !> ................ Documentation comment (file description, function
-!!                         description etc.). Also intended for doxygen
-!!                         generated documentation
-!!     !> @note .......... Documentation notes, intended for doxygen generated
-!!                         documentation
-!!     !!  ............... variables description, additional (helpful)
-!!                         information etc.
-!!     ! IGNORE    ....... Used to ignore this module in list dependency when
-!!                         building
-!!     !   ............... Commented part of code
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>
-!> Module providing main routines for setting processed B2.5 data for ITM CPO
-!> edge or IMAS edge_profiles, edge_sources and edge_transport IDSs.
-!>
-!> @detail  The data comprises of grid geometry, grid subsets and data fields
-!>          of various quantities.
-!>
+!>      @page b2uw_ualio_desc Description
+!!      Module providing main routines for setting processed B2.5 data for
+!!      ITM CPO edge or IMAS edge_profiles, edge_sources and edge_transport IDSs.
+!!
+!!      @detail The data comprises of grid geometry, grid subsets and data
+!!              fields of various quantities.
+!!
+!!      @subsection b2uw_ualio_syx     Exceptional syntax explanation
+!!      @code
+!!          ! IGNORE    !! syntax used to ignore this module in list
+!!                      !! dependency when compiling the code
+!!      @endcode
+!!
 !!-----------------------------------------------------------------------------
 module b2mod_ual_io
 
@@ -80,25 +75,44 @@ contains
     !> Write B2.5 data to IMAS IDS
     subroutine write_ids( edge_profiles, edge_sources, edge_transport )
 #       include <git_version_B25.h>
-        type (ids_edge_profiles)    :: edge_profiles
-        type (ids_edge_sources)     :: edge_sources
-        type (ids_edge_transport)   :: edge_transport
+        type (ids_edge_profiles)    :: edge_profiles    !< IDS designed to
+            !< store data on edge plasma profiles  (includes the scrape-off
+            !< layer and possibly part of the confined plasma)
+        type (ids_edge_sources)     :: edge_sources !< IDS designed to store
+            !< data on edge plasma sources. Energy terms correspond to the full
+            !< kinetic energy equation (i.e. the energy flux takes into account
+            !< the energy transported by the particle flux)
+        type (ids_edge_transport)   :: edge_transport !< IDS designed to store
+            !< data on edge plasma transport. Energy terms correspond to the
+            !< full kinetic energy equation (i.e. the energy flux takes into
+            !< account the energy transported by the particle flux)
 
-        !! Internal
-        type(B2GridMap) :: gmap  !! Where is this type defined?
-        type(ids_generic_grid_dynamic_grid_subset) ::  gs_cell, gs_face,   &
-            &   gs_bnd_core
-        integer :: is, ns, nx, ny, i, j
+        !! Internal variables
+        integer :: ns   !< Total number of ion species
+        integer :: nx   !< Specifies the number of interior cells
+                        !< along the first coordinate
+        integer :: ny   !< Specifies the number of interior cells
+                        !< along the second coordinate
+        integer :: is   !< Ion specie index (iterator)
+        integer :: i    !< Iterator
+        integer :: j    !< Iterator
+        integer :: iGsCore  !< Core grid subset identifier
+        integer :: iGsInnerMidplane !< Inner Midplane grid subset identifier
+        integer :: iGsOuterMidplane !< Outer Midplane grid subset identifier
+        integer :: homogeneous_time !< Homogeneous time (0 or 1)
+        integer :: ggd_slice    !< General grid description slice identifier
+        integer :: num_ggd_slice    !< Total number of ggd slices
         logical, parameter :: B2_WRITE_DATA = .true.
         real(IDS_real),   &
             &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
-        integer :: iGsCore, iGsInnerMidplane, iGsOuterMidplane
-
         real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2 ), 0:1)
-        real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2 ))
-        integer ::  homogeneous_time
-        real(IDS_real)    ::  time
-        integer :: ggd_slice, num_ggd_slice
+        real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2 ) )
+        real(IDS_real) :: time  !< Generic time
+        type(B2GridMap) :: gmap !< Data structure holding an
+            !< intermediate grid description to be transferred into a CPO or IDS
+        type(ids_generic_grid_dynamic_grid_subset) ::  gs_cell
+        type(ids_generic_grid_dynamic_grid_subset) ::  gs_face
+        type(ids_generic_grid_dynamic_grid_subset) ::  gs_bnd_core
 
         !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
@@ -111,7 +125,7 @@ contains
         !! This can be done using exampleSetIDSFundamentals routine
         homogeneous_time = 1
         time = 0.0_IDS_real
-        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time)
+        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time )
 
         !! Preparing edge_transport IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -345,18 +359,22 @@ contains
         contains
 
         !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
-        !> IMAS IDS data tree node.
+        !! IMAS IDS data tree node.
         subroutine write_quantity( val, fluxes, value, flux, ggd_slice )
-
             use b2mod_interp
             type(ids_generic_grid_scalar), pointer, intent(inout) :: val(:)
+                !< Type of IDS data structure, designed for scalar data handling
             ! real(IDS_real), pointer, intent(inout)  :: val(:)
             type (ids_generic_grid_scalar), pointer, intent(inout) :: fluxes(:)
+                !< Type of IDS data structure, designed for scalar data handling
+                !< (in this case scalars regarding fluxes )
             real(IDS_real), intent(in) :: value( -1:gmap%b2nx, -1:gmap%b2ny )
             real(IDS_real), intent(in) :: flux( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )
-            integer, intent(in) ::  ggd_slice
-            real(IDS_real), dimension(:), pointer :: idsdata
-            integer ::  ival
+            integer, intent(in) :: ggd_slice    !< General grid description
+                                                !< slice identifier
+            real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
+                !< handing data field values
+            integer :: ival
 
             !! Allocate data fields for 5 grid subsets
             allocate( val(5) )
@@ -404,11 +422,12 @@ contains
         end subroutine write_quantity
 
         !> Write a scalar B2 cell quantity to ids_generic_grid_scalar
-        subroutine write_cell_scalar(scalar, b2CellData)
+        subroutine write_cell_scalar( scalar, b2CellData )
             type(ids_generic_grid_scalar), intent(inout), pointer :: scalar(:)
-            ! type(ids_generic_grid_scalar), intent(inout), pointer :: scalar(:)
+                !< Type of IDS data structure, designed for scalar data handling
             real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
-            real(IDS_real), dimension(:), pointer :: idsdata
+            real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
+                !< handing data field values
             allocate( scalar(1) )
 
             !! TODO: add checks whether already allocated
@@ -420,21 +439,24 @@ contains
         end subroutine write_cell_scalar
 
         !> Write a vector component B2 cell quantity to ids_generic_grid_vector
-        !> components
-        !> @note Currently works only with parallel velocity data field
-        !> @note Available IDS vector component data fields:
-        !>          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-        !>          - "diamagnetic",
-        !>          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
-        !>          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-        !>          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
+        !! components
+        !! @note Currently works only with parallel velocity data field
+        !! @note Available IDS vector component data fields (vector IDs):
+        !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
+        !!          - "diamagnetic",
+        !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
+        !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
+        !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
         subroutine write_cell_vector_component( vectorComponent, b2CellData,    &
-                &   vectorID)
+                &   vectorID )
             type(ids_generic_grid_vector_components), intent(inout),    &
-                &   pointer :: vectorComponent(:)
+                &   pointer :: vectorComponent(:) !< Type of IDS data structure,
+                    !> designed for vector data handling
             real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
-            real(IDS_real), dimension(:), pointer :: idsdata
-            character(len=*), intent(in) :: vectorID
+            real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
+                !< handing data field values
+            character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
+                                                        !< VEC_ALIGN_RADIAL_ID)
 
             !! If required, allocate storage
             if ( .not. associated( vectorComponent ) ) then
@@ -453,25 +475,31 @@ contains
 
         !!$> TODO: add to GGD itself (ids_grid_data)!
         !> Write a scalar data field given as a scalar data representation to a
-        !> generic grid vector component IDS data fields.
-        !>
-        !> @note    the routine will make sure the required storage is
-        !>          allocated, and will deallocate and re-allocate fields as
-        !>          necessary.
-        !> @note Currently works only with parallel velocity data field
-        !> @note Available IDS vector component data fields:
-        !>          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-        !>          - "diamagnetic",
-        !>          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
-        !>          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-        !>          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
-        subroutine B2gridWriteDataVectorComponents( idsField_vcomp,       &
+        !! generic grid vector component IDS data fields.
+        !!
+        !! @note    The routine will make sure the required storage is
+        !!          allocated, and will deallocate and re-allocate fields as
+        !!          necessary.
+        !! @note Currently works only with parallel velocity data field
+        !! @note Available IDS vector component data fields:
+        !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
+        !!          - "diamagnetic",
+        !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
+        !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
+        !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
+        subroutine B2gridWriteDataVectorComponents( idsField_vcomp,     &
                 &   grid_subset_index, vectorID, data)
             type(ids_generic_grid_vector_components), intent(inout) ::  &
                 &   idsField_vcomp
-            integer, intent(in) :: grid_subset_index
-            character(len=*), intent(in) :: vectorID
-            real(ids_real), intent(in) :: data(:)
+                !< Type of IDS data structure, designed for handling data
+                !> regarding vector components (parallel, poloidal etc.)
+            integer, intent(in) :: grid_subset_index    !< Base grid subset
+                                                        !< index
+            character(len=*), intent(in) :: vectorID    !< Vector ID (e.g. )
+                                                        !< VEC_ALIGN_RADIAL_ID)
+            real(ids_real), intent(in) :: data(:)   !< Data field to be written
+                !< to IDS data structure leaf that corresponds to specified
+                !< vector component
 
             !! set grid subset index
             idsField_vcomp%grid_subset_index = grid_subset_index
@@ -612,46 +640,48 @@ contains
 #endif
 
         !> Write a vector B2 face quantity to a ids_generic_grid_vector
+        !! @note    ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
+        !!          vector%align and vector%alignid:
+        !!          - ITM vector%comp:
+        !!               Holds data on one of the vector components
+        !!               ( parallel, poloidal, toroidal etc.). The %comp(:)
+        !!               node can hold data for any of those components.
+        !!               However the data inside that node must be properly
+        !!               specified in order to provide necessary information
+        !!               to which component this data relates to.
+        !!               IDS does that differently. IDS has specially designed
+        !!               nodes with node names being the same as names of the
+        !!               components (for example
+        !!               edge_profiles.ggd(:)%e_field(:)%parallel).
+        !!               Each of those nodes hold data for its intended
+        !!               component.
+        !!          - ITM vector%alignid:
+        !!               Alignment information for vector components.
+        !!               Describes vector component ID or label
+        !!               ("parallel", "toroidal", etc.). In IDS this is not
+        !!               needed as a node itself indicates to what vector
+        !!               component the data relates to.
+        !!          - ITM vector%align:
+        !!               Alignment information for vector components.
+        !!               Holds vector component label (number tag). In IDS this
+        !!               is probably not required as, same as for %alignid, a
+        !!               node itself indicates to what vector component
+        !!               the data relates to.
         subroutine write_face_vector( vector, b2FaceData, ggd_slice,    &
                 &   gridSubsetId )
             use ids_grid_data ! IGNORE
             type(ids_generic_grid_scalar), intent(inout) :: vector
+                !< Type of IDS data structure, designed for scalar data handling
+                !< (in this case 1D vector)
             real(IDS_real), intent(in) ::   &
                 &   b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
-            integer, intent(in), optional :: gridSubsetId
-            real(IDS_real), dimension(:), pointer :: idsdata
-            integer, intent(in) :: ggd_slice
+            integer, intent(in), optional :: gridSubsetId   !< Base grid subset
+                                                            !< index
+            real(IDS_real), dimension(:), pointer :: idsdata    !< Dummy array
+                !< for holding data field values
+            integer, intent(in) :: ggd_slice    !< General grid description
 
             if ( .not. present(gridSubsetId) ) then
-
-                !! ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
-                !! vector%align and vector%alignid:
-                !! - ITM vector%comp:
-                !!      Holds data on one of the vector components
-                !!      ( parallel, poloidal, toroidal etc.). The %comp(:)
-                !!      node can hold data for any of those components.
-                !!      However the data inside that node must be properly
-                !!      specified in order to provide necessary information
-                !!      to which component this data relates to.
-                !!      IDS does that differently. IDS has specially designed
-                !!      nodes with node names being the same as names of the
-                !!      components (for example
-                !!      edge_profiles.ggd(:)%e_field(:)%parallel).
-                !!      Each of those nodes hold data for its intended
-                !!      component.
-                !! - ITM vector%alignid:
-                !!      Alignment information for vector components.
-                !!      Describes vector component ID or label
-                !!      ("parallel", "toroidal", etc.). In IDS this is not
-                !!      needed as a node itself indicates to what vector
-                !!      component the data relates to.
-                !! - ITM vector%align:
-                !!      Alignment information for vector components.
-                !!      Holds vector component label (number tag). In IDS this
-                !!      is probably not required as, same as for %alignid, a
-                !!      node itself indicates to what vector component
-                !!      the data relates to.
-
                 !! Fill in vector component data
                 idsdata => b2IMASTransformDataB2ToIDS(          &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
@@ -675,11 +705,21 @@ contains
     end subroutine write_ids
 
     !> From the B2 grid, compute the coordinate unit vectors
-    !> (poloidal, radial. toroidal)
-    subroutine computeCoordinateUnitVectors(crx, cry, e1, e2, e3)
-        real(IDS_real), intent(in), dimension(-1:,-1:,0:) :: crx, cry
+    !> (poloidal, radial, toroidal)
+    subroutine computeCoordinateUnitVectors( crx, cry, e1, e2, e3 )
+        real(IDS_real), intent(in), dimension(-1:,-1:,0:) :: crx    !< Horizontal
+            !< coordinates of the four corners of the (ix, iy) cell
+        real(IDS_real), intent(in), dimension(-1:,-1:,0:) :: cry    !< Vertical
+            !< coordinates of the four corners of the (ix, iy) cell
         real(IDS_real), intent(out),    &
-            &   dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e1, e2, e3
+            &   dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e1
+            !< First set of coordinates
+        real(IDS_real), intent(out),    &
+            &   dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e2
+            !< Second set of coordinates
+        real(IDS_real), intent(out),    &
+            &   dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e3
+            !< Third set of coordinates
 
         !! internal
         integer :: ix, iy, ixn, iyn, nx, ny
@@ -785,8 +825,8 @@ contains
 
     !> Return unit vector along direction of given vector
     function unitVector(v) result(unitV)
-        real(IDS_real), intent(in) :: v(:)
-        real(IDS_real) :: unitV(size(v))
+        real(IDS_real), intent(in) :: v(:)  !< Vector
+        real(IDS_real) :: unitV(size(v))    !< Unit vector
 
         unitV = v / sqrt( sum( v**2 ) )
     end function unitVector
