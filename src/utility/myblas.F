@@ -237,7 +237,7 @@
         iy = iy+incy
        enddo
       endif
- #ifdef WITH_FTIMINGS
+#ifdef WITH_FTIMINGS
       call timer%stop("b2saxpy")
 #endif     
       return
