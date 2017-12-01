@@ -298,12 +298,12 @@ contains
   !!        rightcut(i) holds the right boundary index + 1 of a region which is cut
   !!        This means the region range in the x direction is
   !!        (leftcut(i):rightcut(i))
-  subroutine init_connectivity(nx1, ny1, crx1, cry1, cflag,     &
+  subroutine init_connectivity( nx1, ny1, crx1, cry1, cflag,    &
       &     leftix1, leftiy1, rightix1, rightiy1,               &
       &     topix1, topiy1, bottomix1, bottomiy1,               &
       &     leftcut1, rightcut1, bottomcut1, topcut1,           &
       &     periodic_bc, nncut, nncutmax, inseltop, inselbot,   &
-      &     geom_match_dist, istyle)
+      &     geom_match_dist, istyle )
 
     use b2mod_types
     implicit none

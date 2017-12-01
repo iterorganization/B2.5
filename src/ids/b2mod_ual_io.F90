@@ -271,9 +271,9 @@ contains
                     &   flux = fna(:,:,:, is - 1 ),                             &
                     &   ggd_slice = ggd_slice )
                 call write_cell_scalar( scalar = edge_sources%source(1)%        &
-                    &   ggd( ggd_slice )%ion( is )%particles,               &
-                    &   b2CellData = sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *&
-                    &   na(:,:, is - 1 ) )
+                    &   ggd( ggd_slice )%ion( is )%particles,                   &
+                    &   b2CellData =                                            &
+                    &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 )*na(:,:, is - 1 ) )
             end do
 
 !!$    !! ue: Parallel Electron Velocity
@@ -403,21 +403,21 @@ contains
             deallocate( idsdata )
 
             ival = ival + 1
-            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(                    &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
                 &   edge_profiles%ggd( ggd_slice )%grid, iGsOuterMidplane,  &
                 &   gmap, tmpVx )
             call gridWriteData( val( ival ), iGsOuterMidplane, idsdata )
             deallocate( idsdata )
 
             ival = ival + 1
-            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(                    &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
                 &   edge_profiles%ggd( ggd_slice )%grid, GRID_SUBSET_NODES, &
                 &   gmap, tmpVx )
             call gridWriteData( val( ival ), GRID_SUBSET_NODES, idsdata )
             deallocate( idsdata )
             allocate( fluxes(2) )
             call write_face_vector( fluxes(1), flux, ggd_slice)
-            call write_face_vector( fluxes(2), flux, ggd_slice,     &
+            call write_face_vector( fluxes(2), flux, ggd_slice, &
                 &   gridSubsetId = iGsCore )
         end subroutine write_quantity
 
@@ -431,8 +431,8 @@ contains
             allocate( scalar(1) )
 
             !! TODO: add checks whether already allocated
-            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,       &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
+                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,           &
                 &   gmap, b2CellData )
             call gridWriteData( scalar(1), GRID_SUBSET_CELLS, idsdata )
             deallocate(idsdata)
@@ -464,11 +464,11 @@ contains
             end if
 
             !! TODO: add checks whether already allocated
-            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,       &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
+                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,           &
                 &   gmap, b2CellData )
 
-            call B2grid_Write_Data_Vector_Components( vectorComponent(1), &
+            call B2grid_Write_Data_Vector_Components( vectorComponent(1),   &
                 &   GRID_SUBSET_CELLS, vectorID, idsdata )
             deallocate(idsdata)
         end subroutine write_cell_vector_component
@@ -487,7 +487,7 @@ contains
         !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
         !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
         !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
-        subroutine B2grid_Write_Data_Vector_Components( idsField_vcomp,     &
+        subroutine B2grid_Write_Data_Vector_Components( idsField_vcomp, &
                 &   grid_subset_index, vectorID, data)
             type(ids_generic_grid_vector_components), intent(inout) ::  &
                 &   idsField_vcomp
@@ -629,8 +629,8 @@ contains
 
             !! Fill in vector component data
             do i = 1, dim
-                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(          &
-                    &   edge_profiles%ggd( ggd_slice )%grid,    &
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(        &
+                    &   edge_profiles%ggd( ggd_slice )%grid,        &
                     &   GRID_SUBSET_CELLS, gmap, vecdata(:,:,i-1))
                 call gridWriteData( vector, GRID_SUBSET_CELLS, idsdata )
                 deallocate(idsdata)
@@ -683,18 +683,18 @@ contains
 
             if ( .not. present(gridSubsetId) ) then
                 !! Fill in vector component data
-                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(          &
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   GRID_SUBSET_Y_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
-                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(          &
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   GRID_SUBSET_X_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
             else
-                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(          &
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   gridSubsetId, gmap, b2FaceData)
                 call gridWriteData( vector, gridSubsetId, idsdata )
@@ -888,8 +888,8 @@ contains
         & topix,topiy,bottomix,bottomiy, &
         & nnreg, topcut, region, cflags, INCLUDE_GHOST_CELLS, vol, gs, qc )
 
-
-    call xertst( geometryId( nnreg, periodic_bc, topcut ) == GEOMETRY_SN, "write_cpo: can only do single null" )
+    call xertst( geometryId( nnreg, periodic_bc, topcut ) == GEOMETRY_SN,   &
+        &   "write_cpo: can only do single null" )
 
     !! Write plasma state
 

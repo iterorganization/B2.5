@@ -332,9 +332,9 @@ contains
             do iy = -1, ny
 
                 !! Right face: left face of left neighbour
-                call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
-                    &   topix, topiy, bottomix, bottomiy,                   &
-                    &   ix, iy, RIGHT, nbix, nbiy)
+                call get_Neighbour( nx, ny, leftix, leftiy, rightix,    &
+                    &   rightiy, topix, topiy, bottomix, bottomiy,      &                 &
+                    &   ix, iy, RIGHT, nbix, nbiy )
 
                 if( is_Cell_In_Domain(nx, ny, nbix, nbiy) ) then
                     fcyi( ix, iy, RIGHT ) = fcyi( nbix, nbiy, LEFT )
@@ -345,8 +345,8 @@ contains
 
                 !! Top face: bottom face of top neighbour
                 !! also top-left vertex
-                call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
-                    & topix, topiy, bottomix, bottomiy,                        &
+                call get_Neighbour( nx, ny, leftix, leftiy, rightix,    &
+                    &   rightiy, topix, topiy, bottomix, bottomiy,      &                       &
                     & ix, iy, TOP, nbix, nbiy)
 
                 if( is_Cell_In_Domain(nx, ny, nbix, nbiy) ) then
@@ -397,7 +397,7 @@ contains
         vxNeeded = .false.
         do ix = -1, nx
             do iy = -1, ny
-                if( .not. is_Unneeded_Cell( nx, ny, cflag,   &
+                if( .not. is_Unneeded_Cell( nx, ny, cflag,  &
                         &   includeGhostCells, ix, iy ) ) then
                     cvNeeded(cvi(ix, iy)) = .true.
                     do iCorner = 0, 3
@@ -583,7 +583,7 @@ contains
                 fcyiReduce( i1 ) = ic
             end if
         end do
-        call xertst ( ic == nfcx + nfcy,    &
+        call xertst( ic == nfcx + nfcy, &
             & 'b2CreateMap: found less y-aligned faces than expected' )
 
         do iPass = 1, 2
@@ -669,7 +669,7 @@ contains
             end if
         end do
 
-        call xertst ( count( gd%mapVxix == B2_GRID_UNDEFINED ) == 0,    &
+        call xertst( count( gd%mapVxix == B2_GRID_UNDEFINED ) == 0, &
             & "b2CreateMap: mapVxix broken" )
 
         !! After completing the vertex map, we can complete the special
@@ -699,7 +699,7 @@ contains
             do iy = -1, ny
                 do iCorner = VX_LOWERRIGHT, VX_UPPERRIGHT  ! 1, 3
                     if( gd%mapVxI( ix, iy, iCorner) == GRID_UNDEFINED ) then
-                        call find_Existing_Vertex_Index( ix, iy, iCorner,  &
+                        call find_Existing_Vertex_Index( ix, iy, iCorner,   &
                             &   index, stopOnUnneededCells = .true.)
                         if( index /= GRID_UNDEFINED) then
                             gd%mapVxI( ix, iy, iCorner ) = index
@@ -734,7 +734,7 @@ contains
                             do ic = VX_LOWERLEFT, VX_UPPERRIGHT
                                 if( vxi( i1, i2, ic ) == GRID_UNDEFINED ) cycle
                                 if( cell_done ) cycle
-                                if( points_match( crx( ix, iy, iCorner ),  &
+                                if( points_match( crx( ix, iy, iCorner ),   &
                                     &   cry( ix, iy, iCorner ),             &
                                     &   crx( i1, i2, ic), cry( i1, i2, ic ))) then
                                     nsector (                                   &
@@ -766,7 +766,7 @@ contains
 
     !> For a given corner vertex of a cell, check whether in any connected
     !! cell a vertex index was already assigned to this vertex
-    subroutine find_Existing_Vertex_Index( ix, iy, iCorner, index, &
+    subroutine find_Existing_Vertex_Index( ix, iy, iCorner, index,  &
             &   stopOnUnneededCells)
         integer, intent(in) :: ix   !< Specifies index of interior cell along
                                     !< the first coordinate
@@ -811,7 +811,7 @@ contains
                     &   nix, niy, iDir, nix2, niy2 )
 
                 if(.not. is_Cell_In_Domain( nx, ny, nix2, niy2 )) exit
-                if( lStopOnUnneededCells .and. is_Unneeded_Cell( nx, ny,     &
+                if( lStopOnUnneededCells .and. is_Unneeded_Cell( nx, ny,    &
                     &   cflag, includeGhostCells, nix2, niy2) ) exit
 
                 nix = nix2
@@ -849,7 +849,7 @@ contains
         !! b2mod_cellhelper
 
         !! step left
-        call get_Neighbour( nx, ny, leftix, leftiy, rightix, rightiy,    &
+        call get_Neighbour( nx, ny, leftix, leftiy, rightix, rightiy,   &
             &   topix, topiy, bottomix, bottomiy, x, y, LEFT, xn, yn )
         if( .not. is_Cell_In_Domain( nx, ny, xn, yn, extended =   &
             &   includeGhostCells )) then
@@ -864,7 +864,7 @@ contains
         y = yn
 
         !! step bottom
-        call get_Neighbour( nx, ny, leftix, leftiy, rightix, rightiy,    &
+        call get_Neighbour( nx, ny, leftix, leftiy, rightix, rightiy,   &
             &   topix, topiy, bottomix, bottomiy, x, y, BOTTOM, xn, yn )
         if( .not. is_Cell_In_Domain( nx, ny, xn, yn, extended =   &
             &   includeGhostCells ) ) then
@@ -879,7 +879,7 @@ contains
         y = yn
 
         !! step right
-        call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
+        call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy,    &
             &   topix,topiy,bottomix,bottomiy, x, y, RIGHT, xn, yn )
         if( .not. is_Cell_In_Domain( nx, ny, xn, yn, extended =   &
             &   includeGhostCells )) then
@@ -894,7 +894,7 @@ contains
         y = yn
 
         !! step top
-        call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
+        call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy,    &
             &   topix, topiy, bottomix, bottomiy, x, y, TOP, xn, yn )
         if( .not. is_Cell_In_Domain( nx, ny, xn, yn, extended =   &
             &   includeGhostCells)) then
@@ -931,13 +931,14 @@ contains
 
         !! Only cells inside the "normal" B2 domain can be needed
         !! (this catches fake cells and connectivity pointing outside the domain)
-        is_Unneeded_Cell = .not. is_Cell_In_Domain(nx, ny, ix, iy, extended = .true.)
+        is_Unneeded_Cell =  &
+            &   .not. is_Cell_In_Domain(nx, ny, ix, iy, extended = .true.)
         if(is_Unneeded_Cell) return
 
         if(includeGhostCells) then
             is_Unneeded_Cell = isUnusedCell( cflag(ix,iy,CELLFLAG_TYPE) )
         else
-            is_Unneeded_Cell = isUnusedCell( cflag(ix,iy,CELLFLAG_TYPE) ) &
+            is_Unneeded_Cell = isUnusedCell( cflag(ix,iy,CELLFLAG_TYPE) )   &
                 &   .or. isGhostCell( cflag(ix,iy,CELLFLAG_TYPE) )
         end if
 
@@ -980,10 +981,10 @@ contains
 
         if( lExtended ) then
             !! in extended domain (including ghost cells)?
-            is_Cell_In_Domain = ( ix >= -1 ) .and. (ix <= nx) .and.    &
+            is_Cell_In_Domain = ( ix >= -1 ) .and. (ix <= nx) .and. &
                 &   ( iy >= -1 ) .and. ( iy <= ny )
         else
-            is_Cell_In_Domain = ( ix > -1 ) .and. (ix < nx) .and.      &
+            is_Cell_In_Domain = ( ix > -1 ) .and. (ix < nx) .and.   &
                 &   ( iy > -1 ) .and. ( iy < ny )
         end if
     end function is_Cell_In_Domain
@@ -1011,10 +1012,10 @@ contains
 
         if( lExtended ) then
             !! in extended domain (including ghost cells)?
-            is_Node_In_Domain = ( ix >= -1 ) .and. (ix <= nx + 1) .and.    &
+            is_Node_In_Domain = ( ix >= -1 ) .and. (ix <= nx + 1) .and. &
                 &   ( iy >= -1 ) .and. ( iy <= ny + 1 )
         else
-            is_Node_In_Domain = ( ix > -1 ) .and. (ix < nx + 1) .and.      &
+            is_Node_In_Domain = ( ix > -1 ) .and. (ix < nx + 1) .and.   &
                 &   ( iy > -1 ) .and. ( iy < ny + 1)
         end if
     end function is_Node_In_Domain

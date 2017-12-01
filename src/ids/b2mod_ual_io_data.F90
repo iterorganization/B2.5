@@ -39,7 +39,7 @@ module b2mod_ual_io_data
     !> Provides service routines to transform data from B2 to IMAS IDS
     !! (data in form of vertex, face or cell)
     interface b2_IMAS_Transform_Data_B2_To_IDS
-        module procedure b2_IMAS_Transform_Data_B2_To_IDS_Cell,    &
+        module procedure b2_IMAS_Transform_Data_B2_To_IDS_Cell, &
             &   b2_IMAS_Transform_Data_B2_To_IDS_Face
     end interface
 
@@ -61,8 +61,8 @@ contains
         real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
                 !< handing data field values
 
-        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetId,   &
-            &   gmap, b2CellData = b2CellData )
+        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_General( grid,  &
+            &   gridSubsetId, gmap, b2CellData = b2CellData )
     end function b2_IMAS_Transform_Data_B2_To_IDS_Cell
 
     !> Transform data from B2 to IDS face
@@ -81,16 +81,16 @@ contains
         real(IDS_real), dimension(:), pointer :: idsdata !< Array for
             !< handing data field values
 
-        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetId,   &
-            &   gmap, b2FaceData = b2FaceData )
+        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_General( grid,  &
+            &   gridSubsetId, gmap, b2FaceData = b2FaceData )
     end function b2_IMAS_Transform_Data_B2_To_IDS_Face
 
     !! TODO: find a way to include this subroutine in the
     !! b2_IMAS_Transform_Data_B2_To_IDS interface
 
     !> Transform data from B2 to IDS vertex
-    function b2_IMAS_Transform_Data_B2_To_IDS_Vertex( grid, gridSubsetId, gmap,     &
-            &   b2VertexData ) result( idsdata )
+    function b2_IMAS_Transform_Data_B2_To_IDS_Vertex( grid, gridSubsetId,   &
+            &   gmap, b2VertexData ) result( idsdata )
         type(ids_generic_grid_dynamic), intent(in)  :: grid !< Type of IDS data
             !< structure, designed for handling grid geometry data
         integer, intent(in)         :: gridSubsetId !< ID (base index) of the
@@ -111,8 +111,8 @@ contains
     !! IDS array for a given grid subset id. Either b2CellData or b2FaceData
     !! must be given. Do not use this directly, use the provided general
     !! interface b2_IMAS_Transform_Data_B2_To_IDS instead.
-    function b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetId, gmap,   &
-            &   b2CellData, b2FaceData, b2VertexData ) result( idsdata )
+    function b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetId,  &
+            &   gmap, b2CellData, b2FaceData, b2VertexData ) result( idsdata )
         type(ids_generic_grid_dynamic), intent(in)  :: grid !< Type of IDS data
             !< structure, designed for handling grid geometry data
         integer, intent(in) :: gridSubsetId !< Base grid subset index

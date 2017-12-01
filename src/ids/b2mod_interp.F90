@@ -173,7 +173,7 @@ contains
         do ix = -1, nx
           do iy = -1, ny
             if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-                if (xory.eq.1) then
+                if(xory.eq.1) then
                     if(isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
                         face(ix,iy) = (centre(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy))+ &
                         &  centre(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy))/ &

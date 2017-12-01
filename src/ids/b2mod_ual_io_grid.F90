@@ -187,11 +187,12 @@ contains
 
 #ifdef IMAS
 
-    !> Routine that fills in a grid description which is part of a CPO
+    !> Routine that fills in a grid description which is part of a IMAS IDS
     !! using the given grid data and prepared mappings
-    subroutine b2_IMAS_Fill_Grid_Desc( gmap, ggd_grid, nx, ny, crx, cry,     &
-        &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix, bottomiy, &
-        &   nnreg, topcut, region, cflag, includeGhostCells, vol, gs, qc )
+    subroutine b2_IMAS_Fill_Grid_Desc( gmap, ggd_grid, nx, ny, crx, cry,    &
+        &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,       &
+        &   bottomiy, nnreg, topcut, region, cflag, includeGhostCells, vol, &
+        &   gs, qc )
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
@@ -683,7 +684,7 @@ contains
         end do
 
         !! Set nodes list, composing the 2D objects - Cells, using a subroutine
-        call setCellsConnectivityArrayNodes(ggd_grid)
+        call set_Cells_Conn_Array_Nodes(ggd_grid)
 
 #if 0
         !! TODO
@@ -716,7 +717,7 @@ contains
     end subroutine fill_In_Grid_Desc
 
     !> Set connectivity array for cells by defining nodes that form each cell
-    subroutine setCellsConnectivityArrayNodes(ggd_grid)
+    subroutine set_Cells_Conn_Array_Nodes(ggd_grid)
         type(ids_generic_grid_dynamic), intent(inout) :: ggd_grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
         !! Internal variables
@@ -814,8 +815,7 @@ contains
                 &   object( icv )%nodes(4) = node_idx(2)
         end do
 
-    end subroutine setCellsConnectivityArrayNodes
-
+    end subroutine set_Cells_Conn_Array_Nodes
 
     !> Define grid subsets
     subroutine fill_In_GridSubset_Desc
@@ -992,9 +992,9 @@ contains
         if (iCoreGS == B2_GRID_UNDEFINED) then
             iCoreGS = findGridSubsetByName(ggd_grid, "Outer core boundary")
         end if
-        if (iCoreGS == B2_GRID_UNDEFINED) stop "fill_In_GridSubset_Desc:    &
-            &   did not find core boundary grid subset for assembling outer     &
-            &   midplane  grid subset"
+        if (iCoreGS == B2_GRID_UNDEFINED) stop "fill_In_GridSubset_Desc:&
+            & did not find core boundary grid subset for assembling outer&
+            & midplane  grid subset"
 
         !! Figure out starting points for inner and outer midplane on core
         !! boundary
@@ -1044,8 +1044,8 @@ contains
             &   ggd_grid%grid_subset( GSubsetCount ), IDS_CLASS_NODE - 1,   &
             &   indexList2d(:,1), IDS_CLASS_NODE, 1)
 
-        call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: wrote total of " &
-            &//idsInt2str(GSubsetCount)//" grid subsets (expected was "     &
+        call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: wrote total of "    &
+            &   //idsInt2str(GSubsetCount)//" grid subsets (expected was "  &
             &   //idsInt2str(size(ggd_grid%grid_subset))//")" )
 
         call assert( GSubsetCount == size(ggd_grid%grid_subset) )
@@ -1091,12 +1091,12 @@ contains
             obj = getGridSubsetObject(GridSubset, iObj)
             !! Expect a face
             call xertst( all( obj%cls( 1:SPACE_COUNT ) ==               &
-                &   IDS_CLASS_POLOIDALRADIAL_FACE ), "b2mod_ual_io_grid &
-                &   find_Midplane_Cells: assertion failure." )
+                &   IDS_CLASS_POLOIDALRADIAL_FACE ), "b2mod_ual_io_grid&
+                & find_Midplane_Cells: assertion failure." )
             !! ...which is aligned along the x-direction
             call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==   &
-                &   BOTTOM, "b2mod_ual_io_grid find_Midplane_Cells: assertion     &
-                &   failure." )
+                &   BOTTOM, "b2mod_ual_io_grid find_Midplane_Cells: assertion&
+                & failure." )
             ix = gmap % mapFcix( obj%ind( SPACE_POLOIDALPLANE ) )
             iy = gmap % mapFciy( obj%ind( SPACE_POLOIDALPLANE ) )
 
