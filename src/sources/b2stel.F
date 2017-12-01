@@ -25,6 +25,9 @@
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 11.06.13
 #endif
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -197,13 +200,51 @@
       rsanareg=0.0_R8
       rsahireg=0.0_R8
       rsamoreg=0.0_R8
-      rsana=0.0_R8
-      rsahi=0.0_R8
-      rsamo=0.0_R8
+      call sfill (n2*ns, 0.0_R8, rsana, 1)
+      call sfill (n2*ns, 0.0_R8, rsahi, 1)
+      call sfill (n2*ns, 0.0_R8, rsamo, 1)
+
+      rranareg=0.0_R8
+      rrahireg=0.0_R8
+      rramoreg=0.0_R8
+      rqahereg=0.0_R8
+           
+      call sfill (n2*ns, 0.0_R8, rrana, 1)
+      call sfill (n2*ns, 0.0_R8, rrahi, 1)
+      call sfill (n2*ns, 0.0_R8, rramo, 1)
+      call sfill (n2*ns, 0.0_R8, rqahe, 1)
+
+      b2rad=0.0_R8
+      b2radreg=0.0_R8
+      b2bremreg=0.0_R8
+      rqradreg=0.0_R8
+      rqbrmreg=0.0_R8
+      call sfill (n2*ns, 0.0_R8, rqrad, 1)
+      b2brem=0.0_R8
+      rad_imp=0.0_R8
+#ifndef NO_OPENMP_B2STEL
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!$OMP PARALLEL DO default(none), private(ix, iy, is, rf0, t0, t1)
+!$OMP& shared(ns, nx, ny, rightix, leftix, topiy, bottomiy, zn)
+!$OMP& shared(region, rlsa, rsa, vol, ne, na, ni, te, ti, am, ua)
+!$OMP& shared(rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1)
+!$OMP& shared(rlra, rra, rpi, rlqa, rqa, rrd, hz)
+!$OMP& shared(sna0_ion, shi0_ion, smq0_ion, she0)
+!$OMP& shared(sna0_rec, shi0_rec, smq0_rec)
+!$OMP& shared(rsana, rsahi, rsamo, rrana, rrahi, rqahe, rramo, rbr)
+!$OMP& shared(rqrad, rqbrm, zamax, zamin)
+!$OMP& shared(fix_recomb_energy, styl0, BoRiS, is_neutral)
+!$OMP& shared(jimp_tmp, b2espcr)
+!$OMP& reduction(+:rsanareg, rsahireg, rsamoreg, rranareg, rrahireg)
+!$OMP& reduction(+:rqahereg, rramoreg, rqradreg, b2radreg)
+!$OMP& reduction(+:b2rad, rad_imp, rqbrmreg, b2bremreg, b2brem)
+#endif
+      do iy = -1, ny
       do is = 0, ns-2
        if (lnext(is,is+1)) then
 *     ..particle source and heat source
-        do iy = -1, ny
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -234,9 +275,7 @@
            rsahireg(region(ix,iy,0),is)=rsahireg(region(ix,iy,0),is)+t1
           endif
          enddo
-        enddo
 *     ..parallel momentum source
-        do iy = -1, ny
           do ix = -1, nx
             if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &         topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -294,22 +333,12 @@
      &        rsamoreg(region(ix,iy,0),is+1)-t1*ua(ix,iy,is)
            endif
           enddo
-        enddo
        endif
       enddo
 *   ..compute sources due to recombination
-      rranareg=0.0_R8
-      rrahireg=0.0_R8
-      rramoreg=0.0_R8
-      rqahereg=0.0_R8
-      rrana=0.0_R8
-      rrahi=0.0_R8
-      rramo=0.0_R8
-      rqahe=0.0_R8
       do is = 1, ns-1
        if (lnext(is-1,is)) then
 *     ..particle source and heat source
-        do iy = -1, ny
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -359,9 +388,7 @@ c accounted for)
            endif
           endif
          enddo
-        enddo
 *     ..parallel momentum source
-        do iy = -1, ny
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -387,20 +414,10 @@ c accounted for)
      &      rramoreg(region(ix,iy,0),is-1)+t1*ua(ix,iy,is)
           endif
          enddo
-        enddo
        endif
       enddo
 *   ..compute source terms for electron heat loss and radiation
-      b2rad=0.0_R8
-      b2radreg=0.0_R8
-      b2bremreg=0.0_R8
-      rqradreg=0.0_R8
-      rqbrmreg=0.0_R8
-      rqrad=0.0_R8
-      b2brem=0.0_R8
-      rad_imp=0.0_R8
       do is = 0, ns-1
-       do iy = -1, ny
         do ix = -1, nx
          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &      topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -439,7 +456,12 @@ c accounted for)
         enddo
        enddo
       enddo
-
+#ifndef NO_OPENMP_B2STEL
+!$OMP END PARALLEL DO
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
+#endif
 #ifdef ASTRA
       do is = 0, ns-1                                                 !srv 28.07.11 {
         if(is.eq.ismain) then
