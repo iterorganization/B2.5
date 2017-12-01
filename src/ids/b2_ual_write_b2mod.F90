@@ -13,8 +13,81 @@
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
 !!      Library routines.
 !!
+!!      @section b2uw_b2mod_cpo2ids Mapping CPO -> IDS
+!!      Most B2.5 routines were originally developed to work solely with ITM
+!!      CPOs. Those same routines were modified or created anew, providing
+!!      necessary tools for working with IMAS IDSs.
+!!      Since CPO and IDS data structure is not the same a lot of proper
+!!      adjustments had to be made, mostly in modules
+!!      @ref b2uw_ualio_grid_desc "b2mod_ual_io_grid" and
+!!      @ref b2uw_ualio_desc      "b2mod_ual_io".
+!!
+!!
+!!      @subsection b2uw_b2mod_cpo2ids_constants Constants, classes etc.
+!!      Below are listed CPO constants, classes etc. and corresponding IDS
+!!      ones that were used in IMAS IDS B2.5 routines.
+!!
+!!      CPO                                     | IDS
+!!      -------------------------------         | ------------------
+!!      CLASS_NODE = (/ 0, 0 /)                 | IDS_CLASS_NODE = 1
+!!      CLASS_RZ_EDGE = (/ 1, 0 /)              | IDS_CLASS_RZ_EDGE = 2
+!!      CLASS_PHI_EDGE = (/ 0,10 /)             | IDS_CLASS_PHI_EDGE = 2
+!!      CLASS_POLOIDALRADIAL_FACE = (/ 1, 1 /)  | IDS_CLASS_POLOIDALRADIAL_FACE = 2
+!!      CLASS_TOROIDAL_FACE = (/ 2, 0 /)        | IDS_CLASS_TOROIDAL_FACE = 2
+!!      CLASS_CELL = (/ 2, 1 /)                 | IDS_CLASS_CELL = 3
+!!
+!!      <b> Grid subset IDs </b>:
+!!
+!!      B2.5 ITM routines use grid subset IDs (B2_SUBGRID_UNSPECIFIED,
+!!      B2_SUBGRID_NODES, B2_SUBGRID_CELLS etc.) defined in
+!!      @ref b2uw_ualio_grid_desc "b2mod_ual_io_grid.F90", while B2.5 IDS
+!!      uses grid subset IDs defined in IMAS GGD (ids_grid_common.f90).
+!!
+!!      @subsection b2uw_b2mod_cpo2ids_nodes Data tree nodes
+!!      Below are listed CPO nodes and corresponding IDS nodes to which the
+!!      data was written instead.
+!!
+!!      CPO edge.grid. ...              | IDS edge_profiles.ggd(:).grid. ...
+!!      ------------------------------- | -------------------------------------
+!!      spaces(:).coordtype             | space(:).coordinates_type
+!!      spaces(:).objects               | space(:).objects_per_dimension(:).object
+!!      spaces(:).objects(:).geo        | space(:).objects_per_dimension(:).object.geometry
+!!      spaces(:).objects(:).boundary   | space(:).objects_per_dimension(:).object.boundary
+!!      spaces(:).objects(:).neighbour  | space(:).objects_per_dimension(:)object(:).boundary(:).neighbours
+!!      spaces(:).xpoints               | No node for data on x-points was found
+!!      subgrids                        | grid_subset
+!!
+!!      CPO edge. ...           | IDS
+!!      ----------------------- | ---------------------------------------------
+!!      fluid.ne.value          | edge_profiles.ggd(:).electrons.density
+!!      fluid.ne.flux           | edge_transport.model(:).ggd(:).electrons.particles.flux
+!!      fluid.ne.source         | edge_sources.source(:).ggd(:).electrons.particles
+!!      fluid.ni.value          | edge_profiles.ggd(:).ion(:).density
+!!      fluid.ni.flux           | edge_transport.model(:).ggd(:).ion(:).particles.flux
+!!      fluid.ni.source         | edge_sources.source(:).ggd(:).ion(:).particles
+!!      fluid.vi(:).comps(1)    | edge_profiles.ggd(:).ion(:).velocity(:).radial
+!!      fluid.vi(:).comps(2)    | edge_profiles.ggd(:).ion(:).velocity(:).poloidal
+!!      fluid.vi(:).comps(3)    | edge_profiles.ggd(:).ion(:).velocity(:).toroidal
+!!      fluid.vi(:).align(:)    | Probably not required as the leaf label refers to vector component itself
+!!      fluid.vi(:).alignid     | Refers to the label of the node velocity(:) leaf
+!!      fluid.te(:).value       | edge_profiles.ggd(:).electrons.temperature
+!!      fluid.te(:).flux        | edge_transport.model(:).ggd(:).electrons.energy.flux
+!!      fluid.ti(:).value       | edge_profiles.ggd(:).ion(:).temperature
+!!      fluid.ti(:).flux        | edge_transport.model(:).ggd(:).ion(:).energy.flux
+!!      fluid.po.value          | edge_profiles.ggd(:).phi_potential,
+!!      fluid.te_aniso.comps(1) | edge_profiles.ggd(:).e_field.poloidal
+!!      fluid.te_aniso.comps(2) | edge_profiles.ggd(:).e_field.radial
+!!      fluid.te_aniso.comps(3) | edge_profiles.ggd(:).e_field.toroidal
+!!      fluid.te_aniso.comps(4) | edge_profiles.ggd(:).e_field.diamagnetic
+!!
+!!      @note   In the future, IDS data structure nodes that correspond to
+!!              flux data fields are to be moved from edge_transport IDS to
+!!              edge_profiles IDS.
+!!
 !!      \b References:
 !!          - @ref b2uw_b2mod_prog "b2_ual_write_b2mod file reference"
+!!          - @ref b2uw_ualio_grid_desc "b2mod_ual_io_grid module "
+!!          - @ref b2uw_ualio_desc      "b2mod_ual_io module".
 !!
 !!-----------------------------------------------------------------------------
 

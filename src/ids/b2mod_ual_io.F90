@@ -136,7 +136,7 @@ contains
         allocate( edge_transport%ids_properties%comment(1) )
         edge_transport%ids_properties%comment(1) = "Done by b2_ual_write_b2mod"
         !! 2. Allocate edge_transport.time and set it to desired value
-        allocate(edge_transport%time(1))
+        allocate( edge_transport%time(1) )
         edge_transport%time(1) = time
 
         !! Preparing edge_sources IDS for writing
@@ -213,7 +213,7 @@ contains
         mapInitialized = .true.
 
         !! Write grid & grid subsets/subgrids
-        call b2IMASFillGridDescription( gmap, edge_profiles%ggd( ggd_slice )%grid,    &
+        call b2_IMAS_Fill_Grid_Desc( gmap, edge_profiles%ggd( ggd_slice )%grid,    &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
@@ -328,7 +328,7 @@ contains
 
             !! B (magnetic field vector)
             !! Compute unit basis vectors along the field directions
-            call computeCoordinateUnitVectors(crx, cry, e(:,:,:,1), &
+            call compute_Coordinate_Unit_Vectors(crx, cry, e(:,:,:,1), &
                 &   e(:,:,:,2), e(:,:,:,3))
 
             !! Write the three unit basis vectors
@@ -378,7 +378,7 @@ contains
 
             !! Allocate data fields for 5 grid subsets
             allocate( val(5) )
-            idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%   &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
                 &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS, gmap, value )
 
             ival = 1
@@ -388,7 +388,7 @@ contains
             ival = ival + 1
             tmpFace = 0.0_IDS_real
             call value_on_faces( nx, ny, vol, value, tmpFace)
-            idsdata => b2IMASTransformDataB2ToIDS( &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( &
                 &   edge_profiles%ggd( ggd_slice )%grid, iGsCore, gmap, tmpFace )
             call gridWriteData( val( ival ), iGsCore, idsdata )
             deallocate( idsdata )
@@ -396,21 +396,21 @@ contains
             ival = ival + 1
             tmpVx = interpolateToVertices(  &
                 &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
-            idsdata => b2IMASTransformDataB2ToIDSVertex(    &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(    &
                 &   edge_profiles%ggd( ggd_slice )%grid,    &
                 &   iGsInnerMidplane, gmap, tmpVx )
             call gridWriteData( val( ival ), iGsInnerMidplane, idsdata )
             deallocate( idsdata )
 
             ival = ival + 1
-            idsdata => b2IMASTransformDataB2ToIDSVertex(                    &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(                    &
                 &   edge_profiles%ggd( ggd_slice )%grid, iGsOuterMidplane,  &
                 &   gmap, tmpVx )
             call gridWriteData( val( ival ), iGsOuterMidplane, idsdata )
             deallocate( idsdata )
 
             ival = ival + 1
-            idsdata => b2IMASTransformDataB2ToIDSVertex(                    &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(                    &
                 &   edge_profiles%ggd( ggd_slice )%grid, GRID_SUBSET_NODES, &
                 &   gmap, tmpVx )
             call gridWriteData( val( ival ), GRID_SUBSET_NODES, idsdata )
@@ -431,7 +431,7 @@ contains
             allocate( scalar(1) )
 
             !! TODO: add checks whether already allocated
-            idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%   &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
                 &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,       &
                 &   gmap, b2CellData )
             call gridWriteData( scalar(1), GRID_SUBSET_CELLS, idsdata )
@@ -464,11 +464,11 @@ contains
             end if
 
             !! TODO: add checks whether already allocated
-            idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%   &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
                 &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,       &
                 &   gmap, b2CellData )
 
-            call B2gridWriteDataVectorComponents( vectorComponent(1), &
+            call B2grid_Write_Data_Vector_Components( vectorComponent(1), &
                 &   GRID_SUBSET_CELLS, vectorID, idsdata )
             deallocate(idsdata)
         end subroutine write_cell_vector_component
@@ -487,7 +487,7 @@ contains
         !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
         !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
         !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
-        subroutine B2gridWriteDataVectorComponents( idsField_vcomp,     &
+        subroutine B2grid_Write_Data_Vector_Components( idsField_vcomp,     &
                 &   grid_subset_index, vectorID, data)
             type(ids_generic_grid_vector_components), intent(inout) ::  &
                 &   idsField_vcomp
@@ -582,7 +582,7 @@ contains
                 idsField_vcomp%toroidal = data
             end select
 
-        end subroutine B2gridWriteDataVectorComponents
+        end subroutine B2grid_Write_Data_Vector_Components
 
 #if 0
         !> Write a vector B2 cell quantity to a complexgrid_vector
@@ -629,7 +629,7 @@ contains
 
             !! Fill in vector component data
             do i = 1, dim
-                idsdata => b2IMASTransformDataB2ToIDS(          &
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(          &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   GRID_SUBSET_CELLS, gmap, vecdata(:,:,i-1))
                 call gridWriteData( vector, GRID_SUBSET_CELLS, idsdata )
@@ -683,18 +683,18 @@ contains
 
             if ( .not. present(gridSubsetId) ) then
                 !! Fill in vector component data
-                idsdata => b2IMASTransformDataB2ToIDS(          &
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(          &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   GRID_SUBSET_Y_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
-                idsdata => b2IMASTransformDataB2ToIDS(          &
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(          &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   GRID_SUBSET_X_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
             else
-                idsdata => b2IMASTransformDataB2ToIDS(          &
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(          &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   gridSubsetId, gmap, b2FaceData)
                 call gridWriteData( vector, gridSubsetId, idsdata )
@@ -706,7 +706,7 @@ contains
 
     !> From the B2 grid, compute the coordinate unit vectors
     !> (poloidal, radial, toroidal)
-    subroutine computeCoordinateUnitVectors( crx, cry, e1, e2, e3 )
+    subroutine compute_Coordinate_Unit_Vectors( crx, cry, e1, e2, e3 )
         real(IDS_real), intent(in), dimension(-1:,-1:,0:) :: crx    !< Horizontal
             !< coordinates of the four corners of the (ix, iy) cell
         real(IDS_real), intent(in), dimension(-1:,-1:,0:) :: cry    !< Vertical
@@ -756,7 +756,7 @@ contains
                     iyn = leftiy( ix, iy )
                 end if
                 if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                    ! stop "computeCoordinateUnitVectors: not able to find&
+                    ! stop "compute_Coordinate_Unit_Vectors: not able to find&
                     ! &   poloidal neighbour for cell"
                     !! skip cell
                     cycle
@@ -789,7 +789,7 @@ contains
                     iyn = bottomiy( ix, iy )
                 end if
                 if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                    ! stop "computeCoordinateUnitVectors: not able to find&
+                    ! stop "compute_Coordinate_Unit_Vectors: not able to find&
                         ! &    toroidal neighbour for cell"
                     !! skip cell
                     cycle
@@ -821,7 +821,7 @@ contains
             end do
         end do
 
-    end subroutine computeCoordinateUnitVectors
+    end subroutine compute_Coordinate_Unit_Vectors
 
     !> Return unit vector along direction of given vector
     function unitVector(v) result(unitV)
@@ -947,7 +947,7 @@ contains
         allocate(edgecpo%fluid%te_aniso%comps(4))
 
         !! Compute unit basis vectors along the field directions
-        call computeCoordinateUnitVectors(crx, cry, e(:,:,:,1), e(:,:,:,2), e(:,:,:,3))
+        call compute_Coordinate_Unit_Vectors(crx, cry, e(:,:,:,1), e(:,:,:,2), e(:,:,:,3))
 
         !! Write the three unit basis vectors
         do i = 1, 3
@@ -1095,7 +1095,7 @@ contains
   end subroutine write_cpo
 
   !> From the B2 grid, compute the coordinate unit vectors (poloidal, radial. toroidal)
-  subroutine computeCoordinateUnitVectors(crx, cry, e1, e2, e3)
+  subroutine compute_Coordinate_Unit_Vectors(crx, cry, e1, e2, e3)
     real(ITM_R8), intent(in), dimension(-1:,-1:,0:) :: crx, cry
     real(ITM_R8), intent(out), dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e1, e2, e3
 
@@ -1135,7 +1135,7 @@ contains
                 iyn = leftiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "computeCoordinateUnitVectors: not able to find poloidal neighbour for cell"
+                !stop "compute_Coordinate_Unit_Vectors: not able to find poloidal neighbour for cell"
                 !! skip cell
                 cycle
             end if
@@ -1168,7 +1168,7 @@ contains
                 iyn = bottomiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "computeCoordinateUnitVectors: not able to find toroidal neighbour for cell"
+                !stop "compute_Coordinate_Unit_Vectors: not able to find toroidal neighbour for cell"
                 !! skip cell
                 cycle
             end if
@@ -1201,7 +1201,7 @@ contains
         end do
     end do
 
-  end subroutine computeCoordinateUnitVectors
+  end subroutine compute_Coordinate_Unit_Vectors
 
 
   !> Return unit vector along direction of given vector

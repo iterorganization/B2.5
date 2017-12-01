@@ -317,7 +317,7 @@ contains
 
                 !! Vertices: associate bottom left vertex with every cell
                 !! where possible
-                call findExistingVertexIndex( ix, iy, VX_LOWERLEFT, index )
+                call find_Existing_Vertex_Index( ix, iy, VX_LOWERLEFT, index )
                 if(index == GRID_UNDEFINED) then
                     ivx = ivx + 1
                     vxi( ix, iy, VX_LOWERLEFT ) = ivx
@@ -332,11 +332,11 @@ contains
             do iy = -1, ny
 
                 !! Right face: left face of left neighbour
-                call getNeighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
+                call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
                     &   topix, topiy, bottomix, bottomiy,                   &
                     &   ix, iy, RIGHT, nbix, nbiy)
 
-                if( isCellInDomain(nx, ny, nbix, nbiy) ) then
+                if( is_Cell_In_Domain(nx, ny, nbix, nbiy) ) then
                     fcyi( ix, iy, RIGHT ) = fcyi( nbix, nbiy, LEFT )
                 else
                     ifcy = ifcy + 1
@@ -345,11 +345,11 @@ contains
 
                 !! Top face: bottom face of top neighbour
                 !! also top-left vertex
-                call getNeighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
+                call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
                     & topix, topiy, bottomix, bottomiy,                        &
                     & ix, iy, TOP, nbix, nbiy)
 
-                if( isCellInDomain(nx, ny, nbix, nbiy) ) then
+                if( is_Cell_In_Domain(nx, ny, nbix, nbiy) ) then
                     fcxi( ix, iy, TOP ) = fcxi( nbix, nbiy, BOTTOM )
                 else
                     ifcx = ifcx + 1
@@ -375,7 +375,7 @@ contains
             do iy = -1, ny
 
                 do iCorner = VX_LOWERRIGHT, VX_UPPERRIGHT  ! 1, 3
-                    call findExistingVertexIndex( ix, iy, iCorner, index )
+                    call find_Existing_Vertex_Index( ix, iy, iCorner, index )
                     if( index /= GRID_UNDEFINED ) then
                         vxi( ix, iy, iCorner ) = index
                     else
@@ -397,7 +397,7 @@ contains
         vxNeeded = .false.
         do ix = -1, nx
             do iy = -1, ny
-                if( .not. isUnneededCell( nx, ny, cflag,   &
+                if( .not. is_Unneeded_Cell( nx, ny, cflag,   &
                         &   includeGhostCells, ix, iy ) ) then
                     cvNeeded(cvi(ix, iy)) = .true.
                     do iCorner = 0, 3
@@ -421,7 +421,7 @@ contains
                 if( .not. cvNeeded( cvi( ix, iy ) ) ) cycle
 
                 !! test whether vertex is special vertex
-                if( isSpecialVertex( ix, iy ) ) then
+                if( is_Special_Vertex( ix, iy ) ) then
                     svc = svc + 1
                     svix( svc ) = ix
                     sviy( svc ) = iy
@@ -555,7 +555,7 @@ contains
                     end if
 
                     if( fcXNeeded( fcxi( ix, iy, iFace ) ) ) then
-                        !if(isUnneededCell(nx, ny, cflag,  &
+                        !if(is_Unneeded_Cell(nx, ny, cflag,  &
                         !   &   includeGhostCells, ix, iy)) cycle
 
                         !! Get the CPO index for this face
@@ -596,7 +596,7 @@ contains
                     end if
                     if( fcYNeeded( fcyi( ix, iy, iFace ) ) ) then
                         !! do not associate with unused cell
-                        !if(isUnneededCell(nx, ny, cflag,  &
+                        !if(is_Unneeded_Cell(nx, ny, cflag,  &
                         !   &   includeGhostCells, ix, iy)) cycle
 
                         !! Get the CPO index for this face
@@ -699,7 +699,7 @@ contains
             do iy = -1, ny
                 do iCorner = VX_LOWERRIGHT, VX_UPPERRIGHT  ! 1, 3
                     if( gd%mapVxI( ix, iy, iCorner) == GRID_UNDEFINED ) then
-                        call findExistingVertexIndex( ix, iy, iCorner,  &
+                        call find_Existing_Vertex_Index( ix, iy, iCorner,  &
                             &   index, stopOnUnneededCells = .true.)
                         if( index /= GRID_UNDEFINED) then
                             gd%mapVxI( ix, iy, iCorner ) = index
@@ -766,7 +766,7 @@ contains
 
     !> For a given corner vertex of a cell, check whether in any connected
     !! cell a vertex index was already assigned to this vertex
-    subroutine findExistingVertexIndex( ix, iy, iCorner, index, &
+    subroutine find_Existing_Vertex_Index( ix, iy, iCorner, index, &
             &   stopOnUnneededCells)
         integer, intent(in) :: ix   !< Specifies index of interior cell along
                                     !< the first coordinate
@@ -806,12 +806,12 @@ contains
                 !! take step
                 iDir = VXCIRCLE_STEPDIR( iStep, iCorner, iRot )
 
-                call getNeighbour( nx, ny, leftix, leftiy, rightix, &
+                call get_Neighbour( nx, ny, leftix, leftiy, rightix, &
                     &   rightiy, topix, topiy, bottomix, bottomiy,  &
                     &   nix, niy, iDir, nix2, niy2 )
 
-                if(.not. isCellInDomain( nx, ny, nix2, niy2 )) exit
-                if( lStopOnUnneededCells .and. isUnneededCell( nx, ny,     &
+                if(.not. is_Cell_In_Domain( nx, ny, nix2, niy2 )) exit
+                if( lStopOnUnneededCells .and. is_Unneeded_Cell( nx, ny,     &
                     &   cflag, includeGhostCells, nix2, niy2) ) exit
 
                 nix = nix2
@@ -828,13 +828,13 @@ contains
         end do
 
         index = GRID_UNDEFINED
-    end subroutine findExistingVertexIndex
+    end subroutine find_Existing_Vertex_Index
 
     !> Test whether the vertex associated with the cell (ix, iy) is special,
     !! i.e. a x-point
     !! This steps around the vertex (left-bottom-right-top) and checks
     !! whether the resulting position is equal to the starting position
-    logical function isSpecialVertex( ix, iy )
+    logical function is_Special_Vertex( ix, iy )
         integer, intent(in) :: ix   !< Specifies index of interior cell along
                                     !< the first coordinate
         integer, intent(in) :: iy   !< Specifies index of interior cell along
@@ -849,74 +849,74 @@ contains
         !! b2mod_cellhelper
 
         !! step left
-        call getNeighbour( nx, ny, leftix, leftiy, rightix, rightiy,    &
+        call get_Neighbour( nx, ny, leftix, leftiy, rightix, rightiy,    &
             &   topix, topiy, bottomix, bottomiy, x, y, LEFT, xn, yn )
-        if( .not. isCellInDomain( nx, ny, xn, yn, extended =   &
+        if( .not. is_Cell_In_Domain( nx, ny, xn, yn, extended =   &
             &   includeGhostCells )) then
-            isSpecialVertex = .false.
+            is_Special_Vertex = .false.
             return
         end if
         if( isGhostCell( cflag( xn, yn, CELLFLAG_TYPE ) ) ) then
-            isSpecialVertex = .false.
+            is_Special_Vertex = .false.
             return
         end if
         x = xn
         y = yn
 
         !! step bottom
-        call getNeighbour( nx, ny, leftix, leftiy, rightix, rightiy,    &
+        call get_Neighbour( nx, ny, leftix, leftiy, rightix, rightiy,    &
             &   topix, topiy, bottomix, bottomiy, x, y, BOTTOM, xn, yn )
-        if( .not. isCellInDomain( nx, ny, xn, yn, extended =   &
+        if( .not. is_Cell_In_Domain( nx, ny, xn, yn, extended =   &
             &   includeGhostCells ) ) then
-            isSpecialVertex = .false.
+            is_Special_Vertex = .false.
             return
         end if
         if( isGhostCell(cflag(xn,yn,CELLFLAG_TYPE)) ) then
-            isSpecialVertex = .false.
+            is_Special_Vertex = .false.
             return
         end if
         x = xn
         y = yn
 
         !! step right
-        call getNeighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
+        call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
             &   topix,topiy,bottomix,bottomiy, x, y, RIGHT, xn, yn )
-        if( .not. isCellInDomain( nx, ny, xn, yn, extended =   &
+        if( .not. is_Cell_In_Domain( nx, ny, xn, yn, extended =   &
             &   includeGhostCells )) then
-            isSpecialVertex = .false.
+            is_Special_Vertex = .false.
             return
         end if
         if( isGhostCell(cflag(xn,yn,CELLFLAG_TYPE)) ) then
-            isSpecialVertex = .false.
+            is_Special_Vertex = .false.
             return
         end if
         x = xn
         y = yn
 
         !! step top
-        call getNeighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
+        call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy, &
             &   topix, topiy, bottomix, bottomiy, x, y, TOP, xn, yn )
-        if( .not. isCellInDomain( nx, ny, xn, yn, extended =   &
+        if( .not. is_Cell_In_Domain( nx, ny, xn, yn, extended =   &
             &   includeGhostCells)) then
-            isSpecialVertex = .false.
+            is_Special_Vertex = .false.
             return
         end if
         if( isGhostCell(cflag(xn,yn,CELLFLAG_TYPE)) ) then
-            isSpecialVertex = .false.
+            is_Special_Vertex = .false.
             return
         end if
         x = xn
         y = yn
 
         !! do we end up where we left?
-        isSpecialVertex = .not. ( ( x == ix ) .and. ( y == iy ) )
+        is_Special_Vertex = .not. ( ( x == ix ) .and. ( y == iy ) )
 
-    end function isSpecialVertex
+    end function is_Special_Vertex
 
   end subroutine b2CreateMap
 
     !> test whether cell (ix,iy) is actually used
-    function isUnneededCell( nx, ny, cflag, includeGhostCells, ix, iy )
+    function is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, ix, iy )
         integer, intent(in) :: nx   !< Specifies the number of interior cells
                                     !< along the first coordinate
         integer, intent(in) :: ny   !< Specifies the number of interior cells
@@ -927,30 +927,30 @@ contains
                                     !< the second coordinate
         integer, intent(in) :: cflag(-1:nx,-1:ny, CARREOUT_NCELLFLAGS)
         logical, intent(in) :: includeGhostCells    !< Include "fake" cells
-        logical isUnneededCell
+        logical is_Unneeded_Cell
 
         !! Only cells inside the "normal" B2 domain can be needed
         !! (this catches fake cells and connectivity pointing outside the domain)
-        isUnneededCell = .not. isCellInDomain(nx, ny, ix, iy, extended = .true.)
-        if(isUnneededCell) return
+        is_Unneeded_Cell = .not. is_Cell_In_Domain(nx, ny, ix, iy, extended = .true.)
+        if(is_Unneeded_Cell) return
 
         if(includeGhostCells) then
-            isUnneededCell = isUnusedCell( cflag(ix,iy,CELLFLAG_TYPE) )
+            is_Unneeded_Cell = isUnusedCell( cflag(ix,iy,CELLFLAG_TYPE) )
         else
-            isUnneededCell = isUnusedCell( cflag(ix,iy,CELLFLAG_TYPE) ) &
+            is_Unneeded_Cell = isUnusedCell( cflag(ix,iy,CELLFLAG_TYPE) ) &
                 &   .or. isGhostCell( cflag(ix,iy,CELLFLAG_TYPE) )
         end if
 
         !! Classical treatment (without cflag, no extended grid) - for reference
         !if(.not. includeGhostCells) then
-        !    isUnneededCell = &
+        !    is_Unneeded_Cell = &
         !        & ( leftix( ix, iy ) == -2 ) &
         !        & .or. ( rightix( ix, iy ) == ( nx + 1 ) ) &
         !        & .or. ( bottomiy( ix, iy ) == -2 ) &
         !        & .or. ( topiy( ix, iy ) == ( ny + 1 ) )
         !end if
 
-    end function isUnneededCell
+    end function is_Unneeded_Cell
 
 
     !> Check whether the cell at position (ix,iy) is inside the 'classical'
@@ -960,7 +960,7 @@ contains
     !! If the optional parameter extended is given, extended = .false. will
     !! check whether the position is inside the actual physical domain of the
     !! grid.
-    function isCellInDomain( nx, ny, ix, iy, extended )
+    function is_Cell_In_Domain( nx, ny, ix, iy, extended )
         integer, intent(in) :: nx   !< Specifies the number of interior cells
                                     !< along the first coordinate
         integer, intent(in) :: ny   !< Specifies the number of interior cells
@@ -970,7 +970,7 @@ contains
         integer, intent(in) :: iy   !< Specifies index of interior cell along
                                     !< the second coordinate
         logical, intent(in), optional :: extended
-        logical :: isCellInDomain
+        logical :: is_Cell_In_Domain
 
         !! internal
         logical :: lExtended
@@ -980,18 +980,18 @@ contains
 
         if( lExtended ) then
             !! in extended domain (including ghost cells)?
-            isCellInDomain = ( ix >= -1 ) .and. (ix <= nx) .and.    &
+            is_Cell_In_Domain = ( ix >= -1 ) .and. (ix <= nx) .and.    &
                 &   ( iy >= -1 ) .and. ( iy <= ny )
         else
-            isCellInDomain = ( ix > -1 ) .and. (ix < nx) .and.      &
+            is_Cell_In_Domain = ( ix > -1 ) .and. (ix < nx) .and.      &
                 &   ( iy > -1 ) .and. ( iy < ny )
         end if
-    end function isCellInDomain
+    end function is_Cell_In_Domain
 
 
     !> Check whether the node associate with the cell at position (ix,iy) is
     !! included in the grid.
-    function isNodeInDomain( nx, ny, ix, iy, extended )
+    function is_Node_In_Domain( nx, ny, ix, iy, extended )
         integer, intent(in) :: nx   !< Specifies the number of interior cells
                                     !< along the first coordinate
         integer, intent(in) :: ny   !< Specifies the number of interior cells
@@ -1001,7 +1001,7 @@ contains
         integer, intent(in) :: iy   !< Specifies index of interior cell along
                                     !< the second coordinate
         logical, intent(in), optional :: extended
-        logical :: isNodeInDomain
+        logical :: is_Node_In_Domain
 
         !! internal
         logical :: lExtended
@@ -1011,16 +1011,16 @@ contains
 
         if( lExtended ) then
             !! in extended domain (including ghost cells)?
-            isNodeInDomain = ( ix >= -1 ) .and. (ix <= nx + 1) .and.    &
+            is_Node_In_Domain = ( ix >= -1 ) .and. (ix <= nx + 1) .and.    &
                 &   ( iy >= -1 ) .and. ( iy <= ny + 1 )
         else
-            isNodeInDomain = ( ix > -1 ) .and. (ix < nx + 1) .and.      &
+            is_Node_In_Domain = ( ix > -1 ) .and. (ix < nx + 1) .and.      &
                 &   ( iy > -1 ) .and. ( iy < ny + 1)
         end if
-    end function isNodeInDomain
+    end function is_Node_In_Domain
 
     !> extended neighbourhood mappings
-    subroutine getNeighbour(nx, ny, leftix, leftiy, rightix, rightiy,   &
+    subroutine get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy,   &
             &   topix, topiy, bottomix,bottomiy, ix, iy, dir, nbix, nbiy )
         integer, intent(in) :: nx   !< Specifies the number of interior cells
                                     !< along the first coordinate
@@ -1065,7 +1065,7 @@ contains
             nbiy = topiy(ix, iy)
         end select
 
-    end subroutine getNeighbour
+    end subroutine get_Neighbour
 
 end module b2mod_grid_mapping
 

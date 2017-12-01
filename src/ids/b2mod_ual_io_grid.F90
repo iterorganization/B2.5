@@ -6,9 +6,9 @@
 !!      structure.
 !!
 !!      The main two routines are:
-!!          - b2IMASFillGridDescription (for ITM edge CPO)
-!!          - b2ITMFillGridDescription  (for IMAS edge_profiles, edge_sources
-!!          and edge_transport IDSs)
+!!          - b2_IMAS_Fill_Grid_Desc (for IMAS edge_profiles, edge_sources
+!!            and edge_transport IDSs)
+!!          - b2ITMFillGridDescription (for ITM edge CPO)
 !!
 !!      @subsection b2uw_ualio_grid_syx     Exceptional syntax explanation
 !!      @code
@@ -189,7 +189,7 @@ contains
 
     !> Routine that fills in a grid description which is part of a CPO
     !! using the given grid data and prepared mappings
-    subroutine b2IMASFillGridDescription( gmap, ggd_grid, nx, ny, crx, cry,     &
+    subroutine b2_IMAS_Fill_Grid_Desc( gmap, ggd_grid, nx, ny, crx, cry,     &
         &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix, bottomiy, &
         &   nnreg, topcut, region, cflag, includeGhostCells, vol, gs, qc )
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
@@ -248,13 +248,13 @@ contains
         call assert( present( gs ) .EQV. present( qc ) )
 
         !! Set GGD grid geometry
-        call fillInGridDescription()
+        call fill_In_Grid_Desc()
         !! Set grid subsets
-        call fillInGridSubsetDescription()
+        call fill_In_GridSubset_Desc()
 
 contains
     !> Fill in the general grid description
-    subroutine fillInGridDescription()
+    subroutine fill_In_Grid_Desc()
         !! Internal variables
         integer :: ivx  !< Vertex/node index
         integer :: ifc  !< Face/edge index
@@ -485,7 +485,7 @@ contains
             !! Left neighbour: face continuing to the left of this face
             nix = leftix( ix, iy )
             niy = leftiy( ix, iy )
-            if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
+            if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(1)%neighbours(1) =    &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( ifc ) )
@@ -493,7 +493,7 @@ contains
             !! Right neighbour: face continuing to the right of this face
             nix = rightix( ix, iy )
             niy = rightiy( ix, iy )
-            if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
+            if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(2)%neighbours(2) =     &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( ifc ) )
@@ -575,7 +575,7 @@ contains
             !! Bottom neighbour: face continuing to the bottom of this face
             nix = bottomix( ix, iy )
             niy = bottomiy( ix, iy )
-            if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
+            if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(1)%neighbours(1) =    &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( ifc ) )
@@ -583,7 +583,7 @@ contains
             !! Top neighbour: face continuing to the top of this face
             nix = topix( ix, iy )
             niy = topiy( ix, iy )
-            if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
+            if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(1)%neighbours(1) =    &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( ifc ) )
@@ -665,9 +665,9 @@ contains
             ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
                 &   object( icv )%boundary(4)%index = gmap%mapFcI( ix, iy, TOP )
             do dir = LEFT, TOP
-                call getNeighbour(nx, ny, leftix, leftiy, rightix, rightiy,     &
+                call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy,     &
                     &   topix, topiy, bottomix, bottomiy, ix, iy, dir, nix, niy)
-                if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells,    &
+                if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells,    &
                     &   nix, niy ) ) then
                     ggd_grid%space(SPACE_POLOIDALPLANE)%            &
                         &   objects_per_dimension(3)%object (icv )% &
@@ -713,7 +713,7 @@ contains
             end if
         end if
 
-    end subroutine fillInGridDescription
+    end subroutine fill_In_Grid_Desc
 
     !> Set connectivity array for cells by defining nodes that form each cell
     subroutine setCellsConnectivityArrayNodes(ggd_grid)
@@ -818,7 +818,7 @@ contains
 
 
     !> Define grid subsets
-    subroutine fillInGridSubsetDescription
+    subroutine fill_In_GridSubset_Desc
         !! Internal variables
         integer :: geoId
         integer :: iRegion
@@ -834,7 +834,7 @@ contains
         integer, allocatable :: xpoints(:,:)
         integer, allocatable :: indexList1d(:)
         integer, dimension(:,:), allocatable :: indexList2d
-        integer :: i
+        integer :: i    !< Iterator
 
         geoId = geometryId(nnreg, periodic_bc, topcut)
 
@@ -844,7 +844,7 @@ contains
         !! Inner/outer midplane grid subsets
         nGSubset = nGSubset + 2
 
-        call logmsg( LOGDEBUG, "b2IMASFillGridDescription: expecting total of " &
+        call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: expecting total of " &
             &//idsInt2str(nGSubset)//" grid subsets" )
         allocate( ggd_grid%grid_subset( nGSubset ) )
 
@@ -956,7 +956,7 @@ contains
                 GSubsetCount = GSubsetCount + 1
 
                 call logmsg( LOGDEBUG,                                      &
-                    &   "b2IMASFillGridDescription: add grid subset #"//    &
+                    &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//    &
                     &   idsInt2str(GSubsetCount)//                          &
                     &   " for iType "//idsInt2str( iType )//                &
                     &   ", iRegion "//idsInt2str( iRegion )//": "//         &
@@ -992,13 +992,13 @@ contains
         if (iCoreGS == B2_GRID_UNDEFINED) then
             iCoreGS = findGridSubsetByName(ggd_grid, "Outer core boundary")
         end if
-        if (iCoreGS == B2_GRID_UNDEFINED) stop "fillInGridSubsetDescription:    &
+        if (iCoreGS == B2_GRID_UNDEFINED) stop "fill_In_GridSubset_Desc:    &
             &   did not find core boundary grid subset for assembling outer     &
             &   midplane  grid subset"
 
         !! Figure out starting points for inner and outer midplane on core
         !! boundary
-        call findMidplaneCells(ggd_grid%grid_subset( iCoreGS ), gmap, crx,  &
+        call find_Midplane_Cells(ggd_grid%grid_subset( iCoreGS ), gmap, crx,  &
             &   xIn, yIn, xOut, yOut)
 
         GSubsetCount = GSubsetCount + 1
@@ -1044,19 +1044,19 @@ contains
             &   ggd_grid%grid_subset( GSubsetCount ), IDS_CLASS_NODE - 1,   &
             &   indexList2d(:,1), IDS_CLASS_NODE, 1)
 
-        call logmsg( LOGDEBUG, "b2IMASFillGridDescription: wrote total of " &
+        call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: wrote total of " &
             &//idsInt2str(GSubsetCount)//" grid subsets (expected was "     &
             &   //idsInt2str(size(ggd_grid%grid_subset))//")" )
 
         call assert( GSubsetCount == size(ggd_grid%grid_subset) )
-    end subroutine fillInGridSubsetDescription
+    end subroutine fill_In_GridSubset_Desc
 
-    end subroutine b2IMASFillGridDescription
+    end subroutine b2_IMAS_Fill_Grid_Desc
 
     !> Figure out starting cells for inner and outer midplane on core boundary
     !! by finding the points on the core boundary with minimum and maximum r
     !! positions
-    subroutine findMidplaneCells( GridSubset, gmap, crx, xIn, yIn,  &
+    subroutine find_Midplane_Cells( GridSubset, gmap, crx, xIn, yIn,  &
             &   xOut, yOut )
         type(ids_generic_grid_dynamic_grid_subset), intent(in) :: GridSubset
             !< Type of IDS data structure, designed for handling grid subset
@@ -1092,10 +1092,10 @@ contains
             !! Expect a face
             call xertst( all( obj%cls( 1:SPACE_COUNT ) ==               &
                 &   IDS_CLASS_POLOIDALRADIAL_FACE ), "b2mod_ual_io_grid &
-                &   findMidplaneCells: assertion failure." )
+                &   find_Midplane_Cells: assertion failure." )
             !! ...which is aligned along the x-direction
             call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==   &
-                &   BOTTOM, "b2mod_ual_io_grid findMidplaneCells: assertion     &
+                &   BOTTOM, "b2mod_ual_io_grid find_Midplane_Cells: assertion     &
                 &   failure." )
             ix = gmap % mapFcix( obj%ind( SPACE_POLOIDALPLANE ) )
             iy = gmap % mapFciy( obj%ind( SPACE_POLOIDALPLANE ) )
@@ -1114,10 +1114,10 @@ contains
         end do
 
         call xertst( xIn /= huge( xIn ),    &
-            &   "findMidplaneCells: did not find inner midplane position")
+            &   "find_Midplane_Cells: did not find inner midplane position")
         call xertst( xOut /= huge( xOut ),  &
-            &   "findMidplaneCells: did not find outer midplane position")
-    end subroutine findMidplaneCells
+            &   "find_Midplane_Cells: did not find outer midplane position")
+    end subroutine find_Midplane_Cells
 
 #else
 #ifdef ITM
@@ -1160,13 +1160,13 @@ contains
 
     call assert( present(gs) .EQV. present(qc) )
 
-    call fillInGridDescription()
+    call fill_In_Grid_Desc()
     call fillInSubGridDescription()
 
   contains
 
     !! Part 1: fill in grid description
-    subroutine fillInGridDescription()
+    subroutine fill_In_Grid_Desc()
 
       !! internal
       integer :: ivx, ifc, icv, ix, iy, nix, niy, i, dir
@@ -1240,14 +1240,14 @@ contains
           !! Left neighbour: face continuing to the left of this face
           nix = leftix( ix, iy )
           niy = leftiy( ix, iy )
-          if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
+          if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 1, 1 ) = &
                   & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
           end if
           !! Right neighbour: face continuing to the right of this face
           nix = rightix( ix, iy )
           niy = rightiy( ix, iy )
-          if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
+          if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 2, 1 ) = &
                   & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
           end if
@@ -1298,14 +1298,14 @@ contains
           !! Bottom neighbour: face continuing to the bottom of this face
           nix = bottomix( ix, iy )
           niy = bottomiy( ix, iy )
-          if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
+          if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 1, 1 ) = &
                   & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
           end if
           !! Top neighbour: face continuing to the top of this face
           nix = topix( ix, iy )
           niy = topiy( ix, iy )
-          if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
+          if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 2, 1 ) = &
                   & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
           end if
@@ -1353,9 +1353,9 @@ contains
           iy = gmap % mapCviy( icv )
 
           do dir = LEFT, TOP
-             call getNeighbour(nx, ny, leftix, leftiy, rightix, rightiy, topix, topiy, bottomix, bottomiy, &
+             call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy, topix, topiy, bottomix, bottomiy, &
                   & ix, iy, dir, nix, niy)
-             if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
+             if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
                 itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % neighbour(icv, dir+1, 1) = gmap % mapCvI( nix, niy )
              end if
           end do
@@ -1383,7 +1383,7 @@ contains
 
       end if
 
-    end subroutine fillInGridDescription
+    end subroutine fill_In_Grid_Desc
 
 
     !! Part 2: define subgrids
@@ -1495,7 +1495,7 @@ contains
           & did not find core boundary subgrid for assembling outer midplane subgrid"
 
       !! Figure out starting points for inner and outer midplane on core boundary
-      call findMidplaneCells(itmgrid%subgrids(iCoreSg), gmap, crx, xIn, yIn, xOut, yOut)
+      call find_Midplane_Cells(itmgrid%subgrids(iCoreSg), gmap, crx, xIn, yIn, xOut, yOut)
 
       subgridCount = subgridCount + 1
       call createSubGridForExplicitList( itmgrid, itmgrid % subgrids( subgridCount ), &
@@ -1519,7 +1519,7 @@ contains
 
   !> Figure out starting cells for inner and outer midplane on core boundary
   !> by finding the points on the core boundary with minimum and maximum r positions
-  subroutine findMidplaneCells(coreBndSubgrid, gmap, crx, xIn, yIn, xOut, yOut)
+  subroutine find_Midplane_Cells(coreBndSubgrid, gmap, crx, xIn, yIn, xOut, yOut)
     type(type_complexgrid_subgrid), intent(in) :: coreBndSubgrid
     type(B2GridMap), intent(in) :: gmap
     !! x/radial vertex coordinates
@@ -1562,9 +1562,9 @@ contains
     end do
 
     call xertst(xIn /= huge(xIn),   &
-        &   "findMidplaneCells: did not find inner midplane position")
+        &   "find_Midplane_Cells: did not find inner midplane position")
     call xertst(xOut /= huge(xOut), &
-        &   "findMidplaneCells: did not find outer midplane position")
+        &   "find_Midplane_Cells: did not find outer midplane position")
   end subroutine
 
 #endif
@@ -1608,7 +1608,7 @@ contains
             nix = topix(ix, iy)
             niy = topiy(ix, iy)
             !! Stepped outside grid or into ghost cell?
-            if (isUnneededCell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then
+            if (is_Unneeded_Cell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then
                 exit
             else
                 nVx = nVx + 1
@@ -1633,7 +1633,7 @@ contains
             niy = topiy(ix, iy)
 
             !! Stepped outside grid?
-            if (isUnneededCell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then
+            if (is_Unneeded_Cell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then
                 exit
             end if
 
@@ -1697,7 +1697,7 @@ contains
             nix = topix(ix, iy)
             niy = topiy(ix, iy)
             !! Stepped outside grid or into ghost cell?
-            if (isUnneededCell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then
+            if (is_Unneeded_Cell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then
                 exit
             else
                 nVx = nVx + 1
@@ -1722,7 +1722,7 @@ contains
             niy = topiy(ix, iy)
 
             !! Stepped outside grid?
-            if (isUnneededCell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then
+            if (is_Unneeded_Cell( gmap%b2nx, gmap%b2ny, cflag, .true., nix, niy) ) then
                 exit
             end if
 
