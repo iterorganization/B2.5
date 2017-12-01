@@ -15,6 +15,9 @@
       use b2mod_balance !djm Jan2017
      & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
      &          balance_netcdf
+#ifdef WITH_FTIMINGS
+      use timings
+#endif     
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, is0, ismain
@@ -126,6 +129,19 @@ ctmp.dpc
       call sfill (n2*4*ns, 0.0_R8, smq0, 1)
       call sfill (n2*4, 0.0_R8, shi0, 1)
 *   ..compute sources due to charge exchange
+#ifndef NO_OPENMP_B2STCX
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!$OMP PARALLEL DO default(none) private(is, ix, iy)
+!$OMP& private(t0, t1, t2, du0, du1)
+!$OMP& shared(ns, nx, ny, is0, BoRiS, rg0, styl0)
+!$OMP& shared(rightix, leftix, topiy, bottomiy, region, hz)
+!$OMP& shared(rcx, vol, sna0, na, rcxna, am, shi0, rcxhi, smq0, ua)
+!$OMP& reduction(+: rcxnareg, rcxhireg, rcxmoreg)
+!$OMP& shared(rcxmo, zamin, zamax, zn)
+#endif
+      do iy = -1, ny
       do is = 1, ns-1
        if (lnext(is-1,is)) then
 *     ..particle source
@@ -133,7 +149,6 @@ ctmp.dpc
 *        (This is a special case: charge exchange between H0 and H1,
 *        for which there is no particle source.)
         else
-         do iy = -1, ny
           do ix = -1, nx
            if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &        topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -158,11 +173,9 @@ ctmp.dpc
             rcxnareg(region(ix,iy,0),is0)=
      1       rcxnareg(region(ix,iy,0),is0)-t0*na(ix,iy,is0)*na(ix,iy,is)
            endif
-          enddo
          enddo
         endif
 *     ..heat source
-        do iy = -1, ny
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -180,10 +193,8 @@ ctmp.dpc
            rcxhi(ix,iy,is)=rcxhi(ix,iy,is)+t1
            rcxhireg(region(ix,iy,0),is)=rcxhireg(region(ix,iy,0),is)+t1
           endif
-         enddo
         enddo
 *     ..parallel momentum source
-        do iy = -1, ny
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &        topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -274,10 +285,15 @@ ctmp.dpc
      1       rcxmoreg(region(ix,iy,0),is0)-t2*ua(ix,iy,is0)
           endif
          enddo
-        enddo
        endif
       enddo
-
+      enddo
+#ifndef NO_OPENMP_B2STCX
+!$OMP END PARALLEL DO
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
+#endif
 #ifdef ASTRA
       do is = 0, ns-1                     !srv 28.07.11 {
         if(is.eq.ismain) then
