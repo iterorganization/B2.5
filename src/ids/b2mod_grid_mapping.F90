@@ -333,7 +333,7 @@ contains
 
                 !! Right face: left face of left neighbour
                 call get_Neighbour( nx, ny, leftix, leftiy, rightix,    &
-                    &   rightiy, topix, topiy, bottomix, bottomiy,      &                 &
+                    &   rightiy, topix, topiy, bottomix, bottomiy,      &
                     &   ix, iy, RIGHT, nbix, nbiy )
 
                 if( is_Cell_In_Domain(nx, ny, nbix, nbiy) ) then
@@ -346,7 +346,7 @@ contains
                 !! Top face: bottom face of top neighbour
                 !! also top-left vertex
                 call get_Neighbour( nx, ny, leftix, leftiy, rightix,    &
-                    &   rightiy, topix, topiy, bottomix, bottomiy,      &                       &
+                    &   rightiy, topix, topiy, bottomix, bottomiy,      &
                     & ix, iy, TOP, nbix, nbiy)
 
                 if( is_Cell_In_Domain(nx, ny, nbix, nbiy) ) then
