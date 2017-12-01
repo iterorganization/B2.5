@@ -29,6 +29,7 @@
 #endif
 
 #ifdef WITH_FTIMINGS
+      call timer%start("sfill")
       if (do_parallel) call timer%start("parallel")
 #endif
       if (incx.eq.0) then
@@ -59,6 +60,7 @@
       endif
 #ifdef WITH_FTIMINGS
       if (do_parallel) call timer%stop("parallel")
+      call timer%stop("sfill")
 #endif
       return
 *     ------------------------------------------------------------------

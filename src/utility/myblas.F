@@ -198,6 +198,9 @@
       end subroutine b2scopy
       subroutine b2saxpy (n, sa, sx, incx, sy, incy)
       use b2mod_types
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
       integer n, incx, incy
       real (kind=R8) ::
@@ -215,6 +218,9 @@
       integer ibase
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
+#ifdef WITH_FTIMINGS
+      call timer%start("b2saxpy")
+#endif
       if (incy.eq.0) then
        call xerrab ('b2saxpy--error, incy.eq.0')
       else if (sa.eq.0.0_R8) then
@@ -231,6 +237,9 @@
         iy = iy+incy
        enddo
       endif
+ #ifdef WITH_FTIMINGS
+      call timer%stop("b2saxpy")
+#endif     
       return
 *     ------------------------------------------------------------------
       end subroutine b2saxpy
