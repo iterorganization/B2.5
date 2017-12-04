@@ -2226,7 +2226,7 @@ contains
     call subini ('rwcdf')
     iret = nf_inq_varid(ncid,data_name,varid)
     if(iret.ne.0) then
-      write(*,*) 'Error: Could not inquire data_name: ',Trim(data_name)
+      write(*,*) 'Error: Could not inquire data_name: ',trim(data_name)
       call xerrab('Data name not declared')
     endif
     if (debug) write(*,*) "Subroutine rwcdf in mode: ", rw
@@ -2283,7 +2283,7 @@ contains
     return
     !
     entry rwcdf_settime(timnam,ntstep)
-    write(*,*) 'Saving ',Trim(timnam),' as the time dimension'
+    write(*,*) 'Saving ',trim(timnam),' as the time dimension'
     write(*,*) 'ntstep = ',ntstep
     timsav=timnam
     ntsav=ntstep
