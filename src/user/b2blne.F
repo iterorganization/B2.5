@@ -1,4 +1,4 @@
-      subroutine b2blne(nx,ny,ns,BoRiS)
+      subroutine b2blne(nx,ny,ns,BoRiS,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -24,7 +24,7 @@ c*** Computes the global energy flows across the boundaries and the
 c*** sources in B2-Eirene, and the global energy balance in B2
 c-----------------------------------------------------------------------
       implicit none
-      integer nx,ny,ns
+      integer nx,ny,ns,iline
       real (kind=R8) :: BoRiS
 c
 c*** lv    :  version number to appear in the file
@@ -96,6 +96,8 @@ c*** Values by species
       real (kind=R8), allocatable :: radim_tmp(:)
       character*2, allocatable :: hlp_spc(:)
       character*2 hlp_hs(nspc_tmp)*8
+      real (kind=R8), save :: stim = 0.0_R8
+      real (kind=R8) :: tdummy
 c-----------------------------------------------------------------------
 c*** Values by surface. Here ntrg_tmp is the number of values,
 c*** and ntrgs_tmp is the maximum number of different surfaces.
@@ -556,7 +558,7 @@ c
       return
 c=======================================================================
 c
-      entry b2blnei(nx,ny,ns,BoRiS)
+      entry b2blnei(nx,ny,ns,BoRiS,iline)
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_ble)=.true.
@@ -566,6 +568,7 @@ c
       allocate(limp_tmp(nspecies))
       allocate(radim_tmp(nspecies))
       allocate(hlp_spc(nspecies))
+      call ipgetr ('b2mndr_stim', stim)
 c
       tab=char(9)
       nimp_tmp=0
@@ -677,7 +680,7 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex) then !{
+      if(ex.and.stim.lt.0.0_R8) then !{
         read(lun,700,err=92) nv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp
         lv_trc(ltrc)=nv
         warn_tmp=.false.
@@ -771,15 +774,47 @@ c
  92   write(*,*) 'b2blne: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
+c======================================================================
+c
+      entry b2blnec(nx,ny,ns,BoRiS,iline)
+c----------------------------------------------------------------------
+c*** - to be called by b2co for locating truncation for savefile
+c----------------------------------------------------------------------
+c
+      if(.not.filedata(ntrc_ble)) return
+      lun=ntrc(ltrc)
+      f=fn_ntrc(ltrc)
+      call find_file(f,ex)
+      open(lun,file=f,err=190)
+      rewind(lun)
+      iline = 0
+      read(lun,'(a1)',end=155) hlp_c
+      do while (hlp_c.eq.'#')
+        iline = iline+1
+        read(lun,'(a1)',end=155) hlp_c
+      end do
+      backspace lun
+      read(lun,*,end=155) tdummy
+      do while (tdummy.le.tim)
+        iline = iline+1
+        read(lun,*,end=155) tdummy
+      end do
+ 155  continue
+      return
+c======================================================================
+ 190  write(*,*) 'b2blne: cannot open file ',trim(f)
+      filedata(ltrc)=.false.
+      iline=-1
+      return
 c=======================================================================
-      entry b2blnes(nx,ny,ns,BoRiS)
+      entry b2blnes(nx,ny,ns,BoRiS,iline)
 c-----------------------------------------------------------------------
 c*** Save the values of the plasma fluxes across the boundaries
 c-----------------------------------------------------------------------
 c
       return
 c=======================================================================
-      entry b2blnef(nx,ny,ns,BoRiS)
+      entry b2blnef(nx,ny,ns,BoRiS,iline)
 c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------

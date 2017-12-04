@@ -119,6 +119,9 @@
      2  delta_min, dt_change_inc, delta_max, dt_change_dec,
      3  dt_min, dt_max, max_delta
       real (kind=R8), save :: xcur = 0.0_R8, ycur = 1.0_R8
+#ifndef NO_CDF
+      integer ncid
+#endif
 #ifdef CATALYST
       logical use_catalyst
       integer lnblnk
@@ -1755,7 +1758,7 @@ c new CDF movie option (1st frame at t=0)
      1 delta_cdfmovie_time.gt.0.0_R8) then
         if(use_eirene.eq.0) then
 #ifndef NO_CDF
-          call cdfmovie(nx,ny,ns)
+          call cdfmovie(ncid,nx,ny,ns)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -1851,7 +1854,8 @@ c new CDF movie option (1st frame at t=0)
         call b2mxnu (n2*2, fhep, fhe0, fhe)
         call b2mxnu (n2*2, fhip, fhi0, fhi)
         call b2mxnu (n2*2, fchp, fch0, fch)
-        call b2trcs (nx, ny, ns, ismain, dtim, BoRiS)
+        call b2trcs (70, nout, nx, ny, ns, nxtl, nxtr,
+     .    ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)
         if (pot_eq.eq.0) then                                          !srv 13.07.05 {
           po   =0.0e0_R8
@@ -2002,7 +2006,7 @@ c new CDF movie option
         if(tim.ge.save_cdfmovie_time.and.
      1    delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-          call cdfmovie(nx,ny,ns)
+          call cdfmovie(ncid,nx,ny,ns)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -2042,10 +2046,15 @@ c new CDF movie option
             call tallies(nx,ny,ns,BoRiS)
           endif
         endif
-        if (first_time_step) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
+        if (first_time_step) then
+          if(.not.allocated(iz))
+     >     call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
+          call b2trci(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+          if (write_nml_user) call write_b2mod_user_namelist(nx,ns)
+        endif
         if (ank_tracing.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >     call b2trace(nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+     >     call b2trace(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
         endif
 c-rfs       write(*,*) 'fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)',
 c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
@@ -2309,7 +2318,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       if(tim.gt.save_cdfmovie_time-delta_cdfmovie_time+dtim.and.
      1  delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-        call cdfmovie(nx,ny,ns)
+        call cdfmovie(ncid,nx,ny,ns)
 #else
         write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -2359,7 +2368,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       if (ibatch_av_all > 0) call batch_av_all_fin
 
 *  .. finalize tracing routines
-      call b2trcf(nx,ny,ns,ismain,dtim,BoRiS)
+      call b2trcf(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
 
 * ..return
       ncall = ncall+1

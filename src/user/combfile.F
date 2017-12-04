@@ -515,7 +515,7 @@ c*** Open a new tracing file
 c*** Write the header
 
         if(nmrk.gt.0) then !{
-          write(frmhdr,'(6h(2h# ,,i2,4hi12))') nmrk
+          write(frmhdr,'(a,i2,a)') '(''#   '',',nmrk,'i8)'
           write(lun,frmhdr) mrks
           write(lun,'(2a)') '##  ',titel
         end if !}

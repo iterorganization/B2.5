@@ -56,6 +56,7 @@ c*** lv_trc  : their versions
 c*** filedata: if true, produce the file
 c*** fn_ntrc :  file names for the tracing data
 c***
+c***  ntrc_srt  :  tracing/intshrt.trc    :  integral data (short version)
 c***  ntrc_tst  :  tracing/test.trc       :  test data (can be absent)
 c***  ntrc_res  :  tracing/residuals.trc  :  residuals by regions
 c***  ntrc_src  :  tracing/sources.trc    :  integral sources
@@ -73,7 +74,7 @@ c***                    tracing
       parameter (len_ntrc=10)
       integer ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
      ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep
-      parameter (ntrc_tst=2, ntrc_res=3, ntrc_src=4,
+      parameter (ntrc_srt=1, ntrc_tst=2, ntrc_res=3, ntrc_src=4,
      ,           ntrc_bln=5, ntrc_ble=6, ntrc_int=7, ntrc_usr=8,
      ,           ntrc_blm=9, ntrc_sep=10)
       integer ntrc(len_ntrc), lv_trc(len_ntrc)
@@ -198,6 +199,8 @@ c<<<
       NTRC(ntrc_tst) = 80
       fn_ntrc(ntrc_tst) = 'tracing/test.trc'
 c>>>
+      NTRC(ntrc_srt) = 71
+      fn_ntrc(ntrc_srt) = 'tracing/intshrt.trc'
       NTRC(ntrc_res) = 72
       fn_ntrc(ntrc_res) = 'tracing/residuals.trc'
       NTRC(ntrc_src) = 73

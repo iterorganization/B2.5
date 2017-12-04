@@ -1150,17 +1150,18 @@ cxpb Normalise surface constituents
       end subroutine read_b2mod_wall
 
 #ifndef NO_CDF
-      subroutine define_cdf_b2mod_wall(nnwall,nntrack)
+      subroutine define_cdf_b2mod_wall(filename,ncid,nnwall,nntrack)
       use b2mod_tallies
       implicit none
-      integer nnwall,nntrack
+      integer ncid, nnwall, nntrack
+      character*256 filename
 #include <netcdf.inc>
-      integer :: status, ncid, nwallid, ntrackid, ntwoid, tid
+      integer :: status, nwallid, ntrackid, ntwoid, tid
       integer :: vdims(3)
 
       write(*,*) 'Creating the definitions for b2wall.nc'
 
-      status=nf_create('b2wall.nc',NF_CLOBBER,ncid)
+      status=nf_create(filename,NF_CLOBBER,ncid)
       call check_cdf_status(status)
 
       write(*,*) 'element'

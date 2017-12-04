@@ -1,4 +1,4 @@
-      subroutine b2wrint(nx,ny,ns,nregionv)
+      subroutine b2wrint(nx,ny,ns,nregionv,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -30,7 +30,7 @@ c
 c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c
-      integer nx, ny, ns, nregionv
+      integer nx, ny, ns, nregionv, iline
 c
       integer lv
 c      parameter (lv=970522)
@@ -197,6 +197,8 @@ c*** Local variables of general use
       real (kind=R8) ::
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
       integer i, j, k, ir,is,ix,iy, nv
+      real (kind=R8), save :: stim = 0.0_R8
+      real (kind=R8) :: tdummy
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
       integer iatm,imol ! IYS 29.09.2017
@@ -460,12 +462,13 @@ c#endif
       return
 c=======================================================================
 c
-      entry b2wrinti(nx,ny,ns,nregionv)
+      entry b2wrinti(nx,ny,ns,nregionv,iline)
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
 c
       tab=char(9)
+      call ipgetr ('b2mndr_stim', stim)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
@@ -475,9 +478,11 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex) then
-        read(lun,700,err=92) nv,ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
-     ,                          nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp
+      if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
+                                     ! and is to be appended
+        read(lun,700,err=92) nv,
+     &    ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
+     ,    nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp
 c#ifdef SCL_IMP_RCI
 c     ,                         ,ns1_tmp
 c#endif
@@ -691,15 +696,47 @@ c
  94   write(*,*) 'b2wrint: cannot write in the file ',trim(f)
       filedata(ltrc)=.false.
       return
+c======================================================================
+c
+      entry b2wrintc(nx,ny,ns,nregionv,iline)
+c----------------------------------------------------------------------
+c*** - to be called by b2co for locating truncation for savefile
+c----------------------------------------------------------------------
+c
+      if(.not.filedata(ntrc_int)) return
+      lun=ntrc(ltrc)
+      f=fn_ntrc(ltrc)
+      call find_file(f,ex)
+      open(lun,file=f,err=190)
+      rewind(lun)
+      iline = 0
+      read(lun,'(a1)',end=155) hlp_c
+      do while (hlp_c.eq.'#')
+        iline = iline+1
+        read(lun,'(a1)',end=155) hlp_c
+      end do
+      backspace lun
+      read(lun,*,end=155) tdummy
+      do while (tdummy.le.tim)
+        iline = iline+1
+        read(lun,*,end=155) tdummy
+      end do
+ 155  continue
+      return
+c======================================================================
+ 190  write(*,*) 'b2wrint: cannot open file ',trim(f)
+      filedata(ltrc)=.false.
+      iline=-1
+      return
 c=======================================================================
-      entry b2wrints(nx,ny,ns,nregionv)
+      entry b2wrints(nx,ny,ns,nregionv,iline)
 c-----------------------------------------------------------------------
 c*** Save the values (not used for this set)
 c-----------------------------------------------------------------------
 c
       return
 c=======================================================================
-      entry b2wrintf(nx,ny,ns,nregionv)
+      entry b2wrintf(nx,ny,ns,nregionv,iline)
 c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------

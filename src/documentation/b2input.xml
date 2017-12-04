@@ -660,7 +660,7 @@
 				<description>
 					stim specifies the initial time --- default 0. 
 					If set to a positive or zero value, this overwrites the time value read from b2fstati.
-					If set to a negative value, the run continues from the time read in b2fstati.
+					If set to a negative value, the run continues from the time read in b2fstati. In that case, the tracing data is appended to the existing files, otherwise the tracing files are overwritten.
 				</description>
 			</switch>
 			<switch>
@@ -2223,7 +2223,7 @@
 					If &lt;&gt; 0 then recycles the neutral flux having crossed the core boundary within Eirene as ions. The recycling is surface-averaged, and neutrals come back as fully-stripped ions. 
 					'eirene_ionizing_core' is an alias for this switch. 
 					If the value = 1, then the flux is added by direct modification of the sources in the guard cells --- this will only work if a standard flux boundary condition is applied at that boundary. 
-					If the value is &lt; 0, then the absolute value specifies which boundary in b2.boundary.parameters is to be used. This will only work for the new type 13 boundary condition.
+					If the value is &lt; 0, then the absolute value specifies which boundary in b2.boundary.parameters is to be used. This will only work for the type 13 boundary condition.
 				</description>
 			</switch>
 			<switch>
@@ -2287,7 +2287,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					Specifies the number of timesteps between writes of the time-dependent file. If b2time.gt.0, always writes out on the last timestep.
+					Specifies the number of timesteps between writes of the b2time.nc time-dependent file. If b2time.gt.0, always writes out on the last timestep. If b2mndr_stim.lt.0, data from the current run is appended to the existing b2time.nc file, otherwise the file is overwritten.
 				</description>
 			</switch>
 			<switch>
@@ -2521,8 +2521,8 @@
 			<switchgroup>
 				<name>b2stbr_*_netcdf</name>
 				<description>
-					If tallies_netcdf.ne.0, the file 'b2tallies.nc' is created, which contains the regional tallies in CDF format.
-					If b2wall_netcdf.ne.0, the file 'b2wall.nc' is created, which contains the wall tallies in CDF format [written every b2wall_netcdf 'main calls'].
+					If tallies_netcdf.ne.0, the file 'b2tallies.nc' is created, which contains the regional tallies in CDF format. If b2mndr_stim.lt.0, data from the current run is appended to the existing b2tallies.nc file, otherwise the file is overwritten.
+					If b2wall_netcdf.ne.0, the file 'b2wall.nc' is created, which contains the wall tallies in CDF format [written every b2wall_netcdf 'main calls']. If b2mndr_stim.lt.0, data from the current run is appended to the existing b2wall.nc file, otherwise the file is overwritten.
 					If balance_netcdf.ne.0, the file 'balance.nc' is created, which contains all of the arrays required by the balance post-processing routines, in CDF format.
 					If balance_average.ne.0, the balance arrays are averaged over all b2mndr_ntim timesteps.
 				</description>
@@ -2552,7 +2552,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If ank_tracing.ge.1, additional tracing output from Andrei Kukushkin is produced, in files to be found in the tracing/ directory inside the run directory. The traces will be written every ank_tracing iteration.
+					If ank_tracing.ge.1, additional tracing output from Andrei Kukushkin is produced, in files to be found in the tracing/ directory inside the run directory. The traces will be written every ank_tracing iteration. If b2mndr_stim.lt.0, data from the current run is appended to the existing files, otherwise the files are overwritten.
 				</description>
 			</switch>
 			<switch>
@@ -6305,7 +6305,7 @@
 				<namelist>TRANSPORT</namelist>
 				<description>
 					Allows user to choose between different anomalous transport models.
-					Read if 'b2mod_transport_namelist' is set to 1.
+					Read if 'b2tqna_transport_namelist' is set to 1.
 					Overwrite data from b2ah.dat and b2mn.dat.
 					Does not apply to fluid neutral species.
 				</description>
@@ -6740,6 +6740,7 @@
 				<description>
 					Switches to turn on/off the tracing files controlled by the ank_tracing switch. The files are defined in b2mod_diag, in order, starting with element 2 of the filedata array: test.trc, residuals.trc, sources.trc, blnn.trc, blne.trc, integral.trc, user.trc, blnm.trc, sepdata.trc.
 					If there is no b2.user.parameters file present, the flag for user.trc is set to .false..
+					If the tracing files are to be appended but a reading error occurs when opening them, the corresponding filedata element is overwritten to .false..
 				</description>
 			</switch>
 			<switch>

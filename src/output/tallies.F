@@ -21,10 +21,17 @@
       real (kind=R8), save :: potave(0:nsdecl-1)
 #ifndef NO_CDF
 #     include <netcdf.inc>
-      integer status, ncid
+      integer status, ncid, xtypev, ndims, nvars, natts, unlimid, tid
+      integer dimids(NF_MAX_VAR_DIMS), dimsize(NF_MAX_VAR_DIMS)
       real (kind=R8) :: tim_arr(1)
       real (kind=R8) :: naregtmp(0:nnreg(0),0:ns-1)
       real (kind=R8) :: cdftmp(0:nnreg(0))
+      real (kind=R8), save :: stim = 0.0_R8
+      character*(NF_MAX_NAME) :: dimname(1), varname
+      character*256 filename
+      logical :: ex
+      logical streql
+      external streql
 #endif
 *   ..common blocks
       integer ncall,ntstep
@@ -563,19 +570,53 @@
 
 #ifndef NO_CDF
       if(tallies_netcdf.ne.0) then
-        if(ncall.eq.0) then
-          call define_cdf_b2mod_tallies(nnreg,ns)
-	  ntstep=0
-        endif
 	if(ncall.eq.0.or.mod(ncall,tallies_netcdf).eq.0) then
-	  ntstep=ntstep+1
 	  write(*,tally_format) 'Start (CDF) tallies by region'
-	  status=nf_open('b2tallies.nc',NF_WRITE,ncid)
-	  call check_cdf_status(status)
 	  if(ncall.eq.0) then
-	    call write_cdf_char_variable(ncid,-1,
+            filename='b2tallies.nc'
+            call find_file(filename,ex)
+            call ipgetr ('b2mndr_stim', stim)
+            if (.not.ex.or.stim.ge.0.0_R8) then
+              ntstep = 0
+              call define_cdf_b2mod_tallies(filename,ncid,nnreg,ns)
+              status=nf_open(filename,NF_WRITE,ncid)
+              call check_cdf_status(status)
+              write(6,'(a)') trim(filename)//' will be created'
+            else if (ex.and.stim.lt.0.0_R8) then
+              status=nf_open(filename,NF_NOWRITE,ncid)
+              call check_cdf_status(status)
+              status=nf_inq(ncid,ndims,nvars,natts,unlimid)
+              call check_cdf_status(status)
+              status=nf_inq_varid(ncid,'times',tid)
+              call check_cdf_status(status)
+              status=nf_inq_var(ncid,tid,varname,xtypev,
+     *                          ndims,dimids,natts)
+              call check_cdf_status(status)
+              call xertst(ndims.eq.1,
+     *         'times field not one-dimensional in '//trim(filename))
+              status=nf_inq_dim(ncid,dimids(1),dimname(1),dimsize(1))
+              call check_cdf_status(status)
+              ntstep = dimsize(1)
+              status=nf_close(ncid)
+              call check_cdf_status(status)
+              status=nf_open(filename,NF_WRITE,ncid)
+              call check_cdf_status(status)
+              write(6,'(a)') trim(filename)//' will be appended'
+            else
+              ntstep = 0
+              write(6,'(a)') trim(filename)//' will be replaced'
+              call define_cdf_b2mod_tallies(filename,ncid,nnreg,ns)
+              status=nf_open(filename,NF_WRITE,ncid)
+              call check_cdf_status(status)
+            end if
+            write(6,'(a,i8)') trim(filename)//' : ntstep = ', ntstep
+	    if (ntstep.eq.0) call write_cdf_char_variable(ncid,-1,
      *	     'species',species_name(0:ns-1))
+          else
+            status=nf_open(filename,NF_WRITE,ncid)
+            call check_cdf_status(status)
 	  endif
+	  ntstep=ntstep+1
 
 	  tim_arr=tim
 	  call write_cdf_variable(ncid,ntstep,

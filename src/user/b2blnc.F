@@ -1,4 +1,4 @@
-      subroutine b2blnc(nx,ny,ns,dtim)
+      subroutine b2blnc(nx,ny,ns,dtim,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -23,7 +23,7 @@ c*** B2-Eirene and the global particle balance in B2
 c----------------------------------------------------------------------
       implicit none
 c
-      integer nx, ny, ns
+      integer nx, ny, ns, iline
       real (kind=R8) :: dtim
 c
       integer lun, ltrc
@@ -33,6 +33,7 @@ c
       logical first, ex, hlp_lw, hlp_lt
 c<<<
       logical hlp_tt
+      real (kind=R8) :: tdummy
       real (kind=R8) :: hlp_wldpp
       real (kind=R8) :: hlpit_l,hlpit_r
       real (kind=R8), allocatable :: hlpit_lp(:),hlpit_rp(:),hlpit_pl(:)
@@ -41,6 +42,7 @@ c<<<
       integer kst_hlp
       integer use_recyceir
       real (kind=R8) :: recyctmp
+      real (kind=R8), save :: stim = 0.0_R8
 c>>>
 c
 c*** lv    :  version number to appear in the file
@@ -650,7 +652,7 @@ c
       return
 c======================================================================
 c
-      entry b2blnci(nx,ny,ns,dtim)
+      entry b2blnci(nx,ny,ns,dtim,iline)
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_bln)=.true.
@@ -670,6 +672,7 @@ c*** from 960727 on
      , flxid_tmp(nspecies),flxbl_tmp(nspecies),flxbr_tmp(nspecies),
 c*** from 960808 on
      , flxrl_tmp(nspecies))
+      call ipgetr ('b2mndr_stim', stim)
       if(.not.filedata(ntrc_bln)) return
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
@@ -681,7 +684,7 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex) then
+      if(ex.and.stim.lt.0.0_R8) then
         read(lun,710,err=40) nv,j,nc,hlp_c
         go to 42
  40     read(lun,710,err=92) i,j
@@ -746,7 +749,39 @@ c
       return
 c======================================================================
 c
-      entry b2blncs(nx,ny,ns,dtim)
+      entry b2blncc(nx,ny,ns,dtim,iline)
+c----------------------------------------------------------------------
+c*** - to be called by b2co for locating truncation for savefile
+c----------------------------------------------------------------------
+c
+      if(.not.filedata(ntrc_bln)) return
+      lun=ntrc(ltrc)
+      f=fn_ntrc(ltrc)
+      call find_file(f,ex)
+      open(lun,file=f,err=190)
+      rewind(lun)
+      iline = 0
+      read(lun,'(a1)',end=155) hlp_c
+      do while (hlp_c.eq.'#')
+        iline = iline+1
+        read(lun,'(a1)',end=155) hlp_c
+      end do
+      backspace lun
+      read(lun,*,end=155) tdummy
+      do while (tdummy.le.tim)
+        iline = iline+1
+        read(lun,*,end=155) tdummy
+      end do
+ 155  continue
+      return
+c======================================================================
+ 190  write(*,*) 'b2blnc: cannot open file ',trim(f)
+      filedata(ltrc)=.false.
+      iline=-1
+      return
+c======================================================================
+c
+      entry b2blncs(nx,ny,ns,dtim,iline)
 c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
 c----------------------------------------------------------------------
@@ -754,7 +789,7 @@ c
       return
 c======================================================================
 c
-      entry b2blncf(nx,ny,ns,dtim)
+      entry b2blncf(nx,ny,ns,dtim,iline)
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------

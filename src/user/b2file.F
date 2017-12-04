@@ -48,8 +48,10 @@ c
      ,          hlp_frmr*160, hlp_frms*160, hlp_frmt*160,
      ,          hlp_emsg(5)*30
       character :: hlp_h(-1:nh_tmp)*2, hlp_al(0:ns-1)*2
+      real (kind=R8), save :: stim = 0.0_R8
+      integer iline
 c
-      external subini, subend, xertst, xerrab
+      external subini, subend, ipgetr, xertst
 c
 c
 c----------------------------------------------------------------------
@@ -79,6 +81,7 @@ c
 c*** check the number of units specified in ntrc
 c
       call xertst(lf_tmp.le.len_ntrc,'b2file: too many tracing units')
+      call ipgetr('b2mndr_stim', stim)
 c----------------------------------------------------------------------
 c*** Test data - temporary
 c
@@ -90,8 +93,8 @@ c
       l=1
       open(ntrc(ntrc_tst),file=f,err=900)
       rewind(ntrc(ntrc_tst))
-      if(ex) then
-c*** Old file - check it
+      if(ex.and.stim.lt.0.0_R8) then
+c*** Old file to be appended - check it
         l=2
         read(ntrc(ntrc_tst),700,err=900) hlp_c,i,m,n,j
         if(i.ne.lvt) then
@@ -162,7 +165,7 @@ c
       l=1
       open(ntrc(ntrc_res),file=f,err=5)
       rewind(ntrc(ntrc_res))
-      if(ex) then
+      if(ex.and.stim.lt.0.0_R8) then
         l=2
         read(ntrc(ntrc_res),700,err=5) hlp_c,i,j,k
         if(i.ne.lvr) then
@@ -237,7 +240,7 @@ c
       l=1
       open(ntrc(ntrc_src),file=f,err=30)
       rewind(ntrc(ntrc_src))
-      if(ex) then
+      if(ex.and.stim.lt.0.0_R8) then
         l=2
         read(ntrc(ntrc_src),700,err=30) hlp_c,i,j,k
         if(i.ne.lvs) then
@@ -305,6 +308,30 @@ c
         end if
       end do
       call subend()
+      return
+c======================================================================
+      entry b2filec(it,ns,nnreg)
+      do k=1,nf_tmp
+        l=k+1
+        if(filedata(l)) then
+          f=fn_ntrc(l)
+          call find_file(f,ex)
+          open(ntrc(l),file=f,err=290)
+          rewind(ntrc(l))
+          iline = 0
+ 200      read(ntrc(l),'(a1)',end=205) hlp_c
+          if (hlp_c.eq.'#') then
+            iline = iline + 1
+          end if
+          go to 200
+ 205      backspace ntrc(l)
+        end if
+        goto 299
+ 290    write(*,*) 'b2filec: cannot open file ',trim(f)
+        filedata(l)=.false.
+        iline=-1
+ 299    continue
+      end do
       return
 c======================================================================
       entry b2filew(it,ns,nnreg)

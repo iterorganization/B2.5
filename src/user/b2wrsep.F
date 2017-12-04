@@ -1,4 +1,4 @@
-      subroutine b2wrsep(nx,ny,ns,BoRiS)
+      subroutine b2wrsep(nx,ny,ns,BoRiS,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_diag
@@ -30,7 +30,7 @@ c***  - primarily, to provide boundary conditions for core models
 c----------------------------------------------------------------------
       implicit none
 
-      integer nx, ny, ns
+      integer nx, ny, ns, iline
       real (kind=R8) :: BoRiS
 c----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
@@ -112,6 +112,8 @@ c*** Local variables of general use
       parameter (ltrc=ntrc_sep)
       real (kind=R8) ::
      *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny)
+      real (kind=R8) :: stim = 0.0_R8
+      real (kind=R8) :: tdummy
       integer i,j,k,l,ia,is,ix,iy,jxi,jxa,jsep,nv
       integer, allocatable :: ii(:)
       logical ex, warn_tmp
@@ -133,8 +135,6 @@ c----------------------------------------------------------------------
 
       save
 c======================================================================
-
-      if(first_time_step) return
 
 c*** Initialise the arrays
 c
@@ -363,12 +363,13 @@ c*** Write the data in a separate file for plotting...
       return
 c======================================================================
 
-      entry b2wrsepi(nx,ny,ns,BoRiS)
+      entry b2wrsepi(nx,ny,ns,BoRiS,iline)
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c----------------------------------------------------------------------
 
       tab=char(9)
+      call ipgetr ('b2mndr_stim', stim)
       call get_jsep(nx,ny,jxi,jxa,jsep)
 
       if(nspecies.le.0) then !{
@@ -400,7 +401,7 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex) then
+      if(ex.and.stim.lt.0.0_R8) then
         read(lun,700,err=92) nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
         lv_trc(ltrc)=nv
         warn_tmp=.false.
@@ -530,12 +531,44 @@ c
       filedata(ltrc)=.false.
       return
 c======================================================================
-      entry b2wrseps(nx,ny,ns,BoRiS)
+c
+      entry b2wrsepc(nx,ny,ns,BoRiS,iline)
+c----------------------------------------------------------------------
+c*** - to be called by b2co for locating truncation for savefile
+c----------------------------------------------------------------------
+c
+      if(.not.filedata(ntrc_sep)) return
+      lun=ntrc(ltrc)
+      f=fn_ntrc(ltrc)
+      call find_file(f,ex)
+      open(lun,file=f,err=190)
+      rewind(lun)
+      iline = 0
+      read(lun,'(a1)',end=155) hlp_c
+      do while (hlp_c.eq.'#')
+        iline = iline+1
+        read(lun,'(a1)',end=155) hlp_c
+      end do
+      backspace lun
+      read(lun,*,end=155) tdummy
+      do while (tdummy.le.tim)
+        iline = iline+1
+        read(lun,*,end=155) tdummy
+      end do
+ 155  continue
+      return
+c======================================================================
+ 190  write(*,*) 'b2wrsep: cannot open file ',trim(f)
+      filedata(ltrc)=.false.
+      iline=-1
+      return
+c======================================================================
+      entry b2wrseps(nx,ny,ns,BoRiS,iline)
 c----------------------------------------------------------------------
 c
       return
 c======================================================================
-      entry b2wrsepf(nx,ny,ns,BoRiS)
+      entry b2wrsepf(nx,ny,ns,BoRiS,iline)
 c----------------------------------------------------------------------
 c     Finalization step
       deallocate(equs_tmp)
