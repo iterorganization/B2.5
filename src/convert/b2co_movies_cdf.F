@@ -4,7 +4,6 @@
       use b2mod_movies
       use b2mod_indirect
       implicit none
-#     include "mdslib.inc"
       integer nx, ny, ns, natm, nmol
       real (kind=R8) :: tim
       real (kind=R8), save :: dtim = 1.0_R8
