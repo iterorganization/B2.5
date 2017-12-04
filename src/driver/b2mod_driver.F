@@ -1919,7 +1919,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           close(nout(7))
         endif
 !djm Jun2017
-        if((balance_netcdf.ne.0)) then
+        if((balance_netcdf.ne.0).and.(ntim.gt.0)) then
           call update_average_balance(itim,ntim)
         endif
 *    ..increment
