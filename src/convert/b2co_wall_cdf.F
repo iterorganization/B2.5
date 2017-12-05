@@ -2,7 +2,6 @@
       use b2mod_types
       use b2mod_wall
       implicit none
-#     include "mdslib.inc"
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif

@@ -4,7 +4,6 @@
       use b2mod_mwti
       use b2mod_indirect
       implicit none
-#     include "mdslib.inc"
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
