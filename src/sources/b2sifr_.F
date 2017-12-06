@@ -16,21 +16,22 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      *  hx(-1:nx,-1:ny), hz(-1:nx,-1:ny), vol(-1:nx,-1:ny),
      &  bb(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
-     &  ne2(-1:nx,-1:ny), ehxp(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),      !srv 01.07.09
+     &  ne2(-1:nx,-1:ny), ehxp(-1:nx,-1:ny),      !srv 01.07.09
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),              !srv 11.09.09
      &   smprb(-1:nx,-1:ny), smptb(-1:nx,-1:ny), smfrb(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   vti32(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny)
+     *   vti32(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny), 
+     &   lnlam(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
