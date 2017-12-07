@@ -78,6 +78,7 @@ LDLIBES   += -L${SOLPSLIB} -lperf
 endif
 
 ifdef IMAS_PREFIX
+LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
 IMASLIBS   = ${LD_UAL} -lggd-ifort -Wl,-rpath,${EBROOTANACONDA3}/lib
 endif
