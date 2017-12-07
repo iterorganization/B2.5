@@ -46,6 +46,9 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifdef IMAS_PREFIX
+ifndef SOLPS_CPP
+EQUIVS  += -DIMAS
+endif
 LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
 INCMODS  = -I${IMAS_PREFIX}/include/gfortran
 IMASLIBS = ${LD_UAL} -lggd-${COMPILER} -Wl,-rpath,${EBROOTANACONDA3}/lib
