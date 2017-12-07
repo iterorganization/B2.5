@@ -57,6 +57,7 @@ GRLIBES  = ${LD_NCARG} ${LD_MSCL}
 LDLIBES  = ${LD_NETCDF} ${LD_NAG} # -lblas
 
 ifdef IMAS_PREFIX
+LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
 IMASLIBS   = ${LD_UAL} -lggd-ifort
 endif

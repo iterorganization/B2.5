@@ -58,7 +58,6 @@ DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
 DBLSED   = 
 
-
 INCMOD   = -I
 MOD      = mod
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
@@ -73,6 +72,7 @@ CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef IMAS_PREFIX
+LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
 IMASLIBS   = ${LD_UAL} -lggd-ifort
 endif

@@ -39,6 +39,7 @@ FCOPTS = -O2 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-f
 endif
 
 ifdef IMAS_PREFIX
+LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
 INCMODS  = -I${IMAS_PREFIX}/include/gfortran
 IMASLIBS = ${LD_UAL} -lggd-${COMPILER}
 endif

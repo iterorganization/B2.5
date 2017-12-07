@@ -32,6 +32,7 @@ FCOPTS = -fast -Mvect=nofuse -Mbackslash
 endif
 
 ifdef IMAS_PREFIX
+LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
 INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
 IMASLIBS = ${LD_UAL} -lggd-pgi
 endif
