@@ -78,6 +78,9 @@ LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 ifdef IMAS_PREFIX
+ifndef SOLPS_CPP
+EQUIVS    += -DIMAS
+endif
 LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
 LDLIBES   += ${LD_UAL}

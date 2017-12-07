@@ -41,6 +41,9 @@ endif
 endif
 
 ifdef IMAS_PREFIX
+ifndef SOLPS_CPP
+EQUIVS  += -DIMAS
+endif
 LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
 INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
 IMASLIBS = ${LD_UAL} -lggd-pgi

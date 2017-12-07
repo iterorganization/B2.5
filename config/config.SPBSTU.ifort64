@@ -72,6 +72,9 @@ CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef IMAS_PREFIX
+ifndef SOLPS_CPP
+EQUIVS    += -DIMAS
+endif
 LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
 IMASLIBS   = ${LD_UAL} -lggd-ifort
