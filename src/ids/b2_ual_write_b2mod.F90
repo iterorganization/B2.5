@@ -5,11 +5,12 @@
 !!
 !>      @page b2uw_b2mod b2_ual_write_b2mod
 !>      @section b2uw_b2mod_desc   Description
-!!      b2_ual_write_b2mod.f90 script is used to generate b2_ual_write_b2mod.exe
+!!      b2_ual_write_b2mod code is used to generate b2_ual_write_b2mod.exe
 !!      (main program), which is a post-processor for b2.
-!!      The script currently reads the plasma grid
+!!      The code reads the plasma grid
 !!      geometry ( full geometry descriptions of all available grid subsets )
-!!      and plasma state ( electron density ) and writes it to IDS database
+!!      and plasma state (electron density/temperature, ion temperature,
+!!      velocity etc.). The code then writes the obtained data to IDS database
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
 !!      Library routines.
 !!
