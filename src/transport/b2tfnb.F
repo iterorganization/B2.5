@@ -84,7 +84,6 @@
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: vlct_diagno = 1
       character chns*3                                                   !srv 16.09.02
-      integer, save :: fnb_nodrift_style = 1                             !srv 20.06.08
       integer, save :: drift_style = 1                                   !srv 21.06.08
       real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
@@ -178,7 +177,6 @@
         call ipgetr ('b2tfnb_PSch', PSch)                                !srv 17.01.07
         call ipgeti ('b2tfnb_pflux_cor', pflux_cor)                      !srv 05.03.16
         call ipgeti ('b2tfnb_PSch_style', PSch_style)                    !srv 12.11.08
-        call ipgeti ('b2tfnb_fnb_nodrift_style', fnb_nodrift_style)      !srv 20.06.08
         call ipgeti ('b2tfnb_drift_style', drift_style)                  !srv 21.06.08
         call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
         call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
@@ -924,15 +922,10 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
              con_nodrift     = cdnb(ix,iy,0)
              con_2dia(ix,iy) = cdnbhz(ix,iy,0)                          !srv 09.01.01
            endif                                                        !srv 13.10.06 }
-           if(fnb_nodrift_style.eq.0) then                              !srv 20.06.08
-            fnb_nodrift(ix,iy,0) = flo_nodrift*
+           fnb_nodrift(ix,iy,0) = flo_nodrift*
      1      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &      con_nodrift*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
      &      cdpb(ix,iy,0)*(pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))
-           else                                                         !srv 20.06.08 {
-            fnb_nodrift(ix,iy,0) = flo_nodrift*
-     1      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
-           endif                                                        !srv 20.06.08 }
            fnb(ix,iy,0) =
      1      flo*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &      con(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
@@ -1354,16 +1347,11 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &                        nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &       cdpbhz(ix,iy,1)*(pb(ix,iy)                                 !srv 09.01.01
      &                     -pb(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 01.10.99
-          if(fnb_nodrift_style.eq.0) then                               !srv 20.06.08
-           fnb_nodrift(ix,iy,1) = flo_nodrift*
+          fnb_nodrift(ix,iy,1) = flo_nodrift*
      1      (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &       con_nodrift*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -cdpb(ix,iy,1)*(pb(ix,iy)
      &                     -pb(bottomix(ix,iy),bottomiy(ix,iy)))
-          else                                                          !srv 20.06.08 {
-           fnb_nodrift(ix,iy,1) = flo_nodrift*
-     1      (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
-          endif                                                         !srv 20.06.08 }
           fnb_mdf(ix,iy,1) = flo_mdf*                                   !srv 13.10.06 {
      &     (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &     con_mdf(ix,iy)*(nb(ix,iy)-

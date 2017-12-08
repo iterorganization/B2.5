@@ -46,6 +46,9 @@ c
         hlp_al(b2espcr(is))=hlp_al(nspecies+1+is)
         mz_hlp(b2espcr(is))=99
       end do !}
+      do is=1,nspecies+ns !{
+        if (hlp_al(is)(2:2).eq.' ') hlp_al(is)(2:2) = '_'
+      end do !}
 
       open(lun,file='krieger.dat')
       write (lun,'(2a)')

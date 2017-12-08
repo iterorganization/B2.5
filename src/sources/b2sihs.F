@@ -3,7 +3,7 @@
 
       subroutine b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, !xpb !srv 05.07.17
      1  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,             !xpb !srv 01.07.09
-     2  fch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0, vti32)
+     2  fch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -39,8 +39,6 @@
       real (kind=R8) ::
      *  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3)
 *   ..workspace argument (unspecified on entry and on exit)
-      real (kind=R8) ::
-     *  vti32(-1:nx,-1:ny)
       real (kind=R8) :: shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3) !djm Jan2017
 *   ..common block
 *-----------------------------------------------------------------------
@@ -61,9 +59,12 @@
       integer, save :: icase = 0
       integer, save :: istyle_Joule_heating = 1                         !srv 17.01.14
       integer, save :: b2sigp_style = 2                                 !srv 05.07.17
+      integer, save :: use_eirene = 0
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 {
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)  !lk 31.01.08 }
       character chns*3                                                  !srv 05.07.17
+      real (kind=R8) ::
+     *  vti32(-1:nx,-1:ny)
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
      &  phm4, phm5, phm6, phm7, work(-1:nx,-1:ny), 
@@ -75,7 +76,7 @@
      5  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
      6  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
      &  shefr(-1:nx,-1:ny,0:3), shifr(-1:nx,-1:ny,0:3),                 !srv 05.07.17
-     &  smbch(-1:nx,-1:ny), smbtf(-1:nx,-1:ny),
+     &  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),
      &  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
      &  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3),             !srv 13.01.17 05.07.17 }
      &  shest(-1:nx,-1:ny,0:3)                                          !srv 17.12.13
@@ -164,6 +165,7 @@
        endif
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
        call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
+       call ipgeti ('b2mndr_eirene', use_eirene)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -367,26 +369,28 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         shitmp=shi0
       endif
       do is = 0, ns-1
-       do iy = -1, ny
-        do ix = -1, nx
-         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &      region(ix,iy,0).ne.0) then
-          t0 = phm2*vol(ix,iy)*(1.0_R8-BoRiS)*4.0e0_R8/3.0e0_R8*
+       if(.not.is_neutral(is).or.use_eirene.eq.0) then
+        do iy = -1, ny
+         do ix = -1, nx
+          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &       bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
+     &       region(ix,iy,0).ne.0) then
+           t0 = phm2*vol(ix,iy)*(1.0_R8-BoRiS)*     ! 4.0e0_R8/3.0e0_R8* cvsa already has 4/3 !srv 16.10.17
      &      (cvsa(ix,iy,0,is)*(ua(ix,iy,is)-
      &          ua(leftix(ix,iy),leftiy(ix,iy),is))**2/
      &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
      &       cvsa(rightix(ix,iy),rightiy(ix,iy),0,is)*
      &  (ua(rightix(ix,iy),rightiy(ix,iy),is)-ua(ix,iy,is))**2/
      &       (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy))))
-          shi0(ix,iy,0) = shi0(ix,iy,0)+(1.0_R8+rf2)*t0
-          shi0(ix,iy,3) = shi0(ix,iy,3)-rf2*t0/(ni(ix,iy,0)*ti(ix,iy))
-          b2visa(region(ix,iy,0))=b2visa(region(ix,iy,0))+t0
-          b2sihs_visa(ix,iy)=b2sihs_visa(ix,iy)+t0
+           shi0(ix,iy,0) = shi0(ix,iy,0)+(1.0_R8+rf2)*t0
+           shi0(ix,iy,3) = shi0(ix,iy,3)-rf2*t0/(ni(ix,iy,0)*ti(ix,iy))
+           b2visa(region(ix,iy,0))=b2visa(region(ix,iy,0))+t0
+           b2sihs_visa(ix,iy)=b2sihs_visa(ix,iy)+t0
 *!!      (viscous heating from d/dy is temporarily ignored)
-         endif
+          endif
+         enddo
         enddo
-       enddo
+       endif
       enddo
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_visa0to3=shi0-shitmp

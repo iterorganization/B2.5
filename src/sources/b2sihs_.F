@@ -3,8 +3,7 @@
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
      &  hx, hy, qz, vol, bb, pbs, lnlam,                                 !srv 07.06.00 02.06.99 07.05.08 05.07.17
-     1  na, ua, ue, te, ti, po, ne, ni, fne, fch,                        !srv 28.06.03 01.07.09 05.03.11
-     &  cvsa, fchdia, uadia, vadia, vaecrb, she0, shi0, vti32)           !srv 28.06.03 07.07.09
+     1  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, she0, shi0)      !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -37,15 +36,10 @@
       real (kind=R8) ::
      *  fne(-1:nx,-1:ny,0:1),
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
-     &  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1), !srv 07.07.09
      2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1)                     !srv 28.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3)
-*   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
-     *   vti32(-1:nx,-1:ny)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -68,6 +62,9 @@
       integer, save :: icase = 0
       integer, save :: istyle_Joule_heating = 1                       !srv 17.01.14
       integer, save :: b2sigp_style = 2                               !srv 05.07.17
+      integer, save :: use_eirene = 0
+      real (kind=R8) ::
+     *  vti32(-1:nx,-1:ny)
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
      &  phm4, phm5, phm6, wrk0(-1:nx,-1:ny),                          !srv 02.06.99
@@ -87,7 +84,7 @@
      4  ce2(-1:nx,-1:ny), cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny),
      5  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
      6  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
-     7  smbch(-1:nx,-1:ny), smbtf(-1:nx,-1:ny),
+     7  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
      *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)            !srv 13.01.17 05.07.17 }
       character chk*1                                                 !srv 11.09.09 } !srv 05.07.17
@@ -156,6 +153,7 @@
        call ipgeti ('b2sihs_istyle_Joule_heating', 
      &                      istyle_Joule_heating)                  !srv 17.01.14
        call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
+       call ipgeti ('b2mndr_eirene', use_eirene)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -426,37 +424,36 @@
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
       do is = 0, ns-1
-       if(.not.is_neutral(is)) then                                   !srv 29.08.02
-        wrk0 = 0.0e0_R8                                               !srv 28.08.02 21.07.05 {
-        do iy = 0, ny-1
-         do ix = 0, nx
+       if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
+        do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
+         do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
-           wrk0(ix,iy)=0.0e0_R8
+            wrk0(ix,iy)=0.0e0_R8
           else
-           wrk0(ix,iy)=4.0e0_R8/3.0e0_R8*cvsa(ix,iy,0,is)*
+            wrk0(ix,iy) = cvsa(ix,iy,0,is)*                           !srv 16.10.17
      &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
           endif
          enddo
         enddo
-        wrk1 = 0.0e0_R8
-        do iy = 0, ny
-         do ix = 0, nx-1
-          if(leftix(ix,iy).ne.-2) then
-           wrk1(ix,iy)=4.0e0_R8*
-     *      (ua(ix,iy,is)-ua(bottomix(ix,iy),bottomiy(ix,iy),is))**2/
-     &      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))**2
+        do iy = -1, ny
+         do ix = -1, nx
+          if(bottomiy(ix,iy).eq.-2) then
+            wrk1(ix,iy) = 0.0e0_R8
+          else
+            wrk1(ix,iy) = cvsa(ix,iy,1,is)*                             !srv 16.10.17
+     *      (ua(ix,iy,is)-ua(bottomix(ix,iy),bottomiy(ix,iy),is))**2
           endif
          enddo
-        enddo                                                         !srv 28.08.02 21.07.05 }
+        enddo                                                         !srv 28.08.02 21.07.05 16.10.17 }
         do iy = 0, ny-1
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
            t0 = phm2*(1.0_R8-BoRiS)*
      &       (wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))        !srv 21.07.05 }
      &           *0.5e0_R8
-           t1 = phm8*(1.0_R8-BoRiS)*vsa0(ix,iy,is)*vol(ix,iy)*
+           t1 = phm8*(1.0_R8-BoRiS)*!                                 vsa0(ix,iy,is)*vol(ix,iy)*
      &       (wrk1(ix,iy)+wrk1(topix(ix,iy),topiy(ix,iy)))
-     &           *0.5e0_R8                                            !srv 21.07.05 }
+     &           *0.5e0_R8                                            !srv 21.07.05 16.10.17 }
            shivc(ix,iy,0) = shivc(ix,iy,0)+(1.0e0_R8+rf2)*t0
            shivc(ix,iy,3) = shivc(ix,iy,3)-
      &                        rf2*t0/(ni(ix,iy,0)*ti(ix,iy))
@@ -656,88 +653,7 @@
       call b2saxpy (n2*4, 1.0e0_R8, shifr, 1, shi0, 1)                !srv 11.09.09
       b2str=0.0_R8
       b2sihs_str=0.0_R8
-!      if (style.eq.-1) then                                           !srv 28.06.03 {
-!*    ..strange term, version -1
-!       do is = 0, ns-1
-!        do iy = 0, ny-1
-!         do ix = 0, nx-1
-!          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
-!           t0 = za(is)*uasy(ix,iy,is)*
-!     &      (ne(ix,iy)*te(ix,iy)
-!     &       -ne(bottomix(ix,iy),bottomiy(ix,iy))*
-!     &       te(bottomix(ix,iy),bottomiy(ix,iy)))*
-!     &      vol(ix,iy)/
-!     &      (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
-!     &      za(is)*uasy(topix(ix,iy),topiy(ix,iy),is)*
-!     &      (ne(topix(ix,iy),topiy(ix,iy))*
-!     &       te(topix(ix,iy),topiy(ix,iy))-ne(ix,iy)*te(ix,iy))*
-!     &      vol(ix,iy)/(vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
-!           she0(ix,iy,0) = she0(ix,iy,0)+max(0.0e0_R8,t0)
-!           she0(ix,iy,3) = she0(ix,iy,3)+
-!     &      min(0.0e0_R8,t0)/(ne(ix,iy)*te(ix,iy))
-!           shi0(ix,iy,0) = shi0(ix,iy,0)+max(0.0e0_R8,-t0)
-!           shi0(ix,iy,3) = shi0(ix,iy,3)+
-!     &      min(0.0e0_R8,-t0)/(ni(ix,iy,0)*ti(ix,iy))
-!           b2str(region(ix,iy,0))=b2str(region(ix,iy,0))+t0
-!           b2sihs_str(ix,iy)=b2sihs_str(ix,iy)+t0
-!          endif                                                       !srv 26.11.02
-!         enddo
-!        enddo
-!       enddo
-!      else if (style.eq.0) then
-!*    ..strange term, version 0
-!*      (in this version the term is absent)
-!      else if (style.eq.1) then
-!*    ..strange term, version 1
-!       do is = 0, ns-1
-!        do iy = 0, ny-1
-!         do ix = 0, nx-1
-!          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
-!           t0 = za(is)*uasy(ix,iy,is)*
-!     &      (na(ix,iy,is)*ti(ix,iy)
-!     &       -na(bottomix(ix,iy),bottomiy(ix,iy),is)*
-!     &        ti(bottomix(ix,iy),bottomiy(ix,iy)))*
-!     &      vol(ix,iy)/
-!     &      (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
-!     &      za(is)*uasy(topix(ix,iy),topiy(ix,iy),is)*
-!     &      (na(topix(ix,iy),topiy(ix,iy),is)*
-!     &       ti(topix(ix,iy),topiy(ix,iy))-na(ix,iy,is)*ti(ix,iy))*
-!     &      vol(ix,iy)/(vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
-!           she0(ix,iy,0) = she0(ix,iy,0)+max(0.0e0_R8,-t0)
-!           she0(ix,iy,3) = she0(ix,iy,3)+
-!     &      min(0.0e0_R8,-t0)/(ne(ix,iy)*te(ix,iy))
-!           shi0(ix,iy,0) = shi0(ix,iy,0)+max(0.0e0_R8,t0)
-!           shi0(ix,iy,3) = shi0(ix,iy,3)+
-!     &      min(0.0e0_R8,t0)/(ni(ix,iy,0)*ti(ix,iy))
-!           b2str(region(ix,iy,0))=b2str(region(ix,iy,0))+t0
-!           b2sihs_str(ix,iy)=b2sihs_str(ix,iy)+t0
-!          endif                                                       !srv 26.11.02
-!         enddo
-!        enddo
-!       enddo
-!      endif                                                           !srv 28.06.03 }
-!* ..drift                                                             !srv 11.07.99
       b2wrong1=0.0_R8
-!     do is = 0, ns-1
-!       do iy = 0, ny-1         ! was ny DPC 970415
-!         do ix = 0, nx-1        ! was nx DPC 970415
-!          t0=phm3*0.25e0_R8*bb(ix,iy,3)*(
-!     1     (fchdia(rightix(ix,iy),rightiy(ix,iy),0)+fchdia(ix,iy,0))*
-!     1     (uadia(topix(ix,iy),topiy(ix,iy),1,is)+uadia(ix,iy,1,is))-
-!     1     (fchdia(topix(ix,iy),topiy(ix,iy),1)+fchdia(ix,iy,1))*
-!     1     (uadia(rightix(ix,iy),rightiy(ix,iy),0,is)+
-!     2      uadia(ix,iy,0,is)))
-!!         t0 = 0.0e0_R8                                               !srv 31.05.99
-!          she0(ix,iy,0) = she0(ix,iy,0)+max(0.0e0_R8,t0)
-!          she0(ix,iy,3) = she0(ix,iy,3)+
-!     &     min(0.0e0_R8,t0)/(ne(ix,iy)*te(ix,iy))
-!          shi0(ix,iy,0) = shi0(ix,iy,0)+max(0.0e0_R8,-t0)
-!          shi0(ix,iy,3) = shi0(ix,iy,3)+
-!     &     min(0.0e0_R8,-t0)/(ni(ix,iy,0)*ti(ix,iy))
-!          b2wrong1(region(ix,iy,0))=b2wrong1(region(ix,iy,0))+t0
-!         enddo
-!       enddo
-!     enddo                                                            !srv 11.07.99
 * ..return
       if(iout.eq.1) then
         do k=0,3

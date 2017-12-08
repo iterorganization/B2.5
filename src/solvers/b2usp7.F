@@ -165,9 +165,12 @@ cxpb
         iyb = bottomiy(ix,iy)
         ixt = topix(ix,iy)
         iyt = topiy(ix,iy)
-        if (iyb.eq.-2 .or. bottomiy(ixb,iyb).eq.-2 .or. 
-     &      iyt.eq.ny+1 .or. topiy(ixt,iyt).eq.ny+1 .or. 
-     &      bottomiy(ixb,iyb).eq.iy .and. topiy(ixt,iyt).eq.iy) then
+        if (iyb.eq.-2 .or. iyt.eq.ny+1) then
+          aa7(ix,iy,-3) = 0.0_R8
+          aa7(ix,iy, 3) = 0.0_R8
+        else if
+     &     (bottomiy(ixb,iyb).eq.-2 .or.  topiy(ixt,iyt).eq.ny+1 .or.
+     &     (bottomiy(ixb,iyb).eq.iy .and. topiy(ixt,iyt).eq.iy)) then
           aa7(ix,iy,-3) = 0.0_R8
           aa7(ix,iy, 3) = 0.0_R8
         else

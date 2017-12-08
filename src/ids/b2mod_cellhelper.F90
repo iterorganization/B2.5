@@ -41,7 +41,7 @@ module b2mod_cellhelper
   ! do istep = 1, 4; VXCIRCLE_CLOCKWISE(istep, iCorner, COUNTERCLOCKWISE)
   integer, parameter :: VXCIRCLE_STEPDIR(1:4, 0:3, 2) = reshape( &
       & (/ BOTTOM, LEFT, TOP, RIGHT, &  ! Vertex 0/Lower left, clockwise
-      &    RIGHT, BOTTOM, LEFT, TOP, &  ! 
+      &    RIGHT, BOTTOM, LEFT, TOP, &  !
       &    LEFT, TOP, RIGHT, BOTTOM, &
       &    TOP, RIGHT, BOTTOM, LEFT, &
       &    LEFT, BOTTOM, RIGHT, TOP, &
@@ -84,7 +84,7 @@ module b2mod_cellhelper
   real(R8), parameter, private :: geom_match_dist = 1.0e-9_R8
 
   ! Cell geometry types for cellGeoType and isTriangle
-  integer, parameter :: CGEO_BROKEN = 0 
+  integer, parameter :: CGEO_BROKEN = 0
   integer, parameter :: CGEO_QUAD = 1
   integer, parameter :: CGEO_TRIA_NOLEFT = 2
   integer, parameter :: CGEO_TRIA_NOBOT = 3
@@ -94,7 +94,7 @@ module b2mod_cellhelper
 contains
 
   !> Compute distance between points
-  real(R8) function points_dist(x1,y1,x2,y2) 
+  real(R8) function points_dist(x1,y1,x2,y2)
     real(R8), intent(in) :: x1, y1, x2, y2
 
     points_dist = sqrt( (x1-x2)**2+(y1-y2)**2 )
@@ -102,7 +102,7 @@ contains
 
   !> Check whether to points coincide
   !> It tests whether their distance is closter than geom_match_dist.
-  logical function points_match(x1,y1,x2,y2) 
+  logical function points_match(x1,y1,x2,y2)
     real(R8), intent(in) :: x1, y1, x2, y2
 
     points_match = points_dist(x1,y1,x2,y2).lt.geom_match_dist
@@ -110,7 +110,7 @@ contains
 
 
   !> Determine the geometry type of a cell
-  !> 
+  !>
   integer function cellGeoType(crx, cry)
     real(R8), dimension(0:3), intent(in) :: crx, cry
 
@@ -133,7 +133,7 @@ contains
     select case (fcount)
     case (0:2)
         cellGeoType = CGEO_BROKEN
-    case (3)      
+    case (3)
         if (.not. leftFace) cellGeoType = CGEO_TRIA_NOLEFT
         if (.not. botFace) cellGeoType = CGEO_TRIA_NOBOT
         if (.not. rightFace) cellGeoType = CGEO_TRIA_NORIGHT
@@ -145,7 +145,7 @@ contains
   end function cellGeoType
 
 
-  !> Check whether a cell geometry type returned by cellGeoType 
+  !> Check whether a cell geometry type returned by cellGeoType
   !> indicates a triangular cell
   logical function isTriangleCell( cellGeoType )
     integer, intent(in) :: cellGeoType

@@ -100,6 +100,8 @@ c***  i_ersmtr: index of eroded material for the wall segments
      ,  iatm,imol,ia,ims,ind,IAS,shift,
      ,  l_srfmtr(0:nsgmx),
      ,  sptlistrg(0:nsgmx),sptliswll(DEF_NATM+DEF_NMOL)
+      integer :: nyd
+      parameter (nyd=DEF_NYD)
 
 c*** Arrays to store the target profiles
 c***  xtrg    : coordinate along the target
@@ -132,23 +134,28 @@ c***  spttrg  : sputtering [g/y]
 
       real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,mmol,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
-     ,  s(0:ny-1,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),xtrg(0:ny-1,ntrgsx),  
-     ,  netrg(0:ny-1,ntrgsx) , tetrg(0:ny-1,ntrgsx),
-     ,  titrg(0:ny-1,ntrgsx), 
-     ,  wtttrg(0:ny-1,ntrgsx), wptnu(0:ny-1,ntrgsx),
-     ,  wptpl(0:ny-1,ntrgsx),
-     ,  whtnu(0:ny-1,ntrgsx) , whtpl(0:ny-1,ntrgsx),
-     ,  wpttrg(0:ny-1,ntrgsx),
-     ,  wpltrg(0:ny-1,ntrgsx),wnutrg(0:ny-1,ntrgsx),
-     ,  wrdtrg(0:ny-1,ntrgsx),
-     ,  fiitrg(0:ny-1,ntrgsx,DEF_NATM), eiitrg(0:ny-1,ntrgsx,DEF_NATM),
-     ,  faitrg(0:ny-1,ntrgsx,DEF_NATM), eaitrg(0:ny-1,ntrgsx,DEF_NATM),
-     ,  naitrg(0:ny-1,ntrgsx,DEF_NATM), paitrg(0:ny-1,ntrgsx,DEF_NATM),
-     ,  fmitrg(0:ny-1,ntrgsx,DEF_NMOL), emitrg(0:ny-1,ntrgsx,DEF_NMOL),
-     ,  pmitrg(0:ny-1,ntrgsx,DEF_NMOL), nmitrg(0:ny-1,ntrgsx,DEF_NMOL),
-     ,  erntrg(0:ny-1,ntrgsx),spttrg(0:ny-1,ntrgsx),
-     ,  sjs(0:ny-1,ntrgsx),sjs_t(ntrgsx),
-     ,  sjs_w(0:ntrgsx),pump,pumptot,sptmass,sptflx(nlimps)
+     ,  s(0:NYD-1,ntrgsx),xmp_hlp(0:NYD-1,ntrgsx),xtrg(0:NYD-1,ntrgsx),
+     ,  netrg(0:NYD-1,ntrgsx),  tetrg(0:NYD-1,ntrgsx),
+     ,  titrg(0:NYD-1,ntrgsx),
+     ,  wtttrg(0:NYD-1,ntrgsx), wptnu(0:NYD-1,ntrgsx),
+     ,  wptpl(0:NYD-1,ntrgsx),
+     ,  whtnu(0:NYD-1,ntrgsx),  whtpl(0:NYD-1,ntrgsx),
+     ,  wpttrg(0:NYD-1,ntrgsx),
+     ,  wpltrg(0:NYD-1,ntrgsx), wnutrg(0:NYD-1,ntrgsx),
+     ,  wrdtrg(0:NYD-1,ntrgsx),
+     ,  fiitrg(0:NYD-1,ntrgsx,DEF_NATM),
+     ,  eiitrg(0:NYD-1,ntrgsx,DEF_NATM),
+     ,  faitrg(0:NYD-1,ntrgsx,DEF_NATM),
+     ,  eaitrg(0:NYD-1,ntrgsx,DEF_NATM),
+     ,  naitrg(0:NYD-1,ntrgsx,DEF_NATM),
+     ,  paitrg(0:NYD-1,ntrgsx,DEF_NATM),
+     ,  fmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
+     ,  emitrg(0:NYD-1,ntrgsx,DEF_NMOL),
+     ,  pmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
+     ,  nmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
+     ,  erntrg(0:NYD-1,ntrgsx), spttrg(0:NYD-1,ntrgsx),
+     ,  sjs(0:NYD-1,ntrgsx), sjs_t(ntrgsx),
+     ,  sjs_w(0:ntrgsx),pump,pumptot,sptmass,sptflx(DEF_NLIM+DEF_NSTS)
 
 c*** Recap of fluxes from eirene
 c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOTIO
@@ -208,7 +215,8 @@ c***  sfpr_m    : list of active materials
      +         (n_hdpr_s+n_hdpr_a+n_hdpr_sp)*DEF_NATM*(m_hdpr+4)+
      +          n_hdpr_ml*DEF_NMOL*(m_hdpr+4)+
      *          n_hdpr_er*n_srfs_m*(m_hdpr+4))
-      integer n_line_x, n_sfpr_sp, n_sfpr_er,do_spt_wll(nlimps)
+      integer n_line_x, n_sfpr_sp, n_sfpr_er
+      integer do_spt_wll(DEF_NLIM+DEF_NSTS)
       real (kind=R8), allocatable :: w_line(:)
       real (kind=R8) :: s_hlp, nsecyr
       parameter (nsecyr=24.0_R8*3600.0_R8*365.25_R8*0.9925_R8)
@@ -244,6 +252,7 @@ c***  wllersf   : ratio of erosion to sputtering for different meterials
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m),
      .                  wllersf(nsptmx)
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
+      character*256 filename
       logical streql
       external streql
       data srfs_m /'Be','C','CFC','Fe','SS','ss','Mo' ,'W'/
@@ -270,10 +279,11 @@ c-----------------------------------------------------------------------
 c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         tab=char(9)
 #ifndef HPUX
-        inquire(file='fort.44',exist=ft44)
+        filename='fort.44'
 #else
-        inquire(file='ftn44',exist=ft44)
+        filename='ftn44'
 #endif
+        call find_file(filename,ft44)
         do_trg=.true.
         write(frmt_hlp,'(7h(1p,1x,,i5,11h(e12.5,a1)))') n_line_x
         
@@ -285,7 +295,7 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         end do
 #endif
         do is=1,n_sfpr_s !{
-          sfpr_s(is)=adjustl(TEXTAN(is-1))
+          sfpr_s(is)=adjustl(species_list(is))
         end do !}
         do ia=1,natmi
           sfpr_a(ia)=adjustl(TEXTA(ia))
@@ -354,6 +364,7 @@ c        print '((1h:,20(a,1h:)))',(mtrwldsg(i),i=lppp+1,k)          !###
           l=0
           do i=1,n_sfpr_er !{
 c carlis l is index of wall material referred to list of ACTIVE materials
+            if(streql(mtrwldsg(k),'dummy')) cycle
             if(streql(sfpr_m(i),mtrwldsg(k))) l=i
           end do !}
           if(l.eq.0) then !{

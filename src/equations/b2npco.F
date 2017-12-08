@@ -218,6 +218,7 @@ csw 11dec2012, check for solv flags
       if (iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,nb,'b2npco_na'//chns)
         call my_out(70,nx,ny,rescb,'b2npco_resco'//chns)
+        wrk0=snb(:,:,0)+nb*snb(:,:,1)
         call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)

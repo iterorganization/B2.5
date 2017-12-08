@@ -47,7 +47,7 @@ GRLIBES = ${LD_NCARG} ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef USE_EIRENE
@@ -55,8 +55,20 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifdef IMAS_PREFIX
-INCMODS   = `pkg-config --cflags imas-g95`
-LDLIBES  += ${LD_UAL}
+ifndef SOLPS_CPP
+EQUIVS   += -DIMAS
+endif
+LD_UAL   ?= `pkg-config imas-lowlevel imas-g95 --cflags`
+INCMODS  += `pkg-config --cflags imas-g95`
+IMASLIBS  = ${LD_UAL} -lggd-${COMPILER}
+else
+ifdef ITM_ENVIRONMENT_LOADED
+ifndef SOLPS_CPP
+EQUIVS   += -DITM
+endif
+INCMODS  += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_g95_0.93 -I${ITM_GGD_HOME}/include/amd64_g95_0.93 -I${UAL_INCLUDE}/amd64_g95 -I${ITM_ITMCONSTANTS_DIR}/include/amd64_g95_0.93
+IMASLIBS  = ${LD_UAL} -lUALFORTRANInterface_g95
+endif
 endif
 
 LD = $(FC)

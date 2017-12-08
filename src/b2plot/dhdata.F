@@ -266,7 +266,7 @@ CCC   WRITE(TITLF,1000) DSNAME
 C
 C------DOES FILE TO BE OPEN EXIST OR NOT--------------------------------
 C
-      INQUIRE(FILE=DSNAME,EXIST=LEXIST)
+      call find_file(DSNAME,LEXIST)
       IF( .NOT.LEXIST ) THEN
         IFAIL  = 1
         YEARSV = '  '

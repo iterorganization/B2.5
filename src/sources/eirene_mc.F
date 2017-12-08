@@ -1,4 +1,4 @@
-      subroutine eirene_mc(nx, ny, ns, ismain, dtim, BoRiS,
+      subroutine eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,
      1 sna0, smo0, she0, shi0, main_call)
 
 c  version : 26.07.2002 23:39
@@ -7,6 +7,7 @@ c  version : 26.07.2002 23:39
       use b2mod_plasma
       use b2mod_indirect
       use b2mod_geo
+      use b2mod_user_namelist
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
       use b2mod_boundary_namelist
@@ -43,7 +44,7 @@ c  version : 26.07.2002 23:39
       use b2mod_eirbra
 #endif
       implicit none
-      integer nx,ny,ns,ismain
+      integer nx,ny,ns,nxtl,nxtr,ismain
       real (kind=R8) ::
      * dtim, BoRiS,
      * sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -800,7 +801,10 @@ c           l_ddt=l_ddt+1
       end if !}
 
 cxpb  Additional diagnostic for comparison with SOLPS4.0
-      if (ncall.eq.0) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
+      if (ncall.eq.0) then
+        call b2trci(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+        if (write_nml_user) call write_b2mod_user_namelist(nx,ns)
+      endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0
      & .and.ank_tracing.ne.0.and.output_style.ge.2) then
         write(*,*) 'Eirene output in eirene_mc :'
@@ -2234,7 +2238,7 @@ c   and apply linearisation
       sseereg=0.0_R8
       sseireg=0.0_R8
       ssnireg=0.0_R8
-      ssnistra=0.0_R8
+      ssnastra=0.0_R8
       sseicorr=0.0_R8
       sseistab=0.0_R8
       src_ni(:,3,:)=0.0_R8
@@ -2508,8 +2512,8 @@ csw 21feb2012, add l_neutrad (SOLPS4.3)
                   endif
                   ssnireg(b2espcr(is),region(ix,iy,0))=
      .             ssnireg(b2espcr(is),region(ix,iy,0))+t0
-                  ssnistra(b2espcr(is),istrai)=
-     .             ssnistra(b2espcr(is),istrai)+t0
+                  ssnastra(j,istrai)=
+     .             ssnastra(j,istrai)+t0
 * parallel momentum
                   rf0=RF_NEUT(2)
 csw 26feb2014 averaging
@@ -3310,12 +3314,13 @@ cxpb  core recycling into ions of the highest ionisation stage
         do j = 1, nnatmi
           is=ishigh(j)
           if(bccon(is,ib).ne.13) then
-            write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
-     1       ' <> 13, current value = ',bccon(is,ib)
+            if(output_style.ge.2 .or. ncall.lt.3)
+     1       write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
+     2       ' <> 13, current value = ',bccon(is,ib)
 C           call xerrab ('eirene_mc: bccon <> 13')
           else
             conpar(is,ib,3)=core_flux(j)
-            if(output_style.gt.2)
+            if(output_style.ge.2 .or. ncall.lt.3)
      1       write(*,*) 'eirene_mc: conpar(is,ib,3) = ',
      2       conpar(is,ib,3),' for is,ib= ',is,ib
           endif

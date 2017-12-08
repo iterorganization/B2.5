@@ -433,7 +433,7 @@ c 2002-09-11: logic revised
      *  neutral_rescale, BoRiS, divheat, rswitch,
      .  scaling_width(nscale), scaling_strength(nscale),
      .  ixfb, iyfb, ixfb1, iyfb1,
-     .  xfrhie, xfrhiehz, xfrhie_no_drift,
+     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
      .  elm_time_begin, elm_time_end, elm_time_period,
      .  sources_time_mod, sources_time_switch,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
@@ -758,30 +758,26 @@ c 2002-09-11: logic revised
       call ipgetc ('solps_version', solps_version)
       write(*,*) 'Incoming SOLPS version entered : ', solps_version
 #ifndef HPUX
-      if (streql(solps_version,'iter')) then
-        write(*,*)
-     .   'Assuming standard SOLPS-ITER fort.44 format (default)'
-      else if (streql(solps_version,'4.3')) then
-        write(*,*) 'Assuming SOLPS4.3 fort.44 format'
-      else if (streql(solps_version,'5.0')) then
-        write(*,*) 'Assuming SOLPS5.0 fort.44 format'
-      else if (streql(solps_version,'5.1')) then
-        write(*,*) 'Assuming SOLPS5.1 fort.44 format'
-      else if (streql(solps_version,'5.2')) then
-        write(*,*) 'Assuming SOLPS5.2 fort.44 format'
+      filename='fort.44'
 #else
-      if (streql(solps_version,'iter')) then
-        write(*,*)
-     .   'Assuming standard SOLPS-ITER ftn44 format (default)'
-      else if (streql(solps_version,'4.3')) then
-        write(*,*) 'Assuming SOLPS4.3 ftn44 format'
-      else if (streql(solps_version,'5.0')) then
-        write(*,*) 'Assuming SOLPS5.0 ftn44 format'
-      else if (streql(solps_version,'5.1')) then
-        write(*,*) 'Assuming SOLPS5.1 ftn44 format'
-      else if (streql(solps_version,'5.2')) then
-        write(*,*) 'Assuming SOLPS5.2 ftn44 format'
+      filename='ftn44'
 #endif
+      inquire(file=trim(filename),exist=ex)
+      if (streql(solps_version,'iter')) then
+        if (ex) write(*,*) 'Assuming standard SOLPS-ITER '
+     .   //trim(filename)//' format (default)'
+      else if (streql(solps_version,'4.3')) then
+        if (ex) write(*,*) 'Assuming SOLPS4.3 '
+     .   //trim(filename)//' format'
+      else if (streql(solps_version,'5.0')) then
+        if (ex) write(*,*) 'Assuming SOLPS5.0 '
+     .   //trim(filename)//' format'
+      else if (streql(solps_version,'5.1')) then
+        if (ex) write(*,*) 'Assuming SOLPS5.1 '
+     .   //trim(filename)//' format'
+      else if (streql(solps_version,'5.2')) then
+        if (ex) write(*,*) 'Assuming SOLPS5.2 '
+     .   //trim(filename)//' format'
       else
         write(*,*) 'Accepted values are (case-insensitive): '
         write(*,*) '"ITER", "4.3", "5.0", "5.1", "5.2"'
@@ -1327,6 +1323,7 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfnb_xfrhie', xfrhie)
       call ipgetr ('b2tfnb_xfrhiehz', xfrhiehz)
       call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)
+      call ipgetr ('b2tfhe_inert', b2tfhe_inert)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1609,10 +1606,11 @@ c 2002-09-11: logic revised
         case('b2trcl_conductive limit')
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
-        case('b2news_coriolis')  ! Now obsolete, needs to be removed from the list
+        case('b2news_coriolis','b2npht_style_shei',
+     &                         'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
-        case('eirene_fixmap')    ! No longer needed
+        case('eirene_fixmap','b2tfnb_fnb_nodrift_style')  ! No longer needed
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
@@ -1660,6 +1658,9 @@ c 2002-09-11: logic revised
           else
             wait = .true.
           endif
+        case ('b2tfhe_inert') ! needs to be rewritten as b2tiner_inert
+          rswitch = b2tfhe_inert
+          cnamip = 'b2tiner_inert'
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
@@ -7810,7 +7811,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
      .                    nlstadds,mtreadds,ngwties
         end if
         NCHOR1 = 0
-        IF (NCHORI.LE.0) GOTO 1230
+        IF (NCHORI.LE.0) GOTO 1228
         DO 1220 I=1,NCHORI
           call xertst(ILINE+6.le.100,
      .     'increase size of ZEILEN in b2ytdr!')
@@ -7844,11 +7845,11 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
  1220   CONTINUE
         if (streql(eirene_format,'iter') .or.
      .      streql(eirene_format,'new')) THEN
-          READ (ZEILEN(1),6666) NCHOR1,NCHENI
+          WRITE(ZEILEN(1),6666) NCHOR1,NCHENI
         else if (streql(eirene_format,'juelich') .or.
      .           streql(eirene_format,'facelift') .or.
      .           streql(eirene_format,'old')) THEN
-          READ (ZEILEN(1),6666) NCHOR1,NCHENI,lntspec,lntsput,nmcsput,
+          WRITE(ZEILEN(1),6666) NCHOR1,NCHENI,lntspec,lntsput,nmcsput,
      .                    nlstadds,mtreadds,ngwties
         end if
         DO I = 1, ILINE
@@ -7891,6 +7892,8 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:3).EQ.'CH4') GOTO 1227
         IREAD=1
+        GOTO 1230
+ 1228   WRITE(IUNOT,'(A80)') ZEILE
  1230   CONTINUE
 CVK DATA FOR POSTPROCESSING WINDOWS
         READ (IUNIN,'(A80)') ZEILE
@@ -9606,8 +9609,9 @@ cxpb as they no longer necessarily point to the same species
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or.nx.ne.nx1.or.non_commensurate.eq.1)) then
-        call alloc_b2mod_user(nlimi,nmoli,ntns)
-        call read_b2mod_user_namelist(nx,ns)
+        if(.not.allocated(iz))
+     >   call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
+        call alloc_b2mod_user(nx,ns,nlimi,nmoli,ntns)
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
@@ -9769,6 +9773,15 @@ cxpb as they no longer necessarily point to the same species
         if (scale_He) write(99,'(a,l1,a)') 'SCALE_HE=',SCALE_HE,','
         if (print_isat)
      >   write(99,'(a,l1,a)') 'PRINT_ISAT=',PRINT_ISAT,','
+        line='FILEDATA='
+        len=9
+        do i = 1, len_ntrc
+          write(line(len+1:len+2),'(l1,a)') FILEDATA(i),','
+          len = len+2
+        end do
+        write(99,'(a)') trim(line)
+        if (.not.write_nml_user) write(99, '(a,l1,a)')
+     >   'WRITE_NML_USER=',write_nml_user,','
         if (.not.streql(user_filename,'b2.user.parameters'))
      >   write(99,'(a,a,a)')
      .    'USER_FILENAME=''',trim(user_filename),''','

@@ -1,4 +1,4 @@
-      subroutine b2wrint(nx,ny,ns,nregionv)
+      subroutine b2wrint(nx,ny,ns,nregionv,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -30,7 +30,7 @@ c
 c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c
-      integer nx, ny, ns, nregionv
+      integer nx, ny, ns, nregionv, iline
 c
       integer lv
 c      parameter (lv=970522)
@@ -197,6 +197,8 @@ c*** Local variables of general use
       real (kind=R8) ::
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
       integer i, j, k, ir,is,ix,iy, nv
+      real (kind=R8), save :: stim = 0.0_R8
+      real (kind=R8) :: tdummy
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
       integer iatm,imol ! IYS 29.09.2017
@@ -209,7 +211,7 @@ c*** Column headers:
      1          'SSEE_tot','SSEI_tot','SNI_rcmb','SEE_rcmb','SEI_rcmb',
      2          'Zeff_cor','Zeff_crs','Zeff_crn', 'Brmsreg ','imp_rad ',
      2          'neu_rad ','tot_rad '/
-      data hlp_hr / ! These are headers for 10 quantities computed in each region
+      data hlp_hr / ! These are headers for 11 quantities computed in each region
      1          'Brmsreg_','imp_rad_','neu_rad_','tot_rad_','SSEEreg_',
      2          'SSEIreg_','th_enre_','th_enri_',
      3          'K_en_ri_','N_e_reg_','vol_reg_'/
@@ -261,8 +263,6 @@ c#endif
      +  ex, warn_tmp,
      +  tab, hlp_c, f, hlp_frm, hlp_frf
 c=======================================================================
-
-      if(first_time_step) return
 
 c*** Initialise the arrays
 c
@@ -330,15 +330,17 @@ csw 20sep2013 added
       do iy=0,ny-1
         do ix=0,nx-1
           ir=region(ix,iy,0)
-          eesum(ir)  = eesum(ir)  + 1.5*te(ix,iy)*ne(ix,iy)*vol(ix,iy)
-          eisum(ir)  = eisum(ir)  + 1.5*ti(ix,iy)*ni(ix,iy,0)*vol(ix,iy)
+          eesum(ir)  = eesum(ir)  +
+     &                 1.5_R8*te(ix,iy)*ne(ix,iy)*vol(ix,iy)
+          eisum(ir)  = eisum(ir)  +
+     &                 1.5_R8*ti(ix,iy)*ni(ix,iy,0)*vol(ix,iy)
           nesum(ir)  = nesum(ir)  + ne(ix,iy)*vol(ix,iy)
           volsum(ir) = volsum(ir) + vol(ix,iy)
           do is=0,ns-1
             nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
      .                          na(ix,iy,is)*vol(ix,iy)
             kisum(ir) = kisum(ir) +
-     &       0.5*mp*am(is)*na(ix,iy,is)*(ua(ix,iy,is)**2)*vol(ix,iy)
+     &       0.5_R8*mp*am(is)*na(ix,iy,is)*(ua(ix,iy,is)**2)*vol(ix,iy)
             if (is_neutral(is)) then
               nasum(b2espcr(is),ir) = nasum(b2espcr(is),ir) +
      .                                na(ix,iy,is)*vol(ix,iy)
@@ -415,7 +417,7 @@ csw 18nov2013 check alloc
 #ifdef B25_EIRENE
           if (i.gt.0) then
             Na_stra_tmp(i,j) = pdena_int(i,j)
-            ssna_stra_tmp(i,j) = ssnistra(i,j)
+            ssna_stra_tmp(i,j) = ssnastra(i,j)
             do imol = 1, nnmoli
               if (mlcmp(i,imol).gt.0)
      >         Na_stra_tmp(i,j) = Na_stra_tmp(i,j) +
@@ -460,24 +462,27 @@ c#endif
       return
 c=======================================================================
 c
-      entry b2wrinti(nx,ny,ns,nregionv)
+      entry b2wrinti(nx,ny,ns,nregionv,iline)
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
 c
       tab=char(9)
+      call ipgetr ('b2mndr_stim', stim)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
 c
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex) then
-        read(lun,700,err=92) nv,ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
-     ,                          nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp
+      if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
+                                     ! and is to be appended
+        read(lun,700,err=92) nv,
+     &    ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
+     ,    nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp
 c#ifdef SCL_IMP_RCI
 c     ,                         ,ns1_tmp
 c#endif
@@ -490,7 +495,7 @@ c Check version
         if(nv .ne. lv) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current version ',lv,
-     ,                         '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
 c          if(nv .lt. 20010716) then
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -504,7 +509,7 @@ c Check the number of global values
         if(ng_tmp.ne.nglb_tmp) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of global values ',
-     ,                nglb_tmp,'  differs from that in the file ',f
+     ,                nglb_tmp,' differs from that in the file ',trim(f)
           if(ng_tmp .gt. nglb_tmp) filedata(ltrc)=.false.
         end if
 
@@ -512,7 +517,7 @@ c Check the number of quantities computed for each region
         if(nr_tmp .ne. nrgn_tmp) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of values by region ',
-     ,                nrgn_tmp,'  differs from that in the file ',f
+     ,                nrgn_tmp,' differs from that in the file ',trim(f)
           if(nr_tmp .gt. nrgn_tmp) filedata(ltrc) = .false.
         end if
 
@@ -520,7 +525,7 @@ c Check the number of regions
         if(nrg_tmp .ne. nregionv) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of regions ',
-     ,                nregionv,'  differs from that in the file ',f
+     ,                nregionv,' differs from that in the file ',trim(f)
           filedata(ltrc) = .false.
         end if
 
@@ -528,14 +533,14 @@ c Check the number of quantities computed for each species
         if(ns_tmp .ne. nspc_tmp) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of values by species',
-     ,                nspc_tmp,'  differs from that in the file ',f
+     ,                nspc_tmp,' differs from that in the file ',trim(f)
           if(ns_tmp .gt. nspc_tmp) filedata(ltrc)=.false.
         end if
 c#ifdef SCL_IMP_RCI
 c       if(ns1_tmp.ne.nspc1_tmp) then
 c         warn_tmp=.true.
 c         write(*,*) '!!! b2wrint: current number of values by species',
-c     ,          ' (ext1)',nspc1_tmp,'  differs from that in the file ',f
+c     ,    ' (ext1)',nspc1_tmp,' differs from that in the file ',trim(f)
 c         if(ns_tmp.gt.nspc_tmp) filedata(ltrc)=.false.
 c       end if
 c#endif
@@ -544,7 +549,7 @@ c Check the number of species
         if(nsp_tmp .ne. nspecies) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of species ',
-     ,                nspecies,'  differs from that in the file ',f
+     ,                nspecies,' differs from that in the file ',trim(f)
           filedata(ltrc) = .false.
         end if
 
@@ -553,7 +558,7 @@ c Check the number quantities computed for each species in each region
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of values ',
      ,               'by species and region ',
-     ,               nsar_tmp,'  differs from that in the file ',f
+     ,               nsar_tmp,' differs from that in the file ',trim(f)
           if(na_tmp .gt. nsar_tmp) filedata(ltrc) = .false.
         end if
 
@@ -561,7 +566,7 @@ c Check the number of quantities computed for each stratum
         if(nf_tmp .ne. nstr_tmp) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of values by strata',
-     ,               nstr_tmp,'  differs from that in the file ',f
+     ,               nstr_tmp,' differs from that in the file ',trim(f)
           if(nf_tmp .gt. nstr_tmp) filedata(ltrc) = .false.
         end if
 
@@ -569,7 +574,7 @@ c Check the number of strata
         if(nfl_tmp .ne. nstrai) then
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of strata ',
-     ,               nfl_tmp,'  differs from that in the file ',f
+     ,               nfl_tmp,' differs from that in the file ',trim(f)
           filedata(ltrc) = .false.
         end if
 
@@ -578,7 +583,7 @@ c Check the number quantities computed for each species and for each stratum
           warn_tmp = .true.
           write(*,*) '!!! b2wrint: current number of values ',
      ,               'by species and strata ',
-     ,               nssb_tmp,'  differs from that in the file ',f
+     ,               nssb_tmp,' differs from that in the file ',trim(f)
           if(nb_tmp .gt. nssb_tmp) filedata(ltrc) = .false.
         end if
 c
@@ -589,7 +594,7 @@ c If inconsistency is found, generate an error message
      ,                                'remove the existing file first!'
           return
         end if
-        if(warn_tmp) write(*,*) '  You should remove the file!'
+        if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
  50     read(lun,'(a1)',end=55) hlp_c
         go to 50
@@ -669,7 +674,7 @@ c#endif
       if (nfl_tmp.gt.0) then
         write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.4)))')
      -      ng_tmp + nr_tmp*nrg_tmp + ns_tmp*nsp_tmp +
-     +        na_tmp*nrg_tmp*nsp_tmp  + nf_tmp*nfl_tmp +
+     +      na_tmp*nrg_tmp*nsp_tmp  + nf_tmp*nfl_tmp +
      +          (nsp_tmp+1)*nfl_tmp*nb_tmp
       end if
 c#ifdef SCL_IMP_RCI
@@ -680,26 +685,58 @@ c      print *,hlp_frm    !###
 
       return
 c=======================================================================
- 90   write(*,*) 'b2wrint: cannot open a file ',f
+ 90   write(*,*) 'b2wrint: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2wrint: wrong format of the file ',f
+ 92   write(*,*) 'b2wrint: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 94   write(*,*) 'b2wrint: cannot write in the file ',f
+ 94   write(*,*) 'b2wrint: cannot write in the file ',trim(f)
       filedata(ltrc)=.false.
+      return
+c======================================================================
+c
+      entry b2wrintc(nx,ny,ns,nregionv,iline)
+c----------------------------------------------------------------------
+c*** - to be called by b2co for locating truncation for savefile
+c----------------------------------------------------------------------
+c
+      if(.not.filedata(ntrc_int)) return
+      lun=ntrc(ltrc)
+      f=fn_ntrc(ltrc)
+      call find_file(f,ex)
+      open(lun,file=f,err=190)
+      rewind(lun)
+      iline = 0
+      read(lun,'(a1)',end=155) hlp_c
+      do while (hlp_c.eq.'#')
+        iline = iline+1
+        read(lun,'(a1)',end=155) hlp_c
+      end do
+      backspace lun
+      read(lun,*,end=155) tdummy
+      do while (tdummy.le.tim)
+        iline = iline+1
+        read(lun,*,end=155) tdummy
+      end do
+ 155  continue
+      return
+c======================================================================
+ 190  write(*,*) 'b2wrint: cannot open file ',trim(f)
+      filedata(ltrc)=.false.
+      iline=-1
       return
 c=======================================================================
-      entry b2wrints(nx,ny,ns,nregionv)
+      entry b2wrints(nx,ny,ns,nregionv,iline)
 c-----------------------------------------------------------------------
 c*** Save the values (not used for this set)
 c-----------------------------------------------------------------------
 c
       return
 c=======================================================================
-      entry b2wrintf(nx,ny,ns,nregionv)
+      entry b2wrintf(nx,ny,ns,nregionv,iline)
 c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------

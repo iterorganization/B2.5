@@ -5,6 +5,11 @@ c
 c=======================================================================
 c*** b2paux: post-processor for B2-Eirene
 c***
+c*** ig = -20 :
+c***
+c***  Produces a file with coordinates of the grid cell centers and
+c***  densities, temperatures for all species
+c***
 c*** ig = -19 :
 c***
 c***  Produces a file with coordinates of the grid cell centers and
@@ -45,7 +50,7 @@ c*** ig = -12 :
 c***
 c***  Produces a file with coordinates of the grid cell centers and
 c***  the plasma parameters (densities, temperatures, fluid velocities)
-c***  in these points - for H. Wuerz
+c***  in the outer divertor - for H. Wuerz
 c***
 c*** ig = -11 :
 c***
@@ -102,7 +107,7 @@ c***  Produces a file with coordinates of the grid cell centers and
 c***  the plasma parameters (density, temperatures, neutral density)
 c***  in these points - for V. Abramov
 c***
-c*** ig > 999
+c*** ig > 999 :
 c***
 c***  Adds a line to the file ../sum_tmp/spec_pwr.dat with the power
 c***  entering both divertors, power radiated along the divertor legs,
@@ -150,6 +155,9 @@ c
      . hlp_pi(:), hlp_po(:), hlp_at(:), hlp_ml(:), mach(:,:,:), pr(:,:)
       real (kind=R8) :: hlp_a, hlp_m, hlp_n, hlp_p, hlp_s,
      . mass, vel, vth
+      character*2, allocatable :: hlp_al(:)
+      character hlp_frmr*600
+      integer, allocatable :: mz_hlp(:)
       integer lun
       parameter (lun=96)
       integer indsrf(stacklen)
@@ -477,6 +485,41 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       else if(ig.eq.-19) then
         call b2pbrooks(lun)
+c-----------------------------------------------------------------------
+      else if(ig.eq.-20) then
+        allocate(mz_hlp(0:ns-1),hlp_al(0:ns-1))
+        do is=0,ns-1
+          mz_hlp(is)=nint((zamin(is)+zamax(is))/2.0_R8)
+          hlp_al(is)=is_codes(is)
+          if (hlp_al(is)(2:2).eq.' ') hlp_al(is)(2:2) = '_'
+        end do
+        open(lun,file='diagno.dat')
+        write (lun,'(a)') label
+        write (lun,'(a)')
+     ,  '# ix, iy   : poloidal and radial indices in the grid;'
+        write (lun,'(a)')
+     ,  '# R , Z    : R and Z coordinates of the cell centres [m];'
+        write (lun,'(a)')
+     ,  '# ne       : electron density [m^-3];'
+        write (lun,'(a)')
+     ,  '# Te, Ti   : electron and ion temperatures [eV];'
+        write (lun,'(a)')
+     ,  '# n...     : densities of the ion species [m^-3];'
+        write (lun,*)
+        write (hlp_frmr,2010) ns
+ 2010   format('(9h#  ix  iy,7x,1hR,11x,1hZ,10x,',
+     ,    '2hne,10x,2hTe,10x,2hTi,4x,',
+     ,    i3,'(4x,1hn,a2,i2.2,3x))')
+        write (lun,hlp_frmr) (hlp_al(i),mz_hlp(i),i=0,ns-1)
+        write (hlp_frmr,'(a,i3,a)') '(1x,1p,2i4,',ns+5,'e12.4)'
+        do iy = 0, ny-1
+          do ix = 0, nx-1
+            write (lun,hlp_frmr) ix,iy,cr(ix,iy),cz(ix,iy),
+     ,                           ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
+     ,                          (na(ix,iy,is),is=0,ns-1)
+          end do
+        end do
+        close(lun)
 c-----------------------------------------------------------------------
       else if(ig.ge.1000) then
         call b2paspwr(ig-1000)

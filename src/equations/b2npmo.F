@@ -312,7 +312,7 @@
        call b2sscal (n2*2, am(is)*mp, flub, 1)
 !       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,is), flub)
 *    ..add convective term due to new form of ion viscosity term only
-       call b2nxfv (nx, ny, is, hz, cvsahz(-1,-1,0,is), flubv)         !srv 01.07.05 11.09.09
+       call b2nxfv (nx, ny, is, hz, cvsahz_cl(-1,-1,0,is), flubv)      !srv 01.07.05 11.09.09 16.10.17
        if (balance_netcdf.ne.0) then
          fmo_b2nxfv(:,:,:,is)=flubv !djm Jan2017
        endif

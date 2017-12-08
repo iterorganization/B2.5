@@ -31,11 +31,20 @@ endif
 
 ifdef SOLPS_DEBUG
 #FCOPTS = -g -fbounds-check -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
-FCOPTS = -g -frange-check -fbounds-check -Wcharacter-truncation -fcheck=all -fbacktrace \
+FCOPTS = -g -frange-check -fbounds-check -Wcharacter-truncation -fcheck=all -fbacktrace -ffpe-trap=denormal \
 -Waliasing -Wampersand -Wconversion -Wsurprising -Wc-binding-type -Wintrinsics-std -Wintrinsic-shadow -Wline-truncation -Wtarget-lifetime -Winteger-division -Wreal-q-constant #-Wall
 # -Wimplicit-interface -Wunused-parameter -Wunused -Wtabs
 else
 FCOPTS = -O2 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
+endif
+
+ifdef IMAS_PREFIX
+ifndef SOLPS_CPP
+EQUIVS  += -DIMAS
+endif
+LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
+INCMODS  = -I${IMAS_PREFIX}/include/gfortran
+IMASLIBS = ${LD_UAL} -lggd-${COMPILER}
 endif
 
 DBLFC = ${FC}
@@ -52,7 +61,7 @@ GRLIBES = ${LD_NCARG} ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = $(shell paraview-config --include)
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef USE_MPI

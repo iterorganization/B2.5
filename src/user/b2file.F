@@ -39,7 +39,7 @@ c*** nf_tmp: number of files which are written in b2filew
 c*** lf_tmp: number of files whose buffers should be flushed in b2filef
 c***        (must be consistent with ntrc assignment)
 c***
-c***    Current assignment is (see default.F):
+c***    Current assignment is (see b2mod_diag.F):
 c***        ntrc(ntrc_res)     'tracing/residuals.trc'
 c***        ntrc(ntrc_src)     'tracing/sources.trc'
 c***        ntrc(ntrc_tst)     'tracing/test.trc'
@@ -48,8 +48,10 @@ c
      ,          hlp_frmr*160, hlp_frms*160, hlp_frmt*160,
      ,          hlp_emsg(5)*30
       character :: hlp_h(-1:nh_tmp)*2, hlp_al(0:ns-1)*2
+      real (kind=R8), save :: stim = 0.0_R8
+      integer iline
 c
-      external subini, subend, xertst, xerrab
+      external subini, subend, ipgetr, xertst
 c
 c
 c----------------------------------------------------------------------
@@ -63,13 +65,12 @@ c----------------------------------------------------------------------
      5      'unexpected error. Cannot close' /
 c======================================================================
 c
-      entry b2filei(ns,nnreg)
+      entry b2filei(it,ns,nnreg)
 c----------------------------------------------------------------------
 c*** Initialisation call.
 c*** Check whether the directory "tracing" exists and the files can
-c*** be opened. If yes, then the data will be written to the files,
-c*** if no, then they will appear on "b2.log". The file headers are
-c*** written to the files if the files do not exist.
+c*** be opened. If yes, then the data will be written to the files.
+c*** The file headers are written to the files if the files are empty.
 c----------------------------------------------------------------------
       call subini('b2filei')
 c
@@ -80,6 +81,7 @@ c
 c*** check the number of units specified in ntrc
 c
       call xertst(lf_tmp.le.len_ntrc,'b2file: too many tracing units')
+      call ipgetr('b2mndr_stim', stim)
 c----------------------------------------------------------------------
 c*** Test data - temporary
 c
@@ -87,29 +89,29 @@ c
 c
       filedata(ntrc_tst)=.false.
       f=fn_ntrc(ntrc_tst)
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       l=1
       open(ntrc(ntrc_tst),file=f,err=900)
       rewind(ntrc(ntrc_tst))
-      if(ex) then
-c*** Old file - check it
+      if(ex.and.stim.lt.0.0_R8) then
+c*** Old file to be appended - check it
         l=2
         read(ntrc(ntrc_tst),700,err=900) hlp_c,i,m,n,j
         if(i.ne.lvt) then
           write(*,*) '!! b2file: current version ',lvt,
-     ,                     '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
         if(m.ne.nstrai) then
           write(*,*) '!! b2file: current number of strata (nstrai=',
-     ,     nstrai,')  differs from that in the file ',f
+     ,     nstrai,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
         if(n.ne.nnatmi) then
           write(*,*) '!! b2file: current number of atoms (nnatmi=',
-     ,     nnatmi,')  differs from that in the file ',f
+     ,     nnatmi,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
@@ -150,7 +152,7 @@ c>>>
       filedata(ntrc_tst)=.true.
       go to 1000
 c
- 900  write(*,*) 'b2file: ',hlp_emsg(l),f
+ 900  write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Residuals
 c
@@ -159,30 +161,32 @@ c
 c
       filedata(ntrc_res)=.false.
       f=fn_ntrc(ntrc_res)
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       l=1
       open(ntrc(ntrc_res),file=f,err=5)
       rewind(ntrc(ntrc_res))
-      if(ex) then
+      if(ex.and.stim.lt.0.0_R8) then
         l=2
         read(ntrc(ntrc_res),700,err=5) hlp_c,i,j,k
         if(i.ne.lvr) then
           write(*,*) '!! b2file: current version ',lvr,
-     ,                     '  differs from that in the file ',f
+     ,               ' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 10
         end if
         if(j.ne.nnreg(0)) then
           write(*,*) '!! b2file: current number of regions ',
-     ,                nnreg(0),'  differs from that in the file ',f
+     ,                nnreg(0),' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 10
         end if
-        if(k.ne.ns) then
-          write(*,*) '!! b2file: current number of species (ns=',
-     ,                ns,')  differs from that in the file ',f
+        if(k.ne.ns-nspecies) then
+          write(*,*) '!! b2file: current number of ion species (nis=',
+     ,     ns-nspecies,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 10
+        else
+          nis_tmp=k
         end if
       else
 c*** New file - write the headers
@@ -197,7 +201,7 @@ c*** New file - write the headers
         l=4
         nis_tmp=k
 
-        write(ntrc(ntrc_res),700,err=5) '#',lvr,nnreg(0),ns
+        write(ntrc(ntrc_res),700,err=5) '#',lvr,nnreg(0),nis_tmp
         write(ntrc(ntrc_res),710,err=5) '## ',label
 
 c       write(hlp_frmr,'(7h(3h#it,,i3,17h(1h'//tab//
@@ -224,7 +228,7 @@ c>>>
       filedata(ntrc_res)=.true.
       go to 10
 c
-  5   write(*,*) 'b2file: ',hlp_emsg(l),f
+  5   write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Sources
 c
@@ -232,28 +236,28 @@ c
 c
       filedata(ntrc_src)=.false.
       f=fn_ntrc(ntrc_src)
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       l=1
       open(ntrc(ntrc_src),file=f,err=30)
       rewind(ntrc(ntrc_src))
-      if(ex) then
+      if(ex.and.stim.lt.0.0_R8) then
         l=2
         read(ntrc(ntrc_src),700,err=30) hlp_c,i,j,k
         if(i.ne.lvs) then
           write(*,*) '!! b2file: current version ',lvs,
-     ,     '  differs from that in the file ',f
+     ,     ' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
         if(j.ne.nnreg(0)) then
           write(*,*) '!! b2file: current number of regions ',
-     ,                nnreg(0),'  differs from that in the file ',f
+     ,                nnreg(0),' differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
         if(k.ne.nspecies) then
           write(*,*) '!! b2file: current number of species (nspecies=',
-     ,     nspecies,')  differs from that in the file ',f
+     ,     nspecies,') differs from that in the file ',trim(f)
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
@@ -275,8 +279,8 @@ c     -                          (nnreg(0)+1)*12,(nnreg(0)+1)*nspecies*6
      /        '('''//tab//''',a3,a2,i2.2,a1,''_'',a2))'
 
 c<<<
-         print *,'%%% b2file: header format'
-         print *,trim(hlp_frms)
+        print *,'%%% b2file: header format'
+        print *,trim(hlp_frms)
 c>>>
         write(ntrc(ntrc_src),hlp_frms,err=30)
      ,   ((('src',hlp_h(i),j,hlp_s(l),l=1,3),j=0,nnreg(0)),i=-1,2),
@@ -289,7 +293,7 @@ c>>>
       filedata(ntrc_src)=.true.
       go to 35
 
- 30   write(*,*) 'b2file: ',hlp_emsg(l),f
+ 30   write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Position the files for appending the data
 c
@@ -304,6 +308,30 @@ c
         end if
       end do
       call subend()
+      return
+c======================================================================
+      entry b2filec(it,ns,nnreg)
+      do k=1,nf_tmp
+        l=k+1
+        if(filedata(l)) then
+          f=fn_ntrc(l)
+          call find_file(f,ex)
+          open(ntrc(l),file=f,err=290)
+          rewind(ntrc(l))
+          iline = 0
+ 200      read(ntrc(l),'(a1)',end=205) hlp_c
+          if (hlp_c.eq.'#') then
+            iline = iline + 1
+          end if
+          go to 200
+ 205      backspace ntrc(l)
+        end if
+        goto 299
+ 290    write(*,*) 'b2filec: cannot open file ',trim(f)
+        filedata(l)=.false.
+        iline=-1
+ 299    continue
+      end do
       return
 c======================================================================
       entry b2filew(it,ns,nnreg)
@@ -323,7 +351,7 @@ c----------------------------------------------------------------------
      ,     (sclbase(i,k),i=0,nnatmi),(sclrtio(i,k),i=0,nnatmi),
      ,     (sclsrcn(i,k),i=0,nnatmi),k=1,nstrai)
         go to 65
- 62     write(*,*) 'b2file: ',hlp_emsg(l),f
+ 62     write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_tst)=.false.
       end if
 c
@@ -339,7 +367,7 @@ c
      ,    ((rescoreg(i,ions_list(j)),i=1,nnreg(0)),
      ,     (resmoreg(i,ions_list(j)),i=1,nnreg(0)),j=1,nis_tmp)
         go to 75
- 72     write(*,*) 'b2file: ',hlp_emsg(l),f
+ 72     write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_res)=.false.
       end if
 c
@@ -357,41 +385,42 @@ c
      ,         (((src_ni(i,k,j),k=1,3),i=0,nnreg(0)),
      ,          ((src_mo(i,k,j),k=1,3),i=0,nnreg(0)),j=1,nspecies)
         return
- 77     write(*,*) 'b2file: ',hlp_emsg(l),f
+ 77     write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_src)=.false.
       end if
       return
 c======================================================================
 c
-      entry b2filef(ns)
+      entry b2filef(it,ns,nnreg)
 c----------------------------------------------------------------------
 c*** flush the buffers
 c----------------------------------------------------------------------
 c
 c
-      do 100 k=1,lf_tmp
-        if(filedata(k)) then
-          f=fn_ntrc(k)
+      do 100 k=1,nf_tmp
+        j=k+1
+        if(filedata(j)) then
+          f=fn_ntrc(j)
 #ifdef IBMaix
-          call flush_(ntrc(k))
+          call flush_(ntrc(j))
 #else
           l=5
-          close(ntrc(k),err=86)
+          close(ntrc(j),err=86)
 #ifndef F77
           l=1
-          open(ntrc(k),file=f,err=86,position='append')
+          open(ntrc(j),file=f,err=86,position='append')
 #else
           l=1
-          open(ntrc(k),file=f,err=86)
- 80       read(ntrc(k),'(a1)',end=82) hlp_c
+          open(ntrc(j),file=f,err=86)
+ 80       read(ntrc(j),'(a1)',end=82) hlp_c
           go to 80
- 82       backspace ntrc(k)
+ 82       backspace ntrc(j)
 #endif
 #endif
           go to 100
 c
- 86       write(*,*) 'b2file: ',hlp_emsg(l),f
-          filedata(k)=.false.
+ 86       write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+          filedata(j)=.false.
         end if
  100  continue
       return

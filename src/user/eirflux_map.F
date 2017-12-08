@@ -77,20 +77,20 @@ c
       sum1=0.0_R8
       sum2=0.0_R8
       do i=1,n
-       ii=i+shift
-       s2=abs(s(i)+sarea_res(ii))
-       ds=abs(s(i)-sarea_res(ii))
-       sum1=sum1+s(i)
-       sum2=sum2+sarea_res(ii)
-       if(ds.gt.eps*s2) then
-        iferr=.true.
-       end if
+        ii=i+shift
+        s2=abs(s(i)+sarea_res(ii))
+        ds=abs(s(i)-sarea_res(ii))
+        sum1=sum1+s(i)
+        sum2=sum2+sarea_res(ii)
+        if(ds.gt.eps*s2) then
+          iferr=.true.
+        end if
       end do
       if(iferr) then
-       write(*,*) "inconsistency of eirene and b2 geometry ",
-     w            "for target ", t
-        write(*,*) " surface area in b2 ", sum1
-        write(*,*) " surface area in eirene ", sum2
+        write(*,*) "inconsistency of Eirene and B2 geometries ",
+     w             "for target ", t
+        write(*,*) " surface area in B2 ", sum1
+        write(*,*) " surface area in Eirene ", sum2
       end if
 
       return

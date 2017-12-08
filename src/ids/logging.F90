@@ -3,10 +3,10 @@ module logging
   use helper
 
   ! Loglevels: if ( LEVEL <= LOG... ) then write...
-   
+
   integer, parameter :: LOGFATAL = 1
   integer, parameter :: LOGERROR = 2
-  integer, parameter :: LOGWARNING = 3 
+  integer, parameter :: LOGWARNING = 3
   integer, parameter :: LOGKNOWNWARNING = 4
   integer, parameter :: LOGINFO = 5
   integer, parameter :: LOGDEBUG = 6
@@ -23,7 +23,7 @@ contains
   !> Set the given log level
   subroutine setLogLevel( level )
     integer, intent(in) :: level
-    
+
     loglevel = level
   end subroutine setLogLevel
 
@@ -51,19 +51,19 @@ contains
     end select
   end subroutine setLogLevelByName
 
-  ! Returns true if the given log level is encompassed in the current 
+  ! Returns true if the given log level is encompassed in the current
   ! log level threshold. Intended usage:
   ! if ( loglvl( LOGDEBUG ) ) write (*,*) ...
   function loglvl( level ) result ( doLog )
     logical :: doLog
     integer, intent(in) :: level
 
-    doLog = ( level <= loglevel ) 
+    doLog = ( level <= loglevel )
     if ( doLog .and. LOG_WRITELEVEL ) write (*,*) 'loglvl: Loglevel: ', level
 
   end function loglvl
 
-    
+
   ! Write log message
 
   subroutine logmsg( level, msg, ia, ib )
@@ -78,7 +78,7 @@ contains
                     else
                             write (*,'(a,i0)') msg, ia
                     end if
-            else 
+            else
                     write (*,'(a)') msg
             end if
     end if

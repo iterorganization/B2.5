@@ -1,8 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sral (nx, ny, ns, nscx, nscxmax, nsmin, nsmax,
-     &  iscx, ismain, ismain0, dtim, BoRiS, facdrift, fac_ExB,           !xpb
+      subroutine b2sral (nx, ny, ns, nxtl, nxtr,
+     &  nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
+     &  dtim, BoRiS, facdrift, fac_ExB, fac_vis,                         !xpb
      &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
@@ -11,7 +12,7 @@
      &  fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      &  fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  cdna, cdpa, cvsa, cvla, chce, chve, chci, chvi, calf,            !xpb
+     &  cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,         !xpb
      &  rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rza, rz2, rpt, rpi,
      &  sna, smo, smq, she, shi, sch, sne,
@@ -33,10 +34,11 @@
       use b2mod_b2_to_astra
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain,
-     *  ismain0, nsmin, nsmax
+      integer nx, ny, ns, nxtl, nxtr,
+     *  nscx, nscxmax, iscx(0:nscxmax-1), ismain, ismain0, nsmin, nsmax
       real (kind=R8) ::                                                  !xpb
-     *  dtim, BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny)         !xpb
+     *  dtim, BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),        !xpb
+     &  fac_vis(-1:nx,-1:ny)
 *     (geometry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),
@@ -78,7 +80,7 @@
      1  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),                    !xpb
      2  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),                    !xpb
      3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1),             !xpb
-     4  cvsa(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
+     4  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
      5  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *     (log-log rate coefficients)
       real (kind=R8) ::
@@ -119,7 +121,7 @@
       integer use_astra
       integer, save :: elm_count
       integer, save :: style = 2                                        !srv 28.06.08
-      integer, save :: iout = 0                                         !srv 30.06.08
+      integer, save :: iout = 0, iout_b2wdat = 0                        !srv 30.06.08, IYS 06.11.2017
       integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0        !srv 14.07.10
       integer, save :: no_fluid_neutral_sources = 0
       character chns*3, chk*1                                           !srv 30.06.08
@@ -129,7 +131,7 @@
      2  rra(-1:nx,-1:ny,0:ns-1),
      3  rcx(-1:nx,-1:ny,0:ns-1),
      4  smq0(-1:nx,-1:ny,0:3,0:ns-1), smq0_ion(-1:nx,-1:ny,0:3,0:ns-1), !srv 11.09.09
-     4  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1),
+     4  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1), wrk(-1:nx,-1:ny),
      5  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      6  rbr(-1:nx,-1:ny,0:ns-1), fni(-1:nx,-1:ny,0:1),
      7  fne(-1:nx,-1:ny,0:1),
@@ -139,6 +141,8 @@
      &  shi0_rec(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),
      &  smo0(-1:nx,-1:ny,0:3,0:ns-1), sch0(-1:nx,-1:ny,0:3),
      1  wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), pb(-1:nx,-1:ny,0:ns-1)
+      real (kind=R8), allocatable :: sna0_cx(:,:,:,:), smo0_cx(:,:,:,:),  ! IYS 06.11.2017
+     &  shi0_cx(:,:,:)
       logical catch_up
       character*32 hlp_frm
       save ncall, sources_inputfile, guard_flows, numerics_namelist
@@ -191,6 +195,7 @@
         call ipgeti ('eirene_savef31', save_f31)                         !srv 14.07.10 }
         call ipgeti ('b2sral_no_fluid_neutral_sources',
      .                                       no_fluid_neutral_sources)
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 06.11.17
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -211,13 +216,8 @@
        call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
       endif
 *   ..compute fne, fni
-      if(style.eq.0) then                                               !srv 28.07.08
-       call b2xpfe (nx, ny, ns, ns_ext, qe,
+      call b2xpfe (nx, ny, ns, ns_ext, qe,
      &  rza, za_ext, fna, fa_ext, fch, fne)
-      else
-       call b2xpfe (nx, ny, ns, ns_ext, qe,
-     &  rza, za_ext, fna_nodrift, fa_ext, fch_p, fne)                   !srv 11.10.02
-      endif
       call b2xpfi (nx, ny, ns, fna, fni)
 
 *   ..test facdrift and fac_ExB
@@ -267,10 +267,14 @@
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
-       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,         !srv 20.09.06 {
-     &                       facdrift, fchvispar)
+       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
+     &                       fac_vis, fchvispar)
        call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+!      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
+!     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
+!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
+!     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
@@ -288,7 +292,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *   ..compute standard contributions due to boundaries
       wrong_flow = .false.                                              !xpb
-      if(style.eq.0) then                                               !srv 28.07.08
+      if(style.eq.0 .or. style.eq.2) then                               !srv 28.07.08 03.11.17
        if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc called'
        call b2stbc (nx, ny, ns, ismain, ismain0,
      &  BoRiS, facdrift, fac_ExB,                                       !xpb
@@ -304,7 +308,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)            !xpb
        if(wrong_flow) write(*,*)
      &  'b2sral [1]: wrong_flow returned from b2stbc'
-      elseif(style.eq.1) then                                           !srv 28.07.08 {
+      elseif(style.eq.1) then
 !! FIXME : Need to add sne in argument list here ???
        if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc_spb called'
        call b2stbc_spb (nx, ny, ns, facdrift, vol, gs, hx, hy, hz, qz,  !srv 09.01.01
@@ -315,26 +319,9 @@ csw 30sep2013, added cdpa in call, uadia
      &  sna, smo, she, shi, sch, wrong_flow)                            !srv 09.07.99 01.07.05
        if(wrong_flow) write(*,*)
      &  'b2sral [2]: wrong_flow returned from b2stbc_spb'
-       call b2xpfe (nx, ny, ns, ns_ext, qe, rza, za_ext,
-     &  fna, fa_ext, fch_p, fne)                                        !srv 25.12.06
       else
-       if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc called'
-       call b2stbc (nx, ny, ns, ismain, ismain0,
-     &  BoRiS, facdrift, fac_ExB,                                       !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,               !xpb !srv 09.01.01
-     &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
-     .  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,
-     1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,            !srv 16.02.12
-     &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
-     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
-     &  fchanml,
-     2  cdna, chce, chve, chci, chvi, calf,                             !xpb
-     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)            !xpb
-       if(wrong_flow) write(*,*)
-     &  'b2sral [3]: wrong_flow returned from b2stbc'
-       call b2xpfe (nx, ny, ns, ns_ext, qe, rza, za_ext,
-     &  fna, fa_ext, fch_p, fne)                                        !srv 25.12.06
+       call xertst (0.le.style.and.style.le.2,                          !srv 03.11.17
+     .  'invalid switch b2sral_style')
       endif                                                             !srv 28.07.08 }
       if (use_astra.ne.0) then
         se  =0.0_R8                                                     !srv 28.07.11
@@ -356,8 +343,8 @@ csw 30sep2013, added cdpa in call, uadia
 *   ..initialise smq to 0
       call sfill (n2*4*ns, 0.0_R8, smq, 1)
 *   ..compute special contributions (boundaries and recycling)
-      call b2stbr (nx, ny, ns, nscx, nscxmax, iscx, ismain,
-     &  dtim, BoRiS,
+      call b2stbr (nx, ny, ns, nxtl, nxtr,
+     &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
      &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy, te, ti,
      &  po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
@@ -464,6 +451,19 @@ csw 30sep2013, added cdpa in call, uadia
       rcxna=0.0_R8
       rcxhi=0.0_R8
       rcxmo=0.0_R8
+
+      if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
+        if (.not. allocated(shi0_cx)) then
+          write(*,*) 'Allocating arrays for cx'
+          allocate (shi0_cx(-1:nx,-1:ny,0:3))
+          allocate (sna0_cx(-1:nx,-1:ny,0:1,0:ns-1))
+          allocate (smo0_cx(-1:nx,-1:ny,0:3,0:ns-1))
+          call sfill (n2*2*ns, 0.0_R8, sna0_cx, 1)
+          call sfill (n2*4*ns, 0.0_R8, smo0_cx, 1)
+          call sfill (n2*4, 0.0_R8, shi0_cx, 1)
+        endif
+      endif  ! IYS 06.11.2017
+
       do k = 0, nscx-1
 *    ..compute charge exchange rate coefficients
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
@@ -483,7 +483,37 @@ csw 30sep2013, added cdpa in call, uadia
         call b2saxpy (n2*4*ns, 1.0_R8, smq0, 1, smq, 1)
         call b2saxpy (n2*4, 1.0_R8, shi0, 1, shi, 1)
 *      (no contribution to she, sne or sch)
+        if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
+          write(*,*) 'Summing cx sources over hydrogenic neutrals'
+          call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna0_cx, 1)
+          call b2saxpy (n2*4*ns, 1.0_R8, smq0, 1, smo0_cx, 1)
+          call b2saxpy (n2*4, 1.0_R8, shi0, 1, shi0_cx, 1)
+        endif                         ! IYS 06.11.2017
       enddo
+
+      if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
+        write(*,*) 'Writing cx sources'
+        do is = 0,ns-1
+          write (chns,'(i3.3)') is
+          wrk(:,:) = sna0_cx(:,:,0,is)+sna0_cx(:,:,1,is)*na(:,:,is)
+          call my_out(70,nx,ny,wrk,'b2stcx_sna_'//chns)
+          wrk(:,:) = shi0_cx(:,:,0)+shi0_cx(:,:,1)*ti+
+     &               shi0_cx(:,:,2)*ni(:,:,0)+
+     &               shi0_cx(:,:,3)*ti*ni(:,:,0)
+          call my_out(70,nx,ny,wrk,'b2stcx_shi')
+          wrk(:,:) = smo0_cx(:,:,0,is)+
+     &               smo0_cx(:,:,1,is)*ua(:,:,is)+
+     &               smo0_cx(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &               smo0_cx(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+	  call my_out(70,nx,ny,wrk,'b2stcx_smq'//chns)
+        enddo
+        if (allocated(shi0_cx)) then
+          write(*,*) 'Deallocating arrays for cx'
+          deallocate (shi0_cx)
+          deallocate (sna0_cx)
+          deallocate (smo0_cx)
+        endif
+      endif
 
       if(iout.ne.0) then                                                 !srv 30.06.08 {
         do is = 0,ns-1

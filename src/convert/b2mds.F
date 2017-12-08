@@ -60,6 +60,7 @@
       character*12 :: textdrift(0:1)
       character*24 hlp_frm
       integer iflag
+      character*256 filename
 #ifdef B25_EIRENE
       character*72 zeile
 #endif
@@ -132,9 +133,10 @@ c Function to check the correct parameters!
 c
       call subini('b2mds')
 #ifdef B25_EIRENE
-      inquire(file='input.dat',exist=ex)
+      filename='input.dat'
+      call find_file(filename,ex)
       if (ex) then
-        open(unit=45,file='input.dat')
+        open(unit=45,file=filename)
         read(45,'(A72)',END=6999) ZEILE
         rewind(45)
         CALL EIRENE_FIND_PARAM(45)
@@ -610,10 +612,11 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
 #ifdef B25_EIRENE
 #ifndef HPUX
-      inquire(file='fort.44',exist=ex)
+      filename='fort.44'
 #else
-      inquire(file='ftn44',exist=ex)
+      filename='ftn44'
 #endif
+      call find_file(filename,ex)
 #else
       ex = .false.
 #endif
@@ -626,6 +629,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         textin(0)=' ZERO'
         call eirene_mc_init(nx,ny)
       else
+        open(unit=44,file=filename)
         call ngread(ismain,iflag)
         textwl(ns:ns+natmi-1)=textan(0:natmi-1)
         textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
@@ -865,9 +869,10 @@ c
       call mds_put_string_ns('\TOP.SNAPSHOT:TEXTDRIFT',2,textdrift)
       call mds_put_string_ns('\TOP.SNAPSHOT:TEXTLIN',4,text0123)
 c
-      inquire(file='mesh.extra',exist=ex)
+      filename='mesh.extra'
+      call find_file(filename,ex)
       if(ex) then
-        open(99,file='mesh.extra',status='old')
+        open(99,file=filename,status='old')
         icnt=0
    10   continue
         read(99,*,end=20) (rdummy,ix=1,4)

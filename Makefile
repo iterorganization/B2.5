@@ -210,7 +210,7 @@ PROG_OT = b2ah.exe b2ai.exe b2ar.exe b2yi_gnuplot.exe b2yh.exe b2yv.exe b2fgmtry
 PROG_OP = b2op.exe
 PROG_OQ = b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
-PROG_ID = b2_ual_write.exe
+PROG_ID = b2_ual_write.exe b2_ual_write_gsl.exe b2_ual_write_b2mod.exe
 
 EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
@@ -244,7 +244,7 @@ NOPLOT: ${OPEXE} ${OQEXE}
 endif
 ifdef IMAS_VERSION
 DEFAULT: ${IDEXE}
-ALL: ${IDEXE}
+ids: ${IDEXE}
 NOPLOT: ${IDEXE}
 endif
 MAIN: VERSION ${MNEXE}
@@ -753,7 +753,7 @@ ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
 
 ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${LDLIBES} ${LDOPTSend}
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}

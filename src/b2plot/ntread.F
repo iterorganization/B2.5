@@ -39,6 +39,7 @@ c
 #ifdef B25_EIRENE
       INTEGER is, i, j, n, io, idummy, jvft46
       real (kind=R8) :: width
+      character*256 filename
       logical ex
 #endif
 
@@ -72,10 +73,11 @@ C
      &  'faulty argument isymm')
 
 #ifndef HPUX
-      inquire(file='fort.46',exist=ex)
+      filename='fort.46'
 #else
-      inquire(file='ftn46',exist=ex)
+      filename='ftn46'
 #endif
+      call find_file(filename,ex)
       if (.not.ex) then
         call subend ()
         return
@@ -286,6 +288,12 @@ C
         call read_title(46)
         read(46,'(6e15.7)') (triangle_vol(j),j=1,ntrii)
         triangle_vol = triangle_vol/1.0e6_R8   ! convert to m^3
+        if (.not.allocated(pux)) then
+          allocate(pux(ntrii))
+          allocate(puy(ntrii))
+          allocate(pvx(ntrii))
+          allocate(pvy(ntrii))
+        end if
         call read_title(46)
         read(46,'(6e15.7)') (pux(j),j=1,ntrii)
         call read_title(46)
