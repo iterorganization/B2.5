@@ -17,7 +17,9 @@ Library routines.
 
 #### Compiling and setting the environment:
 
-    $ cd $HOME/solps-iter
+In order compile the B2.5 writer code use the commands below while in
+the SOLPS-ITER project main directory:
+
     $ tcsh
     $ source setup.csh
     $ cd modules/B2.5
@@ -29,6 +31,17 @@ as it includes IMAS GGD library routines (Fortran90).
 
 Note: b2_ual_write and b2_ual_write_gsl are OUTDATED codes, but were left in
       the repository for documentation purposes and as and extra examples.
+
+#### Documentation
+
+To compile and see the B2.5 IDS documentation please run the following
+commands in the terminal while in the SOLPS-ITER project main directory:
+
+    $ tcsh
+    $ source setup.csh
+    $ cd $SOLPSTOP/modules/B2.5/documentation/
+    $ make doc
+    $ firefox source/Doxygen/html/index.html
 
 #### Running the code:
 
