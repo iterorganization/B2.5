@@ -385,9 +385,6 @@ contains
         !! Fill in object definitions (i.e. what objects compose an object)
         !! 1D objects: faces/edges
         nfc = gmap%nfcx + gmap%nfcy !! Number of all faces/edges
-        write(0,*) "num_obj_1D: ", nfc
-        write(0,*) "num_obj_1D x-aligned: ", gmap%nfcx
-        write(0,*) "num_obj_1D y-aligned: ", gmap%nfcy
         !! Allocate 1D objects
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(2)%object( gmap%nfcx + gmap%nfcy) )

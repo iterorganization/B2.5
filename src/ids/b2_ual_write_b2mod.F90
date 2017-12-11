@@ -85,6 +85,51 @@
 !!              flux data fields are to be moved from edge_transport IDS to
 !!              edge_profiles IDS.
 !!
+!!      @section b2uw_b2mod_env Compiling and setting the environment
+!!      In order compile the B2.5 writer code use the commands below:
+!!
+!!      @verbatim
+!!          cd $HOME/solps-iter
+!!          tcsh
+!!          source setup.csh
+!!          cd modules/B2.5
+!!          make ids
+!!      @endverbatim
+!!
+!!      @note   At the time of writing this manual IMAS module
+!!              imas/3.13.0/ual/3.6.3 was used. This IMAS module provides
+!!              also GGD support as it includes IMAS GGD library routines
+!!              (Fortran90).
+!!
+!!      @note   b2_ual_write and b2_ual_write_gsl are OUTDATED codes, but
+!!              were left in the repository for documentation purposes and as
+!!              and extra examples.
+!!
+!!      @subsection b2uw_b2mod_run Running the code:
+!!      The examples are available on ITER portal:
+!!      <a href="https://portal.iter.org/departments/POP/CM/IMAS/Forms/AllItems.aspx?RootFolder=%2Fdepartments%2FPOP%2FCM%2FIMAS%2FSOLPS-ITER%2FExamples">B2.5 examples link</a>
+!!
+!!      In terminal navigate to directory containing the case required data files
+!!      (b2fgmtry, b2fstate etc.) and run the following command:
+!!
+!!      @verbatim
+!!          $HOME/solps-iter/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe <shot> <run> <username> <device> <version>
+!!      @endverbatim
+!!
+!!      The arguments marked with < ... > are the parameters of the IDS database
+!!      where the data is to be stored:
+!!          - \b shot:      The shot number of the database being created
+!!          - \b run:       The run number of the database being created
+!!          - \b username:  Creator/owner of the IMAS IDS database
+!!          - \b device:    Device name of the IMAS IDS database
+!!                          (i. e. solps-iter, iter, aug)
+!!          - \b version:   Major version of the IMAS IDS database
+!!
+!!      Example of the command:
+!!      @verbatim
+!!          $HOME/solps-iter/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe 100 7 penkod solps-iter 3
+!!      @endverbatim
+!!
 !!      \b References:
 !!          - @ref b2uw_b2mod_prog "b2_ual_write_b2mod file reference"
 !!          - @ref b2uw_ualio_grid_desc "b2mod_ual_io_grid module "
@@ -207,6 +252,10 @@ program b2_ual_write_b2mod
         !< full kinetic energy equation (i.e. the energy flux takes into
         !< account the energy transported by the particle flux)
 
+    !! Dummy variables
+    character(len=24) :: shot_string
+    character(len=24) :: run_string
+
     !! Check if supposed new file already exists and delete it
     call checkFileAndDelete( "b2fparam" )
     call checkFileAndDelete( "b2mn.prt" )
@@ -228,12 +277,18 @@ program b2_ual_write_b2mod
     ! call b2mn_fin
     ! write(0,*) "b2mn_fin completed"
 
-    treename = "ids"
-    shot = 100
-    run = 7
-    username = "penkod"
-    device = "solps-iter"
-    version = "3"
+    treename = 'ids'
+    !! Command line arguments (can read only input arguments of type string)
+    call getarg( 1, shot_string )
+    call getarg( 2, run_string )
+    call getarg( 3, username )
+    call getarg( 4, device )
+    call getarg( 5, version )
+
+    !! Transform string variables 'shot_string' and 'run_string'to required
+    !! 'nteger variables 'shot' and 'run'
+    read( shot_string, *) shot
+    read( run_string, *) run
 
     !! b2mod routine write_ids
     write(*,*) "START write_ids"
