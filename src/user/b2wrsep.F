@@ -402,7 +402,7 @@ c*** f     :  the associated file name
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
-        read(lun,700,err=92) nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
+        read(lun,701,err=92) nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
         lv_trc(ltrc)=nv
         warn_tmp=.false.
         if(nv.ne.lv) then
@@ -467,7 +467,7 @@ c*** New file
         ni_tmp=nion_tmp
         nii_tmp=nis_tmp
         write(lun,700) lv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
-        write(lun,'(2a)') '## ',label
+        write(lun,'(2a)') '#  ',label
 
         hlp_frf='(9h(5h#time,,i3,9h(1h'//tab//',a8),,'     //
      /          'i3,12h(1h'//tab//',a7,a2),,'              //
@@ -589,6 +589,7 @@ c     Finalization step
       deallocate(hlp_a)
       return
 c======================================================================
-  700 format('#   ',10i8/'##  ',a)
+  700 format('#   ',6i8)
+  701 format(4x,6i8)
 c======================================================================
       end subroutine b2wrsep

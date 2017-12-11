@@ -318,6 +318,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       call alloc_b2mod_braeir(nx,ny,ns)
       call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
 #endif
+      call alloc_b2mod_elements(ns,zn,am)
       call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
@@ -327,7 +328,6 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
      . (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .false.)
-      call alloc_b2mod_elements(ns,zn,am)
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
       write_nml_user = .false.
       call alloc_b2mod_wall_init(nx,ny,nncut)
