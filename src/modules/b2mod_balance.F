@@ -2260,14 +2260,16 @@ cdjm Update ion heat sources
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'speclng',13,specid)
       call check_cdf_status(status)
-      status=nf_def_dim(ncid,'eirnx',size(pfluxa_av,1),eirnxid)
-      call check_cdf_status(status)
-      status=nf_def_dim(ncid,'eirny',size(pfluxa_av,2),eirnyid)
-      call check_cdf_status(status)
-      status=nf_def_dim(ncid,'natm',size(pfluxa_av,3),eirnatmid)
-      call check_cdf_status(status)
-      status=nf_def_dim(ncid,'nmol',size(pfluxm_av,3),eirnmolid)
-      call check_cdf_status(status)
+      if (allocated(dab2_av)) then
+        status=nf_def_dim(ncid,'eirnx',size(pfluxa_av,1),eirnxid)
+        call check_cdf_status(status)
+        status=nf_def_dim(ncid,'eirny',size(pfluxa_av,2),eirnyid)
+        call check_cdf_status(status)
+        status=nf_def_dim(ncid,'natm',size(pfluxa_av,3),eirnatmid)
+        call check_cdf_status(status)
+        status=nf_def_dim(ncid,'nmol',size(pfluxm_av,3),eirnmolid)
+        call check_cdf_status(status)
+      endif
 
 *   ..take dataset out of define mode
       status=nf_enddef(ncid)

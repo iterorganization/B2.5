@@ -228,7 +228,7 @@ c
 
       if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
                                      ! and is to be appended
-        read(lun,700,err=92) nv, 
+        read(lun,701,err=92) nv, 
      &     nr_tmp, ns_tmp, na_tmp,
      ,     nrg_tmp, nsp_tmp, nfl_tmp
         lv_trc(ltrc)=nv
@@ -424,6 +424,7 @@ c-----------------------------------------------------------------------
 c
       return
 c=======================================================================
-  700 format('#   ',7i8/'##  ',a)
+  700 format('#   ',7i8/'#  ',a)
+  701 format(4x,7i8)
 c=======================================================================
       end subroutine b2wrsrt

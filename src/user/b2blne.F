@@ -681,7 +681,7 @@ c
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then !{
-        read(lun,700,err=92) nv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp
+        read(lun,701,err=92) nv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp
         lv_trc(ltrc)=nv
         warn_tmp=.false.
         if(nv.ne.lv) then !{
@@ -821,6 +821,7 @@ c-----------------------------------------------------------------------
 c
       return
 c=======================================================================
-  700 format('#   ',6i8,'  ##  ',a)
+  700 format('#   ',6i8/'#  ',a)
+  701 format(4x,6i8)
 c=======================================================================
       end subroutine b2blne

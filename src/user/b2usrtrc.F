@@ -1473,11 +1473,11 @@ c*** f     :  the associated file name
         na_tmp=0
         np_tmp=0
         ns_tmp=0
-        read(lun,700,err=92) nv,ng_tmp
+        read(lun,701,err=92) nv,ng_tmp
         lv_trc(ltrc)=nv
         if(nv.ge.20000727) then !{
           rewind(lun)
-          read(lun,700,err=92) nv,ng_tmp,np_tmp,ns_tmp,na_tmp
+          read(lun,701,err=92) nv,ng_tmp,np_tmp,ns_tmp,na_tmp
         end if !}
         warn_tmp=.false.
         if(nv.ne.lv) then !{
@@ -1548,7 +1548,7 @@ c*** New file
           end do !}
         end do !}
         write(lun,700) lv,ng_tmp,np_tmp,ns_tmp,na_tmp
-        write(lun,'(2a)') '# ',label
+        write(lun,'(2a)') '#  ',label
 c       hlp_frf='(9h(5h#time,,i3,8h(1h'//tab//',a),,'//
 c     /                                      'i3,8h(1h'//tab//',a)))'
         hlp_frf='(9h(5h#time,,i3,8h(1h'//tab//',a)))'
@@ -1826,5 +1826,6 @@ c     Finalization step
       return
 c=======================================================================
   700 format('#   ',5i8)
+  701 format(4x,5i8)
 c=======================================================================
       end subroutine b2usrtrc

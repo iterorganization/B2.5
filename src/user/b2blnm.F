@@ -289,8 +289,9 @@ c
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
-        read(lun,700,err=92) nv,nd_tmp,ndv_tmp
-  700   format('#   ',3i8,'  ##  ',a)
+        read(lun,701,err=92) nv,nd_tmp,ndv_tmp
+  700   format('#   ',3i8/'#  ',a)
+  701   format(4x,3i8)
         lv_trc(ltrc)=nv
         warn_tmp=.false.
         if(nv.ne.lv) then

@@ -160,7 +160,7 @@ c*** Values by species and regions
      *     equa_tmp(DEF_NATM,NNREGMAX,nsar_tmp)
       real (kind=R8) ::
      *     nasum(DEF_NATM,NNREGMAX),  ! IYS 29.09.2017 added total number of neutrals
-     *     ssna_tmp(DEF_NATM,NNREGMAX),nisum(DEF_NATM,NNREGMAX)
+     *     ssna_tmp(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX)
       equivalence 
      -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum),
      &  (equa_tmp(1,1,3), nasum) ! IYS 29.09.2017
@@ -253,7 +253,7 @@ c#endif
      +  equf_tmp,
      +  fluxt_tmp,
      +  hlp_hf,
-     +  nb_tmp,equb_tmp,hlp_hb,
+     +  nb_tmp, equb_tmp, hlp_hb,
      +  lun,
      +  hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,
      +  i, j, k, is, ix, nv,
@@ -480,7 +480,7 @@ c
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
                                      ! and is to be appended
-        read(lun,700,err=92) nv,
+        read(lun,701,err=92) nv,
      &    ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
      ,    nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp
 c#ifdef SCL_IMP_RCI
@@ -621,15 +621,16 @@ c#endif
      ,                      label
 
 c Create a format string for the column headers
-        hlp_frf='(18h(1h#,7x,4htime,4x,,i3,9h(1h'//tab//',a8),,'//
-     /          'i3,14h(1h'//tab//',a8,i2.2),,'            //
-     /          'i3,12h(1h'//tab//',a8,a2),,'              //
-     /          'i3,17h(1h'//tab//',a8,i2.2,a2),,'         //
-     /          'i3,18h(1h'//tab//',a8,1h_,i2.2),,'        //
-     /          'i3,25h(1h'//tab//',a8,1h_,i2.2,1h_,a2),,' //
-     /          'i3,22h(1h'//tab//',a8,1h_,i2.2,1h_)'      //
+        hlp_frf='(18h(1h#,7x,4htime,4x,,'              //
+     /          'i3, 9h(1h'//tab//',a8),,'             //
+     /          'i3,14h(1h'//tab//',a8,i2.2),,'        //
+     /          'i3,12h(1h'//tab//',a8,a2),,'          //
+     /          'i3,21h(1h'//tab//',a8,i2.2,1h_,a2),,' //
+     /          'i3,14h(1h'//tab//',a8,i2.2),,'        //
+     /          'i3,21h(1h'//tab//',a8,i2.2,1h_,a2),,' //
+     /          'i3,14h(1h'//tab//',a8,i2.2)'          //
 c#ifdef SCL_IMP_RCI
-c     /         ',,i3,12h(1h'//tab//',a8,a2)'              //
+c     /         ',,i3,12h(1h'//tab//',a8,a2)'          //
 c#endif
      /          '))'
 
@@ -744,9 +745,11 @@ c
       return
 c=======================================================================
 c#ifndef SCL_IMP_RCI
-  700 format('#   ',10i8/'##  ',a)
+  700 format('#   ',10i8/'#  ',a)
+  701 format(4x,10i8)
 c#else
-c  700 format('#   ',11i8/'##  ',a)
+c  700 format('#   ',11i8/'#  ',a)
+c  701 format(4x,11i8)
 c#endif
 c=======================================================================
       end subroutine b2wrint

@@ -96,7 +96,7 @@ c*** nummax: maximum width of a numerical field in the file
       character fbn*(lnfn),frmi22*8,chdf(2*nhdr)*(mhdr)
       character cbln*(nummax)
       data cbln / ' ' /
-      character c,tab,f*(lnfn+3+lsuf),cc*20,frmhdr*12,frmdat*48
+      character c,tab,f*(lnfn+3+lsuf),cc*20,frmhdr*16,frmdat*48
       integer i,j,k,l,m,n,ir,iv,kb,kt,lrd,nhd,nmr,ktrl,ltrl,
      ,        lnrw,lvrw,ncln,nrec,ivmax,mrkr(nmrk)
       integer lfrmd ! minimum length of the frmd variable
@@ -395,9 +395,9 @@ c*** Produce the header
           end do !}
 c          write(0,*) 'chdw',lnrw,' :',('  ',trim(chdw(i)),i=1,lvrw)!###
           if(nmrk.gt.0) then !{
-            write(frmhdr,'(6h(2h# ,,i2,4hi12))') nmrk
+            write(frmhdr,'(a,i2,a)') '(''#   '',',nmrk,'i8)'
             write(lun,frmhdr) mrks
-            write(lun,'(2a)') '##  ',titel
+            write(lun,'(2a)') '#  ',titel
           end if !}
           write(frmhdr,'(5h(1h#,,i4,2ha))') 2*lnrw
           write(lun,frmhdr) (trim(chdw(i)),tab,i=1,lnrw)
@@ -517,7 +517,7 @@ c*** Write the header
         if(nmrk.gt.0) then !{
           write(frmhdr,'(a,i2,a)') '(''#   '',',nmrk,'i8)'
           write(lun,frmhdr) mrks
-          write(lun,'(2a)') '##  ',titel
+          write(lun,'(2a)') '#  ',titel
         end if !}
         write(frmhdr,'(5h(1h#,,i4,2ha))') 2*nhdr
         write(lun,frmhdr) (trim(chdr(i)),tab,i=1,nhdr)
