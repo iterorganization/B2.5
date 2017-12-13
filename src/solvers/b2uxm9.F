@@ -5,6 +5,7 @@
      . aa9, name)                                                       !sv 13.10.06
       use b2mod_types
       use b2mod_indirect
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, itcnt
@@ -51,6 +52,7 @@
       real (kind=R8) ::
      *   aaf(-1:nx,-1:ny,-2:2)
       save ncall
+!OMP THREADPRIVATE(ncall, iout)
 *   ..procedures
       intrinsic abs
       external subini, subend, xertst, ipgetr, sfill
@@ -67,6 +69,12 @@
 *   ..set internal parameters on first call                              !sv 25.08.99
       if (ncall.eq.0) then                                               !sv 06.07.06 {
        call ipgeti ('b2uxm9_iout', iout)                                 !sv 13.10.06
+       if (in_parallel() .and. iout.ne.0) then
+!$OMP MASTER
+         write(*,*) 'b2uxm9 OpenMP warning: no file IO in parallel mode'
+!$OMP END MASTER
+         iout = 0
+       endif
       endif                                                              !sv 06.07.06 }
 *   ..set n2
       n2 = (nx+2)*(ny+2)
