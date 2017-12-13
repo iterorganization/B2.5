@@ -9,6 +9,8 @@
      * res(:),
      * a1h_save(:)
 
+!$OMP THREADPRIVATE(r1, s1, a1h, w, res, a1h_save)
+
       integer, allocatable, save ::
      * irn(:),
      * icn(:),
@@ -22,8 +24,11 @@
      * iw28(:,:),
      * irnh_save(:),
      * icnh_save(:)
+!$OMP THREADPRIVATE(irn, icn, ish, jsh ,jsh, irnh, icnh, icnhkeep,
+!$OMP&    ikeep, iw28, irnh_save, icnh_save)
 
       integer nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
+!$OMP THREADPRIVATE(nc0, nltrsol, nnd, n_nonzeros, solvdim, solvdim1)
 
       contains
 
