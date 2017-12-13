@@ -72,8 +72,8 @@ module b2mod_ual_io
 
 contains
 
-    !> Write B2.5 data to IMAS IDS
-    subroutine write_ids( edge_profiles, edge_sources, edge_transport )
+    !> Process B2.5 data and set it to IMAS IDS
+    subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport )
 #       include <git_version_B25.h>
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
             !< store data on edge plasma profiles  (includes the scrape-off
@@ -219,11 +219,11 @@ contains
             &   bottomiy, nnreg, topcut, region, cflags,                    &
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
         call xertst( geometryId( nnreg, periodic_bc, topcut ) ==    &
-            &   GEOMETRY_SN, "write_ids: can only do single null" )
+            &   GEOMETRY_SN, "B25_process_ids: can only do single null" )
 
         !! Write plasma state
         if ( B2_WRITE_DATA ) then
-            write (*,*) "b2mod_ual_io.write_ids: writing plasma state"
+            write (*,*) "b2mod_ual_io.B25_process_ids: writing plasma state"
 
             iGsCore = findGridSubsetByName(                 &
                 &   edge_profiles%ggd( ggd_slice )%grid,    &
@@ -354,7 +354,7 @@ contains
                 &   vectorID = "diamagnetic" )
         end if
 
-        call logmsg( LOGDEBUG, "b2mod_ual_io.write_ids: done" )
+        call logmsg( LOGDEBUG, "b2mod_ual_io.B25_process_ids: done" )
 
         contains
 
@@ -702,7 +702,7 @@ contains
             end if
 
         end subroutine write_face_vector
-    end subroutine write_ids
+    end subroutine B25_process_ids
 
     !> From the B2 grid, compute the coordinate unit vectors
     !> (poloidal, radial, toroidal)

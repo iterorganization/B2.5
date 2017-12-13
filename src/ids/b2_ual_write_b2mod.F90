@@ -52,9 +52,9 @@
 !!      ------------------------------- | -------------------------------------
 !!      spaces(:).coordtype             | space(:).coordinates_type
 !!      spaces(:).objects               | space(:).objects_per_dimension(:).object
-!!      spaces(:).objects(:).geo        | space(:).objects_per_dimension(:).object.geometry
-!!      spaces(:).objects(:).boundary   | space(:).objects_per_dimension(:).object.boundary
-!!      spaces(:).objects(:).neighbour  | space(:).objects_per_dimension(:)object(:).boundary(:).neighbours
+!!      spaces(:).objects(:).geo        | space(:).objects_per_dimension(:).object(:).geometry
+!!      spaces(:).objects(:).boundary   | space(:).objects_per_dimension(:).object(:).boundary
+!!      spaces(:).objects(:).neighbour  | space(:).objects_per_dimension(:).object(:).boundary(:).neighbours
 !!      spaces(:).xpoints               | No node for data on x-points was found
 !!      subgrids                        | grid_subset
 !!
@@ -75,7 +75,7 @@
 !!      fluid.te(:).flux        | edge_transport.model(:).ggd(:).electrons.energy.flux
 !!      fluid.ti(:).value       | edge_profiles.ggd(:).ion(:).temperature
 !!      fluid.ti(:).flux        | edge_transport.model(:).ggd(:).ion(:).energy.flux
-!!      fluid.po.value          | edge_profiles.ggd(:).phi_potential,
+!!      fluid.po.value          | edge_profiles.ggd(:).phi_potential
 !!      fluid.te_aniso.comps(1) | edge_profiles.ggd(:).e_field.poloidal
 !!      fluid.te_aniso.comps(2) | edge_profiles.ggd(:).e_field.radial
 !!      fluid.te_aniso.comps(3) | edge_profiles.ggd(:).e_field.toroidal
@@ -290,10 +290,11 @@ program b2_ual_write_b2mod
     read( shot_string, *) shot
     read( run_string, *) run
 
-    !! b2mod routine write_ids
-    write(*,*) "START write_ids"
-    call write_ids( edge_profiles, edge_sources, edge_transport )
+    !! Process B2.5 data and set it to IMAS IDS
+    write(*,*) "START B25_process_ids"
+    call B25_process_ids( edge_profiles, edge_sources, edge_transport )
 
+    !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
     call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,   &
         &   shot, run, idx, username, device, version )
