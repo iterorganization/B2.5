@@ -18,6 +18,9 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_time
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nxtl, nxtr
@@ -333,7 +336,21 @@ csw 01oct2012 initialize potential if necessary
       else
         cssb = 0.0_R8
       endif                                                              !iyv 06.02.14
-!        do is=0,ns-1                                                    !srv 01.10.99
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!! FR possible loop (1) for use with OpenMP
+!$OMP PARALLEL DO DEFAULT(none) FIRSTPRIVATE(flob, conb, pb)
+!$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax, ismain)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
+!$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
+!$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
+!$OMP& SHARED(cddi, cvlahz, cvmahz, cdnahz, cdpahz, fchvispar)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(kinrgy, fllim0fna) 
+!        do is = 0, ns-1
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
           call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)  !srv 01.10.99
@@ -355,6 +372,11 @@ csw 01oct2012 initialize potential if necessary
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .true.)                                                         !djm Jan2017
         enddo                                                            !srv 01.10.99
+!$OMP END PARALLEL DO
+!! FR end of loop (1)
+#ifdef WITH_FTIMINGS
+        call timer%stop("parallel")
+#endif
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
      &   te, po, vedia, veecrb)
@@ -490,6 +512,28 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 !     &             lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!!FR Possible loop (2) for use with OpenMP
+!$OMP PARALLEL DO DEFAULT(none)
+!$OMP& PRIVATE(ier0, solvedum, solvedm2, ix, iy, new_matrix)
+!$OMP& PRIVATE(ireg)
+!$OMP& FIRSTPRIVATE(pb, flob, conb)
+!$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb)
+!$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
+!$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
+!$OMP& SHARED(is_neutral, uadia, ncall, resmo, corua)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, vol, pbs, pbshz)
+!$OMP& SHARED(cssb, vaecrb, vadia)
+!$OMP& SHARED(wadia, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
+!$OMP& SHARED(cddi, cvlahz, cvmahz, cdnahz, cdpahz, fchvispar)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
+!$OMP& SHARED(rxf0, sna, pcca, resco, corpa, b2stbr_sna, b2stbm_sna) 
+!$OMP& SHARED(ext_sna)
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
 *    ..DPC
@@ -600,6 +644,11 @@ csw 16oct2012 init ier0
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .false.)                                                        !djm Jan2017
       enddo 
+!$OMP END PARALLEL DO
+!! FR End of loop (2)
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
 *      ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
      &  te, po, vedia, veecrb)
@@ -731,6 +780,20 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
           else
             cssb = 0.0_R8
           endif                                                          !iyv 06.02.14
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!! FR possible loop (3) for use with OpenMP
+!$OMP PARALLEL DO DEFAULT(none) LASTPRIVATE(flob, conb, pb)
+!$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax, ismain)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
+!$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
+!$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
+!$OMP& SHARED(cddi, cvlahz, cvmahz, cdnahz, cdpahz, fchvispar)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(kinrgy, fllim0fna) 
           do is = 0, ns-1
 *    ..compute partial pressure
             call b2xppb (nx, ny,
@@ -758,6 +821,11 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &       .false.)                                                    !djm Jan2017
           enddo
+!$OMP END PARALLEL DO
+!!FR End of loop (3)
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
 *      ..compute electron drift velocities
           call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
      &      te, po, vedia, veecrb)
@@ -834,9 +902,19 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
            endif
 	 enddo
        enddo
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!!FR loop (4) over ns suitable for OpenMP parallelisation
+!$OMP PARALLEL DO DEFAULT(none) SHARED(rza,ua,na,ns) REDUCTION(+:ue)
        do is=0,ns-1
         ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
        enddo
+!$OMP END PARALLEL DO
+!!FR end of loop (4)
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
        ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
        ue(:,:)=ue(:,:)/ne(:,:)                                           !srv 05.03.11 }
       else
