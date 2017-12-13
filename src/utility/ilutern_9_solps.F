@@ -35,6 +35,7 @@ c ma28 common blocks
       integer ndrop,maxit,noiter,nsrch,istart,ibig
       common /ma28hdc/ rtol,themax,big,dxmax,errmax,dres,cgce,
      1 ndrop,maxit,noiter,nsrch,istart,ibig
+!OMP THREADPRIVATE(/ma28fdc/, /ma28hdc/)
 c
 
 *  -- PROCEDURES --
@@ -48,6 +49,7 @@ c
       integer, save :: kwrite_fmt = -1                                !srv 18.05.02
       integer, save :: kwrite_bnr = -1                                !srv 18.05.02
       save lfirst, ncall, nwrite
+!$OMP THREADPRIVATE(lfirst, ncall, nwrite, kwrite_fmt, kwrite_bnr)
       data lfirst /.true./, ncall /0/, nwrite /0/
 
 *=======================================================================
@@ -61,6 +63,16 @@ c
         call ipgeti ('ma28_for_9d_nwrite', nwrite)
         call ipgeti ('ma28_for_9d_kwrite_fmt', kwrite_fmt)            !srv 18.05.02
         call ipgeti ('ma28_for_9d_kwrite_bnr', kwrite_bnr)            !srv 18.05.02
+        if (in_parallel() .and. ( nwrite.ne.0 .or.
+     &     kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
+!$OMP MASTER
+         write(*,*) 'ilutern_9 OpenMP warning: no file IO ' ,
+     &       'in parallel mode'
+!$OMP END MASTER
+         nwrite = 0
+         kwrite_fmt = -1
+         kwrite_bnr = -1
+       endif 
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
