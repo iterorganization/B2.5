@@ -10,6 +10,7 @@
       use b2mod_indirect
       use b2mod_balance
      & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb              !srv 05.07.08
@@ -56,12 +57,14 @@
       integer ncall, n2, ix, iy, use_eirene
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0          !srv 06.07.06
       integer, save :: iout = 0, iout_b2wdat = 0                     !srv 04.07.08
+!$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co, iout, iout_b2wdat)
       character chns*3                                               !srv 04.07.08
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
      *   aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1, use_eirene
+!$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
 *   ..procedures
       external subini, subend, xertst, ipgetr, lwget
       external b2xvsg, b2xvff, b2ursc, b2usc9, b2upco
@@ -101,6 +104,12 @@
        call xertst (0.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
        call ipgeti ('b2npc9_iout', iout)                              !srv 13.07.05
+       if (in_parallel() .and. iout.ne.0) then
+!$OMP MASTER
+         write(*,*) 'b2npc9 OpenMP warning: no file IO in parallel mode'
+!$OMP END MASTER
+         iout = 0
+       endif
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
