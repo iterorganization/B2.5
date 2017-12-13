@@ -2268,10 +2268,11 @@ c
       integer icn(licn), lenr(n), lenrl(n), lenoff(n), ip(n), iq(n)
 c see block data for comments on variables in common.
       common /ma30hd/ resid
+!$OMP THREADPRIVATE(/ma30hd/)
 #ifdef DBG
       real (kind=R8) :: product, cutlo
       save cutlo
-!$OMP THREADPRIVATE(cutlo, /ma30hd/)
+!$OMP THREADPRIVATE(cutlo)
 #endif
 c
       integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2, 
