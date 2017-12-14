@@ -14,6 +14,12 @@
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
 !!      Library routines.
 !!
+!!      @note   More on the b2_ual_writers is available in SOLPS-GUI
+!!              documentation under section <b> IMAS HOWTO </b>.
+!!
+!!      @note   A short video tutorial on the use of the B2.5 writer is
+!!              available <a href="https://youtu.be/5IuADXPAgkQ">here</a>.
+!!
 !!      @section b2uw_b2mod_cpo2ids Mapping CPO -> IDS
 !!      Most B2.5 routines were originally developed to work solely with ITM
 !!      CPOs. Those same routines were modified or created anew, providing
