@@ -73,7 +73,7 @@
       integer, save :: nz
 !      integer, allocatable :: ia(:), ja(:)
       integer, allocatable, save :: indexes(:,:), iasave(:), jasave(:)
-!$OMP THREADPRIVATE(indexes, iasave, jasave)
+!$OMP THREADPRIVATE(indexes, iasave, jasave, nz)
 
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures

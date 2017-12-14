@@ -24,6 +24,7 @@
 *   ..local variables
       integer :: n2, ib, ix, iy
       integer, save :: ncall = 0
+!$OMP THREADPRIVATE(ncall)
 *-----------------------------------------------------------------------
 *.computation
 

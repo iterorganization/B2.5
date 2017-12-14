@@ -52,7 +52,7 @@
       real (kind=R8) ::
      *   aaf(-1:nx,-1:ny,-2:2)
       save ncall
-!OMP THREADPRIVATE(ncall, iout)
+!$OMP THREADPRIVATE(ncall, iout)
 *   ..procedures
       intrinsic abs
       external subini, subend, xertst, ipgetr, sfill
