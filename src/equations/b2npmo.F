@@ -285,6 +285,7 @@
 
 * ..main computation
 *   ..compute individual species corrections
+#ifndef NO_OPENMP_B2NPMO
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -314,6 +315,7 @@
 !$OMP& SHARED(pbshz, cvsahz, hy, qz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(is_neutral, ue, zetap, zetae, gti, gte, ce1, ce2, cimp1)
 !$OMP& SHARED(cimp2, zeff, fna_fcor, iout, iout_b2wdat, rxg)
+#endif
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
 *    ..compute rob, pb
@@ -518,9 +520,11 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
        endif
       enddo
+#ifndef NO_OPENMP_B2NPMO
 !$OMP END PARALLEL DO
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
+#endif
 #endif
 csw 21feb2014, execute simultaneous corrections always
 c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.07.10
