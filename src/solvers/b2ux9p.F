@@ -203,6 +203,7 @@
      *                      indexes, iasave, jasave, name)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_openmp
       implicit none
 *  ..input
       integer nx, ny, nnz

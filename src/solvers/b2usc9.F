@@ -6,6 +6,7 @@
      &   name)                                                          !srv 18.05.02
       use b2mod_types
       use b2mod_indirect
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt, isb, nregionv

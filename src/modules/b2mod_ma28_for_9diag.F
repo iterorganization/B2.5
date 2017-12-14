@@ -24,7 +24,7 @@
      * iw28(:,:),
      * irnh_save(:),
      * icnh_save(:)
-!$OMP THREADPRIVATE(irn, icn, ish, jsh ,jsh, irnh, icnh, icnhkeep,
+!$OMP THREADPRIVATE(irn, icn, ish, jsh, irnh, icnh, icnhkeep,
 !$OMP&    ikeep, iw28, irnh_save, icnh_save)
 
       integer nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1

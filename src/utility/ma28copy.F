@@ -3429,7 +3429,7 @@ c
       common /ma28hdc/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
 c     common /ma28gdc/ idisp(2)
-!$OMP THREADPRIVATE(/ma28edc/,/ma28fdc/,/ma28hdc/, /ma28gdc/)
+!$OMP THREADPRIVATE(/ma28edc/,/ma28fdc/,/ma28hdc/)
       data eps /1.0e-4_R8/
       data tol /0.0e0_R8/, cgce /0.5e0_R8/
       data lp /6/, mp /6/
