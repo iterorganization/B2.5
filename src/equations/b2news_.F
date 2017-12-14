@@ -336,6 +336,7 @@ csw 01oct2012 initialize potential if necessary
       else
         cssb = 0.0_R8
       endif                                                              !iyv 06.02.14
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -350,6 +351,7 @@ csw 01oct2012 initialize potential if necessary
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
 !$OMP& SHARED(kinrgy, fllim0fna) 
+#endif
 !        do is = 0, ns-1
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
@@ -372,10 +374,12 @@ csw 01oct2012 initialize potential if necessary
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .true.)                                                         !djm Jan2017
         enddo                                                            !srv 01.10.99
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
 !$OMP END PARALLEL DO
 !! FR end of loop (1)
 #ifdef WITH_FTIMINGS
         call timer%stop("parallel")
+#endif
 #endif
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -512,6 +516,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 !     &             lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -534,6 +539,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
 !$OMP& SHARED(rxf0, sna, pcca, resco, corpa, b2stbr_sna, b2stbm_sna) 
 !$OMP& SHARED(ext_sna)
+#endif
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
 *    ..DPC
@@ -644,10 +650,12 @@ csw 16oct2012 init ier0
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .false.)                                                        !djm Jan2017
       enddo 
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
 !$OMP END PARALLEL DO
 !! FR End of loop (2)
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
+#endif
 #endif
 *      ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -780,6 +788,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
           else
             cssb = 0.0_R8
           endif                                                          !iyv 06.02.14
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -794,6 +803,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
 !$OMP& SHARED(kinrgy, fllim0fna) 
+#endif
           do is = 0, ns-1
 *    ..compute partial pressure
             call b2xppb (nx, ny,
@@ -821,10 +831,12 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &       .false.)                                                    !djm Jan2017
           enddo
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
 !$OMP END PARALLEL DO
 !!FR End of loop (3)
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
+#endif
 #endif
 *      ..compute electron drift velocities
           call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -902,18 +914,22 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
            endif
 	 enddo
        enddo
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
 !!FR loop (4) over ns suitable for OpenMP parallelisation
 !$OMP PARALLEL DO DEFAULT(none) SHARED(rza,ua,na,ns) REDUCTION(+:ue)
+#endif
        do is=0,ns-1
         ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
        enddo
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
 !$OMP END PARALLEL DO
 !!FR end of loop (4)
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
+#endif
 #endif
        ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
        ue(:,:)=ue(:,:)/ne(:,:)                                           !srv 05.03.11 }
