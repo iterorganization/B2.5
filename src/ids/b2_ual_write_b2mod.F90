@@ -246,6 +246,9 @@ program b2_ual_write_b2mod
     integer :: i    !< Iterator
     integer :: shot !< The shot number of the database being created
     integer :: run  !< The run number of the database being created
+    integer :: num_step     !< Number of steps
+    integer :: narg     !< Total Number of input arguments (shot, run etc.)
+    integer :: cptArg
     type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store data on
         !< edge plasma profiles  (includes the scrape-off layer and possibly
         !< part of the confined plasma)
@@ -261,6 +264,8 @@ program b2_ual_write_b2mod
     !! Dummy variables
     character(len=24) :: shot_string
     character(len=24) :: run_string
+    character(len=24) :: num_step_string
+    character(len=24) :: argName
 
     !! Check if supposed new file already exists and delete it
     call checkFileAndDelete( "b2fparam" )
@@ -270,31 +275,77 @@ program b2_ual_write_b2mod
     call checkFileAndDelete( "b2ftrace" )
     call checkFileAndDelete( "b2ftrack" )
 
+    !! Set default value for number of steps
+    num_step = -1
+    version = "3"
+
+    !! Check if arguments are found
+    narg = command_argument_count()
+
+    if( narg > 0 ) then
+        !! Loop across arguments and allocate proper values to variables
+        do cptArg = 1, narg
+            call get_command_argument( cptArg, argName )
+            select case( adjustl( argName ) )
+                case("--shot")
+                    call get_command_argument( cptArg + 1, shot_string )
+                    !! Transform dummy string variable to integer
+                    read( shot_string, *) shot
+                case("--run")
+                    call get_command_argument( cptArg + 1, run_string )
+                    !! Transform dummy string variable to integer
+                    read( run_string, *) run
+                case("--username")
+                    call get_command_argument( cptArg + 1, username )
+                case("--device")
+                    call get_command_argument( cptArg + 1, device )
+                case("--version")
+                    call get_command_argument( cptArg + 1, version )
+                case("--numstep")
+                    call get_command_argument( cptArg + 1, num_step_string )
+                    !! Transform dummy string variable to integer
+                    read( num_step_string, *) num_step
+            end select
+        end do
+    !! If not at least shot, run, username and device were defined display
+    !! the error message and and a full command example
+    else if( narg .lt. 8 ) then
+        write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
+            & shot, run, user, device and version variables must&
+            & be defined. Example (terminal): "
+        write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
+            &b2_ual_write_b2mod.exe --shot 1 --run 1 --username penkod&
+            &  --device solps-iter --version 3 --step 250"
+        call exit(0)
+    else
+        write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
+            & shot, run, user, device and version variables must&
+            & be defined. Example (terminal): "
+        write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
+            &b2_ual_write_b2mod.exe --shot 1512 --run 6 --username penkod&
+            &  --device solps-iter --version 3 --step 250"
+        call exit(0)
+    end if
+
     !! Run main b2 routine to process and read the b2 data
     write(0,*) "Running b2mn_init"
     call b2mn_init
     write(0,*) "b2mn_init completed"
 
-    write(0,*) "Running b2mn_step(0)"
-    call b2mn_step(0)
-    write(0,*) "b2mn_step(0) completed"
+    !! If steps were defined then run the b2mn_step routine for the number of
+    !! steps
+    if( num_step .ge. -1 ) then
+        write(0,*) "Running b2mn_step(", num_step, ")"
+        write(0,*) "num_step: ", num_step
+        call b2mn_step( num_step )
+    end if
+    write(0,*) "b2mn_step() completed"
 
     ! write(0,*) " Running b2mn_fin"
     ! call b2mn_fin
     ! write(0,*) "b2mn_fin completed"
 
     treename = 'ids'
-    !! Command line arguments (can read only input arguments of type string)
-    call getarg( 1, shot_string )
-    call getarg( 2, run_string )
-    call getarg( 3, username )
-    call getarg( 4, device )
-    call getarg( 5, version )
-
-    !! Transform string variables 'shot_string' and 'run_string'to required
-    !! 'nteger variables 'shot' and 'run'
-    read( shot_string, *) shot
-    read( run_string, *) run
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
