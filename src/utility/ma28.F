@@ -1413,19 +1413,19 @@ c numerical singularity is recorded here.
 c changes to column ordering.
           if (nsrch.le.nn) go to 460
           colupd = nn + 1
-            lenpp = oldend-oldpiv+1
-            if (lenpp.lt.4) lpiv(1) = lpiv(1) + 1
-            if (lenpp.ge.4 .and. lenpp.le.6) lpiv(2) = lpiv(2) + 1
-            if (lenpp.ge.7 .and. lenpp.le.10) lpiv(3) = lpiv(3) + 1
-            if (lenpp.ge.11 .and. lenpp.le.15) lpiv(4) = lpiv(4) + 1
-            if (lenpp.ge.16 .and. lenpp.le.20) lpiv(5) = lpiv(5) + 1
-            if (lenpp.ge.21 .and. lenpp.le.30) lpiv(6) = lpiv(6) + 1
-            if (lenpp.ge.31 .and. lenpp.le.50) lpiv(7) = lpiv(7) + 1
-            if (lenpp.ge.51 .and. lenpp.le.70) lpiv(8) = lpiv(8) + 1
-            if (lenpp.ge.71 .and. lenpp.le.100) lpiv(9) = lpiv(9) + 1
-            if (lenpp.ge.101) lpiv(10) = lpiv(10) + 1
-            mapiv = max0(mapiv,lenpp)
-            iavpiv = iavpiv + lenpp
+          lenpp = oldend-oldpiv+1
+          if (lenpp.lt.4) lpiv(1) = lpiv(1) + 1
+          if (lenpp.ge.4 .and. lenpp.le.6) lpiv(2) = lpiv(2) + 1
+          if (lenpp.ge.7 .and. lenpp.le.10) lpiv(3) = lpiv(3) + 1
+          if (lenpp.ge.11 .and. lenpp.le.15) lpiv(4) = lpiv(4) + 1
+          if (lenpp.ge.16 .and. lenpp.le.20) lpiv(5) = lpiv(5) + 1
+          if (lenpp.ge.21 .and. lenpp.le.30) lpiv(6) = lpiv(6) + 1
+          if (lenpp.ge.31 .and. lenpp.le.50) lpiv(7) = lpiv(7) + 1
+          if (lenpp.ge.51 .and. lenpp.le.70) lpiv(8) = lpiv(8) + 1
+          if (lenpp.ge.71 .and. lenpp.le.100) lpiv(9) = lpiv(9) + 1
+          if (lenpp.ge.101) lpiv(10) = lpiv(10) + 1
+          mapiv = max0(mapiv,lenpp)
+          iavpiv = iavpiv + lenpp
           do 450 jj=oldpiv,oldend
             j = icn(jj)
             lc = lastc(j)
