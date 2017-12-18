@@ -32,7 +32,7 @@
       fname = chname
       call chcase (0, fname)
       call xertst (len(chname).le.len(fname),
-     &  'cfopen--faulty argument chname, too long: '//fname)
+     &  'cfopen--faulty argument chname, too long: '//trim(fname))
 *   ..construct fstat
       if (streql(chstat,'old')) then
        fstat = 'old'
@@ -60,17 +60,17 @@
       if (streql(fstat,'old')) then
        call find_file(fname,ltst)
        call xertst (ltst, 'cfopen--supposed old file does not '//
-     &   'exist: file='//fname)
+     &   'exist: file='//trim(fname))
       elseif (streql(fstat,'replace')) then                  !srv 19.04.09
       else
        inquire (file=fname,exist=ltst)
        call xertst (.not.ltst, 'cfopen--supposed new file already '//
-     &   'exists: file='//fname)
+     &   'exists: file='//trim(fname))
       endif
 *   ..open file
       open (ioun,iostat=ios,file=fname,status=fstat,form=fform)
-      call xertst (ios.eq.0, 'cfopen--open failure: file='//fname//
-     &  ', status='//fstat//', form='//fform)
+      call xertst (ios.eq.0, 'cfopen--open failure: file='//
+     &  trim(fname)//', status='//fstat//', form='//fform)
       return
 *     ------------------------------------------------------------------
       end

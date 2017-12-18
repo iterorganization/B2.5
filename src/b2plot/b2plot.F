@@ -6159,7 +6159,7 @@ cdpc still in testing phase
           istart=ipop(istack,iistack)
           itmp=0
 #ifndef NO_CDF
-          call get_cdf_ntstep(filename,itmp)
+          call get_cdf_ntstep(filename,itmp,ncidcdf)
           write(*,*) 'MOVIE: ',itmp
           if(iend.lt.1) iend=itmp
           if(iwrk .eq. wklng) call dropstackbottom()
@@ -6170,7 +6170,7 @@ cdpc still in testing phase
           textwk(:,iwrk)=' '
           graphlabel(iwrk)=' '
           do is=max(istart,1),min(iend,itmp)
-            call get_cdf(filename, is, movietime(1),
+            call get_cdf(filename, ncidcdf, is, movietime(1),
      1       varname, mach, nx, ny)
             write(*,*) 'MOVIE: ',movietime(1)
             write(stmp,'(f13.9,2x,i5,''/'',i5)') movietime(1), is, itmp
@@ -6195,7 +6195,7 @@ cdpc still in testing phase
           istart=ipop(istack,iistack)
           itmp=0
 #ifndef NO_CDF
-          call get_cdf_ntstep(filename,itmp)
+          call get_cdf_ntstep(filename,itmp,ncidcdf)
           write(*,*) 'MOVIE: ',itmp
           if(iend.lt.1) iend=itmp
           if(iwrk .eq. wklng) call dropstackbottom()
@@ -6206,7 +6206,7 @@ cdpc still in testing phase
           textwk(:,iwrk)=' '
           graphlabel(iwrk)=' '
           do is=max(istart,1),min(iend,itmp)
-            call get_cdf(filename, is, movietime(1),
+            call get_cdf(filename, ncidcdf, is, movietime(1),
      1       varname, mach, nx, ny)
             write(*,*) 'MOVIE: ',movietime(1)
             write(stmp,'(f13.9,2x,i5,''/'',i5)') movietime(1), is, itmp

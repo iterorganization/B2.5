@@ -1,4 +1,4 @@
-      subroutine b2wrint(nx,ny,ns,nregionv)
+      subroutine b2wrint(nx,ny,ns,nregionv,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -30,7 +30,7 @@ c
 c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c
-      integer nx, ny, ns, nregionv
+      integer nx, ny, ns, nregionv, iline
 c
       integer lv
 c      parameter (lv=970522)
@@ -160,7 +160,7 @@ c*** Values by species and regions
      *     equa_tmp(DEF_NATM,NNREGMAX,nsar_tmp)
       real (kind=R8) ::
      *     nasum(DEF_NATM,NNREGMAX),  ! IYS 29.09.2017 added total number of neutrals
-     *     ssna_tmp(DEF_NATM,NNREGMAX),nisum(DEF_NATM,NNREGMAX)
+     *     ssna_tmp(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX)
       equivalence 
      -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum),
      &  (equa_tmp(1,1,3), nasum) ! IYS 29.09.2017
@@ -197,6 +197,8 @@ c*** Local variables of general use
       real (kind=R8) ::
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
       integer i, j, k, ir,is,ix,iy, nv
+      real (kind=R8), save :: stim = 0.0_R8
+      real (kind=R8) :: tdummy
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
       integer iatm,imol ! IYS 29.09.2017
@@ -251,7 +253,7 @@ c#endif
      +  equf_tmp,
      +  fluxt_tmp,
      +  hlp_hf,
-     +  nb_tmp,equb_tmp,hlp_hb,
+     +  nb_tmp, equb_tmp, hlp_hb,
      +  lun,
      +  hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,
      +  i, j, k, is, ix, nv,
@@ -460,12 +462,13 @@ c#endif
       return
 c=======================================================================
 c
-      entry b2wrinti(nx,ny,ns,nregionv)
+      entry b2wrinti(nx,ny,ns,nregionv,iline)
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
 c
       tab=char(9)
+      call ipgetr ('b2mndr_stim', stim)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
@@ -475,9 +478,11 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex) then
-        read(lun,700,err=92) nv,ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
-     ,                          nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp
+      if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
+                                     ! and is to be appended
+        read(lun,701,err=92) nv,
+     &    ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
+     ,    nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp
 c#ifdef SCL_IMP_RCI
 c     ,                         ,ns1_tmp
 c#endif
@@ -616,15 +621,16 @@ c#endif
      ,                      label
 
 c Create a format string for the column headers
-        hlp_frf='(18h(1h#,7x,4htime,4x,,i3,9h(1h'//tab//',a8),,'//
-     /          'i3,14h(1h'//tab//',a8,i2.2),,'            //
-     /          'i3,12h(1h'//tab//',a8,a2),,'              //
-     /          'i3,17h(1h'//tab//',a8,i2.2,a2),,'         //
-     /          'i3,18h(1h'//tab//',a8,1h_,i2.2),,'        //
-     /          'i3,25h(1h'//tab//',a8,1h_,i2.2,1h_,a2),,' //
-     /          'i3,22h(1h'//tab//',a8,1h_,i2.2,1h_)'      //
+        hlp_frf='(18h(1h#,7x,4htime,4x,,'              //
+     /          'i3, 9h(1h'//tab//',a8),,'             //
+     /          'i3,14h(1h'//tab//',a8,i2.2),,'        //
+     /          'i3,12h(1h'//tab//',a8,a2),,'          //
+     /          'i3,21h(1h'//tab//',a8,i2.2,1h_,a2),,' //
+     /          'i3,14h(1h'//tab//',a8,i2.2),,'        //
+     /          'i3,21h(1h'//tab//',a8,i2.2,1h_,a2),,' //
+     /          'i3,14h(1h'//tab//',a8,i2.2)'          //
 c#ifdef SCL_IMP_RCI
-c     /         ',,i3,12h(1h'//tab//',a8,a2)'              //
+c     /         ',,i3,12h(1h'//tab//',a8,a2)'          //
 c#endif
      /          '))'
 
@@ -691,15 +697,47 @@ c
  94   write(*,*) 'b2wrint: cannot write in the file ',trim(f)
       filedata(ltrc)=.false.
       return
+c======================================================================
+c
+      entry b2wrintc(nx,ny,ns,nregionv,iline)
+c----------------------------------------------------------------------
+c*** - to be called by b2co for locating truncation for savefile
+c----------------------------------------------------------------------
+c
+      if(.not.filedata(ntrc_int)) return
+      lun=ntrc(ltrc)
+      f=fn_ntrc(ltrc)
+      call find_file(f,ex)
+      open(lun,file=f,err=190)
+      rewind(lun)
+      iline = 0
+      read(lun,'(a1)',end=155) hlp_c
+      do while (hlp_c.eq.'#')
+        iline = iline+1
+        read(lun,'(a1)',end=155) hlp_c
+      end do
+      backspace lun
+      read(lun,*,end=155) tdummy
+      do while (tdummy.le.tim)
+        iline = iline+1
+        read(lun,*,end=155) tdummy
+      end do
+ 155  continue
+      return
+c======================================================================
+ 190  write(*,*) 'b2wrint: cannot open file ',trim(f)
+      filedata(ltrc)=.false.
+      iline=-1
+      return
 c=======================================================================
-      entry b2wrints(nx,ny,ns,nregionv)
+      entry b2wrints(nx,ny,ns,nregionv,iline)
 c-----------------------------------------------------------------------
 c*** Save the values (not used for this set)
 c-----------------------------------------------------------------------
 c
       return
 c=======================================================================
-      entry b2wrintf(nx,ny,ns,nregionv)
+      entry b2wrintf(nx,ny,ns,nregionv,iline)
 c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
@@ -707,9 +745,11 @@ c
       return
 c=======================================================================
 c#ifndef SCL_IMP_RCI
-  700 format('#   ',10i8/'##  ',a)
+  700 format('#   ',10i8/'#  ',a)
+  701 format(4x,10i8)
 c#else
-c  700 format('#   ',11i8/'##  ',a)
+c  700 format('#   ',11i8/'#  ',a)
+c  701 format(4x,11i8)
 c#endif
 c=======================================================================
       end subroutine b2wrint

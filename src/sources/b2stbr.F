@@ -140,8 +140,13 @@
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
 #include <netcdf.inc>
-      integer :: status, ncid
+      integer :: status, ncid, ndims, nvars, natts, unlimid
+      integer dimids(NF_MAX_VAR_DIMS), dimsize(NF_MAX_VAR_DIMS)
       integer, save :: ntstep_b2wall
+      real (kind=R8), save :: stim = 0.0_R8
+      character*(NF_MAX_NAME) :: dimname(NF_MAX_VAR_DIMS)
+      logical ex
+      character*256 filename
 #endif
 *   ..procedures
       logical lnext
@@ -846,23 +851,48 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       if(b2wall_netcdf.ne.0 .and. ntargsp.gt.0) then
 #ifndef NO_CDF
         if(ncall.eq.0) then
-          call define_cdf_b2mod_wall(nbnd,ntargsp)
-          status=nf_open('b2wall.nc',NF_WRITE,ncid)
-          call check_cdf_status(status)
-          write(*,*) 'Writing track_species'
-          call write_cdf_char_variable(ncid,-1,
-     *     'track_species',track_species(1:ntargsp))
-          write(*,*) 'Writing plate_area'
-          call write_cdf_variable(ncid,-1,
-     *     'plate_area',plate_area(1:nbnd))
-          status=nf_close(ncid)
-          call check_cdf_status(status)
-          write(*,*) 'Closed b2wall.nc'
-          ntstep_b2wall=0
+          filename='b2wall.nc'
+          call find_file(filename,ex)
+          call ipgetr ('b2mndr_stim', stim)
+          if (.not.ex.or.stim.ge.0.0_R8) then
+            ntstep_b2wall = 0
+            write(6,'(a)') trim(filename)//' will be created'
+            call define_cdf_b2mod_wall(filename,ncid,nbnd,ntargsp)
+          else if (ex.and.stim.lt.0.0_R8) then
+            status=nf_open(filename,NF_WRITE,ncid)
+            call check_cdf_status(status)
+            status=nf_inq(ncid,ndims,nvars,natts,unlimid)
+            call check_cdf_status(status)
+            status=nf_inq_dim(ncid,dimids(1),dimname(1),dimsize(1))
+            call check_cdf_status(status)
+            ntstep_b2wall=dimsize(1)
+            status=nf_close(ncid)
+            call check_cdf_status(status)
+            write(6,'(a)') trim(filename)//' will be appended'
+          else
+            ntstep_b2wall=0
+            write(6,'(a)') trim(filename)//' will be replaced'
+            call define_cdf_b2mod_wall(filename,ncid,nbnd,ntargsp)
+          end if
+          write(6,'(a,i8)') trim(filename)//' : ntstep_b2wall = ',
+     .                                          ntstep_b2wall
+          if (ntstep_b2wall.eq.0) then
+            status=nf_open(filename,NF_WRITE,ncid)
+            call check_cdf_status(status)
+            write(*,*) 'Writing track_species'
+            call write_cdf_char_variable(ncid,-1,
+     *       'track_species',track_species(1:ntargsp))
+            write(*,*) 'Writing plate_area'
+            call write_cdf_variable(ncid,-1,
+     *       'plate_area',plate_area(1:nbnd))
+            status=nf_close(ncid)
+            call check_cdf_status(status)
+            write(6,'(a)') 'Closed '//trim(filename)
+          end if
         endif
         if(main_call.and.mod(ncall,b2wall_netcdf).eq.0) then
           ntstep_b2wall=ntstep_b2wall+1
-          status=nf_open('b2wall.nc',NF_WRITE,ncid)
+          status=nf_open(filename,NF_WRITE,ncid)
           call check_cdf_status(status)
           call write_cdf_variable(ncid,ntstep_b2wall,
      *     'plate_time',plate_time(1:nbnd))

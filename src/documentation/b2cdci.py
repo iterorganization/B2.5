@@ -2,8 +2,8 @@
 Generates b2cdci.F
 """
 from __future__ import print_function
-
-import xml.etree.ElementTree as etree
+import sys
+import xml.etree.ElementTree as ET
 import textwrap
 
 def check_constant(string):
@@ -38,7 +38,19 @@ def fort_switch(name, default, category, note):
     return fort
 
 xml_name = "b2input.xml"
-tree = etree.parse(xml_name)
+dtd_name = "xhtml-symbol.ent"
+xml_entities = '<!ENTITY % symbols SYSTEM "xhtml-symbol.ent" > %symbols;'
+
+f = open(xml_name, 'r')
+xml_text = f.read()
+f.close()
+
+f = open(dtd_name, 'r')
+dtd_text = f.read()
+f.close()
+
+text_to_process = xml_text.replace(xml_entities, dtd_text)
+tree = ET.ElementTree(ET.fromstring(text_to_process))
 root = tree.getroot()
 
 b2cdci_switches = {}
@@ -191,5 +203,9 @@ fort += """*--------------------------------------------------------------------
 
 """
 
-with open('b2cdci.F', 'w') as f:
+f = open('b2cdci.F', 'w')
+if sys.version_info[0] >= 3:
     f.write(fort)
+else:
+    f.write(fort.encode('utf-8'))
+f.close()

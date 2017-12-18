@@ -801,7 +801,10 @@ c           l_ddt=l_ddt+1
       end if !}
 
 cxpb  Additional diagnostic for comparison with SOLPS4.0
-      if (ncall.eq.0) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
+      if (ncall.eq.0) then
+        call b2trci(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+        if (write_nml_user) call write_b2mod_user_namelist(nx,ns)
+      endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0
      & .and.ank_tracing.ne.0.and.output_style.ge.2) then
         write(*,*) 'Eirene output in eirene_mc :'
