@@ -96,9 +96,20 @@ contains
         integer :: is   !< Ion specie index (iterator)
         integer :: i    !< Iterator
         integer :: j    !< Iterator
-        integer :: iGsCore  !< Core grid subset identifier
-        integer :: iGsInnerMidplane !< Inner Midplane grid subset identifier
-        integer :: iGsOuterMidplane !< Outer Midplane grid subset identifier
+        integer :: iGsCoreBoundary  !< Variable to hold Core grid subset base
+            !< index, later found by findGridSubsetByName() routine.
+        integer :: iGsInnerMidplane !< Variable to hold Inner Midplane grid
+            !< subset base index, later found by findGridSubsetByName() routine
+        integer :: iGsOuterMidplane !< Variable to hold Outer Midplane grid
+            !< subset base index, later found by findGridSubsetByName() routine
+        integer :: iGsCore  !< Variable to hold Core grid
+            !< subset base index, later found by findGridSubsetByName() routine
+        integer :: iGsSOL   !< Variable to hold SOL grid
+            !< subset base index, later found by findGridSubsetByName() routine
+        integer :: iGsIDivertor     !< Variable to hold Inner Divertor grid
+            !< subset base index, later found by findGridSubsetByName() routine
+        integer :: iGsODivertor     !< Variable to hold Outer Divertor grid
+            !< subset base index, later found by findGridSubsetByName() routine
         integer :: homogeneous_time !< Homogeneous time (0 or 1)
         integer :: ggd_slice    !< General grid description slice identifier
         integer :: num_ggd_slice    !< Total number of ggd slices
@@ -213,7 +224,8 @@ contains
         mapInitialized = .true.
 
         !! Write grid & grid subsets/subgrids
-        call b2_IMAS_Fill_Grid_Desc( gmap, edge_profiles%ggd( ggd_slice )%grid,    &
+        call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
+            &   edge_profiles%ggd( ggd_slice )%grid,                        &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
@@ -225,13 +237,24 @@ contains
         if ( B2_WRITE_DATA ) then
             write (*,*) "b2mod_ual_io.B25_process_ids: writing plasma state"
 
-            iGsCore = findGridSubsetByName(                 &
+            !! Find grid subset base indices out of the available grid subset
+            !! data stored in the IDS. That is done using IMAS GGD routine
+            !! findGridSubsetByName().
+            iGsCoreBoundary = findGridSubsetByName(         &
                 &   edge_profiles%ggd( ggd_slice )%grid,    &
                 &   "Core boundary" )
             iGsInnerMidplane = findGridSubsetByName( edge_profiles% &
                 &   ggd( ggd_slice )%grid, "Inner Midplane" )
             iGsOuterMidplane = findGridSubsetByName( edge_profiles% &
                 &   ggd( ggd_slice )%grid, "Outer Midplane" )
+            iGsCore = findGridSubsetByName( edge_profiles%      &
+                &   ggd( ggd_slice )%grid, "Core" )
+            iGsSOL = findGridSubsetByName( edge_profiles%       &
+                &   ggd( ggd_slice )%grid, "SOL" )
+            iGsIDivertor = findGridSubsetByName( edge_profiles% &
+                &   ggd( ggd_slice )%grid, "Inner divertor" )
+            iGsODivertor = findGridSubsetByName( edge_profiles% &
+                &   ggd( ggd_slice )%grid, "Outer divertor" )
 
             !! TODO: The fluxes are currently in the edge_transport. They are
             !! supposed to be in the edge_profiles (24.10.2017)
@@ -376,8 +399,10 @@ contains
                 !< handing data field values
             integer :: ival
 
-            !! Allocate data fields for 5 grid subsets
-            allocate( val(5) )
+            !! Allocate data fields for 5+4 grid subsets
+            allocate( val(9) )
+
+            !! Write data for Cells grid subset
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
                 &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS, gmap, value )
 
@@ -385,23 +410,27 @@ contains
             call gridWriteData( val( ival ), GRID_SUBSET_CELLS, idsdata )
             deallocate( idsdata )
 
+            !! Write data for Core Boundary grid subset
             ival = ival + 1
             tmpFace = 0.0_IDS_real
             call value_on_faces( nx, ny, vol, value, tmpFace)
-            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( &
-                &   edge_profiles%ggd( ggd_slice )%grid, iGsCore, gmap, tmpFace )
-            call gridWriteData( val( ival ), iGsCore, idsdata )
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                    &
+                &   edge_profiles%ggd( ggd_slice )%grid, iGsCoreBoundary,   &
+                &   gmap, tmpFace )
+            call gridWriteData( val( ival ), iGsCoreBoundary, idsdata )
             deallocate( idsdata )
 
+            !! Write data for Inner Midplane grid subset
             ival = ival + 1
             tmpVx = interpolateToVertices(  &
                 &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
-            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(    &
-                &   edge_profiles%ggd( ggd_slice )%grid,    &
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex( &
+                &   edge_profiles%ggd( ggd_slice )%grid,        &
                 &   iGsInnerMidplane, gmap, tmpVx )
             call gridWriteData( val( ival ), iGsInnerMidplane, idsdata )
             deallocate( idsdata )
 
+            !! Write data for Outer Midplane grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
                 &   edge_profiles%ggd( ggd_slice )%grid, iGsOuterMidplane,  &
@@ -409,16 +438,58 @@ contains
             call gridWriteData( val( ival ), iGsOuterMidplane, idsdata )
             deallocate( idsdata )
 
+            !! Write data for Nodes grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
                 &   edge_profiles%ggd( ggd_slice )%grid, GRID_SUBSET_NODES, &
                 &   gmap, tmpVx )
             call gridWriteData( val( ival ), GRID_SUBSET_NODES, idsdata )
             deallocate( idsdata )
+
+            !! Write data on fluxes for y-aligned faces, x-aligned faces
+            !! (those two are set as default) and Core boundary grid subset
             allocate( fluxes(2) )
             call write_face_vector( fluxes(1), flux, ggd_slice)
             call write_face_vector( fluxes(2), flux, ggd_slice, &
-                &   gridSubsetId = iGsCore )
+                &   gridSubsetId = iGsCoreBoundary )
+
+            !! Write data for Core grid subset
+            !! Note: Most of the grid subset is written OK, but at the
+            !!       boundary with the seperatrix incorrect values seems
+            !!       to be written (checked with ParaView ReadUALEdge plugin)!!
+            !!      This is strange as the same procedure
+            !!       works as it should for all other grid subsets (e.g. SOL,
+            !!       Inner divertor and Outer divertor)
+            ival = ival + 1
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
+                &   ggd( ggd_slice )%grid, iGsCore, gmap, value )
+
+            call gridWriteData( val( ival ), iGsCore, idsdata )
+            deallocate( idsdata )
+
+            !! Write data for SOL grid subset
+            ival = ival + 1
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
+                &   ggd( ggd_slice )%grid, iGsSOL, gmap, value )
+
+            call gridWriteData( val( ival ), iGsSOL, idsdata )
+            deallocate( idsdata )
+
+            !! Write data for Inner Divertor grid subset
+            ival = ival + 1
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
+                &   ggd( ggd_slice )%grid, iGsIDivertor, gmap, value )
+
+            call gridWriteData( val( ival ), iGsIDivertor, idsdata )
+            deallocate( idsdata )
+
+            !! Write data for Outer Divertor grid subset
+            ival = ival + 1
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
+                &   ggd( ggd_slice )%grid, iGsODivertor, gmap, value )
+
+            call gridWriteData( val( ival ), iGsODivertor, idsdata )
+            deallocate( idsdata )
         end subroutine write_quantity
 
         !> Write a scalar B2 cell quantity to ids_generic_grid_scalar

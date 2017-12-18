@@ -596,7 +596,7 @@ contains
 
         !! Fill in object definitions (i.e. what objects compose an object)
         !! 2D objects: Cells
-        write(0,*) "num_obj_2D: ", gmap%ncv
+        ! write(0,*) "num_obj_2D: ", gmap%ncv
         !! Allocate 2D objects
         allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)% &
             &   object( gmap%ncv ) )
@@ -953,7 +953,7 @@ contains
                 GSubsetCount = GSubsetCount + 1
 
                 call logmsg( LOGDEBUG,                                      &
-                    &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//    &
+                    &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
                     &   idsInt2str(GSubsetCount)//                          &
                     &   " for iType "//idsInt2str( iType )//                &
                     &   ", iRegion "//idsInt2str( iRegion )//": "//         &
