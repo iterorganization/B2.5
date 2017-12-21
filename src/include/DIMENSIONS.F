@@ -32,7 +32,7 @@
 #define DEF_NADD 4
 #define DEF_NPRNL 50000
 ! new! [2002.06.14]
-#define DEF_NSRFS 2
+#define DEF_NSRFS 4
 
 !
 ! parameters that are unique to B2
