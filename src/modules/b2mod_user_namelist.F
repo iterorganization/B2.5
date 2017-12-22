@@ -129,7 +129,7 @@ c***  Standard setup:
 
       logical :: file_ok
       character*260 filename
-      integer i, j, k, is
+      integer i, j, k, is, im
       logical old_style, done
       logical, save :: hydrogen, helium, neon
       external subini, subend
@@ -171,8 +171,14 @@ c*** Set default values according to current species list
             if (j_h_at(1).ne.0) then
               i = nint(am(j_h_at(1)))
               j_h_at(i) = j_h_at(1)
+              j_h_at(1) = 0
+            else
+              i = nint(am(is))
             end if
-            j_h_at(1) = 0
+            do im = 1, nnmoli
+              l_h_mol(im,i) = l_h_mol(im,1)
+              l_h_mol(im,1) = 0
+            end do
             done = .true.
           end if
           if (j_h_at(nint(am(is))).eq.0)
@@ -194,13 +200,6 @@ c*** Set default values according to current species list
         if (neon .and. j_ne_at.eq.0) j_ne_at = b2eatcr(is)
         is = is + 1
       end do
-      if (old_style) then
-        i = nint(am(eb2atcr(j_h_at(1))))
-        do is = 1, nnmoli
-          l_h_mol(is,i) = l_h_mol(is,1)
-          l_h_mol(is,1) = 0
-        end do
-      end if
 
 *   ..test user namelist input
       call xertst(0.0_R8.le.fusion_power,
