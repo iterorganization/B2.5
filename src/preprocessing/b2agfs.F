@@ -1018,9 +1018,12 @@ c
       j=-1
       lun=96
       meshpath = 'data.local/meshes|data/meshes'
-#ifdef NO_GETENV
-      device = 'iter'
+#ifdef JET
+      device = 'jet'
 #else
+      device = 'iter'
+#endif
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('DEVICE', 0, device, lenval, ierror)
 #else

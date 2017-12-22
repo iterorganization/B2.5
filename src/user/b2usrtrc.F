@@ -326,9 +326,13 @@ c*** Check the input data for consistency and prepare indices
         j_he_i=0
         do j=1,nspecies !{
           if(nfluids(j).eq.1) then !{
-            if(j_h_at.le.0 .or. j_h_at.gt.nnatmi) then !{
-              j_h_at=b2eatcr(eb2spcr(j))
-            end if !}
+            do i=1,3 !{
+              if(nint(am(eb2spcr(j))).eq.i) then !{
+                if(j_h_at(i).le.0 .or. j_h_at(i).gt.nnatmi) then !{
+                  j_h_at(i)=b2eatcr(eb2spcr(j))
+                end if !}
+              end if !}
+            end do !}
           end if !}
           if(nfluids(j).eq.2) then !{
             j_he_i=eb2spcr(j)
@@ -716,8 +720,8 @@ c*** counting from the top targets.
 c***
 c***  j_he_at  is the helium index in the Eirene atoms list. If 0, then
 c***           the B2 species is taken assuming the same order.
-c***  j_h_at   is the same for the hydrogen species, and
-c***  l_h_mol  gives the number of hydrogen nuclei in each molecule
+c***  j_h_at   is the same for the hydrogen isotopes, and
+c***  l_h_mol  gives the number of hydrogen isotope nuclei in each molecule
 c***  lhetrgts is the list of Eirene surfaces used to estimate the
 c***           He enrichment from the single-sided fluxes in Eirene.
 c-----------------------------------------------------------------------
@@ -843,8 +847,12 @@ c>>>
 
 c*** Calculate throughputs, pumping speed, and re-scale He if necessary
 
-        ls=j_h_at
-        do l=1,2 !{
+        do l=1,4 !{
+          if (l.eq.4) then !{
+            ls=j_he_at
+          else !}{
+            ls=j_h_at(l)
+          end if !}
           if(ls.gt.0 .and. ls.le.nnatmi) then !{
 
 c*** Neutral flux across the side walls
@@ -858,8 +866,11 @@ c*** Neutral flux across the side walls
               end do !}
             end do !}
           end if !}
-          equg_tmp(20+l)=hlpnw/2.7e20_R8
-          ls=j_he_at
+          if (l.eq.2 .or. l.eq.3) then !{
+            equg_tmp(21)=equg_tmp(21)+hlpnw/2.7e20_R8
+          else if (l.eq.4) then !}{
+            equg_tmp(22)=hlpnw/2.7e20_R8
+          end if !}
         end do !}
         hlp_dttp=0.5_R8*hlp_dttp     ! assume molecular DT pumping
         if(hlp_ppfr.gt.0.0_R8) hlp_spdt=hlp_dttp/hlp_ppfr
@@ -915,13 +926,17 @@ c*** Helium fraction and related data - flux estimation
           if(k.eq.0) go to 10
           if(k.lt.0) k=nnlimi-k
           if(j_he_at.le.nnatmi) hlp_he=hlp_he+wldna(k,j_he_at,0)
-          if(j_h_at.le.nnatmi) hlp_h=hlp_h+wldna(k,j_h_at,0)
+          do j=1,3 !{
+            if(j_h_at(j).le.nnatmi.and.j_h_at(j).gt.0)
+     .       hlp_h=hlp_h+wldna(k,j_h_at(j),0)
+          end do !}
           do j=1,nnatmi !{
             hlp_tot=hlp_tot+wldna(k,j,0)
           end do !}
           do j=1,nnmoli !{
             hlp_tot=hlp_tot+wldnm(k,j,0)
-            hlp_h=hlp_h+wldnm(k,j,0)*l_h_mol(j)
+            hlp_h=hlp_h+wldnm(k,j,0)*
+     .       (l_h_mol(j,1)+l_h_mol(j,2)+l_h_mol(j,3))
           end do !}
         end do !}
  10     if(hlp_h.gt.0.0_R8) hlp_hefr=hlp_he/(hlp_h+hlp_he)

@@ -117,7 +117,7 @@ c
          na_max_val=maxval(na(-1:nx,-1:ny,0:ns-1))
          ua_min_val=minval(ua(-1:nx,-1:ny,0:ns-1))
          ua_max_val=maxval(ua(-1:nx,-1:ny,0:ns-1))
-         write(*,'(a,1p,8(1x,g12.3))') 'minmax:te ,ti ,na ,ua  ',
+         write(*,'(a,1p,8(1x,g12.3))') 'minmax: te, ti, na, ua ',
      &     te_min_val, te_max_val, ti_min_val, ti_max_val,
      &     na_min_val, na_max_val, ua_min_val, ua_max_val
       endif

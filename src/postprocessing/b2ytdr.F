@@ -275,7 +275,7 @@ c 2002-09-11: logic revised
      2  na_feedback_ix11(:), na_feedback_ix21(:),
      3  na_feedback_iy11(:), na_feedback_iy21(:),
      4  na_feedback_ib1(:)
-      integer, allocatable :: l_h_mol1(:)
+      integer, allocatable :: l_h_mol1(:,:)
       integer, allocatable :: sps_sgrp1(:)
       integer bcpos1(nbcd), bcstart1(nbcd), bcend1(nbcd)
       integer bc_list_size1(nbcd)
@@ -9724,9 +9724,11 @@ cxpb as they no longer necessarily point to the same species
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_HE_TO_D=',Spmp_He_to_D,','
         if (Spmp_nom.ne.0.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_NOM=',Spmp_nom,','
-        if (j_h_at.ne.0) then
-          if (iatm1(j_h_at).ne.0)
-     >     write(99,'(1x,a,i2,a)') 'J_H_AT=',iatm1(j_h_at),','
+        do i=1,3
+          if (j_h_at(i).ne.0) j_h_at(i) = iatm1(j_h_at(i))
+        end do
+        if (maxval(j_h_at).gt.0) then
+          write(99,'(1x,a,3(i2,a))') 'J_H_AT=',(j_h_at(i),',',i=1,3)
         end if
         if (j_he_at.ne.0) then
           if (iatm1(j_he_at).ne.0)
@@ -9737,13 +9739,17 @@ cxpb as they no longer necessarily point to the same species
      >     write(99,'(1x,a,i2,a)') 'J_NE_AT=',iatm1(j_ne_at),','
         end if
         if (maxval(l_h_mol).gt.0) then
-          allocate(l_h_mol1(nmol1))
+          allocate(l_h_mol1(nmol1,3))
           l_h_mol1 = 0
-          write(hlp_frm,'(a,i2,a)') '(a,',nmol1,'(1x,i2,'',''))'
           do j = 1, nmoli
-            if (imol1(j).ne.0) l_h_mol1(imol1(j)) = l_h_mol(j)
+            if (imol1(j).ne.0) l_h_mol1(imol1(j),1:3) = l_h_mol(j,1:3)
           end do
-          write(99,'(1x,a,i2,a)') 'L_H_MOL=',(l_h_mol1(j),j=1,nmol1)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,i2,a,',nmol1,'(i2,a))'
+          do i = 1, 3
+            if (maxval(l_h_mol1(1:nmol1,i)).gt.0)
+     >       write(99,hlp_frm) 'L_H_MOL(1,',i,')=',
+     ,                         (l_h_mol1(j,i),',',j=1,nmol1)
+          end do
           deallocate(l_h_mol1)
         end if
         if (npfrgrp.gt.0) then

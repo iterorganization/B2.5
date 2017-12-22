@@ -21,10 +21,14 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer ix,iy,i,j,k1,k0
+      integer ix,iy,i,j,in,k1,k0
+      real (kind=R8), allocatable :: hlp_f(:)
       character*16 stmp
+      character*256 hlp_frmr
+      character*1 isotope(3), hlp_at(3)
       logical streql
       external streql
+      data isotope / 'H', 'D', 'T'/
 c----------------------------------------------------------------------
 c*** Find helium
 c
@@ -50,23 +54,41 @@ c
         write(*,*) 'b2pzavrv: no helium found: ',k1,k0
         return
       end if
+      in=0
+      do j=1,3
+        if (j_h_at(j).ne.0) then
+          in=in+1
+          hlp_at(in)=isotope(j)
+        end if
+      end do
 c
+      allocate(hlp_f(in))
       open(lun,file='zaveraev.dat')
-      write (lun,710)
-  710 format(9h   ix  iy,5x,5hR (m),7x,5hZ (m),5x,10hnH (m**-3),
-     ,       5x,2hne,8x,7hTe (eV),5x,7hTi (eV),
-     ,       6x,5hnHe++,7x,4hnHe+,8x,3hnHe/)
+      write(hlp_frmr,'(a,i2,a)') '(a9,5x,a5,7x,a5,5x,',
+     . in,'(a10,2x),3x,a2,8x,a7,5x,a7,6x,a5,7x,a4,8x,a3)'
+      write (lun,hlp_frmr)
+     .  '   ix  iy','R (m)','Z (m)',
+     . ('n'//hlp_at(i)//' (m**-3)',i=1,in),
+     .  'ne','Te (eV)','Ti (eV)','nHe++','nHe+','nHe'
 c
       do ix=0,nx-1
         do iy=0,ny-1
+          i=0
+          do j=1,3
+            if (j_h_at(j).ne.0) then
+              i=i+1
+              hlp_f(i)=dab2(ix+1,iy+1,j_h_at(j),1)
+            end if
+          end do
           write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),
-     ,         dab2(ix+1,iy+1,j_h_at,1),
+     ,        (hlp_f(i),i=1,in),
      ,         ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
      ,         na(ix,iy,k1+1),na(ix,iy,k1),dab2(ix+1,iy+1,k0,1)
   700     format(1x,1p,2i4,48e12.3)
         end do
       end do
       close (lun)
+      deallocate(hlp_f)
 c
       return
       end

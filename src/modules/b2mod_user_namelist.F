@@ -7,16 +7,16 @@
       integer nhetrgtx
 #ifdef ALLOCATE_AND_NAMELIST
       integer, allocatable :: lhetrgts(:),lpfrgrp(:),lntrgrp(:)
-      integer, allocatable :: l_h_mol(:)
+      integer, allocatable :: l_h_mol(:,:)
 #else
       parameter (nhetrgtx=DEF_NLIM)
       integer lhetrgts(nhetrgtx),lpfrgrp(DEF_NLIM),lntrgrp(DEF_NLIM)
-      integer l_h_mol(DEF_NMOL)
+      integer l_h_mol(DEF_NMOL,3)
 #endif
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
-     ,  j_he_at,j_h_at,j_ne_at,lpfrs_pmp,
+     ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
@@ -46,10 +46,10 @@ c***              from the bottom, if non-positive)
 c*** lpfrt_[io]:  B2 x-cell indices corresponding to the top of the
 c***              bypass between the inner and outer divertor (counted
 c***              from the x-point, if non-positive)
-c*** j_h_at    :  Hydrogen index in EIRENE atoms list
+c*** j_h_at    :  Hydrogen isotope index in EIRENE atoms list
 c*** j_he_at   :  Helium index in EIRENE atoms list
 c*** j_ne_at   :  Neon index in EIRENE atoms list
-c*** l_h_mol   :  Hydrogen content in the molecules
+c*** l_h_mol   :  Hydrogen isotope content in the molecules
 c*** lpfrs_pmp :  Location of the pump.
 c***              0 no pump at all, 1 - lower PFR, 2 - lower outer
 c*** npfrgrpd  :  max. number of surface groups for PFR flows
@@ -76,7 +76,7 @@ c----------------------------------------------------------------------
 #ifdef ALLOCATE_AND_NAMELIST
       nhetrgtx=nlim
       allocate(lhetrgts(nhetrgtx),lpfrgrp(nlim),lntrgrp(nlim))
-      allocate(l_h_mol(nmol))
+      allocate(l_h_mol(nmol,3))
 #endif
       
 c*** PFR specification - for He enrichment and neutral pressure
@@ -129,34 +129,13 @@ c***  Standard setup:
 
       logical :: file_ok
       character*260 filename
-      integer i, is
+      integer i, j, k, is
+      logical old_style, done
       logical, save :: hydrogen, helium, neon
       external subini, subend
 
       call subini ('readuser')
 
-c*** Set default values according to current species list
-      hydrogen = .false.
-      is = 0
-      do while (.not.hydrogen .and. is.lt.ns)
-        hydrogen = is_neutral(is) .and. nint(zn(is)).eq.1
-        if (hydrogen) j_h_at = b2eatcr(is)
-        is = is + 1
-      end do
-      helium = .false.
-      is = 0
-      do while (.not.helium .and. is.lt.ns)
-        helium = is_neutral(is) .and. nint(zn(is)).eq.2
-        if (helium) j_he_at = b2eatcr(is)
-        is = is + 1
-      end do
-      neon = .false.
-      is = 0
-      do while (.not.neon .and. is.lt.ns)
-        neon = is_neutral(is) .and. nint(zn(is)).eq.10
-        if (neon) j_ne_at = b2eatcr(is)
-        is = is + 1
-      end do
 *  -- USER --
       filename=user_filename
       call find_file(filename,file_ok)
@@ -175,6 +154,53 @@ c*** Set default values according to current species list
         user_namelist_used = .false.
         filedata(ntrc_usr) = .false.
       endif
+cxpb convert old-style j_h_at and l_h_mol to deal with isotope mixes
+      old_style = maxval(j_h_at).eq.0
+      if (j_h_at(1).ne.0.and.j_h_at(2).eq.0.and.j_h_at(3).eq.0) then
+        old_style = nint(am(eb2atcr(j_h_at(1)))).ne.1
+      end if
+c*** Set default values according to current species list
+      hydrogen = .false.
+      done = .false.
+      is = 0
+      do while (is.lt.ns)
+        hydrogen = hydrogen .or.
+     &   (is_neutral(is) .and. nint(zn(is)).eq.1)
+        if (is_neutral(is).and.nint(zn(is)).eq.1) then
+          if (old_style .and. nint(am(is)).ne.1 .and. .not.done) then
+            if (j_h_at(1).ne.0) then
+              i = nint(am(j_h_at(1)))
+              j_h_at(i) = j_h_at(1)
+            end if
+            j_h_at(1) = 0
+            done = .true.
+          end if
+          if (j_h_at(nint(am(is))).eq.0)
+     >        j_h_at(nint(am(is))) = b2eatcr(is)
+        end if
+        is = is + 1
+      end do
+      helium = .false.
+      is = 0
+      do while (.not.helium .and. is.lt.ns)
+        helium = is_neutral(is) .and. nint(zn(is)).eq.2
+        if (helium .and. j_he_at.eq.0) j_he_at = b2eatcr(is)
+        is = is + 1
+      end do
+      neon = .false.
+      is = 0
+      do while (.not.neon .and. is.lt.ns)
+        neon = is_neutral(is) .and. nint(zn(is)).eq.10
+        if (neon .and. j_ne_at.eq.0) j_ne_at = b2eatcr(is)
+        is = is + 1
+      end do
+      if (old_style) then
+        i = nint(am(eb2atcr(j_h_at(1))))
+        do is = 1, nnmoli
+          l_h_mol(is,i) = l_h_mol(is,1)
+          l_h_mol(is,1) = 0
+        end do
+      end if
 
 *   ..test user namelist input
       call xertst(0.0_R8.le.fusion_power,
@@ -206,24 +232,49 @@ c*** Set default values according to current species list
         call xertst(jntrgrp(i-1).lt.intrgrp(i),
      .   'faulty inputs intrgrp, jntrgrp')
       end do
-      if (hydrogen) then
-        call xertst(nint(zn(eb2atcr(j_h_at))).eq.1,
+      call xertst(.not.(hydrogen.and.maxval(j_h_at).eq.0),
      .   'faulty input j_h_at')
+      do i = 1,3
+        if (j_h_at(i).eq.0) cycle
+        if (hydrogen) then
+          call xertst(nint(zn(eb2atcr(j_h_at(i)))).eq.1,
+     .     'faulty input j_h_at')
+        end if
+      end do
+      do i = 1,2
+        do j = i+1,3
+          if (j_h_at(i).ne.0 .and. j_h_at(j).ne.0) then
+            if (nint(am(eb2atcr(j_h_at(i)))).eq.
+     .          nint(am(eb2atcr(j_h_at(j))))) then
+              write(6,*)
+     .         'Non-standard setting of hydrogen isotope species:'
+              write(6,'(1x,a,i3)')
+     .         'More than one hydrogen species defined with mass ',
+     .          nint(am(eb2atcr(j_h_at(i))))
+              write(6,'(1x,a,3i3)') 'j_h_at : ', (j_h_at(k),k=1,3)
+              write(6,'(1x,a,3i3)') 'masses : ',
+     .         (nint(am(eb2atcr(j_h_at(k)))),k=1,3)
+            end if
+          end if
+        end do
+      end do
 #ifdef B25_EIRENE
+      do i = 1,3
+        if (j_h_at(i).eq.0) cycle
         if (user_namelist_used) then
           if (maxval(l_h_mol).gt.0) then
             do is = 1, nnmoli
-              call xertst(l_h_mol(is).eq.mlcmp(j_h_at,is),
+              call xertst(l_h_mol(is,i).eq.mlcmp(j_h_at(i),is),
      .         'faulty inputs l_h_mol, mlcmp')
             end do
           else
             do is = 1, nnmoli
-              l_h_mol(is) = mlcmp(j_h_at,is)
+              l_h_mol(is,i) = mlcmp(j_h_at(i),is)
             end do
           end if
         end if
+      end do
 #endif
-      end if
       if (helium) call xertst(nint(zn(eb2atcr(j_he_at))).eq.2,
      . 'faulty input j_he_at')
       if (neon) call xertst(nint(zn(eb2atcr(j_ne_at))).eq.10,

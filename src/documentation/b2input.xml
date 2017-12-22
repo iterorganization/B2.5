@@ -6616,16 +6616,16 @@
 			</switch>
 			<switch>
 				<name>J_H_AT</name>
-				<type>integer</type>
+				<type>integer array of size (3)</type>
 				<description>
-					Species index of the hydrogen atoms in Eirene. The code attempts to find a match by default.
+					Species indices of the hydrogen isotopes in Eirene. If using only one hydrogen species, only the first element needs to be provided. Otherwise the 3 elements correspond to H/D/T. The code attempts to find a match by default.
 				</description>
 			</switch>
 			<switch>
 				<name>L_H_MOL</name>
-				<type>integer array of size (NMOL)</type>
+				<type>integer array of size (NMOL,3)</type>
 				<description>
-					Number of hydrogen nuclei for molecules in Eirene. The code attempts to find a match by default.
+					Number of hydrogen isotope nuclei for molecules in Eirene. If using only one hydrogen species, only the first element needs to be provided. Otherwise the 3 elements correspond to H/D/T. The code attempts to find a match by default.
 				</description>
 			</switch>
 			<switch>

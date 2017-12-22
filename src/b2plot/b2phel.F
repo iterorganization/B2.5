@@ -21,7 +21,7 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer i,j,k,l,m,n
+      integer i,j,k,l,m,n,is
       real (kind=R8) ::
      . hlp_tot,hlp_he,hlp,hlp_p,hlp_s,hlp_pi,hlp_si,hlp_po,hlp_so
       integer n_wll_hlp
@@ -42,11 +42,16 @@ c
       do i=1,n_wll_hlp
         k=ind_wll_hlp(i)
         hlp_he=hlp_he+wldna(k,j_he_at,0)
-        hlp_tot=hlp_tot+wldna(k,j_h_at,0)
+        do is=1,3
+          if (j_h_at(is).eq.0) cycle
+          hlp_tot=hlp_tot+wldna(k,j_h_at(is),0)
+          do j=1,nmoli
+            if(mlcmp(j_h_at(is),j).gt.0) then
+              hlp_tot=hlp_tot+wldnm(k,j,0)*mlcmp(j_h_at(is),j)
+            end if
+          end do
+        end do
         do j=1,nmoli
-          if(mlcmp(j_h_at,j).gt.0) then
-            hlp_tot=hlp_tot+wldnm(k,j,0)*mlcmp(j_h_at,j)
-          end if
           if(mlcmp(j_he_at,j).gt.0) then
             hlp_he=hlp_he+wldnm(k,j,0)*mlcmp(j_he_at,j)
           end if
