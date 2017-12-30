@@ -9,6 +9,7 @@
      *   dtmo(:,:),
      *   dtee(:),
      *   dtei(:)
+     *   , corr_core_dn(:)                                 ! IYS 19.12.2017
       logical, allocatable, save ::
      *   solveco(:,:),
      *   solvemo(:,:),
@@ -27,6 +28,7 @@
       real (kind=R8), save :: dtmo(0:nsdmax-1,0:NNREGMAX)
       real (kind=R8), save :: dtee(0:NNREGMAX)
       real (kind=R8), save :: dtei(0:NNREGMAX)
+      real (kind=R8), save :: corr_core_dn(0:nsdmax-1)   ! IYS 19.12.2017 
       logical, save :: solveco(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemt(0:NNREGMAX)
@@ -37,6 +39,7 @@
       logical, save :: last_solve_5(0:NNREGMAX)
       logical, save :: last_solve_9(0:NNREGMAX)
 #endif
+      real (kind=R8), save :: corr_core_dt               ! IYS 19.12.2017 
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
       real (kind=R8), allocatable, save :: time_factor(:,:)
@@ -52,6 +55,7 @@
      1 core_dt_suppression,core_dt_factor,
      2 solveco,solvemo,solvepo,solveee,solveei,write_nml_num,
      3 numerics_filename,numerics_time_mod,numerics_time_switch
+     4 ,corr_core_dn,corr_core_dt    ! IYS 19.12.2017
 
 
       contains
@@ -69,6 +73,7 @@
       allocate(dtmo(0:nsd-1,0:nnreg(0)))
       allocate(dtee(0:nnreg(0)))
       allocate(dtei(0:nnreg(0)))
+      allocate(corr_core_dn(0:nsd-1))    ! IYS 19.12.2017
       allocate(solveco(0:nsd-1,0:nnreg(0)))
       allocate(solvemo(0:nsd-1,0:nnreg(0)))
       allocate(solvemt(0:nnreg(0)))
@@ -88,6 +93,8 @@
       dtmo=1.0_R8
       dtee=1.0_R8
       dtei=1.0_R8
+      corr_core_dn=1.0_R8     ! IYS 19.12.2017
+      corr_core_dt=1.0_R8     ! IYS 19.12.2017
       time_factor_required=0.1_R8
       core_dt_suppression=1.0_R8
       core_dt_factor=1.0_R8
@@ -120,6 +127,8 @@
       deallocate(dtmo)
       deallocate(dtee)
       deallocate(dtei)
+      deallocate(corr_core_dn)     ! IYS 19.12.2017
+      deallocate(corr_core_dt)     ! IYS 19.12.2017
       deallocate(solveco)
       deallocate(solvemo)
       deallocate(solvemt)
@@ -139,7 +148,7 @@
 
       integer nx,ny,nsmin,nsmax
       logical :: file_ok
-      integer ix,iy
+      integer ix,iy,is
       real (kind=R8) :: ttf
       character*260 filename
 
@@ -154,6 +163,10 @@
         read(99,numerics)
 #endif
         write(*,*) 'Read namelist numerics from ',trim(filename)
+!        do is=nsmin, nsmax-1 
+!          write(*,*) 'is = ',is,'; corr_core_dn = ',corr_core_dn(is)
+!        enddo
+!        write(*,*) 'corr_core_dt = ', corr_core_dt
         do ix = 0, nnreg(0)
           solveet(ix) = solveee(ix).or.solveei(ix)
           solvemt(ix) = .false.

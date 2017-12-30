@@ -9,6 +9,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_numerics_namelist , only : corr_core_dt                ! IYS 19.12.2017 
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv
@@ -39,7 +40,7 @@
       integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg
       real (kind=R8) ::
      *  ctt, dte, dti, t0, t1, t2
-      real (kind=R8), save :: c_corr_core_dt = 1.0_R8                     !lk 26.10.17
+!      real (kind=R8), save :: c_corr_core_dt = 1.0_R8                     !lk 26.10.17
       real (kind=R8) :: 
      *  dte1(-1:nx,-1:ny), dti1(-1:nx,-1:ny),                             !lk 26.10.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny), tt3(-1:ny)                    !lk 26.10.17
@@ -66,7 +67,7 @@
       n2=(nx+2)*(ny+2)
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2upht_c_corr_core_dt', c_corr_core_dt)              !lk 26.10.2017
+!       call ipgetr ('b2upht_c_corr_core_dt', c_corr_core_dt)              !lk 26.10.2017
        call ipgeti ('b2upht_stylec', stylec)
        call xertst (0.le.stylec, 'faulty internal parameter stylec')
        call ipgeti ('b2news_poteq', pot_eq)
@@ -150,9 +151,9 @@
             if(on_closed_surface(ix,iy) .and. 
      *                                 bottomiy(ix,iy).ne.-2) then
               dti1(ix,iy) = tt1(iy)/tt0(iy) +
-     *         c_corr_core_dt*(dti1(ix,iy)-tt1(iy)/tt0(iy))
+     *         corr_core_dt*(dti1(ix,iy)-tt1(iy)/tt0(iy))    ! IYS 19.12.2017
               dte1(ix,iy) = tt3(iy)/tt2(iy) +
-     *         c_corr_core_dt*(dte1(ix,iy)-tt3(iy)/tt2(iy))
+     *         corr_core_dt*(dte1(ix,iy)-tt3(iy)/tt2(iy))    ! IYS 19.12.2017
             endif
           enddo
         enddo                                             !lk 26.10.2017}
