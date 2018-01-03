@@ -119,7 +119,7 @@
 !!      (b2fgmtry, b2fstate etc.) and run the following command:
 !!
 !!      @verbatim
-!!          $HOME/solps-iter/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe <shot> <run> <username> <device> <version>
+!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe --shot <shot> --run <run> --username <username> --device <device> --version <version> --step <step>
 !!      @endverbatim
 !!
 !!      The arguments marked with < ... > are the parameters of the IDS database
@@ -133,7 +133,7 @@
 !!
 !!      Example of the command:
 !!      @verbatim
-!!          $HOME/solps-iter/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe 100 7 penkod solps-iter 3
+!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe --shot 1512 --run 6 --username penkod --device solps-iter --version 3 --step 250
 !!      @endverbatim
 !!
 !!      \b References:
@@ -301,7 +301,7 @@ program b2_ual_write_b2mod
                     call get_command_argument( cptArg + 1, device )
                 case("--version")
                     call get_command_argument( cptArg + 1, version )
-                case("--numstep")
+                case("--step")
                     call get_command_argument( cptArg + 1, num_step_string )
                     !! Transform dummy string variable to integer
                     read( num_step_string, *) num_step
@@ -334,12 +334,13 @@ program b2_ual_write_b2mod
 
     !! If steps were defined then run the b2mn_step routine for the number of
     !! steps
-    if( num_step .ge. -1 ) then
+    if( num_step .gt. -1 ) then
         write(0,*) "Running b2mn_step(", num_step, ")"
         write(0,*) "num_step: ", num_step
         call b2mn_step( num_step )
+        write(0,*) "b2mn_step() completed"
     end if
-    write(0,*) "b2mn_step() completed"
+
 
     ! write(0,*) " Running b2mn_fin"
     ! call b2mn_fin
