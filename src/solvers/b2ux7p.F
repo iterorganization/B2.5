@@ -75,7 +75,7 @@
       external subini, subend, xertst, ipgeti, ipgetr, slv5pt, iluter
 *   ..initialisation
       save ncall, style, acpar, cpu
-      data ncall/0/, style/3/, acpar/8.0e0_R8/, cpu/0/
+      data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/             !srv 26.12.17
 
 *-----------------------------------------------------------------------
 *.computation
@@ -311,4 +311,4 @@
        enddo
       endif
 
-      end                                                         !sv 29.05.02
+      end                                                         !srv 29.05.02

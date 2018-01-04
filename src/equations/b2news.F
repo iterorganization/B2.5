@@ -190,11 +190,6 @@
      &   ' or both should be false')
        call ipgeti ('b2news_use_b2npc9', use_b2npc9)                  !srv 06.11.08
        call ipgeti ('b2news_use_b2nph9', use_b2nph9)                  !srv 06.11.08
-       call xertst
-     .  (.not.(((use_b2nph9.eq.1.and.(mdf_fhe.ne.0.or.mdf_fhi.ne.0))
-     &      .or.(use_b2npc9.eq.1.and. mdf_fnb.ne.0)).and.
-     &           vis_per.ne.0.0_R8 .and. style.eq.2),
-     &      'Cannot use ma28 for both the 7- and 9-point stencils')
        call ipgeti ('b2news_iout', iout)
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then

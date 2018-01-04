@@ -21,7 +21,7 @@ MPI_CPP   ?= `pkg-config mpich2-ch3 --cflags`
 LD_MPI    ?= `pkg-config mpich2-ch3 --libs`
 else
 ifdef USE_IMPGYRO
-FC 	   = mpif90
+FC         = mpif90
 MPI_CPP   ?= `pkg-config mpich2-ch3 --cflags`
 LD_MPI    ?= `pkg-config mpich2-ch3 --libs`
 else
@@ -34,7 +34,7 @@ ifdef USE_MPI
 FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore ${MPI_CPP}
+FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all ${MPI_CPP}
 else
 FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all
 endif
@@ -65,8 +65,8 @@ GRLIBES    = ${LD_NCARG} ${LD_MSCL}
 LDLIBES    = ${LD_NETCDF} ${LD_NAG} -lz
 
 ifdef LD_CATALYST
-CXX = c++
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
+CXX        = c++
+CXXFLAGS   = -std=c++11 $(shell paraview-config --include)
 endif
 
 #wd: removed; seems to be unused
@@ -87,13 +87,12 @@ IMASLIBS   = ${LD_UAL} -lggd-ifort -Wl,-rpath,${EBROOTANACONDA3}/lib
 endif
 
 LD         = ${FC}
+LDOPTS     = -i_dynamic
 ifdef USE_MPI
-LDOPTS     = -i_dynamic ${LD_MPI}
+LDLIBES   += ${LD_MPI}
 else
 ifdef USE_IMPGYRO
-LDOPTS     = -i_dynamic ${LD_MPI}
-else
-LDOPTS     = -i_dynamic
+LDLIBES   += ${LD_MPI}
 endif
 endif
 

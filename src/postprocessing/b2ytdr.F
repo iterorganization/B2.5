@@ -173,14 +173,14 @@ c 2002-09-11: logic revised
       integer scaling_ix_begin(nscale), scaling_ix_end(nscale)
       integer elm_ix_begin, elm_ix_end
       integer ndim, ndm2, nfitanf, nfitend, ifail
-      integer invert_bpol, invert_btor
+      integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120,
      .          ligne*120
       character id0*8
       character*4 solps_version
       data solps_version / 'iter' /
-      data invert_bpol/0/, invert_btor/0/
+      data invert_bpol/0/, invert_btor/0/, b2ux7p_style/2/
       character*10 :: b2fgmtry_oldversion, b2fgmtry_newversion
       data b2fgmtry_oldversion / '00.000.000' /
       character tab
@@ -1324,6 +1324,8 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfnb_xfrhiehz', xfrhiehz)
       call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)
       call ipgetr ('b2tfhe_inert', b2tfhe_inert)
+      call ipgeti ('b2ux7p_style', b2ux7p_style)
+      if (b2ux7p_style.eq.3) b2ux7p_style = 2
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1603,6 +1605,8 @@ c 2002-09-11: logic revised
           iswitch = ns1max
         case('b2mndr_isfb')
           iswitch = isfb
+        case('b2ux7p_style')
+          iswitch = b2ux7p_style
         case('b2trcl_conductive limit')
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
@@ -1610,7 +1614,8 @@ c 2002-09-11: logic revised
      &                         'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
-        case('eirene_fixmap','b2tfnb_fnb_nodrift_style')  ! No longer needed
+        case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
+     &       'b2npp7_style')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')

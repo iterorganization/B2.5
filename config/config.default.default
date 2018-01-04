@@ -13,23 +13,23 @@ ifndef LD_NETCDF
 endif
 
 
-EQUIVS = 		# name changes for single precision version
+EQUIVS =      # name changes from single precision version
 
-CPP = 			# where to find CPP
-CPPOPTS = 		# options for CPP
+CPP =         # where to find CPP
+CPPOPTS =     # options for CPP
 
-FC = 			# fortran compiler
-FCOPTS = 		# options for fortan compiler for single precision version
-INCMOD =		# option for including modules
-MOD =			# module suffix
+FC =          # fortran compiler
+FCOPTS =      # options for fortan compiler for single precision version
+INCMOD =      # option for including modules
+MOD =         # module suffix
 
-BLD = 			# program an options for building a library
+BLD =         # program and options for building a library
 
-GRLIBES = 		# libraries for single precision version
-LDLIBES = 		# libraries for double precision version
+GRLIBES =     # graphics libraries
+LDLIBES =     # other libraries
 
-LD = 			# loader
-LDOPTS = 		# options for loader
+LD =          # loader
+LDOPTS =      # options for loader
 
 #!!!Local Variables:
 #!!! mode: Makefile

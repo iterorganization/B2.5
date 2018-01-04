@@ -174,10 +174,6 @@
        call ipgeti ('b2tfnb_mdf', mdf_fnb)                               !srv 13.10.06 {
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
        call ipgeti ('b2tfhi_mdf', mdf_fhi) 
-       call xertst
-     .  (.not.(((mdf_fhe.ne.0.or.mdf_fhi.ne.0).or.mdf_fnb.ne.0).and.
-     &           vis_per.ne.0.0_R8 .and. style.eq.2),
-     &      'Cannot use ma28 for both the 7- and 9-point stencils')
        call ipgeti ('b2news_iout', iout)
        call ipgeti ('b2npc9_iout', iout_b2npc9)                          !srv 16.07.10 {
        call ipgeti ('b2npco_iout', iout_b2npco)

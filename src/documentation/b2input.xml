@@ -3138,11 +3138,11 @@
 			</switch>
 			<switch>
 				<name>b2ux7p_style</name>
-				<default>3</default>
+				<default>2</default>
 				<type>integer</type>
 				<description>
-					Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = 5-pt stencil, Style.eq.2 = MA28copy. Style.eq.3 = SDRV from YSMP
-					NOTE: Only style.eq.3 will give good results. Other values are NOT recommended!
+				Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = 5-pt stencil, Style.eq.2 = MA28copy3. Style.eq.3 = SDRV from YSMP
+				NOTE: Only style.eq.2 will give good results. Applying of style.eq.3 should be corrected and is no longer recommended. It might give slow convergence or even divergence of the potential equation. Other values are NOT recommended!
 				</description>
 			</switch>
 			<switch>
@@ -3671,14 +3671,6 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
-			<switch>
-				<name>b2npp7_style</name>
-				<default>1</default>
-				<type>integer</type>
-				<description>
-					When set to '1', SPb's form of the program b2usp7_ is called. It is recommended '1'.
-				</description>
-			</switch>
 			<switch>
 				<name>b2npmo_rxg</name>
 				<default>1.0e6</default>
