@@ -271,6 +271,10 @@ contains
         call rwcdf (rw, ncid, 'nastep', imap, tstepn, iret)
         call check_cdf_status(iret)
         nastep = nint(tstepn(1))
+        iret = nf_close(ncid)
+        call check_cdf_status(iret)
+        iret = nf_open(trim(filename),NCWRITE,ncid)
+        call check_cdf_status(iret)
         write(6,'(a)') trim(filename)//' will be appended'
       else
         ntstep = 0

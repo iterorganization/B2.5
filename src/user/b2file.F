@@ -96,22 +96,25 @@ c
       if(ex.and.stim.lt.0.0_R8) then
 c*** Old file to be appended - check it
         l=2
-        read(ntrc(ntrc_tst),700,err=900) hlp_c,i,m,n,j
+        read(ntrc(ntrc_tst),*,err=900) hlp_c,i,m,n
         if(i.ne.lvt) then
-          write(*,*) '!! b2file: current version ',lvt,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!! b2file: current version ',lvt,
+     ,     ' differs from that in the file ',trim(f),' : ',i
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
         if(m.ne.nstrai) then
-          write(*,*) '!! b2file: current number of strata (nstrai=',
-     ,     nstrai,') differs from that in the file ',trim(f)
+          write(*,'(a,i3,3a,i3)')
+     ,     '!! b2file: current number of strata (nstrai=',nstrai,
+     ,     ') differs from that in the file ',trim(f),' : ',m
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
         if(n.ne.nnatmi) then
-          write(*,*) '!! b2file: current number of atoms (nnatmi=',
-     ,     nnatmi,') differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!! b2file: current number of atoms (nnatmi=',nnatmi,
+     ,     ') differs from that in the file ',trim(f),' : ',n
           write(*,*) ' --  Remove the file first!'
           go to 1000
         end if
@@ -125,24 +128,28 @@ c*** New file - write the headers
 c          write(hlp_frmt,'(7h(3h#it,,i3,21h(1h'//tab//
 c     /     ',a8,i2.2,1h_,a2)))')
 c     -                          nstrai*5*(nnatmi+1)
-          write(hlp_frmt,'(a,i3,a)')
-     /         '(''#it'',',
-     -                          nstrai*5*(nnatmi+1),
-     /         '('''//tab//''',a8,i2.2,''_'',a2))'
+c          write(hlp_frmt,'(a,i3,a)')
+c     /         '(''#it'',',
+c     -                          nstrai*5*(nnatmi+1),
+c     /         '('''//tab//''',a8,i2.2,''_'',a2))'
+          write(hlp_frmt,'(a,i3,a,i2,a)')
+     /         '(''#it'',',nstrai*5,
+     /         '('''//tab//''',a8,i2.2,a3,',
+     /          nnatmi,'('''//tab//''',a8,i2.2,''_'',a2)))'
 c<<<
           print *,'%%% b2file: header format'   !###
           print *,trim(hlp_frmt)                !###
 c>>>
           write(ntrc(ntrc_tst),hlp_frmt,err=900)
-     -     ('sclstra_',i,'  ',
+     -     ('sclstra_',i,'   ',
      ,     ('sclstra_',i,atoms_list(k),k=1,nnatmi),
-     ,     'sclalph_',i,'  ',
+     ,      'sclalph_',i,'   ',
      ,     ('sclalph_',i,atoms_list(k),k=1,nnatmi),
-     ,      'sclbase_',i,'  ',
+     ,      'sclbase_',i,'   ',
      ,     ('sclbase_',i,atoms_list(k),k=1,nnatmi),
-     ,      'sclrtio_',i,'  ',
+     ,      'sclrtio_',i,'   ',
      ,     ('sclrtio_',i,atoms_list(k),k=1,nnatmi),
-     ,      'sclsrcn_',i,'  ',
+     ,      'sclsrcn_',i,'   ',
      ,     ('sclsrcn_',i,atoms_list(k),k=1,nnatmi),i=1,nstrai)
         end if
       end if
@@ -167,22 +174,25 @@ c
       rewind(ntrc(ntrc_res))
       if(ex.and.stim.lt.0.0_R8) then
         l=2
-        read(ntrc(ntrc_res),700,err=5) hlp_c,i,j,k
+        read(ntrc(ntrc_res),*,err=5) hlp_c,i,j,k
         if(i.ne.lvr) then
-          write(*,*) '!! b2file: current version ',lvr,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!! b2file: current version ',lvr,
+     ,     ' differs from that in the file ',trim(f),' : ',i
           write(*,*) ' --  Remove the file first!'
           go to 10
         end if
         if(j.ne.nnreg(0)) then
-          write(*,*) '!! b2file: current number of regions ',
-     ,                nnreg(0),' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!! b2file: current number of regions ',nnreg(0),
+     ,     ' differs from that in the file ',trim(f),' : ',j
           write(*,*) ' --  Remove the file first!'
           go to 10
         end if
         if(k.ne.ns-nspecies) then
-          write(*,*) '!! b2file: current number of ion species (nis=',
-     ,     ns-nspecies,') differs from that in the file ',trim(f)
+          write(*,'(a,i3,3a,i3)')
+     ,     '!! b2file: current number of ion species (nis=',ns-nspecies,
+     ,     ') differs from that in the file ',trim(f),' : ',k
           write(*,*) ' --  Remove the file first!'
           go to 10
         else
@@ -244,20 +254,23 @@ c
         l=2
         read(ntrc(ntrc_src),700,err=30) hlp_c,i,j,k
         if(i.ne.lvs) then
-          write(*,*) '!! b2file: current version ',lvs,
-     ,     ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!! b2file: current version ',lvs,
+     ,     ' differs from that in the file ',trim(f),' : ',i
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
         if(j.ne.nnreg(0)) then
-          write(*,*) '!! b2file: current number of regions ',
-     ,                nnreg(0),' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!! b2file: current number of regions ',nnreg(0),
+     ,     ' differs from that in the file ',trim(f),' : ',j
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if
         if(k.ne.nspecies) then
-          write(*,*) '!! b2file: current number of species (nspecies=',
-     ,     nspecies,') differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!! b2file: current number of species (nspecies=',nspecies,
+     ,     ') differs from that in the file ',trim(f),' : ',k
           write(*,*) ' --  Remove the file first!'
           go to 35
         end if

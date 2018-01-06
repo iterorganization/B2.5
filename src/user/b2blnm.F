@@ -289,15 +289,16 @@ c
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
-        read(lun,701,err=92) nv,nd_tmp,ndv_tmp
+        read(lun,*,err=92) hlp_c,nv,nd_tmp,ndv_tmp
   700   format('#   ',3i8/'#  ',a)
-  701   format(4x,3i8)
+  701   format(a1,3x,3i8)
         lv_trc(ltrc)=nv
         warn_tmp=.false.
         if(nv.ne.lv) then
           warn_tmp=.true.
-          write(*,*) '!!! b2blnm: current version ',lv,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! b2blnm: current version ',lv,
+     ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. lvm) then
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -308,15 +309,17 @@ c*** It was a major change of the file format - impossible to continue
         end if
         if(ndv_tmp.ne.ndiv) then
           warn_tmp=.true.
-          write(*,*) '!!! b2blnm: current number of divertor legs ',
-     ,                ndiv,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2blnm: current number of divertor legs ',ndiv,
+     ,     ' differs from that in the file ',trim(f),' : ',ndv_tmp
           filedata(ltrc)=.false.
         end if
         if(nd_tmp.ne.nqudiv) then
           warn_tmp=.true.
-          write(*,*) '!!! b2blnm: current number of columns',
-     ,                ' for divertor data',nqudiv,
-     ,                ' differs from that in the file ',trim(f)
+          write(*,'(2a,i4,3a,i4)')
+     ,     '!!! b2blnm: current number of columns',
+     ,     ' for divertor data ',nqudiv,
+     ,     ' differs from that in the file ',trim(f),' : ',nd_tmp
           if(nd_tmp.gt.nqudiv) then
             filedata(ltrc)=.false.
           end if

@@ -196,8 +196,8 @@ c          write(0,*) 'after parsehdr. nhd,m,nmr,ir= ',nhd,m,nmr,ir !###
 c          write(0,*) 'mrkr: ',mrkr !###
 c          write(0,*) 'mrks: ',mrks !###
  20       if(ir.ne.0) then !{
-            write(*,*) '!!!! ',trim(fn),' :',ir,' :',nhd,2*nhdr,' :',
-     ,                                              m,mhdr,' :',nmr,nmrk
+            write(*,'(3a,i4,a,2i4,a,2i4,a,2i4)') '!!!! ',trim(fn),' : ',
+     ,       ir,' : ',nhd,2*nhdr,' : ',m,mhdr,' : ',nmr,nmrk
             if(ir.gt.0) then !{
               write(*,*) 'combfile: limits violation in the header of ',
      ,          trim(fn)
@@ -237,15 +237,16 @@ c      write(0,*) 'ex,fn=',ex,'  ',trim(fn)  !###
 
       if(ex) then !{
 
-c*** Check  whether the number of markers or their values have changed
+c*** Check whether the number of markers or their values have changed
 
         iret=0
         op=nmr.ne.nmrk
         if(op .and. (nmr.eq.0 .or. nmrk.eq.0) .or. nmr.gt.0 .and.
      .                                      mrks(1).ne.mrkr(1)) then !{
           iret=iret+4
-          write(*,*) '!!! combfile: current version ',mrks(1),
-     ,                         '  differs from that in the file ',fn
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! combfile: current version ',mrks(1),
+     ,     ' differs from that in the file ',trim(fn),' : ',mrkr(1)
         end if !}
         if(.not.op) then !{
           do i=2,nmr !{

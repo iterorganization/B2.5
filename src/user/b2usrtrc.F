@@ -342,9 +342,9 @@ c*** Check the input data for consistency and prepare indices
           end if !}
         end do !}
 
-        print '(a,3(i3,1x),l1)',
-     ,          '%% b2usrtrc: j_he_at,j_h_at,j_he_i,double_null = ', !###
-     ,                        j_he_at,j_h_at,j_he_i,double_null      !###
+        print '(a,5(i3,1x),l1)',
+     ,   '%% b2usrtrc: j_he_at,j_h_at(1:3),j_he_i,double_null = ', !###
+     ,                 j_he_at,j_h_at     ,j_he_i,double_null      !###
 
 c*** Prepare for neutral data evaluation at diagnostic surfaces
 
@@ -1488,17 +1488,18 @@ c*** f     :  the associated file name
         na_tmp=0
         np_tmp=0
         ns_tmp=0
-        read(lun,701,err=92) nv,ng_tmp
+        read(lun,*,err=92) hlp_c,nv,ng_tmp
         lv_trc(ltrc)=nv
         if(nv.ge.20000727) then !{
           rewind(lun)
-          read(lun,701,err=92) nv,ng_tmp,np_tmp,ns_tmp,na_tmp
+          read(lun,*,err=92) hlp_c,nv,ng_tmp,np_tmp,ns_tmp,na_tmp
         end if !}
         warn_tmp=.false.
         if(nv.ne.lv) then !{
           warn_tmp=.true.
-          write(*,*) '!!! b2usrtrc: current version ',lv,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! b2usrtrc: current version ',lv,
+     ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. lvmj) then !{
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -1514,24 +1515,29 @@ c*** It was a major change of the file format - impossible to continue
           end if !}
         end if !}
         if(na_tmp.ne.npfrgrp) then !{
-          write(*,*) '!!! b2usrtrc: current number of PFR surface ',
-     ,     'groups ',npfrgrp,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2usrtrc: current number of PFR surface groups ',
+     ,     npfrgrp,
+     ,     ' differs from that in the file ',trim(f),' : ',na_tmp
           filedata(ltrc)=.false.
         end if !}
         if(npfrgrp.gt.0) then !{
           if(ng_tmp.ne.nglb_tmp) then !{
-            write(*,*) '!!! b2usrtrc: current number of global values ',
-     ,       nglb_tmp,' differs from that in the file ',trim(f)
+            write(*,'(a,i4,3a,i4)')
+     ,       '!!! b2usrtrc: current number of global values ',nglb_tmp,
+     ,       ' differs from that in the file ',trim(f),' : ',ng_tmp
             filedata(ltrc)=.false.
           end if !}
           if(np_tmp.ne.npff_tmp) then !{
-            write(*,*) '!!! b2usrtrc: current number of PFR values ',
-     ,       npff_tmp,' differs from that in the file ',trim(f)
+            write(*,'(a,i2,3a,i2)')
+     ,       '!!! b2usrtrc: current number of PFR values ',npff_tmp,
+     ,       ' differs from that in the file ',trim(f),' : ',np_tmp
             filedata(ltrc)=.false.
           end if !}
           if(ns_tmp.ne.nspecies) then !{
-            write(*,*) '!!! b2usrtrc: current number of species ',
-     ,       nspecies,' differs from that in the file ',trim(f)
+            write(*,'(a,i2,3a,i2)')
+     ,       '!!! b2usrtrc: current number of species ',nspecies,
+     ,       ' differs from that in the file ',trim(f),' : ',ns_tmp
             filedata(ltrc)=.false.
           end if !}
         end if !}
@@ -1841,6 +1847,6 @@ c     Finalization step
       return
 c=======================================================================
   700 format('#   ',5i8)
-  701 format(4x,5i8)
+  701 format(a1,3x,5i8)
 c=======================================================================
       end subroutine b2usrtrc
