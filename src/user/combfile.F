@@ -407,7 +407,7 @@ c*** re-write the existing file
 
           ncln=1
           allocate(cline(ncln))
-          write(frmhdr,'(1h(,i2,2ha))') ncln
+          write(frmhdr,'(1h(,i3,2ha))') ncln
           l=len(cline)
           nrec=0
           first=.true.
@@ -482,7 +482,7 @@ c*** non-space on both sides of the section borders - the field is split
               ncln=ncln+1
               deallocate(cline)
               allocate(cline(ncln))
-              write(frmhdr,'(1h(,i2,2ha))') ncln
+              write(frmhdr,'(1h(,i3,2ha))') ncln
               backspace lrd
             end if !}
  40       continue

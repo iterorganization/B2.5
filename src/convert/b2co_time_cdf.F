@@ -213,7 +213,8 @@ c prepare the b2time.nc.xxxx file
       status=nf_create(trim(filename),NF_NOCLOBBER,ncid2)
       call check_cdf_status(status)
       call b2crtimecdf(filename, nx, ny, nybl, nytl, nytr, nybr,
-     .                 nya, nyi, nc, ns, nbatch, write_2d, ncid2, iret)
+     .                 nya, nyi, nc, ns, nbatch, write_2d, ncid2,
+     .                 .false., iret)
       status=nf_open(trim(filename),NF_WRITE,ncid2)
       call check_cdf_status(status)
 

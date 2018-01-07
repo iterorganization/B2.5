@@ -246,11 +246,13 @@ c***               groups, number of diagnostic surface groups
       parameter(nrkn_hlp=7)
       integer mrkn_hlp(nrkn_hlp), mrks_hlp(nrkn_hlp)
       integer jxi, jxa, jsep
+      integer use_eirene
       logical ex, warn_tmp, first, first_out, double_null
       character tab, hlp_c, f*(lenfnm)
       character hlp_frm*120, hlp_frf*240, hlp_tpl*2
       data hlp_neu_peak / 5.0_R8 /
       data itg_tmp / 4*-2 /
+      data use_eirene / 0 /
       data first,first_out / 2*.true. /, double_null / .false. /
 c-----------------------------------------------------------------------
 c*** Column headers:
@@ -297,6 +299,7 @@ c          print *
 c        end if !}
 c!###}
         tab=char(9)
+        call ipgeti ('b2mndr_eirene', use_eirene)
 c-----------------------------------------------------------------------
 c*** Check the topology
 
@@ -947,7 +950,7 @@ c*** Helium fraction and related data - flux estimation
 c*** Calculate the peak powers to the targets
 c***  (assuming a peaking factor of hlp_neu_peak for neutrals)
 
-      if(l_neutflux.lt.0) then !{ VK
+      if(l_neutflux.lt.0 .or. use_eirene.eq.0) then !{ VK
 c inner target
         hlp_ppwi=0.0_R8
         hlp_s=0.0_R8
@@ -1090,7 +1093,7 @@ c       hlp_ppwo=wtarg_max(nncut)
 
 #ifdef B25_EIRENE
 c*** Calculate the neutral flows in PFR
-
+      if (use_eirene.eq.0) goto 30
       do k=1,npfrgrp !{
         do j=1,nspecies !{
           hlp=1.0_R8/2.7e20_R8
