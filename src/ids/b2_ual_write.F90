@@ -23,75 +23,74 @@
 program b2_ual_write
 
     use b2mod_main
-    ! use b2mod_ual
-    ! use b2mod_grid_mapping
-    ! use b2mod_ual_io
-    ! use ids_schemas     ! IGNORE
-    !                     !! These are the Fortran type definitions for the
-    !                     !! Physics Data Model
-    ! use ids_routines    ! IGNORE
-    !                     !! These are the Access Layer routines + management of
-    !                     !! IDS structures
-    ! use ids_assert      ! IGNORE
-    ! use ids_grid_common &       ! IGNORE
-    !     & , IDS_COORDTYPE_R => COORDTYPE_R    &
-    !     & , IDS_COORDTYPE_Z => COORDTYPE_Z
-    !     ! &   GRID_UNDEFINED  => B2_GRID_UNDEFINED
-    ! use ids_string              ! IGNORE
-    ! use ids_grid_subgrid        ! IGNORE
-    ! use ids_grid_objectlist     ! IGNORE
-    ! use ids_grid_examples       ! IGNORE
-    ! use ids_grid_unstructured   ! IGNORE
-    ! use ids_grid_structured     ! IGNORE
+    use b2mod_ual
+    use b2mod_grid_mapping
+    use b2mod_ual_io
+    use ids_schemas     ! IGNORE
+                        !! These are the Fortran type definitions for the
+                        !! Physics Data Model
+    use ids_routines    ! IGNORE
+                        !! These are the Access Layer routines + management of
+                        !! IDS structures
+    use ids_assert      ! IGNORE
+    use ids_grid_common &       ! IGNORE
+        & , IDS_COORDTYPE_R => COORDTYPE_R    &
+        & , IDS_COORDTYPE_Z => COORDTYPE_Z
+        ! &   GRID_UNDEFINED  => B2_GRID_UNDEFINED
+    use ids_string              ! IGNORE
+    use ids_grid_subgrid        ! IGNORE
+    use ids_grid_objectlist     ! IGNORE
+    use ids_grid_examples       ! IGNORE
+    use ids_grid_unstructured   ! IGNORE
+    use ids_grid_structured     ! IGNORE
 
-    ! implicit none
+    implicit none
 
-    ! external ipgeti, ipgetc
+    external ipgeti, ipgetc
 
-    ! !! Local variables
-    ! character(len=24) :: treename   !< The name of the IMAS IDS database
-    !     !< (i.e. "edge_profiles" (mandatory) )
-    ! character(len=24), save :: username   !< Creator/owner of the IMAS IDS database
-    ! character(len=24), save :: device     !< Device name of the IMAS IDS database
-    !     !< (i. e. solps-iter, iter, aug)
-    ! character(len=24) :: version    !< Major version of the IMAS IDS database
-    ! integer :: idx  !< The returned identifier to be used in the subsequent
-    !     !< data access operation
-    ! integer, save :: shot !< The shot number of the database being created
-    ! integer, save :: run  !< The run number of the database being created
-    ! type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store data on
-    !     !< edge plasma profiles  (includes the scrape-off layer and possibly
-    !     !< part of the confined plasma)
-    ! type (ids_edge_sources) :: edge_sources !< IDS designed to store
-    !     !< data on edge plasma sources. Energy terms correspond to the full
-    !     !< kinetic energy equation (i.e. the energy flux takes into account
-    !     !< the energy transported by the particle flux)
-    ! type (ids_edge_transport) :: edge_transport !< IDS designed to store
-    !     !< data on edge plasma transport. Energy terms correspond to the
-    !     !< full kinetic energy equation (i.e. the energy flux takes into
-    !     !< account the energy transported by the particle flux)
+    !! Local variables
+    character(len=24) :: treename   !< The name of the IMAS IDS database
+        !< (i.e. "edge_profiles" (mandatory) )
+    character(len=24), save :: username   !< Creator/owner of the IMAS IDS database
+    character(len=24), save :: device     !< Device name of the IMAS IDS database
+        !< (i. e. solps-iter, iter, aug)
+    character(len=24) :: version    !< Major version of the IMAS IDS database
+    integer :: idx  !< The returned identifier to be used in the subsequent
+        !< data access operation
+    integer, save :: shot !< The shot number of the database being created
+    integer, save :: run  !< The run number of the database being created
+    type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store data on
+        !< edge plasma profiles  (includes the scrape-off layer and possibly
+        !< part of the confined plasma)
+    type (ids_edge_sources) :: edge_sources !< IDS designed to store
+        !< data on edge plasma sources. Energy terms correspond to the full
+        !< kinetic energy equation (i.e. the energy flux takes into account
+        !< the energy transported by the particle flux)
+    type (ids_edge_transport) :: edge_transport !< IDS designed to store
+        !< data on edge plasma transport. Energy terms correspond to the
+        !< full kinetic energy equation (i.e. the energy flux takes into
+        !< account the energy transported by the particle flux)
 
-    ! !! Set default value for IMAS major version and IDS treename
-    ! version = "3"
-    ! treename = 'ids'
 
-    ! call ipgeti( 'b2mndr_shot_num', shot )
-    ! call ipgeti( 'b2mndr_run_num', run )
-    ! call ipgetc( 'b2mndr_user', username)
-    ! call ipgetc( 'b2mndr_device', device)
+    !! Set default value for IMAS major version and IDS treename
+    version = '3'
+    treename = 'ids'
 
-    ! write(*,*) shot, run, username, device
+    call ipgeti( 'b2mndr_shot_num', shot )
+    call ipgeti( 'b2mndr_run_num', run )
+    call ipgetc( 'b2mndr_user', username)
+    call ipgetc( 'b2mndr_device', device)
 
-    ! !! Process B2.5 data and set it to IMAS IDS
-    ! write(*,*) "START B25_process_ids"
-    ! call B25_process_ids( edge_profiles, edge_sources, edge_transport )
+    write(*,*) shot, run, username, device
 
-    ! !! Create Write the set data to IDSs
-    ! write(*,*) "START put_ids_edge"
-    ! call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,   &
-    !     &   shot, run, idx, username, device, version )
+    !! Process B2.5 data and set it to IMAS IDS
+    write(*,*) "START B25_process_ids"
+    call B25_process_ids( edge_profiles, edge_sources, edge_transport )
 
-contains
+    !! Create Write the set data to IDSs
+    write(*,*) "START put_ids_edge"
+    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,   &
+        &   shot, run, idx, username, device, version )
 
 end program b2_ual_write
 
