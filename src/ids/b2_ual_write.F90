@@ -51,14 +51,14 @@ program b2_ual_write
     !! Local variables
     character(len=24) :: treename   !< The name of the IMAS IDS database
         !< (i.e. "edge_profiles" (mandatory) )
-    character(len=24), save :: username   !< Creator/owner of the IMAS IDS database
-    character(len=24), save :: device     !< Device name of the IMAS IDS database
+    character(len=24) :: username   !< Creator/owner of the IMAS IDS database
+    character(len=24) :: device     !< Device name of the IMAS IDS database
         !< (i. e. solps-iter, iter, aug)
     character(len=24) :: version    !< Major version of the IMAS IDS database
     integer :: idx  !< The returned identifier to be used in the subsequent
         !< data access operation
-    integer, save :: shot !< The shot number of the database being created
-    integer, save :: run  !< The run number of the database being created
+    integer :: shot !< The shot number of the database being created
+    integer :: run  !< The run number of the database being created
     type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store data on
         !< edge plasma profiles  (includes the scrape-off layer and possibly
         !< part of the confined plasma)
@@ -75,13 +75,17 @@ program b2_ual_write
     !! Set default value for IMAS major version and IDS treename
     version = '3'
     treename = 'ids'
+    write (*,*) 'Starting b2mn init'
+    call b2mn_init
+    ! call b2mn_step(0)
 
-    call ipgeti( 'b2mndr_shot_num', shot )
-    call ipgeti( 'b2mndr_run_num', run )
-    call ipgetc( 'b2mndr_user', username)
-    call ipgetc( 'b2mndr_device', device)
+    call ipgeti('b2mndr_shot_number', shot )
+    call ipgeti('b2mndr_run_number', run )
+    call ipgetc('b2mndr_user', username)
+    call ipgetc('b2mndr_device', device)
 
-    write(*,*) shot, run, username, device
+    write(*,*) 'Shot: ', shot, ' Run: ', run, ' user: ', username, ' device: ', &
+    	& device
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
