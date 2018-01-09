@@ -48,7 +48,8 @@ module b2mod_ual_io
     use ids_routines ! IGNORE
     use ids_assert   ! IGNORE
     use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &   ! IGNORE
-        &   IDS_COORDTYPE_Z => COORDTYPE_Z ! IGNORE
+        &   IDS_COORDTYPE_Z => COORDTYPE_Z,                 &   ! IGNORE
+        &   IDS_GRID_UNDEFINED => GRID_UNDEFINED                ! IGNORE
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
     use ids_grid_objectlist     ! IGNORE
@@ -72,8 +73,17 @@ module b2mod_ual_io
 
 contains
 
-    !> Process B2.5 data and set it to IMAS IDS
-    subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport )
+    !> Process B2.5 data and set it to IMAS IDS.
+    !! @note    The \b B25_process_ids routine enables to store data for
+    !!          specific time slice. By default it stores single default
+    !!          time slice of time slice value 0.0.
+    !!          \b num_time_slices_IN is required to beforehand allocate
+    !!          required ggd(:) array of nodes structure and for additional
+    !!          checks for correct use of the routine.
+    !! @note    Time slice value is set as:
+    !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
+    subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport,    &
+            &   time_step_IN, time_slice_ind_IN, num_time_slices_IN )
 #       include <git_version_B25.h>
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
             !< store data on edge plasma profiles  (includes the scrape-off
@@ -86,6 +96,13 @@ contains
             !< data on edge plasma transport. Energy terms correspond to the
             !< full kinetic energy equation (i.e. the energy flux takes into
             !< account the energy transported by the particle flux)
+        real(IDS_real), intent(in), optional :: time_step_IN !< Time step
+        integer, intent(in), optional :: time_slice_ind_IN
+            !< Time step index for the current time slice
+        integer, intent(in), optional :: num_time_slices_IN
+            !< Total number of time steps. it is required to beforehand allocate
+            !< required ggd(:) array of nodes structure and for additional
+            !< checks for correct use of the routine.
 
         !! Internal variables
         integer :: ns   !< Total number of ion species
@@ -111,19 +128,22 @@ contains
         integer :: iGsODivertor     !< Variable to hold Outer Divertor grid
             !< subset base index, later found by findGridSubsetByName() routine
         integer :: homogeneous_time !< Homogeneous time (0 or 1)
-        integer :: ggd_slice    !< General grid description slice identifier
-        integer :: num_ggd_slice    !< Total number of ggd slices
+        integer :: num_time_slices  !< Total number of time slices.
+        integer :: time_sind   !< Time slice index. Also General grid
+            !< description slice identifier
         logical, parameter :: B2_WRITE_DATA = .true.
         real(IDS_real),   &
             &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
         real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2 ), 0:1)
         real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2 ) )
         real(IDS_real) :: time  !< Generic time
+        real(IDS_real) :: time_step !< Time step
+        real(IDS_real) :: time_slice_value   !< Time slice value
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
-        type(ids_generic_grid_dynamic_grid_subset) ::  gs_cell
-        type(ids_generic_grid_dynamic_grid_subset) ::  gs_face
-        type(ids_generic_grid_dynamic_grid_subset) ::  gs_bnd_core
+        type(ids_generic_grid_dynamic_grid_subset) :: gs_cell
+        type(ids_generic_grid_dynamic_grid_subset) :: gs_face
+        type(ids_generic_grid_dynamic_grid_subset) :: gs_bnd_core
 
         !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
@@ -159,59 +179,90 @@ contains
         allocate( edge_sources%ids_properties%comment(1) )
         edge_sources%ids_properties%comment(1) = "Done by b2_ual_write_b2mod"
         !! 2. Allocate edge_sources.time and set it to desired value
-        allocate(edge_sources%time(1))
+        allocate( edge_sources%time(1) )
         edge_sources%time(1) = time
 
-        !! Allocate ggd slice
-        num_ggd_slice = 1
-        ggd_slice = 1
-        allocate( edge_profiles%ggd( num_ggd_slice ) )
-        allocate( edge_transport%model(1) )
-        edge_transport%model(1)%identifier%index = 1
-        allocate( edge_sources%source(1) )
-        edge_sources%source(1)%identifier%index = 1
-        allocate( edge_transport%model(1)%ggd( num_ggd_slice ) )
-        allocate( edge_sources%source(1)%ggd( num_ggd_slice ) )
-        allocate( edge_transport%model(1)%ggd( num_ggd_slice )%electrons%   &
-            &   energy%flux(1) )
+        !! Set default time step values
+        time_sind = 1
+        time_slice_value = 0.0_IDS_real
+        time_step = IDS_GRID_UNDEFINED
+        num_time_slices = 1
+        !! If present, set time step values
+        if( present( time_step_IN ) ) then
+            time_step = time_step_IN
+        else if( present( time_slice_ind_IN ) ) then
+            time_sind = time_slice_ind_IN
+        else if( present( num_time_slices_IN ) ) then
+            num_time_slices = num_time_slices_IN
+        end if
+        !! Check if num_time_slices >= time_sind
+        call xertst( num_time_slices .ge. time_sind, &
+            &   "B25_process_ids: Time step index cannot be greater than total &
+            & number of time steps!" )
+        !! Get time slice value
+        time_slice_value = time_sind * time_step
 
-        !! allocate and init the IDS
-        allocate( edge_profiles%code%name(1) )
+        !! To be done only on the run of the first time step. If already
+        !! allocated structure is allocated again it deletes all previously
+        !! set data!
+        !! Check for edge_transport%model(1)%ggd and edge_sources%source(1)%ggd
+        !! is not included as they contain beforehand model(:) / source(:)
+        !! structures
+        if( size( edge_profiles%ggd ) .neqv. num_time_slices ) then
+            !! Allocate ggd for number of different time steps
+            time_sind = 1
+            allocate( edge_profiles%ggd( num_time_slices ) )
+            allocate( edge_transport%model(1) )
+            edge_transport%model(1)%identifier%index = 1
+            allocate( edge_sources%source(1) )
+            edge_sources%source(1)%identifier%index = 1
+            allocate( edge_transport%model(1)%ggd( num_time_slices ) )
+            allocate( edge_sources%source(1)%ggd( num_time_slices ) )
+            allocate( edge_transport%model(1)%ggd( num_time_slices )%electrons% &
+                &   energy%flux(1) )
+
+            !! Allocate and init the IDS
+            allocate( edge_profiles%code%name(1) )
 # ifdef B25_EIRENE
-        edge_profiles%code%name = "SOLPS-ITER"
-        edge_transport%code%name = "SOLPS-ITER"
-        edge_sources%code%name = "SOLPS-ITER"
+            edge_profiles%code%name = "SOLPS-ITER"
+            edge_transport%code%name = "SOLPS-ITER"
+            edge_sources%code%name = "SOLPS-ITER"
 # else
-        edge_profiles%code%name = "B2.5"
-        edge_transport%code%name = "B2.5"
-        edge_sources%code%name = "B2.5"
+            edge_profiles%code%name = "B2.5"
+            edge_transport%code%name = "B2.5"
+            edge_sources%code%name = "B2.5"
 # endif
-        allocate( edge_profiles%code%version(1) )
-        edge_profiles%code%version = git_version_B25
-        allocate( edge_transport%code%version(1) )
-        edge_transport%code%version = git_version_B25
+            allocate( edge_profiles%code%version(1) )
+            edge_profiles%code%version = git_version_B25
+            allocate( edge_transport%code%version(1) )
+            edge_transport%code%version = git_version_B25
+            allocate( edge_sources%code%version(1) )
+            edge_sources%code%version = git_version_B25
+        end if
 
-        allocate( edge_sources%code%version(1) )
-        edge_sources%code%version = git_version_B25
+        !! Allocate and set time slice value
+        edge_profiles%ggd( time_sind )%time = time_slice_value
+        edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
+        edge_sources%source(1)%ggd( time_sind )%time = time_slice_value
 
         ns = size( na, 3 )
         nx = ubound( na, 1 )
         ny = ubound( na, 2 )
 
         !! List of species
-        allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
+        allocate( edge_profiles%ggd( time_sind )%ion( ns ) )
         do is = 0, ns-1
-            allocate( edge_profiles%ggd( ggd_slice )%ion( is + 1 )%state(1) )
-            allocate( edge_profiles%ggd( ggd_slice )%ion( is + 1 )%element(1) )
+            allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1) )
+            allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1) )
 
-            call species( is, edge_profiles%ggd( ggd_slice )%ion( is + 1 )% &
+            call species( is, edge_profiles%ggd( time_sind )%ion( is + 1 )% &
                 &   state(1)%label, .false.)
-            edge_profiles%ggd( ggd_slice )%ion( is + 1 )%element(1)%a = am( is )
-            edge_profiles%ggd( ggd_slice )%ion( is + 1 )%element(1)%z_n =   &
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%a = am( is )
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%z_n =   &
                 &   zn( is )
-            edge_profiles%ggd( ggd_slice )%ion( is + 1 )%state(1)%z_min =   &
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%z_min =   &
                 &   zamin( is )
-            edge_profiles%ggd( ggd_slice )%ion( is + 1 )%state(1)%z_max =   &
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%z_max =   &
                 &   zamax( is )
         enddo
 
@@ -225,7 +276,7 @@ contains
 
         !! Write grid & grid subsets/subgrids
         call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
-            &   edge_profiles%ggd( ggd_slice )%grid,                        &
+            &   edge_profiles%ggd( time_sind )%grid,                        &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
@@ -241,20 +292,20 @@ contains
             !! data stored in the IDS. That is done using IMAS GGD routine
             !! findGridSubsetByName().
             iGsCoreBoundary = findGridSubsetByName(         &
-                &   edge_profiles%ggd( ggd_slice )%grid,    &
+                &   edge_profiles%ggd( time_sind )%grid,    &
                 &   "Core boundary" )
             iGsInnerMidplane = findGridSubsetByName( edge_profiles% &
-                &   ggd( ggd_slice )%grid, "Inner Midplane" )
+                &   ggd( time_sind )%grid, "Inner Midplane" )
             iGsOuterMidplane = findGridSubsetByName( edge_profiles% &
-                &   ggd( ggd_slice )%grid, "Outer Midplane" )
+                &   ggd( time_sind )%grid, "Outer Midplane" )
             iGsCore = findGridSubsetByName( edge_profiles%      &
-                &   ggd( ggd_slice )%grid, "Core" )
+                &   ggd( time_sind )%grid, "Core" )
             iGsSOL = findGridSubsetByName( edge_profiles%       &
-                &   ggd( ggd_slice )%grid, "SOL" )
+                &   ggd( time_sind )%grid, "SOL" )
             iGsIDivertor = findGridSubsetByName( edge_profiles% &
-                &   ggd( ggd_slice )%grid, "Inner divertor" )
+                &   ggd( time_sind )%grid, "Inner divertor" )
             iGsODivertor = findGridSubsetByName( edge_profiles% &
-                &   ggd( ggd_slice )%grid, "Outer divertor" )
+                &   ggd( time_sind )%grid, "Outer divertor" )
 
             !! TODO: The fluxes are currently in the edge_transport. They are
             !! supposed to be in the edge_profiles (24.10.2017)
@@ -264,37 +315,37 @@ contains
             !! edge_transport fundamentals
             !! TODO: create it as a subroutine
             allocate( edge_transport%model(1) )
-            allocate( edge_transport%model(1)%ggd( num_ggd_slice ) )
+            allocate( edge_transport%model(1)%ggd( num_time_slices ) )
 
             !! ne: Electron Density
             call write_quantity(                                            &
-                &   val = edge_profiles%ggd( ggd_slice )%electrons%density, &
-                &   fluxes = edge_transport%model(1)%ggd( ggd_slice )%      &
+                &   val = edge_profiles%ggd( time_sind )%electrons%density, &
+                &   fluxes = edge_transport%model(1)%ggd( time_sind )%      &
                 &            electrons%particles%flux,                      &
                 &   value = ne,                                             &
                 &   flux = fne,                                             &
-                &   ggd_slice = ggd_slice )
+                &   time_sind = time_sind )
             call write_cell_scalar(                                         &
-                &   scalar = edge_sources%source(1)%ggd( ggd_slice )%       &
+                &   scalar = edge_sources%source(1)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = sne(:,:,0) + sne(:,:,1) * ne )
 
             !! ni (SOLPS 4.x) /
             !! na (SOLPS 5.x): Ion Density
-            allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
-            allocate( edge_transport%model(1)%ggd( ggd_slice )%ion( ns ) )
-            allocate( edge_sources%source(1)%ggd( ggd_slice )%ion( ns ) )
+            allocate( edge_profiles%ggd( time_sind )%ion( ns ) )
+            allocate( edge_transport%model(1)%ggd( time_sind )%ion( ns ) )
+            allocate( edge_sources%source(1)%ggd( time_sind )%ion( ns ) )
 
             do is = 1, ns
                 call write_quantity(                                            &
-                    &   val = edge_profiles%ggd( ggd_slice )%ion(is)%density,   &
-                    &   fluxes = edge_transport%model(1)%ggd( ggd_slice )%      &
+                    &   val = edge_profiles%ggd( time_sind )%ion(is)%density,   &
+                    &   fluxes = edge_transport%model(1)%ggd( time_sind )%      &
                     &   ion( is )%particles%flux,                               &
                     &   value = na(:,:, is - 1 ),                               &
                     &   flux = fna(:,:,:, is - 1 ),                             &
-                    &   ggd_slice = ggd_slice )
+                    &   time_sind = time_sind )
                 call write_cell_scalar( scalar = edge_sources%source(1)%        &
-                    &   ggd( ggd_slice )%ion( is )%particles,                   &
+                    &   ggd( time_sind )%ion( is )%particles,                   &
                     &   b2CellData =                                            &
                     &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 )*na(:,:, is - 1 ) )
             end do
@@ -308,17 +359,17 @@ contains
 !!$    edge_profiles%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
 !!$    call write_cell_scalar( edge_profiles%fluid%ve%comps(1)%value, ue(:,:) )
             !!$ call write_cell_vector_component(                           &
-            !!$     &   vectorComponent = edge_profiles%ggd( ggd_slice )%   &
+            !!$     &   vectorComponent = edge_profiles%ggd( time_sind )%   &
             !!$     &                     electrons%velocity,               &
             !!$     &   b2CellData = ue(:,:),                               &
             !!$     &   vectorID = VEC_ALIGN_PARALLEL_ID )
 
             !! ua: Parallel Ion Velocity
             do is = 1, ns
-                allocate( edge_profiles%ggd( ggd_slice )%ion( is )%velocity(1) )
+                allocate( edge_profiles%ggd( time_sind )%ion( is )%velocity(1) )
 
                 call write_cell_vector_component(                           &
-                    &   vectorComponent = edge_profiles%ggd( ggd_slice )%   &
+                    &   vectorComponent = edge_profiles%ggd( time_sind )%   &
                     &                     ion( is )%velocity,               &
                     &   b2CellData = ua(:,:, is - 1 ),                      &
                     &   vectorID = VEC_ALIGN_PARALLEL_ID )
@@ -326,27 +377,27 @@ contains
 
             !! te: Electron Temperature
             call write_quantity(                                        &
-                &   val = edge_profiles%ggd( ggd_slice )%electrons%     &
+                &   val = edge_profiles%ggd( time_sind )%electrons%     &
                 &         temperature,                                  &
-                &   fluxes = edge_transport%model(1)%ggd( ggd_slice )%  &
+                &   fluxes = edge_transport%model(1)%ggd( time_sind )%  &
                 &            electrons%energy%flux,                     &
                 &   value = te/qe,                                      &
                 &   flux = fhe,                                         &
-                &   ggd_slice = ggd_slice )
+                &   time_sind = time_sind )
 
             !! ti: Ion Temperature
-            allocate( edge_profiles%ggd( ggd_slice )%ion(1)%temperature(1) )
-            allocate( edge_transport%model(1)%ggd( ggd_slice )%ion( 1 ) )
+            allocate( edge_profiles%ggd( time_sind )%ion(1)%temperature(1) )
+            allocate( edge_transport%model(1)%ggd( time_sind )%ion( 1 ) )
             call write_quantity(                                            &
-                &   val = edge_profiles%ggd( ggd_slice )%ion(1)%temperature,&
-                &   fluxes = edge_transport%model(1)% ggd( ggd_slice )%     &
+                &   val = edge_profiles%ggd( time_sind )%ion(1)%temperature,&
+                &   fluxes = edge_transport%model(1)% ggd( time_sind )%     &
                 &   ion(1)%energy%flux,                                     &
                 &   value = ti/qe,                                          &
                 &   flux = fhi,                                             &
-                &   ggd_slice = ggd_slice )
+                &   time_sind = time_sind )
 
             !! po: Electric Potential
-            call write_cell_scalar( edge_profiles%ggd( ggd_slice )% &
+            call write_cell_scalar( edge_profiles%ggd( time_sind )% &
                 &   phi_potential, po )
 
             !! B (magnetic field vector)
@@ -356,23 +407,23 @@ contains
 
             !! Write the three unit basis vectors
             call write_cell_vector_component(                                   &
-                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field,   &
                 &   b2CellData = e(:,:,:,1),                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
 
             call write_cell_vector_component(                                   &
-                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field,   &
                 &   b2CellData = e(:,:,:,2),                                    &
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             call write_cell_vector_component(                                   &
-                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field,   &
                 &   b2CellData = e(:,:,:,3),                                    &
                 &   vectorID = VEC_ALIGN_TOROIDAL_ID )
 
             !! write the magnetic field vector in the b2 coordinate system
             call write_cell_vector_component(                                   &
-                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field,   &
                 &   b2CellData = bb(:,:,0:2),                                   &
                 &   vectorID = "diamagnetic" )
         end if
@@ -383,7 +434,7 @@ contains
 
         !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
         !! IMAS IDS data tree node.
-        subroutine write_quantity( val, fluxes, value, flux, ggd_slice )
+        subroutine write_quantity( val, fluxes, value, flux, time_sind )
             use b2mod_interp
             type(ids_generic_grid_scalar), pointer, intent(inout) :: val(:)
                 !< Type of IDS data structure, designed for scalar data handling
@@ -393,7 +444,7 @@ contains
                 !< (in this case scalars regarding fluxes )
             real(IDS_real), intent(in) :: value( -1:gmap%b2nx, -1:gmap%b2ny )
             real(IDS_real), intent(in) :: flux( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )
-            integer, intent(in) :: ggd_slice    !< General grid description
+            integer, intent(in) :: time_sind    !< General grid description
                                                 !< slice identifier
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
                 !< handing data field values
@@ -404,7 +455,7 @@ contains
 
             !! Write data for Cells grid subset
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS, gmap, value )
+                &   ggd( time_sind )%grid, GRID_SUBSET_CELLS, gmap, value )
 
             ival = 1
             call gridWriteData( val( ival ), GRID_SUBSET_CELLS, idsdata )
@@ -415,7 +466,7 @@ contains
             tmpFace = 0.0_IDS_real
             call value_on_faces( nx, ny, vol, value, tmpFace)
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                    &
-                &   edge_profiles%ggd( ggd_slice )%grid, iGsCoreBoundary,   &
+                &   edge_profiles%ggd( time_sind )%grid, iGsCoreBoundary,   &
                 &   gmap, tmpFace )
             call gridWriteData( val( ival ), iGsCoreBoundary, idsdata )
             deallocate( idsdata )
@@ -425,7 +476,7 @@ contains
             tmpVx = interpolateToVertices(  &
                 &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex( &
-                &   edge_profiles%ggd( ggd_slice )%grid,        &
+                &   edge_profiles%ggd( time_sind )%grid,        &
                 &   iGsInnerMidplane, gmap, tmpVx )
             call gridWriteData( val( ival ), iGsInnerMidplane, idsdata )
             deallocate( idsdata )
@@ -433,7 +484,7 @@ contains
             !! Write data for Outer Midplane grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
-                &   edge_profiles%ggd( ggd_slice )%grid, iGsOuterMidplane,  &
+                &   edge_profiles%ggd( time_sind )%grid, iGsOuterMidplane,  &
                 &   gmap, tmpVx )
             call gridWriteData( val( ival ), iGsOuterMidplane, idsdata )
             deallocate( idsdata )
@@ -441,7 +492,7 @@ contains
             !! Write data for Nodes grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
-                &   edge_profiles%ggd( ggd_slice )%grid, GRID_SUBSET_NODES, &
+                &   edge_profiles%ggd( time_sind )%grid, GRID_SUBSET_NODES, &
                 &   gmap, tmpVx )
             call gridWriteData( val( ival ), GRID_SUBSET_NODES, idsdata )
             deallocate( idsdata )
@@ -449,8 +500,8 @@ contains
             !! Write data on fluxes for y-aligned faces, x-aligned faces
             !! (those two are set as default) and Core boundary grid subset
             allocate( fluxes(2) )
-            call write_face_vector( fluxes(1), flux, ggd_slice)
-            call write_face_vector( fluxes(2), flux, ggd_slice, &
+            call write_face_vector( fluxes(1), flux, time_sind)
+            call write_face_vector( fluxes(2), flux, time_sind, &
                 &   gridSubsetId = iGsCoreBoundary )
 
             !! Write data for Core grid subset
@@ -462,7 +513,7 @@ contains
             !!       Inner divertor and Outer divertor)
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( ggd_slice )%grid, iGsCore, gmap, value )
+                &   ggd( time_sind )%grid, iGsCore, gmap, value )
 
             call gridWriteData( val( ival ), iGsCore, idsdata )
             deallocate( idsdata )
@@ -470,7 +521,7 @@ contains
             !! Write data for SOL grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( ggd_slice )%grid, iGsSOL, gmap, value )
+                &   ggd( time_sind )%grid, iGsSOL, gmap, value )
 
             call gridWriteData( val( ival ), iGsSOL, idsdata )
             deallocate( idsdata )
@@ -478,7 +529,7 @@ contains
             !! Write data for Inner Divertor grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( ggd_slice )%grid, iGsIDivertor, gmap, value )
+                &   ggd( time_sind )%grid, iGsIDivertor, gmap, value )
 
             call gridWriteData( val( ival ), iGsIDivertor, idsdata )
             deallocate( idsdata )
@@ -486,7 +537,7 @@ contains
             !! Write data for Outer Divertor grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( ggd_slice )%grid, iGsODivertor, gmap, value )
+                &   ggd( time_sind )%grid, iGsODivertor, gmap, value )
 
             call gridWriteData( val( ival ), iGsODivertor, idsdata )
             deallocate( idsdata )
@@ -503,7 +554,7 @@ contains
 
             !! TODO: add checks whether already allocated
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
-                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,           &
+                &   ggd( time_sind )%grid, GRID_SUBSET_CELLS,           &
                 &   gmap, b2CellData )
             call gridWriteData( scalar(1), GRID_SUBSET_CELLS, idsdata )
             deallocate(idsdata)
@@ -536,7 +587,7 @@ contains
 
             !! TODO: add checks whether already allocated
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
-                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,           &
+                &   ggd( time_sind )%grid, GRID_SUBSET_CELLS,           &
                 &   gmap, b2CellData )
 
             call B2grid_Write_Data_Vector_Components( vectorComponent(1),   &
@@ -701,7 +752,7 @@ contains
             !! Fill in vector component data
             do i = 1, dim
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(        &
-                    &   edge_profiles%ggd( ggd_slice )%grid,        &
+                    &   edge_profiles%ggd( time_sind )%grid,        &
                     &   GRID_SUBSET_CELLS, gmap, vecdata(:,:,i-1))
                 call gridWriteData( vector, GRID_SUBSET_CELLS, idsdata )
                 deallocate(idsdata)
@@ -738,7 +789,7 @@ contains
         !!               is probably not required as, same as for %alignid, a
         !!               node itself indicates to what vector component
         !!               the data relates to.
-        subroutine write_face_vector( vector, b2FaceData, ggd_slice,    &
+        subroutine write_face_vector( vector, b2FaceData, time_sind,    &
                 &   gridSubsetId )
             use ids_grid_data ! IGNORE
             type(ids_generic_grid_scalar), intent(inout) :: vector
@@ -750,23 +801,23 @@ contains
                                                             !< index
             real(IDS_real), dimension(:), pointer :: idsdata    !< Dummy array
                 !< for holding data field values
-            integer, intent(in) :: ggd_slice    !< General grid description
+            integer, intent(in) :: time_sind    !< General grid description
 
             if ( .not. present(gridSubsetId) ) then
                 !! Fill in vector component data
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-                    &   edge_profiles%ggd( ggd_slice )%grid,    &
+                    &   edge_profiles%ggd( time_sind )%grid,    &
                     &   GRID_SUBSET_Y_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-                    &   edge_profiles%ggd( ggd_slice )%grid,    &
+                    &   edge_profiles%ggd( time_sind )%grid,    &
                     &   GRID_SUBSET_X_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
             else
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-                    &   edge_profiles%ggd( ggd_slice )%grid,    &
+                    &   edge_profiles%ggd( time_sind )%grid,    &
                     &   gridSubsetId, gmap, b2FaceData)
                 call gridWriteData( vector, gridSubsetId, idsdata )
                 deallocate(idsdata)

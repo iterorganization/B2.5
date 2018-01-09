@@ -79,13 +79,13 @@ program b2_ual_write
     call b2mn_init
     ! call b2mn_step(0)
 
-    call ipgeti('b2mndr_shot_number', shot )
-    call ipgeti('b2mndr_run_number', run )
-    call ipgetc('b2mndr_user', username)
-    call ipgetc('b2mndr_device', device)
+    call ipgeti( 'b2mndr_shot_number', shot )
+    call ipgeti( 'b2mndr_run_number', run )
+    call ipgetc( 'b2mndr_user', username )
+    call ipgetc( 'b2mndr_device', device )
 
     write(*,*) 'Shot: ', shot, ' Run: ', run, ' user: ', username, ' device: ', &
-    	& device
+        & device
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
