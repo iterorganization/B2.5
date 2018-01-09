@@ -195,8 +195,8 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbl, wbbr, wbbv,
+     &  wbbc, cell_width, cell_height, gmap)
       call get_nxt(nx, nxtl, nxtr)
 *   ..read initial state
       call cfverr (ninp(4), plasmastate_version)                        !xpb

@@ -4,8 +4,8 @@
       subroutine b2tfnb (nx, ny, isb, ismain,                            !srv 08.09.01 !lk 02.06.11
      &  guard_flows, facdrift, fac_ExB, mb, vol, cssb, zb,               !xpb !iyv 06.02.14
      &  pbs, pbshz, nb, pb, ub, ubdia, vbecrb, vbdia, wbdia, ne,         !xpb !srv 09.01.01
-     &  te, ti, bb, hx, hy, hz, qz, gs, qc, po, cvlb, cdnb, cdpb, cddb,  !srv 09.01.01 13.10.06
-     &  cvlbhz, cvmbhz, cdnbhz, cdpbhz,                                  !srv 09.01.01
+     &  te, ti, bb, hx, hy, hz, qz, gs, qc, qs, po, cvlb, cdnb, cdpb,    !srv 09.01.01 13.10.06
+     &  cddb, cvlbhz, cvmbhz, cdnbhz, cdpbhz,                            !srv 09.01.01
      &  fchvispar, fchvisper, fchinert, fchanml, fchvisq,                !srv 20.09.06
      &  fnb, fnb_nodrift, fnb_fcor, fnb_he, fnbPSch, fnb_mdf,            !srv 13.10.06
      &  flob, conb, fnb_32, fnb_52, fnb_32nd,  
@@ -32,6 +32,7 @@
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),              !srv 09.01.01
      &  po(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3),
      2  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1),
+     &  qs(-1:nx,-1:ny,0:1),
      2  facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny), zb(-1:nx,-1:ny),
      3  vol(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny), mb,
      &  cvlbhz(-1:nx,-1:ny,0:1,0:1), cvmbhz(-1:nx,-1:ny,0:1,0:1),       !srv 09.01.01
@@ -102,8 +103,7 @@
      *   term(-1:nx,-1:ny), flo_he, con_he(-1:nx,-1:ny),                 !srv 25.04.00 13.09.02 11.09.09
      *   termhz(-1:nx,-1:ny),                                            !srv 05.11.09
      *   flo9, flo9_mdf, flo9_2dia, flo9_he, flo9_nodrift,
-     *   con9, con9_mdf, con9_2dia, con9_he, con9_nodrift,
-     *   qzf(-1:nx,-1:ny)
+     *   con9, con9_mdf, con9_2dia, con9_he, con9_nodrift
       real (kind=R8) :: 
      &   vbecrb_(-1:nx,-1:ny,0:1), wbdia_(-1:nx,-1:ny,0:1),
      &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1),              !srv 21.10.10
@@ -222,7 +222,7 @@ c     of cross flows across surfaces, dif may be negative
         enddo
       enddo
       weight = 1.0e0_R8
-      call diff_r(nx, ny, 0, hx, hy, weight, qz, kmpr, wrk, dkmprr)
+      call diff_r(nx, ny, 0, hx, hy, weight, qs, kmpr, wrk, dkmprr)
 
       write(chns,'(i3.3)') isb
       if(mdf_fnb.eq.0) then                                              !srv 21.10.10 {
@@ -824,11 +824,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 
 *   ..compute radial differences of nb and pb, for 9-point terms
       weight = 1.0e0_R8
-      call diff_r(nx, ny, 0, hx, hy, weight, qz, nb, wrk, dnbr)
-      call diff_r(nx, ny, 0, hx, hy, weight, qz, pb, wrk, dpbr)
-
-*   ..interpolate qz(:,:,0) to x-faces
-      call intfaceh(nx,ny,leftix,leftiy,vol,qz(:,:,0),qzf)
+      call diff_r(nx, ny, 0, hx, hy, weight, qs, nb, wrk, dnbr)
+      call diff_r(nx, ny, 0, hx, hy, weight, qs, pb, wrk, dpbr)
 
 *   ..init fnb to 0
       fnb = 0.0_R8
@@ -958,13 +955,13 @@ cwdk Note: code/control logic here reflects that of radial flow computation on y
 cwdk TODO: flo9* arrays should additionally contain radial drift flows across an x-face
 cwdk       increase size of drift arrays to ubdia(:,:,0:1,0:1)... temp: neglect drifts
 cwdk  contributions from radial flow (neglect drifts for now)
-          flo9      = cvlb(ix,iy,0,1)  ! - ubdia(ix,iy,0,1)*gs(ix,iy,0)*qzf(ix,iy)
-          flo9_mdf  = cvlb(ix,iy,0,1)  ! - vbecrb(ix,iy,0,1)*gs(ix,iy,0)*qzf(ix,iy)
-          flo9_2dia = cvlbhz(ix,iy,0,1)! - ub2dia(ix,iy,0,1)*gs(ix,iy,0)*qzf(ix,iy)*
+          flo9      = cvlb(ix,iy,0,1)  ! - ubdia(ix,iy,0,1)*gs(ix,iy,0)*qs(ix,iy,0)
+          flo9_mdf  = cvlb(ix,iy,0,1)  ! - vbecrb(ix,iy,0,1)*gs(ix,iy,0)*qs(ix,iy,0)
+          flo9_2dia = cvlbhz(ix,iy,0,1)! - ub2dia(ix,iy,0,1)*gs(ix,iy,0)*qs(ix,iy,0)*
 !     &    (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
 !     &     hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
 !     &    (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-          flo9_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0,1) ! - vbecrb(ix,iy,0,1)*gs(ix,iy,0)*qzf(ix,iy)
+          flo9_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0,1) ! - vbecrb(ix,iy,0,1)*gs(ix,iy,0)*qs(ix,iy,0)
           flo9_nodrift = cvlb(ix,iy,0,1)
 cwdk
          endif                                                          !srv 21.06.08 }
@@ -1158,7 +1155,7 @@ c          part of flob9(_mdf) is transfered to conb, to mimick the
 c          upwind discretization needed for the "effective convection"
           t0 = -(hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &          qzf(ix,iy)
+     &          qs(ix,iy,0)
            if(mdf_fnb.eq.0) then                                         !srv 13.10.06 {
              flob(ix,iy,0,0) = (flo + flo9)*
      &        (kmpr(leftix(ix,iy),leftiy(ix,iy))+kmpr(ix,iy))/2.0_R8-
@@ -1397,10 +1394,6 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &              'b2tfnb_fnb_fcorxy'//chns)
       endif                                                     !srv 11.09.09 }
 
-cwdk needed in 9-point scheme
-*   ..interpolate qz(:,:,0) to y-faces
-      call intfacev(nx,ny,bottomix,bottomiy,vol,qz(:,:,0),qzf)
-
 *   ..compute fnby, floby, conby
       do iy = -1, ny
        do ix = -1, nx
@@ -1602,7 +1595,7 @@ c    an upwind scheme
 c    implementation ensures backwards compatibility for perfectly orthogonal grids
          t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
      &         (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &         qzf(ix,iy)
+     &         qs(ix,iy,1)
           if(mdf_fnb.eq.0) then                                          !srv 13.10.06  {
            flob(ix,iy,1,1) = flo*(kmpr(bottomix(ix,iy),bottomiy(ix,iy))
      &        +kmpr(ix,iy))/2.0_R8-
@@ -2281,10 +2274,11 @@ cwdk need full diamagnetic component for energy
        call my_out(70,nx,ny,dkmprti(-1,-1,1),'b2tfnb_dkmprtiy'//chns)
        call my_out(70,nx,ny,ub,'b2tfnb_ua'//chns)
        call my_out(70,nx,ny,nb,'b2tfnb_na'//chns)
+       call my_out(70,nx,ny,pb,'b2tfnb_pa'//chns)
        call my_out(70,nx,ny,te,'b2tfnb_te')
        call my_out(70,nx,ny,ti,'b2tfnb_ti')
        call my_out(70,nx,ny,po,'b2tfnb_po')
-!      call my_out(70,nx,ny,zb,'b2tfnb_zb')
+       call my_out(70,nx,ny,zb,'b2tfnb_zb'//chns)
        call my_out(70,nx,ny,facdrift,'b2tfnb_facdrift'//chns)
        call my_out(70,nx,ny,fac_ExB,'b2tfnb_fac_ExB'//chns)
        call my_out(70,nx,ny,fchvispar(-1,-1,0,0),

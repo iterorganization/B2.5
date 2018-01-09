@@ -3,8 +3,8 @@
 
       subroutine b2trcl (nx, ny, ns, nscx, iscx, ismain, 
      &  bb, conn, vol, gs, hx, hy,  !srv 23.11.10
-     1  hz, qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,  !srv 09.01.01 01.07.09
-     2  chvemx, chvimx, cvsahz,                                          !srv 09.01.01 03.06.03
+     1  hz, qz, qc, qs, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2,  !srv 09.01.01 01.07.09
+     2  lnlam, chvemx, chvimx, cvsahz,                                   !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
      4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                       !srv 09.01.01
      5  csig_cl, calf_cl)                                                !xpb
@@ -31,7 +31,7 @@
      *  bb(-1:nx,-1:ny,0:3), 
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), 
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
+     &  qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),
@@ -218,7 +218,7 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       do is = 0, ns-1
        call b2txcx (nx, ny, mode, wrk, wrk1, hx, hy, qz,    !srv 01.07.05 {
      &   vsa(-1,-1,0,is), cvsahz(-1,-1,0,0,is))
-       call b2txcy (nx, ny, mode, wrk, wrk1, hx, hy, qz,
+       call b2txcy (nx, ny, mode, wrk, wrk1, hx, hy, qz, qs,
      &   vsa(-1,-1,1,is), cvsahz(-1,-1,0,1,is))                                !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 *   ..incorporate geometry
@@ -226,14 +226,14 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       do is = 0, ns-1
        call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, vsa(-1,-1,0,is),
      &   cvsa(-1,-1,0,0,is))
-       call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, vsa(-1,-1,1,is),
-     &   cvsa(-1,-1,0,1,is))
+       call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs,
+     &   vsa(-1,-1,1,is), cvsa(-1,-1,0,1,is))
        do k = 0, nscx-1
          is0 = iscx(k)
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
-           call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz,                !sv
+           call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz,              !sv
      &       sigin(-1,-1,0,is,k), csigin(-1,-1,0,0,is,is0))             !sv 01.07.99
-           call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz,                !sv
+           call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs,          !sv
      &       sigin(-1,-1,1,is,k), csigin(-1,-1,0,1,is,is0))             !sv
         endif
        enddo
@@ -241,27 +241,30 @@ cwdk  tmp: needed as long as not all contributions are filled later on
 
       call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, hce(-1,-1,0), 
      & chce(-1,-1,0,0))
-      call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, hce(-1,-1,1), 
+      call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs, hce(-1,-1,1), 
      & chce(-1,-1,0,1))
       call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, hci(-1,-1,0), 
      & chci(-1,-1,0,0))
-      call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, hci(-1,-1,1), 
+      call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs, hci(-1,-1,1), 
      & chci(-1,-1,0,1))
       call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, sig(-1,-1,0), 
      & csig(-1,-1,0,0))
-      call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, sig(-1,-1,1), 
+      call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs, sig(-1,-1,1), 
      & csig(-1,-1,0,1))
       call b2txcx (nx, ny, -1, vol, gs, hx, hy, qz, alf(-1,-1,0), 
      & calf(-1,-1,0,0))
-      call b2txcy (nx, ny, -1, vol, gs, hx, hy, qz, alf(-1,-1,1), 
+      call b2txcy (nx, ny, -1, vol, gs, hx, hy, qz, qs, alf(-1,-1,1), 
      & calf(-1,-1,0,1))
 
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
-        if (.not. is_neutral(is)) 
-     &  call my_out(70,nx,ny,cvsahz(-1,-1,0,0,is),'b2trcl_cvsahzx'//
-     &    chns)
+        if (.not. is_neutral(is)) then
+          call my_out(70,nx,ny,cvsahz(-1,-1,0,0,is),'b2trcl_cvsahzx'//
+     &      chns)
+          call my_out(70,nx,ny,cvsahz(-1,-1,1,0,is),'b2trcl_cvsahzyx'//
+     &      chns)
+        endif
        enddo
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0

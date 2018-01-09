@@ -4,7 +4,7 @@
       subroutine b2sral (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &  dtim, BoRiS, facdrift, fac_ExB, fac_vis,                         !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
+     &  vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, pbshz, bb,            !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
      &  fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -43,8 +43,8 @@
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),        !srv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     &	bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), 
+     &  pbs(-1:nx,-1:ny,0:1),bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
 *     (state)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1), ve(-1:nx,-1:ny),
@@ -269,7 +269,7 @@
 
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
-       call b2tanml (nx, ny, ns, vol, hx, hy, qz, csig_an, po, fchanml) !srv 20.09.06 }
+       call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml) !srv 20.09.06 }
        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
      &                       fac_vis, fchvispar)
        call b2tiner (nx, ny, ns, vol,

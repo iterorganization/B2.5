@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, !xpb !srv 05.07.17
-     1  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,             !xpb !srv 01.07.09
+     1  qs, vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,         !xpb !srv 01.07.09
      2  fch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)
       use b2mod_types
       use b2mod_rates
@@ -29,7 +29,8 @@
      &  vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     1  ue(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)         !srv 01.07.09
+     1  ue(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny),        !srv 01.07.09
+     &  qs(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
@@ -501,7 +502,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
 *      (a.k.a. Joule heating)
        call b2xehx (nx, ny, hx, te, po, ne, ehx)                         !srv 13.01.17
        if (istyle_Joule_heating.eq.0)
-     &   call b2xehy (nx, ny, hx, hy, qz, te, po, ne, ehy)               !srv 13.01.17
+     &   call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy)           !srv 13.01.17
        b2joule=0.0_R8
        b2sihs_joule=0.0_R8
        if (balance_netcdf.ne.0) then !djm Jan2017

@@ -3,7 +3,7 @@
 
       subroutine b2tfch (nx, ny, ns, ismain, ismain0,
      1  guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,
-     1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,       	 !xpb
+     1  vol, gs, hx, hy, qz, qc, qs, bb, te, po, ne, ne2, lnlam, pz,     !xpb
      1  ti, ni, na, fna, uadia, vedia, wadia, vaecrb,
      2  veecrb, ua, fne_32, fne_52, csig, csigin, chce, chve, chci,   	 !xpb
      &  calf, chvemx, cvsa_cl, fch, conc, fchstoch, fchdia,              !srv 17.12.13 16.10.17
@@ -29,7 +29,7 @@
      & pz(-1:nx,-1:ny), vol(-1:nx,-1:ny), 
      & fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      & gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),    !xpb
-     & uadia(-1:nx,-1:ny,0:1,0:ns-1), 
+     & qs(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1), 
      & ua(-1:nx,-1:ny,0:ns-1),
      & wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1), 	 !xpb
      & fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
@@ -190,7 +190,7 @@
 c Drift terms
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
       call b2tinnt (nx, ny, ns, facdrift, fac_ExB, ismain, ismain0,
-     &              vol, gs, hx, hy, qz, qc, bb,
+     &              vol, gs, hx, hy, qz, qc, qs, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
       call b2tdia(nx, ny, ns, vol, gs, hy, qz, bb,
@@ -319,7 +319,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
         enddo
       enddo
 *   ..compute fchy, concy
-      call b2xehy (nx, ny, hx, hy, qz, te, po, ne, ehy_)                  !srv 13.01.17
+      call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy_)              !srv 13.01.17
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then

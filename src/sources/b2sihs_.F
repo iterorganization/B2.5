@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     &  hx, hy, qz, vol, bb, pbs, lnlam,                                 !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     &  hx, hy, qz, qs, vol, bb, pbs, lnlam,                             !srv 07.06.00 02.06.99 07.05.08 05.07.17
      1  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, she0, shi0)      !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
@@ -32,7 +32,7 @@
      &  ua(-1:nx,-1:ny,0:ns-1), ue(-1:nx,-1:ny),                      !srv 05.03.11
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                       !srv 07.05.08 01.07.09
+     &  qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)  !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  fne(-1:nx,-1:ny,0:1,0:1),
      &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
@@ -426,7 +426,7 @@
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
 cwdk compute radial differences of ua at cell faces
-        call diff_r(nx,ny, 0, hx, hy, vol, qz, ua(-1,-1,is), wrk0, duar)
+        call diff_r(nx,ny, 0, hx, hy, vol, qs, ua(-1,-1,is), wrk0, duar)
 	wrk0 = 0.0e0_R8
         do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
          do ix = -1, nx
@@ -581,7 +581,7 @@ cwdk compute radial differences of ua at cell faces
       if(b2sigp_style.ne.2) then                                      !srv 05.07.17
        call b2xehx (nx, ny, hx, te, po, ne, ehx)                      !srv 13.01.17
        if (istyle_Joule_heating.eq.0)
-     &   call b2xehy (nx, ny, hx, hy, qz, te, po, ne, ehy)            !srv 13.01.17
+     &   call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy)        !srv 13.01.17
        b2joule=0.0_R8
        b2sihs_joule=0.0_R8
        do iy = 0, ny-1

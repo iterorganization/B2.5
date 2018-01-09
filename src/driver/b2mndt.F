@@ -312,7 +312,7 @@ ctmp.dpc
           call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
      &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)           !srv 11.10.02 03.06.03 }
           call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,          !srv 23.11.10
-     1       bb, conn, vol, gs, hx, hy, hz, qz, qc,
+     1       bb, conn, vol, gs, hx, hy, hz, qz, qc, qs,
      1       pbs, crx, cry, bzb, lnlam,                                  !srv 13.10.06 01.07.09
      1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,       !srv 03.06.03
      2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,             !srv 13.10.06
@@ -321,7 +321,7 @@ ctmp.dpc
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
           if(style.ne.0) then                                            !srv 18.06.08 {
-            call b2tanml (nx, ny, ns, vol, hx, hy, qz, csig_an, po,
+            call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po,
      &                    fchanml)                                       !srv 20.09.06 }
             call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,  !srv 20.09.06 {
      &                    fac_vis, fchvispar)
@@ -349,7 +349,7 @@ ctmp.dpc
           call b2sral (nx, ny, ns, nxtl, nxtr,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,
-     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,             !srv 09.01.01
+     &     vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, pbshz, bb,         !srv 09.01.01
      &     na, ua,
      &     uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
@@ -493,7 +493,7 @@ ctmp.dpc
      &          rza(-1,-1,is), pbs, pbshz, na(-1,-1,is),                 !srv 09.01.01 20.09.06
      &          pb, ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &          vadia(-1,-1,0,is), wadia(-1,-1,0,is), ne, te, ti, bb,
-     &          hx, hy, hz, qz, gs, qc, po,                              !srv 19.05.03 08.10.04 04.02.05
+     &          hx, hy, hz, qz, gs, qc, qs, po,                          !srv 19.05.03 08.10.04 04.02.05
      &          cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), 
      &          cdpa(-1,-1,0,0,is),
      &          cddi(-1,-1,0,0,is), cvlahz(-1,-1,0,0,is),
@@ -550,7 +550,7 @@ ctmp.dpc
            solving = .false.
            call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,  !srv 05.07.17
      &      solveee, solveei, solvepo, solvemo,
-     &      rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
+     &      rxf, BoRiS, fac_ExB, hx, hy, qz, qs, vol, bb,
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
      &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09
      &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                  !srv 09.07.08

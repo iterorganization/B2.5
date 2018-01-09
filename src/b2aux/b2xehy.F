@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xehy (nx, ny, hx, hy, qz, te, po, ne, ehy)           !srv 13.01.17
+      subroutine b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy)       !srv 13.01.17
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -10,7 +10,8 @@
       integer nx, ny
       real (kind=R8) ::
      &   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny)
+     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
+     &   qs(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   ehy(-1:nx,-1:ny,0:1)
@@ -36,7 +37,8 @@
       real (kind=R8) ::
      *   t0, hy1_(-1:nx,-1:ny),
      *   dpor(-1:nx,-1:ny,0:1), wrk0(-1:nx,-1:nx,0:1), 
-     *   wrk1(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny,0:1), wrk(-1:nx,-1:ny)
+     *   wrk1(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny,0:1), wrk(-1:nx,-1:ny),
+     *   dum(-1:nx,-1:ny)
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -80,8 +82,8 @@ c     to be considered: volume-weighted interpolation
 *   ..compute ehy
       if(mode_ehy.eq.0) then
 *     ..compute radial differences of po and pe
-        call diff_r(nx, ny, hx, hy, wrk, qz, po, dpor)
-        call diff_r(nx, ny, hx, hy, wrk, qz, ne*te, wrk0)
+        call diff_r(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpor)
+        call diff_r(nx, ny, 0, hx, hy, wrk, qs, ne*te, dum, wrk0)
 *     ..interpolate ne to faces
         call intfaceh(nx,ny,leftix,leftiy,wrk,ne,wrk1(-1,-1,0))
         call intfacev(nx,ny,bottomix,bottomiy,wrk,ne,wrk1(-1,-1,1))
@@ -89,8 +91,8 @@ c     to be considered: volume-weighted interpolation
         ehy = -dpor + wrk0/(qe*wrk1)
       else if (mode_ehy.eq.1) then
 *     ..compute radial differences of po and pe
-        call diff_r(nx, ny, hx, hy, wrk, qz, po, dpor)
-        call diff_r(nx, ny, hx, hy, wrk, qz, ne*te, wrk0)
+        call diff_r(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpor)
+        call diff_r(nx, ny, 0, hx, hy, wrk, qs, ne*te, dum, wrk0)
 *     ..interpolate ne to faces
 cwdk TODO: implement this as a standard interpolation option...
         do iy = -1, ny
@@ -117,9 +119,9 @@ cwdk TODO: implement this as a standard interpolation option...
         ehy = -dpor + wrk0/(qe*wrk1)
       else
 *     ..compute radial differences of po, te and log(ne) on faces
-        call diff_r(nx, ny, hx, hy, wrk, qz, po, dpor)
-        call diff_r(nx, ny, hx, hy, wrk, qz, te, wrk0)
-        call diff_r(nx, ny, hx, hy, wrk, qz, log(ne), wrk1)
+        call diff_r(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpor)
+        call diff_r(nx, ny, 0, hx, hy, wrk, qs, te, dum, wrk0)
+        call diff_r(nx, ny, 0, hx, hy, wrk, qs, log(ne), dum, wrk1)
 *     ..interpolate te to faces
         wrk = 1.0_R8
         call intfaceh(nx,ny,leftix,leftiy,wrk,ne,wrk2(-1,-1,0))

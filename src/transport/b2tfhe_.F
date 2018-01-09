@@ -3,7 +3,7 @@
 
       subroutine b2tfhe_ (nx, ny, ns, ismain, ismain0,
      & facdrift, fac_ExB, fac_vis,                                       !srv 23.11.10
-     1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,          !srv 11.07.99 18.01.02 01.07.09
+     1 vol, gs, hx, hy, qz, qc, qs, bb, te, po, ne, ne2, lnlam, pz,      !srv 11.07.99 18.01.02 01.07.09
      1 ti, ni, na, fna, uadia, vadia, ua, fne,
      2 csig, csig_cl, csigin, chce, chve, chci, calf,                    !srv 17.05.99 11.07.99
      & chvemx, cvsa_cl, cdna, cdpa, cddi, fch, fhe, fhe_mdf, fhePSch,    !srv 27.01.00 13.10.06 16.10.17
@@ -47,7 +47,7 @@
      1   bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      2   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      2   fac_vis(-1:nx,-1:ny), qc(-1:nx,-1:ny),
-     3   csig_cl(-1:nx,-1:ny,0:1,0:1)
+     3   qs(-1:nx,-1:ny,0:1), csig_cl(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) :: cutlo
       parameter (cutlo = 1.0e-60_R8)
       logical balance                                                    !djm Jan2017
@@ -121,8 +121,7 @@ csw 10oct2012
       real (kind=R8) ::
      *    wrk0(-1:nx,-1:ny),
      *    dter(-1:nx,-1:ny,0:1), dpor(-1:nx,-1:ny,0:1),
-     *    qzf(-1:nx,-1:ny), dper(-1:nx,-1:nx,0:1),
-     *    wght(-1:nx,-1:ny)
+     *    dper(-1:nx,-1:nx,0:1), wght(-1:nx,-1:ny)
       real (kind=R8) :: facdriftm
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
@@ -226,7 +225,7 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
       facdriftm = maxval(facdrift)
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
       call b2tinnt (nx, ny, ns, facdrift, fac_ExB, ismain, ismain0,
-     &              vol, gs, hx, hy, qz, qc, bb,
+     &              vol, gs, hx, hy, qz, qc, qs, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 c Drift terms
 *   .. compute x,y-components of divergent part of diamagnetic current
@@ -308,7 +307,7 @@ c Drift terms
 
 * ..compute parallel current
       call b2xehx (nx, ny, hx, te, po, ne, ehx_)                         !srv 13.01.17 {
-      call b2xehy (nx, ny, hx, hy, qz, te, po, ne, ehy_)                 !srv 13.01.17
+      call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy_)             !srv 13.01.17
       call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
       if(style.eq.2) then
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
@@ -327,13 +326,9 @@ c Drift terms
 
 *   ..compute radial differences of te and po, for 9-point terms
       wght = 1.0_R8
-      call diff_r(nx, ny, 0, hx, hy, wght, qz, te, wrk0, dter)
-      call diff_r(nx, ny, 0, hx, hy, wght, qz, po, wrk0, dpor)
-      call diff_r(nx, ny, 0, hx, hy, wght, qz, ne*te, wrk0, dper)
-
-
-*   ..interpolate qz(:,:,0) to x-faces (will be needed for drifts....
-      call intfaceh(nx,ny,leftix,leftiy,vol,qz(:,:,0),qzf)
+      call diff_r(nx, ny, 0, hx, hy, wght, qs, te, wrk0, dter)
+      call diff_r(nx, ny, 0, hx, hy, wght, qs, po, wrk0, dpor)
+      call diff_r(nx, ny, 0, hx, hy, wght, qs, ne*te, wrk0, dper)
  
 * ..compute fluxes and linearization
 *   ..compute fhex, floex, conex, fchx, concx
@@ -810,7 +805,7 @@ c          upwind discretization needed for the "effective convection"
 cwdk (to be checked for new hybrid scheme using mdf...)
           t0 = -(hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &          qzf(ix,iy)                                               !srv 13.10.06 }
+     &          qs(ix,iy,0)                                              !srv 13.10.06 }
           if(mdf_fhe.eq.0) then                                          !srv 13.10.06 {
            floe(ix,iy,0,0) = floe0 + floe9
            floe(ix,iy,0,1) = 0.0_R8
@@ -879,10 +874,6 @@ cwdk add computation of 9-point flows
        w6=0.0e0_R8;
 
       endif                                                              !srv 16.09.02 }
-
-cwdk needed in 9-point scheme
-*   ..interpolate qz(:,:,0) to y-faces
-      call intfacev(nx,ny,bottomix,bottomiy,vol,qz(:,:,0),qzf)
 
 *   ..compute fhey, floey, coney, fchy, concy
       fch_p(:,:,0:1,1) = 0.0e0_R8
@@ -1082,7 +1073,7 @@ c    an upwind scheme
 c    implementation ensures backwards compatibility for perfectly orthogonal grids
          t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
      &         (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &         qzf(ix,iy)
+     &         qs(ix,iy,1)
         if(mdf_fhe.eq.0) then                                            !srv 13.10.06 {
          floe(ix,iy,1,1)   = floe0
          cone(ix,iy,1,1,0) = cone0                           !srv 02.01.07 !srv 23.06.99

@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2rugm (nget, nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbl, wbbr, wbbv,
+     &   wbbc, cell_width, cell_height, gmap)
       use b2mod_types
       use b2mod_indirect
       use b2mod_version
@@ -18,9 +18,10 @@
      &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), 
-     &  qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
-     &  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3), 
-     &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
+     &  qs(-1:nx,-1:ny,0:1), qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx,-1:ny,0:3), 
+     &  wbbr(-1:nx,-1:ny,0:3), wbbv(-1:nx,-1:ny,0:3),
+     &  wbbc(-1:nx+1,-1:ny+1,0:3), 
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
       type(B2GridMap) :: gmap
 *   ..common blocks
@@ -198,9 +199,11 @@
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
-     *   trim1, norm, cosang
+     *   trim1, norm, cosang, sinang
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
+      sinang(p0x,p0y,p1x,p1y) = trim1(
+     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
       cosang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       external subini, subend, xertst, cfrure, cfruin
@@ -237,14 +240,13 @@
 cxpb
       if(b2fgmtry_version.ge.'03.001.000') then
         call cfrure (nget, n2*2, qc, 'qc')
+        call cfrure (nget, n2*2, qs, 'qs')
       elseif(b2fgmtry_version.ge.'01.001.022') then
         call cfrure (nget, n2, qc_loc, 'qc')
         qc(:,:,0) = qc_loc
-        qc(:,:,1) = 0.0_R8
       else
        do iy = -1, ny
         do ix = -1, nx
-         qc(ix,iy,1) = 0.0_R8
          qc(ix,iy,0) = cosang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
@@ -278,7 +280,19 @@ cxpb
         enddo
        enddo
       endif
-cxpb-end
+      if (b2fgmtry_version.lt.'03.001.000') then
+       do iy = -1, ny
+        do ix = -1, nx
+         qc(ix,iy,1) = 0.0_R8
+         qs(ix,iy,1) = 0.0_R8
+         qs(ix,iy,0) = sinang (
+     &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+        enddo
+       enddo
+      endif
+c-xpb-end
       call cfrure (nget, n2*3, gs, 'gs')
 *   ..read /b2cmgs/
       call cfruin (nget, 1, idum, 'nlreg')

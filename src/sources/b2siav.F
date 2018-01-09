@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2siav (nx, ny, ns, isb, mb, hx, hy, hz, vol,
-     & qz, bb, ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,  !srv 01.07.09
-     & cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
+     & qz, qs, bb, ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam,  !srv 01.07.09
+     & chci, cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
      & wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
       use b2mod_types
       use b2mod_constants
@@ -17,7 +17,7 @@
       integer nx, ny, ns, isb
       real (kind=R8) ::
      & mb, hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
-     & vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     & vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      1 bb(-1:nx,-1:ny,0:3), lnlam(-1:nx,-1:ny),                       !srv 01.07.09
      2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1), vbecrb(-1:nx,-1:ny,0:1),
      & te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
@@ -102,7 +102,7 @@
 cwdk should introduce a separate routine to compute gradients (as needed here)
 c    instead of differences
           wght = 1.0_R8
-          call diff_r(nx, ny, 0, hx, hy, wght, qz, ti, wrk0, dtir)
+          call diff_r(nx, ny, 0, hx, hy, wght, qs, ti, wrk0, dtir)
 
 * ..calculate the parallel heat flux of ions in the center of the cell
 

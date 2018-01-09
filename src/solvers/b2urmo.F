@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2urmo (nx, ny, hx, hy, vol, qz,  isb, ub, rob, 
+      subroutine b2urmo (nx, ny, hx, hy, vol, qs,  isb, ub, rob, 
      .  smb, flub, cvsb, resmb, fmb)                                                     !srv 02.06.11
       use b2mod_types
       use b2mod_indirect
@@ -14,7 +14,7 @@
      *   ub(-1:nx,-1:ny), rob(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3),
      &  flub(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny), 
-     &  qz(-1:nx,-1:ny,0:1)
+     &  qs(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   resmb(-1:nx,-1:ny), fmb(-1:nx,-1:ny,0:1,0:1)
@@ -120,7 +120,7 @@
 
 *   ..compute radial differences of ub for 9-point terms
       wght = 1.0_R8
-      call diff_r(nx, ny, 0, hx, hy, wght, qz, ub, ubc, dubr)
+      call diff_r(nx, ny, 0, hx, hy, wght, qs, ub, ubc, dubr)
 
 * ..compute flux
 *   ..compute parallel momentum transport fmbx

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2agmt (nx, ny, isymm, 
-     & crx, cry, vol, hx, hy, qz, qc, qcb, gs,
+     & crx, cry, vol, hx, hy, qz, qc, qs, qcb, gs,
      & cell_width, cell_height, leftix, bottomiy)
       use b2mod_types
       use b2mod_constants
@@ -16,7 +16,7 @@
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qcb(-1:nx,-1:ny),
-     &  gs(-1:nx,-1:ny,0:2),
+     &  gs(-1:nx,-1:ny,0:2), qs(-1:nx,-1:ny,0:1), 
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
@@ -80,13 +80,21 @@
 *     vectors.)
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
-*     qc - (-1:nx,-1:ny) real*8 array, output.
+*     qc - (-1:nx,-1:ny,0:1) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
 *     t is the complementary angle between the x-direction of the 
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
 *     geometry. 
-*     It will hold that 0.lt.qc(,).le.1.
+*     It will hold that 0.lt.qc(,,).le.1.
+*
+*     qs - (-1:nx,-1:ny,0:1) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy) specifies sin(t), where 
+*     t is the complementary angle between the x-direction of the 
+*     (ix,iy) cell and its left face.
+*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
+*     geometry. 
+*     It will hold that -1.lt.qs(,,).le.1.
 *
 *     qcb - (-1:nx,-1:ny) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), qcb(ix,iy) specifies cos(t), where
@@ -189,6 +197,10 @@
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
         qcb(ix,iy) = 1.0_R8
+        qs(ix,iy,0) = sinang (
+     &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
         if(qz(ix,iy,1).le.0.0_R8) then
           write(*,'(a,1x,1f9.6,2i4)')
      1     'Problem in b2agmt: qz(ix,iy,1) <= 0',qz(ix,iy,1),ix,iy

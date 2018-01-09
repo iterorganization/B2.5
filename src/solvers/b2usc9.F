@@ -161,14 +161,16 @@
      &        - conb(ix,iy,0,0,2)                                       !srv 13.10.06
           ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
           if (solvereg(ileft)) then
-           aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
+           aa9(leftix(ix,iy),leftiy(ix,iy),1) = 
+     &       aa9(leftix(ix,iy),leftiy(ix,iy),1) + t0*rscal(pb(ix,iy))
            aa9(leftix(ix,iy),leftiy(ix,iy),0) =
-     &       aa9(leftix(ix,iy),leftiy(ix,iy),0)
-     &       -t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
+     &       aa9(leftix(ix,iy),leftiy(ix,iy),0) - 
+     &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           endif
           if (solvereg(ireg)) then
-           aa9(ix,iy,0) = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
-           aa9(ix,iy,-1) = t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
+           aa9(ix,iy,0)  = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
+           aa9(ix,iy,-1) = aa9(ix,iy,-1) + 
+     &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           endif
 cwdk add 9-point contributions
 cwdk todo: rscal(pb)-logic
@@ -217,14 +219,16 @@ cwdk todo: rscal(pb)-logic
           t1 =-flob(ix,iy,1,1)/2 - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,2)     !srv 13.10.06
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot)) then
-           aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0*rscal(pb(ix,iy))
+           aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = 
+     &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0*rscal(pb(ix,iy))
            aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0)
      &      -t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
           endif
           if (solvereg(ireg)) then
-           aa9(ix,iy,0) = aa9(ix,iy,0)-t0*rscal(pb(ix,iy))
-           aa9(ix,iy,-3) = t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
+           aa9(ix,iy,0)  = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
+           aa9(ix,iy,-3) = aa9(ix,iy,-3) + 
+     &      t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
           endif
 cwdk add 9-point contributions
 cwdk todo: add rscal-logic
@@ -294,6 +298,7 @@ cwdk todo: add rscal-logic
       enddo
       if (iout.ne.0) then                                              !srv 17.06.02 {
         write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,aa9(-1,-1,-4),name//'_aa9m4'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-3),name//'_aa9m3'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-2),name//'_aa9m2'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-1),name//'_aa9m1'//chns)
@@ -301,6 +306,7 @@ cwdk todo: add rscal-logic
         call my_out(70,nx,ny,aa9(-1,-1, 1),name//'_aa9p1'//chns)
         call my_out(70,nx,ny,aa9(-1,-1, 2),name//'_aa9p2'//chns)
         call my_out(70,nx,ny,aa9(-1,-1, 3),name//'_aa9p3'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 4),name//'_aa9p4'//chns)
         call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
         call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
         call my_out(70,nx,ny,nb,name//'_na'//chns)

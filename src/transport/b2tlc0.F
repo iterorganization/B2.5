@@ -1,5 +1,5 @@
-      subroutine b2tlc0 (nx, ny, ns, hx, hy, vol, qz, na, te, ti, cdpa,  !srv 30.11.15 {
-     &                   flc)
+      subroutine b2tlc0 (nx, ny, ns, hx, hy, vol, qz, qc, qs, na, te, 
+     &  ti, cdpa, flc)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -10,7 +10,7 @@
       integer nx, ny, ns
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     *  qz(-1:nx,-1:ny,0:1),
+     *  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      *  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
 *   ..input and output arguments
       real (kind=R8) ::
@@ -63,7 +63,7 @@
 *    ..compute partial pressure
          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute radial differences of partial pressure
-         call diff_r (nx, ny, 0, hx, hy, wght, qz, pb, pbc, dpbr)
+         call diff_r (nx, ny, 0, hx, hy, wght, qs, pb, pbc, dpbr)
          do ix = -1, nx
           do iy = -1, ny
 *   ..compute neutral difusion flux limits on x-surfaces
@@ -85,11 +85,10 @@
 *    ..perpendicular
             if (cdpa(ix,iy,0,1,is).ne.0.0_R8) then
             dpb  = abs(cdpa(ix,iy,0,1,is)*dpbr(ix,iy,0))
-            vbar = abs(sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))*(
-     &        vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),0)/
-     &        qz(leftix(ix,iy),leftiy(ix,iy),1) + 
-     &        vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,0)/qz(ix,iy,1))/
-     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))))
+            vbar = abs(sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))*
+     &        (vol(ix,iy) + vol(leftix(ix,iy),leftiy(ix,iy)))/
+     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &         qs(ix,iy,0)/qc(ix,iy,0))
             t2 = 1.0_R8/(1.0_R8 + (dpb/(alpha*vbar/4.0e0_R8*t1))**gamma)
      &                                                 **(1.0_R8/gamma)
             cdpa(ix,iy,0,1,is) = cdpa(ix,iy,0,1,is)*t2

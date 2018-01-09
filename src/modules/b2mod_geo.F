@@ -19,6 +19,7 @@
      *  qz(:,:,:),
      *  qc(:,:,:),
      *  qcb(:,:),
+     *  qs(:,:,:),
      *  vol(:,:),
      *  pbs(:,:,:), pbshz(:,:,:),                                    !srv 09.01.01
      *  conn(:),
@@ -47,6 +48,7 @@
       allocate(qz(-1:nxd,-1:nyd,0:1))
       allocate(qc(-1:nxd,-1:nyd,0:1))
       allocate(qcb(-1:nxd,-1:nyd))
+      allocate(qs(-1:nxd,-1:nyd,0:1))
       allocate(vol(-1:nxd,-1:nyd))
       allocate(pbs(-1:nxd,-1:nyd,0:1))
       allocate(pbshz(-1:nxd,-1:nyd,0:1))                             !srv 09.01.01
@@ -108,9 +110,11 @@
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
-     *   trim1, norm, cosang
+     *   trim1, norm, cosang, sinang
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
+      sinang(p0x,p0y,p1x,p1y) = trim1(
+     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
       cosang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 
@@ -125,14 +129,13 @@
       call cfrure (nread, size(qz), qz, 'qz')
       if (b2fplasma_version.ge.'03.001.000') then
         call cfrure (nread, size(qc), qc, 'qc')
+        call cfrure (nread, size(qs), qs, 'qs')
       elseif (b2fplasma_version.gt.'01.001.021') then
        call cfrure (nread, size(qc_loc), qc_loc, 'qc')
        qc(:,:,0) = qc_loc
-       qc(:,:,1) = 0.0_R8
       else
        do iy = -1, ny
         do ix = -1, nx
-         qc(ix,iy,1) = 0.0_R8
          qc(ix,iy,0) = cosang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
@@ -163,6 +166,18 @@
           write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
          endif
+        enddo
+       enddo
+      endif
+      if (b2fplasma_version.lt.'03.001.000') then
+       do iy = -1, ny
+        do ix = -1, nx
+         qc(ix,iy,1) = 0.0_R8
+         qs(ix,iy,1) = 0.0_R8
+         qs(ix,iy,0) = sinang (
+     &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
         enddo
        enddo
       endif
@@ -204,6 +219,10 @@ c conn
       if(newversion.gt.'01.001.021') then
         call cfwure (nwrite, size(qc), qc, 'qc')
       endif
+      if(newversion.ge.'03.001.000') then
+        call cfwure (nwrite, size(qs), qs, 'qs')
+      endif
+
       call cfwure (nwrite, size(vol), vol, 'vol')
 c conn
       if(newversion.ge.'01.001.063') then               !srv 15.02.11

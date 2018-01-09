@@ -1,4 +1,4 @@
-      subroutine b2tlh0 (nx, ny, ns, hx, hy, vol, qz, na, ti,
+      subroutine b2tlh0 (nx, ny, ns, hx, hy, vol, qz, qc, qs, na, ti,
      & hcib, chcb, hcimx, fllim0fhi)
       use b2mod_types
       use b2mod_indirect
@@ -10,6 +10,7 @@
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      *  vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     *  qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      *  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
      1  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
@@ -74,7 +75,7 @@
 
 *    ..compute radial differences of partial pressure
       wght = 1.0_R8
-      call diff_r (nx, ny, 0, hx, hy, wght, qz, ti, tic, dtir)
+      call diff_r (nx, ny, 0, hx, hy, wght, qs, ti, tic, dtir)
 
       if(flux_limit_style.eq.0) then                              !srv 13.06.08
 
@@ -262,14 +263,14 @@
 *   .. perpendicular
             if (chcb(ix,iy,0,1,is).ne.0.0_R8) then
             dti  = abs(chcb(ix,iy,0,1,is)*dtir(ix,iy,0))
-            vthi = abs(sqrt(2.0_R8 * t0 / (am(is)*mp))*(
-     &        vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),0)/
-     &        qz(leftix(ix,iy),leftiy(ix,iy),1) + 
-     &        vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,0)/qz(ix,iy,1))/
-     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))))
+            vthi = abs(sqrt(2.0_R8 * t0 / (am(is)*mp))*
+     &        (vol(ix,iy) + vol(leftix(ix,iy),leftiy(ix,iy)))/
+     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &         qs(ix,iy,0)/qc(ix,iy,0))
             t2 = 1.0_R8/(1.0_R8 + (dti/(alpha*vthi*t1*t0))**gamma)
      .                                           **(1.0_R8/gamma)
             chcb(ix,iy,0,1,is) = chcb(ix,iy,0,1,is)*t2
+            fllim0fhi(ix,iy,0,1,is) = t2
             endif
            end if
 *   .. compute neutral heat conductivity flux limit on y-surfaces

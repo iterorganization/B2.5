@@ -1,4 +1,5 @@
-      subroutine b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, kapy, cony)
+      subroutine b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs, kapy, 
+     &  cony)
       use b2mod_types
       use b2mod_indirect
       implicit none
@@ -6,7 +7,7 @@
       real (kind=R8) ::
      *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
      &   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
-     &   qz(-1:nx,-1:ny,0:1), kapy(-1:nx,-1:ny), 
+     &   qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), kapy(-1:nx,-1:ny), 
      &   cony(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
 *     B2TXCY computes radial conductances between neighbouring cells, 
@@ -31,25 +32,18 @@
       call xertst (-1.le.mode.and.mode.le.2,
      &  'b2txcy--faulty argument mode')
 
-*   ..initialize cony
-      cony = 0.0_R8
 *   ..compute cony(:,:,0)
-*   ..use arithmetic averaging (SOLPS4.0 style)
       do iy = -1, ny
        do ix = -1, nx
-        if(leftix(ix,iy).ne.-2) then
-cwdk      t0 = sin(gamma), interpolated to face (volume-weighted)
-c         to consider: compute directly at face as qc(ix,ix,1)?
-          t0 = -(vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,0) +
-     &           vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),0)) /
-     &          (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-cwdk      computation of cony based on gs(:,:,0)*t0, to ensure 'exact' 
-c         face area is use for the flow
-c         to consider: use mode.eq.2 for b2txcx, for consistent computation
-c                      of conductivity there?
-          cony(ix,iy,0) = gs(ix,iy,0)*t0*
-     &       (kapy(leftix(ix,iy),leftiy(ix,iy)) + kapy(ix,iy))/
-     &       (hy1(leftix(ix,iy),leftiy(ix,iy)) + hy1(ix,iy))
+        if(leftix(ix,iy).eq.-2) then
+         cony(ix,iy,0) = 0.0_R8
+        else
+         cony(ix,iy,0) = -gs(ix,iy,0)*qs(ix,iy,0)*
+     &     (vol(ix,iy)*kapy(leftix(ix,iy),leftiy(ix,iy))/
+     &      hy1(leftix(ix,iy),leftiy(ix,iy)) + 
+     &      vol(leftix(ix,iy),leftiy(ix,iy))*kapy(ix,iy)/
+     &      hy1(ix,iy))/
+     &     (vol(leftix(ix,iy),leftiy(ix,iy)) + vol(ix,iy))
         endif
        enddo
       enddo
@@ -58,7 +52,9 @@ c                      of conductivity there?
 *    ..use harmonic averaging
        do iy = -1, ny
         do ix = -1, nx
-         if(bottomiy(ix,iy).ne.-2) then
+         if(bottomiy(ix,iy).eq.-2) then
+          cony(ix,iy,1) = 0.0_R8
+         else
           t0 = vol(bottomix(ix,iy),bottomiy(ix,iy))*
      &         kapy(bottomix(ix,iy),bottomiy(ix,iy))/
      &         hy1(bottomix(ix,iy),bottomiy(ix,iy))**2
@@ -73,7 +69,9 @@ c                      of conductivity there?
 *    ..use geometric averaging
        do iy = -1, ny
         do ix = -1, nx
-         if(bottomiy(ix,iy).ne.-2) then
+         if(bottomiy(ix,iy).eq.-2) then
+          cony(ix,iy,1) = 0.0_R8
+         else
           cony(ix,iy,1) = 2.0_R8*sqrt(max(0.0_R8,
      &     (vol(bottomix(ix,iy),bottomiy(ix,iy))*
      &      kapy(bottomix(ix,iy),bottomiy(ix,iy))/
@@ -87,7 +85,9 @@ c                      of conductivity there?
 *    ..use arithmetic averaging (SOLPS5.0 formulation)
        do iy = -1, ny
         do ix = -1, nx
-         if(bottomiy(ix,iy).ne.-2) then
+         if(bottomiy(ix,iy).eq.-2) then
+          cony(ix,iy,1) = 0.0_R8
+         else
           cony(ix,iy,1) = 2.0_R8*
      &     (vol(bottomix(ix,iy),bottomiy(ix,iy))*
      &        kapy(bottomix(ix,iy),bottomiy(ix,iy))
@@ -100,7 +100,9 @@ c                      of conductivity there?
 *    ..use arithmetic averaging (SOLPS4.0 formulation)
        do iy = -1, ny
         do ix = -1, nx
-         if(bottomiy(ix,iy).ne.-2) then
+         if(bottomiy(ix,iy).eq.-2) then
+          cony(ix,iy,1) = 0.0_R8
+         else
           cony(ix,iy,1) = gs(ix,iy,1)*2.0_R8*
      &       (hy1(bottomix(ix,iy),bottomiy(ix,iy))*
      &        kapy(bottomix(ix,iy),bottomiy(ix,iy))

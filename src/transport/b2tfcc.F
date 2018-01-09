@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfcc (nx, ny, ns, hx, hy, vol, qz, na, te, ti, cdpa, 
+      subroutine b2tfcc (nx, ny, ns, hx, hy, vol, qs, na, te, ti, cdpa, 
      &  floe, cone, floi, coni)
       use b2mod_types
       use b2mod_rates
@@ -13,7 +13,7 @@
       integer nx, ny, ns
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
-     &  cdpa(-1:nx,-1:ny,0:1,0:1,0:ns-1), qz(-1:nx,-1:ny,0:1),
+     &  cdpa(-1:nx,-1:ny,0:1,0:1,0:ns-1), qs(-1:nx,-1:ny,0:1),
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -28,7 +28,7 @@
       real (kind=R8) ::
      *   xfac, t0, t1
       real (kind=R8) ::
-     *   qzf(-1:nx,-1:ny), dtir(-1:nx,-1:ny,0:1), dter(-1:nx,-1:ny,0:1),
+     *   dtir(-1:nx,-1:ny,0:1), dter(-1:nx,-1:ny,0:1),
      *   nw(-1:nx,-1:ny,0:ns-1), dnwr(-1:nx,-1:ny,0:1,0:ns-1),
      *   wght(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
       save ncall, xfac
@@ -80,16 +80,13 @@
 
 *   ..compute radial differences of te, ti, nw for 9-point terms
       wght = 1.0_R8
-      call diff_r(nx, ny, 0, hx, hy, wght, qz, te, wrk, dter)
-      call diff_r(nx, ny, 0, hx, hy, wght, qz, ti, wrk, dtir)
+      call diff_r(nx, ny, 0, hx, hy, wght, qs, te, wrk, dter)
+      call diff_r(nx, ny, 0, hx, hy, wght, qs, ti, wrk, dtir)
       do is = 0, ns-1
         nw(:,:,is) = (rza(:,:,is) + 1.0_R8)*na(:,:,is)
-        call diff_r(nx, ny, 0, hx, hy, wght, qz, nw(-1,-1,is), 
+        call diff_r(nx, ny, 0, hx, hy, wght, qs, nw(-1,-1,is), 
      &    wrk, dnwr(-1,-1,0,is))
       enddo
-
-*   ..interpolate qz(:,:,0) to x-faces
-      call intfaceh(nx,ny,leftix,leftiy,vol,qz(:,:,0),qzf)
 
 * ..correct floe, cone, floi, coni
 *   ..correct x-components
@@ -100,7 +97,7 @@
 cwdk add linearization coefficients for 9-point fluxes
           t0 = -(hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &          qzf(ix,iy) 
+     &          qs(ix,iy,0) 
           floe(ix,iy,0,0) = floe(ix,iy,0,0)-
      &     (xfac*2.5_R8/4.0_R8)*(cdpa(ix,iy,0,0,is)*
      &     (nw(ix,iy,is) - nw(leftix(ix,iy),leftiy(ix,iy),is)) + 
@@ -137,9 +134,6 @@ cwdk add linearization coefficients for 9-point fluxes
        enddo
       enddo
 
-*   ..interpolate qz(:,:,0) to y-faces
-      call intfacev(nx,ny,bottomix,bottomiy,vol,qz(:,:,0),qzf)
-
 *   ..correct y-components
       do is = 0, ns-1
        do iy = -1, ny
@@ -148,7 +142,7 @@ cwdk add linearization coefficients for 9-point fluxes
 cwdk add linearization coefficients for 9-point fluxes
          t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
      &         (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &         qzf(ix,iy)
+     &         qs(ix,iy,1)
           floe(ix,iy,1,1) = floe(ix,iy,1,1)-
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,1,is)*dnwr(ix,iy,1,is)*
      &     (rza(ix,iy,is) + rza(bottomix(ix,iy),bottomiy(ix,iy),is))*

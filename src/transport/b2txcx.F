@@ -43,18 +43,19 @@
      &  smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
      &  'faulty argument range qz(,,1)')
 
-*   ..initialize conx
-      conx = 0.0_R8
-*   ..compute conx
-*     note: conx(:,:,1) = 0 as long as y-faces are aligned with  
-*           magnetic surfaces, so no change needed yet
+*     conx(:,:,1) = 0 as long as y-faces are aligned with  
+*     magnetic surfaces, so no change needed yet
+      conx(:,:,1) = 0.0_R8
+*   ..compute conx(:,:,0)
       if (mode.eq.-1) then
 *    ..use harmonic averaging
 *      (needs somewhat messy code because the harmonic average is only
 *      defined for two quantities of the same sign.)
        do iy = -1, ny
         do ix = -1, nx
-         if(leftix(ix,iy).ne.-2) then
+         if(leftix(ix,iy).eq.-2) then
+           conx(ix,iy,0) = 0.0_R8
+         else
            t0 = vol(leftix(ix,iy),leftiy(ix,iy))*
      &        kapx(leftix(ix,iy),leftiy(ix,iy))/
      &        hx(leftix(ix,iy),leftiy(ix,iy))**2
@@ -69,7 +70,9 @@
 *    ..use geometric averaging
        do iy = -1, ny
         do ix = -1, nx
-         if(leftix(ix,iy).ne.-2) then
+         if(leftix(ix,iy).eq.-2) then
+           conx(ix,iy,0) = 0.0_R8
+         else
            conx(ix,iy,0) = 2.0_R8*sqrt(max(0.0_R8,
      &      (vol(leftix(ix,iy),leftiy(ix,iy))*
      &       kapx(leftix(ix,iy),leftiy(ix,iy))/
@@ -83,7 +86,9 @@
 *    ..use arithmetic averaging
        do iy = -1, ny
         do ix = -1, nx
-         if(leftix(ix,iy).ne.-2) then
+         if(leftix(ix,iy).eq.-2) then
+           conx(ix,iy,0) = 0.0_R8
+         else
            conx(ix,iy,0) = 2.0_R8*
      &        (vol(leftix(ix,iy),leftiy(ix,iy))*
      &         kapx(leftix(ix,iy),leftiy(ix,iy))
@@ -96,7 +101,9 @@
 *    ..use arithmetic averaging (SOLPS4.0 style)
        do iy = -1, ny
         do ix = -1, nx
-         if(leftix(ix,iy).ne.-2) then
+         if(leftix(ix,iy).eq.-2) then
+           conx(ix,iy,0) = 0.0_R8
+         else
            t0 = (vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,1)+
      +           vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),1)) /
      .          (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))

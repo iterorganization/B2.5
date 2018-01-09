@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfhe (nx, ny, ns, guard_flows, facdrift,
-     1  BoRiS, vol, hx, hy, qz, te, po, ne, na, vedia, veecrb,           !srv 13.01.17
+     1  BoRiS, vol, hx, hy, qz, qs, te, po, ne, na, vedia, veecrb,       !srv 13.01.17
      2  fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,           !xpb
      &  cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,           !srv 13.10.06
      &  fchstoch, balance)                                               !djm Jan2017 !srv 17.12.13
@@ -33,7 +33,7 @@
      & cddi(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                 !srv 13.10.06
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      * vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
-     2 BoRiS
+     2 BoRiS, qs(-1:nx,-1:ny,0:1)
       real (kind=R8) :: fchstoch(-1:nx,-1:ny)                            !lk 31.01.08
       logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
@@ -566,7 +566,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
         enddo
       enddo
 *   ..compute fhey, floey, coney
-      call b2xehy (nx, ny, hx, hy, qz, te, po, ne, ehy_)               !srv 13.01.17
+      call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy_)           !srv 13.01.17
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then

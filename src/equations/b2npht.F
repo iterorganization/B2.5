@@ -3,7 +3,7 @@
 
       subroutine b2npht (nx, ny, ns, nregionv, itcnt, ismain, solving,   !srv 05.07.17
      &  solvereg, solvireg, solvpreg, solvmreg,
-     1  rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
+     1  rxf, BoRiS, fac_ExB, hx, hy, qz, qs, vol, bb,
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,
      &  na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                        !srv 09.07.08
@@ -22,7 +22,7 @@
       real (kind=R8) ::
      *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),
      *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     *  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                          !srv 01.07.09
+     *  qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)    !srv 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1,0:1), floi(-1:nx,-1:ny,0:1,0:1),
      &  cone(-1:nx,-1:ny,0:1,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:1,0:2),            !srv 02.01.07
@@ -195,12 +195,12 @@
 * ..main computation
 *   ..compute final heat sources
       if(style.eq.0) then
-       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, vol,  !xpb !srv 05.07.17
-     &  bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni, fch,              !srv 01.07.09
+       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, qs,   !xpb !srv 05.07.17
+     &  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni, fch,         !srv 01.07.09
      &  cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)                   !xpb
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                  !srv 07.06.00 02.06.99 28.06.03 05.07.17
-     *  hx, hy, qz, vol, bb, pbs, lnlam,
+     *  hx, hy, qz, qs, vol, bb, pbs, lnlam,
      *  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, she0, shi0)       !srv 07.06.00 02.06.99 07.07.09
       endif
 csw 21feb2014 remove sources in ghostcells (SOLPS4)

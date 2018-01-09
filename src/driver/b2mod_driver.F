@@ -1253,8 +1253,8 @@ csw 09oct2012
 
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbl, wbbr, wbbv,
+     &  wbbc, cell_width, cell_height, gmap)
       call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
       if (b2mndr_redef_pbs.ne.0) then
         if (redef_pbs.eq.1) then
@@ -1367,6 +1367,10 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
           endif
         enddo
       enddo                                                          !srv 11.03.08 }
+*  ..for 9-point stencil, compute south-face values of qc (cos) and qs (sin)
+*    temporary computation; should go into geometry routines!
+      call intfacev(nx,ny,bottomix,bottomiy,vol,qz(-1,-1,0),qs(-1,-1,1))
+      qc(:,:,1) = (1 - qs(:,:,1)**2)**0.5                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
 *   ..find the poloidal number of midplane cell as a number of cell with min Bz
       if(nncut.eq.2) then                                            !srv 22.05.09 {
         nmdpl = rightcut(nncut)
@@ -1491,6 +1495,10 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
        call my_out(70,nx,ny,fhe(-1,-1,1,1),'b2mndr_fhey')
        call my_out(70,nx,ny,fhi(-1,-1,0,0),'b2mndr_fhix')
        call my_out(70,nx,ny,fhi(-1,-1,1,1),'b2mndr_fhiy')
+       call my_out(70,nx,ny,qc(-1,-1,0),'b2mndr_qc0');
+       call my_out(70,nx,ny,qc(-1,-1,1),'b2mndr_qc1');
+       call my_out(70,nx,ny,qs(-1,-1,0),'b2mndr_qs0');
+       call my_out(70,nx,ny,qs(-1,-1,1),'b2mndr_qs1');
       endif                                                          !srv 25.01.16 }
       do is = 0,ns-1                                                 !srv 25.01.16 {
         do iy=-1,ny

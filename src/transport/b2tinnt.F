@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tinnt (nx, ny, ns, facdrift, fac_ExB,
-     &       ismain, ismain0, vol, gs, hx, hy, qz, qc, bb,               !srv 08.07.09 { !srv 20.10.17
+     &       ismain, ismain0, vol, gs, hx, hy, qz, qc, qs, bb,           !srv 08.07.09 { !srv 20.10.17
      &       te, po, ti, na, fna, csigin, fchin)                         !srv 08.03.99 16.06.09
       use b2mod_types
       use b2mod_indirect
@@ -24,7 +24,8 @@
      1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), 
      1 te(-1:nx,-1:ny), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     & csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny,0:1)
+     & csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny,0:1),
+     & qs(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   fchin(-1:nx,-1:ny,0:1,0:1)
@@ -150,11 +151,11 @@
           sigia(:,:) = sigi(:,:)*dab2(0:nx+1,0:ny+1,iamain,1)
           call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, sigi,
      &                                             csigia(-1,-1,0,0))
-          call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, sigi,
+          call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs, sigi,
      &                                             csigia(-1,-1,0,1))
           call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, sigia,
      &                                 csigin(-1,-1,0,0,ismain,ismain0))
-          call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, sigia,
+        call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs,  sigia, 
      &                                 csigin(-1,-1,0,1,ismain,ismain0))
           if(style.eq.0) then
 *   ..interpolate ti in the left and bottom cell face

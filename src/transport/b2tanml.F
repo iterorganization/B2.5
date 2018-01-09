@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tanml (nx, ny, ns, vol, hx, hy, qz, csig_an, po,       !srv 20.09.06 {
+      subroutine b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po,       !srv 20.09.06 {
      &                    fchanml)
       use b2mod_types
       use b2mod_boundary_namelist
@@ -14,7 +14,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), qs(-1:nx,-1:ny,0:1),
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 csig_an(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
@@ -79,12 +79,12 @@
         fchanml = 0.0e0_R8
       else                                                    !srv 27.02.13
 
-*   ..compute differences of po for 9-point terms
+*   ..compute differences of po, including 9-point terms
         wght = 1.0_R8
-        call diff(nx, ny, hx, hy, wght, qz, po, dpo)
+        call diff(nx, ny, hx, hy, wght, qs, po, dpo)
 
 *   ..compute the current
-        fchanml(:,:,:,:) = -csig_an(:,:,:,:)*dpo(:,:,:,:)
+        fchanml = -csig_an*dpo
 
       endif                                                   !srv 27.02.13
 

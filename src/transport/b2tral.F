@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,       !srv 23.11.10
-     1 bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, crx, cry, bzb,       !srv 09.01.01 01.07.09
+     1 bb, conn, vol, gs, hx, hy, hz, qz, qc, qs, pbs, crx, cry, bzb,       !srv 09.01.01 01.07.09
      1 lnlam, fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,   !srv 03.06.03
      2 cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                  !srv 13.10.06
      3 chvi, csig, csigin, calf, cthe, cthi, 
@@ -24,8 +24,8 @@
      *  bb(-1:nx,-1:ny,0:3), 
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),              !srv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), bzb(-1:nx,-1:ny),    !srv 13.10.06
-     &  lnlam(-1:nx,-1:ny),                                             !srv 01.07.09
+     &  qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), !srv 13.10.06
+     &  bzb(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),                           !srv 01.07.09
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),
@@ -158,14 +158,14 @@
 * ..compute transport coefficients
 *   ..compute anomalous terms
       call b2trno (nx, ny, ns, nscx, nscxmax, iscx, 
-     &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,         !srv 09.01.01
+     &  bb, vol, gs, hx, hy, hz, qz, qc, qs, pbs, crx, cry, conn, !srv 09.01.01
      &  na, ua, te, ti, po, ne, ni, ne2, cdna, cdpa, cvla, cvsa,
      &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                   !srv 09.01.01 15.12.05
      &  chce, chve, chci, chvi, csig, calf, fllim0fhi)
 *   ..compute classical terms
       call b2trcl (nx, ny, ns, nscx, iscx, ismain, 
      &  bb, conn, vol, gs, hx, hy, hz,                            !srv 23.11.10
-     1  qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,   !srv 01.07.09
+     1  qz, qc, qs, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,   !srv 01.07.09
      2  chvemx, chvimx, cvsahz0,                                  !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, csigin,
      4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                !srv 09.01.01
@@ -360,6 +360,10 @@
         call my_out(70,nx,ny,cvsahz(-1,-1,0,0,is),'b2tral_cvsahzx'//
      &              chns)
         call my_out(70,nx,ny,cvsahz(-1,-1,1,1,is),'b2tral_cvsahzy'//
+     &              chns)
+        call my_out(70,nx,ny,cvsahz(-1,-1,0,1,is),'b2tral_cvsahzxy'//
+     &              chns)
+        call my_out(70,nx,ny,cvsahz(-1,-1,1,0,is),'b2tral_cvsahzyx'//
      &              chns)
 !        call my_out(70,nx,ny,cvsa_cl(-1,-1,0,0,is),'b2tral_cvsa_clx'//
 !     &              chns)

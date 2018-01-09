@@ -1961,7 +1961,7 @@ c
         case('ehy')
           description='ehy'
           nz=1
-          call b2xehy (nx, ny, hx, hy, qz, te, po, ne, mach(-1,-1,0))   !srv 13.01.17
+          call b2xehy(nx, ny, hx, hy, qz, qs, te, po, ne, mach(-1,-1,0))!srv 13.01.17
           call copy(mach(-1,-1,1),1.0_R8,nz,textbl)
         case('dab2')
           description='Atomic density (m^{-3})'

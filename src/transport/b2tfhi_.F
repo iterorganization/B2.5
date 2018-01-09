@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 csw 2013 added fna_he, cvsa, vadia into argument list
-      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ti,
-     1  ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia, !srv 17.05.99 27.12.01
-     &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,               !lk 30.05.11
+      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, qs, bb,
+     1   ti, ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa,   !srv 17.05.99 27.12.01
+     &  vadia, fchvispar, fchvisper, fchvisq, fchinert, fchanml,        !lk 30.05.11
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                              !srv 13.10.06
      &  balance)                                                        !djm Jan2017
       use b2mod_types
@@ -26,6 +26,7 @@ csw 2013 added fna_he, cvsa, vadia into argument list
      & chvi(-1:nx,-1:ny,0:1,0:1),
      & cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      & cddi(-1:nx,-1:ny,0:1,0:1,0:ns-1), qz(-1:nx,-1:ny,0:1),           !srv 13.10.06
+     & qs(-1:nx,-1:ny,0:1),
      & chvimx(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      & facdrift(-1:nx,-1:ny),
@@ -81,7 +82,7 @@ csw 30apr2014 added fna_he, ia
 cpax      
       real (kind=R8) ::
      *   flidia(-1:nx,-1:ny,0:1,0:1), facdriftm,                        !srv 25.01.02
-     *   dtir(-1:nx,-1:ny,0:1), qzf(-1:nx,-1:ny),
+     *   dtir(-1:nx,-1:ny,0:1),
      *    wght(-1:nx,-1:ny), tic(-1:nx,-1:ny)
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
@@ -362,11 +363,7 @@ c  ..set null flux in guard cells  ?
 
 *   ..compute radial differences of ti for 9-point terms
       wght = 1.0_R8
-      call diff_r(nx, ny, 0, hx, hy, wght, qz, ti, tic, dtir)
-
-cwdk needed in 9-point scheme
-*   ..interpolate qz(:,:,0) to x-faces
-      call intfaceh(nx,ny,leftix,leftiy,vol,qz(:,:,0),qzf)
+      call diff_r(nx, ny, 0, hx, hy, wght, qs, ti, tic, dtir)
 
 
       fhi_mdf = 0.0_R8                                                  !srv 17.06.09
@@ -896,7 +893,7 @@ c          part of floi9(_mdf) is transfered to coni, to mimick the
 c          upwind discretization needed for the "effective convection"
           t0 = -(hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &          qzf(ix,iy)
+     &          qs(ix,iy,0)
           if(mdf_fhi.eq.0) then                                         !srv 13.10.06 {
            floi(ix,iy,0,0)   = floi0 + floi9
            floi(ix,iy,0,1)   = 0.0_R8
@@ -926,11 +923,6 @@ c          upwind discretization needed for the "effective convection"
        w1=0.0e0_R8; w2=0.0e0_R8; w3=0.0e0_R8; w4=0.0e0_R8; w5=0.0e0_R8;
        w6=0.0e0_R8;
       endif                                                             !srv 16.09.02 }
-
-
-cwdk needed in 9-point scheme
-*   ..interpolate qz(:,:,0) to y-faces
-      call intfacev(nx,ny,bottomix,bottomiy,vol,qz(:,:,0),qzf)
 
 *   ..compute fhiy, floiy, coniy
       do ix = -1, nx
@@ -1199,7 +1191,7 @@ c    an upwind scheme
 c    implementation ensures backwards compatibility for perfectly orthogonal grids
          t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
      &         (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &         qzf(ix,iy)
+     &         qs(ix,iy,1)
          if(mdf_fhi.eq.0) then                                       !srv 13.10.06 {
           floi(ix,iy,1,1)   = floi0
           coni(ix,iy,1,1,0) = coni0

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2usm9 (nx, ny, isb, nregionv, solvereg, itcnt,     !srv 04.07.08
-     &  rxg, vol, hx, hy, hz, qz, bb, rob, pb, ub,                   !srv 09.01.01
+     &  rxg, vol, hx, hy, hz, qz, qs, bb, rob, pb, ub,               !srv 09.01.01
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa9, aad0, name) !srv 06.04.07
       use b2mod_indirect
       use b2mod_types
@@ -15,7 +15,7 @@
       real (kind=R8) ::
      *  rxg, bb(-1:nx,-1:ny,0:3), rob(-1:nx,-1:ny),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),          !srv 09.01.01
-     &  hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     &  hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  pb(-1:nx,-1:ny), ub(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3),
      &  flcb(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),
      &  resmb(-1:nx,-1:ny), ctcfb(-1:nx,-1:ny)                       !srv 06.04.07
@@ -49,8 +49,7 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
-     *  cfc0, t0, t1, t2, t3, t4, flo, dif, flo9, con9, csb, csb1,
-     *  qzf(-1:nx,-1:ny)
+     *  cfc0, t0, t1, t2, t3, t4, flo, dif, flo9, con9, csb, csb1
       save ncall, cfc0
 *   ..procedures
       intrinsic max, abs, sqrt
@@ -119,9 +118,6 @@
        enddo
       enddo
 
-*   ..interpolate qz(:,:,0) to x-faces
-      call intfaceh(nx,ny,leftix,leftiy,vol,qz(:,:,0),qzf)
-
       do iy = -1, ny
        do ix = -1, nx
 csw 18feb2014 corrected BCs (SOLPS4)
@@ -150,20 +146,21 @@ cwdk compute contributions from 9-point stencil
      &         0.5_R8*abs(t2),cvsb(ix,iy,0,1))
          t4 = -(hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &         (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &         qzf(ix,iy)
+     &         qs(ix,iy,0)
          t0 = t0 + upwind(t2,0.0_R8,1.0_R8) - t3*t4
          t1 = t1 - upwind(t2,1.0_R8,0.0_R8) - t3*t4
 
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
          if (solvereg(ileft))
-     >    aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0
+     >    aa9(leftix(ix,iy),leftiy(ix,iy),1) = 
+     >      aa9(leftix(ix,iy),leftiy(ix,iy),1) + t0
          if (solvereg(ireg))
      >    aa9(ix,iy,0) = aa9(ix,iy,0)-t0
          if (solvereg(ileft))
      >    aa9(leftix(ix,iy),leftiy(ix,iy),0) =
      &    aa9(leftix(ix,iy),leftiy(ix,iy),0)-t1
          if (solvereg(ireg))
-     >    aa9(ix,iy,-1) = t1
+     >    aa9(ix,iy,-1) = aa9(ix,iy,-1) + t1
 cwdk add 9-point contributions to matrix
          t0 = -0.25_R8*t3
          t1 = -0.25_R8*t3
@@ -197,9 +194,6 @@ cwdk add 9-point contributions to matrix
        enddo
       enddo
 
-*   ..interpolate qz(:,:,0) to y-faces
-      call intfacev(nx,ny,bottomix,bottomiy,vol,qz(:,:,0),qzf)
-
       do iy = -1, ny
        do ix = -1, nx
 csw 18feb2014 corrected BCs (SOLPS4)
@@ -229,18 +223,19 @@ csw 18feb2014 corrected BCs (SOLPS4)
 
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot))
-     >     aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0
+     >     aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = 
+     >      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0
           if (solvereg(ireg))
-     >     aa9(ix,iy,3) = aa9(ix,iy,3)-t0
+     >     aa9(ix,iy,0) = aa9(ix,iy,0)-t0
           if (solvereg(ibot))
      >     aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &              aa9(bottomix(ix,iy),bottomiy(ix,iy),0)-t1
           if (solvereg(ireg))
-     >     aa9(ix,iy,-3) = t1
+     >     aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1
 cwdk add contributions from 9-point stencil
           t4 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
      &          (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &          qzf(ix,iy)
+     &          qs(ix,iy,1)
           t0 = -0.25_R8*(t3 - 0.5_R8*abs(t2))*t4
           t1 = -0.25_R8*(t3 - 0.5_R8*abs(t2))*t4
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
@@ -331,11 +326,15 @@ cxpb
       call b2ux9p (nx, ny, aa9, itcnt, resmb, corub, name)            !srv 18.03.10
 
       if (iout.ne.0) then                                             !srv 17.06.02 {
+       call my_out(70,nx,ny,aa9(-1,-1,-4),name//'_aa9m4')
+       call my_out(70,nx,ny,aa9(-1,-1,-3),name//'_aa9m3')
        call my_out(70,nx,ny,aa9(-1,-1,-2),name//'_aa9m2')
        call my_out(70,nx,ny,aa9(-1,-1,-1),name//'_aa9m1')
        call my_out(70,nx,ny,aa9(-1,-1, 0),name//'_aa9m0')
        call my_out(70,nx,ny,aa9(-1,-1, 1),name//'_aa9p1')
        call my_out(70,nx,ny,aa9(-1,-1, 2),name//'_aa9p2')
+       call my_out(70,nx,ny,aa9(-1,-1, 3),name//'_aa9p3')
+       call my_out(70,nx,ny,aa9(-1,-1, 4),name//'_aa9p4')
        call my_out(70,nx,ny,resmb,name//'_resmb')
        call my_out(70,nx,ny,corub,name//'_corub')
        call my_out(70,nx,ny,pccb(-1,-1,0,0),name//'_pccbx')

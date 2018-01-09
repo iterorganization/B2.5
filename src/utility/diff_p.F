@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine diff_p(nx, ny, mode, hx, hy, vol, qz, fun, func, dfunp)
+      subroutine diff_p(nx, ny, mode, hx, hy, vol, qs, fun, func, dfunp)
       use b2mod_types
       use b2mod_indirect
       implicit none
@@ -9,7 +9,7 @@
       integer nx,ny,mode
       real (kind=R8) ::
      *   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     *   qz(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny), func(-1:nx,-1:ny)
+     *   qs(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny), func(-1:nx,-1:ny)
 *   ..output arguments
       real (kind=R8) ::
      *   dfunp(-1:nx,-1:ny,0:1)
@@ -34,8 +34,6 @@
 
 *   ..local variables
       integer ix,iy
-      real (kind=R8) ::
-     *   qzf(-1:nx,-1:ny)
 
 *   ..procedures
       external intcor, intfaceh, intfacev

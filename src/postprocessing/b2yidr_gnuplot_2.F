@@ -1,23 +1,27 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2yidr (ninp, nout, nx, ny, ns)
+      subroutine b2yidr_gnuplot (ninp, nout, nx, ny, ns)
       use b2mod_types
       use b2mod_geo
-      use b2mod_work
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals
       use b2mod_sources
       use b2mod_transport
+      use b2mod_rates
+      use b2mod_ppout
+      use b2mod_version
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_geo_corner
+      use b2mod_work
       use b2mod_b2cmpa
       use b2mod_b2cmrc
       use b2mod_b2cmfs
       use b2mod_ppout
       use b2mod_geo_corner
-!      use b2mod_work
+      use b2mod_work
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1), nx, ny, ns
@@ -29,14 +33,14 @@
 *
 *  1. purpose
 *
-*     B2YIDR is a postprocessor for b2. It reads and displays the
+*     B2YIDR is a post-processor for b2. It reads and displays the
 *     plasma state. This routine does not make use of any metric
 *     information.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
+*     This routine is a post-processor for the b2 code. It reads the
 *     result of a b2 calculation, and produces printed and graphical
 *     summaries. This routine does not require any metric information.
 *
@@ -74,26 +78,15 @@
 
 *   ..common blocks
 *   ..local variables
-      integer is, iftp, idum(0:9), ismain
-      real (kind=R8) :: t0, t1,
-     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-     &  rbr(-1:nx,-1:ny,0:ns-1)
-      character lblmn*120, lblrc*120, lblgm*120, idout*80, id*8
+      integer idum(0:9)
+      character lblmn*120, lblrc*120, lblgm*120
       character cnamip*80, cvalip*80, line*500
-      logical file_open
-*   ..initialisation
-      save ismain
-      data ismain/1/
 *   ..procedures
       intrinsic abs
-      logical streql, ltst, is_comment
-      external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, lbfilx, cfruin, is_comment
-      external b2rups, b2ruzd, b2wfpi, b2wgpi, b2sqel, b2spel,
-     &  b2rurc, b2rugm, b2xvps
-      external ipsetc, ipgeti, b2rfcp, b2rflb, b2xxid
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
+      logical is_comment
+      external subini, subend, xertst, cfruch, b2rugm, cfruin, b2xvps
+      external b2rups, b2ruzd, b2wgpi_gnuplot, b2rurc, b2spel, b2sqel
+      external ipsetc, ipgeti, b2rfcp, b2rflb, b2xxid, is_comment
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -124,7 +117,7 @@
 *     It will hold that 0.le.zamin(is).le.zamax(is), 0.lt.zn(is) and
 *     0.lt.am(is). It is required that neutral species not be bundled
 *     with charged species.
-*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
+*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is) 
 *     are undefined.
 *
 *     Description of some local variables (including arrays in w(0:*):
@@ -149,7 +142,7 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
 *     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
 *     uadia(ix,iy,1,is) the radial drift velocity.
-*
+* 
 *     te - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
 *     temperature on the (ix,iy) cell. It will hold that 0.lt.te(,).
@@ -176,20 +169,20 @@
 *     fhe - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
-*     heat flux through the face between the (ix,iy) cell and its
-*     left neighbor. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
+*     heat flux through the face between the (ix,iy) cell and its left
+*     neighbor. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fhey(ix,iy) specifies the electron
-*     heat flux through the face between the (ix,iy) cell and its
-*     bottom neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
+*     heat flux through the face between the (ix,iy) cell and its bottom
+*     neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
 *
 *     fhi - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fhix(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix,iy) cell and its left
-*     neighbor. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
+*     heat flux through the face between the (ix,iy) cell and its
+*     left neighbor. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix,iy) cell and its bottom
-*     neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
+*     heat flux through the face between the (ix,iy) cell and its
+*     bottom neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
 *
 *     fch - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
@@ -204,20 +197,16 @@
 *     lblmn identifies the instance of the program employed for the main
 *     calculation.
 *
-*     ismain - integer.
-*     ismain identifies the index of the main plasma species.
-*     This cannot be a neutral species.
-*
 *-----------------------------------------------------------------------
 *.computation
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2yidr')
+      call subini ('b2yidr_gnuplot')
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
-     &             1.le.ninp(3).and.1.le.ninp(4).and.
-     &             1.le.nout(0).and.1.le.nout(1),
+     &  1.le.ninp(3).and.1.le.ninp(4).and.
+     &  1.le.nout(0).and.1.le.nout(1), 
      &  'faulty argument ninp, nout')
 *   ..test dimensions
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -227,43 +216,34 @@
 * ..computation
 *   ..obtain lblmn
       call b2xxid ('b2mn', lblmn(1:60))
-      inquire(unit=ninp(4),opened=file_open)
-      if (file_open) then
-        call b2rflb (ninp(4), lblmn(61:120))
+      call b2rflb (ninp(4), lblmn(61:120))
 *   ..read revised parameters in physics common
 *     (ninp(4) need supply only parameters that are to be changed from
 *     the values read in as default physics common.)
-        call b2rfcp (ninp(4), ns)
+      call b2rfcp (ninp(4), ns)
 *   ..read and echo code internal parameters
-    1   continue
-         read (ninp(4),'(a80)',end=2,err=93) line
-         if (.not.is_comment(line)) then
-           read (line,*) cnamip, cvalip
-           call ipsetc (cnamip, cvalip)
-         end if
-         goto 1
-    2   continue
-      end if
-*   ..read output control
-      read (ninp(0),'(a8)',err=91) id
-      call xertst (streql(id,'*idout'),
-     &  'faulty input instead of *idout, id='//id)
-      read (ninp(0),*,err=92) iftp, idout
+    1 continue
+       read (ninp(4),'(a)',end=2,err=91) line
+       if (.not.is_comment(line)) then
+         read (line,*) cnamip, cvalip
+         call ipsetc (cnamip, cvalip)
+       end if
+       goto 1
+    2 continue
+*   ..read plasma state file
+      call cfruch (ninp(1), 120, lblmn, 'label')
 *   ..read header for geometry
       call cfruch (ninp(3), 120, lblgm, 'label')
       call cfruin (ninp(3), 1, idum, 'isymm')
       isymm = idum(0)
 *   ..read geometry and metric
-      call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
-*   ..read plasma state file
-      call cfruch (ninp(1), 120, lblmn, 'label')
+      call b2rugm (ninp(3), nx, ny, crx, cry, fpsi,
+     &  ffbz, bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv)
 *   ..read species data
-      call b2ruzd (ninp(1), b2fstate_version,
+      call b2ruzd (ninp(1), b2fstate_version, 
      &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
-      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
+      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
@@ -272,67 +252,29 @@
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      1  b2fstate_version)
 *   ..test plasma state and fluxes
-      call b2xvps (nx, ny, ns,
+      call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+*   .. derive data
+      call b2xpni (nx, ny, ns, na, ni)
 *   ..read atomic rate data
       call cfruch (ninp(2), 120, lblrc, 'label')
       call read_b2mod_ppout('rates', ninp(2), lblrc)
-      call b2rurc (ninp(2), b2frates_version)
-*   ..test rtns, rtzmin, rtzmax, rtzn
-      call xertst (ns.eq.rtns, 'faulty input rtns--wrong rate table?')
-      do is = 0, ns-1
-       call xertst (ltst(zamin(is),rtzmin(is)),
-     &   'faulty input rtzmin--wrong rate table?')
-       call xertst (ltst(zamax(is),rtzmax(is)),
-     &   'faulty input rtzmax--wrong rate table?')
-       call xertst (ltst(zn(is),rtzn(is)),
-     &   'faulty input rtzn--wrong rate table?')
-      enddo
-*    ..compute log-log electron rate coefficients
-      call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
-     &     rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
-*   ..compute electron rate coefficients
-      call ipgeti ('b2mndr_ismain', ismain)
-      call xertst (0.le.ismain.and.ismain.lt.ns,
-     . 'invalid main plasma species index ismain')
-      call xertst (.not.is_neutral(ismain),
-     . 'invalid main plasma species ismain; must not be neutral')
-      call b2sqel (nx, ny, ns, ismain, ev, te,
-     &    rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
-*   ..write label
-      write (nout(0),'(/2x,a)') 'label for this calculation:'
-      write (nout(0),'(/4x,a/4x,a)') lblmn(1:60), lblmn(61:120)
-*   ..write output control
-      write (nout(0),'(/2x,a,2x,i3/2x,a,2x,a)')
-     &  'style of contour plots:', iftp,
-     &  'idout:', idout
-*   ..write state
-      call b2wfpi (nout(0), idout, nx, ny, ns, ne, na, ua, te,
-     &  ti, po, fna, fhe, fhi, fch)
-*   ..activate graphics on nout(1)
-      call gacwk (nout(1))
-*   ..mark contour style
-      call lbfilx (iftp)
+
 *   ..plot state
-      call b2wgpi (nout(0), idout, nx, ny, ns, ne, na, ua, te,
-     &  ti, po, fna, fhe, fhi, fch)
-*   ..deactivate graphics on nout(1)
-      call gdawk (nout(1))
+      call b2wgpi_gnuplot (nout(0), nx, ny, ns, ne, na, ua, te,
+     &  ti, po, fna, fhe, fhi, fch, kinrgy,
+     &  gs,qc,ni)
 
 * ..return
-      call dealloc_b2mod_b2cmrc
       call subend ()
       return
 
 *-----------------------------------------------------------------------
 *.error conditions
 
-   91 call xerrab ('error trying to read heading *idout')
-   92 call xerrab ('error trying to read output control')
-   93 call xerrab ('error trying to read internal parameters')
+   91 call xerrab ('error trying to read internal parameters')
 
 *-----------------------------------------------------------------------
-*.end b2yidr
+*.end b2yidr_gnuplot
 
-      end subroutine b2yidr
+      end subroutine b2yidr_gnuplot

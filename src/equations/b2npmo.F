@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,      !srv 13.01.17
-     &  qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,
+     &  qz, qs, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,
      &  na, te, ti, po, ue, fna_fcor,                                  !srv 09.01.01 01.07.09 05.07.17
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
      &  smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
@@ -29,7 +29,7 @@
       real (kind=R8) ::
      *  rxf, 
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),             !srv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1),
+     &  qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
      &  pbshz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),   !srv 01.07.09 05.07.17
      &  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
@@ -325,9 +325,9 @@
 
 *    ..compute additional viscosity term
        call b2siav (nx, ny, ns, is, am(is)*mp, hx, hy, hz, vol, 
-     &   qz, bb, ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  
-     &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,      !srv 01.07.09
-     &   cvsa(-1,-1,0,0,is), cvsa_cl(-1,-1,0,0,is), 
+     &   qz, qs, bb, ua(-1,-1,is), wadia(-1,-1,0,is),  
+     &   vaecrb(-1,-1,0,is), te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2,
+     &   lnlam, chci, cvsa(-1,-1,0,0,is), cvsa_cl(-1,-1,0,0,is), 
      &   cvsahz(-1,-1,0,0,is), 
      &   cvsahz_cl(-1,-1,0,0,is), smbvh, smbvv, kt_neo, 
      &   wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
@@ -361,7 +361,7 @@ cdjm Jan2017 update momentum source components for balance
        endif
 
 *    ..compute residual
-       call b2urmo (nx, ny, hx, hy, vol, qz, is, ua(-1,-1,is), rob, smb,
+       call b2urmo (nx, ny, hx, hy, vol, qs, is, ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,0,is), resmo(-1,-1,is), wrkf)            !srv 04.07.08
        fmo(:,:,:,:,is)=wrkf
 
@@ -443,7 +443,7 @@ c     ..compare 9-pt stencil matrices
          if (new_matrix) call restart_ma28_for_9
 *     ..compute correction
          call b2usm9 (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
-     &    vol, hx, hy, hz, qz, bb, rob, pb, ua(-1,-1,is),               !srv 09.01.01
+     &    vol, hx, hy, hz, qz, qs, bb, rob, pb, ua(-1,-1,is),           !srv 09.01.01
      &    smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
      &    pcca(-1,-1,0,0,is), aa9, wrk1, 'b2usmo_'//chns)
          last_solve_9(0:nnreg(0)) = solvemo(is,0:nnreg(0))
@@ -485,7 +485,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)                  !srv 03.07.08
         call b2saxpy (n2*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
         call b2saxpy (n2*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
-        call b2urmo (nx, ny, hx, hy, vol, qz, is, ua(-1,-1,is), rob,   !srv 09.01.01
+        call b2urmo (nx, ny, hx, hy, vol, qs, is, ua(-1,-1,is), rob,   !srv 09.01.01
      &   smb, flub, cvsahz(-1,-1,0,0,is), wrk0, wrkf)
 *    ..accumulate residual
         call b2saxpy (n2, 1.0_R8, wrk0, 1, resmt, 1)
@@ -514,7 +514,7 @@ c     ..compare 9-pt stencil matrices
          if (new_matrix) call restart_ma28_for_9
 *     ..compute correction
          call b2usm9 (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,
-     &    vol, hx, hy, hz, qz, bb, ro, pr, wrk0, smt, flct, cvct,
+     &    vol, hx, hy, hz, qz, qs, bb, ro, pr, wrk0, smt, flct, cvct,
      &    resmt, ctcft, corut, pccm, aa9, wrk1, 'b2usmo_total')
          last_solve_9(0:nnreg(0)) = solvemt(0:nnreg(0))
        else
