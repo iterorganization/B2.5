@@ -142,7 +142,7 @@ c***  spttrg  : sputtering [g/y]
      ,  whtnu(0:NYD-1,ntrgsx),  whtpl(0:NYD-1,ntrgsx),
      ,  wpttrg(0:NYD-1,ntrgsx),
      ,  wpltrg(0:NYD-1,ntrgsx), wnutrg(0:NYD-1,ntrgsx),
-     ,  wrdtrg(0:NYD-1,ntrgsx),
+     ,  wrdtrg(0:NY-1,ntrgsx,0:DEF_NATM),
      ,  fiitrg(0:NYD-1,ntrgsx,DEF_NATM),
      ,  eiitrg(0:NYD-1,ntrgsx,DEF_NATM),
      ,  faitrg(0:NYD-1,ntrgsx,DEF_NATM),
@@ -775,7 +775,7 @@ c                  print *,'j,js,wo = ',j,js,wo    !###
                   end if !}
                 end if
                 wpttrg(iy,j)=wnutrg(iy,j)+wpltrg(iy,j)
-                wtttrg(iy,j)=wpttrg(iy,j)+wrdtrg(iy,j)
+                wtttrg(iy,j)=wpttrg(iy,j)+wrdtrg(iy,j,0)
               end do !}
             end do !}
             write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for Wn : ',
@@ -1329,7 +1329,7 @@ c        print *,'itrg,iy=',itrg,iy
         w_line(6)=wnutrg(iy,itrg)
         w_line(5)=wpltrg(iy,itrg)
         w_line(4)=wpttrg(iy,itrg)
-        w_line(3)=wrdtrg(iy,itrg)
+        w_line(3)=wrdtrg(iy,itrg,0)
         w_line(2)=wtttrg(iy,itrg)
         w_line(1)=wldrfdst(iln,izn)
         do is=1,n_sfpr_s !{
