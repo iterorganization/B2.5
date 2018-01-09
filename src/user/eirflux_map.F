@@ -1,11 +1,11 @@
 c
-cvk interfaces to surface flux data calculated by eirene
+cvk interfaces to surface flux data calculated by Eirene
 
 c  version: 11.07.2008 18:53
 
 c
-c calculating the index shift in eirene's flux arrays.
-c to be used in interface subroutines to eirene's flux data
+c calculating the index shift in the Eirene flux arrays.
+c to be used in interface subroutines to Eirene flux data
 c
 c typ    : is the type of the surface which has to match
 c          (for targets 2: radial surface)
@@ -46,12 +46,12 @@ c the surface has been found
 
 
 c=======================================================================
-c check if surface areas in b2 and eirene are the same
+c check if surface areas in B2 and Eirene are the same
 c
 c  s     : array of surface areas
 c  t     : index of target
 c  n     : size of array s
-c  shift : shift which has to be used to access eirene's array
+c  shift : shift which has to be used to access the Eirene array
 c
       subroutine b2neut_surfcheck(s,t,n,shift)
       use b2mod_types
@@ -106,7 +106,7 @@ c           (energy release from recombination of atoms into molecules)
 c  wnpr  : kinetic energy of reflected neutrals originated from ions
 c         (including sputtered neutrals)
 c  n     : length of arrays wneut and wnpr
-c  shift : data offset in the eirene arrays
+c  shift : data offset in the Eirene arrays
 
 
 
@@ -149,7 +149,7 @@ c  sfa   : incident flux density of atom
 c  n     : length of array sfa wneut and wnpr
 c  ia    : index of atom to be taken
 c          if ia>natm then ia-natm is the index of molecule
-c  shift : shift which has to be used to access eirene's array
+c  shift : shift which has to be used to access the Eirene array
 c
       subroutine b2neut_flux(sfa,n,ia,shift)
       use b2mod_types
@@ -191,7 +191,7 @@ c  eav   : average energy of impinging neutrals [eV]
 c  n     : length of array eav
 c  ia    : index of atom to be taken
 c          if ia>natm then ia-natm is the index of molecule
-c  shift : shift which has to be used to access eirene's array
+c  shift : shift which has to be used to access the Eirene array
 c
       subroutine b2neut_enr(eav,n,ia,shift)
       use b2mod_types

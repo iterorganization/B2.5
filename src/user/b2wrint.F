@@ -480,7 +480,7 @@ c
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
                                      ! and is to be appended
-        read(lun,701,err=92) nv,
+        read(lun,*,err=92) hlp_c, nv,
      &    ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
      ,    nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp
 c#ifdef SCL_IMP_RCI
@@ -494,8 +494,9 @@ c Check the consistency of existing file and current run
 c Check version
         if(nv .ne. lv) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrint: current version ',lv,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! b2wrint: current version ',lv,
+     ,     ' differs from that in the file ',trim(f),' : ',nv
 c          if(nv .lt. 20010716) then
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -508,39 +509,45 @@ c          end if
 c Check the number of global values
         if(ng_tmp.ne.nglb_tmp) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrint: current number of global values ',
-     ,                nglb_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i4,3a,i4)')
+     ,     '!!! b2wrint: current number of global values ',nglb_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ng_tmp
           if(ng_tmp .gt. nglb_tmp) filedata(ltrc)=.false.
         end if
 
 c Check the number of quantities computed for each region
         if(nr_tmp .ne. nrgn_tmp) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrint: current number of values by region ',
-     ,                nrgn_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i4,3a,i4)')
+     ,     '!!! b2wrint: current number of values by region ',nrgn_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',nr_tmp
           if(nr_tmp .gt. nrgn_tmp) filedata(ltrc) = .false.
         end if
 
 c Check the number of regions
         if(nrg_tmp .ne. nregionv) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrint: current number of regions ',
-     ,                nregionv,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2wrint: current number of regions ',nregionv,
+     ,     ' differs from that in the file ',trim(f),' : ',nrg_tmp
           filedata(ltrc) = .false.
         end if
 
 c Check the number of quantities computed for each species
         if(ns_tmp .ne. nspc_tmp) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrint: current number of values by species',
-     ,                nspc_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i4,3a,i4)')
+     .     '!!! b2wrint: current number of values by species ',nspc_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ns_tmp
           if(ns_tmp .gt. nspc_tmp) filedata(ltrc)=.false.
         end if
 c#ifdef SCL_IMP_RCI
 c       if(ns1_tmp.ne.nspc1_tmp) then
 c         warn_tmp=.true.
-c         write(*,*) '!!! b2wrint: current number of values by species',
-c     ,    ' (ext1)',nspc1_tmp,' differs from that in the file ',trim(f)
+c         write(*,'(a,i4,3a,i4)')
+c     ,    '!!! b2wrint: current number of values by species (ext1) ',
+c     ,    nspc1_tmp,
+c     ,    ' differs from that in the file ',trim(f),' : ',ns1_tmp
 c         if(ns_tmp.gt.nspc_tmp) filedata(ltrc)=.false.
 c       end if
 c#endif
@@ -548,42 +555,47 @@ c#endif
 c Check the number of species
         if(nsp_tmp .ne. nspecies) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrint: current number of species ',
-     ,                nspecies,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2wrint: current number of species ',nspecies,
+     ,     ' differs from that in the file ',trim(f),' : ',nsp_tmp
           filedata(ltrc) = .false.
         end if
 
 c Check the number quantities computed for each species in each region
         if(na_tmp .ne. nsar_tmp) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrint: current number of values ',
-     ,               'by species and region ',
-     ,               nsar_tmp,' differs from that in the file ',trim(f)
+          write(*,'(2a,i4,3a,i4)')
+     ,     '!!! b2wrint: current number of values',
+     ,     ' by species and region ',nsar_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',na_tmp
           if(na_tmp .gt. nsar_tmp) filedata(ltrc) = .false.
         end if
 
 c Check the number of quantities computed for each stratum
         if(nf_tmp .ne. nstr_tmp) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrint: current number of values by strata',
-     ,               nstr_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i4,3a,i4)')
+     ,     '!!! b2wrint: current number of values by strata ',nstr_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',nf_tmp
           if(nf_tmp .gt. nstr_tmp) filedata(ltrc) = .false.
         end if
 
 c Check the number of strata
         if(nfl_tmp .ne. nstrai) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrint: current number of strata ',
-     ,               nfl_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i3,3a,i3)')
+     ,     '!!! b2wrint: current number of strata ',nstrai,
+     ,     ' differs from that in the file ',trim(f),' : ',nfl_tmp
           filedata(ltrc) = .false.
         end if
 
 c Check the number quantities computed for each species and for each stratum
         if(nb_tmp .ne. nssb_tmp) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrint: current number of values ',
-     ,               'by species and strata ',
-     ,               nssb_tmp,' differs from that in the file ',trim(f)
+          write(*,'(2a,i4,3a,i4)')
+     ,     '!!! b2wrint: current number of values',
+     ,     ' by species and strata ',nssb_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',nb_tmp
           if(nb_tmp .gt. nssb_tmp) filedata(ltrc) = .false.
         end if
 c
@@ -746,10 +758,10 @@ c
 c=======================================================================
 c#ifndef SCL_IMP_RCI
   700 format('#   ',10i8/'#  ',a)
-  701 format(4x,10i8)
+  701 format(a1,3x,10i8)
 c#else
 c  700 format('#   ',11i8/'#  ',a)
-c  701 format(4x,11i8)
+c  701 format(a1,3x,11i8)
 c#endif
 c=======================================================================
       end subroutine b2wrint

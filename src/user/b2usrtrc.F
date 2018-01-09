@@ -246,11 +246,13 @@ c***               groups, number of diagnostic surface groups
       parameter(nrkn_hlp=7)
       integer mrkn_hlp(nrkn_hlp), mrks_hlp(nrkn_hlp)
       integer jxi, jxa, jsep
+      integer use_eirene
       logical ex, warn_tmp, first, first_out, double_null
       character tab, hlp_c, f*(lenfnm)
       character hlp_frm*120, hlp_frf*240, hlp_tpl*2
       data hlp_neu_peak / 5.0_R8 /
       data itg_tmp / 4*-2 /
+      data use_eirene / 0 /
       data first,first_out / 2*.true. /, double_null / .false. /
 c-----------------------------------------------------------------------
 c*** Column headers:
@@ -297,6 +299,7 @@ c          print *
 c        end if !}
 c!###}
         tab=char(9)
+        call ipgeti ('b2mndr_eirene', use_eirene)
 c-----------------------------------------------------------------------
 c*** Check the topology
 
@@ -326,9 +329,13 @@ c*** Check the input data for consistency and prepare indices
         j_he_i=0
         do j=1,nspecies !{
           if(nfluids(j).eq.1) then !{
-            if(j_h_at.le.0 .or. j_h_at.gt.nnatmi) then !{
-              j_h_at=b2eatcr(eb2spcr(j))
-            end if !}
+            do i=1,3 !{
+              if(nint(am(eb2spcr(j))).eq.i) then !{
+                if(j_h_at(i).le.0 .or. j_h_at(i).gt.nnatmi) then !{
+                  j_h_at(i)=b2eatcr(eb2spcr(j))
+                end if !}
+              end if !}
+            end do !}
           end if !}
           if(nfluids(j).eq.2) then !{
             j_he_i=eb2spcr(j)
@@ -338,9 +345,9 @@ c*** Check the input data for consistency and prepare indices
           end if !}
         end do !}
 
-        print '(a,3(i3,1x),l1)',
-     ,          '%% b2usrtrc: j_he_at,j_h_at,j_he_i,double_null = ', !###
-     ,                        j_he_at,j_h_at,j_he_i,double_null      !###
+        print '(a,5(i3,1x),l1)',
+     ,   '%% b2usrtrc: j_he_at,j_h_at(1:3),j_he_i,double_null = ', !###
+     ,                 j_he_at,j_h_at     ,j_he_i,double_null      !###
 
 c*** Prepare for neutral data evaluation at diagnostic surfaces
 
@@ -716,8 +723,8 @@ c*** counting from the top targets.
 c***
 c***  j_he_at  is the helium index in the Eirene atoms list. If 0, then
 c***           the B2 species is taken assuming the same order.
-c***  j_h_at   is the same for the hydrogen species, and
-c***  l_h_mol  gives the number of hydrogen nuclei in each molecule
+c***  j_h_at   is the same for the hydrogen isotopes, and
+c***  l_h_mol  gives the number of hydrogen isotope nuclei in each molecule
 c***  lhetrgts is the list of Eirene surfaces used to estimate the
 c***           He enrichment from the single-sided fluxes in Eirene.
 c-----------------------------------------------------------------------
@@ -843,8 +850,12 @@ c>>>
 
 c*** Calculate throughputs, pumping speed, and re-scale He if necessary
 
-        ls=j_h_at
-        do l=1,2 !{
+        do l=1,4 !{
+          if (l.eq.4) then !{
+            ls=j_he_at
+          else !}{
+            ls=j_h_at(l)
+          end if !}
           if(ls.gt.0 .and. ls.le.nnatmi) then !{
 
 c*** Neutral flux across the side walls
@@ -858,8 +869,11 @@ c*** Neutral flux across the side walls
               end do !}
             end do !}
           end if !}
-          equg_tmp(20+l)=hlpnw/2.7e20_R8
-          ls=j_he_at
+          if (l.eq.2 .or. l.eq.3) then !{
+            equg_tmp(21)=equg_tmp(21)+hlpnw/2.7e20_R8
+          else if (l.eq.4) then !}{
+            equg_tmp(22)=hlpnw/2.7e20_R8
+          end if !}
         end do !}
         hlp_dttp=0.5_R8*hlp_dttp     ! assume molecular DT pumping
         if(hlp_ppfr.gt.0.0_R8) hlp_spdt=hlp_dttp/hlp_ppfr
@@ -915,13 +929,17 @@ c*** Helium fraction and related data - flux estimation
           if(k.eq.0) go to 10
           if(k.lt.0) k=nnlimi-k
           if(j_he_at.le.nnatmi) hlp_he=hlp_he+wldna(k,j_he_at,0)
-          if(j_h_at.le.nnatmi) hlp_h=hlp_h+wldna(k,j_h_at,0)
+          do j=1,3 !{
+            if(j_h_at(j).le.nnatmi.and.j_h_at(j).gt.0)
+     .       hlp_h=hlp_h+wldna(k,j_h_at(j),0)
+          end do !}
           do j=1,nnatmi !{
             hlp_tot=hlp_tot+wldna(k,j,0)
           end do !}
           do j=1,nnmoli !{
             hlp_tot=hlp_tot+wldnm(k,j,0)
-            hlp_h=hlp_h+wldnm(k,j,0)*l_h_mol(j)
+            hlp_h=hlp_h+wldnm(k,j,0)*
+     .       (l_h_mol(j,1)+l_h_mol(j,2)+l_h_mol(j,3))
           end do !}
         end do !}
  10     if(hlp_h.gt.0.0_R8) hlp_hefr=hlp_he/(hlp_h+hlp_he)
@@ -932,7 +950,7 @@ c*** Helium fraction and related data - flux estimation
 c*** Calculate the peak powers to the targets
 c***  (assuming a peaking factor of hlp_neu_peak for neutrals)
 
-      if(l_neutflux.lt.0) then !{ VK
+      if(l_neutflux.lt.0 .or. use_eirene.eq.0) then !{ VK
 c inner target
         hlp_ppwi=0.0_R8
         hlp_s=0.0_R8
@@ -1075,7 +1093,7 @@ c       hlp_ppwo=wtarg_max(nncut)
 
 #ifdef B25_EIRENE
 c*** Calculate the neutral flows in PFR
-
+      if (use_eirene.eq.0) goto 30
       do k=1,npfrgrp !{
         do j=1,nspecies !{
           hlp=1.0_R8/2.7e20_R8
@@ -1473,17 +1491,18 @@ c*** f     :  the associated file name
         na_tmp=0
         np_tmp=0
         ns_tmp=0
-        read(lun,701,err=92) nv,ng_tmp
+        read(lun,*,err=92) hlp_c,nv,ng_tmp
         lv_trc(ltrc)=nv
         if(nv.ge.20000727) then !{
           rewind(lun)
-          read(lun,701,err=92) nv,ng_tmp,np_tmp,ns_tmp,na_tmp
+          read(lun,*,err=92) hlp_c,nv,ng_tmp,np_tmp,ns_tmp,na_tmp
         end if !}
         warn_tmp=.false.
         if(nv.ne.lv) then !{
           warn_tmp=.true.
-          write(*,*) '!!! b2usrtrc: current version ',lv,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! b2usrtrc: current version ',lv,
+     ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. lvmj) then !{
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -1499,24 +1518,29 @@ c*** It was a major change of the file format - impossible to continue
           end if !}
         end if !}
         if(na_tmp.ne.npfrgrp) then !{
-          write(*,*) '!!! b2usrtrc: current number of PFR surface ',
-     ,     'groups ',npfrgrp,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2usrtrc: current number of PFR surface groups ',
+     ,     npfrgrp,
+     ,     ' differs from that in the file ',trim(f),' : ',na_tmp
           filedata(ltrc)=.false.
         end if !}
         if(npfrgrp.gt.0) then !{
           if(ng_tmp.ne.nglb_tmp) then !{
-            write(*,*) '!!! b2usrtrc: current number of global values ',
-     ,       nglb_tmp,' differs from that in the file ',trim(f)
+            write(*,'(a,i4,3a,i4)')
+     ,       '!!! b2usrtrc: current number of global values ',nglb_tmp,
+     ,       ' differs from that in the file ',trim(f),' : ',ng_tmp
             filedata(ltrc)=.false.
           end if !}
           if(np_tmp.ne.npff_tmp) then !{
-            write(*,*) '!!! b2usrtrc: current number of PFR values ',
-     ,       npff_tmp,' differs from that in the file ',trim(f)
+            write(*,'(a,i2,3a,i2)')
+     ,       '!!! b2usrtrc: current number of PFR values ',npff_tmp,
+     ,       ' differs from that in the file ',trim(f),' : ',np_tmp
             filedata(ltrc)=.false.
           end if !}
           if(ns_tmp.ne.nspecies) then !{
-            write(*,*) '!!! b2usrtrc: current number of species ',
-     ,       nspecies,' differs from that in the file ',trim(f)
+            write(*,'(a,i2,3a,i2)')
+     ,       '!!! b2usrtrc: current number of species ',nspecies,
+     ,       ' differs from that in the file ',trim(f),' : ',ns_tmp
             filedata(ltrc)=.false.
           end if !}
         end if !}
@@ -1826,6 +1850,6 @@ c     Finalization step
       return
 c=======================================================================
   700 format('#   ',5i8)
-  701 format(4x,5i8)
+  701 format(a1,3x,5i8)
 c=======================================================================
       end subroutine b2usrtrc

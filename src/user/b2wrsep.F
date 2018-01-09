@@ -402,13 +402,15 @@ c*** f     :  the associated file name
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
-        read(lun,701,err=92) nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
+        read(lun,*,err=92) hlp_c,
+     ,   nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
         lv_trc(ltrc)=nv
         warn_tmp=.false.
         if(nv.ne.lv) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current version ',lv,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! b2wrsep: current version ',lv,
+     ,     ' differs from that in the file ',trim(f),' : ',nv
 c          if(nv .lt. 970212) then
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -419,33 +421,39 @@ c          end if
         end if
         if(ng_tmp.ne.nglb_tmp) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current number of global values ',
-     ,                nglb_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i4,3a,i4)')
+     ,     '!!! b2wrsep: current number of global values ',nglb_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ng_tmp
           if(ng_tmp.gt.nglb_tmp) filedata(ltrc)=.false.
         end if
         if(ns_tmp.ne.nspc_tmp) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current number of values by species',
-     ,                nspc_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i4,3a,i4)')
+     ,     '!!! b2wrsep: current number of values by species ',nspc_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ns_tmp
           if(ns_tmp.gt.nspc_tmp) filedata(ltrc)=.false.
         end if
         if(nsp_tmp.ne.nspecies) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current number of species ',
-     ,                nspecies,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2wrsep: current number of species ',nspecies,
+     ,     ' differs from that in the file ',trim(f),' : ',nsp_tmp
           filedata(ltrc)=.false.
         end if
         if(ni_tmp.ne.nion_tmp) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current number of values ',
-     ,               'by ion charge state ',
-     ,               nion_tmp,' differs from that in the file ',trim(f)
+          write(*,'(2a,i4,3a,i4)')
+     ,     '!!! b2wrsep: current number of values',
+     ,     ' by ion charge state ',nion_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ni_tmp
           if(ni_tmp.gt.nion_tmp) filedata(ltrc)=.false.
         end if
         if(nii_tmp.ne.nis_tmp) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current number of ion charge states',
-     ,     ' ',ns-nspecies,' differs from that in the file ',trim(f)
+          write(*,'(a,i3,3a,i3)')
+     ,     '!!! b2wrsep: current number of ion charge states ',
+     ,     ns-nspecies,
+     ,     ' differs from that in the file ',trim(f),' : ',nii_tmp
           filedata(ltrc)=.false.
         end if
 
@@ -590,6 +598,6 @@ c     Finalization step
       return
 c======================================================================
   700 format('#   ',6i8)
-  701 format(4x,6i8)
+  701 format(a1,3x,6i8)
 c======================================================================
       end subroutine b2wrsep

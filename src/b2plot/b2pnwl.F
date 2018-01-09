@@ -275,21 +275,33 @@ c      end if
         write(*,700) 'Gross C erosion',wldspt(nlim+ltns(1),0),
      .                                 wldspt(nlim+ltns(2),0)
       end if
-c     if (j_h_at.ne.0) then
-c      print 700,'Hydrogen atom flux',wldna(nlim+ltns(1),j_h_at,0),
-c                                     wldna(nlim+ltns(2),j_h_at,0)
-c      print 700,'Average energy',ewlda(nlim+ltns(1),j_h_at,0),
-c                                 ewlda(nlim+ltns(2),j_h_at,0)
+c     if (j_h_at(1).ne.0) then
+c      print 700,'Hydrogen  atom flux',wldna(nlim+ltns(1),j_h_at(1),0),
+c                                      wldna(nlim+ltns(2),j_h_at(1),0)
+c      print 700,'Average energy',ewlda(nlim+ltns(1),j_h_at(1),0),
+c                                 ewlda(nlim+ltns(2),j_h_at(1),0)
+c     end if
+c     if (j_h_at(2).ne.0) then
+c      print 700,'Deuterium atom flux',wldna(nlim+ltns(1),j_h_at(2),0),
+c                                      wldna(nlim+ltns(2),j_h_at(2),0)
+c      print 700,'Average energy',ewlda(nlim+ltns(1),j_h_at(2),0),
+c                                 ewlda(nlim+ltns(2),j_h_at(2),0)
+c     end if
+c     if (j_h_at(3).ne.0) then
+c      print 700,'Tritium   atom flux',wldna(nlim+ltns(1),j_h_at(3),0),
+c                                      wldna(nlim+ltns(2),j_h_at(3),0)
+c      print 700,'Average energy',ewlda(nlim+ltns(1),j_h_at(3),0),
+c                                 ewlda(nlim+ltns(2),j_h_at(3),0)
 c     end if
 c     if (j_he_at.ne.0) then
-c      print 700,'Helium   atom flux',wldna(nlim+ltns(1),j_he_at,0),
-c                                     wldna(nlim+ltns(2),j_he_at,0)
+c      print 700,'Helium    atom flux',wldna(nlim+ltns(1),j_he_at,0),
+c                                      wldna(nlim+ltns(2),j_he_at,0)
 c      print 700,'Average energy',ewlda(nlim+ltns(1),j_he_at,0),
 c                                 ewlda(nlim+ltns(2),j_he_at,0)
 c     end if
 c     if(j_ne_at.ne.0) then
-c      print 700,'Neon     atom flux',wldna(nlim+ltns(1),j_ne_at,0),
-c     ,                               wldna(nlim+ltns(2),j_ne_at,0)
+c      print 700,'Neon      atom flux',wldna(nlim+ltns(1),j_ne_at,0),
+c     ,                                wldna(nlim+ltns(2),j_ne_at,0)
 c      print 700,'Average energy',ewlda(nlim+ltns(1),j_ne_at,0),
 c                                 ewlda(nlim+ltns(2),j_ne_at,0)
 c     end if

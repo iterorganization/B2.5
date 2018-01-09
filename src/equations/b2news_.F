@@ -91,7 +91,8 @@
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
      3  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), zeff(-1:nx,-1:ny),          !srv 05.07.17
-     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)          !iyv 06.02.14
+     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
+     &  zero(-1:nx,-1:ny)
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical inverted_ua, new_matrix
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                   !srv 09.07.99
@@ -174,10 +175,6 @@
        call ipgeti ('b2tfnb_mdf', mdf_fnb)                               !srv 13.10.06 {
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
        call ipgeti ('b2tfhi_mdf', mdf_fhi) 
-       call xertst
-     .  (.not.(((mdf_fhe.ne.0.or.mdf_fhi.ne.0).or.mdf_fnb.ne.0).and.
-     &           vis_per.ne.0.0_R8 .and. style.eq.2),
-     &      'Cannot use ma28 for both the 7- and 9-point stencils')
        call ipgeti ('b2news_iout', iout)
        call ipgeti ('b2npc9_iout', iout_b2npc9)                          !srv 16.07.10 {
        call ipgeti ('b2npco_iout', iout_b2npco)
@@ -241,8 +238,9 @@ csw 26feb2014 some extra variables
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
        call ipgeti ('b2sigp_style', ue_style)
       endif                                                              !srv 02.07.08
-*   ..set n2
+*   ..set n2, zero
       n2 = (nx+2)*(ny+2)
+      zero(-1:nx,-1:ny) = 0.0_R8
 *   ..test nx, ny, ns
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -792,7 +790,13 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 c      with diamagnetic drift part                                       !srv 13.05.99
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
      . rza, za_ext, fna_he, fa_ext, fch_p, fne)                          !srv 13.05.99 21.01.00 11.10.02
+      call b2xpfe (nx, ny, ns, ns_ext, qe,
+     1 rza, za_ext, fna_32nd, fa_ext, fch_32, fne_32)
+      call b2xpfe (nx, ny, ns, 0, qe,
+     1 rza, zero, fna_52nd, zero, fch_52, fne_52)
       call b2xpfi (nx, ny, ns, fna_he, fni)                              !srv 13.05.99 21.01.00
+      call b2xpfi (nx, ny, ns, fna_32nd, fni_32)                         !xpb
+      call b2xpfi (nx, ny, ns, fna_52nd, fni_52)                         !xpb
 *   ..compute heat fluxes
       call b2tfhe_ (nx, ny, ns, ismain, ismain0,
      &  facdrift, fac_ExB, fac_vis,

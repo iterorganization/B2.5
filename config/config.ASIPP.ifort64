@@ -31,17 +31,9 @@ FC       = ifort
 endif
 
 ifdef SOLPS_DEBUG
-ifdef USE_MPI
-FCOPTS   = -g -C -traceback
-else
 FCOPTS   = -g -C -debug all -traceback -check all
-endif
-else
-ifdef USE_MPI
-FCOPTS   = -O2 -vec_report0
 else
 FCOPTS   = -O2 -vec_report0
-endif
 endif
 
 DBLFC    = ${FC}

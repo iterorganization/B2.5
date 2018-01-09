@@ -685,9 +685,10 @@ c*** f     :  the associated file name
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
-        read(lun,710,err=40) nv,j,nc,hlp_c
+        read(lun,*,err=40) hlp_c,nv,j,nc
+        read(lun,*) hlp_c
         go to 42
- 40     read(lun,710,err=92) i,j
+ 40     read(lun,*,err=92) hlp_c,i,j
         lv_trc(ltrc)=lv
         if(i.lt.960727) then
           nc=16
@@ -695,8 +696,9 @@ c*** f     :  the associated file name
           go to 92
         end if
  42     if(nv.ne.lv) then
-          write(*,*) '!!! b2blnc: current version ',lv,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! b2blnc: current version ',lv,
+     ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. 960727) then
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -706,8 +708,9 @@ c*** It was a major change of the file format - impossible to continue
           end if
         end if
         if(nc.ne.np_tmp) then
-          write(*,*) '!!! b2blnc: current number of columns',np_tmp,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i4,3a,i4)')
+     ,     '!!! b2blnc: current number of columns ',np_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',nc
           if(nc.gt.np_tmp) then
             write(*,*) 'No tracing file - ',
      ,                                'remove the existing file first!'
@@ -717,8 +720,9 @@ c*** It was a major change of the file format - impossible to continue
           write(*,*) ' You should remove the file!'
         end if
         if(j.ne.nspecies) then
-          write(*,*) '!!! b2blnc: current number of species ',
-     ,                nspecies,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2blnc: current number of species ',nspecies,
+     ,      ' differs from that in the file ',trim(f),' : ',j
           write(*,*) 'No tracing file - remove the existing file first!'
           filedata(ltrc)=.false.
           return
@@ -797,6 +801,6 @@ c
       return
 c======================================================================
   700 format('#   ',3i8/'#  ',a)
-  710 format(4x,3i8/3x,a)
+  710 format(a1,3x,3i8/3x,a)
 c======================================================================
       end subroutine b2blnc

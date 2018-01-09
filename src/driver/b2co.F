@@ -260,7 +260,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
 #ifdef B25_EIRENE
       filename='input.dat'
       call find_file(filename,file_exists)
-      if (file_exists) then
+      if (file_exists.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) line
         rewind(45)
@@ -281,7 +281,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
  6999 continue
       file_exists = .false.
  7000 continue
-      if (.not.file_exists) then
+      if (.not.file_exists.or.use_eirene.eq.0) then
         ndx=DEF_NXD+DEF_NCUT*5
         ndy=DEF_NYD
         nfl=DEF_NFL

@@ -22,45 +22,97 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer ix,iy,is
-      integer, allocatable :: mz_hlp(:)
+      integer i,ix,iy,is,in,im,nf
+      integer, allocatable :: mz_hlp(:),imol(:)
+      real (kind=R8), allocatable :: hlp_f(:)
       character hlp_frmr*600
-      character*2, allocatable :: hlp_al(:)
+      character*2, allocatable :: hlp_al(:),hlp_ml(:)
+      character*1 hlp_at(3),isotope(3)
+      logical hydrogen
+      data isotope / 'H', 'D', 'T'/
 c----------------------------------------------------------------------
 c*** Write the header
 c
-      allocate(mz_hlp(0:ns-1),hlp_al(0:ns-1))
+      allocate(mz_hlp(0:ns-1),hlp_al(0:ns-1),hlp_ml(nmoli),imol(nmoli))
       do is=0,ns-1
         mz_hlp(is)=nint((zamin(is)+zamax(is))/2.0_R8)
         hlp_al(is)=is_codes(is)
       end do
+      in=0
+      do is=1,3
+        if (j_h_at(is).ne.0) then
+          in=in+1
+          hlp_at(in)=isotope(is)
+        end if
+      end do
+      im=0
+      imol=0
+      do is=1,nmoli
+        if (l_h_mol(is,1)+l_h_mol(is,2)+l_h_mol(is,3).eq.2) then
+          hydrogen=.true.
+          do ix=1,natmi
+            if (ix.eq.j_h_at(1)) cycle
+            if (ix.eq.j_h_at(2)) cycle
+            if (ix.eq.j_h_at(3)) cycle
+            hydrogen = mlcmp(ix,is).eq.0
+          end do
+          if (hydrogen) then
+            im=im+1
+            hlp_ml(im)=textmn(is-1)(2:3)
+            imol(im)=is
+          end if
+        end if
+      end do
 c
       open(lun,file='horton.dat')
-  710 format(9h   ix  iy,5x,5hR (m),7x,5hZ (m),4x,10hne (m**-3),4x,
-     ,       7hTe (eV),5x,7hTi (eV),7x,
-     ,       2hnH,10x,2hTH,10x,3hnH2/)
       write (lun,*) 'ix, iy : x and y indices in the grid;'
       write (lun,*) 'R , Z  : R and Z coordinates of the cell ',
      ,                                                       'centres;'
       write (lun,*) 'ne     : electron density;'
       write (lun,*) 'Te, Ti : electron and ion temperatures;'
-      write (lun,*) 'nH, TH : density and temperature of D atoms;'
-      write (lun,*) 'nH2    : density of D2 molecules.'
+      if (j_h_at(1).ne.0)
+     > write (lun,*) 'nH, TH : density and temperature of H atoms;'
+      if (j_h_at(2).ne.0)
+     > write (lun,*) 'nD, TD : density and temperature of D atoms;'
+      if (j_h_at(3).ne.0)
+     > write (lun,*) 'nT, TT : density and temperature of T atoms;'
+      do is=1,im
+       write (lun,*) 'n'//hlp_ml(is)//'    : density of '
+     .                  //hlp_ml(is)//' molecules.'
+      end do
       write (lun,*) '     All the densities in 1/m**3'
       write (lun,*)
-      write (lun,710)
+      write (hlp_frmr,'(a,i2,a,i2,a)')
+     .    '(a9,5x,a5,7x,a5,4x,a10,4x,a7,5x,a7,7x,',
+     . in,'(a2,10x,a2,10x),',im,'(a3,9x))'
+      write (lun,hlp_frmr)
+     .  '   ix  iy','R (m)','Z (m)','ne (m**-3)','Te (eV)','Ti (eV)',
+     . ('n'//hlp_at(i),'T'//hlp_at(i),i=1,in),
+     . ('n'//hlp_ml(i),i=1,im)
 c
+      nf=2*in+im
+      allocate(hlp_f(nf))
+      write(hlp_frmr,'(a,i2,a)') '(1x,1p,2i4,',5+nf,'e12.3)'
       do ix=0,nx-1
         do iy=0,ny-1
-          write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),ne(ix,iy),
-     ,                    te(ix,iy)/ev,ti(ix,iy)/ev,
-     ,                    dab2(ix+1,iy+1,j_h_at,1),
-     ,                    tab2(ix+1,iy+1,j_h_at,1)/eV,
-     ,                    dmb2(ix+1,iy+1,1,1)
-  700     format(1x,1p,2i4,48e12.3)
+          is=0
+          do i=1,3
+            if (j_h_at(i).ne.0) then
+              hlp_f(is+1)=dab2(ix+1,iy+1,j_h_at(i),1)
+              hlp_f(is+2)=tab2(ix+1,iy+1,j_h_at(i),1)/ev
+              is=is+2
+            end if
+          end do
+          do i=1,im
+            hlp_f(is+1)=dmb2(ix+1,iy+1,imol(im),1)
+            is=is+1
+          end do
+          write (lun,hlp_frmr) ix,iy,cr(ix,iy),cz(ix,iy),ne(ix,iy),
+     ,                         te(ix,iy)/ev,ti(ix,iy)/ev,
+     ,                        (hlp_f(i),i=1,nf)
         end do
       end do
       close (lun)
-      deallocate(mz_hlp,hlp_al)
+      deallocate(mz_hlp,hlp_al,hlp_ml,hlp_f,imol)
 c
       end

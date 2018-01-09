@@ -19,19 +19,11 @@ FC = pgf90
 endif
 
 ifdef SOLPS_DEBUG
-ifdef USE_MPI
-FCOPTS = -g 
-else
 FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
-endif
-else
-ifdef USE_MPI
-FCOPTS = -O2 
 else
 FCOPTS = -O2 -Mbackslash
 FCOPTS = -fast -Mbackslash
 FCOPTS = -fast -Mvect=nofuse -Mbackslash
-endif
 endif
 
 DBLFC = ${FC}

@@ -228,7 +228,7 @@ c
 
       if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
                                      ! and is to be appended
-        read(lun,701,err=92) nv, 
+        read(lun,*,err=92) hlp_c, nv,
      &     nr_tmp, ns_tmp, na_tmp,
      ,     nrg_tmp, nsp_tmp, nfl_tmp
         lv_trc(ltrc)=nv
@@ -239,8 +239,9 @@ c Check the consistency of existing file and current run
 c Check version
         if(nv .ne. lv) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrsrt: current version ',lv,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! b2wrsrt: current version ',lv,
+     ,     ' differs from that in the file ',trim(f),' : ',nv
 c*** It was a major change of the file format - impossible to continue
           write(*,*) 'No tracing file - ',
      ,                                'remove the existing file first!'
@@ -251,53 +252,55 @@ c*** It was a major change of the file format - impossible to continue
 c Check the number of quantities computed for each region
         if(nr_tmp .ne. nrgn_tmp) then
           warn_tmp = .true.
-          write(*,*) 
-     &  '!!! b2wrsrt: current number of values by region ',
-     ,                nrgn_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i4,3a,i4)')
+     ,     '!!! b2wrsrt: current number of values by region ',nrgn_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',nr_tmp
           if(nr_tmp .gt. nrgn_tmp) filedata(ltrc) = .false.
         end if
 
 c Check the number of regions
         if(nrg_tmp .ne. nregionv) then
           warn_tmp = .true.
-          write(*,*) 
-     &   '!!! b2wrsrt: current number of regions ',
-     ,                nregionv,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2wrsrt: current number of regions ',nregionv,
+     ,     ' differs from that in the file ',trim(f),' : ',nrg_tmp
           filedata(ltrc) = .false.
         end if
 
 c Check the number of quantities computed for each species
         if(ns_tmp .ne. nspc_tmp) then
           warn_tmp = .true.
-          write(*,*) 
-     &   '!!! b2wrsrt: current number of values by species',
-     ,                nspc_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i4,3a,i4)')
+     ,     '!!! b2wrsrt: current number of values by species ',nspc_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ns_tmp
           if(ns_tmp .gt. nspc_tmp) filedata(ltrc)=.false.
         end if
 
 c Check the number of species
         if(nsp_tmp .ne. nspecies) then
           warn_tmp = .true.
-          write(*,*) 
-     &    '!!! b2wrsrt: current number of species ',
-     ,                nspecies,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2wrsrt: current number of species ',nspecies,
+     ,     ' differs from that in the file ',trim(f),' : ',nsp_tmp
           filedata(ltrc) = .false.
         end if
 
 c Check the number quantities computed for each species in each region
         if(na_tmp .ne. nsar_tmp) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrsrt: current number of values ',
-     ,               'by species and region ',
-     ,               nsar_tmp,' differs from that in the file ',trim(f)
+          write(*,'(2a,i4,3a,i4)')
+     ,     '!!! b2wrsrt: current number of values',
+     ,     ' by species and region ',nsar_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',na_tmp
           if(na_tmp .gt. nsar_tmp) filedata(ltrc) = .false.
         end if
 
 c Check the number of strata
         if(nfl_tmp .ne. nstrai) then
           warn_tmp = .true.
-          write(*,*) '!!! b2wrsrt: current number of strata ',
-     ,               nfl_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i3,3a,i3)')
+     ,     '!!! b2wrsrt: current number of strata ',nstrai,
+     ,     ' differs from that in the file ',trim(f),' : ',nfl_tmp
           filedata(ltrc) = .false.
         end if
 
@@ -425,6 +428,6 @@ c
       return
 c=======================================================================
   700 format('#   ',7i8/'#  ',a)
-  701 format(4x,7i8)
+  701 format(a1,3x,7i8)
 c=======================================================================
       end subroutine b2wrsrt

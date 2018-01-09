@@ -681,13 +681,14 @@ c
       open(lun,file=f,err=90)
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then !{
-        read(lun,701,err=92) nv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp
+        read(lun,*,err=92) hlp_c,nv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp
         lv_trc(ltrc)=nv
         warn_tmp=.false.
         if(nv.ne.lv) then !{
           warn_tmp=.true.
-          write(*,*) '!!! b2blne: current version ',lv,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! b2blne: current version ',lv,
+     ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv.lt.960825 .or. (nv.le.961229 .and. ni_tmp.eq.0)) then !{
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -698,39 +699,44 @@ c*** It was a major change of the file format - impossible to continue
         end if !}
         if(ni_tmp.ne.nimp_tmp) then !{
           warn_tmp=.true.
-          write(*,*) '!!! b2blne: current number of impurity species ',
-     ,                nimp_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2blne: current number of impurity species ',nimp_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ni_tmp
           filedata(ltrc)=.false.
         end if !}
         if(nz_tmp.ne.ntrgf_tmp) then !{
           warn_tmp=.true.
-          write(*,*) '!!! b2blne: current number of targets ',
-     ,               ntrgf_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2blne: current number of targets ',ntrgf_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',nz_tmp
           filedata(ltrc)=.false.
         end if !}
         if(ng_tmp.ne.nglb_tmp) then !{
           warn_tmp=.true.
-          write(*,*) '!!! b2blne: current number of columns',
-     ,                ' for general data',nglb_tmp,
-     ,                ' differs from that in the file ',trim(f)
+          write(*,'(2a,i4,3a,i4)')
+     ,     '!!! b2blne: current number of columns',
+     ,     ' for general data ',nglb_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ng_tmp
           if(ng_tmp.gt.nglb_tmp) then !{
             filedata(ltrc)=.false.
           end if !}
         end if !}
         if(ns_tmp.ne.nspc_tmp) then !{
           warn_tmp=.true.
-          write(*,*) '!!! b2blne: current number of columns',
-     ,                ' for impurity data',nspc_tmp,
-     ,                ' differs from that in the file ',trim(f)
+          write(*,'(2a,i4,3a,i4)')
+     ,     '!!! b2blne: current number of columns',
+     ,     ' for impurity data ',nspc_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ns_tmp
           if(ns_tmp.gt.nspc_tmp) then !{
             filedata(ltrc)=.false.
           end if !}
         end if !}
         if(nt_tmp.ne.ntrg_tmp) then !{
           warn_tmp=.true.
-          write(*,*) '!!! b2blne: current number of columns',
-     ,                ' for impurity data',ntrg_tmp,
-     ,                ' differs from that in the file ',trim(f)
+          write(*,'(2a,i4,3a,i4)')
+     ,     '!!! b2blne: current number of columns',
+     ,     ' for impurity data ',ntrg_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',nt_tmp
           if(nt_tmp.gt.ntrg_tmp) then !{
             filedata(ltrc)=.false.
           end if !}
@@ -822,6 +828,6 @@ c
       return
 c=======================================================================
   700 format('#   ',6i8/'#  ',a)
-  701 format(4x,6i8)
+  701 format(a1,3x,6i8)
 c=======================================================================
       end subroutine b2blne
