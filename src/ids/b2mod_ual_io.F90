@@ -208,7 +208,7 @@ contains
         !! Check for edge_transport%model(1)%ggd and edge_sources%source(1)%ggd
         !! is not included as they contain beforehand model(:) / source(:)
         !! structures
-        if( size( edge_profiles%ggd ) .neqv. num_time_slices ) then
+        if( size( edge_profiles%ggd ) .ne. num_time_slices ) then
             !! Allocate ggd for number of different time steps
             time_sind = 1
             allocate( edge_profiles%ggd( num_time_slices ) )

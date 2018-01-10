@@ -44,6 +44,9 @@ program b2_ual_write
     use ids_grid_unstructured   ! IGNORE
     use ids_grid_structured     ! IGNORE
 
+#ifdef USE_PXFGETENV
+    integer lenval, ierror
+#endif
     implicit none
 
     external ipgeti, ipgetc
@@ -81,7 +84,28 @@ program b2_ual_write
 
     call ipgeti( 'b2mndr_shot_number', shot )
     call ipgeti( 'b2mndr_run_number', run )
+#ifdef NO_GETENV
+    username=' '
+#else
+#ifdef USE_PXFGETENV
+    CALL PXFGETENV ('USER', 0, username, lenval, ierror)
+#else
+    call getenv ('USER', username)
+#endif
+#endif
     call ipgetc( 'b2mndr_user', username )
+#ifdef JET
+    device = 'jet'
+#else
+    device = 'iter'
+#endif
+#ifndef NO_GETENV
+#ifdef USE_PXFGETENV
+    CALL PXFGETENV ('DEVICE', 0, device, lenval, ierror)
+#else
+    call getenv ('DEVICE', device)
+#endif
+#endif
     call ipgetc( 'b2mndr_device', device )
 
     write(*,*) 'Shot: ', shot, ' Run: ', run, ' user: ', username, ' device: ', &
