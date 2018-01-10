@@ -223,6 +223,8 @@ contains
 
             !! Allocate and init the IDS
             allocate( edge_profiles%code%name(1) )
+            allocate( edge_transport%code%name(1) )
+            allocate( edge_sources%code%name(1) )
 # ifdef B25_EIRENE
             edge_profiles%code%name = "SOLPS-ITER"
             edge_transport%code%name = "SOLPS-ITER"
@@ -253,6 +255,7 @@ contains
         allocate( edge_profiles%ggd( time_sind )%ion( ns ) )
         do is = 0, ns-1
             allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1) )
+            allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%label(1) )
             allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1) )
 
             call species( is, edge_profiles%ggd( time_sind )%ion( is + 1 )% &
