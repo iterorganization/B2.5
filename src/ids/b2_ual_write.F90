@@ -108,8 +108,8 @@ program b2_ual_write
 #endif
     call ipgetc( 'b2mndr_device', device )
 
-    write(*,*) 'Shot: ', shot, ' Run: ', run, ' user: ', username, ' device: ', &
-        & device
+    write(*,'(a,i8,a,i8,4a)') 'Shot: ', shot, ' Run: ', run, &
+        & ' User: ', trim(username), ' Device: ', trim(device)
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
