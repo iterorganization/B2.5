@@ -953,16 +953,17 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
      &                   rtsa,rtra,rtqa,rtcx,rtrd,rtbr,
      &                   rtzz,rtz2,rtpt,rtpi,
      &                   iyear,fix_recomb,ncnct,izpmin,izpmax)
-!!      use b2mod_types
-      use b2mod_constants
-     &     , only : qe
-      use b2mod_solpstop
 #ifdef GOT_AMNSPROTO
       use amns_types       ! IGNORE
 !!      use amns_constants   ! IGNORE
       use amns_module      ! IGNORE
       use euitm_routines   ! IGNORE
+#else
+      use b2mod_types
 #endif
+      use b2mod_constants
+     &     , only : qe
+      use b2mod_solpstop
 
       implicit none
 
