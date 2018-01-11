@@ -136,6 +136,9 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
+#ifdef B25_EIRENE
+      use eirmod_ctrig
+#endif
       implicit none
 
       character*(*) filename
@@ -165,7 +168,8 @@ c
 
       if(use_compile) then
         call compile_tria_chords(maxchords,maxcompile,
-     &   nx,ny,crx,cry,bb,
+     &   ntrii,nrknot,nx,ny,
+     &   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
      1   inpts,indchd,indit,indscl,filename,dataname,
      2   nxcam,xmin,xmax,nycam,ymin,ymax)
       endif
@@ -200,17 +204,21 @@ c
       end subroutine process_eirene_camera
 c
       subroutine compile_tria_chords(maxchords,maxcompile,
-     & nx,ny,crx,cry,bb,
+     & ntrii,nrknot,nx,ny,
+     & xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
      1 inpts,indchd,indit,indscl,filename,dataname,
      2 nxcam,xmin,xmax,nycam,ymin,ymax)
 
       use b2mod_types
       implicit none
 
-      integer maxchords,maxcompile,nx,ny,inpts
+      integer maxchords,maxcompile,ntrii,nrknot,nx,ny,inpts
+      integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
       integer indchd(maxchords+1),indit(maxcompile)
       real (kind=R8) ::
      * indscl(maxcompile),
+     * xtrian(nrknot),
+     * ytrian(nrknot),
      1 crx(-1:nx,-1:ny,0:3),
      2 cry(-1:nx,-1:ny,0:3),
      3 bb(-1:nx,-1:ny,0:3)
@@ -241,7 +249,8 @@ c
       ind=1
    10 read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
       inpts=inpts+1
-      call chord_tria_compile(npoints,nx,ny,crx,cry,bb,
+      call chord_tria_compile(npoints,ntrii,nrknot,nx,ny,
+     * xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
      1 x1,y1,z1,x2,y2,z2,vector,
      1 indchd(inpts),indit(ind),indscl(ind))
       indold=ind
