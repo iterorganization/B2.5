@@ -15,7 +15,7 @@
 !!      Library routines.
 !!
 !!      @note   More on the b2_ual_writers is available in SOLPS-GUI
-!!              documentation under section <b> IMAS HOWTO </b>.
+!!              documentation \b HOWTOs under section <b> 4.5 IMAS </b>.
 !!
 !!      @note   A short video tutorial on the use of the B2.5 writer is
 !!              available <a href="https://youtu.be/5IuADXPAgkQ">here</a>.
@@ -107,9 +107,9 @@
 !!              also GGD support as it includes IMAS GGD library routines
 !!              (Fortran90).
 !!
-!!      @note   b2_ual_write and b2_ual_write_gsl are OUTDATED codes, but
-!!              were left in the repository for documentation purposes and as
-!!              and extra examples.
+!!      @note   b2_ual_write_deprecated and b2_ual_write_gsl are OUTDATED codes,
+!!              but were left in the repository for documentation purposes and
+!!              as an extra examples.
 !!
 !!      @subsection b2uw_b2mod_run Running the code:
 !!      The examples are available on ITER portal:

@@ -5,7 +5,7 @@
 !!
 !>      @page b2uw_b2 b2_ual_write
 !>      @section b2uw_b2_desc   Description
-!!      b2_ual_write code is used to generate b2_ual_write_b2mod.exe
+!!      b2_ual_write code is used to generate b2_ual_write.exe
 !!      (main program), which is intended to be used within SOLPS-GUI.
 !!      The code reads the plasma grid
 !!      geometry ( full geometry descriptions of all available grid subsets )
@@ -15,8 +15,10 @@
 !!      Library routines.
 !!
 !!      @note   More on the b2_ual_writers is available in SOLPS-GUI
-!!              documentation under section <b> IMAS HOWTO </b>.
-!!
+!!              documentation \b HOWTOs under section <b> 4.5 IMAS </b>.
+!!      @note   More information on this b2_ual_write is available in SOLPS-GUI
+!!              documentation \b HOWTOs under section <b> 4.6 Put IDS and Get
+!!              IDS functions </b>.
 !!
 !!-----------------------------------------------------------------------------
 

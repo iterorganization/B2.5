@@ -1,39 +1,43 @@
-!! -----------------------------------------------------------------------------
+!!-----------------------------------------------------------------------------
 !! DOCUMENTATION (doxygen 1.8.8):
 !>      @author
 !>      Dejan Penko
 !!
-!>      @page b2uw_gsl b2_ual_write_gsl
-!>      @section desc2  Description
-!!      @note   This code is OUTDATED! The development continued under new
-!!              script @ref b2uw_b2mod "b2_ual_write_b2mod" and
-!!              @ref b2uw_b2 "b2_ual_write".
-!!              The development 'moved' to new code due to different
-!!              approach of writing data to IDS using b2mod routines.
+!>      @page b2uw_dep b2_ual_write_deprecated
+!>      @section b2uw_dep_desc  Description
+!!      @note   This script is the \b old b2_ual_write.F90 and was kept as an
+!!               archive. The development of the old file continued under new
+!!              codes named
+!!              @ref b2uw_gsl "b2_ual_write_gsl",
+!!              @ref b2uw_b2mod "b2_ual_write_b2mod" and the latest \b new
+!!              @ref b2uw_b2.
+!!              The development 'moved' to new codes due to different
+!!              approach of writing data to IDS using IMAS GGD routines and
+!!              b2mod scripts.
 !!      @note   More on the b2_ual_writers is available in SOLPS-GUI
 !!              documentation \b HOWTOs under section <b> 4.5 IMAS </b>.
 !!
-!!      b2_ual_write_gsl.f90 code is used to generate b2_ual_write_gsl.exe
-!!      (main program), which is a post-processor for b2.
-!!      Same as b2_ual_write_deprecated.F90 the script it reads the plasma
-!!      grid geometry ( including Nodes and Cells grid subsets) and
-!!      plasma state (electron density, electron temperature, ion temperature)
-!!      and writes it to IDS database but with the use of IMAS GGD Grid
-!!      Service Library routines.
+!!      b2_ual_write_deprecated.f90 code is used to generate
+!!      b2_ual_write_deprecated.exe (main
+!!      program), which is a post-processor for b2. It reads the plasma
+!!      grid geometry (including Nodes and Cells grid subsets) and plasma
+!!      state (electron density, electron temperature, ion temperature) and
+!!      writes it to IDS database.
 !!
 !!      \b References:
-!!          - @ref b2uw_gsl_prog "b2_ual_write_gsl file reference"
+!!          - @ref b2uw_dep_prog "b2_ual_write_deprecated file reference"
+!!          - @ref b2uw_gsl "b2_ual_write_gsl"
 !!          - @ref b2uw_b2mod "b2_ual_write_b2mod"
 !!
 !!-----------------------------------------------------------------------------
 
 !!-----------------------------------------------------------------------------
-!>      @section b2uw_gsl_prog Program b2_ual_write_gsl
+!>      @section b2uw_dep_prog Program b2_ual_write_deprecated
 !!      References:
-!!          - @ref b2uw_gsl "b2_ual_write_gsl main page"
+!!          - @ref b2uw_dep "b2_ual_write_deprecated main page"
 !!
-!!      @subsection b2uw_gsl_det  Details
-!!      For more information see also routine \b b2cdca.
+!!      @subsection b2uw_dep_det  Details
+!!      For more information see also routine b2cdca.
 !!
 !!      The complete program performs post-processing of the
 !!      result of a b2 calculation.
@@ -54,8 +58,8 @@
 !!
 !!      @note   See routine b2cdca for the meaning of 'un*formatted'.
 !!
-!!      @subsection b2uw_gsl_pv    Parameters/variables
-!!      @note   see also routine \b b2cdcv
+!!      @subsection b2uw_pv  Parameters/variables
+!!      @note   see also routine /b b2cdcv.F
 !!
 !!      @param  device - Device name of the IMAS IDS database
 !!              (i. e. solps-iter, iter, aug)
@@ -95,70 +99,63 @@
 !!      @param  username - Creator/owner of the IMAS IDS database
 !!      @param  version - Major version of the IMAS IDS database
 !!
-!!      @subsection b2uw_gsl_eind Error indicators
+!!      @subsection b2uw_eind Error indicators
 !!      In case an error condition is detected, a call is made to the
 !!      routine \b xerrab. This causes an error message to be printed,
 !!      after which the program halts.
 !!
-!!      @subsection b2uw_gsl_syx    Exceptional syntax explanation
+!!      @subsection b2uw_syx    Exceptional syntax explanation
 !!      @code
 !!          ! IGNORE    !! syntax used to ignore this module in list
 !!                      !! dependency when compiling the code
 !!      @endcode
-program b2_ual_write_gsl
+program b2_ual_write_deprecated
     use b2mod_types , B2R8 => R8
     use b2mod_rates
     use b2mod_ual_io
 
     use ids_schemas     ! IGNORE
-                        !> These are the Fortran type definitions for the
-                        !> Physics Data Model
+                        !! These are the Fortran type definitions for the
+                        !! Physics Data Model
     use ids_routines    ! IGNORE
-                        !> These are the Access Layer routines + management of
-                        !> IDS structures
-    use ids_assert      ! IGNORE
-    use ids_grid_common &       ! IGNORE
-        & , IDS_COORDTYPE_R => COORDTYPE_R    &
-        & , IDS_COORDTYPE_Z => COORDTYPE_Z
-    use ids_string              ! IGNORE
-    use ids_grid_subgrid        ! IGNORE
-    use ids_grid_objectlist     ! IGNORE
-    use ids_grid_examples       ! IGNORE
-    use ids_grid_unstructured   ! IGNORE
-    use ids_grid_structured     ! IGNORE
+                        !! These are the Access Layer routines + management of
+                        !! IDS structures
 
     implicit none
 
-    !! Local variables
-    character(len=24) :: treename   !< The name of the IMAS IDS database
-        !< (i.e. "edge_profiles" (mandatory) )
-    character(len=24) :: username   !< Creator/owner of the IMAS IDS database
-    character(len=24) :: device     !< Device name of the IMAS IDS database
-        !< (i. e. solps-iter, iter, aug)
-    character(len=24) :: version    !< Major version of the IMAS IDS database
-    integer :: cf_size1(22)     !< Number of '*cf' occurrences in read file
-    integer :: idx  !< The returned identifier to be used in the subsequent
-        !< data access operation
-    integer :: shot !< The shot number of the database being created
-    integer :: run  !< The run number of the database being created
+    !! Internal variables
     integer :: ninp(0:6)    !< Specifies the input unit numbers
     integer :: nout(0:2)    !< Specifies the output unit numbers
     integer :: nx   !< Specifies the number of interior cells along the \b first
         !< coordinate, respectively. The total number of cells is
-        !< (nx+2)*(ny+2)
+        !< (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny). It will hold
+        !< that 0.le.nx and 0.le.ny
     integer :: ny   !< Specifies the number of interior cells along the \b
         !< second coordinate, respectively. The total number of cells is
-        !< (nx+2)*(ny+2)
+        !< (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny). It will hold
+        !< that 0.le.nx and 0.le.ny
     integer :: ns   !< Specifies the number of atomic species in the
+        !< calculation. The species are indexed by (0:ns-1). It will hold
+        !< that 1.le.ns.
     integer :: idum(0:9)
     integer :: io   !< iostat value
-    real (kind=B2R8), allocatable :: ne1(:) !< Data field holding values in
+    real(kind=B2R8), allocatable :: ne1(:)  !< Data field holding values in
         !< relation to quantity: Electron density
-    real (kind=B2R8), allocatable :: te1(:) !< Data field holding values in
+    real(kind=B2R8), allocatable :: te1(:)  !< Data field holding values in
         !< relation to quantity: Electron temperature
-    real (kind=B2R8), allocatable :: ti1(:) !< Data field holding values in
+    real(kind=B2R8), allocatable :: ti1(:)  !< Data field holding values in
         !< relation to quantity: Ion temperature
-    type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store data on
+    integer :: idx  !< The returned identifier to be used in the subsequent
+        !< data access operation
+    integer :: shot !< The shot number of the database being created
+    integer :: run  !< The run number of the database being created
+    character(len=24) :: treename !< The name of the IMAS IDS database
+        !< (i.e. "edge_profiles" (mandatory) )
+    character(len=24) :: username   !< Creator/owner of the IMAS IDS database
+    character(len=24) :: device !< Device name of the IMAS IDS database
+        !< (i. e. solps-iter, iter, aug)
+    character(len=24) :: version    !< Major version of the IMAS IDS database
+    type(ids_edge_profiles) :: edge_profiles !< IDS designed to store data on
         !< edge plasma profiles  (includes the scrape-off layer and possibly
         !< part of the confined plasma)
     !! Procedures
@@ -193,10 +190,10 @@ contains
     subroutine read_b2fgmtry()
         !! Internal variables
         character(len=120) :: lblgm
-        integer :: i, j, k
+        integer ::  i, j, k
 
         !! Program start_up calls
-        call prgini( 'b2_ual_write' )
+        call prgini( 'b2_ual_write_deprecated' )
 
         !! Open files
         !! Input files
@@ -208,16 +205,16 @@ contains
         ! call cfopen( ninp(5), 'b2mn.dat', 'old', 'formatted' )
         ! call cfopen( ninp(6), 'b2frates', 'old', 'formatted' )
         !!...output files
-        call cfopen( nout(0), 'b2_ual_write.prt', 'new', 'formatted' )
+        call cfopen( nout(0), 'b2_ual_write_deprecated.prt', 'new', 'formatted' )
         call cfopen( nout(1), 'b2_ual_writ2.prt', 'new', 'formatted' )
 
         !!..mark output unit for error messages
         call xerset(0)
         !!..obtain version numbers
         call cfverr( ninp(1), b2fgmtry_version )
-        ! call cfverr (ninp(2), b2fparam_version)
+        ! call cfverr ( ninp(2), b2fparam_version )
         call cfverr( ninp(3), b2fstate_version )
-        ! call cfverr (ninp(6), b2frates_version)
+        ! call cfverr ( ninp(6), b2frates_version )
         !!..obtain nx, ny, ns
         call cfruin( ninp(3), 3, idum, 'nx,ny,ns' )
         nx = idum(0)
@@ -225,7 +222,7 @@ contains
         ns = idum(2)
         call xertst( 0.le.nx .and. 0.le.ny .and. 1.le.ns,   &
             &   'faulty input nx, ny, ns from plasma state file' )
-        call cfruin( ninp(1), 2, idum(0), 'nx,ny' )
+        call cfruin ( ninp(1), 2, idum(0), 'nx,ny' )
         call xertst( idum(0).eq.nx .and. idum(1).eq.ny, &
             &   'faulty input nx, ny from geometry file' )
 
@@ -237,10 +234,10 @@ contains
         call cfruch( ninp(1), 120, lblgm, 'label' )
         call cfruin( ninp(1), 1, idum, 'isymm' )
         call b2rugm( ninp(1), nx, ny, crx, cry, fpsi, ffbz, &
-            &   bb, vol, hx, hy, qz, qc, qcb, gs, pbs,      &
-            &   wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
+            &   bb, vol, hx, hy, qz, qc, qcb, gs, pbs, &
+            &   wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap )
 
-        call xertst( size(crx).eq.size(cry),    &
+        call xertst(size(crx).eq.size(cry), &
             &   "The number of x and y coordinates is not the same." )
 
         corner: do k = 0, 3, 1
@@ -265,9 +262,7 @@ contains
                         !< second coordinate
         integer :: ns   !< Specifies the number of atomic species in the
                         !< calculation
-        integer :: k
-        integer :: is
-        integer :: idum(0:9) !!, nscx, iscx(0:nscxmax-1), ismain
+        integer :: idum(0:9)   !! nscx, iscx(0:nscxmax-1), ismain
         real(kind=B2R8), intent(inout), allocatable :: ne(:)    !< Data field
             !< holding values in relation to quantity: Electron density
         real(kind=B2R8), intent(inout), allocatable :: te(:)    !< Data field
@@ -279,8 +274,6 @@ contains
         character :: lblcp*120
         character :: lblmn*120
         character :: lblrc*120
-        character :: cnamip*80
-        character :: cvalip*80
         character :: exp*128
         character :: comment*128
         integer :: shot
@@ -313,27 +306,27 @@ contains
         real (kind=B2R8), allocatable :: fch_p(:) !< The product of the
             !< Parallel electric current and the poloidal magnetic field
             !< component.
-        real (kind=B2R8) :: time
+        real(kind=B2R8) :: time
         !! Procedures
         external subini, subend, xertst, xerrab, cfruch, cfruin, cfrure
         !! Namelist
-        namelist /b2md_namelist/ exp, shot, time, comment, timedep, snapshot, &
-            & tallies, movies, overwrite_shotnumber
+        namelist /b2md_namelist/ exp, shot, time, comment, timedep,     &
+            &   snapshot, tallies, movies, overwrite_shotnumber
 
         !! Subprogram start-up calls
         call subini( 'b2mddr' )
         !! Test ninp, nout
 
-        call xertst( 1.le.ninp(0) .and. 1.le.ninp(1) .and.                  &
-            &   1.le.ninp(2) .and. 1.le.ninp(3) .and. 1.le.ninp(5) .and.    &
-            &   1.le.ninp(6) .and. 1.le.nout(0) .and. 1.le.nout(1) .and.    &
-            &   1.le.nout(2), 'faulty argument ninp, nout' )
-        !!   ..test dimensions
+        call xertst( 1 .le.ninp(0) .and. 1 .le.ninp(1) .and.                  &
+            &   1 .le.ninp(2) .and. 1 .le.ninp(3) .and. 1 .le.ninp(5) .and.    &
+            &   1 .le.ninp(6) .and. 1 .le.nout(0) .and. 1 .le.nout(1) .and.    &
+            &   1 .le.nout(2), 'faulty argument ninp, nout' )
+        !! Test dimensions
 
-        call xertst(0.le.nx .and. 0.le.ny, 'faulty argument nx, ny' )
-        call xertst(1.le.ns, 'faulty argument ns' )
+        call xertst( 0.le.nx .and. 0.le.ny, 'faulty argument nx, ny' )
+        call xertst( 1.le.ns, 'faulty argument ns' )
 
-        call xertst(ns.le.nsdecl, 'faulty parameter nsdecl' )
+        call xertst( ns .le.nsdecl, 'faulty parameter nsdecl' )
 
         !! Get array sizes from the b2fstate. We open the file again as a new
         !! unit to not disrupt the old unit.
@@ -341,7 +334,7 @@ contains
         !! of finding/properly use it.
         cf_sizes = read_additional_sizes(22)
 
-        ! allocate( lblgm( cf_sizes(2) ) )
+        ! allocate( lblgm(cf_sizes(2) ) )
         allocate( zamin( cf_sizes(3) ) )
         allocate( zamax( cf_sizes(4) ) )
         allocate( zn( cf_sizes(5) ) )
@@ -359,8 +352,8 @@ contains
         allocate( fch( cf_sizes(17) ) )
         allocate( fch_32( cf_sizes(18) ) )
         allocate( fch_52( cf_sizes(19) ) )
-        !! The program gives an error saying the kinrgy and fch_p are
-        !! already allocated. Where, when?
+        !! The program gives an error saying the kinrgy is already allocated.
+        !! Where, when?
         ! allocate( kinrgy( cf_sizes(20) ) )
         ! allocate( fch_p( cf_sizes(22) ) )
 
@@ -391,25 +384,24 @@ contains
 
     !> Get array sizes from the b2fstate.
     function read_additional_sizes( array_size )
-        integer, intent(in) :: array_size !< Size of the array
-        !! Internal variables
+        integer, intent(in) :: array_size   !< Size of the array
         character(len=256) :: rdline
         character(len=256) :: rdstring
-        integer ::  cfcount, stat
+        integer :: cfcount, stat
         integer :: cf_sizes(array_size)
         integer, dimension(:), allocatable :: read_additional_sizes
 
-        allocate( read_additional_sizes(array_size) )
+        allocate( read_additional_sizes( array_size ) )
 
         cfcount = 0
         open( 1, file='b2fstate', status="old" )
         do
-            read( 1, '(A)', iostat=io ) rdline
+            read(1,'(A)', iostat=io) rdline
             if( io/=0 ) exit
-            if( rdline(1:3).eq."*cf" ) then
+            if( rdline(1:3) .eq. "*cf") then
                 cfcount = cfcount + 1
                 rdstring = adjustl( rdline(20:28) )
-                read( rdstring,*, iostat=stat )  cf_sizes(cfcount)
+                read( rdstring, *, iostat=stat )  cf_sizes( cfcount )
             end if
         end do
         close(1)
@@ -418,34 +410,21 @@ contains
     end function read_additional_sizes
 
     !> Subroutine used to put data to edge_profiles IDS
-    !!  @param[in]  treename - the name of the IMAS IDS database,
-    !!              (i.e. "edge_profiles" (mandatory) )
-    !!  @param[in]  shot - The shot number of the database being created
-    !!  @param[in]  run - The run number of the database being created
-    !!  @param[in]  idx - The returned identifier to be used in the
-    !!              subsequent data access operation
-    !!  @param[in]  username - Creator/owner of the IMAS IDS database
-    !!  @param[in]  device - Device name of the IMAS IDS database
-    !!              (i. e. solps-iter, iter, aug)
-    !! @param[in]   version - Major version of the IMAS IDS database
-    !! @param[out]  ne - Data field holding values in relation to quantity:
-    !!              Electron density
-    !! @param[out]  te - Data field holding values in relation to quantity:
-    !!              Electron temperature
-    !! @param[out]  ti - Data field holding values in relation to quantity:
-    !!              Ion temperature
     subroutine write_ids_edge_profiles( treename, shot, run, idx, username, &
             &   device, version, ne, te, ti )
-        use ids_grid_unstructured   ! IGNORE
+        !! Internal variables
         character(len=24) :: treename   !< The name of the IMAS IDS database
             !< (i.e. "edge_profiles" (mandatory) )
         character(len=24) :: username   !< Creator/owner of the IMAS IDS database
         character(len=24) :: device !< Device name of the IMAS IDS database
             !< (i. e. solps-iter, iter, aug)
         character(len=24) :: version    !< Major version of the IMAS IDS database
+        character(len=255) :: grid_description  !< Grid description string
+        character(len=132) :: gridSubset_name   !< Grid subset label
         integer :: shot !< The shot number of the database being created
         integer :: run  !< The run number of the database being created
         integer :: idx  !< The returned identifier to be used in the subsequent
+            !< data access operation
         real (kind=B2R8), intent(in) :: ne(:)   !< Data field holding values in
             !< relation to quantity: Electron density
         real (kind=B2R8), intent(in) :: te(:)   !< Data field holding values in
@@ -453,8 +432,7 @@ contains
         real (kind=B2R8), intent(in) :: ti(:)   !< Data field holding values in
             !< relation to quantity: Ion temperature
         !! Internal variables
-        character(len=255) :: grid_description
-        character(len=255) :: gridSubset_name
+        integer :: i, j, k, icount, n
         integer :: num_nodes_all
         integer :: num_nodes
         integer :: num_gridSubsets
@@ -464,12 +442,6 @@ contains
         integer :: numCellsY
         integer :: num_cells
         integer :: cellId
-        integer :: numEdgesX
-        integer :: numEdgesY
-        integer :: num_edges
-        integer :: edgeId
-        integer :: count
-        integer :: count2
         integer :: num_ne_gridSubset
         integer :: num_ne_values
         integer :: num_te_gridSubset
@@ -482,17 +454,7 @@ contains
         integer :: obj_0D_id
         integer :: num_obj_2D
         integer :: obj_2D_id
-        integer :: i, j, k, icount, n
-        integer :: homogeneous_time
-        integer :: coordtype(2)
-        integer, allocatable :: edgesNodesList(:,:)
-        integer, allocatable :: cellsNodesList(:,:)
-        integer, allocatable :: edgeIndicesRepeat(:)
-        !! TODO: get time out from b2fstate
-        ! real(B2R8)    ::  time
-        real(IDS_real) :: time  !< Generic time
-        real(IDS_real), allocatable :: nodesGeoList(:,:)
-        real(IDS_real) :: scalarCells(2)
+        real(B2R8) :: time  !< Generic time
         type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
             !< data on edge plasma profiles  (includes the scrape-off layer and
             !< possibly part of the confined plasma)
@@ -504,8 +466,6 @@ contains
             !< data structure, designed for handling grid geometry data
         type(ids_generic_grid_dynamic_space), pointer :: space  !< Type of IDS
             !< data structure, designed for handling set of grid space data
-        type(ids_generic_grid_scalar), pointer :: idsField  !< Type of IDS
-            !< data structure, designed for handling scalar data fields
 
         !! ===  SET UP IDS ===
         write(0,*) "IDS parameters"
@@ -521,15 +481,18 @@ contains
 
         write(0,*) "Setting data for edge_profiles IDS"
 
-        !! Preparing database for writing
-        !! Through practice it was disclosed that there are some mandatory
-        !! steps to be done in order to assure for data to be successfully
-        !! written to IDS. Without going through those steps errors and failed
-        !! process of writing to IDS are to be expected.
-        !! This can be done using exampleSetIDSFundamentals routine
-        homogeneous_time = 1
-        time = 0.0_IDS_real
-        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time )
+        !! Prepeare database
+        !! In order to write to IDS database there are next steps that are
+        !! absolutely neccessary to do, otherwise writing to IDS database
+        !! will surely fail
+        !! 1. Allocate profiles_1d
+        allocate( edge_profiles%profiles_1d(1) )
+        !! 2. Set homogeneous_time
+        edge_profiles%ids_properties%homogeneous_time = 1
+        !! 3. Allocate edge_profiles.time and Set desired value
+        allocate( edge_profiles%time(1) )
+        edge_profiles%time(1) = 1
+        ! edge_profiles%time(1) = time
 
         !! Allocate ggd slice
         allocate( edge_profiles%ggd(1) )
@@ -537,44 +500,56 @@ contains
         ggd => edge_profiles%ggd(1)
         grid => ggd%grid
 
+        !! Allocate space
+        allocate( grid%space(1) )
+        !! Allocate objects_per_dimension substructure
+        allocate( grid%space(1)%objects_per_dimension(3) )
         !! Set IDS grid description
-        grid_description = "This IDS was written by b2_ual_write_gsl"
+        grid_description = "This IDS was written by b2_ual_write_deprecated"
         grid%identifier%description = grid_description
 
-        !! Set IDS comment under ids_properties substructure
-        allocate( edge_profiles%ids_properties%comment(1) )
-        edge_profiles%ids_properties%comment(1) = &
-            &   "This IDS was created by b2_ual_write_gsl using Grid Service&
-            & Library (GSL)."
-        !! Set IDS code name
-        allocate( edge_profiles%code%name(1) )
-        edge_profiles%code%name(1) = "b2_ual_write_gsl"
-
-        !! === SET UP GRID===
-
+        !! === SET UP GRID ===
         !! The 2D structured grid is in our case composed out of one 2D
         !! structured space
         !! Set definition of the coordinate system of the space
-        coordtype(:) = (/ IDS_COORDTYPE_R, IDS_COORDTYPE_Z /)
+
+        !! Allocate coordinates_type
+        allocate( grid%space(1)%coordinates_type(2) )
+        !! Set coordinate types
+        grid%space(1)%coordinates_type(1) = 4 !! R
+        grid%space(1)%coordinates_type(2) = 5 !! Z
 
         !! --- Set up grid space objects for Class 1 objects - points ---
+
+        num_nodes = num_nodes_all
+        num_obj_0D = num_nodes
 
         !! We are in 2D dimension space and the nodes are defined by coordinates
         !! in a way
         !! n1=[r1, z1], n2=[r2,z2], ..., nn=[rn, zn].
 
-        !! Set geometry (R,Z) coordinate of each node object
-        num_nodes = num_nodes_all
-        allocate( nodesGeoList( num_nodes_all, 2) )
+        allocate( grid%space(1)%objects_per_dimension(1)%object(num_obj_0D) )
 
-        !! To get nodes coordinates to 2D array in correct order
+        !! Set geometry (R,Z) coordinate of each node object
+        do i = 1, num_obj_0D
+            !! Set and fill list of indices for nodes
+            allocate( grid%space(1)%objects_per_dimension(1)%object(i)%nodes(1) )
+            grid%space(1)%objects_per_dimension(1)%object(i)%nodes(1) = i
+            !! Set geometry (R,Z) coordinate of each node object
+            allocate( grid%space(1)%objects_per_dimension(1)%object(i)%geometry(2) )
+        enddo
+
+        !! Get nodes coordinates
         icount = 0
         do k = 0, 3
             do j = -1, ny
                 do i = -1, nx
                     icount = icount + 1
-                    nodesGeoList(icount, 1) = crx(i,j,k)
-                    nodesGeoList(icount, 2) = cry(i,j,k)
+                    !! Fill geometry (R,Z) coordinate of each node object
+                    grid%space(1)%objects_per_dimension(1)%     &
+                        &   object(icount)%geometry(1) = crx(i,j,k)
+                    grid%space(1)%objects_per_dimension(1)%     &
+                        &   object(icount)%geometry(2) = cry(i,j,k)
                 enddo
             enddo
         enddo
@@ -584,9 +559,11 @@ contains
         !! TODO! Currently only placeholder edges are given
 
         !! Set (placeholder) list of indices for nodes defining each edge object
-        allocate( edgesNodesList(1,2) )
-        edgesNodesList(1,1) = 0
-        edgesNodesList(1,2) = 0
+        allocate( grid%space(1)%objects_per_dimension(2)%object(1) )
+        allocate( grid%space(1)%objects_per_dimension(2)%   &
+            &   object(1)%nodes(1) )
+        grid%space(1)%objects_per_dimension(2)%     &
+            &   object(1)%nodes(1) = 0
 
         !! --- Set up connectivity array of grid space objects for      ---
         !! --- Class 3 objects - 2D cells                               ---
@@ -595,71 +572,166 @@ contains
         !!
         !! We are are in 2D dimension and each cell is defined by 4 nodes
         !! Note: cell nodes must be ordered cyclically (here anti-clockwise)
+
         numCellsX = nx + 2
         numCellsY = ny + 2
         num_cells = numCellsX * numCellsY
-        allocate( cellsNodesList( num_cells, 4) )
+        num_obj_2D = num_cells
 
+        allocate( grid%space(1)%objects_per_dimension(3)%object(num_obj_2D) )
+
+        do i = 1, num_obj_2D
+            !! Set list of indices
+            allocate( grid%space(1)%objects_per_dimension(3)%object(i)% &
+                &   nodes(4) ) !! Each cell is formed by 4 nodes
+        enddo
         cellId = 1
         do j = 1,numCellsY
             do i = 1, numCellsX
-                cellsNodesList( cellId, 1 ) = cellId + 0 * numCellsX * numCellsY
-                cellsNodesList( cellId, 2 ) = cellId + 1 * numCellsX * numCellsY
-                cellsNodesList( cellId, 3 ) = cellId + 3 * numCellsX * numCellsY
-                cellsNodesList( cellId, 4 ) = cellId + 2 * numCellsX * numCellsY
+                !! Fill list of indices
+                grid%space(1)%objects_per_dimension(3)%object(cellId)%  &
+                    &   nodes(1) = cellId+0*numCellsX*numCellsY
+                grid%space(1)%objects_per_dimension(3)%object(cellId)%  &
+                    &   nodes(2) = cellId+1*numCellsX*numCellsY
+                grid%space(1)%objects_per_dimension(3)%object(cellId)%  &
+                    &   nodes(3) = cellId+3*numCellsX*numCellsY
+                grid%space(1)%objects_per_dimension(3)%object(cellId)%  &
+                    &   nodes(4) = cellId+2*numCellsX*numCellsY
                 cellId = cellId + 1
             enddo
         enddo
 
-        !! --- Set the grid space objects and grid subsets ---
-        !! For that we use GSL routine gridSetup2dSpace
-        call gridSetup2dSpace(  grid, coordtype,                &
-                            &   geo_0dObj   = nodesGeoList,     &
-                            &   conn_1dObj  = edgesNodesList,   &
-                            &   conn_2dObj  = cellsNodesList,   &
-                            &   createGridSubsets = .true. )
+        !! === SET UP GRID SUBSETS ===
 
-        !! --- (Optional) Set grid subsets custom description   ---
-        grid%grid_subset(1)%identifier%description = "All nodes in the domain."
-        grid%grid_subset(3)%identifier%description = "All cells in the domain."
+        !! Two grid_subsets will be created, one for all nodes
+        !! in the full domain, and one for
+        !! all cells in the full domain
 
-        !! (optional) Change name of the second grid subset
-        grid%grid_subset(2)%identifier%name = "Edges - empty."
+        !! Set up two grid subsets
+
+        num_gridSubsets = 2         !! Number of grid subsets to write
+                                    !! (Cells and Nodes)
+        !! Allocate grid subsets
+        allocate( grid%grid_subset(num_gridSubsets) )
+
+        !! --- Set up grid_subset "Cells" for all cells in the domain ---
+        !! (grid subset index: 1, objects forming the grid subset: cells, 2D)
+
+        gridSubset_index = 1    !! Grid subset index of grid subset Cells
+                                !! (Indexing of grid subsets follows the IDS
+                                !! examples :
+                                !! shot: 1, run:1, # device: iter; and
+                                !! shot: 16151, run: 1000; device: aug
+        gridSubset_name = "Cells"
+        gridSubset_dim_index = 3 !! Grid subset Nodes consists of
+                                 !! points -> 0D objects -> dimension index = 1
+                                 !! (edges -> 1D objects -> dimension index = 2
+                                 !! cells  -> 2D objects -> dimension index = 3)
+
+        !! Set and fill grid subset name
+        allocate( grid%grid_subset(gridSubset_index)%identifier%name(1) )
+        grid%grid_subset(gridSubset_index)%identifier%name = gridSubset_name
+        !! Fill subset base index ( this is special index, each subset has its
+        !! unique index!)
+        grid%grid_subset(gridSubset_index)%identifier%index = gridSubset_index
+
+        !! Set subset element object reference to to appropriate space object
+        !! node
+        allocate( grid%grid_subset(gridSubset_index)%element(num_obj_2D) )
+        do i = 1, num_obj_2D
+            allocate( grid%grid_subset(gridSubset_index)%element(i)%object(1) )
+            !! Fill subset space node index
+            grid%grid_subset(gridSubset_index)%element(i)%object(1)%space = 1
+            !! Fill subset object dimension i.e. object class
+            grid%grid_subset(gridSubset_index)%element(i)%object(1)%dimension = &
+                & gridSubset_dim_index
+            !! Fill subgset object index
+            grid%grid_subset(gridSubset_index)%element(i)%object(1)%index = i
+        enddo
+
+        !! --- Set up grid_subset "Nodes" for all nodes in the domain ---
+        !! (grid subset index: 2, objects forming the grid subset: nodes/points)
+
+        gridSubset_index = 2    !! Grid subset index of grid subset Nodes
+                                !! (Indexing of grid subsets follows the IDS
+                                !! examples :
+                                !! shot: 1, run:1, # device: iter; and
+                                !! shot: 16151, run: 1000; device: aug
+        gridSubset_name = "Nodes"
+        gridSubset_dim_index = 1    !! Grid subset Nodes consists of
+                                    !! points -> 0D objects -> dimension index = 1
+                                    !! (edges -> 1D objects -> dimension index = 2
+                                    !! cells  -> 2D objects -> dimension index = 3)
+
+        allocate( grid%grid_subset(gridSubset_index)%identifier%name(1) )
+        grid%grid_subset(gridSubset_index)%identifier%name = gridSubset_name
+        grid%grid_subset(gridSubset_index)%identifier%index = gridSubset_index
+
+        allocate( grid%grid_subset(gridSubset_index)%element(num_obj_0D) )
+        do i = 1, num_obj_0D
+            allocate( grid%grid_subset(gridSubset_index)%element(i)%object(1) )
+            grid%grid_subset(gridSubset_index)%element(i)%object(1)%space = 1
+            grid%grid_subset(gridSubset_index)%element(i)%object(1)%    &
+                &   dimension = gridSubset_dim_index
+            grid%grid_subset(gridSubset_index)%element(i)%object(1)%index = i
+        enddo
 
         !! === SET VALUES (ne, te, ti) for "Cells" grid subset ===
-        !! For that we use GSL routine gridStructWriteData1d
-        gridSubset_index = 3
-
         !! --- Set ne (electron density) ---
-        allocate( ggd%electrons%density(1) )
-        idsField => ggd%electrons%density(1)
-        call gridStructWriteData1d( grid, idsField, gridSubset_index, ne )
+        gridSubset_index = 1
+        num_ne_gridSubset = 1
+        num_ne_values = size(ne)
+        allocate( ggd%electrons%density(num_ne_gridSubset) )
+        ggd%electrons%density(num_ne_gridSubset)%grid_subset_index =    &
+            &   gridSubset_index
+        allocate( ggd%electrons%density(num_ne_gridSubset)%values(num_ne_values) )
+        do n = 1, num_ne_values
+            ggd%electrons%density(num_ne_gridSubset)%values(n) = ne(n)
+        enddo
 
         !! --- Set te (electron temperature) ---
-        allocate( ggd%electrons%temperature(1) )
-        idsField => ggd%electrons%temperature(1)
-        !! convert to eV (1 J = 6.242e18 eV)
-        call gridStructWriteData1d( grid, idsField, gridSubset_index,   &
-            &   te*6.242e18)
+        num_te_gridSubset = 1
+        num_te_values = size(te)
+        allocate( ggd%electrons%temperature(num_te_gridSubset) )
+        ggd%electrons%temperature(num_te_gridSubset)%grid_subset_index =    &
+            &   gridSubset_index
+        allocate( ggd%electrons%temperature(num_te_gridSubset)%values(num_te_values) )
+        do n = 1, num_te_values
+            !! convert to eV (1 J = 6.242e18 eV)
+            ggd%electrons%temperature(num_te_gridSubset)%values(n) =    &
+                &   te(n)*6.242e18
+        enddo
 
         !! --- Set ti (ion temperature) ---
-        allocate( ggd%ion(1) )
-        allocate( ggd%ion(1)%temperature(1) )
-        idsField => ggd%ion(1)%temperature(1)
-        !! convert to eV (1 J = 6.242e18 eV)
-        call gridStructWriteData1d( grid, idsField, gridSubset_index,   &
-            &   ti*6.242e18)
+        num_ti_gridSubset   = 1
+        num_ti_values       = size(ti)
+        num_ti_species      = 1     !! Number of ion species, as in
+                                    !! number of different ion charges.
+        ion_specie = 1
+        !! Ion specie is linked with the ion density of each ion charge,
+        !! as ion temperature is taken as the same for all ion charges.
+        allocate( ggd%ion(num_ti_species) )
+        allocate( ggd%ion(ion_specie)%temperature(num_ti_gridSubset) )
+        ggd%ion(ion_specie)%temperature(num_ti_gridSubset)%grid_subset_index =  &
+            &   gridSubset_index
+        allocate( ggd%ion(ion_specie)%temperature(num_ti_gridSubset)%   &
+            &   values(num_ti_values) )
+        do n = 1, num_ti_values
+            !! convert to eV (1 J = 6.242e18 eV)
+            ggd%ion(ion_specie)%temperature(num_ti_gridSubset)%values(n) =  &
+                &   ti(n) * (6.242e18)
+        enddo
 
         !! Set data to edge_profiles IDS
         write(0,*) "Writing to edge_profiles IDS"
 
         !! Create and modify new shot/run
-        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+        call imas_create_env(treename, shot, run, 0, 0, idx, username,  &
             &   device, version)
 
         !! Or open and modify existing shot/run (might work much faster than
         !! imas_create_env)
-        ! call imas_open_env( 'treename', shot, run, idx, username, device, version)
+        ! call imas_open_env('treename', shot, run, idx, username, device, version)
 
         !! Put data to IDS
         call ids_put_slice( idx, "edge_profiles", edge_profiles )
@@ -673,38 +745,37 @@ contains
 
     end subroutine write_ids_edge_profiles
 
-    !> subroutine for reading edge_profiles IDS
     !> Example subroutine for reading data out from the edge_profiles IDS
     !! with Fortran90
     subroutine read_ids( treename, shot, run, idx, username, device, version )
         character(len=24) :: treename   !< The name of the IMAS IDS database
-        integer :: shot !< The shot number of the database being created
-        integer :: run  !< The run number of the database being created
-        integer :: idx  !< The returned identifier to be used in the subsequent
         character(len=24) :: username   !< Creator/owner of the IMAS IDS database
         character(len=24) :: device !< Device name of the IMAS IDS database
             !< (i. e. solps-iter, iter, aug)
         character(len=24) :: version    !< Major version of the IMAS IDS database
+        integer :: shot !< The shot number of the database being created
+        integer :: run  !< The run number of the database being created
+        integer :: idx  !< The returned identifier to be used in the subsequent
         !! Internal variables
         integer :: gridSubset_index !< >Grid subset base index
         type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
             !< data in edge plasma profiles  (includes the scrape-off layer and
             !<  possibly part of the confined plasma)
 
-        gridSubset_index = 3
+        gridSubset_index = 2
 
         !! Open input datafile from local database
         write (0,*) "Started reading input IDS", idx, shot, run
 
-        call imas_open_env( 'treename', shot, run, idx, username, device, version )
-        call ids_get( idx, 'edge_profiles', edge_profiles )
+        call imas_open_env('treename', shot, run, idx, username, device, version)
+        call ids_get(idx, 'edge_profiles', edge_profiles)
 
         write(0,*) 'homogeneous_time = ',   &
             &   edge_profiles%ids_properties%homogeneous_time
-        write(0,*) "Grid subset 3 name = ", &
+        write(0,*) "Grid subset 2 name = ", &
             &   edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)%    &
             &   identifier%name
-        write(0,*) "Grid subset 3 index = ",    &
+        write(0,*) "Grid subset 2 index = ",    &
             &   edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)%    &
             &   identifier%index
         ! write(0,*) "Time = ", edge_profiles%time(1)
@@ -714,7 +785,7 @@ contains
 
     end subroutine read_ids
 
-end program b2_ual_write_gsl
+end program b2_ual_write_deprecated
 
 !!!Local Variables:
 !!! mode: f90
