@@ -134,27 +134,27 @@ c***  spttrg  : sputtering [g/y]
 
       real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,mmol,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
-     ,  s(0:NYD-1,ntrgsx),xmp_hlp(0:NYD-1,ntrgsx),xtrg(0:NYD-1,ntrgsx),
-     ,  netrg(0:NYD-1,ntrgsx),  tetrg(0:NYD-1,ntrgsx),
-     ,  titrg(0:NYD-1,ntrgsx),
-     ,  wtttrg(0:NYD-1,ntrgsx), wptnu(0:NYD-1,ntrgsx),
-     ,  wptpl(0:NYD-1,ntrgsx),
-     ,  whtnu(0:NYD-1,ntrgsx),  whtpl(0:NYD-1,ntrgsx),
-     ,  wpttrg(0:NYD-1,ntrgsx),
-     ,  wpltrg(0:NYD-1,ntrgsx), wnutrg(0:NYD-1,ntrgsx),
+     ,  s(0:NY-1,ntrgsx),xmp_hlp(0:NY-1,ntrgsx),xtrg(0:NY-1,ntrgsx),
+     ,  netrg(0:NY-1,ntrgsx),  tetrg(0:NY-1,ntrgsx),
+     ,  titrg(0:NY-1,ntrgsx),
+     ,  wtttrg(0:NY-1,ntrgsx), wptnu(0:NY-1,ntrgsx),
+     ,  wptpl(0:NY-1,ntrgsx),
+     ,  whtnu(0:NY-1,ntrgsx),  whtpl(0:NY-1,ntrgsx),
+     ,  wpttrg(0:NY-1,ntrgsx),
+     ,  wpltrg(0:NY-1,ntrgsx), wnutrg(0:NY-1,ntrgsx),
      ,  wrdtrg(0:NY-1,ntrgsx,0:DEF_NATM),
-     ,  fiitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  eiitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  faitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  eaitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  naitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  paitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  fmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  emitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  pmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  nmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  erntrg(0:NYD-1,ntrgsx), spttrg(0:NYD-1,ntrgsx),
-     ,  sjs(0:NYD-1,ntrgsx), sjs_t(ntrgsx),
+     ,  fiitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  eiitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  faitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  eaitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  naitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  paitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  fmitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  emitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  pmitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  nmitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  erntrg(0:NY-1,ntrgsx), spttrg(0:NY-1,ntrgsx),
+     ,  sjs(0:NY-1,ntrgsx), sjs_t(ntrgsx),
      ,  sjs_w(0:ntrgsx),pump,pumptot,sptmass,sptflx(DEF_NLIM+DEF_NSTS)
 
 c*** Recap of fluxes from eirene
@@ -551,6 +551,7 @@ c            eb2atm will be [1 4 2 3]
       end do
       ils=iabs(lwldlis(iln,izn))
 c      print *,'lwldlis,ils,lppp=',lwldlis(iln,izn),ils,lppp       !###
+
 
 c*** Check whether a target segment is requested
 
@@ -1321,6 +1322,7 @@ c carlis sputtering not happening on this wall but possibly on other walls of th
           end do
         end if
       else if(do_trg) then !}{
+        iy = (ils-lppp-1)-(itrg-1)*ny
 c        print *,'itrg,iy=',itrg,iy     
         w_line(10)=wptpl(iy,itrg) !recombination due to plasma
         w_line(9)=whtpl(iy,itrg) !heat due to plasma                           !###
