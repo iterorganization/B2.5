@@ -1251,13 +1251,16 @@ contains
   real (kind=R8), intent(out) :: face(-1:nx,-1:ny,0:1)
 !! local variables
   integer ix, iy, cgeo
+  real (kind=R8) :: cxx(0:3), cyy(0:3)
 
   face = 0.0_R8
 
   do iy = -1, ny
     do ix = -1, nx
       if (isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-      cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
+      cxx(0:3) = crx(ix,iy,0:3)
+      cyy(0:3) = cry(ix,iy,0:3)
+      cgeo = cellGeoType( cxx, cyy )
       if (cgeo == CGEO_TRIA_NOLEFT) then
         face(ix,iy,0) = 0.0_R8
       else if (.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then

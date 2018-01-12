@@ -273,7 +273,7 @@ c*** read the wall geometry
 cank
 cank-960727
       if(jvft44 .ge. 960623) then
-        print *,'natmi,nmoli,nioni,nplsi=',
+        print *,'natmi,nmoli,nioni,nplsi = ',
      .           natmi,nmoli,nioni,nplsi
         call rdneutrs(44,wldra,natmi)
         call rdneutrs(44,wldrm,nmoli)

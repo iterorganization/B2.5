@@ -1028,13 +1028,18 @@ contains
 
         !! ne
         call write_quantity( edgecpo%fluid%ne%value, edgecpo%fluid%ne%flux, ne, fne )
-        call write_cell_scalar( edgecpo%fluid%ne%source, sne(:,:,0) + sne(:,:,1)*ne )
+        call write_cell_scalar( edgecpo%fluid%ne%source, &
+            &   b2CellData = sne(:,:,0) + sne(:,:,1)*ne )
 
         !! na
         allocate(edgecpo%fluid%ni(ns))
         do is = 1, ns
-            call write_quantity( edgecpo%fluid%ni(is)%value, edgecpo%fluid%ni(is)%flux, na(:,:,is-1), fna(:,:,:,is-1) )
-            call write_cell_scalar( edgecpo%fluid%ni(is)%source, sna(:,:,0,is-1) + sna(:,:,1,is-1)*na(:,:,is-1) )
+            call write_quantity( edgecpo%fluid%ni(is)%value, &
+                &   edgecpo%fluid%ni(is)%flux,               &
+                &   value = na(:,:,is-1),                    &
+                &   flux = fna(:,:,:,is-1) )
+            call write_cell_scalar( edgecpo%fluid%ni(is)%source, &
+                &   b2CellData = sna(:,:,0,is-1) + sna(:,:,1,is-1)*na(:,:,is-1) )
         end do
 
 !!$    ! ue TODO: must be computed, refactor code from b2news into function
@@ -1043,7 +1048,7 @@ contains
 !!$    allocate(edgecpo%fluid%ve%alignid(1))
 !!$    edgecpo%fluid%ve%align(1) = VEC_ALIGN_PARALLEL
 !!$    edgecpo%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
-!!$    call write_cell_scalar( edgecpo%fluid%ve%comps(1)%value, ue(:,:) )
+!!$    call write_cell_scalar( edgecpo%fluid%ve%comps(1)%value, b2CellData = ue(:,:) )
 
         !! ua
         allocate(edgecpo%fluid%vi(ns))
@@ -1054,16 +1059,22 @@ contains
             edgecpo%fluid%vi(is)%align(1) = VEC_ALIGN_PARALLEL
             edgecpo%fluid%vi(is)%alignid(1) = VEC_ALIGN_PARALLEL_ID
 
-            call write_cell_scalar( edgecpo%fluid%vi(is)%comps(1)%value, ua(:,:,is-1) )
+            call write_cell_scalar( edgecpo%fluid%vi(is)%comps(1)%value, &
+                &   b2CellData = ua(:,:,is-1) )
         end do
 
         !! te
-        call write_quantity( edgecpo%fluid%te%value, edgecpo%fluid%te%flux, te/qe, fhe )
+        call write_quantity( edgecpo%fluid%te%value, &
+            &   edgecpo%fluid%te%flux,               &
+            &   value = te/qe,                       &
+            &   flux = fhe )
 
         !! ti
         allocate(edgecpo%fluid%ti(1))
-        call write_quantity( edgecpo%fluid%ti(1)%value, edgecpo%fluid%ti(1)%flux, ti/qe, fhi )
-
+        call write_quantity( edgecpo%fluid%ti(1)%value, &
+            &   edgecpo%fluid%ti(1)%flux,               &
+            &   value = ti/qe,                          &
+            &   flux = fhi )
 
         !! po
         call write_cell_scalar( edgecpo%fluid%po%value, po )
