@@ -1,4 +1,4 @@
-      subroutine b2blnm(nx,ny,ns)
+      subroutine b2blnm(nx,ny,ns,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -25,7 +25,7 @@ c----------------------------------------------------------------------
       implicit none
 c
 c
-      integer nx, ny, ns
+      integer nx, ny, ns, iline
 c
 c*** lv    :  version number to appear in the file
 c*** lvm   :  version number corresponding to the last major change
@@ -85,6 +85,8 @@ c
       real (kind=R8) ::
      *     hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
      *     pr(-1:nx, -1:ny)
+      real (kind=R8), save :: stim = 0.0_R8
+      real (kind=R8) :: tdummy
       logical ex,warn_tmp
       character hlp_c, tab, f*(lenfnm), hlp_frm*80, hlp_frf*160
 c----------------------------------------------------------------------
@@ -124,8 +126,6 @@ c
      +  ex,warn_tmp,
      +  hlp_c, tab, f, hlp_frm, hlp_frf
 c======================================================================
-
-      if(first_time_step) return
 
       do i=1,ndivx
         do j=1,nqudiv
@@ -270,7 +270,7 @@ c
       return
 c======================================================================
 c
-      entry b2blnmi(nx,ny,ns)
+      entry b2blnmi(nx,ny,ns,iline)
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_blm)=.true.
@@ -278,24 +278,27 @@ c----------------------------------------------------------------------
 c
       ndiv=ndivx
       tab=char(9)
+      call ipgetr ('b2mndr_stim', stim)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
 c
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex) then
-        read(lun,700,err=92) nv,nd_tmp,ndv_tmp
-  700   format('#   ',3i8,'  ##  ',a)
+      if(ex.and.stim.lt.0.0_R8) then
+        read(lun,*,err=92) hlp_c,nv,nd_tmp,ndv_tmp
+  700   format('#   ',3i8/'#  ',a)
+  701   format(a1,3x,3i8)
         lv_trc(ltrc)=nv
         warn_tmp=.false.
         if(nv.ne.lv) then
           warn_tmp=.true.
-          write(*,*) '!!! b2blnm: current version ',lv,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! b2blnm: current version ',lv,
+     ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. lvm) then
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -306,15 +309,17 @@ c*** It was a major change of the file format - impossible to continue
         end if
         if(ndv_tmp.ne.ndiv) then
           warn_tmp=.true.
-          write(*,*) '!!! b2blnm: current number of divertor legs ',
-     ,                ndiv,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2blnm: current number of divertor legs ',ndiv,
+     ,     ' differs from that in the file ',trim(f),' : ',ndv_tmp
           filedata(ltrc)=.false.
         end if
         if(nd_tmp.ne.nqudiv) then
           warn_tmp=.true.
-          write(*,*) '!!! b2blnm: current number of columns',
-     ,                ' for divertor data',nqudiv,
-     ,                ' differs from that in the file ',trim(f)
+          write(*,'(2a,i4,3a,i4)')
+     ,     '!!! b2blnm: current number of columns',
+     ,     ' for divertor data ',nqudiv,
+     ,     ' differs from that in the file ',trim(f),' : ',nd_tmp
           if(nd_tmp.gt.nqudiv) then
             filedata(ltrc)=.false.
           end if
@@ -360,7 +365,39 @@ c*** Prepare the formats for the printout
   720 format('(1p,1x,a2,1x,',i3,'e11.3)')
 c======================================================================
 c
-      entry b2blnms(nx,ny,ns)
+      entry b2blnmc(nx,ny,ns,iline)
+c----------------------------------------------------------------------
+c*** - to be called by b2co for locating truncation for savefile
+c----------------------------------------------------------------------
+c
+      if(.not.filedata(ntrc_blm)) return
+      lun=ntrc(ltrc)
+      f=fn_ntrc(ltrc)
+      call find_file(f,ex)
+      open(lun,file=f,err=190)
+      rewind(lun)
+      iline = 0
+      read(lun,'(a1)',end=155) hlp_c
+      do while (hlp_c.eq.'#')
+        iline = iline+1
+        read(lun,'(a1)',end=155) hlp_c
+      end do
+      backspace lun
+      read(lun,*,end=155) tdummy
+      do while (tdummy.le.tim)
+        iline = iline+1
+        read(lun,*,end=155) tdummy
+      end do
+ 155  continue
+      return
+c======================================================================
+ 190  write(*,*) 'b2blnm: cannot open file ',trim(f)
+      filedata(ltrc)=.false.
+      iline=-1
+      return
+c======================================================================
+c
+      entry b2blnms(nx,ny,ns,iline)
 c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
 c----------------------------------------------------------------------
@@ -368,7 +405,7 @@ c
       return
 c======================================================================
 c
-      entry b2blnmf(nx,ny,ns)
+      entry b2blnmf(nx,ny,ns,iline)
 c----------------------------------------------------------------------
 c*** - Finalization step
 c----------------------------------------------------------------------

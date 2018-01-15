@@ -22,7 +22,7 @@ FC = gfortran
 endif
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -gdwarf-2 -fPIC -fbounds-check -fno-second-underscore -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -ffpe-trap=denormal
+FCOPTS = -g -gdwarf-2 -fPIC -fbounds-check -fno-second-underscore -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -ffpe-trap=denormal -ftrapv
 else
 FCOPTS  = -O2 -fPIC -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 endif
@@ -52,6 +52,10 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifdef IMAS_PREFIX
+ifndef SOLPS_CPP
+EQUIVS  += -DIMAS
+endif
+LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
 INCMODS  = -I${IMAS_PREFIX}/include/gfortran
 IMASLIBS = ${LD_UAL} -lggd-${COMPILER} -Wl,-rpath,${EBROOTANACONDA3}/lib
 endif

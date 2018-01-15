@@ -14,6 +14,7 @@
       use b2mod_neoclassical
       use b2mod_time
       use b2mod_b2cmpa
+      use b2mod_b2plot_debug
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
@@ -183,7 +184,8 @@ c     conversion of constants to CGS units
         do is=0,ns-1
          if (abs(na(topix(ix,iy),topiy(ix,iy),is)-na(bottomix(ix,iy),
      &     bottomiy(ix,iy),is)).lt.min_value) then
-          write(*,*) 'ion density gradient too small'
+          if (b2plot_debug.ge.6)
+     &     write(*,*) 'ion density gradient too small'
           gradient=min_value/(hy1(ix,iy)+0.5*(hy1(topix(ix,iy),
      &     topiy(ix,iy))+hy1(bottomix(ix,iy),bottomiy(ix,iy))))
          else
@@ -193,14 +195,15 @@ c     conversion of constants to CGS units
      &     bottomiy(ix,iy))))
          endif
          if (na(ix,iy,is).lt.min_value) then
-          write(*,*) 'ion density too small'
+          if (b2plot_debug.ge.6) write(*,*) 'ion density too small'
           lnn(ix,iy,is)=min_value/gradient
          else
           lnn(ix,iy,is)=na(ix,iy,is)/gradient
          endif
          if (abs(ti(topix(ix,iy),topiy(ix,iy))-ti(bottomix(ix,iy),
      &     bottomiy(ix,iy))).lt.(min_value*ev)) then
-          write(*,*) 'ion temperature gradient too small'
+          if (b2plot_debug.ge.6)
+     &     write(*,*) 'ion temperature gradient too small'
           gradient=min_value*ev/(hy1(ix,iy)+0.5*(hy1(topix(ix,iy),
      &     topiy(ix,iy))+hy1(bottomix(ix,iy),bottomiy(ix,iy))))
          else
@@ -210,7 +213,7 @@ c     conversion of constants to CGS units
      &     bottomiy(ix,iy))))
          endif
          if (ti(ix,iy).lt.(min_value*ev)) then
-          write(*,*) 'ion temperature too low'
+          if (b2plot_debug.ge.6) write(*,*) 'ion temperature too low'
           ltt(ix,iy,is)=min_value*ev/gradient
          else
           ltt(ix,iy,is)=ti(ix,iy)/gradient
@@ -218,7 +221,8 @@ c     conversion of constants to CGS units
         enddo
         if (abs(ne(topix(ix,iy),topiy(ix,iy))-ne(bottomix(ix,iy),
      &    bottomiy(ix,iy))).lt.min_value) then
-         write(*,*) 'electron density gradient too small'
+         if (b2plot_debug.ge.6)
+     &    write(*,*) 'electron density gradient too small'
          gradient=min_value/(hy1(ix,iy)+0.5*(hy1(topix(ix,iy),
      &    topiy(ix,iy))+hy1(bottomix(ix,iy),bottomiy(ix,iy))))
         else
@@ -228,14 +232,15 @@ c     conversion of constants to CGS units
      &    bottomiy(ix,iy))))
         endif
         if (ne(ix,iy).lt.min_value) then
-         write(*,*) 'electron density too small'
+         if (b2plot_debug.ge.6) write(*,*) 'electron density too small'
          lnn(ix,iy,ns)=min_value/gradient
         else
          lnn(ix,iy,ns)=ne(ix,iy)/gradient
         endif
         if (abs(te(topix(ix,iy),topiy(ix,iy))-te(bottomix(ix,iy),
      &    bottomiy(ix,iy))).lt.(min_value*ev)) then
-         write(*,*) 'electron temperature gradient too small'
+         if (b2plot_debug.ge.6)
+     &    write(*,*) 'electron temperature gradient too small'
          gradient=min_value*ev/(hy1(ix,iy)+0.5*(hy1(topix(ix,iy),
      &    topiy(ix,iy))+hy1(bottomix(ix,iy),bottomiy(ix,iy))))
         else
@@ -245,7 +250,8 @@ c     conversion of constants to CGS units
      &    bottomiy(ix,iy))))
         endif
         if (te(ix,iy).lt.(min_value*ev)) then
-         write(*,*) 'electron temperature too low'
+         if (b2plot_debug.ge.6)
+     &    write(*,*) 'electron temperature too low'
          ltt(ix,iy,ns)=min_value*ev/gradient
         else
          ltt(ix,iy,ns)=te(ix,iy)/gradient

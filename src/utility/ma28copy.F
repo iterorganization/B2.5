@@ -129,7 +129,7 @@ c
 !$OMP THREADPRIVATE(/ma28edc/,/ma28fdc/,/ma28gdc/,/ma28hdc/,/ma30idc/)
 !$OMP THREADPRIVATE(/ma30edc/,/ma30fdc/,/mc23bdc/,/lpivotc/)
 c
-      integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1, 
+      integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1,
      * newpos, knum, length, move
 c
 c some  initialisation and transfer of information between
@@ -535,7 +535,7 @@ c     it also calculates the largest element in the input matrix.
       common /ma28gdc/ idisp
 !$OMP THREADPRIVATE(/ma28edc/,/ma28gdc/)
 c
-      integer ii, i, jj, j1, j2, iold, inew, jnew, jold, 
+      integer ii, i, jj, j1, j2, iold, inew, jnew, jold,
      * idisp2, iblock, jcomp, idummy, jdummy, midpt
 c
       data zero /0.0e0_R8/
@@ -703,7 +703,7 @@ c     ma28i/id.
 c iflag is a diagnostic flag which will be set to zero on successful
 c     exit from ma28i/id, otherwise it will have a nonzero value. the
 c     nonzero value iflag can have on exit from ma28i/id are ...
-c     -16    indicating that more than maxit iteartions are required.
+c     -16    indicating that more than maxit iterations are required.
 c     -17    indicating that convergence was too slow.
 c
       integer n, nz, licn, mtype, iflag
@@ -1034,15 +1034,16 @@ c for comments of common block variables see block data subprogram.
       common /lpivotc/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
 !$OMP THREADPRIVATE(/ma30edc/,/ma30fdc/,/ma30idc/,/lpivotc/)
 c
-      integer i, j, k, l, n, i1, i2, ii, j1, j2, jj, kk, ll, iii, 
-     * lc, lr, nc, nr, nz, nz2, nzpc, 
-     * ipiv, jpiv, ipos, jpos, ibeg, jbeg, ilast, iend, jend, 
-     * iop, ifill, irows, istart, idrop, ifir, 
-     * isw, isw1, isrch, itop, iactiv, indrow, ising, idispc, 
-     * ijfir, ijpos, ijp1, idummy, jdummy, jnpos, jnew, jold, jval, 
-     * jcount, jdiff, jroom, jmore, jzer, jzero, 
-     * jcost, kcost, kdrop, lenpp, lenpiv, msrch, morei, 
+      integer i, j, k, l, n, i1, i2, ii, j1, j2, jj, kk, ll, iii,
+     * lc, lr, nc, nr, nz, nz2, nzpc,
+     * ipiv, jpiv, ipos, jpos, ibeg, jbeg, ilast, iend, jend,
+     * iop, ifill, irows, istart, idrop, ifir,
+     * isw, isw1, isrch, itop, iactiv, indrow, ising, idispc,
+     * ijfir, ijpos, ijp1, idummy, jdummy, jnpos, jnew, jold, jval,
+     * jcount, jdiff, jroom, jmore, jzer, jzero,
+     * kdrop, lenpp, lenpiv, msrch, morei,
      * nblock, num, nnm1, nzcol, nzmin, nzrow
+      integer(8) :: jcost, kcost                           !srv 26.02.11 12.03.15
 #ifdef DBG
       real (kind=R8) :: product
       real (kind=R8), save :: cutlo
@@ -1254,7 +1255,7 @@ c     control.
 c jcost is the markowitz cost of the best pivot so far,.. this
 c     pivot is in row ipiv and column jpiv.
           nz2 = nzmin
-          jcost = n*n
+          jcost = int(n,8)*int(n,8)    !srv 26.02.11 12.03.15
 c
 c examine rows/columns in order of ascending count.
           do 340 l=1,2
@@ -1263,7 +1264,7 @@ c examine rows/columns in order of ascending count.
             ll = l
 c a pass with l equal to 2 is only performed in the case of singularity.
             do 330 nz=nz2,n
-              if (jcost.le.(nz-1)**2) go to 420
+              if (jcost.le.int((nz-1),8)**2) go to 420               !srv 26.02.11 12.03.15
               ijfir = ifirst(nz)
               if (ijfir) 230, 220, 240
   220         if (ll.eq.1) nzmin = nz + 1
@@ -1274,7 +1275,7 @@ c a pass with l equal to 2 is only performed in the case of singularity.
   240         ll = 2
 c scan rows with nz nonzeros.
               do 270 idummy=1,n
-                if (jcost.le.(nz-1)**2) go to 420
+                if (jcost.le.int((nz-1),8)**2) go to 420             !srv 26.02.11 12.03.15
                 if (isrch.gt.msrch) go to 420
                 if (ijfir.eq.0) go to 280
 c row ijfir is now examined.
@@ -1293,7 +1294,7 @@ c scan row for possible pivots
                 do 260 jj=j1,j2
                   if (abs(a(jj)).le.au .and. l.eq.1) go to 260
                   j = icn(jj)
-                  kcost = (nz-1)*(lenc(j)-1)
+                  kcost = int((nz-1),8)*int((lenc(j)-1),8)           !srv 26.02.11 12.03.15
                   if (kcost.gt.jcost) go to 260
                   pivr = zero
                   if (amax.ne.zero) pivr = abs(a(jj))/amax
@@ -1304,7 +1305,8 @@ c best pivot so far is found.
                   ijpos = jj
                   ipiv = i
                   jpiv = j
-                  if (msrch.gt.nn+1 .and. jcost.le.(nz-1)**2) go to 420
+                  if (msrch.gt.nn+1 .and. jcost.le.int((nz-1),8)**2)
+     *               go to 420                                        !srv 26.02.11 12.03.15
                   pivrat = pivr
   260           continue
   270         continue
@@ -1312,7 +1314,7 @@ c
 c columns with nz nonzeros now examined.
   280         ijfir = ifirst(nz)
               ijfir = -lastr(ijfir)
-  290         if (jcost.le.nz*(nz-1)) go to 420
+  290         if (jcost.le.int(nz,8)*int((nz-1),8)) go to 420         !srv 26.02.11 12.03.15
               if (msrch.le.nn) go to 330
               do 320 idummy=1,n
                 if (ijfir.eq.0) go to 330
@@ -1323,7 +1325,7 @@ c columns with nz nonzeros now examined.
 c scan column j.
                 do 310 ii=i1,i2
                   i = irn(ii)
-                  kcost = (nz-1)*(lenr(i)-lenrl(i)-1)
+                  kcost = int((nz-1),8)*int((lenr(i)-lenrl(i)-1),8)   !srv 26.02.11 12.03.15
                   if (kcost.ge.jcost) go to 310
 c pivot has best markowitz count so far ... now check its
 c     suitability on numeric grounds by examining the other nonzeros
@@ -1343,7 +1345,7 @@ c     problems with underdetermined systems.
                   jpiv = j
                   ijpos = jpos
                   if (amax.ne.zero) pivrat = abs(a(jpos))/amax
-                  if (jcost.le.nz*(nz-1)) go to 420
+                  if (jcost.le.int(nz,8)*int((nz-1),8)) go to 420     !srv 26.02.11 12.03.15
   310           continue
 c
   320         continue
@@ -1422,19 +1424,19 @@ c numerical singularity is recorded here.
 c changes to column ordering.
           if (nsrch.le.nn) go to 460
           colupd = nn + 1
-            lenpp = oldend-oldpiv+1
-            if (lenpp.lt.4) lpiv(1) = lpiv(1) + 1
-            if (lenpp.ge.4 .and. lenpp.le.6) lpiv(2) = lpiv(2) + 1
-            if (lenpp.ge.7 .and. lenpp.le.10) lpiv(3) = lpiv(3) + 1
-            if (lenpp.ge.11 .and. lenpp.le.15) lpiv(4) = lpiv(4) + 1
-            if (lenpp.ge.16 .and. lenpp.le.20) lpiv(5) = lpiv(5) + 1
-            if (lenpp.ge.21 .and. lenpp.le.30) lpiv(6) = lpiv(6) + 1
-            if (lenpp.ge.31 .and. lenpp.le.50) lpiv(7) = lpiv(7) + 1
-            if (lenpp.ge.51 .and. lenpp.le.70) lpiv(8) = lpiv(8) + 1
-            if (lenpp.ge.71 .and. lenpp.le.100) lpiv(9) = lpiv(9) + 1
-            if (lenpp.ge.101) lpiv(10) = lpiv(10) + 1
-            mapiv = max0(mapiv,lenpp)
-            iavpiv = iavpiv + lenpp
+          lenpp = oldend-oldpiv+1
+          if (lenpp.lt.4) lpiv(1) = lpiv(1) + 1
+          if (lenpp.ge.4 .and. lenpp.le.6) lpiv(2) = lpiv(2) + 1
+          if (lenpp.ge.7 .and. lenpp.le.10) lpiv(3) = lpiv(3) + 1
+          if (lenpp.ge.11 .and. lenpp.le.15) lpiv(4) = lpiv(4) + 1
+          if (lenpp.ge.16 .and. lenpp.le.20) lpiv(5) = lpiv(5) + 1
+          if (lenpp.ge.21 .and. lenpp.le.30) lpiv(6) = lpiv(6) + 1
+          if (lenpp.ge.31 .and. lenpp.le.50) lpiv(7) = lpiv(7) + 1
+          if (lenpp.ge.51 .and. lenpp.le.70) lpiv(8) = lpiv(8) + 1
+          if (lenpp.ge.71 .and. lenpp.le.100) lpiv(9) = lpiv(9) + 1
+          if (lenpp.ge.101) lpiv(10) = lpiv(10) + 1
+          mapiv = max0(mapiv,lenpp)
+          iavpiv = iavpiv + lenpp
           do 450 jj=oldpiv,oldend
             j = icn(jj)
             lc = lastc(j)
@@ -2057,7 +2059,7 @@ c see block data for comments on variables in common.
       common /ma30gdc/ eps, rmin
 !$OMP THREADPRIVATE(/ma30edc/,/ma30idc/,/ma30gdc/)
 c
-      integer i, j, jj, jay, jayjay, ifin, jfin, istart, 
+      integer i, j, jj, jay, jayjay, ifin, jfin, istart,
      * ilend, ipivj, ising
 #ifdef DBG
       real (kind=R8) :: product
@@ -2272,8 +2274,8 @@ c see block data for comments on variables in common.
       common /ma30hdc/ resid
 !$OMP THREADPRIVATE(/ma30hdc/)
 c
-      integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2, 
-     * iend, iback, ifirst, ilast, iblock, iblend, 
+      integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2,
+     * iend, iback, ifirst, ilast, iblock, iblend,
      * jpiv, jpivp1, lt, ltend, numblk
 #ifdef DBG
       real (kind=R8) :: product
@@ -2387,7 +2389,7 @@ c j1 is beginning of row ii.
 c jpiv is the position of the pivot in row ii.
           jpiv = j1 + lenrl(ii)
           jpivp1 = jpiv + 1
-c jump if row  ii of u has no nonzeros.
+c jump if row ii of u has no nonzeros.
           if (j2.lt.jpivp1) go to 90
           wii = w(ii)
           do 80 jj=jpivp1,j2
@@ -2616,7 +2618,7 @@ c     placed on the stack.
       integer icn(licn),lenr(n),arp(n),ib(n),lowl(n),numb(n),
      1prev(n)
 c
-      integer i, i1, i2, ii, j, k, iv, iw, 
+      integer i, i1, i2, ii, j, k, iv, iw,
      * icnt, lcnt, isn, ist, ist1, nnm1
 c
 c   icnt is the number of nodes whose positions in final ordering have
@@ -2727,7 +2729,7 @@ c
       real (kind=R8) ::
      *   a(maxa),ace,acep
 c
-      integer i, j, ja, jb, k, kr, ice, icep, jce, jcep, loc, null 
+      integer i, j, ja, jb, k, kr, ice, icep, jce, jcep, loc, null
 c
 c     ******************************************************************
 c
@@ -2966,7 +2968,7 @@ c######alias mc22adcopy
      *   a(nz),aval
       integer iw(n,2)
       integer icn(nz),lenrow(n),ip(n),iq(n),iw1(nz)
-      integer i, j, j2, jj, iold, ipos, jnum, jval, 
+      integer i, j, j2, jj, iold, ipos, jnum, jval,
      * ichain, length, newpos
       if (nz.le.0) go to 1000
       if (n.le.0) go to 1000
@@ -3056,7 +3058,7 @@ c###### calls   mc13    mc21
       common /mc23bdc/ lp,numnz,num,large,abort
 !$OMP THREADPRIVATE(/mc23bdc/)
 c input ... n,icn .. a,icn,lenr ....
-      integer i, j, k, i1, i2, ii, jj, ibeg, iend, inew, iold, 
+      integer i, j, k, i1, i2, ii, jj, ibeg, iend, inew, iold,
      * jold, jnew, ilend, iblock, irowb, irowe, jnpos, leni, nz
 c
 c set up pointers iw(.,1) to the beginning of the rows and set lenoff

@@ -1342,14 +1342,14 @@ C
             ENDIF
             write(*,*) 'Checking on the existence of ',trim(dsname)
 C
-            INQUIRE( FILE=DSNAME , EXIST=LEXIST )
+            call find_file(DSNAME,LEXIST)
 C
-               IF (.NOT.LEXIST) THEN
-                  IRCODE = 1
-               ELSE
-                  OPEN(UNIT=IUNIT,FILE=DSNAME,STATUS='OLD',ERR=9999)
-                  IRCODE = 0
-               ENDIF
+            IF (.NOT.LEXIST) THEN
+               IRCODE = 1
+            ELSE
+               OPEN(UNIT=IUNIT,FILE=DSNAME,STATUS='OLD',ERR=9999)
+               IRCODE = 0
+            ENDIF
 C
          ENDIF
       RETURN

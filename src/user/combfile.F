@@ -96,7 +96,7 @@ c*** nummax: maximum width of a numerical field in the file
       character fbn*(lnfn),frmi22*8,chdf(2*nhdr)*(mhdr)
       character cbln*(nummax)
       data cbln / ' ' /
-      character c,tab,f*(lnfn+3+lsuf),cc*20,frmhdr*12,frmdat*48
+      character c,tab,f*(lnfn+3+lsuf),cc*20,frmhdr*16,frmdat*48
       integer i,j,k,l,m,n,ir,iv,kb,kt,lrd,nhd,nmr,ktrl,ltrl,
      ,        lnrw,lvrw,ncln,nrec,ivmax,mrkr(nmrk)
       integer lfrmd ! minimum length of the frmd variable
@@ -156,7 +156,7 @@ c*** is present.
  10   continue
 
       ex=.true.
-      inquire(file=fn,exist=ex)
+      call find_file(fn,ex)
 c      write(0,*) 'ex,fn,iv,ivmax=',ex,trim(fn),iv,ivmax !###
       if(ex) then !{
         op=.true.
@@ -164,7 +164,7 @@ c      write(0,*) 'ex,fn,iv,ivmax=',ex,trim(fn),iv,ivmax !###
         do while (op .and. i.le.ivmax) !{
           i=i+1
           write(f,frmi22) trim(fbn)//'.n.',i
-          inquire(file=f,exist=op)
+          call find_file(f,op)
 c          write(0,*) 'op,f=',op,'  ',trim(f) !###
           if(op) fn=f
         end do !}
@@ -196,15 +196,15 @@ c          write(0,*) 'after parsehdr. nhd,m,nmr,ir= ',nhd,m,nmr,ir !###
 c          write(0,*) 'mrkr: ',mrkr !###
 c          write(0,*) 'mrks: ',mrks !###
  20       if(ir.ne.0) then !{
-            write(*,*) '!!!! ',trim(fn),' :',ir,' :',nhd,2*nhdr,' :',
-     ,                                              m,mhdr,' :',nmr,nmrk
+            write(*,'(3a,i4,a,2i4,a,2i4,a,2i4)') '!!!! ',trim(fn),' : ',
+     ,       ir,' : ',nhd,2*nhdr,' : ',m,mhdr,' : ',nmr,nmrk
             if(ir.gt.0) then !{
               write(*,*) 'combfile: limits violation in the header of ',
      ,          trim(fn)
               do while (ex .and. iv.lt.ivmax) !{
                 iv=iv+1
                 write(fn,frmi22) trim(fbn)//'.n.',iv
-                inquire(file=fn,exist=ex)
+                call find_file(fn,ex)
               end do !}
               if(ex) then !{
                 write(*,*) 'combfile: too many versions of ',trim(fbn),
@@ -237,15 +237,16 @@ c      write(0,*) 'ex,fn=',ex,'  ',trim(fn)  !###
 
       if(ex) then !{
 
-c*** Check  whether the number of markers or their values have changed
+c*** Check whether the number of markers or their values have changed
 
         iret=0
         op=nmr.ne.nmrk
         if(op .and. (nmr.eq.0 .or. nmrk.eq.0) .or. nmr.gt.0 .and.
      .                                      mrks(1).ne.mrkr(1)) then !{
           iret=iret+4
-          write(*,*) '!!! combfile: current version ',mrks(1),
-     ,                         '  differs from that in the file ',fn
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! combfile: current version ',mrks(1),
+     ,     ' differs from that in the file ',trim(fn),' : ',mrkr(1)
         end if !}
         if(.not.op) then !{
           do i=2,nmr !{
@@ -315,7 +316,7 @@ c***    look for the name for a new file
           do while (ex .and. iv.lt.ivmax) !{
             iv=iv+1
             write(fn,frmi22) trim(fbn)//'.n.',iv
-            inquire(file=fn,exist=ex)
+            call find_file(fn,ex)
           end do !}
           if(ex) then !{
             write(*,*) 'combfile: too many versions of ',trim(fbn),
@@ -395,9 +396,9 @@ c*** Produce the header
           end do !}
 c          write(0,*) 'chdw',lnrw,' :',('  ',trim(chdw(i)),i=1,lvrw)!###
           if(nmrk.gt.0) then !{
-            write(frmhdr,'(6h(2h# ,,i2,4hi12))') nmrk
+            write(frmhdr,'(a,i2,a)') '(''#   '',',nmrk,'i8)'
             write(lun,frmhdr) mrks
-            write(lun,'(2a)') '##  ',titel
+            write(lun,'(2a)') '#  ',titel
           end if !}
           write(frmhdr,'(5h(1h#,,i4,2ha))') 2*lnrw
           write(lun,frmhdr) (trim(chdw(i)),tab,i=1,lnrw)
@@ -406,7 +407,7 @@ c*** re-write the existing file
 
           ncln=1
           allocate(cline(ncln))
-          write(frmhdr,'(1h(,i2,2ha))') ncln
+          write(frmhdr,'(1h(,i3,2ha))') ncln
           l=len(cline)
           nrec=0
           first=.true.
@@ -481,7 +482,7 @@ c*** non-space on both sides of the section borders - the field is split
               ncln=ncln+1
               deallocate(cline)
               allocate(cline(ncln))
-              write(frmhdr,'(1h(,i2,2ha))') ncln
+              write(frmhdr,'(1h(,i3,2ha))') ncln
               backspace lrd
             end if !}
  40       continue
@@ -515,9 +516,9 @@ c*** Open a new tracing file
 c*** Write the header
 
         if(nmrk.gt.0) then !{
-          write(frmhdr,'(6h(2h# ,,i2,4hi12))') nmrk
+          write(frmhdr,'(a,i2,a)') '(''#   '',',nmrk,'i8)'
           write(lun,frmhdr) mrks
-          write(lun,'(2a)') '##  ',titel
+          write(lun,'(2a)') '#  ',titel
         end if !}
         write(frmhdr,'(5h(1h#,,i4,2ha))') 2*nhdr
         write(lun,frmhdr) (trim(chdr(i)),tab,i=1,nhdr)

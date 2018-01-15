@@ -26,22 +26,18 @@ FC = pgf90
 endif
 
 ifdef SOLPS_DEBUG
-ifdef USE_MPI
-FCOPTS = -g 
-else
 FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
-endif
-else
-ifdef USE_MPI
-FCOPTS = -O2 
 else
 FCOPTS = -O2 -Mbackslash
 FCOPTS = -fast -Mbackslash
 FCOPTS = -fast -Mvect=nofuse -Mbackslash
 endif
-endif
 
 ifdef IMAS_PREFIX
+ifndef SOLPS_CPP
+EQUIVS  += -DIMAS
+endif
+LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
 INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
 IMASLIBS = ${LD_UAL} -lggd-pgi
 endif

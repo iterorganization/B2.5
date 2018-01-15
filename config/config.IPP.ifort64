@@ -26,34 +26,10 @@ else
 FC       = ifort
 endif
 
-ifdef SOLPS_OPENMP
 ifdef SOLPS_DEBUG
-ifdef USE_MPI
-FCOPTS   = -g -C -traceback -fopenmp
-else
-FCOPTS   = -g -C -debug all -traceback -check all -fopenmp
-endif
-else
-ifdef USE_MPI
-FCOPTS   = -O2 -g ${NETCDF_INC} -fp-model source -no-fma -no-vec -r8 -fopenmp
-else
-FCOPTS   = -O2 -g ${NETCDF_INC} -fp-model source -no-fma -no-vec -r8 -fopenmp
-endif
-endif
-else
-ifdef SOLPS_DEBUG
-ifdef USE_MPI
-FCOPTS   = -g -C -traceback
-else
 FCOPTS   = -g -C -debug all -traceback -check all
-endif
-else
-ifdef USE_MPI
-FCOPTS   = -O2 -vec_report0
 else
 FCOPTS   = -O2 -vec_report0
-endif
-endif
 endif
 
 DBLFC    = ${FC}
@@ -74,27 +50,27 @@ CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef IMAS_PREFIX
+ifndef SOLPS_CPP
+EQUIVS    += -DIMAS
+endif
+LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
 IMASLIBS   = ${LD_UAL} -lggd-ifort
 endif
 
+#wd: removed; seems to be unused
+#ifdef B25_EIRENE
+#LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
+#endif
 ifdef PERFMON
 LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
-ifdef SOLPS_OPENMP
-LD       = ${FC} -fopenmp
-else
 LD       = ${FC}
-endif
 LDOPTS   = -i_dynamic
 
 LCPP     = ${LD_SONNET}
 
-# ftimings is a simple little MPCDF library for hierarchical time measurement
-LDLIBES += $(shell pkg-config ftimings-1-intel-16.0 --libs) -Wl,-rpath=$(FTIMINGS_HOME)/lib
-FCOPTS  += $(shell pkg-config ftimings-1-intel-16.0 --variable=fcflags)
-B25_DEFINES += -DWITH_FTIMINGS
 
 #!!!Local Variables:
 #!!! mode: Makefile

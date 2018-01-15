@@ -173,14 +173,14 @@ c 2002-09-11: logic revised
       integer scaling_ix_begin(nscale), scaling_ix_end(nscale)
       integer elm_ix_begin, elm_ix_end
       integer ndim, ndm2, nfitanf, nfitend, ifail
-      integer invert_bpol, invert_btor
+      integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120,
      .          ligne*120
       character id0*8
       character*4 solps_version
       data solps_version / 'iter' /
-      data invert_bpol/0/, invert_btor/0/
+      data invert_bpol/0/, invert_btor/0/, b2ux7p_style/2/
       character*10 :: b2fgmtry_oldversion, b2fgmtry_newversion
       data b2fgmtry_oldversion / '00.000.000' /
       character tab
@@ -275,7 +275,7 @@ c 2002-09-11: logic revised
      2  na_feedback_ix11(:), na_feedback_ix21(:),
      3  na_feedback_iy11(:), na_feedback_iy21(:),
      4  na_feedback_ib1(:)
-      integer, allocatable :: l_h_mol1(:)
+      integer, allocatable :: l_h_mol1(:,:)
       integer, allocatable :: sps_sgrp1(:)
       integer bcpos1(nbcd), bcstart1(nbcd), bcend1(nbcd)
       integer bc_list_size1(nbcd)
@@ -433,7 +433,7 @@ c 2002-09-11: logic revised
      *  neutral_rescale, BoRiS, divheat, rswitch,
      .  scaling_width(nscale), scaling_strength(nscale),
      .  ixfb, iyfb, ixfb1, iyfb1,
-     .  xfrhie, xfrhiehz, xfrhie_no_drift,
+     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
      .  elm_time_begin, elm_time_end, elm_time_period,
      .  sources_time_mod, sources_time_switch,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
@@ -1323,6 +1323,9 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfnb_xfrhie', xfrhie)
       call ipgetr ('b2tfnb_xfrhiehz', xfrhiehz)
       call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)
+      call ipgetr ('b2tfhe_inert', b2tfhe_inert)
+      call ipgeti ('b2ux7p_style', b2ux7p_style)
+      if (b2ux7p_style.eq.3) b2ux7p_style = 2
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1602,13 +1605,17 @@ c 2002-09-11: logic revised
           iswitch = ns1max
         case('b2mndr_isfb')
           iswitch = isfb
+        case('b2ux7p_style')
+          iswitch = b2ux7p_style
         case('b2trcl_conductive limit')
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
-        case('b2news_coriolis')  ! Now obsolete, needs to be removed from the list
+        case('b2news_coriolis','b2npht_style_shei',
+     &                         'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
-        case('eirene_fixmap')    ! No longer needed
+        case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
+     &       'b2npp7_style')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
@@ -1656,6 +1663,9 @@ c 2002-09-11: logic revised
           else
             wait = .true.
           endif
+        case ('b2tfhe_inert') ! needs to be rewritten as b2tiner_inert
+          rswitch = b2tfhe_inert
+          cnamip = 'b2tiner_inert'
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
@@ -9719,9 +9729,11 @@ cxpb as they no longer necessarily point to the same species
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_HE_TO_D=',Spmp_He_to_D,','
         if (Spmp_nom.ne.0.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_NOM=',Spmp_nom,','
-        if (j_h_at.ne.0) then
-          if (iatm1(j_h_at).ne.0)
-     >     write(99,'(1x,a,i2,a)') 'J_H_AT=',iatm1(j_h_at),','
+        do i=1,3
+          if (j_h_at(i).ne.0) j_h_at(i) = iatm1(j_h_at(i))
+        end do
+        if (maxval(j_h_at).gt.0) then
+          write(99,'(1x,a,3(i2,a))') 'J_H_AT=',(j_h_at(i),',',i=1,3)
         end if
         if (j_he_at.ne.0) then
           if (iatm1(j_he_at).ne.0)
@@ -9732,13 +9744,17 @@ cxpb as they no longer necessarily point to the same species
      >     write(99,'(1x,a,i2,a)') 'J_NE_AT=',iatm1(j_ne_at),','
         end if
         if (maxval(l_h_mol).gt.0) then
-          allocate(l_h_mol1(nmol1))
+          allocate(l_h_mol1(nmol1,3))
           l_h_mol1 = 0
-          write(hlp_frm,'(a,i2,a)') '(a,',nmol1,'(1x,i2,'',''))'
           do j = 1, nmoli
-            if (imol1(j).ne.0) l_h_mol1(imol1(j)) = l_h_mol(j)
+            if (imol1(j).ne.0) l_h_mol1(imol1(j),1:3) = l_h_mol(j,1:3)
           end do
-          write(99,'(1x,a,i2,a)') 'L_H_MOL=',(l_h_mol1(j),j=1,nmol1)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,i2,a,',nmol1,'(i2,a))'
+          do i = 1, 3
+            if (maxval(l_h_mol1(1:nmol1,i)).gt.0)
+     >       write(99,hlp_frm) 'L_H_MOL(1,',i,')=',
+     ,                         (l_h_mol1(j,i),',',j=1,nmol1)
+          end do
           deallocate(l_h_mol1)
         end if
         if (npfrgrp.gt.0) then

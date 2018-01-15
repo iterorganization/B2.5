@@ -52,7 +52,7 @@
 
 *   ..local variables
       integer ncall, n2
-      integer, save :: style = 1, iout = 0, iout_b2wdat = 0
+      integer, save :: iout = 0, iout_b2wdat = 0               !srv 27.12.17
       real (kind=R8) ::
      *   aa7(-1:nx,-1:ny,-3:3), wrk0(-1:nx,-1:ny)              !srv 11.01.00
       save ncall
@@ -70,7 +70,6 @@
       call subini ('b2npp7')                                          !srv 06.07.00
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2npp7_style', style)                            !srv 08.07.08
        call ipgeti ('b2npp7_iout', iout)                              !srv 08.07.08
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
       endif
@@ -104,15 +103,9 @@
 *   ..compute residual
       call b2ursd (nx, ny, ne, po, sch, fch, respo)
 *   ..compute correction
-      if(style.eq.0) then
-       call b2usp7 (nx, ny, nregionv, solvereg, itcnt,            !srv 06.07.00 27.01.00
-     &    ne, te, conc, avisper, bvisper, cvisper,                !srv 27.01.00
-     &    sch, respo, corpo, aa7)                                 !srv 27.01.00
-      else                                                        !srv 08.07.08 {
-       call b2usp7_ (nx, ny, nregionv, solvereg, itcnt,
+      call b2usp7 (nx, ny, nregionv, solvereg, itcnt,             !srv 27.12.17
      &    ne, te, conc, avisper, bvisper, cvisper,
      &    sch, respo, corpo, aa7)
-      endif                                                       !srv 08.07.08 }
 *   ..apply correction
       call b2uppo (nx, ny, rxf, corpo, po)
 

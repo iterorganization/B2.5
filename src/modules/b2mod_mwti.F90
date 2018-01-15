@@ -1,8 +1,8 @@
-Module b2mod_mwti
+module b2mod_mwti
   use b2mod_types , only : R8
-  Implicit None
-  Private
-  Public :: b2mwti, output_ds, dealloc_b2mod_mwti
+  implicit none
+  private
+  public :: b2mwti, output_ds, dealloc_b2mod_mwti
   real (kind=R8), allocatable, save :: &
          nesepi_av(:), tesepi_av(:), tisepi_av(:), &
          nesepm_av(:), tesepm_av(:), tisepm_av(:), &
@@ -123,7 +123,9 @@ contains
     real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp, fac
     integer, save :: write_2d = 0
 #ifndef NO_CDF
-    integer imap(maxvdims), iret, ncid
+    integer, save :: ncid
+    integer imap(maxvdims), dims(1), iret
+    integer nvars, natts, ndims, unlimid, nastepid
     real (kind=R8) :: &
          nesepi(nncutmax), tesepi(nncutmax), tisepi(nncutmax), &
          nesepm(nncutmax), tesepm(nncutmax), tisepm(nncutmax), &
@@ -136,7 +138,10 @@ contains
          tmhacore(1), tmhasol(1), tmhadiv(1), slice(-1:ny), tstepn(1)
     real (kind=R8) :: &
          timesa(1), batchsa(1)
+    real (kind=R8), save :: stim = 0.0_R8
+    logical ex
     character*5 rw
+    character*256, save :: filename
 #endif
     !   ..initialisation
     save ncall, ntstep, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
@@ -240,18 +245,72 @@ contains
 #ifndef NO_CDF
       nbatch = ntim/ntim_batch + 1
       write(*,*) 'nbatch = ', nbatch
-      call b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, write_2d, iret)
+      filename='b2time.nc'
+      call find_file(filename,ex)
+      call ipgetr ('b2mndr_stim', stim)
+      if (.not.ex.or.stim.ge.0.0_R8) then
+        ntstep = 0
+        nastep = 0
+        write(6,'(a)') trim(filename)//' will be created'
+        call b2crtimecdf(filename, &
+          nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, write_2d, &
+          ncid, .false., iret)
+        call check_cdf_status(iret)
+        iret = nf_open(trim(filename),NCWRITE,ncid)
+        call check_cdf_status(iret)
+      else if (ex.and.stim.lt.0.0_R8) then
+        rw='read'
+        iret = nf_open(filename,NF_NOWRITE,ncid)
+        call check_cdf_status(iret)
+        iret = nf_inq(ncid,ndims,nvars,natts,unlimid)
+        call check_cdf_status(iret)
+        imap(1)=1
+        call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
+        call check_cdf_status(iret)
+        ntstep = nint(tstepn(1))
+        iret = nf_inq_varid(ncid,'nastep',nastepid)
+        if (nastepid.gt.0) then
+          call rwcdf (rw, ncid, 'nastep', imap, tstepn, iret)
+          call check_cdf_status(iret)
+          nastep = nint(tstepn(1))
+          iret = nf_close(ncid)
+          call check_cdf_status(iret)
+        else
+          nastep = 0
+          iret = nf_close(ncid)
+          call check_cdf_status(iret)
+          call b2crtimecdf(filename, &
+           nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, &
+           write_2d, ncid, .true., iret)
+        endif
+        write(6,'(a)') trim(filename)//' will be appended'
+        iret = nf_open(trim(filename),NCWRITE,ncid)
+        call check_cdf_status(iret)
+      else
+        ntstep = 0
+        nastep = 0
+        write(6,'(a)') trim(filename)//' will be replaced'
+        call b2crtimecdf(filename, &
+          nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, &
+          write_2d, ncid, .false., iret)
+        call check_cdf_status(iret)
+        iret = nf_open(trim(filename),NCWRITE,ncid)
+        call check_cdf_status(iret)
+      end if
+      write(*,*) 'ntstep = ', ntstep
       rw='write'
-      iret = nf_open('b2time.nc',NCWRITE,ncid)
-      ntstep=0
-      nastep=0
       imap(1)=1
       tstepn(1) = ntstep
       call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
+      call check_cdf_status(iret)
+      tstepn(1) = nastep
       call rwcdf (rw, ncid, 'nastep', imap, tstepn, iret)
+      call check_cdf_status(iret)
       tstepn(1) = ntim_batch
       call rwcdf (rw, ncid, 'ntim_batch', imap, tstepn, iret)
+      call check_cdf_status(iret)
       iret = nf_close(ncid)
+      call check_cdf_status(iret)
 !cwdk    initialize writing of the .nc-file for monitoring based on
 !c       batch averaging
 !        call b2cravercdf()
@@ -350,7 +409,8 @@ contains
 #ifndef NO_CDF
     if (lwti.or.lwav) then
       rw = 'write'
-      iret = nf_open('b2time.nc', ncwrite, ncid)
+      iret = nf_open(filename, NCWRITE, ncid)
+      call check_cdf_status(iret)
     endif
 #endif
     if (lwti) then
@@ -378,8 +438,8 @@ contains
     nemxip = 0.0_R8; temxip = 0.0_R8; timxip = 0.0_R8; pomxip = 0.0_R8; pwmxip = 0.0_R8; tpmxip = 0.0_R8   
     ix = -1 ! 1
     ix_off  = ix + target_offset
-    Do iy = iylstrt,iylend
-      Call calc_fet(ix,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+    do iy = iylstrt,iylend
+      call calc_fet(ix,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
       fnixip(1) = fnixip(1) + fnitmp
       feexip(1) = feexip(1) + feetmp
       feixip(1) = feixip(1) + feitmp
@@ -390,17 +450,17 @@ contains
       timxip(1) = max(timxip(1), ti(ix_off,iy))
       pomxip(1) = max(pomxip(1), po(ix_off,iy))
       pwmxip(1) = max(pwmxip(1), pwrtmp)
-      if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) Then
+      if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
         tpmxip(1) = max(tpmxip(1), target_temp(xymap(ix,iy),1))
-      Endif      
-    Enddo
+      endif
+    enddo
     
     fnixap = 0.0_R8; feexap = 0.0_R8; feixap = 0.0_R8; fchxap = 0.0_R8; fetxap = 0.0_R8
     nemxap = 0.0_R8; temxap = 0.0_R8; timxap = 0.0_R8; pomxap = 0.0_R8; pwmxap = 0.0_R8; tpmxap = 0.0_R8
     ix = nx ! 2
     ix_off  = ix - target_offset
-    Do iy = iyrstrt,iyrend
-      Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+    do iy = iyrstrt,iyrend
+      call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
       fnixap(1) = fnixap(1) + fnitmp
       feexap(1) = feexap(1) + feetmp
       feixap(1) = feixap(1) + feitmp
@@ -411,16 +471,16 @@ contains
       timxap(1) = max(timxap(1), ti(ix_off,iy))
       pomxap(1) = max(pomxap(1), po(ix_off,iy))
       pwmxap(1) = max(pwmxap(1), pwrtmp)
-      if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) Then
+      if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
         tpmxap(1) = max(tpmxap(1), target_temp(xymap(ix,iy),1))
-      Endif      
-    Enddo
+      endif
+    enddo
     
     if(nncut.ge.2) then
       ix = ixtr ! 3
       ix_off  = ix + target_offset
-      Do iy = iytrstrt,iytrend
-        Call calc_fet(ix,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+      do iy = iytrstrt,iytrend
+        call calc_fet(ix,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
         fnixap(2) = fnixap(2) + fnitmp
         feexap(2) = feexap(2) + feetmp
         feixap(2) = feixap(2) + feitmp
@@ -431,15 +491,15 @@ contains
         timxap(2) = max(timxap(2), ti(ix_off,iy))
         pomxap(2) = max(pomxap(2), po(ix_off,iy))
         pwmxap(2) = max(pwmxap(2), pwrtmp)
-        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) Then
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
           tpmxap(2) = max(tpmxap(2), target_temp(xymap(ix,iy),1))
-        Endif
-      Enddo
+        endif
+      enddo
       
       ix = ixtl ! 4
       ix_off  = ix - target_offset
-      Do iy = iytlstrt,iytlend
-        Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+      do iy = iytlstrt,iytlend
+        call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
         fnixip(2) = fnixip(2) + fnitmp
         feexip(2) = feexip(2) + feetmp
         feixip(2) = feixip(2) + feitmp
@@ -450,10 +510,10 @@ contains
         timxip(2) = max(timxip(2), ti(ix_off,iy))
         pomxip(2) = max(pomxip(2), po(ix_off,iy))
         pwmxip(2) = max(pwmxip(2), pwrtmp)
-        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) Then
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) then
           tpmxip(2) = max(tpmxip(2), target_temp(xymap(ix,iy),1))
-        Endif
-      Enddo      
+        endif
+      enddo
     endif
 
     fnisip = 0.0_R8; feesip = 0.0_R8; feisip = 0.0_R8; fchsip = 0.0_R8; fetsip = 0.0_R8       
@@ -461,50 +521,50 @@ contains
     fnisipp = 0.0_R8; feesipp = 0.0_R8; feisipp = 0.0_R8; fetsipp = 0.0_R8; fchsipp = 0.0_R8
     fnisapp = 0.0_R8; feesapp = 0.0_R8; feisapp = 0.0_R8; fetsapp = 0.0_R8; fchsapp = 0.0_R8    
     if(nnreg(0).ge.3) then
-      Do ic = 1, nncut
-        Do iy = -1,jsep
+      do ic = 1, nncut
+        do iy = -1,jsep
           ix = leftcut(ic) ! 5
-          Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisipp(ic) = fnisipp(ic) + fnitmp
           feesipp(ic) = feesipp(ic) + feetmp
           feisipp(ic) = feisipp(ic) + feitmp
           fchsipp(ic) = fchsipp(ic) + fchtmp
           fetsipp(ic) = fetsipp(ic) + fettmp
           ix = rightcut(ic) ! 6
-          Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisapp(ic) = fnisapp(ic) + fnitmp
           feesapp(ic) = feesapp(ic) + feetmp
           feisapp(ic) = feisapp(ic) + feitmp
           fchsapp(ic) = fchsapp(ic) + fchtmp
           fetsapp(ic) = fetsapp(ic) + fettmp
-        Enddo
-        Do iy = jsep+1,ny
+        enddo
+        do iy = jsep+1,ny
           ix = leftcut(ic) ! 7
-          Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisip(ic) = fnisip(ic) + fnitmp
           feesip(ic) = feesip(ic) + feetmp
           feisip(ic) = feisip(ic) + feitmp
           fchsip(ic) = fchsip(ic) + fchtmp
           fetsip(ic) = fetsip(ic) + fettmp
           ix = rightcut(ic) ! 8
-          Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisap(ic) = fnisap(ic) + fnitmp
           feesap(ic) = feesap(ic) + feetmp
           feisap(ic) = feisap(ic) + feitmp
           fchsap(ic) = fchsap(ic) + fchtmp
           fetsap(ic) = fetsap(ic) + fettmp
-        Enddo
-      Enddo
+        enddo
+      enddo
     endif
 
     fniyip = 0.0_R8; feeyip = 0.0_R8; feiyip = 0.0_R8; fetyip = 0.0_R8; fchyip = 0.0_R8
     fniyap = 0.0_R8; feeyap = 0.0_R8; feiyap = 0.0_R8; fetyap = 0.0_R8; fchyap = 0.0_R8
 
     if(nnreg(0).eq.4) then
-      Do ix = -1,nx
+      do ix = -1,nx
         if(region(ix,ny,0).eq.2) then
           iy = ny ! 9
-          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(1) = fniyip(1) + fnitmp
           feeyip(1) = feeyip(1) + feetmp
           feiyip(1) = feiyip(1) + feitmp
@@ -513,7 +573,7 @@ contains
         endif
         if(region(ix,ny,0).eq.3.or.region(ix,ny,0).eq.4) then
           iy = ny ! 10
-          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -522,19 +582,19 @@ contains
         endif
         if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
           iy = -1 ! 11
-          Call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
           fchyap(1) = fchyap(1) + fchtmp
           fetyap(1) = fetyap(1) + fettmp
         endif
-      Enddo
+      enddo
     elseif(nnreg(0).eq.5) then
-      Do ix = -1,nx
+      do ix = -1,nx
         if(region(ix,ny,0).eq.5) then
           iy = ny ! 12
-          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(1) = fniyip(1) + fnitmp
           feeyip(1) = feeyip(1) + feetmp
           feiyip(1) = feiyip(1) + feitmp
@@ -543,19 +603,19 @@ contains
         endif
         if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
           iy = -1 ! 13
-          Call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
           fchyap(1) = fchyap(1) + fchtmp
           fetyap(1) = fetyap(1) + fettmp
         endif
-      Enddo
+      enddo
     elseif (nnreg(0).eq.8) then
-      Do ix = -1,nx
+      do ix = -1,nx
         if(mod(region(ix,ny,0),4).eq.2) then
           iy = ny ! 14
-          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(region(ix,ny,0)/4+1) = fniyip(region(ix,ny,0)/4+1) + fnitmp
           feeyip(region(ix,ny,0)/4+1) = feeyip(region(ix,ny,0)/4+1) + feetmp
           feiyip(region(ix,ny,0)/4+1) = feiyip(region(ix,ny,0)/4+1) + feitmp
@@ -564,7 +624,7 @@ contains
         endif
         if(region(ix,ny,0).eq.3 .or. region(ix,ny,0).eq.8) then
           iy = ny ! 15
-          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -573,7 +633,7 @@ contains
         endif
         if(region(ix,-1,0).eq.3 .or. region(ix,-1,0).eq.8) then
           iy = -1 ! 16
-          Call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -582,7 +642,7 @@ contains
         endif
         if(region(ix,ny,0).eq.4 .or. region(ix,ny,0).eq.7) then
           iy = ny ! 17
-          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(2) = fniyap(2) + fnitmp
           feeyap(2) = feeyap(2) + feetmp
           feiyap(2) = feiyap(2) + feitmp
@@ -591,36 +651,36 @@ contains
         endif
         if(region(ix,-1,0).eq.4 .or. region(ix,-1,0).eq.7) then
           iy = -1 ! 18
-          Call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(2) = fniyap(2) + fnitmp
           feeyap(2) = feeyap(2) + feetmp
           feiyap(2) = feiyap(2) + feitmp
           fchyap(2) = fchyap(2) + fchtmp
           fetyap(2) = fetyap(2) + fettmp
         endif
-      Enddo
+      enddo
     else if (nnreg(0).eq.2) then
-      Do ix = -1,nx
+      do ix = -1,nx
         if(region(ix,ny,0).eq.2) then
           iy = ny ! 19
-          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(1) = fniyip(1) + fnitmp
           feeyip(1) = feeyip(1) + feetmp
           feiyip(1) = feiyip(1) + feitmp
           fchyip(1) = fchyip(1) + fchtmp
           fetyip(1) = fetyip(1) + fettmp          
         endif
-      Enddo
+      enddo
     else
-      Do ix = -1,nx
+      do ix = -1,nx
         iy = ny ! 20
-        Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+        call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
         fniyip(1) = fniyip(1) + fnitmp
         feeyip(1) = feeyip(1) + feetmp
         feiyip(1) = feiyip(1) + feitmp
         fchyip(1) = fchyip(1) + fchtmp
         fetyip(1) = fetyip(1) + fettmp          
-      Enddo
+      enddo
     endif ! nnreg check
     
     !
@@ -730,29 +790,28 @@ contains
         tpsepi(2) = 0.0_R8
       endif
       posepi(2) = 0.5_R8 * (po(ixtl-target_offset,jsep) + po(topix(ixtl-target_offset,jsep),topiy(ixtl-target_offset,jsep)))
-    else
-      nesepa(2) = 0.0_R8
-      tesepa(2) = 0.0_R8
-      tisepa(2) = 0.0_R8
-      tpsepa(2) = 0.0_R8
-      posepa(2) = 0.0_R8
-      nesepm(2) = 0.0_R8
-      tesepm(2) = 0.0_R8
-      tisepm(2) = 0.0_R8
-      posepm(2) = 0.0_R8
-      dnsepm(2) = 0.0_R8
-      dpsepm(2) = 0.0_R8
-      kesepm(2) = 0.0_R8
-      kisepm(2) = 0.0_R8
-      vxsepm(2) = 0.0_R8
-      vysepm(2) = 0.0_R8
-      vssepm(2) = 0.0_R8
-      nesepi(2) = 0.0_R8
-      tesepi(2) = 0.0_R8
-      tisepi(2) = 0.0_R8
-      tpsepi(2) = 0.0_R8
-      posepi(2) = 0.0_R8
     endif
+    nesepa(nncut+1:nncutmax) = 0.0_R8
+    tesepa(nncut+1:nncutmax) = 0.0_R8
+    tisepa(nncut+1:nncutmax) = 0.0_R8
+    tpsepa(nncut+1:nncutmax) = 0.0_R8
+    posepa(nncut+1:nncutmax) = 0.0_R8
+    nesepm(nncut+1:nncutmax) = 0.0_R8
+    tesepm(nncut+1:nncutmax) = 0.0_R8
+    tisepm(nncut+1:nncutmax) = 0.0_R8
+    posepm(nncut+1:nncutmax) = 0.0_R8
+    dnsepm(nncut+1:nncutmax) = 0.0_R8
+    dpsepm(nncut+1:nncutmax) = 0.0_R8
+    kesepm(nncut+1:nncutmax) = 0.0_R8
+    kisepm(nncut+1:nncutmax) = 0.0_R8
+    vxsepm(nncut+1:nncutmax) = 0.0_R8
+    vysepm(nncut+1:nncutmax) = 0.0_R8
+    vssepm(nncut+1:nncutmax) = 0.0_R8
+    nesepi(nncut+1:nncutmax) = 0.0_R8
+    tesepi(nncut+1:nncutmax) = 0.0_R8
+    tisepi(nncut+1:nncutmax) = 0.0_R8
+    tpsepi(nncut+1:nncutmax) = 0.0_R8
+    posepi(nncut+1:nncutmax) = 0.0_R8
 #endif
     !
     temxip(1:nc) = temxip(1:nc)/ev
@@ -855,11 +914,11 @@ contains
     tstepn(1) = ntstep
     call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
     call rwcdf(rw,ncid,'timesa',imap,timesa,iret)
-    If (write_2d .ge. 1) Then 
+    if (write_2d .ge. 1) then
       call rwcdf(rw,ncid,'ne2d',(/1,1,1/),ne,iret)
       call rwcdf(rw,ncid,'te2d',(/1,1,1/),te,iret)
       call rwcdf(rw,ncid,'ti2d',(/1,1,1/),ti,iret)
-      If (write_2d .ge. 2) Then
+      if (write_2d .ge. 2) then
         call rwcdf(rw,ncid,'po2d',(/1,1,1/),po,iret)
         call rwcdf(rw,ncid,'kin2d',(/1,1,1,1/),kinrgy,iret)
         call rwcdf(rw,ncid,'rsahi2d',(/1,1,1,1/),rsahi,iret)
@@ -873,8 +932,8 @@ contains
         call rwcdf(rw,ncid,'fhi2d',(/1,1,1,1/),fhi,iret)
         call rwcdf(rw,ncid,'fch2d',(/1,1,1,1/),fch,iret)
         call rwcdf(rw,ncid,'fna2d',(/1,1,1,1,1/),fna,iret)
-      Endif
-    Endif
+      endif
+    endif
     imap(1)=1
     imap(2)=1
     call rwcdf(rw,ncid,'fnixip',imap,fnixip,iret)
@@ -1080,25 +1139,25 @@ contains
     !
     slice=0.0_R8
     do iy = iylstrt, iylend
-      Call calc_fet(-1,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+      call calc_fet(-1,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
     enddo
     call rwcdf(rw,ncid,'ft3dl',imap,slice(iylstrt),iret)
     
     slice=0.0_R8
     do iy = iyrstrt, iyrend
-      Call calc_fet(nx,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+      call calc_fet(nx,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
     enddo
     call rwcdf(rw,ncid,'ft3dr',imap,slice(iyrstrt),iret)
     if (nnreg(0).ge.8) then
       slice=0.0_R8
       do iy = iytlstrt, iytlend
-        Call calc_fet(ixtl,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+        call calc_fet(ixtl,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
       enddo
       call rwcdf(rw,ncid,'ft3dtl',imap,slice(iytlstrt),iret)
       
       slice=0.0_R8
       do iy = iytrstrt, iytrend
-        Call calc_fet(ixtr,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+        call calc_fet(ixtr,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
       enddo
       call rwcdf(rw,ncid,'ft3dtr',imap,slice(iytrstrt),iret)
     endif
@@ -1260,7 +1319,10 @@ contains
 
     endif
     !      
-    if (lwti.or.lwav) iret = nf_close(ncid)
+    if (lwti.or.lwav) then
+      iret = nf_close(ncid)
+      call check_cdf_status(iret)
+    endif
 #endif
 
     ! ..return
@@ -1322,18 +1384,22 @@ contains
   end subroutine dealloc_b2mod_mwti
 
 #ifndef NO_CDF
-  subroutine b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, write_2d, iret)
+  subroutine b2crtimecdf(filename, &
+   nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, write_2d, &
+   ncid, batch_only, iret)
     use b2mod_constants
 #     include <netcdf.inc>
     integer nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, iret
-    integer, Intent(In) :: write_2d
+    integer, intent(in) :: write_2d
+    logical, intent(in) :: batch_only
+    character*256 :: filename
     ! netcdf id
     integer  ncid
     ! dimension ids
-    integer  nxdim, nydim, nsdim, timedim, batchdim, &
-         nybldim,nytldim,nytrdim,nybrdim,nyadim,nyidim,ncdim,idirdim
+    integer :: nxdim, nydim, nsdim, timedim, batchdim, &
+         nybldim, nytldim, nytrdim, nybrdim, nyadim, nyidim, ncdim, idirdim
     ! variable ids
-    integer  ntstepid, timesaid, fnixipid, feexipid, feixipid, &
+    integer :: ntstepid, timesaid, fnixipid, feexipid, feixipid, &
          fnixapid, feexapid, feixapid, nesepiid, tesepiid, tisepiid, &
          nesepmid, tesepmid, tisepmid, nesepaid, tesepaid, tisepaid, &
          nemxipid, temxipid, timxipid, nemxapid, temxapid, timxapid, &
@@ -1353,7 +1419,7 @@ contains
     integer :: ne2did, te2did, ti2did, po2did, kin2did, rsahi2did, &
          rsana2did, rrahi2did, rrana2did, rcxhi2did, rcxna2did, rqrad2did, &
          rqahe2did, fch2did, fhe2did, fhi2did, fna2did
-    integer  fchxipid, fchxapid, posepiid, posepmid, posepaid, &
+    integer :: fchxipid, fchxapid, posepiid, posepmid, posepaid, &
          pomxipid, pomxapid, fchyipid, fchyapid, &
          fchsipid, fchsapid, fchsippid, fchsappid, po3dlid, &
          po3diid, po3daid, po3drid, fc3dlid, fc3drid, &
@@ -1383,787 +1449,1533 @@ contains
     integer :: dims(2)
     real (kind=R8) :: dvals(1)
     ! Create and enter define mode
-    iret = nf_create('b2time.nc', ncclob, ncid)
+    if (batch_only) then
+      iret = nf_open(trim(filename),NCWRITE,ncid)
+      call check_cdf_status(iret)
+      iret = nf_redef(ncid)
+      call check_cdf_status(iret)
+    else
+      iret = nf_create(trim(filename), ncclob, ncid)
+      call check_cdf_status(iret)
+    endif
     ! define dimensions
-    iret = nf_def_dim(ncid, 'nx', nx+2, nxdim)
-    iret = nf_def_dim(ncid, 'ny', ny+2, nydim)
-    iret = nf_def_dim(ncid, 'nybl', nybl, nybldim)
-    if(nytl.gt.0) iret = nf_def_dim(ncid, 'nytl', nytl, nytldim)
-    if(nytr.gt.0) iret = nf_def_dim(ncid, 'nytr', nytr, nytrdim)
-    iret = nf_def_dim(ncid, 'nybr', nybr, nybrdim)
-    iret = nf_def_dim(ncid, 'nyi', nyi, nyidim)
-    iret = nf_def_dim(ncid, 'nya', nya, nyadim)
-    iret = nf_def_dim(ncid, 'nc', nc, ncdim)
-    iret = nf_def_dim(ncid, 'ns', ns, nsdim)
-    iret = nf_def_dim(ncid, 'time', ncunlim, timedim)
+    if (.not.batch_only) then
+      iret = nf_def_dim(ncid, 'nx', nx+2, nxdim)
+      call check_cdf_status(iret)
+      iret = nf_def_dim(ncid, 'ny', ny+2, nydim)
+      call check_cdf_status(iret)
+      iret = nf_def_dim(ncid, 'nybl', nybl, nybldim)
+      call check_cdf_status(iret)
+      if(nytl.gt.0) then
+        iret = nf_def_dim(ncid, 'nytl', nytl, nytldim)
+        call check_cdf_status(iret)
+      endif
+      if(nytr.gt.0) then
+        iret = nf_def_dim(ncid, 'nytr', nytr, nytrdim)
+        call check_cdf_status(iret)
+      endif
+      iret = nf_def_dim(ncid, 'nybr', nybr, nybrdim)
+      call check_cdf_status(iret)
+      iret = nf_def_dim(ncid, 'nyi', nyi, nyidim)
+      call check_cdf_status(iret)
+      iret = nf_def_dim(ncid, 'nya', nya, nyadim)
+      call check_cdf_status(iret)
+      iret = nf_def_dim(ncid, 'nc', nc, ncdim)
+      call check_cdf_status(iret)
+      iret = nf_def_dim(ncid, 'ns', ns, nsdim)
+      call check_cdf_status(iret)
+      iret = nf_def_dim(ncid, 'time', ncunlim, timedim)
+      call check_cdf_status(iret)
+    else
+      iret = nf_inq_dimid(ncid, 'nc', ncdim)
+      call check_cdf_status(iret)
+    end if
     iret = nf_def_dim(ncid, 'batch', nbatch, batchdim)
+    call check_cdf_status(iret)
     ! define variables
-    dims(1) = 0
-    iret = nf_def_var(ncid, 'ntstep', NCDOUBLE, 0, dims, ntstepid)
-    dims(1) = timedim
-    iret = nf_def_var(ncid, 'timesa', NCDOUBLE, 1, dims, timesaid)
-    dvals(1) = 1.0_R8/ev
-    if (write_2d .ge. 1) then
-      iret = nf_def_var(ncid, 'ne2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ne2did)
-      iret = nf_put_att_text(ncid, ne2did, 'long_name', 2, 'ne')
-      iret = nf_put_att_text(ncid, ne2did, 'units', 4, 'm^-3')
-      iret = nf_def_var(ncid, 'te2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), te2did)
-      iret = nf_put_att_text(ncid, te2did, 'long_name', 2, 'Te')
-      iret = nf_put_att_text(ncid, te2did, 'units', 2, 'eV')
-      iret = nf_put_att_double(ncid, te2did, 'scale', NCDOUBLE, 1, dvals(1))
-      iret = nf_def_var(ncid, 'ti2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ti2did)
-      iret = nf_put_att_text(ncid, ti2did, 'long_name', 2, 'Ti')
-      iret = nf_put_att_text(ncid, ti2did, 'units', 2, 'eV')
-      iret = nf_put_att_double(ncid, ti2did, 'scale', NCDOUBLE, 1, dvals(1))
-      if (write_2d .ge. 2) then
-        iret = nf_def_var(ncid, 'po2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), po2did)
-        iret = nf_put_att_text(ncid, po2did, 'long_name', 9, 'potential')
-        iret = nf_put_att_text(ncid, po2did, 'units', 1, 'V')
-        iret = nf_def_var(ncid, 'kin2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), kin2did)
-        iret = nf_put_att_text(ncid, kin2did, 'long_name', 23, 'parallel kinetic energy')
-        iret = nf_put_att_text(ncid, kin2did, 'units', 1, 'J')
-        iret = nf_def_var(ncid, 'rsahi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsahi2did)
-        iret = nf_put_att_text(ncid, rsahi2did, 'long_name', 21, 'iz energy source/sink')
-        iret = nf_put_att_text(ncid, rsahi2did, 'units', 1, 'W')      
-        iret = nf_def_var(ncid, 'rsana2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsana2did)
-        iret = nf_put_att_text(ncid, rsana2did, 'long_name', 7, 'iz rate')
-        iret = nf_put_att_text(ncid, rsana2did, 'units', 3, '1/s')
-        iret = nf_def_var(ncid, 'rrahi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrahi2did)
-        iret = nf_put_att_text(ncid, rrahi2did, 'long_name', 21, 'rc energy source/sink')
-        iret = nf_put_att_text(ncid, rrahi2did, 'units', 1, 'W')
-        iret = nf_def_var(ncid, 'rrana2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrana2did)
-        iret = nf_put_att_text(ncid, rrana2did, 'long_name', 7, 'rc rate')
-        iret = nf_put_att_text(ncid, rrana2did, 'units', 3, '1/s')
-        iret = nf_def_var(ncid, 'rcxhi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxhi2did)
-        iret = nf_put_att_text(ncid, rcxhi2did, 'long_name', 21, 'cx energy source/sink')
-        iret = nf_put_att_text(ncid, rcxhi2did, 'units', 1, 'W')
-        iret = nf_def_var(ncid, 'rcxna2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxna2did)
-        iret = nf_put_att_text(ncid, rcxna2did, 'long_name', 7, 'cx rate')
-        iret = nf_put_att_text(ncid, rcxna2did, 'units', 3, '1/s')
-        iret = nf_def_var(ncid, 'rqrad2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqrad2did)
-        iret = nf_put_att_text(ncid, rqrad2did, 'long_name', 19, 'Line radiation rate')
-        iret = nf_put_att_text(ncid, rqrad2did, 'units', 1, 'W')
-        iret = nf_def_var(ncid, 'rqahe2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqahe2did)
-        iret = nf_put_att_text(ncid, rqahe2did, 'long_name', 21, 'Electron cooling rate')
-        iret = nf_put_att_text(ncid, rqahe2did, 'units', 1, 'W')
+    if (.not.batch_only) then
+      dims(1) = 0
+      iret = nf_def_var(ncid, 'ntstep', NCDOUBLE, 0, dims, ntstepid)
+      call check_cdf_status(iret)
+      dims(1) = timedim
+      iret = nf_def_var(ncid, 'timesa', NCDOUBLE, 1, dims, timesaid)
+      call check_cdf_status(iret)
+      dvals(1) = 1.0_R8/ev
+      if (write_2d .ge. 1) then
+        iret = nf_def_var(ncid, 'ne2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ne2did)
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ne2did, 'long_name', 2, 'ne')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ne2did, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'te2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), te2did)
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, te2did, 'long_name', 2, 'Te')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, te2did, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, te2did, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ti2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ti2did)
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ti2did, 'long_name', 2, 'Ti')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ti2did, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, ti2did, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        if (write_2d .ge. 2) then
+          iret = nf_def_var(ncid, 'po2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), po2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, po2did, 'long_name', 9, 'potential')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, po2did, 'units', 1, 'V')
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'kin2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), kin2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, kin2did, 'long_name', 23, 'parallel kinetic energy')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, kin2did, 'units', 1, 'J')
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'rsahi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsahi2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rsahi2did, 'long_name', 21, 'iz energy source/sink')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rsahi2did, 'units', 1, 'W')      
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'rsana2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsana2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rsana2did, 'long_name', 7, 'iz rate')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rsana2did, 'units', 3, '1/s')
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'rrahi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrahi2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rrahi2did, 'long_name', 21, 'rc energy source/sink')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rrahi2did, 'units', 1, 'W')
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'rrana2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrana2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rrana2did, 'long_name', 7, 'rc rate')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rrana2did, 'units', 3, '1/s')
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'rcxhi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxhi2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rcxhi2did, 'long_name', 21, 'cx energy source/sink')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rcxhi2did, 'units', 1, 'W')
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'rcxna2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxna2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rcxna2did, 'long_name', 7, 'cx rate')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rcxna2did, 'units', 3, '1/s')
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'rqrad2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqrad2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rqrad2did, 'long_name', 19, 'Line radiation rate')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rqrad2did, 'units', 1, 'W')
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'rqahe2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqahe2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rqahe2did, 'long_name', 21, 'Electron cooling rate')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, rqahe2did, 'units', 1, 'W')
+          call check_cdf_status(iret)
         
-        iret = nf_def_dim(ncid, 'idir', 2, idirdim)  ! Needed for fluxes
-        iret = nf_def_var(ncid, 'fhe2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhe2did)
-        iret = nf_put_att_text(ncid, fhe2did, 'long_name', 18, 'Electron heat flux')
-        iret = nf_put_att_text(ncid, fhe2did, 'units', 1, 'W')
-        iret = nf_def_var(ncid, 'fhi2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhi2did)
-        iret = nf_put_att_text(ncid, fhi2did, 'long_name', 13, 'Ion heat flux')
-        iret = nf_put_att_text(ncid, fhi2did, 'units', 1, 'W')      
-        iret = nf_def_var(ncid, 'fch2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fch2did)
-        iret = nf_put_att_text(ncid, fch2did, 'long_name', 7, 'Current')
-        iret = nf_put_att_text(ncid, fch2did, 'units', 1, 'A')      
-        iret = nf_def_var(ncid, 'fna2d'  , NCDOUBLE, 5, (/nxdim,nydim,idirdim,nsdim,timedim/), fna2did)
-        iret = nf_put_att_text(ncid, fna2did, 'long_name', 13, 'Particle flux')
-        iret = nf_put_att_text(ncid, fna2did, 'units', 3, '1/s')
+          iret = nf_def_dim(ncid, 'idir', 2, idirdim)  ! Needed for fluxes
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'fhe2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhe2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, fhe2did, 'long_name', 18, 'Electron heat flux')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, fhe2did, 'units', 1, 'W')
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'fhi2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhi2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, fhi2did, 'long_name', 13, 'Ion heat flux')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, fhi2did, 'units', 1, 'W')      
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'fch2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fch2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, fch2did, 'long_name', 7, 'Current')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, fch2did, 'units', 1, 'A')      
+          call check_cdf_status(iret)
+          iret = nf_def_var(ncid, 'fna2d'  , NCDOUBLE, 5, (/nxdim,nydim,idirdim,nsdim,timedim/), fna2did)
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, fna2did, 'long_name', 13, 'Particle flux')
+          call check_cdf_status(iret)
+          iret = nf_put_att_text(ncid, fna2did, 'units', 3, '1/s')
+          call check_cdf_status(iret)
+        endif
       endif
     endif
 
-    dims(1) = ncdim
-    dims(2) = timedim
-    iret = nf_def_var(ncid, 'fnixip', NCDOUBLE, 2, dims, fnixipid)
-    iret = nf_def_var(ncid, 'feexip', NCDOUBLE, 2, dims, feexipid)
-    iret = nf_def_var(ncid, 'feixip', NCDOUBLE, 2, dims, feixipid)
-    iret = nf_def_var(ncid, 'fetxip', NCDOUBLE, 2, dims, fetxipid)
-    iret = nf_def_var(ncid, 'fchxip', NCDOUBLE, 2, dims, fchxipid)
-    iret = nf_def_var(ncid, 'fnixap', NCDOUBLE, 2, dims, fnixapid)
-    iret = nf_def_var(ncid, 'feexap', NCDOUBLE, 2, dims, feexapid)
-    iret = nf_def_var(ncid, 'feixap', NCDOUBLE, 2, dims, feixapid)
-    iret = nf_def_var(ncid, 'fetxap', NCDOUBLE, 2, dims, fetxapid)
-    iret = nf_def_var(ncid, 'fchxap', NCDOUBLE, 2, dims, fchxapid)
-    iret = nf_def_var(ncid, 'nesepi', NCDOUBLE, 2, dims, nesepiid)
-    iret = nf_def_var(ncid, 'tesepi', NCDOUBLE, 2, dims, tesepiid)
-    iret = nf_def_var(ncid, 'tisepi', NCDOUBLE, 2, dims, tisepiid)
-    iret = nf_def_var(ncid, 'tpsepi', NCDOUBLE, 2, dims, tpsepiid)
-    iret = nf_def_var(ncid, 'posepi', NCDOUBLE, 2, dims, posepiid)
-    iret = nf_def_var(ncid, 'nesepm', NCDOUBLE, 2, dims, nesepmid)
-    iret = nf_def_var(ncid, 'tesepm', NCDOUBLE, 2, dims, tesepmid)
-    iret = nf_def_var(ncid, 'tisepm', NCDOUBLE, 2, dims, tisepmid)
-    iret = nf_def_var(ncid, 'posepm', NCDOUBLE, 2, dims, posepmid)
-    iret = nf_def_var(ncid, 'dnsepm', NCDOUBLE, 2, dims, dnsepmid)
-    iret = nf_def_var(ncid, 'dpsepm', NCDOUBLE, 2, dims, dpsepmid)
-    iret = nf_def_var(ncid, 'kesepm', NCDOUBLE, 2, dims, kesepmid)
-    iret = nf_def_var(ncid, 'kisepm', NCDOUBLE, 2, dims, kisepmid)
-    iret = nf_def_var(ncid, 'vxsepm', NCDOUBLE, 2, dims, vxsepmid)
-    iret = nf_def_var(ncid, 'vysepm', NCDOUBLE, 2, dims, vysepmid)
-    iret = nf_def_var(ncid, 'vssepm', NCDOUBLE, 2, dims, vssepmid)
-    iret = nf_def_var(ncid, 'nesepa', NCDOUBLE, 2, dims, nesepaid)
-    iret = nf_def_var(ncid, 'tesepa', NCDOUBLE, 2, dims, tesepaid)
-    iret = nf_def_var(ncid, 'tisepa', NCDOUBLE, 2, dims, tisepaid)
-    iret = nf_def_var(ncid, 'tpsepa', NCDOUBLE, 2, dims, tpsepaid)
-    iret = nf_def_var(ncid, 'posepa', NCDOUBLE, 2, dims, posepaid)
-    iret = nf_def_var(ncid, 'nemxip', NCDOUBLE, 2, dims, nemxipid)
-    iret = nf_def_var(ncid, 'temxip', NCDOUBLE, 2, dims, temxipid)
-    iret = nf_def_var(ncid, 'timxip', NCDOUBLE, 2, dims, timxipid)
-    iret = nf_def_var(ncid, 'tpmxip', NCDOUBLE, 2, dims, tpmxipid)
-    iret = nf_def_var(ncid, 'pomxip', NCDOUBLE, 2, dims, pomxipid)
-    iret = nf_def_var(ncid, 'nemxap', NCDOUBLE, 2, dims, nemxapid)
-    iret = nf_def_var(ncid, 'temxap', NCDOUBLE, 2, dims, temxapid)
-    iret = nf_def_var(ncid, 'timxap', NCDOUBLE, 2, dims, timxapid)
-    iret = nf_def_var(ncid, 'tpmxap', NCDOUBLE, 2, dims, tpmxapid)
-    iret = nf_def_var(ncid, 'pomxap', NCDOUBLE, 2, dims, pomxapid)
-    iret = nf_def_var(ncid, 'fniyip', NCDOUBLE, 2, dims, fniyipid)
-    iret = nf_def_var(ncid, 'feeyip', NCDOUBLE, 2, dims, feeyipid)
-    iret = nf_def_var(ncid, 'feiyip', NCDOUBLE, 2, dims, feiyipid)
-    iret = nf_def_var(ncid, 'fetyip', NCDOUBLE, 2, dims, fetyipid)
-    iret = nf_def_var(ncid, 'fchyip', NCDOUBLE, 2, dims, fchyipid)
-    iret = nf_def_var(ncid, 'fniyap', NCDOUBLE, 2, dims, fniyapid)
-    iret = nf_def_var(ncid, 'feeyap', NCDOUBLE, 2, dims, feeyapid)
-    iret = nf_def_var(ncid, 'feiyap', NCDOUBLE, 2, dims, feiyapid)
-    iret = nf_def_var(ncid, 'fetyap', NCDOUBLE, 2, dims, fetyapid)
-    iret = nf_def_var(ncid, 'fchyap', NCDOUBLE, 2, dims, fchyapid)
-    iret = nf_def_var(ncid, 'pwmxip', NCDOUBLE, 2, dims, pwmxipid)
-    iret = nf_def_var(ncid, 'pwmxap', NCDOUBLE, 2, dims, pwmxapid)
-    dims(1) = timedim
-    iret = nf_def_var(ncid, 'tmne', NCDOUBLE, 1, dims, tmneid)
-    iret = nf_def_var(ncid, 'tmte', NCDOUBLE, 1, dims, tmteid)
-    iret = nf_def_var(ncid, 'tmti', NCDOUBLE, 1, dims, tmtiid)
-    iret = nf_def_var(ncid, 'tmhacore', NCDOUBLE, 1, dims, tmhacoreid)
-    iret = nf_def_var(ncid, 'tmhasol', NCDOUBLE, 1, dims, tmhasolid)
-    iret = nf_def_var(ncid, 'tmhadiv', NCDOUBLE, 1, dims, tmhadivid)
-    dims(1) = ncdim
-    dims(2) = timedim
-    iret = nf_def_var(ncid, 'fnisip', NCDOUBLE, 2, dims, fnisipid)
-    iret = nf_def_var(ncid, 'feesip', NCDOUBLE, 2, dims, feesipid)
-    iret = nf_def_var(ncid, 'feisip', NCDOUBLE, 2, dims, feisipid)
-    iret = nf_def_var(ncid, 'fetsip', NCDOUBLE, 2, dims, fetsipid)
-    iret = nf_def_var(ncid, 'fchsip', NCDOUBLE, 2, dims, fchsipid)
-    iret = nf_def_var(ncid, 'fnisap', NCDOUBLE, 2, dims, fnisapid)
-    iret = nf_def_var(ncid, 'feesap', NCDOUBLE, 2, dims, feesapid)
-    iret = nf_def_var(ncid, 'feisap', NCDOUBLE, 2, dims, feisapid)
-    iret = nf_def_var(ncid, 'fetsap', NCDOUBLE, 2, dims, fetsapid)
-    iret = nf_def_var(ncid, 'fchsap', NCDOUBLE, 2, dims, fchsapid)
-    iret = nf_def_var(ncid, 'fnisipp', NCDOUBLE, 2, dims, fnisippid)
-    iret = nf_def_var(ncid, 'feesipp', NCDOUBLE, 2, dims, feesippid)
-    iret = nf_def_var(ncid, 'feisipp', NCDOUBLE, 2, dims, feisippid)
-    iret = nf_def_var(ncid, 'fetsipp', NCDOUBLE, 2, dims, fetsippid)
-    iret = nf_def_var(ncid, 'fchsipp', NCDOUBLE, 2, dims, fchsippid)
-    iret = nf_def_var(ncid, 'fnisapp', NCDOUBLE, 2, dims, fnisappid)
-    iret = nf_def_var(ncid, 'feesapp', NCDOUBLE, 2, dims, feesappid)
-    iret = nf_def_var(ncid, 'feisapp', NCDOUBLE, 2, dims, feisappid)
-    iret = nf_def_var(ncid, 'fetsapp', NCDOUBLE, 2, dims, fetsappid)
-    iret = nf_def_var(ncid, 'fchsapp', NCDOUBLE, 2, dims, fchsappid)
-    dims(2) = timedim
-    dims(1) = nybldim
-    iret = nf_def_var(ncid, 'fn3dl', NCDOUBLE, 2, dims, fn3dlid)
-    iret = nf_def_var(ncid, 'fe3dl', NCDOUBLE, 2, dims, fe3dlid)
-    iret = nf_def_var(ncid, 'fi3dl', NCDOUBLE, 2, dims, fi3dlid)
-    iret = nf_def_var(ncid, 'ft3dl', NCDOUBLE, 2, dims, ft3dlid)
-    iret = nf_def_var(ncid, 'fc3dl', NCDOUBLE, 2, dims, fc3dlid)
-    iret = nf_def_var(ncid, 'fl3dl', NCDOUBLE, 2, dims, fl3dlid)
-    iret = nf_def_var(ncid, 'fo3dl', NCDOUBLE, 2, dims, fo3dlid)
-    iret = nf_def_var(ncid, 'ne3dl', NCDOUBLE, 2, dims, ne3dlid)
-    iret = nf_def_var(ncid, 'te3dl', NCDOUBLE, 2, dims, te3dlid)
-    iret = nf_def_var(ncid, 'ti3dl', NCDOUBLE, 2, dims, ti3dlid)
-    iret = nf_def_var(ncid, 'po3dl', NCDOUBLE, 2, dims, po3dlid)
-    iret = nf_def_var(ncid, 'an3dl', NCDOUBLE, 2, dims, an3dlid)
-    iret = nf_def_var(ncid, 'mn3dl', NCDOUBLE, 2, dims, mn3dlid)
-    iret = nf_def_var(ncid, 'tp3dl', NCDOUBLE, 2, dims, tp3dlid)
-    if(nytl.gt.0) then
+    if (.not.batch_only) then
+      dims(1) = ncdim
       dims(2) = timedim
-      dims(1) = nytldim
-      iret = nf_def_var(ncid, 'fn3dtl', NCDOUBLE, 2, dims, fn3dtlid)
-      iret = nf_def_var(ncid, 'fe3dtl', NCDOUBLE, 2, dims, fe3dtlid)
-      iret = nf_def_var(ncid, 'fi3dtl', NCDOUBLE, 2, dims, fi3dtlid)
-      iret = nf_def_var(ncid, 'ft3dtl', NCDOUBLE, 2, dims, ft3dtlid)
-      iret = nf_def_var(ncid, 'fc3dtl', NCDOUBLE, 2, dims, fc3dtlid)
-      iret = nf_def_var(ncid, 'fl3dtl', NCDOUBLE, 2, dims, fl3dtlid)
-      iret = nf_def_var(ncid, 'fo3dtl', NCDOUBLE, 2, dims, fo3dtlid)
-      iret = nf_def_var(ncid, 'ne3dtl', NCDOUBLE, 2, dims, ne3dtlid)
-      iret = nf_def_var(ncid, 'te3dtl', NCDOUBLE, 2, dims, te3dtlid)
-      iret = nf_def_var(ncid, 'ti3dtl', NCDOUBLE, 2, dims, ti3dtlid)
-      iret = nf_def_var(ncid, 'po3dtl', NCDOUBLE, 2, dims, po3dtlid)
-      iret = nf_def_var(ncid, 'an3dtl', NCDOUBLE, 2, dims, an3dtlid)
-      iret = nf_def_var(ncid, 'mn3dtl', NCDOUBLE, 2, dims, mn3dtlid)
-      iret = nf_def_var(ncid, 'tp3dtl', NCDOUBLE, 2, dims, tp3dtlid)
-    endif
-    dims(2) = timedim
-    dims(1) = nyidim
-    iret = nf_def_var(ncid, 'ne3di', NCDOUBLE, 2, dims, ne3diid)
-    iret = nf_def_var(ncid, 'te3di', NCDOUBLE, 2, dims, te3diid)
-    iret = nf_def_var(ncid, 'ti3di', NCDOUBLE, 2, dims, ti3diid)
-    iret = nf_def_var(ncid, 'po3di', NCDOUBLE, 2, dims, po3diid)
-    iret = nf_def_var(ncid, 'an3di', NCDOUBLE, 2, dims, an3diid)
-    iret = nf_def_var(ncid, 'mn3di', NCDOUBLE, 2, dims, mn3diid)
-    iret = nf_def_var(ncid, 'dn3di', NCDOUBLE, 2, dims, dn3diid)
-    iret = nf_def_var(ncid, 'dp3di', NCDOUBLE, 2, dims, dp3diid)
-    iret = nf_def_var(ncid, 'lh3di', NCDOUBLE, 2, dims, lh3diid)
-    iret = nf_def_var(ncid, 'ln3di', NCDOUBLE, 2, dims, ln3diid)
-    iret = nf_def_var(ncid, 'ke3di', NCDOUBLE, 2, dims, ke3diid)
-    iret = nf_def_var(ncid, 'ki3di', NCDOUBLE, 2, dims, ki3diid)
-    iret = nf_def_var(ncid, 'vx3di', NCDOUBLE, 2, dims, vx3diid)
-    iret = nf_def_var(ncid, 'vy3di', NCDOUBLE, 2, dims, vy3diid)
-    iret = nf_def_var(ncid, 'vs3di', NCDOUBLE, 2, dims, vs3diid)
-    dims(2) = timedim
-    dims(1) = nyadim
-    iret = nf_def_var(ncid, 'ne3da', NCDOUBLE, 2, dims, ne3daid)
-    iret = nf_def_var(ncid, 'te3da', NCDOUBLE, 2, dims, te3daid)
-    iret = nf_def_var(ncid, 'ti3da', NCDOUBLE, 2, dims, ti3daid)
-    iret = nf_def_var(ncid, 'po3da', NCDOUBLE, 2, dims, po3daid)
-    iret = nf_def_var(ncid, 'an3da', NCDOUBLE, 2, dims, an3daid)
-    iret = nf_def_var(ncid, 'mn3da', NCDOUBLE, 2, dims, mn3daid)
-    iret = nf_def_var(ncid, 'dn3da', NCDOUBLE, 2, dims, dn3daid)
-    iret = nf_def_var(ncid, 'dp3da', NCDOUBLE, 2, dims, dp3daid)
-    iret = nf_def_var(ncid, 'lh3da', NCDOUBLE, 2, dims, lh3daid)
-    iret = nf_def_var(ncid, 'ln3da', NCDOUBLE, 2, dims, ln3daid)
-    iret = nf_def_var(ncid, 'ke3da', NCDOUBLE, 2, dims, ke3daid)
-    iret = nf_def_var(ncid, 'ki3da', NCDOUBLE, 2, dims, ki3daid)
-    iret = nf_def_var(ncid, 'vx3da', NCDOUBLE, 2, dims, vx3daid)
-    iret = nf_def_var(ncid, 'vy3da', NCDOUBLE, 2, dims, vy3daid)
-    iret = nf_def_var(ncid, 'vs3da', NCDOUBLE, 2, dims, vs3daid)
-    dims(2) = timedim
-    dims(1) = nybrdim
-   iret = nf_def_var(ncid, 'ne3dr', NCDOUBLE, 2, dims, ne3drid)
-    iret = nf_def_var(ncid, 'te3dr', NCDOUBLE, 2, dims, te3drid)
-    iret = nf_def_var(ncid, 'ti3dr', NCDOUBLE, 2, dims, ti3drid)
-    iret = nf_def_var(ncid, 'po3dr', NCDOUBLE, 2, dims, po3drid)
-    iret = nf_def_var(ncid, 'an3dr', NCDOUBLE, 2, dims, an3drid)
-    iret = nf_def_var(ncid, 'mn3dr', NCDOUBLE, 2, dims, mn3drid)
-    iret = nf_def_var(ncid, 'fn3dr', NCDOUBLE, 2, dims, fn3drid)
-    iret = nf_def_var(ncid, 'fe3dr', NCDOUBLE, 2, dims, fe3drid)
-    iret = nf_def_var(ncid, 'fi3dr', NCDOUBLE, 2, dims, fi3drid)
-    iret = nf_def_var(ncid, 'ft3dr', NCDOUBLE, 2, dims, ft3drid)
-    iret = nf_def_var(ncid, 'fc3dr', NCDOUBLE, 2, dims, fc3drid)
-    iret = nf_def_var(ncid, 'fl3dr', NCDOUBLE, 2, dims, fl3drid)
-    iret = nf_def_var(ncid, 'fo3dr', NCDOUBLE, 2, dims, fo3drid)
-    iret = nf_def_var(ncid, 'tp3dr', NCDOUBLE, 2, dims, tp3drid)
-    if(nytr.gt.0) then
+      iret = nf_def_var(ncid, 'fnixip', NCDOUBLE, 2, dims, fnixipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feexip', NCDOUBLE, 2, dims, feexipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feixip', NCDOUBLE, 2, dims, feixipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fetxip', NCDOUBLE, 2, dims, fetxipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fchxip', NCDOUBLE, 2, dims, fchxipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fnixap', NCDOUBLE, 2, dims, fnixapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feexap', NCDOUBLE, 2, dims, feexapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feixap', NCDOUBLE, 2, dims, feixapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fetxap', NCDOUBLE, 2, dims, fetxapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fchxap', NCDOUBLE, 2, dims, fchxapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'nesepi', NCDOUBLE, 2, dims, nesepiid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tesepi', NCDOUBLE, 2, dims, tesepiid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tisepi', NCDOUBLE, 2, dims, tisepiid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tpsepi', NCDOUBLE, 2, dims, tpsepiid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'posepi', NCDOUBLE, 2, dims, posepiid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'nesepm', NCDOUBLE, 2, dims, nesepmid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tesepm', NCDOUBLE, 2, dims, tesepmid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tisepm', NCDOUBLE, 2, dims, tisepmid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'posepm', NCDOUBLE, 2, dims, posepmid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'dnsepm', NCDOUBLE, 2, dims, dnsepmid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'dpsepm', NCDOUBLE, 2, dims, dpsepmid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'kesepm', NCDOUBLE, 2, dims, kesepmid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'kisepm', NCDOUBLE, 2, dims, kisepmid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vxsepm', NCDOUBLE, 2, dims, vxsepmid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vysepm', NCDOUBLE, 2, dims, vysepmid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vssepm', NCDOUBLE, 2, dims, vssepmid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'nesepa', NCDOUBLE, 2, dims, nesepaid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tesepa', NCDOUBLE, 2, dims, tesepaid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tisepa', NCDOUBLE, 2, dims, tisepaid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tpsepa', NCDOUBLE, 2, dims, tpsepaid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'posepa', NCDOUBLE, 2, dims, posepaid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'nemxip', NCDOUBLE, 2, dims, nemxipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'temxip', NCDOUBLE, 2, dims, temxipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'timxip', NCDOUBLE, 2, dims, timxipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tpmxip', NCDOUBLE, 2, dims, tpmxipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'pomxip', NCDOUBLE, 2, dims, pomxipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'nemxap', NCDOUBLE, 2, dims, nemxapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'temxap', NCDOUBLE, 2, dims, temxapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'timxap', NCDOUBLE, 2, dims, timxapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tpmxap', NCDOUBLE, 2, dims, tpmxapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'pomxap', NCDOUBLE, 2, dims, pomxapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fniyip', NCDOUBLE, 2, dims, fniyipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feeyip', NCDOUBLE, 2, dims, feeyipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feiyip', NCDOUBLE, 2, dims, feiyipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fetyip', NCDOUBLE, 2, dims, fetyipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fchyip', NCDOUBLE, 2, dims, fchyipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fniyap', NCDOUBLE, 2, dims, fniyapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feeyap', NCDOUBLE, 2, dims, feeyapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feiyap', NCDOUBLE, 2, dims, feiyapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fetyap', NCDOUBLE, 2, dims, fetyapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fchyap', NCDOUBLE, 2, dims, fchyapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'pwmxip', NCDOUBLE, 2, dims, pwmxipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'pwmxap', NCDOUBLE, 2, dims, pwmxapid)
+      call check_cdf_status(iret)
+      dims(1) = timedim
+      iret = nf_def_var(ncid, 'tmne', NCDOUBLE, 1, dims, tmneid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tmte', NCDOUBLE, 1, dims, tmteid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tmti', NCDOUBLE, 1, dims, tmtiid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tmhacore', NCDOUBLE, 1, dims, tmhacoreid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tmhasol', NCDOUBLE, 1, dims, tmhasolid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tmhadiv', NCDOUBLE, 1, dims, tmhadivid)
+      call check_cdf_status(iret)
+      dims(1) = ncdim
       dims(2) = timedim
-      dims(1) = nytrdim
-      iret = nf_def_var(ncid, 'ne3dtr', NCDOUBLE, 2, dims, ne3dtrid)
-      iret = nf_def_var(ncid, 'te3dtr', NCDOUBLE, 2, dims, te3dtrid)
-      iret = nf_def_var(ncid, 'ti3dtr', NCDOUBLE, 2, dims, ti3dtrid)
-      iret = nf_def_var(ncid, 'po3dtr', NCDOUBLE, 2, dims, po3dtrid)
-      iret = nf_def_var(ncid, 'an3dtr', NCDOUBLE, 2, dims, an3dtrid)
-      iret = nf_def_var(ncid, 'mn3dtr', NCDOUBLE, 2, dims, mn3dtrid)
-      iret = nf_def_var(ncid, 'fn3dtr', NCDOUBLE, 2, dims, fn3dtrid)
-      iret = nf_def_var(ncid, 'fe3dtr', NCDOUBLE, 2, dims, fe3dtrid)
-      iret = nf_def_var(ncid, 'fi3dtr', NCDOUBLE, 2, dims, fi3dtrid)
-      iret = nf_def_var(ncid, 'ft3dtr', NCDOUBLE, 2, dims, ft3dtrid)
-      iret = nf_def_var(ncid, 'fc3dtr', NCDOUBLE, 2, dims, fc3dtrid)
-      iret = nf_def_var(ncid, 'fl3dtr', NCDOUBLE, 2, dims, fl3dtrid)
-      iret = nf_def_var(ncid, 'fo3dtr', NCDOUBLE, 2, dims, fo3dtrid)
-      iret = nf_def_var(ncid, 'tp3dtr', NCDOUBLE, 2, dims, tp3dtrid)
+      iret = nf_def_var(ncid, 'fnisip', NCDOUBLE, 2, dims, fnisipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feesip', NCDOUBLE, 2, dims, feesipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feisip', NCDOUBLE, 2, dims, feisipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fetsip', NCDOUBLE, 2, dims, fetsipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fchsip', NCDOUBLE, 2, dims, fchsipid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fnisap', NCDOUBLE, 2, dims, fnisapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feesap', NCDOUBLE, 2, dims, feesapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feisap', NCDOUBLE, 2, dims, feisapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fetsap', NCDOUBLE, 2, dims, fetsapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fchsap', NCDOUBLE, 2, dims, fchsapid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fnisipp', NCDOUBLE, 2, dims, fnisippid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feesipp', NCDOUBLE, 2, dims, feesippid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feisipp', NCDOUBLE, 2, dims, feisippid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fetsipp', NCDOUBLE, 2, dims, fetsippid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fchsipp', NCDOUBLE, 2, dims, fchsippid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fnisapp', NCDOUBLE, 2, dims, fnisappid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feesapp', NCDOUBLE, 2, dims, feesappid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'feisapp', NCDOUBLE, 2, dims, feisappid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fetsapp', NCDOUBLE, 2, dims, fetsappid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fchsapp', NCDOUBLE, 2, dims, fchsappid)
+      call check_cdf_status(iret)
+      dims(2) = timedim
+      dims(1) = nybldim
+      iret = nf_def_var(ncid, 'fn3dl', NCDOUBLE, 2, dims, fn3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fe3dl', NCDOUBLE, 2, dims, fe3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fi3dl', NCDOUBLE, 2, dims, fi3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ft3dl', NCDOUBLE, 2, dims, ft3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fc3dl', NCDOUBLE, 2, dims, fc3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fl3dl', NCDOUBLE, 2, dims, fl3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fo3dl', NCDOUBLE, 2, dims, fo3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ne3dl', NCDOUBLE, 2, dims, ne3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'te3dl', NCDOUBLE, 2, dims, te3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ti3dl', NCDOUBLE, 2, dims, ti3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'po3dl', NCDOUBLE, 2, dims, po3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'an3dl', NCDOUBLE, 2, dims, an3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'mn3dl', NCDOUBLE, 2, dims, mn3dlid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tp3dl', NCDOUBLE, 2, dims, tp3dlid)
+      call check_cdf_status(iret)
+      if(nytl.gt.0) then
+        dims(2) = timedim
+        dims(1) = nytldim
+        iret = nf_def_var(ncid, 'fn3dtl', NCDOUBLE, 2, dims, fn3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'fe3dtl', NCDOUBLE, 2, dims, fe3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'fi3dtl', NCDOUBLE, 2, dims, fi3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ft3dtl', NCDOUBLE, 2, dims, ft3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'fc3dtl', NCDOUBLE, 2, dims, fc3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'fl3dtl', NCDOUBLE, 2, dims, fl3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'fo3dtl', NCDOUBLE, 2, dims, fo3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ne3dtl', NCDOUBLE, 2, dims, ne3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'te3dtl', NCDOUBLE, 2, dims, te3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ti3dtl', NCDOUBLE, 2, dims, ti3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'po3dtl', NCDOUBLE, 2, dims, po3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'an3dtl', NCDOUBLE, 2, dims, an3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'mn3dtl', NCDOUBLE, 2, dims, mn3dtlid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'tp3dtl', NCDOUBLE, 2, dims, tp3dtlid)
+        call check_cdf_status(iret)
+      endif
+      dims(2) = timedim
+      dims(1) = nyidim
+      iret = nf_def_var(ncid, 'ne3di', NCDOUBLE, 2, dims, ne3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'te3di', NCDOUBLE, 2, dims, te3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ti3di', NCDOUBLE, 2, dims, ti3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'po3di', NCDOUBLE, 2, dims, po3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'an3di', NCDOUBLE, 2, dims, an3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'mn3di', NCDOUBLE, 2, dims, mn3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'dn3di', NCDOUBLE, 2, dims, dn3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'dp3di', NCDOUBLE, 2, dims, dp3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'lh3di', NCDOUBLE, 2, dims, lh3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ln3di', NCDOUBLE, 2, dims, ln3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ke3di', NCDOUBLE, 2, dims, ke3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ki3di', NCDOUBLE, 2, dims, ki3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vx3di', NCDOUBLE, 2, dims, vx3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vy3di', NCDOUBLE, 2, dims, vy3diid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vs3di', NCDOUBLE, 2, dims, vs3diid)
+      call check_cdf_status(iret)
+      dims(2) = timedim
+      dims(1) = nyadim
+      iret = nf_def_var(ncid, 'ne3da', NCDOUBLE, 2, dims, ne3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'te3da', NCDOUBLE, 2, dims, te3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ti3da', NCDOUBLE, 2, dims, ti3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'po3da', NCDOUBLE, 2, dims, po3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'an3da', NCDOUBLE, 2, dims, an3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'mn3da', NCDOUBLE, 2, dims, mn3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'dn3da', NCDOUBLE, 2, dims, dn3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'dp3da', NCDOUBLE, 2, dims, dp3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'lh3da', NCDOUBLE, 2, dims, lh3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ln3da', NCDOUBLE, 2, dims, ln3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ke3da', NCDOUBLE, 2, dims, ke3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ki3da', NCDOUBLE, 2, dims, ki3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vx3da', NCDOUBLE, 2, dims, vx3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vy3da', NCDOUBLE, 2, dims, vy3daid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'vs3da', NCDOUBLE, 2, dims, vs3daid)
+      call check_cdf_status(iret)
+      dims(2) = timedim
+      dims(1) = nybrdim
+      iret = nf_def_var(ncid, 'ne3dr', NCDOUBLE, 2, dims, ne3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'te3dr', NCDOUBLE, 2, dims, te3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ti3dr', NCDOUBLE, 2, dims, ti3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'po3dr', NCDOUBLE, 2, dims, po3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'an3dr', NCDOUBLE, 2, dims, an3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'mn3dr', NCDOUBLE, 2, dims, mn3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fn3dr', NCDOUBLE, 2, dims, fn3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fe3dr', NCDOUBLE, 2, dims, fe3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fi3dr', NCDOUBLE, 2, dims, fi3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'ft3dr', NCDOUBLE, 2, dims, ft3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fc3dr', NCDOUBLE, 2, dims, fc3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fl3dr', NCDOUBLE, 2, dims, fl3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'fo3dr', NCDOUBLE, 2, dims, fo3drid)
+      call check_cdf_status(iret)
+      iret = nf_def_var(ncid, 'tp3dr', NCDOUBLE, 2, dims, tp3drid)
+      call check_cdf_status(iret)
+      if(nytr.gt.0) then
+        dims(2) = timedim
+        dims(1) = nytrdim
+        iret = nf_def_var(ncid, 'ne3dtr', NCDOUBLE, 2, dims, ne3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'te3dtr', NCDOUBLE, 2, dims, te3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ti3dtr', NCDOUBLE, 2, dims, ti3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'po3dtr', NCDOUBLE, 2, dims, po3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'an3dtr', NCDOUBLE, 2, dims, an3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'mn3dtr', NCDOUBLE, 2, dims, mn3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'fn3dtr', NCDOUBLE, 2, dims, fn3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'fe3dtr', NCDOUBLE, 2, dims, fe3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'fi3dtr', NCDOUBLE, 2, dims, fi3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ft3dtr', NCDOUBLE, 2, dims, ft3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'fc3dtr', NCDOUBLE, 2, dims, fc3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'fl3dtr', NCDOUBLE, 2, dims, fl3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'fo3dtr', NCDOUBLE, 2, dims, fo3dtrid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'tp3dtr', NCDOUBLE, 2, dims, tp3dtrid)
+        call check_cdf_status(iret)
+      endif
     endif
 
     !wdk averages
     dims(1) = 0
     iret  = nf_def_var(ncid, 'nastep', NCDOUBLE, 0, dims, nastepid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'ntim_batch', NCDOUBLE, 0, dims, ntimbatchid)
+    call check_cdf_status(iret)
     dims(1) = batchdim
     iret  = nf_def_var(ncid, 'batchsa', NCDOUBLE, 1, dims, batchsaid)
+    call check_cdf_status(iret)
     dims(1) = ncdim
     dims(2) = batchdim
     iret  = nf_def_var(ncid, 'nesepm_av', NCDOUBLE, 2, dims, nesepm_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tesepm_av', NCDOUBLE, 2, dims, tesepm_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tisepm_av', NCDOUBLE, 2, dims, tisepm_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'posepm_av', NCDOUBLE, 2, dims, posepm_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'nesepi_av', NCDOUBLE, 2, dims, nesepi_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tesepi_av', NCDOUBLE, 2, dims, tesepi_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tisepi_av', NCDOUBLE, 2, dims, tisepi_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'posepi_av', NCDOUBLE, 2, dims, posepi_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'nesepa_av', NCDOUBLE, 2, dims, nesepa_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tesepa_av', NCDOUBLE, 2, dims, tesepa_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tisepa_av', NCDOUBLE, 2, dims, tisepa_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'posepa_av', NCDOUBLE, 2, dims, posepa_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'nemxip_av', NCDOUBLE, 2, dims, nemxip_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'temxip_av', NCDOUBLE, 2, dims, temxip_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'timxip_av', NCDOUBLE, 2, dims, timxip_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'pomxip_av', NCDOUBLE, 2, dims, pomxip_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'nemxap_av', NCDOUBLE, 2, dims, nemxap_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'temxap_av', NCDOUBLE, 2, dims, temxap_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'timxap_av', NCDOUBLE, 2, dims, timxap_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'pomxap_av', NCDOUBLE, 2, dims, pomxap_avid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'nesepm_std', NCDOUBLE, 2, dims, nesepm_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tesepm_std', NCDOUBLE, 2, dims, tesepm_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tisepm_std', NCDOUBLE, 2, dims, tisepm_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'posepm_std', NCDOUBLE, 2, dims, posepm_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'nesepi_std', NCDOUBLE, 2, dims, nesepi_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tesepi_std', NCDOUBLE, 2, dims, tesepi_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tisepi_std', NCDOUBLE, 2, dims, tisepi_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'posepi_std', NCDOUBLE, 2, dims, posepi_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'nesepa_std', NCDOUBLE, 2, dims, nesepa_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tesepa_std', NCDOUBLE, 2, dims, tesepa_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'tisepa_std', NCDOUBLE, 2, dims, tisepa_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'posepa_std', NCDOUBLE, 2, dims, posepa_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'nemxip_std', NCDOUBLE, 2, dims, nemxip_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'temxip_std', NCDOUBLE, 2, dims, temxip_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'timxip_std', NCDOUBLE, 2, dims, timxip_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'pomxip_std', NCDOUBLE, 2, dims, pomxip_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'nemxap_std', NCDOUBLE, 2, dims, nemxap_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'temxap_std', NCDOUBLE, 2, dims, temxap_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'timxap_std', NCDOUBLE, 2, dims, timxap_stdid)
+    call check_cdf_status(iret)
     iret  = nf_def_var(ncid, 'pomxap_std', NCDOUBLE, 2, dims, pomxap_stdid)
+    call check_cdf_status(iret)
 
     ! assign attributes
-    iret = nf_put_att_text(ncid, timesaid, 'long_name', 4, 'time')
-    iret = nf_put_att_text(ncid, timesaid, 'units', 2, 's ')
-    iret = nf_put_att_text(ncid, fnixipid, 'long_name', 51, 'integrated poloidal particle flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fnixipid, 'units', 4, 's^-1')
-    iret = nf_put_att_text(ncid, feexipid, 'long_name', 58, 'integrated poloidal electron energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, feexipid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, feixipid, 'long_name', 53, 'integrated poloidal ion energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, feixipid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fetxipid, 'long_name', 53, 'integrated poloidal tot energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fetxipid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fchxipid, 'long_name', 45, 'integrated poloidal current, inboard divertor')
-    iret = nf_put_att_text(ncid, fchxipid, 'units', 2, 'A ')
-    iret = nf_put_att_text(ncid, fnixapid, 'long_name', 52, 'integrated poloidal particle flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fnixapid, 'units', 4, 's^-1')
-    iret = nf_put_att_text(ncid, feexapid, 'long_name', 59, 'integrated poloidal electron energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, feexapid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, feixapid, 'long_name', 54, 'integrated poloidal ion energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, feixapid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fetxapid, 'long_name', 54, 'integrated poloidal tot energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fetxapid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fchxapid, 'long_name', 46, 'integrated poloidal current, outboard divertor')
-    iret = nf_put_att_text(ncid, fchxapid, 'units', 2, 'A ')
-    iret = nf_put_att_text(ncid, nesepiid, 'long_name', 45, 'separatrix electron density, inboard divertor')
-    iret = nf_put_att_text(ncid, nesepiid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, tesepiid, 'long_name', 49, 'separatrix electron temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tesepiid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tisepiid, 'long_name', 44, 'separatrix ion temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tisepiid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tpsepiid, 'long_name', 46, 'separatrix plate temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tpsepiid, 'units', 2, 'K ')
-    iret = nf_put_att_text(ncid, posepiid, 'long_name', 38, 'separatrix potential, inboard divertor')
-    iret = nf_put_att_text(ncid, posepiid, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, nesepmid, 'long_name', 43, 'separatrix electron density, outer midplane')
-    iret = nf_put_att_text(ncid, nesepmid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, tesepmid, 'long_name', 47, 'separatrix electron temperature, outer midplane')
-    iret = nf_put_att_text(ncid, tesepmid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tisepmid, 'long_name', 42, 'separatrix ion temperature, outer midplane')
-    iret = nf_put_att_text(ncid, tisepmid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, posepmid, 'long_name', 36, 'separatrix potential, outer midplane')
-    iret = nf_put_att_text(ncid, posepmid, 'units', 2, 'V ')
+    if (.not.batch_only) then
+      iret = nf_put_att_text(ncid, timesaid, 'long_name', 4, 'time')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, timesaid, 'units', 2, 's ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fnixipid, 'long_name', 51, 'integrated poloidal particle flux, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fnixipid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feexipid, 'long_name', 58, 'integrated poloidal electron energy flux, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feexipid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feixipid, 'long_name', 53, 'integrated poloidal ion energy flux, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feixipid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetxipid, 'long_name', 53, 'integrated poloidal tot energy flux, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetxipid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchxipid, 'long_name', 45, 'integrated poloidal current, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchxipid, 'units', 2, 'A ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fnixapid, 'long_name', 52, 'integrated poloidal particle flux, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fnixapid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feexapid, 'long_name', 59, 'integrated poloidal electron energy flux, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feexapid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feixapid, 'long_name', 54, 'integrated poloidal ion energy flux, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feixapid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetxapid, 'long_name', 54, 'integrated poloidal tot energy flux, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetxapid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchxapid, 'long_name', 46, 'integrated poloidal current, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchxapid, 'units', 2, 'A ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nesepiid, 'long_name', 45, 'separatrix electron density, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nesepiid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tesepiid, 'long_name', 49, 'separatrix electron temperature, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tesepiid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tisepiid, 'long_name', 44, 'separatrix ion temperature, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tisepiid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tpsepiid, 'long_name', 46, 'separatrix plate temperature, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tpsepiid, 'units', 2, 'K ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, posepiid, 'long_name', 38, 'separatrix potential, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, posepiid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nesepmid, 'long_name', 43, 'separatrix electron density, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nesepmid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tesepmid, 'long_name', 47, 'separatrix electron temperature, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tesepmid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tisepmid, 'long_name', 42, 'separatrix ion temperature, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tisepmid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, posepmid, 'long_name', 36, 'separatrix potential, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, posepmid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
 
-    iret = nf_put_att_text(ncid, dnsepmid, 'long_name', 37, 'diffusion coefficient, outer midplane')
-    iret = nf_put_att_text(ncid, dnsepmid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, dpsepmid, 'long_name', 46, 'pressure diffusion coefficient, outer midplane')
-    iret = nf_put_att_text(ncid, dpsepmid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, kesepmid, 'long_name', 44, 'electron thermal diffusivity, outer midplane')
-    iret = nf_put_att_text(ncid, kesepmid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, kisepmid, 'long_name', 39, 'ion thermal diffusivity, outer midplane')
-    iret = nf_put_att_text(ncid, kisepmid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, vxsepmid, 'long_name', 39, 'poloidal pinch velocity, outer midplane')
-    iret = nf_put_att_text(ncid, vxsepmid, 'units', 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vysepmid, 'long_name', 37, 'radial pinch velocity, outer midplane')
-    iret = nf_put_att_text(ncid, vysepmid, 'units', 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vssepmid, 'long_name', 37, 'viscosity coefficient, outer midplane')
-    iret = nf_put_att_text(ncid, vssepmid, 'units', 12, 'm.kg^-1.s^-1')
+      iret = nf_put_att_text(ncid, dnsepmid, 'long_name', 37, 'diffusion coefficient, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, dnsepmid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, dpsepmid, 'long_name', 46, 'pressure diffusion coefficient, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, dpsepmid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, kesepmid, 'long_name', 44, 'electron thermal diffusivity, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, kesepmid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, kisepmid, 'long_name', 39, 'ion thermal diffusivity, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, kisepmid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vxsepmid, 'long_name', 39, 'poloidal pinch velocity, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vxsepmid, 'units', 6, 'm.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vysepmid, 'long_name', 37, 'radial pinch velocity, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vysepmid, 'units', 6, 'm.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vssepmid, 'long_name', 37, 'viscosity coefficient, outer midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vssepmid, 'units', 12, 'm.kg^-1.s^-1')
+      call check_cdf_status(iret)
 
-    iret = nf_put_att_text(ncid, nesepaid, 'long_name', 46, 'separatrix electron density, outboard divertor')
-    iret = nf_put_att_text(ncid, nesepaid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, tesepaid, 'long_name', 50, 'separatrix electron temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tesepaid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tisepaid, 'long_name', 45, 'separatrix ion temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tisepaid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tpsepaid, 'long_name', 47, 'separatrix plate temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tpsepaid, 'units', 2, 'K ')
-    iret = nf_put_att_text(ncid, posepaid, 'long_name', 43, 'separatrix potential, outboard divertor')
-    iret = nf_put_att_text(ncid, posepaid, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, nemxipid, 'long_name', 42, 'maximum electron density, inboard divertor')
-    iret = nf_put_att_text(ncid, nemxipid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, temxipid, 'long_name', 46, 'maximum electron temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, temxipid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, timxipid, 'long_name', 41, 'maximum ion temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, timxipid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tpmxipid, 'long_name', 43, 'maximum plate temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tpmxipid, 'units', 2, 'K ')
-    iret = nf_put_att_text(ncid, pomxipid, 'long_name', 35, 'maximum potential, inboard divertor')
-    iret = nf_put_att_text(ncid, pomxipid, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, nemxapid, 'long_name', 43, 'maximum electron density, outboard divertor')
-    iret = nf_put_att_text(ncid, nemxapid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, temxapid, 'long_name', 47, 'maximum electron temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, temxapid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, timxapid, 'long_name', 43, 'maximum ion temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, timxapid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tpmxapid, 'long_name', 45, 'maximum plate temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tpmxapid, 'units', 2, 'K ')
-    iret = nf_put_att_text(ncid, pomxapid, 'long_name', 37, 'maximum potential, outboard divertor')
-    iret = nf_put_att_text(ncid, pomxapid, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, fniyipid, 'long_name', 45, 'integrated radial particle flux, main chamber')
-    iret = nf_put_att_text(ncid, fniyipid, 'units', 4, 's^-1')
-    iret = nf_put_att_text(ncid, feeyipid, 'long_name', 52, 'integrated radial electron energy flux, main chamber')
-    iret = nf_put_att_text(ncid, feeyipid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, feiyipid, 'long_name', 47, 'integrated radial ion energy flux, main chamber')
-    iret = nf_put_att_text(ncid, feiyipid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fetyipid, 'long_name', 47, 'integrated radial tot energy flux, main chamber')
-    iret = nf_put_att_text(ncid, fetyipid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fchyipid, 'long_name', 39, 'integrated radial current, main chamber')
-    iret = nf_put_att_text(ncid, fchyipid, 'units', 2, 'A ')
-    iret = nf_put_att_text(ncid, fniyapid, 'long_name', 48, 'integrated radial particle flux, divertor region')
-    iret = nf_put_att_text(ncid, fniyapid, 'units', 4, 's^-1')
-    iret = nf_put_att_text(ncid, feeyapid, 'long_name', 55, 'integrated radial electron energy flux, divertor region')
-    iret = nf_put_att_text(ncid, feeyapid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, feiyapid, 'long_name', 50, 'integrated radial ion energy flux, divertor region')
-    iret = nf_put_att_text(ncid, feiyapid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fetyapid, 'long_name', 50, 'integrated radial tot energy flux, divertor region')
-    iret = nf_put_att_text(ncid, fetyapid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fchyapid, 'long_name', 42, 'integrated radial current, divertor region')
-    iret = nf_put_att_text(ncid, fchyapid, 'units', 2, 'A ')
-    iret = nf_put_att_text(ncid, pwmxipid, 'long_name', 42, 'maximum total power flux, inboard divertor')
-    iret = nf_put_att_text(ncid, pwmxipid, 'units', 6, 'W.m^-2')
-    iret = nf_put_att_text(ncid, pwmxapid, 'long_name', 43, 'maximum total power flux, outboard divertor')
-    iret = nf_put_att_text(ncid, pwmxapid, 'units', 6, 'W.m^-2')
-    iret = nf_put_att_text(ncid, tmneid, 'long_name', 25, 'total number of particles')
-    iret = nf_put_att_text(ncid, tmneid, 'units', 2, '  ')
-    iret = nf_put_att_text(ncid, tmteid, 'long_name', 21, 'total electron energy')
-    iret = nf_put_att_text(ncid, tmteid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tmtiid, 'long_name', 16, 'total ion energy')
-    iret = nf_put_att_text(ncid, tmtiid, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tmhacoreid, 'long_name', 24, 'H-alpha emissivity, core')
-    iret = nf_put_att_text(ncid, tmhacoreid, 'units', 19, 'photons.m^-2.sr^-1?')
-    iret = nf_put_att_text(ncid, tmhasolid, 'long_name', 41, 'H-alpha emissivity, SOL above the x-point')
-    iret = nf_put_att_text(ncid, tmhasolid, 'units', 19, 'photons.m^-2.sr^-1?')
-    iret = nf_put_att_text(ncid, tmhadivid, 'long_name', 35, 'H-alpha emissivity, divertor region')
-    iret = nf_put_att_text(ncid, tmhadivid, 'units', 19, 'photons.m^-2.sr^-1?')
-    iret = nf_put_att_text(ncid, fnisipid, 'long_name', 54, 'poloidal particle flux, into inboard separatrix throat')
-    iret = nf_put_att_text(ncid, fnisipid, 'units', 4, 's^-1')
-    iret = nf_put_att_text(ncid, feesipid, 'long_name', 61, 'poloidal electron energy flux, into inboard separatrix throat')
-    iret = nf_put_att_text(ncid, feesipid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, feisipid, 'long_name', 56, 'poloidal ion energy flux, into inboard separatrix throat')
-    iret = nf_put_att_text(ncid, feisipid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fetsipid, 'long_name', 58, 'poloidal total energy flux, into inboard separatrix throat')
-    iret = nf_put_att_text(ncid, fetsipid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fchsipid, 'long_name', 48, 'poloidal current, into inboard separatrix throat')
-    iret = nf_put_att_text(ncid, fchsipid, 'units', 2, 'A ')
-    iret = nf_put_att_text(ncid, fnisapid, 'long_name', 55, 'poloidal particle flux, into outboard separatrix throat')
-    iret = nf_put_att_text(ncid, fnisapid, 'units', 4, 's^-1')
-    iret = nf_put_att_text(ncid, feesapid, 'long_name', 62, 'poloidal electron energy flux, into outboard separaatrix throat')
-    iret = nf_put_att_text(ncid, feesapid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, feisapid, 'long_name', 57, 'poloidal ion energy flux, into outboard separatrix throat')
-    iret = nf_put_att_text(ncid, feisapid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fetsapid, 'long_name', 59, 'poloidal total energy flux, into outboard separatrix throat')
-    iret = nf_put_att_text(ncid, fetsapid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fchsapid, 'long_name', 49, 'poloidal current, into outboard separatrix throat')
-    iret = nf_put_att_text(ncid, fchsapid, 'units', 2, 'A ')
-    iret = nf_put_att_text(ncid, fnisippid, 'long_name', 40, 'poloidal particle flux, core x-pt region')
-    iret = nf_put_att_text(ncid, fnisippid, 'units', 4, 's^-1')
-    iret = nf_put_att_text(ncid, feesippid, 'long_name', 52, 'poloidal electron energy flux, core x-pt flux region')
-    iret = nf_put_att_text(ncid, feesippid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, feisippid, 'long_name', 47, 'poloidal ion energy flux, core x-pt flux region')
-    iret = nf_put_att_text(ncid, feisippid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fetsippid, 'long_name', 49, 'poloidal total energy flux, core x-pt flux region')
-    iret = nf_put_att_text(ncid, fetsippid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fchsippid, 'long_name', 39, 'poloidal current, core x-pt flux region')
-    iret = nf_put_att_text(ncid, fchsippid, 'units', 2, 'A ')
-    iret = nf_put_att_text(ncid, fnisappid, 'long_name', 48, 'poloidal particle flux, x-pt private flux region')
-    iret = nf_put_att_text(ncid, fnisappid, 'units', 4, 's^-1')
-    iret = nf_put_att_text(ncid, feesappid, 'long_name', 55, 'poloidal electron energy flux, x-pt private flux region')
-    iret = nf_put_att_text(ncid, feesappid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, feisappid, 'long_name', 50, 'poloidal ion energy flux, x-pt private flux region')
-    iret = nf_put_att_text(ncid, feisappid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fetsappid, 'long_name', 52, 'poloidal total energy flux, x-pt private flux region')
-    iret = nf_put_att_text(ncid, fetsappid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fchsappid, 'long_name', 42, 'poloidal current, x-pt private flux region')
-    iret = nf_put_att_text(ncid, fchsappid, 'units', 2, 'A ')
+      iret = nf_put_att_text(ncid, nesepaid, 'long_name', 46, 'separatrix electron density, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nesepaid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tesepaid, 'long_name', 50, 'separatrix electron temperature, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tesepaid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tisepaid, 'long_name', 45, 'separatrix ion temperature, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tisepaid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tpsepaid, 'long_name', 47, 'separatrix plate temperature, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tpsepaid, 'units', 2, 'K ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, posepaid, 'long_name', 43, 'separatrix potential, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, posepaid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nemxipid, 'long_name', 42, 'maximum electron density, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nemxipid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, temxipid, 'long_name', 46, 'maximum electron temperature, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, temxipid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, timxipid, 'long_name', 41, 'maximum ion temperature, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, timxipid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tpmxipid, 'long_name', 43, 'maximum plate temperature, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tpmxipid, 'units', 2, 'K ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, pomxipid, 'long_name', 35, 'maximum potential, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, pomxipid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nemxapid, 'long_name', 43, 'maximum electron density, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, nemxapid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, temxapid, 'long_name', 47, 'maximum electron temperature, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, temxapid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, timxapid, 'long_name', 43, 'maximum ion temperature, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, timxapid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tpmxapid, 'long_name', 45, 'maximum plate temperature, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tpmxapid, 'units', 2, 'K ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, pomxapid, 'long_name', 37, 'maximum potential, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, pomxapid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fniyipid, 'long_name', 45, 'integrated radial particle flux, main chamber')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fniyipid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feeyipid, 'long_name', 52, 'integrated radial electron energy flux, main chamber')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feeyipid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feiyipid, 'long_name', 47, 'integrated radial ion energy flux, main chamber')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feiyipid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetyipid, 'long_name', 47, 'integrated radial tot energy flux, main chamber')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetyipid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchyipid, 'long_name', 39, 'integrated radial current, main chamber')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchyipid, 'units', 2, 'A ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fniyapid, 'long_name', 48, 'integrated radial particle flux, divertor region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fniyapid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feeyapid, 'long_name', 55, 'integrated radial electron energy flux, divertor region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feeyapid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feiyapid, 'long_name', 50, 'integrated radial ion energy flux, divertor region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feiyapid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetyapid, 'long_name', 50, 'integrated radial tot energy flux, divertor region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetyapid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchyapid, 'long_name', 42, 'integrated radial current, divertor region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchyapid, 'units', 2, 'A ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, pwmxipid, 'long_name', 42, 'maximum total power flux, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, pwmxipid, 'units', 6, 'W.m^-2')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, pwmxapid, 'long_name', 43, 'maximum total power flux, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, pwmxapid, 'units', 6, 'W.m^-2')
+      call check_cdf_status(iret)
 
-    ! inboard divertor quantities
-    iret = nf_put_att_text(ncid, ne3dlid, 'long_name', 34, 'electron density, inboard divertor')
-    iret = nf_put_att_text(ncid, ne3dlid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, te3dlid, 'long_name', 38, 'electron temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, te3dlid, 'units', 2, 'eV')
-    iret = nf_put_att_double(ncid, te3dlid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, ti3dlid, 'long_name', 33, 'ion temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, ti3dlid, 'units', 2, 'eV')
-    iret = nf_put_att_double(ncid, ti3dlid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, tp3dlid, 'long_name', 35, 'plate temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tp3dlid, 'units', 2, 'K ')
-    iret = nf_put_att_text(ncid, po3dlid, 'long_name', 26, 'potential, inboard divertor')
-    iret = nf_put_att_text(ncid, po3dlid, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, an3dlid, 'long_name', 30, 'atom density, inboard divertor')
-    iret = nf_put_att_text(ncid, an3dlid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, mn3dlid, 'long_name', 34, 'molecule density, inboard divertor')
-    iret = nf_put_att_text(ncid, mn3dlid, 'units', 4, 'm^-3')
-    dvals(1) = -1.0_R8
-    iret = nf_put_att_text(ncid, fn3dlid, 'long_name', 44, 'poloidal main species flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fn3dlid, 'units', 4, 's^-1')
-    iret = nf_put_att_double(ncid, fn3dlid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, fl3dlid, 'long_name', 40, 'poloidal electron flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fl3dlid, 'units', 4, 's^-1')
-    iret = nf_put_att_double(ncid, fl3dlid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, fo3dlid, 'long_name', 35, 'poloidal ion flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fo3dlid, 'units', 4, 's^-1')
-    iret = nf_put_att_double(ncid, fo3dlid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, fe3dlid, 'long_name', 47, 'poloidal electron energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fe3dlid, 'units', 2, 'W ')
-    iret = nf_put_att_double(ncid, fe3dlid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, fi3dlid, 'long_name', 42, 'poloidal ion energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fi3dlid, 'units', 2, 'W ')
-    iret = nf_put_att_double(ncid, fi3dlid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, ft3dlid, 'long_name', 44, 'poloidal total energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, ft3dlid, 'units', 2, 'W ')
-    iret = nf_put_att_double(ncid, ft3dlid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, fc3dlid, 'long_name', 35, 'poloidal current, inboard divertor')
-    iret = nf_put_att_text(ncid, fc3dlid, 'units', 2, 'A ')
-    iret = nf_put_att_double(ncid, fc3dlid, 'scale', NCDOUBLE, 1, dvals(1))
-    ! inboard midplane quantities
-    iret = nf_put_att_text(ncid, ne3diid, 'long_name', 34, 'electron density, inboard midplane')
-    iret = nf_put_att_text(ncid, ne3diid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, te3diid, 'long_name', 38, 'electron temperature, inboard midplane')
-    dvals(1) = 1.0_R8/ev
-    iret = nf_put_att_text(ncid, te3diid, 'units', 2, 'eV')
-    iret = nf_put_att_double(ncid, te3diid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, ti3diid, 'long_name', 33, 'ion temperature, inboard midplane')
-    iret = nf_put_att_text(ncid, ti3diid, 'units', 2, 'eV')
-    iret = nf_put_att_double(ncid, ti3diid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, po3diid, 'long_name', 27, 'potential, inboard midplane')
-    iret = nf_put_att_text(ncid, po3diid, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, an3diid, 'long_name', 30, 'atom density, inboard midplane')
-    iret = nf_put_att_text(ncid, an3diid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, mn3diid, 'long_name', 34, 'molecule density, inboard midplane')
-    iret = nf_put_att_text(ncid, mn3diid, 'units', 4, 'm^-3')
+      ! global quantities
+      iret = nf_put_att_text(ncid, tmneid, 'long_name', 25, 'total number of particles')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tmneid, 'units', 2, '  ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tmteid, 'long_name', 21, 'total electron energy')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tmteid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tmtiid, 'long_name', 16, 'total ion energy')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tmtiid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tmhacoreid, 'long_name', 24, 'H-alpha emissivity, core')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tmhacoreid, 'units', 19, 'photons.m^-2.sr^-1?')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tmhasolid, 'long_name', 41, 'H-alpha emissivity, SOL above the x-point')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tmhasolid, 'units', 19, 'photons.m^-2.sr^-1?')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tmhadivid, 'long_name', 35, 'H-alpha emissivity, divertor region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tmhadivid, 'units', 19, 'photons.m^-2.sr^-1?')
+      call check_cdf_status(iret)
 
-    iret = nf_put_att_text(ncid, dn3diid, 'long_name', 39, 'diffusion coefficient, inboard midplane')
-    iret = nf_put_att_text(ncid, dn3diid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, dp3diid, 'long_name', 48, 'pressure diffusion coefficient, inboard midplane')
-    iret = nf_put_att_text(ncid, dp3diid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, lh3diid, 'long_name', 50, 'radial neutral heat flux limiter, inboard midplane')
-    iret = nf_put_att_text(ncid, lh3diid, 'units', 1, ' ')
-    iret = nf_put_att_text(ncid, ln3diid, 'long_name', 50, 'radial neutral part flux limiter, inboard midplane')
-    iret = nf_put_att_text(ncid, ln3diid, 'units', 1, ' ')
-    iret = nf_put_att_text(ncid, ke3diid, 'long_name', 46, 'electron thermal diffusivity, inboard midplane')
-    iret = nf_put_att_text(ncid, ke3diid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, ki3diid, 'long_name', 41, 'ion thermal diffusivity, inboard midplane')
-    iret = nf_put_att_text(ncid, ki3diid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, vx3diid, 'long_name', 41, 'poloidal pinch velocity, inboard midplane')
-    iret = nf_put_att_text(ncid, vx3diid, 'units', 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vy3diid, 'long_name', 39, 'radial pinch velocity, inboard midplane')
-    iret = nf_put_att_text(ncid, vy3diid, 'units', 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vs3diid, 'long_name', 39, 'viscosity coefficient, inboard midplane')
-    iret = nf_put_att_text(ncid, vs3diid, 'units', 12, 'm.kg^-1.s^-1')
+      ! internal flux quantities
+      iret = nf_put_att_text(ncid, fnisipid, 'long_name', 54, 'poloidal particle flux, into inboard separatrix throat')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fnisipid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feesipid, 'long_name', 61, 'poloidal electron energy flux, into inboard separatrix throat')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feesipid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feisipid, 'long_name', 56, 'poloidal ion energy flux, into inboard separatrix throat')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feisipid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetsipid, 'long_name', 58, 'poloidal total energy flux, into inboard separatrix throat')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetsipid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchsipid, 'long_name', 48, 'poloidal current, into inboard separatrix throat')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchsipid, 'units', 2, 'A ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fnisapid, 'long_name', 55, 'poloidal particle flux, into outboard separatrix throat')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fnisapid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feesapid, 'long_name', 62, 'poloidal electron energy flux, into outboard separaatrix throat')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feesapid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feisapid, 'long_name', 57, 'poloidal ion energy flux, into outboard separatrix throat')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feisapid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetsapid, 'long_name', 59, 'poloidal total energy flux, into outboard separatrix throat')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetsapid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchsapid, 'long_name', 49, 'poloidal current, into outboard separatrix throat')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchsapid, 'units', 2, 'A ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fnisippid, 'long_name', 40, 'poloidal particle flux, core x-pt region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fnisippid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feesippid, 'long_name', 52, 'poloidal electron energy flux, core x-pt flux region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feesippid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feisippid, 'long_name', 47, 'poloidal ion energy flux, core x-pt flux region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feisippid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetsippid, 'long_name', 49, 'poloidal total energy flux, core x-pt flux region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetsippid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchsippid, 'long_name', 39, 'poloidal current, core x-pt flux region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchsippid, 'units', 2, 'A ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fnisappid, 'long_name', 48, 'poloidal particle flux, x-pt private flux region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fnisappid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feesappid, 'long_name', 55, 'poloidal electron energy flux, x-pt private flux region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feesappid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feisappid, 'long_name', 50, 'poloidal ion energy flux, x-pt private flux region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, feisappid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetsappid, 'long_name', 52, 'poloidal total energy flux, x-pt private flux region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fetsappid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchsappid, 'long_name', 42, 'poloidal current, x-pt private flux region')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fchsappid, 'units', 2, 'A ')
+      call check_cdf_status(iret)
 
-    ! upper inboard divertor quantities
-    if(nytl.gt.0) then
-      iret = nf_put_att_text(ncid, ne3dtlid, 'long_name', 40, 'electron density, upper inboard divertor')
-      iret = nf_put_att_text(ncid, ne3dtlid, 'units', 4, 'm^-3')
-      iret = nf_put_att_text(ncid, te3dtlid, 'long_name', 44, 'electron temperature, upper inboard divertor')
-      iret = nf_put_att_text(ncid, te3dtlid, 'units', 2, 'eV')
-      iret = nf_put_att_double(ncid, te3dtlid, 'scale', NCDOUBLE, 1, dvals(1))
-      iret = nf_put_att_text(ncid, ti3dtlid, 'long_name', 39, 'ion temperature, upper inboard divertor')
-      iret = nf_put_att_text(ncid, ti3dtlid, 'units', 2, 'eV')
-      iret = nf_put_att_double(ncid, ti3dtlid, 'scale', NCDOUBLE, 1, dvals(1))
-      iret = nf_put_att_text(ncid, tp3dtlid, 'long_name', 41, 'plate temperature, upper inboard divertor')
-      iret = nf_put_att_text(ncid, tp3dtlid, 'units', 2, 'K ')
-      iret = nf_put_att_text(ncid, po3dtlid, 'long_name', 32, 'potential, upper inboard divertor')
-      iret = nf_put_att_text(ncid, po3dtlid, 'units', 2, 'V ')
-      iret = nf_put_att_text(ncid, an3dtlid, 'long_name', 36, 'atom density, upper inboard divertor')
-      iret = nf_put_att_text(ncid, an3dtlid, 'units', 4, 'm^-3')
-      iret = nf_put_att_text(ncid, mn3dtlid, 'long_name', 40, 'molecule density, upper inboard divertor')
-      iret = nf_put_att_text(ncid, mn3dtlid, 'units', 4, 'm^-3')
-      iret = nf_put_att_text(ncid, fn3dtlid, 'long_name', 50, 'poloidal main species flux, upper inboard divertor')
-      iret = nf_put_att_text(ncid, fn3dtlid, 'units', 4, 's^-1')
-      iret = nf_put_att_text(ncid, fl3dtlid, 'long_name', 46, 'poloidal electron flux, inboard divertor')
-      iret = nf_put_att_text(ncid, fl3dtlid, 'units', 4, 's^-1')
-      iret = nf_put_att_text(ncid, fo3dtlid, 'long_name', 41, 'poloidal ion flux, upper inboard divertor')
-      iret = nf_put_att_text(ncid, fo3dtlid, 'units', 4, 's^-1')
-      iret = nf_put_att_text(ncid, fe3dtlid, 'long_name', 53, 'poloidal electron energy flux, upper inboard divertor')
-      iret = nf_put_att_text(ncid, fe3dtlid, 'units', 2, 'W ')
-      iret = nf_put_att_text(ncid, fi3dtlid, 'long_name', 48, 'poloidal ion energy flux, upper inboard divertor')
-      iret = nf_put_att_text(ncid, fi3dtlid, 'units', 2, 'W ')
-      iret = nf_put_att_text(ncid, ft3dtlid, 'long_name', 50, 'poloidal total energy flux, upper inboard divertor')
-      iret = nf_put_att_text(ncid, ft3dtlid, 'units', 2, 'W ')
-      iret = nf_put_att_text(ncid, fc3dtlid, 'long_name', 41, 'poloidal current, upper inboard divertor')
-      iret = nf_put_att_text(ncid, fc3dtlid, 'units', 2, 'A ')
-    endif
-    ! outboard midplane quantities
-    iret = nf_put_att_text(ncid, ne3daid, 'long_name', 35, 'electron density, outboard midplane')
-    iret = nf_put_att_text(ncid, ne3daid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, te3daid, 'long_name', 39, 'electron temperature, outboard midplane')
-    iret = nf_put_att_text(ncid, te3daid, 'units', 2, 'eV')
-    iret = nf_put_att_double(ncid, te3daid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, ti3daid, 'long_name', 34, 'ion temperature, outboard midplane')
-    iret = nf_put_att_text(ncid, ti3daid, 'units', 2, 'eV')
-    iret = nf_put_att_double(ncid, ti3daid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, po3daid, 'long_name', 28, 'potential, outboard midplane')
-    iret = nf_put_att_text(ncid, po3daid, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, an3daid, 'long_name', 31, 'atom density, outboard midplane')
-    iret = nf_put_att_text(ncid, an3daid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, mn3daid, 'long_name', 35, 'molecule density, outboard midplane')
-    iret = nf_put_att_text(ncid, mn3daid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, dn3daid, 'long_name', 40, 'diffusion coefficient, outboard midplane')
-    iret = nf_put_att_text(ncid, dn3daid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, dp3daid, 'long_name', 49, 'pressure diffusion coefficient, outboard midplane')
-    iret = nf_put_att_text(ncid, dp3daid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, lh3daid, 'long_name', 51, 'radial neutral heat flux limiter, outboard midplane')
-    iret = nf_put_att_text(ncid, lh3daid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, ln3daid, 'long_name', 51, 'radial neutral part flux limiter, outboard midplane')
-    iret = nf_put_att_text(ncid, ln3daid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, ke3daid, 'long_name', 47, 'electron thermal diffusivity, outboard midplane')
-    iret = nf_put_att_text(ncid, ke3daid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, ki3daid, 'long_name', 42, 'ion thermal diffusivity, outboard midplane')
-    iret = nf_put_att_text(ncid, ki3daid, 'units', 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, vx3daid, 'long_name', 42, 'poloidal pinch velocity, outboard midplane')
-    iret = nf_put_att_text(ncid, vx3daid, 'units', 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vy3daid, 'long_name', 40, 'radial pinch velocity, outboard midplane')
-    iret = nf_put_att_text(ncid, vy3daid, 'units', 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vs3daid, 'long_name', 40, 'viscosity coefficient, outboard midplane')
-    iret = nf_put_att_text(ncid, vs3daid, 'units', 12, 'm.kg^-1.s^-1')
-    ! outboard divertor quantities
-    iret = nf_put_att_text(ncid, ne3drid, 'long_name', 35, 'electron density, outboard divertor')
-    iret = nf_put_att_text(ncid, ne3drid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, te3drid, 'long_name', 39, 'electron temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, te3drid, 'units', 2, 'eV')
-    iret = nf_put_att_double(ncid, te3drid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, ti3drid, 'long_name', 34, 'ion temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, ti3drid, 'units', 2, 'eV')
-    iret = nf_put_att_double(ncid, ti3drid, 'scale', NCDOUBLE, 1, dvals(1))
-    iret = nf_put_att_text(ncid, tp3drid, 'long_name', 36, 'plate temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tp3drid, 'units', 2, 'K ')
-    iret = nf_put_att_text(ncid, po3drid, 'long_name', 28, 'potential, outboard divertor')
-    iret = nf_put_att_text(ncid, po3drid, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, an3drid, 'long_name', 31, 'atom density, outboard divertor')
-    iret = nf_put_att_text(ncid, an3drid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, mn3drid, 'long_name', 35, 'molecule density, outboard divertor')
-    iret = nf_put_att_text(ncid, mn3drid, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, fn3drid, 'long_name', 45, 'poloidal main species flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fn3drid, 'units', 4, 's^-1')
-    iret = nf_put_att_text(ncid, fl3drid, 'long_name', 41, 'poloidal electron flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fl3drid, 'units', 4, 's^-1')
-    iret = nf_put_att_text(ncid, fo3drid, 'long_name', 36, 'poloidal ion flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fo3drid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fe3drid, 'long_name', 48, 'poloidal electron energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fe3drid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fi3drid, 'long_name', 43, 'poloidal ion energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fi3drid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, ft3drid, 'long_name', 45, 'poloidal total energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, ft3drid, 'units', 2, 'W ')
-    iret = nf_put_att_text(ncid, fc3drid, 'long_name', 36, 'poloidal current, outboard divertor')
-    iret = nf_put_att_text(ncid, fc3drid, 'units', 2, 'A ')
-    ! upper outboard divertor quantities
-    if(nytr.gt.0) then
-      iret = nf_put_att_text(ncid, ne3dtrid, 'long_name', 41, 'electron density, upper outboard divertor')
-      iret = nf_put_att_text(ncid, ne3dtrid, 'units', 4, 'm^-3')
-      iret = nf_put_att_text(ncid, te3dtrid, 'long_name', 45, 'electron temperature, upper outboard divertor')
-      iret = nf_put_att_text(ncid, te3dtrid, 'units', 2, 'eV')
-      iret = nf_put_att_double(ncid, te3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
-      iret = nf_put_att_text(ncid, ti3dtrid, 'long_name', 40, 'ion temperature, upper outboard divertor')
-      iret = nf_put_att_text(ncid, ti3dtrid, 'units', 2, 'eV')
-      iret = nf_put_att_double(ncid, ti3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
-      iret = nf_put_att_text(ncid, tp3dtrid, 'long_name', 42, 'plate temperature, upper outboard divertor')
-      iret = nf_put_att_text(ncid, tp3dtrid, 'units', 2, 'K ')
-      iret = nf_put_att_text(ncid, po3dtrid, 'long_name', 34, 'potential, upper outboard divertor')
-      iret = nf_put_att_text(ncid, po3dtrid, 'units', 2, 'V ')
-      iret = nf_put_att_text(ncid, an3dtrid, 'long_name', 37, 'atom density, upper outboard divertor')
-      iret = nf_put_att_text(ncid, an3dtrid, 'units', 4, 'm^-3')
-      iret = nf_put_att_text(ncid, mn3dtrid, 'long_name', 41, 'molecule density, upper outboard divertor')
-      iret = nf_put_att_text(ncid, mn3dtrid, 'units', 4, 'm^-3')
+      ! inboard divertor quantities
+      iret = nf_put_att_text(ncid, ne3dlid, 'long_name', 34, 'electron density, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ne3dlid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, te3dlid, 'long_name', 38, 'electron temperature, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, te3dlid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, te3dlid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ti3dlid, 'long_name', 33, 'ion temperature, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ti3dlid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, ti3dlid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tp3dlid, 'long_name', 35, 'plate temperature, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tp3dlid, 'units', 2, 'K ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, po3dlid, 'long_name', 26, 'potential, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, po3dlid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, an3dlid, 'long_name', 30, 'atom density, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, an3dlid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, mn3dlid, 'long_name', 34, 'molecule density, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, mn3dlid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
       dvals(1) = -1.0_R8
-      iret = nf_put_att_text(ncid, fn3dtrid, 'long_name', 51, 'poloidal main species flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fn3dtrid, 'units', 4, 's^-1')
-      iret = nf_put_att_double(ncid, fn3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
-      iret = nf_put_att_text(ncid, fl3dtrid, 'long_name', 47, 'poloidal electron flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fl3dtrid, 'units', 4, 's^-1')
-      iret = nf_put_att_double(ncid, fl3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
-      iret = nf_put_att_text(ncid, fo3dtrid, 'long_name', 42, 'poloidal ion flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fo3dtrid, 'units', 2, 'W ')
-      iret = nf_put_att_double(ncid, fo3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
-      iret = nf_put_att_text(ncid, fe3dtrid, 'long_name', 54, 'poloidal electron energy flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fe3dtrid, 'units', 2, 'W ')
-      iret = nf_put_att_double(ncid, fe3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
-      iret = nf_put_att_text(ncid, fi3dtrid, 'long_name', 49, 'poloidal ion energy flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fi3dtrid, 'units', 2, 'W ')
-      iret = nf_put_att_double(ncid, fi3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
-      iret = nf_put_att_text(ncid, ft3dtrid, 'long_name', 51, 'poloidal total energy flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, ft3dtrid, 'units', 2, 'W ')
-      iret = nf_put_att_double(ncid, ft3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
-      iret = nf_put_att_text(ncid, fc3dtrid, 'long_name', 42, 'poloidal current, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fc3dtrid, 'units', 2, 'A ')
-      iret = nf_put_att_double(ncid, fc3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+      iret = nf_put_att_text(ncid, fn3dlid, 'long_name', 44, 'poloidal main species flux, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fn3dlid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, fn3dlid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fl3dlid, 'long_name', 40, 'poloidal electron flux, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fl3dlid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, fl3dlid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fo3dlid, 'long_name', 35, 'poloidal ion flux, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fo3dlid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, fo3dlid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fe3dlid, 'long_name', 47, 'poloidal electron energy flux, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fe3dlid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, fe3dlid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fi3dlid, 'long_name', 42, 'poloidal ion energy flux, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fi3dlid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, fi3dlid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ft3dlid, 'long_name', 44, 'poloidal total energy flux, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ft3dlid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, ft3dlid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fc3dlid, 'long_name', 35, 'poloidal current, inboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fc3dlid, 'units', 2, 'A ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, fc3dlid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+
+      ! inboard midplane quantities
+      iret = nf_put_att_text(ncid, ne3diid, 'long_name', 34, 'electron density, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ne3diid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, te3diid, 'long_name', 38, 'electron temperature, inboard midplane')
+      call check_cdf_status(iret)
+      dvals(1) = 1.0_R8/ev
+      iret = nf_put_att_text(ncid, te3diid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, te3diid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ti3diid, 'long_name', 33, 'ion temperature, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ti3diid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, ti3diid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, po3diid, 'long_name', 27, 'potential, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, po3diid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, an3diid, 'long_name', 30, 'atom density, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, an3diid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, mn3diid, 'long_name', 34, 'molecule density, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, mn3diid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, dn3diid, 'long_name', 39, 'diffusion coefficient, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, dn3diid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, dp3diid, 'long_name', 48, 'pressure diffusion coefficient, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, dp3diid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, lh3diid, 'long_name', 50, 'radial neutral heat flux limiter, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, lh3diid, 'units', 1, ' ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ln3diid, 'long_name', 50, 'radial neutral part flux limiter, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ln3diid, 'units', 1, ' ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ke3diid, 'long_name', 46, 'electron thermal diffusivity, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ke3diid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ki3diid, 'long_name', 41, 'ion thermal diffusivity, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ki3diid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vx3diid, 'long_name', 41, 'poloidal pinch velocity, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vx3diid, 'units', 6, 'm.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vy3diid, 'long_name', 39, 'radial pinch velocity, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vy3diid, 'units', 6, 'm.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vs3diid, 'long_name', 39, 'viscosity coefficient, inboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vs3diid, 'units', 12, 'm.kg^-1.s^-1')
+      call check_cdf_status(iret)
+
+      ! upper inboard divertor quantities
+      if(nytl.gt.0) then
+        iret = nf_put_att_text(ncid, ne3dtlid, 'long_name', 40, 'electron density, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ne3dtlid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, te3dtlid, 'long_name', 44, 'electron temperature, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, te3dtlid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, te3dtlid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ti3dtlid, 'long_name', 39, 'ion temperature, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ti3dtlid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, ti3dtlid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tp3dtlid, 'long_name', 41, 'plate temperature, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tp3dtlid, 'units', 2, 'K ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, po3dtlid, 'long_name', 32, 'potential, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, po3dtlid, 'units', 2, 'V ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, an3dtlid, 'long_name', 36, 'atom density, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, an3dtlid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, mn3dtlid, 'long_name', 40, 'molecule density, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, mn3dtlid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fn3dtlid, 'long_name', 50, 'poloidal main species flux, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fn3dtlid, 'units', 4, 's^-1')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fl3dtlid, 'long_name', 46, 'poloidal electron flux, inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fl3dtlid, 'units', 4, 's^-1')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fo3dtlid, 'long_name', 41, 'poloidal ion flux, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fo3dtlid, 'units', 4, 's^-1')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fe3dtlid, 'long_name', 53, 'poloidal electron energy flux, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fe3dtlid, 'units', 2, 'W ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fi3dtlid, 'long_name', 48, 'poloidal ion energy flux, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fi3dtlid, 'units', 2, 'W ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ft3dtlid, 'long_name', 50, 'poloidal total energy flux, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ft3dtlid, 'units', 2, 'W ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fc3dtlid, 'long_name', 41, 'poloidal current, upper inboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fc3dtlid, 'units', 2, 'A ')
+        call check_cdf_status(iret)
+      endif
+
+      ! outboard midplane quantities
+      iret = nf_put_att_text(ncid, ne3daid, 'long_name', 35, 'electron density, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ne3daid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, te3daid, 'long_name', 39, 'electron temperature, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, te3daid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, te3daid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ti3daid, 'long_name', 34, 'ion temperature, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ti3daid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, ti3daid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, po3daid, 'long_name', 28, 'potential, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, po3daid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, an3daid, 'long_name', 31, 'atom density, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, an3daid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, mn3daid, 'long_name', 35, 'molecule density, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, mn3daid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, dn3daid, 'long_name', 40, 'diffusion coefficient, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, dn3daid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, dp3daid, 'long_name', 49, 'pressure diffusion coefficient, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, dp3daid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, lh3daid, 'long_name', 51, 'radial neutral heat flux limiter, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, lh3daid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ln3daid, 'long_name', 51, 'radial neutral part flux limiter, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ln3daid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ke3daid, 'long_name', 47, 'electron thermal diffusivity, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ke3daid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ki3daid, 'long_name', 42, 'ion thermal diffusivity, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ki3daid, 'units', 8, 'm^2.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vx3daid, 'long_name', 42, 'poloidal pinch velocity, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vx3daid, 'units', 6, 'm.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vy3daid, 'long_name', 40, 'radial pinch velocity, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vy3daid, 'units', 6, 'm.s^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vs3daid, 'long_name', 40, 'viscosity coefficient, outboard midplane')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, vs3daid, 'units', 12, 'm.kg^-1.s^-1')
+      call check_cdf_status(iret)
+
+      ! outboard divertor quantities
+      iret = nf_put_att_text(ncid, ne3drid, 'long_name', 35, 'electron density, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ne3drid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, te3drid, 'long_name', 39, 'electron temperature, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, te3drid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, te3drid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ti3drid, 'long_name', 34, 'ion temperature, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ti3drid, 'units', 2, 'eV')
+      call check_cdf_status(iret)
+      iret = nf_put_att_double(ncid, ti3drid, 'scale', NCDOUBLE, 1, dvals(1))
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tp3drid, 'long_name', 36, 'plate temperature, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, tp3drid, 'units', 2, 'K ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, po3drid, 'long_name', 28, 'potential, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, po3drid, 'units', 2, 'V ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, an3drid, 'long_name', 31, 'atom density, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, an3drid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, mn3drid, 'long_name', 35, 'molecule density, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, mn3drid, 'units', 4, 'm^-3')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fn3drid, 'long_name', 45, 'poloidal main species flux, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fn3drid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fl3drid, 'long_name', 41, 'poloidal electron flux, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fl3drid, 'units', 4, 's^-1')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fo3drid, 'long_name', 36, 'poloidal ion flux, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fo3drid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fe3drid, 'long_name', 48, 'poloidal electron energy flux, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fe3drid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fi3drid, 'long_name', 43, 'poloidal ion energy flux, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fi3drid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ft3drid, 'long_name', 45, 'poloidal total energy flux, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, ft3drid, 'units', 2, 'W ')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fc3drid, 'long_name', 36, 'poloidal current, outboard divertor')
+      call check_cdf_status(iret)
+      iret = nf_put_att_text(ncid, fc3drid, 'units', 2, 'A ')
+      call check_cdf_status(iret)
+
+      ! upper outboard divertor quantities
+      if(nytr.gt.0) then
+        iret = nf_put_att_text(ncid, ne3dtrid, 'long_name', 41, 'electron density, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ne3dtrid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, te3dtrid, 'long_name', 45, 'electron temperature, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, te3dtrid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, te3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ti3dtrid, 'long_name', 40, 'ion temperature, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ti3dtrid, 'units', 2, 'eV')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, ti3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tp3dtrid, 'long_name', 42, 'plate temperature, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, tp3dtrid, 'units', 2, 'K ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, po3dtrid, 'long_name', 34, 'potential, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, po3dtrid, 'units', 2, 'V ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, an3dtrid, 'long_name', 37, 'atom density, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, an3dtrid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, mn3dtrid, 'long_name', 41, 'molecule density, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, mn3dtrid, 'units', 4, 'm^-3')
+        call check_cdf_status(iret)
+        dvals(1) = -1.0_R8
+        iret = nf_put_att_text(ncid, fn3dtrid, 'long_name', 51, 'poloidal main species flux, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fn3dtrid, 'units', 4, 's^-1')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, fn3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fl3dtrid, 'long_name', 47, 'poloidal electron flux, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fl3dtrid, 'units', 4, 's^-1')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, fl3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fo3dtrid, 'long_name', 42, 'poloidal ion flux, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fo3dtrid, 'units', 2, 'W ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, fo3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fe3dtrid, 'long_name', 54, 'poloidal electron energy flux, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fe3dtrid, 'units', 2, 'W ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, fe3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fi3dtrid, 'long_name', 49, 'poloidal ion energy flux, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fi3dtrid, 'units', 2, 'W ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, fi3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ft3dtrid, 'long_name', 51, 'poloidal total energy flux, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, ft3dtrid, 'units', 2, 'W ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, ft3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fc3dtrid, 'long_name', 42, 'poloidal current, upper outboard divertor')
+        call check_cdf_status(iret)
+        iret = nf_put_att_text(ncid, fc3dtrid, 'units', 2, 'A ')
+        call check_cdf_status(iret)
+        iret = nf_put_att_double(ncid, fc3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
+        call check_cdf_status(iret)
+      endif
     endif
 
     !wdk averaged quantities
     iret = nf_put_att_text(ncid, nesepm_avid, 'long_name', 52, 'averaged separatrix electron density, outer midplane')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nesepm_avid, 'units', 4, 'm^-3')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepm_avid, 'long_name', 56, 'averaged separatrix electron temperature, outer midplane')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepm_avid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepm_avid, 'long_name', 51, 'averaged separatrix ion temperature, outer midplane')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepm_avid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepm_avid, 'long_name', 45, 'averaged separatrix potential, outer midplane')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepm_avid, 'units', 2, 'V ')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nesepi_avid, 'long_name', 54, 'averaged separatrix electron density, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nesepi_avid, 'units', 4, 'm^-3')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepi_avid, 'long_name', 58, 'averaged separatrix electron temperature, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepi_avid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepi_avid, 'long_name', 53, 'averaged separatrix ion temperature, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepi_avid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepi_avid, 'long_name', 47, 'averaged separatrix potential, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepi_avid, 'units', 2, 'V ')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nesepa_avid, 'long_name', 55, 'averaged separatrix electron density, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nesepa_avid, 'units', 4, 'm^-3')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepa_avid, 'long_name', 59, 'averaged separatrix electron temperature, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepa_avid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepa_avid, 'long_name', 54, 'averaged separatrix ion temperature, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepa_avid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepa_avid, 'long_name', 52, 'averaged separatrix potential, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepa_avid, 'units', 2, 'V ')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nemxip_avid, 'long_name', 51, 'averaged maximum electron density, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nemxip_avid, 'units', 4, 'm^-3')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, temxip_avid, 'long_name', 55, 'averaged maximum electron temperature, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, temxip_avid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, timxip_avid, 'long_name', 50, 'averaged maximum ion temperature, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, timxip_avid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, pomxip_avid, 'long_name', 44, 'averaged maximum potential, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, pomxip_avid, 'units', 2, 'V ')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nemxap_avid, 'long_name', 52, 'averaged maximum electron density, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nemxap_avid, 'units', 4, 'm^-3')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, temxap_avid, 'long_name', 56, 'averaged maximum electron temperature, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, temxap_avid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, timxap_avid, 'long_name', 52, 'averaged maximum ion temperature, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, timxap_avid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, pomxap_avid, 'long_name', 46, 'averaged maximum potential, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, pomxap_avid, 'units', 2, 'V ')
+    call check_cdf_status(iret)
 
     !wdk standard deviation of averaged quantities
     iret = nf_put_att_text(ncid, nesepm_stdid, 'long_name', 55, 'variance of separatrix electron density, outer midplane')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nesepm_stdid, 'units', 4, 'm^-3')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepm_stdid, 'long_name', 59, 'variance of separatrix electron temperature, outer midplane')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepm_stdid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepm_stdid, 'long_name', 54, 'variance of separatrix ion temperature, outer midplane')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepm_stdid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepm_stdid, 'long_name', 48, 'variance of separatrix potential, outer midplane')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepm_stdid, 'units', 2, 'V ')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nesepi_stdid, 'long_name', 57, 'variance of separatrix electron density, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nesepi_stdid, 'units', 4, 'm^-3')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepi_stdid, 'long_name', 61, 'variance of separatrix electron temperature, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepi_stdid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepi_stdid, 'long_name', 56, 'variance of separatrix ion temperature, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepi_stdid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepi_stdid, 'long_name', 50, 'variance of separatrix potential, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepi_stdid, 'units', 2, 'V ')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nesepa_stdid, 'long_name', 58, 'variance of separatrix electron density, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nesepa_stdid, 'units', 4, 'm^-3')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepa_stdid, 'long_name', 62, 'variance of separatrix electron temperature, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tesepa_stdid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepa_stdid, 'long_name', 57, 'variance of separatrix ion temperature, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, tisepa_stdid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepa_stdid, 'long_name', 55, 'variance of separatrix potential, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, posepa_stdid, 'units', 2, 'V ')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nemxip_stdid, 'long_name', 54, 'variance of maximum electron density, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nemxip_stdid, 'units', 4, 'm^-3')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, temxip_stdid, 'long_name', 58, 'variance of maximum electron temperature, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, temxip_stdid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, timxip_stdid, 'long_name', 53, 'variance of maximum ion temperature, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, timxip_stdid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, pomxip_stdid, 'long_name', 47, 'variance of maximum potential, inboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, pomxip_stdid, 'units', 2, 'V ')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nemxap_stdid, 'long_name', 55, 'variance of maximum electron density, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, nemxap_stdid, 'units', 4, 'm^-3')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, temxap_stdid, 'long_name', 59, 'variance of maximum electron temperature, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, temxap_stdid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, timxap_stdid, 'long_name', 55, 'variance of maximum ion temperature, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, timxap_stdid, 'units', 2, 'eV')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, pomxap_stdid, 'long_name', 49, 'variance of maximum potential, outboard divertor')
+    call check_cdf_status(iret)
     iret = nf_put_att_text(ncid, pomxap_stdid, 'units', 2, 'V ')
+    call check_cdf_status(iret)
 
     ! leave define mode
     iret = nf_enddef(ncid)
+    call check_cdf_status(iret)
     iret = nf_close(ncid)
+    call check_cdf_status(iret)
     return
   end subroutine b2crtimecdf
 
@@ -2186,20 +2998,23 @@ contains
     !
     call subini ('rwcdf')
     iret = nf_inq_varid(ncid,data_name,varid)
-    if(iret.ne.0) Then
-      Write(*,*) 'Error: Could not inquire data_name: ',Trim(data_name)
+    call check_cdf_status(iret)
+    if(iret.ne.0) then
+      write(*,*) 'Error: Could not inquire data_name: ',trim(data_name)
       call xerrab('Data name not declared')
-    Endif
-    If (debug) Write(*,*) "Subroutine rwcdf in mode: ", rw
-    If (debug) Write(*,*) "Working on variable: ", data_name
+    endif
+    if (debug) write(*,*) "Subroutine rwcdf in mode: ", rw
+    if (debug) write(*,*) "Working on variable: ", data_name
     iret = nf_inq_varndims(ncid,varid,nvdims)
-    If (debug) Write(*,*) "Variable has nvdims=", nvdims
-    If (debug) Write(*,*) "Input imap(:)=", imap(1:nvdims)
+    if (debug) write(*,*) "Variable has nvdims=", nvdims
+    if (debug) write(*,*) "Input imap(:)=", imap(1:nvdims)
     iret = nf_inq_vardimid(ncid,varid,dimids)
+    call check_cdf_status(iret)
     mycount(1) = 1 ! for scalars
     start(1) = 1
     do i=1,nvdims
       iret = nf_inq_dim(ncid,dimids(i),dimnam,dimlen)
+      call check_cdf_status(iret)
       mycount(i) = dimlen
       if(dimnam.eq.timsav) then
         start(i)=ntsav
@@ -2211,40 +3026,43 @@ contains
         start(i)=1
       endif
     enddo
-    If (debug) Write(*,*) "start(:)=", start(1:nvdims)
-    If (debug) Write(*,*) "mycount(:)=", mycount(1:nvdims)
+    if (debug) write(*,*) "start(:)=", start(1:nvdims)
+    if (debug) write(*,*) "mycount(:)=", mycount(1:nvdims)
     istride = 1
     imax = 1
     do i=1,nvdims-1
       istride = istride*imap(i)
       imax = imax*imap(i)*mycount(i)
     enddo
-    If (debug) Write(*,*) "istride=", istride
-    If (debug) Write(*,*) "imax=", imax
+    if (debug) write(*,*) "istride=", istride
+    if (debug) write(*,*) "imax=", imax
     iret = nf_inq_vartype(ncid,varid,vartyp)
+    call check_cdf_status(iret)
     if(rw.eq.'read') then
-      Select Case (vartyp)
-      Case (NCDOUBLE)
+      select case (vartyp)
+      case (NCDOUBLE)
         iret = nf_get_vara_double(ncid,varid,start,mycount,data_set(1:imax:istride))
-      Case Default
+        call check_cdf_status(iret)
+      case default
         call xerrab ('Unknown data type in rwcdf read')
-      End Select
+      end select
     elseif(rw.eq.'write') then
-      Select Case (vartyp)
-      Case (NCDOUBLE)
+      select case (vartyp)
+      case (NCDOUBLE)
         iret = nf_put_vara_double(ncid,varid,start,mycount,data_set(1:imax:istride))
-      Case Default
+        call check_cdf_status(iret)
+      case default
         call xerrab ('Unknown data type in rwcdf write')
-      End Select
+      end select
     else
-      write(*,*) 'Either "read" or "write" must be chosen, not', rw
+      write(*,*) 'Either "read" or "write" must be chosen, not ', rw
     endif
 
     call subend ()
     return
     !
     entry rwcdf_settime(timnam,ntstep)
-    write(*,*) 'Saving ',Trim(timnam),' as the time dimension'
+    write(*,*) 'Saving ',trim(timnam),' as the time dimension'
     write(*,*) 'ntstep = ',ntstep
     timsav=timnam
     ntsav=ntstep
@@ -2320,61 +3138,61 @@ contains
   end subroutine output_ds
 
 
-  Subroutine calc_fet(ix,iy,SIDE,fac_flux,nx,ny,ns,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
-    use b2mod_plasma   , Only : ti, te, fna, fne, fhe, fhi, fch, fhm, fhp
-    use b2mod_indirect , Only : rightix, rightiy, bottomix, bottomiy, topix, topiy, leftix, leftiy
-    use b2mod_external , Only : fhi_ext, pt_ext, ta_ext, ua_ext, am_ext, ns_ext, fa_ext
-    use b2mod_constants , Only : ev, mp
-    Use b2mod_geo , Only : hx, hy, qz, gs
-    Implicit None
-    Integer, Intent(In) :: ix, iy
-    Integer, Intent(In) :: ismain, nx, ny, ns
-    Real(kind=R8), Intent(In) :: BoRiS, fac_flux
-    Real(kind=R8), Intent(Out) :: fet
-    Real(kind=R8), Intent(Out), Optional :: fni0, fee0, fei0, fch0, pwr
-    Character(Len=1) :: SIDE
+  subroutine calc_fet(ix,iy,side,fac_flux,nx,ny,ns,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
+    use b2mod_plasma   , only : ti, te, fna, fne, fhe, fhi, fch, fhm, fhp
+    use b2mod_indirect , only : rightix, rightiy, bottomix, bottomiy, topix, topiy, leftix, leftiy
+    use b2mod_external , only : fhi_ext, pt_ext, ta_ext, ua_ext, am_ext, ns_ext, fa_ext
+    use b2mod_constants , only : ev, mp
+    use b2mod_geo , only : hx, hy, qz, gs
+    implicit none
+    integer, intent(in) :: ix, iy
+    integer, intent(in) :: ismain, nx, ny, ns
+    real(kind=R8), intent(in) :: BoRiS, fac_flux
+    real(kind=R8), intent(out) :: fet
+    real(kind=R8), intent(out), Optional :: fni0, fee0, fei0, fch0, pwr
+    character(len=1) :: side
     ! Local vars
-    Integer :: ix_adj, iy_adj, is, ix_flux, iy_flux, idir
-    Real(kind=R8) :: kintmp, rpttmp, tif, tef, taf
-    Real(kind=R8) :: h(-1:nx,-1:ny)
+    integer :: ix_adj, iy_adj, is, ix_flux, iy_flux, idir
+    real(kind=R8) :: kintmp, rpttmp, tif, tef, taf
+    real(kind=R8) :: h(-1:nx,-1:ny)
     ! computation
 
-    Select Case (SIDE)
-    Case ('l','L')
+    select case (side)
+    case ('l','L')
       ix_flux = rightix(ix,iy) ! Index to cell with flux entering cell
       iy_flux = rightiy(ix,iy)        
       ix_adj  = rightix(ix,iy) ! Index to cell adjacent
       iy_adj  = rightiy(ix,iy)        
       idir = 0                 ! Index in flux variables (x vs y direction)
       h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
-    Case ('r','R')
+    case ('r','R')
       ix_flux = ix
       iy_flux = iy
       ix_adj = leftix(ix,iy)
       iy_adj = leftiy(ix,iy)        
       idir = 0
       h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
-    Case ('t','T')
+    case ('t','T')
       ix_flux = ix
       iy_flux = iy
       ix_adj = bottomix(ix,iy)
       iy_adj = bottomiy(ix,iy)
       idir = 1
       h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
-    Case ('b','B')        
+    case ('b','B')
       ix_flux = topix(ix,iy)
       iy_flux = topiy(ix,iy)
       ix_adj = topix(ix,iy)
       iy_adj = topiy(ix,iy)
       idir = 1
       h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
-    Case Default
-      Call xerrab('Unknown SIDE in calc_fet')
-    End Select
-    If (Present(fni0)) fni0 = fac_flux*fna(ix_flux,iy_flux,idir,ismain)
-    If (Present(fee0)) fee0 = fac_flux*fhe(ix_flux,iy_flux,idir)
-    If (Present(fei0)) fei0 = fac_flux*fhi(ix_flux,iy_flux,idir)
-    If (Present(fch0)) fch0 = fac_flux*fch(ix_flux,iy_flux,idir)
+    case default
+      call xerrab('Unknown side in calc_fet')
+    end select
+    if (present(fni0)) fni0 = fac_flux*fna(ix_flux,iy_flux,idir,ismain)
+    if (present(fee0)) fee0 = fac_flux*fhe(ix_flux,iy_flux,idir)
+    if (present(fei0)) fei0 = fac_flux*fhi(ix_flux,iy_flux,idir)
+    if (present(fch0)) fch0 = fac_flux*fch(ix_flux,iy_flux,idir)
     fet = fac_flux*(fhe(ix_flux,iy_flux,idir) + fhi(ix_flux,iy_flux,idir) + fhi_ext(ix_flux,iy_flux,idir))
     tef = (te(ix_adj,iy_adj)*h(ix,iy)+te(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
     tif = (ti(ix_adj,iy_adj)*h(ix,iy)+ti(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
@@ -2389,10 +3207,10 @@ contains
       taf = (ta_ext(ix_adj,iy_adj,is)*h(ix,iy)+ta_ext(ix,iy,is)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
       fet = fet + fac_flux*(rpttmp*ev + (kintmp+taf)*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,is)
     enddo
-    If (Present(pwr)) pwr = Abs(fet)/gs(ix_flux,iy_flux,idir)
-  End Subroutine calc_fet
+    if (present(pwr)) pwr = Abs(fet)/gs(ix_flux,iy_flux,idir)
+  end subroutine calc_fet
       
-End Module b2mod_mwti
+end module b2mod_mwti
 
 !!!Local Variables:
 !!! mode: f90

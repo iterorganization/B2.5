@@ -1,6 +1,22 @@
+!!-----------------------------------------------------------------------------
+!! DOCUMENTATION:
+!>      @section b2uw_ualio_desc Description
+!!      Module providing main routines for setting processed B2.5 data for
+!!      ITM CPO edge or IMAS edge_profiles, edge_sources and edge_transport IDSs.
+!!
+!!      @detail The data comprises of grid geometry, grid subsets and data
+!!              fields of various quantities.
+!!
+!!      @subsection b2uw_ualio_syx     Exceptional syntax explanation
+!!      @code
+!!          ! IGNORE    !! syntax used to ignore this module in list
+!!                      !! dependency when compiling the code
+!!      @endcode
+!!
+!!-----------------------------------------------------------------------------
 module b2mod_ual_io
 
-    !> B2 modules
+    !! B2 modules
 
     use b2mod_types
     !use b2mod_version
@@ -20,13 +36,13 @@ module b2mod_ual_io
     !use b2mod_neutr_src_scaling
     use b2mod_interp
 
-    !> B2/CPO Mapping
+    !! B2/CPO Mapping
     use b2mod_ual_io_data
     use b2mod_ual_io_grid
 
     use logging
 
-    !> UAL Access
+    !! UAL Access
 #ifdef IMAS
     use ids_schemas  ! IGNORE
     use ids_routines ! IGNORE
@@ -47,7 +63,6 @@ module b2mod_ual_io
     use itm_grid_common ! IGNORE
 #endif
 #endif
-  ! use ggd , GGD_UNDEFINED => GRID_UNDEFINED
 
   implicit none
 
@@ -57,42 +72,71 @@ module b2mod_ual_io
 
 contains
 
-    subroutine write_ids( edge_profiles, edge_sources, edge_transport )
+    !> Process B2.5 data and set it to IMAS IDS
+    subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport )
 #       include <git_version_B25.h>
-        type (ids_edge_profiles)    :: edge_profiles
-        type (ids_edge_sources)     :: edge_sources
-        type (ids_edge_transport)   :: edge_transport
+        type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
+            !< store data on edge plasma profiles  (includes the scrape-off
+            !< layer and possibly part of the confined plasma)
+        type (ids_edge_sources) :: edge_sources !< IDS designed to store
+            !< data on edge plasma sources. Energy terms correspond to the full
+            !< kinetic energy equation (i.e. the energy flux takes into account
+            !< the energy transported by the particle flux)
+        type (ids_edge_transport) :: edge_transport !< IDS designed to store
+            !< data on edge plasma transport. Energy terms correspond to the
+            !< full kinetic energy equation (i.e. the energy flux takes into
+            !< account the energy transported by the particle flux)
 
-        !! Internal
-        type(B2GridMap) :: gmap  !! Where is this type defined?
-        type(ids_generic_grid_dynamic_grid_subset) ::  gs_cell, gs_face,   &
-            &   gs_bnd_core
-        integer :: is, ns, nx, ny, i, j
+        !! Internal variables
+        integer :: ns   !< Total number of ion species
+        integer :: nx   !< Specifies the number of interior cells
+                        !< along the first coordinate
+        integer :: ny   !< Specifies the number of interior cells
+                        !< along the second coordinate
+        integer :: is   !< Ion specie index (iterator)
+        integer :: i    !< Iterator
+        integer :: j    !< Iterator
+        integer :: iGsCoreBoundary  !< Variable to hold Core grid subset base
+            !< index, later found by findGridSubsetByName() routine.
+        integer :: iGsInnerMidplane !< Variable to hold Inner Midplane grid
+            !< subset base index, later found by findGridSubsetByName() routine
+        integer :: iGsOuterMidplane !< Variable to hold Outer Midplane grid
+            !< subset base index, later found by findGridSubsetByName() routine
+        integer :: iGsCore  !< Variable to hold Core grid
+            !< subset base index, later found by findGridSubsetByName() routine
+        integer :: iGsSOL   !< Variable to hold SOL grid
+            !< subset base index, later found by findGridSubsetByName() routine
+        integer :: iGsIDivertor     !< Variable to hold Inner Divertor grid
+            !< subset base index, later found by findGridSubsetByName() routine
+        integer :: iGsODivertor     !< Variable to hold Outer Divertor grid
+            !< subset base index, later found by findGridSubsetByName() routine
+        integer :: homogeneous_time !< Homogeneous time (0 or 1)
+        integer :: ggd_slice    !< General grid description slice identifier
+        integer :: num_ggd_slice    !< Total number of ggd slices
         logical, parameter :: B2_WRITE_DATA = .true.
         real(IDS_real),   &
             &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
-        integer :: iGsCore, iGsInnerMidplane, iGsOuterMidplane
-
         real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2 ), 0:1)
-        real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2 ))
-        integer ::  homogeneous_time
-        real(IDS_real)    ::  time
-        integer :: ggd_slice, num_ggd_slice
-        integer :: ne_slice, num_ne_slices
-        integer :: eflux_slice, num_eflux_slices
+        real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2 ) )
+        real(IDS_real) :: time  !< Generic time
+        type(B2GridMap) :: gmap !< Data structure holding an
+            !< intermediate grid description to be transferred into a CPO or IDS
+        type(ids_generic_grid_dynamic_grid_subset) ::  gs_cell
+        type(ids_generic_grid_dynamic_grid_subset) ::  gs_face
+        type(ids_generic_grid_dynamic_grid_subset) ::  gs_bnd_core
 
-        !> ===  SET UP IDS ===
+        !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
 
-        !> Preparing database for writing
-        !> Through practice it was disclosed that there are some mandatory
-        !> steps to be done in order to assure for data to be successfully
-        !> written to IDS. Without going through those steps errors and failed
-        !> process of writing to IDS are to be expected.
-        !> This can be done using exampleSetIDSFundamentals routine
+        !! Preparing database for writing
+        !! Through practice it was disclosed that there are some mandatory
+        !! steps to be done in order to assure for data to be successfully
+        !! written to IDS. Without going through those steps errors and failed
+        !! process of writing to IDS are to be expected.
+        !! This can be done using exampleSetIDSFundamentals routine
         homogeneous_time = 1
         time = 0.0_IDS_real
-        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time)
+        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time )
 
         !! Preparing edge_transport IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -103,7 +147,7 @@ contains
         allocate( edge_transport%ids_properties%comment(1) )
         edge_transport%ids_properties%comment(1) = "Done by b2_ual_write_b2mod"
         !! 2. Allocate edge_transport.time and set it to desired value
-        allocate(edge_transport%time(1))
+        allocate( edge_transport%time(1) )
         edge_transport%time(1) = time
 
         !! Preparing edge_sources IDS for writing
@@ -118,42 +162,43 @@ contains
         allocate(edge_sources%time(1))
         edge_sources%time(1) = time
 
-        !> Allocate ggd slice
+        !! Allocate ggd slice
         num_ggd_slice = 1
         ggd_slice = 1
         allocate( edge_profiles%ggd( num_ggd_slice ) )
         allocate( edge_transport%model(1) )
         edge_transport%model(1)%identifier%index = 1
-        ! allocate( edge_sources%source(1) )
-        ! edge_sources%source(1)%identifier%index = 1
+        allocate( edge_sources%source(1) )
+        edge_sources%source(1)%identifier%index = 1
         allocate( edge_transport%model(1)%ggd( num_ggd_slice ) )
-        ! allocate( edge_sources%source(1)%ggd( num_ggd_slice ) )
+        allocate( edge_sources%source(1)%ggd( num_ggd_slice ) )
         allocate( edge_transport%model(1)%ggd( num_ggd_slice )%electrons%   &
             &   energy%flux(1) )
 
-        !> allocate and init the IDS
+        !! allocate and init the IDS
         allocate( edge_profiles%code%name(1) )
 # ifdef B25_EIRENE
         edge_profiles%code%name = "SOLPS-ITER"
         edge_transport%code%name = "SOLPS-ITER"
-        ! edge_sources%code%name = "SOLPS-ITER"
+        edge_sources%code%name = "SOLPS-ITER"
 # else
         edge_profiles%code%name = "B2.5"
         edge_transport%code%name = "B2.5"
-        ! edge_sources%code%name = "B2.5"
+        edge_sources%code%name = "B2.5"
 # endif
         allocate( edge_profiles%code%version(1) )
         edge_profiles%code%version = git_version_B25
         allocate( edge_transport%code%version(1) )
         edge_transport%code%version = git_version_B25
-        ! allocate( edge_sources%code%version(1) )
-        ! edge_sources%code%version = git_version_B25
+
+        allocate( edge_sources%code%version(1) )
+        edge_sources%code%version = git_version_B25
 
         ns = size( na, 3 )
         nx = ubound( na, 1 )
         ny = ubound( na, 2 )
 
-        !> List of species
+        !! List of species
         allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
         do is = 0, ns-1
             allocate( edge_profiles%ggd( ggd_slice )%ion( is + 1 )%state(1) )
@@ -168,260 +213,694 @@ contains
                 &   zamin( is )
             edge_profiles%ggd( ggd_slice )%ion( is + 1 )%state(1)%z_max =   &
                 &   zamax( is )
-
         enddo
 
         write(*,*) "Running b2CreateMap subroutine"
-        !> Set up the B2<->IDS mappings
+        !! Set up the B2<->IDS mappings
         call b2CreateMap( nx, ny, crx( -1:nx, -1:ny, : ),             &
             &   cry( -1:nx, -1:ny, : ), cflags, leftix, leftiy,       &
             &   rightix, rightiy, topix, topiy, bottomix,bottomiy,    &
             &   INCLUDE_GHOST_CELLS, gmap )
         mapInitialized = .true.
 
-        !> Write grid & grid subsets/subgrids
-        call b2IMASFillGridDescription( gmap, edge_profiles%ggd( ggd_slice )%grid,    &
+        !! Write grid & grid subsets/subgrids
+        call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
+            &   edge_profiles%ggd( ggd_slice )%grid,                        &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
         call xertst( geometryId( nnreg, periodic_bc, topcut ) ==    &
-            &   GEOMETRY_SN, "write_ids: can only do single null" )
+            &   GEOMETRY_SN, "B25_process_ids: can only do single null" )
 
-        !> Write plasma state
+        !! Write plasma state
         if ( B2_WRITE_DATA ) then
-            write (*,*) "b2mod_ual_io.write_ids: writing plasma state"
+            write (*,*) "b2mod_ual_io.B25_process_ids: writing plasma state"
 
-            iGsCore = findGridSubsetByName(                 &
+            !! Find grid subset base indices out of the available grid subset
+            !! data stored in the IDS. That is done using IMAS GGD routine
+            !! findGridSubsetByName().
+            iGsCoreBoundary = findGridSubsetByName(         &
                 &   edge_profiles%ggd( ggd_slice )%grid,    &
                 &   "Core boundary" )
             iGsInnerMidplane = findGridSubsetByName( edge_profiles% &
-                &   ggd( ggd_slice )%grid, "Inner midplane" )
+                &   ggd( ggd_slice )%grid, "Inner Midplane" )
             iGsOuterMidplane = findGridSubsetByName( edge_profiles% &
-                &   ggd( ggd_slice )%grid, "Outer midplane" )
+                &   ggd( ggd_slice )%grid, "Outer Midplane" )
+            iGsCore = findGridSubsetByName( edge_profiles%      &
+                &   ggd( ggd_slice )%grid, "Core" )
+            iGsSOL = findGridSubsetByName( edge_profiles%       &
+                &   ggd( ggd_slice )%grid, "SOL" )
+            iGsIDivertor = findGridSubsetByName( edge_profiles% &
+                &   ggd( ggd_slice )%grid, "Inner divertor" )
+            iGsODivertor = findGridSubsetByName( edge_profiles% &
+                &   ggd( ggd_slice )%grid, "Outer divertor" )
 
-            !> TODO: The fluxes are currently in the edge_transport. They are
-            !> supposed to be in the edge_profiles (24.10.2017)
-            !> use electrons%particles or electrons%energy node? Currently using
-            !> electrons%energy node
+            !! TODO: The fluxes are currently in the edge_transport. They are
+            !! supposed to be in the edge_profiles (24.10.2017)
+            !! use electrons%particles or electrons%energy node? Currently using
+            !! electrons%energy node
 
-            !> edge_transport fundamentals
-            !> TODO: create it as a subroutine
+            !! edge_transport fundamentals
+            !! TODO: create it as a subroutine
             allocate( edge_transport%model(1) )
             allocate( edge_transport%model(1)%ggd( num_ggd_slice ) )
 
-            !> ne
-            num_ne_slices = 1
-            ne_slice = 1
-            num_eflux_slices = 1
-            eflux_slice = 0
-            allocate( edge_profiles%ggd( ggd_slice )%electrons%density(     &
-                &   num_ne_slices ) )
+            !! ne: Electron Density
+            call write_quantity(                                            &
+                &   val = edge_profiles%ggd( ggd_slice )%electrons%density, &
+                &   fluxes = edge_transport%model(1)%ggd( ggd_slice )%      &
+                &            electrons%particles%flux,                      &
+                &   value = ne,                                             &
+                &   flux = fne,                                             &
+                &   ggd_slice = ggd_slice )
+            call write_cell_scalar(                                         &
+                &   scalar = edge_sources%source(1)%ggd( ggd_slice )%       &
+                &            electrons%particles,                           &
+                &   b2CellData = sne(:,:,0) + sne(:,:,1) * ne )
 
-            call write_quantity( edge_profiles%ggd( ggd_slice )%electrons%  &
-                &   density, edge_transport%model(1)%ggd( ggd_slice )%      &
-                &   electrons%energy%flux, ne, fne, ggd_slice )
-#if 0
-            call write_cell_scalar( edge_profiles%fluid%ne%source,  &
-                &   sne(:,:,0) + sne(:,:,1) * ne )
+            !! ni (SOLPS 4.x) /
+            !! na (SOLPS 5.x): Ion Density
+            allocate( edge_profiles%ggd( ggd_slice )%ion( ns ) )
+            allocate( edge_transport%model(1)%ggd( ggd_slice )%ion( ns ) )
+            allocate( edge_sources%source(1)%ggd( ggd_slice )%ion( ns ) )
 
-            !> na
-            allocate( edge_profiles%fluid%ni( ns ) )
             do is = 1, ns
-                call write_quantity( edge_profiles%fluid%ni(is)%value,      &
-                    &   edge_profiles%fluid%ni( is )%flux, na(:,:, is - 1 ),&
-                    &   fna(:,:,:, is - 1 ) )
-                call write_cell_scalar( edge_profiles%fluid%ni( is )%source,&
-                    &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 ) *         &
-                    &   na(:,:, is - 1 ) )
+                call write_quantity(                                            &
+                    &   val = edge_profiles%ggd( ggd_slice )%ion(is)%density,   &
+                    &   fluxes = edge_transport%model(1)%ggd( ggd_slice )%      &
+                    &   ion( is )%particles%flux,                               &
+                    &   value = na(:,:, is - 1 ),                               &
+                    &   flux = fna(:,:,:, is - 1 ),                             &
+                    &   ggd_slice = ggd_slice )
+                call write_cell_scalar( scalar = edge_sources%source(1)%        &
+                    &   ggd( ggd_slice )%ion( is )%particles,                   &
+                    &   b2CellData =                                            &
+                    &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 )*na(:,:, is - 1 ) )
             end do
 
-!!$    !> ue TODO: must be computed, refactor code from b2news into function
+!!$    !! ue: Parallel Electron Velocity
+!!$    TODO: must be computed, refactor code from b2news into function
 !!$    allocate(edge_profiles%fluid%ve%comps(1))
 !!$    allocate(edge_profiles%fluid%ve%align(1))
 !!$    allocate(edge_profiles%fluid%ve%alignid(1))
 !!$    edge_profiles%fluid%ve%align(1) = VEC_ALIGN_PARALLEL
 !!$    edge_profiles%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
 !!$    call write_cell_scalar( edge_profiles%fluid%ve%comps(1)%value, ue(:,:) )
+            !!$ call write_cell_vector_component(                           &
+            !!$     &   vectorComponent = edge_profiles%ggd( ggd_slice )%   &
+            !!$     &                     electrons%velocity,               &
+            !!$     &   b2CellData = ue(:,:),                               &
+            !!$     &   vectorID = VEC_ALIGN_PARALLEL_ID )
 
-            !> ua
-            allocate( edge_profiles%fluid%vi( ns ) )
+            !! ua: Parallel Ion Velocity
             do is = 1, ns
-                allocate( edge_profiles%fluid%vi( is )%comps(1) )
-                allocate( edge_profiles%fluid%vi( is )%align(1) )
-                allocate( edge_profiles%fluid%vi( is )%alignid(1) )
-                edge_profiles%fluid%vi( is )%align(1) = VEC_ALIGN_PARALLEL
-                edge_profiles%fluid%vi( is )%alignid(1) = VEC_ALIGN_PARALLEL_ID
+                allocate( edge_profiles%ggd( ggd_slice )%ion( is )%velocity(1) )
 
-                call write_cell_scalar( edge_profiles%fluid%vi( is )%comps(1)%value,&
-                    &   ua(:,:, is - 1 ) )
+                call write_cell_vector_component(                           &
+                    &   vectorComponent = edge_profiles%ggd( ggd_slice )%   &
+                    &                     ion( is )%velocity,               &
+                    &   b2CellData = ua(:,:, is - 1 ),                      &
+                    &   vectorID = VEC_ALIGN_PARALLEL_ID )
             end do
 
-            !> te
-            call write_quantity( edge_profiles%fluid%te%value,  &
-                &   edge_profiles%fluid%te%flux, te/qe, fhe )
+            !! te: Electron Temperature
+            call write_quantity(                                        &
+                &   val = edge_profiles%ggd( ggd_slice )%electrons%     &
+                &         temperature,                                  &
+                &   fluxes = edge_transport%model(1)%ggd( ggd_slice )%  &
+                &            electrons%energy%flux,                     &
+                &   value = te/qe,                                      &
+                &   flux = fhe,                                         &
+                &   ggd_slice = ggd_slice )
 
-            !> ti
-            allocate( edge_profiles%fluid%ti(1) )
-            call write_quantity( edge_profiles%fluid%ti(1)%value,   &
-                &   edge_profiles%fluid%ti(1)%flux, ti/qe, fhi )
+            !! ti: Ion Temperature
+            allocate( edge_profiles%ggd( ggd_slice )%ion(1)%temperature(1) )
+            allocate( edge_transport%model(1)%ggd( ggd_slice )%ion( 1 ) )
+            call write_quantity(                                            &
+                &   val = edge_profiles%ggd( ggd_slice )%ion(1)%temperature,&
+                &   fluxes = edge_transport%model(1)% ggd( ggd_slice )%     &
+                &   ion(1)%energy%flux,                                     &
+                &   value = ti/qe,                                          &
+                &   flux = fhi,                                             &
+                &   ggd_slice = ggd_slice )
 
-            !> po
-            call write_cell_scalar( edge_profiles%fluid%po%value, po )
+            !! po: Electric Potential
+            call write_cell_scalar( edge_profiles%ggd( ggd_slice )% &
+                &   phi_potential, po )
 
-            !> B (magnetic field vector)
-            allocate( edge_profiles%fluid%te_aniso%comps(4) )
+            !! B (magnetic field vector)
+            !! Compute unit basis vectors along the field directions
+            call compute_Coordinate_Unit_Vectors(crx, cry, e(:,:,:,1), &
+                &   e(:,:,:,2), e(:,:,:,3))
 
-            !> Compute unit basis vectors along the field directions
-            call computeCoordinateUnitVectors(crx, cry, e(:,:,:,1), e(:,:,:,2),     &
-                &   e(:,:,:,3))
+            !! Write the three unit basis vectors
+            call write_cell_vector_component(                                   &
+                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   b2CellData = e(:,:,:,1),                                    &
+                &   vectorID = VEC_ALIGN_POLOIDAL_ID )
 
-            !> Write the three unit basis vectors
-            do i = 1, 3
-                allocate( edge_profiles%fluid%te_aniso%comps(i)%flux(1) )
-                call write_cell_vector( &
-                    &   edge_profiles%fluid%te_aniso%comps(i)%flux(1), &
-                    & (/ VEC_ALIGN_DEFAULT, VEC_ALIGN_DEFAULT, VEC_ALIGN_DEFAULT /), &
-                    & (/ VEC_ALIGN_DEFAULT_ID, VEC_ALIGN_DEFAULT_ID, VEC_ALIGN_DEFAULT_ID /), &
-                    & e(:,:,:,i) )
-            end do
+            call write_cell_vector_component(                                   &
+                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   b2CellData = e(:,:,:,2),                                    &
+                &   vectorID = VEC_ALIGN_RADIAL_ID )
 
-            !> write the magnetic field vector in the b2 coordinate system
-            allocate( edge_profiles%fluid%te_aniso%comps(4)%flux(1) )
-            call write_cell_vector( edge_profiles%fluid%te_aniso%comps(4)%flux(1),  &
-                & (/ VEC_ALIGN_POLOIDAL, VEC_ALIGN_RADIAL, VEC_ALIGN_TOROIDAL /),   &
-                & (/ VEC_ALIGN_POLOIDAL_ID, VEC_ALIGN_RADIAL_ID,                    &
-                &   VEC_ALIGN_TOROIDAL_ID /), bb(:,:,0:2) )
-#endif
+            call write_cell_vector_component(                                   &
+                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   b2CellData = e(:,:,:,3),                                    &
+                &   vectorID = VEC_ALIGN_TOROIDAL_ID )
 
+            !! write the magnetic field vector in the b2 coordinate system
+            call write_cell_vector_component(                                   &
+                &   vectorComponent = edge_profiles%ggd( ggd_slice )%e_field,   &
+                &   b2CellData = bb(:,:,0:2),                                   &
+                &   vectorID = "diamagnetic" )
         end if
 
-        call logmsg( LOGDEBUG, "b2mod_ual_io.write_ids: done" )
+        call logmsg( LOGDEBUG, "b2mod_ual_io.B25_process_ids: done" )
 
         contains
 
-        !> Write a scalar B2 cell quantity to a ids_generic_grid_scalar
+        !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
+        !! IMAS IDS data tree node.
         subroutine write_quantity( val, fluxes, value, flux, ggd_slice )
             use b2mod_interp
             type(ids_generic_grid_scalar), pointer, intent(inout) :: val(:)
+                !< Type of IDS data structure, designed for scalar data handling
             ! real(IDS_real), pointer, intent(inout)  :: val(:)
             type (ids_generic_grid_scalar), pointer, intent(inout) :: fluxes(:)
+                !< Type of IDS data structure, designed for scalar data handling
+                !< (in this case scalars regarding fluxes )
             real(IDS_real), intent(in) :: value( -1:gmap%b2nx, -1:gmap%b2ny )
             real(IDS_real), intent(in) :: flux( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )
-            integer, intent(in) ::  ggd_slice
-            real(IDS_real), dimension(:), pointer :: idsdata
+            integer, intent(in) :: ggd_slice    !< General grid description
+                                                !< slice identifier
+            real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
+                !< handing data field values
+            integer :: ival
 
-            allocate( val(5) )
-            idsdata => b2IMASTransformDataB2ToIDS( edge_profiles%   &
+            !! Allocate data fields for 5+4 grid subsets
+            allocate( val(9) )
+
+            !! Write data for Cells grid subset
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
                 &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS, gmap, value )
 
-            call gridWriteData( val(1), GRID_SUBSET_CELLS, idsdata )
+            ival = 1
+            call gridWriteData( val( ival ), GRID_SUBSET_CELLS, idsdata )
             deallocate( idsdata )
 
+            !! Write data for Core Boundary grid subset
+            ival = ival + 1
             tmpFace = 0.0_IDS_real
             call value_on_faces( nx, ny, vol, value, tmpFace)
-            idsdata => b2IMASTransformDataB2ToIDS(  &
-                &   edge_profiles%ggd( ggd_slice )%grid, iGsCore, gmap, tmpFace )
-            call gridWriteData( val(2), iGsCore, idsdata )
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                    &
+                &   edge_profiles%ggd( ggd_slice )%grid, iGsCoreBoundary,   &
+                &   gmap, tmpFace )
+            call gridWriteData( val( ival ), iGsCoreBoundary, idsdata )
             deallocate( idsdata )
-#if 0
+
+            !! Write data for Inner Midplane grid subset
+            ival = ival + 1
             tmpVx = interpolateToVertices(  &
                 &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
-            idsdata => b2IMASTransformDataB2ToIDSVertex(    &
-                &   edge_profiles%ggd( ggd_slice )%grid, iGsInnerMidplane, gmap, tmpVx  )
-            call gridWriteData( val(3), iGsInnerMidplane, idsdata )
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex( &
+                &   edge_profiles%ggd( ggd_slice )%grid,        &
+                &   iGsInnerMidplane, gmap, tmpVx )
+            call gridWriteData( val( ival ), iGsInnerMidplane, idsdata )
             deallocate( idsdata )
-#endif
-# if 0
-            idsdata => b2IMASTransformDataB2ToIDSVertex(    &
-                &   edge_profiles%ggd( ggd_slice )%grid, iGsOuterMidplane, gmap, tmpVx )
-            call gridWriteData( val(3), iGsOuterMidplane, idsdata )
-            ! call gridWriteData( val(4), iGsOuterMidplane, idsdata )
+
+            !! Write data for Outer Midplane grid subset
+            ival = ival + 1
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
+                &   edge_profiles%ggd( ggd_slice )%grid, iGsOuterMidplane,  &
+                &   gmap, tmpVx )
+            call gridWriteData( val( ival ), iGsOuterMidplane, idsdata )
             deallocate( idsdata )
-#endif
-#if 1
-            idsdata => b2IMASTransformDataB2ToIDSVertex(    &
-                &   edge_profiles%ggd( ggd_slice )%grid, GRID_SUBSET_NODES, gmap, tmpVx )
-            call gridWriteData( val(3), GRID_SUBSET_NODES, idsdata )
-            ! call gridWriteData( val(5), GRID_SUBSET_NODES, idsdata )
+
+            !! Write data for Nodes grid subset
+            ival = ival + 1
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
+                &   edge_profiles%ggd( ggd_slice )%grid, GRID_SUBSET_NODES, &
+                &   gmap, tmpVx )
+            call gridWriteData( val( ival ), GRID_SUBSET_NODES, idsdata )
             deallocate( idsdata )
-#endif
-#if 1
+
+            !! Write data on fluxes for y-aligned faces, x-aligned faces
+            !! (those two are set as default) and Core boundary grid subset
             allocate( fluxes(2) )
             call write_face_vector( fluxes(1), flux, ggd_slice)
-            call write_face_vector( fluxes(2), flux, ggd_slice, gridSubsetId = iGsCore )
-#endif
+            call write_face_vector( fluxes(2), flux, ggd_slice, &
+                &   gridSubsetId = iGsCoreBoundary )
+
+            !! Write data for Core grid subset
+            !! Note: Most of the grid subset is written OK, but at the
+            !!       boundary with the seperatrix incorrect values seems
+            !!       to be written (checked with ParaView ReadUALEdge plugin)!!
+            !!      This is strange as the same procedure
+            !!       works as it should for all other grid subsets (e.g. SOL,
+            !!       Inner divertor and Outer divertor)
+            ival = ival + 1
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
+                &   ggd( ggd_slice )%grid, iGsCore, gmap, value )
+
+            call gridWriteData( val( ival ), iGsCore, idsdata )
+            deallocate( idsdata )
+
+            !! Write data for SOL grid subset
+            ival = ival + 1
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
+                &   ggd( ggd_slice )%grid, iGsSOL, gmap, value )
+
+            call gridWriteData( val( ival ), iGsSOL, idsdata )
+            deallocate( idsdata )
+
+            !! Write data for Inner Divertor grid subset
+            ival = ival + 1
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
+                &   ggd( ggd_slice )%grid, iGsIDivertor, gmap, value )
+
+            call gridWriteData( val( ival ), iGsIDivertor, idsdata )
+            deallocate( idsdata )
+
+            !! Write data for Outer Divertor grid subset
+            ival = ival + 1
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
+                &   ggd( ggd_slice )%grid, iGsODivertor, gmap, value )
+
+            call gridWriteData( val( ival ), iGsODivertor, idsdata )
+            deallocate( idsdata )
         end subroutine write_quantity
 
-        !! TODO write_cell_scalar
-        !! TODO write_cell_vector
+        !> Write a scalar B2 cell quantity to ids_generic_grid_scalar
+        subroutine write_cell_scalar( scalar, b2CellData )
+            type(ids_generic_grid_scalar), intent(inout), pointer :: scalar(:)
+                !< Type of IDS data structure, designed for scalar data handling
+            real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
+            real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
+                !< handing data field values
+            allocate( scalar(1) )
 
-#if 1
-        ! Write a vector B2 face quantity to a ids_generic_grid_vector
+            !! TODO: add checks whether already allocated
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
+                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,           &
+                &   gmap, b2CellData )
+            call gridWriteData( scalar(1), GRID_SUBSET_CELLS, idsdata )
+            deallocate(idsdata)
+        end subroutine write_cell_scalar
+
+        !> Write a vector component B2 cell quantity to ids_generic_grid_vector
+        !! components
+        !! @note Currently works only with parallel velocity data field
+        !! @note Available IDS vector component data fields (vector IDs):
+        !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
+        !!          - "diamagnetic",
+        !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
+        !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
+        !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
+        subroutine write_cell_vector_component( vectorComponent, b2CellData,    &
+                &   vectorID )
+            type(ids_generic_grid_vector_components), intent(inout),    &
+                &   pointer :: vectorComponent(:) !< Type of IDS data structure,
+                    !> designed for vector data handling
+            real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
+            real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
+                !< handing data field values
+            character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
+                                                        !< VEC_ALIGN_RADIAL_ID)
+
+            !! If required, allocate storage
+            if ( .not. associated( vectorComponent ) ) then
+                allocate( vectorComponent(1) )
+            end if
+
+            !! TODO: add checks whether already allocated
+            idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
+                &   ggd( ggd_slice )%grid, GRID_SUBSET_CELLS,           &
+                &   gmap, b2CellData )
+
+            call B2grid_Write_Data_Vector_Components( vectorComponent(1),   &
+                &   GRID_SUBSET_CELLS, vectorID, idsdata )
+            deallocate(idsdata)
+        end subroutine write_cell_vector_component
+
+        !!$> TODO: add to GGD itself (ids_grid_data)!
+        !> Write a scalar data field given as a scalar data representation to a
+        !! generic grid vector component IDS data fields.
+        !!
+        !! @note    The routine will make sure the required storage is
+        !!          allocated, and will deallocate and re-allocate fields as
+        !!          necessary.
+        !! @note Currently works only with parallel velocity data field
+        !! @note Available IDS vector component data fields:
+        !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
+        !!          - "diamagnetic",
+        !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
+        !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
+        !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
+        subroutine B2grid_Write_Data_Vector_Components( idsField_vcomp, &
+                &   grid_subset_index, vectorID, data)
+            type(ids_generic_grid_vector_components), intent(inout) ::  &
+                &   idsField_vcomp
+                !< Type of IDS data structure, designed for handling data
+                !> regarding vector components (parallel, poloidal etc.)
+            integer, intent(in) :: grid_subset_index    !< Base grid subset
+                                                        !< index
+            character(len=*), intent(in) :: vectorID    !< Vector ID (e.g. )
+                                                        !< VEC_ALIGN_RADIAL_ID)
+            real(ids_real), intent(in) :: data(:)   !< Data field to be written
+                !< to IDS data structure leaf that corresponds to specified
+                !< vector component
+
+            !! set grid subset index
+            idsField_vcomp%grid_subset_index = grid_subset_index
+
+            select case( vectorID )
+            case( VEC_ALIGN_RADIAL_ID )
+                !! Writing radial quantity
+                !! Make sure the data field is properly allocated
+                if ( associated( idsField_vcomp%radial ) ) then
+                    if ( .not. all( shape( idsField_vcomp%radial ) ==   &
+                        &   shape(data) )) then
+                        deallocate( idsField_vcomp%radial )
+                    end if
+                end if
+                !! If required, allocate storage
+                if ( .not. associated( idsField_vcomp%radial ) ) then
+                    allocate(idsField_vcomp%radial( size(data, 1) ))
+                end if
+                !! copy radial data field
+                idsField_vcomp%radial = data
+            case( "diamagnetic" )
+                !! Writing diamagnetic quantity
+                !! Make sure the data field is properly allocated
+                if ( associated( idsField_vcomp%diamagnetic ) ) then
+                    if ( .not. all( shape( idsField_vcomp%diamagnetic) ==   &
+                        &   shape(data) )) then
+                        deallocate( idsField_vcomp%diamagnetic )
+                    end if
+                end if
+                !! If required, allocate storage
+                if ( .not. associated( idsField_vcomp%diamagnetic ) ) then
+                    allocate( idsField_vcomp%diamagnetic( size(data, 1) ) )
+                end if
+                !! copy diamagnetic data field
+                idsField_vcomp%diamagnetic = data
+            case( VEC_ALIGN_PARALLEL_ID )
+                !! Writing parallel quantity
+                !! Make sure the data field is properly allocated
+                if ( associated( idsField_vcomp%parallel ) ) then
+                    if ( .not. all( shape( idsField_vcomp%parallel ) ==  &
+                        &   shape(data) )) then
+                        deallocate( idsField_vcomp%parallel )
+                    end if
+                end if
+                !! If required, allocate storage
+                if ( .not. associated( idsField_vcomp%parallel ) ) then
+                    allocate(idsField_vcomp%parallel( size(data, 1) ))
+                end if
+                !! copy parallel data field
+                idsField_vcomp%parallel = data
+            case( VEC_ALIGN_POLOIDAL_ID )
+                !! Writing poloidal quantity
+                !! Make sure the data field is properly allocated
+                if ( associated( idsField_vcomp%poloidal ) ) then
+                    if ( .not. all( shape( idsField_vcomp%poloidal ) == &
+                        &   shape(data) )) then
+                        deallocate( idsField_vcomp%poloidal )
+                    end if
+                end if
+                !! If required, allocate storage
+                if ( .not. associated( idsField_vcomp%poloidal ) ) then
+                    allocate( idsField_vcomp%poloidal( size(data, 1) ) )
+                end if
+                !! copy poloidal data field
+                idsField_vcomp%poloidal = data
+            case( VEC_ALIGN_TOROIDAL_ID )
+                !! Writing toroidal quantity
+                !! Make sure the data field is properly allocated
+                if ( associated( idsField_vcomp%toroidal ) ) then
+                    if ( .not. all( shape( idsField_vcomp%toroidal ) ==  &
+                        &   shape(data) )) then
+                        deallocate( idsField_vcomp%toroidal )
+                    end if
+                end if
+                !! If required, allocate storage
+                if ( .not. associated( idsField_vcomp%toroidal ) ) then
+                    allocate(idsField_vcomp%toroidal( size(data, 1) ))
+                end if
+                !! copy toroidal data field
+                idsField_vcomp%toroidal = data
+            end select
+
+        end subroutine B2grid_Write_Data_Vector_Components
+
+#if 0
+        !> Write a vector B2 cell quantity to a complexgrid_vector
+        subroutine write_cell_vector( vector, align, alignid, vecdata )
+            type(ids_generic_grid_vector), intent(inout) :: vector
+            real(IDS_real), intent(in) :: vecdata(-1:gmap%b2nx, &
+                &   -1:gmap%b2ny, 0:2)
+            integer, intent(in) :: align(3)
+            character(LEN=132), intent(in) :: alignid(3)
+            real(IDS_real), dimension(:), pointer :: idsdata
+
+            !! internal
+            integer :: dim, i
+
+            dim = size(vecdata, 3)
+
+            !! ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
+            !! vector%align and vector%alignid:
+            !! - ITM vector%comp:
+            !!      Holds data on one of the vector components
+            !!      ( parallel, poloidal, toroidal etc.). The %comp(:)
+            !!      node can hold data for any of those components.
+            !!      However the data inside that node must be properly
+            !!      specified in order to provide necessary information
+            !!      to which component this data relates to.
+            !!      IDS does that differently. IDS has specially designed
+            !!      nodes with node names being the same as names of the
+            !!      components (for example
+            !!      edge_profiles.ggd(:)%e_field(:)%parallel).
+            !!      Each of those nodes hold data for its intended
+            !!      component.
+            !! - ITM vector%alignid:
+            !!      Alignment information for vector components.
+            !!      Describes vector component ID or label
+            !!      ("parallel", "toroidal", etc.). In IDS this is not
+            !!      needed as a node itself indicates to what vector
+            !!      component the data relates to.
+            !! - ITM vector%align:
+            !!      Alignment information for vector components.
+            !!      Holds vector component label (number tag). In IDS this
+            !!      is probably not required as, same as for %alignid, a
+            !!      node itself indicates to what vector component
+            !!      the data relates to.
+
+            !! Fill in vector component data
+            do i = 1, dim
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(        &
+                    &   edge_profiles%ggd( ggd_slice )%grid,        &
+                    &   GRID_SUBSET_CELLS, gmap, vecdata(:,:,i-1))
+                call gridWriteData( vector, GRID_SUBSET_CELLS, idsdata )
+                deallocate(idsdata)
+            end do
+
+        end subroutine write_cell_vector
+#endif
+
+        !> Write a vector B2 face quantity to a ids_generic_grid_vector
+        !! @note    ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
+        !!          vector%align and vector%alignid:
+        !!          - ITM vector%comp:
+        !!               Holds data on one of the vector components
+        !!               ( parallel, poloidal, toroidal etc.). The %comp(:)
+        !!               node can hold data for any of those components.
+        !!               However the data inside that node must be properly
+        !!               specified in order to provide necessary information
+        !!               to which component this data relates to.
+        !!               IDS does that differently. IDS has specially designed
+        !!               nodes with node names being the same as names of the
+        !!               components (for example
+        !!               edge_profiles.ggd(:)%e_field(:)%parallel).
+        !!               Each of those nodes hold data for its intended
+        !!               component.
+        !!          - ITM vector%alignid:
+        !!               Alignment information for vector components.
+        !!               Describes vector component ID or label
+        !!               ("parallel", "toroidal", etc.). In IDS this is not
+        !!               needed as a node itself indicates to what vector
+        !!               component the data relates to.
+        !!          - ITM vector%align:
+        !!               Alignment information for vector components.
+        !!               Holds vector component label (number tag). In IDS this
+        !!               is probably not required as, same as for %alignid, a
+        !!               node itself indicates to what vector component
+        !!               the data relates to.
         subroutine write_face_vector( vector, b2FaceData, ggd_slice,    &
                 &   gridSubsetId )
             use ids_grid_data ! IGNORE
             type(ids_generic_grid_scalar), intent(inout) :: vector
-            ! type(ids_generic_grid_vector), intent(inout) :: vector
-            ! type(type_complexgrid_vector), intent(inout) :: vector
+                !< Type of IDS data structure, designed for scalar data handling
+                !< (in this case 1D vector)
             real(IDS_real), intent(in) ::   &
                 &   b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
-            integer, intent(in), optional :: gridSubsetId
-            real(IDS_real), dimension(:), pointer :: idsdata
-            integer, intent(in) :: ggd_slice
+            integer, intent(in), optional :: gridSubsetId   !< Base grid subset
+                                                            !< index
+            real(IDS_real), dimension(:), pointer :: idsdata    !< Dummy array
+                !< for holding data field values
+            integer, intent(in) :: ggd_slice    !< General grid description
 
             if ( .not. present(gridSubsetId) ) then
-
-                !! TODO: add checks whether already allocated
-                !! TODO: solve the vector%comp etc., found in the old
-                !! type_complexgrid_vector
-                ! allocate(vector%comp(2))
-                ! allocate(vector%align(2))
-                ! allocate(vector%alignid(2))
-
-                !> Fill in alignment information for vector components
-                ! vector%align(1) = VEC_ALIGN_POLOIDAL
-                ! vector%alignid(1) = VEC_ALIGN_POLOIDAL_ID
-
-                ! vector%align(2) = VEC_ALIGN_RADIAL
-                ! vector%alignid(2) = VEC_ALIGN_RADIAL_ID
-
-                !> Fill in vector component data
-                idsdata => b2IMASTransformDataB2ToIDS(          &
+                !! Fill in vector component data
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   GRID_SUBSET_Y_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
-                ! call gridWriteData( vector%values(:,1), GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
-                ! call gridWriteData( vector%comp(1), GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
-                idsdata => b2IMASTransformDataB2ToIDS(          &
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   GRID_SUBSET_X_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_FACES, idsdata )
-                ! call gridWriteData( vector%values(:,2), GRID_SUBSET_X_ALIGNED_FACES, idsdata )
-                ! call gridWriteData( vector%comp(2), GRID_SUBSET_X_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
             else
-                ! allocate(vector%comp(1))
-                ! allocate(vector%align(1))
-                ! allocate(vector%alignid(1))
-
-                ! vector%align(1) = GRID_UNDEFINED
-                ! vector%alignid(1) = ""
-
-                idsdata => b2IMASTransformDataB2ToIDS(          &
+                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%ggd( ggd_slice )%grid,    &
                     &   gridSubsetId, gmap, b2FaceData)
                 call gridWriteData( vector, gridSubsetId, idsdata )
-                ! call gridWriteData( vector%values(:,1), gridSubsetId, idsdata )
-                ! call gridWriteData( vector%comp(1), gridSubsetId, idsdata )
                 deallocate(idsdata)
             end if
 
         end subroutine write_face_vector
-#endif
-        ! return
-    end subroutine write_ids
+    end subroutine B25_process_ids
+
+    !> From the B2 grid, compute the coordinate unit vectors
+    !> (poloidal, radial, toroidal)
+    subroutine compute_Coordinate_Unit_Vectors( crx, cry, e1, e2, e3 )
+        real(IDS_real), intent(in), dimension(-1:,-1:,0:) :: crx    !< Horizontal
+            !< coordinates of the four corners of the (ix, iy) cell
+        real(IDS_real), intent(in), dimension(-1:,-1:,0:) :: cry    !< Vertical
+            !< coordinates of the four corners of the (ix, iy) cell
+        real(IDS_real), intent(out),    &
+            &   dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e1
+            !< First set of coordinates
+        real(IDS_real), intent(out),    &
+            &   dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e2
+            !< Second set of coordinates
+        real(IDS_real), intent(out),    &
+            &   dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e3
+            !< Third set of coordinates
+
+        !! internal
+        integer :: ix, iy, ixn, iyn, nx, ny
+        real(IDS_real), dimension(0:1) :: cC, cN
+        real(IDS_real) :: dir
+
+        e1 = 0.0
+        e2 = 0.0
+        e3 = 0.0
+
+        !! poloidal vectors
+        nx = ubound(crx,1)
+        ny = ubound(crx,2)
+        do ix = -1, nx
+            do iy = -1, ny
+
+                cC = quadCentroid( &
+                    & crx(ix, iy, 0), cry(ix, iy, 0), &
+                    & crx(ix, iy, 1), cry(ix, iy, 1), &
+                    & crx(ix, iy, 2), cry(ix, iy, 2), &
+                    & crx(ix, iy, 3), cry(ix, iy, 3) )
+
+                !! poloidal direction
+                !! Try to find right neighbour
+                dir = 1.0
+                ixn = rightix( ix, iy )
+                iyn = rightiy( ix, iy )
+
+                if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
+                    !! If not found, try to find left neighbour
+                    !! ...and note to invert vector direction
+                    dir = -1.0
+                    ixn = leftix( ix, iy )
+                    iyn = leftiy( ix, iy )
+                end if
+                if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
+                    ! stop "compute_Coordinate_Unit_Vectors: not able to find&
+                    ! &   poloidal neighbour for cell"
+                    !! skip cell
+                    cycle
+                end if
+
+                cN = quadCentroid( &
+                    & crx(ixn, iyn, 0), cry(ixn, iyn, 0), &
+                    & crx(ixn, iyn, 1), cry(ixn, iyn, 1), &
+                    & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
+                    & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
+
+                !! compute vector from one centroid to the other
+                e1(ix,iy,1) = cN(0) - cC(0)   !! R
+                e1(ix,iy,2) = 0.0             !! phi
+                e1(ix,iy,3) = cN(1) - cC(1)   !! Z
+
+                e1(ix,iy,:) = e1(ix,iy,:) * dir  !! fix direction
+
+                !! radial direction
+                !! Try to find top neighbour
+                dir = 1.0
+                ixn = topix( ix, iy )
+                iyn = topiy( ix, iy )
+
+                if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
+                    !! If not found, try to find bottom neighbour
+                    !! ...and note to invert vector direction
+                    dir = -1.0
+                    ixn = bottomix( ix, iy )
+                    iyn = bottomiy( ix, iy )
+                end if
+                if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
+                    ! stop "compute_Coordinate_Unit_Vectors: not able to find&
+                        ! &    toroidal neighbour for cell"
+                    !! skip cell
+                    cycle
+                end if
+
+                cN = quadCentroid( &
+                    & crx(ixn, iyn, 0), cry(ixn, iyn, 0), &
+                    & crx(ixn, iyn, 1), cry(ixn, iyn, 1), &
+                    & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
+                    & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
+
+                !! compute vector from one centroid to the other
+                e2(ix,iy,1) = cN(0) - cC(0)   !! R
+                e2(ix,iy,2) = 0.0             !! phi
+                e2(ix,iy,3) = cN(1) - cC(1)   !! Z
+
+                e2(ix,iy,:) = e2(ix,iy,:) * dir  !! fix direction
+
+                !! toroidal direction
+                e3(ix,iy,1) = 0.0   !! R
+                e3(ix,iy,2) = 1.0   !! phi
+                e3(ix,iy,3) = 0.0   !! Z
+
+                !! make unit vectors
+                e1(ix,iy,:) = unitVector(e1(ix,iy,:))
+                e2(ix,iy,:) = unitVector(e2(ix,iy,:))
+                e3(ix,iy,:) = unitVector(e3(ix,iy,:))
+
+            end do
+        end do
+
+    end subroutine compute_Coordinate_Unit_Vectors
+
+    !> Return unit vector along direction of given vector
+    function unitVector(v) result(unitV)
+        real(IDS_real), intent(in) :: v(:)  !< Vector
+        real(IDS_real) :: unitV(size(v))    !< Unit vector
+
+        unitV = v / sqrt( sum( v**2 ) )
+    end function unitVector
 
 #else
 # ifdef ITM
@@ -431,7 +910,7 @@ contains
   subroutine write_cpo(edgecpo)
     type (type_edge) :: edgecpo
 
-    ! internal
+    !! internal
     type(B2GridMap) :: gmap
     type(type_complexgrid_subgrid) :: sg_cell, sg_face, sg_bnd_core
     integer :: is, ns, nx, ny, i
@@ -443,20 +922,19 @@ contains
     real(ITM_R8) :: tmpVx(-1:ubound(na, 1), -1:ubound(na, 2))
 
 
-    ! allocate and init the cpo
+    !! allocate and init the cpo
     allocate(edgecpo%datainfo%dataprovider(1))
     edgecpo%datainfo%dataprovider="IPP"
     allocate(edgecpo%codeparam%codename(1))
     edgecpo%codeparam%codename(1)="B2.5"
     edgecpo%time= 0.0D0
 
-
     ns = size(na, 3)
     nx = ubound(na, 1)
     ny = ubound(na, 2)
 
 
-! species block
+!! species block
     allocate(edgecpo%species(ns))
     do is = 0, ns-1
        allocate(edgecpo%species(is+1)%label(1))
@@ -468,23 +946,23 @@ contains
     enddo
 
 
-    ! set up the B2<->CPO mappings
+    !! set up the B2<->CPO mappings
     call b2ITMCreateMap( nx,ny,crx(-1:nx,-1:ny,: ),cry(-1:nx,-1:ny,:),&
         & cflags,leftix,leftiy,rightix,rightiy, &
         & topix,topiy,bottomix,bottomiy, INCLUDE_GHOST_CELLS, gmap )
     mapInitialized = .true.
 
-    ! write grid & subgrids
+    !! write grid & subgrids
     call b2ITMFillGridDescription( gmap, edgecpo%grid, &
         & nx,ny,crx(-1:nx,-1:ny,:),cry(-1:nx,-1:ny,:), &
         & leftix,leftiy,rightix,rightiy, &
         & topix,topiy,bottomix,bottomiy, &
         & nnreg, topcut, region, cflags, INCLUDE_GHOST_CELLS, vol, gs, qc )
 
+    call xertst( geometryId( nnreg, periodic_bc, topcut ) == GEOMETRY_SN,   &
+        &   "write_cpo: can only do single null" )
 
-    call xertst( geometryId( nnreg, periodic_bc, topcut ) == GEOMETRY_SN, "write_cpo: can only do single null" )
-
-    ! Write plasma state
+    !! Write plasma state
 
     if ( B2_WRITE_DATA ) then
 
@@ -494,11 +972,11 @@ contains
         iSgInnerMidplane = gridFindSubGridByName( edgecpo%grid, "Inner midplane" )
         iSgOuterMidplane = gridFindSubGridByName( edgecpo%grid, "Outer midplane" )
 
-        ! ne
+        !! ne
         call write_quantity( edgecpo%fluid%ne%value, edgecpo%fluid%ne%flux, ne, fne )
         call write_cell_scalar( edgecpo%fluid%ne%source, sne(:,:,0) + sne(:,:,1)*ne )
 
-        ! na
+        !! na
         allocate(edgecpo%fluid%ni(ns))
         do is = 1, ns
             call write_quantity( edgecpo%fluid%ni(is)%value, edgecpo%fluid%ni(is)%flux, na(:,:,is-1), fna(:,:,:,is-1) )
@@ -513,7 +991,7 @@ contains
 !!$    edgecpo%fluid%ve%alignid(1) = VEC_ALIGN_PARALLEL_ID
 !!$    call write_cell_scalar( edgecpo%fluid%ve%comps(1)%value, ue(:,:) )
 
-        ! ua
+        !! ua
         allocate(edgecpo%fluid%vi(ns))
         do is = 1, ns
             allocate(edgecpo%fluid%vi(is)%comps(1))
@@ -525,24 +1003,24 @@ contains
             call write_cell_scalar( edgecpo%fluid%vi(is)%comps(1)%value, ua(:,:,is-1) )
         end do
 
-        ! te
+        !! te
         call write_quantity( edgecpo%fluid%te%value, edgecpo%fluid%te%flux, te/qe, fhe )
 
-        ! ti
+        !! ti
         allocate(edgecpo%fluid%ti(1))
         call write_quantity( edgecpo%fluid%ti(1)%value, edgecpo%fluid%ti(1)%flux, ti/qe, fhi )
 
 
-        ! po
+        !! po
         call write_cell_scalar( edgecpo%fluid%po%value, po )
 
-        ! B (magnetic field vector)
+        !! B (magnetic field vector)
         allocate(edgecpo%fluid%te_aniso%comps(4))
 
-        ! Compute unit basis vectors along the field directions
-        call computeCoordinateUnitVectors(crx, cry, e(:,:,:,1), e(:,:,:,2), e(:,:,:,3))
+        !! Compute unit basis vectors along the field directions
+        call compute_Coordinate_Unit_Vectors(crx, cry, e(:,:,:,1), e(:,:,:,2), e(:,:,:,3))
 
-        ! Write the three unit basis vectors
+        !! Write the three unit basis vectors
         do i = 1, 3
             allocate(edgecpo%fluid%te_aniso%comps(i)%flux(1))
             call write_cell_vector( edgecpo%fluid%te_aniso%comps(i)%flux(1), &
@@ -551,7 +1029,7 @@ contains
                 & e(:,:,:,i) )
         end do
 
-        ! write the magnetic field vector in the b2 coordinate system
+        !! write the magnetic field vector in the b2 coordinate system
         allocate(edgecpo%fluid%te_aniso%comps(4)%flux(1))
         call write_cell_vector( edgecpo%fluid%te_aniso%comps(4)%flux(1), &
             & (/ VEC_ALIGN_POLOIDAL, VEC_ALIGN_RADIAL, VEC_ALIGN_TOROIDAL /), &
@@ -564,7 +1042,7 @@ contains
 
   contains
 
-    ! Write a scalar B2 cell quantity to a complexgrid_scalar
+    !> Write a scalar B2 cell quantity to a complexgrid_scalar
     subroutine write_quantity( values, fluxes, value, flux )
       use b2mod_interp
       type(type_complexgrid_scalar), pointer, intent(inout) :: values(:)
@@ -598,13 +1076,13 @@ contains
     end subroutine write_quantity
 
 
-    ! Write a scalar B2 cell quantity to a complexgrid_scalar
+    !> Write a scalar B2 cell quantity to a complexgrid_scalar
     subroutine write_cell_scalar(scalar, b2CellData)
       type(type_complexgrid_scalar), intent(inout), pointer :: scalar(:)
       real(ITM_R8), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
       real(ITM_R8), dimension(:), pointer :: cpodata
 
-      ! TODO: add checks whether already allocated
+      !! TODO: add checks whether already allocated
       allocate(scalar(1))
       cpodata => b2ITMTransformDataB2ToCpo( edgecpo%grid, B2_SUBGRID_CELLS, gmap, b2CellData )
       call gridWriteData( scalar(1), B2_SUBGRID_CELLS, cpodata )
@@ -612,7 +1090,7 @@ contains
     end subroutine write_cell_scalar
 
 
-    ! Write a vector B2 cell quantity to a complexgrid_vector
+    !> Write a vector B2 cell quantity to a complexgrid_vector
     subroutine write_cell_vector(vector, align, alignid, vecdata)
       type(type_complexgrid_vector), intent(inout) :: vector
       real(ITM_R8), intent(in) :: vecdata(-1:gmap%b2nx, -1:gmap%b2ny, 0:2)
@@ -620,21 +1098,21 @@ contains
       character(LEN=132), intent(in) :: alignid(3)
       real(ITM_R8), dimension(:), pointer :: cpodata
 
-      ! internal
+      !! internal
       integer :: dim, i
 
       dim = size(vecdata, 3)
 
-      ! TODO: add checks whether already allocated
+      !! TODO: add checks whether already allocated
       allocate(vector%comp(dim))
       allocate(vector%align(dim))
       allocate(vector%alignid(dim))
 
-      ! Fill in alignment information for vector components
+      !! Fill in alignment information for vector components
       vector%align = align
       vector%alignid = alignid
 
-      ! Fill in vector component data
+      !! Fill in vector component data
       do i = 1, dim
          cpodata => b2ITMTransformDataB2ToCpo(edgecpo%grid, B2_SUBGRID_CELLS, gmap, vecdata(:,:,i-1))
          call gridWriteData( vector%comp(i), B2_SUBGRID_CELLS, cpodata )
@@ -643,8 +1121,7 @@ contains
 
     end subroutine write_cell_vector
 
-
-    ! Write a vector B2 face quantity to a complexgrid_vector
+    !> Write a vector B2 face quantity to a complexgrid_vector
     subroutine write_face_vector(vector, b2FaceData, subgridInd)
       type(type_complexgrid_vector), intent(inout) :: vector
       real(ITM_R8), intent(in) :: b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
@@ -689,11 +1166,11 @@ contains
   end subroutine write_cpo
 
   !> From the B2 grid, compute the coordinate unit vectors (poloidal, radial. toroidal)
-  subroutine computeCoordinateUnitVectors(crx, cry, e1, e2, e3)
+  subroutine compute_Coordinate_Unit_Vectors(crx, cry, e1, e2, e3)
     real(ITM_R8), intent(in), dimension(-1:,-1:,0:) :: crx, cry
     real(ITM_R8), intent(out), dimension(-1:ubound(crx,1),-1:ubound(crx,2),3) :: e1, e2, e3
 
-    ! internal
+    !! internal
     integer :: ix, iy, ixn, iyn, nx, ny
     real(ITM_R8), dimension(0:1) :: cC, cN
     real(ITM_R8) :: dir
@@ -702,7 +1179,7 @@ contains
     e2 = 0.0
     e3 = 0.0
 
-    ! poloidal vectors
+    !! poloidal vectors
 
     nx = ubound(crx,1)
     ny = ubound(crx,2)
@@ -715,22 +1192,22 @@ contains
                 & crx(ix, iy, 2), cry(ix, iy, 2), &
                 & crx(ix, iy, 3), cry(ix, iy, 3) )
 
-            ! poloidal direction
-            ! Try to find right neighbour
+            !! poloidal direction
+            !! Try to find right neighbour
             dir = 1.0
             ixn = rightix( ix, iy )
             iyn = rightiy( ix, iy )
 
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                ! If not found, try to find left neighbour
-                ! ...and note to invert vector direction
+                !! If not found, try to find left neighbour
+                !! ...and note to invert vector direction
                 dir = -1.0
                 ixn = leftix( ix, iy )
                 iyn = leftiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "computeCoordinateUnitVectors: not able to find poloidal neighbour for cell"
-                ! skip cell
+                !stop "compute_Coordinate_Unit_Vectors: not able to find poloidal neighbour for cell"
+                !! skip cell
                 cycle
             end if
 
@@ -740,30 +1217,30 @@ contains
                 & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
                 & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
 
-            ! compute vector from one centroid to the other
-            e1(ix,iy,1) = cN(0) - cC(0)   ! R
-            e1(ix,iy,2) = 0.0             ! phi
-            e1(ix,iy,3) = cN(1) - cC(1)   ! Z
+            !! compute vector from one centroid to the other
+            e1(ix,iy,1) = cN(0) - cC(0)   !! R
+            e1(ix,iy,2) = 0.0             !! phi
+            e1(ix,iy,3) = cN(1) - cC(1)   !! Z
 
-            e1(ix,iy,:) = e1(ix,iy,:) * dir  ! fix direction
+            e1(ix,iy,:) = e1(ix,iy,:) * dir  !! fix direction
 
 
-            ! radial direction
-            ! Try to find top neighbour
+            !! radial direction
+            !! Try to find top neighbour
             dir = 1.0
             ixn = topix( ix, iy )
             iyn = topiy( ix, iy )
 
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                ! If not found, try to find bottom neighbour
-                ! ...and note to invert vector direction
+                !! If not found, try to find bottom neighbour
+                !! ...and note to invert vector direction
                 dir = -1.0
                 ixn = bottomix( ix, iy )
                 iyn = bottomiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "computeCoordinateUnitVectors: not able to find toroidal neighbour for cell"
-                ! skip cell
+                !stop "compute_Coordinate_Unit_Vectors: not able to find toroidal neighbour for cell"
+                !! skip cell
                 cycle
             end if
 
@@ -773,21 +1250,21 @@ contains
                 & crx(ixn, iyn, 2), cry(ixn, iyn, 2), &
                 & crx(ixn, iyn, 3), cry(ixn, iyn, 3) )
 
-            ! compute vector from one centroid to the other
-            e2(ix,iy,1) = cN(0) - cC(0)   ! R
-            e2(ix,iy,2) = 0.0             ! phi
-            e2(ix,iy,3) = cN(1) - cC(1)   ! Z
+            !! compute vector from one centroid to the other
+            e2(ix,iy,1) = cN(0) - cC(0)   !! R
+            e2(ix,iy,2) = 0.0             !! phi
+            e2(ix,iy,3) = cN(1) - cC(1)   !! Z
 
-            e2(ix,iy,:) = e2(ix,iy,:) * dir  ! fix direction
-
-
-            ! toroidal direction
-            e3(ix,iy,1) = 0.0   ! R
-            e3(ix,iy,2) = 1.0   ! phi
-            e3(ix,iy,3) = 0.0   ! Z
+            e2(ix,iy,:) = e2(ix,iy,:) * dir  !! fix direction
 
 
-            ! make unit vectors
+            !! toroidal direction
+            e3(ix,iy,1) = 0.0   !! R
+            e3(ix,iy,2) = 1.0   !! phi
+            e3(ix,iy,3) = 0.0   !! Z
+
+
+            !! make unit vectors
             e1(ix,iy,:) = unitVector(e1(ix,iy,:))
             e2(ix,iy,:) = unitVector(e2(ix,iy,:))
             e3(ix,iy,:) = unitVector(e3(ix,iy,:))
@@ -795,7 +1272,7 @@ contains
         end do
     end do
 
-  end subroutine computeCoordinateUnitVectors
+  end subroutine compute_Coordinate_Unit_Vectors
 
 
   !> Return unit vector along direction of given vector

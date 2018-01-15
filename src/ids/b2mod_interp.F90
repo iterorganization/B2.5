@@ -1,3 +1,14 @@
+!!-----------------------------------------------------------------------------
+!! DOCUMENTATION:
+!>      @section b2mod_interp_desc Description
+!!      Module providing routines for interpolation of a cell-centred quantity to
+!!      cell faces, computing flow velocity quantities, providing values for
+!!      cell-centered quantities etc.
+!!
+!!      @subsection b2mod_gmap_pv  Parameters/variables
+!!      @param  BB_INVALID
+!!
+!!-----------------------------------------------------------------------------
 module b2mod_interp
 
     use b2mod_types
@@ -10,33 +21,53 @@ module b2mod_interp
 
 contains
 
+    !> Routine for computing magnetic field at faces
     subroutine compute_b_at_faces( nx, ny, bb, wbbl, wbbr, wbbv,    &
         &   leftix, leftiy, rightix, rightiy, bottomix, bottomiy,   &
         &   topix, topiy, vol, gs, qc, qcb, cflags )
 
         implicit none
-        integer, intent(in)  :: nx, ny
-        real(R8), intent(in) :: bb( -1:nx, -1:ny, 0:3 ),            &
-            &   vol( -1:nx ,-1:ny ,0:4 ), gs( -1:nx, -1:ny, 0:2 ),  &
-            &   qc( -1:nx, -1:ny ), qcb( -1:nx, -1:ny )
-        real(R8), intent(out) :: wbbl( -1:nx, -1:ny, 0:3 ),         &
-            &   wbbr( -1:nx, -1:ny, 0:3 ), wbbv( -1:nx, -1:ny, 0:3 )
+        integer, intent(in)  :: nx  !< Specifies the number of interior cells
+                                    !< along the first coordinate
+        integer, intent(in)  :: ny  !< Specifies the number of interior cells
+                                    !< along the second coordinate
+        real(R8), intent(in) :: bb( -1:nx, -1:ny, 0:3 ) !< Magnetic field
+        real(R8), intent(in) :: vol( -1:nx ,-1:ny ,0:4 )    !< Cell volume
+        real(R8), intent(in) :: gs( -1:nx, -1:ny, 0:2 )
+        real(R8), intent(in) :: qc( -1:nx, -1:ny ) !< Cosine of the angle
+            !< between flux line direction and left cell face
+        real(R8), intent(in) :: qcb( -1:nx, -1:ny )
+        real(R8), intent(out) :: wbbl( -1:nx, -1:ny, 0:3 )
+        real(R8), intent(out) :: wbbr( -1:nx, -1:ny, 0:3 )
+        real(R8), intent(out) :: wbbv( -1:nx, -1:ny, 0:3 )
         integer, intent(in) :: cflags( -1:nx, -1:ny, CARREOUT_NCELLFLAGS )
-        integer, intent(in) ::  &
-            &   leftix( -1:nx, -1:ny ),leftiy( -1:nx, -1:ny ),      &
-            &   rightix( -1:nx, -1:ny ),rightiy( -1:nx, -1:ny ),    &
-            &   topix( -1:nx, -1:ny ),topiy( -1:nx, -1:ny ),        &
-            &   bottomix( -1:nx, -1:ny ),bottomiy( -1:nx, -1:ny )
+        integer, intent(in) :: leftix( -1:nx, -1:ny)    !< Left neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: leftiy( -1:nx, -1:ny )   !< Left neighbour radial
+            !< (second coordinate) index
+        integer, intent(in) :: rightix( -1:nx, -1:ny )  !< Right neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: rightiy( -1:nx, -1:ny )  !< Right neighbour
+            !< radial (second coordinate) index
+        integer, intent(in) :: topix( -1:nx, -1:ny )    !< Top neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: topiy( -1:nx, -1:ny )    !< Top neighbour radial
+            !< (second coordinate) index
+        integer, intent(in) :: bottomix( -1:nx, -1:ny ) !< Bottom neighbour
+            !< poloidal (first coordinate) index array
+        integer, intent(in) :: bottomiy( -1:nx, -1:ny ) !< Bottom neighbour
+            !< radial (second coordinate) index
 
-        !! internal
-        integer :: ix, iy
+        !! Internal variables
+        integer :: ix   !< x-aligned (poloidal) cell index
+        integer :: iy   !< y-aligned (radial) cell index
 
-        !!    ..interpolate magnetic field to cell faces
+        !! Interpolate magnetic field to cell faces
         call interp_magnetic_field( nx, ny, bb, wbbl, wbbr, wbbv,       &
             &   leftix, leftiy, rightix, rightiy, bottomix, bottomiy,   &
             &   topix, topiy, vol, gs, qc, qcb, cflags )
 
-        !!    ..extrapolate magnetic field to edges
+        !! Extrapolate magnetic field to edges
         do iy = -1, ny
             do ix = -1, nx
                 if ( isUnusedCell( cflags( ix, iy, CELLFLAG_TYPE ))) cycle
@@ -80,7 +111,7 @@ contains
             enddo
         enddo
 
-        !!   ..compute extrapolated wbb.(:,:,3) components
+        !! Compute extrapolated wbb.(:,:,3) components
         wbbl(:,:,3) = sqrt( wbbl(:,:,0)**2 + wbbl(:,:,1)**2 + wbbl(:,:,2)**2)
         wbbr(:,:,3) = sqrt( wbbr(:,:,0)**2 + wbbr(:,:,1)**2 + wbbr(:,:,2)**2)
         wbbv(:,:,3) = sqrt( wbbv(:,:,0)**2 + wbbv(:,:,1)**2 + wbbv(:,:,2)**2)
@@ -104,154 +135,177 @@ contains
         return
     end subroutine compute_b_at_faces
 
-! Use this instead of left-right and top-bottom interpolation
-! Obsolete: did not take properly into account trapezoidal and triangle cells
-! Use interp_volume below instead
-  subroutine interp_width(xory,nx,ny,hx,hy,gs,qc,qcb,centre,face)
-  use b2mod_indirect
-  implicit none
-  integer xory
-  integer nx, ny
-  real (kind=R8) :: hx(-1:nx,-1:ny), hy(-1:nx,-1:ny)
-  real (kind=R8) :: gs(-1:nx,-1:ny,0:2)
-  real (kind=R8) :: qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny)
-  real (kind=R8) :: centre(-1:nx,-1:ny), face(-1:nx,-1:ny)
-! This routine performs interpolation of a cell-centred quantity to cell faces
-! with special treatment for triangular cells at the edges.
-! The interpolation is done according to the cell widths given by hx and hy.
-! xory.eq.1: interpolation in the x-direction
-! xory.eq.2: interpolation in the y-direction
-  integer ix, iy
-  real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
-  intrinsic sqrt
+    !> This routine performs interpolation of a cell-centered quantity to cell
+    !! faces with special treatment for triangular cells at the edges.
+    !! The interpolation is done according to the cell widths given by hx and hy.
+    !! xory.eq.1: interpolation in the x-direction
+    !! xory.eq.2: interpolation in the y-direction
+    !! Use this instead of left-right and top-bottom interpolation
+    !! Obsolete: did not take properly into account trapezoidal and triangle cells
+    !! Use interp_volume below instead
+    subroutine interp_width( xory, nx, ny, hx, hy, gs, qc, qcb, centre, face )
+        use b2mod_indirect
+        implicit none
+        integer :: xory
+        integer :: nx   !< Specifies the number of interior cells
+                        !< along the first coordinate (poloidal)
+        integer :: ny   !< Specifies the number of interior cells
+                        !< along the second coordinate (radial)
+        real (kind=R8) :: hx(-1:nx,-1:ny)
+        real (kind=R8) :: hy(-1:nx,-1:ny)
+        real (kind=R8) :: gs(-1:nx,-1:ny,0:2)
+        real (kind=R8) :: qc(-1:nx,-1:ny) !< Cosine of the angle
+            !< between flux line direction and left cell face
+        real (kind=R8) :: qcb(-1:nx,-1:ny)
+        real (kind=R8) :: centre(-1:nx,-1:ny)
+        real (kind=R8) :: face(-1:nx,-1:ny)
 
-  face = INVALID_DOUBLE
+        integer :: ix   !< x-aligned (poloidal) cell index
+        integer :: iy   !< y-aligned (radial) cell index
+        real (kind=R8) :: area_to_top
+        real (kind=R8) :: area_to_bottom
+        real (kind=R8) :: area_to_left
+        real (kind=R8) :: area_to_right
+        intrinsic sqrt
 
-  do ix = -1, nx
-    do iy = -1, ny
-      if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-      if (xory.eq.1) then
-        if(isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
-           face(ix,iy) = (centre(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy))+ &
-                       &  centre(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy))/ &
-                       & (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
-        elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
-             &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
-             &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
-             &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) == GRID_UNDEFINED) then
-           face(ix,iy) = (centre(ix,iy)*hy(topix(ix,iy),topiy(ix,iy))+ &
-                       &  centre(topix(ix,iy),topiy(ix,iy))*hy(ix,iy))/ &
-                       & (hy(ix,iy)+hy(topix(ix,iy),topiy(ix,iy)))
-        elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
-             &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
-             &  cflags(ix,iy,CELLFLAG_TOPFACE) == GRID_UNDEFINED .and. &
-             &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
-           face(ix,iy) = (centre(ix,iy)*hy(bottomix(ix,iy),bottomiy(ix,iy))+ &
-                       &  centre(bottomix(ix,iy),bottomiy(ix,iy))*hy(ix,iy))/ &
-                       & (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
-        elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
-             &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
-             &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
-             &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
-          area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
-                 &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
-          area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
-          face(ix,iy) = (centre(ix,iy)* &
-             &  (area_to_bottom * hy(bottomix(ix,iy),bottomiy(ix,iy)) + &
-             &   area_to_top * hy(topix(ix,iy),topiy(ix,iy))) + &
-             &  (centre(bottomix(ix,iy),bottomiy(ix,iy)) * area_to_bottom + &
-             &   centre(topix(ix,iy),topiy(ix,iy)) * area_to_top)*hy(ix,iy))/ &
-             &  (area_to_bottom * hy(bottomix(ix,iy),bottomiy(ix,iy)) + &
-             &   area_to_top * hy(topix(ix,iy),topiy(ix,iy)) + &
-             &  (area_to_bottom+area_to_top) * hy(ix,iy))
-        endif
-      elseif (xory.eq.2) then
-        if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
-           face(ix,iy) = (centre(ix,iy)*hy(bottomix(ix,iy),bottomiy(ix,iy))+ &
-                       &  centre(bottomix(ix,iy),bottomiy(ix,iy))*hy(ix,iy))/ &
-                       & (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
-        elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
-             &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
-             &  cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
-             &  cflags(ix,iy,CELLFLAG_RIGHTFACE) == GRID_UNDEFINED) then
-           face(ix,iy) = (centre(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy))+ &
-                       &  centre(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy))/ &
-                       & (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
-        elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
-             &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
-             &  cflags(ix,iy,CELLFLAG_LEFTFACE) == GRID_UNDEFINED .and. &
-             &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
-           face(ix,iy) = (centre(ix,iy)*hx(rightix(ix,iy),rightiy(ix,iy))+ &
-                       &  centre(rightix(ix,iy),rightiy(ix,iy))*hx(ix,iy))/ &
-                       & (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))
-        elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
-             &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
-             &  cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
-             &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
-          area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
-          area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)
-          face(ix,iy) = (centre(ix,iy)* &
-             &  (area_to_left * hx(leftix(ix,iy),leftiy(ix,iy)) + &
-             &   area_to_right * hx(rightix(ix,iy),rightiy(ix,iy))) + &
-             &  (centre(leftix(ix,iy),leftiy(ix,iy)) * area_to_left + &
-             &   centre(rightix(ix,iy),rightiy(ix,iy)) * area_to_right ) * &
-             &   hx(ix,iy)) / &
-             &  (area_to_left * hx(leftix(ix,iy),leftiy(ix,iy)) + &
-             &   area_to_right * hx(rightix(ix,iy),rightiy(ix,iy)) + &
-             &  (area_to_left+area_to_right) * hx(ix,iy))
-        endif
-      endif
-    end do
-  end do
+        face = INVALID_DOUBLE
 
-  return
-  end subroutine interp_width
+        do ix = -1, nx
+          do iy = -1, ny
+            if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
+                if(xory.eq.1) then
+                    if(isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
+                        face(ix,iy) = (centre(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy))+ &
+                        &  centre(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy))/ &
+                            & (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
+                    elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
+                        &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
+                        &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
+                        &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) == GRID_UNDEFINED) then
+                        face(ix,iy) = (centre(ix,iy)*hy(topix(ix,iy),topiy(ix,iy))+ &
+                            &  centre(topix(ix,iy),topiy(ix,iy))*hy(ix,iy))/ &
+                            & (hy(ix,iy)+hy(topix(ix,iy),topiy(ix,iy)))
+                    elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
+                        &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
+                        &  cflags(ix,iy,CELLFLAG_TOPFACE) == GRID_UNDEFINED .and. &
+                        &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
+                        face(ix,iy) = (centre(ix,iy)*hy(bottomix(ix,iy),bottomiy(ix,iy))+ &
+                            &  centre(bottomix(ix,iy),bottomiy(ix,iy))*hy(ix,iy))/ &
+                            & (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
+                    elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
+                        &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
+                        &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
+                        &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
+                        area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
+                            &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
+                        area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
+                        face(ix,iy) = (centre(ix,iy)* &
+                            &  (area_to_bottom * hy(bottomix(ix,iy),bottomiy(ix,iy)) + &
+                            &   area_to_top * hy(topix(ix,iy),topiy(ix,iy))) + &
+                            &  (centre(bottomix(ix,iy),bottomiy(ix,iy)) * area_to_bottom + &
+                            &   centre(topix(ix,iy),topiy(ix,iy)) * area_to_top)*hy(ix,iy))/ &
+                            &  (area_to_bottom * hy(bottomix(ix,iy),bottomiy(ix,iy)) + &
+                            &   area_to_top * hy(topix(ix,iy),topiy(ix,iy)) + &
+                            &  (area_to_bottom+area_to_top) * hy(ix,iy))
+                    endif
+                elseif (xory.eq.2) then
+                    if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
+                        face(ix,iy) = (centre(ix,iy)*hy(bottomix(ix,iy),bottomiy(ix,iy))+ &
+                            &  centre(bottomix(ix,iy),bottomiy(ix,iy))*hy(ix,iy))/ &
+                            & (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
+                    elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
+                        &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
+                        &  cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
+                        &  cflags(ix,iy,CELLFLAG_RIGHTFACE) == GRID_UNDEFINED) then
+                        face(ix,iy) = (centre(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy))+ &
+                            &  centre(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy))/ &
+                            & (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
+                    elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
+                        &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
+                        &  cflags(ix,iy,CELLFLAG_LEFTFACE) == GRID_UNDEFINED .and. &
+                        &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
+                        face(ix,iy) = (centre(ix,iy)*hx(rightix(ix,iy),rightiy(ix,iy))+ &
+                            &  centre(rightix(ix,iy),rightiy(ix,iy))*hx(ix,iy))/ &
+                            & (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))
+                    elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
+                        &   isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
+                        &  cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
+                        &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
+                        area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
+                            &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
+                        area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)
+                        face(ix,iy) = (centre(ix,iy)* &
+                            &  (area_to_left * hx(leftix(ix,iy),leftiy(ix,iy)) + &
+                            &   area_to_right * hx(rightix(ix,iy),rightiy(ix,iy))) + &
+                            &  (centre(leftix(ix,iy),leftiy(ix,iy)) * area_to_left + &
+                            &   centre(rightix(ix,iy),rightiy(ix,iy)) * area_to_right ) * &
+                            &   hx(ix,iy)) / &
+                            &  (area_to_left * hx(leftix(ix,iy),leftiy(ix,iy)) + &
+                            &   area_to_right * hx(rightix(ix,iy),rightiy(ix,iy)) + &
+                            &  (area_to_left+area_to_right) * hx(ix,iy))
+                endif
+            endif
+          end do
+        end do
 
-  subroutine interp_volume1(idir,nx,ny,ns,vol,gs,qc,qcb,centre,face)
+        return
+    end subroutine interp_width
+
+  subroutine interp_volume1( idir, nx, ny, ns, vol, gs, qc, qcb, centre, face )
   implicit none
   integer, intent(in) :: idir
-  integer, intent(in) :: nx, ny, ns
-  real (kind=R8), intent(in) :: vol(-1:nx,-1:ny,0:4)
+  integer, intent(in) :: nx !< Specifies the number of interior cells
+                            !< along the first coordinate (poloidal)
+  integer, intent(in) :: ny !< Specifies the number of interior cells
+                            !< along the second coordinate (radial)
+  integer, intent(in) :: ns
+  real (kind=R8), intent(in) :: vol(-1:nx,-1:ny,0:4)    !< Cell volume
   real (kind=R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
-  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny)
+  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny) !< Cosine of the angle
+    !< between flux line direction and left cell face
   real (kind=R8), intent(in) :: qcb(-1:nx,-1:ny)
   real (kind=R8), intent(in) :: centre(-1:nx,-1:ny,0:ns-1)
   real (kind=R8), intent(out) :: face(-1:nx,-1:ny,0:ns-1)
   integer is
 
   do is = 0, ns-1
-    call interp_volume(idir,nx,ny,vol,gs,qc,qcb,centre(-1,-1,is),face(-1,-1,is))
+    call interp_volume( idir, nx, ny, vol, gs, qc, qcb, centre(-1,-1,is),   &
+        &   face(-1,-1,is) )
   end do
 
   return
   end subroutine interp_volume1
 
-  subroutine interp_volume(idir,nx,ny,vol,gs,qc,qcb,centre,face)
+  !> This routine performs interpolation of a cell-centred quantity to cell faces
+  !! with special treatment for triangular cells at the edges.
+  !! This routine is to be used when the result must also be present on
+  !! non-existent 'virtual' faces that are missing in triangle cells.
+  !! If one only needs the values on existing valid faces, then one should use
+  !! values_on_faces instead.
+  !! The interpolation is done according to the cell volumes given by vol.
+  !! For trapezoidal cells, the volume used is that which corresponds to
+  !! the projected area of contact between the cells being interpolated.
+  !! idir.eq.TO_LEFT: interpolation to the LEFT
+  !! idir.eq.TO_BOTTOM: interpolation in the BOTTOM
+  !! idir.eq.TO_RIGHT: interpolation to the RIGHT
+  !! idir.eq.TO_TOP: interpolation in the TOP
+  subroutine interp_volume( idir, nx, ny, vol, gs, qc, qcb, centre, face )
   use b2mod_indirect
   use b2mod_cellhelper
   implicit none
   integer, intent(in) ::  idir
-  integer, intent(in) ::  nx, ny
+  integer, intent(in) ::  nx    !< Specifies the number of interior cells
+                                !< along the first coordinate (poloidal)
+  integer, intent(in) ::  ny    !< Specifies the number of interior cells
+                                !< along the second coordinate (radial)
   real (kind=R8), intent(in) :: vol(-1:nx,-1:ny,0:4)
   real (kind=R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
-  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny)
+  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny) !< Cosine of the angle
+    !< between flux line direction and left cell face
   real (kind=R8), intent(in) :: qcb(-1:nx,-1:ny)
   real (kind=R8), intent(in) :: centre(-1:nx,-1:ny)
   real (kind=R8), intent(out) :: face(-1:nx,-1:ny)
-! This routine performs interpolation of a cell-centred quantity to cell faces
-! with special treatment for triangular cells at the edges.
-! This routine is to be used when the result must also be present on
-! non-existent 'virtual' faces that are missing in triangle cells.
-! If one only needs the values on existing valid faces, then one should use
-! values_on_faces instead.
-! The interpolation is done according to the cell volumes given by vol.
-! For trapezoidal cells, the volume used is that which corresponds to
-! the projected area of contact between the cells being interpolated.
-! idir.eq.TO_LEFT: interpolation to the LEFT
-! idir.eq.TO_BOTTOM: interpolation in the BOTTOM
-! idir.eq.TO_RIGHT: interpolation to the RIGHT
-! idir.eq.TO_TOP: interpolation in the TOP
+
   integer ix, iy, ixn, iyn
   real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
   intrinsic sqrt
@@ -434,28 +488,48 @@ contains
   return
   end subroutine interp_volume
 
-  subroutine interp_magnetic_field(nx,ny,bb,wbbl,wbbr,wbbv, &
-       & leftix,leftiy,rightix,rightiy,bottomix,bottomiy, &
-       & topix,topiy,vol,gs,qc,qcb,cflags)
+  !> Identical code to interp_volume, but needs to refer to the
+  !! geometric arrays explicitly
+  subroutine interp_magnetic_field( nx, ny, bb, wbbl, wbbr, wbbv,   &
+        &    leftix, leftiy, rightix, rightiy, bottomix, bottomiy,  &
+        &    topix, topiy, vol, gs, qc, qcb, cflags)
 
     implicit none
-    integer, intent(in) :: nx, ny
-    real(R8), intent(in) :: bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny,0:4), &
-                         &  gs(-1:nx,-1:ny,0:2), &
-                         &  qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny)
-    real(R8), intent(out) :: wbbl(-1:nx,-1:ny,0:3), &
-         & wbbr(-1:nx,-1:ny,0:3), wbbv(-1:nx,-1:ny,0:3)
+    integer, intent(in) :: nx   !< Specifies the number of interior cells
+                                !< along the first coordinate (poloidal)
+    integer, intent(in) :: ny   !< Specifies the number of interior cells
+                                !< along the second coordinate (radial)
+    real(R8), intent(in) :: bb(-1:nx,-1:ny,0:3)
+    real(R8), intent(in) :: vol(-1:nx,-1:ny,0:4)
+    real(R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
+    real(R8), intent(in) :: qc(-1:nx,-1:ny)
+    real(R8), intent(in) :: qcb(-1:nx,-1:ny)
+    real(R8), intent(out) :: wbbl(-1:nx,-1:ny,0:3)
+    real(R8), intent(out) :: wbbr(-1:nx,-1:ny,0:3)
+    real(R8), intent(out) :: wbbv(-1:nx,-1:ny,0:3)
     integer, intent(in) :: cflags(-1:nx,-1:ny,CARREOUT_NCELLFLAGS)
-    integer, intent(in) :: &
-         & leftix(-1:nx,-1:ny),leftiy(-1:nx,-1:ny), &
-         & rightix(-1:nx,-1:ny),rightiy(-1:nx,-1:ny), &
-         & topix(-1:nx,-1:ny),topiy(-1:nx,-1:ny), &
-         & bottomix(-1:nx,-1:ny),bottomiy(-1:nx,-1:ny)
-! identical code to interp_volume above, but needs to refer to the
-! geometric arrays explicitly
+    integer, intent(in) :: leftix( -1:nx, -1:ny)    !< Left neighbour
+        !< poloidal (first coordinate) index array
+    integer, intent(in) :: leftiy( -1:nx, -1:ny )   !< Left neighbour radial
+        !< (second coordinate) index
+    integer, intent(in) :: rightix( -1:nx, -1:ny )  !< Right neighbour
+        !< poloidal (first coordinate) index array
+    integer, intent(in) :: rightiy( -1:nx, -1:ny )  !< Right neighbour
+        !< radial (second coordinate) index
+    integer, intent(in) :: topix( -1:nx, -1:ny )    !< Top neighbour
+        !< poloidal (first coordinate) index array
+    integer, intent(in) :: topiy( -1:nx, -1:ny )    !< Top neighbour radial
+        !< (second coordinate) index
+    integer, intent(in) :: bottomix( -1:nx, -1:ny ) !< Bottom neighbour
+        !< poloidal (first coordinate) index array
+    integer, intent(in) :: bottomiy( -1:nx, -1:ny ) !< Bottom neighbour
+        !< radial (second coordinate) index
 
-  integer ix, iy, ixn, iyn
-  real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
+    integer :: ix   !< x-aligned (poloidal) cell index
+    integer :: iy   !< y-aligned (radial) cell index
+    integer :: ixn
+    integer :: iyn
+    real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
   intrinsic sqrt
 
   wbbl = BB_INVALID
@@ -465,7 +539,7 @@ contains
   do ix = -1, nx
     do iy = -1, ny
       if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-! First compute wbbl, the interpolation to the left
+!! First compute wbbl, the interpolation to the left
       if(isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
         ixn = leftix(ix,iy)
         iyn = leftiy(ix,iy)
@@ -506,7 +580,7 @@ contains
            &   area_to_top * vol(topix(ix,iy),topiy(ix,iy),TO_BOTTOM) + &
            &  (area_to_bottom+area_to_top) * vol(ix,iy,TO_SELF))
       endif
-! Second, compute wbbr, the interpolation to the right
+!! Second, compute wbbr, the interpolation to the right
       if(isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
         ixn = rightix(ix,iy)
         iyn = rightiy(ix,iy)
@@ -547,7 +621,7 @@ contains
            &   area_to_top * vol(topix(ix,iy),topiy(ix,iy),TO_BOTTOM) + &
            &  (area_to_bottom+area_to_top) * vol(ix,iy,TO_SELF))
       endif
-! Third, compute wbbv, the interpolation to the bottom
+!! Third, compute wbbv, the interpolation to the bottom
       if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
         ixn = bottomix(ix,iy)
         iyn = bottomiy(ix,iy)
@@ -594,6 +668,14 @@ contains
   return
   end subroutine interp_magnetic_field
 
+  !> This routine performs an interpolation of cell-faced quantities to cell centres
+  !! with special treatment for non-rectangular cells and attention to the direction
+  !! of slanted faces.
+  !! If the cell-faced quantity is a flux where the directional sign matters, we
+  !! take it into account
+  !! The cell-centered is bi-directional (0: poloidal, 1: radial)
+  !! For a positive slant value, a positive poloidal flux in a slanted face is
+  !! directed towards the top
   subroutine interp_from_face(isflux,isparallel,nx,ny,flux,centre)
   use b2mod_geo , only: crx, cry, gs, qz, qc, pbs
   use b2mod_indirect
@@ -603,22 +685,16 @@ contains
   integer, intent(in) :: nx, ny
   real (kind=R8), intent(in) :: flux(-1:nx,-1:ny,0:1)
   real (kind=R8), intent(out) :: centre(-1:nx,-1:ny,0:1)
-! This routine performs an interpolation of cell-faced quantities to cell centres
-! with special treatment for non-rectangular cells and attention to the direction
-! of slanted faces.
-! If the cell-faced quantity is a flux where the directional sign matters, we
-! take it into account
-! The cell-centered is bi-directional (0: poloidal, 1: radial)
-! For a positive slant value, a positive poloidal flux in a slanted face is directed towards the top
+
   integer ix, iy
   integer cgeo
   real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
   real (kind=R8) :: face(-1:nx,-1:ny,0:1,0:1), slant
   real (kind=R8) :: p0x, p0y, p1x, p1y
   logical classical
-! FIXME: To remove later once qcb and vol are redefined in b2mod_geo
+!! FIXME: To remove later once qcb and vol are redefined in b2mod_geo
   real (kind=R8) :: qcb(-1:nx,-1:ny), vol(-1:nx,-1:ny,0:4)
-!   ..procedures
+!!   ..procedures
   intrinsic min, max, sqrt
   real (kind=R8) :: trim1, norm, sinang
   norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
@@ -627,8 +703,8 @@ contains
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 
   classical = isClassicalGrid(cflags)
-! If isparallel is .true., then the background flow is in the parallel direction
-! face has dimensions (ix,iy,iFace,iDir)
+!! If isparallel is .true., then the background flow is in the parallel direction
+!! face has dimensions (ix,iy,iFace,iDir)
   face = 0.0_R8
   do ix = -1, nx
     do iy = -1, ny
@@ -703,8 +779,8 @@ contains
   do ix = -1, nx
     do iy = -1, ny
       if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-! We treat the guard cells at the end so they can inherit real cell value when
-! necessary
+!! We treat the guard cells at the end so they can inherit real cell value when
+!! necessary
       if(isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
       cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
       if (isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy))) then
@@ -801,24 +877,24 @@ contains
           centre(ix,iy,0) = 0.5_R8*( face(ix,iy,0,0) + face(rightix(ix,iy),rightiy(ix,iy),0,0) )
         elseif (cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
               & cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
- ! both top and bottom sides are misaligned
-          if (pbs(ix,iy,1).gt.0.0_R8 .and. & ! the bottom edge is being shaved going to the left
-            & pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8) then  ! the top edge is being shaved going to the right
+ !! both top and bottom sides are misaligned
+          if (pbs(ix,iy,1).gt.0.0_R8 .and. & !! the bottom edge is being shaved going to the left
+            & pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8) then  !! the top edge is being shaved going to the right
             centre(ix,iy,0) = 0.5_R8* ( &
                 & (face(ix,iy,0,0)*area_to_left + face(ix,iy,1,0)*area_to_bottom) / &
                 & (area_to_left + area_to_bottom) + &
                 & (face(topix(ix,iy),topiy(ix,iy),1,0)*area_to_top + &
                 &  face(rightix(ix,iy),rightiy(ix,iy),0,0)*area_to_right) / &
                 & (area_to_top + area_to_right) )
-          elseif (pbs(ix,iy,1).lt.0.0_R8 .and. & ! the bottom edge is being shaved going to the right
-                & pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8) then  ! the top edge is being shaved going to the right
+          elseif (pbs(ix,iy,1).lt.0.0_R8 .and. & !! the bottom edge is being shaved going to the right
+                & pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8) then  !! the top edge is being shaved going to the right
             centre(ix,iy,0) = 0.5_R8* ( face(ix,iy,0,0) + &
                 & (face(topix(ix,iy),topiy(ix,iy),1,0)*area_to_top + &
                 &  face(rightix(ix,iy),rightiy(ix,iy),0,0)*area_to_right + &
                 &  face(ix,iy,1,0)*area_to_bottom) / &
                 & (area_to_top + area_to_right + area_to_bottom) )
-          elseif (pbs(ix,iy,1).lt.0.0_R8 .and. & ! the bottom edge is being shaved going to the right
-                & pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8) then  ! the top edge is being shaved going to the left
+          elseif (pbs(ix,iy,1).lt.0.0_R8 .and. & !! the bottom edge is being shaved going to the right
+                & pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8) then  !! the top edge is being shaved going to the left
             centre(ix,iy,0) = 0.5_R8* ( &
                 & (face(ix,iy,0,0)*area_to_left + &
                 &  face(topix(ix,iy),topiy(ix,iy),1,0)*area_to_top) / &
@@ -826,69 +902,69 @@ contains
                 & (face(ix,iy,1,0)*area_to_bottom + &
                 &  face(rightix(ix,iy),rightiy(ix,iy),0,0)*area_to_right) / &
                 & (area_to_bottom + area_to_right) )
-          elseif (pbs(ix,iy,1).gt.0.0_R8 .and. & ! the bottom edge is being shaved going to the left
-                & pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8) then  ! the top edge is being shaved going to the left
+          elseif (pbs(ix,iy,1).gt.0.0_R8 .and. & !! the bottom edge is being shaved going to the left
+                & pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8) then  !! the top edge is being shaved going to the left
             centre(ix,iy,0) = 0.5_R8* ( face(rightix(ix,iy),rightiy(ix,iy),0,0) + &
                 & (face(topix(ix,iy),topiy(ix,iy),1,0)*area_to_top + &
                 &  face(ix,iy,0,0)*area_to_left + &
                 &  face(ix,iy,1,0)*area_to_bottom) / &
                 & (area_to_top + area_to_left + area_to_bottom) )
-          elseif (pbs(ix,iy,1).eq.0.0_R8 .and. & ! the bottom edge is approximately aligned
-                & pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8) then  ! the top edge is being shaved going to the left
+          elseif (pbs(ix,iy,1).eq.0.0_R8 .and. & !! the bottom edge is approximately aligned
+                & pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8) then  !! the top edge is being shaved going to the left
             centre(ix,iy,0) = 0.5_R8* ( face(rightix(ix,iy),rightiy(ix,iy),0,0) + &
                 & (face(topix(ix,iy),topiy(ix,iy),1,0)*area_to_top + &
                 &  face(ix,iy,0,0)*area_to_left) / &
                 & (area_to_top + area_to_left) )
-          elseif (pbs(ix,iy,1).eq.0.0_R8 .and. & ! the bottom edge is approximately aligned
-                & pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8) then  ! the top edge is being shaved going to the right
+          elseif (pbs(ix,iy,1).eq.0.0_R8 .and. & !! the bottom edge is approximately aligned
+                & pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8) then  !! the top edge is being shaved going to the right
             centre(ix,iy,0) = 0.5_R8* ( face(ix,iy,0,0) + &
                 & (face(topix(ix,iy),topiy(ix,iy),1,0)*area_to_top + &
                 &  face(rightix(ix,iy),rightiy(ix,iy),0,0)*area_to_right) / &
                 & (area_to_top + area_to_right) )
-          elseif (pbs(ix,iy,1).lt.0.0_R8 .and. & ! the bottom edge is being shaved going to the right
-                & pbs(topix(ix,iy),topiy(ix,iy),1).eq.0.0_R8) then  ! the top edge is approximately aligned
+          elseif (pbs(ix,iy,1).lt.0.0_R8 .and. & !! the bottom edge is being shaved going to the right
+                & pbs(topix(ix,iy),topiy(ix,iy),1).eq.0.0_R8) then  !! the top edge is approximately aligned
             centre(ix,iy,0) = 0.5_R8* ( face(ix,iy,0,0) + &
                 & (face(rightix(ix,iy),rightiy(ix,iy),0,0)*area_to_right + &
                 &  face(ix,iy,1,0)*area_to_bottom) / &
                 & (area_to_right + area_to_bottom) )
-          elseif (pbs(ix,iy,1).gt.0.0_R8 .and. & ! the bottom edge is being shaved going to the left
-                & pbs(topix(ix,iy),topiy(ix,iy),1).eq.0.0_R8) then  ! the top edge is approximately aligned
+          elseif (pbs(ix,iy,1).gt.0.0_R8 .and. & !! the bottom edge is being shaved going to the left
+                & pbs(topix(ix,iy),topiy(ix,iy),1).eq.0.0_R8) then  !! the top edge is approximately aligned
             centre(ix,iy,0) = 0.5_R8* ( &
                 & (face(ix,iy,0,0)*area_to_left + face(ix,iy,1,0)*area_to_bottom) / &
                 & (area_to_left + area_to_bottom) + &
                 &  face(rightix(ix,iy),rightiy(ix,iy),0,0) )
           elseif (pbs(ix,iy,1).eq.0.0_R8 .and. &
-                & pbs(topix(ix,iy),topiy(ix,iy),1).eq.0.0_R8) then  ! both edges are approximately aligned
+                & pbs(topix(ix,iy),topiy(ix,iy),1).eq.0.0_R8) then  !! both edges are approximately aligned
             centre(ix,iy,0) = 0.5_R8*( face(ix,iy,0,0) + face(rightix(ix,iy),rightiy(ix,iy),0,0) )
           endif
         elseif (cflags(ix,iy,CELLFLAG_TOPFACE) == GRID_UNDEFINED .and. &
               & cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
-          if (pbs(ix,iy,1).lt.0.0_R8) then  ! the bottom edge is being shaved going to the right
+          if (pbs(ix,iy,1).lt.0.0_R8) then  !! the bottom edge is being shaved going to the right
             centre(ix,iy,0) = 0.5_R8* ( face(ix,iy,0,0) + &
                 & (face(rightix(ix,iy),rightiy(ix,iy),0,0)*area_to_right + &
                 &  face(ix,iy,1,0)*area_to_bottom) / &
                 & (area_to_right + area_to_bottom) )
-          elseif (pbs(ix,iy,1).gt.0.0_R8) then  ! the bottom edge is being shaved going to the left
+          elseif (pbs(ix,iy,1).gt.0.0_R8) then  !! the bottom edge is being shaved going to the left
             centre(ix,iy,0) = 0.5_R8* ( &
                 & (face(ix,iy,0,0)*area_to_left + face(ix,iy,1,0)*area_to_bottom) / &
                 & (area_to_left + area_to_bottom) + &
                 &  face(rightix(ix,iy),rightiy(ix,iy),0,0) )
-          elseif (pbs(ix,iy,1).eq.0.0_R8) then  ! the bottom edge is approximately aligned
+          elseif (pbs(ix,iy,1).eq.0.0_R8) then  !! the bottom edge is approximately aligned
             centre(ix,iy,0) = 0.5_R8*( face(ix,iy,0,0) + face(rightix(ix,iy),rightiy(ix,iy),0,0) )
           endif
         elseif (cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
               & cflags(ix,iy,CELLFLAG_BOTTOMFACE) == GRID_UNDEFINED) then
-          if (pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8) then  ! the top edge is being shaved going to the left
+          if (pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8) then  !! the top edge is being shaved going to the left
             centre(ix,iy,0) = 0.5_R8* ( face(rightix(ix,iy),rightiy(ix,iy),0,0) + &
                 & (face(topix(ix,iy),topiy(ix,iy),1,0)*area_to_top + &
                 &  face(ix,iy,0,0)*area_to_left) / &
                 & (area_to_top + area_to_left) )
-          elseif (pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8) then  ! the top edge is being shaved going to the right
+          elseif (pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8) then  !! the top edge is being shaved going to the right
             centre(ix,iy,0) = 0.5_R8* ( face(ix,iy,0,0) + &
                 & (face(topix(ix,iy),topiy(ix,iy),1,0)*area_to_top + &
                 &  face(rightix(ix,iy),rightiy(ix,iy),0,0)*area_to_right) / &
                 & (area_to_top + area_to_right) )
-          elseif (pbs(topix(ix,iy),topiy(ix,iy),1).eq.0.0_R8) then  ! the top edge is approximately aligned
+          elseif (pbs(topix(ix,iy),topiy(ix,iy),1).eq.0.0_R8) then  !! the top edge is approximately aligned
             centre(ix,iy,0) = 0.5_R8*( face(ix,iy,0,0) + face(rightix(ix,iy),rightiy(ix,iy),0,0) )
           endif
         endif
@@ -991,24 +1067,24 @@ contains
           centre(ix,iy,1) = 0.5_R8*( face(ix,iy,1,1) + face(topix(ix,iy),topiy(ix,iy),1,1) )
         elseif (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
               & cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
- ! both left and right sides are misaligned
+ !! both left and right sides are misaligned
           if (vol(ix,iy,TO_TOP).gt.vol(ix,iy,TO_BOTTOM) .and. &
-           &  vol(ix,iy,TO_TOP).eq.vol(ix,iy,TO_SELF)) then  ! the cell is keystone-shaped
+           &  vol(ix,iy,TO_TOP).eq.vol(ix,iy,TO_SELF)) then  !! the cell is keystone-shaped
             centre(ix,iy,1) = 0.5_R8 * ( face(topix(ix,iy),topiy(ix,iy),1,1) + &
                    & ( face(ix,iy,1,1)*area_to_bottom + &
                    &   face(ix,iy,0,1)*area_to_left + &
                    &   face(rightix(ix,iy),rightiy(ix,iy),0,1)*area_to_right ) / &
                    & ( area_to_bottom + area_to_left + area_to_right ) )
           else if (vol(ix,iy,TO_TOP).lt.vol(ix,iy,TO_BOTTOM) .and. &
-              &    vol(ix,iy,TO_BOTTOM).eq.vol(ix,iy,TO_SELF)) then  ! the cell is an inverted keystone
+              &    vol(ix,iy,TO_BOTTOM).eq.vol(ix,iy,TO_SELF)) then  !! the cell is an inverted keystone
             centre(ix,iy,1) = 0.5_R8 * ( face(ix,iy,1,1) + &
                    & ( face(topix(ix,iy),topiy(ix,iy),1,1)*area_to_top + &
                    &   face(ix,iy,0,1)*area_to_left + &
                    &   face(rightix(ix,iy),rightiy(ix,iy),0,1)*area_to_right ) / &
                    & ( area_to_top + area_to_left + area_to_right ) )
           else if (vol(ix,iy,TO_TOP).lt.vol(ix,iy,TO_SELF).and. &
-                &  vol(ix,iy,TO_BOTTOM).lt.vol(ix,iy,TO_SELF)) then  ! left and right edges are being shaved in the same direction
-            if (qz(ix,iy,0).lt.0.0_R8) then  ! the cell is slanted to the right
+                &  vol(ix,iy,TO_BOTTOM).lt.vol(ix,iy,TO_SELF)) then  !! left and right edges are being shaved in the same direction
+            if (qz(ix,iy,0).lt.0.0_R8) then  !! the cell is slanted to the right
               centre(ix,iy,1) = 0.5_R8 * ( &
                      & ( face(ix,iy,1,1)*area_to_bottom + &
                      &   face(rightix(ix,iy),rightiy(ix,iy),0,1)*area_to_right ) / &
@@ -1016,7 +1092,7 @@ contains
                      & ( face(ix,iy,0,1)*area_to_left + &
                      &   face(topix(ix,iy),topiy(ix,iy),1,1)*area_to_top ) / &
                      & ( area_to_top + area_to_left ) )
-            elseif (qz(ix,iy,0).gt.0.0_R8) then  ! the cell is slanted to the left
+            elseif (qz(ix,iy,0).gt.0.0_R8) then  !! the cell is slanted to the left
               centre(ix,iy,1) = 0.5_R8 * ( &
                      & ( face(ix,iy,1,1)*area_to_bottom + &
                      &   face(ix,iy,0,1)*area_to_left ) / &
@@ -1024,47 +1100,47 @@ contains
                      & ( face(rightix(ix,iy),rightiy(ix,iy),0,1)*area_to_right + &
                      &   face(topix(ix,iy),topiy(ix,iy),1,1)*area_to_top ) / &
                      & ( area_to_top + area_to_right ) )
-            elseif (qz(ix,iy,0).eq.0.0_R8) then  ! the cell is approximately aligned
+            elseif (qz(ix,iy,0).eq.0.0_R8) then  !! the cell is approximately aligned
               centre(ix,iy,1) = 0.5_R8 * ( face(ix,iy,1,1) + &
                      &   face(topix(ix,iy),topiy(ix,iy),1,1) )
             endif
-          else ! both edges are approximately aligned
+          else !! both edges are approximately aligned
             centre(ix,iy,1) = 0.5_R8 * ( face(ix,iy,1,1) + &
                      &   face(topix(ix,iy),topiy(ix,iy),1,1) )
           endif
         elseif (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
               & cflags(ix,iy,CELLFLAG_RIGHTFACE) == GRID_UNDEFINED) then
-! the left side is misaligned
-          if (vol(ix,iy,TO_TOP).lt.vol(ix,iy,TO_BOTTOM)) then  ! the cell is being shaved going up
+!! the left side is misaligned
+          if (vol(ix,iy,TO_TOP).lt.vol(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going up
             centre(ix,iy,1) = 0.5_R8 * ( face(ix,iy,1,1) + &
                      & ( face(ix,iy,0,1)*area_to_left + &
                      &   face(topix(ix,iy),topiy(ix,iy),1,1)*area_to_top ) / &
                      & ( area_to_top + area_to_left ) )
-          else if (vol(ix,iy,TO_TOP).gt.vol(ix,iy,TO_BOTTOM)) then  ! the cell is being shaved going down
+          else if (vol(ix,iy,TO_TOP).gt.vol(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going down
             centre(ix,iy,1) = 0.5_R8 * ( &
                      & ( face(ix,iy,1,1)*area_to_bottom + &
                      &   face(ix,iy,0,1)*area_to_left ) / &
                      & ( area_to_bottom + area_to_left ) + &
                      &   face(topix(ix,iy),topiy(ix,iy),1,1) )
-          else ! case of approximately rectangular boundary cell
+          else !! case of approximately rectangular boundary cell
             centre(ix,iy,1) = 0.5_R8 * ( face(ix,iy,1,1) + &
                      &   face(topix(ix,iy),topiy(ix,iy),1,1) )
           endif
         elseif (cflags(ix,iy,CELLFLAG_LEFTFACE) == GRID_UNDEFINED .and. &
               & cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
- ! the right side is misaligned
-          if (vol(ix,iy,TO_TOP).lt.vol(ix,iy,TO_BOTTOM)) then  ! the cell is being shaved going up
+ !! the right side is misaligned
+          if (vol(ix,iy,TO_TOP).lt.vol(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going up
             centre(ix,iy,1) = 0.5_R8 * ( face(ix,iy,1,1) + &
                      & ( face(rightix(ix,iy),rightiy(ix,iy),0,1)*area_to_right + &
                      &   face(topix(ix,iy),topiy(ix,iy),1,1)*area_to_top ) / &
                      & ( area_to_top + area_to_right ) )
-          else if (vol(ix,iy,TO_TOP).gt.vol(ix,iy,TO_BOTTOM)) then  ! the cell is being shaved going down
+          else if (vol(ix,iy,TO_TOP).gt.vol(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going down
             centre(ix,iy,1) = 0.5_R8 * ( &
                      & ( face(ix,iy,1,1)*area_to_bottom + &
                      &   face(rightix(ix,iy),rightiy(ix,iy),0,1)*area_to_right ) / &
                      & ( area_to_bottom + area_to_right ) + &
                      & face(topix(ix,iy),topiy(ix,iy),1,1)*area_to_top )
-          else ! case of approximately rectangular boundary cell
+          else !! case of approximately rectangular boundary cell
             centre(ix,iy,1) = 0.5_R8 * ( face(ix,iy,1,1) + &
                      &   face(topix(ix,iy),topiy(ix,iy),1,1) )
           endif
@@ -1073,10 +1149,10 @@ contains
     end do
   end do
 
-! We now treat the special case of guard cells
-! that inherit directly the value from the valid face when available
-! If not, and neighbours exist, we do a simple interpolation
-! If not again, we recopy the value from the neighbouring real cell
+!! We now treat the special case of guard cells
+!! that inherit directly the value from the valid face when available
+!! If not, and neighbours exist, we do a simple interpolation
+!! If not again, we recopy the value from the neighbouring real cell
   do ix = -1, nx
     do iy = -1, ny
       if(.not.isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
@@ -1162,18 +1238,18 @@ contains
   return
   end subroutine value_on_faces1
 
+  !> This subroutine computes an interpolated value on the existing faces only
   subroutine value_on_faces(nx,ny,weight,centre,face)
-! This subroutine computes an interpolated value on the existing faces only
   use b2mod_geo
   use b2mod_indirect
   implicit none
-! input arguments
+!! input arguments
   integer, intent(in) :: nx, ny
   real (kind=R8), intent(in) :: centre(-1:nx,-1:ny), &
                               & weight(-1:nx,-1:ny,0:4)
-! output arguments
+!! output arguments
   real (kind=R8), intent(out) :: face(-1:nx,-1:ny,0:1)
-! local variables
+!! local variables
   integer ix, iy, cgeo
 
   face = 0.0_R8
@@ -1209,19 +1285,19 @@ contains
   return
   end subroutine value_on_faces
 
+  !> This subroutine computes a FACE-CENTERED velocity by dividing a flow
+  !> by a projected area and a FACE-CENTERED density
   subroutine face_velocity_from_flow(nx,ny,ns,flow,density,velocity)
-! This subroutine computes a FACE-CENTERED velocity by dividing a flow
-! by a projected area and a FACE-CENTERED density
   use b2mod_geo
   use b2mod_indirect
   implicit none
-! input arguments
+!! input arguments
   integer, intent(in) :: nx, ny, ns
   real (kind=R8), intent(in) :: flow(-1:nx,-1:ny,0:1,0:ns-1), &
                            & density(-1:nx,-1:ny,0:1,0:ns-1)
-! output arguments
+!! output arguments
   real (kind=R8), intent(out) :: velocity(-1:nx,-1:ny,0:1,0:ns-1)
-! local variables
+!! local variables
   integer ix, iy, is
   real (kind=R8) :: area_to_top, area_to_bottom
 
@@ -1312,21 +1388,21 @@ contains
   return
   end subroutine face_velocity_from_flow
 
+  !> This subroutine computes a CELL-CENTERED 2-component velocity by dividing
+  !> FACE-CENTERED flows by a cross-sectional area and a CELL-CENTERED density
+  !> If isparallel is .true., then the flow is purely poloidal
   subroutine cell_velocity_from_flow(nx,ny,ns,isparallel,flow,density,velocity)
-! This subroutine computes a CELL-CENTERED 2-component velocity by dividing
-! FACE-CENTERED flows by a cross-sectional area and a CELL-CENTERED density
-! If isparallel is .true., then the flow is purely poloidal
   use b2mod_geo
   use b2mod_indirect
   implicit none
-! input arguments
+!! input arguments
   integer, intent(in) :: nx, ny, ns
   logical, intent(in) :: isparallel
   real (kind=R8), intent(in) :: flow(-1:nx,-1:ny,0:1,0:ns-1), &
                            & density(-1:nx,-1:ny,0:ns-1)
-! output arguments
+!! output arguments
   real (kind=R8), intent(out) :: velocity(-1:nx,-1:ny,0:1,0:ns-1)
-! local variables
+!! local variables
   integer ix, iy, is
   real (kind=R8) :: flux(-1:nx,-1:ny,0:1,0:ns-1)
 
@@ -1372,25 +1448,25 @@ contains
   return
   end subroutine cell_velocity_from_flow
 
+  !> This subroutine computes a flow by multiplying CELL-CENTERED velocities and densities
+  !> through a projected contact area
+  !> The flow produced is a cell-faced quantity
+  !> The flow is positive in the usual directions, thus the sign of pbs appears
+  !> We interpolate internally to the cell faces
   subroutine flow_from_velocity(nx,ny,ns,velocity,density,flow)
-! This subroutine computes a flow by multiplying CELL-CENTERED velocities and densities
-! through a projected contact area
-! The flow produced is a cell-faced quantity
-! The flow is positive in the usual directions, thus the sign of pbs appears
-! We interpolate internally to the cell faces
   use b2mod_geo
   use b2mod_indirect
   implicit none
-! input arguments
+!! input arguments
   integer, intent(in) :: nx, ny, ns
   real (kind=R8), intent(in) :: velocity(-1:nx,-1:ny,0:1,0:ns-1), &
                               & density(-1:nx,-1:ny,0:ns-1)
-! output arguments
+!! output arguments
   real (kind=R8), intent(out) :: flow(-1:nx,-1:ny,0:1,0:ns-1)
-! local variables
+!! local variables
   integer ix, iy, is, cgeo
   real (kind=R8) :: den(-1:nx,-1:ny,0:1,0:ns-1), vv(-1:nx,-1:ny,0:1,0:ns-1)
-! procedures
+!! procedures
   intrinsic sqrt
   real (kind=R8) :: b2sign
   external b2sign
@@ -1404,7 +1480,7 @@ contains
     do iy = -1, ny
       do ix = -1, nx
         if (isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-! poloidal contributions
+!! poloidal contributions
   	if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) &
              & flow(ix,iy,0,is) = flow(ix,iy,0,is) + &
              & vv(ix,iy,0,is)*den(ix,iy,0,is)*gs(ix,iy,0)*qc(ix,iy)
@@ -1427,7 +1503,7 @@ contains
              & vv(ix,iy,0,is)*den(ix,iy,0,is)* &
              & gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
 
-! radial contributions
+!! radial contributions
   	if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
           if (pbs(ix,iy,1).eq.0.0_R8) then
             flow(ix,iy,1,is) = flow(ix,iy,1,is) + &
@@ -1494,7 +1570,7 @@ contains
   return
   end subroutine flow_from_velocity
 
-  ! Interpolate a cell quantity cv to all cell vertices
+  !> Interpolate a cell quantity cv to all cell vertices
   function interpolateToAllVertices( nx, ny, cv ) result ( vx )
     use b2mod_cellhelper
     implicit none
@@ -1502,7 +1578,7 @@ contains
     real (kind=R8), intent(in), dimension(-1:nx,-1:ny) :: cv
     real (kind=R8), dimension(-1:nx,-1:ny,0:3) :: vx
 
-    ! internal
+    !! internal
     integer ivertex
 
     do ivertex = VX_LOWERLEFT, VX_UPPERRIGHT
@@ -1511,7 +1587,7 @@ contains
     return
   end function interpolateToAllVertices
 
-  ! Interpolate a cell quantity cv to a particular vertex
+  !> Interpolate a cell quantity cv to a particular vertex
   function interpolateToVertices( nx, ny, vx_index, cv ) result( vx )
     use b2mod_geo
     use b2mod_b2cmfs
@@ -1578,6 +1654,13 @@ contains
 
   end function interpolateToVertices
 
+  !> The purpose of this routine is to provide values of cell-centered quantities
+  !> projected to the 'sides' of the cells, i.e. taking into account the fact that,
+  !> on each side, more that one neighbor may contribute, or, in the case of
+  !> triangular cells, the contribution does necessarily come from the obvious
+  !> place.
+  !> The projected values will be stored in side(,,TO_LEFT:TO_TOP).
+  !> The interpolation to the sides is weighted by the 'weight' function.
   subroutine value_to_side(nx, ny, weight, centre, side)
   use b2mod_geo , only: crx, cry, gs, qc, pbs
   use b2mod_indirect
@@ -1587,16 +1670,10 @@ contains
   real(R8), intent(in) :: centre(-1:nx,-1:ny)
   real(R8), intent(in) :: weight(-1:nx,-1:ny,0:4)
   real(R8), intent(out) :: side(-1:nx,-1:ny,1:4)
-! FIXME: To remove later once qcb and vol are redefined in b2mod_geo
+!! FIXME: To remove later once qcb and vol are redefined in b2mod_geo
   real (kind=R8) :: qcb(-1:nx,-1:ny), vol(-1:nx,-1:ny,0:4)
 
-! The purpose of this routine is to provide values of cell-centered quantities
-! projected to the 'sides' of the cells, i.e. taking into account the fact that,
-! on each side, more that one neighbor may contribute, or, in the case of
-! triangular cells, the contribution does necessarily come from the obvious
-! place.
-! The projected values will be stored in side(,,TO_LEFT:TO_TOP).
-! The interpolation to the sides is weighted by the 'weight' function.
+
   integer ix, iy, cgeo
   real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
   logical classical, rectangular
@@ -1649,7 +1726,7 @@ contains
         end if
       else
         cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
-! Do left side first
+!! Do left side first
         if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
           area_to_left = gs(ix,iy,0) * qc(ix,iy)
         else
@@ -1661,11 +1738,11 @@ contains
           area_to_bottom = 0.0_R8
         end if
         if (cgeo == CGEO_TRIA_NOLEFT) then
-! Triangles with no left face
+!! Triangles with no left face
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
                  &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
           if (pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8 .and. &
-            & pbs(ix,iy,1).gt.0.0_R8) then  ! cell is a left-pointing arrow
+            & pbs(ix,iy,1).gt.0.0_R8) then  !! cell is a left-pointing arrow
             side(ix,iy,TO_LEFT) = &
              & (area_to_top * &
              &  (centre(ix,iy)*weight(topix(ix,iy),topiy(ix,iy),TO_BOTTOM) + &
@@ -1694,18 +1771,18 @@ contains
              &   weight(ix,iy,TO_BOTTOM))
           end if
         else if (vol(ix,iy,TO_LEFT).eq.vol(ix,iy,TO_SELF)) then
-! Other triangles and trapezoids with a full left side
+!! Other triangles and trapezoids with a full left side
           side(ix,iy,TO_LEFT) = &
            & (centre(ix,iy)*weight(leftix(ix,iy),leftiy(ix,iy),TO_RIGHT)+ &
            &  centre(leftix(ix,iy),leftiy(ix,iy))*weight(ix,iy,TO_LEFT))/ &
            & (weight(leftix(ix,iy),leftiy(ix,iy),TO_RIGHT)+ &
            &  weight(ix,iy,TO_LEFT))
         else
-! Other trapezoids
+!! Other trapezoids
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
                  &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
           if (pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8 .and. &
-            & pbs(ix,iy,1).gt.0.0_R8) then  ! contribution from all three neighbors
+            & pbs(ix,iy,1).gt.0.0_R8) then  !! contribution from all three neighbors
             side(ix,iy,TO_LEFT) = &
              & (area_to_top * &
              &  (centre(ix,iy)*weight(topix(ix,iy),topiy(ix,iy),TO_BOTTOM) + &
@@ -1724,7 +1801,7 @@ contains
              &   weight(ix,iy,TO_BOTTOM))) / &
              & (area_to_top + area_to_left + area_to_bottom)
           else if (pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8 .and. &
-                &  pbs(ix,iy,1).le.0.0_R8) then  ! contribution from top and left neighbors
+                &  pbs(ix,iy,1).le.0.0_R8) then  !! contribution from top and left neighbors
             side(ix,iy,TO_LEFT) = &
              & (area_to_top * &
              &  (centre(ix,iy)*weight(topix(ix,iy),topiy(ix,iy),TO_BOTTOM) + &
@@ -1738,7 +1815,7 @@ contains
              &   weight(ix,iy,TO_LEFT))) / &
              & (area_to_top + area_to_left)
           else if (pbs(topix(ix,iy),topiy(ix,iy),1).ge.0.0_R8 .and. &
-                &  pbs(ix,iy,1).gt.0.0_R8) then  ! contribution from bottom and left neighbors
+                &  pbs(ix,iy,1).gt.0.0_R8) then  !! contribution from bottom and left neighbors
             side(ix,iy,TO_LEFT) = &
              & (area_to_left * &
              &  (centre(ix,iy)*weight(leftix(ix,iy),leftiy(ix,iy),TO_RIGHT) + &
@@ -1753,11 +1830,11 @@ contains
              & (area_to_left + area_to_bottom)
           end if
         end if
-! Do bottom side second
+!! Do bottom side second
         area_to_bottom = gs(ix,iy,1) * qcb(ix,iy)
         area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)
         if (cgeo == CGEO_TRIA_NOBOT) then
-! Triangles with no bottom face
+!! Triangles with no bottom face
           area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
                  &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
           if (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
@@ -1790,14 +1867,14 @@ contains
              &   weight(ix,iy,TO_LEFT))
           end if
         else if (vol(ix,iy,TO_BOTTOM).eq.vol(ix,iy,TO_SELF)) then
-! Other triangles and trapezoids with a full bottom side
+!! Other triangles and trapezoids with a full bottom side
           side(ix,iy,TO_BOTTOM) = &
            & (centre(ix,iy)*weight(bottomix(ix,iy),bottomiy(ix,iy),TO_TOP)+ &
            &  centre(bottomix(ix,iy),bottomiy(ix,iy))*weight(ix,iy,TO_BOTTOM))/ &
            & (weight(bottomix(ix,iy),bottomiy(ix,iy),TO_TOP)+ &
            &  weight(ix,iy,TO_BOTTOM))
         else
-! Other trapezoids
+!! Other trapezoids
           area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
                  &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
           if (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
@@ -1849,14 +1926,14 @@ contains
              & (area_to_bottom + area_to_left)
           end if
         end if
-! Do right side third
+!! Do right side third
         if (cgeo == CGEO_TRIA_NORIGHT) then
-! Triangles with no right face
+!! Triangles with no right face
           area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
                  &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
           if (pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8 .and. &
-            & pbs(ix,iy,1).lt.0.0_R8) then  ! cell is a right-pointing arrow
+            & pbs(ix,iy,1).lt.0.0_R8) then  !! cell is a right-pointing arrow
             side(ix,iy,TO_RIGHT) = &
              & (area_to_top * &
              &  (centre(ix,iy)*weight(topix(ix,iy),topiy(ix,iy),TO_BOTTOM) + &
@@ -1885,21 +1962,21 @@ contains
              &   weight(ix,iy,TO_BOTTOM))
           end if
         else if (vol(ix,iy,TO_RIGHT).eq.vol(ix,iy,TO_SELF)) then
-! Other triangles and trapezoids with a full right side
+!! Other triangles and trapezoids with a full right side
           side(ix,iy,TO_RIGHT) = &
            & (centre(ix,iy)*weight(rightix(ix,iy),rightiy(ix,iy),TO_LEFT)+ &
            &  centre(rightix(ix,iy),rightiy(ix,iy))*weight(ix,iy,TO_RIGHT))/ &
            & (weight(rightix(ix,iy),rightiy(ix,iy),TO_LEFT)+ &
            &  weight(ix,iy,TO_RIGHT))
         else
-! Other trapezoids
+!! Other trapezoids
           area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0) * &
                         & qc(rightix(ix,iy),rightiy(ix,iy))
           area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
                  &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
           if (pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8 .and. &
-            & pbs(ix,iy,1).lt.0.0_R8) then  ! contribution from all three neighbors
+            & pbs(ix,iy,1).lt.0.0_R8) then  !! contribution from all three neighbors
             side(ix,iy,TO_RIGHT) = &
              & (area_to_top * &
              &  (centre(ix,iy)*weight(topix(ix,iy),topiy(ix,iy),TO_BOTTOM) + &
@@ -1918,7 +1995,7 @@ contains
              &   weight(ix,iy,TO_BOTTOM))) / &
              & (area_to_top + area_to_right + area_to_bottom)
           else if (pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8 .and. &
-                &  pbs(ix,iy,1).ge.0.0_R8) then  ! contribution from top and right neighbors
+                &  pbs(ix,iy,1).ge.0.0_R8) then  !! contribution from top and right neighbors
             side(ix,iy,TO_RIGHT) = &
              & (area_to_top * &
              &  (centre(ix,iy)*weight(topix(ix,iy),topiy(ix,iy),TO_BOTTOM) + &
@@ -1932,7 +2009,7 @@ contains
              &   weight(ix,iy,TO_RIGHT))) / &
              & (area_to_top + area_to_right)
           else if (pbs(topix(ix,iy),topiy(ix,iy),1).le.0.0_R8 .and. &
-                &  pbs(ix,iy,1).lt.0.0_R8) then  ! contribution from bottom and right neighbors
+                &  pbs(ix,iy,1).lt.0.0_R8) then  !! contribution from bottom and right neighbors
             side(ix,iy,TO_RIGHT) = &
              & (area_to_right * &
              &  (centre(ix,iy)*weight(rightix(ix,iy),rightiy(ix,iy),TO_LEFT) + &
@@ -1947,9 +2024,9 @@ contains
              & (area_to_right + area_to_bottom)
           end if
         end if
-! Do top side fourth
+!! Do top side fourth
         if (cgeo == CGEO_TRIA_NOTOP) then
-! Triangles with no top face
+!! Triangles with no top face
           area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)
           area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
                  &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
@@ -1983,14 +2060,14 @@ contains
              &   weight(ix,iy,TO_LEFT))
           end if
         else if (vol(ix,iy,TO_TOP).eq.vol(ix,iy,TO_SELF)) then
-! Other triangles and trapezoids with a full top side
+!! Other triangles and trapezoids with a full top side
           side(ix,iy,TO_TOP) = &
            & (centre(ix,iy)*weight(topix(ix,iy),topiy(ix,iy),TO_BOTTOM)+ &
            &  centre(topix(ix,iy),topiy(ix,iy))*weight(ix,iy,TO_TOP))/ &
            & (weight(topix(ix,iy),topiy(ix,iy),TO_BOTTOM)+ &
            &  weight(ix,iy,TO_TOP))
         else
-! Other trapezoids
+!! Other trapezoids
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1) * &
                      & qcb(topix(ix,iy),topiy(ix,iy))
           area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)

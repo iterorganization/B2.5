@@ -1009,7 +1009,7 @@ c     --------------------------------------------------------------------------
         enddo
       else
         write(*,*)
-     1   'Source-Function does not have the right size, try again.'
+     1   'Source function does not have the right size, try again.'
         return
       endif 
        

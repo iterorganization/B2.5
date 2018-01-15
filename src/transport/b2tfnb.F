@@ -1984,8 +1984,8 @@ cwdk need full diamagnetic component for energy
             rdiv= div_fnb_mdf/div_fnb
             fnb = rdiv*fnb
           else
-            write(*,"(a,i4)")
-     >       ' Flux correction is impossible for is =',isb
+            if (ncall.eq.0) write(*,"(a,i4)")
+     >       ' Boundary flux correction not attempted for is = ',isb
           endif
           if(iout.ne.0) then
             write(*,*)

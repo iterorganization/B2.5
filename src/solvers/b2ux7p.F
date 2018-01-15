@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ux7p (nx, ny, aa7, itcnt, resfun, corfun, name)  !sv 11.01.00
+      subroutine b2ux7p (nx, ny, aa7, itcnt, resfun, corfun, name) !srv 11.01.00
       use b2mod_types
       use b2mod_ma28_for_7diag
       use b2mod_ysmp_sdrv
@@ -11,8 +11,8 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
       real (kind=R8) ::
-     *   aa7(-1:nx,-1:ny,-3:3), resfun(-1:nx,-1:ny)                 !sv 11.01.00
-      character*(*) name                                            !sv 18.05.02
+     *   aa7(-1:nx,-1:ny,-3:3), resfun(-1:nx,-1:ny)                !srv 11.01.00
+      character*(*) name                                           !srv 18.05.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(-1:nx,-1:ny)
@@ -43,8 +43,8 @@
 *     nx, ny - integer, input.
 *     See the calling routine for description.
 *
-*     aa7 - (-1:nx,-1:ny,-3:3) real*8 array, input.           !sv 11.01.00
-*     aa7 contains the seven-point matrix.                    !sv 11.01.00
+*     aa7 - (-1:nx,-1:ny,-3:3) real*8 array, input.           !srv 11.01.00
+*     aa7 contains the seven-point matrix.                    !srv 11.01.00
 *
 *     itcnt - integer, input.
 *     itcnt specifies the iteration counter in the calling routine.
@@ -75,44 +75,44 @@
       external subini, subend, xertst, ipgeti, ipgetr, slv5pt, iluter
 *   ..initialisation
       save ncall, style, acpar, cpu
-      data ncall/0/, style/3/, acpar/8.0e0_R8/, cpu/0/
+      data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/             !srv 26.12.17
 
 *-----------------------------------------------------------------------
 *.computation
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2ux7p')                                       !sv 11.01.00
+      call subini ('b2ux7p')                                       !srv 11.01.00
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2ux7p_style', style)                         !sv 11.01.00
+       call ipgeti ('b2ux7p_style', style)                         !srv 11.01.00
        call xertst (0.le.style.and.style.lt.4,
      &   'faulty internal parameter style')
-       call ipgetr ('b2ux7p_acpar', acpar)                         !sv 11.01.00
+       call ipgetr ('b2ux7p_acpar', acpar)                         !srv 11.01.00
        call xertst (0.lt.acpar, 'faulty internal parameter acpar')
-       call ipgeti ('b2ux7p_cpu', cpu)                             !sv 11.01.00
+       call ipgeti ('b2ux7p_cpu', cpu)                             !srv 11.01.00
        if(style.eq.2) then
          mult_nonzero=10
          mult_solvdim=15
          mult_solvdim1=10
-         call ipgeti ('b2ux7p_mult_nonzero', mult_nonzero)         !sv 11.01.00
-         call ipgeti ('b2ux7p_mult_solvdim', mult_solvdim)         !sv 11.01.00
-         call ipgeti ('b2ux7p_mult_solvdim1', mult_solvdim1)       !sv 11.01.00
+         call ipgeti ('b2ux7p_mult_nonzero', mult_nonzero)         !srv 11.01.00
+         call ipgeti ('b2ux7p_mult_solvdim', mult_solvdim)         !srv 11.01.00
+         call ipgeti ('b2ux7p_mult_solvdim1', mult_solvdim1)       !srv 11.01.00
          nnd=(nx+2)*(ny+2)
          n_nonzeros=mult_nonzero*nnd
          solvdim=mult_solvdim*n_nonzeros
          solvdim1=mult_solvdim1*n_nonzeros
-         call alloc_b2mod_ma28_for_7diag                           !sv 11.01.00
-         call iniilu_7(nx+2,ny+2)                                  !sv 11.01.00
+         call alloc_b2mod_ma28_for_7diag                           !srv 11.01.00
+         call iniilu_7(nx+2,ny+2)                                  !srv 11.01.00
          nltrsol=2
-         call ipgeti ('b2ux7p_nltrsol', nltrsol)                   !sv 11.01.00
+         call ipgeti ('b2ux7p_nltrsol', nltrsol)                   !srv 11.01.00
        endif
        if(style.eq.3) then                                         !srv 29.05.02 {
          nnd=(nx+2)*(ny+2)
          nnd_sdrv  = (nx+2)*(ny+2)
          n_nz_sdrv = 4*nnd_sdrv
 !         nsp = 3*nnd + 12*n_nz_sdrv  ! was 7*n_nz_sdrv without vis per !srv 13.02.03
-         nsp = 3*nnd + 13*n_nz_sdrv                                !srv 20.02.06
+         nsp = 3*nnd + 16*n_nz_sdrv                                !srv 29.12.15
          call alloc_b2mod_ysmp_sdrv
          ia = 0                                                    !srv 15.05.07
          ja = 0                                                    !srv 15.05.07
@@ -126,7 +126,7 @@
 *   ..obtain work space
       if (ncall.eq.0) then
         write(*,*) 
-     .   'Allocating space for solver for 7-point-stencil matrix'  !sv 11.01.00
+     .   'Allocating space for solver for 7-point-stencil matrix'  !srv 11.01.00
         if (style.eq.0) then
           call xerrab ('Style not applicable to 7-point-stencil!')
 *    ..obtain workspace for iluter
@@ -146,7 +146,7 @@
         else if (style.eq.2) then
         endif
         write(*,*) 
-     .   'Allocated space for solver for 7-point-stencil matrix'   !sv 11.01.00
+     .   'Allocated space for solver for 7-point-stencil matrix'   !srv 11.01.00
       endif
 
 *   ..solve the correction equation
@@ -164,11 +164,11 @@
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
       else if (style.eq.2) then
 *    ..use ma28
-        call ilutern_7(NX+2, NY+2, NX+2, aa7(-1,-1,-3),              !sv 11.01.00
+        call ilutern_7(NX+2, NY+2, NX+2, aa7(-1,-1,-3),            !srv 11.01.00
      1   aa7(-1,-1,-2), aa7(-1,-1,-1), aa7(-1,-1,0),
-     2   aa7(-1,-1,1), aa7(-1,-1,2), aa7(-1,-1,3),                 !sv 11.01.00
+     2   aa7(-1,-1,1), aa7(-1,-1,2), aa7(-1,-1,3),                 !srv 11.01.00
      .   resfun, corfun, name)
-       else if (style.eq.3) then                                     !srv 29.05.02 {
+       else if (style.eq.3) then                                   !srv 29.05.02 {
 !        call cpu_time(cpu_start)
         call storage_7 (nx, ny, aa7, n_nz_sdrv, ia, ja, a, nz,
      *                 indexes, iasave, jasave, name)
@@ -178,7 +178,7 @@
         call xertst (nz.le.N_NZ_SDRV, ' nz.gt.N_NZ_SDRV')
 *    ..use sdrv from YSMP
 !        call cpu_time(cpu_start)
-        call illtern_7(NX+2, NY+2, NX+2, NZ, resfun, corfun)         !srv 29.05.02 }
+        call illtern_7(NX+2, NY+2, NX+2, NZ, resfun, corfun)       !srv 29.05.02 }
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of illtern_7 is',1pd9.2)") cpu_end-cpu_start
       endif
@@ -311,4 +311,4 @@
        enddo
       endif
 
-      end                                                         !sv 29.05.02
+      end                                                         !srv 29.05.02

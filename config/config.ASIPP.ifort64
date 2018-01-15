@@ -31,17 +31,9 @@ FC       = ifort
 endif
 
 ifdef SOLPS_DEBUG
-ifdef USE_MPI
-FCOPTS   = -g -C -traceback
-else
 FCOPTS   = -g -C -debug all -traceback -check all
-endif
-else
-ifdef USE_MPI
-FCOPTS   = -O2 -vec_report0
 else
 FCOPTS   = -O2 -vec_report0
-endif
 endif
 
 DBLFC    = ${FC}
@@ -62,6 +54,10 @@ CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef IMAS_PREFIX
+ifndef SOLPS_CPP
+EQUIVS    += -DIMAS
+endif
+LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
 IMASLIBS   = ${LD_UAL} -lggd-ifort
 endif

@@ -801,7 +801,10 @@ c           l_ddt=l_ddt+1
       end if !}
 
 cxpb  Additional diagnostic for comparison with SOLPS4.0
-      if (ncall.eq.0) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
+      if (ncall.eq.0) then
+        call b2trci(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+        if (write_nml_user) call write_b2mod_user_namelist(nx,ns)
+      endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0
      & .and.ank_tracing.ne.0.and.output_style.ge.2) then
         write(*,*) 'Eirene output in eirene_mc :'
@@ -3311,12 +3314,13 @@ cxpb  core recycling into ions of the highest ionisation stage
         do j = 1, nnatmi
           is=ishigh(j)
           if(bccon(is,ib).ne.13) then
-            write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
-     1       ' <> 13, current value = ',bccon(is,ib)
+            if(output_style.ge.2 .or. ncall.lt.3)
+     1       write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
+     2       ' <> 13, current value = ',bccon(is,ib)
 C           call xerrab ('eirene_mc: bccon <> 13')
           else
             conpar(is,ib,3)=core_flux(j)
-            if(output_style.gt.2)
+            if(output_style.ge.2 .or. ncall.lt.3)
      1       write(*,*) 'eirene_mc: conpar(is,ib,3) = ',
      2       conpar(is,ib,3),' for is,ib= ',is,ib
           endif

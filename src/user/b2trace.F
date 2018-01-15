@@ -1,4 +1,4 @@
-      subroutine b2trace(nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+      subroutine b2trace(nput,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
       use b2mod_types
       use b2mod_diag
       use b2mod_b2cmpa
@@ -18,9 +18,9 @@ c*** redirected to the log file for the first call and there is no
 c*** further output
 c----------------------------------------------------------------------
       implicit none
-      integer nx, ny, ns, nxtl, nxtr, ismain
-      real (kind=R8) :: dtim, BoRiS
-      integer ix, iy, is, istra
+      integer nput, nx, ny, ns, nxtl, nxtr, ismain, lun
+      real (kind=R8) :: dtim, tim, BoRiS
+      integer ix, iy, is, istra, iline
       integer, save :: use_recyceir
       real (kind=R8) :: recyctmp
       logical, save :: tracing_initialised
@@ -109,55 +109,105 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
 #endif
       if(ank_tracing.eq.0) return
 c*** Particle balance
-      if(filedata(ntrc_bln)) call b2blnc(nx,ny,ns,dtim)
+      if(filedata(ntrc_bln)) call b2blnc(nx,ny,ns,dtim,iline)
 c*** Power balance
-      if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,BoRiS)
+      if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,BoRiS,iline)
 c*** Parallel momentum balance
-      if(filedata(ntrc_blm)) call b2blnm(nx,ny,ns)
+      if(filedata(ntrc_blm)) call b2blnm(nx,ny,ns,iline)
 c*** Additional integrals
-      if(filedata(ntrc_int)) call b2wrint(nx,ny,ns,nnreg(0))
+      if(filedata(ntrc_int)) call b2wrint(nx,ny,ns,nnreg(0),iline)
+      if(filedata(ntrc_srt)) call b2wrsrt(nx,ny,ns,nnreg(0),iline)
 c*** Separatrix data
-      if(filedata(ntrc_sep)) call b2wrsep(nx,ny,ns,BoRiS)
+      if(filedata(ntrc_sep)) call b2wrsep(nx,ny,ns,BoRiS,iline)
 c*** User-specific data
-      if(filedata(ntrc_usr)) call b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS)
+      if(filedata(ntrc_usr))
+     > call b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
 c
       return
 c======================================================================
-      entry b2trci(nx,ny,ns,ismain,dtim,BoRiS)
+      entry b2trci(nput,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
 c*** Initialisation call
       if (tracing_initialised) return
       call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
       call ipgeti ('eirene_use_recyceir', use_recyceir)
 c*** Initialise tracing routines
-      if(filedata(ntrc_bln)) call b2blnci(nx,ny,ns,dtim)
-      if(filedata(ntrc_ble)) call b2blnei(nx,ny,ns,BoRiS)
-      if(filedata(ntrc_blm)) call b2blnmi(nx,ny,ns)
-      if(filedata(ntrc_int)) call b2wrinti(nx,ny,ns,nnreg(0))
-      if(filedata(ntrc_sep)) call b2wrsepi(nx,ny,ns,BoRiS)
-      if(filedata(ntrc_usr)) call b2usrtri(nx,ny,ns,BoRiS)
+      if(ank_tracing.eq.0) return
+      if(filedata(ntrc_bln)) call b2blnci(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_ble)) call b2blnei(nx,ny,ns,BoRiS,iline)
+      if(filedata(ntrc_blm)) call b2blnmi(nx,ny,ns,iline)
+      if(filedata(ntrc_int)) call b2wrinti(nx,ny,ns,nnreg(0),iline)
+      if(filedata(ntrc_srt)) call b2wrsrti(nx,ny,ns,nnreg(0),iline)
+      if(filedata(ntrc_sep)) call b2wrsepi(nx,ny,ns,BoRiS,iline)
+      if(filedata(ntrc_usr))
+     > call b2usrtri(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
       tracing_initialised = .true.
       return
 c======================================================================
-      entry b2trcs(nx,ny,ns,ismain,dtim,BoRiS)
-c*** - to be called BEFORE each timestep
-      if(filedata(ntrc_bln)) call b2blncs(nx,ny,ns,dtim)
-      if(filedata(ntrc_ble)) call b2blnes(nx,ny,ns,BoRiS)
-      if(filedata(ntrc_blm)) call b2blnms(nx,ny,ns)
-      if(filedata(ntrc_int)) call b2wrints(nx,ny,ns,nnreg(0))
-      if(filedata(ntrc_sep)) call b2wrseps(nx,ny,ns,BoRiS)
-      if(filedata(ntrc_usr)) call b2usrtrs(nx,ny,ns,BoRiS)
+      entry b2trcc(nput,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+c*** Truncate to match savefile
+      if(filedata(ntrc_bln)) then
+        call b2blncc(nx,ny,ns,dtim,iline)
+        if (iline.gt.0)
+     >   write(nput,'(a,i8)') trim(fn_ntrc(ntrc_bln)), iline
+      end if
+      if(filedata(ntrc_ble)) then
+        call b2blnec(nx,ny,ns,BoRiS,iline)
+        if (iline.gt.0)
+     >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_ble)), iline
+      end if
+      if(filedata(ntrc_blm)) then
+        call b2blnmc(nx,ny,ns,iline)
+        if (iline.gt.0)
+     >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_blm)), iline
+      end if
+      if(filedata(ntrc_int)) then
+        call b2wrintc(nx,ny,ns,nnreg(0),iline)
+        if (iline.gt.0)
+     >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_int)), iline
+      end if
+      if(filedata(ntrc_srt)) then
+        call b2wrsrtc(nx,ny,ns,nnreg(0),iline)
+        if (iline.gt.0)
+     >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_srt)), iline
+      end if
+      if(filedata(ntrc_sep)) then
+        call b2wrsepc(nx,ny,ns,BoRiS,iline)
+        if (iline.gt.0)
+     >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_sep)), iline
+      end if
+      if(filedata(ntrc_usr)) then
+        call b2usrtrcc(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+        if (iline.gt.0)
+     >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_usr)), iline
+      end if
       return
 c======================================================================
-      entry b2trcf(nx,ny,ns,ismain,dtim,BoRiS)
+      entry b2trcs(nput,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+c*** - to be called BEFORE each timestep
+      if(ank_tracing.eq.0) return
+      if(filedata(ntrc_bln)) call b2blncs(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_ble)) call b2blnes(nx,ny,ns,BoRiS,iline)
+      if(filedata(ntrc_blm)) call b2blnms(nx,ny,ns,iline)
+      if(filedata(ntrc_int)) call b2wrints(nx,ny,ns,nnreg(0),iline)
+      if(filedata(ntrc_srt)) call b2wrsrts(nx,ny,ns,nnreg(0),iline)
+      if(filedata(ntrc_sep)) call b2wrseps(nx,ny,ns,BoRiS,iline)
+      if(filedata(ntrc_usr))
+     > call b2usrtrs(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+      return
+c======================================================================
+      entry b2trcf(nput,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
 c*** Finalization call
       if (.not.tracing_initialised) return
       call dealloc_b2mod_user
-      if(filedata(ntrc_bln)) call b2blncf(nx,ny,ns,dtim)
-      if(filedata(ntrc_ble)) call b2blnef(nx,ny,ns,BoRiS)
-      if(filedata(ntrc_blm)) call b2blnmf(nx,ny,ns)
-      if(filedata(ntrc_int)) call b2wrintf(nx,ny,ns,nnreg(0))
-      if(filedata(ntrc_sep)) call b2wrsepf(nx,ny,ns,BoRiS)
-      if(filedata(ntrc_usr)) call b2usrtrf(nx,ny,ns,BoRiS)
+      if(ank_tracing.eq.0) return
+      if(filedata(ntrc_bln)) call b2blncf(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_ble)) call b2blnef(nx,ny,ns,BoRiS,iline)
+      if(filedata(ntrc_blm)) call b2blnmf(nx,ny,ns,iline)
+      if(filedata(ntrc_int)) call b2wrintf(nx,ny,ns,nnreg(0),iline)
+      if(filedata(ntrc_srt)) call b2wrsrtf(nx,ny,ns,nnreg(0),iline)
+      if(filedata(ntrc_sep)) call b2wrsepf(nx,ny,ns,BoRiS,iline)
+      if(filedata(ntrc_usr))
+     > call b2usrtrf(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
       tracing_initialised = .false.
       return
 c======================================================================

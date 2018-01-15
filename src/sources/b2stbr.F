@@ -140,8 +140,13 @@
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
 #include <netcdf.inc>
-      integer :: status, ncid
+      integer :: status, ncid, ndims, nvars, natts, unlimid
+      integer dimids(NF_MAX_VAR_DIMS), dimsize(NF_MAX_VAR_DIMS)
       integer, save :: ntstep_b2wall
+      real (kind=R8), save :: stim = 0.0_R8
+      character*(NF_MAX_NAME) :: dimname(NF_MAX_VAR_DIMS)
+      logical ex
+      character*256 filename
 #endif
 *   ..procedures
       logical lnext
@@ -846,23 +851,48 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       if(b2wall_netcdf.ne.0 .and. ntargsp.gt.0) then
 #ifndef NO_CDF
         if(ncall.eq.0) then
-          call define_cdf_b2mod_wall(nbnd,ntargsp)
-          status=nf_open('b2wall.nc',NF_WRITE,ncid)
-          call check_cdf_status(status)
-          write(*,*) 'Writing track_species'
-          call write_cdf_char_variable(ncid,-1,
-     *     'track_species',track_species(1:ntargsp))
-          write(*,*) 'Writing plate_area'
-          call write_cdf_variable(ncid,-1,
-     *     'plate_area',plate_area(1:nbnd))
-          status=nf_close(ncid)
-          call check_cdf_status(status)
-          write(*,*) 'Closed b2wall.nc'
-          ntstep_b2wall=0
+          filename='b2wall.nc'
+          call find_file(filename,ex)
+          call ipgetr ('b2mndr_stim', stim)
+          if (.not.ex.or.stim.ge.0.0_R8) then
+            ntstep_b2wall = 0
+            write(6,'(a)') trim(filename)//' will be created'
+            call define_cdf_b2mod_wall(filename,ncid,nbnd,ntargsp)
+          else if (ex.and.stim.lt.0.0_R8) then
+            status=nf_open(filename,NF_WRITE,ncid)
+            call check_cdf_status(status)
+            status=nf_inq(ncid,ndims,nvars,natts,unlimid)
+            call check_cdf_status(status)
+            status=nf_inq_dim(ncid,dimids(1),dimname(1),dimsize(1))
+            call check_cdf_status(status)
+            ntstep_b2wall=dimsize(1)
+            status=nf_close(ncid)
+            call check_cdf_status(status)
+            write(6,'(a)') trim(filename)//' will be appended'
+          else
+            ntstep_b2wall=0
+            write(6,'(a)') trim(filename)//' will be replaced'
+            call define_cdf_b2mod_wall(filename,ncid,nbnd,ntargsp)
+          end if
+          write(6,'(a,i8)') trim(filename)//' : ntstep_b2wall = ',
+     .                                          ntstep_b2wall
+          if (ntstep_b2wall.eq.0) then
+            status=nf_open(filename,NF_WRITE,ncid)
+            call check_cdf_status(status)
+            write(*,*) 'Writing track_species'
+            call write_cdf_char_variable(ncid,-1,
+     *       'track_species',track_species(1:ntargsp))
+            write(*,*) 'Writing plate_area'
+            call write_cdf_variable(ncid,-1,
+     *       'plate_area',plate_area(1:nbnd))
+            status=nf_close(ncid)
+            call check_cdf_status(status)
+            write(6,'(a)') 'Closed '//trim(filename)
+          end if
         endif
         if(main_call.and.mod(ncall,b2wall_netcdf).eq.0) then
           ntstep_b2wall=ntstep_b2wall+1
-          status=nf_open('b2wall.nc',NF_WRITE,ncid)
+          status=nf_open(filename,NF_WRITE,ncid)
           call check_cdf_status(status)
           call write_cdf_variable(ncid,ntstep_b2wall,
      *     'plate_time',plate_time(1:nbnd))
@@ -938,37 +968,37 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 #ifdef B25_EIRENE
        do ia = 1,nnatmi
         write (chns,'(i3.3)') ia
-        call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,ia,1),
-     &                'b2stbr_rfluxa_eir'//chns)
-        call my_out(70,nx,ny,tfluxa(0:nx+1,0:ny+1,ia,1),      ! IYS 27.01.2017
-     &                'b2stbr_tfluxa_eir'//chns)
+        wrk0(-1:nx,-1:ny)=rfluxa(0:nx+1,0:ny+1,ia,1)
+        call my_out(70,nx,ny,wrk0,'b2stbr_rfluxa_eir'//chns)
+        wrk0(-1:nx,-1:ny)=tfluxa(0:nx+1,0:ny+1,ia,1)
+        call my_out(70,nx,ny,wrk0,'b2stbr_tfluxa_eir'//chns)
         call my_out(70,nx,ny,fatm_eir(:,:,1,ia),              ! IYS 27.01.2017
      &                'b2stbr_fatmy_eir'//chns)
-        call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,ia,1),
-     &                'b2stbr_pfluxa_eir'//chns)
+        wrk0(-1:nx,-1:ny)=pfluxa(0:nx+1,0:ny+1,ia,1)
+        call my_out(70,nx,ny,wrk0,'b2stbr_pfluxa_eir'//chns)
         call my_out(70,nx,ny,fatm_eir(:,:,0,ia),              ! IYS 27.01.2017
      &                'b2stbr_fatmx_eir'//chns)
-        call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,ia,1),
-     &                'b2stbr_dab2_eir'//chns)
-        call my_out(70,nx,ny,tab2(0:nx+1,0:ny+1,ia,1),
-     &                'b2stbr_tab2_eir'//chns)
+        wrk0(-1:nx,-1:ny)=dab2(0:nx+1,0:ny+1,ia,1)
+        call my_out(70,nx,ny,wrk0,'b2stbr_dab2_eir'//chns)
+        wrk0(-1:nx,-1:ny)=tab2(0:nx+1,0:ny+1,ia,1)
+        call my_out(70,nx,ny,wrk0,'b2stbr_tab2_eir'//chns)
        enddo
        do im = 1,nmol
         write (chns,'(i3.3)') im
-        call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,im,1),
-     &              'b2stbr_rfluxm_eir'//chns)
-        call my_out(70,nx,ny,tfluxm(0:nx+1,0:ny+1,im,1),      ! IYS 27.01.2017
-     &              'b2stbr_tfluxm_eir'//chns)
+        wrk0(-1:nx,-1:ny)=rfluxm(0:nx+1,0:ny+1,im,1)
+        call my_out(70,nx,ny,wrk0,'b2stbr_rfluxm_eir'//chns)
+        wrk0(-1:nx,-1:ny)=tfluxm(0:nx+1,0:ny+1,im,1)
+        call my_out(70,nx,ny,wrk0,'b2stbr_tfluxm_eir'//chns)
         call my_out(70,nx,ny,fmol_eir(:,:,1,im),              ! IYS 27.01.2017
      &              'b2stbr_fmoly_eir'//chns)
-        call my_out(70,nx,ny,pfluxm(0:nx+1,0:ny+1,im,1),
-     &              'b2stbr_pfluxm_eir'//chns)
+        wrk0(-1:nx,-1:ny)=pfluxm(0:nx+1,0:ny+1,im,1)
+        call my_out(70,nx,ny,wrk0,'b2stbr_pfluxm_eir'//chns)
         call my_out(70,nx,ny,fmol_eir(:,:,0,im),              ! IYS 27.01.2017
      &              'b2stbr_fmolx_eir'//chns)
-        call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,im,1),
-     &              'b2stbr_dmb2_eir'//chns)
-        call my_out(70,nx,ny,tmb2(0:nx+1,0:ny+1,im,1),
-     &              'b2stbr_tmb2_eir'//chns)
+        wrk0(-1:nx,-1:ny)=dmb2(0:nx+1,0:ny+1,im,1)
+        call my_out(70,nx,ny,wrk0,'b2stbr_dmb2_eir'//chns)
+        wrk0(-1:nx,-1:ny)=tmb2(0:nx+1,0:ny+1,im,1)
+        call my_out(70,nx,ny,wrk0,'b2stbr_tmb2_eir'//chns)
        enddo
 #endif
       endif

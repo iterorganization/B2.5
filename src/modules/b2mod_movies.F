@@ -3,15 +3,16 @@
       use b2mod_constants
 #ifndef NO_CDF
 #     include <netcdf.inc>
-      integer, save :: ncid, nxdim, nydim, nsdim, natmdim, nmoldim, 
+      integer, save :: nxdim, nydim, nsdim, natmdim, nmoldim,
      & timedim, ntstep
 
       contains
 
-      subroutine create_cdf_start(filename, nx, ny, ns, natm, nmol)
+      subroutine create_cdf_start(ncid, filename,
+     & nx, ny, ns, natm, nmol)
       implicit none
       character*(*) filename
-      integer nx, ny, ns, natm, nmol
+      integer ncid, nx, ny, ns, natm, nmol
 * variable shapes
       integer dims(3)
 * dimensions and variables
@@ -46,9 +47,11 @@
       return
       end subroutine create_cdf_start
 
-      subroutine create_cdf_field2(name, long_name, units)
+      subroutine create_cdf_field2(ncid, name, long_name, units)
       implicit none
       character*(*) name, long_name, units
+* file id
+      integer ncid
 * variable shapes
       integer dims(3)
 * dimensions and variables
@@ -69,9 +72,9 @@
       return
       end subroutine create_cdf_field2
 
-      subroutine create_cdf_field3(name, itype, long_name, units)
+      subroutine create_cdf_field3(ncid, name, itype, long_name, units)
       implicit none
-      integer itype
+      integer ncid, itype
       character*(*) name, long_name, units
 * variable shapes
       integer dims(4)
@@ -105,8 +108,10 @@
       return
       end subroutine create_cdf_field3
 
-      subroutine create_cdf_end()
+      subroutine create_cdf_end(ncid)
       implicit none
+* file id
+      integer ncid
 * dimensions and variables
       integer iret, varid, index(1)
 * leave define mode
@@ -117,7 +122,7 @@
       call check_cdf_status(iret)
       index(1)=1
       ntstep=0
-      write(*,*) 'put_cdf: ',ntstep
+      write(*,*) 'create_cdf_end: ',ntstep
       iret=nf_put_var1_int(ncid,varid,index,ntstep)
       call check_cdf_status(iret)
       iret = nf_close (ncid)
@@ -125,8 +130,9 @@
       return
       end subroutine create_cdf_end
 
-      subroutine put_cdf_start(filename, time)
+      subroutine put_cdf_start(ncid, filename, time)
       implicit none
+      integer ncid
       character*(*) filename
       real (kind=R8) :: time(1)
       integer iret
@@ -142,7 +148,7 @@ c
       iret=nf_get_var1_int(ncid,varid,index,ntstep)
       call check_cdf_status(iret)
       ntstep=ntstep+1
-      write(*,*) 'put_cdf: ',filename,ntstep
+      write(*,*) 'put_cdf_start: ',trim(filename),ntstep
       iret=nf_put_var1_int(ncid,varid,index,ntstep)
       call check_cdf_status(iret)
 c
@@ -155,8 +161,9 @@ c
       return
       end subroutine put_cdf_start
 
-      subroutine put_cdf_field2(name, z_xyt, nx, ny)
+      subroutine put_cdf_field2(ncid, name, z_xyt, nx, ny)
       implicit none
+      integer ncid
       character*(*) name
       integer nx, ny
       real (kind=R8) :: z_xyt(nx, ny)
@@ -177,8 +184,9 @@ c
       return
       end subroutine put_cdf_field2
 
-      subroutine put_cdf_field3(name, z_xyst, nx, ny, ns)
+      subroutine put_cdf_field3(ncid, name, z_xyst, nx, ny, ns)
       implicit none
+      integer ncid
       character*(*) name
       integer nx, ny, ns
       real (kind=R8) :: z_xyst(nx, ny, ns)
@@ -201,8 +209,9 @@ c
       return
       end subroutine put_cdf_field3
 
-      subroutine put_cdf_end()
+      subroutine put_cdf_end(ncid)
       implicit none
+      integer ncid
       integer iret
 c
       iret = nf_close (ncid)
@@ -210,7 +219,7 @@ c
       return
       end subroutine put_cdf_end
 
-      subroutine get_cdf_ntstep(filename, ntstep)
+      subroutine get_cdf_ntstep(filename, ntstep, ncid)
       implicit none
       character*(*) filename
       integer ntstep
@@ -230,7 +239,8 @@ c
       call check_cdf_status(iret)
       end subroutine get_cdf_ntstep
 
-      subroutine get_cdf(filename, ntstep, time, name, z_xyt, nx, ny)
+      subroutine get_cdf(filename, ncid,
+     &  ntstep, time, name, z_xyt, nx, ny)
       implicit none
       character*(*) filename, name
       integer ntstep, nx, ny
@@ -265,7 +275,8 @@ c
 
 c OLD interface
 
-      subroutine create_cdf(filename, nx, ny, name, long_name, units)
+      subroutine create_cdf(filename, ncid,
+     &  nx, ny, name, long_name, units)
       implicit none
       character*(*) filename, name, long_name, units
       integer nx, ny
@@ -315,7 +326,7 @@ c     1 lnblnk(units), units, iret)
       call check_cdf_status(iret)
 * set the initial timestep index (0)
       ntstep=0
-      write(*,*) 'put_cdf: ',filename,ntstep
+      write(*,*) 'create_cdf: ',filename,ntstep
       iret=nf_put_var1_int(ncid,ntstepid,index,ntstep)
       call check_cdf_status(iret)
       iret = nf_close (ncid)
@@ -323,7 +334,7 @@ c     1 lnblnk(units), units, iret)
       return
       end subroutine create_cdf
 
-      subroutine put_cdf(filename, time, name, z_xyt, nx, ny)
+      subroutine put_cdf(ncid, filename, time, name, z_xyt, nx, ny)
       implicit none
       character*(*) filename, name
       integer nx, ny

@@ -411,23 +411,25 @@
 
       status=nf_def_var(ncid,varname,vartype,ndims,vdims,varid)
       call check_cdf_status(status)
-      status=nf_put_att_text(ncid,varid,'units',len(units),units)
+      status=nf_put_att_text(ncid,varid,'units',
+     1 len_trim(units),trim(units))
       call check_cdf_status(status)
       status=nf_put_att_text(ncid,varid,'long_name',
-     1 len(long_name),long_name)
+     1 len_trim(long_name),trim(long_name))
       call check_cdf_status(status)
 
       return
       end subroutine create_cdf_var_with_attrs
 
-      subroutine define_cdf_b2mod_tallies(nnreg,nsd)
-      integer nnreg(0:2), nsd
+      subroutine define_cdf_b2mod_tallies(filename,ncid,nnreg,nsd)
+      integer ncid, nnreg(0:2), nsd
+      character*256 filename
 #include <netcdf.inc>
       integer :: status, 
-     1 ncid, vregid, xregid, yregid, nsid, tid, varid, specid
+     1 vregid, xregid, yregid, nsid, tid, varid, specid
       integer :: vdims(3)
 
-      status=nf_create('b2tallies.nc',NF_CLOBBER,ncid)
+      status=nf_create(filename,NF_WRITE,ncid)
       call check_cdf_status(status)
 
       status=nf_def_dim(ncid,'vreg',nnreg(0)+1,vregid)
@@ -475,7 +477,7 @@
      *  2,vdims,'eV','Average potential')
       call create_cdf_var_with_attrs(
      *  ncid,'volreg',NF_DOUBLE,
-     *  2,vdims,'m^3','Volume')                     !!! change ???
+     *  2,vdims,'m^3','Volume')
       call create_cdf_var_with_attrs(
      *  ncid,'b2stbr_sne_reg',NF_DOUBLE,
      *  2,vdims,'e','Recycling electron particle source')

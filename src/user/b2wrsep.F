@@ -1,4 +1,4 @@
-      subroutine b2wrsep(nx,ny,ns,BoRiS)
+      subroutine b2wrsep(nx,ny,ns,BoRiS,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_diag
@@ -30,7 +30,7 @@ c***  - primarily, to provide boundary conditions for core models
 c----------------------------------------------------------------------
       implicit none
 
-      integer nx, ny, ns
+      integer nx, ny, ns, iline
       real (kind=R8) :: BoRiS
 c----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
@@ -112,6 +112,8 @@ c*** Local variables of general use
       parameter (ltrc=ntrc_sep)
       real (kind=R8) ::
      *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny)
+      real (kind=R8) :: stim = 0.0_R8
+      real (kind=R8) :: tdummy
       integer i,j,k,l,ia,is,ix,iy,jxi,jxa,jsep,nv
       integer, allocatable :: ii(:)
       logical ex, warn_tmp
@@ -133,8 +135,6 @@ c----------------------------------------------------------------------
 
       save
 c======================================================================
-
-      if(first_time_step) return
 
 c*** Initialise the arrays
 c
@@ -363,12 +363,13 @@ c*** Write the data in a separate file for plotting...
       return
 c======================================================================
 
-      entry b2wrsepi(nx,ny,ns,BoRiS)
+      entry b2wrsepi(nx,ny,ns,BoRiS,iline)
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c----------------------------------------------------------------------
 
       tab=char(9)
+      call ipgetr ('b2mndr_stim', stim)
       call get_jsep(nx,ny,jxi,jxa,jsep)
 
       if(nspecies.le.0) then !{
@@ -397,17 +398,19 @@ c*** f     :  the associated file name
 
       allocate(ii(ns))
       allocate(hlp_a(ns))
-      inquire(file=f,exist=ex)
+      call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
-      if(ex) then
-        read(lun,700,err=92) nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
+      if(ex.and.stim.lt.0.0_R8) then
+        read(lun,*,err=92) hlp_c,
+     ,   nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
         lv_trc(ltrc)=nv
         warn_tmp=.false.
         if(nv.ne.lv) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current version ',lv,
-     ,               ' differs from that in the file ',trim(f)
+          write(*,'(a,i8,3a,i8)')
+     ,     '!!! b2wrsep: current version ',lv,
+     ,     ' differs from that in the file ',trim(f),' : ',nv
 c          if(nv .lt. 970212) then
 c*** It was a major change of the file format - impossible to continue
             write(*,*) 'No tracing file - ',
@@ -418,33 +421,39 @@ c          end if
         end if
         if(ng_tmp.ne.nglb_tmp) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current number of global values ',
-     ,                nglb_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i4,3a,i4)')
+     ,     '!!! b2wrsep: current number of global values ',nglb_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ng_tmp
           if(ng_tmp.gt.nglb_tmp) filedata(ltrc)=.false.
         end if
         if(ns_tmp.ne.nspc_tmp) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current number of values by species',
-     ,                nspc_tmp,' differs from that in the file ',trim(f)
+          write(*,'(a,i4,3a,i4)')
+     ,     '!!! b2wrsep: current number of values by species ',nspc_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ns_tmp
           if(ns_tmp.gt.nspc_tmp) filedata(ltrc)=.false.
         end if
         if(nsp_tmp.ne.nspecies) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current number of species ',
-     ,                nspecies,' differs from that in the file ',trim(f)
+          write(*,'(a,i2,3a,i2)')
+     ,     '!!! b2wrsep: current number of species ',nspecies,
+     ,     ' differs from that in the file ',trim(f),' : ',nsp_tmp
           filedata(ltrc)=.false.
         end if
         if(ni_tmp.ne.nion_tmp) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current number of values ',
-     ,               'by ion charge state ',
-     ,               nion_tmp,' differs from that in the file ',trim(f)
+          write(*,'(2a,i4,3a,i4)')
+     ,     '!!! b2wrsep: current number of values',
+     ,     ' by ion charge state ',nion_tmp,
+     ,     ' differs from that in the file ',trim(f),' : ',ni_tmp
           if(ni_tmp.gt.nion_tmp) filedata(ltrc)=.false.
         end if
         if(nii_tmp.ne.nis_tmp) then
           warn_tmp=.true.
-          write(*,*) '!!! b2wrsep: current number of ion charge states',
-     ,     ' ',ns-nspecies,' differs from that in the file ',trim(f)
+          write(*,'(a,i3,3a,i3)')
+     ,     '!!! b2wrsep: current number of ion charge states ',
+     ,     ns-nspecies,
+     ,     ' differs from that in the file ',trim(f),' : ',nii_tmp
           filedata(ltrc)=.false.
         end if
 
@@ -466,7 +475,7 @@ c*** New file
         ni_tmp=nion_tmp
         nii_tmp=nis_tmp
         write(lun,700) lv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
-        write(lun,'(2a)') '## ',label
+        write(lun,'(2a)') '#  ',label
 
         hlp_frf='(9h(5h#time,,i3,9h(1h'//tab//',a8),,'     //
      /          'i3,12h(1h'//tab//',a7,a2),,'              //
@@ -530,12 +539,44 @@ c
       filedata(ltrc)=.false.
       return
 c======================================================================
-      entry b2wrseps(nx,ny,ns,BoRiS)
+c
+      entry b2wrsepc(nx,ny,ns,BoRiS,iline)
+c----------------------------------------------------------------------
+c*** - to be called by b2co for locating truncation for savefile
+c----------------------------------------------------------------------
+c
+      if(.not.filedata(ntrc_sep)) return
+      lun=ntrc(ltrc)
+      f=fn_ntrc(ltrc)
+      call find_file(f,ex)
+      open(lun,file=f,err=190)
+      rewind(lun)
+      iline = 0
+      read(lun,'(a1)',end=155) hlp_c
+      do while (hlp_c.eq.'#')
+        iline = iline+1
+        read(lun,'(a1)',end=155) hlp_c
+      end do
+      backspace lun
+      read(lun,*,end=155) tdummy
+      do while (tdummy.le.tim)
+        iline = iline+1
+        read(lun,*,end=155) tdummy
+      end do
+ 155  continue
+      return
+c======================================================================
+ 190  write(*,*) 'b2wrsep: cannot open file ',trim(f)
+      filedata(ltrc)=.false.
+      iline=-1
+      return
+c======================================================================
+      entry b2wrseps(nx,ny,ns,BoRiS,iline)
 c----------------------------------------------------------------------
 c
       return
 c======================================================================
-      entry b2wrsepf(nx,ny,ns,BoRiS)
+      entry b2wrsepf(nx,ny,ns,BoRiS,iline)
 c----------------------------------------------------------------------
 c     Finalization step
       deallocate(equs_tmp)
@@ -556,6 +597,7 @@ c     Finalization step
       deallocate(hlp_a)
       return
 c======================================================================
-  700 format('#   ',10i8/'##  ',a)
+  700 format('#   ',6i8)
+  701 format(a1,3x,6i8)
 c======================================================================
       end subroutine b2wrsep

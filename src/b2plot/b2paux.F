@@ -150,18 +150,19 @@ c=======================================================================
       use b2mod_neutrals_namelist
       implicit none
 c
-      integer ig
+      integer ig, ih(3)
       real (kind=R8), allocatable ::
      . hlp_pi(:), hlp_po(:), hlp_at(:), hlp_ml(:), mach(:,:,:), pr(:,:)
-      real (kind=R8) :: hlp_a, hlp_m, hlp_n, hlp_p, hlp_s,
+      real (kind=R8) :: hlp_a, hlp_m, hlp_n, hlp_p, hlp_s(3), hlp_ms(3),
      . mass, vel, vth
       character*2, allocatable :: hlp_al(:)
+      character*11, allocatable :: hlp_sg(:)
       character hlp_frmr*600
       integer, allocatable :: mz_hlp(:)
       integer lun
       parameter (lun=96)
       integer indsrf(stacklen)
-      integer i, j, is, ix, iy, k, n, nindsrf
+      integer i, j, im, in, is, ix, iy, k, n, nindsrf
       logical found
       character tab, frm*128, filename*256, extralabel*256
 c=======================================================================
@@ -260,11 +261,33 @@ c-----------------------------------------------------------------------
       else if(ig.eq.-7) then
 c-----------------------------------------------------------------------
         print *
-c*** print deuterium fluxes across the surfaces
+c*** print hydrogen isotopes fluxes across the surfaces
 
         hlp_s=0.0_R8
-        write(6,'(1x,a7,2x,5(3x,a9,2x))') 'surface',
-     ,    'atoms on','atoms off','mols on','mols off','saldo   '
+        in = 0
+        ih = 0
+        do is = 1, 3
+          if (j_h_at(is).ne.0) then
+            in = in+1
+            ih(in) = is
+          end if
+        end do
+        allocate(hlp_ml(3))
+        allocate(hlp_sg(5*in))
+        hlp_ml=0.0_R8
+        hlp_ms=0.0_R8
+        i = 0
+        do is = 1, 3
+          if (j_h_at(is).eq.0) cycle
+          i = i+1
+          hlp_sg(5*(i-1)+1)=is_codes(eb2atcr(j_h_at(is)))//'atoms on'
+          hlp_sg(5*(i-1)+2)=is_codes(eb2atcr(j_h_at(is)))//'atoms off'
+          hlp_sg(5*(i-1)+3)=is_codes(eb2atcr(j_h_at(is)))//'mols on'
+          hlp_sg(5*(i-1)+4)=is_codes(eb2atcr(j_h_at(is)))//'mols off'
+          hlp_sg(5*(i-1)+5)=is_codes(eb2atcr(j_h_at(is)))//'saldo'
+        end do
+        write(hlp_frmr,'(a,i2,a)') '(1x,a7,2x,',5*in,'(1x,a11,2x))'
+        write(6,hlp_frmr) 'surface',(hlp_sg(is),is=1,5*in)
         write(6,*) '  additional:'
         do i=1,nlimi+nstsi !{
           j=i
@@ -272,17 +295,28 @@ c*** print deuterium fluxes across the surfaces
             j=i-nlimi+nlim
             if(i.eq.nlimi+1) write(6,*) '  non-default:'
           end if !}
-          hlp_s=wldna(j,j_h_at,0)-wldra(j,j_h_at,0)-wldpa(j,j_h_at,0)+
-     ,       2*(wldnm(j,1,0)-wldrm(j,1,0)-wldpm(j,1,0))
-c          if(abs(hlp_s).gt.0.001*
-c     ,       abs(wldna(j,j_h_at,0)+wldra(j,j_h_at,0)+wldpa(j,j_h_at,0)+
-c     ,        2*(wldnm(j,1,0)+wldrm(j,1,0)+wldpm(j,1,0)))) then !{
-          write(6,'(2x,i4,2x,1p,5e14.6)')
-     ,     j,wldna(j,j_h_at,0),wldra(j,j_h_at,0)+wldpa(j,j_h_at,0),
-     ,       wldnm(j,1,0),wldrm(j,1,0)+wldpm(j,1,0),hlp_s
-c          end if !}
+          do is = 1, 3 !{
+            if (j_h_at(is).eq.0) cycle
+            hlp_s(is)=wldna(j,j_h_at(is),0)-wldra(j,j_h_at(is),0)
+     ,               -wldpa(j,j_h_at(is),0)
+            do im = 1, nmoli !{
+              if (l_h_mol(im,is).gt.0) then !{
+                hlp_s(is)=hlp_s(is)+l_h_mol(im,is)*
+     ,           (wldnm(j,im,0)-wldrm(j,im,0)-wldpm(j,im,0))
+                hlp_ml(is)=l_h_mol(im,is)*wldnm(j,im,0)
+                hlp_ms(is)=l_h_mol(im,is)*(wldrm(j,im,0)+wldpm(j,im,0))
+              end if !}
+            end do !}
+          end do !}
+          write(hlp_frmr,'(a,i2,a)') '(2x,i4,2x,1p,',5*in,'e14.6)'
+          write(6,hlp_frmr)
+     ,     j,(wldna(j,j_h_at(ih(is)),0),
+     ,        wldra(j,j_h_at(ih(is)),0)+wldpa(j,j_h_at(ih(is)),0),
+     ,        hlp_ml(ih(is)),hlp_ms(ih(is)),hlp_s(ih(is)),is=1,in)
         end do !}
         print *
+        deallocate(hlp_sg)
+        deallocate(hlp_ml)
 c-----------------------------------------------------------------------
       else if(ig.eq.-8) then
 c-----------------------------------------------------------------------
@@ -318,7 +352,12 @@ c-----------------------------------------------------------------------
         end do
         do i=-1,nx
           do j=-1,ny ! Only hydrogen atoms appear in momentum balance
-            mach(i,j,2)=tab2(i+1,j+1,j_h_at,1)*dab2(i+1,j+1,j_h_at,1)
+            do is = 1, 3
+              if (j_h_at(is).ne.0) then
+                mach(i,j,2)=mach(i,j,2)+tab2(i+1,j+1,j_h_at(is),1)*
+     .                                  dab2(i+1,j+1,j_h_at(is),1)
+              end if
+            end do
           end do
         end do
         open(lun,file='prn.dat')

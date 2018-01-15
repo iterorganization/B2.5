@@ -134,27 +134,27 @@ c***  spttrg  : sputtering [g/y]
 
       real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,mmol,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
-     ,  s(0:NYD-1,ntrgsx),xmp_hlp(0:NYD-1,ntrgsx),xtrg(0:NYD-1,ntrgsx),
-     ,  netrg(0:NYD-1,ntrgsx),  tetrg(0:NYD-1,ntrgsx),
-     ,  titrg(0:NYD-1,ntrgsx),
-     ,  wtttrg(0:NYD-1,ntrgsx), wptnu(0:NYD-1,ntrgsx),
-     ,  wptpl(0:NYD-1,ntrgsx),
-     ,  whtnu(0:NYD-1,ntrgsx),  whtpl(0:NYD-1,ntrgsx),
-     ,  wpttrg(0:NYD-1,ntrgsx),
-     ,  wpltrg(0:NYD-1,ntrgsx), wnutrg(0:NYD-1,ntrgsx),
-     ,  wrdtrg(0:NYD-1,ntrgsx),
-     ,  fiitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  eiitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  faitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  eaitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  naitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  paitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  fmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  emitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  pmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  nmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  erntrg(0:NYD-1,ntrgsx), spttrg(0:NYD-1,ntrgsx),
-     ,  sjs(0:NYD-1,ntrgsx), sjs_t(ntrgsx),
+     ,  s(0:NY-1,ntrgsx),xmp_hlp(0:NY-1,ntrgsx),xtrg(0:NY-1,ntrgsx),
+     ,  netrg(0:NY-1,ntrgsx),  tetrg(0:NY-1,ntrgsx),
+     ,  titrg(0:NY-1,ntrgsx),
+     ,  wtttrg(0:NY-1,ntrgsx), wptnu(0:NY-1,ntrgsx),
+     ,  wptpl(0:NY-1,ntrgsx),
+     ,  whtnu(0:NY-1,ntrgsx),  whtpl(0:NY-1,ntrgsx),
+     ,  wpttrg(0:NY-1,ntrgsx),
+     ,  wpltrg(0:NY-1,ntrgsx), wnutrg(0:NY-1,ntrgsx),
+     ,  wrdtrg(0:NY-1,ntrgsx,0:DEF_NATM),
+     ,  fiitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  eiitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  faitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  eaitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  naitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  paitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  fmitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  emitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  pmitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  nmitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  erntrg(0:NY-1,ntrgsx), spttrg(0:NY-1,ntrgsx),
+     ,  sjs(0:NY-1,ntrgsx), sjs_t(ntrgsx),
      ,  sjs_w(0:ntrgsx),pump,pumptot,sptmass,sptflx(DEF_NLIM+DEF_NSTS)
 
 c*** Recap of fluxes from eirene
@@ -252,6 +252,7 @@ c***  wllersf   : ratio of erosion to sputtering for different meterials
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m),
      .                  wllersf(nsptmx)
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
+      character*256 filename
       logical streql
       external streql
       data srfs_m /'Be','C','CFC','Fe','SS','ss','Mo' ,'W'/
@@ -278,10 +279,11 @@ c-----------------------------------------------------------------------
 c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         tab=char(9)
 #ifndef HPUX
-        inquire(file='fort.44',exist=ft44)
+        filename='fort.44'
 #else
-        inquire(file='ftn44',exist=ft44)
+        filename='ftn44'
 #endif
+        call find_file(filename,ft44)
         do_trg=.true.
         write(frmt_hlp,'(7h(1p,1x,,i5,11h(e12.5,a1)))') n_line_x
         
@@ -444,20 +446,20 @@ c carlis evaluate number of sputtered atoms and molecules
             sfpr_sp(i)=trim(TEXTA(ia))
           end if
         end do
-        do im=1,nmol
+        do imol=1,nmol
           match_found=.false.
           j=1
           do j=1,nlimps
-            if (wldsptm(j,im,0).gt.0.0_R8) then
-              sptflx(j)=wldsptm(j,im,0)
-              do_spt_wll(j)=im+natm
-              sptliswll(im+natm)=1
+            if (wldsptm(j,imol,0).gt.0.0_R8) then
+              sptflx(j)=wldsptm(j,imol,0)
+              do_spt_wll(j)=imol+natm
+              sptliswll(imol+natm)=1
               match_found=.true.
             end if
           end do
           if (match_found) then
             i=i+1
-            sfpr_sp(i)=trim(adjustl(textmn(im-1)))
+            sfpr_sp(i)=trim(adjustl(textmn(imol-1)))
           end if
         end do
 #endif
@@ -549,6 +551,7 @@ c            eb2atm will be [1 4 2 3]
       end do
       ils=iabs(lwldlis(iln,izn))
 c      print *,'lwldlis,ils,lppp=',lwldlis(iln,izn),ils,lppp       !###
+
 
 c*** Check whether a target segment is requested
 
@@ -773,7 +776,7 @@ c                  print *,'j,js,wo = ',j,js,wo    !###
                   end if !}
                 end if
                 wpttrg(iy,j)=wnutrg(iy,j)+wpltrg(iy,j)
-                wtttrg(iy,j)=wpttrg(iy,j)+wrdtrg(iy,j)
+                wtttrg(iy,j)=wpttrg(iy,j)+wrdtrg(iy,j,0)
               end do !}
             end do !}
             write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for Wn : ',
@@ -983,10 +986,10 @@ c carlis wldspta and wldsptm give sputtered flux for each emitted atom and molec
                       sjs_t(j)=sjs_t(j)+sjs(iy,j)
                     end if
                   end do
-                  do im=1,nmoli
-                    if (wldsptm_res(im,iy+IAS).gt.0.0_R8) then
-                      sptlistrg(j)=im+natm
-                      sjs(iy,j)=wldsptm_res(im,iy+IAS)*
+                  do imol=1,nmoli
+                    if (wldsptm_res(imol,iy+IAS).gt.0.0_R8) then
+                      sptlistrg(j)=imol+natm
+                      sjs(iy,j)=wldsptm_res(imol,iy+IAS)*
      .                    sarea_res(iy+IAS)
                       sjs_t(j)=sjs_t(j)+
      .                                 sjs(iy,j)
@@ -1060,19 +1063,19 @@ c carlis           [mm/y] = [1/s]*[s*mm*m2/y]*
           iznt=izn
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny-1
+            iy=ny- (ils-lppp-1)-(itrg-1)*ny
             im=-1
           else !}{
-            iy=0
+            iy = (ils-lppp-1)-(itrg-1)*ny
             im=1
           end if !}
         else if (iznt.ne.izn) then !}{ itg.ne.itrg
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny-1
+            iy=ny-(ils-lppp-1)-(itrg-1)*ny
             im=-1
           else !}{
-            iy=0
+            iy = (ils-lppp-1)-(itrg-1)*ny
             im=1
           end if !}
           iznt=izn
@@ -1327,7 +1330,7 @@ c        print *,'itrg,iy=',itrg,iy
         w_line(6)=wnutrg(iy,itrg)
         w_line(5)=wpltrg(iy,itrg)
         w_line(4)=wpttrg(iy,itrg)
-        w_line(3)=wrdtrg(iy,itrg)
+        w_line(3)=wrdtrg(iy,itrg,0)
         w_line(2)=wtttrg(iy,itrg)
         w_line(1)=wldrfdst(iln,izn)
         do is=1,n_sfpr_s !{

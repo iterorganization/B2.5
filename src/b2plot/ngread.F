@@ -45,6 +45,7 @@ c
       real (kind=R8), allocatable :: ft44data(:,:)
       character charns*3
       character*18 hlp_frm
+      character*256 filename
       logical ex
 #endif
       integer, save :: use_recyceir, iout
@@ -93,12 +94,14 @@ C
       call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
       allocate(ft44data(0:nx+1,0:ny+1))
-      inquire(file='input.dat',exist=ex)
+      filename='input.dat'
+      call find_file(filename,ex)
 #ifndef HPUX
-      if (.not.ex) inquire(file='fort.33',exist=nlwrmsh)
+      filename='fort.33'
 #else
-      if (.not.ex) inquire(file='ftn33',exist=nlwrmsh)
+      filename='ftn33'
 #endif
+      if (.not.ex) call find_file(filename,nlwrmsh)
 c
 * labels
 * neutral atoms

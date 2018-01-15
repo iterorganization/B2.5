@@ -1,101 +1,225 @@
-!> Legend:
-!>     !> .......... Variables description,
-!>                   additional (helpful) information etc.
-!>     !  .......... Commented part of code
-!> -----------------------------------------------------------------------------
-!> DOCUMENTATION:
-!> 1. purpose
-!>
-!>      b2_ual_write_b2mod.f90 script is used to generate b2_ual_write_b2mod.exe
-!>      (main program), which is a post-processor for b2.
-!>      The script currently reads the plasma grid
-!>      geometry ( full geometry descriptions of all available grid subsets )
-!>      and plasma state ( electron density ) and writes it to IDS database
-!>      with the use of b2mod scripts that utilize IMAS GGD Grid Service
-!>      Library routines.
-!>
-!>
-!> 2. specification
-!>
-!>      Main program.
-!>
-!>
-!> 3. description (see also routine b2cdca)
-!>
-!>      The complete program performs post-processing of the
-!>      result of a b2 calculation.
-!>      This program unit opens and closes the input/output units, and
-!>      may perform some other system-dependent operations.
-!>
-!>      The input units are:
-!>      ninp(0): formatted; provides output control parameters.
-!>      ninp(1): un*formatted; provides the geometry.
-!>      ninp(2): un*formatted; provides the run parameters.
-!>      ninp(3): un*formatted; provides the plasma state.
-!>      ninp(4): unformatted; provides the detailed plasma state.
-!>      ninp(5): formatted; provides the run switches.
-!>      ninp(6): un*formatted; provides the atomic data.
-!>
-!>      The output units are:
-!>      nout(0): formatted; provides printed output.
-!>
-!>      (See routine b2cdca for the meaning of "un*formatted".)
-!>
-!>
-!> 4. parameters (see also routine b2cdcv)
-!>
-!>      None.
-!>
-!>
-!> 5. error indicators
-!>
-!>      In case an error condition is detected, a call is made to the
-!>      routine xerrab. This causes an error message to be printed,
-!>      after which the program halts.
-!>
-!> -----------------------------------------------------------------------------
+!!-----------------------------------------------------------------------------
+!! DOCUMENTATION (doxygen 1.8.8):
+!>      @author
+!>      Dejan Penko
+!!
+!>      @page b2uw_b2mod b2_ual_write_b2mod
+!>      @section b2uw_b2mod_desc   Description
+!!      b2_ual_write_b2mod code is used to generate b2_ual_write_b2mod.exe
+!!      (main program), which is a post-processor for b2.
+!!      The code reads the plasma grid
+!!      geometry ( full geometry descriptions of all available grid subsets )
+!!      and plasma state (electron density/temperature, ion temperature,
+!!      velocity etc.). The code then writes the obtained data to IDS database
+!!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
+!!      Library routines.
+!!
+!!      @note   More on the b2_ual_writers is available in SOLPS-GUI
+!!              documentation under section <b> IMAS HOWTO </b>.
+!!
+!!      @note   A short video tutorial on the use of the B2.5 writer is
+!!              available <a href="https://youtu.be/5IuADXPAgkQ">here</a>.
+!!
+!!      @section b2uw_b2mod_cpo2ids Mapping CPO -> IDS
+!!      Most B2.5 routines were originally developed to work solely with ITM
+!!      CPOs. Those same routines were modified or created anew, providing
+!!      necessary tools for working with IMAS IDSs.
+!!      Since CPO and IDS data structure is not the same a lot of proper
+!!      adjustments had to be made, mostly in modules
+!!      @ref b2uw_ualio_grid_desc "b2mod_ual_io_grid" and
+!!      @ref b2uw_ualio_desc      "b2mod_ual_io".
+!!
+!!
+!!      @subsection b2uw_b2mod_cpo2ids_constants Constants, classes etc.
+!!      Below are listed CPO constants, classes etc. and corresponding IDS
+!!      ones that were used in IMAS IDS B2.5 routines.
+!!
+!!      CPO                                     | IDS
+!!      -------------------------------         | ------------------
+!!      CLASS_NODE = (/ 0, 0 /)                 | IDS_CLASS_NODE = 1
+!!      CLASS_RZ_EDGE = (/ 1, 0 /)              | IDS_CLASS_RZ_EDGE = 2
+!!      CLASS_PHI_EDGE = (/ 0,10 /)             | IDS_CLASS_PHI_EDGE = 2
+!!      CLASS_POLOIDALRADIAL_FACE = (/ 1, 1 /)  | IDS_CLASS_POLOIDALRADIAL_FACE = 2
+!!      CLASS_TOROIDAL_FACE = (/ 2, 0 /)        | IDS_CLASS_TOROIDAL_FACE = 2
+!!      CLASS_CELL = (/ 2, 1 /)                 | IDS_CLASS_CELL = 3
+!!
+!!      <b> Grid subset IDs </b>:
+!!
+!!      B2.5 ITM routines use grid subset IDs (B2_SUBGRID_UNSPECIFIED,
+!!      B2_SUBGRID_NODES, B2_SUBGRID_CELLS etc.) defined in
+!!      @ref b2uw_ualio_grid_desc "b2mod_ual_io_grid.F90", while B2.5 IDS
+!!      uses grid subset IDs defined in IMAS GGD (ids_grid_common.f90).
+!!
+!!      @subsection b2uw_b2mod_cpo2ids_nodes Data tree nodes
+!!      Below are listed CPO nodes and corresponding IDS nodes to which the
+!!      data was written instead.
+!!
+!!      CPO edge.grid. ...              | IDS edge_profiles.ggd(:).grid. ...
+!!      ------------------------------- | -------------------------------------
+!!      spaces(:).coordtype             | space(:).coordinates_type
+!!      spaces(:).objects               | space(:).objects_per_dimension(:).object
+!!      spaces(:).objects(:).geo        | space(:).objects_per_dimension(:).object(:).geometry
+!!      spaces(:).objects(:).boundary   | space(:).objects_per_dimension(:).object(:).boundary
+!!      spaces(:).objects(:).neighbour  | space(:).objects_per_dimension(:).object(:).boundary(:).neighbours
+!!      spaces(:).xpoints               | No node for data on x-points was found
+!!      subgrids                        | grid_subset
+!!
+!!      CPO edge. ...           | IDS
+!!      ----------------------- | ---------------------------------------------
+!!      fluid.ne.value          | edge_profiles.ggd(:).electrons.density
+!!      fluid.ne.flux           | edge_transport.model(:).ggd(:).electrons.particles.flux
+!!      fluid.ne.source         | edge_sources.source(:).ggd(:).electrons.particles
+!!      fluid.ni.value          | edge_profiles.ggd(:).ion(:).density
+!!      fluid.ni.flux           | edge_transport.model(:).ggd(:).ion(:).particles.flux
+!!      fluid.ni.source         | edge_sources.source(:).ggd(:).ion(:).particles
+!!      fluid.vi(:).comps(1)    | edge_profiles.ggd(:).ion(:).velocity(:).radial
+!!      fluid.vi(:).comps(2)    | edge_profiles.ggd(:).ion(:).velocity(:).poloidal
+!!      fluid.vi(:).comps(3)    | edge_profiles.ggd(:).ion(:).velocity(:).toroidal
+!!      fluid.vi(:).align(:)    | Probably not required as the leaf label refers to vector component itself
+!!      fluid.vi(:).alignid     | Refers to the label of the node velocity(:) leaf
+!!      fluid.te(:).value       | edge_profiles.ggd(:).electrons.temperature
+!!      fluid.te(:).flux        | edge_transport.model(:).ggd(:).electrons.energy.flux
+!!      fluid.ti(:).value       | edge_profiles.ggd(:).ion(:).temperature
+!!      fluid.ti(:).flux        | edge_transport.model(:).ggd(:).ion(:).energy.flux
+!!      fluid.po.value          | edge_profiles.ggd(:).phi_potential
+!!      fluid.te_aniso.comps(1) | edge_profiles.ggd(:).e_field.poloidal
+!!      fluid.te_aniso.comps(2) | edge_profiles.ggd(:).e_field.radial
+!!      fluid.te_aniso.comps(3) | edge_profiles.ggd(:).e_field.toroidal
+!!      fluid.te_aniso.comps(4) | edge_profiles.ggd(:).e_field.diamagnetic
+!!
+!!      @note   In the future, IDS data structure nodes that correspond to
+!!              flux data fields are to be moved from edge_transport IDS to
+!!              edge_profiles IDS.
+!!
+!!      @section b2uw_b2mod_env Compiling and setting the environment
+!!      In order compile the B2.5 writer code use the commands below:
+!!
+!!      @verbatim
+!!          cd $HOME/solps-iter
+!!          tcsh
+!!          source setup.csh
+!!          cd modules/B2.5
+!!          make ids
+!!      @endverbatim
+!!
+!!      @note   At the time of writing this manual IMAS module
+!!              imas/3.13.0/ual/3.6.3 was used. This IMAS module provides
+!!              also GGD support as it includes IMAS GGD library routines
+!!              (Fortran90).
+!!
+!!      @note   b2_ual_write and b2_ual_write_gsl are OUTDATED codes, but
+!!              were left in the repository for documentation purposes and as
+!!              and extra examples.
+!!
+!!      @subsection b2uw_b2mod_run Running the code:
+!!      The examples are available on ITER portal:
+!!      <a href="https://portal.iter.org/departments/POP/CM/IMAS/Forms/AllItems.aspx?RootFolder=%2Fdepartments%2FPOP%2FCM%2FIMAS%2FSOLPS-ITER%2FExamples">B2.5 examples link</a>
+!!
+!!      In terminal navigate to directory containing the case required data files
+!!      (b2fgmtry, b2fstate etc.) and run the following command:
+!!
+!!      @verbatim
+!!          $HOME/solps-iter/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe <shot> <run> <username> <device> <version>
+!!      @endverbatim
+!!
+!!      The arguments marked with < ... > are the parameters of the IDS database
+!!      where the data is to be stored:
+!!          - \b shot:      The shot number of the database being created
+!!          - \b run:       The run number of the database being created
+!!          - \b username:  Creator/owner of the IMAS IDS database
+!!          - \b device:    Device name of the IMAS IDS database
+!!                          (i. e. solps-iter, iter, aug)
+!!          - \b version:   Major version of the IMAS IDS database
+!!
+!!      Example of the command:
+!!      @verbatim
+!!          $HOME/solps-iter/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe 100 7 penkod solps-iter 3
+!!      @endverbatim
+!!
+!!      \b References:
+!!          - @ref b2uw_b2mod_prog "b2_ual_write_b2mod file reference"
+!!          - @ref b2uw_ualio_grid_desc "b2mod_ual_io_grid module "
+!!          - @ref b2uw_ualio_desc      "b2mod_ual_io module".
+!!
+!!-----------------------------------------------------------------------------
 
-!>.specification
+!!-----------------------------------------------------------------------------
+!>      @section b2uw_b2mod_prog Program b2_ual_write_b2mod
+!!      References:
+!!          - @ref b2uw_b2mod "b2_ual_write_b2mod main page"
+!!
+!!      @subsection b2uw_b2mod_det   Details
+!!      For more information see also routine \b b2cdca.
+!!
+!!      The complete program performs post-processing of the
+!!      result of a b2 calculation.
+!!      This program unit opens and closes the input/output units, and
+!!      may perform some other system-dependent operations.
+
+!!
+!!      The input units are:
+!!          - ninp(0): formatted; provides output control parameters.
+!!          - ninp(1): un*formatted; provides the geometry.
+!!          - ninp(2): un*formatted; provides the run parameters.
+!!          - ninp(3): un*formatted; provides the plasma state.
+!!          - ninp(4): unformatted; provides the detailed plasma state.
+!!          - ninp(5): formatted; provides the run switches.
+!!          - ninp(6): un*formatted; provides the atomic data.
+!!
+!!      The output units are:
+!!          - nout(0): formatted; provides printed output.
+!!
+!!      @note   See routine b2cdca for the meaning of "un*formatted".
+!!
+!!      @subsection b2uw_b2mod_pv    Parameters/variables
+!!      @note   see also routine \b b2cdcv
+!!
+!!      @param  device - Device name of the IMAS IDS database
+!!              (i. e. solps-iter, iter, aug)
+!!      @param  edge_profiles - IDS designed to store data on edge plasma
+!!              profiles  (includes the scrape-off layer and possibly part
+!!              of the confined plasma)
+!!      @param  edge_sources - IDS designed to store data on edge plasma
+!!              sources. Energy terms correspond to the full kinetic energy
+!!              equation (i.e. the energy flux takes into account the energy
+!!              transported by the particle flux)
+!!      @param  edge_transport - IDS designed to store data on edge plasma
+!!              transport. Energy terms correspond to the full kinetic energy
+!!              equation (i.e. the energy flux takes into account the energy
+!!              transported by the particle flux)
+!!      @param  idx - The returned identifier to be used in the subsequent
+!!                    data access operation
+!!      @param  run - The run number of the database being created
+!!      @param  shot - The shot number of the database being created
+!!      @param  treename - the name of the IMAS IDS database,
+!!              (i.e. "edge_profiles" (mandatory) )
+!!      @param  username - Creator/owner of the IMAS IDS database
+!!      @param  version - Major version of the IMAS IDS database
+!!
+!!      @subsection b2uw_b2mod_eind  Error indicators
+!!      In case an error condition is detected, a call is made to the
+!!      routine \b xerrab. This causes an error message to be printed,
+!!      after which the program halts.
+!!
+!!      @subsection b2uw_b2mod_syx     Exceptional syntax explanation
+!!      @code
+!!          ! IGNORE    !! syntax used to ignore this module in list
+!!                      !! dependency when compiling the code
+!!      @endcode
+!!
+!!-----------------------------------------------------------------------------
 
 program b2_ual_write_b2mod
 
-    use b2mod_types , B2R8 => R8
-    use b2mod_version
-    use b2mod_geo
-    use b2mod_plasma
-    use b2mod_rates
-    use b2mod_residuals
-    ! use b2mod_sources
-    ! use b2mod_transport
-    ! use b2mod_anomalous_transport
-    use b2mod_work
-    ! use b2mod_time
-    use b2mod_ppout
-    ! use b2mod_tallies
-    ! use b2mod_indirect
-    ! use b2mod_neutrals_namelist
-    ! use b2mod_neutr_src_scaling
-    ! use b2mod_b2cmfs
-    ! use b2mod_constants
+    use b2mod_main
     use b2mod_grid_mapping
-    ! use b2mod_ual_io_grid
-    ! use b2mod_ual_io_data
-    ! use b2mod_ual
     use b2mod_ual_io
-    ! use b2mod_geo_corner
-    ! use b2mod_b2cmrc
-    ! use b2mod_b2cmgs
-    ! use b2mod_b2cmpa
-    ! use b2mod_b2cmpb
-    ! use b2mod_b2cmpt
-    ! use b2mod_b2cmwg
-
     use ids_schemas     ! IGNORE
-                        !> These are the Fortran type definitions for the
-                        !> Physics Data Model
+                        !! These are the Fortran type definitions for the
+                        !! Physics Data Model
     use ids_routines    ! IGNORE
-                        !> These are the Access Layer routines + management of
-                        !> IDS structures
+                        !! These are the Access Layer routines + management of
+                        !! IDS structures
     use ids_assert      ! IGNORE
     use ids_grid_common &       ! IGNORE
         & , IDS_COORDTYPE_R => COORDTYPE_R    &
@@ -110,88 +234,126 @@ program b2_ual_write_b2mod
 
     implicit none
 
-    !>--------------------------------------------------------------------------
+    !! Local variables
+    character(len=24) :: treename   !< The name of the IMAS IDS database
+        !< (i.e. "edge_profiles" (mandatory) )
+    character(len=24) :: username   !< Creator/owner of the IMAS IDS database
+    character(len=24) :: device     !< Device name of the IMAS IDS database
+        !< (i. e. solps-iter, iter, aug)
+    character(len=24) :: version    !< Major version of the IMAS IDS database
+    integer :: idx  !< The returned identifier to be used in the subsequent
+        !< data access operation
+    integer :: i    !< Iterator
+    integer :: shot !< The shot number of the database being created
+    integer :: run  !< The run number of the database being created
+    integer :: num_step     !< Number of steps
+    integer :: narg     !< Total Number of input arguments (shot, run etc.)
+    integer :: cptArg
+    type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store data on
+        !< edge plasma profiles  (includes the scrape-off layer and possibly
+        !< part of the confined plasma)
+    type (ids_edge_sources) :: edge_sources !< IDS designed to store
+        !< data on edge plasma sources. Energy terms correspond to the full
+        !< kinetic energy equation (i.e. the energy flux takes into account
+        !< the energy transported by the particle flux)
+    type (ids_edge_transport) :: edge_transport !< IDS designed to store
+        !< data on edge plasma transport. Energy terms correspond to the
+        !< full kinetic energy equation (i.e. the energy flux takes into
+        !< account the energy transported by the particle flux)
 
-    !>.declarations
+    !! Dummy variables
+    character(len=24) :: shot_string
+    character(len=24) :: run_string
+    character(len=24) :: num_step_string
+    character(len=24) :: argName
 
-    !>..common blocks
+    !! Check if supposed new file already exists and delete it
+    call checkFileAndDelete( "b2fparam" )
+    call checkFileAndDelete( "b2mn.prt" )
+    call checkFileAndDelete( "b2fstate" )
+    call checkFileAndDelete( "b2fmovie" )
+    call checkFileAndDelete( "b2ftrace" )
+    call checkFileAndDelete( "b2ftrack" )
 
-    !>..local variables
-    integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
-    real (kind=B2R8), allocatable ::  ne1(:), te1(:), ti1(:)
-    integer ::  cf_size1(22)
-    integer ::  idx, i
-    integer ::  ix, ixx
-    integer ::  shot, run
-    character(len=24)        ::  treename, username, device, version
-    !> character(len=255)    ::  imas_connect_url
-    type(ids_edge_profiles)  ::  edge_profiles
-    type(ids_edge_sources)   ::  edge_sources
-    type(ids_edge_transport) ::  edge_transport
-    !>  ..procedures
-    external prgini, prgend, xerset, xertst, cfopen, cfruin
-    !>  ..initialize input/output units
-    data ninp/50, 51, 52, 53, 54, 55, 56/
-    data nout/60, 61, 62/
+    !! Set default value for number of steps
+    num_step = -1
+    version = "3"
 
-    !>--------------------------------------------------------------------------
-    !>.documentation-internal
-    !>
-    !>      The following common blocks have their outermost declaration in
-    !>      this routine; they need not be preserved between calls.
-    !>
-    !>      Description of some local variables:
-    !>
-    !>      ninp - (0:6) integer array.
-    !>      ninp specifies the input unit numbers.
-    !>
-    !>      nout - (0:2) integer array.
-    !>      nout specifies the output unit numbers.
-    !>
-    !>      nx, ny - integer.
-    !>      nx and ny specify the number of interior cells along the first
-    !>      and the second coordinate, respectively. The total number of
-    !>      cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
-    !>      It will hold that 0.le.nx and 0.le.ny.
-    !>
-    !>      ns - integer.
-    !>      ns specifies the number of atomic species in the calculation.
-    !>      The species are indexed by (0:ns-1).
-    !>      It will hold that 1.le.ns.
-    !>
-    !>--------------------------------------------------------------------------
-    !>.computation
+    !! Check if arguments are found
+    narg = command_argument_count()
 
-    !> Read main data
-    write(*,*) "START read_b2fgmtry_b2fstate"
-    call read_b2fgmtry_b2fstate()
+    if( narg > 0 ) then
+        !! Loop across arguments and allocate proper values to variables
+        do cptArg = 1, narg
+            call get_command_argument( cptArg, argName )
+            select case( adjustl( argName ) )
+                case("--shot")
+                    call get_command_argument( cptArg + 1, shot_string )
+                    !! Transform dummy string variable to integer
+                    read( shot_string, *) shot
+                case("--run")
+                    call get_command_argument( cptArg + 1, run_string )
+                    !! Transform dummy string variable to integer
+                    read( run_string, *) run
+                case("--username")
+                    call get_command_argument( cptArg + 1, username )
+                case("--device")
+                    call get_command_argument( cptArg + 1, device )
+                case("--version")
+                    call get_command_argument( cptArg + 1, version )
+                case("--numstep")
+                    call get_command_argument( cptArg + 1, num_step_string )
+                    !! Transform dummy string variable to integer
+                    read( num_step_string, *) num_step
+            end select
+        end do
+    !! If not at least shot, run, username and device were defined display
+    !! the error message and and a full command example
+    else if( narg .lt. 8 ) then
+        write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
+            & shot, run, user, device and version variables must&
+            & be defined. Example (terminal): "
+        write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
+            &b2_ual_write_b2mod.exe --shot 1 --run 1 --username penkod&
+            &  --device solps-iter --version 3 --step 250"
+        call exit(0)
+    else
+        write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
+            & shot, run, user, device and version variables must&
+            & be defined. Example (terminal): "
+        write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
+            &b2_ual_write_b2mod.exe --shot 1512 --run 6 --username penkod&
+            &  --device solps-iter --version 3 --step 250"
+        call exit(0)
+    end if
 
-    !> Read plasma state
-    write(*,*) "START read_b2fplasma"
-    call read_b2fplasma( ninp, nx, ny, ns )
+    !! Run main b2 routine to process and read the b2 data
+    write(0,*) "Running b2mn_init"
+    call b2mn_init
+    write(0,*) "b2mn_init completed"
 
-    !> Read additional data
-    ! write(*,*) "START read_additional"
-    ! call read_additional( ninp, nout, nx, ny, ns, ne1, te1, ti1 )
+    !! If steps were defined then run the b2mn_step routine for the number of
+    !! steps
+    if( num_step .ge. -1 ) then
+        write(0,*) "Running b2mn_step(", num_step, ")"
+        write(0,*) "num_step: ", num_step
+        call b2mn_step( num_step )
+    end if
+    write(0,*) "b2mn_step() completed"
 
-    treename    = "ids"
-    ! shot        = 16151
-    ! run         = 1001
-    shot    = 100
-    run     = 6
-    username    = "penkod"
-    device     = "solps-iter"
-    version     = "3"
+    ! write(0,*) " Running b2mn_fin"
+    ! call b2mn_fin
+    ! write(0,*) "b2mn_fin completed"
 
-    !> Set the data to edge_profiles IDS
-    ! call write_ids_edge_profiles( edge_profiles, treename, shot, run, idx, username, &
-                                        ! & device, version, ne1, te1, ti1)
-    !> b2mod routine write_ids
-    write(*,*) "START write_ids"
-    call write_ids( edge_profiles, edge_sources, edge_transport )
+    treename = 'ids'
 
+    !! Process B2.5 data and set it to IMAS IDS
+    write(*,*) "START B25_process_ids"
+    call B25_process_ids( edge_profiles, edge_sources, edge_transport )
+
+    !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,    &
+    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,   &
         &   shot, run, idx, username, device, version )
 
     ! call read_ids(treename, shot, run, idx, username, &
@@ -199,499 +361,74 @@ program b2_ual_write_b2mod
 
 contains
 
-    !> Subroutine intended for reading grid geometry
-    subroutine read_b2fgmtry_b2fstate()
+    !> Subroutine intended to check if supposed new file already exists. If
+    !! the file exists it deletes it.
+    subroutine checkFileAndDelete( fileName )
+        character(len=*), intent(in) :: fileName    !< Name of the file to be
+                                                    !< checked
+        !! Internal variables
+        integer :: stat
+        logical :: file_exists
 
-        integer            ::  i, j, k
-        character(len=120) ::  lblgm
+        inquire( file=fileName, exist=file_exists )
+        if ( file_exists ) then
+            write(*,*) "Deleting old ", fileName
+            open(unit=1234, iostat=stat, file=fileName, status='old')
+            if (stat == 0) close(1234, status='delete')
+        endif
 
-        !>..program start_up calls
-        call prgini( "b2_ual_write" )
+    end subroutine
 
-        !>..open files
-        !>...input files
-        ! call cfopen ( ninp(0), "b2_ual_write.dat", "old", "formatted" )
-        call cfopen( ninp(1), "b2fgmtry", "old", "un*formatted" )
-        call cfopen ( ninp(2), "b2fparam", "old", "un*formatted" )
-        call cfopen( ninp(3), "b2fstate", "old", "un*formatted" )
-        call cfopen ( ninp(4), "b2fplasma", "old", "unformatted" )
-        ! call cfopen ( ninp(5), "b2mn.dat", "old", "formatted" )
-        call cfopen ( ninp(6), "b2frates", "old", "formatted" )
-        !>...output files
-        call cfopen( nout(0), "b2_ual_write.prt", "new", "formatted" )
-        call cfopen( nout(1), "b2_ual_write2.prt", "new", "formatted" )
-
-        !>..mark output unit for error messages
-        call xerset(0)
-        !>..obtain version numbers
-        call cfverr( ninp(1), b2fgmtry_version )
-        call cfverr ( ninp(2), b2fparam_version )
-        call cfverr( ninp(3), b2fstate_version )
-        call cfverr ( ninp(6), b2frates_version )
-        !>..obtain nx, ny, ns
-        call cfruin( ninp(3), 3, idum, "nx,ny,ns" )
-        nx = idum(0)
-        ny = idum(1)
-        ns = idum(2)
-        call xertst( 0.le.nx .and. 0.le.ny .and. 1.le.ns,   &
-            &   "faulty input nx, ny, ns from plasma state file" )
-        call cfruin ( ninp(1), 2, idum(0), "nx,ny" )
-        call xertst( idum(0) .eq. nx .and. idum(1) .eq. ny, &
-            &   "faulty input nx, ny from geometry file" )
-
-        call alloc_b2mod_geo( nx, ny)
-        call alloc_b2mod_plasma( nx, ny, ns )
-        call alloc_b2mod_indirect( nx, ny, nncutmax )
-        call alloc_b2mod_sources( nx, ny, ns)
-
-        call cfruch ( ninp(1), 120, lblgm, "label" )
-        call cfruin ( ninp(1), 1, idum, "isymm" )
-        call b2rugm ( ninp(1), nx, ny, crx, cry, fpsi, ffbz, &
-         & bb, vol, hx, hy, qz, qc, qcb, gs, pbs, &
-         & wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap )
-        call xertst( size( crx ) .eq. size( cry ),  &
-            &   "The number of x and y coordinates is not the same." )
-
-        corner: do k = 0, 3, 1
-            xi: do j = -1, ny, 1
-                yi: do i = -1, nx, 1
-                    write ( nout(0),*) i, j, k, crx(i, j, k)
-                end do yi
-            end do xi
-        end do corner
-
-        call prgend()
-
-        ! stop 'b2_ual_write'
-
-    end subroutine read_b2fgmtry_b2fstate
-
-    !> Subroutine intended for reading plasma state (electron density etc.)
-    subroutine read_b2fplasma( ninp, nx, ny, ns )
-        integer ninp(0:6), nx, ny, ns
-        character lblgm*120
-
-        !! allocate module data structures and read b2fplasma file
-        !! (taken from b2md.F)
-
-        call alloc_b2mod_rates( nx, ny, ns)
-        call alloc_b2mod_residuals( nx, ny, ns)
-        call alloc_b2mod_transport( nx, ny, ns)
-        call alloc_b2mod_anomalous_transport( nx, ny, ns)
-        call alloc_b2mod_work( nx, ny, ns)
-        !! ..read geometry
-        ! call cfruch (ninp(1), 120, lblgm, 'label')
-        ! call cfruin (ninp(1), 1, idum, 'isymm')
-        ! isymm = idum(0)
-        ! call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz, &
-            ! &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs,       &
-            ! &  wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
-        !!     ..read plasma state
-        call cfverr( ninp(4), b2fplasma_version )
-        call read_b2mod_geo( nx, ny, ninp(4) )
-        call read_b2mod_plasma( nx, ny, ns, ninp(4) )
-        call read_b2mod_residuals( ninp(4) )
-        call read_b2mod_sources( ninp(4) )
-    !!$    call read_b2mod_transport(nx,ny,ns,ninp(4))
-        ! call read_b2mod_anomalous_transport(ninp(4))
-        ! call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrai)
-        call alloc_b2mod_ppout( nx, ny, ns )
-
-    end subroutine read_b2fplasma
-
-    !> Subroutine to read additional data
-    !> Currently it reads the same data as read_b2fplasma subroutine
-    !> but uses 'manual' approach of reading data
-    subroutine read_additional( ninp, nout, nx, ny, ns, ne, te, ti )
-
-        !> Read and compute additional data (taken from b2mddr.F)
-
-        implicit none
-
-        !>   ..input arguments (unchanged on exit)
-        integer ninp(0:6), nout(0:2), nx, ny, ns
-        !>   ..output arguments (unspecified on entry)
-        !     ( none)
-        !>   ..common blocks
-
-        !>   ..local variables
-        integer k, is, idum(0:9) !>, nscx, iscx(0:nscxmax-1), ismain
-        character lblgm*120, lblcp*120, lblmn*120, lblrc*120
-        character cnamip*80, cvalip*80
-        !>   ..procedures
-        external subini, subend, xertst, xerrab, cfruch, cfruin, cfrure
-        !>   ..namelist
-        character   :: exp*128, comment*128
-        integer     :: shot, overwrite_shotnumber
-        logical     :: timedep, snapshot, tallies, movies
-        real (kind=B2R8), allocatable ::  zamin(:), zamax(:), zn(:),  &
-            &   am(:), na(:), ua(:), uadia(:), po(:), fna(:), fhe(:),   &
-            &   fhi(:), fch(:), fch_32(:), fch_52(:), kinrgy(:), fch_p(:)
-        real (kind=B2R8), intent(inout), allocatable :: ne(:), te(:), ti(:)
-        real (kind=B2R8)    ::  time
-        integer             ::  cf_sizes(22)
-
-        namelist /b2md_namelist/ exp, shot, time, comment, timedep, snapshot, &
-            & tallies, movies, overwrite_shotnumber
-
-        !>   ..subprogram start-up calls
-        call subini("b2mddr" )
-        !>   ..test ninp, nout
-        call xertst( 1.le.ninp(0) .and. 1.le.ninp(1) .and. 1.le.ninp(2)     &
-            &   .and. 1.le.ninp(3) .and. 1.le.ninp(5) .and. 1.le.ninp(6)    &
-            &   .and. 1.le.nout(0) .and. 1.le.nout(1) .and. 1.le.nout(2),   &
-            &   "faulty argument ninp, nout" )
-        !>   ..test dimensions
-        call xertst(0.le.nx .and. 0.le.ny, "faulty argument nx, ny" )
-        call xertst(1.le.ns, "faulty argument ns" )
-        call xertst( ns.le.nsdecl, "faulty parameter nsdecl" )
-
-        !> Get array sizes from the b2fstate. We open the file again as a new
-        !> unit to not disrupt the old unit.
-        !> A routine should exist to do all that work but so far with no success
-        !> of finding/properly use it.
-        cf_sizes = read_additional_sizes(22)
-
-        ! allocate( lblgm( cf_sizes(2) ) )
-        allocate( zamin( cf_sizes(3) ) )
-        allocate( zamax( cf_sizes(4) ) )
-        allocate( zn( cf_sizes(5) ) )
-        allocate( am( cf_sizes(6) ) )
-        allocate( na( cf_sizes(7) ) )
-        allocate( ne( cf_sizes(8) ) )
-        allocate( ua( cf_sizes(9) ) )
-        allocate( uadia( cf_sizes(10) ) )
-        allocate( te( cf_sizes(11) ) )
-        allocate( ti( cf_sizes(12) ) )
-        allocate( po( cf_sizes(13) ) )
-        allocate( fna( cf_sizes(14) ) )
-        allocate( fhe( cf_sizes(15) ) )
-        allocate( fhi( cf_sizes(16) ) )
-        allocate( fch( cf_sizes(17) ) )
-        allocate( fch_32( cf_sizes(18) ) )
-        allocate( fch_52( cf_sizes(19) ) )
-        !> The program gives an error saying the kinrgy and fch_p are
-        !> already allocated. Where, when?
-        ! allocate(kinrgy(cf_sizes(20)))
-        ! allocate(fch_p(cf_sizes(22)))
-
-        ! call cfruch( ninp(3), cf_sizes(2), lblgm, "label" )
-        call cfruch( ninp(3), 120, lblgm, "label" )
-        call cfrure( ninp(3), cf_sizes(3), zamin, "zamin" )
-        call cfrure( ninp(3), cf_sizes(4), zamax, "zamax" )
-        call cfrure( ninp(3), cf_sizes(5), zn, "zn" )
-        call cfrure( ninp(3), cf_sizes(6), am, "am" )
-        call cfrure( ninp(3), cf_sizes(7), na, "na" )
-        call cfrure( ninp(3), cf_sizes(8), ne, "ne" )
-        call cfrure( ninp(3), cf_sizes(9), ua, "ua" )
-        call cfrure( ninp(3), cf_sizes(10), uadia, "uadia" )
-        call cfrure( ninp(3), cf_sizes(11), te, "te" )
-        call cfrure( ninp(3), cf_sizes(12), ti, "ti" )
-        call cfrure( ninp(3), cf_sizes(13), po, "po" )
-        call cfrure( ninp(3), cf_sizes(14), fna, "fna" )
-        call cfrure( ninp(3), cf_sizes(15), fhe, "fhe" )
-        call cfrure( ninp(3), cf_sizes(16), fhi, "fhi" )
-        call cfrure( ninp(3), cf_sizes(17), fch, "fch" )
-        call cfrure( ninp(3), cf_sizes(18), fch_32, "fch_32" )
-        call cfrure( ninp(3), cf_sizes(19), fch_52, "fch_52" )
-        ! call cfrure( ninp(3), cf_sizes(20), kinrgy, "kinrgy" )
-        ! call cfrure( ninp(3), 1, time, "time" )
-        ! call cfrure( ninp(3), cf_sizes(22), fch_p, "fch_p" )
-
-    end subroutine read_additional
-
-    !> Get array sizes from the b2fstate.
-    function read_additional_sizes( array_size )
-        integer, intent(in )    :: array_size
-        character(len=256)      :: rdline, rdstring
-        integer                 :: cfcount, stat
-        integer ::  cf_sizes( array_size )
-        integer, dimension(:), allocatable :: read_additional_sizes
-
-        allocate( read_additional_sizes( array_size ) )
-
-        cfcount = 0
-        open( 1, file = "b2fstate", status = "old" )
-        do
-            read(1,"(A)", iostat=io) rdline
-            if (io/=0) exit
-            if (rdline(1:3).eq."*cf" ) then
-                cfcount = cfcount + 1
-                rdstring = adjustl( rdline(20:28) )
-                read( rdstring, *, iostat = stat) cf_sizes( cfcount )
-            end if
-        end do
-        close(1)
-        read_additional_sizes = cf_sizes
-
-    end function read_additional_sizes
-
-    !! Subroutine used to set data for edge_profiles IDS
-    subroutine write_ids_edge_profiles( edge_profiles, treename, shot, run, idx, username, &
-                                        & device, version, ne, te, ti )
-        integer :: shot, run, idx
-        integer :: num_nodes_all, num_nodes, num_gridSubsets
-        integer :: gridSubset_index
-        integer :: numCellsX, numCellsY, num_cells, cellId
-        integer :: numEdgesX, numEdgesY, num_edges, edgeId, count, count2
-        integer :: num_ne_gridSubset, num_ne_values
-        integer :: num_te_gridSubset, num_te_values
-        integer :: num_ti_gridSubset, num_ti_values, num_ti_species, ion_specie
-        integer :: num_obj_0D, obj_0D_id
-        integer :: num_obj_2D, obj_2D_id
-        integer :: gridSubset_dim_index
-        integer :: i, j, k, icount, n
-        integer :: homogeneous_time
-        integer :: coordtype(2)
-        integer, allocatable ::  edgesNodesList(:,:), cellsNodesList(:,:)
-        integer, allocatable ::  edgeIndicesRepeat(:)
-        character(len=24)    ::  treename, username, device, version
-        character(len=255)   ::  imas_connect_url
-        character(len=255)   ::  grid_description
-        character(len=132)   ::  gridSubset_name
-        real (kind=B2R8), intent(in ) :: ne(:), te(:), ti(:)
-        !> TODO: read "time" out from b2fstate file
-        ! real(B2R8)    ::  time
-        real(IDS_real) :: time
-        real(IDS_real), allocatable :: nodesGeoList(:,:)
-        real(IDS_real) :: scalarCells(2)
-        type(ids_edge_profiles), intent(inout) :: edge_profiles
-        type(ids_edge_sources)   :: edge_sources
-        type(ids_edge_transport) :: edge_transport
-        type(ids_edge_profiles_time_slice), pointer   :: ggd
-        type(ids_generic_grid_dynamic), pointer       :: grid
-        type(ids_generic_grid_dynamic_space), pointer :: space
-        type(ids_generic_grid_scalar), pointer        :: idsField
-
-        !> ===  SET UP IDS ===
-        write(0,*) "IDS parameters"
-        write(0,*) "shot: ", shot
-        write(0,*) "run:", run
-        write(0,*) "username: ", username
-        write(0,*) "device: ", device
-        write(0,*) "version: ", version
-
-        !> We already went through the check if size(crx)==size(cry)
-        !> so we can safely assume that num_nodes == size(crx)
-        num_nodes_all   = size(crx) !> Number of all available coordinates
-
-        write(0,*) "Setting data for edge_profiles IDS shot:", shot,    &
-            &   ", run:", run
-
-        !> Preparing database for writing
-        !> Through practice it was disclosed that there are some mandatory
-        !> steps to be done in order to assure for data to be successfully
-        !> written to IDS. Without going through those steps errors and failed
-        !> process of writing to IDS are to be expected.
-        !> This can be done using exampleSetIDSFundamentals routine
-        homogeneous_time = 1
-        time = 0.0_IDS_real
-        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time )
-
-        !> Allocate ggd slice
-        allocate( edge_profiles%ggd(1) )
-        !> Set pointers to top IDS nodes/structures
-        ggd => edge_profiles%ggd(1)
-        grid => ggd%grid
-
-        !> Set IDS grid description
-        grid_description = "This IDS was written by b2_ual_write_gsl"
-        grid%identifier%description = grid_description
-
-        !> Set IDS comment under ids_properties substructure
-        allocate( edge_profiles%ids_properties%comment(1) )
-        edge_profiles%ids_properties%comment(1) = &
-            &   "This IDS was created by b2_ual_write_gsl using Grid Service&
-            & Library (GSL)."
-        !> Set IDS code name
-        allocate( edge_profiles%code%name(1) )
-        edge_profiles%code%name(1) = "b2_ual_write_gsl"
-
-        !> === SET UP GRID===
-
-        !> The 2D structured grid is in our case composed out of one 2D
-        !> structured space
-        !> Set definition of the coordinate system of the space
-        coordtype(:) = (/ IDS_COORDTYPE_R, IDS_COORDTYPE_Z /)
-
-        !> --- Set up grid space objects for Class 1 objects - points ---
-
-        !> We are in 2D dimension space and the nodes are defined by coordinates
-        !> in a way
-        !> n1=[r1, z1], n2=[r2,z2], ..., nn=[rn, zn].
-
-        !> Set geometry (R,Z) coordinate of each node object
-        num_nodes = num_nodes_all
-        allocate( nodesGeoList( num_nodes_all, 2) )
-
-        !> To get nodes coordinates to 2D array in correct order
-        icount = 0
-        do k = 0, 3
-            do j = -1, ny
-                do i = -1, nx
-                    icount = icount + 1
-                    nodesGeoList(icount, 1) = crx(i,j,k)
-                    nodesGeoList(icount, 2) = cry(i,j,k)
-                enddo
-            enddo
-        enddo
-
-        !> --- (TODO) Set up connectivity array of grid space objects for   ---
-        !> --- Class 2 objects - edges                                      ---
-        ! !> TODO! Currently only placeholder edges are given
-
-        ! !> Set (placeholder) list of indices for nodes defining each edge object
-        ! allocate( edgesNodesList(1,2))
-        ! edgesNodesList(1,1) = 0
-        ! edgesNodesList(1,2) = 0
-
-        !! b2CreateMap: map contains  3724 unique cells
-        !! b2CreateMap: map contains  3822 unique x-aligned faces
-        !! b2CreateMap: map contains  3762 unique y-aligned faces
-        !! b2CreateMap: map contains  3860 unique vertices
-
-        numEdgesX = nx + 2
-        numEdgesY = ny + 2
-        !num_edges = (( numCellsX * numCellsY) + 98) * 2  !! (3860)
-        ! num_edges = numEdgesX * numEdgesY  !! x-aligned (3724)
-        ! num_edges = numEdgesX * numEdgesY - 98 !! x-aligned (3626)
-        num_edges = numEdgesX * numEdgesY + 98 !! x-aligned (3822)
-        !! TODO: have to fix circular connectivity
-        allocate( edgesNodesList( num_edges, 2) )
-
-        edgeId = 1
-        count = 0
-        count2 = 1
-        ! do j = 1, numEdgesY - 1
-        !     do i = 1, numEdgesX
-        !         edgesNodesList( edgeId, 1) = edgeId
-        !         edgesNodesList( edgeId, 2) = edgeId + 1
-        !         edgeId = edgeId + 1
-        !     end do
-        ! end do
-
-        ! allocate( edgeIndicesRepeat(95))
-        allocate( edgeIndicesRepeat(95) )
-        do j = 1, 24
-            edgeIndicesRepeat(j) = j
-        end do
-        do j = 25, 71
-            edgeIndicesRepeat(j) = j + 1
-        end do
-        do j = 72, 95
-            edgeIndicesRepeat(j) = j + 2
-        end do
-        write(*,*) edgeIndicesRepeat
-
-        do j = 1, 3822
-            ! if( j/95 == count + 1) then
-            if (count2 == 96) then
-                ! write(*,*) j/95, count + 1, count2
-                count = count + 1
-                count2 = 1
-            end if
-            write(*,*) j, count, count2,    &
-                &   count + count * 97 + edgeIndicesRepeat(count2), &
-                &   count + count * 97 + edgeIndicesRepeat(count2) + 1
-            edgesNodesList(j, 1) =  &
-                &   count + count * 97 + edgeIndicesRepeat(count2)
-            edgesNodesList(j, 2) =  &
-                &   count + count * 97 + edgeIndicesRepeat(count2) + 1
-            count2 = count2 + 1
-        end do
-
-        !> --- Set up connectivity array of grid space objects for      ---
-        !> --- Class 3 objects - 2D cells                               ---
-
-        !> Set list of indices for nodes defining each cell object
-        !>
-        !> We are are in 2D dimension and each cell is defined by 4 nodes
-        !> Note: cell nodes must be ordered cyclically (here anti-clockwise)
-        numCellsX = nx + 2
-        numCellsY = ny + 2
-        num_cells = numCellsX * numCellsY
-        allocate(cellsNodesList( num_cells, 4) )
-
-        cellId = 1
-        do j = 1,numCellsY
-            do i = 1, numCellsX
-                cellsNodesList(cellId, 1) = cellId + 0 * numCellsX * numCellsY
-                cellsNodesList(cellId, 2) = cellId + 1 * numCellsX * numCellsY
-                cellsNodesList(cellId, 3) = cellId + 3 * numCellsX * numCellsY
-                cellsNodesList(cellId, 4) = cellId + 2 * numCellsX * numCellsY
-                cellId = cellId + 1
-            enddo
-        enddo
-
-        !> --- Set the grid space objects and grid subsets ---
-        !> For that we use GSL routine gridSetup2dSpace
-        call gridSetup2dSpace(  grid, coordtype,                &
-                            &   geo_0dObj   = nodesGeoList,     &
-                            &   conn_1dObj  = edgesNodesList,   &
-                            &   conn_2dObj  = cellsNodesList,   &
-                            &   createGridSubsets = .true. )
-        !> --- (Optional) Set grid subsets custom description   ---
-        grid%grid_subset(1)%identifier%description = "All nodes in the domain."
-        grid%grid_subset(3)%identifier%description = "All cells in the domain."
-
-        !> (optional) Change name of the second grid subset
-        grid%grid_subset(2)%identifier%name = "Edges - empty."
-
-        !> === SET VALUES ( ne, te, ti) for "Cells" grid subset ===
-        !> For that we use GSL routine gridStructWriteData1d
-        gridSubset_index = 3
-
-        !> --- Set ne ( electron density) ---
-        allocate( ggd%electrons%density(1) )
-        idsField => ggd%electrons%density(1)
-        call gridStructWriteData1d( grid, idsField, gridSubset_index, ne )
-
-        !> --- Set te ( electron temperature) ---
-        allocate( ggd%electrons%temperature(1) )
-        idsField => ggd%electrons%temperature(1)
-        !> convert to eV (1 J = 6.242e18 eV)
-        call gridStructWriteData1d( grid, idsField, gridSubset_index,   &
-            &   te*6.242e18 )
-
-        !> --- Set ti (ion temperature) ---
-        allocate( ggd%ion(1) )
-        allocate( ggd%ion(1)%temperature(1) )
-        idsField => ggd%ion(1)%temperature(1)
-        !> convert to eV (1 J = 6.242e18 eV)
-        call gridStructWriteData1d( grid, idsField, gridSubset_index,   &
-            &   ti*6.242e18 )
-
-    end subroutine write_ids_edge_profiles
-
-    !! Subroutine used to put data to edge_profiles IDS
+    !> Subroutine used to put data to edge_profiles, edge_sources and
+    !! edge_transport IDSs.
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &
             &   treename, shot, run, idx, username, device, version )
-        integer :: shot, run, idx
-        type(ids_edge_profiles), intent(inout) :: edge_profiles
-        type(ids_edge_sources), intent(inout) :: edge_sources
-        type(ids_edge_transport), intent(inout) :: edge_transport
-        character(len=24) :: treename, username, device, version
+        type(ids_edge_profiles), intent(inout)  :: edge_profiles    !< IDS
+            !< designed to store data on edge plasma profiles  (includes the
+            !< scrape-off layer and possibly part of the confined plasma)
+        type (ids_edge_sources), intent(inout)  :: edge_sources     !< IDS
+            !< designed to store data on edge plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_edge_transport), intent(inout)  :: edge_transport !< IDS
+            !< designed to store  data on edge plasma transport. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+            !< (i.e. "edge_profiles" (mandatory) )
+        integer, intent(in) :: shot !< The shot number of the database being created
+        integer, intent(in) :: run  !< The run number of the database being created
+        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
+            !< data access operation
+        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
+            !< database
+        character(len=24), intent(in) :: device     !< Device name of the IMAS IDS database
+            !< (i. e. solps-iter, iter, aug)
+        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+            !< database
 
-        !> Set data to edge_profiles IDS
+        !! Set data to edge_profiles IDS
         write(0,*) "Writing to edge_profiles, edge_sources and edge_transport IDS"
 
-        !> Create and modify new shot/run
-        call imas_create_env(treename, shot, run, 0, 0, idx, username, &
+        !! Create and modify new shot/run
+        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
             device, version )
 
-        !> Or open and modify existing shot/run (might work much faster than
-        !> imas_create_env)
+        !! Or open and modify existing shot/run (might work much faster than
+        !! imas_create_env)
         ! call imas_open_env('treename', shot, run, idx, username, device, version )
 
-        !> Put data to IDS
-        call ids_put_slice( idx, "edge_profiles", edge_profiles )
-        call ids_put_slice( idx, "edge_transport", edge_sources )
-        call ids_put_slice( idx, "edge_transport", edge_transport )
+        !! Put data to IDS
+        ! call ids_put_slice( idx, "edge_profiles", edge_profiles )
+        ! call ids_put_slice( idx, "edge_transport", edge_sources )
+        ! call ids_put_slice( idx, "edge_transport", edge_transport )
         call ids_put( idx, "edge_profiles", edge_profiles )
-        call ids_put( idx, "edge_transport", edge_sources )
+        call ids_put( idx, "edge_sources", edge_sources )
         call ids_put( idx, "edge_transport", edge_transport )
 
-        !> Close IDS
+        !! Close IDS
         call ids_deallocate( edge_profiles )
         call ids_deallocate( edge_sources )
         call ids_deallocate( edge_transport )
@@ -701,18 +438,26 @@ contains
 
     end subroutine put_ids_edge
 
-    !> subroutine for reading edge_profiles IDS
+    !> Example subroutine for reading edge_profiles IDS
+    !! with Fortran90
     subroutine read_ids( treename, shot, run, idx, username, device, version )
-        !> Example for reading IDS database in Fortran90
-        integer                 ::  shot, run, idx
-        integer                 ::  gridSubset_index
-        character(len=24)       ::  treename, username, device, version
-        type(ids_edge_profiles) ::  edge_profiles
-        character(len=255)      ::  imas_connect_url
+        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+        integer, intent(in) :: shot !< The shot number of the database being created
+        integer, intent(in) :: run  !< The run number of the database being created
+        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
+        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS database
+        character(len=24), intent(in) :: device !< Device name of the IMAS IDS database
+            !< (i. e. solps-iter, iter, aug)
+        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS database
+        !! Internal variables
+        integer :: gridSubset_index !< >Grid subset base index
+        type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
+            !< data in edge plasma profiles  (includes the scrape-off layer and
+            !<  possibly part of the confined plasma)
 
         gridSubset_index = 3
 
-        !> Open input datafile from local database
+        !! Open input datafile from local database
         write (0,*) "Started reading input IDS", idx, shot, run
 
         call imas_open_env('treename', shot, run, idx, username, device, version )
