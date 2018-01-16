@@ -1063,19 +1063,19 @@ c carlis           [mm/y] = [1/s]*[s*mm*m2/y]*
           iznt=izn
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny- (ils-lppp-1)-(itrg-1)*ny
+            iy= ny*itg - (ils-lppp) + (ny-1)*(itg-1)
             im=-1
           else !}{
-            iy = (ils-lppp-1)-(itrg-1)*ny
+            iy= ny+itg-1-(ils-lppp)
             im=1
           end if !}
         else if (iznt.ne.izn) then !}{ itg.ne.itrg
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny-(ils-lppp-1)-(itrg-1)*ny
+            iy= ny*itg - (ils-lppp) + (ny-1)*(itg-1)
             im=-1
           else !}{
-            iy = (ils-lppp-1)-(itrg-1)*ny
+            iy= ny+itg-1-(ils-lppp)
             im=1
           end if !}
           iznt=izn
