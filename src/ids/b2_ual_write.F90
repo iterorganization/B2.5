@@ -75,7 +75,7 @@ program b2_ual_write
         !< data on edge plasma transport. Energy terms correspond to the
         !< full kinetic energy equation (i.e. the energy flux takes into
         !< account the energy transported by the particle flux)
-
+    character*256 systemarg
 
     !! Set default value for IMAS major version and IDS treename
     version = '3'
@@ -96,11 +96,7 @@ program b2_ual_write
 #endif
 #endif
     call ipgetc( 'b2mndr_user', username )
-#ifdef JET
-    device = 'jet'
-#else
-    device = 'iter'
-#endif
+    device = 'solps-iter'
 #ifndef NO_GETENV
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('DEVICE', 0, device, lenval, ierror)
@@ -109,6 +105,10 @@ program b2_ual_write
 #endif
 #endif
     call ipgetc( 'b2mndr_device', device )
+    systemarg='imasdb '//trim(device)
+#ifdef IMAS
+    call system(systemarg)
+#endif
 
     write(*,'(a,i8,a,i8,4a)') 'Shot: ', shot, ' Run: ', run, &
         & ' User: ', trim(username), ' Device: ', trim(device)
