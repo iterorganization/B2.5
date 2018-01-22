@@ -30,6 +30,7 @@ module b2mod_ual
 
 contains
 
+#ifdef IMAS
     !> Subroutine used to put data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &
@@ -88,6 +89,7 @@ contains
         write(0,*) "IDS write finished"
 
     end subroutine put_ids_edge
+#endif
 
     !> Routine to open UAL database.
     !! @note For IMAS IDS is recommended use of IMAS GGD library routine
