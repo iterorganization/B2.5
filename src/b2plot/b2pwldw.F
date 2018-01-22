@@ -134,27 +134,27 @@ c***  spttrg  : sputtering [g/y]
 
       real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,mmol,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
-     ,  s(0:NYD-1,ntrgsx),xmp_hlp(0:NYD-1,ntrgsx),xtrg(0:NYD-1,ntrgsx),
-     ,  netrg(0:NYD-1,ntrgsx),  tetrg(0:NYD-1,ntrgsx),
-     ,  titrg(0:NYD-1,ntrgsx),
-     ,  wtttrg(0:NYD-1,ntrgsx), wptnu(0:NYD-1,ntrgsx),
-     ,  wptpl(0:NYD-1,ntrgsx),
-     ,  whtnu(0:NYD-1,ntrgsx),  whtpl(0:NYD-1,ntrgsx),
-     ,  wpttrg(0:NYD-1,ntrgsx),
-     ,  wpltrg(0:NYD-1,ntrgsx), wnutrg(0:NYD-1,ntrgsx),
+     ,  s(0:NY-1,ntrgsx),xmp_hlp(0:NY-1,ntrgsx),xtrg(0:NY-1,ntrgsx),
+     ,  netrg(0:NY-1,ntrgsx),  tetrg(0:NY-1,ntrgsx),
+     ,  titrg(0:NY-1,ntrgsx),
+     ,  wtttrg(0:NY-1,ntrgsx), wptnu(0:NY-1,ntrgsx),
+     ,  wptpl(0:NY-1,ntrgsx),
+     ,  whtnu(0:NY-1,ntrgsx),  whtpl(0:NY-1,ntrgsx),
+     ,  wpttrg(0:NY-1,ntrgsx),
+     ,  wpltrg(0:NY-1,ntrgsx), wnutrg(0:NY-1,ntrgsx),
      ,  wrdtrg(0:NY-1,ntrgsx,0:DEF_NATM),
-     ,  fiitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  eiitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  faitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  eaitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  naitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  paitrg(0:NYD-1,ntrgsx,DEF_NATM),
-     ,  fmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  emitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  pmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  nmitrg(0:NYD-1,ntrgsx,DEF_NMOL),
-     ,  erntrg(0:NYD-1,ntrgsx), spttrg(0:NYD-1,ntrgsx),
-     ,  sjs(0:NYD-1,ntrgsx), sjs_t(ntrgsx),
+     ,  fiitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  eiitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  faitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  eaitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  naitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  paitrg(0:NY-1,ntrgsx,DEF_NATM),
+     ,  fmitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  emitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  pmitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  nmitrg(0:NY-1,ntrgsx,DEF_NMOL),
+     ,  erntrg(0:NY-1,ntrgsx), spttrg(0:NY-1,ntrgsx),
+     ,  sjs(0:NY-1,ntrgsx), sjs_t(ntrgsx),
      ,  sjs_w(0:ntrgsx),pump,pumptot,sptmass,sptflx(DEF_NLIM+DEF_NSTS)
 
 c*** Recap of fluxes from eirene
@@ -446,20 +446,20 @@ c carlis evaluate number of sputtered atoms and molecules
             sfpr_sp(i)=trim(TEXTA(ia))
           end if
         end do
-        do im=1,nmol
+        do imol=1,nmol
           match_found=.false.
           j=1
           do j=1,nlimps
-            if (wldsptm(j,im,0).gt.0.0_R8) then
-              sptflx(j)=wldsptm(j,im,0)
-              do_spt_wll(j)=im+natm
-              sptliswll(im+natm)=1
+            if (wldsptm(j,imol,0).gt.0.0_R8) then
+              sptflx(j)=wldsptm(j,imol,0)
+              do_spt_wll(j)=imol+natm
+              sptliswll(imol+natm)=1
               match_found=.true.
             end if
           end do
           if (match_found) then
             i=i+1
-            sfpr_sp(i)=trim(adjustl(textmn(im-1)))
+            sfpr_sp(i)=trim(adjustl(textmn(imol-1)))
           end if
         end do
 #endif
@@ -551,6 +551,7 @@ c            eb2atm will be [1 4 2 3]
       end do
       ils=iabs(lwldlis(iln,izn))
 c      print *,'lwldlis,ils,lppp=',lwldlis(iln,izn),ils,lppp       !###
+
 
 c*** Check whether a target segment is requested
 
@@ -985,10 +986,10 @@ c carlis wldspta and wldsptm give sputtered flux for each emitted atom and molec
                       sjs_t(j)=sjs_t(j)+sjs(iy,j)
                     end if
                   end do
-                  do im=1,nmoli
-                    if (wldsptm_res(im,iy+IAS).gt.0.0_R8) then
-                      sptlistrg(j)=im+natm
-                      sjs(iy,j)=wldsptm_res(im,iy+IAS)*
+                  do imol=1,nmoli
+                    if (wldsptm_res(imol,iy+IAS).gt.0.0_R8) then
+                      sptlistrg(j)=imol+natm
+                      sjs(iy,j)=wldsptm_res(imol,iy+IAS)*
      .                    sarea_res(iy+IAS)
                       sjs_t(j)=sjs_t(j)+
      .                                 sjs(iy,j)
@@ -1062,19 +1063,19 @@ c carlis           [mm/y] = [1/s]*[s*mm*m2/y]*
           iznt=izn
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny-1
+            iy= ny*itg - (ils-lppp) + (ny-1)*(itg-1)
             im=-1
           else !}{
-            iy=0
+            iy= ny+itg-1-(ils-lppp)
             im=1
           end if !}
         else if (iznt.ne.izn) then !}{ itg.ne.itrg
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny-1
+            iy= ny*itg - (ils-lppp) + (ny-1)*(itg-1)
             im=-1
           else !}{
-            iy=0
+            iy= ny+itg-1-(ils-lppp)
             im=1
           end if !}
           iznt=izn

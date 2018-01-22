@@ -175,40 +175,42 @@ c
       return
       end function chord_tria_integral
 c
-      subroutine chord_tria_compile(npoints,nx,ny,crx,cry,bb,
+      subroutine chord_tria_compile(npoints,ntrii,nrknot,nx,ny,
+     * xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector,
-     2 indchd,indix,indiy,indscl)
+     2 indchd,indit,indscl)
 
       use b2mod_types
       implicit none
 
-      integer npoints,nx,ny
+      integer npoints,ntrii,nrknot,nx,ny
+      integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
       real (kind=R8) ::
-     * tt(-1:nx,-1:ny),score(-1:nx,-1:ny),
+     * tt(ntrii),score(ntrii),
+     * xtrian(nrknot),
+     * ytrian(nrknot),
      1 crx(-1:nx,-1:ny,0:3),
      2 cry(-1:nx,-1:ny,0:3),
      3 bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      * xp1,yp1,zp1,xp2,yp2,zp2
-      integer indchd,indix(*),indiy(*)
+      integer indchd,indit(*)
       real (kind=R8) ::
      * indscl(*)
       logical vector
 
       real (kind=R8) ::
-     * chord_value
-      integer i,ix,iy
+     * chord_tria_value
+      integer i,it
       real (kind=R8) ::
      * f,x,y,z,dl,dxp,dyp,dzp
       logical found
       external subini, subend
 
       call subini('chord_compile')
-      do iy=-1,ny
-        do ix=-1,nx
-          tt(ix,iy)=1.0_R8
-          score(ix,iy)=0.0_R8
-        enddo
+      do it=1,ntrii
+        tt(it)=1.0_R8
+        score(it)=0.0_R8
       enddo
 
       dxp=xp2-xp1
@@ -221,28 +223,27 @@ c
       dl=dl/real(npoints)
 
       do i=1,npoints
-        f=real(i-0.5)/real(npoints)
-        x=xp1*(1.0-f)+xp2*f
-        y=yp1*(1.0-f)+yp2*f
-        z=zp1*(1.0-f)+zp2*f
-        call chord_find(nx,ny,crx,cry,x,y,z,found,ix,iy)
+        f=real(i-0.5_R8)/real(npoints)
+        x=xp1*(1.0_R8-f)+xp2*f
+        y=yp1*(1.0_R8-f)+yp2*f
+        z=zp1*(1.0_R8-f)+zp2*f
+        call chord_tria_find(ntrii,nrknot,necke,xtrian,ytrian,
+     &   x,y,z,found,it)
         if(found) then
-          score(ix,iy)=score(ix,iy)+dl*
-     1   chord_value(nx,ny,tt,crx,cry,bb,
-     2   x,y,z,dxp,dyp,dzp,vector)
+          score(it)=score(it)+dl*
+     1     chord_tria_value(ntrii,nrknot,nx,ny,tt,
+     2      xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     2      x,y,z,dxp,dyp,dzp,vector)
         endif
       enddo
 
       i=0
-      do iy=-1,ny
-        do ix=-1,nx
-          if(score(ix,iy).ne.0) then
+      do it=1,ntrii
+        if(score(it).ne.0.0_R8) then
             i=i+1
-            indix(i)=ix
-            indiy(i)=iy
-            indscl(i)=score(ix,iy)
-          endif
-        enddo
+            indit(i)=it
+            indscl(i)=score(it)
+        endif
       enddo
       indchd=i
 
