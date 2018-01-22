@@ -25,7 +25,10 @@ module b2mod_ual
 
   private
 
-  public open_ual, close_ual, put_ids_edge
+  public open_ual, close_ual
+#ifdef IMAS
+  public put_ids_edge
+#endif
 
 
 contains
