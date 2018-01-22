@@ -568,7 +568,7 @@
 				<name>b2mndr_id</name>
 				<description>
 					These switches server as identification for the simulation. They can be inherited from SOLPS-GUI:
-					Run number : The number of the run.
+					Run number : The number of the run. Must be positive and no more than a 4-digit integer (i.e. span from 0 to 9999).
 					Shot number : Shot number identifying the run. Defaults to the last number found in shotnumber.history, or 0 if the file is not found.
 					Device : The device where the simulation was run.
 					User : The user who ran the simulation.
