@@ -85,6 +85,7 @@ program b2_ual_write
     ! call b2mn_step(0)
 
     call ipgeti( 'b2mndr_shot_number', shot )
+    call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
     call ipgeti( 'b2mndr_run_number', run )
     call xertst( 0.le.run.and.run.le.9999, 'Invalid run number')
 #ifdef NO_GETENV

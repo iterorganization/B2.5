@@ -706,6 +706,7 @@ c
      *   a(licn), aorg(nz), rhs(n), r(n), x(n), w(n), prec
 c
 c private and common variables.
+      real (kind=R16) :: qr(n), qaorg, qx                               !srv 16.01.18
 c see block data for comments on variables in common.
 c see comments in code for use of private variables.
 c
@@ -748,7 +749,7 @@ c
 c
 c  calculate the max-norm of the first solution.
 c
-      dd = 0.0e0_R8                                                   !sv 21.11.00
+      dd = 0.0e0_R8                                                   !srv 21.11.00
       do 30 i=1,n
         dd = max(dd,abs(x(i)))
    30 continue
@@ -762,22 +763,27 @@ c
 c  calculate the residual vector.
 c
         do 40 i=1,n
-          r(i) = rhs(i)
+          qr(i) = rhs(i)                                               !srv 16.01.18
    40   continue
         if (mtype.eq.1) go to 60
         do 50 i=1,nz
           nrow = irnorg(i)
           ncol = icnorg(i)
-          r(ncol) = r(ncol) - aorg(i)*x(nrow)
+          qaorg = aorg(i)                                              !srv 16.01.18 {
+          qx    = x(nrow)
+          qr(ncol) = qr(ncol) - qaorg*qx                               !srv 16.01.18 }
    50   continue
         go to 80
 c mtype=1.
    60   do 70 i=1,nz
           nrow = irnorg(i)
           ncol = icnorg(i)
-          r(nrow) = r(nrow) - aorg(i)*x(ncol)
+          qaorg = aorg(i)                                              !srv 16.01.18 {
+          qx    = x(ncol)
+          qr(nrow) = qr(nrow) - qaorg*qx                               !srv 16.01.18 }
    70   continue
-   80   dres = 0.0e0_R8                                               !sv 21.11.00
+   80   r = real(qr,R8)                                                !srv 16.01.18
+        dres = 0.0e0_R8                                                !srv 21.11.00
 c
 c  find the max-norm of the residual vector.
 c
@@ -788,7 +794,7 @@ c
 c  stop the calculations if the max-norm of
 c  the residual vector is zero.
 c
-        if (dres.eq.0.0e0_R8) go to 150                               !sv 21.11.00
+        if (dres.eq.0.0e0_R8) go to 150                               !srv 21.11.00
 c
 c  calculate the correction vector.
 c
@@ -797,7 +803,7 @@ c
 c
 c  find the max-norm of the correction vector.
 c
-        dd = 0.0e0_R8                                                 !sv 21.11.00
+        dd = 0.0e0_R8                                                 !srv 21.11.00
         do 100 i=1,n
           dd = max(dd,abs(r(i)))
   100   continue
@@ -805,11 +811,11 @@ c
 c  check the convergence.
 c
         if (dd.gt.d*cgce .and. iterat.ge.2) go to 130
-        if (dxmax*10.0e0_R8+dd.eq.dxmax*10.0e0_R8) go to 140          !sv 21.11.00
+        if (dxmax*10.0e0_R8+dd.eq.dxmax*10.0e0_R8) go to 140          !srv 21.11.00
 c
 c  attempt to improve the solution.
 c
-        dxmax = 0.0e0_R8                                              !sv 21.11.00
+        dxmax = 0.0e0_R8                                              !srv 21.11.00
         do 110 i=1,n
           x(i) = x(i) + r(i)
           dxmax = max(dxmax,abs(x(i)))
@@ -835,7 +841,7 @@ c
   160 return
 99999 format (' error return from ma28i/idc with iflag = ', i3/' more ',
      * 'than', i5, ' iterations required')
-99998 format (' error return from ma28ic with iflag = ', i3/' converge',
+99998 format (' error return from ma28id with iflag = ', i3/' converge', !srv 16.01.18
      * 'nce rate of ', 1pe9.2, ' too slow'/' maximum acceptable rate',
      * ' set to ', 1pe9.2)
       end subroutine ma28idcopy

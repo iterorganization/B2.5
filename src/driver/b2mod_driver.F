@@ -1854,8 +1854,7 @@ c new CDF movie option (1st frame at t=0)
         call b2mxnu (n2*2, fhep, fhe0, fhe)
         call b2mxnu (n2*2, fhip, fhi0, fhi)
         call b2mxnu (n2*2, fchp, fch0, fch)
-        call b2trcs (70, nout, nx, ny, ns, nxtl, nxtr,
-     .    ismain, dtim, BoRiS)
+        call b2trcs (70, nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)
         if (pot_eq.eq.0) then                                          !srv 13.07.05 {
           po   =0.0e0_R8
