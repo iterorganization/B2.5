@@ -10109,6 +10109,11 @@ c end of implementation
           call my_out(70,nx,ny,she0(-1,-1,k),'b2stbc_phys_she'//chk)
           call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbc_phys_shi'//chk)
         enddo
+       call my_out(70,nx,ny,ua(:,:,is),'b2stbc_phys_ua'//chns)
+       call my_out(70,nx,ny,na(:,:,is),'b2stbc_phys_na'//chns)
+       call my_out(70,nx,ny,te,'b2stbc_phys_te'//chns)
+       call my_out(70,nx,ny,ti,'b2stbc_phys_ti'//chns)
+       call my_out(70,nx,ny,po,'b2stbc_phys_po'//chns)
        enddo
        do k=0,1
          write (chk,'(i1)') k
