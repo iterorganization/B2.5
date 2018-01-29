@@ -5,7 +5,11 @@
       character *(*) first_name
 
       character *64 filename                              !srv 05.10.09
+#ifdef DBG
+      character(24) hlp_frm                               !srv 11.03.13
+#else
       character(23) hlp_frm                               !srv 11.03.13
+#endif
       integer ix, iy
       integer, save :: ncall = 0
       integer, save :: iappend = 0
@@ -32,9 +36,15 @@
       else
         open (nwrite,file=filename,position='append')
       end if
+#ifdef DBG
+      write(hlp_frm,"(a4,i4,a12)") '(5x,',nx+2,'(15x,i3,5x))'
+      write (nwrite,hlp_frm) (ix,ix=-1,nx)
+      write(hlp_frm,"(a10,i4,a10)") '(1x,i3,1x,',nx+2,'(es23.15))'
+#else
       write(hlp_frm,"(a4,i4,a11)") '(5x,',nx+2,'(6x,i3,5x))'
       write (nwrite,hlp_frm) (ix,ix=-1,nx)
       write(hlp_frm,"(a10,i4,a9)") '(1x,i3,1x,',nx+2,'(es14.6))'
+#endif
       do iy=ny,-1,-1
         write(nwrite,hlp_frm) iy, (fun(ix,iy), ix = -1, nx)
       enddo
