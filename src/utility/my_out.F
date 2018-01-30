@@ -5,11 +5,7 @@
       character *(*) first_name
 
       character *64 filename                              !srv 05.10.09
-#ifdef DBG
       character(24) hlp_frm                               !srv 11.03.13
-#else
-      character(23) hlp_frm                               !srv 11.03.13
-#endif
       integer ix, iy
       integer, save :: ncall = 0
       integer, save :: iappend = 0
