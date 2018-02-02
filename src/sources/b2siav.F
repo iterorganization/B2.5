@@ -253,7 +253,7 @@
           qipgen = 0.0e0_R8
           do iy=0,ny-1
             do ix=0,nx-1
-              qipgen(ix,iy)=qip1(ix,iy)*datan(qip0(ix,iy)/qip1(ix,iy))
+              qipgen(ix,iy)=qip1(ix,iy)*atan(qip0(ix,iy)/qip1(ix,iy))
      &                   *sqrt(bb(ix,iy,3))
             enddo
           enddo

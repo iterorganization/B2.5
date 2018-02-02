@@ -303,7 +303,7 @@ cxpb
 
       integer,intent(in)::nx,ny,ns,ns_ext
 
-      real(8),intent(in)::
+      real(kind=R8),intent(in)::
      &  bb (-1:nx,-1:ny,0:3),
      &  na (-1:nx,-1:ny,0:ns-1),
      &  ne (-1:nx,-1:ny),
@@ -316,7 +316,7 @@ cxpb
      &  fhi (-1:nx,-1:ny,0:1),
      &  fch (-1:nx,-1:ny,0:1)
 
-      real(8),intent(out)::
+      real(kind=R8),intent(out)::
      &  sna_ext (-1:nx,-1:ny,0:ns-1),
      &  sne_ext (-1:nx,-1:ny),
      &  smo_ext (-1:nx,-1:ny,0:ns-1),

@@ -193,7 +193,7 @@
 
            do iy=0,ny-1
             do ix=0,nx-1
-             wrk0(ix,iy)=qip1(ix,iy)*datan(qip0(ix,iy)/qip1(ix,iy))
+             wrk0(ix,iy)=qip1(ix,iy)*atan(qip0(ix,iy)/qip1(ix,iy))
      &        *sqrt(bb(ix,iy,3))
             enddo
            enddo
