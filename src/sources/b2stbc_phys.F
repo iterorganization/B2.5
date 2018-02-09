@@ -1930,7 +1930,7 @@ c dpc
               ENDDO
               NAS = NAS *
      &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
-     &                 max(abs(totflux),SCONPAR(IS)))
+     &                 max(abs(totflux),abs(SCONPAR(IS))))
 !              T0 = (totflux-CONPAR(IS,IB,1))/
 !     &           max(abs(totflux),CONPAR(IS,IB,1))
 !              NAS = NAS *
@@ -2153,7 +2153,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               ENDDO
               NAS = NAS *
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
-     &           max(abs(totfluxn+totfluxi),SCONPAR(IS)))
+     &           max(abs(totfluxn+totfluxi),abs(SCONPAR(IS))))
               write(*,"(' BCCON=19: NAS=',es14.7,' totfluxn=',es14.7,
      &         ' totfluxi=',es14.7,' SCONPAR=',es14.7,
      &         ' totfluxn+totfluxi=',es14.7)")
@@ -2465,7 +2465,7 @@ cxpb Careful here because of BC number clash
               NAS=NAS/t0      ! Volume-averaged density
               NAS = NAS*
      &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
-     &           max(abs(totflux),SCONPAR(IS)))
+     &           max(abs(totflux),abs(SCONPAR(IS))))
 !              T0 = (totflux-CONPAR(IS,IB,1))/
 !     &           max(abs(totflux),CONPAR(IS,IB,1))
 !              NAS = NA((BCEND(IB)+BCSTART(IB))/2,BCPOS(IB),is) *
@@ -2971,7 +2971,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               NAS=NAS/t0      ! Volume-averaged density
               NAS = NAS*
      &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
-     &           max(abs(totflux),SCONPAR(IS)))
+     &           max(abs(totflux),abs(SCONPAR(IS))))
               write(*,"(' BCCON=26: NAS=',es14.7,' totflux=',es14.7,
      *                  ' SCONPAR=',es14.7,' IS=',i3)")
      .                NAS,totflux,SCONPAR(IS),IS
