@@ -91,6 +91,10 @@
 
 * ..apply the correction
 *   ..adjust te, ti, po
+      tt0 = 0.0e0_R8
+      tt1 = 0.0e0_R8
+      tt2 = 0.0e0_R8
+      tt3 = 0.0e0_R8
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
@@ -127,27 +131,48 @@
         endif
 	  dte1(ix,iy) = dte
 	  dti1(ix,iy) = dti
-       enddo
-	enddo
-
 *   ..smooth the correction for inner flux surfaces      !lk 26.10.2017{
-        tt0 = 0.0e0_R8
-        tt1 = 0.0e0_R8
-        tt2 = 0.0e0_R8
-	  tt3 = 0.0e0_R8
-        do iy = -1,ny
-          do ix = -1,nx
-            if(on_closed_surface(ix,iy) .and. 
+          if(on_closed_surface(ix,iy) .and. 
      *                                 bottomiy(ix,iy).ne.-2) then
               tt0(iy) = tt0(iy) + vol(ix,iy)*ni(ix,iy,1)
               tt1(iy) = tt1(iy) + vol(ix,iy)*ni(ix,iy,1)*dti1(ix,iy)
               tt2(iy) = tt2(iy) + vol(ix,iy)*ne(ix,iy)
               tt3(iy) = tt3(iy) + vol(ix,iy)*ne(ix,iy)*dte1(ix,iy)
-            endif
-          enddo
-        enddo
-        do iy = -1,ny
-          do ix = -1,nx
+          endif
+       enddo
+	enddo
+
+!*   ..smooth the correction for inner flux surfaces      !lk 26.10.2017{
+!        tt0 = 0.0e0_R8
+!        tt1 = 0.0e0_R8
+!        tt2 = 0.0e0_R8
+!	  tt3 = 0.0e0_R8
+!        do iy = -1,ny
+!          do ix = -1,nx
+!            if(on_closed_surface(ix,iy) .and. 
+!     *                                 bottomiy(ix,iy).ne.-2) then
+!              tt0(iy) = tt0(iy) + vol(ix,iy)*ni(ix,iy,1)
+!              tt1(iy) = tt1(iy) + vol(ix,iy)*ni(ix,iy,1)*dti1(ix,iy)
+!              tt2(iy) = tt2(iy) + vol(ix,iy)*ne(ix,iy)
+!              tt3(iy) = tt3(iy) + vol(ix,iy)*ne(ix,iy)*dte1(ix,iy)
+!            endif
+!          enddo
+!        enddo
+!        do iy = -1,ny
+!          do ix = -1,nx
+!            if(on_closed_surface(ix,iy) .and. 
+!     *                                 bottomiy(ix,iy).ne.-2) then
+!              dti1(ix,iy) = tt1(iy)/tt0(iy) +
+!     *         corr_core_dt*(dti1(ix,iy)-tt1(iy)/tt0(iy))    ! IYS 19.12.2017
+!              dte1(ix,iy) = tt3(iy)/tt2(iy) +
+!     *         corr_core_dt*(dte1(ix,iy)-tt3(iy)/tt2(iy))    ! IYS 19.12.2017
+!            endif
+!          enddo
+!        enddo                                             !lk 26.10.2017}
+     
+	do iy = -1, ny
+       do ix = -1, nx
+        ireg = region(ix,iy,0)
             if(on_closed_surface(ix,iy) .and. 
      *                                 bottomiy(ix,iy).ne.-2) then
               dti1(ix,iy) = tt1(iy)/tt0(iy) +
@@ -155,11 +180,6 @@
               dte1(ix,iy) = tt3(iy)/tt2(iy) +
      *         corr_core_dt*(dte1(ix,iy)-tt3(iy)/tt2(iy))    ! IYS 19.12.2017
             endif
-          enddo
-        enddo                                             !lk 26.10.2017}
-     
-	do iy = -1, ny
-       do ix = -1, nx
         dte = dte1(ix,iy)
 	  dti = dti1(ix,iy)                                       !srv 25.07.17
         if (leftix(ix,iy).ne.-2) 
