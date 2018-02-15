@@ -680,6 +680,11 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+ 91   ex = .false.
+ 93   continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then !{
         read(lun,*,err=92) hlp_c,nv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp
         lv_trc(ltrc)=nv

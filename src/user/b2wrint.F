@@ -478,6 +478,11 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+ 91   ex = .false.
+ 93   continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
                                      ! and is to be appended
         read(lun,*,err=92) hlp_c, nv,

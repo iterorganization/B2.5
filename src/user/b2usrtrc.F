@@ -1487,6 +1487,11 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 95
+ 91   ex = .false.
+ 95   continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then !{
         na_tmp=0
         np_tmp=0
