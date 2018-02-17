@@ -418,7 +418,7 @@ c*** f     :  the associated file name
      ,     ' differs from that in the file ',trim(f),' : ',nv
 c          if(nv .lt. 970212) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -463,7 +463,7 @@ c          end if
         end if
 
         if(.not.filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if

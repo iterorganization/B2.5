@@ -1551,7 +1551,7 @@ c*** It was a major change of the file format - impossible to continue
         end if !}
 
         if(.not.filedata(ltrc)) then !{
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if !}
@@ -1603,7 +1603,7 @@ c=======================================================================
       return
 
  93   write(*,*) 'b2usrtrc: number of species changed - remove the ',
-     ,                                             'tracing file first!'
+     ,                           trim(f),' tracing file first!'
       filedata(ltrc)=.false.
       return
 

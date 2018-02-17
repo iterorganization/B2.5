@@ -306,7 +306,7 @@ c
      ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. lvm) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             go to 98
@@ -331,7 +331,7 @@ c*** It was a major change of the file format - impossible to continue
         end if
 c
         if(.not.filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           go to 98
         end if

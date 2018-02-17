@@ -282,9 +282,9 @@ csw 18nov2013 check alloc
 #ifdef B25_EIRENE
       if(allocated(volsumn)) then
 #endif
-        hlp_sumn=sum(volsumn(1:nstrai))
-        hlp_sume=sum(volsumee(1:nstrai))
-        hlp_sumi=sum(volsumei(1:nstrai))
+        hlp_sumn=sum(volsumn(1:nstrat))
+        hlp_sume=sum(volsumee(1:nstrat))
+        hlp_sumi=sum(volsumei(1:nstrat))
 #ifdef B25_EIRENE
       endif
 #endif
@@ -366,7 +366,7 @@ csw 20sep2013 added
         enddo
       enddo
 
-      do j=1,nstrai
+      do j=1,nstrat
 csw 18nov2013 check alloc
 #ifdef B25_EIRENE
         if(allocated(srcstrn)) then
@@ -411,7 +411,7 @@ csw 18nov2013 check alloc
       if (hlp_zn2 .gt. 0.0_R8) hlp_zefn = hlp_zn1 / hlp_zn2
 
       do i=0,nnatmi
-        do j=1,nstrai
+        do j=1,nstrat
           sclf_tmp(i,j) = sclstra(i,j)
           rtio_tmp(i,j) = sclrtio(i,j)-1.0_R8
 #ifdef B25_EIRENE
@@ -504,7 +504,7 @@ c Check version
      ,     ' differs from that in the file ',trim(f),' : ',nv
 c          if(nv .lt. 20010716) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc) = .false.
             return
@@ -586,10 +586,10 @@ c Check the number of quantities computed for each stratum
         end if
 
 c Check the number of strata
-        if(nfl_tmp .ne. nstrai) then
+        if(nfl_tmp .ne. nstrat) then
           warn_tmp = .true.
           write(*,'(a,i3,3a,i3)')
-     ,     '!!! b2wrint: current number of strata ',nstrai,
+     ,     '!!! b2wrint: current number of strata ',nstrat,
      ,     ' differs from that in the file ',trim(f),' : ',nfl_tmp
           filedata(ltrc) = .false.
         end if
@@ -607,7 +607,7 @@ c
 
 c If inconsistency is found, generate an error message
         if(.not. filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if
@@ -628,7 +628,7 @@ c#endif
         nsp_tmp = nspecies
         na_tmp  = nsar_tmp
         nf_tmp  = nstr_tmp
-        nfl_tmp = nstrai
+        nfl_tmp = nstrat
         nb_tmp  = nssb_tmp
         write(lun,700) lv,ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
      ,                      nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp,
