@@ -136,8 +136,6 @@ c     parameter (destmode=2)               !hardwired to 2
       real (kind=R8) ::
      *   lwarr(-1:nx,-1:ny,0:ns-1),
      1   starttime, tstepn(1), dumarr(1)
-      integer nf_open, nf_close
-      external nf_open, nf_close
 #endif
 #endif
 
