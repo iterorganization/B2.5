@@ -15,6 +15,7 @@ CPPOPTS    = -P -I${srcdir} ${EQUIVS}
 SED        = sed s:\#PREC\#:d:g
 SED        =
 LINK_MOD   = 
+FC_VERSION = $(shell echo `ifort --version | head -1 | awk '{printf "%s ",$$3,"\n"}'`)
 
 ifdef USE_MPI
 FC         = mpif90
@@ -78,12 +79,24 @@ endif
 endif
 else
 ifdef USE_MPI
+ifeq (${FC_VERSION},18.0.1)
+FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
+else
 FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
+endif
 else
 ifdef USE_IMPGYRO
+ifeq (${FC_VERSION},18.0.1)
+FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
+else
 FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
+endif
+else
+ifeq (${FC_VERSION},18.0.1)
+FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore
 else
 FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore
+endif
 endif
 endif
 endif
@@ -124,7 +137,9 @@ IMASLIBS   = ${LD_UAL} -lggd-ifort
 endif
 
 LD         = ${FC}
+ifneq (${FC_VERSION},18.0.1)
 LDOPTS     = -i_dynamic
+endif
 ifdef USE_MPI
 LDLIBES   += ${LD_MPI}
 else
