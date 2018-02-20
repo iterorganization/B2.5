@@ -938,6 +938,8 @@ c
       call mapy(nx,ny,1,fch_32(:,:,1),work)
       call mapx(nx,ny,1,fch_52(:,:,0),work)
       call mapy(nx,ny,1,fch_52(:,:,1),work)
+      call mapx(nx,ny,1,fne(:,:,0),work)
+      call mapy(nx,ny,1,fne(:,:,1),work)
       call mapx(nx,ny,1,fne_32(:,:,0),work)
       call mapy(nx,ny,1,fne_32(:,:,1),work)
       call mapx(nx,ny,1,fne_52(:,:,0),work)
