@@ -43,16 +43,16 @@ C PREPARING GEOMETRY DATA
           ntrgs=4
         end if
 C A PIECE OF CODE FROM B2PLOT
-        ltrgpos(1)=-1
+        ltrgpos(1)=0
         k=2
         if(ntrgs.eq.4) then
-          ltrgpos(2)=nxtl
+          ltrgpos(2)=nxtl-1
           ltrgpos(3)=nxtr+1
           k=4
         end if !}
-        ltrgpos(k)=nx
+        ltrgpos(k)=nx-1
 C AREAS OF THE SURFACE ELEMENTS
-        l=1
+        l=0
         do j=1,nncut*2
           k=ltrgpos(j)
           wtarg_max(j)=0.0_R8
@@ -74,7 +74,7 @@ C AREAS OF THE SURFACE ELEMENTS
 
       write(*,*) "calculating incident power flux in b2usr_loads"
 
-      l=1
+      l=0
       do j=1,ntrgs
         k=ltrgpos(j)
         call b2neut_eng(wnutrg(0,j),wnutpr(0,j),ny,shift(j))
@@ -90,6 +90,7 @@ C AREAS OF THE SURFACE ELEMENTS
      .                 (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
      .                  ua_ext(k,iy,is)**2))
           end do
+          hlp=hlp+(1.0_R8-BoRiS)*fne(k+l,iy,0)*te(k,iy)
           hlp=hlp/strg(iy,j)
           wtarg(iy,j)=hlp+wnutrg(iy,j)-wnutpr(iy,j)
           if(wtarg(iy,j).gt.wtarg_max(j)) wtarg_max(j)=wtarg(iy,j)
