@@ -28,7 +28,7 @@ else
 FCOPTS = -O2 -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 endif
 
-ifdef IMAS_PREFIX
+ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS  += -DIMAS
 endif
