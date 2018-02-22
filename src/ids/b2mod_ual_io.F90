@@ -46,7 +46,6 @@ module b2mod_ual_io
 #ifdef IMAS
     use ids_schemas  ! IGNORE
     use ids_routines ! IGNORE
-    use ids_assert   ! IGNORE
     use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &   ! IGNORE
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,                 &   ! IGNORE
         &   IDS_GRID_UNDEFINED => GRID_UNDEFINED                ! IGNORE

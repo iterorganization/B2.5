@@ -221,7 +221,6 @@ program b2_ual_write_b2mod
     use ids_routines    ! IGNORE
                         !! These are the Access Layer routines + management of
                         !! IDS structures
-    use ids_assert      ! IGNORE
     use ids_grid_common &       ! IGNORE
         & , IDS_COORDTYPE_R => COORDTYPE_R    &
         & , IDS_COORDTYPE_Z => COORDTYPE_Z
