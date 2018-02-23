@@ -61,9 +61,9 @@ module b2mod_cellhelper
 
     !! Directions for clockwise circle around corner vertex
     !! To circle around cell corner vertex iCorner in clockwise direction,
-    !! do istep = 1, 4; VXCIRCLE_STEPDIR(istep, iCorner, CLOCKWISE)
+    !! do istep = 1, 4, VXCIRCLE_STEPDIR(istep, iCorner, CLOCKWISE)
     !! To circle around cell corner vertex iCorner in counterclockwise direction,
-    !! do istep = 1, 4; VXCIRCLE_CLOCKWISE(istep, iCorner, COUNTERCLOCKWISE)
+    !! do istep = 1, 4, VXCIRCLE_CLOCKWISE(istep, iCorner, COUNTERCLOCKWISE)
     integer, parameter :: VXCIRCLE_STEPDIR(1:4, 0:3, 2) = reshape(  &
       & (/ BOTTOM, LEFT, TOP, RIGHT, &  ! Vertex 0/Lower left, clockwise
       &    RIGHT, BOTTOM, LEFT, TOP, &  !

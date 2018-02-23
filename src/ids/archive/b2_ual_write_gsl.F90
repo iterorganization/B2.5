@@ -44,16 +44,16 @@
 !!      may perform some other system-dependent operations.
 !!
 !!      The input units are:
-!!          - ninp(0): formatted; provides output control parameters.
-!!          - ninp(1): un*formatted; provides the geometry.
-!!          - ninp(2): un*formatted; provides the run parameters.
-!!          - ninp(3): un*formatted; provides the plasma state.
-!!          - ninp(4): unformatted; provides the detailed plasma state.
-!!          - ninp(5): formatted; provides the run switches.
-!!          - ninp(6): un*formatted; provides the atomic data.
+!!          - ninp(0): formatted, provides output control parameters.
+!!          - ninp(1): un*formatted, provides the geometry.
+!!          - ninp(2): un*formatted, provides the run parameters.
+!!          - ninp(3): un*formatted, provides the plasma state.
+!!          - ninp(4): unformatted, provides the detailed plasma state.
+!!          - ninp(5): formatted, provides the run switches.
+!!          - ninp(6): un*formatted, provides the atomic data.
 !!
 !!      The output units are:
-!!          - nout(0): formatted; provides printed output.
+!!          - nout(0): formatted, provides printed output.
 !!
 !!      @note   See routine b2cdca for the meaning of 'un*formatted'.
 !!
@@ -82,7 +82,7 @@
 !!              <i> (integer) </i>
 !!      @param  nx, ny - Specifies the number of interior cells along the
 !!              first and the second coordinate, respectively.
-!!              The total number of cells is (nx+2)*(ny+2); they are indexed
+!!              The total number of cells is (nx+2)*(ny+2), they are indexed
 !!              by (-1:nx,-1:ny). It will hold that 0.le.nx and 0.le.ny
 !!              <i> (integer) </i>
 !!      @param  run - The run number of the database being created
