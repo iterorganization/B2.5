@@ -74,16 +74,16 @@
       end subroutine b2xgbs
 
       subroutine b2xgbs1 (nx1, ny1, 
-     . bottomiy1, wbbl1, wbbv1, gs1, qc1, qcb1, crx1, cry1, pbs1)
+     . bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
       use b2mod_types
       implicit none
       integer nx1, ny1
       integer bottomiy1(-1:nx1,-1:ny1)
       real (kind=R8) ::
      *  wbbl1(-1:nx1,-1:ny1,0:3), wbbv1(-1:nx1,-1:ny1,0:3),
-     &  gs1(-1:nx1,-1:ny1,0:1), crx1(-1:nx1,-1:ny1,0:3), 
+     &  gs1(-1:nx1,-1:ny1,0:2), crx1(-1:nx1,-1:ny1,0:3),
      &  cry1(-1:nx1,-1:ny1,0:3), qc1(-1:nx1,-1:ny1),
-     &  qcb1(-1:nx1,-1:ny1), pbs1(-1:nx1,-1:ny1,0:1)
+     &  pbs1(-1:nx1,-1:ny1,0:1)
 *     ------------------------------------------------------------------
 *     B2XGBS1 computes the product (magnetic field pitch)*(surface area)
 *     at cell faces on the basis mesh. 
@@ -130,6 +130,7 @@
 *   ..test edge values of gs1
       call b2xvfx (nx1, ny1, gs1(-1,-1,0), 'gs1x')
       call b2xvfy1(nx1, ny1, gs1(-1,-1,1), 'gs1y', bottomiy1)
+      call b2xvsg (n2, gs1(-1,-1,2), 1, 'gsz', '.gt.')
 *   ..compute pbs1(,,0:1)
       do iy = -1, ny1
        do ix = -1, nx1

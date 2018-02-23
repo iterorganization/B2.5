@@ -2228,15 +2228,17 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      1 write(*,*) 'stopping because .quit seen'
       if(quitexist_) write(*,*) 'stopping because _quit seen'         !srv 13.04.11
       if(cpuval.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8)
-     1 write(*,*) 'stopping because cpu > limit: ',cpuval,b2mndr_cpu
-      if(itim.ge.ntim)
-     1 write(*,*) 'stopping because itim >= ntim: ',itim,ntim
+     1 write(*,'(a,1p,2(e12.5,1x))')
+     . 'stopping because cpu > limit: ',cpuval,b2mndr_cpu
+      if(itim.ge.ntim) write(*,'(a,2(i8,1x))')
+     1 'stopping because itim >= ntim: ',itim,ntim
       if(etim.gt.stim.and.tim.ge.etim.and.etim.ne.0.0_R8)
-     1 write(*,*) 'stopping because tim >= etim: ',tim,etim
-      if(etim.eq.stim.and.stim.gt.0.0_R8)
-     1 write(*,*) 'stopping because etim = stim: ',etim,stim
+     1 write(*,'(a,1p,2(e12.5,1x))')
+     . 'stopping because tim >= etim: ',tim,etim
+      if(etim.eq.stim.and.stim.gt.0.0_R8) write(*,'(a,1p,2(e12.5,1x))')
+     1 'stopping because etim = stim: ',etim,stim
       if(elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
-     &   b2mndr_elapsed.gt.0.0_R8) write(*,*)
+     &   b2mndr_elapsed.gt.0.0_R8) write(*,'(a,1p,2(e12.5,1x))')
      1 'stopping because elapsed CPU time > limit: ',
      .  elapsedval-elapsedinit,b2mndr_elapsed
       if(ierr.ne.0)
