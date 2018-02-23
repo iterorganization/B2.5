@@ -6,8 +6,9 @@
 !>      @page b2uw_dep b2_ual_write_deprecated
 !>      @section b2uw_dep_desc  Description
 !!      @note   This script is the \b old b2_ual_write.F90 and was kept as an
-!!               archive. The development of the old file continued under new
-!!              codes named
+!!              archive for possible future references and as an example for
+!!              information purposes. The development of the old file continued
+!!              under new codes named
 !!              @ref b2uw_gsl "b2_ual_write_gsl",
 !!              @ref b2uw_b2mod "b2_ual_write_b2mod" and the latest \b new
 !!              @ref b2uw_b2.

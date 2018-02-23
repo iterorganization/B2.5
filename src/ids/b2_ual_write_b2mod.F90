@@ -119,7 +119,9 @@
 !!      (b2fgmtry, b2fstate etc.) and run the following command:
 !!
 !!      @verbatim
-!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe --shot <shot> --run <run> --username <username> --device <device> --version <version> --step <step>
+!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
+!!          --shot <shot> --run <run> --username <username> --device <device> --version <version>
+!!          --step <step>
 !!      @endverbatim
 !!
 !!      The arguments marked with < ... > are the parameters of the IDS database
@@ -133,7 +135,8 @@
 !!
 !!      Example of the command:
 !!      @verbatim
-!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe --shot 1512 --run 6 --username penkod --device solps-iter --version 3 --step 250
+!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
+!!          --shot 1512 --run 6 --username penkod --device solps-iter --version 3 --step 250
 !!      @endverbatim
 !!
 !!      \b References:
