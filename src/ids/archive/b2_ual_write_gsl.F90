@@ -5,7 +5,10 @@
 !!
 !>      @page b2uw_gsl b2_ual_write_gsl
 !>      @section desc2  Description
-!!      @note   This code is OUTDATED! The development continued under new
+!!      @note   This script represents one of first improvements of the
+!!              \b old  b2_ual_write.F90 and was kept as an archive for possible
+!!              future references and as an example for information purposes.
+!!              The development of the code then continued under new
 !!              script @ref b2uw_b2mod "b2_ual_write_b2mod" and
 !!              @ref b2uw_b2 "b2_ual_write".
 !!              The development 'moved' to new code due to different
