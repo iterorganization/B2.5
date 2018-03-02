@@ -504,7 +504,7 @@
       call xertst (na_min.gt.0.0_R8,
      & 'faulty internal parameter na_min')
       do is=0,ns-1
-        call xertst (naini(is).gt.na_min,
+        call xertst (naini(is).ge.na_min,
      &   'Initial densities must be larger than na_min!')
       end do
 

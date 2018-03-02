@@ -250,7 +250,7 @@ c 2002-09-11: logic revised
      5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
      7 na_feedback_time1(:), gpdata1(:,:,:)
-      real (kind=R8) :: ds_offset, l_total, l_ref, na0eps
+      real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min
       integer ns1, nsm, nxm, nym, natmm, nmolm, nwallm
       integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
       integer ib1, ib2, ifl, js, ks, itrack
@@ -541,7 +541,7 @@ c 2002-09-11: logic revised
       data mw_jxa/-1/, mw_jsep/-1/
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
-      data BoRiS/0.0_R8/, na0eps/0.0_R8/
+      data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
       data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
       data xfrhie_no_drift/1.0_R8/
 *  ..namelists
@@ -1210,6 +1210,7 @@ c 2002-09-11: logic revised
       endif
 
 *   ..write header for transformed state
+      write(*,*) 'Writing transformed state file b2fstatt'
       write(*,*) 'ns, ns1 = ', ns, ns1
       idum(0) = nx1
       idum(1) = ny1
@@ -1232,6 +1233,7 @@ c 2002-09-11: logic revised
 *   ..save transformed averaged state
       if (averaging) then
         write(nout(5),'(a)') 'b2favere'
+        write(*,*) 'Writing transformed averaged state file b2favere.2'
         call b2yt_write_average (99, nx1, ny1, ns1,
      &    naver, ntotdt, lblmn, zamin1, zamax1, zn1, am1,
      &    na1_mean, te1_mean, ti1_mean, ua1_mean, po1_mean,
@@ -1249,6 +1251,7 @@ c 2002-09-11: logic revised
       call b2rucp (ninp(8), b2fparam_version, nx, ns)
 *   ..now we treat b2mn.dat
 *   ..rewrite b2mn.dat into b2mn.dat.2
+      write(*,*) 'Writing transformed switches file b2mn.dat.2'
 *   ..read in label and revised parameters in physics common
       call b2rflb (ninp(2), lblmn(61:120))
 *   ..take into account the transport parameter arrays
@@ -1282,6 +1285,7 @@ c 2002-09-11: logic revised
      .              atomic_physics_rescale_flag)
       call ipgeti ('b2mndr_eirene', use_eirene)
       call ipgetr ('b2mndr_na0eps', na0eps)
+      call ipgetr ('b2mndr_na_min', na_min)
       call ipgeti ('b2mndr_ismain', ismain)
       call ipgeti ('b2mwti_ismain0', ismain0)
       call ipgeti ('b2news_nsmin', nsmin)
@@ -1639,6 +1643,7 @@ c 2002-09-11: logic revised
         case('b2mndr_na0eps')
           if (na0eps.lt.1.0e8_R8) then
             cnamip = 'b2mndr_na_min'
+            na_min = na0eps
           else
             cnamip = 'b2mndr_na_new'
           end if
@@ -2157,10 +2162,15 @@ c 2002-09-11: logic revised
         if (transport_namelist.eq.0) call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
         if (same_bundling) then
-          if (first_pass)
-     >     write(nout(5),'(a)') 'b2.transport.parameters'
+          if (first_pass) then
+            write(nout(5),'(a)') 'b2.transport.parameters'
+            write(*,*) 'No changes needed in b2.transport.parameters'
+          endif
           if (.not.streql(transport_filename,'b2.transport.parameters'))
-     >     write(nout(5),'(a)') trim(transport_filename)
+     >     then
+            write(nout(5),'(a)') trim(transport_filename)
+            write(*,*) 'No changes needed in ',trim(transport_filename)
+          endif
         else
           write(nout(5),'(a)') trim(new_filename)
           write(*,*) 'Writing ',trim(new_filename)
@@ -2330,9 +2340,15 @@ c 2002-09-11: logic revised
 #endif
         close(99)
         if(same_bundling.and.nx.eq.nx1.and.ny.eq.ny1) then
-          if (first_pass) write(nout(5),'(a)') 'b2.transport.inputfile'
+          if (first_pass) then
+            write(nout(5),'(a)') 'b2.transport.inputfile'
+            write(*,*) 'No changes needed in b2.transport.inputfile'
+          endif
           if (.not.streql(transport_filename,'b2.transport.inputfile'))
-     >     write(nout(5),'(a)') trim(transport_filename)
+     >     then
+            write(nout(5),'(a)') trim(transport_filename)
+            write(*,*) 'No changes needed in ',trim(transport_filename)
+          endif
         else
           write(nout(5),'(a)') trim(new_filename)
           write(*,*) 'Writing ',trim(new_filename)
@@ -2605,6 +2621,8 @@ cxpb We must ensure we have not already listed this additional species
         endif
         deallocate(dsa,dsa1,deta)
         deallocate(eta_hce_mult1)
+      else if (todo) then
+        write(*,*) 'No changes needed in ',trim(filename)
       endif
 
 *  ..write new b2.sources.profile
@@ -3157,10 +3175,15 @@ cxpb This will need to be checked !!!
         if (numerics_namelist.eq.0) call alloc_b2mod_numerics(nx,ny,ns)
         call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
         if (same_bundling) then
-          if (first_pass)
-     >     write(nout(5),'(a)') 'b2.numerics.parameters'
+          if (first_pass) then
+            write(nout(5),'(a)') 'b2.numerics.parameters'
+            write(*,*) 'No changes needed in b2.numerics.parameters'
+          endif
           if (.not.streql(numerics_filename,'b2.numerics.parameters'))
-     >     write(nout(5),'(a)') trim(numerics_filename)
+     >     then
+            write(nout(5),'(a)') trim(numerics_filename)
+            write(*,*) 'No changes needed in ',trim(numerics_filename)
+          endif
         else
           write(*,*) 'Writing ',trim(new_filename)
           open(99,file=new_filename)
@@ -3282,7 +3305,8 @@ cxpb This will need to be checked !!!
 *  ..write new b2.atomic_physics_rescale.parameters
       filename='b2.atomic_physics_rescale.parameters'
       call find_file(filename,todo)
-      if(atomic_physics_rescale_flag.ne.0.or.todo) then
+      if((atomic_physics_rescale_flag.ne.0.or.todo).and.
+     & .not.same_bundling) then
         rescale_sa=1.0_R8
         rescale_ra=1.0_R8
         rescale_qa=1.0_R8
@@ -3360,6 +3384,8 @@ cxpb This will need to be checked !!!
         endif
         write(99,'(a1)') '/'
         close(99)
+      else if (same_bundling.and.todo) then
+        write(*,*) 'No changes needed in ',trim(filename)
       endif
 
 #ifdef B25_EIRENE
@@ -3451,8 +3477,10 @@ cxpb start by identifying the correspondence with the new run species
         end do
         nmol1 = iss
         if (streql(eirene_format,'iter') .and. same_bundling .and.
-     .      nx.eq.nx1 .and. ny.eq.ny1 .and. non_commensurate.eq.0)
-     .   goto 8688  ! no need to convert input.dat file
+     .      nx.eq.nx1 .and. ny.eq.ny1 .and. non_commensurate.eq.0) then
+          write(*,*) 'No changes needed in input.dat'
+          goto 8688  ! no need to convert input.dat file
+        endif
 cxpb  Start reading input.dat file
         read(IUNIN,'(A72)',end=8687) ZEILE   ! TXTRUN
         open(unit=IUNOT,file='input.dat.2',status='unknown')
@@ -8392,6 +8420,12 @@ cxpb  Convert fort.44 file if needed
           write(nout(5),'(a)') 'ftn44.2'
 #endif
           deallocate(epls_map)
+        else if (todo) then
+#ifndef HPUX
+          write(*,*) 'No changes needed in fort.44'
+#else
+          write(*,*) 'No changes needed in ftn44'
+#endif
         endif
 cxpb  Convert fort.46 file if needed
 #ifndef HPUX
@@ -8405,6 +8439,12 @@ cxpb  Convert fort.46 file if needed
           write(nout(5),'(a)') 'fort.46.2'
 #else
           write(nout(5),'(a)') 'ftn46.2'
+#endif
+        else if (todo) then
+#ifndef HPUX
+          write(*,*) 'No changes needed in fort.46'
+#else
+          write(*,*) 'No changes needed in ftn46'
 #endif
         endif
       else
@@ -9394,6 +9434,8 @@ cxpb as they no longer necessarily point to the same species
             deallocate(saved_na_feedback_actuator1)
           end if
         end if
+      else if (todo) then
+        write(*,*) 'No changes needed in ',trim(filename)
       end if
 
 *   ..write new b2.feedback_control.parameters if needed
@@ -9604,6 +9646,8 @@ cxpb as they no longer necessarily point to the same species
         deallocate(na_feedback_puff_max1)
         deallocate(na_feedback_overshoot1)
         deallocate(na_feedback_time1)
+      else if (todo) then
+        write(*,*) 'No changes needed in ',trim(filename)
       end if
 
 *   ..write new b2.user.parameters, if needed
@@ -9799,6 +9843,8 @@ cxpb as they no longer necessarily point to the same species
         write(99,'(a1)') '/'
         close(99)
         call dealloc_b2mod_user
+      else if (todo) then
+        write(*,*) 'No changes needed in ',trim(filename)
       end if
 
 *   ..write new b2yq.dat, if needed
@@ -9822,6 +9868,8 @@ cxpb as they no longer necessarily point to the same species
           goto 982
  983      continue
           close(99)
+        else if (same_bundling) then
+          write(*,*) 'No changes needed in ',trim(filename)
         end if
         close(98)
       end if
@@ -9917,39 +9965,43 @@ cxpb as they no longer necessarily point to the same species
         end if
         call b2wfcp (nout(3), 0, ns1)
         close(nout(3))
+      else
+        write(*,*) 'No changes needed in b2ah.dat'
       endif
 
 *   ..we now do b2ai.dat, using the data computed for b2ah.dat
-      if (.not.same_bundling) then
+*   ..we read to check if the initial densities must be changed
+      call b2aix0 (ninp(7:6:-1), idum(0), idum(1), idum(2))
+      call xertst (idum(2).eq.ns,
+     .   'incorrect species number in b2ai.dat')
+      call b2rflb (ninp(6), lblps(61:120))
+*   ..read species data
+      read (ninp(6),*) ligne
+      do is = 0, ns-1
+        read (ninp(6),*) id0, (zpdum(is,i),i=0,3)
+      enddo
+*   ..read initial densities
+      read (ninp(6),*) ligne
+      allocate(nbini(0:nsm-1))
+      read (ninp(6),*) (nbini(is),is=0,ns-1)
+      if (.not.same_bundling.or.minval(nbini(0:ns-1)).lt.na_min) then
         call cfopen (nout(4),'b2ai.dat.2','new','formatted')
         write(*,*) 'Writing b2ai.dat.2'
         write(nout(5),'(a)') 'b2ai.dat.2'
-        call b2aix0 (ninp(7:6:-1), idum(0), idum(1), idum(2))
-        call xertst (idum(2).eq.ns,
-     .   'incorrect species number in b2ai.dat')
         write(nout(4),'(a)') '*dimens         (ns; free format)'
         write(nout(4),*) ns1
-        call b2rflb (ninp(6), lblps(61:120))
         write(nout(4),'(a)')
      .   '*label          (lblps, character*60; free format)'
         write(nout(4),'(a,a,a)') '''',trim(lblps(61:120)),''''
-*   ..read species data
-        read (ninp(6),*) ligne
-        do is = 0, ns-1
-          read (ninp(6),*) id0, (zpdum(is,i),i=0,3)
-        enddo
 *   ..write species data
         write (nout(4),'(a)')
      &   '*specs     zamin     zamax     zn       am'
         do is = 0, ns1-1
           write (nout(4),fmt0) is,zamin(is),zamax(is),zn(is),am(is)
         enddo
-*   ..read and write initial densities
-        read (ninp(6),*) ligne
+*   ..write initial densities (corrected if needed)
         write(nout(4),'(a)') trim(ligne)
-        allocate(nbini(0:nsm-1))
-        read (ninp(6),*) (nbini(is),is=0,ns-1)
-        cftmp(0:ns-1) = nbini(0:ns-1)
+        cftmp(0:ns-1) = max(nbini(0:ns-1),na_min)
         call convert_bundle_r(ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
         nbini(0:ns1-1) = cftmp(0:ns1-1)
         write (hlp_frm,'(a,i3,a)') '(1p,',ns1,'(1e9.2,1x))'
@@ -9960,8 +10012,10 @@ cxpb as they no longer necessarily point to the same species
         read (ninp(6),*) ligne
         write(nout(4),'(a)') trim(ligne)
         close(nout(4))
-        deallocate(nbini)
+      else
+        write(*,*) 'No changes needed in b2ai.dat'
       endif
+      deallocate(nbini)
       deallocate(idum)
 
 *   ..we now write a new SOLPS_FLUIDS file if needed
@@ -9977,6 +10031,8 @@ cxpb as they no longer necessarily point to the same species
         write(99,hlp_frm) (trim(species_name(is)),is=0,ns1-1)
         close(99)
         deallocate(species_name)
+      else
+        write(*,*) 'No changes needed in SOLPS_FLUIDS'
       endif
 
       call dealloc_b2mod_diag
