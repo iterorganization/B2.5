@@ -8914,9 +8914,9 @@ cxpb as they no longer necessarily point to the same species
         if (itrack1.gt.0) track_chem_sput1(itrack1) = track_chem_sput(1)
         if (itrack2.gt.0) track_chem_sput1(itrack2) = track_chem_sput(2)
         if (itrack3.gt.0) track_chem_sput1(itrack3) = track_chem_sput(3)
-        write(hlp_frm,'(a,i2,a)') '(a,',itrack,'l1,a)'
-        if (itrack.gt.0) write(99, hlp_frm)
-     .   'TRACK_CHEM_SPUT=',track_chem_sput1(1:itrack),','
+        write(hlp_frm,'(a,i2,a)') '(a,',ntrack,'(1x,l1,'',''))'
+        if (itrack.gt.0) write(99, hlp_frm) 'TRACK_CHEM_SPUT='
+     .       ,(track_chem_sput1(ib),ib=1,ntrack)
         write(hlp_frm,'(a,i2,a)') '(a,i2,a,',nstrat1,'(1x,i3,'',''))'
         do is = 1, ntrack
           if (maxval(targsp1(1:nstrat1,is)).gt.0) write(99, hlp_frm)
