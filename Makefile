@@ -925,20 +925,6 @@ endif
 
 include ${OBJDIR}/dependencies
 
-${OBJDIR}/process.o : process.F
-	@- /bin/rm -f ${OBJDIR}/process.f ${OBJDIR}/process.o
-ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
-else
-ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/process.f
-else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${DBLSED} > ${OBJDIR}/process.f
-endif
-	${DBLFC} ${DBLOPTION} ${FCOPTS} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/process.f
-endif
-	@if [ -f process.o ] ; then /bin/mv process.o ${OBJDIR}/ ; fi
-
 ifeq ($(COMPILER),g77)
 ${OBJDIR}/b2stbc.o : b2stbc.F
 	@- /bin/rm -f ${OBJDIR}/b2stbc.f ${OBJDIR}/b2stbc.o
