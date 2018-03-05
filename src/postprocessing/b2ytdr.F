@@ -8409,7 +8409,7 @@ cxpb  Convert fort.44 file if needed
      &     e_bundle_contr(1:ns1-nspecies1,1:ns-nspecies)
           call b2yt_ngread(solps_version, eirene_format,
      &     nx1, ny1, natmi1, iatm1, nmol1, imol1,
-     &     ns1-nspecies1, ipls1, ns-nspecies,
+     &     ns1-nspecies1, ipls1, npls,
      &     savestratum, non_commensurate, epls_map,
      &     jsep1, region1, leftcut1, rightcut1, bottomcut1, topcut1,
      &     bottomiy1,
