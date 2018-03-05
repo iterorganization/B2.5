@@ -42,7 +42,7 @@ c
         end if
         k1=k1+i+1
       end do
- 10   continue
+   10 continue
       do j=1,natmi
         print *,j,' :',textan(j-1)
         stmp=textan(j-1)

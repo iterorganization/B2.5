@@ -304,7 +304,7 @@
 *   ..initialisation
       parameter (amtol = 1.0e-2_R8)
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
-     &  n_flux_zero/0/, dtim/1.0/, na_feedback_save/DEF_NATM*0.0_R8/,
+     &  n_flux_zero/0/, dtim/1.0_R8/, na_feedback_save/DEF_NATM*0.0_R8/,
      &  na_feedback_prev/DEF_NATM*0.0_R8/,
      1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
      1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
@@ -315,7 +315,7 @@
      3  nesepm_pfr/0.0_R8/, nesepm_alpha/1.0e-3_R8/,
      3  nesepm_beta/0.0_R8/, nesepm_gamma/0.99_R8/,
      3  nesepm_minpuff/0.0_R8/, nesepm_maxpuff/0.0_R8/,
-     3  nesepm_overshoot/0.0_R8/, nesepm_error_old/0.0/,
+     3  nesepm_overshoot/0.0_R8/, nesepm_error_old/0.0_R8/,
      3  nesepm_integral_error/0.0_R8/,
      4  volrec_sol/0.0_R8/, volrec_alpha/1.0e-3_R8/,
      4  volrec_beta/1.0_R8/, volrec_overshoot/0.0_R8/,

@@ -68,17 +68,19 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:0), nout(0:2), ishot, idum(0:9), nx, ny, ns, n2, io
+      integer ninp(0:0), nout(0:2)
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
-      real (kind=R8), allocatable :: za(:), zero(:,:)
-      character*120 lblmn, lblgm
+      real (kind=R8), allocatable :: zero(:,:)
 #ifdef MDSPLUS
 #     include "mdslib.inc"
+      integer idum(0:9), io, ishot, n2, nx, ny, ns
       integer status, retlen, dbversion
       integer ix, iy, i, j, is
+      character*120 lblmn, lblgm
       integer, allocatable :: idummy(:,:)
+      real (kind=R8), allocatable :: za(:)
       logical file_open
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y

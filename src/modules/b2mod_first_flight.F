@@ -221,8 +221,8 @@ cxpb  neutrals to be eion=shi/sna.
       do ia=1,no_of_slices
          dist_end=dist_start
          flown_time=0.0_R8
-	 ixend=-2
-	 iyend=-2
+         ixend=-2
+         iyend=-2
          ptr=index(indptr,ia,0)
          do while (flown_time.lt.flight_time .and. 
      1     ptr.le.index(indptr,ia,1))

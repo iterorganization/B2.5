@@ -13,14 +13,12 @@
       use b2mod_sources
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
-     & , only : b2sihs_diae0to3, b2sihs_divue0to3, b2sihs_exbe0to3,
-     &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
+     & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
+     &          b2sihs_joule0to3, b2sihs_divua0to3,
      &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
      &          balance_netcdf
       use b2mod_transport_fun                                            !srv 05.07.17
       use b2mod_external                                                 !srv 05.07.17
-      use b2mod_geo
-     , , only : hz                                                       !srv 05.07.17
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                         !xpb !srv 05.07.15
@@ -62,7 +60,6 @@
       integer, save :: use_eirene = 0
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 {
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)  !lk 31.01.08 }
-      character chns*3                                                  !srv 05.07.17
       real (kind=R8) ::
      *  vti32(-1:nx,-1:ny)
       real (kind=R8) ::
@@ -85,7 +82,7 @@
       real (kind=R8) ::
      *  t0, t1, ctaup, coef, czetap, czetae                             !srv 05.07.17
 *   ..procedures
-      intrinsic min, max, sqrt, log, mod
+      intrinsic min, max, sqrt
       real (kind=R8) ::
      *  uasx, uesx, uasy, hy1                                           !srv 13.01.17
       external subini, subend, xertst, ipgeti, ipgetr, sfill

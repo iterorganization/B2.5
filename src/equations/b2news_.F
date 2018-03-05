@@ -105,8 +105,6 @@
       intrinsic mod
       real (kind=R8) ::
      *  smin, smax, b2sasum
-      integer len_of_digits
-      external len_of_digits
       external subini, subend, xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
@@ -836,7 +834,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
            elseif(rightix(ix,iy).eq.nx+1) then
              ue(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
            endif
-	 enddo
+         enddo
        enddo
        do is=0,ns-1
         ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)

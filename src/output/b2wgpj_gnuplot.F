@@ -69,7 +69,11 @@
 *   ..procedures
       intrinsic max
 #ifndef NAGF95
+#ifndef NAGFOR
       integer iargc
+#else
+      integer lenval, ierror
+#endif
 #endif
       external subini, subend, xertst
 
@@ -90,17 +94,27 @@
 
 * ..make two-dimensional plots
       islice=1
+#ifndef NAGFOR
       if(iargc().le.0) then
+#else
+      if(command_argument_count().le.0) then
+#endif
          want='te  '
       else
+#ifndef NAGFOR
          call getarg(1,want)
          if(iargc().ge.2) then
             call getarg(2,slice)
+#else
+         call get_command_argument(1,want,lenval,ierror)
+         if(command_argument_count().ge.2) then
+            call get_command_argument(2,slice,lenval,ierror)
+#endif
             read(slice,*,err=5) islice
             islice=min(max(islice,0),ns-1)
          endif
       endif
- 5    continue
+    5 continue
       write(*,'(a,a,i4)') '#',want,islice
       if(want.eq.'te  ') then
          do iy=-1,ny

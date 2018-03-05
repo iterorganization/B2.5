@@ -239,7 +239,7 @@ c 2002-09-11: logic revised
      4 r(:), f(:), dprof(:), felm(:), delm(:),
      5 px(:), pf(:), pelm(:),
      6 prdsa(:), pra(:), dsa(:), dsa1(:), deta(:),
-     7 pxdsa(:), pxa(:), xx(:), x(:), fx(:), dx(:),
+     7 pxa(:), xx(:), fx(:), dx(:),
      8 sr1(:), sf1(:), sd1(:), sr2(:), sf2(:), sd2(:),
      9 spr(:), spf1(:), spf2(:), s1d(:,:,:,:),
      * xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
@@ -260,7 +260,6 @@ c 2002-09-11: logic revised
       integer istyle_cur_contr_on_S_and_N
       integer is0(0:DEF_NSD-1), is1(0:ns-1)
       integer is1beginrange, is1endrange
-      integer iplsbeginrange, iplsendrange
       integer, allocatable :: iatm1(:), imol1(:), ipls1(:), istra1(:)
       integer, allocatable :: istmp(:), ns1data(:,:,:), nx1data(:,:,:)
       integer, allocatable :: mlcmp1(:,:), ifl1(:), ispecies1(:)
@@ -320,6 +319,7 @@ c 2002-09-11: logic revised
       integer NSIGI_BGK, NSIGI_COP, NSIGI_SPC
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
+      integer iplsbeginrange, iplsendrange
       integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
       integer, allocatable :: NPOINT(:,:), ILIIN(:), IHELP(:), IGJUM0(:)
       integer, allocatable :: IREAC1(:)
@@ -473,8 +473,8 @@ c 2002-09-11: logic revised
       character*4, allocatable :: TDMH2(:,:), TDMH21(:,:)
       character*9, allocatable :: TDMREACTION(:,:), TDMREACTION1(:,:)
       character*3, allocatable :: TDMCR(:,:), TDMCR1(:,:)
-#endif
       character*8 :: TEXTM(DEF_NMOL)
+#endif
       character*10, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary
       logical chemsp1(nstraid), savestratum(0:nstraid)
@@ -507,26 +507,26 @@ c 2002-09-11: logic revised
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
-      integer lnblnk, convert_position, len_of_digits, trace_convert
+      integer lnblnk, len_of_digits, trace_convert
 #ifdef B25_EIRENE
-      integer transform_tally
+      integer transform_tally, b2idez, convert_eirene
       logical isaletter
       logical species_present, element_present, molecule_present
-      external isaletter
+      external isaletter, b2idez, convert_eirene
       external species_present, element_present, molecule_present
+      intrinsic iabs, min0
 #endif
-      integer conformal_convert, convert_eirene, b2idez
+      integer conformal_convert
       real (kind=R8) :: cr, cz, cr1, cz1, rratio
       logical open_file, streql, is_comment
       external subini, subend, xertst, xerrab, cfruch, cfrure, cfwuin,
-     &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk, convert_position,
+     &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk,
      &  len_of_digits, open_file, get_jsep, conformal_convert,
-     &  convert_eirene, b2idez, streql, get_nxt, b2yt_nxt, b2yt_ngread,
-     &  b2yt_ntread, is_comment
+     &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr
       external E01BEF, E01BFF
-      intrinsic nint, mod, min0, index, iabs, sqrt
+      intrinsic nint, mod, index, sqrt
 *   ..initialisation
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
@@ -1159,8 +1159,7 @@ c 2002-09-11: logic revised
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
-     &    hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1,
-     &    naver, ntotdt,
+     &    bundle_frac, naver, ntotdt,
      &    na_mean, te_mean, ti_mean, ua_mean, po_mean,
      &    e_na, e_te, e_ti, e_ua, e_po,
      &    sna_mean, sne_mean, smo_mean,
@@ -3014,10 +3013,12 @@ cxpb This will need to be checked !!!
                     nx1data(ikind,j,js)=0   ! This profile has been absorbed in the current one
                   else if (bundle_frac(is1(is),js).gt.0.0_R8) then
                     if (ndat.gt.nx1+2) then  ! need to coarsen the profile according to the new grid
+                      xx(1:ndat) = x1d(1,1:ndat,j,is)
+                      fx(1:ndat) = x1d(2,1:ndat,j,is)
                       if (.not.axdone) then
-                        allocate(pxa(-1:nx1))
+                        allocate(pxa(1:nx1+2))
                         allocate(l_conn(-1:nx1))
-                        allocate(x(1:nx+2),fx(1:nx+2))
+                        allocate(fx(1:nx+2))
                         allocate(dx(1:nx+2))
                         ireg = mod(region1(ixref1,iyref1,0),4)
                         if (ikind.eq.1) then
@@ -3060,23 +3061,20 @@ cxpb This will need to be checked !!!
                         end if
                         nfitanf = -1
                         do i = 0, nx1
-                          if (pxa(i).lt.x(1)) nfitanf = nfitanf+1
+                          if (pxa(i).lt.xx(1)) nfitanf = nfitanf+1
                           nfitend=i-1
-                          if (pxa(i).gt.x(ndat)) exit
+                          if (pxa(i).gt.xx(ndat)) exit
                           nfitend=i
                         end do
                         ndim=nfitend+1-nfitanf
                         axdone = .true.
                       endif
-                      xx(1:ndat) = x1d(1,1:ndat,j,is)
-                      fx(1:ndat) = x1d(2,1:ndat,j,is)
                       call E01BEF(ndat,xx,fx,dx,ifail)
                       nfitanf=1
-                      do ix=1,nx1+2
-                        pxa(ix)=pxdsa(ix)
-                        if(pxa(ix).lt.x(1)) nfitanf=nfitanf+1
+                      do ix=-1,nx1
+                        if(pxa(ix).lt.xx(1)) nfitanf=nfitanf+1
                         nfitend=ix-1
-                        if (pxa(ix).GT.x(ndat)) exit
+                        if (pxa(ix).GT.xx(ndat)) exit
                         nfitend=ix
                       enddo
                       call xertst(nfitanf.lt.nfitend,
@@ -3094,7 +3092,7 @@ cxpb This will need to be checked !!!
                       x1data(1,1:ndat,j,is1(is)) = x1d(1,1:ndat,j,is)  ! profile position
                       x1data(2,1:ndat,j,is1(is)) = x1d(2,1:ndat,j,is)  ! profile value
                     endif
-                    if (axdone) deallocate(pxa,x,fx,dx)
+                    if (axdone) deallocate(pxa,fx,dx)
                   endif
                 enddo
                 deallocate(x1d)
@@ -9321,10 +9319,9 @@ cxpb as they no longer necessarily point to the same species
      &                sputter_yield2_yt(ix,iy,is,1).ne.0.0_R8 .or.
      &                sputter_yield2_yt(ix,iy,is,2).ne.0.0_R8) then
                     do ib = 1, 2
-                      write(99,'(a14,i4,a1,i4,a1,i3,a1,i1,a2,
-     &                          1pe21.13e3,
-     &                          a17,i4,a1,i4,a1,i3,a1,i1,a2,
-     &                          1pe21.13e3,a1)')
+                      write(99,
+     &                 '(a14,i4,a1,i4,a1,i3,a1,i1,a2,1pe21.13e3,'//
+     &                  'a17,i4,a1,i4,a1,i3,a1,i1,a2,1pe21.13e3,a1)')
      .                 'SPUTTER_YIELD(',ix,',',iy,',',is,',',ib,')=',
      .                  sputter_yield_yt(ix,iy,is,ib),
      .               ', SPUTTER_YIELD2(',ix,',',iy,',',is,',',ib,')=',
@@ -9813,14 +9810,14 @@ cxpb as they no longer necessarily point to the same species
           write(*,*) 'Writing '//trim(new_filename)
           open(99,file=new_filename)
           write(nout(5),'(a)') trim(new_filename)
- 982      continue
+  982     continue
           read(98,*,end=983,err=983) indx, indy
           indx1=trace_convert(indx,ns,ns1,is1)
           indy1=trace_convert(indy,ns,ns1,is1)
           if (indx1.ne.0 .and. indy1.ne.0)
      >     write(99,'(2i6)') indx1, indy1
           goto 982
- 983      continue
+  983     continue
           close(99)
         end if
         close(98)
@@ -11060,7 +11057,7 @@ C
         IT=10**(IZIF-K)
         IQ=IZ/IT
         IZ=IZ-IQ*IT
-1     CONTINUE
+    1 CONTINUE
       B2IDEZ=IQ
       call subend()
       return

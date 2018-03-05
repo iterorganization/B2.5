@@ -12,19 +12,20 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,&
 !Coprocessor is called each time step in b2mndr_1 to output
 !simulation data to ParaView Catalyst.
 
+  use b2mod_types
   implicit none
-  integer :: nx, ny, ns, step, flag, numC, ix, iy
+  integer :: nx, ny, ns, step, flag, numC !, ix, iy
   integer, intent(in) :: ncrx
-  real(kind=8) :: time
+  real(kind=R8) :: time
   integer, dimension(-1:nx,-1:ny) :: rightix, topiy
-  real(kind=8), dimension(-1:nx,-1:ny) :: vol,hx,hy,qc,te,ti,po,bzb,OnedBsq,ne
-  real(kind=8), dimension(-1:nx,-1:ny,2) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,&
-      & fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper &
-      & !,velocity
-  real(kind=8), dimension(-1:nx,-1:ny,3) :: gs
-  real(kind=8), dimension(-1:nx,-1:ny,4) :: crx,cry,bb
-  real(kind=8), dimension(-1:nx,-1:ny,0:ns-1) :: na,ua,kinrgy,rra,rqa,rsa
-  real(kind=8), dimension(-1:nx,-1:ny,0:1,0:ns-1) :: fna,fna_mdf,fna_fcor,&
+  real(kind=R8), dimension(-1:nx,-1:ny) :: vol,hx,hy,qc,te,ti,po,bzb,OnedBsq,ne
+  real(kind=R8), dimension(-1:nx,-1:ny,2) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,&
+      & fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper !,&
+     !& velocity
+  real(kind=R8), dimension(-1:nx,-1:ny,3) :: gs
+  real(kind=R8), dimension(-1:nx,-1:ny,4) :: crx,cry,bb
+  real(kind=R8), dimension(-1:nx,-1:ny,0:ns-1) :: na,ua,kinrgy,rra,rqa,rsa
+  real(kind=R8), dimension(-1:nx,-1:ny,0:1,0:ns-1) :: fna,fna_mdf,fna_fcor,&
       & uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi
   real :: start, finish
   

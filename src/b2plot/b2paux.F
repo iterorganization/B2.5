@@ -512,7 +512,8 @@ c-----------------------------------------------------------------------
         open(unit=lun,file=filename)
         write(lun,'(2a)') '# ', trim(extralabel)
         write(lun,'(2a)') '# ', trim(graphlabel(iwrk))
-        write(lun,'(3x,2hix,3x,2hiy,6x,1hx,11x,1hy,11x,3hz01)')
+        write(lun,'(3x,a2,3x,a2,6x,a1,11x,a1,11x,a3)')
+     .   'ix','iy','x','y','z01'
         do iy = 0, ny-1
           do ix = 0, nx-1
             write(lun,'(2i5,1p,3e12.4)')

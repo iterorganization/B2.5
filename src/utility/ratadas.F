@@ -158,7 +158,7 @@ c     log10 of rate coefficients (in cm3/s)
      *   DREC(isdimd,itdimd,iddimd),DION(isdimd,itdimd,iddimd),
      &   DCEX(isdimd,itdimd,iddimd),DPLT(isdimd,itdimd,iddimd),
      &   DPRB(isdimd,itdimd,iddimd),DTMP1(itdimd,iddimd),
-     1	 DTMP2(itdimd,iddimd),DTMP3(itdimd,iddimd)
+     1   DTMP2(itdimd,iddimd),DTMP3(itdimd,iddimd)
 c     effective coefficients
       real (kind=R8) ::
      *   DZAV(isdimd,itdimd,iddimd),DZA2(isdimd,itdimd,iddimd),
@@ -782,7 +782,7 @@ c     reading in data, ionisation potentials
 c     filling rtsa(ionisation)
       write(*,*) 'rtsa'
       do ic=0,ncnct-2
-	dtmp1(1:ITMAXDion,1:IDMAXDion)=
+        dtmp1(1:ITMAXDion,1:IDMAXDion)=
      .   DION(ic+1,1:ITMAXDion,1:IDMAXDion)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -798,7 +798,7 @@ c     filling rtsa(ionisation)
 c     filling rtra(recombination)
       write(*,*) 'rtra'
       do ic=1,ncnct-1
-	dtmp1(1:ITMAXDrec,1:IDMAXDrec)=
+        dtmp1(1:ITMAXDrec,1:IDMAXDrec)=
      .   DREC(ic,1:ITMAXDrec,1:IDMAXDrec)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -815,15 +815,15 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
       write(*,*) 'rtqa,rtrd,rtbr'
       do ic=0,ncnct-1
         if(ic.gt.0) then
-	 dtmp1(1:ITMAXDprb,1:IDMAXDprb)=
+         dtmp1(1:ITMAXDprb,1:IDMAXDprb)=
      .    DPRB(ic,1:ITMAXDprb,1:IDMAXDprb)
         endif
-	if(ic.lt.ncnct-1) then
-	  dtmp2(1:ITMAXDplt,1:IDMAXDplt)=
+         if(ic.lt.ncnct-1) then
+          dtmp2(1:ITMAXDplt,1:IDMAXDplt)=
      .     DPLT(ic+1,1:ITMAXDplt,1:IDMAXDplt)
-	  dtmp3(1:ITMAXDpot,1:IDMAXDpot)=
+          dtmp3(1:ITMAXDpot,1:IDMAXDpot)=
      .     DPOT(ic+2,1:ITMAXDpot,1:IDMAXDpot)
-	endif
+        endif
         do cT=0,rtnt
           logT=log10(rtt(cT))
           do cD=0,rtnn
@@ -872,7 +872,7 @@ c so is included explicitly in b2stel if 'b2stel_fix_recomb_energy' is nonzero
 c     filling rtcx(charge exchange)
       write(*,*) 'rtcx'
       do ic=1,ncnct-1
-	dtmp1(1:ITMAXDcex,1:IDMAXDcex)=
+        dtmp1(1:ITMAXDcex,1:IDMAXDcex)=
      .   DCEX(ic,1:ITMAXDcex,1:IDMAXDcex)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -888,7 +888,7 @@ c     filling rtcx(charge exchange)
 c     filling rtzz(effective charge)
       write(*,*) 'rtzz'
       do ic=0,ncnct-1
-	dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
+        dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
      .   DZAV(ic+1,1:ITMAXDzav,1:IDMAXDzav)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -904,7 +904,7 @@ c     filling rtzz(effective charge)
 c     filling rtz2(effective square charge)
       write(*,*) 'rtz2'
       do ic=0,ncnct-1
-	dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
+        dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
      .   DZA2(ic+1,1:ITMAXDzav,1:IDMAXDzav)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -921,7 +921,7 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
       write(*,*) 'rtpt,rtpi'
       do ic=0,ncnct-1
         do cT=0,rtnt
-	  dtmp1(1:ITMAXDpot,1:IDMAXDpot)=
+          dtmp1(1:ITMAXDpot,1:IDMAXDpot)=
      .     DPOT(ic+1,1:ITMAXDpot,1:IDMAXDpot)
           logT=log10(rtt(cT))
           do cD=0,rtnn
@@ -943,7 +943,7 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
       call subend ()
       return
 
- 990  continue
+  990 continue
       call xerrab ('Check specifications in ratadas.filelist!')
 
       end subroutine ratadas

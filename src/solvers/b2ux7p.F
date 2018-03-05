@@ -33,7 +33,7 @@
 *     with the five-point discretisation of a single scalar partial
 *     differential equation on a topologically rectangular mesh. The
 *     routine is an interface to one of two solvers. If the internal
-*     parameter "style" has the value 0 then a solver based on Stone's
+*     parameter "style" has the value 0 then a solver based on the Stone
 *     SIP-ILU procedure is used; if style.eq.1 then a direct band
 *     solver is used.
 *
@@ -171,7 +171,7 @@
        else if (style.eq.3) then                                   !srv 29.05.02 {
 !        call cpu_time(cpu_start)
         call storage_7 (nx, ny, aa7, n_nz_sdrv, ia, ja, a, nz,
-     *                 indexes, iasave, jasave, name)
+     *                 indexes, iasave, jasave)
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
 !        write(*,*) 'STORAGE_7: nz = ',nz
@@ -197,14 +197,13 @@
       end subroutine b2ux7p
 
       subroutine storage_7 (nx, ny, aa7, nnz, ip, ja, a, k,          !srv 29.05.02
-     *                      indexes, ipsave, jasave, name)
+     *                      indexes, ipsave, jasave)
       use b2mod_types
       use b2mod_indirect
       implicit none
 *  ..input
       integer nx, ny, nnz
       real (kind=R8) :: aa7(-1:nx,-1:ny,-3:3)
-      character*(*) name
 *  ..output
       integer ip((nx+2)*(ny+2)+1), ja(nnz), k,
      *        indexes(1:3,nnz), ipsave((nx+2)*(ny+2)+1), jasave(nnz)

@@ -41,11 +41,10 @@
       integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k             !srv 26.01.00
       integer, save :: iout = 0                                    !srv 08.07.08
       character chark*1                                            !srv 08.07.08
-      integer ireg, ileft, ibot, itop
+      integer ireg, ileft, ibot
       real (kind=R8) :: vis_per, aa7p2, aa7m2                      !srv 27.01.00
       save ncall, vis_per                                          !srv 27.01.00
 *   ..procedures
-      intrinsic min, abs
       external subini, subend, xertst, sfill
       external b2xvsg, b2xvff, b2ux7p                              !srv 11.01.00
 *   ..initialisation

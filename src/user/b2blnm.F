@@ -290,8 +290,8 @@ c
       rewind(lun)
       if(ex) read(lun,*,end=91) hlp_c
       goto 93
- 91   ex = .false.
- 93   continue
+   91 ex = .false.
+   93 continue
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=92) hlp_c,nv,nd_tmp,ndv_tmp
@@ -337,9 +337,9 @@ c
         end if
         if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else
 c*** New file
         nd_tmp=nqudiv
@@ -354,16 +354,16 @@ c*** New file
      -                                                   nd_tmp*ndv_tmp
       return
 c======================================================================
- 90   write(*,*) 'b2blnm: cannot open file ',trim(f)
+   90 write(*,*) 'b2blnm: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       go to 98
 c
- 92   write(*,*) 'b2blnm: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2blnm: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       go to 98
 c
 c*** Prepare the formats for the printout
- 98   write(hlp_frf,710) nqudiv
+   98 write(hlp_frf,710) nqudiv
       write(hlp_frm,720) nqudiv
       return
   710 format('(1x,3hdiv,',i3,'(2x,a8,1x))')
@@ -393,10 +393,10 @@ c
         iline = iline+1
         read(lun,*,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2blnm: cannot open file ',trim(f)
+  190 write(*,*) 'b2blnm: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return

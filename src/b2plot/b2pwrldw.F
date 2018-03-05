@@ -56,7 +56,7 @@ c
             k=k+1
             lwldrad(k)=l
           end if
- 100    continue
+  100   continue
       end do
       nwldrad=k
 c

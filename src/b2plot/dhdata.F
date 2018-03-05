@@ -160,6 +160,10 @@ C
       external lnblnk, subini, subend
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
 C
       SAVE      IZ1MIN
@@ -199,7 +203,7 @@ C
         WRITE(EVCUT,1050) IEVCUT
         DO 50 I = 1 , 6
           IF( EVCUT(I:I).EQ.' ' ) LEVMIN = I
-  50    CONTINUE
+   50   CONTINUE
         LEVMIN = LEVMIN + 1
       END IF
 C
@@ -216,10 +220,20 @@ C
 #ifdef NO_GETENV
       solpstop=' '
 #else
+#ifdef NAGFOR
+      call get_environment_variable('SOLPSTOP',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('SOLPSTOP',value=solpstop)
+      elseif (ierror.eq.1) then
+        solpstop=' '
+      endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
       call getenv ('SOLPSTOP', solpstop)
+#endif
 #endif
 #endif
       if(solpstop.eq.' ') then
@@ -314,7 +328,7 @@ C
         WRITE(6,1020)
      .      'ITDIMD MUST BE LARGER THAN IZ1MAX-IZ1MIN+1'
         WRITE(6,1120) ITDIMD,IZ1MAX,IZ1MIN
-1120    FORMAT('ITDIMD = ',I4,' IZ1MAX = ',I4,' IZ1MIN = ',I4)
+ 1120   FORMAT('ITDIMD = ',I4,' IZ1MAX = ',I4,' IZ1MIN = ',I4)
         IFAIL=2
         GOTO 9999
       ENDIF

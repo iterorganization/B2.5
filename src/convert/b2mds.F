@@ -44,8 +44,10 @@
       use eirmod_extrab25
 #else
       use b2mod_braeir
+#ifdef MDSPLUS
       use b2mod_eirbra
      & , smo_eir => smo
+#endif
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmfs
@@ -57,7 +59,6 @@
 #endif
       integer nxd,nyd,nsd_local,in_jxi,in_jxa,in_jsep
       real (kind=R8) :: BoRiS
-      character*12 :: textdrift(0:1)
       character*24 hlp_frm
       integer iflag
       character*256 filename
@@ -68,20 +69,14 @@ c
 c  version : 27.07.96 20:37
 c
       real (kind=R8) ::
-     3   hy1(-1:nxd,-1:nyd), energy_balance(-1:nxd,-1:nyd),
+     3   energy_balance(-1:nxd,-1:nyd),
      3   pr(-1:nxd,-1:nyd), energy_balance2(-1:nxd,-1:nyd),
-     4   energy_balance_old(-1:nxd,-1:nyd),
-     3   particle_balance(-1:nxd,-1:nyd,0:nsd_local-1), pb0,
-     4   bas_vis_piece(-1:nxd,-1:nyd,0:nsd_local-1),
-     5   cr_x(0:nxd,-1:nyd), cz_x(0:nxd,-1:nyd),
-     6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd),
-     7   za(0:nsd_local-1), pot(0:nsd_local-1), poti(0:nsd_local-1)
+     4   energy_balance_old(-1:nxd,-1:nyd)
       real (kind=R8) ::
      3   div_fna(-1:nxd,-1:nyd,0:nsd_local-1),
      3   div_fmo(-1:nxd,-1:nyd,0:nsd_local-1),
      3   div_fhm(-1:nxd,-1:nyd,0:nsd_local-1),
      3   div_fhp(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fhe(-1:nxd,-1:nyd), div_fhi(-1:nxd,-1:nyd),
      3   div_fhet(-1:nxd,-1:nyd), div_fhit(-1:nxd,-1:nyd),
      4   div_fch(-1:nxd,-1:nyd), div_fhj(-1:nxd,-1:nyd)
 
@@ -94,22 +89,27 @@ c
       integer il,imi,ix,iy
 #ifdef MDSPLUS
       character*512 textpl_cat, textwl_cat
+      character*12 :: textdrift(0:1)
       integer :: status
       character :: mds_signal_name*(64), tdi*(172)
       real (kind=R8), allocatable ::
      *   vesl(:,:)
-      integer i, icnt
+      integer i, icnt, nsw
       integer itmp(-1:nxd,-1:nyd)
       real (kind=R8) ::
-     *   rdummy, rtmp, temp(-1:nxd,-1:nyd),
+     *   rdummy, rtmp, temp(-1:nxd,-1:nyd), hy1(-1:nxd,-1:nyd),
      5   tmp(-1:nxd,-1:nyd,0:nsd_local-1),
+     5   cr_x(0:nxd,-1:nyd), cz_x(0:nxd,-1:nyd),
+     6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd),
      7   flux_x(0:nxd,-1:nyd,0:nsd_local-1),
      7   flux_y(-1:nxd,0:nyd,0:nsd_local-1),
      8   dsrad(-1:nxd,-1:nyd),dspol(-1:nxd,-1:nyd),dspar(-1:nxd,-1:nyd),
-     9   fhesep,fhisep,fnesep,fnisep
+     9   fhesep,fhisep,fnesep,fnisep,
+     *   pot(0:nsd_local-1),poti(0:nsd_local-1),
+     7   za(0:nsd_local-1)
 #endif
 c
-      integer nsw, ismain, refl_model, sput_phys_model, use_eirene,
+      integer ismain, refl_model, sput_phys_model, use_eirene,
      . sput_phys_col, boundary_namelist, neutrals_namelist
       data ismain/1/, refl_model/1/, sput_phys_col/3/, use_eirene/0/,
      3     sput_phys_model/1/, boundary_namelist/0/,
@@ -120,6 +120,10 @@ c
 
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -195,14 +199,25 @@ c
 #ifdef NO_GETENV
       solpstop=' '
 #else
+#ifdef NAGFOR
+      call get_environment_variable('SOLPSTOP',
+     .   status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('SOLPSTOP',value=solpstop)
+      elseif (ierror.eq.1) then
+        solpstop=' '
+      endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
       call getenv ('SOLPSTOP', solpstop)
 #endif
 #endif
+#endif
       cr=0.25_R8*sum(crx,3)
       cz=0.25_R8*sum(cry,3)
+#ifdef MDSPLUS
       cr_x=0.0_R8
       cz_x=0.0_R8
       cr_y=0.0_R8
@@ -219,6 +234,7 @@ c
           cz_y(ix,iy)=(cry(ix,iy,0)+cry(ix,iy,1))/2.0_R8
         enddo
       enddo
+#endif
 c
       ns=max(nsd_local,1)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',ns,'i3)'
@@ -257,8 +273,6 @@ c
       text0123(1)='1'
       text0123(2)='2'
       text0123(3)='3'
-      textdrift(0)='Diamagnetic'
-      textdrift(1)='Radial'
 
 cxpb  This call is moved up from 'f31' so that we use the original cell-faced
 cxpb  quantities before their mapping to cell centers
@@ -364,12 +378,6 @@ c calculate divergences of the various fluxes
             div_fhit(ix,iy)=
      1       +fhit(rightix(ix,iy),rightiy(ix,iy),0)-fhit(ix,iy,0)
      2       +fhit(topix(ix,iy),topiy(ix,iy),1)-fhit(ix,iy,1)
-            div_fhe(ix,iy)=
-     1       +fhe(rightix(ix,iy),rightiy(ix,iy),0)-fhe(ix,iy,0)
-     2       +fhe(topix(ix,iy),topiy(ix,iy),1)-fhe(ix,iy,1)
-            div_fhi(ix,iy)=
-     1       +fhi(rightix(ix,iy),rightiy(ix,iy),0)-fhi(ix,iy,0)
-     2       +fhi(topix(ix,iy),topiy(ix,iy),1)-fhi(ix,iy,1)
             div_fch(ix,iy)=
      1       +fch(rightix(ix,iy),rightiy(ix,iy),0)-fch(ix,iy,0)
      2       +fch(topix(ix,iy),topiy(ix,iy),1)-fch(ix,iy,1)
@@ -379,8 +387,6 @@ c calculate divergences of the various fluxes
           else
             div_fhet(ix,iy)=0.0_R8
             div_fhit(ix,iy)=0.0_R8
-            div_fhe(ix,iy)=0.0_R8
-            div_fhi(ix,iy)=0.0_R8
             div_fch(ix,iy)=0.0_R8
             div_fhj(ix,iy)=0.0_R8
           endif
@@ -486,39 +492,6 @@ c charge exchange for H+/D+/T+
           endif
         enddo
       enddo
-c particle balance
-      do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *       bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-              pb0=-div_fna(ix,iy,is)-rsana(ix,iy,is)-rrana(ix,iy,is)+
-     1         b2stbc_sna(ix,iy,is)+b2stbr_sna(ix,iy,is)+
-     2         b2stbm_sna(ix,iy,is)+ext_sna(ix,iy,is)
-              if (is_neutral(is)) then
-                pb0=pb0+rcxna(ix,iy,is)
-              else
-                pb0=pb0-rcxna(ix,iy,is)
-              endif
-              if(is.gt.0) then
-                pb0=pb0+rsana(ix,iy,is-1)
-                if(is_neutral(is-1)) then
-                  pb0=pb0+rcxna(ix,iy,is-1)
-                endif
-              endif
-              if(is.lt.ns-1) then
-                pb0=pb0+rrana(ix,iy,is+1)
-                if(.not.is_neutral(is+1)) then
-                  pb0=pb0+rcxna(ix,iy,is+1)
-                endif
-              endif
-              particle_balance(ix,iy,is)=pb0
-            else
-              particle_balance(ix,iy,is)=0.0_R8
-            endif
-          enddo
-        enddo
-      enddo
 c alternative (failed) calculation of energy balance (elegant, but flawed)
       do iy=-1,ny
         do ix=-1,nx
@@ -530,23 +503,6 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
      2       rpt(ix,iy,is)*ev*div_fna(ix,iy,is)+
      3       div_fhm(ix,iy,is)*(1.0_R8-BoRiS)-
      4       rqahe(ix,iy,is)
-          enddo
-        enddo
-      enddo
-      do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &       bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &       region(ix,iy,0).ne.0) then
-              bas_vis_piece(ix,iy,is)=ua(ix,iy,is)*
-     2         (cvsa_cl(rightix(ix,iy),rightiy(ix,iy),0,is)*
-     4           (ua(rightix(ix,iy),rightiy(ix,iy),is)-ua(ix,iy,is))-
-     5          cvsa_cl(ix,iy,0,is)*
-     6           (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is)))
-            else
-              bas_vis_piece(ix,iy,is)=0.0_R8
-            endif
           enddo
         enddo
       enddo
@@ -635,7 +591,6 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
         textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
       endif
-      nsw=ns+natmi+nmoli+nioni
 
 !XXX
       write(*,*) 'b2mds ...'
@@ -646,6 +601,10 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'jxi, jxa, jsep : ', jxi, jxa, jsep
 
 #ifdef MDSPLUS
+      textdrift(0)='Diamagnetic'
+      textdrift(1)='Radial'
+      nsw=ns+natmi+nmoli+nioni
+
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NX',nx+2)
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NY',ny+2)
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NS',ns)

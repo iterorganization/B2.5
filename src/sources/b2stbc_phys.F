@@ -146,7 +146,7 @@
      &  ,pzaverage, pzsum, volsum                                       !srv 24.03.99 18.01.02
      &  ,ua2sum, ua2average(0:ns-1)                                     !srv 07.04.00 15.02.02
      &  ,uasum, uaaverage(0:ns-1)                                       !srv 15.02.02
-     &  ,nesum, neaverage, tisum, tiaverage, tesum, teaverage           !srv 15.12.00 25.01.02
+     &  ,nesum, tisum, tiaverage, tesum                                 !srv 15.12.00 25.01.02
      &  ,nasum, naaverage(0:ns-1), bbsum, bbaverage                     !srv 22.01.02 18.10.04
       real (kind=R8) :: bzhzsum, bzhzaverage                            !lk 20.11.07
       real (kind=R8) ::
@@ -174,7 +174,7 @@
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
       integer isfeedback, fix_fch_in_fhe_sheath
       integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
-      integer, save :: use_eirene, no_current 
+      integer, save :: use_eirene, no_current
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
      1 bc_type13_norm, bc_type13_fac, na_min, na_new
       character*26 boundary_location(nbcd)
@@ -202,7 +202,7 @@
      &  abs(am(is)-am(js)).lt.amtol
 *   ..initialisation
       data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
-     1 bc_type16_ref/1/, bc_type20_ref/1/, 
+     1 bc_type16_ref/1/, bc_type20_ref/1/,
      2 na_min/1.0e4_R8/, na_new/1.0e14_R8/,
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
@@ -400,9 +400,7 @@
        endif                                                      !srv 26.11.02
       enddo                                                       !srv 15.12.00
       bbaverage=bbsum/volsum                                      !srv 18.10.04
-      neaverage=nesum/volsum                                      !srv 15.12.00 25.01.02
       tiaverage=tisum/volsum                                      !srv 15.12.00
-      teaverage=tesum/volsum                                      !srv 15.12.00
       bzhzaverage=bzhzsum/volsum                                  !lk 20.11.07
 *   ..find the average ua**2, na for inner flux surface           !srv 22.01.02 {
       do is = 0, ns-1
@@ -1216,7 +1214,7 @@ cghgh
      .             sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) + t0/
      &               na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
                 end if
-                t1 = 
+                t1 =
      .           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      .                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
                 if (t1.le.0.0_R8) then
@@ -1855,7 +1853,7 @@ c dpc
             call xertst(is.eq.ismain,
      1         'BCCON = 16 is applied for main ion only for ASTRA') !srv 29.09.15
 #endif
-            write(*,'(a,a,i3)') 
+            write(*,'(a,a,i3)')
      .       'given total particle flux with constant',
      &       ' density for ion is =', is
 !           write all boundaries with this type of boundary condition
@@ -1935,8 +1933,9 @@ c dpc
 !     &           max(abs(totflux),CONPAR(IS,IB,1))
 !              NAS = NAS *
 !     &         (1.0_R8-max(-bc_ref,min(bc_ref,T0)))
-              write(*,"(' BCCON=16: NAS=',es14.7,' totflux=',es14.7,
-     *         ' SCONPAR=',es14.7,' IS=',i3)")NAS,totflux,SCONPAR(IS),IS
+              write(*,'(a,es14.7,a,es14.7,a,es14.7,a,i3)')
+     &         ' BCCON=16: NAS=',NAS,' totflux=',totflux,
+     &         ' SCONPAR=',SCONPAR(IS),' IS=',IS
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -2154,10 +2153,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
               NAS = NAS *
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           max(abs(totfluxn+totfluxi),abs(SCONPAR(IS))))
-              write(*,"(' BCCON=19: NAS=',es14.7,' totfluxn=',es14.7,
-     &         ' totfluxi=',es14.7,' SCONPAR=',es14.7,
-     &         ' totfluxn+totfluxi=',es14.7)")
-     *         NAS, totfluxn, totfluxi, SCONPAR(IS), totfluxn+totfluxi
+              write(*,'(a,es14.7,a,es14.7,a,es14.7,a,es14.7,a,es14.7)')
+     *         ' BCCON=19: NAS=',NAS,' totfluxn=',totfluxn,
+     &         ' totfluxi=',totfluxi,' SCONPAR=',SCONPAR(IS),
+     &         ' totfluxn+totfluxi=',totfluxn+totfluxi
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -2379,7 +2378,7 @@ cxpb Careful here because of BC number clash
           if(ncall.eq.0) then
             call xertst(is.eq.ismain,
      1       'BCCON = 22 is applied for main ion only ')
-            write(*,'(a,a,i3)') 
+            write(*,'(a,a,i3)')
      &       'given total particle flux with constant',
      &       ' density for ion is =', is
 !           write all boundaries with this type of boundary condition
@@ -2470,9 +2469,9 @@ cxpb Careful here because of BC number clash
 !     &           max(abs(totflux),CONPAR(IS,IB,1))
 !              NAS = NA((BCEND(IB)+BCSTART(IB))/2,BCPOS(IB),is) *
 !     &         (1.0_R8-max(-bc_ref,min(bc_ref,T0)))
-              write(*,"(' BCCON=22: NAS=',es14.7,' totflux=',es14.7,
-     *                       '  SCONPAR=',es14.7,' IS=',i3)")
-     .         NAS,totflux,SCONPAR(IS),IS
+              write(*,'(a,es14.7,a,es14.7,a,es14.7,a,i3)')
+     .         ' BCCON=22: NAS=',NAS,' totflux=',totflux,
+     &         ' SCONPAR=',SCONPAR(IS),' IS=',IS
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -2513,7 +2512,7 @@ cxpb Careful here because of BC number clash
           if(ncall.eq.0) then
             call xertst(is.eq.ismain,
      1       'BCCON = 23 is applied for main ion only ')
-            write(*,'(a,a,i3)') 
+            write(*,'(a,a,i3)')
      .       'given total particle flux with constant',
      &       ' density for main ion is =', ismain
 !          write all boundaries with this type of boundary condition
@@ -2628,10 +2627,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
               NAS = NAS*
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))
-              write(*,"(' BCCON=23: NAS=',es14.7,' totfluxn=',es14.7,
-     &         ' totfluxi=',es14.7,' SCONPAR=',es14.7,
-     &         ' totfluxn+totfluxi=',es14.7)")
-     *         NAS, totfluxn, totfluxi, SCONPAR(IS), totfluxn+totfluxi
+              write(*,'(5(a,es14.7))')
+     *          ' BCCON=23: NAS=',NAS,' totfluxn=',totfluxn,
+     &          ' totfluxi=',totfluxi,' SCONPAR=', SCONPAR(IS),
+     &          ' totfluxn+totfluxi=',totfluxn+totfluxi
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -2972,9 +2971,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
               NAS = NAS*
      &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
      &           max(abs(totflux),abs(SCONPAR(IS))))
-              write(*,"(' BCCON=26: NAS=',es14.7,' totflux=',es14.7,
-     *                  ' SCONPAR=',es14.7,' IS=',i3)")
-     .                NAS,totflux,SCONPAR(IS),IS
+              write(*,'(a,es14.7,a,es14.7,a,es14.7,a,i3)')
+     .         ' BCCON=26: NAS=',NAS,' totflux=',totflux,
+     .         ' SCONPAR=',SCONPAR(IS),' IS=',IS
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -3144,10 +3143,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
               NAS = NAS*
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))
-              write(*,"(' BCCON=27: NAS=',es14.7,' totfluxn=',es14.7,
-     &         ' totfluxi=',es14.7,' SCONPAR=',es14.7,
-     &         ' totfluxn+totfluxi=',es14.7)")
-     *         NAS, totfluxn, totfluxi, SCONPAR(IS), totfluxn+totfluxi
+              write(*,'(5(a,es14.7))')
+     *         ' BCCON=27: NAS=',NAS,' totfluxn=',totfluxn,
+     &         ' totfluxi=',totfluxi,' SCONPAR=',SCONPAR(IS),
+     &         ' totfluxn+totfluxi=',totfluxn+totfluxi
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -5434,7 +5433,7 @@ cghgh
             endif                                                       !srv 01.06.06 }
             end do
           ELSE
-            CALL XERRAB 
+            CALL XERRAB
      .       ('B2STBC -- BCENE=15, not available for S and N')
           END IF
 
@@ -5535,7 +5534,7 @@ cghgh
             endif                                                       !srv 01.06.06 }
             end do
           ELSE
-            CALL XERRAB 
+            CALL XERRAB
      .       ('B2STBC -- BCENE=15, not available for S and N')
           END IF
         else
@@ -5689,12 +5688,13 @@ cghgh
               TES = TES *
      &         (1.0_R8-bc_ref_te*(totflux-SENEPAR)/                     !srv 11.04.13
      &           max(abs(totflux),SENEPAR))
-              write(*,"(' BCENE=16: TES=',es14.7,' totflux=',es14.7,
-     *         ' SENEPAR=',es14.7)") TES/ev, totflux, SENEPAR
+              write(*,'(3(a,es14.7))')
+     &         ' BCENE=16: TES=',TES/ev,' totflux=',totflux,
+     &         ' SENEPAR=',SENEPAR
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
-                    she0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)= 
+                    she0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
      .               VBIG*NE00*TES*
      .               SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                     she0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1)=
@@ -6665,7 +6665,7 @@ cxpb code segment analog to b2tfhi
             w1 = 0.0_R8
             if (BoRiS.eq.1.0_R8) then
               do is = 0, ns-1
-                t2 = dim ( coni0, 
+                t2 = dim ( coni0,
      .           abs(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
      .                  fna(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is))*
      .           max(0.0_R8,
@@ -6683,7 +6683,7 @@ cxpb code segment analog to b2tfhi
      .             ti(bc_list_x(ix,ib),bc_list_y(ix,ib))) - t2 *
      .            (ti(bc_list_x(ix,ib),bc_list_y(ix,ib)) -
      .             ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))     
+     .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
               end do
             end if
             if (no_hybr_i.eq.0) then
@@ -6814,7 +6814,7 @@ cxpb code segment analog to b2tfhi
             w1 = 0.0_R8
             if (BoRiS.eq.1.0_R8) then
               do is = 0, ns-1
-                t2 = dim ( coni0, 
+                t2 = dim ( coni0,
      .           abs(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
      .            fna(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,is))*
@@ -7652,8 +7652,9 @@ cxpb          endif
              TIS = TIS *
      &         (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/                     !srv 11.04.13
      &           max(abs(totflux),SENIPAR))
-             write(*,"(' BCENI=16: TIS=',es14.7,' totflux=',es14.7,
-     *         ' SENIPAR=',es14.7)") TIS/ev, totflux, SENIPAR
+             write(*,'(3(a,es14.7))')
+     &         ' BCENI=16: TIS=',TIS/ev,' totflux=',totflux,
+     &         ' SENIPAR=',SENIPAR
              DO IBW=IB,NBC
                IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                  DO IX = 1, BC_LIST_SIZE(IBW)
@@ -7944,7 +7945,7 @@ cxpb Careful here because of BC number clash
             do is = 0, ns-1
               if(.not.is_neutral(is)) then                           !srv 19.03.09 {
                 t0 = na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
-                csb = 
+                csb =
      .           sqrt((rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
      &                  te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
      &                  ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
@@ -8073,7 +8074,7 @@ cxpb Careful here because of BC number clash
               call xertst(use_astra.ne.0.or.
      .         ENIPAR(IB,1).eq.ENIPAR(IBW,1),
      1         'BCENI = 23, inconsistent ENIPAR(,1) values!')
-              if (.not.(bccon(ismain,ib).eq.21 .or. 
+              if (.not.(bccon(ismain,ib).eq.21 .or.
      .                  bccon(ismain,ib).eq.22 .or.
      .                  bccon(ismain,ib).eq.23)) then
                 write(0,'(a,i3,a,i2,a)') 'Should use BCCON(',ismain,
@@ -8200,7 +8201,7 @@ cxpb Careful here because of BC number clash
      .                                      BC_LIST_Y(1,IBW)),
      .         'BCENI = 24 only applicable to core boundaries !')
               call xertst(enipar(ibw,1).ne.0,'faulty parameter enipar1')
-              if (.not.(bccon(ismain,ib).eq.21 .or. 
+              if (.not.(bccon(ismain,ib).eq.21 .or.
      .                  bccon(ismain,ib).eq.22 .or.
      .                  bccon(ismain,ib).eq.23)) then
                   write(0,'(a,i3,a,i2,a)') 'Should use BCCON(',ismain,
@@ -8213,9 +8214,9 @@ cxpb Careful here because of BC number clash
      &             'ion density boundary condition'  !srv 21.09.12
               end if
               if (ns.gt.1) then
-               write(0,*) 
+               write(0,*)
      &       'Use of BCENI=24 only meant for runs without impurities!'
-               write(6,*) 
+               write(6,*)
      &       'Use of BCENI=24 only meant for runs without impurities!'
               endif
             endif
@@ -8317,8 +8318,9 @@ cxpb Careful here because of BC number clash
             TIS=TIS*
      &          (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/
      &            max(abs(totflux),SENIPAR))
-            write(*,"(' BCENI=24: TIS=',es14.7,' totflux=',es14.7,
-     *        ' SENIPAR=',es14.7)") TIS/ev, totflux, SENIPAR
+            write(*,'(3(a,es14.7))')
+     &        ' BCENI=24: TIS=',TIS/ev,' totflux=',totflux,
+     &        ' SENIPAR=',SENIPAR
             DO IBW=IB,NBC
               IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
@@ -8347,13 +8349,13 @@ cxpb Careful here because of BC number clash
 
 32500   CONTINUE
         if(ncall.eq.0) then
-          write(*,'(a,1p,g14.7,a,g14.7,a,a,a)') 
+          write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'fixed ion temperature (modified by nearby ring) ',
      1     ENIPAR(IB,1),' with ',ENIPAR(IB,2),' on ',
      1     BCCHAR(IB),boundary_location(ib)
-          call xertst(enipar(ib,1).ne.0.0_R8, 
+          call xertst(enipar(ib,1).ne.0.0_R8,
      1     'faulty parameter enipar1')
-          call xertst(enipar(ib,2).gt.0.0_R8, 
+          call xertst(enipar(ib,2).gt.0.0_R8,
      1     'faulty parameter enipar2')
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
@@ -8644,8 +8646,9 @@ cxpb Careful here because of BC number clash
             TIS=TIS*
      &          (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/
      &            max(abs(totflux),SENIPAR))
-            write(*,"(' BCENI=27: TIS=',es14.7,' totflux=',es14.7,
-     *        ' SENIPAR=',es14.7)") TIS/ev, totflux, SENIPAR
+            write(*,'(3(a,es14.7))')
+     &        ' BCENI=27: TIS=',TIS/ev,' totflux=',totflux,
+     &        ' SENIPAR=',SENIPAR
             DO IBW=IB,NBC
               IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
@@ -8897,7 +8900,7 @@ c              fchi=0.0_R8
 *     ..set sheath potential drop for Eirene
             if (eirene_sheath_pot.eq.1) then
               ! B2 indexing for delta_sheathxb
-              delta_sheathxb(BC_LIST_X(IY,IB)+1,BC_LIST_Y(IY,IB)+1) = 
+              delta_sheathxb(BC_LIST_X(IY,IB)+1,BC_LIST_Y(IY,IB)+1) =
      .          qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
      .          bcint(te,nx,ny,iy,ib)
             endif
@@ -8972,7 +8975,7 @@ c              fchi=0.0_R8
 *     ..set sheath potential drop for Eirene
             if (eirene_sheath_pot.eq.1) then
               ! B2 indexing for delta_sheathxb
-              delta_sheathxb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)+1) = 
+              delta_sheathxb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)+1) =
      .          qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
      .          bcint(te,nx,ny,iy,ib)
             endif
@@ -9308,7 +9311,7 @@ c              fchi=0.0_R8
 *     ..set sheath potential drop for Eirene
             if (eirene_sheath_pot.eq.1) then
               ! B2 indexing for delta_sheathxb
-              delta_sheathxb(BC_LIST_X(IY,IB)+1,BC_LIST_Y(IY,IB)+1) = 
+              delta_sheathxb(BC_LIST_X(IY,IB)+1,BC_LIST_Y(IY,IB)+1) =
      &          qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
      &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
             endif
@@ -9399,7 +9402,7 @@ c              fchi=0.0_R8
 *     ..set sheath potential drop for Eirene
             if (eirene_sheath_pot.eq.1) then
               ! B2 indexing for delta_sheathxb
-              delta_sheathxb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)+1) = 
+              delta_sheathxb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)+1) =
      &          qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
      &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
             endif
@@ -9582,13 +9585,13 @@ c************************************************************* } Solovyev 01.05.
             do ibw=ib,nbc
               if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
                 do ix=1, bc_list_size(ibw)
-                  totflux = totflux + 
+                  totflux = totflux +
      &              fch(topix(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),
      &                  topiy(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),1)
                 enddo
               endif
             enddo
-c The implementation is based on one step of Newton's method
+c The implementation is based on one step of Newton method
             cur_delta = totflux-scurpar                                 ! { Solovyev 03.05.14
             if (ncall.eq.0) then
               write (72, *) '# Newton'
@@ -9620,17 +9623,17 @@ c The implementation is based on one step of Newton's method
                 po_prev = po_curr
                 po_curr = POS
                 write (72, *) ncall, totflux, POS   ! Solovyev 29.04.14 - test output to b2fdebug
-              endif                                                             ! Solovyev 23.05.14
-            endif                                                               ! } Solovyev 03.05.14
+              endif                                                     ! Solovyev 23.05.14
+            endif                                                       ! } Solovyev 03.05.14
 c end of implementation
             write (*, *) 'ncall, totflux, POS', ncall,totflux, POS   !Solovyev 29.04.14 - test output to b2fdebug
             do ibw=ib,nbc
               if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
                 do ix=1, BC_LIST_SIZE(IBW)
-                  sch0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0) = 
-     &                  PBIG*POS*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))    !Solovyev 27.04.14
-                  sch0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1) = 
-     &                 -PBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))        !Solovyev 27.04.14
+                  sch0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0) =
+     &                 PBIG*POS*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)) !Solovyev 27.04.14
+                  sch0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1) =
+     &                -PBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))     !Solovyev 27.04.14
                 enddo
               endif
             enddo
@@ -9639,7 +9642,7 @@ c end of implementation
             call xerrab('B2STBC -- BCPOT=16, NOT AVAILABLE FOR N,W,E')
           endif
         endif
-        goto 50000                                                          !srv 29.09.15 }
+        goto 50000                                                      !srv 29.09.15 }
 
 * -- BCPOT=17 -- Nothing implemented
 

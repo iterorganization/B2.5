@@ -198,7 +198,7 @@ c additional time-modification factor
       enddo
 
       return
- 999  call xerrab ('Error while reading NUMERICS namelist!')
+  999 call xerrab ('Error while reading NUMERICS namelist!')
       end subroutine read_b2mod_numerics_namelist
 
       subroutine write_b2mod_numerics_namelist

@@ -935,7 +935,7 @@ ifeq ($(strip $(SED)),)
 else
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${DBLSED} > ${OBJDIR}/process.f
 endif
-	${DBLFC} ${DBLOPTION} ${FCOPTS} -c ${INCMOD}${OBJDIR} ${OBJDIR}/process.f
+	${DBLFC} ${DBLOPTION} ${FCOPTS} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/process.f
 endif
 	@if [ -f process.o ] ; then /bin/mv process.o ${OBJDIR}/ ; fi
 

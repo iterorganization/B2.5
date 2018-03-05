@@ -315,27 +315,27 @@ C
 *//END NTREAD//
 
 #ifndef HPUX
-1983  WRITE(*,*)
+ 1983 WRITE(*,*)
      w     "ERROR IN NTREAD: CANNOT OPEN FORT.33 ",
      .     "(NODES OF TRIANGULAR GRID)"
       call xerrab('Cannot open fort.33 file!')
-1984  WRITE(*,*)
+ 1984 WRITE(*,*)
      w     "ERROR IN NTREAD: CANNOT OPEN FORT.34 ",
      .     "(TABLE OF CELLS OF TRIANGULAR GRID)"
       call xerrab('Cannot open fort.34 file!')
-1985  WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FORT.35 ",
+ 1985 WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FORT.35 ",
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
       call xerrab('Cannot open fort.35 file!')
 #else
-1983  WRITE(*,*)
+ 1983 WRITE(*,*)
      w     "ERROR IN NTREAD: CANNOT OPEN FTN33 ",
      .     "(NODES OF TRIANGULAR GRID)"
       call xerrab('Cannot open ftn33 file!')
-1984  WRITE(*,*)
+ 1984 WRITE(*,*)
      w     "ERROR IN NTREAD: CANNOT OPEN FTN34 ",
      .     "(TABLE OF CELLS OF TRIANGULAR GRID)"
       call xerrab('Cannot open ftn34 file!')
-1985  WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FTN35 ",
+ 1985 WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FTN35 ",
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
       call xerrab('Cannot open ftn35 file!')
 #endif

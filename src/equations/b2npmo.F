@@ -83,14 +83,14 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, diagno, ireg, nsmin, nsmax, k
+      integer ncall, n2, ix, iy, is, diagno, ireg, nsmin, nsmax
       integer, save :: iout = 0, b2sifr_ver = 1, iout_b2wdat = 0       !srv 04.07.08 26.10.08
       integer, save :: icase = 0                                       !srv 13.01.17
       integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       integer, save :: vlct_diagno = 1
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
-      character chns*3, chk*1                                          !srv 04.07.08
+      character chns*3                                                 !srv 04.07.08
       real (kind=R8) ::
      *  rxg, t0, t1, t2, czetap, czetae                                !srv 13.01.17
       real (kind=R8) ::
@@ -223,8 +223,8 @@
       call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
       do iy = -1, ny
         do ix = -1, nx
-	  ce1(ix,iy)=fce1(zeff(ix,iy))
-	  ce2(ix,iy)=fce2(zeff(ix,iy))
+          ce1(ix,iy)=fce1(zeff(ix,iy))
+          ce2(ix,iy)=fce2(zeff(ix,iy))
           cimp1(ix,iy)=fce1(zmff(ix,iy))
           cimp2(ix,iy)=fce2(zmff(ix,iy))
         enddo
@@ -390,14 +390,14 @@ cdjm Jan2017 update momentum source components for balance
          wrks = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,is)+      !srv 05.07.17 {
      &        smbfria(:,:,2)*na(:,:,is)*mp*am(is)+
      &        smbfria(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is))
-	 call my_out(70,nx,ny,wrks,'b2npmo_smofria'//chns)
+         call my_out(70,nx,ny,wrks,'b2npmo_smofria'//chns)
 
          wrks = vol*hz*(smbfrea(:,:,0)+smbfrea(:,:,1)*ua(:,:,is))
-	 call my_out(70,nx,ny,wrks,'b2npmo_smofrea'//chns)
+         call my_out(70,nx,ny,wrks,'b2npmo_smofrea'//chns)
          wrks = vol*hz*smbtfia(:,:,0)
-	 call my_out(70,nx,ny,wrks,'b2npmo_smotfia'//chns)
+         call my_out(70,nx,ny,wrks,'b2npmo_smotfia'//chns)
          wrks = vol*hz*smbtfea(:,:,0)
-	 call my_out(70,nx,ny,wrks,'b2npmo_smotfea'//chns)
+         call my_out(70,nx,ny,wrks,'b2npmo_smotfea'//chns)
          call my_out(70,nx,ny,ue,'b2npmo_ue')                          !srv 05.07.17 }
          wrks=smban(:,:,0)+smban(:,:,1)*ua(:,:,is)+
      &       smban(:,:,2)*na(:,:,is)*mp*am(is)+

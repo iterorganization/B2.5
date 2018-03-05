@@ -95,12 +95,11 @@
      *  nsmin, nsmax, no_current
 *   ..procedures
       intrinsic abs, min, mod
-      real (kind=R8) ::
-     *  smin, smax, b2sasum
+      real (kind=R8) :: smin, smax
       integer len_of_digits
       external len_of_digits
       external subini, subend, xertst, ipgetr, smin, smax,
-     &  b2scopy, b2saxpy, b2sasum, ipgeti
+     &  b2scopy, b2saxpy, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
      &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhe, b2tfhi,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2srsm,
@@ -761,7 +760,6 @@ cxpb
                 ixmax = -2                                               !xpb
                 iymax = -2                                               !xpb
                 do iy = -1, ny
-cxpb       t0 = t0+b2sasum(nx+2,wrk0(-1,iy),1)
 cxpb  Do not count residuals from dead or unsolved cells
                   do ix = -1, nx
                     ireg = region(ix,iy,0)
@@ -998,6 +996,7 @@ c        write(*,*) 'Called b2stbr_neutr_scl'
       subroutine print_wrong_flows(label)
       implicit none
       character (len=*) :: label
+      integer iy
       logical inverted_ua
 
       inverted_ua = .true.

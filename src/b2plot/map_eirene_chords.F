@@ -8,10 +8,12 @@ c
       use b2mod_b2plot_values
 #ifdef B25_EIRENE
       use eirmod_ctrig
+#endif
       implicit none
 
       character*(*) filename
 
+#ifdef B25_EIRENE
       real (kind=R8) :: wrkarr(ntrii)
       character*80 dataname,ccol
       logical open_file,found

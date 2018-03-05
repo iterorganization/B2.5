@@ -50,7 +50,9 @@
       character chns*3, chcx*3, chk*1                                   !srv 11.09.09
       real (kind=R8) ::
      *  rg0, t0, t1, t2, du0, du1
+#ifdef ASTRA
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
+#endif
       save ncall, styl0, rg0
 *   ..procedures
       intrinsic abs

@@ -13,17 +13,15 @@ c=======================================================================
       integer lun,nindsrf,indsrf(nindsrf)
 
       integer nn
-      integer i,j,k,l,is,iy,jj
-      real (kind=R8) :: u,area
+      integer i,j,k
       real (kind=R8), allocatable :: hlp_flx(:),hlp_enr(:)
-      character fmt_peak*80,tab,hlp_fn*16
+      character hlp_fn*16
       character*8, allocatable :: hlp_hd(:)
 c=======================================================================
       print *,'Starting b2pntrdt. nindsrf=', nindsrf      !###
       if(nindsrf.le.0) return
       print *,'   indsrf=',(indsrf(i),i=1,nindsrf)        !###
 
-      tab=char(9)
       nn=natmi+nmoli
       allocate(hlp_flx(nn),hlp_enr(nn))
       allocate(hlp_hd(nn))
@@ -31,7 +29,7 @@ c=======================================================================
       do j=1,nindsrf !{
         k=j
         if(k.lt.0) k=nlim-k
-        write(hlp_fn,'(4hndt_,i4.4,4h.dat)') k
+        write(hlp_fn,'(a4,i4.4,a4)') 'ndt_',k,'.dat'
         print *,'filename: ',hlp_fn                     !###
         open(lun,file=hlp_fn)
         close(lun)
@@ -42,9 +40,5 @@ c=======================================================================
       deallocate(hlp_hd)
       return
 !####
-c=======================================================================
-  710 format('(2h# ,a,1h',a,',',i3,'(a,i2.2,1h',a,'))')
-  720 format('(1x,i3,1p,',i3,'(e12.4,1h',a1,'))')
-  740 format('# ',2a,' : ',a)
 c=======================================================================
       end

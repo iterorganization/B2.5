@@ -18,19 +18,20 @@ c*** redirected to the log file for the first call and there is no
 c*** further output
 c----------------------------------------------------------------------
       implicit none
-      integer nput, nx, ny, ns, nxtl, nxtr, ismain, lun
-      real (kind=R8) :: dtim, tim, BoRiS
-      integer ix, iy, is, istra, iline
+      integer nput, nx, ny, ns, nxtl, nxtr, ismain
+      real (kind=R8) :: dtim, BoRiS
+      integer iline
       integer, save :: use_recyceir
-      real (kind=R8) :: recyctmp
       logical, save :: tracing_initialised
       data tracing_initialised /.false./
       data use_recyceir /1/
+#ifdef B25_EIRENE
+      integer ix, iy, is, istra
+      real (kind=R8) :: recyctmp
 c----------------------------------------------------------------------
 c
 c*** Correct the neutral fluxes according to recyc values
 c
-#ifdef B25_EIRENE
       write(*,'(a,6i5)') 'nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi=',
      1 nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi
 csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)

@@ -40,7 +40,6 @@
       real (kind=R8) :: sig_stoch, delta_stoch, width
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
-      intrinsic max, abs
       real (kind=R8) ::
      *   hy1                                                            !srv 07.07.14
       external subini, subend, ipgetr, ipgeti, xertst, xerrab

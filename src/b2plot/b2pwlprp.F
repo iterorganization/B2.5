@@ -35,11 +35,10 @@ c======================================================================
 #include <DIMENSIONS.F>
       real (kind=R8) ::
      *   d,x
-      integer i,j,k,l,n,i1,i2,ii,il,is,ix,iy,jj,kb,ke,kk,kn,ks,
-     ,        kkb,kke,kks,n_atg,n_targ,
-     ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),l_atg(ntrgsx),
+      integer i,j,k,l,n,i1,i2,ii,il,is,ix,iy,jj,kb,ke,kk,kn,kkb,kke,
+     ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),
      ,        m_hlp(ntrgsx),k1,k2,flagmin,cont,ksel,flagmin1
-      logical lim_cnf,checked
+      logical lim_cnf
 c
       real (kind=R8) :: width,dist,distmin,xx1,xx2,yy1,yy2,temp,
      ,                  distmin1
@@ -731,7 +730,7 @@ c*** Store original plot zones to be used for substituting proper elements insid
         allocate(lwldlis_old(size(lwldlis,1)))
         lwldlis_old(:)=lwldlis(:,il)
         allocate(lis_ind(nwldlis_old))
-ccc*** Order elements of original plot zone in CCW direction	  
+ccc*** Order elements of original plot zone in CCW direction
         do i=1,nwldlis_old
           k1=abs(lwldlis_old(i))
           xx1=pp1(1,k1)
@@ -749,7 +748,7 @@ ccc*** Order elements of original plot zone in CCW direction
             end if !}
           end do
           lis_ind(i)=flagmin
-        end do	  
+        end do
         !Sort
         do i1=1,nwldlis_old-1
           cont=minloc(lis_ind(i1:nwldlis_old),1)
@@ -761,13 +760,13 @@ ccc*** Order elements of original plot zone in CCW direction
           lwldlis_old(i1)=temp
         end do
         deallocate(lis_ind)
-	  
+
 ccc*** Check if a plot zone has starting and ending element which is inside a target     
         if (.not. istarget(il)) then 
           !{ check if first and last element of the list are not in lwldlis(1), if so they are inside targets
           k1=abs(lwldlis_old(1));
           k2=abs(lwldlis_old(nwldlis_old))
-          flagmin=0			
+          flagmin=0
           do i1=1,nwldlis(1)
             ksel=abs(lwldlis(i1,1))
             if ((ksel .eq. k1) .or. (ksel .eq. k2)) then
@@ -778,9 +777,9 @@ ccc*** Check if a plot zone has starting and ending element which is inside a ta
             istarget(il)=.true.
           end if
         end if
-	  	    
+
 ccc*** Substitute b2 cells only when overlapping original plot zone target elements
-	if (istarget(il)) then !{ inside target
+        if (istarget(il)) then !{ inside target
           k1=lwldlis_old(1)
           k2=lwldlis_old(nwldlis_old)
           distmin=1.0e5

@@ -47,8 +47,6 @@ c  Tp = Target surface temperature (K).
       real (kind=R8) :: u(7*ndepth_nml), u1(7*ndepth_nml)
       real (kind=R8) :: x(ndepth)
       real (kind=R8) :: x0, xn, t0, tn, dx(ndepth-1)
-      real (kind=R8) :: Cp, Kappa, mass_density
-      external Cp, Kappa, mass_density
 
 #ifdef NO_NAG
       integer ier, iflg, iopt, neq, nmax, nstep
@@ -810,7 +808,7 @@ c....................................................................
       end function qrad
 
 c....................................................................
-c   Ref: 1) C. Garc'ia Rosales, Erosion processes in plasma-wall
+c   Ref: 1) C. Garcia Rosales, Erosion processes in plasma-wall
 c           interactions, J. Nucl. Mater. 211 (1994) Pg.202-214.
 c        2) R.A. Langley, Evaporation, Data Compendium for Plasma
 c           Surface Interactions, Special Issue, NUCLEAR FUSION,

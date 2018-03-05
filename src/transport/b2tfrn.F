@@ -6,7 +6,7 @@
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,   
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,         !srv 20.09.06
      &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
-     &  uadia, fna_eir, fne_eir, fhe_eir, fhi_eir)
+     &  veecrb, uadia, fna_eir, fne_eir, fhe_eir, fhi_eir)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -90,7 +90,7 @@
      *   hybr, hy1
       external subini, subend, xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
-      intrinsic abs, max, min, mod, sqrt
+      intrinsic abs, max, min, sqrt
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       hybr(flo,dif) = max(dif,abs(flo/2.),sqrt(dif**2+flo**2/4.)) !!!
 *   ..initialisation

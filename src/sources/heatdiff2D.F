@@ -141,9 +141,9 @@ c       function of the position "x" at ndepth_nml grid points.
           do i=1,ndepth_nml
             Tp(iwall,i) = U(iwall,i)
           enddo
-          call subend ()
-          return
         enddo
+        call subend ()
+        return
       else
         do iwall = 1, nw
           do i = 1, ndepth_nml

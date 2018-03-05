@@ -15,14 +15,12 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
-     & , only : b2sihs_diae0to3, b2sihs_divue0to3, b2sihs_exbe0to3,
-     &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
+     & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
+     &          b2sihs_joule0to3, b2sihs_divua0to3,
      &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
      &          balance_netcdf
       use b2mod_transport_fun                                         !srv 05.07.17
       use b2mod_external                                              !srv 05.07.17
-      use b2mod_geo
-     , , only : hz                                                    !srv 05.07.17
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                      !srv 05.07.17
@@ -110,7 +108,7 @@
 *     Note 1: rf0-5 are numerical parameters, see the code. All must
 *     be non-negative and of order unity; larger values are meant to
 *     provide more stabilization. Some or all may be set to zero and
-*     removed eventually. I've had some experience to indicate that
+*     removed eventually. I have had some experience to indicate that
 *     rf0, rf2, rf4 may have a useful function; however, later changes
 *     in the code may have made all these parameters superfluous.
 

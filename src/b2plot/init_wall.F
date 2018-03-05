@@ -26,7 +26,7 @@
       integer, save :: debug_init_wall
       real (kind=R8) :: qin, qel, normal_r, normal_z, torl,
      *  xa, ya, xa2, ya2, xb, yb, xo, yo, nhalf_r, nhalf_z, nhalf,
-     *  xap, yap, xaq, yaq, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
+     *  xap, yap, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
      *  dist, distp, dint, sum,
      *  sput_frac(0:ntrack), wrk(ndepth_nml)
       character*16 hlp_frm
@@ -47,7 +47,7 @@
 
       real (kind=R8) :: mass_density
       logical overlap
-      intrinsic mod, max, min, sqrt, abs, int
+      intrinsic max, min, sqrt, abs, int
       external mass_density, overlap
       external xertst, subini, subend, ipgeti, ipgetr
 
@@ -548,13 +548,6 @@ c no mixed materials
           nhalf = sqrt(nhalf_r**2 + nhalf_z**2)
           nhalf_r = nhalf_r/nhalf
           nhalf_z = nhalf_z/nhalf
-          if (ibnd.eq.wall_begin(is)) then
-            xaq = xa + normal_r*target_depth(ibnd,ndepth_nml)
-            yaq = ya + normal_z*target_depth(ibnd,ndepth_nml)
-          else
-            xaq = targetcr(ibnd-1,min(ikink0,ndepth_nml),2)
-            yaq = targetcz(ibnd-1,min(ikink0,ndepth_nml),2)
-          endif
           xbq = xb + nhalf_r*target_depth(ibnd,ndepth_nml)
           ybq = yb + nhalf_z*target_depth(ibnd,ndepth_nml)
           if (abs(normal_r*nhalf_z-normal_z*nhalf_r).le.1.e-10_R8) then  ! parallel case
@@ -927,7 +920,7 @@ cxpb Use 1-D equilibrium profile
       integer ns, nz, ibnd
       integer i, is, itrack, icoat
       real (kind=R8) :: sum, sput_frac(0:ntrack)
-      logical surface_only, found
+      logical found
       character*24 filename
       integer, save :: ncall, hd_linlog, sput_frac_flag
       real (kind=R8), save :: hd_ratio,
@@ -940,7 +933,7 @@ cxpb Use 1-D equilibrium profile
       real (kind=R8) :: onemeps
       parameter (onemeps = 1.0_R8 - 1.0e-5_R8)
       logical open_file
-      intrinsic max, sqrt
+      intrinsic max
       external ipgeti, ipgetr, xertst, xerrab
       external mass_density, open_file
 
@@ -966,14 +959,12 @@ cxpb Use 1-D equilibrium profile
       endif
 
       if (layer_thickness(ibnd).eq.0.0_R8) then
-        surface_only = .true.     ! no idea what it should be, but otherwise an undefined variable is used later
         continue  ! nothing to do
       else if (layer_thickness(ibnd).gt.0.0_R8) then
 cxpb  The deposited layer is included in the first depth element, raising it.
 cxpb  Recall the depth is measured starting at 0 at the nominal surface and
 cxpb  increases going away from the plasma.
         target_depth(ibnd,1) = -layer_thickness(ibnd)
-        surface_only = .true.
       else if (layer_thickness(ibnd).lt.0.0_R8) then
 cxpb  Shallow erosion case, does not cross eventual coating boundary
 cxpb  The net erosion is layer_thickness but the mixed layer is
@@ -985,7 +976,6 @@ cxpb  target element
      .       coating_thickness(ibnd) .or.
      .       coating_thickness(ibnd).eq.0.0_R8)) then
           target_depth(ibnd,1) = -layer_thickness(ibnd)
-          surface_only = .true.
         else if ((layer_depth(ibnd)-layer_thickness(ibnd)).lt.
      .       coating_thickness(ibnd) .or.
      .       coating_thickness(ibnd).eq.0.0_R8) then
@@ -1044,7 +1034,6 @@ cxpb  The first target element must be at least layer_depth thick
      .         (hd_ratio - 1.0_R8)
             end do
           endif
-          surface_only = .false.
         else
 cxpb  Very deep erosion case, crosses coating boundary
 cxpb  The first target element must be at least layer_depth thick
@@ -1072,7 +1061,6 @@ cxpb  The first target element must be at least layer_depth thick
      .         (hd_ratio - 1.0_R8)
             end do
           endif
-          surface_only = .false.
           write(*,*)
      .     'Fully eroded coating. Read new bulk surface properties'
           filename='Surface_properties/'//trim(bulk_material_name(ibnd))
@@ -1588,7 +1576,6 @@ cxpb We must now test the intersection of side 41 with 5678
       use b2mod_types
       implicit none
       real (kind=R8) :: x1,y1,x2,y2,x3,y3,x4,y4
-      intrinsic abs, sqrt
 cxpb We aim to find if segment 12 intersects with segment 34
 
 cxpb Check if vector 34 lies between 31 and 32 and vector 12 is between 13 and 14

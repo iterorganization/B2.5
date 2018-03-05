@@ -32,7 +32,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, k
+      integer ncall, ix, iy, k
       integer, save :: iout = 0
       character chns*3, chark*1
       real (kind=R8) ::
@@ -58,8 +58,6 @@
        call ipgetr ('b2sian_phm0', phm0)
        call ipgeti ('b2sian_iout', iout)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       smban = 0.0_R8

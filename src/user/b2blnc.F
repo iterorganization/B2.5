@@ -686,21 +686,21 @@ c*** f     :  the associated file name
       rewind(lun)
       if(ex) read(lun,*,end=91) hlp_c
       goto 93
- 91   ex = .false.
- 93   continue
+   91 ex = .false.
+   93 continue
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=40) hlp_c,nv,j,nc
         read(lun,*) hlp_c
         go to 42
- 40     read(lun,*,err=92) hlp_c,i,j
+   40   read(lun,*,err=92) hlp_c,i,j
         lv_trc(ltrc)=lv
         if(i.lt.960727) then
           nc=16
         else
           go to 92
         end if
- 42     if(nv.ne.lv) then
+   42   if(nv.ne.lv) then
           write(*,'(a,i8,3a,i8)')
      ,     '!!! b2blnc: current version ',lv,
      ,     ' differs from that in the file ',trim(f),' : ',nv
@@ -733,9 +733,9 @@ c*** It was a major change of the file format - impossible to continue
           filedata(ltrc)=.false.
           return
         end if
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else
         nc=np_tmp
         write(lun,700) lv,nspecies,np_tmp,label
@@ -750,11 +750,11 @@ c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
      ,                                                  np_tmp*nspecies
       return
 c======================================================================
- 90   write(*,*) 'b2blnc: cannot open file ',trim(f)
+   90 write(*,*) 'b2blnc: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2blnc: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2blnc: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================
@@ -782,10 +782,10 @@ c
         iline = iline+1
         read(lun,*,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2blnc: cannot open file ',trim(f)
+  190 write(*,*) 'b2blnc: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return

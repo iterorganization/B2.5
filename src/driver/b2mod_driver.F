@@ -1772,7 +1772,7 @@ c new CDF movie option (1st frame at t=0)
 
       call subend()
       return
- 999  call xerrab
+  999 call xerrab
      . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
       end subroutine b2mndr_0
 
@@ -1786,9 +1786,11 @@ c new CDF movie option (1st frame at t=0)
 #ifdef WINDOWS
       logical(4) :: lresult
 #endif
-      integer i, is, js
+      integer i
       character*256 filename, fort31name
+#ifdef B25_EIRENE
       character*256 systemarg
+#endif
       logical ok, found
 *   ..procedures
       real(kind=R8) :: epoch_seconds

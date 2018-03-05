@@ -401,13 +401,13 @@ C
       ENDIF
 C
       IF (.NOT.LCONST) THEN
-100     READ (29,'(A80)',END=990) ZEILE
+  100   READ (29,'(A80)',END=990) ZEILE
         IF (INDEX(ZEILE,'##BEGIN DATA HERE##').EQ.0) GOTO 100
 
-1       READ (29,'(A80)',END=990) ZEILE
+    1   READ (29,'(A80)',END=990) ZEILE
         IF (INDEX(ZEILE,H123).EQ.0) GOTO 1
 C
-2       READ (29,'(A80)',END=990) ZEILE
+    2   READ (29,'(A80)',END=990) ZEILE
         IF (INDEX(ZEILE,'H.').NE.0 .and.
      .      INDEX(ZEILE,'section').NE.0) GOTO 990
         IF (INDEX(ZEILE,'Reaction ').EQ.0.or.
@@ -418,22 +418,22 @@ C  SINGLE PARAM. FIT, ISW=1,2,5,8,11
       IF (ISW.EQ.1.OR.ISW.EQ.2.OR.ISW.EQ.5.OR.ISW.EQ.8.OR.ISW.EQ.11)
      .THEN
         IF (.NOT.LCONST) THEN
-3         READ (29,'(A80)',END=990) ZEILE
+    3     READ (29,'(A80)',END=990) ZEILE
           IF (INDEX(ZEILE,CHR).EQ.0) GOTO 3
           DO 9 J=0,2
             IND=0
             DO 4 I=1,3
               IND=IND+INDEX(ZEILE((IND+1):80),CHR(2:2))
               READ (ZEILE((IND+2):80),'(E20.12)') CREAC(J*3+I,I0,IR)
-4           CONTINUE
+    4       CONTINUE
             READ (29,'(A80)',END=990) ZEILE
-9         CONTINUE
+    9     CONTINUE
           IF (INDEX(ZEILE,CHRL).NE.0) THEN
             IND=0
             DO 5 I=1,3
               IND=IND+INDEX(ZEILE((IND+1):80),CHR(2:2))
               READ (ZEILE((IND+3):80),'(E20.12)') fparm(IR,i)
-5           CONTINUE
+    5       CONTINUE
             LGEMIN=.true.
             READ (29,'(A80)',END=990) ZEILE
           ENDIF
@@ -442,7 +442,7 @@ C  SINGLE PARAM. FIT, ISW=1,2,5,8,11
             DO 7 I=4,6
               IND=IND+INDEX(ZEILE((IND+1):80),CHR(2:2))
               READ (ZEILE((IND+3):80),'(E20.12)') fparm(IR,i)
-7           CONTINUE
+    7       CONTINUE
             LGEMAX=.true.
             READ (29,'(A80)',END=990) ZEILE
           ENDIF
@@ -471,21 +471,21 @@ C
           CREAC(1,I0,IR)=CONST
           DO 6 J=2,9
             CREAC(J,I0,IR)=0.
-6         CONTINUE
+    6     CONTINUE
         ENDIF
 C
       ELSE
 C  TWO PARAM. FIT, ISW=3,4,6,7,9,10,12
 
         DO 11 J=0,2
-16        READ (29,'(A80)',END=990) ZEILE
+   16     READ (29,'(A80)',END=990) ZEILE
           IF (INDEX(ZEILE,'Index').EQ.0) GOTO 16
           READ (29,'(1X)')
           DO 17 I=1,9
             READ (29,*) IH,(CREAC(I,K,IR),K=J*3+1,J*3+3)
 cdr         write (6,*) IH,(CREAC(I,K,IR),K=J*3+1,J*3+3)
-17        CONTINUE
-11      CONTINUE
+   17     CONTINUE
+   11   CONTINUE
 C
       ENDIF
 C
@@ -494,13 +494,13 @@ C
       call subend ()
       RETURN
 C
-990   WRITE (6,*) ' NO DATA FOUND FOR REACTION ',H123,' ',REAC,
+  990 WRITE (6,*) ' NO DATA FOUND FOR REACTION ',H123,' ',REAC,
      .            ' IN DATA SET ',FILNAM
       WRITE (6,*) ' IR,MODCLF(IR) ',IR,MODCLF(IR)
       CLOSE (UNIT=29)
       call subend ()
       RETURN
-991   WRITE (6,*) ' INVALID CONSTANT IN SLREAC. CONST= ',CONST
+  991 WRITE (6,*) ' INVALID CONSTANT IN SLREAC. CONST= ',CONST
       WRITE (6,*) ' CHECK "REACTION CARDS" FOR REACTION NO. ',IR
       CALL XERRAB ('Invalid constant in reaction card')
       END SUBROUTINE SLREAC_b2plot

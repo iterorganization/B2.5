@@ -32,7 +32,7 @@
 *  1. purpose
 *
 *     B2YV reads in an unformatted b2fplasma file and visualizes
-*     b2plasma's arrays.
+*     b2plasma arrays.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -41,8 +41,8 @@
 
 *   ..local variables
       integer :: icase, ix, iy, isymm, is
-      integer :: lbc, ubc, lbr, ubr   
-      real(4), allocatable :: M(:,:)
+      integer :: lbc, ubc, lbr, ubr
+      real(kind=R4), allocatable :: M(:,:)
       character(1) :: key
       character lblgm*120
 #ifdef WINDOWS
@@ -50,7 +50,6 @@
       integer status
       character(AV_MAX_LABEL_LEN) :: axis1 = 'X', axis2 = 'Y', axis3
 #else
-      character*1 :: axis1 = 'X', axis2 = 'Y'
       character*40 :: axis3
 #endif
 
@@ -90,10 +89,10 @@
 !      call cfopen (nout(0),'b2yv.prt','new','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version number						 !srv 18.09.03
+*   ..obtain version number                                             !srv 18.09.03
       call cfverr (ninp(1), b2fgmtry_version)
       call cfverr (ninp(2), b2fparam_version)
-      call cfverr (ninp(3), b2fstati_version)			 !srv 18.09.03
+      call cfverr (ninp(3), b2fstati_version)                           !srv 18.09.03
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(1), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -158,7 +157,7 @@
      &      (adjustr(is_codes(is)),nint(zamin(is)),is=0,ns-1)
       write(hlp_frm,'(a,i3,a)') '(14x,a,',ns,'(1x,I2,1x)/)'
       write(*,hlp_frm)
-     &        ' - input a number', (is+ns,is=0,ns-1) 
+     &        ' - input a number', (is+ns,is=0,ns-1)
 
       write(*,"(a,a,(1x,I2,1x))") 'To look at electron tempetature',
      &        '       - input a number', ns+ns
@@ -172,61 +171,61 @@
       write(*,"(a,a,(1x,I2,1x))") 'To look at radial electric field',
      &        '    - input a number', ns+ns+3
 
-      read (*,*) icase 
+      read (*,*) icase
 
       if(0.le.icase .and. icase.le.ns-1 )then
-	write(title,"('Density of ',a2,i1)") 
+        write(title,"('Density of ',a2,i1)")
      &     adjustr(is_codes(icase)),nint(zamin(icase))
-	write(axis3,"('Density of ',a2,i1,', [1/m^3]')") 
+        write(axis3,"('Density of ',a2,i1,', [1/m^3]')")
      &     adjustr(is_codes(icase)),nint(zamin(icase))
         do iy = -1,ny
           do ix = -1,nx
-	    M(iy,ix) = na(ix,iy,icase)
-	  enddo
-	enddo
+            M(iy,ix) = na(ix,iy,icase)
+          enddo
+        enddo
       elseif(ns.le.icase .and. icase.le.ns-1+ns )then
-	write(title,"('Parallel velocity of ',a2,i1)") 
+        write(title,"('Parallel velocity of ',a2,i1)")
      &     adjustr(is_codes(icase-ns)),nint(zamin(icase-ns))
-	write(axis3,"('Parallel velocity of ',a2,i1,', [m/c]')") 
+        write(axis3,"('Parallel velocity of ',a2,i1,', [m/c]')")
      &     adjustr(is_codes(icase-ns)),nint(zamin(icase-ns))
         do iy = -1,ny
           do ix = -1,nx
-	    M(iy,ix) = ua(ix,iy,icase-ns)
-	  enddo
-	enddo
+            M(iy,ix) = ua(ix,iy,icase-ns)
+          enddo
+        enddo
       elseif(icase .eq. ns+ns )then
-	write(title,"('Temperature of electrons')") 
-	write(axis3,"('Temperature of electrons',', [eV]')") 
+        write(title,"('Temperature of electrons')")
+        write(axis3,"('Temperature of electrons',', [eV]')")
         do iy = -1,ny
           do ix = -1,nx
-	    M(iy,ix) = te(ix,iy)/ev
-	  enddo
-	enddo
+            M(iy,ix) = te(ix,iy)/ev
+          enddo
+        enddo
       elseif(icase .eq. ns+ns+1 )then
-	write(title,"('Temperature of ions')") 
-	write(axis3,"('Temperature of ions',', [eV]')") 
+        write(title,"('Temperature of ions')")
+        write(axis3,"('Temperature of ions',', [eV]')")
         do iy = -1,ny
           do ix = -1,nx
-	    M(iy,ix) = ti(ix,iy)/ev
-	  enddo
-	enddo
+            M(iy,ix) = ti(ix,iy)/ev
+          enddo
+        enddo
       elseif(icase .eq. ns+ns+2 )then
-	write(title,"('Electric potential')") 
+        write(title,"('Electric potential')")
         do iy = -1,ny
           do ix = -1,nx
-	    M(iy,ix) = po(ix,iy)
-	  enddo
-	enddo
+            M(iy,ix) = po(ix,iy)
+          enddo
+        enddo
       elseif(icase .eq. ns+ns+3 )then
-	write(title,"('Radial electric field')") 
+        write(title,"('Radial electric field')")
         M=0.0d0
-	do iy=0,ny
-	  do ix=-1,nx
-	    M(iy,ix)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
+        do iy=0,ny
+          do ix=-1,nx
+            M(iy,ix)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
      *                /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
      *                *2.0e0_R8
-	  enddo
-	enddo
+          enddo
+        enddo
       else
         call xerrab ('Wrong icase value')
       endif
@@ -246,7 +245,7 @@
       call favSetAxisLabel (hv, y_axis, axis2, status)
       call favSetAxisLabel (hv, z_axis, trim(axis3), status)
 
-!	call faglShow(M, status)
+!       call faglShow(M, status)
       call favShowWindow(hv,AV_TRUE, status)
 
 
@@ -257,13 +256,15 @@
       key = GETCHARQQ()
       call favEndViewer(hv,status)
 !       call faglClose(M, status)
-      call faglEndWatch(M, status)  
+      call faglEndWatch(M, status)
+#else
+      key = ' '
 #endif
 
       select case (key)
-	case ('0':'9')
-	  goto 10
-	case default
+        case ('0':'9')
+          goto 10
+        case default
       end select
 
 *   ..close files

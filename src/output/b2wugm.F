@@ -15,7 +15,7 @@
      *   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), 
+     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      &  qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      &  pbs(-1:nx,-1:ny,0:1), wbbc(-1:nx+1,-1:ny+1,0:3),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
@@ -129,12 +129,12 @@ cdpc
       write(*,*) 'Checking CRX'
       errors=0
       do iy=-1,ny
-c check right neighbours       
+c check right neighbours
         do ix=-1,nx-1
           if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-	  ixr=rightix(ix,iy)
-	  if(.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
-	    write(*,*) 'No right neighbour for ',ix,iy
+          ixr=rightix(ix,iy)
+          if(.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
+            write(*,*) 'No right neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. ix.eq.nxiso2 .and.
      &     iy.ge.nyiso1 .and. iy.le.nyiso2) then
             write(*,*) 'Testing skipped for isolated region edge at ',
@@ -145,25 +145,25 @@ c check right neighbours
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	       'Error with right neighbour of ',
-     2	       ix,iy,' (lower point), ','dist=',distval
+     1         'Error with right neighbour of ',
+     2          ix,iy,' (lower point), ','dist=',distval
             endif
             distval=
      1       dist(crx(ix,iy,3),crx(ixr,rightiy(ix,iy),2))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	       'Error with right neighbour of ',
-     2	       ix,iy,' (upper point), ','dist=',distval
+     1         'Error with right neighbour of ',
+     2          ix,iy,' (upper point), ','dist=',distval
             endif
           endif
         enddo
-c check left neighbours       
+c check left neighbours
         do ix=0,nx
           if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-	  ixl=leftix(ix,iy)
+          ixl=leftix(ix,iy)
           if(.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
-	    write(*,*) 'No left neighbour for ',ix,iy
+            write(*,*) 'No left neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. ix.eq.nxiso1 .and.
      &     iy.ge.nyiso1 .and. iy.le.nyiso2) then
             write(*,*) 'Testing skipped for isolated region edge at ',
@@ -174,88 +174,89 @@ c check left neighbours
             if(distval.ne.0) then
             if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	       'Error with left neighbour of ',ix,iy,' (lower point), ',
-     2	       'dist=',distval
+     1         'Error with left neighbour of ',ix,iy,' (lower point), ',
+     2         'dist=',distval
             endif
             distval=
      1       dist(crx(ix,iy,2),crx(ixl,leftiy(ix,iy),3))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	       'Error with left neighbour of ',ix,iy,' (upper point), ',
-     2	       'dist=',distval
+     1         'Error with left neighbour of ',ix,iy,' (upper point), ',
+     2         'dist=',distval
             endif
           endif
         enddo
       enddo
       do ix=-1,nx
-c check top neighbours       
+c check top neighbours
         do iy=-1,ny-1
           if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-	  iyt=topiy(ix,iy)
-	  if(.not.isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy))) then
-	    write(*,*) 'No top neighbour for ',ix,iy
+          iyt=topiy(ix,iy)
+          if(.not.isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy))) then
+            write(*,*) 'No top neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. iy.eq.nyiso2 .and.
      &     ix.ge.nxiso1 .and. ix.le.nxiso2) then
             write(*,*) 'Testing skipped for isolated region edge at ',
      .      ix,iy
-	  elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
-	    distval=
-     1	     dist(crx(ix,iy,2),crx(topix(ix,iy),iyt,0))
-	    if(distval.ne.0) then
+          elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
+            distval=
+     1       dist(crx(ix,iy,2),crx(topix(ix,iy),iyt,0))
+            if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	     'Error with top neighbour of ',ix,iy,' (left point), ',
-     2	     'dist=',distval
+     1       'Error with top neighbour of ',ix,iy,' (left point), ',
+     2       'dist=',distval
             endif
             distval=
      1       dist(crx(ix,iy,3),crx(topix(ix,iy),iyt,1))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	     'Error with top neighbour of ',ix,iy,' (right point), ',
-     2	     'dist=',distval
+     1       'Error with top neighbour of ',ix,iy,' (right point), ',
+     2       'dist=',distval
             endif
           endif
         enddo
-c check bottom neighbours       
+c check bottom neighbours
         do iy=0,ny
           if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-	  iyb=bottomiy(ix,iy)
-	  if(.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
-	    write(*,*) 'No bottom neighbour for ',ix,iy
+          iyb=bottomiy(ix,iy)
+          if(.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy)))
+     >     then
+            write(*,*) 'No bottom neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. iy.eq.nyiso1 .and.
      &     ix.ge.nxiso1 .and. ix.le.nxiso2) then
             write(*,*) 'Testing skipped for isolated region edge at ',
      .      ix,iy
-	  elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
-	    distval=
-     1	     dist(crx(ix,iy,0),crx(bottomix(ix,iy),iyb,2))
-	    if(distval.ne.0) then
-	      if(distval.gt.1e-6) errors=errors+1
-              write(*,*)
-     1	     'Error with bottom neighbour of ',ix,iy,' (left point), ',
-     2	     'dist=',distval
-            endif
+          elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
             distval=
-     1	     dist(crx(ix,iy,1),crx(bottomix(ix,iy),iyb,3))
+     1       dist(crx(ix,iy,0),crx(bottomix(ix,iy),iyb,2))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	     'Error with bottom neighbour of ',ix,iy,' (right point), ',
-     2	     'dist=',distval
+     1       'Error with bottom neighbour of ',ix,iy,' (left point), ',
+     2       'dist=',distval
+            endif
+            distval=
+     1       dist(crx(ix,iy,1),crx(bottomix(ix,iy),iyb,3))
+            if(distval.ne.0) then
+              if(distval.gt.1e-6) errors=errors+1
+              write(*,*)
+     1       'Error with bottom neighbour of ',ix,iy,' (right point), ',
+     2       'dist=',distval
             endif
           endif
         enddo
       enddo
       write(*,*) 'Checking CRY'
       do iy=-1,ny
-c check right neighbours       
+c check right neighbours
         do ix=-1,nx-1
           if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
           ixr=rightix(ix,iy)
-	  if(.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
-	    write(*,*) 'No right neighbour for ',ix,iy
+          if(.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
+            write(*,*) 'No right neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. ix.eq.nxiso2 .and.
      &     iy.ge.nyiso1 .and. iy.le.nyiso2) then
             write(*,*) 'Testing skipped for isolated region edge at ',
@@ -266,25 +267,25 @@ c check right neighbours
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	     'Error with right neighbour of ',ix,iy,' (lower point), ',
-     2	     'dist=',distval
+     1       'Error with right neighbour of ',ix,iy,' (lower point), ',
+     2       'dist=',distval
             endif
             distval=
      1     dist(cry(ix,iy,3),cry(ixr,rightiy(ix,iy),2))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	     'Error with right neighbour of ',ix,iy,' (upper point), ',
-     2	     'dist=',distval
+     1       'Error with right neighbour of ',ix,iy,' (upper point), ',
+     2       'dist=',distval
            endif
           endif
         enddo
-c check left neighbours       
+c check left neighbours
         do ix=0,nx
           if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
           ixl=leftix(ix,iy)
           if(.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
-	    write(*,*) 'No left neighbour for ',ix,iy
+            write(*,*) 'No left neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. ix.eq.nxiso1 .and.
      &     iy.ge.nyiso1 .and. iy.le.nyiso2) then
             write(*,*) 'Testing skipped for isolated region edge at ',
@@ -295,81 +296,82 @@ c check left neighbours
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	     'Error with left neighbour of ',ix,iy,' (lower point), ',
-     2	     'dist=',distval
+     1       'Error with left neighbour of ',ix,iy,' (lower point), ',
+     2       'dist=',distval
             endif
             distval=
      1       dist(cry(ix,iy,2),cry(ixl,leftiy(ix,iy),3))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	     'Error with left neighbour of ',ix,iy,' (upper point), ',
-     2	     'dist=',distval
+     1       'Error with left neighbour of ',ix,iy,' (upper point), ',
+     2       'dist=',distval
             endif
           endif
         enddo
       enddo
       do ix=-1,nx
-c check top neighbours       
-        do iy=-1,ny-1 
+c check top neighbours
+        do iy=-1,ny-1
           if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-	  iyt=topiy(ix,iy)
-	  if(.not.isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy))) then
-	    write(*,*) 'No top neighbour for ',ix,iy
+          iyt=topiy(ix,iy)
+          if(.not.isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy))) then
+            write(*,*) 'No top neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. iy.eq.nyiso2 .and.
      &     ix.ge.nxiso1 .and. ix.le.nxiso2) then
             write(*,*) 'Testing skipped for isolated region edge at ',
      .      ix,iy
-	  elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
-	    distval=
-     1	     dist(cry(ix,iy,2),cry(topix(ix,iy),iyt,0))
-	    if(distval.ne.0) then
+          elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
+            distval=
+     1       dist(cry(ix,iy,2),cry(topix(ix,iy),iyt,0))
+            if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	     'Error with top neighbour of ',ix,iy,' (left point), ',
-     2	     'dist=',distval
+     1       'Error with top neighbour of ',ix,iy,' (left point), ',
+     2       'dist=',distval
             endif
             distval=
      1       dist(cry(ix,iy,3),cry(topix(ix,iy),iyt,1))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	     'Error with top neighbour of ',ix,iy,' (right point), ',
-     2	     'dist=',distval
+     1       'Error with top neighbour of ',ix,iy,' (right point), ',
+     2       'dist=',distval
             endif
           endif
         enddo
-c check bottom neighbours       
+c check bottom neighbours
         do iy=0,ny
           if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-	  iyb=bottomiy(ix,iy)
-	  if(.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
-	    write(*,*) 'No bottom neighbour for ',ix,iy
+          iyb=bottomiy(ix,iy)
+          if(.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy)))
+     >     then
+            write(*,*) 'No bottom neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. iy.eq.nyiso1 .and.
      &     ix.ge.nxiso1 .and. ix.le.nxiso2) then
             write(*,*) 'Testing skipped for isolated region edge at ',
      .      ix,iy
-	  elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
-	    distval=
-     1	     dist(cry(ix,iy,0),cry(bottomix(ix,iy),iyb,2))
-	    if(distval.ne.0) then
-	      if(distval.gt.1e-6) errors=errors+1
+          elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
+            distval=
+     1       dist(cry(ix,iy,0),cry(bottomix(ix,iy),iyb,2))
+            if(distval.ne.0) then
+              if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	     'Error with bottom neighbour of ',ix,iy,' (left point), ',
-     2	     'dist=',distval
+     1       'Error with bottom neighbour of ',ix,iy,' (left point), ',
+     2       'dist=',distval
             endif
             distval=
      1       dist(cry(ix,iy,1),cry(bottomix(ix,iy),iyb,3))
             if(distval.ne.0) then
               if(distval.gt.1e-6) errors=errors+1
               write(*,*)
-     1	     'Error with bottom neighbour of ',ix,iy,' (right point), ',
-     2	     'dist=',distval 
+     1       'Error with bottom neighbour of ',ix,iy,' (right point), ',
+     2       'dist=',distval
             endif
           endif
         enddo
       enddo
-cxpb  
+cxpb
       done = .false.
       do ix = -1, nx
         do iy = -1, ny
@@ -441,7 +443,7 @@ cdpc-end
       call cfwure (nput, n2*2, qz, 'qz')
 cxpb
       if(newversion.ge.'01.001.022') then
-	call cfwure (nput, n2, qc, 'qc')
+        call cfwure (nput, n2, qc, 'qc')
       endif
 cxpb-end
       call cfwure (nput, n2*3, gs, 'gs')
@@ -474,12 +476,12 @@ cdpc
 cdpc-end
 cxpb
       if(newversion.ge.'01.001.000') then
-	idum(0)=periodic_bc
-	call cfwuin (nput, 1, idum, 'periodic_bc')
+        idum(0)=periodic_bc
+        call cfwuin (nput, 1, idum, 'periodic_bc')
       endif
 cxpb-end
       if(newversion.ge.'01.001.063') then          !srv 15.02.11
-	call cfwure (nput, n2*2, pbs, 'pbs')
+        call cfwure (nput, n2*2, pbs, 'pbs')
       endif
       if(newversion.ge.'03.000.006') then
         idum(0)=redef_pbs

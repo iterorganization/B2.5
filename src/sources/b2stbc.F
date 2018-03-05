@@ -92,8 +92,8 @@
      *   sna0ep, she0ep, shi0ep, t0, testqe, testqi,
      *   b2stbc_neoclassical, b2stbc_fchy_dia,
      &   praverage(2), prsum(2), gssum(2), tesum(2), tisum(2),
-     1   nasum(0:ns-1,2), teave(2), tiave(2),
-     1   naave(0:ns-1,2), nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
+     1   nasum(0:ns-1,2),
+     1   nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
      x   nxf, taf, zxf,
      1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
      1   sum_sch0, sum_vol, integral_current
@@ -106,7 +106,7 @@
      1   b2stbc_feedback, b2stbc_fchy_dia_coreonly, secmodel,
      *   area_fix, sheath_drift_fix
 *   ..procedures
-      intrinsic mod, nint
+      intrinsic nint
       real (kind=R8) ::
      *   b2ssum, hy1
       external subini, subend, xertst, sfill, b2ssum, b2saxpy,
@@ -302,9 +302,6 @@
       praverage(1)=prsum(1)/volsum(1)                                    !xpb
       qeaverage(1)=qesum(1)/gssum(1)
       qiaverage(1)=qisum(1)/gssum(1)
-      teave(1)=tesum(1)/gssum(1)
-      tiave(1)=tisum(1)/gssum(1)
-      naave(:,1)=nasum(:,1)/gssum(1)
 *   ..find the average pressure for island center flux surface           !xpb
       iy = ny                                                            !xpb
       tesum(2)=0.0_R8
@@ -388,9 +385,6 @@
         praverage(2)=prsum(2)/volsum(2)                                  !xpb
         qeaverage(2)=qesum(2)/gssum(2)                                   !xpb
         qiaverage(2)=qisum(2)/gssum(2)                                   !xpb
-        teave(2)=tesum(2)/gssum(2)
-        tiave(2)=tisum(2)/gssum(2)
-        naave(:,2)=nasum(:,2)/gssum(2)
       endif
       if (ncall.eq.0) lbndusr=.false.                                    !xpb
 

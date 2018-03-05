@@ -289,7 +289,7 @@ c*** Set default values according to current species list
       written = .true.
       return
 
- 999  call xerrab ('Error while reading FEEDBACK namelist!')
+  999 call xerrab ('Error while reading FEEDBACK namelist!')
       end subroutine read_b2mod_user_namelist
 
       end module b2mod_user_namelist

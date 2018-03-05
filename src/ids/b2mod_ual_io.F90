@@ -196,8 +196,8 @@ contains
         end if
         !! Check if num_time_slices >= time_sind
         call xertst( num_time_slices .ge. time_sind, &
-            &   "B25_process_ids: Time step index cannot be greater than total &
-            & number of time steps!" )
+            & "B25_process_ids: Time step index cannot be greater " // &
+            & "than total number of time steps!" )
         !! Get time slice value
         time_slice_value = time_sind * time_step
 
@@ -880,8 +880,8 @@ contains
                     iyn = leftiy( ix, iy )
                 end if
                 if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                    ! stop "compute_Coordinate_Unit_Vectors: not able to find&
-                    ! &   poloidal neighbour for cell"
+                    ! stop "compute_Coordinate_Unit_Vectors: "// &
+                    ! & "not able to find poloidal neighbour for cell"
                     !! skip cell
                     cycle
                 end if
@@ -913,8 +913,8 @@ contains
                     iyn = bottomiy( ix, iy )
                 end if
                 if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                    ! stop "compute_Coordinate_Unit_Vectors: not able to find&
-                        ! &    toroidal neighbour for cell"
+                    ! stop "compute_Coordinate_Unit_Vectors: "// &
+                        ! &  "not able to find toroidal neighbour for cell"
                     !! skip cell
                     cycle
                 end if

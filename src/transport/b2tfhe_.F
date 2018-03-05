@@ -85,7 +85,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ib, is, ixl, iyl, ixb, iyb, is0
+      integer ncall, n2, ix, iy, ib, is, is0
       integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0

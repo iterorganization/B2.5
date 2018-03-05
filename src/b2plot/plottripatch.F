@@ -23,7 +23,7 @@ C =====================================================================
 #endif
       real xbox(8),ybox(8),
      1 zlo,zhi,zval,clv,zinc,rlo,rhi,small
-      integer ix,iy,icol,ici,n,i,ic,
+      integer icol,ici,n,i,
      2 no_available_colors,noz,nozm,nfmtz
       real floor,ceil
       external floor,ceil

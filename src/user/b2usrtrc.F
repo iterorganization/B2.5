@@ -201,7 +201,7 @@ c***    starting and ending B2 cell for interface
      ,  ipfc_tmp(npfi_tmp),jpfc_tmp(npfi_tmp)
 c***    surface area,cell interface areas
       real (kind=R8) ::
-     *  hlp_arpfs(npfi_tmp),hlp_acpfs(0:nx,npfi_tmp)
+     *  hlp_arpfs(npfi_tmp)
       real (kind=R8) ::
      *  hlp_w(npfi_tmp)
       real (kind=R8) ::
@@ -226,16 +226,20 @@ c-----------------------------------------------------------------------
       integer lun, ltrc
       parameter (ltrc=ntrc_usr)
       real (kind=R8) ::
-     *  hlp, hlp_p, hlp_s, hlp_pi, hlp_si, hlp_po, hlp_so, hlp_tot,
-     ,  hlp_he, hlp_hep, hlp_h, hlp_neu_peak, hlpnw,
+     *  hlp, hlp_s, hlp_pi, hlp_si, hlp_po, hlp_so,
+     ,  hlp_he, hlp_hep, hlp_neu_peak,
      ,  hlp_ne_he_c, hlp_ne_he_s
       real (kind=R8) ::
-     *  a, d, e, g, s, t, v, x, e0
+     *  d, e, s, x
       real (kind=R8) :: pr(-1:nx,-1:ny), xdum(1)
       real (kind=R8) :: stim = 0.0_R8
       real (kind=R8) :: tdummy
-      integer i, j, k, l, m, n, ia, i0, im, is, ix, iy, js, ls, nv, irt,
-     ,  iyp, j_he_i, l_pad_str, n_pad_str
+      integer i, j, k, l, m, n, i0, is, ix, iy, js, nv, irt,
+     ,  j_he_i, l_pad_str, n_pad_str
+#ifdef B25_EIRENE
+      integer ia, im, iyp, ls
+      real (kind=R8) :: a, g, t, v, e0, hlp_h, hlp_p, hlp_tot, hlpnw
+#endif
 c*** radial position of the separatrix and poloidal positions of
 c*** targets and midplane for DoD calculation for each target
       integer isp_tmp(4),itg_tmp(4),imp_tmp(4)
@@ -450,9 +454,8 @@ c              print *,'i,k,msns=',i,k,msns(1,i),msns(2,i) !###
         end do !}
 
 c*** Find the B2 cell ranges corresponding to PFR interfaces
-c***  (ipfc_tmp, jpfc_tmp, hlp_acpfs)
+c***  (ipfc_tmp, jpfc_tmp)
 
-        hlp_acpfs=0
         hlp_w=0
         if(lpfrs_pmp.ne.0) then !{
 
@@ -521,7 +524,6 @@ c*** Outer divertor
         if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) iy=ny
         do k=1,npfi_tmp !{
           do i=ipfc_tmp(k),jpfc_tmp(k) !{
-            hlp_acpfs(i,k)=gs(i,iy,1)
             hlp_w(k)=hlp_w(k)+gs(i,iy,1)
           end do !}
         end do !}
@@ -942,7 +944,7 @@ c*** Helium fraction and related data - flux estimation
      .       (l_h_mol(j,1)+l_h_mol(j,2)+l_h_mol(j,3))
           end do !}
         end do !}
- 10     if(hlp_h.gt.0.0_R8) hlp_hefr=hlp_he/(hlp_h+hlp_he)
+   10   if(hlp_h.gt.0.0_R8) hlp_hefr=hlp_he/(hlp_h+hlp_he)
         if(hlp_heoc.gt.0.0_R8) hlp_henr=hlp_hefr/hlp_heoc
       end if !}
 #endif
@@ -1124,7 +1126,7 @@ c*** Calculate the neutral flows in PFR
         end do !}
       end do !}
 #endif
- 30   do k=1,npfrgrp !{
+   30 do k=1,npfrgrp !{
         do j=1,nspecies !{
           hlp_pfrf(0,j,1)=hlp_pfrf(0,j,1)+hlp_pfrf(k,j,1)
         end do !}
@@ -1489,8 +1491,8 @@ c*** f     :  the associated file name
       rewind(lun)
       if(ex) read(lun,*,end=91) hlp_c
       goto 95
- 91   ex = .false.
- 95   continue
+   91 ex = .false.
+   95 continue
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then !{
         na_tmp=0
@@ -1557,9 +1559,9 @@ c*** It was a major change of the file format - impossible to continue
         end if !}
         if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else !}{
 c*** New file
         ng_tmp=nglb_tmp
@@ -1594,24 +1596,24 @@ c        print *,'b2usrtrc frm:',hlp_frm  !###
      -                                ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp
       return
 c=======================================================================
- 90   write(*,*) 'b2usrtrc: cannot open file ',trim(f)
+   90 write(*,*) 'b2usrtrc: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 
- 92   write(*,*) 'b2usrtrc: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2usrtrc: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 
- 93   write(*,*) 'b2usrtrc: number of species changed - remove the ',
+   93 write(*,*) 'b2usrtrc: number of species changed - remove the ',
      ,                           trim(f),' tracing file first!'
       filedata(ltrc)=.false.
       return
 
- 94   write(*,*) 'b2usrtrc: cannot write in the file ',trim(f)
+   94 write(*,*) 'b2usrtrc: cannot write in the file ',trim(f)
       filedata(ltrc)=.false.
       return
 
- 98   write(*,'(2a,2i8)') 'b2usrtrc: internal error. ',
+   98 write(*,'(2a,2i8)') 'b2usrtrc: internal error. ',
      ,  'Number of columns in the header - ',ntrc_tmp,n
       filedata(ltrc)=.false.
       return
@@ -1838,10 +1840,10 @@ c*** Limiter case
         iline = iline+1
         read(lun,*,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2usrtrc: cannot open file ',trim(f)
+  190 write(*,*) 'b2usrtrc: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return

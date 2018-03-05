@@ -14,8 +14,9 @@
      *  fna_ch(:,:,:,:),
      *  fna_nanom(:,:,:,:),
      *  fna_panom(:,:,:,:),
-     *  fna_pschused(:,:,:,:),
+     *  fna_pschused(:,:,:,:)
 *     Sources
+      real (kind=R8), allocatable, save ::
      *  b2stbr_phys_sna0to1(:,:,:,:),
      *  b2stbr_phys_sna_bal(:,:,:),
      *  b2stbr_bas_sna0to1(:,:,:,:),
@@ -49,8 +50,9 @@
      *  b2srdt_sna0to1(:,:,:,:),
      *  b2srdt_sna_bal(:,:,:),
      *  b2srst_sna0to1(:,:,:,:),
-     *  b2srst_sna_bal(:,:,:),
+     *  b2srst_sna_bal(:,:,:)
 *     Time-averaged quantities
+      real (kind=R8), allocatable, save ::
      *  fna_pinch_av(:,:,:,:),
      *  fna_pll_av(:,:,:,:),
      *  fna_drift_av(:,:,:,:),
@@ -75,13 +77,15 @@
      *  b2srsm_sna_bal_av(:,:,:),
      *  b2srdt_sna_bal_av(:,:,:),
      *  b2srst_sna_bal_av(:,:,:),
-     *  resco_av(:,:,:),
+     *  resco_av(:,:,:)
 *   ..Arrays for momentum balance:
 *     Fluxes
+      real (kind=R8), allocatable, save ::
      *  fmo_flua(:,:,:,:),
      *  fmo_cvsa(:,:,:,:),
-     *  fmo_b2nxfv(:,:,:,:),
+     *  fmo_b2nxfv(:,:,:,:)
 *     Sources
+      real (kind=R8), allocatable, save ::
      *  b2stbr_phys_smo0to3(:,:,:,:),
      *  b2stbr_phys_smo_bal(:,:,:),
      *  b2stbr_bas_smo0to3(:,:,:,:),
@@ -129,8 +133,9 @@
      *  b2sigp_smogp0to3(:,:,:,:),
      *  b2sigp_smogp_bal(:,:,:),
      *  b2sigp_pstat0to3(:,:,:,:),
-     *  b2sigp_pstat_bal(:,:,:),
+     *  b2sigp_pstat_bal(:,:,:)
 *     Time-averaged quantities
+      real (kind=R8), allocatable, save ::
      *  fmo_flua_av(:,:,:,:),
      *  fmo_cvsa_av(:,:,:,:),
      *  fmo_b2nxfv_av(:,:,:,:),
@@ -158,9 +163,10 @@
      *  b2nxdv_smo_bal_av(:,:,:),
      *  b2sigp_smogp_bal_av(:,:,:),
      *  b2sigp_pstat_bal_av(:,:,:),
-     *  resmo_av(:,:,:),
+     *  resmo_av(:,:,:)
 *   ..Arrays for electron heat balance:
 *     Fluxes
+      real (kind=R8), allocatable, save ::
      *  fhe_32(:,:,:),
      *  fhe_52(:,:,:),
      *  fhe_thermj(:,:,:),
@@ -168,8 +174,9 @@
      *  fhe_dia(:,:,:),
      *  fhe_ecrb(:,:,:),
      *  fhe_strange(:,:,:),
-     *  fhe_pschused(:,:,:),
+     *  fhe_pschused(:,:,:)
 *     Sources
+      real (kind=R8), allocatable, save ::
      *  b2stbr_phys_she0to3(:,:,:),
      *  b2stbr_phys_she_bal(:,:),
      *  b2stbr_bas_she0to3(:,:,:),
@@ -206,8 +213,9 @@
      *  b2sihs_exbe_bal(:,:),
      *  b2sihs_joule0to3(:,:,:),
      *  b2sihs_joule_bal(:,:),
-     *  b2npht_shei_bal(:,:), !djm equipartition is not linearised
+     *  b2npht_shei_bal(:,:) !djm equipartition is not linearised
 *     Time-averaged quantities
+      real (kind=R8), allocatable, save ::
      *  fhe_32_av(:,:,:),
      *  fhe_52_av(:,:,:),
      *  fhe_thermj_av(:,:,:),
@@ -235,9 +243,10 @@
      *  b2sihs_exbe_bal_av(:,:),
      *  b2sihs_joule_bal_av(:,:),
      *  b2npht_shei_bal_av(:,:),
-     *  reshe_av(:,:),
+     *  reshe_av(:,:)
 *   ..Arrays for ion heat balance:
 *     Fluxes
+      real (kind=R8), allocatable, save ::
      *  fhi_32(:,:,:),
      *  fhi_52(:,:,:),
      *  fhi_cond(:,:,:),
@@ -250,8 +259,9 @@
      *  fhi_visper(:,:,:),
      *  fhi_visq(:,:,:),
      *  fhi_anml(:,:,:),
-     *  fhi_kevis(:,:,:),
+     *  fhi_kevis(:,:,:)
 *     Source
+      real (kind=R8), allocatable, save ::
      *  b2stbr_phys_shi0to3(:,:,:),
      *  b2stbr_phys_shi_bal(:,:),
      *  b2stbr_bas_shi0to3(:,:,:),
@@ -293,8 +303,9 @@
      *  b2sihs_visa0to3(:,:,:),
      *  b2sihs_visa_bal(:,:),
      *  b2sihs_fraa0to3(:,:,:),
-     *  b2sihs_fraa_bal(:,:),
+     *  b2sihs_fraa_bal(:,:)
 *     Time-averaged quantities
+      real (kind=R8), allocatable, save ::
      *  fhi_32_av(:,:,:),
      *  fhi_52_av(:,:,:),
      *  fhi_cond_av(:,:,:),
@@ -329,8 +340,9 @@
      *  b2sihs_exba_bal_av(:,:),
      *  b2sihs_visa_bal_av(:,:),
      *  b2sihs_fraa_bal_av(:,:),
-     *  reshi_av(:,:),
+     *  reshi_av(:,:)
 *     Additional averaged quantities
+      real (kind=R8), allocatable, save ::
      *  ne_av(:,:),
      *  na_av(:,:,:),
      *  ua_av(:,:,:),
@@ -1367,10 +1379,6 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       end subroutine update_balance_sources_particles
 
       subroutine update_balance_sources_momentum(nx,ny,isb,ub,rob) !djm Jan2017
-      use b2mod_constants
-     & , only : mp
-      use b2mod_b2cmpa
-     & , only : am
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx,ny,isb
@@ -2197,6 +2205,7 @@ cdjm Update ion heat sources
       end subroutine update_average_balance
 
       subroutine write_balance(nxd,nyd,nsd)
+#ifndef NO_CDF
       use b2mod_geo
      & , only : crx,cry,hx,bb,vol,gs
       use b2mod_indirect
@@ -2210,6 +2219,7 @@ cdjm Update ion heat sources
      & , only : am
       use b2mod_constants
      & , only : mp,ev
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nxd,nyd,nsd

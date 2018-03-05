@@ -543,7 +543,7 @@ c
 #endif
       implicit none
       integer nx,ny
-      integer ix,iy,i,nniso,idum
+      integer ix,iy,i,nniso
 
       integer nxcut1(nncutmax),nxcut2(nncutmax),
      &        nycut1(nncutmax),nycut2(nncutmax),
@@ -555,6 +555,7 @@ c
       logical ex
 
 #ifdef B25_EIRENE
+      integer idum
       integer, save :: exp_location, dot_location
       character*80 line
       data new_format/1/

@@ -9,13 +9,17 @@
 #endif
       integer nx, ny, ns
       real (kind=R8) :: tim
-      integer :: timedim
       real (kind=R8), save :: dtim = 1.0_R8
+#ifndef NO_CDF
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
 #endif
-#ifndef NO_CDF
+#endif
       integer :: status
+      integer :: timedim
       integer :: idim, ivar, iatt, iret, ib, it, ih, idum,
      1 itim, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
      2 dimids(NF_MAX_VAR_DIMS), len, index, dimsize(NF_MAX_VAR_DIMS),
@@ -124,12 +128,23 @@ c prepare the b2tallies.nc.xxxx file
 #ifdef NO_GETENV
       extension='xxxx'
 #else
+#ifdef NAGFOR
+        call get_environment_variable('PLASMASTATE',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable('PLASMASTATE',value=plasmastate)
+          extension=plasmastate(lenval-3:lenval)
+        elseif (ierror.eq.1) then
+          extension='xxxx'
+        endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
 #else
       call getenv ('PLASMASTATE', plasmastate)
 #endif
       extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
+#endif
 #endif
       filename='b2tallies.nc.'//extension
       call define_cdf_b2mod_tallies(filename,ncid2,nnreg,ns)
@@ -176,7 +191,7 @@ c read and rewrite data
               status=nf_put_vara_double(ncid2,ivar,start,count,data3)
             end if
             call check_cdf_status(status)
-            deallocate(data3) 
+            deallocate(data3)
           elseif(ndims.eq.2) then
             allocate(data2(dimsize(1),dimsize(2)))
             status=nf_get_vara_double(ncid,ivar,start,count,data2)

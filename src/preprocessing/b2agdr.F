@@ -98,7 +98,6 @@
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle
-      logical :: includeGhostCells
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
@@ -494,28 +493,28 @@
       endif
 cdpc-debug
       if(nx1.eq.nx.and.ny1.eq.ny) then
-	write(*,*) 'b2agdr sanity check: vol ',
-     1	 maxval(abs(vol1-vol))
-	write(*,*) 'b2agdr sanity check: hx  ',
-     1	 maxval(abs(hx1-hx))
-	write(*,*) 'b2agdr sanity check: hy  ',
-     1	 maxval(abs(hy1-hy))
-	write(*,*) 'b2agdr sanity check: qz  ',
-     1	 maxval(abs(qz1-qz))
-	write(*,*) 'b2agdr sanity check: qc  ',
-     1	 maxval(abs(qc1-qc))
-	write(*,*) 'b2agdr sanity check: qcb ',
-     1	 maxval(abs(qcb1-qcb))
-	write(*,*) 'b2agdr sanity check: gs  ',
-     1	 maxval(abs(gs1-gs))
-	write(*,*) 'b2agdr sanity check: crx ',
-     1	 maxval(abs(crx1-crx))
-	write(*,*) 'b2agdr sanity check: cry ',
-     1	 maxval(abs(cry1-cry))
-	write(*,*) 'b2agdr sanity check: bb  ',
-     1	 maxval(abs(bb1-bb))
-	write(*,*) 'b2agdr sanity check: pbs ',
-     1	 maxval(abs(pbs1-pbs))
+        write(*,*) 'b2agdr sanity check: vol ',
+     1   maxval(abs(vol1-vol))
+        write(*,*) 'b2agdr sanity check: hx  ',
+     1   maxval(abs(hx1-hx))
+        write(*,*) 'b2agdr sanity check: hy  ',
+     1   maxval(abs(hy1-hy))
+        write(*,*) 'b2agdr sanity check: qz  ',
+     1   maxval(abs(qz1-qz))
+        write(*,*) 'b2agdr sanity check: qc  ',
+     1   maxval(abs(qc1-qc))
+        write(*,*) 'b2agdr sanity check: qcb ',
+     1   maxval(abs(qcb1-qcb))
+        write(*,*) 'b2agdr sanity check: gs  ',
+     1   maxval(abs(gs1-gs))
+        write(*,*) 'b2agdr sanity check: crx ',
+     1   maxval(abs(crx1-crx))
+        write(*,*) 'b2agdr sanity check: cry ',
+     1   maxval(abs(cry1-cry))
+        write(*,*) 'b2agdr sanity check: bb  ',
+     1   maxval(abs(bb1-bb))
+        write(*,*) 'b2agdr sanity check: pbs ',
+     1   maxval(abs(pbs1-pbs))
       endif
       write(*,*) 'b2agdr1: bb(nx,ny,0) ',bb(nx,ny,0)
       if(istyle.ge.0) then
@@ -523,7 +522,7 @@ cdpc-debug
         call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
 *   ..compute magnetic field on proper mesh
         call b2agbb (nx, ny, vol, hx, hy, qz, 
-     &	 fpsi, ffbz, bb)
+     &   fpsi, ffbz, bb)
       else
         fpsi=0.0_R8
         ffbz=0.0_R8
