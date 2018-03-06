@@ -2,17 +2,17 @@
 *.specification
 
       subroutine b2stbc (nx, ny, ns, ismain, ismain0, 
-     &  BoRiS, facdrift, fac_ExB,                                        !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !xpb !srv 09.01.01
+     &  BoRiS, facdrift, fac_ExB,                                       !xpb
+     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,               !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
-     &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
+     &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                 !srv 28.10.02
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
-     &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,             !srv 16.02.12
-     &  fnaPSch, fhePSch, fhiPSch,                                       !srv 25.02.00 13.10.06
-     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
+     &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,            !srv 16.02.12
+     &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
+     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,
-     &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call)       !xpb
+     &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call)      !xpb
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect

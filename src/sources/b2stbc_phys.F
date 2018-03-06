@@ -106,16 +106,13 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, js, ib, ireg, coreregno, coreregn2,
-     1  bc_type13_ref, bc_type13_ix, bc_type13_iy, bc_type13_i,
-     2  bc_type13_ixx,
+     1  bc_type13_ref, bc_type13_ix, bc_type13_iy, bc_type13_ixx,
      1  bc_type16_ref, bc_type16_ix, bc_type16_iy, bc_type16_i,
      2  bc_type16_ixx,
-     1  bc_type20_ref, bc_type20_ix, bc_type20_iy, bc_type20_i,
-     2  bc_type20_ixx,
-     1  bc_type21_ref, bc_type21_ix, bc_type21_iy, bc_type21_i,
-     2  bc_type21_ixx,
+     1  bc_type20_ref, bc_type20_ix, bc_type20_iy, bc_type20_ixx,
+     1  bc_type21_ref, bc_type21_ix, bc_type21_iy, bc_type21_ixx,
      1  bc_type16_kinetic_energy
-      integer       :: num_inner, k, isb, isa, ism, ibw                 !srv 26.11.02
+      integer       :: num_inner, k, ism                                !srv 26.11.02
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0           !srv 08.08.02 14.02.05
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0, iout = 0, !srv 13.10.06
@@ -159,7 +156,7 @@
      *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
      *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                             !srv 29.09.15
       real (kind=R8), save :: ycur = 1.0e0_R8
-      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8           !srv 02.10.17
+      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8          !srv 02.10.17
       real (kind=R8), save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
      &                        phm2 = 1.0e0_R8,
      &                        corr_flux   = 0.0e0_R8                    !srv 25.07.05
@@ -229,78 +226,78 @@
       call subini ('b2stbc_phys')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2stbc_phm0', phm0)                                  !srv 17.01.07
-       call ipgetr ('b2stbc_phm1', phm1)                                  !srv 17.01.07
-       call ipgetr ('b2stbc_phm2', phm2)                                  !srv 17.01.07
-        call ipgeti ('b2stbc_coreregno', coreregno)
-        call xertst (cbirso.le.coreregno.and.
+       call ipgetr ('b2stbc_phm0', phm0)                                !srv 17.01.07
+       call ipgetr ('b2stbc_phm1', phm1)                                !srv 17.01.07
+       call ipgetr ('b2stbc_phm2', phm2)                                !srv 17.01.07
+       call ipgeti ('b2stbc_coreregno', coreregno)
+       call xertst (cbirso.le.coreregno.and.
      1   coreregno.le.cbirso+cbnrso-1,
      2   'faulty internal parameter coreregno')
-        if (nncut.ge.2) then
-          call ipgeti ('b2stbc_coreregn2', coreregn2)
-          call xertst (cbirso.le.coreregn2.and.
+       if (nncut.ge.2) then
+         call ipgeti ('b2stbc_coreregn2', coreregn2)
+         call xertst (cbirso.le.coreregn2.and.
      1     coreregn2.le.cbirso+cbnrso-1,
      2     'faulty internal parameter coreregn2')
-        endif
-        call ipgeti ('b2tfhe_conduction_only', conduction_only)
-        call ipgeti ('b2tfhe_no_hybr', no_hybr_e)
-        call ipgeti ('b2tfhi_no_hybr', no_hybr_i)
-        call ipgeti ('b2mndr_eirene', use_eirene)
-        call ipgeti ('b2mndr_astra', use_astra)
-        call ipgeti ('b2tfnb_drift_style', drift_style)
-        call ipgeti ('b2stbc_type13_ref', bc_type13_ref)
-        call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
-        call ipgeti ('b2stbc_type20_ref', bc_type20_ref)
-        call ipgeti ('b2stbc_type21_ref', bc_type21_ref)
-        call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
-        call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
-        call ipgetr ('b2mndr_na_min', na_min)
-        call ipgetr ('b2mndr_na_new', na_new)
-        call xertst (0.0_R8.lt.na_min, 'faulty parameter na_min')
-        call xertst (na_new.gt.0.0_R8, 'faulty parameter na_new')
-        call xertst (na_new.gt.na_min,
+       endif
+       call ipgeti ('b2tfhe_conduction_only', conduction_only)
+       call ipgeti ('b2tfhe_no_hybr', no_hybr_e)
+       call ipgeti ('b2tfhi_no_hybr', no_hybr_i)
+       call ipgeti ('b2mndr_eirene', use_eirene)
+       call ipgeti ('b2mndr_astra', use_astra)
+       call ipgeti ('b2tfnb_drift_style', drift_style)
+       call ipgeti ('b2stbc_type13_ref', bc_type13_ref)
+       call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
+       call ipgeti ('b2stbc_type20_ref', bc_type20_ref)
+       call ipgeti ('b2stbc_type21_ref', bc_type21_ref)
+       call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
+       call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
+       call ipgetr ('b2mndr_na_min', na_min)
+       call ipgetr ('b2mndr_na_new', na_new)
+       call xertst (0.0_R8.lt.na_min, 'faulty parameter na_min')
+       call xertst (na_new.gt.0.0_R8, 'faulty parameter na_new')
+       call xertst (na_new.gt.na_min,
      &  'na_new must be larger than na_min!')
-        call ipgeti ('b2stbc_fix_fch_in_fhe_sheath',
+       call ipgeti ('b2stbc_fix_fch_in_fhe_sheath',
      1   fix_fch_in_fhe_sheath)
-        call ipgeti ('b2stbc_fix_sx_in_fhe_sheath',
-     1   fix_sx_in_fhe_sheath)                                       !srv 08.05.09
-        call ipgeti ('b2stbc_type16_kinetic_energy',
+       call ipgeti ('b2stbc_fix_sx_in_fhe_sheath',
+     1   fix_sx_in_fhe_sheath)                                      !srv 08.05.09
+       call ipgeti ('b2stbc_type16_kinetic_energy',
      1   bc_type16_kinetic_energy)
-        call ipgetr ('b2stbc_cbc', cbc)                              !srv 14.10.99
-        call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
-        call ipgeti ('b2stbc_istyle_fchi', istyle_fchi)              !srv 14.02.05
-        call ipgetr ('b2stbc_corr_flux_in_core', corr_flux)          !srv 25.07.05
-        call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)        !srv 25.07.05
-        call ipgeti ('b2stbc_iout', iout)                            !srv 11.07.05
-        call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !srv 13.10.06
-        call ipgeti ('b2tfhe_mdf', mdf_fhe)                          !srv 13.10.06
-        call ipgeti ('b2tfhi_mdf', mdf_fhi)                          !srv 13.10.06
-        call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                      !srv 28.04.08
-        call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
-     &                       istyle_cur_contr_on_S_and_N)            !srv 01.02.09
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
-        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
-        call ipgeti ('b2npco_iout', iout_b2npco)
-        call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgeti ('b2nph9_iout', iout_b2nph9)
-        call ipgeti ('b2npht_iout', iout_b2npht)
-        call ipgeti ('b2npp7_iout', iout_b2npp7)
-        call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
-        call ipgetr ('b2stbc_bc_ref', bc_ref)
-        call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                  !srv 11.04.13
-        call ipgetr ('b2stbc_bc_ref_ti', bc_ref_ti)                  !srv 11.04.13
-        call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
-        call ipgeti ('b2stbc_bcene_16_style', bcene_16_style)
-        call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
-        call ipgeti ('b2tfhe_no_current', no_current)
-        call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
-        call xertst (pot_eq.eq.1.or.no_current.eq.1,
+       call ipgetr ('b2stbc_cbc', cbc)                              !srv 14.10.99
+       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
+       call ipgeti ('b2stbc_istyle_fchi', istyle_fchi)              !srv 14.02.05
+       call ipgetr ('b2stbc_corr_flux_in_core', corr_flux)          !srv 25.07.05
+       call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)        !srv 25.07.05
+       call ipgeti ('b2stbc_iout', iout)                            !srv 11.07.05
+       call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !srv 13.10.06
+       call ipgeti ('b2tfhe_mdf', mdf_fhe)                          !srv 13.10.06
+       call ipgeti ('b2tfhi_mdf', mdf_fhi)                          !srv 13.10.06
+       call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                      !srv 28.04.08
+       call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
+     &                      istyle_cur_contr_on_S_and_N)            !srv 01.02.09
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
+       call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
+       call ipgeti ('b2npco_iout', iout_b2npco)
+       call ipgeti ('b2npmo_iout', iout_b2npmo)
+       call ipgeti ('b2nph9_iout', iout_b2nph9)
+       call ipgeti ('b2npht_iout', iout_b2npht)
+       call ipgeti ('b2npp7_iout', iout_b2npp7)
+       call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
+       call ipgetr ('b2stbc_bc_ref', bc_ref)
+       call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                  !srv 11.04.13
+       call ipgetr ('b2stbc_bc_ref_ti', bc_ref_ti)                  !srv 11.04.13
+       call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
+       call ipgeti ('b2stbc_bcene_16_style', bcene_16_style)
+       call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
+       call ipgeti ('b2tfhe_no_current', no_current)
+       call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
+       call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-        call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 23.05.14 !srv 29.09.15
-        call ipgetr ('b2tfhi_ycur', ycur)
-        call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
-        call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
-        call ipgeti ('eirene_sheath_pot',eirene_sheath_pot)
+       call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 23.05.14 !srv 29.09.15
+       call ipgetr ('b2tfhi_ycur', ycur)
+       call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
+       call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
+       call ipgeti ('eirene_sheath_pot',eirene_sheath_pot)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -497,6 +494,55 @@ cwdk  now need to recompute full diamagnetic component for ud
 
 * -- LOOP OVER ALL BOUNDARIES
       DO IB = 1, NBC
+
+        if (bcpos(ib).eq.-2) then
+          write(boundary_location(ib),'(a23,i2)')
+     .     ' on boundary cell list ',IB
+        else
+          write(boundary_location(ib),'(a4,i4,a6,i4,a4,i4)')
+     .     ' at ',BCPOS(IB),' from ',BCSTART(IB),' to ',BCEND(IB)
+        endif
+
+* -- Moving core tally according to B.C.
+* -- Must be done only once!
+
+        IF (ncall.eq.0 .and. bc_type16_ref.gt.1) THEN
+          IF (BCCHAR(IB).EQ.'S' .AND.
+     &       (BCENE(IB).EQ.16.or.BCENE(IB).EQ.17.or.BCENE(IB).EQ.20.or.
+     &        BCENI(IB).EQ.16.or.BCENI(IB).EQ.17.or.BCENI(IB).EQ.20))
+     &     THEN
+            DO IX = 1, bc_list_size(ib)
+              bc_type16_ix=bc_list_x(ix,ib)
+              bc_type16_iy=bc_list_y(ix,ib)
+              do bc_type16_i=1,bc_type16_ref      ! how many steps away from the boundary?
+                bc_type16_ixx=topix(bc_type16_ix,bc_type16_iy)
+                bc_type16_iy=topiy(bc_type16_ix,bc_type16_iy)
+                bc_type16_ix=bc_type16_ixx
+                call xertst (-2.lt.bc_type16_ix.and.
+     &                       bc_type16_ix.lt.nx+1,
+     1           'stepped off x-grid in type 16 bc')
+                call xertst (-2.lt.bc_type16_iy.and.
+     &                       bc_type16_iy.lt.ny+1,
+     1           'stepped off y-grid in type 16 bc')
+              enddo
+              region(bc_type16_ix,bc_type16_iy,2) =
+     .         region(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),2)
+              region(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),2) = 0
+            ENDDO
+            if (bc_type16_ref.gt.2) then
+              write(*,'(a,i2,a)')
+     .         'Moved core radial flux tally position by ',
+     .          bc_type16_ref-1,' radial steps.'
+            else if (bc_type16_ref.eq.2) then
+              write(*,'(a)')
+     .         'Moved core radial flux tally position by '//
+     .         '1 radial step.'
+            endif
+          ENDIF
+        ENDIF
+
         call b2stbc_phys_species(IB)
         call b2stbc_phys_ene(IB)
         call b2stbc_phys_eni(IB)
@@ -605,64 +651,27 @@ cwdk  now need to recompute full diamagnetic component for ud
 
       subroutine b2stbc_phys_species(IB)
       integer ib
+      integer ix, iy, is, isa, isb, ibw
+      integer bc_type13_i, bc_type20_i, bc_type21_i
 
-        if (bcpos(ib).eq.-2) then
-          write(boundary_location(ib),'(a23,i2)')
-     .     ' on boundary cell list ',IB
-        else
-          write(boundary_location(ib),'(a4,i4,a6,i4,a4,i4)')
-     .     ' at ',BCPOS(IB),' from ',BCSTART(IB),' to ',BCEND(IB)
-        endif
+      if (bcpos(ib).eq.-2) then
+        write(boundary_location(ib),'(a23,i2)')
+     .   ' on boundary cell list ',IB
+      else
+        write(boundary_location(ib),'(a4,i4,a6,i4,a4,i4)')
+     .   ' at ',BCPOS(IB),' from ',BCSTART(IB),' to ',BCEND(IB)
+      endif
 
-* -- Moving core tally according to B.C.
-* -- Must be done only once!
-
-        IF (ncall.eq.0 .and. bc_type16_ref.gt.1) THEN
-          IF (BCCHAR(IB).EQ.'S' .AND.
-     &     (BCENE(IB).EQ.16.or.BCENE(IB).EQ.17.or.BCENE(IB).EQ.20.or.
-     &      BCENI(IB).EQ.16.or.BCENI(IB).EQ.17.or.BCENI(IB).EQ.20)) THEN
-            DO IX = 1, bc_list_size(ib)
-              bc_type16_ix=bc_list_x(ix,ib)
-              bc_type16_iy=bc_list_y(ix,ib)
-              do bc_type16_i=1,bc_type16_ref      ! how many steps away from the boundary?
-                bc_type16_ixx=topix(bc_type16_ix,bc_type16_iy)
-                bc_type16_iy=topiy(bc_type16_ix,bc_type16_iy)
-                bc_type16_ix=bc_type16_ixx
-                call xertst (-2.lt.bc_type16_ix.and.
-     &                       bc_type16_ix.lt.nx+1,
-     1           'stepped off x-grid in type 16 bc')
-                call xertst (-2.lt.bc_type16_iy.and.
-     &                       bc_type16_iy.lt.ny+1,
-     1           'stepped off y-grid in type 16 bc')
-              enddo
-              region(bc_type16_ix,bc_type16_iy,2) =
-     .         region(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),2)
-              region(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),2) = 0
-            ENDDO
-            if (bc_type16_ref.gt.2) then
-              write(*,'(a,i2,a)')
-     .         'Moved core radial flux tally position by ',
-     .          bc_type16_ref-1,' radial steps.'
-            else if (bc_type16_ref.eq.2) then
-              write(*,'(a)')
-     .         'Moved core radial flux tally position by '//
-     .         '1 radial step.'
-            endif
-          ENDIF
-        ENDIF
-
-        DO IS=0, NS-1
+      DO IS=0, NS-1
 
 * -- BOUNDARY CONDITIONS FOR CONTINUITY EQUATIONS --
-          if(BCCON(IS,IB).eq.0) goto 10000
-          GOTO(100,200,300,400,500,600,700,800,900,1000,
+        if(BCCON(IS,IB).eq.0) goto 10000
+        GOTO(100,200,300,400,500,600,700,800,900,1000,
      1     1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,
      2     2100,2200,2300,2400,2500,2600,2700),
      .     BCCON(IS,IB)
-          write(*,*) BCCON(IS,IB)
-          call xerrab ('BCCON out of bounds')
+        write(*,*) BCCON(IS,IB)
+        call xerrab ('BCCON out of bounds')
 
 * -- BCCON=1 -- PRESCRIBE THE VALUE OF THE DENSITY
 
@@ -4264,6 +4273,8 @@ cxpb  and max(,,) statement for stability
 
       subroutine b2stbc_phys_ene(IB)
       integer ib
+      integer ix, iy, is, ibw
+      integer bc_type16_i, bc_type20_i, bc_type21_i
 
 * -- BOUNDARY CONDITIONS FOR ELECTRON ENERGY EQUATION --
         if(BCENE(IB).eq.0) goto 30000
@@ -6296,6 +6307,8 @@ cghgh
 
         subroutine b2stbc_phys_eni(IB)
         integer ib
+        integer ix, iy, is, ibw
+        integer bc_type16_i, bc_type20_i, bc_type21_i
 
 * -- BOUNDARY CONDITIONS FOR ION ENERGY EQUATIONS --
         if(BCENI(IB).eq.0) goto 40000
@@ -8798,6 +8811,8 @@ cxpb Careful here because of BC number clash
 
         subroutine b2stbc_phys_pot(IB)
         integer ib
+        integer ix, iy, is, ibw
+        integer bc_type21_i
 
 * -- BOUNDARY CONDITIONS FOR POTENTIAL EQUATION --
         if(BCPOT(IB).eq.0) goto 50000
