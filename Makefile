@@ -10,6 +10,8 @@ SRCB2   = ${PWD}
 SRCDIR  = ${SRCB2}/src
 DOCDIR  = ${SRCDIR}/documentation
 PYTHON  = python
+INCLUDE =
+TAGSLIST =
 
 MAKES = ${SRCB2}/Makefile
 # Include global SOLPS compiler settings
@@ -81,8 +83,6 @@ ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && ec
 endif
 
 # Add external includes first
-INCLUDE =
-TAGSLIST =
 ifdef NCDIR
 INCLUDE += -I${NCDIR}/include
 endif
