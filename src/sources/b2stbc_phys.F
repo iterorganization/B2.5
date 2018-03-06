@@ -489,13 +489,123 @@ cwdk  now need to recompute full diamagnetic component for ud
       endif                                                           !xpb
 
       if(ncall.eq.0) write(*,*) 'Doing B2-style bc'
-      once_bccon = .false.                                            !srv 16.02.12 {
+
+      once_bccon = .false.
       once_bcene = .false.
-      once_bceni = .false.                                            !srv 16.02.12 }
-      once_bcpot = .false.                                            !Solovyev 13.05.14 !srv 29.09.15
+      once_bceni = .false.
+      once_bcpot = .false.
 
 * -- LOOP OVER ALL BOUNDARIES
-      DO IB=1, NBC
+      DO IB = 1, NBC
+        call b2stbc_phys_species(IB)
+        call b2stbc_phys_ene(IB)
+        call b2stbc_phys_eni(IB)
+        call b2stbc_phys_pot(IB)
+      END DO
+
+* ---------------------------------------------------------------------
+*  INTERIOR BOUNDARY AT DEAD REGIONS
+*  ---------------------------------------------------------------------
+      DO IB=1,NNISO
+        DO IX=NXISO1(IB), NXISO2(IB)
+          DO IY=NYISO1(IB), NYISO2(IB)
+            DO IS=0, NS-1
+              SNA0(IX,IY,0,IS)= UBIG*NIISO(IS)
+              SNA0(IX,IY,1,IS)=-UBIG
+              smo0(ix,iy,0,is)= ubig*ne00*am(is)*0.0_R8*
+     .         sx(min(nx-1,ix),iy)
+              smo0(ix,iy,1,is)=-ubig*ne00*am(is)*
+     .         sx(min(nx-1,ix),iy)
+            end do
+            she0(IX,IY,0)= UBIG*NE(IX,IY)*TEISO*EV
+            she0(IX,IY,1)=-UBIG*NE(IX,IY)
+            shi0(IX,IY,0)= UBIG*NE(IX,IY)*TIISO*EV
+            shi0(IX,IY,1)=-UBIG*NE(IX,IY)
+            sch0(IX,IY,0)= UBIG*PHIISO
+            sch0(IX,IY,1)=-UBIG
+          end do
+        end do
+      end do
+
+      if (iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then               !srv 11.09.09 {
+       do is = 0, ns-1
+        write (chns,'(i3.3)') is
+        wrk0=smo0(:,:,0,is)+
+     &       smo0(:,:,1,is)*ua(:,:,is)+
+     &       smo0(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &       smo0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrk0,'b2stbc_phys_smo'//chns)
+       enddo
+      endif
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+     &        .or. iout_b2wdat.eq.4 ) then
+       do is = 0, ns-1
+        write (chns,'(i3.3)') is
+!        do k=0,1
+!         write (chk,'(i1)') k
+!         call my_out(70,nx,ny,sna0(-1,-1,k,is),
+!     &               'b2stbc_phys_sna'//chk//chns)
+!        enddo
+        wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
+        call my_out(70,nx,ny,wrk0,'b2stbc_phys_sna'//chns)
+       enddo
+      endif
+      if ((iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)
+     &        .or. iout_b2wdat.eq.4 ) then
+       wrk0=she0(:,:,0)+she0(:,:,1)*te+
+     &      she0(:,:,2)*ne + she0(:,:,3)*te*ne
+       call my_out(70,nx,ny,wrk0,'b2stbc_phys_she')
+       wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
+     &      shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
+       call my_out(70,nx,ny,wrk0,'b2stbc_phys_shi')
+      endif
+      if ((iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)
+     &        .or. iout_b2wdat.eq.4 ) then
+       wrk0=sch0(:,:,0)+sch0(:,:,1)*po+
+     &      sch0(:,:,2)*ne+sch0(:,:,3)*po*ne(:,:)
+       call my_out(70,nx,ny,wrk0,'b2stbc_phys_sch')
+      endif
+
+      if (iout.eq.1) then
+       do is = 0, ns-1
+        write (chns,'(i3.3)') is
+        do k=0,3
+          write (chk,'(i1)') k
+          call my_out(70,nx,ny,smo0(-1,-1,k,is),
+     &               'b2stbc_phys_smo'//chk//chns)
+        enddo
+        call my_out(70,nx,ny,ua(:,:,is),'b2stbc_phys_ua'//chns)
+        call my_out(70,nx,ny,na(:,:,is),'b2stbc_phys_na'//chns)
+        do k=0,1
+         write (chk,'(i1)') k
+         call my_out(70,nx,ny,sna0(-1,-1,k,is),
+     &               'b2stbc_phys_sna'//chk//chns)
+        enddo
+       enddo
+       do k=0,3
+         write (chk,'(i1)') k
+         call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbc_phys_sch'//chk)
+         call my_out(70,nx,ny,she0(-1,-1,k),'b2stbc_phys_she'//chk)
+         call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbc_phys_shi'//chk)
+       enddo
+       call my_out(70,nx,ny,te,'b2stbc_phys_te')
+       call my_out(70,nx,ny,ti,'b2stbc_phys_ti')
+       call my_out(70,nx,ny,po,'b2stbc_phys_po')
+      endif                                                           !srv 11.09.09 }
+
+* ..return
+      if(ncall.eq.0 .or. main_call) ncall = ncall+1
+      call subend ()
+      return
+
+*-----------------------------------------------------------------------
+*.end b2stbc_phys
+
+      contains
+
+      subroutine b2stbc_phys_species(IB)
+      integer ib
+
         if (bcpos(ib).eq.-2) then
           write(boundary_location(ib),'(a23,i2)')
      .     ' on boundary cell list ',IB
@@ -4149,8 +4259,13 @@ cxpb  and max(,,) statement for stability
 20000     continue
         enddo
 
-* -- BOUNDARY CONDITIONS FOR ELECTRON ENERGY EQUATION --
+      return
+      end subroutine b2stbc_phys_species
 
+      subroutine b2stbc_phys_ene(IB)
+      integer ib
+
+* -- BOUNDARY CONDITIONS FOR ELECTRON ENERGY EQUATION --
         if(BCENE(IB).eq.0) goto 30000
         GOTO(20100,20200,20300,20400,20500,
      1   20600,20700,20800,20900,21000,
@@ -6175,9 +6290,14 @@ cghgh
         END IF                                                         !srv 23.07.10 }
         GOTO 30000
 
-* -- BOUNDARY CONDITIONS FOR ION ENERGY EQUATIONS --
-
 30000   continue
+        return
+        end subroutine b2stbc_phys_ene
+
+        subroutine b2stbc_phys_eni(IB)
+        integer ib
+
+* -- BOUNDARY CONDITIONS FOR ION ENERGY EQUATIONS --
         if(BCENI(IB).eq.0) goto 40000
         GOTO(30100,30200,30300,30400,30500,
      1     30600,30700,30800,30900,31000,
@@ -8672,9 +8792,14 @@ cxpb Careful here because of BC number clash
         ENDIF
         GOTO 40000
 
-* -- BOUNDARY CONDITIONS FOR POTENTIAL EQUATION --
-
 40000   CONTINUE
+        return
+        end subroutine b2stbc_phys_eni
+
+        subroutine b2stbc_phys_pot(IB)
+        integer ib
+
+* -- BOUNDARY CONDITIONS FOR POTENTIAL EQUATION --
         if(BCPOT(IB).eq.0) goto 50000
         GOTO(40100,40200,40300,40400,40500,
      1   40600,40700,40800,40900,41000,
@@ -10037,103 +10162,8 @@ c end of implementation
            ENDIF
          endif
         endif                                                        !srv 01.02.09 }
-      enddo
 
-* ---------------------------------------------------------------------
-*  INTERIOR BOUNDARY AT DEAD REGIONS
-*  ---------------------------------------------------------------------
-      DO IB=1,NNISO
-        DO IX=NXISO1(IB), NXISO2(IB)
-          DO IY=NYISO1(IB), NYISO2(IB)
-            DO IS=0, NS-1
-              SNA0(IX,IY,0,IS)= UBIG*NIISO(IS)
-              SNA0(IX,IY,1,IS)=-UBIG
-              smo0(ix,iy,0,is)= ubig*ne00*am(is)*0.0_R8*
-     .         sx(min(nx-1,ix),iy)
-              smo0(ix,iy,1,is)=-ubig*ne00*am(is)*
-     .         sx(min(nx-1,ix),iy)
-            end do
-            she0(IX,IY,0)= UBIG*NE(IX,IY)*TEISO*EV
-            she0(IX,IY,1)=-UBIG*NE(IX,IY)
-            shi0(IX,IY,0)= UBIG*NE(IX,IY)*TIISO*EV
-            shi0(IX,IY,1)=-UBIG*NE(IX,IY)
-            sch0(IX,IY,0)= UBIG*PHIISO
-            sch0(IX,IY,1)=-UBIG
-          end do
-        end do
-      end do
-
-      if (iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then               !srv 11.09.09 {
-       do is = 0, ns-1
-        write (chns,'(i3.3)') is
-        wrk0=smo0(:,:,0,is)+
-     &       smo0(:,:,1,is)*ua(:,:,is)+
-     &       smo0(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &       smo0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-        call my_out(70,nx,ny,wrk0,'b2stbc_phys_smo'//chns)
-       enddo
-      endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
-     &        .or. iout_b2wdat.eq.4 ) then
-       do is = 0, ns-1
-        write (chns,'(i3.3)') is
-!        do k=0,1
-!         write (chk,'(i1)') k
-!         call my_out(70,nx,ny,sna0(-1,-1,k,is),
-!     &               'b2stbc_phys_sna'//chk//chns)
-!        enddo
-        wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
-        call my_out(70,nx,ny,wrk0,'b2stbc_phys_sna'//chns)
-       enddo
-      endif
-      if ((iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)
-     &        .or. iout_b2wdat.eq.4 ) then
-       wrk0=she0(:,:,0)+she0(:,:,1)*te+
-     &      she0(:,:,2)*ne + she0(:,:,3)*te*ne
-       call my_out(70,nx,ny,wrk0,'b2stbc_phys_she')
-       wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
-     &      shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
-       call my_out(70,nx,ny,wrk0,'b2stbc_phys_shi')
-      endif
-      if ((iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)
-     &        .or. iout_b2wdat.eq.4 ) then
-       wrk0=sch0(:,:,0)+sch0(:,:,1)*po+
-     &      sch0(:,:,2)*ne+sch0(:,:,3)*po*ne(:,:)
-       call my_out(70,nx,ny,wrk0,'b2stbc_phys_sch')
-      endif
-      if (iout.eq.1) then
-       do is = 0, ns-1
-        write (chns,'(i3.3)') is
-        do k=0,3
-          write (chk,'(i1)') k
-          call my_out(70,nx,ny,smo0(-1,-1,k,is),
-     &               'b2stbc_phys_smo'//chk//chns)
-        enddo
-        call my_out(70,nx,ny,ua(:,:,is),'b2stbc_phys_ua'//chns)
-        call my_out(70,nx,ny,na(:,:,is),'b2stbc_phys_na'//chns)
-        do k=0,1
-         write (chk,'(i1)') k
-         call my_out(70,nx,ny,sna0(-1,-1,k,is),
-     &               'b2stbc_phys_sna'//chk//chns)
-        enddo
-       enddo
-       do k=0,3
-         write (chk,'(i1)') k
-         call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbc_phys_sch'//chk)
-         call my_out(70,nx,ny,she0(-1,-1,k),'b2stbc_phys_she'//chk)
-         call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbc_phys_shi'//chk)
-       enddo
-       call my_out(70,nx,ny,te,'b2stbc_phys_te')
-       call my_out(70,nx,ny,ti,'b2stbc_phys_ti')
-       call my_out(70,nx,ny,po,'b2stbc_phys_po')
-      endif                                                           !srv 11.09.09 }
-
-* ..return
-      if(ncall.eq.0 .or. main_call) ncall = ncall+1
-      call subend ()
       return
-
-*-----------------------------------------------------------------------
-*.end b2stbc_phys
+      end subroutine b2stbc_phys_pot
 
       end subroutine b2stbc_phys
