@@ -51,7 +51,7 @@
       integer ncall, n2
       integer, save :: iout = 0, iout_b2wdat = 0
       real (kind=R8) ::
-     *  aa5(-1:nx,-1:ny,-2:2), wrk0(-1:nx,-1:ny)
+     *  aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -108,7 +108,7 @@ c-rfs     .  fch(21,-1,0), fch(21,-1,1),
 c-rfs     .  fch(21,0,1), respo(21,-1)
 *   ..compute correction
       call b2uspo (nx, ny, nregionv, solvereg, itcnt,
-     &  ne, te, conc, sch, respo, corpo, aa5, 'b2nppo')             !srv 18.03.10
+     &  ne, te, conc, sch, respo, corpo, aa9, 'b2nppo')             !srv 18.03.10
 *   ..apply correction
       call b2uppo (nx, ny, rxf, corpo, po)
 

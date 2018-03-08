@@ -155,9 +155,11 @@
         if(leftix(ix,iy).eq.-2) then
           aa9(ix,iy,-1) = 0.0e0_R8
         else                                                            !srv 26.11.02 }
-          t0 =  flob(ix,iy,0,0)/2 - (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy))
+          t0 =  flob(ix,iy,0,0)/2.0_R8
+     &        - (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy))
      &        - conb(ix,iy,0,0,1)                                       !srv 13.10.06 
-          t1 = -flob(ix,iy,0,0)/2 - (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy))
+          t1 = -flob(ix,iy,0,0)/2.0_R8
+     &        - (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy))
      &        - conb(ix,iy,0,0,2)                                       !srv 13.10.06
           ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
           if (solvereg(ileft)) then
@@ -215,8 +217,10 @@ cwdk todo: rscal(pb)-logic
          if(bottomiy(ix,iy).eq.-2) then
           aa9(ix,iy,-3) = 0.0_R8
          else
-          t0 = flob(ix,iy,1,1)/2 - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,1)     !srv 13.10.06
-          t1 =-flob(ix,iy,1,1)/2 - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,2)     !srv 13.10.06
+          t0 = 0.5_R8*flob(ix,iy,1,1) 
+     &       - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,1)     !srv 13.10.06
+          t1 =-0.5_R8*flob(ix,iy,1,1)
+     &       - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,2)     !srv 13.10.06
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot)) then
            aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = 
@@ -298,6 +302,8 @@ cwdk todo: add rscal-logic
       enddo
       if (iout.ne.0) then                                              !srv 17.06.02 {
         write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,aa9(-1,-1,-6),name//'_aa9m6'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1,-5),name//'_aa9m5'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-4),name//'_aa9m4'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-3),name//'_aa9m3'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-2),name//'_aa9m2'//chns)
@@ -307,6 +313,8 @@ cwdk todo: add rscal-logic
         call my_out(70,nx,ny,aa9(-1,-1, 2),name//'_aa9p2'//chns)
         call my_out(70,nx,ny,aa9(-1,-1, 3),name//'_aa9p3'//chns)
         call my_out(70,nx,ny,aa9(-1,-1, 4),name//'_aa9p4'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 5),name//'_aa9p5'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 6),name//'_aa9p6'//chns)
         call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
         call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
         call my_out(70,nx,ny,nb,name//'_na'//chns)

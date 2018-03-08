@@ -549,7 +549,8 @@ cwdk tmp: always use 9-point stencil
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_9(ireg)
               end do
-              if(new_matrix) call restart_ma28_for_9
+cwdk tmp: always restart
+              if(new_matrix.or..true.) call restart_ma28_for_9
               call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
      &         solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
@@ -679,19 +680,19 @@ cwdk tmp: always use 9-point stencil
 *    ..perform iteration
           t0=0.0_R8
           if (i.eq.0) then
-cwdk tmp: always use 9-point stencil, also for neutrals
-cwdk      need a master-switch to decide to use 9-point st
-           if (vis_per.eq.0.0e0_R8.and. .false.) then                                 !srv 06.07.00
+           if (vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
             new_matrix = .false.
             do ireg = 0, nnreg(0)
              new_matrix = new_matrix.or.
-     &        solvepo(ireg).neqv.last_solve_5(ireg)
+     &        solvepo(ireg).neqv.last_solve_9(ireg)
             end do
-            if (new_matrix) call restart_ma28
+cwdk tmp: always restart
+            if (new_matrix.or..true.) call restart_ma28_for_9
             call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
      &       ne, te, conc, sch, po, fch, respo, corpo, ier0)
-            last_solve_5(0:nnreg(0))=solvepo(0:nnreg(0))
+            last_solve_9(0:nnreg(0))=solvepo(0:nnreg(0))
            else
+            call restart_ma28_for_9
             call b2npp7 (nx, ny, nnreg(0), solvepo, ncall, rxf2,         !srv 27.01.00
      &       ne, te, conc, avisper, bvisper, cvisper,                    !srv 27.01.00
      &       sch, po, fch, respo, corpo, ier0)                           !srv 27.01.00
@@ -702,9 +703,7 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
             t0 = t0+b2sasum(nx+2,respo(-1,iy),1)
            enddo
           else
-cwdk tmp: always use 9-point stencil, also for neutrals
-cwdk      need a master-switch to decide to use 9-point st
-           if (vis_per.eq.0.0e0_R8.and..false.) then                                 !srv 06.07.00
+           if (vis_per.eq.0.0e0_R8) then  
             call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
      &       ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
            else
@@ -781,9 +780,9 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
           endif                                                          !srv 12.07.05 }
           if(t0.gt.potok.and.(i.eq.potit/3.or.i.eq.potit*2/3)) then      !srv 06.07.00
             if (vis_per.eq.0.0e0_R8) then
-              call restart_ma28
+              call restart_ma28_for_9
             else
-              if (style.eq.2) call restart_ma28_for_7                    !srv 11.01.00 29.05.02
+              if (style.eq.2) call restart_ma28_for_9                    !srv 11.01.00 29.05.02
               if (style.eq.3) call restart_sdrv_for_7                    !srv 29.05.02
             endif
           endif                                                          !srv 06.07.00
@@ -966,7 +965,8 @@ cwdk      need a master-switch to decide to use 9-point stencil...
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_9(ireg)
               end do
-              if(new_matrix) call restart_ma28_for_9
+cwdk tmp: always restart
+              if(new_matrix.or..true.) call restart_ma28_for_9
               call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
      &         solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,

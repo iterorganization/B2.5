@@ -272,6 +272,9 @@ CWDK tmp: call 9-point solver
           write (chark,'(i1)') k
           call my_out(70,nx,ny,sch(-1,-1,k),'b2usp7_sch'//chark)
         enddo
+        call my_out(70,nx,ny,aa11(-1,-1,-6),'b2usp7_aa11m6')
+        call my_out(70,nx,ny,aa11(-1,-1,-5),'b2usp7_aa11m5')
+        call my_out(70,nx,ny,aa11(-1,-1,-4),'b2usp7_aa11m4')
         call my_out(70,nx,ny,aa11(-1,-1,-3),'b2usp7_aa11m3')
         call my_out(70,nx,ny,aa11(-1,-1,-2),'b2usp7_aa11m2')
         call my_out(70,nx,ny,aa11(-1,-1,-1),'b2usp7_aa11m1')
@@ -279,6 +282,9 @@ CWDK tmp: call 9-point solver
         call my_out(70,nx,ny,aa11(-1,-1, 1),'b2usp7_aa11p1')
         call my_out(70,nx,ny,aa11(-1,-1, 2),'b2usp7_aa11p2')
         call my_out(70,nx,ny,aa11(-1,-1, 3),'b2usp7_aa11p3')
+        call my_out(70,nx,ny,aa11(-1,-1, 4),'b2usp7_aa11p4')
+        call my_out(70,nx,ny,aa11(-1,-1, 5),'b2usp7_aa11p5')
+        call my_out(70,nx,ny,aa11(-1,-1, 6),'b2usp7_aa11p6')
         call my_out(70,nx,ny,respo,'b2usp7_respo')
         call my_out(70,nx,ny,corpo,'b2usp7_corpo')
       endif                                                        !srv 08.07.08 }

@@ -209,6 +209,8 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0,0),'b2npc9_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1,1),'b2npc9_fnay'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,0,1),'b2npc9_fnaxy'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,1,0),'b2npc9_fnayx'//chns)
       elseif (iout_b2wdat.eq.4) then                                  !iys 17.04.17
         write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
@@ -217,6 +219,8 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0,0),'b2npc9_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1,1),'b2npc9_fnay'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,0,1),'b2npc9_fnaxy'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,1,0),'b2npc9_fnayx'//chns)
       endif                                                          
 
 *   ..set error parameter

@@ -63,6 +63,7 @@
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
       integer, save :: iadd_9 = 1                                      !srv 02.01.07
       integer, save :: last_ion
+      integer, save :: iout = 0
       integer ireg, ileft, ibot
       save ncall
       real (kind=R8) ::
@@ -90,6 +91,7 @@
        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
        call ipgeti ('b2ush9_add_9', iadd_9)                           !srv 02.01.07
+       call ipgeti ('b2ush9_iout', iout)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -380,6 +382,24 @@ cwdk add 9-point contributions
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')  !srv 18.05.02
 
+      if (iout.ne.0) then
+       call my_out(70,nx,ny,aa9(-1,-1,-6),'b2ush9_total_aa9m6')
+       call my_out(70,nx,ny,aa9(-1,-1,-5),'b2ush9_total_aa9m5')
+       call my_out(70,nx,ny,aa9(-1,-1,-4),'b2ush9_total_aa9m4')
+       call my_out(70,nx,ny,aa9(-1,-1,-3),'b2ush9_total_aa9m3')
+       call my_out(70,nx,ny,aa9(-1,-1,-2),'b2ush9_total_aa9m2')
+       call my_out(70,nx,ny,aa9(-1,-1,-1),'b2ush9_total_aa9m1')
+       call my_out(70,nx,ny,aa9(-1,-1, 0),'b2ush9_total_aa9m0')
+       call my_out(70,nx,ny,aa9(-1,-1, 1),'b2ush9_total_aa9p1')
+       call my_out(70,nx,ny,aa9(-1,-1, 2),'b2ush9_total_aa9p2')
+       call my_out(70,nx,ny,aa9(-1,-1, 3),'b2ush9_total_aa9p3')
+       call my_out(70,nx,ny,aa9(-1,-1, 4),'b2ush9_total_aa9p4')
+       call my_out(70,nx,ny,aa9(-1,-1, 5),'b2ush9_total_aa9p5')
+       call my_out(70,nx,ny,aa9(-1,-1, 6),'b2ush9_total_aa9p6')
+       call my_out(70,nx,ny,resht,'b2ush9_resht')
+       call my_out(70,nx,ny,cortt,'b2ush9_cortt')
+      endif
+
 * ..electron temperature correction equation
       new_matrix = .false.
       do ireg = 0, nregionv
@@ -554,6 +574,24 @@ cwdk add 9-point contributions
       enddo
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, reshe, corte, 'b2ush9_Te')     !srv 18.05.02
+
+      if (iout.ne.0) then
+       call my_out(70,nx,ny,aa9(-1,-1,-6),'b2ush9_he_aa9m6')
+       call my_out(70,nx,ny,aa9(-1,-1,-5),'b2ush9_he_aa9m5')
+       call my_out(70,nx,ny,aa9(-1,-1,-4),'b2ush9_he_aa9m4')
+       call my_out(70,nx,ny,aa9(-1,-1,-3),'b2ush9_he_aa9m3')
+       call my_out(70,nx,ny,aa9(-1,-1,-2),'b2ush9_he_aa9m2')
+       call my_out(70,nx,ny,aa9(-1,-1,-1),'b2ush9_he_aa9m1')
+       call my_out(70,nx,ny,aa9(-1,-1, 0),'b2ush9_he_aa9m0')
+       call my_out(70,nx,ny,aa9(-1,-1, 1),'b2ush9_he_aa9p1')
+       call my_out(70,nx,ny,aa9(-1,-1, 2),'b2ush9_he_aa9p2')
+       call my_out(70,nx,ny,aa9(-1,-1, 3),'b2ush9_he_aa9p3')
+       call my_out(70,nx,ny,aa9(-1,-1, 4),'b2ush9_he_aa9p4')
+       call my_out(70,nx,ny,aa9(-1,-1, 5),'b2ush9_he_aa9p5')
+       call my_out(70,nx,ny,aa9(-1,-1, 6),'b2ush9_he_aa9p6')
+       call my_out(70,nx,ny,resht,'b2ush9_reshe')
+       call my_out(70,nx,ny,cortt,'b2ush9_corte')
+      endif
 
 * ..atom temperature correction equation
       new_matrix = .false.
@@ -740,6 +778,24 @@ cwdk add 9-point contributions
         corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
        enddo
       enddo
+
+      if (iout.ne.0) then
+       call my_out(70,nx,ny,aa9(-1,-1,-6),'b2ush9_hi_aa9m6')
+       call my_out(70,nx,ny,aa9(-1,-1,-5),'b2ush9_hi_aa9m5')
+       call my_out(70,nx,ny,aa9(-1,-1,-4),'b2ush9_hi_aa9m4')
+       call my_out(70,nx,ny,aa9(-1,-1,-3),'b2ush9_hi_aa9m3')
+       call my_out(70,nx,ny,aa9(-1,-1,-2),'b2ush9_hi_aa9m2')
+       call my_out(70,nx,ny,aa9(-1,-1,-1),'b2ush9_hi_aa9m1')
+       call my_out(70,nx,ny,aa9(-1,-1, 0),'b2ush9_hi_aa9m0')
+       call my_out(70,nx,ny,aa9(-1,-1, 1),'b2ush9_hi_aa9p1')
+       call my_out(70,nx,ny,aa9(-1,-1, 2),'b2ush9_hi_aa9p2')
+       call my_out(70,nx,ny,aa9(-1,-1, 3),'b2ush9_hi_aa9p3')
+       call my_out(70,nx,ny,aa9(-1,-1, 4),'b2ush9_hi_aa9p4')
+       call my_out(70,nx,ny,aa9(-1,-1, 5),'b2ush9_hi_aa9p5')
+       call my_out(70,nx,ny,aa9(-1,-1, 6),'b2ush9_hi_aa9p6')
+       call my_out(70,nx,ny,resht,'b2ush9_reshi')
+       call my_out(70,nx,ny,cortt,'b2ush9_corti')
+      endif
 
 *   ..return
       ncall = ncall+1
