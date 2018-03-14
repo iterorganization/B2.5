@@ -41,7 +41,7 @@ c
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
       integer jvft46
-      integer is, i, j, n, jvftnew, nstra1, io, idummy
+      integer is, i, j, n, jvftnew, io, idummy
       real (kind=R8) :: width
       real (kind=R8), allocatable :: field1(:,:)
       character*16, allocatable :: textan1(:), textmn1(:)
@@ -53,8 +53,7 @@ c
 
 *  -- PROCEDURES --
       character*32 :: get_B25_hash
-      logical streql
-      external ipgeti, ipgetr, xertst, streql, get_B25_hash
+      external ipgeti, ipgetr, xertst, get_B25_hash
 #endif
       external subini, subend
 

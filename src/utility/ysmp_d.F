@@ -313,7 +313,8 @@ C
 C----GENERATE INVERSE PERMUTATION FROM PERMUTATION
     4   DO 5 K=1,N
           NEXT(K) = -NEXT(K)
-    5     LAST(NEXT(K)) = K
+          LAST(NEXT(K)) = K
+    5   CONTINUE
 C
         RETURN
         END
@@ -335,7 +336,8 @@ C----INITIALIZE DEGREES, ELEMENT LISTS, AND DEGREE LISTS
         DO 1 VI=1,N
           MARK(VI) = 1
           L(VI) = 0
-    1     HEAD(VI) = 0
+          HEAD(VI) = 0
+    1   CONTINUE
         SFS = N+1
 C
 C----CREATE NONZERO STRUCTURE
@@ -372,7 +374,8 @@ C----CREATE DEGREE LISTS AND INITIALIZE MARK VECTOR
           HEAD(DVI) = VI
           LAST(VI) = -DVI
           IF (NEXT(VI).GT.0)  LAST(NEXT(VI)) = VI
-    4     MARK(VI) = TAG
+          MARK(VI) = TAG
+    4   CONTINUE
 C
         RETURN
 C
@@ -912,7 +915,8 @@ C
 C----INITIALIZATION
         DO 1 K=1,N
           D(K) = 0.0e0_R8                                                !srv 11.01.07
-    1     JL(K) = 0
+          JL(K) = 0
+    1   CONTINUE
 C
 C----FOR EACH ROW K
         DO 11 K=1,N
@@ -990,7 +994,8 @@ C------SAVE NONZERO ENTRIES IN K-TH ROW OF U ...
             DO 10 J=JMIN,JMAX
               JUMUJ = JU(MU+J)
               U(J) = D(JUMUJ)
-   10         D(JUMUJ) = 0.0e0_R8                                        !srv 11.01.07
+              D(JUMUJ) = 0.0e0_R8                                        !srv 11.01.07
+   10       CONTINUE
 C
 C------... AND ADD K TO ROW LIST FOR FIRST NONZERO ENTRY IN K-TH ROW
             IL(K) = JMIN
@@ -1031,7 +1036,8 @@ C-----------------------------------------------------------------------
 C
 C----SET TMP TO PERMUTED B
         DO 1 K=1,N
-    1     TMP(K) = B(P(K))
+          TMP(K) = B(P(K))
+    1   CONTINUE
 C
 C----SOLVE  UT D Y = B  BY FORWARD SUBSTITUTION
         DO 3 K=1,N
@@ -1041,7 +1047,8 @@ C----SOLVE  UT D Y = B  BY FORWARD SUBSTITUTION
           IF (JMIN.GT.JMAX)  GO TO 3
           MU = IJU(K) - JMIN
           DO 2 J=JMIN,JMAX
-    2       TMP(JU(MU+J)) = TMP(JU(MU+J)) + U(J) * TMPK
+            TMP(JU(MU+J)) = TMP(JU(MU+J)) + U(J) * TMPK
+    2     CONTINUE
     3     TMP(K) = TMPK * D(K)
 C
 C----SOLVE  U X = Y  BY BACK SUBSTITUTION
@@ -1053,10 +1060,12 @@ C----SOLVE  U X = Y  BY BACK SUBSTITUTION
           IF (JMIN.GT.JMAX)  GO TO 5
           MU = IJU(K) - JMIN
           DO 4 J=JMIN,JMAX
-    4       SUM = SUM + U(J) * TMP(JU(MU+J))
+            SUM = SUM + U(J) * TMP(JU(MU+J))
+    4     CONTINUE
     5     TMP(K) = SUM
           Z(P(K)) = SUM
-    6     K = K-1
+          K = K-1
+    6   CONTINUE
 C
         RETURN
         END
@@ -1105,7 +1114,8 @@ C
 C--PHASE 1 -- FIND ROW IN WHICH TO STORE EACH NONZERO
 C----INITIALIZE COUNT OF NONZEROES TO BE STORED IN EACH ROW
         DO 1 I=1,N
-    1     Q(I) = 0
+          Q(I) = 0
+    1   CONTINUE
 C
 C----FOR EACH NONZERO ELEMENT A(J)
         DO 3 I=1,N
@@ -1121,15 +1131,17 @@ C--------FIND ROW (=R(J)) AND COLUMN (=JA(J)) IN WHICH TO STORE A(J) ...
             R(J) = K
 C
 C--------... AND INCREMENT COUNT OF NONZEROES (=Q(R(J)) IN THAT ROW
-    2       Q(K) = Q(K) + 1
-    3     CONTINUE
+            Q(K) = Q(K) + 1
+    2     CONTINUE
+    3   CONTINUE
 C
 C
 C--PHASE 2 -- FIND NEW IA AND PERMUTATION TO APPLY TO (JA,A)
 C----DETERMINE POINTERS TO DELIMIT ROWS IN PERMUTED (JA,A)
         DO 4 I=1,N
           IA(I+1) = IA(I) + Q(I)
-    4     Q(I) = IA(I+1)
+          Q(I) = IA(I+1)
+    4   CONTINUE
 C
 C----DETERMINE WHERE EACH (JA(J),A(J)) IS STORED IN PERMUTED (JA,A)
 C----FOR EACH NONZERO ELEMENT (IN REVERSE ORDER)
@@ -1302,7 +1314,8 @@ C----INITIALIZATION
         IU(1) = 1
         DO 1 K=1,N
           MARK(K) = 0
-    1     JL(K) = 0
+          JL(K) = 0
+    1   CONTINUE
 C
 C----FOR EACH ROW K
         DO 18 K=1,N
@@ -1387,7 +1400,7 @@ C--------SEARCH LAST ROW SAVED FOR FIRST NONZERO ENTRY IN K-TH ROW ...
             IF (JUMIN.GT.JUPTR)  GO TO 12
             DO 11 JMIN=JUMIN,JUPTR
               IF (JU(JMIN)-I)  11, 13, 12
-   11         CONTINUE
+   11       CONTINUE
    12       GO TO 15
 C
 C--------... AND THEN TEST WHETHER TAIL MATCHES HEAD OF K-TH ROW
@@ -1396,7 +1409,7 @@ C--------... AND THEN TEST WHETHER TAIL MATCHES HEAD OF K-TH ROW
               IF (JU(J).NE.I)  GO TO 15
               I = Q(I)
               IF (I.GT.N)  GO TO 17
-   14         CONTINUE
+   14       CONTINUE
             JUPTR = JMIN - 1
 C
 C------SAVE NONZERO STRUCTURE OF K-TH ROW IN JU
@@ -1407,7 +1420,8 @@ C------SAVE NONZERO STRUCTURE OF K-TH ROW IN JU
           DO 16 J=JUMIN,JUPTR
             I = Q(I)
             JU(J) = I
-   16       MARK(I) = K
+            MARK(I) = K
+   16     CONTINUE
           IJU(K) = JUMIN
 C
 C------ADD K TO ROW LIST FOR FIRST NONZERO ELEMENT IN K-TH ROW

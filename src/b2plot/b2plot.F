@@ -214,7 +214,7 @@ c
      * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time
       real (kind=R8) ::
      1 lambda, lnlam, hh, hhn, phi_app
-      integer i,j,icell,iclv,il,imi,
+      integer i,j,icell,il,imi,
      1 is1,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
      2 ikind,lnblnk,nz,ixx,iyy,ixl,ixr,iyb,iyt,isel,
      3 i1,ibnd,ixn,iyn,ixf,iyf,idir,isign
@@ -6336,6 +6336,8 @@ cdpc still in testing phase
       subroutine select_eirene_stack
 
 #ifdef B25_EIRENE
+      integer i, is
+
       cflag=.true.
       EVALUE: select case(cval)
         case('pdena')
@@ -6533,7 +6535,7 @@ cdpc still in testing phase
 
       subroutine select_eirene_command
 #ifdef B25_EIRENE
-      integer it, iclv
+      integer i, ix, iy, is, it, iclv
       integer :: nntria(0:nxd-1,0:nyd-1)
       real (kind=R8) :: volsum,
      *   xc, yc, x1, x2, x3, x4, y1, y2, y3, y4

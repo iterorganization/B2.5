@@ -59,6 +59,9 @@
       use eirmod_extrab25
       use b2mod_b2plot
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+#ifdef NAGFOR
+      use f90_unix_proc ! IGNORE
+#endif
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -1790,6 +1793,9 @@ c new CDF movie option (1st frame at t=0)
       character*256 filename, fort31name
 #ifdef B25_EIRENE
       character*256 systemarg
+#ifdef NAGFOR
+      integer ierror, status
+#endif
 #endif
       logical ok, found
 *   ..procedures
@@ -2164,23 +2170,39 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
             inquire(file='fort.13',exist=found)
             if (found) then
               systemarg='cp fort.13 fort.13.'//savefile(13:16)
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
             inquire(file='fort.15',exist=found)
             if (found) then
               systemarg='cp fort.15 fort.15.'//savefile(13:16)
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
 #else
             inquire(file='ftn13',exist=found)
             if (found) then
               systemarg='cp ftn13 ftn13.'//savefile(13:16)
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
             inquire(file='ftn15',exist=found)
             if (found) then
               systemarg='cp ftn15 ftn15.'//savefile(13:16)
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
 #endif
           endif

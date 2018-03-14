@@ -675,8 +675,8 @@ cxpb Deduce from fort.33 triangle vertices files which format precision to use
           new_format = 2
         end if
         goto 939
- 933    new_format = 2
- 939    continue
+  933   new_format = 2
+  939   continue
         close(33)
       else
         new_format = 2
@@ -812,8 +812,6 @@ csw 13apr2011 dummies for vparx,...,deltae_...
       call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
       call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathxb)
       call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathyb)
-
-
 
       deallocate(dummy)
 
