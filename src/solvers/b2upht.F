@@ -9,7 +9,8 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_numerics_namelist , only : corr_core_dt                ! IYS 19.12.2017 
+      use b2mod_numerics_namelist
+     , , only : corr_core_dt                ! IYS 19.12.2017 
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv
@@ -40,7 +41,6 @@
       integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg
       real (kind=R8) ::
      *  ctt, dte, dti, t0, t1, t2
-!      real (kind=R8), save :: c_corr_core_dt = 1.0_R8                     !lk 26.10.17
       real (kind=R8) :: 
      *  dte1(-1:nx,-1:ny), dti1(-1:nx,-1:ny),                             !lk 26.10.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny), tt3(-1:ny)                    !lk 26.10.17
@@ -67,7 +67,6 @@
       n2=(nx+2)*(ny+2)
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-!       call ipgetr ('b2upht_c_corr_core_dt', c_corr_core_dt)              !lk 26.10.2017
        call ipgeti ('b2upht_stylec', stylec)
        call xertst (0.le.stylec, 'faulty internal parameter stylec')
        call ipgeti ('b2news_poteq', pot_eq)
@@ -129,64 +128,36 @@
          dte = rxf*max(-te(ix,iy),corte(ix,iy))
          dti = rxf*max(-ti(ix,iy),corti(ix,iy))
         endif
-	  dte1(ix,iy) = dte
-	  dti1(ix,iy) = dti
+        dte1(ix,iy) = dte
+        dti1(ix,iy) = dti
 *   ..smooth the correction for inner flux surfaces      !lk 26.10.2017{
-          if(on_closed_surface(ix,iy) .and. 
+        if(on_closed_surface(ix,iy) .and. 
      *                                 bottomiy(ix,iy).ne.-2) then
-              tt0(iy) = tt0(iy) + vol(ix,iy)*ni(ix,iy,1)
-              tt1(iy) = tt1(iy) + vol(ix,iy)*ni(ix,iy,1)*dti1(ix,iy)
-              tt2(iy) = tt2(iy) + vol(ix,iy)*ne(ix,iy)
-              tt3(iy) = tt3(iy) + vol(ix,iy)*ne(ix,iy)*dte1(ix,iy)
-          endif
+          tt0(iy) = tt0(iy) + vol(ix,iy)*ni(ix,iy,1)
+          tt1(iy) = tt1(iy) + vol(ix,iy)*ni(ix,iy,1)*dti1(ix,iy)
+          tt2(iy) = tt2(iy) + vol(ix,iy)*ne(ix,iy)
+          tt3(iy) = tt3(iy) + vol(ix,iy)*ne(ix,iy)*dte1(ix,iy)
+        endif
        enddo
-	enddo
+      enddo
 
-!*   ..smooth the correction for inner flux surfaces      !lk 26.10.2017{
-!        tt0 = 0.0e0_R8
-!        tt1 = 0.0e0_R8
-!        tt2 = 0.0e0_R8
-!	  tt3 = 0.0e0_R8
-!        do iy = -1,ny
-!          do ix = -1,nx
-!            if(on_closed_surface(ix,iy) .and. 
-!     *                                 bottomiy(ix,iy).ne.-2) then
-!              tt0(iy) = tt0(iy) + vol(ix,iy)*ni(ix,iy,1)
-!              tt1(iy) = tt1(iy) + vol(ix,iy)*ni(ix,iy,1)*dti1(ix,iy)
-!              tt2(iy) = tt2(iy) + vol(ix,iy)*ne(ix,iy)
-!              tt3(iy) = tt3(iy) + vol(ix,iy)*ne(ix,iy)*dte1(ix,iy)
-!            endif
-!          enddo
-!        enddo
-!        do iy = -1,ny
-!          do ix = -1,nx
-!            if(on_closed_surface(ix,iy) .and. 
-!     *                                 bottomiy(ix,iy).ne.-2) then
-!              dti1(ix,iy) = tt1(iy)/tt0(iy) +
-!     *         corr_core_dt*(dti1(ix,iy)-tt1(iy)/tt0(iy))    ! IYS 19.12.2017
-!              dte1(ix,iy) = tt3(iy)/tt2(iy) +
-!     *         corr_core_dt*(dte1(ix,iy)-tt3(iy)/tt2(iy))    ! IYS 19.12.2017
-!            endif
-!          enddo
-!        enddo                                             !lk 26.10.2017}
-     
-	do iy = -1, ny
+      do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-            if(on_closed_surface(ix,iy) .and. 
+        if(on_closed_surface(ix,iy) .and. 
      *                                 bottomiy(ix,iy).ne.-2) then
-              dti1(ix,iy) = tt1(iy)/tt0(iy) +
+          dti1(ix,iy) = tt1(iy)/tt0(iy) +
      *         corr_core_dt*(dti1(ix,iy)-tt1(iy)/tt0(iy))    ! IYS 19.12.2017
-              dte1(ix,iy) = tt3(iy)/tt2(iy) +
+          dte1(ix,iy) = tt3(iy)/tt2(iy) +
      *         corr_core_dt*(dte1(ix,iy)-tt3(iy)/tt2(iy))    ! IYS 19.12.2017
-            endif
+        endif
         dte = dte1(ix,iy)
-	  dti = dti1(ix,iy)                                       !srv 25.07.17
+        dti = dti1(ix,iy)                                       !srv 25.07.17
         if (leftix(ix,iy).ne.-2) 
      >   wrk0(ix,iy) = ne(ix,iy)*dte+ni(ix,iy,0)*dti-
      &                 ne(leftix(ix,iy),leftiy(ix,iy))*dte-
      &                 ni(leftix(ix,iy),leftiy(ix,iy),0)*dti
-        if (solvereg(ireg)) te(ix,iy) = max(1.0e-5_R8*ev,te(ix,iy)+dte)	 !xpb
+        if (solvereg(ireg)) te(ix,iy) = max(1.0e-5_R8*ev,te(ix,iy)+dte)   !xpb
         if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
      &      leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
@@ -194,7 +165,7 @@
         else if (pot_eq.eq.2) then
           po(ix,iy) = 3.1_R8*te(ix,iy)/qe
         end if
-        if (solvireg(ireg)) ti(ix,iy) = max(1.0e-5_R8*ev,ti(ix,iy)+dti)	 !xpb
+        if (solvireg(ireg)) ti(ix,iy) = max(1.0e-5_R8*ev,ti(ix,iy)+dti)   !xpb
        enddo
       enddo
 *   ..adjust ua

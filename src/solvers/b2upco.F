@@ -2,13 +2,14 @@
 *.specification
 
       subroutine b2upco (nx, ny, nregionv, ua_solve, solvereg,
-     &  rxf, pcm0, vol, corpb, pccb0, pb, nb, ub, is)
+     &  rxf, pcm0, vol, corpb, pccb0, pb, nb, ub, isb)
       use b2mod_indirect
       use b2mod_types
-      use b2mod_numerics_namelist , only : corr_core_dn
+      use b2mod_numerics_namelist
+     , , only : corr_core_dn
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, nregionv, is
+      integer nx, ny, nregionv, isb
       real (kind=R8) ::
      *  rxf, pcm0, vol(-1:nx,-1:ny), corpb(-1:nx,-1:ny),
      *  pccb0(-1:nx,-1:ny)
@@ -35,7 +36,6 @@
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
-!      real (kind=R8), save :: c_corr_core_dn = 1.0_R8                     !lk 30.06.17
       real (kind=R8), save :: na_min = 1.0e4_R8
       real (kind=R8) :: t0,
      *  pb_(-1:nx,-1:ny), nb_(-1:nx,-1:ny),                               !lk 30.06.17
@@ -54,7 +54,6 @@
       call subini ('b2upco')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-!       call ipgetr ('b2upco_c_corr_core_dn', c_corr_core_dn)              !lk 30.06.2017
        call ipgetr ('b2mndr_na_min', na_min)                              ! IYS 27.11.2017
       endif
 *   ..test nx, ny
@@ -88,7 +87,7 @@
         pb_(ix,iy) = t0*pb(ix,iy)                        !lk 30.06.2017
        enddo
       enddo
-      if(corr_core_dn(is).eq.1.0_R8) then                  !srv 25.07.17 {  IYS 19.12.2017
+      if(corr_core_dn(isb).eq.1.0_R8) then               !srv 25.07.17 {  IYS 19.12.2017
         nb = nb_
         pb = pb_
       else                                               !srv 25.07.17 }
@@ -113,7 +112,7 @@
           do ix = -1,nx
             if(on_closed_surface(ix,iy).and.bottomiy(ix,iy).ne.-2) then
               t0 = pb(ix,iy)+tt2(iy)/tt0(iy) +
-     *         corr_core_dn(is)*(pb_(ix,iy)-pb(ix,iy)-tt2(iy)/tt0(iy))    ! IYS 19.12.2017
+     *         corr_core_dn(isb)*(pb_(ix,iy)-pb(ix,iy)-tt2(iy)/tt0(iy))   ! IYS 19.12.2017
               if (t0 .lt. pb(ix,iy)*na_min / nb(ix,iy)) then
                 too_low_density = .TRUE.
                 exit
@@ -121,7 +120,7 @@
                 pb(ix,iy) = t0
               endif
               t0 = nb(ix,iy)+tt1(iy)/tt0(iy) +
-     *         corr_core_dn(is)*(nb_(ix,iy)-nb(ix,iy)-tt1(iy)/tt0(iy))    ! IYS 19.12.2017
+     *         corr_core_dn(isb)*(nb_(ix,iy)-nb(ix,iy)-tt1(iy)/tt0(iy))   ! IYS 19.12.2017
               if (t0 .lt. na_min) then
                 too_low_density = .TRUE.
                 exit

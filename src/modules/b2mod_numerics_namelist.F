@@ -54,9 +54,8 @@
       namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
      2 solveco,solvemo,solvepo,solveee,solveei,write_nml_num,
-     3 numerics_filename,numerics_time_mod,numerics_time_switch
-     4 ,corr_core_dn,corr_core_dt    ! IYS 19.12.2017
-
+     3 numerics_filename,numerics_time_mod,numerics_time_switch,
+     4 corr_core_dn,corr_core_dt    ! IYS 19.12.2017
 
       contains
 
@@ -128,7 +127,6 @@
       deallocate(dtee)
       deallocate(dtei)
       deallocate(corr_core_dn)     ! IYS 19.12.2017
-      deallocate(corr_core_dt)     ! IYS 19.12.2017
       deallocate(solveco)
       deallocate(solvemo)
       deallocate(solvemt)
@@ -143,10 +141,10 @@
       return
       end subroutine dealloc_b2mod_numerics
 
-      subroutine read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
+      subroutine read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
       implicit none
 
-      integer nx,ny,nsmin,nsmax
+      integer nx,ny,ns,nsmin,nsmax
       logical :: file_ok
       integer ix,iy,is
       real (kind=R8) :: ttf
@@ -163,10 +161,6 @@
         read(99,numerics)
 #endif
         write(*,*) 'Read namelist numerics from ',trim(filename)
-!        do is=nsmin, nsmax-1 
-!          write(*,*) 'is = ',is,'; corr_core_dn = ',corr_core_dn(is)
-!        enddo
-!        write(*,*) 'corr_core_dt = ', corr_core_dt
         do ix = 0, nnreg(0)
           solveet(ix) = solveee(ix).or.solveei(ix)
           solvemt(ix) = .false.
@@ -186,6 +180,12 @@
      & 'faulty parameter core_dt_suppression')
       call xertst (0.0_R8.lt.core_dt_factor,
      & 'faulty parameter core_dt_factor')
+      call xertst (0.0_R8.lt.corr_core_dt,
+     & 'faulty parameter corr_core_dt')
+      do is = 0, ns
+        call xertst (0.0_R8.lt.corr_core_dn(is),
+     &   'faulty parameter corr_core_dn')
+      end do
       call xertst (0.0_R8.le.time_factor_required,
      & 'faulty parameter time_factor_required')
       call xertst (0.0_R8.lt.minval(dtco),
@@ -197,7 +197,7 @@
       call xertst (0.0_R8.lt.minval(dtei),
      & 'faulty parameter dtei')
 
-c additional time-modification factor
+c additional time modification factor
       ttf=core_dt_suppression
       do iy=-1,ny
         if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)

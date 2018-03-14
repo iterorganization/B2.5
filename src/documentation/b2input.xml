@@ -2458,7 +2458,7 @@
 			<switchgroup>
 				<name>b2mndr_*</name>
 				<description>
-					The five switches above are safeguards numbers for when printing changes after a time-step. The change is computed as: deltaX = abs((X(t)-X(t-1))/(X(t)+X_eps))
+					The five switches above are safeguards numbers for when printing changes after a time step. The change is computed as: deltaX = abs((X(t)-X(t-1))/(X(t)+X_eps))
 				</description>
 				<switch>
 					<name>b2mndr_na_eps</name>
@@ -2898,7 +2898,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If ank_mods.ne.0, then uses an additional scheme to ensure particle balance as the B2 solution evolves, due to the internal iteration scheme, away from the plasma background on which the Eirene sources were originally computed at the beginning of the time-step. The user is referred to the text in $SOLPSTOP/doc/Source_Scaling_in_B2.pdf for a full description of the method used.
+					If ank_mods.ne.0, then uses an additional scheme to ensure particle balance as the B2 solution evolves, due to the internal iteration scheme, away from the plasma background on which the Eirene sources were originally computed at the beginning of the time step. The user is referred to the text in $SOLPSTOP/doc/Source_Scaling_in_B2.pdf for a full description of the method used.
 				</description>
 			</switch>
 			<switch>
@@ -3102,14 +3102,6 @@
 				<description>
 					Artificial coefficient providing faster convergence to the neoclassical electric field but giving a distortion of the flows in the SOL as a side-effect.
 					Can be applied &lt;&gt;1 during the convergence and turned off for the final stage of calculations. Use with caution.
-				</description>
-			</switch>
-			<switch>
-				<name>b2upco_c_corr_core_dn</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					Smoothing parameter for the pressure correction on closed field lines.
 				</description>
 			</switch>
 			<switch>
@@ -3804,7 +3796,7 @@
 			<switchgroup>
 				<name>b2srdt_phm.</name>
 				<description>
-					Multipliers to the density, parallel momentum, heat, potential, and electron prticle time-derivative source terms, respectively.
+					Multipliers to the density, parallel momentum, heat, potential, and electron particle time-derivative source terms, respectively.
 					'phm4' is normally zero since the potential equation contains no source terms.
 				</description>
 				<switch>
@@ -6251,6 +6243,24 @@
 				<type>real*8</type>
 				<description>
 					Multiplier to the timestep in the core. Only active is less than 1. Should be larger than 0. Multiplies each successive core ring of cells (increasing IY) by CORE_DT_FACTOR, until the local time step multiplier is equal to 1.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_CORE_DN</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NS-1)</type>
+				<description>
+				Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a.
+					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_CORE_DT</name>
+				<default>1.0</default>
+				<type>real*8</type>
+				<description>
+				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions.
+					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
 				</description>
 			</switch>
 			<switch>
