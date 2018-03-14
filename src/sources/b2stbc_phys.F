@@ -48,7 +48,7 @@
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),           !srv 24.08.08
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
      &  pbshz(-1:nx,-1:ny,0:1),
-     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
+     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1  uadia(-1:nx,-1:ny,0:1,0:ns-1),
@@ -436,12 +436,13 @@
           if (rightix(ix,iy).ne.nx+1) then
             sx(ix,iy)=gs(rightix(ix,iy),rightiy(ix,iy),0)
             if (area_fix.ge.3)
-     >       sx(ix,iy) = sx(ix,iy)*qc(rightix(ix,iy),rightiy(ix,iy))
+     >       sx(ix,iy) = sx(ix,iy)*qc(rightix(ix,iy),rightiy(ix,iy),0)
             sxhz(ix,iy)=gs(rightix(ix,iy),rightiy(ix,iy),0)*       !srv 24.08.08
      &                  hz(ix,iy)
 !     &                  hz(rightix(ix,iy),rightiy(ix,iy))
             if (area_fix.ge.3)
-     >       sxhz(ix,iy) = sxhz(ix,iy)*qc(rightix(ix,iy),rightiy(ix,iy))
+     >       sxhz(ix,iy) = sxhz(ix,iy)*
+     >         qc(rightix(ix,iy),rightiy(ix,iy),0)
           else
             sx(ix,iy)=0.0_R8
             sxhz(ix,iy)=0.0_R8                                     !srv 24.08.08
@@ -459,7 +460,7 @@
      .           na_ext(leftix(ix,iy),leftiy(ix,iy),is)*hx(ix,iy))/
      .          (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))))
             end do
-            if (area_fix.ge.1) uu(ix,iy,:) = uu(ix,iy,:)/qc(ix,iy)
+            if (area_fix.ge.1) uu(ix,iy,:) = uu(ix,iy,:)/qc(ix,iy,0)
           else
             uu(ix,iy,:)=0.0_R8
           endif

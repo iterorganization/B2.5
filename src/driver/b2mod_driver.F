@@ -87,6 +87,7 @@
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
@@ -1187,6 +1188,7 @@ csw 09oct2012
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
+       call ipgeti ('b2mndr_use_9pt_stencil',use_9pt_stencil)
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1367,10 +1369,18 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
           endif
         enddo
       enddo                                                          !srv 11.03.08 }
-*  ..for 9-point stencil, compute south-face values of qc (cos) and qs (sin)
-*    temporary computation; should go into geometry routines!
-      call intfacev(nx,ny,bottomix,bottomiy,vol,qz(-1,-1,0),qs(-1,-1,1))
-      qc(:,:,1) = (1 - qs(:,:,1)**2)**0.5                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
+      if (use_9pt_stencil.eq.1) then
+cwdk    For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
+cwdk    temporary computation; should go into geometry routines!
+        call intfacev(nx,ny,bottomix,bottomiy,vol,qz(-1,-1,0),
+     .    qs(-1,-1,1))
+        qc(:,:,1) = (1 - qs(:,:,1)**2)**0.5                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
+      else
+cwdk    Use 5-point stencil. Overwrite values of qc and qs to ensure
+cwdk    backwards compatible behavior
+        qs(:,:,:) = 0.0_R8 ! will make all 9-point contributions 0
+        qc(:,:,1) = 1.0_R8 ! keep qc(:,:,0) unmodified, for corrections to poloidal face areas
+      endif
 *   ..find the poloidal number of midplane cell as a number of cell with min Bz
       if(nncut.eq.2) then                                            !srv 22.05.09 {
         nmdpl = rightcut(nncut)

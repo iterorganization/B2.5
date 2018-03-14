@@ -21,7 +21,7 @@
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  ne(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1),
      &  kinrgy(-1:nx,-1:ny,0:ns-1),ni(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx, -1:ny, 0:2), qc(-1:nx, -1:ny)
+     &  gs(-1:nx, -1:ny, 0:2), qc(-1:nx, -1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -234,7 +234,7 @@ csw 30apr2014 added
       elseif(want.eq.'sxpe') then
          do iy=-1,ny
             do ix=-1,nx
-               write(*,*) ix,iy,gs(ix,iy,0)*qc(ix,iy)
+               write(*,*) ix,iy,gs(ix,iy,0)*qc(ix,iy,0)
             enddo
             write(*,'()')
          enddo

@@ -25,7 +25,7 @@
      *  facdrift(-1:nx,-1:ny), 
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),    !xpb
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
-     &  qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3)
+     &  qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1  uadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1), 
@@ -575,7 +575,7 @@
        endif
 *    ..compute s0, s1: hb
        s0 = gs(rightix(-1,iy),rightiy(-1,iy),0)
-       if (area_fix.ge.3) s0 = s0*qc(rightix(-1,iy),rightiy(-1,iy))       !srv 09.03.09
+       if (area_fix.ge.3) s0 = s0*qc(rightix(-1,iy),rightiy(-1,iy),0)       !srv 09.03.09
        s1 = abs(pbs(rightix(-1,iy),rightiy(-1,iy),0))
 *    ..compute cell-faced quantities
        do is = 0, ns-1
@@ -803,7 +803,7 @@ c         fchi=0.0_R8
        endif
 *    ..compute s0, s1
        s0 = gs(nx,iy,0)
-       if (area_fix.ge.3) s0 = s0*qc(nx,iy)                          !srv 09.03.09
+       if (area_fix.ge.3) s0 = s0*qc(nx,iy,0)                       !srv 09.03.09
        s1 = abs(pbs(nx,iy,0))
 *    ..compute cell-faced quantities
        do is = 0, ns-1

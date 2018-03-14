@@ -30,7 +30,7 @@
       real (kind=R8) :: dtim,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3)
+     &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
@@ -210,7 +210,7 @@ cxpb Must convert fluxes to flux densities
               ua0(ix,iy,is) = (ua(ix,iy,is)*na(ix,iy,is)*
      .         sign(1.0_R8,bb(ix,iy,0)) + ua_tmp*n0_tmp)/na0(ix,iy,is)
               fna0(ix,iy,0,0,is) = 
-     .         fna(ix,iy,0,0,is)/gs(ix,iy,0)/qc(ix,iy) + p0_tmp
+     .         fna(ix,iy,0,0,is)/gs(ix,iy,0)/qc(ix,iy,0) + p0_tmp
               fna0(ix,iy,1,1,is) = fna(ix,iy,1,1,is)/gs(ix,iy,1) +r0_tmp
               fhi0(ix,iy,0,0) = fhi0(ix,iy,0,0) + pe_tmp
               fhi0(ix,iy,1,1) = fhi0(ix,iy,1,1) + re_tmp
@@ -219,7 +219,7 @@ cxpb Must convert fluxes to flux densities
         else
           na0(:,:,is) = na(:,:,is)
           ua0(:,:,is) = ua(:,:,is)*sign(1.0_R8,bb(:,:,0))
-          fna0(:,:,0,0,is) = fna(:,:,0,0,is)/gs(:,:,0)/qc(:,:)
+          fna0(:,:,0,0,is) = fna(:,:,0,0,is)/gs(:,:,0)/qc(:,:,0)
           fna0(:,:,1,1,is) = fna(:,:,1,1,is)/gs(:,:,1)
         end if
       end do
@@ -247,12 +247,12 @@ cxpb Must convert fluxes to flux densities
      .                  ti(ix,iy)*ni(ix,iy,0)) /
      .                 (na_tot(ix,iy) + ni(ix,iy,0))
           fhi0(ix,iy,0,0) = fhi0(ix,iy,0,0) + 
-     .     fhi(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy)
+     .     fhi(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy,0)
           fhi0(ix,iy,1,1) = fhi0(ix,iy,1,1) + 
      .     fhi(ix,iy,1,1)/gs(ix,iy,1)
-          fhe0(ix,iy,0,0) = fhe(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy)
+          fhe0(ix,iy,0,0) = fhe(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy,0)
           fhe0(ix,iy,1,1) = fhe(ix,iy,1,1)/gs(ix,iy,1)
-          fch0(ix,iy,0,0) = fch(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy)
+          fch0(ix,iy,0,0) = fch(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy,0)
           fch0(ix,iy,1,1) = fch(ix,iy,1,1)/gs(ix,iy,1)
         end do
       end do

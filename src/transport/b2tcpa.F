@@ -68,7 +68,8 @@
 *    ..test sign of ne, te, csig, calf
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2*4, csig, 1, 'csig', '.ge.')
+       call b2xvsg (n2, csig(-1,-1,0,0), 1, 'csig', '.ge.')
+       call b2xvsg (n2, csig(-1,-1,1,1), 1, 'csig', '.ge.')
 *    ..test edge values of csig, calf
        call b2xvff (nx, ny, csig, 'csig')
        call b2xvff (nx, ny, calf, 'calf')
