@@ -244,7 +244,7 @@ c Drift terms
       call b2tiner (nx, ny, ns, vol, gs, hx, hy, bb, na, ua,             !srv 22.11.12
      &              facdrift, fchinert)
 *  .. calculate the x,y-components of anomalous current
-      call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)
+      call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,     !srv 07.07.14
