@@ -311,7 +311,7 @@ c 2002-09-11: logic revised
       integer NCHORI, NCHENI, NCHOR1
       integer LNTSPEC, LNTSPUT, NMCSPUT, NLSTADDS, MTREADDS, NGWTIES
       integer NSNVI, NSNV1, NPWIN, NSPTAL
-      integer kint, kmod, iside
+      integer jatm, kint, kmod, iside
       integer NTL, NFR
       integer IPOS0, IPOS1, IPOS2
       integer NPRCSF, IPRCSF
@@ -3460,9 +3460,12 @@ cxpb start by identifying the correspondence with the new run species
             imol1(imol) = iss
           else
             found = .true.
-            do iatm = 1, natm
-              if (mlcmp(iatm,imol).ne.0) then
-                if (iatm1(iatm).eq.0) found = .false.
+            do jatm = 1, natm
+              if (mlcmp(jatm,imol).ne.0) then
+                if (iatm1(jatm).eq.0) then
+                  iatm = jatm
+                  found = .false.
+                end if
               end if
             end do
             if (found) then
@@ -5513,7 +5516,7 @@ cxpb We now re-compute input data according to the new bundling for block 4
             IF (M.EQ.1) THEN   ! we have an atom
               ISCD2A(IATM,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              ISCD2A(IATM,K) = M + 10*L + 100*imol1(imol)
+              ISCD2A(IATM,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
               ISCD2A(IATM,K) = M + 10*L + 100*ipls1(icrm)
             END IF
