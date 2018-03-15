@@ -531,14 +531,14 @@ cxpb
      &     po, cvla(-1,-1,0,0,is),cdna(-1,-1,0,0,is),cdpa(-1,-1,0,0,is),
      &     cddi(-1,-1,0,0,is),                                           !srv 13.10.06
      &     cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),  
-     &     cdnahz(-1,-1,0,0,is),                                         !srv 09.01.01 15.12.05
-     &     cdpahz(-1,-1,0,0,is), fchvispar, fchinert, fchanml,           !srv 20.09.06
-     &     fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
+     &     cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),                   !srv 09.01.01 15.12.05
+     &     fchvispar, fchvisper, fchinert, fchanml, fchvisq, 
+     &     fna(-1,-1,0,0,is),fna_nodrift(-1,-1,0,0,is),
      &     fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),                 !srv 01.10.99 21.01.00
      &     fnaPSch(-1,-1,0,0,is), fna_mdf(-1,-1,0,0,is),                 !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,0,is), fna_52(-1,-1,0,0,is),
      1     fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is),
-     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is))
+     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),.true.)
           if (ncall.eq.ncallout) then
             write(*,*) 'ncall,is',ncall,is
             call hbout('b2ne_npco   ',nx,ny,ns,te,'te',ti,'ti',
