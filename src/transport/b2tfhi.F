@@ -133,8 +133,8 @@
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-       call b2xvsg (n2*2, chci(-1,-1,0,0), 1, 'chci', '.ge.')
-       call b2xvsg (n2*2, chci(-1,-1,1,1), 1, 'chci', '.ge.')
+       call b2xvsg (n2, chci(-1,-1,0,0), 1, 'chci00', '.ge.')
+       call b2xvsg (n2, chci(-1,-1,1,1), 1, 'chci11', '.ge.')
 *    ..test edge values of chci, chvi
        call b2xvff (nx, ny, chci, 'chci')
        call b2xvff (nx, ny, chvi, 'chvi')

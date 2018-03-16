@@ -203,8 +203,8 @@
        enddo
 *    ..test sign and edge values of cvsa
        do is = 0, ns-1
-        call b2xvsg (n2*2, cvsa(-1,-1,0,0,is), 1, 'cvsa', '.ge.')
-        call b2xvsg (n2*2, cvsa(-1,-1,1,1,is), 1, 'cvsa', '.ge.')
+        call b2xvsg (n2, cvsa(-1,-1,0,0,is), 1, 'cvsa00', '.ge.')
+        call b2xvsg (n2, cvsa(-1,-1,1,1,is), 1, 'cvsa11', '.ge.')
         call b2xvff (nx, ny, cvsa(-1,-1,0,0,is), 'cvsa')
        enddo
 *    ..test sign of smo, smq

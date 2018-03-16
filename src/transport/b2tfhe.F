@@ -143,10 +143,10 @@
 *    ..test sign of ne, te, csig, chce
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2*2, csig(-1,-1,0,0), 1, 'csig', '.ge.')
-       call b2xvsg (n2*2, csig(-1,-1,1,1), 1, 'csig', '.ge.')
-       call b2xvsg (n2*2, chce(-1,-1,0,0), 1, 'chce', '.ge.')
-       call b2xvsg (n2*2, chce(-1,-1,1,1), 1, 'chce', '.ge.')
+       call b2xvsg (n2, csig(-1,-1,0,0), 1, 'csig00', '.ge.')
+       call b2xvsg (n2, csig(-1,-1,1,1), 1, 'csig11', '.ge.')
+       call b2xvsg (n2, chce(-1,-1,0,0), 1, 'chce00', '.ge.')
+       call b2xvsg (n2, chce(-1,-1,1,1), 1, 'chce11', '.ge.')
 *    ..test edge values of csig, chce, chve, chvemx, calf, calf_an
        call b2xvff (nx, ny, csig, 'csig')
        call b2xvff (nx, ny, chce, 'chce')
