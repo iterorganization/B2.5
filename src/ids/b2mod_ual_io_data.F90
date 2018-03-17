@@ -18,7 +18,7 @@ module b2mod_ual_io_data
     use ids_schemas ! IGNORE
     ! use ids_assert
     use ids_string  ! IGNORE
-    ! use ids_grid_structured
+    use ids_grid_structured ! IGNORE
 #else
 #ifdef ITM
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
@@ -50,7 +50,7 @@ contains
     !> Transform data from B2 to IDS cell
     function b2_IMAS_Transform_Data_B2_To_IDS_Cell( grid, gridSubsetId, gmap,  &
             &   b2CellData ) result( idsdata )
-        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS data
+        type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS data
             !< structure, designed for handling grid geometry data
         integer, intent(in) :: gridSubsetId !< ID (base index) of the
             !< grid subset the data is to be stored onx
@@ -68,7 +68,7 @@ contains
     !> Transform data from B2 to IDS face
     function b2_IMAS_Transform_Data_B2_To_IDS_Face( grid, gridSubsetId, gmap,  &
             &   b2FaceData ) result( idsdata )
-        type(ids_generic_grid_dynamic), intent(in)  :: grid !< Type of IDS data
+        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS data
             !< structure, designed for handling grid geometry data
         integer, intent(in) :: gridSubsetId !< ID (base index) of the
             !< grid subset the data is to be stored on
@@ -91,7 +91,7 @@ contains
     !> Transform data from B2 to IDS vertex
     function b2_IMAS_Transform_Data_B2_To_IDS_Vertex( grid, gridSubsetId,   &
             &   gmap, b2VertexData ) result( idsdata )
-        type(ids_generic_grid_dynamic), intent(in)  :: grid !< Type of IDS data
+        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS data
             !< structure, designed for handling grid geometry data
         integer, intent(in)         :: gridSubsetId !< ID (base index) of the
             !< grid subset the data is to be stored on
@@ -113,7 +113,7 @@ contains
     !! interface b2_IMAS_Transform_Data_B2_To_IDS instead.
     function b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetId,  &
             &   gmap, b2CellData, b2FaceData, b2VertexData ) result( idsdata )
-        type(ids_generic_grid_dynamic), intent(in)  :: grid !< Type of IDS data
+        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS data
             !< structure, designed for handling grid geometry data
         integer, intent(in) :: gridSubsetId !< Base grid subset index
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
@@ -197,7 +197,7 @@ contains
 
   implicit none
 
-  interface b2ITMTransformDataB2ToCpo
+  interface b2ITMTransformDataB2ToCPO
       module procedure b2ITMTransformDataB2ToCPOCell, b2ITMTransformDataB2ToCPOFace
   end interface
 

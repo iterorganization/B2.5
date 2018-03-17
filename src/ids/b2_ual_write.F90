@@ -41,9 +41,10 @@ program b2_ual_write
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
     use ids_grid_objectlist     ! IGNORE
-    use ids_grid_examples       ! IGNORE
     use ids_grid_unstructured   ! IGNORE
     use ids_grid_structured     ! IGNORE
+    use ids_grid_access         ! IGNORE
+    use ids_grid_object         ! IGNORE
 
 #ifdef USE_PXFGETENV
     integer lenval, ierror

@@ -46,16 +46,19 @@ module b2mod_ual_io
 #ifdef IMAS
     use ids_schemas  ! IGNORE
     use ids_routines ! IGNORE
-    use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &   ! IGNORE
-        &   IDS_COORDTYPE_Z => COORDTYPE_Z,                 &   ! IGNORE
-        &   IDS_GRID_UNDEFINED => GRID_UNDEFINED                ! IGNORE
+    use ids_grid_common , &     ! IGNORE
+        &   IDS_COORDTYPE_R => COORDTYPE_R,    &
+        &   IDS_COORDTYPE_Z => COORDTYPE_Z,    &
+        &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
     use ids_grid_objectlist     ! IGNORE
-    use ids_grid_examples       ! IGNORE
     use ids_grid_unstructured   ! IGNORE
     use ids_grid_structured     ! IGNORE
     use ids_grid_data           ! IGNORE
+    use ids_grid_examples , &   ! IGNORE
+        &   IDS_RUN => RUN, &
+        &   IDS_SHOT => SHOT
 #else
 #ifdef ITM
     use euITM_schemas   ! IGNORE
@@ -81,7 +84,7 @@ contains
     !!          checks for correct use of the routine.
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
-    subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport,    &
+    subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport, &
             &   time_step_IN, time_slice_ind_IN, num_time_slices_IN )
 #       include <git_version_B25.h>
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
@@ -278,7 +281,7 @@ contains
 
         !! Write grid & grid subsets/subgrids
         call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
-            &   edge_profiles%ggd( time_sind )%grid,                        &
+            &   edge_profiles%grid_ggd( time_sind ),                        &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
@@ -293,26 +296,25 @@ contains
             !! Find grid subset base indices out of the available grid subset
             !! data stored in the IDS. That is done using IMAS GGD routine
             !! findGridSubsetByName().
-            iGsCoreBoundary = findGridSubsetByName(         &
-                &   edge_profiles%ggd( time_sind )%grid,    &
-                &   "Core boundary" )
-            iGsInnerMidplane = findGridSubsetByName( edge_profiles% &
-                &   ggd( time_sind )%grid, "Inner Midplane" )
-            iGsOuterMidplane = findGridSubsetByName( edge_profiles% &
-                &   ggd( time_sind )%grid, "Outer Midplane" )
-            iGsCore = findGridSubsetByName( edge_profiles%      &
-                &   ggd( time_sind )%grid, "Core" )
-            iGsSOL = findGridSubsetByName( edge_profiles%       &
-                &   ggd( time_sind )%grid, "SOL" )
-            iGsIDivertor = findGridSubsetByName( edge_profiles% &
-                &   ggd( time_sind )%grid, "Inner divertor" )
-            iGsODivertor = findGridSubsetByName( edge_profiles% &
-                &   ggd( time_sind )%grid, "Outer divertor" )
+            iGsCoreBoundary = findGridSubsetByName(   &
+                &   edge_profiles%grid_ggd( time_sind ), "Core boundary" )
+            iGsInnerMidplane = findGridSubsetByName(  &
+                &   edge_profiles%grid_ggd( time_sind ), "Inner Midplane" )
+            iGsOuterMidplane = findGridSubsetByName(  &
+                &   edge_profiles%grid_ggd( time_sind ), "Outer Midplane" )
+            iGsCore = findGridSubsetByName(           &
+                &   edge_profiles%grid_ggd( time_sind ), "Core" )
+            iGsSOL = findGridSubsetByName(            &
+                &   edge_profiles%grid_ggd( time_sind ), "SOL" )
+            iGsIDivertor = findGridSubsetByName(      &
+                &   edge_profiles%grid_ggd( time_sind ), "Inner divertor" )
+            iGsODivertor = findGridSubsetByName(      &
+                &   edge_profiles%grid_ggd( time_sind ), "Outer divertor" )
 
             !! TODO: The fluxes are currently in the edge_transport. They are
             !! supposed to be in the edge_profiles (24.10.2017)
-            !! use electrons%particles or electrons%energy node? Currently using
-            !! electrons%energy node
+            !! use electrons%particles or electrons%energy node?
+            !! Currently using electrons%energy node
 
             !! edge_transport fundamentals
             !! TODO: create it as a subroutine
@@ -457,7 +459,7 @@ contains
 
             !! Write data for Cells grid subset
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( time_sind )%grid, GRID_SUBSET_CELLS, gmap, value )
+                &   grid_ggd( time_sind ), GRID_SUBSET_CELLS, gmap, value )
 
             ival = 1
             call gridWriteData( val( ival ), GRID_SUBSET_CELLS, idsdata )
@@ -468,7 +470,7 @@ contains
             tmpFace = 0.0_IDS_real
             call value_on_faces( nx, ny, vol, value, tmpFace)
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                    &
-                &   edge_profiles%ggd( time_sind )%grid, iGsCoreBoundary,   &
+                &   edge_profiles%grid_ggd( time_sind ), iGsCoreBoundary,   &
                 &   gmap, tmpFace )
             call gridWriteData( val( ival ), iGsCoreBoundary, idsdata )
             deallocate( idsdata )
@@ -478,7 +480,7 @@ contains
             tmpVx = interpolateToVertices(  &
                 &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex( &
-                &   edge_profiles%ggd( time_sind )%grid,        &
+                &   edge_profiles%grid_ggd( time_sind ),        &
                 &   iGsInnerMidplane, gmap, tmpVx )
             call gridWriteData( val( ival ), iGsInnerMidplane, idsdata )
             deallocate( idsdata )
@@ -486,7 +488,7 @@ contains
             !! Write data for Outer Midplane grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
-                &   edge_profiles%ggd( time_sind )%grid, iGsOuterMidplane,  &
+                &   edge_profiles%grid_ggd( time_sind ), iGsOuterMidplane,  &
                 &   gmap, tmpVx )
             call gridWriteData( val( ival ), iGsOuterMidplane, idsdata )
             deallocate( idsdata )
@@ -494,7 +496,7 @@ contains
             !! Write data for Nodes grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
-                &   edge_profiles%ggd( time_sind )%grid, GRID_SUBSET_NODES, &
+                &   edge_profiles%grid_ggd( time_sind ), GRID_SUBSET_NODES, &
                 &   gmap, tmpVx )
             call gridWriteData( val( ival ), GRID_SUBSET_NODES, idsdata )
             deallocate( idsdata )
@@ -515,7 +517,7 @@ contains
             !!       Inner divertor and Outer divertor)
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( time_sind )%grid, iGsCore, gmap, value )
+                &   grid_ggd( time_sind ), iGsCore, gmap, value )
 
             call gridWriteData( val( ival ), iGsCore, idsdata )
             deallocate( idsdata )
@@ -523,7 +525,7 @@ contains
             !! Write data for SOL grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( time_sind )%grid, iGsSOL, gmap, value )
+                &   grid_ggd( time_sind ), iGsSOL, gmap, value )
 
             call gridWriteData( val( ival ), iGsSOL, idsdata )
             deallocate( idsdata )
@@ -531,7 +533,7 @@ contains
             !! Write data for Inner Divertor grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( time_sind )%grid, iGsIDivertor, gmap, value )
+                &   grid_ggd( time_sind ), iGsIDivertor, gmap, value )
 
             call gridWriteData( val( ival ), iGsIDivertor, idsdata )
             deallocate( idsdata )
@@ -539,7 +541,7 @@ contains
             !! Write data for Outer Divertor grid subset
             ival = ival + 1
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
-                &   ggd( time_sind )%grid, iGsODivertor, gmap, value )
+                &   grid_ggd( time_sind ), iGsODivertor, gmap, value )
 
             call gridWriteData( val( ival ), iGsODivertor, idsdata )
             deallocate( idsdata )
@@ -556,7 +558,7 @@ contains
 
             !! TODO: add checks whether already allocated
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
-                &   ggd( time_sind )%grid, GRID_SUBSET_CELLS,           &
+                &   grid_ggd( time_sind ), GRID_SUBSET_CELLS,           &
                 &   gmap, b2CellData )
             call gridWriteData( scalar(1), GRID_SUBSET_CELLS, idsdata )
             deallocate(idsdata)
@@ -589,7 +591,7 @@ contains
 
             !! TODO: add checks whether already allocated
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
-                &   ggd( time_sind )%grid, GRID_SUBSET_CELLS,           &
+                &   grid_ggd( time_sind ), GRID_SUBSET_CELLS,           &
                 &   gmap, b2CellData )
 
             call B2grid_Write_Data_Vector_Components( vectorComponent(1),   &
@@ -754,7 +756,7 @@ contains
             !! Fill in vector component data
             do i = 1, dim
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(        &
-                    &   edge_profiles%ggd( time_sind )%grid,        &
+                    &   edge_profiles%grid_ggd( time_sind ),        &
                     &   GRID_SUBSET_CELLS, gmap, vecdata(:,:,i-1))
                 call gridWriteData( vector, GRID_SUBSET_CELLS, idsdata )
                 deallocate(idsdata)
@@ -808,18 +810,18 @@ contains
             if ( .not. present(gridSubsetId) ) then
                 !! Fill in vector component data
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-                    &   edge_profiles%ggd( time_sind )%grid,    &
+                    &   edge_profiles%grid_ggd( time_sind ),    &
                     &   GRID_SUBSET_Y_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-                    &   edge_profiles%ggd( time_sind )%grid,    &
+                    &   edge_profiles%grid_ggd( time_sind ),    &
                     &   GRID_SUBSET_X_ALIGNED_FACES, gmap, b2FaceData)
                 call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
             else
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-                    &   edge_profiles%ggd( time_sind )%grid,    &
+                    &   edge_profiles%grid_ggd( time_sind ),    &
                     &   gridSubsetId, gmap, b2FaceData)
                 call gridWriteData( vector, gridSubsetId, idsdata )
                 deallocate(idsdata)

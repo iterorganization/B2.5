@@ -31,6 +31,9 @@ module b2mod_ual_io_grid
     use ids_string          ! IGNORE
     use ids_grid_subgrid    ! IGNORE
     use ids_grid_structured ! IGNORE
+    use ids_grid_objectlist ! IGNORE
+    use ids_assert          ! IGNORE
+    use ids_grid_object     ! IGNORE
 #else
 # ifdef ITM
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
@@ -196,7 +199,7 @@ contains
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
-        type(ids_generic_grid_dynamic), intent(out) :: ggd_grid !< Type of IDS
+        type(ids_generic_grid_aos3_root), intent(out) :: ggd_grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 
         integer, intent(in) :: nx   !< Number of interior cells
@@ -716,7 +719,7 @@ contains
 
     !> Set connectivity array for cells by defining nodes that form each cell
     subroutine set_Cells_Conn_Array_Nodes(ggd_grid)
-        type(ids_generic_grid_dynamic), intent(inout) :: ggd_grid !< Type of IDS
+        type(ids_generic_grid_aos3_root), intent(inout) :: ggd_grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
         !! Internal variables
         integer, allocatable :: objects2Darray(:,:)
@@ -872,8 +875,8 @@ contains
         !! Initialize implicit object list for faces (class (/2/) )
         allocate(indexList1d(gmap%nfcx))
         indexList1d = (/ (i, i = 1, gmap%nfcx) /)
-        call createExplicitObjectListSingleSpace( ggd_grid,         &
-            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
+        call createExplicitObjectListSingleSpace( ggd_grid,            &
+            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),    &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,            &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
 
@@ -883,7 +886,7 @@ contains
             indexList1d = (/ 1 /)
             call createExplicitObjectListSingleSpace( ggd_grid,         &
                 &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
-                &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,            &
+                &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,         &
                 &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         end if
 
@@ -906,15 +909,15 @@ contains
         deallocate(indexList1d)
         allocate(indexList1d(1))
         indexList1d = (/ 1 /)
-        call createExplicitObjectListSingleSpace( ggd_grid,         &
-            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES), &
+        call createExplicitObjectListSingleSpace( ggd_grid,           &
+            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),   &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,           &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         end if
 
         !! GRID_SUBSET_CELLS: all 2d cells, one implicit object list
-        call createGridSubsetForClass(  ggd_grid,           &
-            &   ggd_grid%grid_subset( GRID_SUBSET_CELLS ),  &
+        call createGridSubsetForClass(  ggd_grid,               &
+            &   ggd_grid%grid_subset( GRID_SUBSET_CELLS ),      &
             &   IDS_CLASS_CELL, 1, GRID_SUBSET_CELLS, "Cells",  &
             &   "All faces (1D objects) in the domain."  )
 
@@ -969,22 +972,23 @@ contains
                 !! subroutine collectIndexListForRegionSubroutine
                 !! (function collectIndexListForRegion transferred to subroutine,
                 !! as array of certain dimension is required as an output)
-                call collectIndexListForRegionSubroutine( gmap, region, iType,  &
-                    &   iRegion, indexList2d )
+                call collectIndexListForRegionSubroutine( gmap, region,   &
+                    &   iType, iRegion, indexList2d )
 
                 !! Initialize explicit object list for grid subset
                 !! TODO: Currently taking object indices only from space 1
                 !!      ( %space(1) ). Set
                 !!       to search all spaces
-                call createExplicitObjectListSingleSpace( ggd_grid,             &
-                    &   ggd_grid%grid_subset( GSubsetCount ), sum( cls ) - 1,   &
+                call createExplicitObjectListSingleSpace( ggd_grid,           &
+                    &   ggd_grid%grid_subset( GSubsetCount ), sum( cls ) - 1, &
                     &   indexList2d(:,1), sum(cls), 1)
             end do
         end do
 
         deallocate(indexList2d)
         !! Add midplane node grid subsets
-        !! Find the core boundary grid subset by looking for its name as defined in b2mod_connectivity
+        !! Find the core boundary grid subset by looking for its name as 
+        !! defined in b2mod_connectivity
         iCoreGS = findGridSubsetByName(ggd_grid, "Core boundary")
         !! For double null, we need the outer half of the core boundary
         if (iCoreGS == B2_GRID_UNDEFINED) then
