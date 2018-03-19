@@ -1374,7 +1374,7 @@ cwdk    For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
 cwdk    temporary computation; should go into geometry routines!
         call intfacev(nx,ny,bottomix,bottomiy,vol,qz(-1,-1,0),
      .    qs(-1,-1,1))
-        qc(:,:,1) = (1 - qs(:,:,1)**2)**0.5                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
+        qc(:,:,1) = sqrt(1.0_R8 - qs(:,:,1)**2)                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
       else
 cwdk    Use 5-point stencil. Overwrite values of qc and qs to ensure
 cwdk    backwards compatible behavior
