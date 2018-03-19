@@ -30,6 +30,7 @@ C
       real (kind=R8) ::
      *   u
       parameter (u=1.0e0_R8)
+      real (kind=R8), save :: prec = 1.0e-10_R8                    !srv 16.01.18
 
 c ma28 common blocks
       real (kind=R8) ::
@@ -71,11 +72,12 @@ c
         call ipgeti ('ma28_for_7d_nwrite', nwrite)
         call ipgeti ('ma28_for_7d_kwrite_fmt', kwrite_fmt)          !srv 18.05.02
         call ipgeti ('ma28_for_7d_kwrite_bnr', kwrite_bnr)          !srv 18.05.02
+        call ipgetr ('ma28_for_7d_prec', prec)                      !srv 16.01.18
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
       call cpu_time(cpu_start)
-!      if(ncall.lt.1000) then                                     !srv 26.12.17 {
+!      if(ncall.lt.1000) then                                       !srv 26.12.17 {
 !*  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
 !         IF (N1 .LT. 2 .OR. N2 .LT. 2 .OR. N1D .LT. N1) THEN
 !           CALL XERRAB ('ILUTERN_7 -- FAULTY ARGUMENT N1, N2, N1D')  !srv 06.07.00
@@ -247,7 +249,7 @@ cdpc
       endif
       call ma28idcopy3                                             !srv 26.12.17
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
-     1 r1,s1,res,w,1,1e-10_R8,iflag)
+     1 r1,s1,res,w,1,prec,iflag)                                   !srv 16.01.18
       if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(a,i3,1p,2g15.8,i6)')
      1 'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
 
@@ -272,7 +274,7 @@ cdpc
 
         call ma28idcopy3                                           !srv 26.12.17
      1   (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
-     1    r1,s1,res,w,1,1e-10_R8,iflag)
+     1    r1,s1,res,w,1,prec,iflag)                                !srv 16.01.18
 
         if(iflag.lt.0) then
          write(*,"(a)") 'Problem with solving of '//trim(name)
