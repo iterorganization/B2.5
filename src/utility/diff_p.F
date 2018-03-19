@@ -53,8 +53,10 @@
 *   ..compute poloidal difference at x-faces
       do iy = -1,ny
         do ix = -1,nx
-          if(leftix(ix,iy).ne.-2 .and.
-     &       bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+          if(leftix(ix,iy).ne.-2) then
+cwdk temporary: also compute differences between guard cells for backwards
+cwdk            compatiblity (avoid problems in corner cells)
+cwdk later on : these faces will be removed altogether
             dfunp(ix,iy,0) = 
      &       fun(ix,iy) - fun(leftix(ix,iy),leftiy(ix,iy))
           else

@@ -75,14 +75,21 @@
 *   ..compute difference at y-faces
       do iy = -1,ny
         do ix = -1,nx
-          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and. 
-     &       bottomiy(ix,iy).ne.-2) then
-            dfunr(ix,iy,1) = 
-     &       fun(ix,iy) - fun(bottomix(ix,iy),bottomiy(ix,iy)) -        ! contribution from y-direction
-     &       (func(rightix(ix,iy),rightiy(ix,iy)) - func(ix,iy))*       ! contribution from x-direction (non-orthogonal grids)
-     &       (hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &       (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &       qs(ix,iy,1)
+          if (bottomiy(ix,iy).ne.-2) then
+            if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+cwdk temporary: compute differences between guard cells for backwards
+cwdk            compatiblity (avoid problems in corner cells)
+cwdk later on : these faces will be removed altogether
+              dfunr(ix,iy,1) = 
+     &          fun(ix,iy) - fun(bottomix(ix,iy),bottomiy(ix,iy))       ! contribution from y-direction
+            else
+              dfunr(ix,iy,1) = 
+     &          fun(ix,iy) - fun(bottomix(ix,iy),bottomiy(ix,iy)) -     ! contribution from y-direction
+     &          (func(rightix(ix,iy),rightiy(ix,iy)) - func(ix,iy))*    ! contribution from x-direction (non-orthogonal grids)
+     &          (hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &          (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &          qs(ix,iy,1)
+            endif
           else
             dfunr(ix,iy,1) = 0.0_R8
           endif
