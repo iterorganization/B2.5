@@ -15,7 +15,7 @@
       real (kind=R8) ::
      &   bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &   hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     &   fchanml(-1:nx,-1:ny,0:1)
+     &   fchanml(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   smban(-1:nx,-1:ny,0:3)
@@ -76,8 +76,8 @@
            else
             smban(ix,iy,0) = -phm0*hz(ix,iy)*hy1(ix,iy)*
      &          bb(ix,iy,0)/bb(ix,iy,2)*bb(ix,iy,3)*
-     &          (fchanml(ix,iy,1)+
-     &           fchanml(topix(ix,iy),topiy(ix,iy),1))*0.5_R8
+     &          (fchanml(ix,iy,1,1)+
+     &           fchanml(topix(ix,iy),topiy(ix,iy),1,1))*0.5_R8
             smban(ix,iy,1) = 0.0e0_R8
             smban(ix,iy,2) = 0.0e0_R8
             smban(ix,iy,3) = 0.0e0_R8
