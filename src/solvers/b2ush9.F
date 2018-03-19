@@ -589,8 +589,8 @@ cwdk add 9-point contributions
        call my_out(70,nx,ny,aa9(-1,-1, 4),'b2ush9_he_aa9p4')
        call my_out(70,nx,ny,aa9(-1,-1, 5),'b2ush9_he_aa9p5')
        call my_out(70,nx,ny,aa9(-1,-1, 6),'b2ush9_he_aa9p6')
-       call my_out(70,nx,ny,resht,'b2ush9_reshe')
-       call my_out(70,nx,ny,cortt,'b2ush9_corte')
+       call my_out(70,nx,ny,reshe,'b2ush9_reshe')
+       call my_out(70,nx,ny,corte,'b2ush9_corte')
       endif
 
 * ..atom temperature correction equation
@@ -793,8 +793,8 @@ cwdk add 9-point contributions
        call my_out(70,nx,ny,aa9(-1,-1, 4),'b2ush9_hi_aa9p4')
        call my_out(70,nx,ny,aa9(-1,-1, 5),'b2ush9_hi_aa9p5')
        call my_out(70,nx,ny,aa9(-1,-1, 6),'b2ush9_hi_aa9p6')
-       call my_out(70,nx,ny,resht,'b2ush9_reshi')
-       call my_out(70,nx,ny,cortt,'b2ush9_corti')
+       call my_out(70,nx,ny,reshi,'b2ush9_reshi')
+       call my_out(70,nx,ny,corti,'b2ush9_corti')
       endif
 
 *   ..return
