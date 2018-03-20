@@ -9,6 +9,7 @@
      *   dtmo(:,:),
      *   dtee(:),
      *   dtei(:)
+     *   , corr_core_dn(:)                                 ! IYS 19.12.2017
       logical, allocatable, save ::
      *   solveco(:,:),
      *   solvemo(:,:),
@@ -27,6 +28,7 @@
       real (kind=R8), save :: dtmo(0:nsdmax-1,0:NNREGMAX)
       real (kind=R8), save :: dtee(0:NNREGMAX)
       real (kind=R8), save :: dtei(0:NNREGMAX)
+      real (kind=R8), save :: corr_core_dn(0:nsdmax-1)   ! IYS 19.12.2017 
       logical, save :: solveco(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemt(0:NNREGMAX)
@@ -37,6 +39,7 @@
       logical, save :: last_solve_5(0:NNREGMAX)
       logical, save :: last_solve_9(0:NNREGMAX)
 #endif
+      real (kind=R8), save :: corr_core_dt               ! IYS 19.12.2017 
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
       real (kind=R8), allocatable, save :: time_factor(:,:)
@@ -51,8 +54,8 @@
       namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
      2 solveco,solvemo,solvepo,solveee,solveei,write_nml_num,
-     3 numerics_filename,numerics_time_mod,numerics_time_switch
-
+     3 numerics_filename,numerics_time_mod,numerics_time_switch,
+     4 corr_core_dn,corr_core_dt    ! IYS 19.12.2017
 
       contains
 
@@ -69,6 +72,7 @@
       allocate(dtmo(0:nsd-1,0:nnreg(0)))
       allocate(dtee(0:nnreg(0)))
       allocate(dtei(0:nnreg(0)))
+      allocate(corr_core_dn(0:nsd-1))    ! IYS 19.12.2017
       allocate(solveco(0:nsd-1,0:nnreg(0)))
       allocate(solvemo(0:nsd-1,0:nnreg(0)))
       allocate(solvemt(0:nnreg(0)))
@@ -88,6 +92,8 @@
       dtmo=1.0_R8
       dtee=1.0_R8
       dtei=1.0_R8
+      corr_core_dn=1.0_R8     ! IYS 19.12.2017
+      corr_core_dt=1.0_R8     ! IYS 19.12.2017
       time_factor_required=0.1_R8
       core_dt_suppression=1.0_R8
       core_dt_factor=1.0_R8
@@ -120,6 +126,7 @@
       deallocate(dtmo)
       deallocate(dtee)
       deallocate(dtei)
+      deallocate(corr_core_dn)     ! IYS 19.12.2017
       deallocate(solveco)
       deallocate(solvemo)
       deallocate(solvemt)
@@ -134,12 +141,12 @@
       return
       end subroutine dealloc_b2mod_numerics
 
-      subroutine read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
+      subroutine read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
       implicit none
 
-      integer nx,ny,nsmin,nsmax
+      integer nx,ny,ns,nsmin,nsmax
       logical :: file_ok
-      integer ix,iy
+      integer ix,iy,is
       real (kind=R8) :: ttf
       character*260 filename
 
@@ -173,6 +180,12 @@
      & 'faulty parameter core_dt_suppression')
       call xertst (0.0_R8.lt.core_dt_factor,
      & 'faulty parameter core_dt_factor')
+      call xertst (0.0_R8.lt.corr_core_dt,
+     & 'faulty parameter corr_core_dt')
+      do is = 0, ns
+        call xertst (0.0_R8.lt.corr_core_dn(is),
+     &   'faulty parameter corr_core_dn')
+      end do
       call xertst (0.0_R8.le.time_factor_required,
      & 'faulty parameter time_factor_required')
       call xertst (0.0_R8.lt.minval(dtco),
@@ -184,7 +197,7 @@
       call xertst (0.0_R8.lt.minval(dtei),
      & 'faulty parameter dtei')
 
-c additional time-modification factor
+c additional time modification factor
       ttf=core_dt_suppression
       do iy=-1,ny
         if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)

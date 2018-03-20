@@ -225,7 +225,7 @@
         call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
         call alloc_b2mod_numerics(nx,ny,ns)
         if(numerics_namelist.ge.1) then
-          call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
+          call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
@@ -238,7 +238,7 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch)
      1     then
             write(*,*) 'b2srsm: catching up ...'
-            call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
+            call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
             call write_b2mod_numerics_namelist
             catch_up=numerics_time_mod.gt.0.0_R8
           else
@@ -253,7 +253,7 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
      1     int(tim/numerics_time_mod).gt.elm_count) then
             elm_count=tim/numerics_time_mod
-            call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
+            call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
             call write_b2mod_numerics_namelist
           endif
         endif

@@ -6,8 +6,9 @@
 !>      @page b2uw_dep b2_ual_write_deprecated
 !>      @section b2uw_dep_desc  Description
 !!      @note   This script is the \b old b2_ual_write.F90 and was kept as an
-!!               archive. The development of the old file continued under new
-!!              codes named
+!!              archive for possible future references and as an example for
+!!              information purposes. The development of the old file continued
+!!              under new codes named
 !!              @ref b2uw_gsl "b2_ual_write_gsl",
 !!              @ref b2uw_b2mod "b2_ual_write_b2mod" and the latest \b new
 !!              @ref b2uw_b2.
@@ -45,16 +46,16 @@
 !!      may perform some other system-dependent operations.
 !!
 !!      The input units are:
-!!          - ninp(0): formatted; provides output control parameters.
-!!          - ninp(1): un*formatted; provides the geometry.
-!!          - ninp(2): un*formatted; provides the run parameters.
-!!          - ninp(3): un*formatted; provides the plasma state.
-!!          - ninp(4): unformatted; provides the detailed plasma state.
-!!          - ninp(5): formatted; provides the run switches.
-!!          - ninp(6): un*formatted; provides the atomic data.
+!!          - ninp(0): formatted, provides output control parameters.
+!!          - ninp(1): un*formatted, provides the geometry.
+!!          - ninp(2): un*formatted, provides the run parameters.
+!!          - ninp(3): un*formatted, provides the plasma state.
+!!          - ninp(4): unformatted, provides the detailed plasma state.
+!!          - ninp(5): formatted, provides the run switches.
+!!          - ninp(6): un*formatted, provides the atomic data.
 !!
 !!      The output units are:
-!!          - nout(0): formatted; provides printed output.
+!!          - nout(0): formatted, provides printed output.
 !!
 !!      @note   See routine b2cdca for the meaning of 'un*formatted'.
 !!
@@ -83,7 +84,7 @@
 !!              <i> (integer) </i>
 !!      @param  nx, ny - Specifies the number of interior cells along the
 !!              first and the second coordinate, respectively.
-!!              The total number of cells is (nx+2)*(ny+2); they are indexed
+!!              The total number of cells is (nx+2)*(ny+2), they are indexed
 !!              by (-1:nx,-1:ny). It will hold that 0.le.nx and 0.le.ny
 !!              <i> (integer) </i>
 !!      @param  run - The run number of the database being created
@@ -128,11 +129,11 @@ program b2_ual_write_deprecated
     integer :: nout(0:2)    !< Specifies the output unit numbers
     integer :: nx   !< Specifies the number of interior cells along the \b first
         !< coordinate, respectively. The total number of cells is
-        !< (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny). It will hold
+        !< (nx+2)*(ny+2), they are indexed by (-1:nx,-1:ny). It will hold
         !< that 0.le.nx and 0.le.ny
     integer :: ny   !< Specifies the number of interior cells along the \b
         !< second coordinate, respectively. The total number of cells is
-        !< (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny). It will hold
+        !< (nx+2)*(ny+2), they are indexed by (-1:nx,-1:ny). It will hold
         !< that 0.le.nx and 0.le.ny
     integer :: ns   !< Specifies the number of atomic species in the
         !< calculation. The species are indexed by (0:ns-1). It will hold
@@ -620,8 +621,8 @@ contains
         gridSubset_index = 1    !! Grid subset index of grid subset Cells
                                 !! (Indexing of grid subsets follows the IDS
                                 !! examples :
-                                !! shot: 1, run:1, # device: iter; and
-                                !! shot: 16151, run: 1000; device: aug
+                                !! shot: 1, run:1, # device: iter, and
+                                !! shot: 16151, run: 1000, device: aug
         gridSubset_name = "Cells"
         gridSubset_dim_index = 3 !! Grid subset Nodes consists of
                                  !! points -> 0D objects -> dimension index = 1
@@ -655,8 +656,8 @@ contains
         gridSubset_index = 2    !! Grid subset index of grid subset Nodes
                                 !! (Indexing of grid subsets follows the IDS
                                 !! examples :
-                                !! shot: 1, run:1, # device: iter; and
-                                !! shot: 16151, run: 1000; device: aug
+                                !! shot: 1, run:1, # device: iter, and
+                                !! shot: 16151, run: 1000, device: aug
         gridSubset_name = "Nodes"
         gridSubset_dim_index = 1    !! Grid subset Nodes consists of
                                     !! points -> 0D objects -> dimension index = 1

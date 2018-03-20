@@ -38,7 +38,7 @@
 *       B2MNDR_1 - Main driver routine.
 *       B2MNDR_2 - Main driver routine finalisation.
 *       B2MNDS - Initialisation.
-*       B2MNDT - Time-stepping.
+*       B2MNDT - Time stepping.
 *       B2MW* - Monitoring of the calculation.
 *       B2MX* - Auxiliaries for b2m*.
 *     B2N* - Driver routines for inner iteration.

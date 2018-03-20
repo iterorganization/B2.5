@@ -1115,8 +1115,16 @@
                   if(feedback_namelist_used .and.
      &                 ncall .eq. 0 .and.
      &                 saved_na_feedback_actuator(ispecies) .eq. 0.0_R8)
-     &                 saved_na_feedback_actuator(ispecies) =
+     >             then
+                    write(message,'(a,i3,a,i2,a)')
+     .               'Initial gas puff strength.le.0, set by CONPAR(',
+     .                is_start,',',na_feedback_ib(ispecies),',1) !'
+                    call xertst(
+     .                 conpar(is_start, na_feedback_ib(ispecies), 1)
+     .                 .gt.0.0_R8, trim(message) )
+                    saved_na_feedback_actuator(ispecies) =
      &                 conpar(is_start, na_feedback_ib(ispecies), 1)
+                  end if
 
                   if (na_feedback_option(ispecies).lt.4) then
                     saved_na_feedback_actuator(ispecies) =

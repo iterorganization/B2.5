@@ -137,6 +137,8 @@ C
         jvftnew = min(jvft44,961228)
       else if (streql(solps_version,'4.3')) then
         jvftnew = min(jvft44,20080706)
+      else if (streql(solps_version,'5.1')) then
+        jvftnew = min(jvft44,20130210)
       else
         jvftnew = max(jvft44,20160829)
       endif
@@ -766,7 +768,11 @@ cank-960727
         deallocate(wldra1,wldrm1)
       end if
       if(jvft44 .ge. 961228) then
-        call rdneutrs(44,wldpp,nplsi)
+        if (streql(solps_version,'5.1')) then
+          call rdneutrs(44,wldpp,nfla)
+        else
+          call rdneutrs(44,wldpp,nplsi)
+        endif
         call rdneutrs(44,wldpa,natmi)
         call rdneutrs(44,wldpm,nmoli)
         call rdneutrs(44,wldpeb,1)
@@ -820,7 +826,11 @@ cank-960727
         end if
         if(nstrai .gt. 1) then
           do istra=1,nstrai
-            call rdneutrs(44,wldpp(:,:,istra),nplsi)
+            if (streql(solps_version,'5.1')) then
+              call rdneutrs(44,wldpp(:,:,istra),nfla)
+            else
+              call rdneutrs(44,wldpp(:,:,istra),nplsi)
+            endif
             call rdneutrs(44,wldpa(:,:,istra),natmi)
             call rdneutrs(44,wldpm(:,:,istra),nmoli)
             call rdneutrs(44,wldpeb(1,istra),1)
@@ -890,14 +900,15 @@ cank
         write(45,'(18i4)') (isrftype(i),i=1,nlim1)
         write(45,'(18i4)') (isrftype(nlim+i),i=1,nstsi)
       end if
-      if (NLWRMSH .and. streql(solps_version,'4.3')) then
+      if (NLWRMSH .and. (streql(solps_version,'4.3') .or.
+     &                   streql(solps_version,'5.1'))) then
         if(jvft44 .ge. 20051115) then
           call read_title(44)
           read (44,'(6e13.5)') (wlarea(i),i=1,nlimi)
           read (44,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
           call write_title(45,'wlarea',nnlimi+nnstsi)
-          write(45,'(6e13.5)') (wlarea(i),i=1,nlim1)
-          write(45,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
+          write(45,'(1p,6e13.5)') (wlarea(i),i=1,nlim1)
+          write(45,'(1p,6e13.5)') (wlarea(nlim+i),i=1,nstsi)
         end if
         if(jvft44 .ge. 20060206) then
           k=0
@@ -920,10 +931,17 @@ cank
      ,                                                       i=1,nstsi)
           k=k+nioni
           call read_title(44)
-          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-          read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
-          read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
+          if (streql(solps_version,'5.1')) then
+            read (44,'(6a13)') (eirtxt(j+k),j=1,nfla)
+            read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nfla),i=1,nlimi)
+            read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nfla),
      ,                          i=1,nstsi)
+          else
+            read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
+            read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
+            read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
+     ,                          i=1,nstsi)
+          endif
 
           allocate (eirtxt1(natm1+nmol1+nioni+npls1))
           allocate (wlabsrp1(natm1+nmol1+nioni+npls1,nlim+nstsi))
