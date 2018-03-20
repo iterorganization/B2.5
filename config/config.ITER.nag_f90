@@ -11,7 +11,7 @@ CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
 FC = nagfor
-FCOPTS = -O -x77 # -mismatch
+FCOPTS = -O -x77 -PIC -compatible # -mismatch
 INCMOD = -I
 MOD = mod
 

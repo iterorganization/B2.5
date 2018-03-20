@@ -406,9 +406,9 @@ contains
 
         write(0,*) "homogeneous_time = ",   &
             &   edge_profiles%ids_properties%homogeneous_time
-        write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
+        write(0,*) "Grid subset 3 name = ", edge_profiles%grid_ggd(1)%  &
             &   grid_subset(gridSubset_index)%identifier%name
-        write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &
+        write(0,*) "Grid subset 3 index = ", edge_profiles%grid_ggd(1)% &
             &   grid_subset(gridSubset_index)%identifier%index
         ! write(0,*) "Time = ", edge_profiles%time(1)
         call ids_deallocate( edge_profiles )
