@@ -6,7 +6,7 @@
       integer nx, ny
       logical lcore
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) :: flux(-1:nx,-1:ny,0:1), tbfl(1:nbc), div
+      real (kind=R8) :: flux(-1:nx,-1:ny,0:1,0:1), tbfl(1:nbc), div
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -43,7 +43,9 @@
      &       mod(region(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0),4).ne.1)
      >        tbfl(ib) = tbfl(ib) +
      &         flux(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &              TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)
+     &              TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,0) +
+     &         flux(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &              TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)
           end do
           div = div - tbfl(ib)
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
@@ -51,20 +53,24 @@
             if(lcore.or.
      &         region(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0).ne.5)
      >       tbfl(ib) = tbfl(ib) +
-     &        flux(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)
+     &        flux(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,0) +
+     &        flux(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)
           end do
           div = div + tbfl(ib)
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
           DO IY=1, BC_LIST_SIZE(IB)
             tbfl(ib) = tbfl(ib) +
      &        flux(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)
+     &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0) +
+     &        flux(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,1)
           end do
           div = div - tbfl(ib)
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           DO IY=1, BC_LIST_SIZE(IB)
             tbfl(ib) = tbfl(ib) +
-     &        flux(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
+     &        flux(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0) +
+     &        flux(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,1)
           end do
           div = div + tbfl(ib)
         ENDIF
