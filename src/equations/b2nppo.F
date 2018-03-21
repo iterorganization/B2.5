@@ -83,7 +83,8 @@
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
 *    ..test sign of conc
-       call b2xvsg (n2*4, conc, 1, 'conc', '.ge.')
+       call b2xvsg (n2, conc(-1,-1,0,0), 1, 'conc00', '.ge.')
+       call b2xvsg (n2, conc(-1,-1,1,1), 1, 'conc11', '.ge.')
 *    ..test edge values of conc
        call b2xvff (nx, ny, conc, 'conc')
 *    ..test sign of sch
