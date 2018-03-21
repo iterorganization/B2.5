@@ -549,8 +549,7 @@ cwdk tmp: always use 9-point stencil
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_9(ireg)
               end do
-cwdk tmp: always restart
-              if(new_matrix.or..true.) call restart_ma28_for_9
+              if(new_matrix) call restart_ma28_for_9
               call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
      &         solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
@@ -686,13 +685,11 @@ cwdk tmp: always restart
              new_matrix = new_matrix.or.
      &        solvepo(ireg).neqv.last_solve_9(ireg)
             end do
-cwdk tmp: always restart
-            if (new_matrix.or..true.) call restart_ma28_for_9
+            if (new_matrix) call restart_ma28_for_9
             call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
      &       ne, te, conc, sch, po, fch, respo, corpo, ier0)
             last_solve_9(0:nnreg(0))=solvepo(0:nnreg(0))
            else
-            call restart_ma28_for_9
             call b2npp7 (nx, ny, nnreg(0), solvepo, ncall, rxf2,         !srv 27.01.00
      &       ne, te, conc, avisper, bvisper, cvisper,                    !srv 27.01.00
      &       sch, po, fch, respo, corpo, ier0)                           !srv 27.01.00
@@ -965,8 +962,7 @@ cwdk      need a master-switch to decide to use 9-point stencil...
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_9(ireg)
               end do
-cwdk tmp: always restart
-              if(new_matrix.or..true.) call restart_ma28_for_9
+              if(new_matrix) call restart_ma28_for_9
               call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
      &         solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
