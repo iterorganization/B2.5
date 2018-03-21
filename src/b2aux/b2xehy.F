@@ -124,8 +124,8 @@ cwdk TODO: implement this as a standard interpolation option...
         call diff_r(nx, ny, 0, hx, hy, wrk, qs, log(ne), dum, wrk1)
 *     ..interpolate te to faces
         wrk = 1.0_R8
-        call intfaceh(nx,ny,leftix,leftiy,wrk,ne,wrk2(-1,-1,0))
-        call intfacev(nx,ny,bottomix,bottomiy,wrk,ne,wrk2(-1,-1,1))
+        call intfaceh(nx,ny,leftix,leftiy,wrk,te,wrk2(-1,-1,0))
+        call intfacev(nx,ny,bottomix,bottomiy,wrk,te,wrk2(-1,-1,1))
 *     ..compute ehy      
         ehy = -dpor + (wrk0 + wrk1*wrk2)/qe
       endif
