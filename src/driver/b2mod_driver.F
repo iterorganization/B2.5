@@ -1376,9 +1376,11 @@ cwdk    temporary computation; should go into geometry routines!
      .    qs(-1,-1,1))
         qc(:,:,1) = sqrt(1.0_R8 - qs(:,:,1)**2)                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
       else
-cwdk    Use 5-point stencil. Overwrite values of qc and qs to ensure
+cwdk    Use 5-point stencil. Overwrite values of qz, qc and qs to ensure
 cwdk    backwards compatible behavior
-        qs(:,:,:) = 0.0_R8 ! will make all 9-point contributions 0
+cwdk    to be checked: qz(:,:,0) never used !?!
+        qs(:,:,:) = 0.0_R8 ! will make all 9-point contributions on faces 0
+        qz(:,:,0) = 0.0_R8 ! will make all 9-point contributions in cell centers 0
         qc(:,:,1) = 1.0_R8 ! keep qc(:,:,0) unmodified, for corrections to poloidal face areas
       endif
 *   ..find the poloidal number of midplane cell as a number of cell with min Bz
