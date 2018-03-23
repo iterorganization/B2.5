@@ -123,19 +123,22 @@ c
       endif
 
 * get drift velocities in cell centers
-      vaecrbc = vaecrb
-      wadiac  = wadia
-      vadiac  = vadia
-      if (drift_style.eq.1) then
-        do is=0,ns-1
+      do is=0,ns-1
+        vaecrbc(:,:,0,is) = vaecrb(:,:,0,0,is)
+        wadiac(:,:,0,is)  = wadia(:,:,0,0,is)
+        vadiac(:,:,0,is)  = vadia(:,:,0,0,is)
+        vaecrbc(:,:,1,is) = vaecrb(:,:,1,1,is)
+        wadiac(:,:,1,is)  = wadia(:,:,1,1,is)
+        vadiac(:,:,1,is)  = vadia(:,:,1,1,is)
+        if (drift_style.eq.1) then
           call mapx(nx,ny,1,vaecrbc(:,:,0,is),wrk)
           call mapy(nx,ny,1,vaecrbc(:,:,1,is),wrk)
           call mapx(nx,ny,1,wadiac(:,:,0,is),wrk)
           call mapy(nx,ny,1,wadiac(:,:,1,is),wrk)
           call mapx(nx,ny,1,vadiac(:,:,0,is),wrk)
           call mapy(nx,ny,1,vadiac(:,:,1,is),wrk)
-        enddo
-      endif
+        endif
+      enddo
 
       if(iout.ne.0) then                                               !srv 18.06.08 {
         do is = 0,ns-1
@@ -144,12 +147,12 @@ c
          call my_out(70,nx,ny,fna(-1,-1,1,1,is),'copy_fnay'//chns)
        call my_out(70,nx,ny,fna_eir(-1,-1,0,0,is),'copy_fna_eirx'//chns)
        call my_out(70,nx,ny,fna_eir(-1,-1,1,1,is),'copy_fna_eiry'//chns)
-         call my_out(70,nx,ny,vaecrb(-1,-1,0,is),'copy_vecrbx'//chns)
-         call my_out(70,nx,ny,vaecrb(-1,-1,1,is),'copy_vecrby'//chns)
-         call my_out(70,nx,ny,wadia(-1,-1,0,is),'copy_wadiax'//chns)
-         call my_out(70,nx,ny,wadia(-1,-1,1,is),'copy_wadiay'//chns)
-         call my_out(70,nx,ny,vadia(-1,-1,0,is),'copy_vadiax'//chns)
-         call my_out(70,nx,ny,vadia(-1,-1,1,is),'copy_vadiay'//chns)
+         call my_out(70,nx,ny,vaecrb(-1,-1,0,0,is),'copy_vecrbx'//chns)
+         call my_out(70,nx,ny,vaecrb(-1,-1,1,1,is),'copy_vecrby'//chns)
+         call my_out(70,nx,ny,wadia(-1,-1,0,0,is),'copy_wadiax'//chns)
+         call my_out(70,nx,ny,wadia(-1,-1,1,1,is),'copy_wadiay'//chns)
+         call my_out(70,nx,ny,vadia(-1,-1,0,0,is),'copy_vadiax'//chns)
+         call my_out(70,nx,ny,vadia(-1,-1,1,1,is),'copy_vadiay'//chns)
          call my_out(70,nx,ny,vaecrbc(-1,-1,0,is),'copy_vecrbcx'//chns)
          call my_out(70,nx,ny,vaecrbc(-1,-1,1,is),'copy_vecrbcy'//chns)
          call my_out(70,nx,ny,wadiac(-1,-1,0,is),'copy_wadiacx'//chns)

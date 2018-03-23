@@ -325,7 +325,7 @@
         fch_p(:,:,1,1)=0.0_R8                                   !srv 10.06.09
         do is = 0, ns-1
           kinrgy(:,:,is)=0.5_R8*am(is)*mp*
-     .     (ua(:,:,is)**2+uadia(:,:,0,is)**2+uadia(:,:,1,is)**2)
+     .     (ua(:,:,is)**2+uadia(:,:,0,0,is)**2+uadia(:,:,1,1,is)**2)
         enddo
       else
         status=mdsvalue2('_s=\TOP.SNAPSHOT:UADIA'//char(0),

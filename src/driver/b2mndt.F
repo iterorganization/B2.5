@@ -491,8 +491,9 @@ ctmp.dpc
              call b2tfnb (nx, ny, is, ismain,
      &          guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,    !srv 07.06.00 09.01.01 08.09.01 19.05.03 04.02.05
      &          rza(-1,-1,is), pbs, pbshz, na(-1,-1,is),                 !srv 09.01.01 20.09.06
-     &          pb, ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
-     &          vadia(-1,-1,0,is), wadia(-1,-1,0,is), ne, te, ti, bb,
+     &          pb, ua(-1,-1,is), uadia(-1,-1,0,0,is), 
+     &          vaecrb(-1,-1,0,0,is), vadia(-1,-1,0,0,is),
+     &          wadia(-1,-1,0,0,is), ne, te, ti, bb,
      &          hx, hy, hz, qz, gs, qc, qs, po,                          !srv 19.05.03 08.10.04 04.02.05
      &          cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), 
      &          cdpa(-1,-1,0,0,is),

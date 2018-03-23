@@ -32,8 +32,8 @@
      *   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      &   vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &   gs(-1:nx,-1:ny,0:2), ne2(-1:nx,-1:ny), pz(-1:nx,-1:ny),         !srv 11.07.99 18.01.02
-     &   uadia(-1:nx,-1:ny,0:1,0:ns-1),
-     &   vadia(-1:nx,-1:ny,0:1,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),          !srv 17.05.99 25.01.02
+     &   uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &   vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),      !srv 17.05.99 25.01.02
      &   fne(-1:nx,-1:ny,0:1,0:1), csig(-1:nx,-1:ny,0:1,0:1),
      &   csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1), 
      &   chci(-1:nx,-1:ny,0:1,0:1),   !srv 11.07.99 24.06.08
@@ -265,7 +265,7 @@ c Drift terms
      &       *(te(leftix(ix,iy),leftiy(ix,iy))                           !srv 17.05.99 11.03.00
      &       /ti(leftix(ix,iy),leftiy(ix,iy))                            !srv 17.05.99 11.03.00
      &       +te(ix,iy)/ti(ix,iy))*0.5e0_R8                              !srv 17.05.99 11.03.00 25.01.02 13.09.02
-     &       *vadia(ix,iy,0,is)*vdia_par ! for is = 1 (za = 1)           !srv 17.05.99 11.03.00 21.04.00 25.01.02 18.01.07
+     &       *vadia(ix,iy,0,0,is)*vdia_par ! for is = 1 (za = 1)         !srv 17.05.99 11.03.00 21.04.00 25.01.02 18.01.07
      1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
      2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
      3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
@@ -281,7 +281,7 @@ c Drift terms
      &      *(te(bottomix(ix,iy),bottomiy(ix,iy))                        !srv 17.05.99 11.03.00 13.09.02
      &      /ti(bottomix(ix,iy),bottomiy(ix,iy))                         !srv 17.05.99 11.03.00
      &      +te(ix,iy)/ti(ix,iy))*0.5e0_R8                               !srv 17.05.99 11.03.00 25.01.02 13.09.02
-     &      *vadia(ix,iy,1,is)*vdia_par                                  !srv 17.05.99 11.03.00 18.01.07
+     &      *vadia(ix,iy,1,1,is)*vdia_par                                !srv 17.05.99 11.03.00 18.01.07
      1      *(bb(ix,iy,2)/bb(ix,iy,3)+                                   !srv 13.09.02 {
      2      bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
      3      bb(bottomix(ix,iy),bottomiy(ix,iy),3))/2.0e0_R8              !srv 13.09.02 }
@@ -306,7 +306,7 @@ c Drift terms
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 
 * ..compute parallel current
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                         !srv 13.01.17 {
+      call b2xehx (nx, ny, hx, hy, qz, qs, te, po, ne, ehx_)             !srv 13.01.17 {
       call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy_)             !srv 13.01.17
       call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
       if(style.eq.2) then

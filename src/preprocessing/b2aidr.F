@@ -70,7 +70,7 @@
       integer, save :: read_b2fstate = 0                            !srv 22.12.09
       real (kind=R8) :: t0, t1                                      !srv 22.12.09
       real (kind=R8), allocatable :: zcdum(:,:),
-     &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:),
+     &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:,:),
      &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:,:), fhe1(:,:,:,:),
      &  fhi1(:,:,:,:), fch1(:,:,:,:), fch_321(:,:,:,:),fch_521(:,:,:,:),
      &  fch_p1(:,:,:,:), kinrgy1(:,:,:),
@@ -85,8 +85,8 @@
      &  fchdia1(:,:,:,:), fchin1(:,:,:,:),
      &  fchvispar1(:,:,:,:), fchvisper1(:,:,:,:),
      &  fchvisq1(:,:,:,:), fchinert1(:,:,:,:),
-     &  vaecrb1(:,:,:,:), vadia1(:,:,:,:), wadia1(:,:,:,:),
-     &  veecrb1(:,:,:), vedia1(:,:,:),
+     &  vaecrb1(:,:,:,:,:), vadia1(:,:,:,:,:), wadia1(:,:,:,:,:),
+     &  veecrb1(:,:,:,:), vedia1(:,:,:,:),
      &  floe_noc1(:,:,:,:), floi_noc1(:,:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
       character lblps*120, lblgm*120, id*8, id0*8, line*500
@@ -564,7 +564,7 @@
        enddo
        allocate(
      *  na1(-1:nx,-1:ny,0:idum(2)-1), ua1(-1:nx,-1:ny,0:idum(2)-1),
-     &  ne1(-1:nx,-1:ny), uadia1(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  ne1(-1:nx,-1:ny), uadia1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
      &  te1(-1:nx,-1:ny), ti1(-1:nx,-1:ny), po1(-1:nx,-1:ny),
      &  fna1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),fhe1(-1:nx,-1:ny,0:1,0:1),
      &  fhi1(-1:nx,-1:ny,0:1,0:1), fch1(-1:nx,-1:ny,0:1,0:1),
@@ -587,10 +587,10 @@
      &  fchdia1(-1:nx,-1:ny,0:1,0:1), fchin1(-1:nx,-1:ny,0:1,0:1),
      &  fchvispar1(-1:nx,-1:ny,0:1,0:1),fchvisper1(-1:nx,-1:ny,0:1,0:1),
      &  fchvisq1(-1:nx,-1:ny,0:1,0:1), fchinert1(-1:nx,-1:ny,0:1,0:1),
-     &  vaecrb1(-1:nx,-1:ny,0:1,0:idum(2)-1),
-     &  vadia1(-1:nx,-1:ny,0:1,0:idum(2)-1),
-     &  wadia1(-1:nx,-1:ny,0:1,0:idum(2)-1),
-     &  veecrb1(-1:nx,-1:ny,0:1), vedia1(-1:nx,-1:ny,0:1),
+     &  vaecrb1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  vadia1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  wadia1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  veecrb1(-1:nx,-1:ny,0:1,0:1), vedia1(-1:nx,-1:ny,0:1,0:1),
      &  floe_noc1(-1:nx,-1:ny,0:1,0:1), floi_noc1(-1:nx,-1:ny,0:1,0:1) )
 *   ..read initial state from the file
        call b2rups (ninp(3), idum(0), idum(1), idum(2),
@@ -614,19 +614,19 @@
          na(:,:,is)       = na1(:,:,is)
          ua(:,:,is)       = ua1(:,:,is)
          kinrgy(:,:,is)   = kinrgy1(:,:,is)
-         uadia(:,:,:,is)  = uadia1(:,:,:,is)
-         vadia(:,:,:,is)  = vadia1(:,:,:,is)
-         wadia(:,:,:,is)  = wadia1(:,:,:,is)
-         vaecrb(:,:,:,is) = vaecrb1(:,:,:,is)
+         uadia(:,:,:,:,is)  = uadia1(:,:,:,:,is)
+         vadia(:,:,:,:,is)  = vadia1(:,:,:,:,is)
+         wadia(:,:,:,:,is)  = wadia1(:,:,:,:,is)
+         vaecrb(:,:,:,:,is) = vaecrb1(:,:,:,:,is)
        enddo
        do is = min(ns,idum(2)), ns-1
         call sfill (n2, naini(is), na(-1,-1,is), 1)
         call sfill (n2, 0.0_R8, ua(-1,-1,is), 1)
         call sfill (n2, 0.0_R8, kinrgy(-1,-1,is), 1)
-        call sfill (n2*2, 0.0_R8, uadia(-1,-1,0,is), 1)
-        call sfill (n2*2, 0.0_R8, vadia(-1,-1,0,is), 1)
-        call sfill (n2*2, 0.0_R8, wadia(-1,-1,0,is), 1)
-        call sfill (n2*2, 0.0_R8, vaecrb(-1,-1,0,is), 1)
+        call sfill (n2*4, 0.0_R8, uadia(-1,-1,0,0,is), 1)
+        call sfill (n2*4, 0.0_R8, vadia(-1,-1,0,0,is), 1)
+        call sfill (n2*4, 0.0_R8, wadia(-1,-1,0,0,is), 1)
+        call sfill (n2*4, 0.0_R8, vaecrb(-1,-1,0,0,is), 1)
        enddo
        do is = 0, ns-1
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
@@ -700,10 +700,10 @@
         call sfill (n2, naini(is), na(-1,-1,is), 1)
         call sfill (n2, 0.0_R8, ua(-1,-1,is), 1)
         call sfill (n2, 0.0_R8, kinrgy(-1,-1,is), 1)
-        call sfill (n2*2, 0.0_R8, uadia(-1,-1,0,is), 1)
-        call sfill (n2*2, 0.0_R8, vadia(-1,-1,0,is), 1)
-        call sfill (n2*2, 0.0_R8, wadia(-1,-1,0,is), 1)
-        call sfill (n2*2, 0.0_R8, vaecrb(-1,-1,0,is), 1)
+        call sfill (n2*4, 0.0_R8, uadia(-1,-1,0,0,is), 1)
+        call sfill (n2*4, 0.0_R8, vadia(-1,-1,0,0,is), 1)
+        call sfill (n2*4, 0.0_R8, wadia(-1,-1,0,0,is), 1)
+        call sfill (n2*4, 0.0_R8, vaecrb(-1,-1,0,0,is), 1)
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
        enddo
        call b2xpne (nx, ny, ns, rza, na, zero, ne)

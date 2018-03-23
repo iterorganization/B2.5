@@ -17,7 +17,7 @@
       integer nput, nx, ny, ns
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:ns-1),                  !xpb
+     &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),                  !xpb
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
@@ -43,9 +43,10 @@
      &  fchdia(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),
      &  fchvispar(-1:nx,-1:ny,0:1,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1),
      &  fchvisq(-1:nx,-1:ny,0:1,0:1), fchinert(-1:nx,-1:ny,0:1,0:1),
-     &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
-     &  veecrb(-1:nx,-1:ny,0:1), vedia(-1:nx,-1:ny,0:1),
+     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  veecrb(-1:nx,-1:ny,0:1,0:1), vedia(-1:nx,-1:ny,0:1,0:1),
      &  floe_noc(-1:nx,-1:ny,0:1,0:1), floi_noc(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
 *     (none)
@@ -111,7 +112,7 @@
       call cfwure (nput, n2*ns, na, 'na')
       call cfwure (nput, n2,    ne, 'ne')
       call cfwure (nput, n2*ns, ua, 'ua')
-      call cfwure (nput, n2*2*ns, uadia, 'uadia')
+      call cfwure (nput, n2*4*ns, uadia, 'uadia')
       call cfwure (nput, n2, te, 'te')
       call cfwure (nput, n2, ti, 'ti')
       call cfwure (nput, n2, po, 'po')
@@ -154,11 +155,11 @@
       call cfwure (nput, n2*4, fchvisper, 'fchvisper')
       call cfwure (nput, n2*4, fchvisq, 'fchvisq')
       call cfwure (nput, n2*4, fchinert, 'fchinert')
-      call cfwure (nput, n2*2*ns, vaecrb, 'vaecrb')
-      call cfwure (nput, n2*2*ns, vadia, 'vadia')
-      call cfwure (nput, n2*2*ns, wadia, 'wadia')
-      call cfwure (nput, n2*2, veecrb, 'veecrb')
-      call cfwure (nput, n2*2, vedia, 'vedia')
+      call cfwure (nput, n2*4*ns, vaecrb, 'vaecrb')
+      call cfwure (nput, n2*4*ns, vadia, 'vadia')
+      call cfwure (nput, n2*4*ns, wadia, 'wadia')
+      call cfwure (nput, n2*4, veecrb, 'veecrb')
+      call cfwure (nput, n2*4, vedia, 'vedia')
       call cfwure (nput, n2*4, floe_noc, 'floe_noc')
       call cfwure (nput, n2*4, floi_noc, 'floi_noc')
 

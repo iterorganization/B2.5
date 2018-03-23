@@ -9,7 +9,7 @@
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), wbbl(-1:nx,-1:ny,0:3),
      *  gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1),
-     *  qc(-1:nx,-1:ny), vol(-1:nx,-1:ny)
+     *  qc(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny)
 *   ..input/output arguments (defined on entry, changed upon exit)
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
@@ -119,7 +119,7 @@
             pbs(ix,iy,0) =
      .         gs(ixref(iseg(ix,iy),iy),iy,0)*
      .       wbbl(ixref(iseg(ix,iy),iy),iy,0)/wbbl(ix,iy,3)*
-     .         qc(ixref(iseg(ix,iy),iy),iy)
+     .         qc(ixref(iseg(ix,iy),iy),iy,0)
           end if
           hy(ix,iy) = hz(ixref(iseg(ix,iy),iy),iy)*
      .                hy(ixref(iseg(ix,iy),iy),iy)*

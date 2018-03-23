@@ -167,14 +167,14 @@
         call my_out(70,nx,ny,wrk0,'usound'//chns)
         wrk1 = ua(:,:,is)/wrk0
         call my_out(70,nx,ny,wrk1,'ua_M_'//chns)                  !srv 24.03.10 }
-        call my_out(70,nx,ny,uadia(-1,-1,0,is),'uadiax'//chns)    !srv
-        call my_out(70,nx,ny,uadia(-1,-1,1,is),'uadiay'//chns)    !srv
-        call my_out(70,nx,ny,vaecrb(-1,-1,0,is),'vaecrbx'//chns)  !srv
-        call my_out(70,nx,ny,vaecrb(-1,-1,1,is),'vaecrby'//chns)  !srv
-        call my_out(70,nx,ny,vadia(-1,-1,0,is),'vadiax'//chns)    !srv
-        call my_out(70,nx,ny,vadia(-1,-1,1,is),'vadiay'//chns)    !srv
-        call my_out(70,nx,ny,wadia(-1,-1,0,is),'wadiax'//chns)    !srv
-        call my_out(70,nx,ny,wadia(-1,-1,1,is),'wadiay'//chns)    !srv
+        call my_out(70,nx,ny,uadia(-1,-1,0,0,is),'uadiax'//chns)  !srv
+        call my_out(70,nx,ny,uadia(-1,-1,1,1,is),'uadiay'//chns)  !srv
+        call my_out(70,nx,ny,vaecrb(-1,-1,0,0,is),'vaecrbx'//chns)!srv
+        call my_out(70,nx,ny,vaecrb(-1,-1,1,1,is),'vaecrby'//chns)!srv
+        call my_out(70,nx,ny,vadia(-1,-1,0,0,is),'vadiax'//chns)  !srv
+        call my_out(70,nx,ny,vadia(-1,-1,1,1,is),'vadiay'//chns)  !srv
+        call my_out(70,nx,ny,wadia(-1,-1,0,0,is),'wadiax'//chns)  !srv
+        call my_out(70,nx,ny,wadia(-1,-1,1,1,is),'wadiay'//chns)  !srv
         call my_out(70,nx,ny,fna(-1,-1,0,0,is),'fnax'//chns)      !srv
         call my_out(70,nx,ny,fna(-1,-1,1,1,is),'fnay'//chns)      !srv
         call my_out(70,nx,ny,fna_mdf(-1,-1,0,0,is),'fnax_mdf'//chns)  !srv 13.10.06
@@ -212,7 +212,7 @@
           do ix = -1, nx
             if (leftix(ix,iy).ne.-2) wrk0(ix,iy)=
      1        wbbl(ix,iy,2)/wbbl(ix,iy,3)
-     4       *vaecrb(ix,iy,0,is)*
+     4       *vaecrb(ix,iy,0,0,is)*
      5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/       !srv 01.03.00
      6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))          !srv 01.03.00
      7       *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
@@ -225,7 +225,7 @@
           do ix = -1, nx
             if (leftix(ix,iy).ne.-2) wrk1(ix,iy)=
      1        wbbl(ix,iy,2)/wbbl(ix,iy,3)
-     4       *vadia(ix,iy,0,is)*
+     4       *vadia(ix,iy,0,0,is)*
      5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/       !srv 01.03.00
      6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))          !srv 01.03.00
      7       *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
@@ -240,7 +240,7 @@
         do iy = -1, ny
           do ix = -1, nx
             if (bottomiy(ix,iy).ne.-2)
-     >        wrk0(ix,iy)=vaecrb(ix,iy,1,is)*(na(ix,iy,is)
+     >        wrk0(ix,iy)=vaecrb(ix,iy,1,1,is)*(na(ix,iy,is)
      &          +na(bottomix(ix,iy),bottomiy(ix,iy),is))/2.0_R8*
      5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/   !srv 01.03.00
      6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))    !srv 01.03.00
@@ -251,7 +251,7 @@
         do iy = -1, ny
           do ix = -1, nx
             if (bottomiy(ix,iy).ne.-2)
-     >        wrk1(ix,iy)=vadia(ix,iy,1,is)*(na(ix,iy,is)
+     >        wrk1(ix,iy)=vadia(ix,iy,1,1,is)*(na(ix,iy,is)
      &          +na(bottomix(ix,iy),bottomiy(ix,iy),is))/2.0_R8*
      5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/   !srv 01.03.00
      6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))    !srv 01.03.00
@@ -507,17 +507,17 @@
           do ix = -1, nx
             if(on_closed_surface(ix,iy).and.
      &        bottomiy(ix,iy).ne.-2) then  ! for CORE              !srv 01.02.12
-              sfuadia(iy,is) = sfuadia(iy,is) + uadia(ix,iy,1,is)*
+              sfuadia(iy,is) = sfuadia(iy,is) + uadia(ix,iy,1,1,is)*
      5         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
      &         (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &          na(ix,iy,is))/2.0_R8
-              sfvadia(iy,is) = sfvadia(iy,is) + vadia(ix,iy,1,is)*
+              sfvadia(iy,is) = sfvadia(iy,is) + vadia(ix,iy,1,1,is)*
      5         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
      &         (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &          na(ix,iy,is))/2.0_R8
-              sfvaecrb(iy,is) = sfvaecrb(iy,is) + vaecrb(ix,iy,1,is)*
+              sfvaecrb(iy,is) = sfvaecrb(iy,is) + vaecrb(ix,iy,1,1,is)*
      5         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
      &         (na(bottomix(ix,iy),bottomiy(ix,iy),is)+

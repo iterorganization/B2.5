@@ -34,8 +34,9 @@
      &  bb(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
-     &  vadia(-1:nx,-1:ny,0:1,0:ns-1)                                 !srv 07.07.09
+     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1)                                 !srv 07.07.09
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),

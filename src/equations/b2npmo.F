@@ -41,7 +41,8 @@
      &  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
      &  chci(-1:nx,-1:ny,0:1,0:1),                                     !srv 10.11.02
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
+     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1)
       logical solving
 *   ..input/output arguments
       real (kind=R8) ::
@@ -325,9 +326,9 @@
 
 *    ..compute additional viscosity term
        call b2siav (nx, ny, ns, is, am(is)*mp, hx, hy, hz, vol, 
-     &   qz, qs, bb, ua(-1,-1,is), wadia(-1,-1,0,is),  
-     &   vaecrb(-1,-1,0,is), te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2,
-     &   lnlam, chci, cvsa(-1,-1,0,0,is), cvsa_cl(-1,-1,0,0,is), 
+     &   qz, qs, bb, ua(-1,-1,is), wadia(-1,-1,0,0,is),  
+     &   vaecrb(-1,-1,0,0,is), te, ti, na(-1,-1,is), po, ni(-1,-1,1),
+     &   ne2, lnlam, chci, cvsa(-1,-1,0,0,is), cvsa_cl(-1,-1,0,0,is), 
      &   cvsahz(-1,-1,0,0,is), 
      &   cvsahz_cl(-1,-1,0,0,is), smbvh, smbvv, kt_neo, 
      &   wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05

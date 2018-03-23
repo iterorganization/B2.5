@@ -14,11 +14,12 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
+     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
-     &  ro(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     &  ro(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1,0:1), 
+     &  fni(-1:nx,-1:ny,0:1,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
@@ -208,35 +209,35 @@
       endif
 *   ..make contour plots of electron heat flux
       if (strmas(idout,'cphe')) then
-       t0 = scal10(0.8_R8*samax(n2,fhe(-1,-1,0),1))
+       t0 = scal10(0.8_R8*samax(n2,fhe(-1,-1,0,0),1))
        write (header,fmth)
      1	'x-directed electron heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphe', header
-       call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhe(-1,-1,0),
+       call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhe(-1,-1,0,0),
      1	 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
      2   -t0/20.0_R8, t0/20.0_R8, 10)
-       t0 = scal10(0.8_R8*samax(n2,fhe(-1,-1,1),1))
+       t0 = scal10(0.8_R8*samax(n2,fhe(-1,-1,1,1),1))
        write (header,fmth)
      1	'y-directed electron heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphe', header
-       call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhe(-1,-1,1),
+       call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhe(-1,-1,1,1),
      1	 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
      2   -t0/20.0_R8, t0/20.0_R8, 10)
       endif
 *   ..make contour plots of all atom heat flux
       if (strmas(idout,'cphi')) then
-       t0 = scal10(0.8_R8*samax(n2,fhi(-1,-1,0),1))
+       t0 = scal10(0.8_R8*samax(n2,fhi(-1,-1,0,0),1))
        write (header,fmth)
      1	'x-directed all atom heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphi', header
-       call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhi(-1,-1,0),
+       call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhi(-1,-1,0,0),
      1	 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
      2   -t0/20.0_R8, t0/20.0_R8, 10)
-       t0 = scal10(0.8_R8*samax(n2,fhi(-1,-1,1),1))
+       t0 = scal10(0.8_R8*samax(n2,fhi(-1,-1,1,1),1))
        write (header,fmth)
      1	'y-directed all atom heat flux (unit).', t0/100.
        write (nprt,fmtp) '+cphi', header
-       call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhi(-1,-1,1),
+       call b2wgxp (nx, ny, header, xc, xf, yc, yf, fhi(-1,-1,1,1),
      1	 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 48,
      2   -t0/20.0_R8, t0/20.0_R8, 10)
       endif
@@ -244,8 +245,8 @@
 * ..make one-dimensional plots
 *   ..compute electron and atom flux as function of x
       do ix = 0, nx
-       wxf1(ix) = b2ssum(ny+2,fne(ix,-1,0),nx+2)
-       wxf2(ix) = b2ssum(ny+2,fni(ix,-1,0),nx+2)
+       wxf1(ix) = b2ssum(ny+2,fne(ix,-1,0,0),nx+2)
+       wxf2(ix) = b2ssum(ny+2,fni(ix,-1,0,0),nx+2)
       enddo
 *   ..compute common scale for particle fluxes
       t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
@@ -269,8 +270,8 @@
       endif
 *   ..compute heat fluxes as function of x
       do ix = 0, nx
-       wxf1(ix) = b2ssum(ny+2,fhe(ix,-1,0),nx+2)
-       wxf2(ix) = b2ssum(ny+2,fhi(ix,-1,0),nx+2)
+       wxf1(ix) = b2ssum(ny+2,fhe(ix,-1,0,0),nx+2)
+       wxf2(ix) = b2ssum(ny+2,fhi(ix,-1,0,0),nx+2)
       enddo
 *   ..compute common scale for two heat fluxes
       t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
@@ -294,8 +295,8 @@
       endif
 *   ..compute y-directed heat fluxes as function of x on southern boundary
       do ix = 0, nx
-       wxf1(ix) = fhe(ix,0,1)
-       wxf2(ix) = fhi(ix,0,1)
+       wxf1(ix) = fhe(ix,0,1,1)
+       wxf2(ix) = fhi(ix,0,1,1)
       enddo
 *   ..compute common scale for two heat fluxes
       t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
@@ -320,7 +321,7 @@
       endif
 *   ..compute electric current as function of x
       do ix = 0, nx
-       wxf1(ix) = b2ssum(ny+2,fch(ix,-1,0),nx+2)
+       wxf1(ix) = b2ssum(ny+2,fch(ix,-1,0,0),nx+2)
       enddo
 *   ..scale for electric current
       if (samax(nx+1,wxf1(0),1).eq.0.0_R8) then
@@ -342,7 +343,7 @@
       do is = 0, ns-1
        if (strmas(idout,'fnax')) then
         do ix = 0, nx
-         wxf1(ix) = b2ssum(ny+2,fna(ix,-1,0,is),nx+2)
+         wxf1(ix) = b2ssum(ny+2,fna(ix,-1,0,0,is),nx+2)
         enddo
         if (samax(nx+1,wxf1(0),1).eq.0.0_R8) then
          sc = 1.0_R8
@@ -360,8 +361,8 @@
       enddo
 *   ..compute electron and atom flux as function of y
       do iy = 0, ny
-       wyf1(iy) = b2ssum(nx+2,fne(-1,iy,1),1)
-       wyf2(iy) = b2ssum(nx+2,fni(-1,iy,1),1)
+       wyf1(iy) = b2ssum(nx+2,fne(-1,iy,1,1),1)
+       wyf2(iy) = b2ssum(nx+2,fni(-1,iy,1,1),1)
       enddo
 *   ..cmpute commoon scale for particle fluxes
       t0 = max(samax(ny+1,wyf1(0),1),samax(ny+1,wyf2(0),1))
@@ -385,8 +386,8 @@
       endif
 *   ..compute heat fluxes as function of y
       do iy = 0, ny
-       wyf1(iy) = b2ssum(nx+2,fhe(-1,iy,1),1)
-       wyf2(iy) = b2ssum(nx+2,fhi(-1,iy,1),1)
+       wyf1(iy) = b2ssum(nx+2,fhe(-1,iy,1,1),1)
+       wyf2(iy) = b2ssum(nx+2,fhi(-1,iy,1,1),1)
       enddo
 *   ..compute common scale for two heat fluxes
       t0 = max(samax(ny+1,wyf1(0),1),samax(ny+1,wyf2(0),1))
@@ -410,7 +411,7 @@
       endif
 *   ..compute electric current as function of y
       do iy = 0, ny
-       wyf1(iy) = b2ssum(nx+2,fch(-1,iy,1),1)
+       wyf1(iy) = b2ssum(nx+2,fch(-1,iy,1,1),1)
       enddo
 *   ..scale for electric current
       if (samax(ny+1,wyf1(0),1).eq.0.0_R8) then
@@ -432,7 +433,7 @@
       do is = 0, ns-1
        if (strmas(idout,'fnay')) then
         do iy = 0, ny
-         wyf1(iy) = b2ssum(nx+2,fna(-1,iy,1,is),1)
+         wyf1(iy) = b2ssum(nx+2,fna(-1,iy,1,1,is),1)
         enddo
         if (samax(ny+1,wyf1(0),1).eq.0.0_R8) then
          sc = 1.0_R8

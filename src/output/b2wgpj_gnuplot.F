@@ -17,9 +17,9 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  ne(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1),
+     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
+     &  ne(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1,0:1),
      &  kinrgy(-1:nx,-1:ny,0:ns-1),ni(-1:nx,-1:ny,0:1),
      &  gs(-1:nx, -1:ny, 0:2), qc(-1:nx, -1:ny,0:1)
 *   ..common blocks
@@ -112,14 +112,14 @@
       elseif(want.eq.'fhex') then
          do iy=-1,ny
             do ix=-1,nx
-               write(*,*) ix,iy,fhe(ix,iy,0)
+               write(*,*) ix,iy,fhe(ix,iy,0,0)
             enddo
             write(*,'()')
          enddo
       elseif(want.eq.'fhey') then
          do iy=-1,ny
             do ix=-1,nx
-               write(*,*) ix,iy,fhe(ix,iy,1)
+               write(*,*) ix,iy,fhe(ix,iy,1,1)
             enddo
             write(*,'()')
          enddo
@@ -133,14 +133,14 @@
       elseif(want.eq.'fhix') then
          do iy=-1,ny
             do ix=-1,nx
-               write(*,*) ix,iy,fhi(ix,iy,0)
+               write(*,*) ix,iy,fhi(ix,iy,0,0)
             enddo
             write(*,'()')
          enddo
       elseif(want.eq.'fhiy') then
          do iy=-1,ny
             do ix=-1,nx
-               write(*,*) ix,iy,fhi(ix,iy,1)
+               write(*,*) ix,iy,fhi(ix,iy,1,1)
             enddo
             write(*,'()')
          enddo
@@ -154,14 +154,14 @@
       elseif(want.eq.'fnex') then
          do iy=-1,ny
             do ix=-1,nx
-               write(*,*) ix,iy,fne(ix,iy,0)
+               write(*,*) ix,iy,fne(ix,iy,0,0)
             enddo
             write(*,'()')
          enddo
       elseif(want.eq.'fney') then
          do iy=-1,ny
             do ix=-1,nx
-               write(*,*) ix,iy,fne(ix,iy,1)
+               write(*,*) ix,iy,fne(ix,iy,1,1)
             enddo
             write(*,'()')
          enddo
@@ -175,14 +175,14 @@
       elseif(want.eq.'fchx') then
          do iy=-1,ny
             do ix=-1,nx
-               write(*,*) ix,iy,fch(ix,iy,0)
+               write(*,*) ix,iy,fch(ix,iy,0,0)
             enddo
             write(*,'()')
          enddo
       elseif(want.eq.'fchy') then
          do iy=-1,ny
             do ix=-1,nx
-               write(*,*) ix,iy,fch(ix,iy,1)
+               write(*,*) ix,iy,fch(ix,iy,1,1)
             enddo
             write(*,'()')
          enddo
@@ -197,7 +197,7 @@
          do iy=-1,ny
             do ix=-1,nx
 csw 17feb2012 fixed             write(*,*) ix,iy,fna(ix,iy,islice,0)
-               write(*,*) ix,iy,fna(ix,iy,0,islice)
+               write(*,*) ix,iy,fna(ix,iy,0,0,islice)
             enddo
             write(*,'()')
          enddo
@@ -205,7 +205,7 @@ csw 17feb2012 fixed             write(*,*) ix,iy,fna(ix,iy,islice,0)
          do iy=-1,ny
             do ix=-1,nx
 csw 17feb2012 fixed              write(*,*) ix,iy,fna(ix,iy,islice,1)
-               write(*,*) ix,iy,fna(ix,iy,1,islice)
+               write(*,*) ix,iy,fna(ix,iy,1,1,islice)
             enddo
             write(*,'()')
          enddo

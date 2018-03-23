@@ -33,9 +33,9 @@
      &  qs(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     2  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
-     3  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
-     4  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
+     2  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     3  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     4  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3)
@@ -500,7 +500,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
 
 *    ..contribution from electron-atom friction
 *      (a.k.a. Joule heating)
-       call b2xehx (nx, ny, hx, te, po, ne, ehx)                         !srv 13.01.17
+       call b2xehx (nx, ny, hx, hy, qz, qs, te, po, ne, ehx)             !srv 13.01.17
        if (istyle_Joule_heating.eq.0)
      &   call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy)           !srv 13.01.17
        b2joule=0.0_R8
@@ -559,10 +559,10 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &        (coef*lnlam(ix,iy)/4.0_R8)*(1.0_R8-BoRiS)*                 !srv 03.05.10
      &         na(ix,iy,is)*na(ix,iy,isb)*vti32(ix,iy)*
      &        ((ua(ix,iy,is)-ua(ix,iy,isb))**2+
-     &         (wadia(ix,iy,0,is )+vaecrb(ix,iy,0,is )-
-     &          wadia(ix,iy,0,isb)-vaecrb(ix,iy,0,isb))**2+
-     &         (wadia(ix,iy,1,is )+vaecrb(ix,iy,1,is )-
-     &          wadia(ix,iy,1,isb)-vaecrb(ix,iy,1,isb))**2)
+     &         (wadia(ix,iy,0,0,is )+vaecrb(ix,iy,0,0,is )-
+     &          wadia(ix,iy,0,0,isb)-vaecrb(ix,iy,0,0,isb))**2+
+     &         (wadia(ix,iy,1,1,is )+vaecrb(ix,iy,1,1,is )-
+     &          wadia(ix,iy,1,1,isb)-vaecrb(ix,iy,1,1,isb))**2)
              shi0(ix,iy,0) = shi0(ix,iy,0)+(2.5_R8+rf4)*t0
              shi0(ix,iy,3) = shi0(ix,iy,3)-
      &        (1.5_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
@@ -715,14 +715,15 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &           region(ix,iy,0).ne.1 .or. nncut.eq.0) then
                 t0=phm7*0.5_R8*bb(ix,iy,3)*(
      1           (fchdia(rightix(ix,iy),rightiy(ix,iy),0,0)+
-     1            fchdia(ix,iy,0,0))*uadia(ix,iy,1,is)-
+     1            fchdia(ix,iy,0,0))*uadia(ix,iy,1,1,is)-
      1           (fchdia(topix(ix,iy),topiy(ix,iy),1,1)+
-     2            fchdia(ix,iy,1,1))*uadia(ix,iy,0,is))
+     2            fchdia(ix,iy,1,1))*uadia(ix,iy,0,0,is))
 *   ..case where the mesh is discontinuous
               else
-                t0=phm7*bb(ix,iy,3)*(fchdia(ix,iy,0,0)*uadia(ix,iy,1,is)
+                t0=phm7*bb(ix,iy,3)*(fchdia(ix,iy,0,0)*
+     1            uadia(ix,iy,1,1,is)
      1           -0.5_R8*(fchdia(topix(ix,iy),topiy(ix,iy),1,1)+
-     2                    fchdia(ix,iy,1,1))*uadia(ix,iy,0,is))
+     2                    fchdia(ix,iy,1,1))*uadia(ix,iy,0,0,is))
               endif
               she0(ix,iy,0) = she0(ix,iy,0)+max(0.0_R8,t0)
               she0(ix,iy,3) = she0(ix,iy,3)+

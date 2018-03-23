@@ -48,12 +48,14 @@
 *     (state)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1), ve(-1:nx,-1:ny),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
-     2  vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
+     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     1  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     2  vedia(-1:nx,-1:ny,0:1,0:1), veecrb(-1:nx,-1:ny,0:1,0:1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1), wedia(-1:nx,-1:ny,0:1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
+     &  kinrgy(-1:nx,-1:ny,0:ns-1), wedia(-1:nx,-1:ny,0:1,0:1),
+     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *     (fluxes)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 

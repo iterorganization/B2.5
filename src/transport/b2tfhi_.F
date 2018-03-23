@@ -30,7 +30,7 @@ csw 2013 added fna_he, cvsa, vadia into argument list
      & chvimx(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      & facdrift(-1:nx,-1:ny),
-     & vadia(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 17.05.99 27.12.01 25.01.02
+     & vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                   !srv 17.05.99 27.12.01 25.01.02
      & fchvispar(-1:nx,-1:ny,0:1,0:1), fchvisq(-1:nx,-1:ny,0:1,0:1),    !lk 30.05.11
      & fchinert(-1:nx,-1:ny,0:1,0:1), fchanml(-1:nx,-1:ny,0:1,0:1),     !lk 30.05.11
 csw 30apr2014 added fna_he, ia
@@ -326,7 +326,7 @@ c  ..set null flux in guard cells  ?
      &        +na(ix,iy,is)
 !     &        *bb(ix,iy,2)/bb(ix,iy,3)                                 !srv 05.02.05
      &                    )*0.5e0_R8                                    !srv 17.05.99 11.03.00
-     &       *vadia(ix,iy,0,is)*2.5e0_R8*vdia_par                       !srv 17.05.99 11.03.00 21.04.00 13.09.02 18.01.07
+     &       *vadia(ix,iy,0,0,is)*2.5e0_R8*vdia_par                     !srv 17.05.99 11.03.00 21.04.00 13.09.02 18.01.07
 !     &          +(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))         !srv 25.01.02 was 5/2
 !     &           /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
 !     &           *(bb(leftix(ix,iy),leftiy(ix,iy),2)
@@ -344,7 +344,7 @@ c  ..set null flux in guard cells  ?
      &        +(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))        !srv 25.01.02 was 5/2
      &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))         
      &   *(na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8 
-     &   *vadia(ix,iy,1,is)*2.5e0_R8*vdia_par                           !srv 13.09.02 18.01.07
+     &   *vadia(ix,iy,1,1,is)*2.5e0_R8*vdia_par                         !srv 13.09.02 18.01.07
          enddo
          enddo
         endif

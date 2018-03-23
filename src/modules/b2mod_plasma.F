@@ -21,7 +21,7 @@
      *  te(:,:),  te0(:,:),  tep(:,:),
      *  ti(:,:),  ti0(:,:),  tip(:,:),
      *  ua(:,:,:),  ua0(:,:,:),  uap(:,:,:),
-     *  uadia(:,:,:,:),  fchdia(:,:,:,:),
+     *  uadia(:,:,:,:,:),  fchdia(:,:,:,:),
      *  fch_p(:,:,:,:), fch_pi_c(:,:,:,:), fch_pi_f(:,:,:,:),            !srv 10.06.08 { 13.01.17
      *  fhm(:,:,:,:,:), fhp(:,:,:,:,:), fhj(:,:,:,:), fht(:,:,:,:),
      *  fhe_mdf(:,:,:,:), fhePSch(:,:,:,:), 
@@ -35,9 +35,9 @@
       real (kind=R8), allocatable, save ::
      *  fchvispar(:,:,:,:), fchvisper(:,:,:,:), fchvisq(:,:,:,:),        !srv 11.07.99
      *  fchinert(:,:,:,:), fchin(:,:,:,:), fchanml(:,:,:,:),             !srv 07.07.99 24.03.07 10.06.08 }
-     *  vadia(:,:,:,:), vedia(:,:,:), wadia(:,:,:,:),                    !xpb
-     *  vaecrb(:,:,:,:), veecrb(:,:,:),
-     *  wedia(:,:,:), ve(:,:),                                           !srv 14.07.10
+     *  vadia(:,:,:,:,:), vedia(:,:,:,:), wadia(:,:,:,:,:),              !xpb
+     *  vaecrb(:,:,:,:,:), veecrb(:,:,:,:),
+     *  wedia(:,:,:,:), ve(:,:),                                           !srv 14.07.10
      *  fna_nodrift(:,:,:,:,:), 
      *  kinrgy(:,:,:), kinrgy0(:,:,:), kinrgyp(:,:,:),             !xpb
      *  fmo(:,:,:,:,:)
@@ -126,7 +126,7 @@
       allocate(ua(-1:nxd,-1:nyd,0:nsd-1))
       allocate(ua0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(uap(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(uadia(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(uadia(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(fch_pi_c(-1:nxd,-1:nyd,0:1,0:1))                      !srv 13.01.17
       allocate(fch_pi_f(-1:nxd,-1:nyd,0:1,0:1))                      !srv 13.01.17
       allocate(fchdia(-1:nxd,-1:nyd,0:1,0:1))
@@ -143,15 +143,15 @@
       allocate(fchin(-1:nxd,-1:nyd,0:1,0:1))                         !srv 30.09.02
       fchin=0.0_R8
       allocate(fchanml(-1:nxd,-1:nyd,0:1,0:1))                       !srv 24.03.07
-      allocate(vadia(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !xpb
+      allocate(vadia(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                 !xpb
       vadia=0.0_R8
-      allocate(vedia(-1:nxd,-1:nyd,0:1))                             !xpb
-      allocate(wadia(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !xpb
-      allocate(wedia(-1:nxd,-1:nyd,0:1))                             !srv 14.07.10
+      allocate(vedia(-1:nxd,-1:nyd,0:1,0:1))                         !xpb
+      allocate(wadia(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                 !xpb
+      allocate(wedia(-1:nxd,-1:nyd,0:1,0:1))                         !srv 14.07.10
       allocate(ve(-1:nxd,-1:nyd))                                    !srv 14.07.10
-      allocate(vaecrb(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !xpb
+      allocate(vaecrb(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                !xpb
       vaecrb=0.0_R8
-      allocate(veecrb(-1:nxd,-1:nyd,0:1))                            !xpb
+      allocate(veecrb(-1:nxd,-1:nyd,0:1,0:1))                        !xpb
       allocate(fna_nodrift(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))           !xpb
       fna_nodrift=0.0_R8
       allocate(kinrgy(-1:nxd,-1:nyd,0:nsd-1))                        !xpb
@@ -382,8 +382,8 @@
       call cfrure (nread, size(ua), ua, 'ua')
       call cfrure (nread, size(ua0), ua0, 'ua0')
       call cfrure (nread, size(uap), uap, 'uap')
-      call cfrure (nread, size(uadia), uadia, 'uadia')
       if (b2fplasma_version.ge.'03.001.000') then
+        call cfrure (nread, size(uadia), uadia, 'uadia')
         call cfrure (nread, size(fchdia), fchdia, 'fchdia')
         call cfrure (nread, size(fmo),    fmo,    'fmo')
         call cfrure (nread, size(fna_32), fna_32, 'fna_32')
@@ -393,6 +393,10 @@
         call cfrure (nread, size(fne_32), fne_32, 'fne_32')
         call cfrure (nread, size(fne_52), fne_52, 'fne_52')
       else
+        call cfrure (nread, size(flocs), uadia, 'uadia')
+        uadia = 0.0_R8
+        uadia(:,:,0,0,:) = flocs(:,:,0,:)
+        uadia(:,:,1,1,:) = flocs(:,:,1,:)
         call cfrure (nread, size(floc), floc, 'fchdia')
         fchdia = 0.0_R8
         fchdia(:,:,0,0) = floc(:,:,0)
@@ -442,9 +446,18 @@
           fne_52 = 0.0_R8
         endif
       endif
-      if(b2fplasma_version.ge.'01.001.010') then
+      if(b2fplasma_version.ge.'03.001.000') then
         call cfrure (nread, size(wadia), wadia, 'wadia')
         call cfrure (nread, size(vaecrb), vaecrb, 'vaecrb')
+      elseif(b2fplasma_version.ge.'01.001.010') then
+        call cfrure (nread, size(flocs), wadia, 'wadia')
+        wadia = 0.0_R8
+        wadia(:,:,0,0,:) = flocs(:,:,0,:)
+        wadia(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nread, size(flocs), vaecrb, 'vaecrb')
+        vaecrb = 0.0_R8
+        vaecrb(:,:,0,0,:) = flocs(:,:,0,:)
+        vaecrb(:,:,1,1,:) = flocs(:,:,1,:)
       else
         wadia = uadia
         vaecrb = 0.0_R8

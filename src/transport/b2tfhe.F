@@ -32,7 +32,7 @@
      & calf(-1:nx,-1:ny,0:1,0:1), chvemx(-1:nx,-1:ny),
      & cddi(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                 !srv 13.10.06
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     * vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
+     * vedia(-1:nx,-1:ny,0:1,0:1), veecrb(-1:nx,-1:ny,0:1,0:1),
      2 BoRiS, qs(-1:nx,-1:ny,0:1)
       real (kind=R8) :: fchstoch(-1:nx,-1:ny)                            !lk 31.01.08
       logical balance                                                    !djm Jan2017
@@ -306,7 +306,7 @@ c  ...set null flux in guard cells  ?
 
       fhe_mdf = 0.0e0_R8                                               !srv 13.10.06
 
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                       !srv 13.01.17 {
+      call b2xehx (nx, ny, hx, hy, qz, qs, te, po, ne, ehx_)           !srv 13.01.17 {
       if(style.eq.2) then
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
         do iy = -1, ny
@@ -370,13 +370,13 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         *(ne(leftix(ix,iy),leftiy(ix,iy))                         !xpb
      &          +ne(ix,iy))/2.0_R8
               if (drift_style.eq.0) then
-                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,0) + 
-     1            vedia(leftix(ix,iy),leftiy(ix,iy),0))
-                flo_veecrb=0.5_R8*prefactor*(veecrb(ix,iy,0) + 
-     1            veecrb(leftix(ix,iy),leftiy(ix,iy),0))
+                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,0,0) + 
+     1            vedia(leftix(ix,iy),leftiy(ix,iy),0,0))
+                flo_veecrb=0.5_R8*prefactor*(veecrb(ix,iy,0,0) + 
+     1            veecrb(leftix(ix,iy),leftiy(ix,iy),0,0))
               else
-                flo_vedia=prefactor*vedia(ix,iy,0)
-                flo_veecrb=prefactor*veecrb(ix,iy,0)
+                flo_vedia=prefactor*vedia(ix,iy,0,0)
+                flo_veecrb=prefactor*veecrb(ix,iy,0,0)
               endif
             endif
             floe0_mdf=floe0+1.5_R8*flo_veecrb                            !srv 18.08.08
@@ -607,13 +607,13 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &         *(ne(bottomix(ix,iy),bottomiy(ix,iy))                     !xpb
      &          +ne(ix,iy))/2.0_R8                                       !xpb
               if (drift_style.eq.0) then
-                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,1) + 
-     1            vedia(bottomix(ix,iy),bottomiy(ix,iy),1))
-                flo_veecrb=0.5_R8*prefactor*(veecrb(ix,iy,1) + 
-     1            veecrb(bottomix(ix,iy),bottomiy(ix,iy),1))
+                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,1,1) + 
+     1            vedia(bottomix(ix,iy),bottomiy(ix,iy),1,1))
+                flo_veecrb=0.5_R8*prefactor*(veecrb(ix,iy,1,1) + 
+     1            veecrb(bottomix(ix,iy),bottomiy(ix,iy),1,1))
               else
-                flo_vedia=prefactor*vedia(ix,iy,1)
-                flo_veecrb=prefactor*veecrb(ix,iy,1)
+                flo_vedia=prefactor*vedia(ix,iy,1,1)
+                flo_veecrb=prefactor*veecrb(ix,iy,1,1)
               endif
             endif
             if(mdf_fhe.eq.0) then                                        !srv 13.10.06 {

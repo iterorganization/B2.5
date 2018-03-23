@@ -40,9 +40,9 @@
      1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1), kinrgy(-1:nx,-1:ny,0:ns-1),
-     2  vedia(-1:nx,-1:ny,0:1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
-     3  veecrb(-1:nx,-1:ny,0:1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
+     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), kinrgy(-1:nx,-1:ny,0:ns-1),
+     2  vedia(-1:nx,-1:ny,0:1,0:1), vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     3  veecrb(-1:nx,-1:ny,0:1,0:1), vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
@@ -494,7 +494,7 @@ c from diamagnetic drifts
      &            *te(bottomix(ix,iy),bottomiy(ix,iy))
      &            /ti(bottomix(ix,iy),bottomiy(ix,iy))
      &           +rza(ix,iy,is)*na(ix,iy,is)*te(ix,iy)/ti(ix,iy))/
-     1           2.0_R8*vadia(ix,iy,1,is)*b2stbc_fchy_dia*
+     1           2.0_R8*vadia(ix,iy,1,1,is)*b2stbc_fchy_dia*
      1           (te(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &            te(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy))/
      &           (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -506,7 +506,7 @@ c from diamagnetic drifts
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
      &           *(na(bottomix(ix,iy),bottomiy(ix,iy),is)
      &            +na(ix,iy,is))/2.0_R8
-     &           *vadia(ix,iy,1,is)*b2stbc_fchy_dia*
+     &           *vadia(ix,iy,1,1,is)*b2stbc_fchy_dia*
      1           (ti(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &            ti(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy))/
      &           (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -559,7 +559,7 @@ c from diamagnetic drifts
      &           *te(bottomix(ix,iy),bottomiy(ix,iy))
      &           /ti(bottomix(ix,iy),bottomiy(ix,iy))
      &           +rza(ix,iy,is)*na(ix,iy,is)*te(ix,iy)/ti(ix,iy))/
-     1           2.0_R8*vadia(ix,iy,1,is)*b2stbc_fchy_dia*
+     1           2.0_R8*vadia(ix,iy,1,1,is)*b2stbc_fchy_dia*
      1           (te(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &            te(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy))/
      &           (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -571,7 +571,7 @@ c from diamagnetic drifts
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
      &           *(na(bottomix(ix,iy),bottomiy(ix,iy),is)
      &            +na(ix,iy,is))/2.0_R8
-     &           *vadia(ix,iy,1,is)*b2stbc_fchy_dia*
+     &           *vadia(ix,iy,1,1,is)*b2stbc_fchy_dia*
      1           (ti(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &            ti(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy))/
      &           (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))

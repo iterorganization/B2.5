@@ -23,8 +23,8 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
+     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), pr(-1:nx,-1:ny),
      &  rz2(-1:nx,-1:ny,0:ns-1), uac(-1:nx,-1:ny,0:ns-1)
@@ -92,11 +92,11 @@
       external b2xvsg, b2xvgm, b2xvps, b2xgxy
       pit(ix,iy) = bb(ix,iy,0)/bb(ix,iy,3)
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      uax(ix,iy,is) = fna(ix,iy,0,is)*
+      uax(ix,iy,is) = fna(ix,iy,0,0,is)*
      &  (hx(ix,iy)/na(leftix(ix,iy),leftiy(ix,iy),is)+
      1	 hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/
      &  (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-      uay(ix,iy,is) = fna(ix,iy,1,is)*
+      uay(ix,iy,is) = fna(ix,iy,1,1,is)*
      &  (hy1(ix,iy)/na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      1	 hy1(bottomix(ix,iy),bottomiy(ix,iy))/na(ix,iy,is))/
      &  (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
@@ -242,13 +242,13 @@
      &  (((ua(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
 *   ..save fluxes
       write (nsav)
-     &  (((fna(ix,iy,0,is),ix=0,nx),0.0_R8,iy=-1,ny),is=0,ns-1),
-     &  (((fna(ix,iy,1,is),ix=-1,nx),iy=0,ny),(0.0_R8,ix=-1,nx),
+     &  (((fna(ix,iy,0,0,is),ix=0,nx),0.0_R8,iy=-1,ny),is=0,ns-1),
+     &  (((fna(ix,iy,1,1,is),ix=-1,nx),iy=0,ny),(0.0_R8,ix=-1,nx),
      &    is=0,ns-1),
-     &  ((fhe(ix,iy,0),ix=0,nx),0.0_R8,iy=-1,ny),
-     &  ((fhe(ix,iy,1),ix=-1,nx),iy=0,ny),(0.0_R8,ix=-1,nx),
-     &  ((fhi(ix,iy,0),ix=0,nx),0.0_R8,iy=-1,ny),
-     &  ((fhi(ix,iy,1),ix=-1,nx),iy=0,ny),(0.0_R8,ix=-1,nx)
+     &  ((fhe(ix,iy,0,0),ix=0,nx),0.0_R8,iy=-1,ny),
+     &  ((fhe(ix,iy,1,1),ix=-1,nx),iy=0,ny),(0.0_R8,ix=-1,nx),
+     &  ((fhi(ix,iy,0,0),ix=0,nx),0.0_R8,iy=-1,ny),
+     &  ((fhi(ix,iy,1,1),ix=-1,nx),iy=0,ny),(0.0_R8,ix=-1,nx)
 *!!   (heat fluxes should be energy fluxes.)
 *   ..save zeroes for residuals
       write (nsav)

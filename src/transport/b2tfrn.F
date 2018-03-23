@@ -30,9 +30,10 @@
      &  cdna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cdpa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  chce(-1:nx,-1:ny,0:1,0:1), chci(-1:nx,-1:ny,0:1,0:1),
-     &  ne(-1:nx,-1:ny), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
-     &  veecrb(-1:nx,-1:ny,0:1),
+     &  ne(-1:nx,-1:ny), vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  veecrb(-1:nx,-1:ny,0:1,0:1),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
      2  hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), 
      &  qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), ve(-1:nx,-1:ny), 
@@ -40,7 +41,7 @@
      3  te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  wedia(-1:nx,-1:ny,0:1), fna_eir(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  wedia(-1:nx,-1:ny,0:1,0:1), fna_eir(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fne_eir(-1:nx,-1:ny,0:1,0:1),
      &  fhe_eir(-1:nx,-1:ny,0:1,0:1), fhi_eir(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
@@ -212,15 +213,15 @@ csw 30sep2013, added check for no_hybr
      &      term(ix,iy)                                                  !iyv 19.04.07
            if (drift_style.eq.0) then
             flo_eir = flo_eir + 0.5_R8*
-     1       ((vaecrb(ix,iy,0,is)*xvecrb+wadia(ix,iy,0,is)*xwdia)*
+     1       ((vaecrb(ix,iy,0,0,is)*xvecrb+wadia(ix,iy,0,0,is)*xwdia)*
      2         vol(ix,iy)/hx(ix,iy)+
-     3        (vaecrb(leftix(ix,iy),leftiy(ix,iy),0,is)*xvecrb+
-     4         wadia(leftix(ix,iy),leftiy(ix,iy),0,is)*xwdia)*
+     3        (vaecrb(leftix(ix,iy),leftiy(ix,iy),0,0,is)*xvecrb+
+     4         wadia(leftix(ix,iy),leftiy(ix,iy),0,0,is)*xwdia)*
      5         vol(leftix(ix,iy),leftiy(ix,iy))/
      6         hx(leftix(ix,iy),leftiy(ix,iy)))
            else
             flo_eir = flo_eir +
-     4      (vaecrb(ix,iy,0,is)*xvecrb+wadia(ix,iy,0,is)*xwdia)*
+     4      (vaecrb(ix,iy,0,0,is)*xvecrb+wadia(ix,iy,0,0,is)*xwdia)*
      5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/               !srv 01.03.00
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
            end if
@@ -247,15 +248,15 @@ csw 30sep2013, added check for no_hybr
      &      term(ix,iy)
            if (drift_style.eq.0) then
             flo_eir = flo_eir + 0.5_R8*
-     1       ((vaecrb(ix,iy,0,is)*xvecrb+wadia(ix,iy,0,is)*xwdia)*
+     1       ((vaecrb(ix,iy,0,0,is)*xvecrb+wadia(ix,iy,0,0,is)*xwdia)*
      2         vol(ix,iy)/hx(ix,iy)+
-     3        (vaecrb(leftix(ix,iy),leftiy(ix,iy),0,is)*xvecrb+
-     4         wadia(leftix(ix,iy),leftiy(ix,iy),0,is)*xwdia)*
+     3        (vaecrb(leftix(ix,iy),leftiy(ix,iy),0,0,is)*xvecrb+
+     4         wadia(leftix(ix,iy),leftiy(ix,iy),0,0,is)*xwdia)*
      5         vol(leftix(ix,iy),leftiy(ix,iy))/
      6         hx(leftix(ix,iy),leftiy(ix,iy)))
            else
             flo_eir = flo_eir +
-     4       (vaecrb(ix,iy,0,is)*xvecrb+wadia(ix,iy,0,is)*xwdia)*
+     4       (vaecrb(ix,iy,0,0,is)*xvecrb+wadia(ix,iy,0,0,is)*xwdia)*
      5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 14.07.10 }
            endif
@@ -285,15 +286,15 @@ csw 30sep2013, added check for no_hybr
            flo_eir = cvla(ix,iy,1,1,is)
            if(drift_style.eq.0) then
             flo_eir = flo_eir + 0.5_R8*
-     1       ((vaecrb(ix,iy,1,is)*xvecrb+wadia(ix,iy,1,is)*xwdia)*
+     1       ((vaecrb(ix,iy,1,1,is)*xvecrb+wadia(ix,iy,1,1,is)*xwdia)*
      2         vol(ix,iy)/hy1(ix,iy)+
-     3        (vaecrb(bottomix(ix,iy),bottomiy(ix,iy),1,is)*xvecrb+
-     4         wadia(bottomix(ix,iy),bottomiy(ix,iy),1,is)*xwdia)*
+     3        (vaecrb(bottomix(ix,iy),bottomiy(ix,iy),1,1,is)*xvecrb+
+     4         wadia(bottomix(ix,iy),bottomiy(ix,iy),1,1,is)*xwdia)*
      5         vol(bottomix(ix,iy),bottomiy(ix,iy))/
      6         hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            else
             flo_eir = flo_eir +
-     1       (vaecrb(ix,iy,1,is)*xvecrb+wadia(ix,iy,1,is)*xwdia)*
+     1       (vaecrb(ix,iy,1,1,is)*xvecrb+wadia(ix,iy,1,1,is)*xwdia)*
      2       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      3       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            end if
@@ -327,15 +328,15 @@ csw 30sep2013, added check for no_hybr
            flo_eir = cvla(ix,iy,1,1,is)
            if(drift_style.eq.0) then
             flo_eir = flo_eir + 0.5_R8*
-     1       ((vaecrb(ix,iy,1,is)*xvecrb+wadia(ix,iy,1,is)*xwdia)*
+     1       ((vaecrb(ix,iy,1,1,is)*xvecrb+wadia(ix,iy,1,1,is)*xwdia)*
      2         vol(ix,iy)/hy1(ix,iy)+
-     3        (vaecrb(bottomix(ix,iy),bottomiy(ix,iy),1,is)*xvecrb+
-     4         wadia(bottomix(ix,iy),bottomiy(ix,iy),1,is)*xwdia)*
+     3        (vaecrb(bottomix(ix,iy),bottomiy(ix,iy),1,1,is)*xvecrb+
+     4         wadia(bottomix(ix,iy),bottomiy(ix,iy),1,1,is)*xwdia)*
      5         vol(bottomix(ix,iy),bottomiy(ix,iy))/
      6         hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            else
             flo_eir = flo_eir +
-     1       (vaecrb(ix,iy,1,is)*xvecrb+wadia(ix,iy,1,is)*xwdia)*
+     1       (vaecrb(ix,iy,1,1,is)*xvecrb+wadia(ix,iy,1,1,is)*xwdia)*
      2       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      3       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            end if
@@ -394,7 +395,7 @@ c Drift terms
           enddo
         enddo
         call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,0),
-     &                                         wedia(-1,-1,0))
+     &                                         wedia(-1,-1,0,0))
 
         wrk0=0.0_R8  ! compute ... on the cell faces
         do iy=-1,ny
@@ -422,7 +423,7 @@ c Drift terms
           enddo
         enddo
         call intfacev(nx,ny,bottomix,bottomiy,vol,wedia_(-1,-1,1),
-     &                                            wedia(-1,-1,1))        !srv 14.07.10 }
+     &                                            wedia(-1,-1,1,1))        !srv 14.07.10 }
       endif
 
 * ..compute electron velocity
@@ -462,15 +463,15 @@ c Drift terms
                 fle_eir = ve(ix,iy)                                      !srv 14.07.10 {
                 if(drift_style.eq.0) then
                  fle_eir = fle_eir + 0.5_R8*
-     1            ((veecrb(ix,iy,0)*xvecrb+wedia(ix,iy,0)*xwdia)*
+     1            ((veecrb(ix,iy,0,0)*xvecrb+wedia(ix,iy,0,0)*xwdia)*
      2              vol(ix,iy)/hx(ix,iy)+
-     3             (veecrb(leftix(ix,iy),leftiy(ix,iy),0)*xvecrb+
-     4              wedia(leftix(ix,iy),leftiy(ix,iy),0)*xwdia)*
+     3             (veecrb(leftix(ix,iy),leftiy(ix,iy),0,0)*xvecrb+
+     4              wedia(leftix(ix,iy),leftiy(ix,iy),0,0)*xwdia)*
      5              vol(leftix(ix,iy),leftiy(ix,iy))/
      6              hx(leftix(ix,iy),leftiy(ix,iy)))
                 else
                  fle_eir = fle_eir +
-     &            (veecrb(ix,iy,0)*xvecrb+wedia(ix,iy,0)*xwdia)*
+     &            (veecrb(ix,iy,0,0)*xvecrb+wedia(ix,iy,0,0)*xwdia)*
      &            (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))            !srv 14.07.10 }
                 end if
@@ -530,15 +531,15 @@ c Drift terms
 !     &        (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)
                 if(drift_style.eq.0) then
                   fle_eir = 0.5_R8*
-     1             ((veecrb(ix,iy,1)*xvecrb+wedia(ix,iy,1)*xwdia)*
+     1             ((veecrb(ix,iy,1,1)*xvecrb+wedia(ix,iy,1,1)*xwdia)*
      2               vol(ix,iy)/hy1(ix,iy)+
-     3              (veecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*xvecrb+
-     4               wedia(bottomix(ix,iy),bottomiy(ix,iy),1)*xwdia)*
+     3              (veecrb(bottomix(ix,iy),bottomiy(ix,iy),1,1)*xvecrb+
+     4               wedia(bottomix(ix,iy),bottomiy(ix,iy),1,1)*xwdia)*
      5               vol(bottomix(ix,iy),bottomiy(ix,iy))/
      6               hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                 else
                   fle_eir =
-     1             (veecrb(ix,iy,1)*xvecrb+wedia(ix,iy,1)*xwdia)*
+     1             (veecrb(ix,iy,1,1)*xvecrb+wedia(ix,iy,1,1)*xwdia)*
      2             (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      3             (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                 end if
@@ -594,7 +595,7 @@ cxpb turn off flows between boundary cells
               fne_eir(ix,iy,1,1)=0.0_R8
               fhe_eir(ix,iy,1,1)=0.0_R8
               fhi_eir(ix,iy,1,1)=0.0_R8
-              wedia(ix,iy,1)=0.0_R8
+              wedia(ix,iy,1,1)=0.0_R8
             endif
           enddo
         enddo
@@ -606,7 +607,7 @@ cxpb turn off poloidal flows in core boundary
             fne_eir(ix,-1,0,0) = 0.0_R8
             fhe_eir(ix,-1,0,0) = 0.0_R8
             fhi_eir(ix,-1,0,0) = 0.0_R8
-            wedia(ix,-1,0)   = 0.0_R8
+            wedia(ix,-1,0,0)   = 0.0_R8
           endif
         enddo
       elseif(guard_flows.eq.1) then                                      !srv 20.06.08 {
@@ -640,7 +641,7 @@ cxpb turn off poloidal flows in core boundary
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            wedia(ix,iy,:)  =0.0_R8
+            wedia(ix,iy,:,:)  =0.0_R8
             fna_eir(ix,iy,:,:,:)=0.0_R8
             fne_eir(ix,iy,:,:)=0.0_R8
             fhe_eir(ix,iy,:,:)=0.0_R8
@@ -674,10 +675,10 @@ csw 18feb2014 remove fluxes between guard cells
      .     'b2tfrn_fna_eirx'//chns)
           call my_out(70,nx,ny,fna_eir(-1,-1,1,1,is),
      .     'b2tfrn_fna_eiry'//chns)
-          call my_out(70,nx,ny,vaecrb(-1,-1,0,is),'b2tfrn_vecrbx'//chns)
-          call my_out(70,nx,ny,vaecrb(-1,-1,1,is),'b2tfrn_vecrby'//chns)
-          call my_out(70,nx,ny,wadia(-1,-1,0,is),'b2tfrn_wadiax'//chns)
-          call my_out(70,nx,ny,wadia(-1,-1,1,is),'b2tfrn_wadiay'//chns)
+        call my_out(70,nx,ny,vaecrb(-1,-1,0,0,is),'b2tfrn_vecrbx'//chns)
+        call my_out(70,nx,ny,vaecrb(-1,-1,1,1,is),'b2tfrn_vecrby'//chns)
+        call my_out(70,nx,ny,wadia(-1,-1,0,0,is),'b2tfrn_wadiax'//chns)
+        call my_out(70,nx,ny,wadia(-1,-1,1,1,is),'b2tfrn_wadiay'//chns)
           call my_out(70,nx,ny,cdna(-1,-1,0,0,is),'b2tfrn_cdnax'//chns)
           call my_out(70,nx,ny,cdna(-1,-1,1,1,is),'b2tfrn_cdnay'//chns)
           call my_out(70,nx,ny,ua(-1,-1,is),'b2tfrn_ua'//chns)
@@ -697,8 +698,8 @@ csw 18feb2014 remove fluxes between guard cells
         call my_out(70,nx,ny,fchinert(-1,-1,1,1),'b2tfrn_fchinerty')
         call my_out(70,nx,ny,fchanml(-1,-1,0,0),'b2tfrn_fchanmlx')
         call my_out(70,nx,ny,fchanml(-1,-1,1,1),'b2tfrn_fchanmly')
-        call my_out(70,nx,ny,wedia(-1,-1,0),'b2tfrn_wediax')
-        call my_out(70,nx,ny,wedia(-1,-1,1),'b2tfrn_wediay')
+        call my_out(70,nx,ny,wedia(-1,-1,0,0),'b2tfrn_wediax')
+        call my_out(70,nx,ny,wedia(-1,-1,1,1),'b2tfrn_wediay')
         call my_out(70,nx,ny,ve,'b2tfrn_ve')
         call my_out(70,nx,ny,ne,'b2tfrn_ne')
         call my_out(70,nx,ny,te,'b2tfrn_te')

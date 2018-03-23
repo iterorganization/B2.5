@@ -47,9 +47,10 @@
      &  fchdia(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),
      &  fchvispar(-1:nx,-1:ny,0:1,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1),
      &  fchvisq(-1:nx,-1:ny,0:1,0:1), fchinert(-1:nx,-1:ny,0:1,0:1),
-     &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
-     &  veecrb(-1:nx,-1:ny,0:1), vedia(-1:nx,-1:ny,0:1),
+     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  veecrb(-1:nx,-1:ny,0:1,0:1), vedia(-1:nx,-1:ny,0:1,0:1),
      &  floe_noc(-1:nx,-1:ny,0:1,0:1), floi_noc(-1:nx,-1:ny,0:1,0:1)
 
 *-----------------------------------------------------------------------
@@ -497,11 +498,11 @@
         call cfrure (nget, n2*4, fchvisper, 'fchvisper')
         call cfrure (nget, n2*4, fchvisq, 'fchvisq')
         call cfrure (nget, n2*4, fchinert, 'fchinert')
-        call cfrure (nget, n2*2*ns, vaecrb, 'vaecrb')
-        call cfrure (nget, n2*2*ns, vadia, 'vadia')
-        call cfrure (nget, n2*2*ns, wadia, 'wadia')
-        call cfrure (nget, n2*2, veecrb, 'veecrb')
-        call cfrure (nget, n2*2, vedia, 'vedia')
+        call cfrure (nget, n2*4*ns, vaecrb, 'vaecrb')
+        call cfrure (nget, n2*4*ns, vadia, 'vadia')
+        call cfrure (nget, n2*4*ns, wadia, 'wadia')
+        call cfrure (nget, n2*4, veecrb, 'veecrb')
+        call cfrure (nget, n2*4, vedia, 'vedia')
         call cfrure (nget, n2*4, floe_noc, 'floe_noc')
         call cfrure (nget, n2*4, floi_noc, 'floi_noc')
       elseif(b2fstat_version.ge.'03.000.005') then
@@ -605,11 +606,26 @@
         fchinert = 0.0_R8
         fchinert(:,:,0,0) = floc(:,:,0)
         fchinert(:,:,1,1) = floc(:,:,1)
-        call cfrure (nget, n2*2*ns, vaecrb, 'vaecrb')
-        call cfrure (nget, n2*2*ns, vadia, 'vadia')
-        call cfrure (nget, n2*2*ns, wadia, 'wadia')
-        call cfrure (nget, n2*2, veecrb, 'veecrb')
-        call cfrure (nget, n2*2, vedia, 'vedia')
+        call cfrure (nget, n2*2*ns, flocs, 'vaecrb')
+        vaecrb = 0.0_R8
+        vaecrb(:,:,0,0,:) = flocs(:,:,0,:)
+        vaecrb(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2*ns, flocs, 'vadia')
+        vadia = 0.0_R8
+        vadia(:,:,0,0,:) = flocs(:,:,0,:)
+        vadia(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2*ns, flocs, 'wadia')
+        wadia = 0.0_R8
+        wadia(:,:,0,0,:) = flocs(:,:,0,:)
+        wadia(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2, floc, 'veecrb')
+        veecrb = 0.0_R8
+        veecrb(:,:,0,0) = floc(:,:,0)
+        veecrb(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'vedia')
+        vedia = 0.0_R8
+        vedia(:,:,0,0) = floc(:,:,0)
+        vedia(:,:,1,1) = floc(:,:,1)
         call cfrure (nget, n2*2, floc, 'floe_noc')
         floe_noc = 0.0_R8
         floe_noc(:,:,0,0) = floc(:,:,0)

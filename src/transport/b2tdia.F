@@ -12,7 +12,8 @@
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      &  pz(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), uadia(-1:nx,-1:ny,0:1,0:ns-1)
+     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  fchdia(-1:nx,-1:ny,0:1,0:1)
@@ -151,9 +152,9 @@ crfs inertia terms
      &             bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1.and.
      &             region(ix,iy,0).ne.0)
      >            gampvd(ix,iy)=gampvd(ix,iy)+am(is)*mp*
-     1            0.5_R8*(fna(ix,iy,0,0,is)*uadia(ix,iy,0,is)+
+     1            0.5_R8*(fna(ix,iy,0,0,is)*uadia(ix,iy,0,0,is)+
      2            fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)
-     2            *uadia(rightix(ix,iy),rightiy(ix,iy),0,is))
+     2            *uadia(rightix(ix,iy),rightiy(ix,iy),0,0,is))
               enddo
             enddo
             do ix = -1, nx
@@ -167,14 +168,14 @@ cxpb  Standard case
                     gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
      1               0.5_R8*(fna(ix,iy,1,1,is)+
      2               fna(topix(ix,iy),topiy(ix,iy),1,1,is))*
-     1               0.5_R8*(uadia(ix,iy,0,is)+
-     2               uadia(rightix(ix,iy),rightiy(ix,iy),0,is))
+     1               0.5_R8*(uadia(ix,iy,0,0,is)+
+     2               uadia(rightix(ix,iy),rightiy(ix,iy),0,0,is))
                   else                                                   !xpb
 cxpb  Island X-point cells
                     gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
      1               fna(ix,iy,1,1,is)*                                    !xpb
-     2               0.5_R8*(uadia(ix,iy,0,is)+
-     2               uadia(rightix(ix,iy),rightiy(ix,iy),0,is))
+     2               0.5_R8*(uadia(ix,iy,0,0,is)+
+     2               uadia(rightix(ix,iy),rightiy(ix,iy),0,0,is))
                   endif
                 endif                                           	 !xpb
               enddo

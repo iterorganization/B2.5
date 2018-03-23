@@ -35,7 +35,8 @@
      &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1), 
      1  qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), 
      .  na(-1:nx,-1:ny,0:ns-1), 
-     2  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
+     2  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     2  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      3  facdrift(-1:nx,-1:ny), kinrgy(-1:nx,-1:ny,0:ns-1), BoRiS
       logical balance                                                !djm Jan2017
 *   ..output arguments (unspecified on entry)
@@ -373,16 +374,16 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &        *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8
              if (drift_style.eq.0) then
                cum_flo_vadia=cum_flo_vadia + 0.5_R8*prefactor*
-     1           (vadia(ix,iy,0,is) + 
-     2            vadia(leftix(ix,iy),leftiy(ix,iy),0,is))
+     1           (vadia(ix,iy,0,0,is) + 
+     2            vadia(leftix(ix,iy),leftiy(ix,iy),0,0,is))
                cum_flo_vaecrb=cum_flo_vaecrb + 0.5_R8*prefactor*
-     1           (vaecrb(ix,iy,0,is) + 
-     2            vaecrb(leftix(ix,iy),leftiy(ix,iy),0,is))
+     1           (vaecrb(ix,iy,0,0,is) + 
+     2            vaecrb(leftix(ix,iy),leftiy(ix,iy),0,0,is))
              else
                cum_flo_vadia=cum_flo_vadia+
-     1           prefactor*vadia(ix,iy,0,is)
+     1           prefactor*vadia(ix,iy,0,0,is)
                cum_flo_vaecrb=cum_flo_vaecrb+
-     1           prefactor*vaecrb(ix,iy,0,is)
+     1           prefactor*vaecrb(ix,iy,0,0,is)
              endif
            enddo
          endif
@@ -713,16 +714,16 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         +na(ix,iy,is))/2.0_R8                               !srv 17.05.99
              if (drift_style.eq.0) then
                cum_flo_vadia=cum_flo_vadia+
-     1          0.5_R8*prefactor*(vadia(ix,iy,1,is) + 
-     2          vadia(bottomix(ix,iy),bottomiy(ix,iy),1,is))
+     1          0.5_R8*prefactor*(vadia(ix,iy,1,1,is) + 
+     2          vadia(bottomix(ix,iy),bottomiy(ix,iy),1,1,is))
                cum_flo_vaecrb=cum_flo_vaecrb+
-     1          0.5_R8*prefactor*(vaecrb(ix,iy,1,is) + 
-     2          vaecrb(bottomix(ix,iy),bottomiy(ix,iy),1,is))
+     1          0.5_R8*prefactor*(vaecrb(ix,iy,1,1,is) + 
+     2          vaecrb(bottomix(ix,iy),bottomiy(ix,iy),1,1,is))
              else
                cum_flo_vadia=cum_flo_vadia+
-     1          prefactor*vadia(ix,iy,1,is)
+     1          prefactor*vadia(ix,iy,1,1,is)
                cum_flo_vaecrb=cum_flo_vaecrb+
-     1          prefactor*vaecrb(ix,iy,1,is)
+     1          prefactor*vaecrb(ix,iy,1,1,is)
              endif
            enddo
          endif

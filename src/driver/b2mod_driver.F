@@ -1489,8 +1489,8 @@ cwdk    to be checked: qz(:,:,0) never used !?!
         write (chns,'(i3.3)') is
         call my_out(70,nx,ny,na(-1,-1,is),'b2mndr_na'//chns)
         call my_out(70,nx,ny,ua(-1,-1,is),'b2mndr_ua'//chns)
-        call my_out(70,nx,ny,uadia(-1,-1,0,is),'b2mndr_uadiax'//chns)
-        call my_out(70,nx,ny,uadia(-1,-1,1,is),'b2mndr_uadiay'//chns)
+        call my_out(70,nx,ny,uadia(-1,-1,0,0,is),'b2mndr_uadiax'//chns)
+        call my_out(70,nx,ny,uadia(-1,-1,1,1,is),'b2mndr_uadiay'//chns)
         call my_out(70,nx,ny,fna(-1,-1,0,0,is),'b2mndr_fnax'//chns)
         call my_out(70,nx,ny,fna(-1,-1,1,1,is),'b2mndr_fnay'//chns)
        enddo
@@ -1537,10 +1537,10 @@ cwdk    to be checked: qz(:,:,0) never used !?!
        call sfill (n2*(ns-ns0), na_new, na(-1,-1,ns0), 1)
        call sfill (n2*(ns-ns0), 0.0_R8, ua(-1,-1,ns0), 1)
        call sfill (n2*(ns-ns0), 0.0_R8, kinrgy(-1,-1,ns0), 1)        !xpb
-       call sfill (n2*2*(ns-ns0), 0.0_R8, uadia(-1,-1,0,ns0), 1)     !xpb
-       call sfill (n2*2*(ns-ns0), 0.0_R8, vadia(-1,-1,0,ns0), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, wadia(-1,-1,0,ns0), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, vaecrb(-1,-1,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, uadia(-1,-1,0,0,ns0), 1)     !xpb
+       call sfill (n2*4*(ns-ns0), 0.0_R8, vadia(-1,-1,0,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, wadia(-1,-1,0,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, vaecrb(-1,-1,0,0,ns0), 1)
        call sfill (n2*4*(ns-ns0), 0.0_R8, fna(-1,-1,0,0,ns0), 1)
        call sfill (n2*4*(ns-ns0), 0.0_R8, fna_mdf(-1,-1,0,0,ns0), 1)
        call sfill (n2*4*(ns-ns0), 0.0_R8, fna_fcor(-1,-1,0,0,ns0), 1)

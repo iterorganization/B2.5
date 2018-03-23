@@ -18,11 +18,12 @@
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
+     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
-     &  ro(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     &  ro(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1,0:1), 
+     &  fni(-1:nx,-1:ny,0:1,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
@@ -257,8 +258,8 @@
 * ..make one-dimensional plots
 *   ..compute electron and total atom flux as function of x
       do ix = 0, nx
-       wxf1(ix) = b2ssum(ny+2,fne(ix,-1,0),nx+2)
-       wxf2(ix) = b2ssum(ny+2,fni(ix,-1,0),nx+2)
+       wxf1(ix) = b2ssum(ny+2,fne(ix,-1,0,0),nx+2)
+       wxf2(ix) = b2ssum(ny+2,fni(ix,-1,0,0),nx+2)
       enddo
 *   ..compute common scale for particle fluxes
       t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
@@ -291,8 +292,8 @@
       endif
 *   ..compute heat fluxes as function of x
       do ix = 0, nx
-       wxf1(ix) = b2ssum(ny+2,fhe(ix,-1,0),nx+2)
-       wxf2(ix) = b2ssum(ny+2,fhi(ix,-1,0),nx+2)
+       wxf1(ix) = b2ssum(ny+2,fhe(ix,-1,0,0),nx+2)
+       wxf2(ix) = b2ssum(ny+2,fhi(ix,-1,0,0),nx+2)
       enddo
 *   ..compute common scale for two heat fluxes
       t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
@@ -324,7 +325,7 @@
       endif
 *   ..compute electric current as function of x
       do ix = 0, nx
-       wxf1(ix) = b2ssum(ny+2,fch(ix,-1,0),nx+2)
+       wxf1(ix) = b2ssum(ny+2,fch(ix,-1,0,0),nx+2)
       enddo
 *   ..compute scale for electric current
       if (samax(nx+1,wxf1(0),1).eq.0) then
@@ -355,7 +356,7 @@
 *    ..prepare data
        do is = 0, ns-1
         do ix = 0, nx
-         wxf1(ix) = b2ssum(ny+2,fna(ix,-1,0,is),nx+2)
+         wxf1(ix) = b2ssum(ny+2,fna(ix,-1,0,0,is),nx+2)
         enddo
         if (samax(nx+1,wxf1(0),1).eq.0) then
          sc = 1
@@ -381,8 +382,8 @@
       endif
 *   ..compute electron and total atom flux as function of y
       do iy = 0, ny
-       wyf1(iy) = b2ssum(nx+2,fne(-1,iy,1),1)
-       wyf2(iy) = b2ssum(nx+2,fni(-1,iy,1),1)
+       wyf1(iy) = b2ssum(nx+2,fne(-1,iy,1,1),1)
+       wyf2(iy) = b2ssum(nx+2,fni(-1,iy,1,1),1)
       enddo
 *   ..compute common scale for particle fluxes
       t0 = max(samax(ny+1,wyf1(0),1),samax(ny+1,wyf2(0),1))
@@ -415,8 +416,8 @@
       endif
 *   ..compute heat fluxes as function of y
       do iy = 0, ny
-       wyf1(iy) = b2ssum(nx+2,fhe(-1,iy,1),1)
-       wyf2(iy) = b2ssum(nx+2,fhi(-1,iy,1),1)
+       wyf1(iy) = b2ssum(nx+2,fhe(-1,iy,1,1),1)
+       wyf2(iy) = b2ssum(nx+2,fhi(-1,iy,1,1),1)
       enddo
 *   ..compute common scale for two heat fluxes
       t0 = max(samax(ny+1,wyf1(0),1),samax(ny+1,wyf2(0),1))
@@ -448,7 +449,7 @@
       endif
 *   ..compute electric current as function of y
       do iy = 0, ny
-       wyf1(iy) = b2ssum(nx+2,fch(-1,iy,1),1)
+       wyf1(iy) = b2ssum(nx+2,fch(-1,iy,1,1),1)
       enddo
 *   ..compute scale for electric current
       if (samax(ny+1,wyf1(0),1).eq.0) then
@@ -479,7 +480,7 @@
 *    ..prepare data
        do is = 0, ns-1
         do iy = 0, ny
-         wyf1(iy) = b2ssum(nx+2,fna(-1,iy,1,is),1)
+         wyf1(iy) = b2ssum(nx+2,fna(-1,iy,1,1,is),1)
         enddo
         if (samax(ny+1,wyf1(0),1).eq.0) then
          sc = 1

@@ -185,23 +185,26 @@ c 2002-09-11: logic revised
       data b2fgmtry_oldversion / '00.000.000' /
       character tab
       real (kind=R8) ::
-     1 fhe1(-1:nx1,-1:ny1,0:1),
-     2 fch1(-1:nx1,-1:ny1,0:1),
-     3 fhi1(-1:nx1,-1:ny1,0:1), po1(-1:nx1,-1:ny1),
+     1 fhe1(-1:nx1,-1:ny1,0:1,0:1),
+     2 fch1(-1:nx1,-1:ny1,0:1,0:1),
+     3 fhi1(-1:nx1,-1:ny1,0:1,0:1), po1(-1:nx1,-1:ny1),
      5 ti1(-1:nx1,-1:ny1), te1(-1:nx1,-1:ny1), ne1(-1:nx1,-1:ny1),
-     6 fch1_32(-1:nx1,-1:ny1,0:1), fch1_52(-1:nx1,-1:ny1,0:1),
-     7 fch1_p(-1:nx1,-1:ny1,0:1), w1d(0:ns-1), zpdum(0:ns-1,0:3),
-     8 fhe_mdf1(-1:nx1,-1:ny1,0:1), fhi_mdf1(-1:nx1,-1:ny1,0:1),
-     9 fhePSch1(-1:nx1,-1:ny1,0:1), fhiPSch1(-1:nx1,-1:ny1,0:1),
-     * fne_eir1(-1:nx1,-1:ny1,0:1), fhe_eir1(-1:nx1,-1:ny1,0:1),
-     1 fhi_eir1(-1:nx1,-1:ny1,0:1),
-     2 fni_321(-1:nx1,-1:ny1,0:1), fni_521(-1:nx1,-1:ny1,0:1),
-     3 fne_321(-1:nx1,-1:ny1,0:1), fne_521(-1:nx1,-1:ny1,0:1),
-     4 fchdia1(-1:nx1,-1:ny1,0:1), fchin1(-1:nx1,-1:ny1,0:1),
-     5 fchvispar1(-1:nx1,-1:ny1,0:1), fchvisper1(-1:nx1,-1:ny1,0:1),
-     6 fchvisq1(-1:nx1,-1:ny1,0:1), fchinert1(-1:nx1,-1:ny1,0:1),
-     7 floe_noc1(-1:nx1,-1:ny1,0:1), floi_noc1(-1:nx1,-1:ny1,0:1),
-     8 veecrb1(-1:nx1,-1:ny1,0:1), vedia1(-1:nx1,-1:ny1,0:1)
+     6 fch1_32(-1:nx1,-1:ny1,0:1,0:1), fch1_52(-1:nx1,-1:ny1,0:1,0:1),
+     7 fch1_p(-1:nx1,-1:ny1,0:1,0:1), w1d(0:ns-1), zpdum(0:ns-1,0:3),
+     8 fhe_mdf1(-1:nx1,-1:ny1,0:1,0:1), fhi_mdf1(-1:nx1,-1:ny1,0:1,0:1),
+     9 fhePSch1(-1:nx1,-1:ny1,0:1,0:1), fhiPSch1(-1:nx1,-1:ny1,0:1,0:1),
+     * fne_eir1(-1:nx1,-1:ny1,0:1,0:1), fhe_eir1(-1:nx1,-1:ny1,0:1,0:1),
+     1 fhi_eir1(-1:nx1,-1:ny1,0:1,0:1),
+     2 fni_321(-1:nx1,-1:ny1,0:1,0:1), fni_521(-1:nx1,-1:ny1,0:1,0:1),
+     3 fne_321(-1:nx1,-1:ny1,0:1,0:1), fne_521(-1:nx1,-1:ny1,0:1,0:1),
+     4 fchdia1(-1:nx1,-1:ny1,0:1,0:1), fchin1(-1:nx1,-1:ny1,0:1,0:1),
+     5 fchvispar1(-1:nx1,-1:ny1,0:1,0:1), 
+     5 fchvisper1(-1:nx1,-1:ny1,0:1,0:1),
+     6 fchvisq1(-1:nx1,-1:ny1,0:1,0:1), 
+     6 fchinert1(-1:nx1,-1:ny1,0:1,0:1),
+     7 floe_noc1(-1:nx1,-1:ny1,0:1,0:1), 
+     7 floi_noc1(-1:nx1,-1:ny1,0:1,0:1),
+     8 veecrb1(-1:nx1,-1:ny1,0:1,0:1), vedia1(-1:nx1,-1:ny1,0:1,0:1)
       real (kind=R8), allocatable ::
      . na_mean(:,:,:), te_mean(:,:), ti_mean(:,:),
      . ua_mean(:,:,:), po_mean(:,:),
@@ -224,12 +227,13 @@ c 2002-09-11: logic revised
      . e_she1(:,:,:), e_shi1(:,:,:), e_sch1(:,:,:)
       real (kind=R8), allocatable ::
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
-     2 uadia1(:,:,:,:), fna1(:,:,:,:), ua1(:,:,:), na1(:,:,:),
-     3 kinrgy1(:,:,:), fna_mdf1(:,:,:,:),
-     4 fna_fcor1(:,:,:,:), fna_nodrift1(:,:,:,:), fna_he1(:,:,:,:),
-     5 fnaPSch1(:,:,:,:), fna_eir1(:,:,:,:),
-     6 fna_321(:,:,:,:), fna_521(:,:,:,:),
-     7 vaecrb1(:,:,:,:), vadia1(:,:,:,:), wadia1(:,:,:,:),
+     2 uadia1(:,:,:,:,:), fna1(:,:,:,:,:), ua1(:,:,:), na1(:,:,:),
+     3 kinrgy1(:,:,:), fna_mdf1(:,:,:,:,:),
+     4 fna_fcor1(:,:,:,:,:), fna_nodrift1(:,:,:,:,:), 
+     4 fna_he1(:,:,:,:,:),
+     5 fnaPSch1(:,:,:,:,:), fna_eir1(:,:,:,:,:),
+     6 fna_321(:,:,:,:,:), fna_521(:,:,:,:,:),
+     7 vaecrb1(:,:,:,:,:), vadia1(:,:,:,:,:), wadia1(:,:,:,:,:),
      8 sputter_yield_yt(:,:,:,:), sputter_yield2_yt(:,:,:,:),
      9 sputter_tmp(:,:), cftmp(:),
      . bundle_contr(:,:), bundle_frac(:,:), x1data(:,:,:,:),
@@ -974,19 +978,19 @@ c 2002-09-11: logic revised
       allocate(na1(-1:nx1,-1:ny1,0:ns1-1))
       allocate(ua1(-1:nx1,-1:ny1,0:ns1-1))
       allocate(kinrgy1(-1:nx1,-1:ny1,0:ns1-1))
-      allocate(fna1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(fna_mdf1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(fna_eir1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(fna_fcor1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(fna_nodrift1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(fna_he1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(fna_321(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(fna_521(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(fnaPSch1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(uadia1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(vadia1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(wadia1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(vaecrb1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(fna1(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(fna_mdf1(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(fna_eir1(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(fna_fcor1(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(fna_nodrift1(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(fna_he1(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(fna_321(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(fna_521(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(fnaPSch1(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(uadia1(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(vadia1(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(wadia1(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
+      allocate(vaecrb1(-1:nx1,-1:ny1,0:1,0:1,0:ns1-1))
       allocate(na_mean(-1:nx,-1:ny,0:ns-1))
       allocate(ua_mean(-1:nx,-1:ny,0:ns-1))
       allocate(te_mean(-1:nx,-1:ny))
@@ -1192,17 +1196,17 @@ c 2002-09-11: logic revised
             e_na1(:,:,is)=e_na1(:,:,is)*neutral_rescale**2
             sna1_mean(:,:,:,is)=sna1_mean(:,:,:,is)*neutral_rescale
             e_sna1(:,:,:,is)=e_sna1(:,:,:,is)*neutral_rescale**2
-            fna1(:,:,:,is)=fna1(:,:,:,is)*neutral_rescale
-            fna_mdf1(:,:,:,is)=fna_mdf1(:,:,:,is)*neutral_rescale
-            fna_fcor1(:,:,:,is)=fna_fcor1(:,:,:,is)*neutral_rescale
-            fna_nodrift1(:,:,:,is)=
-     .       fna_nodrift1(:,:,:,is)*neutral_rescale
-            fna_he1(:,:,:,is)=fna_he1(:,:,:,is)*neutral_rescale
-            fnaPSch1(:,:,:,is)=fnaPSch1(:,:,:,is)*neutral_rescale
-            fna_eir1(:,:,:,is)=fna_eir1(:,:,:,is)*neutral_rescale
+            fna1(:,:,:,:,is)=fna1(:,:,:,:,is)*neutral_rescale
+            fna_mdf1(:,:,:,:,is)=fna_mdf1(:,:,:,:,is)*neutral_rescale
+            fna_fcor1(:,:,:,:,is)=fna_fcor1(:,:,:,:,is)*neutral_rescale
+            fna_nodrift1(:,:,:,:,is)=
+     .       fna_nodrift1(:,:,:,:,is)*neutral_rescale
+            fna_he1(:,:,:,:,is)=fna_he1(:,:,:,:,is)*neutral_rescale
+            fnaPSch1(:,:,:,:,is)=fnaPSch1(:,:,:,:,is)*neutral_rescale
+            fna_eir1(:,:,:,:,is)=fna_eir1(:,:,:,:,is)*neutral_rescale
             kinrgy1(:,:,is)=kinrgy1(:,:,is)*neutral_rescale
-            fna_321(:,:,:,is)=fna_321(:,:,:,is)*neutral_rescale
-            fna_521(:,:,:,is)=fna_521(:,:,:,is)*neutral_rescale
+            fna_321(:,:,:,:,is)=fna_321(:,:,:,:,is)*neutral_rescale
+            fna_521(:,:,:,:,is)=fna_521(:,:,:,:,is)*neutral_rescale
           endif
         enddo
         call b2xpfi (nx, ny, ns, fna_321, fni_321)

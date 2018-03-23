@@ -339,8 +339,8 @@ csw 01oct2012 initialize potential if necessary
           call b2tfnb (nx, ny, is, ismain, 
      &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,           !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
-     1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),
-     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc, qs,  !srv 19.05.03 08.10.04 04.02.05
+     1   uadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is), vadia(-1,-1,0,0,is),
+     1   wadia(-1,-1,0,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,qs, !srv 19.05.03 08.10.04 04.02.05
      &   po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), cdpa(-1,-1,0,0,is),
      &   cddi(-1,-1,0,0,is),                                             !srv 13.10.06
      &   cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                     !srv 09.01.01 15.12.05
@@ -505,8 +505,8 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
         call b2tfnb (nx, ny, is, ismain, 
      &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,           !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
-     1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),       !srv 17.05.99
-     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc, qs,  !srv 19.05.03 08.10.04  04.02.05
+     1   uadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is), vadia(-1,-1,0,0,is),!srv 17.05.99
+     1   wadia(-1,-1,0,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,qs,  !srv 19.05.03 08.10.04  04.02.05
      &   po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), cdpa(-1,-1,0,0,is),
      &   cddi(-1,-1,0,0,is),                                             !srv 13.10.06
      &   cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                     !srv 09.01.01 15.12.05
@@ -589,8 +589,8 @@ cwdk tmp: always use 9-point stencil
         call b2tfnb (nx, ny, is, ismain, 
      &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,           !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
-     1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),       !srv 17.05.99
-     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc, qs,  !srv 19.05.03 08.10.04 04.02.05
+     1   uadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is), vadia(-1,-1,0,0,is), !srv 17.05.99
+     1   wadia(-1,-1,0,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,qs, !srv 19.05.03 08.10.04 04.02.05
      &   po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), cdpa(-1,-1,0,0,is),
      &   cddi(-1,-1,0,0,is),                                             !srv 13.10.06
      &   cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                     !srv 09.01.01 15.12.05
@@ -748,8 +748,9 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
             call b2tfnb (nx, ny, is, ismain, 
      &       guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,       !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
      1       rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),  !srv 09.01.01 20.09.06
-     1       uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),   !srv 17.05.99
-     1       wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,  !srv 19.05.03 08.10.04 04.02.05
+     1       uadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is), 
+     1       vadia(-1,-1,0,0,is),                                        !srv 17.05.99
+     1       wadia(-1,-1,0,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs,qc, !srv 19.05.03 08.10.04 04.02.05
      &       qs, po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is),
      &       cdpa(-1,-1,0,0,is), cddi(-1,-1,0,0,is),                     !srv 13.10.06
      &       cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                 !srv 09.01.01 15.12.05
@@ -917,9 +918,10 @@ c   recompute particle fluxes
         call b2tfnb (nx, ny, is, ismain,
      &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,           !srv 07.06.00 09.01.01 08.09.01 19.05.03 06.02.14
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
-     1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),       !srv 17.05.99
-     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc, qs,  !srv 19.05.03 08.10.04  04.02.05
-     &   po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), cdpa(-1,-1,0,0,is),
+     1   uadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is), vadia(-1,-1,0,0,is), !srv 17.05.99
+     1   wadia(-1,-1,0,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,    !srv 19.05.03 08.10.04  04.02.05
+     &   qs, po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), 
+     &   cdpa(-1,-1,0,0,is),
      &   cddi(-1,-1,0,0,is),                                             !srv 13.10.06
      &   cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                     !srv 09.01.01 15.12.05
      &   cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),
@@ -1008,9 +1010,10 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
         call b2tfnb (nx, ny, is, ismain, 
      &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,           !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
-     1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),
-     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc, qs,  !srv 19.05.03 08.10.04 04.02.05
-     &   po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), cdpa(-1,-1,0,0,is),
+     1   uadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is), vadia(-1,-1,0,0,is),
+     1   wadia(-1,-1,0,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,  !srv 19.05.03 08.10.04 04.02.05
+     &   qs, po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), 
+     &   cdpa(-1,-1,0,0,is),
      &   cddi(-1,-1,0,0,is),                                             !srv 13.10.06
      &   cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                     !srv 09.01.01 15.12.05
      &   cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),

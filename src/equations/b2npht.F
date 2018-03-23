@@ -18,22 +18,23 @@
      &          balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nregionv, itcnt, ismain                        !srv 05.07.17
+      integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
       real (kind=R8) ::
      *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),
      *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      *  qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)    !srv 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1,0:1), floi(-1:nx,-1:ny,0:1,0:1),
-     &  cone(-1:nx,-1:ny,0:1,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:1,0:2),            !srv 02.01.07
+     &  cone(-1:nx,-1:ny,0:1,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:1,0:2),   !srv 02.01.07
      &  ceqp(-1:nx,-1:ny), pccm(-1:nx,-1:ny,0:1,0:1),
      &  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
-     *  fne(-1:nx,-1:ny,0:1,0:1),                                            !srv 09.07.08
+     *  fne(-1:nx,-1:ny,0:1,0:1),                                       !srv 09.07.08
      &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     1  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
-     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
-     3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)    !srv 07.07.09
+     1  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     3  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     4  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1)                              !srv 07.07.09
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)

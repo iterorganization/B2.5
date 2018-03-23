@@ -29,7 +29,7 @@ c
      . in_am(1:in_ns),
      . in_na(0:in_nx+1,0:in_ny+1,in_ns),
      . in_ua(0:in_nx+1,0:in_ny+1,in_ns),
-     . in_uadia(0:in_nx+1,0:in_ny+1,0:1,in_ns),
+     . in_uadia(0:in_nx+1,0:in_ny+1,0:1,0:1,in_ns),
      . in_te(0:in_nx+1,0:in_ny+1),
      . in_ti(0:in_nx+1,0:in_ny+1),
      . in_po(0:in_nx+1,0:in_ny+1)
@@ -224,14 +224,14 @@ c x-direction cell face quantities
           do ix=0,in_nx
             up(ix,iy,is)=in_ua(ix+1,iy,is)
             fnix(ix,iy,is)=in_fna(ix+1,iy,0,is)
-            ud(ix,iy,is)=in_uadia(ix+1,iy,0,is)
+            ud(ix,iy,is)=in_uadia(ix+1,iy,0,0,is)
           enddo
         enddo
 c y-direction cell face quantities
         do iy=0,in_ny
           do ix=0,in_nx+1
             fniy(ix,iy,is)=in_fna(ix,iy+1,1,is)
-            vd(ix,iy,is)=in_uadia(ix,iy+1,1,is)
+            vd(ix,iy,is)=in_uadia(ix,iy+1,1,1,is)
           enddo
         enddo
       enddo

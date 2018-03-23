@@ -355,8 +355,9 @@
          call b2tfnb (nx, ny, is, ismain,                                !srv 08.09.01
      1    guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,          !iyv 06.02.14
      1    rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
-     1    uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),      !xpb
-     &    wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc, qs, !srv 09.01.01
+     1    uadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is), 
+     &    vadia(-1,-1,0,0,is), wadia(-1,-1,0,0,is),                      !xpb
+     &    ne, te, ti, bb, hx, hy, hz, qz, gs, qc, qs, !srv 09.01.01
      &    po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is),
      &    cdpa(-1,-1,0,0,is), cddi(-1,-1,0,0,is),                        !srv 13.10.06
      &    cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),
@@ -485,7 +486,7 @@ cxpb
      1               'Velocity limit active for ix,iy,is = ',ix,iy,is
                     write(*,'(a,1p,7g14.7)')
      .               'ua,uadia(x&y),te,ti,mach10,na/ne ',
-     1                ua(ix,iy,is),(uadia(ix,iy,i,is),i=0,1),
+     1                ua(ix,iy,is),(uadia(ix,iy,i,i,is),i=0,1),
      2                te(ix,iy)/ev,ti(ix,iy)/ev,mach10,
      3                na(ix,iy,is)/ne(ix,iy)
                     write(*,'(a,1p,3g14.7)') 'sources(r,m,ext): ',
@@ -503,7 +504,7 @@ cxpb
      1               'Velocity limit active for ix,iy,is = ',ix,iy,is
                     write(*,'(a,1p,7g14.7)')
      .               'ua,uadia(x&y),te,ti,mach10,na/ne ',
-     1                ua(ix,iy,is),(uadia(ix,iy,i,is),i=0,1),
+     1                ua(ix,iy,is),(uadia(ix,iy,i,i,is),i=0,1),
      2                te(ix,iy)/ev,ti(ix,iy)/ev,mach10,
      3                na(ix,iy,is)/ne(ix,iy)
                     write(*,'(a,1p,3g14.7)') 'sources(r,m,ext): ',
@@ -526,8 +527,9 @@ cxpb
           call b2tfnb (nx, ny, is, ismain,                               !srv 08.09.01
      1     guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,         !xpb !iyv 06.02.14
      1     rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
-     1     uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),     !xpb
-     &     wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,qs, !srv 09.01.01
+     1     uadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is), 
+     &     vadia(-1,-1,0,0,is), wadia(-1,-1,0,0,is),                     !xpb
+     &     ne, te, ti, bb, hx, hy, hz, qz, gs, qc,qs,                    !srv 09.01.01
      &     po, cvla(-1,-1,0,0,is),cdna(-1,-1,0,0,is),cdpa(-1,-1,0,0,is),
      &     cddi(-1,-1,0,0,is),                                           !srv 13.10.06
      &     cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),  
@@ -599,8 +601,9 @@ cxpb
             call b2tfnb (nx, ny, is, ismain,                             !srv 08.09.01
      1       guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,       !xpb !iyv 06.02.14
      1       rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
-     1       uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),   !xpb
-     &       wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,  !srv 09.01.01
+     1       uadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is), 
+     &       vadia(-1,-1,0,0,is), wadia(-1,-1,0,0,is),                   !xpb
+     &       ne, te, ti, bb, hx, hy, hz, qz, gs, qc,                     !srv 09.01.01
      &       qs, po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), 
      &       cdpa(-1,-1,0,0,is), cddi(-1,-1,0,0,is),                     !srv 13.10.06
      &       cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is), 
@@ -811,8 +814,9 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                   call b2tfnb (nx, ny, is, ismain,                       !srv 08.09.01
      1             guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb, !iyv 06.02.14
      1             rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb,
-     1             ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  !xpb
-     &             vadia(-1,-1,0,is), wadia(-1,-1,0,is),
+     1             ua(-1,-1,is), uadia(-1,-1,0,0,is), 
+     &             vaecrb(-1,-1,0,0,is),                                 !xpb
+     &             vadia(-1,-1,0,0,is), wadia(-1,-1,0,0,is),
      &             ne, te, ti, bb, hx, hy, hz, qz, gs, qc, qs, po,       !srv 09.01.01
      &             cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), 
      &             cdpa(-1,-1,0,0,is),

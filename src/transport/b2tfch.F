@@ -29,9 +29,10 @@
      & pz(-1:nx,-1:ny), vol(-1:nx,-1:ny), 
      & fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      & gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),    !xpb
-     & qs(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1), 
+     & qs(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
      & ua(-1:nx,-1:ny,0:ns-1),
-     & wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1), 	 !xpb
+     & wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     & vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),                               !xpb
      & fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
      1 csig(-1:nx,-1:ny,0:1,0:1), chci(-1:nx,-1:ny,0:1,0:1),
      & csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1),                   	 !xpb
@@ -47,7 +48,7 @@
       real (kind=R8) ::
      *  fch(-1:nx,-1:ny,0:1,0:1), 
      &  conc(-1:nx,-1:ny,0:1,0:1),
-     *  vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
+     *  vedia(-1:nx,-1:ny,0:1,0:1), veecrb(-1:nx,-1:ny,0:1,0:1),
      2  fchdia(-1:nx,-1:ny,0:1,0:1), 
      3  fch_p(-1:nx,-1:ny,0:1,0:1), fchvispar(-1:nx,-1:ny,0:1,0:1),              !xpb srv 10.06.08
      4  fch_32(-1:nx,-1:ny,0:1,0:1), fch_52(-1:nx,-1:ny,0:1,0:1),
@@ -213,7 +214,7 @@ c Drift terms
      & fchstoch)
 
 *   ..compute parallel current
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                        !srv 13.01.17 {
+      call b2xehx (nx, ny, hx, hy, qz, qs, te, po, ne, ehx_)             !srv 13.01.17 {
       if (no_current.ne.1) then
         call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
         if (style.eq.2) then
@@ -266,10 +267,10 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))     	 !xpb
      &         *(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
               if (drift_style.eq.0) then
-                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,0) + 
-     1            vedia(leftix(ix,iy),leftiy(ix,iy),1))
+                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,0,0) + 
+     1            vedia(leftix(ix,iy),leftiy(ix,iy),0,0))
               else
-                flo_vedia=prefactor*vedia(ix,iy,0)
+                flo_vedia=prefactor*vedia(ix,iy,0,0)
               endif
             endif
             floe0=floe0_nd+2.5_R8*flo_vedia

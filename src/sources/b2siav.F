@@ -19,7 +19,8 @@
      & mb, hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
      & vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      1 bb(-1:nx,-1:ny,0:3), lnlam(-1:nx,-1:ny),                       !srv 01.07.09
-     2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1), vbecrb(-1:nx,-1:ny,0:1),
+     2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1,0:1), 
+     & vbecrb(-1:nx,-1:ny,0:1,0:1),
      & te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
      & po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
      & chci(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),                  !srv 23.07.99

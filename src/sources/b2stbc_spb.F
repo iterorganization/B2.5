@@ -26,8 +26,9 @@
      1	bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      *   na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),  !sv 14.10.99
-     1  vadia(-1:nx,-1:ny,0:1,0:ns-1),                                  !sv 12.05.00
+     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     1  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),                             !sv 14.10.99
+     1  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),                              !sv 12.05.00
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
@@ -392,7 +393,7 @@
           sna0(ix,-1,0,is) = sna0(ix,-1,0,is)                         !sv 08.02.02
      &    +cbsna(6,is,ireg)*(                                         !sv 08.02.02
 !     &     cvla(ix,iy,1)+   ! remember if you need
-     &     uadia(ix,iy,1,is)*                                         !sv 08.02.02
+     &     uadia(ix,iy,1,1,is)*                                         !sv 08.02.02
      &    (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/          !sv 01.03.00
      &     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))          !sv 01.03.00 07.05.08
      &                      )                                         !sv 08.02.02
@@ -410,10 +411,10 @@
      &        cbsna(2,is,ireg).ne.0.0e0_R8) then
 	     if(mdf_fnb.eq.0) then
                sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+
-     *          min(0.0e0_R8,s0*(vadia(ix,0,1,is)+vaecrb(ix,0,1,is)))
+     *         min(0.0e0_R8,s0*(vadia(ix,0,1,1,is)+vaecrb(ix,0,1,1,is)))
 	     else
                sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+
-     *          min(0.0e0_R8,s0*vaecrb(ix,0,1,is))
+     *          min(0.0e0_R8,s0*vaecrb(ix,0,1,1,is))
 	     endif
 	   endif
 	 endif                                                        !sv 02.03.05 }
@@ -435,7 +436,7 @@
              iy = -1                                                  !sv 15.02.02
              smo0(ix,-1,0,is) = smo0(ix,-1,0,is)+                     !sv 09.01.01 01.07.05
      &       s0hz*(am(is)*mp)*naaverage(is)                           !sv 15.02.02
-!     &     *(2.0e0_R8*vadia(ix,iy,1,is))
+!     &     *(2.0e0_R8*vadia(ix,iy,1,1,is))
      &       *(-2.0e0_R8*facdrift(ix,iy)*phm2*            ! *signmf   !sv 07.06.00 17.05.99 25.04.00 15.02.02 11.01.13
      &          tiaverage*bb(ix,iy,2)/(qe*rza(ix,iy,is)*hx(ix,iy))    !sv 15.02.02
      &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !sv 05.03.99 15.02.02
@@ -607,13 +608,13 @@
      &        cbsna(2,is,ireg).ne.0.0e0_R8) then
 	     if(mdf_fnb.eq.0) then                                     !sv 09.11.06 {
             sna0(ix,ny,1,is) = sna0(ix,ny,1,is)-
-     *       max(0.0e0_R8,s0*(vadia(ix,ny,1,is)+vaecrb(ix,ny,1,is)))
+     *       max(0.0e0_R8,s0*(vadia(ix,ny,1,1,is)+vaecrb(ix,ny,1,1,is)))
 	     else
             sna0(ix,ny,1,is) = sna0(ix,ny,1,is)-                       !lk 12.12.07 {
      *      max(0.0e0_R8,
      8         (vol(ix,ny)+vol(bottomix(ix,ny),bottomiy(ix,ny)))/
      9         (hy1(ix,ny)+hy1(bottomix(ix,ny),bottomiy(ix,ny)))      !sv 07.05.08
-     &         *vaecrb(ix,ny,1,is))                                   !lk 12.12.07 }
+     &         *vaecrb(ix,ny,1,1,is))                                 !lk 12.12.07 }
 	     endif                                                    !sv 09.11.06 }
 	    endif
 	   endif                                                      !sv 02.03.05 {
@@ -766,15 +767,15 @@ c         fchi=0.0e0_R8                            ! was commented
 *     ..compute csb
            csb = sqrt((rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))/(am(is)*mp))   !sv 26.11.02
 *     .. account for diamagnetic drifts
-	     csbm = max(csb,0.1e0_R8*csb+uadia(0,iy,0,is)*    !signmf* !sv 17.02.04 {  11.01.13
+	     csbm = max(csb,0.1e0_R8*csb+uadia(0,iy,0,0,is)*    !signmf* !sv 17.02.04 {  11.01.13
      &                  bb(ix,iy,2)/bb(ix,iy,0))
-	     cstm = max(cst,0.1e0_R8*cst+uadia(0,iy,0,is)*    !signmf*                 11.01.13
+	     cstm = max(cst,0.1e0_R8*cst+uadia(0,iy,0,0,is)*    !signmf*                 11.01.13
      &                 bb(ix,iy,2)/bb(ix,iy,0))                       !sv 17.02.04 }
 	     if(istyle_cs.eq.0) then                                       !sv 25.04.08 {
             vwest=(-cst)*pbshz(rightix(ix,iy),rightiy(ix,iy),0)+           !sv 17.02.04 19.02.08
      &      hz(ix,iy)*vol(rightix(ix,iy),rightiy(ix,iy))/
      &                 hx(rightix(ix,iy),rightiy(ix,iy))      !*signmf*bb(ix,iy,2)/bb(ix,iy,3)   !sv 05.02.05
-     &       *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,is))*cbc        !sv 17.02.04 19.02.08
+     &       *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,0,is))*cbc      !sv 17.02.04 19.02.08
 !        vwest=(-cst)*pbshz(rightix(ix,iy),rightiy(ix,iy),0)+          !sv 17.02.04 {
 !     &    hz(ix,iy)*vol(ix,iy)/hx(ix,iy)  !*signmf*bb(ix,iy,2)/bb(ix,iy,3)   !sv 05.02.05
  !    &    *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,is))*cbc           !sv 17.02.04 }
@@ -782,7 +783,7 @@ c         fchi=0.0e0_R8                            ! was commented
             vwest=(-csb)*pbshz(rightix(ix,iy),rightiy(ix,iy),0)+        !sv 17.02.04 19.02.08
      &       hz(ix,iy)*vol(rightix(ix,iy),rightiy(ix,iy))/
      &                  hx(rightix(ix,iy),rightiy(ix,iy)) 
-     &       *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,is))*cbc         !sv 17.02.04 19.02.08
+     &       *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,0,is))*cbc       !sv 17.02.04 19.02.08
 	   endif                                                        !sv 25.04.08 }
 	   if(ivminus.eq.0) then                                        !sv 24.03.05
              vminus= vwest                                              !sv 28.01.05
@@ -834,7 +835,7 @@ c         sna0(-1,iy,1,1) = -1.0d60
 !     &                     cst*pbshz(rightix(ix,iy),rightiy(ix,iy),0)
 !          write(*,*) '       hz*vol/hx*Bz/B*(-VaExBx) = ',
 !     &           hz(ix,iy)*vol(ix,iy)/hx(ix,iy) ! *signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
-!     &           *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,is))*cbc
+!     &           *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,0,is))*cbc
 !!	    vwest = 0.0e0_R8                                            !sv 02.11.99
 !        endif
            smo0(ix,iy,0,is) = smo0(ix,iy,0,is)+  !sv 26.11.02
@@ -978,21 +979,21 @@ c         fchi=0.0e0_R8                      !sv was commented
 *     ..compute csb
            csb = sqrt((rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))/(am(is)*mp))  !sv 26.11.02
 *     .. account for diamagnetic drifts
-	     csbm = max(csb,0.1e0_R8*csb-uadia(ix,iy,0,is)*             !sv 17.02.04 {
+	     csbm = max(csb,0.1e0_R8*csb-uadia(ix,iy,0,0,is)*           !sv 17.02.04 {
      1	           bb(ix,iy,2)/bb(ix,iy,0))
-	     cstm = max(cst,0.1e0_R8*cst-uadia(ix,iy,0,is)*
+	     cstm = max(cst,0.1e0_R8*cst-uadia(ix,iy,0,0,is)*
      1	           bb(ix,iy,2)/bb(ix,iy,0))                             !sv 17.02.04 }
 	     if(istyle_cs.eq.0) then                                    !sv 25.04.08 {
             veast = cst*pbshz(ix,iy,0)+                                 !sv 17.02.04 19.02.08 25.04.08 {
      &       hz(ix,iy)*vol(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy)     !*signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
-     &           *(-vaecrb(ix,iy,0,is))*cbc                             !sv 17.02.04 19.02.08
+     &           *(-vaecrb(ix,iy,0,0,is))*cbc                           !sv 17.02.04 19.02.08
 !        veast = cst*pbshz(ix,iy,0)+                                    !sv 17.02.04 {
 !     &       hz(ix,iy)*vol(ix,iy)/hx(ix,iy) !*signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
-!     &           *(-vaecrb(ix,iy,0,is))*cbc                            !sv 17.02.04 }
+!     &           *(-vaecrb(ix,iy,0,0,is))*cbc                          !sv 17.02.04 }
            else
             veast = csb*pbshz(ix,iy,0)+                                 !sv 17.02.04 19.02.08
      &       hz(ix,iy)*vol(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy)
-     &           *(-vaecrb(ix,iy,0,is))*cbc                             !sv 17.02.04 19.02.08
+     &           *(-vaecrb(ix,iy,0,0,is))*cbc                           !sv 17.02.04 19.02.08
 	     endif                                                      !sv 25.04.08 }
 	     if(ivplus.eq.0) then                                       !sv 24.03.05
 	      vplus=veast                                               !sv 28.01.05
@@ -1000,7 +1001,7 @@ c         fchi=0.0e0_R8                      !sv was commented
 	      vplus=(veast+abs(veast))*0.5e0_R8                         !sv 28.01.05
 	     endif                                                      !sv 24.03.05
 !        v0 =vol(ix,iy)/hx(ix,iy)*bb(ix,iy,2)/bb(ix,iy,3)               !sv 18.07.03 {
-!     &      *vaecrb(ix,iy,0,is)*cbc*signmf
+!     &      *vaecrb(ix,iy,0,0,is)*cbc*signmf
 *     ..compute particle source
            sna0(ix,iy,0,is) = sna0(ix,iy,0,is)+                         !sv 26.11.02
      &      cbsna(0,is,ireg)*s0+
@@ -1043,7 +1044,7 @@ c         sna0(nx,iy,1,1) = -1.0d160
 !	    write(*,*) '     cst*pbshz(ix,iy,0) = ',cst*pbshz(ix,iy,0)
 !          write(*,*) '       hz*vol/hx*Bz/B*(-VaExBx) = ',
 !     &           hz(ix,iy)*vol(ix,iy)/hx(ix,iy) ! *signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
-!     &           *(-vaecrb(ix,iy,0,is))*cbc
+!     &           *(-vaecrb(ix,iy,0,0,is))*cbc
 !!	    veast = 0.0e0_R8                                            !sv 02.11.99
 !        endif
            smo0(ix,iy,0,is) = smo0(ix,iy,0,is)+                         !sv 26.11.02

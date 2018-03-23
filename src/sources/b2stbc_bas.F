@@ -28,7 +28,8 @@
      &  qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1), 
+     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
@@ -591,13 +592,13 @@ cxpb  Following suggestion from Russians, the drift velocity should
 cxpb  only include ExB terms and not diamagnetic contributions
          if (sheath_drift_fix.eq.0) then
            udf(is) =
-     &      (uadia(-1,iy,0,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
-     &       uadia(rightix(-1,iy),rightiy(-1,iy),0,is)*hx(-1,iy))/
+     &      (uadia(-1,iy,0,0,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
+     &       uadia(rightix(-1,iy),rightiy(-1,iy),0,0,is)*hx(-1,iy))/
      &      (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
          else
            udf(is) =
-     &      (vaecrb(-1,iy,0,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
-     &       vaecrb(rightix(-1,iy),rightiy(-1,iy),0,is)*hx(-1,iy))/
+     &      (vaecrb(-1,iy,0,0,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
+     &       vaecrb(rightix(-1,iy),rightiy(-1,iy),0,0,is)*hx(-1,iy))/
      &      (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
          endif
        enddo
@@ -819,13 +820,13 @@ cxpb  Following suggestion from Russians, the drift velocity should
 cxpb  only include ExB terms and not diamagnetic contributions
          if (sheath_drift_fix.eq.0) then
            udf(is) =
-     &      (uadia(nx,iy,0,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
-     &       uadia(leftix(nx,iy),leftiy(nx,iy),0,is)*hx(nx,iy))/
+     &      (uadia(nx,iy,0,0,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
+     &       uadia(leftix(nx,iy),leftiy(nx,iy),0,0,is)*hx(nx,iy))/
      &      (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
          else
            udf(is) =
-     &      (vaecrb(nx,iy,0,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
-     &       vaecrb(leftix(nx,iy),leftiy(nx,iy),0,is)*hx(nx,iy))/
+     &      (vaecrb(nx,iy,0,0,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
+     &       vaecrb(leftix(nx,iy),leftiy(nx,iy),0,0,is)*hx(nx,iy))/
      &      (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
          endif
        enddo

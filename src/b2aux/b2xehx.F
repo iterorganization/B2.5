@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xehx (nx, ny, hx, te, po, ne, ehx)       !srv 13.01.17
+      subroutine b2xehx (nx, ny, hx, hy, qz, qs, te, po, ne, ehx)       !srv 13.01.17
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -9,8 +9,9 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     &   hx(-1:nx,-1:ny), te(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &   ne(-1:nx,-1:ny)
+     &   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
+     &   qs(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   ehx(-1:nx,-1:ny,0:1)
@@ -34,11 +35,17 @@
       integer ncall, n2, ix, iy
       integer, save :: mode_ehx = 0                                     !srv 06.04.15
       real (kind=R8) ::
-     *   t0
+     *   t0, hy1_(-1:nx,-1:ny),
+     *   dpop(-1:nx,-1:ny,0:1), wrk0(-1:nx,-1:nx,0:1), 
+     *   wrk1(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny,0:1), wrk(-1:nx,-1:ny),
+     *   dum(-1:nx,-1:ny)
       save ncall
 *   ..procedures
       external subini, subend, xertst
       external b2xvsg
+      real (kind=R8) ::
+     *   hy1
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialization
       data ncall/0/
 *-----------------------------------------------------------------------
@@ -62,40 +69,66 @@
        call b2xvsg (n2, te, 1, 'te', '.gt.')
       endif
 
-*   ..compute ehx
-      do iy = -1, ny
-        do ix = -1, nx                                                   !srv 26.11.02 {
-          if(leftix(ix,iy).eq.-2) then                                   !srv 26.11.02
-            ehx(ix,iy,0)  = 0.0e0_R8
-          else                                                           !srv 26.11.02 }
-            if(mode_ehx.eq.0) then                                       !srv 06.04.15 {
-              ehx(ix,iy,0) =
-     &         -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &          (ne(ix,iy)*te(ix,iy)                                     !srv 98
-     &          -ne(leftix(ix,iy),leftiy(ix,iy))*                        !srv
-     &           te(leftix(ix,iy),leftiy(ix,iy)))*                       !srv
-     &          (2.0_R8/qe)/(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))  !srv
-            else if(mode_ehx.eq.1) then
-              t0= (ne(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
-     &             ne(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy)))/
-     &            (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-              ehx(ix,iy,0) = 
-     &        -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &         (ne(ix,iy)*te(ix,iy)
-     &         -ne(leftix(ix,iy),leftiy(ix,iy))*
-     &          te(leftix(ix,iy),leftiy(ix,iy)))/(qe*t0)
-            else
-              ehx(ix,iy,0) =
-     &        -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+               !srv
-     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5e0_R8*     !srv
-     &         (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy)))))/qe !srv .98 
-            endif                                                        !srv 06.04.15 }
-          endif                                                          !srv 26.11.02 02.04.15
+      do iy=-1,ny
+        do ix=-1,nx
+          hy1_(ix,iy)=hy1(ix,iy)
         enddo
       enddo
-* ..for now, zero on y-faces
-      ehx(:,:,1) = 0.0_R8
+
+cwdk  wrk will be used for interpolation to vertices; now: just 1.0_R8
+c     to be considered: volume-weighted interpolation
+      wrk = 1.0_R8
+
+*   ..compute ehx
+      if(mode_ehx.eq.0) then
+*     ..compute poloidal differences of po and pe
+        call diff_p(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpop)
+        call diff_p(nx, ny, 0, hx, hy, wrk, qs, ne*te, dum, wrk0)
+*     ..interpolate ne to faces
+        call intfaceh(nx,ny,leftix,leftiy,wrk,ne,wrk1(-1,-1,0))
+        call intfacev(nx,ny,bottomix,bottomiy,wrk,ne,wrk1(-1,-1,1))
+*     ..compute ehx      
+        ehx = -dpop + wrk0/(qe*wrk1)
+      else if (mode_ehx.eq.1) then
+*     ..compute poloidal differences of po and pe
+        call diff_p(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpop)
+        call diff_p(nx, ny, 0, hx, hy, wrk, qs, ne*te, dum, wrk0)
+*     ..interpolate ne to faces
+cwdk TODO: implement this as a standard interpolation option...
+        do iy = -1, ny
+          do ix = -1, nx
+            if(leftix(ix,iy).eq.-2) then
+              wrk1(ix,iy,0) = 0.0_R8
+            else
+              wrk1(ix,iy,0) = 
+     &            (ne(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
+     &             ne(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &            (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
+            endif
+            if(bottomiy(ix,iy).eq.-2) then
+              wrk1(ix,iy,1) = 0.0_R8
+	    else
+              wrk1(ix,iy,1) = 
+     &            (ne(bottomix(ix,iy),bottomiy(ix,iy))*hy1_(ix,iy)+
+     &             ne(ix,iy)*hy1_(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &            (hy1_(bottomix(ix,iy),bottomiy(ix,iy))+hy1_(ix,iy))
+            endif
+          enddo
+        enddo
+*     ..compute ehx      
+        ehx = -dpop + wrk0/(qe*wrk1)
+      else
+*     ..compute poloidal differences of po, te and log(ne) on faces
+        call diff_p(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpop)
+        call diff_p(nx, ny, 0, hx, hy, wrk, qs, te, dum, wrk0)
+        call diff_p(nx, ny, 0, hx, hy, wrk, qs, log(ne), dum, wrk1)
+*     ..interpolate te to faces
+        wrk = 1.0_R8
+        call intfaceh(nx,ny,leftix,leftiy,wrk,te,wrk2(-1,-1,0))
+        call intfacev(nx,ny,bottomix,bottomiy,wrk,te,wrk2(-1,-1,1))
+*     ..compute ehx      
+        ehx = -dpop + (wrk0 + wrk1*wrk2)/qe
+      endif
 
 * ..return
       ncall = ncall+1

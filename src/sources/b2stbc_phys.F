@@ -51,9 +51,9 @@
      1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1),
-     &  vedia(-1:nx,-1:ny,0:1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
-     2  veecrb(-1:nx,-1:ny,0:1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
+     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  vedia(-1:nx,-1:ny,0:1,0:1), vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     2  veecrb(-1:nx,-1:ny,0:1,0:1), vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  kinrgy(-1:nx,-1:ny,0:ns-1)
@@ -472,11 +472,11 @@ cwdk  With redefinition of drifts as being the poloidal projections,
 cwdk  now need to recompute full diamagnetic component for ud
       if (sheath_drift_fix.eq.0) then
         do is = 0,ns-1
-          ud(:,:,is) = uadia(:,:,0,is)*bb(:,:,3)/bb(:,:,2)*signmf
+          ud(:,:,is) = uadia(:,:,0,0,is)*bb(:,:,3)/bb(:,:,2)*signmf
         enddo
       else
         do is=0,ns-1
-          ud(:,:,is) = vaecrb(:,:,0,is)*bb(:,:,3)/bb(:,:,2)*signmf
+          ud(:,:,is) = vaecrb(:,:,0,0,is)*bb(:,:,3)/bb(:,:,2)*signmf
         enddo
       endif
       if (main_call .and. diagno.ge.1) then                           !xpb
@@ -980,7 +980,7 @@ cghgh
      &            vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &            hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &            vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                   topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
+     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
      &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) +
      &           max(0.0_R8,t0)*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
@@ -1015,7 +1015,7 @@ cghgh
                 t0 =
      &           vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &           hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     &           vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
+     &           vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
      &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) +
      &           max(0.0_R8,t0)*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
@@ -1048,7 +1048,7 @@ cghgh
      &           vol(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &           hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
      &           vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &                  rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)
+     &                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is)
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
      &           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) +
      &           max(0.0_R8,t0)*na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
@@ -1081,7 +1081,7 @@ cghgh
                 t0 =
      &           vol(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &           hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
-     &           vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+     &           vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
      &           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) +
      &           max(0.0_R8,t0)*na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
@@ -1117,15 +1117,15 @@ cghgh
                   t0 =
      &              vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &              hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     &              vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
+     &              vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)
                 else if (drift_style.eq.1) then
                   t0 =
      &              vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &              hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*0.5_R8*
-     &             (vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
+     &             (vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)+
      &              vaecrb(
      &               topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &               topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is))
+     &               topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is))
                 endif
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
      &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) +
@@ -1161,15 +1161,15 @@ cghgh
                   t0 =
      &             vol(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &             hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
-     &             vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+     &             vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)
                 else if (drift_style.eq.1) then
                   t0 =
      &             vol(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &             hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*0.5_R8*
-     &            (vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)+
+     &            (vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)+
      &             vaecrb(
      &              rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is))
+     &              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is))
                 endif                                                  !srv 12.09.08 }
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
      &           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) +
@@ -1222,7 +1222,7 @@ cghgh
                 end if
                 t1 = 
      .           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
+     .                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)
                 if (t1.le.0.0_R8) then
                   sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      .             sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
@@ -1263,7 +1263,7 @@ cghgh
      &             sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) + t0/
      &               na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
                 end if
-                t1 = -vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
+                t1 = -vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)
                 if (t1.le.0.0_R8) then
                   sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      &             sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
@@ -1312,9 +1312,9 @@ cghgh
      .           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
      *           min(0.0e0_R8,s0*(
      .            vadia(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)+
+     .                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)+
      &           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)))
+     &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)))
               else
                 t0 =
      .          -fnaPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
@@ -1331,7 +1331,7 @@ cghgh
      &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
      &            s0*min(0.0e0_R8,
      &           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)) !srv 02.03.05 }
+     &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)) !srv 02.03.05 }
               endif                                                     !srv 09.11.06 08.09.08 }
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'N') THEN
@@ -1353,8 +1353,8 @@ cghgh
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      .           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)-
      *           max(0.0e0_R8,
-     .               s0*(vadia(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
-     *                  vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)))
+     .             s0*(vadia(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)+
+     *                vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)))
               else
                 t0 = fnaPSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)
                 if (t0.ge.0.0_R8) then
@@ -1368,7 +1368,7 @@ cghgh
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      .           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)-
      &           max(0.0e0_R8,
-     .               s0*vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)) !lk 12.12.07 }
+     .             s0*vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)) !lk 12.12.07 }
               endif                                                     !srv 09.11.06 08.09.08 }
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'W') THEN
@@ -1391,9 +1391,9 @@ cghgh
      .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)-
      *           max(0.0e0_R8,s0*(vadia(
      .            rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)+
+     .            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is)+
      *     vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)))
+     .            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is)))
               else
                 t0 = -fnaPSch(
      &            rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
@@ -1409,8 +1409,8 @@ cghgh
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
      .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)-
      &           max(0.0e0_R8,s0*vaecrb(
-     .               rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .               rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)) !lk 12.12.07 }
+     .             rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is)) !lk 12.12.07 }
               endif                                                    !srv 09.11.06 08.09.08 }
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
@@ -1432,8 +1432,8 @@ cghgh
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
      .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)-
      *           max(0.0e0_R8,
-     .               s0*(vadia(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)+
-     *                  vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)))
+     .             s0*(vadia(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)+
+     *                vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)))
               else
                 t0 = fnaPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)
                 if (t0.ge.0.0_R8) then
@@ -1447,7 +1447,7 @@ cghgh
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
      .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)-
      &           max(0.0e0_R8,
-     .               s0*vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)) !lk 12.12.07 }
+     .             s0*vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)) !lk 12.12.07 }
               endif                                                     !srv 09.11.06 08.09.08 }
             ENDDO
           ELSE
@@ -2021,7 +2021,7 @@ c dpc
      &           vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &           hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
+     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)
               endif                                                   !srv 12.09.08 }
             ENDDO
           ELSE
@@ -3907,7 +3907,7 @@ cxpb  and max(,,) statement for stability
      &          hx(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*  !*signmf*bb(bc_list_x(iy,ib),bc_listy(iy,ib),2)/bb(bc_list_x(iy,ib),bc_list_y(iy,ib),3)   !srv 05.02.05
      &      vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)*
+     &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is)*
      &           cbc*          !srv 17.02.04 19.02.08
      &          (abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
      &               bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))        !srv 11.01.13
@@ -3938,7 +3938,7 @@ cxpb  and max(,,) statement for stability
      &              leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
      &          hx(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &             leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))        !*signmf*bb(bc_list_x(iy,ib),bc_list_y(iy,ib),2)/bb(bc_list_x(iy,ib),bc_list_y(iy,ib),3) !srv 05.02.05
-     &          *vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)*cbc*    !srv 17.02.04 19.02.08
+     &          *vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)*cbc*    !srv 17.02.04 19.02.08
      &          (abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
      &               bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))         !srv 11.01.13
                SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) =
@@ -4697,9 +4697,9 @@ cxpb code segment analog to b2tfhe
      .              bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
      &          +ne(bc_list_x(ix,ib),bc_list_y(ix,ib)))/2.0_R8
               flo_vedia=prefactor*
-     .         vedia(bc_list_x(ix,ib),bc_list_y(ix,ib),1)
+     .         vedia(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)
               flo_veecrb=prefactor*
-     .         veecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1)
+     .         veecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)
               flo = (1.5_R8+BoRiS)*
      .         fne_32(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)+
      1         2.5_R8*fne_52(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)+
@@ -4831,9 +4831,9 @@ cxpb code segment analog to b2tfhe
      .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))                    !xpb
      &          +ne(bc_list_x(ix,ib),bc_list_y(ix,ib)))/2.0_R8                   !xpb
               flo_vedia=prefactor*
-     .         vedia(bc_list_x(ix,ib),bc_list_y(ix,ib),1)
+     .         vedia(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)
               flo_veecrb=prefactor*
-     .         veecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1)
+     .         veecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)
               flo = (1.5_R8+BoRiS)*
      .         fne_32(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,1)+
@@ -4959,7 +4959,7 @@ cghgh
      &         1.5_R8*vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &                hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &         veecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)*
+     &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)*
      &                   ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
             endif                                                !srv 12.09.08 }
           end do
@@ -4984,7 +4984,7 @@ cghgh
      &         1.5_R8*vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &                hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &         veecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)*
+     &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)*
      &         ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
             endif                                                !srv 12.09.08 }
           end do
@@ -5074,7 +5074,7 @@ cghgh
      &         1.5_R8*vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &                hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &         veecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)*
+     &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)*
      &                   ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
             endif                                                !srv 12.09.08 }
           ENDDO
@@ -5105,7 +5105,7 @@ cghgh
      .         she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) -
      &         1.5_R8*vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &                hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     &         veecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)*
+     &         veecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)*
      &             ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
             endif                                                !srv 12.09.08 }
           ENDDO
@@ -6650,9 +6650,9 @@ cxpb code segment analog to b2tfhi
      .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),is)
      &            +na(bc_list_x(ix,ib),bc_list_y(ix,ib),is))/2.0_R8
                 cum_flo_vadia=cum_flo_vadia+
-     1           prefactor*vadia(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is)
+     1         prefactor*vadia(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1,is)
                 cum_flo_vaecrb=cum_flo_vaecrb+prefactor*
-     1           vaecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is)
+     1           vaecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1,is)
               enddo
               flo = (1.5_R8+BoRiS)*
      .         fni_32(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)+
@@ -6796,9 +6796,9 @@ cxpb code segment analog to b2tfhi
      &           +na(bc_list_x(ix,ib),bc_list_y(ix,ib),is))/2.0_R8
                cum_flo_vadia=cum_flo_vadia+prefactor*
      1          vadia(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     2                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,is)
+     2                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,1,is)
                cum_flo_vaecrb=cum_flo_vaecrb+
-     1          prefactor*vaecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is)
+     1        prefactor*vaecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1,is)
              enddo
              flo = (1.5_R8+BoRiS)*
      1         fni_32(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
@@ -6964,7 +6964,7 @@ cghgh
      &           1.5_R8*vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &                  hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)*
+     &                 topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)*
      &           na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               end do
             endif                                                 !srv 12.09.08 }
@@ -6997,7 +6997,7 @@ cghgh
      .           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) -
      &           1.5_R8*vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &                  hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     &           vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)*
+     &           vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)*
      &               na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               end do
             endif                                                 !srv 12.09.08 }
@@ -7090,7 +7090,7 @@ cxpb          endif
      &           1.5_R8*vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &                  hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)*
+     &                 topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)*
      &                     na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               end do
             endif                                                       !srv 12.09.08 }
@@ -7134,7 +7134,7 @@ cxpb          endif
      &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) -
      &           1.5_R8*vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &                  hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     &           vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)*
+     &           vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)*
      &               na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
              end do
             endif                                                       !srv 12.09.08 }

@@ -13,9 +13,9 @@
       real (kind=R8) ::
      *  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
+     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -86,7 +86,7 @@
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test edge values of fluxes
       do is = 0, ns-1
-       call b2xvff (nx, ny, fna(-1,-1,0,is), 'fna')
+       call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
       enddo
       call b2xvff (nx, ny, fhe, 'fhe')
       call b2xvff (nx, ny, fhi, 'fhi')
@@ -103,9 +103,9 @@
        do ix = -1, nx
         write (nprt,'(2x,i4)') ix
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
-     &    fhe(ix,0,1)/gs(ix,0,1), fhi(ix,0,1)/gs(ix,0,1),
-     &    fne(ix,0,1)/gs(ix,0,1), fch(ix,0,1)/gs(ix,0,1),
-     &    (fna(ix,0,1,is)/gs(ix,0,1),is=0,ns-1)
+     &    fhe(ix,0,1,1)/gs(ix,0,1), fhi(ix,0,1,1)/gs(ix,0,1),
+     &    fne(ix,0,1,1)/gs(ix,0,1), fch(ix,0,1,1)/gs(ix,0,1),
+     &    (fna(ix,0,1,1,is)/gs(ix,0,1),is=0,ns-1)
        enddo
       endif
 *   ..write pzno segment?
@@ -116,9 +116,9 @@
        do ix = -1, nx
         write (nprt,'(2x,i4)') ix
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
-     &    fhe(ix,ny,1)/gs(ix,ny,1), fhi(ix,ny,1)/gs(ix,ny,1),
-     &    fne(ix,ny,1)/gs(ix,ny,1), fch(ix,ny,1)/gs(ix,ny,1),
-     &    (fna(ix,ny,1,is)/gs(ix,ny,1),is=0,ns-1)
+     &    fhe(ix,ny,1,1)/gs(ix,ny,1), fhi(ix,ny,1,1)/gs(ix,ny,1),
+     &    fne(ix,ny,1,1)/gs(ix,ny,1), fch(ix,ny,1,1)/gs(ix,ny,1),
+     &    (fna(ix,ny,1,1,is)/gs(ix,ny,1),is=0,ns-1)
        enddo
       endif
 *   ..write pzwe segment?
@@ -129,11 +129,11 @@
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
-     &    fhe(0,iy,0)/gs(0,iy,0)/qc(0,iy), 
-     &    fhi(0,iy,0)/gs(0,iy,0)/qc(0,iy),
-     &    fne(0,iy,0)/gs(0,iy,0)/qc(0,iy), 
-     &    fch(0,iy,0)/gs(0,iy,0)/qc(0,iy),
-     &   (fna(0,iy,0,is)/gs(0,iy,0)/qc(0,iy),is=0,ns-1)
+     &    fhe(0,iy,0,0)/gs(0,iy,0)/qc(0,iy), 
+     &    fhi(0,iy,0,0)/gs(0,iy,0)/qc(0,iy),
+     &    fne(0,iy,0,0)/gs(0,iy,0)/qc(0,iy), 
+     &    fch(0,iy,0,0)/gs(0,iy,0)/qc(0,iy),
+     &   (fna(0,iy,0,0,is)/gs(0,iy,0)/qc(0,iy),is=0,ns-1)
        enddo
       endif
 *   ..write pzea segment?
@@ -144,11 +144,11 @@
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
-     &    fhe(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy), 
-     &    fhi(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy),
-     &    fne(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy), 
-     &    fch(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy),
-     &   (fna(nx,iy,0,is)/gs(nx,iy,0)/qc(nx,iy),is=0,ns-1)
+     &    fhe(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy), 
+     &    fhi(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy),
+     &    fne(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy), 
+     &    fch(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy),
+     &   (fna(nx,iy,0,0,is)/gs(nx,iy,0)/qc(nx,iy),is=0,ns-1)
        enddo
       endif
 *   ..write blank line

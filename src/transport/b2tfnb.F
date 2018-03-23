@@ -50,9 +50,9 @@
      1  flob(-1:nx,-1:ny,0:1,0:1),  fnb_fcor(-1:nx,-1:ny,0:1,0:1),      !srv 01.10.99
      2  fnb_he(-1:nx,-1:ny,0:1,0:1),                                    !srv 21.01.00
      &  fnbPSch(-1:nx,-1:ny,0:1,0:1), fnb_mdf(-1:nx,-1:ny,0:1,0:1),     !srv 13.10.06
-     &  conb(-1:nx,-1:ny,0:1,0:1,0:4), ubdia(-1:nx,-1:ny,0:1),          !srv 13.10.06
-     &  vbecrb(-1:nx,-1:ny,0:1), vbdia(-1:nx,-1:ny,0:1),                !xpb
-     &  wbdia(-1:nx,-1:ny,0:1), kbnrgy(-1:nx,-1:ny),
+     &  conb(-1:nx,-1:ny,0:1,0:1,0:4), ubdia(-1:nx,-1:ny,0:1,0:1),      !srv 13.10.06
+     &  vbecrb(-1:nx,-1:ny,0:1,0:1), vbdia(-1:nx,-1:ny,0:1,0:1),        !xpb
+     &  wbdia(-1:nx,-1:ny,0:1,0:1), kbnrgy(-1:nx,-1:ny),
      &  fllim0fnb(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -118,7 +118,8 @@
      *   wrk(-1:nx,-1:ny),
      &   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1), nbcor(-1:nx,-1:ny),  !srv 01.10.99 !lk 09.06.11
+     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1,0:1), 
+     *   nbcor(-1:nx,-1:ny),                                             !srv 01.10.99 !lk 09.06.11
      *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                          !srv 08.10.04
      *   nbzb(-1:nx,-1:ny), nbzbc(-1:nx,-1:ny),                          !srv 13.05.16
      *   dnbr(-1:nx,-1:ny,0:1), dpbr(-1:nx,-1:ny,0:1)
@@ -319,14 +320,14 @@ cxpb  Must check that we are not at the island X-point or at the mesh edge !xpb
 cxpb  Standard case
 cwdk correct computation of drift components to always represent the poloidal
 cwdk projection of the drift
-              vbecrb(ix,iy,0) = - fac_ExB(ix,iy)*poleldr/hy1(ix,iy)*     !xpb
+              vbecrb(ix,iy,0,0) = - fac_ExB(ix,iy)*poleldr/hy1(ix,iy)*   !xpb
      1         bb(ix,iy,2)/bb(ix,iy,3)**2*                               !xpb
      2         (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))
-              vbdia(ix,iy,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/     !xpb
+              vbdia(ix,iy,0,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/   !xpb
      1         bb(ix,iy,3)*2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*    !xpb
      3         (wbbv(topix(ix,iy),topiy(ix,iy),3)-wbbv(ix,iy,3))*
      &         facdrift(ix,iy)*poldidr                                   !xpb
-              wbdia(ix,iy,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)
+              wbdia(ix,iy,0,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)
      1         /bb(ix,iy,3)/qe/zb(ix,iy)/nb(ix,iy)*
      2         (wpb(topix(ix,iy),topiy(ix,iy))-wpb(ix,iy))*
      &         facdrift(ix,iy)
@@ -344,12 +345,13 @@ cxpb     3         ((vol(ix,iy)*bb(topix(ix,iy),topiy(ix,iy),3)+         !xpb
 cxpb     3           vol(topix(ix,iy),topiy(ix,iy))*bb(ix,iy,3))/        !xpb
 cxpb     3              (vol(topix(ix,iy),topiy(ix,iy))+vol(ix,iy))-     !xpb
 cxpb     3              wbbv(ix,iy,3))                                   !xpb
-              vbecrb(ix,iy,0) = 0.0_R8                                   !xpb
-              vbdia(ix,iy,0) = 0.0_R8                                    !xpb
-              wbdia(ix,iy,0) = 0.0_R8
+              vbecrb(ix,iy,0,0) = 0.0_R8                                 !xpb
+              vbdia(ix,iy,0,0) = 0.0_R8                                  !xpb
+              wbdia(ix,iy,0,0) = 0.0_R8
             endif                                                        !xpb
-            ubdia(ix,iy,0) = vbecrb(ix,iy,0) + vbdia(ix,iy,0)            !srv 17.05.99
-            ub2dia(ix,iy,0) = vbecrb(ix,iy,0) + 2.0_R8*vbdia(ix,iy,0)    !srv 01.10.99
+            ubdia(ix,iy,0,0) = vbecrb(ix,iy,0,0) + vbdia(ix,iy,0,0)      !srv 17.05.99
+            ub2dia(ix,iy,0,0) = vbecrb(ix,iy,0,0) + 
+     &        2.0_R8*vbdia(ix,iy,0,0)                                    !srv 01.10.99
           enddo
         enddo
         
@@ -360,20 +362,21 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-             vbecrb(ix,iy,1) = fac_ExB(ix,iy)*radeldr/hx(ix,iy)*         !xpb
+             vbecrb(ix,iy,1,1) = fac_ExB(ix,iy)*radeldr/hx(ix,iy)*       !xpb
      1          bb(ix,iy,2)/bb(ix,iy,3)**2*                              !xpb
      2         (wpo(rightix(ix,iy),rightiy(ix,iy))-wpo(ix,iy))
-             vbdia(ix,iy,1) = facdrift(ix,iy)*raddidr* 
+             vbdia(ix,iy,1,1) = facdrift(ix,iy)*raddidr* 
      &         ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hx(ix,iy))            !xpb
      &         *(2.0_R8/bb(ix,iy,3)**3)                                  !xpb
      &         *(wbbr(ix,iy,3)-wbbl(ix,iy,3))                            !xpb
-             wbdia(ix,iy,1) = bb(ix,iy,2)
+             wbdia(ix,iy,1,1) = bb(ix,iy,2)
      &         /(qe*zb(ix,iy)*hx(ix,iy)*nb(ix,iy))                       !xpb
      &         /bb(ix,iy,3)**2*                                          !xpb
      2         (wpb(rightix(ix,iy),rightiy(ix,iy))-wpb(ix,iy))*
      &         facdrift(ix,iy)
-             ubdia(ix,iy,1) = vbecrb(ix,iy,1) + vbdia(ix,iy,1)           !srv 17.05.99
-             ub2dia(ix,iy,1) = vbecrb(ix,iy,1) + 2.0_R8*vbdia(ix,iy,1)   !srv 01.10.99
+             ubdia(ix,iy,1,1) = vbecrb(ix,iy,1,1) + vbdia(ix,iy,1,1)     !srv 17.05.99
+             ub2dia(ix,iy,1,1) = vbecrb(ix,iy,1,1) + 
+     &         2.0_R8*vbdia(ix,iy,1,1)                                   !srv 01.10.99
             endif
           enddo
         enddo
@@ -384,31 +387,41 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
         do ix = -1, nx                                                   !xpb
           do iy = -1, ny                                                 !xpb
             if(leftix(ix,iy).eq.-2) then
-              vbecrb(ix,iy,:) = vbecrb(rightix(ix,iy),rightiy(ix,iy),:)  !xpb
-              vbdia(ix,iy,:) = vbdia(rightix(ix,iy),rightiy(ix,iy),:)    !xpb
-              wbdia(ix,iy,:) = wbdia(rightix(ix,iy),rightiy(ix,iy),:)    !xpb
-              ubdia(ix,iy,:) = vbecrb(ix,iy,:) + vbdia(ix,iy,:) 
-              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:)  !srv 17.07.08
+              vbecrb(ix,iy,:,:) = 
+     &          vbecrb(rightix(ix,iy),rightiy(ix,iy),:,:)                !xpb
+              vbdia(ix,iy,:,:) = 
+     &          vbdia(rightix(ix,iy),rightiy(ix,iy),:,:)                 !xpb
+              wbdia(ix,iy,:,:) = 
+     &          wbdia(rightix(ix,iy),rightiy(ix,iy),:,:)                 !xpb
+              ubdia(ix,iy,:,:) = vbecrb(ix,iy,:,:) + vbdia(ix,iy,:,:) 
+              ub2dia(ix,iy,:,:) = 
+     &          vbecrb(ix,iy,:,:) + 2.0_R8*vbdia(ix,iy,:,:)  !srv 17.07.08
             elseif(rightix(ix,iy).eq.nx+1) then                          !xpb
-              vbecrb(ix,iy,:) = vbecrb(leftix(ix,iy),leftiy(ix,iy),:)    !xpb
-              vbdia(ix,iy,:) = vbdia(leftix(ix,iy),leftiy(ix,iy),:)      !xpb
-              wbdia(ix,iy,:) = wbdia(leftix(ix,iy),leftiy(ix,iy),:)      !xpb
-              ubdia(ix,iy,:) = vbecrb(ix,iy,:) + vbdia(ix,iy,:) 
-              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:)  !srv 17.07.08
+              vbecrb(ix,iy,:,:) = 
+     &          vbecrb(leftix(ix,iy),leftiy(ix,iy),:,:)                  !xpb
+              vbdia(ix,iy,:,:) = vbdia(leftix(ix,iy),leftiy(ix,iy),:,:)  !xpb
+              wbdia(ix,iy,:,:) = wbdia(leftix(ix,iy),leftiy(ix,iy),:,:)  !xpb
+              ubdia(ix,iy,:,:) = vbecrb(ix,iy,:,:) + vbdia(ix,iy,:,:) 
+              ub2dia(ix,iy,:,:) = 
+     &          vbecrb(ix,iy,:,:) + 2.0_R8*vbdia(ix,iy,:,:)              !srv 17.07.08
             endif
             if(topiy(ix,iy).eq.ny+1) then                                !xpb
-              vbecrb(ix,iy,:) = 
-     .         vbecrb(bottomix(ix,iy),bottomiy(ix,iy),:)                 !xpb
-              vbdia(ix,iy,:) = vbdia(bottomix(ix,iy),bottomiy(ix,iy),:)  !xpb
-              wbdia(ix,iy,:) = wbdia(bottomix(ix,iy),bottomiy(ix,iy),:)  !xpb
-              ubdia(ix,iy,:) = vbecrb(ix,iy,:) + vbdia(ix,iy,:) 
-              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:)  !srv 17.07.08
+              vbecrb(ix,iy,:,:) = 
+     .          vbecrb(bottomix(ix,iy),bottomiy(ix,iy),:,:)              !xpb
+              vbdia(ix,iy,:,:) = 
+     &          vbdia(bottomix(ix,iy),bottomiy(ix,iy),:,:)               !xpb
+              wbdia(ix,iy,:,:) = 
+     &          wbdia(bottomix(ix,iy),bottomiy(ix,iy),:,:)               !xpb
+              ubdia(ix,iy,:,:) = vbecrb(ix,iy,:,:) + vbdia(ix,iy,:,:) 
+              ub2dia(ix,iy,:,:) = 
+     &          vbecrb(ix,iy,:,:) + 2.0_R8*vbdia(ix,iy,:,:)              !srv 17.07.08
             elseif(bottomiy(ix,iy).eq.-2) then
-              vbecrb(ix,iy,:) = vbecrb(topix(ix,iy),topiy(ix,iy),:)      !xpb
-              vbdia(ix,iy,:) = vbdia(topix(ix,iy),topiy(ix,iy),:)        !xpb
-              wbdia(ix,iy,:) = wbdia(topix(ix,iy),topiy(ix,iy),:)        !xpb
-              ubdia(ix,iy,:) = vbecrb(ix,iy,:) + vbdia(ix,iy,:) 
-              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:)  !srv 17.07.08
+              vbecrb(ix,iy,:,:) = vbecrb(topix(ix,iy),topiy(ix,iy),:,:)  !xpb
+              vbdia(ix,iy,:,:) = vbdia(topix(ix,iy),topiy(ix,iy),:,:)    !xpb
+              wbdia(ix,iy,:,:) = wbdia(topix(ix,iy),topiy(ix,iy),:,:)    !xpb
+              ubdia(ix,iy,:,:) = vbecrb(ix,iy,:,:) + vbdia(ix,iy,:,:) 
+              ub2dia(ix,iy,:,:) = 
+     &          vbecrb(ix,iy,:,:) + 2.0_R8*vbdia(ix,iy,:,:)              !srv 17.07.08
             endif
           enddo
         enddo
@@ -417,18 +430,18 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
         do iy = -1, ny                                                   !xpb
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-           vbecrb(ix,iy,1) = 0.0_R8                                      !xpb
-           vbdia(ix,iy,1) = 0.0_R8                                       !xpb
-           wbdia(ix,iy,1) = 0.0_R8                                       !xpb
-           ubdia(ix,iy,1) = 0.0_R8                                       !xpb
-           ub2dia(ix,iy,1) = 0.0_R8                                      !srv 17.07.08
+           vbecrb(ix,iy,1,:) = 0.0_R8                                    !xpb
+           vbdia(ix,iy,1,:) = 0.0_R8                                     !xpb
+           wbdia(ix,iy,1,:) = 0.0_R8                                     !xpb
+           ubdia(ix,iy,1,:) = 0.0_R8                                     !xpb
+           ub2dia(ix,iy,1,:) = 0.0_R8                                    !srv 17.07.08
           endif
           if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
-           vbecrb(ix,iy,0) = 0.0_R8                                      !xpb
-           vbdia(ix,iy,0) = 0.0_R8                                       !xpb
-           wbdia(ix,iy,0) = 0.0_R8                                       !xpb
-           ubdia(ix,iy,0) = 0.0_R8                                       !xpb
-           ub2dia(ix,iy,0) = 0.0_R8                                      !srv 17.07.08
+           vbecrb(ix,iy,0,:) = 0.0_R8                                    !xpb
+           vbdia(ix,iy,0,:) = 0.0_R8                                     !xpb
+           wbdia(ix,iy,0,:) = 0.0_R8                                     !xpb
+           ubdia(ix,iy,0,:) = 0.0_R8                                     !xpb
+           ub2dia(ix,iy,0,:) = 0.0_R8                                    !srv 17.07.08
           endif
          enddo
         enddo                                                            !xpb
@@ -445,7 +458,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
         do iy = 0, ny-1
          do ix = 0, nx
           if(leftix(ix,iy).ne.-2) then                                   !srv 26.11.02
-             vbecrb(ix,iy,0) = - poleldr*fac_ExB(ix,iy)/                 !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
+             vbecrb(ix,iy,0,0) = - poleldr*fac_ExB(ix,iy)/                 !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      1      (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))* ! signmf*     !srv
      2      (bb(ix,iy,2)/bb(ix,iy,3)**2                                  !srv 05.02.05
      2         +bb(leftix(ix,iy),leftiy(ix,iy),2)/
@@ -462,7 +475,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 !     8         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))*
 !     9         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))               !lk 12.12.07)
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
-             if( abs(vbecrb(ix,iy,0)) .gt. 2.0_R8*cssb(ix,iy,0) ) then
+             if( abs(vbecrb(ix,iy,0,0)) .gt. 2.0_R8*cssb(ix,iy,0) ) then
                xcount = xcount+1
                if (vlct_diagno.ge.2) then
                  write(6,'(a,a,i3,a,i4,a,i4,a)')
@@ -470,27 +483,28 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      .            'to species ',isb,' in cell (',ix,',',iy,'):'
                  write(6,'(a,1p,1e12.5,a,1e12.5)')
      .            'Mach 2: ',2.0_R8*cssb(ix,iy,0),
-     .            ' Vx_ExB:',vbecrb(ix,iy,0)
+     .            ' Vx_ExB:',vbecrb(ix,iy,0,0)
                end if
-               vbecrb(ix,iy,0)=
-     .          sign(2.0_R8*cssb(ix,iy,0),vbecrb(ix,iy,0))
+               vbecrb(ix,iy,0,0)=
+     .          sign(2.0_R8*cssb(ix,iy,0),vbecrb(ix,iy,0,0))
              endif
            endif                                                         !iyv 06.02.14  }
-           vbdia(ix,iy,0) =    poldidr*facdrift(ix,iy)* ! signmf*        !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
+           vbdia(ix,iy,0,0) =    poldidr*facdrift(ix,iy)* ! signmf*      !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
      &          (ti(leftix(ix,iy),leftiy(ix,iy))                         !srv 05.03.99
      &           *bb(leftix(ix,iy),leftiy(ix,iy),2)                      !srv 05.02.05
      &           /(qe*zb(ix,iy)*hy1(leftix(ix,iy),leftiy(ix,iy)))        !srv
      &          +ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hy1(ix,iy)))*0.5_R8 !srv 05.02.05
      &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv 05.03.99
-           wbdia(ix,iy,0) = - facdrift(ix,iy)/                           !srv 13.05.16 {
+           wbdia(ix,iy,0,0) = - facdrift(ix,iy)/                         !srv 13.05.16 {
      1	    (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
      2	    (bb(ix,iy,2)/bb(ix,iy,3)**2
      2        +bb(leftix(ix,iy),leftiy(ix,iy),2)/
      2         bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*
      2         (nbtic(topix(ix,iy),topiy(ix,iy))-nbtic(ix,iy))/
      &        (nbzbc(topix(ix,iy),topiy(ix,iy))+nbzbc(ix,iy))*2.0_R8/qe  !srv 13.05.16 }
-           ubdia(ix,iy,0) = vbecrb(ix,iy,0) + vbdia(ix,iy,0)             !srv 17.05.99 
-           ub2dia(ix,iy,0) = vbecrb(ix,iy,0) + 2.0e0_R8*vbdia(ix,iy,0)   !srv 01.10.99
+           ubdia(ix,iy,0,0) = vbecrb(ix,iy,0,0) + vbdia(ix,iy,0,0)       !srv 17.05.99 
+           ub2dia(ix,iy,0,0) = 
+     &       vbecrb(ix,iy,0,0) + 2.0e0_R8*vbdia(ix,iy,0,0)               !srv 01.10.99
           endif                                                          !srv 26.11.02
          enddo
         enddo
@@ -510,7 +524,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
         do iy = 0, ny
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then      !srv 26.11.02
-             vbecrb(ix,iy,1) = radeldr*fac_ExB(ix,iy)/                   !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
+             vbecrb(ix,iy,1,1) = radeldr*fac_ExB(ix,iy)/                 !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      1       (hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))* !signmf*   !srv
      2       (bb(ix,iy,2)/bb(ix,iy,3)**2                                 !srv 05.02.05
      2          +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
@@ -527,7 +541,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 !     8          (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
 !     9          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
-             if( abs(vbecrb(ix,iy,1)) .gt. 2.0_R8*cssb(ix,iy,1) ) then
+             if( abs(vbecrb(ix,iy,1,1)) .gt. 2.0_R8*cssb(ix,iy,1) ) then
                ycount = ycount + 1
                if (vlct_diagno.ge.2) then
                  write(6,'(a,a,i3,a,i4,a,i4,a)')
@@ -535,19 +549,19 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      .            'to species ',isb,' in cell (',ix,',',iy,'):'
                  write(6,'(a,1p,1e12.5,a,1e12.5)')
      .            'Mach 2: ',2.0_R8*cssb(ix,iy,1),
-     .            ' Vy_ExB:',vbecrb(ix,iy,1)
+     .            ' Vy_ExB:',vbecrb(ix,iy,1,1)
                end if
-               vbecrb(ix,iy,1)=
-     .          sign(2.0_R8*cssb(ix,iy,1),vbecrb(ix,iy,1))
+               vbecrb(ix,iy,1,1)=
+     .          sign(2.0_R8*cssb(ix,iy,1),vbecrb(ix,iy,1,1))
              endif
            endif                                                         !iyv 06.02.14  }
-           vbdia(ix,iy,1) =  -raddidr*facdrift(ix,iy)* ! signmf*         !srv 11.01.13 07.06.00 17.05.99 25.04.00
+           vbdia(ix,iy,1,1) =  -raddidr*facdrift(ix,iy)* ! signmf*       !srv 11.01.13 07.06.00 17.05.99 25.04.00
      &           (ti(bottomix(ix,iy),bottomiy(ix,iy))                    !srv 05.03.99
      &           *bb(bottomix(ix,iy),bottomiy(ix,iy),2)                  !srv
      &           /(qe*zb(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy)))     !srv
      &           +ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hx(ix,iy)))*0.5_R8 !srv
      &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv 05.03.99
-           wbdia(ix,iy,1) = facdrift(ix,iy)/                             !srv 13.05.16 {
+           wbdia(ix,iy,1,1) = facdrift(ix,iy)/                           !srv 13.05.16 {
      1      (hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))*
      2      (bb(ix,iy,2)/bb(ix,iy,3)**2
      2       +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
@@ -555,8 +569,9 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      2     (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))/
      &     (nbzbc(rightix(ix,iy),rightiy(ix,iy))+nbzbc(ix,iy))*2.0_R8/qe !srv 13.05.16 }
 
-           ubdia(ix,iy,1) = vbecrb(ix,iy,1) + vbdia(ix,iy,1)             !srv 17.05.99
-           ub2dia(ix,iy,1) = vbecrb(ix,iy,1) + 2.0e0_R8*vbdia(ix,iy,1)   !srv 01.10.99
+           ubdia(ix,iy,1,1) = vbecrb(ix,iy,1,1) + vbdia(ix,iy,1,1)       !srv 17.05.99
+           ub2dia(ix,iy,1,1) = 
+     &       vbecrb(ix,iy,1,1) + 2.0e0_R8*vbdia(ix,iy,1,1)               !srv 01.10.99
           endif                                                          !srv 26.11.02
          enddo
         enddo
@@ -755,14 +770,14 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
      &          )
               fnbPSch(ix,iy,0,0)= fnbPSch(ix,iy,0,0)/t2
-              vbdia(ix,iy,0)= vbdia(ix,iy,0)/
-     &                              (1.0_R8 + abs(vbdia(ix,iy,0))/vbar) 
-              wbdia(ix,iy,0)= wbdia(ix,iy,0)/
-     &                              (1.0_R8 + abs(wbdia(ix,iy,0))/vbar) 
-              ubdia(ix,iy,0)= ubdia(ix,iy,0)/
-     &                              (1.0_R8 + abs(ubdia(ix,iy,0))/vbar) 
-              ub2dia(ix,iy,0)= ub2dia(ix,iy,0)/
-     &                              (1.0_R8 + abs(ub2dia(ix,iy,0))/vbar) 
+              vbdia(ix,iy,0,0)= vbdia(ix,iy,0,0)/
+     &                            (1.0_R8 + abs(vbdia(ix,iy,0,0))/vbar) 
+              wbdia(ix,iy,0,0)= wbdia(ix,iy,0,0)/
+     &                            (1.0_R8 + abs(wbdia(ix,iy,0,0))/vbar) 
+              ubdia(ix,iy,0,0)= ubdia(ix,iy,0,0)/
+     &                            (1.0_R8 + abs(ubdia(ix,iy,0,0))/vbar) 
+              ub2dia(ix,iy,0,0)= ub2dia(ix,iy,0,0)/
+     &                            (1.0_R8 + abs(ub2dia(ix,iy,0,0))/vbar) 
             endif
 	    if (bottomiy(ix,iy).ne.-2) then
 	      t0 = max(ti(ix,iy), ti(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -777,14 +792,14 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &	       /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
      &	       )
 	      fnbPSch(ix,iy,1,1)= fnbPSch(ix,iy,1,1)/t2
-	      vbdia(ix,iy,1)= vbdia(ix,iy,1)/
-     &	       (1.0_R8 + abs(vbdia(ix,iy,1))/vbar) 
-	      wbdia(ix,iy,1)= wbdia(ix,iy,1)/
-     &	       (1.0_R8 + abs(wbdia(ix,iy,1))/vbar) 
-	      ubdia(ix,iy,1)= ubdia(ix,iy,1)/
-     &	       (1.0_R8 + abs(ubdia(ix,iy,1))/vbar) 
-	      ub2dia(ix,iy,1)= ub2dia(ix,iy,1)/
-     &	       (1.0_R8 + abs(ub2dia(ix,iy,1))/vbar) 
+	      vbdia(ix,iy,1,1)= vbdia(ix,iy,1,1)/
+     &	       (1.0_R8 + abs(vbdia(ix,iy,1,1))/vbar) 
+	      wbdia(ix,iy,1,1)= wbdia(ix,iy,1,1)/
+     &	       (1.0_R8 + abs(wbdia(ix,iy,1,1))/vbar) 
+	      ubdia(ix,iy,1,1)= ubdia(ix,iy,1,1)/
+     &	       (1.0_R8 + abs(ubdia(ix,iy,1,1))/vbar) 
+	      ub2dia(ix,iy,1,1)= ub2dia(ix,iy,1,1)/
+     &	       (1.0_R8 + abs(ub2dia(ix,iy,1,1))/vbar) 
 	    endif
 	  enddo
         enddo
@@ -874,25 +889,25 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &    (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
          if(drift_style.eq.0)then                                       !srv 21.06.08
           flo = cvlb(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy)+   !srv 20.06.08
-     1     (ubdia(ix,iy,0)+ubdia(leftix(ix,iy),leftiy(ix,iy),0))/
+     1     (ubdia(ix,iy,0,0)+ubdia(leftix(ix,iy),leftiy(ix,iy),0,0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
      7     hx(leftix(ix,iy),leftiy(ix,iy)))
           flo_mdf = cvlb(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)+           !srv 17.07.08 {
      &      term(ix,iy) +                                               !iyv 19.04.07
-     1     (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
+     1     (vbecrb(ix,iy,0,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0,0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
      7     hx(leftix(ix,iy),leftiy(ix,iy)))                             !srv 17.07.08 }
           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0,0)+                       !srv 13.09.02 { 01.07.05 20.01.11
      &     pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +                       !iyv 30.05.08 !srv 03.10.08
-     1     (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
+     1     (vbecrb(ix,iy,0,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0,0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
      7     hx(leftix(ix,iy),leftiy(ix,iy)))                             !srv 17.07.08 }
           flo2dia = cvlbhz(ix,iy,0,0)+pbshz(ix,iy,0)*wrk0(ix,iy)+       !srv 01.10.99 01.07.05
      &     termhz(ix,iy)+                                               !srv 05.11.09
-     1     (ub2dia(ix,iy,0)+ub2dia(leftix(ix,iy),leftiy(ix,iy),0))/
+     1     (ub2dia(ix,iy,0,0)+ub2dia(leftix(ix,iy),leftiy(ix,iy),0,0))/
      5     2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hx(ix,iy)
      6     +hz(leftix(ix,iy),leftiy(ix,iy))*
      7     vol(leftix(ix,iy),leftiy(ix,iy))/
@@ -930,21 +945,21 @@ cwdk
          else                                                           !srv 21.06.08 {
           flo = cvlb(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)+               !srv 01.07.05
      &      term(ix,iy) +                                               !iyv 19.04.07
-     4      ubdia(ix,iy,0)*
+     4      ubdia(ix,iy,0,0)*
      5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/              !srv 01.03.00
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 01.03.00
           flo_mdf = cvlb(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)+           !srv 13.10.06 {
      &      term(ix,iy) +                                               !iyv 19.04.07
-     &      vbecrb(ix,iy,0)*
+     &      vbecrb(ix,iy,0,0)*
      &      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0,0)+                       !srv 13.09.02 { 01.07.05 20.01.11
      &     pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +                       !iyv 30.05.08 !srv 03.10.08
-     4     vbecrb(ix,iy,0)*
+     4     vbecrb(ix,iy,0,0)*
      5     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/               
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
           flo2dia = cvlbhz(ix,iy,0,0)+pbshz(ix,iy,0)*wrk0(ix,iy)+
-     &      termhz(ix,iy) + ub2dia(ix,iy,0)*
+     &      termhz(ix,iy) + ub2dia(ix,iy,0,0)*
      &     (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
      &      hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
      &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                  !srv it is correct. Keep in mind hz*vol/hx and interpolation of hz
@@ -1069,13 +1084,14 @@ cdjm Jan2017 store components of fnb for balance
              if (mdf_fnb.eq.0) then
                if (drift_style.eq.0) then
                 fna_drift(ix,iy,0,0,isb) = 
-     &           (ubdia(ix,iy,0)+ubdia(leftix(ix,iy),leftiy(ix,iy),0))/
+     &           (ubdia(ix,iy,0,0)+
+     &            ubdia(leftix(ix,iy),leftiy(ix,iy),0,0))/
      &           2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)+
      &                          vol(leftix(ix,iy),leftiy(ix,iy))/
      &                          hx(leftix(ix,iy),leftiy(ix,iy)))*
      &           (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
                else
-                fna_drift(ix,iy,0,0,isb) = ubdia(ix,iy,0)*
+                fna_drift(ix,iy,0,0,isb) = ubdia(ix,iy,0,0)*
      &           (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
      &           (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
@@ -1086,14 +1102,14 @@ cdjm Jan2017 store components of fnb for balance
              else
                if (drift_style.eq.0) then
                 fna_drift(ix,iy,0,0,isb) =
-     &           (vbecrb(ix,iy,0)+
-     &            vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
+     &           (vbecrb(ix,iy,0,0)+
+     &            vbecrb(leftix(ix,iy),leftiy(ix,iy),0,0))/
      &           2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)+
      &                          vol(leftix(ix,iy),leftiy(ix,iy))/
      &                          hx(leftix(ix,iy),leftiy(ix,iy)))*
      &           (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
                else
-                fna_drift(ix,iy,0,0,isb) = vbecrb(ix,iy,0)*
+                fna_drift(ix,iy,0,0,isb) = vbecrb(ix,iy,0,0)*
      &           (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
      &           (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
@@ -1229,12 +1245,13 @@ csw 14mar2013 missing con_he added --> needed in b2tfhi_ / b2tfhe_ !!!
      &                               term(ix,iy))*t2
              if (drift_style.eq.0) then
               fna_drift(ix,iy,0,0,isb) = 
-     &           (ubdia(ix,iy,0)+ubdia(leftix(ix,iy),leftiy(ix,iy),0))/
+     &           (ubdia(ix,iy,0,0)+
+     &            ubdia(leftix(ix,iy),leftiy(ix,iy),0,0))/
      &           2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)+
      &                          vol(leftix(ix,iy),leftiy(ix,iy))/
      &                          hx(leftix(ix,iy),leftiy(ix,iy)))*t2
              else
-              fna_drift(ix,iy,0,0,isb) = ubdia(ix,iy,0)*
+              fna_drift(ix,iy,0,0,isb) = ubdia(ix,iy,0,0)*
      &           (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*t2
              endif
@@ -1324,7 +1341,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      *     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           wrk2(ix,iy) = term(ix,iy)*
      *     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
-          wrk3(ix,iy) = vbecrb(ix,iy,0)*
+          wrk3(ix,iy) = vbecrb(ix,iy,0,0)*
      &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
      &     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
@@ -1364,7 +1381,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          if(leftix(ix,iy).eq.-2) then
           wrk6(ix,iy) = 0.0_R8
          else
-          wrk6(ix,iy) = vbdia(ix,iy,0)*
+          wrk6(ix,iy) = vbdia(ix,iy,0,0)*
      5     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      6     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
      &     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8    
@@ -1378,7 +1395,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           if(leftix(ix,iy).eq.-2) then
            wrk6(ix,iy) = 0.0_R8
           else
-           wrk6(ix,iy) = vbdia(ix,iy,0)*
+           wrk6(ix,iy) = vbdia(ix,iy,0,0)*
      5      (hz(ix,iy)*vol(ix,iy)+hz(leftix(ix,iy),leftiy(ix,iy))
      5      *vol(leftix(ix,iy),leftiy(ix,iy)))/
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
@@ -1435,19 +1452,20 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          endif
          if(drift_style.eq.0)then                                       !srv 21.06.08
           flo = cvlb(ix,iy,1,1)+
-     &      0.5_R8*(ubdia(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
-     &      +ubdia(bottomix(ix,iy),bottomiy(ix,iy),1)*
+     &      0.5_R8*(ubdia(ix,iy,1,1)*vol(ix,iy)/hy1(ix,iy)
+     &      +ubdia(bottomix(ix,iy),bottomiy(ix,iy),1,1)*
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
      &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &      +scur
           flo_mdf = cvlb(ix,iy,1,1)+
-     &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
-     &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
+     &      0.5_R8*(vbecrb(ix,iy,1,1)*vol(ix,iy)/hy1(ix,iy)
+     &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1,1)*
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
      &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &      +scur
           flo2dia = cvlbhz(ix,iy,1,1)+
-     &       (ub2dia(ix,iy,1)+ub2dia(bottomix(ix,iy),bottomiy(ix,iy),1))
+     &       (ub2dia(ix,iy,1,1)+
+     &        ub2dia(bottomix(ix,iy),bottomiy(ix,iy),1,1))
      &       /2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hy1(ix,iy)+           !srv 01.10.99 09.01.01
      &        hz(bottomix(ix,iy),bottomiy(ix,iy))
      5                        *vol(bottomix(ix,iy),bottomiy(ix,iy))/
@@ -1455,20 +1473,20 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &        (hz(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8*   !srv 18.09.08
      &         scur
           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1,1)+                       !srv 13.09.02 ( 20.01.11
-     &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
-     &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
+     &      0.5_R8*(vbecrb(ix,iy,1,1)*vol(ix,iy)/hy1(ix,iy)
+     &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1,1)*
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
      &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
          else                                                           !srv 21.06.08 {
-           flo = cvlb(ix,iy,1,1)+ubdia(ix,iy,1)*
+           flo = cvlb(ix,iy,1,1)+ubdia(ix,iy,1,1)*
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/          !srv 01.03.00
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))           !srv 01.03.00
      &      +scur
-           flo_mdf = cvlb(ix,iy,1,1)+vbecrb(ix,iy,1)*                   !srv 01.06.06 {
+           flo_mdf = cvlb(ix,iy,1,1)+vbecrb(ix,iy,1,1)*                 !srv 01.06.06 {
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &      +scur
-           flo2dia = cvlbhz(ix,iy,1,1)+ub2dia(ix,iy,1)*
+           flo2dia = cvlbhz(ix,iy,1,1)+ub2dia(ix,iy,1,1)*
      5      (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
      &       hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+          !srv it is correct. Keep in mind hz*vol/hy and interpolation of hz
@@ -1476,7 +1494,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
      &      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
      &       scur
-           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1,1)+vbecrb(ix,iy,1)*      !srv 13.09.02 ( 20.01.11
+           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1,1)+vbecrb(ix,iy,1,1)*    !srv 13.09.02 ( 20.01.11
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
          endif                                                          !srv 21.06.08 }
@@ -1535,24 +1553,24 @@ cdjm Jan2017 store components of fnb for balance
             if (drift_style.eq.0) then
               if (mdf_fnb.eq.0) then
                 fna_drift(ix,iy,1,1,isb) =
-     &                0.5_R8*(ubdia(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)+
-     &                        ubdia(bottomix(ix,iy),bottomiy(ix,iy),1)*
-     &                        vol(bottomix(ix,iy),bottomiy(ix,iy))/
-     &                        hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &              0.5_R8*(ubdia(ix,iy,1,1)*vol(ix,iy)/hy1(ix,iy)+
+     &                      ubdia(bottomix(ix,iy),bottomiy(ix,iy),1,1)*
+     &                      vol(bottomix(ix,iy),bottomiy(ix,iy))/
+     &                      hy1(bottomix(ix,iy),bottomiy(ix,iy)))
               else
                 fna_drift(ix,iy,1,1,isb) =
-     &                0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)+
-     &                        vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
-     &                        vol(bottomix(ix,iy),bottomiy(ix,iy))
-     &                        /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &              0.5_R8*(vbecrb(ix,iy,1,1)*vol(ix,iy)/hy1(ix,iy)+
+     &                      vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1,1)*
+     &                      vol(bottomix(ix,iy),bottomiy(ix,iy))
+     &                      /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
               endif
             else
               if (mdf_fnb.eq.0) then
-                fna_drift(ix,iy,1,1,isb) = ubdia(ix,iy,1)*
+                fna_drift(ix,iy,1,1,isb) = ubdia(ix,iy,1,1)*
      &                (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      &                (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
               else
-                fna_drift(ix,iy,1,1,isb) = vbecrb(ix,iy,1)*
+                fna_drift(ix,iy,1,1,isb) = vbecrb(ix,iy,1,1)*
      &                (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      &                (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
               endif
@@ -1721,7 +1739,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           wrk7(ix,iy) = 0.0_R8
           wrk8(ix,iy) = 0.0_R8                                          !iys 17.04.2012
          else
-          wrk3(ix,iy) = vbecrb(ix,iy,1)*
+          wrk3(ix,iy) = vbecrb(ix,iy,1,1)*
      5     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
      &     (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
@@ -1756,7 +1774,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          if(bottomiy(ix,iy).eq.-2) then
            wrk6(ix,iy) = 0.0_R8
          else
-           wrk6(ix,iy) = vbdia(ix,iy,1)*
+           wrk6(ix,iy) = vbdia(ix,iy,1,1)*
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
      &      (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
@@ -1770,7 +1788,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          if(bottomiy(ix,iy).eq.-2) then
           wrk6(ix,iy) = 0.0_R8
          else
-          wrk6(ix,iy) = vbdia(ix,iy,1)*
+          wrk6(ix,iy) = vbdia(ix,iy,1,1)*
      5     (hz(ix,iy)*vol(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy))
      5     *vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
@@ -1799,18 +1817,18 @@ cxpb turn off flows between boundary cells
             flob(ix,iy,1,0:1)=0.0_R8
             conb(ix,iy,1,0:1,:)=0.0_R8
 	    fllim0fnb(ix,iy,1,0:1) = 1.0_R8
-            vbecrb(ix,iy,1)=0.0_R8
-            vbdia(ix,iy,1)=0.0_R8
-            wbdia(ix,iy,1)=0.0_R8
-            ubdia(ix,iy,1)=0.0_R8
+            vbecrb(ix,iy,1,0:1)=0.0_R8
+            vbdia(ix,iy,1,0:1)=0.0_R8
+            wbdia(ix,iy,1,0:1)=0.0_R8
+            ubdia(ix,iy,1,0:1)=0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-               fna_pinch(ix,iy,1,1,isb)=0.0_R8
-               fna_pll(ix,iy,1,1,isb)=0.0_R8
-               fna_drift(ix,iy,1,1,isb)=0.0_R8
-               fna_nanom(ix,iy,1,1,isb)=0.0_R8
-               fna_panom(ix,iy,1,1,isb)=0.0_R8
-               fna_ch(ix,iy,1,1,isb)=0.0_R8
-               fna_pschused(ix,iy,1,1,isb)=0.0_R8
+               fna_pinch(ix,iy,1,0:1,isb)=0.0_R8
+               fna_pll(ix,iy,1,0:1,isb)=0.0_R8
+               fna_drift(ix,iy,1,0:1,isb)=0.0_R8
+               fna_nanom(ix,iy,1,0:1,isb)=0.0_R8
+               fna_panom(ix,iy,1,0:1,isb)=0.0_R8
+               fna_ch(ix,iy,1,0:1,isb)=0.0_R8
+               fna_pschused(ix,iy,1,0:1,isb)=0.0_R8
             endif
           endif
          enddo
@@ -1828,10 +1846,10 @@ cxpb turn off poloidal flows in core boundary
             flob(ix,-1,0,0:1) = 0.0_R8
             conb(ix,-1,0,0:1,:)=0.0_R8
 	    fllim0fnb(ix,-1,0,0:1) = 1.0_R8
-            vbecrb(ix,-1,0) = 0.0_R8
-            vbdia(ix,-1,0) = 0.0_R8
-            wbdia(ix,-1,0) = 0.0_R8
-            ubdia(ix,-1,0) = 0.0_R8
+            vbecrb(ix,-1,0,0:1) = 0.0_R8
+            vbdia(ix,-1,0,0:1) = 0.0_R8
+            wbdia(ix,-1,0,0:1) = 0.0_R8
+            ubdia(ix,-1,0,0:1) = 0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
                fna_pinch(ix,-1,0,0:1,isb)=0.0_R8
                fna_pll(ix,-1,0,0:1,isb)=0.0_R8
@@ -1926,10 +1944,10 @@ csw 18feb2014 remove fluxes between guard cells
             fnb_he(ix,iy,0,0:1)=0.0_R8
             fnb_mdf(ix,iy,0,0:1)=0.0_R8
             flob(ix,iy,0,0:1)=0.0_R8
-            vbecrb(ix,iy,0)=0.0_R8
-            vbdia(ix,iy,0)=0.0_R8
-            wbdia(ix,iy,0)=0.0_R8
-            ubdia(ix,iy,0)=0.0_R8
+            vbecrb(ix,iy,0,0:1)=0.0_R8
+            vbdia(ix,iy,0,0:1)=0.0_R8
+            wbdia(ix,iy,0,0:1)=0.0_R8
+            ubdia(ix,iy,0,0:1)=0.0_R8
             conb(ix,iy,0,0:1,:)=0.0_R8
 	    fllim0fnb(ix,iy,0,0:1)=1.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
@@ -1953,10 +1971,10 @@ csw 18feb2014 remove fluxes between guard cells
             fnb_he(ix,iy,1,0:1)=0.0_R8
             fnb_mdf(ix,iy,1,0:1)=0.0_R8
             flob(ix,iy,1,0:1)=0.0_R8
-            vbecrb(ix,iy,1)=0.0_R8
-            vbdia(ix,iy,1)=0.0_R8
-            wbdia(ix,iy,1)=0.0_R8
-            ubdia(ix,iy,1)=0.0_R8
+            vbecrb(ix,iy,1,0:1)=0.0_R8
+            vbdia(ix,iy,1,0:1)=0.0_R8
+            wbdia(ix,iy,1,0:1)=0.0_R8
+            ubdia(ix,iy,1,0:1)=0.0_R8
             conb(ix,iy,1,0:1,:)=0.0_R8
 	    fllim0fnb(ix,iy,1,0:1)=1.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
@@ -1976,10 +1994,10 @@ csw 18feb2014 remove fluxes between guard cells
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            vbecrb(ix,iy,0)=0.0_R8
-            vbdia(ix,iy,0)=0.0_R8
-            wbdia(ix,iy,0)=0.0_R8
-            ubdia(ix,iy,0)=0.0_R8
+            vbecrb(ix,iy,0,0:1)=0.0_R8
+            vbdia(ix,iy,0,0:1)=0.0_R8
+            wbdia(ix,iy,0,0:1)=0.0_R8
+            ubdia(ix,iy,0,0:1)=0.0_R8
             fnb(ix,iy,0,0:1)=0.0_R8
             fnb_32(ix,iy,0,0:1)=0.0_R8
             fnb_52(ix,iy,0,0:1)=0.0_R8
@@ -1998,10 +2016,10 @@ csw 18feb2014 remove fluxes between guard cells
             flob(ix,iy,1,0:1)=0.0_R8
             conb(ix,iy,1,0:1,:)=0.0_R8
 	    fllim0fnb(ix,iy,1,0:1) = 1.0_R8
-            vbecrb(ix,iy,1)=0.0_R8
-            vbdia(ix,iy,1)=0.0_R8
-            wbdia(ix,iy,1)=0.0_R8
-            ubdia(ix,iy,1)=0.0_R8
+            vbecrb(ix,iy,1,0:1)=0.0_R8
+            vbdia(ix,iy,1,0:1)=0.0_R8
+            wbdia(ix,iy,1,0:1)=0.0_R8
+            ubdia(ix,iy,1,0:1)=0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
                fna_pinch(ix,iy,0:1,0:1,isb)=0.0_R8
                fna_pll(ix,iy,0:1,0:1,isb)=0.0_R8
@@ -2018,10 +2036,10 @@ csw 18feb2014 remove fluxes between guard cells
 * ..compute kinetic energy of species
       if(drift_style.eq.0) then                                         !srv 14.07.10 {
 cwdk for computation of kinetic energy, need true diamagnetic components
-        vbecrb_(:,:,0) = vbecrb(:,:,0)*bb(:,:,3)/bb(:,:,2)
-        wbdia_(:,:,0)  = wbdia(:,:,0)*bb(:,:,3)/bb(:,:,2)
-        vbecrb_(:,:,1) = vbecrb(:,:,1)
-        wbdia_(:,:,1)  = wbdia(:,:,1)
+        vbecrb_(:,:,0) = vbecrb(:,:,0,0)*bb(:,:,3)/bb(:,:,2)
+        wbdia_(:,:,0)  = wbdia(:,:,0,0)*bb(:,:,3)/bb(:,:,2)
+        vbecrb_(:,:,1) = vbecrb(:,:,1,1)
+        wbdia_(:,:,1)  = wbdia(:,:,1,1)
       else
        if((maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8)
      &    .and. minval(zb).gt.0.0_R8) then
@@ -2184,15 +2202,15 @@ cwdk need full diamagnetic component for energy
        call my_out(70,nx,ny,fnbPSch(-1,-1,0,0),'b2tfnb_fnbPSchx'//chns)
        call my_out(70,nx,ny,fnbPSch(-1,-1,1,1),'b2tfnb_fnbPSchy'//chns)
        if (isb .eq. ismain) then
-          call my_out(70,nx,ny,vbecrb(-1,-1,0),'b2tfnb_vbecrbx'//chns)
-          call my_out(70,nx,ny,vbecrb(-1,-1,1),'b2tfnb_vbecrby'//chns)
+          call my_out(70,nx,ny,vbecrb(-1,-1,0,0),'b2tfnb_vbecrbx'//chns)
+          call my_out(70,nx,ny,vbecrb(-1,-1,1,1),'b2tfnb_vbecrby'//chns)
        endif
-!       call my_out(70,nx,ny,ubdia(-1,-1,0),'b2tfnb_ubdiax'//chns)
-!       call my_out(70,nx,ny,ubdia(-1,-1,1),'b2tfnb_ubdiay'//chns)
-       call my_out(70,nx,ny,vbdia(-1,-1,0),'b2tfnb_vbdiax'//chns)
-       call my_out(70,nx,ny,vbdia(-1,-1,1),'b2tfnb_vbdiay'//chns)
-       call my_out(70,nx,ny,wbdia(-1,-1,0),'b2tfnb_wbdiax'//chns)
-       call my_out(70,nx,ny,wbdia(-1,-1,1),'b2tfnb_wbdiay'//chns)
+!       call my_out(70,nx,ny,ubdia(-1,-1,0,0),'b2tfnb_ubdiax'//chns)
+!       call my_out(70,nx,ny,ubdia(-1,-1,1,1),'b2tfnb_ubdiay'//chns)
+       call my_out(70,nx,ny,vbdia(-1,-1,0,0),'b2tfnb_vbdiax'//chns)
+       call my_out(70,nx,ny,vbdia(-1,-1,1,1),'b2tfnb_vbdiay'//chns)
+       call my_out(70,nx,ny,wbdia(-1,-1,0,0),'b2tfnb_wbdiax'//chns)
+       call my_out(70,nx,ny,wbdia(-1,-1,1,1),'b2tfnb_wbdiay'//chns)
        call my_out(70,nx,ny,kbnrgy,'b2tfnb_kbnrgy'//chns)
       endif
 
@@ -2228,14 +2246,14 @@ cwdk need full diamagnetic component for energy
      &             'b2tfnb_fllim0fnbx'//chns)
        call my_out(70,nx,ny,fllim0fnb(-1,-1,1,1),
      &             'b2tfnb_fllim0fnby'//chns)
-       call my_out(70,nx,ny,vbecrb(-1,-1,0),'b2tfnb_vbecrbx'//chns)
-       call my_out(70,nx,ny,vbecrb(-1,-1,1),'b2tfnb_vbecrby'//chns)
-       call my_out(70,nx,ny,ubdia(-1,-1,0),'b2tfnb_ubdiax'//chns)
-       call my_out(70,nx,ny,ubdia(-1,-1,1),'b2tfnb_ubdiay'//chns)
-       call my_out(70,nx,ny,vbdia(-1,-1,0),'b2tfnb_vbdiax'//chns)
-       call my_out(70,nx,ny,vbdia(-1,-1,1),'b2tfnb_vbdiay'//chns)
-       call my_out(70,nx,ny,wbdia(-1,-1,0),'b2tfnb_wbdiax'//chns)
-       call my_out(70,nx,ny,wbdia(-1,-1,1),'b2tfnb_wbdiay'//chns)
+       call my_out(70,nx,ny,vbecrb(-1,-1,0,0),'b2tfnb_vbecrbx'//chns)
+       call my_out(70,nx,ny,vbecrb(-1,-1,1,1),'b2tfnb_vbecrby'//chns)
+       call my_out(70,nx,ny,ubdia(-1,-1,0,0),'b2tfnb_ubdiax'//chns)
+       call my_out(70,nx,ny,ubdia(-1,-1,1,1),'b2tfnb_ubdiay'//chns)
+       call my_out(70,nx,ny,vbdia(-1,-1,0,0),'b2tfnb_vbdiax'//chns)
+       call my_out(70,nx,ny,vbdia(-1,-1,1,1),'b2tfnb_vbdiay'//chns)
+       call my_out(70,nx,ny,wbdia(-1,-1,0,0),'b2tfnb_wbdiax'//chns)
+       call my_out(70,nx,ny,wbdia(-1,-1,1,1),'b2tfnb_wbdiay'//chns)
        call my_out(70,nx,ny,kbnrgy,'b2tfnb_kbnrgy'//chns)
        call my_out(70,nx,ny,cvlb(-1,-1,0,0),'b2tfnb_cvlbx'//chns)
        call my_out(70,nx,ny,cvlb(-1,-1,1,1),'b2tfnb_cvlby'//chns)
@@ -2254,8 +2272,8 @@ cwdk need full diamagnetic component for energy
        call my_out(70,nx,ny,pbs(-1,-1,0),'b2tfnb_pbsx')
        call my_out(70,nx,ny,pbshz(-1,-1,0),'b2tfnb_pbshzx')
        call my_out(70,nx,ny,pbshz(-1,-1,1),'b2tfnb_pbshzy')
-       call my_out(70,nx,ny,ub2dia(-1,-1,0),'b2tfnb_ub2diax'//chns)
-       call my_out(70,nx,ny,ub2dia(-1,-1,1),'b2tfnb_ub2diay'//chns)
+       call my_out(70,nx,ny,ub2dia(-1,-1,0,0),'b2tfnb_ub2diax'//chns)
+       call my_out(70,nx,ny,ub2dia(-1,-1,1,1),'b2tfnb_ub2diay'//chns)
        call my_out(70,nx,ny,conb(-1,-1,0,0,0),'b2tfnb_conbx0'//chns)
        call my_out(70,nx,ny,conb(-1,-1,0,0,1),'b2tfnb_conbx1'//chns)
        call my_out(70,nx,ny,conb(-1,-1,0,0,2),'b2tfnb_conbx2'//chns)
