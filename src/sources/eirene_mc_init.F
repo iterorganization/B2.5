@@ -56,6 +56,8 @@ c     avoids double module definition in case code is compiled with Eirene
         allocate(wldpeb(nlimps,0:nstra+1))
         allocate(wldspt(nlimps,0:nstra+1))
         allocate(eneutrad(0:nxdd,0:nydd,natm,0:nstra+1))
+        allocate(emolrad(0:nxdd,0:nydd,nmol,0:nstra+1))
+        allocate(eionrad(0:nxdd,0:nydd,nion,0:nstra+1))
         allocate(isrftype(nlimps))
 #else
         call alloc_b2mod_eirdiag(nx,ny,
@@ -83,6 +85,8 @@ c     avoids double module definition in case code is compiled with Eirene
         srcml=0.0_R8
         edissml=0.0_R8
         eneutrad=0.0_R8
+        emolrad=0.0_R8
+        eionrad=0.0_R8
         wldnek=0.0_R8
         wldnep=0.0_R8
         wldna=0.0_R8

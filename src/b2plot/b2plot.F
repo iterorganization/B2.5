@@ -2031,6 +2031,16 @@ c
           nz=natmi
           mach(:,:,0:nz-1)=eneutrad(0:nx+1,0:ny+1,1:nz,0)
           call copy(mach,-1.0_R8,nz,textan)
+        case ('molrad')
+          description='Power loss due to molecule radiation (W)'
+          nz=nmoli
+          mach(:,:,0:nz-1)=emolrad(0:nx+1,0:ny+1,1:nz,0)
+          call copy(mach,-1.0_R8,nz,textmn)
+        case ('ionrad')
+          description='Power loss due to molecular ion radiation (W)'
+          nz=nioni
+          mach(:,:,0:nz-1)=eionrad(0:nx+1,0:ny+1,1:nz,0)
+          call copy(mach,-1.0_R8,nz,textin)
         case ('rqae')
           description='Electron cooling rate (W) [rqahe]'
           nz=ns

@@ -77,6 +77,7 @@ c
       real (kind=R8), allocatable :: wlabsrp1(:,:)
       real (kind=R8), allocatable :: wlpump1(:,:)
       real (kind=R8), allocatable :: eneutrad1(:,:,:)
+      real (kind=R8), allocatable :: emolrad1(:,:,:)
       real (kind=R8), allocatable :: wldna1res(:,:), wldnm1res(:,:)
       real (kind=R8), allocatable :: ewlda1res(:,:), ewldm1res(:,:)
       real (kind=R8), allocatable :: ewldea1res(:,:), ewldem1res(:,:)
@@ -1103,6 +1104,35 @@ cank
           deallocate(eneutrad1)
         end if
 
+        if (jvft44 .ge. 20180323) then
+          do is = 1, nmoli
+            call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
+          end do
+          allocate(emolrad1(0:nx1+1,0:ny1+1,nmol1))
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
+              call b2xtvc(nx, ny, nx1, ny1,
+     &         field, emolrad1(0,0,imol1(is)),
+     &         nncutmax, non_commensurate,
+     &         nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &         leftcut, leftcut1, rightcut, rightcut1,
+     &         bottomcut, bottomcut1, topcut, topcut1,
+     &         wrk0)
+            end if
+          end do
+          call write_title(45,'emolrad',n2*nmol1)
+          call eirene_neutr(45,nx1,ny1,nmol1,emolrad1,
+     .                         nx1,ny1,nmol1,1,1)
+          deallocate(emolrad1)
+          call write_title(45,'eionrad',n2*nioni) ! No test ion conversion
+          call eirene_neutr(45,nx1,ny1,nioni,eionrad,
+     .                         nx1,ny1,nioni,1,1)
+        end if
+
 !! FIXME: When changing grid size, NCL may vary and thus arrays below need re-mapping
         if(jvft44 .ge. 20080706) then
           call read_title(44)
@@ -1474,6 +1504,34 @@ cank
      .                           nx1,ny1,natm1,1,1)
             deallocate(eneutrad1)
           end if
+        end if
+        if(jvft44.ge.20180323) then
+          do is = 1, nmoli
+            call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
+          end do
+          allocate(emolrad1(0:nx1+1,0:ny1+1,nmol1))
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
+              call b2xtvc(nx, ny, nx1, ny1,
+     &         field, emolrad1(0,0,imol1(is)),
+     &         nncutmax, non_commensurate,
+     &         nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &         leftcut, leftcut1, rightcut, rightcut1,
+     &         bottomcut, bottomcut1, topcut, topcut1,
+     &         wrk0)
+            end if
+          end do
+          call write_title(45,'emolrad',n2*nmol1)
+          call eirene_neutr(45,nx1,ny1,nmol1,emolrad1,
+     .                         nx1,ny1,nmol1,1,1)
+          deallocate(emolrad1)
+          call write_title(45,'eionrad',n2*nioni) ! No test ion conversion
+          call eirene_neutr(45,nx1,ny1,nioni,eionrad,
+     .                         nx1,ny1,nioni,1,1)
         end if
       end if
       if(jvft44.ge.960513) nlimi = nlim1

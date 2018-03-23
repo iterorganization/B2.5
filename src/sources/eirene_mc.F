@@ -53,7 +53,7 @@ c  version : 26.07.2002 23:39
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
-      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
+      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir, b2stbc_feedback
       integer, allocatable, save :: feedback_strata(:)
@@ -3234,10 +3234,21 @@ c
 !                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,1)
 !                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,1)
 !                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,1)
-                radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,0)
-                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,0)
-                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,0)
-                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,0)
+cxpb Replacing edissml contribution with emolrad
+c$$$                radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,0)
+c$$$                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,0)
+c$$$                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,0)
+c$$$                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,0)
+                radarr(ix,iy)=radarr(ix,iy)+emolrad(ix+1,iy+1,imol,0)
+                rad_neutr=rad_neutr+emolrad(ix+1,iy+1,imol,0)
+                rdneureg(k)=rdneureg(k)+emolrad(ix+1,iy+1,imol,0)
+                recycereg(k)=recycereg(k)+emolrad(ix+1,iy+1,imol,0)
+              end do
+              do iion = 1, nnioni
+                radarr(ix,iy)=radarr(ix,iy)+eionrad(ix+1,iy+1,iion,0)
+                rad_neutr=rad_neutr+eionrad(ix+1,iy+1,iion,0)
+                rdneureg(k)=rdneureg(k)+eionrad(ix+1,iy+1,iion,0)
+                recycereg(k)=recycereg(k)+eionrad(ix+1,iy+1,iion,0)
               end do
             endif
           enddo
@@ -3246,6 +3257,12 @@ c
         if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
      .   'EIRENE_MC. ENEUTRAD : ',
      .   (SUM(eneutrad(1:nx,1:ny,iatm,0)),iatm=1,nnatmi)
+        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
+     .   'EIRENE_MC. EMOLRAD : ',
+     .   (SUM(emolrad(1:nx,1:ny,imol,0)),imol=1,nnmoli)
+        if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
+     .   'EIRENE_MC. EIONRAD : ',
+     .   (SUM(eionrad(1:nx,1:ny,iion,0)),iion=1,nnioni)
       endif
       if (dbg_eir_mc.ge.2 .and. main_call) write(*,'(a,1p,2(1x,e14.7))')
      . 'EIRENE_MC. RADARR, RAD_NEUTR : ',
