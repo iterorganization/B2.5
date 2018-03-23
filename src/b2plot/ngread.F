@@ -463,6 +463,15 @@ cank
           end do
         end if
 
+        if(jvft44 .ge. 20180323) then
+          do is = 1, nmoli
+            call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
+          end do
+        end if
+
         if(jvft44 .ge. 20080706) then
           call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
@@ -611,6 +620,14 @@ cank
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
           end do
         end if
+        if(jvft44 .ge. 20180323) then
+          do is = 1, nmoli
+            call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
+          end do
+        end if
       end if
 
 cc<<<
@@ -639,6 +656,10 @@ c      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
 cank
 cxpb 20130210
 c      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
+cxpb
+cxpb 20180323
+      call extend(emolrad,ndx,ndy,nmol,nnx,nny,nmoli)
+      call extend(eionrad,ndx,ndy,nion,nnx,nny,nioni)
 cxpb
       deallocate(ft44data)
 #endif

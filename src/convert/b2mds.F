@@ -772,8 +772,9 @@ c 23: fht definition changed to 5/2 formulation
 c 24: removed drift velocity contributions from kinrgy
 c 25: debugged indexing error for eneutrad
 c 26: using total field for computing dspar
+c 27: Added EMOLRAD and EIONRAD arrays
 
-      dbversion=26
+      dbversion=27
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -1385,6 +1386,10 @@ c
      1   tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)
         call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
+        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1   tmp(ix,iy,is)=emolrad(ix+1,iy+1,is+1,1)
+        call mds_put_double_rzns('\TOP.SNAPSHOT:EMOLRAD','W',nx+2,
+     1   ny+2,nmoli,tmp,'TEXTMN','')
       endif
 #endif
 #ifdef B25_EIRENE
@@ -1396,6 +1401,10 @@ c
         forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
      1   tmp(ix,iy,is)=tib2(ix+1,iy+1,is+1,1)/ev
         call mds_put_double_rzns('\TOP.SNAPSHOT:TIB2','eV',nx+2,
+     1   ny+2,nioni,tmp,'TEXTIN','')
+        forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
+     1   tmp(ix,iy,is)=eionrad(ix+1,iy+1,is+1,1)
+        call mds_put_double_rzns('\TOP.SNAPSHOT:EIONRAD','W',nx+2,
      1   ny+2,nioni,tmp,'TEXTIN','')
       endif
 #endif
