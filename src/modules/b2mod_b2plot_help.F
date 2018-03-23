@@ -427,7 +427,7 @@
      7    'Recycling conditions',
      8    'Molecule dissociation rate (#.s^{-1})',
      9    'Power to atoms due to molecule dissociation (W)',
-     *    'Total power loss due to atom radiation (W)'/
+     *    'Power loss due to atom radiation (W)'/
       data descriptions(301:310) /
      1    'Poloidal particle flux without drifts (s^{-1})',
      2    'Radial particle flux without drifts (s^{-1})',

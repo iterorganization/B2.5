@@ -1993,7 +1993,7 @@ c
           mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
           call copy(mach,-1.0_R8,nz,textmn)
         case ('neutrad')
-          description='Total power loss due to atom radiation (W)'
+          description='Power loss due to atom radiation (W)'
           nz=natmi
           mach(:,:,0:nz-1)=eneutrad(0:nx+1,0:ny+1,1:nz,0)
           call copy(mach,-1.0_R8,nz,textan)
@@ -10129,6 +10129,15 @@ c
         case('nspecies') ! nspecies 
           stack_name='integer'
           call ipush(istack,iistack,nspecies)
+        case('natm')     ! natm
+          stack_name='integer'
+          call ipush(istack,iistack,natm)
+        case('nmol')     ! nmol
+          stack_name='integer'
+          call ipush(istack,iistack,nmol)
+        case('nion')     ! nion
+          stack_name='integer'
+          call ipush(istack,iistack,nion)
         case('nxtl')     ! nxtl 
           stack_name='integer'
           if (nnreg(0).eq.8) then
