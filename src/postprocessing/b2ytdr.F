@@ -312,6 +312,7 @@ c 2002-09-11: logic revised
       integer LNTSPEC, LNTSPUT, NMCSPUT, NLSTADDS, MTREADDS, NGWTIES
       integer NSNVI, NSNV1, NPWIN, NSPTAL
       integer jatm, kint, kmod, iside
+      integer isbegin, isend, is1begin, is1end
       integer NTL, NFR
       integer IPOS0, IPOS1, IPOS2
       integer NPRCSF, IPRCSF
@@ -3231,7 +3232,7 @@ cxpb This will need to be checked !!!
               call convert_bundle_l(ns1,ns,nsm,is_neutral1,bundle_frac,
      .         solveco(0,ireg))
               write(99,hlp_frm)
-     .         'SOLVECO(0,',ireg,')=',(solveco(is,ireg),is=0,ns1-1)
+     .         'SOLVECO(0,',ireg,')=',(solveco(is,ireg),is=0,ns1-1),','
             endif
           enddo
           do ireg = 0, nnreg(0)
@@ -3243,7 +3244,7 @@ cxpb This will need to be checked !!!
               call convert_bundle_l(ns1,ns,nsm,is_neutral1,bundle_frac,
      .         solvemo(0,ireg))
               write(99,hlp_frm)
-     .         'SOLVEMO(0,',ireg,')=',(solvemo(is,ireg),is=0,ns1-1)
+     .         'SOLVEMO(0,',ireg,')=',(solvemo(is,ireg),is=0,ns1-1),','
             endif
           enddo
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nnreg(0)+1,'l1,a)'
@@ -3252,19 +3253,19 @@ cxpb This will need to be checked !!!
             todo = todo .or. .not.solvepo(ireg)
           enddo
           if (todo) write(99,hlp_frm)
-     .      'SOLVEPO=',(solvepo(ireg),is=0,nnreg(0))
+     .      'SOLVEPO=',(solvepo(ireg),is=0,nnreg(0)),','
           todo = .false.
           do ireg = 0, nnreg(0)
             todo = todo .or. .not.solveee(ireg)
           enddo
           if (todo) write(99,hlp_frm)
-     .     'SOLVEEE=',(solveee(ireg),is=0,nnreg(0))
+     .     'SOLVEEE=',(solveee(ireg),is=0,nnreg(0)),','
           todo = .false.
           do ireg = 0, nnreg(0)
             todo = todo .or. .not.solveei(ireg)
           enddo
           if (todo) write(99,hlp_frm)
-     .     'SOLVEEI=',(solveei(ireg),is=0,nnreg(0))
+     .     'SOLVEEI=',(solveei(ireg),is=0,nnreg(0)),','
           if(numerics_time_mod.gt.0.0_R8) then
             write(99,'(1x,a,a,a)')
      .       'NUMERICS_FILENAME=''',trim(numerics_filename),''','
@@ -6549,6 +6550,26 @@ cxpb We now rewrite the modified block 4
         READ (IUNIN,6664) (DPLD(IPLS),IPLS=1,NPLSI)
         call e_bundle_transmit_r
      .   (nplsi,nplsi1,e_bundle_contr,DPLD,DPLD1,1)
+cxpb Rescaling for when the extent of the nuclear sequence has changed
+        do is = 1, nspecies1
+          is1begin = eb2spcr1(is)+1
+          isbegin = eb2spcr(lkindp(ifl1(is1begin)))+1
+          if (is.lt.nspecies1) then
+            is1end = eb2spcr1(is+1)-1
+          else
+            is1end = ns1-1
+          end if
+          if (lkindp(ifl1(is1end)).lt.nspecies) then
+            isend = eb2spcr1(lkindp(ifl1(is1end))+1)-1
+          else
+            isend = ns-1
+          end if
+          if (nint(zamin1(is1begin)).ne.nint(zamin(isbegin)) .or.
+     &        nint(zamax1(is1end)).ne.nint(zamax(isend))) then
+            dpld1(is1begin:is1end)=dpld1(is1begin:is1end)*
+     .       rratio(isend-isbegin+1,is1end-is1begin+1)
+          end if
+        end do
         WRITE(IUNOT,6664) (DPLD1(IPLS),IPLS=1,NPLSI1)
         deallocate(DPLD,DPLD1)
         IF (NPHOTI.GT.0) THEN
