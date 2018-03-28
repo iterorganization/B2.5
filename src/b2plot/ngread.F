@@ -657,10 +657,6 @@ cank
 cxpb 20130210
 c      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
 cxpb
-cxpb 20180323
-      call extend(emolrad,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(eionrad,ndx,ndy,nion,nnx,nny,nioni)
-cxpb
       deallocate(ft44data)
 #endif
       NFEND = 1
