@@ -643,12 +643,13 @@ cc<<<
       call extend(pefluxm,ndx,ndy,nmol,nnx,nny,nmoli)
       call extend(emiss,ndx,ndy,1,nnx,nny,1)
       call extend(emissmol,ndx,ndy,1,nnx,nny,1)
+cxpb We do not extend the volumetric losses quantities
 cank 960511
-      call extend(srcml,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(srcml,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
 cank
 cxpb 20130210
-      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
+c      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
 cxpb
       deallocate(ft44data)
 #endif
