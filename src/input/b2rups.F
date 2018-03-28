@@ -586,23 +586,23 @@
         fchdia = 0.0_R8
         fchdia(:,:,0,0) = floc(:,:,0)
         fchdia(:,:,1,1) = floc(:,:,1)
-        call cfrure (nget, n2*2, fchin, 'fchin')
+        call cfrure (nget, n2*2, floc, 'fchin')
         fchin = 0.0_R8
         fchin(:,:,0,0) = floc(:,:,0)
         fchin(:,:,1,1) = floc(:,:,1)
-        call cfrure (nget, n2*2, fchvispar, 'fchvispar')
+        call cfrure (nget, n2*2, floc, 'fchvispar')
         fchvispar = 0.0_R8
         fchvispar(:,:,0,0) = floc(:,:,0)
         fchvispar(:,:,1,1) = floc(:,:,1)
-        call cfrure (nget, n2*2, fchvisper, 'fchvisper')
+        call cfrure (nget, n2*2, floc, 'fchvisper')
         fchvisper = 0.0_R8
         fchvisper(:,:,0,0) = floc(:,:,0)
         fchvisper(:,:,1,1) = floc(:,:,1)
-        call cfrure (nget, n2*2, fchvisq, 'fchvisq')
+        call cfrure (nget, n2*2, floc, 'fchvisq')
         fchvisq = 0.0_R8
         fchvisq(:,:,0,0) = floc(:,:,0)
         fchvisq(:,:,1,1) = floc(:,:,1)
-        call cfrure (nget, n2*2, fchinert, 'fchinert')
+        call cfrure (nget, n2*2, floc, 'fchinert')
         fchinert = 0.0_R8
         fchinert(:,:,0,0) = floc(:,:,0)
         fchinert(:,:,1,1) = floc(:,:,1)
