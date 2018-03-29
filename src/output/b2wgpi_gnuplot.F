@@ -3,8 +3,7 @@
 
       subroutine b2wgpi_gnuplot (nprt, nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch,
-     &  kinrgy,
-     &  gs,qc,ni)
+     &  kinrgy, gs, qc, ni)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect

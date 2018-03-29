@@ -3,8 +3,7 @@
 
       subroutine b2wgpj_gnuplot (nprt, nx, ny, ns, 
      &  na, ua, te, ti, po, fna, fhe, fhi, fch, 
-     &  ne, fne, kinrgy,
-     &  gs,qc,ni)
+     &  ne, fne, kinrgy, gs, qc, ni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa

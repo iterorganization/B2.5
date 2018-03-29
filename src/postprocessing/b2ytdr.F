@@ -5237,7 +5237,7 @@ cxpb Now we have read the species data and can identify the bundles
         ipls = 0
         iplss = 0
         do iatm = 1, nspecies
-          if (ispecies1(iatm).eq.0) then
+          if (ispecies1(iatm).eq.-1) then
             do while (NMASSP(min(nplsi,ipls+1)).eq.
      .                NMASSA(b2eatcr(eb2spcr(iatm))) .and.
      .                NCHARP(min(nplsi,ipls+1)).eq.
@@ -5246,7 +5246,7 @@ cxpb Now we have read the species data and can identify the bundles
               ipls = ipls + 1
             end do
             cycle
-          endif
+          end if
           is = eb2spcr(iatm)+1
           if (iatm.eq.nspecies) then
             js = ns-1
@@ -6560,7 +6560,7 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
             is1end = ns1-1
           end if
           if (lkindp(ifl1(is1end)).lt.nspecies) then
-            isend = eb2spcr1(lkindp(ifl1(is1end))+1)-1
+            isend = eb2spcr(lkindp(ifl1(is1end))+1)-1
           else
             isend = ns-1
           end if
@@ -9220,7 +9220,7 @@ cxpb as they no longer necessarily point to the same species
               sps_sgrp1(ib)=sps_sgrp(ib)
             else if (sps_sgrp(ib).gt.nspecies) then
               sps_sgrp1(ib)=nspecies1+1
-            else if (ispecies1(sps_sgrp(ib)).ne.0) then
+            else if (ispecies1(sps_sgrp(ib)).ne.-1) then
               sps_sgrp1(ib)=ispecies1(sps_sgrp(ib))
             else
               sps_sgrp1(ib)=-1
