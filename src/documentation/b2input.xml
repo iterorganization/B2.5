@@ -4421,6 +4421,7 @@
 			</switch>
 			<switch>
 				<name>L_NEUTFLUX</name>
+                <default>0 for coupled cases, -1 otherwise</default>
 				<type>integer</type>
 				<description>
 					If l_neutflux &gt;=0, then correct treatment of the incident fluxes in B2 and b2plot; if &lt;0, then old (approximate) treatment

@@ -1106,8 +1106,8 @@ c     &   'faulty internal parameter density_rescale')
        call ipgeti ('b2mndr_astra',use_astra)
 * change atomic physics for coupling to Eirene    ! DPC 1999.06.28
        call ipgeti ('b2mndr_eirene', use_eirene)
-       call ipgeti ('eirene_savef30', save_f30)                    !srv 01.03.10
-       call ipgeti ('eirene_savef31', save_f31)                    !srv 01.03.10
+       call ipgeti ('eirene_savef30', save_f30)   !srv 01.03.10
+       call ipgeti ('eirene_savef31', save_f31)   !srv 01.03.10
        call ipgetr ('b2mndr_rescale_neutrals',neutral_rescale)
        call ipgetr ('b2mndr_rescale_neutrals_sources',
      *       neutral_sources_rescale)

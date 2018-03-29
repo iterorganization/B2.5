@@ -3524,13 +3524,15 @@ cxpb  Start reading input.dat file
           inquire(file='fort.11',exist=ex)
           if (ex) idum(3) = (idum(3)/10)*10 + 6
           inquire(file='fort.13',exist=ex)
-          if (ex) idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
+          if (ex .or. nfl.lt.nplsi)
+     >     idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
           inquire(file='fort.15',exist=ex)
 #else
           inquire(file='ftn11',exist=ex)
           if (ex) idum(3) = (idum(3)/10)*10 + 6
           inquire(file='ftn13',exist=ex)
-          if (ex) idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
+          if (ex .or. nfl.lt.nplsi)
+     >     idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
           inquire(file='ftn15',exist=ex)
 #endif
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
