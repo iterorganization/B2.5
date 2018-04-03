@@ -3198,7 +3198,10 @@ contains
     tif = (ti(ix_adj,iy_adj)*h(ix,iy)+ti(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
     fet = fet + fac_flux*fne(ix_flux,iy_flux,idir)*tef*(1.0_R8-BoRiS)
     do is=0,ns-1
-      fet = fet + fac_flux*(fhm(ix_flux,iy_flux,idir,is)+tif)*(1.0_R8-BoRiS) + fac_flux*fhp(ix_flux,iy_flux,idir,is)
+      fet = fet + &
+        fac_flux*(fhm(ix_flux,iy_flux,idir,is)+ &
+                  fna(ix_flux,iy_flux,idir,is)*tif)*(1.0_R8-BoRiS) + &
+        fac_flux*fhp(ix_flux,iy_flux,idir,is)
     enddo
     do is=0,ns_ext-1
       kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &

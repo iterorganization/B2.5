@@ -1538,8 +1538,9 @@ c   --> better way doing this is necessary)
         if(density_rescale < 0.d0) then
           do is=0,ns-1
            if (is_neutral(is).or.nint(zn(is)).ne.2) cycle
-           na(:,:,is)=na(:,:,is)*(-density_rescale)
-           ne(:,:)=ne(:,:)+na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0)
+           na(:,:,is) = na(:,:,is)*(-density_rescale)
+           ne(:,:) = ne(:,:) +
+     .      na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0)
            fna(:,:,0:1,is) = fna(:,:,0:1,is)*(-density_rescale)
            fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*(-density_rescale)
            fna_fcor(:,:,0:1,is) =
@@ -1551,7 +1552,7 @@ c   --> better way doing this is necessary)
            fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*(-density_rescale)
            fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*(-density_rescale)
            fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*(-density_rescale)
-           kinrgy(:,:,is)=kinrgy(:,:,is)*(-density_rescale)
+           kinrgy(:,:,is) = kinrgy(:,:,is)*(-density_rescale)
            write(*,*) 'Density ',is,' rescaled by ',-density_rescale
           enddo
         else
@@ -1600,8 +1601,8 @@ c   --> better way doing this is necessary)
       if(ncall.eq.0.and.neutral_rescale.ne.1.0_R8) then
         do is=0,ns-1
           if(is_neutral(is)) then
-            na(:,:,is)=na(:,:,is)*neutral_rescale
-            fna(:,:,0:1,is)=fna(:,:,0:1,is)*neutral_rescale
+            na(:,:,is) = na(:,:,is)*neutral_rescale
+            fna(:,:,0:1,is) = fna(:,:,0:1,is)*neutral_rescale
             fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*neutral_rescale
             fna_fcor(:,:,0:1,is) = fna_fcor(:,:,0:1,is)*neutral_rescale
             fna_nodrift(:,:,0:1,is) =
@@ -1611,7 +1612,7 @@ c   --> better way doing this is necessary)
             fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*neutral_rescale
             fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*neutral_rescale
             fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*neutral_rescale
-            kinrgy(:,:,is)=kinrgy(:,:,is)*neutral_rescale
+            kinrgy(:,:,is) = kinrgy(:,:,is)*neutral_rescale
           endif
         enddo
         write(*,*) 'Rescaled neutrals by ',neutral_rescale

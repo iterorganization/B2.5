@@ -67,8 +67,7 @@
      &  rza, za_ext, fna, fa_ext, fch, fne)
 *   ..plot state
       call b2wgpj_gnuplot (nprt, nx, ny, ns, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch, ne, fne, kinrgy,
-     &  gs,qc,ni)
+     &  fna, fhe, fhi, fch, ne, fne, kinrgy, gs, qc, ni)
 
 * ..return
       call subend ()
