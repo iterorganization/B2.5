@@ -2004,7 +2004,7 @@ c
           mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
           call copy(mach,-1.0_R8,nz,textmn)
         case ('neutrad')
-          description='Total power loss due to atom radiation (W)'
+          description='Power loss due to atom radiation (W)'
           nz=natmi
           mach(:,:,0:nz-1)=eneutrad(0:nx+1,0:ny+1,1:nz,0)
           call copy(mach,-1.0_R8,nz,textan)
@@ -2068,13 +2068,14 @@ c
               do is=0,ns-1
                 fetx(ix,iy)=fetx(ix,iy)+
      .           rpt(ix,iy,is)*ev*fna(ix,iy,0,is)+
-     1           fhm(ix,iy,0,is)*(1.0_R8-BoRiS)
+     .          (ti(ix,iy)*fna(ix,iy,0,is)+
+     1           fhm(ix,iy,0,is))*(1.0_R8-BoRiS)
               end do
               do is=0,ns_ext-1
                 fetx(ix,iy)=fetx(ix,iy)+
      .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,0,is)+
-     .           0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2*
-     .           fa_ext(ix,iy,0,is)*(1.0_R8-BoRiS)
+     .          (0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+
+     .           ta_ext(ix,iy,is))*fa_ext(ix,iy,0,is)*(1.0_R8-BoRiS)
               end do
             end do
           end do
@@ -2088,13 +2089,14 @@ c
               do is=0,ns-1
                 fety(ix,iy)=fety(ix,iy)+
      1           rpt(ix,iy,is)*ev*fna(ix,iy,1,is)+
-     1           fhm(ix,iy,1,is)*(1.0_R8-BoRiS)
+     1          (ti(ix,iy)*fna(ix,iy,1,is)+
+     1           fhm(ix,iy,1,is))*(1.0_R8-BoRiS)
               end do
               do is=0,ns_ext-1
                 fety(ix,iy)=fety(ix,iy)+
      .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,1,is)+
-     .           0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2*
-     .           fa_ext(ix,iy,1,is)*(1.0_R8-BoRiS)
+     .          (0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+
+     .           ta_ext(ix,iy,is))*fa_ext(ix,iy,1,is)*(1.0_R8-BoRiS)
               end do
             end do
           end do
@@ -10156,7 +10158,16 @@ c
         case('nspecies') ! nspecies
           stack_name='integer'
           call ipush(istack,iistack,nspecies)
-        case('nxtl')     ! nxtl
+        case('natm')     ! natm
+          stack_name='integer'
+          call ipush(istack,iistack,natm)
+        case('nmol')     ! nmol
+          stack_name='integer'
+          call ipush(istack,iistack,nmol)
+        case('nion')     ! nion
+          stack_name='integer'
+          call ipush(istack,iistack,nion)
+        case('nxtl')     ! nxtl 
           stack_name='integer'
           if (nnreg(0).eq.8) then
             call ipush(istack,iistack,nxtl)

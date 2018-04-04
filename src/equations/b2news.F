@@ -366,7 +366,7 @@
      &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                      !srv 13.10.06
      1    flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.true.)                !djm Jan2017
+     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .true.)               !djm Jan2017
         enddo
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -537,7 +537,7 @@ cxpb
      &     fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                     !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1     fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.true.)               !djm Jan2017
+     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .true.)              !djm Jan2017
           if (ncall.eq.ncallout) then
             write(*,*) 'ncall,is',ncall,is
             call hbout('b2ne_npco   ',nx,ny,ns,te,'te',ti,'ti',
@@ -610,7 +610,7 @@ cxpb
      &       fnaPSch(-1,-1,0,is),fna_mdf(-1,-1,0,is),                    !srv 13.10.06
      1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.false.)            !djm Jan2017
+     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)           !djm Jan2017
           endif
         enddo
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
@@ -822,7 +822,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      &             fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),             !srv 13.10.06
      1             flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1             fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.false.)      !djm Jan2017
+     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)     !djm Jan2017
                 enddo
                 if(wrong_flow .or. ipass.ne.0) then                      !xpb
                    call print_wrong_flows(

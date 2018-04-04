@@ -149,7 +149,7 @@ cank }
 
 csw 21feb2012
       integer, save ::
-     . l_neutrad=0, l_neutflux=-1
+     . l_neutrad=0, l_neutflux
       real(kind=R8), save ::
      1 chemical_erosion_redep_fac,
      2 chemical_erosion_be_fac_a,
@@ -201,8 +201,10 @@ csw 21feb2012
      &  natm_in, nmol_in, nion_in, nstra_in, nsts_in, sput_dst
       integer is, isstart, isend
       integer is0, ispecies
+      integer use_eirene
       character*12 hlp_frm
       intrinsic nint
+      data use_eirene /0/
 
 #ifdef ALLOCATE_AND_NAMELIST
       NSTRAID=NSTRAID_in
@@ -345,6 +347,12 @@ cwdk 0% momentum recycling, for backwards compatibility
       dbg_eir_mc=100                     !srv 08.06.13
       debug_flags=0
       neut_scl_lim=2
+      call ipgeti ('b2mndr_eirene', use_eirene)
+      if (use_eirene.eq.0) then
+        l_neutflux=-1
+      else
+        l_neutflux=0
+      endif
 
       chemical_erosion_redep_fac=1.0_R8
       chemical_erosion_be_fac=.false.

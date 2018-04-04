@@ -182,9 +182,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
           if (BoRiS.eq.1.0_R8) then
             do is = 0, ns-1
               shidt(ix,iy,0) = shidt(ix,iy,0)+t0*
-     &         kinrgy0(ix,iy,is)*na0(ix,iy,is)
+     &         (kinrgy0(ix,iy,is)+ti0(ix,iy))*na0(ix,iy,is)
               shidt(ix,iy,2) = shidt(ix,iy,2)-t0*
-     &         kinrgy0(ix,iy,is)*na0(ix,iy,is)/
+     &         (kinrgy0(ix,iy,is)+ti0(ix,iy))*na0(ix,iy,is)/
      &         ni0(ix,iy,0)
             enddo
           endif

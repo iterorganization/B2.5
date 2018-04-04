@@ -1122,6 +1122,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tfrn_xvecrb</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Real parameter which multiplies the contribution from the ExB drift velocity to the kinetic energy and the flows passed to Eirene.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfrn_xwdia</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Real parameter which multiplies the contribution from the diamagnetic drift velocity to the kinetic energy and the flows passed to Eirene.
+				</description>
+			</switch>
+			<switch>
 				<name>b2tfhe_neutral</name>
 				<default>0.0</default>
 				<type>real</type>
@@ -2507,7 +2523,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Controls additional output to b2time.nc.  If eq 1 then a few 2d arrays (ne, Te, Ti) are written with each write to b2time.nc. If eq 2 then fluxes, po, kinetic energy, and fluid particle and energy source terms are also included (e.g., rsana, rsahi, rqrad).
+					Controls additional output to b2time.nc.  If eq 1 then a few 2d arrays (ne, Te, Ti) are written with each write to b2time.nc. If eq 2 then fluxes, electric potential, kinetic energy, and fluid particle and energy source terms are also included (e.g., rsana, rsahi, rqrad).
 				</description>
 			</switch>
 			<switch>
@@ -4421,6 +4437,7 @@
 			</switch>
 			<switch>
 				<name>L_NEUTFLUX</name>
+                <default>0 for coupled cases, -1 otherwise</default>
 				<type>integer</type>
 				<description>
 					If l_neutflux &gt;=0, then correct treatment of the incident fluxes in B2 and b2plot; if &lt;0, then old (approximate) treatment

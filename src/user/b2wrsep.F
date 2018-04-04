@@ -186,8 +186,10 @@ c          v=vol(ix,iy)
           hlp_qisp=hlp_qisp+fhi(ix,iy,1)
           do is=0,ns-1
             kintmp =
-     .       (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .        kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
+     .      ((kinrgy(ix,iy,is)+ti(ix,iy))*
+     .        hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     .       (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     .        ti(bottomix(ix,iy),bottomiy(ix,iy)))*hy1(ix,iy))/
      .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
             hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,iy,1,is)
           enddo

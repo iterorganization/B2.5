@@ -3,8 +3,7 @@
 
       subroutine b2wgpj_gnuplot (nprt, nx, ny, ns, 
      &  na, ua, te, ti, po, fna, fhe, fhi, fch, 
-     &  ne, fne, kinrgy,
-     &  gs,qc,ni)
+     &  ne, fne, kinrgy, gs, qc, ni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -20,7 +19,7 @@
      &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  ne(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1),ni(-1:nx,-1:ny,0:1),
+     &  kinrgy(-1:nx,-1:ny,0:ns-1), ni(-1:nx,-1:ny,0:1),
      &  gs(-1:nx, -1:ny, 0:2), qc(-1:nx, -1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
