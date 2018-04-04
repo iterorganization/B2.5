@@ -19,21 +19,14 @@ module b2mod_ual_io
     !! B2 modules
 
     use b2mod_types
-    !use b2mod_version
     use b2mod_b2cmpa
     use b2mod_geo
     use b2mod_plasma
     use b2mod_constants
-    !use b2mod_rates
-    !use b2mod_residuals
     use b2mod_sources
     use b2mod_transport
     use b2mod_anomalous_transport
-    !use b2mod_work
-    !use b2mod_ppout
     use b2mod_indirect
-    !use b2mod_neutrals_namelist
-    !use b2mod_neutr_src_scaling
     use b2mod_interp
 
     !! B2/CPO Mapping
@@ -214,14 +207,17 @@ contains
             !! Allocate ggd for number of different time steps
             time_sind = 1
             allocate( edge_profiles%ggd( num_time_slices ) )
+            allocate( edge_profiles%grid_ggd( time_sind ) )
+            allocate( edge_transport%grid_ggd( time_sind ) )
             allocate( edge_transport%model(1) )
             edge_transport%model(1)%identifier%index = 1
+            allocate( edge_sources%grid_ggd( time_sind ) )
             allocate( edge_sources%source(1) )
             edge_sources%source(1)%identifier%index = 1
             allocate( edge_transport%model(1)%ggd( num_time_slices ) )
             allocate( edge_sources%source(1)%ggd( num_time_slices ) )
-            allocate( edge_transport%model(1)%ggd( num_time_slices )%electrons% &
-                &   energy%flux(1) )
+            allocate( edge_transport%model(1)%ggd( num_time_slices )% &
+                &   electrons%energy%flux(1) )
 
             !! Allocate and init the IDS
             allocate( edge_profiles%code%name(1) )
@@ -245,8 +241,11 @@ contains
         end if
 
         !! Allocate and set time slice value
+        edge_profiles%grid_ggd( time_sind )%time = time_slice_value
         edge_profiles%ggd( time_sind )%time = time_slice_value
+        edge_transport%grid_ggd( time_sind )%time = time_slice_value
         edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
+        edge_sources%grid_ggd( time_sind )%time = time_slice_value
         edge_sources%source(1)%ggd( time_sind )%time = time_slice_value
 
         ns = size( na, 3 )
@@ -262,7 +261,8 @@ contains
 
             call species( is, edge_profiles%ggd( time_sind )%ion( is + 1 )% &
                 &   state(1)%label, .false.)
-            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%a = am( is )
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%a =     &
+                &   am( is )
             edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%z_n =   &
                 &   zn( is )
             edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%z_min =   &
@@ -341,17 +341,18 @@ contains
             allocate( edge_sources%source(1)%ggd( time_sind )%ion( ns ) )
 
             do is = 1, ns
-                call write_quantity(                                            &
-                    &   val = edge_profiles%ggd( time_sind )%ion(is)%density,   &
-                    &   fluxes = edge_transport%model(1)%ggd( time_sind )%      &
-                    &   ion( is )%particles%flux,                               &
-                    &   value = na(:,:, is - 1 ),                               &
-                    &   flux = fna(:,:,:, is - 1 ),                             &
+                call write_quantity(                                          &
+                    &   val = edge_profiles%ggd( time_sind )%ion(is)%density, &
+                    &   fluxes = edge_transport%model(1)%ggd( time_sind )%    &
+                    &   ion( is )%particles%flux,                             &
+                    &   value = na(:,:, is - 1 ),                             &
+                    &   flux = fna(:,:,:, is - 1 ),                           &
                     &   time_sind = time_sind )
-                call write_cell_scalar( scalar = edge_sources%source(1)%        &
-                    &   ggd( time_sind )%ion( is )%particles,                   &
-                    &   b2CellData =                                            &
-                    &   sna(:,:,0, is - 1 ) + sna(:,:,1, is - 1 )*na(:,:, is - 1 ) )
+                call write_cell_scalar( scalar = edge_sources%source(1)%      &
+                    &   ggd( time_sind )%ion( is )%particles,                 &
+                    &   b2CellData =                                          &
+                    &   sna(:,:,0, is - 1 ) +                                 &
+                    &   sna(:,:,1, is - 1 )*na(:,:, is - 1 ) )
             end do
 
 !!$    !! ue: Parallel Electron Velocity

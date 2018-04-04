@@ -14,6 +14,7 @@ FC = nagfor
 FCOPTS = -O -x77 -PIC -compatible # -mismatch
 INCMOD = -I
 MOD = mod
+OBJDEST = -mdir ${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 

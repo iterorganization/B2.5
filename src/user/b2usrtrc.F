@@ -1604,7 +1604,7 @@ c=======================================================================
       filedata(ltrc)=.false.
       return
 
- 93   write(*,'(4a)') 'b2usrtrc: number of species changed - ',
+   93 write(*,'(4a)') 'b2usrtrc: number of species changed - ',
      ,                'remove the ',trim(f),' tracing file first!'
       filedata(ltrc)=.false.
       return
