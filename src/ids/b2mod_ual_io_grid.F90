@@ -408,7 +408,7 @@ contains
                 !! Neighbours to undefined
                 allocate(ggd_grid%space( SPACE_POLOIDALPLANE )% &
                     &   objects_per_dimension(2)%object( ifc )%boundary(i)% &
-                    &   neighbours(1))
+                    &   neighbours(2))
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(i)%neighbours(1) =   &
                     &   B2_GRID_UNDEFINED
@@ -625,7 +625,7 @@ contains
                 !! Neighbours to undefined
                 allocate(ggd_grid%space( SPACE_POLOIDALPLANE )% &
                     &   objects_per_dimension(3)%object( icv )%boundary(i)% &
-                    &   neighbours(1))
+                    &   neighbours(2))
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
                     &   object( icv )%boundary(i)%neighbours(1) =   &
                     &   B2_GRID_UNDEFINED

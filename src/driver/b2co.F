@@ -84,13 +84,14 @@
       real (kind=R8) :: dtim = 1.0_R8
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
       character filename*256
+      character b2fstate_only*256
       character extension*4
       character cnamip*80, cvalip*80, line*500
-      logical file_open, file_exists
+      logical file_open, file_exists, todo
 *   ..procedures
       integer lnblnk
-      logical is_comment
-      external lnblnk, is_comment
+      logical is_comment, streql
+      external lnblnk, is_comment, streql
       external prgini, prgend, xerset, xertst, cfopen, cfruin
       external b2rucp, b2rups, b2wuzd, b2wups, b2xvps, ipgeti, ipgetr
 *   ..initialise input/output unit numbers
@@ -363,9 +364,19 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         call b2filec(0,ns,nnreg(0))
       end if
 *   ..rewrite NetCDF files
+#ifdef NO_GETENV
+      todo=.true.
+#else
+#ifdef USE_PXFGETENV
+      CALL PXFGETENV ('B2FSTATE_ONLY', 0, b2fstate_only, lenval, ierror)
+#else
+      call getenv ('B2FSTATE_ONLY', b2fstate_only)
+#endif
+      todo=.not.streql(b2fstate_only,'yes')
+#endif
       call ipgeti ('b2mndr_b2time', b2time)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
-      if (b2time.gt.0 .or. ntim_batch.gt.0) then
+      if (todo.and.(b2time.gt.0 .or. ntim_batch.gt.0)) then
         filename='b2time.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -378,7 +389,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         end if
       end if
       call ipgeti ('b2stbr_b2wall_netcdf', b2wall_netcdf)
-      if (b2wall_netcdf.gt.0) then
+      if (todo.and.b2wall_netcdf.gt.0) then
         filename='b2wall.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -391,7 +402,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         end if
       end if
       call ipgeti ('b2mndr_tally', tally)
-      if (tally.gt.0) then
+      if (todo.and.tally.gt.0) then
         filename='b2tallies.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -404,7 +415,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         end if
       end if
       call ipgeti ('b2mndr_mvnum', mvnum)
-      if (mvnum.gt.0) then
+      if (todo.and.mvnum.gt.0) then
         filename='b2movies.nc'
         call find_file(filename,file_exists)
         if(file_exists) then

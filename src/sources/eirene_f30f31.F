@@ -194,9 +194,10 @@ c
             feixb(ix,iy+1)=fhi(rightix(ix-1,iy),rightiy(ix-1,iy),0)
             do is=0,ns-1
               kintmp =
-     .         (kinrgy(rightix(ix-1,iy),rightiy(ix-1,iy),is)*
+     .        ((kinrgy(rightix(ix-1,iy),rightiy(ix-1,iy),is)+
+     .          ti(rightix(ix-1,iy),rightiy(ix-1,iy)))*
      .          hx(ix-1,iy)+
-     .          kinrgy(ix-1,iy,is)*
+     .         (kinrgy(ix-1,iy,is)+ti(ix-1,iy))*
      .          hx(rightix(ix-1,iy),rightiy(ix-1,iy)))/
      .         (hx(ix-1,iy)+hx(rightix(ix-1,iy),rightiy(ix-1,iy)))
               feixb(ix,iy+1)=feixb(ix,iy+1)+kintmp*(1.0_R8-BoRiS)
@@ -218,11 +219,13 @@ c
           do is=0,ns-1
             if (bottomiy(ix,iy).ne.-2) then
               kintmp =
-     .         (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .          kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
+     .        ((kinrgy(ix,iy,is)+ti(ix,iy))*
+     .          hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     .         (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     .          ti(bottomix(ix,iy),bottomiy(ix,iy)))*hy1(ix,iy))/
      .         (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
             else
-              kintmp = kinrgy(ix,iy,is)
+              kintmp = kinrgy(ix,iy,is)+ti(ix,iy)
             endif
             feiyb(ix+1,iy)=feiyb(ix+1,iy)+kintmp*(1.0_R8-BoRiS)
      .       *fna(ix,iy,1,is)

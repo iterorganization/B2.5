@@ -1344,7 +1344,7 @@ c
      &           lengthy(nmdpl,ny)-lengthy(nmdpl,mintopcut)) then
             topdelta2 = mintopcut                 !srv 24.06.03 {
             width = 0.0e0_R8
-            do iy =mintopcut+1,ny
+            do iy =mintopcut,ny                                         !srv 23.01.18
              width = width + hy(nmdpl,iy)
              if(width.ge.delta2) then
               topdelta2 = iy
@@ -1355,13 +1355,13 @@ c
             topdelta2 = ny
            endif                                                       !srv 15.05.09 }
            if(iout.ne.0) then
-            open(70,file= 'Parameters_of_H-regime.dat')
+            open(70,file= 'output/Parameters_of_H-regime.dat')         !srv 23.01.18
             write(70,"(/' Parameters of H-regime')")
             write(70,"(' Number of midplane cell =',i4)") nmdpl
             write(70,"(' Number of first cell in CORE where transport ',
      &         ' coefficients are changed',2i5)") bottomdelta1
-            write(70,"(' Number of last  cell in CORE where transport ',
-     &         ' coefficients are changed',2i5)") topdelta2
+            write(70,"(' Number of last  cell in SOL  where transport ',
+     &         ' coefficients are changed',2i5)") topdelta2            !srv 23.01.18
             close(70)
            endif
           endif

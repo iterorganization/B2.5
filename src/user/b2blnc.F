@@ -684,6 +684,11 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+ 91   ex = .false.
+ 93   continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=40) hlp_c,nv,j,nc
         read(lun,*) hlp_c
@@ -701,7 +706,7 @@ c*** f     :  the associated file name
      ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. 960727) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -712,7 +717,7 @@ c*** It was a major change of the file format - impossible to continue
      ,     '!!! b2blnc: current number of columns ',np_tmp,
      ,     ' differs from that in the file ',trim(f),' : ',nc
           if(nc.gt.np_tmp) then
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -723,7 +728,8 @@ c*** It was a major change of the file format - impossible to continue
           write(*,'(a,i2,3a,i2)')
      ,     '!!! b2blnc: current number of species ',nspecies,
      ,      ' differs from that in the file ',trim(f),' : ',j
-          write(*,*) 'No tracing file - remove the existing file first!'
+          write(*,*) 'No ',trim(f),' tracing file - ',
+     ,                              'remove the existing file first!'
           filedata(ltrc)=.false.
           return
         end if

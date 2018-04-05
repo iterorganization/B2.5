@@ -101,7 +101,7 @@ EQUIVS    += -DIMAS
 endif
 LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
-IMASLIBS   = ${LD_UAL} -lggd-ifort -Wl,-rpath,${EBROOTANACONDA3}/lib
+IMASLIBS   = ${LD_UAL} -lggd-ifort
 endif
 
 LD         = ${FC}

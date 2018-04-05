@@ -3,8 +3,7 @@
 
       subroutine b2wgpi_gnuplot (nprt, nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch,
-     &  kinrgy,
-     &  gs,qc,ni)
+     &  kinrgy, gs, qc, ni)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -68,8 +67,7 @@
      &  rza, za_ext, fna, fa_ext, fch, fne)
 *   ..plot state
       call b2wgpj_gnuplot (nprt, nx, ny, ns, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch, ne, fne, kinrgy,
-     &  gs,qc,ni)
+     &  fna, fhe, fhi, fch, ne, fne, kinrgy, gs, qc, ni)
 
 * ..return
       call subend ()

@@ -15,7 +15,7 @@
 !!      Library routines.
 !!
 !!      @note   More on the b2_ual_writers is available in SOLPS-GUI
-!!              documentation under section <b> IMAS HOWTO </b>.
+!!              documentation \b HOWTOs under section <b> 4.5 IMAS </b>.
 !!
 !!      @note   A short video tutorial on the use of the B2.5 writer is
 !!              available <a href="https://youtu.be/5IuADXPAgkQ">here</a>.
@@ -107,9 +107,9 @@
 !!              also GGD support as it includes IMAS GGD library routines
 !!              (Fortran90).
 !!
-!!      @note   b2_ual_write and b2_ual_write_gsl are OUTDATED codes, but
-!!              were left in the repository for documentation purposes and as
-!!              and extra examples.
+!!      @note   b2_ual_write_deprecated and b2_ual_write_gsl are OUTDATED codes,
+!!              but were left in the repository for documentation purposes and
+!!              as an extra examples.
 !!
 !!      @subsection b2uw_b2mod_run Running the code:
 !!      The examples are available on ITER portal:
@@ -119,7 +119,9 @@
 !!      (b2fgmtry, b2fstate etc.) and run the following command:
 !!
 !!      @verbatim
-!!          $HOME/solps-iter/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe <shot> <run> <username> <device> <version>
+!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
+!!          --shot <shot> --run <run> --username <username> --device <device> --version <version>
+!!          --step <step>
 !!      @endverbatim
 !!
 !!      The arguments marked with < ... > are the parameters of the IDS database
@@ -133,7 +135,8 @@
 !!
 !!      Example of the command:
 !!      @verbatim
-!!          $HOME/solps-iter/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe 100 7 penkod solps-iter 3
+!!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
+!!          --shot 1512 --run 6 --username penkod --device solps-iter --version 3 --step 250
 !!      @endverbatim
 !!
 !!      \b References:
@@ -158,16 +161,16 @@
 
 !!
 !!      The input units are:
-!!          - ninp(0): formatted; provides output control parameters.
-!!          - ninp(1): un*formatted; provides the geometry.
-!!          - ninp(2): un*formatted; provides the run parameters.
-!!          - ninp(3): un*formatted; provides the plasma state.
-!!          - ninp(4): unformatted; provides the detailed plasma state.
-!!          - ninp(5): formatted; provides the run switches.
-!!          - ninp(6): un*formatted; provides the atomic data.
+!!          - ninp(0): formatted, provides output control parameters.
+!!          - ninp(1): un*formatted, provides the geometry.
+!!          - ninp(2): un*formatted, provides the run parameters.
+!!          - ninp(3): un*formatted, provides the plasma state.
+!!          - ninp(4): unformatted, provides the detailed plasma state.
+!!          - ninp(5): formatted, provides the run switches.
+!!          - ninp(6): un*formatted, provides the atomic data.
 !!
 !!      The output units are:
-!!          - nout(0): formatted; provides printed output.
+!!          - nout(0): formatted, provides printed output.
 !!
 !!      @note   See routine b2cdca for the meaning of "un*formatted".
 !!
@@ -212,6 +215,7 @@
 program b2_ual_write_b2mod
 
     use b2mod_main
+    use b2mod_ual
     use b2mod_grid_mapping
     use b2mod_ual_io
     use ids_schemas     ! IGNORE
@@ -301,7 +305,7 @@ program b2_ual_write_b2mod
                     call get_command_argument( cptArg + 1, device )
                 case("--version")
                     call get_command_argument( cptArg + 1, version )
-                case("--numstep")
+                case("--step")
                     call get_command_argument( cptArg + 1, num_step_string )
                     !! Transform dummy string variable to integer
                     read( num_step_string, *) num_step
@@ -334,12 +338,13 @@ program b2_ual_write_b2mod
 
     !! If steps were defined then run the b2mn_step routine for the number of
     !! steps
-    if( num_step .ge. -1 ) then
+    if( num_step .gt. -1 ) then
         write(0,*) "Running b2mn_step(", num_step, ")"
         write(0,*) "num_step: ", num_step
         call b2mn_step( num_step )
+        write(0,*) "b2mn_step() completed"
     end if
-    write(0,*) "b2mn_step() completed"
+
 
     ! write(0,*) " Running b2mn_fin"
     ! call b2mn_fin
@@ -378,65 +383,6 @@ contains
         endif
 
     end subroutine
-
-    !> Subroutine used to put data to edge_profiles, edge_sources and
-    !! edge_transport IDSs.
-    subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &
-            &   treename, shot, run, idx, username, device, version )
-        type(ids_edge_profiles), intent(inout)  :: edge_profiles    !< IDS
-            !< designed to store data on edge plasma profiles  (includes the
-            !< scrape-off layer and possibly part of the confined plasma)
-        type (ids_edge_sources), intent(inout)  :: edge_sources     !< IDS
-            !< designed to store data on edge plasma sources. Energy terms
-            !< correspond to the full kinetic energy equation (i.e. the energy
-            !< flux takes into account the energy transported by the particle
-            !< flux)
-        type (ids_edge_transport), intent(inout)  :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
-            !< correspond to the full kinetic energy equation (i.e. the energy
-            !< flux takes into account the energy transported by the particle
-            !< flux)
-        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
-            !< (i.e. "edge_profiles" (mandatory) )
-        integer, intent(in) :: shot !< The shot number of the database being created
-        integer, intent(in) :: run  !< The run number of the database being created
-        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
-            !< data access operation
-        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
-            !< database
-        character(len=24), intent(in) :: device     !< Device name of the IMAS IDS database
-            !< (i. e. solps-iter, iter, aug)
-        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
-            !< database
-
-        !! Set data to edge_profiles IDS
-        write(0,*) "Writing to edge_profiles, edge_sources and edge_transport IDS"
-
-        !! Create and modify new shot/run
-        call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-            device, version )
-
-        !! Or open and modify existing shot/run (might work much faster than
-        !! imas_create_env)
-        ! call imas_open_env('treename', shot, run, idx, username, device, version )
-
-        !! Put data to IDS
-        ! call ids_put_slice( idx, "edge_profiles", edge_profiles )
-        ! call ids_put_slice( idx, "edge_transport", edge_sources )
-        ! call ids_put_slice( idx, "edge_transport", edge_transport )
-        call ids_put( idx, "edge_profiles", edge_profiles )
-        call ids_put( idx, "edge_sources", edge_sources )
-        call ids_put( idx, "edge_transport", edge_transport )
-
-        !! Close IDS
-        call ids_deallocate( edge_profiles )
-        call ids_deallocate( edge_sources )
-        call ids_deallocate( edge_transport )
-        call imas_close( idx )
-
-        write(0,*) "IDS write finished"
-
-    end subroutine put_ids_edge
 
     !> Example subroutine for reading edge_profiles IDS
     !! with Fortran90

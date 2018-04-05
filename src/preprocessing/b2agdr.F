@@ -399,7 +399,7 @@
 *    ..compute pbs1 (magnetic field pitch * surface area) at cell faces
       geometryType = geometryId(nnreg, periodic_bc, topcut1)
       call b2xgbs1 (nx1, ny1, 
-     1 bottomiy1, wbbl1, wbbv1, gs1, qc1, qcb1, crx1, cry1, pbs1)
+     1 bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
 *   ..project metric coefficients to proper mesh
       call b2agmx (nx1, ny1, nx, ny, 
      & vol1, hx1, hy1, qz1, qc1, qcb1,

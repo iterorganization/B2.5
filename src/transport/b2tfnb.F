@@ -9,7 +9,7 @@
      &  fchvispar, fchvisper, fchinert, fchanml, fchvisq,                !srv 20.09.06
      &  fnb, fnb_nodrift, fnb_fcor, fnb_he, fnbPSch, fnb_mdf,            !srv 13.10.06
      &  flob, conb, fnb_32, fnb_52, fnb_32nd,  
-     &  fnb_52nd,kbnrgy, fllim0fnb,
+     &  fnb_52nd, kbnrgy, fllim0fnb,
      &  balance)                                                         !djm Jan2017
       use b2mod_types
       use b2mod_boundary_namelist

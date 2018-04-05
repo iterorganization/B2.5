@@ -408,14 +408,14 @@ c*** re-write the existing file
           ncln=1
           allocate(cline(ncln))
           write(frmhdr,'(1h(,i3,2ha))') ncln
-          l=len(cline)
+          l=nhdr*48
           nrec=0
           first=.true.
           write(frmdat,700) lwfs+8,lwfs,csep,lnrw-1,lwfr+8,lwfr,csep
 c          print *,trim(frmdat)  !###
           do while (.true.) !{
-            read(lrd,frmhdr,end=45) cline
-            if(.not.streql(cline(ncln)(l-nummax:l),' ')) then !{
+            read(lrd,frmhdr,end=45) (cline(j),j=1,ncln)
+            if(streql(cline(ncln)(l-nummax:l),' ')) then !{
               if(ncln.gt.1) then !{
 
 c*** Check whether any data fields are split between the line parts
@@ -444,7 +444,7 @@ c*** non-space on both sides of the section borders - the field is split
                           kt=k+nummax
                         end do !}
                       end if !}
-                      if(.not.streql(cline(j)(k:l),' ')) then !{ shift to the right
+                      if(streql(cline(j)(k:l),' ')) then !{ shift to the right
                         cline(j)(n+1:l)=cline(j)(1:l-n)
                         cline(j)(1:n)=cline(j-1)(l-n+1:l)
                         cline(j-1)(l-n+1:l)=repeat(' ',n)

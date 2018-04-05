@@ -186,8 +186,10 @@ c          v=vol(ix,iy)
           hlp_qisp=hlp_qisp+fhi(ix,iy,1)
           do is=0,ns-1
             kintmp =
-     .       (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .        kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
+     .      ((kinrgy(ix,iy,is)+ti(ix,iy))*
+     .        hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     .       (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     .        ti(bottomix(ix,iy),bottomiy(ix,iy)))*hy1(ix,iy))/
      .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
             hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,iy,1,is)
           enddo
@@ -401,6 +403,11 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+ 91   ex = .false.
+ 93   continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=92) hlp_c,
      ,   nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
@@ -413,7 +420,7 @@ c*** f     :  the associated file name
      ,     ' differs from that in the file ',trim(f),' : ',nv
 c          if(nv .lt. 970212) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -458,7 +465,7 @@ c          end if
         end if
 
         if(.not.filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if

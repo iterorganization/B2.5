@@ -1930,7 +1930,7 @@ c dpc
               ENDDO
               NAS = NAS *
      &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
-     &                 max(abs(totflux),SCONPAR(IS)))
+     &                 max(abs(totflux),abs(SCONPAR(IS))))
 !              T0 = (totflux-CONPAR(IS,IB,1))/
 !     &           max(abs(totflux),CONPAR(IS,IB,1))
 !              NAS = NAS *
@@ -2153,7 +2153,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               ENDDO
               NAS = NAS *
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
-     &           max(abs(totfluxn+totfluxi),SCONPAR(IS)))
+     &           max(abs(totfluxn+totfluxi),abs(SCONPAR(IS))))
               write(*,"(' BCCON=19: NAS=',es14.7,' totfluxn=',es14.7,
      &         ' totfluxi=',es14.7,' SCONPAR=',es14.7,
      &         ' totfluxn+totfluxi=',es14.7)")
@@ -2465,7 +2465,7 @@ cxpb Careful here because of BC number clash
               NAS=NAS/t0      ! Volume-averaged density
               NAS = NAS*
      &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
-     &           max(abs(totflux),SCONPAR(IS)))
+     &           max(abs(totflux),abs(SCONPAR(IS))))
 !              T0 = (totflux-CONPAR(IS,IB,1))/
 !     &           max(abs(totflux),CONPAR(IS,IB,1))
 !              NAS = NA((BCEND(IB)+BCSTART(IB))/2,BCPOS(IB),is) *
@@ -2971,7 +2971,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               NAS=NAS/t0      ! Volume-averaged density
               NAS = NAS*
      &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
-     &           max(abs(totflux),SCONPAR(IS)))
+     &           max(abs(totflux),abs(SCONPAR(IS))))
               write(*,"(' BCCON=26: NAS=',es14.7,' totflux=',es14.7,
      *                  ' SCONPAR=',es14.7,' IS=',i3)")
      .                NAS,totflux,SCONPAR(IS),IS
@@ -10105,16 +10105,24 @@ c end of implementation
           write (chk,'(i1)') k
           call my_out(70,nx,ny,smo0(-1,-1,k,is),
      &               'b2stbc_phys_smo'//chk//chns)
-          call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbc_phys_sch'//chk)
-          call my_out(70,nx,ny,she0(-1,-1,k),'b2stbc_phys_she'//chk)
-          call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbc_phys_shi'//chk)
         enddo
-       enddo
-       do k=0,1
+        call my_out(70,nx,ny,ua(:,:,is),'b2stbc_phys_ua'//chns)
+        call my_out(70,nx,ny,na(:,:,is),'b2stbc_phys_na'//chns)
+        do k=0,1
          write (chk,'(i1)') k
          call my_out(70,nx,ny,sna0(-1,-1,k,is),
      &               'b2stbc_phys_sna'//chk//chns)
+        enddo
        enddo
+       do k=0,3
+         write (chk,'(i1)') k
+         call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbc_phys_sch'//chk)
+         call my_out(70,nx,ny,she0(-1,-1,k),'b2stbc_phys_she'//chk)
+         call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbc_phys_shi'//chk)
+       enddo
+       call my_out(70,nx,ny,te,'b2stbc_phys_te')
+       call my_out(70,nx,ny,ti,'b2stbc_phys_ti')
+       call my_out(70,nx,ny,po,'b2stbc_phys_po')
       endif                                                           !srv 11.09.09 }
 
 * ..return

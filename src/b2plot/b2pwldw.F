@@ -660,7 +660,7 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
                     wo=wo+fna(k+1-l,iy,0,is)*rpt(kk,iy,is)*ev
                   else
                     wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,is)
-     *               *(1.0_R8-BoRiS)*kinrgy(kk,iy,is)
+     *               *(1.0_R8-BoRiS)*(ti(kk,iy)+kinrgy(kk,iy,is))
                   end if
                   whtpl(iy,j)=whtpl(iy,j)+fna(k+1-l,iy,0,is)
      *             *(1.0_R8-BoRiS)*(ti(kk,iy)+kinrgy(kk,iy,is))
@@ -672,7 +672,7 @@ c carlis 31jan2017  added ti as suggested by sw in b2blne.
                   else
                     wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,is)
      .               *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .                 ua_ext(kk,iy,is)**2)
+     .                 ua_ext(kk,iy,is)**2+ta_ext(kk,iy,is))
                   end if
                   whtpl(iy,j)=whtpl(iy,j)+fa_ext(k+1-l,iy,0,is)
      .             *(1.0_R8-BoRiS)*(ta_ext(kk,iy,is)+0.5_R8*
@@ -1063,19 +1063,19 @@ c carlis           [mm/y] = [1/s]*[s*mm*m2/y]*
           iznt=izn
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny- (ils-lppp-1)-(itrg-1)*ny
+            iy= ny*itg - (ils-lppp) + (ny-1)*(itg-1)
             im=-1
           else !}{
-            iy = (ils-lppp-1)-(itrg-1)*ny
+            iy= ny+itg-1-(ils-lppp)
             im=1
           end if !}
         else if (iznt.ne.izn) then !}{ itg.ne.itrg
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny-(ils-lppp-1)-(itrg-1)*ny
+            iy= ny*itg - (ils-lppp) + (ny-1)*(itg-1)
             im=-1
           else !}{
-            iy = (ils-lppp-1)-(itrg-1)*ny
+            iy= ny+itg-1-(ils-lppp)
             im=1
           end if !}
           iznt=izn

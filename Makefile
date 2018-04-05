@@ -202,7 +202,9 @@ empty :=
 #VPATH=$(subst $(space),$(empty),${VHEAD}${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user)
 VPATH=${VHEAD}${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user
 FPATH:=${VPATH}
-VPATH += :${SRCDIR}/ids:${SRCDIR}/test
+VPATH += :${SRCDIR}/test
+VPATH += :${SRCDIR}/ids
+VPATH += :${SRCDIR}/ids/archive
 FFPATH += :${SRCDIR}/ids
 FFPATH += :${SRCDIR}/modules
 

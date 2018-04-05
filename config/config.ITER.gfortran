@@ -57,7 +57,7 @@ EQUIVS  += -DIMAS
 endif
 LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
 INCMODS  = -I${IMAS_PREFIX}/include/gfortran
-IMASLIBS = ${LD_UAL} -lggd-${COMPILER} -Wl,-rpath,${EBROOTANACONDA3}/lib
+IMASLIBS = ${LD_UAL} -lggd-${COMPILER}
 endif
 
 ifdef LD_CATALYST

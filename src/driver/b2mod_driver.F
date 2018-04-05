@@ -1106,8 +1106,8 @@ c     &   'faulty internal parameter density_rescale')
        call ipgeti ('b2mndr_astra',use_astra)
 * change atomic physics for coupling to Eirene    ! DPC 1999.06.28
        call ipgeti ('b2mndr_eirene', use_eirene)
-       call ipgeti ('eirene_savef30', save_f30)                    !srv 01.03.10
-       call ipgeti ('eirene_savef31', save_f31)                    !srv 01.03.10
+       call ipgeti ('eirene_savef30', save_f30)   !srv 01.03.10
+       call ipgeti ('eirene_savef31', save_f31)   !srv 01.03.10
        call ipgetr ('b2mndr_rescale_neutrals',neutral_rescale)
        call ipgetr ('b2mndr_rescale_neutrals_sources',
      *       neutral_sources_rescale)
@@ -1538,8 +1538,9 @@ c   --> better way doing this is necessary)
         if(density_rescale < 0.d0) then
           do is=0,ns-1
            if (is_neutral(is).or.nint(zn(is)).ne.2) cycle
-           na(:,:,is)=na(:,:,is)*(-density_rescale)
-           ne(:,:)=ne(:,:)+na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0)
+           na(:,:,is) = na(:,:,is)*(-density_rescale)
+           ne(:,:) = ne(:,:) +
+     .      na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0)
            fna(:,:,0:1,is) = fna(:,:,0:1,is)*(-density_rescale)
            fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*(-density_rescale)
            fna_fcor(:,:,0:1,is) =
@@ -1551,7 +1552,7 @@ c   --> better way doing this is necessary)
            fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*(-density_rescale)
            fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*(-density_rescale)
            fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*(-density_rescale)
-           kinrgy(:,:,is)=kinrgy(:,:,is)*(-density_rescale)
+           kinrgy(:,:,is) = kinrgy(:,:,is)*(-density_rescale)
            write(*,*) 'Density ',is,' rescaled by ',-density_rescale
           enddo
         else
@@ -1600,8 +1601,8 @@ c   --> better way doing this is necessary)
       if(ncall.eq.0.and.neutral_rescale.ne.1.0_R8) then
         do is=0,ns-1
           if(is_neutral(is)) then
-            na(:,:,is)=na(:,:,is)*neutral_rescale
-            fna(:,:,0:1,is)=fna(:,:,0:1,is)*neutral_rescale
+            na(:,:,is) = na(:,:,is)*neutral_rescale
+            fna(:,:,0:1,is) = fna(:,:,0:1,is)*neutral_rescale
             fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*neutral_rescale
             fna_fcor(:,:,0:1,is) = fna_fcor(:,:,0:1,is)*neutral_rescale
             fna_nodrift(:,:,0:1,is) =
@@ -1611,7 +1612,7 @@ c   --> better way doing this is necessary)
             fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*neutral_rescale
             fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*neutral_rescale
             fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*neutral_rescale
-            kinrgy(:,:,is)=kinrgy(:,:,is)*neutral_rescale
+            kinrgy(:,:,is) = kinrgy(:,:,is)*neutral_rescale
           endif
         enddo
         write(*,*) 'Rescaled neutrals by ',neutral_rescale
@@ -1854,8 +1855,7 @@ c new CDF movie option (1st frame at t=0)
         call b2mxnu (n2*2, fhep, fhe0, fhe)
         call b2mxnu (n2*2, fhip, fhi0, fhi)
         call b2mxnu (n2*2, fchp, fch0, fch)
-        call b2trcs (70, nout, nx, ny, ns, nxtl, nxtr,
-     .    ismain, dtim, BoRiS)
+        call b2trcs (70, nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)
         if (pot_eq.eq.0) then                                          !srv 13.07.05 {
           po   =0.0e0_R8
@@ -2229,15 +2229,17 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      1 write(*,*) 'stopping because .quit seen'
       if(quitexist_) write(*,*) 'stopping because _quit seen'         !srv 13.04.11
       if(cpuval.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8)
-     1 write(*,*) 'stopping because cpu > limit: ',cpuval,b2mndr_cpu
-      if(itim.ge.ntim)
-     1 write(*,*) 'stopping because itim >= ntim: ',itim,ntim
+     1 write(*,'(a,1p,2(e12.5,1x))')
+     . 'stopping because cpu > limit: ',cpuval,b2mndr_cpu
+      if(itim.ge.ntim) write(*,'(a,2(i8,1x))')
+     1 'stopping because itim >= ntim: ',itim,ntim
       if(etim.gt.stim.and.tim.ge.etim.and.etim.ne.0.0_R8)
-     1 write(*,*) 'stopping because tim >= etim: ',tim,etim
-      if(etim.eq.stim.and.stim.gt.0.0_R8)
-     1 write(*,*) 'stopping because etim = stim: ',etim,stim
+     1 write(*,'(a,1p,2(e12.5,1x))')
+     . 'stopping because tim >= etim: ',tim,etim
+      if(etim.eq.stim.and.stim.gt.0.0_R8) write(*,'(a,1p,2(e12.5,1x))')
+     1 'stopping because etim = stim: ',etim,stim
       if(elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
-     &   b2mndr_elapsed.gt.0.0_R8) write(*,*)
+     &   b2mndr_elapsed.gt.0.0_R8) write(*,'(a,1p,2(e12.5,1x))')
      1 'stopping because elapsed CPU time > limit: ',
      .  elapsedval-elapsedinit,b2mndr_elapsed
       if(ierr.ne.0)

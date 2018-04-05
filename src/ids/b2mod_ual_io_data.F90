@@ -158,9 +158,13 @@ contains
                 !! get the subobject index for the face in the 2d poloidal
                 !! plane space
                 icv = curObj%ind(SPACE_POLOIDALPLANE)
-                !! copy data
-                idsdata( iobj ) =   &
-                    &   b2CellData( gmap%mapCvix( icv ), gmap%mapCviy( icv ) )
+                if( icv .eq. 0 ) then
+                   idsdata( iobj ) = 0.0 !! TODO DP skip when no index present
+                else
+                                !! copy data
+                   idsdata( iobj ) =   &
+                      & b2CellData( gmap%mapCvix( icv ), gmap%mapCviy( icv ) )
+                end if
             else if( present( b2FaceData ) ) then
                 !! Face data case
                 !! check that it is a face

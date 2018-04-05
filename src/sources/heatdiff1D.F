@@ -212,17 +212,17 @@ cxpb  Will need to update this later for a better computation
         KAc = coating_Kappa_KA(ibnd)
         KBc = coating_Kappa_KB(ibnd)
         Tc = max(Tcbc, min( matsurf_vapor_temp(ibnd), (Tcbc + KBb/KAb) *
-     .       dexp(-KAb*Qtot*(coating_thickness(ibnd)-xn)) - KBb/KAb ))
+     .       exp(-KAb*Qtot*(coating_thickness(ibnd)-xn)) - KBb/KAb ))
       endif
       do i = ndepth_nml, 2, -1
         xx(i) = x(i)
         if (target_depth(ibnd,i).ge.coating_thickness(ibnd)) then
           uu(i) = max(Tcbc, min( matsurf_vapor_temp(ibnd),
-     .     (Tcbc + KBb/KAb) * dexp(-KAb*Qtot*(x(i)-xn)) - KBb/KAb ))
+     .     (Tcbc + KBb/KAb) * exp(-KAb*Qtot*(x(i)-xn)) - KBb/KAb ))
         else
           uu(i) = max(Tcbc, min( matsurf_vapor_temp(ibnd),
      .     (Tc + KBc/KAc) *
-     .     dexp(-KAc*Qtot*(x(i)-coating_thickness(ibnd))) - KBc/KAc ))
+     .     exp(-KAc*Qtot*(x(i)-coating_thickness(ibnd))) - KBc/KAc ))
         endif
 c        print*,x(i),' ',uu(i),' ',i,' ',xn,' ',x0
       enddo
@@ -230,7 +230,7 @@ c        print*,x(i),' ',uu(i),' ',i,' ',xn,' ',x0
       Tl = uu(2)
       uu(1) = max(Tl, min( matsurf_vapor_temp(ibnd),
      .     (Tl + Kbl/KAl) *
-     .     dexp(-KAl*Qtot*(x(1)-x(2))) - KBl/KAl ))
+     .     exp(-KAl*Qtot*(x(1)-x(2))) - KBl/KAl ))
 
       return
       end subroutine fic

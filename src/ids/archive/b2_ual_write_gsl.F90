@@ -5,15 +5,21 @@
 !!
 !>      @page b2uw_gsl b2_ual_write_gsl
 !>      @section desc2  Description
-!!      @note   This code is OUTDATED! The development continued under new
-!!              script @ref b2uw_b2mod "b2_ual_write_b2mod".
+!!      @note   This script represents one of first improvements of the
+!!              \b old  b2_ual_write.F90 and was kept as an archive for possible
+!!              future references and as an example for information purposes.
+!!              The development of the code then continued under new
+!!              script @ref b2uw_b2mod "b2_ual_write_b2mod" and
+!!              @ref b2uw_b2 "b2_ual_write".
 !!              The development 'moved' to new code due to different
 !!              approach of writing data to IDS using b2mod routines.
+!!      @note   More on the b2_ual_writers is available in SOLPS-GUI
+!!              documentation \b HOWTOs under section <b> 4.5 IMAS </b>.
 !!
 !!      b2_ual_write_gsl.f90 code is used to generate b2_ual_write_gsl.exe
 !!      (main program), which is a post-processor for b2.
-!!      Same as b2_ual_write.F90 the script it reads the plasma grid geometry
-!!      ( including Nodes and Cells grid subsets) and
+!!      Same as b2_ual_write_deprecated.F90 the script it reads the plasma
+!!      grid geometry ( including Nodes and Cells grid subsets) and
 !!      plasma state (electron density, electron temperature, ion temperature)
 !!      and writes it to IDS database but with the use of IMAS GGD Grid
 !!      Service Library routines.
@@ -38,16 +44,16 @@
 !!      may perform some other system-dependent operations.
 !!
 !!      The input units are:
-!!          - ninp(0): formatted; provides output control parameters.
-!!          - ninp(1): un*formatted; provides the geometry.
-!!          - ninp(2): un*formatted; provides the run parameters.
-!!          - ninp(3): un*formatted; provides the plasma state.
-!!          - ninp(4): unformatted; provides the detailed plasma state.
-!!          - ninp(5): formatted; provides the run switches.
-!!          - ninp(6): un*formatted; provides the atomic data.
+!!          - ninp(0): formatted, provides output control parameters.
+!!          - ninp(1): un*formatted, provides the geometry.
+!!          - ninp(2): un*formatted, provides the run parameters.
+!!          - ninp(3): un*formatted, provides the plasma state.
+!!          - ninp(4): unformatted, provides the detailed plasma state.
+!!          - ninp(5): formatted, provides the run switches.
+!!          - ninp(6): un*formatted, provides the atomic data.
 !!
 !!      The output units are:
-!!          - nout(0): formatted; provides printed output.
+!!          - nout(0): formatted, provides printed output.
 !!
 !!      @note   See routine b2cdca for the meaning of 'un*formatted'.
 !!
@@ -76,7 +82,7 @@
 !!              <i> (integer) </i>
 !!      @param  nx, ny - Specifies the number of interior cells along the
 !!              first and the second coordinate, respectively.
-!!              The total number of cells is (nx+2)*(ny+2); they are indexed
+!!              The total number of cells is (nx+2)*(ny+2), they are indexed
 !!              by (-1:nx,-1:ny). It will hold that 0.le.nx and 0.le.ny
 !!              <i> (integer) </i>
 !!      @param  run - The run number of the database being created

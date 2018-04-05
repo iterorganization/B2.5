@@ -166,7 +166,7 @@ cdjm Jan2017 update particle source components for balance
      &   corpb, aa9, 'b2usc9_'//chns)                                 !srv 18.05.02
 *   ..apply correction
       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
-     & vol, corpb, pccb(-1,-1,0), pb, nb, ub)
+     & vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                    !IYS 19.12.2017
       if(guard_flows.eq.2 .or.                                        !srv 06.07.08 {
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 06.07.08 {
 *   ..replace the incorrect corner values by the interpolated values  !srv 30.04.08 {
