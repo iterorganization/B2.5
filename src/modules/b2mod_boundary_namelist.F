@@ -43,6 +43,11 @@ cank }
      *   BC_LIST_Y(:,:)
       character*1, allocatable, save ::
      *   BCCHAR(:)
+	  character*256, allocatable, save :: con_fn(:)
+      character*256, allocatable, save :: mom_fn(:)
+      character*256, allocatable, save :: ene_fn(:)
+      character*256, allocatable, save :: eni_fn(:)
+      character*256, allocatable, save :: pot_fn(:)								  
 #else
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
@@ -69,6 +74,11 @@ cank }
       integer, save :: NYISO2(NNISOD)
       real (kind=R8), save :: NIISO(0:nsdmax-1)
       integer, save :: lcbs(NBCD)
+	  character*256, save :: con_fn(NBCD)
+      character*256, save :: mom_fn(NBCD)
+      character*256, save :: ene_fn(NBCD)
+      character*256, save :: eni_fn(NBCD)
+      character*256, save :: pot_fn(NBCD)	
 #endif
 csw 18feb2014 added for correct implementation of boundary conditions
       integer, save :: l_fbound=0, l_enebound=0, l_timbound=0
@@ -94,7 +104,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
      3 NNISO,NIISO,TEISO,TIISO,PHIISO,NXISO1,NXISO2,NYISO1,NYISO2,
      4 bcchar,
      5 boundary_filename,boundary_time_mod,boundary_time_switch,
-     6 lcbs, write_nml_bnd
+     6 lcbs, write_nml_bnd, con_fn, mom_fn, ene_fn, eni_fn, pot_fn
       
       contains
 
@@ -273,6 +283,11 @@ cxpb overwrite the defaults with the namelist data
       allocate(NYISO2(nnisod_in))
       allocate(NIISO(0:nsd-1))
       allocate(lcbs(nbcd_in))
+      allocate(con_fn(nbcd_in))
+      allocate(mom_fn(nbcd_in))
+      allocate(ene_fn(nbcd_in))
+      allocate(eni_fn(nbcd_in))
+      allocate(pot_fn(nbcd_in))
 #else
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
       call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
@@ -320,7 +335,12 @@ cxpb overwrite the defaults with the namelist data
       boundary_filename='b2.boundary.parameters'
       boundary_time_mod=0.0_R8
       boundary_time_switch=0.0_R8
-
+      con_fn='b2.con.profile'
+      mom_fn='b2.mom.profile'
+      ene_fn='b2.ene.profile'
+      eni_fn='b2.eni.profile'
+      pot_fn='b2.pot.profile'
+	  
 csw 21feb2014, setup some additional work variables for boundary conditions
 cxpb Have to do this here already in case the namelist is not used
       call ipgeti ('b2news_l_fbound', l_fbound)
@@ -388,6 +408,11 @@ cxpb Have to do this here already in case the namelist is not used
       deallocate(NYISO2)
       deallocate(NIISO)
       deallocate(LCBS)
+	  deallocate(con_fn)
+      deallocate(mom_fn)
+      deallocate(ene_fn)
+      deallocate(eni_fn)
+      deallocate(pot_fn)
 #endif
       deallocate(iffboundx)
       deallocate(iffboundy)
