@@ -51,7 +51,7 @@ c
      ,  titrg(0:ny-1,ntrgsx),wpttrg(0:ny-1,ntrgsx),
      ,  wpltrg(0:ny-1,ntrgsx),wnutrg(0:ny-1,ntrgsx),
      ,  wrdtrg(0:ny-1,ntrgsx,0:DEF_NATM),wtttrg(0:ny-1,ntrgsx),
-     ,  wpk_tt(0:ntrgsx),wpk_rd(0:ntrgsx),
+     ,  wpk_tt(0:ntrgsx),wpk_rd(0:ntrgsx),wpk_te(ntrgsx),wpk_ne(ntrgsx),
      ,  wpk_pl(0:ntrgsx),wpk_nu(0:ntrgsx),
      ,  wlc_tt(ntrgsx),wlc_rd(ntrgsx),wlc_pl(ntrgsx),wlc_nu(ntrgsx),
      ,  pwr_tt(ntrgsx),pwr_rd(ntrgsx),fwht_tt(ntrgsx),fwxt_tt(ntrgsx),
@@ -522,15 +522,19 @@ c----------------------------------------------------------------------
 c*** Calculate the peak power loads onto the targets and write them
 c*** down to the summary file
 c
+      l=1
       wpk_tt(0)=0
       wpk_rd(0)=0
       wpk_pl(0)=0
       wpk_nu(0)=0
       do j=1,ntrgts !{
+        k=ltrgpos(j)
         wpk_tt(j)=wtttrg(lytg,j)
         wpk_rd(j)=wrdtrg(lytg,j,0)
         wpk_pl(j)=wpltrg(lytg,j)
         wpk_nu(j)=wnutrg(lytg,j)
+        wpk_te(j)=te(k+l,lytg)/ev
+        wpk_ne(j)=ne(k+l,lytg)
         wlc_tt(j)=xtrg(lytg,j)
         wlc_rd(j)=xtrg(lytg,j)
         wlc_pl(j)=xtrg(lytg,j)
@@ -539,6 +543,8 @@ c
         do i=lytg+1,ny-1 !{
           if(wtttrg(i,j) .gt. wpk_tt(j)) then !{
             wpk_tt(j)=wtttrg(i,j)
+            wpk_te(j)=te(k+l,i)/ev
+            wpk_ne(j)=ne(k+l,i)
             wlc_tt(j)=xtrg(i,j)
             m_hlp(j)=i
           end if !}
@@ -555,9 +561,10 @@ c
             wlc_nu(j)=xtrg(i,j)
           end if !}
         end do !}
+        l=1-l
       end do !}
 
-      write(fmt_peak,700) 20,tab
+      write(fmt_peak,700) 24,tab
   700 format('(1p,e12.5,',i3,'(1h',a1,',e12.4))')
       i1=1
       i2=ntrgts
@@ -572,7 +579,7 @@ c
           wpk_rd(0)=max(wpk_rd(i1),wpk_rd(i2))
           wpk_pl(0)=max(wpk_pl(i1),wpk_pl(i2))
           wpk_nu(0)=max(wpk_nu(i1),wpk_nu(i2))
-          write(lun,'(a5,20(a1,2a))') '#time',
+          write(lun,'(a5,24(a1,2a))') '#time',
      -     tab,'peak_t_i',tl,tab,'peak_t_o',tl,tab,'peak_t_x',tl,
      ,     tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
      ,     tab,'peak_r_i',tl,tab,'peak_r_o',tl,tab,'peak_r_x',tl,
@@ -580,12 +587,16 @@ c
      ,     tab,'peak_p_i',tl,tab,'peak_p_o',tl,tab,'peak_p_x',tl,
      ,     tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
      ,     tab,'peak_n_i',tl,tab,'peak_n_o',tl,tab,'peak_n_x',tl,
-     ,     tab, 'loc_n_i',tl,tab, 'loc_n_o',tl
+     ,     tab, 'loc_n_i',tl,tab, 'loc_n_o',tl,
+     ,     tab,'peak_tei',tl,tab,'peak_teo',tl,
+     ,     tab,'peak_nei',tl,tab,'peak_neo',tl
           write(lun,fmt_peak) tim,
      ,     (wpk_tt(i),i=i1,i2,i3), wpk_tt(0), (wlc_tt(i),i=1,2),
      ,     (wpk_rd(i),i=i1,i2,i3), wpk_rd(0), (wlc_rd(i),i=1,2),
      ,     (wpk_pl(i),i=i1,i2,i3), wpk_pl(0), (wlc_pl(i),i=1,2),
-     ,     (wpk_nu(i),i=i1,i2,i3), wpk_nu(0), (wlc_nu(i),i=1,2)
+     ,     (wpk_nu(i),i=i1,i2,i3), wpk_nu(0), (wlc_nu(i),i=1,2),
+     ,     (wpk_te(i),i=i1,i2,i3),
+     ,     (wpk_ne(i),i=i1,i2,i3)
           close (lun)
         end if !}
         i1=2
