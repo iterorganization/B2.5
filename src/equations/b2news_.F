@@ -659,7 +659,7 @@ csw 16oct2012 init ier0
           call b2tfhe_ (nx, ny, ns, ismain, ismain0,
      &     facdrift, fac_ExB, fac_vis,
      1     vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,      !srv 11.07.99 18.01.02 01.07.09
-     1     ti, ni(-1,-1,1), na, fna, uadia, vadia,                       !srv 17.05.99 25.01.02
+     1     ti, ni(-1,-1,1), na, fna, uadia, vedia,                       !srv 17.05.99 25.01.02
      &     ua, fne, csig, csig_cl, csigin, chce,                         !srv 17.05.99
      &     chve, chci, calf, chvemx, cvsa_cl, cdna, cdpa, cddi,          !srv 05.07.00 11.07.99 16.10.17
      &     fch, fhe, fhe_mdf, fhePSch, conc,  avisper, bvisper, cvisper, !srv 05.07.00 13.10.06
@@ -801,7 +801,7 @@ c      with diamagnetic drift part                                       !srv 13
       call b2tfhe_ (nx, ny, ns, ismain, ismain0,
      &  facdrift, fac_ExB, fac_vis,
      1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,         !srv 11.07.99 18.01.02 01.07.09
-     1  ti, ni(-1,-1,1), na, fna, uadia, vadia,                          !srv 17.05.99 25.01.02
+     1  ti, ni(-1,-1,1), na, fna, uadia, vedia,                          !srv 17.05.99 25.01.02
      &  ua, fne, csig, csig_cl, csigin, chce,                            !srv
      &  chve, chci, calf, chvemx, cvsa_cl, cdna, cdpa, cddi,             !srv 05.07.00 11.07.99 16.10.17
      &  fch, fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,     !srv 05.07.00 11.07.99 13.10.06
