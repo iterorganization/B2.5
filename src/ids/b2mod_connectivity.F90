@@ -1,5 +1,5 @@
 !!-----------------------------------------------------------------------------
-!! DOCUMENTATION:
+!! DOCUMENTATION (doxygen 1.8.8)::
 !>      @section b2mod_conn_desc Description
 !!      Module providing Basic connectivity routines and routines for obtaining
 !!      cell and grid characterization information.
@@ -16,34 +16,35 @@ module b2mod_connectivity
     implicit none
 #include "DIMENSIONS.F"
 
-    !! constant to mark in connectivity arrays that no connectivity available
-    integer, parameter :: NO_CONNECTIVITY = huge(0)
+    integer, parameter :: NO_CONNECTIVITY = huge(0) !< Constant to mark in
+        !< connectivity arrays that no connectivity available
 
     !! Geometry/topology IDs (obtain using function geometryId(..:))
 
-    !! Number of different geometry/topology situations = max(GEOMETRY_*)
     integer, parameter :: GEOMETRY_COUNT = 8
+        !< Number of different geometry/topology situations = max(GEOMETRY_*)
+
     !! The IDs
-    integer, parameter :: GEOMETRY_LINEAR = 1
-    integer, parameter :: GEOMETRY_CYLINDER = 2
-    integer, parameter :: GEOMETRY_LIMITER = 3
-    integer, parameter :: GEOMETRY_SN = 4
+    integer, parameter :: GEOMETRY_LINEAR = 1   !< First of geometry IDs
+    integer, parameter :: GEOMETRY_CYLINDER = 2 !< Second of geometry IDs
+    integer, parameter :: GEOMETRY_LIMITER = 3  !< Third of geometry IDs
+    integer, parameter :: GEOMETRY_SN = 4   !< Fourth of geometry IDs
     integer, parameter :: GEOMETRY_STELLARATORISLAND = 5
-    integer, parameter :: GEOMETRY_CDN = 6
-    integer, parameter :: GEOMETRY_DDN_BOTTOM = 7
-    integer, parameter :: GEOMETRY_DDN_TOP = 8
+        !< Fifth of geometry IDs
+    integer, parameter :: GEOMETRY_CDN = 6  !< Sixth of geometry IDs
+    integer, parameter :: GEOMETRY_DDN_BOTTOM = 7   !< Seventh of geometry IDs
+    integer, parameter :: GEOMETRY_DDN_TOP = 8  !< Eighth of geometry IDs
 
     !! Region types
     !! Region type indices are the ones used in the B2 region array,
     !! i.e. zero-based.
-
-    !! Number of different region types
     integer, parameter :: REGIONTYPE_COUNT = 3
-    !! The types (indexing as in B2 region array, i.e. zero-based)
-    integer, parameter :: REGIONTYPE_CELL = 0
-    integer, parameter :: REGIONTYPE_XFACE = 1
-    integer, parameter :: REGIONTYPE_YFACE = 2
+        !< Number of different region types
 
+    !! The types (indexing as in B2 region array, i.e. zero-based)
+    integer, parameter :: REGIONTYPE_CELL = 0   !< First region type
+    integer, parameter :: REGIONTYPE_XFACE = 1  !< Second region type
+    integer, parameter :: REGIONTYPE_YFACE = 2  !< Third region type
 
     !! Region counts and names
 
@@ -65,14 +66,14 @@ module b2mod_connectivity
         &       8, 13, 14,  & !! GEOMETRY_DDN_BOTTOM
         &       8, 13, 14   & !! GEOMETRY_DDN_TOP
         &    /),            &
-        &    (/ REGIONTYPE_COUNT, GEOMETRY_COUNT /) )
+        &    (/ REGIONTYPE_COUNT, GEOMETRY_COUNT /) )   !< Region counts
 
     !! Region names
     !! First dimension: geometry type (given in comments)
     !! Second dimension: region type
     !! Third dimension: region index
 
-    character(32), parameter, private :: UU = repeat(' ', 32) ! UnUsed string
+    character(32), parameter, private :: UU = repeat(' ', 32) !< UnUsed string
 
     character(32), dimension(REGION_COUNT_MAX, 0:REGIONTYPE_COUNT-1,    &
         &   GEOMETRY_COUNT) :: regionNames =                            &

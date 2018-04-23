@@ -48,9 +48,11 @@
         if (px(j).lt.x(1)) then
           ifail = 4
           pf(j)=f(1)+d(1)*(px(j)-x(1))
-        elseif (px(j).ge.x(n)) then
+        elseif (px(j).gt.x(n)) then
           ifail = 4
           pf(j) = f(n)+d(n-1)*(px(j)-x(n))
+        elseif (px(j).eq.x(n)) then
+          pf(j) = f(n)
         else
           do i = 1, n-1
             if (px(j).ge.x(i) .and. px(j).lt.x(i+1)) then

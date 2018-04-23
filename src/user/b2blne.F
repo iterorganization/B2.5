@@ -680,6 +680,11 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+ 91   ex = .false.
+ 93   continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then !{
         read(lun,*,err=92) hlp_c,nv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp
         lv_trc(ltrc)=nv
@@ -691,7 +696,7 @@ c
      ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv.lt.960825 .or. (nv.le.961229 .and. ni_tmp.eq.0)) then !{
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -742,7 +747,7 @@ c*** It was a major change of the file format - impossible to continue
           end if !}
         end if !}
         if(.not.filedata(ltrc)) then !{
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if !}

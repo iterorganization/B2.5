@@ -225,6 +225,11 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+ 91   ex = .false.
+ 93   continue
+      rewind(lun)
 
       if(ex.and.stim.lt.0.0_R8) then ! the old file exists and is found
                                      ! and is to be appended
@@ -243,7 +248,7 @@ c Check version
      ,     '!!! b2wrsrt: current version ',lv,
      ,     ' differs from that in the file ',trim(f),' : ',nv
 c*** It was a major change of the file format - impossible to continue
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           filedata(ltrc) = .false.
           return
@@ -296,17 +301,17 @@ c Check the number quantities computed for each species in each region
         end if
 
 c Check the number of strata
-        if(nfl_tmp .ne. nstrai) then
+        if(nfl_tmp .ne. nstrat) then
           warn_tmp = .true.
           write(*,'(a,i3,3a,i3)')
-     ,     '!!! b2wrsrt: current number of strata ',nstrai,
+     ,     '!!! b2wrsrt: current number of strata ',nstrat,
      ,     ' differs from that in the file ',trim(f),' : ',nfl_tmp
           filedata(ltrc) = .false.
         end if
 
 c If inconsistency is found, generate an error message
         if(.not. filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if
@@ -326,7 +331,7 @@ c*** New file
         ns_tmp  = nspc_tmp
         nsp_tmp = nspecies
         na_tmp  = nsar_tmp
-        nfl_tmp = nstrai
+        nfl_tmp = nstrat
         write(lun,700) lv,nr_tmp,ns_tmp,na_tmp,
      ,                      nrg_tmp,nsp_tmp,nfl_tmp,
      ,                      label

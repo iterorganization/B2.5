@@ -219,7 +219,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
 *     the kinetic energy of a particle of species (is) in cell (ix,iy).
 *     The velocity used includes the parallel velocity as well
-*     as the total diamagnetic and ExB drift velocities in both the radial
+*     as the total diamagnetic and ExB drift velocities (if the xwdia and
+*     xvecrb switches, respectively, are activated) in both the radial
 *     and diamagnetic directions.
 *
 *     te - (-1:nx,-1:ny) real*8 array.
@@ -504,7 +505,7 @@
       call xertst (na_min.gt.0.0_R8,
      & 'faulty internal parameter na_min')
       do is=0,ns-1
-        call xertst (naini(is).gt.na_min,
+        call xertst (naini(is).ge.na_min,
      &   'Initial densities must be larger than na_min!')
       end do
 

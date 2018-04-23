@@ -961,16 +961,19 @@ c inner target
             hlp=hlp+abs(fna(0,iy,0,is)*(
      .       (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
      .       (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
-     .       (kinrgy(0,iy,is)*hx(-1,iy)+kinrgy(-1,iy,is)*hx(0,iy))/
+     .      ((kinrgy(0,iy,is)+ti(0,iy))*hx(-1,iy)+
+     .       (kinrgy(-1,iy,is)+ti(-1,iy))*hx(0,iy))/
      .       (hx(-1,iy)+hx(0,iy))))
           end do !}
           do is=0,ns_ext-1 !{
             hlp=hlp+abs(fa_ext(0,iy,0,is)*(
      .       (pt_ext(0,iy,is)*hx(-1,iy)+pt_ext(-1,iy,is)*hx(0,iy))/
      .       (hx(-1,iy)+hx(0,iy))*ev+
-     .       (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
-     .       (ua_ext(0,iy,is)**2*hx(-1,iy)+
-     .        ua_ext(-1,iy,is)**2*hx(0,iy))/
+     .       (1.0_R8-BoRiS)*
+     .      ((0.5_R8*am_ext(is)*mp*ua_ext(0,iy,is)**2+ta_ext(0,iy,is))*
+     .        hx(-1,iy)+
+     .       (0.5_R8*am_ext(is)*mp*ua_ext(-1,iy,is)**2+ta_ext(-1,iy,is))
+     .       *hx(0,iy))/
      .       (hx(-1,iy)+hx(0,iy))))
           end do !}
           hlp=hlp/s
@@ -989,8 +992,8 @@ c outer target
             hlp=hlp+abs(fna(nx,iy,0,is)*(
      .       (rpt(nx,iy,is)*hx(nx-1,iy)+rpt(nx-1,iy,is)*hx(nx,iy))/
      .       (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
-     .       (kinrgy(nx,iy,is)*hx(nx-1,iy)+
-     .        kinrgy(nx-1,iy,is)*hx(nx,iy))/
+     .      ((kinrgy(nx,iy,is)+ti(nx,iy))*hx(nx-1,iy)+
+     .       (kinrgy(nx-1,iy,is)+ti(nx-1,iy))*hx(nx,iy))/
      .       (hx(nx-1,iy)+hx(nx,iy))))
           end do !}
           do is=0,ns_ext-1 !{
@@ -1023,8 +1026,8 @@ c outer target
      .         (rpt(ix,iy,is)*hx(ix-1,iy)+
      .          rpt(ix-1,iy,is)*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
-     .         (kinrgy(ix,iy,is)*hx(ix-1,iy)+
-     .          kinrgy(ix-1,iy,is)*hx(ix,iy))/
+     .        ((kinrgy(ix,iy,is)+ti(ix,iy))*hx(ix-1,iy)+
+     .         (kinrgy(ix-1,iy,is)+ti(ix-1,iy))*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))))
             end do !}
             do is=0,ns_ext-1 !{
@@ -1056,8 +1059,8 @@ c outer target
      .         (rpt(ix,iy,is)*hx(ix-1,iy)+
      .          rpt(ix-1,iy,is)*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
-     .         (kinrgy(ix,iy,is)*hx(ix-1,iy)+
-     .          kinrgy(ix-1,iy,is)*hx(ix,iy))/
+     .        ((kinrgy(ix,iy,is)+ti(ix,iy))*hx(ix-1,iy)+
+     .         (kinrgy(ix-1,iy,is)+ti(ix-1,iy))*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))))
             end do !}
             do is=0,ns_ext-1 !{
@@ -1487,6 +1490,11 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 95
+ 91   ex = .false.
+ 95   continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then !{
         na_tmp=0
         np_tmp=0
@@ -1546,7 +1554,7 @@ c*** It was a major change of the file format - impossible to continue
         end if !}
 
         if(.not.filedata(ltrc)) then !{
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if !}
@@ -1597,8 +1605,8 @@ c=======================================================================
       filedata(ltrc)=.false.
       return
 
- 93   write(*,*) 'b2usrtrc: number of species changed - remove the ',
-     ,                                             'tracing file first!'
+ 93   write(*,'(4a)') 'b2usrtrc: number of species changed - ',
+     ,                'remove the ',trim(f),' tracing file first!'
       filedata(ltrc)=.false.
       return
 
