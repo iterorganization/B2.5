@@ -209,6 +209,7 @@
      &       ((hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
      &        (hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy)))/
      &        (rza(ix,iy,is)*qe)
+           cddi(ix,iy,0,1,is) = cddi(ix,iy,0,0,is)
           endif
          enddo
         enddo

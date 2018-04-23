@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     & te, po, vedia, veecrb)
+      subroutine b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc,
+     & qs, bb, te, po, vedia, veecrb)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -13,8 +13,8 @@
       real (kind=R8) ::
      * facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      * vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     * qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
-     * te(-1:nx,-1:ny), po(-1:nx,-1:ny)
+     * qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
+     * bb(-1:nx,-1:ny,0:3), te(-1:nx,-1:ny), po(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vedia(-1:nx,-1:ny,0:1,0:1), veecrb(-1:nx,-1:ny,0:1,0:1)
@@ -34,7 +34,8 @@
       real (kind=R8) ::
      * poleldr, poldidr, radeldr, raddidr
       real (kind=R8) ::
-     * wpo(-1:nx,-1:ny), poc(-1:nx,-1:ny), weight(-1:nx,-1:ny)
+     * wpo(-1:nx,-1:ny), poc(-1:nx,-1:ny), weight(-1:nx,-1:ny),
+     * dpo(-1:nx,-1:ny,0:1,0:1), dOnedBsq(-1:nx,-1:ny,0:1,0:1)
       save ncall, drift_style, poleldr, poldidr, radeldr, raddidr
 *   ..procedures
       intrinsic min
@@ -168,7 +169,14 @@ cxpb  Standard case
        else  ! 5.2 drift treatment
 
          weight = 1.0e0_R8                                               !lk   
-         call intcor(nx,ny,weight,po,poc)                                !lk 12.12.07
+cwdk add computation of 9-point corrections for drifts
+cwdk precomputation of differences on faces
+        call diff(nx, ny, hx, hy, weight, qs, po,   dpo)
+        call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
+!        call diff_p(nx,ny, 1, hx, hy, weight, qs, OnedBsq, OnedBsqc, 
+!     .    dOnedBsq(-1,-1,0,0))
+!        call diff_r(nx,ny, 1, hx, hy, weight, qs, OnedBsq, OnedBsqc, 
+!     .    dOnedBsq(-1,-1,0,1))
          do iy = 0, ny-1
            do ix = 0, nx
              if(leftix(ix,iy).ne.-2) then                                !srv 26.11.02
@@ -177,13 +185,37 @@ cxpb  Standard case
      2          (bb(ix,iy,2)/bb(ix,iy,3)**2                              !srv 05.02.05
      2          +bb(leftix(ix,iy),leftiy(ix,iy),2)/
      2           bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*                  !srv 05.02.05
-     2          (poc(topix(ix,iy),topiy(ix,iy))-poc(ix,iy))              !srv 13.05.16 }
+     2           dpo(ix,iy,0,1)                                          !srv 13.05.16 }
+cwdk computation of radial drifts on poloidal faces
+cwdk somewhat messy interpolation of geometric factors, for exact
+cwdk cancelation of some terms in poloidal and radial drift components
+               veecrb(ix,iy,0,1) =   radeldr*fac_ExB(ix,iy)/
+     1          (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
+     &          (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &           qc(ix,iy,0)*
+     2          (bb(ix,iy,2)/bb(ix,iy,3)**2
+     2          +bb(leftix(ix,iy),leftiy(ix,iy),2)/
+     2           bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*
+     2           dpo(ix,iy,0,0)
                vedia(ix,iy,0,0) = -poldidr*facdrift(ix,iy)* ! signmf*    !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
      &           (te(leftix(ix,iy),leftiy(ix,iy))                        !srv 05.03.99
      &           *bb(leftix(ix,iy),leftiy(ix,iy),2)                      !srv 05.02.05
      &          /(qe*hy1(leftix(ix,iy),leftiy(ix,iy)))                   !srv
      &           +te(ix,iy)*bb(ix,iy,2)/(qe*hy1(ix,iy)))*0.5_R8          !srv 05.02.05
-     &          *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))   !srv 05.03.99
+     &          *dOnedBsq(ix,iy,0,1)                                     !srv 05.03.99
+cwdk computation of radial drifts on poloidal faces
+cwdk somewhat messy interpolation of geometric factors, for exact
+cwdk cancelation of some terms in poloidal and radial drift components
+               vedia(ix,iy,0,1) =  raddidr*facdrift(ix,iy)* ! signmf*
+     &           (te(leftix(ix,iy),leftiy(ix,iy))
+     &           *bb(leftix(ix,iy),leftiy(ix,iy),2)
+     &          /(qe*hy1(leftix(ix,iy),leftiy(ix,iy)))
+     &           +te(ix,iy)*bb(ix,iy,2)/(qe*hy1(ix,iy)))*0.5_R8*
+     &           (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &           (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &           qc(ix,iy,0)
+     &          *dOnedBsq(ix,iy,0,1)
              endif
            enddo
          enddo
@@ -196,14 +228,13 @@ cxpb  Standard case
      2	        (bb(ix,iy,2)/bb(ix,iy,3)**2                              !srv 05.02.05
      2          +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
      2           bb(bottomix(ix,iy),bottomiy(ix,iy),3)**2)*              !srv 05.02.05
-     2	        (poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))          !srv 13.05.16 }
+     2	         dpo(ix,iy,1,0)                                          !srv 13.05.16 }
                vedia(ix,iy,1,1) =  raddidr*facdrift(ix,iy)* ! signmf*    !srv 11.01.13 07.06.00 17.05.99 25.04.00
      &           (te(bottomix(ix,iy),bottomiy(ix,iy))                    !srv 05.03.99
      &           *bb(bottomix(ix,iy),bottomiy(ix,iy),2)                  !srv
      &          /(qe*hx(bottomix(ix,iy),bottomiy(ix,iy)))                !srv
      &           +te(ix,iy)*bb(ix,iy,2)/(qe*hx(ix,iy)))*0.5_R8           !srv
-     &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-
-     &            OnedBsqc(ix,iy))                                       !srv 05.03.99
+     &          *dOnedBsq(ix,iy,1,0)                                     !srv 05.03.99
              endif
            enddo
          enddo

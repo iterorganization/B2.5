@@ -272,19 +272,19 @@
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
        call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml) !srv 20.09.06 }
-       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
+       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,  !srv 20.09.06 {
      &                       fac_vis, fchvispar)
        call b2tiner (nx, ny, ns, vol,
-     &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
 !      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
 !     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
+!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,       !srv 10.10.17
 !     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
-     &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
-     &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,
+     &  vol, hx, hy, hz, qz, gs, qc, qs, bb, pbs, ua, na, ne, te, ti,
+     &  po, fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,
      &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
      &  uadia,
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
@@ -301,7 +301,7 @@ csw 30sep2013, added cdpa in call, uadia
        if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc called'
        call b2stbc (nx, ny, ns, ismain, ismain0,
      &  BoRiS, facdrift, fac_ExB,                                       !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,               !xpb !srv 09.01.01
+     &  vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, pbshz, bb,           !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      .  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,

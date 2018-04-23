@@ -3,8 +3,8 @@
 
       subroutine b2tfrn (nx, ny, ns, guard_flows,                        !srv 14.07.10 {
      &  facdrift, fac_ExB, rza, rz2,                                     !srv 13.01.17
-     &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,   
-     &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,         !srv 20.09.06
+     &  vol, hx, hy, hz, qz, gs, qc, qs, bb, pbs, ua, na, ne, te, ti,
+     &  po, fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,     !srv 20.09.06
      &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
      &  uadia, fna_eir, fne_eir, fhe_eir, fhi_eir)
       use b2mod_types
@@ -38,7 +38,8 @@
      2  hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), 
      &  qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), ve(-1:nx,-1:ny), 
      2  facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny), 
-     3  te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
+     3  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
+     &  qs(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  wedia(-1:nx,-1:ny,0:1,0:1), fna_eir(-1:nx,-1:ny,0:1,0:1,0:ns-1),
@@ -79,9 +80,15 @@
       real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8           !srv 02.10.17
       real (kind=R8) ::
      *   dif, flo, cutlo, fle_eir, cone_eir, floe_eir, chce_eir, scur,   !srv 14.07.10
-     &   floi_eir, chci_eir, flo_eir, con_eir, term(-1:nx,-1:ny)
+     &   floi_eir, chci_eir, flo_eir, con_eir, term(-1:nx,-1:ny),
+     &   fle9_eir, cone9_eir, floe9_eir, chce9_eir, scur9,
+     &   floi9_eir, chci9_eir,flo9_eir, con9_eir
       real (kind=R8) :: 
-     &   wedia_(-1:nx,-1:ny,0:1), nel(-1:nx,-1:ny), pb(-1:nx,-1:ny)      !srv 14.07.10 }
+     &   wedia_(-1:nx,-1:ny,0:1), nel(-1:nx,-1:ny), pb(-1:nx,-1:ny),     !srv 14.07.10 }
+     &   dnb(-1:nx,-1:ny,0:1,0:1), dpb(-1:nx,-1:ny,0:1,0:1),
+     &   dnete(-1:nx,-1:ny,0:1,0:1), dte(-1:nx,-1:ny,0:1,0:1), 
+     &   dti(-1:nx,-1:ny,0:1,0:1), dne(-1:nx,-1:ny,0:1,0:1),
+     &   weight(-1:nx,-1:ny)
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
@@ -90,12 +97,13 @@
       save ncall
 *   ..procedures
       real (kind=R8) ::
-     *   hybr, hy1
+     *   hybr, hy1, upwind
       external subini, subend, xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
       intrinsic abs, max, min, mod, sqrt
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      hybr(flo,dif) = max(dif,abs(flo/2.),sqrt(dif**2+flo**2/4.)) !!!
+      hybr(flo,dif) = max(abs(dif),abs(flo/2.),sqrt(dif**2+flo**2/4.)) !!!
+      upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialisation
       data ncall/0/ 
 
@@ -143,19 +151,7 @@
 *    ..compute partial pressure
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)     !srv 01.10.99
 *   ..compute wrk0
-       do iy = -1, ny
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-           wrk0(ix,iy) = 0.0_R8
-         else
-           wrk0(ix,iy) = !pbs(ix,iy,0)*                                  !srv 20.06.08
-     &      (vol(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
-     &       vol(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
-     &      (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-         endif
-        enddo
-       enddo
-       call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
+      call intfaceh(nx,ny,leftix,leftiy,vol,ua(-1,-1,is),wrk0)
 *   ..compute wrk1
        do iy = -1, ny
         do ix = -1, nx
@@ -184,11 +180,17 @@
         enddo
        enddo
        call b2xxgs (nx, ny, 0.0_R8, wrk2, 1)
+
+*   ..compute radial differences of nb and pb, for 9-point terms
+      weight = 1.0e0_R8
+      call diff(nx, ny, hx, hy, weight, qs, na(-1,-1,is), dnb)
+      call diff(nx, ny, hx, hy, weight, qs, pb, dpb)
+
 *   ..compute fna_eirx
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
-          fna_eir(ix,iy,0,0,is)     = 0.0_R8                            !srv 14.07.10
+          fna_eir(ix,iy,0,0:1,is)     = 0.0_R8                          !srv 14.07.10
          else
 
 csw 30sep2013, added check for no_hybr
@@ -198,8 +200,14 @@ csw 30sep2013, added check for no_hybr
      &       vis_per*fchvisper(ix,iy,0,0)                                !srv 02.10.17
      &      +fchanml(ix,iy,0,0)+vis_q*fchvisq(ix,iy,0,0))*xcur/qe/       !srv 02.10.17
      &     ((na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8)
+           scur9 =
+     &      (fchinert(ix,iy,0,1)+fchvispar(ix,iy,0,1)
+     &       +vis_per*fchvisper(ix,iy,0,1)
+     &       +fchanml(ix,iy,0,1)+vis_q*fchvisq(ix,iy,0,1))*ycur/qe/
+     &     ((na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8)
           else
-            scur = 0.0_R8
+            scur  = 0.0_R8
+            scur9 = 0.0_R8
           end if
           if(no_hybr .ne. 0) then
            term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*
@@ -246,6 +254,7 @@ csw 30sep2013, added check for no_hybr
      &      (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
            flo_eir = cvla(ix,iy,0,0,is)+pbs(ix,iy,0)*wrk0(ix,iy)+        !srv 14.07.10 {
      &      term(ix,iy)
+           flo9_eir = cvla(ix,iy,0,1,is)
            if (drift_style.eq.0) then
             flo_eir = flo_eir + 0.5_R8*
      1       ((vaecrb(ix,iy,0,0,is)*xvecrb+wadia(ix,iy,0,0,is)*xwdia)*
@@ -259,16 +268,31 @@ csw 30sep2013, added check for no_hybr
      4       (vaecrb(ix,iy,0,0,is)*xvecrb+wadia(ix,iy,0,0,is)*xwdia)*
      5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 14.07.10 }
+            flo9_eir = flo9_eir + 
+     &       (vaecrb(ix,iy,0,1,is)*xvecrb+wadia(ix,iy,0,1,is)*xwdia)*
+     &        qs(ix,iy,0)/qc(ix,iy,0)*
+     &       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
+     &       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 14.07.10 }
            endif
            flo_eir = flo_eir + scur
+           flo9_eir = flo9_eir + scur9
            if(no_Ptncr_x_co.eq.0) then                                   !srv 13.10.06 {
             con_eir = hybr(flo_eir,cdna(ix,iy,0,0,is))
            else
             con_eir = cdna(ix,iy,0,0,is)
            endif
+           if(no_Ptncr_y_co.eq.0) then
+             con9_eir = sign(hybr(flo9_eir,cdna(ix,iy,0,1,is)) -
+     &         0.5_R8*abs(flo9_eir),cdna(ix,iy,0,1,is))
+           else
+             con9_eir = cdna(ix,iy,0,1,is)
+           endif
            fna_eir(ix,iy,0,0,is) = flo_eir*                                            !srv 14.07.10 
      1      (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8-
-     &      con_eir*(na(ix,iy,is)-na(leftix(ix,iy),leftiy(ix,iy),is))     
+     &      con_eir*dnb(ix,iy,0,0)
+           fna_eir(ix,iy,0,1,is) =  upwind(flo9_eir,
+     &      na(leftix(ix,iy),leftiy(ix,iy),is),na(ix,iy,is)) -
+     &      con9_eir*dnb(ix,iy,0,1)
           endif ! no_hybr = 0
          endif
         enddo
@@ -277,7 +301,7 @@ csw 30sep2013, added check for no_hybr
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
-           fna_eir(ix,iy,1,1,is)     = 0.0_R8                                   !srv 14.07.10
+           fna_eir(ix,iy,1,0:1,is)     = 0.0_R8                                 !srv 14.07.10
          else
 
 csw 30sep2013, added check for no_hybr
@@ -356,10 +380,9 @@ csw 30sep2013, added check for no_hybr
            else
              con_eir = cdna(ix,iy,1,1,is)
            endif
-           fna_eir(ix,iy,1,1,is) = flo_eir*                                   !srv 14.07.10
-     &      (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))
-     &      /2.0_R8-con_eir*
-     &      (na(ix,iy,is)-na(bottomix(ix,iy),bottomiy(ix,iy),is))
+           fna_eir(ix,iy,1,1,is) = upwind(flo_eir,                       !srv 14.07.10
+     &      na(bottomix(ix,iy),bottomiy(ix,iy),is),na(ix,iy,is))
+     &      -(con_eir - 0.5_R8*abs(flo_eir))*dnb(ix,iy,1,1)
           endif !no_hybr =0
          endif
         enddo
@@ -371,24 +394,17 @@ c Drift terms
 
       if((maxval(facdrift).ne.0.0_R8 .or. 
      &    maxval(fac_ExB).ne.0.0_R8)) then
-        wrk0=0.0_R8  ! compute .... on the cell faces                    !srv 14.07.10 {
-        do iy=0,ny
-          do ix=-1,nx
-            wrk0(ix,iy)=(ne(ix,iy)*te(ix,iy)-
-     &       ne(bottomix(ix,iy),bottomiy(ix,iy))*
-     &       te(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0_R8
-          enddo
-        enddo
+        wrk0=1.0_R8  ! compute ... on the cell faces
+        call grad(nx, ny, hx, hy, wrk0, qz, qs, ne*te, dnete)
         do iy=-1,ny  ! compute ... on the cell centers
           do ix=-1,nx
             if(bottomiy(ix,iy).eq.-2) then
-              wedia_(ix,iy,0) = wrk0(ix,topiy(ix,iy))
+              wedia_(ix,iy,0) = dnete(ix,topiy(ix,iy),1,1)
             elseif(topiy(ix,iy).eq.ny+1) then
-              wedia_(ix,iy,0) = wrk0(ix,iy)
+              wedia_(ix,iy,0) = dnete(ix,iy,1,1)
             else
               wedia_(ix,iy,0) = 0.5_R8*
-     &         (wrk0(topix(ix,iy),topiy(ix,iy))+wrk0(ix,iy))
+     &         (dnete(topix(ix,iy),topiy(ix,iy),1,1)+dnete(ix,iy,1,1))
             endif
             wedia_(ix,iy,0) = wedia_(ix,iy,0)/
      &       (qe*ne(ix,iy))*(bb(ix,iy,2)/bb(ix,iy,3)**2)                 !srv 15.02.12
@@ -397,34 +413,31 @@ c Drift terms
         call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,0),
      &                                         wedia(-1,-1,0,0))
 
-        wrk0=0.0_R8  ! compute ... on the cell faces
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ne.-2) then
-              wrk0(ix,iy)=(ne(ix,iy)*te(ix,iy)-
-     &         ne(leftix(ix,iy),leftiy(ix,iy))*
-     &         te(leftix(ix,iy),leftiy(ix,iy)))/
-     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8
-            endif
-          enddo
-        enddo
         do iy=-1,ny  ! compute .... on the cell centers
           do ix=-1,nx
             if(leftix(ix,iy).eq.-2) then
-              wedia_(ix,iy,1) = wrk0(rightix(ix,iy),iy)
+              wedia_(ix,iy,1) = dnete(rightix(ix,iy),iy,0,0)
             elseif(rightix(ix,iy).eq.nx+1) then
-              wedia_(ix,iy,1) = wrk0(ix,iy)
+              wedia_(ix,iy,1) = dnete(ix,iy,0,0)
             else
               wedia_(ix,iy,1) = 0.5_R8*
-     &         (wrk0(rightix(ix,iy),rightiy(ix,iy))+wrk0(ix,iy))
+     &       (dnete(rightix(ix,iy),rightiy(ix,iy),0,0)+dnete(ix,iy,0,0))
             endif
               wedia_(ix,iy,1) = - wedia_(ix,iy,1)/
      &         (qe*ne(ix,iy))*(bb(ix,iy,2)/bb(ix,iy,3)**2)               !srv 15.02.12
           enddo
         enddo
+        call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,1),
+     &                                         wedia(-1,-1,0,1))
         call intfacev(nx,ny,bottomix,bottomiy,vol,wedia_(-1,-1,1),
      &                                            wedia(-1,-1,1,1))        !srv 14.07.10 }
       endif
+
+* ..compute differences of ne, te, ti for 9-point terms
+      weight=1.0_R8
+      call diff(nx, ny, hx, hy, weight, qs, ne, dne)
+      call diff(nx, ny, hx, hy, weight, qs, te, dte)
+      call diff(nx, ny, hx, hy, weight, qs, ti, dti)
 
 * ..compute electron velocity
       call intfaceh(nx,ny,leftix,leftiy,vol,ne,nel)                      !srv 14.07.10 {
@@ -456,9 +469,9 @@ c Drift terms
           do iy = -1, ny
             do ix = -1, nx
               if(leftix(ix,iy).eq.-2) then
-                fne_eir(ix,iy,0,0)     = 0.0_R8                                !srv 14.07.10 
-                fhe_eir(ix,iy,0,0)     = 0.0_R8                                !srv 14.07.10 
-                fhi_eir(ix,iy,0,0)     = 0.0_R8                                !srv 14.07.10 
+                fne_eir(ix,iy,0,0:1)     = 0.0_R8                        !srv 14.07.10 
+                fhe_eir(ix,iy,0,0:1)     = 0.0_R8                        !srv 14.07.10 
+                fhi_eir(ix,iy,0,0:1)     = 0.0_R8                        !srv 14.07.10 
               else     ! ve has been myltiplied by vol*bx/hx
                 fle_eir = ve(ix,iy)                                      !srv 14.07.10 {
                 if(drift_style.eq.0) then
@@ -474,43 +487,79 @@ c Drift terms
      &            (veecrb(ix,iy,0,0)*xvecrb+wedia(ix,iy,0,0)*xwdia)*
      &            (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))            !srv 14.07.10 }
+                 fle9_eir = 
+     &            (veecrb(ix,iy,0,1)*xvecrb+wedia(ix,iy,0,1)*xwdia)*
+     &            qs(ix,iy,0)/qc(ix,iy,0)*
+     &            (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
+     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))            !srv 14.07.10 }
                 end if
                 if(no_Ptncr_x_co.eq.0) then                              !srv 13.10.06 {
                   cone_eir = hybr(fle_eir,cdna(ix,iy,0,0,is))
                 else
                   cone_eir = cdna(ix,iy,0,0,is)
                 endif
+                if(no_Ptncr_y_co.eq.0) then                              !srv 13.10.06 {
+                  cone9_eir = sign(hybr(fle9_eir,cdna(ix,iy,0,1,is)) -
+     &              0.5_R8*abs(fle9_eir),cdna(ix,iy,0,1,is))
+                else
+                  cone9_eir = cdna(ix,iy,0,1,is)
+                endif
                 fne_eir(ix,iy,0,0) =                                          !srv 14.07.10 
      &           fle_eir*(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))
      &            /2.0_R8-
-     &            cone_eir*(ne(ix,iy)-ne(leftix(ix,iy),leftiy(ix,iy))) 
+     &            cone_eir*dne(ix,iy,0,0)
+                fne_eir(ix,iy,0,1) = upwind(fle9_eir,
+     &            ne(leftix(ix,iy),leftiy(ix,iy)),ne(ix,iy)) -
+     &            cone9_eir*dne(ix,iy,0,1) 
                 floe_eir = 2.5_R8*fne_eir(ix,iy,0,0)
      &           -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe                !srv 30.12.09 13.01.17
+                floe9_eir = 2.5_R8*fne_eir(ix,iy,0,1)
                 if(no_Ptncr_x_he.eq.0) then                              !srv 06.07.06 {
                   chce_eir = hybr(floe_eir,chce(ix,iy,0,0))
                 else
                   chce_eir = chce(ix,iy,0,0)
                 endif
-                fhe_eir(ix,iy,0,0) = floe_eir*                                         !srv 14.07.10 
+                if(no_Ptncr_y_he.eq.0) then                              !srv 06.07.06 {
+                  chce9_eir = sign(hybr(floe9_eir,chce(ix,iy,0,1)) -
+     &              0.5_R8*abs(floe9_eir),chce(ix,iy,0,1))
+                else
+                  chce9_eir = chce(ix,iy,0,1)
+                endif
+                fhe_eir(ix,iy,0,0) = floe_eir*                           !srv 14.07.10 
      &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
      &           /2.0_R8-
-     &           chce_eir*(te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))
+     &           chce_eir*dte(ix,iy,0,0)
+                fhe_eir(ix,iy,0,1) = upwind(floe9_eir,
+     &           te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)) -
+     &           chce9_eir*dte(ix,iy,0,1) 
                 floi_eir = 0.0_R8
+                floi9_eir = 0.0_R8
                 do isb = 0, ns-1
                   if(.not.is_neutral(isb)) then
                     floi_eir = floi_eir + fna_eir(ix,iy,0,0,isb)
+                    floi9_eir = floi9_eir + fna_eir(ix,iy,0,1,isb)
                   endif
                 enddo
                 floi_eir = 2.5_R8*floi_eir
-                if(no_Ptncr_x_hi.eq.0) then                                 !srv 06.07.06 {
+                floi9_eir = 2.5_R8*floi9_eir
+                if(no_Ptncr_x_hi.eq.0) then                              !srv 06.07.06 {
                   chci_eir = hybr(floi_eir,chci(ix,iy,0,0))
                 else
                   chci_eir = chci(ix,iy,0,0)
                 endif
-                fhi_eir(ix,iy,0,0) = floi_eir*                                         !srv 14.07.10 
+                if(no_Ptncr_y_hi.eq.0) then                              !srv 06.07.06 {
+                  chci9_eir = sign(hybr(floi9_eir,chci(ix,iy,0,1)) -
+     &              0.5_R8*abs(floi9_eir),chci(ix,iy,0,1))
+                else
+                  chci9_eir = chci(ix,iy,0,1)
+                endif
+                fhi_eir(ix,iy,0,0) = floi_eir*                           !srv 14.07.10 
      &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
      &           /2.0_R8-
-     &           chci_eir*(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
+     &           chci_eir*dti(ix,iy,0,0)
+                fhi_eir(ix,iy,0,1) = upwind(floi9_eir,
+     &           ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)) -
+     &           chci9_eir*dti(ix,iy,0,1) 
               endif
             enddo
           enddo
@@ -519,9 +568,9 @@ c Drift terms
           do iy = -1, ny
             do ix = -1, nx
               if(bottomiy(ix,iy).eq.-2) then
-                fne_eir(ix,iy,1,1)     = 0.0_R8
-                fhe_eir(ix,iy,1,1)     = 0.0_R8
-                fhi_eir(ix,iy,1,1)     = 0.0_R8
+                fne_eir(ix,iy,1,0:1)     = 0.0_R8
+                fhe_eir(ix,iy,1,0:1)     = 0.0_R8
+                fhi_eir(ix,iy,1,0:1)     = 0.0_R8
               else
 !             flo_eir = cvlb(ix,iy,1)+(wedia(ix,iy,1)+vbecrb(ix,iy,1))*  !srv 14.07.10
 !     &     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
@@ -548,20 +597,18 @@ c Drift terms
                 else
                   cone_eir = cdna(ix,iy,1,1,is)
                 endif
-                fne_eir(ix,iy,1,1) = fle_eir*                                !srv 14.07.10
-     &           (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))/
-     &           2.0_R8-cone_eir*
-     &           (ne(ix,iy)-ne(bottomix(ix,iy),bottomiy(ix,iy)))
+                fne_eir(ix,iy,1,1) = upwind(fle_eir,                    !srv 14.07.10
+     &           ne(bottomix(ix,iy),bottomiy(ix,iy)),ne(ix,iy))
+     &           -(cone_eir - 0.5_R8*abs(fle_eir))*dne(ix,iy,1,1)
                 floe_eir = 2.5_R8*fne_eir(ix,iy,1,1)
                 if(no_Ptncr_y_he.eq.0) then                                   !sv 13.10.06 {
                   chce_eir = hybr(floe_eir,chce(ix,iy,1,1))
                 else
                   chce_eir = chce(ix,iy,1,1)
                 endif
-                fhe_eir(ix,iy,1,1) = floe_eir*                                !srv 14.07.10
-     &           (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/
-     &           2.0_R8-chce_eir*
-     &           (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+                fhe_eir(ix,iy,1,1) = upwind(floe_eir,                    !srv 14.07.10
+     &           te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))
+     &           -(chce_eir - 0.5_R8*abs(floe_eir))*dte(ix,iy,1,1)
                 floi_eir = 0.0_R8
                 do isb = 0, ns-1
                   if(.not.is_neutral(isb)) then
@@ -574,10 +621,9 @@ c Drift terms
                 else
                   chci_eir = chci(ix,iy,1,1)
                 endif
-                fhi_eir(ix,iy,1,1) = floi_eir*                                         !srv 14.07.10 
-     &           (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/
-     &           2.0_R8-chci_eir*
-     &           (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
+                fhi_eir(ix,iy,1,1) = upwind(floi_eir,                    !srv 14.07.10
+     &           ti(bottomix(ix,iy),bottomiy(ix,iy)),ti(ix,iy))
+     &           -(chci_eir - 0.5_R8*abs(floi_eir))*dti(ix,iy,1,1)
               endif
             enddo
           enddo

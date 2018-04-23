@@ -1,4 +1,4 @@
-      subroutine b2tdia(nx, ny, ns, vol, gs, hy, qz, bb,
+      subroutine b2tdia(nx, ny, ns, vol, gs, hx, hy, qz, qs, bb,
      &   pz, fna, uadia, facdrift, fchdia)       !srv 16.19.17 {
       use b2mod_types
       use b2mod_b2cmpa
@@ -9,8 +9,9 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
+     &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
+     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
+     &  bb(-1:nx,-1:ny,0:3),
      &  pz(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
      &  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1)
@@ -34,7 +35,7 @@
       integer n2, ix, iy
       integer, save :: ncall = 0
       real (kind=R8) ::
-     &  facdriftm
+     &  facdriftm, wght(-1:nx,-1:ny), dOnedBsq(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
 #ifdef CLASSICAL_CURRENT
       integer is
@@ -81,6 +82,14 @@
       fchdia = 0.0e0_R8
       facdriftm = maxval(facdrift)
       if (facdriftm.ne.0.0_R8 .and. dia_cur.ne.0.0e0_R8) then            !srv 16.10.17
+*       compute differences of OnedBsq on cell faces
+        call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
+        wght = 1.0_R8
+!        call diff_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
+!     .    dOnedBsq(-1,-1,0,0))
+!        call diff_r(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
+!     .    dOnedBsq(-1,-1,0,1))
+
 *       X-COMPONENT OF DIVERGENT PART OF DIAMAGNETIC CURRENT
 
 !         do iy=-1,ny
@@ -94,7 +103,21 @@
      &       *bb(leftix(ix,iy),leftiy(ix,iy),2))*0.5e0_R8                !srv 31.03.00
      &      *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
      &      /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))
-     &      *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))
+     &      *dOnedBsq(ix,iy,0,1)
+cwdk computation of radial current on 'poloidal' faces
+cwdk somewhat messy interpolation of geometric factors, for exact
+cwdk cancelation of some terms in poloidal and radial current components
+             fchdia(ix,iy,0,1)=fchdia(ix,iy,0,1)+
+     &                       dia_cur*facdrift(ix,iy)* ! signmf*          !srv 25.04.00 05.02.05 11.01.13 16.10.17
+     &      (pz(ix,iy)*bb(ix,iy,2)+                                      !srv 31.03.00 18.01.02
+     &        pz(leftix(ix,iy),leftiy(ix,iy))                            !srv 31.03.00
+     &       *bb(leftix(ix,iy),leftiy(ix,iy),2))*0.5e0_R8                !srv 31.03.00
+     &      *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+     &      /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))*
+     &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &       qs(ix,iy,0)
+     &      *dOnedBsq(ix,iy,0,0)
 !     &       (ne(ix,iy)+ne(leftix(ix,iy),leftiy(ix,iy)))/2.0e0_R8       !srv
 !     &      *(te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy))                 !srv
 !     &       +ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/2.0e0_R8       !srv
@@ -126,7 +149,7 @@
      &       *bb(bottomix(ix,iy),bottomiy(ix,iy),2))*0.5e0_R8            !srv 31.03.00 18.01.02 }
      &      *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))           !srv
      &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))         !srv
-     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))   !srv
+     &      *dOnedBsq(ix,iy,1,0)                                         !srv
 
 !     &      -(ne(ix,iy)+ne(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8   !srv
 !     &      *(te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy))             !srv

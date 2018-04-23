@@ -73,7 +73,7 @@
         goto 100
       endif
 
-*    ..compute radial differences of partial pressure
+*    ..compute radial differences of temperature
       wght = 1.0_R8
       call diff_r (nx, ny, 0, hx, hy, wght, qs, ti, tic, dtir)
 

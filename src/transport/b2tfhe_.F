@@ -4,7 +4,7 @@
       subroutine b2tfhe_ (nx, ny, ns, ismain, ismain0,
      & facdrift, fac_ExB, fac_vis,                                       !srv 23.11.10
      1 vol, gs, hx, hy, qz, qc, qs, bb, te, po, ne, ne2, lnlam, pz,      !srv 11.07.99 18.01.02 01.07.09
-     1 ti, ni, na, fna, uadia, vadia, ua, fne,
+     1 ti, ni, na, fna, uadia, vedia, ua, fne,
      2 csig, csig_cl, csigin, chce, chve, chci, calf,                    !srv 17.05.99 11.07.99
      & chvemx, cvsa_cl, cdna, cdpa, cddi, fch, fhe, fhe_mdf, fhePSch,    !srv 27.01.00 13.10.06 16.10.17
      & conc, avisper, bvisper, cvisper, floe, cone, fchdia, fchin,       !srv 27.01.00 30.09.02
@@ -33,7 +33,7 @@
      &   vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &   gs(-1:nx,-1:ny,0:2), ne2(-1:nx,-1:ny), pz(-1:nx,-1:ny),         !srv 11.07.99 18.01.02
      &   uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &   vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),      !srv 17.05.99 25.01.02
+     &   vedia(-1:nx,-1:ny,0:1,0:1), ua(-1:nx,-1:ny,0:ns-1),             !srv 17.05.99 25.01.02
      &   fne(-1:nx,-1:ny,0:1,0:1), csig(-1:nx,-1:ny,0:1,0:1),
      &   csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1), 
      &   chci(-1:nx,-1:ny,0:1,0:1),   !srv 11.07.99 24.06.08
@@ -46,7 +46,7 @@
      1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1   bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      2   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-     2   fac_vis(-1:nx,-1:ny), qc(-1:nx,-1:ny),
+     2   fac_vis(-1:nx,-1:ny), qc(-1:nx,-1:ny,0:1),
      3   qs(-1:nx,-1:ny,0:1), csig_cl(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) :: cutlo
       parameter (cutlo = 1.0e-60_R8)
@@ -229,19 +229,19 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 c Drift terms
 *   .. compute x,y-components of divergent part of diamagnetic current
-      call b2tdia(nx, ny, ns, vol, gs, hy, qz, bb,
+      call b2tdia(nx, ny, ns, vol, gs, hx, hy, qz, qs, bb,
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua,
+      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua,
      &              cvsa_cl, fac_vis, fchvispar)                         !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,             !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
-      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,        !srv 10.10.17
+      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb, ne2,    !srv 10.10.17
      &             lnlam, te, ti, ni, chci, fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99
-      call b2tiner (nx, ny, ns, vol, gs, hx, hy, bb, na, ua,             !srv 22.11.12
+      call b2tiner (nx, ny, ns, vol, gs, hx, hy, qs, bb, na, ua,         !srv 22.11.12
      &              facdrift, fchinert)
 *  .. calculate the x,y-components of anomalous current
       call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml)
@@ -260,15 +260,19 @@ c Drift terms
           do ix = 0, nx
            if(leftix(ix,iy).ne.-2) then                                  !srv 26.11.02
             fledia(ix,iy,0,0) =
-     &       -(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))              !srv 25.01.02 was 5/2
+     &        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))              !srv 25.01.02 was 5/2
      &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))                !srv 17.05.99 11.03.00
-     &       *(te(leftix(ix,iy),leftiy(ix,iy))                           !srv 17.05.99 11.03.00
-     &       /ti(leftix(ix,iy),leftiy(ix,iy))                            !srv 17.05.99 11.03.00
-     &       +te(ix,iy)/ti(ix,iy))*0.5e0_R8                              !srv 17.05.99 11.03.00 25.01.02 13.09.02
-     &       *vadia(ix,iy,0,0,is)*vdia_par ! for is = 1 (za = 1)         !srv 17.05.99 11.03.00 21.04.00 25.01.02 18.01.07
-     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
-     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
-     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
+     &       *vedia(ix,iy,0,0)*vdia_par                                  !srv 17.05.99 11.03.00 21.04.00 25.01.02 18.01.07
+!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
+!     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
+!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
+            fledia(ix,iy,0,1) =
+     &       -(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
+     &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
+     &       *vedia(ix,iy,0,1)*vdia_par*qs(ix,iy,0)/qc(ix,iy,0)
+!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
+!     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
+!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
            endif                                                         !srv 26.11.02
           enddo
          enddo
@@ -276,15 +280,12 @@ c Drift terms
          do iy = 0, ny
           do ix = -1, nx
            fledia(ix,iy,1,1) =
-     &      -(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))           !srv 17.05.99 11.03.00 25.01.02 was 5/2
+     &       (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))           !srv 17.05.99 11.03.00 25.01.02 was 5/2
      &      /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))           !srv 17.05.99 11.03.00
-     &      *(te(bottomix(ix,iy),bottomiy(ix,iy))                        !srv 17.05.99 11.03.00 13.09.02
-     &      /ti(bottomix(ix,iy),bottomiy(ix,iy))                         !srv 17.05.99 11.03.00
-     &      +te(ix,iy)/ti(ix,iy))*0.5e0_R8                               !srv 17.05.99 11.03.00 25.01.02 13.09.02
-     &      *vadia(ix,iy,1,1,is)*vdia_par                                !srv 17.05.99 11.03.00 18.01.07
-     1      *(bb(ix,iy,2)/bb(ix,iy,3)+                                   !srv 13.09.02 {
-     2      bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
-     3      bb(bottomix(ix,iy),bottomiy(ix,iy),3))/2.0e0_R8              !srv 13.09.02 }
+     &      *vedia(ix,iy,1,1)*vdia_par                                   !srv 17.05.99 11.03.00 18.01.07
+!     1      *(bb(ix,iy,2)/bb(ix,iy,3)+                                   !srv 13.09.02 {
+!     2      bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
+!     3      bb(bottomix(ix,iy),bottomiy(ix,iy),3))/2.0e0_R8              !srv 13.09.02 }
           enddo
          enddo                                                           !srv 25.01.02 }
         endif
@@ -301,7 +302,8 @@ c Drift terms
        w6=0.0e0_R8;
       endif                                                              !srv 16.09.02 }
 
-      call b2tepsch(nx, ny, ns, facdrift, cddi, te, ne, cone, fhePSch)   !srv 16.10.17
+      call b2tepsch(nx, ny, ns, hx, hy, qs, facdrift, cddi, te, ne, 
+     .  cone, fhePSch)                                                   !srv 16.10.17
 
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 
@@ -835,6 +837,7 @@ cwdk add computation of 9-point flows
 !     &    bb(leftix(ix,iy),leftiy(ix,iy),2))                            !srv
 !     &  /(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))                  !srv
 !     &  *(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8             !srv 11.10.02 }
+         fch(ix,iy,0,1) = fch(ix,iy,0,1) + fchvisper(ix,iy,0,1)
          conc(ix,iy,0,0) = csig(ix,iy,0,0)
          conc(ix,iy,0,1) = csig(ix,iy,0,1)
          if(fch_ion_neutral.ne.0.0e0_R8 ) then                           !srv

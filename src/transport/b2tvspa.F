@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,  !srv 20.09.06 { 16.10.17
-     &                    fac_vis, fchvispar)                           !srv 22.06.08
+      subroutine b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua,      !srv 20.09.06 { 16.10.17
+     &           cvsa_cl, fac_vis, fchvispar)                           !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -18,6 +18,7 @@
      & ua(-1:nx,-1:ny,0:ns-1),
      & cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),                              !srv 16.10.17
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     1 qs(-1:nx,-1:ny,0:1),
      1 bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                         !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -43,8 +44,8 @@
       real (kind=R8) ::
      &  vis_par
       real (kind=R8) ::
-     *   dvpar(-1:nx,-1:ny)
-     *  , wrk0(-1:nx,-1:ny)
+     *   dvpar(-1:nx,-1:ny), wght(-1:nx,-1:ny),
+     *   wrk0(-1:nx,-1:ny), gOnedBsq(-1:nx,-1:ny,0:1,0:1)
       save ncall, vis_par
 *   ..procedures
       intrinsic max, abs
@@ -80,6 +81,13 @@ c Drift terms
       fchvispar =0.0e0_R8                                                !srv 09.07.99
       dvpar=0.0e0_R8                                                     !srv 24.06.99
       if (vis_par.ne.0.0e0_R8.and.maxval(fac_vis).ne.0.0_R8) then        !srv
+*       compute gradients of OnedBsq on cell faces
+        call grad(nx, ny, hx, hy, vol, qz, qs, OnedBsq, gOnedBsq)
+        wght = 1.0_R8
+!        call grad_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
+!     .    gOnedBsq(-1,-1,0,0))
+!        call grad_r(nx,ny, 1, hx, hy, wght, qz, qs, OnedBsq, OnedBsqc, 
+!     .    gOnedBsq(-1,-1,0,1))
         do is = 0, ns-1                                                  !srv 24.06.99
           if (nint(zn(is)).eq.1 .and. nint(zamax(is)).eq.1 .and.
      &        .not.is_neutral(is)) then                                  !srv 24.06.99
@@ -114,14 +122,20 @@ c Drift terms
 	    if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
 	      fchvispar(ix,iy,0,0)= fchvispar(ix,iy,0,0) -               !srv 16.10.17
      &        vis_par*fac_vis(ix,iy)*                         !signmf*   !srv 25.04.00 05.02.05 22.06.08 11.01.13
-     &        2.0e0_R8*dvpar(ix,iy)                                      !srv 23.07.05
-     &       /(hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy))              !srv 18.02.00
-     &       *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))      !srv
-     &        /3.0e0_R8                                             	 !srv 18.02.00
+     &        dvpar(ix,iy)*gOnedBsq(ix,iy,0,1)/3.0e0_R8                  !srv 23.07.05
 !     &       (dvpar(ix,iy)+dvpar(leftix(ix,iy),leftiy(ix,iy)))          !srv
 !     &       /(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))               !srv 18.02.00
 !     &       *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))     !srv
 !     &        /3.0e0_R8                                             	 !srv 18.02.00
+cwdk computation of radial current on 'poloidal' faces
+cwdk somewhat messy interpolation of geometric factors, for exact
+cwdk cancelation of some terms in poloidal and radial current components
+	      fchvispar(ix,iy,0,1)= fchvispar(ix,iy,0,1) -
+     &        vis_par*fac_vis(ix,iy)*
+     &        dvpar(ix,iy)*gOnedBsq(ix,iy,0,0)/3.0e0_R8*
+     &       (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &       (hy1(ix,iy) + hy1(leftix(ix,iy),leftiy(ix,iy)))*
+     &        qs(ix,iy,0)
 	    endif                                                        !srv 26.11.02
 	  enddo
 	enddo
@@ -139,11 +153,11 @@ c Drift terms
 	  do ix = 0, nx-1
 	    if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
 	      fchvispar(ix,iy,1,1)= fchvispar(ix,iy,1,1) +               !srv 16.10.17
-     &        vis_par*fac_vis(ix,iy)*                       ! signmf*    !srv 25.04.00 21.04.00 22.06.08 11.01.13
+     &        vis_par*fac_vis(ix,iy)*0.5e0_R8*              ! signmf*    !srv 25.04.00 21.04.00 22.06.08 11.01.13
      &       (wrk0(ix,iy)+wrk0(bottomix(ix,iy),bottomiy(ix,iy)))         !srv 23.07.05
-     &       /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))          !srv 18.02.00
-     &       *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))  !srv
-     &        /3.0e0_R8                                                  !srv 18.02.00
+     &       *(hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))
+     &       /(hy1(ix,iy) + hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &       *gOnedBsq(ix,iy,1,0)/3.0e0_R8                               !srv
 	    endif                                                        !srv 26.11.02
 	  enddo
 	enddo
@@ -154,12 +168,12 @@ c Drift terms
       DO IB=1,NNISO
 	DO IX=NXISO1(IB), NXISO2(IB)
 	  DO IY=NYISO1(IB), NYISO2(IB)
-	    fchvispar(ix,iy,0,0)=0.0e0_R8
+	    fchvispar(ix,iy,0,0:1)=0.0e0_R8
 	  end do
 	end do
 	DO IX=NXISO1(IB), NXISO2(IB)
 	  DO IY=NYISO1(IB), NYISO2(IB)
-	    fchvispar(ix,iy,1,1)=0.0e0_R8
+	    fchvispar(ix,iy,1,0:1)=0.0e0_R8
 	  end do
 	end do
       end do

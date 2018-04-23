@@ -1,5 +1,5 @@
-      subroutine b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,
-     &           lnlam, te, ti, ni, chci, fchvisq)
+      subroutine b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,
+     &       ne2, lnlam, te, ti, ni, chci, fchvisq)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -13,7 +13,8 @@
      &   fac_vis(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &   hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      &   ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), te(-1:nx,-1:ny),
-     &   ti(-1:nx,-1:ny), ni(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1,0:1) 
+     &   ti(-1:nx,-1:ny), ni(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1,0:1), 
+     &   qs(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      $   fchvisq(-1:nx,-1:ny,0:1,0:1)                                   !srv 11.07.99
@@ -37,7 +38,9 @@
       real (kind=R8) ::
      *    wrk0(-1:nx,-1:ny), qip0(-1:nx,-1:ny),                         !srv 11.07.99
      *    qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                       !srv 20.12.99
-     *    tauia(-1:nx,-1:ny,0:ns-1)                                     !srv 28.03.99 11.07.99
+     *    tauia(-1:nx,-1:ny,0:ns-1),                                    !srv 28.03.99 11.07.99
+     *    dtir(-1:nx,-1:ny), wght(-1:nx,-1:ny),
+     *    dOnedBsq(-1:nx,-1:ny,0:1,0:1)
 *   ..procedures
       intrinsic max, abs
       real (kind=R8) ::
@@ -65,6 +68,18 @@
       fchvisq   = 0.0e0_R8                                              !srv 11.07.99
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8) then               !srv 16.10.17
+
+*     ..compute radial gradients of ti
+         call gradc_r(nx, ny, hx, hy, vol, qz, ti, dtir)
+
+*       compute differences of OnedBsq on cell faces
+        call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
+!        wght = 1.0_R8
+!        call diff_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
+!     .    dOnedBsq(-1,-1,0,0))
+!        call diff_r(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
+!     .    dOnedBsq(-1,-1,0,1))
+
          do is = 0,ns-1                                                 !srv 12.05.11
           if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then           !srv 12.05.11
 !           is = ismain    ! 1                                  
@@ -115,11 +130,7 @@
      .                             bottomiy(ix,iy))) then
                qip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &          /bb(ix,iy,0)/bbaverage2(iy))
-     &          *(ni(ix,iy)*ti(ix,iy)/qe)*
-     &          (ti(topix(ix,iy),topiy(ix,iy))
-     &          -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &          (hy1(ix,iy)+0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &          0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))    
+     &          *(ni(ix,iy)*ti(ix,iy)/qe)*dtir(ix,iy)    
               endif
              enddo
             enddo
@@ -173,11 +184,7 @@
      &          *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
      &          -2.5e0_R8*bb(ix,iy,2)
      &          /bb(ix,iy,0)/bb(ix,iy,3)
-     &          *(ni(ix,iy)*ti(ix,iy)/qe)*
-     &          (ti(topix(ix,iy),topiy(ix,iy))
-     &          -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &          (hy1(ix,iy)+0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &          0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy))) 
+     &          *(ni(ix,iy)*ti(ix,iy)/qe)*dtir(ix,iy) 
               endif
              enddo
             enddo
@@ -258,7 +265,31 @@
      &         /sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))
      &         )*0.5e0_R8
      &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
-     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))
+     &         *dOnedBsq(ix,iy,0,1)
+cwdk computation of radial current on 'poloidal' faces
+cwdk somewhat messy interpolation of geometric factors, for exact
+cwdk cancelation of some terms in poloidal and radial current components
+              fchvisq(ix,iy,0,1) = fchvisq(ix,iy,0,1)-                  !srv 16.10.17
+     &         fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
+     &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
+     &         *tauia1(ix,iy)
+     &         *alpha1(ix,iy)
+     &         *bb(ix,iy,2)/bb(ix,iy,3)
+     &         *bb(ix,iy,0)/sqrt(bb(ix,iy,3))
+     &         +vol(leftix(ix,iy),leftiy(ix,iy))
+     &         /hx(leftix(ix,iy),leftiy(ix,iy))**2
+     &         /hy1(leftix(ix,iy),leftiy(ix,iy))
+     &         *tauia1(leftix(ix,iy),leftiy(ix,iy))
+     &         *alpha1(leftix(ix,iy),leftiy(ix,iy))
+     &         *bb(leftix(ix,iy),leftiy(ix,iy),2)
+     &         /bb(leftix(ix,iy),leftiy(ix,iy),3)
+     &         *bb(leftix(ix,iy),leftiy(ix,iy),0)
+     &         /sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))
+     &         )*0.5e0_R8
+     &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
+     &         *dOnedBsq(ix,iy,0,0)*qs(ix,iy,0)*
+     &         (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &         (hy1(ix,iy) + hy1(leftix(ix,iy),leftiy(ix,iy)))
              endif                                                      !lk 23.05.06 05.07.07 }
             enddo
            enddo
@@ -292,8 +323,7 @@
      &             rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
      &          -qipgen(ix,iy)-qipgen(bottomix(ix,iy),bottomiy(ix,iy))
      &            )*0.5e0_R8
-     &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))
-     &          -OnedBsqc(ix,iy))
+     &          *dOnedBsq(ix,iy,1,0)
               endif
              endif                                                      !lk 23.05.06 05.07.07 }
             enddo

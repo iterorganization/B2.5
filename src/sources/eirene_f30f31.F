@@ -144,9 +144,13 @@ c
         do is = 0,ns-1
          write (chns,'(i3.3)') is
          call my_out(70,nx,ny,fna(-1,-1,0,0,is),'copy_fnax'//chns)
+         call my_out(70,nx,ny,fna(-1,-1,0,1,is),'copy_fnaxy'//chns)
+         call my_out(70,nx,ny,fna(-1,-1,1,0,is),'copy_fnayx'//chns)
          call my_out(70,nx,ny,fna(-1,-1,1,1,is),'copy_fnay'//chns)
-       call my_out(70,nx,ny,fna_eir(-1,-1,0,0,is),'copy_fna_eirx'//chns)
-       call my_out(70,nx,ny,fna_eir(-1,-1,1,1,is),'copy_fna_eiry'//chns)
+      call my_out(70,nx,ny,fna_eir(-1,-1,0,0,is),'copy_fna_eirx'//chns)
+      call my_out(70,nx,ny,fna_eir(-1,-1,0,1,is),'copy_fna_eirxy'//chns)
+      call my_out(70,nx,ny,fna_eir(-1,-1,1,0,is),'copy_fna_eiryx'//chns)
+      call my_out(70,nx,ny,fna_eir(-1,-1,1,1,is),'copy_fna_eiry'//chns)
          call my_out(70,nx,ny,vaecrb(-1,-1,0,0,is),'copy_vecrbx'//chns)
          call my_out(70,nx,ny,vaecrb(-1,-1,1,1,is),'copy_vecrby'//chns)
          call my_out(70,nx,ny,wadia(-1,-1,0,0,is),'copy_wadiax'//chns)
@@ -194,7 +198,8 @@ c
       do iy=-1,ny
         do ix=0,nx
           if(rightix(ix-1,iy).ne.nx+1) then
-            feixb(ix,iy+1)=fhi(rightix(ix-1,iy),rightiy(ix-1,iy),0,0)
+            feixb(ix,iy+1)=fhi(rightix(ix-1,iy),rightiy(ix-1,iy),0,0)+
+     .                     fhi(rightix(ix-1,iy),rightiy(ix-1,iy),0,1)
             do is=0,ns-1
               kintmp =
      .         (kinrgy(rightix(ix-1,iy),rightiy(ix-1,iy),is)*
@@ -203,9 +208,11 @@ c
      .          hx(rightix(ix-1,iy),rightiy(ix-1,iy)))/
      .         (hx(ix-1,iy)+hx(rightix(ix-1,iy),rightiy(ix-1,iy)))
               feixb(ix,iy+1)=feixb(ix,iy+1)+kintmp*(1.0_R8-BoRiS)
-     .         *fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,0,is)
+     .         *(fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,0,is) + 
+     .           fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,1,is))
             enddo
-            feexb(ix,iy+1)=fhe(rightix(ix-1,iy),rightiy(ix-1,iy),0,0)
+            feexb(ix,iy+1)=fhe(rightix(ix-1,iy),rightiy(ix-1,iy),0,0)+
+     .                     fhe(rightix(ix-1,iy),rightiy(ix-1,iy),0,1)
           else
             feixb(ix,iy+1)=0.0_R8
             feexb(ix,iy+1)=0.0_R8
@@ -217,7 +224,7 @@ c
 * cell face y
       do iy=0,ny
         do ix=-1,nx
-          feiyb(ix+1,iy)=fhi(ix,iy,1,1)
+          feiyb(ix+1,iy)=fhi(ix,iy,1,0)+fhi(ix,iy,1,1)
           do is=0,ns-1
             if (bottomiy(ix,iy).ne.-2) then
               kintmp =
@@ -228,9 +235,9 @@ c
               kintmp = kinrgy(ix,iy,is)
             endif
             feiyb(ix+1,iy)=feiyb(ix+1,iy)+kintmp*(1.0_R8-BoRiS)
-     .       *fna(ix,iy,1,1,is)
+     .       *(fna(ix,iy,1,0,is)+fna(ix,iy,1,1,is))
           enddo
-          feeyb(ix+1,iy)=fhe(ix,iy,1,1)
+          feeyb(ix+1,iy)=fhe(ix,iy,1,0)+fhe(ix,iy,1,1)
         enddo
       enddo
       feiyb(:,ny+1)=0.0_R8
@@ -426,7 +433,8 @@ c     internal cell -> full diamagnetic drift
               if(rightix(ix-1,iy).ne.nx+1) then
                if(leftix(ix,iy).ne.-2) then
                   fnixb(ix,iy+1,nflai)=
-     1             fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,0,is)
+     1             fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,0,is)+
+     2             fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,1,is)
                else
                  fnixb(ix,iy+1,nflai)=0.0_R8
                endif
@@ -440,7 +448,7 @@ c     internal cell -> full diamagnetic drift
           do iy=0,ny
             do ix=-1,nx
               if(bottomiy(ix,iy).ne.-2) then
-                fniyb(ix+1,iy,nflai)=fna(ix,iy,1,1,is)
+                fniyb(ix+1,iy,nflai)=fna(ix,iy,0,1,is)+fna(ix,iy,1,1,is)
               else
                 fniyb(ix+1,iy,nflai)=0.0_R8
               endif

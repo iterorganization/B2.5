@@ -57,8 +57,10 @@
      *   fnac(-1:nx,-1:ny,0:1,0:ns-1), vntrc(-1:nx,-1:ny,0:1),            !srv 08.07.09
      *   vntrl(-1:nx,-1:ny), vntrb(-1:nx,-1:ny),
      *   til(-1:nx,-1:ny), tib(-1:nx,-1:ny),
-     *   fnan(-1:nx,-1:ny,0:1,0:ns-1), work(-1:nx,-1:ny,0:1,0:ns-1),
-     *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1)
+     *   fnan(-1:nx,-1:ny,0:1,0:1,0:ns-1), work(-1:nx,-1:ny,0:1,0:ns-1),
+     *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1),
+     *   wght(-1:nx,-1:ny), wrk0(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     *   wrk1(-1:nx,-1:ny,0:1,0:1), dpo(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) ::
      &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), 
      &   csigia(-1:nx,-1:ny,0:1,0:1),                                     !srv 15.02.11
@@ -161,31 +163,40 @@
 *   ..interpolate ti in the left and bottom cell face
             call intfaceh(nx, ny, leftix, leftiy, vol, ti, til)
             call intfacev(nx, ny, bottomix, bottomiy, vol, ti, tib)
+*   ..pre-computation of differences
+            wght = 1.0e0_R8
+            call diff(nx, ny, hx, hy, wght, qs, po,   dpo)
+            call diff(nx, ny, hx, hy, wght, qs, log(na(-1,-1,ismain)), 
+     &        wrk0(-1,-1,0,0,ismain))
+            call diff(nx, ny, hx, hy, wght, qs, ti, wrk1)
           else
 *   ..interpolate na in the left and bottom cell face
            call intfaceh(nx, ny, leftix, leftiy, vol,
      *                 na(-1,-1,ismain), nal(-1,-1,ismain))
            call intfacev(nx, ny, bottomix, bottomiy, vol,
      &                 na(-1,-1,ismain), nab(-1,-1,ismain))
+*   ..pre-computation of differences
+            wght = 1.0e0_R8
+            call diff(nx, ny, hx, hy, wght, qs, po,   dpo)
+            call diff(nx, ny, hx, hy, wght, qs, na(-1,-1,ismain)*ti, 
+     &        wrk0(-1,-1,0,0,ismain))
           endif
 *       X-COMPONENT OF ION-NEUTRAL CURRENT
-*      ..get fluxes divided by area
+*      ..get fluxes divided by area, in cell centre
           do iy=-1,ny
             do ix=-1,nx
               if(leftix(ix,iy).ne.-2) then
-                fnan(ix,iy,0,ismain0)=pfluxa(ix+1,iy+1,iamain,1) !/gs(ix,iy,0)
+                fnac(ix,iy,0,ismain0)=pfluxa(ix+1,iy+1,iamain,1) !/gs(ix,iy,0)
               else
-                fnan(ix,iy,0,ismain0)=0.0_R8
+                fnac(ix,iy,0,ismain0)=0.0_R8
               endif
               if(bottomiy(ix,iy).ne.-2) then
-                fnan(ix,iy,1,ismain0)=rfluxa(ix+1,iy+1,iamain,1) !/gs(ix,iy,1)
+                fnac(ix,iy,1,ismain0)=rfluxa(ix+1,iy+1,iamain,1) !/gs(ix,iy,1)
               else
-                fnan(ix,iy,1,ismain0)=0.0_R8
+                fnac(ix,iy,1,ismain0)=0.0_R8
               endif
             enddo
           enddo
-*       ..get fluxes in the cell centre
-          fnac(:,:,:,ismain0) = fnan(:,:,:,ismain0)
 
 !!! These mapping routines seems to be not necessary here, since [rp]flux[am]
 !!! comes already in cell centers                         ! IYS 27.01.2017
@@ -201,23 +212,32 @@
 
 *      ..interpolate fluxes in the cell face
           call intfaceh(nx,ny,leftix,leftiy,vol,fnac(-1,-1,1,ismain0),
-     &                                        fnan(-1,-1,0,ismain0))
+     &                                        fnan(-1,-1,0,0,ismain0))
+          call intfaceh(nx,ny,leftix,leftiy,vol,fnac(-1,-1,0,ismain0),
+     &                                        fnan(-1,-1,0,1,ismain0))
           if(style.eq.0) then
             do iy=0,ny-1
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2) then
                   fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
      &              csigin(ix,iy,0,0,ismain,ismain0)*(
-     &            ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
-     &              -(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
-     &               +til(ix,iy)*(log(na(ix,iy,ismain))-
-     &                    log(na(leftix(ix,iy),leftiy(ix,iy),ismain))))/
+     &            ( -dpo(ix,iy,0,0)
+     &              -(wrk1(ix,iy,0,0) + 
+     &                til(ix,iy)*wrk0(ix,iy,0,0,ismain))/
      &                     (qe*rza(ix,iy,ismain)) )*
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
-     &           +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
+     &         +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,0,ismain0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
 !     &           +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
+                  fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
+     &              csigin(ix,iy,0,1,ismain,ismain0)*(
+     &              -dpo(ix,iy,0,1)
+     &              -(wrk1(ix,iy,0,1) + 
+     &                til(ix,iy)*wrk0(ix,iy,0,1,ismain))/
+     &                     (qe*rza(ix,iy,ismain)) )
+     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,2)*fnan(ix,iy,0,1,ismain0)*
+     &              (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
              enddo
            enddo
@@ -227,17 +247,22 @@
                 if(leftix(ix,iy).ne.-2) then
                   fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
      &              csigin(ix,iy,0,0,ismain,ismain0)*(
-     &             ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
-     &               -(na(ix,iy,ismain)*ti(ix,iy)-
-     &              na(leftix(ix,iy),leftiy(ix,iy),ismain)*
-     &              ti(leftix(ix,iy),leftiy(ix,iy)))/
+     &             ( -dpo(ix,iy,0,0)
+     &               -wrk0(ix,iy,0,0,ismain)/
      &              (nal(ix,iy,ismain)*qe*rza(ix,iy,ismain)) )*
      &              (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                                                      )
-     &           +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
+     &         +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,0,ismain0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
 !     &           +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
+                  fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
+     &              csigin(ix,iy,0,1,ismain,ismain0)*(
+     &              -dpo(ix,iy,0,1)
+     &              -wrk0(ix,iy,0,1,ismain)/
+     &              (nal(ix,iy,ismain)*qe*rza(ix,iy,ismain)) )
+     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,2)*fnan(ix,iy,0,1,ismain0)*
+     &              (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
               enddo
             enddo
@@ -250,20 +275,18 @@
 
 *      ..interpolate fluxes in the cell face
           call intfacev(nx, ny, bottomix, bottomiy, vol,
-     &                   fnac(-1,-1,0,ismain0), fnan(-1,-1,1,ismain0))
+     &                   fnac(-1,-1,0,ismain0), fnan(-1,-1,1,1,ismain0))
           if(style.eq.0) then
             do iy=0,ny
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then
                   fchin(ix,iy,1,1)=fchin(ix,iy,1,1)+
      &              csigin(ix,iy,1,1,ismain,ismain0)*(
-     &            -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
-     &            -(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy))+
-     &              tib(ix,iy)*(log(na(ix,iy,ismain))-
-     &                  log(na(bottomix(ix,iy),bottomiy(ix,iy),ismain)))
-     &              )/(qe*rza(ix,iy,ismain))
+     &            - dpo(ix,iy,1,1)
+     &            -(wrk1(ix,iy,1,1)+tib(ix,iy)*wrk0(ix,iy,1,1,ismain))/
+     &              (qe*rza(ix,iy,ismain))
      &                                                      )
-     &          - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &       - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -276,13 +299,11 @@
                 if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then
                   fchin(ix,iy,1,1)=fchin(ix,iy,1,1)+
      &              csigin(ix,iy,1,1,ismain,ismain0)*(  ! csigia(ix,iy,1,1)*(
-     &            -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
-     &            -(na(ix,iy,ismain)*ti(ix,iy)-
-     &                      na(bottomix(ix,iy),bottomiy(ix,iy),ismain)*
-     &                      ti(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &            - dpo(ix,iy,1,1)
+     &            - wrk0(ix,iy,1,1,ismain)/
      &             (nab(ix,iy,ismain)*qe*rza(ix,iy,ismain))
      &                                                      )
-     &          - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -304,12 +325,15 @@
         else
 *   ..extensive tests on first few calls
           if (ncall.lt.3) then
-*    ..test sign of ne, te, csigin, chce
+*    ..test sign of ne, te, chce
             call b2xvsg (n2, te, 1, 'te', '.gt.')
-            call b2xvsg (n2*4*ns*ns, csigin, 1, 'csigin', '.ge.')
-*    ..test edge values of csigin
+*    ..test edge values and sign of csigin
             do is = 0, ns-1
               do is0 = 0, ns-1
+                call b2xvsg (n2, csigin(-1,-1,0,0,is,is0), 'csigin', 
+     .            '.ge.')
+                call b2xvsg (n2, csigin(-1,-1,1,1,is,is0), 'csigin',
+     .            '.ge.')
                 call b2xvff (nx, ny, csigin(-1,-1,0,0,is,is0), 'csigin')
               enddo
             enddo
@@ -318,6 +342,14 @@
 *   ..interpolate ti in the left and bottom cell face
             call intfaceh(nx, ny, leftix, leftiy, vol, ti, til)
             call intfacev(nx, ny, bottomix, bottomiy, vol, ti, tib)
+*   ..pre-computation of differences
+            wght = 1.0e0_R8
+            call diff(nx, ny, hx, hy, wght, qs, po,   dpo)
+            do is = 0, ns-1
+              call diff(nx, ny, hx, hy, wght, qs, log(na(-1,-1,is)), 
+     &          wrk0(-1,-1,0,0,is))
+            enddo
+            call diff(nx, ny, hx, hy, wght, qs, ti, wrk1)
           else
 *   ..interpolate na in the left and bottom cell face
             do is = 0, ns-1
@@ -325,7 +357,12 @@
      *                    na(-1,-1,is), nal(-1,-1,is))
               call intfacev(nx, ny, bottomix, bottomiy, vol,
      &                    na(-1,-1,is), nab(-1,-1,is))
+*   ..pre-computation of differences
+              wght = 1.0e0_R8
+              call diff(nx, ny, hx, hy, wght, qs, na(-1,-1,is)*ti, 
+     &          wrk0(-1,-1,0,0,is))
             enddo
+            call diff(nx, ny, hx, hy, wght, qs, po,   dpo)
           endif
 *   ..calculate the contribution of ion-neutral current
           fchin = 0.0e0_R8
@@ -337,21 +374,22 @@
               do iy=-1,ny
                 do ix=-1,nx
                   if(leftix(ix,iy).ne.-2) then
-                    fnan(ix,iy,0,is0)=fna(ix,iy,0,0,is0)/gs(ix,iy,0)
+                    fnan(ix,iy,0,0,is0)=fna(ix,iy,0,0,is0)/gs(ix,iy,0)
                     if (area_fix.ge.1)
-     >               fnan(ix,iy,0,is0)=fna(ix,iy,0,0,is0)/qc(ix,iy,0)
+     >               fnan(ix,iy,0,0,is0)=fnan(ix,iy,0,0,is0)/qc(ix,iy,0)
                   else
-                    fnan(ix,iy,0,is0)=0.0_R8
+                    fnan(ix,iy,0,0:1,is0)=0.0_R8
                   endif
                   if(bottomiy(ix,iy).ne.-2) then
-                    fnan(ix,iy,1,is0)=fna(ix,iy,1,1,is0)/gs(ix,iy,1)
+                    fnan(ix,iy,1,1,is0)=fna(ix,iy,1,1,is0)/gs(ix,iy,1)
                   else
-                    fnan(ix,iy,1,is0)=0.0_R8
+                    fnan(ix,iy,1,1,is0)=0.0_R8
                   endif
                 enddo
               enddo
 *       ..get fluxes in the cell centre
-              fnac(:,:,:,is0) = fnan(:,:,:,is0)
+              fnac(:,:,0,is0) = fnan(:,:,0,0,is0)
+              fnac(:,:,1,is0) = fnan(:,:,1,1,is0)
               call mapx(nx,ny,1, fnac(-1,-1,0,is0), work(-1,-1,0,is0))
               call mapy(nx,ny,1, fnac(-1,-1,1,is0), work(-1,-1,1,is0))
 *      ..get velocities in the cell centre
@@ -360,6 +398,8 @@
 *      ..interpolate velocities in the cell face
               call intfaceh(nx,ny,leftix,leftiy,vol,vntrc(-1,-1,0),
      &                                                         vntrl)
+              call intfaceh(nx,ny,leftix,leftiy,vol,vntrc(-1,-1,1),
+     &                                                         vntrb)
               do is = 0, ns-1
 !                if (.not.is_neutral(is)) then
                 if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then       !srv 20.10.17
@@ -369,14 +409,21 @@
                         if(leftix(ix,iy).ne.-2) then
                           fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
      &                        csigin(ix,iy,0,0,is,is0)*(                    !srv 24.06.08
-     &                    ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
-     &                       -(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
-     &                      +til(ix,iy)*(log(na(ix,iy,is))-
-     &                        log(na(leftix(ix,iy),leftiy(ix,iy),is))))/
+     &                    ( -dpo(ix,iy,0,0)
+     &                      -(wrk1(ix,iy,0,0)
+     &                      +til(ix,iy)*wrk0(ix,iy,0,0,is))/
      &                      (qe*rza(ix,iy,is)) )*
      &                     (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                      +wbbl(ix,iy,2)*vntrl(ix,iy)*(hx(ix,iy)+
      &                       hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8 )
+                          fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
+     &                        csigin(ix,iy,0,1,is,is0)*(
+     &                      -dpo(ix,iy,0,1)
+     &                      -(wrk1(ix,iy,0,1) + 
+     &                       til(ix,iy)*wrk0(ix,iy,0,1,is))/
+     &                      (qe*rza(ix,iy,is)) 
+     &                      -wbbl(ix,iy,2)*vntrb(ix,iy)*(hy1(ix,iy)+
+     &                       hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8 )
                         endif
                       enddo
                     enddo
@@ -386,14 +433,19 @@
                         if(leftix(ix,iy).ne.-2) then
                           fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
      &                        csigin(ix,iy,0,0,is,is0)*(                    !srv 24.06.08
-     &                    ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
-     &                      -(na(ix,iy,is)*ti(ix,iy)-
-     &                        na(leftix(ix,iy),leftiy(ix,iy),is)*
-     &                        ti(leftix(ix,iy),leftiy(ix,iy)))/
+     &                    ( -dpo(ix,iy,0,0)
+     &                      -wrk0(ix,iy,0,0,is)/
      &                       (nal(ix,iy,is)*qe*rza(ix,iy,is)) )*
      &                       (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                       +wbbl(ix,iy,2)*vntrl(ix,iy)*(hx(ix,iy)+
      &                      hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8 )
+                          fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
+     &                        csigin(ix,iy,0,1,is,is0)*(
+     &                      -dpo(ix,iy,0,1)
+     &                      -wrk0(ix,iy,0,1,is)/
+     &                      (nal(ix,iy,is)*qe*rza(ix,iy,is)) 
+     &                      -wbbl(ix,iy,2)*vntrb(ix,iy)*(hy1(ix,iy)+
+     &                       hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8 )
                         endif
                       enddo
                     enddo
@@ -414,10 +466,9 @@
      &                     rightix(ix,iy).ne.nx+1) then
                           fchin(ix,iy,1,1)=fchin(ix,iy,1,1)+
      &                      csigin(ix,iy,1,1,is,is0)*(
-     &                  -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
-     &                  -(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy))+
-     &                    tib(ix,iy)*(log(na(ix,iy,is))-
-     &                    log(na(bottomix(ix,iy),bottomiy(ix,iy),is))))/
+     &                  -dpo(ix,iy,1,1)
+     &                  -(wrk1(ix,iy,1,1)+
+     &                    tib(ix,iy)*wrk0(ix,iy,1,1,is))/
      &                   (qe*rza(ix,iy,is))-wbbv(ix,iy,2)*vntrb(ix,iy)*   !srv 11.01.13
      &                   (hy1(ix,iy)+
      &                    hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
@@ -431,10 +482,8 @@
      &                     rightix(ix,iy).ne.nx+1) then
                           fchin(ix,iy,1,1)=fchin(ix,iy,1,1)+
      &                   csigin(ix,iy,1,1,is,is0)*(
-     &                  -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
-     &                  -(na(ix,iy,is)*ti(ix,iy)-
-     &                      na(bottomix(ix,iy),bottomiy(ix,iy),is)*
-     &                      ti(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &                  -dpo(ix,iy,1,1)
+     &                  -wrk0(ix,iy,1,1,is)/
      &                   (nab(ix,iy,is)*qe*rza(ix,iy,is))
      &                  - wbbv(ix,iy,2)*vntrb(ix,iy)*(hy1(ix,iy)          !srv 11.01.13
      &                   +hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
@@ -476,8 +525,8 @@
      &                                      'b2tinnt_csiginx')
        call my_out(70,nx,ny,csigin(-1,-1,1,1,ismain,ismain0),
      &                                      'b2tinnt_csiginy')
-       call my_out(70,nx,ny,fnan(-1,-1,0,ismain0),'b2tinnt_fnanx')
-       call my_out(70,nx,ny,fnan(-1,-1,1,ismain0),'b2tinnt_fnany')
+       call my_out(70,nx,ny,fnan(-1,-1,0,0,ismain0),'b2tinnt_fnanx')
+       call my_out(70,nx,ny,fnan(-1,-1,1,1,ismain0),'b2tinnt_fnany')
        call my_out(70,nx,ny,fchin(-1,-1,0,0),'b2tinnt_fchinx')
        call my_out(70,nx,ny,fchin(-1,-1,1,1),'b2tinnt_fchiny')
 !       call my_out(70,nx,ny,vntrc(-1,-1,0),'b2tinnt_vntrcx')

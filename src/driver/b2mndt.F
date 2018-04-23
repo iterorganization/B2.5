@@ -323,13 +323,13 @@ ctmp.dpc
           if(style.ne.0) then                                            !srv 18.06.08 {
             call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po,
      &                    fchanml)                                       !srv 20.09.06 }
-            call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,  !srv 20.09.06 {
-     &                    fac_vis, fchvispar)
+            call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua,       !srv 20.09.06 {
+     &                    cvsa_cl, fac_vis, fchvispar)
             call b2tiner (nx, ny, ns, vol,
-     &                    gs, hx, hy, bb, na, ua, facdrift, fchinert)
+     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
 !            call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,     !srv 10.10.17
 !     &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!            call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,      !srv 10.10.17
+!            call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,  !srv 10.10.17
 !     &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
           endif                                                          !srv 18.06.08 }
           src_ni=0.0_R8
@@ -510,8 +510,8 @@ ctmp.dpc
      &          .false.)                                                 !djm Jan2017
            end do
 *      ..compute electron drift velocities
-           call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &      te, po, vedia, veecrb)
+           call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc,
+     &      qs, bb, te, po, vedia, veecrb)
 *      ..compute other fluxes
            call b2xpen (nx, ny, ns,
      1      fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,

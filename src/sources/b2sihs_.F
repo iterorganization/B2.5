@@ -69,7 +69,8 @@
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
      &  phm4, phm5, phm6, wrk0(-1:nx,-1:ny),                          !srv 02.06.99
      &  phm7, phm8, wrk1(-1:nx,-1:ny),                                !srv 28.08.02
-     &  dpo(-1:nx,-1:ny,0:1), dOnedBsq(-1:nx,-1:ny,0:1)               !srv 03.04.07
+     &  dpo(-1:nx,-1:ny,0:1,0:1), dOnedBsq(-1:nx,-1:ny,0:1,0:1),      !srv 03.04.07
+     &  wght(-1:nx,-1:ny)
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8               !lk 31.01.08 {
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)!lk 31.01.08 }
       real (kind=R8) :: 
@@ -328,32 +329,13 @@
       endif
       call b2saxpy (n2*4, 1.0e0_R8, shidu, 1, shi0, 1)                !srv 11.09.09
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
-      dpo = 0.0e0_R8;   dOnedBsq = 0.0e0_R8                           !srv 03.04.07 {
-      do iy = 0, ny-1
-        do ix = 0, nx
-          if(leftix(ix,iy).ne.-2) then
-            dpo(ix,iy,0) =
-     &         (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))/
-     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-            dOnedBsq(ix,iy,0) =
-     &       (OnedBsq(ix,iy) - OnedBsq(leftix(ix,iy),leftiy(ix,iy)))/
-     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-          endif
-        enddo
-      enddo
-
-      do iy = 0, ny
-       do ix = -1, nx
-        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-          dpo(ix,iy,1) =
-     &     (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
-          dOnedBsq(ix,iy,1) =
-     &    (OnedBsq(ix,iy) - OnedBsq(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
-        endif
-       enddo
-      enddo
+      wght = 1.0_R8
+      call grad(nx, ny, hx, hy, wght, qz, qs, po,   dpo)
+      call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
+!      call grad_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
+!     .  dOnedBsq(-1,-1,0,0))
+!      call grad_r(nx,ny, 1, hx, hy, wght, qz, qs, OnedBsq, OnedBsqc, 
+!     .  dOnedBsq(-1,-1,0,1))
 
       b2exbe=0.0_R8
       b2sihs_exbe=0.0_R8
@@ -371,10 +353,11 @@
 !     &       OnedBsq(bottomix(ix,iy),bottomiy(ix,iy)))
 !     &                                                )*0.25e0_R8*signmf !srv 21.04.00
          wrk0(ix,iy) = bb(ix,iy,2)*vol(ix,iy)*                        !srv 11.01.13
-     &   ((dpo(ix,iy,1)+dpo(topix(ix,iy),topiy(ix,iy),1))*
-     &   (dOnedBsq(ix,iy,0)+dOnedBsq(rightix(ix,iy),rightiy(ix,iy),0)) -
-     &    (dpo(ix,iy,0)+dpo(rightix(ix,iy),rightiy(ix,iy),0))*
-     &   (dOnedBsq(ix,iy,1)+dOnedBsq(topix(ix,iy),topiy(ix,iy),1)))
+     &   ((dpo(ix,iy,1,1)+dpo(topix(ix,iy),topiy(ix,iy),1,1))*
+     &   (dOnedBsq(ix,iy,0,0)+
+     &    dOnedBsq(rightix(ix,iy),rightiy(ix,iy),0,0)) -
+     &    (dpo(ix,iy,0,0)+dpo(rightix(ix,iy),rightiy(ix,iy),0,0))*
+     &   (dOnedBsq(ix,iy,1,1)+dOnedBsq(topix(ix,iy),topiy(ix,iy),1,1)))
      &    *0.25e0_R8 ! *signmf                                        !srv 11.01.13 03.04.07 }
          t0 = phm5*fac_ExB(ix,iy)*wrk0(ix,iy)                         !srv 07.06.00 02.06.99
          shedd(ix,iy,0) = shedd(ix,iy,0)+

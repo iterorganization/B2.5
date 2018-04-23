@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tiner (nx, ny, ns, vol, gs, hx, hy, bb, na, ua,    !srv 20.09.06 {
+      subroutine b2tiner (nx, ny, ns, vol, gs, hx, hy, qs, bb, na, ua,!srv 20.09.06 {
      &                    facdrift, fchinert)                         !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
@@ -17,7 +17,8 @@
      & vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      & na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     1 bb(-1:nx,-1:ny,0:3), facdrift(-1:nx,-1:ny)                     !srv 22.06.08
+     1 bb(-1:nx,-1:ny,0:3), facdrift(-1:nx,-1:ny),                    !srv 22.06.08
+     & qs(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &     fchinert(-1:nx,-1:ny,0:1,0:1)
@@ -43,7 +44,7 @@
       integer, save :: no_current = 0
       integer, save :: guard_flows
       real (kind=R8) ::
-     &  fch_inert
+     &  fch_inert, wght(-1:nx,-1:ny), dOnedBsq(-1:nx,-1:ny,0:1,0:1)
       save ncall, fch_inert
 *   ..procedures
       intrinsic max, abs
@@ -75,6 +76,13 @@ c Drift terms
       fchinert =0.0e0_R8
       if(fch_inert.ne.0.0e0_R8.and.maxval(facdrift).ne.0.0_R8.and.
      .   no_current.eq.0)then                                            !srv 07.07.99
+*       compute differences of OnedBsq on cell faces
+        call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
+        wght = 1.0_R8
+!        call diff_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
+!     .    dOnedBsq(-1,-1,0,0))
+!        call diff_r(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
+!     .    dOnedBsq(-1,-1,0,1))
         if(fch_inert_style.eq.0) then	
          do is = 0, ns-1                                                 !srv 07.07.99
 	  if (.not.is_neutral(is)) then                                  !srv 07.07.99
@@ -90,7 +98,22 @@ c Drift terms
      &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8   !srv 07.07.99
      &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))            !srv 07.07.99
      &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))          !srv 07.07.99
-     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv 07.07.99
+     &         *dOnedBsq(ix,iy,0,1)                                      !srv 07.07.99
+cwdk computation of radial current on 'poloidal' faces
+cwdk somewhat messy interpolation of geometric factors, for exact
+cwdk cancelation of some terms in poloidal and radial current components
+               fchinert(ix,iy,0,1)=fchinert(ix,iy,0,1)
+     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*
+     &          facdrift(ix,iy)*
+     &          (ua(ix,iy,is)**2+ua(leftix(ix,iy),leftiy(ix,iy),is)**2)
+     &         *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
+     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8
+     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))*
+     &         (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &         (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &         qs(ix,iy,0)
+     &         *dOnedBsq(ix,iy,0,0)
 	       endif                                                     !srv 26.11.02
              enddo							 !srv 07.07.99
            enddo							 !srv 07.07.99 
@@ -109,8 +132,7 @@ c Drift terms
      &          /2.0e0_R8                                                !srv 07.07.99
      &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))       !srv 07.07.99
      &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
-     &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-
-     &            OnedBsqc(ix,iy))                                       !srv 07.07.99
+     &          *dOnedBsq(ix,iy,1,0)                                     !srv 07.07.99
 	       endif                                                     !srv 26.11.02
              enddo							 !srv 07.07.99
            enddo							 !srv 07.07.99
@@ -132,7 +154,23 @@ c Drift terms
      &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8   !srv 07.07.99
      &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))            !srv 07.07.99
      &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))          !srv 07.07.99
-     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv 07.07.99
+     &         *dOnedBsq(ix,iy,0,1)                                      !srv 07.07.99
+cwdk computation of radial current on 'poloidal' faces
+cwdk somewhat messy interpolation of geometric factors, for exact
+cwdk cancelation of some terms in poloidal and radial current components
+               fchinert(ix,iy,0,1)=fchinert(ix,iy,0,1)
+     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*
+     &          facdrift(ix,iy)*
+     &          (ua(ix,iy,is)**2*na(ix,iy,is)+
+     &           ua(leftix(ix,iy),leftiy(ix,iy),is)**2*
+     &          na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
+     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8
+     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))*
+     &         (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &         (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &         qs(ix,iy,0)
+     &         *dOnedBsq(ix,iy,0,0)
 	       endif                                                     !srv 26.11.02
              enddo							 !srv 07.07.99
            enddo							 !srv 07.07.99 
@@ -149,8 +187,7 @@ c Drift terms
      &          /2.0e0_R8                                                !srv 07.07.99
      &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))       !srv 07.07.99
      &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
-     &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-
-     &            OnedBsqc(ix,iy))                                       !srv 07.07.99
+     &          *dOnedBsq(ix,iy,1,0)                                     !srv 07.07.99
 	       endif                                                     !srv 26.11.02
              enddo							 !srv 07.07.99
            enddo							 !srv 07.07.99

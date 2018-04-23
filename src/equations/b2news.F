@@ -329,13 +329,13 @@
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
         endif                                                            !xpb
         call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml) !srv 20.09.06 }
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
+        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,  !srv 20.09.06 {
      &                       fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,
-     &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
 !        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,         !srv 10.10.17
 !     &          po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,     !srv 10.10.17
+!        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb, ne2, !srv 10.10.17
 !     &               lnlam, te, ti, ni, chci, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
@@ -371,8 +371,8 @@
      2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),.true.)              !djm Jan2017
         enddo
 *      ..compute electron drift velocities
-        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &    te, po, vedia, veecrb)
+        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc, qs, 
+     &    bb, te, po, vedia, veecrb)
 *     ..re-compute source linearisation                                  !xpb
         call b2sral (nx, ny, ns, nxtl, nxtr,
      &    nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
@@ -455,13 +455,13 @@ cxpb
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
         call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml) !srv 20.09.06 }
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
+        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,  !srv 20.09.06 {
      &                       fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,
-     &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
 !        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy,  qz, bb,        !srv 10.10.17
 !     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
+!        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,      !srv 10.10.17
 !     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
@@ -622,8 +622,8 @@ cxpb
      &          'Before potential loop: fna(ions) at plates')
         endif
 *      ..compute electron drift velocities
-        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &    te, po, vedia, veecrb)
+        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc, qs, 
+     &    bb, te, po, vedia, veecrb)
 *   ..re-compute ne, ni
         call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
         call nancheck(nx, ny, ne, 'b2news(ne): after call to b2xpne')
@@ -669,7 +669,7 @@ cxpb
      >         write(*,*) 'b2news [a][32|52] ',
      1         maxval(abs(fna-fna_32-fna_52)), maxval(abs(fna))
               call b2tfed (nx, ny, facdrift, fac_ExB,
-     &         vol, hx, hy, qz, bb,
+     &         vol, hx, hy, qz, qc, qs, bb,
      &         te, po, vedia, veecrb)
               call b2tfch (nx, ny, ns, ismain, ismain0,
      1         guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,           !xpb
@@ -887,8 +887,8 @@ c     with diamagnetic drift part                                        !xpb
      >   write(*,*) 'b2news [a][32|52] ',
      1   maxval(abs(fna-fna_32-fna_52)), maxval(abs(fna))
 *   ..compute heat fluxes
-        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &   te, po, vedia, veecrb)
+        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc, qs,
+     &   bb, te, po, vedia, veecrb)
         call b2tfch (nx, ny, ns, ismain, ismain0,
      1   guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,                 !xpb
      1   vol, gs, hx, hy, qz, qc, qs, bb, te, po, ne, ne2, lnlam, pz,    !xpb

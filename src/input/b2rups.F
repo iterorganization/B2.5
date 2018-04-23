@@ -22,7 +22,7 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
@@ -374,8 +374,13 @@
         call b2xpne (nx, ny, ns, rza, na, zero, ne)
       endif
       call cfrure (nget, n2*ns, ua, 'ua')
-      if(b2fstat_version.ge.'01.001.000') then                  !xpb
-        call cfrure (nget, n2*2*ns, uadia, 'uadia')             !xpb
+      if(b2fstat_version.ge.'03.001.000') then
+        call cfrure (nget, n2*4*ns, uadia, 'uadia')
+      elseif(b2fstat_version.ge.'01.001.000') then              !xpb
+        call cfrure (nget, n2*2*ns, flocs, 'uadia')
+        uadia = 0.0_R8
+        uadia(:,:,0,0,:) = flocs(:,:,0,:)
+        uadia(:,:,1,1,:) = flocs(:,:,1,:)
       else                                                      !dpc
         uadia=0.0_R8                                            !dpc
       endif                                                     !xpb
@@ -428,7 +433,7 @@
       else
         do is = 0, ns-1
           kinrgy(:,:,is)=0.5_R8*am(is)*mp*
-     .     (ua(:,:,is)**2+uadia(:,:,0,is)**2+uadia(:,:,1,is)**2)
+     .     (ua(:,:,is)**2+uadia(:,:,0,0,is)**2+uadia(:,:,1,1,is)**2)
         enddo
       endif
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')

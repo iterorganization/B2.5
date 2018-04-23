@@ -3,7 +3,7 @@
 
       subroutine b2stbc (nx, ny, ns, ismain, ismain0, 
      &  BoRiS, facdrift, fac_ExB,                                        !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !xpb !srv 09.01.01
+     &  vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, pbshz, bb,                !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
@@ -37,7 +37,8 @@
      &  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),       !srv 09.01.01
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1)
+     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1),
+     &  qs(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), kinrgy(-1:nx,-1:ny,0:ns-1),
@@ -409,7 +410,7 @@
 
         if(ncall.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nx, ny, ns, ismain, ismain0,
-     1   BoRiS, facdrift, fac_ExB, vol, crx, hx, hy, hz, qz, qc, gs,     !srv 24.08.08
+     1   BoRiS, facdrift, fac_ExB, vol, crx, hx, hy, hz, qz, qc, qs, gs, !srv 24.08.08
      1   pbs, pbshz, bb, na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      2   te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc, fna, fna_mdf,   !srv 28.10.02
      1   fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,        !srv 13.10.06

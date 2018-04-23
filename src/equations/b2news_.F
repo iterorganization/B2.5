@@ -280,6 +280,7 @@ csw 26feb2014 some extra variables
       rxf0 = rxf*xfm0
       rxf1 = rxf*xfm1
       rxf2 = 1.0e0_R8 ! (rxf*xfm2)**0.2e0_R8                             !srv 15.01.03
+      if (rxf .eq. 0.0e0_R8) rxf2 = 0.0e0_R8
       rxf3 = rxf*xfm3
 
 csw 01oct2012 initialize potential if necessary
@@ -311,13 +312,13 @@ csw 01oct2012 initialize potential if necessary
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl)                           !srv 09.01.01 15.12.05
       call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml)   !srv 20.09.06  }
-      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,        !srv 20.09.06  {
+      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,    !srv 20.09.06  {
      &                       fac_vis, fchvispar)
       call b2tiner (nx, ny, ns, vol,
-     &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
 !      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
 !     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
+!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb, ne2,   !srv 10.10.17
 !     &             lnlam, te, ti, ni, chci, fchvisq)
 
 *   ..iterate on momentum balance
@@ -356,8 +357,8 @@ csw 01oct2012 initialize potential if necessary
      &   .true.)                                                         !djm Jan2017
         enddo                                                            !srv 01.10.99
 *      ..compute electron drift velocities
-        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &   te, po, vedia, veecrb)
+        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc, qs, 
+     &   bb, te, po, vedia, veecrb)
 !      end if                                                            !srv 01.10.99
 
 csw 10dec2012: added extra call if wanted/not-wanted (SOLPS4 has an
@@ -481,10 +482,10 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
       call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
       call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml)   !srv 20.09.06 }
-      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,        !srv 20.09.06 {
+      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,    !srv 20.09.06 {
      &                       fac_vis, fchvispar)
       call b2tiner (nx, ny, ns, vol,
-     &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
 !      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
 !     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
 !      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
@@ -606,8 +607,8 @@ cwdk tmp: always use 9-point stencil
      &   .false.)                                                        !djm Jan2017
       enddo 
 *      ..compute electron drift velocities
-      call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &  te, po, vedia, veecrb)
+      call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc, qs,
+     &  bb, te, po, vedia, veecrb)
 
       if(iout.ne.0 .or. iout_b2npco.ne.0 .or. iout_b2npc9.ne.0           !srv 16.07.10
      &             .or. iout_b2npmo.ne.0 .or. iout_b2npht.ne.0 
@@ -666,7 +667,7 @@ cwdk tmp: always use 9-point stencil
           call b2tfhe_ (nx, ny, ns, ismain, ismain0,
      &     facdrift, fac_ExB, fac_vis,
      1     vol, gs, hx, hy, qz, qc, qs, bb, te, po, ne, ne2, lnlam, pz,  !srv 11.07.99 18.01.02 01.07.09
-     1     ti, ni(-1,-1,1), na, fna, uadia, vadia,                       !srv 17.05.99 25.01.02
+     1     ti, ni(-1,-1,1), na, fna, uadia, vedia,                       !srv 17.05.99 25.01.02
      &     ua, fne, csig, csig_cl, csigin, chce,                         !srv 17.05.99
      &     chve, chci, calf, chvemx, cvsa_cl, cdna, cdpa, cddi,          !srv 05.07.00 11.07.99 16.10.17
      &     fch, fhe, fhe_mdf, fhePSch, conc,  avisper, bvisper, cvisper, !srv 05.07.00 13.10.06
@@ -699,6 +700,7 @@ crfs       do iy = 0, ny-1
 crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
             t0 = t0+b2sasum(nx+2,respo(-1,iy),1)
            enddo
+           if (rxf2 .eq. 0.0e0_R8) t0 = 0.0e0_R8
           else
            if (vis_per.eq.0.0e0_R8) then  
             call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
@@ -718,14 +720,14 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 *   ..recompute currents
           call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po,        !srv 20.09.06 }
      &                         fchanml)
-          call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,    !srv 20.09.06 {
+          call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua,cvsa_cl, !srv 20.09.06 {
      &                         fac_vis, fchvispar)
           call b2tiner (nx, ny, ns, vol,
-     &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
+     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
 !          call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,       !srv 10.10.17
 !     &            po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!          call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,   !srv 10.10.17
-!     &                lnlam, te, ti, ni, chci, fchvisq)
+!          call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,    !srv 10.10.17
+!     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
           if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
             call b2xpro (nx, ny, ns, mp, am, na, ro)
@@ -766,8 +768,8 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &       .false.)                                                    !djm Jan2017
           enddo
 *      ..compute electron drift velocities
-          call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &      te, po, vedia, veecrb)
+          call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc,
+     &      qs, bb, te, po, vedia, veecrb)
 
           write(*,*) 'i,respo',i,t0
           call xertst (ier0.eq.0, 'error return from b2nppo')
@@ -810,7 +812,7 @@ c      with diamagnetic drift part                                       !srv 13
       call b2tfhe_ (nx, ny, ns, ismain, ismain0,
      &  facdrift, fac_ExB, fac_vis,
      1  vol, gs, hx, hy, qz, qc, qs, bb, te, po, ne, ne2, lnlam, pz,     !srv 11.07.99 18.01.02 01.07.09
-     1  ti, ni(-1,-1,1), na, fna, uadia, vadia,                          !srv 17.05.99 25.01.02
+     1  ti, ni(-1,-1,1), na, fna, uadia, vedia,                          !srv 17.05.99 25.01.02
      &  ua, fne, csig, csig_cl, csigin, chce,                            !srv
      &  chve, chci, calf, chvemx, cvsa_cl, cdna, cdpa, cddi,             !srv 05.07.00 11.07.99 16.10.17
      &  fch, fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,     !srv 05.07.00 11.07.99 13.10.06
@@ -818,7 +820,7 @@ c      with diamagnetic drift part                                       !srv 13
      &  fchvisq, fchinert, fchanml,                                      !srv 07.07.99 11.07.99 22.11.99 24.03.07
      &  .true.)                                                          !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
-      call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, qs, bb, ti,
+      call b2tfhi_(nx, ny, ns, facdrift, vol, hx, hy, qz, qc, qs, bb,ti,
      1  ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia,  !srv 17.05.99 27.12.01 25.01.02 13.10.06
      &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,              
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                               !srv 13.10.06
@@ -991,8 +993,8 @@ cwdk      need a master-switch to decide to use 9-point stencil...
         call xertst (ier0.eq.0, 'error return from b2npco')
        enddo
 *      ..compute electron drift velocities
-       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &  te, po, vedia, veecrb)
+       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc, qs, 
+     &  bb, te, po, vedia, veecrb)
       endif ! do_2nd_b2npco
 
 csw 06dec2012 finally re-evaluate particle fluxes
@@ -1028,8 +1030,8 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &   .false.)                                                        !djm Jan2017
        enddo                                                             !srv 01.10.99
 *      ..compute electron drift velocities
-       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &  te, po, vedia, veecrb)
+       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc, qs, 
+     &  bb, te, po, vedia, veecrb)
       endif                                                              !srv 28.06.13 }
 
 csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)

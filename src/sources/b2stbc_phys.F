@@ -2,7 +2,7 @@
 *.specification
       subroutine b2stbc_phys (nx, ny, ns, ismain, ismain0,
      1  BoRiS, facdrift, fac_ExB,
-     1  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, na, ua,     !srv 24.08.08
+     1  vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, pbshz, bb, na, ua, !srv 24.08.08
      1  uadia, vedia, vadia, veecrb, vaecrb,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc, fna, fna_mdf, !srv 28.10.02
      1  fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,      !srv 13.10.06
@@ -48,7 +48,8 @@
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),           !srv 24.08.08
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
      &  pbshz(-1:nx,-1:ny,0:1),
-     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1)
+     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1),
+     &  qs(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
@@ -3906,8 +3907,14 @@ cxpb  and max(,,) statement for stability
      &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
      &          hx(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*  !*signmf*bb(bc_list_x(iy,ib),bc_listy(iy,ib),2)/bb(bc_list_x(iy,ib),bc_list_y(iy,ib),3)   !srv 05.02.05
+     &     (vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is) -
      &      vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is)*
+     &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,1,is)*
+     &       qs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &          rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)/
+     &       qc(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &          rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))*
      &           cbc*          !srv 17.02.04 19.02.08
      &          (abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
      &               bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))        !srv 11.01.13
@@ -3938,7 +3945,10 @@ cxpb  and max(,,) statement for stability
      &              leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
      &          hx(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &             leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))        !*signmf*bb(bc_list_x(iy,ib),bc_list_y(iy,ib),2)/bb(bc_list_x(iy,ib),bc_list_y(iy,ib),3) !srv 05.02.05
-     &          *vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)*cbc*    !srv 17.02.04 19.02.08
+     &          *(vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is) - 
+     &            vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,1,is)*
+     &                qs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
+     &                qc(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*cbc*    !srv 17.02.04 19.02.08
      &          (abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
      &               bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))         !srv 11.01.13
                SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) =
