@@ -441,7 +441,7 @@ c     ..compare 9-pt stencil matrices
           new_matrix = new_matrix.or.
      &     solvemo(is,ireg).neqv.last_solve_9(ireg)
          end do
-         if (new_matrix) call restart_ma28_for_9
+         if (new_matrix.or..true.) call restart_ma28_for_9
 *     ..compute correction
          call b2usm9 (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
      &    vol, hx, hy, hz, qz, qs, bb, rob, pb, ua(-1,-1,is),           !srv 09.01.01
@@ -512,7 +512,7 @@ c     ..compare 9-pt stencil matrices
           new_matrix = new_matrix.or.
      &     solvemt(ireg).neqv.last_solve_9(ireg)
          end do
-         if (new_matrix) call restart_ma28_for_9
+         if (new_matrix.or..true.) call restart_ma28_for_9
 *     ..compute correction
          call b2usm9 (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,
      &    vol, hx, hy, hz, qz, qs, bb, ro, pr, wrk0, smt, flct, cvct,
