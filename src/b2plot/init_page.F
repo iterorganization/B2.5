@@ -106,7 +106,7 @@ c     the line format common
       if(noax.gt.0) then
         if(linlog.eq.1.or.linlog.eq.2) then
           logx=.false.
-          call nice(xlo,xhi,nox,noxm,fmtx,nfmtx)
+          call nice(xlo,xhi,nox,noxm,fmtx,nfmtx,nice_axes)
         else
           logx=.true.
           if(xhi.le.0.0) then
@@ -131,7 +131,7 @@ c     the line format common
 
         if(linlog.eq.1.or.linlog.eq.3) then
           logy=.false.
-          call nice(ylo,yhi,noy,noym,fmty,nfmty)
+          call nice(ylo,yhi,noy,noym,fmty,nfmty,nice_axes)
         else
           logy=.true.
           if(yhi.le.0.0) then

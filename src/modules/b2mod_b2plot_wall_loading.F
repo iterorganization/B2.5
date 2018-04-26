@@ -16,9 +16,10 @@ c
       parameter (nsptmx=3)
       integer ildparm, irdparm, lppp, nwldprt,
      ,  lwldstrt(nwldprtx), nwldlis(nwldprtx),
-     ,	jedge(ntrgsx), ltrgpos(ntrgsx), lseppos(ntrgsx), lpfrpos(ntrgsx),
+     ,  jedge(2*ntrgsx), ltrgpos(ntrgsx),
+     ,  lseppos(ntrgsx), lpfrpos(ntrgsx),
      ,  ntrgts, ntrgs,
-     ,	nadsrc, nwldrad, npumplis, ntrgsa, lnumboff, nskipel, lytg, nytg
+     ,  nadsrc, nwldrad, npumplis, ntrgsa, lnumboff, nskipel, lytg, nytg
       integer, allocatable :: indwll(:), luwrk(:), lwldrad(:),
      ,  lwldlis(:,:), leirlis(:,:), lpumplis(:)
       integer lelmind(mskipel), lskipel(mskipel), lcspwll(mskipel),
@@ -30,7 +31,7 @@ c
       real (kind=R4) :: ppp1(3,DEF_NLIM), ppp2(3,DEF_NLIM)
       real (kind=R8) :: addsrc_xy(2,nadsrcm), add_rad
       real (kind=R8), allocatable :: segm_area(:), segm_len(:),
-     ,	wldrfdst(:,:), wldrdld(:), co_data(:), wldrdlsp(:,:)
+     ,  wldrfdst(:,:), wldrdld(:), co_data(:), wldrdlsp(:,:)
       character*8 :: pltzlbl(nwldprtx)
       character mtrtrgsg(ntrgsx)*(lnwlmtrl),
      ,          lblwldpt(nwldprtx)*(mlblprtx)
@@ -78,8 +79,12 @@ c*** mtrgedge : list of segments to be linked to the target edges
 c***            if not specified, ltrgedge or jedg[io][12] are used
 c*** jedgi1   : inner edge of inner target => jedge(1)
 c*** jedgi2   : inner edge of outer target => jedge(2)
-c*** jedgo1   : outer edge of inner target => jedge(3)
-c*** jedgo2   : outer edge of outer target => jedge(4)
+c*** jedgo1   : outer edge of inner target => jedge(3) (SN) or jedge(5) (DN)
+c*** jedgo2   : outer edge of outer target => jedge(4) (SN) or jedge(6) (DN)
+c*** jedgi3   : inner edge of upper inner target => jedge(3)
+c*** jedgi4   : inner edge of upper outer target => jedge(4)
+c*** jedgo3   : outer edge of upper inner target => jedge(7)
+c*** jedgo4   : outer edge of upper outer target => jedge(8)
 c*** nytg     : number of radial cells in the target ( < ny-1 for limiter)
 c*** lytg     : starting radial cell for targets ( > 0 for limiter)
 c*** nadsrc   : actual number of additional radiation sources
@@ -113,7 +118,7 @@ c======================================================================
       allocate(lpumplis(nlim))
       allocate(wldrdlsp(nsgmx,DEF_NATM))
       allocate(segm_area(nsgmx), segm_len(nsgmx),
-     ,	wldrfdst(nsgmx,nwldprtx), wldrdld(nsgmx), co_data(nsgmx))
+     ,  wldrfdst(nsgmx,nwldprtx), wldrdld(nsgmx), co_data(nsgmx))
       allocate(mtrwldsg(nsgmx))
       lskip = .false.
 

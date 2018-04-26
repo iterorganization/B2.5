@@ -154,7 +154,12 @@
 
 *  write table of statistical errors
 
-      open (newunit=iout,file='b2ye.prt')
+#ifdef B25_EIRENE
+      iout = newunit()
+#else
+      iout = 99
+#endif
+      open (unit=iout,file='b2ye.prt')
       write (iout,'(a16,5a12)') ' variable ','mean value','t',
      .             't1','t2','eps_s'
 

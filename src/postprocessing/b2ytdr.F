@@ -6555,20 +6555,21 @@ cxpb We now rewrite the modified block 4
 cxpb Rescaling for when the extent of the nuclear sequence has changed
         do is = 1, nspecies1
           is1begin = eb2spcr1(is)+1
-          isbegin = eb2spcr(lkindp(ifl1(is1begin)))+1
+          isbegin = eb2spcr(lkindp(isp(ifl1(is1begin))))+1
           if (is.lt.nspecies1) then
             is1end = eb2spcr1(is+1)-1
           else
             is1end = ns1-1
           end if
-          if (lkindp(ifl1(is1end)).lt.nspecies) then
-            isend = eb2spcr(lkindp(ifl1(is1end))+1)-1
+          if (lkindp(isp(ifl1(is1end))).lt.nspecies) then
+            isend = eb2spcr(lkindp(isp(ifl1(is1end)))+1)-1
           else
             isend = ns-1
           end if
           if (nint(zamin1(is1begin)).ne.nint(zamin(isbegin)) .or.
      &        nint(zamax1(is1end)).ne.nint(zamax(isend))) then
-            dpld1(is1begin:is1end)=dpld1(is1begin:is1end)*
+            dpld1(ifl1(is1begin):ifl1(is1end))=
+     .       dpld1(ifl1(is1begin):ifl1(is1end))*
      .       rratio(isend-isbegin+1,is1end-is1begin+1)
           end if
         end do

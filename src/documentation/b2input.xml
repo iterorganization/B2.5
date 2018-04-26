@@ -4195,7 +4195,7 @@
 				<default>-2</default>
 				<type>integer array of length (NSTRAT)</type>
 				<description>
-					Position in the B2 grid of the of strata. Similar use as BCPOS from /BOUNDARY/ namelist.
+					Position in the B2 grid of the strata. Similar use as BCPOS from /BOUNDARY/ namelist.
 				</description>
 			</switch>
 			<switch>
@@ -5788,7 +5788,7 @@
 				<type>Real*8 array of size (0:NSPECIES-1)</type>
 				<description>
 					Factor by which the rescaling is slowed. Rescaling factor is :
-					Option 1: (1 + &alpha;*target/current) / (1 + alpha)
+					Option 1: (1 + alpha*target/current) / (1 + alpha)
 					Option 3: 2**(tanh(log(x)/beta)*log(alpha)/log(2))
 					Options 4 and 5: Corresponds to parameter F
 				</description>

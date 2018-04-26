@@ -34,7 +34,7 @@ c
         write (*,*) 'User specified',nofecls,'Eirene contour levels'
         write (*,*) 'Using customised Eirene contour levels:'
         do iclv=1,nofecls
-          eclval(iclv)=rstack(irstack-nofwcls+iclv)
+          eclval(iclv)=rstack(irstack-nofecls+iclv)
           write (*,*) 'Eirene contour level',iclv,'at',eclval(iclv)
         enddo
       endif

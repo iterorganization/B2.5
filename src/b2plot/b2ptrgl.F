@@ -436,9 +436,10 @@ c          print *,'j,js,wldnek,wldnep = ',j,js,wldnek(js,0),wldnep(js,0)
               wi(j)=0.0_R8
             end if !}
           else !}{
-            write(*,*) 'b2ptrgl: ntns.ne.ntrgts (',ntns,' vs.',ntrgts,
+            write(*,'(a,i2,a,i2,a)')
+     ,               'b2ptrgl: ntns.ne.ntrgts ( ',ntns,' vs. ',ntrgts,
      ,               ' ) - no neutral load onto the targets calculated'
-            write(*,*) '  ==> check specification of ltns in ',
+            write(*,'(2a)') '  ==> check specification of ltns in ',
      ,                               'b2.neutrals.parameters'
             wi(j)=0.0_R8
           end if !}
@@ -683,7 +684,8 @@ c*** Total power outside the strike point position and power half-width
         if(fwht_tt(j).lt.0.0_R8 .or. hwht_tt(j).lt.0.0_R8 .or.
      .                               hwhm_tt(j).lt.0.0_R8) then !{
           print *,'!!!! NEGATIVE POWER WIDTH - target ',j,' time ',tim
-          print *,'fwht,hwht,hwhm = ',fwht_tt(j),hwht_tt(j),hwhm_tt(j)
+          print '(1x,a,3(f10.5,4x))','fwht,hwht,hwhm = ',
+     ,                                fwht_tt(j),hwht_tt(j),hwhm_tt(j)
           print *,'xtg_hlp:'
           print '(1x,i3,10f10.5/(4x,10f10.5))',lseppos(j)+1,
      ,                                          (xtg_hlp(i,j),i=0,ny-1)
@@ -1024,11 +1026,6 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
 #endif
         end if 
         
-        if (do_sput(j)) then
-          nclm_er=2+3*natmi+nspecies+2*ntrgts+2*nmoli
-        else
-          nclm_er=2+3*natmi+nspecies+2*nmoli
-        endif
         l=1
 	do ia=1,natmi
           fpt_str(1+3*(ia-1))=trim(TEXTA(ia))//'_flux_atm'
@@ -1061,6 +1058,11 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           jj=j
           if(j.eq.ntrgts) jj=ntrgsx
           open(lun,file=ftrg(jj,2))
+          if (do_sput(j)) then
+            nclm_er=2+3*natmi+nspecies+2*ntrgts+2*nmoli
+          else
+            nclm_er=2+3*natmi+nspecies+2*nmoli
+          endif
           write(fmt_peak,710) nclm_er,tab
           write(lun,740) 'Target erosion - ',trg_label(jj),label
           write(lun,740) 'x',tab,
@@ -1089,7 +1091,6 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
      ,           (mol_str(:,ia),ia=1,nmoli),spt_str(:,j),'xMP'
             write(fmt_peak,720) nclm_er,tab
           else 
-            nclm_er=2+3*natmi+nspecies+2*nmoli
             write(lun,fmt_peak) 'x',
      ,           (fpt_str(ia),ia=1,3*natmi+nspecies),
      ,           (mol_str(:,ia),ia=1,nmoli),'xMP'
