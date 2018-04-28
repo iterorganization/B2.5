@@ -32,7 +32,7 @@ c
         lwldstrt(i)=0
       end do
       lppp=0
-      jedge(1:4)=0
+      jedge(1:2*ntrgsx)=0
       add_rad=0.0_R8
       nadsrc=0
       do i=1,ntrgsx

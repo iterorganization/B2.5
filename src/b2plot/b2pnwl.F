@@ -9,6 +9,7 @@ c======================================================================
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2cmfs
+      use b2mod_indirect
       use b2mod_constants
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
@@ -48,6 +49,13 @@ c*** Set the default values
       nwldprt=0
 c*** Read the data from dg files
       call b2pinp(*999)
+c*** Re-order jedge data if less than ntrgsx targets
+      if (ntrgsa.lt.ntrgsx) then
+        do i=1,ntrgsa
+          jedge(ntrgsa+i)=jedge(ntrgsx+i)
+          jedge(ntrgsx+i)=0
+        end do
+      end if
 c
 c*** Convert the input wall coordinates into double precision
 c*** and scale them to meters.
@@ -329,6 +337,7 @@ c***  leirlis : the lists themselves (Eirene numbering)
 c
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_indirect
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -359,7 +368,12 @@ c----------------------------------------------------------------------
 c
 cc%%%
 c      print *,'b2pwsrt',nwldprt
-c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      if (nnreg(0).lt.8) then
+c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      else
+c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
+c        print '(a,4i6)','jedgo1, jedgo2, jedgo3, jedgo4 =',jedge(5:8)
+c      end if
 c      do il=1,nwldprt
 c        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
 c        print '(1x,20i4)',(lwldlis(ii,il),ii=1,nwldlis(il))
@@ -469,7 +483,10 @@ c*** No connection found
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
               else if (j.eq.jedge(1).or.j.eq.jedge(2).or.
-     .                 j.eq.jedge(3).or.j.eq.jedge(4)) then
+     .                 j.eq.jedge(3).or.j.eq.jedge(4).or.
+     .               ((j.eq.jedge(5).or.j.eq.jedge(6).or.
+     .                 j.eq.jedge(7).or.j.eq.jedge(8)).and.
+     .                 nnreg(0).eq.8)) then
                 k = 1
                 found = .false.
                 do while (.not.found .and. k.le.nlim)

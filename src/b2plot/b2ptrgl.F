@@ -51,7 +51,7 @@ c
      ,  titrg(0:ny-1,ntrgsx),wpttrg(0:ny-1,ntrgsx),
      ,  wpltrg(0:ny-1,ntrgsx),wnutrg(0:ny-1,ntrgsx),
      ,  wrdtrg(0:ny-1,ntrgsx,0:DEF_NATM),wtttrg(0:ny-1,ntrgsx),
-     ,  wpk_tt(0:ntrgsx),wpk_rd(0:ntrgsx),
+     ,  wpk_tt(0:ntrgsx),wpk_rd(0:ntrgsx),wpk_te(ntrgsx),wpk_ne(ntrgsx),
      ,  wpk_pl(0:ntrgsx),wpk_nu(0:ntrgsx),
      ,  wlc_tt(ntrgsx),wlc_rd(ntrgsx),wlc_pl(ntrgsx),wlc_nu(ntrgsx),
      ,  pwr_tt(ntrgsx),pwr_rd(ntrgsx),fwht_tt(ntrgsx),fwxt_tt(ntrgsx),
@@ -436,9 +436,10 @@ c          print *,'j,js,wldnek,wldnep = ',j,js,wldnek(js,0),wldnep(js,0)
               wi(j)=0.0_R8
             end if !}
           else !}{
-            write(*,*) 'b2ptrgl: ntns.ne.ntrgts (',ntns,' vs.',ntrgts,
+            write(*,'(a,i2,a,i2,a)')
+     ,               'b2ptrgl: ntns.ne.ntrgts ( ',ntns,' vs. ',ntrgts,
      ,               ' ) - no neutral load onto the targets calculated'
-            write(*,*) '  ==> check specification of ltns in ',
+            write(*,'(2a)') '  ==> check specification of ltns in ',
      ,                               'b2.neutrals.parameters'
             wi(j)=0.0_R8
           end if !}
@@ -524,15 +525,19 @@ c----------------------------------------------------------------------
 c*** Calculate the peak power loads onto the targets and write them
 c*** down to the summary file
 c
+      l=1
       wpk_tt(0)=0
       wpk_rd(0)=0
       wpk_pl(0)=0
       wpk_nu(0)=0
       do j=1,ntrgts !{
+        k=ltrgpos(j)
         wpk_tt(j)=wtttrg(lytg,j)
         wpk_rd(j)=wrdtrg(lytg,j,0)
         wpk_pl(j)=wpltrg(lytg,j)
         wpk_nu(j)=wnutrg(lytg,j)
+        wpk_te(j)=te(k+l,lytg)/ev
+        wpk_ne(j)=ne(k+l,lytg)
         wlc_tt(j)=xtrg(lytg,j)
         wlc_rd(j)=xtrg(lytg,j)
         wlc_pl(j)=xtrg(lytg,j)
@@ -541,6 +546,8 @@ c
         do i=lytg+1,ny-1 !{
           if(wtttrg(i,j) .gt. wpk_tt(j)) then !{
             wpk_tt(j)=wtttrg(i,j)
+            wpk_te(j)=te(k+l,i)/ev
+            wpk_ne(j)=ne(k+l,i)
             wlc_tt(j)=xtrg(i,j)
             m_hlp(j)=i
           end if !}
@@ -557,9 +564,10 @@ c
             wlc_nu(j)=xtrg(i,j)
           end if !}
         end do !}
+        l=1-l
       end do !}
 
-      write(fmt_peak,700) 20,tab
+      write(fmt_peak,700) 24,tab
   700 format('(1p,e12.5,',i3,'(1h',a1,',e12.4))')
       i1=1
       i2=ntrgts
@@ -574,7 +582,7 @@ c
           wpk_rd(0)=max(wpk_rd(i1),wpk_rd(i2))
           wpk_pl(0)=max(wpk_pl(i1),wpk_pl(i2))
           wpk_nu(0)=max(wpk_nu(i1),wpk_nu(i2))
-          write(lun,'(a5,20(a1,2a))') '#time',
+          write(lun,'(a5,24(a1,2a))') '#time',
      -     tab,'peak_t_i',tl,tab,'peak_t_o',tl,tab,'peak_t_x',tl,
      ,     tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
      ,     tab,'peak_r_i',tl,tab,'peak_r_o',tl,tab,'peak_r_x',tl,
@@ -582,12 +590,16 @@ c
      ,     tab,'peak_p_i',tl,tab,'peak_p_o',tl,tab,'peak_p_x',tl,
      ,     tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
      ,     tab,'peak_n_i',tl,tab,'peak_n_o',tl,tab,'peak_n_x',tl,
-     ,     tab, 'loc_n_i',tl,tab, 'loc_n_o',tl
+     ,     tab, 'loc_n_i',tl,tab, 'loc_n_o',tl,
+     ,     tab,'peak_tei',tl,tab,'peak_teo',tl,
+     ,     tab,'peak_nei',tl,tab,'peak_neo',tl
           write(lun,fmt_peak) tim,
      ,     (wpk_tt(i),i=i1,i2,i3), wpk_tt(0), (wlc_tt(i),i=1,2),
      ,     (wpk_rd(i),i=i1,i2,i3), wpk_rd(0), (wlc_rd(i),i=1,2),
      ,     (wpk_pl(i),i=i1,i2,i3), wpk_pl(0), (wlc_pl(i),i=1,2),
-     ,     (wpk_nu(i),i=i1,i2,i3), wpk_nu(0), (wlc_nu(i),i=1,2)
+     ,     (wpk_nu(i),i=i1,i2,i3), wpk_nu(0), (wlc_nu(i),i=1,2),
+     ,     (wpk_te(i),i=i1,i2,i3),
+     ,     (wpk_ne(i),i=i1,i2,i3)
           close (lun)
         end if !}
         i1=2
@@ -674,7 +686,8 @@ c*** Total power outside the strike point position and power half-width
         if(fwht_tt(j).lt.0.0_R8 .or. hwht_tt(j).lt.0.0_R8 .or.
      .                               hwhm_tt(j).lt.0.0_R8) then !{
           print *,'!!!! NEGATIVE POWER WIDTH - target ',j,' time ',tim
-          print *,'fwht,hwht,hwhm = ',fwht_tt(j),hwht_tt(j),hwhm_tt(j)
+          print '(1x,a,3(f10.5,4x))','fwht,hwht,hwhm = ',
+     ,                                fwht_tt(j),hwht_tt(j),hwhm_tt(j)
           print *,'xtg_hlp:'
           print '(1x,i3,10f10.5/(4x,10f10.5))',lseppos(j)+1,
      ,                                          (xtg_hlp(i,j),i=0,ny-1)
@@ -1015,11 +1028,6 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
 #endif
         end if
 
-        if (do_sput(j)) then
-          nclm_er=2+3*natmi+nspecies+2*ntrgts+2*nmoli
-        else
-          nclm_er=2+3*natmi+nspecies+2*nmoli
-        endif
         l=1
         do ia=1,natmi
           fpt_str(1+3*(ia-1))=trim(TEXTA(ia))//'_flux_atm'
@@ -1052,6 +1060,11 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           jj=j
           if(j.eq.ntrgts) jj=ntrgsx
           open(lun,file=ftrg(jj,2))
+          if (do_sput(j)) then
+            nclm_er=2+3*natmi+nspecies+2*ntrgts+2*nmoli
+          else
+            nclm_er=2+3*natmi+nspecies+2*nmoli
+          endif
           write(fmt_peak,710) nclm_er,tab
           write(lun,740) 'Target erosion - ',trg_label(jj),label
           write(lun,740) 'x',tab,
@@ -1080,7 +1093,6 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
      ,           (mol_str(:,ia),ia=1,nmoli),spt_str(:,j),'xMP'
             write(fmt_peak,720) nclm_er,tab
           else
-            nclm_er=2+3*natmi+nspecies+2*nmoli
             write(lun,fmt_peak) 'x',
      ,           (fpt_str(ia),ia=1,3*natmi+nspecies),
      ,           (mol_str(:,ia),ia=1,nmoli),'xMP'

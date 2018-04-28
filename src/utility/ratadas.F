@@ -99,7 +99,7 @@ c     filename ycd (effective square charge)
 c     filename ecd (effective ionisation potential)
       character fnpot*200
 c     filename of actual file opened
-      character actual_file*256
+      character filename*256, actual_file*256
 c     helpers for composing filenames
       integer ibundling, iquote, quote_count
       character UIDIN*256, ZEILE*80
@@ -129,7 +129,7 @@ c     helpers for reading in data
      &        IDMAXDzav,ITMAXDzav,
      &        IDMAXDza2,ITMAXDza2,
      &        IDMAXDpot,ITMAXDpot
-      logical lres,lstan,lptn
+      logical lres,lstan,lptn,ex
       real (kind=R8) :: dnr_ams
       character dnr_ele*12
 c     read in data
@@ -206,7 +206,9 @@ c     ionisation potentials
       endif
 
 c     reading in filename and mass
-      call xertst(silent_open(99,'ratadas.filelist',
+      filename='ratadas.filelist'
+      call find_file(filename,ex)
+      call xertst(silent_open(99,filename,
      1 'data.local|modules/B2.5/Database',actual_file), 'missing file')
       write(*,'(a/a)')
      1 'Getting ADAS file list from ',trim(actual_file)
@@ -1021,8 +1023,6 @@ c     read in data
       type (amns_set_type) :: set
       character (len=80) :: format
 #endif
-
-
 
       logical silent_open
       external silent_open

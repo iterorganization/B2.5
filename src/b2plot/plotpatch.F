@@ -63,7 +63,7 @@ C =====================================================================
 
       IF(NOFCLS.EQ.0) THEN                ! standard contouring
         IF(mod(LINLOG,2).EQ.1) THEN  ! ==> do linear plot <====================
-          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ)
+          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ,.true.)
           NCONT=NOZ*NOZM
           if(b2plot_debug.ge.10)
      1     write (*,*) 'ncont =',ncont,' noz =',noz,' nozm =',nozm
@@ -304,7 +304,7 @@ c
      1     (log10(zmax)-log10(zmin))
         enddo
       else
-        call nice(zmin,zmax,noz,nozm,fmtz,nfmtz)
+        call nice(zmin,zmax,noz,nozm,fmtz,nfmtz,.true.)
         NCNT=NOZ*NOZM
         write (*,*) 'ncnt =',ncnt,' noz =',noz,' nozm =',nozm
         do while(NCNT.lt.5.AND.NOZM.GT.1)

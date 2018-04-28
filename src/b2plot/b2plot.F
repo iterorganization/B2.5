@@ -1215,6 +1215,7 @@ c
       call trigon(.false.)         ! overlayed triangular grid off by default
       call vesselon(.false.)       ! same for vessel
       call separatrixon(.false.)   ! same for separatrix
+      call adjust_axes(.false.)    ! nice axes by default
       call set_midplane_mapping(.false.) ! do not map to midplane by default
       call wallon(.false.,0,values(14),values(15),1)
       call targeton(.false.,values(32),values(33),1)
@@ -10353,6 +10354,8 @@ c
           call set_midplane_mapping(.true.)
         case('nocp')     ! do not plot contour plot
           call contourplot(.false.)
+        case('nice')     ! toggle whether axes will have nice values
+          call adjust_axes(.true.)
         case('sepw')     ! change separatrix line width
           stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return

@@ -18,7 +18,13 @@ FC = mpif90
 MPI_CPP ?= `pkg-config mpich2-ch3 --cflags`
 LD_MPI  ?= `pkg-config mpich2-ch3 --libs`
 else
+ifdef USE_IMPGYRO
+FC = mpif90
+MPI_CPP ?= `pkg-config mpich2-ch3 --cflags`
+LD_MPI  ?= `pkg-config mpich2-ch3 --libs`
+else
 FC = gfortran
+endif
 endif
 
 ifdef SOLPS_DEBUG

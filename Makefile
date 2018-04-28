@@ -14,6 +14,7 @@ INCLUDE =
 TAGSLIST =
 
 MAKES = ${SRCB2}/Makefile
+DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 # Include global SOLPS compiler settings
 ifndef SOLPS_CPP
 NODENAME = $(shell echo `hostname`)
@@ -133,7 +134,6 @@ INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include
 SOLPS4INCLUDE = -I${SOLPSTOP}/modules/solps4-5/src/B2_include
 TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F ${SRCDIR}/*/*.F90 ${DOCDIR}/*.xml
 
-DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 ifdef USE_MPI
 DEFINES += ${USE_MPI}
 else

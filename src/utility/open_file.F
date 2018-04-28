@@ -169,9 +169,21 @@ c
       close(lu)
       filenamecat='../'//filename(1:lnblnk(filename))
       open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     1 status='old',err=15,recl=1000010)
+     1 status='old',err=12,recl=1000010)
       return
-   15 continue
+   12 continue
+      close(lu)
+      filenamecat='../baserun/'//filename(1:lnblnk(filename))
+      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
+     1 status='old',err=14,recl=1000010)
+      return
+   14 continue
+      close(lu)
+      filenamecat='../../baserun/'//filename(1:lnblnk(filename))
+      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
+     1 status='old',err=16,recl=1000010)
+      return
+   16 continue
       copyarea=area
    17 iend=index(copyarea,'|')
       if(iend.eq.0) then
@@ -229,6 +241,12 @@ c
       inquire(file='../baserun/'//filename, exist=exist)
       if(exist) then
          filename='../baserun/'//filename
+         return
+      endif
+
+      inquire(file='../../baserun/'//filename, exist=exist)
+      if(exist) then
+         filename='../../baserun/'//filename
          return
       endif
 

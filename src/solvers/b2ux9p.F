@@ -439,7 +439,7 @@
           iasave(i)=ia(i)
           jasave(i)=ja(i)
         enddo                                              !sv 15.05.07 }
-        lfirst=.false.
+!        lfirst=.false.
 
       else
 !       ia=iasave                                           !sv 15.05.07 {

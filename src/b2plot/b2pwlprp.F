@@ -67,7 +67,12 @@ c<<<
       tab=char(9)
 c
 c      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
-c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      if(nnreg(0).lt.8) then
+c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      else
+c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
+c        print '(a,4i6)','jedgo1, jedgo2, jedgo3, jedgo4 =',jedge(5:8)
+c      end if
 c      print '(a,8i6)','ltrgedge = ',ltrgedge
 c      print '(a,8i6)','mtrgedge = ',mtrgedge
 c
@@ -325,12 +330,25 @@ c>>>
 c
 c*** Modify the target edges for continuity with B2 grid edges
 c
-c      print *,'Before modification: ', jedge(1:4)
-c      print '((2(1x,a3,1p,4e12.4)))',
+c      if (nnreg(0).lt.8) then
+c        print *,'Before modification: ', jedge(1:4)
+c        print '((2(1x,a3,1p,4e12.4)))',
 c     ,          'i1',(pp1(j,jedge(1)),pp2(j,jedge(1)),j=1,2),
 c     ,          'o1',(pp1(j,jedge(3)),pp2(j,jedge(3)),j=1,2),
 c     ,          'i2',(pp1(j,jedge(2)),pp2(j,jedge(2)),j=1,2),
 c     ,          'o2',(pp1(j,jedge(4)),pp2(j,jedge(4)),j=1,2)
+c      else
+c        print *,'Before modification: ', jedge(1:8)
+c        print '((2(1x,a3,1p,4e12.4)))',
+c     ,          'i1',(pp1(j,jedge(1)),pp2(j,jedge(1)),j=1,2),
+c     ,          'o1',(pp1(j,jedge(5)),pp2(j,jedge(5)),j=1,2),
+c     ,          'i2',(pp1(j,jedge(2)),pp2(j,jedge(2)),j=1,2),
+c     ,          'o2',(pp1(j,jedge(6)),pp2(j,jedge(6)),j=1,2)
+c     ,          'i3',(pp1(j,jedge(3)),pp2(j,jedge(3)),j=1,2),
+c     ,          'o3',(pp1(j,jedge(7)),pp2(j,jedge(7)),j=1,2),
+c     ,          'i4',(pp1(j,jedge(4)),pp2(j,jedge(4)),j=1,2),
+c     ,          'o4',(pp1(j,jedge(8)),pp2(j,jedge(8)),j=1,2)
+c      end if
 
       do i=1,ntrgts !{
         if (mod(i,2).eq.1) then

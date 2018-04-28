@@ -3,8 +3,9 @@
       use F90_KIND  ! IGNORE
       INTEGER, PARAMETER :: R16 = real128
 #else
-#ifdef PGF90
-! Quadruple precision not available for Portland Group compilers
+#ifdef NOQUAD
+! For when quadruple precision is not available
+! such as Portland Group compilers and some gfortran versions
       INTEGER, PARAMETER :: R16 = SELECTED_REAL_KIND (14)
 #else
       INTEGER, PARAMETER :: R16 = SELECTED_REAL_KIND (33)     !srv 16.01.18
