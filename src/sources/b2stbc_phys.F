@@ -174,7 +174,7 @@
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
       integer isfeedback, fix_fch_in_fhe_sheath
       integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
-      integer, save :: use_eirene, no_current 
+      integer, save :: use_eirene, no_current, ionising_core
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
      1 bc_type13_norm, bc_type13_fac, na_min, na_new
       character*26 boundary_location(nbcd)
@@ -202,7 +202,7 @@
      &  abs(am(is)-am(js)).lt.amtol
 *   ..initialisation
       data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
-     1 bc_type16_ref/1/, bc_type20_ref/1/, 
+     1 bc_type16_ref/1/, bc_type20_ref/1/, ionising_core/0/,
      2 na_min/1.0e4_R8/, na_new/1.0e14_R8/,
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
@@ -301,6 +301,11 @@
         call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
         call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
         call ipgeti ('eirene_sheath_pot',eirene_sheath_pot)
+        call ipgeti ('eirene_ionising_core', ionising_core)
+        if (ionising_core.eq.0)     ! for backward compatibility
+     >   call ipgeti ('eirene_ionizing_core', ionising_core)
+        call xertst (ionising_core.gt.0.or.abs(ionising_core).le.nbc,
+     1   'faulty input ionising_core, abs(ionising_core) > NBC')
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -2061,6 +2066,8 @@ c dpc
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            call(ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 19')
           endif
           if(.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S') THEN
@@ -2546,6 +2553,8 @@ cxpb Careful here because of BC number clash
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            call(ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 23')
           endif
 
           IF(BCCHAR(IB).EQ.'S') THEN
@@ -3046,6 +3055,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            call(ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 27')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             if(.not.once_bccon(is)) then

@@ -3259,12 +3259,27 @@ cxpb  core recycling into ions of the highest ionisation stage
         if (balance_netcdf.ne.0) then
           eirene_mc_core_sna0to1=0.0_R8 !djm Jan2017
         endif
-        do iy = -1, ny
-          do ix = -1, nx
-            do j = 1, nnatmi
+        do j = 1, nnatmi
+          ! compute the average density on the core boundary (t1)
+          t1 = 0.0_R8
+          do iy = -1, ny
+            do ix = -1, nx
               if (bottomiy(ix,iy).eq.-2 .and.
      &            on_closed_surface(ix,iy)) then
+                t1 = t1 +
+     &           na(topix(ix,iy),topiy(ix,iy),ishigh(j))*
+     &           gs(topix(ix,iy),topiy(ix,iy),1)
+              end if
+            end do
+          end do
+          t1 = t1/core_surface
+          do iy = -1, ny
+            do ix = -1, nx
+              if (bottomiy(ix,iy).eq.-2 .and.
+     &            on_closed_surface(ix,iy)) then
+! the recycling flux is modulated as per the poloidal density distribution
                 t0=core_flux(j)*
+     *           (na(topix(ix,iy),topiy(ix,iy),ishigh(j))/t1)*
      *           (gs(topix(ix,iy),topiy(ix,iy),1)/core_surface)
                 if(linearisation.eq.1) then !{
                   if(t0.gt.0.0_R8) then !{
@@ -3304,9 +3319,9 @@ cxpb  core recycling into ions of the highest ionisation stage
                   endif
                 end if !}
               endif
-            enddo
-          enddo
-        enddo
+            enddo  !ix}
+          enddo  !iy}
+        enddo  !j}
       else if (ionising_core.lt.0) then
         ib=abs(ionising_core)
         call xertst (ib.le.nbc,
