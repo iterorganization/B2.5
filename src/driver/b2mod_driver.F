@@ -44,6 +44,10 @@
      & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
+      use b2us_map
+      use b2us_geo
+      use b2us_plasma
+      use b2us_prep
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -88,6 +92,7 @@
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
       integer, save :: use_9pt_stencil = 1
+      integer, save :: use_unstructured_grid = 0
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
@@ -1189,6 +1194,8 @@ csw 09oct2012
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
        call ipgeti ('b2mndr_use_9pt_stencil',use_9pt_stencil)
+       call ipgeti ('b2mndr_use_unstructured_grid',
+     &               use_unstructured_grid)
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1482,6 +1489,19 @@ cwdk    to be checked: qz(:,:,0) never used !?!
 *   get averaged plasma profiles
       if (ird_aver > 0)
      &  call run_av_get_plasma (na, te, ti, ua, po, nx, ny, ns)
+
+      if (use_unstructured_grid > 0) then
+        call calc_mapping (nx+1, ny+1,
+     .            leftix,leftiy,rightix,rightiy,
+     .            topix,topiy,bottomix,bottomiy,
+     .            nncut,leftcut,rightcut,topcut,bottomcut)
+
+        call prep_geometry (nx+1, ny+1,
+     .                      mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs)
+
+        call prep_plasma (nx+1, ny+1, ns,
+     .                    mpg%nCv, mpg%nCi, mpg%nFc, state)
+      end if
 
       if(iout.ne.0) then                                             !srv 25.01.16 {
        call my_out(70,nx,ny,ne,'b2mndr_ne')
