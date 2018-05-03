@@ -2066,7 +2066,7 @@ c dpc
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
-            call(ionising_core.eq.0,
+            call xertst (ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 19')
           endif
           if(.not.once_bccon(is)) then
@@ -2553,7 +2553,7 @@ cxpb Careful here because of BC number clash
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
-            call(ionising_core.eq.0,
+            call xertst (ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 23')
           endif
 
@@ -3055,7 +3055,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
-            call(ionising_core.eq.0,
+            call xertst (ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 27')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
