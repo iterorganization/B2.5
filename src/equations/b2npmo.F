@@ -35,7 +35,7 @@
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),             !srv 09.01.01
      &  qz(-1:nx,-1:ny,0:1),
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
-     &  pbshz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),   !srv 01.07.09 05.07.17
+     &  pbshz(-1:nx,-1:ny,0:1), ue(-1:nx,-1:ny),   !srv 01.07.09 05.07.17
      &  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
@@ -52,7 +52,7 @@
 *   ..output arguments (unspecified on entry)
       integer ierr
       real (kind=R8) ::
-     *  kt_neo(-1:nx,-1:ny),
+     *  kt_neo(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
      *  resmo(-1:nx,-1:ny,0:ns-1), resmt(-1:nx,-1:ny),
      &  corua(-1:nx,-1:ny,0:ns-1), corut(-1:nx,-1:ny),
      &  pcca(-1:nx,-1:ny,0:1,0:ns-1), pccm(-1:nx,-1:ny,0:1),
@@ -302,7 +302,8 @@
 !$OMP& PRIVATE(wrkf, aa5, wrk1, smb, solvedum, ix, iy)
 !$OMP& PRIVATE(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf) 
 !$OMP& PRIVATE(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
-!$OMP& PRIVATE(chns, wrks, new_matrix, lnlam)
+!$OMP& PRIVATE(chns, wrks, new_matrix)
+!$OMP& FIRSTPRIVATE(lnlam) LASTPRIVATE(lnlam)
 !$OMP& LASTPRIVATE(kt_neo)
 !$OMP& REDUCTION(+:resmt,flct,cvct,smt, ctcft)
 !$OMP& SHARED(ns, n2, na, am, nx, ny, rza, ne, te, ti, vol, hx, hz, bb)
