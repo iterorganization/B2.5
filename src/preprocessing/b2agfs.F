@@ -988,6 +988,11 @@ c
 #ifdef USE_PXFGETENV
       integer lenval, ierror
 #endif
+#ifndef NO_GETENV
+      character*12 device_env
+      logical streql
+      external streql
+#endif
       real (kind=R8) ::
      *  ubr, ubt, ubp, upsi
       parameter (line_length=256)
@@ -1024,11 +1029,13 @@ c
       device = 'iter'
 #endif
 #ifndef NO_GETENV
+      device_env = ' '
 #ifdef USE_PXFGETENV
-      CALL PXFGETENV ('DEVICE', 0, device, lenval, ierror)
+      CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
 #else
-      call getenv ('DEVICE', device)
+      call getenv ('DEVICE', device_env)
 #endif
+      if (.not.streql(device_env,' ')) device = device_env
 #endif
       if(istyle.eq.-1) then      	 !xpb  DG-CARRE-format geometry input
         meshpath = trim(meshpath)
