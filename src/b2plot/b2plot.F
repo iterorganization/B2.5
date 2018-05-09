@@ -1667,6 +1667,14 @@ c
           description='Radial particle flux (s^{-1})'
           nz=ns
           call copy(fnay,1.0_R8,nz,textpl)
+        case('fnex')
+          description='Poloidal electron flux (s^{-1})'
+          nz=1
+          call copy(fne(:,:,0),1.0_R8,1,textbl)
+        case('fney')
+          description='Radial electron flux (s^{-1})'
+          nz=1
+          call copy(fne(:,:,1),1.0_R8,1,textbl)
         case('fmox')
           description='Poloidal flux of parallel momentum (N)'
           nz=ns
