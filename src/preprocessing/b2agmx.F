@@ -2,11 +2,11 @@
 *.specification
 
       subroutine b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, qz1, qc1, qcb1,
+     & vol1, hx1, hy1, qz1, qc1, qs1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
-     & vol, hx, hy, qz, qc, qcb,
+     & vol, hx, hy, qz, qc, qs,
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
@@ -26,7 +26,7 @@
       real (kind=R8) ::
      *  vol1(-1:nx1,-1:ny1), hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1),
      &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1,0:1), 
-     &  qcb1(-1:nx1,-1:ny1),
+     &  qs1(-1:nx1,-1:ny1,0:1),
      &  gs1(-1:nx1,-1:ny1,0:2),
      1	crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
      2	bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
@@ -45,7 +45,7 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qcb(-1:nx,-1:ny),
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      1	gs(-1:nx,-1:ny,0:2), crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      2	bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
      3  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
@@ -114,14 +114,6 @@
 *     geometry. 
 *     It will hold that 0.lt.qc(,).le.1.
 *
-*     qcb - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qcb(ix,iy) specifies cos(t), where
-*     t is the complementary angle between the y-direction of the
-*     (ix,iy) cell and its bottom face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry.
-*     It will hold that 0.lt.qcb(,).le.1.
-*
 *     gs - (-1:nx,-1:ny,0:2) real*8 array, output.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
 *     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
@@ -178,7 +170,7 @@
       call xertst (1.le.nx.and.1.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.nx1.and.1.le.ny1, 'faulty input nx1, ny1')
 *   ..test input metric
-      call b2xvgm1(nx1, ny1, vol1, hx1, hy1, qz1, qc1, qcb1, gs1, pbs1,
+      call b2xvgm1(nx1, ny1, vol1, hx1, hy1, qz1, qc1, qs1, gs1, pbs1,
      . cell_width1, cell_height1, bottomiy1)
 *   ..read input switch
       call ipgeti ('b2agmx_pbs_from_basis_mesh', pbs_from_basis_mesh)
@@ -271,7 +263,7 @@
             kx1 = 1
             ix1 = (ix-2*isox)*nx1eff/nxeff + 2*isox
           endif
-*     ..project gsx, pbsx and qc to cell (ix,iy)
+*     ..project gsx, pbsx and qc(,,0) to cell (ix,iy)
           if (.not.isInDomain(nx1,ny1,leftix1(ix1,iy1),
      .                                leftiy1(ix1,iy1))) then
             gs(ix,iy,0) = 0.0_R8
@@ -298,7 +290,7 @@
             qc(ix,iy,0) = t1/t0
             pbs(ix,iy,0) = t2
           endif
-*     ..project gsy, pbsy and qcb to cell (ix,iy)
+*     ..project gsy, pbsy and qc(,,1) to cell (ix,iy)
           if (.not.isInDomain(nx1,ny1,bottomix1(ix1,iy1),
      .                                bottomiy1(ix1,iy1))) then
             gs(ix,iy,1) = 0.0_R8
@@ -308,23 +300,24 @@
             do jx1 = 0, kx1-1
               t0 = t0+pi*dist1(ix1+jx1,iy1,0,1)*
      .         (crx1(ix1+jx1,iy1,0)+crx1(ix1+jx1,iy1,1))
-              t1 = t1+qcb1(ix1+jx1,iy1)*pi*dist1(ix1+jx1,iy1,0,1)*
+              t1 = t1+qc1(ix1+jx1,iy1,1)*pi*dist1(ix1+jx1,iy1,0,1)*
      .         (crx1(ix1+jx1,iy1,0)+crx1(ix1+jx1,iy1,1))
             enddo
-            qcb(ix,iy) = t1/t0
+            qc(ix,iy,1) = t1/t0
           else
             t0 = 0.0_R8
             t1 = 0.0_R8
             t2 = 0.0_R8
             do jx1 = 0, kx1-1
               t0 = t0+gs1(ix1+jx1,iy1,1)
-              t1 = t1+qcb1(ix1+jx1,iy1)*gs1(ix1+jx1,iy1,1)
+              t1 = t1+qc1(ix1+jx1,iy1,1)*gs1(ix1+jx1,iy1,1)
               t2 = t2+pbs1(ix1+jx1,iy1,1)
             enddo
             gs(ix,iy,1) = t0
-            qcb(ix,iy) = t1/t0
+            qc(ix,iy,1) = t1/t0
             pbs(ix,iy,1) = t2
           endif
+cwdk projection of qs still to be added!
 *     ..project vol, gsz, and qz to cell (ix,iy)
           t0 = 0.0_R8
           t1 = 0.0_R8

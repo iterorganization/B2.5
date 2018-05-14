@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2wsav (nsav, nx, ny, ns, lblgm, crx, cry, bb, vol,
-     &  hx, hy, qz, qc, qcb, gs, pbs, cell_width, cell_height,
+     &  hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height,
      &  na, ua, te, ti, po, fna, fhe, fhi, fch)
       use b2mod_types
       use b2mod_rates
@@ -14,10 +14,10 @@
       integer nsav, nx, ny, ns
       character lblgm*120
       real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), qc(-1:nx,-1:ny),
+     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), qc(-1:nx,-1:ny,0:1),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
-     &  pbs(-1:nx,-1:ny,0:1), qcb(-1:nx,-1:ny),
+     &  pbs(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -75,7 +75,7 @@
       enddo
 *   ..produce output
       call b2wsax (nsav, nx, ny, ns, lblgm, crx, cry, bb, vol,
-     &  hx, hy, qz, qc, qcb, gs, pbs, cell_width, cell_height,
+     &  hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height,
      &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ne2, rz2, pr, uac)
 
 * ..return

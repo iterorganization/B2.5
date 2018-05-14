@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xvgm (nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,
+      subroutine b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      &  cell_width, cell_height)
       use b2mod_types
       use b2mod_b2cmgs
@@ -11,7 +11,7 @@
       integer nx, ny
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qcb(-1:nx,-1:ny),
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -38,7 +38,7 @@
 *  5. parameters (see also routine b2cdcv)
 *
 *     nx, ny - integer, input.
-*     vol, hx, hy, qz, qc, qcb, gs, pbs - real array, input.
+*     vol, hx, hy, qz, qc, qs, gs, pbs - real array, input.
 *     See the calling routine for description.
 *
 *     (parameters in common:)
@@ -83,12 +83,18 @@
       call xertst (smin(n2,qz(-1,-1,1),1).gt.0.0_R8.and.
      &  smax(n2,qz(-1,-1,1),1).le.1.0_R8,
      &  'faulty argument range qz(,,1)')
-      call xertst (smin(n2,qc,1).gt.0.0_R8.and.
-     &  smax(n2,qc,1).le.1.0_R8,
-     &  'faulty argument range qc')
-      call xertst (smin(n2,qcb,1).gt.0.0_R8.and.
-     &  smax(n2,qcb,1).le.1.0_R8,
-     &  'faulty argument range qcb')
+      call xertst (smin(n2,qc(-1,-1,0),1).gt.0.0_R8.and.
+     &  smax(n2,qc(-1,-1,0),1).le.1.0_R8,
+     &  'faulty argument range qc(,,0)')
+      call xertst (smin(n2,qc(-1,-1,1),1).gt.0.0_R8.and.
+     &  smax(n2,qc(-1,-1,1),1).le.1.0_R8,
+     &  'faulty argument range qc(,,1)')
+      call xertst (smin(n2,qs(-1,-1,0),1).gt.-1.0_R8.and.
+     &  smax(n2,qs(-1,-1,0),1).lt.1.0_R8,
+     &  'faulty argument range qs(,,0)')
+      call xertst (smin(n2,qs(-1,-1,1),1).gt.-1.0_R8.and.
+     &  smax(n2,qs(-1,-1,1),1).lt.1.0_R8,
+     &  'faulty argument range qs(,,1)')
 *   ..test edge values of gs
       call b2xvfx (nx, ny, gs(-1,-1,0), 'gsx')
       call b2xvfy (nx, ny, gs(-1,-1,1), 'gsy')
@@ -127,7 +133,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xvgm1(nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,
+      subroutine b2xvgm1(nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      . cell_width, cell_height, bottomiy1)
       use b2mod_types
       use b2mod_b2cmgs
@@ -137,7 +143,7 @@
       integer nx, ny, bottomiy1(-1:nx,-1:ny)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qcb(-1:nx,-1:ny),
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -165,7 +171,7 @@
 *  5. parameters (see also routine b2cdcv)
 *
 *     nx, ny - integer, input.
-*     vol, hx, hy, qz, qc, qcb, gs, pbs - real array, input.
+*     vol, hx, hy, qz, qc, qs, gs, pbs - real array, input.
 *     See the calling routine for description.
 *
 *     (parameters in common:)
@@ -210,12 +216,18 @@
       call xertst (smin(n2,qz(-1,-1,1),1).gt.0.0_R8.and.
      &  smax(n2,qz(-1,-1,1),1).le.1.0_R8,
      &  'faulty argument range qz(,,1)')
-      call xertst (smin(n2,qc,1).gt.0.0_R8.and.
-     &  smax(n2,qc,1).le.1.0_R8,
-     &  'faulty argument range qc')
-      call xertst (smin(n2,qcb,1).gt.0.0_R8.and.
-     &  smax(n2,qcb,1).le.1.0_R8,
-     &  'faulty argument range qcb')
+      call xertst (smin(n2,qc(-1,-1,0),1).gt.0.0_R8.and.
+     &  smax(n2,qc(-1,-1,0),1).le.1.0_R8,
+     &  'faulty argument range qc(,,0)')
+      call xertst (smin(n2,qc(-1,-1,1),1).gt.0.0_R8.and.
+     &  smax(n2,qc(-1,-1,1),1).le.1.0_R8,
+     &  'faulty argument range qc(,,1)')
+      call xertst (smin(n2,qs(-1,-1,0),1).gt.-1.0_R8.and.
+     &  smax(n2,qs(-1,-1,0),1).lt.1.0_R8,
+     &  'faulty argument range qs(,,0)')
+      call xertst (smin(n2,qs(-1,-1,1),1).gt.-1.0_R8.and.
+     &  smax(n2,qs(-1,-1,1),1).lt.1.0_R8,
+     &  'faulty argument range qs(,,1)')
 *   ..test edge values of gs
       call b2xvfx (nx, ny, gs(-1,-1,0), 'gsx')
       call b2xvfy1(nx, ny, gs(-1,-1,1), 'gsy', bottomiy1)

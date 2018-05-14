@@ -18,7 +18,6 @@
      *  hz(:,:),                                                     !srv 09.01.01
      *  qz(:,:,:),
      *  qc(:,:,:),
-     *  qcb(:,:),
      *  qs(:,:,:),
      *  vol(:,:),
      *  pbs(:,:,:), pbshz(:,:,:),                                    !srv 09.01.01
@@ -47,7 +46,6 @@
       allocate(hz(-1:nxd,-1:nyd))                                    !srv 09.01.01
       allocate(qz(-1:nxd,-1:nyd,0:1))
       allocate(qc(-1:nxd,-1:nyd,0:1))
-      allocate(qcb(-1:nxd,-1:nyd))
       allocate(qs(-1:nxd,-1:nyd,0:1))
       allocate(vol(-1:nxd,-1:nyd))
       allocate(pbs(-1:nxd,-1:nyd,0:1))
@@ -79,7 +77,6 @@
         deallocate(hz)
         deallocate(qz)
         deallocate(qc)
-        deallocate(qcb)
         deallocate(vol)
         deallocate(pbs)
         deallocate(pbshz)                                            !srv 09.01.01
@@ -101,12 +98,10 @@
       subroutine read_b2mod_geo(nx,ny,nread)
       use b2mod_indirect
       implicit none
-      integer nread, nx, ny
+      integer nread, nx, ny, n2
       integer ix, iy
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
-      real (kind=R8) ::
-     *   qc_loc(-1:nx,-1:ny)
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -118,6 +113,7 @@
       cosang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 
+      n2 = (nx+1)*(ny+1)
       call cfrure (nread, size(bb), bb, 'bb')
       call cfrure (nread, size(crx), crx, 'crx')
       call cfrure (nread, size(cry), cry, 'cry')
@@ -131,8 +127,7 @@
         call cfrure (nread, size(qc), qc, 'qc')
         call cfrure (nread, size(qs), qs, 'qs')
       elseif (b2fplasma_version.gt.'01.001.021') then
-       call cfrure (nread, size(qc_loc), qc_loc, 'qc')
-       qc(:,:,0) = qc_loc
+       call cfrure (nread, n2, qc(-1,-1,0), 'qc')
       else
        do iy = -1, ny
         do ix = -1, nx
@@ -149,31 +144,31 @@
         enddo
        enddo
       endif
-      qcb = 1.0_R8
-      if (b2fplasma_version.gt.'01.001.030') then
-       call cfrure_opt (nread, size(qcb), qcb, 'qcb')
-      end if
-      if (maxval(qcb).eq.1.0_R8 .and. minval(qcb).eq.1.0_R8) then
-       do iy = -1, ny
-        do ix = -1, nx
-         qcb(ix,iy) = cosang (
-     &     crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
-     &    (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
-     &    (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
-         if(qcb(ix,iy).le.0.0_R8) then
-          write(*,*) 'Problem in b2mod_geo: qcb(ix,iy) <= 0',
-     1     qcb(ix,iy),ix,iy
-          write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
-          write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
-         endif
+      if(b2fgmtry_version.lt.'03.001.000') then
+       qc(:,:,1) = 1.0_R8
+       qs(:,:,1) = 0.0_R8
+       if(b2fgmtry_version.ge.'01.001.030') then
+	 call cfrure_opt (nread, n2, qc(-1,-1,1), 'qcb')
+       end if
+       if (maxval(qc(:,:,1)).eq.1.0_R8 .and. 
+     &     minval(qc(:,:,1)).eq.1.0_R8) then
+        do iy = -1, ny
+         do ix = -1, nx
+          qc(ix,iy,1) = cosang (
+     &      crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
+     &     (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
+     &     (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
+          if(qc(ix,iy,1).le.0.0_R8) then
+           write(*,'(a,1f12.6,2i5)')
+     1      'Problem in b2mod_geo: qc(ix,iy,1) <= 0',qc(ix,iy,1),ix,iy
+           write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
+           write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
+          endif
+         enddo
         enddo
-       enddo
-      endif
-      if (b2fplasma_version.lt.'03.001.000') then
+       endif
        do iy = -1, ny
         do ix = -1, nx
-         qc(ix,iy,1) = 0.0_R8
-         qs(ix,iy,1) = 0.0_R8
          qs(ix,iy,0) = sinang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),

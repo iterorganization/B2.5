@@ -169,16 +169,16 @@
       integer iFace, offset
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
-      real (kind=R8) ::
-     *   qc1_loc(-1:nx1,-1:ny1)
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
-     *   trim1, norm, cosang
+     *   trim1, norm, cosang, sinang
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
       cosang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
+      sinang(p0x,p0y,p1x,p1y) = trim1(
+     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
       external subini, subend, xertst, cfrure, cfruin
       external b2xvsg, b2xvgm1
 
@@ -212,14 +212,12 @@
 cxpb
       if(b2fgmtry_version.ge.'03.001.000') then
         call cfrure (nget, n2*2, qc1, 'qc')
+        call cfrure (nget, n2*2, qs1, 'qs')
       elseif(b2fgmtry_version.ge.'01.001.022') then
-        call cfrure (nget, n2, qc1_loc, 'qc')
-        qc1(:,:,0) = qc1_loc
-        qc1(:,:,1) = 0.0_R8
+        call cfrure (nget, n2, qc1(-1,-1,0), 'qc')
       else
        do iy = -1, ny1
         do ix = -1, nx1
-         qc1(ix,iy,1) = 0.0_R8
          qc1(ix,iy,0) = cosang (
      &    (crx1(ix,iy,1)+crx1(ix,iy,3))-(crx1(ix,iy,0)+crx1(ix,iy,2)),
      &    (cry1(ix,iy,1)+cry1(ix,iy,3))-(cry1(ix,iy,0)+cry1(ix,iy,2)),
@@ -233,23 +231,35 @@ cxpb
         enddo
        enddo
       endif
-      qcb1 = 1.0_R8
-      if(b2fgmtry_version.ge.'01.001.030') then
-	call cfrure_opt (nget, n2, qcb1, 'qcb')
-      end if
-      if (maxval(qcb1).eq.1.0_R8 .and. minval(qcb1).eq.1.0_R8) then
+      if(b2fgmtry_version.lt.'03.001.000') then
+       qc1(:,:,1) = 1.0_R8
+       qs1(:,:,1) = 0.0_R8
+       if(b2fgmtry_version.ge.'01.001.030') then
+         call cfrure_opt (nget, n2, qc1(-1,-1,1), 'qcb')
+       end if
+       if (maxval(qc1(:,:,1)).eq.1.0_R8 .and. 
+     &     minval(qc1(:,:,1)).eq.1.0_R8) then
+        do iy = -1, ny1
+         do ix = -1, nx1
+          qc1(ix,iy,1) = cosang (
+     &      crx1(ix,iy,1)-crx1(ix,iy,0),  cry1(ix,iy,1)-cry1(ix,iy,0),
+     &     (crx1(ix,iy,2)+crx1(ix,iy,3))-(crx1(ix,iy,0)+crx1(ix,iy,1)),
+     &     (cry1(ix,iy,2)+cry1(ix,iy,3))-(cry1(ix,iy,0)+cry1(ix,iy,1)))
+          if(qc1(ix,iy,1).le.0.0_R8) then
+           write(*,'(a,1f12.6,2i5)')
+     1      'Problem in b2rugm: qc1(ix,iy,1) <= 0',qc1(ix,iy,1),ix,iy
+           write(*,'(a,4f12.6)') 'crx1 = ', crx1(ix,iy,0:3)
+           write(*,'(a,4f12.6)') 'cry1 = ', cry1(ix,iy,0:3)
+          endif
+         enddo
+        enddo
+       endif
        do iy = -1, ny1
         do ix = -1, nx1
-         qcb1(ix,iy) = cosang (
-     &     crx1(ix,iy,1)-crx1(ix,iy,0),  cry1(ix,iy,1)-cry1(ix,iy,0),
-     &    (crx1(ix,iy,2)+crx1(ix,iy,3))-(crx1(ix,iy,0)+crx1(ix,iy,1)),
-     &    (cry1(ix,iy,2)+cry1(ix,iy,3))-(cry1(ix,iy,0)+cry1(ix,iy,1)))
-         if(qcb1(ix,iy).le.0.0_R8) then
-          write(*,'(a,1f12.6,2i5)')
-     1     'Problem in b2rugm: qcb1(ix,iy) <= 0',qcb1(ix,iy),ix,iy
-          write(*,'(a,4f12.6)') 'crx1 = ', crx1(ix,iy,0:3)
-          write(*,'(a,4f12.6)') 'cry1 = ', cry1(ix,iy,0:3)
-         endif
+         qs1(ix,iy,0) = sinang (
+     &    (crx1(ix,iy,1)+crx1(ix,iy,3))-(crx1(ix,iy,0)+crx1(ix,iy,2)),
+     &    (cry1(ix,iy,1)+cry1(ix,iy,3))-(cry1(ix,iy,0)+cry1(ix,iy,2)),
+     &     crx1(ix,iy,2)-crx1(ix,iy,0),  cry1(ix,iy,2)-cry1(ix,iy,0))
         enddo
        enddo
       endif
@@ -442,7 +452,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
       call xertst(maxval(region1(-1:nx1,-1:ny1,2)).gt.0 .or.
      &            minval(region1(-1:nx1,-1:ny1,1)).lt.0,
      $            'Y-regions not set, re-run b2ag!')
-      call b2xvgm1(nx1, ny1, vol1, hx1, hy1, qz1, qc1, qcb1, gs1, pbs1,
+      call b2xvgm1(nx1, ny1, vol1, hx1, hy1, qz1, qc1, qs1, gs1, pbs1,
      . cell_width1, cell_height1, bottomiy1)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx1,ny1,crx1,cry1,cflags1,

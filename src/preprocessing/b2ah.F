@@ -133,7 +133,7 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbl, wbbr, wbbv,
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
      &  wbbc, cell_width, cell_height, gmap)
 *   ..call principal driver routine
       call b2ahdr (ninp, nout, nx, ns)
