@@ -223,8 +223,8 @@ c Drift terms
       call b2tdia(nx, ny, ns, vol, gs, hy, qz, bb,
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua,
-     &              cvsa_cl, fac_vis, fchvispar)                         !srv 20.09.06 16.10.17
+      call b2tvspa(nx, ny, ns, vol, hx, hy, qz, bb, ua,
+     &             cvsa_cl, fac_vis, fchvispar)                          !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,             !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)

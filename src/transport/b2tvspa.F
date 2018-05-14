@@ -53,7 +53,7 @@
       real (kind=R8) :: hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *   ..initialization
-      data ncall/0/, vis_par/1.0e0_R8/
+      data ncall/0/, vis_par/0.0_R8/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -62,7 +62,7 @@
       call subini ('b2tvspa')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2tvspa_vis_par', vis_par)
+       call ipgetr ('b2tfhe_vis_par', vis_par)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
