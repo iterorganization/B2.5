@@ -17,7 +17,7 @@
      *  hy1(:,:),
      *  qz1(:,:,:),
      *  qc1(:,:,:),
-     *  qcb1(:,:),
+     *  qs1(:,:,:),
      *  pbs1(:,:,:),
      *  wbbl1(:,:,:),
      *  wbbr1(:,:,:),
@@ -63,7 +63,7 @@
       allocate(hy1(-1:nxd,-1:nyd))
       allocate(qz1(-1:nxd,-1:nyd,0:1))
       allocate(qc1(-1:nxd,-1:nyd,0:1))
-      allocate(qcb1(-1:nxd,-1:nyd))
+      allocate(qs1(-1:nxd,-1:nyd,0:1))
       allocate(pbs1(-1:nxd,-1:nyd,0:1))
       allocate(wbbl1(-1:nxd,-1:nyd,0:3))
       allocate(wbbr1(-1:nxd,-1:nyd,0:3))
@@ -105,7 +105,7 @@
          deallocate(hy1)
          deallocate(qz1)
          deallocate(qc1)
-         deallocate(qcb1)
+         deallocate(qs1)
          deallocate(pbs1)
          deallocate(wbbl1)
          deallocate(wbbr1)

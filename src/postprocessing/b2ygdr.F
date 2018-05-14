@@ -292,7 +292,7 @@
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
 *   ..read geometry
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbl, wbbr, wbbv,
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
      &  wbbc, cell_width, cell_height, gmap)
 
 * ..output

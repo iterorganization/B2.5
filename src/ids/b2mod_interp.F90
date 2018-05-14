@@ -24,7 +24,7 @@ contains
     !> Routine for computing magnetic field at faces
     subroutine compute_b_at_faces( nx, ny, bb, wbbl, wbbr, wbbv,    &
         &   leftix, leftiy, rightix, rightiy, bottomix, bottomiy,   &
-        &   topix, topiy, vol, gs, qc, qcb, cflags )
+        &   topix, topiy, vol, gs, qc, cflags )
 
         implicit none
         integer, intent(in)  :: nx  !< Specifies the number of interior cells
@@ -34,9 +34,8 @@ contains
         real(R8), intent(in) :: bb( -1:nx, -1:ny, 0:3 ) !< Magnetic field
         real(R8), intent(in) :: vol( -1:nx ,-1:ny ,0:4 )    !< Cell volume
         real(R8), intent(in) :: gs( -1:nx, -1:ny, 0:2 )
-        real(R8), intent(in) :: qc( -1:nx, -1:ny ) !< Cosine of the angle
+        real(R8), intent(in) :: qc( -1:nx, -1:ny , 0:1) !< Cosine of the angle
             !< between flux line direction and left cell face
-        real(R8), intent(in) :: qcb( -1:nx, -1:ny )
         real(R8), intent(out) :: wbbl( -1:nx, -1:ny, 0:3 )
         real(R8), intent(out) :: wbbr( -1:nx, -1:ny, 0:3 )
         real(R8), intent(out) :: wbbv( -1:nx, -1:ny, 0:3 )
@@ -65,7 +64,7 @@ contains
         !! Interpolate magnetic field to cell faces
         call interp_magnetic_field( nx, ny, bb, wbbl, wbbr, wbbv,       &
             &   leftix, leftiy, rightix, rightiy, bottomix, bottomiy,   &
-            &   topix, topiy, vol, gs, qc, qcb, cflags )
+            &   topix, topiy, vol, gs, qc, cflags )
 
         !! Extrapolate magnetic field to edges
         do iy = -1, ny
@@ -143,7 +142,7 @@ contains
     !! Use this instead of left-right and top-bottom interpolation
     !! Obsolete: did not take properly into account trapezoidal and triangle cells
     !! Use interp_volume below instead
-    subroutine interp_width( xory, nx, ny, hx, hy, gs, qc, qcb, centre, face )
+    subroutine interp_width( xory, nx, ny, hx, hy, gs, qc, centre, face )
         use b2mod_indirect
         implicit none
         integer :: xory
@@ -154,9 +153,8 @@ contains
         real (kind=R8) :: hx(-1:nx,-1:ny)
         real (kind=R8) :: hy(-1:nx,-1:ny)
         real (kind=R8) :: gs(-1:nx,-1:ny,0:2)
-        real (kind=R8) :: qc(-1:nx,-1:ny) !< Cosine of the angle
+        real (kind=R8) :: qc(-1:nx,-1:ny,0:1) !< Cosine of the angle
             !< between flux line direction and left cell face
-        real (kind=R8) :: qcb(-1:nx,-1:ny)
         real (kind=R8) :: centre(-1:nx,-1:ny)
         real (kind=R8) :: face(-1:nx,-1:ny)
 
@@ -197,8 +195,8 @@ contains
                         &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
                         &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED) then
                         area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
-                            &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
-                        area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
+                            &  sqrt(1.0_R8 - qc(topix(ix,iy),topiy(ix,iy),1)**2)
+                        area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qc(ix,iy,1)**2)
                         face(ix,iy) = (centre(ix,iy)* &
                             &  (area_to_bottom * hy(bottomix(ix,iy),bottomiy(ix,iy)) + &
                             &   area_to_top * hy(topix(ix,iy),topiy(ix,iy))) + &
@@ -232,8 +230,8 @@ contains
                         &  cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
                         &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
                         area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-                            &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
-                        area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)
+                            &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
+                        area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy,0)**2)
                         face(ix,iy) = (centre(ix,iy)* &
                             &  (area_to_left * hx(leftix(ix,iy),leftiy(ix,iy)) + &
                             &   area_to_right * hx(rightix(ix,iy),rightiy(ix,iy))) + &
@@ -251,7 +249,7 @@ contains
         return
     end subroutine interp_width
 
-  subroutine interp_volume1( idir, nx, ny, ns, vol, gs, qc, qcb, centre, face )
+  subroutine interp_volume1( idir, nx, ny, ns, vol, gs, qc, centre, face )
   implicit none
   integer, intent(in) :: idir
   integer, intent(in) :: nx !< Specifies the number of interior cells
@@ -261,15 +259,14 @@ contains
   integer, intent(in) :: ns
   real (kind=R8), intent(in) :: vol(-1:nx,-1:ny,0:4)    !< Cell volume
   real (kind=R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
-  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny) !< Cosine of the angle
+  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny,0:1) !< Cosine of the angle
     !< between flux line direction and left cell face
-  real (kind=R8), intent(in) :: qcb(-1:nx,-1:ny)
   real (kind=R8), intent(in) :: centre(-1:nx,-1:ny,0:ns-1)
   real (kind=R8), intent(out) :: face(-1:nx,-1:ny,0:ns-1)
   integer is
 
   do is = 0, ns-1
-    call interp_volume( idir, nx, ny, vol, gs, qc, qcb, centre(-1,-1,is),   &
+    call interp_volume( idir, nx, ny, vol, gs, qc, centre(-1,-1,is),   &
         &   face(-1,-1,is) )
   end do
 
@@ -289,7 +286,7 @@ contains
   !! idir.eq.TO_BOTTOM: interpolation in the BOTTOM
   !! idir.eq.TO_RIGHT: interpolation to the RIGHT
   !! idir.eq.TO_TOP: interpolation in the TOP
-  subroutine interp_volume( idir, nx, ny, vol, gs, qc, qcb, centre, face )
+  subroutine interp_volume( idir, nx, ny, vol, gs, qc, centre, face )
   use b2mod_indirect
   use b2mod_cellhelper
   implicit none
@@ -300,9 +297,8 @@ contains
                                 !< along the second coordinate (radial)
   real (kind=R8), intent(in) :: vol(-1:nx,-1:ny,0:4)
   real (kind=R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
-  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny) !< Cosine of the angle
+  real (kind=R8), intent(in) :: qc(-1:nx,-1:ny,0:1) !< Cosine of the angle
     !< between flux line direction and left cell face
-  real (kind=R8), intent(in) :: qcb(-1:nx,-1:ny)
   real (kind=R8), intent(in) :: centre(-1:nx,-1:ny)
   real (kind=R8), intent(out) :: face(-1:nx,-1:ny)
 
@@ -347,8 +343,8 @@ contains
              &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
              &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
            area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
-                 &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
-           area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
+                 &  sqrt(1.0_R8 - qc(topix(ix,iy),topiy(ix,iy),1)**2)
+           area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qc(ix,iy,1)**2)
            face(ix,iy) = (centre(ix,iy)* &
              &  (area_to_bottom * vol(bottomix(ix,iy),bottomiy(ix,iy),TO_TOP) + &
              &   area_to_top * vol(topix(ix,iy),topiy(ix,iy),TO_BOTTOM)) + &
@@ -388,8 +384,8 @@ contains
              &  cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
              &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
            area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
-           area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)
+                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
+           area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy,0)**2)
            face(ix,iy) = (centre(ix,iy)* &
              &  (area_to_left * vol(leftix(ix,iy),leftiy(ix,iy),TO_RIGHT) + &
              &   area_to_right * vol(rightix(ix,iy),rightiy(ix,iy),TO_LEFT)) + &
@@ -429,8 +425,8 @@ contains
              &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
              &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
            area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
-                 &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
-           area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
+                 &  sqrt(1.0_R8 - qc(topix(ix,iy),topiy(ix,iy),1)**2)
+           area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qc(ix,iy,1)**2)
            face(ix,iy) = (centre(ix,iy)* &
              &  (area_to_bottom * vol(bottomix(ix,iy),bottomiy(ix,iy),TO_TOP) + &
              &   area_to_top * vol(topix(ix,iy),topiy(ix,iy),TO_BOTTOM)) + &
@@ -470,8 +466,8 @@ contains
              &  cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
              &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
            area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
-           area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)
+                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
+           area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy,0)**2)
            face(ix,iy) = (centre(ix,iy)* &
              &  (area_to_left * vol(leftix(ix,iy),leftiy(ix,iy),TO_RIGHT) + &
              &   area_to_right * vol(rightix(ix,iy),rightiy(ix,iy),TO_LEFT)) + &
@@ -492,7 +488,7 @@ contains
   !! geometric arrays explicitly
   subroutine interp_magnetic_field( nx, ny, bb, wbbl, wbbr, wbbv,   &
         &    leftix, leftiy, rightix, rightiy, bottomix, bottomiy,  &
-        &    topix, topiy, vol, gs, qc, qcb, cflags)
+        &    topix, topiy, vol, gs, qc, cflags)
 
     implicit none
     integer, intent(in) :: nx   !< Specifies the number of interior cells
@@ -502,8 +498,7 @@ contains
     real(R8), intent(in) :: bb(-1:nx,-1:ny,0:3)
     real(R8), intent(in) :: vol(-1:nx,-1:ny,0:4)
     real(R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
-    real(R8), intent(in) :: qc(-1:nx,-1:ny)
-    real(R8), intent(in) :: qcb(-1:nx,-1:ny)
+    real(R8), intent(in) :: qc(-1:nx,-1:ny,0:1)
     real(R8), intent(out) :: wbbl(-1:nx,-1:ny,0:3)
     real(R8), intent(out) :: wbbr(-1:nx,-1:ny,0:3)
     real(R8), intent(out) :: wbbv(-1:nx,-1:ny,0:3)
@@ -569,8 +564,8 @@ contains
            &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
            &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
         area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
-               &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
-        area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
+               &  sqrt(1.0_R8 - qc(topix(ix,iy),topiy(ix,iy),1)**2)
+        area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qc(ix,iy,1)**2)
         wbbl(ix,iy,:) = (bb(ix,iy,:)* &
            &  (area_to_bottom * vol(bottomix(ix,iy),bottomiy(ix,iy),TO_TOP) + &
            &   area_to_top * vol(topix(ix,iy),topiy(ix,iy),TO_BOTTOM)) + &
@@ -610,8 +605,8 @@ contains
            &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
            &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
         area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
-               &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
-        area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
+               &  sqrt(1.0_R8 - qc(topix(ix,iy),topiy(ix,iy),1)**2)
+        area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qc(ix,iy,1)**2)
         wbbr(ix,iy,:) = (bb(ix,iy,:)* &
            &  (area_to_bottom * vol(bottomix(ix,iy),bottomiy(ix,iy),TO_TOP) + &
            &   area_to_top * vol(topix(ix,iy),topiy(ix,iy),TO_BOTTOM)) + &
@@ -651,8 +646,8 @@ contains
            &  cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
            &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
         area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-           &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
-        area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)
+           &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
+        area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy,0)**2)
         wbbv(ix,iy,:) = (bb(ix,iy,:)* &
            &  (area_to_left * vol(leftix(ix,iy),leftiy(ix,iy),TO_RIGHT) + &
            &   area_to_right * vol(rightix(ix,iy),rightiy(ix,iy),TO_LEFT)) + &
@@ -693,7 +688,7 @@ contains
   real (kind=R8) :: p0x, p0y, p1x, p1y
   logical classical
 !! FIXME: To remove later once qcb and vol are redefined in b2mod_geo
-  real (kind=R8) :: qcb(-1:nx,-1:ny), vol(-1:nx,-1:ny,0:4)
+  real (kind=R8) :: vol(-1:nx,-1:ny,0:4)
 !!   ..procedures
   intrinsic min, max, sqrt
   real (kind=R8) :: trim1, norm, sinang
@@ -764,11 +759,11 @@ contains
           endif
         else
           if (pbs(ix,iy,1).ge.0.0_R8 .or. .not.isflux) then
-            face(ix,iy,1,0) = flux(ix,iy,1)*(1.0_R8-sqrt(1.0_R8-qcb(ix,iy)**2))
+            face(ix,iy,1,0) = flux(ix,iy,1)*(1.0_R8-sqrt(1.0_R8-qc(ix,iy,1)**2))
           else
-            face(ix,iy,1,0) =-flux(ix,iy,1)*(1.0_R8-sqrt(1.0_R8-qcb(ix,iy)**2))
+            face(ix,iy,1,0) =-flux(ix,iy,1)*(1.0_R8-sqrt(1.0_R8-qc(ix,iy,1)**2))
           endif
-          face(ix,iy,1,1) = flux(ix,iy,1)*sqrt(1.0_R8-qcb(ix,iy)**2)
+          face(ix,iy,1,1) = flux(ix,iy,1)*sqrt(1.0_R8-qc(ix,iy,1)**2)
         endif
       endif
     enddo
@@ -785,12 +780,12 @@ contains
       cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
       if (isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy))) then
         area_to_top = gs(topix(ix,iy),topiy(ix,iy),1) * &
-                    & sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
+                    & sqrt(1.0_R8 - qc(topix(ix,iy),topiy(ix,iy),1)**2)
       else
         area_to_top = 0.0_R8
       endif
       if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
-        area_to_bottom = gs(ix,iy,1) * sqrt(1.0_R8 - qcb(ix,iy)**2)
+        area_to_bottom = gs(ix,iy,1) * sqrt(1.0_R8 - qc(ix,iy,1)**2)
       else
         area_to_bottom = 0.0_R8
       endif
@@ -970,12 +965,12 @@ contains
         endif
       endif
       if (isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy))) then
-        area_to_top = gs(topix(ix,iy),topiy(ix,iy),1) * qcb(topix(ix,iy),topiy(ix,iy))
+        area_to_top = gs(topix(ix,iy),topiy(ix,iy),1) * qc(topix(ix,iy),topiy(ix,iy),1)
       else
         area_to_top = 0.0_R8
       endif
       if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
-        area_to_bottom = gs(ix,iy,1) * qcb(ix,iy)
+        area_to_bottom = gs(ix,iy,1) * qc(ix,iy,1)
       else
         area_to_bottom = 0.0_R8
       endif
@@ -1319,7 +1314,7 @@ contains
           if (pbs(topix(ix,iy),topiy(ix,iy),1).ne.0.0_R8) &
           & velocity(ix,iy,0,is) = flow(topix(ix,iy),topiy(ix,iy),1,is)/ &
               &  (gs(topix(ix,iy),topiy(ix,iy),1)* &
-              &   sqrt(1.0_R8-qcb(topix(ix,iy),topiy(ix,iy))**2))/ &
+              &   sqrt(1.0_R8-qc(topix(ix,iy),topiy(ix,iy),1)**2))/ &
               &  density(topix(ix,iy),topiy(ix,iy),1,is)
         elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
               &  isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
@@ -1327,14 +1322,14 @@ contains
               &  cflags(ix,iy,CELLFLAG_TOPFACE) == GRID_UNDEFINED) then
           if (pbs(ix,iy,1).ne.0.0_R8) &
           & velocity(ix,iy,0,is) = flow(ix,iy,1,is)/density(ix,iy,1,is)/ &
-              &  (gs(ix,iy,1)*sqrt(1.0_R8-qcb(ix,iy)**2))
+              &  (gs(ix,iy,1)*sqrt(1.0_R8-qc(ix,iy,1)**2))
         elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
               &  isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
               &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
               &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED) then
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
-              &   sqrt(1.0_R8-qcb(topix(ix,iy),topiy(ix,iy))**2)
-          area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8-qcb(ix,iy)**2)
+              &   sqrt(1.0_R8-qc(topix(ix,iy),topiy(ix,iy),1)**2)
+          area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8-qc(ix,iy,1)**2)
           if (area_to_top.ne.0.0_R8) velocity(ix,iy,0,is) = &
               &   flow(topix(ix,iy),topiy(ix,iy),1,is)/area_to_top/ &
               &   density(topix(ix,iy),topiy(ix,iy),1,is)
@@ -1347,7 +1342,7 @@ contains
             velocity(ix,iy,1,is) = flow(ix,iy,1,is)/gs(ix,iy,1)/ &
                               & density(ix,iy,1,is)
           else
-            velocity(ix,iy,1,is) = flow(ix,iy,1,is)/(gs(ix,iy,1)*qcb(ix,iy))/ &
+            velocity(ix,iy,1,is) = flow(ix,iy,1,is)/(gs(ix,iy,1)*qc(ix,iy,1))/ &
                               & density(ix,iy,1,is)
           endif
         elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
@@ -1416,7 +1411,7 @@ contains
         end if
         if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
           if (pbs(ix,iy,1).ne.0.0_R8) then
-            flux(ix,iy,1,is) = flow(ix,iy,1,is)/gs(ix,iy,1)/qcb(ix,iy)
+            flux(ix,iy,1,is) = flow(ix,iy,1,is)/gs(ix,iy,1)/qc(ix,iy,1)
           else
             flux(ix,iy,1,is) = flow(ix,iy,1,is)/gs(ix,iy,1)
           end if
@@ -1475,8 +1470,8 @@ contains
 
   call value_on_faces1(nx,ny,ns,vol,density,den)
   do is = 0, ns-1
-    call interp_volume(TO_LEFT,nx,ny,vol,gs,qc,qcb,velocity(-1,-1,0,is),vv(-1,-1,0,is))
-    call interp_volume(TO_BOTTOM,nx,ny,vol,gs,qc,qcb,velocity(-1,-1,1,is),vv(-1,-1,1,is))
+    call interp_volume(TO_LEFT,nx,ny,vol,gs,qc,velocity(-1,-1,0,is),vv(-1,-1,0,is))
+    call interp_volume(TO_BOTTOM,nx,ny,vol,gs,qc,velocity(-1,-1,1,is),vv(-1,-1,1,is))
     do iy = -1, ny
       do ix = -1, nx
         if (isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
@@ -1493,7 +1488,7 @@ contains
              & b2sign(1.0_R8,pbs(topix(ix,iy),topiy(ix,iy),1))* &
              & vv(ix,iy,0,is)*den(ix,iy,0,is)* &
              & gs(topix(ix,iy),topiy(ix,iy),1)* &
-             & sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
+             & sqrt(1.0_R8 - qc(topix(ix,iy),topiy(ix,iy),1)**2)
         if ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
              &  isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
              &  cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
@@ -1501,7 +1496,7 @@ contains
              & flow(ix,iy,1,is) = flow(ix,iy,1,is) + &
              & b2sign(1.0_R8,pbs(ix,iy,1))* &
              & vv(ix,iy,0,is)*den(ix,iy,0,is)* &
-             & gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
+             & gs(ix,iy,1)*sqrt(1.0_R8 - qc(ix,iy,1)**2)
 
 !! radial contributions
   	if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
@@ -1510,7 +1505,7 @@ contains
              & vv(ix,iy,1,is)*den(ix,iy,1,is)*gs(ix,iy,1)
           else
             flow(ix,iy,1,is) = flow(ix,iy,1,is) + b2sign(1.0_R8,pbs(ix,iy,1))* &
-             & vv(ix,iy,1,is)*den(ix,iy,1,is)*gs(ix,iy,1)*qcb(ix,iy)
+             & vv(ix,iy,1,is)*den(ix,iy,1,is)*gs(ix,iy,1)*qc(ix,iy,1)
           endif
         endif
         cgeo = cellGeoType(crx(ix,iy,:),cry(ix,iy,:))
@@ -1671,7 +1666,7 @@ contains
   real(R8), intent(in) :: weight(-1:nx,-1:ny,0:4)
   real(R8), intent(out) :: side(-1:nx,-1:ny,1:4)
 !! FIXME: To remove later once qcb and vol are redefined in b2mod_geo
-  real (kind=R8) :: qcb(-1:nx,-1:ny), vol(-1:nx,-1:ny,0:4)
+  real (kind=R8) :: vol(-1:nx,-1:ny,0:4)
 
 
   integer ix, iy, cgeo
@@ -1733,14 +1728,14 @@ contains
           area_to_left = 0.0_R8
         endif
         if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
-          area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
+          area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qc(ix,iy,1)**2)
         else
           area_to_bottom = 0.0_R8
         end if
         if (cgeo == CGEO_TRIA_NOLEFT) then
 !! Triangles with no left face
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
-                 &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
+                 &  sqrt(1.0_R8 - qc(topix(ix,iy),topiy(ix,iy),1)**2)
           if (pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8 .and. &
             & pbs(ix,iy,1).gt.0.0_R8) then  !! cell is a left-pointing arrow
             side(ix,iy,TO_LEFT) = &
@@ -1780,7 +1775,7 @@ contains
         else
 !! Other trapezoids
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
-                 &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
+                 &  sqrt(1.0_R8 - qc(topix(ix,iy),topiy(ix,iy),1)**2)
           if (pbs(topix(ix,iy),topiy(ix,iy),1).lt.0.0_R8 .and. &
             & pbs(ix,iy,1).gt.0.0_R8) then  !! contribution from all three neighbors
             side(ix,iy,TO_LEFT) = &
@@ -1831,7 +1826,7 @@ contains
           end if
         end if
 !! Do bottom side second
-        area_to_bottom = gs(ix,iy,1) * qcb(ix,iy)
+        area_to_bottom = gs(ix,iy,1) * qc(ix,iy,1)
         area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy,0)**2)
         if (cgeo == CGEO_TRIA_NOBOT) then
 !! Triangles with no bottom face
@@ -1929,9 +1924,9 @@ contains
 !! Do right side third
         if (cgeo == CGEO_TRIA_NORIGHT) then
 !! Triangles with no right face
-          area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
+          area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qc(ix,iy,1)**2)
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
-                 &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
+                 &  sqrt(1.0_R8 - qc(topix(ix,iy),topiy(ix,iy),1)**2)
           if (pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8 .and. &
             & pbs(ix,iy,1).lt.0.0_R8) then  !! cell is a right-pointing arrow
             side(ix,iy,TO_RIGHT) = &
@@ -1972,9 +1967,9 @@ contains
 !! Other trapezoids
           area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0) * &
                         & qc(rightix(ix,iy),rightiy(ix,iy),0)
-          area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
+          area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qc(ix,iy,1)**2)
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
-                 &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
+                 &  sqrt(1.0_R8 - qc(topix(ix,iy),topiy(ix,iy),1)**2)
           if (pbs(topix(ix,iy),topiy(ix,iy),1).gt.0.0_R8 .and. &
             & pbs(ix,iy,1).lt.0.0_R8) then  !! contribution from all three neighbors
             side(ix,iy,TO_RIGHT) = &
@@ -2069,7 +2064,7 @@ contains
         else
 !! Other trapezoids
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1) * &
-                     & qcb(topix(ix,iy),topiy(ix,iy))
+                     & qc(topix(ix,iy),topiy(ix,iy),1)
           area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy,0)**2)
           area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
                  &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)

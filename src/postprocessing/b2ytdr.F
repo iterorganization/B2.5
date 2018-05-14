@@ -897,7 +897,7 @@ c 2002-09-11: logic revised
         call cfruin (70, 1, idum, 'isymm')
 *   ..read old geometry and metric
         call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbl, wbbr, wbbv,
+     &   bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
      &   wbbc, cell_width, cell_height, gmap)
         if (non_commensurate.eq.1) then
         call xertst (nnreg(0).eq.nnreg1(0) .and. nncut.eq.nncut1 .and.
@@ -922,7 +922,7 @@ c 2002-09-11: logic revised
         call cfruch (ninp(3), 120, lblgm, 'label')
         call cfruin (ninp(3), 1, idum, 'isymm')
         call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbl, wbbr, wbbv,
+     &   bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
      &   wbbc, cell_width, cell_height, gmap)
       endif
       if (invert_bpol.eq.1) then
@@ -958,7 +958,7 @@ c 2002-09-11: logic revised
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
         call b2wugm (nout(6), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &   vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &   vol, hx, hy, qz, qc, qs, gs, pbs, wbbc,
      &   cell_width, cell_height)
         close(nout(6))
       endif

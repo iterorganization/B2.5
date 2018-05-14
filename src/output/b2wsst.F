@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2wsst (nspc, nx, ny, ns, crx, cry, bb, vol, hx, hy,
-     &  qz, qc, qcb, gs, pbs, cell_width, cell_height,
+     &  qz, qc, qs, gs, pbs, cell_width, cell_height,
      &  na, ua, te, ti, po, fna, fhe, fhi, fch,
      &  ne, ni, pr, ro, fne, fni, wrk0, wrk1)
       use b2mod_types
@@ -14,8 +14,8 @@
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),
-     &  qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
+     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),
+     &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -55,7 +55,7 @@
 *     nx, ny, ns - integer, input.
 *     See the calling routine for description.
 *
-*     crx, cry, bb, vol, hx, hy, qz, qc, qcb, gs, pbs - real*8 array, input.
+*     crx, cry, bb, vol, hx, hy, qz, qc, qs, gs, pbs - real*8 array, input.
 *     See the calling routine for description.
 *
 *     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
@@ -111,7 +111,7 @@
 *   ..test sign of bb
       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
 *   ..test metric coefficients
-      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      &  cell_width, cell_height)
 *   ..test plasma state
       call b2xvps (nx, ny, ns, 

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2rugm (nget, nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbl, wbbr, wbbv,
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
      &   wbbc, cell_width, cell_height, gmap)
       use b2mod_types
       use b2mod_indirect
@@ -18,7 +18,7 @@
      &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), 
-     &  qs(-1:nx,-1:ny,0:1), qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
      &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx,-1:ny,0:3), 
      &  wbbr(-1:nx,-1:ny,0:3), wbbv(-1:nx,-1:ny,0:3),
      &  wbbc(-1:nx+1,-1:ny+1,0:3), 
@@ -128,14 +128,6 @@
 *     geometry. 
 *     It will hold that 0.lt.qc(,).le.1.
 *
-*     qcb - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qcb(ix,iy) specifies cos(t), where
-*     t is the complementary angle between the y-direction of the
-*     (ix,iy) cell and its bottom face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry.
-*     It will hold that 0.lt.qcb(,).le.1.
-*
 *     gs - (-1:nx,-1:ny,0:2) real*8 array, output.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
 *     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
@@ -194,8 +186,6 @@
       integer iFace, offset
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
-      real (kind=R8) ::
-     *   qc_loc(-1:nx,-1:ny)
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -242,8 +232,7 @@ cxpb
         call cfrure (nget, n2*2, qc, 'qc')
         call cfrure (nget, n2*2, qs, 'qs')
       elseif(b2fgmtry_version.ge.'01.001.022') then
-        call cfrure (nget, n2, qc_loc, 'qc')
-        qc(:,:,0) = qc_loc
+        call cfrure (nget, n2, qc(-1,-1,0), 'qc')
       else
        do iy = -1, ny
         do ix = -1, nx
@@ -260,31 +249,31 @@ cxpb
         enddo
        enddo
       endif
-      qcb = 1.0_R8
-      if(b2fgmtry_version.ge.'01.001.030') then
-	call cfrure_opt (nget, n2, qcb, 'qcb')
-      end if
-      if (maxval(qcb).eq.1.0_R8 .and. minval(qcb).eq.1.0_R8) then
-       do iy = -1, ny
-        do ix = -1, nx
-         qcb(ix,iy) = cosang (
-     &     crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
-     &    (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
-     &    (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
-         if(qcb(ix,iy).le.0.0_R8) then
-          write(*,'(a,1f12.6,2i5)')
-     1     'Problem in b2rugm: qcb(ix,iy) <= 0',qcb(ix,iy),ix,iy
-          write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
-          write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
-         endif
+      if(b2fgmtry_version.lt.'03.001.000') then
+       qc(:,:,1) = 1.0_R8
+       qs(:,:,1) = 0.0_R8
+       if(b2fgmtry_version.ge.'01.001.030') then
+	 call cfrure_opt (nget, n2, qc(-1,-1,1), 'qcb')
+       end if
+       if (maxval(qc(:,:,1)).eq.1.0_R8 .and. 
+     &     minval(qc(:,:,1)).eq.1.0_R8) then
+        do iy = -1, ny
+         do ix = -1, nx
+          qc(ix,iy,1) = cosang (
+     &      crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
+     &     (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
+     &     (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
+          if(qc(ix,iy,1).le.0.0_R8) then
+           write(*,'(a,1f12.6,2i5)')
+     1      'Problem in b2rugm: qc(ix,iy,1) <= 0',qc(ix,iy,1),ix,iy
+           write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
+           write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
+          endif
+         enddo
         enddo
-       enddo
-      endif
-      if (b2fgmtry_version.lt.'03.001.000') then
+       endif
        do iy = -1, ny
         do ix = -1, nx
-         qc(ix,iy,1) = 0.0_R8
-         qs(ix,iy,1) = 0.0_R8
          qs(ix,iy,0) = sinang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
@@ -488,7 +477,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call xertst(maxval(region(-1:nx,-1:ny,2)).gt.0 .or.
      &            minval(region(-1:nx,-1:ny,1)).lt.0,
      $            'Y-regions not set, re-run b2ag!')
-      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      &     cell_width, cell_height)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx,ny,crx,cry,cflags,
