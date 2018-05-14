@@ -958,7 +958,7 @@ c 2002-09-11: logic revised
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
         call b2wugm (nout(6), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &   vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &   vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbc,
      &   cell_width, cell_height)
         close(nout(6))
       endif

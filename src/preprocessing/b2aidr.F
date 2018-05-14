@@ -522,8 +522,8 @@
       isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)                     !xpb 10.08.00
 *   ..read geometry
-      call b2rugm (ninp(2), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+      call b2rugm (ninp(2), nx, ny, crx, cry, fpsi, ffbz, bb, vol, 
+     &  hx, hy, qz, qc, qs, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 
       if(read_b2fstate.ne.0) then

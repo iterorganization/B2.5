@@ -348,7 +348,7 @@
       endif
 *   ..compute metric coefficients on auxiliary mesh
       call b2agmt (nx1, ny1, isymm, crx1, cry1, vol1,
-     & hx1, hy1, qz1, qc1, qcb1, gs1,
+     & hx1, hy1, qz1, qc1, qs1, qcb1, gs1,
      & cell_width1, cell_height1, leftix1, bottomiy1)
 *    ..interpolate magnetic field to cell faces
       call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
@@ -654,7 +654,7 @@ cdpc-debug
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
       call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &  vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbc,
      &  cell_width, cell_height)
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')

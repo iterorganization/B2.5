@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2wugm (nput, nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &  vol, hx, hy, qz, qc, qs, qcb, gs, pbs, wbbc,
      &  cell_width, cell_height)
       use b2mod_types
       use b2mod_indirect
@@ -16,7 +16,8 @@
      &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), 
-     &  qc(-1:nx,-1:ny,0:1), qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     &  qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
+     &  qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      &  pbs(-1:nx,-1:ny,0:1), wbbc(-1:nx+1,-1:ny+1,0:3),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -442,6 +443,7 @@ cdpc-end
 cxpb
       if(newversion.ge.'03.001.000') then
         call cfwure (nput, n2*2, qc, 'qc')
+        call cfwure (nput, n2*2, qs, 'qs')
       elseif(newversion.ge.'01.001.022') then
 	call cfwure (nput, n2, qc, 'qc')
       endif
