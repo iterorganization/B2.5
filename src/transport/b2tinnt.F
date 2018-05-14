@@ -60,7 +60,8 @@
      *   fnan(-1:nx,-1:ny,0:1,0:1,0:ns-1), work(-1:nx,-1:ny,0:1,0:ns-1),
      *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1),
      *   wght(-1:nx,-1:ny), wrk0(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     *   wrk1(-1:nx,-1:ny,0:1,0:1), dpo(-1:nx,-1:ny,0:1,0:1)
+     *   wrk1(-1:nx,-1:ny,0:1,0:1), dpo(-1:nx,-1:ny,0:1,0:1),
+     *   wrk(-1:nx,-1:ny)
       real (kind=R8) ::
      &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), 
      &   csigia(-1:nx,-1:ny,0:1,0:1),                                     !srv 15.02.11
@@ -165,8 +166,9 @@
             call intfacev(nx, ny, bottomix, bottomiy, vol, ti, tib)
 *   ..pre-computation of differences
             wght = 1.0e0_R8
+            wrk  = log(na(:,:,ismain))
             call diff(nx, ny, hx, hy, wght, qs, po,   dpo)
-            call diff(nx, ny, hx, hy, wght, qs, log(na(-1,-1,ismain)), 
+            call diff(nx, ny, hx, hy, wght, qs, wrk, 
      &        wrk0(-1,-1,0,0,ismain))
             call diff(nx, ny, hx, hy, wght, qs, ti, wrk1)
           else
@@ -330,9 +332,9 @@
 *    ..test edge values and sign of csigin
             do is = 0, ns-1
               do is0 = 0, ns-1
-                call b2xvsg (n2, csigin(-1,-1,0,0,is,is0), 'csigin', 
+                call b2xvsg (n2, csigin(-1,-1,0,0,is,is0), 1, 'csigin', 
      .            '.ge.')
-                call b2xvsg (n2, csigin(-1,-1,1,1,is,is0), 'csigin',
+                call b2xvsg (n2, csigin(-1,-1,1,1,is,is0), 1, 'csigin',
      .            '.ge.')
                 call b2xvff (nx, ny, csigin(-1,-1,0,0,is,is0), 'csigin')
               enddo
@@ -346,7 +348,8 @@
             wght = 1.0e0_R8
             call diff(nx, ny, hx, hy, wght, qs, po,   dpo)
             do is = 0, ns-1
-              call diff(nx, ny, hx, hy, wght, qs, log(na(-1,-1,is)), 
+              wrk = log(na(:,:,is))                                      !srv 12.05.18
+              call diff(nx, ny, hx, hy, wght, qs, wrk, 
      &          wrk0(-1,-1,0,0,is))
             enddo
             call diff(nx, ny, hx, hy, wght, qs, ti, wrk1)
