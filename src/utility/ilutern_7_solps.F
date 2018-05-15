@@ -302,7 +302,7 @@ cdpc
 
       entry restart_ma28_for_7                                     !srv 11.01.00
       lfirst=.true.
-      write(*,*) 'Restarting ma28'
+      write(*,*) 'Restarting ma28_for_7'                           !srv 02.04.18
       return
 
 *=======================================================================

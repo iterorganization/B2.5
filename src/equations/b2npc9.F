@@ -154,7 +154,7 @@ cdjm Jan2017 update particle source components for balance
       write (chns,'(i3.3)') isb
       call b2usc9 (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, !srv 13.10.06 26.09.12
      &   pbs, nb, pb, snb(-1,-1,1), flob, conb, pccb(-1,-1,1), rescb,  
-     &   corpb, aa9, 'b2usc9_'//chns)                                 !srv 18.05.02
+     &   corpb, aa9, '_b2usc9_'//chns)                                !srv 18.05.02 02.04.18
 *   ..apply correction
       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
      & vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                    !IYS 19.12.2017

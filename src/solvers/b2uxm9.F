@@ -151,7 +151,7 @@
          call my_out(70,nx,ny,aaf(-1,-1,-2),'aafm2'//trim(name))
          call my_out(70,nx,ny,aaf(-1,-1, 2),'aafp2'//trim(name))
        endif
-
+                
        aa9(:,:,-3) = aa9(:,:,-3) + aaf(:,:,-2)
        aa9(:,:,-1) = aa9(:,:,-1) + aaf(:,:,-1) 
        aa9(:,:, 1) = aa9(:,:, 1) + aaf(:,:, 1) 
@@ -266,8 +266,8 @@
           call my_out(70,nx,ny,aa9(-1,-1,-5),'aa9ym1xp1'//trim(name))
           call my_out(70,nx,ny,aa9(-1,-1, 2),'aa9xm1yp1'//trim(name))
           call my_out(70,nx,ny,aa9(-1,-1, 5),'aa9yp1xm1'//trim(name))
-         endif
-
+      endif
+      
 * ..return
       ncall = ncall+1
       call subend ()
