@@ -747,7 +747,7 @@
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
-      js=ltns(nncut)+nlim
+      js=ltns(nncut*2)+nlim   ! iyv 15.05.2018
       do iy=0,ny-1 !{
       wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
      &                              hlp_neu_peak/hlp_s
