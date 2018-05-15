@@ -19,11 +19,15 @@
 
       private
 
-      public :: read_mapping, calc_mapping, prep_geometry, prep_plasma
+      public :: read_mapping, calc_mapping, prep_geometry, prep_plasma, 
+     .          prep_plasma_ext
 
+cwdk  eventually: take this outside of a module! (or: make sure this module is
+cwdk  only used at b2mod_driver level)
       type(mapping), public, save :: mpg
       type(geometry), public, save :: gm
       type(B2State), public, save :: state
+      type(B2StateExt), public, save :: state_ext
 
       contains
 
@@ -52,35 +56,32 @@
 
 ***********************************************************************
 
-      subroutine calc_mapping(nxp,nyp,
+      subroutine calc_mapping(nx,ny,
      .           leftix,leftiy,rightix,rightiy,
      .           topix,topiy,bottomix,bottomiy,
      .           nncut,leftcut,rightcut,topcut,bottomcut)
 
       implicit none
-      integer, intent(in) :: nxp, nyp, nncut
-      integer, intent(in) :: leftix(-1:nxp,-1:nyp),
-     .                       leftiy(-1:nxp,-1:nyp),
-     .                       rightix(-1:nxp,-1:nyp),
-     .                       rightiy(-1:nxp,-1:nyp),
-     .                       topix(-1:nxp,-1:nyp),
-     .                       topiy(-1:nxp,-1:nyp),
-     .                       bottomix(-1:nxp,-1:nyp),
-     .                       bottomiy(-1:nxp,-1:nyp)
+      integer, intent(in) :: nx, ny, nncut
+      integer, intent(in) :: leftix(-1:nx,-1:ny),
+     .                       leftiy(-1:nx,-1:ny),
+     .                       rightix(-1:nx,-1:ny),
+     .                       rightiy(-1:nx,-1:ny),
+     .                       topix(-1:nx,-1:ny),
+     .                       topiy(-1:nx,-1:ny),
+     .                       bottomix(-1:nx,-1:ny),
+     .                       bottomiy(-1:nx,-1:ny)
       integer, intent(in) :: leftcut(nncut), rightcut(nncut),
      .                       topcut(nncut), bottomcut(nncut)
       integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc, 
-     .           vxFc_end, vxCv_end, nx, ny, icut, ix1, ix2, iy1, iy2,
+     .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
      .           ivx, ivx1, ivx2, nxx, mxreg, ifs, icv, ireg, istart
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:)
 
 !  assume a structured quadrilateral grid
 
-      nx = nxp - 1
-      ny = nyp - 1
-
 !  no. of cells
-      mpg%nCi = nx*ny 
+      mpg%nCi = nx*ny
       mpg%nCg = 2*nx + 2*ny   
       mpg%nCv = mpg%nCi + mpg%nCg  
 
@@ -97,7 +98,7 @@
       mpg%nCmxFc = 4
 
 ! max no. of flux surfaces
-      mpg%nFs = nncut*ny
+      mpg%mxnFs = 8*nncut*ny
 
       call alloc_mapping (mpg)
 
@@ -295,23 +296,28 @@
         do ix = 0, nx-1
           ic = (ix+1) + iy*nx
           mpg%cvReg(ic) = region(ix,iy,0)
+          mpg%cvOnClosedSurface(ic) = on_closed_surface(ix,iy)
 	end do
       end do	
 
       do ix = 0, nx-1
         ic = mpg%nCi + ix+1
         mpg%cvReg(ic) = region(ix,-1,0)
+        mpg%cvOnClosedSurface(ic) = on_closed_surface(ix,-1)
 
         ic = mpg%nCi + nx + ix+1
         mpg%cvReg(ic) = region(ix,ny,0)
+        mpg%cvOnClosedSurface(ic) = on_closed_surface(ix,ny)
       end do
  
       do iy = 0, ny-1
         ic = mpg%nCi + 2*nx + iy+1
         mpg%cvReg(ic) = region(-1,iy,0)
+        mpg%cvOnClosedSurface(ic) = on_closed_surface(-1,iy)
 
         ic = mpg%nCi + 2*nx + ny + iy+1
         mpg%cvReg(ic) = region(nx,iy,0)
+        mpg%cvOnClosedSurface(ic) = on_closed_surface(nx,iy)
       end do
 
 ! regions (faces)
@@ -384,19 +390,19 @@
       end do
       mpg%nFs = ifs
      
+! 
+
       end subroutine calc_mapping
 
 ***********************************************************************
 
-      subroutine prep_geometry (nxp, nyp, nCv, nCi, nFc, nVx, nFs)
+      subroutine prep_geometry (nx, ny, nCv, nCi, nFc, nVx, nFs)
 
       implicit none
-      integer, intent(in) :: nxp, nyp, nCv, nCi, nFc, nVx, nFs
-      integer :: nx, ny, ix, iy, ic, ifc, nxx, ivx, i, j
+      integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs
+      integer :: ix, iy, ic, ifc, nxx, ivx, i, j
       real(r8), allocatable :: qs(:,:,:)
 
-      nx = nxp - 1
-      ny = nyp - 1
       nxx = (nx+1)*ny
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs)
@@ -609,15 +615,12 @@
 
 **********************************************************************
       
-      subroutine prep_plasma (nxp, nyp, ns, nCv, nCi, nFc, st)
+      subroutine prep_plasma (nx, ny, ns, nCv, nCi, nFc, st)
       
       implicit none
-      integer, intent(in) :: nxp, nyp, ns, nCi, nCv, nFc
+      integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
       type(B2State), intent(inout) :: st
-      integer :: nx, ny, ix, iy, ic, ifc
-
-      nx = nxp - 1
-      ny = nyp - 1
+      integer :: ix, iy, ic, ifc
 
       call createB2Plasma( nCv, ns, st % pl )
       call createB2Coeff( nCv, nFC, ns, st % co )
@@ -625,6 +628,7 @@
       call createB2Source( nCv, ns, st % sr )   
       call createB2SourceWork( nCv, ns, st % srw )   
       call createB2Rates( nCv, ns, st % rt )
+      call createB2RatesWork( nCv, ns, st % rtw )
       call createB2PlasmaSnapshot( nCv, nFc, ns, st % psnl )
       call createB2PlasmaSnapshot( nCv, nFc, ns, st % psnc )
       call createB2Diagnostic( nCv, ns, st % diag )
@@ -646,12 +650,6 @@
 
 ! B2coeff
           st % co % ceqp(ic) = ceqp(ix,iy)
-          st % co % uadia(ic,0:1,0:1,0:ns-1) = 
-     .              uadia(ix,iy,0:1,0:1,0:ns-1)
-          st % co % wadia(ic,0:1,0:1,0:ns-1) = 
-     .              wadia(ix,iy,0:1,0:1,0:ns-1)
-          st % co % vaecrb(ic,0:1,0:1,0:ns-1) = 
-     .              vaecrb(ix,iy,0:1,0:1,0:ns-1)
 
 ! from b2coeffwork
           st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
@@ -692,8 +690,10 @@
           st % dv % corti(ic) = corti(ix,iy)
       
 ! coupling coefficients
-          st % dv % pcca(ic,0:1,0:1,0:ns-1) = pcca(ix,iy,0:1,0:1,0:ns-1)
-          st % dv % pccm(ic,0:1,0:1) = pccm(ix,iy,0:1,0:1)
+          st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
+          st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
+          st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
+          st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
 !          st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
@@ -735,12 +735,6 @@
 
 ! B2coeff
         st % co % ceqp(ic) = ceqp(ix,iy)
-        st % co % uadia(ic,0:1,0:1,0:ns-1) = 
-     &            uadia(ix,iy,0:1,0:1,0:ns-1)
-        st % co % wadia(ic,0:1,0:1,0:ns-1) = 
-     &            wadia(ix,iy,0:1,0:1,0:ns-1)
-        st % co % vaecrb(ic,0:1,0:1,0:ns-1) = 
-     &            vaecrb(ix,iy,0:1,0:1,0:ns-1)
 
 ! from b2coeffwork
         st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
@@ -781,8 +775,10 @@
         st % dv % corti(ic) = corti(ix,iy)
       
 ! coupling coefficients
-        st % dv % pcca(ic,0:1,0:1,0:ns-1) = pcca(ix,iy,0:1,0:1,0:ns-1)
-        st % dv % pccm(ic,0:1,0:1) = pccm(ix,iy,0:1,0:1)
+        st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
+        st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
+        st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
+        st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
         
 ! B2SourceWork
 !        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
@@ -819,12 +815,6 @@
         
 ! B2coeff
         st % co % ceqp(ic) = ceqp(ix,iy)
-        st % co % uadia(ic,0:1,0:1,0:ns-1) = 
-     &            uadia(ix,iy,0:1,0:1,0:ns-1)
-        st % co % wadia(ic,0:1,0:1,0:ns-1) = 
-     &            wadia(ix,iy,0:1,0:1,0:ns-1)
-        st % co % vaecrb(ic,0:1,0:1,0:ns-1) = 
-     &            vaecrb(ix,iy,0:1,0:1,0:ns-1)
         
 ! from b2coeffwork
         st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
@@ -865,8 +855,10 @@
         st % dv % corti(ic) = corti(ix,iy)
       
 ! coupling coefficients
-        st % dv % pcca(ic,0:1,0:1,0:ns-1) = pcca(ix,iy,0:1,0:1,0:ns-1)
-        st % dv % pccm(ic,0:1,0:1) = pccm(ix,iy,0:1,0:1)
+        st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
+        st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
+        st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
+        st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
 !        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
@@ -906,12 +898,6 @@
         
 ! B2coeff
         st % co % ceqp(ic) = ceqp(ix,iy)
-        st % co % uadia(ic,0:1,0:1,0:ns-1) = 
-     &            uadia(ix,iy,0:1,0:1,0:ns-1)
-        st % co % wadia(ic,0:1,0:1,0:ns-1) = 
-     &            wadia(ix,iy,0:1,0:1,0:ns-1)
-        st % co % vaecrb(ic,0:1,0:1,0:ns-1) = 
-     &            vaecrb(ix,iy,0:1,0:1,0:ns-1)
         
 ! from b2coeffwork
         st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
@@ -952,8 +938,10 @@
         st % dv % corti(ic) = corti(ix,iy)
       
 ! coupling coefficients
-        st % dv % pcca(ic,0:1,0:1,0:ns-1) = pcca(ix,iy,0:1,0:1,0:ns-1)
-        st % dv % pccm(ic,0:1,0:1) = pccm(ix,iy,0:1,0:1)
+        st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
+        st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
+        st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
+        st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
 !        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
@@ -991,12 +979,6 @@
         
 ! B2coeff
         st % co % ceqp(ic) = ceqp(ix,iy)
-        st % co % uadia(ic,0:1,0:1,0:ns-1) = 
-     &            uadia(ix,iy,0:1,0:1,0:ns-1)
-        st % co % wadia(ic,0:1,0:1,0:ns-1) = 
-     &            wadia(ix,iy,0:1,0:1,0:ns-1)
-        st % co % vaecrb(ic,0:1,0:1,0:ns-1) = 
-     &            vaecrb(ix,iy,0:1,0:1,0:ns-1)
         
 ! from b2coeffwork
         st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
@@ -1037,8 +1019,10 @@
         st % dv % corti(ic) = corti(ix,iy)
       
 ! coupling coefficients
-        st % dv % pcca(ic,0:1,0:1,0:ns-1) = pcca(ix,iy,0:1,0:1,0:ns-1)
-        st % dv % pccm(ic,0:1,0:1) = pccm(ix,iy,0:1,0:1)
+        st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
+        st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
+        st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
+        st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
 !        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
@@ -1073,236 +1057,112 @@
           ifc = ix+1 + iy*(nx+1)
 
 ! B2coeff
-          st % co % csig_an(ifc,0,0) = csig_an(ix,iy,0,0)
-          st % co % calf(ifc,0,0) = calf(ix,iy,0,0)
+          st % co % csig_an(ifc,0:1) = csig_an(ix,iy,0,0:1)
+          st % co % calf(ifc,0:1) = calf(ix,iy,0,0:1)
 
-          st % co % csig(ifc,0,0) = csig(ix,iy,0,0)
-          st % co % csigin(ifc,0,0,0:ns-1,0:ns-1) = 
-     .              csigin(ix,iy,0,0,0:ns-1,0:ns-1)
+          st % co % csig(ifc,0:1) = csig(ix,iy,0,0:1)
+          st % co % csigin(ifc,0:1,0:ns-1,0:ns-1) = 
+     .              csigin(ix,iy,0,0:1,0:ns-1,0:ns-1)
 
-          st % co % chve(ifc,0,0) = chve(ix,iy,0,0)
-          st % co % chce(ifc,0,0) = chce(ix,iy,0,0)
-          st % co % chvemx(ifc,0) = chvemx(ix,iy)
+          st % co % chve(ifc,0:1) = chve(ix,iy,0,0:1)
+          st % co % chce(ifc,0:1) = chce(ix,iy,0,0:1)
+          st % co % chvemx(ifc) = chvemx(ix,iy)
 
-          st % co % chvi(ifc,0,0) = chvi(ix,iy,0,0)
-          st % co % chci(ifc,0,0) = chci(ix,iy,0,0)
-          st % co % chvimx(ifc,0) = chvimx(ix,iy)
+          st % co % chvi(ifc,0:1) = chvi(ix,iy,0,0:1)
+          st % co % chci(ifc,0:1) = chci(ix,iy,0,0:1)
+          st % co % chvimx(ifc) = chvimx(ix,iy)
 
-          st % co % cvla(ifc,0,0,0:ns-1) = cvla(ix,iy,0,0,0:ns-1)
-          st % co % cdna(ifc,0,0,0:ns-1) = cdna(ix,iy,0,0,0:ns-1)
-          st % co % cdpa(ifc,0,0,0:ns-1) = cdpa(ix,iy,0,0,0:ns-1)
+          st % co % cvla(ifc,0:1,0:ns-1) = cvla(ix,iy,0,0:1,0:ns-1)
+          st % co % cdna(ifc,0:1,0:ns-1) = cdna(ix,iy,0,0:1,0:ns-1)
+          st % co % cdpa(ifc,0:1,0:ns-1) = cdpa(ix,iy,0,0:1,0:ns-1)
 
-          st % co % cvsa(ifc,0,0,0:ns-1) = cvsa(ix,iy,0,0,0:ns-1)
+          st % co % cvsa(ifc,0:1,0:ns-1) = cvsa(ix,iy,0,0:1,0:ns-1)
           st % co % cthe(ifc,0:ns-1) = cthe(ix,iy,0:ns-1)
           st % co % cthi(ifc,0:ns-1) = cthi(ix,iy,0:ns-1)
-          st % co % cvsa_cl(ifc,0,0,0:ns-1) = cvsa_cl(ix,iy,0,0,0:ns-1)
+          st % co % cvsa_cl(ifc,0:1,0:ns-1) = 
+     .                                 cvsa_cl(ix,iy,0,0:1,0:ns-1)
 
-          st % co % fllim0fhi(ifc,0,0,0:ns-1) = 
-     &              fllim0fhi(ix,iy,0,0,0:ns-1)
+          st % co % fllim0fhi(ifc,0:1,0:ns-1) = 
+     &              fllim0fhi(ix,iy,0,0:1,0:ns-1)
           st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
       
 ! fluxes
-          st % dv % fch(ifc,0,0) = fch(ix,iy,0,0)
-          st % dv % fch_32(ifc,0,0) = fch_32(ix,iy,0,0)
-          st % dv % fch_52(ifc,0,0) = fch_52(ix,iy,0,0)
-          st % dv % fch_p(ifc,0,0) = fch_p(ix,iy,0,0)
+          st % dv % fch(ifc,0:1) = fch(ix,iy,0,0:1)
+          st % dv % fch_32(ifc,0:1) = fch_32(ix,iy,0,0:1)
+          st % dv % fch_52(ifc,0:1) = fch_52(ix,iy,0,0:1)
+          st % dv % fch_p(ifc,0:1) = fch_p(ix,iy,0,0:1)
+          st % dv % fchdia(ifc,0:1) = fchdia(ix,iy,0,0:1)
+          st % dv % fchin(ifc,0:1) = fchin(ix,iy,0,0:1)
+          st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,0,0:1)
+          st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,0,0:1)
+          st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,0,0:1)
+          st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,0,0:1)
+          st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,0,0:1)
 
-          st % dv % fne(ifc,0,0) = fne(ix,iy,0,0)
-          st % dv % fne_32(ifc,0,0) = fne_32(ix,iy,0,0)
-          st % dv % fne_52(ifc,0,0) = fne_52(ix,iy,0,0)
+          st % dv % fne(ifc,0:1) = fne(ix,iy,0,0:1)
+          st % dv % fne_32(ifc,0:1) = fne_32(ix,iy,0,0:1)
+          st % dv % fne_52(ifc,0:1) = fne_52(ix,iy,0,0:1)
 
-          st % dv % fni(ifc,0,0) = fni(ix,iy,0,0)
-          st % dv % fni_32(ifc,0,0) = fni_32(ix,iy,0,0)
-          st % dv % fni_52(ifc,0,0) = fni_52(ix,iy,0,0)
+          st % dv % fni(ifc,0:1) = fni(ix,iy,0,0:1)
+          st % dv % fni_32(ifc,0:1) = fni_32(ix,iy,0,0:1)
+          st % dv % fni_52(ifc,0:1) = fni_52(ix,iy,0,0:1)
 
-          st % dv % fna(ifc,0,0,0:ns-1) = fna(ix,iy,0,0,0:ns-1)
-          st % dv % fna_32(ifc,0,0,0:ns-1) = fna_32(ix,iy,0,0,0:ns-1)
-          st % dv % fna_52(ifc,0,0,0:ns-1) = fna_52(ix,iy,0,0,0:ns-1)
-          st % dv % fna_nodrift(ifc,0,0,0:ns-1) = 
-     .              fna_nodrift(ix,iy,0,0,0:ns-1)
+          st % dv % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
+          st % dv % fna_mdf(ifc,0:1,0:ns-1) = 
+     .              fna_mdf(ix,iy,0,0:1,0:ns-1)
+          st % dv % fna_he(ifc,0:1,0:ns-1) = fna_he(ix,iy,0,0:1,0:ns-1)
+          st % dv % fna_32(ifc,0:1,0:ns-1) = fna_32(ix,iy,0,0:1,0:ns-1)
+          st % dv % fna_52(ifc,0:1,0:ns-1) = fna_52(ix,iy,0,0:1,0:ns-1)
+          st % dv % fna_32nd(ifc,0:1,0:ns-1) = 
+     .              fna_32nd(ix,iy,0,0:1,0:ns-1)
+          st % dv % fna_52nd(ifc,0:1,0:ns-1) = 
+     .              fna_52nd(ix,iy,0,0:1,0:ns-1)
+          st % dv % fna_nodrift(ifc,0:1,0:ns-1) = 
+     .              fna_nodrift(ix,iy,0,0:1,0:ns-1)
 
-          st % dv % fhe(ifc,0,0) = fhe(ix,iy,0,0)
-          st % dv % fhet(ifc,0,0) = fhet(ix,iy,0,0)
-          st % dv % fhi(ifc,0,0) = fhi(ix,iy,0,0)
-          st % dv % fhit(ifc,0,0) = fhit(ix,iy,0,0)
+          st % dv % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
+          st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,0,0:1)
+          st % dv % fhet(ifc,0:1) = fhet(ix,iy,0,0:1)
+          st % dv % fhe_eir(ifc,0:1) = fhe_eir(ix,iy,0,0:1)
+          st % dv % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
+          st % dv % fhi_mdf(ifc,0:1) = fhi_mdf(ix,iy,0,0:1)
+          st % dv % fhit(ifc,0:1) = fhit(ix,iy,0,0:1)
+          st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,0,0:1)
+
+! derived quantities
+          st % dv % uadia(ifc,0:1,0:ns-1) = 
+     .              uadia(ix,iy,0,0:1,0:ns-1)
+          st % dv % vadia(ifc,0:1,0:ns-1) = 
+     .              vadia(ix,iy,0,0:1,0:ns-1)
+          st % dv % wadia(ifc,0:1,0:ns-1) = 
+     .              wadia(ix,iy,0,0:1,0:ns-1)
+          st % dv % vaecrb(ifc,0:1,0:ns-1) = 
+     .              vaecrb(ix,iy,0,0:1,0:ns-1)
+          st % dv % wedia(ifc,0:1) = 
+     .              wedia(ix,iy,0,0:1)
+          st % dv % veecrb(ifc,0:1) = 
+     .              veecrb(ix,iy,0,0:1)
       
 ! numerical coefficients
-          st % dv % conc(ifc,0,0) = conc(ix,iy,0,0)
+          st % dv % conc(ifc,0:1) = conc(ix,iy,0,0:1)
           st % dv % fllime(ifc) = fllime(ix,iy)
-          st % dv % floe(ifc,0,0) = floe(ix,iy,0,0)
-          st % dv % cone(ifc,0,0,:) = cone(ix,iy,0,0,:)
+          st % dv % floe(ifc,0:1) = floe(ix,iy,0,0:1)
+          st % dv % cone(ifc,0:1,:) = cone(ix,iy,0,0:1,:)
           st % dv % fllimi(ifc) = fllimi(ix,iy)
-          st % dv % floi(ifc,0,0) = floi(ix,iy,0,0)
-          st % dv % coni(ifc,0,0,:) = coni(ix,iy,0,0,:)
+          st % dv % floi(ifc,0:1) = floi(ix,iy,0,0:1)
+          st % dv % coni(ifc,0:1,:) = coni(ix,iy,0,0:1,:)
 
 !B2PlasmaSnapshot
-          st % psnl % fch(ifc,0,0) = fch(ix,iy,0,0)
-          st % psnl % fna(ifc,0,0,0:ns-1) = fna(ix,iy,0,0,0:ns-1)
-          st % psnl % fhe(ifc,0,0) = fhe(ix,iy,0,0)
-          st % psnl % fhi(ifc,0,0) = fhi(ix,iy,0,0)
-          st % psnc % fch(ifc,0,0) = fch(ix,iy,0,0)
-          st % psnc % fna(ifc,0,0,0:ns-1) = fna(ix,iy,0,0,0:ns-1)
-          st % psnc % fhe(ifc,0,0) = fhe(ix,iy,0,0)
-          st % psnc % fhi(ifc,0,0) = fhi(ix,iy,0,0)
+          st % psnl % fch(ifc,0:1) = fch(ix,iy,0,0:1)
+          st % psnl % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
+          st % psnl % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
+          st % psnl % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
+          st % psnc % fch(ifc,0:1) = fch(ix,iy,0,0:1)
+          st % psnc % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
+          st % psnc % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
+          st % psnc % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
 
         end do
-
-
-
-! left boundary face (to guard cells)
-        ix = 0
-        ifc = ix+1 + iy*(nx+1)
-
-! B2coeff
-        st % co % csig_an(ifc,0,0) = csig_an(ix,iy,0,0)
-        st % co % calf(ifc,0,0) = calf(ix,iy,0,0)
-        
-        st % co % csig(ifc,0,0) = csig(ix,iy,0,0)
-        st % co % csigin(ifc,0,0,0:ns-1,0:ns-1) = 
-     .            csigin(ix,iy,0,0,0:ns-1,0:ns-1)
-
-        st % co % chve(ifc,0,0) = chve(ix,iy,0,0)
-        st % co % chce(ifc,0,0) = chce(ix,iy,0,0)
-        st % co % chvemx(ifc,0) = chvemx(ix,iy)
-        
-        st % co % chvi(ifc,0,0) = chvi(ix,iy,0,0)
-        st % co % chci(ifc,0,0) = chci(ix,iy,0,0)
-        st % co % chvimx(ifc,0) = chvimx(ix,iy)
-        
-        st % co % cvla(ifc,0,0,0:ns-1) = cvla(ix,iy,0,0,0:ns-1)
-        st % co % cdna(ifc,0,0,0:ns-1) = cdna(ix,iy,0,0,0:ns-1)
-        st % co % cdpa(ifc,0,0,0:ns-1) = cdpa(ix,iy,0,0,0:ns-1)
-        
-        st % co % cvsa(ifc,0,0,0:ns-1) = cvsa(ix,iy,0,0,0:ns-1)
-        st % co % cthe(ifc,0:ns-1) = cthe(ix,iy,0:ns-1)
-        st % co % cthi(ifc,0:ns-1) = cthi(ix,iy,0:ns-1)
-        st % co % cvsa_cl(ifc,0,0,0:ns-1) = cvsa_cl(ix,iy,0,0,0:ns-1)
-        
-        st % co % fllim0fhi(ifc,0,0,0:ns-1) = 
-     &            fllim0fhi(ix,iy,0,0,0:ns-1)
-        st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
-      
-! fluxes
-        st % dv % fch(ifc,0,0) = fch(ix,iy,0,0)
-        st % dv % fch_32(ifc,0,0) = fch_32(ix,iy,0,0)
-        st % dv % fch_52(ifc,0,0) = fch_52(ix,iy,0,0)
-        st % dv % fch_p(ifc,0,0) = fch_p(ix,iy,0,0)
-        
-        st % dv % fne(ifc,0,0) = fne(ix,iy,0,0)
-        st % dv % fne_32(ifc,0,0) = fne_32(ix,iy,0,0)
-        st % dv % fne_52(ifc,0,0) = fne_52(ix,iy,0,0)
-        
-        st % dv % fni(ifc,0,0) = fni(ix,iy,0,0)
-        st % dv % fni_32(ifc,0,0) = fni_32(ix,iy,0,0)
-        st % dv % fni_52(ifc,0,0) = fni_52(ix,iy,0,0)
-        
-        st % dv % fna(ifc,0,0,0:ns-1) = fna(ix,iy,0,0,0:ns-1)
-        st % dv % fna_32(ifc,0,0,0:ns-1) = fna_32(ix,iy,0,0,0:ns-1)
-        st % dv % fna_52(ifc,0,0,0:ns-1) = fna_52(ix,iy,0,0,0:ns-1)
-        st % dv % fna_nodrift(ifc,0,0,0:ns-1) = 
-     .            fna_nodrift(ix,iy,0,0,0:ns-1)
-
-        st % dv % fhe(ifc,0,0) = fhe(ix,iy,0,0)
-        st % dv % fhet(ifc,0,0) = fhet(ix,iy,0,0)
-        st % dv % fhi(ifc,0,0) = fhi(ix,iy,0,0)
-        st % dv % fhit(ifc,0,0) = fhit(ix,iy,0,0)
-        
-! numerical coefficients
-        st % dv % conc(ifc,0,0) = conc(ix,iy,0,0)
-        st % dv % fllime(ifc) = fllime(ix,iy)
-        st % dv % floe(ifc,0,0) = floe(ix,iy,0,0)
-        st % dv % cone(ifc,0,0,:) = cone(ix,iy,0,0,:)
-        st % dv % fllimi(ifc) = fllimi(ix,iy)
-        st % dv % floi(ifc,0,0) = floi(ix,iy,0,0)
-        st % dv % coni(ifc,0,0,:) = coni(ix,iy,0,0,:)
-        
-! B2PlasmaSnapshot
-        st % psnl % fch(ifc,0,0) = fch(ix,iy,0,0)
-        st % psnl % fna(ifc,0,0,0:ns-1) = fna(ix,iy,0,0,0:ns-1)
-        st % psnl % fhe(ifc,0,0) = fhe(ix,iy,0,0)
-        st % psnl % fhi(ifc,0,0) = fhi(ix,iy,0,0)
-        st % psnc % fch(ifc,0,0) = fch(ix,iy,0,0)
-        st % psnc % fna(ifc,0,0,0:ns-1) = fna(ix,iy,0,0,0:ns-1)
-        st % psnc % fhe(ifc,0,0) = fhe(ix,iy,0,0)
-        st % psnc % fhi(ifc,0,0) = fhi(ix,iy,0,0)
-  
-      
-! right guard cells
-        ix = nx
-        ifc = ix+1 + iy*(nx+1)
-
-! B2coeff
-        st % co % csig_an(ifc,0,0) = csig_an(ix,iy,0,0)
-        st % co % calf(ifc,0,0) = calf(ix,iy,0,0)
-        
-        st % co % csig(ifc,0,0) = csig(ix,iy,0,0)
-        st % co % csigin(ifc,0,0,0:ns-1,0:ns-1) = 
-     .            csigin(ix,iy,0,0,0:ns-1,0:ns-1)
-
-        st % co % chve(ifc,0,0) = chve(ix,iy,0,0)
-        st % co % chce(ifc,0,0) = chce(ix,iy,0,0)
-        st % co % chvemx(ifc,0) = chvemx(ix,iy)
-        
-        st % co % chvi(ifc,0,0) = chvi(ix,iy,0,0)
-        st % co % chci(ifc,0,0) = chci(ix,iy,0,0)
-        st % co % chvimx(ifc,0) = chvimx(ix,iy)
-        
-        st % co % cvla(ifc,0,0,0:ns-1) = cvla(ix,iy,0,0,0:ns-1)
-        st % co % cdna(ifc,0,0,0:ns-1) = cdna(ix,iy,0,0,0:ns-1)
-        st % co % cdpa(ifc,0,0,0:ns-1) = cdpa(ix,iy,0,0,0:ns-1)
-        
-        st % co % cvsa(ifc,0,0,0:ns-1) = cvsa(ix,iy,0,0,0:ns-1)
-        st % co % cthe(ifc,0:ns-1) = cthe(ix,iy,0:ns-1)
-        st % co % cthi(ifc,0:ns-1) = cthi(ix,iy,0:ns-1)
-        st % co % cvsa_cl(ifc,0,0,0:ns-1) = cvsa_cl(ix,iy,0,0,0:ns-1)
-        
-        st % co % fllim0fhi(ifc,0,0,0:ns-1) = 
-     &            fllim0fhi(ix,iy,0,0,0:ns-1)
-        st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
-        
-! fluxes
-        st % dv % fch(ifc,0,0) = fch(ix,iy,0,0)
-        st % dv % fch_32(ifc,0,0) = fch_32(ix,iy,0,0)
-        st % dv % fch_52(ifc,0,0) = fch_52(ix,iy,0,0)
-        st % dv % fch_p(ifc,0,0) = fch_p(ix,iy,0,0)
-        
-        st % dv % fne(ifc,0,0) = fne(ix,iy,0,0)
-        st % dv % fne_32(ifc,0,0) = fne_32(ix,iy,0,0)
-        st % dv % fne_52(ifc,0,0) = fne_52(ix,iy,0,0)
-        
-        st % dv % fni(ifc,0,0) = fni(ix,iy,0,0)
-        st % dv % fni_32(ifc,0,0) = fni_32(ix,iy,0,0)
-        st % dv % fni_52(ifc,0,0) = fni_52(ix,iy,0,0)
-        
-        st % dv % fna(ifc,0,0,0:ns-1) = fna(ix,iy,0,0,0:ns-1)
-        st % dv % fna_32(ifc,0,0,0:ns-1) = fna_32(ix,iy,0,0,0:ns-1)
-        st % dv % fna_52(ifc,0,0,0:ns-1) = fna_52(ix,iy,0,0,0:ns-1)
-        st % dv % fna_nodrift(ifc,0,0,0:ns-1) = 
-     .            fna_nodrift(ix,iy,0,0,0:ns-1)
-        
-        st % dv % fhe(ifc,0,0) = fhe(ix,iy,0,0)
-        st % dv % fhet(ifc,0,0) = fhet(ix,iy,0,0)
-        st % dv % fhi(ifc,0,0) = fhi(ix,iy,0,0)
-        st % dv % fhit(ifc,0,0) = fhit(ix,iy,0,0)
-        
-! numerical coefficients
-        st % dv % conc(ifc,0,0) = conc(ix,iy,0,0)
-        st % dv % fllime(ifc) = fllime(ix,iy)
-        st % dv % floe(ifc,0,0) = floe(ix,iy,0,0)
-        st % dv % cone(ifc,0,0,:) = cone(ix,iy,0,0,:)
-        st % dv % fllimi(ifc) = fllimi(ix,iy)
-        st % dv % floi(ifc,0,0) = floi(ix,iy,0,0)
-        st % dv % coni(ifc,0,0,:) = coni(ix,iy,0,0,:)
-        
-!B2PlasmaSnapshot
-        st % psnl % fch(ifc,0,0) = fch(ix,iy,0,0)
-        st % psnl % fna(ifc,0,0,0:ns-1) = fna(ix,iy,0,0,0:ns-1)
-        st % psnl % fhe(ifc,0,0) = fhe(ix,iy,0,0)
-        st % psnl % fhi(ifc,0,0) = fhi(ix,iy,0,0)
-        st % psnc % fch(ifc,0,0) = fch(ix,iy,0,0)
-        st % psnc % fna(ifc,0,0,0:ns-1) = fna(ix,iy,0,0,0:ns-1)
-        st % psnc % fhe(ifc,0,0) = fhe(ix,iy,0,0)
-        st % psnc % fhi(ifc,0,0) = fhi(ix,iy,0,0)
       end do
 
 
@@ -1314,233 +1174,106 @@
           ifc = nxx + iy+1 + ix*(ny+1)
 
 ! B2coeff
-          st % co % csig_an(ifc,1,1) = csig_an(ix,iy,1,1)
-          st % co % calf(ifc,1,1) = calf(ix,iy,1,1)
+          st % co % csig_an(ifc,0:1) = csig_an(ix,iy,1,0:1)
+          st % co % calf(ifc,0:1) = calf(ix,iy,1,0:1)
         
-          st % co % csig(ifc,1,1) = csig(ix,iy,1,1)
-          st % co % csigin(ifc,1,1,0:ns-1,0:ns-1) = 
-     .              csigin(ix,iy,1,1,0:ns-1,0:ns-1)
+          st % co % csig(ifc,0:1) = csig(ix,iy,1,0:1)
+          st % co % csigin(ifc,0:1,0:ns-1,0:ns-1) = 
+     .              csigin(ix,iy,1,0:1,0:ns-1,0:ns-1)
 
-          st % co % chve(ifc,1,1) = chve(ix,iy,1,1)
-          st % co % chce(ifc,1,1) = chce(ix,iy,1,1)
-          st % co % chvemx(ifc,1) = chvemx(ix,iy)
+          st % co % chve(ifc,0:1) = chve(ix,iy,1,0:1)
+          st % co % chce(ifc,0:1) = chce(ix,iy,1,0:1)
+          st % co % chvemx(ifc) = chvemx(ix,iy)
         
-          st % co % chvi(ifc,1,1) = chvi(ix,iy,1,1)
-          st % co % chci(ifc,1,1) = chci(ix,iy,1,1)
-          st % co % chvimx(ifc,1) = chvimx(ix,iy)
+          st % co % chvi(ifc,0:1) = chvi(ix,iy,1,0:1)
+          st % co % chci(ifc,0:1) = chci(ix,iy,1,0:1)
+          st % co % chvimx(ifc) = chvimx(ix,iy)
         
-          st % co % cvla(ifc,1,1,0:ns-1) = cvla(ix,iy,1,1,0:ns-1)
-          st % co % cdna(ifc,1,1,0:ns-1) = cdna(ix,iy,1,1,0:ns-1)
-          st % co % cdpa(ifc,1,1,0:ns-1) = cdpa(ix,iy,1,1,0:ns-1)
+          st % co % cvla(ifc,0:1,0:ns-1) = cvla(ix,iy,1,0:1,0:ns-1)
+          st % co % cdna(ifc,0:1,0:ns-1) = cdna(ix,iy,1,0:1,0:ns-1)
+          st % co % cdpa(ifc,0:1,0:ns-1) = cdpa(ix,iy,1,0:1,0:ns-1)
           
-          st % co % cvsa(ifc,1,1,0:ns-1) = cvsa(ix,iy,1,1,0:ns-1)
+          st % co % cvsa(ifc,0:1,0:ns-1) = cvsa(ix,iy,1,0:1,0:ns-1)
           st % co % cthe(ifc,0:ns-1) = cthe(ix,iy,0:ns-1)
           st % co % cthi(ifc,0:ns-1) = cthi(ix,iy,0:ns-1)
-          st % co % cvsa_cl(ifc,1,1,0:ns-1) = cvsa_cl(ix,iy,1,1,0:ns-1)
+          st % co % cvsa_cl(ifc,0:1,0:ns-1) = 
+     .              cvsa_cl(ix,iy,1,0:1,0:ns-1)
           
-          st % co % fllim0fhi(ifc,1,1,0:ns-1) = 
-     &              fllim0fhi(ix,iy,1,1,0:ns-1)
+          st % co % fllim0fhi(ifc,0:1,0:ns-1) = 
+     &              fllim0fhi(ix,iy,1,0:1,0:ns-1)
           st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
           
 ! fluxes
-          st % dv % fch(ifc,1,1) = fch(ix,iy,1,1)
-          st % dv % fch_32(ifc,1,1) = fch_32(ix,iy,1,1)
-          st % dv % fch_52(ifc,1,1) = fch_52(ix,iy,1,1)
-          st % dv % fch_p(ifc,1,1) = fch_p(ix,iy,1,1)
+          st % dv % fch(ifc,0:1) = fch(ix,iy,1,0:1)
+          st % dv % fch_32(ifc,0:1) = fch_32(ix,iy,1,0:1)
+          st % dv % fch_52(ifc,0:1) = fch_52(ix,iy,1,0:1)
+          st % dv % fch_p(ifc,0:1) = fch_p(ix,iy,1,0:1)
+          st % dv % fchdia(ifc,0:1) = fchdia(ix,iy,1,0:1)
+          st % dv % fchin(ifc,0:1) = fchin(ix,iy,1,0:1)
+          st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,1,0:1)
+          st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,1,0:1)
+          st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,1,0:1)
+          st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,1,0:1)
+          st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,1,0:1)
           
-          st % dv % fne(ifc,1,1) = fne(ix,iy,1,1)
-          st % dv % fne_32(ifc,1,1) = fne_32(ix,iy,1,1)
-          st % dv % fne_52(ifc,1,1) = fne_52(ix,iy,1,1)
+          st % dv % fne(ifc,0:1) = fne(ix,iy,1,0:1)
+          st % dv % fne_32(ifc,0:1) = fne_32(ix,iy,1,0:1)
+          st % dv % fne_52(ifc,0:1) = fne_52(ix,iy,1,0:1)
           
-          st % dv % fni(ifc,1,1) = fni(ix,iy,1,1)
-          st % dv % fni_32(ifc,1,1) = fni_32(ix,iy,1,1)
-          st % dv % fni_52(ifc,1,1) = fni_52(ix,iy,1,1)
+          st % dv % fni(ifc,0:1) = fni(ix,iy,1,0:1)
+          st % dv % fni_32(ifc,0:1) = fni_32(ix,iy,1,0:1)
+          st % dv % fni_52(ifc,0:1) = fni_52(ix,iy,1,0:1)
         
-          st % dv % fna(ifc,1,1,0:ns-1) = fna(ix,iy,1,1,0:ns-1)
-          st % dv % fna_32(ifc,1,1,0:ns-1) = fna_32(ix,iy,1,1,0:ns-1)
-          st % dv % fna_52(ifc,1,1,0:ns-1) = fna_52(ix,iy,1,1,0:ns-1)
-          st % dv % fna_nodrift(ifc,1,1,0:ns-1) = 
-     .              fna_nodrift(ix,iy,1,1,0:ns-1)
+          st % dv % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_mdf(ifc,0:1,0:ns-1) = 
+     .              fna_mdf(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_he(ifc,0:1,0:ns-1) = fna_he(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_fcor(ifc,0:1,0:ns-1) = 
+     .              fna_fcor(ix,iy,1,0:1,0:ns-1)
+          st % dv % fnaPSch(ifc,0:1,0:ns-1) = 
+     .              fnaPSch(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_32(ifc,0:1,0:ns-1) = fna_32(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_52(ifc,0:1,0:ns-1) = fna_52(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_32nd(ifc,0:1,0:ns-1) = 
+     .              fna_32nd(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_52nd(ifc,0:1,0:ns-1) = 
+     .              fna_52nd(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_eir(ifc,0:1,0:ns-1) = 
+     .              fna_eir(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_nodrift(ifc,0:1,0:ns-1) = 
+     .              fna_nodrift(ix,iy,1,0:1,0:ns-1)
         
-          st % dv % fhe(ifc,1,1) = fhe(ix,iy,1,1)
-          st % dv % fhet(ifc,1,1) = fhet(ix,iy,1,1)
-          st % dv % fhi(ifc,1,1) = fhi(ix,iy,1,1)
-          st % dv % fhit(ifc,1,1) = fhit(ix,iy,1,1)
-        
+          st % dv % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
+          st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,1,0:1)
+          st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,1,0:1)
+          st % dv % fhet(ifc,0:1) = fhet(ix,iy,1,0:1)
+          st % dv % fhe_eir(ifc,0:1) = fhe_eir(ix,iy,1,0:1)
+          st % dv % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
+          st % dv % fhi_mdf(ifc,0:1) = fhi_mdf(ix,iy,1,0:1)
+          st % dv % fhiPSch(ifc,0:1) = fhiPSch(ix,iy,1,0:1)
+          st % dv % fhit(ifc,0:1) = fhit(ix,iy,1,0:1)
+          st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,1,0:1)
+
 ! numerical coefficients
-          st % dv % conc(ifc,1,1) = conc(ix,iy,1,1)
+          st % dv % conc(ifc,0:1) = conc(ix,iy,1,0:1)
           st % dv % fllime(ifc) = fllime(ix,iy)
-          st % dv % floe(ifc,1,1) = floe(ix,iy,1,1)
-          st % dv % cone(ifc,1,1,:) = cone(ix,iy,1,1,:)
+          st % dv % floe(ifc,0:1) = floe(ix,iy,1,0:1)
+          st % dv % cone(ifc,0:1,:) = cone(ix,iy,1,0:1,:)
           st % dv % fllimi(ifc) = fllimi(ix,iy)
-          st % dv % floi(ifc,1,1) = floi(ix,iy,1,1)
-          st % dv % coni(ifc,1,1,:) = coni(ix,iy,1,1,:)
+          st % dv % floi(ifc,0:1) = floi(ix,iy,1,0:1)
+          st % dv % coni(ifc,0:1,:) = coni(ix,iy,1,0:1,:)
           
 ! B2PlasmaSnapshot
-          st % psnl % fch(ifc,1,1) = fch(ix,iy,1,1)
-          st % psnl % fna(ifc,1,1,0:ns-1) = fna(ix,iy,1,1,0:ns-1)
-          st % psnl % fhe(ifc,1,1) = fhe(ix,iy,1,1)
-          st % psnl % fhi(ifc,1,1) = fhi(ix,iy,1,1)
-          st % psnc % fch(ifc,1,1) = fch(ix,iy,1,1)
-          st % psnc % fna(ifc,1,1,0:ns-1) = fna(ix,iy,1,1,0:ns-1)
-          st % psnc % fhe(ifc,1,1) = fhe(ix,iy,1,1)
-          st % psnc % fhi(ifc,1,1) = fhi(ix,iy,1,1)
+          st % psnl % fch(ifc,0:1) = fch(ix,iy,1,0:1)
+          st % psnl % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
+          st % psnl % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
+          st % psnl % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
+          st % psnc % fch(ifc,0:1) = fch(ix,iy,1,0:1)
+          st % psnc % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
+          st % psnc % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
+          st % psnc % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
 
         end do
-
-! lower guard cells
-        iy = 0
-        ifc = nxx + ix+1
-
-! B2coeff
-        st % co % csig_an(ifc,1,1) = csig_an(ix,iy,1,1)
-        st % co % calf(ifc,1,1) = calf(ix,iy,1,1)
-        
-        st % co % csig(ifc,1,1) = csig(ix,iy,1,1)
-        st % co % csigin(ifc,1,1,0:ns-1,0:ns-1) = 
-     .            csigin(ix,iy,1,1,0:ns-1,0:ns-1)
-
-        st % co % chve(ifc,1,1) = chve(ix,iy,1,1)
-        st % co % chce(ifc,1,1) = chce(ix,iy,1,1)
-        st % co % chvemx(ifc,1) = chvemx(ix,iy)
-        
-        st % co % chvi(ifc,1,1) = chvi(ix,iy,1,1)
-        st % co % chci(ifc,1,1) = chci(ix,iy,1,1)
-        st % co % chvimx(ifc,1) = chvimx(ix,iy)
-        
-        st % co % cvla(ifc,1,1,0:ns-1) = cvla(ix,iy,1,1,0:ns-1)
-        st % co % cdna(ifc,1,1,0:ns-1) = cdna(ix,iy,1,1,0:ns-1)
-        st % co % cdpa(ifc,1,1,0:ns-1) = cdpa(ix,iy,1,1,0:ns-1)
-          
-        st % co % cvsa(ifc,1,1,0:ns-1) = cvsa(ix,iy,1,1,0:ns-1)
-        st % co % cthe(ifc,0:ns-1) = cthe(ix,iy,0:ns-1)
-        st % co % cthi(ifc,0:ns-1) = cthi(ix,iy,0:ns-1)
-        st % co % cvsa_cl(ifc,1,1,0:ns-1) = cvsa_cl(ix,iy,1,1,0:ns-1)
-          
-        st % co % fllim0fhi(ifc,1,1,0:ns-1) = 
-     &            fllim0fhi(ix,iy,1,1,0:ns-1)
-        st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
-          
-! fluxes
-        st % dv % fch(ifc,1,1) = fch(ix,iy,1,1)
-        st % dv % fch_32(ifc,1,1) = fch_32(ix,iy,1,1)
-        st % dv % fch_52(ifc,1,1) = fch_52(ix,iy,1,1)
-        st % dv % fch_p(ifc,1,1) = fch_p(ix,iy,1,1)
-          
-        st % dv % fne(ifc,1,1) = fne(ix,iy,1,1)
-        st % dv % fne_32(ifc,1,1) = fne_32(ix,iy,1,1)
-        st % dv % fne_52(ifc,1,1) = fne_52(ix,iy,1,1)
-          
-        st % dv % fni(ifc,1,1) = fni(ix,iy,1,1)
-        st % dv % fni_32(ifc,1,1) = fni_32(ix,iy,1,1)
-        st % dv % fni_52(ifc,1,1) = fni_52(ix,iy,1,1)
-        
-        st % dv % fna(ifc,1,1,0:ns-1) = fna(ix,iy,1,1,0:ns-1)
-        st % dv % fna_32(ifc,1,1,0:ns-1) = fna_32(ix,iy,1,1,0:ns-1)
-        st % dv % fna_52(ifc,1,1,0:ns-1) = fna_52(ix,iy,1,1,0:ns-1)
-        st % dv % fna_nodrift(ifc,1,1,0:ns-1) = 
-     .            fna_nodrift(ix,iy,1,1,0:ns-1)
-        
-        st % dv % fhe(ifc,1,1) = fhe(ix,iy,1,1)
-        st % dv % fhet(ifc,1,1) = fhet(ix,iy,1,1)
-        st % dv % fhi(ifc,1,1) = fhi(ix,iy,1,1)
-        st % dv % fhit(ifc,1,1) = fhit(ix,iy,1,1)
-        
-! numerical coefficients
-        st % dv % conc(ifc,1,1) = conc(ix,iy,1,1)
-        st % dv % fllime(ifc) = fllime(ix,iy)
-        st % dv % floe(ifc,1,1) = floe(ix,iy,1,1)
-        st % dv % cone(ifc,1,1,:) = cone(ix,iy,1,1,:)
-        st % dv % fllimi(ifc) = fllimi(ix,iy)
-        st % dv % floi(ifc,1,1) = floi(ix,iy,1,1)
-        st % dv % coni(ifc,1,1,:) = coni(ix,iy,1,1,:)
-          
-! B2PlasmaSnapshot
-        st % psnl % fch(ifc,1,1) = fch(ix,iy,1,1)
-        st % psnl % fna(ifc,1,1,0:ns-1) = fna(ix,iy,1,1,0:ns-1)
-        st % psnl % fhe(ifc,1,1) = fhe(ix,iy,1,1)
-        st % psnl % fhi(ifc,1,1) = fhi(ix,iy,1,1)
-        st % psnc % fch(ifc,1,1) = fch(ix,iy,1,1)
-        st % psnc % fna(ifc,1,1,0:ns-1) = fna(ix,iy,1,1,0:ns-1)
-        st % psnc % fhe(ifc,1,1) = fhe(ix,iy,1,1)
-        st % psnc % fhi(ifc,1,1) = fhi(ix,iy,1,1)
-
-! upper guard cells
-        iy = ny
-        ifc = nxx + nx + ix+1
-
-! B2coeff
-        st % co % csig_an(ifc,1,1) = csig_an(ix,iy,1,1)
-        st % co % calf(ifc,1,1) = calf(ix,iy,1,1)
-        
-        st % co % csig(ifc,1,1) = csig(ix,iy,1,1)
-        st % co % csigin(ifc,1,1,0:ns-1,0:ns-1) = 
-     .            csigin(ix,iy,1,1,0:ns-1,0:ns-1)
-
-        st % co % chve(ifc,1,1) = chve(ix,iy,1,1)
-        st % co % chce(ifc,1,1) = chce(ix,iy,1,1)
-        st % co % chvemx(ifc,1) = chvemx(ix,iy)
-        
-        st % co % chvi(ifc,1,1) = chvi(ix,iy,1,1)
-        st % co % chci(ifc,1,1) = chci(ix,iy,1,1)
-        st % co % chvimx(ifc,1) = chvimx(ix,iy)
-        
-        st % co % cvla(ifc,1,1,0:ns-1) = cvla(ix,iy,1,1,0:ns-1)
-        st % co % cdna(ifc,1,1,0:ns-1) = cdna(ix,iy,1,1,0:ns-1)
-        st % co % cdpa(ifc,1,1,0:ns-1) = cdpa(ix,iy,1,1,0:ns-1)
-          
-        st % co % cvsa(ifc,1,1,0:ns-1) = cvsa(ix,iy,1,1,0:ns-1)
-        st % co % cthe(ifc,0:ns-1) = cthe(ix,iy,0:ns-1)
-        st % co % cthi(ifc,0:ns-1) = cthi(ix,iy,0:ns-1)
-        st % co % cvsa_cl(ifc,1,1,0:ns-1) = cvsa_cl(ix,iy,1,1,0:ns-1)
-          
-        st % co % fllim0fhi(ifc,1,1,0:ns-1) = 
-     &            fllim0fhi(ix,iy,1,1,0:ns-1)
-        st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
-        
-! fluxes
-        st % dv % fch(ifc,1,1) = fch(ix,iy,1,1)
-        st % dv % fch_32(ifc,1,1) = fch_32(ix,iy,1,1)
-        st % dv % fch_52(ifc,1,1) = fch_52(ix,iy,1,1)
-        st % dv % fch_p(ifc,1,1) = fch_p(ix,iy,1,1)
-          
-        st % dv % fne(ifc,1,1) = fne(ix,iy,1,1)
-        st % dv % fne_32(ifc,1,1) = fne_32(ix,iy,1,1)
-        st % dv % fne_52(ifc,1,1) = fne_52(ix,iy,1,1)
-          
-        st % dv % fni(ifc,1,1) = fni(ix,iy,1,1)
-        st % dv % fni_32(ifc,1,1) = fni_32(ix,iy,1,1)
-        st % dv % fni_52(ifc,1,1) = fni_52(ix,iy,1,1)
-        
-        st % dv % fna(ifc,1,1,0:ns-1) = fna(ix,iy,1,1,0:ns-1)
-        st % dv % fna_32(ifc,1,1,0:ns-1) = fna_32(ix,iy,1,1,0:ns-1)
-        st % dv % fna_52(ifc,1,1,0:ns-1) = fna_52(ix,iy,1,1,0:ns-1)
-        st % dv % fna_nodrift(ifc,1,1,0:ns-1) = 
-     .            fna_nodrift(ix,iy,1,1,0:ns-1)
-        
-        st % dv % fhe(ifc,1,1) = fhe(ix,iy,1,1)
-        st % dv % fhet(ifc,1,1) = fhet(ix,iy,1,1)
-        st % dv % fhi(ifc,1,1) = fhi(ix,iy,1,1)
-        st % dv % fhit(ifc,1,1) = fhit(ix,iy,1,1)
-        
-! numerical coefficients
-        st % dv % conc(ifc,1,1) = conc(ix,iy,1,1)
-        st % dv % fllime(ifc) = fllime(ix,iy)
-        st % dv % floe(ifc,1,1) = floe(ix,iy,1,1)
-        st % dv % cone(ifc,1,1,:) = cone(ix,iy,1,1,:)
-        st % dv % fllimi(ifc) = fllimi(ix,iy)
-        st % dv % floi(ifc,1,1) = floi(ix,iy,1,1)
-        st % dv % coni(ifc,1,1,:) = coni(ix,iy,1,1,:)
-          
-! B2PlasmaSnapshot
-        st % psnl % fch(ifc,1,1) = fch(ix,iy,1,1)
-        st % psnl % fna(ifc,1,1,0:ns-1) = fna(ix,iy,1,1,0:ns-1)
-        st % psnl % fhe(ifc,1,1) = fhe(ix,iy,1,1)
-        st % psnl % fhi(ifc,1,1) = fhi(ix,iy,1,1)
-        st % psnc % fch(ifc,1,1) = fch(ix,iy,1,1)
-        st % psnc % fna(ifc,1,1,0:ns-1) = fna(ix,iy,1,1,0:ns-1)
-        st % psnc % fhe(ifc,1,1) = fhe(ix,iy,1,1)
-        st % psnc % fhi(ifc,1,1) = fhi(ix,iy,1,1)
       end do     
 
       st % diag % aresco(0:ns-1) = aresco(0:ns-1)
@@ -1561,5 +1294,17 @@
 ******************************************************************************
 
 
+      subroutine prep_plasma_ext (nx, ny, ns, nCv, nCi, nFc, st_ext)
+      
+        implicit none
+        integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
+        type(B2StateExt), intent(inout) :: st_ext
+        integer :: ix, iy, ic, ifc
+
+        ! For now, only create a dummy external state.
+        ! Functionality from b2mod_external to be carried over!
+        call createB2StateExt( nCv, nFc, ns, st_ext )
+
+      end subroutine prep_plasma_ext
 
       end module b2us_prep

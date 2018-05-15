@@ -7,7 +7,7 @@
       public :: alloc_geometry, dealloc_geometry
 
       type, public :: geometry
-        integer :: nFs
+        
 !  cell quantiites
         real (kind=R8), allocatable  :: cvBb(:,:) ! (nCv,4) Bx,By,Bz, |B|
         real (kind=R8), allocatable  :: cvX(:)

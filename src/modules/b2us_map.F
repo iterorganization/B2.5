@@ -8,22 +8,23 @@
       
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nFs, mxnFs
-        integer, allocatable :: cvFcP(:,:) ! (2,nCv) pointing for every cell to the first index number in the cvFc list and its number of faces
+        integer, allocatable :: cvFcP(:,:) ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
         integer, allocatable :: cvFc(:)    ! listing for every cell the corresponding face numbers 
-	integer, allocatable :: fcCv(:,:)  ! (2,nFc) listing for every face the two corresponding cells
-	integer, allocatable :: fcVx(:,:)  ! (2, nFc) Hajo used: xVx(ix,iy) and yVx(ix,iy) are used but for each cell
-	integer, allocatable :: cvVxP(:,:) ! (2,nCv) pointing for every cell to the first index number in the cvVx list and its number of vertices 
+	integer, allocatable :: fcCv(:,:)  ! (nFc,2) listing for every face the two corresponding cells
+	integer, allocatable :: fcVx(:,:)  ! (nFc,2) Hajo used: xVx(ix,iy) and yVx(ix,iy) are used but for each cell
+	integer, allocatable :: cvVxP(:,:) ! (nCv,2) pointing for every cell to the first index number in the cvVx list and its number of vertices 
 	integer, allocatable :: cvVx(:)    ! listing for every cell the corresponding vertex numbers
-	integer, allocatable :: vxFcP(:,:) ! (2,nVx) pointing for every vertex to the first index number in the vxFc list and its number of faces  
+	integer, allocatable :: vxFcP(:,:) ! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces  
 	integer, allocatable :: vxFc(:)    ! listing for every vertex the corresponding face numbers
-	integer, allocatable :: vxCvP(:,:) ! (2,nVx) pointing for every cell to the first index number in the vxCv list and its number of cells   
+	integer, allocatable :: vxCvP(:,:) ! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells   
 	integer, allocatable :: vxCv(:)    ! listing for every vertex the corresponding cell numbers
-        integer, allocatable :: cvFsP(:,:) ! (2,nFs) pointing for every 
+        integer, allocatable :: cvFsP(:,:) ! (nFs,2) pointing for every 
         integer, allocatable :: cvFs(:)
-        integer, allocatable :: fcFsP(:,:) ! (2,nFs) pointing for every 
+        integer, allocatable :: fcFsP(:,:) ! (nFs,2) pointing for every 
         integer, allocatable :: fcFs(:)
         integer, allocatable :: fcReg(:) 
         integer, allocatable :: cvReg(:)
+        logical, allocatable :: cvOnClosedSurface(:)
       end type mapping
 
       contains
@@ -51,7 +52,7 @@
       allocate (m%fcFsP(m%mxnFs,2))
       allocate (m%fcReg(m%nFC))
       allocate (m%cvReg(m%nCv))
-
+      allocate (m%cvOnClosedSurface(m%nCv))
       
       end subroutine alloc_mapping 
 
@@ -78,6 +79,7 @@
       deallocate (m%fcFsP)
       deallocate (m%fcReg)
       deallocate (m%cvReg)
+      deallocate (m%cvOnClosedSurface)
 
       
       end subroutine dealloc_mapping 

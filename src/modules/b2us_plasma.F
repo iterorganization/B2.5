@@ -20,26 +20,38 @@
   ! Quantities derived from plasma state
       type B2Derivatives
         ! fluxes/flux densities
-        real(R8), allocatable :: fch(:,:,:), fch_32(:,:,:), 
-     .                           fch_52(:,:,:), fch_p(:,:,:)
-        real(R8), allocatable :: fni_32(:,:,:), fni_52(:,:,:), 
-     .                           fni(:,:,:)
-        real(R8), allocatable :: fna(:,:,:,:), fna_52(:,:,:,:), 
-     .                           fna_32(:,:,:,:), fna_nodrift(:,:,:,:) 
-!    .                         , fna_52nd(:,:,:), fna_32nd(:,:,:)
-        real(R8), allocatable :: fne(:,:,:), fne_32(:,:,:), 
-     .                           fne_52(:,:,:), 
-     .                           fhe(:,:,:), fhet(:,:,:)
-        real(R8), allocatable :: fhi(:,:,:), fhit(:,:,:)          
+        ! dimensions: fc, direction (, species)
+        real(R8), allocatable :: fch(:,:), fch_32(:,:), 
+     .                           fch_52(:,:), fch_p(:,:),
+     .                           fchdia(:,:), fchin(:,:),
+     .                           fchvispar(:,:), fchvisper(:,:),
+     .                           fchvisq(:,:), fchinert(:,:),
+     .                           fchanml(:,:)
+        real(R8), allocatable :: fni_32(:,:), fni_52(:,:), 
+     .                           fni(:,:)
+        real(R8), allocatable :: fna(:,:,:), fna_mdf(:,:,:), 
+     .                           fna_52(:,:,:), fna_32(:,:,:), 
+     .                           fna_52nd(:,:,:), fna_32nd(:,:,:),
+     .                           fna_nodrift(:,:,:), fna_he(:,:,:),
+     .                           fnaPSch(:,:,:), fna_fcor(:,:,:),
+     .                           fna_eir(:,:,:)
+        real(R8), allocatable :: fne(:,:), fne_32(:,:), 
+     .                           fne_52(:,:), fne_eir(:,:),
+     .                           fhe(:,:), fhe_mdf(:,:), fhet(:,:),
+     .                           fhePSch(:,:), fhe_eir(:,:)
+        real(R8), allocatable :: fhi(:,:), fhi_mdf(:,:), fhit(:,:),          
+     .                           fhiPSch(:,:), fhi_eir(:,:)
 
 
         ! kinetic energy
+        ! dimensions: cv, species
         real(R8), allocatable :: kinrgy(:,:)
 
         ! numerical coefficients (maybe move to separate object)
-        real(R8), dimension(:,:,:), allocatable :: conc
-        real(R8), dimension(:,:,:), allocatable :: floe, floi
-        real(R8), dimension(:,:,:,:), allocatable :: cone, coni
+        real(R8), dimension(:,:), allocatable :: conc
+        real(R8), dimension(:,:), allocatable :: floe, floi, 
+     .                                           floe_noc, floi_noc
+        real(R8), dimension(:,:,:), allocatable :: cone, coni
         real(R8), dimension(:), allocatable :: fllime, fllimi
         
         ! residuals
@@ -54,40 +66,48 @@
      .                                           corte, corti
 
         ! coupling coefficients
-        real(R8), dimension(:,:,:,:), allocatable :: pcca
-        real(R8), dimension(:,:,:), allocatable :: pccm
+        real(R8), dimension(:,:,:), allocatable :: pcca
+        real(R8), dimension(:,:), allocatable :: pccm
 
         ! derived state quantities
         ! ni(:,0) is ions, ni(:,1) is neutrals, ue is parallel electron velocity
         ! ne2(:) is electron density, ne2 is elect. den. computed w. squared charge rz2
         real(R8), allocatable :: ne(:), ni(:,:), ue(:), ne2(:)
 
+        ! drift velocities, at cell faces
+        ! dimensions: fc, direction, species
+        real(R8), allocatable :: uadia(:,:,:), vadia(:,:,:), 
+     .                           wadia(:,:,:), vaecrb(:,:,:), 
+     .                           wedia(:,:), veecrb(:,:)
+
+
       end type B2Derivatives
 
   ! Transport coefficients (velocities, diffusivities...)
       type B2Coeff
         ! at faces
-        real(R8), dimension(:,:,:), allocatable :: csig, calf, csig_an
-        real(R8), dimension(:,:,:,:,:), allocatable :: csigin
-        real(R8), dimension(:,:,:), allocatable :: chve, chce
-        real(R8), dimension(:,:,:), allocatable :: chvi, chci
-        real(R8), dimension(:,:), allocatable :: chvemx, chvimx
-        real(R8), allocatable :: cvla(:,:,:,:), cdna(:,:,:,:), 
-     .                           cdpa(:,:,:,:), cvsa(:,:,:,:)
-        real(R8), allocatable :: cthe(:,:), cthi(:,:), cvsa_cl(:,:,:,:)
+        real(R8), dimension(:,:), allocatable :: csig, calf, csig_an
+        real(R8), dimension(:,:,:,:), allocatable :: csigin
+        real(R8), dimension(:,:), allocatable :: chve, chce
+        real(R8), dimension(:,:), allocatable :: chvi, chci
+        real(R8), dimension(:), allocatable :: chvemx, chvimx
+        real(R8), allocatable :: cvla(:,:,:), cdna(:,:,:), 
+     .                           cdpa(:,:,:), cvsa(:,:,:)
+        real(R8), allocatable :: cthe(:,:), cthi(:,:), cvsa_cl(:,:,:)
         real(R8), allocatable :: ceqp(:)
           
-        real(R8), allocatable :: fllim0fhi(:,:,:,:), fllimvisc(:,:) 
+        real(R8), allocatable :: fllim0fhi(:,:,:), fllimvisc(:,:) 
 
         real(R8), allocatable, dimension(:) :: sig0, hce0, hci0, alf0
         real(R8), allocatable, dimension(:,:) :: dpa0, dna0, vsa0, 
      .                                             hcib
         real(R8), allocatable, dimension(:,:,:) :: vla0
 
-        ! velocities at cell centers
-        ! dimensions: cv, direction, species
-        real(R8), allocatable :: uadia(:,:,:,:), wadia(:,:,:,:), 
-     .                           vaecrb(:,:,:,:)
+cwdk move to dv
+!        ! velocities at cell centers
+!        ! dimensions: cv, direction, species
+!        real(R8), allocatable :: uadia(:,:,:,:), wadia(:,:,:,:), 
+!     .                           vaecrb(:,:,:,:)
 
       end type B2Coeff
   
@@ -124,8 +144,8 @@
         real(R8), dimension(:,:), allocatable :: na, ua  ! second index is species
         real(R8), dimension(:), allocatable :: po, te, ti
         real(R8), allocatable :: ne(:), ni(:,:)
-        real(R8), allocatable :: fch(:,:,:), fna(:,:,:,:), 
-     .                           fhi(:,:,:), fhe(:,:,:)
+        real(R8), allocatable :: fch(:,:), fna(:,:,:), 
+     .                           fhi(:,:), fhe(:,:)
         real(R8), allocatable :: kinrgy(:,:)
       end type B2PlasmaSnapshot
  
@@ -164,10 +184,35 @@
         type(B2Source) :: sr
         type(B2SourceWork) :: srw
         type(B2Rates) :: rt
+        type(B2RatesWork) :: rtw
         type(B2PlasmaSnapshot) :: psnl, psnc
         type(B2Diagnostic) :: diag
         type(B2Update) :: update
       end type B2State
+
+
+ ! External plasma
+ ! As simplified type containg all data on possible external species
+ ! To be considered: move to a separate module b2us_plasma_ext?
+      type B2StateExt
+
+        character*13, dimension(:), allocatable :: text(:)
+        integer :: ns
+        logical, dimension(:), allocatable :: is_neutral(:)
+        logical :: initialised_externals = .false.
+        logical :: allocated_externals = .false.
+
+        real(R8), dimension(:), allocatable :: zn, am,
+     .                                         ne, ne2, ue
+        real(R8), dimension(:,:), allocatable :: za, za2, pt, 
+     .                                           na, ni, ua, ta,
+     .                                           fhi
+        real(R8), dimension(:,:,:), allocatable :: fa
+
+        real(R8), dimension(:), allocatable ::  sne, she, shi, sch
+        real(R8), dimension(:,:), allocatable :: sna, smo
+
+      end type B2StateExt
 
       contains
 
@@ -203,38 +248,35 @@
       integer, intent(in) :: nCv, nFc, ns
       type(B2Coeff), intent(inout) :: coeff
       
-      allocate( coeff % csig_an( nFc, 0:1, 0:1 ) )
-      allocate( coeff % calf( nFc, 0:1, 0:1 ) )
+      allocate( coeff % csig_an( nFc, 0:1 ) )
+      allocate( coeff % calf( nFc, 0:1 ) )
       
-      allocate( coeff % csig( nFc, 0:1, 0:1 ) )
-      allocate( coeff % csigin( nFc, 0:1, 0:1, 0:ns-1, 0:ns-1 ) )
+      allocate( coeff % csig( nFc, 0:1 ) )
+      allocate( coeff % csigin( nFc, 0:1, 0:ns-1, 0:ns-1 ) )
       
-      allocate( coeff % chve( nFc, 0:1, 0:1 ) )
-      allocate( coeff % chce( nFc, 0:1, 0:1 ) )
-      allocate( coeff % chvemx( nFc, 0:1 ) )
+      allocate( coeff % chve( nFc, 0:1 ) )
+      allocate( coeff % chce( nFc, 0:1 ) )
+      allocate( coeff % chvemx( nFc ) )
       
-      allocate( coeff % chvi( nFc, 0:1, 0:1 ) )
-      allocate( coeff % chci( nFc, 0:1, 0:1 ) )
-      allocate( coeff % chvimx( nFc, 0:1 ) )
+      allocate( coeff % chvi( nFc, 0:1 ) )
+      allocate( coeff % chci( nFc, 0:1 ) )
+      allocate( coeff % chvimx( nFc ) )
       
-      allocate( coeff % cvla( nFc, 0:1, 0:1, 0:ns-1 ) )
-      allocate( coeff % cdna( nFc, 0:1, 0:1, 0:ns-1 ) )
-      allocate( coeff % cdpa( nFc, 0:1, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvla( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cdna( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cdpa( nFc, 0:1, 0:ns-1 ) )
       
-      allocate( coeff % cvsa( nFc, 0:1, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvsa( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cthe( nFc, 0:ns-1 ) )
       allocate( coeff % cthi( nFc, 0:ns-1 ) )
-      allocate( coeff % cvsa_cl( nFc, 0:1, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvsa_cl( nFc, 0:1, 0:ns-1 ) )
       
       allocate( coeff % ceqp( nCv ) )
       
-      allocate( coeff % fllim0fhi( nFc, 0:1, 0:1, 0:ns-1 ) )
+      allocate( coeff % fllim0fhi( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % fllimvisc( nFc, 0:ns-1 ) )
-      
-      allocate( coeff % uadia( nCv, 0:1, 0:1, 0:ns-1 ) )
-      allocate( coeff % wadia( nCv, 0:1, 0:1, 0:ns-1 ) )
-      allocate( coeff % vaecrb( nCv, 0:1, 0:1, 0:ns-1 ) )
-      
+            
+
 ! moved here from b2coeffwork
       
       allocate( coeff%dna0( nCv, 0:ns-1 ) )
@@ -280,10 +322,6 @@
       deallocate( coeff % fllim0fhi )
       deallocate( coeff % fllimvisc )
       
-      deallocate( coeff % uadia )
-      deallocate( coeff % wadia )
-      deallocate( coeff % vaecrb )
-      
       deallocate( coeff%dna0 )
       deallocate( coeff%dpa0 )
       deallocate( coeff%vla0 )
@@ -303,28 +341,48 @@
       type(B2Derivatives), intent(inout) :: dv
       
 ! fluxes
-      allocate( dv % fch( nFc, 0:1, 0:1 ) )
-      allocate( dv % fch_32( nFc, 0:1, 0:1 ) )
-      allocate( dv % fch_52( nFc, 0:1, 0:1 ) )
-      allocate( dv % fch_p( nFc, 0:1, 0:1 ) )
+      allocate( dv % fch( nFc, 0:1 ) )
+      allocate( dv % fch_32( nFc, 0:1 ) )
+      allocate( dv % fch_52( nFc, 0:1 ) )
+      allocate( dv % fch_p( nFc, 0:1 ) )
+      allocate( dv % fchdia( nFc, 0:1 ) )
+      allocate( dv % fchin( nFc, 0:1 ) )
+      allocate( dv % fchvispar( nFc, 0:1 ) )
+      allocate( dv % fchvisper( nFc, 0:1 ) )
+      allocate( dv % fchvisq( nFc, 0:1 ) )
+      allocate( dv % fchinert( nFc, 0:1 ) )
+      allocate( dv % fchanml( nFc, 0:1 ) )      
+      allocate( dv % fne( nFc, 0:1 ) )
+      allocate( dv % fne_32( nFc, 0:1 ) )
+      allocate( dv % fne_52( nFc, 0:1 ) )
       
-      allocate( dv % fne( nFc, 0:1, 0:1 ) )
-      allocate( dv % fne_32( nFc, 0:1, 0:1 ) )
-      allocate( dv % fne_52( nFc, 0:1, 0:1 ) )
+      allocate( dv % fni( nFc, 0:1 ) )    
+      allocate( dv % fni_32( nFc, 0:1 ) )
+      allocate( dv % fni_52( nFc, 0:1 ) )
       
-      allocate( dv % fni( nFc, 0:1, 0:1 ) )    
-      allocate( dv % fni_32( nFc, 0:1, 0:1 ) )
-      allocate( dv % fni_52( nFc, 0:1, 0:1 ) )
+      allocate( dv % fna( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % fna_mdf( nFc, 0:1 , 0:ns-1 ) )    
+      allocate( dv % fna_he( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % fna_32( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % fna_52( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % fna_32nd( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % fna_52nd( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % fnaPSch( nFc, 0:1 , 0:ns-1 ) )
+      allocate( dv % fna_fcor( nFc, 0:1 , 0:ns-1 ) )        
+      allocate( dv % fna_eir( nFc, 0:1, 0:ns-1 ) )
+
+      allocate( dv % fna_nodrift( nFc, 0:1, 0:ns-1 ) )
       
-      allocate( dv % fna( nFc, 0:1, 0:1, 0:ns-1 ) )
-      allocate( dv % fna_32( nFc, 0:1, 0:1, 0:ns-1 ) )
-      allocate( dv % fna_52( nFc, 0:1, 0:1, 0:ns-1 ) )
-      allocate( dv % fna_nodrift( nFc, 0:1, 0:1, 0:ns-1 ) )
-      
-      allocate( dv % fhe( nFc, 0:1, 0:1 ) )    
-      allocate( dv % fhet( nFc, 0:1, 0:1 ) )
-      allocate( dv % fhi( nFc, 0:1, 0:1 ) )    
-      allocate( dv % fhit( nFc, 0:1, 0:1 ) )
+      allocate( dv % fhe( nFc, 0:1 ) )    
+      allocate( dv % fhe_mdf( nFc, 0:1 ) )    
+      allocate( dv % fhePSch( nFc, 0:1 ) )    
+      allocate( dv % fhet( nFc, 0:1 ) )
+      allocate( dv % fhe_eir( nFc, 0:1 ) )    
+      allocate( dv % fhi( nFc, 0:1 ) )    
+      allocate( dv % fhi_mdf( nFc, 0:1 ) )    
+      allocate( dv % fhiPSch( nFc, 0:1 ) )    
+      allocate( dv % fhit( nFc, 0:1 ) )
+      allocate( dv % fhi_eir( nFc, 0:1 ) )    
       
 ! kinetic energy
       allocate( dv % kinrgy( nCv, 0:ns-1 ) )    
@@ -334,15 +392,26 @@
       allocate( dv % ne2( nCv ) )    
       allocate( dv % ni( nCv, 0:1 ) )    
       allocate( dv % ue( nCv ) )
+
+! drift flows
+      allocate( dv % uadia( nCv, 0:1, 0:ns-1 ) )
+      allocate( dv % vadia( nCv, 0:1, 0:ns-1 ) )
+      allocate( dv % wadia( nCv, 0:1, 0:ns-1 ) )
+      allocate( dv % vaecrb( nCv, 0:1, 0:ns-1 ) )
+      allocate( dv % wedia( nCv, 0:1 ) )
+      allocate( dv % veecrb( nCv, 0:1 ) )
+
       
 ! numerical coefficients
-      allocate( dv % conc( nFc, 0:1, 0:1 ) )
+      allocate( dv % conc( nFc, 0:1 ) )
       allocate( dv % fllime( nFc ) )    
-      allocate( dv % floe( nFc, 0:1, 0:1 ) )
-      allocate( dv % cone( nFc, 0:1, 0:1, 0:2) )
+      allocate( dv % floe( nFc, 0:1 ) )
+      allocate( dv % floe_noc( nFc, 0:1 ) )
+      allocate( dv % cone( nFc, 0:1, 0:2) )
       allocate( dv % fllimi( nFc ) )    
-      allocate( dv % floi( nFc, 0:1, 0:1 ) )
-      allocate( dv % coni( nFc, 0:1, 0:1, 0:2 ) )
+      allocate( dv % floi( nFc, 0:1 ) )
+      allocate( dv % floi_noc( nFc, 0:1 ) )
+      allocate( dv % coni( nFc, 0:1, 0:2 ) )
       
 ! residuals
       allocate( dv % resmo( nCv, 0:ns-1 ) )
@@ -363,8 +432,8 @@
       allocate( dv % corti( nCv ) )
       
 ! coupling coefficients
-      allocate( dv % pcca( nCv, 0:1, 0:1, 0:ns-1 ) )
-      allocate( dv % pccm( nCv, 0:1, 0:1 ) )
+      allocate( dv % pcca( nCv, 0:1, 0:ns-1 ) )
+      allocate( dv % pccm( nCv, 0:1 ) )
       
       end subroutine createB2Derivatives
       
@@ -376,40 +445,65 @@
       deallocate( dv % fni )
       deallocate( dv % fne_32 )
       deallocate( dv % fne_52 )
-      deallocate( dv % fna_32 )
-      deallocate( dv % fna_52 )
-      deallocate( dv % fna_nodrift )
       deallocate( dv % fni_32 )
       deallocate( dv % fni_52 )
-      deallocate( dv % fna )
       deallocate( dv % fch )
       deallocate( dv % fch_32 )
       deallocate( dv % fch_52 )
       deallocate( dv % fch_p )
+      deallocate( dv % fchdia )
+      deallocate( dv % fchin )
+      deallocate( dv % fchvispar )
+      deallocate( dv % fchvisper )
+      deallocate( dv % fchvisq )
+      deallocate( dv % fchinert )
+      deallocate( dv % fchanml )
       deallocate( dv % fna )
+      deallocate( dv % fna_mdf )
+      deallocate( dv % fna_he )
       deallocate( dv % fna_32 )
       deallocate( dv % fna_52 )
+      deallocate( dv % fna_32nd )
+      deallocate( dv % fna_52nd )
+      deallocate( dv % fnaPSch )
+      deallocate( dv % fna_fcor )
       deallocate( dv % fna_nodrift )
+      deallocate( dv % fna_eir )
       
       deallocate( dv % ne )
       deallocate( dv % ne2 )
       deallocate( dv % ni )
       deallocate( dv % ue )
-      
+
+      deallocate( dv % uadia )
+      deallocate( dv % vadia )
+      deallocate( dv % wadia )
+      deallocate( dv % vaecrb )
+      deallocate( dv % wedia )
+      deallocate( dv % veecrb )
+
 ! kinetic energy
       deallocate( dv % kinrgy )
       
       deallocate( dv % fhi )
+      deallocate( dv % fhi_mdf )
+      deallocate( dv % fhiPSch )
       deallocate( dv % fhit )
+      deallocate( dv % fhi_eir )
       deallocate( dv % fhe )
+      deallocate( dv % fhe_mdf )
+      deallocate( dv % fhePSch )
       deallocate( dv % fhet )
+      deallocate( dv % fhe_eir )
 
       deallocate( dv % conc )
       deallocate( dv % fllime )
       deallocate( dv % floe )
+      deallocate( dv % floe_noc )
       deallocate( dv % cone )
       deallocate( dv % fllimi )
       deallocate( dv % floi )
+      deallocate( dv % floi_noc )
       deallocate( dv % coni )
       
       deallocate( dv % resmo )
@@ -565,10 +659,10 @@
       allocate( snap % ne( nCv ) ) 
       allocate( snap % ni( nCv, 0:1 ) )    
       
-      allocate( snap % fch( nFc, 0:1, 0:1 ) )
-      allocate( snap % fna( nFc, 0:1, 0:1, 0:ns-1 ) )
-      allocate( snap % fhe( nFc, 0:1, 0:1 ) )    
-      allocate( snap % fhi( nFc, 0:1, 0:1 ) )    
+      allocate( snap % fch( nFc, 0:1 ) )
+      allocate( snap % fna( nFc, 0:1, 0:ns-1 ) )
+      allocate( snap % fhe( nFc, 0:1 ) )    
+      allocate( snap % fhi( nFc, 0:1 ) )    
       
       allocate( snap % kinrgy( nCv, 0:ns-1 ) )    
       end subroutine createB2PlasmaSnapshot
@@ -663,6 +757,68 @@
       deallocate( update % ti )
       end subroutine destroyB2Update
          
-           
+      
+
+ ! External plasma
+      subroutine createB2StateExt( nCv, nFc, ns_ext, state_ext )
+        integer, intent(in) :: nCv, nFc, ns_ext
+        type(B2StateExt), intent(inout) :: state_ext
+
+        allocate( state_ext % text (0:ns_ext-1) )
+        allocate( state_ext % is_neutral (0:ns_ext-1) )
+        allocate( state_ext % zn (0:ns_ext-1) )
+        allocate( state_ext % am (0:ns_ext-1) )
+        allocate( state_ext % za (1:nCv, 0:ns_ext-1) )
+        allocate( state_ext % za2 (1:nCv, 0:ns_ext-1) )
+        allocate( state_ext % pt (1:nCv, 0:ns_ext-1) )
+        allocate( state_ext % ne (1:nCv) )
+        allocate( state_ext % ne2 (1:nCv) )
+        allocate( state_ext % ue (1:nCv))
+        allocate( state_ext % na (1:nCv, 0:ns_ext-1) )
+        allocate( state_ext % ni (1:nCv, 0:1) )
+        allocate( state_ext % ua (1:nCv, 0:ns_ext-1) )
+        allocate( state_ext % ta (1:nCv, 0:ns_ext-1) )
+        allocate( state_ext % fhi (1:nFc, 0:1) )
+        allocate( state_ext % fa (1:nFc, 0:1, 0:ns_ext-1) )
+        allocate( state_ext % sne (1:nCv) )
+        allocate( state_ext % she (1:nCv)  )
+        allocate( state_ext % shi (1:nCv) )
+        allocate( state_ext % sch (1:nCv) )
+        allocate( state_ext % sna (1:nCv, 0:ns_ext-1) )
+        allocate( state_ext % smo (1:nCv, 0:ns_ext-1) )
+
+
+      end subroutine createB2StateExt
+
+
+      subroutine destroyB2StateExt( state_ext )
+        type(B2StateExt), intent(inout) :: state_ext
+
+        deallocate( state_ext % text )
+        deallocate( state_ext % is_neutral )
+        deallocate( state_ext % zn )
+        deallocate( state_ext % am )
+        deallocate( state_ext % za )
+        deallocate( state_ext % za2 )
+        deallocate( state_ext % pt )
+        deallocate( state_ext % ne )
+        deallocate( state_ext % ne2 )
+        deallocate( state_ext % ue )
+        deallocate( state_ext % na )
+        deallocate( state_ext % ni )
+        deallocate( state_ext % ua )
+        deallocate( state_ext % ta )
+        deallocate( state_ext % fhi )
+        deallocate( state_ext % fa )
+        deallocate( state_ext % sne )
+        deallocate( state_ext % she )
+        deallocate( state_ext % shi )
+        deallocate( state_ext % sch )
+        deallocate( state_ext % sna )
+        deallocate( state_ext % smo )
+
+      end subroutine destroyB2StateExt
+
+     
       end module b2us_plasma
       
