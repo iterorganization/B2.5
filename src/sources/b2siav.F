@@ -53,7 +53,7 @@
       real (kind=R8) ::
      *     t0, ft                                                   !srv 16.10.17
       real (kind=R8), save ::
-     &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
+     &     addvis=1.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
      &     cvsa_mltpl = 1.0e0_R8                                    !iyv 06.12.13
       real (kind=R8) ::
      *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99

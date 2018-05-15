@@ -1953,9 +1953,9 @@ cwdk need full diamagnetic component for energy
 
       do ix=-1,nx
        do iy=-1,ny
-         kbnrgy(ix,iy) = 0.5_R8*mb*(ub(ix,iy)**2+                ! ua is a value in the cell center
-     .     (xwdia*wbdia_(ix,iy,0)+xvecrb*vbecrb_(ix,iy,0))**2+   ! wbdia_ is a value in the cell center
-     .     (xwdia*wbdia_(ix,iy,1)+xvecrb*vbecrb_(ix,iy,1))**2)   ! vbecrb_ is a value in the cell center
+         kbnrgy(ix,iy) = 0.5_R8*mb*ub(ix,iy)**2                  ! ua is a value in the cell center
+!     .    +(xwdia*wbdia_(ix,iy,0)+xvecrb*vbecrb_(ix,iy,0))**2    ! wbdia_ is a value in the cell center
+!     .    +(xwdia*wbdia_(ix,iy,1)+xvecrb*vbecrb_(ix,iy,1))**2)   ! vbecrb_ is a value in the cell center
        end do
       end do
 

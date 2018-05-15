@@ -298,8 +298,6 @@ c  ..set null flux in guard cells  ?
 
 * ..compute fluxes and linearisation
       do is = 0, ns-1
-!wdk w0 now contains contributions from drifts, while probably only parallel kinetic energy
-!wdk should be taken into account here !?!
         w0(:,:,is) = kinrgy(:,:,is)/(am(is)*mp)
       end do
 *   ..compute fhix, floix, conix
@@ -343,7 +341,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
                coni0 = 4.0e0_R8/3.0e0_R8*cvsa(ix,iy,0,is)
                t1 = dim ( coni0,
      .          abs(floi0) *
-     .          max(0.0_R8, 
+     .          max(0.0_R8,
      .           min(w0(ix,iy,is),w0(leftix(ix,iy),leftiy(ix,iy),is)))/
      .          max(cutlo,
      .              w0(ix,iy,is)+w0(leftix(ix,iy),leftiy(ix,iy),is)) )

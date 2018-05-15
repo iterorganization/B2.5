@@ -1001,7 +1001,7 @@
 		<category name="Physics">
 			<switch>
 				<name>b2siav_addvis</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Multiplier to heat flux contribution to divergence of viscosity tensor in the momentum equation.
@@ -1126,7 +1126,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Real parameter which multiplies the contribution from the ExB drift velocity to the kinetic energy and the flows passed to Eirene.
+					Real parameter which multiplies the contribution from the ExB drift velocity to the flows passed to Eirene.
 				</description>
 			</switch>
 			<switch>
@@ -1134,7 +1134,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Real parameter which multiplies the contribution from the diamagnetic drift velocity to the kinetic energy and the flows passed to Eirene.
+					Real parameter which multiplies the contribution from the diamagnetic drift velocity to the flows passed to Eirene.
 				</description>
 			</switch>
 			<switch>
@@ -1167,7 +1167,7 @@
 			</switch>
 			<switch>
 				<name>b2tfhe_vis_par</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Real parameter which multiplies the current driven by parallel viscosity.
@@ -1634,7 +1634,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-				    vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+				  vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 				</description>
 			</switch>
 			<switch>
@@ -2978,11 +2978,11 @@
 			</switch>
 			<switch>
 				<name>b2tfhe_vis_per</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<note>!srv 20.11.08</note>
 				<description>
-                    vis_per is a multiplier to the perpendicular viscosity current.
+					vis_per is a multiplier to the perpendicular viscosity current.
 					If vis_per.ne.0.0, the electric potential equation is solved by the subroutine b2npp7 using a 7-point stencil.
 					The value '1.0' is recommended for runs with drifts when perpendicular viscosity and corresponding perpendicular viscosity current is taken into account.
 				</description>

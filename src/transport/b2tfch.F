@@ -98,8 +98,8 @@
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
 *   ..initialisation
       data ncall/0/, fch_ion_neutral/0.0_R8/, fch_anomalous/1.0_R8/,  	!xpb
-     * vis_par/0.0_R8/, no_current/0/, conduction_only/0/, 
-     1 vis_per/0.0_R8/, no_hybr/0/, pot_eq/1/, sig_stoch/1.0_R8/
+     * vis_par/1.0_R8/, no_current/0/, conduction_only/0/,
+     1 vis_per/1.0_R8/, no_hybr/0/, pot_eq/1/, sig_stoch/1.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -124,12 +124,13 @@
        call xertst (fch_anomalous.ne.0.0_R8
      &         .or.(fch_stochastic.ne.0.0_R8.and.sig_stoch.ne.0.0_R8)
      &         .or.(fch_inert.ne.0.0_R8.and.maxval(facdrift).ne.0.0_R8)
-     &         .or.(vis_q.ne.0.0_R8.and.maxval(facdrift).ne.0.0_R8)
-     &         .or.(vis_par.ne.0.0_R8.and.maxval(facdrift).ne.0.0_R8)
-     &         .or.(fch_ion_neutral.ne.0.0_R8
-     &                                 .and.maxval(facdrift).ne.0.0_R8)
+     &         .or.(vis_q.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8)
+     &         .or.(vis_par.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8)
+     &         .or.(fch_ion_neutral.ne.0.0_R8.and.
+     &                                (maxval(facdrift).ne.0.0_R8.or.
+     &                                 maxval(fac_ExB).ne.0.0_R8))
      &         .or.(maxval(facdrift).ne.0.0_R8.and.dia_cur.ne.0.0_R8)
-     &         .or.(vis_per.ne.0.0_R8.and.maxval(facdrift).ne.0.0_R8),
+     &         .or.(vis_per.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8),
      &         'No radial current terms activated!')                    !xpb
        call xertst (0.0_R8.le.dia_cur .and. 1.0_R8.ge.dia_cur,          !xpb
      &  'faulty argument dia_cur')                                      !xpb

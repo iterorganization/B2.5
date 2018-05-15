@@ -545,7 +545,7 @@ c 2002-09-11: logic revised
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
       data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
       data xfrhie_no_drift/1.0_R8/
-      data b2tfhe_vis_par/0.0_R8/, b2tvspa_vis_par/1.0_R8/
+      data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
