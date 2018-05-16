@@ -19,7 +19,9 @@
 
       private
 
-      public :: read_mapping, calc_mapping, prep_geometry, prep_plasma, 
+      public :: read_mapping, calc_mapping, write_mapping,
+     .          read_geometry, prep_geometry, write_geometry,
+     .          prep_plasma, 
      .          prep_plasma_ext
 
 cwdk  eventually: take this outside of a module! (or: make sure this module is
@@ -37,7 +39,7 @@ cwdk  only used at b2mod_driver level)
 
       implicit none
       character(*),intent(in) :: fname
-      integer :: iun, io
+      integer :: iun, io, idum(0:9)
 
       open (newunit=iun,file=fname,status='old',iostat=io)
 
@@ -47,12 +49,110 @@ cwdk  only used at b2mod_driver level)
         mpg%nFc = 0
         mpg%nVx = 0
       else
+        call cfruin (iun, 1, idum, 'nCi')
+        mpg%nCi = idum(0) 
+        call cfruin (iun, 1, idum, 'nCg')
+        mpg%nCg = idum(0) 
+        call cfruin (iun, 1, idum, 'nCv')
+        mpg%nCv = idum(0)
+        call cfruin (iun, 1, idum, 'nFc')
+        mpg%nFc = idum(0)
+        call cfruin (iun, 1, idum, 'nVx')
+        mpg%nVx = idum(0)
+        call cfruin (iun, 1, idum, 'nFs')
+        mpg%nFs = idum(0)
+        call cfruin (iun, 1, idum, 'nCmxVx')
+        mpg%nCmxVx = idum(0)
+        call cfruin (iun, 1, idum, 'nCmxFc')
+        mpg%nCmxFc = idum(0)
+        call cfruin (iun, 1, idum, 'mxnFs')
+        mpg%mxnFs = idum(0)
+
+        call alloc_mapping (mpg)
+        
+        call cfruin (iun, mpg%nCv*2,          mpg%cvFcP, 'cvFcP')
+        call cfruin (iun, mpg%nCmxFc*mpg%nCv, mpg%cvFc,  'cvFc')
+        call cfruin (iun, mpg%nFc*2,          mpg%fcCv,  'fcCv')
+        call cfruin (iun, mpg%nFc*2,          mpg%fcVx,  'fcVx')
+        call cfruin (iun, mpg%nCv*2,          mpg%cvVxP, 'cvVxP')
+        call cfruin (iun, mpg%nCmxVx*mpg%nCv, mpg%cvVx,  'cvVx')
+        call cfruin (iun, mpg%nVx*2,          mpg%vxFcP, 'vxFcP')
+        call cfruin (iun, mpg%nCmxFc*mpg%nVx, mpg%vxFc,  'vxFc')
+        call cfruin (iun, mpg%nVx*2,          mpg%vxCvP, 'vxCvP')
+        call cfruin (iun, mpg%nCmxVx*mpg%nCv, mpg%vxCv,  'vxCv')
+        call cfruin (iun, mpg%mxnFs*2,        mpg%cvFsP, 'cvFsP')
+        call cfruin (iun, mpg%nCv,            mpg%cvFs,  'cvFs')
+        call cfruin (iun, mpg%mxnFs*2,        mpg%fcFsP, 'fcFsP')
+        call cfruin (iun, mpg%nCv,            mpg%fcFs,  'fcFs')
+        call cfruin (iun, mpg%nFc,            mpg%fcReg,  'fcReg')
+        call cfruin (iun, mpg%nCv,            mpg%cvReg,  'cvReg')
+        call cfruin (iun, mpg%nCv,            mpg%cvOnClosedSurface,
+     .                                            'cvOnClosedSurface')
       end if
 
       close  (iun)
 
       return
       end subroutine read_mapping 	
+
+***********************************************************************
+
+      subroutine write_mapping (fname)
+
+      implicit none
+      character(*),intent(in) :: fname
+      integer :: nout, io, idum(0:9)
+
+      open (newunit=nout,file=fname,iostat=io)
+
+      if (io /= 0) then
+        write (*,*) ' file ', fname, ' cannot be written'
+      else
+
+        idum(0) = mpg%nCi
+        call cfwuin (nout, 1, idum, 'nCi')
+        idum(0) = mpg%nCg
+        call cfwuin (nout, 1, idum, 'nCg')
+        idum(0) = mpg%nCv
+        call cfwuin (nout, 1, idum, 'nCv')
+        idum(0) = mpg%nFc
+        call cfwuin (nout, 1, idum, 'nFc')
+        idum(0) = mpg%nVx
+        call cfwuin (nout, 1, idum, 'nVx')
+        idum(0) = mpg%nFs
+        call cfwuin (nout, 1, idum, 'nFs')
+        idum(0) = mpg%nCmxVx
+        call cfwuin (nout, 1, idum, 'nCmxVx')
+        idum(0) = mpg%nCmxFc
+        call cfwuin (nout, 1, idum, 'nCmxFc')
+        idum(0) = mpg%mxnFs
+        call cfwuin (nout, 1, idum, 'mxnFs')
+
+        call cfwuin (nout, mpg%nCv*2,          mpg%cvFcP, 'cvFcP')
+        call cfwuin (nout, mpg%nCmxFc*mpg%nCv, mpg%cvFc,  'cvFc')
+        call cfwuin (nout, mpg%nFc*2,          mpg%fcCv,  'fcCv')
+        call cfwuin (nout, mpg%nFc*2,          mpg%fcVx,  'fcVx')
+        call cfwuin (nout, mpg%nCv*2,          mpg%cvVxP, 'cvVxP')
+        call cfwuin (nout, mpg%nCmxVx*mpg%nCv, mpg%cvVx,  'cvVx')
+        call cfwuin (nout, mpg%nVx*2,          mpg%vxFcP, 'vxFcP')
+        call cfwuin (nout, mpg%nCmxFc*mpg%nVx, mpg%vxFc,  'vxFc')
+        call cfwuin (nout, mpg%nVx*2,          mpg%vxCvP, 'vxCvP')
+        call cfwuin (nout, mpg%nCmxVx*mpg%nCv, mpg%vxCv,  'vxCv')
+        call cfwuin (nout, mpg%mxnFs*2,        mpg%cvFsP, 'cvFsP')
+        call cfwuin (nout, mpg%nCv,            mpg%cvFs,  'cvFs')
+        call cfwuin (nout, mpg%mxnFs*2,        mpg%fcFsP, 'fcFsP')
+        call cfwuin (nout, mpg%nCv,            mpg%fcFs,  'fcFs')
+        call cfwuin (nout, mpg%nFc,            mpg%fcReg,  'fcReg')
+        call cfwuin (nout, mpg%nCv,            mpg%cvReg,  'cvReg')
+        call cfwuin (nout, mpg%nCv,            mpg%cvOnClosedSurface,
+     .                                            'cvOnClosedSurface')
+
+      end if
+
+      close  (nout)
+
+      return
+      end subroutine write_mapping 	
 
 ***********************************************************************
 
@@ -257,17 +357,18 @@ cwdk  only used at b2mod_driver level)
        ch(1:mpg%ncV) = mpg%cvVx(1:mpg%ncV)
        
        mpg%vxFcP(1,1) = 1
+       mpg%vxCvP(1,1) = 1
        do ivx = 1, (nx+1)*(ny+1)-1
          mpg%vxFcP(ivx,2) = count(fh == ivx)
-         mpg%vxFcP(ivx+1,1) = mpg%vxFcP(ivx,1) + mpg%vxFcP(ivx+1,2)  
+         mpg%vxFcP(ivx+1,1) = mpg%vxFcP(ivx,1) + mpg%vxFcP(ivx,2)  
          if (mpg%vxFcP(ivx,2) > 0) then
-           mpg%vxFcP(mpg%vxFcP(ivx,1):mpg%vxFcP(ivx+1,1)-1,1) =
+           mpg%vxFc(mpg%vxFcP(ivx,1):mpg%vxFcP(ivx+1,1)-1) =
      .          pack( indFc, fh == ivx )
          end if
          mpg%vxCvP(ivx,2) = count(ch == ivx)
-         mpg%vxCvP(ivx+1,1) = mpg%vxCvP(ivx,1) + mpg%vxCvP(ivx+1,2)  
+         mpg%vxCvP(ivx+1,1) = mpg%vxCvP(ivx,1) + mpg%vxCvP(ivx,2)  
          if (mpg%vxCvP(ivx,2) > 0) then
-           mpg%vxCvP(mpg%vxCvP(ivx,1):mpg%vxCvP(ivx+1,1)-1,1) =
+           mpg%vxCv(mpg%vxCvP(ivx,1):mpg%vxCvP(ivx+1,1)-1) =
      .          pack( indCv, ch == ivx )
          end if
        end do
@@ -276,13 +377,13 @@ cwdk  only used at b2mod_driver level)
        mpg%vxFcP(ivx,2) = count(fh == ivx)
        vxFc_end = mpg%vxFcP(ivx,1) + mpg%vxFcP(ivx,2)
        if (mpg%vxFcP(ivx,2) > 0) then
-         mpg%vxFcP(mpg%vxFcP(ivx,1):vxFc_end,1) =
+         mpg%vxFc(mpg%vxFcP(ivx,1):vxFc_end) =
      .          pack( indFc, fh == ivx )
        end if
        mpg%vxCvP(ivx,2) = count(ch == ivx)
        vxCv_end = mpg%vxCvP(ivx,1) + mpg%vxCvP(ivx,2)
        if (mpg%vxCvP(ivx,2) > 0) then
-         mpg%vxCvP(mpg%vxCvP(ivx,1):vxCv_end,1) =
+         mpg%vxCv(mpg%vxCvP(ivx,1):vxCv_end) =
      .          pack( indCv, ch == ivx )
        end if
 
@@ -389,10 +490,107 @@ cwdk  only used at b2mod_driver level)
         end do	
       end do
       mpg%nFs = ifs
-     
-! 
 
       end subroutine calc_mapping
+
+***********************************************************************
+
+      subroutine read_geometry (fname)
+
+      implicit none
+      character(*),intent(in) :: fname
+      integer :: iun, io, idum(0:9)
+
+      open (newunit=iun,file=fname,iostat=io)
+
+      if (io /= 0) then
+        write (*,*) ' file ', fname, ' cannot be written'
+      else
+
+        call alloc_geometry (gm, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs)
+
+! cell volumes 
+        call cfrure (iun, mpg%nCv*4, gm%cvBb,   'cvBb')
+        call cfrure (iun, mpg%nCv,   gm%cvX,    'cvX')
+        call cfrure (iun, mpg%nCv,   gm%cvY,    'cvY')
+        call cfrure (iun, mpg%nCv,   gm%cvS,    'cvS')
+        call cfrure (iun, mpg%nCv,   gm%cvH,    'cvH')
+        call cfrure (iun, mpg%nCv*2, gm%cvQgam, 'cvQgam')
+        call cfrure (iun, mpg%nCv, gm%cvVol,  'cvVol')
+
+! face quantities
+        call cfrure (iun, mpg%nFc*4, gm%fcBb,   'fcBb')
+        call cfrure (iun, mpg%nFc,   gm%fcS,    'fcS')
+        call cfrure (iun, mpg%nFc*2, gm%fcHc,   'fcHc')
+        call cfrure (iun, mpg%nFc*2, gm%fcHt,   'fcHt')
+        call cfrure (iun, mpg%nFc*2, gm%fcQgam, 'fcQgam')
+        call cfrure (iun, mpg%nFc*2, gm%fcQalf, 'fcQalf')
+        call cfrure (iun, mpg%nFc*2, gm%fcQbet, 'fcQbet')
+        call cfrure (iun, mpg%nFc,   gm%fcPbs,  'fcPbs')
+        call cfrure (iun, mpg%nFc,   gm%fcPbshz,'fcPbshz')
+
+! vertice quantities
+        call cfrure (iun, mpg%nVx,   gm%vxX,    'vxX')
+        call cfrure (iun, mpg%nVx,   gm%vxY,    'vxY')
+        call cfrure (iun, mpg%nVx,   gm%vxFfbz, 'vxFfbz')
+        call cfrure (iun, mpg%nVx,   gm%vxFpsi, 'vxFpsi')
+
+        call cfrure (iun, mpg%nFs,   gm%fsConn, 'fsConn')
+
+      end if
+
+      close  (iun)
+
+      return
+      end subroutine read_geometry
+
+***********************************************************************
+
+      subroutine write_geometry (fname)
+
+      implicit none
+      character(*),intent(in) :: fname
+      integer :: nout, io, idum(0:9)
+
+      open (newunit=nout,file=fname,iostat=io)
+
+      if (io /= 0) then
+        write (*,*) ' file ', fname, ' cannot be written'
+      else
+! cell volumes 
+        call cfwure (nout, mpg%nCv*4, gm%cvBb,   'cvBb')
+        call cfwure (nout, mpg%nCv,   gm%cvX,    'cvX')
+        call cfwure (nout, mpg%nCv,   gm%cvY,    'cvY')
+        call cfwure (nout, mpg%nCv,   gm%cvS,    'cvS')
+        call cfwure (nout, mpg%nCv,   gm%cvH,    'cvH')
+        call cfwure (nout, mpg%nCv*2, gm%cvQgam, 'cvQgam')
+        call cfwure (nout, mpg%nCv,   gm%cvVol,  'cvVol')
+
+! face quantities
+        call cfwure (nout, mpg%nFc*4, gm%fcBb,   'fcBb')
+        call cfwure (nout, mpg%nFc,   gm%fcS,    'fcS')
+        call cfwure (nout, mpg%nFc*2, gm%fcHc,   'fcHc')
+        call cfwure (nout, mpg%nFc*2, gm%fcHt,   'fcHt')
+        call cfwure (nout, mpg%nFc*2, gm%fcQgam, 'fcQgam')
+        call cfwure (nout, mpg%nFc*2, gm%fcQalf, 'fcQalf')
+        call cfwure (nout, mpg%nFc*2, gm%fcQbet, 'fcQbet')
+        call cfwure (nout, mpg%nFc,   gm%fcPbs,  'fcPbs')
+        call cfwure (nout, mpg%nFc,   gm%fcPbshz,'fcPbshz')
+
+! vertice quantities
+        call cfwure (nout, mpg%nVx,   gm%vxX,    'vxX')
+        call cfwure (nout, mpg%nVx,   gm%vxY,    'vxY')
+        call cfwure (nout, mpg%nVx,   gm%vxFfbz, 'vxFfbz')
+        call cfwure (nout, mpg%nVx,   gm%vxFpsi, 'vxFpsi')
+
+        call cfwure (nout, mpg%nFs,   gm%fsConn, 'fsConn')
+
+      end if
+
+      close  (nout)
+
+      return
+      end subroutine write_geometry
 
 ***********************************************************************
 
@@ -406,6 +604,7 @@ cwdk  only used at b2mod_driver level)
       nxx = (nx+1)*ny
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs)
+
 ! cell volumes 
       do iy = 0, ny-1
         do ix = 0, nx-1
