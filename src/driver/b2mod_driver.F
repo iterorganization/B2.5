@@ -1491,16 +1491,22 @@ cwdk    to be checked: qz(:,:,0) never used !?!
      &  call run_av_get_plasma (na, te, ti, ua, po, nx, ny, ns)
 
       if (use_unstructured_grid > 0) then
-        call calc_mapping (nx+1, ny+1,
+        call calc_mapping (nx, ny,
      .            leftix,leftiy,rightix,rightiy,
      .            topix,topiy,bottomix,bottomiy,
      .            nncut,leftcut,rightcut,topcut,bottomcut)
 
-        call prep_geometry (nx+1, ny+1,
+        call prep_geometry (nx, ny,
      .                      mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs)
 
-        call prep_plasma (nx+1, ny+1, ns,
+        call prep_plasma (nx, ny, ns,
      .                    mpg%nCv, mpg%nCi, mpg%nFc, state)
+
+        call write_mapping('mapping.dat')
+        call write_geometry('geometry.dat')
+
+        call my_out(70,nx,ny,na(-1,-1,1),'na_1_structured')
+        call my_out_us(70,mpg%nCv,state%pl%na(1,1),'na_1_unstructured')
       end if
 
       if(iout.ne.0) then                                             !srv 25.01.16 {
