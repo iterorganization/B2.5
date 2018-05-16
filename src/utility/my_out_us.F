@@ -36,10 +36,13 @@ c     File names will be appended with "*_us.dat".
       else
         open (nwrite,file=filename,position='append')
       end if
-      write(hlp_frm,"(a4,i4,a11)") '(5x,',nCv,'(6x,i3,5x))'
-      write (nwrite,hlp_frm) (ic,ic=1,nCv)
-      write (hlp_frm,"(a10,i4,a9)") '(5x,',nCv,'(es14.6))'
-      write (nwrite,hlp_frm) (fun(ic), ic = 1, nCv)
+!      write(hlp_frm,"(a4,i4,a11)") '(5x,',nCv,'(6x,i3,5x))'
+!      write (nwrite,hlp_frm) (ic,ic=1,nCv)
+!      write (hlp_frm,"(a10,i4,a9)") '(5x,',nCv,'(es14.6))'
+!      write (nwrite,hlp_frm) (fun(ic), ic = 1, nCv)
+      do ic = 1, nCv
+        write (nwrite,'(1x,i9,1x,es14.6)') ic, fun(ic)
+      end do
       close (nwrite)
 
       return
