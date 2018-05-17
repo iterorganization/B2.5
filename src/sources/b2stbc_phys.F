@@ -30,6 +30,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_external
+      use b2mod_boundary_sources                                        !srv 26.02.18
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_braeir
@@ -936,13 +937,60 @@ cghgh
      .       SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)
           ENDDO                                                     !srv 23.09.08 }
           GOTO 10000
-cghgh
 
-* -- BCCON=7 -- PRESCRIBE THE DENSITY AS A FUNCTION OF OTHER
-*                 PLASMA PARAMETERS
+* -- BCCON=7 -- PRESCRIBE THE GIVEN PROFILE OF DENSITY
 
   700     CONTINUE
-          CALL XERRAB ('B2STBC -- BCCON=7, NOT YET AVAILABLE')
+          if(ncall.eq.0) then                                       !srv 26.02.18 {
+            write(*,'(a,a,a,a,a,i3)')
+     .       'profile of density ',' on ',
+     1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+          endif
+          IF(BCCHAR(IB).EQ.'S') THEN
+            DO IX = 1, BC_LIST_SIZE(IB)
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
+     .         VBIG*bv_na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),IS)*
+     .         SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
+     .         -VBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            end do
+          ELSEIF(BCCHAR(IB).EQ.'N') THEN
+            DO IX = 1, BC_LIST_SIZE(IB)
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
+     .         VBIG*bv_na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),IS)*
+     .         SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=-VBIG*
+     .         SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+            end do
+          ELSEIF(BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .         UBIG*bv_na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),IS)*
+     .         SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .         -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            end do
+          ELSEIF(BCCHAR(IB).EQ.'E') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .          UBIG*bv_na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),IS)*
+     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .         -UBIG*
+     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            end do
+          ELSE
+            CALL XERRAB
+     1       ('B2STBC -- BCCON=7, INVALID OPTION')
+          ENDIF
+          DO IX = 1, BC_LIST_SIZE(IB)
+            SNA0_NO_MDF(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)=
+     .       SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)
+          ENDDO                                                         !srv 26.02.18 }
           GOTO 10000
 
 * -- BCCON=8 -- PRESCRIBE THE TOTAL PARTICLE FLUX WITH
@@ -3609,11 +3657,60 @@ cxpb  and max(,,) statement for stability
           CALL XERRAB ('B2STBC -- BCMOM=6, NOT YET AVAILABLE')
           GOTO 20000
 
-* -- BCMOM=7 -- PRESCRIBE THE PARALLEL MOMENTUM AS A FUNCTION OF OTHER
-*                 PLASMA PARAMETERS
+* -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOSITY
 
 10700     CONTINUE
-          CALL XERRAB ('B2STBC -- BCMOM=7, NOT YET AVAILABLE')
+          if(ncall.eq.0) then                                           !srv 26.02.18 {
+            write(*,'(4a,i3)') 'specified parallel velocity on ',
+     .       BCCHAR(IB), boundary_location(ib), ' for species ',IS
+          endif
+          IF(BCCHAR(IB).EQ.'S') THEN
+            DO IX = 1, BC_LIST_SIZE(IB)
+              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
+     .         VBIG*NE00*AM(IS)*
+     .         bv_ua(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),IS)*
+     .         SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
+     .        -VBIG*NE00*AM(IS)*
+     .         SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            end do
+          ELSEIF(BCCHAR(IB).EQ.'N') THEN
+            DO IX = 1, BC_LIST_SIZE(IB)
+              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
+     .         VBIG*NE00*AM(IS)*
+     .         bv_ua(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),IS)*
+     .         SYHZ(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .              BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
+     .        -VBIG*NE00*AM(IS)*
+     .         SYHZ(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .              BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+            end do
+          ELSEIF(BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .         UBIG*NE00*AM(IS)*
+     .         bv_ua(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),IS)*
+     .         SXHZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .        -UBIG*NE00*AM(IS)*
+     .         SXHZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            end do
+          ELSEIF(BCCHAR(IB).EQ.'E') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .         UBIG*NE00*AM(IS)*
+     .         bv_ua(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),IS)*
+     .         SXHZ(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .        -UBIG*NE00*AM(IS)*
+     .         SXHZ(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            end do
+          ELSE
+            CALL XERRAB ('B2STBC -- BCMOM=7, INVALID OPTION')
+          ENDIF                                                         !srv 26.02.18
           GOTO 20000
 
 * -- BCMOM=8 -- SPECIAL : LIMITED SHEAR
@@ -4931,13 +5028,55 @@ cxpb code segment analog to b2tfhe
           CALL XERRAB ('B2STBC -- BCENE=6, NOT AVAILABLE FOR W,E')
         ENDIF
         GOTO 30000
-cghgh
 
-* -- BCENE=7 -- PRESCRIBE THE ELECTRON TEMPERATURE AS A FUNCTION OF
-*                 OTHER PLASMA PARAMETERS
+* -- BCENE=7 -- PRESCRIBE THE ELECTRON TEMPERATURE PROFILE
 
 20700   CONTINUE
-        CALL XERRAB ('B2STBC -- BCENE=7, NOT YET AVAILABLE')
+        if(ncall.eq.0) then                                             !srv 26.02.18 {
+          write(*,'(3a)')
+     .     'specified electron temperature on ',
+     1     BCCHAR(IB), boundary_location(ib)
+        endif
+        IF(BCCHAR(IB).EQ.'S') THEN
+          DO IX = 1, BC_LIST_SIZE(IB)
+            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
+     .       VBIG*NE00*bv_te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*EV
+     .       *SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
+     .       -VBIG*NE00*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'N') THEN
+          DO IX = 1, BC_LIST_SIZE(IB)
+            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
+     .        VBIG*NE00*bv_te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*EV*
+     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-VBIG*NE00*
+     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'W') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)
+            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
+     .       UBIG*NE00*bv_te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*EV
+     .       *SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=
+     .       -UBIG*NE00*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'E') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)
+            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
+     .        UBIG*NE00*bv_te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*EV*
+     .       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-UBIG*NE00*
+     .       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+          end do
+        ELSE
+          CALL XERRAB
+     1     ('B2STBC -- BCENE=7, INVALID OPTION')
+        ENDIF                                                           !srv 26.02.18 }
         GOTO 30000
 
 * -- BCENE=8 -- PRESCRIBE THE TOTAL ELECTRON HEAT FLUX WITH CONSTANT
@@ -6920,13 +7059,54 @@ cxpb code segment analog to b2tfhi
           CALL XERRAB ('B2STBC -- BCENI=6, NOT AVAILABLE FOR W,E')
         ENDIF
         GOTO 40000
-cghgh
 
-* -- BCENI=7 -- PRESCRIBE THE ION TEMPERATURE AS A FUNCTION OF OTHER
-*                 PLASMA PARAMETERS
+* -- BCENI=7 -- PRESCRIBE THE ION TEMPERATURE PROFILE
 
 30700   CONTINUE
-        CALL XERRAB ('B2STBC -- BCENI=7, NOT YET AVAILABLE')
+       if(ncall.eq.0) then                                   !srv 26.02.18 {
+          write(*,'(3a)') 'specified ion temperature on ',
+     1     BCCHAR(IB), boundary_location(ib)
+        endif
+        IF(BCCHAR(IB).EQ.'S') THEN
+          DO IX = 1, BC_LIST_SIZE(IB)
+            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
+     .       VBIG*NE00*bv_ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*EV*
+     .       SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
+     .      -VBIG*NE00*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'N') THEN
+          DO IX = 1, BC_LIST_SIZE(IB)
+            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
+     .       VBIG*NE00*bv_ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*EV*
+     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-VBIG*NE00*
+     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'W') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)
+            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
+     .       UBIG*NE00*bv_ti(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*EV*
+     .       SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=
+     .      -UBIG*NE00*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'E') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)
+            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
+     .       UBIG*NE00*bv_ti(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*EV*
+     .       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-UBIG*NE00*
+     .       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+          end do
+        ELSE
+          CALL XERRAB
+     1     ('B2STBC -- BCENI=7, INVALID OPTION.')
+        END IF                                                   !srv 26.02.18 }
         GOTO 40000
 
 * -- BCENI=8 -- PRESCRIBE THE TOTAL ION HEAT FLUX WITH CONSTANT
@@ -9101,11 +9281,52 @@ c              fchi=0.0_R8
         CALL XERRAB ('B2STBC -- BCPOT=6, NOT YET AVAILABLE')
         GOTO 50000
 
-* -- BCPOT=7 -- PRESCRIBE THE POTENTIAL AS A FUNCTION OF
-*                 OTHER PLASMA PARAMETERS
+* -- BCPOT=7 -- PRESCRIBE THE GIVEN PROFILE OF POTENTIAL
 
 40700   CONTINUE
-        CALL XERRAB ('B2STBC -- BCPOT=7, NOT YET AVAILABLE')
+        if(ncall.eq.0) then                                             !srv 26.02.18 {
+          write(*,'(3a)') 'specified potential on ',
+     1     BCCHAR(IB), boundary_location(ib)
+        endif
+        IF(BCCHAR(IB).EQ.'S') THEN
+          DO IX = 1, BC_LIST_SIZE(IB)
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
+     .       PBIG*bv_po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
+     .              SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
+     .      -PBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'N') THEN
+          DO IX = 1, BC_LIST_SIZE(IB)
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
+     .       PBIG*bv_po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
+     1       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-PBIG*
+     1       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'W') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)
+            sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
+     .       UBIG*bv_po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
+     .               SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=
+     .      -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'E') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)
+            sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
+     .       UBIG*bv_po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
+     1       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-UBIG*
+     1       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+          end do
+        ELSE
+          CALL XERRAB('B2STBC -- BCPOT=7, INVALID OPTION.')
+        ENDIF                                                           !srv 26.02.18 }
         GOTO 50000
 
 * -- BCPOT=8 -- PRESCRIBE THE TOTAL ELECTRON CURRENT WITH CONSTANT

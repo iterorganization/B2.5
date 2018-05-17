@@ -44,6 +44,8 @@
      & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
+      use b2mod_equation_sources                                        !srv 26.02.18
+      use b2mod_boundary_sources                                        !srv 26.02.18
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -87,6 +89,8 @@
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
+      integer, save :: use_mms = 0                                   !srv 26.02.18
+      integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
       integer, save :: use_9pt_stencil = 1
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
@@ -872,12 +876,19 @@
        call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
        call ipgeti ('balance_average',balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nx,ny,ns)
-       call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
+       call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
+       call ipgeti ('b2mndr_use_mms',use_mms)                           !srv 26.02.18 {
+       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
+       if(boundary_sources.ne.0) 
+     &    call alloc_b2mod_boundary_sources(nx,ny,ns)
+       call ipgeti ('b2mndr_equation_sources', equation_sources)
+       if(equation_sources.ne.0) 
+     &    call alloc_b2mod_equation_sources(nx,ny,ns)                   !srv 26.02.18 }
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
        call xertst (0.le.ntim.and.0.0_R8.lt.dtim,
      &   'faulty internal parameter ntim, dtim')
-       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                 !srv 11.01.13
+       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                    !srv 11.01.13
        call ipgetr ('b2mndr_stim', stim)
        call ipgetr ('b2mndr_etim', etim)
        call ipgetr ('b2news_BoRiS', BoRiS)
@@ -1519,6 +1530,10 @@ cwdk    to be checked: qz(:,:,0) never used !?!
           enddo
         enddo
       enddo                                                          !srv 25.01.16 }
+      if(use_mms.ne.0) then                                          !srv 26.02.18 {
+*   ..reset initial state using exact solution 
+       call set_exact_solution(nx, ny, ns)
+      endif                                                          !srv 26.02.18 {
 *   ..test plasma state and fluxes
       call b2xvps (nx, ny, ns0,
      & ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
@@ -2418,6 +2433,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption
+      if(boundary_sources.ne.0) call dealloc_b2mod_boundary_sources     !srv 26.02.18
+      if(equation_sources.ne.0) call dealloc_b2mod_equation_sources     !srv 26.02.18
 #ifdef B25_EIRENE
       call dealloc_b2mod_b2plot
       CALL EIRENE_DEALLOC_BRAEIR
