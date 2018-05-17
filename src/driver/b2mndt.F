@@ -20,6 +20,8 @@
       use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_numerics_namelist
+      use b2mod_equation_sources                                        !srv 26.02.18
+      use b2mod_boundary_sources                                        !srv 26.02.18
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -84,6 +86,7 @@
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
+      integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
       real (kind=R8) ::
      *  rxf, BoRiS
       real (kind=R8) ::
@@ -175,12 +178,16 @@
      &      'faulty internal parameter nstg_aresco')
        test_residual=nstg_areshe.gt.0.0_R8.or.nstg_areshi.gt.0.0_R8.or.
      &               nstg_aresco.gt.0.0_R8
-       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 06.02.14
+       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
 !WG_TODO       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
-       call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)            !srv 31.01.07 {
+       call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)              !srv 31.01.07 {
        call xertst (1.le.ntim_step_out,
-     &   'faulty internal parameter ntim_step_out')                   !srv 31.01.07 }
-       call ipgeti ('b2mndt_use_b2srst', use_b2srst)                  !srv 13.07.12
+     &   'faulty internal parameter ntim_step_out')                     !srv 31.01.07 }
+       call ipgeti ('b2mndt_use_b2srst', use_b2srst)                    !srv 13.07.12
+       call ipgeti ('b2mndr_equation_sources', equation_sources)        !srv 26.02.18 {
+       if(equation_sources.ne.0) call read_equation_sources(nCv, ns)
+       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
+       if(boundary_sources.ne.0) call read_boundary_sources(nCv, ns)    !srv 26.02.18 }
        call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
@@ -381,6 +388,20 @@ ctmp.dpc
 !WG_TODO          call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
 !WG_TODO          call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
 !WG_TODO          call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                  !srv 11.09.09 }
+          if(equation_sources.ne.0) then                                 !srv 26.02.18 {
+	    do iCv = 1,nCv
+              st%sr%sna(iCv,0:1,0:ns-1) = st%sr%sna(iCv,0:1,0:ns-1)+
+     &          geo%cvVol(iCv)*art_sna(iCv,0:1,0:ns-1) 
+              st%sr%smo(iCv,0:3,0:ns-1) = st%sr%smo(iCv,0:3,0:ns-1)+
+     &          geo%cvVol(iCv)*geo%cvHz(iCv)*art_smo(iCv,0:3,0:ns-1) 
+              st%sr%she(iCv,0:3) = st%sr%she(iCv,0:3)+
+     &          geo%cvVol(iCv)*art_she(iCv,0:3) 
+              st%sr%shi(iCv,0:3) = st%sr%shi(iCv,0:3)+
+     &          geo%cvVol(iCv)*art_shi(iCv,0:3) 
+              st%sr%sch(iCv,0:3) = st%sr%sch(iCv,0:3)+
+     &          geo%cvVol(iCv)*art_sch(iCv,0:3) 
+            enddo
+          endif                                                          !srv 26.02.18 }
 *     ..stabilise the source coefficients
           if(use_b2srst.eq.1)
      &     call b2srst (nCv, ns, mpg, st%pl%na, st%pl%ua, st%pl%te,   !srv 01.07.08
