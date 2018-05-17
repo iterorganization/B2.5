@@ -350,6 +350,14 @@
       call b2agmt (nx1, ny1, isymm, crx1, cry1, vol1,
      & hx1, hy1, qz1, qc1, qs1, gs1,
      & cell_width1, cell_height1, leftix1, bottomiy1)
+*   ..improved computation of qc and qs based on interpolation of qz values
+cwdk  avoids artificial reduction of poloidal contact area between faces for
+cwdk  curvilinear grids
+      call intfaceh(nx1,ny1,leftix1,leftiy1,vol1,qz1(-1,-1,0),
+     .  qs1(-1,-1,0))
+      call intfacev(nx1,ny1,bottomix1,bottomiy1,vol1,qz1(-1,-1,0),
+     .  qs1(-1,-1,1))
+        qc(:,:,:) = sqrt(1.0_R8 - qs(:,:,:)**2)                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
 *    ..interpolate magnetic field to cell faces
       call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
       call intfacer1(nx1,ny1,2,rightix1,rightiy1,vol1,bb1,wbbr1)
