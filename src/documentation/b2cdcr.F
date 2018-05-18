@@ -358,6 +358,9 @@
 *     B2TFRN computes the particle and energy fluxes between
 *     neighbouring cells which are to be provided to Eirene
 *
+*     B2TIPSCH computes the Pfirsch-Schlueter all atom heat flux between
+*     neighboring cells, and the coefficients that specify its linearization.
+*
 *     B2TLHE applies a flux limit to the electron heat and charge
 *     transport coefficients.
 *
@@ -367,6 +370,9 @@
 *     B2TLH0 computes the conductive neutral heat transport flux limit.
 *
 *     B2TLMV applies a flux limit to the viscosity.
+*
+*     B2TNPSCH computes the Pfirsch-Schlueter particle fluxes of one atomic
+*     species between neighbouring cells
 *
 *     B2TQCA computes the classical contributions to the atom
 *     transport coefficients.
@@ -418,6 +424,10 @@
 *
 *     B2TXSY computes the integrals over cell y-faces of a function
 *     that is provided on the cells.
+*
+*     B2UNAVSPR7A evaluates the coefficients of matrix of the contribution
+*     from divergence of the viscosity perpendicular current by analytically
+*     manipulation with respect to main ion density using a 7-point stencil.
 *
 *     B2UPCO corrects the state of the plasma towards the solution of
 *     continuity equation for one atomic species.

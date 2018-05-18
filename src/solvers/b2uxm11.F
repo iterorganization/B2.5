@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uxm11 (nx, ny, isb, zb, fac_vis, nregionv, itcnt, 
+      subroutine b2uxm11 (nx, ny, isb, zb, fac_vis, nregionv, itcnt,
      &                    solvereg, po, ti, nb, pb, conb, aa11, name)    !srv 02.04.18
       use b2mod_types
       use b2mod_indirect
@@ -9,8 +9,8 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
       real (kind=R8) ::
-     *   fac_vis(-1:nx,-1:ny), zb(-1:nx,-1:ny), po(-1:nx,-1:ny), 
-     &   ti(-1:nx,-1:ny), nb(-1:nx,-1:ny), pb(-1:nx,-1:ny), 
+     *   fac_vis(-1:nx,-1:ny), zb(-1:nx,-1:ny), po(-1:nx,-1:ny),
+     &   ti(-1:nx,-1:ny), nb(-1:nx,-1:ny), pb(-1:nx,-1:ny),
      &   conb(-1:nx,-1:ny,0:1,0:1)
       logical solvereg(0:nregionv)
       character*(*) name
@@ -24,13 +24,13 @@
 *  1. purpose
 *
 *     B2UXM11 computes a matrix which corresponds of approximation mixed
-*     derivatives in equations on 11th point stencil.
-*     
+*     derivatives in equations on 11-point stencil.
+*
 *-----------------------------------------------------------------------
 !                                                           7
 !                                                           |
 !                                                           |
-!       2_____3_____4          5___________6           _____3_____ 
+!       2_____3_____4          5___________6           _____3_____
 !       |     |     |          |     |     |          |     |     |
 !       |     |     |          |     |     |          |     |     |
 !      -1_____0_____1          |_____|_____|          |_____0_____|
@@ -42,9 +42,9 @@
 !                                                          -7
 !
 !                                 (ix,iy+2)
-!                                    |              
-!                                    |              
-!                                    |              
+!                                    |
+!                                    |
+!                                    |
 !                (ix-1,iy+1)______(ix,iy+1)____(ix+1,iy+1)
 !                     |              |              |
 !                     |              |              |
@@ -54,9 +54,9 @@
 !                     |              |              |
 !                     |              |              |
 !                (ix-1,iy-1)______(ix,iy-1)____(ix+1,iy-1)
-!                                    |  
 !                                    |
-!                                    | 
+!                                    |
+!                                    |
 !                                (ix,iy-2)
 !
 *.declarations
@@ -98,16 +98,16 @@
        call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
       endif
 
-*   ..compute contribution in x-part of five point stencil
+*   ..compute contribution in x-part of five-point stencil
        aaf = 0.0e0_R8
-*     from P.Sch x-part of nine point stencil
+*     from P.Sch x-part of nine-point stencil
        do iy = -1, ny
         do ix = -1, nx
          ireg=region(ix,iy,0)
 *       Case of left neighbor
          if(leftix(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-          
+
          else
             ixl = leftix(ix,iy)
             iyl = leftiy(ix,iy)
@@ -117,7 +117,7 @@
 *       Case of right neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-          
+
          else
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
@@ -137,14 +137,14 @@
           call my_out(70,nx,ny,aaf(-1,-1, 1),'aafp1'//trim(name))
           endif
 
-*     from P.Sch y-part of nine point stencil
+*     from P.Sch y-part of nine-point stencil
        do iy = -1, ny
         do ix = -1, nx
          ireg=region(ix,iy,0)
 *       Case of bottom neighbor
          if(bottomiy(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      &      .not.solvereg(ireg)) then
-          
+
          else
           ixb = bottomix(ix,iy)
           iyb = bottomiy(ix,iy)
@@ -154,7 +154,7 @@
 *       Case of top neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-          
+
          else
           ixt = topix(ix,iy)
           iyt = topiy(ix,iy)
@@ -168,21 +168,21 @@
          call my_out(70,nx,ny,aaf(-1,-1,-2),'aafm2'//trim(name))
          call my_out(70,nx,ny,aaf(-1,-1, 2),'aafp2'//trim(name))
        endif
-                
+
        aa11(:,:,-3) = aa11(:,:,-3) + aaf(:,:,-2)
-       aa11(:,:,-1) = aa11(:,:,-1) + aaf(:,:,-1) 
-       aa11(:,:, 1) = aa11(:,:, 1) + aaf(:,:, 1) 
+       aa11(:,:,-1) = aa11(:,:,-1) + aaf(:,:,-1)
+       aa11(:,:, 1) = aa11(:,:, 1) + aaf(:,:, 1)
        aa11(:,:, 3) = aa11(:,:, 3) + aaf(:,:, 2)
 
-*   ..compute additional P.Sch part of nine point matrix. 
+*   ..compute additional P.Sch part of nine-point matrix.
        do iy = -1, ny
         do ix = -1, nx
          ireg=region(ix,iy,0)
-*       Case (ix-1,iy-1) 
+*       Case (ix-1,iy-1)
          if(leftix(ix,iy).eq.-2 .or. bottomiy(ix,iy).eq.-2 .or.
      &      .not.solvereg(ireg)) then
-            aa11(ix,iy,-4) = 0.0e0_R8        
-            aa11(ix,iy,-6) = 0.0e0_R8        
+            aa11(ix,iy,-4) = 0.0e0_R8
+            aa11(ix,iy,-6) = 0.0e0_R8
          else
             ixl = leftix(ix,iy)
             iyl = leftiy(ix,iy)
@@ -201,11 +201,11 @@
      &                conb(leftix(ixb,iyb),leftiy(ixb,iyb),1,0)
             endif
          endif
-*       Case (ix-1,iy+1) 
+*       Case (ix-1,iy+1)
          if(leftix(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-          aa11(ix,iy,2) = 0.0e0_R8        
-          aa11(ix,iy,5) = 0.0e0_R8        
+          aa11(ix,iy,2) = 0.0e0_R8
+          aa11(ix,iy,5) = 0.0e0_R8
          else
             ixl = leftix(ix,iy)
             iyl = leftiy(ix,iy)
@@ -224,7 +224,7 @@
      &                      conb(leftix(ixt,iyt),leftiy(ixt,iyt),1,1)
             endif
          endif
-*       Case (ix+1,iy-1) 
+*       Case (ix+1,iy-1)
          if(rightix(ix,iy).eq.nx+1 .or. bottomiy(ix,iy).eq.-2 .or.
      &      .not.solvereg(ireg)) then
           aa11(ix,iy,-2) = 0.0e0_R8
@@ -247,7 +247,7 @@
      &                     conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
             endif
          endif
-*       Case (ix+1,iy+1) 
+*       Case (ix+1,iy+1)
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
            aa11(ix,iy,4) = 0.0e0_R8
@@ -266,22 +266,22 @@
             else
               aa11(ix,iy,4) = aa11(ix,iy,4) -                           !srv 28.05.08
      &                      conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)
-              aa11(ix,iy,6) = aa11(ix,iy,6) +                           !srv 28.05.08 
+              aa11(ix,iy,6) = aa11(ix,iy,6) +                           !srv 28.05.08
      &                      conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
             endif
          endif
 
         enddo
       enddo
-*  .. calculate the coefficients of 7-th point stencil from 
+*  .. calculate the coefficients of 7-point stencil from
 *     viscosity perpendicular current by numerically
 !      call b2unavspr7n(nx, ny, isb, zb, fac_vis, po, ti, nb, pb, aa7)  !srv 02.04.18
-      
+
       call b2unavspr7a(nx, ny, nregionv, solvereg, isb, zb,              !srv 02.04.18 {
-     &              fac_vis, ti, nb, pb, aa7) 
-*  .. calculate the coefficients of 7-th point stencil from 
-*     viscosity perpendicular current by analitically
-     
+     &              fac_vis, ti, nb, pb, aa7)
+*  .. calculate the coefficients of 7-point stencil from
+*     viscosity perpendicular current by analytically
+
 *  .. add coefficients
       aa11(:,:,-7) = aa11(:,:,-7) + aa7(:,:,-3)
       aa11(:,:,-3) = aa11(:,:,-3) + aa7(:,:,-2)

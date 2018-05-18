@@ -43,7 +43,7 @@
 *     See the calling routine for description.
 *
 *     aa11 - (-1:nx,-1:ny,-7:7) real*8 array, input.
-*     aa11 contains x,y-part of the 11th-point stencil.
+*     aa11 contains x,y-part of the 11-point stencil.
 *
 *     itcnt - integer, input.
 *     itcnt specifies the iteration counter in the calling routine.
@@ -164,15 +164,15 @@
       else if (style.eq.2) then
        call cpu_time(c_start)
        call storage_11 (nx, ny, aa11, n_nonzeros, irnh, icnh, a1h, nz,
-     *                 indexes, iasave, jasave, name)       
+     *                 indexes, iasave, jasave, name)
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_11 ',
      &               c_end-c_start
 *    ..use ma28
        call cpu_time(cpu_start)
 !       call ilutern_9(NX+2, NY+2, NX+2,
-!     & aa11(-1,-1,-3,0), aa11(-1,-1,-1,0), aa11(-1,-1,0,0), aa11(-1,-1,1,0), 
-!     & aa11(-1,-1, 3,0), 
+!     & aa11(-1,-1,-3,0), aa11(-1,-1,-1,0), aa11(-1,-1,0,0), aa11(-1,-1,1,0),
+!     & aa11(-1,-1, 3,0),
 !     & aa11(-1,-1,-4,0), aa11(-1,-1,-2,0), aa11(-1,-1,2,0), aa11(-1,-1,4,0),
 !     & aa11(-1,-1,-4,1), aa11(-1,-1,-2,1), aa11(-1,-1,2,1), aa11(-1,-1,4,1),
 !     & resfun, corfun, name)                        !srv 18.05.02
@@ -208,7 +208,7 @@
 !                                                           7
 !                                                           |
 !                                                           |
-!       2_____3_____4          5___________6           _____3_____ 
+!       2_____3_____4          5___________6           _____3_____
 !       |     |     |          |     |     |          |     |     |
 !       |     |     |          |     |     |          |     |     |
 !      -1_____0_____1          |_____|_____|          |_____0_____|
@@ -220,9 +220,9 @@
 !                                                          -7
 !
 !                                 (ix,iy+2)
-!                                    |              
-!                                    |              
-!                                    |              
+!                                    |
+!                                    |
+!                                    |
 !                (ix-1,iy+1)______(ix,iy+1)____(ix+1,iy+1)
 !                     |              |              |
 !                     |              |              |
@@ -232,9 +232,9 @@
 !                     |              |              |
 !                     |              |              |
 !                (ix-1,iy-1)______(ix,iy-1)____(ix+1,iy-1)
-!                                    |  
 !                                    |
-!                                    | 
+!                                    |
+!                                    |
 !                                (ix,iy-2)
 !
 *  ..locals
@@ -372,7 +372,7 @@
               ja(k) =2+leftix(ixt,iyt)+(2+leftiy(ixt,iyt)-1)*nxp2
               ner = ner+1
             endif
-*       Case (ix+1,iy-1) 
+*       Case (ix+1,iy-1)
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
             ixb = bottomix(ix,iy)
@@ -397,7 +397,7 @@
               ja(k) =2+rightix(ixb,iyb)+(2+rightiy(ixb,iyb)-1)*nxp2
               ner = ner+1
             endif
-*       Case (ix+1,iy+1) 
+*       Case (ix+1,iy+1)
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
             ixt = topix(ix,iy)

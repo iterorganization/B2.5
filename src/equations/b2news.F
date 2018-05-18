@@ -136,8 +136,8 @@
        call xertst (0.0_R8.le.xfm3.and.xfm3.le.1.0_R8,
      &   'faulty internal parameter xfm3')
        call ipgetr ('b2news_BoRiS', BoRiS)
-       call ipgeti ('b2ux7p_style', style)                                !srv 29.05.02
-       call ipgetr ('b2tfhe_vis_per', vis_per)                            !srv 06.07.00
+       call ipgeti ('b2ux7p_style', style)                               !srv 29.05.02
+       call ipgetr ('b2tfhe_vis_per', vis_per)                           !srv 06.07.00
        call ipgetr ('b2mndr_na_min', na_min)
        call ipgetr ('b2mndr_na_new', na_new)
        call xertst (na_min.gt.0.0_R8,
@@ -162,12 +162,12 @@
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)     !iyv 06.02.14
+       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)       !iyv 06.02.14
        call ipgeti ('b2news_no_solve', no_solve)
        call xertst (-15.le.no_solve.and.no_solve.le.1,
      &   'faulty input no_solve')
-*    ..the table showes which combination of equations will be solved 
-*      depending on the value of switch 'b2news_no_solve' 
+*    ..the table below shows which combination of equations will be solved
+*      depending on the value of switch 'b2news_no_solve'
 *----------------------------------------------------
 *        | value |  co  |  mo  |  he  |  hi  |  po  |
 *----------------------------------------------------
@@ -216,17 +216,17 @@
      >   write(*,*) 'Not solving potential equation!'
        if(.not.solving(4))
      >   write(*,*) 'Not solving heat equations!'
-       call ipgeti ('b2news_recalculate_contributions',               !dpc
-     1  recalculate_contributions)                                    !dpc
+       call ipgeti ('b2news_recalculate_contributions',                  !dpc
+     1  recalculate_contributions)                                       !dpc
        call b2news_facdrift_fac_ExB_init(nx, ny, ramp_slow)
-       call ipgeti ('b2tfnb_mdf', mdf_fnb)                            !srv 13.10.06 {
+       call ipgeti ('b2tfnb_mdf', mdf_fnb)                               !srv 13.10.06 {
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
-       call ipgeti ('b2tfhi_mdf', mdf_fhi)                            !srv 13.10.06 }
+       call ipgeti ('b2tfhi_mdf', mdf_fhi)                               !srv 13.10.06 }
        call xertst (mdf_fhe.eq.0 .eqv. mdf_fhi.eq.0,
      &   ' Both mdf_fhe.eq.0 and mdf_fhe.eq.0 should be true,'//
      &   ' or both should be false')
-       call ipgeti ('b2news_use_b2npc9', use_b2npc9)                  !srv 06.11.08
-       call ipgeti ('b2news_use_b2nph9', use_b2nph9)                  !srv 06.11.08
+       call ipgeti ('b2news_use_b2npc9', use_b2npc9)                     !srv 06.11.08
+       call ipgeti ('b2news_use_b2nph9', use_b2nph9)                     !srv 06.11.08
        call ipgeti ('b2news_iout', iout)
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
@@ -241,7 +241,7 @@
          nsmax=0
        endif
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
-       call ipgeti ('b2sigp_style', ue_style)                           !srv 13.01.17
+       call ipgeti ('b2sigp_style', ue_style)                            !srv 13.01.17
       endif
 *   ..set n2, zero
       n2 = (nx+2)*(ny+2)
@@ -404,7 +404,7 @@
      &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                      !srv 13.10.06
      1    flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.true.)                !djm Jan2017
+     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .true.)               !djm Jan2017
         enddo
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -575,7 +575,7 @@ cxpb
      &     fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                     !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1     fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.true.)               !djm Jan2017
+     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .true.)              !djm Jan2017
           if (ncall.eq.ncallout) then
             write(*,*) 'ncall,is',ncall,is
             call hbout('b2ne_npco   ',nx,ny,ns,te,'te',ti,'ti',
@@ -593,14 +593,14 @@ cxpb
      &            solveco(is,ireg).neqv.last_solve_7(ireg)
                 end do
                 if(new_matrix) call restart_ma28_for_7
-                call b2npc7 (nx, ny, fac_vis, guard_flows, 
-     &           rza(-1,-1,is), nnreg(0), solvedum, solving(1),  
+                call b2npc7 (nx, ny, fac_vis, guard_flows,
+     &           rza(-1,-1,is), nnreg(0), solvedum, solving(1),
      &           solvedm2, ncall, is, rxf0, vol, pbs, flob, conb,       !srv 22.01.02 01.07.05
-     &           sna(-1,-1,0,is), pcca(-1,-1,0,is), ti, pb,  
+     &           sna(-1,-1,0,is), pcca(-1,-1,0,is), ti, pb,
      &           na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                  call xertst (ier0.eq.0, 'error return from b2npc7')
-                last_solve_7(0:nnreg(0))=solveco(is,0:nnreg(0))
+                last_solve_7(0:nnreg(0)) = solveco(is,0:nnreg(0))
               else                                                       !srv 02.04.18
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
@@ -624,12 +624,12 @@ cxpb
      &               solveco(is,ireg).neqv.last_solve_11(ireg)
                   end do
                   if(new_matrix) call restart_ma28_for_11
-                  call b2npc11 (nx, ny, fac_vis, guard_flows, 
-     &             rza(-1,-1,is), nnreg(0), solvedum, solving(1), 
-     &             solvedm2, ncall, is, rxf0, vol, 
+                  call b2npc11 (nx, ny, fac_vis, guard_flows,
+     &             rza(-1,-1,is), nnreg(0), solvedum, solving(1),
+     &             solvedm2, ncall, is, rxf0, vol,
      &             pbs, flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
-     &             po, ti, pb, na(-1,-1,is), ua(-1,-1,is), 
-     &             fna_mdf(-1,-1,0,is), resco(-1,-1,is), 
+     &             po, ti, pb, na(-1,-1,is), ua(-1,-1,is),
+     &             fna_mdf(-1,-1,0,is), resco(-1,-1,is),
      &             corpa(-1,-1,is), ier0)
                   call xertst (ier0.eq.0, 'error return from b2npc11')
                   last_solve_11(0:nnreg(0)) = solveco(is,0:nnreg(0))
@@ -640,7 +640,7 @@ cxpb
                   end do
                   if(new_matrix) call restart_ma28_for_9
                   call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
-     &             solving(1), solvedm2, ncall, is, rxf0, vol, pbs, 
+     &             solving(1), solvedm2, ncall, is, rxf0, vol, pbs,
      &             flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
      &             pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &             resco(-1,-1,is), corpa(-1,-1,is), ier0)
@@ -681,7 +681,7 @@ cxpb
      &       fnaPSch(-1,-1,0,is),fna_mdf(-1,-1,0,is),                    !srv 13.10.06
      1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.false.)            !djm Jan2017
+     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)           !djm Jan2017
           endif
         enddo
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
@@ -894,7 +894,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      &             fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),             !srv 13.10.06
      1             flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1             fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.false.)      !djm Jan2017
+     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)     !djm Jan2017
                 enddo
                 if(wrong_flow .or. ipass.ne.0) then                      !xpb
                    call print_wrong_flows(

@@ -12,12 +12,12 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
       real (kind=R8) ::
-     *  fac_vis(-1:nx,-1:ny), zb(-1:nx,-1:ny), rxg, pcm1, 
+     *  fac_vis(-1:nx,-1:ny), zb(-1:nx,-1:ny), rxg, pcm1,
      &  pbs(-1:nx,-1:ny,0:1), nb(-1:nx,-1:ny),ti(-1:nx,-1:ny),
      &  pb(-1:nx,-1:ny), snbv(-1:nx,-1:ny), flob(-1:nx,-1:ny,0:1),
      &  conb(-1:nx,-1:ny,0:1,0:4), pccb1(-1:nx,-1:ny),                !srv 13.10.06
      &  rescb(-1:nx,-1:ny), vol(-1:nx,-1:ny)
-      logical solvereg(0:nregionv)      
+      logical solvereg(0:nregionv)
       character*(*) name                                              !srv 18.03.10
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -32,7 +32,7 @@
 *  1. purpose
 *
 *     B2USC7 computes a correction towards the solution of the
-*     continuity equation for one atomic species for 7th point stencil.
+*     continuity equation for one atomic species for 7-point stencil.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -148,13 +148,13 @@ csw 18feb2014 corrected BCs (SOLPS4)
           if (solvereg(ireg))
      >     aa5(ix,iy,0) = aa5(ix,iy,0)-t0*rscal(pb(ix,iy))
           if (solvereg(ileft))
-     >     aa5(leftix(ix,iy),leftiy(ix,iy),0) = 
+     >     aa5(leftix(ix,iy),leftiy(ix,iy),0) =
      &       aa5(leftix(ix,iy),leftiy(ix,iy),0)
      &       -t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           if (solvereg(ireg))
      >     aa5(ix,iy,-1) = t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
         endif
-        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg)) 
+        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
      >   aa5(ix,iy,1) = 0.0_R8
        enddo
       enddo
@@ -179,7 +179,7 @@ csw 18feb2014 corrected BCs (SOLPS4)
           if (solvereg(ireg))
      >     aa5(ix,iy,0) = aa5(ix,iy,0)-t0*rscal(pb(ix,iy))
           if (solvereg(ibot))
-     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),0) = 
+     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa5(bottomix(ix,iy),bottomiy(ix,iy),0)
      &      -t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
           if (solvereg(ireg))
@@ -199,7 +199,7 @@ cxpb
             if (solvereg(ireg))
      >       aa5(ix,iy,2) = t0*rscal(pb(topix(ix,iy),topiy(ix,iy)))
             if (solvereg(itop))
-     >       aa5(topix(ix,iy),topiy(ix,iy),0) = 
+     >       aa5(topix(ix,iy),topiy(ix,iy),0) =
      &       aa5(topix(ix,iy),topiy(ix,iy),0)-
      &       t0*rscal(pb(topix(ix,iy),topiy(ix,iy)))
             if (solvereg(ireg))
@@ -209,20 +209,20 @@ cxpb
           endif
 cxpb
         endif
-        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) 
+        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg))
      >   aa5(ix,iy,2) = 0.0_R8
        enddo
       enddo
-*  .. calculate the coefficients of 7-th point stencil from 
-*     viscosity perpendicular current by numerically
+*  .. calculate the coefficients of 7-point stencil from
+*     viscosity perpendicular current
 !      call b2unavspr7n(nx, ny, isb, zb, fac_vis, po, ti, nb, pb, aa7)  !srv 02.04.18
-      
+
       call b2unavspr7a(nx, ny, nregionv, solvereg, isb, zb,              !srv 02.04.18 {
-     &              fac_vis, ti, nb, pb, aa7) 
-*  .. calculate the coefficients of 7-th point stencil from 
-*     viscosity perpendicular current by analitically
-     
-*  .. add coefficients of five point stencil
+     &              fac_vis, ti, nb, pb, aa7)
+*  .. calculate the coefficients of 7-point stencil from
+*     viscosity perpendicular current
+
+*  .. add coefficients of five-point stencil
       aa7(:,:,-2) = aa7(:,:,-2) + aa5(:,:,-2)
       aa7(:,:,-1) = aa7(:,:,-1) + aa5(:,:,-1)    ! in fact aa7(:,:,-1) = 0
       aa7(:,:, 0) = aa7(:,:, 0) + aa5(:,:, 0)
@@ -243,7 +243,7 @@ cxpb
         if (.not.solvereg(ireg)) rescb(ix,iy) = 0.0_R8
        enddo
       enddo
-      
+
 *   ..solve the correction equation
       write(*,'(a,a)') 'Calling b2ux7p from ',name
 !      call b2ux5p (nx, ny, aa5, itcnt, rescb, corpb, name)             !srv 18.03.10

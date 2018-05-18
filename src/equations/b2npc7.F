@@ -14,9 +14,9 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb                 !srv 05.07.08
       real (kind=R8) ::
-     *  fac_vis(-1:nx,-1:ny), rxf, pbs(-1:nx,-1:ny,0:1), 
+     *  fac_vis(-1:nx,-1:ny), rxf, pbs(-1:nx,-1:ny,0:1),
      &  flob(-1:nx,-1:ny,0:1), conb(-1:nx,-1:ny,0:1,0:4),               !srv 13.10.06
-     &  snb(-1:nx,-1:ny,0:1), pccb(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny), 
+     &  snb(-1:nx,-1:ny,0:1), pccb(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny),
      &  ti(-1:nx,-1:ny), zb(-1:nx,-1:ny)
       logical solvcreg(0:nregionv), ua_solve, solvmreg(0:nregionv)
 *   ..input/output arguments
@@ -35,7 +35,7 @@
 *
 *  1. purpose
 *
-*     b2npc7 performs one iteration of a relaxation process for the
+*     B2NPC7 performs one iteration of a relaxation process for the
 *     solution of the continuity equation for one atomic species.
 *
 *
@@ -161,7 +161,7 @@ csw 11dec2012, check for solv flags
       write (chns,'(i3.3)') isb
       if(all(solvcreg(0:nnreg(0)))) then
 *   ..compute correction
-       call b2usc7 (nx, ny, fac_vis, isb, zb, nregionv, solvcreg, 
+       call b2usc7 (nx, ny, fac_vis, isb, zb, nregionv, solvcreg,
      &  itcnt, rxg, pcm1, vol, pbs, ti, nb, pb, snb(-1,-1,1), flob,
      &  conb, pccb(-1,-1,1), rescb, corpb, aa7, 'b2usc7_'//chns)        !srv 02.04.18
 *   ..apply correction

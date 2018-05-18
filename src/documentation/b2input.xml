@@ -714,51 +714,50 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-          If no_solve.eq.1, then the code is run without actually solving any equations. All secondary and dependent data is computed.
-          The nstg(0:2) array is overwritten to '1's. The simulation time will not be updated. The code will compute fluxes, sources, transport coefficients, etc...
-          'ntim' times but not update the basic plasma quantities. Additionally, if no_solve is set to a negative value, then only some equations are solved (simulation time and nstg arrays will behave normally).
-          no_solve.eq.-1 will activate the parallel momentum equations only.
-          no_solve.eq.-2 will activate the density equations only. no_solve.eq.-4 will activate the potential equation only. (Active only if poteq.eq.1, otherwise, the behaviour dictated by the poteq setting applies).
-          no_solve.eq.-8 will activate the heat equations only. These can be combined. For example, no_solve.eq.-3 will activate the parallel momentum and particle conservation equations.
-          If the no_solve switch requires an equation not to be solved, the settings in the corresponding solvexx arrays from b2.numerics.parameters are moot.
-          The latter are reserved for fine-tuning numerical diagnostics.
-          *    The table below showes which combination of equations will be solved
-          *      depending on the value of switch 'b2news_no_solve'
-          *----------------------------------------------------
-          *        | value |  co  |  mo  |  he  |  hi  |  po  |
-          *----------------------------------------------------
-          *        |   0   |  +   |  +   |  +   |  +   |  +   |
-          *----------------------------------------------------
-          *        |   1   |  -   |  -   |  -   |  -   |  -   |
-          *----------------------------------------------------
-          *        |  -1   |  -   |  +   |  -   |  -   |  -   |
-          *----------------------------------------------------
-          *        |  -2   |  +   |  -   |  -   |  -   |  -   |
-          *----------------------------------------------------
-          *        |  -3   |  +   |  +   |  -   |  -   |  -   |
-          *----------------------------------------------------
-          *        |  -4   |  -   |  -   |  -   |  -   |  +   |
-          *----------------------------------------------------
-          *        |  -5   |  -   |  +   |  -   |  -   |  +   |
-          *----------------------------------------------------
-          *        |  -6   |  +   |  -   |  -   |  -   |  +   |
-          *----------------------------------------------------
-          *        |  -7   |  +   |  +   |  -   |  -   |  +   |
-          *----------------------------------------------------
-          *        |  -8   |  -   |  -   |  +   |  +   |  -   |
-          *----------------------------------------------------
-          *        |  -9   |  -   |  +   |  +   |  +   |  -   |
-          *----------------------------------------------------
-          *        | -10   |  +   |  -   |  +   |  +   |  -   |
-          *----------------------------------------------------
-          *        | -11   |  +   |  +   |  +   |  +   |  -   |
-          *----------------------------------------------------
-          *        | -12   |  -   |  -   |  +   |  +   |  +   |
-          *----------------------------------------------------
-          *        | -13   |  -   |  +   |  +   |  +   |  +   |
-          *----------------------------------------------------
-          *        | -14   |  +   |  -   |  +   |  +   |  +   |
-          *----------------------------------------------------
+					If no_solve.eq.1, then the code is run without actually solving any equations. All secondary and dependent data is computed.
+					The nstg(0:2) array is overwritten to '1's. The simulation time will not be updated. The code will compute fluxes, sources, transport coefficients, etc... 'ntim' times but not update the basic plasma quantities. Additionally, if no_solve is set to a negative value, then only some equations are solved (simulation time and nstg arrays will behave normally).
+					no_solve.eq.-1 will activate the parallel momentum equations only.
+					no_solve.eq.-2 will activate the density equations only.
+					no_solve.eq.-4 will activate the potential equation only. (Active only if poteq.eq.1, otherwise, the behaviour dictated by the poteq setting applies).
+					no_solve.eq.-8 will activate the heat equations only. These can be combined. For example, no_solve.eq.-3 will activate the parallel momentum and particle conservation equations.
+					If the no_solve switch requires an equation not to be solved, the settings in the corresponding solvexx arrays from b2.numerics.parameters are moot.
+					The latter are reserved for fine-tuning numerical diagnostics.
+					The table below shows which combination of equations will be solved	depending on the value of switch 'b2news_no_solve'
+					*----------------------------------------------------
+					*        | value |  co  |  mo  |  he  |  hi  |  po  |
+					*----------------------------------------------------
+					*        |   0   |  +   |  +   |  +   |  +   |  +   |
+					*----------------------------------------------------
+					*        |   1   |  -   |  -   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -1   |  -   |  +   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -2   |  +   |  -   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -3   |  +   |  +   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -4   |  -   |  -   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -5   |  -   |  +   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -6   |  +   |  -   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -7   |  +   |  +   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -8   |  -   |  -   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        |  -9   |  -   |  +   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        | -10   |  +   |  -   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        | -11   |  +   |  +   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        | -12   |  -   |  -   |  +   |  +   |  +   |
+					*----------------------------------------------------
+					*        | -13   |  -   |  +   |  +   |  +   |  +   |
+					*----------------------------------------------------
+					*        | -14   |  +   |  -   |  +   |  +   |  +   |
+					*----------------------------------------------------
         </description>
 			</switch>
 			<switch>

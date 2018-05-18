@@ -9,12 +9,12 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt, isb, nregionv
-      logical solvereg(0:nregionv)      
+      logical solvereg(0:nregionv)
       real (kind=R8) ::
-     *  fac_vis(-1:nx,-1:ny), zb(-1:nx,-1:ny), rxg, pcm1,  
-     &  pbs(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny), ti(-1:nx,-1:ny), 
-     &  nb(-1:nx,-1:ny), pb(-1:nx,-1:ny), snbv(-1:nx,-1:ny), 
-     &  flob(-1:nx,-1:ny,0:1), conb(-1:nx,-1:ny,0:1,0:4), 
+     *  fac_vis(-1:nx,-1:ny), zb(-1:nx,-1:ny), rxg, pcm1,
+     &  pbs(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
+     &  nb(-1:nx,-1:ny), pb(-1:nx,-1:ny), snbv(-1:nx,-1:ny),
+     &  flob(-1:nx,-1:ny,0:1), conb(-1:nx,-1:ny,0:1,0:4),
      &  pccb1(-1:nx,-1:ny), rescb(-1:nx,-1:ny)
       character*(*) name
 *   ..output arguments (unspecified on entry)
@@ -30,13 +30,14 @@
 *  1. purpose
 *
 *     B2USC11 computes a correction towards the solution of the
-*     continuity equation for one atomic species on 11th point stencil.
-*     
+*     continuity equation for one atomic species using an 11-point
+*     stencil.
+*
 *-----------------------------------------------------------------------
 !                                                           7
 !                                                           |
 !                                                           |
-!       2_____3_____4          5___________6           _____3_____ 
+!       2_____3_____4          5___________6           _____3_____
 !       |     |     |          |     |     |          |     |     |
 !       |     |     |          |     |     |          |     |     |
 !      -1_____0_____1          |_____|_____|          |_____0_____|
@@ -48,9 +49,9 @@
 !                                                          -7
 !
 !                                 (ix,iy+2)
-!                                    |              
-!                                    |              
-!                                    |              
+!                                    |
+!                                    |
+!                                    |
 !                (ix-1,iy+1)______(ix,iy+1)____(ix+1,iy+1)
 !                     |              |              |
 !                     |              |              |
@@ -60,9 +61,9 @@
 !                     |              |              |
 !                     |              |              |
 !                (ix-1,iy-1)______(ix,iy-1)____(ix+1,iy-1)
-!                                    |  
 !                                    |
-!                                    | 
+!                                    |
+!                                    |
 !                                (ix,iy-2)
 !
 *.declarations
@@ -98,7 +99,7 @@
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
        call ipgeti ('b2usc11_add_11', iadd_11)
        call ipgeti ('b2usc11_iout', iout)
-      endif 
+      endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -204,16 +205,16 @@
      >     aa11(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa11(bottomix(ix,iy),bottomiy(ix,iy),0)
      &      -t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
-          if (solvereg(ireg)) aa11(ix,iy,-3) = 
+          if (solvereg(ireg)) aa11(ix,iy,-3) =
      >     t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
          endif
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa11(-1,ny,3), 1)
 
-*   ..add matrix from contribution nine and elleven point stencils
+*   ..add matrix from contribution nine- and eleven-point stencils
       if(iadd_11 .eq. 1) then
-        call b2uxm11 (nx, ny, isb, zb, fac_vis, nnreg(0), itcnt, 
+        call b2uxm11 (nx, ny, isb, zb, fac_vis, nnreg(0), itcnt,
      &       solvereg, po, ti, nb, pb, conb(-1,-1,0,3), aa11, name)      !srv 02.04.18
        endif
 

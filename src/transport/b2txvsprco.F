@@ -1,4 +1,4 @@
-      subroutine b2txvsprco(nx, ny, isb, fac_vis, vol, hx, hy, qz,          !srv 02.04.18
+      subroutine b2txvsprco(nx, ny, isb, fac_vis, vol, hx, hy, qz,       !srv 02.04.18
      &    bb, zb, ti, kmpr, nb, avisper, bvisper, cvisper, dvisper)
       use b2mod_types
       use b2mod_indirect
@@ -51,10 +51,10 @@
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-*   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99 
+*   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99
       avisper  = 0.0e0_R8; bvisper = 0.0e0_R8; cvisper = 0.0e0_R8;     !srv 27.01.00 22.03.02
-      dvisper = 0.0e0_R8      
-        
+      dvisper = 0.0e0_R8
+
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8) then             !srv 22.11.99
 
@@ -69,31 +69,31 @@
               else
                 t0 = 2.0_R8/wbbv(ix,iy,3)/
      &            (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-                cvisper(ix,iy,1) = cvisper(ix,iy,1) + t0
-                dvisper(ix,iy,1) = dvisper(ix,iy,1) + t0*
+                cvisper(ix,iy,1) = cvisper(ix,iy,1) + t0*fac_vis(ix,iy)
+                dvisper(ix,iy,1) = dvisper(ix,iy,1) + t0*fac_vis(ix,iy)*
      &           (ti(ix,iy)*kmpr(ix,iy)+                              ! in order to avoid nonlinear entry of pb
-     &            ti(bottomix(ix,iy),bottomiy(ix,iy))*                ! we change its by na/kmpr
+     &            ti(bottomix(ix,iy),bottomiy(ix,iy))*                ! we change it by na/kmpr
      &            kmpr(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &            (qe*(zb(ix,iy)*nb(ix,iy)+                        
+     &            (qe*(zb(ix,iy)*nb(ix,iy)+
      &            zb(bottomix(ix,iy),bottomiy(ix,iy))*
      &            nb(bottomix(ix,iy),bottomiy(ix,iy))))
               endif
             enddo
           enddo
-        
+
           do iy=-1,ny
             do ix=-1,nx
               if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then ! we do not want to have fchvisper(:,:,1) in guard cells on West and East
                 t0 = 0.25_R8*vsa0(ix,iy,isb)*vol(ix,iy)/hy1(ix,iy)**2
-                bvisper(ix,iy,1) = bvisper(ix,iy,1) + t0
+                bvisper(ix,iy,1) = bvisper(ix,iy,1) + t0*fac_vis(ix,iy)
               endif
             enddo
           enddo
-          
+
           avisper(:,:,1) = cvisper(:,:,1)
-          
+
       endif                                                             !srv 22.11.99
-      
+
       if(iout.eq.1) then
        call my_out(70,nx,ny,avisper(-1,-1,1),'b2txvsprco_avispery')
        call my_out(70,nx,ny,bvisper(-1,-1,1),'b2txvsprco_bvispery')
@@ -103,7 +103,7 @@
          do ix=-1,nx
            wrk0(ix,iy) = hy1(ix,iy)
          enddo
-       enddo      
+       enddo
        call my_out(70,nx,ny,wrk0,'b2tvsprco_hy1')
        call my_out(70,nx,ny,wbbv(-1,-1,3),'b2tvsprco_bbv')
        call my_out(70,nx,ny,vol,'b2tvspcor_vol')

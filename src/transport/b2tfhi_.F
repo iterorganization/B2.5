@@ -75,7 +75,7 @@ csw 30apr2014 added fna_he, ia
       real (kind=R8) ::
      *   flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,    !srv 17.05.99
      &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf, dti0_mdf                 !srv 13.10.06 17.06.09
-cpax      
+cpax
       real (kind=R8) ::
      *   flidia(-1:nx,-1:ny,0:1), facdriftm                             !srv 25.01.02
       real (kind=R8), allocatable ::
@@ -86,7 +86,7 @@ cpax
       save ncall, vdia_par                                              !srv 17.05.99
 *   ..procedures
       intrinsic max, abs
-cpax      
+cpax
       real (kind=R8) ::
      *   hybr, hy1, upwind
       external subini, subend, xertst
@@ -182,8 +182,8 @@ c-rfs     1 minval(fni(-1,:,0)),maxval(fni(-1,:,0))
          do ix = -1, nx
           flidia(ix,iy,1) = flidia(ix,iy,1)
      &        +(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))        !srv 25.01.02 was 5/2
-     &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))         
-     &   *(na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8 
+     &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+     &   *(na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8
      &   *vadia(ix,iy,1,is)*2.5e0_R8*vdia_par                           !srv 13.09.02 18.01.07
          enddo
          enddo
@@ -286,7 +286,7 @@ csw 27nov2012  added check upwind (SOLPS4 style)
                upfac=1.0_R8
              else
                upfac=0.0_R8
-             endif             
+             endif
              fhi_32(ix,iy,0) = 1.5e0_R8*fni(ix,iy,0)*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
@@ -364,15 +364,15 @@ csw 2014 add viscous term (assume: already flux limited cvsa, if any)
 c     (ONLY FOR TESTING w/ SOLPS4 discretization)
           if(b2vis .ne. 0) then
            do is=0,ns-1
-             fhi(ix,iy,0) = fhi(ix,iy,0) - 
+             fhi(ix,iy,0) = fhi(ix,iy,0) -
      .          (cvsa(ix,iy,0,is)
      .          +cvsa(leftix(ix,iy),leftiy(ix,iy),0,is))/2.0_R8
      .
      .        *2.0_R8*
-     .        (ua(ix,iy,is) 
+     .        (ua(ix,iy,is)
      .        +ua(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8 *
      .
-     .        (ua(ix,iy,is) 
+     .        (ua(ix,iy,is)
      .        -ua(leftix(ix,iy),leftiy(ix,iy),is))
            enddo
           endif
@@ -417,7 +417,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
 csw 27nov2012 added check upwind (SOLPS4 style)
            if(b2_upwind .ne. 0) then
              fhi_mdf(ix,iy,0) = upwind(floi0_mdf,
-     &           ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)) 
+     &           ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy))
      &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                         !srv 17.06.09 }
              floi(ix,iy,0) = floi0_mdf-
      &        sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
@@ -466,7 +466,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
              endif
            else
              fhi_mdf(ix,iy,0) = floi0_mdf*
-     &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0 
+     &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0
      &       -abs(floi0_mdf/2.0)*dti-coni0_mdf*dti0 - fhiPSch(ix,iy,0)  !srv 17.06.09 }
              floi(ix,iy,0) = floi0_mdf-
      &        sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
@@ -551,7 +551,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0/coni0_mdf)
            endif
            w5(ix,iy) = flidia(ix,iy,0)*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-          endif                          
+          endif
 
 
 csw 27nov2012 added check upwind (SOLPS4 style)
@@ -560,7 +560,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &                                ,ti(ix,iy))
      &           - coni0*dti0
             fhi_mdf(ix,iy,0) = upwind(floi0_mdf,                        !srv 13.10.06 {
-     &           ti(leftix(ix,iy),leftiy(ix,iy)) ,ti(ix,iy)) 
+     &           ti(leftix(ix,iy),leftiy(ix,iy)) ,ti(ix,iy))
      &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                         !srv 13.10.06 }
             if (balance.and.
      &          (balance_netcdf.ne.0).and.
@@ -641,7 +641,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &                            +ti(ix,iy))/2.0_R8
      &      - coni0*dti0
             fhi_mdf(ix,iy,0) = floi0_mdf*                               !srv 13.10.06 {
-     &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0 
+     &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0
      &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                         !srv 13.10.06 }
             if (balance.and.
      &          (balance_netcdf.ne.0).and.
@@ -952,7 +952,7 @@ csw 13mar2013 added check upwind (SOLPS4)
      &      (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
            fhi_ecrb(ix,iy,1) = 0.0_R8
            fhi_pschused(ix,iy,1) = -fhiPSch(ix,iy,1)
-         endif         
+         endif
         endif
 
 
@@ -970,11 +970,11 @@ csw 2014 add kinetic term (ONLY FOR TESTING w/ SOLPS4 discretization)
 csw 2014 add viscous term   (ONLY FOR TESTING w/ SOLPS4 discretization)
           if(b2vis .ne. 0) then
            do is=0,ns-1
-             fhi(ix,iy,1) = fhi(ix,iy,1) - 
+             fhi(ix,iy,1) = fhi(ix,iy,1) -
      .          cvsa(ix,iy,1,is)
      .          *ua(ix,iy,is)
      .        *2.0_R8
-     .        *(ua(ix,iy,is) 
+     .        *(ua(ix,iy,is)
      .        -ua(bottomix(ix,iy),bottomiy(ix,iy),is))
            enddo
           endif
@@ -990,7 +990,7 @@ csw 2014 add viscous term   (ONLY FOR TESTING w/ SOLPS4 discretization)
        enddo
       enddo
 
-csw 18feb2014 remove fluxes between guard cells 
+csw 18feb2014 remove fluxes between guard cells
         do ix=-1,nx
          do iy=-1,ny
            if(iffboundx(ix,iy).ne.0) then

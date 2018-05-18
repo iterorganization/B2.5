@@ -13,10 +13,10 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *  facdrift(-1:nx,-1:ny),  vol(-1:nx,-1:ny), 
+     *  facdrift(-1:nx,-1:ny),  vol(-1:nx,-1:ny),
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),          !srv 13.10.06
      1  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
-     &  cddi(-1:nx,-1:ny,0:1,0:ns-1) 
+     &  cddi(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   fhiPSch(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2)            !srv 13.10.06
@@ -26,13 +26,13 @@
 *
 *  1. purpose
 *
-*     B2TIPSCH computes the Pfirsch-Schlueter all atom heat flux between 
+*     B2TIPSCH computes the Pfirsch-Schlueter all atom heat flux between
 *     neighboring cells, and the coefficients that specify its linearization.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine computes the Pfirsch-Schlueter atom heat flux, fhi, 
+*     This routine computes the Pfirsch-Schlueter atom heat flux, fhi,
 *     and the coefficients coni that linearize the response of the
 *     atom heat flux to changes in the atom temperature.
 *
@@ -43,7 +43,7 @@
       integer ncall, n2, ix, iy, is, ib, ixl, iyl, ixb, iyb
       integer, save :: iout = 0
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
-      
+
       real (kind=R8) ::
      *   facdriftm                                                      !srv 25.01.02
       save ncall
@@ -230,7 +230,7 @@
       enddo
 
 c  ..set null flux in guard cells  ?
-!      fhiPSch(-1, :,:)=0.0e0_R8    ! MODIFY for Double Case 
+!      fhiPSch(-1, :,:)=0.0e0_R8    ! MODIFY for Double Case
 !      fhiPSch(nx, :,1)=0.0e0_R8
 !      fhiPSch( :,-1,:)=0.0e0_R8
 !      fhiPSch( :,ny,0)=0.0e0_R8
@@ -238,7 +238,7 @@ c  ..set null flux in guard cells  ?
 
 
 
-csw 18feb2014 remove fluxes between guard cells 
+csw 18feb2014 remove fluxes between guard cells
         do ix=-1,nx
          do iy=-1,ny
            if(iffboundx(ix,iy).ne.0) then

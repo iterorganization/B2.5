@@ -275,7 +275,7 @@
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
-*   ..add matrix from contribution nine point stencil
+*   ..add matrix from contribution nine-point stencil
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, nregionv, itcnt, solveee, cone(-1,-1,0,1),
      &  aa9, 'b2ush9_totale')                                         !srv 02.01.07
@@ -390,7 +390,7 @@
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
-*   ..add matrix from contribution nine point stencil
+*   ..add matrix from contribution nine-point stencil
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, nregionv, itcnt, solveee, cone(-1,-1,0,1),
      &  aa9, 'b2ush9_Te')                                             !srv 02.01.07
@@ -505,7 +505,7 @@
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
-*   ..add matrix from contribution nine point stencil
+*   ..add matrix from contribution nine-point stencil
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, nregionv, itcnt, solveei, coni(-1,-1,0,1),
      &  aa9, 'b2ush9_Ti')                                             !srv 02.01.07

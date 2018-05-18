@@ -21,7 +21,7 @@
      3  ti(-1:nx,-1:ny), cddb(-1:nx,-1:ny,0:1)                           !srv 13.10.06 !iyv 06.02.14
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  fnbPSch(-1:nx,-1:ny,0:1) 
+     &  fnbPSch(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -34,7 +34,8 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine computes the particle flux, fnbPSch, of one atomic
-*     species*
+*     species
+*
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -92,13 +93,13 @@
         call intcor(nx,ny,vol,nbti,nbtic)                                !srv 08.10.04
         do iy = 0, ny-1
          do ix = -1, nx
-          if(leftix(ix,iy).eq.-2 .or. 
+          if(leftix(ix,iy).eq.-2 .or.
      &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then        !srv 26.05.08
            fnbPSch(ix,iy,0)=0.0e0_R8
           else
            ixl = leftix(ix,iy)
            iyl = leftiy(ix,iy)
-           fnbPSch(ix,iy,0) = 0.25e0_R8*PSch*( 
+           fnbPSch(ix,iy,0) = 0.25e0_R8*PSch*(
      &      cddb(topix(ix,iy),topiy(ix,iy),1)*
      &       (nb(topix(ix,iy),topiy(ix,iy))*
      &        ti(topix(ix,iy),topiy(ix,iy))- nb(ix,iy)*ti(ix,iy))+
@@ -124,7 +125,7 @@
         call intcor(nx,ny,weight,nb,nbcor)                              !lk 09.06.11
         do iy = 0, ny-1
          do ix = -1, nx
-          if(leftix(ix,iy).eq.-2 .or. 
+          if(leftix(ix,iy).eq.-2 .or.
      &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then       !srv 26.05.08
            fnbPSch(ix,iy,0)=0.0e0_R8
           else
@@ -243,7 +244,7 @@ cxpb turn off poloidal flows in core boundary
          enddo                                                          !srv 20.06.08 }
       endif                                                             !xpb
 
-csw 18feb2014 remove fluxes between guard cells 
+csw 18feb2014 remove fluxes between guard cells
         do ix=-1,nx
          do iy=-1,ny
           if(iffboundx(ix,iy).ne.0) then

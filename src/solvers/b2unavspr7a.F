@@ -9,7 +9,7 @@
       integer nx, ny, nregionv, isb
       logical solvereg(0:nregionv)
       real (kind=R8) ::
-     &   zb(-1:nx,-1:ny), fac_vis(-1:nx,-1:ny),  
+     &   zb(-1:nx,-1:ny), fac_vis(-1:nx,-1:ny),
      &   ti(-1:nx,-1:ny), nb(-1:nx,-1:ny), pb(-1:nx,-1:ny)
 *   ..output arguments (unchanged on exit)
       real (kind=R8) ::
@@ -19,17 +19,17 @@
 *
 *  1. purpose
 *
-*     B2UNAVSPR7A evaluates the coefficients of matrix of the contribution from  
-*     divergence of the viscosity perpedicular current by analytically 
-*     with respect to main ion density on 7-th point stencil. The coefficients 
-*     will be stored in the matrix
+*     B2UNAVSPR7A evaluates the coefficients of matrix of the contribution
+*     from divergence of the viscosity perpendicular current by analytically
+*     manipulation with respect to main ion density using a 7-point stencil.
+*     The coefficients will be stored in the matrix.
 *
 *   ..local variables
       integer, save :: ncall = 0, iout = 0
       integer n2, ix, iy, ixt, ixb, iyt, iyb, ireg
       real (kind=R8), save :: vis_per = 0.0_R8
       real (kind=R8) ::
-     &   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1), 
+     &   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
      &   cvisper(-1:nx,-1:ny,0:1), dvisper(-1:nx,-1:ny,0:1),
      &   kmpr(-1:nx,-1:ny)
       real (kind=R8) ::
@@ -49,15 +49,15 @@
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-      
+
 *   ..calculate the coefficients in difference approximation
 *     of viscosity perpendicular current
       kmpr = nb/pb
       call b2txvsprco(nx, ny, isb, fac_vis, vol, hx, hy, qz,            !srv 02.04.18
      &    bb, zb, ti, kmpr, nb, avisper, bvisper, cvisper, dvisper)
-      
+
       aa7 = 0.0_R8
-      
+
       if(vis_per.ne.0.0_R8) then
 *   ..compute the seven-point matrix                               !srv 26.01.00
       do iy = -1, ny
@@ -67,7 +67,7 @@
          iyt = topiy(ix,iy)
          ixb = bottomix(ix,iy)
          iyb = bottomiy(ix,iy)
-         coef = fac_vis(ix,iy)/qe  ! we divide by qe becauce the contribution is fchvisper/qe
+         coef = 1.0_R8/qe  ! we divide by qe because the contribution is fchvisper/qe
          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      &      iyt.eq.ny+1 .or. iyb.eq.-2 .or. .not.solvereg(ireg)) then   !srv 26.11.02 12.12.17 {
 *   .. do nothing
@@ -116,9 +116,9 @@
          endif                                                     !srv 26.11.02 12.12.17 }
        enddo
       enddo
-          
+
       endif   !   vis_per.ne.0.0_R8
-      
+
       if(iout.ne.0) then
        call my_out(70,nx,ny,aa7(-1,-1,  3),'b2unavspr7a_aa7p3')
        call my_out(70,nx,ny,aa7(-1,-1,  2),'b2unavspr7a_aa7p2')
@@ -126,12 +126,12 @@
        call my_out(70,nx,ny,aa7(-1,-1, -2),'b2unavspr7a_aa7m2')
        call my_out(70,nx,ny,aa7(-1,-1, -3),'b2unavspr7a_aa7m3')
       endif
-      
+
       ncall = ncall+1
       call subend ()
       return
 
 *-----------------------------------------------------------------------
 *.end b2unavspr7a
-      
+
       end subroutine b2unavspr7a                           !srv 02.04.18 }

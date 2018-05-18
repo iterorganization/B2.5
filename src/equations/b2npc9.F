@@ -33,8 +33,8 @@
 *  1. purpose
 *
 *     B2NPC9 performs one iteration of a relaxation process for the
-*     solution of the continuity equation for one atomic species on
-*     nine point stencil.
+*     solution of the continuity equation for one atomic species using
+*     a nine-point stencil.
 *
 *
 *  3. description (see also routine b2cdca)
