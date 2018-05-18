@@ -76,7 +76,8 @@
       real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8           !srv 02.10.17
       real (kind=R8) ::
      *   dif, flo, cutlo, fle_eir, cone_eir, floe_eir, chce_eir, scur,   !srv 14.07.10
-     &   floi_eir, chci_eir, flo_eir, con_eir, term(-1:nx,-1:ny)
+     &   floi_eir, chci_eir, flo_eir, con_eir, term(-1:nx,-1:ny),
+     &   vsprcur                                                         !srv 02.04.18
       real (kind=R8) :: 
      &   wedia_(-1:nx,-1:ny,0:1), nel(-1:nx,-1:ny), pb(-1:nx,-1:ny)      !srv 14.07.10 }
       parameter (cutlo=1.0e-60_R8)
@@ -297,13 +298,14 @@ csw 30sep2013, added check for no_hybr
            if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
             scur =
      &        (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+
-     &         vis_per*fchvisper(ix,iy,1)+vis_q*fchvisq(ix,iy,1)+        !srv 02.10.17
-     &         fchanml(ix,iy,1))/
+     &         vis_q*fchvisq(ix,iy,1)+fchanml(ix,iy,1))/                 !srv 02.10.17
      &        (qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &        na(ix,iy,is))/2.0_R8)
+            vsprcur = vis_per*fchvisper(ix,iy,1)/qe                      !srv 02.04.18
            else
             scur = 0.0_R8
-           endif
+            vsprcur = 0.0_R8                                             !srv 02.04.18
+          endif
            flo_eir = flo_eir + scur
            t0 = (na(ix,iy,is) +na(bottomix(ix,iy),bottomiy(ix,iy),is))/
      1      2.0_R8
@@ -319,7 +321,7 @@ csw 30sep2013, added check for no_hybr
      &      con_eir*(na(ix,iy,is)
      &              -na(bottomix(ix,iy),bottomiy(ix,iy),is))-
      &      cdpa(ix,iy,1,is)*(pb(ix,iy)
-     &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
+     &              -pb(bottomix(ix,iy),bottomiy(ix,iy))) + vsprcur       !srv 02.04.18
           else
            flo_eir = cvla(ix,iy,1,is)
            if(drift_style.eq.0) then
@@ -339,13 +341,14 @@ csw 30sep2013, added check for no_hybr
            if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
              scur =
      &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+
-     &         vis_per*fchvisper(ix,iy,1)                               !srv 02.10.17
-     &         +fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/          !srv 02.10.17
+     &          fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/          !srv 02.10.17
      &        (qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &             na(ix,iy,is))/2.0_R8)
+             vsprcur = vis_per*fchvisper(ix,iy,1)/qe                    !srv 02.04.18
            else
              scur = 0.0_R8
-           endif
+             vsprcur = 0.0_R8                                            !srv 02.04.18
+          endif
            flo_eir = flo_eir + scur
            if(no_Ptncr_y_co.eq.0) then                                   !srv 06.07.06 {
              con_eir = hybr(flo_eir,cdna(ix,iy,1,is))
@@ -356,7 +359,8 @@ csw 30sep2013, added check for no_hybr
      &      (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))
      &      /2.0_R8-con_eir*
      &      (na(ix,iy,is)-na(bottomix(ix,iy),bottomiy(ix,iy),is))
-          endif !no_hybr =0
+     &      + vsprcur                                                    !srv 02.04.18
+         endif !no_hybr =0
          endif
         enddo
        enddo
