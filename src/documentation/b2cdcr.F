@@ -426,7 +426,7 @@
 *     that is provided on the cells.
 *
 *     B2UNAVSPR7A evaluates the coefficients of matrix of the contribution
-*     from divergence of the viscosity perpendicular current by analytically
+*     from divergence of the viscosity perpendicular current by analytical
 *     manipulation with respect to main ion density using a 7-point stencil.
 *
 *     B2UPCO corrects the state of the plasma towards the solution of

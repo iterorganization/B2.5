@@ -20,14 +20,14 @@
 *  1. purpose
 *
 *     B2UNAVSPR7A evaluates the coefficients of matrix of the contribution
-*     from divergence of the viscosity perpendicular current by analytically
+*     from divergence of the viscosity perpendicular current by analytical
 *     manipulation with respect to main ion density using a 7-point stencil.
 *     The coefficients will be stored in the matrix.
 *
 *   ..local variables
       integer, save :: ncall = 0, iout = 0
       integer n2, ix, iy, ixt, ixb, iyt, iyb, ireg
-      real (kind=R8), save :: vis_per = 0.0_R8
+      real (kind=R8), save :: vis_per = 1.0_R8
       real (kind=R8) ::
      &   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
      &   cvisper(-1:nx,-1:ny,0:1), dvisper(-1:nx,-1:ny,0:1),
