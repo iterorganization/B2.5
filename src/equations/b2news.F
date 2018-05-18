@@ -110,7 +110,7 @@
      1  xfm3/1.0_R8/, potit/50/, potok/1.0e-2_R8/, pot_eq/1/,
      2  ncallout/-1/, guard_flows/2/, no_solve/0/,
      5  recalculate_contributions/1/, ramp_slow/0/, no_current/0/,       !dpc
-     6  potitmin/0/, BoRiS/0.0_R8/, vis_per/0.0_R8/, na_min/1.0e4_R8/,
+     6  potitmin/0/, BoRiS/0.0_R8/, vis_per/1.0_R8/, na_min/1.0e4_R8/,
      7  na_new/1.0e14_R8/
 *
 *-----------------------------------------------------------------------
