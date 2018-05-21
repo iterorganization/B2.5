@@ -86,7 +86,7 @@
  
 *  prepare reading from NETCDF file b2time.nc
       rw='read'
-      ncid=ncopn('b2time.nc',ncwrite,iret)
+      iret = nf_open('b2time.nc',ncwrite,ncid)
 
       imap(1)=1
       call rwcdf (rw, ncid, 'nastep', imap, tstepn, iret)
@@ -365,7 +365,7 @@
 
       close (iout)
 
-      call ncclos (ncid, iret)
+      iret = nf_close(ncid)
 
       deallocate (batchsa)
       deallocate (nemxip_av)
