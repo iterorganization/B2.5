@@ -12,6 +12,8 @@
       use b2mod_b2cmpa
       use b2mod_balance                                               !djm Jan2017
      & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
+      use b2mod_plasma
+     & , only : fac_vis                                               !srv 22.05.18
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
@@ -95,7 +97,7 @@
       smbvv = 0.0_R8
 
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
-        if (addvis.ne.0.0_R8) then                                  !srv 19.01.05 28.03.06 {
+        if (addvis.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8) then    !srv 19.01.05 28.03.06 { 22.05.18
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
 * ..calculate the parallel heat flux of ions in the center of the cell
 
@@ -287,7 +289,8 @@
           do iy=0,ny-1
             do ix=0,nx-1
               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-                t0=addvis*vol(ix,iy)/hx(ix,iy)*bb(ix,iy,0)*
+                t0=fac_vis(ix,iy)*addvis*                           !srv 22.05.18
+     &                 vol(ix,iy)/hx(ix,iy)*bb(ix,iy,0)*
      &            sqrt(bb(ix,iy,3))*hz(ix,iy)
                 smbvh(ix,iy,0) = smbvh(ix,iy,0)
      &            +t0*(wrk1(rightix(ix,iy),rightiy(ix,iy))-wrk1(ix,iy))

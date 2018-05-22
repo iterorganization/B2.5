@@ -3332,8 +3332,8 @@ cxpb  core recycling into ions of the highest ionisation stage
             if(output_style.ge.2 .or. ncall.lt.3)
      1       write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
      2       ' <> 13, current value = ',bccon(is,ib)
-            call xerrab
-     .    ('Negative eirene_ionising_core must be used with BCCON=13')
+c            call xerrab
+c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
           else
             conpar(is,ib,3)=core_flux(j)
             if(output_style.ge.2 .or. ncall.lt.3)
