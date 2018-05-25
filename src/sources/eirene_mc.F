@@ -3204,7 +3204,7 @@ c
 !                rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,1)
 !                recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,1)
 !pb
-                 radarr(ix,iy)=eneutrad(ix+1,iy+1,iatm,0)
+                 radarr(ix,iy)=radarr(ix,iy)+eneutrad(ix+1,iy+1,iatm,0)
                  rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,0)
                  rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,0)
                  recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,0)
@@ -3231,7 +3231,7 @@ c
       endif
       if (dbg_eir_mc.ge.2 .and. main_call) write(*,'(a,1p,2(1x,e14.7))')
      . 'EIRENE_MC. RADARR, RAD_NEUTR : ',
-     .  SUM(radarr(1:nx,1:ny)), rad_neutr
+     .  SUM(radarr(0:nx-1,0:ny-1)), rad_neutr
 
       if(.not.filedata(ntrc_int)) then
         write(*,'(a,1p,1000g12.4)')
@@ -3330,14 +3330,16 @@ cxpb  core recycling into ions of the highest ionisation stage
           is=ishigh(j)
           if(bccon(is,ib).ne.13) then
             if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
+     1       write(*,'(a,i3,1x,i3,a,i3)')
+     .       'eirene_mc: bccon for is,ib= ',is,ib,
      2       ' <> 13, current value = ',bccon(is,ib)
 c            call xerrab
 c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
           else
             conpar(is,ib,3)=core_flux(j)
             if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,*) 'eirene_mc: conpar(is,ib,3) = ',
+     1       write(*,'(a,1p,1e12.5,a,i3,1x,i3)')
+     .       'eirene_mc: conpar(is,ib,3) = ',
      2       conpar(is,ib,3),' for is,ib= ',is,ib
           endif
         enddo
