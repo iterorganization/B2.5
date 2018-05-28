@@ -43,7 +43,7 @@
       subroutine read_boundary_sources(nx, ny, ns)
        use b2mod_types
        use b2mod_boundary_namelist
-	 implicit none
+       implicit none
        integer nx, ny, ns
 
        integer ib, is, ix, iy

@@ -3,7 +3,7 @@
       implicit none
        real (kind=R8), allocatable, save ::
      *  art_sch(:,:,:), 
-     *  art_she(:,:,:),               
+     *  art_she(:,:,:),
      *  art_shi(:,:,:), 
      *  art_smo(:,:,:,:), 
      *  art_sna(:,:,:,:)
@@ -43,22 +43,21 @@
       
       subroutine read_equation_sources(nx, ny, ns)
        use b2mod_types
-	 implicit none
+       implicit none
        integer nx, ny, ns
-
        integer is, ix, iy
 	 logical art_exists
 
-	   INQUIRE (FILE = '../art_sna.dat', EXIST = art_exists)
-	   if(art_exists) then
-	    open(70,FILE = '../art_sna.dat')
-	     read (70,"(<nx+2>(2x,e23.16))") 
+           INQUIRE (FILE = '../art_sna.dat', EXIST = art_exists)
+           if(art_exists) then
+            open(70,FILE = '../art_sna.dat')
+            read (70,"(<nx+2>(2x,e23.16))") 
      &           (((art_sna(ix,iy,0,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-	    close(70)
-	   else
-	    write(*,*) ' There is no file ../art_sna.dat'
-	    stop
-	   endif 
+           close(70)
+          else
+            write(*,*) ' There is no file ../art_sna.dat'
+            stop
+           endif
 
 	   INQUIRE (FILE = '../art_smo.dat', EXIST = art_exists)
 	   if(art_exists) then
