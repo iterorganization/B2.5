@@ -338,7 +338,7 @@
           call b2sral (nx, ny, ns, nxtl, nxtr,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,                      !xpb
-     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, na,         !srv 09.01.01
+     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, lnlam, na,  !srv 09.01.01 02.04.18
      &     ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
      &     fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -370,10 +370,10 @@
      &                       fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,         !srv 10.10.17
-!     &          po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,     !srv 10.10.17
-!     &               lnlam, te, ti, ni, chci, fchvisq)
+        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,         !srv 10.10.17
+     &          po, ti, na, avisper, bvisper, cvisper, fchvisper)
+        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,     !srv 10.10.17
+     &               lnlam, te, ti, ni, chci, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
           call b2xpro (nx, ny, ns, mp, am, na, ro)
@@ -413,7 +413,7 @@
         call b2sral (nx, ny, ns, nxtl, nxtr,
      &    nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &    dtim, BoRiS, facdrift, fac_ExB, fac_vis,                       !xpb
-     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,              !srv 09.01.01
+     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, lnlam,       !srv 09.01.01 02.04.18
      &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                !srv 28.10.02
      &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -495,10 +495,10 @@ cxpb
      &                       fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy,  qz, bb,        !srv 10.10.17
-!     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
-!     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
+        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy,  qz, bb,        !srv 10.10.17
+     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
+        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
+     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
 !        do is = 0, ns-1
@@ -769,7 +769,7 @@ cxpb
      &           nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &           dtim, BoRiS, facdrift, fac_ExB, fac_vis,                !xpb
      &           vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,
-     &           na, ua,                                                 !srv 09.01.01
+     &           lnlam, na, ua,                                          !srv 09.01.01
      &           uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &           te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,         !srv 28.10.02
      &           fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
