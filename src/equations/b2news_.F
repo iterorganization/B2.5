@@ -815,7 +815,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      1       wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,  !srv 19.05.03 08.10.04 04.02.05
      &       po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &       cddi(-1,-1,0,is),                                           !srv 13.10.06
-     &       cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is),cdnahz(-1,-1,0,is),  !srv 09.01.01 15.12.05
+     &       cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is), !srv 09.01.01 15.12.05
      &       cdpahz(-1,-1,0,is),
      &       fchvispar, fchvisper, fchinert, fchanml, fchvisq,           !srv 19.07.02 01.10.99 20.09.06
      &       fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),

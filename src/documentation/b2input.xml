@@ -1617,7 +1617,7 @@
 			</switch>
 			<switch>
 				<name>b2mndr_hz</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<note>!srv 09.06.08</note>
 				<description>

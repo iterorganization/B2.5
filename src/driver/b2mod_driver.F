@@ -88,7 +88,7 @@
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
-      real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
+      real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
@@ -1179,7 +1179,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        call xertst (0.le.isfb.and.isfb.lt.ns,
      &   'faulty internal parameter isfb')
        call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
-       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
+       call xertst (0.0_R8.le.fac_hz .and. 1.0_R8.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
 csw 09oct2012
        call ipgeti ('b2news_poteq', pot_eq)
