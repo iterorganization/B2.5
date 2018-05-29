@@ -289,8 +289,9 @@ contains
         integer :: nfcy !< Number of y-aligned faces/edges (1D objects)
         integer :: nvx  !< Number of all vertices/nodes (0D objects)
 
-        character(*), parameter :: VERTEX_FILE = '../vertex_data.out'
-        integer, parameter :: VERTEX_UNIT = 887
+        character(*), parameter :: VERTEX_FILE = 'vertex_data.out'
+        character(256) :: VERTEX_FILE_TEMP
+        integer, parameter :: VERTEX_UNIT = 99
         logical :: vertexfileExists
 
         call logmsg( LOGDEBUG, "b2CreateMap: create map for a nx="  &
@@ -724,14 +725,14 @@ contains
             &   //int2str(gd%nvx)//" unique vertices")
 
         !! Find out how many and which control volumes touch any given vertex
-        inquire( file=trim(VERTEX_FILE), exist=vertexfileExists )
+        VERTEX_FILE_TEMP = trim(VERTEX_FILE)
+        call find_file(VERTEX_FILE_TEMP,vertexfileExists)
         if (vertexfileExists) then
           ! read vertex file
-          open(unit=VERTEX_UNIT, file=VERTEX_FILE)
+          open(unit=VERTEX_UNIT, file=VERTEX_FILE_TEMP)
           read(VERTEX_UNIT,*) gd%mapCvixVx
           read(VERTEX_UNIT,*) gd%mapCviyVx
           close(VERTEX_UNIT)
-
         else
           nsector = 0
           do ix = -1, nx
@@ -771,8 +772,9 @@ contains
                     end do
                 end do
             end do
-          end do
-          open(unit=VERTEX_UNIT, file=trim(VERTEX_FILE))
+         end do
+          VERTEX_FILE_TEMP = trim("../"//VERTEX_FILE)
+          open(unit=VERTEX_UNIT, file=trim(VERTEX_FILE_TEMP))
           write(VERTEX_UNIT,*) gd%mapCvixVx
           write(VERTEX_UNIT,*) gd%mapCviyVx
           close(VERTEX_UNIT)
