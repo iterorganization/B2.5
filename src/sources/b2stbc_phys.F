@@ -120,6 +120,7 @@
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0, iout = 0, !srv 13.10.06
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 iout_b2npmo = 0, iout_b2wdat = 0
@@ -281,6 +282,8 @@
         call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                     !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                   !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
@@ -10135,7 +10138,8 @@ c end of implementation
         call my_out(70,nx,ny,wrk0,'b2stbc_phys_smo'//chns)
        enddo
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1
+     &              .or.  iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 )  !srv 02.04.18
      &        .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is

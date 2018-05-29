@@ -65,7 +65,9 @@
       integer, save :: no_hybr = 0
       integer, save :: drift_style = 1
       integer, save :: iout = 0,
-     &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
+     &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
+     &                 iout_b2npmo =0
       integer, save :: style = 2                                         !srv 13.01.17
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       character chns*3                                                   !srv 16.09.02
@@ -112,6 +114,8 @@
         call ipgeti ('b2tfrn_iout', iout)
         call ipgeti ('b2npc9_iout', iout_b2npc9)
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                         !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                       !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                          !srv 30.12.09
         call ipgetr ('b2tfnb_xfrhie', xfrhie)

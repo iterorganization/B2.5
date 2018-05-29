@@ -75,7 +75,9 @@
 *   ..local variables
       integer ncall, n2, ix, iy, ib, area_fix, no_hybr
       integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
-     &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
+     &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
+     &                 iout_b2npmo =0
       integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
       integer, save :: pflux_cor = 1                                     !srv 05.03.16
@@ -179,6 +181,8 @@
         call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                         !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                       !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgetr ('b2tfrn_xvecrb', xvecrb)                            !srv 27.01.12
         call ipgetr ('b2tfrn_xwdia', xwdia)                              !srv 27.01.12
@@ -982,7 +986,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        enddo
       enddo
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
+     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0                        !srv 02.04.18
      &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
@@ -1381,8 +1386,9 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      1   ' mb = ',mb/mp,' are ',maxfluxlimit
       endif
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
-     &       .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then               !srv 11.09.09 {
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
+     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0                        !srv 02.04.18
+     &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
