@@ -218,10 +218,6 @@
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
 *     the kinetic energy of a particle of species (is) in cell (ix,iy).
-*     The velocity used includes the parallel velocity as well
-*     as the total diamagnetic and ExB drift velocities (if the xwdia and
-*     xvecrb switches, respectively, are activated) in both the radial
-*     and diamagnetic directions.
 *
 *     te - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron

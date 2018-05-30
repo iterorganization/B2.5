@@ -7,8 +7,6 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_plasma
-     * , only : fac_vis
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -41,14 +39,14 @@
       integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k             !srv 26.01.00
       integer, save :: iout = 0                                    !srv 08.07.08
       character chark*1                                            !srv 08.07.08
-      integer ireg, ileft, ibot
-      real (kind=R8) :: vis_per, aa7p2, aa7m2                      !srv 27.01.00
-      save ncall, vis_per                                          !srv 27.01.00
+      integer ireg, ileft, ibot, itop
+      real (kind=R8) :: aa7p2, aa7m2                               !srv 27.01.00
+      save ncall                                                   !srv 27.01.00
 *   ..procedures
       external subini, subend, xertst, sfill
       external b2xvsg, b2xvff, b2ux7p                              !srv 11.01.00
 *   ..initialisation
-      data ncall/0/, vis_per/0.0e0_R8/                             !srv 27.01.00
+      data ncall/0/                                                !srv 27.01.00
 
 *-----------------------------------------------------------------------
 *.computation
@@ -58,7 +56,6 @@
       call subini ('b2usp7')                                       !srv 06.07.00
 *   ..set internal parameters on first call                        !srv
       if (ncall.eq.0) then                                         !srv
-       call ipgetr ('b2tfhe_vis_per', vis_per)                     !srv 27.01.00 08.07.08
        call ipgeti ('b2usp7_iout', iout)                           !srv 08.07.08
       endif                                                        !srv
 *   ..set n2
@@ -150,43 +147,43 @@
 *   .. do nothing
          else
            if(bottomiy(ixb,iyb).eq.-2) then
-              aa7(ix,iy, 3) = vis_per*fac_vis(ix,iy)*
-     &         (avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
-     &          cvisper(topix(ixt,iyt),topiy(ixt,iyt),1))
-             aa7m2 =   vis_per*fac_vis(ix,iy)*(
-     &         avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1))
+              aa7(ix,iy, 3) =
+     &          avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
+     &          cvisper(topix(ixt,iyt),topiy(ixt,iyt),1)
+             aa7m2 =
+     &         avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
              aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7m2
-             aa7p2 =     vis_per*fac_vis(ix,iy)*(
+             aa7p2 =
      &         avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1)
-     &        +avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1))
+     &        +avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)
              aa7(ix,iy,2) = aa7(ix,iy,2) - aa7(ix,iy,3) - aa7p2
              aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
            elseif(topiy(ixt,iyt).eq.ny+1) then
-              aa7(ix,iy,-3) = vis_per*fac_vis(ix,iy)*
-     &        (avisper(ix,iy,1)*bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1))
-             aa7m2 =   vis_per*fac_vis(ix,iy)*(
+              aa7(ix,iy,-3) =
+     &         avisper(ix,iy,1)*bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1)
+             aa7m2 =
      &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
-     &        +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1))
+     &        +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1)
              aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3)  - aa7m2
-             aa7p2 =     vis_per*fac_vis(ix,iy)*(
-     &        avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1))
+             aa7p2 =
+     &        avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)
              aa7(ix,iy,2) = aa7(ix,iy,2) - aa7p2
              aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
            else
-             aa7(ix,iy,-3) = vis_per*fac_vis(ix,iy)*
-     &        (avisper(ix,iy,1)*bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1))
-             aa7(ix,iy, 3) = vis_per*fac_vis(ix,iy)*
-     &         (avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
-     &          cvisper(topix(ixt,iyt),topiy(ixt,iyt),1))
-             aa7m2 =   vis_per*fac_vis(ix,iy)*(
+             aa7(ix,iy,-3) =
+     &         avisper(ix,iy,1)*bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1)
+             aa7(ix,iy, 3) =
+     &         avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
+     &         cvisper(topix(ixt,iyt),topiy(ixt,iyt),1)
+             aa7m2 =
      &         avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
      &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
-     &        +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1))
+     &        +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1)
              aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3)  - aa7m2
-             aa7p2 =     vis_per*fac_vis(ix,iy)*(
+             aa7p2 =
      &         avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1)
      &        +avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)
-     &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1))
+     &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)
              aa7(ix,iy,2) = aa7(ix,iy,2) - aa7(ix,iy,3) - aa7p2
              aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
            endif

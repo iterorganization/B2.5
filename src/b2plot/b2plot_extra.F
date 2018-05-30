@@ -50,49 +50,48 @@ c     log10 of rate coefficient (in cm3/s)
         call lower_case(ELNAME)
         if (trim(ELNAME).eq.'d'.or.trim(ELNAME).eq.'t') ELNAME = 'h'
         DSN = trim(REAC)//'/'//trim(REAC)//'_'//trim(ELNAME)//'.dat'
-        call xertst(open_file(29,DSN,
-     .   'data.local/adas/adf11|modules/adas/adf11'),
-     .   'No ADAS file found')
+        if(open_file(29,DSN,
+     .   'data.local/adas/adf11|modules/adas/adf11')) then
 c     reading in data
 cxpb The number 2 is dependent on the type of data being read
-        if(index(REAC,'acd').NE.0) then  ! recombination
-          id = 1
-          first_stage = .false.
-          last_stage = .true.
-        elseif(index(REAC,'scd').NE.0) then  ! ionisation
-          id = 2
-          first_stage = .true.
-          last_stage = .false.
-        elseif(index(REAC,'ccd').NE.0) then  ! charge exchange
-          id = 3
-          first_stage = .false.
-          last_stage = .true.
-        elseif(index(REAC,'prb').NE.0) then  ! bremsstrahlung + radiative recombination contribution
-          id = 4
-          first_stage = .false.
-          last_stage = .true.
-        elseif(index(REAC,'plt').NE.0) then  ! line radiation
-          id = 8
-          first_stage = .true.
-          last_stage = .false.
-        elseif(index(REAC,'zcd').NE.0) then  ! effective charge
-          id = 10
-          first_stage = .true.
-          last_stage = .true.
-        elseif(index(REAC,'ycd').NE.0) then  ! effective square charge
-          id = 11
-          first_stage = .true.
-          last_stage = .true.
-        elseif(index(REAC,'ecd').NE.0) then  ! effective ionisation potential
-          id = 12
-          first_stage = .true.
-          last_stage = .true.
-        else
-          write(6,*) 'ADAS data type ',trim(REAC),' not recognized!'
-          call subend ()
-          return
-        endif
-        call xxdata_11(29,id,
+          if(index(REAC,'acd').NE.0) then  ! recombination
+            id = 1
+            first_stage = .false.
+            last_stage = .true.
+          elseif(index(REAC,'scd').NE.0) then  ! ionisation
+            id = 2
+            first_stage = .true.
+            last_stage = .false.
+          elseif(index(REAC,'ccd').NE.0) then  ! charge exchange
+            id = 3
+            first_stage = .false.
+            last_stage = .true.
+          elseif(index(REAC,'prb').NE.0) then  ! bremsstrahlung + radiative recombination contribution
+            id = 4
+            first_stage = .false.
+            last_stage = .true.
+          elseif(index(REAC,'plt').NE.0) then  ! line radiation
+            id = 8
+            first_stage = .true.
+            last_stage = .false.
+          elseif(index(REAC,'zcd').NE.0) then  ! effective charge
+            id = 10
+            first_stage = .true.
+            last_stage = .true.
+          elseif(index(REAC,'ycd').NE.0) then  ! effective square charge
+            id = 11
+            first_stage = .true.
+            last_stage = .true.
+          elseif(index(REAC,'ecd').NE.0) then  ! effective ionisation potential
+            id = 12
+            first_stage = .true.
+            last_stage = .true.
+          else
+            write(6,*) 'ADAS data type ',trim(REAC),' not recognized!'
+            call subend ()
+            return
+          endif
+          call xxdata_11(29,id,
      *           isdimd,iddimd,itdimd,ndptnl,ndptn,ndptnc,ndcnct,
      *           IZMAX,IZ1MIN,IZ1MAX,
      *           nptnl,nptn,nptnc,iptnla,iptna,iptnca,
@@ -100,54 +99,61 @@ cxpb The number 2 is dependent on the type of data being read
      *           isppr,ispbr,isstgr,
      *           IDMAXD,ITMAXD,DDENSD,DTEVD,DREAC,
      *           lres,lstan,lptn)
-        if (IZMAX.ne.nint(zn(is))) then
-          write(*,*) 'ADAS tables: wrong element.'
-          write(*,*) 'reading file: ',DSN
-          call xerrab ('Wrong element in ADAS file')
-        endif
-        if ((IDMAXD.gt.iddimd).or.(ITMAXD.gt.itdimd)) then
-          write(*,*) 'ADAS tables: dimensions too big.'
-          write(*,*) 'Change iddimd and itdimd in source code.'
-          write(*,*) 'reading file: ',DSN
-          call xerrab ('Too big dimensions in ADAS tables')
-        endif
-c     filling array and computing rate
-        do ic=0,ncnct-1
-          if((ic.eq.0.and.first_stage).or.
-     &       (ic.eq.ncnct-1.and.last_stage).or.
-     &       (ic.gt.0.and.ic.lt.ncnct-1)) then
-            if(first_stage) then
-	      DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic+1,1:ITMAXD,1:IDMAXD)
-            else
-	      DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic,1:ITMAXD,1:IDMAXD)
-            endif
-          elseif (id.lt.10) then
-            DTMP(1:ITMAXD,1:IDMAXD)=6.0_R8
-          else
-            DTMP(1:ITMAXD,1:IDMAXD)=0.0_R8
+          if (IZMAX.ne.nint(zn(is))) then
+            write(*,*) 'ADAS tables: wrong element.'
+            write(*,*) 'reading file: ',DSN
+            call xerrab ('Wrong element in ADAS file')
           endif
-          do ix=0,nx+1
-            do iy=0,ny+1
-              logT=log10(te(ix,iy)/qe)
-              logD=log10(ne(ix,iy)/1.0e6_R8)
-              call int2d(DTMP(1:itdimd,1:iddimd),itdimd,iddimd,
-     1         DTEVD,ITMAXD,DDENSD,IDMAXD,
-     2         logT,logD,ans)
-              if(id.lt.10) then
-                if((ic.eq.0.and..not.first_stage) .or.
-     &             (ic.eq.ncnct-1.and..not.last_stage)) then
-                  mach(ix,iy,is+ic)=0.0_R8
-                else
-                  mach(ix,iy,is+ic)=10.0_R8**(ans-6.0_R8)
-                end if
+          if ((IDMAXD.gt.iddimd).or.(ITMAXD.gt.itdimd)) then
+            write(*,*) 'ADAS tables: dimensions too big.'
+            write(*,*) 'Change iddimd and itdimd in source code.'
+            write(*,*) 'reading file: ',DSN
+            call xerrab ('Too big dimensions in ADAS tables')
+          endif
+c     filling array and computing rate
+          do ic=0,ncnct-1
+            if((ic.eq.0.and.first_stage).or.
+     &         (ic.eq.ncnct-1.and.last_stage).or.
+     &         (ic.gt.0.and.ic.lt.ncnct-1)) then
+              if(first_stage) then
+	        DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic+1,1:ITMAXD,1:IDMAXD)
               else
-                mach(ix,iy,is+ic)=ans
+	        DTMP(1:ITMAXD,1:IDMAXD)=DREAC(ic,1:ITMAXD,1:IDMAXD)
               endif
+            elseif (id.lt.10) then
+              DTMP(1:ITMAXD,1:IDMAXD)=6.0_R8
+            else
+              DTMP(1:ITMAXD,1:IDMAXD)=0.0_R8
+            endif
+            do ix=0,nx+1
+              do iy=0,ny+1
+                logT=log10(te(ix,iy)/qe)
+                logD=log10(ne(ix,iy)/1.0e6_R8)
+                call int2d(DTMP(1:itdimd,1:iddimd),itdimd,iddimd,
+     1           DTEVD,ITMAXD,DDENSD,IDMAXD,
+     2           logT,logD,ans)
+                if(id.lt.10) then
+                  if((ic.eq.0.and..not.first_stage) .or.
+     &               (ic.eq.ncnct-1.and..not.last_stage)) then
+                    mach(ix,iy,is+ic)=0.0_R8
+                  else
+                    mach(ix,iy,is+ic)=10.0_R8**(ans-6.0_R8)
+                  end if
+                else
+                  mach(ix,iy,is+ic)=ans
+                endif
+              enddo
             enddo
           enddo
-        enddo
-        is = is + ncnct
-        close(29)
+          is = is + ncnct
+          close(29)
+        else
+          write(*,*) 'No ADAS file found : setting data to 0'
+          do while (streql(ELNAME,is_codes(is)))
+            mach(0:nx+1,0:ny+1,is) = 0.0_R8
+            is = is + 1
+          end do
+        endif
       enddo
       call subend ()
       return

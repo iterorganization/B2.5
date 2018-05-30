@@ -425,6 +425,7 @@
       reshi_reg(0)=0.0_R8
       resmt_reg(0)=0.0_R8
       respo_reg(0)=0.0_R8
+      rdneureg(0)=0.0_R8
       do ir=1,nnreg(0)
         tereg(0)=tereg(0)+tereg(ir)
         nereg(0)=nereg(0)+nereg(ir)
@@ -469,6 +470,7 @@
         reshi_reg(0)=reshi_reg(0)+reshi_reg(ir)
         resmt_reg(0)=resmt_reg(0)+resmt_reg(ir)
         respo_reg(0)=respo_reg(0)+respo_reg(ir)
+        rdneureg(0)=rdneureg(0)+rdneureg(ir)
       enddo
 *    ..write tallies
       write(*,tally_format) 'Start tallies by region'
@@ -567,6 +569,7 @@
       write(*,tally_format) 'reshi_reg',reshi_reg
       write(*,tally_format) 'resmt_reg',resmt_reg
       write(*,tally_format) 'respo_reg',respo_reg
+      write(*,tally_format) 'rdneureg',rdneureg
       write(*,tally_format) 'End tallies by region'
 
 #ifndef NO_CDF
@@ -809,6 +812,8 @@
      *	   'resmt_reg',resmt_reg)
 	  call write_cdf_variable(ncid,ntstep,
      *	   'respo_reg',respo_reg)
+	  call write_cdf_variable(ncid,ntstep,
+     *	   'rdneureg',rdneureg)
 	  write(*,tally_format) 'End (CDF) tallies by region'
 
 	  status=nf_close(ncid)

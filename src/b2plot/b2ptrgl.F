@@ -1035,7 +1035,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           fpt_str(3+3*(ia-1))=trim(TEXTA(ia))//'_pres_atm'
         end do
         do is=1,nspecies
-          fpt_str(is+3*natmi)=species_list(is)//'_flux_ion'
+          fpt_str(is+3*natmi)=trim(species_list(is))//'_flux_ion'
         end do
         do k=1,ntrgts
           if (do_sput(k)) then

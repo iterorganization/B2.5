@@ -433,7 +433,7 @@ c 2002-09-11: logic revised
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch,
      .  scaling_width(nscale), scaling_strength(nscale),
-     .  ixfb, iyfb, ixfb1, iyfb1,
+     .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
      .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
      .  elm_time_begin, elm_time_end, elm_time_period,
      .  sources_time_mod, sources_time_switch,
@@ -545,6 +545,7 @@ c 2002-09-11: logic revised
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
       data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
       data xfrhie_no_drift/1.0_R8/
+      data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
@@ -1328,6 +1329,8 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfnb_xfrhiehz', xfrhiehz)
       call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)
       call ipgetr ('b2tfhe_inert', b2tfhe_inert)
+      call ipgetr ('b2tfhe_vis_par', b2tfhe_vis_par)
+      call ipgetr ('b2tvspa_vis_par', b2tvspa_vis_par)
       call ipgeti ('b2ux7p_style', b2ux7p_style)
       if (b2ux7p_style.eq.3) b2ux7p_style = 2
 *   ..we do the allocation calls now so that
@@ -1671,6 +1674,18 @@ c 2002-09-11: logic revised
         case ('b2tfhe_inert') ! needs to be rewritten as b2tiner_inert
           rswitch = b2tfhe_inert
           cnamip = 'b2tiner_inert'
+        case ('b2tvspa_vis_par') ! obsolete, superseded by b2tfhe_vis_par
+          todo = b2tvspa_vis_par.ne.1.0_R8 .and.
+     &           b2tfhe_vis_par .eq.1.0_R8
+          if (todo) then
+            rswitch = b2tvspa_vis_par
+            cnamip = 'b2tfhe_vis_par'
+          else
+            wait = .true.
+          endif
+        case ('b2tfhe_vis_par') ! superseding of b2tvspa_vis_par, with above
+          wait = b2tvspa_vis_par.ne.1.0_R8 .and.
+     &           b2tfhe_vis_par .eq.1.0_R8
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES

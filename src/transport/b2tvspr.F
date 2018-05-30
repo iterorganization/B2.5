@@ -24,7 +24,7 @@
 *   ..local variables
       integer ix, iy, is
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
-      real (kind=R8), save :: vis_per = 0.0e0_R8                        !srv 22.11.99
+      real (kind=R8), save :: vis_per = 1.0e0_R8                        !srv 22.11.99
       real (kind=R8) :: va(-1:nx,-1:ny,0:1), dva(-1:nx,-1:ny)           !srv 22.11.99
       real (kind=R8) :: fac_vism
 *   ..procedures

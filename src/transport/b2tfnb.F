@@ -8,7 +8,7 @@
      &  cvlbhz, cvmbhz, cdnbhz, cdpbhz,                                  !srv 09.01.01
      &  fchvispar, fchvisper, fchinert, fchanml, fchvisq,                !srv 20.09.06
      &  fnb, fnb_nodrift, fnb_fcor, fnb_he, fnbPSch, fnb_mdf,            !srv 13.10.06
-     &  flob, conb, fnb_32, fnb_52, fnb_32nd,  
+     &  flob, conb, fnb_32, fnb_52, fnb_32nd,
      &  fnb_52nd, kbnrgy, fllim0fnb,
      &  balance)                                                         !djm Jan2017
       use b2mod_types
@@ -73,14 +73,14 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ib, area_fix, no_hybr,
-     &        ixl, iyl, ixb, iyb                                         !srv 13.10.06
+      integer ncall, n2, ix, iy, ib, area_fix, no_hybr
       integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
-     &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
+     &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
+     &                 iout_b2npmo =0
       integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
       integer, save :: pflux_cor = 1                                     !srv 05.03.16
-      integer, save :: PSch_style = 1                                    !srv 12.11.08
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: vlct_diagno = 1
       character chns*3                                                   !srv 16.09.02
@@ -88,12 +88,11 @@
       real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
-      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8           !srv 02.10.17
+      real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8           !srv 02.10.17
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       real (kind=R8), save ::
      &   poleldr = 1.0_R8, radeldr = 1.0_R8,                             !srv 25.04.00
-     &   poldidr = 1.0_R8, raddidr = 1.0_R8,                             !srv 25.04.00
-     &   PSch = 1.0_R8                                                   !srv 17.01.07
+     &   poldidr = 1.0_R8, raddidr = 1.0_R8                              !srv 25.04.00
       real (kind=R8) ::
      *   con(-1:nx,-1:ny), dif, flo, con_nodrift, flo_nodrift, xfrhie,
      *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
@@ -102,10 +101,9 @@
      *   term(-1:nx,-1:ny), flo_he, con_he(-1:nx,-1:ny),                 !srv 25.04.00 13.09.02 11.09.09
      &   termhz(-1:nx,-1:ny)                                             !srv 05.11.09
       real (kind=R8) ::
-     &   vbecrb_(-1:nx,-1:ny,0:1), wbdia_(-1:nx,-1:ny,0:1),
      &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1),              !srv 21.10.10
      &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
-     &   rdiv, scur                                                      !srv 05.03.16
+     &   rdiv, scur, vsprcur                                             !srv 05.03.16 02.04.18
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
@@ -113,7 +111,7 @@
      *   wrk6(-1:nx,-1:ny), wrk7(-1:nx,-1:ny), wrk8(-1:nx,-1:ny),        !srv 11.09.09 !iys 17.04.12
      &   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1), nbcor(-1:nx,-1:ny),  !srv 01.10.99 !lk 09.06.11
+     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1),                      !srv 01.10.99 !lk 09.06.11
      *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                          !srv 08.10.04
      *   nbzb(-1:nx,-1:ny), nbzbc(-1:nx,-1:ny)                           !srv 13.05.16
       real (kind=R8) :: weight(-1:nx,-1:ny)                              !lk
@@ -174,9 +172,7 @@
      &   'b2tfnb_alpha and b2tlc0_alpha cannot be both different '//
      &   'from zero ')                                                   !srv 09.07.03 }
         call ipgeti ('b2tfnb_mdf', mdf_fnb)                              !srv 13.10.06
-        call ipgetr ('b2tfnb_PSch', PSch)                                !srv 17.01.07
         call ipgeti ('b2tfnb_pflux_cor', pflux_cor)                      !srv 05.03.16
-        call ipgeti ('b2tfnb_PSch_style', PSch_style)                    !srv 12.11.08
         call ipgeti ('b2tfnb_drift_style', drift_style)                  !srv 21.06.08
         call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
         call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
@@ -185,6 +181,8 @@
         call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                         !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                       !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgetr ('b2tfrn_xvecrb', xvecrb)                            !srv 27.01.12
         call ipgetr ('b2tfrn_xwdia', xwdia)                              !srv 27.01.12
@@ -553,165 +551,14 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      .         ycount,' time for species ',isb
           end if
         end if
-       endif                                                             !srv 21.06.08 {
+      endif                                                             !srv 21.06.08 {
 
-*   ..compute P.Sch x-flux                                               !srv 13.10.06 {
-       if(PSch_style.eq.0) then                                          !srv 12.11.08
-        call intcor(nx,ny,vol,po,poc)
-        nbti=nb*ti
-        call intcor(nx,ny,vol,nbti,nbtic)                                !srv 08.10.04
-        do iy = 0, ny-1
-         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2 .or.
-     &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then        !srv 26.05.08
-           fnbPSch(ix,iy,0)=0.0e0_R8
-           conb(ix,iy,0,3) = 0.0e0_R8                                    !srv 26.05.08
-           conb(ix,iy,0,4) = 0.0e0_R8
-          else
-           ixl = leftix(ix,iy)
-           iyl = leftiy(ix,iy)
-           fnbPSch(ix,iy,0) = 0.25e0_R8*PSch*(
-     &      cddb(topix(ix,iy),topiy(ix,iy),1)*
-     &       (nb(topix(ix,iy),topiy(ix,iy))*
-     &        ti(topix(ix,iy),topiy(ix,iy))- nb(ix,iy)*ti(ix,iy))+
-     &      cddb(topix(ixl,iyl),topiy(ixl,iyl),1)*
-     &       (nb(topix(ixl,iyl),topiy(ixl,iyl))*
-     &        ti(topix(ixl,iyl),topiy(ixl,iyl))-
-     &        nb(ixl,iyl)*ti(ixl,iyl))+
-     &      cddb(ixl,iyl,1)*
-     &       (nb(ixl,iyl)*ti(ixl,iyl)
-     &                   -nb(bottomix(ixl,iyl),bottomiy(ixl,iyl))*
-     &                    ti(bottomix(ixl,iyl),bottomiy(ixl,iyl)))+
-     &      cddb(ix,iy,1)*
-     &       (nb(ix,iy)*ti(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy))*
-     &                         ti(bottomix(ix,iy),bottomiy(ix,iy)))
-     &                                       )
-!           conb(ix,iy,0,3) = 0.25e0_R8*PSch*cddb(ix,iy,1)*ti(ix,iy)    !srv 21.10.10 {
-!           conb(ix,iy,0,4) = 0.25e0_R8*PSch*cddb(ix,iy,1)*
-!     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
-           conb(ix,iy,0,3) = 0.25_R8*PSch*cddb(ix,iy,1)*kmprti(ix,iy,1)
-           conb(ix,iy,0,4) = conb(ix,iy,0,3)                            !srv 21.10.10 }
-          endif
-         enddo
-        enddo
-       else
-        weight = 1.0e0_R8                                               !lk
-        call intcor(nx,ny,weight,po,poc)                                !lk 12.12.07
-        nbti=nb*ti
-        call intcor(nx,ny,weight,nbti,nbtic)                            !lk 12.12.07
-        call intcor(nx,ny,weight,nb,nbcor)                              !lk 09.06.11
-        do iy = 0, ny-1
-         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2 .or.
-     &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then       !srv 26.05.08
-           fnbPSch(ix,iy,0)=0.0e0_R8
-           conb(ix,iy,0,3) = 0.0e0_R8                                   !srv 26.05.08
-           conb(ix,iy,0,4) = 0.0e0_R8
-          else
-           ixl = leftix(ix,iy)
-           iyl = leftiy(ix,iy)
-!           fnbPSch(ix,iy,0) = PSch*                                    !lk {
-!     &      (nbtic(topix(ix,iy),topiy(ix,iy))-nbtic(ix,iy))*
-!     &      (bzb(ix,iy)*hz(ix,iy)*vol(ixl,iyl)
-!     &      +bzb(ixl,iyl)*hz(ixl,iyl)*vol(ix,iy))
-!     &      /(vol(ixl,iyl)+vol(ix,iy))/(qe*zb(ix,iy))                  !lk }
-           fnbPSch(ix,iy,0) = PSch*                                     !lk {
-     &      (nbtic(topix(ix,iy),topiy(ix,iy))-nbtic(ix,iy))*
-     &      (bzb(ix,iy)*(vol(ix,iy)/gs(ix,iy,2))*vol(ixl,iyl)
-     &      +bzb(ixl,iyl)*(vol(ixl,iyl)/gs(ixl,iyl,2))*vol(ix,iy))
-     &      /(vol(ixl,iyl)+vol(ix,iy))/(qe*zb(ix,iy))                   !lk }
-     &      *(nb(ix,iy)+nb(ixl,iyl))/(nbcor(ix,iy)+                     !lk 09.06.11
-     &      nbcor(topix(ix,iy),topiy(ix,iy)))                           !lk 09.06.11
-!            conb(ix,iy,0,3) = 0.25e0_R8*PSch*cddb(ix,iy,1)*ti(ix,iy)   !srv 21.10.10 {
-!            conb(ix,iy,0,4) = 0.25e0_R8*PSch*cddb(ix,iy,1)*
-!     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
-           conb(ix,iy,0,3) = 0.25_R8*PSch*cddb(ix,iy,1)*kmprti(ix,iy,1)
-           conb(ix,iy,0,4) = conb(ix,iy,0,3)                            !srv 21.10.10 }
-          endif
-         enddo
-        enddo
-       endif
+      call b2txnpsch (nx, ny, isb, guard_flows, facdrift,                !srv 02.04.18 {
+     &        kmprti, cddb, conb)
 
-*   ..compute P.Sch y-flux
-       iy = -1
-       fnbPSch(:,iy,1)=0.0e0_R8
-       if(PSch_style.eq.0) then                                         !srv 12.11.08
-        do iy = 0, ny
-         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-           fnbPSch(ix,iy,1)= 0.0e0_R8
-           conb(ix,iy,1,3) = 0.0e0_R8                                   !srv 26.05.08
-           conb(ix,iy,1,4) = 0.0e0_R8
-          else
-           ixb = bottomix(ix,iy)
-           iyb = bottomiy(ix,iy)
-           fnbPSch(ix,iy,1) = -0.25e0_R8*PSch*(
-     &    cddb(rightix(ix,iy),rightiy(ix,iy),0)*
-     &     (nb(rightix(ix,iy),rightiy(ix,iy))*
-     &      ti(rightix(ix,iy),rightiy(ix,iy))-nb(ix,iy)*ti(ix,iy))+
-     &    cddb(ix,iy,0)*
-     &    (nb(ix,iy)*ti(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy))*
-     &                         ti(leftix(ix,iy),leftiy(ix,iy)))+
-     &    cddb(bottomix(ix,iy),bottomiy(ix,iy),0)*
-     &     (nb(bottomix(ix,iy),bottomiy(ix,iy))*
-     &      ti(bottomix(ix,iy),bottomiy(ix,iy))
-     &                         -nb(leftix(ixb,iyb),leftiy(ixb,iyb))*
-     &                          ti(leftix(ixb,iyb),leftiy(ixb,iyb)))+
-     &    cddb(rightix(ixb,iyb),rightiy(ixb,iyb),0)*
-     &     (nb(rightix(ixb,iyb),rightiy(ixb,iyb))*
-     &      ti(rightix(ixb,iyb),rightiy(ixb,iyb))
-     &                  -nb(bottomix(ix,iy),bottomiy(ix,iy))*
-     &                   ti(bottomix(ix,iy),bottomiy(ix,iy)))
-     &                                         )
-
-!           conb(ix,iy,1,3) = 0.25e0_R8*PSch*cddb(ix,iy,0)*ti(ix,iy)    !srv 21.10.10 {
-!           conb(ix,iy,1,4) = 0.25e0_R8*PSch*cddb(ix,iy,0)*
-!     &                        ti(leftix(ix,iy),leftiy(ix,iy))
-           conb(ix,iy,1,3) = 0.25_R8*PSch*cddb(ix,iy,0)*kmprti(ix,iy,0)
-           conb(ix,iy,1,4) = conb(ix,iy,1,3)                            !srv 21.10.10 }
-          endif
-         enddo
-        enddo
-       else
-        do iy = 0, ny
-         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-           fnbPSch(ix,iy,1)= 0.0e0_R8
-           conb(ix,iy,1,3) = 0.0e0_R8                                   !srv 26.05.08
-           conb(ix,iy,1,4) = 0.0e0_R8
-          else
-           ixb = bottomix(ix,iy)
-           iyb = bottomiy(ix,iy)
-!           fnbPSch(ix,iy,1) = -PSch*                                   !lk {
-!     &      (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*
-!     &      (bzb(ix,iy)*hz(ix,iy)*vol(ixb,iyb)
-!     &      +bzb(ixb,iyb)*hz(ixb,iyb)*vol(ix,iy))
-!     &      /(vol(ixb,iyb)+vol(ix,iy))/(qe*zb(ix,iy))                  !lk }
-           fnbPSch(ix,iy,1) = -PSch*                                    !lk {
-     &      (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*
-     &      (bzb(ix,iy)*(vol(ix,iy)/gs(ix,iy,2))*vol(ixb,iyb)
-     &      +bzb(ixb,iyb)*(vol(ixb,iyb)/gs(ixb,iyb,2))*vol(ix,iy))
-     &      /(vol(ixb,iyb)+vol(ix,iy))/(qe*zb(ix,iy))                   !lk }
-     &      *(nb(ix,iy)+nb(ixb,iyb))/(nbcor(ix,iy)+                     !lk 09.06.11
-     &      nbcor(rightix(ix,iy),rightiy(ix,iy)))                       !lk 09.06.11
-
-!           conb(ix,iy,1,3) = 0.25e0_R8*PSch*cddb(ix,iy,0)*ti(ix,iy)    !srv 21.10.10 {
-!           conb(ix,iy,1,4) = 0.25e0_R8*PSch*cddb(ix,iy,0)*
-!     &                        ti(leftix(ix,iy),leftiy(ix,iy))
-           conb(ix,iy,1,3) = 0.25_R8*PSch*cddb(ix,iy,0)*kmprti(ix,iy,0)
-           conb(ix,iy,1,4) = conb(ix,iy,1,3)                            !srv 21.10.10 }
-          endif
-         enddo
-        enddo
-       endif
-
-        do iy = -1, ny                                                  !srv 02.01.07 {
-          do ix = -1, nx
-            fnbPSch(ix,iy,0:1) = fnbPSch(ix,iy,0:1)*facdrift(ix,iy)
-            conb(ix,iy,0:1,3) = conb(ix,iy,0:1,3)*facdrift(ix,iy)
-            conb(ix,iy,0:1,4) = conb(ix,iy,0:1,4)*facdrift(ix,iy)
-          enddo
-        enddo                                                           !srv 02.01.07 }
+*   ..compute Pfirsch-Schlueter particle fluxes                          !srv 13.10.06
+      call b2tnpsch (nx, ny, isb, guard_flows, facdrift, zb, vol,        !srv 02.04.18
+     &  hx, hy, qz, gs, qc, nb, ti, cddb, fnbPSch)
 
       endif
 
@@ -1139,7 +986,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        enddo
       enddo
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
+     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0                        !srv 02.04.18
      &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
@@ -1256,11 +1104,12 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then          !srv 20.09.06
            scur =
      &      (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+
-     &       vis_per*fchvisper(ix,iy,1)                                 !srv 17.07.08 {  02.10.17
-     &       +fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/            !srv 17.07.08 {  02.10.17
+     &       fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/             !srv 17.07.08 {  02.10.17
      &      (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8) !srv 17.07.08 }
+           vsprcur = vis_per*fchvisper(ix,iy,1)/qe                      !srv 02.04.18
          else
            scur = 0.0_R8
+           vsprcur = 0.0_R8
          endif
          if(drift_style.eq.0)then                                       !srv 21.06.08
           flo = cvlb(ix,iy,1)+
@@ -1331,7 +1180,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      1      flo*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &      con(ix,iy)*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      cdpb(ix,iy,1)*(pb(ix,iy)
-     &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
+     &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))+vsprcur !srv 02.04.18
 *      fnb_he will be used only for heat equations                      !srv 21.01.00 {
           fnb_he(ix,iy,1) = flo_he*(nb(bottomix(ix,iy),bottomiy(ix,iy)) !srv 13.09.02 {
      &          +nb(ix,iy))/2.0_R8-
@@ -1346,7 +1195,10 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       con_2dia(ix,iy)*(nb(ix,iy)-
      &                        nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &       cdpbhz(ix,iy,1)*(pb(ix,iy)                                 !srv 09.01.01
-     &                     -pb(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 01.10.99
+     &                     -pb(bottomix(ix,iy),bottomiy(ix,iy)))+       !srv 01.10.99
+     &      (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &       hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
+     &      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*vsprcur   !srv 02.04.18
           fnb_nodrift(ix,iy,1) = flo_nodrift*
      1      (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &       con_nodrift*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -1358,7 +1210,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &                     nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &     cdpb(ix,iy,1)*(pb(ix,iy)
      &                   -pb(bottomix(ix,iy),bottomiy(ix,iy)))-
-     &                    fnbPSch(ix,iy,1)                              !srv 13.10.06 }
+     &                    fnbPSch(ix,iy,1) + vsprcur                    !srv 13.10.06 } 02.04.18
           if (balance.and.(balance_netcdf.ne.0)) then
 cdjm Jan2017 store components of fnb for balance
             fna_pinch(ix,iy,1,isb) = cvlb(ix,iy,1)*
@@ -1469,7 +1321,7 @@ csw 14mar2013 missing con_he added --> needed in b2tfhi_ / b2tfhe_ !!!
            fnb(ix,iy,1) = flo * t2-
      &      con(ix,iy)*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      cdpb(ix,iy,1)*(pb(ix,iy)
-     &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
+     &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))+vsprcur !srv 02.04.18
            fnb_nodrift(ix,iy,1) = flo_nodrift*t3-
      &       con_nodrift*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -cdpb(ix,iy,1)*(pb(ix,iy)
@@ -1534,8 +1386,9 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      1   ' mb = ',mb/mp,' are ',maxfluxlimit
       endif
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
-     &       .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then               !srv 11.09.09 {
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
+     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0                        !srv 02.04.18
+     &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
@@ -1838,124 +1691,9 @@ csw 18feb2014 remove fluxes between guard cells
       end do
 
 * ..compute kinetic energy of species
-      if(drift_style.eq.0) then                                         !srv 14.07.10 {
-cwdk for computation of kinetic energy, need true diamagnetic components
-        vbecrb_(:,:,0) = vbecrb(:,:,0)*bb(:,:,3)/bb(:,:,2)
-        wbdia_(:,:,0)  = wbdia(:,:,0)*bb(:,:,3)/bb(:,:,2)
-        vbecrb_(:,:,1) = vbecrb(:,:,1)
-        wbdia_(:,:,1)  = wbdia(:,:,1)
-      else
-       if((maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8)
-     &    .and. minval(zb).gt.0.0_R8) then
-        wrk0=0.0_R8  ! compute electric field on the cell faces
-        do iy=0,ny
-         do ix=-1,nx
-          wrk0(ix,iy)=(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0_R8
-         end do
-        end do
-        do iy=-1,ny  ! compute perpendicular projection V_ExB on the cell centers
-         do ix=-1,nx
-          if(bottomiy(ix,iy).eq.-2) then
-           vbecrb_(ix,iy,0) = wrk0(ix,topiy(ix,iy))
-          elseif(topiy(ix,iy).eq.ny+1) then
-           vbecrb_(ix,iy,0) = wrk0(ix,iy)
-          else
-           vbecrb_(ix,iy,0) = 0.5_R8*
-     &        (wrk0(topix(ix,iy),topiy(ix,iy))+wrk0(ix,iy))
-          endif
-cwdk need full diamagnetic component for energy
-           vbecrb_(ix,iy,0)=-vbecrb_(ix,iy,0)/
-     &       bb(ix,iy,3)
-         enddo
-        enddo
-        wrk0=0.0_R8  ! compute .... on the cell faces
-        do iy=0,ny
-         do ix=-1,nx
-          wrk0(ix,iy)=(nb(ix,iy)*ti(ix,iy)-
-     &                 nb(bottomix(ix,iy),bottomiy(ix,iy))*
-     &                 ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0_R8
-         end do
-        end do
-        do iy=-1,ny  ! compute perpendicular projection V_dia on the cell centers
-         do ix=-1,nx
-          if(bottomiy(ix,iy).eq.-2) then
-           wbdia_(ix,iy,0)=wrk0(ix,topiy(ix,iy))
-          elseif(topiy(ix,iy).eq.ny+1) then
-           wbdia_(ix,iy,0)=wrk0(ix,iy)
-          else
-           wbdia_(ix,iy,0)=0.5_R8*
-     &        (wrk0(topix(ix,iy),topiy(ix,iy))+
-     &         wrk0(ix,iy))
-          endif
-cwdk need full diamagnetic component for energy
-           wbdia_(ix,iy,0)=-wbdia_(ix,iy,0)/
-     &         (zb(ix,iy)*qe*nb(ix,iy)*bb(ix,iy,3))
-         enddo
-        enddo
-
-        wrk0=0.0_R8  ! compute y-component of electric field on the cell faces
-        do iy=-1,ny
-         do ix=-1,nx
-          if(leftix(ix,iy).ne.-2) then
-           wrk0(ix,iy)=(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))/
-     &          (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8
-          endif
-         end do
-        end do
-        do iy=-1,ny  ! compute .... on the cell centers
-         do ix=-1,nx
-          if(leftix(ix,iy).eq.-2) then
-           vbecrb_(ix,iy,1)=wrk0(rightix(ix,iy),iy)
-          elseif(rightix(ix,iy).eq.nx+1) then
-           vbecrb_(ix,iy,1)=wrk0(ix,iy)
-          else
-           vbecrb_(ix,iy,1)=0.5_R8*
-     &        (wrk0(rightix(ix,iy),rightiy(ix,iy))+wrk0(ix,iy))
-          endif
-            vbecrb_(ix,iy,1)= vbecrb_(ix,iy,1)*
-     &       bb(ix,iy,2)/bb(ix,iy,3)**2                                 !srv 15.02.12
-         enddo
-        enddo
-
-        wrk0=0.0_R8  ! compute ... on the cell faces
-        do iy=-1,ny
-         do ix=-1,nx
-          if(leftix(ix,iy).ne.-2) then
-           wrk0(ix,iy)=(nb(ix,iy)*ti(ix,iy)-
-     &         nb(leftix(ix,iy),leftiy(ix,iy))*
-     &         ti(leftix(ix,iy),leftiy(ix,iy)))/
-     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8
-          endif
-         enddo
-        enddo
-        do iy=-1,ny  ! compute .... on the cell centers
-         do ix=-1,nx
-          if(leftix(ix,iy).eq.-2) then
-           wbdia_(ix,iy,1)=wrk0(rightix(ix,iy),iy)
-          elseif(rightix(ix,iy).eq.nx+1) then
-           wbdia_(ix,iy,1)=wrk0(ix,iy)
-          else
-           wbdia_(ix,iy,1)=0.5_R8*
-     &        (wrk0(rightix(ix,iy),rightiy(ix,iy))+wrk0(ix,iy))
-          endif
-          wbdia_(ix,iy,1)=wbdia_(ix,iy,1)/
-     &        (zb(ix,iy)*qe*nb(ix,iy))*bb(ix,iy,2)/bb(ix,iy,3)**2       !srv 15.02.12
-         enddo
-        enddo
-       else
-        wbdia_ = 0.0_R8
-        vbecrb_= 0.0_R8
-       endif
-
-      endif                                                             !srv 14.07.10 }
-
       do ix=-1,nx
        do iy=-1,ny
-         kbnrgy(ix,iy) = 0.5_R8*mb*(ub(ix,iy)**2+                ! ua is a value in the cell center
-     .     (xwdia*wbdia_(ix,iy,0)+xvecrb*vbecrb_(ix,iy,0))**2+   ! wbdia_ is a value in the cell center
-     .     (xwdia*wbdia_(ix,iy,1)+xvecrb*vbecrb_(ix,iy,1))**2)   ! vbecrb_ is a value in the cell center
+         kbnrgy(ix,iy) = 0.5_R8*mb*ub(ix,iy)**2
        end do
       end do
 

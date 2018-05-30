@@ -992,6 +992,11 @@ c
       integer lenval, ierror
 #endif
 #endif
+#ifndef NO_GETENV
+      character*12 device_env
+      logical streql
+      external streql
+#endif
       real (kind=R8) ::
      *  ubr, ubt, ubp, upsi
       parameter (line_length=256)
@@ -1028,20 +1033,22 @@ c
       device = 'iter'
 #endif
 #ifndef NO_GETENV
+      device_env = ' '
 #ifdef NAGFOR
       call get_environment_variable('DEVICE',
      . status=ierror, length=lenval)
       if (ierror.eq.0)
-     > call get_environment_variable('DEVICE',value=device)
+     > call get_environment_variable('DEVICE',value=device_env)
 #else
 #ifdef USE_PXFGETENV
-      CALL PXFGETENV ('DEVICE', 0, device, lenval, ierror)
+      CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
 #else
-      call getenv ('DEVICE', device)
+      call getenv ('DEVICE', device_env)
 #endif
 #endif
+      if (.not.streql(device_env,' ')) device = device_env
 #endif
-      if(istyle.eq.-1) then      	 !xpb  DG-CARRE-format geometry input
+      if(istyle.eq.-1) then        !xpb  DG-CARRE-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/Carre/meshes/'//trim(device)
         if(open_file(lun,local_sonnet,meshpath)) then

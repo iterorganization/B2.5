@@ -237,7 +237,7 @@ cdpc
          call ma28adcopy3                                          !srv 26.12.17
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
          if(nltrsol.gt.0 .or. iflag.lt.0)
-     1   write(*,'(a,i6,i8,a,i8,i8,a,i8)') 
+     1   write(*,'(a,i6,i8,a,i8,i8,a,i8)')
      .    'iflag,minirn/dim,minicn/dim ',
      2     iflag,minirn,' /',solvdim1,minicn,' /',solvdim
          do i=1,solvdim
@@ -300,7 +300,7 @@ cdpc
 
       entry restart_ma28_for_7                                     !srv 11.01.00
       lfirst=.true.
-      write(*,*) 'Restarting ma28'
+      write(*,*) 'Restarting ma28_for_7'                           !srv 02.04.18
       return
 
 *=======================================================================

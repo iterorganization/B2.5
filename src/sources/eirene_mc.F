@@ -3204,7 +3204,7 @@ c
 !                rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,1)
 !                recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,1)
 !pb
-                 radarr(ix,iy)=eneutrad(ix+1,iy+1,iatm,0)
+                 radarr(ix,iy)=radarr(ix,iy)+eneutrad(ix+1,iy+1,iatm,0)
                  rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,0)
                  rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,0)
                  recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,0)
@@ -3231,7 +3231,7 @@ c
       endif
       if (dbg_eir_mc.ge.2 .and. main_call) write(*,'(a,1p,2(1x,e14.7))')
      . 'EIRENE_MC. RADARR, RAD_NEUTR : ',
-     .  SUM(radarr(1:nx,1:ny)), rad_neutr
+     .  SUM(radarr(0:nx-1,0:ny-1)), rad_neutr
 
       if(.not.filedata(ntrc_int)) then
         write(*,'(a,1p,1000g12.4)')
@@ -3259,12 +3259,27 @@ cxpb  core recycling into ions of the highest ionisation stage
         if (balance_netcdf.ne.0) then
           eirene_mc_core_sna0to1=0.0_R8 !djm Jan2017
         endif
-        do iy = -1, ny
-          do ix = -1, nx
-            do j = 1, nnatmi
+        do j = 1, nnatmi
+          ! compute the average density on the core boundary (t1)
+          t1 = 0.0_R8
+          do iy = -1, ny
+            do ix = -1, nx
               if (bottomiy(ix,iy).eq.-2 .and.
      &            on_closed_surface(ix,iy)) then
+                t1 = t1 +
+     &           na(topix(ix,iy),topiy(ix,iy),ishigh(j))*
+     &           gs(topix(ix,iy),topiy(ix,iy),1)
+              end if
+            end do
+          end do
+          t1 = t1/core_surface
+          do iy = -1, ny
+            do ix = -1, nx
+              if (bottomiy(ix,iy).eq.-2 .and.
+     &            on_closed_surface(ix,iy)) then
+! the recycling flux is modulated as per the poloidal density distribution
                 t0=core_flux(j)*
+     *           (na(topix(ix,iy),topiy(ix,iy),ishigh(j))/t1)*
      *           (gs(topix(ix,iy),topiy(ix,iy),1)/core_surface)
                 if(linearisation.eq.1) then !{
                   if(t0.gt.0.0_R8) then !{
@@ -3304,9 +3319,9 @@ cxpb  core recycling into ions of the highest ionisation stage
                   endif
                 end if !}
               endif
-            enddo
-          enddo
-        enddo
+            enddo  !ix}
+          enddo  !iy}
+        enddo  !j}
       else if (ionising_core.lt.0) then
         ib=abs(ionising_core)
         call xertst (ib.le.nbc,
@@ -3315,13 +3330,16 @@ cxpb  core recycling into ions of the highest ionisation stage
           is=ishigh(j)
           if(bccon(is,ib).ne.13) then
             if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
+     1       write(*,'(a,i3,1x,i3,a,i3)')
+     .       'eirene_mc: bccon for is,ib= ',is,ib,
      2       ' <> 13, current value = ',bccon(is,ib)
-C           call xerrab ('eirene_mc: bccon <> 13')
+c            call xerrab
+c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
           else
             conpar(is,ib,3)=core_flux(j)
             if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,*) 'eirene_mc: conpar(is,ib,3) = ',
+     1       write(*,'(a,1p,1e12.5,a,i3,1x,i3)')
+     .       'eirene_mc: conpar(is,ib,3) = ',
      2       conpar(is,ib,3),' for is,ib= ',is,ib
           endif
         enddo

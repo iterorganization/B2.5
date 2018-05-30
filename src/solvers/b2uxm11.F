@@ -1,38 +1,50 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uxm9 (nx, ny, nregionv, itcnt, solvereg, conb,
-     . aa9, name)                                                       !sv 13.10.06
+      subroutine b2uxm11 (nx, ny, isb, zb, fac_vis, nregionv, itcnt,
+     &                    solvereg, po, ti, nb, pb, conb, aa11, name)    !srv 02.04.18
       use b2mod_types
       use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, nregionv, itcnt
+      integer nx, ny, isb, nregionv, itcnt
       real (kind=R8) ::
-     *   conb(-1:nx,-1:ny,0:1,0:1)
+     *   fac_vis(-1:nx,-1:ny), zb(-1:nx,-1:ny), po(-1:nx,-1:ny),
+     &   ti(-1:nx,-1:ny), nb(-1:nx,-1:ny), pb(-1:nx,-1:ny),
+     &   conb(-1:nx,-1:ny,0:1,0:1)
       logical solvereg(0:nregionv)
       character*(*) name
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   aa9(-1:nx,-1:ny,-6:6)
+     *   aa11(-1:nx,-1:ny,-7:7)
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2UXM9 computes a matrix which corresponds of approximation mixed
-*     derivatives in equations on nine-point stencil.
+*     B2UXM11 computes a matrix which corresponds of approximation mixed
+*     derivatives in equations on 11-point stencil.
 *
 *-----------------------------------------------------------------------
-!                 2_____3_____4                     5___________6
-!                 |     |     |                     |     |     |
-!                 |     |     |                     |     |     |
-!                -1_____0_____1                     |_____|_____|
-!                 |     |     |                     |     |     |
-!                 |     |     |                     |     |     |
-!                -4____-3____-2                    -6_____|____-5
-
+!                                                           7
+!                                                           |
+!                                                           |
+!       2_____3_____4          5___________6           _____3_____
+!       |     |     |          |     |     |          |     |     |
+!       |     |     |          |     |     |          |     |     |
+!      -1_____0_____1          |_____|_____|          |_____0_____|
+!       |     |     |          |     |     |          |     |     |
+!       |     |     |          |     |     |          |     |     |
+!      -4____-3____-2         -6_____|____-5          |____-3_____|
+!                                                           |
+!                                                           |
+!                                                          -7
+!
+!                                 (ix,iy+2)
+!                                    |
+!                                    |
+!                                    |
 !                (ix-1,iy+1)______(ix,iy+1)____(ix+1,iy+1)
 !                     |              |              |
 !                     |              |              |
@@ -42,16 +54,22 @@
 !                     |              |              |
 !                     |              |              |
 !                (ix-1,iy-1)______(ix,iy-1)____(ix+1,iy-1)
+!                                    |
+!                                    |
+!                                    |
+!                                (ix,iy-2)
+!
 *.declarations
 
 *   ..local variables
-      integer ncall, ix, iy, ixl, iyl, ixr, iyr, ixb, iyb, ixt, iyt
+      integer ncall, n2, ix, iy, ixl, iyl, ixr, iyr, ixb, iyb, ixt, iyt
       integer ireg
-      integer, save :: iout = 0                                          !sv 13.10.06
+      integer, save :: iout = 0                                          !srv 13.10.06
       real (kind=R8) ::
-     *   aaf(-1:nx,-1:ny,-2:2)
+     *   aaf(-1:nx,-1:ny,-2:2), aa7(-1:nx,-1:ny,-3:3)
       save ncall
 *   ..procedures
+      intrinsic abs
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux5p
 *   ..initialization
@@ -62,11 +80,13 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2uxm9')
-*   ..set internal parameters on first call                              !sv 25.08.99
-      if (ncall.eq.0) then                                               !sv 06.07.06 {
-       call ipgeti ('b2uxm9_iout', iout)                                 !sv 13.10.06
-      endif                                                              !sv 06.07.06 }
+      call subini ('b2uxm11')
+*   ..set internal parameters on first call                              !srv 25.08.99
+      if (ncall.eq.0) then                                               !srv 06.07.06 {
+       call ipgeti ('b2uxm11_iout', iout)                                 !srv 13.10.06
+      endif                                                              !srv 06.07.06 }
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test itcnt
@@ -74,7 +94,7 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of conb
-       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')               !sv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')               !srv 13.10.06 {
        call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
       endif
 
@@ -149,10 +169,10 @@
          call my_out(70,nx,ny,aaf(-1,-1, 2),'aafp2'//trim(name))
        endif
 
-       aa9(:,:,-3) = aa9(:,:,-3) + aaf(:,:,-2)
-       aa9(:,:,-1) = aa9(:,:,-1) + aaf(:,:,-1)
-       aa9(:,:, 1) = aa9(:,:, 1) + aaf(:,:, 1)
-       aa9(:,:, 3) = aa9(:,:, 3) + aaf(:,:, 2)
+       aa11(:,:,-3) = aa11(:,:,-3) + aaf(:,:,-2)
+       aa11(:,:,-1) = aa11(:,:,-1) + aaf(:,:,-1)
+       aa11(:,:, 1) = aa11(:,:, 1) + aaf(:,:, 1)
+       aa11(:,:, 3) = aa11(:,:, 3) + aaf(:,:, 2)
 
 *   ..compute additional P.Sch part of nine-point matrix.
        do iy = -1, ny
@@ -161,8 +181,8 @@
 *       Case (ix-1,iy-1)
          if(leftix(ix,iy).eq.-2 .or. bottomiy(ix,iy).eq.-2 .or.
      &      .not.solvereg(ireg)) then
-            aa9(ix,iy,-4) = 0.0e0_R8
-            aa9(ix,iy,-6) = 0.0e0_R8
+            aa11(ix,iy,-4) = 0.0e0_R8
+            aa11(ix,iy,-6) = 0.0e0_R8
          else
             ixl = leftix(ix,iy)
             iyl = leftiy(ix,iy)
@@ -170,22 +190,22 @@
             iyb = bottomiy(ix,iy)
             if(bottomix(ixl,iyl) .eq. leftix(ixb,iyb) .and.
      &         bottomiy(ixl,iyl) .eq. leftiy(ixb,iyb)) then
-              aa9(ix,iy,-4) = aa9(ix,iy,-4)                           !sv 28.05.08
+              aa11(ix,iy,-4) = aa11(ix,iy,-4)                           !srv 28.05.08
      &               - conb(bottomix(ixl,iyl),bottomiy(ixl,iyl),0,1)
      &               + conb(leftix(ixb,iyb),leftiy(ixb,iyb),1,0)
-               aa9(ix,iy,-6) = 0.0e0_R8
+               aa11(ix,iy,-6) = 0.0e0_R8
             else
-               aa9(ix,iy,-4) = aa9(ix,iy,-4)                          !sv 28.05.08
+               aa11(ix,iy,-4) = aa11(ix,iy,-4)                          !srv 28.05.08
      &              - conb(bottomix(ixl,iyl),bottomiy(ixl,iyl),0,1)
-               aa9(ix,iy,-6) = aa9(ix,iy,-6) +                        !sv 28.05.08
+               aa11(ix,iy,-6) = aa11(ix,iy,-6) +                        !srv 28.05.08
      &                conb(leftix(ixb,iyb),leftiy(ixb,iyb),1,0)
             endif
          endif
 *       Case (ix-1,iy+1)
          if(leftix(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-          aa9(ix,iy,2) = 0.0e0_R8
-          aa9(ix,iy,5) = 0.0e0_R8
+          aa11(ix,iy,2) = 0.0e0_R8
+          aa11(ix,iy,5) = 0.0e0_R8
          else
             ixl = leftix(ix,iy)
             iyl = leftiy(ix,iy)
@@ -193,22 +213,22 @@
             iyt = topiy(ix,iy)
             if(leftix(ixt,iyt) .eq. topix(ixl,iyl) .and.
      &         leftiy(ixt,iyt) .eq. topiy(ixl,iyl)) then
-              aa9(ix,iy,2) = aa9(ix,iy,2) +                           !sv 28.05.08
+              aa11(ix,iy,2) = aa11(ix,iy,2) +                           !srv 28.05.08
      &                    conb(topix(ixl,iyl),topiy(ixl,iyl),0,0) -
      &                    conb(leftix(ixt,iyt),leftiy(ixt,iyt),1,1)
-             aa9(ix,iy,5) = 0.0e0_R8
+             aa11(ix,iy,5) = 0.0e0_R8
             else
-             aa9(ix,iy,2) = aa9(ix,iy,2) +                            !sv 28.05.08
+             aa11(ix,iy,2) = aa11(ix,iy,2) +                            !srv 28.05.08
      &                      conb(topix(ixl,iyl),topiy(ixl,iyl),0,0)
-             aa9(ix,iy,5) = aa9(ix,iy,5) -                            !sv 28.05.08
+             aa11(ix,iy,5) = aa11(ix,iy,5) -                            !srv 28.05.08
      &                      conb(leftix(ixt,iyt),leftiy(ixt,iyt),1,1)
             endif
          endif
 *       Case (ix+1,iy-1)
          if(rightix(ix,iy).eq.nx+1 .or. bottomiy(ix,iy).eq.-2 .or.
      &      .not.solvereg(ireg)) then
-          aa9(ix,iy,-2) = 0.0e0_R8
-          aa9(ix,iy,-5) = 0.0e0_R8
+          aa11(ix,iy,-2) = 0.0e0_R8
+          aa11(ix,iy,-5) = 0.0e0_R8
          else
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
@@ -216,22 +236,22 @@
             iyb = bottomiy(ix,iy)
             if(bottomix(ixr,iyr) .eq. rightix(ixb,iyb) .and.
      &       bottomiy(ixr,iyr) .eq. rightiy(ixb,iyb)) then
-              aa9(ix,iy,-2) = aa9(ix,iy,-2) +                         !sv 28.05.08
+              aa11(ix,iy,-2) = aa11(ix,iy,-2) +                         !srv 28.05.08
      &                     conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,1)
      &                   - conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
-              aa9(ix,iy,-5) = 0.0e0_R8
+              aa11(ix,iy,-5) = 0.0e0_R8
             else
-              aa9(ix,iy,-2) = aa9(ix,iy,-2) +                         !sv 28.05.08
+              aa11(ix,iy,-2) = aa11(ix,iy,-2) +                         !srv 28.05.08
      &                     conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,1)
-              aa9(ix,iy,-5) = aa9(ix,iy,-5) -                         !sv 28.05.08
+              aa11(ix,iy,-5) = aa11(ix,iy,-5) -                         !srv 28.05.08
      &                     conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
             endif
          endif
 *       Case (ix+1,iy+1)
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-           aa9(ix,iy,4) = 0.0e0_R8
-           aa9(ix,iy,6) = 0.0e0_R8
+           aa11(ix,iy,4) = 0.0e0_R8
+           aa11(ix,iy,6) = 0.0e0_R8
          else
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
@@ -239,30 +259,52 @@
             iyt = topiy(ix,iy)
             if(topix(ixr,iyr) .eq. rightix(ixt,iyt) .and.
      &       topiy(ixr,iyr) .eq. rightiy(ixt,iyt)) then
-              aa9(ix,iy,4) = aa9(ix,iy,4) -                           !sv 28.05.08
+              aa11(ix,iy,4) = aa11(ix,iy,4) -                           !srv 28.05.08
      &                      conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)+
      &                      conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
-              aa9(ix,iy,6) = 0.0e0_R8
+              aa11(ix,iy,6) = 0.0e0_R8
             else
-              aa9(ix,iy,4) = aa9(ix,iy,4) -                           !sv 28.05.08
+              aa11(ix,iy,4) = aa11(ix,iy,4) -                           !srv 28.05.08
      &                      conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)
-              aa9(ix,iy,6) = aa9(ix,iy,6) +                           !sv 28.05.08
+              aa11(ix,iy,6) = aa11(ix,iy,6) +                           !srv 28.05.08
      &                      conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
             endif
          endif
 
         enddo
-       enddo
+      enddo
+*  .. calculate the coefficients of 7-point stencil from
+*     viscosity perpendicular current by numerically
+!      call b2unavspr7n(nx, ny, isb, zb, fac_vis, po, ti, nb, pb, aa7)  !srv 02.04.18
 
-       if(iout.ne.0) then
-          call my_out(70,nx,ny,aa9(-1,-1,-4),'aa9xm1ym1'//trim(name))
-          call my_out(70,nx,ny,aa9(-1,-1,-6),'aa9ym1xm1'//trim(name))
-          call my_out(70,nx,ny,aa9(-1,-1, 4),'aa9xp1yp1'//trim(name))
-          call my_out(70,nx,ny,aa9(-1,-1, 6),'aa9yp1xp1'//trim(name))
-          call my_out(70,nx,ny,aa9(-1,-1,-2),'aa9xp1ym1'//trim(name))
-          call my_out(70,nx,ny,aa9(-1,-1,-5),'aa9ym1xp1'//trim(name))
-          call my_out(70,nx,ny,aa9(-1,-1, 2),'aa9xm1yp1'//trim(name))
-          call my_out(70,nx,ny,aa9(-1,-1, 5),'aa9yp1xm1'//trim(name))
+      call b2unavspr7a(nx, ny, nregionv, solvereg, isb, zb,              !srv 02.04.18 {
+     &              fac_vis, ti, nb, pb, aa7)
+*  .. calculate the coefficients of 7-point stencil from
+*     viscosity perpendicular current by analytically
+
+*  .. add coefficients
+      aa11(:,:,-7) = aa11(:,:,-7) + aa7(:,:,-3)
+      aa11(:,:,-3) = aa11(:,:,-3) + aa7(:,:,-2)
+      aa11(:,:, 0) = aa11(:,:, 0) + aa7(:,:, 0)
+      aa11(:,:, 3) = aa11(:,:, 3) + aa7(:,:, 2)
+      aa11(:,:, 7) = aa11(:,:, 7) + aa7(:,:, 3)
+
+      if(iout.ne.0) then
+        call my_out(70,nx,ny,aa11(-1,-1,-7),'aa11xym2'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1,-6),'aa11ym1xm1'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1,-5),'aa11ym1xp1'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1,-4),'aa11xm1ym1'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1,-3),'aa11xym1'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1,-2),'aa11xp1ym1'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1,-1),'aa11xm1y'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1, 0),'aa11xy'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1, 1),'aa11xp1y'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1, 2),'aa11xm1yp1'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1, 3),'aa11xyp1'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1, 4),'aa11xp1yp1'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1, 5),'aa11yp1xm1'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1, 6),'aa11yp1xp1'//trim(name))
+        call my_out(70,nx,ny,aa11(-1,-1, 7),'aa11xyp2'//trim(name))
       endif
 
 * ..return
@@ -271,6 +313,6 @@
       return
 
 *-----------------------------------------------------------------------
-*.end b2uxm9
+*.end b2uxm11
 
-      end
+      end                                               !srv 02.04.18 }

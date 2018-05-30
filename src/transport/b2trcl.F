@@ -118,7 +118,7 @@ csw 13mar2012
 *   ..initialisation
       save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode
       data ncall/0/, lthf21/0/, lvis21/0/, mode/1/,
-     1  cthiv/2.65_R8/, cthev/0.0_R8/, vis_par/0.0_R8/,
+     1  cthiv/2.65_R8/, cthev/0.0_R8/, vis_par/1.0_R8/,
      1  lluciani/3/
 
 *-----------------------------------------------------------------------

@@ -55,7 +55,11 @@ program b2_ual_write
 #endif
     implicit none
 
-    external ipgeti, ipgetc
+#ifndef NO_GETENV
+    character(len=24) :: device_env
+#endif
+    logical streql
+    external ipgeti, ipgetc, streql
 
     !! Local variables
     character(len=24) :: treename   !< The name of the IMAS IDS database
@@ -96,20 +100,24 @@ program b2_ual_write
     call xertst( 0.le.run.and.run.le.9999, 'Invalid run number')
     username=usrnam()
     call ipgetc( 'b2mndr_user', username )
+    call xertst( .not.streql(username,' '), 'User name not defined !')
     device = 'solps-iter'
 #ifndef NO_GETENV
+    device_env = ' '
 #ifdef NAGFOR
     call get_environment_variable('DEVICE', status=ierror, length=lenval)
-    if (ierror.eq.0) call get_environment_variable('DEVICE',value=device)
+    if (ierror.eq.0) call get_environment_variable('DEVICE',value=device_env)
 #else
 #ifdef USE_PXFGETENV
-    CALL PXFGETENV ('DEVICE', 0, device, lenval, ierror)
+    CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
 #else
-    call getenv ('DEVICE', device)
+    call getenv ('DEVICE', device_env)
 #endif
 #endif
+    if (.not.streql(device_env,' ')) device = device_env
 #endif
     call ipgetc( 'b2mndr_device', device )
+    call xertst( .not.streql(device,' '), 'Device not defined !')
     systemarg='imasdb '//trim(device)
 #ifdef IMAS
     call system(systemarg)

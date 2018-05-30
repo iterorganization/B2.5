@@ -776,8 +776,9 @@ c     fni_32, fni_52, fne_32, fne_52,
 c     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 c 23: fht definition changed to 5/2 formulation
+c 24: removed drift velocity contributions from kinrgy
 
-      dbversion=23
+      dbversion=24
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)

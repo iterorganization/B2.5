@@ -117,6 +117,7 @@
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0, iout = 0, !srv 13.10.06
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 iout_b2npmo = 0, iout_b2wdat = 0
@@ -156,7 +157,7 @@
      *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
      *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                             !srv 29.09.15
       real (kind=R8), save :: ycur = 1.0e0_R8
-      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8          !srv 02.10.17
+      real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8          !srv 02.10.17
       real (kind=R8), save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
      &                        phm2 = 1.0e0_R8,
      &                        corr_flux   = 0.0e0_R8                    !srv 25.07.05
@@ -164,14 +165,14 @@
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
       character chns*3, chk*1                                           !srv 11.07.05
-      logical decay_length_ok, fedback_species
+      logical decay_length_ok, fedback_species, core_boundary, ishigh
       logical, save :: BCCON14_W(NBCD), BCCON14_E(NBCD)                 !srv 20.09.17
       real (kind=R8) ::
      *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
       integer isfeedback, fix_fch_in_fhe_sheath
       integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
-      integer, save :: use_eirene, no_current
+      integer, save :: use_eirene, no_current, ionising_core
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
      1 bc_type13_norm, bc_type13_fac, na_min, na_new
       character*26 boundary_location(nbcd)
@@ -199,7 +200,7 @@
      &  abs(am(is)-am(js)).lt.amtol
 *   ..initialisation
       data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
-     1 bc_type16_ref/1/, bc_type20_ref/1/,
+     1 bc_type16_ref/1/, bc_type20_ref/1/, ionising_core/0/,
      2 na_min/1.0e4_R8/, na_new/1.0e14_R8/,
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
@@ -260,44 +261,51 @@
        call ipgeti ('b2stbc_fix_fch_in_fhe_sheath',
      1   fix_fch_in_fhe_sheath)
        call ipgeti ('b2stbc_fix_sx_in_fhe_sheath',
-     1   fix_sx_in_fhe_sheath)                                      !srv 08.05.09
+     1   fix_sx_in_fhe_sheath)                                          !srv 08.05.09
        call ipgeti ('b2stbc_type16_kinetic_energy',
      1   bc_type16_kinetic_energy)
-       call ipgetr ('b2stbc_cbc', cbc)                              !srv 14.10.99
-       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
-       call ipgeti ('b2stbc_istyle_fchi', istyle_fchi)              !srv 14.02.05
-       call ipgetr ('b2stbc_corr_flux_in_core', corr_flux)          !srv 25.07.05
-       call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)        !srv 25.07.05
-       call ipgeti ('b2stbc_iout', iout)                            !srv 11.07.05
-       call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !srv 13.10.06
-       call ipgeti ('b2tfhe_mdf', mdf_fhe)                          !srv 13.10.06
-       call ipgeti ('b2tfhi_mdf', mdf_fhi)                          !srv 13.10.06
-       call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                      !srv 28.04.08
+       call ipgetr ('b2stbc_cbc', cbc)                                  !srv 14.10.99
+       call ipgeti ('b2stbc_average_pr', istyle_average_pr)             !srv 08.08.02
+       call ipgeti ('b2stbc_istyle_fchi', istyle_fchi)                  !srv 14.02.05
+       call ipgetr ('b2stbc_corr_flux_in_core', corr_flux)              !srv 25.07.05
+       call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)            !srv 25.07.05
+       call ipgeti ('b2stbc_iout', iout)                                !srv 11.07.05
+       call ipgeti ('b2tfnb_mdf', mdf_fnb)                              !srv 13.10.06
+       call ipgeti ('b2tfhe_mdf', mdf_fhe)                              !srv 13.10.06
+       call ipgeti ('b2tfhi_mdf', mdf_fhi)                              !srv 13.10.06
+       call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                          !srv 28.04.08
        call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
-     &                      istyle_cur_contr_on_S_and_N)            !srv 01.02.09
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
-       call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
+     &                      istyle_cur_contr_on_S_and_N)                !srv 01.02.09
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
+       call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
+       call ipgeti ('b2npc7_iout', iout_b2npc7)                         !srv 02.04.18
+       call ipgeti ('b2npc11_iout', iout_b2npc11)                       !srv 02.04.18
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
        call ipgeti ('b2npp7_iout', iout_b2npp7)
-       call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
+       call ipgeti ('b2nppo_iout', iout_b2nppo)                         !srv 11.09.09 }
        call ipgetr ('b2stbc_bc_ref', bc_ref)
-       call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                  !srv 11.04.13
-       call ipgetr ('b2stbc_bc_ref_ti', bc_ref_ti)                  !srv 11.04.13
+       call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                      !srv 11.04.13
+       call ipgetr ('b2stbc_bc_ref_ti', bc_ref_ti)                      !srv 11.04.13
        call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
        call ipgeti ('b2stbc_bcene_16_style', bcene_16_style)
        call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
        call ipgeti ('b2tfhe_no_current', no_current)
-       call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
+       call ipgeti ('b2news_poteq', pot_eq)                             !srv 27.02.13
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-       call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 23.05.14 !srv 29.09.15
+       call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)              !Solovyev 23.05.14 !srv 29.09.15
        call ipgetr ('b2tfhi_ycur', ycur)
        call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
        call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
        call ipgeti ('eirene_sheath_pot',eirene_sheath_pot)
+       call ipgeti ('eirene_ionising_core', ionising_core)
+       if (ionising_core.eq.0)     ! for backward compatibility
+     >   call ipgeti ('eirene_ionizing_core', ionising_core)
+       call xertst (ionising_core.gt.0.or.abs(ionising_core).le.nbc,
+     1   'faulty input ionising_core, abs(ionising_core) > NBC')
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -502,6 +510,8 @@ cwdk  now need to recompute full diamagnetic component for ud
           write(boundary_location(ib),'(a4,i4,a6,i4,a4,i4)')
      .     ' at ',BCPOS(IB),' from ',BCSTART(IB),' to ',BCEND(IB)
         endif
+        core_boundary = BCCHAR(IB).EQ.'S' .and.
+     &   on_closed_surface(bc_list_x(1,ib),bc_list_y(1,ib))
 
 * -- Moving core tally according to B.C.
 * -- Must be done only once!
@@ -583,7 +593,8 @@ cwdk  now need to recompute full diamagnetic component for ud
         call my_out(70,nx,ny,wrk0,'b2stbc_phys_smo'//chns)
        enddo
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1
+     &              .or.  iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 )  !srv 02.04.18
      &        .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
@@ -663,6 +674,11 @@ cwdk  now need to recompute full diamagnetic component for ud
       endif
 
       DO IS=0, NS-1
+        if (is.eq.ns-1) then
+          ishigh = .true.
+        else
+          ishigh = .not.lnext(is,is+1)
+        end if
 
 * -- BOUNDARY CONDITIONS FOR CONTINUITY EQUATIONS --
         if(BCCON(IS,IB).eq.0) goto 10000
@@ -677,10 +693,12 @@ cwdk  now need to recompute full diamagnetic component for ud
 
   100     CONTINUE
           if(ncall.eq.0) then
-            IF(BCCHAR(IB).EQ.'S') THEN
-            if(is.eq.ismain.and.use_astra.ne.0) then
+            IF(core_boundary) THEN
+             if(is.eq.ismain.and.use_astra.ne.0) then
               CONPAR(IS,IB,1) = neb_astra                               !srv 28.07.11
-            endif
+             endif
+             if (ishigh) call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 1')
             ENDIF
             if (CONPAR(IS,IB,1).eq.0.0_R8) then
               CONPAR(IS,IB,1) = na_min
@@ -761,6 +779,9 @@ cwdk  now need to recompute full diamagnetic component for ud
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'density gradient ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            if (core_boundary.and.ishigh)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 2')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -879,6 +900,9 @@ cwdk  now need to recompute full diamagnetic component for ud
      1       'BCCON = 4, CONPAR(,,1) !> 0')
             call xertst(CONPAR(IS,IB,2).gt.0.0_R8,
      1       'BCCON = 4, CONPAR(,,2) !> 0')
+            if (core_boundary.and.ishigh)
+     .       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 4')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -987,6 +1011,9 @@ cghgh
      .      'total particle flux ',CONPAR(IS,IB,1),
      1      ' with const density on ',BCCHAR(IB),
      2      boundary_location(ib),' for species ',IS
+           if (core_boundary.and.ishigh)
+     >      call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 6')
           endif
           IF(BCCHAR(IB).EQ.'N') THEN
             s1=0.0_R8
@@ -1306,6 +1333,9 @@ cghgh
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(CONPAR(IS,IB,1).ne.0.0_R8,
      1       'B2STBC -- BCCON=9, CONPAR(,,1) = 0')
+            if (core_boundary.and.ishigh)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 9')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -1404,6 +1434,9 @@ cghgh
      .       'leakage ',CONPAR(IS,IB,1),' on ',BCCHAR(IB),
      1       boundary_location(ib),
      2       ' for species ',IS
+            if (core_boundary.and.ishigh)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 10')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -1678,6 +1711,9 @@ cghgh
            call xertst ((0.0_R8.eq.nesepm.and.0.0_R8.eq.ndes_sol).or.
      1      0.0_R8.eq.nesepm_overshoot,
      1      'BCCON=12 coding incompatible with nesepm_overshoot!')
+           if (core_boundary.and.ishigh)
+     >      call xertst (ionising_core.eq.0,
+     .      'ionising_core switch usage inconsistent with BCCON = 12')
           endif
           IF (BCCHAR(IB).EQ.'S') THEN
 *   ..initialise ireg
@@ -1752,6 +1788,9 @@ cghgh
      1       BCCHAR(IB),boundary_location(ib),
      2       ' for species ',IS, ' with parameters ',
      3       CONPAR(IS,IB,1),CONPAR(IS,IB,2)
+            if (core_boundary.and.ishigh)
+     .       call xertst (ionising_core.le.0,
+     .       'ionising_core switch usage inconsistent with BCCON = 13')
           endif
 c dpc
           IF(BCCHAR(IB).EQ.'S') THEN
@@ -1851,20 +1890,20 @@ c dpc
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       ' sound speed flux ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
-            endif
-            IF(BCCHAR(IB).EQ.'W') THEN
-              DO IY = 1, BC_LIST_SIZE(IB)
-                S1 = ABS(
+          endif
+          IF(BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              S1 = ABS(
      1           PBS(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))
-                CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     .                  RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-!                CS=SQRT(BCINT(PR,NX,NY,IY,IB)/BCINT(RO,NX,NY,IY,IB))
-                SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
-                SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+              CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     .                RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+!             CS=SQRT(BCINT(PR,NX,NY,IY,IB)/BCINT(RO,NX,NY,IY,IB))
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
      .           S1*CONPAR(IS,IB,1)*CS
-                sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
+              sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
      &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
      &           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)
               if(mdf_fnb.ne.0) then                                   !srv 13.10.06 {
@@ -1880,18 +1919,18 @@ c dpc
      &               na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
                 endif
               endif                                                   !srv 13.10.06 }
-              ENDDO
-            ELSEIF(BCCHAR(IB).EQ.'E') THEN
-              DO IY = 1, BC_LIST_SIZE(IB)
-                S1 = ABS(PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
-                CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     .                  RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-!                CS=SQRT(BCINT(PR,NX,NY,IY,IB)/BCINT(RO,NX,NY,IY,IB))
-                SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
-                SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+            ENDDO
+          ELSEIF(BCCHAR(IB).EQ.'E') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              S1 = ABS(PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
+              CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     .                RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+!              CS=SQRT(BCINT(PR,NX,NY,IY,IB)/BCINT(RO,NX,NY,IY,IB))
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
      .           S1*CONPAR(IS,IB,1)*CS
-                sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
+              sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
      &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)
               if(mdf_fnb.ne.0) then                                   !srv 13.10.06 {
@@ -1905,9 +1944,9 @@ c dpc
      &               na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
                 endif
               endif                                                   !srv 13.10.06 }
-              ENDDO
-            ELSE
-              CALL XERRAB ('B2STBC -- BCCON=14, NOT IN RADIAL DIR')
+            ENDDO
+          ELSE
+            CALL XERRAB ('B2STBC -- BCCON=14, NOT IN RADIAL DIR')
           ENDIF
           GOTO 10000
 
@@ -1919,6 +1958,9 @@ c dpc
      .       'prescribe the decay length for the density',
      &       ' for drifs switched on ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            if (core_boundary.and.ishigh)
+     .       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 15')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN                                !srv 23.07.10 {
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -1993,6 +2035,9 @@ c dpc
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            if (core_boundary.and.ishigh)
+     .       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 16')
           endif
           if(.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S') THEN
@@ -2179,6 +2224,8 @@ c dpc
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            if (ishigh) call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 19')
           endif
           if(.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S') THEN
@@ -2310,6 +2357,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 1, CONPAR(,,1) !> 0')
+            if (core_boundary.and.ishigh)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 20')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             naave = 0.0_R8
@@ -2423,6 +2473,9 @@ cxpb Careful here because of BC number clash
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             END DO
+            if (core_boundary.and.ishigh)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 21')
           endif
           IF(BCCHAR(IB).EQ.'S' .and.
      &       on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
@@ -2528,6 +2581,9 @@ cxpb Careful here because of BC number clash
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            if (core_boundary.and.ishigh)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 22')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             if(.not.once_bccon(is)) then
@@ -2664,6 +2720,8 @@ cxpb Careful here because of BC number clash
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            if (ishigh) call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 23')
           endif
 
           IF(BCCHAR(IB).EQ.'S') THEN
@@ -2789,6 +2847,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1       'BCCON = 24, CONPAR(,,1) !> 0')
             call xertst(CONPAR(is,ib,2).gt.0.0_R8,
      &           'faulty parameter conpar2')
+            if (ishigh.and.core_boundary)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 24')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             naave = 0.0_R8
@@ -2930,6 +2991,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             END DO
+            if (ishigh.and.core_boundary)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 25')
           endif
 
           IF(BCCHAR(IB).EQ.'S') THEN
@@ -3034,6 +3098,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            if (ishigh.and.core_boundary)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 26')
           endif  ! ncall == 0
           IF(BCCHAR(IB).EQ.'S') THEN
             if(.not.once_bccon(is)) then
@@ -3164,6 +3231,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 27')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             if(.not.once_bccon(is)) then

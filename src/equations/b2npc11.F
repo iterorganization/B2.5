@@ -1,10 +1,10 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npc9 (nx, ny, guard_flows,                        !srv 05.07.08
+      subroutine b2npc11 (nx, ny, fac_vis, guard_flows, zb,          !srv 05.07.08 02.04.18 {
      &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb, rxf,
      &  vol, pbs, flob, conb, snb,                                   !srv 22.01.02 13.10.06
-     &  pccb, pb, nb, ub, fnb, rescb, corpb, ierr)
+     &  pccb, po, ti, pb, nb, ub, fnb, rescb, corpb, ierr)
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_indirect
@@ -15,9 +15,10 @@
       integer nx, ny, guard_flows, nregionv, itcnt, isb              !srv 05.07.08
       real (kind=R8) ::
      *   rxf, vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
-     &  flob(-1:nx,-1:ny,0:1),
+     &  fac_vis(-1:nx,-1:ny), flob(-1:nx,-1:ny,0:1),
      &  conb(-1:nx,-1:ny,0:1,0:4), snb(-1:nx,-1:ny,0:1),             !srv 13.10.06
-     &  pccb(-1:nx,-1:ny,0:1), fnb(-1:nx,-1:ny,0:1)
+     &  pccb(-1:nx,-1:ny,0:1), fnb(-1:nx,-1:ny,0:1),
+     &  po(-1:nx,-1:ny), ti(-1:nx,-1:ny), zb(-1:nx,-1:ny)
       logical solvcreg(0:nregionv), ua_solve, solvmreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -32,9 +33,9 @@
 *
 *  1. purpose
 *
-*     B2NPC9 performs one iteration of a relaxation process for the
+*     B2NPC11 performs one iteration of a relaxation process for the
 *     solution of the continuity equation for one atomic species using
-*     a nine-point stencil.
+*     an 11-point stencil.
 *
 *
 *  3. description (see also routine b2cdca)
@@ -60,7 +61,7 @@
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
-     *   aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)
+     *   aa11(-1:nx,-1:ny,-7:7), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1, use_eirene
 *   ..procedures
       external subini, subend, xertst, ipgetr, lwget
@@ -91,16 +92,16 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2npc9')
+      call subini ('b2npc11')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2npc9_rxg', rxg)
-       call ipgetr ('b2npc9_pcm0', pcm0)
-       call ipgetr ('b2npc9_pcm1', pcm1)
+       call ipgetr ('b2npc11_rxg', rxg)
+       call ipgetr ('b2npc11_pcm0', pcm0)
+       call ipgetr ('b2npc11_pcm1', pcm1)
        call xertst (0.lt.rxg, 'faulty internal parameter rxg')
        call xertst (0.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
-       call ipgeti ('b2npc9_iout', iout)                              !srv 13.07.05
+       call ipgeti ('b2npc11_iout', iout)                              !srv 13.07.05
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
@@ -116,7 +117,7 @@
 *    ..test sign of conb
        if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !srv 06.07.06 {
         call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')                 !srv 18.11.05 13.10.06
-       endif                                                          !srv 06.07.06 }
+       endif                                                        !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
        call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                 !srv 13.10.06 {
@@ -144,19 +145,19 @@ cdjm Jan2017 update particle source components for balance
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 15.02.10 { this part should be re-written
        do iy=-1, ny, ny+1                                             !srv 27.06.08 {
         do ix = -1, nx
-         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
-          rescb(ix,iy) = 0.0_R8
-         endif
+          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+            rescb(ix,iy) = 0.0_R8
+          endif
         enddo
        enddo                                                          !srv 27.06.08 }
       endif                                                           !srv 15.02.10 }
 *   ..compute correction
       write (chns,'(i3.3)') isb
-      call b2usc9 (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, !srv 13.10.06 26.09.12
-     &   pbs, nb, pb, snb(-1,-1,1), flob, conb, pccb(-1,-1,1), rescb,  
-     &   corpb, aa9, '_b2usc9_'//chns)                                !srv 18.05.02 02.04.18
+      call b2usc11 (nx, ny, fac_vis, isb, zb, nregionv, solvcreg, itcnt, !srv 13.10.06 26.09.12
+     &   rxg, pcm1, pbs, po, ti, nb, pb, snb(-1,-1,1), flob, conb,
+     &   pccb(-1,-1,1), rescb, corpb, aa11, '_b2usc11_'//chns)           !srv 18.05.02 02.04.18
 *   ..apply correction
-      call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
+      call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      & vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                    !IYS 19.12.2017
       if(guard_flows.eq.2 .or.                                        !srv 06.07.08 {
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 06.07.08 {
@@ -165,14 +166,14 @@ cdjm Jan2017 update particle source components for balance
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2 )
      &     nb(ix,iy) = exp(
-     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
-     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) +
+     .      log(nb(topix(ix,iy),topiy(ix,iy))) -
      &      log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
      &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
           if(rightix(ix,iy).eq.nx+1 )
      &     nb(ix,iy) = exp(
-     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
-     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) +
+     .      log(nb(topix(ix,iy),topiy(ix,iy))) -
      &      log(nb(topix(leftix(ix,iy),leftiy(ix,iy)),
      &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
         enddo
@@ -180,39 +181,39 @@ cdjm Jan2017 update particle source components for balance
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2 )
      &     nb(ix,iy) = exp(
-     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
-     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) +
+     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
      &      log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
           if(rightix(ix,iy).eq.nx+1 )
      &     nb(ix,iy) = exp(
-     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
-     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) +
+     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
      &      log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
         enddo                                                         !srv 27.06.08 }
       endif                                                           !srv 06.07.08 }
       if (iout.ne.0) then                                             !srv 12.07.02 {
         write (chns,'(i3.3)') isb
-        call my_out(70,nx,ny,pb,'b2npc9_pa'//chns)
-        call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
-        call my_out(70,nx,ny,ub,'b2npc9_ua'//chns)
-        call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)
-        call my_out(70,nx,ny,snb(-1,-1,0),'b2npc9_sna0'//chns)
-        call my_out(70,nx,ny,snb(-1,-1,1),'b2npc9_sna1'//chns)
+        call my_out(70,nx,ny,pb,'b2npc11_pa'//chns)
+        call my_out(70,nx,ny,nb,'b2npc11_na'//chns)
+        call my_out(70,nx,ny,ub,'b2npc11_ua'//chns)
+        call my_out(70,nx,ny,rescb,'b2npc11_resco'//chns)
+        call my_out(70,nx,ny,snb(-1,-1,0),'b2npc11_sna0'//chns)
+        call my_out(70,nx,ny,snb(-1,-1,1),'b2npc11_sna1'//chns)
         wrk0=snb(:,:,0)+nb*snb(:,:,1)
-        call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
-        call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc9_fnax'//chns)
-        call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc9_fnay'//chns)
+        call my_out(70,nx,ny,wrk0,'b2npc11_sna'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc11_fnax'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc11_fnay'//chns)
       elseif (iout_b2wdat.eq.4) then                                  !iys 17.04.17
         write (chns,'(i3.3)') isb
-        call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
-        call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)
+        call my_out(70,nx,ny,nb,'b2npc11_na'//chns)
+        call my_out(70,nx,ny,rescb,'b2npc11_resco'//chns)
         wrk0=snb(:,:,0)+nb*snb(:,:,1)
-        call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
-        call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc9_fnax'//chns)
-        call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc9_fnay'//chns)
-      endif                                                          
+        call my_out(70,nx,ny,wrk0,'b2npc11_sna'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc11_fnax'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc11_fnay'//chns)
+      endif
 
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
@@ -224,6 +225,6 @@ cdjm Jan2017 update particle source components for balance
       return
 
 *-----------------------------------------------------------------------
-*.end b2npc9
+*.end b2npc11
 
-      end
+      end                                                           !srv 02.04.18 }

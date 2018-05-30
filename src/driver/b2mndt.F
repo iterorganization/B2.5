@@ -327,10 +327,10 @@ ctmp.dpc
      &                    fac_vis, fchvispar)
             call b2tiner (nx, ny, ns, vol,
      &                    gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!            call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,     !srv 10.10.17
-!     &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!            call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,      !srv 10.10.17
-!     &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
+            call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,     !srv 10.10.17
+     &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
+            call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,      !srv 10.10.17
+     &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
           endif                                                          !srv 18.06.08 }
           src_ni=0.0_R8
           src_ne=0.0_R8
@@ -349,7 +349,7 @@ ctmp.dpc
           call b2sral (nx, ny, ns, nxtl, nxtr,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,
-     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,             !srv 09.01.01
+     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, lnlam,      !srv 09.01.01 02.04.18
      &     na, ua,
      &     uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02

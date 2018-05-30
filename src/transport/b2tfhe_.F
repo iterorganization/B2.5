@@ -136,8 +136,8 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
 *   ..initialization
       data ncall/0/, fch_ion_neutral/0.0e0_R8/, fch_inert/1.0e0_R8/      !srv 07.07.99 22.03.02
      *        , fch_anomalous/1.0e0_R8/                                  !srv 22.03.02
-     *        , dia_cur/1.0e0_R8/, vis_par/0.0e0_R8/, vdia_par/1.0e0_R8/ !srv 17.05.99 22.03.02
-     *        , vis_q/1.0e0_R8/, vis_per/0.0e0_R8/                       !srv 11.07.99 22.11.99 22.03.02
+     *        , dia_cur/1.0e0_R8/, vis_par/1.0e0_R8/, vdia_par/1.0e0_R8/ !srv 17.05.99 22.03.02
+     *        , vis_q/1.0e0_R8/, vis_per/1.0e0_R8/                       !srv 11.07.99 22.11.99 22.03.02
 
 *-----------------------------------------------------------------------
 *.computation
@@ -223,8 +223,8 @@ c Drift terms
       call b2tdia(nx, ny, ns, vol, gs, hy, qz, bb,
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua,
-     &              cvsa_cl, fac_vis, fchvispar)                         !srv 20.09.06 16.10.17
+      call b2tvspa(nx, ny, ns, vol, hx, hy, qz, bb, ua,
+     &             cvsa_cl, fac_vis, fchvispar)                          !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,             !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)

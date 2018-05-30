@@ -677,8 +677,7 @@
 
          do ispecies = 0, nspecies-1
 
-            if(na_feedback_target(ispecies) .gt. 0.0_R8 .and.
-     &         na_feedback_choice(ispecies) .gt. 0 .and.
+            if(na_feedback_choice(ispecies) .gt. 0 .and.
      &         na_feedback_option(ispecies) .gt. 0 .and.
      &         na_feedback_actuator(ispecies) .gt.0) then
 
@@ -1222,10 +1221,11 @@
                write(*,'(a,1p,i3,g15.6)') 'na_feedback_actuator ', 
      &              ispecies+1, saved_na_feedback_actuator(ispecies)
 
+               if(na_feedback_choice(ispecies).eq.6)
+     >          deallocate(charge_frac)
+
             endif
 
-            if(na_feedback_choice(ispecies).eq.6)
-     >       deallocate(charge_frac)
          enddo
 
          feedback_namelist_used = .true.

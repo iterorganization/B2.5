@@ -715,14 +715,50 @@
 				<type>integer</type>
 				<description>
 					If no_solve.eq.1, then the code is run without actually solving any equations. All secondary and dependent data is computed.
-					The nstg(0:2) array is overwritten to '1's. The simulation time will not be updated. The code will compute fluxes, sources, transport coefficients, etc...
-					'ntim' times but not update the basic plasma quantities. Additionally, if no_solve is set to a negative value, then only some equations are solved (simulation time and nstg arrays will behave normally).
+					The nstg(0:2) array is overwritten to '1's. The simulation time will not be updated. The code will compute fluxes, sources, transport coefficients, etc... 'ntim' times but not update the basic plasma quantities. Additionally, if no_solve is set to a negative value, then only some equations are solved (simulation time and nstg arrays will behave normally).
 					no_solve.eq.-1 will activate the parallel momentum equations only.
-					no_solve.eq.-2 will activate the density equations only. no_solve.eq.-4 will activate the potential equation only. (Active only if poteq.eq.1, otherwise, the behaviour dictated by the poteq setting applies).
+					no_solve.eq.-2 will activate the density equations only.
+					no_solve.eq.-4 will activate the potential equation only. (Active only if poteq.eq.1, otherwise, the behaviour dictated by the poteq setting applies).
 					no_solve.eq.-8 will activate the heat equations only. These can be combined. For example, no_solve.eq.-3 will activate the parallel momentum and particle conservation equations.
 					If the no_solve switch requires an equation not to be solved, the settings in the corresponding solvexx arrays from b2.numerics.parameters are moot.
 					The latter are reserved for fine-tuning numerical diagnostics.
-				</description>
+					The table below shows which combination of equations will be solved	depending on the value of switch 'b2news_no_solve'
+					*----------------------------------------------------
+					*        | value |  co  |  mo  |  he  |  hi  |  po  |
+					*----------------------------------------------------
+					*        |   0   |  +   |  +   |  +   |  +   |  +   |
+					*----------------------------------------------------
+					*        |   1   |  -   |  -   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -1   |  -   |  +   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -2   |  +   |  -   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -3   |  +   |  +   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -4   |  -   |  -   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -5   |  -   |  +   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -6   |  +   |  -   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -7   |  +   |  +   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -8   |  -   |  -   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        |  -9   |  -   |  +   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        | -10   |  +   |  -   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        | -11   |  +   |  +   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        | -12   |  -   |  -   |  +   |  +   |  +   |
+					*----------------------------------------------------
+					*        | -13   |  -   |  +   |  +   |  +   |  +   |
+					*----------------------------------------------------
+					*        | -14   |  +   |  -   |  +   |  +   |  +   |
+					*----------------------------------------------------
+        </description>
 			</switch>
 			<switch>
 				<name>b2mndr_cpu</name>
@@ -1001,7 +1037,7 @@
 		<category name="Physics">
 			<switch>
 				<name>b2siav_addvis</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Multiplier to heat flux contribution to divergence of viscosity tensor in the momentum equation.
@@ -1126,7 +1162,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Real parameter which multiplies the contribution from the ExB drift velocity to the kinetic energy and the flows passed to Eirene.
+					Real parameter which multiplies the contribution from the ExB drift velocity to the flows passed to Eirene.
 				</description>
 			</switch>
 			<switch>
@@ -1134,7 +1170,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Real parameter which multiplies the contribution from the diamagnetic drift velocity to the kinetic energy and the flows passed to Eirene.
+					Real parameter which multiplies the contribution from the diamagnetic drift velocity to the flows passed to Eirene.
 				</description>
 			</switch>
 			<switch>
@@ -1167,7 +1203,7 @@
 			</switch>
 			<switch>
 				<name>b2tfhe_vis_par</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Real parameter which multiplies the current driven by parallel viscosity.
@@ -1581,7 +1617,7 @@
 			</switch>
 			<switch>
 				<name>b2mndr_hz</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<note>!srv 09.06.08</note>
 				<description>
@@ -1631,10 +1667,10 @@
 			</switch>
 			<switch>
 				<name>b2tfnb_vis_per</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
-				    vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+				  vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 				</description>
 			</switch>
 			<switch>
@@ -2237,7 +2273,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If &lt;&gt; 0 then recycles the neutral flux having crossed the core boundary within Eirene as ions. The recycling is surface-averaged, and neutrals come back as fully-stripped ions.
+					If &lt;&gt; 0 then recycles the neutral flux having crossed the core boundary within Eirene as ions. The recycling is modulated as per the poloidal density distribution of the ions, and neutrals come back as fully-stripped ions.
 					'eirene_ionizing_core' is an alias for this switch.
 					If the value = 1, then the flux is added by direct modification of the sources in the guard cells --- this will only work if a standard flux boundary condition is applied at that boundary.
 					If the value is &lt; 0, then the absolute value specifies which boundary in b2.boundary.parameters is to be used. This will only work for the type 13 boundary condition.
@@ -2978,11 +3014,11 @@
 			</switch>
 			<switch>
 				<name>b2tfhe_vis_per</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<note>!srv 20.11.08</note>
 				<description>
-                    vis_per is a multiplier to the perpendicular viscosity current.
+					vis_per is a multiplier to the perpendicular viscosity current.
 					If vis_per.ne.0.0, the electric potential equation is solved by the subroutine b2npp7 using a 7-point stencil.
 					The value '1.0' is recommended for runs with drifts when perpendicular viscosity and corresponding perpendicular viscosity current is taken into account.
 				</description>
