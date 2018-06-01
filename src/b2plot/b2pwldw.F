@@ -41,6 +41,8 @@ c***  Impinging ion flux     \
 c***  Average ion energy      |  for each species
 c***  Impinging atom flux     |
 c***  Average atom energy    /
+c***  Impinging molecule flux    \ for each molecular species
+c***  Average molecule energy    /
 c***  Net erosion             |   for each kind of sputtered material
 c***  Gross erosion           |
 c***
@@ -117,6 +119,8 @@ c***  whtpl   : plasma heat
 c***  wpttrg  : particle power to the target
 c***  wpltrg  : plasma power to the target
 c***  wnutrg  : neutral power to the target
+c***  wnmtrg  : power with molecules to the target
+c***  wnatrg  : power with atoms to the target
 c***  wrdtrg  : radiation power to the target
 c***  wtttrg  : total power to the target
 c***  fiitrg  : impinging ion flux 
@@ -132,13 +136,26 @@ c***  paitrg  : pressure of neutral atoms
 c***  erntrg  : erosion [mm/y]
 c***  spttrg  : sputtering [g/y]
 
+c*** Arrays to store the peak values
+c***  wpk_tt  : peak power - total
+c***  wpk_rd  : peak power - radiation
+c***  wpk_pl  : peak power - plasma
+c***  wpk_nu  : peak power - neutrals
+c***  wlc_tt  : location of total peak
+c***  wlc_rd  : location of radiation peak
+c***  wlc_pl  : location of plasma peak
+c***  wlc_nu  : location of neutral peak
+c***  wrd_pk  : radiation at total peak
+c***  wpl_pk  : plasma at total peak
+c***  wnu_pk  : neutrals at total peak
+
       real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,mmol,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
      ,  s(0:NY-1,ntrgsx),xmp_hlp(0:NY-1,ntrgsx),xtrg(0:NY-1,ntrgsx),
      ,  netrg(0:NY-1,ntrgsx),  tetrg(0:NY-1,ntrgsx),
      ,  titrg(0:NY-1,ntrgsx),
      ,  wtttrg(0:NY-1,ntrgsx), wptnu(0:NY-1,ntrgsx),
-     ,  wptpl(0:NY-1,ntrgsx),
+     ,  wptpl(0:NY-1,ntrgsx), wnutpr(0:NY-1,ntrgsx),
      ,  whtnu(0:NY-1,ntrgsx),  whtpl(0:NY-1,ntrgsx),
      ,  wpttrg(0:NY-1,ntrgsx),
      ,  wpltrg(0:NY-1,ntrgsx), wnutrg(0:NY-1,ntrgsx),
@@ -189,6 +206,7 @@ c***  m_hdln    : max. length of the header line
 c***  n_hdpr_c  : number of common quantities
 c***  n_hdpr_t  : number of target quantities
 c***  n_hdpr_a  : number of quantities by atoms
+c***  n_hdpr_u  : number of quantities by molecules
 c***  n_hdpr_s  : number of quantities by species
 c***  n_hdpr_sp : number of quantities for sputtering
 c***  n_hdpr_er : number of quantities for erosion
@@ -207,7 +225,7 @@ c***  sfpr_a    : list of active atoms
 c***  sfpr_m    : list of active materials
 
       integer n_hdpr_c,n_hdpr_t,n_hdpr_s,n_hdpr_a,n_hdpr_sp,n_sfpr_s,
-     ,  m_hdpr,m_hdln,n_hdpr_ml,n_hdpr_er,n_srfs_m
+     ,  m_hdpr,m_hdln,n_hdpr_u,n_hdpr_ml,n_hdpr_er,n_srfs_m
       parameter
      , (n_hdpr_c=10, n_hdpr_t=4, n_hdpr_s=2, n_hdpr_a=4, n_hdpr_sp=2,
      ,  n_hdpr_er=2, m_hdpr=5, n_hdpr_ml=4, n_srfs_m=8,
@@ -705,6 +723,8 @@ c                   carlis Using values directly calculated from Eirene
      .                           +ewldmr_res(is,iy+IA))*
      .                            sarea_res(iy+IA)
                   enddo
+                  wnutpr(iy,j)=ewldrp_res(iy+IA)
+                  wpltrg(iy,j)=wpltrg(iy,j)-wnutpr(iy,j)
                   do is=1,nioni
                     mion=0.0_R8
                     imol=1
@@ -1194,7 +1214,7 @@ c        print *,hdr_line(1:k-1)
      .   'net sputtering of wall material XX [g/y]'
         write(lun,740) 'sptng_XX',tab,
      .   'gross sputtering of wall material XX [g/y]'
-  740 format('# ',2a,' : ',a)
+  740   format('# ',2a,' : ',a)
         write(lun,'(a)') hdr_line(1:k-1)
       end if !}
 c*** Print the line

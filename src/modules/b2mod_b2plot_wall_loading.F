@@ -26,7 +26,7 @@ c
      ,        lpspwll(mskipel), lpsptrg(ntrgsx), lcsptrg(ntrgsx),
      ,        ltrgedge(2,ntrgsx), mtrgedge(2,ntrgsx)
       logical lvdg20
-      logical l2rdldw, l2rdldt, l2pwinp, lrdlsp,
+      logical l2rdldw, l2rdldt, l2pwinp, lrdlsp, lrdlcr,
      ,  lwlddir(nwldprtx), lskip(DEF_NLIM)
       real (kind=R4) :: ppp1(3,DEF_NLIM), ppp2(3,DEF_NLIM)
       real (kind=R8) :: addsrc_xy(2,nadsrcm), add_rad
@@ -102,6 +102,7 @@ c*** l2pwinp  : geometry input block was called
 c*** l2rdldw  : radiation load was calculated for the walls
 c*** l2rdldt  : radiation load was calculated for the targets
 c*** lrdlsp   : radiation load split was calculated
+c*** lrdlcr   : radiation load from core sources was calculated
 c*** luwrk    : working array
 c*** co_data  : working array (originally, for average energy)
 c======================================================================
