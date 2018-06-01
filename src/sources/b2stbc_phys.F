@@ -182,7 +182,11 @@
       character*26 boundary_location(nbcd)
       character*24 hlp_frm
       character*260 filename											! RC 27.03.18								 
-      real (kind=R8) :: profile(-1:ny,0:3)								! RC 27.03.18										 
+      real (kind=R8) :: profile(-1:ny,0:3)								! RC 27.03.18
+      real (kind=R8) :: potentialOld(0:nbcd-1), currentOld(0:nbcd-1)    ! RC 01.06.18
+      real (kind=R8) :: currentNew(0:nbcd-1)                            ! RC 01.06.18
+      integer :: currentCounter(0:nbcd-1)                               ! RC 01.06.18
+      real (kind=R8) :: potentialNew                                    ! RC 01.06.18										 
       save ncall, coreregno, coreregn2,  bc_type13_ref,
      1  bc_type16_ref, bc_type20_ref, bc_type13_norm, bc_type13_fac,
      2  na_min, na_new, bc_type21_ref, ndes_sol,
@@ -10073,10 +10077,193 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
         endif
         goto 50000                                                      !srv 03.03.15 }
 
-* -- BCPOT=14 -- Nothing implemented
+* -- BCPOT=14 -- SHEATH CONDITIONS FOR FLOATING TARGET, ELECTRON ENERGY TRANSMISSION
 
 41400   CONTINUE
-        CALL XERRAB ('B2STBC -- BCPOT=14, NOT AVAILABLE FOR S,N,W,E')
+        if(ncall.eq.0) then
+          write(*,*) 'sheath potential (floating target) bc on ',
+     1         BCCHAR(IB), boundary_location(ib)
+          currentOld(ib) = potpar(ib,2)
+          currentCounter(ib) = 0
+        endif
+        ! potpar(,1) > 0.0 used as multiplication factor. 
+        ! when modifying the target potential, it will be changed by potpar(,1) * total current.
+        ! potpar(,2) to store target potential (like in BCPOT=3)
+        ! namelist value of potpar(,2) used as initial guess of target potential
+
+        ! steps to get floating target
+        ! - determine total current through target
+        ! - correct target potential to reduce this current
+        !   (correction ~ total current) 
+
+        if (main_call) then
+          t0 = 0.0_R8
+          IF (BCCHAR(IB).EQ.'W') THEN
+            ! loop over wall to determine total current
+            DO IY = 1, BC_LIST_SIZE(IB)
+              t0 = t0 - fch(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     *             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0)
+            END DO
+
+          ELSE IF (BCCHAR(IB).EQ.'E') THEN
+            ! loop over wall to determine total current
+            DO IY = 1, BC_LIST_SIZE(IB)
+              t0 = t0 + fch(bc_list_x(iy,ib),bc_list_y(iy,ib),0)
+            END DO
+          END IF
+          
+          IF (abs(t0) > 0.1_R8) THEN
+            currentCounter(ib) = currentCounter(ib) + 1
+          ELSE
+            currentCounter(ib) = 0
+          END IF
+          currentNew(ib) = t0
+
+          IF (currentCounter(ib) > 5) THEN
+            ! current is converged for given potential, determine new potential
+            currentCounter(ib) = 0
+            potpar(ib, 2) = potpar(ib, 2) + potpar(ib, 1) * t0
+            WRITE (*, *) 'RCW: current, new:', 
+     *           currentNew(ib), potpar(ib,2)
+            WRITE (*, *) 'RCW: potential, new:', 
+     *           potpar(ib,2), currentNew(ib)
+          END IF
+        ENDIF
+
+        IF(BCCHAR(IB).EQ.'W') THEN
+
+          DO IY = 1, BC_LIST_SIZE(IB)
+            s1 = abs(pbs(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .                   rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0))
+            vte = sqrt(bcint(te,nx,ny,iy,ib)/me)
+            t0 = 0.0_R8
+            do is = 0, ns-1
+              t0 = t0-bcint(rza(-1,-1,is),nx,ny,iy,ib)*
+     1         fna(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,is)
+            enddo
+            do is = 0, ns_ext-1
+              t0 = t0-bcint(za_ext(-1,-1,is),nx,ny,iy,ib)*
+     1         fa_ext(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .                rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,is)
+            enddo
+            fchi = qe*t0
+            if(t0.lt.0.0_R8 .and. 
+     .       bottomiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.-2 .and.
+     &       topiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.ny+1) then
+              wrong_flow = .true.                                     !xpb
+              if(diagno.ge.0) then
+                write(*,'(a,2i4,g14.7)') 'b2stbc_west:ix,iy,fchi',
+     1           bc_list_x(iy,ib),bc_list_y(iy,ib),fchi
+                write(*,'(2g14.7)') 
+     .         rza(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),ismain),
+     &         fna(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,ismain)
+                write(*,'(a,4g14.7)') 'Bx,Bz,Ud,-Ua =',
+     &           wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0),
+     .           wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),2),
+     &           ud(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain),
+     .          -ua(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain)
+               endif
+c              fchi=0.0_R8
+            endif
+            fche = sqrt(1/(2*pi))*qe*bcint(ne,nx,ny,iy,ib)*vte*s1*
+     &       expu2(-qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
+     .       bcint(te,nx,ny,iy,ib))
+            if (secmodel.eq.1) then
+              if (ne(bc_list_x(iy,ib),bc_list_y(iy,ib))/
+     .           (rza(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain)*
+     .            na(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain))
+     .           .gt.1.1_R8) then
+                write(*,*) 'Large ne contribution from impurities!'
+                write(*,*) 'Kinetic s.e.c. model may not be valid!'
+              endif
+              call eseec0 (bcint(te,nx,ny,iy,ib),
+     &         bcint(ti,nx,ny,iy,ib),bcint(ne,nx,ny,iy,ib),
+     &         bcint(po,nx,ny,iy,ib),
+     .         wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0),
+     &         wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3),0,
+     .         bc_list_x(iy,ib),bc_list_y(iy,ib),
+     &         nx,ny,ns,ismain,seec,diagno)                           !cfs
+            else
+              seec = gammae
+            endif
+            t0 = max(fchi,(1.0_R8-seec)*fche)*qe/bcint(te,nx,ny,iy,ib)
+*    ..compute charge source
+            sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) = 
+     .       sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),0)+
+     &       (1.0_R8-seec)*fche-fchi+
+     .       t0*po(bc_list_x(iy,ib),bc_list_y(iy,ib))
+            sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) = 
+     .      sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-t0
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'E') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)
+            s1 = abs(pbs(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
+            vte = sqrt(bcint(te,nx,ny,iy,ib)/me)
+            t0 = 0.0_R8
+            do is = 0, ns-1
+              t0 = t0+
+     &         bcint(rza(-1,-1,is),nx,ny,iy,ib)*
+     .         fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,is)
+            enddo
+            do is = 0, ns_ext-1
+              t0 = t0+bcint(za_ext(-1,-1,is),nx,ny,iy,ib)*
+     &         fa_ext(bc_list_x(iy,ib),bc_list_y(iy,ib),0,is)
+            enddo
+            fchi = qe*t0
+            if(t0.lt.0.0_R8 .and. 
+     .       bottomiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.-2 .and.
+     &       topiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.ny+1) then
+              wrong_flow = .true.                                     !xpb
+              if(diagno.ge.0) then
+                write(*,'(a,2i4,g14.7)') 'b2stbc_east:ix,iy,fchi',
+     1           bc_list_x(iy,ib),bc_list_y(iy,ib),fchi
+                write(*,'(2g14.7)') 
+     &           rza(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain),
+     .           fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,ismain)
+                write(*,'(a,4g14.7)') 'Bx,Bz,Ud,Ua =',
+     &           wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0),
+     .           wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),2),
+     &           ud(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain),
+     .           ua(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain)
+               endif
+c              fchi=0.0_R8
+            endif
+            fche = sqrt(1/(2*pi))*qe*bcint(ne,nx,ny,iy,ib)*vte*s1*
+     &       expu2(-qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
+     .       bcint(te,nx,ny,iy,ib))
+            if (secmodel.eq.1) then
+              if (ne(bc_list_x(iy,ib),bc_list_y(iy,ib))/
+     .           (rza(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain)*
+     .            na(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain))
+     .           .gt.1.1_R8) then
+                write(*,*) 'Large ne contribution from impurities!'
+                write(*,*) 'Kinetic s.e.c. model may not be valid!'
+              endif
+              call eseec0 (bcint(te,nx,ny,iy,ib),
+     &         bcint(ti,nx,ny,iy,ib),bcint(ne,nx,ny,iy,ib),
+     &         bcint(po,nx,ny,iy,ib),
+     .         wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0),
+     &         wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3),0,
+     .         bc_list_x(iy,ib),bc_list_y(iy,ib),
+     &         nx,ny,ns,ismain,seec,diagno)                           !cfs
+            else
+              seec = gammae
+            endif
+            t0 = max(fchi,(1.0_R8-seec)*fche)*qe/bcint(te,nx,ny,iy,ib)
+*    ..compute charge source
+            sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) =
+     .      sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),0)+
+     &       (1.0_R8-seec)*fche-fchi+
+     .       t0*po(bc_list_x(iy,ib),bc_list_y(iy,ib))
+            sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) =
+     .      sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-t0
+          end do
+        ELSE
+          CALL XERRAB ('B2STBC -- BCPOT=13, NO SHEATH IN RADIAL DIR.')
+        END IF
         GOTO 50000
 
 * -- BCPOT=15 -- Potential profile is read from file
