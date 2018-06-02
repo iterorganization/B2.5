@@ -724,6 +724,7 @@ c                   carlis Using values directly calculated from Eirene
      .                            sarea_res(iy+IA)
                   enddo
                   wnutpr(iy,j)=ewldrp_res(iy+IA)
+                  whtpl(iy,j)=whtpl(iy,j)-wnutpr(iy,j)
                   wpltrg(iy,j)=wpltrg(iy,j)-wnutpr(iy,j)
                   do is=1,nioni
                     mion=0.0_R8
