@@ -726,9 +726,9 @@ c*** Calculate the integral loads onto the targets and power load widths
 c*** and write them down to a summary file
 
       wpar_hlp=maxval(wid_par,1)
-      npar_hlp=maxloc(wid_par,1)
+      npar_hlp=maxloc(wid_par,1)-1
       wtrg_hlp=maxval(wid_trg,1)
-      ntrg_hlp=maxloc(wid_trg,1)
+      ntrg_hlp=maxloc(wid_trg,1)-1
 c!###{
 c      print *,'wid_par:'
 c      do j=1,ntrgts !{
@@ -929,10 +929,10 @@ c!###}
       write(lun,750) trim(hdr_4(4)),' : HWHM of the max. ',
      ,  'target flux mapped to the OMP'
       write(lun,750) trim(hdr_4(5)),' : exponential decay length of ',
-     ,  'the max. target flux, calculated from HM and mapped to the OMP'
-      write(lun,750) trim(hdr_4(6)),' : exponential decay length of ',
      ,  'the max. parallel flux, ',
      ,  'calculated from HM and mapped to the OMP'
+      write(lun,750) trim(hdr_4(6)),' : exponential decay length of ',
+     ,  'the max. target flux, calculated from HM and mapped to the OMP'
       write(lun,750) trim(hdr_4(7)),' : exponential decay length of ',
      ,  'the real target flux, ',
      ,  'calculated from HM and mapped to the OMP'
