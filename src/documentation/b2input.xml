@@ -1074,6 +1074,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
+					If b2sigp_style is set to '2', this switch has no effect.
 					When set to '1', there is no radial contribution in Joule heating because there are no physical reasons to take it into account.
 					The value '0' corresponds to the old SOLPS5.0 treatment.
 				</description>
@@ -2152,10 +2153,10 @@
 			</switch>
 			<switch>
 				<name>b2stel_phm0</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the recombination contribution to the electron cooling rate (if ADPAK rates are not used because those are already included). Assumes all recombination is three-body.
+					Multiplier of the sources due to atomic physics.
 				</description>
 			</switch>
 			<switch>
@@ -3740,7 +3741,7 @@
 					If poteq.eq.0, the potential equation is jumped over and not solved.
 					If poteq.eq.2, the potential is set to 3.1*Te/qe as per SOLPS4.0.
 					If poteq.eq.1, the potential equation is solved according to the no_solve switch settings.
-					If poteq.ne.1, then 'b2tfhe_no_current'must be set to '1'.
+					If poteq.ne.1, then 'b2tfhe_no_current' must be set to '1'.
 				</description>
 			</switch>
 			<switch>

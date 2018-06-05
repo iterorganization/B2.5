@@ -2496,7 +2496,9 @@ c
         case ('smth')
           description='Thermal force (N)'
           nz=ns
-          call copy(smpr+smpt,1.0_R8,nz,textpl)
+          mach(-1:nx,-1:ny,0:nz-1)=smpr(-1:nx,-1:ny,0:nz-1)+
+     .                             smpt(-1:nx,-1:ny,0:nz-1)
+          call copy(mach,1.0_R8,nz,textpl)
         case ('smpr')
           description='Thermal force (proportional to exhp) (N)'
           nz=ns
