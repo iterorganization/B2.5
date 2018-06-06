@@ -320,18 +320,21 @@ ctmp.dpc
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
-          if(style.ne.0) then                                            !srv 18.06.08 {
+!          if(style.ne.0) then                                           !srv 18.06.08 {
             call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
      &                    fchanml)                                       !srv 20.09.06 }
             call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,  !srv 20.09.06 {
      &                    fac_vis, fchvispar)
             call b2tiner (nx, ny, ns, vol,
      &                    gs, hx, hy, bb, na, ua, facdrift, fchinert)
-            call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,     !srv 10.10.17
+            call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,      !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
-            call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,      !srv 10.10.17
+            call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,       !srv 10.10.17
      &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
-          endif                                                          !srv 18.06.08 }
+!          endif                                                         !srv 18.06.08 }
+*      ..compute electron drift velocities
+          call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,   !srv 05.06.18
+     &     te, po, vedia, veecrb)
           src_ni=0.0_R8
           src_ne=0.0_R8
           src_mo=0.0_R8
