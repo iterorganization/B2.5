@@ -3,11 +3,12 @@ c
       use b2mod_types
       use b2mod_b2plot
       use b2mod_plasma
+      use b2mod_elements
       use b2mod_constants
       use b2mod_b2cmpa
       implicit none
       real (kind=R8) ::
-     *   dtev((nx+2)*(ny+2)),
+     * dtev((nx+2)*(ny+2)),
      1 ddens((nx+2)*(ny+2)),
      2 drcofi((nx+2)*(ny+2)),dspec(-1:nx,-1:ny,0:ns-1)
       integer ifail,iz0,iz1,iclass,itmax,ievcut,
@@ -19,6 +20,8 @@ c
      1 drcofd(itdimd,itdimd,itdimd)
       real (kind=R8) ::
      *   zmin,zmax
+      logical streql
+      external streql
       character year*2, TITLF*80
       data    year   /'03'/
 
@@ -31,13 +34,19 @@ c
         enddo
       enddo
 
+      ifail=0
+      dspec=0.0_R8
       do is=0,ns-1
         iz0=nint(zn(is))
         iz1=partition_number(is)+1  ! was nint(za(is))+1
+        if (iz1.eq.iz0+1) cycle     ! avoid fully stripped ions
+        if (ifail.eq.1) then        ! if file absent, skip rest of sequence
+          if (streql(is_codes(is-1),is_codes(is))) cycle
+        end if
         iclass=7
         ievcut=0
 
-        CALL  DHDATA( YEAR   , TITLF  , IFAIL
+        CALL DHDATA( YEAR  , TITLF  , IFAIL
      &   , IZ0    , IZ1    , ICLASS , ITMAX  , IEVCUT
      &   , ITDIMD , ITMAXD , IDMAXD , IZMAXD
      &   , DTEV   , DDENS
@@ -46,12 +55,12 @@ c
 
 C
         if (ifail .gt. 0)   then
-          write (*,3003) ifail,is,iz0,iz1
+          write (*,3003) ifail,is,iz0,iz1-1
  3003     format (
      >     ' >>> error in dhdata: ifail =',i3,/,
      >     '  ifail = 1: no datafile for dhdata available',/,
      >     '        = 2: dimension itdimd too small',/,
-     >     '  for species, nuclear charge, ionic charge =',3i3,/)
+     >     '  for species, nuclear charge, partition =',3i3,/)
           do iy=-1,ny
             do ix=-1,nx
               dspec(ix,iy,is)=0.0_R8
@@ -71,6 +80,7 @@ C
             enddo
           enddo
           write(*,*) 'is,zmin,zmax ',is,zmin,zmax
+          if (iz1.eq.iz0) write(*,'()')
         endif
 
       enddo
@@ -1340,7 +1350,7 @@ C
             ELSE
                DSNAME = DSNAME(1:IDLEN)//ESYM(1:2)//CZ(1:IZEND)//'.dat'
             ENDIF
-            write(*,*) 'Checking on the existence of ',trim(dsname)
+            write(*,'(2a)') 'Checking on the existence of ',trim(dsname)
 C
             call find_file(DSNAME,LEXIST)
 C

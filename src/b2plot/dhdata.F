@@ -21,17 +21,17 @@ C
 C NOTE    : THE SOURCE DATA IS CONTAINED AS SEQUENTIAL DATASETS
 C           AS FOLLOWS:
 C
-C         DS-NAME                   ICLASS     RATENKOEFF. FUER
+C         DS-NAME                   ICLASS     RATE COEFF. FOR
 C
-C  (1)  ACD<YR>#<IEL).DATA             1       REKOMBINATION
+C  (1)  ACD<YR>#<IEL).DATA             1       RECOMBINATION
 C  (2)  SCD<YR>#<IEL>.DATA             2       IONISATION
 C  (3)  CCD<YR>#<IEL>.DATA             3       CHARGE EXCHANGE
 C  (4)  PRB<YR>#<IEL>.EV<CUT>.DATA     4       BREMSSTRAHLUNG
-C  (5)  PLT<YR>#<IEL>.EV<CUT>.DATA     5       LINIENSTRAHLUNG
-C  (6)  PRC<YR>#<IEL>.EV<CUT>.DATA     6       CX-STRAHLUNG?
-C  (7)  PLS<YR>#<IEL>.DATA             7       DIAGNOSTIK LINIE
+C  (5)  PLT<YR>#<IEL>.EV<CUT>.DATA     5       LINE RADIATION
+C  (6)  PRC<YR>#<IEL>.EV<CUT>.DATA     6       CX-RADIATION?
+C  (7)  PLS<YR>#<IEL>.DATA             7       DIAGNOSTIC LINE
 C
-C       WHERE, <YR>  = TWO INTEGERS  FOR THE YEAR SELECTED
+C       WHERE, <YR>  = TWO INTEGERS FOR THE YEAR SELECTED
 C              <IEL> = ELEMENT NAME
 C              <CUT> = ENERGY CUT-OFF (EV)
 C
@@ -74,7 +74,7 @@ C          (I*4)  LCK       = MUST BE GREATER THAN 'ITMAXD' & 'IDMAXD'
 C                             & 'ITMAX' - ARRAY SIZE FOR SPLINE CALCS.
 C          (R*8)  A()       = GENERAL ARRAY
 C          (R*8)  DRCOF0(,) = INTERPOLATION OF DRCOFD(,,) W.R.T DTEV()
-C          (L*8)  LEXIST    = TRUE --- FILE TO OPEN EXISTS ELSE NOT
+C          (L*8)  LEXIST    = TRUE --- FILE TO OPEN EXISTS ELSE FALSE
 C
 C PE BRIDEN = ADDED VARIABLES (14/01/91)
 C
@@ -124,9 +124,9 @@ C                                            'DIMENSION DRCOFI(ITDIMD)'
 C                                           TO
 C                                            'DIMENSION DRCOFI(ITMAX)'
 C
-C
 C DATE   : 25/06/91 HP SUMMERS - REVISION: RENAMED FROM D2DATA TO DHDATA
 C                                          SET IOPT=4 FOR IONBAL
+C
 C-----------------------------------------------------------------------
 C
       INTEGER   L1, IREAD, LCK, IDMAXD_LOC
@@ -151,16 +151,15 @@ C
 C
       CHARACTER YEAR*2  , YEARSV*2  , TITLF*80  , EVCUT*6
       CHARACTER SEQUA*2 , DSNAME*256, STRING*80 , BLANKS*40
+      character*256 filenamecat
 C
       LOGICAL   LEXIST  , LSETX
 C
-      character*256 solpstop
       real (kind=R8) :: R8FUN1
       EXTERNAL  R8FUN1
       external lnblnk, subini, subend
-#ifdef USE_PXFGETENV
-      integer lenval, ierror
-#endif
+      logical open_file, silent_open
+      external open_file, silent_open
 C
       SAVE      IZ1MIN
 C
@@ -213,20 +212,6 @@ C
         LEN=2
       ENDIF
 C
-#ifdef NO_GETENV
-      solpstop=' '
-#else
-#ifdef USE_PXFGETENV
-      CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
-#else
-      call getenv ('SOLPSTOP', solpstop)
-#endif
-#endif
-      if(solpstop.eq.' ') then
-        solpstop='/afs/ipp-garching.mpg.de/u/dpc/solps4.0'
-        write(*,*) 'DHDATA: no SOLPSTOP set, using: ',
-     1   solpstop(1:lnblnk(solpstop))
-      endif
       IF     (ICLASS.EQ.1) THEN
         DSNAME='/JETSHP.ACD'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
       ELSEIF (ICLASS.EQ.2) THEN
@@ -259,14 +244,19 @@ C.....  DSNAME='/JETSHP.PLS'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
         DSNAME='pls'//YEAR//SEQUA(1:LEN)//'.data'
       ENDIF
 C
-      dsname=solpstop(1:lnblnk(solpstop)) // '/data/summers/' // dsname
-
       TITLF=BLANKS//BLANKS
 CCC   WRITE(TITLF,1000) DSNAME
 C
 C------DOES FILE TO BE OPEN EXIST OR NOT--------------------------------
 C
-      call find_file(DSNAME,LEXIST)
+C     call find_file(DSNAME,LEXIST)
+      if (iz1.eq.1) then
+        LEXIST=open_file(IREAD,DSNAME,
+     .   'data.local/Summers|modules/B2.5/Database/Summers')
+      else
+        LEXIST=silent_open(IREAD,DSNAME,
+     .   'data.local/Summers|modules/B2.5/Database/Summers',filenamecat)
+      end if
       IF( .NOT.LEXIST ) THEN
         IFAIL  = 1
         YEARSV = '  '
@@ -278,7 +268,7 @@ C
 C------READ FILE # IREAD------------------------------------------------
 C
 c     OPEN(UNIT=IREAD,FILE=DSNAME,ACTION='READ')
-      OPEN(UNIT=IREAD,FILE=DSNAME)
+c     OPEN(UNIT=IREAD,FILE=DSNAME)
 C
       READ(IREAD,1010) IZMAX , IDMAXD , ITMAXD , IZ1MIN , IZ1MAX
 C
