@@ -110,19 +110,19 @@ C
 C DATE   : 08/10/90 PE BRIDEN - REVISION: RENAMED SUBROUTINE
 C
 C DATE   : 12/11/90 PE BRIDEN - CORRECTION: MOVE THE SETTING OF 'INDXZ1'
-C                                           TO AFTER THE  '20 CONTINUE'
-C                                           STATEMENT.   ALSO SAVE  THE
+C                                           TO AFTER THE '20 CONTINUE'
+C                                           STATEMENT. ALSO SAVE THE
 C                                           VALUE OF 'IZ1MIN'.
 C
 C DATE   : 14/01/91 PE BRIDEN - ADAS91:     CALLS TO NAG SPLINE ROUTINES
 C                                           'E01BAF' & 'E02BBF' REPLACED
-C                                           BY  CALLS   TO  ADAS  SPLINE
+C                                           BY CALLS TO ADAS SPLINE
 C                                           ROUTINE 'XXSPLN'.
 C
 C DATE   : 25/06/91 PE BRIDEN - CORRECTION: CHANGED FOLLOWING DIMENSION:
-C                                            'DIMENSION DRCOFI(ITDIMD)'
+C                                           'DIMENSION DRCOFI(ITDIMD)'
 C                                           TO
-C                                            'DIMENSION DRCOFI(ITMAX)'
+C                                           'DIMENSION DRCOFI(ITMAX)'
 C
 C DATE   : 25/06/91 HP SUMMERS - REVISION: RENAMED FROM D2DATA TO DHDATA
 C                                          SET IOPT=4 FOR IONBAL
@@ -472,15 +472,15 @@ C  INPUT : (R*8)  YIN()   = Y-VALUES OF KNOTS
 C
 C  INPUT : (I*4)  NOUT    = NUMBER OF OUTPUT VALUES TO BE INTERPOLATED
 C                           EXTRAPOLATED.
-C  INPUT : (R*8)  XOUT()  = X-VALUES AT WHICH INTERPOLATION/EXTRAPOLA-
-C                           TION REQUIRED
+C  INPUT : (R*8)  XOUT()  = X-VALUES AT WHICH INTERPOLATION/EXTRAPOLATION
+C                           REQUIRED
 C  OUTPUT: (R*8)  YOUT()  = INTERPOLATED/EXTRAPOLATED Y-VALUES FOR
 C                           REQUESTED 'XOUT()' VALUES.
 C
 C  OUTPUT: (R*8)  DY()    = INTERPOLATED DERIVATIVES
 C
-C          (I*4)  NKNOTS  = PARAMETER = MAXIMUM  NUMBER OF KNOTS ALLOWED
-C          (I*4)  NIOPT   = PARAMETER = MAXIMUM  VALUE OF IOPT ALLOWED
+C          (I*4)  NKNOTS  = PARAMETER = MAXIMUM NUMBER OF KNOTS ALLOWED
+C          (I*4)  NIOPT   = PARAMETER = MAXIMUM VALUE OF IOPT ALLOWED
 C
 C          (I*4)  I       = GENERAL ARRAY USE
 C          (I*4)  K       = INDEX OF 'XOUT()' VALUE FOR INTERPOLATION/
@@ -489,9 +489,9 @@ C          (I*4)  NIN0    = 'NIN' - 1
 C          (I*4)  INTER   = INDEX OF CLOSEST/NEXT HIGHEST VALUE OF
 C                           'XIN()' TO THE VALUE OF 'XOUT()' BEING
 C                           INTERPOLATED/EXTRAPOLATED.
-C          (I*4)  NOPT    = VALUE OF  'IOPT' USED IN  CALCULATING  END-
-C                           CONDITIONS   FOR  STORED  'X-VALUE'  SPLINE
-C                           PARAMETERS.   (NOTE:  IF  'IOPT < 0',  THEN
+C          (I*4)  NOPT    = VALUE OF 'IOPT' USED IN CALCULATING END-
+C                           CONDITIONS FOR STORED 'X-VALUE' SPLINE
+C                           PARAMETERS. (NOTE: IF 'IOPT < 0', THEN
 C                           'NOPT = 0'.) - I.E. 'NOPT = MAX( 0, IOPT )'.
 C
 C          (R*8)  XK      = VALUE OF 'XOUT(K)' BEING INTERPOLATED/
@@ -545,21 +545,21 @@ C                                     SLOPE
 C                            FUNCTION OF 'NOPT'
 C
 C NOTES: 'LSETX': SET TO .TRUE. ON ENTRY IF A NEW 'XIN' ARRAY IS BEING
-C                 USED.  IF THE 'XIN' AXIS IS THE SAME FOR A NUMBER OF
-C                 CALLS THEN DO NOT RESET 'LSETX'  -  THIS  SUBROUTINE
-C                 SETS IT TO .FALSE. FOR YOU.   IF THE VALUE OF 'NOPT'
-C                 IS CHANGED BETWEEN CALLS THEN THE VALUE  OF  'LSETX'
-C                 ON  ENTRY IS TAKEN AS BEING EQUAL TO .TRUE. .
+C                 USED. IF THE 'XIN' AXIS IS THE SAME FOR A NUMBER OF
+C                 CALLS THEN DO NOT RESET 'LSETX' - THIS SUBROUTINE
+C                 SETS IT TO .FALSE. FOR YOU. IF THE VALUE OF 'NOPT'
+C                 IS CHANGED BETWEEN CALLS THEN THE VALUE OF 'LSETX'
+C                 ON ENTRY IS TAKEN AS BEING EQUAL TO .TRUE. .
 C
 C                 THEREFORE 'LSETX' NEED ONLY BE SET TO .TRUE. ON ENTRY
-C                 IF EITHER IT IS ITS FIRST CALL OR IF ANY ONE  OF  THE
+C                 IF EITHER IT IS ITS FIRST CALL OR IF ANY ONE OF THE
 C                 FOLLOWING VALUES HAS CHANGED:
 C
 C                 'NIN' , 'FINTX' , 'XIN(I), I=1,NIN'
 C
 C                 CARE: A VARIABLE MUST BE USED FOR 'LSETX', A CONSTANT,
-C                       I.E.  .TRUE. ,  CANNOT BE DIRECTLY TYPED AS  AN
-C                       ARGUMENT BECAUSE IT WILL BE CHANGED TO  .FALSE.
+C                       I.E. .TRUE. , CANNOT BE DIRECTLY TYPED AS AN
+C                       ARGUMENT BECAUSE IT WILL BE CHANGED TO .FALSE.
 C                       ON RETURN.
 C
 C         SPLINE  END CONDITIONS AND EXTRAPOLATION DEPEND ON 'IOPT' AS
@@ -584,18 +584,18 @@ C                             TO ZERO (CARE IF LOG OF OUTPUT IS NEEDED).
 C          IF ( IOPT.GT.4 ) PROGRAM STOPS
 C         -------------------------------------------------------------
 C
-C          THIS SUBROUTINE IS AN AMENDED  AND STRUCTURED VERSION OF  THE
-C          SUBROUTINE  'ESPLINE'  WRITTEN BY  H.P. SUMMERS,   JET   26TH
-C          OCTOBER 1989.   IT REMOVES THE COMMON BLOCK  /IONSPL/ ,   THE
+C          THIS SUBROUTINE IS AN AMENDED  AND STRUCTURED VERSION OF THE
+C          SUBROUTINE 'ESPLINE' WRITTEN BY H.P. SUMMERS, JET 26TH
+C          OCTOBER 1989. IT REMOVES THE COMMON BLOCK /IONSPL/ , THE
 C          SWITCHES 'ISW & ISW2' AND ALSO THE CASE FOR THE INTERPOLATION
-C          OF CHARGE STATE VALUES.   IT INTRODUCES THE FEATURE  THAT  AN
-C          ARRAY OF INPUT  'X-VALUES'  CAN BE  INTERPOLATED/EXTRAPOLATED
+C          OF CHARGE STATE VALUES. IT INTRODUCES THE FEATURE THAT AN
+C          ARRAY OF INPUT 'X-VALUES' CAN BE INTERPOLATED/EXTRAPOLATED
 C          IN ONE CALL.
 C
 C ROUTINES:
 C          ROUTINE    SOURCE    BRIEF DESCRIPTION
 C          ------------------------------------------------------------
-C          FINTX      ------    EXTERNAL  REAL  FUNCTION,   USED  TO
+C          FINTX      ------    EXTERNAL REAL FUNCTION, USED TO
 C                               TRANSFORM X-COORDINATES.
 C
 C
@@ -782,7 +782,7 @@ C-----------------------------------------------------------------------
                   AGRL(4) =  1.0 - AGRL(3)
                ENDIF
 C-----------------------------------------------------------------------
-C EVALUATE 'YOUT'-VALUE FOR REQUESTED 'XOUT'-VALUE
+C EVALUATE 'YOUT' VALUE FOR REQUESTED 'XOUT' VALUE
 C-----------------------------------------------------------------------
             YOUT(K) = ( AGRL(1)* DY(INTER-1) ) + ( AGRL(2)* DY(INTER) )
      &              + ( AGRL(3)*YIN(INTER-1) ) + ( AGRL(4)*YIN(INTER) )

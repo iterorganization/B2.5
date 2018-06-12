@@ -508,7 +508,7 @@ C
       RETURN
 C
 990   WRITE (6,*) ' NO DATA FOUND FOR REACTION ',H123,' ',REAC,
-     .            ' IN DATA SET ',FILNAM
+     .            ' IN DATASET ',FILNAM
       WRITE (6,*) ' IR,MODCLF(IR) ',IR,MODCLF(IR)
       CLOSE (UNIT=29)
       call subend ()

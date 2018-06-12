@@ -844,20 +844,20 @@
 *
 *   ..2d Auxiliary routines for discretised PDEs
 *
-*     ILU5F computes the ILU factorisation of a 2d-5point matrix.
+*     ILU5F computes the ILU factorisation of a 2d 5-point matrix.
 *
-*     ILU5G computes the ILU factorisation of a 2d-5point matrix and
+*     ILU5G computes the ILU factorisation of a 2d 5-point matrix and
 *     applies the factors for one iteration of an update equation.
 *
 *     ILU5S solves an equation of the form L*U*x=r, where L and U are
-*     the factors in an ILU factorisation of a 2d-5point matrix.
+*     the factors in an ILU factorisation of a 2d 5-point matrix.
 *
 *     ILUTER performs a number of iterations of the Stone strongly
 *     implicit procedure for a system of equations of five-point form.
 *
-*     SIP5F computes the SIP-ILU factorisation of a 2d-5point matrix.
+*     SIP5F computes the SIP-ILU factorisation of a 2d 5-point matrix.
 *
-*     SIP5G computes the SIP-ILU factorisation of a 2d-5point matrix,
+*     SIP5G computes the SIP-ILU factorisation of a 2d 5-point matrix,
 *     and applies the factors for one iteration of an update equation.
 *
 *     SLV5PT solves a five-point system of equations by a direct
@@ -961,7 +961,7 @@
 *     RATWEI uses WEISHEIT data to improve tables of rate coefficients
 *     for ionisation, recombination, electron energy loss, and charge
 *     exchange; as function of temperature and density.
-*     The WEISHEIT data set is incomplete.  The call to ratwei must
+*     The WEISHEIT dataset is incomplete.  The call to ratwei must
 *     be preceded by a call to one of the comprehensive routines.
 *
 *-----------------------------------------------------------------------
