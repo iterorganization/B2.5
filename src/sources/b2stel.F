@@ -72,10 +72,10 @@
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
-     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,         !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
-      character chns*3, chk*1                                           !srv 30.06.08
+      character chns*3, chk*1                                     !srv 30.06.08
       real (kind=R8) ::
      *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
@@ -97,7 +97,7 @@
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,
      &  rxm1/0.0_R8/, rxm2/0.0_R8/,
-     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/0.0_R8/,
+     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/,           !srv 05.06.18
      &  fix_recomb_energy/0/
 
 *-----------------------------------------------------------------------
@@ -214,7 +214,7 @@
 *       ..compute damping coefficient
            rf0 = rxm0*max(0.0_R8,rlsa(ix,iy,1,is))
 *       ..compute rate for is->is+1
-           t0 = rsa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)
+           t0 = phm0*rsa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)                 !srv 05.06.18
 *       ..compute particle source
            sna0_ion(ix,iy,0,is+1) = sna0_ion(ix,iy,0,is+1)+             !srv 11.09.09 {
      &      (1.0_R8+rf0)*t0*na(ix,iy,is)
@@ -247,8 +247,8 @@
 *       ..compute damping coefficient
               rf0 = rg0+rxm1*max(0.0_R8,rlsa(ix,iy,1,is))
 *       ..compute rate for is->is+1
-              t0 = rsa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
-     &            *hz(ix,iy)                                         !srv 09.01.01
+              t0 = phm0*rsa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)  !srv 05.06.18
+     &            *hz(ix,iy)                                             !srv 09.01.01
 *       ..compute parallel momentum source
               t1 = ((am(is)+am(is+1))/2.0_R8)*mp*t0
               if (styl0.eq.0) then
@@ -320,7 +320,7 @@
 *       ..compute damping coefficient
            rf0 = rxm2*max(0.0_R8,-rlra(ix,iy,1,is))
 *       ..compute rate for is->is-1
-           t0 = rra(ix,iy,is)*vol(ix,iy)*ne(ix,iy)
+           t0 = phm0*rra(ix,iy,is)*vol(ix,iy)*ne(ix,iy)               !srv 05.06.18
 *       ..compute particle source
            sna0_rec(ix,iy,0,is) = sna0_rec(ix,iy,0,is)+               !srv 11.09.09 {
      &       rf0*t0*na(ix,iy,is)
@@ -372,8 +372,8 @@ c accounted for)
 *       ..compute damping coefficient
            rf0 = rg1+rxm3*max(0.0_R8,-rlra(ix,iy,1,is))
 *       ..compute rate for is->is-1
-           t0 =rra(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
-     &         *hz(ix,iy)                                            !srv 09.01.01
+           t0 = phm0*rra(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)*    !srv 05.06.18
+     &          hz(ix,iy)                                                !srv 09.01.01
 *       ..compute parallel momentum source
            t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
            smq0_rec(ix,iy,0,is) = smq0_rec(ix,iy,0,is)+
@@ -413,7 +413,7 @@ c accounted for)
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
 *      ..if adpak_used, also contains recombination and CX terms
-          t0 = rqa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
+          t0 = phm0*rqa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)       !srv 05.06.18
 *      ..compute electron heat sink
           she0(ix,iy,0) = she0(ix,iy,0)+rf0*t0
           she0(ix,iy,3) = she0(ix,iy,3)-
@@ -421,7 +421,7 @@ c accounted for)
           rqahe(ix,iy,is) = rqahe(ix,iy,is) + t0
           rqahereg(region(ix,iy,0),is)=rqahereg(region(ix,iy,0),is)+t0
 *      ..compute line radiation rate for is->any
-          t0 = rrd(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
+          t0 = phm0*rrd(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)      !srv 05.06.18
 *      ..compute line radiation
           rqrad(ix,iy,is) = t0
           rqradreg(region(ix,iy,0),is)=rqradreg(region(ix,iy,0),is)+t0
@@ -432,7 +432,7 @@ c accounted for)
      .       rad_imp(jimp_tmp(b2espcr(is)))-t0
           endif
 *      ..compute bremsstrahlung radiation rate for is->any
-          t0 = rbr(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
+          t0 = phm0*rbr(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)    !srv 05.06.18
 *      ..compute bremsstrahlung radiation
           rqbrm(ix,iy,is) = t0
           rqbrmreg(region(ix,iy,0),is)=rqbrmreg(region(ix,iy,0),is)+t0

@@ -27,7 +27,7 @@ c     helpers for reading in data
       real (kind=R8) :: dnr_ams
       character dnr_ele*12
       integer id
-      logical first_stage, last_stage
+      logical first_stage, last_stage, same_element
 c     log10 of densities (in 1/cm3), temperatures (in eV)
       real (kind=R8) ::
      *   DDENSD(iddimd),DTEVD(itdimd),logT,logD
@@ -149,9 +149,16 @@ c     filling array and computing rate
           close(29)
         else
           write(*,*) 'No ADAS file found : setting data to 0'
-          do while (streql(ELNAME,is_codes(is)))
+          same_element = .true.
+          do while (same_element)
             mach(0:nx+1,0:ny+1,is) = 0.0_R8
+            ic = is
             is = is + 1
+            if (is.eq.ns) then
+              same_element = .false.
+            else
+              same_element = streql(is_codes(is),is_codes(ic))
+            end if
           end do
         endif
       enddo
@@ -501,7 +508,7 @@ C
       RETURN
 C
   990 WRITE (6,*) ' NO DATA FOUND FOR REACTION ',H123,' ',REAC,
-     .            ' IN DATA SET ',FILNAM
+     .            ' IN DATASET ',FILNAM
       WRITE (6,*) ' IR,MODCLF(IR) ',IR,MODCLF(IR)
       CLOSE (UNIT=29)
       call subend ()

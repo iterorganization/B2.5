@@ -4,7 +4,8 @@ c  version : 07.11.97 13:22
 c
 c======================================================================
 c*** Calculates the radiation power load onto the targets
-c*** rdl(i,1) corresponds to the inner and rdl(i,2) to the outer target
+c*** rdl(i,1,:) corresponds to the inner and rdl(i,2,:) to the outer target
+c*** Last index 0 is a sum over all species
 c*** Power is in W/m**2 (previously, MW/m**2)
 c======================================================================
       use b2mod_types
@@ -20,7 +21,9 @@ c*** If the load is already calculated, just fill in the output array
 c
       if(.not.l2rdldt) then !{
 c----------------------------------------------------------------------
-c        print *,'b2ptrdl starting...'
+#ifdef DBG
+        print *,'b2ptrdl starting...'
+#endif
 c*** Input the DG data and prepare the geometry
 c
         call b2pwinp
@@ -58,28 +61,37 @@ c
           end do !}
           nwldrad=nwldrad+nytg
         end do !}
-c!###{
-c        print *,'%% b2ptrdl: nwldrad,nytg / lwldrad',nwldrad,nytg
-c        k=0
-c        do j=1,ntrgts !{
-c          print '(1x,30i4)',(lwldrad(k+i),i=1,nytg)
-c          k=k+nytg
-c        end do !}
-c        print '(1x,a,i5/(1x,30i4))','nwldlis / lwldlis',nwldlis(1),
-c     ,                                    (lwldlis(i,1),i=1,nwldlis(1))
-c!###}
+#ifdef DBG
+        print *,'%% b2ptrdl: nwldrad,nytg / lwldrad',nwldrad,nytg
+        k=0
+        do j=1,ntrgts !{
+          print '(1x,30i4)',(lwldrad(k+i),i=1,nytg)
+          k=k+nytg
+        end do !}
+        print '(1x,a,i5/(1x,30i4))','nwldlis / lwldlis',nwldlis(1),
+     ,                                    (lwldlis(i,1),i=1,nwldlis(1))
+#endif
 
 c*** Calculate the load
 
         call b2pwrdld
-c        print *,'after b2pwrdld: lrdlsp=',lrdlsp !###
+
+        if(lrdlsp.and.lrdlcr) then !{
+          print *,'#### b2ptrdl: both lrdlsp and lrdlcr are true - ',
+     ,                                                'internal error'
+          lrdlsp=.false.
+          lrdlcr=.false.
+        end if !}
+#ifdef DBG
+        print *,'after b2pwrdld: lrdlsp=',lrdlsp !###
+#endif
         l2rdldt=.true.
-c<<<
-c        print '(a/(1p,5e17.4))','Inner target: load',
-c     ,    (wldrdld(lppp+i+1),i=0,ny-1)
-c        print '(a/(1p,5e17.4))','Outer target: load',
-c     ,    (wldrdld(lppp+ny+i+1),i=0,ny-1)
-c>>>
+#ifdef DBG
+        print '(a/(1p,5e17.4))','Inner target: load',
+     ,    (wldrdld(lppp+i+1),i=0,ny-1)
+        print '(a/(1p,5e17.4))','Outer target: load',
+     ,    (wldrdld(lppp+ny+i+1),i=0,ny-1)
+#endif
       end if !}
 c----------------------------------------------------------------------
 c*** Arrange the output data
@@ -95,6 +107,10 @@ c*** Arrange the output data
               rdl(i,l,m)=wldrdlsp(lppp+k-i+lytg,m)
               rdl(i,l+1,m)=wldrdlsp(lppp+k+1+i-lytg,m)
             end do !}
+          end if !}
+          if(lrdlcr) then !{
+            rdl(i,l,1)=wldrdlsp(lppp+k+1-i+lytg-1,1)
+            rdl(i,l+1,1)=wldrdlsp(lppp+k+i-lytg+1,1)
           end if !}
         end do !}
         k=3*nytg

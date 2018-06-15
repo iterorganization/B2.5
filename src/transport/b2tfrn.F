@@ -5,8 +5,8 @@
      &  facdrift, fac_ExB, rza, rz2,                                     !srv 13.01.17
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,   
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,         !srv 20.09.06
-     &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
-     &  veecrb, uadia, fna_eir, fne_eir, fhe_eir, fhi_eir)
+     &  fne, cvla, cdna, cdpa, chce, chci, veecrb, vaecrb, wadia, ve,    !srv 05.06.18
+     &  wedia, uadia, fna_eir, fne_eir, fhe_eir, fhi_eir)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect

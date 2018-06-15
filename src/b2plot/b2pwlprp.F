@@ -217,10 +217,12 @@ c*** Prepare the list of grid indices for the target flux faces
         k=4
       end if !}
       ltrgpos(k)=nx-1 !csc
-      lseppos(k)=topcut(nncut)-1
+      lseppos(k)=topcut(1)-1
       lpfrpos(k)=rightcut(1)
 c      print *,'ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
 c      print *,'%% ltrgpos : ',(ltrgpos(i),i=1,k)              !###
+c      print *,'%% lseppos : ',(lseppos(i),i=1,k)              !###
+c      print *,'%% lpfrpos : ',(lpfrpos(i),i=1,k)              !###
 
 c*** Sort the segments in the lists of the "wall zones"
 c*** The shadowing structure must be closed, therefore it starts from

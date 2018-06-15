@@ -312,7 +312,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_close(ncid)
       call check_cdf_status(iret)
-!cwdk    initialize writing of the .nc-file for monitoring based on
+!cwdk    initialize writing of the .nc file for monitoring based on
 !c       batch averaging
 !        call b2cravercdf()
 !        iret = nf_open('b2aver.nc',ncwrite,ncav)

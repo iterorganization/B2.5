@@ -6,7 +6,7 @@
      *   alf, a(0:m*n-1), b(0:m*n-1), c(0:m*n-1), d(0:m*n-1),
      &  e(0:m*n-1)
 *     ------------------------------------------------------------------
-*     SIP5F computes the SIP-ILU factorisation of a 2d-5point matrix.
+*     SIP5F computes the SIP-ILU factorisation of a 2d 5-point matrix.
 *     ------------------------------------------------------------------
 *     /1/ Herbert L. Stone: Iterative Solution of Implicit Approxima-
 *     tions of Multidimensional Partial Differential Equations,

@@ -1538,14 +1538,14 @@ c if stellarator island or limiter case, find periodicity domain coordinate
 c
       region=0
 c volume component
-      if(nx.eq.1) then  ! 1d-radial
+      if(nx.eq.1) then  ! 1d radial
         do iy=-1,ny
           do ix=-1,nx
             region(ix,iy,0)=1
           enddo
         enddo
         nnreg(0)=1
-      else if(ny.eq.1) then  ! 1d-parallel
+      else if(ny.eq.1) then  ! 1d parallel
         do iy=-1,ny
           do ix=-1,nx
             region(ix,iy,0)=1
