@@ -519,6 +519,9 @@ c*** recyc     : fudge factors for the sources in B2
       na_feedback_on = .false.
       do is = 0, nspecies-1
         if (na_feedback_on) cycle
+        if (na_feedback_actuator(is).eq.1)
+     >   call xertst(nesepm_istra.gt.0,
+     &    'No gas puff feedback stratum set!')
         na_feedback_on = na_feedback_target(is).gt.0.0_R8.and.
      &                   na_feedback_actuator(is).eq.1.and.
      &                   nesepm_istra.gt.0
