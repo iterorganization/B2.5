@@ -135,6 +135,15 @@ c
           y2=nyiso2(ic)+0.5_R8
           call lined_d(x1,y1,x2,y2)
         enddo
+        if (nncut.eq.0) then
+          if (jsep.gt.-2) then
+            x1=-1-0.5_R8
+            y1=jsep+0.5_R8
+            x2=nx+0.5_R8
+            y2=jsep+0.5_R8
+            call lined_d(x1,y1,x2,y2)
+          endif
+        endif
       endif
       if(physical) then
         do iy = -1, ny-1
@@ -188,6 +197,14 @@ c
             end if
           end do
         end do
+        if (nncut.eq.0) then
+          if (jsep.gt.-2) then
+            do ix=-1,nx
+              call lined_d(crx(ix,jsep,2),cry(ix,jsep,2),
+     1                     crx(ix,jsep,3),cry(ix,jsep,3))
+            enddo
+          endif
+        endif
       endif
 #ifndef PLPLOT
       call gslwsc_d(lwidth)

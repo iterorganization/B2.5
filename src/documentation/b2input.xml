@@ -264,6 +264,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mwti_jsep</name>
+				<default>See description (integer)</default>
+				<type>integer</type>
+				<description>
+					Cell index, on the basis mesh, of the last poloidal ring before the separatrix. Can only be provided for slab geometries, otherwise calculated from geometry:
+					Single-null : jsep=topcut1(1)-1. Double-null : jsep=min(topcut1(1),topcut1(2))-1.
+					Default for straight geometries : jsep=ny/2
+				</description>
+			</switch>
+			<switch>
 				<name>b2agmx_pbs_from_basis_mesh</name>
 				<default>1</default>
 				<type>integer</type>

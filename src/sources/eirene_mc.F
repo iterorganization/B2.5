@@ -814,14 +814,17 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         sum_wld(1:2,1:2+nnatmi)=0.0_R8
         do istrai = 1, nstrat
           sum_wld(1,1)=sum_wld(1,1)+wldnek(nnlimi+ltns(1),istrai)
-          sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+ltns(2),istrai)
+          if (ltns(2).ne.0)
+     >     sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+ltns(2),istrai)
           sum_wld(1,2)=sum_wld(1,2)+wldnep(nnlimi+ltns(1),istrai)
-          sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+ltns(2),istrai)
+          if (ltns(2).ne.0)
+     >     sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+ltns(2),istrai)
           do is = 1, nnatmi
             sum_wld(1,2+is)=sum_wld(1,2+is)+wldna(nnlimi+ltns(1),
      .       is,istrai)
-            sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+ltns(2),
-     .       is,istrai)
+            if (ltns(2).ne.0)
+     >       sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+ltns(2),
+     .        is,istrai)
           end do
         end do
         write(*,*) 'Summed inner target data : '

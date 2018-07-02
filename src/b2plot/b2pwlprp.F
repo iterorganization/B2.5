@@ -26,6 +26,7 @@ c======================================================================
       use b2mod_b2cmfs
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_boundary_namelist
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -58,12 +59,17 @@ c<<<
       parameter (lun_w=76, lfn_hlp=mlblprtx+9)
       character tab, fn_hlp*(lfn_hlp)
 c>>>
+      integer boundary_namelist, use_eirene
+      data boundary_namelist/0/, use_eirene/0/
+      save boundary_namelist, use_eirene
       data ib,ie,it/ntrgsx*0,ntrgsx*0,ntrgsx*0/
       intrinsic mod
-      external ipgetr, subini, subend, xerrab
+      external ipgeti, ipgetr, subini, subend, xerrab
 c======================================================================
       call subini ('b2pwlprp')
       call ipgetr ('b2agmt_1d_width', width)
+      call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+      call ipgeti ('b2mndr_eirene', use_eirene)
 c<<<
       tab=char(9)
 c
@@ -171,12 +177,36 @@ c*** Check the topology of the grid and the list of target edges
 
       if(ntrgsa.gt.0) then !{
         ntrgs=ntrgsa
-        do i=1,ntrgs !{
-          ltrgedge(1,i)=mtrgedge(1,i)
-          ltrgedge(2,i)=mtrgedge(2,i)
-        end do !}
+        if (ntrgs.eq.1) then
+          ltrgedge(1,1)=mtrgedge(2,1)
+          ltrgedge(2,1)=mtrgedge(1,1)
+        else
+          do i=1,ntrgs !{
+            ltrgedge(1,i)=mtrgedge(1,i)
+            ltrgedge(2,i)=mtrgedge(2,i)
+          end do !}
+        end if
       end if !}
       ntrgts=2
+      if(nncut.eq.0 .and. .not.lim_cnf) then
+        if (use_eirene.ne.0) then
+          ntrgts=0
+          do while (ltns(ntrgts+1).gt.0)
+            ntrgts=ntrgts+1
+          end do
+        else if (boundary_namelist.ne.0) then
+          ntrgts=0
+          do i=1,nbc
+            if(bcchar(i).eq.'E'.or.bcchar(i).eq.'W') then
+              if(bcene(i).eq. 3.or.bcene(i).eq.12.or.
+     &           bcene(i).eq.15) ntrgts=ntrgts+1
+            end if
+          end do
+        else if (periodic_bc.eq.1) then
+          ntrgts=0
+        end if
+      end if
+      if(nncut.eq.1 .or. lim_cnf) ntrgts=2
       if(nncut.eq.2) ntrgts=4
       if(ntrgs.gt.ntrgts) then !{
         write(*,*) 'b2pwlprp: inconsistent topology. ',
@@ -204,9 +234,15 @@ c*** No PFR for limiter configuration
 
 c*** Prepare the list of grid indices for the target flux faces
 
-      ltrgpos(1)=-1
-      lseppos(1)=topcut(1)-1
-      lpfrpos(1)=leftcut(1)-1
+      if (lim_cnf.or.nncut.ge.1) then
+        ltrgpos(1)=-1
+        lseppos(1)=topcut(1)-1
+        lpfrpos(1)=leftcut(1)-1
+      else
+        ltrgpos(1)=nx-1
+        lseppos(1)=jsep
+        lpfrpos(1)=3*nx/4
+      endif
       k=2
       if(ntrgts.eq.4) then
         ltrgpos(2)=nxtl
@@ -217,13 +253,21 @@ c*** Prepare the list of grid indices for the target flux faces
         lpfrpos(3)=rightcut(2)-1
         k=4
       end if !}
-      ltrgpos(k)=nx-1 !csc
-      lseppos(k)=topcut(1)-1
-      lpfrpos(k)=rightcut(1)
-c      print *,'ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
-c      print *,'%% ltrgpos : ',(ltrgpos(i),i=1,k)              !###
-c      print *,'%% lseppos : ',(lseppos(i),i=1,k)              !###
-c      print *,'%% lpfrpos : ',(lpfrpos(i),i=1,k)              !###
+      if (lim_cnf.or.nncut.ge.1) then
+        ltrgpos(k)=nx-1
+        lseppos(k)=topcut(1)-1
+        lpfrpos(k)=rightcut(1)
+      else
+        ltrgpos(k)=-1
+        lseppos(k)=jsep
+        lpfrpos(k)=nx/4
+      endif
+#ifdef DBG
+      print *,'ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
+      print *,'%% ltrgpos : ',(ltrgpos(i),i=1,k)              !###
+      print *,'%% lseppos : ',(lseppos(i),i=1,k)              !###
+      print *,'%% lpfrpos : ',(lpfrpos(i),i=1,k)              !###
+#endif
 
 c*** Sort the segments in the lists of the "wall zones"
 c*** The shadowing structure must be closed, therefore it starts from
@@ -292,14 +336,18 @@ cc>>>
       do i=1,nytg
         j=lytg+i
         k=nytg*(ntrgts-1)
-        pp1(1,i+lppp)=crx(0,ny-i,2)
-        pp1(2,i+lppp)=cry(0,ny-i,2)
-        pp2(1,i+lppp)=crx(0,ny-i,0)
-        pp2(2,i+lppp)=cry(0,ny-i,0)
-        pp1(1,i+lppp+k)=crx(nx,j-1,0)
-        pp1(2,i+lppp+k)=cry(nx,j-1,0)
-        pp2(1,i+lppp+k)=crx(nx,j-1,2)
-        pp2(2,i+lppp+k)=cry(nx,j-1,2)
+        if (ntrgts.gt.1.or.ltrgpos(1).eq.-1) then
+          pp1(1,i+lppp)=crx(0,ny-i,2)
+          pp1(2,i+lppp)=cry(0,ny-i,2)
+          pp2(1,i+lppp)=crx(0,ny-i,0)
+          pp2(2,i+lppp)=cry(0,ny-i,0)
+        end if
+        if (ntrgts.gt.1.or.ltrgpos(1).eq.nx-1) then
+          pp1(1,i+lppp+k)=crx(nx,j-1,0)
+          pp1(2,i+lppp+k)=cry(nx,j-1,0)
+          pp2(1,i+lppp+k)=crx(nx,j-1,2)
+          pp2(2,i+lppp+k)=cry(nx,j-1,2)
+        end if
       end do
       if(ntrgts.eq.4) then !{
         k=nxtl
@@ -354,7 +402,7 @@ c     ,          'o4',(pp1(j,jedge(8)),pp2(j,jedge(8)),j=1,2)
 c      end if
 
       do i=1,ntrgts !{
-        if (mod(i,2).eq.1) then
+        if (mod(i,2).eq.1.and.ntrgts.ge.2) then
           m_hlp(i)=ltrgpos(i)+1
         else
           m_hlp(i)=ltrgpos(i)
@@ -370,16 +418,27 @@ c        print *,'i,k,ltrgedges: ',i,k,ltrgedge(1,i),ltrgedge(2,i) !###
           l=ltrgedge(k,i)
 c          print *,'pp1: l,ix,iy ',l,ix,iy !###
           if(l.gt.0) then !{
-            pp1(1,l)=crx(ix,iy,0)
-            pp1(2,l)=cry(ix,iy,0)
+            if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+              iy=ny-1-iy
+              pp1(1,l)=crx(ix,iy,3)
+              pp1(2,l)=cry(ix,iy,3)
+            else
+              pp1(1,l)=crx(ix,iy,0)
+              pp1(2,l)=cry(ix,iy,0)
+            end if
           end if !}
           k=3-k
           iy=ny-1-iy
           l=ltrgedge(k,i)
 c          print *,'pp2: l,ix,iy ',l,ix,iy !###
           if(l.gt.0) then !{
-            pp2(1,l)=crx(ix,iy,3)
-            pp2(2,l)=cry(ix,iy,3)
+            if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+              pp2(1,l)=crx(ix,iy,0)
+              pp2(2,l)=cry(ix,iy,0)
+            else
+              pp2(1,l)=crx(ix,iy,3)
+              pp2(2,l)=cry(ix,iy,3)
+            end if
           end if !}
           k=3-k
           iy=ny-1-iy
@@ -517,7 +576,7 @@ c          print '(1x,30i4)',(lwldlis(i,il),i=1,n)       !###
             k=iabs(lwldlis(is,il))
             if(k.eq.ltrgedge(2,1) .or. k.eq.ltrgedge(1,2) .or.
      .          (ntrgts.eq.4 .and.
-     .            (k.eq.ltrgedge(2,3) .or. k.eq.ltrgedge(1,4)))) then !{
+     .        (k.eq.ltrgedge(2,3) .or. k.eq.ltrgedge(1,4)))) then !{
 c*** CW edge
 c              print *,'CW edge: k=',k                   !###
               if(kb.ne.0) then !{
@@ -540,7 +599,7 @@ c*** Target still open...
 c              print *,'kb,ib(kb)=',kb,ib(kb)            !###
             else if(k.eq.ltrgedge(1,1) .or. k.eq.ltrgedge(2,2) .or.
      .        (ntrgts.eq.4 .and.
-     .           (k.eq.ltrgedge(1,3) .or. k.eq.ltrgedge(2,4)))) then !}{
+     .             (k.eq.ltrgedge(1,3) .or. k.eq.ltrgedge(2,4)))) then !}{
 c*** CCW edge. Check to which target this edge belongs
               i1=1
               do i2=1,ntrgts !{
@@ -592,9 +651,9 @@ c*** Now fill in the necessary arrays
             istarget(il)=.true.
 
 c!###{
-c           print *,         'Before merging the targets. ',
+c           print *,         'Before merging the targets ',
 c     ,          ':      ib       :      ie       :      it       :'
-c           print '(a,24i4)','                             ',ib,ie,it
+c           print '(a,24i4)','                            ',ib,ie,it
 c           print *,'lytg,nytg= ',lytg,nytg
 c!###}
 
@@ -608,9 +667,10 @@ c***   kke     if nonzero, the first segment was CCW edge abs(kke)
 c***           if negative, the corresponding target has been added
 c***
 c*** It is assumed here that CW and CCW edges differ
-c*** Build only the shadowing structure with the additional wall segments from target cells
-c*** Other plot zones will be defined using starting/ending segments and selecting the chain
-c*** from shadowing structure itself
+c*** Build only the shadowing structure with the additional wall segments
+c*** from target cells
+c*** Other plot zones will be defined using starting/ending segments and
+c*** selecting the chain from shadowing structure itself
             if (il.eq.1) then
               kke=0
               kn=0
@@ -627,7 +687,7 @@ c*** CCW target
                   do i=1,ntrgts !{
                     if(j.eq.ib(i)) kb=i
                   end do !}
-c                print '(1x,a,5i5)',':: j,ke,kb,k,kn : ',j,ke,kb,k,kn!###
+c                  print '(1x,a,5i5)',':: j,ke,kb,k,kn : ',j,ke,kb,k,kn!###
                   if(kb.gt.0 .and. ke.gt.0) then !{
                     write (*,*) 'b2pwlprp: a segment can appear in ',
      ,                   'the grid edge lists no more than once.'
@@ -723,7 +783,7 @@ c*** Limiter configuration. Add the CCW target face
                   lwldlis(i,il)=luwrk(i)
                 end do !}
                 nwldlis(il)=kn
-c              print *,'il,kn = ',il,kn                  !###
+c                print *,'il,kn = ',il,kn                  !###
               else !}{
                 print *,'b2pwlprp: not yet provided for the CW target ',
      ,                                                   'orientation.'
@@ -737,13 +797,12 @@ c              print *,'il,kn = ',il,kn                  !###
       end do !}
 c!###{
 c      print *,'After correction. nwldprt =',nwldprt
-c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
+c      print '(a,(20i4))','nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt !{
-c       print '(a,i5/(5x,15i5))','lwldlis :',il,
+c       print '(a,i4/(20i4))','lwldlis :',il,
 c     ,                                 (lwldlis(i,il),i=1,nwldlis(il))
 c      end do !}
 c!###}
-
 
       do il=2,nwldprt
 c*** Store original plot zones to be used for substituting proper elements inside targets
@@ -835,7 +894,7 @@ ccc*** Substitute b2 cells only when overlapping original plot zone target eleme
           end do
           nwldlis_old=cont-1
           nwldlis(il)=cont-1
-c*** Now change also the new plot zone according to the Cw or CCW order
+c*** Now change also the new plot zone according to the CW or CCW order
           if (lwlddir(il)) then !CCW order
             do i=1,nwldlis(il)
               lwldlis(i,il)=lwldlis_old(i)
