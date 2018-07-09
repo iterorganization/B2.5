@@ -17,7 +17,7 @@
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'p '
 '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 's '
 '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'cl'
-'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'ar'
+'89  ' '89  ' '89  ' '89  ' '41  ' '89  ' '89  ' 'ar'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'k ' 
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ca'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'sc'
@@ -25,7 +25,7 @@
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'v ' 
 '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'cr'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'mn'
-'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'fe'
+'89  ' '89  ' '89  ' '89  ' '41  ' '89  ' '89  ' 'fe'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'co'
 '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'ni'
 '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'cu'
@@ -35,7 +35,7 @@
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'as'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'se'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'br'
-'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'kr'
+'89  ' '89  ' '89  ' '89  ' '41  ' '89  ' '89  ' 'kr'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'rb'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'sr'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'y ' 
@@ -53,7 +53,7 @@
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'sb'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'te'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'i '
-'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'xe'
+'89  ' '89  ' '89  ' '89  ' '41  ' '89  ' '89  ' 'xe'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'cs'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ba'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'la'
@@ -73,11 +73,13 @@
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'lu'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'hf'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ta'
-'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'w '
+'50  ' '50  ' '89  ' '50  ' '41  ' '89  ' '89  ' 'w '
  rec    ion    cex    prb    plt    zcd    ecd    es      [names in ratadas.F]
  acd    scd    ccd    prb    plt    zcd    ecd            [directories in adas]
 
 Change log:
+        2018.07.09	XPB	Changed W acd, scd, prb to '50
+				Changed plt to '41 for Ar, Fe, Kr, W, Xe
         2013.07.01	DPC	Changed H acd, scd, prb, plt to '12
         2014.04.29	DPC	Changed Si from '89 to '96 except for CCD (= '89)
 	2012.03.21	DPC	Changed Li from none to '96 except for CCD (= '89)
