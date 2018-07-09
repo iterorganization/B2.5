@@ -2,6 +2,7 @@
 
       use b2mod_types
       use b2mod_geo
+      use b2mod_geo_corner
       use b2mod_indirect
       use b2mod_plasma
       use b2mod_transport
@@ -21,6 +22,7 @@
 
       public :: read_mapping, calc_mapping, write_mapping,
      .          read_geometry, prep_geometry, write_geometry,
+     .          calc_mapping_bc, calc_mapping_neut,
      .          prep_plasma, 
      .          prep_plasma_ext
 
@@ -181,9 +183,9 @@ cwdk  only used at b2mod_driver level)
 !  assume a structured quadrilateral grid
 
 !  no. of cells
-      mpg%nCi = nx*ny
-      mpg%nCg = 2*nx + 2*ny   
-      mpg%nCv = mpg%nCi + mpg%nCg  
+      mpg%nCi = nx*ny                         ! internal cells
+      mpg%nCg = 2*nx + 2*ny                   ! guard cells
+      mpg%nCv = mpg%nCi + mpg%nCg             ! total number of cells
 
 !  no. of cell faces
       mpg%nFc = ny*(nx+1) + nx*(ny+1)
@@ -220,6 +222,7 @@ cwdk  only used at b2mod_driver level)
       end do
 
 ! list of cell faces and vertices for inner cells
+! interpolation coefficients for interpolation to cell centers
       nxx = (nx+1)*ny
       do iy = 1, ny
         do ix = 1, nx
@@ -233,6 +236,14 @@ cwdk  only used at b2mod_driver level)
           mpg%cvFc(if2) = ix+1 + (iy-1)*(nx+1)
           mpg%cvFc(if3) = nxx + iy + (ix-1)*(ny+1)
           mpg%cvFc(if4) = nxx + iy+1 + (ix-1)*(ny+1)
+          mpg%intcellP(if1) = 1.0_R8
+          mpg%intcellP(if2) = 1.0_R8
+          mpg%intcellP(if3) = 0.0_R8
+          mpg%intcellP(if4) = 0.0_R8
+          mpg%intcellR(if1) = 0.0_R8
+          mpg%intcellR(if2) = 0.0_R8
+          mpg%intcellR(if3) = 1.0_R8
+          mpg%intcellR(if4) = 1.0_R8
 !          mpg%cvVx(if1) = ix + (iy-1)*(nx+1)
           mpg%cvVx(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
           mpg%cvVx(if2) = ix+1 + (iy-1)*(nx+1)
@@ -246,10 +257,14 @@ cwdk  only used at b2mod_driver level)
       do ix = 1, nx
         ic = mpg%nCi + ix
         mpg%cvFc(mpg%cvFcP(ic,1)) = nxx + 1 + (ix-1)*(ny+1)
+        mpg%intcellP(mpg%cvFcP(ic,1)) = 1.0_R8
+        mpg%intcellR(mpg%cvFcP(ic,1)) = 1.0_R8
         mpg%cvVx(mpg%cvVxP(ic,1)) = ix 
         mpg%cvVx(mpg%cvVxP(ic,1)+1) = ix+1 
         ic = mpg%nCi + nx + ix
         mpg%cvFc(mpg%cvFcP(ic,1)) = nxx + ny+1 + (ix-1)*(ny+1)
+        mpg%intcellP(mpg%cvFcP(ic,1)) = 1.0_R8
+        mpg%intcellR(mpg%cvFcP(ic,1)) = 1.0_R8
         mpg%cvVx(mpg%cvVxP(ic,1)) = ix + ny*(nx+1)
         mpg%cvVx(mpg%cvVxP(ic,1)+1) = ix+1 + ny*(nx+1)
       end do
@@ -257,10 +272,14 @@ cwdk  only used at b2mod_driver level)
       do iy = 1, ny
         ic = mpg%nCi + 2*nx + iy
         mpg%cvFc(mpg%cvFcP(ic,1)) = 1 + (iy-1)*(nx+1)
+        mpg%intcellP(mpg%cvFcP(ic,1)) = 1.0_R8
+        mpg%intcellR(mpg%cvFcP(ic,1)) = 1.0_R8
         mpg%cvVx(mpg%cvVxP(ic,1)) = 1 + (iy-1)*(nx+1) 
         mpg%cvVx(mpg%cvVxP(ic,1)+1) = 1 + iy*(nx+1) 
         ic = mpg%nCi + 2*nx + ny + iy
         mpg%cvFc(mpg%cvFcP(ic,1)) = nx+1 + (iy-1)*(nx+1)
+        mpg%intcellP(mpg%cvFcP(ic,1)) = 1.0_R8
+        mpg%intcellR(mpg%cvFcP(ic,1)) = 1.0_R8
         mpg%cvVx(mpg%cvVxP(ic,1)) = nx+1 + (iy-1)*(nx+1) 
         mpg%cvVx(mpg%cvVxP(ic,1)+1) = nx+1 + iy*(nx+1) 
       end do
@@ -274,6 +293,8 @@ cwdk  only used at b2mod_driver level)
            ifc = ix + (iy-1)*(nx+1)
            mpg%fcCv(ifc,1) = ic - 1
            mpg%fcCv(ifc,2) = rightix(ix-2,iy-1)+1 + (iy-1)*nx
+           mpg%fcNv(ifc,1) = 6
+           mpg%fcNv(ifc,2) = 5
            mpg%fcVx(ifc,1) = ix + (iy-1)*(nx+1)
            mpg%fcVx(ifc,2) = ix + iy*(nx+1)
          end do
@@ -283,6 +304,8 @@ cwdk  only used at b2mod_driver level)
          ifc = 1 + (iy-1)*(nx+1)
          mpg%fcCv(ifc,1) = mpg%nCi + 2*nx + iy
          mpg%fcCv(ifc,2) = ic
+         mpg%fcNv(ifc,1) = 4
+         mpg%fcNv(ifc,2) = 5
          mpg%fcVx(ifc,1) = 1 + (iy-1)*(nx+1)
          mpg%fcVx(ifc,2) = 1 + iy*(nx+1)
 
@@ -291,6 +314,8 @@ cwdk  only used at b2mod_driver level)
          ifc = nx+1 + (iy-1)*(nx+1)
          mpg%fcCv(ifc,1) = ic - 1
          mpg%fcCv(ifc,2) = mpg%nCi + 2*nx + ny + iy
+         mpg%fcNv(ifc,1) = 6
+         mpg%fcNv(ifc,2) = 4
          mpg%fcVx(ifc,1) = nx+1 + (iy-1)*(nx+1)
          mpg%fcVx(ifc,2) = nx+1 + iy*(nx+1)
        end do
@@ -300,27 +325,33 @@ cwdk  only used at b2mod_driver level)
          do iy = 2, ny
            ic = ix + (iy-1)*nx
            ifc = nxx + iy + (ix-1)*(ny+1)
-           mpg%fcCv(ifc,1) = ic
-           mpg%fcCv(ifc,2) = ic - nx
-           mpg%fcVx(ifc,1) = ix + (iy-1)*(nx+1)
-           mpg%fcVx(ifc,2) = ix+1 + (iy-1)*(nx+1)
+           mpg%fcCv(ifc,2) = ic
+           mpg%fcCv(ifc,1) = ic - nx
+           mpg%fcNv(ifc,1) = 8
+           mpg%fcNv(ifc,2) = 3
+           mpg%fcVx(ifc,2) = ix + (iy-1)*(nx+1)
+           mpg%fcVx(ifc,1) = ix+1 + (iy-1)*(nx+1)
          end do
 
 ! lower guard cells
          ic = ix 
          ifc = nxx + ix
-         mpg%fcCv(ifc,1) = ic
-         mpg%fcCv(ifc,2) = mpg%nCi + ix
-         mpg%fcVx(ifc,1) = ix 
-         mpg%fcVx(ifc,2) = ix+1 
+         mpg%fcCv(ifc,2) = ic
+         mpg%fcCv(ifc,1) = mpg%nCi + ix
+         mpg%fcNv(ifc,1) = 5
+         mpg%fcNv(ifc,2) = 3
+         mpg%fcVx(ifc,2) = ix 
+         mpg%fcVx(ifc,1) = ix+1 
 
 ! upper guard cells
          ic = ix + (ny-1)*(nx+1)
          ifc = nxx + nx + ix
-         mpg%fcCv(ifc,1) = mpg%nCi + nx + ix
-         mpg%fcCv(ifc,2) = ic
-         mpg%fcVx(ifc,1) = ix + ny*(nx+1)
-         mpg%fcVx(ifc,2) = ix+1 + ny*(nx+1)
+         mpg%fcCv(ifc,2) = mpg%nCi + nx + ix
+         mpg%fcCv(ifc,1) = ic
+         mpg%fcNv(ifc,1) = 8
+         mpg%fcNv(ifc,2) = 3
+         mpg%fcVx(ifc,2) = ix + ny*(nx+1)
+         mpg%fcVx(ifc,1) = ix+1 + ny*(nx+1)
        end do
 
 ! merging x-point vertex
@@ -495,6 +526,103 @@ cwdk  only used at b2mod_driver level)
 
 ***********************************************************************
 
+      subroutine calc_mapping_bc (nx, ny, ns, m)
+      use b2mod_boundary_namelist
+      implicit none
+      integer :: nx, ny, ns, ib, ibc, is, inbc
+      integer :: bcs(nbc), bce(nbc), bcl(nbc)
+      type (mapping), intent (inout) :: m
+
+
+
+      m%nBc   = nbc     ! number of boundary conditions
+      m%mxnBc = 0       ! number of cells with imposed BC
+      do ib = 1, nbc
+        bcs(ib) = bcstart(ib)
+        bce(ib) = bcend(ib)
+        ! exclude corner cells if present
+        if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S') then
+          if (leftix (bcstart(ib),bcpos(ib)) .eq. -2)  
+     >      bcs(ib) = bcs(ib) + 1
+          if (rightix(bcend(ib),  bcpos(ib)) .eq. nx+1) 
+     >      bce(ib) = bce(ib) - 1
+        endif
+        if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') then
+          if (bottomiy(bcpos(ib),bcstart(ib)) .eq. -2)
+     >      bcs(ib) = bcs(ib) + 1
+          if (topiy   (bcpos(ib),bcend(ib)  ) .eq. ny+1)
+     >      bce(ib) = bce(ib) - 1
+        endif
+        bcl(ib) = bce(ib) - bcs(ib) + 1
+        m%mxnBc = m%mxnBc + bcl(ib)
+      enddo
+      if (m%mxnBc .ne. m%nCg ) 
+     >  call xerrab ('calc_mapping_bc -- wrong mxnBc')
+
+
+      call alloc_mapping_bc (m)
+
+      inbc = 0 ! index in bcCv
+      do ib = 1, nbc
+        mpg%bcCvP(ib,1) = inbc + 1
+        mpg%bcCvP(ib,2) = bcl(ib)
+        if (bcchar(ib).eq.'S') then
+          do ibc = 1, bcl(ib)
+            inbc = inbc + 1
+            mpg%bcCv(inbc,1) = mpg%nCi + bcs(ib) + ibc ! number of the guard cell
+            mpg%bcCv(inbc,2) = bcs(ib) + ibc           ! number of the corresponding domain cell
+            mpg%bcFcOr(inbc) = -1.0_R8
+          enddo
+        elseif (bcchar(ib).eq.'N') then
+          do ibc = 1, bcl(ib)
+            inbc = inbc + 1
+            mpg%bcCv(inbc,1) = mpg%nCi + nx + bcs(ib) + ibc
+            mpg%bcCv(inbc,2) = nx*(ny-1) + bcs(ib) + ibc 
+            mpg%bcFcOr(inbc) = 1.0_R8
+          enddo
+        elseif (bcchar(ib).eq.'W') then
+          do ibc = 1, bcl(ib)
+            inbc = inbc + 1
+            mpg%bcCv(inbc,1) = mpg%nCi + 2*nx + bcs(ib) + ibc
+            mpg%bcCv(inbc,2) = nx*bcs(ib) + 1
+            mpg%bcFcOr(inbc) = -1.0_R8
+          enddo
+        elseif (bcchar(ib).eq.'E') then 
+          do ibc = 1, bcl(ib)
+            inbc = inbc + 1
+            mpg%bcCv(inbc,1) = mpg%nCi + 2*nx + ny + bcs(ib) + ibc
+            mpg%bcCv(inbc,2) = nx*(bcs(ib) + 1)
+            mpg%bcFcOr(inbc) = 1.0_R8
+          enddo
+        else
+          call xerrab ('calc_mapping_bc -- wrong BCCHAR')
+        endif
+      enddo     
+
+      if (inbc .ne. m%nCg ) 
+     >  call xerrab ('calc_mapping_bc -- problem setting up bc arrays')
+
+      end subroutine calc_mapping_bc
+
+
+***********************************************************************
+
+
+
+      subroutine calc_mapping_neut (nx, ny, ns, m)
+      use b2mod_neutrals_namelist
+      implicit none
+      integer :: nx, ny, ns
+      type (mapping), intent (inout) :: m
+
+      call xerrab('to be written!')
+
+      end subroutine calc_mapping_neut
+
+
+***********************************************************************
+
+
       subroutine read_geometry (fname)
 
       implicit none
@@ -516,13 +644,15 @@ cwdk  only used at b2mod_driver level)
         call cfrure (iun, mpg%nCv,   gm%cvS,    'cvS')
         call cfrure (iun, mpg%nCv,   gm%cvH,    'cvH')
         call cfrure (iun, mpg%nCv*2, gm%cvQgam, 'cvQgam')
-        call cfrure (iun, mpg%nCv, gm%cvVol,  'cvVol')
+        call cfrure (iun, mpg%nCv,   gm%cvVol,  'cvVol')
+        call cfrure (iun, mpg%nCv,   gm%cvOnedBsq,'cvOnedBsq')
+        call cfrure (iun, mpg%nCv,   gm%cvBzb,  'cvBzb')
 
 ! face quantities
         call cfrure (iun, mpg%nFc*4, gm%fcBb,   'fcBb')
         call cfrure (iun, mpg%nFc,   gm%fcS,    'fcS')
         call cfrure (iun, mpg%nFc*2, gm%fcHc,   'fcHc')
-        call cfrure (iun, mpg%nFc*2, gm%fcHt,   'fcHt')
+        call cfrure (iun, mpg%nFc,   gm%fcHt,   'fcHt')
         call cfrure (iun, mpg%nFc*2, gm%fcQgam, 'fcQgam')
         call cfrure (iun, mpg%nFc*2, gm%fcQalf, 'fcQalf')
         call cfrure (iun, mpg%nFc*2, gm%fcQbet, 'fcQbet')
@@ -565,12 +695,14 @@ cwdk  only used at b2mod_driver level)
         call cfwure (nout, mpg%nCv,   gm%cvH,    'cvH')
         call cfwure (nout, mpg%nCv*2, gm%cvQgam, 'cvQgam')
         call cfwure (nout, mpg%nCv,   gm%cvVol,  'cvVol')
+        call cfwure (nout, mpg%nCv,   gm%cvOnedBsq,'cvOnedBsq')
+        call cfwure (nout, mpg%nCv,   gm%cvBzb,  'cvBzb')
 
 ! face quantities
         call cfwure (nout, mpg%nFc*4, gm%fcBb,   'fcBb')
         call cfwure (nout, mpg%nFc,   gm%fcS,    'fcS')
         call cfwure (nout, mpg%nFc*2, gm%fcHc,   'fcHc')
-        call cfwure (nout, mpg%nFc*2, gm%fcHt,   'fcHt')
+        call cfwure (nout, mpg%nFc,   gm%fcHt,   'fcHt')
         call cfwure (nout, mpg%nFc*2, gm%fcQgam, 'fcQgam')
         call cfwure (nout, mpg%nFc*2, gm%fcQalf, 'fcQalf')
         call cfwure (nout, mpg%nFc*2, gm%fcQbet, 'fcQbet')
@@ -599,7 +731,9 @@ cwdk  only used at b2mod_driver level)
       implicit none
       integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs
       integer :: ix, iy, ic, ifc, nxx, ivx, i, j
-      real(r8), allocatable :: qs(:,:,:)
+      real (kind=R8) :: hy1(-1:nx,-1:ny)
+
+      hy1 = hy*qz(:,:,1)
 
       nxx = (nx+1)*ny
 
@@ -612,58 +746,73 @@ cwdk  only used at b2mod_driver level)
 ! b field
           gm%cvBb(ic,0:3) = bb(ix,iy,0:3)
 ! cell center
-          gm%cvX(ic) = 0.25d0*sum(crx(ix,iy,0:3))
-          gm%cvY(ic) = 0.25d0*sum(cry(ix,iy,0:3))
+          gm%cvX(ic) = 0.25_R8*sum(crx(ix,iy,0:3))
+          gm%cvY(ic) = 0.25_R8*sum(cry(ix,iy,0:3))
           gm%cvS(ic) = gs(ix,iy,2)
           gm%cvH(ic) = hz(ix,iy)
+          gm%cvHx(ic) = hx(ix,iy)
           gm%cvQgam(ic,0) = qz(ix,iy,1)    ! cos
           gm%cvQgam(ic,1) = -qz(ix,iy,0)   ! sin
 	  gm%cvVol(ic) = vol(ix,iy)
+          gm%cvOnedBsq(ic) = OnedBsq(ix,iy)
+          gm%cvBzb(ic) = bzb(ix,iy)
         end do
       end do
 
       do ix = 0, nx-1
         ic = nCi + ix+1
         gm%cvBb(ic,0:3) = bb(ix,-1,0:3)
-        gm%cvX(ic) = 0.25d0*sum(crx(ix,-1,0:3))
-        gm%cvY(ic) = 0.25d0*sum(cry(ix,-1,0:3))
+        gm%cvX(ic) = 0.25_R8*sum(crx(ix,-1,0:3))
+        gm%cvY(ic) = 0.25_R8*sum(cry(ix,-1,0:3))
         gm%cvS(ic) = gs(ix,-1,2)
         gm%cvH(ic) = hz(ix,-1)
+        gm%cvHx(ic) = hx(ix,-1)
         gm%cvQgam(ic,0) = qz(ix,-1,1)
         gm%cvQgam(ic,1) = -qz(ix,-1,0)
         gm%cvVol(ic) = vol(ix,-1)
+        gm%cvOnedBsq(ic) = OnedBsq(ix,-1)
+        gm%cvBzb(ic) = bzb(ix,-1)
 
         ic = nCi + nx + ix+1
         gm%cvBb(ic,0:3) = bb(ix,ny,0:3)
-        gm%cvX(ic) = 0.25d0*sum(crx(ix,ny,0:3))
-        gm%cvY(ic) = 0.25d0*sum(cry(ix,ny,0:3))
+        gm%cvX(ic) = 0.25_R8*sum(crx(ix,ny,0:3))
+        gm%cvY(ic) = 0.25_R8*sum(cry(ix,ny,0:3))
         gm%cvS(ic) = gs(ix,ny,2)
         gm%cvH(ic) = hz(ix,ny)
+        gm%cvHx(ic) = hx(ix,ny)
         gm%cvQgam(ic,0) = qz(ix,ny,1)
         gm%cvQgam(ic,1) = -qz(ix,ny,0)
         gm%cvVol(ic) = vol(ix,ny)
+        gm%cvOnedBsq(ic) = OnedBsq(ix,ny)
+        gm%cvBzb(ic) = bzb(ix,ny)
       end do
  
       do iy = 0, ny-1
         ic = nCi + 2*nx + iy+1
         gm%cvBb(ic,0:3) = bb(-1,iy,0:3)
-        gm%cvX(ic) = 0.25d0*sum(crx(-1,iy,0:3))
-        gm%cvY(ic) = 0.25d0*sum(cry(-1,iy,0:3))
+        gm%cvX(ic) = 0.25_R8*sum(crx(-1,iy,0:3))
+        gm%cvY(ic) = 0.25_R8*sum(cry(-1,iy,0:3))
         gm%cvS(ic) = gs(-1,iy,2)
         gm%cvH(ic) = hz(-1,iy)
+        gm%cvHx(ic) = hx(-1,iy)
         gm%cvQgam(ic,0) = qz(-1,iy,1)
         gm%cvQgam(ic,1) = -qz(-1,iy,0)
 	gm%cvVol(ic) = vol(-1,iy)
+        gm%cvOnedBsq(ic) = OnedBsq(-1,iy)
+        gm%cvBzb(ic) = bzb(-1,iy)
 
         ic = nCi + 2*nx + ny + iy+1
         gm%cvBb(ic,0:3) = bb(nx,iy,0:3)
-        gm%cvX(ic) = 0.25d0*sum(crx(nx,iy,0:3))
-        gm%cvY(ic) = 0.25d0*sum(cry(nx,iy,0:3))
+        gm%cvX(ic) = 0.25_R8*sum(crx(nx,iy,0:3))
+        gm%cvY(ic) = 0.25_R8*sum(cry(nx,iy,0:3))
         gm%cvS(ic) = gs(nx,iy,2)
         gm%cvH(ic) = hz(nx,iy)
+        gm%cvHx(ic) = hx(nx,iy)
         gm%cvQgam(ic,0) = qz(nx,iy,1)
         gm%cvQgam(ic,1) = -qz(nx,iy,0)
 	gm%cvVol(ic) = vol(nx,iy)
+        gm%cvOnedBsq(ic) = OnedBsq(nx,iy)
+        gm%cvBzb(ic) = bzb(nx,iy)
       end do
 
 ! x faces
@@ -672,16 +821,18 @@ cwdk  only used at b2mod_driver level)
            ifc = ix+1 + iy*(nx+1)
            gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
            gm%fcS(ifc) = gs(ix,iy,0)
-           gm%fcHc(ifc,0) = 0.5d0*hx(leftix(ix,iy),leftiy(ix,iy))
-           gm%fcHc(ifc,1) = 0.5d0*hx(ix,iy)
-           gm%fcHt(ifc,0) = hy(leftix(ix,iy),leftiy(ix,iy))
-	   gm%fcHt(ifc,1) = hy(ix,iy)
+           gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
+           gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
+           gm%fcHt(ifc)   = 
+     .       0.5_R8*(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))             !cwdk: computation could be made exact
+           gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
+           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
            gm%fcQgam(ifc,0) = qc(ix,iy,0)
-           gm%fcQgam(ifc,1) = sqrt(1.d0-qc(ix,iy,0)**2)
+           gm%fcQgam(ifc,1) = -qs(ix,iy,0)
            gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)
            gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)
-           gm%fcQbet(ifc,0) = 1.d0
-           gm%fcQbet(ifc,1) = 0.d0
+           gm%fcQbet(ifc,0) = 1.0_R8
+           gm%fcQbet(ifc,1) = 0.0_R8
            gm%fcPbs(ifc) = pbs(ix,iy,0)
            gm%fcPbshz(ifc) = pbshz(ix,iy,0)
          end do
@@ -691,16 +842,17 @@ cwdk  only used at b2mod_driver level)
          ifc = ix+1 + iy*(nx+1)
          gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
          gm%fcS(ifc) = gs(ix,iy,0)
-         gm%fcHc(ifc,0) = 0.5d0*hx(leftix(ix,iy),leftiy(ix,iy))
-         gm%fcHc(ifc,1) = 0.5d0*hx(ix,iy)
-         gm%fcHt(ifc,0) = hy(leftix(ix,iy),leftiy(ix,iy))
-         gm%fcHt(ifc,1) = hy(ix,iy)
+         gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
+         gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
+         gm%fcHt(ifc)   = hy(leftix(ix,iy),leftiy(ix,iy))                   !cwdk: computation could be made exact
+         gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
+         gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
          gm%fcQgam(ifc,0) = qc(ix,iy,0)
-         gm%fcQgam(ifc,1) = sqrt(1.d0-qc(ix,iy,0)**2)
+         gm%fcQgam(ifc,1) = -qs(ix,iy,0)
          gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)
          gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)
-         gm%fcQbet(ifc,0) = 1.d0
-         gm%fcQbet(ifc,1) = 0.d0
+         gm%fcQbet(ifc,0) = 1.0_R8
+         gm%fcQbet(ifc,1) = 0.0_R8
          gm%fcPbs(ifc) = pbs(ix,iy,0)
          gm%fcPbshz(ifc) = pbshz(ix,iy,0)
 
@@ -709,39 +861,42 @@ cwdk  only used at b2mod_driver level)
          ifc = ix+1 + iy*(nx+1)
          gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
 	 gm%fcS(ifc) = gs(ix,iy,0)
-         gm%fcHc(ifc,0) = 0.5d0*hx(leftix(ix,iy),leftiy(ix,iy))
-         gm%fcHc(ifc,1) = 0.5d0*hx(ix,iy)
-         gm%fcHt(ifc,0) = hy(leftix(ix,iy),leftiy(ix,iy))
-         gm%fcHt(ifc,1) = hy(ix,iy)
+         gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
+         gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
+         gm%fcHt(ifc)   = hy(ix,iy)                                         !cwdk: computation could be made exact
+         gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
+         gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
          gm%fcQgam(ifc,0) = qc(ix,iy,0)
-         gm%fcQgam(ifc,1) = sqrt(1.d0-qc(ix,iy,0)**2)
+         gm%fcQgam(ifc,1) = -qs(ix,iy,0)
          gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)
          gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)
-         gm%fcQbet(ifc,0) = 1.d0
-         gm%fcQbet(ifc,1) = 0.d0
+         gm%fcQbet(ifc,0) = 1.0_R8
+         gm%fcQbet(ifc,1) = 0.0_R8
          gm%fcPbs(ifc) = pbs(ix,iy,0)
          gm%fcPbshz(ifc) = pbshz(ix,iy,0)
        end do
 
 ! y faces
-       allocate (qs(-1:nx,-1:ny,0:1))
-       call intfacev(nx, ny, bottomix, bottomiy, vol, qz(-1,-1,0),
-     .               qs(-1,-1,1))
+!       allocate (qs(-1:nx,-1:ny,0:1))
+!       call intfacev(nx, ny, bottomix, bottomiy, vol, qz(-1,-1,0),
+!     .               qs(-1,-1,1))
        do ix = 0, nx-1
          do iy = 1, ny-1
            ifc = nxx + iy+1 + ix*(ny+1)
            gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
            gm%fcS(ifc) = gs(ix,iy,1)
-           gm%fcHc(ifc,0) = 0.5d0*hy(bottomix(ix,iy),bottomiy(ix,iy))
-           gm%fcHc(ifc,1) = 0.5d0*hy(ix,iy)
-           gm%fcHt(ifc,0) = hx(bottomix(ix,iy),bottomiy(ix,iy))
-           gm%fcHt(ifc,1) = hx(ix,iy)
-           gm%fcQgam(ifc,0) = sqrt(1.d0 - qs(ix,iy,1)**2)
+           gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))       !cwdk: change orientation ??
+           gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
+           gm%fcHt(ifc)   = 
+     .       0.5_R8*(hx(bottomix(ix,iy),bottomiy(ix,iy)) + hx(ix,iy))       !cwdk: computation could be made exact
+           gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
+           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
+           gm%fcQgam(ifc,0) = qc(ix,iy,1)
            gm%fcQgam(ifc,1) = -qs(ix,iy,1)
-           gm%fcQalf(ifc,0) = 1.d0
-           gm%fcQalf(ifc,1) = 0.d0
-           gm%fcQbet(ifc,0) = 0.d0
-           gm%fcQbet(ifc,1) = 1.d0
+           gm%fcQalf(ifc,0) = 0.0_R8
+           gm%fcQalf(ifc,1) = 1.0_R8
+           gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)
+           gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)
            gm%fcPbs(ifc) = pbs(ix,iy,1)
            gm%fcPbshz(ifc) = pbshz(ix,iy,1)
          end do
@@ -751,16 +906,17 @@ cwdk  only used at b2mod_driver level)
          ifc = nxx + ix+1
          gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
          gm%fcS(ifc) = gs(ix,iy,1)
-         gm%fcHc(ifc,0) = 0.5d0*hy(bottomix(ix,iy),bottomiy(ix,iy))
-         gm%fcHc(ifc,1) = 0.5d0*hy(ix,iy)
-         gm%fcHt(ifc,0) = hx(bottomix(ix,iy),bottomiy(ix,iy))
-         gm%fcHt(ifc,1) = hx(ix,iy)
-         gm%fcQgam(ifc,0) = sqrt(1.d0 - qs(ix,iy,1)**2)
+         gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))
+         gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
+         gm%fcHt(ifc)   = hx(bottomix(ix,iy),bottomiy(ix,iy))               !cwdk: computation could be made exact
+         gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
+         gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
+         gm%fcQgam(ifc,0) = qc(ix,iy,1)
          gm%fcQgam(ifc,1) = -qs(ix,iy,1)
-         gm%fcQalf(ifc,0) = 1.d0
-         gm%fcQalf(ifc,1) = 0.d0
-         gm%fcQbet(ifc,0) = 0.d0
-         gm%fcQbet(ifc,1) = 1.d0
+         gm%fcQalf(ifc,0) = 0.0_R8
+         gm%fcQalf(ifc,1) = 1.0_R8
+         gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)
+         gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)
          gm%fcPbs(ifc) = pbs(ix,iy,1)
          gm%fcPbshz(ifc) = pbshz(ix,iy,1)
 
@@ -769,16 +925,17 @@ cwdk  only used at b2mod_driver level)
          ifc = nxx + nx + ix+1
          gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
 	 gm%fcS(ifc) = gs(ix,iy,1)
-         gm%fcHc(ifc,0) = 0.5d0*hy(bottomix(ix,iy),bottomiy(ix,iy))
-         gm%fcHc(ifc,1) = 0.5d0*hy(ix,iy)
-         gm%fcHt(ifc,0) = hx(bottomix(ix,iy),bottomiy(ix,iy))
-         gm%fcHt(ifc,1) = hx(ix,iy)
-         gm%fcQgam(ifc,0) = sqrt(1.d0 - qs(ix,iy,1)**2)
+         gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))
+         gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
+         gm%fcHt(ifc)   = hx(ix,iy)                                         !cwdk: computation could be made exact
+         gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
+         gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
+         gm%fcQgam(ifc,0) = qc(ix,iy,1)
          gm%fcQgam(ifc,1) = -qs(ix,iy,1)
-         gm%fcQalf(ifc,0) = 1.d0
-         gm%fcQalf(ifc,1) = 0.d0
-         gm%fcQbet(ifc,0) = 0.d0
-         gm%fcQbet(ifc,1) = 1.d0
+         gm%fcQalf(ifc,0) = 0.0_R8
+         gm%fcQalf(ifc,1) = 1.0_R8
+         gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)
+         gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)
          gm%fcPbs(ifc) = pbs(ix,iy,1)
          gm%fcPbshz(ifc) = pbshz(ix,iy,1)
        end do      
@@ -798,13 +955,13 @@ cwdk  only used at b2mod_driver level)
  
 ! connection length for core region
 
-      gm%fsConn = 0.d0
+      gm%fsConn = 0.0_R8
       do i = 1, nFs 
 	ic = mpg%cvFS(mpg%cvFsP(i,1))
 	if (mod(mpg%cvReg(ic),4) == 1) then
 	  do j=mpg%fcFsP(i,1), mpg%fcFsP(i,1)+mpg%fcFsp(i,2)-1
 	    ifc = mpg%fcFs(j)
-	    gm%fsconn(i) = gm%fsconn(i) + (gm%fcHc(ifc,0)+gm%fcHc(ifc,1))*
+	    gm%fsconn(i) = gm%fsconn(i) + (gm%fcHc(ifc,1)+gm%fcHc(ifc,2))*
      .                     gm%fcBb(ifc,3)/abs(gm%fcBb(ifc,0))
 	  end do
         end if
@@ -1281,6 +1438,10 @@ cwdk  only used at b2mod_driver level)
           st % co % cvsa_cl(ifc,0:1,0:ns-1) = 
      .                                 cvsa_cl(ix,iy,0,0:1,0:ns-1)
 
+          st % co % cddi(ifc,0:1,0:ns-1) = cddi(ix,iy,0,0:1,0:ns-1)
+
+          st % co % fllim0fna(ifc,0:1,0:ns-1) = 
+     &              fllim0fna(ix,iy,0,0:1,0:ns-1)
           st % co % fllim0fhi(ifc,0:1,0:ns-1) = 
      &              fllim0fhi(ix,iy,0,0:1,0:ns-1)
           st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
@@ -1341,6 +1502,11 @@ cwdk  only used at b2mod_driver level)
      .              wedia(ix,iy,0,0:1)
           st % dv % veecrb(ifc,0:1) = 
      .              veecrb(ix,iy,0,0:1)
+! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
+! but actually used as face quantities in case of drift_flows = 1
+          st % dv % facdrift(ifc) = facdrift(ix,iy)
+          st % dv % fac_ExB(ifc) = fac_ExB(ix,iy)
+          st % dv % fac_vis(ifc) = fac_vis(ix,iy)
       
 ! numerical coefficients
           st % dv % conc(ifc,0:1) = conc(ix,iy,0,0:1)
@@ -1398,6 +1564,8 @@ cwdk  only used at b2mod_driver level)
           st % co % cvsa_cl(ifc,0:1,0:ns-1) = 
      .              cvsa_cl(ix,iy,1,0:1,0:ns-1)
           
+          st % co % cddi(ifc,0:1,0:ns-1) = cddi(ix,iy,1,0:1,0:ns-1)
+
           st % co % fllim0fhi(ifc,0:1,0:ns-1) = 
      &              fllim0fhi(ix,iy,1,0:1,0:ns-1)
           st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
@@ -1452,6 +1620,26 @@ cwdk  only used at b2mod_driver level)
           st % dv % fhiPSch(ifc,0:1) = fhiPSch(ix,iy,1,0:1)
           st % dv % fhit(ifc,0:1) = fhit(ix,iy,1,0:1)
           st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,1,0:1)
+
+
+! derived quantities
+          st % dv % uadia(ifc,0:1,0:ns-1) = 
+     .              uadia(ix,iy,1,0:1,0:ns-1)
+          st % dv % vadia(ifc,0:1,0:ns-1) = 
+     .              vadia(ix,iy,1,0:1,0:ns-1)
+          st % dv % wadia(ifc,0:1,0:ns-1) = 
+     .              wadia(ix,iy,1,0:1,0:ns-1)
+          st % dv % vaecrb(ifc,0:1,0:ns-1) = 
+     .              vaecrb(ix,iy,1,0:1,0:ns-1)
+          st % dv % wedia(ifc,0:1) = 
+     .              wedia(ix,iy,1,0:1)
+          st % dv % veecrb(ifc,0:1) = 
+     .              veecrb(ix,iy,1,0:1)
+! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
+! but actually used as face quantities in case of drift_flows = 1
+          st % dv % facdrift(ifc) = facdrift(ix,iy)
+          st % dv % fac_ExB(ifc) = fac_ExB(ix,iy)
+          st % dv % fac_vis(ifc) = fac_vis(ix,iy)
 
 ! numerical coefficients
           st % dv % conc(ifc,0:1) = conc(ix,iy,1,0:1)

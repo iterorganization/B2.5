@@ -26,7 +26,8 @@
      .                           fchdia(:,:), fchin(:,:),
      .                           fchvispar(:,:), fchvisper(:,:),
      .                           fchvisq(:,:), fchinert(:,:),
-     .                           fchanml(:,:)
+     .                           fchanml(:,:),
+     .                           fch_pi_c(:,:), fch_pi_f(:,:)
         real(R8), allocatable :: fni_32(:,:), fni_52(:,:), 
      .                           fni(:,:)
         real(R8), allocatable :: fna(:,:,:), fna_mdf(:,:,:), 
@@ -34,7 +35,8 @@
      .                           fna_52nd(:,:,:), fna_32nd(:,:,:),
      .                           fna_nodrift(:,:,:), fna_he(:,:,:),
      .                           fnaPSch(:,:,:), fna_fcor(:,:,:),
-     .                           fna_eir(:,:,:)
+     .                           fna_eir(:,:,:),
+     .                           fmo(:,:,:)
         real(R8), allocatable :: fne(:,:), fne_32(:,:), 
      .                           fne_52(:,:), fne_eir(:,:),
      .                           fhe(:,:), fhe_mdf(:,:), fhet(:,:),
@@ -49,9 +51,9 @@
 
         ! numerical coefficients (maybe move to separate object)
         real(R8), dimension(:,:), allocatable :: conc
-        real(R8), dimension(:,:), allocatable :: floe, floi, 
+        real(R8), dimension(:,:), allocatable :: flob, floe, floi, 
      .                                           floe_noc, floi_noc
-        real(R8), dimension(:,:,:), allocatable :: cone, coni
+        real(R8), dimension(:,:,:), allocatable :: conb, cone, coni
         real(R8), dimension(:), allocatable :: fllime, fllimi
         
         ! residuals
@@ -72,13 +74,16 @@
         ! derived state quantities
         ! ni(:,0) is ions, ni(:,1) is neutrals, ue is parallel electron velocity
         ! ne2(:) is electron density, ne2 is elect. den. computed w. squared charge rz2
-        real(R8), allocatable :: ne(:), ni(:,:), ue(:), ne2(:)
+        ! pa(:,0:ns-1) is partial pressure
+        real(R8), allocatable :: ne(:), ni(:,:), ue(:), ne2(:), pa(:,:),
+     .                           lnlam(:)
 
         ! drift velocities, at cell faces
         ! dimensions: fc, direction, species
         real(R8), allocatable :: uadia(:,:,:), vadia(:,:,:), 
      .                           wadia(:,:,:), vaecrb(:,:,:), 
-     .                           wedia(:,:), veecrb(:,:)
+     .                           vedia(:,:), wedia(:,:), veecrb(:,:),
+     .                           facdrift(:), fac_ExB(:), fac_vis(:)
 
 
       end type B2Derivatives
@@ -86,22 +91,37 @@
   ! Transport coefficients (velocities, diffusivities...)
       type B2Coeff
         ! at faces
-        real(R8), dimension(:,:), allocatable :: csig, calf, csig_an
+        real(R8), dimension(:,:), allocatable :: csig, calf, csig_an,
+     .                                           calf_an, csig_cl, 
+     .                                           calf_cl
         real(R8), dimension(:,:,:,:), allocatable :: csigin
         real(R8), dimension(:,:), allocatable :: chve, chce
         real(R8), dimension(:,:), allocatable :: chvi, chci
         real(R8), dimension(:), allocatable :: chvemx, chvimx
         real(R8), allocatable :: cvla(:,:,:), cdna(:,:,:), 
-     .                           cdpa(:,:,:), cvsa(:,:,:)
+     .                           cdpa(:,:,:), cvsa(:,:,:),
+     .                           cvlahz(:,:,:), cdnahz(:,:,:), 
+     .                           cdpahz(:,:,:), cvsahz(:,:,:),
+     .                           cddi(:,:,:), cvsahz_cl(:,:,:),
+     .                           chcb(:,:,:), cvsa_an(:,:,:),
+     .                           cvmahz(:,:,:)
         real(R8), allocatable :: cthe(:,:), cthi(:,:), cvsa_cl(:,:,:)
         real(R8), allocatable :: ceqp(:)
           
-        real(R8), allocatable :: fllim0fhi(:,:,:), fllimvisc(:,:) 
+        real(R8), allocatable :: fllim0fhi(:,:,:), fllimvisc(:,:),
+     .                           fllim0fna(:,:,:)
 
         real(R8), allocatable, dimension(:) :: sig0, hce0, hci0, alf0
         real(R8), allocatable, dimension(:,:) :: dpa0, dna0, vsa0, 
-     .                                             hcib
-        real(R8), allocatable, dimension(:,:,:) :: vla0
+     .                                           hcib
+        real(R8), allocatable, dimension(:,:,:) :: vla0, vma0
+
+        real(R8), allocatable, dimension(:) :: 
+     .                           fllim_ki, fllim_ke, fllim_al, 
+     .                           fllim_al_c, f_luc_ke, f_luc_ki,
+     .                           f_luc_et, f_luc_sg, f_luc_al,
+     .                           alfx_c, sigx_c
+
 
 cwdk move to dv
 !        ! velocities at cell centers
@@ -112,12 +132,12 @@ cwdk move to dv
       end type B2Coeff
   
       type B2Source 
-        real(R8), dimension(:,:), allocatable :: sch, she, shi
+        real(R8), dimension(:,:), allocatable :: sch, she, shi, sne
         real(R8), dimension(:,:,:), allocatable :: smo, smq, sna
       end type B2Source
 
       type B2SourceWork
-        real(R8), dimension(:,:), allocatable :: sch0, she0, shi0
+        real(R8), dimension(:,:), allocatable :: sch0, she0, shi0, sne0
         real(R8), dimension(:,:,:), allocatable :: smo0, smq0, sna0         
       end type B2SourceWork
 
@@ -247,11 +267,15 @@ cwdk move to dv
       subroutine createB2Coeff( nCv, nFC, ns, coeff )
       integer, intent(in) :: nCv, nFc, ns
       type(B2Coeff), intent(inout) :: coeff
-      
-      allocate( coeff % csig_an( nFc, 0:1 ) )
+
+
       allocate( coeff % calf( nFc, 0:1 ) )
+      allocate( coeff % calf_cl( nFc, 0:1 ) )
+      allocate( coeff % calf_an( nFc, 0:1 ) )
       
       allocate( coeff % csig( nFc, 0:1 ) )
+      allocate( coeff % csig_cl( nFc, 0:1 ) )
+      allocate( coeff % csig_an( nFc, 0:1 ) )
       allocate( coeff % csigin( nFc, 0:1, 0:ns-1, 0:ns-1 ) )
       
       allocate( coeff % chve( nFc, 0:1 ) )
@@ -260,19 +284,31 @@ cwdk move to dv
       
       allocate( coeff % chvi( nFc, 0:1 ) )
       allocate( coeff % chci( nFc, 0:1 ) )
+      allocate( coeff % chcb( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % chvimx( nFc ) )
       
       allocate( coeff % cvla( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cdna( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cdpa( nFc, 0:1, 0:ns-1 ) )
-      
       allocate( coeff % cvsa( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvsa_cl( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvsa_an( nFc, 0:1, 0:ns-1 ) )
+
+      allocate( coeff % cvlahz( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cdnahz( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cdpahz( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvsahz( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvsahz_cl( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvmahz( nFc, 0:1, 0:ns-1 ) )
+
+      allocate( coeff % cddi( nFc, 0:1, 0:ns-1 ) )
+
       allocate( coeff % cthe( nFc, 0:ns-1 ) )
       allocate( coeff % cthi( nFc, 0:ns-1 ) )
-      allocate( coeff % cvsa_cl( nFc, 0:1, 0:ns-1 ) )
       
       allocate( coeff % ceqp( nCv ) )
-      
+
+      allocate( coeff % fllim0fna( nFc, 0:1, 0:ns-1 ) )      
       allocate( coeff % fllim0fhi( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % fllimvisc( nFc, 0:ns-1 ) )
             
@@ -282,12 +318,25 @@ cwdk move to dv
       allocate( coeff%dna0( nCv, 0:ns-1 ) )
       allocate( coeff%dpa0( nCv, 0:ns-1 ) )
       allocate( coeff%vla0( nCv, 0:1, 0:ns-1 ) )
+      allocate( coeff%vma0( nCv, 0:1, 0:ns-1 ) )
       allocate( coeff%vsa0( nCv, 0:ns-1 ) )
       allocate( coeff%hci0( nCv ) )
       allocate( coeff%hcib( nCv, 0:ns-1 ) )
       allocate( coeff%hce0( nCv ) )
       allocate( coeff%sig0( nCv ) )
       allocate( coeff%alf0( nCv ) )
+
+      allocate( coeff%fllim_ki( nFc ) )
+      allocate( coeff%fllim_ke( nFc ) )
+      allocate( coeff%fllim_al( nFc ) )
+      allocate( coeff%fllim_al_c( nCv ) )
+      allocate( coeff%f_luc_ke( nFc ) )
+      allocate( coeff%f_luc_ki( nFc ) )
+      allocate( coeff%f_luc_et( nFc ) )
+      allocate( coeff%f_luc_sg( nFc ) )
+      allocate( coeff%f_luc_al( nFc ) )
+      allocate( coeff%alfx_c( nCv ) )
+      allocate( coeff%sigx_c( nCv ) )
 
       end subroutine createB2Coeff
 
@@ -299,6 +348,7 @@ cwdk move to dv
       deallocate( coeff % csigin )
       deallocate( coeff % csig_an )
       deallocate( coeff % calf )
+      deallocate( coeff % calf_an )
       
       deallocate( coeff % chve )
       deallocate( coeff % chce )
@@ -306,31 +356,57 @@ cwdk move to dv
       
       deallocate( coeff % chvi )
       deallocate( coeff % chci )
+      deallocate( coeff % chcb )
       deallocate( coeff % chvimx )
       
       deallocate( coeff % cvla )
       deallocate( coeff % cdna )
       deallocate( coeff % cdpa )
-      
       deallocate( coeff % cvsa )
+      deallocate( coeff % cvsa_cl )
+      deallocate( coeff % cvsa_an )
+
+      deallocate( coeff % cvlahz )
+      deallocate( coeff % cdnahz )
+      deallocate( coeff % cdpahz )
+      deallocate( coeff % cvsahz )
+      deallocate( coeff % cvsahz_cl )
+      deallocate( coeff % cvmahz )
+
+      deallocate( coeff % cddi )
+
       deallocate( coeff % cthe )
       deallocate( coeff % cthi )
-      deallocate( coeff % cvsa_cl )
+
       
       deallocate( coeff % ceqp )
-      
+
+      deallocate( coeff % fllim0fna )      
       deallocate( coeff % fllim0fhi )
       deallocate( coeff % fllimvisc )
       
       deallocate( coeff%dna0 )
       deallocate( coeff%dpa0 )
       deallocate( coeff%vla0 )
+      deallocate( coeff%vma0 )
       deallocate( coeff%vsa0 )
       deallocate( coeff%hci0 )
       deallocate( coeff%hcib )
       deallocate( coeff%hce0 )
       deallocate( coeff%sig0 )
       deallocate( coeff%alf0 )
+
+      deallocate( coeff%fllim_ki )
+      deallocate( coeff%fllim_ke )
+      deallocate( coeff%fllim_al )
+      deallocate( coeff%fllim_al_c )
+      deallocate( coeff%f_luc_ke )
+      deallocate( coeff%f_luc_ki )
+      deallocate( coeff%f_luc_et )
+      deallocate( coeff%f_luc_sg )
+      deallocate( coeff%f_luc_al )
+      deallocate( coeff%alfx_c )
+      deallocate( coeff%sigx_c )
       
       end subroutine destroyB2Coeff
       
@@ -351,7 +427,9 @@ cwdk move to dv
       allocate( dv % fchvisper( nFc, 0:1 ) )
       allocate( dv % fchvisq( nFc, 0:1 ) )
       allocate( dv % fchinert( nFc, 0:1 ) )
-      allocate( dv % fchanml( nFc, 0:1 ) )      
+      allocate( dv % fchanml( nFc, 0:1 ) )
+      allocate( dv % fch_pi_c( nCv, 0:1 ) )
+      allocate( dv % fch_pi_f( nFc, 0:1 ) )                        
       allocate( dv % fne( nFc, 0:1 ) )
       allocate( dv % fne_32( nFc, 0:1 ) )
       allocate( dv % fne_52( nFc, 0:1 ) )
@@ -373,6 +451,8 @@ cwdk move to dv
 
       allocate( dv % fna_nodrift( nFc, 0:1, 0:ns-1 ) )
       
+      allocate( dv % fmo( nFc, 0:1, 0:ns-1 ) )
+
       allocate( dv % fhe( nFc, 0:1 ) )    
       allocate( dv % fhe_mdf( nFc, 0:1 ) )    
       allocate( dv % fhePSch( nFc, 0:1 ) )    
@@ -392,17 +472,25 @@ cwdk move to dv
       allocate( dv % ne2( nCv ) )    
       allocate( dv % ni( nCv, 0:1 ) )    
       allocate( dv % ue( nCv ) )
+      allocate( dv % pa( nCv, 0:ns-1 ) )    
+      allocate( dv % lnlam( nCv ) ) 
 
 ! drift flows
-      allocate( dv % uadia( nCv, 0:1, 0:ns-1 ) )
-      allocate( dv % vadia( nCv, 0:1, 0:ns-1 ) )
-      allocate( dv % wadia( nCv, 0:1, 0:ns-1 ) )
-      allocate( dv % vaecrb( nCv, 0:1, 0:ns-1 ) )
-      allocate( dv % wedia( nCv, 0:1 ) )
-      allocate( dv % veecrb( nCv, 0:1 ) )
+      allocate( dv % uadia ( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % vadia ( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % wadia ( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % vaecrb( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % vedia ( nFc, 0:1 ) )
+      allocate( dv % wedia ( nFc, 0:1 ) )
+      allocate( dv % veecrb( nFc, 0:1 ) )
+      allocate( dv % facdrift (nFc))
+      allocate( dv % fac_ExB  (nFc))
+      allocate( dv % fac_vis   (nFc))
 
       
 ! numerical coefficients
+      allocate( dv % flob (nFc, 0:1 ) )
+      allocate( dv % conb (nFc, 0:1, 0:4) )
       allocate( dv % conc( nFc, 0:1 ) )
       allocate( dv % fllime( nFc ) )    
       allocate( dv % floe( nFc, 0:1 ) )
@@ -458,6 +546,8 @@ cwdk move to dv
       deallocate( dv % fchvisq )
       deallocate( dv % fchinert )
       deallocate( dv % fchanml )
+      deallocate( dv % fch_pi_c )
+      deallocate( dv % fch_pi_f )
       deallocate( dv % fna )
       deallocate( dv % fna_mdf )
       deallocate( dv % fna_he )
@@ -470,17 +560,29 @@ cwdk move to dv
       deallocate( dv % fna_nodrift )
       deallocate( dv % fna_eir )
       
+      deallocate( dv % fmo )
+
       deallocate( dv % ne )
       deallocate( dv % ne2 )
       deallocate( dv % ni )
       deallocate( dv % ue )
+      deallocate( dv % pa )
+      deallocate( dv % lnlam)
 
       deallocate( dv % uadia )
       deallocate( dv % vadia )
       deallocate( dv % wadia )
       deallocate( dv % vaecrb )
+      deallocate( dv % vedia )
       deallocate( dv % wedia )
       deallocate( dv % veecrb )
+      deallocate( dv % facdrift )
+      deallocate( dv % fac_ExB )
+      deallocate( dv % fac_vis )
+
+      deallocate (dv % flob )
+      deallocate (dv % conb )
+
 
 ! kinetic energy
       deallocate( dv % kinrgy )
@@ -537,6 +639,7 @@ cwdk move to dv
       allocate( sr % smo( nCv, 0:3, 0:ns-1 ) )
       allocate( sr % smq( nCv, 0:3, 0:ns-1 ) )
       allocate( sr % sna( nCv, 0:1, 0:ns-1 ) )
+      allocate( sr % sne( nCv, 0:1 ) )
       
       end subroutine createB2Source
       
@@ -549,6 +652,8 @@ cwdk move to dv
       deallocate( sr % smo )
       deallocate( sr % smq )
       deallocate( sr % sna )
+      deallocate( sr % sne )
+
       end subroutine destroyB2Source
       
       subroutine createB2SourceWork( nCv, ns, srw )
@@ -561,6 +666,7 @@ cwdk move to dv
       allocate( srw % smo0( nCv, 0:3, 0:ns-1 ) )
       allocate( srw % smq0( nCv, 0:3, 0:ns-1 ) )
       allocate( srw % sna0( nCv, 0:1, 0:ns-1 ) )
+      allocate( srw % sne0( nCv, 0:1 ) )
       
       end subroutine createB2SourceWork
 
@@ -573,6 +679,8 @@ cwdk move to dv
       deallocate( srw % smo0 )
       deallocate( srw % smq0 )
       deallocate( srw % sna0 )
+      deallocate( srw % sne0 )
+
       end subroutine destroyB2SourceWork
       
       
@@ -820,5 +928,46 @@ cwdk move to dv
       end subroutine destroyB2StateExt
 
      
+! some routines borrowed from b2nStateHelper
+      subroutine getB2PlasmaSnapshot( pl, dv, snap )
+        type(B2Plasma), intent(in) :: pl
+        type(B2Derivatives), intent(in) :: dv
+        type(B2PlasmaSnapshot), intent(inout) :: snap
+
+        snap % na = pl % na
+        snap % ua = pl % ua
+        snap % po = pl % po
+        snap % te = pl % te
+        snap % ti = pl % ti
+        snap % ne = dv % ne
+        snap % ni = dv % ni
+        snap % fch = dv % fch
+        snap % fhe = dv % fhe
+        snap % fhi = dv % fhi
+        snap % kinrgy = dv % kinrgy
+
+      end subroutine getB2PlasmaSnapshot
+
+      subroutine putB2PlasmaSnapshot( pl, dv, snap )
+        type(B2Plasma), intent(inout) :: pl
+        type(B2Derivatives), intent(inout) :: dv
+        type(B2PlasmaSnapshot), intent(in) :: snap
+
+        pl % na = snap % na
+        pl % ua = snap % ua
+        pl % po = snap % po
+        pl % te = snap % te
+        pl % ti = snap % ti
+        dv % ne = snap % ne
+        dv % ni = snap % ni
+        dv % fch = snap % fch
+        dv % fhe = snap % fhe
+        dv % fhi = snap % fhi
+        dv % kinrgy = snap % kinrgy
+    
+      end subroutine putB2PlasmaSnapshot
+
+
+
       end module b2us_plasma
       

@@ -4,10 +4,13 @@
       implicit none
       
       private
-      public :: alloc_mapping, dealloc_mapping
+      public :: alloc_mapping, dealloc_mapping,
+     .          alloc_mapping_bc, dealloc_mapping_bc,
+     .          alloc_mapping_rc, dealloc_mapping_rc
       
       type, public :: mapping
-        integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nFs, mxnFs
+        integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nFs, mxnFs,
+     .             nBc, mxnBc, nRc, mxnRc
         integer, allocatable :: cvFcP(:,:) ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
         integer, allocatable :: cvFc(:)    ! listing for every cell the corresponding face numbers 
 	integer, allocatable :: fcCv(:,:)  ! (nFc,2) listing for every face the two corresponding cells
@@ -25,6 +28,24 @@
         integer, allocatable :: fcReg(:) 
         integer, allocatable :: cvReg(:)
         logical, allocatable :: cvOnClosedSurface(:)
+
+        integer, allocatable :: bcCvP(:,:) ! (nFs,2) pointing for every 
+        integer, allocatable :: bcCv(:,:)
+        real (kind=R8), allocatable :: bcFcOr (:)  ! multiplier to indicate whether outward normal coincindes with the face normal (1.0_R8) or not (-1.0_R8)
+
+        integer, allocatable :: rcCvP(:,:) ! (nFs,2) pointing for every 
+        integer, allocatable :: rcCv(:,:)
+        real (kind=R8), allocatable :: rcFcOr (:)  ! multiplier to indicate whether outward normal coincindes with the face normal (1.0_R8) or not (-1.0_R8)
+
+!        real (kind=R8), allocatable :: intfaceV(:,:) ! volume factors for interpolation from centers to faces; currently: still geo%fcVol
+!        real (kind=R8), allocatable :: intvertexV(:) ! volume factors for interpolation from centers to vertices; currently: still based on cvVol
+        real (kind=R8), allocatable :: intcellP(:)   ! factors for interpolation from faces to centers in poloidal direction
+        real (kind=R8), allocatable :: intcellR(:)   ! factors for interpolation from faces to centers in radial direction
+
+        integer, allocatable :: fcNv(:,:)  !(nFc,2): indicating for each cell of a face the number of the neighboring cell in its stencil
+        integer, allocatable :: aaP(:,:) !(nCv,2): pointing for each cell to the start in cvNv array, and the number of points in its stencil
+        integer, allocatable :: cvNv(:)    !(nFc,2): indicating for each cell the numbers of the cells in its stencil
+
       end type mapping
 
       contains
@@ -54,6 +75,15 @@
       allocate (m%cvReg(m%nCv))
       allocate (m%cvOnClosedSurface(m%nCv))
       
+!      allocate (m%intfaceV(m%nFc,2))
+!      allocate (m%intvertexV(m%nCmxVx * m%nCv))
+      allocate (m%intcellP(m%nCmxFc * m%nCv))
+      allocate (m%intcellR(m%nCmxFc * m%nCv))
+
+      allocate (m%fcNv(m%nFc,2))
+      allocate (m%aaP(m%nCv,2))
+!      allocate (m%cvNv(m%nCmxVx*m%nCmxVx*m%nCv)) ! very conservative; reduce!
+
       end subroutine alloc_mapping 
 
 **********************************************************************
@@ -81,8 +111,66 @@
       deallocate (m%cvReg)
       deallocate (m%cvOnClosedSurface)
 
-      
+!      deallocate (m%intfaceV) 
+!      deallocate (m%intvertexV) 
+      deallocate (m%intcellP) 
+      deallocate (m%intcellR)       
+
       end subroutine dealloc_mapping 
+
+**********************************************************************
+
+      subroutine alloc_mapping_bc (m)
+
+      implicit none
+      type(mapping), intent(in out) :: m
+
+      allocate (m%bcCvP  ( m % nBc,   2 ) )
+      allocate (m%bcCv   ( m % mxnBc, 2 ) )
+      allocate (m%bcFcOr ( m % mxnBc    ) )
+
+      
+      end subroutine alloc_mapping_bc 
+
+**********************************************************************
+
+      subroutine dealloc_mapping_bc (m)
+
+      implicit none
+      type(mapping), intent(in out) :: m
+
+      deallocate ( m % bcCvP  )
+      deallocate ( m % bcCv   )
+      deallocate ( m % bcFcOr )
+      
+      end subroutine dealloc_mapping_bc
+
+**********************************************************************
+
+      subroutine alloc_mapping_rc (m)
+
+      implicit none
+      type(mapping), intent(in out) :: m
+
+      allocate (m%rcCvP  ( m % nRc,   2 ) )
+      allocate (m%rcCv   ( m % mxnRc, 2 ) )
+      allocate (m%rcFcOr ( m % mxnRc    ) )
+
+      
+      end subroutine alloc_mapping_rc 
+
+**********************************************************************
+
+      subroutine dealloc_mapping_rc (m)
+
+      implicit none
+      type(mapping), intent(in out) :: m
+
+      deallocate ( m % rcCvP  )
+      deallocate ( m % rcCv   )
+      deallocate ( m % rcFcOr )
+      
+      end subroutine dealloc_mapping_rc 
 
 **********************************************************************
 
