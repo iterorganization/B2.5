@@ -121,8 +121,12 @@ cc    -------------------------------------------------------------------------
       CHARACTER ex*3,fn*80,MIE*2,MIR*2,MIC*2
       logical open_file
 
-      if(.not.open_file(99,fn,
-     1 'data.local/adas|modules/adas')) return
+      if(err.eq.0) then
+        if(.not.open_file(99,fn,
+     1   'data.local/adas|modules/adas')) return
+      else if (err.eq.1) then
+        if(.not.open_file(99,fn,'modules/adas')) return
+      end if
       read(99,*) UIDIN
       if(uidin(1:8).eq.'SOLPSTOP') then
         if (uidin(9:9).ne.'/') then
@@ -160,7 +164,7 @@ cc    -------------------------------------------------------------------------
       end subroutine InitADAS
 
 cc    -------------------------------------------------------------------------
-cc    SUBROUTINE GetIBSEL(WL,DWL,MIE,MIR,MIC,id,IBSELAE,IBSELAR,IBSELAC)
+cc    SUBROUTINE GetIBSEL(WL,DWL,MIE,MIR,MIC,id,IBSELAE,IBSELAR,IBSELAC,ERR)
 cc    INPUT:     REAL WL:             wavelength in A
 cc               REAL DWL:            half width of wavelength window in A
 cc               CHARACTER MIE*2:     metastable index excitation
@@ -170,6 +174,7 @@ cc               INTEGER id:          dimension for array of indices
 cc    OUTPUT:    INTEGER IBSELAE(id): array of indices, excit
 cc               INTEGER IBSELAR(id): array of indices, recom
 cc               INTEGER IBSELAC(id): array of indices, cexch
+cc               INTEGER ERR          error code
 cc    -------------------------------------------------------------------------
 cc    GetIBSEL selects all data blocks in the wavelength window [WL-DWL,WL+DWL]
 cc    InitADAS MUST be called before any call to this subroutine!
@@ -178,7 +183,7 @@ cc    03/24/97 bhs
 cc    -------------------------------------------------------------------------
 
       subroutine GetIBSEL(WL,DWL,MIE,MIR,MIC,id,
-     &                    IBSELAE,IBSELAR,IBSELAC)
+     &                    IBSELAE,IBSELAR,IBSELAC,ERR)
 
       use b2mod_types
       implicit none
@@ -193,6 +198,7 @@ cc    -------------------------------------------------------------------------
       integer IBSELAE(id)
       integer IBSELAR(id)
       integer IBSELAC(id)
+      integer ERR
       integer count,countEX,countRE,countCE
       integer NBSEL
       character CWAVEL(NSTORE)*10,CTYPE(NSTORE)*8
@@ -201,6 +207,7 @@ cc    -------------------------------------------------------------------------
       external streql
 
       call GetInfo(NBSEL,CWAVEL,CTYPE,CINDM,LOT)
+      ERR = 0
       do count=1,id
          IBSELAE(count)=0
          IBSELAR(count)=0
@@ -249,6 +256,7 @@ cc    -------------------------------------------------------------------------
      1    (countCE .eq. 1)) then
          write(*,*) 'GetIBSEL: none selected for'
          write(*,*) 'ion charge: ',IZIN,' nuclear charge: ',IZ0IN
+         ERR = 1
       endif
       return     
       end subroutine GetIBSEL
@@ -3070,10 +3078,18 @@ c      close(99)
 c     calculating the emissivity
       write(*,*) 'Calculate the emissivity for species ',is
       filename='filelist.adas.adf15'
+      err=0
       call InitADAS(ic,nc,
      &              extension,filename,mie,mir,mic,err)
       if (err .eq. 0) then
-         call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac)
+         call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
+         if (err .eq. 1) then
+c  try again in the case where local files were used and
+c  a standard database file may be present 
+           call InitADAS(ic,nc,
+     &                   extension,filename,mie,mir,mic,err)
+           call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
+         end if
          do ix=-1,nx
             do iy=-1,ny
                lNe(1)=NE(ix,iy)/1.0e6_R8
