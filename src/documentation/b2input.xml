@@ -5792,8 +5792,8 @@
 						1: local species density (averaged over the rectangle of cells[IX1:IX2,IY1:IY2]). Summed over all charge states of that species.
 						2: local electron density (averaged over the rectangle of cells[IX1:IX2,IY1:IY2]).
 						3: outer midplane separatrix electron density.
-						4: total particle content for that species averaged over the rectangle of cells[IX1:IX2,IY1:IY2].
-						5: total ion content for that species (not including neutrals) averaged over the rectangle of cells[IX1:IX2,IY1:IY2].
+						4: total particle content for that species summed over the rectangle of cells[IX1:IX2,IY1:IY2].
+						5: total ion content for that species (not including neutrals) summed over the rectangle of cells[IX1:IX2,IY1:IY2].
 						6: neutral particle flux through the core boundary.
 						7: relative average concentration of this species at the separatrix.
                                                 8: relative average concentration of this species averaged over the rectangle of cells[IX1:IX2,IY1:IY2].

@@ -908,14 +908,12 @@
                         if(on_closed_surface(ix,jsep))
      >                      then
                           na_feedback_current =
-     &                           na_feedback_current +
-     &                           na(ix,jsep,is) * gs(ix,jsep,1) +
-     &                           na(topix(ix,jsep),topiy(ix,jsep),is) * 
+     &                           na_feedback_current + (na(ix,jsep,is) +
+     &                           na(topix(ix,jsep),topiy(ix,jsep),is)) *
      &                           gs(topix(ix,jsep),topiy(ix,jsep),1)
                           if (is.eq.is_start) then
-                            sum_e = sum_e +
-     &                           ne(ix,jsep) * gs(ix,jsep,1) +
-     &                           ne(topix(ix,jsep),topiy(ix,jsep)) *
+                            sum_e = sum_e + (ne(ix,jsep) +
+     &                           ne(topix(ix,jsep),topiy(ix,jsep))) *
      &                           gs(topix(ix,jsep),topiy(ix,jsep),1)
                           end if
                         endif
