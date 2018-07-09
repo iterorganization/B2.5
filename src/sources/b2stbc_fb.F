@@ -944,10 +944,10 @@
      &                           na_feedback_ix2(ispecies)
                           na_feedback_current =
      &                           na_feedback_current +
-     &                           na(ix,iy,is) * gs(ix,iy,1)
+     &                           na(ix,iy,is) * vol(ix,iy)
                           if (is.eq.is_start) then
                                 sum_e = sum_e +
-     .                           ne(ix,iy) * gs(ix,iy,1)
+     .                           ne(ix,iy) * vol(ix,iy)
                           end if
                         enddo
                       enddo
