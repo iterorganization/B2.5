@@ -1,20 +1,21 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfx (nx, ny, qe, vol, hx, bb, ne, te, po, ehxp,
+      subroutine b2nxfx (nCv, nFc, nVx, geo, mpg, qe, ne, te, po, ehxp,
      &     wrk0, wrk1)
       use b2mod_types
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny
+      integer nCv, nFc, nVx
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   qe, bb(-1:nx,-1:ny,0:3), ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
-     &  po(-1:nx,-1:ny),vol(-1:nx,-1:ny),hx(-1:nx,-1:ny),
-     &  wrk0(-1:nx,-1:ny),wrk1(-1:nx,-1:ny)
+     *   qe, ne(nCv), te(nCv), po(nCv), wrk0(nFc), wrk1(nFc)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   ehxp(-1:nx,-1:ny)
+     *   ehxp(nCv)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -36,8 +37,8 @@
 *     with its cell-centred value.
 *
 *
-*     ehxp - (-1:nx,-1:ny) real array, output.
-*     For (ix,iy) in (0:nx-1,-1:ny), ehxp(ix,iy) is defined by:
+*     ehxp - (nFc) real array, output.
+*     For (iFc) in (1:nFc), ehxp(iFc) is defined by:
 *       ehxp(ix,iy) = pbs(ix,iy,0)*
 *         (ne("ix+1/2",iy)*te("ix+1/2",iy)-
 *          ne("ix-1/2",iy)*te("ix-1/2",iy)-
@@ -50,9 +51,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, ix, iy
+      integer ncall, iCv
       integer, save :: style = 1, iout = 0                            !srv 26.10.08
       integer, save :: pot_eq = 1, no_current=0                       !srv 16.07.12
+      real (kind=R8) :: wrkc0(nCv), wrkc1(nCv), wrkv(nVx)
       save ncall
 *   ..procedures
       external subini, subend, xertst, ipgeti
@@ -74,28 +76,17 @@
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
       endif
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       if(pot_eq.eq.0 .or. pot_eq.eq.2) then                           !srv 16.07.12 27.02.13
        ehxp = 0.0_R8
       elseif(pot_eq.eq.1) then
        if(style.eq.0) then                                             !srv 26.10.08
+       call xerrab ('b2nxfx -- style 0 not supported for WG')
+#ifdef WG_TODO
 *   ..compute wrk0 and wrk1
-       do iy = -1, ny
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-          wrk0(ix,iy) = 0.0_R8
-          wrk1(ix,iy) = 0.0_R8
-         else
-          wrk0(ix,iy) = ne(ix,iy)*te(ix,iy)-
-     &         ne(leftix(ix,iy),leftiy(ix,iy))
-     &        *te(leftix(ix,iy),leftiy(ix,iy))
-          wrk1(ix,iy) = po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy))
-         endif
-        enddo
-       enddo
-       call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
-       call b2xxgs (nx, ny, 0.0_R8, wrk1, 1)
+       call diff_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
+       call diff_p(nCv, nFc, nVx, 0, geo, mpg, po   , wrkv, wrk1)
 *   ..compute ehxp
        do iy = -1, ny
         do ix = -1, nx
@@ -128,39 +119,19 @@
          endif
         enddo
        enddo
+#endif
       else ! style                                     !srv 26.10.08 {
 *   ..compute wrk0 and wrk1
-       do iy = -1, ny
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-          wrk0(ix,iy) = 0.0e0_R8
-          wrk1(ix,iy) = 0.0e0_R8
-         else
-          wrk0(ix,iy) = 
-     &        (ne(ix,iy)*te(ix,iy)
-     &        -ne(leftix(ix,iy),leftiy(ix,iy))*
-     &         te(leftix(ix,iy),leftiy(ix,iy)))
-     &       /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-          wrk1(ix,iy) = 
-     &        (po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
-     &       /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-         endif
-        enddo
-       enddo
+       call grad_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
+       call grad_p(nCv, nFc, nVx, 0, geo, mpg, po   , wrkv, wrk1)
 *   ..compute ehxp
        ehxp = 0.0e0_R8
-       do iy = 0, ny-1
-        do ix = 0, nx-1
-         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-          ehxp(ix,iy) = 0.0e0_R8
-         else
-          ehxp(ix,iy) = ((wrk0(ix,iy)+wrk0(leftix(ix,iy),leftiy(ix,iy)))
-     &                  *0.5e0_R8-
-     &                  (wrk1(ix,iy)+wrk1(leftix(ix,iy),leftiy(ix,iy)))
-     &                  *0.5e0_R8*qe*ne(ix,iy))
-     &                  *bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)
-         endif
-        enddo
+       call intcell(nFc,nCv,mpg,mpg%intcellP,wrk0,wrkc0)
+       call intcell(nFc,nCv,mpg,mpg%intcellP,wrk1,wrkc1)
+       ehxp = (wrkc0-wrkc1*qe*ne)*geo%cvBb(:,0)/geo%cvBb(:,3)*geo%cvVol
+*   ..zero out guard cells
+       do iCv = mpg%nCi+1, nCv
+         ehxp(iCv) = 0.0_R8
        enddo
       endif                                               !srv 26.10.08 }
       else                                                !srv 16.07.12
@@ -168,7 +139,7 @@
       endif                                               !srv 16.07.12
 
       if (iout.eq.1) then                                 !srv 11.09.09
-        call my_out(70,nx,ny,ehxp,'b2nxfx_ehxp')
+        call my_out_us(70,nFc,ehxp,'b2nxfx_ehxp')
       endif
 
 * ..return

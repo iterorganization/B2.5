@@ -1,27 +1,26 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
-     &  na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
+      subroutine b2trql (nCv, nFc, ns, geo, mpg, pl, dv, st_ext, 
+     .  chvemx, chvimx)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
-      real (kind=R8) ::
-     *  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), 
-     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),
-     &  qc(-1:nx,-1:ny,0:1)
+      integer nCv, nFc, ns
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (in) :: dv
+      type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)
+     *  chvemx(nFc), chvimx(nFc)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -41,12 +40,12 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2
+      integer ncall
       save ncall
       real (kind=R8) ::
      *   cflme, cflmi
       real (kind=R8) ::
-     *   nirm(-1:nx,-1:ny)
+     *   nirm(nCv)
 *   ..procedures
       real (kind=R8) ::
      *   smin, smax
@@ -64,12 +63,12 @@
 *
 *     Description of some local variables (including arrays in w(0:*):
 *
-*     nirm - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), nirm(ix,iy) specifies the atom
-*     density weighted by 1/sqrt(am) on the (ix,iy) cell. It will hold
-*     that 0.lt.nirm(,).
+*     nirm - (nCv) real*8 array.
+*     For (iCv) in (1:nCv), nirm(iCv) specifies the atom
+*     density weighted by 1/sqrt(am) on the (iCv) cell. It will hold
+*     that 0.lt.nirm().
 *     The defining expression for nirm is
-*       nirm(,) = (sum is : 0.le.is.lt.ns : na(,,is)/sqrt(am(is))).
+*       nirm() = (sum is : 0.le.is.lt.ns : na(,is)/sqrt(am(is))).
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -77,47 +76,46 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2trql')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc, ns
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test bb
-       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test range of qz, qc
-       call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
-     &   'faulty argument range qz(,,0)')
-       call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &   smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
-     &   'faulty argument range qz(,,1)')
-       call xertst (0.0_R8.lt.smin(n2,qc,1).and.
-     &   smax(n2,qc,1).le.1.0_R8, 
-     &   'faulty argument range qc')
+       call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
+*    ..test sign of cvVol
+       call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
+*    ..test range of cvQgam, fcQgam
+       call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
+     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8, 
+     &   'faulty argument range cvQgam(,1)')
+       call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
+     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8, 
+     &   'faulty argument range cvQgam(,0)')
+       call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
+     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8, 
+     &   'faulty argument range fcQgam(,1)')
+       call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
+     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8, 
+     &   'faulty argument range fcQgam(,0)')
 *    ..test sign of na, te, ti, ne2
-       call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-       call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-       call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
+       call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
+       call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, dv%ne2, 1, 'ne2', '.gt.')
       endif
 *   ..compute nirm (atom density weighted by 1/sqrt(am)
-      call b2xpnr (nx, ny, ns, am, na, nirm)
+      call b2xpnr (nCv, ns, am, pl%na, nirm)
 
 * ..compute flux limit velocities
 *   ..compute electron heat flux limit velocity
       cflme = cflim(0)
-      call b2tlhe (nx, ny, me, cflme, bb, gs, pbs(-1,-1,0), qc, ne, te, 
+      call b2tlhe (nCv, nFc, me, cflme, geo, mpg, dv%ne, pl%te, 
      &  chvemx)
 *   ..compute all atom heat flux limit velocity
       cflmi = cflim(1)
-      call b2tlhi (nx, ny, mp, cflmi, bb, gs, pbs(-1,-1,0), qc, ni,
-     &  nirm, ti, chvimx)
+      call b2tlhi (nCv, nFc, mp, cflmi, geo, mpg, dv%ni,
+     &  nirm, st_ext%ni, pl%ti, chvimx)
 
 * ..return
       ncall = ncall+1

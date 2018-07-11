@@ -1,18 +1,21 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfv (nx, ny, isb, hz, cvsbhz_cl, flubv)            !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
+      subroutine b2nxfv (nCv, nFc, nVx, isb, geo, mpg, cvsbhz_cl, flubv)            !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
       use b2mod_types
-      use b2mod_indirect
       use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, isb
+      integer nCv, nFc, nVx, isb
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   hz(-1:nx,-1:ny), cvsbhz_cl(-1:nx,-1:ny,0:1,0:1)               !srv 16.10.17
+     *   cvsbhz_cl(nFc,0:1)               !srv 16.10.17
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   flubv(-1:nx,-1:ny,0:1,0:1)
+     *   flubv(nFc,0:1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -26,9 +29,9 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy
+      integer ncall
       real (kind=R8) ::
-     *   ft                                                            !srv 16.10.17
+     *   ft, wrkv(nVx), dloghz(nFc)                                   !srv 16.10.17
       save ncall
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
@@ -46,29 +49,21 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2nxfv')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
       endif
-
-* ..initialize flubv to zero
-      flubv = 0.0_R8
 
 * ..compute convection term
       ft = 4.0_R8/3.0_R8
 *   ..compute flubvx
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then         !srv 26.10.08
-       do iy = -1, ny
-        do ix = -1, nx
-	   if(leftix(ix,iy).ne.-2) then
-             flubv(ix,iy,0,0) = ft*cvsbhz_cl(ix,iy,0,0)*              !srv 16.10.17
-     &        (log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))
-	   endif
-        enddo
-       enddo
+        call diff_p(nCv,nFc,nVx,0,geo,mpg,log(geo%cvH),wrkv,dloghz)
+        flubv(:,0) = ft*cvsbhz_cl(:,0)*dloghz
+        flubv(:,1) = 0.0_R8
+      else
+        flubv = 0.0_R8
       endif
 
 * ..return

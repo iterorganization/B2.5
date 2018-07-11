@@ -1,105 +1,53 @@
-      subroutine b2xpen (nx, ny, ns,
+      subroutine b2xpen (nCv, nFc, ns, mpg,
      1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_constants
+      use b2us_map
       implicit none
-      integer nx, ny, ns
+      integer nCv, nFc, ns
 ! inputs
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     *  fne(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
-     1  fhe(-1:nx,-1:ny,0:1,0:1), fhi(-1:nx,-1:ny,0:1,0:1),
-     2  kinrgy(-1:nx,-1:ny,0:ns-1), rpt(-1:nx,-1:ny,0:ns-1),
-     3  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny), BoRiS
+     *  fna(nFc,0:1,0:ns-1), fne(nFc,0:1), fch(nFc,0:1),
+     *  fhe(nFc,0:1), fhi(1:nFc,0:1), kinrgy(nCv,0:ns-1), 
+     *  rpt(nCv,0:ns-1), te(nCv), ti(nCv), po(nCv), BoRiS
 ! outputs
       real (kind=R8) ::
-     &  fhm(-1:nx,-1:ny,0:1,0:1,0:ns-1),fhp(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     1  fhj(-1:nx,-1:ny,0:1,0:1),       fht(-1:nx,-1:ny,0:1,0:1)
+     *  fhm(nFc,0:1,0:ns-1),fhp(nFc,0:1,0:ns-1),
+     *  fhj(nFc,0:1),       fht(nFc,0:1)
 *     ------------------------------------------------------------------
 *     B2XPEN computes contributions to the total energy fluxes, 
 *     as well as the total energy fluxes
 *     The contributions from external species are not included and must
 *     be added explicitly in the calling routine when needed.
 *     ------------------------------------------------------------------
-      integer ix, iy, is
+      integer iFc, is
       real (kind=R8) ::
-     &  fnt(-1:nx,-1:ny,0:1,0:1)
+     &  fnt(nFc,0:1)
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xpen')
-      fhm = 0.0_R8
-      fhp = 0.0_R8
-      fhj = 0.0_R8
-      fnt = 0.0_R8
-      fht = 0.0_R8
 c calculate additional fluxes (fhj, fhm, fhp)
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ge.-1) then
-            fhj(ix,iy,0,0)=-fch(ix,iy,0,0)*
-     1       (po(ix,iy)+po(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
-            fhj(ix,iy,0,1)=-fch(ix,iy,0,1)*
-     1       (po(ix,iy)+po(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
-            fnt(ix,iy,0,0)=fne(ix,iy,0,0)*
-     1       (te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
-            fnt(ix,iy,0,1)=fne(ix,iy,0,1)*
-     1       (te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
-          endif
-          if(bottomiy(ix,iy).ge.-1) then
-            fhj(ix,iy,1,0)=-fch(ix,iy,1,0)*
-     1       (po(ix,iy)+po(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
-            fhj(ix,iy,1,1)=-fch(ix,iy,1,1)*
-     1       (po(ix,iy)+po(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
-            fnt(ix,iy,1,0)=fne(ix,iy,1,0)*
-     1       (te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
-            fnt(ix,iy,1,1)=fne(ix,iy,1,1)*
-     1       (te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
-          endif
-        enddo
+      do iFc=1,nFc
+        fhj(iFc,0:1)=-0.5_R8*fch(iFc,0:1)*
+     1    (po(mpg%fcCv(iFc,1))+po(mpg%fcCv(iFc,2)))
+        fnt(iFc,0:1)= 0.5_R8*fne(iFc,0:1)*
+     1    (te(mpg%fcCv(iFc,1))+te(mpg%fcCv(iFc,2)))
       enddo
       do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ge.-1) then
-              fhm(ix,iy,0,0,is)=0.5_R8*fna(ix,iy,0,0,is)*
-     2         (kinrgy(leftix(ix,iy),leftiy(ix,iy),is)+kinrgy(ix,iy,is))
-              fhm(ix,iy,0,1,is)=0.5_R8*fna(ix,iy,0,1,is)*
-     2         (kinrgy(leftix(ix,iy),leftiy(ix,iy),is)+kinrgy(ix,iy,is))
-              fhp(ix,iy,0,0,is)=0.5_R8*fna(ix,iy,0,0,is)*
-     2         (rpt(leftix(ix,iy),leftiy(ix,iy),is)+rpt(ix,iy,is))*ev
-              fhp(ix,iy,0,1,is)=0.5_R8*fna(ix,iy,0,1,is)*
-     2         (rpt(leftix(ix,iy),leftiy(ix,iy),is)+rpt(ix,iy,is))*ev
-              fnt(ix,iy,0,0)=fnt(ix,iy,0,0)+0.5_R8*fna(ix,iy,0,0,is)*
-     2         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
-              fnt(ix,iy,0,1)=fnt(ix,iy,0,1)+0.5_R8*fna(ix,iy,0,1,is)*
-     2         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
-            endif
-            if(bottomiy(ix,iy).ge.-1) then
-              fhm(ix,iy,1,0,is)=0.5_R8*fna(ix,iy,1,0,is)*
-     2         (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     1          kinrgy(ix,iy,is))
-              fhm(ix,iy,1,1,is)=0.5_R8*fna(ix,iy,1,1,is)*
-     2         (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     1          kinrgy(ix,iy,is))
-              fhp(ix,iy,1,0,is)=0.5_R8*fna(ix,iy,1,0,is)*
-     2         (rpt(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     1          rpt(ix,iy,is))*ev
-              fhp(ix,iy,1,1,is)=0.5_R8*fna(ix,iy,1,1,is)*
-     2         (rpt(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     1          rpt(ix,iy,is))*ev
-              fnt(ix,iy,1,0)=fnt(ix,iy,1,0)+0.5_R8*fna(ix,iy,1,0,is)*
-     2         (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))
-              fnt(ix,iy,1,1)=fnt(ix,iy,1,1)+0.5_R8*fna(ix,iy,1,1,is)*
-     2         (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))
-            endif
-          enddo
+        do iFc=1,nFc
+          fhm(iFc,0:1,is)=0.5_R8*fna(iFc,0:1,is)*
+     2      (kinrgy(mpg%fcCv(iFc,1),is)+kinrgy(mpg%fcCv(iFc,2),is))
+          fhp(iFc,0:1,is)=0.5_R8*fna(iFc,0:1,is)*
+     2      (rpt(mpg%fcCv(iFc,1),is)+rpt(mpg%fcCv(iFc,2),is))*ev
+          fnt(iFc,0:1)=fnt(iFc,0:1)+0.5_R8*fna(iFc,0:1,is)*
+     2      (ti(mpg%fcCv(iFc,1))+ti(mpg%fcCv(iFc,2)))
         enddo
       enddo
 c calculate total fluxes (fht)
       fht = fhe + fhi + fhj + fnt*(1.0_R8-BoRiS)
       do is=0,ns-1
-	fht = fht + fhp(:,:,:,:,is) + fhm(:,:,:,:,is)*(1.0_R8-BoRiS)
+	fht = fht + fhp(:,:,is) + fhm(:,:,is)*(1.0_R8-BoRiS)
       enddo
 *$$$  call subend ()
       return

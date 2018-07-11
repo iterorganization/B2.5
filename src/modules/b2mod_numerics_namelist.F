@@ -185,17 +185,17 @@
      & 'faulty parameter dtei')
 
 c additional time-modification factor
-      ttf=core_dt_suppression
-      do iy=-1,ny
-        if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
-        do ix=-1,nx
-          if(on_closed_surface(ix,iy)) then
-            time_factor(ix,iy)=ttf
-          else
-            time_factor(ix,iy)=1.0_R8
-          endif
-        enddo
-      enddo
+!WG_TODO      ttf=core_dt_suppression
+!WG_TODO      do iy=-1,ny
+!WG_TODO        if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
+!WG_TODO        do ix=-1,nx
+!WG_TODO          if(on_closed_surface(ix,iy)) then
+!WG_TODO            time_factor(ix,iy)=ttf
+!WG_TODO          else
+!WG_TODO            time_factor(ix,iy)=1.0_R8
+!WG_TODO          endif
+!WG_TODO        enddo
+!WG_TODO      enddo
 
       return
  999  call xerrab ('Error while reading NUMERICS namelist!')

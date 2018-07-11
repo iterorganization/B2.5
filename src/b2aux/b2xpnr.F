@@ -1,25 +1,20 @@
-      subroutine b2xpnr (nx, ny, ns, am, na, nirm)
+      subroutine b2xpnr (nCv, ns, am, na, nirm)
       use b2mod_types
       implicit none
-      integer nx, ny, ns
+      integer nCv, ns
       real (kind=R8) ::
-     *   am(0:ns-1), na(-1:nx,-1:ny,0:ns-1), nirm(-1:nx,-1:ny)
+     *   am(0:ns-1), na(nCv,0:ns-1), nirm(nCv)
 *     ------------------------------------------------------------------
 *     B2XPNR computes the atom density weighted by 1/sqrt(am), nirm:
-*       nirm(,) = (sum is :: na(,,is)/sqrt(am(is))) .
+*       nirm() = (sum is :: na(,is)/sqrt(am(is))) .
 *     ------------------------------------------------------------------
-      integer n2, is
-      real (kind=R8) ::
-     *   t0
+      integer is
       intrinsic sqrt
-      external sfill, b2saxpy
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xpnr')
-      n2 = (nx+2)*(ny+2)
-      call sfill (n2, 0.0_R8, nirm, 1)
+      nirm = 0.0_R8
       do is = 0, ns-1
-       t0 = 1.0_R8/sqrt(am(is))
-       call b2saxpy (n2, t0, na(-1,-1,is), 1, nirm, 1)
+        nirm = nirm + na(:,is)/sqrt(am(is))
       enddo
 *$$$  call subend ()
       return

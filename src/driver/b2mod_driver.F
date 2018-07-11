@@ -88,7 +88,7 @@
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
       integer, save :: b2mndr_redef_pbs = 0
       integer, save :: pot_eq = 1
-      integer, save :: guard_flows = 2
+      integer, save :: boundary_namelist = 0
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
       integer, save :: use_9pt_stencil = 1
@@ -101,9 +101,9 @@
      &  density_rescale, BoRiS, ne_wanted,
      &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
      &  ixfb, iyfb, ax, ay
-      real (kind=R8), allocatable ::
-     *  rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
-     *  rza0(:,:,:), rz20(:,:,:), rpt0(:,:,:), rpi0(:,:,:)
+!WG_TODO      real (kind=R8), allocatable ::
+!WG_TODO     *  !rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
+!WG_TODO     *  rza0(:,:), rz20(:,:), rpt0(:,:), rpi0(:,:)
       save ne_wanted, ne_wanted_time, ne_wanted_next_time,
      &  ne_wanted_mod_time, ixfb, iyfb
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
@@ -156,6 +156,11 @@
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
       real (kind=R8) :: hzconst                                      !srv 30.01.10
+
+      type(mapping), public, save :: mpg
+      type(geometry), public, save :: gm
+      type(B2State), public, save :: state
+      type(B2StateExt), public, save :: state_ext
 
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
@@ -219,6 +224,7 @@
 #else
       integer ninp(0:5), nout(0:8), nx, ny, ns, ns0
 #endif
+      integer nCv, nFc
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..local variables
@@ -227,7 +233,7 @@
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
      3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       integer atomic_physics_rescale_flag
-      integer ix, iy, is, js, k, idum(0:9)
+      integer ix, iy, iCv, is, js, k, idum(0:9)
 #ifdef B25_EIRENE
       integer iflag
 #endif
@@ -886,7 +892,7 @@
        call ipgetr ('b2mndr_stim', stim)
        call ipgetr ('b2mndr_etim', etim)
        call ipgetr ('b2news_BoRiS', BoRiS)
-       call ipgeti ('b2news_guard_flows', guard_flows)
+       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
        call ipgeti ('b2news_no_solve', no_solve)
        call xertst (-15.le.no_solve.and.no_solve.le.1,
      &   'faulty input no_solve')
@@ -1030,12 +1036,12 @@ c     &   'faulty internal parameter density_rescale')
        call ipgetr ('b2mndr_dt_max',dt_max)
        call xertst (0.0_R8.le.dt_max,'faulty internal parameter dt_max')
 * modify rate coefficients for coronal model
-       allocate(
-     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-     &  rbr(-1:nx,-1:ny,0:ns-1),
-     *  rza0(-1:nx,-1:ny,0:ns-1), rz20(-1:nx,-1:ny,0:ns-1),
-     *  rpt0(-1:nx,-1:ny,0:ns-1), rpi0(-1:nx,-1:ny,0:ns-1))
+!WG_TODO       allocate(
+!WG_TODO     *  !rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
+!WG_TODO     &  !rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
+!WG_TODO     &  !rbr(-1:nx,-1:ny,0:ns-1),
+!WG_TODO     *  rza0(nCv,0:ns-1), rz20(nCv,0:ns-1),
+!WG_TODO     *  rpt0(nCv,0:ns-1), rpi0(nCv,0:ns-1))
        call ipgeti ('b2mndr_coronal_model', coronal)
        if(coronal.ne.0) then
           write(*,*)
@@ -1376,19 +1382,33 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
           endif
         enddo
       enddo                                                          !srv 11.03.08 }
-      if (use_9pt_stencil.eq.1) then
-cwdk    For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
-cwdk    temporary computation; should go into geometry routines!
-        call intfacev(nx,ny,bottomix,bottomiy,vol,qz(-1,-1,0),
-     .    qs(-1,-1,1))
-        qc(:,:,1) = sqrt(1.0_R8 - qs(:,:,1)**2)                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
-      else
-cwdk    Use 5-point stencil. Overwrite values of qz, qc and qs to ensure
+cwdk  For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
+cwdk  temporary computation; should go into geometry routines!
+cwk:  this interpolation for backwards compatibility in computation of radial conductances etc.
+      do ix = -1, nx
+       do iy = -1, ny
+        if (bottomiy(ix,iy).eq.-2) then
+         qc(ix,iy,1)=0.0_R8
+        else
+         qc(ix,iy,1) =
+     .    (hy(ix,iy)*qz(ix,iy,1) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     .     qz(bottomix(ix,iy),bottomiy(ix,iy),1))/ 
+     .    (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+         qs(ix,iy,1) =
+     .    (hy(ix,iy)*qz(ix,iy,0) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     .     qz(bottomix(ix,iy),bottomiy(ix,iy),0))/ 
+     .    (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+        endif
+       enddo
+      enddo
+cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
+      qs(:,:,1) = sign(sqrt(1.0_R8 - qc(:,:,1)**2),qs(:,:,1))
+      if (use_9pt_stencil.eq.0) then
+cwdk    Use 5-point stencil. Overwrite values of qz and qs (sin) to ensure
 cwdk    backwards compatible behavior
-cwdk    to be checked: qz(:,:,0) never used !?!
         qs(:,:,:) = 0.0_R8 ! will make all 9-point contributions on faces 0
         qz(:,:,0) = 0.0_R8 ! will make all 9-point contributions in cell centers 0
-        qc(:,:,1) = 1.0_R8 ! keep qc(:,:,0) unmodified, for corrections to poloidal face areas
+!        qc(:,:,1) = 1.0_R8 ! keep qc(:,:,0) unmodified, for corrections to poloidal face areas
       endif
 *   ..find the poloidal number of midplane cell as a number of cell with min Bz
       if(nncut.eq.2) then                                            !srv 22.05.09 {
@@ -1490,92 +1510,149 @@ cwdk    to be checked: qz(:,:,0) never used !?!
       if (ird_aver > 0)
      &  call run_av_get_plasma (na, te, ti, ua, po, nx, ny, ns)
 
-      if (use_unstructured_grid > 0) then
-        call calc_mapping (nx, ny,
-     .            leftix,leftiy,rightix,rightiy,
-     .            topix,topiy,bottomix,bottomiy,
-     .            nncut,leftcut,rightcut,topcut,bottomcut)
+      write (*,*) 'Starting conversion to unstructured format...'
+cwdk -- TMP
+!  no. of cells
+      mpg%nCi = nx*ny                         ! internal cells
+      mpg%nCg = 2*nx + 2*ny                   ! guard cells
+      mpg%nCv = mpg%nCi + mpg%nCg             ! total number of cells
 
-        call prep_geometry (nx, ny,
-     .                      mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs)
+!  no. of cell faces
+      mpg%nFc = ny*(nx+1) + nx*(ny+1)
 
-        call prep_plasma (nx, ny, ns,
+! no. of vertices
+      mpg%nVx = (nx+1) * (ny+1)
+
+! max. no. of vertices per cell (for now: conservative estimate)
+      mpg%nCmxVx = 4 * mpg%nCv
+
+! max. no. of faces per cell (for now: conservative estimate)
+      mpg%nCmxFc = 4 * mpg%nCv
+
+! max. no. of cells per vertex (for now: conservative estimate)
+      mpg%nVmxCv = 4 * mpg%nCv
+
+! max. no. of faces per vertex (for now: conservative estimate)
+      mpg%nVmxFc = 4 * mpg%nCv
+
+! max no. of flux surfaces
+      mpg%mxnFs = 8*nncut*ny
+
+      write (*,*) 'Mapping defined, with'
+      write (*,*) 'nCv, nCi, nCg  = ', mpg%nCv, mpg%nCi, mpg%nCg
+      write (*,*) 'nFc, nVx       = ', mpg%nFc, mpg%nVx
+      write (*,*) 'nCmxFc, nCmxVx = ', mpg%nCmxFc, mpg%nCmxVx
+      write (*,*) 'nVmxFc, nVmxCv = ', mpg%nVmxFc, mpg%nVmxCv
+      write (*,*) 'nVmxFc, mxnFs  = ', mpg%mxnFs
+
+cwdk -- TMP
+
+!      call alloc_mapping (mpg)
+
+*   conversion to new, ustructured data-types
+      call calc_mapping (nx, ny, mpg)
+
+      if (boundary_namelist.ge.1) then
+        call initialize_b2mod_boundary(nx,ny,ns,0.0_R8)
+        call calc_mapping_bc (nx, ny, ns, mpg)
+      else 
+        call xerrab('b2mndr -- specify BCs using boundary_namelist')
+      endif
+
+      write (*,*) 'Mapping created'
+      
+
+
+      call prep_geometry (nx, ny,
+     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, gm, mpg)
+
+      write (*,*) 'Geometry created'
+      
+
+      call prep_plasma (nx, ny, ns,
      .                    mpg%nCv, mpg%nCi, mpg%nFc, state)
 
-        call write_mapping('mapping.dat')
-        call write_geometry('geometry.dat')
+      write (*,*) 'State created'
 
-        call my_out(70,nx,ny,na(-1,-1,1),'na_1_structured')
-        call my_out_us(70,mpg%nCv,state%pl%na(1,1),'na_1_unstructured')
-      end if
+      call prep_plasma_ext(nx, ny, ns,
+     .                    mpg%nCv, mpg%nCi, mpg%nFc, state_ext)
+
+      write (*,*) 'State_ext created'
+
+      call write_mapping('mapping.dat', mpg)
+      call write_geometry('geometry.dat', mpg, gm)
+
+      call my_out(70,nx,ny,na(-1,-1,1),'na_1_structured')
+      call my_out_us(70,mpg%nCv,state%pl%na(1,1),'na_1_unstructured')
+
+
+*   ..set some local variables related to US grid
+      nCv = mpg % nCv
+      nFc = mpg % nFc
 
       if(iout.ne.0) then                                             !srv 25.01.16 {
-       call my_out(70,nx,ny,ne,'b2mndr_ne')
+       call my_out(70,nCv,state%dv%ne,'b2mndr_ne')
        do is = 0,ns-1
         write (chns,'(i3.3)') is
-        call my_out(70,nx,ny,na(-1,-1,is),'b2mndr_na'//chns)
-        call my_out(70,nx,ny,ua(-1,-1,is),'b2mndr_ua'//chns)
-        call my_out(70,nx,ny,uadia(-1,-1,0,0,is),'b2mndr_uadiax'//chns)
-        call my_out(70,nx,ny,uadia(-1,-1,1,1,is),'b2mndr_uadiay'//chns)
-        call my_out(70,nx,ny,fna(-1,-1,0,0,is),'b2mndr_fnax'//chns)
-        call my_out(70,nx,ny,fna(-1,-1,1,1,is),'b2mndr_fnay'//chns)
+        call my_out_us(70,nCv,state%pl%na(1,is),'b2mndr_na'//chns)
+        call my_out_us(70,nCv,state%pl%ua(1,is),'b2mndr_ua'//chns)
+        call my_out_us(70,nCv,state%dv%uadia(1,0,is),
+     .    'b2mndr_uadiax'//chns)
+        call my_out_us(70,nCv,state%dv%uadia(1,1,is),
+     .    'b2mndr_uadiay'//chns)
+        call my_out_us(70,nCv,state%dv%fna(1,0,is),'b2mndr_fnax'//chns)
+        call my_out_us(70,nCv,state%dv%fna(1,1,is),'b2mndr_fnay'//chns)
        enddo
-       call my_out(70,nx,ny,te,'b2mndr_te')
-       call my_out(70,nx,ny,te/ev,'b2mndr_te_eV')
-       call my_out(70,nx,ny,ti,'b2mndr_ti')
-       call my_out(70,nx,ny,ti/ev,'b2mndr_ti_eV')
-       call my_out(70,nx,ny,po,'b2mndr_po')
-       call my_out(70,nx,ny,fch(-1,-1,0,0),'b2mndr_fchx')
-       call my_out(70,nx,ny,fch(-1,-1,1,1),'b2mndr_fchy')
-       call my_out(70,nx,ny,fch_p(-1,-1,0,0),'b2mndr_fchx_p')
-       call my_out(70,nx,ny,fch_p(-1,-1,1,1),'b2mndr_fchy_p')
-       call my_out(70,nx,ny,fhe(-1,-1,0,0),'b2mndr_fhex')
-       call my_out(70,nx,ny,fhe(-1,-1,1,1),'b2mndr_fhey')
-       call my_out(70,nx,ny,fhi(-1,-1,0,0),'b2mndr_fhix')
-       call my_out(70,nx,ny,fhi(-1,-1,1,1),'b2mndr_fhiy')
-       call my_out(70,nx,ny,qc(-1,-1,0),'b2mndr_qc0');
-       call my_out(70,nx,ny,qc(-1,-1,1),'b2mndr_qc1');
-       call my_out(70,nx,ny,qs(-1,-1,0),'b2mndr_qs0');
-       call my_out(70,nx,ny,qs(-1,-1,1),'b2mndr_qs1');
+       call my_out_us(70,nCv,state%pl%te,'b2mndr_te')
+       call my_out_us(70,nCv,state%pl%te/ev,'b2mndr_te_eV')
+       call my_out_us(70,nCv,state%pl%ti,'b2mndr_ti')
+       call my_out_us(70,nCv,state%pl%ti/ev,'b2mndr_ti_eV')
+       call my_out_us(70,nCv,state%pl%po,'b2mndr_po')
+       call my_out_us(70,nCv,state%dv%fch(1,0),'b2mndr_fchx')
+       call my_out_us(70,nCv,state%dv%fch(1,1),'b2mndr_fchy')
+       call my_out_us(70,nCv,state%dv%fch_p(1,0),'b2mndr_fchx_p')
+       call my_out_us(70,nCv,state%dv%fch_p(1,1),'b2mndr_fchy_p')
+       call my_out_us(70,nCv,state%dv%fhe(1,0),'b2mndr_fhex')
+       call my_out_us(70,nCv,state%dv%fhe(1,1),'b2mndr_fhey')
+       call my_out_us(70,nCv,state%dv%fhi(1,0),'b2mndr_fhix')
+       call my_out_us(70,nCv,state%dv%fhi(1,1),'b2mndr_fhiy')
+!       call my_out_us(70,nCv,qc,'b2mndr_qc')
+!       call my_out_us(70,nCv,qs,'b2mndr_qs0')
       endif                                                          !srv 25.01.16 }
-      do is = 0,ns-1                                                 !srv 25.01.16 {
-        do iy=-1,ny
-          do ix=-1,nx
-            na(ix,iy,is)= max(na(ix,iy,is),na_min)
-          enddo
+      do is = 0,ns-1
+        do iCv=1,nCv
+          state % pl % na(iCv,is) = max(state % pl % na(iCv,is),na_min)
         enddo
-      enddo                                                          !srv 25.01.16 }
-*   ..test plasma state and fluxes
-      call b2xvps (nx, ny, ns0,
-     & ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-      call b2xvsg (n2*ns0, kinrgy, 1, 'kinrgy', '.ge.')
+      enddo
+*   ..test plasma state
+      call b2xvps (nCv, nFc, ns, state % pl, state % dv)
+      call b2xvsg (nCv*ns0, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
 *   ..compute log-log electron rate coefficients
-      call b2spel (nx, ny, ns0, ev, te, ne,
-     &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
+      call b2spel (nCv, ns0, ev, state%pl%te, state%dv%ne, state%rt)
 *   ..compute electron rate coefficients
       call xertst (0.le.ismain.and.ismain.lt.ns0,
      . 'invalid main plasma species index ismain')
-      call b2sqel (nx, ny, ns0, ismain, ev, te,
-     &    rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
+      call b2sqel (nCv, ns0, ismain, ev, state%pl%te, state%rt, 
+     .  state%rtw)
 *   ..extend initial state to species (ns0:ns-1)
       if (ns0.lt.ns) then
-       call sfill (n2*(ns-ns0), na_new, na(-1,-1,ns0), 1)
-       call sfill (n2*(ns-ns0), 0.0_R8, ua(-1,-1,ns0), 1)
-       call sfill (n2*(ns-ns0), 0.0_R8, kinrgy(-1,-1,ns0), 1)        !xpb
-       call sfill (n2*4*(ns-ns0), 0.0_R8, uadia(-1,-1,0,0,ns0), 1)     !xpb
-       call sfill (n2*4*(ns-ns0), 0.0_R8, vadia(-1,-1,0,0,ns0), 1)
-       call sfill (n2*4*(ns-ns0), 0.0_R8, wadia(-1,-1,0,0,ns0), 1)
-       call sfill (n2*4*(ns-ns0), 0.0_R8, vaecrb(-1,-1,0,0,ns0), 1)
-       call sfill (n2*4*(ns-ns0), 0.0_R8, fna(-1,-1,0,0,ns0), 1)
-       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_mdf(-1,-1,0,0,ns0), 1)
-       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_fcor(-1,-1,0,0,ns0), 1)
-       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_nodrift(-1,-1,0,0,ns0), 1)
-       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_he(-1,-1,0,0,ns0), 1)
-       call sfill (n2*4*(ns-ns0), 0.0_R8, fnaPSch(-1,-1,0,0,ns0), 1)
-       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_eir(-1,-1,0,0,ns0), 1)
-       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_32(-1,-1,0,0,ns0), 1)
-       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_52(-1,-1,0,0,ns0), 1)
+       call sfill (nCv*(ns-ns0), na_new, state % pl % na(1,ns0), 1)
+       call sfill (nCv*(ns-ns0), 0.0_R8, state % pl % ua(1,ns0), 1)
+       call sfill (nCv*(ns-ns0), 0.0_R8, state % dv % kinrgy(1,ns0), 1)        !xpb
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%uadia(1,0,ns0), 1)     !xpb
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%vadia(1,0,ns0), 1)
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%wadia(1,0,ns0), 1)
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%vaecrb(1,0,ns0), 1)
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%fna(1,0,ns0), 1)
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%fna_mdf(1,0,ns0), 1)
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%fna_fcor(1,0,ns0),1)
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%fna_nodrift(1,0,ns0)
+     .   , 1)
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%fna_he(1,0,ns0), 1)
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%fnaPSch(1,0,ns0), 1)
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%fna_eir(1,0,ns0), 1)
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%fna_32(1,0,ns0), 1)
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%fna_52(1,0,ns0), 1)
       endif
 *   ..rescale densities and associated fluxes
       if (density_rescale.ne.1.0_R8) then
@@ -1584,60 +1661,70 @@ c   --> better way doing this is necessary)
         if(density_rescale < 0.d0) then
           do is=0,ns-1
            if (is_neutral(is).or.nint(zn(is)).ne.2) cycle
-           na(:,:,is)=na(:,:,is)*(-density_rescale)
-           ne(:,:)=ne(:,:)+na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0)
-           fna(:,:,:,:,is) = fna(:,:,:,:,is)*(-density_rescale)
-           fna_mdf(:,:,:,:,is) = fna_mdf(:,:,:,:,is)*(-density_rescale)
-           fna_fcor(:,:,:,:,is) =
-     .      fna_fcor(:,:,:,:,is)*(-density_rescale)
-           fna_nodrift(:,:,:,:,is) =
-     .      fna_nodrift(:,:,:,:,is)*(-density_rescale)
-           fna_he(:,:,:,:,is) = fna_he(:,:,:,:,is)*(-density_rescale)
-           fnaPSch(:,:,:,:,is) = fnaPSch(:,:,:,:,is)*(-density_rescale)
-           fna_eir(:,:,:,:,is) = fna_eir(:,:,:,:,is)*(-density_rescale)
-           fna_32(:,:,:,:,is) = fna_32(:,:,:,:,is)*(-density_rescale)
-           fna_52(:,:,:,:,is) = fna_52(:,:,:,:,is)*(-density_rescale)
-           kinrgy(:,:,is)=kinrgy(:,:,is)*(-density_rescale)
+           state%pl%na(:,is) = state%pl%na(:,is)*(-density_rescale)
+           state%dv%ne(:) = state%dv%ne(:) + 
+     .      state%pl%na(:,is)*state%rt%rza(:,is)*(-density_rescale-1.0)
+           state%dv%fna(:,:,is) = 
+     .      state%dv%fna(:,:,is)*(-density_rescale)
+           state%dv%fna_mdf(:,:,is) = 
+     .      state%dv%fna_mdf(:,:,is)*(-density_rescale)
+           state%dv%fna_fcor(:,:,is) =
+     .      state%dv%fna_fcor(:,:,is)*(-density_rescale)
+           state%dv%fna_nodrift(:,:,is) =
+     .      state%dv%fna_nodrift(:,:,is)*(-density_rescale)
+           state%dv%fna_he(:,:,is) = 
+     .      state%dv%fna_he(:,:,is)*(-density_rescale)
+           state%dv%fnaPSch(:,:,is) = 
+     .      state%dv%fnaPSch(:,:,is)*(-density_rescale)
+           state%dv%fna_eir(:,:,is) = 
+     .      state%dv%fna_eir(:,:,is)*(-density_rescale)
+           state%dv%fna_32(:,:,is) = 
+     .      state%dv%fna_32(:,:,is)*(-density_rescale)
+           state%dv%fna_52(:,:,is) = 
+     .      state%dv%fna_52(:,:,is)*(-density_rescale)
+           state%dv%kinrgy(:,is) = 
+     .      state%dv%kinrgy(:,is)*(-density_rescale)
            write(*,*) 'Density ',is,' rescaled by ',-density_rescale
           enddo
         else
-         na = na * density_rescale
-         ne = (ne-ne_ext) * density_rescale + ne_ext
-         fna = fna * density_rescale
-         fna_mdf = fna_mdf * density_rescale
-         fna_fcor = fna_fcor * density_rescale
-         fna_nodrift = fna_nodrift * density_rescale
-         fna_he = fna_he * density_rescale
-         fnaPSch = fnaPSch * density_rescale
-         fna_eir = fna_eir * density_rescale
-         fna_32 = fna_32 * density_rescale
-         fna_52 = fna_52 * density_rescale
-         fne_eir = fne_eir * density_rescale
-         fne_32 = fne_32 * density_rescale
-         fne_52 = fne_52 * density_rescale
-         fni_32 = fni_32 * density_rescale
-         fni_52 = fni_52 * density_rescale
-         fhe = fhe * density_rescale
-         fhe_mdf = fhe_mdf * density_rescale
-         fhePSch = fhePSch * density_rescale
-         fhe_eir = fhe_eir * density_rescale
-         fhi = fhi * density_rescale
-         fhi_mdf = fhi_mdf * density_rescale
-         fhiPSch = fhiPSch * density_rescale
-         fhi_eir = fhi_eir * density_rescale
-         fch = fch * density_rescale
-         fch_32 = fch_32 * density_rescale
-         fch_52 = fch_52 * density_rescale
-         fch_p = fch_p * density_rescale
-         fchdia = fchdia * density_rescale
-         fchin = fchin * density_rescale
-         fchvispar = fchvispar * density_rescale
-         fchvisper = fchvisper * density_rescale
-         fchvisq = fchvisq * density_rescale
-         fchinert = fchinert * density_rescale
-         floe_noc = floe_noc * density_rescale
-         floi_noc = floi_noc * density_rescale
-         kinrgy = kinrgy * density_rescale
+         state%pl%na = state%pl%na * density_rescale
+         state%dv%ne = (state%dv%ne-state_ext%ne) * density_rescale +
+     .    state_ext%ne
+         state%dv%fna = state%dv%fna * density_rescale
+         state%dv%fna_mdf = state%dv%fna_mdf * density_rescale
+         state%dv%fna_fcor = state%dv%fna_fcor * density_rescale
+         state%dv%fna_nodrift = state%dv%fna_nodrift * density_rescale
+         state%dv%fna_he = state%dv%fna_he * density_rescale
+         state%dv%fnaPSch = state%dv%fnaPSch * density_rescale
+         state%dv%fna_eir = state%dv%fna_eir * density_rescale
+         state%dv%fna_32 = state%dv%fna_32 * density_rescale
+         state%dv%fna_52 = state%dv%fna_52 * density_rescale
+         state%dv%fne_eir = state%dv%fne_eir * density_rescale
+         state%dv%fne_32 = state%dv%fne_32 * density_rescale
+         state%dv%fne_52 = state%dv%fne_52 * density_rescale
+         state%dv%fni_32 = state%dv%fni_32 * density_rescale
+         state%dv%fni_52 = state%dv%fni_52 * density_rescale
+         state%dv%fhe = state%dv%fhe * density_rescale
+         state%dv%fhe_mdf = state%dv%fhe_mdf * density_rescale
+         state%dv%fhePSch = state%dv%fhePSch * density_rescale
+         state%dv%fhe_eir = state%dv%fhe_eir * density_rescale
+         state%dv%fhi = state%dv%fhi * density_rescale
+         state%dv%fhi_mdf = state%dv%fhi_mdf * density_rescale
+         state%dv%fhiPSch = state%dv%fhiPSch * density_rescale
+         state%dv%fhi_eir = state%dv%fhi_eir * density_rescale
+         state%dv%fch = state%dv%fch * density_rescale
+         state%dv%fch_32 = state%dv%fch_32 * density_rescale
+         state%dv%fch_52 = state%dv%fch_52 * density_rescale
+         state%dv%fch_p = state%dv%fch_p * density_rescale
+         state%dv%fchdia = state%dv%fchdia * density_rescale
+         state%dv%fchin = state%dv%fchin * density_rescale
+         state%dv%fchvispar = state%dv%fchvispar * density_rescale
+         state%dv%fchvisper = state%dv%fchvisper * density_rescale
+         state%dv%fchvisq = state%dv%fchvisq * density_rescale
+         state%dv%fchinert = state%dv%fchinert * density_rescale
+         state%dv%floe_noc = state%dv%floe_noc * density_rescale
+         state%dv%floi_noc = state%dv%floi_noc * density_rescale
+         state%dv%kinrgy = state%dv%kinrgy * density_rescale
          write(*,*) 'All densities and fluxes rescaled by ',
      .    density_rescale
         endif
@@ -1646,18 +1733,25 @@ c   --> better way doing this is necessary)
       if(ncall.eq.0.and.neutral_rescale.ne.1.0_R8) then
         do is=0,ns-1
           if(is_neutral(is)) then
-            na(:,:,is)=na(:,:,is)*neutral_rescale
-            fna(:,:,:,:,is)=fna(:,:,:,:,is)*neutral_rescale
-            fna_mdf(:,:,:,:,is) = fna_mdf(:,:,:,:,is)*neutral_rescale
-            fna_fcor(:,:,:,:,is) = fna_fcor(:,:,:,:,is)*neutral_rescale
-            fna_nodrift(:,:,:,:,is) =
-     .       fna_nodrift(:,:,:,:,is)*neutral_rescale
-            fna_he(:,:,:,:,is) = fna_he(:,:,:,:,is)*neutral_rescale
-            fnaPSch(:,:,:,:,is) = fnaPSch(:,:,:,:,is)*neutral_rescale
-            fna_eir(:,:,:,:,is) = fna_eir(:,:,:,:,is)*neutral_rescale
-            fna_32(:,:,:,:,is) = fna_32(:,:,:,:,is)*neutral_rescale
-            fna_52(:,:,:,:,is) = fna_52(:,:,:,:,is)*neutral_rescale
-            kinrgy(:,:,is)=kinrgy(:,:,is)*neutral_rescale
+            state%pl%na(:,is)=state%pl%na(:,is)*neutral_rescale
+            state%dv%fna(:,:,is)=state%dv%fna(:,:,is)*neutral_rescale
+            state%dv%fna_mdf(:,:,is) = 
+     .       state%dv%fna_mdf(:,:,is)*neutral_rescale
+            state%dv%fna_fcor(:,:,is) = 
+     .       state%dv%fna_fcor(:,:,is)*neutral_rescale
+            state%dv%fna_nodrift(:,:,is) =
+     .       state%dv%fna_nodrift(:,:,is)*neutral_rescale
+            state%dv%fna_he(:,:,is) = 
+     .       state%dv%fna_he(:,:,is)*neutral_rescale
+            state%dv%fnaPSch(:,:,is) = 
+     .       state%dv%fnaPSch(:,:,is)*neutral_rescale
+            state%dv%fna_eir(:,:,is) = 
+     .       state%dv%fna_eir(:,:,is)*neutral_rescale
+            state%dv%fna_32(:,:,is) = 
+     .       state%dv%fna_32(:,:,is)*neutral_rescale
+            state%dv%fna_52(:,:,is) = 
+     .       state%dv%fna_52(:,:,is)*neutral_rescale
+            state%dv%kinrgy(:,is)=state%dv%kinrgy(:,is)*neutral_rescale
           endif
         enddo
         write(*,*) 'Rescaled neutrals by ',neutral_rescale
@@ -1665,43 +1759,49 @@ c   --> better way doing this is necessary)
 *   ..if we rescaled or added species, recompute dependent quantities
 *   ..until convergence
       if (ns0.lt.ns .or. density_rescale.ne.1.0_R8) then
+        call xerrab ('b2mndr - rescaling not yet done for WG')
+#ifdef WG_TODO
         if (ns0.lt.ns) then
           do is = ns0, ns-1
-            rza(-1:nx,-1:ny,is) = (zamin(is)+zamax(is))/2.0_R8
-            rz2(-1:nx,-1:ny,is) = ((zamin(is)+zamax(is))/2.0_R8)**2
-            rpt(-1:nx,-1:ny,is) = (potmin(is)+potmax(is))/2.0_R8
-            rpi(-1:nx,-1:ny,is) = (potimin(is)+potimax(is))/2.0_R8
+            state%rt%rza(:,is) = (zamin(is)+zamax(is))/2.0_R8
+            state%rt%rz2(:,is) = ((zamin(is)+zamax(is))/2.0_R8)**2
+            state%rt%rpt(:,is) = (potmin(is)+potmax(is))/2.0_R8
+            state%rt%rpi(:,is) = (potimin(is)+potimax(is))/2.0_R8
           enddo
-          call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+          call b2xpne (nCv, ns, state % rt % rza, state % pl % na, 
+     .       state_ext % ne, state % dv % ne)
         endif
         max_delta = 1.0_R8
         is = 0
         do while (max_delta.gt.1.0e-6_R8 .and. is.lt.10)
           is = is + 1
-          call b2scopy (n2*ns, rza, 1, rza0, 1)
-          call b2scopy (n2*ns, rz2, 1, rz20, 1)
-          call b2scopy (n2*ns, rpt, 1, rpt0, 1)
-          call b2scopy (n2*ns, rpi, 1, rpi0, 1)
-          call b2scopy (n2, ne, 1, ne0, 1)
+          call b2scopy (nCv*ns, state%rt%rza, 1, rza0, 1)
+          call b2scopy (nCv*ns, state%rt%rz2, 1, rz20, 1)
+          call b2scopy (nCv*ns, state%rt%rpt, 1, rpt0, 1)
+          call b2scopy (nCv*ns, state%rt%rpi, 1, rpi0, 1)
+          call b2scopy (nCv, state%dv%ne, 1, state%psnc%ne, 1)
 *    ..compute log-log electron rate coefficients
-          call b2spel (nx, ny, ns, ev, te, ne,
-     &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
+          call b2spel (nCv, ns, ev, state%pl%te, state%dv%ne, state%rt)
 *   ..compute electron rate coefficients
-          call b2sqel (nx, ny, ns, ismain, ev, te,
-     &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &     rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
-          call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+          call b2sqel (nCv, ns, ismain, ev, state % pl % te, state % rt, 
+     .      state % rtw)
+          call b2xpne (nCv, ns, state % rt % rza, state % pl % na, 
+     .       state_ext % ne, state % dv % ne)
           max_delta = max(
-     1     maxval(abs((rza-rza0)/(rza+1.0_R8))),
-     2     maxval(abs((rz2-rz20)/(rz2+1.0_R8))),
-     3     maxval(abs((rpt-rpt0)/(rpt+1.0_R8))),
-     4     maxval(abs((rpi-rpi0)/(rpi+1.0_R8))),
-     5     maxval(abs((ne - ne0)/(ne +na_eps))))
+     1     maxval(abs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),
+     2     maxval(abs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),
+     3     maxval(abs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),
+     4     maxval(abs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),
+     5     maxval(abs((state%dv%ne - state%psnc%ne)/
+     6       (state%dv%ne + na_eps))))
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
+#endif
       endif
 *   ..rewrite input file with inverted velocity
       if(inverse_ua.ne.0) then                                           !srv 04.02.15 {
+        call xerrab ('inverse ua option not yet available for WG')
+#ifdef WG_TODO
         call cfopen (70,'b2fstati_with-ua','new','un*formatted')
         idum(0) = nx
         idum(1) = ny
@@ -1720,34 +1820,13 @@ c   --> better way doing this is necessary)
      &   fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &   vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
         close(70)
+#endif
       endif                                                              !srv 04.02.15 }
-*   ..initialise previous state and fluxes
-      call b2scopy (n2*ns, na, 1, na0, 1)
-      call b2scopy (n2, ne, 1, ne0, 1)
-      call b2scopy (n2*ns, ua, 1, ua0, 1)
-      call b2scopy (n2, te, 1, te0, 1)
-      call b2scopy (n2, ti, 1, ti0, 1)
-      call b2scopy (n2, po, 1, po0, 1)
-      call b2scopy (n2*4*ns, fna, 1, fna0, 1)
-      call b2scopy (n2*4, fhe, 1, fhe0, 1)
-      call b2scopy (n2*4, fhi, 1, fhi0, 1)
-      call b2scopy (n2*4, fch, 1, fch0, 1)
-      call b2scopy (n2*ns, kinrgy, 1, kinrgy0, 1)
-      call b2scopy (n2*ns, na, 1, nap, 1)
-      call b2scopy (n2, ne, 1, nep, 1)
-      call b2scopy (n2*ns, ua, 1, uap, 1)
-      call b2scopy (n2, te, 1, tep, 1)
-      call b2scopy (n2, ti, 1, tip, 1)
-      call b2scopy (n2, po, 1, pop, 1)
-      call b2scopy (n2*4*ns, fna, 1, fnap, 1)
-      call b2scopy (n2*4, fhe, 1, fhep, 1)
-      call b2scopy (n2*4, fhi, 1, fhip, 1)
-      call b2scopy (n2*4, fch, 1, fchp, 1)
-      call b2scopy (n2*ns, kinrgy, 1, kinrgyp, 1)
 *   ..compute initial ni
-      call b2xpni (nx, ny, ns, na, ni)
-*   ..compute ni0
-      call b2xpni (nx, ny, ns, na0, ni0)
+      call b2xpni (nCv, ns, state%pl%na, state%dv%ni)
+*   ..initialise previous state and fluxes
+      call getB2PlasmaSnapshot( state%pl, state%dv, state%psnc )
+      call getB2PlasmaSnapshot( state%pl, state%dv, state%psnl )
 *   ..write output control
       write (nout(0),'(2(/2x,a,2x,a))')
      &  'idout0:', idout0, 'idout1:', idout1
@@ -1781,6 +1860,9 @@ cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (nx, ny, ns, BoRiS)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
+      call read_neutrals_namelist(nx, ny, ns, .true.)
+      call calc_mapping_neut (nx, ny, ns, mpg)
+
 #ifdef B25_EIRENE
 #ifndef HPUX
       filename='fort.44'
@@ -1832,6 +1914,7 @@ c new CDF movie option (1st frame at t=0)
 #ifdef WINDOWS
       logical(4) :: lresult
 #endif
+      integer nCv, nFc, nVx
       integer i, is, js
       character*256 filename, fort31name
       character*256 systemarg
@@ -1852,6 +1935,11 @@ c new CDF movie option (1st frame at t=0)
       call cpu_time(cpuinit)
       elapsedinit=epoch_seconds()
 
+cwdk  set some integers
+      nCv = mpg%nCv
+      nFc = mpg%nFc
+      nVx = mpg%nVx
+
     1 continue
       write(*,'(1x,a,i9,1p,g14.7,i9,i3,1x,l1)')
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
@@ -1865,6 +1953,7 @@ c new CDF movie option (1st frame at t=0)
      &    (.not.quit.and.itim.lt.ntim.and.ierr.eq.0.and.
      &     (etim.gt.tim.or.etim.eq.0.0_R8))) then !{
 
+#ifdef WG_TODO
 !!!
 !!! DPC experimental
 !!!
@@ -1887,25 +1976,27 @@ c new CDF movie option (1st frame at t=0)
 !!!
 !!! end of experiment
 !!!
+#endif
 
 *    ..guess the next state
-        call b2mxnp (n2*ns, nap, na0, na)
-        call b2mxnu (n2*ns, uap, ua0, ua)
-        call b2mxnp (n2, nep, ne0, ne)
-        call b2mxnp (n2, tep, te0, te)
-        call b2mxnp (n2, tip, ti0, ti)
-        call b2mxnp (n2, kinrgyp, kinrgy0, kinrgy)
-        call b2mxnu (n2, pop, po0, po)
-        call b2mxnu (n2*4*ns, fnap, fna0, fna)
-        call b2mxnu (n2*4, fhep, fhe0, fhe)
-        call b2mxnu (n2*4, fhip, fhi0, fhi)
-        call b2mxnu (n2*4, fchp, fch0, fch)
-        call b2trcs (70, nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS)
+        call b2mxnp(nCv*ns, state%psnl%na, state%psnc%na, state%pl%na)
+        call b2mxnu(nCv*ns, state%psnl%ua, state%psnc%ua, state%pl%ua)
+        call b2mxnp(nCv, state%psnl%ne, state%psnc%ne, state%dv%ne)
+        call b2mxnp(nCv, state%psnl%te, state%psnc%te, state%pl%te)
+        call b2mxnp(nCv, state%psnl%ti, state%psnc%ti, state%pl%ti)
+        call b2mxnp(nCv, state%psnl%kinrgy, state%psnc%kinrgy, 
+     .    state%dv%kinrgy)
+        call b2mxnu(nCv, state%psnl%po, state%psnc%po, state%pl%po)
+        call b2mxnu(nFc*2*ns,state%psnl%fna,state%psnc%fna,state%dv%fna)
+        call b2mxnu(nFc*2, state%psnl%fhe, state%psnc%fhe, state%dv%fhe)
+        call b2mxnu(nFc*2, state%psnl%fhi, state%psnc%fhi, state%dv%fhi)
+        call b2mxnu(nFc*2, state%psnl%fch, state%psnc%fch, state%dv%fch)
+!WG_TODO        call b2trcs(70, nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)
         if (pot_eq.eq.0) then                                          !srv 13.07.05 {
-          po   =0.0e0_R8
+          state%pl%po   =0.0e0_R8
         else if (pot_eq.eq.2) then
-          po(:,:)=3.1_R8*te(:,:)/qe
+          state%pl%po=3.1_R8*state%pl%te/qe
         endif
 
 *    ..perform one time step
@@ -1914,8 +2005,9 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
-          call b2mndt (nout, nx, ny, ns, nxtl, nxtr,
-     &     ismain, ismain0, nscx, iscx, itim, dtim, ntim, ierr)
+          call b2mndt (nout, nCv, nFc, nVx, ns, nxtl, nxtr,
+     .      ismain, ismain0, nscx, nscxmax, iscx, itim, dtim, ntim, 
+     .      gm, mpg, state, state_ext, ierr)
 
           if(ierr.eq.10) then
             stack_ptr=stack_ptr+1
@@ -1925,22 +2017,13 @@ csw 09oct2012 set default potential already at this point (BCs)
             dtim=dtim/10.0_R8
             ntim=itim+10
             itim_plas=itim_plas-10
-            na=na0
-            ne=ne0
-            ua=ua0
-            te=te0
-            ti=ti0
-            po=po0
-            fna=fna0
-            fhe=fhe0
-            fhi=fhi0
-            fch=fch0
-            kinrgy=kinrgy0
+            call putB2PlasmaSnapshot( state%pl, state%dv, state%psnc )
           else
             ok=ierr.eq.0
           endif
         enddo
 *    ..produce data for movie
+#ifdef WG_TODO
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
           call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
         endif
@@ -1971,6 +2054,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         if((balance_netcdf.ne.0).and.(ntim.gt.0)) then
           call update_average_balance(itim,ntim)
         endif
+#endif
 *    ..increment
         itim = itim+1
         itim_plas = itim_plas + 1
@@ -1979,19 +2063,31 @@ csw 09oct2012 set default potential already at this point (BCs)
         endif
         write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
      &    ' TIME ',tim, ' NTIM ', ntim,' DTIM ',dtim
-        write(*,*) 'delta na ',maxval(abs((na-na0)/(na+na_eps)))
-        write(*,*) 'delta te ',maxval(abs((te-te0)/(te+te_eps*ev)))
-        write(*,*) 'delta ti ',maxval(abs((ti-ti0)/(ti+ti_eps*ev)))
-        write(*,*) 'delta po ',maxval(abs((po-po0)/(abs(po)+po_eps)))
+        write(*,*) 'delta na ',maxval(abs((state%pl%na-state%psnc%na)/
+     &    (state%pl%na+na_eps)))
+        write(*,*) 'delta te ',maxval(abs((state%pl%te-state%psnc%te)/
+     &    (state%pl%te+te_eps*ev)))
+        write(*,*) 'delta ti ',maxval(abs((state%pl%ti-state%psnc%ti)/
+     &    (state%pl%ti+ti_eps*ev)))
+        write(*,*) 'delta po ',maxval(abs((state%pl%po-state%psnc%po)/
+     &    (abs(state%pl%po)+po_eps)))
         write(*,*) 'delta ua ',
-     *   maxval(abs((na*ua-na0*ua0)/(abs(na*ua)+na_eps*ua_eps)))
+     *   maxval(abs((state%pl%na*state%pl%ua-
+     &    state%psnc%na*state%psnc%ua)/
+     &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps)))
         if(delta_min.gt.0.0_R8.and.delta_max.gt.0.0_R8) then
           max_delta=max(
-     1     maxval(abs((na-na0)/(na+na_eps))),
-     2     maxval(abs((te-te0)/(te+te_eps*ev))),
-     3     maxval(abs((ti-ti0)/(ti+ti_eps*ev))),
-     4     maxval(abs((po-po0)/(abs(po)+po_eps))),
-     5     maxval(abs((na*ua-na0*ua0)/(abs(na*ua)+na_eps*ua_eps))))
+     &     maxval(abs((state%pl%na-state%psnc%na)/
+     &    (state%pl%na+na_eps))),
+     &     maxval(abs((state%pl%te-state%psnc%te)/
+     &    (state%pl%te+te_eps*ev))),
+     &     maxval(abs((state%pl%ti-state%psnc%ti)/
+     &    (state%pl%ti+ti_eps*ev))),
+     &     maxval(abs((state%pl%po-state%psnc%po)/
+     &    (abs(state%pl%po)+po_eps))),
+     &     maxval(abs((state%pl%na*state%pl%ua-
+     &    state%psnc%na*state%psnc%ua)/
+     &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps))))
           if(max_delta.gt.delta_max) then
             write(*,*) 'b2mndr_delta: max_delta > delta_max'
             dtim=max(dt_min,dtim*dt_change_dec)
@@ -2017,6 +2113,7 @@ csw 09oct2012 set default potential already at this point (BCs)
      1                itim,dtim,ntim,stack_ptr
         end do
 *    ..produce time dependent file
+#ifdef WG_TODO
         if (save_f31.lt.0) then
 #ifndef HPUX
           write(fort31name,'(a,i8.8)') 'fort.31.', itim
@@ -2029,7 +2126,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           call write_f31(nx, ny)
           close(31)
         end if
-
+#endif
 #ifdef JET
         if(tim.ge.save_tran_time.and.delta_tran_time.gt.0.0_R8) then
           tran_num=tran_num+1
@@ -2047,6 +2144,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           save_tran_time=save_tran_time+delta_tran_time
         endif
 #endif
+#ifdef WG_TODO
 c new CDF movie option
         if(tim.ge.save_cdfmovie_time.and.
      1    delta_cdfmovie_time.gt.0.0_R8) then
@@ -2103,6 +2201,7 @@ c new CDF movie option
         endif
 c-rfs       write(*,*) 'fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)',
 c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
+#endif
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
@@ -2150,6 +2249,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         if(ntim_save.gt.0.and.itim.gt.0) write_save=write_save.or.
      .   mod(itim,ntim_save).eq.0
         write_save=write_save.and..not.quit
+#ifdef WG_TODO
         if(write_save) then
           write(savefile(13:16),'(i4)') edition
           edition=edition+1
@@ -2238,6 +2338,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
             write (*,*) aver_name,' saved '
           end if
         endif
+#endif        
         first_time_step=.false.
 
 #ifdef CATALYST
@@ -2266,8 +2367,18 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #else
       integer nout(0:8), nx, ny, ns
 #endif
+      integer nCv, nFc
       character*256 filename
       logical found
+      
+cwdk  back-conversion to structured grid
+      call to_struct_plasma (nx,ny,ns,mpg%nCv,mpg%nCi,mpg%nFc,state)
+cwdk  deallocation of unstructured types
+      call destroyB2State (state)
+      call dealloc_geometry (gm)
+      call dealloc_mapping_bc (mpg)
+      call dealloc_mapping_rc (mpg)
+      call dealloc_mapping (mpg)
 
       call subini ('b2mndr_2')
       if(quitexist)
@@ -2417,7 +2528,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 
 * ..return
       ncall = ncall+1
-      deallocate(rsa, rra, rqa, rrd, rbr, rza0, rz20, rpt0, rpi0)
+!WG_TODO      deallocate(rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
       call dealloc_b2mod_ma28
       call dealloc_b2mod_wall

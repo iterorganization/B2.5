@@ -1,81 +1,41 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbc (nx, ny, ns, ismain, ismain0, 
-     &  BoRiS, facdrift, fac_ExB,                                        !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, pbshz, bb,                !xpb !srv 09.01.01
-     &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
-     &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
-     1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
-     &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,             !srv 16.02.12
-     &  fnaPSch, fhePSch, fhiPSch,                                       !srv 25.02.00 13.10.06
-     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
-     &  fchanml,
-     2  cdna, chce, chve, chci, chvi, calf,
-     &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call)       !xpb
+      subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
+     &  geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  wrong_flow, main_call)
       use b2mod_types
-      use b2mod_rates
-      use b2mod_indirect
-      use b2mod_boundary_namelist
-      use b2mod_geo_corner
+!      use b2mod_boundary_namelist
+!      use b2mod_geo_corner
       use b2mod_constants
-      use b2mod_sources
-     1 , only : b2stbc_sna,b2stbc_smo,b2stbc_she,b2stbc_shi,b2stbc_sch,
-     2          b2stbc_sne
-      use b2mod_balance !djm Jan 2017
-     1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
-     2          b2stbc_shi0to3,balance_netcdf
+!      use b2mod_sources
+!     1 , only : b2stbc_sna,b2stbc_smo,b2stbc_she,b2stbc_shi,b2stbc_sch,
+!     2          b2stbc_sne
+!      use b2mod_balance !djm Jan 2017
+!     1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
+!     2          b2stbc_shi0to3,balance_netcdf
       use b2mod_feedback
       use b2mod_b2cmpa
-      use b2mod_external
       use b2mod_time
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain, ismain0
+      integer nCv, nFc, nVx, ns, ismain, ismain0
       real (kind=R8) ::
-     *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny), 
-     &  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),       !srv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1),
-     &  qs(-1:nx,-1:ny,0:1)
-      real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), kinrgy(-1:nx,-1:ny,0:ns-1),
-     2  vedia(-1:nx,-1:ny,0:1,0:1), vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     3  veecrb(-1:nx,-1:ny,0:1,0:1), vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
-      real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     &  fna_52(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  fni_32(-1:nx,-1:ny,0:1,0:1), fni_52(-1:nx,-1:ny,0:1,0:1),
-     &  fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
-     &  fhe(-1:nx,-1:ny,0:1,0:1), fhe_mdf(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fhi_mdf(-1:nx,-1:ny,0:1,0:1),
-     &  fch(-1:nx,-1:ny,0:1,0:1),
-     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1),
-     &  fch_p(-1:nx,-1:ny,0:1,0:1), fchvispar(-1:nx,-1:ny,0:1,0:1),          !srv 11.10.02 21.10.02 {
-     &  fchvisper(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),
-     &  fchvisq(-1:nx,-1:ny,0:1,0:1), fchdia(-1:nx,-1:ny,0:1,0:1),
-     &  fchinert(-1:nx,-1:ny,0:1,0:1),                                       !srv 21.10.02 }
-     &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                !srv 25.02.00
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                 !srv 13.10.06
-     &  fchanml(-1:nx,-1:ny,0:1,0:1),
-     &  fhePSch(-1:nx,-1:ny,0:1,0:1), fhiPSch(-1:nx,-1:ny,0:1,0:1),          !srv 13.10.06
-     &  floe_noc(-1:nx,-1:ny,0:1,0:1), floi_noc(-1:nx,-1:ny,0:1,0:1)             !srv 28.10.02
-      real (kind=R8) ::
-     1  chce(-1:nx,-1:ny,0:1,0:1), chve(-1:nx,-1:ny,0:1,0:1),
-     2  chci(-1:nx,-1:ny,0:1,0:1), chvi(-1:nx,-1:ny,0:1,0:1),
-     3  calf(-1:nx,-1:ny,0:1,0:1), cdna(-1:nx,-1:ny,0:1,0:1,0:ns-1)
+     *  BoRiS
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Rates), intent (in) :: rt
+      type (B2RatesWork), intent (in) :: rtw
+      type (B2Coeff), intent (inout) :: co
+      type (B2StateExt), intent (in) :: st_ext
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
-     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
+      type (B2SourceWork), intent (out) :: srw
       logical wrong_flow                                                 !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -91,7 +51,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, regcnt, ixx
+      integer ncall, iCv, is, regcnt, ixx
       real (kind=R8) ::
      *   sna0ep, she0ep, shi0ep, t0, testqe, testqi,
      *   b2stbc_neoclassical, b2stbc_fchy_dia,
@@ -102,27 +62,26 @@
      1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
      1   sum_sch0, sum_vol, integral_current
       integer boundary_namelist, diagno, b2stbc_fchy_dia_coreonly,
-     *   area_fix, sheath_drift_fix
-      integer element_done(-1:nx)
+     *   sheath_drift_fix
+!WG_TODO      integer element_done(-1:nx)
       integer b2stbc_feedback, secmodel
       save ncall, sna0ep, she0ep, shi0ep, boundary_namelist, diagno,
      *   b2stbc_neoclassical, b2stbc_fchy_dia, integral_current,
      1   b2stbc_feedback, b2stbc_fchy_dia_coreonly, secmodel,
-     *   area_fix, sheath_drift_fix
+     *   sheath_drift_fix
 *   ..procedures
       intrinsic mod, nint
       real (kind=R8) ::
-     *   b2ssum, hy1
+     *   b2ssum
       external subini, subend, xertst, sfill, b2ssum, b2saxpy,
      *   ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys, b2stbc_bas, b2stbc_fb_pre, b2stbc_fb_post
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
      1   shi0ep/1.0e-36_R8/, boundary_namelist/0/,diagno/0/,
      2   b2stbc_neoclassical/0.0_R8/, b2stbc_fchy_dia/0.0_R8/,
-     3   integral_current/0.0_R8/, b2stbc_feedback/0/, area_fix/3/,
+     3   integral_current/0.0_R8/, b2stbc_feedback/0/,
      4   b2stbc_fchy_dia_coreonly/1/, secmodel/0/, 
      5   sheath_drift_fix/1/
 *-----------------------------------------------------------------------
@@ -154,21 +113,18 @@
      1              'faulty internal parameter b2stbc_fchy_dia')         !xpb
        call ipgetr ('b2stbc_integral_current', integral_current)         !dpc
        call xertst (.not.(integral_current.ne.0.0_R8.and.
-     .  ((maxval(facdrift).gt.0.0_R8.and.b2stbc_fchy_dia.gt.0.0_R8).or.
-     .   b2stbc_neoclassical.gt.0.0_R8)),
+     .  ((maxval(dv%facdrift).gt.0.0_R8.and.b2stbc_fchy_dia.gt.0.0_R8)
+     .   .or.b2stbc_neoclassical.gt.0.0_R8)),
      .  'inconsistent boundary settings for current equation')
        call ipgeti ('b2stbc_feedback', b2stbc_feedback)
-       lfeedback=b2stbc_feedback.ne.0                          ! dpc-2003-10-23
+!WG_TODO       lfeedback=b2stbc_feedback.ne.0                          ! dpc-2003-10-23
        call ipgeti ('b2stbc_fchy_dia_coreonly',
      .               b2stbc_fchy_dia_coreonly)
        call ipgeti ('b2stbc_secmodel', secmodel)
-       call ipgeti ('b2news_area_fix', area_fix)
        call ipgeti ('b2stbc_sheath_drift_fix', sheath_drift_fix)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc, ns
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
@@ -180,30 +136,20 @@
      . 'invalid main neutral species ismain0; must be neutral')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
+*    ..test sign of vol
+       call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
+       call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
 *    ..test state
-       call b2xvps (nx, ny, ns, 
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-*    ..test edge values of fne, fni, chce, chve, chci, chvi, calf
-       call b2xvff (nx, ny, fne, 'fne')
-       call b2xvff (nx, ny, fni, 'fni')
-       call b2xvff (nx, ny, chce, 'chce')
-       call b2xvff (nx, ny, chve, 'chve')
-       call b2xvff (nx, ny, chci, 'chci')
-       call b2xvff (nx, ny, chvi, 'chvi')
-       call b2xvff (nx, ny, calf, 'calf')
+       call b2xvps (nCv, nFc, ns, pl, dv)
 *    ..test sign of chce, chci
-       call b2xvsg (n2, chce(-1,-1,0,0), 1, 'chce00', '.ge.')
-       call b2xvsg (n2, chce(-1,-1,1,1), 1, 'chce11', '.ge.')
-       call b2xvsg (n2, chci(-1,-1,0,0), 1, 'chci00', '.ge.')
-       call b2xvsg (n2, chci(-1,-1,1,1), 1, 'chci11', '.ge.')
+       call b2xvsg (nCv,co%chce(1,0)*geo%fcQalf(1,0),1,'chce0','.ge.')
+       call b2xvsg (nCv,co%chce(1,1)*geo%fcQalf(1,1),1,'chce1','.ge.')
+       call b2xvsg (nCv,co%chci(1,0)*geo%fcQalf(1,0),1,'chci0','.ge.')
+       call b2xvsg (nCv,co%chci(1,1)*geo%fcQalf(1,1),1,'chci1','.ge.')
       endif
 *   ..test facdrift           !xpb
-      call xertst (0.0_R8.le.minval(facdrift) .and. 
-     & 1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
+      call xertst (0.0_R8.le.minval(dv%facdrift) .and. 
+     & 1.0_R8.ge.maxval(dv%facdrift), 'faulty argument facdrift')
 !      if (ncall.eq.1 .and. main_call) then                               !xpb !srv 18.05.09
 !        if (maxval(facdrift).eq.0.0_R8) then                             !xpb
 !          write (*,*) 'b2stbc_neoclassical =', b2stbc_neoclassical       !xpb
@@ -221,22 +167,23 @@
      .   'WARNING! Kinetic secondary emission expects HYDROGEN plasmas!'
       endif
 *   ..initialise sources to 0
-      call sfill (n2*2*ns, 0.0_R8, sna0, 1)
-      call sfill (n2*4*ns, 0.0_R8, smo0, 1)
-      call sfill (n2*2, 0.0_R8, sne0, 1)
-      call sfill (n2*4, 0.0_R8, she0, 1)
-      call sfill (n2*4, 0.0_R8, shi0, 1)
-      call sfill (n2*4, 0.0_R8, sch0, 1)
+      call sfill (nCv*2*ns, 0.0_R8, srw%sna0, 1)
+      call sfill (nCv*4*ns, 0.0_R8, srw%smo0, 1)
+      call sfill (nCv*2, 0.0_R8, srw%sne0, 1)
+      call sfill (nCv*4, 0.0_R8, srw%she0, 1)
+      call sfill (nCv*4, 0.0_R8, srw%shi0, 1)
+      call sfill (nCv*4, 0.0_R8, srw%sch0, 1)
 
 * ..compute standard form volume sources
 *   (This code placed here for want of a better location)
 *   ..low-level particle source
       do is = 0, ns-1
-       call b2saxpy (n2, sna0ep, vol, 1, sna0(-1,-1,0,is), 1)
+       call b2saxpy (nCv, sna0ep, geo%cvVol, 1, srw%sna0(1,0,is), 1)
       enddo
-      call b2saxpy (n2, she0ep, vol, 1, she0(-1,-1,0), 1)
-      call b2saxpy (n2, shi0ep, vol, 1, shi0(-1,-1,0), 1)
+      call b2saxpy (nCv, she0ep, geo%cvVol, 1, srw%she0(1,0), 1)
+      call b2saxpy (nCv, shi0ep, geo%cvVol, 1, srw%shi0(1,0), 1)
 
+#ifdef WG_TODO
 *   ..find the average pressure for inner flux surface           !sv 24.03.99
       iy = -1                                                    !sv 24.03.99
       tesum(1)=0.0_R8
@@ -399,33 +346,25 @@
         naave(:,2)=nasum(:,2)/gssum(2)
       endif
       if (ncall.eq.0) lbndusr=.false.                                    !xpb
-
+#endif
       if(boundary_namelist.ge.1) then
 
+#ifdef WG_TODO
          if(lfeedback.or.b2stbc_feedback.ne.0)
      1        call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
      1        vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
      &        sna0, smo0, she0, shi0, sch0, sne0, 
      &        main_call, diagno)
-
+#endif
         if(ncall.eq.0) write(*,*) ' b2stbc_phys called'
-        call b2stbc_phys(nx, ny, ns, ismain, ismain0,
-     1   BoRiS, facdrift, fac_ExB, vol, crx, hx, hy, hz, qz, qc, qs, gs, !srv 24.08.08
-     1   pbs, pbshz, bb, na, ua, uadia, vedia, vadia, veecrb, vaecrb,
-     2   te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc, fna, fna_mdf,   !srv 28.10.02
-     1   fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,        !srv 13.10.06
-     &   fhe, fhi, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch, fch,    !srv 16.02.12
-     &   fne, fni,                                                       !srv 13.10.06
-     &   fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
-     &   fchanml,
-     &   cdna, chce, chve, chci, chvi, calf,                             !srv 25.09.09
-     &   sna0, smo0, she0, shi0, sch0, sne0, 
-     &   wrong_flow, main_call, diagno,
-     &   b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &   b2stbc_fchy_dia_coreonly, secmodel, area_fix,
-     &   sheath_drift_fix)
+        call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
+     &    geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &    wrong_flow, main_call, diagno,
+     &    b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
+     &    b2stbc_fchy_dia_coreonly, secmodel, sheath_drift_fix)
         if(wrong_flow) write(*,*) 
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
+#ifdef WG_TODO
         if(lbndusr) then
           if(ncall.eq.0) write(*,*) 'BNDUSR called'
           call b2stbc_bas(nx, ny, ns, ismain,
@@ -440,8 +379,9 @@
           if(wrong_flow) write(*,*) 
      &           'b2stbc: wrong_flow returned from b2stbc_bas'
         endif      !lbndusr
+#endif
       else      !boundary_namelist.ge.1
-        
+#ifdef WG_TODO        
         call b2stbc_bas(nx, ny, ns, ismain,
      1   facdrift, vol, hx, hy, qz, qc, gs,
      1   pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
@@ -453,32 +393,35 @@
      &   area_fix, sheath_drift_fix)
         if(wrong_flow) write(*,*) 
      &       'b2stbc: wrong_flow returned from b2stbc_bas'
+#endif
       endif
+#ifdef WG_TODO
       if(lfeedback.or.b2stbc_feedback.ne.0)
      1 call b2stbc_fb_post(nx, ny, ns, ismain, BoRiS,
      1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
      &	sna0, smo0, she0, shi0, sch0, sne0, 
      &  main_call, diagno)
-
+#endif
 * ..compute conditions on the cuts
 *     (no flow)
-*   ..compute suitable large coefficient
-      t0 = 1.0e20_R8*b2ssum(n2,vol,1)
-*     (the dimension of t0 is m**3/s)
-*   ..loop over species
-      do is = 0, ns-1
-*    ..set parallel momentum source
-       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,0,is), 1)
-       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,1,is), 1)
-       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,2,is), 1)
-       call b2xxgs (nx, ny, -t0, smo0(-1,-1,3,is), 1)
-      enddo
+!WG_TODO*   ..compute suitable large coefficient
+!WG_TODO      t0 = 1.0e20_R8*b2ssum(nCv,geo%cvVol,1)
+!WG_TODO*     (the dimension of t0 is m**3/s)
+!WG_TODO*   ..loop over species
+!WG_TODO      do is = 0, ns-1
+!WG_TODO*    ..set parallel momentum source
+!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,0,is), 1)
+!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,1,is), 1)
+!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,2,is), 1)
+!WG_TODO       call b2xxgs (nx, ny, -t0, smo0(-1,-1,3,is), 1)
+!WG_TODO      enddo
 
 c added 2001.11.26 dpc/xpb
 c to fix problems with the core energy boundary condition arising
 c from diamagnetic drifts
       testqe=0.0_R8
       testqi=0.0_R8
+#ifdef WG_TODO
       if(maxval(facdrift).ne.0.0_R8) then
         do ix=-1,nx
           iy=0                                        ! south side
@@ -629,8 +572,9 @@ c if we want the integral current to be 0
      >     write(*,'(i5/(10(1x,10i1)))') iy,element_done
         enddo
       endif
-
+#endif
 * ..return
+#ifdef WG_TODO
       if((ncall.eq.0 .and. diagno.ge.2) .or. diagno.ge.3) then
         do ix=-1,nx
           write(*,'(a,i4,1p,6(1x,e14.7))') 'S:ix,ti,ni,shi0 ',
@@ -697,7 +641,7 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stbc_she0to3 = she0
         b2stbc_shi0to3 = shi0
       endif
-
+#endif
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
       call subend ()
       return

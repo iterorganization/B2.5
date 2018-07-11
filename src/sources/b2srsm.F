@@ -1,33 +1,34 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2srsm (nx, ny, ns, dtim, vol, na, ua, te, ti, ne, ni,
-     &  snasm, smosm, shesm, shism, snesm, main_call)
+      subroutine b2srsm (nCv, ns, dtim, geo, mpg, na, ua, te, ti, ne,
+     &  ni, sr, main_call)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_numerics_namelist
       use b2mod_neutrals_namelist
       use b2mod_constants
       use b2mod_diag
       use b2mod_time
       use b2mod_b2cmpa
-      use b2mod_balance !djm Jan2017
-     1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
-     2          b2srsm_shi0to3, balance_netcdf
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
+!WG_TODO      use b2mod_balance !djm Jan2017
+!WG_TODO     1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
+!WG_TODO     2          b2srsm_shi0to3, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nCv, ns
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  dtim
       real (kind=R8) ::
-     *  vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1), 
-     *  ua(-1:nx,-1:ny,0:ns-1), ni(-1:nx,-1:ny,0:1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ne(-1:nx,-1:ny)
+     *  na(nCv,0:ns-1), 
+     *  ua(nCv,0:ns-1), ni(nCv,0:1),
+     &  te(nCv), ti(nCv), ne(nCv)
       logical main_call 
 *   ..input/output arguments
-      real (kind=R8) ::
-     *  snasm(-1:nx,-1:ny,0:1,0:ns-1), smosm(-1:nx,-1:ny,0:3,0:ns-1), 
-     &  shesm(-1:nx,-1:ny,0:3), shism(-1:nx,-1:ny,0:3),
-     &  snesm(-1:nx,-1:ny,0:1)
+      type (B2Source), intent (inout) :: sr
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -44,7 +45,7 @@
 *.declarations
 
 *   ..local variables
-      integer is, ix, iy, n2, ncall, diagno, enable
+      integer is, iCv, ncall, diagno, enable
       integer k
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
@@ -53,11 +54,11 @@
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
       real (kind=R8) :: !djm Jan2017
-     &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1), 
-     &  shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3)
+     &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1), 
+     &  shetmp(nCv,0:3), shitmp(nCv,0:3)
 *   ..procedures
       real (kind=R8) :: roxa
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
+      roxa(iCv,is) = am(is)*mp*na(iCv,is)
       external subini, subend, xertst, ipgeti, b2xvsg
       intrinsic abs, min, mod, int
 *   ..initialisation
@@ -70,25 +71,21 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2srsm')
-*   ..compute n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, ns
+      call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test dtim
       call xertst (0.lt.dtim, 'faulty argument dtim')
-*   ..test vol
-      call b2xvsg (n2, vol, 1, 'vol', '.gt.')
 *   ..test sign of na, ni, ne, te, ti
       do is = 0, ns-1
-        call b2xvsg (n2, na(-1,-1,is), 1, 'na', '.gt.')
+        call b2xvsg (nCv, na(1,is), 1, 'na', '.gt.')
       enddo
       do is = 0, 1
-        call b2xvsg (n2, ni(-1,-1,is), 1, 'ni', '.gt.')
+        call b2xvsg (nCv, ni(1,is), 1, 'ni', '.gt.')
       enddo
-      call b2xvsg (n2, ne, 1, 'ne', '.gt.')
-      call b2xvsg (n2, te, 1, 'te', '.gt.')
-      call b2xvsg (n2, ti, 1, 'ti', '.gt.')
+      call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
+      call b2xvsg (nCv, te, 1, 'te', '.gt.')
+      call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
 *   ..obtain input
       if (ncall.eq.0) then
         call ipgeti ('b2srsm_iout', iout)                         !srv 11.09.09 {
@@ -106,12 +103,14 @@
       endif
 
 cdjm Jan2017 Keep sources at the start to calculate total change for balance routines
-      snatmp = snasm
-      smotmp = smosm
-      shetmp = shesm
-      shitmp = shism
+      snatmp = sr%sna
+      smotmp = sr%smo
+      shetmp = sr%she
+      shitmp = sr%shi
 
       if(enable.ne.0) then
+        call xerrab ('b2srsm not adapted for WG')
+#ifdef WG_TODO
 c*** calculate the integral sources for all regions:
 c*** before correction (1), after correction (2)
         timefactor = 1.0_R8
@@ -124,7 +123,7 @@ c*** before correction (1), after correction (2)
               if (resignore(ix,iy,1).ne.0) then
 c check particles
                 invtimescale =
-     1           abs(snasm(ix,iy,0,is)+snasm(ix,iy,1,is)*na(ix,iy,is))
+     1           abs(sr%sna(ix,iy,0,is)+sr%sna(ix,iy,1,is)*na(ix,iy,is))
      2           /(na(ix,iy,is)*vol(ix,iy))  
                 hlp = invtimescale*time_factor_required*
      1           dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
@@ -140,8 +139,8 @@ c check particles
                     write(*,'(a,3e10.3)') 'te,ti,ne = ',
      1               te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
                   endif
-                  snasm(ix,iy,0,is) = snasm(ix,iy,0,is)/hlp
-                  snasm(ix,iy,1,is) = snasm(ix,iy,1,is)/hlp
+                  sr%sna(ix,iy,0,is) = sr%sna(ix,iy,0,is)/hlp
+                  sr%sna(ix,iy,1,is) = sr%sna(ix,iy,1,is)/hlp
                   if (main_call.and.mod(ncall,eirene_mod).eq.0) then
                     src_ni(region(ix,iy,0),2,b2espcr(is)) = 
      &                src_ni(region(ix,iy,0),2,b2espcr(is)) +
@@ -158,10 +157,10 @@ c check particles
             do iy = -1, ny
               if (resignore(ix,iy,2).ne.0) then
 c check parallel momentum
-                invtimescale = abs(smosm(ix,iy,0,is) +
-     1           smosm(ix,iy,1,is)*ua(ix,iy,is) +
-     &           smosm(ix,iy,2,is)*roxa(ix,iy,is) + 
-     &           smosm(ix,iy,3,is)*roxa(ix,iy,is)*ua(ix,iy,is))
+                invtimescale = abs(sr%smo(ix,iy,0,is) +
+     1           sr%smo(ix,iy,1,is)*ua(ix,iy,is) +
+     &           sr%smo(ix,iy,2,is)*roxa(ix,iy,is) + 
+     &           sr%smo(ix,iy,3,is)*roxa(ix,iy,is)*ua(ix,iy,is))
      2           /(sqrt(ti(ix,iy)/
      3           (am(is)*mp))*roxa(ix,iy,is)*vol(ix,iy))  
                 hlp = invtimescale*time_factor_required*
@@ -179,10 +178,10 @@ c check parallel momentum
                     write(*,'(a,3e10.3)') 'te,ti,ne = ',
      1               te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
                   endif
-                  smosm(ix,iy,0,is) = smosm(ix,iy,0,is)/hlp
-                  smosm(ix,iy,1,is) = smosm(ix,iy,1,is)/hlp
-                  smosm(ix,iy,2,is) = smosm(ix,iy,2,is)/hlp
-                  smosm(ix,iy,3,is) = smosm(ix,iy,3,is)/hlp
+                  sr%smo(ix,iy,0,is) = sr%smo(ix,iy,0,is)/hlp
+                  sr%smo(ix,iy,1,is) = sr%smo(ix,iy,1,is)/hlp
+                  sr%smo(ix,iy,2,is) = sr%smo(ix,iy,2,is)/hlp
+                  sr%smo(ix,iy,3,is) = sr%smo(ix,iy,3,is)/hlp
                   if (main_call.and.mod(ncall,eirene_mod).eq.0) then
                     src_mo(region(ix,iy,0),2,b2espcr(is)) = 
      &                src_mo(region(ix,iy,0),2,b2espcr(is)) +
@@ -207,9 +206,9 @@ c check parallel momentum
             if (resignore(ix,iy,1).ne.0) then
 c check ion energy
               invtimescale =
-     1         abs(shism(ix,iy,0) + shism(ix,iy,1)*ti(ix,iy) + 
-     &         shism(ix,iy,2)*ni(ix,iy,0) +
-     &         shism(ix,iy,3)*ti(ix,iy)*ni(ix,iy,0))
+     1         abs(sr%shi(ix,iy,0) + sr%shi(ix,iy,1)*ti(ix,iy) + 
+     &         sr%shi(ix,iy,2)*ni(ix,iy,0) +
+     &         sr%shi(ix,iy,3)*ti(ix,iy)*ni(ix,iy,0))
      2         /(ti(ix,iy)*ni(ix,iy,0)*vol(ix,iy))
               hlp = invtimescale*time_factor_required*
      .         dtim*dtei(region(ix,iy,0))*time_factor(ix,iy)
@@ -225,10 +224,10 @@ c check ion energy
                   write(*,'(a,3e10.3)') 'te,ti,ne = ',
      1             te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
                 endif
-                shism(ix,iy,0) = shism(ix,iy,0)/hlp
-                shism(ix,iy,1) = shism(ix,iy,1)/hlp
-                shism(ix,iy,2) = shism(ix,iy,2)/hlp
-                shism(ix,iy,3) = shism(ix,iy,3)/hlp
+                sr%shi(ix,iy,0) = sr%shi(ix,iy,0)/hlp
+                sr%shi(ix,iy,1) = sr%shi(ix,iy,1)/hlp
+                sr%shi(ix,iy,2) = sr%shi(ix,iy,2)/hlp
+                sr%shi(ix,iy,3) = sr%shi(ix,iy,3)/hlp
                 if (main_call.and.mod(ncall,eirene_mod).eq.0) then
                   src_ei(region(ix,iy,0),2) = 
      &              src_ei(region(ix,iy,0),2) +
@@ -244,9 +243,9 @@ c check ion energy
               endif
 c check electron energy
               invtimescale =
-     1         abs(shesm(ix,iy,0) + shesm(ix,iy,1)*te(ix,iy) + 
-     &         shesm(ix,iy,2)*ne(ix,iy) +
-     &         shesm(ix,iy,3)*te(ix,iy)*ne(ix,iy))
+     1         abs(sr%she(ix,iy,0) + sr%she(ix,iy,1)*te(ix,iy) + 
+     &         sr%she(ix,iy,2)*ne(ix,iy) +
+     &         sr%she(ix,iy,3)*te(ix,iy)*ne(ix,iy))
      2         /(te(ix,iy)*ne(ix,iy)*vol(ix,iy))
               hlp = invtimescale*time_factor_required*
      .         dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
@@ -263,10 +262,10 @@ c check electron energy
                   write(*,'(a,3e10.3)') 'te,ti,ne = ',
      1             te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
                 endif
-                shesm(ix,iy,0) = shesm(ix,iy,0)/hlp
-                shesm(ix,iy,1) = shesm(ix,iy,1)/hlp
-                shesm(ix,iy,2) = shesm(ix,iy,2)/hlp
-                shesm(ix,iy,3) = shesm(ix,iy,3)/hlp
+                sr%she(ix,iy,0) = sr%she(ix,iy,0)/hlp
+                sr%she(ix,iy,1) = sr%she(ix,iy,1)/hlp
+                sr%she(ix,iy,2) = sr%she(ix,iy,2)/hlp
+                sr%she(ix,iy,3) = sr%she(ix,iy,3)/hlp
                 if (main_call.and.mod(ncall,eirene_mod).eq.0) then
                   src_ee(region(ix,iy,0),2) = 
      &              src_ee(region(ix,iy,0),2) +
@@ -282,7 +281,7 @@ c check electron energy
               endif
 c check electron particle number
               invtimescale =
-     1         abs(snesm(ix,iy,0) + snesm(ix,iy,1)*ne(ix,iy))
+     1         abs(sr%sne(ix,iy,0) + sr%sne(ix,iy,1)*ne(ix,iy))
      2         /(ne(ix,iy)*vol(ix,iy))
               hlp = invtimescale*time_factor_required*
      1         dtim*time_factor(ix,iy)
@@ -298,8 +297,8 @@ c check electron particle number
                   write(*,'(a,3e10.3)') 'te,ti,ne = ',
      1             te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
                 endif
-                snesm(ix,iy,0) = snesm(ix,iy,0)/hlp
-                snesm(ix,iy,1) = snesm(ix,iy,1)/hlp
+                sr%sne(ix,iy,0) = sr%sne(ix,iy,0)/hlp
+                sr%sne(ix,iy,1) = sr%sne(ix,iy,1)/hlp
                 if (main_call.and.mod(ncall,eirene_mod).eq.0) then
                   src_ne(region(ix,iy,0),2) = 
      &              src_ne(region(ix,iy,0),2) +
@@ -311,39 +310,40 @@ c check electron particle number
             endif
           enddo    
         enddo
+#endif
       endif
 
 cdjm Store the total change in linearised sources for balance
-      if (balance_netcdf.ne.0) then
-        b2srsm_sna0to1 = snasm-snatmp
-        b2srsm_smo0to3 = smosm-smotmp
-        b2srsm_she0to3 = shesm-shetmp
-        b2srsm_shi0to3 = shism-shitmp
-      endif
+!WG_TODO      if (balance_netcdf.ne.0) then
+!WG_TODO        b2srsm_sna0to1 = sr%sna-snatmp
+!WG_TODO        b2srsm_smo0to3 = sr%smo-smotmp
+!WG_TODO        b2srsm_she0to3 = sr%she-shetmp
+!WG_TODO        b2srsm_shi0to3 = sr%shi-shitmp
+!WG_TODO      endif
 
       if (iout_b2npmo.eq.1) then                                     !srv 11.09.09 {
 	 do is = 0, ns-1          
 	  write (chns,'(i3.3)') is
-!	  call my_out(70,nx,ny,smosm(:,:,0,is)+                        !srv 07.10.09
-!     &        smosm(:,:,1,is)*ua(:,:,is)+
-!     &        smosm(:,:,2,is)*na(:,:,is)*mp*am(is)+
-!     &        smosm(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
+!	  call my_out(70,nCv,sr%smo(:,:,0,is)+                        !srv 07.10.09
+!     &        sr%smo(:,:,1,is)*ua(:,:,is)+
+!     &        sr%smo(:,:,2,is)*na(:,:,is)*mp*am(is)+
+!     &        sr%smo(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
 !     &        'b2srsm_smosm'//chns)
 	 enddo
       endif
       if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) then
         do is = 0, ns-1
 	  write (chns,'(i3.3)') is
-!        call my_out(70,nx,ny,snasm(:,:,0,is)+                       !srv 07.10.09
-!     &             snasm(:,:,1,is)*na(:,:,is),'b2srsm_snasm'//chns)
+!        call my_out(70,nCv,sr%sna(:,:,0,is)+                       !srv 07.10.09
+!     &             sr%sna(:,:,1,is)*na(:,:,is),'b2srsm_snasm'//chns)
         enddo
       endif
       if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
-!	 call my_out(70,nx,ny,shesm(:,:,0)+shesm(:,:,1)*te+            !srv 07.10.09
-!     &   shesm(:,:,2)*ne + shesm(:,:,3)*te*ne,'b2srsm_shesm')
-!	 call my_out(70,nx,ny,shism(:,:,0)+shism(:,:,1)*ti+
-!     &   shism(:,:,2)*ni(:,:,0) + 
-!     &   shism(:,:,3)*ti*ni(:,:,0),'b2srsm_shism')
+!	 call my_out(70,nCv,sr%she(:,:,0)+sr%she(:,:,1)*te+            !srv 07.10.09
+!     &   sr%she(:,:,2)*ne + sr%she(:,:,3)*te*ne,'b2srsm_shesm')
+!	 call my_out(70,nCv,sr%shi(:,:,0)+sr%shi(:,:,1)*ti+
+!     &   sr%shi(:,:,2)*ni(:,:,0) + 
+!     &   sr%shi(:,:,3)*ti*ni(:,:,0),'b2srsm_shism')
       endif            
 
       if (iout.eq.1) then
@@ -351,21 +351,21 @@ cdjm Store the total change in linearised sources for balance
 	  write (chns,'(i3.3)') is
 	  do k=0,3
 	   write (chk,'(i1)') k
-	   call my_out(70,nx,ny,smosm(-1,-1,k,is),
+	   call my_out(70,nCv,sr%smo(1,k,is),
      &                       'b2srsm_smosm'//chk//chns)
 	  enddo
 	  do k=0,1
 	   write (chk,'(i1)') k
-	   call my_out(70,nx,ny,snasm(-1,-1,k,is),
+	   call my_out(70,nCv,sr%sna(1,k,is),
      &                       'b2srsm_snasm'//chk//chns)
 	  enddo
 	enddo
         do k=0,3
-	  call my_out(70,nx,ny,shesm(-1,-1,k),'b2srsm_shesm'//chk)
-	  call my_out(70,nx,ny,shism(-1,-1,k),'b2srsm_shism'//chk)
+	  call my_out(70,nCv,sr%she(1,k),'b2srsm_shesm'//chk)
+	  call my_out(70,nCv,sr%shi(1,k),'b2srsm_shism'//chk)
 	enddo
 	do k=0,1
-	  call my_out(70,nx,ny,snesm(-1,-1,k),'b2srsm_snesm'//chk)
+	  call my_out(70,nCv,sr%sne(1,k),'b2srsm_snesm'//chk)
 	enddo
       endif                                                          !srv 11.09.09 }
 

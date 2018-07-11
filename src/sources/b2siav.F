@@ -1,38 +1,39 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2siav (nx, ny, ns, isb, mb, hx, hy, hz, vol,
-     & qz, qs, bb, ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam,  !srv 01.07.09
+      subroutine b2siav (nCv, nFc, nVx, ns, isb, geo, mpg, mb,
+     & ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam,  !srv 01.07.09
      & chci, cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
      & wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
       use b2mod_types
       use b2mod_constants
-      use b2mod_indirect
-      use b2mod_geo_corner
+!WG_TODO      use b2mod_geo_corner
       use b2mod_b2cmpa
-      use b2mod_balance                                               !djm Jan2017
-     & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
+      use b2us_geo
+      use b2us_map
+!WG_TODO      use b2mod_balance                                               !djm Jan2017
+!WG_TODO     & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, isb
+      integer nCv, nFc, nVx, ns, isb
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     & mb, hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
-     & vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
-     1 bb(-1:nx,-1:ny,0:3), lnlam(-1:nx,-1:ny),                       !srv 01.07.09
-     2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1,0:1), 
-     & vbecrb(-1:nx,-1:ny,0:1,0:1),
-     & te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
-     & po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
-     & chci(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),                  !srv 23.07.99
-     & cvsb_cl(-1:nx,-1:ny,0:1,0:1), cvsbhz(-1:nx,-1:ny,0:1,0:1),             !srv 04.10.99 09.01.01
-     & cvsbhz_cl(-1:nx,-1:ny,0:1,0:1)                                     !srv 31.07.02
+     & mb, lnlam(nCv),                       !srv 01.07.09
+     2 ub(nCv), wbdia(nFc,0:1), 
+     & vbecrb(nFc,0:1),
+     & te(nCv), ti(nCv), nb(nCv),
+     & po(nCv), ni(nCv), ne2(nCv),
+     & chci(nFc,0:1), cvsb(nFc,0:1),                  !srv 23.07.99
+     & cvsb_cl(nFc,0:1), cvsbhz(nFc,0:1),             !srv 04.10.99 09.01.01
+     & cvsbhz_cl(nFc,0:1)                                     !srv 31.07.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),
-     &   kt_neo(-1:nx,-1:ny)
+     *   smbvh(nCv,0:3), smbvv(nCv,0:3),
+     &   kt_neo(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny)
+     *   wrk0(nCv), wrk1(nCv), wrk2(nCv)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -47,7 +48,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, k
+      integer ncall, iFc, k
       integer, save :: qstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
       character chns*3, chk*1                                       !srv 17.06.02
@@ -57,21 +58,22 @@
      &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
      &     cvsa_mltpl = 1.0e0_R8                                    !iyv 06.12.13
       real (kind=R8) ::
-     *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
-     *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
-     &   tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny),                 !lk 23.05.06 05.07.07 {
-     &   conn(-1:ny), tt2(-1:ny), tt3(-1:ny), eps1(-1:ny),
-     &   dtir(-1:nx,-1:ny)
-      real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
-     &                , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
-     &                , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
+     &     wrks(nCv)
+!WG_TODO     *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
+!WG_TODO     *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
+!WG_TODO     &   tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny),                 !lk 23.05.06 05.07.07 {
+!WG_TODO     &   conn(-1:ny), tt2(-1:ny), tt3(-1:ny), eps1(-1:ny),
+!WG_TODO     &   dtir(-1:nx,-1:ny)
+!WG_TODO      real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
+!WG_TODO     &                , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
+!WG_TODO     &                , nu1(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
       integer mintopcut                                             !lk 23.05.06 05.07.07 }
       save ncall
       data ncall/0/
 *   ..procedures
       intrinsic abs, sqrt
-      real (kind=R8) :: hy1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
+!WG_TODO      real (kind=R8) :: hy1
+!WG_TODO      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *-----------------------------------------------------------------------
 *.computation
 
@@ -88,16 +90,15 @@
        call ipgeti ('b2trcl_lluciani', lluciani)                    !lk 03.12.09
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)	            !iyv 06.12.13
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
-      s2 = sqrt(2.0_R8)                                             !iyv 02.12.13
+!WG_TODO      s2 = sqrt(2.0_R8)                                             !iyv 02.12.13
       smbvh  = 0.0_R8
       smbvv = 0.0_R8
 
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
         if (addvis.ne.0.0_R8) then                                  !srv 19.01.05 28.03.06 {
+          call xerrab ('addvis not yet available for WG')
+#ifdef WG_TODO
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
 *   ..compute radial gradients of ti
           call gradc_r(nx, ny, hx, hy, vol, qz, ti, dtir)
@@ -290,9 +291,12 @@
               endif
             enddo
           enddo
+#endif
         endif                                                       !lk 23.05.06 05.07.07
 
         if (addvis1.ne.0.0_R8) then          !srv 19.01.05 30.01.10
+          call xerrab ('addvis not yet available for WG')
+#ifdef WG_TODO
 
           wrk0=0
           wrk2 = sqrt(bb(:,:,3))     ! wrk2 is used below twice
@@ -326,34 +330,36 @@
               endif
             enddo
           enddo                                                     !srv 19.01.05 }
+#endif
         endif
       endif                                                         !srv 26.10.08
 
+#ifdef WG_TODO
       if (iout.ne.0) then                                           !srv 17.06.02 {
-        call my_out(70,nx,ny,alpha1,'b2siav_alpha1')
-        call my_out(70,nx,ny,kt_neo,'b2siav_kt_neo')
-        call my_out(70,nx,ny,tauia1,'b2siav_tauia1')
+        call my_out_us(70,nCv,alpha1,'b2siav_alpha1')
+        call my_out_us(70,nCv,kt_neo,'b2siav_kt_neo')
+        call my_out_us(70,nCv,tauia1,'b2siav_tauia1')
         write (chns,'(i3.3)') isb
         do k=0,3
           write (chk,'(i1)') k
-          call my_out(70,nx,ny,smbvv(-1,-1,k),'b2siav_smovv'//chk//chns)
-          call my_out(70,nx,ny,smbvh(-1,-1,k),'b2siav_smovh'//chk//chns)
+          call my_out_us(70,nCv,smbvv(1,k),'b2siav_smovv'//chk//chns)
+          call my_out_us(70,nCv,smbvh(1,k),'b2siav_smovh'//chk//chns)
         enddo
-        wrks=smbvv(:,:,0)+smbvv(:,:,1)*ub(:,:)+
-     &       smbvv(:,:,2)*nb(:,:)*mb+smbvv(:,:,3)*ub(:,:)*nb(:,:)*mb
-        call my_out(70,nx,ny,wrks,'b2siav_smovv'//chns)
-        wrks=smbvh(:,:,0)+smbvh(:,:,1)*ub(:,:)+
-     &       smbvh(:,:,2)*nb(:,:)*mb+smbvh(:,:,3)*ub(:,:)*nb(:,:)*mb
-        call my_out(70,nx,ny,wrks,'b2siav_smovh'//chns)
-        call my_out(70,nx,ny,cvsbhz(-1,-1,0,0),'b2siav_cvsbhzx'//chns)
-        call my_out(70,nx,ny,cvsbhz(-1,-1,1,1),'b2siav_cvsbhzy'//chns)
+        wrks=smbvv(:,0)+smbvv(:,1)*ub(:)+
+     &       smbvv(:,2)*nb(:)*mb+smbvv(:,3)*ub(:)*nb(:)*mb
+        call my_out_us(70,nCv,wrks,'b2siav_smovv'//chns)
+        wrks=smbvh(:,0)+smbvh(:,1)*ub(:)+
+     &       smbvh(:,2)*nb(:)*mb+smbvh(:,3)*ub(:)*nb(:)*mb
+        call my_out_us(70,nCv,wrks,'b2siav_smovh'//chns)
+        call my_out_us(70,nFc,cvsbhz(1,0),'b2siav_cvsbhzx'//chns)
+        call my_out_us(70,nFc,cvsbhz(1,1),'b2siav_cvsbhzy'//chns)
       endif                                                          !srv 17.06.02 }
-
+#endif
 cdjm Jan2017 Store linearised sources for balance
-      if (balance_netcdf.ne.0) then
-        b2siav_smovh0to3(-1:nx,-1:ny,0:3,isb)=smbvh
-        b2siav_smovv0to3(-1:nx,-1:ny,0:3,isb)=smbvv
-      endif
+!WG_TODO      if (balance_netcdf.ne.0) then
+!WG_TODO        b2siav_smovh0to3(-1:nx,-1:ny,0:3,isb)=smbvh
+!WG_TODO        b2siav_smovv0to3(-1:nx,-1:ny,0:3,isb)=smbvv
+!WG_TODO      endif
 
 * ..return
       ncall = ncall+1

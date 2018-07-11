@@ -1,18 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ursc (nx, ny, fun, sfn, ffn, resfn)
+      subroutine b2ursc (nCv, nFc, geo, mpg, fun, sfn, ffn, resfn)
       use b2mod_types
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny
+      integer nCv, nFc
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   fun(-1:nx,-1:ny), sfn(-1:nx,-1:ny,0:1), 
-     &  ffn(-1:nx,-1:ny,0:1,0:1)
+     *   fun(nCv), sfn(nCv,0:1), ffn(nFc,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   resfn(-1:nx,-1:ny)
+     *   resfn(nCv)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -32,7 +34,7 @@
 *       resfn = rhs-div(flux) .
 *     The flux is specified by ffn, and the right hand side has the
 *     linearised representation
-*       rhs(,) = sfn(,,0)+sfn(,,1)*fun(,) .
+*       rhs() = sfn(,0)+sfn(,1)*fun() .
 *     This linearisation may include a contribution from an implicit
 *     discretisation in time.
 *
@@ -41,18 +43,11 @@
 *     cell volumes. Therefore, the expression for the integrated
 *     residual on any cell does not involve any geometric factors.
 *
-*     Since the introduction of the 9-point stencil, the dimensions of 
-*     the flux arrays have increase to ffn(-1:nx,-1:ny,0:1,0:1), where
-*     ffn(-1:nx,-1:ny,0,0) specifies the poloidal flow across an x-face
-*     ffn(-1:nx,-1:ny,0,1) specifies the radial   flow across an x-face
-*     ffn(-1:nx,-1:ny,1,0) specifies the poloidal flow across an y-face
-*     ffn(-1:nx,-1:ny,1,1) specifies the radial   flow across an y-face
-*
 *-----------------------------------------------------------------------
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy
+      integer ncall, iFc
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -66,63 +61,25 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2ursc')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of sfn
-       call b2xvsg (n2, sfn(-1,-1,1), 1, 'sfn', '.le.')
-*    ..test edge values of ffn
-       call b2xvff (nx, ny, ffn, 'ffn')
+       call b2xvsg (nCv, sfn(1,1), 1, 'sfn', '.le.')
       endif
 
 * ..compute residual
+
 *   ..contribution from right hand side
-      do iy = -1, ny
-       do ix = -1, nx
-        resfn(ix,iy) = sfn(ix,iy,0)+sfn(ix,iy,1)*fun(ix,iy)
-       enddo
-      enddo
-*   ..contribution from ffnx
-      do iy = -1, ny
-       do ix = -1, nx
-        if(leftix(ix,iy).eq.-2) then
-         resfn(ix,iy) = resfn(ix,iy)
-     &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0,0)
-     &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0,1)
-        elseif(rightix(ix,iy).eq.nx+1) then
-         resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,0,0)+ffn(ix,iy,0,1)
-        else
-         resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,0,0)+ffn(ix,iy,0,1)
-     &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0,0)
-     &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0,1)
-        endif
-       enddo
-      enddo
-*   ..contribution from ffny
-      do iy = -1, ny
-       do ix = -1, nx
-        if (bottomiy(ix,iy).eq.-2) then
-cxpb  cells with no bottom neighbour
-         resfn(ix,iy) = resfn(ix,iy)
-     &     -ffn(topix(ix,iy),topiy(ix,iy),1,0)
-     &     -ffn(topix(ix,iy),topiy(ix,iy),1,1)
-        elseif (topiy(ix,iy).eq.ny+1) then
-cxpb  cells with no top neighbour
-          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,0)+ffn(ix,iy,1,1)
-        elseif (topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then
-cxpb  standard case
-          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,0)+ffn(ix,iy,1,1)
-     &                  -ffn(topix(ix,iy),topiy(ix,iy),1,0)
-     &                  -ffn(topix(ix,iy),topiy(ix,iy),1,1)
-         elseif (topiy(topix(ix,iy),topiy(ix,iy)).eq.iy .and. ny.gt.1) 
-     &    then
-cxpb  diverted island X-point case
-          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,0)+ffn(ix,iy,1,1)
-        endif
-       enddo
+      resfn = sfn(:,0)+sfn(:,1)*fun
+
+*   ..contribution from ffn
+      do iFc = 1, nFc
+        resfn(mpg%fcCv(iFc,1)) = 
+     &    resfn(mpg%fcCv(iFc,1)) - ffn(iFc,0) - ffn(iFc,1)
+        resfn(mpg%fcCv(iFc,2)) = 
+     &    resfn(mpg%fcCv(iFc,2)) + ffn(iFc,0) + ffn(iFc,1)
       enddo
 
 * ..return

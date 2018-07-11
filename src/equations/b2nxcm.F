@@ -1,16 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxcm (nx, ny, ns, pccm, pcca)
+      subroutine b2nxcm (nCv, ns, pccm, pcca)
       use b2mod_types
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nCv, ns
       real (kind=R8) ::
-     *   pccm(-1:nx,-1:ny,0:1,0:1)
+     *   pccm(nCv,0:1)
 *   ..input/output arguments
       real (kind=R8) ::
-     *   pcca(-1:nx,-1:ny,0:1,0:1,0:ns-1)
+     *   pcca(nCv,0:1,0:ns-1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -24,7 +24,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, ix, iy, is
+      integer ncall, iCv, is
       save ncall
       real (kind=R8) ::
      *   t0, t1
@@ -42,16 +42,14 @@
 
 *   ..subprogram start-up calls
       call subini ('b2nxcm')
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv
+      call xertst (0.le.nCv, 'faulty argument nCv')
 
 *   ..update pcca
       do is = 0, ns-1
-        do iy = -1, ny
-         do ix = -1, nx
-          pcca(ix,iy,0,0,is) = uxcm(pccm(ix,iy,0,0),pcca(ix,iy,0,0,is))
-          pcca(ix,iy,1,1,is) = uxcm(pccm(ix,iy,1,1),pcca(ix,iy,1,1,is))
-         enddo
+        do iCv = 1, nCv
+          pcca(iCv,0,is) = uxcm(pccm(iCv,0),pcca(iCv,0,is))
+          pcca(iCv,1,is) = uxcm(pccm(iCv,1),pcca(iCv,1,is))
         enddo
       enddo
 

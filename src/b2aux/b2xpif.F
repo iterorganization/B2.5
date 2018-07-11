@@ -1,43 +1,35 @@
-      subroutine b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)      !srv 13.01.17
+      subroutine b2xpif (nCv, nFc, geo, mpg, fch_pi_c, fch_pi_f)      !srv 13.01.17
       use b2mod_types
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
       implicit none
-      integer nx, ny
+      integer nCv, nFc
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
-     *  vol(-1:nx,-1:ny), fch_pi_c(-1:nx,-1:ny,0:1,0:1)
+     *  fch_pi_c(nCv,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  fch_pi_f(-1:nx,-1:ny,0:1,0:1)
+     &  fch_pi_f(nFc,0:1)
 *     ------------------------------------------------------------------
 *     B2XPIF computes the ion parallel current on cell faces.
 *     ------------------------------------------------------------------
-      integer n2, ix, iy
+      integer iFc
       integer, save :: ncall = 0
       real (kind=R8), save  :: prl_cur = 1.0_R8
 *     ------------------------------------------------------------------
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_prl_cur', prl_cur)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 
-      call intfaceh(nx,ny,leftix,leftiy,vol,fch_pi_c(-1,-1,0,0),
-     .                                      fch_pi_f(-1,-1,0,0))
+*  .. interpolate fch_pi_c(,0) to faces
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,fch_pi_c, fch_pi_f)
 
-      do iy = -1, ny
-        do ix = -1, nx
-          if(leftix(ix,iy).ne.-2) then
-            fch_pi_f(ix,iy,0,0) = fch_pi_f(ix,iy,0,0)*
-     &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))/
-     &       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*prl_cur
-	  endif
-        enddo
-      enddo
+*  .. multiply with poloidal face area
+      fch_pi_f(:,0) = fch_pi_f(:,0)*geo%fcS(:)*geo%fcQalf(:,0)*prl_cur
 
-      fch_pi_f(-1:nx,-1:ny,0,1) = 0.0_R8
-      fch_pi_f(-1:nx,-1:ny,1,0) = 0.0_R8
-      fch_pi_f(-1:nx,-1:ny,1,1) = 0.0_R8
+*  .. set radial component zero
+      fch_pi_f(:,1) = 0.0_R8
 
       ncall = ncall+1
       return

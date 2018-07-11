@@ -11,7 +11,7 @@
       end function
 #endif
 
-      subroutine nancheck(nx, ny, data, label)
+      subroutine nancheck(nCv, data, label)
       use b2mod_types
 #ifndef NO_IEEE
       use ieee_arithmetic    ! IGNORE
@@ -21,23 +21,21 @@
       logical, external :: my_isnan
 #endif
 *   ..input arguments (unchanged on exit)
-      integer nx, ny
+      integer nCv
       real (kind=R8) ::
-     *   data(-1:nx,-1:ny)
+     *   data(nCv)
       character (len=*) label
 *   ..local variables
-      integer ix, iy
+      integer iCv
 
-      do iy = -1, ny
-        do ix = -1, nx
+      do iCv = 1, nCv
 #ifndef NO_IEEE
-          if(ieee_is_nan(data(ix,iy))) then
+          if(ieee_is_nan(data(iCv))) then
 #else
-          if(my_isnan(data(ix,iy))) then
+          if(my_isnan(data(iCv))) then
 #endif
-            write(*,*) label, ' NaN found at ', ix,iy
+            write(*,*) label, ' NaN found at ', iCv
           endif
-        enddo
       enddo
 
       return

@@ -1,30 +1,24 @@
-      subroutine b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs, kapy, 
-     &  cony)
+      subroutine b2txcy (nCv, nFc, mode, geo, mpg, fcVol, fcS, kapy, 
+     .  cony)
       use b2mod_types
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
       implicit none
-      integer nx, ny, mode
+      integer nCv, nFc, mode
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
-     &   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
-     &   qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), kapy(-1:nx,-1:ny), 
-     &   cony(-1:nx,-1:ny,0:1)
+     &   fcVol(nFc,2), fcS(nFc), kapy(nCv), cony(nFc)
 *     ------------------------------------------------------------------
 *     B2TXCY computes radial conductances between neighbouring cells, 
 *     given the conductivities.
-*     cony(:,:,0) contains radial conductivities across x-faces
-*     cony(:,:,1) contains radial conductivities across y-faces
 *     ------------------------------------------------------------------
-      integer ix, iy
+      integer iFc
       real (kind=R8) ::
      *   t0, t1
       intrinsic max, sqrt
-      real (kind=R8) ::
-     *   hy1, harm
       external subini, subend, xertst
       external b2xxgs
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txcy')
@@ -32,92 +26,50 @@
       call xertst (-1.le.mode.and.mode.le.2,
      &  'b2txcy--faulty argument mode')
 
-*   ..compute cony(:,:,0)
-      do iy = -1, ny
-       do ix = -1, nx
-        if(leftix(ix,iy).eq.-2) then
-         cony(ix,iy,0) = 0.0_R8
-        else
-         cony(ix,iy,0) = -gs(ix,iy,0)*qs(ix,iy,0)*
-     &     (vol(ix,iy)*kapy(leftix(ix,iy),leftiy(ix,iy))/
-     &      hy1(leftix(ix,iy),leftiy(ix,iy)) + 
-     &      vol(leftix(ix,iy),leftiy(ix,iy))*kapy(ix,iy)/
-     &      hy1(ix,iy))/
-     &     (vol(leftix(ix,iy),leftiy(ix,iy)) + vol(ix,iy))
-        endif
-       enddo
-      enddo
-*   ..compute cony(:,:,1)
+cwdk factor 0.5 (vs. 2.0 in original code)!
+cwdk note that fcHc is typically hx/2 or hy/2!
+
+*   ..compute cony
       if (mode.eq.-1) then
 *    ..use harmonic averaging
-       do iy = -1, ny
-        do ix = -1, nx
-         if(bottomiy(ix,iy).eq.-2) then
-          cony(ix,iy,1) = 0.0_R8
-         else
-          t0 = vol(bottomix(ix,iy),bottomiy(ix,iy))*
-     &         kapy(bottomix(ix,iy),bottomiy(ix,iy))/
-     &         hy1(bottomix(ix,iy),bottomiy(ix,iy))**2
-          t1 = vol(ix,iy)*kapy(ix,iy)/hy1(ix,iy)**2
-          if (t0*t1.gt.0.0_R8) then
-           cony(ix,iy,1) = harm(t0,t1)
-          endif
-         endif
-        enddo
+       do iFc = 1, nFc
+        t0 = fcVol(iFc,1)*kapy(mpg%fcCv(iFc,1))/geo%fcHc(iFc,1)**2
+        t1 = fcVol(iFc,2)*kapy(mpg%fcCv(iFc,2))/geo%fcHc(iFc,2)**2
+        if (t0*t1.gt.0.0_R8) then
+         cony(iFc) = 
+     &    t0*t1/(t0+t1)*geo%fcQalf(iFc,1)/geo%fcQgam(iFc,0)**2
+        endif
        enddo
       else if (mode.eq.0) then
 *    ..use geometric averaging
-       do iy = -1, ny
-        do ix = -1, nx
-         if(bottomiy(ix,iy).eq.-2) then
-          cony(ix,iy,1) = 0.0_R8
-         else
-          cony(ix,iy,1) = 2.0_R8*sqrt(max(0.0_R8,
-     &     (vol(bottomix(ix,iy),bottomiy(ix,iy))*
-     &      kapy(bottomix(ix,iy),bottomiy(ix,iy))/
-     &      hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &     (vol(ix,iy)*kapy(ix,iy)/hy1(ix,iy))))/
-     &     (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-         endif
-        enddo
+       do iFc = 1, nFc
+        cony(iFc) = 
+     &    geo%fcQalf(iFc,1)/geo%fcQgam(iFc,0)**2*sqrt(max(0.0_R8,
+     &   (fcVol(iFc,1)*kapy(mpg%fcCv(iFc,1))/geo%fcHc(iFc,1))*
+     &   (fcVol(iFc,2)*kapy(mpg%fcCv(iFc,2))/geo%fcHc(iFc,2))))/
+     &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
        enddo
       else if (mode.eq.1) then
 *    ..use arithmetic averaging (SOLPS5.0 formulation)
-       do iy = -1, ny
-        do ix = -1, nx
-         if(bottomiy(ix,iy).eq.-2) then
-          cony(ix,iy,1) = 0.0_R8
-         else
-          cony(ix,iy,1) = 2.0_R8*
-     &     (vol(bottomix(ix,iy),bottomiy(ix,iy))*
-     &        kapy(bottomix(ix,iy),bottomiy(ix,iy))
-     &       +vol(ix,iy)*kapy(ix,iy))/
-     &     (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))**2
-         endif
-        enddo
+       do iFc = 1, nFc
+        cony(iFc) = geo%fcQalf(iFc,1)/geo%fcQgam(iFc,0)**2*
+     &   (fcVol(iFc,1)*kapy(mpg%fcCv(iFc,1)) + 
+     &    fcVol(iFc,2)*kapy(mpg%fcCv(iFc,2)))/
+     &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
        enddo
       else if (mode.eq.2) then
 *    ..use arithmetic averaging (SOLPS4.0 formulation)
-       do iy = -1, ny
-        do ix = -1, nx
-         if(bottomiy(ix,iy).eq.-2) then
-          cony(ix,iy,1) = 0.0_R8
-         else
-          cony(ix,iy,1) = gs(ix,iy,1)*2.0_R8*
-     &       (hy1(bottomix(ix,iy),bottomiy(ix,iy))*
-     &        kapy(bottomix(ix,iy),bottomiy(ix,iy))
-     &       +hy1(ix,iy)*kapy(ix,iy))/
-     &     (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))**2
-         endif
-        enddo
+       do iFc = 1, nFc
+        cony(iFc) = 
+     &    fcS(iFc)*geo%fcQalf(iFc,1)/geo%fcQgam(iFc,0)*
+     &   (geo%fcHc(iFc,1)*kapy(mpg%fcCv(iFc,1)) + 
+     &    geo%fcHc(iFc,2)*kapy(mpg%fcCv(iFc,2)))/
+     &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
        enddo
       endif
-*     (Note: We used to have the loop over ix outside the one over iy
-*     in the previous code, but then the AIX/XLF compiler version 2.2
-*     produced wrong code when optimisation (-O) was on.)
 *   ..reset null regions
-      call b2xxgs (nx, ny, 0.0_R8, cony(-1,-1,0), 1)
-      call b2xxgs (nx, ny, 0.0_R8, cony(-1,-1,1), 2)
+!      call b2xxgs (nx, ny, 0.0_R8, cony(-1,-1,0), 1)
+!      call b2xxgs (nx, ny, 0.0_R8, cony(-1,-1,1), 2)
 *   ..return
       call subend ()
       return

@@ -1,23 +1,22 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxdu (nx, ny, ns, na, ua, smq, smqdu, wrk0, wrk1)
+      subroutine b2nxdu (nCv, ns, na, ua, smq, smqdu, wrk0, wrk1)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nCv, ns
       real (kind=R8) ::
-     *   na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  smq(-1:nx,-1:ny,0:3,0:ns-1)
+     *   na(nCv,0:ns-1), ua(nCv,0:ns-1),
+     &  smq(nCv,0:3,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   smqdu(-1:nx,-1:ny)
+     *   smqdu(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny)
+     *   wrk0(nCv), wrk1(nCv)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -31,14 +30,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is
+      integer ncall, iCv, is
       save ncall
 *   ..procedures
-      real (kind=R8) ::
-     *   roxa
       external subini, subend, xertst, sfill
       external b2xvsg, b2xvfx
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/
 
@@ -48,45 +44,35 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2nxdu')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv
+      call xertst (0.le.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-
 *    ..test sign of smq
        do is = 0, ns-1
-        call b2xvsg (n2, smq(-1,-1,1,is), 1, 'smq1', '.le.')
-        call b2xvsg (n2, smq(-1,-1,3,is), 1, 'smq3', '.le.')
+        call b2xvsg (nCv, smq(1,1,is), 1, 'smq1', '.le.')
+        call b2xvsg (nCv, smq(1,3,is), 1, 'smq3', '.le.')
        enddo
       endif
 
 * ..compute smqdu
 *   ..compute auxiliaries wrk0 and wrk1
-      call sfill (n2, 0.0_R8, wrk0, 1)
-      call sfill (n2, 0.0_R8, wrk1, 1)
+      call sfill (nCv, 0.0_R8, wrk0, 1)
+      call sfill (nCv, 0.0_R8, wrk1, 1)
       do is = 0, ns-1
-       do iy = -1, ny
-        do ix = -1, nx
-         wrk0(ix,iy) = wrk0(ix,iy)+smq(ix,iy,1,is)+
-     &     smq(ix,iy,3,is)*roxa(ix,iy,is)
-         wrk1(ix,iy) = wrk1(ix,iy)+smq(ix,iy,0,is)+
-     &     smq(ix,iy,1,is)*ua(ix,iy,is)+
-     &     smq(ix,iy,2,is)*roxa(ix,iy,is)+
-     &     smq(ix,iy,3,is)*roxa(ix,iy,is)*ua(ix,iy,is)
-        enddo
-       enddo
+       wrk0 = wrk0 + smq(:,1,is) + smq(:,3,is)*am(is)*mp*na(:,is)
+       wrk1 = wrk1 + smq(:,0,is) + 
+     &               smq(:,1,is)*ua(:,is) + 
+     &               smq(:,2,is)*am(is)*mp*na(:,is) +
+     &               smq(:,3,is)*am(is)*mp*na(:,is)*ua(:,is)
       enddo
 *   ..compute smqdu
-      do iy = -1, ny
-       do ix = -1, nx
-        if (wrk0(ix,iy).eq.0.0_R8) then
-         smqdu(ix,iy) = 0.0_R8
+      do iCv = 1, nCv
+        if (wrk0(iCv).eq.0.0_R8) then
+         smqdu(iCv) = 0.0_R8
         else
-         smqdu(ix,iy) = wrk1(ix,iy)/wrk0(ix,iy)
+         smqdu(iCv) = wrk1(iCv)/wrk0(iCv)
         endif
-       enddo
       enddo
 
 * ..return

@@ -1,30 +1,30 @@
-      subroutine b2tlhi (nx, ny, mp, cflmi, bb, gs, pbsx, qc, ni, nirm,
-     &  ti, chvimx)
+      subroutine b2tlhi (nCv, nFc, mp, cflmi, geo, mpg, ni, nirm,
+     &  ni_ext, ti, chvimx)
       use b2mod_types
-      use b2mod_indirect
-      use b2mod_external
+      use b2us_geo
+      use b2us_map
       implicit none
-      integer nx, ny
+      integer nCv, nFc
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  mp, cflmi, 
-     *  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2),
-     *  pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny,0:1), ni(-1:nx,-1:ny,0:1),
-     *  nirm(-1:nx,-1:ny), ti(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)
+     *  mp, cflmi, ni(nCv,0:1), nirm(nCv), ni_ext(nCv,0:1), ti(nCv), 
+     *  chvimx(nFc)
 *     ------------------------------------------------------------------
 *     B2TLHI computes the all atom heat transport flux limit velocity.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer ncall, ix, iy, area_fix, model
+      integer ncall, iCv, iFc, model
       real (kind=R8) ::
      *   t0,t1
-      save ncall, area_fix, model
+      save ncall, model
 *   ..procedures
       real (kind=R8) :: pit
       intrinsic max, sqrt
       external subini, subend, xertst, b2xvfx, ipgeti
-      pit(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
+      pit(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 *   ..initialisation
-      data ncall/0/, area_fix/3/, model/1/
+      data ncall/0/, model/1/
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlhi')
@@ -33,45 +33,35 @@
       call xertst (0.0_R8.le.cflmi, 'faulty argument cflmi')
 *   ..read switches
       if (ncall.eq.0) then
-        call ipgeti ('b2news_area_fix', area_fix)
         call ipgeti ('b2tqca_model', model)
       endif
 
 *   ..compute flux limit velocity
-      do iy = -1, ny
-       do ix = -1, nx
-        if(leftix(ix,iy).eq.-2) then
-         chvimx(ix,iy) = 0.0_R8
-        else
+      if (model.eq.1) then  ! SOLPS5.0 treatments
+        do iFc = 1, nFc
 cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqca_model, 
 c    because now both options are interchangeable
-          if (model.eq.1) then  ! SOLPS5.0 treatments
-            t0 = max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy))
-            chvimx(ix,iy) = cflmi*abs(pbsx(ix,iy))*sqrt(t0/mp)*            !srv 11.01.13
-     &        (nirm(leftix(ix,iy),leftiy(ix,iy))
-     &        +nirm(ix,iy))/(ni(leftix(ix,iy),leftiy(ix,iy),0)+
-     &                    ni_ext(leftix(ix,iy),leftiy(ix,iy),0)+
-     &                    ni(ix,iy,0)+ni_ext(ix,iy,0))
-            if (area_fix.eq.2) chvimx(ix,iy) = chvimx(ix,iy)*qc(ix,iy,0)
-          else if (model.eq.2) then  ! SOLPS4.0 treatment
-            t0 = ti(ix,iy)
-            t1 = ti(leftix(ix,iy),leftiy(ix,iy))
+          t0 = max(ti(mpg%fcCv(iFc,1)),ti(mpg%fcCv(iFc,2)))
+          chvimx(iFc) = cflmi*abs(geo%fcPbs(iFc))*sqrt(t0/mp)*            !srv 11.01.13
+     &      (nirm(mpg%fcCv(iFc,1))+nirm(mpg%fcCv(iFc,2)))/
+     &      (ni(mpg%fcCv(iFc,1),0)+ni_ext(mpg%fcCv(iFc,1),0)+
+     &       ni(mpg%fcCv(iFc,2),0)+ni_ext(mpg%fcCv(iFc,2),0))
+        enddo
+      else if (model.eq.2) then  ! SOLPS4.0 treatment
+       do iFc = 1, nFc
+        t0 = ti(mpg%fcCv(iFc,2))
+        t1 = ti(mpg%fcCv(iFc,1))
 cwdk 10.03.16 Divide by ni*ti at cell faces, so chvimx contains the same information 
 c           as case b2tqca_model.eq.1
 c           Removes need for different treatment later on in the code (b2tfhi), and 
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
-            chvimx(ix,iy) = cflmi*gs(ix,iy,0)*
-     &       (nirm(ix,iy)*pit(ix,iy)*sqrt(t0/mp)*t0 + 
-     &        nirm(leftix(ix,iy),leftiy(ix,iy))*
-     &        pit(leftix(ix,iy),leftiy(ix,iy))*sqrt(t1/mp)*t1)/
-     &       ((ni(leftix(ix,iy),leftiy(ix,iy),0)+
-     &         ni_ext(leftix(ix,iy),leftiy(ix,iy),0)+
-     &         ni(ix,iy,0)+ni_ext(ix,iy,0))*max(t0,t1))
-            if (area_fix.ge.2) chvimx(ix,iy) = chvimx(ix,iy)*qc(ix,iy,0)
-          endif
-        endif
+        chvimx(iFc) = cflmi*geo%fcS(iFc)*geo%fcQalf(iFc,0)*
+     &   (nirm(mpg%fcCv(iFc,2))*pit(mpg%fcCv(iFc,2))*sqrt(t0/mp)*t0 + 
+     &    nirm(mpg%fcCv(iFc,1))*pit(mpg%fcCv(iFc,1))*sqrt(t1/mp)*t1)/
+     &   ((ni(mpg%fcCv(iFc,1),0)+ni_ext(mpg%fcCv(iFc,1),0)+
+     &     ni(mpg%fcCv(iFc,2),0)+ni_ext(mpg%fcCv(iFc,2),0))*max(t0,t1))
        enddo
-      enddo
+      endif
       ncall = ncall+1
       call subend ()
       return

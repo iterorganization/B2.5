@@ -1,54 +1,49 @@
-      subroutine b2tlh0 (nx, ny, ns, hx, hy, vol, qz, qc, qs, na, ti,
+      subroutine b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, na, ti,
      & hcib, chcb, hcimx, fllim0fhi)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nCv, nFc, nVx, ns
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     *  vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     *  qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
-     *  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
-     1  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:1,0:ns-1)
+     *  na(nCv,0:ns-1), ti(nCv),
+     1  hcib(nCv,0:ns-1), chcb(nFc,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  hcimx(-1:nx,-1:ny,0:1,0:ns-1),
-     &	fllim0fhi(-1:nx,-1:ny,0:1,0:1,0:ns-1)
+     *  hcimx(nCv,0:1,0:ns-1),
+     &	fllim0fhi(nFc,0:1,0:ns-1)
 *   ..common blocks
 *     ------------------------------------------------------------------
 *     B2TLH0 computes the conductive neutral heat transport flux limit.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer ix, iy, is, n2, ncall, c3, hcimx_flag
+      integer iFc, is, ncall, c3, hcimx_flag
       integer, save :: iout = 0                                   !srv 13.01.04 {
-      real (kind=R8), allocatable :: w1(:,:)
+      real (kind=R8), allocatable :: w1(:)
       character charns*3                                          !srv 13.01.04 }
       integer, save :: flux_limit_style = 2                       !srv 13.06.08
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, t3, dti, vthi, maxfluxlimit(0:1),
-     *  flux_limit_min_ti, dtir(-1:nx,-1:ny,0:1), wght(-1:nx,-1:ny),
-     *  tic(-1:nx,-1:ny)
+     *  flux_limit_min_ti, tiv(nVx), dtif(nFc,0:1)
+      real (kind=R8), save :: cutlo = 1.0e-60_R8
       save ncall, alpha, gamma, flux_limit_min_ti, hcimx_flag
 *   ..initialisation
       data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/,
      *     flux_limit_min_ti/0.0_R8/, hcimx_flag/1/
 *   ..procedures
       intrinsic max, abs, sqrt
-      real (kind=R8) ::
-     *   hy1
       external subini, subend, xertst, ipgetr, ipgeti
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlh0')
-*   ..test nx, ny, ns
-      call xertst (0.le.nx .and. 0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc, ns
+      call xertst (0.le.nCv .and. 0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..read input on first call
       if (ncall.eq.0) then
         call ipgetr ('b2tlh0_alpha', alpha)
@@ -62,23 +57,23 @@
         call ipgeti ('b2tlh0_flux_limit_style', flux_limit_style) !srv 13.06.08
       endif
 
-      call sfill(n2*2*ns, 0.0_R8, hcimx, 1)
-      call sfill(n2*4*ns, 1.0_R8, fllim0fhi, 1)
+      call sfill(nCv*2*ns, 0.0_R8, hcimx, 1)
+      call sfill(nFc*2*ns, 1.0_R8, fllim0fhi, 1)
       maxfluxlimit=0.0_R8
 
 *   ..nothing done if alpha.eq.0
       if (alpha.eq.0.0_R8) then
-        hcimx(:,:,0,:) = hcib(:,:,:)
-        hcimx(:,:,1,:) = hcib(:,:,:)
+        hcimx(:,0,:) = hcib(:,:)
+        hcimx(:,1,:) = hcib(:,:)
         goto 100
       endif
 
-*    ..compute radial differences of temperature
-      wght = 1.0_R8
-      call diff_r (nx, ny, 0, hx, hy, wght, qs, ti, tic, dtir)
+*    ..compute differences of temperature
+      call diff(nCv, nFc, nVx, 0, geo, mpg, ti, tiv, dtif)
 
       if(flux_limit_style.eq.0) then                              !srv 13.06.08
-
+        call xerrab('b2tlh0 -- not yet implementend for wide grids')
+#ifdef WG_TODO
        do ix = -1, nx
          do iy = -1, ny
 *   .. compute poloidal neutral heat conductivity flux limit
@@ -181,9 +176,10 @@
            enddo
          enddo
        enddo
-
+#endif
       else if (flux_limit_style.eq.1) then                    !srv 13.06.08 {
-
+        call xerrab('b2tlh0 -- not yet implementend for wide grids')
+#ifdef WG_TODO
        do ix = -1, nx
          do iy = -1, ny
 *   .. compute parallel neutral heat conductivity flux limit
@@ -237,58 +233,32 @@
            endif
          enddo
        enddo
-
+#endif
       else
 ! new default treatment applying the flux limit to the transport coefficient directly
        do is = 0, ns-1
         if (is_neutral(is)) then
-         do ix = -1, nx
-          do iy = -1, ny
-*   .. compute neutral heat conductivity flux limit on x-surfaces
-           if (leftix(ix,iy).ne.-2) then
-*   .. parallel
-            t0 = (ti(ix,iy) + ti(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
-            t1 = (na(ix,iy,is) + na(leftix(ix,iy),leftiy(ix,iy),is))
-     .            /2.0_R8
-            dti = chcb(ix,iy,0,0,is)*
-     &            abs(ti(leftix(ix,iy),leftiy(ix,iy)) - ti(ix,iy))
-            vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))
-     &            *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-     &            /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
-            t2 = 1.0_R8/(1.0_R8 + (dti/(alpha*vthi*t1*t0))**gamma)
-     .                                           **(1.0_R8/gamma)
-            chcb(ix,iy,0,0,is) = chcb(ix,iy,0,0,is)*t2
-	    fllim0fhi(ix,iy,0,0,is) = t2
-            maxfluxlimit(0)=max(maxfluxlimit(0),t2)
-*   .. perpendicular
-            if (chcb(ix,iy,0,1,is).ne.0.0_R8) then
-            dti  = abs(chcb(ix,iy,0,1,is)*dtir(ix,iy,0))
-            vthi = abs(sqrt(2.0_R8 * t0 / (am(is)*mp))*
-     &        (vol(ix,iy) + vol(leftix(ix,iy),leftiy(ix,iy)))/
-     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &         qs(ix,iy,0)/qc(ix,iy,0))
-            t2 = 1.0_R8/(1.0_R8 + (dti/(alpha*vthi*t1*t0))**gamma)
-     .                                           **(1.0_R8/gamma)
-            chcb(ix,iy,0,1,is) = chcb(ix,iy,0,1,is)*t2
-            fllim0fhi(ix,iy,0,1,is) = t2
-            endif
-           end if
-*   .. compute neutral heat conductivity flux limit on y-surfaces
-           if (bottomiy(ix,iy).ne.-2) then
-            t0 = (ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
-            t1 = (na(ix,iy,is) + na(bottomix(ix,iy),bottomiy(ix,iy),is))
-     &           /2.0_R8
-            dti = chcb(ix,iy,1,1,is)*abs(dtir(ix,iy,1))
-            vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))
-     &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &           /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-            t2 = 1.0_R8/(1.0_R8 +(dti/(alpha*vthi*t1*t0))**gamma)
-     .                                          **(1.0_R8/gamma)
-            chcb(ix,iy,1,1,is) = chcb(ix,iy,1,1,is)*t2
-	    fllim0fhi(ix,iy,1,1,is) = t2
-            maxfluxlimit(1)=max(maxfluxlimit(1),t2)
-           end if
-          end do
+         do iFc = 1, nFc
+          t0 = (ti(mpg%fcCv(iFc,1))    + ti(mpg%fcCv(iFc,2)))/2.0_R8
+          t1 = (na(mpg%fcCv(iFc,1),is) + na(mpg%fcCv(iFc,2),is))/2.0_R8
+*   .. compute neutral heat conductivity flux limit in poloidal direction
+          dti = chcb(iFc,0,is)*dtif(iFc,0)
+          vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*
+     &      geo%fcS(iFc)*geo%fcQalf(iFc,0)
+          t2 = 1.0_R8/(1.0_R8 + 
+     .      abs(dti/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
+          chcb(iFc,0,is) = chcb(iFc,0,is)*t2
+	  fllim0fhi(iFc,0,is) = t2
+          maxfluxlimit(0)=max(maxfluxlimit(0),t2)
+*   .. compute neutral heat conductivity flux limit in radial diretion
+          dti = chcb(iFc,1,is)*dtif(iFc,1)
+          vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*
+     &      geo%fcS(iFc)*geo%fcQalf(iFc,1)
+          t2 = 1.0_R8/(1.0_R8 +
+     .      abs(dti/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
+          chcb(iFc,1,is) = chcb(iFc,1,is)*t2
+	  fllim0fhi(iFc,1,is) = t2
+          maxfluxlimit(1)=max(maxfluxlimit(1),t2)
          end do
         end if
        end do
@@ -300,27 +270,27 @@
      .  'b2tlh0: maxfluxlimit = ',maxfluxlimit
 
        if (iout.ne.0) then
-        allocate(w1(-1:nx,-1:ny))
+        allocate(w1(nCv))
         do is=0,ns-1                                            !srv 13.01.04 {
          write (charns,'(i3.3)') is
          if (flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then
-           call my_out(70, nx, ny, hcimx(-1,-1,0,is),'hcimx'//charns)
-           call my_out(70, nx, ny, hcimx(-1,-1,1,is),'hcimy'//charns)
+           call my_out_us(70, nCv, hcimx(1,0,is),'hcimx'//charns)
+           call my_out_us(70, nCv, hcimx(1,1,is),'hcimy'//charns)
            w1 = 1.0e0_R8
-           where (hcimx(:,:,0,is) /= 0.0e0_R8) w1 = hcib(:,:,is)
-     &                                          /hcimx(:,:,0,is)
-           call my_out(70, nx, ny, w1,'chcimx'//charns)
+           where (hcimx(:,0,is) /= 0.0e0_R8) w1 = hcib(:,is)
+     &                                          /hcimx(:,0,is)
+           call my_out_us(70, nCv, w1,'chcimx'//charns)
            w1 = 1.0e0_R8
-           where (hcimx(:,:,1,is) /= 0.0e0_R8) w1 = hcib(:,:,is)
-     &                                          /hcimx(:,:,1,is)
-           call my_out(70, nx, ny, w1,'chcimy'//charns)
+           where (hcimx(:,1,is) /= 0.0e0_R8) w1 = hcib(:,is)
+     &                                          /hcimx(:,1,is)
+           call my_out_us(70, nCv, w1,'chcimy'//charns)
          else
-           call my_out(70, nx, ny, fllim0fhi(-1,-1,0,0,is),
+           call my_out_us(70, nFc, fllim0fhi(1,0,is),
      &                 'fllim0fhix'//charns)
-           call my_out(70, nx, ny, fllim0fhi(-1,-1,1,1,is),
+           call my_out_us(70, nFc, fllim0fhi(1,1,is),
      &                 'fllim0fhiy'//charns)
-           call my_out(70, nx, ny, chcb(-1,-1,0,0,is), 'chcix'//charns)
-           call my_out(70, nx, ny, chcb(-1,-1,1,1,is), 'chciy'//charns)
+           call my_out_us(70, nFc, chcb(1,0,is), 'chcix'//charns)
+           call my_out_us(70, nFc, chcb(1,1,is), 'chciy'//charns)
          end if
         enddo                                                   !srv 13.01.04 }
         deallocate(w1)

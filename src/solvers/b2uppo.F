@@ -1,16 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uppo (nx, ny, rxf, corpo, po)
+      subroutine b2uppo (nCv, rxf, corpo, po)
       use b2mod_types
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny
+      integer nCv
       real (kind=R8) ::
-     *   rxf, corpo(-1:nx,-1:ny)
+     *   rxf, corpo(nCv)
 *   ..input/output arguments
       real (kind=R8) ::
-     *   po(-1:nx,-1:ny)
+     *   po(nCv)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -23,7 +23,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, ix, iy
+      integer ncall
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -36,8 +36,8 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2uppo')
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv
+      call xertst (0.le.nCv, 'faulty argument nCv')
 *   ..test rxf
       call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..extensive tests on first few calls
@@ -46,11 +46,7 @@
 
 * ..implement the correction
 *   ..compute new po
-      do iy = -1, ny
-       do ix = -1, nx
-        po(ix,iy) = po(ix,iy)+rxf*corpo(ix,iy)
-       enddo
-      enddo
+      po = po + rxf*corpo
 
 * ..return
       ncall = ncall+1

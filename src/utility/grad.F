@@ -1,36 +1,33 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine grad(nx, ny, hx, hy, vol, qz, qs, fun, gfun)
+      subroutine grad(nCv, nFc, nVx, mode, geo, mpg, fun, funv, gfun)
       use b2mod_types
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments
-      integer nx,ny
+      integer nCv, nFc, nVx, mode
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     *   qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
+     *   fun(nCv), funv(nVx)
 *   ..output arguments
       real (kind=R8) ::
-     *   gfun(-1:nx,-1:ny,0:1,0:1)
+     *   gfun(nFc,0:1)
 *-----------------------------------------------------------------------
 *.documentation
 *
-*     GRAD computes gradients of a cell centered quantity fun on x and
-*     y faces of a cell.
-*     gfun(:,:,0,:) will hold gradients at x-faces
-*     gfun(:,:,1,:) will hold gradients at y-faces
-*     gfun(:,:,:,0) will hold poloidal gradients
-*     gfun(:,:,:,1) will hold radial gradients
+*     GRAD computes gradients of a cell centered quantity fun on
+*     faces of a cell.
+*     gfun(:,0) will hold poloidal gradients
+*     gfun(:,1) will hold radial gradients
 *
 *     The routine is a simple interface to GRAD_P and GRAD_R, that will
 *     compute the actual poloidal and radial gradients
 *
 *-----------------------------------------------------------------------
 *.declarations
-
-*   ..local variables
-      real (kind=R8) ::
-     *  func(-1:nx,-1:ny)
 
 *   ..procedures
       external grad_p, grad_r
@@ -39,12 +36,11 @@
 *.computation      
 
 *   ..interpolate fun to cell corners
-      call intcor(nx,ny,vol,fun,func)
+      call intvertex(nCv,nVx,mpg,geo%cvVol,fun,funv)
 
-*   ..compute poloidal and radial gradients
-      call grad_p(nx,ny, 1, hx, hy, vol, qs, fun, func, gfun(-1,-1,0,0))
-      call grad_r(nx,ny, 1, hx, hy, vol, qz, qs, fun, func, 
-     &  gfun(-1,-1,0,1))
+*   ..compute poloidal and radial differences
+      call grad_p(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfun(1,0))
+      call grad_r(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfun(1,1))
 
 *   ..return
       return

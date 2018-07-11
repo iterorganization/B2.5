@@ -1,79 +1,44 @@
-      subroutine b2xpfe (nx, ny, ns, ns_ext, qe, 
+      subroutine b2xpfe (nCv, nFc, ns, ns_ext, geo, mpg, qe, 
      &  rza, za_ext, fna, fa_ext, fch, fne)
       use b2mod_types
-      use b2mod_geo
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
       implicit none
-      integer nx, ny, ns, ns_ext
+      integer nCv, nFc, ns, ns_ext
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  qe, rza(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     *  za_ext(-1:nx,-1:ny,0:max(ns_ext,1)-1), 
-     *  fa_ext(-1:nx,-1:ny,0:1,0:1,0:max(ns_ext,1)-1),
-     &  fch(-1:nx,-1:ny,0:1,0:1), fne(-1:nx,-1:ny,0:1,0:1)
+     *  qe, rza(nCv,0:ns-1), fna(nFc,0:1,0:ns-1),
+     *  za_ext(nCv,0:max(ns_ext,1)-1), 
+     *  fa_ext(nFc,0:1,0:max(ns_ext,1)-1),
+     &  fch(nFc,0:1), fne(nFc,0:1)
 *     ------------------------------------------------------------------
 *     B2XPFE computes the electron particle flux, fne:
-*       fne(,,,) = (sum is :: rza(,,is)*fna(,,,,is))-(1/qe)*fch(,,,) .
+*       fne(,) = (sum is :: rza(,is)*fna(,,is))-(1/qe)*fch(,) .
 *     A contribution from external species can also be included.
 *     ------------------------------------------------------------------
-      integer n2, ix, iy, is
+      integer iFc, is
       external sfill, b2saxpy
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xpfe')
-      n2 = (nx+2)*(ny+2)
-      call sfill (n2*4, 0.0_R8, fne, 1)
+      call sfill (nFc*2, 0.0_R8, fne, 1)
       do is = 0, ns-1
-        do iy = -1, ny
-          do ix = -1, nx
-            if (leftix(ix,iy).ne.-2) then
-              fne(ix,iy,0,0) = fne(ix,iy,0,0) + fna(ix,iy,0,0,is)*
-     .         (rza(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
-     .          rza(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
-     .         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-              fne(ix,iy,0,1) = fne(ix,iy,0,1) + fna(ix,iy,0,1,is)*
-     .         (rza(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
-     .          rza(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
-     .         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-            endif
-            if (bottomiy(ix,iy).ne.-2) then
-              fne(ix,iy,1,0) = fne(ix,iy,1,0) + fna(ix,iy,1,0,is)*
-     .         (rza(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
-     .          rza(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
-     .         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
-              fne(ix,iy,1,1) = fne(ix,iy,1,1) + fna(ix,iy,1,1,is)*
-     .         (rza(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
-     .          rza(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
-     .         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
-            endif
-          enddo
+        do iFc = 1, nFc
+          fne(iFc,0:1) = fne(iFc,0:1) + fna(iFc,0:1,is)*
+     .      (rza(mpg%fcCv(iFc,1),is)*geo%cvVol(mpg%fcCv(iFc,2))+
+     .       rza(mpg%fcCv(iFc,2),is)*geo%cvVol(mpg%fcCv(iFc,1)))/
+     .      (geo%cvVol(mpg%fcCv(iFc,1))+geo%cvVol(mpg%fcCv(iFc,2)))
         enddo
       enddo
       do is = 0, ns_ext-1
-        do iy = -1, ny
-          do ix = -1, nx
-            if (leftix(ix,iy).ne.-2) then
-              fne(ix,iy,0,0) = fne(ix,iy,0,0) + fa_ext(ix,iy,0,0,is)*
-     .         (za_ext(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
-     .          za_ext(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
-     .         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-              fne(ix,iy,0,1) = fne(ix,iy,0,1) + fa_ext(ix,iy,0,1,is)*
-     .         (za_ext(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
-     .          za_ext(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
-     .         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-            endif
-            if (bottomiy(ix,iy).ne.-2) then
-              fne(ix,iy,1,0) = fne(ix,iy,1,0) + fa_ext(ix,iy,1,0,is)*
-     .         (za_ext(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
-     .          za_ext(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
-     .         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
-              fne(ix,iy,1,1) = fne(ix,iy,1,1) + fa_ext(ix,iy,1,1,is)*
-     .         (za_ext(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
-     .          za_ext(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
-     .         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
-            endif
-          enddo
+        do iFc = 1, nFc
+          fne(iFc,0:1) = fne(iFc,0:1) + fa_ext(iFc,0:1,is)*
+     .      (za_ext(mpg%fcCv(iFc,1),is)*geo%cvVol(mpg%fcCv(iFc,2))+
+     .       za_ext(mpg%fcCv(iFc,2),is)*geo%cvVol(mpg%fcCv(iFc,1)))/
+     .      (geo%cvVol(mpg%fcCv(iFc,1))+geo%cvVol(mpg%fcCv(iFc,2)))
         enddo
       enddo
-      call b2saxpy (n2*4, -1.0_R8/qe, fch, 1, fne, 1)
+      call b2saxpy (nFc*2, -1.0_R8/qe, fch, 1, fne, 1)
 *$$$  call subend ()
       return
 *     ------------------------------------------------------------------

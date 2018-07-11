@@ -1,23 +1,23 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqca (nx, ny, ns, lnlam, bb, na, te, ti, ne, ne2,       !srv 01.07.09
-     1 vsa, hci)
+      subroutine b2tqca (nCv, ns, geo, pl, dv, rt, st_ext, vsa, hci)
       use b2mod_types
-      use b2mod_rates
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_external
+      use b2us_geo
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
-      real (kind=R8) ::
-     *  lnlam(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),   !srv 01.07.09
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     &  ne2(-1:nx,-1:ny)
+      integer nCv, ns
+      type (geometry), intent (in) :: geo
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (in) :: dv
+      type (B2Rates), intent (in) :: rt
+      type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  vsa(-1:nx,-1:ny,0:1,0:ns-1), hci(-1:nx,-1:ny,0:1)
+     *  vsa(nCv,0:1,0:ns-1), hci(nCv,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -61,14 +61,14 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, model, n2, ix, iy, is, js
+      integer ncall, model, iCv, is, js
       integer, save :: icase = 0                                      !srv 20.09.11
       integer, save :: iout = 0, iout_b2wdat=0,                       !srv 16.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0, iout_b2npmo = 0
       character chns*3                                                !srv 16.06.08
       real (kind=R8) :: 
      *  fki, fxi, eta, ctaup, ctaui, ci, 
-     *  t, t0, t1, tau(-1:nx,-1:ny), tnp, phm0, w                     !srv 11.09.09
+     *  t, t0, t1, tau(nCv), tnp, phm0, w                             !srv 11.09.09
       parameter (fki=2.253_R8, eta=0.96_R8, ci = 3.9e0_R8)
       save ncall, model, phm0
 *   ..procedures
@@ -77,7 +77,7 @@
      *  pitx
       external subini, subend, xertst, sfill, ipgetr, ipgeti
       external b2xvsg
-      pitx(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
+      pitx(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, model/1/
 
@@ -93,7 +93,7 @@
 *
 *     Description of some local procedures:
 *
-*     pitx(ix,iy) is the local pitch of the magnetic field.
+*     pitx(iCv) is the local pitch of the magnetic field.
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -101,10 +101,8 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tqca')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, ns
+      call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read input parameter
       if (ncall.eq.0) then
@@ -123,11 +121,11 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test bb
-        call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
+        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test state
-        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-        call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
+        call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
+        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
+        call b2xvsg (nCv, dv%ne2, 1, 'ne2', '.gt.')
       endif
 *   ..compute ctaup
 *     Following Balescu; Braginskii has ctaup different by a factor
@@ -144,95 +142,94 @@
       ctaup = t0*sqrt(mp)						 !xpb
 
 *   ..compute the Coulomb logarithm
-      call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
+      call b2tlnl (nCv, icase, pl%te, pl%ti, dv%ne, dv%lnlam)               !srv 01.07.09  20.09.11
 * ..compute vsa, hci
 *   ..compute vsax, hcix
 *     (initialise hcix to 0)
-      call sfill (n2, 0.0_R8, hci(-1,-1,0), 1)
+      call sfill (nCv, 0.0_R8, hci(1,0), 1)
       do is = 0, ns-1
        if (is_neutral(is)) then
 *       (neutral vsax and hcix are strictly anomalous)
-        call sfill (n2, 0.0_R8, vsa(-1,-1,0,is), 1)
+        call sfill (nCv, 0.0_R8, vsa(1,0,is), 1)
        else
-        do iy = -1, ny
-         do ix = -1, nx
-          t0 = ti(ix,iy)/ev
-          tau(ix,iy) = (ctaup/lnlam(ix,iy))*sqrt(am(is))*t0*sqrt(t0)/             !xpb !srv 01.07.09
-     &      (rz2(ix,iy,is)*ne2(ix,iy))
-          tnp = tau(ix,iy)*na(ix,iy,is)*pitx(ix,iy)**2
+        do iCv = 1, nCv
+          t0 = pl%ti(iCv)/ev
+          tau(iCv) = (ctaup/dv%lnlam(iCv))*sqrt(am(is))*t0*sqrt(t0)/          !xpb !srv 01.07.09
+     &      (rt%rz2(iCv,is)*dv%ne2(iCv))
+          tnp = tau(iCv)*pl%na(iCv,is)*pitx(iCv)**2
           if (model.eq.1) then  ! SOLPS5.0 model : Balescu 29-moment result
-            hci(ix,iy,0) = hci(ix,iy,0)+
-     &       2.5_R8*(ti(ix,iy)/(mp*am(is)))*fki*tnp
+            hci(iCv,0) = hci(iCv,0)+
+     &       2.5_R8*(pl%ti(iCv)/(mp*am(is)))*fki*tnp
 c DPC/XPB changed to 4/3*  at the strong recommendation of Rozhansky
 c WDK/SRV 21.07.2016 factor 4/3 removed from vsa, but added explicitly to cvsahz (not cvsa),
 c         according to old model.eq.3 treatment
-            vsa(ix,iy,0,is) = 
-     &       phm0*eta*sqrt(2.0_R8)*ti(ix,iy)*tnp
+            vsa(iCv,0,is) = 
+     &       phm0*eta*sqrt(2.0_R8)*pl%ti(iCv)*tnp
           else if (model.eq.2) then ! old SOLPS4.0 model : Braginskii
             w = 0.0_R8
             t = 0.0_R8
             do js = 0, ns-1
-              w = w + rz2(ix,iy,js) * na(ix,iy,js) * 
+              w = w + rt%rz2(iCv,js) * pl%na(iCv,js) * 
      &            sqrt(2.0_R8*mp*am(is)*am(js)/(am(is)+am(js))) 
-              t = t + rz2(ix,iy,js) * na(ix,iy,js) / 
+              t = t + rt%rz2(iCv,js) * pl%na(iCv,js) / 
      &            sqrt((am(is)+am(js))/2.0_R8) 
             enddo
-            do js = 0, ns_ext-1
-              w = w + za2_ext(ix,iy,js) * na_ext(ix,iy,js) *
-     &            sqrt(2.0_R8*mp*am(is)*am_ext(js)/(am(is)+am_ext(js)))
-              t = t + za2_ext(ix,iy,js) * na_ext(ix,iy,js) /
-     &            sqrt((am(is)+am_ext(js))/2.0_R8)
+            do js = 0, st_ext%ns-1
+              w = w + st_ext%za2(iCv,js) * st_ext%na(iCv,js) *
+     &            sqrt(2.0_R8*mp*am(is)*st_ext%am(js)/
+     &            (am(is)+st_ext%am(js)))
+              t = t + st_ext%za2(iCv,js) * st_ext%na(iCv,js) /
+     &            sqrt((am(is)+st_ext%am(js))/2.0_R8)
             enddo
-cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(ix,iy,is)  ! lower precision as per 4.0
-	    ctaui = 2.1e13_R8 / (lnlam(ix,iy)*rz2(ix,iy,is))             !srv 01.07.09
+cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(iCv,is)  ! lower precision as per 4.0
+	    ctaui = 2.1e13_R8 / (dv%lnlam(iCv)*rt%rz2(iCv,is))             !srv 01.07.09
 	    fxi = ci * ctaui / (ev*sqrt(ev*mp))
-            hci(ix,iy,0) = hci(ix,iy,0) + fxi*(na(ix,iy,is)/w)*
-     &       pitx(ix,iy)**2*(ti(ix,iy)**2*sqrt(ti(ix,iy)))
+            hci(iCv,0) = hci(iCv,0) + fxi*(pl%na(iCv,is)/w)*
+     &       pitx(iCv)**2*(pl%ti(iCv)**2*sqrt(pl%ti(iCv)))
 cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
-            vsa(ix,iy,0,is) = 
-     &       phm0*eta*ctaui/(ev*sqrt(ev))*(na(ix,iy,is)/t)*
-     &       pitx(ix,iy)**2*(ti(ix,iy)**2*sqrt(ti(ix,iy)))
+            vsa(iCv,0,is) = 
+     &       phm0*eta*ctaui/(ev*sqrt(ev))*(pl%na(iCv,is)/t)*
+     &       pitx(iCv)**2*(pl%ti(iCv)**2*sqrt(pl%ti(iCv)))
           else
             call xerrab ('b2tqca--invalid value b2tqca_model > 2. ')
           endif
-         enddo
         enddo
         if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                      .or. iout_b2wdat.eq.4) then
          write (chns,'(i3.3)') is
-         call my_out(70,nx,ny,tau,'b2tqca_taua'//chns)
+         call my_out_us(70,nCv,tau,'b2tqca_taua'//chns)
 	endif
        endif
       enddo
 *   ..compute vsay, hciy
 *!!   (classical perpendicular transport is set to 0)
       do is = 0, ns-1
-       call sfill (n2, 0.0_R8, vsa(-1,-1,1,is), 1)
+       call sfill (nCv, 0.0_R8, vsa(1,1,is), 1)
       enddo
-      call sfill (n2, 0.0_R8, hci(-1,-1,1), 1)
+      call sfill (nCv, 0.0_R8, hci(1,1), 1)
 
       if(iout_b2npmo.ne.0) then                                        !srv 16.06.08 30.01.10 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-        call my_out(70,nx,ny,vsa(-1,-1,0,is),'b2tqca_vsax'//chns)
-        call my_out(70,nx,ny,vsa(-1,-1,1,is),'b2tqca_vsay'//chns)
-!        call my_out(70,nx,ny,na(-1,-1,is),'b2tqca_na'//chns)
+        call my_out_us(70,nCv,vsa(1,0,is),'b2tqca_vsax'//chns)
+        call my_out_us(70,nCv,vsa(1,1,is),'b2tqca_vsay'//chns)
+!        call my_out_us(70,nCv,pl%na(1,is),'b2tqca_na'//chns)
        enddo
-!        call my_out(70,nx,ny,lnlam,'b2tqca_lnlam')
-!        call my_out(70,nx,ny,ti,'b2tqca_ti')
-!        call my_out(70,nx,ny,ne,'b2tqca_ne')
-!        call my_out(70,nx,ny,ne2,'b2tqca_ne2')
-!        call my_out(70,nx,ny,bb(-1,-1,0),'b2tqca_Bx')
-!        call my_out(70,nx,ny,bb(-1,-1,3),'b2tqca_BB')
+!        call my_out_us(70,nCv,lnlam,'b2tqca_lnlam')
+!        call my_out_us(70,nCv,pl%ti,'b2tqca_ti')
+!        call my_out_us(70,nCv,dv%ne,'b2tqca_ne')
+!        call my_out_us(70,nCv,dv%ne2,'b2tqca_ne2')
+!        call my_out_us(70,nCv,geo%cvBb(1,0),'b2tqca_Bx')
+!        call my_out_us(70,nCv,geo%cvBb(1,3),'b2tqca_BB')
       endif                                                          !srv 16.06.08 }
 
       if(iout_b2wdat.eq.4) then                                      !srv 16.06.08 30.01.10 {
-        call my_out(70,nx,ny,lnlam,'b2tqca_lnlam')
+        call my_out_us(70,nCv,dv%lnlam,'b2tqca_lnlam')
       endif
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
-        call my_out(70,nx,ny,hci(-1,-1,0),'b2tqca_hcix')
-        call my_out(70,nx,ny,hci(-1,-1,1),'b2tqca_hciy')
+        call my_out_us(70,nCv,hci(1,0),'b2tqca_hcix')
+        call my_out_us(70,nCv,hci(1,1),'b2tqca_hciy')
       endif                                                          !srv 16.06.08 30.01.10 }
 
 * ..return

@@ -1,16 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sqcx (nx, ny, ns, ev, amh0, th0, rlcx0, rcx)
+      subroutine b2sqcx (nCv, ns, ev, amh0, th0, rlcx0, rcx)
       use b2mod_types
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nCv, ns
       real (kind=R8) ::
-     *   ev, amh0, th0(-1:nx,-1:ny), rlcx0(-1:nx,-1:ny,0:1,0:ns-1)
+     *   ev, amh0, th0(nCv), rlcx0(nCv,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   rcx(-1:nx,-1:ny,0:ns-1)
+     *   rcx(nCv,0:ns-1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -41,11 +41,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is
+      integer ncall, styl0, n2, iCv, is
       real (kind=R8) ::
      *   phm0, cutlo, cutll, t0
       real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny)
+     *   wrk0(nCv)
       save ncall, styl0, phm0
 *   ..procedures
       intrinsic log, exp, max, dim
@@ -71,10 +71,8 @@
        call ipgetr ('b2sqcx_phm0', phm0)
        call xertst (0.0_R8.le.phm0, 'faulty internal parameter phm0')
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, ns
+      call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test ev, amh0
       call xertst (0.0_R8.lt.ev, 'faulty argument ev')
@@ -83,36 +81,28 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test th0
-       call b2xvsg (n2, th0, 1, 'th0', '.gt.')
+       call b2xvsg (nCv, th0, 1, 'th0', '.gt.')
       endif
 *   ..set cutll, cutlo
       cutll = log(machsfr())
       cutlo = max(machsfr(),exp(cutll))
 *   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
-      do iy = -1, ny
-       do ix = -1, nx
-        wrk0(ix,iy) = log(th0(ix,iy)/(amh0*ev))
-       enddo
+      do iCv = 1, nCv
+        wrk0(iCv) = log(th0(iCv)/(amh0*ev))
       enddo
 
 * ..main computation
 *   ..compute rate coefficients
       do is = 0, ns-1
        if (styl0.eq.0.or.is.lt.2) then
-        do iy = -1, ny
-         do ix = -1, nx
+        do iCv = 1, nCv
 *      ..compute charge exchange rate coefficient
-          rcx(ix,iy,is) = phm0*
-     &     expu(rlcx0(ix,iy,0,is)+rlcx0(ix,iy,1,is)*wrk0(ix,iy))
-         enddo
+          rcx(iCv,is) = phm0*
+     &     expu(rlcx0(iCv,0,is)+rlcx0(iCv,1,is)*wrk0(iCv))
         enddo
        else
-        do iy = -1, ny
-         do ix = -1, nx
 *      ..compute charge exchange rate coefficient
-          rcx(ix,iy,is) = 0.0_R8
-         enddo
-        enddo
+          rcx(:,is) = 0.0_R8
        endif
       enddo
 

@@ -1,55 +1,49 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trcl (nx, ny, ns, nscx, iscx, ismain, 
-     &  bb, conn, vol, gs, hx, hy,  !srv 23.11.10
-     1  hz, qz, qc, qs, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2,  !srv 09.01.01 01.07.09
-     2  lnlam, chvemx, chvimx, cvsahz,                                   !srv 09.01.01 03.06.03
+      subroutine b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,          !srv 23.11.10
+     1  geo, mpg, pl, dv, rt, co, st_ext, cvsahz,                        !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
      4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                       !srv 09.01.01
      5  csig_cl, calf_cl)                                                !xpb
       use b2mod_types
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-      use b2mod_geo_corner
-     &                    , only : nmdpl
-      use b2mod_transport
-     &                    , only :
-     &                     f_luc_ke, f_luc_ki, f_luc_et, f_luc_sg,
-     &                     f_luc_al, fllim_ki, fllim_ke, fllim_al,       !srv 13.01.17
-     &                     fllim_al_c, alfx_c, sigx_c                    !srv 08.10.14
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nscx, ismain
+      integer nCv, nFc, nVx, ns, nscx, ismain
       integer iscx(0:nscx-1)
-      real (kind=R8) ::
-     *  bb(-1:nx,-1:ny,0:3), 
-     &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), 
-     &  qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),
-     &  fch_p(-1:nx,-1:ny,0:1,0:1), conn(-1:ny), qc(-1:nx,-1:ny,0:1),            !srv 10.06.08
-     &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny), lnlam(-1:nx,-1:ny)     !srv 03.06.03 01.07.09
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Rates), intent (in) :: rt
+      type (B2Coeff), intent (in) :: co
+      type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
+cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
       real (kind=R8) ::
-     &  cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  chce(-1:nx,-1:ny,0:1,0:1), chve(-1:nx,-1:ny,0:1,0:1),
-     &  chci(-1:nx,-1:ny,0:1,0:1), chvi(-1:nx,-1:ny,0:1,0:1),
-     &  csig(-1:nx,-1:ny,0:1,0:1), calf(-1:nx,-1:ny,0:1,0:1),
-     &  csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1),				 !xpb
-     &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
-     &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),                               !srv 09.01.01
-     &  fllimvisc(-1:nx,-1:ny,0:ns-1), 
-     &  cvsahz(-1:nx,-1:ny,0:1,0:1,0:ns-1),   !srv 09.01.01
-     &  csig_cl(-1:nx,-1:ny,0:1,0:1), calf_cl(-1:nx,-1:ny,0:1,0:1)
+     &  cvsa(nFc,0:1,0:ns-1),
+     &  chce(nFc,0:1), chve(nFc,0:1),
+     &  chci(nFc,0:1), chvi(nFc,0:1),
+     &  csig(nFc,0:1), calf(nFc,0:1),
+     &  csigin(nFc,0:1,0:ns-1,0:ns-1),				 !xpb
+     &  cthe(nFc,0:ns-1), cthi(nFc,0:ns-1),
+     &  cvsa_cl(nFc,0:1,0:ns-1),
+     &  cvsahz_cl(nFc,0:1,0:ns-1),                               !srv 09.01.01
+     &  fllimvisc(nFc,0:ns-1), 
+     &  cvsahz(nFc,0:1,0:ns-1),   !srv 09.01.01
+     &  csig_cl(nFc,0:1), calf_cl(nFc,0:1),
+     &  fllim_ke(nFc), fllim_ki(nFc), fllim_al(nFc), fllim_al_c(nCv),
+     &  f_luc_ke(nFc), f_luc_ki(nFc), f_luc_et(nFc), f_luc_sg(nFc), 
+     &  f_luc_al(nFc), alfx_c(nCv), sigx_c(nCv)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -83,7 +77,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, k, is, is0, lthf21, lvis21, lluciani, ix, iy
+      integer ncall, k, is, is0, lthf21, lvis21, lluciani, iCv, iFc
       integer, save :: conductive_limit = 1                            !srv 16.06.08
       integer, save :: style = 2                                       !srv 13.01.17
       integer, save :: iout = 0, iout_b2wdat = 0,                      !srv 17.06.08
@@ -96,26 +90,26 @@
       real (kind=R8) ::
      *  cflmv, cthiv, cthev, vis_par, jemax                           !srv 13.01.17
       real (kind=R8) ::                                               !srv 03.06.03
-     *   t0, dte, dti, flomx
-      real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1), nu2(-1:nx,-1:ny),  !lk 19.09.07
-     &    k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)        !lk 19.09.07
-      real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),           !lk 12.05.11
-     &    k1(-1:nx,-1:ny), t1, t2                                     !lk 12.05.11
+     *   t0, dte(nFc), dti(nFc), flomx
+      real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),  !lk 19.09.07
+     &    k2(nCv), tt0(mpg%nFs), tt1(mpg%nFs), eps1(mpg%nFs)          !lk 19.09.07
+      real (kind=R8) :: tau(nCv), nu1(nCv),                           !lk 12.05.11
+     &    k1(nCv), t1, t2                                             !lk 12.05.11
       real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.12.13
+      real (kind=R8), save :: cutlo = 1.0e-10_R8
       real (kind=R8) ::
-     *  hce(-1:nx,-1:ny,0:1), sig(-1:nx,-1:ny,0:1),
-     1  alf(-1:nx,-1:ny,0:1), vsa(-1:nx,-1:ny,0:1,0:ns-1),
-     2  hci(-1:nx,-1:ny,0:1), sigin(-1:nx,-1:ny,0:1,0:ns-1,0:nscx-1),
-     3  wrk(-1:nx,-1:ny), wrk1(-1:nx,-1:ny,0:2)                       !srv 01.07.99 09.01.01
+     *  hce(nCv,0:1), sig(nCv,0:1),
+     1  alf(nCv,0:1), vsa(nCv,0:1,0:ns-1),
+     2  hci(nCv,0:1), sigin(nCv,0:1,0:ns-1,0:nscx-1),
+     3  wrk(nFc), wrk1(nFc,2), wrkv(nVx)                              !srv 01.07.99 09.01.01
 csw 13mar2012
       integer, save :: core_cond_limit=0
 *   ..procedures
       real (kind=R8) ::
-     *  smin, smax, hy1                                               !srv 22.04.16
+     *  smin, smax                                                    !srv 22.04.16
       external subini, subend, xertst, xerrab, sfill, smin, smax
       external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,        !xpb
-     &  ipgeti, ipgetr, b2ttia, intfaceh, intfacev                    !lk 19.09.07
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                              !srv 22.04.16
+     &  ipgeti, ipgetr, b2ttia                                        !lk 19.09.07
 *   ..initialisation
       save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode
       data ncall/0/, lthf21/0/, lvis21/0/, mode/1/,
@@ -128,10 +122,8 @@ csw 13mar2012
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2trcl')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc, ns
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
@@ -169,127 +161,125 @@ csw 13mar2012
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test bb
-        call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
-*    ..test sign of vol, hx, hy
-        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test range of qz
-        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &               smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
-     &               'faulty argument range qz(,,0)')
-        call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &               smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
-     &               'faulty argument range qz(,,1)')
+        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
+*    ..test sign of vol
+        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
+*    ..test range of cvQgam, fcQgam
+       call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
+     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8, 
+     &   'faulty argument range cvQgam(,1)')
+       call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
+     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8, 
+     &   'faulty argument range cvQgam(,0)')
+       call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
+     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8, 
+     &   'faulty argument range fcQgam(,1)')
+       call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
+     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8, 
+     &   'faulty argument range fcQgam(,0)')
 *    ..test sign of na, te, ti
-        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-        call b2xvsg (n2, te, 1, 'te', '.gt.')
-        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
+        call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
+        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
+        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
       endif
 
 * ..compute transport coefficients
-*   ..initialize to zero
-cwdk  tmp: needed as long as not all contributions are filled later on
-      cvsa   = 0.0_R8
-      cvsahz = 0.0_R8
-      chce   = 0.0_R8
-      chci   = 0.0_R8
-      calf   = 0.0_R8
-      csig   = 0.0_R8
 *   ..compute differential classical transport coefficients
-      call b2tqca (nx, ny, ns, lnlam, bb, na, te, ti, ne, ne2, vsa, hci)  !srv 01.07.09 20.09.11
-      call b2tqce (nx, ny, lnlam, bb, te, ti, ne, ne2, hce, sig, alf) !srv 01.07.09 20.09.11
-      call b2tqin (nx, ny, ns, nscx, iscx, bb, ti, na, sigin)         !xpb
-      call sfill (n2*ns, cthev, cthe,1)
-      call sfill (n2*ns, cthiv, cthi,1)
-      call sfill (n2, 1.0_R8, fllim_ki, 1)                            !srv 13.01.17 {
-      call sfill (n2, 1.0_R8, fllim_ke, 1)
-      call sfill (n2, 1.0_R8, fllim_al, 1)
-      call sfill (n2, 1.0_R8, fllim_al_c, 1)
-      alfx_c(:,:) = alf(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
-      sigx_c(:,:) = sig(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
+      call b2tqca (nCv, ns, geo, pl, dv, rt, st_ext, vsa, hci)        !srv 01.07.09 20.09.11
+      call b2tqce (nCv, geo, mpg, pl, dv, hce, sig, alf)              !srv 01.07.09 20.09.11
+      call b2tqin (nCv, ns, nscx, iscx, geo, pl, rt, sigin)           !xpb
+      call sfill (nFc*ns, cthev, cthe,1)
+      call sfill (nFc*ns, cthiv, cthi,1)
+      call sfill (nFc, 1.0_R8, fllim_ki, 1)                            !srv 13.01.17 {
+      call sfill (nFc, 1.0_R8, fllim_ke, 1)
+      call sfill (nFc, 1.0_R8, fllim_al, 1)
+      call sfill (nCv, 1.0_R8, fllim_al_c, 1)
+      alfx_c(:) = alf(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
+      sigx_c(:) = sig(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
 *   ..incorporate geometry with hz                                    !srv 09.01.01
-      call intfaceh(nx,ny,leftix,leftiy,vol,hz,wrk)
-      wrk1(:,:,0) = gs(:,:,0)*wrk 
-      call intfacev(nx,ny,bottomix,bottomiy,vol,hz,wrk)
-      wrk1(:,:,1) = gs(:,:,1)*wrk
-      wrk1(:,:,2) = gs(:,:,2)
-      wrk  = hz*vol
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,wrk)
+      wrk = geo%fcS*wrk 
+      do iFc = 1, nFc
+        wrk1(iFc,1) = geo%fcVol(iFc,1)*geo%cvH(mpg%fcCv(iFc,1))
+        wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvH(mpg%fcCv(iFc,2))
+      enddo
       do is = 0, ns-1
-       call b2txcx (nx, ny, mode, wrk, wrk1, hx, hy, qz,    !srv 01.07.05 {
-     &   vsa(-1,-1,0,is), cvsahz(-1,-1,0,0,is))
-       call b2txcy (nx, ny, mode, wrk, wrk1, hx, hy, qz, qs,
-     &   vsa(-1,-1,1,is), cvsahz(-1,-1,0,1,is))                                !srv 01.07.05 }
+       call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,              !srv 01.07.05 {
+     &   vsa(1,0,is), cvsahz(1,0,is))
+       call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
+     &   vsa(1,1,is), cvsahz(1,1,is))                                 !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 *   ..incorporate geometry
-      call sfill (n2*4*ns*ns, 0.0_R8, csigin(-1,-1,0,0,0,0), 1)
+      call sfill (nFc*2*ns*ns, 0.0_R8, csigin(1,0,0,0), 1)
       do is = 0, ns-1
-       call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, vsa(-1,-1,0,is),
-     &   cvsa(-1,-1,0,0,is))
-       call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs,
-     &   vsa(-1,-1,1,is), cvsa(-1,-1,0,1,is))
+       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   vsa(1,0,is), cvsa(1,0,is))
+       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   vsa(1,1,is), cvsa(1,1,is))
        do k = 0, nscx-1
          is0 = iscx(k)
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
-           call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz,              !sv
-     &       sigin(-1,-1,0,is,k), csigin(-1,-1,0,0,is,is0))             !sv 01.07.99
-           call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs,          !sv
-     &       sigin(-1,-1,1,is,k), csigin(-1,-1,0,1,is,is0))             !sv
+           call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,   !sv
+     &       sigin(1,0,is,k), csigin(1,0,is,is0))                       !sv 01.07.99
+           call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,   !sv
+     &       sigin(1,1,is,k), csigin(1,1,is,is0))                       !sv
         endif
        enddo
       enddo
 
-      call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, hce(-1,-1,0), 
-     & chce(-1,-1,0,0))
-      call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs, hce(-1,-1,1), 
-     & chce(-1,-1,0,1))
-      call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, hci(-1,-1,0), 
-     & chci(-1,-1,0,0))
-      call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs, hci(-1,-1,1), 
-     & chci(-1,-1,0,1))
-      call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, sig(-1,-1,0), 
-     & csig(-1,-1,0,0))
-      call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs, sig(-1,-1,1), 
-     & csig(-1,-1,0,1))
-      call b2txcx (nx, ny, -1, vol, gs, hx, hy, qz, alf(-1,-1,0), 
-     & calf(-1,-1,0,0))
-      call b2txcy (nx, ny, -1, vol, gs, hx, hy, qz, qs, alf(-1,-1,1), 
-     & calf(-1,-1,0,1))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  hce(1,0), chce(1,0))
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  hce(1,1), chce(1,1))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  hci(1,0), chci(1,0))
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  hci(1,1), chci(1,1))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  sig(1,0), csig(1,0))
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  sig(1,1), csig(1,1))
+      call b2txcx (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
+     &  alf(1,0), calf(1,0))
+      call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
+     &  alf(1,1), calf(1,1))
 
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         if (.not. is_neutral(is)) then
-          call my_out(70,nx,ny,cvsahz(-1,-1,0,0,is),'b2trcl_cvsahzx'//
+          call my_out_us(70,nFc,cvsahz(1,0,is),'b2trcl_cvsahzx'//
      &      chns)
-          call my_out(70,nx,ny,cvsahz(-1,-1,1,0,is),'b2trcl_cvsahzyx'//
+          call my_out_us(70,nFc,cvsahz(1,0,is),'b2trcl_cvsahzyx'//
      &      chns)
         endif
        enddo
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                   .or. iout_b2wdat.eq.4) then
-        call my_out(70,nx,ny,chce(-1,-1,0,0),'b2trcl_chcex')
-!        call my_out(70,nx,ny,chce(-1,-1,1,1),'b2trcl_chcey')
-        call my_out(70,nx,ny,calf(-1,-1,0,0),'b2trcl_calfx')
-!        call my_out(70,nx,ny,calf(-1,-1,1,1),'b2trcl_calfy')
-        call my_out(70,nx,ny,alfx_c,'b2trcl_alfx_c')                    !srv 05.07.17
-        call my_out(70,nx,ny,chci(-1,-1,0,0),'b2trcl_chcix')
-!        call my_out(70,nx,ny,chci(-1,-1,1,1),'b2trcl_chciy')
+        call my_out_us(70,nFc,chce(1,0),'b2trcl_chcex')
+!        call my_out_us(70,nFc,chce(1,1),'b2trcl_chcey')
+        call my_out_us(70,nFc,calf(1,0),'b2trcl_calfx')
+!        call my_out_us(70,nFc,calf(1,1),'b2trcl_calfy')
+        call my_out_us(70,nFc,alfx_c,'b2trcl_alfx_c')                    !srv 05.07.17
+        call my_out_us(70,nFc,chci(1,0),'b2trcl_chcix')
+!        call my_out_us(70,nFc,chci(1,1),'b2trcl_chciy')
       endif
       if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
      &                   .or. iout_b2wdat.eq.4) then
-        call my_out(70,nx,ny,csig(-1,-1,0,0),'b2trcl_csigx')
-!        call my_out(70,nx,ny,csig(-1,-1,1,1),'b2trcl_csigy')
-        call my_out(70,nx,ny,sigx_c,'b2trcl_sigx_c')                    !srv 05.07.17
+        call my_out_us(70,nFc,csig(1,0),'b2trcl_csigx')
+!        call my_out_us(70,nFc,csig(1,1),'b2trcl_csigy')
+        call my_out_us(70,nFc,sigx_c,'b2trcl_sigx_c')                    !srv 05.07.17
       endif
 
 *   ..call 21 moment routines
+#ifdef WG_TODO
 #ifndef NO_21
       if (lthf21.ne.0) call b2t21t (nx, ny, ns, lnlam, bb, vol, hx,     !srv 01.07.09
      1 pbs, ne, na, ne2, te, ti, ua, fch_p, chce, chci, cthe, cthi)
       if (lvis21.ne.0) call b2t21v (nx, ny, ns, lnlam,                  !srv 01.07.09
      1 bb, vol, hx, pbs, ne, na, te, ti, ua, cvsa)
+#endif
 #endif
 *   ..luciani
       f_luc_ke = 1.0_R8                                                 !srv 13.01.17 {
@@ -297,6 +287,7 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       f_luc_et = 1.0_R8
       f_luc_sg = 1.0_R8
       f_luc_al = 1.0_R8                                                 !srv 13.01.17 }
+#ifdef WG_TODO
       if(lluciani.eq.1) then   ! connection length formulation
         do iy=-1,ny
           if(conn(iy).gt.0.0_R8) then
@@ -496,159 +487,143 @@ cwdk  tmp: needed as long as not all contributions are filled later on
        enddo                                   !srv 28.07.11 }
       endif
 #endif
+#endif
 *   ..set strange velocities chve, chvi
-      call sfill (n2*4, 0.0_R8, chve, 1)
-      call sfill (n2*4, 0.0_R8, chvi, 1)
+      call sfill (nFc*2, 0.0_R8, chve, 1)
+      call sfill (nFc*2, 0.0_R8, chvi, 1)
 
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         if(.not. is_neutral(is)) 
-     &  call my_out(70,nx,ny,cvsahz(-1,-1,0,0,is),
+     &  call my_out_us(70,nFc,cvsahz(1,0,is),
      &              'b2trcl_luciani_cvsahzx'//chns)
-!        call my_out(70,nx,ny,cvsahz(-1,-1,1,1,is),'b2trcl_luciani_cvsahzy'
+!        call my_out_us(70,nFc,cvsahz(1,1,is),'b2trcl_luciani_cvsahzy'
 !     &              //chns)
        enddo
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                  .or. iout_b2wdat.eq.4) then
-        call my_out(70,nx,ny,chce(-1,-1,0,0),'b2trcl_luciani_chcex')
-!        call my_out(70,nx,ny,chce(-1,-1,1,1),'b2trcl_luciani_chcey')
-        call my_out(70,nx,ny,calf(-1,-1,0,0),'b2trcl_luciani_calfx')
-        call my_out(70,nx,ny,alfx_c,'b2trcl_luciani_alfx_c')              !srv 05.07.17
-!        call my_out(70,nx,ny,calf(-1,-1,1,1),'b2trcl_luciani_calfy')
-        call my_out(70,nx,ny,chci(-1,-1,0,0),'b2trcl_luciani_chcix')
-!        call my_out(70,nx,ny,chci(-1,-1,1,1),'b2trcl_luciani_chciy')
+        call my_out_us(70,nFc,chce(1,0),'b2trcl_luciani_chcex')
+!        call my_out_us(70,nFc,chce(1,1),'b2trcl_luciani_chcey')
+        call my_out_us(70,nFc,calf(1,0),'b2trcl_luciani_calfx')
+        call my_out_us(70,nFc,alfx_c,'b2trcl_luciani_alfx_c')              !srv 05.07.17
+!        call my_out_us(70,nFc,calf(1,1),'b2trcl_luciani_calfy')
+        call my_out_us(70,nFc,chci(1,0),'b2trcl_luciani_chcix')
+!        call my_out_us(70,nFc,chci(1,1),'b2trcl_luciani_chciy')
       endif
       if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
      &                  .or. iout_b2wdat.eq.4) then
-        call my_out(70,nx,ny,csig(-1,-1,0,0),'b2trcl_luciani_csigx')
-!        call my_out(70,nx,ny,csig(-1,-1,1,1),'b2trcl_luciani_csigy')
-        call my_out(70,nx,ny,sigx_c,'b2trcl_luciani_sigx_c')              !srv 05.07.17
+        call my_out_us(70,nFc,csig(1,0),'b2trcl_luciani_csigx')
+!        call my_out_us(70,nFc,csig(1,1),'b2trcl_luciani_csigy')
+        call my_out_us(70,nFc,sigx_c,'b2trcl_luciani_sigx_c')              !srv 05.07.17
       endif
 
-*   .. save chce(:,:,0,0) after applying Luciani
-      wrk = chce(:,:,0,0)                                                   !srv 13.01.17
+*   .. save chce(:,0) after applying Luciani
+      wrk = chce(:,0)                                                   !srv 13.01.1
 
       if(conductive_limit.ne.0) then                                      !srv 16.06.08 {
+*   .. pre-compute poloidal differences of te, ti
+       call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dte)
+       call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dti)
 *   .. apply the conductive limit of parallel electron heat flux          !srv 03.06.03 {
        if(cflim(0).ne.0.0e0_R8) then
-        do iy = -1, ny
-         do ix = -1, nx
-          if(leftix(ix,iy).ne.-2) then
+        do iFc = 1, nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c            if(.not.on_closed_surface(ix,iy)) then                         !lk 06.05.07
-           if(core_cond_limit.ne.0.or.
-     &        .not.on_closed_surface(ix,iy)) then
-            dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-            flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
-     &       ne(ix,iy))/2.0_R8
-            t0 = chce(ix,iy,0,0)*abs(dte)/(flomx*max(
-     &       te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
-            fllim_ke(ix,iy)=1.0_R8/(1.0e0_R8+t0)
-            chce(ix,iy,0,0)=chce(ix,iy,0,0)*fllim_ke(ix,iy)
-           endif
-          endif
-         enddo
+!WG_TODO           if(core_cond_limit.ne.0.or.
+!     &        .not.on_closed_surface(ix,iy)) then
+            flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
+     &                              dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
+            t0 = chce(iFc,0)*abs(dte(iFc))/(flomx*max(
+     &        pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + cutlo)
+            fllim_ke(iFc)=1.0_R8/(1.0e0_R8+t0)
+            chce(iFc,0)=chce(iFc,0)*fllim_ke(iFc)
+!WG_TODO           endif
         enddo
        endif
 *   .. apply the conductive limit of parallel ion heat flux
        if(cflim(1).ne.0.0e0_R8) then
-        do iy = -1, ny
-         do ix = -1, nx
-          if(leftix(ix,iy).ne.-2) then
+        do iFc = 1,nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c          if(.not.on_closed_surface(ix,iy)) then                           !lk 06.05.07
-           if(core_cond_limit.ne.0.or.
-     &        .not.on_closed_surface(ix,iy)) then
-            dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
-            flomx = chvimx(ix,iy)*(ni(leftix(ix,iy),leftiy(ix,iy),0)
-     &                          +ni(ix,iy,0))/2.0_R8
-            t0 = chci(ix,iy,0,0)*abs(dti)/
-     &        (flomx*max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
-            fllim_ki(ix,iy) = 1.0_R8/(1.0e0_R8+t0)
-            chci(ix,iy,0,0)=chci(ix,iy,0,0)*fllim_ki(ix,iy)
-           endif
-          endif
-         enddo
+!WG_TODO           if(core_cond_limit.ne.0.or.
+!     &        .not.on_closed_surface(ix,iy)) then
+            flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
+     &                             +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
+            t0 = chci(iFc,0)*abs(dti(iFc))/(flomx*max(
+     &        pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + cutlo)
+            fllim_ki(iFc) = 1.0_R8/(1.0e0_R8+t0)
+            chci(iFc,0)=chci(iFc,0)*fllim_ki(iFc)
+!WG_TODO           endif
         enddo
        endif
       endif                                                               !srv 16.06.08 }
 *   ..apply flux limit to calf                                            !srv 13.01.17 {
       if(style.ne.2) then
        if(cflim(0).ne.0.0e0_R8) then
-        do iy = -1, ny
-         do ix = -1, nx
-           if(leftix(ix,iy).ne.-2) then
-             if(.not.on_closed_surface(ix,iy)) then
-               dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-               flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
-     & 	                              ne(ix,iy))/2.0_R8
-               t0 = wrk(ix,iy)*abs(dte)/(flomx*max(
-     & 	            te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
-               fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
-               calf(ix,iy,0,0)=calf(ix,iy,0,0)*fllim_al(ix,iy)            !srv 13.01.17
-               alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al(ix,iy)                !iyv 19.11.13 !srv 08.10.14
-             endif
-           endif
-         enddo
+        do iFc = 1, nFc
+!WG_TODO             if(.not.on_closed_surface(ix,iy)) then
+            flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
+     & 	                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
+            t0 = wrk(iFc)*abs(dte(iFc))/(flomx*max(
+     & 	      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + cutlo)
+            fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
+            calf(iFc,0)=calf(iFc,0)*fllim_al(iFc)            !srv 13.01.17
+!WG_TODO            alfx_c(iFc)=alfx_c(iFc)*fllim_al(iFc)                !iyv 19.11.13 !srv 08.10.14
+!WG_TODO             endif
         enddo
        endif
       else
        if(cflim(3).ne.0.0e0_R8) then
 *   ..apply flux limit to calf at cell faces
-        do iy = -1, ny
-         do ix = -1, nx
-           if(.not.on_closed_surface(ix,iy)) then
-             if(leftix(ix,iy).ne.-2) then
-               dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-               jemax = sqrt(
-     &          (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8/me)*
-     &           qe*(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8*
-     &           abs(pbs(ix,iy,0))
-               t0 = abs(calf(ix,iy,0,0)*dte)/(cflim(3)*jemax)
-               fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
-               calf(ix,iy,0,0)=calf(ix,iy,0,0)*fllim_al(ix,iy)                !srv 13.01.17
-             endif
-           endif
-         enddo
+        do iFc = 1, nFc
+!WG_TODO           if(.not.on_closed_surface(ix,iy)) then
+            jemax = sqrt(
+     &       (pl%te(mpg%fcCv(iFc,1))+pl%te(mpg%fcCv(iFc,2)))/2.0_R8/me)*
+     &        qe*(dv%ne(mpg%fcCv(iFc,1))+dv%ne(mpg%fcCv(iFc,2)))/2.0_R8*
+     &        abs(geo%fcPbs(iFc))
+            t0 = abs(calf(iFc,0)*dte(iFc))/(cflim(3)*jemax + cutlo)
+            fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
+            calf(iFc,0)=calf(iFc,0)*fllim_al(iFc)                !srv 13.01.17
+!WG_TODO           endif
         enddo
 *   ..apply flux limit to alfx_c at cell centers
-        do iy = -1, ny
-         do ix = -1, nx
-           if(.not.on_closed_surface(ix,iy)) then
-             if(leftix(ix,iy).eq.-2) then
-               dte =
-     &          (te(rightix(ix,iy),rightiy(ix,iy))-te(ix,iy))/
-     &          (hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8
-             elseif(rightix(ix,iy).eq.nx+1) then
-               dte =
-     &          (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
-     &          (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
-             else
-               dte =
-     &          ((te(rightix(ix,iy),rightiy(ix,iy))-te(ix,iy))/
-     &           (hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8+
-     &           (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
-     &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8)/
-     &          2.0_R8
-             endif
-             jemax = sqrt(te(ix,iy)/me)*
-     &               qe*ne(ix,iy)*abs(bb(ix,iy,0)/bb(ix,iy,3))
-             t0 = abs(alfx_c(ix,iy))*abs(dte)/(cflim(3)*jemax)
-             fllim_al_c(ix,iy)=1.0_R8/(1.0e0_R8+t0)
-             alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al_c(ix,iy)                !iyv 19.11.13 !srv 08.10.14
-           endif
-         enddo
+#ifdef WG_TODO
+        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, gtec)
+        do iCv = 1, nCv
+!WG_TODO           if(.not.on_closed_surface(ix,iy)) then
+!             if(leftix(ix,iy).eq.-2) then
+!               dte =
+!     &          (te(rightix(ix,iy),rightiy(ix,iy))-te(ix,iy))/
+!     &          (hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8
+!             elseif(rightix(ix,iy).eq.nx+1) then
+!               dte =
+!     &          (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
+!     &          (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
+!             else
+!               dte =
+!     &          ((te(rightix(ix,iy),rightiy(ix,iy))-te(ix,iy))/
+!     &           (hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8+
+!     &           (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
+!     &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8)/
+!     &          2.0_R8
+!             endif
+             jemax = sqrt(pl%te(iCv)/me)*
+     &               qe*dv%ne(iCv)*abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
+             t0 = abs(alfx_c(iCv))*abs(gtec(iCv))/(cflim(3)*jemax + cutlo)
+             fllim_al_c(iCv)=1.0_R8/(1.0e0_R8+t0)
+             alfx_c(iCv)=alfx_c(iCv)*fllim_al_c(iCv)                !iyv 19.11.13 !srv 08.10.14
+!WG_TODO           endif
         enddo
+#endif
        endif
       endif
 *   ..apply flux limit to cvsa
       cflmv = cflim(2)
       do is = 0, ns-1
-       call b2tlmv (nx, ny, is, cflmv, pbs(-1,-1,0), qc, na(-1,-1,is),    !srv 12.04.08
-     &   ti, ua(-1,-1,is), cvsa(-1,-1,0,0,is), cvsahz(-1,-1,0,0,is),
-     &   fllimvisc(-1,-1,is))
+       call b2tlmv (nCv, nFc, is, cflmv, geo, mpg, pl%na(1,is), pl%ti, 
+     &   pl%ua(1,is), cvsa(1,0,is), cvsahz(1,0,is), fllimvisc(1,is))
       enddo
 *   .. save the classical transport coefficients
       csig_cl = csig
@@ -659,63 +634,63 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
        do is = 0, ns-1
        write (chns,'(i3.3)') is 
-        call my_out(70,nx,ny,cvsahz(-1,-1,0,0,is),
+        call my_out_us(70,nFc,cvsahz(1,0,is),
      &              'b2trcl_luciani_fllim_cvsahzx'//chns)
-!        call my_out(70,nx,ny,cvsahz(-1,-1,1,1,is),
+!        call my_out_us(70,nFc,cvsahz(1,1,is),
 !     &              'b2trcl_luciani_fllim_cvsahzy'//chns)
        enddo
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &       .or. iout_b2wdat.eq.4) then
-        call my_out(70,nx,ny,chce(-1,-1,0,0),
+        call my_out_us(70,nFc,chce(1,0),
      &             'b2trcl_luciani_fllim_chcex')
-!        call my_out(70,nx,ny,chce(-1,-1,1,1),'b2trcl_luciani_fllim_chcey')
-        call my_out(70,nx,ny,calf(-1,-1,0,0),
+!        call my_out_us(70,nFc,chce(1,1),'b2trcl_luciani_fllim_chcey')
+        call my_out_us(70,nFc,calf(1,0),
      &             'b2trcl_luciani_fllim_calfx')
-!        call my_out(70,nx,ny,calf(-1,-1,1,1),'b2trcl_luciani_fllim_calfy')
-        call my_out(70,nx,ny,alfx_c,'b2trcl_luciani_fllim_alfx_c')         !srv 05.07.17
-        call my_out(70,nx,ny,chci(-1,-1,0,0),
+!        call my_out_us(70,nFc,calf(1,1),'b2trcl_luciani_fllim_calfy')
+        call my_out_us(70,nFc,alfx_c,'b2trcl_luciani_fllim_alfx_c')         !srv 05.07.17
+        call my_out_us(70,nFc,chci(1,0),
      &             'b2trcl_luciani_fllim_chcix')
-!        call my_out(70,nx,ny,chci(-1,-1,1,1),'b2trcl_luciani_fllim_chciy')
+!        call my_out_us(70,nFc,chci(1,1),'b2trcl_luciani_fllim_chciy')
       endif
                                          
       if(iout.ne.0) then                             !srv 17.06.08 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
-        call my_out(70,nx,ny,cvsa(-1,-1,0,0,is),'cl_cvsax'//chns)
-        call my_out(70,nx,ny,cvsa(-1,-1,1,1,is),'cl_cvsay'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,0,0,is),'cl_cvsahzx'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,1,1,is),'cl_cvsahzy'//chns)
-        call my_out(70,nx,ny,cvsa_cl(-1,-1,0,0,is),'cl_cvsa_clx'//chns)
-        call my_out(70,nx,ny,cvsa_cl(-1,-1,1,1,is),'cl_cvsa_cly'//chns)
-        call my_out(70,nx,ny,cvsahz_cl(-1,-1,0,0,is),
+        call my_out_us(70,nFc,cvsa(1,0,is),'cl_cvsax'//chns)
+        call my_out_us(70,nFc,cvsa(1,1,is),'cl_cvsay'//chns)
+        call my_out_us(70,nFc,cvsahz(1,0,is),'cl_cvsahzx'//chns)
+        call my_out_us(70,nFc,cvsahz(1,1,is),'cl_cvsahzy'//chns)
+        call my_out_us(70,nFc,cvsa_cl(1,0,is),'cl_cvsa_clx'//chns)
+        call my_out_us(70,nFc,cvsa_cl(1,1,is),'cl_cvsa_cly'//chns)
+        call my_out_us(70,nFc,cvsahz_cl(1,0,is),
      &              'cl_cvsahz_clx'//chns)
-        call my_out(70,nx,ny,cvsahz_cl(-1,-1,1,1,is),
+        call my_out_us(70,nFc,cvsahz_cl(1,1,is),
      &              'cl_cvsahz_cly'//chns)
-        call my_out(70,nx,ny,cthe(-1,-1,is),'cl_cthe'//chns)
-        call my_out(70,nx,ny,cthi(-1,-1,is),'cl_cthi'//chns)
+        call my_out_us(70,nFc,cthe(1,is),'cl_cthe'//chns)
+        call my_out_us(70,nFc,cthi(1,is),'cl_cthi'//chns)
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0 
-         call my_out(70,nx,ny,csigin(-1,-1,0,0,is,is0),'cl_csiginx'//
+         call my_out_us(70,nFc,csigin(1,0,is,is0),'cl_csiginx'//
      &        chns//'_'//chns0)
-         call my_out(70,nx,ny,csigin(-1,-1,1,1,is,is0),'cl_csiginy'//
+         call my_out_us(70,nFc,csigin(1,1,is,is0),'cl_csiginy'//
      &        chns//'_'//chns0)
         enddo
        enddo
-       call my_out(70,nx,ny,chce(-1,-1,0,0),'cl_chcex')
-       call my_out(70,nx,ny,chce(-1,-1,1,1),'cl_chcey')
-       call my_out(70,nx,ny,chci(-1,-1,0,0),'cl_chcix')
-       call my_out(70,nx,ny,chci(-1,-1,1,1),'cl_chciy')
-       call my_out(70,nx,ny,chve(-1,-1,0,0),'cl_chvex')
-       call my_out(70,nx,ny,chve(-1,-1,1,1),'cl_chvey')
-       call my_out(70,nx,ny,chvi(-1,-1,0,0),'cl_chvix')
-       call my_out(70,nx,ny,chvi(-1,-1,1,1),'cl_chviy')
-       call my_out(70,nx,ny,csig(-1,-1,0,0),'cl_csigx')
-       call my_out(70,nx,ny,csig(-1,-1,1,1),'cl_csigy')
-       call my_out(70,nx,ny,calf(-1,-1,0,0),'cl_calfx')
-       call my_out(70,nx,ny,calf(-1,-1,1,1),'cl_calfy')
-       call my_out(70,nx,ny,sigx_c,'cl_sigx_c')                      !srv 05.07.17
-       call my_out(70,nx,ny,alfx_c,'cl_alfx_c')                      !srv 05.07.17
+       call my_out_us(70,nFc,chce(1,0),'cl_chcex')
+       call my_out_us(70,nFc,chce(1,1),'cl_chcey')
+       call my_out_us(70,nFc,chci(1,0),'cl_chcix')
+       call my_out_us(70,nFc,chci(1,1),'cl_chciy')
+       call my_out_us(70,nFc,chve(1,0),'cl_chvex')
+       call my_out_us(70,nFc,chve(1,1),'cl_chvey')
+       call my_out_us(70,nFc,chvi(1,0),'cl_chvix')
+       call my_out_us(70,nFc,chvi(1,1),'cl_chviy')
+       call my_out_us(70,nFc,csig(1,0),'cl_csigx')
+       call my_out_us(70,nFc,csig(1,1),'cl_csigy')
+       call my_out_us(70,nFc,calf(1,0),'cl_calfx')
+       call my_out_us(70,nFc,calf(1,1),'cl_calfy')
+       call my_out_us(70,nFc,sigx_c,'cl_sigx_c')                      !srv 05.07.17
+       call my_out_us(70,nFc,alfx_c,'cl_alfx_c')                      !srv 05.07.17
       endif                                                          !srv 17.06.08 }
 
 * ..return

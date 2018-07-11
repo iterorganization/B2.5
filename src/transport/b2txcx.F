@@ -1,124 +1,72 @@
-      subroutine b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, kapx, conx)
+      subroutine b2txcx (nCv, nFc, mode, geo, mpg, fcVol, fcS, kapx, 
+     .  conx)
       use b2mod_types
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
       implicit none
-      integer nx, ny, mode
+      integer nCv, nFc, mode
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
-     &   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     &   kapx(-1:nx,-1:ny), conx(-1:nx,-1:ny,0:1)
+     &   fcVol(nFc,2), fcS(nFc), kapx(nCv), conx(nFc)
 *     ------------------------------------------------------------------
 *     B2TXCX computes poloidal conductances between neighbouring cells, 
-*     given the poloidal conductivities in cell centers.
-*     conx(:,:,0) contains poloidal conductivities across x-faces
-*     conx(:,:,1) contains poloidal conductivities across y-faces
+*     given the conductivities.
 *     ------------------------------------------------------------------
-      integer n2, ix, iy
+      integer iFc
       real (kind=R8) ::
      *   t0, t1
       intrinsic max, sqrt
-      real (kind=R8) ::
-     *   harm, smin, smax
-      external subini, subend, xertst, smin, smax
-      external b2xvsg, b2xxgs
-      harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
+      external subini, subend, xertst
+      external b2xxgs
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txcx')
-*   ..test nx, ny
-      call xertst (0.le.nx .and. 0.le.ny, 'faulty argument nx, ny')
-*   ..set n2
-      n2=(nx+2)*(ny+2)
 *   ..test mode
       call xertst (-1.le.mode.and.mode.le.2,
      &  'b2txcx--faulty argument mode')
-*   ..test sign of vol, hx
-      call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-      call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-*   ..test range of qz
-      call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &  smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
-     &  'faulty argument range qz(,,0)')
-      call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &  smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
-     &  'faulty argument range qz(,,1)')
 
-*     conx(:,:,1) = 0 as long as y-faces are aligned with  
-*     magnetic surfaces, so no change needed yet
-      conx(:,:,1) = 0.0_R8
-*   ..compute conx(:,:,0)
+*   ..compute conx
       if (mode.eq.-1) then
 *    ..use harmonic averaging
-*      (needs somewhat messy code because the harmonic average is only
-*      defined for two quantities of the same sign.)
-       do iy = -1, ny
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-           conx(ix,iy,0) = 0.0_R8
-         else
-           t0 = vol(leftix(ix,iy),leftiy(ix,iy))*
-     &        kapx(leftix(ix,iy),leftiy(ix,iy))/
-     &        hx(leftix(ix,iy),leftiy(ix,iy))**2
-           t1 = vol(ix,iy)*kapx(ix,iy)/hx(ix,iy)**2
-           if (t0*t1.gt.0.0_R8) then
-             conx(ix,iy,0) = harm(t0,t1)
-           endif
-         endif
-        enddo
+       do iFc = 1, nFc
+        t0 = fcVol(iFc,1)*kapx(mpg%fcCv(iFc,1))/geo%fcHc(iFc,1)**2
+        t1 = fcVol(iFc,2)*kapx(mpg%fcCv(iFc,2))/geo%fcHc(iFc,2)**2
+        if (t0*t1.gt.0.0_R8) then
+         conx(iFc) = 
+     &    t0*t1/(t0+t1)*geo%fcQalf(iFc,0)/geo%fcQgam(iFc,0)**2
+        endif
        enddo
       else if (mode.eq.0) then
 *    ..use geometric averaging
-       do iy = -1, ny
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-           conx(ix,iy,0) = 0.0_R8
-         else
-           conx(ix,iy,0) = 2.0_R8*sqrt(max(0.0_R8,
-     &      (vol(leftix(ix,iy),leftiy(ix,iy))*
-     &       kapx(leftix(ix,iy),leftiy(ix,iy))/
-     &       hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &      (vol(ix,iy)*kapx(ix,iy)/hx(ix,iy))))/
-     &      (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-         endif
-        enddo
+       do iFc = 1, nFc
+        conx(iFc) = 
+     &    geo%fcQalf(iFc,0)/geo%fcQgam(iFc,0)**2*sqrt(max(0.0_R8,
+     &   (fcVol(iFc,1)*kapx(mpg%fcCv(iFc,1))/geo%fcHc(iFc,1))*
+     &   (fcVol(iFc,2)*kapx(mpg%fcCv(iFc,2))/geo%fcHc(iFc,2))))/
+     &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
        enddo
       else if (mode.eq.1) then
-*    ..use arithmetic averaging
-       do iy = -1, ny
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-           conx(ix,iy,0) = 0.0_R8
-         else
-           conx(ix,iy,0) = 2.0_R8*
-     &        (vol(leftix(ix,iy),leftiy(ix,iy))*
-     &         kapx(leftix(ix,iy),leftiy(ix,iy))
-     &        +vol(ix,iy)*kapx(ix,iy))/
-     &        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))**2
-         endif
-        enddo
+*    ..use arithmetic averaging (SOLPS5.0 formulation)
+       do iFc = 1, nFc
+        conx(iFc) = geo%fcQalf(iFc,0)/geo%fcQgam(iFc,0)**2*
+     &   (fcVol(iFc,1)*kapx(mpg%fcCv(iFc,1)) + 
+     &    fcVol(iFc,2)*kapx(mpg%fcCv(iFc,2)))/
+     &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
        enddo
       else if (mode.eq.2) then
-*    ..use arithmetic averaging (SOLPS4.0 style)
-       do iy = -1, ny
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-           conx(ix,iy,0) = 0.0_R8
-         else
-           t0 = (vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,1)+
-     +           vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),1)) /
-     .          (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-           conx(ix,iy,0) = gs(ix,iy,0)*t0*2.0_R8*
-     &        (hx(leftix(ix,iy),leftiy(ix,iy))*
-     &         kapx(leftix(ix,iy),leftiy(ix,iy))
-     &        +hx(ix,iy)*kapx(ix,iy))/
-     &        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))**2
-         endif
-        enddo
+*    ..use arithmetic averaging (SOLPS4.0 formulation)
+       do iFc = 1, nFc
+        conx(iFc) = 
+     &    fcS(iFc)*geo%fcQalf(iFc,0)/geo%fcQgam(iFc,0)*
+     &   (geo%fcHc(iFc,1)*kapx(mpg%fcCv(iFc,1)) + 
+     &    geo%fcHc(iFc,2)*kapx(mpg%fcCv(iFc,2)))/
+     &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
        enddo
       endif
 *   ..reset null regions
-      call b2xxgs (nx, ny, 0.0_R8, conx(-1,-1,0), 1)
-      call b2xxgs (nx, ny, 0.0_R8, conx(-1,-1,1), 2)
+!      call b2xxgs (nx, ny, 0.0_R8, conx(-1,-1,0), 1)
+!      call b2xxgs (nx, ny, 0.0_R8, conx(-1,-1,1), 2)
 *   ..return
       call subend ()
       return

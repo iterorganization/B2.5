@@ -1,20 +1,22 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2upco (nx, ny, nregionv, ua_solve, solvereg,
-     &  rxf, pcm0, vol, corpb, pccb0, pb, nb, ub)
-      use b2mod_indirect
+      subroutine b2upco (nCv, nFc, nVx, geo, mpg, nregionv, ua_solve,
+     &   solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub)
       use b2mod_types
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, nregionv
+      integer nCv, nFc, nVx, nregionv
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  rxf, pcm0, vol(-1:nx,-1:ny), corpb(-1:nx,-1:ny),
-     *  pccb0(-1:nx,-1:ny)
+     *  rxf, pcm0, corpb(nCv), pccb0(nCv)
       logical ua_solve, solvereg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
-     *  pb(-1:nx,-1:ny), nb(-1:nx,-1:ny), ub(-1:nx,-1:ny)
+     *  pb(nCv), nb(nCv), ub(nCv)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -28,16 +30,15 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, ix, iy, ireg
-!      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
+      integer ncall, iCv, iFc, ireg
       save ncall
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *  wrk0(-1:nx,-1:ny)
+     *  wrk0(nFc), wrk(nCv), wrkv(nVx)
       real (kind=R8), save :: c_corr_core_dn = 1.0_R8                     !lk 30.06.17
       real (kind=R8) :: t0,
-     *  pb_(-1:nx,-1:ny), nb_(-1:nx,-1:ny),                               !lk 30.06.17
-     *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny)                                !lk 30.06.17
+     *  pb_(nCv), nb_(nCv) !,                                               !lk 30.06.17
+!WG_TODO     *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny)                                !lk 30.06.17
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2xxgs
 *   ..initialisation
@@ -53,8 +54,8 @@
       if (ncall.eq.0) then
        call ipgetr ('b2upco_c_corr_core_dn', c_corr_core_dn)              !lk 30.06.2017
       endif
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..test rxf, pcm0
       call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      .  'faulty argument rxf')
@@ -62,32 +63,26 @@
 
 * ..implement the correction
 *   ..compute wrk0
-      do iy = -1, ny
-       do ix = -1, nx
-        if(leftix(ix,iy).eq.-2) then
-         wrk0(ix,iy) = 0.0_R8
-        else
-         wrk0(ix,iy) = corpb(ix,iy)-corpb(leftix(ix,iy),leftiy(ix,iy))
-        endif
-       enddo
-      enddo
-      call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
+      call diff_p (nCv, nFc, nVx, 0, geo, mpg, corpb, wrkv, wrk0)
+cwdk: now: interpolate wrk0 from faces to centers
+cwdk  needed: "distribute" wrk0 to centers based on volume
+      call intcell(nFc, nCv, mpg, mpg%intcellP, wrk0,wrk)
 *   ..compute new pb and nb
-      do iy = -1, ny
-       do ix = -1, nx
-        if (0.0_R8.le.corpb(ix,iy)) then
-         t0 = 1.0_R8+rxf*corpb(ix,iy)/pb(ix,iy)
+      do iCv = 1, nCv
+        if (0.0_R8.le.corpb(iCv)) then
+         t0 = 1.0_R8+rxf*corpb(iCv)/pb(iCv)
         else
-         t0 = 1.0_R8/(1.0_R8-rxf*corpb(ix,iy)/pb(ix,iy))
+         t0 = 1.0_R8/(1.0_R8-rxf*corpb(iCv)/pb(iCv))
         endif
-        nb_(ix,iy) = t0*nb(ix,iy)                        !lk 30.06.2017
-        pb_(ix,iy) = t0*pb(ix,iy)                        !lk 30.06.2017
-       enddo
+        nb_(iCv) = t0*nb(iCv)                        !lk 30.06.2017
+        pb_(iCv) = t0*pb(iCv)                        !lk 30.06.2017
       enddo
       if(c_corr_core_dn.eq.1.0_R8) then                  !srv 25.07.17 {
         nb = nb_
         pb = pb_
       else                                               !srv 25.07.17 }
+        call xerrab('c_corr_core_dn .ne. 1 not yet available for WG')
+#ifdef WG_TODO
 *   ..smooth the correction for inner flux surfaces      !lk 30.06.2017{
         tt0 = 0.0e0_R8
         tt1 = 0.0e0_R8
@@ -114,20 +109,15 @@
             endif
           enddo
         enddo                                             !lk 30.06.2017}
+#endif
       endif                                               !srv 25.07.17
 *   ..compute new ub
       if (ua_solve) then
-       do iy = -1, ny
-        do ix = -1, nx
+       do iCv = 1, mpg%nCi ! internal cells only
 *       (note the further damping on the velocity correction)
-         ireg = region(ix,iy,0)
-         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &      solvereg(ireg))
-     &    ub(ix,iy) = ub(ix,iy)-pcm0*rxf*pccb0(ix,iy)*vol(ix,iy)*
-     &    (wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &     wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
-     &      vol(rightix(ix,iy),rightiy(ix,iy))))
-        enddo
+         ireg = mpg%cvReg(iCv)
+         if(solvereg(ireg))
+     &    ub(iCv) = ub(iCv)-pcm0*rxf*pccb0(iCv)*wrk(iCv)
        enddo
       endif
 

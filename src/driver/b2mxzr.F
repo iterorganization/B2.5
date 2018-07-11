@@ -1,18 +1,19 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mxzr (nx, ny, ns, resco, resmo, resmt, reshe, reshi,
-     &  respo)
+      subroutine b2mxzr (nCv, ns, mpg, resco, resmo, resmt, reshe,
+     &  reshi, respo)
       use b2mod_types
-      use b2mod_indirect
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nCv, ns
+      type (mapping), intent (in) :: mpg
 *   ..input/output arguments
       real (kind=R8) ::
-     *  resco(-1:nx,-1:ny,0:ns-1), resmo(-1:nx,-1:ny,0:ns-1),
-     &  resmt(-1:nx,-1:ny), reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny),
-     &  respo(-1:nx,-1:ny)
+     *  resco(nCv,0:ns-1), resmo(nCv,0:ns-1),
+     &  resmt(nCv), reshe(nCv), reshi(nCv),
+     &  respo(nCv)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -36,7 +37,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, is, ix, iy
+      integer ncall, is, iCv
       save ncall
 *   ..procedures
       external subini, subend, xertst, sfill
@@ -50,50 +51,45 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2mxzr')
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, ns
+      call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 
 *   ..zero-out parts of (na) residual
       do is = 0, ns-1
-       call b2xxgs (nx, ny, 0.0_R8, resco(-1,-1,is), 0)
-       call sfill (nx+2, 0.0_R8, resco(-1,-1,is), 1)
-       call sfill (nx+2, 0.0_R8, resco(-1,ny,is), 1)
-       call sfill (ny, 0.0_R8, resco(-1,0,is), nx+2)
-       call sfill (ny, 0.0_R8, resco(nx,0,is), nx+2)
+!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, resco(-1,-1,is), 0)
+       do iCv = mpg%nCi+1, nCv
+        resco(iCv,is) = 0.0_R8
+       enddo
       enddo
 *   ..zero-out parts of (ua) residual
       do is = 0, ns-1
-       call b2xxgs (nx, ny, 0.0_R8, resmo(-1,-1,is), 0)
-       call sfill (nx+2, 0.0_R8, resmo(-1,-1,is), 1)
-       call sfill (nx+2, 0.0_R8, resmo(-1,ny,is), 1)
-       call sfill (ny, 0.0_R8, resmo(-1,0,is), nx+2)
-       call sfill (ny, 0.0_R8, resmo(nx,0,is), nx+2)
+!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, resmo(-1,-1,is), 0)
+       do iCv = mpg%nCi+1, nCv
+        resmo(iCv,is) = 0.0_R8
+       enddo
       enddo
-      call b2xxgs (nx, ny, 0.0_R8, resmt, 0)
-      call sfill (nx+2, 0.0_R8, resmt(-1,-1), 1)
-      call sfill (nx+2, 0.0_R8, resmt(-1,ny), 1)
-      call sfill (ny, 0.0_R8, resmt(-1,0), nx+2)
-      call sfill (ny, 0.0_R8, resmt(nx,0), nx+2)
+!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, resmt, 0)
+       do iCv = mpg%nCi+1, nCv
+        resmt(iCv) = 0.0_R8
+       enddo
 *   ..zero-out parts of (te) residual
-      call b2xxgs (nx, ny, 0.0_R8, reshe, 0)
-      call sfill (nx+2, 0.0_R8, reshe(-1,-1), 1)
-      call sfill (nx+2, 0.0_R8, reshe(-1,ny), 1)
-      call sfill (ny, 0.0_R8, reshe(-1,0), nx+2)
-      call sfill (ny, 0.0_R8, reshe(nx,0), nx+2)
+!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshe, 0)
+       do iCv = mpg%nCi+1, nCv
+        reshe(iCv) = 0.0_R8
+       enddo
 *   ..zero-out parts of (ti) residual
-      call b2xxgs (nx, ny, 0.0_R8, reshi, 0)
-      call sfill (nx+2, 0.0_R8, reshi(-1,-1), 1)
-      call sfill (nx+2, 0.0_R8, reshi(-1,ny), 1)
-      call sfill (ny, 0.0_R8, reshi(-1,0), nx+2)
-      call sfill (ny, 0.0_R8, reshi(nx,0), nx+2)
+!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, reshi, 0)
+       do iCv = mpg%nCi+1, nCv
+        reshi(iCv) = 0.0_R8
+       enddo
 *   ..zero-out parts of (po) residual
-      call b2xxgs (nx, ny, 0.0_R8, respo, 0)
-      call sfill (nx+2, 0.0_R8, respo(-1,-1), 1)
-      call sfill (nx+2, 0.0_R8, respo(-1,ny), 1)
-      call sfill (ny, 0.0_R8, respo(-1,0), nx+2)
-      call sfill (ny, 0.0_R8, respo(nx,0), nx+2)
+!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, respo, 0)
+       do iCv = mpg%nCi+1, nCv
+        respo(iCv) = 0.0_R8
+       enddo
 
+#ifdef WG_TODO
       do ix = 0, nx-1
         do iy = 0, ny-1
 *   ..zero out interior boundaries and resignore regions
@@ -110,6 +106,7 @@
           endif
         enddo
       enddo
+#endif
 
 * ..return
       ncall = ncall+1

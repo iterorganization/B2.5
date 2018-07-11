@@ -1,17 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxst (nx, ny, rob, smb, ro, smt)
+      subroutine b2nxst (nCv, rob, smb, ro, smt)
       use b2mod_types
-      use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny
+      integer nCv
       real (kind=R8) ::
-     *   rob(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3), ro(-1:nx,-1:ny)
+     *   rob(nCv), smb(nCv,0:3), ro(nCv)
 *   ..input/output arguments
       real (kind=R8) ::
-     *   smt(-1:nx,-1:ny,0:3)
+     *   smt(nCv,0:3)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -25,7 +24,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, ix, iy
+      integer ncall, iCv
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -37,16 +36,11 @@
 
 *   ..subprogram start-up calls
       call subini ('b2nxst')
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv
+      call xertst (0.le.nCv, 'faulty argument nCv')
 *   ..update smt
-      do iy = -1, ny
-       do ix = -1, nx
-        smt(ix,iy,1) = smt(ix,iy,1)+smb(ix,iy,1)
-        smt(ix,iy,3) = smt(ix,iy,3)+smb(ix,iy,3)*
-     &     rob(ix,iy)/ro(ix,iy)
-       enddo
-      enddo
+      smt(:,1) = smt(:,1) + smb(:,1)
+      smt(:,3) = smt(:,3) + smb(:,3)*rob/ro
 
 * ..return
       ncall = ncall+1

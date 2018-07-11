@@ -1,28 +1,24 @@
-      subroutine b2xzef (nx, ny, ns, rz2, na, ne, zeff)                 !srv 13.01.17 {
+      subroutine b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)                 !srv 13.01.17 {
       use b2mod_types
-      use b2mod_external
+      use b2us_plasma
       implicit none
-      integer nx, ny, ns
+      integer nCv, ns
+      type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) ::
-     *  rz2(-1:nx,-1:ny,0:ns-1), na(-1:nx,-1:ny,0:ns-1), 
-     *  ne(-1:nx,-1:ny), zeff(-1:nx,-1:ny)
+     *  rz2(nCv,0:ns-1), na(nCv,0:ns-1), ne(nCv), zeff(nCv)
 *     ------------------------------------------------------------------
 *     B2XZEF computes zeff:
-*       zeff(,) = (sum is :: rz2(,,is)*na(,,is))/ne .
+*       zeff() = (sum is :: rz2(,is)*na(,is))/ne .
 *     ------------------------------------------------------------------
-      integer n2, is
-      external sfill
+      integer is
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xzef')
-      n2 = (nx+2)*(ny+2)
-      call sfill (n2, 0.0_R8, zeff, 1)
+      zeff = 0.0_R8
       do is = 0, ns-1
-       zeff(-1:nx,-1:ny) = zeff(-1:nx,-1:ny) +
-     .  rz2(-1:nx,-1:ny,is)*na(-1:nx,-1:ny,is)
+        zeff = zeff + rz2(:,is)*na(:,is)
       enddo
-      do is = 0, ns_ext-1
-       zeff(-1:nx,-1:ny) = zeff(-1:nx,-1:ny) +
-     .  za2_ext(-1:nx,-1:ny,is)*na_ext(-1:nx,-1:ny,is)
+      do is = 0, st_ext%ns-1
+        zeff = zeff + st_ext%za2(:,is)*st_ext%na(:,is)
       enddo
       zeff=zeff/ne
 *$$$  call subend ()
