@@ -47,9 +47,7 @@ c ma28 common blocks
 c
 
 *  -- PROCEDURES --
-      real (kind=R8) ::
-     *   b2sasum
-      EXTERNAL XERRAB, b2sasum
+      EXTERNAL XERRAB
 
       logical lfirst
       integer ncall, nwrite
