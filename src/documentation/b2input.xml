@@ -5689,6 +5689,14 @@
 					Last value used for the radial particle flux feedback in the SOL. Corresponds to 'isfeedback' B2 species.
 				</description>
 			</switch>
+			<switch>
+				<name>SAVED_NA_FEEDBACK_ACTUATOR</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NSPECIES)</type>
+				<description>
+					Last value used for the feedback control actuator for each isonuclear sequence.
+				</description>
+			</switch>
 		</category>
 		<category name="b2.feedback_control.parameters">
 			<introduction>
@@ -5771,7 +5779,7 @@
 				<default>0.0</default>
 				<type>Real*8 array of size (0:NSPECIES-1)</type>
 				<description>
-					Sets the target density of species (ISPECIES) for the feedback scheme.
+					Sets the target value of the quantity associated with species (ISPECIES) for the feedback scheme defined by NA_FEEDBACK_CHOICE(ISPECIES).
 				</description>
 			</switch>
 			<switch>
@@ -5863,7 +5871,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Lower poloidal bound for the region of which the density is being averaged.
+					Lower poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>
@@ -5871,7 +5879,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Upper poloidal bound for the region of which the density is being averaged.
+					Upper poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>
@@ -5879,7 +5887,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Lower radial bound for the region of which the density is being averaged.
+					Lower radial bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>
@@ -5887,7 +5895,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Upper poloidal bound for the region of which the density is being averaged.
+					Upper poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>
