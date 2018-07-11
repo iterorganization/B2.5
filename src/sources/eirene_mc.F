@@ -56,7 +56,7 @@ csw 19oct2012, added save attribute!!!
       integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
-      integer, allocatable :: feedback_strata(:)
+      integer, allocatable, save :: feedback_strata(:)
       logical feedback_stratum
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
