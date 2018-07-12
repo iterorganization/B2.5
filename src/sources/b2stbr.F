@@ -1,33 +1,30 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr (nx, ny, ns, nxtl, nxtr,
+      subroutine b2stbr (nCv, nFc, nVx, ns, nxtl, nxtr, 
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy,
-     &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
-     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
+     &  geo, mpg, pl, dv, co, rt, rtw, st_ext, srw, main_call)
       use b2mod_types
-      use b2mod_wall
+!WG_TODO      use b2mod_wall
       use b2mod_diag
       use b2mod_time
-      use b2mod_layer
-      use b2mod_elements
-      use b2mod_sputter
-      use b2mod_first_flight
+!WG_TODO      use b2mod_layer
+!WG_TODO      use b2mod_elements
+!WG_TODO      use b2mod_sputter
+!WG_TODO      use b2mod_first_flight
       use b2mod_constants
-      use b2mod_indirect
-      use b2mod_neutrals_namelist
-      use b2mod_sources
-     1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
-     2          b2stbr_sne
-      use b2mod_balance !djm Jan2017
-     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
-     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
-     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
-     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
-     &          b2stbr_first_flight_sna0to1,
-     &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
-     &          balance_netcdf
+!WG_TODO      use b2mod_neutrals_namelist
+!WG_TODO      use b2mod_sources
+!     1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
+!     2          b2stbr_sne
+!      use b2mod_balance !djm Jan2017
+!     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
+!     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
+!     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
+!     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
+!     &          b2stbr_first_flight_sna0to1,
+!     &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
+!     &          balance_netcdf
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
@@ -43,34 +40,30 @@
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nxtl, nxtr
+      integer nCv, nFc, nVx, ns, nxtl, nxtr
       integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
-      real (kind=R8) :: dtim, BoRiS,
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  hz(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2)
-      real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)
-      real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
-     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1),
-     &  rsa(-1:nx,-1:ny,0:ns-1), bb(-1:nx,-1:ny,0:3)
+      real (kind=R8) :: dtim, BoRiS      
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Rates), intent (in) :: rt
+      type (B2RatesWork), intent (in) :: rtw
+      type (B2Coeff), intent (inout) :: co
+      type (B2StateExt), intent (in) :: st_ext
       logical main_call
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
-     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
+      type (B2SourceWork), intent (out) :: srw
 *   ..local variables
-      real (kind=R8) :: snatmp(-1:nx,-1:ny,0:1,0:ns-1), !djm Mar2017
-     &                  smotmp(-1:nx,-1:ny,0:3,0:ns-1),
-     &                  shetmp(-1:nx,-1:ny,0:3),
-     &                  shitmp(-1:nx,-1:ny,0:3)
+      real (kind=R8) :: snatmp(nCv,0:1,0:ns-1), !djm Mar2017
+     &                  smotmp(nCv,0:3,0:ns-1),
+     &                  shetmp(nCv,0:3),
+     &                  shitmp(nCv,0:3)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -86,7 +79,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k
+      integer n2, iCv, is, js, ib, ic, ibnd, itrack, k
       integer, save :: jxi, jxa, jsep
       integer, save :: no_b2stbr_phys_call=0
       integer, save :: out_tfiles = 1                                !xpb 28.09.16
@@ -107,12 +100,12 @@
      *  tphye(0:ns-1), thevp(0:ns-1), thvpe(0:ns-1), tresn(0:ns-1),
      *  trese(0:ns-1), trfln(0:ns-1), trfle(0:ns-1), t_frac, t0
       real (kind=R8) ::                                              !srv 29.04.10 {
-     &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
-     &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),
-     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
-     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),  !IYS 27.01.17
-     &  flxtmp(0:nx+1,0:ny+1)
+     &  sna0_eir(nCv,0:1,0:ns-1),
+     &  smo0_eir(nCv,0:3,0:ns-1),
+     &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3),
+     &  fatm_eir(nCv,0:1,nnatmi), datm_eir(nCv,nnatmi), !srv 29.04.10 }
+     &  fmol_eir(nCv,0:1,nmol), dmol_eir(nCv,nmol)!,  !IYS 27.01.17
+!WG_TODO     &  flxtmp(0:nx+1,0:ny+1)
       integer ncall, sput_src, first_flight,
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
@@ -129,9 +122,9 @@
      *  start_time,end_time,pfrpuff,mainpuff,corepuff,
      *  sum_start,sum_end,neutral_rescale,neutral_sources_rescale,
      *  sum_strti,sum_ndi,sum_nde,core_sources_rescale,
-     *  shi0_ff(-1:nx,-1:ny,0:nscx-1), wrk0(-1:nx,-1:ny),
-     *  work(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny), wrk3(-1:nx,-1:ny),
-     *  f_redep(-1:nx,-1:ny,0:ns-1)
+     *  shi0_ff(nCv,0:nscx-1), wrk0(nCv),
+     *  work(nCv,0:1), wrk2(nCv), wrk3(nCv),
+     *  f_redep(nCv,0:ns-1)
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
       real (kind=R8) :: amtol
@@ -199,7 +192,7 @@
       call subini ('b2stbr')
       new_sputter_namelist=.false.
       if (ncall.eq.0) then
-        call get_jsep(nx,ny,jxi,jxa,jsep)
+!WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
         call ipgeti ('b2stbr_output', output)
         call ipgeti ('b2mndr_eirene', use_eirene)
         if (use_eirene.eq.1) out_tfiles=0
@@ -222,6 +215,8 @@
         call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
         call ipgeti ('b2stbr_first_flight', first_flight)
         if(first_flight.ne.0) then
+        call xerrab ('b2stbr -- first flight options not av. for WG')
+#ifdef WG_TODO
            call ipgetr ('b2stbr_first_flight_dl', in_dl)
            call ipgeti ('b2stbr_first_flight_no_of_flights',
      *          in_no_of_angles)
@@ -257,6 +252,7 @@
      *          'Used ',ptr_table,' out of ',size_of_table,
      *          ' (',real(ptr_table)/real(size_of_table)*100,'%)',
      *          end_time-start_time,' cpu-seconds'
+#endif
         endif
         call ipgeti ('b2stbr_sput_src', sput_src)
         call ipgeti ('b2stbr_sput_chem_model', sput_chem_model)
@@ -287,11 +283,13 @@
         call xertst (0.0_R8.le.sput_phys,
      1   'faulty input b2stbr_sput_phys')
         if(sput_phys.ne.0.0_R8) then
+#ifdef WG_TODO
           call xertst (sput_dst.lt.ns,
      1     'faulty b2stbr_sput_dst')
           call ipgetr ('b2stbr_sput_phys_alpha', sput_phys_alpha)
           call xertst (0.0_R8.le.sput_phys_alpha,
      1     'faulty b2stbr_sput_phys_alpha')
+#endif
         endif
         call ipgeti ('b2stbr_b2wall_netcdf', b2wall_netcdf)
         call ipgetr ('b2stbr_therm_evap', therm_evap)
@@ -311,12 +309,14 @@
         call xertst (cbirso.le.coreregno.and.
      1   coreregno.le.cbirso+cbnrso-1,
      2   'faulty internal parameter coreregno')
+#ifdef WG_TODO
         if (nncut.ge.2) then
           call ipgeti ('b2stbc_coreregn2', coreregn2)
           call xertst (cbirso.le.coreregn2.and.
      1     coreregn2.le.cbirso+cbnrso-1,
      2     'faulty internal parameter coreregn2')
         endif
+#endif
         call ipgetr ('b2stbr_core_sources_rescale',
      1   core_sources_rescale)
         call xertst (0.0_R8.le.core_sources_rescale,
@@ -332,6 +332,7 @@
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       else
         if(neutrals_time_mod.gt.0.0_R8) then
+#ifdef WG_TODO
           write(*,*) 'NEUTRALS: ',tim,mod(tim,neutrals_time_mod),
      1     neutrals_time_switch,int(tim/neutrals_time_mod),
      2     neutrals_count
@@ -344,60 +345,49 @@
      &       'Increase DEF_NSTRA in DIMENSIONS.F')
             call write_b2mod_neutrals_namelist
           endif
+#endif
         endif
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc, ns
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test range of qz
-       call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
-     &   'faulty argument range qz(,,0)')
-       call xertst ( 0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &   smax(n2,qz(-1,-1,1),1).le.1.0_R8,
-     &   'faulty argument range qz(,,1)')
-*    ..test sign of pbs
-!       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
-*    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+*    ..test sign of vol
+       call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
+       call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
+*    ..test range of cvQgam, fcQgam
+       call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
+     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8, 
+     &   'faulty argument range cvQgam(,1)')
+       call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
+     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8, 
+     &   'faulty argument range cvQgam(,0)')
+       call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
+     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8, 
+     &   'faulty argument range fcQgam(,1)')
+       call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
+     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8, 
+     &   'faulty argument range fcQgam(,0)')
 *    ..test sign of na, ni, ne, te, ti
-       call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-       call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
-       call b2xvsg (n2, ne, 1, 'ne', '.gt.')
-       call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2, ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
+       call b2xvsg (nCv*2, dv%ni, 1, 'ni', '.gt.')
+       call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
       endif
-*   ..test edge values of fluxes
-      do is = 0, ns-1
-       call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
-      enddo
-      call b2xvff (nx, ny, fhe, 'fhe')
-      call b2xvff (nx, ny, fhi, 'fhi')
-      call b2xvff (nx, ny, fch, 'fch')
-      call b2xvff (nx, ny, fne, 'fne')
-      call b2xvff (nx, ny, fni, 'fni')
 *   ..initialize sources to 0
-      call sfill (n2*2*ns, 0.0_R8, sna0, 1)
-      call sfill (n2*4*ns, 0.0_R8, smo0, 1)
-      call sfill (n2*2, 0.0_R8, sne0, 1)
-      call sfill (n2*4, 0.0_R8, she0, 1)
-      call sfill (n2*4, 0.0_R8, shi0, 1)
-      call sfill (n2*4, 0.0_R8, sch0, 1)
-      call sfill (n2*nscx, 0.0_R8, shi0_ff, 1)
-
-      call sfill (n2*2*ns, 0.0_R8, sna0_eir, 1)                    !srv 29.04.10 {
-      call sfill (n2*4*ns, 0.0_R8, smo0_eir, 1)
-      call sfill (n2*4, 0.0_R8, she0_eir, 1)
-      call sfill (n2*4, 0.0_R8, shi0_eir, 1)
+      call sfill (nCv*2*ns, 0.0_R8, srw%sna0, 1)
+      call sfill (nCv*4*ns, 0.0_R8, srw%smo0, 1)
+      call sfill (nCv*2, 0.0_R8, srw%sne0, 1)
+      call sfill (nCv*4, 0.0_R8, srw%she0, 1)
+      call sfill (nCv*4, 0.0_R8, srw%shi0, 1)
+      call sfill (nCv*4, 0.0_R8, srw%sch0, 1)
+      call sfill (nCv*nscx, 0.0_R8, shi0_ff, 1)
+      call sfill (nCv*2*ns, 0.0_R8, sna0_eir, 1)                    !srv 29.04.10 {
+      call sfill (nCv*4*ns, 0.0_R8, smo0_eir, 1)
+      call sfill (nCv*4, 0.0_R8, she0_eir, 1)
+      call sfill (nCv*4, 0.0_R8, shi0_eir, 1)
       fatm_eir = 0.0_R8
       datm_eir = 0.0_R8                                            !srv 29.04.10 }
 
@@ -423,6 +413,8 @@ c   --> better solution wanted here..
        if(redep_alpha.eq.0.0_R8) then
         f_redep=0.0_R8
        else
+        call xerrab ('WG - redep_alpha .ne. 0')
+#ifdef WG_TODO
         do is=0, ns-1
           if(is_neutral(is).and.lnext(is,is+1)) then
             do iy=-1,ny
@@ -442,9 +434,11 @@ c   --> better solution wanted here..
             f_redep(:,:,is)=0.0_R8
           endif
         enddo
+#endif
        endif
        if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
+#ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
           snatmp=sna0
@@ -452,19 +446,20 @@ c   --> better solution wanted here..
           shetmp=she0
           shitmp=shi0
         endif
-        call b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
-     &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
-     &   neutral_sources_rescale, core_sources_rescale,
-     &   sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
-     &   sput_chem_model, therm_evap, sput_res,
-     &   reflection_on, sputter_energy_on, main_call, output,
-     &   sput_frac_flag, sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
-     1   sput_mixed_alpha, sput_mixed_beta,
-     2   new_sputter_namelist, shi0_ff, f_redep,
-     3   potential_at_guard_cell, recycled_neutrals_contr)
+#endif
+        call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
+     &  dtim, BoRiS, geo, mpg, pl, dv, rt, rtw, st_ext, srw,
+     &  tchem, tchee, tphys, tphye,
+     &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
+     &  neutral_sources_rescale, core_sources_rescale,  
+     &  sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
+     &  sput_chem_model, therm_evap, sput_res,  
+     &  reflection_on, sputter_energy_on, main_call, output, 
+     &  sput_frac_flag, sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
+     1  sput_mixed_alpha, sput_mixed_beta,
+     2  new_sputter_namelist, shi0_ff, f_redep,
+     3  potential_at_guard_cell, recycled_neutrals_contr)
+#ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
           b2stbr_phys_sna0to1=sna0-snatmp
@@ -472,7 +467,9 @@ c   --> better solution wanted here..
           b2stbr_phys_she0to3=she0-shetmp
           b2stbr_phys_shi0to3=shi0-shitmp
         endif
+#endif
        else
+#ifdef WG_TODO
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
@@ -501,10 +498,12 @@ c   --> better solution wanted here..
           b2stbr_bas_she0to3=she0-shetmp
           b2stbr_bas_shi0to3=shi0-shitmp
         endif
+#endif
        endif
       endif
 
       if(first_flight.ne.0) then
+#ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
           snatmp=sna0
@@ -621,6 +620,7 @@ c   --> better solution wanted here..
           b2stbr_first_flight_she0to3=she0-shetmp
           b2stbr_first_flight_shi0to3=shi0-shitmp
         endif
+#endif
       endif
 
       if(main_call.and.out_tfiles.ne.0) then                        ! xpb  !srv 07.04.09
@@ -724,39 +724,42 @@ c   --> better solution wanted here..
 #endif
       else
 cwdk remove this if-test, to allow runs without Eirene if code is compiled with Eirene
+#ifdef WG_TODO
         call eirene_mc_init(nx,ny)             ! EIRDIAG = 0   !srv 03.04.13
+#endif
       endif
 
 * ..sources
-      b2stbr_sna(-1:nx,-1:ny,0:ns-1)=
-     1 sna0(-1:nx,-1:ny,0,0:ns-1)+
-     2 sna0(-1:nx,-1:ny,1,0:ns-1)*na(-1:nx,-1:ny,0:ns-1)
+#ifdef WG_TODO
+      b2stbr_sna(nCv,0:ns-1)=
+     1 sna0(nCv,0,0:ns-1)+
+     2 sna0(nCv,1,0:ns-1)*na(nCv,0:ns-1)
       do is=0,ns-1
-        b2stbr_smo(-1:nx,-1:ny,is)=
-     1   smo0(-1:nx,-1:ny,0,is)+
-     2   smo0(-1:nx,-1:ny,1,is)*ua(-1:nx,-1:ny,is)+
-     3   smo0(-1:nx,-1:ny,2,is)*am(is)*mp*na(-1:nx,-1:ny,is)+
-     4   smo0(-1:nx,-1:ny,3,is)*am(is)*mp*na(-1:nx,-1:ny,is)*
-     5   ua(-1:nx,-1:ny,is)
+        b2stbr_smo(nCv,is)=
+     1   smo0(nCv,0,is)+
+     2   smo0(nCv,1,is)*ua(nCv,is)+
+     3   smo0(nCv,2,is)*am(is)*mp*na(nCv,is)+
+     4   smo0(nCv,3,is)*am(is)*mp*na(nCv,is)*
+     5   ua(nCv,is)
       enddo
-      b2stbr_she(-1:nx,-1:ny)=
-     1 she0(-1:nx,-1:ny,0)+
-     2 she0(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
-     3 she0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4 she0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
-      b2stbr_shi(-1:nx,-1:ny)=
-     1 shi0(-1:nx,-1:ny,0)+
-     2 shi0(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3 shi0(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4 shi0(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
-      b2stbr_sch(-1:nx,-1:ny)=
-     1 sch0(-1:nx,-1:ny,0)+
-     2 sch0(-1:nx,-1:ny,1)*po(-1:nx,-1:ny)+
-     3 sch0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4 sch0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*po(-1:nx,-1:ny)
-      b2stbr_sne(-1:nx,-1:ny)=
-     1 sne0(-1:nx,-1:ny,0)+
-     2 sne0(-1:nx,-1:ny,1)*ne(-1:nx,-1:ny)
+      b2stbr_she(nCv)=
+     1 she0(nCv,0)+
+     2 she0(nCv,1)*te(nCv)+
+     3 she0(nCv,2)*ne(nCv)+
+     4 she0(nCv,3)*ne(nCv)*te(nCv)
+      b2stbr_shi(nCv)=
+     1 shi0(nCv,0)+
+     2 shi0(nCv,1)*ti(nCv)+
+     3 shi0(nCv,2)*ni(nCv,0)+
+     4 shi0(nCv,3)*ni(nCv,0)*ti(nCv)
+      b2stbr_sch(nCv)=
+     1 sch0(nCv,0)+
+     2 sch0(nCv,1)*po(nCv)+
+     3 sch0(nCv,2)*ne(nCv)+
+     4 sch0(nCv,3)*ne(nCv)*po(nCv)
+      b2stbr_sne(nCv)=
+     1 sne0(nCv,0)+
+     2 sne0(nCv,1)*ne(nCv)
 
       if(main_call) then
         do ibnd = 1, nbnd
@@ -848,7 +851,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           endif
         enddo
       endif
-
+#endif
       if(b2wall_netcdf.ne.0 .and. ntargsp.gt.0) then
 #ifndef NO_CDF
         if(ncall.eq.0) then
@@ -924,18 +927,18 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
 !     *              'b2stbr_smo_eir'//chk//chns)
 !          enddo
-          wrk0=smo0_eir(:,:,0,is)+
-     &         smo0_eir(:,:,1,is)*ua(:,:,is)+
-     &         smo0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &         smo0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-          call my_out(70,nx,ny,wrk0,'b2stbr_smo_eir'//chns)
+          wrk0=smo0_eir(:,0,is)+
+     &         smo0_eir(:,1,is)*pl%ua(:,is)+
+     &         smo0_eir(:,2,is)*pl%na(:,is)*mp*am(is)+
+     &         smo0_eir(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
+          call my_out_us(70,nCv,wrk0,'b2stbr_smo_eir'//chns)
          endif
         else
 !        do k=0,3
 !         write (chk,'(i1)') k
 !         call my_out(70,nx,ny,smo0(-1,-1,k,is),'b2stbr_smo'//chk//chns)
 !        enddo
-         call my_out(70,nx,ny,b2stbr_smo(-1,-1,is),'b2stbr_smo'//chns)
+!WG_TODO         call my_out_us(70,nCv,b2stbr_smo(1,is),'b2stbr_smo'//chns)
         endif
 !       call my_out(70,nx,ny,ua(-1,-1,is),'b2stbr_ua'//chns)
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
@@ -951,55 +954,55 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           if (iout_b2wdat.ne.4) then
            do k=0,1                                                   !srv 29.04.10
             write (chk,'(i1)') k
-            call my_out(70,nx,ny,sna0_eir(-1,-1,k,is),
+            call my_out_us(70,nCv,sna0_eir(1,k,is),
      *               'b2stbr_sna_eir'//chk//chns)
            enddo
           endif
-          wrk0=sna0_eir(:,:,0,is)+sna0_eir(:,:,1,is)*na(:,:,is)
-          call my_out(70,nx,ny,wrk0,'b2stbr_sna_eir'//chns)
+          wrk0=sna0_eir(:,0,is)+sna0_eir(:,1,is)*pl%na(:,is)
+          call my_out_us(70,nCv,wrk0,'b2stbr_sna_eir'//chns)
          endif
         else
 !        do k=0,1
 !         write (chk,'(i1)') k
 !         call my_out(70,nx,ny,sna0(-1,-1,k,is),'b2stbr_sna'//chk//chns)
 !        enddo
-         call my_out(70,nx,ny,b2stbr_sna(-1,-1,is),'b2stbr_sna'//chns)
+!WG_TODO         call my_out_us(70,nCv,b2stbr_sna(1,is),'b2stbr_sna'//chns)
         endif
        enddo                                                          !srv 29.04.10
 #ifdef B25_EIRENE
        do ia = 1,nnatmi
         write (chns,'(i3.3)') ia
         wrk0(-1:nx,-1:ny)=rfluxa(0:nx+1,0:ny+1,ia,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_rfluxa_eir'//chns)
+        call my_out_us(70,nCv,wrk0,'b2stbr_rfluxa_eir'//chns)
         wrk0(-1:nx,-1:ny)=tfluxa(0:nx+1,0:ny+1,ia,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_tfluxa_eir'//chns)
-        call my_out(70,nx,ny,fatm_eir(:,:,1,ia),              ! IYS 27.01.2017
+        call my_out_us(70,nCv,wrk0,'b2stbr_tfluxa_eir'//chns)
+        call my_out_us(70,nCv,fatm_eir(:,:,1,ia),              ! IYS 27.01.2017
      &                'b2stbr_fatmy_eir'//chns)
         wrk0(-1:nx,-1:ny)=pfluxa(0:nx+1,0:ny+1,ia,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_pfluxa_eir'//chns)
-        call my_out(70,nx,ny,fatm_eir(:,:,0,ia),              ! IYS 27.01.2017
+        call my_out_us(70,nCv,wrk0,'b2stbr_pfluxa_eir'//chns)
+        call my_out_us(70,nCv,fatm_eir(:,:,0,ia),              ! IYS 27.01.2017
      &                'b2stbr_fatmx_eir'//chns)
         wrk0(-1:nx,-1:ny)=dab2(0:nx+1,0:ny+1,ia,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_dab2_eir'//chns)
+        call my_out_us(70,nCv,wrk0,'b2stbr_dab2_eir'//chns)
         wrk0(-1:nx,-1:ny)=tab2(0:nx+1,0:ny+1,ia,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_tab2_eir'//chns)
+        call my_out_us(70,nCv,wrk0,'b2stbr_tab2_eir'//chns)
        enddo
        do im = 1,nmol
         write (chns,'(i3.3)') im
         wrk0(-1:nx,-1:ny)=rfluxm(0:nx+1,0:ny+1,im,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_rfluxm_eir'//chns)
+        call my_out_us(70,nCv,wrk0,'b2stbr_rfluxm_eir'//chns)
         wrk0(-1:nx,-1:ny)=tfluxm(0:nx+1,0:ny+1,im,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_tfluxm_eir'//chns)
-        call my_out(70,nx,ny,fmol_eir(:,:,1,im),              ! IYS 27.01.2017
+        call my_out_us(70,nCv,wrk0,'b2stbr_tfluxm_eir'//chns)
+        call my_out_us(70,nCv,fmol_eir(:,:,1,im),              ! IYS 27.01.2017
      &              'b2stbr_fmoly_eir'//chns)
         wrk0(-1:nx,-1:ny)=pfluxm(0:nx+1,0:ny+1,im,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_pfluxm_eir'//chns)
-        call my_out(70,nx,ny,fmol_eir(:,:,0,im),              ! IYS 27.01.2017
+        call my_out_us(70,nCv,wrk0,'b2stbr_pfluxm_eir'//chns)
+        call my_out_us(70,nCv,fmol_eir(:,:,0,im),              ! IYS 27.01.2017
      &              'b2stbr_fmolx_eir'//chns)
         wrk0(-1:nx,-1:ny)=dmb2(0:nx+1,0:ny+1,im,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_dmb2_eir'//chns)
+        call my_out_us(70,nCv,wrk0,'b2stbr_dmb2_eir'//chns)
         wrk0(-1:nx,-1:ny)=tmb2(0:nx+1,0:ny+1,im,1)
-        call my_out(70,nx,ny,wrk0,'b2stbr_tmb2_eir'//chns)
+        call my_out_us(70,nCv,wrk0,'b2stbr_tmb2_eir'//chns)
        enddo
 #endif
       endif
@@ -1009,33 +1012,33 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         if (iout_b2wdat.ne.4) then
          do k=0,1  ! 3
           write (chk,'(i1)') k
-          call my_out(70,nx,ny,she0_eir(-1,-1,k),'b2stbr_she_eir'//chk)
-          call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
+          call my_out_us(70,nCv,she0_eir(1,k),'b2stbr_she_eir'//chk)
+          call my_out_us(70,nCv,shi0_eir(1,k),'b2stbr_shi_eir'//chk)
          enddo
         endif
-        wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*ti+
-     &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*ti*ne
-        call my_out(70,nx,ny,wrk0,'b2stbr_she_eir')
-        wrk0=shi0_eir(:,:,0)+shi0_eir(:,:,1)*ti+
-     &       shi0_eir(:,:,2)*ni(:,:,0)+shi0_eir(:,:,3)*ti*ni(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2stbr_shi_eir')
+        wrk0=she0_eir(:,0)+she0_eir(:,1)*pl%te+
+     &       she0_eir(:,2)*dv%ne+she0_eir(:,3)*pl%te*dv%ne
+        call my_out_us(70,nCv,wrk0,'b2stbr_she_eir')
+        wrk0=shi0_eir(:,0)+shi0_eir(:,1)*pl%ti+
+     &       shi0_eir(:,2)*dv%ni(:,0)+shi0_eir(:,3)*pl%ti*dv%ni(:,0)
+        call my_out_us(70,nCv,wrk0,'b2stbr_shi_eir')
        endif
 !      do k=0,3
 !       write (chk,'(i1)') k
-!       call my_out(70,nx,ny,she0(-1,-1,k),'b2stbr_she'//chk)
-!       call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbr_shi'//chk)
+!       call my_out_us(70,nCv,she0(-1,-1,k),'b2stbr_she'//chk)
+!       call my_out_us(70,nCv,shi0(-1,-1,k),'b2stbr_shi'//chk)
 !      enddo
-       call my_out(70,nx,ny,b2stbr_she,'b2stbr_she')
-       call my_out(70,nx,ny,b2stbr_shi,'b2stbr_shi')               !srv 29.04.10
+!WG_TODO       call my_out_us(70,nCv,b2stbr_she,'b2stbr_she')
+!WG_TODO       call my_out_us(70,nCv,b2stbr_shi,'b2stbr_shi')               !srv 29.04.10
       endif
       if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)
      &         .or. iout_b2wdat.eq.4 ) then
        if (use_eirene.eq.0) then
 !        do k=0,3
 !          write (chk,'(i1)') k
-!          call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbr_sch'//chk)
+!          call my_out_us(70,nCv,sch0(-1,-1,k),'b2stbr_sch'//chk)
 !       enddo
-        call my_out(70,nx,ny,b2stbr_sch,'b2stbr_sch')
+!WG_TODO        call my_out_us(70,nCv,b2stbr_sch,'b2stbr_sch')
        endif
       endif                                                           !srv 11.09.09 }
 

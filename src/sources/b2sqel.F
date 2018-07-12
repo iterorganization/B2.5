@@ -1,27 +1,18 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sqel (nx, ny, ns, ismain, ev, te, 
-     &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
+      subroutine b2sqel (nCv, ns, ismain, ev, te, rt, rtw)
       use b2mod_types
       use b2mod_b2cmpa
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain
+      integer nCv, ns, ismain
       real (kind=R8) ::
-     *  ev, te(-1:nx,-1:ny), rlsa(-1:nx,-1:ny,0:1,0:ns-1),
-     &  rlra(-1:nx,-1:ny,0:1,0:ns-1), rlqa(-1:nx,-1:ny,0:1,0:ns-1),
-     &  rlrd(-1:nx,-1:ny,0:1,0:ns-1), rlbr(-1:nx,-1:ny,0:1,0:ns-1),
-     &  rlza(-1:nx,-1:ny,0:1,0:ns-1), rlz2(-1:nx,-1:ny,0:1,0:ns-1),
-     &  rlpt(-1:nx,-1:ny,0:1,0:ns-1), rlpi(-1:nx,-1:ny,0:1,0:ns-1)
+     *  ev, te(1:nCv)
+      type (B2Rates), intent (inout) :: rt
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
-     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-     &  rbr(-1:nx,-1:ny,0:ns-1),
-     &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),
-     &  rpt(-1:nx,-1:ny,0:ns-1), rpi(-1:nx,-1:ny,0:ns-1)
+      type (B2RatesWork), intent (out) :: rtw
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -52,11 +43,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is
+      integer ncall, iCv, is
       real (kind=R8) ::
      *   phm0, phm1, phm2, cutlo, cutll, t0, art_rad, tnorm
       real (kind=R8) ::
-     *  wrk0(-1:nx,-1:ny)
+     *  wrk0(1:nCv)
       save ncall, phm0, phm1, phm2, art_rad
       integer, save :: use_eirene=0
 *   ..procedures
@@ -86,60 +77,52 @@
        call ipgetr ('b2sqel_artificial_radiation', art_rad)
        call ipgeti ('b2mndr_eirene', use_eirene)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, ns
+      call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test ev
       call xertst (0.0_R8.lt.ev, 'faulty argument ev')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-       call b2xvsg (n2, te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, te, 1, 'te', '.gt.')
       endif
 *   ..set cutll, cutlo
       cutll = log(machsfr())
       cutlo = max(machsfr(),exp(cutll))
-*   ..compute wrk0(,)=log(te(,)/ev)
-      do iy = -1, ny
-       do ix = -1, nx
-        wrk0(ix,iy) = log(te(ix,iy)/ev)
-       enddo
-      enddo
+*   ..compute wrk0()=log(te()/ev)
+      wrk0 = log(te/ev)
 
 * ..main computation
 *   ..compute rate coefficients
       do is = 0, ns-1
-       do iy = -1, ny
-        do ix = -1, nx
+       do iCv = 1, nCv
 *      ..compute ionisation rate coefficient
-         rsa(ix,iy,is) = phm0*
-     &     expu(rlsa(ix,iy,0,is)+rlsa(ix,iy,1,is)*wrk0(ix,iy))
+         rtw%rsa(iCv,is) = phm0*
+     &     expu(rt%rlsa(iCv,0,is)+rt%rlsa(iCv,1,is)*wrk0(iCv))
 *      ..compute recombination rate coefficient
-         rra(ix,iy,is) = phm1*
-     &     expu(rlra(ix,iy,0,is)+rlra(ix,iy,1,is)*wrk0(ix,iy))
+         rtw%rra(iCv,is) = phm1*
+     &     expu(rt%rlra(iCv,0,is)+rt%rlra(iCv,1,is)*wrk0(iCv))
 *      ..compute heat loss rate coefficient
-         rqa(ix,iy,is) = phm2*
-     &     ev*expu(rlqa(ix,iy,0,is)+rlqa(ix,iy,1,is)*wrk0(ix,iy))
+         rtw%rqa(iCv,is) = phm2*
+     &     ev*expu(rt%rlqa(iCv,0,is)+rt%rlqa(iCv,1,is)*wrk0(iCv))
 *      ..compute line radiation rate coefficient
-         rrd(ix,iy,is) = phm2*
-     &     ev*expu(rlrd(ix,iy,0,is)+rlrd(ix,iy,1,is)*wrk0(ix,iy))
+         rtw%rrd(iCv,is) = phm2*
+     &     ev*expu(rt%rlrd(iCv,0,is)+rt%rlrd(iCv,1,is)*wrk0(iCv))
 *      ..compute bremsstrahlung radiation rate coefficient
-         rbr(ix,iy,is) = phm2*
-     &     ev*expu(rlbr(ix,iy,0,is)+rlbr(ix,iy,1,is)*wrk0(ix,iy))
+         rtw%rbr(iCv,is) = phm2*
+     &     ev*expu(rt%rlbr(iCv,0,is)+rt%rlbr(iCv,1,is)*wrk0(iCv))
 *      ..compute effective charge state
-         rza(ix,iy,is) = max(zamin(is),min(zamax(is), 
-     &     rlza(ix,iy,0,is)+rlza(ix,iy,1,is)*wrk0(ix,iy)))
+         rt%rza(iCv,is) = max(zamin(is),min(zamax(is), 
+     &     rt%rlza(iCv,0,is)+rt%rlza(iCv,1,is)*wrk0(iCv)))
 *      ..compute effective square charge
-         rz2(ix,iy,is) = max(zamin(is)**2,min(zamax(is)**2,
-     &     rlz2(ix,iy,0,is)+rlz2(ix,iy,1,is)*wrk0(ix,iy)))
+         rt%rz2(iCv,is) = max(zamin(is)**2,min(zamax(is)**2,
+     &     rt%rlz2(iCv,0,is)+rt%rlz2(iCv,1,is)*wrk0(iCv)))
 *      ..compute cumulative ionisation potential
-         rpt(ix,iy,is) = 
-     &     rlpt(ix,iy,0,is)+rlpt(ix,iy,1,is)*wrk0(ix,iy)
+         rt%rpt(iCv,is) = 
+     &     rt%rlpt(iCv,0,is)+rt%rlpt(iCv,1,is)*wrk0(iCv)
 *      ..compute effective ionisation potential
-         rpi(ix,iy,is) = 
-     &     rlpi(ix,iy,0,is)+rlpi(ix,iy,1,is)*wrk0(ix,iy)
-        enddo
+         rt%rpi(iCv,is) = 
+     &     rt%rlpi(iCv,0,is)+rt%rlpi(iCv,1,is)*wrk0(iCv)
        enddo
       enddo
 
@@ -151,15 +134,13 @@
      1     'Artificial radiation model active, art_rad = ',art_rad
         endif
         is=ismain    ! XPB 2007.11.02 was ns-1
-        do iy = -1, ny
-          do ix = -1, nx
+        do iCv = 1, nCv
 *      ..compute artificial radiation rate coefficient
-            TNORM = MAX(0.000001_R8,TE(IX,IY)/(15.0_R8*EV))
-            rqa(ix,iy,is) = rqa(ix,iy,is) +
+            TNORM = MAX(0.000001_R8,TE(iCv)/(15.0_R8*EV))
+            rtw%rqa(iCv,is) = rtw%rqa(iCv,is) +
      1       art_rad*2.0E-31_R8/(TNORM**1.5_R8+1.0_R8/TNORM**3)
-            rrd(ix,iy,is) = rrd(ix,iy,is) +
+            rtw%rrd(iCv,is) = rtw%rrd(iCv,is) +
      1       art_rad*2.0E-31_R8/(TNORM**1.5_R8+1.0_R8/TNORM**3)
-          enddo
         enddo
       endif
       

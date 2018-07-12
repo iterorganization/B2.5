@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10 :: newversion ='03.001.000'
+      character*10 :: newversion ='03.002.000'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',

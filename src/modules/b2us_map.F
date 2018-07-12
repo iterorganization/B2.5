@@ -9,18 +9,19 @@
      .          alloc_mapping_rc, dealloc_mapping_rc
       
       type, public :: mapping
-        integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nFs, mxnFs,
-     .             nBc, mxnBc, nRc, mxnRc
+        integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv, 
+     &             nVmxFc, nFs, mxnFs, nBc, mxnBc, nRc, mxnRc
+
         integer, allocatable :: cvFcP(:,:) ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
         integer, allocatable :: cvFc(:)    ! listing for every cell the corresponding face numbers 
-	integer, allocatable :: fcCv(:,:)  ! (nFc,2) listing for every face the two corresponding cells
-	integer, allocatable :: fcVx(:,:)  ! (nFc,2) Hajo used: xVx(ix,iy) and yVx(ix,iy) are used but for each cell
-	integer, allocatable :: cvVxP(:,:) ! (nCv,2) pointing for every cell to the first index number in the cvVx list and its number of vertices 
-	integer, allocatable :: cvVx(:)    ! listing for every cell the corresponding vertex numbers
-	integer, allocatable :: vxFcP(:,:) ! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces  
-	integer, allocatable :: vxFc(:)    ! listing for every vertex the corresponding face numbers
-	integer, allocatable :: vxCvP(:,:) ! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells   
-	integer, allocatable :: vxCv(:)    ! listing for every vertex the corresponding cell numbers
+        integer, allocatable :: fcCv(:,:)  ! (nFc,2) listing for every face the two corresponding cells
+        integer, allocatable :: fcVx(:,:)  ! (nFc,2) Hajo used: xVx(ix,iy) and yVx(ix,iy) are used but for each cell
+        integer, allocatable :: cvVxP(:,:) ! (nCv,2) pointing for every cell to the first index number in the cvVx list and its number of vertices 
+        integer, allocatable :: cvVx(:)    ! listing for every cell the corresponding vertex numbers        
+        integer, allocatable :: vxFcP(:,:) ! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces  
+        integer, allocatable :: vxFc(:)    ! listing for every vertex the corresponding face numbers
+        integer, allocatable :: vxCvP(:,:) ! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells   
+        integer, allocatable :: vxCv(:)    ! listing for every vertex the corresponding cell numbers
         integer, allocatable :: cvFsP(:,:) ! (nFs,2) pointing for every 
         integer, allocatable :: cvFs(:)
         integer, allocatable :: fcFsP(:,:) ! (nFs,2) pointing for every 
@@ -55,18 +56,18 @@
       subroutine alloc_mapping (m)
 
       implicit none
-      type(mapping), intent(in out) :: m
+      type(mapping), intent(inout) :: m
 
       allocate (m%cvFcP(m%nCv,2)) 
-      allocate (m%cvFc(m%nCmxFc * m%nCv))
+      allocate (m%cvFc(m%nCmxFc))
       allocate (m%fcCv(m%nFc,2))
       allocate (m%fcVx(m%nFc,2))
       allocate (m%cvVxP(m%nCv,2))
-      allocate (m%cvVx(m%nCmxVx * m%nCv))
+      allocate (m%cvVx(m%nCmxVx))
       allocate (m%vxFcP(m%nVx,2)) 
-      allocate (m%vxFc(m%nCmxFc * m%nVx))
+      allocate (m%vxFc(m%nVmxFc))
       allocate (m%vxCvP(m%nVx,2))  
-      allocate (m%vxCv(m%nCmxVx * m%nCv)) 
+      allocate (m%vxCv(m%nVmxCv)) 
       allocate (m%cvFs(m%nCv))
       allocate (m%cvFsP(m%mxnFs,2))
       allocate (m%fcFs(m%nCv))
@@ -77,13 +78,17 @@
       
 !      allocate (m%intfaceV(m%nFc,2))
 !      allocate (m%intvertexV(m%nCmxVx * m%nCv))
-      allocate (m%intcellP(m%nCmxFc * m%nCv))
-      allocate (m%intcellR(m%nCmxFc * m%nCv))
+      allocate (m%intcellP(m%nCmxFc))
+      allocate (m%intcellR(m%nCmxFc))
 
       allocate (m%fcNv(m%nFc,2))
       allocate (m%aaP(m%nCv,2))
+
 !      allocate (m%cvNv(m%nCmxVx*m%nCmxVx*m%nCv)) ! very conservative; reduce!
 
+      write (*,*) 'Mapping allocated'
+
+      return
       end subroutine alloc_mapping 
 
 **********************************************************************
@@ -116,6 +121,7 @@
       deallocate (m%intcellP) 
       deallocate (m%intcellR)       
 
+      return
       end subroutine dealloc_mapping 
 
 **********************************************************************
@@ -129,7 +135,7 @@
       allocate (m%bcCv   ( m % mxnBc, 2 ) )
       allocate (m%bcFcOr ( m % mxnBc    ) )
 
-      
+      return
       end subroutine alloc_mapping_bc 
 
 **********************************************************************
@@ -143,6 +149,7 @@
       deallocate ( m % bcCv   )
       deallocate ( m % bcFcOr )
       
+      return
       end subroutine dealloc_mapping_bc
 
 **********************************************************************
@@ -156,7 +163,7 @@
       allocate (m%rcCv   ( m % mxnRc, 2 ) )
       allocate (m%rcFcOr ( m % mxnRc    ) )
 
-      
+      return      
       end subroutine alloc_mapping_rc 
 
 **********************************************************************
@@ -169,7 +176,8 @@
       deallocate ( m % rcCvP  )
       deallocate ( m % rcCv   )
       deallocate ( m % rcFcOr )
-      
+
+      return      
       end subroutine dealloc_mapping_rc 
 
 **********************************************************************

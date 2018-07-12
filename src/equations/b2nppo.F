@@ -1,26 +1,28 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nppo (nx, ny, nregionv, solvereg, itcnt, rxf,
-     &  ne, te, conc, sch, po, fch, respo, corpo, ierr)
+      subroutine b2nppo (nCv, nFc, nVx, nregionv, solvereg, itcnt, rxf,
+     &  geo, mpg, pl, dv, sr, ierr)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, nregionv, itcnt
+      integer nCv, nFc, nVx, nregionv, itcnt
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  rxf, ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
-     &  conc(-1:nx,-1:ny,0:1,0:1), sch(-1:nx,-1:ny,0:3)
+     *  rxf
       logical solvereg(0:nregionv)
 *   ..input/output arguments
-      real (kind=R8) ::
-     *  po(-1:nx,-1:ny), fch(-1:nx,-1:ny,0:1,0:1)
+      type (B2Plasma), intent (inout) :: pl
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Source), intent (inout) :: sr
 *   ..output arguments (unspecified on entry)
       integer ierr
-      real (kind=R8) ::
-     *  respo(-1:nx,-1:ny), corpo(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -48,10 +50,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2
+      integer ncall
       integer, save :: iout = 0, iout_b2wdat = 0
       real (kind=R8) ::
-     *  aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)
+     *  aa(9*nCv), wrk0(nCv)
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -70,33 +72,25 @@
        call ipgeti ('b2nppo_iout', iout)                            !srv 08.07.08
        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..test rxf
       call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      . 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of ne, te
-       call b2xvsg (n2, ne, 1, 'ne', '.gt.')
-       call b2xvsg (n2, te, 1, 'te', '.gt.')
-*    ..test sign of conc
-       call b2xvsg (n2, conc(-1,-1,0,0), 1, 'conc00', '.ge.')
-       call b2xvsg (n2, conc(-1,-1,1,1), 1, 'conc11', '.ge.')
-*    ..test edge values of conc
-       call b2xvff (nx, ny, conc, 'conc')
+       call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
 *    ..test sign of sch
-       call b2xvsg (n2, sch(-1,-1,1), 1, 'sch1', '.le.')
-       call b2xvsg (n2, sch(-1,-1,3), 1, 'sch3', '.le.')
-*    ..test edge values of fch
-       call b2xvff (nx, ny, fch, 'fch')
+       call b2xvsg (nCv, sr%sch(1,1), 1, 'sch1', '.le.')
+       call b2xvsg (nCv, sr%sch(1,3), 1, 'sch3', '.le.')
       endif
 
 * ..main computation
 *   ..compute residual
-      call b2ursd (nx, ny, ne, po, sch, fch, respo)
+      call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%po, sr%sch, dv%fch, 
+     &  dv%respo)
 c-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)
 c-rfs      write(6,*) 'ix=20, iy=-1, sch ',
 c-rfs     .  sch(20,-1,0), sch(20,-1,1),
@@ -108,25 +102,26 @@ c-rfs      write(6,*) 'ix=21, iy=-1, fch, respo',
 c-rfs     .  fch(21,-1,0), fch(21,-1,1),
 c-rfs     .  fch(21,0,1), respo(21,-1)
 *   ..compute correction
-      call b2uspo (nx, ny, nregionv, solvereg, itcnt,
-     &  ne, te, conc, sch, respo, corpo, aa9, 'b2nppo')             !srv 18.03.10
+      call b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, geo,
+     &  mpg, dv%ne, pl%te, dv%conc, sr%sch, dv%respo, dv%corpo, aa, 
+     &  'b2nppo')
 *   ..apply correction
-      call b2uppo (nx, ny, rxf, corpo, po)
+      call b2uppo (nCv, rxf, dv%corpo, pl%po)
 
       if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                    !srv 11.09.09 {
-!       call my_out(70,nx,ny,te,'b2nppo_te')
-!       call my_out(70,nx,ny,ne,'b2nppo_ne')
-        call my_out(70,nx,ny,po,'b2nppo_po')
-        call my_out(70,nx,ny,respo,'b2nppo_respo')
-        call my_out(70,nx,ny,fch(-1,-1,0,0),'b2nppo_fchx')
-        call my_out(70,nx,ny,fch(-1,-1,1,1),'b2nppo_fchy')
-!       call my_out(70,nx,ny,sch(-1,-1,0),'b2nppo_sch0')
-!       call my_out(70,nx,ny,sch(-1,-1,1),'b2nppo_sch1')
-!       call my_out(70,nx,ny,sch(-1,-1,2),'b2nppo_sch2')
-!       call my_out(70,nx,ny,sch(-1,-1,3),'b2nppo_sch3')
-         wrk0=sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
-     &        sch(:,:,3)*ne*po
-        call my_out(70,nx,ny,wrk0,'b2nppo_sch')
+!       call my_out_us(70,nCv,pl%te,'b2nppo_te')
+!       call my_out_us(70,nCv,dv%ne,'b2nppo_ne')
+        call my_out_us(70,nCv,pl%po,'b2nppo_po')
+        call my_out_us(70,nCv,dv%respo,'b2nppo_respo')
+        call my_out_us(70,nFc,dv%fch(1,0),'b2nppo_fchx')
+        call my_out_us(70,nFc,dv%fch(1,1),'b2nppo_fchy')
+!       call my_out_us(70,nCv,sr%sch(1,0),'b2nppo_sch0')
+!       call my_out_us(70,nCv,sr%sch(1,1),'b2nppo_sch1')
+!       call my_out_us(70,nCv,sr%sch(1,2),'b2nppo_sch2')
+!       call my_out_us(70,nCv,sr%sch(1,3),'b2nppo_sch3')
+         wrk0=sr%sch(:,0)+sr%sch(:,1)*pl%po+sr%sch(:,2)*dv%ne+
+     &        sr%sch(:,3)*dv%ne*pl%po
+        call my_out_us(70,nCv,wrk0,'b2nppo_sch')
       endif                                                       !srv 11.09.09 }
 
 *   ..set error parameter and return

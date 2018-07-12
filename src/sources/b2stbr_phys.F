@@ -1,10 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_phys (nx, ny, ns, nscx, iscx,
-     &  dtim, BoRiS, vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
-     &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
+      subroutine b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
+     &  dtim, BoRiS, geo, mpg, pl, dv, rt, rtw, st_ext, srw,
+     &  tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &  neutral_sources_rescale, core_sources_rescale,  
      &  sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
@@ -15,40 +14,27 @@
      2  new_sputter_namelist, shi0_ff, f_redep,
      3  potential_at_guard_cell, recycled_neutrals_contr)
       use b2mod_types
-      use b2mod_rates
-      use b2mod_sputter
+!WG_TODO      use b2mod_sputter
       use b2mod_tallies
-      use b2mod_elements
-      use b2mod_indirect
+!WG_TODO      use b2mod_elements
       use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
-      use b2mod_wall
+!WG_TODO      use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_b2cmfs
-      use b2mod_external
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
+      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
       integer sput_src, sput_chem_model, boundary_namelist, 
      *     reflection_on, sputter_energy_on, output, 
      *     sput_frac_flag, potential_at_guard_cell
       logical main_call, new_sputter_namelist
-      real (kind=R8) :: dtim, BoRiS,
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  hz(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx,-1:ny,0:2), bb(-1:nx,-1:ny,0:3)
-      real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
-      real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
-     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1), 
-     &  f_redep(-1:nx,-1:ny,0:ns-1)
+      real (kind=R8) :: dtim, BoRiS ,
+     &  f_redep(nCv,0:ns-1)
       real (kind=R8) ::
      *  neutral_sources_rescale, core_sources_rescale, 
      &  sput_chem_alpha, sput_phys_alpha, alpha,
@@ -56,12 +42,17 @@
      &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      1  sput_mixed_alpha, sput_mixed_beta,
      2  recycled_neutrals_contr
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Rates), intent (in) :: rt
+      type (B2RatesWork), intent (in) :: rtw
+      type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
+      type (B2SourceWork), intent (out) :: srw
       real (kind=R8) ::
-     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1),
-     &  shi0_ff(-1:nx,-1:ny,0:nscx-1),
+     &  shi0_ff(nCv,0:nscx-1),
      &  tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1), tphye(0:ns-1),
      &  thevp(0:ns-1), thvpe(0:ns-1), trese(0:ns-1), tresn(0:ns-1),
      &  trfln(0:ns-1), trfle(0:ns-1)
@@ -80,7 +71,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, i, ix, iy, is, ib, istra, ncall, k,
+      integer i, iRc1, iRc2, iFc, is, ib, istra, ncall, k,
      * iwall, itargsp, zbulk
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
@@ -89,7 +80,7 @@
       character*15 hlp_frm
       integer, allocatable :: flux_x(:), flux_y(:)
       real (kind=R8), allocatable :: area(:)
-      real (kind=R8) :: wrk0(-1:nx,-1:ny)
+      real (kind=R8) :: wrk0(nCv)
       real (kind=R8) ::
      *   amtol, t0, t1, t2, t3, b2stbr_phys_sna(0:ns-1), 
      *   qin, qel, surface_temp,
@@ -104,8 +95,7 @@
       external subini, subend, xertst
       external b2xvsg, b2xvff, smin, smax
       real (kind=R8) :: 
-     *   smax, smin, hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
+     *   smax, smin
 *   ..initialisation
       save ncall
       data ncall/0/
@@ -150,46 +140,35 @@
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2nphe_iout', iout_b2npht)                     !srv 11.09.09 }
       endif                                                         !srv 22.08.08 }
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc, ns
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test range of qz
-       call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
-     &   'faulty argument range qz(,,0)')
-       call xertst ( 0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &   smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
-     &   'faulty argument range qz(,,1)')
-*    ..test sign of pbs
-!       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                  !srv 11.01.13
-*    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+*    ..test sign of vol
+       call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
+       call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
+*    ..test range of cvQgam, fcQgam
+       call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
+     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8, 
+     &   'faulty argument range cvQgam(,1)')
+       call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
+     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8, 
+     &   'faulty argument range cvQgam(,0)')
+       call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
+     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8, 
+     &   'faulty argument range fcQgam(,1)')
+       call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
+     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8, 
+     &   'faulty argument range fcQgam(,0)')
 *    ..test sign of na, ni, ne, te, ti
-       call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-       call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
-       call b2xvsg (n2, ne, 1, 'ne', '.gt.')
-       call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2, ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
+       call b2xvsg (nCv*2, dv%ni, 1, 'ni', '.gt.')
+       call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
       endif
-*   ..test edge values of fluxes
-      do is = 0, ns-1
-       call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
-      enddo
-      call b2xvff (nx, ny, fhe, 'fhe')
-      call b2xvff (nx, ny, fhi, 'fhi')
-      call b2xvff (nx, ny, fch, 'fch')
-      call b2xvff (nx, ny, fne, 'fne')
-      call b2xvff (nx, ny, fni, 'fni')
-
+#ifdef WG_TODO
       if(new_sputter_namelist) then
          do itargsp=1, ntargsp
             if(track_chem_sput(itargsp)) then
@@ -211,11 +190,9 @@
 
       b2stbr_phys_sna=0.0_R8
       do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
+        do iCv=1,nCv
             b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
-     1       sna0(ix,iy,0,is)+sna0(ix,iy,1,is)*na(ix,iy,is)
-          enddo
+     1       srw%sna0(iCv,0,is)+srw%sna0(iCv,1,is)*pl%na(iCv,is)
         enddo
       enddo
       if((main_call.and.output.ge.1).or.output.gt.1)
@@ -253,9 +230,9 @@
       reflection_max = 0.0_R8
       redep_max = 0.0_R8
       yself_max = 0.0_R8
-
+#endif
       do istra = 1, nstrat
-
+#ifdef WG_TODO
         sput_dst_bulk=targsp(istra,1)
         if (sput_dst_bulk.eq.-1) then
           l_chem_sput=.false.
@@ -320,17 +297,23 @@
         if((main_call.and.output.ge.1).or.output.gt.1)
      *     write(*,*) 'stratum,b2stbr_phys_sna(start): ',
      1   istra, b2stbr_phys_sna
-
+#endif
 * ..recycling model at south boundary
-        if (crcstra(istra).eq.'S') then
+        if (crcstra(istra).eq.'S' .or. crcstra(istra).eq.'N' .or. 
+     .      crcstra(istra).eq.'W' .or. crcstra(istra).eq.'E') then
 
 *   ..loop over boundary cells
-          do i = 1, rc_list_size(istra)          
-            Phi_app = get_phi_applied(boundary_namelist,
-     .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore = on_closed_surface(rc_list_x(i,istra),
-     .                                rc_list_y(i,istra)) ! xpb: no sputtering in core!
+          do i = 1, mpg%rcCvP(istra,2)
+            iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
+            iRc2 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,2) ! the domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iRc1,1))        ! the guard face
+
+            Phi_app = getPhiApplied(boundary_namelist,mpg,iRc1) ! the potential
+
+            lcore = mpg%cvOnClosedSurface(iRc1) ! xpb: no sputtering in core!
+
 *   ..compute 2-D target temperature evolution
+#ifdef WG_TODO
             if(plate_model.eq.2 .and. .not.lcore .and. main_call 
      &       .and. i.eq.1) then
               allocate(flux_x(rc_list_size(istra)),
@@ -351,148 +334,15 @@
      &         area(1:rc_list_size(istra)),BoRiS)
               deallocate(flux_x,flux_y,area)
             endif
-
+#endif
             call recycle(
      &           species_start(istra), species_end(istra),
-     &           rc_list_x(i,istra),rc_list_y(i,istra),
-     &           topix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           topiy(rc_list_x(i,istra),rc_list_y(i,istra)),-1,
-     &           topix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           topiy(rc_list_x(i,istra),rc_list_y(i,istra)),1,
-     &           hy(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           hy(topix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &               topiy(rc_list_x(i,istra),rc_list_y(i,istra))),
-     &           Phi_app,
-     &           gs(topix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &              topiy(rc_list_x(i,istra),rc_list_y(i,istra)),1),
-     &           lcore)
-          enddo
-
-* ..recycling model at north boundary
-        else if (crcstra(istra).eq.'N') then
-
-*   ..loop over boundary cells
-          do i = 1, rc_list_size(istra)
-            Phi_app = get_phi_applied(boundary_namelist,
-     .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore=on_closed_surface(rc_list_x(i,istra),
-     .                              rc_list_y(i,istra))
-*   ..compute 2-D target temperature evolution
-            if(plate_model.eq.2 .and. .not.lcore .and. main_call 
-     &       .and. i.eq.1) then
-              allocate(area(rc_list_size(istra)))
-              do ix = 1, rc_list_size(istra)
-                area(ix) = gs(rc_list_x(ix,istra),rc_list_y(ix,istra),1)
-              enddo
-              call prehd2D(ns,rc_list_size(istra),
-     &         rc_list_x(1:rc_list_size(istra),istra),
-     &         rc_list_y(1:rc_list_size(istra),istra),dtim,+1,
-     &         rc_list_x(1:rc_list_size(istra),istra),
-     &         rc_list_y(1:rc_list_size(istra),istra),1,
-     &         area(1:rc_list_size(istra)),BoRiS)
-              deallocate(area)
-            endif
-
-            call recycle(
-     &           species_start(istra),species_end(istra),
-     &           rc_list_x(i,istra),rc_list_y(i,istra),
-     &           bottomix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           bottomiy(rc_list_x(i,istra),rc_list_y(i,istra)),+1,
-     &           rc_list_x(i,istra),rc_list_y(i,istra),1,
-     &           hy(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           hy(bottomix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &               bottomiy(rc_list_x(i,istra),rc_list_y(i,istra))),
-     &           Phi_app,
-     &           gs(rc_list_x(i,istra),rc_list_y(i,istra),1),
-     &           lcore)
-          enddo
-
-* ..recycling model at west boundary
-        else if (crcstra(istra).eq.'W') then
-
-*   ..loop over boundary cells
-          do i = 1, rc_list_size(istra)
-            Phi_app = get_phi_applied(boundary_namelist,
-     .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore=.false.
-*   ..compute 2-D target temperature evolution
-            if(plate_model.eq.2 .and. .not.lcore .and. main_call 
-     &       .and. i.eq.1) then
-              allocate(flux_x(rc_list_size(istra)),
-     .                 flux_y(rc_list_size(istra)),
-     .                 area(rc_list_size(istra)))
-              do ix = 1, rc_list_size(istra)
-                flux_x(ix) = rightix(rc_list_x(ix,istra),
-     .                               rc_list_y(ix,istra))
-                flux_y(ix) = rightiy(rc_list_x(ix,istra),
-     .                               rc_list_y(ix,istra))
-                area(ix) = gs(flux_x(ix),flux_y(ix),0)
-              enddo
-              call prehd2D(ns,rc_list_size(istra),
-     &         rc_list_x(1:rc_list_size(istra),istra),
-     &         rc_list_y(1:rc_list_size(istra),istra),dtim,-1,
-     &         flux_x(1:rc_list_size(istra)),
-     &         flux_y(1:rc_list_size(istra)),0,
-     &         area(1:rc_list_size(istra)),BoRiS)
-              deallocate(flux_x,flux_y,area)
-            end if
-
-            call recycle(
-     &           species_start(istra),species_end(istra),
-     &           rc_list_x(i,istra),rc_list_y(i,istra),
-     &           rightix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           rightiy(rc_list_x(i,istra),rc_list_y(i,istra)),-1,
-     &           rightix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           rightiy(rc_list_x(i,istra),rc_list_y(i,istra)),0,
-     &           hx(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           hx(rightix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &              rightiy(rc_list_x(i,istra),rc_list_y(i,istra))),
-     &           Phi_app,
-     &           gs(rightix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &              rightiy(rc_list_x(i,istra),rc_list_y(i,istra)),0),
-     &           lcore)
-          enddo
-
-* ..recycling model at east boundary
-        else if (crcstra(istra).eq.'E') then
-
-*   ..loop over boundary cells
-          do i = 1, rc_list_size(istra)     
-            Phi_app = get_phi_applied(boundary_namelist,
-     .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore=.false.
-*   ..compute 2-D target temperature evolution
-            if(plate_model.eq.2 .and. .not.lcore .and. main_call 
-     &       .and. i.eq.1) then 
-              allocate(area(rc_list_size(istra)))
-              do ix = 1, rc_list_size(istra)
-                area(ix) = gs(rc_list_x(ix,istra),rc_list_y(ix,istra),0)
-              enddo
-              call prehd2D(ns,rc_list_size(istra),
-     &         rc_list_x(1:rc_list_size(istra),istra),
-     &         rc_list_y(1:rc_list_size(istra),istra),dtim,+1,
-     &         rc_list_x(1:rc_list_size(istra),istra),
-     &         rc_list_y(1:rc_list_size(istra),istra),0,
-     &         area(1:rc_list_size(istra)),BoRiS)
-              deallocate(area)
-            endif
-
-            call recycle(
-     &           species_start(istra), species_end(istra),
-     &           rc_list_x(i,istra),rc_list_y(i,istra),
-     &           leftix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           leftiy(rc_list_x(i,istra),rc_list_y(i,istra)),+1,
-     &           rc_list_x(i,istra),rc_list_y(i,istra),0,
-     &           hx(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           hx(leftix(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &              leftiy(rc_list_x(i,istra),rc_list_y(i,istra))),
-     &           Phi_app,
-     &           gs(rc_list_x(i,istra),rc_list_y(i,istra),0),
-     &           lcore)
+     &           iRc1, iRc2, iFc, mpg%rcFcOr(iRc1), Phi_app, lcore)
           enddo
 
         endif       ! crcstra(istra)
 
+#ifdef WG_TODO
         b2stbr_phys_sna=0.0_R8
         do is=0,ns-1
           do iy=-1,ny
@@ -505,9 +355,10 @@
         if((main_call.and.output.ge.1).or.output.gt.1)
      *       write(*,*) 'stratum,b2stbr_phys_sna(end): ',
      1   istra, b2stbr_phys_sna
-
+#endif
       enddo      ! istra
 
+#ifdef WG_TODO
       b2stbr_phys_sna=0.0_R8
       do is=0,ns-1
         do iy=-1,ny
@@ -548,7 +399,7 @@
           endif
         enddo
       endif
-
+#endif
       if (iout.eq.1 .or. iout_b2npmo.eq.1) then                   !srv 11.07.05 11.09.09 {
        do is = 0, ns-1
 	write (chns,'(i3.3)') is
@@ -557,11 +408,11 @@
 !	   call my_out(70,nx,ny,smo0(-1,-1,k,is),
 !     &                       'b2stbr_phys_smo'//chk//chns)
 !	  enddo
-        wrk0=smo0(:,:,0,is)+
-     &       smo0(:,:,1,is)*ua(:,:,is)+
-     &       smo0(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &       smo0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-	call my_out(70,nx,ny,wrk0,'b2stbr_phys_smo'//chns)
+        wrk0=srw%smo0(:,0,is)+
+     &       srw%smo0(:,1,is)*pl%ua(:,is)+
+     &       srw%smo0(:,2,is)*pl%na(:,is)*mp*am(is)+
+     &       srw%smo0(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
+	call my_out_us(70,nCv,wrk0,'b2stbr_phys_smo'//chns)
        enddo
       endif
       if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
@@ -572,8 +423,8 @@
 !	   call my_out(70,nx,ny,sna0(-1,-1,k,is),
 !     &                       'b2stbr_phys_sna'//chk//chns)
 !	  enddo
-        wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
-	call my_out(70,nx,ny,wrk0,'b2stbr_phys_sna'//chns)
+        wrk0=srw%sna0(:,0,is)+srw%sna0(:,1,is)*pl%na(:,is)
+	call my_out_us(70,nCv,wrk0,'b2stbr_phys_sna'//chns)
        enddo
       endif
       if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
@@ -583,17 +434,17 @@
 !	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbr_phys_shi'//chk)
 !	  call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbr_phys_sch'//chk)
 !	 enddo
-         wrk0=she0(:,:,0)+she0(:,:,1)*te+
-     &        she0(:,:,2)*ne + she0(:,:,3)*te*ne
-	 call my_out(70,nx,ny,wrk0,'b2stbr_phys_she')
-         wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
-     &        shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
-	 call my_out(70,nx,ny,wrk0,'b2stbr_phys_shi')
+         wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
+     &        srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
+	 call my_out_us(70,nCv,wrk0,'b2stbr_phys_she')
+         wrk0=srw%shi0(:,0)+srw%shi0(:,1)*pl%ti+
+     &        srw%shi0(:,2)*dv%ni(:,0)+srw%shi0(:,3)*pl%ti*dv%ni(:,0)
+	 call my_out_us(70,nCv,wrk0,'b2stbr_phys_shi')
       endif
       if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
-         wrk0=sch0(:,:,0)+sch0(:,:,1)*po+
-     &        sch0(:,:,2)*ne+sch0(:,:,3)*po*ne(:,:)
-	 call my_out(70,nx,ny,wrk0,'b2stbr_phys_sch')
+         wrk0=srw%sch0(:,0)+srw%sch0(:,1)*pl%po+
+     &        srw%sch0(:,2)*dv%ne+srw%sch0(:,3)*pl%po*dv%ne
+	 call my_out_us(70,nCv,wrk0,'b2stbr_phys_sch')
       endif
       if(iout.eq.1) then
         open(70,file='t_files.dat')
@@ -628,23 +479,17 @@
 
       contains
 
-      subroutine recycle(nsmin,nsmax,ix,iy,ixn,iyn,
-     &     isign,ixf,iyf,idir,
-     &     hh,hhn,Phi_app,area,
-     &     lcore)
-c ix,iy           position of the cell
-c ixn,iyn         position of the neighbour cell
+      subroutine recycle(nsmin,nsmax,iCv,iCn,iFc,isign,Phi_app,lcore)
+c iCv             number of the guard cell
+c iCn             number of the neighbour cell
+c iFc             number of the guard cell face
 c isign           multiplies fluxes to get the right sign
-c ixf,iyf         position where fluxes are evaluated
-c idir            index for direction of flux (x or y)
-c hh              either hx or hy1 @ ix,iy
-c hhn             either hx or hy1 @ ixn,iyn
 c Phi_app         applied potential
 c area            area element
 c lcore           is this a core element?
       implicit none
-      integer nsmin, nsmax, ix, iy, ixn, iyn, isign, ixf, iyf, idir
-      real (kind=R8) hh, hhn, Phi_app, area, pof
+      integer nsmin, nsmax, iCv, iCn, iFc
+      real (kind=R8) Phi_app, pof, isign
       logical lcore, found
 
       integer is0, is1, is2, is, js, k, iwall, itrack
@@ -659,6 +504,7 @@ c lcore           is this a core element?
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 
+#ifdef WG_TODO
       iwall=xymap(ix,iy)
 cdpc-exp
       if(sput_frac_flag.eq.0.or.lcore.or.ntargsp.eq.0.or.
@@ -791,46 +637,57 @@ cxpb  with bulk and deposited contributions
         enddo
       endif
 cdpc-end
-      tef = (te(ix,iy)*hhn+te(ixn,iyn)*hh)/(hhn+hh)
-      tif = (ti(ix,iy)*hhn+ti(ixn,iyn)*hh)/(hhn+hh)
+#endif
+      tef = (pl%te(mpg%fcCv(iFc,1))*geo%fcHc(iFc,2)+
+     &       pl%te(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
+     &      (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+      tif = (pl%ti(mpg%fcCv(iFc,1))*geo%fcHc(iFc,2)+
+     &       pl%ti(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
+     &      (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
       if (potential_at_guard_cell.eq.1) then
 !        write(6,*) 'Potential taken at guard cell (phys)'
-        pof = po(ix,iy)
+        pof = pl%po(iCv)
       else
 !        write(6,*) 'Potential taken at real cell (phys)'
-        pof = po(ixn,iyn)
+        pof = pl%po(iCn)
       endif
       zaf(0:ns-1) = 
-     & (rza(ix,iy,0:ns-1)*hhn+rza(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
+     & (rt%rza(mpg%fcCv(iFc,1),0:ns-1)*geo%fcHc(iFc,2)+
+     &  rt%rza(mpg%fcCv(iFc,2),0:ns-1)*geo%fcHc(iFc,1))/
+     & (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
       rpf(0:ns-1) = 
-     & (rpt(ix,iy,0:ns-1)*hhn+rpt(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      qin = max(0.0_R8,isign*(fhi(ixf,iyf,idir,0)+
-     &                        fhi(ixf,iyf,idir,1)+
-     &                        fhi_ext(ixf,iyf,idir,0)+
-     &                        fhi_ext(ixf,iyf,idir,1)))/area
+     & (rt%rpt(mpg%fcCv(iFc,1),0:ns-1)*geo%fcHc(iFc,2)+
+     &  rt%rpt(mpg%fcCv(iFc,2),0:ns-1)*geo%fcHc(iFc,1))/
+     & (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+      qin = max(0.0_R8,isign*(dv%fhi(iFc,0) + dv%fhi(iFc,1) +
+     &  st_ext%fhi(iFc,0) + st_ext%fhi(iFc,1)))/geo%fcS(iFc)
       do is=0,ns-1
-         qin=qin+max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is) + 
-     &                             fna(ixf,iyf,idir,1,is)))
-     &        *((kinrgy(ix,iy,is)+tif)*(1.0_R8-BoRiS) + rpf(is)*ev)/area
+        qin = qin+max(0.0_R8,isign*(dv%fna(iFc,0,is)+dv%fna(iFc,1,is)))*
+     &    ((dv%kinrgy(iCv,is)+tif)*(1.0_R8-BoRiS) + rpf(is)*ev)/
+     &     geo%fcS(iFc)
       enddo
-      do is=0,ns_ext-1
-         ptf =
-     &    (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/(hhn+hh)
-         taf =
-     &    (ta_ext(ix,iy,is)*hhn+ta_ext(ixn,iyn,is)*hh)/(hhn+hh)
-         qin=qin+max(0.0_R8,isign*(fa_ext(ixf,iyf,idir,0,is) + 
-     &                             fa_ext(ixf,iyf,idir,1,is)))
-     &        *((0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+taf)*
+      do is=0,st_ext%ns-1
+        ptf =
+     &   (st_ext%pt(mpg%fcCv(iFc,1),is)*geo%fcHc(iFc,2)+
+     &    st_ext%pt(mpg%fcCv(iFc,2),is)*geo%fcHc(iFc,1))/
+     &   (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+        taf =
+     &   (st_ext%ta(mpg%fcCv(iFc,1),is)*geo%fcHc(iFc,2)+
+     &    st_ext%ta(mpg%fcCv(iFc,2),is)*geo%fcHc(iFc,1))/
+     &   (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+        qin = qin + max(0.0_R8,isign*(st_ext%fa(iFc,0,is) + 
+     &                            st_ext%fa(iFc,1,is)))
+     &        *((0.5_R8*st_ext%am(is)*mp*st_ext%ua(iCv,is)**2+taf)*
      &          (1.0_R8-BoRiS)
-     &          + ptf*ev)/area
+     &          + ptf*ev)/geo%fcS(iFc)
       enddo
-      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir,0)+
-     &  fhe(ixf,iyf,idir,1)+
-     &  (fne(ixf,iyf,idir,0)+fne(ixf,iyf,idir,1))
-     &  *tef*(1.0_R8-BoRiS)))/area
+      qel = max(0.0_R8,isign*(dv%fhe(iFc,0)+dv%fhe(iFc,1)+
+     &  (dv%fne(iFc,0)+dv%fne(iFc,1))*tef*(1.0_R8-BoRiS)))/geo%fcS(iFc)
       if(lcore) then
          surface_temp = 0.0_R8
       else
+         surface_temp = 0.0_R8
+#ifdef WG_TODO
          if(iwall.eq.0) then
             write(*,*) 'xymap returned zero for ix,iy = ',ix,iy
             call xerrab ('Invalid iwall setting!')
@@ -849,6 +706,7 @@ cdpc-end
          else if (plate_model.eq.2) then
            surface_temp = target_temp(iwall,1)
          endif
+#endif
       endif
 
 *    ..loop over species
@@ -881,18 +739,18 @@ cdpc
 cdpc
 *       (species (is) recycles into is0)
 *       (is0 corresponds to CX species is2)
-         t0 = max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is) + 
-     &                          fna(ixf,iyf,idir,1,is))) *
+         t0 = max(0.0_R8,isign*(dv%fna(iFc,0,is) + dv%fna(iFc,1,is))) *
      1        neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
          Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
-         Pflx = t0/area          ! xpb: Incident particle flux (part/m^2/s)
+         Pflx = t0/geo%fcS(iFc)  ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then
-            vbar = sqrt(8.0_R8 * ti(ix,iy) / (pi * am(is) * mp))
-            Pflx = Pflx + na(ix,iy,is)*vbar*alpha *
+            vbar = sqrt(8.0_R8 * pl%ti(iCv) / (pi * am(is) * mp))
+            Pflx = Pflx + pl%na(iCv,is)*vbar*alpha *
      1           neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
          endif
-         sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+recyc(is,istra)*t0
+         srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+recyc(is,istra)*t0
+#ifdef WG_TODO
          itrack=track_index(is0)
 cxpb Whatever is not recycled is counted as deposition
          if(itrack.gt.0.and.itrack.le.ntrack
@@ -901,19 +759,21 @@ cxpb Whatever is not recycled is counted as deposition
      1           dtim*plate_time_factor(iwall)*
      2           (1.0_R8-recyc(is,istra))*t0
          endif
+#endif
 cwdk  recycle toroidal componenent of parallel momentum, factor mrecyc
 c     (toroidal piec only, because poloidal piece of parallel velocity flips sign after reflection)
-         smo0(ix,iy,0,is0) = smo0(ix,iy,0,is0) + mrecyc(is,istra)*
-     &        am(is)*mp*ua(ix,iy,is)*bb(ix,iy,2)**2/bb(ix,iy,3)**2*
-     &        recyc(is,istra)*t0*hz(ix,iy)
-         shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
+         srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + mrecyc(is,istra)*
+     &    am(is)*mp*pl%ua(iCv,is)*geo%cvBb(iCv,2)**2/geo%cvBb(iCv,3)**2*
+     &    recyc(is,istra)*t0*geo%cvH(iCv)
+         srw%shi0(iCv,0) = srw%shi0(iCv,0)+recycled_neutrals_contr*max(
      &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
-         if (is2.ne.-1) shi0_ff(ix,iy,is2) = shi0_ff(ix,iy,is2)+
+         if (is2.ne.-1) shi0_ff(iCv,is2) = shi0_ff(iCv,is2)+
      &        recycled_neutrals_contr*max(
      &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
+#ifdef WG_TODO
          if(.not.lcore) then    ! xpb: no sputtering in core!
 c chemical sputtering
             if(chem_sput(is,istra).gt.0.0_R8.and.
@@ -1412,10 +1272,11 @@ cxpb  as deposition
                backscattering_energy(iwall,is) = 0.0_R8
             endif
          endif
+#endif
 *    ..recycling into next ionized species 
          if(is.lt.ns-1) then
            if(lnext(is,is+1))
-     1        sna0(ix,iy,0,is+1) = sna0(ix,iy,0,is+1)+
+     1        srw%sna0(iCv,0,is+1) = srw%sna0(iCv,0,is+1)+
      2        rcion(is,istra)*t0/neutral_sources_rescale
          endif
       enddo      ! do is = 0, ns-1
@@ -1442,18 +1303,17 @@ cxpb
             endif
 cxpb
 *          (species (is) recycles into is0)
-            t0 = max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is) + 
-     .                             fna(ixf,iyf,idir,1,is))) *
-     .           core_sources_rescale ! xpb: 2002.02.01
+            t0 = max(0.0_R8,isign*(dv%fna(iFc,0,is) + dv%fna(iFc,1,is)))
+     .           *core_sources_rescale ! xpb: 2002.02.01
             if (is.ne.is0) then
-               sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+
+               srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0)+
      &          recyc(is,istra)*t0
 cwdk  recycling of true parallel momentum
 c     (at core, cell faces will be flux-surface aligned)
-               smo0(ix,iy,0,is0) = smo0(ix,iy,0,is0)+
-     .           mrecyc(is,istra)*am(is)*mp*ua(ix,iy,is)*
-     .           recyc(is,istra)*t0*hz(ix,iy)
-               shi0(ix,iy,0) = shi0(ix,iy,0)+erecyc(is,istra)*
+               srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0)+
+     .           mrecyc(is,istra)*am(is)*mp*pl%ua(iCv,is)*
+     .           recyc(is,istra)*t0*geo%cvH(iCv)
+               srw%shi0(iCv,0) = srw%shi0(iCv,0)+erecyc(is,istra)*
      .          (1.5_R8+BoRiS)*(zaf(is)*tef+tif)*recyc(is,istra)*t0
      &          *recycled_neutrals_contr  !srv          
             endif

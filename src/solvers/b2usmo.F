@@ -1,37 +1,37 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usmo (nx, ny, isb, nregionv, solvereg, itcnt,     !srv 04.07.08
-     &  rxg, vol, hx, hz, bb, rob, pb, ub,                           !srv 09.01.01
-     &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa5, aad0, name) !srv 06.04.07
-      use b2mod_indirect
+      subroutine b2usmo (nCv, nFc, nVx, isb, geo, mpg, 
+     &  nregionv, solvereg, itcnt, rxg, rob, pb, ub,                !srv 09.01.01
+     &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa, aad0, name) !srv 06.04.07
       use b2mod_types
-      use b2mod_boundary_namelist
-     , , only : iffboundx, iffboundy
+      use b2us_geo
+      use b2us_map
       implicit none
-*   ..input arguments (unchanged on exit)
-      integer nx, ny, isb, nregionv, itcnt
+*   ..input arguments (unchaninvged on exit)
+      integer nCv, nFc, nVx, isb, nregionv, itcnt
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       character*(*) name                                             !srv 18.05.02
       real (kind=R8) ::
-     *  rxg, bb(-1:nx,-1:ny,0:3), rob(-1:nx,-1:ny),
-     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),          !srv 09.01.01
-     &  pb(-1:nx,-1:ny), ub(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3),
-     &  flcb(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),
-     &  resmb(-1:nx,-1:ny), ctcfb(-1:nx,-1:ny)                       !srv 06.04.07
+     *  rxg, rob(nCv),
+     &  pb(nCv), ub(nCv), smb(nCv,0:3), flcb(nFc,0:1), cvsb(nFc,0:1),
+     &  resmb(nCv), ctcfb(nCv)                                       !srv 06.04.07
       logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  corub(-1:nx,-1:ny), pccb(-1:nx,-1:ny,0:1,0:1)
+     *  corub(nCv), pccb(nCv,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
+!WG_TODO: better definition of size aa still needed
       real (kind=R8) ::
-     *  aa5(-1:nx,-1:ny,-2:2), aad0(-1:nx,-1:ny)
+     *  aa(9*nCv), aad0(nCv)
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2USMO computes a correction towards the solution of the
+*     b2usmo computes a correction towards the solution of the
 *     parallel momentum balance equation for one atomic species.
 *
 *
@@ -44,20 +44,16 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
+      integer ncall, iCv, iFc, iCv1, iCv2, iNv1, iNv2, ireg
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
-     *  cfc0, t0, t1, flo, dif, csb, csb1
+     *  cfc0, t0, t1, t2, t3, t4, flo, dif, flo9, con9, csb, csb1
+      logical lnonzero
       save ncall, cfc0
 *   ..procedures
       intrinsic max, abs, sqrt
-      real (kind=R8) ::
-     *  hybr
       external subini, subend, xertst, ipgetr, sfill
-      external b2xvsg, b2xvff, b2ux5p
-      hybr(flo,dif) = max(dif,abs(flo/2.0_R8),
-     .                    sqrt(dif**2+flo**2/4.0_R8))
+      external b2xvsg, b2xvff, b2ux5p, intfaceh, intfacev
 *   ..initialisation
       data ncall/0/, cfc0/1.0_R8/
 
@@ -71,189 +67,107 @@
       if (ncall.eq.0) then
        call ipgetr ('b2usmo_cfc0', cfc0)
        call xertst (0.0_R8.le.cfc0, 'faulty internal parameter cfc0')
-       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
-       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
        call ipgeti ('b2usmo_iout', iout)                              !srv 17.06.02
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..test itcnt
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of rob, pb, smb1, smb3, cvsb
-       call b2xvsg (n2, rob, 1, 'rob', '.gt.')
-       call b2xvsg (n2, pb, 1, 'pb', '.gt.')
-       call b2xvsg (n2, smb(-1,-1,1), 1, 'smb1', '.le.')
-       call b2xvsg (n2, smb(-1,-1,3), 1, 'smb3', '.le.')
-       call b2xvsg (n2, cvsb(-1,-1,0,0), 1, 'cvsb00', '.ge.')
-       call b2xvsg (n2, cvsb(-1,-1,1,1), 1, 'cvsb11', '.ge.')
-*    ..test edge values of flcb, cvsb
-       call b2xvff (nx, ny, flcb, 'flcb')
-       call b2xvff (nx, ny, cvsb, 'cvsb')
+       call b2xvsg (nCv, rob, 1, 'rob', '.gt.')
+       call b2xvsg (nCv, pb, 1, 'pb', '.gt.')
+       call b2xvsg (nCv, smb(1,1), 1, 'smb1', '.le.')
+       call b2xvsg (nCv, smb(1,3), 1, 'smb3', '.le.')
       endif
 
 * ..compute the correction
-      call sfill (n2*5, 0.0_R8, aa5, 1)
-*   ..compute the five-point matrix
-      do iy = -1, ny
-       do ix = -1, nx
-        ireg = region(ix,iy,0)
+      aa = 0.0_R8
+*   ..compute the nine-point matrix
+      do iCv = 1, nCv
+        ireg = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
-         csb = sqrt(pb(ix,iy)/rob(ix,iy))
-         csb1 = sqrt(ub(ix,iy)**2+csb**2)
-         aad0(ix,iy) = -smb(ix,iy,1)-
-     &    smb(ix,iy,3)*rob(ix,iy)+
-     &    cfc0*abs(vol(ix,iy)*hz(ix,iy)/hx(ix,iy)*bb(ix,iy,0)/       !srv 09.01.01
-     &    bb(ix,iy,3)*csb)*rob(ix,iy)
-         aa5(ix,iy,0) = aad0(ix,iy)+abs(resmb(ix,iy))/(rxg*csb1)
+         csb = sqrt(pb(iCv)/rob(iCv))
+         csb1 = sqrt(ub(iCv)**2+csb**2)
+         aad0(iCv) = -smb(iCv,1)-
+     &    smb(iCv,3)*rob(iCv)+
+     &    cfc0*abs(geo%cvVol(iCv)*geo%cvH(iCv)/geo%cvHx(iCv)*       !srv 09.01.01
+     &    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*csb)*rob(iCv)
+         aa(mpg%aaP(iCv,1)) = aad0(iCv)+abs(resmb(iCv))/(rxg*csb1)
         else
-         aa5(ix,iy,0) = 1.0_R8
-         aad0(ix,iy) = 0.0_R8
+         aa(mpg%aaP(iCv,1)) = 1.0_R8
+         aad0(iCv) = 0.0_R8
         endif
-       enddo
       enddo
-      do iy = -1, ny
-       do ix = -1, nx
-csw 18feb2014 corrected BCs (SOLPS4)
-        if(iffboundx(ix,iy).ne.0) then
-          aa5(ix,iy,-1) = 0.0_R8
-          aa5(ix,iy,1) = 0.0_R8
-          cycle
+      do iFc = 1, nFc
+        iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
+        iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
+*     ..contributions from flcb(:,0), cvsb(:,0) ('5-point' contributions)
+        iNv1 = mpg%fcNv(iFc,1) ! number of c2 as seen from c1 
+        iNv2 = mpg%fcNv(iFc,2) ! number of c1 as seen from c2
+        t1 = - 0.5_R8*flcb(iFc,0) - cvsb(iFc,0)
+        t2 =   0.5_R8*flcb(iFc,0) - cvsb(iFc,0)
+        if (solvereg(mpg%cvReg(iCv1))) then
+          aa(mpg%aaP(iCv1,1))        = aa(mpg%aaP(iCv1,1))        - t1
+          aa(mpg%aaP(iCv1,1)+iNv1-1) = aa(mpg%aaP(iCv1,1)+iNv1-1) + t2
         endif
-
-        ireg = region(ix,iy,0)
-        if(leftix(ix,iy).eq.-2) then
-         aa5(ix,iy,-1) = 0.0_R8
-        else
-         if(no_Ptncr_x_co.eq.0) then                                  !sv 06.07.06 {
-          t0 =  flcb(ix,iy,0,0)/2.0_R8-
-     .          hybr(flcb(ix,iy,0,0),cvsb(ix,iy,0,0))
-          t1 = -flcb(ix,iy,0,0)/2.0_R8-
-     .          hybr(flcb(ix,iy,0,0),cvsb(ix,iy,0,0))
-         else
-          t0 =  flcb(ix,iy,0,0)/2.0_R8-cvsb(ix,iy,0,0)
-          t1 = -flcb(ix,iy,0,0)/2.0_R8-cvsb(ix,iy,0,0)
-         endif                                                        !sv 06.07.06 }
-         ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
-         if (solvereg(ileft))
-     >    aa5(leftix(ix,iy),leftiy(ix,iy),1) = t0
-         if (solvereg(ireg))
-     >    aa5(ix,iy,0) = aa5(ix,iy,0)-t0
-         if (solvereg(ileft))
-     >    aa5(leftix(ix,iy),leftiy(ix,iy),0) =
-     &    aa5(leftix(ix,iy),leftiy(ix,iy),0)-t1
-         if (solvereg(ireg))
-     >    aa5(ix,iy,-1) = t1
+        if (solvereg(mpg%cvReg(iCv2))) then
+          aa(mpg%aaP(iCv2,1))        = aa(mpg%aaP(iCv2,1))        - t2
+          aa(mpg%aaP(iCv2,1)+iNv2-1) = aa(mpg%aaP(iCv2,1)+iNv2-1) + t1
         endif
-        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
-     >   aa5(ix,iy,1) = 0.0_R8
-       enddo
-      enddo
-      do iy = -1, ny
-       do ix = -1, nx
-csw 18feb2014 corrected BCs (SOLPS4)
-        if(iffboundy(ix,iy).ne.0) then
-          aa5(ix,iy,-2) = 0.0_R8
-          aa5(ix,iy,2) = 0.0_R8
-          cycle
-        endif
-
-        ireg = region(ix,iy,0)
-        if(bottomiy(ix,iy).eq.-2) then
-         aa5(ix,iy,-2) = 0.0_R8
-        else
-         if(no_Ptncr_y_co.eq.0) then                                 !srv 06.07.06 {
-          t0 =  flcb(ix,iy,1,1)/2.0_R8 - 
-     &          hybr(flcb(ix,iy,1,1),cvsb(ix,iy,1,1))
-          t1 = -flcb(ix,iy,1,1)/2.0_R8 - 
-     &          hybr(flcb(ix,iy,1,1),cvsb(ix,iy,1,1))
-         else
-          t0 =  flcb(ix,iy,1,1)/2.0_R8 - cvsb(ix,iy,1,1)
-          t1 = -flcb(ix,iy,1,1)/2.0_R8 - cvsb(ix,iy,1,1)
-         endif                                                        !srv 06.07.06 }
-          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-          if (solvereg(ibot))
-     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0
-          if (solvereg(ireg))
-     >     aa5(ix,iy,0) = aa5(ix,iy,0)-t0
-          if (solvereg(ibot))
-     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),0) =
-     &              aa5(bottomix(ix,iy),bottomiy(ix,iy),0)-t1
-          if (solvereg(ireg))
-     >     aa5(ix,iy,-2) = t1
-cxpb
-          if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
-     &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
-     &       iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
-           if(ncall.lt.3) write(*,*) 'Executing xpb:b2usmo for ',ix,iy
-           t0 =  flcb(topix(ix,iy),topiy(ix,iy),1,1)/2.0_R8-
-     &           hybr(flcb(topix(ix,iy),topiy(ix,iy),1,1),
-     &                cvsb(topix(ix,iy),topiy(ix,iy),1,1))
-            t1 = -flcb(topix(ix,iy),topiy(ix,iy),1,1)/2.0_R8-
-     &            hybr(flcb(topix(ix,iy),topiy(ix,iy),1,1),
-     &                 cvsb(topix(ix,iy),topiy(ix,iy),1,1))
-            itop = region(topix(ix,iy),topiy(ix,iy),0)
-            if (solvereg(ireg))
-     >       aa5(ix,iy,2) = t0
-            if (solvereg(itop))
-     >       aa5(topix(ix,iy),topiy(ix,iy),0) = 
-     &       aa5(topix(ix,iy),topiy(ix,iy),0)-t0
-            if (solvereg(ireg))
-     >       aa5(ix,iy,0) = aa5(ix,iy,0)-t1
-            if (solvereg(itop))
-     >       aa5(topix(ix,iy),topiy(ix,iy),2) = t1
-          endif
-cxpb
-        endif
-        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg))
-     >   aa5(ix,iy,2) = 0.0_R8
-       enddo
+*     ..contributions from flcb(:,1), cvsb(:,1) ('9-point' contributions)
+!WG_TODO
       enddo
 *   ..compute pccb
       pccb = 0.0_R8
-      do iy = -1, ny
-       do ix = -1, nx
-        ireg = region(ix,iy,0)
+      do iCv = 1, nCv
+        ireg = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
-         pccb(ix,iy,0,0) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
-     .    bb(ix,iy,0)/bb(ix,iy,3)/aa5(ix,iy,0)                        !srv 11.01.13
-         pccb(ix,iy,1,1) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
-     .    bb(ix,iy,0)/bb(ix,iy,3)/aad0(ix,iy)                         !srv 11.01.13
+         pccb(iCv,0) = (geo%cvVol(iCv)*geo%cvH(iCv)/geo%cvHx(iCv))*      !srv 09.01.01
+     .    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)/aa(mpg%aaP(iCv,1))             !srv 11.01.13
+         pccb(iCv,1) = (geo%cvVol(iCv)*geo%cvH(iCv)/geo%cvHx(iCv))*      !srv 09.01.01
+     .    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)/aad0(iCv)                      !srv 11.01.13
         else
-         resmb(ix,iy) = 0.0_R8   ! take opportunity to correct RHS
+         resmb(iCv) = 0.0_R8   ! take opportunity to correct RHS
         endif
-       enddo
       enddo
 *   ..contribution from linearization of centrifugal force
-      aa5(:,:,0) = aa5(:,:,0) - min(0.0e0_R8,ctcfb)                   !srv 06.04.07
-      do iy=-1,ny
-       do ix=-1,nx
-        if (aa5(ix,iy,0).eq.0.0_R8 .and.
-     &      aa5(ix,iy,1).eq.0.0_R8 .and. aa5(ix,iy,-1).eq.0.0_R8 .and.
-     &      aa5(ix,iy,2).eq.0.0_R8 .and. aa5(ix,iy,-2).eq.0.0_R8) then
-          aa5(ix,iy,0) = 1.0_R8
-          resmb(ix,iy) = 0.0_R8
-        end if
-       enddo
+      do iCv = 1, nCv
+        aa(mpg%aaP(iCv,1)) = aa(mpg%aaP(iCv,1)) - 
+     &    min(0.0e0_R8,ctcfb(iCv))
       enddo
-*   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ', name
-      call b2ux5p (nx, ny, aa5, itcnt, resmb, corub, name)            !srv 18.03.10
+      do iCv = 1, nCv
+        lnonzero=.false.
+        do iNv1 = 1,mpg%aaP(iCv,2)
+          lnonzero = lnonzero.or.(aa(mpg%aaP(iCv,1)+iNv1-1).ne.0.0_R8)
+        enddo
+        if (.not.lnonzero) then
+          aa(mpg%aaP(iCv,1)) = 1.0_R8
+          resmb(iCv) = 0.0_R8
+        endif
+      enddo
 
+*   ..solve the correction equation
+      write(*,'(a,a)') 'Calling b2uxus from ', name
+      call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name)           !srv 18.03.10
+#ifdef WG_TODO
       if (iout.ne.0) then                                             !srv 17.06.02 {
-       call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2')
-       call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1')
-       call my_out(70,nx,ny,aa5(-1,-1, 0),name//'_aa5m0')
-       call my_out(70,nx,ny,aa5(-1,-1, 1),name//'_aa5p1')
-       call my_out(70,nx,ny,aa5(-1,-1, 2),name//'_aa5p2')
-       call my_out(70,nx,ny,resmb,name//'_resmb')
-       call my_out(70,nx,ny,corub,name//'_corub')
-       call my_out(70,nx,ny,pccb(-1,-1,0,0),name//'_pccbx')
-       call my_out(70,nx,ny,pccb(-1,-1,1,1),name//'_pccby')
+       call my_out_us(70,nCv,aa(-1,-1,-4),name//'_aam4')
+       call my_out_us(70,nCv,aa(-1,-1,-3),name//'_aam3')
+       call my_out_us(70,nCv,aa(-1,-1,-2),name//'_aam2')
+       call my_out_us(70,nCv,aa(-1,-1,-1),name//'_aam1')
+       call my_out_us(70,nCv,aa(-1,-1, 0),name//'_aam0')
+       call my_out_us(70,nCv,aa(-1,-1, 1),name//'_aap1')
+       call my_out_us(70,nCv,aa(-1,-1, 2),name//'_aap2')
+       call my_out_us(70,nCv,aa(-1,-1, 3),name//'_aap3')
+       call my_out_us(70,nCv,aa(-1,-1, 4),name//'_aap4')
+       call my_out_us(70,nCv,resmb,name//'_resmb')
+       call my_out_us(70,nCv,corub,name//'_corub')
+       call my_out_us(70,nCv,pccb(-1,-1,0,0),name//'_pccbx')
+       call my_out_us(70,nCv,pccb(-1,-1,1,1),name//'_pccby')
       endif                                                           !srv 17.06.02 }
+#endif
 * ..return
       ncall = ncall+1
       call subend ()

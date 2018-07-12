@@ -1,28 +1,31 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2upht (nx, ny, ns, nregionv, 
+      subroutine b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
      &  po_solve, ua_solve, solvereg, solvireg, solvpreg, solvmreg,
      &  rxf, pcm0, cortt, corte, corti,
-     &  pccm0, na, ua, te, ti, po, ne, ni, wrk0, vol)
+     &  pccm0, na, ua, te, ti, po, ne, ni)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nregionv
+      integer nCv, nFc, nVx, ns, nregionv
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  rxf, pcm0, cortt(-1:nx,-1:ny), corte(-1:nx,-1:ny),
-     &  corti(-1:nx,-1:ny), pccm0(-1:nx,-1:ny), vol(-1:nx,-1:ny)
+     *  rxf, pcm0, cortt(nCv), corte(nCv),
+     &  corti(nCv), pccm0(nCv)
       logical po_solve, ua_solve,
      &  solvereg(0:nregionv), solvireg(0:nregionv),
      &  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), wrk0(-1:nx,-1:ny)
+     *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
+     &  te(nCv), ti(nCv), po(nCv),
+     &  ne(nCv), ni(nCv,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -36,9 +39,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg
+      integer ncall, stylec, pot_eq, iCv, is, ireg
       real (kind=R8) ::
-     *  ctt, dte, dti, t0, t1, t2
+     *  ctt, dte(nCv), dti(nCv), t0, t1, t2,
+     *  wrk(nCv), wrkf(nFc), wrkv(nVx)
       save ncall, stylec, pot_eq
 *   ..procedures
       intrinsic min, max
@@ -56,16 +60,14 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2upht')
-*   ..set n2
-      n2=(nx+2)*(ny+2)
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2upht_stylec', stylec)
        call xertst (0.le.stylec, 'faulty internal parameter stylec')
        call ipgeti ('b2news_poteq', pot_eq)
       endif
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc, ns
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test rxf, pcm0
       call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8, 
@@ -73,86 +75,70 @@
       call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
 *   ..test sign of na, ni, vol, te, ti, ne
       if(ncall.lt.3) then
-        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
-        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-        call b2xvsg (n2, te, 1, 'te', '.gt.')
-        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
+        call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
+        call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
+        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
+        call b2xvsg (nCv, te, 1, 'te', '.gt.')
+        call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
+        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       endif 
 
 * ..apply the correction
 *   ..adjust te, ti, po
-      do iy = -1, ny
-       do ix = -1, nx
-        ireg = region(ix,iy,0)
+      do iCv = 1, nCv
+        ireg = mpg%cvReg(iCv)
         if (stylec.eq.0) then
          if (solvereg(ireg).and.solvireg(ireg)) then
-          dte = rxf*max(-te(ix,iy),(corte(ix,iy)+cortt(ix,iy))/2.0_R8)
-          dti = rxf*max(-ti(ix,iy),(corti(ix,iy)+cortt(ix,iy))/2.0_R8)
+          dte(iCv) = rxf*max(-te(iCv),(corte(iCv)+cortt(iCv))/2.0_R8)
+          dti(iCv) = rxf*max(-ti(iCv),(corti(iCv)+cortt(iCv))/2.0_R8)
          else
-          dte = rxf*max(-te(ix,iy),corte(ix,iy))
-          dti = rxf*max(-ti(ix,iy),corti(ix,iy))
+          dte(iCv) = rxf*max(-te(iCv),corte(iCv))
+          dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
          endif
         else if (stylec.eq.1) then
-         ctt = cortt(ix,iy)-
-     &     med(corte(ix,iy),cortt(ix,iy),corti(ix,iy))
+         ctt = cortt(iCv)-
+     &     med(corte(iCv),cortt(iCv),corti(iCv))
          if (solvereg(ireg).and.solvireg(ireg)) then
-          dte = rxf*max(-te(ix,iy),corte(ix,iy)+ctt)
-          dti = rxf*max(-ti(ix,iy),corti(ix,iy)+ctt)
+          dte(iCv) = rxf*max(-te(iCv),corte(iCv)+ctt)
+          dti(iCv) = rxf*max(-ti(iCv),corti(iCv)+ctt)
          else
-          dte = rxf*max(-te(ix,iy),corte(ix,iy))
-          dti = rxf*max(-ti(ix,iy),corti(ix,iy))
+          dte(iCv) = rxf*max(-te(iCv),corte(iCv))
+          dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
          endif
         else if (stylec.eq.2) then
 *        !! This for testing purposes only
-         dte = rxf*max(-te(ix,iy),corte(ix,iy))
-         dti = 0.0_R8
+         dte(iCv) = rxf*max(-te(iCv),corte(iCv))
+         dti(iCv) = 0.0_R8
         else if (stylec.eq.3) then
 *        !! This for testing purposes only
-         dte = 0.0_R8
-         dti = rxf*max(-ti(ix,iy),corti(ix,iy))
+         dte(iCv) = 0.0_R8
+         dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
         else if (stylec.eq.4) then
 *        !! This for testing purposes only
-         dte = rxf*max(-te(ix,iy),corte(ix,iy))
-         dti = rxf*max(-ti(ix,iy),corti(ix,iy))
+         dte(iCv) = rxf*max(-te(iCv),corte(iCv))
+         dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
         endif
-        if (leftix(ix,iy).ne.-2) 
-     >   wrk0(ix,iy) = ne(ix,iy)*dte+ni(ix,iy,0)*dti-
-     &                 ne(leftix(ix,iy),leftiy(ix,iy))*dte-
-     &                 ni(leftix(ix,iy),leftiy(ix,iy),0)*dti
-        if (solvereg(ireg)) te(ix,iy) = max(1.0e-5_R8*ev,te(ix,iy)+dte)	 !xpb
+        if (solvereg(ireg)) te(iCv) = max(1.0e-5_R8*ev,te(iCv)+dte(iCv))	 !xpb
         if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
-     &      leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
-                            po(ix,iy) = po(ix,iy)+dte/qe
+     &      iCv.le.mpg%nCi) then
+          po(iCv) = po(iCv)+dte(iCv)/qe
         else if (pot_eq.eq.2) then
-          po(ix,iy) = 3.1_R8*te(ix,iy)/qe
+          po(iCv) = 3.1_R8*te(iCv)/qe
         end if
-        if (solvireg(ireg)) ti(ix,iy) = max(1.0e-5_R8*ev,ti(ix,iy)+dti)	 !xpb
-       enddo
+        if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv))	 !xpb
       enddo
 *   ..adjust ua
+      wrk = ne*dte + ni(:,0)*dti
+      call diff_p (nCv, nFc, nVx, 0, geo, mpg, wrk, wrkv, wrkf)
+cwdk: now: interpolate wrkf from faces to centers
+cwdk  needed: "distribute" wrkf to centers based on volume
+      call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf, wrk)
       if (ua_solve) then
-       do iy = -1, ny
-        do ix = -1, nx
-         ireg = region(ix,iy,0)
-         if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-          t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
-     &     (wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &      wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
-     &       vol(rightix(ix,iy),rightiy(ix,iy))))
-         elseif(rightix(ix,iy).eq.nx+1) then
-          t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
-     &     wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-         elseif(leftix(ix,iy).eq.-2) then
-          t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
-     &     wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
-     &       vol(rightix(ix,iy),rightiy(ix,iy)))
-         endif
-         do is = 0, ns-1
-          if (solvmreg(is,ireg)) ua(ix,iy,is) = ua(ix,iy,is)-t0
-         enddo
+       do iCv = 1, nCv
+        ireg = mpg%cvReg(iCv)
+        t0 = pcm0*pccm0(iCv)*wrk(iCv)
+        do is = 0, ns-1
+         if (solvmreg(is,ireg)) ua(iCv,is) = ua(iCv,is)-t0
         enddo
        enddo
       endif

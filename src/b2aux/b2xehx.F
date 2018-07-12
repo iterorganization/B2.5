@@ -1,20 +1,21 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xehx (nx, ny, hx, hy, qz, qs, te, po, ne, ehx)       !srv 13.01.17
+      subroutine b2xehx (nCv, nFc, nVx, geo, mpg, te, po, ne, ehx)       !srv 13.01.17
       use b2mod_types
-      use b2mod_indirect
       use b2mod_constants
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny
+      integer nCv, nFc, nVx
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     &   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     &   qs(-1:nx,-1:ny,0:1)
+     &   te(nCv), po(nCv), ne(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   ehx(-1:nx,-1:ny,0:1)
+     &   ehx(nFc)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -32,20 +33,16 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, n2, ix, iy
+      integer ncall
       integer, save :: mode_ehx = 0                                     !srv 06.04.15
       real (kind=R8) ::
-     *   t0, hy1_(-1:nx,-1:ny),
-     *   dpop(-1:nx,-1:ny,0:1), wrk0(-1:nx,-1:nx,0:1), 
-     *   wrk1(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny,0:1), wrk(-1:nx,-1:ny),
-     *   dum(-1:nx,-1:ny)
+     *   dpop(nFc), wrk0(nFc), 
+     *   wrk1(nFc), wrk2(nFc), wrk(nCv),
+     *   wrkv(nVx), ones(nFc,2)
       save ncall
 *   ..procedures
       external subini, subend, xertst
       external b2xvsg
-      real (kind=R8) ::
-     *   hy1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialization
       data ncall/0/
 *-----------------------------------------------------------------------
@@ -58,74 +55,43 @@
       if (ncall.eq.0) then                                               !srv
        call ipgeti ('b2tfhe_mode_ehx',mode_ehx)                          !srv 06.04.15
       endif                                                              !srv
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of ne, te, csig
-       call b2xvsg (n2, ne, 1, 'ne', '.gt.')
-       call b2xvsg (n2, te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv, te, 1, 'te', '.gt.')
       endif
-
-      do iy=-1,ny
-        do ix=-1,nx
-          hy1_(ix,iy)=hy1(ix,iy)
-        enddo
-      enddo
-
-cwdk  wrk will be used for interpolation to vertices; now: just 1.0_R8
-c     to be considered: volume-weighted interpolation
-      wrk = 1.0_R8
 
 *   ..compute ehx
       if(mode_ehx.eq.0) then
+        ones = 1.0_R8
 *     ..compute poloidal differences of po and pe
-        call diff_p(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpop)
-        call diff_p(nx, ny, 0, hx, hy, wrk, qs, ne*te, dum, wrk0)
+        call diff_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpop)
+        call diff_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
 *     ..interpolate ne to faces
-        call intfaceh(nx,ny,leftix,leftiy,wrk,ne,wrk1(-1,-1,0))
-        call intfacev(nx,ny,bottomix,bottomiy,wrk,ne,wrk1(-1,-1,1))
+        call intface(nCv,nFc,mpg%fcCv,ones,ne,wrk1)
 *     ..compute ehx      
         ehx = -dpop + wrk0/(qe*wrk1)
       else if (mode_ehx.eq.1) then
 *     ..compute poloidal differences of po and pe
-        call diff_p(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpop)
-        call diff_p(nx, ny, 0, hx, hy, wrk, qs, ne*te, dum, wrk0)
+        call diff_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpop)
+        call diff_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
 *     ..interpolate ne to faces
-cwdk TODO: implement this as a standard interpolation option...
-        do iy = -1, ny
-          do ix = -1, nx
-            if(leftix(ix,iy).eq.-2) then
-              wrk1(ix,iy,0) = 0.0_R8
-            else
-              wrk1(ix,iy,0) = 
-     &            (ne(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
-     &             ne(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy)))/
-     &            (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-            endif
-            if(bottomiy(ix,iy).eq.-2) then
-              wrk1(ix,iy,1) = 0.0_R8
-	    else
-              wrk1(ix,iy,1) = 
-     &            (ne(bottomix(ix,iy),bottomiy(ix,iy))*hy1_(ix,iy)+
-     &             ne(ix,iy)*hy1_(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &            (hy1_(bottomix(ix,iy),bottomiy(ix,iy))+hy1_(ix,iy))
-            endif
-          enddo
-        enddo
+!WG_TODO now we use inverse volume instead of inverse distance weighting
+!WG_TODO to interpolate to the faces
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ne,wrk1)
 *     ..compute ehx      
         ehx = -dpop + wrk0/(qe*wrk1)
       else
+        ones = 1.0_R8
 *     ..compute poloidal differences of po, te and log(ne) on faces
-        call diff_p(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpop)
-        call diff_p(nx, ny, 0, hx, hy, wrk, qs, te, dum, wrk0)
-        call diff_p(nx, ny, 0, hx, hy, wrk, qs, log(ne), dum, wrk1)
+        call diff_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpop)
+        call diff_p(nCv, nFc, nVx, 0, geo, mpg, te, wrkv, wrk0)
+        call diff_p(nCv, nFc, nVx, 0, geo, mpg, log(ne), wrkv, wrk1)
 *     ..interpolate te to faces
-        wrk = 1.0_R8
-        call intfaceh(nx,ny,leftix,leftiy,wrk,te,wrk2(-1,-1,0))
-        call intfacev(nx,ny,bottomix,bottomiy,wrk,te,wrk2(-1,-1,1))
+        call intface(nCv,nFc,mpg%fcCv,ones,te,wrk2)
 *     ..compute ehx      
         ehx = -dpop + (wrk0 + wrk1*wrk2)/qe
       endif

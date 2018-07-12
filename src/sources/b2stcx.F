@@ -1,34 +1,32 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stcx (nx, ny, ns, is0, ismain, hz, BoRiS, vol, na,   !srv 09.01.01
-     &  ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0)        !srv 07.07.09
+      subroutine b2stcx (nCv, nFc, ns, is0, ismain, BoRiS, geo, mpg, na,!srv 09.01.01
+     &  ua, ti, ni, rcx, sna0, smq0, shi0)        !srv 07.07.09
       use b2mod_types
-      use b2mod_indirect
       use b2mod_constants
-      use b2mod_tallies
-      use b2mod_sources
+!      use b2mod_tallies
+!      use b2mod_sources
       use b2mod_b2cmpa
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
-      use b2mod_balance !djm Jan2017
-     & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
-     &          balance_netcdf
+!      use b2mod_balance !djm Jan2017
+!     & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
+!     &          balance_netcdf
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, is0, ismain
+      integer nCv, nFc, ns, is0, ismain
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  hz(-1:nx,-1:ny), BoRiS, vol(-1:nx,-1:ny),                       !srv 09.01.01
-     &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), rcx(-1:nx,-1:ny,0:ns-1),
-     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     &  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1)
+     *  BoRiS, na(nCv,0:ns-1), ua(nCv,0:ns-1), ti(nCv), ni(nCv,0:1),
+     *  rcx(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smq0(-1:nx,-1:ny,0:3,0:ns-1),
-     &  shi0(-1:nx,-1:ny,0:3)
+     *  sna0(nCv,0:1,0:ns-1), smq0(nCv,0:3,0:ns-1), shi0(nCv,0:3)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -43,7 +41,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, js, k
+      integer ncall, styl0, iCv, is, js, k
       integer, save :: iout = 0, !iout_b2wdat = 0,                      !srv 30.06.08 11.09.09
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
@@ -51,7 +49,7 @@
       character chns*3, chcx*3, chk*1                                   !srv 11.09.09
       real (kind=R8) ::
      *  rg0, t0, t1, t2, du0, du1
-      real (kind=R8) :: wrk0(-1:nx,-1:ny)
+      real (kind=R8) :: wrk0(nCv)
       save ncall, styl0, rg0
 *   ..procedures
       intrinsic abs
@@ -62,7 +60,7 @@
       external b2xvsg
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
+      roxa(iCv,is) = am(is)*mp*na(iCv,is)
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/
 *!!   (rg0 for numerical stabilisation; needs experiments.)
@@ -88,10 +86,8 @@
        call ipgeti ('b2npht_iout', iout_b2npht)                       !srv 11.09.09 }
 !       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc, ns
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test is0
       call xertst (0.le.is0.and.is0.lt.ns-1, 'faulty argument is0')
@@ -100,14 +96,14 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of vol, na, ti, ni
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-       call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-       call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
+       call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
+       call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
+       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
 *    ..test rate coefficients
        do is = 1, ns-1
         if (.not.lnext(is-1,is)) then
-         call xertst (samax(n2,rcx(-1,-1,is),1).eq.0.0_R8,
+         call xertst (samax(nCv,rcx(1,is),1).eq.0.0_R8,
      &     'faulty argument rcx: nonzero for unrelated species')
         endif
        enddo
@@ -123,9 +119,9 @@ ctmp.dpc
 
 * ..compute source terms
 *   ..initialise sources to 0
-      call sfill (n2*2*ns, 0.0_R8, sna0, 1)
-      call sfill (n2*4*ns, 0.0_R8, smq0, 1)
-      call sfill (n2*4, 0.0_R8, shi0, 1)
+      call sfill (nCv*2*ns, 0.0_R8, sna0, 1)
+      call sfill (nCv*4*ns, 0.0_R8, smq0, 1)
+      call sfill (nCv*4, 0.0_R8, shi0, 1)
 *   ..compute sources due to charge exchange
       do is = 1, ns-1
        if (lnext(is-1,is)) then
@@ -134,147 +130,135 @@ ctmp.dpc
 *        (This is a special case: charge exchange between H0 and H1,
 *        for which there is no particle source.)
         else
-         do iy = -1, ny
-          do ix = -1, nx
-           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &        topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
-     &        region(ix,iy,0).ne.0) then
+         do iCv = 1, mpg%nCi
+           if(mpg%cvReg(iCv).ne.0) then
 *        ..compute rate for is->is-1 and is0->is0+1
-            t0 = rcx(ix,iy,is)*vol(ix,iy)
+            t0 = rcx(iCv,is)*geo%cvVol(iCv)
 *        ..compute particle source
-            sna0(ix,iy,0,is-1) = sna0(ix,iy,0,is-1)+
-     &       t0*na(ix,iy,is0)*na(ix,iy,is)
-            sna0(ix,iy,0,is0+1) = sna0(ix,iy,0,is0+1)+
-     &       t0*na(ix,iy,is0)*na(ix,iy,is)
-            sna0(ix,iy,1,is) = sna0(ix,iy,1,is)-
-     &       t0*na(ix,iy,is0)
-            sna0(ix,iy,1,is0) = sna0(ix,iy,1,is0)-
-     &       t0*na(ix,iy,is)
-            rcxna(ix,iy,is)=rcxna(ix,iy,is)+
-     1       t0*na(ix,iy,is0)*na(ix,iy,is)
-            rcxna(ix,iy,is0)=rcxna(ix,iy,is0)-
-     1       t0*na(ix,iy,is0)*na(ix,iy,is)
-            rcxnareg(region(ix,iy,0),is)=
-     1       rcxnareg(region(ix,iy,0),is)+t0*na(ix,iy,is0)*na(ix,iy,is)
-            rcxnareg(region(ix,iy,0),is0)=
-     1       rcxnareg(region(ix,iy,0),is0)-t0*na(ix,iy,is0)*na(ix,iy,is)
+            sna0(iCv,0,is-1) = sna0(iCv,0,is-1)+
+     &       t0*na(iCv,is0)*na(iCv,is)
+            sna0(iCv,0,is0+1) = sna0(iCv,0,is0+1)+
+     &       t0*na(iCv,is0)*na(iCv,is)
+            sna0(iCv,1,is) = sna0(iCv,1,is)-
+     &       t0*na(iCv,is0)
+            sna0(iCv,1,is0) = sna0(iCv,1,is0)-
+     &       t0*na(iCv,is)
+!WG_TODO            rcxna(iCv,is)=rcxna(iCv,is)+
+!WG_TODO     1       t0*na(iCv,is0)*na(iCv,is)
+!WG_TODO            rcxna(iCv,is0)=rcxna(iCv,is0)-
+!WG_TODO     1       t0*na(iCv,is0)*na(iCv,is)
+!WG_TODO            rcxnareg(mpg%cvReg(iCv),is)=
+!WG_TODO     1       rcxnareg(mpg%cvReg(iCv),is)+t0*na(iCv,is0)*na(iCv,is)
+!WG_TODO            rcxnareg(mpg%cvReg(iCv),is0)=
+!WG_TODO     1       rcxnareg(mpg%cvReg(iCv),is0)-t0*na(iCv,is0)*na(iCv,is)
            endif
-          enddo
          enddo
         endif
 *     ..heat source
-        do iy = -1, ny
-         do ix = -1, nx
-          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
-     &       region(ix,iy,0).ne.0) then
+        do iCv = 1, mpg%nCi
+          if(mpg%cvReg(iCv).ne.0) then
 *       ..compute rate for is->is-1 and is0->is0+1
-           t0 = rcx(ix,iy,is)*vol(ix,iy)
+           t0 = rcx(iCv,is)*geo%cvVol(iCv)
 *       ..compute atom heat source
-           du0 = ua(ix,iy,is)-ua(ix,iy,is-1)
-           du1 = ua(ix,iy,is0)-ua(ix,iy,is0+1)
-           t1 = t0*na(ix,iy,is0)*na(ix,iy,is)*(mp/2.0_R8)*
+           du0 = ua(iCv,is)-ua(iCv,is-1)
+           du1 = ua(iCv,is0)-ua(iCv,is0+1)
+           t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
      &      (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &       ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
      &      (1.0_R8-BoRiS)
-           shi0(ix,iy,0) = shi0(ix,iy,0)+t1
-           rcxhi(ix,iy,is)=rcxhi(ix,iy,is)+t1
-           rcxhireg(region(ix,iy,0),is)=rcxhireg(region(ix,iy,0),is)+t1
+           shi0(iCv,0) = shi0(iCv,0)+t1
+!WG_TODO           rcxhi(iCv,is)=rcxhi(iCv,is)+t1
+!WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
           endif
-         enddo
         enddo
 *     ..parallel momentum source
-        do iy = -1, ny
-         do ix = -1, nx
-          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &        topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
-     &        region(ix,iy,0).ne.0) then
+        do iCv = 1,mpg%nCi
+          if(mpg%cvReg(iCv).ne.0) then
 *       ..compute rate for is->is-1 and is0->is0+1
-            t0 = rcx(ix,iy,is)*vol(ix,iy)*na(ix,iy,is0)*na(ix,iy,is)
-     &           *hz(ix,iy)                                          !srv 09.01.01
+            t0 = rcx(iCv,is)*geo%cvVol(iCv)*na(iCv,is0)*na(iCv,is)
+     &           *geo%cvH(iCv)                                          !srv 09.01.01
             t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
             t2 = ((am(is0)+am(is0+1))/2.0_R8)*mp*t0
             if (styl0.eq.0) then
 *       ..compute parallel momentum source
-              smq0(ix,iy,0,is) = smq0(ix,iy,0,is)+
-     &         rg0*t1*ua(ix,iy,is)
-              smq0(ix,iy,1,is) = smq0(ix,iy,1,is)-
+              smq0(iCv,0,is) = smq0(iCv,0,is)+
+     &         rg0*t1*ua(iCv,is)
+              smq0(iCv,1,is) = smq0(iCv,1,is)-
      &         (1.0_R8+rg0)*t1
-              smq0(ix,iy,0,is-1) = smq0(ix,iy,0,is-1)+
-     &         t1*(ua(ix,iy,is)+rg0*ua(ix,iy,is-1))
-              smq0(ix,iy,1,is-1) = smq0(ix,iy,1,is-1)-
+              smq0(iCv,0,is-1) = smq0(iCv,0,is-1)+
+     &         t1*(ua(iCv,is)+rg0*ua(iCv,is-1))
+              smq0(iCv,1,is-1) = smq0(iCv,1,is-1)-
      &         rg0*t1
-              smq0(ix,iy,0,is0+1) = smq0(ix,iy,0,is0+1)+
-     &         t2*(ua(ix,iy,is0)+rg0*ua(ix,iy,is0+1))
-              smq0(ix,iy,1,is0+1) = smq0(ix,iy,1,is0+1)-
+              smq0(iCv,0,is0+1) = smq0(iCv,0,is0+1)+
+     &         t2*(ua(iCv,is0)+rg0*ua(iCv,is0+1))
+              smq0(iCv,1,is0+1) = smq0(iCv,1,is0+1)-
      &         rg0*t2
-              smq0(ix,iy,0,is0) = smq0(ix,iy,0,is0)+
-     &         rg0*t2*ua(ix,iy,is0)
-              smq0(ix,iy,1,is0) = smq0(ix,iy,1,is0)-
+              smq0(iCv,0,is0) = smq0(iCv,0,is0)+
+     &         rg0*t2*ua(iCv,is0)
+              smq0(iCv,1,is0) = smq0(iCv,1,is0)-
      &         (1.0_R8+rg0)*t2
             else if (styl0.eq.1) then
 *       ..compute parallel momentum source
-              smq0(ix,iy,2,is) = smq0(ix,iy,2,is)+
-     &         rg0*t1*ua(ix,iy,is)/roxa(ix,iy,is)
-              smq0(ix,iy,3,is) = smq0(ix,iy,3,is)-
-     &         (1.0_R8+rg0)*t1/roxa(ix,iy,is)
-              smq0(ix,iy,2,is-1) = smq0(ix,iy,2,is-1)+
-     &         t1*(ua(ix,iy,is)+rg0*ua(ix,iy,is-1))/roxa(ix,iy,is-1)
-              smq0(ix,iy,3,is-1) = smq0(ix,iy,3,is-1)-
-     &         rg0*t1/roxa(ix,iy,is-1)
-              smq0(ix,iy,2,is0+1) = smq0(ix,iy,2,is0+1)+
-     &         t2*(ua(ix,iy,is0)+rg0*ua(ix,iy,is0+1))/roxa(ix,iy,is0+1)
-              smq0(ix,iy,3,is0+1) = smq0(ix,iy,3,is0+1)-
-     &         rg0*t2/roxa(ix,iy,is0+1)
-              smq0(ix,iy,2,is0) = smq0(ix,iy,2,is0)+
-     &         rg0*t2*ua(ix,iy,is0)/roxa(ix,iy,is0)
-              smq0(ix,iy,3,is0) = smq0(ix,iy,3,is0)-
-     &         (1.0_R8+rg0)*t2/roxa(ix,iy,is0)
+              smq0(iCv,2,is) = smq0(iCv,2,is)+
+     &         rg0*t1*ua(iCv,is)/roxa(iCv,is)
+              smq0(iCv,3,is) = smq0(iCv,3,is)-
+     &         (1.0_R8+rg0)*t1/roxa(iCv,is)
+              smq0(iCv,2,is-1) = smq0(iCv,2,is-1)+
+     &         t1*(ua(iCv,is)+rg0*ua(iCv,is-1))/roxa(iCv,is-1)
+              smq0(iCv,3,is-1) = smq0(iCv,3,is-1)-
+     &         rg0*t1/roxa(iCv,is-1)
+              smq0(iCv,2,is0+1) = smq0(iCv,2,is0+1)+
+     &         t2*(ua(iCv,is0)+rg0*ua(iCv,is0+1))/roxa(iCv,is0+1)
+              smq0(iCv,3,is0+1) = smq0(iCv,3,is0+1)-
+     &         rg0*t2/roxa(iCv,is0+1)
+              smq0(iCv,2,is0) = smq0(iCv,2,is0)+
+     &         rg0*t2*ua(iCv,is0)/roxa(iCv,is0)
+              smq0(iCv,3,is0) = smq0(iCv,3,is0)-
+     &         (1.0_R8+rg0)*t2/roxa(iCv,is0)
             else if (styl0.eq.2) then
 *       ..compute parallel momentum source
-              smq0(ix,iy,0,is) = smq0(ix,iy,0,is)+
-     &         rg0*t1*ua(ix,iy,is)
-              smq0(ix,iy,3,is) = smq0(ix,iy,3,is)-
-     &         (1.0_R8+rg0)*t1/roxa(ix,iy,is)
-              smq0(ix,iy,0,is-1) = smq0(ix,iy,0,is-1)+
-     &         t1*(ua(ix,iy,is)+rg0*ua(ix,iy,is-1))
-              smq0(ix,iy,3,is-1) = smq0(ix,iy,3,is-1)-
-     &         rg0*t1/roxa(ix,iy,is-1)
-              smq0(ix,iy,0,is0+1) = smq0(ix,iy,0,is0+1)+
-     &         t2*(ua(ix,iy,is0)+rg0*ua(ix,iy,is0+1))
-              smq0(ix,iy,3,is0+1) = smq0(ix,iy,3,is0+1)-
-     &         rg0*t2/roxa(ix,iy,is0+1)
-              smq0(ix,iy,0,is0) = smq0(ix,iy,0,is0)+
-     &         rg0*t2*ua(ix,iy,is0)
-              smq0(ix,iy,3,is0) = smq0(ix,iy,3,is0)-
-     &         (1.0_R8+rg0)*t2/roxa(ix,iy,is0)
+              smq0(iCv,0,is) = smq0(iCv,0,is)+
+     &         rg0*t1*ua(iCv,is)
+              smq0(iCv,3,is) = smq0(iCv,3,is)-
+     &         (1.0_R8+rg0)*t1/roxa(iCv,is)
+              smq0(iCv,0,is-1) = smq0(iCv,0,is-1)+
+     &         t1*(ua(iCv,is)+rg0*ua(iCv,is-1))
+              smq0(iCv,3,is-1) = smq0(iCv,3,is-1)-
+     &         rg0*t1/roxa(iCv,is-1)
+              smq0(iCv,0,is0+1) = smq0(iCv,0,is0+1)+
+     &         t2*(ua(iCv,is0)+rg0*ua(iCv,is0+1))
+              smq0(iCv,3,is0+1) = smq0(iCv,3,is0+1)-
+     &         rg0*t2/roxa(iCv,is0+1)
+              smq0(iCv,0,is0) = smq0(iCv,0,is0)+
+     &         rg0*t2*ua(iCv,is0)
+              smq0(iCv,3,is0) = smq0(iCv,3,is0)-
+     &         (1.0_R8+rg0)*t2/roxa(iCv,is0)
             else if (styl0.eq.3) then
 *       ..compute parallel momentum source
-              smq0(ix,iy,2,is) = smq0(ix,iy,2,is)+
-     &         rg0*t1*ua(ix,iy,is)/roxa(ix,iy,is)
-              smq0(ix,iy,1,is) = smq0(ix,iy,1,is)-
+              smq0(iCv,2,is) = smq0(iCv,2,is)+
+     &         rg0*t1*ua(iCv,is)/roxa(iCv,is)
+              smq0(iCv,1,is) = smq0(iCv,1,is)-
      &         (1.0_R8+rg0)*t1
-              smq0(ix,iy,2,is-1) = smq0(ix,iy,2,is-1)+
-     &         t1*(ua(ix,iy,is)+rg0*ua(ix,iy,is-1))/roxa(ix,iy,is-1)
-              smq0(ix,iy,1,is-1) = smq0(ix,iy,1,is-1)-
+              smq0(iCv,2,is-1) = smq0(iCv,2,is-1)+
+     &         t1*(ua(iCv,is)+rg0*ua(iCv,is-1))/roxa(iCv,is-1)
+              smq0(iCv,1,is-1) = smq0(iCv,1,is-1)-
      &         rg0*t1
-              smq0(ix,iy,2,is0+1) = smq0(ix,iy,2,is0+1)+
-     &         t2*(ua(ix,iy,is0)+rg0*ua(ix,iy,is0+1))/roxa(ix,iy,is0+1)
-              smq0(ix,iy,1,is0+1) = smq0(ix,iy,1,is0+1)-
+              smq0(iCv,2,is0+1) = smq0(iCv,2,is0+1)+
+     &         t2*(ua(iCv,is0)+rg0*ua(iCv,is0+1))/roxa(iCv,is0+1)
+              smq0(iCv,1,is0+1) = smq0(iCv,1,is0+1)-
      &         rg0*t2
-              smq0(ix,iy,2,is0) = smq0(ix,iy,2,is0)+
-     &         rg0*t2*ua(ix,iy,is0)/roxa(ix,iy,is0)
-              smq0(ix,iy,1,is0) = smq0(ix,iy,1,is0)-
+              smq0(iCv,2,is0) = smq0(iCv,2,is0)+
+     &         rg0*t2*ua(iCv,is0)/roxa(iCv,is0)
+              smq0(iCv,1,is0) = smq0(iCv,1,is0)-
      &         (1.0_R8+rg0)*t2
             endif
-            rcxmo(ix,iy,is)=rcxmo(ix,iy,is)+t1*ua(ix,iy,is)
-            rcxmo(ix,iy,is0)=rcxmo(ix,iy,is0)-t2*ua(ix,iy,is)
-            rcxmoreg(region(ix,iy,0),is)=
-     1       rcxmoreg(region(ix,iy,0),is)+t1*ua(ix,iy,is)
-            rcxmoreg(region(ix,iy,0),is0)=
-     1       rcxmoreg(region(ix,iy,0),is0)-t2*ua(ix,iy,is0)
+!WG_TODO            rcxmo(iCv,is)=rcxmo(iCv,is)+t1*ua(iCv,is)
+!WG_TODO            rcxmo(iCv,is0)=rcxmo(iCv,is0)-t2*ua(iCv,is)
+!WG_TODO            rcxmoreg(mpg%cvReg(iCv),is)=
+!WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is)+t1*ua(iCv,is)
+!WG_TODO            rcxmoreg(mpg%cvReg(iCv),is0)=
+!WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is0)-t2*ua(iCv,is0)
           endif
-         enddo
         enddo
        endif
       enddo
@@ -282,7 +266,7 @@ ctmp.dpc
 #ifdef ASTRA
       do is = 0, ns-1                     !srv 28.07.11 {
         if(is.eq.ismain) then
-          wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
+          wrk0=sna0(:,0,is)+sna0(:,1,is)*na(:,is)
           call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
         endif
       enddo
@@ -339,7 +323,7 @@ ctmp.dpc
           write (chns,'(i3.3)') is
           do k=0,1
             write (chk,'(i1)') k
-            call my_out(70,nx,ny,smq0(-1,-1,k,is),
+            call my_out_us(70,nCv,smq0(1,k,is),
      &        'b2stcx_smq'//chk//'_'//chcx//'_'//chns)
            enddo
         enddo
@@ -347,11 +331,11 @@ ctmp.dpc
 
 
 cdjm Jan2017 Keep linearised sources for balance
-      if (balance_netcdf.ne.0) then
-        b2stcx_sna0to1 = sna0
-        b2stcx_smq0to3 = smq0
-        b2stcx_shi0to3 = shi0
-      endif
+!WG_TODO      if (balance_netcdf.ne.0) then
+!WG_TODO        b2stcx_sna0to1 = sna0
+!WG_TODO        b2stcx_smq0to3 = smq0
+!WG_TODO        b2stcx_shi0to3 = shi0
+!WG_TODO      endif
 
 * ..return
       ncall = ncall+1

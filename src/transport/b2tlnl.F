@@ -1,17 +1,17 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tlnl (nx, ny, icase, te, ti, ne, lnlam)              !srv 01.07.09 {
+      subroutine b2tlnl (nCv, icase, te, ti, ne, lnlam)                 !srv 01.07.09 {
       use b2mod_types
       use b2mod_constants
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, icase                                             !srv 20.09.11
+      integer nCv, icase                                                !srv 20.09.11
       real (kind=R8) ::
-     &   te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ne(-1:nx,-1:ny)              !srv 20.09.11
+     &   te(nCv), ti(nCv), ne(nCv)                                      !srv 20.09.11
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   lnlam(-1:nx,-1:ny)
+     *   lnlam(nCv)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -31,7 +31,7 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, n2, ix, iy
+      integer ncall, iCv
       real (kind=R8), save :: lambda=-5.0e0_R8
       save ncall
 *   ..procedures
@@ -60,72 +60,61 @@
        call ipgetr('b2trcl_lambda', lambda)
        call xertst(0.0_R8.ne.lambda, 'faulty internal parameter lambda') !srv 02.07.13
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, ns
+      call xertst (0.le.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test state
-       call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2, ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv, te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       endif
 
 * ..compute lnlam
       if (lambda.lt.0.0_R8) then
 	select case(icase)
 	 case(0)      ! Braginsky formula
-        do iy = -1, ny
-         do ix = -1, nx
-	    if(te(ix,iy)/ev .le. 50.0_R8) then
-           lnlam(ix,iy)=max(-lambda,
-     &     23.4_R8 - 1.15_R8*log10(ne(ix,iy)/1.0e6_R8) +
-     &                            3.45_R8*log10(te(ix,iy)/ev))
+        do iCv = 1, nCv
+	    if(te(iCv)/ev .le. 50.0_R8) then
+           lnlam(iCv)=max(-lambda,
+     &     23.4_R8 - 1.15_R8*log10(ne(iCv)/1.0e6_R8) +
+     &                            3.45_R8*log10(te(iCv)/ev))
 	    else
-           lnlam(ix,iy)=max(-lambda,
-     &             25.3_R8 - 1.15_R8*log10(ne(ix,iy)/1.0e6_R8) + 
-     &                            2.30_R8*log10(te(ix,iy)/ev))
+           lnlam(iCv)=max(-lambda,
+     &             25.3_R8 - 1.15_R8*log10(ne(iCv)/1.0e6_R8) + 
+     &                            2.30_R8*log10(te(iCv)/ev))
 	    endif
-	    if(lnlam(ix,iy).le.0.0_R8) then
+	    if(lnlam(iCv).le.0.0_R8) then
 	     open(70,file='info_b2tlnl.dat')
 	     write(70,"(a)")
-     &     ' ix   iy   ne(ix,iy)      te(ix,iy)  lnlam(ix,iy)'
-	     write(70,"(2i5,3es13.4)")
-     &       ix,iy,ne(ix,iy),te(ix,iy),lnlam(ix,iy)
+     &     ' ix   iy   ne(iCv)      te(iCv)  lnlam(iCv)'
+	     write(70,"(i5,3es13.4)")
+     &       iCv,ne(iCv),te(iCv),lnlam(iCv)
 	     close(70)
 	     write(*,"(a)")
-     &     ' ix   iy   ne(ix,iy)      te(ix,iy)  lnlam(ix,iy)'
-	     write(*,"(2i5,3es13.4)")
-     &       ix,iy,ne(ix,iy),te(ix,iy),lnlam(ix,iy)
-	     call xertst (lnlam(ix,iy).gt.0.0_R8,
+     &     ' ix   iy   ne(iCv)      te(iCv)  lnlam(iCv)'
+	     write(*,"(i5,3es13.4)")
+     &       iCv,ne(iCv),te(iCv),lnlam(iCv)
+	     call xertst (lnlam(iCv).gt.0.0_R8,
      &                  'Negative Coulomb logarithm')     !srv 12.01.16
 	    endif
-         enddo
         enddo
 	 case(1)     ! Wesson formula for ion-ion collisions
-        do iy = -1, ny
-         do ix = -1, nx
-           lnlam(ix,iy)=max(-lambda,17.3_R8-
-     &       log(ne(ix,iy)/1.0e20_R8)/2.0_R8+
-     &       1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
-
-         enddo
+        do iCv = 1, nCv
+           lnlam(iCv)=max(-lambda,17.3_R8-
+     &       log(ne(iCv)/1.0e20_R8)/2.0_R8+
+     &       1.5_R8*log(ti(iCv)/ev/1000.0_R8))
         enddo
 	 case(2)    ! Wesson formula for electron-electron collisions
-        do iy = -1, ny
-         do ix = -1, nx
-           lnlam(ix,iy)=max(-lambda,14.9_R8-
-     &	   log(ne(ix,iy)/1.0e20_R8)/2.0_R8+
-     &	   log(te(ix,iy)/ev/1000.0_R8))
-         enddo
+        do iCv = 1, nCv
+           lnlam(iCv)=max(-lambda,14.9_R8-
+     &	   log(ne(iCv)/1.0e20_R8)/2.0_R8+
+     &	   log(te(iCv)/ev/1000.0_R8))
         enddo
 	 case(3)   !  Wesson formula for electron-ion collisions
-        do iy = -1, ny
-         do ix = -1, nx
-           lnlam(ix,iy)=max(-lambda,15.2-
-     &	  log(ne(ix,iy)/1e20_R8)/2.0_R8+
-     &	  log(te(ix,iy)/ev/1000.0_R8))
-         enddo
+        do iCv = 1, nCv
+           lnlam(iCv)=max(-lambda,15.2-
+     &	  log(ne(iCv)/1e20_R8)/2.0_R8+
+     &	  log(te(iCv)/ev/1000.0_R8))
         enddo
 	 case default
 	  write(*,*) ' b2tlnl: incorrect value icase =',icase

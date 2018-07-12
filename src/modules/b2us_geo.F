@@ -81,6 +81,7 @@
       
       allocate (g%fsConn(nFs))
       
+      return
       end subroutine alloc_geometry
 
 **********************************************************************
@@ -119,6 +120,7 @@
       
       deallocate (g%fsConn)
       
+      return
       end subroutine dealloc_geometry
 
 **********************************************************************

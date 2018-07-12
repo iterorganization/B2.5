@@ -945,4 +945,42 @@ c.. Test consistency with region boundaries
 
       end function get_phi_applied
 
+      function getPhiApplied(boundary_namelist,mpg,iCv)
+      use b2mod_types
+      use b2us_map
+      implicit none
+      real (kind=R8) :: getPhiApplied
+      integer boundary_namelist, iCv
+      type (mapping), intent (in) :: mpg
+      integer i, ib
+      logical found
+
+      getPhiApplied = 0.0_R8
+      if (boundary_namelist.eq.1) then
+        ib = 1
+        found = .false.
+        do while (ib.le.nbc .and. .not.found)
+          if (bcchar(ib).eq.'S' .or. bcchar(ib).eq.'N' .or.
+     .        bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') then
+            i = 1
+            do while (i.le.mpg%bcCvP(ib,2) .and. .not.found)
+              found = mpg%bcCv(mpg%bcCvP(ib,1)+i-1,1) .eq. iCv
+              i = i + 1
+            end do
+          endif
+          if (.not.found) ib = ib + 1
+        enddo
+        if (found) then
+          select case(bcpot(ib))
+          case(1,4)
+            getPhiApplied = POTPAR(ib,1)
+          case(3)
+            getPhiApplied = POTPAR(ib,2)
+          end select
+        endif
+      endif
+      return
+
+      end function getPhiApplied
+
       end module b2mod_boundary_namelist

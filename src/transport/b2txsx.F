@@ -1,50 +1,36 @@
-      subroutine b2txsx (nx, ny, vol, hx, qz, fun, funsx)
+      subroutine b2txsx (nCv, nFc, geo, mpg, fcVol, fcS, fun, funsx)
       use b2mod_types
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
       implicit none
-      integer nx, ny
+      integer nCv, nFc
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     &  fun(-1:nx,-1:ny), funsx(-1:nx,-1:ny)
+     &  fcVol(nFc,2), fcS(nFc), fun(nCv), funsx(nFc)
 *     ------------------------------------------------------------------
 *     B2TXSX computes the integrals over cell x-faces of a function
 *     that is provided on the cells.
 *!!   (Re-consider specification and use of this routine for the case
 *     of a non-orthogonal grid.)
 *     ------------------------------------------------------------------
-      integer n2, ix, iy
+      integer iFc
       real (kind=R8) ::
      *  smin, smax
       external subini, subend, b2xxgs, smin, smax
 *     ------------------------------------------------------------------
       call subini ('b2txsx')
-*   ..test nx, ny
-      call xertst (0.le.nx .and. 0.le.ny, 'faulty argument nx,ny')
-*   ..set n2
-      n2=(nx+2)*(ny+2)
-*   ..test sign of vol, hx
-      call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-      call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-*   ..test range of qz
-      call xertst (-1.lt.smin(n2,qz(-1,-1,0),1).and.
-     &  smax(n2,qz(-1,-1,0),1).lt.1, 'faulty argument range qz(,,0)')
-      call xertst (0.lt.smin(n2,qz(-1,-1,1),1).and.
-     &  smax(n2,qz(-1,-1,1),1).le.1, 'faulty argument range qz(,,1)')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv .and. 0.le.nFc, 'faulty argument nCv,nFc')
 *   ..compute funsx
-      do iy = -1, ny
-       do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-           funsx(ix,iy) = 0
-         else
-           funsx(ix,iy) =
-     &      (vol(ix,iy)*fun(leftix(ix,iy),leftiy(ix,iy))
-     &      +vol(leftix(ix,iy),leftiy(ix,iy))*fun(ix,iy))/
-     &      (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-         endif
-       enddo
+      do iFc = 1, nFc
+        funsx(iFc) = fcS(iFc)*geo%fcQalf(iFc,0)*
+     &   (fcVol(iFc,2)*fun(mpg%fcCv(iFc,1)) + 
+     &    fcVol(iFc,1)*fun(mpg%fcCv(iFc,2)))/
+     &   (fcVol(iFc,1) + fcVol(iFc,2))
       enddo
 *   ..reset null regions
-      call b2xxgs (nx, ny, 0.0_R8, funsx, 1)
+!      call b2xxgs (nx, ny, 0.0_R8, funsx, 1)
 *   ..return
       call subend ()
       return

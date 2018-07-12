@@ -1,25 +1,24 @@
-      subroutine b2xpro (nx, ny, ns, mp, am, na, ro)
+      subroutine b2xpro (nCv, ns, mp, am, na, ro, st_ext)
       use b2mod_types
-      use b2mod_external
+      use b2us_plasma
       implicit none
-      integer nx, ny, ns
+      integer nCv, ns
+      type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) ::
-     *   mp, am(0:ns-1), na(-1:nx,-1:ny,0:ns-1), ro(-1:nx,-1:ny)
+     *   mp, am(0:ns-1), na(nCv,0:ns-1), ro(nCv)
 *     ------------------------------------------------------------------
 *     B2XPRO computes the mass density, ro:
-*       ro(,) = (sum is :: am(is)*mp*na(,,is)) .
+*       ro() = (sum is :: am(is)*mp*na(,is)) .
 *     ------------------------------------------------------------------
-      integer n2, is
-      external sfill, b2saxpy
+      integer is
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xpro')
-      n2 = (nx+2)*(ny+2)
-      call sfill (n2, 0.0_R8, ro, 1)
+      ro = 0.0_R8
       do is = 0, ns-1
-       call b2saxpy (n2, mp*am(is), na(-1,-1,is), 1, ro, 1)
+        ro = ro + mp*am(is)*na(:,is)
       enddo
-      do is = 0, ns_ext-1
-       call b2saxpy (n2, mp*am_ext(is), na_ext(-1,-1,is), 1, ro, 1)
+      do is = 0, st_ext%ns-1
+        ro = ro + mp*st_ext%am(is)*st_ext%na(:,is)
       enddo
 *$$$  call subend ()
       return

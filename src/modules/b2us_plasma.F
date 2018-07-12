@@ -43,6 +43,8 @@
      .                           fhePSch(:,:), fhe_eir(:,:)
         real(R8), allocatable :: fhi(:,:), fhi_mdf(:,:), fhit(:,:),          
      .                           fhiPSch(:,:), fhi_eir(:,:)
+        real(R8), allocatable :: fhm(:,:,:), fhp(:,:,:), fhj(:,:), 
+     .                           fht(:,:)
 
 
         ! kinetic energy
@@ -236,6 +238,46 @@ cwdk move to dv
 
       contains
 
+      subroutine createB2State (nCv, nFc, ns, st)
+      implicit none
+      integer, intent (in) :: nCv, nFc, ns
+      type(B2State), intent(inout) :: st
+
+      call createB2Plasma( nCv, ns, st % pl )
+      call createB2Coeff( nCv, nFC, ns, st % co )
+      call createB2Derivatives( nCv, nFc, ns, st % dv )
+      call createB2Source( nCv, ns, st % sr )   
+      call createB2SourceWork( nCv, ns, st % srw )   
+      call createB2Rates( nCv, ns, st % rt )
+      call createB2RatesWork( nCv, ns, st % rtw )
+      call createB2PlasmaSnapshot( nCv, nFc, ns, st % psnl )
+      call createB2PlasmaSnapshot( nCv, nFc, ns, st % psnc )
+      call createB2Diagnostic( nCv, ns, st % diag )
+      call createB2Update( nCv, ns, st % update )
+
+      return
+      end subroutine createB2State
+
+      subroutine destroyB2State ( st )
+      implicit none
+      type (B2State), intent (inout) :: st
+
+      call destroyB2Plasma( st % pl )
+      call destroyB2Coeff( st % co )
+      call destroyB2Derivatives( st % dv )
+      call destroyB2Source( st % sr )   
+      call destroyB2SourceWork( st % srw )   
+      call destroyB2Rates( st % rt )
+      call destroyB2RatesWork( st % rtw )
+      call destroyB2PlasmaSnapshot(  st % psnl )
+      call destroyB2PlasmaSnapshot( st % psnc )
+      call destroyB2Diagnostic( st % diag )
+      call destroyB2Update( st % update )
+
+      return
+      end subroutine destroyB2State
+
+
       subroutine createB2Plasma( nCv, ns, plasma )
       integer, intent(in) :: nCv, ns
       type(B2Plasma), intent(inout) :: plasma
@@ -247,7 +289,8 @@ cwdk move to dv
       allocate( plasma % po( nCv ) )
       allocate( plasma % te( nCv ) )
       allocate( plasma % ti( nCv ) )
-      
+
+      return      
       end subroutine createB2Plasma
 
 
@@ -260,7 +303,8 @@ cwdk move to dv
       deallocate( plasma % po )   
       deallocate( plasma % te )   
       deallocate( plasma % ti )   
-      
+
+      return      
       end subroutine destroyB2Plasma
       
       
@@ -338,6 +382,7 @@ cwdk move to dv
       allocate( coeff%alfx_c( nCv ) )
       allocate( coeff%sigx_c( nCv ) )
 
+      return
       end subroutine createB2Coeff
 
       
@@ -408,6 +453,7 @@ cwdk move to dv
       deallocate( coeff%alfx_c )
       deallocate( coeff%sigx_c )
       
+      return
       end subroutine destroyB2Coeff
       
       
@@ -463,6 +509,10 @@ cwdk move to dv
       allocate( dv % fhiPSch( nFc, 0:1 ) )    
       allocate( dv % fhit( nFc, 0:1 ) )
       allocate( dv % fhi_eir( nFc, 0:1 ) )    
+      allocate( dv % fhm( nFc, 0:1, 0:ns-1) ) 
+      allocate( dv % fhp( nFc, 0:1, 0:ns-1) ) 
+      allocate( dv % fhj( nFc, 0:1 ) ) 
+      allocate( dv % fht( nFc, 0:1 ) ) 
       
 ! kinetic energy
       allocate( dv % kinrgy( nCv, 0:ns-1 ) )    
@@ -522,7 +572,8 @@ cwdk move to dv
 ! coupling coefficients
       allocate( dv % pcca( nCv, 0:1, 0:ns-1 ) )
       allocate( dv % pccm( nCv, 0:1 ) )
-      
+
+      return      
       end subroutine createB2Derivatives
       
       
@@ -598,6 +649,11 @@ cwdk move to dv
       deallocate( dv % fhet )
       deallocate( dv % fhe_eir )
 
+      deallocate( dv % fhm )
+      deallocate( dv % fhp )
+      deallocate( dv % fhj )
+      deallocate( dv % fht )
+
       deallocate( dv % conc )
       deallocate( dv % fllime )
       deallocate( dv % floe )
@@ -625,7 +681,8 @@ cwdk move to dv
       deallocate( dv % corti )
       deallocate( dv % pcca )
       deallocate( dv % pccm )
-           
+
+      return           
       end subroutine destroyB2Derivatives
       
       
@@ -640,7 +697,8 @@ cwdk move to dv
       allocate( sr % smq( nCv, 0:3, 0:ns-1 ) )
       allocate( sr % sna( nCv, 0:1, 0:ns-1 ) )
       allocate( sr % sne( nCv, 0:1 ) )
-      
+
+      return      
       end subroutine createB2Source
       
       subroutine destroyB2Source( sr )
@@ -654,6 +712,7 @@ cwdk move to dv
       deallocate( sr % sna )
       deallocate( sr % sne )
 
+      return
       end subroutine destroyB2Source
       
       subroutine createB2SourceWork( nCv, ns, srw )
@@ -667,7 +726,8 @@ cwdk move to dv
       allocate( srw % smq0( nCv, 0:3, 0:ns-1 ) )
       allocate( srw % sna0( nCv, 0:1, 0:ns-1 ) )
       allocate( srw % sne0( nCv, 0:1 ) )
-      
+
+      return      
       end subroutine createB2SourceWork
 
       subroutine destroyB2SourceWork( srw )
@@ -681,6 +741,7 @@ cwdk move to dv
       deallocate( srw % sna0 )
       deallocate( srw % sne0 )
 
+      return
       end subroutine destroyB2SourceWork
       
       
@@ -706,6 +767,8 @@ cwdk move to dv
       allocate( rt%rz2( nCv, 0:ns-1 ) )
       allocate( rt%rpt( nCv, 0:ns-1 ) )
       allocate( rt%rpi( nCv, 0:ns-1 ) )
+
+      return
       end subroutine createB2Rates
       
       
@@ -726,7 +789,8 @@ cwdk move to dv
       deallocate( rt%rz2 )
       deallocate( rt%rpt )
       deallocate( rt%rpi )
-      
+
+      return      
       end subroutine destroyB2Rates
       
       
@@ -740,6 +804,8 @@ cwdk move to dv
       allocate( rtw%rrd( nCv, 0:ns-1 ) )
       allocate( rtw%rbr( nCv, 0:ns-1 ) )
       allocate( rtw%rcx( nCv, 0:ns-1 ) )
+
+      return
       end subroutine createB2RatesWork
       
       
@@ -752,6 +818,7 @@ cwdk move to dv
       if ( allocated( rtw%rrd ) ) deallocate( rtw%rrd )
       if ( allocated( rtw%rbr ) ) deallocate( rtw%rbr )
       if ( allocated( rtw%rcx ) ) deallocate( rtw%rcx )
+      return
       end subroutine destroyB2RatesWork
       
       subroutine createB2PlasmaSnapshot( nCv, nFc, ns, snap )
@@ -773,6 +840,8 @@ cwdk move to dv
       allocate( snap % fhi( nFc, 0:1 ) )    
       
       allocate( snap % kinrgy( nCv, 0:ns-1 ) )    
+
+      return
       end subroutine createB2PlasmaSnapshot
       
       
@@ -791,6 +860,8 @@ cwdk move to dv
       deallocate( snap % fhe )
       deallocate( snap % fhi )
       deallocate( snap % kinrgy )
+
+      return
       end subroutine destroyB2PlasmaSnapshot
       
       subroutine createB2Diagnostic( nCv, ns, diag )
@@ -816,6 +887,8 @@ cwdk move to dv
       allocate( diag % resmoreg(0:nnreg(0), 0:ns-1 ) )
       allocate( diag % reshereg(0:nnreg(0)) )
       allocate( diag % reshireg(0:nnreg(0)) )
+
+      return
       end subroutine createB2Diagnostic
       
       
@@ -836,6 +909,8 @@ cwdk move to dv
       deallocate( diag % resmoreg )
       deallocate( diag % reshereg )
       deallocate( diag % reshireg )
+
+      return
       end subroutine destroyB2Diagnostic
       
       
@@ -850,7 +925,8 @@ cwdk move to dv
       allocate( update % po( nCv ) )
       allocate( update % te( nCv ) )
       allocate( update % ti( nCv ) )
-      
+
+      return      
       end subroutine createB2Update
       
       
@@ -863,6 +939,8 @@ cwdk move to dv
       deallocate( update % po )
       deallocate( update % te )
       deallocate( update % ti )
+
+      return
       end subroutine destroyB2Update
          
       
@@ -895,7 +973,7 @@ cwdk move to dv
         allocate( state_ext % sna (1:nCv, 0:ns_ext-1) )
         allocate( state_ext % smo (1:nCv, 0:ns_ext-1) )
 
-
+      return
       end subroutine createB2StateExt
 
 
@@ -925,6 +1003,7 @@ cwdk move to dv
         deallocate( state_ext % sna )
         deallocate( state_ext % smo )
 
+      return
       end subroutine destroyB2StateExt
 
      
@@ -941,11 +1020,13 @@ cwdk move to dv
         snap % ti = pl % ti
         snap % ne = dv % ne
         snap % ni = dv % ni
+        snap % fna = dv % fna
         snap % fch = dv % fch
         snap % fhe = dv % fhe
         snap % fhi = dv % fhi
         snap % kinrgy = dv % kinrgy
 
+      return
       end subroutine getB2PlasmaSnapshot
 
       subroutine putB2PlasmaSnapshot( pl, dv, snap )
@@ -960,11 +1041,13 @@ cwdk move to dv
         pl % ti = snap % ti
         dv % ne = snap % ne
         dv % ni = snap % ni
+        dv % fna = snap % fna
         dv % fch = snap % fch
         dv % fhe = snap % fhe
         dv % fhi = snap % fhi
         dv % kinrgy = snap % kinrgy
     
+      return
       end subroutine putB2PlasmaSnapshot
 
 

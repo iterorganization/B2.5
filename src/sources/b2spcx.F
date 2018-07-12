@@ -1,18 +1,18 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2spcx (nx, ny, ns, ev, amh0, th0, ne, 
+      subroutine b2spcx (nCv, ns, ev, amh0, th0, ne, 
      *   rlcx0)
       use b2mod_types
       use b2mod_b2cmrc
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nCv, ns
       real (kind=R8) ::
-     *   ev, amh0, th0(-1:nx,-1:ny), ne(-1:nx,-1:ny)
+     *   ev, amh0, th0(nCv), ne(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   rlcx0(-1:nx,-1:ny,0:1,0:ns-1)
+     *   rlcx0(nCv,0:1,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -50,7 +50,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, it0, in0
+      integer ncall, iCv, is, it0, in0
       save ncall
       real (kind=R8) ::
      *   rlt0, rln0, fxt0, fxn0, t0, t1, tt
@@ -72,10 +72,8 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2spcx')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, ns
+      call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test ev, amh0
       call xertst (0.lt.ev, 'faulty argument ev')
@@ -83,8 +81,8 @@
      &  'faulty argument range amh0')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-       call b2xvsg (n2, th0, 1, 'th0', '.gt.')
-       call b2xvsg (n2, ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv, th0, 1, 'th0', '.gt.')
+       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       endif
 
 * ..compute rate coefficients
@@ -92,11 +90,10 @@
       it0 = 0
       in0 = 0
 *   ..loop over cells
-      do iy = -1, ny
-       do ix = -1, nx
+      do iCv = 1, nCv
 *     ..compute abscissae
-        rlt0 = max(rtlt(0),min(rtlt(rtnt),log(th0(ix,iy)/(amh0*ev))))
-        rln0 = max(rtln(0),min(rtln(rtnn),log(ne(ix,iy))))
+        rlt0 = max(rtlt(0),min(rtlt(rtnt),log(th0(iCv)/(amh0*ev))))
+        rln0 = max(rtln(0),min(rtln(rtnn),log(ne(iCv))))
 *     ..find it0
 *       (linear search starting from previous it0, to establish
 *         0.le.it0.lt.rtnt;
@@ -141,10 +138,9 @@
          t0 = (1-fxn0)*rtlcx(it0,in0,is)+fxn0*rtlcx(it0,in0+1,is)
          t1 = (1-fxn0)*rtlcx(it0+1,in0,is)+fxn0*rtlcx(it0+1,in0+1,is)
          tt = (t1-t0)/(rtlt(it0+1)-rtlt(it0))
-         rlcx0(ix,iy,1,is) = trimg(-20.0_R8,20.0_R8,tt)
-         rlcx0(ix,iy,0,is) = (1-fxt0)*t0+fxt0*t1-rlcx0(ix,iy,1,is)*rlt0
+         rlcx0(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
+         rlcx0(iCv,0,is) = (1-fxt0)*t0+fxt0*t1-rlcx0(iCv,1,is)*rlt0
         enddo
-       enddo
       enddo
 
 * ..return

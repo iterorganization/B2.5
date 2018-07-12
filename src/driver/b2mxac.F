@@ -1,21 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mxac (nx, ny, ns, corpa, corua, corut, corte, corti,
-     &  corpo, acorpa, acorua, acorut, acorte, acorti, acorpo)
+      subroutine b2mxac (nCv, ns, dv, diag)
       use b2mod_types
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
-      real (kind=R8) ::
-     *  corpa(-1:nx,-1:ny,0:ns-1), corua(-1:nx,-1:ny,0:ns-1),
-     &  corut(-1:nx,-1:ny), corte(-1:nx,-1:ny), corti(-1:nx,-1:ny),
-     &  corpo(-1:nx,-1:ny)
+      integer nCv, ns
+      type (B2Derivatives), intent (in) :: dv
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
-     *  acorpa(0:ns-1), acorua(0:ns-1), acorut, acorte, acorti,
-     &  acorpo
-
+      type (B2Diagnostic), intent (out) :: diag
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -36,7 +30,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, is
+      integer ncall, is
       save ncall
 *   ..procedures
       real (kind=R8) ::
@@ -52,24 +46,22 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2mxac')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, ns
+      call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 
 
 * ..compute norms of the corrections
 *   ..compute acorpa, acorua
       do is = 0, ns-1
-       acorpa(is) = samax(n2,corpa(-1,-1,is),1)
-       acorua(is) = samax(n2,corua(-1,-1,is),1)
+       diag%acorpa(is) = samax(nCv,dv%corpa(1,is),1)
+       diag%acorua(is) = samax(nCv,dv%corua(1,is),1)
       enddo
 *   ..compute acorut, acorte, acorti, acorpo
-      acorut = samax(n2,corut,1)
-      acorte = samax(n2,corte,1)
-      acorti = samax(n2,corti,1)
-      acorpo = samax(n2,corpo,1)
+      diag%acorut = samax(nCv,dv%corut,1)
+      diag%acorte = samax(nCv,dv%corte,1)
+      diag%acorti = samax(nCv,dv%corti,1)
+      diag%acorpo = samax(nCv,dv%corpo,1)
 
 * ..return
       ncall = ncall+1

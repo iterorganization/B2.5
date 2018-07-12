@@ -1,58 +1,42 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stel (nx, ny, ns, ismain,                            !srv 28.07.11
-     & BoRiS, bb, vol, hx, hy, hz, na, ua,                              !srv 09.01.01
-     & wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB,     !srv 07.07.09
-     & rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, rlsa, rlra, rlqa,
-     & sna0_ion, sna0_rec, smq0_ion, smq0_rec, she0, shi0_ion, shi0_rec) !srv 11.09.09
+      subroutine b2stel (nCv, nFc, nVx, ns, ismain, BoRiS,
+     &  geo, mpg, pl, dv, rt, rtw, srw)
       use b2mod_types
       use b2mod_diag
       use b2mod_tallies
-      use b2mod_indirect
       use b2mod_constants
-      use b2mod_sources
+!      use b2mod_sources
       use b2mod_eirene_globals
       use b2mod_b2cmpa
       use b2mod_b2cmrc
-      use b2mod_balance !djm Jan2017
-     & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
-     &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
-     &          b2stel_she0to3,
-     &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
-     &          balance_netcdf
+!WG_TODO      use b2mod_balance !djm Jan2017
+!WG_TODO     & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
+!WG_TODO     &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
+!WG_TODO     &          b2stel_she0to3,
+!WG_TODO     &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
+!WG_TODO     &          balance_netcdf
 #ifdef ASTRA
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 11.06.13
 #endif
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain
+      integer nCv, nFc, nVx, ns, ismain
       real (kind=R8) ::
-     *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-     &  vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1), hz(-1:nx,-1:ny),    !srv 09.01.01
-     &  bb(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny),
-     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1)                                 !srv 07.07.09
-      real (kind=R8) ::
-     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-     &  rbr(-1:nx,-1:ny,0:ns-1),
-     &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),
-     &  rpt(-1:nx,-1:ny,0:ns-1), rpi(-1:nx,-1:ny,0:ns-1),
-     &  rlsa(-1:nx,-1:ny,0:1,0:ns-1),
-     &  rlra(-1:nx,-1:ny,0:1,0:ns-1), rlqa(-1:nx,-1:ny,0:1,0:ns-1)
+     *  BoRiS
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Rates), intent (in) :: rt
+      type (B2RatesWork), intent (in) :: rtw
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
-     *  sna0_ion(-1:nx,-1:ny,0:1,0:ns-1),                            !srv 11.09.09
-     &  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1),
-     *  smq0_ion(-1:nx,-1:ny,0:3,0:ns-1),
-     *  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0(-1:nx,-1:ny,0:3),
-     &  shi0_ion(-1:nx,-1:ny,0:3), shi0_rec(-1:nx,-1:ny,0:3)
+      type (B2SourceWork), intent (inout) :: srw
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -69,7 +53,7 @@
 
 #     include <DIMENSIONS.F>
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, js, fix_recomb_energy, k
+      integer ncall, styl0, iCv, is, js, fix_recomb_energy, k
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
@@ -82,7 +66,11 @@
      *  fix_recomb_energy
       real (kind=R8) ::
      *  rf0, t0, t1
-      real (kind=R8) :: wrk0(-1:nx,-1:ny)
+      real (kind=R8) :: wrk0(nCv)
+      real (kind=R8) ::
+     *  sna0_ion(nCv,0:1,0:ns-1), sna0_rec(nCv,0:1,0:ns-1),
+     *  smq0_ion(nCv,0:3,0:ns-1), smq0_rec(nCv,0:3,0:ns-1),
+     &  shi0_ion(nCv,0:3),        shi0_rec(nCv,0:3)
 *   ..procedures
       intrinsic abs
       logical lnext
@@ -92,7 +80,7 @@
       external b2xvsg
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
+      roxa(iCv,is) = am(is)*mp*pl%na(iCv,is)
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,
@@ -150,36 +138,32 @@
        call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 11.09.09 }
        call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, ns
+      call xertst (0.le.nCv, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of bb
-       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
-*    ..test vol, hx, hy, qz
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test sign of na, te, ti, ne, ni
-       call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-       call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-       call b2xvsg (n2, ne, 1, 'ne', '.gt.')
-       call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
+*    ..test sign of vol
+       call b2xvsg (nCv, geo%cvBb(1,3), 1, 'vol', '.gt.')
+       call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
+       call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
+*    ..test sign of na, ni, ne, te, ti
+       call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
+       call b2xvsg (nCv*2, dv%ni, 1, 'ni', '.gt.')
+       call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
 *   ..test facdrift, fac_ExB
-      call xertst (0.0_R8.le.minval(facdrift) .and.
-     &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
-      call xertst (0.0_R8.le.minval(fac_ExB) .and.
-     &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
+      call xertst (0.0_R8.le.minval(dv%facdrift) .and.
+     &     1.0_R8.ge.maxval(dv%facdrift), 'faulty argument facdrift')
+      call xertst (0.0_R8.le.minval(dv%fac_ExB) .and.
+     &     1.0_R8.ge.maxval(dv%fac_ExB), 'faulty argument fac_ExB')
 *    ..test rate coefficients
        do is = 0, ns-2
         if (.not.lnext(is,is+1)) then
-         call xertst (samax(n2,rsa(-1,-1,is),1).eq.0.0_R8,
+         call xertst (samax(nCv,rtw%rsa(1,is),1).eq.0.0_R8,
      &     'faulty argument rsa: nonzero for unrelated species')
-         call xertst (samax(n2,rra(-1,-1,is+1),1).eq.0.0_R8,
+         call xertst (samax(nCv,rtw%rra(1,is+1),1).eq.0.0_R8,
      &     'faulty argument rra: nonzero for unrelated species')
         endif
        enddo
@@ -187,114 +171,107 @@
 
 * ..compute source terms
 *   ..initialise sources to 0
-      call sfill (n2*2*ns, 0.0_R8, sna0_ion, 1)                      !srv 11.09.09
-      call sfill (n2*2*ns, 0.0_R8, sna0_rec, 1)
-      call sfill (n2*4*ns, 0.0_R8, smq0_ion, 1)
-      call sfill (n2*4*ns, 0.0_R8, smq0_rec, 1)
-      call sfill (n2*4, 0.0_R8, she0, 1)
-      call sfill (n2*4, 0.0_R8, shi0_ion, 1)
-      call sfill (n2*4, 0.0_R8, shi0_rec, 1)
+      call sfill (nCv*2*ns, 0.0_R8, sna0_ion, 1)                      !srv 11.09.09
+      call sfill (nCv*2*ns, 0.0_R8, sna0_rec, 1)
+      call sfill (nCv*4*ns, 0.0_R8, smq0_ion, 1)
+      call sfill (nCv*4*ns, 0.0_R8, smq0_rec, 1)
+      call sfill (nCv*4, 0.0_R8, srw%she0, 1)
+      call sfill (nCv*4, 0.0_R8, shi0_ion, 1)
+      call sfill (nCv*4, 0.0_R8, shi0_rec, 1)
 *   ..compute sources due to ionisation
       rsanareg=0.0_R8
       rsahireg=0.0_R8
       rsamoreg=0.0_R8
-      rsana=0.0_R8
-      rsahi=0.0_R8
-      rsamo=0.0_R8
+!WG_TODO      rsana=0.0_R8
+!WG_TODO      rsahi=0.0_R8
+!WG_TODO      rsamo=0.0_R8
       do is = 0, ns-2
        if (lnext(is,is+1)) then
 *     ..particle source and heat source
-        do iy = -1, ny
-         do ix = -1, nx
-          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
-     &       region(ix,iy,0).ne.0) then
+        do iCv = 1, mpg%nCi ! internal cells only
+          if(mpg%cvReg(iCv).ne.0) then
 *       ..compute damping coefficient
-           rf0 = rxm0*max(0.0_R8,rlsa(ix,iy,1,is))
+           rf0 = rxm0*max(0.0_R8,rt%rlsa(iCv,1,is))
 *       ..compute rate for is->is+1
-           t0 = rsa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)
+           t0 = rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)
 *       ..compute particle source
-           sna0_ion(ix,iy,0,is+1) = sna0_ion(ix,iy,0,is+1)+             !srv 11.09.09 {
-     &      (1.0_R8+rf0)*t0*na(ix,iy,is)
-           sna0_ion(ix,iy,1,is+1) = sna0_ion(ix,iy,1,is+1)-
-     &      rf0*t0*na(ix,iy,is)/na(ix,iy,is+1)
-           sna0_ion(ix,iy,0,is) = sna0_ion(ix,iy,0,is)+
-     &      rf0*t0*na(ix,iy,is)
-           sna0_ion(ix,iy,1,is) = sna0_ion(ix,iy,1,is)-(1.0_R8+rf0)*t0  !srv 11.09.09 }
-           rsana(ix,iy,is) = t0*na(ix,iy,is)
-           rsanareg(region(ix,iy,0),is)=rsanareg(region(ix,iy,0),is)+
-     1      t0*na(ix,iy,is)
+           sna0_ion(iCv,0,is+1) = sna0_ion(iCv,0,is+1)+             !srv 11.09.09 {
+     &      (1.0_R8+rf0)*t0*pl%na(iCv,is)
+           sna0_ion(iCv,1,is+1) = sna0_ion(iCv,1,is+1)-
+     &      rf0*t0*pl%na(iCv,is)/pl%na(iCv,is+1)
+           sna0_ion(iCv,0,is) = sna0_ion(iCv,0,is)+
+     &      rf0*t0*pl%na(iCv,is)
+           sna0_ion(iCv,1,is) = sna0_ion(iCv,1,is)-
+     &      (1.0_R8+rf0)*t0  !srv 11.09.09 }
+!WG_TODO           rsana(iCv,is) = t0*pl%na(iCv,is)
+           rsanareg(mpg%cvReg(iCv),is)=rsanareg(mpg%cvReg(iCv),is)+
+     1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
-           t1 = t0*na(ix,iy,is)*(1.0_R8-BoRiS)*
+           t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
      &       ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
-     &       ((ua(ix,iy,is)-ua(ix,iy,is+1))**2)
-           shi0_ion(ix,iy,0) = shi0_ion(ix,iy,0)+(1.0_R8+rf0)*t1
-           shi0_ion(ix,iy,3) = shi0_ion(ix,iy,3)-
-     &                         rf0*t1/(ni(ix,iy,0)*ti(ix,iy))
-           rsahi(ix,iy,is) = t1
-           rsahireg(region(ix,iy,0),is)=rsahireg(region(ix,iy,0),is)+t1
+     &       ((pl%ua(iCv,is)-pl%ua(iCv,is+1))**2)
+           shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1
+           shi0_ion(iCv,3) = shi0_ion(iCv,3)-
+     &                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
+!WG_TODO           rsahi(iCv,is) = t1
+           rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1
           endif
-         enddo
         enddo
 *     ..parallel momentum source
-        do iy = -1, ny
-          do ix = -1, nx
-            if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &         topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
-     &         region(ix,iy,0).ne.0) then
+        do iCv = 1, mpg%nCi ! internal cells only
+          if(mpg%cvReg(iCv).ne.0) then
 *       ..compute damping coefficient
-              rf0 = rg0+rxm1*max(0.0_R8,rlsa(ix,iy,1,is))
+             rf0 = rg0+rxm1*max(0.0_R8,rt%rlsa(iCv,1,is))
 *       ..compute rate for is->is+1
-              t0 = rsa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
-     &            *hz(ix,iy)                                         !srv 09.01.01
+             t0 = rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
+     &           pl%na(iCv,is)*geo%cvH(iCv)                                         !srv 09.01.01
 *       ..compute parallel momentum source
-              t1 = ((am(is)+am(is+1))/2.0_R8)*mp*t0
-              if (styl0.eq.0) then
-                smq0_ion(ix,iy,0,is+1) = smq0_ion(ix,iy,0,is+1)+
-     &           t1*(ua(ix,iy,is)+rf0*ua(ix,iy,is+1))
-                smq0_ion(ix,iy,1,is+1) = smq0_ion(ix,iy,1,is+1)-
+             t1 = ((am(is)+am(is+1))/2.0_R8)*mp*t0
+             if (styl0.eq.0) then
+                smq0_ion(iCv,0,is+1) = smq0_ion(iCv,0,is+1)+
+     &           t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is+1))
+                smq0_ion(iCv,1,is+1) = smq0_ion(iCv,1,is+1)-
      &           rf0*t1
-                smq0_ion(ix,iy,0,is) = smq0_ion(ix,iy,0,is)+
-     &           rf0*t1*ua(ix,iy,is)
-                smq0_ion(ix,iy,1,is) = smq0_ion(ix,iy,1,is)-
+                smq0_ion(iCv,0,is) = smq0_ion(iCv,0,is)+
+     &           rf0*t1*pl%ua(iCv,is)
+                smq0_ion(iCv,1,is) = smq0_ion(iCv,1,is)-
      &           (1.0_R8+rf0)*t1
-              else if (styl0.eq.1) then
+             else if (styl0.eq.1) then
 *       ..compute parallel momentum source
-               smq0_ion(ix,iy,2,is+1) = smq0_ion(ix,iy,2,is+1)+
-     &          t1*(ua(ix,iy,is)+rf0*ua(ix,iy,is+1))/roxa(ix,iy,is+1)
-               smq0_ion(ix,iy,3,is+1) = smq0_ion(ix,iy,3,is+1)-
-     &          rf0*t1/roxa(ix,iy,is+1)
-               smq0_ion(ix,iy,2,is) = smq0_ion(ix,iy,2,is)+
-     &          rf0*t1*ua(ix,iy,is)/roxa(ix,iy,is)
-               smq0_ion(ix,iy,3,is) = smq0_ion(ix,iy,3,is)-
-     &          (1.0_R8+rf0)*t1/roxa(ix,iy,is)
+               smq0_ion(iCv,2,is+1) = smq0_ion(iCv,2,is+1)+
+     &          t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is+1))/roxa(iCv,is+1)
+               smq0_ion(iCv,3,is+1) = smq0_ion(iCv,3,is+1)-
+     &          rf0*t1/roxa(iCv,is+1)
+               smq0_ion(iCv,2,is) = smq0_ion(iCv,2,is)+
+     &          rf0*t1*pl%ua(iCv,is)/roxa(iCv,is)
+               smq0_ion(iCv,3,is) = smq0_ion(iCv,3,is)-
+     &          (1.0_R8+rf0)*t1/roxa(iCv,is)
              else if (styl0.eq.2) then
-               smq0_ion(ix,iy,0,is+1) = smq0_ion(ix,iy,0,is+1)+
-     &          t1*(ua(ix,iy,is)+rf0*ua(ix,iy,is+1))
-               smq0_ion(ix,iy,3,is+1) = smq0_ion(ix,iy,3,is+1)-
-     &          rf0*t1/roxa(ix,iy,is+1)
-               smq0_ion(ix,iy,0,is) = smq0_ion(ix,iy,0,is)+
-     &          rf0*t1*ua(ix,iy,is)
-               smq0_ion(ix,iy,3,is) = smq0_ion(ix,iy,3,is)-
-     &          (1.0_R8+rf0)*t1/roxa(ix,iy,is)
+               smq0_ion(iCv,0,is+1) = smq0_ion(iCv,0,is+1)+
+     &          t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is+1))
+               smq0_ion(iCv,3,is+1) = smq0_ion(iCv,3,is+1)-
+     &          rf0*t1/roxa(iCv,is+1)
+               smq0_ion(iCv,0,is) = smq0_ion(iCv,0,is)+
+     &          rf0*t1*pl%ua(iCv,is)
+               smq0_ion(iCv,3,is) = smq0_ion(iCv,3,is)-
+     &          (1.0_R8+rf0)*t1/roxa(iCv,is)
              else if (styl0.eq.3) then
-               smq0_ion(ix,iy,2,is+1) = smq0_ion(ix,iy,2,is+1)+
-     &          t1*(ua(ix,iy,is)+rf0*ua(ix,iy,is+1))/roxa(ix,iy,is+1)
-               smq0_ion(ix,iy,1,is+1) = smq0_ion(ix,iy,1,is+1)-
+               smq0_ion(iCv,2,is+1) = smq0_ion(iCv,2,is+1)+
+     &          t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is+1))/roxa(iCv,is+1)
+               smq0_ion(iCv,1,is+1) = smq0_ion(iCv,1,is+1)-
      &          rf0*t1
-               smq0_ion(ix,iy,2,is) = smq0_ion(ix,iy,2,is)+
-     &          rf0*t1*ua(ix,iy,is)/roxa(ix,iy,is)
-               smq0_ion(ix,iy,1,is) = smq0_ion(ix,iy,1,is)-
+               smq0_ion(iCv,2,is) = smq0_ion(iCv,2,is)+
+     &          rf0*t1*pl%ua(iCv,is)/roxa(iCv,is)
+               smq0_ion(iCv,1,is) = smq0_ion(iCv,1,is)-
      &         (1.0_R8+rf0)*t1
              endif
-             rsamo(ix,iy,is) = rsamo(ix,iy,is)+t1*ua(ix,iy,is)
-             rsamoreg(region(ix,iy,0),is) =
-     &        rsamoreg(region(ix,iy,0),is)+t1*ua(ix,iy,is)
-             rsamo(ix,iy,is+1) = rsamo(ix,iy,is+1)-t1*ua(ix,iy,is)
-             rsamoreg(region(ix,iy,0),is+1) =
-     &        rsamoreg(region(ix,iy,0),is+1)-t1*ua(ix,iy,is)
-           endif
-          enddo
+!WG_TODO             rsamo(iCv,is) = rsamo(iCv,is)+t1*pl%ua(iCv,is)
+             rsamoreg(mpg%cvReg(iCv),is) =
+     &        rsamoreg(mpg%cvReg(iCv),is)+t1*pl%ua(iCv,is)
+!WG_TODO             rsamo(iCv,is+1) = rsamo(iCv,is+1)-t1*pl%ua(iCv,is)
+             rsamoreg(mpg%cvReg(iCv),is+1) =
+     &        rsamoreg(mpg%cvReg(iCv),is+1)-t1*pl%ua(iCv,is)
+          endif
         enddo
        endif
       enddo
@@ -303,42 +280,39 @@
       rrahireg=0.0_R8
       rramoreg=0.0_R8
       rqahereg=0.0_R8
-      rrana=0.0_R8
-      rrahi=0.0_R8
-      rramo=0.0_R8
-      rqahe=0.0_R8
+!WG_TODO      rrana=0.0_R8
+!WG_TODO      rrahi=0.0_R8
+!WG_TODO      rramo=0.0_R8
+!WG_TODO      rqahe=0.0_R8
       do is = 1, ns-1
        if (lnext(is-1,is)) then
 *     ..particle source and heat source
-        do iy = -1, ny
-         do ix = -1, nx
-          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
-     &       region(ix,iy,0).ne.0) then
+        do iCv = 1, mpg%nCi ! internal cells only
+         if(mpg%cvReg(iCv).ne.0) then
 *       ..compute damping coefficient
-           rf0 = rxm2*max(0.0_R8,-rlra(ix,iy,1,is))
+           rf0 = rxm2*max(0.0_R8,-rt%rlra(iCv,1,is))
 *       ..compute rate for is->is-1
-           t0 = rra(ix,iy,is)*vol(ix,iy)*ne(ix,iy)
+           t0 = rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)
 *       ..compute particle source
-           sna0_rec(ix,iy,0,is) = sna0_rec(ix,iy,0,is)+               !srv 11.09.09 {
-     &       rf0*t0*na(ix,iy,is)
-           sna0_rec(ix,iy,1,is) = sna0_rec(ix,iy,1,is)-(1.0_R8+rf0)*t0
-           sna0_rec(ix,iy,0,is-1) = sna0_rec(ix,iy,0,is-1)+
-     &      (1.0_R8+rf0)*t0*na(ix,iy,is)
-           sna0_rec(ix,iy,1,is-1) = sna0_rec(ix,iy,1,is-1)-           !srv 11.09.09 {
-     &      rf0*t0*na(ix,iy,is)/na(ix,iy,is-1)
-           rrana(ix,iy,is) = t0*na(ix,iy,is)
-           rranareg(region(ix,iy,0),is)=rranareg(region(ix,iy,0),is)+
-     1      t0*na(ix,iy,is)
+           sna0_rec(iCv,0,is) = sna0_rec(iCv,0,is)+               !srv 11.09.09 {
+     &       rf0*t0*pl%na(iCv,is)
+           sna0_rec(iCv,1,is) = sna0_rec(iCv,1,is)-(1.0_R8+rf0)*t0
+           sna0_rec(iCv,0,is-1) = sna0_rec(iCv,0,is-1)+
+     &      (1.0_R8+rf0)*t0*pl%na(iCv,is)
+           sna0_rec(iCv,1,is-1) = sna0_rec(iCv,1,is-1)-           !srv 11.09.09 {
+     &      rf0*t0*pl%na(iCv,is)/pl%na(iCv,is-1)
+!WG_TODO           rrana(iCv,is) = t0*pl%na(iCv,is)
+           rranareg(mpg%cvReg(iCv),is)=rranareg(mpg%cvReg(iCv),is)+
+     1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
-           t1 = t0*na(ix,iy,is)*(1.0_R8-BoRiS)*
+           t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
      &       ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
-     &       ((ua(ix,iy,is)-ua(ix,iy,is-1))**2)
-           shi0_rec(ix,iy,0) = shi0_rec(ix,iy,0)+(1.0_R8+rf0)*t1
-           shi0_rec(ix,iy,3) = shi0_rec(ix,iy,3)-
-     *                         rf0*t1/(ni(ix,iy,0)*ti(ix,iy))
-           rrahi(ix,iy,is) = t1
-           rrahireg(region(ix,iy,0),is)=rrahireg(region(ix,iy,0),is)+t1
+     &       ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
+           shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1
+           shi0_rec(iCv,3) = shi0_rec(iCv,3)-
+     *                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
+!WG_TODO           rrahi(iCv,is) = t1
+           rrahireg(mpg%cvReg(iCv),is)=rrahireg(mpg%cvReg(iCv),is)+t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
            if(fix_recomb_energy.ne.0) then
 c the default treatment is to have the entire ionization potential
@@ -348,122 +322,118 @@ c this treatment changes this --- the ionization potential difference
 c is given back as energy to the electrons and additional radiative
 c losses should be included (in ADAS terms, the PRB file should be
 c accounted for)
-             she0(ix,iy,0)=she0(ix,iy,0)+(1.0_R8+rf0)*
-     &        t0*rpi(ix,iy,is)*ev*na(ix,iy,is)
-             she0(ix,iy,3)=she0(ix,iy,3)-rf0*
-     &        t0*rpi(ix,iy,is)*ev*na(ix,iy,is)/(ne(ix,iy)*te(ix,iy))
-             rqahe(ix,iy,is) = rqahe(ix,iy,is) -
-     &        t0*rpi(ix,iy,is)*ev*na(ix,iy,is)
-             rqahereg(region(ix,iy,0),is) =
-     &        rqahereg(region(ix,iy,0),is) -
-     &        t0*rpi(ix,iy,is)*ev*na(ix,iy,is)
+             srw%she0(iCv,0)=srw%she0(iCv,0)+(1.0_R8+rf0)*
+     &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
+             srw%she0(iCv,3)=srw%she0(iCv,3)-rf0*
+     &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)/(dv%ne(iCv)*pl%te(iCv))
+!WG_TODO             rqahe(iCv,is) = rqahe(iCv,is) -
+!WG_TODO     &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
+             rqahereg(mpg%cvReg(iCv),is) =
+     &        rqahereg(mpg%cvReg(iCv),is) -
+     &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
            endif
-          endif
-         enddo
+         endif
         enddo
 *     ..parallel momentum source
-        do iy = -1, ny
-         do ix = -1, nx
-          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
-     &       region(ix,iy,0).ne.0) then
+        do iCv = 1, mpg%nCi ! internal cells only
+         if(mpg%cvReg(iCv).ne.0) then
 *       ..compute damping coefficient
-           rf0 = rg1+rxm3*max(0.0_R8,-rlra(ix,iy,1,is))
+           rf0 = rg1+rxm3*max(0.0_R8,-rt%rlra(iCv,1,is))
 *       ..compute rate for is->is-1
-           t0 =rra(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
-     &         *hz(ix,iy)                                            !srv 09.01.01
+           t0 =rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
+     &         pl%na(iCv,is)*geo%cvH(iCv)                                            !srv 09.01.01
 *       ..compute parallel momentum source
            t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
-           smq0_rec(ix,iy,0,is) = smq0_rec(ix,iy,0,is)+
-     &      rf0*t1*ua(ix,iy,is)
-           smq0_rec(ix,iy,1,is) = smq0_rec(ix,iy,1,is)-(1.0_R8+rf0)*t1
-           smq0_rec(ix,iy,0,is-1) = smq0_rec(ix,iy,0,is-1)+
-     &      t1*(ua(ix,iy,is)+rf0*ua(ix,iy,is-1))
-           smq0_rec(ix,iy,1,is-1) = smq0_rec(ix,iy,1,is-1)-rf0*t1
-           rramo(ix,iy,is) = rramo(ix,iy,is)+t1*ua(ix,iy,is)
-           rramoreg(region(ix,iy,0),is) =
-     &      rramoreg(region(ix,iy,0),is)+t1*ua(ix,iy,is)
-           rramo(ix,iy,is-1) = rramo(ix,iy,is-1)+t1*ua(ix,iy,is)
-           rramoreg(region(ix,iy,0),is-1) =
-     &      rramoreg(region(ix,iy,0),is-1)+t1*ua(ix,iy,is)
-          endif
-         enddo
+           smq0_rec(iCv,0,is) = smq0_rec(iCv,0,is)+
+     &      rf0*t1*pl%ua(iCv,is)
+           smq0_rec(iCv,1,is) = smq0_rec(iCv,1,is)-(1.0_R8+rf0)*t1
+           smq0_rec(iCv,0,is-1) = smq0_rec(iCv,0,is-1)+
+     &      t1*(pl%ua(iCv,is)+rf0*pl%ua(iCv,is-1))
+           smq0_rec(iCv,1,is-1) = smq0_rec(iCv,1,is-1)-rf0*t1
+!WG_TODO           rramo(iCv,is) = rramo(iCv,is)+t1*pl%ua(iCv,is)
+           rramoreg(mpg%cvReg(iCv),is) =
+     &      rramoreg(mpg%cvReg(iCv),is)+t1*pl%ua(iCv,is)
+!WG_TODO           rramo(iCv,is-1) = rramo(iCv,is-1)+t1*pl%ua(iCv,is)
+           rramoreg(mpg%cvReg(iCv),is-1) =
+     &      rramoreg(mpg%cvReg(iCv),is-1)+t1*pl%ua(iCv,is)
+         endif
         enddo
        endif
       enddo
 *   ..compute source terms for electron heat loss and radiation
-      b2rad=0.0_R8
+!WG_TODO      b2rad=0.0_R8
       b2radreg=0.0_R8
       b2bremreg=0.0_R8
       rqradreg=0.0_R8
       rqbrmreg=0.0_R8
-      rqrad=0.0_R8
-      b2brem=0.0_R8
-      rad_imp=0.0_R8
+!WG_TODO      rqrad=0.0_R8
+!WG_TODO      b2brem=0.0_R8
+!WG_TODO      rad_imp=0.0_R8
       do is = 0, ns-1
-       do iy = -1, ny
-        do ix = -1, nx
-         if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &      topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
-     &      region(ix,iy,0).ne.0) then
+        do iCv = 1, mpg%nCi ! internal cells only
+         if(mpg%cvReg(iCv).ne.0) then
 *      ..compute damping coefficient
-          rf0 = rxm4*max(0.0_R8,rlqa(ix,iy,1,is))
+          rf0 = rxm4*max(0.0_R8,rt%rlqa(iCv,1,is))
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
 *      ..if adpak_used, also contains recombination and CX terms
-          t0 = rqa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
+          t0 = rtw%rqa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
 *      ..compute electron heat sink
-          she0(ix,iy,0) = she0(ix,iy,0)+rf0*t0
-          she0(ix,iy,3) = she0(ix,iy,3)-
-     &     (1.0_R8+rf0)*t0/(ne(ix,iy)*te(ix,iy))
-          rqahe(ix,iy,is) = rqahe(ix,iy,is) + t0
-          rqahereg(region(ix,iy,0),is)=rqahereg(region(ix,iy,0),is)+t0
+          srw%she0(iCv,0) = srw%she0(iCv,0)+rf0*t0
+          srw%she0(iCv,3) = srw%she0(iCv,3)-
+     &     (1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
+!WG_TODO          rqahe(iCv,is) = rqahe(iCv,is) + t0
+          rqahereg(mpg%cvReg(iCv),is)=rqahereg(mpg%cvReg(iCv),is)+t0
 *      ..compute line radiation rate for is->any
-          t0 = rrd(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
+          t0 = rtw%rrd(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
 *      ..compute line radiation
-          rqrad(ix,iy,is) = t0
-          rqradreg(region(ix,iy,0),is)=rqradreg(region(ix,iy,0),is)+t0
-          b2radreg(region(ix,iy,0))=b2radreg(region(ix,iy,0))-t0
+!WG_TODO          rqrad(iCv,is) = t0
+          rqradreg(mpg%cvReg(iCv),is)=rqradreg(mpg%cvReg(iCv),is)+t0
+          b2radreg(mpg%cvReg(iCv))=b2radreg(mpg%cvReg(iCv))-t0
           b2rad=b2rad-t0
           if (.not.is_neutral(is) .and. jimp_tmp(b2espcr(is)).ne.0) then
             rad_imp(jimp_tmp(b2espcr(is)))=
      .       rad_imp(jimp_tmp(b2espcr(is)))-t0
           endif
 *      ..compute bremsstrahlung radiation rate for is->any
-          t0 = rbr(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
+          t0 = rtw%rbr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
 *      ..compute bremsstrahlung radiation
-          rqbrm(ix,iy,is) = t0
-          rqbrmreg(region(ix,iy,0),is)=rqbrmreg(region(ix,iy,0),is)+t0
-          b2bremreg(region(ix,iy,0))=b2bremreg(region(ix,iy,0))-t0
+!WG_TODO          rqbrm(iCv,is) = t0
+          rqbrmreg(mpg%cvReg(iCv),is)=rqbrmreg(mpg%cvReg(iCv),is)+t0
+          b2bremreg(mpg%cvReg(iCv))=b2bremreg(mpg%cvReg(iCv))-t0
           b2brem=b2brem-t0
          endif
         enddo
-       enddo
       enddo
+
+*  ..copy to srw
+      srw%sna0 = sna0_ion + sna0_rec
+      srw%smq0 = smq0_ion + smq0_rec
+      srw%shi0 = shi0_ion + shi0_rec
 
 #ifdef ASTRA
       do is = 0, ns-1                                                 !srv 28.07.11 {
         if(is.eq.ismain) then
-          wrk0=sna0_ion(:,:,0,is)+sna0_ion(:,:,1,is)*na(:,:,is)
+          wrk0=sna0_ion(:,:,0,is)+sna0_ion(:,:,1,is)*pl%na(:,:,is)
           call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
-          wrk0=sna0_rec(:,:,0,is)+sna0_rec(:,:,1,is)*na(:,:,is)
+          wrk0=sna0_rec(:,:,0,is)+sna0_rec(:,:,1,is)*pl%na(:,:,is)
           call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
         endif
       enddo                                                           !srv 28.07.11 }
 
-      wrk0=she0(:,:,0)+
-     &     she0(:,:,1)*te(:,:)+she0(:,:,2)*ne+
-     &     she0(:,:,3)*ne*te
+      wrk0=srw%she0(:,0)+
+     &     srw%she0(:,1)*te(:)+srw%she0(:,2)*ne+
+     &     srw%she0(:,3)*ne*te
       call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)              !srv 11.06.13
 
-      wrk0=shi0_ion(:,:,0)+
-     &     shi0_ion(:,:,1)*ti+shi0_ion(:,:,2)*ni(:,:,0)+
-     &     shi0_ion(:,:,3)*ni(:,:,0)*ti
+      wrk0=shi0_ion(:,0)+
+     &     shi0_ion(:,1)*ti+shi0_ion(:,2)*ni(:,0)+
+     &     shi0_ion(:,3)*ni(:,0)*ti
       call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
 
-      wrk0=shi0_rec(:,:,0)+
-     &     shi0_rec(:,:,1)*ti+shi0_rec(:,:,2)*ni(:,:,0)+
-     &     shi0_rec(:,:,3)*ni(:,:,0)*ti
+      wrk0=shi0_rec(:,0)+
+     &     shi0_rec(:,1)*ti+shi0_rec(:,2)*ni(:,0)+
+     &     shi0_rec(:,3)*ni(:,0)*ti
       call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
 #endif
 
@@ -478,16 +448,16 @@ c accounted for)
 !          call my_out(70,nx,ny,smq0_rec(-1,-1,k,is),
 !     &                       'b2stel_smq_rec'//chk//chns)
 !         enddo
-          wrk0=smq0_ion(:,:,0,is)+
-     &         smq0_ion(:,:,1,is)*ua(:,:,is)+
-     &         smq0_ion(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &         smq0_ion(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-          call my_out(70,nx,ny,wrk0,'b2stel_smq_ion'//chns)
-          wrk0=smq0_rec(:,:,0,is)+
-     &         smq0_rec(:,:,1,is)*ua(:,:,is)+
-     &         smq0_rec(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &         smq0_rec(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-          call my_out(70,nx,ny,wrk0,'b2stel_smq_rec'//chns)
+          wrk0=smq0_ion(:,0,is)+
+     &         smq0_ion(:,1,is)*pl%ua(:,is)+
+     &         smq0_ion(:,2,is)*pl%na(:,is)*mp*am(is)+
+     &         smq0_ion(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
+          call my_out_us(70,nCv,wrk0,'b2stel_smq_ion'//chns)
+          wrk0=smq0_rec(:,0,is)+
+     &         smq0_rec(:,1,is)*pl%ua(:,is)+
+     &         smq0_rec(:,2,is)*pl%na(:,is)*mp*am(is)+
+     &         smq0_rec(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
+          call my_out_us(70,nCv,wrk0,'b2stel_smq_rec'//chns)
         enddo
       endif
       if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
@@ -501,10 +471,10 @@ c accounted for)
 !          call my_out(70,nx,ny,sna0_rec(-1,-1,k,is),
 !     &                       'b2stel_sna_rec'//chk//chns)
 !         enddo
-          wrk0=sna0_ion(:,:,0,is)+sna0_ion(:,:,1,is)*na(:,:,is)
-          call my_out(70,nx,ny,wrk0,'b2stel_sna_ion'//chns)
-          wrk0=sna0_rec(:,:,0,is)+sna0_rec(:,:,1,is)*na(:,:,is)
-          call my_out(70,nx,ny,wrk0,'b2stel_sna_rec'//chns)
+          wrk0=sna0_ion(:,0,is)+sna0_ion(:,1,is)*pl%na(:,is)
+          call my_out_us(70,nCv,wrk0,'b2stel_sna_ion'//chns)
+          wrk0=sna0_rec(:,0,is)+sna0_rec(:,1,is)*pl%na(:,is)
+          call my_out_us(70,nCv,wrk0,'b2stel_sna_rec'//chns)
 
         enddo
       endif
@@ -515,34 +485,38 @@ c accounted for)
 !         call my_out(70,nx,ny,shi0_ion(-1,-1,k),'b2stel_shi_ion'//chk)
 !         call my_out(70,nx,ny,shi0_rec(-1,-1,k),'b2stel_shi_rec'//chk)
 !        enddo
-!      call my_out(70,nx,ny,she0(-1,-1,k),'b2stel_she')
-        wrk0=she0(:,:,0)+she0(:,:,1)*te+
-     &       she0(:,:,2)*ne + she0(:,:,3)*te*ne
-        call my_out(70,nx,ny,wrk0,'b2stel_she_rad')
-        wrk0=shi0_ion(:,:,0)+shi0_ion(:,:,1)*ti+
-     &       shi0_ion(:,:,2)*ni(:,:,0)+shi0_ion(:,:,3)*ti*ni(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2stel_shi_ion')                  !srv 01.11.10
-        wrk0=shi0_rec(:,:,0)+shi0_rec(:,:,1)*ti+
-     &       shi0_rec(:,:,2)*ni(:,:,0)+shi0_rec(:,:,3)*ti*ni(:,:,0)
-        call my_out(70,nx,ny,wrk0,'b2stel_shi_rec')                  !srv 01.11.10
+!      call my_out(70,nx,ny,srw%she0(-1,-1,k),'b2stel_she')
+        wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
+     &       srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
+        call my_out_us(70,nCv,wrk0,'b2stel_she_rad')
+        wrk0=shi0_ion(:,0)+shi0_ion(:,1)*pl%ti+
+     &       shi0_ion(:,2)*dv%ni(:,0)+
+     &       shi0_ion(:,3)*pl%ti*dv%ni(:,0)
+        call my_out_us(70,nCv,wrk0,'b2stel_shi_ion')                  !srv 01.11.10
+        wrk0=shi0_rec(:,0)+shi0_rec(:,1)*pl%ti+
+     &       shi0_rec(:,2)*dv%ni(:,0)+
+     &       shi0_rec(:,3)*pl%ti*dv%ni(:,0)
+        call my_out_us(70,nCv,wrk0,'b2stel_shi_rec')                  !srv 01.11.10
 
-        do is=0,ns-1                                                 !srv 03.02.12 {
-          write(chns,'(i3.3)') is
-          call my_out(70,nx,ny,rqrad(-1,-1,is),'b2stel_rqrad'//chns)
-          call my_out(70,nx,ny,rqbrm(-1,-1,is),'b2stel_rqbrm'//chns)
-        enddo                                                        !srv 03.02.12 }
+!WG_TODO        do is=0,ns-1                                                 !srv 03.02.12 {
+!WG_TODO          write(chns,'(i3.3)') is
+!WG_TODO          call my_out_us(70,nCv,rqrad(1,is),'b2stel_rqrad'//chns)
+!WG_TODO          call my_out_us(70,nCv,rqbrm(1,is),'b2stel_rqbrm'//chns)
+!WG_TODO        enddo                                                        !srv 03.02.12 }
       endif                                                          !srv 30.06.08 11.09.09 }
 
 cdjm Jan2017 Keep linearised sources for balance
+#ifdef WG_TODO
       if (balance_netcdf.ne.0) then
         b2stel_sna_ion0to1 = sna0_ion
         b2stel_sna_rec0to1 = sna0_rec
         b2stel_smq_ion0to3 = smq0_ion
         b2stel_smq_rec0to3 = smq0_rec
-        b2stel_she0to3=she0
+        b2stel_she0to3=srw%she0
         b2stel_shi_ion0to3=shi0_ion
         b2stel_shi_rec0to3=shi0_rec
       endif
+#endif
 
 * ..return
       ncall = ncall+1

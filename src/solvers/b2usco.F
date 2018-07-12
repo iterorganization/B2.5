@@ -1,59 +1,77 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usco (nx, ny, isb, nregionv, solvereg, itcnt, rxg, !srv 06.07.08
-     &  pcm1, vol, pbs, nb, pb,
-     &  snbv, flob, conb, pccb1, rescb, corpb, aa5, name)             !srv 18.05.02
+      subroutine b2usco (nCv, nFc, nVx, isb, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
+     &   solvereg, itcnt, rxg, pcm1, nb, pb, snbv, flob, conb,
+     &   pccb1, rescb, corpb, aa, name)                              !srv 18.05.02
       use b2mod_types
-      use b2mod_indirect
-      use b2mod_boundary_namelist
-     , , only : iffboundx, iffboundy
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, isb, nregionv, itcnt
-      real (kind=R8) ::
-     *  rxg, pcm1, pbs(-1:nx,-1:ny,0:1), nb(-1:nx,-1:ny),
-     &  pb(-1:nx,-1:ny), snbv(-1:nx,-1:ny), flob(-1:nx,-1:ny,0:1,0:1),
-     &  conb(-1:nx,-1:ny,0:1,0:1,0:4), pccb1(-1:nx,-1:ny),            !srv 13.10.06
-     &  rescb(-1:nx,-1:ny), vol(-1:nx,-1:ny)
+      integer nCv, nFc, nVx, itcnt, isb, nregionv
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       logical solvereg(0:nregionv)      
-      character*(*) name                                              !srv 18.03.10
+      real (kind=R8) ::
+     *   rxg, pcm1, nb(nCv), pb(nCv), snbv(nCv), flob(nFc,0:1),
+     &   conb(nFc,0:1,0:4), pccb1(nCv), rescb(nCv)
+      character*(*) name
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  corpb(-1:nx,-1:ny)
+     *   corpb(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
+!WG_TODO: better definition of size aa still needed
       real (kind=R8) ::
-     *  aa5(-1:nx,-1:ny,-2:2), wrk0(-1:nx,-1:ny)
+     *   aa(9*nCv)
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2USCO computes a correction towards the solution of the
-*     continuity equation for one atomic species.
-*
+*     b2usco computes a correction towards the solution of the
+*     continuity equation for one atomic species on an unstructured 
+*     mesh.
+*     
 *-----------------------------------------------------------------------
+!                 2_____3_____4                     5___________6
+!                 |     |     |                     |     |     |
+!                 |     |     |                     |     |     |
+!                -1_____0_____1                     |_____|_____|
+!                 |     |     |                     |     |     |
+!                 |     |     |                     |     |     |
+!                -4____-3____-2                    -6_____|____-5
+
+!                (ix-1,iy+1)______(ix,iy+1)____(ix+1,iy+1)
+!                     |              |              |
+!                     |              |              |
+!                     |              |              |
+!                (ix-1,iy  )______(ix,iy)______(ix+1,iy  )
+!                     |              |              |
+!                     |              |              |
+!                     |              |              |
+!                (ix-1,iy-1)______(ix,iy-1)____(ix+1,iy-1)
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
+      integer ncall, iCv, iFc, iCv1, iCv2, iNv1, iNv2, ireg
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
-      integer, save :: iout = 0                                       !srv 17.06.02
-      character chns*3                                                !srv 17.06.02
+      integer, save :: iadd_9 = 1, iout = 0                           !srv 13.10.06
       real (kind=R8) ::
-     *  t0, t1
+     *   t1, t2, wrk0(nFc)
+      character chns*3
+      logical lnonzero
       save ncall
 *   ..procedures
       intrinsic abs
       real (kind=R8) ::
-     *  rscal
+     *   rscal
       external subini, subend, xertst, ipgetr, sfill
-      external b2xvsg, b2xvff, b2xxgs, b2ux5p
-! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
-      rscal(t0) = t0                                                  !srv 13.10.06
-!      rscal(t0) = 1.0e0_R8                                           !srv 13.10.06
-*   ..initialisation
+      external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                  !srv 02.01.07
+!      rscal(t1) = t1
+      rscal(t1) = 1.0e0_R8                                             !srv 13.10.06
+*   ..initialization
       data ncall/0/
 
 *-----------------------------------------------------------------------
@@ -62,191 +80,122 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2usco')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then                                            !srv 06.07.08 {
+*   ..set internal parameters on first call                              !srv 25.08.99
+      if (ncall.eq.0) then                                               !srv 06.07.06 {
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
-       call ipgeti ('b2usco_iout', iout)                              !srv 17.06.02
-      endif                                                           !srv 06.07.08 }
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 13.10.06
+       call ipgeti ('b2usco_iout', iout)                                 !srv 13.10.06
+      endif                                                              !srv 06.07.06 }
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..test itcnt, rxg, pcm1
       call xertst (0.le.itcnt, 'faulty argument itcnt')
-      call xertst (0.0_R8.lt.rxg, 'faulty argument rxg')
-      call xertst (0.0_R8.le.pcm1, 'faulty argument pcm1')
+      call xertst (0.lt.rxg, 'faulty argument rxg')
+      call xertst (0.le.pcm1, 'faulty argument pcm1')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol, nb, pb
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, nb, 1, 'nb', '.gt.')
-       call b2xvsg (n2, pb, 1, 'pb', '.gt.')
-*    ..test sign of snbv, conb
-       call b2xvsg (n2, snbv, 1, 'snbv', '.le.')
-       if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !srv 06.07.06 {
-        call b2xvsg (n2*4*3, conb, 1, 'conb', '.ge.')                 !srv 18.11.05 13.10.06
-       endif                                                          !srv 06.07.06 }
-*    ..test edge values of flob, conb
-       call b2xvff (nx, ny, flob, 'flob')
-       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')               !srv 13.10.06 {
-       call b2xvff (nx, ny, conb(-1,-1,0,0,1), 'conb1')
-       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb2')               !srv 13.10.06 }
+*    ..test sign of nb, pb
+       call b2xvsg (nCv, nb, 1, 'nb', '.gt.')
+       call b2xvsg (nCv, pb, 1, 'pb', '.gt.')
+*    ..test sign of snbv
+       call b2xvsg (nCv, snbv, 1, 'snbv', '.le.')
       endif
 
-* ..compute the correction
-      call sfill (n2*5, 0.0_R8, aa5, 1)
+      aa = 0.0e0_R8
+
 *   ..compute wrk0
-      do iy = -1, ny
-        do ix = -1, nx
-          if(leftix(ix,iy).eq.-2) then
-            wrk0(ix,iy) = 0.0_R8
-          else
+      do iFc = 1, nFc
 *!!     Maybe use volume weighting or inverse-volume weighting here.
-            wrk0(ix,iy) = pbs(ix,iy,0)*
-     &       (pccb1(leftix(ix,iy),leftiy(ix,iy))*
-     &        nb(leftix(ix,iy),leftiy(ix,iy))+
-     &        pccb1(ix,iy)*nb(ix,iy))/2.0_R8
-          endif
-        enddo
+cwdk need calccoeff here...
+        wrk0(iFc) = 0.5_R8*geo%fcPbs(iFc)*
+     &    (pccb1(mpg%fcCv(iFc,1))*nb(mpg%fcCv(iFc,1)) +
+     &     pccb1(mpg%fcCv(iFc,2))*nb(mpg%fcCv(iFc,2)))
       enddo
-      call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
-*   ..compute the five-point matrix
-      do iy = -1, ny
-       do ix = -1, nx
-        ireg = region(ix,iy,0)
+!WG_TODO      call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
+
+* ..compute the matrix
+      do iCv = 1, nCv
+        ireg  = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
-         aa5(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+
-     &    abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))
+          aa(mpg%aaP(iCv,1)) = (-snbv(iCv)*nb(iCv)/pb(iCv)+         !srv 13.10.06 {
+     &     abs(rescb(iCv))/(rxg*pb(iCv)))*rscal(pb(iCv))        !srv 13.10.06 }
         else
-         aa5(ix,iy,0) = rscal(pb(ix,iy))
+          aa(mpg%aaP(iCv,1)) = rscal(pb(iCv))
         endif
-       enddo
       enddo
-      do iy = -1, ny
-       do ix = -1, nx
 
-csw 18feb2014 corrected BCs (SOLPS4)
-        if(iffboundx(ix,iy).ne.0) then
-          aa5(ix,iy,-1) = 0.0_R8
-          aa5(ix,iy,1) = 0.0_R8
-          cycle
+      do iFc = 1, nFc
+        iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
+        iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
+*     ..contributions from flob(:,0), conb(:,0,:) ('5-point' contributions)
+        iNv1 = mpg%fcNv(iFc,1) ! number of c2 as seen from c1 
+        iNv2 = mpg%fcNv(iFc,2) ! number of c1 as seen from c2
+        t1 = - 0.5_R8*flob(iFc,0) - (conb(iFc,0,0)+pcm1*wrk0(iFc))
+     &       - conb(iFc,0,2)                                       !srv 13.10.06
+        t2 =   0.5_R8*flob(iFc,0) - (conb(iFc,0,0)+pcm1*wrk0(iFc))
+     &       - conb(iFc,0,1)                                       !srv 13.10.06 
+        if (solvereg(mpg%cvReg(iCv1))) then
+          aa(mpg%aaP(iCv1,1)) = aa(mpg%aaP(iCv1,1)) - 
+     &      t1*rscal(pb(iCv1))
+          aa(mpg%aaP(iCv1,1)+iNv1-1) = aa(mpg%aaP(iCv1,1)+iNv1-1) + 
+     &      t2*rscal(pb(iCv2))
         endif
+        if (solvereg(mpg%cvReg(iCv2))) then
+          aa(mpg%aaP(iCv2,1)) = aa(mpg%aaP(iCv2,1)) - 
+     &      t2*rscal(pb(iCv2))
+          aa(mpg%aaP(iCv2,1)+iNv2-1) = aa(mpg%aaP(iCv2,1)+iNv2-1) + 
+     &      t1*rscal(pb(iCv1))
+        endif
+*     ..contributions from flob(:,1), conb(:,1,:) ('9-point' contributions)
+!WG_TODO
+      enddo
 
-        ireg = region(ix,iy,0)
-        if(leftix(ix,iy).eq.-2) then
-          aa5(ix,iy,-1) = 0.0_R8
-        else
-          t0 =  flob(ix,iy,0,0)/2.0_R8 - 
-     &         (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy)) - conb(ix,iy,0,0,1) !srv 13.10.06
-          t1 = -flob(ix,iy,0,0)/2.0_R8 - 
-     &         (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy)) - conb(ix,iy,0,0,2) !srv 13.10.06
-          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
-          if (solvereg(ileft))
-     >     aa5(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
-          if (solvereg(ireg))
-     >     aa5(ix,iy,0) = aa5(ix,iy,0)-t0*rscal(pb(ix,iy))
-          if (solvereg(ileft))
-     >     aa5(leftix(ix,iy),leftiy(ix,iy),0) = 
-     &       aa5(leftix(ix,iy),leftiy(ix,iy),0)
-     &       -t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
-          if (solvereg(ireg))
-     >     aa5(ix,iy,-1) = t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
+#ifdef WG_TODO
+*   ..add matrix from contribution nine point stencil
+      if(iadd_9 .eq. 1) then
+       call b2uxm9 (nx, ny, nnreg(0), itcnt, solvereg,
+     &   conb(-1,-1,0,0,3), aa, name)                             !srv 02.01.07
+      endif
+#endif
+      do iCv = 1, nCv
+        lnonzero=.false.
+        do iNv1 = 1,mpg%aaP(iCv,2)
+          lnonzero = lnonzero.or.(aa(mpg%aaP(iCv,1)+iNv1-1).ne.0.0_R8)
+        enddo
+        if (.not.lnonzero) then
+          aa(mpg%aaP(iCv,1)) = rscal(pb(iCv))
+          rescb(iCv) = 0.0_R8
         endif
-        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg)) 
-     >   aa5(ix,iy,1) = 0.0_R8
-       enddo
+        ireg = mpg%cvReg(iCv)
+        if (.not.solvereg(ireg)) rescb(iCv) = 0.0_R8
       enddo
-      do iy = -1, ny
-       do ix = -1, nx
-csw 18feb2014 corrected BCs (SOLPS4)
-        if(iffboundy(ix,iy).ne.0) then
-          aa5(ix,iy,-2) = 0.0_R8
-          aa5(ix,iy,2) = 0.0_R8
-          cycle
-        endif
 
-        ireg = region(ix,iy,0)
-        if(bottomiy(ix,iy).eq.-2) then
-          aa5(ix,iy,-2) = 0.0_R8
-        else
-          t0 =  flob(ix,iy,1,1)/2.0_R8 - conb(ix,iy,1,1,0) 
-     &                                 - conb(ix,iy,1,1,1) !srv 13.10.06
-          t1 = -flob(ix,iy,1,1)/2.0_R8 - conb(ix,iy,1,1,0) 
-     &                                 - conb(ix,iy,1,1,2) !srv 13.10.06
-          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-          if (solvereg(ibot))
-     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0*rscal(pb(ix,iy))
-          if (solvereg(ireg))
-     >     aa5(ix,iy,0) = aa5(ix,iy,0)-t0*rscal(pb(ix,iy))
-          if (solvereg(ibot))
-     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),0) = 
-     &      aa5(bottomix(ix,iy),bottomiy(ix,iy),0)
-     &      -t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
-          if (solvereg(ireg))
-     >     aa5(ix,iy,-2) = t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
-cxpb
-          if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
-     &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
-     &       iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
-            if(ncall.lt.3) write(*,*) 'Executing xpb:b2usco for ',ix,iy
-            t0 = flob(topix(ix,iy),topiy(ix,iy),1,1)/2-
-     &           conb(topix(ix,iy),topiy(ix,iy),1,1,0)-                !srv 13.10.06
-     &           conb(topix(ix,iy),topiy(ix,iy),1,1,1)                 !srv 13.10.06
-            t1 = -flob(topix(ix,iy),topiy(ix,iy),1,1)/2-
-     &           conb(topix(ix,iy),topiy(ix,iy),1,1,0)-                !srv 13.10.06
-     &           conb(topix(ix,iy),topiy(ix,iy),1,1,2)                 !srv 13.10.06
-            itop = region(topix(ix,iy),topiy(ix,iy),0)
-            if (solvereg(ireg))
-     >       aa5(ix,iy,2) = t0*rscal(pb(topix(ix,iy),topiy(ix,iy)))
-            if (solvereg(itop))
-     >       aa5(topix(ix,iy),topiy(ix,iy),0) = 
-     &       aa5(topix(ix,iy),topiy(ix,iy),0)-
-     &       t0*rscal(pb(topix(ix,iy),topiy(ix,iy)))
-            if (solvereg(ireg))
-     >       aa5(ix,iy,0) = aa5(ix,iy,0)-t1*rscal(pb(ix,iy))
-            if (solvereg(itop))
-     >       aa5(topix(ix,iy),topiy(ix,iy),2) = t1*rscal(pb(ix,iy))
-          endif
-cxpb
-        endif
-        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) 
-     >   aa5(ix,iy,2) = 0.0_R8
-       enddo
-      enddo
-*   ..correct RHS if not solving
-      do iy = -1, ny
-       do ix = -1, nx
-        ireg = region(ix,iy,0)
-        if (aa5(ix,iy,0).eq.0.0_R8 .and.
-     &      aa5(ix,iy,1).eq.0.0_R8 .and. aa5(ix,iy,-1).eq.0.0_R8 .and.
-     &      aa5(ix,iy,2).eq.0.0_R8 .and. aa5(ix,iy,-2).eq.0.0_R8) then
-          aa5(ix,iy,0) = rscal(pb(ix,iy))
-          rescb(ix,iy) = 0.0_R8
-        end if
-        if (.not.solvereg(ireg)) rescb(ix,iy) = 0.0_R8
-       enddo
-      enddo
-      
+
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ',name
-      call b2ux5p (nx, ny, aa5, itcnt, rescb, corpb, name)             !srv 18.03.10
+      call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name)                 !srv 18.05.02
 *   ..redo the scaling
-      do iy = -1, ny
-       do ix = -1, nx
-        corpb(ix,iy) = corpb(ix,iy)*rscal(pb(ix,iy))
-       enddo
+      do iCv = 1, nCv
+        corpb(iCv) = corpb(iCv)*rscal(pb(iCv))
       enddo
       if (iout.ne.0) then                                              !srv 17.06.02 {
-       write (chns,'(i3.3)') isb
-       call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 0),name//'_aa5m0'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 1),name//'_aa5p1'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 2),name//'_aa5p2'//chns)
-       call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
-       call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
-       call my_out(70,nx,ny,nb,name//'_nb'//chns)
+        write (chns,'(i3.3)') isb
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-6),name//'_aam6'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-5),name//'_aam5'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-4),name//'_aam4'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-3),name//'_aam3'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-2),name//'_aam2'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-1),name//'_aam1'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 0),name//'_aacc'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 1),name//'_aap1'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 2),name//'_aap2'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 3),name//'_aap3'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 4),name//'_aap4'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 5),name//'_aap5'//chns)
+!WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 6),name//'_aap6'//chns)
+        call my_out_us(70,nCv,corpb,name//'_corpb'//chns)
+        call my_out_us(70,nCv,rescb,name//'_rescb'//chns)
+        call my_out_us(70,nCv,nb,name//'_na'//chns)
       endif                                                            !srv 17.06.02 }
 
 * ..return

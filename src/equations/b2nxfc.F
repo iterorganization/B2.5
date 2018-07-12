@@ -1,24 +1,26 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfc (nx, ny, isb, vol, pbs, rob, ub, flub, cvsb,
-     &  flcb, cvcb, wrk0)
+      subroutine b2nxfc (nCv, nFc, nVx, isb, geo, mpg, rob, ub, flub,
+     &  cvsb, flcb, cvcb, wrkf)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_boundary_namelist
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, isb
+      integer nCv, nFc, nVx, isb
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  pbs(-1:nx,-1:ny,0:1), rob(-1:nx,-1:ny), ub(-1:nx,-1:ny),
-     &  flub(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1), 
-     &  vol(-1:nx,-1:ny)
+     *  rob(nCv), ub(nCv),
+     &  flub(nFc,0:1), cvsb(nFc,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   flcb(-1:nx,-1:ny,0:1,0:1), cvcb(-1:nx,-1:ny,0:1,0:1)
+     *   flcb(nFc,0:1), cvcb(nFc,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny)                                          !srv 02.07.08
+     *   wrkf(nFc), flub0(nFc,0:1)                          !srv 02.07.08
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -32,7 +34,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, n2, ix, iy, ncallout, ib
+      integer ncall, style, iFc, ncallout, ib
       integer, save :: iout = 0                                     !srv 17.06.02
       character charns*3                                            !srv 17.06.02
       save ncall, style, ncallout
@@ -66,136 +68,51 @@
        call ipgeti ('b2news_ncallout', ncallout)
        call ipgeti ('b2nxfc_iout', iout)                             !srv 17.06.02
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*   ..test edge values of flub
-       call b2xvff (nx, ny, flub, 'flub')
        if (ncall.eq.ncallout) then
         write(*,*) 'ncall',ncall
-        call hbout('b2nxfc_xvsg ',nx,ny,2,rob,'rob',ub,'ub',cvsb,
-     &  'cvsb',cvsb,'ua',cvsb,'na',cvsb,'ua')
+!WG_TODO        call hbout('b2nxfc_xvsg ',nx,ny,2,rob,'rob',ub,'ub',cvsb,
+!WG_TODO     &  'cvsb',cvsb,'ua',cvsb,'na',cvsb,'ua')
        endif
 *    ..test sign of rob
-       call b2xvsg (n2, rob, 1, 'rob', '.gt.')
+       call b2xvsg (nCv, rob, 1, 'rob', '.gt.')
       endif
 
 * ..compute convection factors
-*   ..compute wrk0
-      call intfaceh(nx,ny,leftix,leftiy,vol,ub,wrk0)
-*   ..compute flcbx, cvcbx
-      do iy = -1, ny
-       if (style.eq.0) then
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-          flcb(ix,iy,0,0) = 0.0_R8
-          flcb(ix,iy,0,1) = 0.0_R8
-          cvcb(ix,iy,0,0) = 0.0_R8
-          cvcb(ix,iy,0,1) = 0.0_R8
-         else
-          flcb(ix,iy,0,0) = flub(ix,iy,0,0)+pbs(ix,iy,0)*(vol(ix,iy)*
-     &      rob(leftix(ix,iy),leftiy(ix,iy))*
-     &      ub(leftix(ix,iy),leftiy(ix,iy))+
-     &      vol(leftix(ix,iy),leftiy(ix,iy))*rob(ix,iy)*ub(ix,iy))/
-     &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-          flcb(ix,iy,0,1) = flub(ix,iy,0,1)
-          cvcb(ix,iy,0,0) = cvsb(ix,iy,0,0)
-          cvcb(ix,iy,0,1) = cvsb(ix,iy,0,1)
-         endif
+      flub0 = flub
+      if (style.eq.0) then
+*     ..compute wrkf
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ub*rob,wrkf)
+*     ..compute flcbx, cvcbx
+        flub0(:,0) = flub0(:,0) + geo%fcPbshz*wrkf
+      elseif (style.eq.1) then
+*     ..compute wrkf
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ub,wrkf)
+*     ..compute flcbx, cvcbx        
+        do iFc = 1, nFc
+          flub0(iFc,0) = flub0(iFc,0) + geo%fcPbs(iFc)*wrkf(iFc)*
+     &      (rob(mpg%fcCv(iFc,1))+rob(mpg%fcCv(iFc,2)))*0.5e0_R8
         enddo
-       elseif(style.eq.1) then
-        do ix = -1, nx                                                 !srv 26.11.02
-         if(leftix(ix,iy).eq.-2) then                                           !srv 26.11.02 {
-          flcb(ix,iy,0,0) = 0.0_R8
-          flcb(ix,iy,0,1) = 0.0_R8
-          cvcb(ix,iy,0,0) = 0.0_R8
-          cvcb(ix,iy,0,1) = 0.0_R8
-         else
-          flcb(ix,iy,0,0) = flub(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)*
-     &      (rob(ix,iy)+rob(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8      !srv 01.07.05 } 
-          flcb(ix,iy,0,1) = flub(ix,iy,0,1)
-          cvcb(ix,iy,0,0) = cvsb(ix,iy,0,0)
-          cvcb(ix,iy,0,1) = cvsb(ix,iy,0,1)
-         endif                                                         !srv 26.11.02 }
-        enddo
-       else
+      else
         call xerrab ('Only style 0 or 1 in b2nxfc are included')
-       endif
-      enddo
-*   ..compute flcby, cvcby
-      call b2scopy (n2, flub(-1,-1,1,0), 1, flcb(-1,-1,1,0), 1)
-      call b2scopy (n2, flub(-1,-1,1,1), 1, flcb(-1,-1,1,1), 1)
-      call b2scopy (n2, cvsb(-1,-1,1,0), 1, cvcb(-1,-1,1,0), 1)
-      call b2scopy (n2, cvsb(-1,-1,1,1), 1, cvcb(-1,-1,1,1), 1)
-
-csw 18feb2014 remove fluxes between guard cells 
-        do ix=-1,nx
-         do iy=-1,ny
-           if(iffboundx(ix,iy).ne.0) then
-             flub(ix,iy,0,0:1)=0.0_R8
-             cvsb(ix,iy,0,0:1)=0.0_R8
-             flcb(ix,iy,0,0:1)=0.0_R8
-             cvcb(ix,iy,0,0:1)=0.0_R8
-           endif
-           if(iffboundy(ix,iy).ne.0) then
-             flub(ix,iy,1,0:1)=0.0_R8
-             cvsb(ix,iy,1,0:1)=0.0_R8
-             flcb(ix,iy,1,0:1)=0.0_R8
-             cvcb(ix,iy,1,0:1)=0.0_R8
-           endif
-         enddo
-        enddo
-
-*  INTERIOR BOUNDARY AT DEAD REGIONS
-      DO IB=1,NNISO
-        DO IX=NXISO1(IB), NXISO2(IB)
-          DO IY=NYISO1(IB), NYISO2(IB)
-            flcb(ix,iy,:,:)=0.0_R8
-            cvcb(ix,iy,:,:)=0.0_R8
-            flub(ix,iy,:,:)=0.0_R8
-            cvsb(ix,iy,:,:)=0.0_R8
-          end do
-        end do
-      end do
-
-C*     turn off flows between boundary cells in west and east
-C        do iy = -1, ny
-C         do ix = -1, nx
-C          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-C            flcb(ix,iy,1,0:1) = 0.0_R8
-C            cvcb(ix,iy,1,0:1) = 0.0_R8
-C            flub(ix,iy,1,0:1) = 0.0_R8
-C            cvsb(ix,iy,1,0:1) = 0.0_R8
-C          endif
-C         enddo
-C        enddo
-C*     turn off flows between boundary cells in south and in north
-C         do iy = -1, ny, ny+1
-C            flcb(:,iy,0,0:1) = 0.0_R8
-C            cvcb(:,iy,0,0:1) = 0.0_R8
-C            flub(:,iy,0,0:1) = 0.0_R8
-C            cvsb(:,iy,0,0:1) = 0.0_R8
-C         enddo                          
-
+      endif
+* ..compute linearization
+!WG_TODO: change the mode "0" to an input to select different
+!WG_TODO: discretization schemes
+      call calccoef(nCv,nFc,nVx,0,geo,mpg,flub0,cvsb,flcb,cvcb)
 
       if (iout.ne.0) then                                              !sv 17.06.02 {
         write (charns,'(i3.3)') isb    
-        call my_out(70,nx,ny,flub(-1,-1,0,0),'b2nxfc_flubx'//charns)
-        call my_out(70,nx,ny,flub(-1,-1,0,1),'b2nxfc_flubxy'//charns)
-        call my_out(70,nx,ny,flub(-1,-1,1,0),'b2nxfc_flubyx'//charns)
-        call my_out(70,nx,ny,flub(-1,-1,1,1),'b2nxfc_fluby'//charns)
-        call my_out(70,nx,ny,flcb(-1,-1,0,0),'b2nxfc_flcbx'//charns)
-        call my_out(70,nx,ny,flcb(-1,-1,0,1),'b2nxfc_flcbxy'//charns)
-        call my_out(70,nx,ny,flcb(-1,-1,1,0),'b2nxfc_flcbyx'//charns)
-        call my_out(70,nx,ny,flcb(-1,-1,1,1),'b2nxfc_flcby'//charns)
-        call my_out(70,nx,ny,cvcb(-1,-1,0,0),'b2nxfc_cvcbx'//charns)
-        call my_out(70,nx,ny,cvcb(-1,-1,0,1),'b2nxfc_cvcbxy'//charns)
-        call my_out(70,nx,ny,cvcb(-1,-1,1,0),'b2nxfc_cvcbyx'//charns)
-        call my_out(70,nx,ny,cvcb(-1,-1,1,1),'b2nxfc_cvcby'//charns)
-        call my_out(70,nx,ny,rob,'b2nxfc_rob'//charns)
+        call my_out_us(70,nFc,flub(1,0),'b2nxfc_flubx'//charns)
+        call my_out_us(70,nFc,flub(1,1),'b2nxfc_fluby'//charns)
+        call my_out_us(70,nFc,flcb(1,0),'b2nxfc_flcbx'//charns)
+        call my_out_us(70,nFc,flcb(1,1),'b2nxfc_flcby'//charns)
+        call my_out_us(70,nFc,cvcb(1,0),'b2nxfc_cvcbx'//charns)
+        call my_out_us(70,nFc,cvcb(1,1),'b2nxfc_cvcby'//charns)
+        call my_out_us(70,nCv,rob,'b2nxfc_rob'//charns)
       endif                                                            !sv 17.06.02 }
 * ..return
       ncall = ncall+1

@@ -1,21 +1,23 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2treq (nx, ny, vol, te, ti, ne, ni, ne2m, lnlam, ceqp)   !xpb !srv 01.07.09
+      subroutine b2treq (nCv, vol, te, ti, ne, ni, ne2m, lnlam, st_ext, 
+     &  ceqp)   !xpb !srv 01.07.09
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_external
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny
+      integer nCv
+      type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) ::
-     *  vol(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), 
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ne2m(-1:nx,-1:ny), lnlam(-1:nx,-1:ny)        !xpb !srv 01.07.09
+     *  vol(nCv), ni(nCv,0:1), 
+     &  te(nCv), ti(nCv),
+     &  ne(nCv), ne2m(nCv), lnlam(nCv)        !xpb !srv 01.07.09
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  ceqp(-1:nx,-1:ny)
+     *  ceqp(nCv)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -38,7 +40,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy
+      integer ncall, iCv
       integer, save :: icase = 0
       real (kind=R8) ::
      *  cfeqp, phm0
@@ -58,10 +60,8 @@
 
 *   ..subprogram start-up calls
       call subini ('b2treq')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv
+      call xertst (0.le.nCv, 'faulty argument nCv')
 *   ..read input data
       if (ncall.eq.0) then
        call ipgetr ('b2treq_phm0', phm0)
@@ -73,20 +73,18 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test vol, state
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2, ne, 1, 'ne', '.gt.')
-       call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
-       call b2xvsg (n2, ne2m, 1, 'ne2m', '.gt.')
+       call b2xvsg (nCv, vol, 1, 'vol', '.gt.')
+       call b2xvsg (nCv, te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
+       call b2xvsg (nCv, ne2m, 1, 'ne2m', '.gt.')
       endif
 
-      call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)                     !srv 20.09.11
+      call b2tlnl (nCv, icase, te, ti, ne, lnlam)                     !srv 20.09.11
 *   ..compute ceqp
-      do iy = -1, ny
-       do ix = -1, nx
-        ceqp(ix,iy) = phm0*(cfeqp*lnlam(ix,iy)*ev*sqrt(ev))*vol(ix,iy)*  !srv 01.07.09
-     &    (ne2m(ix,iy)/(ni(ix,iy,0)+ni_ext(ix,iy,0)))
-       enddo
+      do iCv = 1, nCv
+        ceqp(iCv) = phm0*(cfeqp*lnlam(iCv)*ev*sqrt(ev))*vol(iCv)*  !srv 01.07.09
+     &    (ne2m(iCv)/(ni(iCv,0)+st_ext%ni(iCv,0)))
       enddo
 
 * ..return
