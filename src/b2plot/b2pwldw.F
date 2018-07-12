@@ -338,10 +338,13 @@ c        if(n_sfpr_s.gt.0) print *,(' ',sfpr_s(i),i=1,n_sfpr_s)      !###
             k=k+1
             iy=(bcstart(i)+bcend(i))/2
             if(l.eq.nx) then !{
-              if(ntrgts.eq.2) then !{
+              if(ntrgts.eq.1) then !{
+                phi_hlp(1)=get_phi_applied(boundary_namelist,l,iy)
+                eni_hlp(1)=enipar(i,1)+2.0_R8-enipar(i,2)
+              else if(ntrgts.eq.2) then !{
                 phi_hlp(2)=get_phi_applied(boundary_namelist,l,iy)
                 eni_hlp(2)=enipar(i,1)+2.0_R8-enipar(i,2)
-              else !}{
+              else if (ntrgts.eq.4) then !}{
                 phi_hlp(4)=get_phi_applied(boundary_namelist,l,iy)
                 eni_hlp(4)=enipar(i,1)+2.0_R8-enipar(i,2)
               end if !}
@@ -644,9 +647,14 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
             l=1
             u=-1
             do j=1,ntrgts !{
+              if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                u=1
+                l=0
+              end if
               k=ltrgpos(j)
               kk=k+l
               ISS=ltns(j)
+              if (ISS.eq.0) cycle
               IND=eirdiag_nds_ind(ISS)
               IA=IND+1
               do iy=0,ny-1 !{
@@ -750,6 +758,7 @@ c            print *,'ntrgts, wi: ',ntrgts,(wi(i),i=1,ntrgts)  !###
               if (ft44) then
                 if(ntns.eq.ntrgts) then !{
                   js=ltns(j)+nlim
+                  if (ltns(j).eq.0) cycle
                   wo=wldnek(js,0)+wldnep(js,0)
 c                  print *,'j,js,wo = ',j,js,wo    !###
                   if(wi(j).gt.0.0_R8) then !{
@@ -792,10 +801,15 @@ c*** Particle fluxes and energies
               l=1
               u=-1
               do j=1,ntrgts !{
+                if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                  u=1
+                  l=0
+                end if
                 k=ltrgpos(j)
                 kk=k+l
                 ib=k+1-l
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
 c!###{
@@ -842,10 +856,15 @@ c*** Atomic fluxes and energies
               l=1
               u=-1
               do j=1,ntrgts !{
+                if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                  u=1
+                  l=0
+                end if
                 k=ltrgpos(j)
                 kk=k+l
                 ib=k+1-l
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
                 do iy=0,ny-1 !{
@@ -915,10 +934,15 @@ c*** Molecules fluxes and energies
               l=1
               u=-1
               do j=1,ntrgts !{
+                if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                  u=1
+                  l=0
+                endif
                 k=ltrgpos(j)
                 kk=k+l
                 ib=k+1-l
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
                 do iy=0,ny-1 !{
@@ -974,6 +998,7 @@ c carlis wldspta and wldsptm give sputtered flux for each emitted atom and molec
               shift=lppp+1
               do j=1,ntrgts !{
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
                 sjs_t(j)=0.0_R8

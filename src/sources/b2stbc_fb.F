@@ -901,28 +901,58 @@
                   is_start=-1
                   is_end=-1
                   do is=0, ns-1
-                     if(is_neutral(is)) cycle
-                     if(b2espcr(is).eq.ispecies+1) then
-                        if(is_start.eq.-1) is_start=is
-                        do iy = na_feedback_iy1(ispecies),
-     &                          na_feedback_iy2(ispecies)
-                           do ix = na_feedback_ix1(ispecies),
-     &                             na_feedback_ix2(ispecies)
-                             if(on_closed_surface(bottomix(ix,iy),
-     .                                            bottomiy(ix,iy)))
-     >                        then
-                                na_feedback_current =
-     &                             na_feedback_current +
-     &                             na(ix,iy,is) * gs(ix,iy,1)
-                                if (is.eq.is_start) then
-                                  sum_e = sum_e +
-     .                             ne(ix,iy) * gs(ix,iy,1)
-                                end if
-                              endif
-                           enddo
+                    if(is_neutral(is)) cycle
+                    if(b2espcr(is).eq.ispecies+1) then
+                      if(is_start.eq.-1) is_start=is
+                      do ix = 0, nx-1
+                        if(on_closed_surface(ix,jsep))
+     >                      then
+                          na_feedback_current =
+     &                           na_feedback_current + (na(ix,jsep,is) +
+     &                           na(topix(ix,jsep),topiy(ix,jsep),is)) *
+     &                           gs(topix(ix,jsep),topiy(ix,jsep),1)
+                          if (is.eq.is_start) then
+                            sum_e = sum_e + (ne(ix,jsep) +
+     &                           ne(topix(ix,jsep),topiy(ix,jsep))) *
+     &                           gs(topix(ix,jsep),topiy(ix,jsep),1)
+                          end if
+                        endif
+                      enddo
+                      is_end=is
+                    endif
+                  enddo
+                  na_feedback_current = na_feedback_current/sum_e
+
+               case (8) ! relative average concentration of this species on desired domain
+
+                  if(ncall.eq.0) then
+                     write(*,*)
+     &                 'b2stbc_fb_pre_choice: using average ',
+     &                 'concentration for sequence ', ispecies+1
+                  endif
+                  na_feedback_current = 0.0_R8
+                  sum_e = 0.0_R8
+                  is_start=-1
+                  is_end=-1
+                  do is=0, ns-1
+                    if(is_neutral(is)) cycle
+                    if(b2espcr(is).eq.ispecies+1) then
+                      if(is_start.eq.-1) is_start=is
+                      do iy = na_feedback_iy1(ispecies),
+     &                        na_feedback_iy2(ispecies)
+                        do ix = na_feedback_ix1(ispecies),
+     &                           na_feedback_ix2(ispecies)
+                          na_feedback_current =
+     &                           na_feedback_current +
+     &                           na(ix,iy,is) * vol(ix,iy)
+                          if (is.eq.is_start) then
+                                sum_e = sum_e +
+     .                           ne(ix,iy) * vol(ix,iy)
+                          end if
                         enddo
-                        is_end=is
-                     endif
+                      enddo
+                      is_end=is
+                    endif
                   enddo
                   na_feedback_current = na_feedback_current/sum_e
 

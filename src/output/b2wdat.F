@@ -746,10 +746,12 @@
       end do !}
 #ifdef B25_EIRENE
       js=ltns(nncut*2)+nlim   ! iyv 15.05.2018
-      do iy=0,ny-1 !{
-      wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
+      if (ltns(nncut*2).gt.0) then
+        do iy=0,ny-1 !{
+          wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
      &                              hlp_neu_peak/hlp_s
-      enddo
+        enddo
+      endif
 #endif
 
 ! for double_null geometry     !iyv 04.02.11

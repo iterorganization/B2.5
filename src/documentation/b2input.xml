@@ -264,6 +264,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mwti_jsep</name>
+				<default>See description (integer)</default>
+				<type>integer</type>
+				<description>
+					Cell index, on the basis mesh, of the last poloidal ring before the separatrix. Can only be provided for slab geometries, otherwise calculated from geometry:
+					Single-null : jsep=topcut1(1)-1. Double-null : jsep=min(topcut1(1),topcut1(2))-1.
+					Default for straight geometries : jsep=ny/2
+				</description>
+			</switch>
+			<switch>
 				<name>b2agmx_pbs_from_basis_mesh</name>
 				<default>1</default>
 				<type>integer</type>
@@ -5679,6 +5689,14 @@
 					Last value used for the radial particle flux feedback in the SOL. Corresponds to 'isfeedback' B2 species.
 				</description>
 			</switch>
+			<switch>
+				<name>SAVED_NA_FEEDBACK_ACTUATOR</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NSPECIES)</type>
+				<description>
+					Last value used for the feedback control actuator for each isonuclear sequence.
+				</description>
+			</switch>
 		</category>
 		<category name="b2.feedback_control.parameters">
 			<introduction>
@@ -5761,7 +5779,7 @@
 				<default>0.0</default>
 				<type>Real*8 array of size (0:NSPECIES-1)</type>
 				<description>
-					Sets the target density of species (ISPECIES) for the feedback scheme.
+					Sets the target value of the quantity associated with species (ISPECIES) for the feedback scheme defined by NA_FEEDBACK_CHOICE(ISPECIES).
 				</description>
 			</switch>
 			<switch>
@@ -5782,10 +5800,11 @@
 						1: local species density (averaged over the rectangle of cells[IX1:IX2,IY1:IY2]). Summed over all charge states of that species.
 						2: local electron density (averaged over the rectangle of cells[IX1:IX2,IY1:IY2]).
 						3: outer midplane separatrix electron density.
-						4: total particle content for that species.
-						5: total ion content for that species (not including neutrals).
+						4: total particle content for that species summed over the rectangle of cells[IX1:IX2,IY1:IY2].
+						5: total ion content for that species (not including neutrals) summed over the rectangle of cells[IX1:IX2,IY1:IY2].
 						6: neutral particle flux through the core boundary.
 						7: relative average concentration of this species at the separatrix.
+                                                8: relative average concentration of this species averaged over the rectangle of cells[IX1:IX2,IY1:IY2].
 				</description>
 			</switch>
 			<switch>
@@ -5852,7 +5871,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Lower poloidal bound for the region of which the density is being averaged.
+					Lower poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>
@@ -5860,7 +5879,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Upper poloidal bound for the region of which the density is being averaged.
+					Upper poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>
@@ -5868,7 +5887,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Lower radial bound for the region of which the density is being averaged.
+					Lower radial bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>
@@ -5876,7 +5895,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Upper poloidal bound for the region of which the density is being averaged.
+					Upper poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>

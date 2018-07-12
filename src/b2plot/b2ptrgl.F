@@ -289,6 +289,10 @@ c*** Projected (ideal) power flux on targets
       l=-1
       u=-1.0_R8
       do j=1,ntrgts !{
+        if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+          u=1.0_R8
+          l=1
+        end if
         m=ltrgpos(j)
         k=lpfrpos(j)-l
         i=lseppos(j)+1
@@ -303,10 +307,15 @@ c*** Projected (ideal) power flux on targets
         end do !}
         wo=wo*u
         if (wo.le.0.0_R8) then !{
-          write(*,*) 'Wrong sign of qpar. j,k,is,u,wo=',j,k,is,u,wo
+          write(*,'(a,3i5,1p,2(1x,1e12.5))')
+     .     'Wrong sign of qpar. j,k,is,u,wo=',j,k,is,u,wo
         else !}{
           n=k
-          nn=lpfrpos(j-l)+l
+          if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+            nn=lpfrpos(j+1)-1
+          else
+            nn=lpfrpos(j-l)+l
+          end if
           do ix=k-l,nn,-l !{
             wt=wo
             wo=0.0_R8
@@ -375,8 +384,13 @@ c
       l=1
       u=-1.0_R8
       do j=1,ntrgts !{
+        if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+          u=1.0_R8
+          l=0
+        end if
         k=ltrgpos(j)
         ISS=ltns(j)
+        if (ISS.eq.0) cycle
         IND=eirdiag_nds_ind(ISS)
         IAS=IND+1
         do iy=lytg,ny-1 !{
@@ -473,6 +487,7 @@ c         and from x-point to targets
           do ik=1,2
             ix=ixstart(j,ik)
             t1(ik)=0.0_R8
+            if (ix.eq.-2) cycle
             if (ik.eq.1.and.iy.gt.jsep) then
 c carlis If starting @midplane in SOL then remove half of starting cell
               t1(ik)=t1(ik)-hx(ix,iy)/2.0_R8/
@@ -496,7 +511,8 @@ c carlis If starting @midplane in SOL then remove half of starting cell
         l=1-l
         u=-u
       end do !}
-      do iy=lytg,jsep !{
+      if (ntrgts.ge.2) then
+       do iy=lytg,jsep !{
 c carlis  If in PFR region then connection length from midplane to target will
 c         be equal to connection length from target to target
         lcnnt(iy,1)=lcnnx(iy,1)+lcnnx(iy,2)
@@ -505,7 +521,8 @@ c         be equal to connection length from target to target
           lcnnt(iy,2)=lcnnt(iy,1)
           lcnnt(iy,3)=lcnnt(iy,ntrgts)
         end if
-      end do
+       end do
+      end if
 
 c
 c*** Re-scale the neutral target loading and calculate the sums
@@ -521,6 +538,7 @@ c      print *,'ntrgts, wi: ',ntrgts,(wi(i),i=1,ntrgts)  !####
         if (ft44) then
           if(ntns .eq. ntrgts) then !{
             js=ltns(j)+nlim
+            if (ltns(j).eq.0) cycle
             wo=wldnek(js,0)+wldnep(js,0)
 c          print *,'j,js,wldnek,wldnep = ',j,js,wldnek(js,0),wldnep(js,0)
             if(wi(j) .gt. 0.0_R8) then !{
@@ -627,7 +645,7 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
           else !}{
             write(lun,fmt_peak) xtrg(i,j),netrg(i,j),tetrg(i,j),
      ,              titrg(i,j),
-     ,              wtttrg(i,j),wpttrg(i,j),wrdtrg(i,j,0),wnutrg(i,j),
+     ,              wtttrg(i,j),wpttrg(i,j),wrdtrg(i,j,0),wpltrg(i,j),
      ,              wnutrg(i,j),xmp_hlp(i,k),rctrg(i,j),zctrg(i,j),
      ,              wp_xpt(i,j),
      ,              wid_par(i,j),wid_trg(i,j),lcnnt(i,j),lcnnx(i,j)
@@ -692,21 +710,35 @@ c
           open(lun,file=fn_hlp)
           write(lun,740) 'Peak powers ',pkl_label(j),label
           i3=i2-i1
+          if (i3.eq.0 .and. ntrgts.eq.1) i3=1
           wpk_tt(0)=max(wpk_tt(i1),wpk_tt(i2))
           wpk_rd(0)=max(wpk_rd(i1),wpk_rd(i2))
           wpk_pl(0)=max(wpk_pl(i1),wpk_pl(i2))
           wpk_nu(0)=max(wpk_nu(i1),wpk_nu(i2))
-          write(lun,'(a5,a1,24(a1,2a))') '#time',tab,
-     -     tab,'peak_t_i',tl,tab,'peak_t_o',tl,tab,'peak_t_x',tl,
-     ,     tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
-     ,     tab,'peak_r_i',tl,tab,'peak_r_o',tl,tab,'peak_r_x',tl,
-     ,     tab, 'loc_r_i',tl,tab, 'loc_r_o',tl,
-     ,     tab,'peak_p_i',tl,tab,'peak_p_o',tl,tab,'peak_p_x',tl,
-     ,     tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
-     ,     tab,'peak_n_i',tl,tab,'peak_n_o',tl,tab,'peak_n_x',tl,
-     ,     tab, 'loc_n_i',tl,tab, 'loc_n_o',tl,
-     ,     tab,'peak_tei',tl,tab,'peak_teo',tl,
-     ,     tab,'peak_nei',tl,tab,'peak_neo',tl
+          if (i1.ne.i2) then
+           write(lun,'(a5,a1,24(a1,2a))') '#time',tab,
+     -      tab,'peak_t_i',tl,tab,'peak_t_o',tl,tab,'peak_t_x',tl,
+     ,      tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
+     ,      tab,'peak_r_i',tl,tab,'peak_r_o',tl,tab,'peak_r_x',tl,
+     ,      tab, 'loc_r_i',tl,tab, 'loc_r_o',tl,
+     ,      tab,'peak_p_i',tl,tab,'peak_p_o',tl,tab,'peak_p_x',tl,
+     ,      tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
+     ,      tab,'peak_n_i',tl,tab,'peak_n_o',tl,tab,'peak_n_x',tl,
+     ,      tab, 'loc_n_i',tl,tab, 'loc_n_o',tl,
+     ,      tab,'peak_tei',tl,tab,'peak_teo',tl,
+     ,      tab,'peak_nei',tl,tab,'peak_neo',tl
+          else
+           write(lun,'(a5,a1,24(a1,2a))') '#time',tab,
+     -      tab,'peak_t_i',tl,tab,'peak_t_x',tl,
+     ,      tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
+     ,      tab,'peak_r_i',tl,tab,'peak_r_x',tl,
+     ,      tab, 'loc_r_i',tl,tab, 'loc_r_o',tl,
+     ,      tab,'peak_p_i',tl,tab,'peak_p_x',tl,
+     ,      tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
+     ,      tab,'peak_n_i',tl,tab,'peak_n_x',tl,
+     ,      tab, 'loc_n_i',tl,tab, 'loc_n_o',tl,
+     ,      tab,'peak_tei',tl,tab,'peak_nei',tl
+          end if
           write(lun,fmt_peak) tim,
      ,     (wpk_tt(i),i=i1,i2,i3), wpk_tt(0), (wlc_tt(i),i=1,2),
      ,     (wpk_rd(i),i=i1,i2,i3), wpk_rd(0), (wlc_rd(i),i=1,2),
@@ -743,6 +775,12 @@ c      print '(a,i8,7i12)','npar_hlp: ',(npar_hlp(j),j=1,ntrgts)
 c      print '(a,1p,8e12.4)','wtrg_hlp: ',(wtrg_hlp(j),j=1,ntrgts)
 c      print '(a,i8,7i12)','ntrg_hlp: ',(ntrg_hlp(j),j=1,ntrgts)
 c!###}
+      ia=-2
+      ib=-2
+      ic=-2
+      ha=0.0_R8
+      hb=0.0_R8
+      hc=0.0_R8
       do j=1,ntrgts !{
         hlp_trg(j)=trg_short(j)
         pwr_tt(j)=0.0_R8
@@ -1047,9 +1085,14 @@ c        print *,'ismain,ismain0',ismain,ismain0
         u=-1.0_R8
         l=1
         do j=1,ntrgts !{
+          if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+            u=1.0_R8
+            l=0
+          end if
           k=ltrgpos(j)
 c          print *,'j,ltrgpos = ',j,k  !###
           ISS=ltns(j)
+          if (ISS.eq.0) cycle
           IND=eirdiag_nds_ind(ISS)
           IAS=IND+1
           do iy=lytg,ny-1 !{
@@ -1106,6 +1149,7 @@ c        print *,'size wldpp(,,)',size(wldpp,1),size(wldpp,2),size(wldpp,3)
         if (ft44) then
           do j=1,ntrgts !{
             js=ltns(j)+nlim
+            if (ltns(j).eq.0) cycle
             do ia=1,natmi !loop over Eirene atoms
               sja_w(j,ia)=sja_w(j,ia)+wldna(js,ia,0)
             end do
@@ -1167,6 +1211,7 @@ c        Temporary solution for this routine is to use the bulk track_species
              end if
             end do
             ISS=ltns(j)
+            if (ISS.eq.0) cycle
             IND=eirdiag_nds_ind(ISS)
             IAS=IND+1
             sptlis(j)=0
@@ -1285,6 +1330,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           mol_str(2,imol)=trim(ssmol)//'_pres_mol'
         end do
         do j=1,ntrgts !{
+          if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) l=0
           nx_hlp=ltrgpos(j)+l
           jj=j
           if(j.eq.ntrgts) jj=ntrgsx
@@ -1389,6 +1435,7 @@ c
           end do
         end do !}
         k=1
+        if(ntrgts.eq.1) k=ntrgsx
         if(ntrgts.eq.2) k=ntrgsx-1
         open(lun,file=fsumm(2))
         write(lun,*) 'Target erosion summary: ',label
@@ -1464,7 +1511,8 @@ c
           close (lun)
         end if
       else
-        write(*,*) 'b2ptrgl: ntns.ne.ntrgts (',ntns,' vs.',ntrgts,
+        write(*,'(a,i2,a,i2,a)')
+     ,             'b2ptrgl: ntns.ne.ntrgts (',ntns,' vs.',ntrgts,
      ,                               ' ) - no sputtering calculated.'
         write(*,*) '  ==> check specification of ltns in ',
      ,                               'b2.parameters (section NEUTRALS)'

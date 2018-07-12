@@ -1615,7 +1615,7 @@ cghgh
            do isa = 0, nspecies-1
              if (na_feedback_ib(isa).eq.ib) then
                fedback_species = fedback_species .or.
-     .                          (is.ge.eb2spcr(isa+1)+1 .and.
+     .                          (is.ge.eb2spcr(isa+1) .and.
      .                           is.le.eb2spcr(isa+1)+nfluids(isa+1))
              end if
            end do

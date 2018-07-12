@@ -96,7 +96,7 @@ c----------------------------------------------------------------------
      >     print *,'Check nwldprtx in b2mod_b2plot_wall_loading.F'
           return
       end if
-      call rearri(lwldlis(1,ll),nlim,nwldlis(ll))
+      call rearri(lwldlis(1,ll),nsgmx,nwldlis(ll))
       return
 c----------------------------------------------------------------------
    30 call resimi(ll)

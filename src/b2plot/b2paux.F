@@ -213,17 +213,19 @@ c-----------------------------------------------------------------------
      ,    (wldnm(nlim+ltns(1),i,0),i=1,nmoli),
      ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
      ,    wldspt(nlim+ltns(1),0)
-        do i=1,natmi
+        if (ltns(2).ne.0) then
+         do i=1,natmi
           hlp_at(i)=wldra(nlim+ltns(2),i,0)+wldpa(nlim+ltns(2),i,0)
-        end do
-        do i=1,nmoli
+         end do
+         do i=1,nmoli
           hlp_ml(i)=wldrm(nlim+ltns(2),i,0)+wldpm(nlim+ltns(2),i,0)
-        end do
-        write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
+         end do
+         write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
      ,    (wldna(nlim+ltns(2),i,0),i=1,natmi),
      ,    (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
      ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
      ,    wldspt(nlim+ltns(2),0)
+        end if
         deallocate(hlp_pi,hlp_po)
         deallocate(hlp_at,hlp_ml)
 c-----------------------------------------------------------------------

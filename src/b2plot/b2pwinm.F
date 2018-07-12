@@ -73,7 +73,7 @@ c*** Target list
         if(ll.gt.nwldprtx) 
      >   write (*,*) 'Check nwldprtx in b2mod_b2plot_wall_loading.F'
       else
-        call rearri(lwldlis(1,ll),nlim,nwldlis(ll))
+        call rearri(lwldlis(1,ll),nsgmx,nwldlis(ll))
       end if
       return
 c----------------------------------------------------------------------

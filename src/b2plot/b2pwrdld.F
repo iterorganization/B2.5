@@ -55,11 +55,11 @@ c
 #ifdef DBG
       print *,'b2pwrdld: nplgs,nbndry,nwldrad=',nplgs,nbndry,nwldrad
       print *,'lwldlis(i,1):'
-      print '(20i5)',(lwldlis(i,1),i=1,nplgs)
+      print '(20i4)',(lwldlis(i,1),i=1,nplgs)
       print *,'lbnd(i):'
-      print '(20i5)',(lbnd(i),i=1,nplgs)
+      print '(20i4)',(lbnd(i),i=1,nplgs)
       print *,'luwrk:'
-      print '(20i5)',luwrk
+      print '(20i4)',luwrk
 #endif
 
       k=0
@@ -83,10 +83,10 @@ c
 #ifdef DBG
       print *,'Shadowing structure: ',
      ,         nplgs,nbndry,nwldlis(1),lwldlis(1,1)
-      print '(16i5)',(lbnd(i),i=1,nbnd)
-      print '(5(1x,2f7.2))',(xp(i),yp(i),i=1,nplgs)
+      print '(20i4)',(lbnd(i),i=1,nplgs)
+      print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
       print '(a,12i5)','Radiation target ',ntrg,(nwldlis(i),i=2,nwldprt)
-      print '(16i5)',(ltrg(i),i=1,ntrg)
+      print '(20i4)',(ltrg(i),i=1,ntrg)
 
       open(lun_w,file='layout-w.dat')
       write(lun_w,'(6a)') '#Wall layout : ',label
