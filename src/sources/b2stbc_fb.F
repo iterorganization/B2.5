@@ -293,7 +293,7 @@
      5  ndes, ndes_sol, den, rcbsna,
      6  cbsnafac,
      7  private_flux_puff, private_flux_area, flux_old,
-     8  neutral_sources_rescale, use_eirene,
+     8  neutral_sources_rescale,
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
      9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
       save zeroslope
