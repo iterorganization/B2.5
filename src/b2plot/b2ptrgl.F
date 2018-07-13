@@ -37,7 +37,7 @@ c======================================================================
       character*8 TEXTA(DEF_NATM)
 #endif
 c
-      integer i,j,jj,k,l,m,n,iss,imol,iy,js,nn,nclm_ld,nclm_er,nx_hlp
+      integer i,j,jj,k,kk,l,m,n,iss,imol,iy,js,nn,nclm_ld,nclm_er,nx_hlp
       integer i1,i2,i3,ia,ib,ic,is,ix,ik,imin,imax,ind,ims,ias
       integer ixstart(ntrgsx,2),ixend(ntrgsx,2)
       integer m_hlp(ntrgsx),npar_hlp(ntrgsx),ntrg_hlp(ntrgsx)
@@ -59,6 +59,8 @@ c*  xwhm_tt:  exp. decay length on target, calc. from hw & mapped to OMP
      ,  wpk_pl(0:ntrgsx),wpk_nu(0:ntrgsx),wp_xpt(0:ny-1,ntrgsx),
      ,  wlc_tt(ntrgsx),wlc_rd(ntrgsx),wlc_pl(ntrgsx),wlc_nu(ntrgsx),
      ,  wid_par(0:ny-1,ntrgsx),wid_trg(0:ny-1,ntrgsx),
+     ,  whtpl(0:ny-1,ntrgsx),wptpl(0:ny-1,ntrgsx),wptnu(0:ny-1,ntrgsx),
+     ,  whtnu(0:ny-1,ntrgsx),
 c* Integrals of total and radiated power to the targets, power widths
      ,  pwr_tt(ntrgsx),pwr_rd(ntrgsx),fwht_tt(ntrgsx),fwxt_tt(ntrgsx),
      ,  pwr_cr(ntrgsx),frc_cr(ntrgsx),
@@ -389,53 +391,47 @@ c
           l=0
         end if
         k=ltrgpos(j)
+        kk=k+l
         ISS=ltns(j)
         if (ISS.eq.0) cycle
         IND=eirdiag_nds_ind(ISS)
         IAS=IND+1
         do iy=lytg,ny-1 !{
+          wo=0.0_R8
           wnutrg(iy,j)=0.0_R8
-          wo=fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0)+fhi_ext(k+1-l,iy,0)
+          whtpl(iy,j)=fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0)+
+     .                fhi_ext(k+1-l,iy,0)
           do is=0,ns-1 !{
-            if (ft44) then
-              wo=wo+fna(k+1-l,iy,0,is)*(rpt(k+l,iy,is)*ev
-     .         +(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy)))
+            if (.not.is_neutral(is).or.ft44) then
+              wo=wo+fna(k+1-l,iy,0,is)*rpt(kk,iy,is)*ev
 c carlis 31jan2017  added ti as suggested by sw in b2blne.F
             else
-              if (is_neutral(is)) then
-                wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,is)
-     .           *(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy))
-              else
-                wo=wo+fna(k+1-l,iy,0,is)*(rpt(k+l,iy,is)*ev
-     .           +(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy)))
-c carlis 31jan2017  added ti as suggested by sw in b2blne.F
-              endif
+              wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,is)
+     *             *(1.0_R8-BoRiS)*(ti(kk,iy)+kinrgy(kk,iy,is))
             endif
+            whtpl(iy,j)=whtpl(iy,j)+fna(k+1-l,iy,0,is)
+     *             *(1.0_R8-BoRiS)*(ti(kk,iy)+kinrgy(kk,iy,is))
           end do !}
           do is=0,ns_ext-1 !{
-            if (ft44) then
-              wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(k+l,iy,is)*ev
-     .         +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .           ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is)))
+            if (.not.is_ext_neutral(is).or.ft44) then
+              wo=wo+fa_ext(k+1-l,iy,0,is)*pt_ext(kk,iy,is)*ev
 c carlis 31jan2017  added ta as suggested by sw in b2blne.F
             else
-              if (is_ext_neutral(is)) then
-                wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,is)
-     .           *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .             ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is))
-              else
-                wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(k+l,iy,is)*ev
-     .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .             ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is)))
-c carlis 31jan2017  added ta as suggested by sw in b2blne.F
-              endif
+              wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,is)
+     .               *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
+     .                 ua_ext(kk,iy,is)**2+ta_ext(kk,iy,is))
             end if
+            whtpl(iy,j)=whtpl(iy,j)+fa_ext(k+1-l,iy,0,is)
+     .             *(1.0_R8-BoRiS)*(ta_ext(kk,iy,is)+0.5_R8*
+     .             am_ext(is)*mp*ua_ext(kk,iy,is)**2)
           end do !}
-          wo=wo+(1.0_R8-BoRiS)*fne(k+1-l,iy,0)*te(k+l,iy)
+          whtpl(iy,j)=whtpl(iy,j)+fne(k+1-l,iy,0)
+     .           *(1.0_R8-BoRiS)*te(kk,iy)
 c carlis 31jan2017  added electron contribution as suggested by sw in b2blne.
 c         wo=-1.0e-6_R8*wo/s(iy,1)
-          wo= wo/s(iy,j)
-          wpltrg(iy,j)=wo*u
+          wptpl(iy,j)=wo/s(iy,j)*u
+          whtpl(iy,j)=whtpl(iy,j)/s(iy,j)*u
+          wpltrg(iy,j)=wptpl(iy,j)+whtpl(iy,j)
           if(.not.ft44) wnutrg(iy,j)=wnutrg(iy,j)*u/s(iy,j)
           netrg(iy,j)=ne(k+l,iy)
           tetrg(iy,j)=te(k+l,iy)/ev
@@ -456,6 +452,7 @@ c             carlis Using values directly calculated from Eirene
             enddo
 c             kinetic energy of recycled and sputtered neutrals
             wnutpr(iy,j)=ewldrp_res(iy+IAS)
+            whtpl(iy,j)=whtpl(iy,j)-wnutpr(iy,j)
             wpltrg(iy,j)=wpltrg(iy,j)-wnutpr(iy,j)
             do is=1,nioni
               mion=0.0_R8
@@ -557,7 +554,16 @@ c          print *,'j,js,wldnek,wldnep = ',j,js,wldnek(js,0),wldnep(js,0)
         endif
         do iy=lytg,ny-1 !{
 c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
-          if (ft44) wnutrg(iy,j)=wnutrg(iy,j)*wi(j)/s(iy,j)
+          if (ft44) then 
+            wnutrg(iy,j)=wnutrg(iy,j)*wi(j)/s(iy,j)
+            if(abs(wo).gt.0.0_R8) then !{
+              wptnu(iy,j)=wnutrg(iy,j)*wldnep(js,0)/wo
+              whtnu(iy,j)=wnutrg(iy,j)-wptnu(iy,j)
+            else !}{
+              wptnu(iy,j)=0.0_R8
+              whtnu(iy,j)=0.0_R8
+            end if !}
+          endif
           wpttrg(iy,j)=wnutrg(iy,j)+wpltrg(iy,j)
           wtttrg(iy,j)=wpttrg(iy,j)+wrdtrg(iy,j,0)
         end do !}
@@ -565,7 +571,7 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
       write(*,'(1x,a,1p,16e12.3)')
      -                   'Scaling factors for Wn : ',(wi(i),i=1,ntrgts)
 
-      nclm_ld=17
+      nclm_ld=21
       if(lrdlsp) nclm_ld=nclm_ld+natmi
       if(lrdlcr) nclm_ld=nclm_ld+1
       do j=1,ntrgts !{
@@ -585,6 +591,14 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
      .   'power flux with charged particles [W/m^2]'
         write(lun,740) 'Wneut',tab,
      .   'power flux with neutral particles [W/m^2]'
+        write(lun,740) 'Wheat',tab,
+     .   'power flux due to particles impinging on wall [W/m^2]'
+        write(lun,740) 'Wpot',tab,
+     .   'power flux due to recombination [W/m^2]'
+        write(lun,740) 'Whtpl',tab,
+     .   'power flux due to plasma particles impinging on wall [W/m^2]'
+        write(lun,740) 'Wptpl',tab,
+     .   'power flux due to plasma recombination [W/m^2]'
         write(lun,740) 'xMP',tab,'radial coordinate in midplane '//
      .   '(IMP for inner target(s), OMP for outer(s)) [m]'
         write(lun,740) 'Rclfc',tab,'radial coordinate on target [m]'
@@ -603,20 +617,22 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
           write(lun,740) 'rad_XX',tab,
      .     'radiation power flux from species XX [W/m^2]'
           write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
-     ,            'Wrad','Wpls','Wneut','xMP','Rclfc','Zclfc',
-     ,            'Wpar_xpt','WWpar','WWtrg','Lcnnt','Lcnnx',
+     ,            'Wrad','Wpls','Wneut','Wheat','Wpot','Whtpl',
+     ,            'Wptpl','xMP','Rclfc','Zclfc','Wpar_xpt',
+     ,            'WWpar','WWtrg','Lcnnt','Lcnnx',
      ,            ('rad_'//textan(is)(2:3),is=0,natmi-1)
         else if(lrdlcr) then !}{
           write(lun,740) 'rd_cr',tab,
      ,     'radiation power flux from core [W/m^2]'
           write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
-     ,            'Wrad','Wpls','Wneut','xMP','Rclfc','Zclfc',
-     ,            'Wpar_xpt','WWpar','WWtrg','Lcnnt','Lcnnx',
-     ,            'rd_cr'
+     ,            'Wrad','Wpls','Wneut','Wheat','Wpot','Whtpl',
+     ,            'Wptpl','xMP','Rclfc','Zclfc','Wpar_xpt',
+     ,            'WWpar','WWtrg','Lcnnt','Lcnnx','rd_cr'      
         else !}{
           write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
-     ,            'Wrad','Wpls','Wneut','xMP','Rclfc','Zclfc',
-     ,            'Wpar_xpt','WWpar','WWtrg','Lcnnt','Lcnnx'
+     ,            'Wrad','Wpls','Wneut','Wheat','Wpot','Whtpl',
+     ,            'Wptpl','xMP','Rclfc','Zclfc','Wpar_xpt',
+     ,            'WWpar','WWtrg','Lcnnt','Lcnnx'
         end if !}
         write(fmt_peak,720) nclm_ld,tab
         if(ntrgts.eq.4) then !{
@@ -629,7 +645,9 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
             write(lun,fmt_peak) xtrg(i,j),netrg(i,j),tetrg(i,j),
      ,              titrg(i,j),
      ,              wtttrg(i,j),wpttrg(i,j),wrdtrg(i,j,0),wpltrg(i,j),
-     ,              wnutrg(i,j),xmp_hlp(i,k),rctrg(i,j),zctrg(i,j),
+     ,              wnutrg(i,j),whtnu(i,j)+whtpl(i,j),
+     ,              wptnu(i,j)+wptpl(i,j),whtpl(i,j),wptpl(i,j),
+     ,              xmp_hlp(i,k),rctrg(i,j),zctrg(i,j),
      ,              wp_xpt(i,j),
      ,              wid_par(i,j),wid_trg(i,j),lcnnt(i,j),lcnnx(i,j),
      ,              (wrdtrg(i,j,is),is=1,natmi)
@@ -638,7 +656,9 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
             write(lun,fmt_peak) xtrg(i,j),netrg(i,j),tetrg(i,j),
      ,              titrg(i,j),
      ,              wtttrg(i,j),wpttrg(i,j),wrdtrg(i,j,0),wpltrg(i,j),
-     ,              wnutrg(i,j),xmp_hlp(i,k),rctrg(i,j),zctrg(i,j),
+     ,              wnutrg(i,j),whtnu(i,j)+whtpl(i,j),
+     ,              wptnu(i,j)+wptpl(i,j),whtpl(i,j),wptpl(i,j),
+     ,              xmp_hlp(i,k),rctrg(i,j),zctrg(i,j),
      ,              wp_xpt(i,j),
      ,              wid_par(i,j),wid_trg(i,j),lcnnt(i,j),lcnnx(i,j),
      ,              wrdtrg(i,j,is)
@@ -646,7 +666,9 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
             write(lun,fmt_peak) xtrg(i,j),netrg(i,j),tetrg(i,j),
      ,              titrg(i,j),
      ,              wtttrg(i,j),wpttrg(i,j),wrdtrg(i,j,0),wpltrg(i,j),
-     ,              wnutrg(i,j),xmp_hlp(i,k),rctrg(i,j),zctrg(i,j),
+     ,              wnutrg(i,j),whtnu(i,j)+whtpl(i,j),
+     ,              wptnu(i,j)+wptpl(i,j),whtpl(i,j),wptpl(i,j),
+     ,              xmp_hlp(i,k),rctrg(i,j),zctrg(i,j),
      ,              wp_xpt(i,j),
      ,              wid_par(i,j),wid_trg(i,j),lcnnt(i,j),lcnnx(i,j)
           end if !}
