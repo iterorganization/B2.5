@@ -194,25 +194,19 @@
 *  ..check that we have some particle diffusion
       if (ncall.le.3) then                                            !srv 12.03.12 {
         do is = 0, ns-1
-          wrk(:) = co%cdna(:,0,is)+co%cdpa(:,0,is)
+cwdk combined check for poloidal or radial diffusion
+          wrk(:) = co%cdna(:,0,is)*geo%fcQalf(:,0) + 
+     .             co%cdpa(:,0,is)*geo%fcQalf(:,0) + 
+     .             co%cdna(:,1,is)*geo%fcQalf(:,1) + 
+     .             co%cdpa(:,1,is)*geo%fcQalf(:,1)
           wrkmin = huge(1.0_R8)
           do iFc = 1, nFc
             wrkmin = min(wrkmin, wrk(iFc))
           enddo
-          write(message,'(a, i3, a)') 
-     .     'No particle diffusion for species ',is,
-     .     ' in poloidal direction'
+          write(message,'(a, i3)') 
+     .     'No particle diffusion for species ',is
           call xertst (wrkmin.gt.0.0_R8 .or. pol_anom_scale.eq.0.0_R8
      .     .or. .not.solving(2),message)
-          wrk(:) = co%cdna(:,1,is)+co%cdpa(:,1,is)
-          wrkmin = huge(1.0_R8)
-          do iFc = 1, nFc
-            wrkmin = min(wrkmin, wrk(iFc))
-          enddo
-          write(message,'(a, i3, a)') 
-     .     'No particle diffusion for species ',is,
-     .     ' in radial direction'
-          call xertst (wrkmin.gt.0.0_R8 .or. .not.solving(2), message)
 *  ..check that we have some anomalous ion heat transport
           wrkmin = minval(co%hcib(:,is))
           write(message,'(a, i3)')
@@ -220,14 +214,16 @@
           call xertst (wrkmin.gt.0.0_R8 .or. .not.solving(4), message)
         enddo
 *  ..check that we have some anomalous perpendicular currents
-        wrk(:) = co%calf_an(:,1)+co%csig_an(:,1)
-        wrkmin = huge(1.0_R8)
-        do iFc = 1, nFc
-              wrkmin = min(wrkmin, wrk(iFc))
-        enddo
-        call xertst (wrkmin.gt.0.0_R8 .or. pot_eq.ne.1 .or. 
-     .   fch_anomalous.eq.0.0_R8 .or. .not.solving(3) .or. 
-     .   no_current.eq.1, 'No anomalous perpendicular currents')
+!WG_TODO
+!WG_TODO        wrk(:) = co%calf_an(:,1)*geo%fcQalf(:,1) +
+!WG_TODO     .           co%csig_an(:,1)*geo%fcQalf(:,1)
+!WG_TODO        wrkmin = huge(1.0_R8)
+!WG_TODO        do iFc = 1, nFc
+!WG_TODO              wrkmin = min(wrkmin, wrk(iFc))
+!WG_TODO        enddo
+!WG_TODO        call xertst (wrkmin.gt.0.0_R8 .or. pot_eq.ne.1 .or. 
+!WG_TODO     .   fch_anomalous.eq.0.0_R8 .or. .not.solving(3) .or. 
+!WG_TODO     .   no_current.eq.1, 'No anomalous perpendicular currents')
       endif                                                           !srv 12.03.12 }
 
       if(iout.ne.0) then                                              !srv 17.06.08 {

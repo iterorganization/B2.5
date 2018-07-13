@@ -9,9 +9,9 @@
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
       real (kind=R8) ::
-     *  ev, te(1:nCv), ne(1:nCv)
+     *  ev, te(nCv), ne(nCv)
 *   ..output arguments (unspecified on entry)
-      type (B2Rates), intent (out) :: rt
+      type (B2Rates), intent (inout) :: rt
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation

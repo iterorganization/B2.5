@@ -1497,6 +1497,7 @@ cwdk    backwards compatible behavior
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      &  b2fstati_version)
 
+#ifdef WG_TODO
 *   initialize 2d batch averages
       if (ibatch_av_all > 0) call batch_av_all_init (nx, ny, ns)
 
@@ -1509,45 +1510,8 @@ cwdk    backwards compatible behavior
 *   get averaged plasma profiles
       if (ird_aver > 0)
      &  call run_av_get_plasma (na, te, ti, ua, po, nx, ny, ns)
-
+#endif
       write (*,*) 'Starting conversion to unstructured format...'
-cwdk -- TMP
-!  no. of cells
-      mpg%nCi = nx*ny                         ! internal cells
-      mpg%nCg = 2*nx + 2*ny                   ! guard cells
-      mpg%nCv = mpg%nCi + mpg%nCg             ! total number of cells
-
-!  no. of cell faces
-      mpg%nFc = ny*(nx+1) + nx*(ny+1)
-
-! no. of vertices
-      mpg%nVx = (nx+1) * (ny+1)
-
-! max. no. of vertices per cell (for now: conservative estimate)
-      mpg%nCmxVx = 4 * mpg%nCv
-
-! max. no. of faces per cell (for now: conservative estimate)
-      mpg%nCmxFc = 4 * mpg%nCv
-
-! max. no. of cells per vertex (for now: conservative estimate)
-      mpg%nVmxCv = 4 * mpg%nCv
-
-! max. no. of faces per vertex (for now: conservative estimate)
-      mpg%nVmxFc = 4 * mpg%nCv
-
-! max no. of flux surfaces
-      mpg%mxnFs = 8*nncut*ny
-
-      write (*,*) 'Mapping defined, with'
-      write (*,*) 'nCv, nCi, nCg  = ', mpg%nCv, mpg%nCi, mpg%nCg
-      write (*,*) 'nFc, nVx       = ', mpg%nFc, mpg%nVx
-      write (*,*) 'nCmxFc, nCmxVx = ', mpg%nCmxFc, mpg%nCmxVx
-      write (*,*) 'nVmxFc, nVmxCv = ', mpg%nVmxFc, mpg%nVmxCv
-      write (*,*) 'nVmxFc, mxnFs  = ', mpg%mxnFs
-
-cwdk -- TMP
-
-!      call alloc_mapping (mpg)
 
 *   conversion to new, ustructured data-types
       call calc_mapping (nx, ny, mpg)
@@ -1591,7 +1555,7 @@ cwdk -- TMP
       nFc = mpg % nFc
 
       if(iout.ne.0) then                                             !srv 25.01.16 {
-       call my_out(70,nCv,state%dv%ne,'b2mndr_ne')
+       call my_out_us(70,nCv,state%dv%ne,'b2mndr_ne')
        do is = 0,ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nCv,state%pl%na(1,is),'b2mndr_na'//chns)
@@ -1626,7 +1590,6 @@ cwdk -- TMP
       enddo
 *   ..test plasma state
       call b2xvps (nCv, nFc, ns, state % pl, state % dv)
-      call b2xvsg (nCv*ns0, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
 *   ..compute log-log electron rate coefficients
       call b2spel (nCv, ns0, ev, state%pl%te, state%dv%ne, state%rt)
 *   ..compute electron rate coefficients
@@ -1827,14 +1790,14 @@ c   --> better way doing this is necessary)
 *   ..initialise previous state and fluxes
       call getB2PlasmaSnapshot( state%pl, state%dv, state%psnc )
       call getB2PlasmaSnapshot( state%pl, state%dv, state%psnl )
-*   ..write output control
-      write (nout(0),'(2(/2x,a,2x,a))')
-     &  'idout0:', idout0, 'idout1:', idout1
-*   ..write geometric information
-      call b2wfgm (nout(0), idout0, nx, ny)
-*   ..write summary of initial state
-      call b2wfpi (nout(0), idout0, nx, ny, ns, ne, na, ua,
-     &  te, ti, po, fna, fhe, fhi, fch)
+!WG_TODO*   ..write output control
+!WG_TODO      write (nout(0),'(2(/2x,a,2x,a))')
+!WG_TODO     &  'idout0:', idout0, 'idout1:', idout1
+!WG_TODO*   ..write geometric information
+!WG_TODO      call b2wfgm (nout(0), idout0, nx, ny)
+!WG_TODO*   ..write summary of initial state
+!WG_TODO      call b2wfpi (nout(0), idout0, nx, ny, ns, ne, na, ua,
+!WG_TODO     &  te, ti, po, fna, fhe, fhi, fch)
 
 * ..main loop
 *   ..initialise counters
@@ -1860,8 +1823,8 @@ cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (nx, ny, ns, BoRiS)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
-      call read_neutrals_namelist(nx, ny, ns, .true.)
-      call calc_mapping_neut (nx, ny, ns, mpg)
+!      call read_neutrals_namelist(nx, ny, ns, .true.)
+      call calc_mapping_rc (nx, ny, ns, mpg)
 
 #ifdef B25_EIRENE
 #ifndef HPUX
@@ -2417,6 +2380,7 @@ cwdk  deallocation of unstructured types
       call wall_final(nx,ny,ns,found)
 
 * ..display and save the result of the calculation
+#ifdef WG_TODO
 *   ..write summary of final state
       call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na, ua,
      &  te, ti, po, fna, fhe, fhi, fch)
@@ -2426,6 +2390,7 @@ cwdk  deallocation of unstructured types
       call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
+#endif
 *   ..save final state
       call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
@@ -2434,6 +2399,7 @@ cwdk  deallocation of unstructured types
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
+#ifdef WG_TODO
       call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
       if (use_astra.ne.0) then
        call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
@@ -2522,7 +2488,7 @@ cwdk  deallocation of unstructured types
       end if
 
       if (ibatch_av_all > 0) call batch_av_all_fin
-
+#endif
 *  .. finalize tracing routines
       call b2trcf(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
 

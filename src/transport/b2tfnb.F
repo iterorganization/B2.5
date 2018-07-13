@@ -1035,7 +1035,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         call my_out_us(70,nFc,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
         call my_out_us(70,nFc,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
        else
-        call my_out(70,nFc,wrk5,'b2tfnb_dgradpbx'//chns)
+        call my_out_us(70,nFc,wrk5,'b2tfnb_dgradpbx'//chns)
        endif
        call my_out_us(70,nFc,wrk1,'b2tfnb_bxuanax'//chns)
        call my_out_us(70,nFc,wrk2,'b2tfnb_dpccornax'//chns)
@@ -1083,7 +1083,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        else
         call my_out_us(70,nFc,wrk5,'b2tfnb_dgradpby'//chns)
        endif
-       call my_out(70,nFc,wrk8,'b2tfnb_cvlbnay'//chns)               !iys 17.04.2012
+       call my_out_us(70,nFc,wrk8,'b2tfnb_cvlbnay'//chns)               !iys 17.04.2012
 !       call my_out_us(70,nFc,con_2dia,'b2tfnb_dPat_2diay'//chns)
 !       call my_out_us(70,nFc,con_mdf,'b2tfnb_dPat_mdfy'//chns)
       endif

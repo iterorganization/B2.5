@@ -58,7 +58,7 @@
       type (B2StateExt), intent (in) :: st_ext
       logical main_call
 *   ..output arguments (unspecified on entry)
-      type (B2SourceWork), intent (out) :: srw
+      type (B2SourceWork), intent (inout) :: srw
 *   ..local variables
       real (kind=R8) :: snatmp(nCv,0:1,0:ns-1), !djm Mar2017
      &                  smotmp(nCv,0:3,0:ns-1),

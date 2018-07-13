@@ -314,8 +314,8 @@
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
         call diff(nCv, nFc, nVx, 0, geo, mpg, ua(1,is), wrkv, wrkf)
-        wrkf(:,0) = cvsa(:,0,is)/(geo%fcQalf(iFc,0)+eps)*wrkf(:,0)**2
-        wrkf(:,1) = cvsa(:,1,is)/(geo%fcQalf(iFc,1)+eps)*wrkf(:,1)**2
+        wrkf(:,0) = cvsa(:,0,is)/(geo%fcQalf(:,0)+eps)*wrkf(:,0)**2
+        wrkf(:,1) = cvsa(:,1,is)/(geo%fcQalf(:,1)+eps)*wrkf(:,1)**2
         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(1,0),visc(1,0))
         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(1,1),visc(1,1))
         do iCv = 1, mpg%nCi
@@ -434,14 +434,14 @@
 !WG_TODO       b2joule=0.0_R8
 !WG_TODO       b2sihs_joule=0.0_R8
        do iFc = 1, nFc
-         wrkf(:,0) = fch(iFc,0)*ehx(iFc)/
+         wrkf(iFc,0) = fch(iFc,0)*ehx(iFc)/
      &    ((geo%fcS(iFc)*geo%fcQalf(iFc,0) + eps)*
      &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))))
        enddo
        call intcell(nFc,nCv,mpg, mpg%intcellP, wrkf(1,0),wrkc)
        if (istyle_Joule_heating.eq.0) then
         do iFc = 1, nFc
-          wrkf(:,1) = fch(iFc,1)*ehy(iFc)/
+          wrkf(iFc,1) = fch(iFc,1)*ehy(iFc)/
      &     ((geo%fcS(iFc)*geo%fcQalf(iFc,1) + eps)*
      &      (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))))
         enddo

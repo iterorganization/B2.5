@@ -26,9 +26,8 @@
       real (kind=R8) ::
      *   cortt(nCv), corte(nCv), corti(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
-!WG_TODO: better definition of size aa still needed
       real (kind=R8) ::
-     *  flo0(nFc,0:1), con0(nFc,0:1,0:2), aa(9*nCv)
+     *  flo0(nFc,0:1), con0(nFc,0:1,0:2), aa(mpg%nCmxNv)
 
 *-----------------------------------------------------------------------
 *.documentation

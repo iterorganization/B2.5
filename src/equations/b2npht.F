@@ -61,7 +61,7 @@
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
-     * aa(9*nCv), wrkf(nFc,0:1),                !srv 02.01.07
+     * aa(mpg%nCmxNv), wrkf(nFc,0:1),                !srv 02.01.07
      1 wrkc(nFc,0:1,0:2), cortt(nCv),               !srv 02.01.07
      2 she0(nCv,0:3), shi0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                            !srv 18.09.09

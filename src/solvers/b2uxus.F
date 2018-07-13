@@ -226,10 +226,10 @@
               ja(k)  = mpg%cvNv(mpg%aaP(iCv,1)+iNv-1)
             endif
           enddo
-          ip(i+1)=ip(i) + ner
+          ip(iCv+1)=ip(iCv) + ner
           do
             lord=.true.
-            do ipt=ip(i),ip(i+1)-2
+            do ipt=ip(iCv),ip(iCv+1)-2
               if(ja(ipt).gt.ja(ipt+1)) then
                 jtemp     = ja(ipt)
                 ja(ipt)   = ja(ipt+1)

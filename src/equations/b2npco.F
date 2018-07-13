@@ -56,7 +56,7 @@
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
-     *   aa(9*nCv), wrk0(nCv)
+     *   aa(mpg%nCmxNv), wrk0(nCv)
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       external subini, subend, xertst, ipgetr, lwget

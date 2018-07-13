@@ -95,7 +95,7 @@
       logical test_residual, quit_residual, main_call
       logical solving(4)
       save test_residual
-      integer n2, istg(0:2), is, k
+      integer istg(0:2), is, k
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, nasum, na0sum, 
@@ -257,10 +257,10 @@ c therefore initialise here
 
 * ..initialisation
 *   ..initialise sources to 0
-      call sfill (n2*2*ns, 0.0_R8, snasm, 1)                        !srv 11.09.09 {
-      call sfill (n2*4*ns, 0.0_R8, smosm, 1)
-      call sfill (n2*4, 0.0_R8, shesm, 1)
-      call sfill (n2*4, 0.0_R8, shism, 1)
+      call sfill (nCv*2*ns, 0.0_R8, snasm, 1)                        !srv 11.09.09 {
+      call sfill (nCv*4*ns, 0.0_R8, smosm, 1)
+      call sfill (nCv*4, 0.0_R8, shesm, 1)
+      call sfill (nCv*4, 0.0_R8, shism, 1)
 !WG_TODO      call sfill (n2*2*ns, 0.0_R8, snadt, 1)
 !WG_TODO      call sfill (n2*4*ns, 0.0_R8, smodt, 1)
 !WG_TODO      call sfill (n2*4, 0.0_R8, shedt, 1)

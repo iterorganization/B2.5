@@ -50,7 +50,7 @@
       type (B2RatesWork), intent (in) :: rtw
       type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
-      type (B2SourceWork), intent (out) :: srw
+      type (B2SourceWork), intent (inout) :: srw
       real (kind=R8) ::
      &  shi0_ff(nCv,0:nscx-1),
      &  tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1), tphye(0:ns-1),
@@ -337,7 +337,8 @@
 #endif
             call recycle(
      &           species_start(istra), species_end(istra),
-     &           iRc1, iRc2, iFc, mpg%rcFcOr(iRc1), Phi_app, lcore)
+     &           iRc1, iRc2, iFc, mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1),
+     &           Phi_app, lcore)
           enddo
 
         endif       ! crcstra(istra)
@@ -462,6 +463,7 @@
         close(70)
       endif                                                            !srv 11.07.05 }
 
+#ifdef WG_TODO
       if(reflection_max.gt.1.0_R8 .or. 
      .  ((main_call.and.output.ge.1).or.output.gt.1))
      1 write(*,*) 'Maximum reflection coefficient ', reflection_max
@@ -470,6 +472,7 @@
       if(redep_max.gt.0.0_R8 .and. (yself_max.ge.1.0_R8 .or. 
      .  ((main_call.and.output.ge.1).or.output.gt.1)))
      . write(*,*) 'Maximum self-sputtering coefficient ', yself_max
+#endif
 * ..return
       ncall = ncall + 1
       call subend ()

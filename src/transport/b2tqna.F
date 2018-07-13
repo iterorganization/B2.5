@@ -615,6 +615,7 @@ cdpc
 
       end subroutine b2tqna
 
+#ifdef WG_TODO
       subroutine set_transport(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
      &  hy, qz, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
      &  wrk0)
@@ -3492,5 +3493,5 @@ c      close(14)
       deallocate(r, f, b, c, d)
 
       end subroutine set_profile                                      !srv 01.03.07 }
-
+#endif
 

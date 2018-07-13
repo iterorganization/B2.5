@@ -21,9 +21,8 @@
       real (kind=R8) ::
      *  corpo(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
-!WG_TODO: better definition of size aa still needed
       real (kind=R8) ::
-     *  aa(9*nCv)
+     *  aa(mpg%nCmxNv)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation

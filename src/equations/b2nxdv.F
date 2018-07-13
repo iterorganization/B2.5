@@ -8,8 +8,8 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   rob(nCv), smqb(nCv,0:3), 
-     &  smqdu(nCv), smb(nCv,0:3)
-      real (kind=R8) :: smbtmp(nCv,0:3) !djm Jan2017
+     &   smqdu(nCv), smb(nCv,0:3)
+!WG_TODO      real (kind=R8) :: smbtmp(nCv,0:3) !djm Jan2017
 *     ------------------------------------------------------------------
 *     B2NXDV computes the correction to the parallel momentum source
 *     that is required to make the total friction force cancel.
@@ -29,8 +29,8 @@
 *   ..test nCv
       call xertst (0.le.nCv, 'faulty argument nCv')
 
-cdjm Jan2017 Keep source at the start to calculate total change for balance routines
-      smbtmp = smb
+!WG_TODOcdjm Jan2017 Keep source at the start to calculate total change for balance routines
+!WG_TODO      smbtmp = smb
 
 *   ..adjust smb
       if(style.eq.0) then

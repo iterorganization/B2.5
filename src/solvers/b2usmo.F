@@ -22,9 +22,8 @@
       real (kind=R8) ::
      *  corub(nCv), pccb(nCv,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
-!WG_TODO: better definition of size aa still needed
       real (kind=R8) ::
-     *  aa(9*nCv), aad0(nCv)
+     *  aa(mpg%nCmxNv), aad0(nCv)
 
 *-----------------------------------------------------------------------
 *.documentation

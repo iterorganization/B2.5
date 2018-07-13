@@ -91,7 +91,7 @@
      1  pb(nCv), cvct(nFc,0:1),
      2  rob(nCv), flub(nFc,0:1),
      *  flubv(nFc,0:1),                                    !srv 11.09.09
-     3  wrkf(nFc,0:1), wrkv(nVx), aa(9*nCv),
+     3  wrkf(nFc,0:1), wrkv(nVx), aa(mpg%nCmxNv),
      4  smb(nCv,0:3), flcb(nFc,0:1),
      5  cvcb(nFc,0:1), ro(nCv),
      6  pr(nCv), !WG_TODO ne2(nCv),
@@ -324,7 +324,7 @@
        call b2saxpy (nCv*4, 1.0_R8, smbvv, 1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
        call b2saxpy (nCv*4, 1.0_R8, smban,  1, smb, 1)                  !srv 25.09.17
-       call b2nxdv (nCv, is, rob, sr%smq(1,0,is), smqdu, smb)             !srv ???
+       call b2nxdv (nCv, is, mpg, rob, sr%smq(1,0,is), smqdu, smb)             !srv ???
 *    ..save final source for species (is)                              !srv 10.11.02
 !WG_TODO       smof(:,:,is) = smb                                              !srv 10.11.02
 

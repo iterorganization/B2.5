@@ -77,6 +77,7 @@
         deallocate(hz)
         deallocate(qz)
         deallocate(qc)
+        deallocate(qs)
         deallocate(vol)
         deallocate(pbs)
         deallocate(pbshz)                                            !srv 09.01.01

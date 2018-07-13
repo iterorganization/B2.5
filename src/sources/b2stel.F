@@ -4,7 +4,7 @@
       subroutine b2stel (nCv, nFc, nVx, ns, ismain, BoRiS,
      &  geo, mpg, pl, dv, rt, rtw, srw)
       use b2mod_types
-      use b2mod_diag
+!      use b2mod_diag
       use b2mod_tallies
       use b2mod_constants
 !      use b2mod_sources
@@ -54,7 +54,7 @@
 #     include <DIMENSIONS.F>
 *   ..local variables
       integer ncall, styl0, iCv, is, js, fix_recomb_energy, k
-      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
+!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
@@ -122,14 +122,14 @@
      &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!'
        endif
 *   ..identify impurity homonuclear sequences
-       nimp_tmp=0
-       jimp_tmp=0
-       do is = 1, nspecies !{
-         if(nfluids(is).gt.1) then !{
-           nimp_tmp=nimp_tmp+1
-           jimp_tmp(is)=nimp_tmp
-         end if !}
-       end do !}
+!WG_TODO       nimp_tmp=0
+!WG_TODO       jimp_tmp=0
+!WG_TODO       do is = 1, nspecies !{
+!WG_TODO         if(nfluids(is).gt.1) then !{
+!WG_TODO           nimp_tmp=nimp_tmp+1
+!WG_TODO           jimp_tmp(is)=nimp_tmp
+!WG_TODO         end if !}
+!WG_TODO       end do !}
        call ipgeti ('b2stel_iout', iout)                         !srv 30.06.08
        call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
@@ -390,18 +390,18 @@ c accounted for)
 !WG_TODO          rqrad(iCv,is) = t0
           rqradreg(mpg%cvReg(iCv),is)=rqradreg(mpg%cvReg(iCv),is)+t0
           b2radreg(mpg%cvReg(iCv))=b2radreg(mpg%cvReg(iCv))-t0
-          b2rad=b2rad-t0
-          if (.not.is_neutral(is) .and. jimp_tmp(b2espcr(is)).ne.0) then
-            rad_imp(jimp_tmp(b2espcr(is)))=
-     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
-          endif
+!WG_TODO          b2rad=b2rad-t0
+!WG_TODO          if (.not.is_neutral(is) .and. jimp_tmp(b2espcr(is)).ne.0) then
+!WG_TODO            rad_imp(jimp_tmp(b2espcr(is)))=
+!WG_TODO     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
+!WG_TODO          endif
 *      ..compute bremsstrahlung radiation rate for is->any
           t0 = rtw%rbr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
 *      ..compute bremsstrahlung radiation
 !WG_TODO          rqbrm(iCv,is) = t0
           rqbrmreg(mpg%cvReg(iCv),is)=rqbrmreg(mpg%cvReg(iCv),is)+t0
           b2bremreg(mpg%cvReg(iCv))=b2bremreg(mpg%cvReg(iCv))-t0
-          b2brem=b2brem-t0
+!WG_TODO          b2brem=b2brem-t0
          endif
         enddo
       enddo

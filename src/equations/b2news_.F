@@ -469,7 +469,7 @@ c   extra call at this place within internal iteration)
 csw 11oct2012 added check on coriolis force (taken from b2news())
       ier0=0
       call b2npmo (nCv, nFc, nVx, ns, ismain, geo, mpg,
-     &  ncall, solving, rxf1, pl, dv, rt, co, sr, st_ext,
+     &  ncall, solving(1), rxf1, pl, dv, rt, co, sr, st_ext,
      &  ier0)
       call xertst (ier0.eq.0, 'error return from b2npmo') 
 *   ..set nep
@@ -560,12 +560,12 @@ csw 16oct2012 init ier0
       call nancheck(nCv, dv%ne, 'b2news(ne): after call to b2xpne')
       call b2xpni (nCv, ns, pl%na, dv%ni)
       call b2xpne (nCv, ns, rt%rz2, pl%na, st_ext%ne2, dv%ne2)  !srv 11.07.99
-      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz)                       !srv 18.01.02
+      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz,st_ext)                       !srv 18.01.02
 
 *   ..compute ceqp                                                       !srv 03.07.03 {
       call b2xpnm (nCv, ns, rt%rz2, am, pl%na, wrk0)
       call b2treq (nCv, geo%cvVol, pl%te, pl%ti, dv%ne, dv%ni, wrk0, 
-     %  dv%lnlam, co%ceqp)                                               !srv 03.07.03 }
+     %  dv%lnlam, st_ext, co%ceqp)                                       !srv 03.07.03 }
       if(iout .ne. 0) then                                               !srv 12.07.05 {
         do is = 0,ns-1
           write(charns,'(i3.3)') is

@@ -77,7 +77,7 @@
      &  csig_stoch(nFc), fchstoch(nFc),                               !lk 31.01.08
      &  chce_stoch(nFc)                                               !srv 20.09.17
       real (kind=R8) ::
-     *  hcimx(nFc,0:ns-1), wrk(nFc), wrk1(nFc,2), wrkv(nVx), 
+     *  hcimx(nCv,0:1,0:ns-1), wrk(nFc), wrk1(nFc,2), wrkv(nVx), 
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),          !srv 09.07.03 30.11.15
      3  flchz(nFc,0:1,0:ns-1),                            !srv 09.07.03 30.11.15
@@ -150,9 +150,9 @@
 
 * ..compute transport coefficients
 *   ..compute differential anomalous transport coefficients
-      call b2tqna (nCv, nFc, nVx, ns, nscx, iscx, geo, mpg, pl,
-     &   dv, rt, st_ext, co%dna0, co%dpa0, co%vla0, co%vma0, co%vsa0,
-     &   co%hci0, co%hcib, co%hce0, co%sig0, co%alf0, hvi0, hve0)
+      call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, geo, mpg,
+     &  pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0, co%vma0, co%vsa0,
+     &  co%hci0, co%hcib, co%hce0, co%sig0, co%alf0, hvi0, hve0)
       if(flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then      !srv 07.12.15
 *   ..apply flux limit to neutrals contribution to hci
       call xerrab('b2trno -- option to be adapted for WG')
@@ -330,16 +330,16 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
 *   .. apply flux limit to neutrals contribution to cdpa
         wrk = 1.0_R8
         call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na, pl%te, 
-     &  pl%ti, rt%rza, co%cdpa, flc) !srv 09.07.03 30.11.15
+     &    pl%ti, rt%rza, co%cdpa, flc) !srv 09.07.03 30.11.15
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,wrk)
         call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na, pl%te, 
-     &  pl%ti, rt%rza, co%cdpahz, flchz) 
+     &    pl%ti, rt%rza, co%cdpahz, flchz) 
       endif                                                               !srv 15.06.08 }
 
       if (flux_limit_style.eq.2) then                                     !srv 07.12.15 {
 *   ..apply flux limit to neutrals contribution to chcb
        call b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ti,
-     &  co%hcib, co%chcb, hcimx, co%fllim0fhi)
+     &   co%hcib, co%chcb, hcimx, co%fllim0fhi)
      	co%chci = 0.0_R8
         do is = 0, ns-1
           co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)

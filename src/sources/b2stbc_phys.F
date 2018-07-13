@@ -42,7 +42,7 @@
       type (B2StateExt), intent (in) :: st_ext
       logical main_call                                              !xpb
 *   ..output arguments (unspecified on entry)
-      type (B2SourceWork), intent (out) :: srw
+      type (B2SourceWork), intent (inout) :: srw
       integer b2stbc_fchy_dia_coreonly, secmodel, sheath_drift_fix
       logical wrong_flow                                             !xpb
 *   ..common blocks
@@ -281,10 +281,10 @@
 *    ..test state
        call b2xvps (nCv, nFc, ns, pl, dv)
 *    ..test sign of chce, chci
-       call b2xvsg (nCv,co%chce(1,0)*geo%fcQalf(1,0),1,'chce0','.ge.')
-       call b2xvsg (nCv,co%chce(1,1)*geo%fcQalf(1,1),1,'chce1','.ge.')
-       call b2xvsg (nCv,co%chci(1,0)*geo%fcQalf(1,0),1,'chci0','.ge.')
-       call b2xvsg (nCv,co%chci(1,1)*geo%fcQalf(1,1),1,'chci1','.ge.')
+       call b2xvsg (nCv,co%chce(:,0)*geo%fcQalf(:,0),1,'chce0','.ge.')
+       call b2xvsg (nCv,co%chce(:,1)*geo%fcQalf(:,1),1,'chce1','.ge.')
+       call b2xvsg (nCv,co%chci(:,0)*geo%fcQalf(:,0),1,'chci0','.ge.')
+       call b2xvsg (nCv,co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
       endif
 *   ..set cutll, cutlo
       cutll = log(machsfr())
@@ -371,8 +371,8 @@
        naaverage(is) = nasum/volsum
       enddo                                                        !srv 22.01.02 }
 #endif
-      call b2xpro (nCv, ns, mp, am, pl%na, ro)                     !srv 01.02.09
-      call b2xppr (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pr)
+      call b2xpro (nCv, ns, mp, am, pl%na, ro, st_ext)             !srv 01.02.09
+      call b2xppr (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pr, st_ext)
       wdia=(dv%ne*pl%te+dv%ni(:,1)*pl%ti)*geo%cvBb(:,2)
       do is = 0, st_ext%ns-1
         if (.not.st_ext%is_neutral(is)) wdia=wdia+
@@ -420,6 +420,7 @@ cxpb  Following suggestion from Russians, the drift velocity
 cxpb  should only include ExB and not diamagnetic contribution
 cwdk  With redefinition of drifts as being the poloidal projections,
 cwdk  now need to recompute full diamagnetic component for ud
+#ifdef WG_TODO
       if (sheath_drift_fix.eq.0) then
        do is = 0,ns-1
         ud(:,is) = dv%uadia(:,0,is)*geo%cvBb(:,3)/geo%cvBb(:,2)*signmf
@@ -429,7 +430,6 @@ cwdk  now need to recompute full diamagnetic component for ud
         ud(:,is) = dv%vaecrb(:,0,is)*geo%cvBb(:,3)/geo%cvBb(:,2)*signmf
        enddo
       endif
-#ifdef WG_TODO
       if (main_call .and. diagno.ge.1) then                           !xpb
         write(*,'(a,1p,(10000e12.4))') 'dna0',
      1   (dna0(nx/2,ny,is),is=0,ns-1)
@@ -3332,7 +3332,7 @@ cxpb  and max(,,) statement for stability
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             cs   = sqrt(pr(iCv1)/ro(iCv1))
             s1hz = geo%fcPbshz(iFc)
-            vbnd = cs*s1hz*mpg%bcFcOr(iCv1)
+            vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
             srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                        !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &         mompar(is,ib,1)*vbnd
@@ -4658,7 +4658,7 @@ cghgh
      *          pl%na(iCv1,is)
             enddo
             t0 = max(0.0e0_R8, (abs(geo%fcPbs(iFc))*t0*cs -           !srv 05.05.09
-     &        dv%fch_p(iFc,0)*mpg%bcFcOr(iFc)/qe))                    !srv 25.12.06 11.01.13 20.09.17
+     &        dv%fch_p(iFc,0)*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)/qe))  !srv 25.12.06 11.01.13 20.09.17
             if(pot_eq.eq.1) then                                      !srv 27.02.13 {
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                   !srv 11.03.09 {
      &          (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0                !srv 19.04.13

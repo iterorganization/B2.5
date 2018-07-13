@@ -53,7 +53,7 @@
       integer ncall
       integer, save :: iout = 0, iout_b2wdat = 0
       real (kind=R8) ::
-     *  aa(9*nCv), wrk0(nCv)
+     *  aa(mpg%nCmxNv), wrk0(nCv)
       save ncall
 *   ..procedures
       external subini, subend, xertst
