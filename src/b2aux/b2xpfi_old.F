@@ -1,4 +1,4 @@
-      subroutine b2xpfi (nx, ny, ns, fna, fni)
+      subroutine b2xpfi_old (nx, ny, ns, fna, fni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
