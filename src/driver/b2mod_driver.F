@@ -2384,8 +2384,8 @@ cwdk  deallocation of unstructured types
 *   ..write summary of final state
       call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na, ua,
      &  te, ti, po, fna, fhe, fhi, fch)
-      if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns,              !pb 29.07.16
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+!WG_TODO      if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns,              !pb 29.07.16
+!WG_TODO     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..test plasma state
       call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
