@@ -157,7 +157,7 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test bb
-       call b2xvsg (nCv, geo%cvBb(11,3), 1, 'bb3', '.gt.')
+       call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test state
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')

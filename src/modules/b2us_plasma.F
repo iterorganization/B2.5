@@ -972,7 +972,28 @@ cwdk move to dv
         allocate( state_ext % sch (1:nCv) )
         allocate( state_ext % sna (1:nCv, 0:ns_ext-1) )
         allocate( state_ext % smo (1:nCv, 0:ns_ext-1) )
-
+        state_ext % text       = ''
+        state_ext % is_neutral = .false.
+        state_ext % zn         = 0.0_R8
+        state_ext % am         = 0.0_R8
+        state_ext % za         = 0.0_R8
+        state_ext % za2        = 0.0_R8
+        state_ext % pt         = 0.0_R8
+        state_ext % ne         = 0.0_R8
+        state_ext % ne2        = 0.0_R8
+        state_ext % ue         = 0.0_R8
+        state_ext % na         = 0.0_R8
+        state_ext % ni         = 0.0_R8
+        state_ext % ua         = 0.0_R8
+        state_ext % ta         = 0.0_R8
+        state_ext % fhi        = 0.0_R8
+        state_ext % fa         = 0.0_R8
+        state_ext % sne        = 0.0_R8
+        state_ext % she        = 0.0_R8
+        state_ext % shi        = 0.0_R8
+        state_ext % sch        = 0.0_R8
+        state_ext % sna        = 0.0_R8
+        state_ext % smo        = 0.0_R8
       return
       end subroutine createB2StateExt
 
