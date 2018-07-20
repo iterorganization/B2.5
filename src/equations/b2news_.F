@@ -569,13 +569,13 @@ csw 16oct2012 init ier0
       if(iout .ne. 0) then                                               !srv 12.07.05 {
         do is = 0,ns-1
           write(charns,'(i3.3)') is
-          call my_out_us(70,nCv,pl%na(1,is),'b2news__na'//charns)
+          call my_out_us(70,nCv,0,pl%na(1,is),'b2news__na'//charns)
         enddo
-        call my_out_us(70,nCv,dv%ni(1,0),'b2news__ni0')
-        call my_out_us(70,nCv,dv%ni(1,1),'b2news__ni1')
-        call my_out_us(70,nCv,dv%ne,'b2news__ne')
-        call my_out_us(70,nCv,pz,'b2news__pz')
-        call my_out_us(70,nCv,co%ceqp,'b2news__ceqp')
+        call my_out_us(70,nCv,0,dv%ni(1,0),'b2news__ni0')
+        call my_out_us(70,nCv,0,dv%ni(1,1),'b2news__ni1')
+        call my_out_us(70,nCv,0,dv%ne,'b2news__ne')
+        call my_out_us(70,nCv,0,pz,'b2news__pz')
+        call my_out_us(70,nCv,0,co%ceqp,'b2news__ceqp')
       endif                                                              !srv 12.07.05 }
 
 
@@ -590,7 +590,7 @@ csw 16oct2012 init ier0
      &       dv%ne, wrk0)
           call b2saxpy (nCv, 1.0_R8, wrk0, 1, pl%po, 1)
           if(iout .ne. 0) then                                           !srv 12.07.05 {
-            call my_out_us(70,nCv,pl%po,'b2nxdp_po')
+            call my_out_us(70,nCv,0,pl%po,'b2nxdp_po')
           endif                                                          !srv 12.07.05 }
         endif
 *   ..iterate several times on the potential equation
@@ -693,8 +693,8 @@ cwdk of potential equation...
           call xertst (ier0.eq.0, 'error return from b2nppo')
           if(iout .ne. 0) then                                           !srv 12.07.05 {
             write (charns,'(i3.3)') i
-            call my_out_us(70,nCv,dv%respo,'b2news__respo'//charns)
-            call my_out_us(70,nCv,pl%po,'b2news__po'//charns)
+            call my_out_us(70,nCv,0,dv%respo,'b2news__respo'//charns)
+            call my_out_us(70,nCv,0,pl%po,'b2news__po'//charns)
           endif                                                          !srv 12.07.05 }
           if(t0.gt.potok.and.(i.eq.potit/3.or.i.eq.potit*2/3)) then      !srv 06.07.00
             if (vis_per.eq.0.0e0_R8) then

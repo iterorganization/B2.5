@@ -109,19 +109,19 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
       call b2uppo (nCv, rxf, dv%corpo, pl%po)
 
       if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                    !srv 11.09.09 {
-!       call my_out_us(70,nCv,pl%te,'b2nppo_te')
-!       call my_out_us(70,nCv,dv%ne,'b2nppo_ne')
-        call my_out_us(70,nCv,pl%po,'b2nppo_po')
-        call my_out_us(70,nCv,dv%respo,'b2nppo_respo')
-        call my_out_us(70,nFc,dv%fch(1,0),'b2nppo_fchx')
-        call my_out_us(70,nFc,dv%fch(1,1),'b2nppo_fchy')
-!       call my_out_us(70,nCv,sr%sch(1,0),'b2nppo_sch0')
-!       call my_out_us(70,nCv,sr%sch(1,1),'b2nppo_sch1')
-!       call my_out_us(70,nCv,sr%sch(1,2),'b2nppo_sch2')
-!       call my_out_us(70,nCv,sr%sch(1,3),'b2nppo_sch3')
+!       call my_out_us(70,nCv,0,pl%te,'b2nppo_te')
+!       call my_out_us(70,nCv,0,dv%ne,'b2nppo_ne')
+        call my_out_us(70,nCv,0,pl%po,'b2nppo_po')
+        call my_out_us(70,nCv,0,dv%respo,'b2nppo_respo')
+        call my_out_us(70,nFc,1,dv%fch(1,0),'b2nppo_fchx')
+        call my_out_us(70,nFc,1,dv%fch(1,1),'b2nppo_fchy')
+!       call my_out_us(70,nCv,0,sr%sch(1,0),'b2nppo_sch0')
+!       call my_out_us(70,nCv,0,sr%sch(1,1),'b2nppo_sch1')
+!       call my_out_us(70,nCv,0,sr%sch(1,2),'b2nppo_sch2')
+!       call my_out_us(70,nCv,0,sr%sch(1,3),'b2nppo_sch3')
          wrk0=sr%sch(:,0)+sr%sch(:,1)*pl%po+sr%sch(:,2)*dv%ne+
      &        sr%sch(:,3)*dv%ne*pl%po
-        call my_out_us(70,nCv,wrk0,'b2nppo_sch')
+        call my_out_us(70,nCv,0,wrk0,'b2nppo_sch')
       endif                                                       !srv 11.09.09 }
 
 *   ..set error parameter and return

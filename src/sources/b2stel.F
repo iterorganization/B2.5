@@ -452,12 +452,12 @@ c accounted for)
      &         smq0_ion(:,1,is)*pl%ua(:,is)+
      &         smq0_ion(:,2,is)*pl%na(:,is)*mp*am(is)+
      &         smq0_ion(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-          call my_out_us(70,nCv,wrk0,'b2stel_smq_ion'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2stel_smq_ion'//chns)
           wrk0=smq0_rec(:,0,is)+
      &         smq0_rec(:,1,is)*pl%ua(:,is)+
      &         smq0_rec(:,2,is)*pl%na(:,is)*mp*am(is)+
      &         smq0_rec(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-          call my_out_us(70,nCv,wrk0,'b2stel_smq_rec'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2stel_smq_rec'//chns)
         enddo
       endif
       if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
@@ -472,9 +472,9 @@ c accounted for)
 !     &                       'b2stel_sna_rec'//chk//chns)
 !         enddo
           wrk0=sna0_ion(:,0,is)+sna0_ion(:,1,is)*pl%na(:,is)
-          call my_out_us(70,nCv,wrk0,'b2stel_sna_ion'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2stel_sna_ion'//chns)
           wrk0=sna0_rec(:,0,is)+sna0_rec(:,1,is)*pl%na(:,is)
-          call my_out_us(70,nCv,wrk0,'b2stel_sna_rec'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2stel_sna_rec'//chns)
 
         enddo
       endif
@@ -488,20 +488,20 @@ c accounted for)
 !      call my_out(70,nx,ny,srw%she0(-1,-1,k),'b2stel_she')
         wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
      &       srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
-        call my_out_us(70,nCv,wrk0,'b2stel_she_rad')
+        call my_out_us(70,nCv,0,wrk0,'b2stel_she_rad')
         wrk0=shi0_ion(:,0)+shi0_ion(:,1)*pl%ti+
      &       shi0_ion(:,2)*dv%ni(:,0)+
      &       shi0_ion(:,3)*pl%ti*dv%ni(:,0)
-        call my_out_us(70,nCv,wrk0,'b2stel_shi_ion')                  !srv 01.11.10
+        call my_out_us(70,nCv,0,wrk0,'b2stel_shi_ion')                  !srv 01.11.10
         wrk0=shi0_rec(:,0)+shi0_rec(:,1)*pl%ti+
      &       shi0_rec(:,2)*dv%ni(:,0)+
      &       shi0_rec(:,3)*pl%ti*dv%ni(:,0)
-        call my_out_us(70,nCv,wrk0,'b2stel_shi_rec')                  !srv 01.11.10
+        call my_out_us(70,nCv,0,wrk0,'b2stel_shi_rec')                  !srv 01.11.10
 
 !WG_TODO        do is=0,ns-1                                                 !srv 03.02.12 {
 !WG_TODO          write(chns,'(i3.3)') is
-!WG_TODO          call my_out_us(70,nCv,rqrad(1,is),'b2stel_rqrad'//chns)
-!WG_TODO          call my_out_us(70,nCv,rqbrm(1,is),'b2stel_rqbrm'//chns)
+!WG_TODO          call my_out_us(70,nCv,0,rqrad(1,is),'b2stel_rqrad'//chns)
+!WG_TODO          call my_out_us(70,nCv,0,rqbrm(1,is),'b2stel_rqbrm'//chns)
 !WG_TODO        enddo                                                        !srv 03.02.12 }
       endif                                                          !srv 30.06.08 11.09.09 }
 

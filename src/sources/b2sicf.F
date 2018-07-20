@@ -140,13 +140,13 @@ cdjm Store linearised source for balance
         write (chns,'(i3.3)') isb
         do k=0,3
           write (chark,'(i1)') k
-          call my_out_us(70,nCv,smbcf(1,k),
+          call my_out_us(70,nCv,0,smbcf(1,k),
      .                         'b2sicf_smocf'//chark//chns)
         enddo
         wrks=smbcf(:,0)+smbcf(:,1)*ub+
      &       smbcf(:,2)*nb*mb+smbcf(:,3)*ub*nb*mb
-        call my_out_us(70,nCv,wrks,'b2sicf_smocf'//chns)
-        call my_out_us(70,nCv,ctcf,'b2sicf_ctcf'//chns)
+        call my_out_us(70,nCv,0,wrks,'b2sicf_smocf'//chns)
+        call my_out_us(70,nCv,0,ctcf,'b2sicf_ctcf'//chns)
       endif                                                              !srv 17.06.02 }
 
 * ..return

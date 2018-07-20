@@ -931,14 +931,14 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
      &         smo0_eir(:,1,is)*pl%ua(:,is)+
      &         smo0_eir(:,2,is)*pl%na(:,is)*mp*am(is)+
      &         smo0_eir(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-          call my_out_us(70,nCv,wrk0,'b2stbr_smo_eir'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2stbr_smo_eir'//chns)
          endif
         else
 !        do k=0,3
 !         write (chk,'(i1)') k
 !         call my_out(70,nx,ny,smo0(-1,-1,k,is),'b2stbr_smo'//chk//chns)
 !        enddo
-!WG_TODO         call my_out_us(70,nCv,b2stbr_smo(1,is),'b2stbr_smo'//chns)
+!WG_TODO         call my_out_us(70,nCv,0,b2stbr_smo(1,is),'b2stbr_smo'//chns)
         endif
 !       call my_out(70,nx,ny,ua(-1,-1,is),'b2stbr_ua'//chns)
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
@@ -954,55 +954,55 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           if (iout_b2wdat.ne.4) then
            do k=0,1                                                   !srv 29.04.10
             write (chk,'(i1)') k
-            call my_out_us(70,nCv,sna0_eir(1,k,is),
+            call my_out_us(70,nCv,0,sna0_eir(1,k,is),
      *               'b2stbr_sna_eir'//chk//chns)
            enddo
           endif
           wrk0=sna0_eir(:,0,is)+sna0_eir(:,1,is)*pl%na(:,is)
-          call my_out_us(70,nCv,wrk0,'b2stbr_sna_eir'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2stbr_sna_eir'//chns)
          endif
         else
 !        do k=0,1
 !         write (chk,'(i1)') k
 !         call my_out(70,nx,ny,sna0(-1,-1,k,is),'b2stbr_sna'//chk//chns)
 !        enddo
-!WG_TODO         call my_out_us(70,nCv,b2stbr_sna(1,is),'b2stbr_sna'//chns)
+!WG_TODO         call my_out_us(70,nCv,0,b2stbr_sna(1,is),'b2stbr_sna'//chns)
         endif
        enddo                                                          !srv 29.04.10
 #ifdef B25_EIRENE
        do ia = 1,nnatmi
         write (chns,'(i3.3)') ia
         wrk0(-1:nx,-1:ny)=rfluxa(0:nx+1,0:ny+1,ia,1)
-        call my_out_us(70,nCv,wrk0,'b2stbr_rfluxa_eir'//chns)
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_rfluxa_eir'//chns)
         wrk0(-1:nx,-1:ny)=tfluxa(0:nx+1,0:ny+1,ia,1)
-        call my_out_us(70,nCv,wrk0,'b2stbr_tfluxa_eir'//chns)
-        call my_out_us(70,nCv,fatm_eir(:,:,1,ia),              ! IYS 27.01.2017
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_tfluxa_eir'//chns)
+        call my_out_us(70,nCv,0,fatm_eir(:,:,1,ia),              ! IYS 27.01.2017
      &                'b2stbr_fatmy_eir'//chns)
         wrk0(-1:nx,-1:ny)=pfluxa(0:nx+1,0:ny+1,ia,1)
-        call my_out_us(70,nCv,wrk0,'b2stbr_pfluxa_eir'//chns)
-        call my_out_us(70,nCv,fatm_eir(:,:,0,ia),              ! IYS 27.01.2017
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_pfluxa_eir'//chns)
+        call my_out_us(70,nCv,0,fatm_eir(:,:,0,ia),              ! IYS 27.01.2017
      &                'b2stbr_fatmx_eir'//chns)
         wrk0(-1:nx,-1:ny)=dab2(0:nx+1,0:ny+1,ia,1)
-        call my_out_us(70,nCv,wrk0,'b2stbr_dab2_eir'//chns)
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_dab2_eir'//chns)
         wrk0(-1:nx,-1:ny)=tab2(0:nx+1,0:ny+1,ia,1)
-        call my_out_us(70,nCv,wrk0,'b2stbr_tab2_eir'//chns)
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_tab2_eir'//chns)
        enddo
        do im = 1,nmol
         write (chns,'(i3.3)') im
         wrk0(-1:nx,-1:ny)=rfluxm(0:nx+1,0:ny+1,im,1)
-        call my_out_us(70,nCv,wrk0,'b2stbr_rfluxm_eir'//chns)
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_rfluxm_eir'//chns)
         wrk0(-1:nx,-1:ny)=tfluxm(0:nx+1,0:ny+1,im,1)
-        call my_out_us(70,nCv,wrk0,'b2stbr_tfluxm_eir'//chns)
-        call my_out_us(70,nCv,fmol_eir(:,:,1,im),              ! IYS 27.01.2017
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_tfluxm_eir'//chns)
+        call my_out_us(70,nCv,0,fmol_eir(:,:,1,im),              ! IYS 27.01.2017
      &              'b2stbr_fmoly_eir'//chns)
         wrk0(-1:nx,-1:ny)=pfluxm(0:nx+1,0:ny+1,im,1)
-        call my_out_us(70,nCv,wrk0,'b2stbr_pfluxm_eir'//chns)
-        call my_out_us(70,nCv,fmol_eir(:,:,0,im),              ! IYS 27.01.2017
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_pfluxm_eir'//chns)
+        call my_out_us(70,nCv,0,fmol_eir(:,:,0,im),              ! IYS 27.01.2017
      &              'b2stbr_fmolx_eir'//chns)
         wrk0(-1:nx,-1:ny)=dmb2(0:nx+1,0:ny+1,im,1)
-        call my_out_us(70,nCv,wrk0,'b2stbr_dmb2_eir'//chns)
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_dmb2_eir'//chns)
         wrk0(-1:nx,-1:ny)=tmb2(0:nx+1,0:ny+1,im,1)
-        call my_out_us(70,nCv,wrk0,'b2stbr_tmb2_eir'//chns)
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_tmb2_eir'//chns)
        enddo
 #endif
       endif
@@ -1012,33 +1012,33 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         if (iout_b2wdat.ne.4) then
          do k=0,1  ! 3
           write (chk,'(i1)') k
-          call my_out_us(70,nCv,she0_eir(1,k),'b2stbr_she_eir'//chk)
-          call my_out_us(70,nCv,shi0_eir(1,k),'b2stbr_shi_eir'//chk)
+          call my_out_us(70,nCv,0,she0_eir(1,k),'b2stbr_she_eir'//chk)
+          call my_out_us(70,nCv,0,shi0_eir(1,k),'b2stbr_shi_eir'//chk)
          enddo
         endif
         wrk0=she0_eir(:,0)+she0_eir(:,1)*pl%te+
      &       she0_eir(:,2)*dv%ne+she0_eir(:,3)*pl%te*dv%ne
-        call my_out_us(70,nCv,wrk0,'b2stbr_she_eir')
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_she_eir')
         wrk0=shi0_eir(:,0)+shi0_eir(:,1)*pl%ti+
      &       shi0_eir(:,2)*dv%ni(:,0)+shi0_eir(:,3)*pl%ti*dv%ni(:,0)
-        call my_out_us(70,nCv,wrk0,'b2stbr_shi_eir')
+        call my_out_us(70,nCv,0,wrk0,'b2stbr_shi_eir')
        endif
 !      do k=0,3
 !       write (chk,'(i1)') k
-!       call my_out_us(70,nCv,she0(-1,-1,k),'b2stbr_she'//chk)
-!       call my_out_us(70,nCv,shi0(-1,-1,k),'b2stbr_shi'//chk)
+!       call my_out_us(70,nCv,0,she0(-1,-1,k),'b2stbr_she'//chk)
+!       call my_out_us(70,nCv,0,shi0(-1,-1,k),'b2stbr_shi'//chk)
 !      enddo
-!WG_TODO       call my_out_us(70,nCv,b2stbr_she,'b2stbr_she')
-!WG_TODO       call my_out_us(70,nCv,b2stbr_shi,'b2stbr_shi')               !srv 29.04.10
+!WG_TODO       call my_out_us(70,nCv,0,b2stbr_she,'b2stbr_she')
+!WG_TODO       call my_out_us(70,nCv,0,b2stbr_shi,'b2stbr_shi')               !srv 29.04.10
       endif
       if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)
      &         .or. iout_b2wdat.eq.4 ) then
        if (use_eirene.eq.0) then
 !        do k=0,3
 !          write (chk,'(i1)') k
-!          call my_out_us(70,nCv,sch0(-1,-1,k),'b2stbr_sch'//chk)
+!          call my_out_us(70,nCv,0,sch0(-1,-1,k),'b2stbr_sch'//chk)
 !       enddo
-!WG_TODO        call my_out_us(70,nCv,b2stbr_sch,'b2stbr_sch')
+!WG_TODO        call my_out_us(70,nCv,0,b2stbr_sch,'b2stbr_sch')
        endif
       endif                                                           !srv 11.09.09 }
 

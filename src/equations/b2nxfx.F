@@ -139,7 +139,7 @@
       endif                                               !srv 16.07.12
 
       if (iout.eq.1) then                                 !srv 11.09.09
-        call my_out_us(70,nFc,ehxp,'b2nxfx_ehxp')
+        call my_out_us(70,nFc,1,ehxp,'b2nxfx_ehxp')
       endif
 
 * ..return

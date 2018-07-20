@@ -89,7 +89,7 @@ c       fl(ix,iy)=1.0d0
 
       if(iout.ne.0) then                                             !srv 12.04.04 {
        write (charns,'(i3.3)') isb  
-       call my_out_us(70,nFc,fl,'cflmv-1'//charns)
+       call my_out_us(70,nFc,1,fl,'cflmv-1'//charns)
       endif                                                          !srv 12.04.04 }
 
       ncall = ncall+1

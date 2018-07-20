@@ -357,96 +357,96 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
        do is = 0, ns-1
 	write (chns,'(i3.3)') is
         if (is_neutral(is) ) then
-          call my_out_us(70,nFc,co%cdpa(1,0,is),'b2trno_cdpax'//chns)
-          call my_out_us(70,nFc,co%cdpa(1,1,is),'b2trno_cdpay'//chns)
+          call my_out_us(70,nFc,1,co%cdpa(1,0,is),'b2trno_cdpax'//chns)
+          call my_out_us(70,nFc,1,co%cdpa(1,1,is),'b2trno_cdpay'//chns)
         else
-          call my_out_us(70,nFc,co%cdna(1,0,is),'b2trno_cdnax'//chns)
-          call my_out_us(70,nFc,co%cdna(1,1,is),'b2trno_cdnay'//chns)
+          call my_out_us(70,nFc,1,co%cdna(1,0,is),'b2trno_cdnax'//chns)
+          call my_out_us(70,nFc,1,co%cdna(1,1,is),'b2trno_cdnay'//chns)
         endif
-!        call my_out_us(70,nFc,co%cvla(1,0,is),'b2trno_cvlax'//chns)
-!        call my_out_us(70,nFc,co%cvla(1,1,is),'b2trno_cvlay'//chns)
+!        call my_out_us(70,nFc,1,co%cvla(1,0,is),'b2trno_cvlax'//chns)
+!        call my_out_us(70,nFc,1,co%cvla(1,1,is),'b2trno_cvlay'//chns)
        enddo
       endif
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-        call my_out_us(70,nFc,co%cvsa(1,0,is),'b2trno_cvsax'//chns)
-        call my_out_us(70,nFc,co%cvsa(1,1,is),'b2trno_cvsay'//chns)
-        call my_out_us(70,nFc,co%cvsa(1,1,is),'b2trno_cvsaxy'//chns)
-        call my_out_us(70,nFc,co%cvsa(1,0,is),'b2trno_cvsayx'//chns)
-        call my_out_us(70,nFc,co%cvsahz(1,0,is),'b2trno_cvsahzx'//
+        call my_out_us(70,nFc,1,co%cvsa(1,0,is),'b2trno_cvsax'//chns)
+        call my_out_us(70,nFc,1,co%cvsa(1,1,is),'b2trno_cvsay'//chns)
+        call my_out_us(70,nFc,1,co%cvsa(1,1,is),'b2trno_cvsaxy'//chns)
+        call my_out_us(70,nFc,1,co%cvsa(1,0,is),'b2trno_cvsayx'//chns)
+        call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'b2trno_cvsahzx'//
      &              chns)
-        call my_out_us(70,nFc,co%cvsahz(1,1,is),'b2trno_cvsahzy'//
+        call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'b2trno_cvsahzy'//
      &              chns)
-        call my_out_us(70,nFc,co%cvsahz(1,1,is),'b2trno_cvsahzxy'//
+        call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'b2trno_cvsahzxy'//
      &              chns)
-        call my_out_us(70,nFc,co%cvsahz(1,0,is),'b2trno_cvsahzyx'//
+        call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'b2trno_cvsahzyx'//
      &              chns)
 
        enddo
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                  .or. iout_b2wdat.eq.4) then
-        call my_out_us(70,nFc,co%chce(1,0),'b2trno_chcex')
-        call my_out_us(70,nFc,co%chce(1,1),'b2trno_chcey')
-        call my_out_us(70,nFc,co%chci(1,0),'b2trno_chcix')
-        call my_out_us(70,nFc,co%chci(1,1),'b2trno_chciy')
-        call my_out_us(70,nFc,chce_stoch,'b2trno_chcey_stoch')
+        call my_out_us(70,nFc,1,co%chce(1,0),'b2trno_chcex')
+        call my_out_us(70,nFc,1,co%chce(1,1),'b2trno_chcey')
+        call my_out_us(70,nFc,1,co%chci(1,0),'b2trno_chcix')
+        call my_out_us(70,nFc,1,co%chci(1,1),'b2trno_chciy')
+        call my_out_us(70,nFc,1,chce_stoch,'b2trno_chcey_stoch')
       endif
       if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
      &                  .or. iout_b2wdat.eq.4) then
-        call my_out_us(70,nFc,co%csig(1,0),'b2trno_csigx')
-        call my_out_us(70,nFc,co%csig(1,1),'b2trno_csigy')
-        call my_out_us(70,nFc,csig_stoch,'b2trno_csigy_stoch')
+        call my_out_us(70,nFc,1,co%csig(1,0),'b2trno_csigx')
+        call my_out_us(70,nFc,1,co%csig(1,1),'b2trno_csigy')
+        call my_out_us(70,nFc,1,csig_stoch,'b2trno_csigy_stoch')
       endif                                                          !srv 19.05.10 }
       if(iout.ne.0) then                                             !srv 17.06.08 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-        call my_out_us(70,nFc,co%cdna(1,0,is),'b2trno_cdnax'//chns)
-        call my_out_us(70,nFc,co%cdna(1,1,is),'b2trno_cdnay'//chns)
-        call my_out_us(70,nFc,co%cdpa(1,0,is),'b2trno_cdpax'//chns)
-        call my_out_us(70,nFc,co%cdpa(1,1,is),'b2trno_cdpay'//chns)
-        call my_out_us(70,nFc,co%cvla(1,0,is),'b2trno_cvlax'//chns)
-        call my_out_us(70,nFc,co%cvla(1,1,is),'b2trno_cvlay'//chns)
-        call my_out_us(70,nFc,co%cvsa(1,0,is),'b2trno_cvsax'//chns)
-        call my_out_us(70,nFc,co%cvsa(1,1,is),'b2trno_cvsay'//chns)
-        call my_out_us(70,nFc,co%cdnahz(1,0,is),'b2trno_dnahzx'//chns)
-        call my_out_us(70,nFc,co%cdnahz(1,1,is),'b2trno_dnahzy'//chns)
-       call my_out_us(70,nFc,co%cdpahz(1,0,is),'b2trno_cdpahzx'//chns)
-       call my_out_us(70,nFc,co%cdpahz(1,1,is),'b2trno_cdpahzy'//chns)
-       call my_out_us(70,nFc,co%cvlahz(1,0,is),'b2trno_cvlahzx'//chns)
-       call my_out_us(70,nFc,co%cvlahz(1,1,is),'b2trno_cvlahzy'//chns)
-       call my_out_us(70,nFc,co%cvsahz(1,0,is),'b2trno_cvsahzx'//chns)
-       call my_out_us(70,nFc,co%cvsahz(1,1,is),'b2trno_cvsahzy'//chns)
-       call my_out_us(70,nFc,co%cvmahz(1,0,is),'b2trno_cvmahzx'//chns)
-       call my_out_us(70,nFc,co%cvmahz(1,1,is),'b2trno_cvmahzy'//chns)
+        call my_out_us(70,nFc,1,co%cdna(1,0,is),'b2trno_cdnax'//chns)
+        call my_out_us(70,nFc,1,co%cdna(1,1,is),'b2trno_cdnay'//chns)
+        call my_out_us(70,nFc,1,co%cdpa(1,0,is),'b2trno_cdpax'//chns)
+        call my_out_us(70,nFc,1,co%cdpa(1,1,is),'b2trno_cdpay'//chns)
+        call my_out_us(70,nFc,1,co%cvla(1,0,is),'b2trno_cvlax'//chns)
+        call my_out_us(70,nFc,1,co%cvla(1,1,is),'b2trno_cvlay'//chns)
+        call my_out_us(70,nFc,1,co%cvsa(1,0,is),'b2trno_cvsax'//chns)
+        call my_out_us(70,nFc,1,co%cvsa(1,1,is),'b2trno_cvsay'//chns)
+        call my_out_us(70,nFc,1,co%cdnahz(1,0,is),'b2trno_dnahzx'//chns)
+        call my_out_us(70,nFc,1,co%cdnahz(1,1,is),'b2trno_dnahzy'//chns)
+       call my_out_us(70,nFc,1,co%cdpahz(1,0,is),'b2trno_cdpahzx'//chns)
+       call my_out_us(70,nFc,1,co%cdpahz(1,1,is),'b2trno_cdpahzy'//chns)
+       call my_out_us(70,nFc,1,co%cvlahz(1,0,is),'b2trno_cvlahzx'//chns)
+       call my_out_us(70,nFc,1,co%cvlahz(1,1,is),'b2trno_cvlahzy'//chns)
+       call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'b2trno_cvsahzx'//chns)
+       call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'b2trno_cvsahzy'//chns)
+       call my_out_us(70,nFc,1,co%cvmahz(1,0,is),'b2trno_cvmahzx'//chns)
+       call my_out_us(70,nFc,1,co%cvmahz(1,1,is),'b2trno_cvmahzy'//chns)
         if (flux_limit_style.eq.2) then                                 !srv 07.12.15 {
-         call my_out_us(70,nFc,co%chcb(1,0,is),'b2trno_chcixa'//chns)
-         call my_out_us(70,nFc,co%chcb(1,1,is),'b2trno_chciya'//chns)
-         call my_out_us(70,nFc,co%fllim0fhi(1,0,is),
+         call my_out_us(70,nFc,1,co%chcb(1,0,is),'b2trno_chcixa'//chns)
+         call my_out_us(70,nFc,1,co%chcb(1,1,is),'b2trno_chciya'//chns)
+         call my_out_us(70,nFc,1,co%fllim0fhi(1,0,is),
      &                'b2trno_fllim0fhix'//chns)
-         call my_out_us(70,nFc,co%fllim0fhi(1,1,is),
+         call my_out_us(70,nFc,1,co%fllim0fhi(1,1,is),
      &                'b2trno_fllim0fhiy'//chns)
         endif                                                          !srv 07,12.15 }
-        call my_out_us(70,nFc,flc(1,0,is),'b2trno_flcx'//chns)
-        call my_out_us(70,nFc,flc(1,1,is),'b2trno_flcy'//chns)
-        call my_out_us(70,nFc,flchz(1,0,is),'b2trno_flchzx'//chns)
-        call my_out_us(70,nFc,flchz(1,1,is),'b2trno_flchzy'//chns)
+        call my_out_us(70,nFc,1,flc(1,0,is),'b2trno_flcx'//chns)
+        call my_out_us(70,nFc,1,flc(1,1,is),'b2trno_flcy'//chns)
+        call my_out_us(70,nFc,1,flchz(1,0,is),'b2trno_flchzx'//chns)
+        call my_out_us(70,nFc,1,flchz(1,1,is),'b2trno_flchzy'//chns)
        enddo
-       call my_out_us(70,nFc,co%chce(1,0),'b2trno_chcex')
-       call my_out_us(70,nFc,co%chce(1,1),'b2trno_chcey')
-       call my_out_us(70,nFc,co%chci(1,0),'b2trno_chcix')
-       call my_out_us(70,nFc,co%chci(1,1),'b2trno_chciy')
-       call my_out_us(70,nFc,co%chve(1,0),'b2trno_chvex')
-       call my_out_us(70,nFc,co%chve(1,1),'b2trno_chvey')
-       call my_out_us(70,nFc,co%chvi(1,0),'b2trno_chvix')
-       call my_out_us(70,nFc,co%chvi(1,1),'b2trno_chviy')
-       call my_out_us(70,nFc,co%csig(1,0),'b2trno_csigx')
-       call my_out_us(70,nFc,co%csig(1,1),'b2trno_csigy')
-       call my_out_us(70,nFc,co%calf_an(1,0),'b2trno_calf_anx')
-       call my_out_us(70,nFc,co%calf_an(1,1),'b2trno_calf_any')
-       call my_out_us(70,nFc,co%csig_an(1,0),'b2trno_csig_anx')
-       call my_out_us(70,nFc,co%csig_an(1,1),'b2trno_csig_any')
+       call my_out_us(70,nFc,1,co%chce(1,0),'b2trno_chcex')
+       call my_out_us(70,nFc,1,co%chce(1,1),'b2trno_chcey')
+       call my_out_us(70,nFc,1,co%chci(1,0),'b2trno_chcix')
+       call my_out_us(70,nFc,1,co%chci(1,1),'b2trno_chciy')
+       call my_out_us(70,nFc,1,co%chve(1,0),'b2trno_chvex')
+       call my_out_us(70,nFc,1,co%chve(1,1),'b2trno_chvey')
+       call my_out_us(70,nFc,1,co%chvi(1,0),'b2trno_chvix')
+       call my_out_us(70,nFc,1,co%chvi(1,1),'b2trno_chviy')
+       call my_out_us(70,nFc,1,co%csig(1,0),'b2trno_csigx')
+       call my_out_us(70,nFc,1,co%csig(1,1),'b2trno_csigy')
+       call my_out_us(70,nFc,1,co%calf_an(1,0),'b2trno_calf_anx')
+       call my_out_us(70,nFc,1,co%calf_an(1,1),'b2trno_calf_any')
+       call my_out_us(70,nFc,1,co%csig_an(1,0),'b2trno_csig_anx')
+       call my_out_us(70,nFc,1,co%csig_an(1,1),'b2trno_csig_any')
       endif                                                          !srv 17.06.08 }
 
 * ..return

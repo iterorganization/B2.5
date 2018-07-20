@@ -76,7 +76,7 @@ cdjm Store linearised source for balance
         write (chns,'(i3.3)') isb
         do k=0,3
           write (chark,'(i1)') k
-          call my_out_us(70,nCv,smban(1,k),
+          call my_out_us(70,nCv,0,smban(1,k),
      .                         'b2sian_smoan'//chark//chns)
         enddo
       endif

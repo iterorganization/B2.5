@@ -192,9 +192,9 @@ cwdk need calccoeff here...
 !WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 4),name//'_aap4'//chns)
 !WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 5),name//'_aap5'//chns)
 !WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1, 6),name//'_aap6'//chns)
-        call my_out_us(70,nCv,corpb,name//'_corpb'//chns)
-        call my_out_us(70,nCv,rescb,name//'_rescb'//chns)
-        call my_out_us(70,nCv,nb,name//'_na'//chns)
+        call my_out_us(70,nCv,0,corpb,name//'_corpb'//chns)
+        call my_out_us(70,nCv,0,rescb,name//'_rescb'//chns)
+        call my_out_us(70,nCv,0,nb,name//'_na'//chns)
       endif                                                            !srv 17.06.02 }
 
 * ..return

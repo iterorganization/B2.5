@@ -122,23 +122,23 @@
       if (iout.ne.0) then                                          !srv 08.07.08 {
         do k=0,3
           write (chark,'(i1)') k
-          call my_out_us(70,nCv,sch(-1,-1,k),'b2uspo_sch'//chark)
+          call my_out_us(70,nCv,0,sch(-1,-1,k),'b2uspo_sch'//chark)
         enddo
-        call my_out_us(70,nCv,aa(-1,-1,-6),'b2uspo_aam6')
-        call my_out_us(70,nCv,aa(-1,-1,-5),'b2uspo_aam5')
-        call my_out_us(70,nCv,aa(-1,-1,-4),'b2uspo_aam4')
-        call my_out_us(70,nCv,aa(-1,-1,-3),'b2uspo_aam3')
-        call my_out_us(70,nCv,aa(-1,-1,-2),'b2uspo_aam2')
-        call my_out_us(70,nCv,aa(-1,-1,-1),'b2uspo_aam1')
-        call my_out_us(70,nCv,aa(-1,-1, 0),'b2uspo_aam0')
-        call my_out_us(70,nCv,aa(-1,-1, 1),'b2uspo_aap1')
-        call my_out_us(70,nCv,aa(-1,-1, 2),'b2uspo_aap2')
-        call my_out_us(70,nCv,aa(-1,-1, 3),'b2uspo_aap3')
-        call my_out_us(70,nCv,aa(-1,-1, 4),'b2uspo_aap4')
-        call my_out_us(70,nCv,aa(-1,-1, 5),'b2uspo_aap5')
-        call my_out_us(70,nCv,aa(-1,-1, 6),'b2uspo_aap6')
-        call my_out_us(70,nCv,respo,'b2uspo_respo')
-        call my_out_us(70,nCv,corpo,'b2uspo_corpo')
+        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2uspo_aam6')
+        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2uspo_aam5')
+        call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2uspo_aam4')
+        call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2uspo_aam3')
+        call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2uspo_aam2')
+        call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2uspo_aam1')
+        call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2uspo_aam0')
+        call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2uspo_aap1')
+        call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2uspo_aap2')
+        call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2uspo_aap3')
+        call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2uspo_aap4')
+        call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2uspo_aap5')
+        call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2uspo_aap6')
+        call my_out_us(70,nCv,0,respo,'b2uspo_respo')
+        call my_out_us(70,nCv,0,corpo,'b2uspo_corpo')
       endif
 #endif
 * ..return

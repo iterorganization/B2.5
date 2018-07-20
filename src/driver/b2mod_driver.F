@@ -1547,7 +1547,7 @@ cwdk    backwards compatible behavior
       call write_geometry('geometry.dat', mpg, gm)
 
       call my_out(70,nx,ny,na(-1,-1,1),'na_1_structured')
-      call my_out_us(70,mpg%nCv,state%pl%na(1,1),'na_1_unstructured')
+      call my_out_us(70,nCv,0,state%pl%na(1,1),'na_1_unstructured')
 
 
 *   ..set some local variables related to US grid
@@ -1555,33 +1555,33 @@ cwdk    backwards compatible behavior
       nFc = mpg % nFc
 
       if(iout.ne.0) then                                             !srv 25.01.16 {
-       call my_out_us(70,nCv,state%dv%ne,'b2mndr_ne')
+       call my_out_us(70,nCv,0,state%dv%ne,'b2mndr_ne')
        do is = 0,ns-1
         write (chns,'(i3.3)') is
-        call my_out_us(70,nCv,state%pl%na(1,is),'b2mndr_na'//chns)
-        call my_out_us(70,nCv,state%pl%ua(1,is),'b2mndr_ua'//chns)
-        call my_out_us(70,nFc,state%dv%uadia(1,0,is),
+        call my_out_us(70,nCv,0,state%pl%na(1,is),'b2mndr_na'//chns)
+        call my_out_us(70,nCv,0,state%pl%ua(1,is),'b2mndr_ua'//chns)
+        call my_out_us(70,nFc,1,state%dv%uadia(1,0,is),
      .    'b2mndr_uadiax'//chns)
-        call my_out_us(70,nCv,state%dv%uadia(1,1,is),
+        call my_out_us(70,nCv,0,state%dv%uadia(1,1,is),
      .    'b2mndr_uadiay'//chns)
-        call my_out_us(70,nFc,state%dv%fna(1,0,is),'b2mndr_fnax'//chns)
-        call my_out_us(70,nFc,state%dv%fna(1,1,is),'b2mndr_fnay'//chns)
+       call my_out_us(70,nFc,1,state%dv%fna(1,0,is),'b2mndr_fnax'//chns)
+       call my_out_us(70,nFc,1,state%dv%fna(1,1,is),'b2mndr_fnay'//chns)
        enddo
-       call my_out_us(70,nCv,state%pl%te,'b2mndr_te')
-       call my_out_us(70,nCv,state%pl%te/ev,'b2mndr_te_eV')
-       call my_out_us(70,nCv,state%pl%ti,'b2mndr_ti')
-       call my_out_us(70,nCv,state%pl%ti/ev,'b2mndr_ti_eV')
-       call my_out_us(70,nCv,state%pl%po,'b2mndr_po')
-       call my_out_us(70,nFc,state%dv%fch(1,0),'b2mndr_fchx')
-       call my_out_us(70,nFc,state%dv%fch(1,1),'b2mndr_fchy')
-       call my_out_us(70,nFc,state%dv%fch_p(1,0),'b2mndr_fchx_p')
-       call my_out_us(70,nFc,state%dv%fch_p(1,1),'b2mndr_fchy_p')
-       call my_out_us(70,nFc,state%dv%fhe(1,0),'b2mndr_fhex')
-       call my_out_us(70,nFc,state%dv%fhe(1,1),'b2mndr_fhey')
-       call my_out_us(70,nFc,state%dv%fhi(1,0),'b2mndr_fhix')
-       call my_out_us(70,nFc,state%dv%fhi(1,1),'b2mndr_fhiy')
-!       call my_out_us(70,nCv,qc,'b2mndr_qc')
-!       call my_out_us(70,nCv,qs,'b2mndr_qs0')
+       call my_out_us(70,nCv,0,state%pl%te,'b2mndr_te')
+       call my_out_us(70,nCv,0,state%pl%te/ev,'b2mndr_te_eV')
+       call my_out_us(70,nCv,0,state%pl%ti,'b2mndr_ti')
+       call my_out_us(70,nCv,0,state%pl%ti/ev,'b2mndr_ti_eV')
+       call my_out_us(70,nCv,0,state%pl%po,'b2mndr_po')
+       call my_out_us(70,nFc,1,state%dv%fch(1,0),'b2mndr_fchx')
+       call my_out_us(70,nFc,1,state%dv%fch(1,1),'b2mndr_fchy')
+       call my_out_us(70,nFc,1,state%dv%fch_p(1,0),'b2mndr_fchx_p')
+       call my_out_us(70,nFc,1,state%dv%fch_p(1,1),'b2mndr_fchy_p')
+       call my_out_us(70,nFc,1,state%dv%fhe(1,0),'b2mndr_fhex')
+       call my_out_us(70,nFc,1,state%dv%fhe(1,1),'b2mndr_fhey')
+       call my_out_us(70,nFc,1,state%dv%fhi(1,0),'b2mndr_fhix')
+       call my_out_us(70,nFc,1,state%dv%fhi(1,1),'b2mndr_fhiy')
+!       call my_out_us(70,nCv,0,qc,'b2mndr_qc')
+!       call my_out_us(70,nCv,0,qs,'b2mndr_qs0')
       endif                                                          !srv 25.01.16 }
       do is = 0,ns-1
         do iCv=1,nCv

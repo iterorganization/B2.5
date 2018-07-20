@@ -234,7 +234,7 @@
 *   ..compute smqdu
       call b2nxdu (nCv, ns, pl%na, pl%ua, sr%smq, smqdu, wrk0, wrk1)
       if (iout.ne.0) then
-       call my_out_us(70,nCv,smqdu,'b2npmo_smqdu')
+       call my_out_us(70,nCv,0,smqdu,'b2npmo_smqdu')
       endif
 *   ..initialise
       call sfill (nCv*4, 0.0_R8, smt, 1)
@@ -341,66 +341,66 @@ cdjm Jan2017 update momentum source components for balance
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
        if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 12.07.02 {
-         call my_out_us(70,nCv,dv%resmo(1,is),'b2npmo_resmo'//chns)
-        call my_out_us(70,nFc,dv%fmo(1,0,is),'b2npmo_fmox'//chns)
-        call my_out_us(70,nFc,dv%fmo(1,1,is),'b2npmo_fmoy'//chns)
+         call my_out_us(70,nCv,0,dv%resmo(1,is),'b2npmo_resmo'//chns)
+        call my_out_us(70,nFc,1,dv%fmo(1,0,is),'b2npmo_fmox'//chns)
+        call my_out_us(70,nFc,1,dv%fmo(1,1,is),'b2npmo_fmoy'//chns)
          if(.not. is_neutral(is)) then
-            call my_out_us(70,nFc,flubv(1,0),'b2npmo_flubvx'//chns)
+            call my_out_us(70,nFc,1,flubv(1,0),'b2npmo_flubvx'//chns)
             wrks=smbvv(:,0)+smbvv(:,1)*pl%ua(:,is)+
      &         smbvv(:,2)*pl%na(:,is)*mp*am(is)+
      &         smbvv(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-            call my_out_us(70,nCv,wrks,'b2npmo_smovv'//chns)
+            call my_out_us(70,nCv,0,wrks,'b2npmo_smovv'//chns)
             wrks=smbvh(:,0)+smbvh(:,1)*pl%ua(:,is)+
      &         smbvh(:,2)*pl%na(:,is)*mp*am(is)+
      &         smbvh(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-            call my_out_us(70,nCv,wrks,'b2npmo_smovh'//chns)
+            call my_out_us(70,nCv,0,wrks,'b2npmo_smovh'//chns)
          endif
          wrks=smb(:,0)+smb(:,1)*pl%ua(:,is)+
      &       smb(:,2)*pl%na(:,is)*mp*am(is)+
      &       smb(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-         call my_out_us(70,nCv,wrks,'b2npmo_smb'//chns)                  !srv 28.02.17
+         call my_out_us(70,nCv,0,wrks,'b2npmo_smb'//chns)                  !srv 28.02.17
          wrks=smbcf(:,0)+smbcf(:,1)*pl%ua(:,is)+
      &       smbcf(:,2)*pl%na(:,is)*mp*am(is)+
      &       smbcf(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-         call my_out_us(70,nCv,wrks,'b2npmo_smocf'//chns)
+         call my_out_us(70,nCv,0,wrks,'b2npmo_smocf'//chns)
          wrks = geo%cvVol*geo%cvH*(smbfria(:,0)+
      &        smbfria(:,1)*pl%ua(:,is)+      !srv 05.07.17 {
      &        smbfria(:,2)*pl%na(:,is)*mp*am(is)+
      &        smbfria(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is))
-	 call my_out_us(70,nCv,wrks,'b2npmo_smofria'//chns)
+	 call my_out_us(70,nCv,0,wrks,'b2npmo_smofria'//chns)
 
          wrks = geo%cvVol*geo%cvH*(smbfrea(:,0)+
      &                             smbfrea(:,1)*pl%ua(:,is))
-	 call my_out_us(70,nCv,wrks,'b2npmo_smofrea'//chns)
+	 call my_out_us(70,nCv,0,wrks,'b2npmo_smofrea'//chns)
          wrks = geo%cvVol*geo%cvH*smbtfia(:,0)
-	 call my_out_us(70,nCv,wrks,'b2npmo_smotfia'//chns)
+	 call my_out_us(70,nCv,0,wrks,'b2npmo_smotfia'//chns)
          wrks = geo%cvVol*geo%cvH*smbtfea(:,0)
-	 call my_out_us(70,nCv,wrks,'b2npmo_smotfea'//chns)
-         call my_out_us(70,nCv,dv%ue,'b2npmo_ue')                        !srv 05.07.17 }
+	 call my_out_us(70,nCv,0,wrks,'b2npmo_smotfea'//chns)
+         call my_out_us(70,nCv,0,dv%ue,'b2npmo_ue')                        !srv 05.07.17 }
          wrks=smban(:,0)+smban(:,1)*pl%ua(:,is)+
      &       smban(:,2)*pl%na(:,is)*mp*am(is)+
      &       smban(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-         call my_out_us(70,nCv,wrks,'b2npmo_smoan'//chns)               !srv 25.09.17
+         call my_out_us(70,nCv,0,wrks,'b2npmo_smoan'//chns)               !srv 25.09.17
        endif                                                           !srv 05.07.17
 
        if (iout .ne. 0) then
-        call my_out_us(70,nCv,pl%ua(1,is),'b2npmo_ua_input'//chns)
+        call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua_input'//chns)
         wrks=sr%smo(:,0,is)+sr%smo(:,1,is)*pl%ua(:,is)+
      &       sr%smo(:,2,is)*pl%na(:,is)*mp*am(is)+
      &       sr%smo(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-        call my_out_us(70,nCv,wrks,'b2npmo_smo'//chns)                  !srv 28.02.17
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smo'//chns)                  !srv 28.02.17
         wrks=smbch(:,0)+smbch(:,1)*pl%ua(:,is)+
      &       smbch(:,2)*pl%na(:,is)*mp*am(is)+
      &       smbch(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-        call my_out_us(70,nCv,wrks,'b2npmo_smoch'//chns)
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smoch'//chns)
         wrks=smbtf(:,0)+smbtf(:,1)*pl%ua(:,is)+
      &       smbtf(:,2)*pl%na(:,is)*mp*am(is)+
      &       smbtf(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-        call my_out_us(70,nCv,wrks,'b2npmo_smotf'//chns)
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smotf'//chns)
         wrks=smbgp(:,0)+smbgp(:,1)*pl%ua(:,is)+
      &       smbgp(:,2)*pl%na(:,is)*mp*am(is)+
      &       smbgp(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-        call my_out_us(70,nCv,wrks,'b2npmo_smogp'//chns)
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smogp'//chns)
        endif                                                           !srv 12.07.02 }
 
        if (solving) then                                               !srv 06.07.10
@@ -542,12 +542,12 @@ c     ..compare 9-pt stencil matrices
       if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                      !srv 12.07.02 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is                                       !srv 18.05.02
-        call my_out_us(70,nCv,pl%ua(1,is),'b2npmo_ua'//chns)
+        call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua'//chns)
        enddo
       endif                                                            !srv 12.07.02 }
       if (iout.ne.0) then
-       call my_out_us(70,nCv,dv%pccm(1,0),'b2npmo_pccmx')            !srv 11.01.13
-       call my_out_us(70,nCv,dv%pccm(1,1),'b2npmo_pccmy')            !srv 11.01.13
+       call my_out_us(70,nCv,0,dv%pccm(1,0),'b2npmo_pccmx')            !srv 11.01.13
+       call my_out_us(70,nCv,0,dv%pccm(1,1),'b2npmo_pccmy')            !srv 11.01.13
       endif                                                            !srv 12.07.02 }
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)

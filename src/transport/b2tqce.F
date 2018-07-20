@@ -262,13 +262,13 @@
       call sfill (nCv, 0.0_R8, alf(1,1), 1)
 
       if(iout.ne.0) then                                                 !srv 16.06.08 {
-        call my_out_us(70,nCv,tau,'taue')
-        call my_out_us(70,nCv,hce(1,0),'hcex')
-        call my_out_us(70,nCv,hce(1,1),'hcey')
-        call my_out_us(70,nCv,sig(1,0),'sigx')
-        call my_out_us(70,nCv,sig(1,1),'sigy')
-        call my_out_us(70,nCv,alf(1,0),'alfx')
-        call my_out_us(70,nCv,alf(1,1),'alfy')
+        call my_out_us(70,nCv,0,tau,'taue')
+        call my_out_us(70,nCv,0,hce(1,0),'hcex')
+        call my_out_us(70,nCv,0,hce(1,1),'hcey')
+        call my_out_us(70,nCv,0,sig(1,0),'sigx')
+        call my_out_us(70,nCv,0,sig(1,1),'sigy')
+        call my_out_us(70,nCv,0,alf(1,0),'alfx')
+        call my_out_us(70,nCv,0,alf(1,1),'alfy')
 !WG_TODO        open (70,file='b2tqce_fke.dat')                         
 !WG_TODO        open (71,file='b2tqce_fke_Zh.dat')                         
 !WG_TODO        write(hlp_frm,"(a10,i4,a9)") '(1x,3x,1x,',nx+2,'(es14.6))'       !srv 11.03.13
@@ -282,7 +282,7 @@
       endif                                                          !srv 16.06.08 }
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                  .or. iout_b2wdat.eq.4) then
-        call my_out_us(70,nCv,tau,'b2tqce_taue')
+        call my_out_us(70,nCv,0,tau,'b2tqce_taue')
       endif
 
 * ..return

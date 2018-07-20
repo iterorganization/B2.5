@@ -1029,20 +1029,20 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
 !       wrk7 = -con_mdf*dnb(:,0)
        wrk8 = co%cvla(:,0,isb)*nbf
        if(.not. is_neutral(isb)) then
-        call my_out_us(70,nFc,wrk3,'b2tfnb_vaecrbnax'//chns)
-        call my_out_us(70,nFc,dv%fnaPSch(1,0,isb),
+        call my_out_us(70,nFc,1,wrk3,'b2tfnb_vaecrbnax'//chns)
+        call my_out_us(70,nFc,1,dv%fnaPSch(1,0,isb),
      &   'b2tfnb_fnbPSchx'//chns)
-        call my_out_us(70,nFc,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
-        call my_out_us(70,nFc,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
+        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
+        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
        else
-        call my_out_us(70,nFc,wrk5,'b2tfnb_dgradpbx'//chns)
+        call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpbx'//chns)
        endif
-       call my_out_us(70,nFc,wrk1,'b2tfnb_bxuanax'//chns)
-       call my_out_us(70,nFc,wrk2,'b2tfnb_dpccornax'//chns)
+       call my_out_us(70,nFc,1,wrk1,'b2tfnb_bxuanax'//chns)
+       call my_out_us(70,nFc,1,wrk2,'b2tfnb_dpccornax'//chns)
        if (iout_b2wdat .ne. 4) 
-     &  call my_out_us(70,nFc,wrk6,'b2tfnb_dpccorhznax'//chns)            !srv 05.11.09
+     &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_dpccorhznax'//chns)            !srv 05.11.09
        if (iout.eq.1) 
-     &  call my_out_us(70,nFc,wrk8,'b2tfnb_cvlbnax'//chns)                !iys 17.04.2012
+     &  call my_out_us(70,nFc,1,wrk8,'b2tfnb_cvlbnax'//chns)                !iys 17.04.2012
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diax'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfx'//chns)
       endif
@@ -1050,12 +1050,12 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        write(chns,'(i3.3)') isb
        wrk6 = dv%vadia(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)
        if(.not. is_neutral(isb)) 
-     &  call my_out_us(70,nFc,wrk6,'b2tfnb_vadianax'//chns)
+     &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianax'//chns)
        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,wrk3)
        wrk6 = dv%vadia(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)*wrk3
        if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
-     &   call my_out_us(70,nFc,wrk6,'b2tfnb_vadianahzx'//chns)
-       call my_out_us(70,nFc,dv%fna_fcor(1,0,isb),
+     &   call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianahzx'//chns)
+       call my_out_us(70,nFc,1,dv%fna_fcor(1,0,isb),
      &              'b2tfnb_fnb_fcorx'//chns)
       endif                                                     !srv 11.09.09 }
 
@@ -1075,28 +1075,28 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        wrk8 = co%cvla(:,1,isb)*nbf
        write(chns,'(i3.3)') isb
        if(.not. is_neutral(isb)) then
-        call my_out_us(70,nFc,dv%fnaPSch(:,1,isb),
+        call my_out_us(70,nFc,1,dv%fnaPSch(:,1,isb),
      &   'b2tfnb_fnbPSchy'//chns)
-        call my_out_us(70,nFc,wrk3,'b2tfnb_vaecrbnay'//chns)
-        call my_out_us(70,nFc,wrk7,'b2tfnb_dPat_mdf_gradnay'//chns)
-        call my_out_us(70,nFc,wrk4,'b2tfnb_dPat_2diagradnay'//chns)
+        call my_out_us(70,nFc,1,wrk3,'b2tfnb_vaecrbnay'//chns)
+        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnay'//chns)
+        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnay'//chns)
        else
-        call my_out_us(70,nFc,wrk5,'b2tfnb_dgradpby'//chns)
+        call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpby'//chns)
        endif
-       call my_out_us(70,nFc,wrk8,'b2tfnb_cvlbnay'//chns)               !iys 17.04.2012
-!       call my_out_us(70,nFc,con_2dia,'b2tfnb_dPat_2diay'//chns)
-!       call my_out_us(70,nFc,con_mdf,'b2tfnb_dPat_mdfy'//chns)
+       call my_out_us(70,nFc,1,wrk8,'b2tfnb_cvlbnay'//chns)               !iys 17.04.2012
+!       call my_out_us(70,nFc,1,con_2dia,'b2tfnb_dPat_2diay'//chns)
+!       call my_out_us(70,nFc,1,con_mdf,'b2tfnb_dPat_mdfy'//chns)
       endif
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 .or. iout.eq.1) then
        write(chns,'(i3.3)') isb
        wrk6 = dv%vadia(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)
        if(.not. is_neutral(isb)) 
-     &  call my_out_us(70,nFc,wrk6,'b2tfnb_vadianay'//chns)
+     &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianay'//chns)
        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,wrk3)
        wrk6 = dv%vadia(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)*wrk3 
        if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
-     &  call my_out_us(70,nFc,wrk6,'b2tfnb_vadianahzy'//chns)
-      call my_out_us(70,nFc,dv%fna_fcor(1,1,isb),
+     &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianahzy'//chns)
+      call my_out_us(70,nFc,1,dv%fna_fcor(1,1,isb),
      &  'b2tfnb_fnb_fcory'//chns)
       endif                                                              !srv 11.09.09 }
 
@@ -1219,128 +1219,128 @@ cwdk need full diamagnetic component for energy
       endif                                                             !srv 05.03.16 }
 #endif
       if (iout_b2wdat .eq. 4) then
-       call my_out_us(70,nFc,dv%fna(1,0,isb),'b2tfnb_fnbx'//chns)
-       call my_out_us(70,nFc,dv%fna(1,1,isb),'b2tfnb_fnby'//chns)
-       call my_out_us(70,nFc,dv%fna_fcor(1,0,isb),
+       call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2tfnb_fnbx'//chns)
+       call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2tfnb_fnby'//chns)
+       call my_out_us(70,nFc,1,dv%fna_fcor(1,0,isb),
      &            'b2tfnb_fnb_fcorx'//chns)
-       call my_out_us(70,nFc,dv%fna_fcor(1,1,isb),
+       call my_out_us(70,nFc,1,dv%fna_fcor(1,1,isb),
      &            'b2tfnb_fnb_fcory'//chns)
-       call my_out_us(70,nFc,dv%fna_he(1,0,isb),'b2tfnb_fnb_hex'//chns)
-       call my_out_us(70,nFc,dv%fna_he(1,1,isb),'b2tfnb_fnb_hey'//chns)
-       call my_out_us(70,nFc,dv%fnaPSch(1,0,isb),
+      call my_out_us(70,nFc,1,dv%fna_he(1,0,isb),'b2tfnb_fnb_hex'//chns)
+      call my_out_us(70,nFc,1,dv%fna_he(1,1,isb),'b2tfnb_fnb_hey'//chns)
+       call my_out_us(70,nFc,1,dv%fnaPSch(1,0,isb),
      &            'b2tfnb_fnbPSchx'//chns)
-       call my_out_us(70,nFc,dv%fnaPSch(1,1,isb),
+       call my_out_us(70,nFc,1,dv%fnaPSch(1,1,isb),
      &            'b2tfnb_fnbPSchy'//chns)
        if (isb .eq. ismain) then
-          call my_out_us(70,nFc,dv%vaecrb(1,0,isb),
+          call my_out_us(70,nFc,1,dv%vaecrb(1,0,isb),
      &            'b2tfnb_vbecrbx'//chns)
-          call my_out_us(70,nFc,dv%vaecrb(1,1,isb),
+          call my_out_us(70,nFc,1,dv%vaecrb(1,1,isb),
      &            'b2tfnb_vbecrby'//chns)
        endif
-!       call my_out_us(70,nFc,dv%uadia(1,0,isb),'b2tfnb_ubdiax'//chns)
-!       call my_out_us(70,nFc,dv%uadia(1,1,isb),'b2tfnb_ubdiay'//chns)
-       call my_out_us(70,nFc,dv%vadia(1,0,isb),'b2tfnb_vbdiax'//chns)
-       call my_out_us(70,nFc,dv%vadia(1,1,isb),'b2tfnb_vbdiay'//chns)
-       call my_out_us(70,nFc,dv%wadia(1,0,isb),'b2tfnb_wbdiax'//chns)
-       call my_out_us(70,nFc,dv%wadia(1,1,isb),'b2tfnb_wbdiay'//chns)
-       call my_out_us(70,nCv,dv%kinrgy,'b2tfnb_kbnrgy'//chns)
+!       call my_out_us(70,nFc,1,dv%uadia(1,0,isb),'b2tfnb_ubdiax'//chns)
+!       call my_out_us(70,nFc,1,dv%uadia(1,1,isb),'b2tfnb_ubdiay'//chns)
+       call my_out_us(70,nFc,1,dv%vadia(1,0,isb),'b2tfnb_vbdiax'//chns)
+       call my_out_us(70,nFc,1,dv%vadia(1,1,isb),'b2tfnb_vbdiay'//chns)
+       call my_out_us(70,nFc,1,dv%wadia(1,0,isb),'b2tfnb_wbdiax'//chns)
+       call my_out_us(70,nFc,1,dv%wadia(1,1,isb),'b2tfnb_wbdiay'//chns)
+       call my_out_us(70,nCv,0,dv%kinrgy,'b2tfnb_kbnrgy'//chns)
       endif
 
       if(iout.ne.0) then                                                !srv 18.06.08 {
        write (chns,'(i3.3)') isb
-       call my_out_us(70,nFc,dv%fna(1,0,isb),'b2tfnb_fnbx'//chns)
-       call my_out_us(70,nFc,dv%fna(1,1,isb),'b2tfnb_fnby'//chns)
-       call my_out_us(70,nFc,dv%fna_nodrift(1,0,isb),
+       call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2tfnb_fnbx'//chns)
+       call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2tfnb_fnby'//chns)
+       call my_out_us(70,nFc,1,dv%fna_nodrift(1,0,isb),
      &             'b2tfnb_fnb_nodriftx'//chns)
-       call my_out_us(70,nFc,dv%fna_nodrift(1,1,isb),
+       call my_out_us(70,nFc,1,dv%fna_nodrift(1,1,isb),
      &             'b2tfnb_fnb_nodrifty'//chns)
-      call my_out_us(70,nFc,dv%fna_fcor(1,0,isb),
+      call my_out_us(70,nFc,1,dv%fna_fcor(1,0,isb),
      &             'b2tfnb_fnb_fcorx'//chns)
-      call my_out_us(70,nFc,dv%fna_fcor(1,1,isb),
+      call my_out_us(70,nFc,1,dv%fna_fcor(1,1,isb),
      &             'b2tfnb_fnb_fcory'//chns)
-       call my_out_us(70,nFc,dv%fna_he(1,0,isb),'b2tfnb_fnb_hex'//chns)
-       call my_out_us(70,nFc,dv%fna_he(1,1,isb),'b2tfnb_fnb_hey'//chns)
-       call my_out_us(70,nFc,dv%fnaPSch(1,0,isb),
+      call my_out_us(70,nFc,1,dv%fna_he(1,0,isb),'b2tfnb_fnb_hex'//chns)
+      call my_out_us(70,nFc,1,dv%fna_he(1,1,isb),'b2tfnb_fnb_hey'//chns)
+       call my_out_us(70,nFc,1,dv%fnaPSch(1,0,isb),
      &             'b2tfnb_fnbPSchx'//chns)
-       call my_out_us(70,nFc,dv%fnaPSch(1,1,isb),
+       call my_out_us(70,nFc,1,dv%fnaPSch(1,1,isb),
      &             'b2tfnb_fnbPSchy'//chns)
-       call my_out_us(70,nFc,dv%fna_mdf(1,0,isb),
+       call my_out_us(70,nFc,1,dv%fna_mdf(1,0,isb),
      &             'b2tfnb_fnb_mdfx'//chns)
-       call my_out_us(70,nFc,dv%fna_mdf(1,1,isb),
+       call my_out_us(70,nFc,1,dv%fna_mdf(1,1,isb),
      &             'b2tfnb_fnb_mdfy'//chns)
-       call my_out_us(70,nFc,dv%fna_32(1,0,isb),'b2tfnb_fnb_32x'//chns)
-       call my_out_us(70,nFc,dv%fna_32(1,1,isb),'b2tfnb_fnb_32y'//chns)
-       call my_out_us(70,nFc,dv%fna_52(1,0,isb),'b2tfnb_fnb_52x'//chns)
-       call my_out_us(70,nFc,dv%fna_52(1,1,isb),'b2tfnb_fnb_52y'//chns)
-       call my_out_us(70,nFc,dv%fna_32nd(1,0,isb),
+      call my_out_us(70,nFc,1,dv%fna_32(1,0,isb),'b2tfnb_fnb_32x'//chns)
+      call my_out_us(70,nFc,1,dv%fna_32(1,1,isb),'b2tfnb_fnb_32y'//chns)
+      call my_out_us(70,nFc,1,dv%fna_52(1,0,isb),'b2tfnb_fnb_52x'//chns)
+      call my_out_us(70,nFc,1,dv%fna_52(1,1,isb),'b2tfnb_fnb_52y'//chns)
+      call my_out_us(70,nFc,1,dv%fna_32nd(1,0,isb),
      &             'b2tfnb_fnb_32ndx'//chns)
-       call my_out_us(70,nFc,dv%fna_32nd(1,1,isb),
+       call my_out_us(70,nFc,1,dv%fna_32nd(1,1,isb),
      &             'b2tfnb_fnb_32ndy'//chns)
-       call my_out_us(70,nFc,dv%fna_52nd(1,0,isb),
+       call my_out_us(70,nFc,1,dv%fna_52nd(1,0,isb),
      &             'b2tfnb_fnb_52ndx'//chns)
-       call my_out_us(70,nFc,dv%fna_52nd(1,1,isb),
+       call my_out_us(70,nFc,1,dv%fna_52nd(1,1,isb),
      &             'b2tfnb_fnb_52ndy'//chns)
-       call my_out_us(70,nFc,co%fllim0fna(1,0,isb),
+       call my_out_us(70,nFc,1,co%fllim0fna(1,0,isb),
      &             'b2tfnb_fllim0fnbx'//chns)
-       call my_out_us(70,nFc,co%fllim0fna(1,1,isb),
+       call my_out_us(70,nFc,1,co%fllim0fna(1,1,isb),
      &             'b2tfnb_fllim0fnby'//chns)
-       call my_out_us(70,nFc,dv%vaecrb(1,0,isb),'b2tfnb_vbecrbx'//chns)
-       call my_out_us(70,nFc,dv%vaecrb(1,1,isb),'b2tfnb_vbecrby'//chns)
-       call my_out_us(70,nFc,dv%uadia(1,0,isb),'b2tfnb_ubdiax'//chns)
-       call my_out_us(70,nFc,dv%uadia(1,1,isb),'b2tfnb_ubdiay'//chns)
-       call my_out_us(70,nFc,dv%vadia(1,0,isb),'b2tfnb_vbdiax'//chns)
-       call my_out_us(70,nFc,dv%vadia(1,1,isb),'b2tfnb_vbdiay'//chns)
-       call my_out_us(70,nFc,dv%wadia(1,0,isb),'b2tfnb_wbdiax'//chns)
-       call my_out_us(70,nFc,dv%wadia(1,1,isb),'b2tfnb_wbdiay'//chns)
-       call my_out_us(70,nCv,dv%kinrgy,'b2tfnb_kbnrgy'//chns)
-       call my_out_us(70,nFc,co%cvla(1,0,isb),'b2tfnb_cvlbx'//chns)
-       call my_out_us(70,nFc,co%cvla(1,1,isb),'b2tfnb_cvlby'//chns)
-       call my_out_us(70,nFc,co%cvlahz(1,0,isb),'b2tfnb_cvlbhzx'//chns)
-       call my_out_us(70,nFc,co%cvlahz(1,1,isb),'b2tfnb_cvlbhzy'//chns)
-       call my_out_us(70,nFc,co%cdpahz(1,0,isb),'b2tfnb_cdpbhzx'//chns)
-       call my_out_us(70,nFc,co%cdpahz(1,1,isb),'b2tfnb_cdpbhzy'//chns)
-       call my_out_us(70,nFc,co%cdpa(1,0,isb),'b2tfnb_cdpbx'//chns)
-       call my_out_us(70,nFc,co%cdpa(1,1,isb),'b2tfnb_cdpby'//chns)
-       call my_out_us(70,nFc,co%cdna(1,0,isb),'b2tfnb_cdnbx'//chns)
-       call my_out_us(70,nFc,co%cdna(1,1,isb),'b2tfnb_cdnby'//chns)
-       call my_out_us(70,nFc,co%cddi(1,0,isb),'b2tfnb_cddbx'//chns)
-       call my_out_us(70,nFc,co%cddi(1,1,isb),'b2tfnb_cddby'//chns)
-       call my_out_us(70,nFc,term,'b2tfnb_term'//chns)
-       call my_out_us(70,nFc,termhz,'b2tfnb_termhz'//chns)
-       call my_out_us(70,nFc,geo%fcPbs,'b2tfnb_pbsx')
-       call my_out_us(70,nFc,geo%fcPbshz,'b2tfnb_pbshzx')
-       call my_out_us(70,nFc,ub2dia(1,0),'b2tfnb_ub2diax'//chns)
-       call my_out_us(70,nFc,ub2dia(1,1),'b2tfnb_ub2diay'//chns)
-       call my_out_us(70,nFc,dv%conb(1,0,0),'b2tfnb_conbx0'//chns)
-       call my_out_us(70,nFc,dv%conb(1,0,1),'b2tfnb_conbx1'//chns)
-       call my_out_us(70,nFc,dv%conb(1,0,2),'b2tfnb_conbx2'//chns)
-       call my_out_us(70,nFc,dv%conb(1,0,3),'b2tfnb_conbx3'//chns)
-       call my_out_us(70,nFc,dv%conb(1,0,4),'b2tfnb_conbx4'//chns)
-       call my_out_us(70,nFc,dv%conb(1,1,0),'b2tfnb_conby0'//chns)
-       call my_out_us(70,nFc,dv%conb(1,1,1),'b2tfnb_conby1'//chns)
-       call my_out_us(70,nFc,dv%conb(1,1,2),'b2tfnb_conby2'//chns)
-       call my_out_us(70,nFc,dv%conb(1,1,3),'b2tfnb_conby3'//chns)
-       call my_out_us(70,nFc,dv%conb(1,1,4),'b2tfnb_conby4'//chns)
-       call my_out_us(70,nFc,dv%flob(1,0),'b2tfnb_flobx'//chns)
-       call my_out_us(70,nFc,dv%flob(1,1),'b2tfnb_floby'//chns)
-       call my_out_us(70,nFc,kmprti(1),'b2tfnb_kmprtix'//chns)
-       call my_out_us(70,nFc,dkmprti(1,0),'b2tfnb_dkmprtix'//chns)
-       call my_out_us(70,nFc,dkmprti(1,1),'b2tfnb_dkmprtiy'//chns)
-       call my_out_us(70,nCv,pl%ua(1,isb),'b2tfnb_ua'//chns)
-       call my_out_us(70,nCv,pl%na(1,isb),'b2tfnb_na'//chns)
-       call my_out_us(70,nCv,dv%pa(1,isb),'b2tfnb_pa'//chns)
-       call my_out_us(70,nCv,pl%te,'b2tfnb_te')
-       call my_out_us(70,nCv,pl%ti,'b2tfnb_ti')
-       call my_out_us(70,nCv,pl%po,'b2tfnb_po')
-       call my_out_us(70,nCv,rt%rza(1,isb),'b2tfnb_zb'//chns)
-       call my_out_us(70,nFc,dv%facdrift,'b2tfnb_facdrift'//chns)
-       call my_out_us(70,nFc,dv%fac_ExB,'b2tfnb_fac_ExB'//chns)
-       call my_out_us(70,nFc,dv%fchvispar(1,0),'b2tfnb_fchvisparx')
-       call my_out_us(70,nFc,dv%fchvispar(1,1),'b2tfnb_fchvispary')
-       call my_out_us(70,nFc,dv%fchinert(1,0),'b2tfnb_fchinertx')
-       call my_out_us(70,nFc,dv%fchinert(1,1),'b2tfnb_fchinerty')
-       call my_out_us(70,nFc,dv%fchanml(1,0),'b2tfnb_fchanmlx')
-       call my_out_us(70,nFc,dv%fchanml(1,1),'b2tfnb_fchanmly')
+      call my_out_us(70,nFc,1,dv%vaecrb(1,0,isb),'b2tfnb_vbecrbx'//chns)
+      call my_out_us(70,nFc,1,dv%vaecrb(1,1,isb),'b2tfnb_vbecrby'//chns)
+       call my_out_us(70,nFc,1,dv%uadia(1,0,isb),'b2tfnb_ubdiax'//chns)
+       call my_out_us(70,nFc,1,dv%uadia(1,1,isb),'b2tfnb_ubdiay'//chns)
+       call my_out_us(70,nFc,1,dv%vadia(1,0,isb),'b2tfnb_vbdiax'//chns)
+       call my_out_us(70,nFc,1,dv%vadia(1,1,isb),'b2tfnb_vbdiay'//chns)
+       call my_out_us(70,nFc,1,dv%wadia(1,0,isb),'b2tfnb_wbdiax'//chns)
+       call my_out_us(70,nFc,1,dv%wadia(1,1,isb),'b2tfnb_wbdiay'//chns)
+       call my_out_us(70,nCv,0,dv%kinrgy,'b2tfnb_kbnrgy'//chns)
+       call my_out_us(70,nFc,1,co%cvla(1,0,isb),'b2tfnb_cvlbx'//chns)
+       call my_out_us(70,nFc,1,co%cvla(1,1,isb),'b2tfnb_cvlby'//chns)
+      call my_out_us(70,nFc,1,co%cvlahz(1,0,isb),'b2tfnb_cvlbhzx'//chns)
+      call my_out_us(70,nFc,1,co%cvlahz(1,1,isb),'b2tfnb_cvlbhzy'//chns)
+      call my_out_us(70,nFc,1,co%cdpahz(1,0,isb),'b2tfnb_cdpbhzx'//chns)
+      call my_out_us(70,nFc,1,co%cdpahz(1,1,isb),'b2tfnb_cdpbhzy'//chns)
+       call my_out_us(70,nFc,1,co%cdpa(1,0,isb),'b2tfnb_cdpbx'//chns)
+       call my_out_us(70,nFc,1,co%cdpa(1,1,isb),'b2tfnb_cdpby'//chns)
+       call my_out_us(70,nFc,1,co%cdna(1,0,isb),'b2tfnb_cdnbx'//chns)
+       call my_out_us(70,nFc,1,co%cdna(1,1,isb),'b2tfnb_cdnby'//chns)
+       call my_out_us(70,nFc,1,co%cddi(1,0,isb),'b2tfnb_cddbx'//chns)
+       call my_out_us(70,nFc,1,co%cddi(1,1,isb),'b2tfnb_cddby'//chns)
+       call my_out_us(70,nFc,1,term,'b2tfnb_term'//chns)
+       call my_out_us(70,nFc,1,termhz,'b2tfnb_termhz'//chns)
+       call my_out_us(70,nFc,1,geo%fcPbs,'b2tfnb_pbsx')
+       call my_out_us(70,nFc,1,geo%fcPbshz,'b2tfnb_pbshzx')
+       call my_out_us(70,nFc,1,ub2dia(1,0),'b2tfnb_ub2diax'//chns)
+       call my_out_us(70,nFc,1,ub2dia(1,1),'b2tfnb_ub2diay'//chns)
+       call my_out_us(70,nFc,1,dv%conb(1,0,0),'b2tfnb_conbx0'//chns)
+       call my_out_us(70,nFc,1,dv%conb(1,0,1),'b2tfnb_conbx1'//chns)
+       call my_out_us(70,nFc,1,dv%conb(1,0,2),'b2tfnb_conbx2'//chns)
+       call my_out_us(70,nFc,1,dv%conb(1,0,3),'b2tfnb_conbx3'//chns)
+       call my_out_us(70,nFc,1,dv%conb(1,0,4),'b2tfnb_conbx4'//chns)
+       call my_out_us(70,nFc,1,dv%conb(1,1,0),'b2tfnb_conby0'//chns)
+       call my_out_us(70,nFc,1,dv%conb(1,1,1),'b2tfnb_conby1'//chns)
+       call my_out_us(70,nFc,1,dv%conb(1,1,2),'b2tfnb_conby2'//chns)
+       call my_out_us(70,nFc,1,dv%conb(1,1,3),'b2tfnb_conby3'//chns)
+       call my_out_us(70,nFc,1,dv%conb(1,1,4),'b2tfnb_conby4'//chns)
+       call my_out_us(70,nFc,1,dv%flob(1,0),'b2tfnb_flobx'//chns)
+       call my_out_us(70,nFc,1,dv%flob(1,1),'b2tfnb_floby'//chns)
+       call my_out_us(70,nFc,1,kmprti(1),'b2tfnb_kmprtix'//chns)
+       call my_out_us(70,nFc,1,dkmprti(1,0),'b2tfnb_dkmprtix'//chns)
+       call my_out_us(70,nFc,1,dkmprti(1,1),'b2tfnb_dkmprtiy'//chns)
+       call my_out_us(70,nCv,0,pl%ua(1,isb),'b2tfnb_ua'//chns)
+       call my_out_us(70,nCv,0,pl%na(1,isb),'b2tfnb_na'//chns)
+       call my_out_us(70,nCv,0,dv%pa(1,isb),'b2tfnb_pa'//chns)
+       call my_out_us(70,nCv,0,pl%te,'b2tfnb_te')
+       call my_out_us(70,nCv,0,pl%ti,'b2tfnb_ti')
+       call my_out_us(70,nCv,0,pl%po,'b2tfnb_po')
+       call my_out_us(70,nCv,0,rt%rza(1,isb),'b2tfnb_zb'//chns)
+       call my_out_us(70,nFc,1,dv%facdrift,'b2tfnb_facdrift'//chns)
+       call my_out_us(70,nFc,1,dv%fac_ExB,'b2tfnb_fac_ExB'//chns)
+       call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfnb_fchvisparx')
+       call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfnb_fchvispary')
+       call my_out_us(70,nFc,1,dv%fchinert(1,0),'b2tfnb_fchinertx')
+       call my_out_us(70,nFc,1,dv%fchinert(1,1),'b2tfnb_fchinerty')
+       call my_out_us(70,nFc,1,dv%fchanml(1,0),'b2tfnb_fchanmlx')
+       call my_out_us(70,nFc,1,dv%fchanml(1,1),'b2tfnb_fchanmly')
       endif                                                             !srv 18.06.08 }
 
 * ..return

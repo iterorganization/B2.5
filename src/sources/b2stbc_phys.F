@@ -8899,7 +8899,7 @@ c end of implementation
      &       srw%smo0(:,1,is)*pl%ua(:,is)+
      &       srw%smo0(:,2,is)*pl%na(:,is)*mp*am(is)+
      &       srw%smo0(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-        call my_out_us(70,nCv,wrk0,'b2stbc_phys_smo'//chns)
+        call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_smo'//chns)
        enddo
       endif
       if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
@@ -8912,39 +8912,39 @@ c end of implementation
 !     &               'b2stbc_phys_sna'//chk//chns)
 !        enddo
         wrk0=srw%sna0(:,0,is)+srw%sna0(:,1,is)*pl%na(:,is)
-        call my_out_us(70,nCv,wrk0,'b2stbc_phys_sna'//chns)
+        call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_sna'//chns)
        enddo
       endif
       if ((iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)
      &        .or. iout_b2wdat.eq.4 ) then
        wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
      &      srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
-       call my_out_us(70,nCv,wrk0,'b2stbc_phys_she')
+       call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_she')
        wrk0=srw%shi0(:,0)+srw%shi0(:,1)*pl%ti+
      &      srw%shi0(:,2)*dv%ni(:,0)+srw%shi0(:,3)*pl%ti*dv%ni(:,0)
-       call my_out_us(70,nCv,wrk0,'b2stbc_phys_shi')
+       call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_shi')
       endif
       if ((iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)
      &        .or. iout_b2wdat.eq.4 ) then
        wrk0=srw%sch0(:,0)+srw%sch0(:,1)*pl%po+
      &      srw%sch0(:,2)*dv%ne+srw%sch0(:,3)*pl%po*dv%ne
-       call my_out_us(70,nCv,wrk0,'b2stbc_phys_sch')
+       call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_sch')
       endif
       if (iout.eq.1) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         do k=0,3
           write (chk,'(i1)') k
-          call my_out_us(70,nCv,srw%smo0(1,k,is),
+          call my_out_us(70,nCv,0,srw%smo0(1,k,is),
      &               'b2stbc_phys_smo'//chk//chns)
-          call my_out_us(70,nCv,srw%sch0(1,k),'b2stbc_phys_sch'//chk)
-          call my_out_us(70,nCv,srw%she0(1,k),'b2stbc_phys_she'//chk)
-          call my_out_us(70,nCv,srw%shi0(1,k),'b2stbc_phys_shi'//chk)
+          call my_out_us(70,nCv,0,srw%sch0(1,k),'b2stbc_phys_sch'//chk)
+          call my_out_us(70,nCv,0,srw%she0(1,k),'b2stbc_phys_she'//chk)
+          call my_out_us(70,nCv,0,srw%shi0(1,k),'b2stbc_phys_shi'//chk)
         enddo
        enddo
        do k=0,1
          write (chk,'(i1)') k
-         call my_out_us(70,nCv,srw%sna0(1,k,is),
+         call my_out_us(70,nCv,0,srw%sna0(1,k,is),
      &               'b2stbc_phys_sna'//chk//chns)
        enddo
       endif                                                           !srv 11.09.09 }

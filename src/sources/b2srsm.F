@@ -351,21 +351,21 @@ cdjm Store the total change in linearised sources for balance
 	  write (chns,'(i3.3)') is
 	  do k=0,3
 	   write (chk,'(i1)') k
-	   call my_out_us(70,nCv,sr%smo(1,k,is),
+	   call my_out_us(70,nCv,0,sr%smo(1,k,is),
      &                       'b2srsm_smosm'//chk//chns)
 	  enddo
 	  do k=0,1
 	   write (chk,'(i1)') k
-	   call my_out_us(70,nCv,sr%sna(1,k,is),
+	   call my_out_us(70,nCv,0,sr%sna(1,k,is),
      &                       'b2srsm_snasm'//chk//chns)
 	  enddo
 	enddo
         do k=0,3
-	  call my_out_us(70,nCv,sr%she(1,k),'b2srsm_shesm'//chk)
-	  call my_out_us(70,nCv,sr%shi(1,k),'b2srsm_shism'//chk)
+	  call my_out_us(70,nCv,0,sr%she(1,k),'b2srsm_shesm'//chk)
+	  call my_out_us(70,nCv,0,sr%shi(1,k),'b2srsm_shism'//chk)
 	enddo
 	do k=0,1
-	  call my_out_us(70,nCv,sr%sne(1,k),'b2srsm_snesm'//chk)
+	  call my_out_us(70,nCv,0,sr%sne(1,k),'b2srsm_snesm'//chk)
 	enddo
       endif                                                          !srv 11.09.09 }
 

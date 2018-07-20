@@ -274,23 +274,23 @@
         do is=0,ns-1                                            !srv 13.01.04 {
          write (charns,'(i3.3)') is
          if (flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then
-           call my_out_us(70, nCv, hcimx(1,0,is),'hcimx'//charns)
-           call my_out_us(70, nCv, hcimx(1,1,is),'hcimy'//charns)
+           call my_out_us(70,nCv,0, hcimx(1,0,is),'hcimx'//charns)
+           call my_out_us(70,nCv,0, hcimx(1,1,is),'hcimy'//charns)
            w1 = 1.0e0_R8
            where (hcimx(:,0,is) /= 0.0e0_R8) w1 = hcib(:,is)
      &                                          /hcimx(:,0,is)
-           call my_out_us(70, nCv, w1,'chcimx'//charns)
+           call my_out_us(70,nCv,0, w1,'chcimx'//charns)
            w1 = 1.0e0_R8
            where (hcimx(:,1,is) /= 0.0e0_R8) w1 = hcib(:,is)
      &                                          /hcimx(:,1,is)
-           call my_out_us(70, nCv, w1,'chcimy'//charns)
+           call my_out_us(70,nCv,0, w1,'chcimy'//charns)
          else
-           call my_out_us(70, nFc, fllim0fhi(1,0,is),
+           call my_out_us(70,nFc,1, fllim0fhi(1,0,is),
      &                 'fllim0fhix'//charns)
-           call my_out_us(70, nFc, fllim0fhi(1,1,is),
+           call my_out_us(70,nFc,1, fllim0fhi(1,1,is),
      &                 'fllim0fhiy'//charns)
-           call my_out_us(70, nFc, chcb(1,0,is), 'chcix'//charns)
-           call my_out_us(70, nFc, chcb(1,1,is), 'chciy'//charns)
+           call my_out_us(70,nFc,1, chcb(1,0,is), 'chcix'//charns)
+           call my_out_us(70,nFc,1, chcb(1,1,is), 'chciy'//charns)
          end if
         enddo                                                   !srv 13.01.04 }
         deallocate(w1)
