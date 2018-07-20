@@ -372,17 +372,10 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
         write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,co%cvsa(1,0,is),'b2trno_cvsax'//chns)
         call my_out_us(70,nFc,1,co%cvsa(1,1,is),'b2trno_cvsay'//chns)
-        call my_out_us(70,nFc,1,co%cvsa(1,1,is),'b2trno_cvsaxy'//chns)
-        call my_out_us(70,nFc,1,co%cvsa(1,0,is),'b2trno_cvsayx'//chns)
         call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'b2trno_cvsahzx'//
      &              chns)
         call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'b2trno_cvsahzy'//
      &              chns)
-        call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'b2trno_cvsahzxy'//
-     &              chns)
-        call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'b2trno_cvsahzyx'//
-     &              chns)
-
        enddo
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0

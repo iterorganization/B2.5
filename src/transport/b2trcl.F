@@ -250,8 +250,6 @@ csw 13mar2012
         if (.not. is_neutral(is)) then
           call my_out_us(70,nFc,1,cvsahz(1,0,is),'b2trcl_cvsahzx'//
      &      chns)
-          call my_out_us(70,nFc,1,cvsahz(1,0,is),'b2trcl_cvsahzyx'//
-     &      chns)
         endif
        enddo
       endif

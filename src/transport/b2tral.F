@@ -267,12 +267,8 @@ cwdk combined check for poloidal or radial diffusion
        enddo
        call my_out_us(70,nFc,1,co%chce(1,0),'chcex')
        call my_out_us(70,nFc,1,co%chce(1,1),'chcey')
-       call my_out_us(70,nFc,1,co%chce(1,1),'chcexy')
-       call my_out_us(70,nFc,1,co%chce(1,0),'chceyx')
        call my_out_us(70,nFc,1,co%chci(1,0),'chcix')
        call my_out_us(70,nFc,1,co%chci(1,1),'chciy')
-       call my_out_us(70,nFc,1,co%chci(1,1),'chcixy')
-       call my_out_us(70,nFc,1,co%chci(1,0),'chciyx')
        call my_out_us(70,nFc,1,co%chve(1,0),'chvex')
        call my_out_us(70,nFc,1,co%chve(1,1),'chvey')
        call my_out_us(70,nFc,1,co%chvi(1,0),'chvix')
@@ -305,10 +301,6 @@ cwdk combined check for poloidal or radial diffusion
         call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'b2tral_cvsahzx'//
      &              chns)
         call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'b2tral_cvsahzy'//
-     &              chns)
-        call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'b2tral_cvsahzxy'//
-     &              chns)
-        call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'b2tral_cvsahzyx'//
      &              chns)
 !        call my_out_us(70,nFc,1,co%cvsa_cl(1,0,is),'b2tral_cvsa_clx'//
 !     &              chns)
