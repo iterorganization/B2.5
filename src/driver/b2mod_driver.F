@@ -1546,8 +1546,8 @@ cwdk    backwards compatible behavior
       call write_mapping('mapping.dat', mpg)
       call write_geometry('geometry.dat', mpg, gm)
 
-      call my_out(70,nx,ny,na(-1,-1,1),'na_1_structured')
-      call my_out_us(70,nCv,0,state%pl%na(1,1),'na_1_unstructured')
+!      call my_out(70,nx,ny,na(-1,-1,1),'na_1_structured')
+!      call my_out_us(70,nCv,0,state%pl%na(1,1),'na_1_unstructured')
 
 
 *   ..set some local variables related to US grid
