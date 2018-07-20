@@ -169,7 +169,9 @@ cwdk      type(B2StateExt), public, save :: state_ext
 ***********************************************************************
 
       subroutine calc_mapping(nx, ny, m)
-
+#ifdef WG_DEBUG
+      use b2us_debug
+#endif
       implicit none
       type (mapping), intent (inout) :: m
       integer, intent(in) :: nx, ny
@@ -183,6 +185,11 @@ cwdk      type(B2StateExt), public, save :: state_ext
 !  assume a structured quadrilateral grid
 
       write (*,*) 'Creating mapping ...'
+
+#ifdef WG_DEBUG
+      nx_st = nx
+      ny_st = ny
+#endif
 
 !  no. of cells
       m%nCi = nx*ny                         ! internal cells
