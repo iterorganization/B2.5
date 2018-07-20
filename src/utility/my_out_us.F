@@ -21,15 +21,18 @@ c     File names will be appended with "*_st.dat".
       character *(*) first_name
 
       character *64 filename
-      character(23) hlp_frm
+      character(24) hlp_frm
       integer ic, ix, iy
       integer, save :: ncall = 0
-      integer, save :: iappend = 0
+      integer, save :: iappend = 0, ndigits = 6
+
       logical ex
       character(7), save :: folder
 
       if (ncall.eq.0) then
         call ipgeti('b2wdat_append', iappend)
+        call ipgeti('my_out_us_digits', ndigits)
+        call xertst(0.le.ndigits, 'invalid ndigits value')
         ncall = 1
 *    ..try to create a file in optional output folder
         open(70,file='output/__1__st.dat',err=10)
@@ -50,12 +53,9 @@ c     File names will be appended with "*_st.dat".
         else
           open (nwrite,file=filename,position='append')
         end if
-!       write(hlp_frm,"(a4,i4,a11)") '(5x,',nel,'(6x,i3,5x))'
-!       write (nwrite,hlp_frm) (ic,ic=1,nel)
-!       write (hlp_frm,"(a10,i4,a9)") '(5x,',nel,'(es14.6))'
-!       write (nwrite,hlp_frm) (fun(ic), ic = 1, nel)
+        write(hlp_frm,"(a,i2,a,i2.2,a)")'(1x,i9,1x,es',ndigits+8,'.',ndigits,')' 
         do ic = 1, nel
-          write (nwrite,'(1x,i9,1x,es14.6)') ic, fun_us(ic)
+          write (nwrite,hlp_frm) ic, fun_us(ic)
         end do
         close (nwrite)
 #else
@@ -70,9 +70,11 @@ c     File names will be appended with "*_st.dat".
         else
           open (nwrite,file=filename,position='append')
         end if
-        write(hlp_frm,"(a4,i4,a11)") '(5x,',nx_st+2,'(6x,i3,5x))'
+        write(hlp_frm,"(a4,i4,a1,i2,a9)") 
+     &       '(5x,',nx_st+2,'(',ndigits,'x,i3,5x))'
         write (nwrite,hlp_frm) (ix,ix=-1,nx_st)
-        write(hlp_frm,"(a10,i4,a9)") '(1x,i3,1x,',nx_st+2,'(es14.6))'
+        write(hlp_frm,"(a10,i4,a3,i2.2,a1,i2.2,a2)")
+     &       '(1x,i3,1x,',nx_st+2,'(es',ndigits+8,'.',ndigits,'))'
         do iy=ny_st,-1,-1
           write(nwrite,hlp_frm) iy, (fun_st(ix,iy), ix = -1, nx_st)
         enddo
@@ -91,9 +93,11 @@ c     File names will be appended with "*_st.dat".
           else
             open (nwrite,file=filename,position='append')
           end if
-          write(hlp_frm,"(a4,i4,a11)") '(5x,',nx_st+2,'(6x,i3,5x))'
+          write(hlp_frm,"(a4,i4,a1,i2,a9)") 
+     &         '(5x,',nx_st+2,'(',ndigits,'x,i3,5x))'
           write (nwrite,hlp_frm) (ix,ix=-1,nx_st)
-          write(hlp_frm,"(a10,i4,a9)") '(1x,i3,1x,',nx_st+2,'(es14.6))'
+          write(hlp_frm,"(a10,i4,a3,i2.2,a1,i2.2,a2)")
+     &         '(1x,i3,1x,',nx_st+2,'(es',ndigits+8,'.',ndigits,'))'
           do iy=ny_st,-1,-1
            write(nwrite,hlp_frm) iy, (funf_st(ix,iy,ic), ix = -1, nx_st)
           enddo
