@@ -23,7 +23,7 @@ SED      =
 LINK_MOD = 
 
 ifdef USE_MPI
-FC       = mpif90
+FC       = mpiifort
 else
 FC       = ifort
 endif
