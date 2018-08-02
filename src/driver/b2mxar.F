@@ -19,7 +19,7 @@
       type (B2Derivatives), intent (in) :: dv
       real (kind=R8) :: BoRiS
 *   ..output arguments (unspecified on entry)
-      type (B2Diagnostic), intent (out) :: diag
+      type (B2Diagnostic), intent (inout) :: diag
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation

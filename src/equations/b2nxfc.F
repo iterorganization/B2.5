@@ -106,13 +106,13 @@
 
       if (iout.ne.0) then                                              !sv 17.06.02 {
         write (charns,'(i3.3)') isb    
-        call my_out_us(70,nFc,flub(1,0),'b2nxfc_flubx'//charns)
-        call my_out_us(70,nFc,flub(1,1),'b2nxfc_fluby'//charns)
-        call my_out_us(70,nFc,flcb(1,0),'b2nxfc_flcbx'//charns)
-        call my_out_us(70,nFc,flcb(1,1),'b2nxfc_flcby'//charns)
-        call my_out_us(70,nFc,cvcb(1,0),'b2nxfc_cvcbx'//charns)
-        call my_out_us(70,nFc,cvcb(1,1),'b2nxfc_cvcby'//charns)
-        call my_out_us(70,nCv,rob,'b2nxfc_rob'//charns)
+        call my_out_us(70,nFc,1,flub(1,0),'b2nxfc_flubx'//charns)
+        call my_out_us(70,nFc,1,flub(1,1),'b2nxfc_fluby'//charns)
+        call my_out_us(70,nFc,1,flcb(1,0),'b2nxfc_flcbx'//charns)
+        call my_out_us(70,nFc,1,flcb(1,1),'b2nxfc_flcby'//charns)
+        call my_out_us(70,nFc,1,cvcb(1,0),'b2nxfc_cvcbx'//charns)
+        call my_out_us(70,nFc,1,cvcb(1,1),'b2nxfc_cvcby'//charns)
+        call my_out_us(70,nCv,0,rob,'b2nxfc_rob'//charns)
       endif                                                            !sv 17.06.02 }
 * ..return
       ncall = ncall+1

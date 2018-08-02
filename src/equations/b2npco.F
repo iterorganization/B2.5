@@ -56,7 +56,7 @@
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
-     *   aa(9*nCv), wrk0(nCv)
+     *   aa(mpg%nCmxNv), wrk0(nCv)
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       external subini, subend, xertst, ipgetr, lwget
@@ -140,28 +140,24 @@ cdjm Jan2017 update particle source components for balance
      &  dv%pa(1,isb), pl%na(1,isb), pl%ua(1,isb))
       if (iout.ne.0) then                                             !srv 12.07.02 {
         write (chns,'(i3.3)') isb
-        call my_out_us(70,nCv,dv%pa(1,isb),'b2npco_pa'//chns)
-        call my_out_us(70,nCv,pl%na(1,isb),'b2npco_na'//chns)
-        call my_out_us(70,nCv,pl%ua(1,isb),'b2npco_ua'//chns)
-        call my_out_us(70,nCv,dv%resco(1,isb),'b2npco_resco'//chns)
-        call my_out_us(70,nCv,sr%sna(1,0,isb),'b2npco_sna0'//chns)
-        call my_out_us(70,nCv,sr%sna(1,1,isb),'b2npco_sna1'//chns)
+        call my_out_us(70,nCv,0,dv%pa(1,isb),'b2npco_pa'//chns)
+        call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
+        call my_out_us(70,nCv,0,pl%ua(1,isb),'b2npco_ua'//chns)
+        call my_out_us(70,nCv,0,dv%resco(1,isb),'b2npco_resco'//chns)
+        call my_out_us(70,nCv,0,sr%sna(1,0,isb),'b2npco_sna0'//chns)
+        call my_out_us(70,nCv,0,sr%sna(1,1,isb),'b2npco_sna1'//chns)
         wrk0=sr%sna(:,0,isb)+pl%na(:,isb)*sr%sna(:,1,isb)
-        call my_out_us(70,nCv,wrk0,'b2npco_sna'//chns)
-        call my_out_us(70,nFc,dv%fna(1,0,isb),'b2npco_fnax'//chns)
-        call my_out_us(70,nFc,dv%fna(1,1,isb),'b2npco_fnay'//chns)
-        call my_out_us(70,nFc,dv%fna(1,1,isb),'b2npco_fnaxy'//chns)
-        call my_out_us(70,nFc,dv%fna(1,0,isb),'b2npco_fnayx'//chns)
+        call my_out_us(70,nCv,0,wrk0,'b2npco_sna'//chns)
+        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2npco_fnax'//chns)
+        call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2npco_fnay'//chns)
       elseif (iout_b2wdat.eq.4) then                                  !iys 17.04.17
         write (chns,'(i3.3)') isb
-        call my_out_us(70,nCv,pl%na(1,isb),'b2npco_na'//chns)
-        call my_out_us(70,nCv,dv%resco(1,isb),'b2npco_resco'//chns)
+        call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
+        call my_out_us(70,nCv,0,dv%resco(1,isb),'b2npco_resco'//chns)
         wrk0=sr%sna(:,0,isb)+pl%na(:,isb)*sr%sna(:,1,isb)
-        call my_out_us(70,nCv,wrk0,'b2npco_sna'//chns)
-        call my_out_us(70,nFc,dv%fna(1,0,isb),'b2npco_fnax'//chns)
-        call my_out_us(70,nFc,dv%fna(1,1,isb),'b2npco_fnay'//chns)
-        call my_out_us(70,nFc,dv%fna(1,1,isb),'b2npco_fnaxy'//chns)
-        call my_out_us(70,nFc,dv%fna(1,0,isb),'b2npco_fnayx'//chns)
+        call my_out_us(70,nCv,0,wrk0,'b2npco_sna'//chns)
+        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2npco_fnax'//chns)
+        call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2npco_fnay'//chns)
       endif                                                          
 
 *   ..set error parameter

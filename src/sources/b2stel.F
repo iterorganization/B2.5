@@ -4,7 +4,7 @@
       subroutine b2stel (nCv, nFc, nVx, ns, ismain, BoRiS,
      &  geo, mpg, pl, dv, rt, rtw, srw)
       use b2mod_types
-      use b2mod_diag
+!      use b2mod_diag
       use b2mod_tallies
       use b2mod_constants
 !      use b2mod_sources
@@ -54,7 +54,7 @@
 #     include <DIMENSIONS.F>
 *   ..local variables
       integer ncall, styl0, iCv, is, js, fix_recomb_energy, k
-      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
+!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
@@ -122,14 +122,14 @@
      &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!'
        endif
 *   ..identify impurity homonuclear sequences
-       nimp_tmp=0
-       jimp_tmp=0
-       do is = 1, nspecies !{
-         if(nfluids(is).gt.1) then !{
-           nimp_tmp=nimp_tmp+1
-           jimp_tmp(is)=nimp_tmp
-         end if !}
-       end do !}
+!WG_TODO       nimp_tmp=0
+!WG_TODO       jimp_tmp=0
+!WG_TODO       do is = 1, nspecies !{
+!WG_TODO         if(nfluids(is).gt.1) then !{
+!WG_TODO           nimp_tmp=nimp_tmp+1
+!WG_TODO           jimp_tmp(is)=nimp_tmp
+!WG_TODO         end if !}
+!WG_TODO       end do !}
        call ipgeti ('b2stel_iout', iout)                         !srv 30.06.08
        call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
@@ -390,18 +390,18 @@ c accounted for)
 !WG_TODO          rqrad(iCv,is) = t0
           rqradreg(mpg%cvReg(iCv),is)=rqradreg(mpg%cvReg(iCv),is)+t0
           b2radreg(mpg%cvReg(iCv))=b2radreg(mpg%cvReg(iCv))-t0
-          b2rad=b2rad-t0
-          if (.not.is_neutral(is) .and. jimp_tmp(b2espcr(is)).ne.0) then
-            rad_imp(jimp_tmp(b2espcr(is)))=
-     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
-          endif
+!WG_TODO          b2rad=b2rad-t0
+!WG_TODO          if (.not.is_neutral(is) .and. jimp_tmp(b2espcr(is)).ne.0) then
+!WG_TODO            rad_imp(jimp_tmp(b2espcr(is)))=
+!WG_TODO     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
+!WG_TODO          endif
 *      ..compute bremsstrahlung radiation rate for is->any
           t0 = rtw%rbr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
 *      ..compute bremsstrahlung radiation
 !WG_TODO          rqbrm(iCv,is) = t0
           rqbrmreg(mpg%cvReg(iCv),is)=rqbrmreg(mpg%cvReg(iCv),is)+t0
           b2bremreg(mpg%cvReg(iCv))=b2bremreg(mpg%cvReg(iCv))-t0
-          b2brem=b2brem-t0
+!WG_TODO          b2brem=b2brem-t0
          endif
         enddo
       enddo
@@ -452,12 +452,12 @@ c accounted for)
      &         smq0_ion(:,1,is)*pl%ua(:,is)+
      &         smq0_ion(:,2,is)*pl%na(:,is)*mp*am(is)+
      &         smq0_ion(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-          call my_out_us(70,nCv,wrk0,'b2stel_smq_ion'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2stel_smq_ion'//chns)
           wrk0=smq0_rec(:,0,is)+
      &         smq0_rec(:,1,is)*pl%ua(:,is)+
      &         smq0_rec(:,2,is)*pl%na(:,is)*mp*am(is)+
      &         smq0_rec(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-          call my_out_us(70,nCv,wrk0,'b2stel_smq_rec'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2stel_smq_rec'//chns)
         enddo
       endif
       if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
@@ -472,9 +472,9 @@ c accounted for)
 !     &                       'b2stel_sna_rec'//chk//chns)
 !         enddo
           wrk0=sna0_ion(:,0,is)+sna0_ion(:,1,is)*pl%na(:,is)
-          call my_out_us(70,nCv,wrk0,'b2stel_sna_ion'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2stel_sna_ion'//chns)
           wrk0=sna0_rec(:,0,is)+sna0_rec(:,1,is)*pl%na(:,is)
-          call my_out_us(70,nCv,wrk0,'b2stel_sna_rec'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2stel_sna_rec'//chns)
 
         enddo
       endif
@@ -488,20 +488,20 @@ c accounted for)
 !      call my_out(70,nx,ny,srw%she0(-1,-1,k),'b2stel_she')
         wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
      &       srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
-        call my_out_us(70,nCv,wrk0,'b2stel_she_rad')
+        call my_out_us(70,nCv,0,wrk0,'b2stel_she_rad')
         wrk0=shi0_ion(:,0)+shi0_ion(:,1)*pl%ti+
      &       shi0_ion(:,2)*dv%ni(:,0)+
      &       shi0_ion(:,3)*pl%ti*dv%ni(:,0)
-        call my_out_us(70,nCv,wrk0,'b2stel_shi_ion')                  !srv 01.11.10
+        call my_out_us(70,nCv,0,wrk0,'b2stel_shi_ion')                  !srv 01.11.10
         wrk0=shi0_rec(:,0)+shi0_rec(:,1)*pl%ti+
      &       shi0_rec(:,2)*dv%ni(:,0)+
      &       shi0_rec(:,3)*pl%ti*dv%ni(:,0)
-        call my_out_us(70,nCv,wrk0,'b2stel_shi_rec')                  !srv 01.11.10
+        call my_out_us(70,nCv,0,wrk0,'b2stel_shi_rec')                  !srv 01.11.10
 
 !WG_TODO        do is=0,ns-1                                                 !srv 03.02.12 {
 !WG_TODO          write(chns,'(i3.3)') is
-!WG_TODO          call my_out_us(70,nCv,rqrad(1,is),'b2stel_rqrad'//chns)
-!WG_TODO          call my_out_us(70,nCv,rqbrm(1,is),'b2stel_rqbrm'//chns)
+!WG_TODO          call my_out_us(70,nCv,0,rqrad(1,is),'b2stel_rqrad'//chns)
+!WG_TODO          call my_out_us(70,nCv,0,rqbrm(1,is),'b2stel_rqbrm'//chns)
 !WG_TODO        enddo                                                        !srv 03.02.12 }
       endif                                                          !srv 30.06.08 11.09.09 }
 

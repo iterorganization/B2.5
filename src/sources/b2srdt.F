@@ -217,7 +217,7 @@ cdjm Store the total change in linearised sources for balance
      &        sr%smo(:,1,is)*ua(:,is)+
      &        sr%smo(:,2,is)*na(:,is)*mp*am(is)+
      &        sr%smo(:,3,is)*ua(:,is)*na(:,is)*mp*am(is)
-         call my_out_us(70,nCv,wrk0,'b2srdt_smodt'//chns)
+         call my_out_us(70,nCv,0,wrk0,'b2srdt_smodt'//chns)
        enddo
       endif
       if ((iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or. iout_b2wdat.eq.4)
@@ -225,18 +225,18 @@ cdjm Store the total change in linearised sources for balance
         do is = 0, ns-1
           write (chns,'(i3.3)') is
           wrk0=sr%sna(:,0,is)+sr%sna(:,1,is)*na(:,is)
-          call my_out_us(70,nCv,wrk0,'b2srdt_snadt'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_snadt'//chns)
         enddo
       endif
       if ((iout_b2nph9.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
      &             .and. lout) then
         wrk0=sr%she(:,0)+sr%she(:,1)*te+
      &       sr%she(:,2)*ne + sr%she(:,3)*te*ne
-        call my_out_us(70,nCv,wrk0,'b2srdt_shedt')
+        call my_out_us(70,nCv,0,wrk0,'b2srdt_shedt')
         wrk0=sr%shi(:,0)+sr%shi(:,1)*ti+
      &       sr%shi(:,2)*ni(:,0)+
      &       sr%shi(:,3)*ti*ni(:,0)
-        call my_out_us(70,nCv,wrk0,'b2srdt_shidt')
+        call my_out_us(70,nCv,0,wrk0,'b2srdt_shidt')
       endif
 
       if (iout.eq.1 .and. lout) then
@@ -244,20 +244,20 @@ cdjm Store the total change in linearised sources for balance
         write (chns,'(i3.3)') is
         do k=0,3
          write (chk,'(i1)') k
-         call my_out_us(70,nCv,sr%smo(1,k,is),
+         call my_out_us(70,nCv,0,sr%smo(1,k,is),
      &                       'b2srdt_smodt'//chk//chns)
         enddo
         do k=0,1
          write (chk,'(i1)') k
-         call my_out_us(70,nCv,sr%sna(1,k,is),
+         call my_out_us(70,nCv,0,sr%sna(1,k,is),
      &                       'b2srdt_snadt'//chk//chns)
         enddo
        enddo
        do k=0,3
         write (chk,'(i1)') k
-        call my_out_us(70,nCv,sr%she(1,k),'b2srdt_shedt'//chk)
-        call my_out_us(70,nCv,sr%shi(1,k),'b2srdt_shidt'//chk)
-        call my_out_us(70,nCv,sr%sch(1,k),'b2srdt_schdt'//chk)
+        call my_out_us(70,nCv,0,sr%she(1,k),'b2srdt_shedt'//chk)
+        call my_out_us(70,nCv,0,sr%shi(1,k),'b2srdt_shidt'//chk)
+        call my_out_us(70,nCv,0,sr%sch(1,k),'b2srdt_schdt'//chk)
        enddo
       endif                                                           !srv 11.09.09 }
 

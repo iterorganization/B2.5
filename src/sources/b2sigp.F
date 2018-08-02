@@ -339,14 +339,14 @@ cxpb apply restriction to pressure gradient for minority ions
        write (chns,'(i3.3)') isb
 !      do k=0,3
 !        write (chk,'(i1)') k
-!        call my_out_us(70,nCv,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
+!        call my_out_us(70,nCv,0,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
 !      enddo
        if(style.eq.0 .or. style.eq.1 ) then
-          call my_out_us(70,nCv,wrk5,'b2sigp_smogpi'//chns)
-          call my_out_us(70,nCv,wrk6,'b2sigp_smogpe'//chns)
+          call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
+          call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpe'//chns)
        elseif(style.eq.2) then
-          call my_out_us(70,nCv,wrk5,'b2sigp_smogpi'//chns)
-          call my_out_us(70,nCv,wrk6,'b2sigp_smogpo'//chns)
+          call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
+          call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpo'//chns)
        endif
       endif                                                           !srv 17.06.02 }
 

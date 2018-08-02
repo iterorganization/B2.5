@@ -61,7 +61,7 @@
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
-     * aa(9*nCv), wrkf(nFc,0:1),                !srv 02.01.07
+     * aa(mpg%nCmxNv), wrkf(nFc,0:1),                !srv 02.01.07
      1 wrkc(nFc,0:1,0:2), cortt(nCv),               !srv 02.01.07
      2 she0(nCv,0:3), shi0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                            !srv 18.09.09
@@ -199,35 +199,35 @@ cdjm Jan2017 update particle source components for balance
       dv%reshi = dv%reshi + shei
 
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
-        call my_out_us(70,nCv,shei,'b2npht_shei')
+        call my_out_us(70,nCv,0,shei,'b2npht_shei')
 !        do is = 0,ns-1
 !         write (chns,'(i3.3)') is
-!         call my_out_us(70,nCv,na(1,is),'b2npht_na'//chns//'_input')
-!         call my_out_us(70,nCv,ua(1,is),'b2npht_ua'//chns//'_input')
+!         call my_out_us(70,nCv,0,na(1,is),'b2npht_na'//chns//'_input')
+!         call my_out_us(70,nCv,0,ua(1,is),'b2npht_ua'//chns//'_input')
 !        enddo
-!        call my_out_us(70,nCv,te,'b2npht_te_input')
-!        call my_out_us(70,nCv,ti,'b2npht_ti_input')
-!        call my_out_us(70,nCv,po,'b2npht_po_input')
-	call my_out_us(70,nCv,dv%reshe,'b2npht_reshe')
-	call my_out_us(70,nFc,dv%fhe(1,0),'b2npht_fhex')
-	call my_out_us(70,nFc,dv%fhe(1,1),'b2npht_fhey')
-!	 call my_out_us(70,nCv,she0(1,0),'b2npht_she0')
-!	 call my_out_us(70,nCv,she0(1,1),'b2npht_she1')
-!	 call my_out_us(70,nCv,she0(1,2),'b2npht_she2')
-!	 call my_out_us(70,nCv,she0(1,3),'b2npht_she3')
+!        call my_out_us(70,nCv,0,te,'b2npht_te_input')
+!        call my_out_us(70,nCv,0,ti,'b2npht_ti_input')
+!        call my_out_us(70,nCv,0,po,'b2npht_po_input')
+	call my_out_us(70,nCv,0,dv%reshe,'b2npht_reshe')
+	call my_out_us(70,nFc,1,dv%fhe(1,0),'b2npht_fhex')
+	call my_out_us(70,nFc,1,dv%fhe(1,1),'b2npht_fhey')
+!	 call my_out_us(70,nCv,0,she0(1,0),'b2npht_she0')
+!	 call my_out_us(70,nCv,0,she0(1,1),'b2npht_she1')
+!	 call my_out_us(70,nCv,0,she0(1,2),'b2npht_she2')
+!	 call my_out_us(70,nCv,0,she0(1,3),'b2npht_she3')
         wrk0=she0(:,0)+she0(:,1)*pl%te+she0(:,2)*dv%ne+
      &       she0(:,3)*pl%te*dv%ne
-	call my_out_us(70,nCv,wrk0,'b2npht_she')
-	call my_out_us(70,nCv,dv%reshi,'b2npht_reshi')
-	call my_out_us(70,nFc,dv%fhi(1,0),'b2npht_fhix')
-	call my_out_us(70,nFc,dv%fhi(1,1),'b2npht_fhiy')
-!	 call my_out_us(70,nCv,shi0(1,0),'b2npht_shi0')
-!	 call my_out_us(70,nCv,shi0(1,1),'b2npht_shi1')
-!	 call my_out_us(70,nCv,shi0(1,2),'b2npht_shi2')
-!	 call my_out_us(70,nCv,shi0(1,3),'b2npht_shi3')
+	call my_out_us(70,nCv,0,wrk0,'b2npht_she')
+	call my_out_us(70,nCv,0,dv%reshi,'b2npht_reshi')
+	call my_out_us(70,nFc,1,dv%fhi(1,0),'b2npht_fhix')
+	call my_out_us(70,nFc,1,dv%fhi(1,1),'b2npht_fhiy')
+!	 call my_out_us(70,nCv,0,shi0(1,0),'b2npht_shi0')
+!	 call my_out_us(70,nCv,0,shi0(1,1),'b2npht_shi1')
+!	 call my_out_us(70,nCv,0,shi0(1,2),'b2npht_shi2')
+!	 call my_out_us(70,nCv,0,shi0(1,3),'b2npht_shi3')
         wrk0=shi0(:,0)+shi0(:,1)*pl%ti+
      &       shi0(:,2)*dv%ni(:,0)+shi0(:,3)*pl%ti*dv%ni(:,0)
-        call my_out_us(70,nCv,wrk0,'b2npht_shi')
+        call my_out_us(70,nCv,0,wrk0,'b2npht_shi')
       endif                                                             !srv 17.07.05 01.11.10 }
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
@@ -249,15 +249,15 @@ cdjm Jan2017 update particle source components for balance
       if (iout.eq.1) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
-          call my_out_us(70,nCv,pl%na(1,is),'b2npht_na'//chns)
-          call my_out_us(70,nCv,pl%ua(1,is),'b2npht_ua'//chns)
+          call my_out_us(70,nCv,0,pl%na(1,is),'b2npht_na'//chns)
+          call my_out_us(70,nCv,0,pl%ua(1,is),'b2npht_ua'//chns)
         end do
-        call my_out_us(70,nCv,pl%te,'b2npht_te')
-        call my_out_us(70,nCv,pl%ti,'b2npht_ti')
-        call my_out_us(70,nCv,pl%po,'b2npht_po')
+        call my_out_us(70,nCv,0,pl%te,'b2npht_te')
+        call my_out_us(70,nCv,0,pl%ti,'b2npht_ti')
+        call my_out_us(70,nCv,0,pl%po,'b2npht_po')
       elseif (iout_b2wdat.eq.4) then
-        call my_out_us(70,nCv,pl%te,'b2npht_te')
-        call my_out_us(70,nCv,pl%ti,'b2npht_ti')
+        call my_out_us(70,nCv,0,pl%te,'b2npht_te')
+        call my_out_us(70,nCv,0,pl%ti,'b2npht_ti')
       end if
 
 * ..return

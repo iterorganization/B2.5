@@ -200,7 +200,7 @@ cdjm Jan2017 Store for balance
 !     &        smost(:,1,is)*ua(:,is)+
 !     &        smost(:,2,is)*na(:,is)*mp*am(is)+
 !     &        smost(:,3,is)*ua(:,is)*na(:,is)*mp*am(is)
-!	  call my_out_us(70,nCv,wrk0,'b2srst_smost'//chns)
+!	  call my_out_us(70,nCv,0,wrk0,'b2srst_smost'//chns)
 !       enddo
 !      endif
 !      if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) then
@@ -208,22 +208,22 @@ cdjm Jan2017 Store for balance
 !	  write (chns,'(i3.3)') is
 !         wrk0=snast(:,0,is)+              !srv 07.10.09
 !     &        snast(:,1,is)*na(:,is)
-!	  call my_out_us(70,nCv,wrk0,'b2srst_snast'//chns)
+!	  call my_out_us(70,nCv,0,wrk0,'b2srst_snast'//chns)
 !       enddo
 !      endif
       if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
      &          then
         wrk0=shest(:,0)+shest(:,1)*te+  !srv 07.10.09
      &       shest(:,2)*ne + shest(:,3)*te*ne
-	call my_out_us(70,nCv,wrk0,'b2srst_shest')
+	call my_out_us(70,nCv,0,wrk0,'b2srst_shest')
         wrk0=shist(:,0)+shist(:,1)*ti+
      &       shist(:,2)*ni(:,0)+shist(:,3)*ti*ni(:,0)
-	call my_out_us(70,nCv,wrk0,'b2srst_shist')
+	call my_out_us(70,nCv,0,wrk0,'b2srst_shist')
       endif
 !      if (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1) then
 !        wrk0=schst(:,0)+schst(:,1)*po+  !srv 07.10.09
 !     &       schst(:,2)*ne+schst(:,3)*po*ne(:)
-!	 call my_out_us(70,nCv,wrk0,'b2srst_schst')
+!	 call my_out_us(70,nCv,0,wrk0,'b2srst_schst')
 !      endif
 
       if (iout.eq.1) then                       !srv 11.09.09 {
@@ -231,20 +231,20 @@ cdjm Jan2017 Store for balance
 	  write (chns,'(i3.3)') is
 	  do k=0,3
 	   write (chk,'(i1)') k
-	   call my_out_us(70,nCv,smost(1,k,is),
+	   call my_out_us(70,nCv,0,smost(1,k,is),
      &                       'b2srst_smost'//chk//chns)
 	  enddo
 	  do k=0,1
 	   write (chk,'(i1)') k
-	   call my_out_us(70,nCv,snast(1,k,is),
+	   call my_out_us(70,nCv,0,snast(1,k,is),
      &                       'b2srst_snast'//chk//chns)
 	  enddo
         enddo
 	do k=0,3
 	  write (chk,'(i1)') k
-	  call my_out_us(70,nCv,shest(1,k),'b2srst_shest'//chk)
-          call my_out_us(70,nCv,shist(1,k),'b2srst_shist'//chk)
-	  call my_out_us(70,nCv,schst(1,k),'b2srst_schst'//chk)
+	  call my_out_us(70,nCv,0,shest(1,k),'b2srst_shest'//chk)
+          call my_out_us(70,nCv,0,shist(1,k),'b2srst_shist'//chk)
+	  call my_out_us(70,nCv,0,schst(1,k),'b2srst_schst'//chk)
 	enddo
       endif                                                 !srv 11.09.09 }
 

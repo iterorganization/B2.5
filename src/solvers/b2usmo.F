@@ -22,9 +22,8 @@
       real (kind=R8) ::
      *  corub(nCv), pccb(nCv,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
-!WG_TODO: better definition of size aa still needed
       real (kind=R8) ::
-     *  aa(9*nCv), aad0(nCv)
+     *  aa(mpg%nCmxNv), aad0(nCv)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -153,19 +152,19 @@
       call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name)           !srv 18.03.10
 #ifdef WG_TODO
       if (iout.ne.0) then                                             !srv 17.06.02 {
-       call my_out_us(70,nCv,aa(-1,-1,-4),name//'_aam4')
-       call my_out_us(70,nCv,aa(-1,-1,-3),name//'_aam3')
-       call my_out_us(70,nCv,aa(-1,-1,-2),name//'_aam2')
-       call my_out_us(70,nCv,aa(-1,-1,-1),name//'_aam1')
-       call my_out_us(70,nCv,aa(-1,-1, 0),name//'_aam0')
-       call my_out_us(70,nCv,aa(-1,-1, 1),name//'_aap1')
-       call my_out_us(70,nCv,aa(-1,-1, 2),name//'_aap2')
-       call my_out_us(70,nCv,aa(-1,-1, 3),name//'_aap3')
-       call my_out_us(70,nCv,aa(-1,-1, 4),name//'_aap4')
-       call my_out_us(70,nCv,resmb,name//'_resmb')
-       call my_out_us(70,nCv,corub,name//'_corub')
-       call my_out_us(70,nCv,pccb(-1,-1,0,0),name//'_pccbx')
-       call my_out_us(70,nCv,pccb(-1,-1,1,1),name//'_pccby')
+       call my_out_us(70,nCv,0,aa(-1,-1,-4),name//'_aam4')
+       call my_out_us(70,nCv,0,aa(-1,-1,-3),name//'_aam3')
+       call my_out_us(70,nCv,0,aa(-1,-1,-2),name//'_aam2')
+       call my_out_us(70,nCv,0,aa(-1,-1,-1),name//'_aam1')
+       call my_out_us(70,nCv,0,aa(-1,-1, 0),name//'_aam0')
+       call my_out_us(70,nCv,0,aa(-1,-1, 1),name//'_aap1')
+       call my_out_us(70,nCv,0,aa(-1,-1, 2),name//'_aap2')
+       call my_out_us(70,nCv,0,aa(-1,-1, 3),name//'_aap3')
+       call my_out_us(70,nCv,0,aa(-1,-1, 4),name//'_aap4')
+       call my_out_us(70,nCv,0,resmb,name//'_resmb')
+       call my_out_us(70,nCv,0,corub,name//'_corub')
+       call my_out_us(70,nCv,0,pccb(-1,-1,0,0),name//'_pccbx')
+       call my_out_us(70,nCv,0,pccb(-1,-1,1,1),name//'_pccby')
       endif                                                           !srv 17.06.02 }
 #endif
 * ..return

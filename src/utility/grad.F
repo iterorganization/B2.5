@@ -35,8 +35,14 @@
 *-----------------------------------------------------------------------
 *.computation      
 
-*   ..interpolate fun to cell corners
-      call intvertex(nCv,nVx,mpg,geo%cvVol,fun,funv)
+*   ..test mode
+      call xertst (0.le.mode.and.mode.le.1,
+     .  'grad--faulty argument mode')
+
+*   ..interpolate fun to cell vertices, using volume weighted averaging
+      if (mode.eq.0) then
+        call intvertex(nCv,nVx,mpg,geo%cvVol,fun,funv)
+      endif
 
 *   ..compute poloidal and radial differences
       call grad_p(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfun(1,0))

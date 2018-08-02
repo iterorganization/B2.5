@@ -9,8 +9,8 @@
      .          alloc_mapping_rc, dealloc_mapping_rc
       
       type, public :: mapping
-        integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv, 
-     &             nVmxFc, nFs, mxnFs, nBc, mxnBc, nRc, mxnRc
+        integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
+     &             nVmxFc, nFs, mxnFs, nBc, mxnBc, nRc, mxnRc, nCmxNv
 
         integer, allocatable :: cvFcP(:,:) ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
         integer, allocatable :: cvFc(:)    ! listing for every cell the corresponding face numbers 
@@ -83,6 +83,7 @@
 
       allocate (m%fcNv(m%nFc,2))
       allocate (m%aaP(m%nCv,2))
+      allocate (m%cvNv(m%nCmxNv))
 
 !      allocate (m%cvNv(m%nCmxVx*m%nCmxVx*m%nCv)) ! very conservative; reduce!
 
@@ -119,7 +120,11 @@
 !      deallocate (m%intfaceV) 
 !      deallocate (m%intvertexV) 
       deallocate (m%intcellP) 
-      deallocate (m%intcellR)       
+      deallocate (m%intcellR)   
+
+      deallocate (m%fcNv)
+      deallocate (m%aaP)
+      deallocate (m%cvNv)    
 
       return
       end subroutine dealloc_mapping 

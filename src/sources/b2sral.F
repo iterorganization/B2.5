@@ -31,12 +31,12 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
-      type (B2Derivatives), intent (inout) :: dv
-      type (B2Rates), intent (in) :: rt
-      type (B2RatesWork), intent (in) :: rtw
-      type (B2Coeff), intent (inout) :: co
       type (B2StateExt), intent (in) :: st_ext
-*   ..output arguments (unspecified on entry)
+*   ..input/output arguments
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Rates), intent (inout) :: rt
+      type (B2RatesWork), intent (inout) :: rtw
+      type (B2Coeff), intent (inout) :: co
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
       logical wrong_flow                                                 !xpb
@@ -419,16 +419,16 @@ csw 30sep2013, added cdpa in call, uadia
         do is = 0,ns-1
           write (chns,'(i3.3)') is
           wrk(:) = sna0_cx(:,0,is)+sna0_cx(:,1,is)*pl%na(:,is)
-          call my_out_us(70,nCv,wrk,'b2stcx_sna_'//chns)
+          call my_out_us(70,nCv,0,wrk,'b2stcx_sna_'//chns)
           wrk(:) = shi0_cx(:,0)+shi0_cx(:,1)*pl%ti+
      &             shi0_cx(:,2)*dv%ni(:,0)+
      &             shi0_cx(:,3)*pl%ti*dv%ni(:,0)
-          call my_out_us(70,nCv,wrk,'b2stcx_shi')
+          call my_out_us(70,nCv,0,wrk,'b2stcx_shi')
           wrk(:) = smo0_cx(:,0,is)+
      &             smo0_cx(:,1,is)*pl%ua(:,is)+
      &             smo0_cx(:,2,is)*pl%na(:,is)*mp*am(is)+
      &             smo0_cx(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-	  call my_out_us(70,nCv,wrk,'b2stcx_smq'//chns)
+	  call my_out_us(70,nCv,0,wrk,'b2stcx_smq'//chns)
         enddo
         if (allocated(shi0_cx)) then
           write(*,*) 'Deallocating arrays for cx'
@@ -443,34 +443,34 @@ csw 30sep2013, added cdpa in call, uadia
           write (chns,'(i3.3)') is
           do k=0,1
             write (chk,'(i1)') k
-            call my_out_us(70,nCv,sr%sna(1,k,is),
+            call my_out_us(70,nCv,0,sr%sna(1,k,is),
      &       'b2sral_sna'//chk//chns)
           enddo
           do k=0,3
             write (chk,'(i1)') k
-            call my_out_us(70,nCv,sr%smo(1,k,is),
+            call my_out_us(70,nCv,0,sr%smo(1,k,is),
      &       'b2sral_smo'//chk//chns)
-            call my_out_us(70,nCv,sr%smq(1,k,is),
+            call my_out_us(70,nCv,0,sr%smq(1,k,is),
      &       'b2sral_smq'//chk//chns)
           enddo
         enddo
         do k=0,3
           write (chk,'(i1)') k
-          call my_out_us(70,nCv,sr%she(1,k),'b2sral_she'//chk)
-          call my_out_us(70,nCv,sr%shi(1,k),'b2sral_shi'//chk)
-          call my_out_us(70,nCv,sr%sch(1,k),'b2sral_sch'//chk)
+          call my_out_us(70,nCv,0,sr%she(1,k),'b2sral_she'//chk)
+          call my_out_us(70,nCv,0,sr%shi(1,k),'b2sral_shi'//chk)
+          call my_out_us(70,nCv,0,sr%sch(1,k),'b2sral_sch'//chk)
 #ifdef WG_TODO
           if (use_astra.ne.0) then
-            call my_out_us(70,nCv,sheNb_astra(1,k),
+            call my_out_us(70,nCv,0,sheNb_astra(1,k),
      &       'b2sral_sheNb_astra'//chk)
-            call my_out_us(70,nCv,shiNb_astra(1,k),
+            call my_out_us(70,nCv,0,shiNb_astra(1,k),
      &       'b2sral_shiNb_astra'//chk)
           endif
 #endif
         enddo
         do k=0,1
           write (chk,'(i1)') k
-          call my_out_us(70,nCv,sr%sne(1,k),'b2sral_sne'//chk)
+          call my_out_us(70,nCv,0,sr%sne(1,k),'b2sral_sne'//chk)
         enddo
       endif                                                              !srv 30.06.08 }
 

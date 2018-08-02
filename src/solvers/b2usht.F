@@ -26,9 +26,8 @@
       real (kind=R8) ::
      *   cortt(nCv), corte(nCv), corti(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
-!WG_TODO: better definition of size aa still needed
       real (kind=R8) ::
-     *  flo0(nFc,0:1), con0(nFc,0:1,0:2), aa(9*nCv)
+     *  flo0(nFc,0:1), con0(nFc,0:1,0:2), aa(mpg%nCmxNv)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -219,21 +218,21 @@ cwdk radial contribution
       call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total')  !srv 18.05.02
 #ifdef WG_TODO
       if (iout.ne.0) then
-       call my_out_us(70,nCv,aa(-1,-1,-6),'b2usht_total_aam6')
-       call my_out_us(70,nCv,aa(-1,-1,-5),'b2usht_total_aam5')
-       call my_out_us(70,nCv,aa(-1,-1,-4),'b2usht_total_aam4')
-       call my_out_us(70,nCv,aa(-1,-1,-3),'b2usht_total_aam3')
-       call my_out_us(70,nCv,aa(-1,-1,-2),'b2usht_total_aam2')
-       call my_out_us(70,nCv,aa(-1,-1,-1),'b2usht_total_aam1')
-       call my_out_us(70,nCv,aa(-1,-1, 0),'b2usht_total_aam0')
-       call my_out_us(70,nCv,aa(-1,-1, 1),'b2usht_total_aap1')
-       call my_out_us(70,nCv,aa(-1,-1, 2),'b2usht_total_aap2')
-       call my_out_us(70,nCv,aa(-1,-1, 3),'b2usht_total_aap3')
-       call my_out_us(70,nCv,aa(-1,-1, 4),'b2usht_total_aap4')
-       call my_out_us(70,nCv,aa(-1,-1, 5),'b2usht_total_aap5')
-       call my_out_us(70,nCv,aa(-1,-1, 6),'b2usht_total_aap6')
-       call my_out_us(70,nCv,resht,'b2usht_resht')
-       call my_out_us(70,nCv,cortt,'b2usht_cortt')
+       call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_total_aam6')
+       call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_total_aam5')
+       call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_total_aam4')
+       call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2usht_total_aam3')
+       call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2usht_total_aam2')
+       call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2usht_total_aam1')
+       call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2usht_total_aam0')
+       call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2usht_total_aap1')
+       call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2usht_total_aap2')
+       call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2usht_total_aap3')
+       call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_total_aap4')
+       call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_total_aap5')
+       call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_total_aap6')
+       call my_out_us(70,nCv,0,resht,'b2usht_resht')
+       call my_out_us(70,nCv,0,cortt,'b2usht_cortt')
       endif
 #endif
 * ..electron temperature correction equation
@@ -315,21 +314,21 @@ cwdk radial contribution
       call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')     !srv 18.05.02
 #ifdef WG_TODO
       if (iout.ne.0) then
-       call my_out_us(70,nCv,aa(-1,-1,-6),'b2usht_he_aam6')
-       call my_out_us(70,nCv,aa(-1,-1,-5),'b2usht_he_aam5')
-       call my_out_us(70,nCv,aa(-1,-1,-4),'b2usht_he_aam4')
-       call my_out_us(70,nCv,aa(-1,-1,-3),'b2usht_he_aam3')
-       call my_out_us(70,nCv,aa(-1,-1,-2),'b2usht_he_aam2')
-       call my_out_us(70,nCv,aa(-1,-1,-1),'b2usht_he_aam1')
-       call my_out_us(70,nCv,aa(-1,-1, 0),'b2usht_he_aam0')
-       call my_out_us(70,nCv,aa(-1,-1, 1),'b2usht_he_aap1')
-       call my_out_us(70,nCv,aa(-1,-1, 2),'b2usht_he_aap2')
-       call my_out_us(70,nCv,aa(-1,-1, 3),'b2usht_he_aap3')
-       call my_out_us(70,nCv,aa(-1,-1, 4),'b2usht_he_aap4')
-       call my_out_us(70,nCv,aa(-1,-1, 5),'b2usht_he_aap5')
-       call my_out_us(70,nCv,aa(-1,-1, 6),'b2usht_he_aap6')
-       call my_out_us(70,nCv,reshe,'b2usht_reshe')
-       call my_out_us(70,nCv,corte,'b2usht_corte')
+       call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_he_aam6')
+       call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_he_aam5')
+       call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_he_aam4')
+       call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2usht_he_aam3')
+       call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2usht_he_aam2')
+       call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2usht_he_aam1')
+       call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2usht_he_aam0')
+       call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2usht_he_aap1')
+       call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2usht_he_aap2')
+       call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2usht_he_aap3')
+       call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_he_aap4')
+       call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_he_aap5')
+       call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_he_aap6')
+       call my_out_us(70,nCv,0,reshe,'b2usht_reshe')
+       call my_out_us(70,nCv,0,corte,'b2usht_corte')
       endif
 #endif
 * ..atom temperature correction equation
@@ -415,21 +414,21 @@ cwdk radial contribution
 
 #ifdef WG_TODO
       if (iout.ne.0) then
-       call my_out_us(70,nCv,aa(-1,-1,-6),'b2usht_hi_aam6')
-       call my_out_us(70,nCv,aa(-1,-1,-5),'b2usht_hi_aam5')
-       call my_out_us(70,nCv,aa(-1,-1,-4),'b2usht_hi_aam4')
-       call my_out_us(70,nCv,aa(-1,-1,-3),'b2usht_hi_aam3')
-       call my_out_us(70,nCv,aa(-1,-1,-2),'b2usht_hi_aam2')
-       call my_out_us(70,nCv,aa(-1,-1,-1),'b2usht_hi_aam1')
-       call my_out_us(70,nCv,aa(-1,-1, 0),'b2usht_hi_aam0')
-       call my_out_us(70,nCv,aa(-1,-1, 1),'b2usht_hi_aap1')
-       call my_out_us(70,nCv,aa(-1,-1, 2),'b2usht_hi_aap2')
-       call my_out_us(70,nCv,aa(-1,-1, 3),'b2usht_hi_aap3')
-       call my_out_us(70,nCv,aa(-1,-1, 4),'b2usht_hi_aap4')
-       call my_out_us(70,nCv,aa(-1,-1, 5),'b2usht_hi_aap5')
-       call my_out_us(70,nCv,aa(-1,-1, 6),'b2usht_hi_aap6')
-       call my_out_us(70,nCv,reshi,'b2usht_reshi')
-       call my_out_us(70,nCv,corti,'b2usht_corti')
+       call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_hi_aam6')
+       call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_hi_aam5')
+       call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_hi_aam4')
+       call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2usht_hi_aam3')
+       call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2usht_hi_aam2')
+       call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2usht_hi_aam1')
+       call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2usht_hi_aam0')
+       call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2usht_hi_aap1')
+       call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2usht_hi_aap2')
+       call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2usht_hi_aap3')
+       call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_hi_aap4')
+       call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_hi_aap5')
+       call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_hi_aap6')
+       call my_out_us(70,nCv,0,reshi,'b2usht_reshi')
+       call my_out_us(70,nCv,0,corti,'b2usht_corti')
       endif
 #endif
 

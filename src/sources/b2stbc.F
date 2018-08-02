@@ -35,7 +35,7 @@
       type (B2StateExt), intent (in) :: st_ext
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
-      type (B2SourceWork), intent (out) :: srw
+      type (B2SourceWork), intent (inout) :: srw
       logical wrong_flow                                                 !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -142,10 +142,10 @@
 *    ..test state
        call b2xvps (nCv, nFc, ns, pl, dv)
 *    ..test sign of chce, chci
-       call b2xvsg (nCv,co%chce(1,0)*geo%fcQalf(1,0),1,'chce0','.ge.')
-       call b2xvsg (nCv,co%chce(1,1)*geo%fcQalf(1,1),1,'chce1','.ge.')
-       call b2xvsg (nCv,co%chci(1,0)*geo%fcQalf(1,0),1,'chci0','.ge.')
-       call b2xvsg (nCv,co%chci(1,1)*geo%fcQalf(1,1),1,'chci1','.ge.')
+       call b2xvsg (nCv,co%chce(:,0)*geo%fcQalf(:,0),1,'chce0','.ge.')
+       call b2xvsg (nCv,co%chce(:,1)*geo%fcQalf(:,1),1,'chce1','.ge.')
+       call b2xvsg (nCv,co%chci(:,0)*geo%fcQalf(:,0),1,'chci0','.ge.')
+       call b2xvsg (nCv,co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
       endif
 *   ..test facdrift           !xpb
       call xertst (0.0_R8.le.minval(dv%facdrift) .and. 

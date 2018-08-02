@@ -12,7 +12,7 @@
      *  ev, te(1:nCv)
       type (B2Rates), intent (inout) :: rt
 *   ..output arguments (unspecified on entry)
-      type (B2RatesWork), intent (out) :: rtw
+      type (B2RatesWork), intent (inout) :: rtw
 
 *-----------------------------------------------------------------------
 *.documentation

@@ -314,8 +314,8 @@
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
         call diff(nCv, nFc, nVx, 0, geo, mpg, ua(1,is), wrkv, wrkf)
-        wrkf(:,0) = cvsa(:,0,is)/(geo%fcQalf(iFc,0)+eps)*wrkf(:,0)**2
-        wrkf(:,1) = cvsa(:,1,is)/(geo%fcQalf(iFc,1)+eps)*wrkf(:,1)**2
+        wrkf(:,0) = cvsa(:,0,is)/(geo%fcQalf(:,0)+eps)*wrkf(:,0)**2
+        wrkf(:,1) = cvsa(:,1,is)/(geo%fcQalf(:,1)+eps)*wrkf(:,1)**2
         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(1,0),visc(1,0))
         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(1,1),visc(1,1))
         do iCv = 1, mpg%nCi
@@ -434,14 +434,14 @@
 !WG_TODO       b2joule=0.0_R8
 !WG_TODO       b2sihs_joule=0.0_R8
        do iFc = 1, nFc
-         wrkf(:,0) = fch(iFc,0)*ehx(iFc)/
+         wrkf(iFc,0) = fch(iFc,0)*ehx(iFc)/
      &    ((geo%fcS(iFc)*geo%fcQalf(iFc,0) + eps)*
      &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))))
        enddo
        call intcell(nFc,nCv,mpg, mpg%intcellP, wrkf(1,0),wrkc)
        if (istyle_Joule_heating.eq.0) then
         do iFc = 1, nFc
-          wrkf(:,1) = fch(iFc,1)*ehy(iFc)/
+          wrkf(iFc,1) = fch(iFc,1)*ehy(iFc)/
      &     ((geo%fcS(iFc)*geo%fcQalf(iFc,1) + eps)*
      &      (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))))
         enddo
@@ -511,55 +511,55 @@
       if(iout.eq.1) then
         do k=0,3
           write (chk,'(i1)') k
-          call my_out_us(70,nCv,shedu(1,k),'b2sihs__shedu'//chk)
-          call my_out_us(70,nCv,shedd(1,k),'b2sihs__shedd'//chk)
-          call my_out_us(70,nCv,shefr(1,k),'b2sihs__shefr'//chk)
-!         call my_out_us(70,nCv,she0(1,k),'b2sihs__she'//chk)
+          call my_out_us(70,nCv,0,shedu(1,k),'b2sihs__shedu'//chk)
+          call my_out_us(70,nCv,0,shedd(1,k),'b2sihs__shedd'//chk)
+          call my_out_us(70,nCv,0,shefr(1,k),'b2sihs__shefr'//chk)
+!         call my_out_us(70,nCv,0,she0(1,k),'b2sihs__she'//chk)
 
-          call my_out_us(70,nCv,shidu(1,k),'b2sihs__shidu'//chk)
-          call my_out_us(70,nCv,shidd(1,k),'b2sihs__shidd'//chk)
-          call my_out_us(70,nCv,shifr(1,k),'b2sihs__shifr'//chk)
-          call my_out_us(70,nCv,shiva(1,k),'b2sihs__shiva'//chk)
-          call my_out_us(70,nCv,shivc(1,k),'b2sihs__shivc'//chk)
-!         call my_out_us(70,nCv,shi0(1,k),'b2sihs__shi'//chk)
+          call my_out_us(70,nCv,0,shidu(1,k),'b2sihs__shidu'//chk)
+          call my_out_us(70,nCv,0,shidd(1,k),'b2sihs__shidd'//chk)
+          call my_out_us(70,nCv,0,shifr(1,k),'b2sihs__shifr'//chk)
+          call my_out_us(70,nCv,0,shiva(1,k),'b2sihs__shiva'//chk)
+          call my_out_us(70,nCv,0,shivc(1,k),'b2sihs__shivc'//chk)
+!         call my_out_us(70,nCv,0,shi0(1,k),'b2sihs__shi'//chk)
         enddo
       endif
       if (iout_b2npht.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
      &                                            then
         wrks=she0(:,0)+she0(:,1)*te+
      &       she0(:,2)*ne + she0(:,3)*te*ne
-        call my_out_us(70,nCv,wrks,'b2sihs__she')
+        call my_out_us(70,nCv,0,wrks,'b2sihs__she')
         wrks=shest(:,0)+shest(:,1)*te+
      &       shest(:,2)*ne + shest(:,3)*te*ne
-        call my_out_us(70,nCv,shest,'b2sihs__shest')        !srv 17.12.13
+        call my_out_us(70,nCv,0,shest,'b2sihs__shest')        !srv 17.12.13
         wrks=shedu(:,0)+shedu(:,1)*te+
      &       shedu(:,2)*ne + shedu(:,3)*te*ne
-        call my_out_us(70,nCv,wrks,'b2sihs__shedu')
+        call my_out_us(70,nCv,0,wrks,'b2sihs__shedu')
         wrks=shedd(:,0)+shedd(:,1)*te+
      &       shedd(:,2)*ne + shedd(:,3)*te*ne
-        call my_out_us(70,nCv,wrks,'b2sihs__shedd')
+        call my_out_us(70,nCv,0,wrks,'b2sihs__shedd')
         wrks=shefr(:,0)+shefr(:,1)*te+
      &  shefr(:,2)*ne + shefr(:,3)*te*ne
-        call my_out_us(70,nCv,wrks,'b2sihs__shefr')
+        call my_out_us(70,nCv,0,wrks,'b2sihs__shefr')
 
         wrks=shi0(:,0)+shi0(:,1)*ti+
      &       shi0(:,2)*ni(:,0)+shi0(:,3)*ti*ni(:,0)
-        call my_out_us(70,nCv,wrks,'b2sihs__shi')
+        call my_out_us(70,nCv,0,wrks,'b2sihs__shi')
         wrks=shidu(:,0)+shidu(:,1)*ti+
      &       shidu(:,2)*ni(:,0)+shidu(:,3)*ti*ni(:,0)
-        call my_out_us(70,nCv,wrks,'b2sihs__shidu')
+        call my_out_us(70,nCv,0,wrks,'b2sihs__shidu')
         wrks=shidd(:,0)+shidd(:,1)*ti+
      &       shidd(:,2)*ni(:,0)+shidd(:,3)*ti*ni(:,0)
-        call my_out_us(70,nCv,wrks,'b2sihs__shidd')
+        call my_out_us(70,nCv,0,wrks,'b2sihs__shidd')
         wrks=shifr(:,0)+shifr(:,1)*ti+
      &       shifr(:,2)*ni(:,0)+shifr(:,3)*ti*ni(:,0)
-        call my_out_us(70,nCv,wrks,'b2sihs__shifr')
+        call my_out_us(70,nCv,0,wrks,'b2sihs__shifr')
         wrks=shiva(:,0)+shiva(:,1)*ti+
      &       shiva(:,2)*ni(:,0)+shiva(:,3)*ti*ni(:,0)
-        call my_out_us(70,nCv,wrks,'b2sihs__shiva')
+        call my_out_us(70,nCv,0,wrks,'b2sihs__shiva')
         wrks=shivc(:,0)+shivc(:,1)*ti+
      &       shivc(:,2)*ni(:,0)+shivc(:,3)*ti*ni(:,0)
-        call my_out_us(70,nCv,wrks,'b2sihs__shivc')
+        call my_out_us(70,nCv,0,wrks,'b2sihs__shivc')
       endif
       ncall = ncall+1
       call subend ()

@@ -107,8 +107,8 @@ cwdk       viscosity, and will be zero if cvsb is zero
 
       if(iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then
        write (chns,'(i3.3)') isb
-       call my_out_us(70,nFc,flv(1,0),'b2urmo_etaPat_graduax'//chns)
-       call my_out_us(70,nFc,flv(1,1),'b2urmo_etaPat_graduay'//chns)
+       call my_out_us(70,nFc,1,flv(1,0),'b2urmo_etaPat_graduax'//chns)
+       call my_out_us(70,nFc,1,flv(1,1),'b2urmo_etaPat_graduay'//chns)
       endif      
 
 * ..compute residual

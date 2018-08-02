@@ -446,20 +446,20 @@ cxpb Corrected for dimensionality
       if(iout.ne.0) then                                            !srv 10.11.09 {
         do is = 0,ns-1
           write (chns,'(i3.3)') is
-          call my_out_us(70,nCv,dna0(1,is),'b2tqna_in_dna0'//chns)
-          call my_out_us(70,nCv,dpa0(1,is),'b2tqna_in_dpa0'//chns)
+          call my_out_us(70,nCv,0,dna0(1,is),'b2tqna_in_dna0'//chns)
+          call my_out_us(70,nCv,0,dpa0(1,is),'b2tqna_in_dpa0'//chns)
           wrk0=vsa0(:,is)/(mp*am(is)*pl%na(:,is))
-          call my_out_us(70,nCv,wrk0,'b2tqna_in_vsa0'//chns)
-          call my_out_us(70,nCv,vla0(1,0,is),'b2tqna_in_vla0x'//chns)
-          call my_out_us(70,nCv,vla0(1,1,is),'b2tqna_in_vla0y'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2tqna_in_vsa0'//chns)
+          call my_out_us(70,nCv,0,vla0(1,0,is),'b2tqna_in_vla0x'//chns)
+          call my_out_us(70,nCv,0,vla0(1,1,is),'b2tqna_in_vla0y'//chns)
           wrk0=hcib(:,is)/pl%na(:,is)
-          call my_out_us(70,nCv,wrk0,'b2tqna_in_hcib'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2tqna_in_hcib'//chns)
         enddo
-!       call my_out_us(70,nCv,hci0,'b2tqna_in_hci0')
+!       call my_out_us(70,nCv,0,hci0,'b2tqna_in_hci0')
         wrk0=hce0/dv%ne
-        call my_out_us(70,nCv,wrk0,'b2tqna_in_hce0')
-        call my_out_us(70,nCv,sig0,'b2tqna_in_sig0')
-        call my_out_us(70,nCv,alf0,'b2tqna_in_alf0')
+        call my_out_us(70,nCv,0,wrk0,'b2tqna_in_hce0')
+        call my_out_us(70,nCv,0,sig0,'b2tqna_in_sig0')
+        call my_out_us(70,nCv,0,alf0,'b2tqna_in_alf0')
       endif                                                           !srv 10.11.09 }
 #ifdef WG_TODO
       if(user_transport.eq.0) then
@@ -589,20 +589,20 @@ cdpc
       if(iout_b2wdat.eq.4) then                                            !srv 10.11.09 {
         do is = 0,ns-1
           write (chns,'(i3.3)') is
-          call my_out_us(70,nCv,dna0(1,is),'b2tqna_dna0'//chns)
-          call my_out_us(70,nCv,dpa0(1,is),'b2tqna_dpa0'//chns)
+          call my_out_us(70,nCv,0,dna0(1,is),'b2tqna_dna0'//chns)
+          call my_out_us(70,nCv,0,dpa0(1,is),'b2tqna_dpa0'//chns)
           wrk0 = vsa0(:,is)/(mp*am(is)*pl%na(:,is))
-          call my_out_us(70,nCv,wrk0,'b2tqna_vsa0'//chns)
-!          call my_out_us(70,nCv,vla0(1,0,is),'b2tqna_vla0x'//chns)
-          call my_out_us(70,nCv,vla0(1,1,is),'b2tqna_vla0y'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2tqna_vsa0'//chns)
+!          call my_out_us(70,nCv,0,vla0(1,0,is),'b2tqna_vla0x'//chns)
+          call my_out_us(70,nCv,0,vla0(1,1,is),'b2tqna_vla0y'//chns)
           wrk0 = hcib(:,is)/pl%na(:,is)
-          call my_out_us(70,nCv,wrk0,'b2tqna_hcib'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2tqna_hcib'//chns)
         enddo
-!        call my_out_us(70,nCv,hci0,'b2tqna_in_hci0')
+!        call my_out_us(70,nCv,0,hci0,'b2tqna_in_hci0')
         wrk0=hce0/dv%ne
-        call my_out_us(70,nCv,wrk0,'b2tqna_hce0')
-        call my_out_us(70,nCv,sig0,'b2tqna_sig0')
-        call my_out_us(70,nCv,alf0,'b2tqna_alf0')
+        call my_out_us(70,nCv,0,wrk0,'b2tqna_hce0')
+        call my_out_us(70,nCv,0,sig0,'b2tqna_sig0')
+        call my_out_us(70,nCv,0,alf0,'b2tqna_alf0')
       endif                                                           !srv 10.11.09 }
 cdpc
 * ..return
@@ -615,6 +615,7 @@ cdpc
 
       end subroutine b2tqna
 
+#ifdef WG_TODO
       subroutine set_transport(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
      &  hy, qz, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
      &  wrk0)
@@ -3492,5 +3493,5 @@ c      close(14)
       deallocate(r, f, b, c, d)
 
       end subroutine set_profile                                      !srv 01.03.07 }
-
+#endif
 

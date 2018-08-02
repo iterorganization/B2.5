@@ -50,7 +50,7 @@
       type (B2RatesWork), intent (in) :: rtw
       type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
-      type (B2SourceWork), intent (out) :: srw
+      type (B2SourceWork), intent (inout) :: srw
       real (kind=R8) ::
      &  shi0_ff(nCv,0:nscx-1),
      &  tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1), tphye(0:ns-1),
@@ -337,7 +337,8 @@
 #endif
             call recycle(
      &           species_start(istra), species_end(istra),
-     &           iRc1, iRc2, iFc, mpg%rcFcOr(iRc1), Phi_app, lcore)
+     &           iRc1, iRc2, iFc, mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1),
+     &           Phi_app, lcore)
           enddo
 
         endif       ! crcstra(istra)
@@ -412,7 +413,7 @@
      &       srw%smo0(:,1,is)*pl%ua(:,is)+
      &       srw%smo0(:,2,is)*pl%na(:,is)*mp*am(is)+
      &       srw%smo0(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-	call my_out_us(70,nCv,wrk0,'b2stbr_phys_smo'//chns)
+	call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_smo'//chns)
        enddo
       endif
       if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
@@ -424,7 +425,7 @@
 !     &                       'b2stbr_phys_sna'//chk//chns)
 !	  enddo
         wrk0=srw%sna0(:,0,is)+srw%sna0(:,1,is)*pl%na(:,is)
-	call my_out_us(70,nCv,wrk0,'b2stbr_phys_sna'//chns)
+	call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_sna'//chns)
        enddo
       endif
       if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
@@ -436,15 +437,15 @@
 !	 enddo
          wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
      &        srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
-	 call my_out_us(70,nCv,wrk0,'b2stbr_phys_she')
+	 call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_she')
          wrk0=srw%shi0(:,0)+srw%shi0(:,1)*pl%ti+
      &        srw%shi0(:,2)*dv%ni(:,0)+srw%shi0(:,3)*pl%ti*dv%ni(:,0)
-	 call my_out_us(70,nCv,wrk0,'b2stbr_phys_shi')
+	 call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_shi')
       endif
       if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
          wrk0=srw%sch0(:,0)+srw%sch0(:,1)*pl%po+
      &        srw%sch0(:,2)*dv%ne+srw%sch0(:,3)*pl%po*dv%ne
-	 call my_out_us(70,nCv,wrk0,'b2stbr_phys_sch')
+	 call my_out_us(70,nCv,0,wrk0,'b2stbr_phys_sch')
       endif
       if(iout.eq.1) then
         open(70,file='t_files.dat')
@@ -462,6 +463,7 @@
         close(70)
       endif                                                            !srv 11.07.05 }
 
+#ifdef WG_TODO
       if(reflection_max.gt.1.0_R8 .or. 
      .  ((main_call.and.output.ge.1).or.output.gt.1))
      1 write(*,*) 'Maximum reflection coefficient ', reflection_max
@@ -470,6 +472,7 @@
       if(redep_max.gt.0.0_R8 .and. (yself_max.ge.1.0_R8 .or. 
      .  ((main_call.and.output.ge.1).or.output.gt.1)))
      . write(*,*) 'Maximum self-sputtering coefficient ', yself_max
+#endif
 * ..return
       ncall = ncall + 1
       call subend ()

@@ -469,7 +469,7 @@ c   extra call at this place within internal iteration)
 csw 11oct2012 added check on coriolis force (taken from b2news())
       ier0=0
       call b2npmo (nCv, nFc, nVx, ns, ismain, geo, mpg,
-     &  ncall, solving, rxf1, pl, dv, rt, co, sr, st_ext,
+     &  ncall, solving(1), rxf1, pl, dv, rt, co, sr, st_ext,
      &  ier0)
       call xertst (ier0.eq.0, 'error return from b2npmo') 
 *   ..set nep
@@ -560,22 +560,22 @@ csw 16oct2012 init ier0
       call nancheck(nCv, dv%ne, 'b2news(ne): after call to b2xpne')
       call b2xpni (nCv, ns, pl%na, dv%ni)
       call b2xpne (nCv, ns, rt%rz2, pl%na, st_ext%ne2, dv%ne2)  !srv 11.07.99
-      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz)                       !srv 18.01.02
+      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz,st_ext)                       !srv 18.01.02
 
 *   ..compute ceqp                                                       !srv 03.07.03 {
       call b2xpnm (nCv, ns, rt%rz2, am, pl%na, wrk0)
       call b2treq (nCv, geo%cvVol, pl%te, pl%ti, dv%ne, dv%ni, wrk0, 
-     %  dv%lnlam, co%ceqp)                                               !srv 03.07.03 }
+     %  dv%lnlam, st_ext, co%ceqp)                                       !srv 03.07.03 }
       if(iout .ne. 0) then                                               !srv 12.07.05 {
         do is = 0,ns-1
           write(charns,'(i3.3)') is
-          call my_out_us(70,nCv,pl%na(1,is),'b2news__na'//charns)
+          call my_out_us(70,nCv,0,pl%na(1,is),'b2news__na'//charns)
         enddo
-        call my_out_us(70,nCv,dv%ni(1,0),'b2news__ni0')
-        call my_out_us(70,nCv,dv%ni(1,1),'b2news__ni1')
-        call my_out_us(70,nCv,dv%ne,'b2news__ne')
-        call my_out_us(70,nCv,pz,'b2news__pz')
-        call my_out_us(70,nCv,co%ceqp,'b2news__ceqp')
+        call my_out_us(70,nCv,0,dv%ni(1,0),'b2news__ni0')
+        call my_out_us(70,nCv,0,dv%ni(1,1),'b2news__ni1')
+        call my_out_us(70,nCv,0,dv%ne,'b2news__ne')
+        call my_out_us(70,nCv,0,pz,'b2news__pz')
+        call my_out_us(70,nCv,0,co%ceqp,'b2news__ceqp')
       endif                                                              !srv 12.07.05 }
 
 
@@ -590,7 +590,7 @@ csw 16oct2012 init ier0
      &       dv%ne, wrk0)
           call b2saxpy (nCv, 1.0_R8, wrk0, 1, pl%po, 1)
           if(iout .ne. 0) then                                           !srv 12.07.05 {
-            call my_out_us(70,nCv,pl%po,'b2nxdp_po')
+            call my_out_us(70,nCv,0,pl%po,'b2nxdp_po')
           endif                                                          !srv 12.07.05 }
         endif
 *   ..iterate several times on the potential equation
@@ -693,8 +693,8 @@ cwdk of potential equation...
           call xertst (ier0.eq.0, 'error return from b2nppo')
           if(iout .ne. 0) then                                           !srv 12.07.05 {
             write (charns,'(i3.3)') i
-            call my_out_us(70,nCv,dv%respo,'b2news__respo'//charns)
-            call my_out_us(70,nCv,pl%po,'b2news__po'//charns)
+            call my_out_us(70,nCv,0,dv%respo,'b2news__respo'//charns)
+            call my_out_us(70,nCv,0,pl%po,'b2news__po'//charns)
           endif                                                          !srv 12.07.05 }
           if(t0.gt.potok.and.(i.eq.potit/3.or.i.eq.potit*2/3)) then      !srv 06.07.00
             if (vis_per.eq.0.0e0_R8) then

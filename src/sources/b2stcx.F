@@ -323,7 +323,7 @@ ctmp.dpc
           write (chns,'(i3.3)') is
           do k=0,1
             write (chk,'(i1)') k
-            call my_out_us(70,nCv,smq0(1,k,is),
+            call my_out_us(70,nCv,0,smq0(1,k,is),
      &        'b2stcx_smq'//chk//'_'//chcx//'_'//chns)
            enddo
         enddo

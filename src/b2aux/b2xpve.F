@@ -43,9 +43,9 @@
 *   ..compute ve, electron parallel velocity                            !iyv 19.11.13 {
       wght = 1.0_R8
       pe = ne*te
-      call grad_p(nCv, nFc, 0, geo, mpg, po, dumm, gpop)
-      call grad_p(nCv, nFc, 0, geo, mpg, pe, dumm, gpep)
-      call grad_p(nCv, nFc, 0, geo, mpg, te, dumm, gtep)
+      call grad_p(nCv, nFc, mpg%nVx, 0, geo, mpg, po, dumm, gpop)
+      call grad_p(nCv, nFc, mpg%nVx, 0, geo, mpg, pe, dumm, gpep)
+      call grad_p(nCv, nFc, mpg%nVx, 0, geo, mpg, te, dumm, gtep)
       call intface(nCv,nFc,mpg%fcCv,wght,ne,nef)
       wrksig = -gpop + gpep/(qe*nef)
       wrkalf =  gtep

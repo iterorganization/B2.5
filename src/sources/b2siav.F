@@ -336,23 +336,23 @@
 
 #ifdef WG_TODO
       if (iout.ne.0) then                                           !srv 17.06.02 {
-        call my_out_us(70,nCv,alpha1,'b2siav_alpha1')
-        call my_out_us(70,nCv,kt_neo,'b2siav_kt_neo')
-        call my_out_us(70,nCv,tauia1,'b2siav_tauia1')
+        call my_out_us(70,nCv,0,alpha1,'b2siav_alpha1')
+        call my_out_us(70,nCv,0,kt_neo,'b2siav_kt_neo')
+        call my_out_us(70,nCv,0,tauia1,'b2siav_tauia1')
         write (chns,'(i3.3)') isb
         do k=0,3
           write (chk,'(i1)') k
-          call my_out_us(70,nCv,smbvv(1,k),'b2siav_smovv'//chk//chns)
-          call my_out_us(70,nCv,smbvh(1,k),'b2siav_smovh'//chk//chns)
+          call my_out_us(70,nCv,0,smbvv(1,k),'b2siav_smovv'//chk//chns)
+          call my_out_us(70,nCv,0,smbvh(1,k),'b2siav_smovh'//chk//chns)
         enddo
         wrks=smbvv(:,0)+smbvv(:,1)*ub(:)+
      &       smbvv(:,2)*nb(:)*mb+smbvv(:,3)*ub(:)*nb(:)*mb
-        call my_out_us(70,nCv,wrks,'b2siav_smovv'//chns)
+        call my_out_us(70,nCv,0,wrks,'b2siav_smovv'//chns)
         wrks=smbvh(:,0)+smbvh(:,1)*ub(:)+
      &       smbvh(:,2)*nb(:)*mb+smbvh(:,3)*ub(:)*nb(:)*mb
-        call my_out_us(70,nCv,wrks,'b2siav_smovh'//chns)
-        call my_out_us(70,nFc,cvsbhz(1,0),'b2siav_cvsbhzx'//chns)
-        call my_out_us(70,nFc,cvsbhz(1,1),'b2siav_cvsbhzy'//chns)
+        call my_out_us(70,nCv,0,wrks,'b2siav_smovh'//chns)
+        call my_out_us(70,nFc,1,cvsbhz(1,0),'b2siav_cvsbhzx'//chns)
+        call my_out_us(70,nFc,1,cvsbhz(1,1),'b2siav_cvsbhzy'//chns)
       endif                                                          !srv 17.06.02 }
 #endif
 cdjm Jan2017 Store linearised sources for balance
