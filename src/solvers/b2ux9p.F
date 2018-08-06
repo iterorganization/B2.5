@@ -204,7 +204,8 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_openmp
-      use b2mod_ma28_for_9diag, only: iasave_omp,
+      use b2mod_ma28_for_9diag
+     &    , only: iasave_omp,
      &    jasave_omp, indexes_omp, loop2_over,
      &    storage_9_initialized, nz_omp
       implicit none

@@ -21,7 +21,8 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
-      use b2mod_ma28_for_9diag, only:  loop2_over
+      use b2mod_ma28_for_9diag
+     &    , only:  loop2_over
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nxtl, nxtr
