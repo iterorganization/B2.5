@@ -479,7 +479,6 @@
          iasave_omp = iasave
          jasave_omp = jasave
          indexes_omp = indexes
-         a1h_omp = a
          nz_omp = k
          storage_9_initialized = .true.
         endif
