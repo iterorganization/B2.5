@@ -204,6 +204,9 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_openmp
+      use b2mod_ma28_for_9diag, only: iasave_omp,
+     &    jasave_omp, indexes_omp, loop2_over,
+     &    storage_9_initialized, nz_omp
       implicit none
 *  ..input
       integer nx, ny, nnz
@@ -259,6 +262,19 @@
       n = (nx+2)*(ny+2)
 
       if (lfirst) then
+       if (loop2_over .and. storage_9_initialized) then
+         ! in this case an omp thread has already initialized the
+         ! the indexes array, we will use that
+         jasave = jasave_omp
+         iasave = iasave_omp
+         indexes = indexes_omp
+         k = nz_omp
+         do i=1,k
+           a(i) = aa9(indexes(1,i), indexes(2,i), indexes(3,i))
+	 end do
+	 ia= iasave
+         ja = jasave
+       else
         indexes=0
         nxp2=nx+2
         k=0
@@ -457,7 +473,18 @@
           iasave(i)=ia(i)
           jasave(i)=ja(i)
         enddo                                              !sv 15.05.07 }
-        lfirst=.false.
+!$OMP critical (storage9)
+        if (.not. storage_9_initialized) then
+         iasave_omp = iasave
+         jasave_omp = jasave
+         indexes_omp = indexes
+         a1h_omp = a
+         nz_omp = k
+         storage_9_initialized = .true.
+        endif
+!$OMP end critical (storage9)
+       endif
+       lfirst=.false.
 
       else
 !       ia=iasave                                           !sv 15.05.07 {

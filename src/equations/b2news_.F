@@ -21,6 +21,7 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
+      use b2mod_ma28_for_9diag, only:  loop2_over
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nxtl, nxtr
@@ -520,9 +521,10 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 #endif
 !!FR Possible loop (2) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none)
-!$OMP& PRIVATE(ier0, solvedum, solvedm2, ix, iy, new_matrix)
-!$OMP& PRIVATE(ireg)
+!$OMP& PRIVATE(ier0, solvedum, solvedm2, ix, iy, ireg)
+!$OMP& LASTPRIVATE(new_matrix)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
+!$OMP& LASTPRIVATE(pb, flob, conb)
 !$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb)
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
 !$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
@@ -655,6 +657,7 @@ csw 16oct2012 init ier0
       call timer%stop("parallel")
 #endif
 #endif
+      loop2_over = .true.
 *      ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
      &  te, po, vedia, veecrb)

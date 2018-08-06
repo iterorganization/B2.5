@@ -36,7 +36,7 @@ c ma28 common blocks
       integer ndrop,maxit,noiter,nsrch,istart,ibig
       common /ma28hdc/ rtol,themax,big,dxmax,errmax,dres,cgce,
      1 ndrop,maxit,noiter,nsrch,istart,ibig
-!OMP THREADPRIVATE(/ma28fdc/, /ma28hdc/)
+!$OMP THREADPRIVATE(/ma28fdc/, /ma28hdc/)
 c
 
 *  -- PROCEDURES --
