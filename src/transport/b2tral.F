@@ -88,6 +88,7 @@
       integer ix, iy, is, n2, ncall, pot_eq, no_current, no_solve, is0
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
       character(3) chns, chns0                                          !srv 17.06.08
@@ -141,6 +142,8 @@
         call ipgeti ('b2tral_iout', iout)                         !srv 17.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                  !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
@@ -334,7 +337,8 @@
        call my_out(70,nx,ny,calf(-1,-1,1),'calfy')
       endif                                                          !srv 17.06.08 }
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                !srv 11.09.09 {
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
+     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0) then               !srv 11.09.09 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         call my_out(70,nx,ny,cdna(-1,-1,0,is),'b2tral_cdnax'//chns)

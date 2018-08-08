@@ -1010,9 +1010,12 @@ c outer target
           hlp_ppwo=max(hlp_ppwo,hlp)
           hlp_s=hlp_s+s
         end do !}
-        js=ltns(nncut)+nnlimi
-        hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
-        hlp_ppwo=hlp_ppwo+(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
+        js=ltns(nncut*2)+nnlimi  ! iyv 15.05.2015
+        if (ltns(nncut*2).ne.0) then
+          hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
+          hlp_ppwo=hlp_ppwo+(wldnek(js,0)+
+     .                       wldnep(js,0))*hlp_neu_peak/hlp_s
+        end if
 
         if(double_null) then !{
           hlp_pwou=0.0_R8

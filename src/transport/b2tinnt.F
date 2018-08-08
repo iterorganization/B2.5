@@ -337,7 +337,7 @@
                   if(leftix(ix,iy).ne.-2) then
                     fnan(ix,iy,0,is0)=fna(ix,iy,0,is0)/gs(ix,iy,0)
                     if (area_fix.ge.1)
-     >               fnan(ix,iy,0,is0)=fna(ix,iy,0,is0)/qc(ix,iy)
+     >               fnan(ix,iy,0,is0)=fnan(ix,iy,0,is0)/qc(ix,iy)
                   else
                     fnan(ix,iy,0,is0)=0.0_R8
                   endif

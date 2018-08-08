@@ -320,16 +320,11 @@ c      if(nidim .ne. 2) call line(2)
           end if
           if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
           if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
-          if(values(11).ne.init_value .and.
-     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
-            xmin=values(11)
+          if(values(3).ne.values(4)) then
+            xmin=values(3)
+            xmax=values(4)
           else
             xmin=min(wrk(iystart),wrk(iyend))
-          endif
-          if(values(12).ne.init_value .and.
-     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
-            xmax=values(12)
-          else
             xmax=max(wrk(iystart),wrk(iyend))
           endif
           if(xmin.eq.xmax) then
@@ -364,6 +359,8 @@ c      if(nidim .ne. 2) call line(2)
           endif
 #endif
           do iy=iystart,iyend-1
+            if(wrk(iy+1).lt.xmin) cycle
+            if(wrk(iy).gt.xmax) cycle
             call lined_d(
      1       wrk(iy),
      2       min(lmax,max(lmin,work(ix,iy,is,iwrk))),

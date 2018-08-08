@@ -817,8 +817,10 @@ c     fni_32, fni_52, fne_32, fne_52,
 c     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 c 23: fht definition changed to 5/2 formulation
+c 24: removed drift velocity contributions from kinrgy
+c 25: debugged indexing error for eneutrad
 
-      dbversion=23
+      dbversion=25
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -1387,7 +1389,7 @@ c
         call mds_put_double_rz('\TOP.SNAPSHOT:EMISS','ph.m^-3.s^-1',
      1   nx+2,ny+2,temp,'')
         forall (ix=-1:nx,iy=-1:ny,is=0:natmi-1)
-     1   tmp(ix,iy,is)=eneutrad(ix+1,iy+1,is+1,1)
+     1   tmp(ix,iy,is)=eneutrad(ix+1,iy+1,is+1,0)
         call mds_put_double_rzns('\TOP.SNAPSHOT:ENEUTRAD','W',nx+2,
      1   ny+2,natmi,tmp,'TEXTAN','')
       endif

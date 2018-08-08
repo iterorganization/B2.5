@@ -19,7 +19,9 @@
      *   solveei(:),
      *   solveet(:),
      *   last_solve_5(:),
+     *   last_solve_7(:),                                 !srv 02.04.18
      *   last_solve_9(:)
+     *   last_solve_11(:)                                 !srv 02.04.18
 #else
 #     include "DIMENSIONS.F"
       integer NSDMAX
@@ -37,7 +39,9 @@
       logical, save :: solveei(0:NNREGMAX)
       logical, save :: solveet(0:NNREGMAX)
       logical, save :: last_solve_5(0:NNREGMAX)
+      logical, save :: last_solve_7(0:NNREGMAX)          !srv 02.04.18
       logical, save :: last_solve_9(0:NNREGMAX)
+      logical, save :: last_solve_11(0:NNREGMAX)         !srv 02.04.18
 #endif
 !$OMP THREADPRIVATE (last_solve_5, last_solve_9)
       real (kind=R8), save :: corr_core_dt               ! IYS 19.12.2017 
@@ -82,7 +86,9 @@
       allocate(solveei(0:nnreg(0)))
       allocate(solveet(0:nnreg(0)))
       allocate(last_solve_5(0:nnreg(0)))
+      allocate(last_solve_7(0:nnreg(0)))        !srv 02.04.18
       allocate(last_solve_9(0:nnreg(0)))
+      allocate(last_solve_11(0:nnreg(0)))       !srv 02.04.18
 #else
       call xertst (nsd.le.nsdmax,
      1 'increase DEF_NSD in DIMENSIONS.F')
@@ -106,7 +112,9 @@
       solveei=.true.
       solveet=.true.
       last_solve_5=.true.
+      last_solve_7=.true.                                            !srv 02.04.18
       last_solve_9=.true.
+      last_solve_11=.true.                                           !srv 02.04.18
       numerics_filename='b2.numerics.parameters'
       numerics_time_mod=0.0_R8
       numerics_time_switch=0.0_R8
@@ -136,7 +144,9 @@
       deallocate(solveei)
       deallocate(solveet)
       deallocate(last_solve_5)
+      deallocate(last_solve_7)                                          !srv 02.04.18
       deallocate(last_solve_9)
+      deallocate(last_solve_11)                                         !srv 02.04.18
 #endif
       b2mod_numerics_allocated = .false.
       return

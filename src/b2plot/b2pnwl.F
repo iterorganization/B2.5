@@ -9,6 +9,7 @@ c======================================================================
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2cmfs
+      use b2mod_indirect
       use b2mod_constants
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
@@ -48,6 +49,13 @@ c*** Set the default values
       nwldprt=0
 c*** Read the data from dg files
       call b2pinp(*999)
+c*** Re-order jedge data if less than ntrgsx targets
+      if (ntrgsa.lt.ntrgsx) then
+        do i=1,ntrgsa
+          jedge(ntrgsa+i)=jedge(ntrgsx+i)
+          jedge(ntrgsx+i)=0
+        end do
+      end if
 c
 c*** Convert the input wall coordinates into double precision
 c*** and scale them to meters.
@@ -245,18 +253,41 @@ c        write(lun,'(1p,e16.3)') a
 c        close(lun)
 c      end if
       write(*,*) '*** Target loading with neutrals ***'
-      write(*,700) 'Total power released',
+      if (ltns(2).eq.0) then
+       write(*,700) 'Total power released',
+     ,              wldnek(nlim+ltns(1),0)+wldnep(nlim+ltns(1),0)
+       write(*,700) 'incl. potential energy',wldnep(nlim+ltns(1),0)
+       do i=1,natmi
+        write(*,710) text_an(i),' atom flux',wldna(nlim+ltns(1),i,0)
+        write(*,710) text_an(i),' average energy',
+     ,                                       ewlda(nlim+ltns(1),i,0)
+       end do
+       if(ic .gt. 0) then
+        wwyn=wldra(nlim+ltns(1),ic,0)+wldpa(nlim+ltns(1),ic,0)
+     .      -wldna(nlim+ltns(1),ic,0)
+        do i=1,nmoli
+          if (mlcmp(ic,i).gt.0) then
+            wwyn=wwyn+mlcmp(ic,i)*(wldrm(nlim+ltns(1),i,0)
+     .                            +wldpm(nlim+ltns(1),i,0)
+     .                            -wldnm(nlim+ltns(1),i,0))
+          end if
+        end do
+        write(*,700) 'Net   C erosion',wwyn
+        write(*,700) 'Gross C erosion',wldspt(nlim+ltns(1),0)
+       end if
+      else
+       write(*,700) 'Total power released',
      ,              wldnek(nlim+ltns(1),0)+wldnep(nlim+ltns(1),0),
      ,              wldnek(nlim+ltns(2),0)+wldnep(nlim+ltns(2),0)
-      write(*,700) 'incl. potential energy',wldnep(nlim+ltns(1),0),
-     ,                                      wldnep(nlim+ltns(2),0)
-      do i=1,natmi
+       write(*,700) 'incl. potential energy',wldnep(nlim+ltns(1),0),
+     ,                                       wldnep(nlim+ltns(2),0)
+       do i=1,natmi
         write(*,710) text_an(i),' atom flux',
      ,               wldna(nlim+ltns(1),i,0),wldna(nlim+ltns(2),i,0)
         write(*,710) text_an(i),' average energy',
      ,               ewlda(nlim+ltns(1),i,0),ewlda(nlim+ltns(2),i,0)
-      end do
-      if(ic .gt. 0) then
+       end do
+       if(ic .gt. 0) then
         wwyn=wldra(nlim+ltns(1),ic,0)+wldpa(nlim+ltns(1),ic,0)
      .      -wldna(nlim+ltns(1),ic,0)
         wwyg=wldra(nlim+ltns(2),ic,0)+wldpa(nlim+ltns(2),ic,0)
@@ -274,6 +305,7 @@ c      end if
         write(*,700) 'Net   C erosion',wwyn,wwyg
         write(*,700) 'Gross C erosion',wldspt(nlim+ltns(1),0),
      .                                 wldspt(nlim+ltns(2),0)
+       end if
       end if
 c     if (j_h_at(1).ne.0) then
 c      print 700,'Hydrogen  atom flux',wldna(nlim+ltns(1),j_h_at(1),0),
@@ -329,6 +361,7 @@ c***  leirlis : the lists themselves (Eirene numbering)
 c
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_indirect
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -359,7 +392,12 @@ c----------------------------------------------------------------------
 c
 cc%%%
 c      print *,'b2pwsrt',nwldprt
-c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      if (nnreg(0).lt.8) then
+c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      else
+c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
+c        print '(a,4i6)','jedgo1, jedgo2, jedgo3, jedgo4 =',jedge(5:8)
+c      end if
 c      do il=1,nwldprt
 c        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
 c        print '(1x,20i4)',(lwldlis(ii,il),ii=1,nwldlis(il))
@@ -469,7 +507,10 @@ c*** No connection found
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
               else if (j.eq.jedge(1).or.j.eq.jedge(2).or.
-     .                 j.eq.jedge(3).or.j.eq.jedge(4)) then
+     .                 j.eq.jedge(3).or.j.eq.jedge(4).or.
+     .               ((j.eq.jedge(5).or.j.eq.jedge(6).or.
+     .                 j.eq.jedge(7).or.j.eq.jedge(8)).and.
+     .                 nnreg(0).eq.8)) then
                 k = 1
                 found = .false.
                 do while (.not.found .and. k.le.nlim)

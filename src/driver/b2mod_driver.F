@@ -25,6 +25,7 @@
       use b2mod_user_namelist
       use b2mod_ma28_for_7diag
       use b2mod_ma28_for_9diag
+      use b2mod_ma28_for_11diag                                         !srv 02.04.18
       use b2mod_transport_models
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
@@ -87,7 +88,7 @@
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
-      real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
+      real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
@@ -1106,8 +1107,8 @@ c     &   'faulty internal parameter density_rescale')
        call ipgeti ('b2mndr_astra',use_astra)
 * change atomic physics for coupling to Eirene    ! DPC 1999.06.28
        call ipgeti ('b2mndr_eirene', use_eirene)
-       call ipgeti ('eirene_savef30', save_f30)   !srv 01.03.10
-       call ipgeti ('eirene_savef31', save_f31)   !srv 01.03.10
+       call ipgeti ('eirene_savef30', save_f30)                    !srv 01.03.10
+       call ipgeti ('eirene_savef31', save_f31)                    !srv 01.03.10
        call ipgetr ('b2mndr_rescale_neutrals',neutral_rescale)
        call ipgetr ('b2mndr_rescale_neutrals_sources',
      *       neutral_sources_rescale)
@@ -1178,7 +1179,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        call xertst (0.le.isfb.and.isfb.lt.ns,
      &   'faulty internal parameter isfb')
        call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
-       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
+       call xertst (0.0_R8.le.fac_hz .and. 1.0_R8.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
 csw 09oct2012
        call ipgeti ('b2news_poteq', pot_eq)
@@ -1539,8 +1540,7 @@ c   --> better way doing this is necessary)
           do is=0,ns-1
            if (is_neutral(is).or.nint(zn(is)).ne.2) cycle
            na(:,:,is) = na(:,:,is)*(-density_rescale)
-           ne(:,:) = ne(:,:) +
-     .      na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0)
+           ne(:,:)=ne(:,:)+na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0)
            fna(:,:,0:1,is) = fna(:,:,0:1,is)*(-density_rescale)
            fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*(-density_rescale)
            fna_fcor(:,:,0:1,is) =
@@ -2397,6 +2397,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call dealloc_b2mod_neoclassical
       call dealloc_b2mod_ma28_for_7diag
       call dealloc_b2mod_ma28_for_9diag
+      call dealloc_b2mod_ma28_for_11diag                                 !srv 02.04.18
       call dealloc_b2mod_eirene_sources
       call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models

@@ -264,6 +264,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mwti_jsep</name>
+				<default>See description (integer)</default>
+				<type>integer</type>
+				<description>
+					Cell index, on the basis mesh, of the last poloidal ring before the separatrix. Can only be provided for slab geometries, otherwise calculated from geometry:
+					Single-null : jsep=topcut1(1)-1. Double-null : jsep=min(topcut1(1),topcut1(2))-1.
+					Default for straight geometries : jsep=ny/2
+				</description>
+			</switch>
+			<switch>
 				<name>b2agmx_pbs_from_basis_mesh</name>
 				<default>1</default>
 				<type>integer</type>
@@ -715,14 +725,50 @@
 				<type>integer</type>
 				<description>
 					If no_solve.eq.1, then the code is run without actually solving any equations. All secondary and dependent data is computed.
-					The nstg(0:2) array is overwritten to '1's. The simulation time will not be updated. The code will compute fluxes, sources, transport coefficients, etc...
-					'ntim' times but not update the basic plasma quantities. Additionally, if no_solve is set to a negative value, then only some equations are solved (simulation time and nstg arrays will behave normally).
+					The nstg(0:2) array is overwritten to '1's. The simulation time will not be updated. The code will compute fluxes, sources, transport coefficients, etc... 'ntim' times but not update the basic plasma quantities. Additionally, if no_solve is set to a negative value, then only some equations are solved (simulation time and nstg arrays will behave normally).
 					no_solve.eq.-1 will activate the parallel momentum equations only.
-					no_solve.eq.-2 will activate the density equations only. no_solve.eq.-4 will activate the potential equation only. (Active only if poteq.eq.1, otherwise, the behaviour dictated by the poteq setting applies).
+					no_solve.eq.-2 will activate the density equations only.
+					no_solve.eq.-4 will activate the potential equation only. (Active only if poteq.eq.1, otherwise, the behaviour dictated by the poteq setting applies).
 					no_solve.eq.-8 will activate the heat equations only. These can be combined. For example, no_solve.eq.-3 will activate the parallel momentum and particle conservation equations.
 					If the no_solve switch requires an equation not to be solved, the settings in the corresponding solvexx arrays from b2.numerics.parameters are moot.
 					The latter are reserved for fine-tuning numerical diagnostics.
-				</description>
+					The table below shows which combination of equations will be solved	depending on the value of switch 'b2news_no_solve'
+					*----------------------------------------------------
+					*        | value |  co  |  mo  |  he  |  hi  |  po  |
+					*----------------------------------------------------
+					*        |   0   |  +   |  +   |  +   |  +   |  +   |
+					*----------------------------------------------------
+					*        |   1   |  -   |  -   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -1   |  -   |  +   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -2   |  +   |  -   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -3   |  +   |  +   |  -   |  -   |  -   |
+					*----------------------------------------------------
+					*        |  -4   |  -   |  -   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -5   |  -   |  +   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -6   |  +   |  -   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -7   |  +   |  +   |  -   |  -   |  +   |
+					*----------------------------------------------------
+					*        |  -8   |  -   |  -   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        |  -9   |  -   |  +   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        | -10   |  +   |  -   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        | -11   |  +   |  +   |  +   |  +   |  -   |
+					*----------------------------------------------------
+					*        | -12   |  -   |  -   |  +   |  +   |  +   |
+					*----------------------------------------------------
+					*        | -13   |  -   |  +   |  +   |  +   |  +   |
+					*----------------------------------------------------
+					*        | -14   |  +   |  -   |  +   |  +   |  +   |
+					*----------------------------------------------------
+        </description>
 			</switch>
 			<switch>
 				<name>b2mndr_cpu</name>
@@ -1001,7 +1047,7 @@
 		<category name="Physics">
 			<switch>
 				<name>b2siav_addvis</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Multiplier to heat flux contribution to divergence of viscosity tensor in the momentum equation.
@@ -1038,6 +1084,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
+					If b2sigp_style is set to '2', this switch has no effect.
 					When set to '1', there is no radial contribution in Joule heating because there are no physical reasons to take it into account.
 					The value '0' corresponds to the old SOLPS5.0 treatment.
 				</description>
@@ -1126,7 +1173,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Real parameter which multiplies the contribution from the ExB drift velocity to the kinetic energy and the flows passed to Eirene.
+					Real parameter which multiplies the contribution from the ExB drift velocity to the flows passed to Eirene.
 				</description>
 			</switch>
 			<switch>
@@ -1134,7 +1181,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Real parameter which multiplies the contribution from the diamagnetic drift velocity to the kinetic energy and the flows passed to Eirene.
+					Real parameter which multiplies the contribution from the diamagnetic drift velocity to the flows passed to Eirene.
 				</description>
 			</switch>
 			<switch>
@@ -1167,7 +1214,7 @@
 			</switch>
 			<switch>
 				<name>b2tfhe_vis_par</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Real parameter which multiplies the current driven by parallel viscosity.
@@ -1581,7 +1628,7 @@
 			</switch>
 			<switch>
 				<name>b2mndr_hz</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<note>!srv 09.06.08</note>
 				<description>
@@ -1631,10 +1678,10 @@
 			</switch>
 			<switch>
 				<name>b2tfnb_vis_per</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
-				    vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+				  vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 				</description>
 			</switch>
 			<switch>
@@ -2116,10 +2163,10 @@
 			</switch>
 			<switch>
 				<name>b2stel_phm0</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the recombination contribution to the electron cooling rate (if ADPAK rates are not used because those are already included). Assumes all recombination is three-body.
+					Multiplier of the sources due to atomic physics.
 				</description>
 			</switch>
 			<switch>
@@ -2237,7 +2284,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If &lt;&gt; 0 then recycles the neutral flux having crossed the core boundary within Eirene as ions. The recycling is surface-averaged, and neutrals come back as fully-stripped ions.
+					If &lt;&gt; 0 then recycles the neutral flux having crossed the core boundary within Eirene as ions. The recycling is modulated as per the poloidal density distribution of the ions, and neutrals come back as fully-stripped ions.
 					'eirene_ionizing_core' is an alias for this switch.
 					If the value = 1, then the flux is added by direct modification of the sources in the guard cells --- this will only work if a standard flux boundary condition is applied at that boundary.
 					If the value is &lt; 0, then the absolute value specifies which boundary in b2.boundary.parameters is to be used. This will only work for the type 13 boundary condition.
@@ -2978,11 +3025,11 @@
 			</switch>
 			<switch>
 				<name>b2tfhe_vis_per</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<note>!srv 20.11.08</note>
 				<description>
-                    vis_per is a multiplier to the perpendicular viscosity current.
+					vis_per is a multiplier to the perpendicular viscosity current.
 					If vis_per.ne.0.0, the electric potential equation is solved by the subroutine b2npp7 using a 7-point stencil.
 					The value '1.0' is recommended for runs with drifts when perpendicular viscosity and corresponding perpendicular viscosity current is taken into account.
 				</description>
@@ -3704,7 +3751,7 @@
 					If poteq.eq.0, the potential equation is jumped over and not solved.
 					If poteq.eq.2, the potential is set to 3.1*Te/qe as per SOLPS4.0.
 					If poteq.eq.1, the potential equation is solved according to the no_solve switch settings.
-					If poteq.ne.1, then 'b2tfhe_no_current'must be set to '1'.
+					If poteq.ne.1, then 'b2tfhe_no_current' must be set to '1'.
 				</description>
 			</switch>
 			<switch>
@@ -4195,7 +4242,7 @@
 				<default>-2</default>
 				<type>integer array of length (NSTRAT)</type>
 				<description>
-					Position in the B2 grid of the of strata. Similar use as BCPOS from /BOUNDARY/ namelist.
+					Position in the B2 grid of the strata. Similar use as BCPOS from /BOUNDARY/ namelist.
 				</description>
 			</switch>
 			<switch>
@@ -5642,6 +5689,14 @@
 					Last value used for the radial particle flux feedback in the SOL. Corresponds to 'isfeedback' B2 species.
 				</description>
 			</switch>
+			<switch>
+				<name>SAVED_NA_FEEDBACK_ACTUATOR</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NSPECIES)</type>
+				<description>
+					Last value used for the feedback control actuator for each isonuclear sequence.
+				</description>
+			</switch>
 		</category>
 		<category name="b2.feedback_control.parameters">
 			<introduction>
@@ -5724,7 +5779,7 @@
 				<default>0.0</default>
 				<type>Real*8 array of size (0:NSPECIES-1)</type>
 				<description>
-					Sets the target density of species (ISPECIES) for the feedback scheme.
+					Sets the target value of the quantity associated with species (ISPECIES) for the feedback scheme defined by NA_FEEDBACK_CHOICE(ISPECIES).
 				</description>
 			</switch>
 			<switch>
@@ -5745,10 +5800,11 @@
 						1: local species density (averaged over the rectangle of cells[IX1:IX2,IY1:IY2]). Summed over all charge states of that species.
 						2: local electron density (averaged over the rectangle of cells[IX1:IX2,IY1:IY2]).
 						3: outer midplane separatrix electron density.
-						4: total particle content for that species.
-						5: total ion content for that species (not including neutrals).
+						4: total particle content for that species summed over the rectangle of cells[IX1:IX2,IY1:IY2].
+						5: total ion content for that species (not including neutrals) summed over the rectangle of cells[IX1:IX2,IY1:IY2].
 						6: neutral particle flux through the core boundary.
 						7: relative average concentration of this species at the separatrix.
+                                                8: relative average concentration of this species averaged over the rectangle of cells[IX1:IX2,IY1:IY2].
 				</description>
 			</switch>
 			<switch>
@@ -5788,7 +5844,7 @@
 				<type>Real*8 array of size (0:NSPECIES-1)</type>
 				<description>
 					Factor by which the rescaling is slowed. Rescaling factor is :
-					Option 1: (1 + &alpha;*target/current) / (1 + alpha)
+					Option 1: (1 + alpha*target/current) / (1 + alpha)
 					Option 3: 2**(tanh(log(x)/beta)*log(alpha)/log(2))
 					Options 4 and 5: Corresponds to parameter F
 				</description>
@@ -5815,7 +5871,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Lower poloidal bound for the region of which the density is being averaged.
+					Lower poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>
@@ -5823,7 +5879,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Upper poloidal bound for the region of which the density is being averaged.
+					Upper poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>
@@ -5831,7 +5887,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Lower radial bound for the region of which the density is being averaged.
+					Lower radial bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>
@@ -5839,7 +5895,7 @@
 				<default>-2</default>
 				<type>Integer array of size (0:NSPECIES-1)</type>
 				<description>
-					Upper poloidal bound for the region of which the density is being averaged.
+					Upper poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
 				</description>
 			</switch>
 			<switch>

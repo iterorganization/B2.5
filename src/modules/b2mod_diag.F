@@ -5,6 +5,7 @@
       use b2mod_eirene_globals
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
+      implicit none
 c
 c  version : 27.04.2005
 c
@@ -72,7 +73,7 @@ c***                    tracing
 
       integer len_ntrc, ntrc_used
       parameter (len_ntrc=10)
-      integer ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
+      integer ntrc_srt, ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
      ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep
       parameter (ntrc_srt=1, ntrc_tst=2, ntrc_res=3, ntrc_src=4,
      ,           ntrc_bln=5, ntrc_ble=6, ntrc_int=7, ntrc_usr=8,
@@ -114,7 +115,7 @@ c
       allocate(IZ(-1:NXD,-1:NYD))
       allocate(RESHLP(-1:NXD,-1:NYD))
       allocate(rad_imp(1:nspecies))
-      allocate(rdneureg(nregionv),
+      allocate(rdneureg(0:nregionv),
      2  b2radirreg(nregionv),b2radlrreg(nregionv),
      3  recycereg(nregionv), recycireg(nregionv),
      4  sseereg(nregionv), sseireg(nregionv),

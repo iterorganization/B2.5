@@ -3,11 +3,12 @@ c
       use b2mod_types
       use b2mod_b2plot
       use b2mod_plasma
+      use b2mod_elements
       use b2mod_constants
       use b2mod_b2cmpa
       implicit none
       real (kind=R8) ::
-     *   dtev((nx+2)*(ny+2)),
+     * dtev((nx+2)*(ny+2)),
      1 ddens((nx+2)*(ny+2)),
      2 drcofi((nx+2)*(ny+2)),dspec(-1:nx,-1:ny,0:ns-1)
       integer ifail,iz0,iz1,iclass,itmax,ievcut,
@@ -19,6 +20,8 @@ c
      1 drcofd(itdimd,itdimd,itdimd)
       real (kind=R8) ::
      *   zmin,zmax
+      logical streql
+      external streql
       character year*2, TITLF*80
       data    year   /'03'/
 
@@ -31,13 +34,19 @@ c
         enddo
       enddo
 
+      ifail=0
+      dspec=0.0_R8
       do is=0,ns-1
         iz0=nint(zn(is))
         iz1=partition_number(is)+1  ! was nint(za(is))+1
+        if (iz1.eq.iz0+1) cycle     ! avoid fully stripped ions
+        if (ifail.eq.1) then        ! if file absent, skip rest of sequence
+          if (streql(is_codes(is-1),is_codes(is))) cycle
+        end if
         iclass=7
         ievcut=0
 
-        CALL  DHDATA( YEAR   , TITLF  , IFAIL
+        CALL DHDATA( YEAR  , TITLF  , IFAIL
      &   , IZ0    , IZ1    , ICLASS , ITMAX  , IEVCUT
      &   , ITDIMD , ITMAXD , IDMAXD , IZMAXD
      &   , DTEV   , DDENS
@@ -46,12 +55,12 @@ c
 
 C
         if (ifail .gt. 0)   then
-          write (*,3003) ifail,is,iz0,iz1
+          write (*,3003) ifail,is,iz0,iz1-1
  3003     format (
      >     ' >>> error in dhdata: ifail =',i3,/,
      >     '  ifail = 1: no datafile for dhdata available',/,
      >     '        = 2: dimension itdimd too small',/,
-     >     '  for species, nuclear charge, ionic charge =',3i3,/)
+     >     '  for species, nuclear charge, partition =',3i3,/)
           do iy=-1,ny
             do ix=-1,nx
               dspec(ix,iy,is)=0.0_R8
@@ -71,6 +80,7 @@ C
             enddo
           enddo
           write(*,*) 'is,zmin,zmax ',is,zmin,zmax
+          if (iz1.eq.iz0) write(*,'()')
         endif
 
       enddo
@@ -111,8 +121,12 @@ cc    -------------------------------------------------------------------------
       CHARACTER ex*3,fn*80,MIE*2,MIR*2,MIC*2
       logical open_file
 
-      if(.not.open_file(99,fn,
-     1 'data.local/adas|modules/adas')) return
+      if(err.eq.0) then
+        if(.not.open_file(99,fn,
+     1   'data.local/adas|modules/adas')) return
+      else if (err.eq.1) then
+        if(.not.open_file(99,fn,'modules/adas')) return
+      end if
       read(99,*) UIDIN
       if(uidin(1:8).eq.'SOLPSTOP') then
         if (uidin(9:9).ne.'/') then
@@ -150,7 +164,7 @@ cc    -------------------------------------------------------------------------
       end subroutine InitADAS
 
 cc    -------------------------------------------------------------------------
-cc    SUBROUTINE GetIBSEL(WL,DWL,MIE,MIR,MIC,id,IBSELAE,IBSELAR,IBSELAC)
+cc    SUBROUTINE GetIBSEL(WL,DWL,MIE,MIR,MIC,id,IBSELAE,IBSELAR,IBSELAC,ERR)
 cc    INPUT:     REAL WL:             wavelength in A
 cc               REAL DWL:            half width of wavelength window in A
 cc               CHARACTER MIE*2:     metastable index excitation
@@ -160,6 +174,7 @@ cc               INTEGER id:          dimension for array of indices
 cc    OUTPUT:    INTEGER IBSELAE(id): array of indices, excit
 cc               INTEGER IBSELAR(id): array of indices, recom
 cc               INTEGER IBSELAC(id): array of indices, cexch
+cc               INTEGER ERR          error code
 cc    -------------------------------------------------------------------------
 cc    GetIBSEL selects all data blocks in the wavelength window [WL-DWL,WL+DWL]
 cc    InitADAS MUST be called before any call to this subroutine!
@@ -168,7 +183,7 @@ cc    03/24/97 bhs
 cc    -------------------------------------------------------------------------
 
       subroutine GetIBSEL(WL,DWL,MIE,MIR,MIC,id,
-     &                    IBSELAE,IBSELAR,IBSELAC)
+     &                    IBSELAE,IBSELAR,IBSELAC,ERR)
 
       use b2mod_types
       implicit none
@@ -183,12 +198,16 @@ cc    -------------------------------------------------------------------------
       integer IBSELAE(id)
       integer IBSELAR(id)
       integer IBSELAC(id)
+      integer ERR
       integer count,countEX,countRE,countCE
       integer NBSEL
       character CWAVEL(NSTORE)*10,CTYPE(NSTORE)*8
       character CINDM(NSTORE)*2
+      logical streql
+      external streql
 
       call GetInfo(NBSEL,CWAVEL,CTYPE,CINDM,LOT)
+      ERR = 0
       do count=1,id
          IBSELAE(count)=0
          IBSELAR(count)=0
@@ -201,8 +220,8 @@ cc    -------------------------------------------------------------------------
          read(CWAVEL(count),'(f8.1)') wla(count)
          write(*,*) count,wla(count),CWAVEL(count)
          if (abs(wl-wla(count)) .le. dwl) then
-            if (CTYPE(count) .eq. 'EXCIT') then
-               if (MIE .eq. CINDM(count)) then
+            if (streql(CTYPE(count),'EXCIT')) then
+               if (streql(MIE,CINDM(count))) then
                   IBSELAE(countEX)=count
                   countEX=countEX+1
                   write(*,*) 
@@ -211,8 +230,8 @@ cc    -------------------------------------------------------------------------
                   write(*,*) 'metastable index: ',CINDM(count)
                endif
             endif
-            if (CTYPE(count) .eq. 'RECOM') then
-               if (MIR .eq. CINDM(count)) then
+            if (streql(CTYPE(count),'RECOM')) then
+               if (streql(MIR,CINDM(count))) then
                   IBSELAR(countRE)=count
                   countRE=countRE+1
                   write(*,*)
@@ -221,8 +240,8 @@ cc    -------------------------------------------------------------------------
                   write(*,*) 'metastable index: ',CINDM(count)
                endif
             endif
-            if (CTYPE(count) .eq. 'CHEXC') then
-               if (MIC .eq. CINDM(count)) then
+            if (streql(CTYPE(count),'CHEXC')) then
+               if (streql(MIC,CINDM(count))) then
                   IBSELAC(countCE)=count
                   countCE=countCE+1
                   write(*,*)
@@ -234,9 +253,10 @@ cc    -------------------------------------------------------------------------
          endif
       enddo
       if ((countEX .eq. 1) .and. (countRE .eq. 1) .and.
-     1 (countCE .eq. 1)) then
+     1    (countCE .eq. 1)) then
          write(*,*) 'GetIBSEL: none selected for'
          write(*,*) 'ion charge: ',IZIN,' nuclear charge: ',IZ0IN
+         ERR = 1
       endif
       return     
       end subroutine GetIBSEL
@@ -319,9 +339,9 @@ cc    -------------------------------------------------------------------------
 
       integer dim
       real (kind=R8) ::
-     *    NE(maxdim),NI(maxdim),NI1(maxdim),
-     &       NH(maxdim),TE(maxdim),E(maxdim),
-     &       locTE(maxdim) 
+     *   NE(maxdim),NI(maxdim),NI1(maxdim),
+     &   NH(maxdim),TE(maxdim),E(maxdim),
+     &   locTE(maxdim)
       real (kind=R8) ::
      *   cNE(dim),cNI(dim),cNI1(dim),cNH(dim),cTE(dim)
       real (kind=R8) ::
@@ -331,12 +351,12 @@ cc    -------------------------------------------------------------------------
       integer IRCODE
       character TITLX*296
       real (kind=R8) ::
-     *    WL,PECA(maxdim)
+     *   WL,PECA(maxdim)
       logical LTRNG(maxdim),LDRNG(maxdim)
       real (kind=R8) ::
-     *    PECE(maxdim),PECR(maxdim),PECC(maxdim)
+     *   PECE(maxdim),PECR(maxdim),PECC(maxdim)
       real (kind=R8) ::
-     *    PE(maxdim),PR(maxdim),PC(maxdim)
+     *   PE(maxdim),PR(maxdim),PC(maxdim)
       real (kind=R8) ::
      *   f
       integer index
@@ -416,7 +436,7 @@ c         enddo
 
       do cc=1,dim
          E(cc)=PECE(cc)*NE(cc)*NI(cc)+PECR(cc)*NE(cc)*NI1(cc)+
-     &        PECC(cc)*NH(cc)*NI1(cc)
+     &         PECC(cc)*NH(cc)*NI1(cc)
          cE(cc)=E(cc)
          cPP(cc)=PE(cc)+PR(cc)+PC(cc)
       enddo
@@ -450,9 +470,9 @@ c     -------------------------------------------------------------------------
 #     include "adas_common.inc"
 
       real (kind=R8) ::
-     *    TETA(NTDIM,NSTORE),TEDA(NDDIM,NSTORE)
+     *   TETA(NTDIM,NSTORE),TEDA(NDDIM,NSTORE)
       real (kind=R8) ::
-     *    PEC(NTDIM,NDDIM,NSTORE)
+     *   PEC(NTDIM,NDDIM,NSTORE)
       real (kind=R8) ::
      *   T(NSTORE)
       integer IUNIT,IRCODE
@@ -509,12 +529,12 @@ C
 C  PURPOSE:
 C          PERFORMS CUBIC SPLINE ON LOG(TEMPERATURE AND DENSITY)
 C          VERSUS LOG(IONISATIONS PER PHOTON)
-C          INPUT DATA FOR A GIVEN WAVELENGTH DATA-BLOCK.
+C          INPUT DATA FOR A GIVEN WAVELENGTH DATA BLOCK.
 C
-C          USING  TWO-WAY SPLINES IT CALCULATES  THE  PHOTON EMISSIVITY
-C          FOR  'ITVAL'  PAIRS OF  ELECTRON TEMPERATURES  AND  DENSITIES
+C          USING TWO-WAY SPLINES IT CALCULATES THE PHOTON EMISSIVITY
+C          FOR 'ITVAL' PAIRS OF ELECTRON TEMPERATURES AND DENSITIES
 C          FROM THE TWO-DIMENSIONAL TABLE OF TEMPERATURES/DENSITIES READ
-C          IN FROM THE INPUT FILE. IF A  VALUE  CANNOT  BE  INTERPOLATED
+C          IN FROM THE INPUT FILE. IF A VALUE CANNOT BE INTERPOLATED
 C          USING SPLINES IT IS EXTRAPOLATED VIA 'XXSPLE'.
 C
 C  CALLING PROGRAM: ADAS503/SPEC
@@ -525,19 +545,19 @@ C
 C  INPUT : (I*4)  NTDIM   = MAX NUMBER OF ELECTRON TEMPERATURES ALLOWED
 C  INPUT : (I*4)  NDDIM   = MAX NUMBER OF ELECTRON DENSITIES    ALLOWED
 C
-C  INPUT : (I*4)  ITA     = INPUT DATA FILE: NUMBER OF ELECTRON TEMPERA-
-C                           TURES READ FOR THE DATA-BLOCK BEING ASSESSED
-C  INPUT : (I*4)  IDA     = INPUT DATA FILE: NUMBER OF ELECTRON DENSIT-
-C                           IES   READ FOR THE DATA-BLOCK BEING ASSESSED
+C  INPUT : (I*4)  ITA     = INPUT DATA FILE: NUMBER OF ELECTRON TEMPERATURES
+C                           READ FOR THE DATA BLOCK BEING ASSESSED
+C  INPUT : (I*4)  IDA     = INPUT DATA FILE: NUMBER OF ELECTRON DENSITIES
+C                           READ FOR THE DATA BLOCK BEING ASSESSED
 C  INPUT : (I*4)  ITVAL   = NUMBER OF ISPF ENTERED TEMPERATURE/DENSITY
 C                           PAIRS FOR WHICH IONISATIONS PER PHOTON
 C                           ARE REQUIRED FOR TABULAR/GRAPHICAL OUTPUT.
 C
 C  INPUT : (R*8)  TETA()  = INPUT DATA FILE: ELECTRON TEMPERATURES (EV)
-C                           FOR THE DATA-BLOCK BEING ASSESSED.
+C                           FOR THE DATA BLOCK BEING ASSESSED.
 C                           DIMENSION: ELECTRON TEMPERATURE INDEX
 C  INPUT : (R*8)  TEDA()  = INPUT DATA FILE: ELECTRON DENSITIES (CM-3)
-C                           FOR THE DATA-BLOCK BEING ASSESSED.
+C                           FOR THE DATA BLOCK BEING ASSESSED.
 C                           DIMENSION: ELECTRON DENSITY INDEX
 C  INPUT : (R*8)  TEVA()  = USER ENTERED: ELECTRON TEMPERATURES (EV)
 C                           DIMENSION: TEMPERATURE/DENSITY PAIR INDEX
@@ -545,43 +565,43 @@ C  INPUT : (R*8)  DIN()   = USER ENTERED: ELECTRON DENSITIES (CM-3)
 C                           DIMENSION: TEMPERATURE/DENSITY PAIR INDEX
 C
 C
-C  INPUT : (R*8)  PEC(,)   =INPUT DATA FILE: FULL SET OF IONISATIONS PER
-C                           PHOTON VALUES FOR THE DATA-BLOCK BEING
+C  INPUT : (R*8)  PEC(,)  = INPUT DATA FILE: FULL SET OF IONISATIONS PER
+C                           PHOTON VALUES FOR THE DATA BLOCK BEING
 C                           ANALYSED.
 C                           1ST DIMENSION: ELECTRON TEMPERATURE INDEX
 C                           2ND DIMENSION: ELECTRON DENSITY     INDEX
-C  OUTPUT: (R*8)  PECA()  = SPLINE INTERPOLATED OR  EXTRAPOLATED  IONIZ-
-C                           ATIONS/PHOTON FOR THE USER ENTERED ELECTRON
-C                           TEMPERATURE/DENSITY PAIRS.
+C  OUTPUT: (R*8)  PECA()  = SPLINE INTERPOLATED OR  EXTRAPOLATED
+C                           IONIZATIONS/PHOTON FOR THE USER ENTERED
+C                           ELECTRON TEMPERATURE/DENSITY PAIRS.
 C                           DIMENSION: TEMPERATURE/DENSITY PAIR INDEX
 C
-C  OUTPUT: (L*4)  LTRNG()=  .TRUE.  => OUTPUT 'PECA()' VALUE WAS INTER-
-C                                      POLATED  FOR  THE  USER  ENTERED
+C  OUTPUT: (L*4)  LTRNG() = .TRUE.  => OUTPUT 'PECA()' VALUE WAS
+C                                      INTERPOLATED FOR THE USER ENTERED
 C                                      ELECTRON TEMPERATURE 'TEVA()'.
-C                           .FALSE. => OUTPUT 'PECA()' VALUE WAS EXTRA-
-C                                      POLATED  FOR  THE  USER  ENTERED
+C                           .FALSE. => OUTPUT 'PECA()' VALUE WAS
+C                                      EXTRAPOLATED FOR THE USER ENTERED
 C                                      ELECTRON TEMPERATURE 'TEVA()'.
 C                           DIMENSION: TEMPERATURE/DENSITY PAIR INDEX
 C
-C  OUTPUT: (L*4)  LDRNG()=  .TRUE.  => OUTPUT 'PECA()' VALUE WAS INTER-
-C                                      POLATED  FOR  THE  USER  ENTERED
+C  OUTPUT: (L*4)  LDRNG() = .TRUE.  => OUTPUT 'PECA()' VALUE WAS
+C                                      INTERPOLATED FOR THE USER ENTERED
 C                                      ELECTRON DENSITY 'DIN()'.
-C                           .FALSE. => OUTPUT 'PECA()' VALUE WAS EXTRA-
-C                                      POLATED  FOR  THE  USER  ENTERED
+C                           .FALSE. => OUTPUT 'PECA()' VALUE WAS
+C                                      EXTRAPOLATED FOR THE USER ENTERED
 C                                      ELECTRON DENSITY 'DIN()'.
 C                           DIMENSION: TEMPERATURE/DENSITY PAIR INDEX
 C
-C          (I*4)  NIN     = PARAMETER = MAX. NO. OF INPUT  TEMP/DENSITY
+C          (I*4)  NIN     = PARAMETER = MAX. NO. OF INPUT TEMP/DENSITY
 C                                       VALUES. MUST BE >= 'ITA'&'IDA'
 C          (I*4)  NOUT    = PARAMETER = MAX. NO. OF OUTPUT TEMP/DENSITY
-C                                       PAIRS.  MUST BE >= 'ITVAL'
+C                                       PAIRS. MUST BE >= 'ITVAL'
 C          (I*4)  L1      = PARAMETER = 1
 C
-C          (I*4)  IED     = ARRAY SUBSCRIPT USED INPUT  FILE  ELECTRON
+C          (I*4)  IED     = ARRAY SUBSCRIPT USED INPUT FILE ELECTRON
 C                           DENSITIES.
-C          (I*4)  IET     = ARRAY SUBSCRIPT USED INPUT  FILE  ELECTRON
+C          (I*4)  IET     = ARRAY SUBSCRIPT USED INPUT FILE ELECTRON
 C                           TEMPERATURES.
-C          (I*4)  IT      = ARRAY  SUBSCRIPT  USED  FOR  USER  ENTERED
+C          (I*4)  IT      = ARRAY SUBSCRIPT USED FOR USER ENTERED
 C                           TEMPERATURE/DENSITY PAIRS .
 C          (I*4)  IOPT    = DEFINES THE BOUNDARY DERIVATIVES FOR THE
 C                           SPLINE ROUTINE 'XXSPLE', SEE 'XXSPLE'.
@@ -604,8 +624,8 @@ C          (R*8)  XOUT()  = 1) LOG( SCALED USER ENTERED ELECTRON DENS. )
 C                           2) LOG( SCALED USER ENTERED ELECTRON TEMPS.)
 C          (R*8)  YOUT()  = LOG( OUTPUT GENERATED IONISATIONS/PHOTON )
 C          (R*8)  YPASS(,)= LOG( IONISATIONS/PHOTON) INTERMEDIATE ARRAY
-C                           WHICH   STORES   INTERPOLATED/EXTRAPOLATED
-C                           VALUES  BETWEEN  THE  TWO  SPLINE SECTIONS.
+C                           WHICH STORES INTERPOLATED/EXTRAPOLATED
+C                           VALUES BETWEEN THE TWO SPLINE SECTIONS.
 C                           SECTIONS.
 C          (R*8)  DF()    = SPLINE INTERPOLATED DERIVATIVES
 C
@@ -658,16 +678,16 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       real (kind=R8) ::
      *        TETA(ITA)             , TEDA(IDA)       ,
-     &           TEVA(ITVAL)           , DIN(ITVAL)      ,
-     &           PECA(ITVAL)           ,
-     &           PEC(NTDIM,NDDIM)
+     &        TEVA(ITVAL)           , DIN(ITVAL)      ,
+     &        PECA(ITVAL)           ,
+     &        PEC(NTDIM,NDDIM)
       real (kind=R8) ::
      *        DF(NIN)               ,
-     &           XIN(NIN)              , YIN(NIN)        ,
-     &           XOUT(NOUT)            , YOUT(NOUT)      ,
-     &                                   YPASS(NOUT,NIN)
+     &        XIN(NIN)              , YIN(NIN)        ,
+     &        XOUT(NOUT)            , YOUT(NOUT)      ,
+     &                                YPASS(NOUT,NIN)
 C-----------------------------------------------------------------------
-      LOGICAL    LTRNG(ITVAL)          , LDRNG(ITVAL)
+      LOGICAL LTRNG(ITVAL)          , LDRNG(ITVAL)
 C-----------------------------------------------------------------------
       EXTERNAL   R8FUN1
       external   subini, subend, xertst
@@ -788,18 +808,18 @@ C-----------------------------------------------------------------------
 C
 C  ******************* FORTRAN77 SUBROUTINE: SPEC **********************
 C
-C  PURPOSE: TO EXTRACT AND INTERPOLATE  PHOTON EMISSIVITIES FOR
+C  PURPOSE: TO EXTRACT AND INTERPOLATE PHOTON EMISSIVITIES FOR
 C           EMITTING IONS.
 C           USES THE SAME ROUTINES USED BY ADAS503, EXCEPT FOR:
 C
 C           'E3FILE' - WHICH OPENS THE REQUESTED FILE.
-C           'E3CHKB' - WHICH CHECKS INPUT  VALUES  ARE  CONSISTENT  WITH
-C                      THE SELECTED DATA-BLOCK 'IBSEL' AND   'IBSEL'  IS
+C           'E3CHKB' - WHICH CHECKS INPUT VALUES ARE CONSISTENT WITH
+C                      THE SELECTED DATA BLOCK 'IBSEL' AND 'IBSEL' IS
 C                      IN RANGE.
 C
-C            THE FIRST OF THESE FUNCTIONS IS CARRIED  OUT  IN  'ADAS503'
-C            VIA ISPF PANELS USING THE ROUTINE 'E3SPF0'  -  ADAS503 DOES
-C            NOT REQUIRE THE ROUTINE 'E3CHKB' AS THE USER CANNOT  SELECT
+C            THE FIRST OF THESE FUNCTIONS IS CARRIED OUT IN 'ADAS503'
+C            VIA ISPF PANELS USING THE ROUTINE 'E3SPF0' - ADAS503 DOES
+C            NOT REQUIRE THE ROUTINE 'E3CHKB' AS THE USER CANNOT SELECT
 C            AN INVALID VALUE FOR 'IBSEL' OR 'IBSEL'/EMITTER COMBINATION
 C
 C
@@ -807,7 +827,7 @@ C  CALLING PROGRAM: GENERAL USE
 C
 C  SUBROUTINE:
 C
-C  INPUT : (I*4)   IBSEL   = INDEX OF DATA-BLOCK SELECTED FOR ANALYSIS
+C  INPUT : (I*4)   IBSEL   = INDEX OF DATA BLOCK SELECTED FOR ANALYSIS
 C  INPUT : (I*4)   IZIN    = ION CHARGE OF EMITTING ION
 C  INPUT : (I*4)   IZ0IN   = NUCLEAR CHARGE OF EMITTING ION
 C
@@ -821,47 +841,47 @@ C  OUTPUT: (R*8)   WLNGTH  = SELECTED BLOCK WAVELENGTH (ANGSTROMS)
 C
 C  OUTPUT: (R*8)   PECA()  = PHOTON EMISSIVITIES.
 C                            DIMENSION: TEMPERATURE/DENSITY PAIR INDEX
-C  OUTPUT: (L*4)   LTRNG() =.TRUE.  => OUTPUT 'PECA()'  VALUE WAS INTER-
-C                                      POLATED  FOR  THE  USER  ENTERED
+C  OUTPUT: (L*4)   LTRNG() =.TRUE.  => OUTPUT 'PECA()' VALUE WAS
+C                                      INTERPOLATED FOR THE USER ENTERED
 C                                      ELECTRON TEMPERATURE 'TVAL()'.
-C                           .FALSE. => OUTPUT 'PECA()'  VALUE WAS EXTRA-
-C                                      POLATED  FOR  THE  USER  ENTERED
+C                           .FALSE. => OUTPUT 'PECA()' VALUE WAS
+C                                      EXTRAPOLATED FOR THE USER ENTERED
 C                                      ELECTRON TEMPERATURE 'TVAL()'.
 C                            DIMENSION: TEMPERATURE/DENSITY PAIR INDEX
-C  OUTPUT: (L*4)   LDRNG() =.TRUE.  => OUTPUT 'PECA()'  VALUE WAS INTER-
-C                                      POLATED  FOR  THE  USER  ENTERED
+C  OUTPUT: (L*4)   LDRNG() =.TRUE.  => OUTPUT 'PECA()' VALUE WAS
+C                                      INTERPOLATED FOR THE USER ENTERED
 C                                      ELECTRON DENSITY 'DVAL()'.
-C                           .FALSE. => OUTPUT 'PECA()'  VALUE WAS EXTRA-
-C                                      POLATED  FOR  THE  USER  ENTERED
+C                           .FALSE. => OUTPUT 'PECA()' VALUE WAS
+C                                      EXTRAPOLATED FOR THE USER ENTERED
 C                                      ELECTRON DENSITY 'DVAL()'.
 C                            DIMENSION: TEMPERATURE/DENSITY PAIR INDEX
 C
 C  OUTPUT: (C*296) TITLX   = INFORMATION STRING (DSN ETC.)
 C  OUTPUT: (I*4)   IRCODE  = RETURN CODE FROM SUBROUTINE:
 C                            0 => NORMAL COMPLETION - NO ERROR DETECTED
-C                            1 => DATA SET MEMBER FOR EMITTING ION WITH
+C                            1 => DATASET MEMBER FOR EMITTING ION WITH
 C                                 CHARGE 'IZIN' & ION CHARGE 'IZ0IN' CAN
 C                                 NOT BE FOUND/DOES NOT EXIST.
 C                            2 => DISCREPANCY BETWEEN REQUESTED CHARGES
 C                                 AND THOSE IN INPUT FILE.
-C                            3 => THE SELECTED DATA-BLOCK 'IBSEL' IS OUT
+C                            3 => THE SELECTED DATA BLOCK 'IBSEL' IS OUT
 C                                 OF RANGE OR DOES NOT EXIST.
 C                            4 => INVALID VALUE FOR 'IZ0IN' ENTERED.
 C                                 ('IZ0MIN' <= 'IZ0IN' <= 'IZ0MAX')
 C                            5 => INVALID VALUE FOR 'IZIN' ENTERED.
 C                                 ( 0  <= 'IZIN' <= 99 )
 C                            9 => ERROR ENCOUNTERED WHEN TRYING TO OPEN
-C                                 INPUT DATA-SET.
+C                                 INPUT DATASET.
 C
-C          (I*4)   NSTORE  = PARAMETER= MAXIMUM NUMBER  OF  DATA-BLOCKS
-C                                      WHICH CAN BE READ FROM THE INPUT
-C                                      DATA-SET.
-C          (I*4)   NTDIM   = PARAMETER= MAXIMUM NUMBER OF ELECTRON TEMP-
-C                                      ERATURES THAT CAN BE READ  FROM
-C                                      AN INPUT DATA-SET DATA-BLOCK.
-C          (I*4)   NDDIM   = PARAMETER= MAXIMUM NUMBER OF ELECTRON DENS-
-C                                      ITIES  THAT  CAN  BE  READ  FROM
-C                                      AN INPUT DATA-SET DATA-BLOCK.
+C          (I*4)   NSTORE  = PARAMETER= MAXIMUM NUMBER OF DATA BLOCKS
+C                                       WHICH CAN BE READ FROM THE INPUT
+C                                       DATASET.
+C          (I*4)   NTDIM   = PARAMETER= MAXIMUM NUMBER OF ELECTRON
+C                                       TEMPERATURES THAT CAN BE READ FROM
+C                                       AN INPUT DATASET DATA BLOCK.
+C          (I*4)   NDDIM   = PARAMETER= MAXIMUM NUMBER OF ELECTRON
+C                                       DENSITIES THAT CAN BE READ FROM
+C                                       AN INPUT DATASET DATA BLOCK.
 C          (I*4)   IZ0MIN  = PARAMETER: MIN. ALLOWED VALUE FOR 'IZ0IN'
 C          (I*4)   IZ0MAX  = PARAMETER: MAX. ALLOWED VALUE FOR 'IZ0IN'
 C
@@ -869,16 +889,16 @@ C          (I*4)   IZ0LST  = LAST VALUE OF 'IZ0IN' FOR  WHICH  INPUT
 C                            DATA WAS READ.
 C          (I*4)   IZLAST  = LAST VALUE OF 'IZIN' FOR  WHICH  INPUT
 C                            DATA WAS READ.
-C          (I*4)   IUNIT   = UNIT TO WHICH INPUT DATA SET IS ALLOCATED
-C          (I*4)   NBSEL   = TOTAL NUMBER OF DATA-BLOCKS READ FROM INPUT
-C                            DATA SET.
+C          (I*4)   IUNIT   = UNIT TO WHICH INPUT DATASET IS ALLOCATED
+C          (I*4)   NBSEL   = TOTAL NUMBER OF DATA BLOCKS READ FROM INPUT
+C                            DATASET.
 C          (I*4)   IZ0     = INPUT FILE - EMITTING ION - NUCLEAR CHARGE
 C          (I*4)   IZ      = INPUT FILE - EMITTING ION - CHARGE
 C          (I*4)   IZ1     = INPUT FILE - EMITTING ION - CHARGE + 1
 C          (I*4)   IPOS    = USED IN CONVERTING CWAVEL -> WLNGTH
 C
-C          (L*4)   LOPEN   = .TRUE.  => INPUT DATA SET OPEN.
-C                            .FALSE. => INPUT DATA SET CLOSED.
+C          (L*4)   LOPEN   = .TRUE.  => INPUT DATASET OPEN.
+C                            .FALSE. => INPUT DATASET CLOSED.
 C
 C          (C*2)   ESYM    = INPUT FILE - EMITTING ION - ELEMENT SYMBOL
 C          (C*3)   EXTIN   = CURRENT ADAS SOURCE DATA FILE EXTENSION
@@ -894,46 +914,45 @@ CA         (C*80)  TYPIN   = ADAS DATA FILE SUBDIRECTORY (OPTIONAL)
 CA         (C*80)  TYPLST  = ADAS DATA FILE SUBDIRECTORY USED LAST TIME
 C                            DATA WAS READ.
 C          (C*11)  C11     = USED IN CONVERTING CWAVEL -> WLNGTH
-CA         (C*80)  DSNREQ  = NAME OF DATA SET REQUESTED
+CA         (C*80)  DSNREQ  = NAME OF DATASET REQUESTED
 C                            (MAY OR MAY NOT EXIST)
-CA         (C*80)  DSNAME  = NAME OF DATA SET INTERROGATED
+CA         (C*80)  DSNAME  = NAME OF DATASET INTERROGATED
 C
-C          (I*4)   ISELA() = INPUT DATA FILE: DATA-BLOCK ENTRY INDICES.
-C                            DIMENSION: DATA-BLOCK INDEX
-C          (I*4)   ITA()   = INPUT DATA SET-NUMBER OF ELECTRON TEMPERA-
-C                            TURES.
-C                            DIMENSION: DATA-BLOCK INDEX
-C          (I*4)   IDA()   = INPUT DATA SET-NUMBER OF ELECTRON DENSITIES
-C                            DIMENSION: DATA-BLOCK INDEX
+C          (I*4)   ISELA() = INPUT DATA FILE: DATA BLOCK ENTRY INDICES.
+C                            DIMENSION: DATA BLOCK INDEX
+C          (I*4)   ITA()   = INPUT DATASET NUMBER OF ELECTRON TEMPERATURES.
+C                            DIMENSION: DATA BLOCK INDEX
+C          (I*4)   IDA()   = INPUT DATASET NUMBER OF ELECTRON DENSITIES
+C                            DIMENSION: DATA BLOCK INDEX
 C
-C          (R*8)   TETA(,) = INPUT DATA SET -
+C          (R*8)   TETA(,) = INPUT DATASET -
 C                            ELECTRON TEMPERATURES (UNITS: eV)
 C                            1st DIMENSION: ELECTRON TEMPERATURE INDEX
-C                            2nd DIMENSION: DATA-BLOCK INDEX
-C          (R*8)   TEDA(,) = INPUT DATA SET -
+C                            2nd DIMENSION: DATA BLOCK INDEX
+C          (R*8)   TEDA(,) = INPUT DATASET -
 C                            ELECTRON DENSITIES    (UNITS: cm-3)
 C                            1st DIMENSION: ELECTRON DENSITY     INDEX
-C                            2nd DIMENSION: DATA-BLOCK INDEX
-C          (R*8)   PEC(,,)   =INPUT DATA SET -
-C                             FULL SET OF IONISATIONS PER PHOTON
-C                             1st DIMENSION: ELECTRON TEMPERATURE INDEX
-C                             2nd DIMENSION: ELECTRON DENSITY     INDEX
-C                             3rd DIMENSION: DATA-BLOCK INDEX
+C                            2nd DIMENSION: DATA BLOCK INDEX
+C          (R*8)   PEC(,,) = INPUT DATASET -
+C                            FULL SET OF IONISATIONS PER PHOTON
+C                            1st DIMENSION: ELECTRON TEMPERATURE INDEX
+C                            2nd DIMENSION: ELECTRON DENSITY     INDEX
+C                            3rd DIMENSION: DATA BLOCK INDEX
 C
 C          (C*10)  CWAVEL() = INPUT FILE - WAVELENGTH (ANGSTROMS)
-C                             DIMENSION: DATA-BLOCK INDEX
+C                             DIMENSION: DATA BLOCK INDEX
 C          (C*8)   CFILE()  = INPUT FILE - SPECIFIC ION FILE SOURCE
-C                             DIMENSION: DATA-BLOCK INDEX
+C                             DIMENSION: DATA BLOCK INDEX
 C          (C*8)   CTYPE()  = INPUT FILE - TYPE OF DATA (IE EXCIT., ETC)
-C                             DIMENSION: DATA-BLOCK INDEX
+C                             DIMENSION: DATA BLOCK INDEX
 C          (C*2)   CINDM()  = INPUT FILE - METASTABLE INDEX
-C                             DIMENSION: DATA-BLOCK INDEX
+C                             DIMENSION: DATA BLOCK INDEX
 C
 C ROUTINES:
 C          ROUTINE    SOURCE    BRIEF DESCRIPTION
 C          ------------------------------------------------------------
-C          E3FILE     ADAS      OPEN DATA SET FOR SELECTED EMITTER
-C          E3DATA     ADAS      FETCH INPUT DATA FROM SELECTED DATA SET
+C          E3FILE     ADAS      OPEN DATASET FOR SELECTED EMITTER
+C          E3DATA     ADAS      FETCH INPUT DATA FROM SELECTED DATASET
 C          E3CHKB     ADAS      CHECK VALIDITY OF ION AND 'IBSEL'
 C          E3SPLN     ADAS      INTERPOLATE DATA WITH TWO WAY SPLINES
 C          E3TITL     ADAS      CREATE DESCRIPTIVE TITLE FOR OUTPUT
@@ -999,7 +1018,7 @@ C-----------------------------------------------------------------------
      &            IPOS
 C-----------------------------------------------------------------------
       real (kind=R8) ::
-     *         WLNGTH
+     *            WLNGTH
 C-----------------------------------------------------------------------
       LOGICAL     LOPEN
 C-----------------------------------------------------------------------
@@ -1008,13 +1027,13 @@ C-----------------------------------------------------------------------
      &                             GRPIN*8           , GRPLST*8     ,
      &                             TYPIN*80          , TYPLST*80    ,
      &            C11*11         ,
-     &            DSNREQ*256      , DSNAME*256         , TITLX*296
+     &            DSNREQ*256     , DSNAME*256        , TITLX*296
 C-----------------------------------------------------------------------
       INTEGER     ISELA(NSTORE)             ,
      &            ITA(NSTORE)               , IDA(NSTORE)
 C-----------------------------------------------------------------------
       real (kind=R8) ::
-     *     TVAL(ITVAL)               , DVAL(ITVAL)          ,
+     *            TVAL(ITVAL)               , DVAL(ITVAL)          ,
      &            PECA(ITVAL)
 C-----------------------------------------------------------------------
       LOGICAL     LTRNG(ITVAL)              , LDRNG(ITVAL)
@@ -1023,9 +1042,9 @@ C-----------------------------------------------------------------------
      &            CTYPE(NSTORE)*8           , CWAVEL(NSTORE)*10
 C-----------------------------------------------------------------------
       real (kind=R8) ::
-     *         TETA(NTDIM,NSTORE)        , TEDA(NDDIM,NSTORE)
+     *            TETA(NTDIM,NSTORE)        , TEDA(NDDIM,NSTORE)
       real (kind=R8) ::
-     *         PEC(NTDIM,NDDIM,NSTORE)
+     *            PEC(NTDIM,NDDIM,NSTORE)
 C-----------------------------------------------------------------------
       SAVE        DSNAME      , UIDLST     , GRPLST     , TYPLST   ,
      &            EXTLST      , IZ0LST     , IZLAST     ,
@@ -1063,7 +1082,7 @@ C
 C
 C-----------------------------------------------------------------------
 C IF NEW EMITTING ION ENTERED OR SOURCE DATA USERID HAS CHANGED:
-C - OPEN THE REQUESTED DATA SET & READ IN COMPLETE SET OF RATE DATA.
+C - OPEN THE REQUESTED DATASET & READ IN COMPLETE SET OF RATE DATA.
 C-----------------------------------------------------------------------
 C
                IF ( (IZLAST .NE. IZIN)   .OR. 
@@ -1161,31 +1180,31 @@ C-----------------------------------------------------------------------
 C
 C  ****************** FORTRAN77 SUBROUTINE: E3FILE *********************
 C
-C  PURPOSE: TO OPEN A PHOTON EMISSIVITY 'IONELEC' DATA SET
-C           BY DEFAULT, OR AN ALTERNATIVE DATA SET IF REQUIRED, FOR
+C  PURPOSE: TO OPEN A PHOTON EMISSIVITY 'IONELEC' DATASET
+C           BY DEFAULT, OR AN ALTERNATIVE DATASET IF REQUIRED, FOR
 C           EMITTING ION WITH NUCLEAR CHARGE 'IZ0' AND CHARGE 'IZ'.
 C           THIS WILL BE CONNECTED TO UNIT 'IUNIT'.
 C
-C   DATA SET OPENED: $ADASUSER/<DEFADF>/<GROUP>(OPTIONAL)/<TYPE>/
+C   DATASET OPENED: $ADASUSER/<DEFADF>/<GROUP>(OPTIONAL)/<TYPE>/
 C                        <GROUP_EXT>#<ELEMENT SYMBOL><CHARGE>
 C
 C  CALLING PROGRAM: SPEC
 C
 C  SUBROUTINE:
 C
-C  INPUT : (I*4)   IUNIT   = UNIT TO WHICH DATA SET WILL BE CONNECTED
+C  INPUT : (I*4)   IUNIT   = UNIT TO WHICH DATASET WILL BE CONNECTED
 C  INPUT : (I*4)   IZ0     = NUCLEAR CHARGE OF EMITTING ION REQUESTED
 C  INPUT : (I*4)   IZ      = ION CHARGE OF EMITTING ION REQUESTED
 C
 C  OUTPUT: (I*4)   IRCODE  = RETURN CODE FROM SUBROUTINE:
-C                            0 => DATA SET SUCCESSFULLY CONNECTED
+C                            0 => DATASET SUCCESSFULLY CONNECTED
 C                            1 => REQUESTED DATA  SET  MEMBER  DOES  NOT
-C                                 EXISTS - DATA SET NOT CONNECTED.
+C                                 EXISTS - DATASET NOT CONNECTED.
 C                            6 => INVALID VALUE FOR 'IZ' ENTERED.
 C                                 ( 0 <= 'IZ' <= 99 )
 C                            9 => REQUESTED DATA  SET  EXISTS BUT CANNOT
 C                                 BE OPENED.
-C  OUTPUT: (C*256)  DSNAME  = NAME OF OPENED DATA SET UNDER UNIX
+C  OUTPUT: (C*256)  DSNAME  = NAME OF OPENED DATASET UNDER UNIX
 C
 C          (I*4)   IDLEN   = LENGTH, IN BYTES, OF FIXED 'DSNAME' PREFIX
 C          (I*4)   LENF1   = FIRST NON-BLANK CHR OF 'DSNAME' GROUP PART
@@ -1262,7 +1281,7 @@ C-----------------------------------------------------------------------
      &            LENF7         , LENF8
 C-----------------------------------------------------------------------
       CHARACTER   XFESYM*2      , ESYM*2         , CZ*2       ,
-     &            USERID*80     , DSNAME*256      , DEFADF*5   ,
+     &            USERID*80     , DSNAME*256     , DEFADF*5   ,
      &            USRGRP*8      , USRTYP*80      , USREXT*3   ,
      &            HASH*1
 C-----------------------------------------------------------------------
@@ -1340,7 +1359,7 @@ C
             ELSE
                DSNAME = DSNAME(1:IDLEN)//ESYM(1:2)//CZ(1:IZEND)//'.dat'
             ENDIF
-            write(*,*) 'Checking on the existence of ',trim(dsname)
+            write(*,'(2a)') 'Checking on the existence of ',trim(dsname)
 C
             call find_file(DSNAME,LEXIST)
 C
@@ -1381,22 +1400,22 @@ C-----------------------------------------------------------------------
 C
 C  ****************** FORTRAN77 SUBROUTINE: E3TITL *********************
 C
-C  PURPOSE:  TO CREATE THE DESCRIPTIVE TITLE FOR SELECTED DATA-BLOCK.
+C  PURPOSE:  TO CREATE THE DESCRIPTIVE TITLE FOR SELECTED DATA BLOCK.
 C
 C  CALLING PROGRAM: ADAS503/SPEC
 C
 C  SUBROUTINE:
 C
-C  INPUT : (I*4)  IBSEL    = SELECTED DATA-BLOCK: INDEX
-C  INPUT : (C*(*)) DSNAME   = FULL INPUT DATA SET NAME
+C  INPUT : (I*4)  IBSEL    = SELECTED DATA BLOCK: INDEX
+C  INPUT : (C*(*)) DSNAME  = FULL INPUT DATASET NAME
 C
-C  INPUT : (C*2)  ESYM     = INPUT DATA SET: EMITTING ION ELEMENT SYMBOL
-C  INPUT : (I*4)  IZ       = INPUT DATA SET: EMITTING ION CHARGE-STATE
+C  INPUT : (C*2)  ESYM     = INPUT DATASET: EMITTING ION ELEMENT SYMBOL
+C  INPUT : (I*4)  IZ       = INPUT DATASET: EMITTING ION CHARGE STATE
 C
-C  INPUT : (C*10) CWAVEL   = SELECTED DATA-BLOCK: WAVELENGTH (ANGS.)
-C  INPUT : (C*2)  CINDM    = SELECTED DATA-BLOCK: METASTABLE INDEX
+C  INPUT : (C*10) CWAVEL   = SELECTED DATA BLOCK: WAVELENGTH (ANGS.)
+C  INPUT : (C*2)  CINDM    = SELECTED DATA BLOCK: METASTABLE INDEX
 C
-C  OUTPUT: (C*296)TITLX    = SELECTED DATA-BLOCK: DESCRIPTIVE TITLE
+C  OUTPUT: (C*296)TITLX    = SELECTED DATA BLOCK: DESCRIPTIVE TITLE
 C
 C          (C*2)  C2       = GENERAL USE 2 BYTE  CHARACTER  STRING
 C          (C*3)  C3       = GENERAL USE 3 BYTE  CHARACTER  STRING
@@ -1447,8 +1466,8 @@ C-----------------------------------------------------------------------
       WRITE(C2,1000) IZ
       TITLX(POS_NOW:POS_NOW+6) = ESYM // '+' // C2  
       POS_NOW = POS_NOW + 5
-      TITLX(POS_NOW:POS_NOW+29)=' WAVELENGTH= '//CWAVEL//
-     &                          ' MET='//CINDM
+      TITLX(POS_NOW:POS_NOW+30)=' WAVELENGTH= '//CWAVEL//
+     &                          ' MET= '//CINDM
 C
 C-----------------------------------------------------------------------
  1000 FORMAT(I2)
@@ -1469,20 +1488,20 @@ C
 C  ****************** FORTRAN77 SUBROUTINE: E3CHKB *********************
 C
 C  PURPOSE: TO CHECK THE SELECTED BLOCK (IBSEL) OF DATA  EXISTS  IN  THE
-C           INPUT DATA SET AND IF SO IT REPRESENTS THE ENTERED VALUES OF
+C           INPUT DATASET AND IF SO IT REPRESENTS THE ENTERED VALUES OF
 C           'IZ0IN' (NUCLEAR CHARGE OF EMITTING ION)          &
 C           'IZIN'  (CHARGE OF EMITTING ION)
 C
-C           IT ALSO CLOSES THE INPUT DATA SET ALLOCATION IF OPEN.
+C           IT ALSO CLOSES THE INPUT DATASET ALLOCATION IF OPEN.
 C
 C  CALLING PROGRAM: SPEC
 C
 C  SUBROUTINE:
 C
-C  INPUT : (I*4)   IUNIT   = UNIT TO WHICH INPUT DATA SET IS ALLOCATED
-C  INPUT : (I*4)   NBSEL   = TOTAL NUMBER OF DATA-BLOCKS READ FROM INPUT
-C                            DATA SET.
-C  INPUT : (I*4)   IBSEL   = INDEX OF DATA-BLOCK SELECTED FOR ANALYSIS
+C  INPUT : (I*4)   IUNIT   = UNIT TO WHICH INPUT DATASET IS ALLOCATED
+C  INPUT : (I*4)   NBSEL   = TOTAL NUMBER OF DATA BLOCKS READ FROM INPUT
+C                            DATASET.
+C  INPUT : (I*4)   IBSEL   = INDEX OF DATA BLOCK SELECTED FOR ANALYSIS
 C
 C  INPUT : (I*4)   IZ0IN   = REQUESTED: NUCLEAR CHARGE OF EMITTING ION
 C  INPUT : (I*4)   IZIN    = REQUESTED: CHARGE OF EMITTING ION
@@ -1490,24 +1509,24 @@ C
 C  INPUT : (I*4)   IZ0     = INPUT FILE: NUCLEAR CHARGE OF EMITTING ION
 C  INPUT : (I*4)   IZ      = INPUT FILE: CHARGE OF EMITTING ION
 C
-C  I/O   : (L*4)   LOPEN   = INPUT : .TRUE.  => INPUT DATA SET OPEN.
-C                                    .FALSE. => INPUT DATA SET CLOSED.
+C  I/O   : (L*4)   LOPEN   = INPUT : .TRUE.  => INPUT DATASET OPEN.
+C                                    .FALSE. => INPUT DATASET CLOSED.
 C                            OUTPUT: ALWAYS RETURNED AS .FALSE.
 C  OUTPUT: (I*4)   IRCODE  = RETURN CODE FROM SUBROUTINE:
 C                            0 => NO ERROR DETECTED.
 C                            2 => DISCREPANCY BETWEEN REQUESTED CHARGES
 C                                 AND THOSE IN INPUT DATA FILE.
-C                            3 => SELECTED DATA-BLOCK  OUT OF RANGE  OR
+C                            3 => SELECTED DATA BLOCK  OUT OF RANGE  OR
 C                                 DOES NOT EXIST.
 C
 C          (I*4)   I4UNIT  = FUNCTION (SEE ROUTINE SECTION BELOW)
 C
-C          (C*256)  DSNAME  = UNIX NAME OF DATA SET OPENED
+C          (C*256)  DSNAME  = UNIX NAME OF DATASET OPENED
 C
 C ROUTINES:
 C          ROUTINE    SOURCE    BRIEF DESCRIPTION
 C          ------------------------------------------------------------
-C          E3FILE     ADAS      OPEN DATA SET FOR SELECTED EMITTER
+C          E3FILE     ADAS      OPEN DATASET FOR SELECTED EMITTER
 C          I4UNIT     ADAS      FETCH UNIT NUMBER FOR OUTPUT OF MESSAGES
 C
 C AUTHOR:  H. P. SUMMERS
@@ -1569,8 +1588,8 @@ C-----------------------------------------------------------------------
 C
  1000 FORMAT( 1X,12('*'),' SPEC  RETURN CODE: ',I1,1X,12('*')/
      &        1X,'E3CHKB ERROR: SELECTED DATA BLOCK OUT OF RANGE'/
-     &       15X,'MAXIMUM DATA-BLOCK INDEX  = ',I4/
-     &       15X,'DATA-BLOCK INDEX SELECTED = ',I4/
+     &       15X,'MAXIMUM DATA BLOCK INDEX  = ',I4/
+     &       15X,'DATA BLOCK INDEX SELECTED = ',I4/
      &        1X,46('*'))
 C
 C-----------------------------------------------------------------------
@@ -1602,11 +1621,10 @@ C  CALLING PROGRAM: ADAS503/SPEC
 C
 C  DATA:
 C
-C           UP TO 'NSTORE' SETS (DATA-BLOCKS) OF DATA MAY BE  READ FROM
+C           UP TO 'NSTORE' SETS (DATA BLOCKS) OF DATA MAY BE READ FROM
 C           THE FILE - EACH BLOCK FORMING A COMPLETE SET OF IONISATIONS
 C           PER PHOTON VALUES FOR GIVEN TEMP./DENSITY COMBINATION. EACH
-C           DATA-BLOCK  IS  ANALYSED INDEPENDENTLY OF ANY  OTHER  DATA-
-C           BLOCK.
+C           DATA BLOCK IS ANALYSED INDEPENDENTLY OF ANY OTHER DATA BLOCK.
 C
 C           THE UNITS USED IN THE DATA FILE ARE TAKEN AS FOLLOWS:
 C
@@ -1616,10 +1634,10 @@ C
 C  SUBROUTINE:
 C
 C  INPUT : (I*4)  IUNIT    = UNIT TO WHICH INPUT FILE IS ALLOCATED.
-CX INPUT : (C*44) DSNAME   = MVS DATA SET NAME OF DATA SET BEING READ
-CA INPUT : (C*256) DSNAME   = NAME OF DATA FILE BEING READ
+CX INPUT : (C*44) DSNAME   = MVS DATASET NAME OF DATASET BEING READ
+CA INPUT : (C*256) DSNAME  = NAME OF DATA FILE BEING READ
 C
-C  INPUT : (I*4)  NSTORE   = MAXIMUM NUMBER  OF  INPUT DATA-BLOCKS  THAT
+C  INPUT : (I*4)  NSTORE   = MAXIMUM NUMBER  OF  INPUT DATA BLOCKS  THAT
 C                            CAN BE STORED.
 C  INPUT : (I*4)  NTDIM    = MAX NUMBER OF ELECTRON TEMPERATURES ALLOWED
 C  INPUT : (I*4)  NDDIM    = MAX NUMBER OF ELECTRON DENSITIES    ALLOWED
@@ -1629,46 +1647,46 @@ C  OUTPUT: (I*4)  IZ       = READ - EMITTING ION - CHARGE
 C  OUTPUT: (I*4)  IZ1      = READ - EMITTING ION - CHARGE + 1
 C  OUTPUT: (C*2)  ESYM     = READ - EMITTING ION - ELEMENT SYMBOL
 C
-C  OUTPUT: (I*4)  NBSEL    = NUMBER OF DATA-BLOCKS ACCEPTED & READ IN.
-C  OUTPUT: (I*4)  ISELA()  = READ - DATA-SET DATA-BLOCK ENTRY INDICES
-C                            DIMENSION: DATA-BLOCK INDEX
+C  OUTPUT: (I*4)  NBSEL    = NUMBER OF DATA BLOCKS ACCEPTED & READ IN.
+C  OUTPUT: (I*4)  ISELA()  = READ - DATASET DATA BLOCK ENTRY INDICES
+C                            DIMENSION: DATA BLOCK INDEX
 C
 C  OUTPUT: (C*10) CWAVEL() = READ - WAVELENGTH (ANGSTROMS)
-C                            DIMENSION: DATA-BLOCK INDEX
+C                            DIMENSION: DATA BLOCK INDEX
 C  OUTPUT: (C*8)  CFILE()  = READ - SPECIFIC ION FILE SOURCE
-C                            DIMENSION: DATA-BLOCK INDEX
+C                            DIMENSION: DATA BLOCK INDEX
 C  OUTPUT: (C*8)  CTYPE()  = READ - DATA TYPE
-C                            DIMENSION: DATA-BLOCK INDEX
+C                            DIMENSION: DATA BLOCK INDEX
 C  OUTPUT: (C*2)  CINDM()  = READ - METASTABLE INDEX
-C                            DIMENSION: DATA-BLOCK INDEX
+C                            DIMENSION: DATA BLOCK INDEX
 C
 C  OUTPUT: (I*4)  ITA()    = READ - NUMBER OF ELECTRON TEMPERATURES
-C                            DIMENSION: DATA-BLOCK INDEX
+C                            DIMENSION: DATA BLOCK INDEX
 C  OUTPUT: (I*4)  IDA()    = READ - NUMBER OF ELECTRON DENSITIES
-C                            DIMENSION: DATA-BLOCK INDEX
+C                            DIMENSION: DATA BLOCK INDEX
 C
 C  OUTPUT: (R*8)  TETA(,)  = READ - ELECTRON TEMPERATURES (UNITS: eV)
 C                            1st DIMENSION: ELECTRON TEMPERATURE INDEX
-C                            2nd DIMENSION: DATA-BLOCK INDEX
+C                            2nd DIMENSION: DATA BLOCK INDEX
 C  OUTPUT: (R*8)  TEDA(,)  = READ - ELECTRON DENSITIES (UNITS: CM-3)
 C                            1st DIMENSION: ELECTRON DENSITY INDEX
-C                            2nd DIMENSION: DATA-BLOCK INDEX
+C                            2nd DIMENSION: DATA BLOCK INDEX
 C
-C  OUTPUT: (R*8)  PEC(,,)   =READ - PHOTON EMISSIVITY VALUES
+C  OUTPUT: (R*8)  PEC(,,)  = READ - PHOTON EMISSIVITY VALUES
 C                            1st DIMENSION: ELECTRON TEMPERATURE INDEX
 C                            2nd DIMENSION: ELECTRON DENSITY INDEX
-C                            3rd DIMENSION: DATA-BLOCK INDEX
+C                            3rd DIMENSION: DATA BLOCK INDEX
 C
 C          (I*4)  I4EIZ0   = FUNCTION - (SEE ROUTINES SECTION BELOW)
 C          (I*4)  I4FCTN   = FUNCTION - (SEE ROUTINES SECTION BELOW)
 C          (I*4)  I4UNIT   = FUNCTION - (SEE ROUTINES SECTION BELOW)
-C          (I*4)  IBLK     = ARRAY INDEX: DATA-BLOCK INDEX
+C          (I*4)  IBLK     = ARRAY INDEX: DATA BLOCK INDEX
 C          (I*4)  ITT      = ARRAY INDEX: ELECTRON TEMPERATURE INDEX
 C          (I*4)  ITD      = ARRAY INDEX: ELECTRON DENSITY     INDEX
 C          (I*4)  NTNUM    = NUMBER OF ELECTRON TEMPERATURES FOR CURRENT
-C                            DATA-BLOCK
+C                            DATA BLOCK
 C          (I*4)  NDNUM    = NUMBER OF ELECTRON DENSITIES    FOR CURRENT
-C                            DATA-BLOCK
+C                            DATA BLOCK
 C          (I*4)  IABT     = RETURN CODE FROM 'I4FCTN'
 C          (I*4)  IPOS1    = GENERAL USE STRING INDEX VARIABLE
 C          (I*4)  IPOS2    = GENERAL USE STRING INDEX VARIABLE
@@ -1684,8 +1702,10 @@ C          (C*6)  CKEY1    = 'FILMEM' - INPUT BLOCK HEADER KEY
 C          (C*4)  CKEY2    = 'TYPE  ' - INPUT BLOCK HEADER KEY
 C          (C*4)  CKEY3    = 'INDM  ' - INPUT BLOCK HEADER KEY
 C          (C*4)  CKEY4    = 'ISEL  ' - INPUT BLOCK HEADER KEY
+C          (C*4)  CKEY5    = 'ISPN  ' - INPUT BLOCK HEADER KEY
+C          (C*4)  CKEY6    = 'ISPP  ' - INPUT BLOCK HEADER KEY
 C          (C*80) C80      = GENERAL USE 80 BYTE  CHARACTER  STRING  FOR
-C                            THE INPUT OF DATA-SET RECORDS.
+C                            THE INPUT OF DATASET RECORDS.
 C
 C ROUTINES:
 C          ROUTINE    SOURCE    BRIEF DESCRIPTION
@@ -1735,10 +1755,11 @@ C-----------------------------------------------------------------------
       LOGICAL    LBEND
 C-----------------------------------------------------------------------
 CX    CHARACTER  DSNAME*44             , ESYM*2
-      CHARACTER  DSNAME*256             , ESYM*2              
+      CHARACTER  DSNAME*256            , ESYM*2
       CHARACTER  CSLASH*1              , C2*2                ,
      &           CKEY1*6               , CKEY2*4             ,
      &           CKEY3*4               , CKEY4*4             ,
+     &           CKEY5*4               , CKEY6*4             ,
      &           IONNAM*5              , C80*80
 C-----------------------------------------------------------------------
       INTEGER    ISELA(NSTORE)         ,
@@ -1748,20 +1769,23 @@ C-----------------------------------------------------------------------
      &           CTYPE(NSTORE)*8       , CWAVEL(NSTORE)*10
 C-----------------------------------------------------------------------
       real (kind=R8) ::
-     *        TETA(NTDIM,NSTORE)    , TEDA(NDDIM,NSTORE)
+     *           TETA(NTDIM,NSTORE)    , TEDA(NDDIM,NSTORE)
       real (kind=R8) ::
-     *        PEC(NTDIM,NDDIM,NSTORE)
+     *           PEC(NTDIM,NDDIM,NSTORE)
 C-----------------------------------------------------------------------
       SAVE       CSLASH                ,
      &           CKEY1                 , CKEY2                ,
-     &           CKEY3                 , CKEY4
-      EXTERNAL   SUBINI, SUBEND, XERRAB
+     &           CKEY3                 , CKEY4                ,
+     &           CKEY5                 , CKEY6
+      LOGICAL    STREQL
+      EXTERNAL   SUBINI, SUBEND, XERRAB, STREQL
 C
 C-----------------------------------------------------------------------
 C
       DATA       CSLASH / '/' /
       DATA       CKEY1  / 'FILMEM' /   , CKEY2  / 'TYPE'   /  ,
-     &           CKEY3  / 'INDM'   /   , CKEY4  / 'ISEL'   /
+     &           CKEY3  / 'INDM'   /   , CKEY4  / 'ISEL'   /  ,
+     &           CKEY5  / 'ISPB'   /   , CKEY6  / 'ISPP'   /
 C
 C **********************************************************************
 C
@@ -1769,7 +1793,7 @@ C
       LBEND = .FALSE.
 C
 C-----------------------------------------------------------------------
-C READ IN NUMBER OF DATA-BLOCKS PRESENT IN INPUT FILE.
+C READ IN NUMBER OF DATA BLOCKS PRESENT IN INPUT FILE.
 C-----------------------------------------------------------------------
 C
       READ(IUNIT,1000) C80
@@ -1779,11 +1803,11 @@ C
       IPOS2 = IPOS1          + 4
       READ(C80(IPOS1:IPOS2),1001) IONNAM
 C
-         IF ( IONNAM(2:2) .EQ. '+' ) THEN
-            ESYM  = IONNAM(1:1) // ' '
-         ELSE
-            ESYM  = IONNAM(1:2)
-         ENDIF
+      IF ( IONNAM(2:2) .EQ. '+' .OR. IONNAM(2:2) .EQ. ':') THEN
+         ESYM  = IONNAM(1:1) // ' '
+      ELSE
+         ESYM  = IONNAM(1:2)
+      ENDIF
 C
       IZ0   = I4EIZ0( ESYM )
       IZ    = I4FCTN( IONNAM(3:5) , IABT )
@@ -1794,85 +1818,117 @@ C
 C
       IZ1   = IZ + 1
 C
-         IF (NBSEL .GT. NSTORE) THEN
-            WRITE(I4UNIT(-1),2000) DSNAME , NSTORE , NBSEL , NSTORE
-            NBSEL = NSTORE
-         ENDIF
+      IF (NBSEL .GT. NSTORE) THEN
+         WRITE(I4UNIT(-1),2000) DSNAME , NSTORE , NBSEL , NSTORE
+         NBSEL = NSTORE
+      ENDIF
 C
 C***********************************************************************
-C INPUT DATA FOR EACH OF THE DATA-BLOCKS
+C INPUT DATA FOR EACH OF THE DATA BLOCKS
 C***********************************************************************
 C
-         DO 1 IBLK=1,NBSEL
+      DO 1 IBLK=1,NBSEL
 C
 C-----------------------------------------------------------------------
 C INPUT TITLE, WAVELENGTH AND OTHER INFORMATION (CHECK BLOCK EXISTS)
 C-----------------------------------------------------------------------
 C
-            IF (.NOT.LBEND) THEN
-               READ(IUNIT,1000)   C80
+         IF (.NOT.LBEND) THEN
+            READ(IUNIT,1000)   C80
 C
-                  IF ( C80(1:1) .NE. 'C') THEN
+            IF ( C80(1:1) .NE. 'C') THEN
 C
-                     IPOS1 =  INDEX(C80,'A') + 1
-                     IPOS2 =  INDEX(C80,'/') - 1
+               IPOS1 =  INDEX(C80,'A') + 1
+               IPOS2 =  INDEX(C80,'/') - 1
 C
-                        IF (IPOS1 .EQ. 1) THEN
-                           IPOS1        = 11
-                           CWAVEL(IBLK) = C80(1:10)
-                        ELSEIF (IPOS1 .GT. 10) THEN
-                           CWAVEL(IBLK) = C80(1:10)
-                        ELSE
-                           CWAVEL(IBLK) = C80(1:IPOS1-1)
-                        ENDIF
+               IF (IPOS1 .EQ. 1) THEN
+                  IPOS1        = 11
+                  CWAVEL(IBLK) = C80(1:10)
+               ELSEIF (IPOS1 .GT. 10) THEN
+                  CWAVEL(IBLK) = C80(1:10)
+               ELSE
+                  CWAVEL(IBLK) = C80(1:IPOS1-1)
+               ENDIF
 C
-                     READ(C80(IPOS1:IPOS2),*) IDA(IBLK) , ITA(IBLK)
+               READ(C80(IPOS1:IPOS2),*) IDA(IBLK) , ITA(IBLK)
 C
-                     CALL XXHKEY( C80 , CKEY1 , CSLASH , CFILE(IBLK)  )
-                     CALL XXHKEY( C80 , CKEY2 , CSLASH , CTYPE(IBLK)  )
-                     CALL XXHKEY( C80 , CKEY3 , CSLASH , CINDM(IBLK)  )
-                     CALL XXHKEY( C80 , CKEY4 , CSLASH , C2           )
-                     ISELA(IBLK) = I4FCTN( C2 , IABT )
+               CALL XXHKEY( C80 , CKEY1 , CSLASH , CFILE(IBLK))
+               if(streql(cfile(iblk),' ')) then
+                  call lower_case(CKEY1)
+                  CALL XXHKEY( C80 , CKEY1 , CSLASH , CFILE(IBLK))
+               end if
+               CALL XXHKEY( C80 , CKEY2 , CSLASH , CTYPE(IBLK))
+               if(streql(ctype(iblk),' ')) then
+                  call lower_case(CKEY2)
+                  CALL XXHKEY( C80 , CKEY2 , CSLASH , CTYPE(IBLK))
+               end if
+               CALL XXHKEY( C80 , CKEY3 , CSLASH , CINDM(IBLK))
+               if(streql(cindm(iblk),' ')) then
+                  call lower_case(CKEY3)
+                  CALL XXHKEY( C80 , CKEY3 , CSLASH , CINDM(IBLK))
+               end if
+               if(streql(cindm(iblk),' ')) then
+                  CALL XXHKEY( C80 , CKEY5 , CSLASH , CINDM(IBLK))
+               end if
+               if(streql(cindm(iblk),' ')) then
+                  call lower_case(CKEY5)
+                  CALL XXHKEY( C80 , CKEY5 , CSLASH , CINDM(IBLK))
+               end if
+               if(streql(cindm(iblk),' ')) then
+                  CALL XXHKEY( C80 , CKEY6 , CSLASH , CINDM(IBLK))
+                  if(streql(cindm(iblk),'t')) cindm(iblk)='+T'
+               end if
+               if(streql(cindm(iblk),' ')) then
+                  call lower_case(CKEY6)
+                  CALL XXHKEY( C80 , CKEY6 , CSLASH , CINDM(IBLK))
+                  if(streql(cindm(iblk),'t')) cindm(iblk)='+T'
+               end if
+               CALL XXHKEY( C80 , CKEY4 , CSLASH , C2 )
+               if(streql(c2,' ')) then
+                  call lower_case(CKEY4)
+                  CALL XXHKEY( C80 , CKEY4 , CSLASH , C2 )
+               end if
+               ISELA(IBLK) = I4FCTN( C2 , IABT )
 C
-                     NDNUM = IDA(IBLK)
-                     NTNUM = ITA(IBLK)
+               NDNUM = IDA(IBLK)
+               NTNUM = ITA(IBLK)
 C
-                         IF (NTNUM .GT. NTDIM) THEN
-                            WRITE(I4UNIT(-1),2001) DSNAME , IBLK  ,
-     &                                            'TEMPERATURES'  ,
-     &                                            NTDIM   , NTNUM
-                            CALL XERRAB ('NTNUM .GT. NTDIM')
-                         ENDIF
+               IF (NTNUM .GT. NTDIM) THEN
+                  WRITE(I4UNIT(-1),2001) DSNAME , IBLK  ,
+     &                                  'TEMPERATURES'  ,
+     &                                   NTDIM   , NTNUM
+                  CALL XERRAB ('NTNUM .GT. NTDIM')
+               ENDIF
 C
-                         IF (NDNUM .GT. NDDIM) THEN
-                            WRITE(I4UNIT(-1),2001) DSNAME , IBLK   ,
-     &                                            'DENSITIES'      ,
-     &                                            NDDIM   , NDNUM
-                            CALL XERRAB ('NDNUM .GT. NDDIM')
-                         ENDIF
+               IF (NDNUM .GT. NDDIM) THEN
+                  WRITE(I4UNIT(-1),2001) DSNAME , IBLK   ,
+     &                                  'DENSITIES'      ,
+     &                                   NDDIM   , NDNUM
+                  CALL XERRAB ('NDNUM .GT. NDDIM')
+               ENDIF
 C
 C-----------------------------------------------------------------------
 C INPUT TEMPERATURE, DENSITY AND PHOTON EMISSIVITIES FOR BLOCK
 C-----------------------------------------------------------------------
 C
-                     READ(IUNIT,1002) ( TEDA(ITD,IBLK) , ITD=1,NDNUM )
-                     READ(IUNIT,1002) ( TETA(ITT,IBLK) , ITT=1,NTNUM )
+               READ(IUNIT,1002) ( TEDA(ITD,IBLK) , ITD=1,NDNUM )
+               READ(IUNIT,1002) ( TETA(ITT,IBLK) , ITT=1,NTNUM )
 C
-                        DO 3 ITD=1,NDNUM
-                           READ(IUNIT,1002) (PEC(ITT,ITD,IBLK),
-     &                                       ITT=1,NTNUM        )
-    3                   CONTINUE
+               DO 3 ITD=1,NDNUM
+                  READ(IUNIT,1002) (PEC(ITT,ITD,IBLK),
+     &                              ITT=1,NTNUM        )
+    3          CONTINUE
 C
-                  ELSE
-                     WRITE(I4UNIT(-1),2002) DSNAME  , NBSEL    ,
-     &                                     IBLK - 1 , IBLK - 1
-                     LBEND = .TRUE.
-                     NBSEL = IBLK - 1
-                  ENDIF
-C
+            ELSE
+               WRITE(I4UNIT(-1),2002) DSNAME  , NBSEL    ,
+     &                                IBLK - 1 , IBLK - 1
+               LBEND = .TRUE.
+               NBSEL = IBLK - 1
             ENDIF
 C
-    1    CONTINUE
+         ENDIF
+C
+    1 CONTINUE
 C
 C***********************************************************************
 C
@@ -1881,22 +1937,22 @@ C
  1002 FORMAT(8D9.2)
 C
  2000 FORMAT(/1X,31('*'),' E3DATA MESSAGE ',31('*')/
-     &        2X,'INPUT PHOT. EMISS. DATA SET NAME: ',A80/
-     &        2X,'NUMBER OF WAVELENGTH DATA-BLOCKS',
-     &           ' IN INPUT DATA SET TOO GREAT.'/
+     &        2X,'INPUT PHOT. EMISS. DATASET NAME: ',A80/
+     &        2X,'NUMBER OF WAVELENGTH DATA BLOCKS',
+     &           ' IN INPUT DATASET TOO GREAT.'/
      &        2X,'THE MAXIMUM NUMBER ALLOWED     = ',I3/
-     &        2X,'THE NUMBER PRESENT IN DATA SET = ',I3/
+     &        2X,'THE NUMBER PRESENT IN DATASET = ',I3/
      &        2X,'THEREFORE ONLY THE FIRST ',I3,' HAVE BEEN ACCEPTED'/
      &        1X,31('*'),' END OF MESSAGE ',31('*'))
  2001 FORMAT(/1X,32('*'),' E3DATA ERROR ',32('*')/
-     &        2X,'INPUT PHOT. EMISS. DATA SET NAME: ',A80/
-     &        2X,'DATA-BLOCK INDEX: ',I3//
+     &        2X,'INPUT PHOT. EMISS. DATASET NAME: ',A80/
+     &        2X,'DATA BLOCK INDEX: ',I3//
      &        2X,'THE NUMBER OF INPUT ELECTRON ',A,' TOO LARGE'/
      &        2X,'THE MAXIMUM NUMBER ALLOWED       = ',I3/
-     &        2X,'THE NUMBER PRESENT IN DATA-BLOCK = ',I3/
+     &        2X,'THE NUMBER PRESENT IN DATA BLOCK = ',I3/
      &        1X,29('*'),' PROGRAM TERMINATED ',29('*'))
  2002 FORMAT(/1X,31('*'),' E3DATA MESSAGE ',31('*')/
-     &        2X,'INPUT IONS./PHOTON DATA SET NAME: ',A80/
+     &        2X,'INPUT IONS./PHOTON DATASET NAME: ',A80/
      &        2X,'INCONSISTENCY IN THE NUMBER OF WAVELENGTHS',
      &           ' EXPECTED AND READ.'/
      &        2X,'THE NUMBER EXPECTED = ',I3/
@@ -2242,8 +2298,8 @@ C  OUTPUT: (L*4)  LINTRP()= .TRUE.  => 'YOUT()' VALUE INTERPOLATED.
 C                           .FALSE. => 'YOUT()' VALUE EXTRAPOLATED.
 C                           (ARRAY SIZE: NOUT)
 C
-C          (I*4)  NKNOTS  = PARAMETER = MAXIMUM  NUMBER OF KNOTS ALLOWED
-C          (I*4)  NIOPT   = PARAMETER = MAXIMUM  VALUE OF IOPT ALLOWED
+C          (I*4)  NKNOTS  = PARAMETER = MAXIMUM NUMBER OF KNOTS ALLOWED
+C          (I*4)  NIOPT   = PARAMETER = MAXIMUM VALUE OF IOPT ALLOWED
 C
 C          (I*4)  I       = GENERAL ARRAY USE
 C          (I*4)  K       = INDEX OF 'XOUT()' VALUE FOR INTERPOLATION/
@@ -2252,9 +2308,9 @@ C          (I*4)  NIN0    = 'NIN' - 1
 C          (I*4)  INTER   = INDEX OF CLOSEST/NEXT HIGHEST VALUE OF
 C                           'XIN()' TO THE VALUE OF 'XOUT()' BEING
 C                           INTERPOLATED/EXTRAPOLATED.
-C          (I*4)  NOPT    = VALUE OF  'IOPT' USED IN  CALCULATING  END-
-C                           CONDITIONS   FOR  STORED  'X-VALUE'  SPLINE
-C                           PARAMETERS.   (NOTE:  IF  'IOPT < 0',  THEN
+C          (I*4)  NOPT    = VALUE OF 'IOPT' USED IN  CALCULATING  END-
+C                           CONDITIONS FOR STORED 'X-VALUE' SPLINE
+C                           PARAMETERS. (NOTE: IF 'IOPT < 0', THEN
 C                           'NOPT = 0'.) - I.E. 'NOPT = MAX( 0, IOPT )'.
 C
 C          (R*8)  XK      = VALUE OF 'XOUT(K)' BEING INTERPOLATED/
@@ -2347,18 +2403,18 @@ C                             TO ZERO (CARE IF LOG OF OUTPUT IS NEEDED).
 C          IF ( IOPT .GT. 4 ) PROGRAM STOPS
 C         -------------------------------------------------------------
 C
-C          THIS SUBROUTINE IS AN AMENDED  AND STRUCTURED VERSION OF  THE
-C          SUBROUTINE  'ESPLINE'  WRITTEN BY  H.P. SUMMERS,   JET   26TH
-C          OCTOBER 1989.   IT REMOVES THE COMMON BLOCK  /IONSPL/ ,   THE
+C          THIS SUBROUTINE IS AN AMENDED AND STRUCTURED VERSION OF THE
+C          SUBROUTINE 'ESPLINE' WRITTEN BY H.P. SUMMERS, JET 26TH
+C          OCTOBER 1989. IT REMOVES THE COMMON BLOCK /IONSPL/ , THE
 C          SWITCHES 'ISW & ISW2' AND ALSO THE CASE FOR THE INTERPOLATION
-C          OF CHARGE STATE VALUES.   IT INTRODUCES THE FEATURE  THAT  AN
-C          ARRAY OF INPUT  'X-VALUES'  CAN BE  INTERPOLATED/EXTRAPOLATED
+C          OF CHARGE STATE VALUES. IT INTRODUCES THE FEATURE THAT AN
+C          ARRAY OF INPUT 'X-VALUES' CAN BE INTERPOLATED/EXTRAPOLATED
 C          IN ONE CALL.
 C
 C ROUTINES:
 C          ROUTINE    SOURCE    BRIEF DESCRIPTION
 C          ------------------------------------------------------------
-C          FINTX      ------    EXTERNAL  REAL*8  FUNCTION,   USED  TO
+C          FINTX      ------    EXTERNAL REAL*8 FUNCTION, USED TO
 C                               TRANSFORM X-COORDINATES.
 C
 C
@@ -2551,7 +2607,7 @@ C-----------------------------------------------------------------------
                   AGRL(4)   =  1.0_R8 - AGRL(3)
                ENDIF
 C-----------------------------------------------------------------------
-C EVALUATE 'YOUT'-VALUE FOR REQUESTED 'XOUT'-VALUE
+C EVALUATE 'YOUT' VALUE FOR REQUESTED 'XOUT' VALUE
 C-----------------------------------------------------------------------
             YOUT(K) = ( AGRL(1)* DY(INTER-1) ) + ( AGRL(2)* DY(INTER) )
      &              + ( AGRL(3)*YIN(INTER-1) ) + ( AGRL(4)*YIN(INTER) )
@@ -3014,17 +3070,26 @@ c     initialising
       dwl=idwl*1.0_R8
       nz=size(elements)
       allocate(iae(nz),iar(nz),iac(nz))
-c      if(.not.open_file(99,'source.location','data.local/adas|modules/adas')) return
+c      if(.not.open_file(99,'source.location',
+c    &     'data.local/adas|modules/adas')) return
 c      read(99,*) extension,mie,mir,mic
 c      read(99,*) filename
 c      close(99)
 c     calculating the emissivity
       write(*,*) 'Calculate the emissivity for species ',is
       filename='filelist.adas.adf15'
+      err=0
       call InitADAS(ic,nc,
      &              extension,filename,mie,mir,mic,err)
       if (err .eq. 0) then
-         call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac)
+         call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
+         if (err .eq. 1) then
+c  try again in the case where local files were used and
+c  a standard database file may be present 
+           call InitADAS(ic,nc,
+     &                   extension,filename,mie,mir,mic,err)
+           call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
+         end if
          do ix=-1,nx
             do iy=-1,ny
                lNe(1)=NE(ix,iy)/1.0e6_R8

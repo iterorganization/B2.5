@@ -78,16 +78,18 @@
      *   qe_iup_sum, qi_iup_sum, q_iup_sum,
      *   uvbtot, voltot                                            !iyv 29.11.13
       character chns*3                                             !srv 27.04.01
-      character(23) hlp_frm                                        !srv 03.04.13
+      character*32 hlp_frm                                         !srv 03.04.13
       character*26 boundary_location(nbcd)
-      character(7), save :: folder                        !srv 26.09.17
-      logical ex                                          !srv 26.09.17
+      character(7), save :: folder                                 !srv 26.09.17
+      logical ex                                                   !srv 26.09.17
 #ifdef B25_EIRENE
       integer js
       real (kind=R8), save :: hlp_neu_peak
       data hlp_neu_peak / 5.0_R8 /                                 !iyv 15.10.09
 #endif
 *   ..procedures
+      integer len_of_digits
+      external len_of_digits
       external subini, subend, ipgeti, machsfr
 *   ..procedures                                                   !srv
       intrinsic abs                                                !srv
@@ -747,11 +749,13 @@
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
-      js=ltns(nncut)+nlim
-      do iy=0,ny-1 !{
-      wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
+      js=ltns(nncut*2)+nlim   ! iyv 15.05.2018
+      if (ltns(nncut*2).gt.0) then
+        do iy=0,ny-1 !{
+          wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
      &                              hlp_neu_peak/hlp_s
-      enddo
+        enddo
+      endif
 #endif
 
 ! for double_null geometry     !iyv 04.02.11
@@ -1451,7 +1455,7 @@
      &   'of the dead region NYISO1', (NYISO1(IS),IS=1,NNISO)
        write (70,*) ' Row number of top right corner ',
      &   'of the dead region NYISO2', (NYISO2(IS),IS=1,NNISO)
-       close (70)                                                   !srv
+       close (70)                                                  !srv
 
        open(70,file=trim(folder)//'Total_boundary_particle_fluxes.dat')   !srv 26.09.17
 
@@ -1459,7 +1463,9 @@
        sum_ssna= 0.0_R8
 
        do is=0, ns-1
-        write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
+        write (hlp_frm,'(a,i1,a)')
+     .   '(a,1x,a2,i',len_of_digits(nint(zamin(is))),')'
+        write (70,hlp_frm) 'Total_boundary_particle_flux ',
      &               adjustr(is_codes(is)),nint(zamin(is))
 
         sdiv(is) = 0.0_R8
@@ -1522,7 +1528,12 @@
         sum_ssna = sum_ssna + ssna(is)
 
         sum_sdiv = sum_sdiv +sdiv(is)
-        write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
+        if (nint(zamin(is)).lt.10) then
+          write(hlp_frm,'(a)') '(a,9x,a2,i1,4x,3(a,es15.7,4x))'
+        else
+          write(hlp_frm,'(a)') '(a,9x,a2,i2,3x,3(a,es15.7,4x))'
+        endif
+        write (70,hlp_frm) 'Balance for equation ',
      &     adjustr(is_codes(is)),nint(zamin(is)),
      &     ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
      &     '     Ssna-Sdiv =', ssna(is) - sdiv(is)
@@ -1539,7 +1550,9 @@
        sum_ssna = 0.0_R8
 
        do is=0, ns-1
-         write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
+         write (hlp_frm,'(a,i1,a)')
+     .    '(a,1x,a2,i',len_of_digits(nint(zamin(is))),')'
+         write (70,hlp_frm) 'Total_boundary_particle_flux ',
      &               adjustr(is_codes(is)),nint(zamin(is))
 
          sdiv(is) = 0.0_R8
@@ -1595,7 +1608,12 @@
         sum_ssna = sum_ssna + ssna(is)
 
         sum_sdiv = sum_sdiv +sdiv(is)
-        write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
+        if (nint(zamin(is)).lt.10) then
+          write(hlp_frm,'(a)') '(a,9x,a2,i1,4x,3(a,es15.7,4x))'
+        else
+          write(hlp_frm,'(a)') '(a,9x,a2,i2,3x,3(a,es15.7,4x))'
+        endif
+        write (70,hlp_frm) 'Balance for equation ',
      &     adjustr(is_codes(is)),nint(zamin(is)),
      &     ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
      &     '     Ssna-Sdiv =', ssna(is) - sdiv(is)

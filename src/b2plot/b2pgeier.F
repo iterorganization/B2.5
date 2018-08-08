@@ -30,12 +30,16 @@ c*** Determine topology and calculate some indices
 
       call b2pwinp
 c      print *,'After b2pwinp: ntrgts,lytg,nytg,lrdlsp = ',  !###
-c     ,         ntrgts,lytg,nytg,lrdlsp                      !###
+c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
       allocate(hlp_flx(0:ny-1,0:ns-1,ntrgsx))
 
       l=1
       u=-1
       do j=1,ntrgts !{
+        if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+          l=0
+          u=1
+        end if
         k=ltrgpos(j)
         do iy=lytg,ny-1 !{
           do is=0,ns-1 !{

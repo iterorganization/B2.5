@@ -73,7 +73,7 @@ c*** Target list
         if(ll.gt.nwldprtx) 
      >   write (*,*) 'Check nwldprtx in b2mod_b2plot_wall_loading.F'
       else
-        call rearri(lwldlis(1,ll),nlim,nwldlis(ll))
+        call rearri(lwldlis(1,ll),nsgmx,nwldlis(ll))
       end if
       return
 c----------------------------------------------------------------------
@@ -214,9 +214,9 @@ c*** PFR side edge
 c----------------------------------------------------------------------
 c*** Target specification
  200  call resimi(lutrgt)
-      if(lutrgt.lt.0 .or. lutrgt.gt.2) then !{
-        write(*,'(1x,a,i4,a)') 'Wrong target number:',lutrgt,
-     ,                            '.  Must be positive and =< 2'
+      if(lutrgt.lt.0 .or. lutrgt.gt.ntrgsx) then !{
+        write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lutrgt,
+     ,                            '.  Must be positive and =< ', ntrgsx
         write (*,*) '==> corrupted param.dg?'
       else !}{
         ntrgsa=max(ntrgsa,lutrgt)

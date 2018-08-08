@@ -1201,14 +1201,14 @@ contains
 !!$    !
 !!$    region=0
 !!$    ! volume component
-!!$    if(nx.eq.1) then  ! 1d-radial
+!!$    if(nx.eq.1) then  ! 1d radial
 !!$        do iy=-1,ny
 !!$            do ix=-1,nx
 !!$              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1
 !!$            enddo
 !!$        enddo
 !!$        nnreg(0)=1
-!!$    else if(ny.eq.1) then  ! 1d-parallel
+!!$    else if(ny.eq.1) then  ! 1d parallel
 !!$        do iy=-1,ny
 !!$            do ix=-1,nx
 !!$              if (.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) region(ix,iy,0)=1

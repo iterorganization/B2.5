@@ -41,6 +41,8 @@ c***  Impinging ion flux     \
 c***  Average ion energy      |  for each species
 c***  Impinging atom flux     |
 c***  Average atom energy    /
+c***  Impinging molecule flux    \ for each molecular species
+c***  Average molecule energy    /
 c***  Net erosion             |   for each kind of sputtered material
 c***  Gross erosion           |
 c***
@@ -117,6 +119,8 @@ c***  whtpl   : plasma heat
 c***  wpttrg  : particle power to the target
 c***  wpltrg  : plasma power to the target
 c***  wnutrg  : neutral power to the target
+c***  wnmtrg  : power with molecules to the target
+c***  wnatrg  : power with atoms to the target
 c***  wrdtrg  : radiation power to the target
 c***  wtttrg  : total power to the target
 c***  fiitrg  : impinging ion flux 
@@ -132,13 +136,26 @@ c***  paitrg  : pressure of neutral atoms
 c***  erntrg  : erosion [mm/y]
 c***  spttrg  : sputtering [g/y]
 
+c*** Arrays to store the peak values
+c***  wpk_tt  : peak power - total
+c***  wpk_rd  : peak power - radiation
+c***  wpk_pl  : peak power - plasma
+c***  wpk_nu  : peak power - neutrals
+c***  wlc_tt  : location of total peak
+c***  wlc_rd  : location of radiation peak
+c***  wlc_pl  : location of plasma peak
+c***  wlc_nu  : location of neutral peak
+c***  wrd_pk  : radiation at total peak
+c***  wpl_pk  : plasma at total peak
+c***  wnu_pk  : neutrals at total peak
+
       real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,mmol,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
      ,  s(0:NY-1,ntrgsx),xmp_hlp(0:NY-1,ntrgsx),xtrg(0:NY-1,ntrgsx),
      ,  netrg(0:NY-1,ntrgsx),  tetrg(0:NY-1,ntrgsx),
      ,  titrg(0:NY-1,ntrgsx),
      ,  wtttrg(0:NY-1,ntrgsx), wptnu(0:NY-1,ntrgsx),
-     ,  wptpl(0:NY-1,ntrgsx),
+     ,  wptpl(0:NY-1,ntrgsx), wnutpr(0:NY-1,ntrgsx),
      ,  whtnu(0:NY-1,ntrgsx),  whtpl(0:NY-1,ntrgsx),
      ,  wpttrg(0:NY-1,ntrgsx),
      ,  wpltrg(0:NY-1,ntrgsx), wnutrg(0:NY-1,ntrgsx),
@@ -189,6 +206,7 @@ c***  m_hdln    : max. length of the header line
 c***  n_hdpr_c  : number of common quantities
 c***  n_hdpr_t  : number of target quantities
 c***  n_hdpr_a  : number of quantities by atoms
+c***  n_hdpr_u  : number of quantities by molecules
 c***  n_hdpr_s  : number of quantities by species
 c***  n_hdpr_sp : number of quantities for sputtering
 c***  n_hdpr_er : number of quantities for erosion
@@ -207,7 +225,7 @@ c***  sfpr_a    : list of active atoms
 c***  sfpr_m    : list of active materials
 
       integer n_hdpr_c,n_hdpr_t,n_hdpr_s,n_hdpr_a,n_hdpr_sp,n_sfpr_s,
-     ,  m_hdpr,m_hdln,n_hdpr_ml,n_hdpr_er,n_srfs_m
+     ,  m_hdpr,m_hdln,n_hdpr_u,n_hdpr_ml,n_hdpr_er,n_srfs_m
       parameter
      , (n_hdpr_c=10, n_hdpr_t=4, n_hdpr_s=2, n_hdpr_a=4, n_hdpr_sp=2,
      ,  n_hdpr_er=2, m_hdpr=5, n_hdpr_ml=4, n_srfs_m=8,
@@ -320,10 +338,13 @@ c        if(n_sfpr_s.gt.0) print *,(' ',sfpr_s(i),i=1,n_sfpr_s)      !###
             k=k+1
             iy=(bcstart(i)+bcend(i))/2
             if(l.eq.nx) then !{
-              if(ntrgts.eq.2) then !{
+              if(ntrgts.eq.1) then !{
+                phi_hlp(1)=get_phi_applied(boundary_namelist,l,iy)
+                eni_hlp(1)=enipar(i,1)+2.0_R8-enipar(i,2)
+              else if(ntrgts.eq.2) then !{
                 phi_hlp(2)=get_phi_applied(boundary_namelist,l,iy)
                 eni_hlp(2)=enipar(i,1)+2.0_R8-enipar(i,2)
-              else !}{
+              else if (ntrgts.eq.4) then !}{
                 phi_hlp(4)=get_phi_applied(boundary_namelist,l,iy)
                 eni_hlp(4)=enipar(i,1)+2.0_R8-enipar(i,2)
               end if !}
@@ -645,9 +666,14 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
             l=1
             u=-1
             do j=1,ntrgts !{
+              if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                u=1
+                l=0
+              end if
               k=ltrgpos(j)
               kk=k+l
               ISS=ltns(j)
+              if (ISS.eq.0) cycle
               IND=eirdiag_nds_ind(ISS)
               IA=IND+1
               do iy=0,ny-1 !{
@@ -705,6 +731,9 @@ c                   carlis Using values directly calculated from Eirene
      .                           +ewldmr_res(is,iy+IA))*
      .                            sarea_res(iy+IA)
                   enddo
+                  wnutpr(iy,j)=ewldrp_res(iy+IA)
+                  whtpl(iy,j)=whtpl(iy,j)-wnutpr(iy,j)
+                  wpltrg(iy,j)=wpltrg(iy,j)-wnutpr(iy,j)
                   do is=1,nioni
                     mion=0.0_R8
                     imol=1
@@ -748,6 +777,7 @@ c            print *,'ntrgts, wi: ',ntrgts,(wi(i),i=1,ntrgts)  !###
               if (ft44) then
                 if(ntns.eq.ntrgts) then !{
                   js=ltns(j)+nlim
+                  if (ltns(j).eq.0) cycle
                   wo=wldnek(js,0)+wldnep(js,0)
 c                  print *,'j,js,wo = ',j,js,wo    !###
                   if(wi(j).gt.0.0_R8) then !{
@@ -790,10 +820,15 @@ c*** Particle fluxes and energies
               l=1
               u=-1
               do j=1,ntrgts !{
+                if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                  u=1
+                  l=0
+                end if
                 k=ltrgpos(j)
                 kk=k+l
                 ib=k+1-l
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
 c!###{
@@ -840,10 +875,15 @@ c*** Atomic fluxes and energies
               l=1
               u=-1
               do j=1,ntrgts !{
+                if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                  u=1
+                  l=0
+                end if
                 k=ltrgpos(j)
                 kk=k+l
                 ib=k+1-l
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
                 do iy=0,ny-1 !{
@@ -913,10 +953,15 @@ c*** Molecules fluxes and energies
               l=1
               u=-1
               do j=1,ntrgts !{
+                if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+                  u=1
+                  l=0
+                endif
                 k=ltrgpos(j)
                 kk=k+l
                 ib=k+1-l
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
                 do iy=0,ny-1 !{
@@ -972,6 +1017,7 @@ c carlis wldspta and wldsptm give sputtered flux for each emitted atom and molec
               shift=lppp+1
               do j=1,ntrgts !{
                 ISS=ltns(j)
+                if (ISS.eq.0) cycle
                 IND=eirdiag_nds_ind(ISS)
                 IAS=IND+1
                 sjs_t(j)=0.0_R8
@@ -1194,7 +1240,7 @@ c        print *,hdr_line(1:k-1)
      .   'net sputtering of wall material XX [g/y]'
         write(lun,740) 'sptng_XX',tab,
      .   'gross sputtering of wall material XX [g/y]'
-  740 format('# ',2a,' : ',a)
+  740   format('# ',2a,' : ',a)
         write(lun,'(a)') hdr_line(1:k-1)
       end if !}
 c*** Print the line

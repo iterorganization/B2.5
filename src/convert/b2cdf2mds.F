@@ -193,7 +193,7 @@ c conceptually two types of traces, f(t) and g(t,x); here handle g(t,x)
                 exit
               endif
             enddo
-            call xertst (index.gt.0, '3d-suffix not found')
+            call xertst (index.gt.0, '3d suffix not found')
             mds_signal_name='\TOP.TIMEDEP.' //
      1       trim(mds_zone(index)) // ':'
             write(*,'(a,a,a,a)') 'We need to save ',trim(varname),

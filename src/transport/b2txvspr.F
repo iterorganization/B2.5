@@ -23,7 +23,7 @@
 *   ..local variables
       integer n2, ix, iy, is
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
-      real (kind=R8), save :: vis_per = 0.0e0_R8                        !srv 22.11.99
+      real (kind=R8), save :: vis_per = 1.0e0_R8                        !srv 22.11.99
       real (kind=R8) ::
      &  fac_vism, t0, wrk0(-1:nx,-1:ny)
       character(3) :: chns
@@ -66,7 +66,8 @@
               else
                 t0 = 2.0_R8/wbbv(ix,iy,3)/
      &            (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-                cvisper(ix,iy,1) = cvisper(ix,iy,1) + t0
+                cvisper(ix,iy,1) =
+     .            cvisper(ix,iy,1) + t0*vis_per*fac_vis(ix,iy)
               endif
             enddo
           enddo
@@ -75,7 +76,8 @@
             do ix=-1,nx
               if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then ! we do not want to have fchvisper(:,:,1) in guard cells on West and East
                 t0 = 0.25_R8*vsa0(ix,iy,is)*vol(ix,iy)/hy1(ix,iy)**2
-                bvisper(ix,iy,1) = bvisper(ix,iy,1) + t0
+                bvisper(ix,iy,1) =
+     .            bvisper(ix,iy,1) + t0*vis_per*fac_vis(is,iy)
               endif
             enddo
           enddo

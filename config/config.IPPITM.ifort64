@@ -35,7 +35,11 @@ LINK_MOD =
 ifdef USE_MPI
 FC       = mpiifort
 else
+ifdef USE_IMPGYRO
+FC       = mpiifort
+else
 FC       = ifort
+endif
 endif
 
 ifdef SOLPS_DEBUG

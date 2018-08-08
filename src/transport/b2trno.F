@@ -79,6 +79,7 @@
       integer hcimx_flag, mode
       integer, save :: iout = 0, iout_b2wdat = 0,                     !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,             !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
       character(3) chns                                               !srv 17.06.08
@@ -127,6 +128,8 @@
         call ipgeti ('b2trno_iout', iout)                            !srv 17.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 19.05.10 {
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                     !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                   !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
@@ -335,8 +338,9 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
       call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
       call b2xvsg (n2*2, chci, 1, 'chci', '.ge.')
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
-     &                  .or. iout_b2wdat.eq.4) then                  !srv 19.05.10 {
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
+     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0
+     &                  .or. iout_b2wdat.eq.4) then                       !srv 19.05.10 {
        do is = 0, ns-1
 	write (chns,'(i3.3)') is
         if (is_neutral(is) ) then

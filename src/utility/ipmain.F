@@ -162,6 +162,12 @@
           call xerrab
      &     ('Prohibited "b2news_vis_per" switch usage!')
         endif
+        if (ipnam(ip).eq.'b2tvspa_vis_par') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use b2tfhe_vis_par instead'
+          call xerrab
+     &     ('Prohibited "b2tvspa_vis_par" switch usage!')
+        endif
         if (ipnam(ip).eq.'b2npmo_modvis') then
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete'

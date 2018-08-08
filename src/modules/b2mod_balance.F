@@ -1073,9 +1073,15 @@ cdjm Jan2017 Flux arrays:
 
       subroutine alloc_b2mod_eirene_sources(nxd,nyd,nsd,nstrad)
 #ifdef B25_EIRENE
+#ifndef SOLPS4_3
       use eirmod_extrab25
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
+#else
+      use eirdiag ! IGNORE
+     & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
+     &          pfluxa,pfluxm,pefluxa,pefluxm
+#endif
 #else
       use b2mod_eirdiag
 #endif
@@ -1744,9 +1750,15 @@ cdjm Update ion heat sources
       use b2mod_rates
      & , only : rpt
 #ifdef B25_EIRENE
+#ifndef SOLPS4_3
       use eirmod_extrab25
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
+#else
+      use eirdiag ! IGNORE
+     & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
+     &          pfluxa,pfluxm,pefluxa,pefluxm
+#endif
 #else
       use b2mod_eirdiag
 #endif

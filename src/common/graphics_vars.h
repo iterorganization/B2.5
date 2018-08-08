@@ -14,7 +14,8 @@
       logical dirty_graph,dirty_page,new_page,vessel,outline,
      . colprt,lalong,labels,contours,grid,trig,wall,intpol,sptrix,
      . contplot,initialised_plotting,logx,logy,logz,target,
-     . want_aspect,lzero,label_same_lines,color_map_loaded
+     . want_aspect,lzero,label_same_lines,color_map_loaded,
+     . nice_axes
 
       character*256 extralabel,globalheader,device,wallbarlabel,
      . targetbarlabel,color_file
@@ -32,7 +33,7 @@
      l dirty_graph,dirty_page,new_page,labels,contours,grid,trig,wall,
      . intpol,sptrix,vessel,outline,contplot,initialised_plotting,
      . colprt,lalong,logx,logy,logz,want_aspect,lzero,label_same_lines,
-     . target,color_map_loaded,
+     . target,color_map_loaded,nice_axes,
      c extralabel,globalheader,device,wallbarlabel,targetbarlabel,
      . color_file
 

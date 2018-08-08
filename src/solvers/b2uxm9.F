@@ -23,8 +23,8 @@
 *  1. purpose
 *
 *     B2UXM9 computes a matrix which corresponds of approximation mixed
-*     derivatives in equations on nine point stencil.
-*     
+*     derivatives in equations on nine-point stencil.
+*
 *-----------------------------------------------------------------------
 !                 2_____3_____4                     5___________6
 !                 |     |     |                     |     |     |
@@ -89,16 +89,16 @@
        call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
       endif
 
-*   ..compute contribution in x-part of five point stencil
+*   ..compute contribution in x-part of five-point stencil
        aaf = 0.0e0_R8
-*     from P.Sch x-part of nine point stencil
+*     from P.Sch x-part of nine-point stencil
        do iy = -1, ny
         do ix = -1, nx
          ireg=region(ix,iy,0)
 *       Case of left neighbor
          if(leftix(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-          
+
          else
             ixl = leftix(ix,iy)
             iyl = leftiy(ix,iy)
@@ -108,7 +108,7 @@
 *       Case of right neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-          
+
          else
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
@@ -128,14 +128,14 @@
           call my_out(70,nx,ny,aaf(-1,-1, 1),'aafp1'//trim(name))
           endif
 
-*     from P.Sch y-part of nine point stencil
+*     from P.Sch y-part of nine-point stencil
        do iy = -1, ny
         do ix = -1, nx
          ireg=region(ix,iy,0)
 *       Case of bottom neighbor
          if(bottomiy(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      &      .not.solvereg(ireg)) then
-          
+
          else
           ixb = bottomix(ix,iy)
           iyb = bottomiy(ix,iy)
@@ -145,7 +145,7 @@
 *       Case of top neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-          
+
          else
           ixt = topix(ix,iy)
           iyt = topiy(ix,iy)
@@ -161,19 +161,19 @@
        endif
 
        aa9(:,:,-3) = aa9(:,:,-3) + aaf(:,:,-2)
-       aa9(:,:,-1) = aa9(:,:,-1) + aaf(:,:,-1) 
-       aa9(:,:, 1) = aa9(:,:, 1) + aaf(:,:, 1) 
+       aa9(:,:,-1) = aa9(:,:,-1) + aaf(:,:,-1)
+       aa9(:,:, 1) = aa9(:,:, 1) + aaf(:,:, 1)
        aa9(:,:, 3) = aa9(:,:, 3) + aaf(:,:, 2)
 
-*   ..compute additional P.Sch part of nine point matrix. 
+*   ..compute additional P.Sch part of nine-point matrix.
        do iy = -1, ny
         do ix = -1, nx
          ireg=region(ix,iy,0)
-*       Case (ix-1,iy-1) 
+*       Case (ix-1,iy-1)
          if(leftix(ix,iy).eq.-2 .or. bottomiy(ix,iy).eq.-2 .or.
      &      .not.solvereg(ireg)) then
-            aa9(ix,iy,-4) = 0.0e0_R8        
-            aa9(ix,iy,-6) = 0.0e0_R8        
+            aa9(ix,iy,-4) = 0.0e0_R8
+            aa9(ix,iy,-6) = 0.0e0_R8
          else
             ixl = leftix(ix,iy)
             iyl = leftiy(ix,iy)
@@ -192,11 +192,11 @@
      &                conb(leftix(ixb,iyb),leftiy(ixb,iyb),1,0)
             endif
          endif
-*       Case (ix-1,iy+1) 
+*       Case (ix-1,iy+1)
          if(leftix(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-          aa9(ix,iy,2) = 0.0e0_R8        
-          aa9(ix,iy,5) = 0.0e0_R8        
+          aa9(ix,iy,2) = 0.0e0_R8
+          aa9(ix,iy,5) = 0.0e0_R8
          else
             ixl = leftix(ix,iy)
             iyl = leftiy(ix,iy)
@@ -215,7 +215,7 @@
      &                      conb(leftix(ixt,iyt),leftiy(ixt,iyt),1,1)
             endif
          endif
-*       Case (ix+1,iy-1) 
+*       Case (ix+1,iy-1)
          if(rightix(ix,iy).eq.nx+1 .or. bottomiy(ix,iy).eq.-2 .or.
      &      .not.solvereg(ireg)) then
           aa9(ix,iy,-2) = 0.0e0_R8
@@ -238,7 +238,7 @@
      &                     conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
             endif
          endif
-*       Case (ix+1,iy+1) 
+*       Case (ix+1,iy+1)
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
            aa9(ix,iy,4) = 0.0e0_R8
@@ -257,7 +257,7 @@
             else
               aa9(ix,iy,4) = aa9(ix,iy,4) -                           !sv 28.05.08
      &                      conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)
-              aa9(ix,iy,6) = aa9(ix,iy,6) +                           !sv 28.05.08 
+              aa9(ix,iy,6) = aa9(ix,iy,6) +                           !sv 28.05.08
      &                      conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
             endif
          endif
@@ -274,7 +274,7 @@
           call my_out(70,nx,ny,aa9(-1,-1,-5),'aa9ym1xp1'//trim(name))
           call my_out(70,nx,ny,aa9(-1,-1, 2),'aa9xm1yp1'//trim(name))
           call my_out(70,nx,ny,aa9(-1,-1, 5),'aa9yp1xm1'//trim(name))
-         endif
+      endif
 
 * ..return
       ncall = ncall+1

@@ -23,8 +23,13 @@ ifdef USE_MPI
 FC = mpif90
 LD = mpif90
 else
+ifdef USE_IMPGYRO
+FC = mpif90
+LD = mpif90
+else
 FC = pgf90
 LD = pgf90
+endif
 endif
 ifdef SOLPS_DEBUG
 FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff

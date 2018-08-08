@@ -81,7 +81,7 @@ c
       integer ::
      *   nntria(0:nxd-1,0:nyd-1)
       real (kind=R8) ::
-     *   pr(-1:nxd,-1:nyd),
+     *   pr(-1:nxd,-1:nyd), ro(-1:nxd,-1:nyd,0:nsd_local-1),
      3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
      4   hy1(-1:nxd,-1:nyd),
      4   energy_balance_old(-1:nxd,-1:nyd),
@@ -1205,6 +1205,7 @@ c
       call trigon(.false.)         ! overlayed triangular grid off by default
       call vesselon(.false.)       ! same for vessel
       call separatrixon(.false.)   ! same for separatrix
+      call adjust_axes(.false.)    ! nice axes by default
       call set_midplane_mapping(.false.) ! do not map to midplane by default
       call wallon(.false.,0,values(14),values(15),1)
       call targeton(.false.,values(32),values(33),1)
@@ -1262,6 +1263,7 @@ c
       do is=0,ns-1
         do iy=-1,ny
           do ix=-1,nx
+            ro(ix,iy,is)=am(is)*mp*na(ix,iy,is)
             vv(ix,iy,is)=fna(ix,iy,1,is)/na(ix,iy,is)/gs(ix,iy,1)
             up(ix,iy,is)=
      .       fna(ix,iy,0,is)/na(ix,iy,is)/gs(ix,iy,0)/qz(ix,iy,1)
@@ -1666,6 +1668,14 @@ c
           description='Radial particle flux (s^{-1})'
           nz=ns
           call copy(fnay,1.0_R8,nz,textpl)
+        case('fnex')
+          description='Poloidal electron flux (s^{-1})'
+          nz=1
+          call copy(fne(:,:,0),1.0_R8,1,textbl)
+        case('fney')
+          description='Radial electron flux (s^{-1})'
+          nz=1
+          call copy(fne(:,:,1),1.0_R8,1,textbl)
         case('fmox')
           description='Poloidal flux of parallel momentum (N)'
           nz=ns
@@ -2156,14 +2166,7 @@ c
         case ('ro')
           description='Mass density (kg.m^{-3})'
           nz=ns
-          do is=0,ns-1
-            do iy=-1,ny
-              do ix=-1,nx
-                mach(ix,iy,is)=am(is)*mp*na(ix,iy,is)
-              end do
-            end do
-          end do
-          call copy(mach,1.0_R8,nz,textpl)
+          call copy(ro,1.0_R8,nz,textpl)
         case ('b2espcr')
           description='Nuclear sequence index'
           nz=ns
@@ -2487,7 +2490,9 @@ c
         case ('smth')
           description='Thermal force (N)'
           nz=ns
-          call copy(smpr+smpt,1.0_R8,nz,textpl)
+          mach(-1:nx,-1:ny,0:nz-1)=smpr(-1:nx,-1:ny,0:nz-1)+
+     .                             smpt(-1:nx,-1:ny,0:nz-1)
+          call copy(mach,1.0_R8,nz,textpl)
         case ('smpr')
           description='Thermal force (proportional to exhp) (N)'
           nz=ns
@@ -2627,153 +2632,333 @@ c
         case ('sna')
           description='Particle source (#.s^{-1})'
           nz=ns
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          isel=ipop(istack,iistack)
-          if(isel.lt.0.or.isel.gt.1) then
-            write(*,*) 'selected value of ',isel,' out of range 0..1'
-            return
-          endif
-          description=trim(description) // text0123(isel)
-          do is=0,ns-1
-            mach(-1:nx,-1:ny,is)=sna(-1:nx,-1:ny,isel,is)
-          enddo
-          write(*,*) '"sna" option with ',isel
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'Particle source, constant part (#.s^{-1})'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'Particle source, variable part (m^{3}.s^{-1})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..1'
+              return
+            end if
+            do is=0,ns-1
+              mach(-1:nx,-1:ny,is)=sna(-1:nx,-1:ny,isel,is)
+            enddo
+            write(*,*) '"sna" option with ',isel
+          else
+            call lower_case(description)
+            description='Total ' // trim(description)  ! IGNORE
+            do is=0,ns-1
+              mach(-1:nx,-1:ny,is)=sna(-1:nx,-1:ny,0,is)+
+     .          na(-1:nx,-1:ny,is)*sna(-1:nx,-1:ny,1,is)
+            end do
+          end if
           call copy(mach,1.0_R8,nz,textpl)
         case ('sne')
           description='Electron particle source (e.s^{-1})'
           nz=1
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          isel=ipop(istack,iistack)
-          if(isel.lt.0.or.isel.gt.1) then
-            write(*,*) 'selected value of ',isel,' out of range 0..1'
-            return
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'Electron particle source, constant part (e.s^{-1})'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'Electron particle source, variable part (m^{3}.s^{-1})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..1'
+              return
+            end if
+            mach(-1:nx,-1:ny,0)=sne(-1:nx,-1:ny,isel)
+            write(*,*) '"sne" option with ',isel
+          else
+            call lower_case(description)
+            description='Total ' // trim(description)  ! IGNORE
+            mach(-1:nx,-1:ny,0)=sne(-1:nx,-1:ny,0)+
+     .          ne(-1:nx,-1:ny)*sne(-1:nx,-1:ny,1)
           endif
-          description=trim(description) // text0123(isel)
-          write(*,*) '"sne" option with ',isel
-          call copy(sne(:,:,isel),1.0_R8,nz,textbl)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('smo')
           description='Parallel momentum source (N)'
           nz=ns
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          isel=ipop(istack,iistack)
-          if(isel.lt.0.or.isel.gt.3) then
-            write(*,*) 'selected value of ',isel,' out of range 0..3'
-            return
-          endif
-          description=trim(description) // text0123(isel)
-          do is=0,ns-1
-            mach(:,:,is)=smo(:,:,isel,is)
-          enddo
-          write(*,*) '"smo" option with ',isel
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'Parallel momentum source, constant part (N)'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'Parallel momentum source, ua part (kg.s^{-1})'
+            else if (isel.eq.2) then
+              description=  ! IGNORE
+     .         'Parallel momentum source, ' //
+     .         'mass density part (m^{4}.s^{-2})'
+            else if (isel.eq.3) then
+              description=  ! IGNORE
+     .         'Parallel momentum source, ' //
+     .         'momentum density part (m^{3}.s^{-1})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..3'
+              return
+            end if
+            do is=0,ns-1
+              mach(:,:,is)=smo(:,:,isel,is)
+            enddo
+            write(*,*) '"smo" option with ',isel
+          else
+            description='Total parallel momentum source (N)'  ! IGNORE
+            do is=0,ns-1
+              mach(-1:nx,-1:ny,is)=smo(-1:nx,-1:ny,0,is)+
+     .          ua(-1:nx,-1:ny,is)*smo(-1:nx,-1:ny,1,is)+
+     .          ro(-1:nx,-1:ny,is)*smo(-1:nx,-1:ny,2,is)+
+     .          ro(-1:nx,-1:ny,is)*smo(-1:nx,-1:ny,3,is)*
+     .          ua(-1:nx,-1:ny,is)
+            end do
+          end if
           call copy(mach,1.0_R8,nz,textpl)
         case ('smq')
           description='smq (momentum sources from atomic physics) (N)'
           nz=ns
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          isel=ipop(istack,iistack)
-          if(isel.lt.0.or.isel.gt.3) then
-            write(*,*) 'selected value of ',isel,' out of range 0..3'
-            return
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description='smq, constant part (N)'  ! IGNORE
+            else if (isel.eq.1) then
+              description='smq, ua part (kg.s^{-1})'  ! IGNORE
+            else if (isel.eq.2) then
+              description='smq, mass density part (m^{4}.s^{-2})'  ! IGNORE
+            else if (isel.eq.3) then
+              description='smq, momentum density part (m^{3}.s^{-1})'  ! IGNORE
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..3'
+              return
+            end if
+            do is=0,ns-1
+              mach(:,:,is)=smq(:,:,isel,is)
+            enddo
+            write(*,*) '"smq" option with ',isel
+          else
+            description='Total ' // trim(description)  ! IGNORE
+            do is=0,ns-1
+              mach(-1:nx,-1:ny,is)=smq(-1:nx,-1:ny,0,is)+
+     .          ua(-1:nx,-1:ny,is)*smq(-1:nx,-1:ny,1,is)+
+     .          ro(-1:nx,-1:ny,is)*smq(-1:nx,-1:ny,2,is)+
+     .          ro(-1:nx,-1:ny,is)*smq(-1:nx,-1:ny,3,is)*
+     .          ua(-1:nx,-1:ny,is)
+            end do
           endif
-          description=trim(description) // text0123(isel)
-          do is=0,ns-1
-            mach(:,:,is)=smq(:,:,isel,is)
-          enddo
-          write(*,*) '"smq" option with ',isel
           call copy(mach,1.0_R8,nz,textpl)
         case ('she')
           description='Electron heat source (W)'
           nz=1
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          isel=ipop(istack,iistack)
-          if(isel.lt.0.or.isel.gt.3) then
-            write(*,*) 'selected value of ',isel,' out of range 0..3'
-            return
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'Electron heat source, constant part (W)'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'Electron heat source, temperature part (s^{-1})'
+            else if (isel.eq.2) then
+              description=  ! IGNORE
+     .         'Electron heat source, density part (W.m^{3})'
+            else if (isel.eq.3) then
+              description=  ! IGNORE
+     .         'Electron heat source, ' //
+     .         'energy density part (m^{3}.s^{-1})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..3'
+              return
+            endif
+            mach(-1:nx,-1:ny,0)=she(-1:nx,-1:ny,isel)
+            write(*,*) '"she" option with ',isel
+          else
+            description='Total electron heat source (W)'  ! IGNORE
+            mach(-1:nx,-1:ny,0)=she(-1:nx,-1:ny,0)+
+     .          te(-1:nx,-1:ny)*she(-1:nx,-1:ny,1)+
+     .          ne(-1:nx,-1:ny)*she(-1:nx,-1:ny,2)+
+     .          ne(-1:nx,-1:ny)*she(-1:nx,-1:ny,3)*te(-1:nx,-1:ny)
           endif
-          description=trim(description) // text0123(isel)
-          write(*,*) '"she" option with ',isel
-          call copy(she(:,:,isel),1.0_R8,nz,textbl)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('shi')
           description='Ion heat source (W)'
           nz=1
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          isel=ipop(istack,iistack)
-          if(isel.lt.0.or.isel.gt.3) then
-            write(*,*) 'selected value of ',isel,' out of range 0..3'
-            return
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'Ion heat source, constant part (W)'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'Ion heat source, temperature part (s^{-1})'
+            else if (isel.eq.2) then
+              description=  ! IGNORE
+     .         'Ion heat source, density part (W.m^{3})'
+            else if (isel.eq.3) then
+              description=  ! IGNORE
+     .         'Ion heat source, energy density part (m^{3}.s^{-1})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..3'
+              return
+            endif
+            mach(-1:nx,-1:ny,0)=shi(-1:nx,-1:ny,isel)
+            write(*,*) '"shi" option with ',isel
+          else
+            description='Total ion heat source (W)'  ! IGNORE
+            mach(-1:nx,-1:ny,0)=shi(-1:nx,-1:ny,0)+
+     .          ti(-1:nx,-1:ny)*shi(-1:nx,-1:ny,1)+
+     .          ni(-1:nx,-1:ny,0)*shi(-1:nx,-1:ny,2)+
+     .          ni(-1:nx,-1:ny,0)*shi(-1:nx,-1:ny,3)*ti(-1:nx,-1:ny)
           endif
-          description=trim(description) // text0123(isel)
-          write(*,*) '"shi" option with ',isel
-          call copy(shi(:,:,isel),1.0_R8,nz,textbl)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('sch')
           description='Charge source (A)'
           nz=1
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          isel=ipop(istack,iistack)
-          if(isel.lt.0.or.isel.gt.3) then
-            write(*,*) 'selected value of ',isel,' out of range 0..3'
-            return
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'Charge source, constant part (A)'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'Charge source, potential part (S)'
+            else if (isel.eq.2) then
+              description=  ! IGNORE
+     .         'Charge source, density part (A.m^{3})'
+            else if (isel.eq.3) then
+              description=  ! IGNORE
+     .         'Charge source, potential*density part (S.m^{3})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..3'
+              return
+            endif
+            mach(-1:nx,-1:ny,0)=sch(-1:nx,-1:ny,isel)
+            write(*,*) '"sch" option with ',isel
+          else
+            description='Total charge source (A)'  ! IGNORE
+            mach(-1:nx,-1:ny,0)=sch(-1:nx,-1:ny,0)+
+     .          po(-1:nx,-1:ny)*sch(-1:nx,-1:ny,1)+
+     .          ne(-1:nx,-1:ny)*sch(-1:nx,-1:ny,2)+
+     .          ne(-1:nx,-1:ny)*sch(-1:nx,-1:ny,3)*po(-1:nx,-1:ny)
           endif
-          description=trim(description) // text0123(isel)
-          write(*,*) '"sch" option with ',isel
-          call copy(sch(:,:,isel),1.0_R8,nz,textbl)
+          call copy(mach,1.0_R8,nz,textbl)
         case ('smaf')
           description='smaf (extended friction term) (N)'
           nz=ns
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          isel=ipop(istack,iistack)
-          if(isel.lt.0.or.isel.gt.3) then
-            write(*,*) 'selected value of ',isel,' out of range 0..3'
-            return
-          endif
-          description=trim(description) // text0123(isel)
-          do is=0,ns-1
-            mach(:,:,is)=b2npmo_smaf(:,:,isel,is)
-          enddo
-          write(*,*) 
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'Friction term, constant part (N)'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'Friction term, ua part (kg.s^{-1})'
+            else if (isel.eq.2) then
+              description=  ! IGNORE
+     .         'Friction term, mass density part (m^{4}.s^{-2})'
+            else if (isel.eq.3) then
+              description=  ! IGNORE
+     .         'Friction term, momentum density part (m^{3}.s^{-1})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..3'
+              return
+            endif
+            do is=0,ns-1
+              mach(:,:,is)=b2npmo_smaf(:,:,isel,is)
+            enddo
+            write(*,*)
      &         '"smaf (extended friction term)" option with ',isel
+          else
+            description='Total ' // trim(description)  ! IGNORE
+            do is=0,ns-1
+              mach(-1:nx,-1:ny,is)=b2npmo_smaf(-1:nx,-1:ny,0,is)+
+     .          ua(-1:nx,-1:ny,is)*b2npmo_smaf(-1:nx,-1:ny,1,is)+
+     .          ro(-1:nx,-1:ny,is)*b2npmo_smaf(-1:nx,-1:ny,2,is)+
+     .          ro(-1:nx,-1:ny,is)*b2npmo_smaf(-1:nx,-1:ny,3,is)*
+     .          ua(-1:nx,-1:ny,is)
+            end do
+          end if
           call copy(mach,1.0_R8,nz,textpl)
         case ('smag')
           description='smag (pressure gradient term) (N)'
           nz=ns
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          isel=ipop(istack,iistack)
-          if(isel.lt.0.or.isel.gt.3) then
-            write(*,*) 'selected value of ',isel,' out of range 0..3'
-            return
-          endif
-          description=trim(description) // text0123(isel)
-          do is=0,ns-1
-            mach(:,:,is)=b2npmo_smag(:,:,isel,is)
-          enddo
-          write(*,*) 
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'Pressure gradient term, constant part (N)'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'Pressure gradient term, ua part (kg.s^{-1})'
+            else if (isel.eq.2) then
+              description=  ! IGNORE
+     .         'Pressure gradient term, ' //
+     .         'mass density part (m^{4}.s^{-2})'
+            else if (isel.eq.3) then
+              description=  ! IGNORE
+     .         'Pressure gradient term, ' //
+     .         'momentum density part (m^{3}.s^{-1})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..3'
+              return
+            endif
+            do is=0,ns-1
+              mach(:,:,is)=b2npmo_smag(:,:,isel,is)
+            enddo
+            write(*,*)
      &         '"smag (pressure gradient term)" option with ',isel
+          else
+            description='Total ' // trim(description)  ! IGNORE
+            do is=0,ns-1
+              mach(-1:nx,-1:ny,is)=b2npmo_smag(-1:nx,-1:ny,0,is)+
+     .          ua(-1:nx,-1:ny,is)*b2npmo_smag(-1:nx,-1:ny,1,is)+
+     .          ro(-1:nx,-1:ny,is)*b2npmo_smag(-1:nx,-1:ny,2,is)+
+     .          ro(-1:nx,-1:ny,is)*b2npmo_smag(-1:nx,-1:ny,3,is)*
+     .          ua(-1:nx,-1:ny,is)
+            end do
+          end if
           call copy(mach,1.0_R8,nz,textpl)
         case ('smav')
           description='smav (additional viscosity term) (N)'
           nz=ns
-          stack_req=(/1,0,0,0,0,0,0/)
-          if(bad_args(stack_req)) return
-          isel=ipop(istack,iistack)
-          if(isel.lt.0.or.isel.gt.3) then
-            write(*,*) 'selected value of ',isel,' out of range 0..3'
-            return
-          endif
-          description=trim(description) // text0123(isel)
-          do is=0,ns-1
-            mach(:,:,is)=b2npmo_smav(:,:,isel,is)
-          enddo
-          write(*,*) 
+          if(iistack.gt.0) then
+            isel=ipop(istack,iistack)
+            if (isel.eq.0) then
+              description=  ! IGNORE
+     .         'Additional viscosity term, constant part (N)'
+            else if (isel.eq.1) then
+              description=  ! IGNORE
+     .         'Additional viscosity term, ua part (kg.s^{-1})'
+            else if (isel.eq.2) then
+              description=  ! IGNORE
+     .         'Additional viscosity term, ' //
+     .         'mass density part (m^{4}.s^{-2})'
+            else if (isel.eq.3) then
+              description=  ! IGNORE
+     .         'Additional viscosity term, ' //
+     .         'momentum density part (m^{3}.s^{-1})'
+            else
+              write(*,*) 'selected value of ',isel,' out of range 0..3'
+              return
+            endif
+            do is=0,ns-1
+              mach(:,:,is)=b2npmo_smav(:,:,isel,is)
+            enddo
+            write(*,*)
      &         '"smav (additional viscosity term)" option with ',isel
+          else
+            description='Total ' // trim(description)  ! IGNORE
+            do is=0,ns-1
+              mach(-1:nx,-1:ny,is)=b2npmo_smav(-1:nx,-1:ny,0,is)+
+     .          ua(-1:nx,-1:ny,is)*b2npmo_smav(-1:nx,-1:ny,1,is)+
+     .          ro(-1:nx,-1:ny,is)*b2npmo_smav(-1:nx,-1:ny,2,is)+
+     .          ro(-1:nx,-1:ny,is)*b2npmo_smav(-1:nx,-1:ny,3,is)*
+     .          ua(-1:nx,-1:ny,is)
+            end do
+          end if
           call copy(mach,1.0_R8,nz,textpl)
         case ('rco')
           description='RESCO'
@@ -10325,6 +10510,8 @@ c
           call set_midplane_mapping(.true.)
         case('nocp')     ! do not plot contour plot
           call contourplot(.false.)
+        case('nice')     ! toggle whether axes will have nice values
+          call adjust_axes(.true.)
         case('sepw')     ! change separatrix line width
           stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return

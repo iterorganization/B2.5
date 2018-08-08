@@ -307,7 +307,7 @@ contains
                 &   objects_per_dimension(1)%object( ivx )%geometry(2) )
             !! Set geometry (R and Z coordinates) of each node
             !! The way of writing nodes data identically to the to IDS converted
-            !! CPO 16151/1000 case, available on (written in 11th October 2017)
+            !! CPO 16151/1000 case, available on (written in 11 October 2017)
             !! ITER HPC custer in directory
             !! /home/ITER/penkod/public/imasdb/solps-iter/3/0
             !! or

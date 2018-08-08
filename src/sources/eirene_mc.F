@@ -56,6 +56,8 @@ csw 19oct2012, added save attribute!!!
       integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
+      integer, allocatable, save :: feedback_strata(:)
+      logical feedback_stratum
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
      * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
@@ -251,6 +253,7 @@ c not sure this is the right place
         allocate(ispc_ref(NATM))
         allocate(ishigh(NATM))
         allocate(sum_wld(2,2+NATM))
+        allocate(feedback_strata(0:nspecies-1))
         if (balance_netcdf.ne.0) then !djm Jan2017
           call alloc_b2mod_eirene_sources(nx,ny,ns,nstrat)
         endif
@@ -282,6 +285,10 @@ c not sure this is the right place
         call ipgetr ('b2stbc_ndes_sol', ndes_sol)
         call xertst (0.0_R8.le.ndes_sol,
      1   'faulty internal parameter ndes_sol')
+        call ipgeti ('b2stbc_isfeedback', isfeedback)
+        call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
+     1   'faulty internal parameter isfeedback')
+        feedback_strata=0
         call ipgeti ('eirene_nesepm_istra', nesepm_istra)
         if(nesepm_istra.gt.0) then
           call xertst (nesepm_istra.le.nstrat,
@@ -309,16 +316,25 @@ c not sure this is the right place
           end do
           call xertst (icount.eq.1 .or. nesepm_istra.gt.0,
      .     'Multiple definitions of puff strata, use nesepm_istra')
+          feedback_strata(b2espcr(isfeedback)-1)=nesepm_istra
         endif
+        do is = 0, nspecies-1
+          if (na_feedback_actuator(is).eq.1) then
+            do istrai = 1, nstrat
+              if (crcstra(istrai).eq.'C' .and.
+     .          species_start(istrai).le.eb2spcr(is+1) .and.
+     .          species_end(istrai).ge.eb2spcr(is+1)) then
+                  feedback_strata(is) = istrai
+              end if
+            end do
+          end if
+        end do
         call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
         call xertst (0.0_R8.le.private_flux_puff,
      1   'faulty internal parameter private_flux_puff')
         call ipgeti ('b2stbc_pfrregno1', pfrregno1)
         call ipgeti ('b2stbc_pfrregno2', pfrregno2)
         call ipgeti ('b2stbc_solregno', solregno)
-        call ipgeti ('b2stbc_isfeedback', isfeedback)
-        call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
-     1   'faulty internal parameter isfeedback')
         if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
      1     .or.nesepm_pfr.gt.0.0_R8) then !{
           call xertst (cbirso.le.pfrregno1.and.
@@ -519,13 +535,16 @@ c*** recyc     : fudge factors for the sources in B2
       na_feedback_on = .false.
       do is = 0, nspecies-1
         if (na_feedback_on) cycle
+        if (na_feedback_actuator(is).eq.1)
+     >   call xertst(nesepm_istra.gt.0.or.maxval(feedback_strata).gt.0,
+     &    'No gas puff feedback strata set!')
         na_feedback_on = na_feedback_target(is).gt.0.0_R8.and.
      &                   na_feedback_actuator(is).eq.1.and.
-     &                   nesepm_istra.gt.0
+     &                   feedback_strata(is).gt.0
         if (na_feedback_on) then
           na_feedback_on = na_feedback_on .and.
-     &      species_start(nesepm_istra).le.eb2spcr(is+1).and.
-     &      species_end(nesepm_istra).ge.eb2spcr(is+1)
+     &      species_start(feedback_strata(is)).le.eb2spcr(is+1).and.
+     &      species_end(feedback_strata(is)).ge.eb2spcr(is+1)
         end if
       end do
 
@@ -533,6 +552,11 @@ c*** recyc     : fudge factors for the sources in B2
       tflux=0.0_R8
       flux_scale=0.0_R8
       do istrai = 1, nstrat !{
+        feedback_stratum=.false.
+        do is=0,nspecies-1
+          feedback_stratum=feedback_stratum.or.
+     .                     istrai.eq.feedback_strata(is)
+        end do
         flux_scale(istrai)=1.0_R8
         IF(crcstra(istrai).eq.'W') then !{
           do is = species_start(istrai),species_end(istrai) !{
@@ -657,13 +681,14 @@ c*** recyc     : fudge factors for the sources in B2
               endif
             end if
           else if (ncall.ge.ncallfeedback.and.
-     &             istrai.eq.nesepm_istra.and.na_feedback_on) then !}{
+     &             feedback_stratum.and.na_feedback_on) then !}{
             do is = 0, nspecies-1 !{
               if (na_feedback_target(is).gt.0.0_R8.and.
      &            na_feedback_actuator(is).eq.1.and.
-     &            species_start(nesepm_istra).le.
+     &            species_start(feedback_strata(is)).le.
      &               eb2spcr(is+1)+nfluids(is+1).and.
-     &            species_end(nesepm_istra).ge.eb2spcr(is+1)) then !{
+     &            species_end(feedback_strata(is)).ge.eb2spcr(is+1))
+     >         then !{
                 tflux(istrai)=tflux(istrai)+
      .           conpar(eb2spcr(is+1),na_feedback_ib(is),1)
               end if !}
@@ -811,14 +836,17 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         sum_wld(1:2,1:2+nnatmi)=0.0_R8
         do istrai = 1, nstrat
           sum_wld(1,1)=sum_wld(1,1)+wldnek(nnlimi+ltns(1),istrai)
-          sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+ltns(2),istrai)
+          if (ltns(2).ne.0)
+     >     sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+ltns(2),istrai)
           sum_wld(1,2)=sum_wld(1,2)+wldnep(nnlimi+ltns(1),istrai)
-          sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+ltns(2),istrai)
+          if (ltns(2).ne.0)
+     >     sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+ltns(2),istrai)
           do is = 1, nnatmi
             sum_wld(1,2+is)=sum_wld(1,2+is)+wldna(nnlimi+ltns(1),
      .       is,istrai)
-            sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+ltns(2),
-     .       is,istrai)
+            if (ltns(2).ne.0)
+     >       sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+ltns(2),
+     .        is,istrai)
           end do
         end do
         write(*,*) 'Summed inner target data : '
@@ -3204,7 +3232,7 @@ c
 !                rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,1)
 !                recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,1)
 !pb
-                 radarr(ix,iy)=eneutrad(ix+1,iy+1,iatm,0)
+                 radarr(ix,iy)=radarr(ix,iy)+eneutrad(ix+1,iy+1,iatm,0)
                  rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,0)
                  rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,0)
                  recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,0)
@@ -3231,7 +3259,7 @@ c
       endif
       if (dbg_eir_mc.ge.2 .and. main_call) write(*,'(a,1p,2(1x,e14.7))')
      . 'EIRENE_MC. RADARR, RAD_NEUTR : ',
-     .  SUM(radarr(1:nx,1:ny)), rad_neutr
+     .  SUM(radarr(0:nx-1,0:ny-1)), rad_neutr
 
       if(.not.filedata(ntrc_int)) then
         write(*,'(a,1p,1000g12.4)')
@@ -3259,12 +3287,27 @@ cxpb  core recycling into ions of the highest ionisation stage
         if (balance_netcdf.ne.0) then
           eirene_mc_core_sna0to1=0.0_R8 !djm Jan2017
         endif
-        do iy = -1, ny
-          do ix = -1, nx
-            do j = 1, nnatmi
+        do j = 1, nnatmi
+          ! compute the average density on the core boundary (t1)
+          t1 = 0.0_R8
+          do iy = -1, ny
+            do ix = -1, nx
               if (bottomiy(ix,iy).eq.-2 .and.
      &            on_closed_surface(ix,iy)) then
+                t1 = t1 +
+     &           na(topix(ix,iy),topiy(ix,iy),ishigh(j))*
+     &           gs(topix(ix,iy),topiy(ix,iy),1)
+              end if
+            end do
+          end do
+          t1 = t1/core_surface
+          do iy = -1, ny
+            do ix = -1, nx
+              if (bottomiy(ix,iy).eq.-2 .and.
+     &            on_closed_surface(ix,iy)) then
+! the recycling flux is modulated as per the poloidal density distribution
                 t0=core_flux(j)*
+     *           (na(topix(ix,iy),topiy(ix,iy),ishigh(j))/t1)*
      *           (gs(topix(ix,iy),topiy(ix,iy),1)/core_surface)
                 if(linearisation.eq.1) then !{
                   if(t0.gt.0.0_R8) then !{
@@ -3304,9 +3347,9 @@ cxpb  core recycling into ions of the highest ionisation stage
                   endif
                 end if !}
               endif
-            enddo
-          enddo
-        enddo
+            enddo  !ix}
+          enddo  !iy}
+        enddo  !j}
       else if (ionising_core.lt.0) then
         ib=abs(ionising_core)
         call xertst (ib.le.nbc,
@@ -3315,13 +3358,16 @@ cxpb  core recycling into ions of the highest ionisation stage
           is=ishigh(j)
           if(bccon(is,ib).ne.13) then
             if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
+     1       write(*,'(a,i3,1x,i3,a,i3)')
+     .       'eirene_mc: bccon for is,ib= ',is,ib,
      2       ' <> 13, current value = ',bccon(is,ib)
-C           call xerrab ('eirene_mc: bccon <> 13')
+c            call xerrab
+c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
           else
             conpar(is,ib,3)=core_flux(j)
             if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,*) 'eirene_mc: conpar(is,ib,3) = ',
+     1       write(*,'(a,1p,1e12.5,a,i3,1x,i3)')
+     .       'eirene_mc: conpar(is,ib,3) = ',
      2       conpar(is,ib,3),' for is,ib= ',is,ib
           endif
         enddo
@@ -3407,6 +3453,7 @@ csw 26feb2014
       endif
       if(nhist.gt.1) call dealloc_sum_arrays
       if(nrelax.gt.1 .or. nhist.gt.1) call dealloc_hist_arrays
+      deallocate(feedback_strata)
 
       return
 

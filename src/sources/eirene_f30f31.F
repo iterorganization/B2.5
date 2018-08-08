@@ -553,20 +553,22 @@ c
      &        nxiso1(nncutmax),nxiso2(nncutmax),
      &        nyiso1(nncutmax),nyiso2(nncutmax)
 
-      character*54 format_string(2)
+      character*54 format_string(4)
       integer, save :: new_format
       logical ex
 
 #ifdef B25_EIRENE
-      integer, save :: exp_location, dot_location
+      integer, save :: exp_location, dot_location, spacing
+      character*1 :: ldum(0:3)
       character*80 line
       data new_format/1/
-      logical open_file
-      external open_file
+      logical open_file, streql
+      external open_file, streql
 #else
       data new_format/2/
 #endif
-      data format_string/ '(1P,4E15.7)', '(1P,4E16.8)' /
+      data format_string/ '(1P,4E15.7)', '(1P,4E16.8)',
+     .                       '(4E15.7)',    '(4E16.8)'/
 
 #ifndef HPUX
       inquire(file='fort.30',exist=ex)
@@ -673,6 +675,15 @@ cxpb Deduce from fort.33 triangle vertices files which format precision to use
             call xerrab ('Unrecognized format (2) in ftn33 file')
 #endif
           end if
+cxpb Now deal with older files without the 1P in the format string
+cxpb If the 1P was missing in the format, the numbers will start with 0
+          spacing=index(line(dot_location+1:len(line)),'.')
+          do i = 0, 3
+            ldum(i) = line(dot_location-1+i*spacing:
+     .                     dot_location-1+i*spacing)
+            if (.not.streql(ldum(i),'0')) exit
+            if (i.eq.3) new_format = new_format+2
+          end do
         else
           new_format = 2
         end if

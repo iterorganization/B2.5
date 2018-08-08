@@ -4,7 +4,7 @@
       subroutine b2tfhe_ (nx, ny, ns, ismain, ismain0,
      & facdrift, fac_ExB, fac_vis,                                       !srv 23.11.10
      1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,          !srv 11.07.99 18.01.02 01.07.09
-     1 ti, ni, na, fna, uadia, vadia, ua, fne,
+     1 ti, ni, na, fna, uadia, vedia, ua, fne,
      2 csig, csig_cl, csigin, chce, chve, chci, calf,                    !srv 17.05.99 11.07.99
      & chvemx, cvsa_cl, cdna, cdpa, cddi, fch, fhe, fhe_mdf, fhePSch,    !srv 27.01.00 13.10.06 16.10.17
      & conc, avisper, bvisper, cvisper, floe, cone, fchdia, fchin,       !srv 27.01.00 30.09.02
@@ -33,7 +33,7 @@
      &   vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:ns-1),
      &   gs(-1:nx,-1:ny,0:2), ne2(-1:nx,-1:ny), pz(-1:nx,-1:ny),         !srv 11.07.99 18.01.02
      &   uadia(-1:nx,-1:ny,0:1,0:ns-1),
-     &   vadia(-1:nx,-1:ny,0:1,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),          !srv 17.05.99 25.01.02
+     &   vedia(-1:nx,-1:ny,0:1), ua(-1:nx,-1:ny,0:ns-1),                 !srv 17.05.99 25.01.02
      &   fne(-1:nx,-1:ny,0:1), csig(-1:nx,-1:ny,0:1),
      &   csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), chci(-1:nx,-1:ny,0:1),   !srv 11.07.99 24.06.08
      &   chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
@@ -136,8 +136,8 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
 *   ..initialization
       data ncall/0/, fch_ion_neutral/0.0e0_R8/, fch_inert/1.0e0_R8/      !srv 07.07.99 22.03.02
      *        , fch_anomalous/1.0e0_R8/                                  !srv 22.03.02
-     *        , dia_cur/1.0e0_R8/, vis_par/0.0e0_R8/, vdia_par/1.0e0_R8/ !srv 17.05.99 22.03.02
-     *        , vis_q/1.0e0_R8/, vis_per/0.0e0_R8/                       !srv 11.07.99 22.11.99 22.03.02
+     *        , dia_cur/1.0e0_R8/, vis_par/1.0e0_R8/, vdia_par/1.0e0_R8/ !srv 17.05.99 22.03.02
+     *        , vis_q/1.0e0_R8/, vis_per/1.0e0_R8/                       !srv 11.07.99 22.11.99 22.03.02
 
 *-----------------------------------------------------------------------
 *.computation
@@ -223,8 +223,8 @@ c Drift terms
       call b2tdia(nx, ny, ns, vol, gs, hy, qz, bb,
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua,
-     &              cvsa_cl, fac_vis, fchvispar)                         !srv 20.09.06 16.10.17
+      call b2tvspa(nx, ny, ns, vol, hx, hy, qz, bb, ua,
+     &             cvsa_cl, fac_vis, fchvispar)                          !srv 20.09.06 16.10.17
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,             !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
@@ -251,15 +251,12 @@ c Drift terms
           do ix = 0, nx
            if(leftix(ix,iy).ne.-2) then                                  !srv 26.11.02
             fledia(ix,iy,0) =
-     &       -(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))              !srv 25.01.02 was 5/2
+     &        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))              !srv 25.01.02 was 5/2
      &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))                !srv 17.05.99 11.03.00
-     &       *(te(leftix(ix,iy),leftiy(ix,iy))                           !srv 17.05.99 11.03.00
-     &       /ti(leftix(ix,iy),leftiy(ix,iy))                            !srv 17.05.99 11.03.00
-     &       +te(ix,iy)/ti(ix,iy))*0.5e0_R8                              !srv 17.05.99 11.03.00 25.01.02 13.09.02
-     &       *vadia(ix,iy,0,is)*vdia_par ! for is = 1 (za = 1)           !srv 17.05.99 11.03.00 21.04.00 25.01.02 18.01.07
-     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
-     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
-     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
+     &       *vedia(ix,iy,0)*vdia_par                                    !srv 17.05.99 11.03.00 21.04.00 25.01.02 18.01.07
+!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
+!     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
+!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
            endif                                                         !srv 26.11.02
           enddo
          enddo
@@ -267,15 +264,12 @@ c Drift terms
          do iy = 0, ny
           do ix = -1, nx
            fledia(ix,iy,1) =
-     &      -(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))           !srv 17.05.99 11.03.00 25.01.02 was 5/2
+     &       (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))           !srv 17.05.99 11.03.00 25.01.02 was 5/2
      &      /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))           !srv 17.05.99 11.03.00
-     &      *(te(bottomix(ix,iy),bottomiy(ix,iy))                        !srv 17.05.99 11.03.00 13.09.02
-     &      /ti(bottomix(ix,iy),bottomiy(ix,iy))                         !srv 17.05.99 11.03.00
-     &      +te(ix,iy)/ti(ix,iy))*0.5e0_R8                               !srv 17.05.99 11.03.00 25.01.02 13.09.02
-     &      *vadia(ix,iy,1,is)*vdia_par                                  !srv 17.05.99 11.03.00 18.01.07
-     1      *(bb(ix,iy,2)/bb(ix,iy,3)+                                   !srv 13.09.02 {
-     2      bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
-     3      bb(bottomix(ix,iy),bottomiy(ix,iy),3))/2.0e0_R8              !srv 13.09.02 }
+     &      *vedia(ix,iy,1)*vdia_par                                     !srv 17.05.99 11.03.00 18.01.07
+!     1      *(bb(ix,iy,2)/bb(ix,iy,3)+                                   !srv 13.09.02 {
+!     2      bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
+!     3      bb(bottomix(ix,iy),bottomiy(ix,iy),3))/2.0e0_R8              !srv 13.09.02 }
           enddo
          enddo                                                           !srv 25.01.02 }
         endif

@@ -225,10 +225,12 @@ c     the line format common
 #endif
           do iseg = 1, nsegments
             do i = wall_begin(iseg), wall_end(iseg)-1
+              if(xvalues(i+1).lt.xmin) cycle
+              if(xvalues(i).gt.xmax) cycle
               call lined_d(
-     .         min(xmax,max(xmin,xvalues(i))),
+     .         xvalues(i),
      .         min(lmax,max(lmin,wall_stack(i,is,iwwrk))),
-     .         min(xmax,max(xmin,xvalues(i+1))),
+     .         xvalues(i+1),
      .         min(lmax,max(lmin,wall_stack(i+1,is,iwwrk))))
             enddo
             if (iseg.lt.nsegments) then

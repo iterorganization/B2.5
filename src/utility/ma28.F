@@ -177,7 +177,7 @@ c data check to see if all indices lie between 1 and n.
 c
 c sort matrix into row order.
       call mc20ad(n, nz, a, icn, iw, irn, 0)
-c part of ikeep is used here as a work-array.  ikeep(i,2) is
+c part of ikeep is used here as a work array.  ikeep(i,2) is
 c     the last row to have a nonzero in column i.  ikeep(i,3)
 c     is the off-set of column i from the start of the row.
       do 60 i=1,n

@@ -30,13 +30,6 @@
       integer nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
 !$OMP THREADPRIVATE(nc0, nltrsol, nnd, n_nonzeros, solvdim, solvdim1)
 
-      logical, save :: loop2_over = .false.
-      logical, save :: storage_9_initialized = .false.
-
-      integer, save :: nz_omp
-      INTEGER, ALLOCATABLE, SAVE, DIMENSION(:) :: IASAVE_omp, jasave_omp
-      INTEGER, ALLOCATABLE, DIMENSION(:,:), SAVE :: indexes_omp
-
       contains
 
       subroutine alloc_b2mod_ma28_for_9diag
@@ -65,12 +58,6 @@
       allocate(iw28(1:nnd,8))
       allocate(irnh_save(1:n_nonzeros))
       allocate(icnh_save(1:n_nonzeros))
-!$OMP critical (ma28_for_9_alloc)
-      if (.not.allocated(iasave_omp)) then
-        allocate(iasave_omp(solvdim),jasave_omp(solvdim))
-        allocate(indexes_omp(3, solvdim))
-      endif
-!$OMP end critical (ma28_for_9_alloc)
       write(*,*) 'Allocated space for b2mod_ma28_for_9diag'
 
       end subroutine alloc_b2mod_ma28_for_9diag

@@ -207,10 +207,12 @@ cxpb : new default behaviour : zero of distance set at ixref
           endif
 #endif
           do ix=ixstart,ixend-1
+            if(wrk(ix+1).lt.xmin) cycle
+            if(wrk(ix).gt.xmax) cycle
             call lined_d(
-     1       min(values(2),max(values(1),wrk(ix))),
+     1       wrk(ix),
      2       min(lmax,max(lmin,work(ix,iy,is,iwrk))),
-     3       min(values(2),max(values(1),wrk(ix+1))),
+     3       wrk(ix+1),
      4       min(lmax,max(lmin,work(ix+1,iy,is,iwrk))))
             if(rightix(ix,iy).ne.ix+1) then
 #ifndef PLPLOT

@@ -592,6 +592,9 @@
       call create_cdf_var_with_attrs(
      *  ncid,'b2radreg',NF_DOUBLE,
      *  2,vdims,'W','b2radreg')
+      call create_cdf_var_with_attrs(
+     *  ncid,'rdneureg',NF_DOUBLE,
+     *  2,vdims,'W','rdneureg')
 
       vdims(1)=vregid
       vdims(2)=nsid

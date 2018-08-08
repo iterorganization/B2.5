@@ -96,7 +96,7 @@ c----------------------------------------------------------------------
      >     print *,'Check nwldprtx in b2mod_b2plot_wall_loading.F'
           return
       end if
-      call rearri(lwldlis(1,ll),nlim,nwldlis(ll))
+      call rearri(lwldlis(1,ll),nsgmx,nwldlis(ll))
       return
 c----------------------------------------------------------------------
  30   call resimi(ll)
@@ -135,7 +135,7 @@ c*** Outer edge of outer target
       luswch=4
       goto 130
 c----------------------------------------------------------------------
-c*** Values for the target edges
+c*** Values for the target edges (old style, only worked for SN topologies)
  130  if(luswch.ge.1 .and. luswch.le.4) then
         call rearri(jedge(luswch),1,i)
       else
@@ -144,33 +144,33 @@ c*** Values for the target edges
       luswch=0
       return
 c----------------------------------------------------------------------
-c*** Old style values for the target SOL edges
+c*** New style values for the target SOL edges
  140  if (lt.eq.0) then
         call scipit
-      else if(lt.lt.0 .or. lt.gt.2) then
-        write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
-     ,                            '.  Must be positive and =< 2'
-      else if (lt.ge.1 .and. lt.le.2) then
-        call resimi(jedge(2+lt))
+      else if(lt.lt.0 .or. lt.gt.ntrgsx) then
+        write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lt,
+     ,                            '.  Must be positive and =< ', ntrgsx
+      else if (lt.ge.1 .and. lt.le.ntrgsx) then
+        call resimi(jedge(ntrgsx+lt))
       end if
       return
 c----------------------------------------------------------------------
-c*** Old style values for the target PFR edges
+c*** New style values for the target PFR edges
  150  if (lt.eq.0) then
         call scipit
-      else if(lt.lt.0 .or. lt.gt.2) then
-        write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
-     ,                            '.  Must be positive and =< 2'
-      else if (lt.ge.1 .and. lt.le.2) then
+      else if(lt.lt.0 .or. lt.gt.ntrgsx) then
+        write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lt,
+     ,                            '.  Must be positive and =< ', ntrgsx
+      else if (lt.ge.1 .and. lt.le.ntrgsx) then
         call resimi(jedge(lt))
       end if
       return
 c----------------------------------------------------------------------
 c*** Target specifications
  160  call resimi(lt)
-      if(lt.lt.0 .or. lt.gt.2)
-     >   write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
-     ,                            '.  Must be positive and =< 2'
+      if(lt.lt.0 .or. lt.gt.ntrgsx)
+     >   write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lt,
+     ,                            '.  Must be positive and =< ', ntrgsx
       return
 c----------------------------------------------------------------------
 c*** Plotzone label

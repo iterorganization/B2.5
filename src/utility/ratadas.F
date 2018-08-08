@@ -99,10 +99,10 @@ c     filename ycd (effective square charge)
 c     filename ecd (effective ionisation potential)
       character fnpot*200
 c     filename of actual file opened
-      character actual_file*256
+      character filename*256, actual_file*256
 c     helpers for composing filenames
       integer ibundling, iquote, quote_count
-      character UIDIN*256, ZEILE*80
+      character UIDIN*256, UIDSTD*256, ZEILE*80
       character SUBDIRrec*4,SUBDIRion*4,SUBDIRcex*4
       character SUBDIRprb*4,SUBDIRplt*4,SUBDIRzav*4
       character SUBDIRza2*4,SUBDIRpot*4
@@ -129,7 +129,7 @@ c     helpers for reading in data
      &        IDMAXDzav,ITMAXDzav,
      &        IDMAXDza2,ITMAXDza2,
      &        IDMAXDpot,ITMAXDpot
-      logical lres,lstan,lptn
+      logical lres,lstan,lptn,ex
       real (kind=R8) :: dnr_ams
       character dnr_ele*12
 c     read in data
@@ -206,7 +206,10 @@ c     ionisation potentials
       endif
 
 c     reading in filename and mass
-      call xertst(silent_open(99,'ratadas.filelist',
+      filename='ratadas.filelist'
+      uidstd=trim(solpstop()) // '/modules/adas'
+      call find_file(filename,ex)
+      call xertst(silent_open(99,filename,
      1 'data.local|modules/B2.5/Database',actual_file), 'missing file')
       write(*,'(a/a)')
      1 'Getting ADAS file list from ',trim(actual_file)
@@ -357,14 +360,54 @@ c     ADAS file names
       call strip_spaces(fnzav)
       call strip_spaces(fnza2)
       call strip_spaces(fnpot)
-      fnrec=trim(UIDIN)//fnrec
-      fnion=trim(UIDIN)//fnion
-      fncex=trim(UIDIN)//fncex
-      fnprb=trim(UIDIN)//fnprb
-      fnplt=trim(UIDIN)//fnplt
-      fnzav=trim(UIDIN)//fnzav
-      fnza2=trim(UIDIN)//fnza2
-      fnpot=trim(UIDIN)//fnpot
+      inquire(file=trim(UIDIN)//fnrec, exist=ex)
+      if(ex) then
+        fnrec=trim(UIDIN)//fnrec
+      else
+        fnrec=trim(UIDSTD)//fnrec
+      endif
+      inquire(file=trim(UIDIN)//fnion, exist=ex)
+      if(ex) then
+        fnion=trim(UIDIN)//fnion
+      else
+        fnion=trim(UIDSTD)//fnion
+      endif
+      inquire(file=trim(UIDIN)//fncex, exist=ex)
+      if(ex) then
+        fncex=trim(UIDIN)//fncex
+      else
+        fncex=trim(UIDSTD)//fncex
+      endif
+      inquire(file=trim(UIDIN)//fnprb, exist=ex)
+      if(ex) then
+        fnprb=trim(UIDIN)//fnprb
+      else
+        fnprb=trim(UIDSTD)//fnprb
+      endif
+      inquire(file=trim(UIDIN)//fnplt, exist=ex)
+      if(ex) then
+        fnplt=trim(UIDIN)//fnplt
+      else
+        fnplt=trim(UIDSTD)//fnplt
+      endif
+      inquire(file=trim(UIDIN)//fnzav, exist=ex)
+      if(ex) then
+        fnzav=trim(UIDIN)//fnzav
+      else
+        fnzav=trim(UIDSTD)//fnzav
+      endif
+      inquire(file=trim(UIDIN)//fnza2, exist=ex)
+      if(ex) then
+        fnza2=trim(UIDIN)//fnza2
+      else
+        fnza2=trim(UIDSTD)//fnza2
+      endif
+      inquire(file=trim(UIDIN)//fnpot, exist=ex)
+      if(ex) then
+        fnpot=trim(UIDIN)//fnpot
+      else
+        fnpot=trim(UIDSTD)//fnpot
+      endif
 
       write(*,*) 'Using ADAS files:'
       if (SUBDIRrec.ne.'none') then
@@ -1021,8 +1064,6 @@ c     read in data
       type (amns_set_type) :: set
       character (len=80) :: format
 #endif
-
-
 
       logical silent_open
       external silent_open

@@ -4,7 +4,7 @@
       subroutine b2sral (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &  dtim, BoRiS, facdrift, fac_ExB, fac_vis,                         !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
+     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, lnlam,         !srv 09.01.01 02.04.18
      &  na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
      &  fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -28,6 +28,10 @@
       use b2mod_boundary_namelist
       use b2mod_time
       use b2mod_anomalous_transport
+      use b2mod_work                                                     !srv 02.04.18 {
+     &     , only: avisper, bvisper, cvisper
+      use b2mod_plasma
+     &     , only: ne2                                                   !srv 02.04.18 }
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_external
@@ -134,7 +138,7 @@
      4  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1), wrk(-1:nx,-1:ny),
      5  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      6  rbr(-1:nx,-1:ny,0:ns-1), fni(-1:nx,-1:ny,0:1),
-     7  fne(-1:nx,-1:ny,0:1),
+     7  fne(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny),                       !srv 02.04.18
      8  sna0(-1:nx,-1:ny,0:1,0:ns-1), sna0_ion(-1:nx,-1:ny,0:1,0:ns-1), !srv 11.09.09
      8  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1), sne0(-1:nx,-1:ny,0:1),
      9  shi0(-1:nx,-1:ny,0:3), shi0_ion(-1:nx,-1:ny,0:3),
@@ -271,17 +275,17 @@
      &                       fac_vis, fchvispar)
        call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
-!     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
-!     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
+       call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
+     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
+       call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
+     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,
-     &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
-     &  uadia,
+     &  fne, cvla, cdna, cdpa, chce, chci, veecrb, vaecrb, wadia, ve,   !srv 05.06.18
+     &  wedia, uadia,
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       endif                                                             !srv 14.07.10 }
 

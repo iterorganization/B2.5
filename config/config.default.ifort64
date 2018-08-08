@@ -23,7 +23,11 @@ LINK_MOD =
 ifdef USE_MPI
 FC       = mpif90
 else
+ifdef USE_IMPGYRO
+FC       = mpif90
+else
 FC       = ifort
+endif
 endif
 
 ifdef USE_OPENMP

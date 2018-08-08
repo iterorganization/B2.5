@@ -86,7 +86,7 @@
  
 *  prepare reading from NETCDF file b2time.nc
       rw='read'
-      ncid=ncopn('b2time.nc',ncwrite,iret)
+      iret = nf_open('b2time.nc',ncwrite,ncid)
 
       imap(1)=1
       call rwcdf (rw, ncid, 'nastep', imap, tstepn, iret)
@@ -154,7 +154,12 @@
 
 *  write table of statistical errors
 
-      open (newunit=iout,file='b2ye.prt')
+#ifdef B25_EIRENE
+      iout = newunit()
+#else
+      iout = 99
+#endif
+      open (unit=iout,file='b2ye.prt')
       write (iout,'(a16,5a12)') ' variable ','mean value','t',
      .             't1','t2','eps_s'
 
@@ -360,7 +365,7 @@
 
       close (iout)
 
-      call ncclos (ncid, iret)
+      iret = nf_close(ncid)
 
       deallocate (batchsa)
       deallocate (nemxip_av)
