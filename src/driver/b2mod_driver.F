@@ -1305,7 +1305,7 @@ csw 09oct2012
       else
         signmf = 0.0_R8
         call xertst (isymm.eq.2.or.isymm.eq.4,
-         'error in b2mndr , signmf = 0 in b2mndr')
+     &   'error in b2mndr , signmf = 0 in b2mndr')
       endif
       write(*,*) 'conn'
       do iy=-1,ny
