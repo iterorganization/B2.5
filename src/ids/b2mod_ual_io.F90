@@ -49,9 +49,6 @@ module b2mod_ual_io
     use ids_grid_unstructured   ! IGNORE
     use ids_grid_structured     ! IGNORE
     use ids_grid_data           ! IGNORE
-    use ids_grid_examples , &   ! IGNORE
-        &   IDS_RUN => RUN, &
-        &   IDS_SHOT => SHOT
 #else
 #ifdef ITM
     use euITM_schemas   ! IGNORE
