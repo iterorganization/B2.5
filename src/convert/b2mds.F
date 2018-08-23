@@ -44,10 +44,8 @@
       use eirmod_extrab25
 #else
       use b2mod_braeir
-#ifdef MDSPLUS
       use b2mod_eirbra
      & , smo_eir => smo
-#endif
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmfs
