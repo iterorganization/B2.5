@@ -1,5 +1,7 @@
 # Test whether necessary variables are set
 NODENAME  ?= $(shell echo `hostname`)
+LD_NETCDF ?= `nf-config --flibs`
+LD_MSCL   ?= `pkg-config mscl --libs`
 #LD_NCARG ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 ifeq (,$(findstring hpc-login0,${NODENAME}))
 NCDIR     ?= /work/imas/opt/netcdf-fortran/4.4.2-intel-12.0.2
