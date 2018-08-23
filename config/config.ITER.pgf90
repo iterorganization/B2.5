@@ -58,9 +58,9 @@ ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS  += -DIMAS
 endif
-LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
-INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
-IMASLIBS = ${LD_UAL} -lggd-pgi
+LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs` `pkg-config ggd --libs`
+INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags` `pkg-config ggd --cflags`
+IMASLIBS = ${LD_UAL}
 endif
 
 LCPP = ${LD_SONNET}

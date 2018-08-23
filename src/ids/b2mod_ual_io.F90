@@ -39,6 +39,7 @@ module b2mod_ual_io
 #ifdef IMAS
     use ids_schemas  ! IGNORE
     use ids_routines ! IGNORE
+    use ids_utility  ! IGNORE
     use ids_grid_common , &     ! IGNORE
         &   IDS_COORDTYPE_R => COORDTYPE_R,    &
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,    &
@@ -49,9 +50,6 @@ module b2mod_ual_io
     use ids_grid_unstructured   ! IGNORE
     use ids_grid_structured     ! IGNORE
     use ids_grid_data           ! IGNORE
-    use ids_grid_examples , &   ! IGNORE
-        &   IDS_RUN => RUN, &
-        &   IDS_SHOT => SHOT
 #else
 #ifdef ITM
     use euITM_schemas   ! IGNORE
@@ -148,10 +146,10 @@ contains
         !! steps to be done in order to assure for data to be successfully
         !! written to IDS. Without going through those steps errors and failed
         !! process of writing to IDS are to be expected.
-        !! This can be done using exampleSetIDSFundamentals routine
+        !! This can be done using setIDSFundamentals routine
         homogeneous_time = 1
         time = 0.0_IDS_real
-        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time )
+        call setIDSFundamentals( edge_profiles, homogeneous_time, time )
 
         !! Preparing edge_transport IDS for writing
         !! In order to write to IDS database there are next steps that are
