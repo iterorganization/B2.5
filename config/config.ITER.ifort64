@@ -132,8 +132,13 @@ ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS    += -DIMAS
 endif
+ifneq (,$(findstring hpc-login0,${NODENAME}))
 LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort ggd --libs`
 INCMODS   += `pkg-config imas-lowlevel imas-ifort ggd --cflags`
+else
+LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
+INCMODS   += `pkg-config imas-lowlevel imas-ifort --cflags`
+endif
 IMASLIBS   = ${LD_UAL}
 endif
 
