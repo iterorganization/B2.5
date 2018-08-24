@@ -126,9 +126,9 @@
 *   ..obtain work space
       if (ncall.eq.0) then
         write(*,*) 
-     .   'Allocating space for solver for 7-point-stencil matrix'  !srv 11.01.00
+     .   'Allocating space for solver for 7-point stencil matrix'  !srv 11.01.00
         if (style.eq.0) then
-          call xerrab ('Style not applicable to 7-point-stencil!')
+          call xerrab ('Style not applicable to 7-point stencil!')
 *    ..obtain workspace for iluter
           allocate(aaf(1:n2*5))
           allocate(wrk0(1:n2))
@@ -136,7 +136,7 @@
           allocate(wrk2(1:n2))
           allocate(iwrk(1:1))
         else if (style.eq.1) then
-          call xerrab ('Style not applicable to 7-point-stencil!')
+          call xerrab ('Style not applicable to 7-point stencil!')
 *    ..obtain workspace for slv5pt
           allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
           allocate(wrk0(1:n2))
@@ -146,7 +146,7 @@
         else if (style.eq.2) then
         endif
         write(*,*) 
-     .   'Allocated space for solver for 7-point-stencil matrix'   !srv 11.01.00
+     .   'Allocated space for solver for 7-point stencil matrix'   !srv 11.01.00
       endif
 
 *   ..solve the correction equation
