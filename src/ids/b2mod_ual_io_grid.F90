@@ -199,9 +199,13 @@ contains
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
+#ifdef GGD_OLD
+        type(ids_generic_grid_dynamic), intent(out) :: ggd_grid !< Type of IDS
+            !< data structure, designed for handling grid geometry data
+#else
         type(ids_generic_grid_aos3_root), intent(out) :: ggd_grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
-
+#endif
         integer, intent(in) :: nx   !< Number of interior cells
             !< along the first coordinate (used to define size of grid arrays:
             !< (-1:nx, -1:ny)
@@ -719,8 +723,13 @@ contains
 
     !> Set connectivity array for cells by defining nodes that form each cell
     subroutine set_Cells_Conn_Array_Nodes(ggd_grid)
+#ifdef GGD_OLD
+        type(ids_generic_grid_dynamic), intent(inout) :: ggd_grid !< Type of IDS
+            !< data structure, designed for handling grid geometry data
+#else
         type(ids_generic_grid_aos3_root), intent(inout) :: ggd_grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
+#endif
         !! Internal variables
         integer, allocatable :: objects2Darray(:,:)
         integer :: num_nodes_2D     !< Total number of nodes forming one cell

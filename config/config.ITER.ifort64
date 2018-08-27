@@ -136,8 +136,9 @@ ifneq (,$(findstring hpc-login0,${NODENAME}))
 LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort ggd --libs`
 INCMODS   += `pkg-config imas-lowlevel imas-ifort ggd --cflags`
 else
-LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
+LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs` -lggd-ifort
 INCMODS   += `pkg-config imas-lowlevel imas-ifort --cflags`
+EQUIVS    += -DGGD_OLD
 endif
 IMASLIBS   = ${LD_UAL}
 endif
