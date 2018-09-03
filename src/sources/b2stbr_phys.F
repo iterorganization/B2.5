@@ -141,7 +141,7 @@
       call subini ('b2stbr_phys')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then                                          !srv 22.08.08 {
-       write(*,*) ' First call of b2stbr_phys' 
+       write(*,*) 'First call of b2stbr_phys'
        call ipgeti ('b2stbr_phys_iout', iout)                       !srv 11.07.05
        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)

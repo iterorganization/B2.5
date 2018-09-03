@@ -1772,7 +1772,7 @@ c dpc
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 14, CONPAR(,,1) <= 0 not allowed!')
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
-     .       ' sound speed flux ',CONPAR(IS,IB,1),' on ',
+     .       'sound speed flux ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
           IF(BCCHAR(IB).EQ.'W') THEN
@@ -4307,7 +4307,7 @@ cxpb  and max(,,) statement for stability
         if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron temperature gradient ',ENEPAR(IB,1),
-     1     ' on',BCCHAR(IB),boundary_location(ib)
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
@@ -6210,8 +6210,8 @@ cghgh
 22200   CONTINUE
         if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
-     .     ' BCENE=22 with ENEPAR(IB,1)=',ENEPAR(IB,1),
-     1     ' on',BCCHAR(IB),boundary_location(ib)
+     .     'BCENE=22 with ENEPAR(IB,1)= ',ENEPAR(IB,1),
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
@@ -8072,7 +8072,7 @@ cxpb Careful here because of BC number clash
 32200   CONTINUE
         if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
-     &     ' BCENI=22 with ENIPAR(IB,1) =',ENIPAR(IB,1),
+     &     'BCENI=22 with ENIPAR(IB,1)= ',ENIPAR(IB,1),
      &     ' on ', BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
@@ -9287,7 +9287,7 @@ c              fchi=0.0_R8
           write(*,'(a,a,1p,g14.7,a,g14.7,a,a,a)')
      &     'sheath potential bc from b2stbc_spb',
      &     ' with POTPAR(IB,2) =',POTPAR(IB,2),' gammae =', gammae,
-     &     'on ',BCCHAR(IB),boundary_location(ib)
+     &     ' on ',BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'W') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
@@ -9847,7 +9847,7 @@ c end of implementation
          IF (BCPOT(IB).NE.0.AND.BCPOT(IB).NE.5.AND.BCPOT(IB).NE.8) THEN
           if (ncall.eq.0) write(*,'(a,i2,a,i2)')
      &          'Disabled special treatment of fchy_dia on boundary ',
-     &          ib,' because potential is imposed by BCPOT=',BCPOT(IB)
+     &          ib,' because potential is imposed by BCPOT =',BCPOT(IB)
          ELSE IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             if(maxval(facdrift) .ne. 0.0_R8) then
