@@ -34,10 +34,10 @@
 *   ..write error message
       if (lwf) then
        write (nprt,'(1x,a/1x,a)')
-     &   '*** XERRAB: program will stop. ***', messg
+     &   '*** XERRAB: program will stop. ***', trim(messg)
       else
        write (*,'(1x,a/1x,a)')
-     &   '*** XERRAB: program will stop. ***', messg
+     &   '*** XERRAB: program will stop. ***', trim(messg)
       endif
 *   ..write the call chain
       call subxnd (lbot, srname)
@@ -56,9 +56,9 @@
       endif
     3 if (.not.lbot) then
        if (lwf) then
-        write (nprt,'(2x,a)') srname
+        write (nprt,'(2x,a)') trim(srname)
        else
-        write (*,'(2x,a)') srname
+        write (*,'(2x,a)') trim(srname)
        endif
        call subxnd (lbot, srname)
        goto 3
