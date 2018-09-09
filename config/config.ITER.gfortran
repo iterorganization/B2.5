@@ -55,8 +55,8 @@ ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS  += -DIMAS
 endif
-LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran ggd --libs`
-INCMODS  = -I${IMAS_PREFIX}/include/gfortran `pkg-config ggd --cflags`
+LD_UAL  ?= `pkg-config imas-gfortran ggd --libs`
+INCMODS  = `pkg-config imas-gfortran ggd --cflags`
 IMASLIBS = ${LD_UAL}
 endif
 
