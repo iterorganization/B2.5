@@ -60,7 +60,7 @@ EQUIVS   += -DIMAS
 endif
 LD_UAL   ?= `pkg-config imas-lowlevel imas-g95 --cflags`
 INCMODS  += `pkg-config --cflags imas-g95`
-IMASLIBS  = ${LD_UAL} -lggd-${COMPILER}
+IMASLIBS  = ${LD_UAL} -lggd-${COMPILER} -L/cineca/prod/opt/compilers/gnu/6.1.0/none/lib64 -lstdc++
 else
 ifdef ITM_ENVIRONMENT_LOADED
 ifndef SOLPS_CPP

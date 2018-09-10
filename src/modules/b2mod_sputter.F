@@ -1192,7 +1192,7 @@ c       write(*,*) 'Radiation Enhanced Sublimation < 0, Ei = ', eo
       end subroutine ressput
 
 
-C   Subroutine to evaluate the thermal evaporation of Graphite.
+C   Subroutine to evaluate thermal evaporation.
 
 c   Ref: 1) C. Garcia Rosales, Erosion processes in plasma-wall
 c           interactions, J. Nucl. Mater. 211 (1994) Pg.202-214.
@@ -1204,9 +1204,9 @@ c   Written by Manoj Warrier on 17-05-96.
 
 *********************************************************************************
 
-c  This routine takes the temperature of the graphite plate ( tp ), and the
-c  atomic mass ( am2 ) of the target as inputs and outputs the flux of carbon
-c  atoms evaporated from the graphite plate ( flxthev ) per meter**2 per sec.
+c  This routine takes the temperature of the plate ( tp ), and the
+c  atomic mass ( am2 ) of the target as inputs and outputs the flux of
+c  atoms evaporated from the plate ( flxthev ) per meter**2 per sec.
 c
 c  Table of A and B for some first wall materials in Fusion research:
 c  (Ref (2) above).

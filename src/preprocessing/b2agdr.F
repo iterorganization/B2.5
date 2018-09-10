@@ -542,7 +542,7 @@ cdpc-debug
      .   'This means that the Bx(grad B) direction points DOWN.'
         write(nout(0),'(2x,a)')
      .   'Bz is out of the page towards you.'
-      else
+      else if (bb(nx,ny,2).lt.0.0_R8) then
         write(*,'(a)')
      .   'This case has NEGATIVE toroidal magnetic field.'
         if (isymm.ne.0) write(*,'(a)')
@@ -555,13 +555,20 @@ cdpc-debug
      .   'This means that the Bx(grad B) direction points UP.'
         write(nout(0),'(2x,a)')
      .   'Bz is into the page away from you.'
+      else
+        write(*,'(a)')
+     .   'This case has ZERO toroidal magnetic field.'
+        write(nout(0),'(/2x,a)')
+     .   'This case has ZERO toroidal magnetic field.'
       endif
-      write(*,'(a)')
-     . 'If this is not correct, please set :'
-      write(*,'(a)')
-     . '"b2agfs_Bt_reversal" to "1" in "b2ag.dat" and rerun.'
-      write(*,'(a)')
-     . 'If already set to "1", set to "0" instead.'
+      if (bb(nx,ny,2).ne.0.0_R8) then
+        write(*,'(a)')
+     .   'If this is not correct, please set :'
+        write(*,'(a)')
+     .   '"b2agfs_Bt_reversal" to "1" in "b2ag.dat" and rerun.'
+        write(*,'(a)')
+     .   'If already set to "1", set to "0" instead.'
+      endif
       write(*,'()')
       if (bb(nx,ny,0).gt.0.0_R8) then
         write(*,'(a)')
@@ -621,7 +628,7 @@ cdpc-debug
         write(nout(0),'(2x,a)')
      .   'This case has CO-directed plasma current and '//
      .   'toroidal field.'
-      else
+      else if (bb(nx,ny,0)*bb(nx,ny,2).gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has COUNTER-directed plasma current and '//
      .   'toroidal field.'

@@ -257,7 +257,7 @@ c also set lenoff(1) to -1 and set permutation arrays.
   170 if (lbig) big1 = themax
       if (nsrch.le.n) go to 180
 c
-c perform l/u decomosition on diagonal blocks.
+c perform l/u decomposition on diagonal blocks.
       call ma30adcopy(n, icn, a, licn, ikeep, ikeep(1,4), idisp,
      *ikeep(1,2), ikeep(1,3), irn, lirn, iw(1,2), iw(1,3), iw(1,4),
      *iw(1,5), iw(1,6), iw(1,7), iw(1,8), iw, upriv, iflag)

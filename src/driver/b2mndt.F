@@ -392,14 +392,14 @@ ctmp.dpc
           istg(2) = 0
     3     if (istg(2).lt.nstg(2) .and. .not.quit_residual) then
 *      ..basic iterative step
+           ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
            if(style.eq.0) then                                           !srv 01.07.08
-            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
             call b2news (nx, ny, ns, nxtl, nxtr,
      &       nscx, iscx, ismain, ismain0,
      &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
            else                                                          !srv 01.07.08 {
             call b2news_(nx, ny, ns, nxtl, nxtr,
-     &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0)               !srv 16.07.10 23.11.10
+     &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0, ramp_call)    !srv 16.07.10 23.11.10
            endif                                                         !srv 01.07.08 )
            flush(6)
            if(ier0.eq.10) then

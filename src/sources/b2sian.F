@@ -66,7 +66,8 @@
         do iy = -1, ny
           do ix = -1, nx
            if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
-     &       bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
+     &        bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1 .or.
+     &        bb(ix,iy,2).eq.0.0_R8) then
             smban(ix,iy,0) = 0.0e0_R8
             smban(ix,iy,1) = 0.0e0_R8
             smban(ix,iy,2) = 0.0e0_R8

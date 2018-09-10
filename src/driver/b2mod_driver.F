@@ -1307,7 +1307,8 @@ csw 09oct2012
         signmf = bb(jxa,jsep,2)/abs(bb(jxa,jsep,2))
       else
         signmf = 0.0_R8
-        call xerrab ('error in b2mndr , signmf = 0 in b2mndr')         !srv 09.10.09
+        call xertst (isymm.eq.2.or.isymm.eq.4,
+     &   'error in b2mndr , signmf = 0 in b2mndr')
       endif
       write(*,*) 'conn'
       do iy=-1,ny

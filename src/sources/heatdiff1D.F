@@ -843,7 +843,7 @@ c     Steel   | -14321.9 | 9.44    |
       external subini, subend, ipgetr
       intrinsic min
 
-c  Ts       ->  temperature of the Graphite plate in Kelvin.
+c  Ts       ->  temperature of the plate in Kelvin.
 c  flxthev  ->  Flux of target atoms evaporated ( / m^2 /s )
 c  qevap -> Energy lost (Joules / m^2 / s)
 
