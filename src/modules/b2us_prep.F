@@ -266,11 +266,13 @@ cwdk      type(B2StateExt), public, save :: state_ext
           if2 = if1 + 1
           if3 = if2 + 1
           if4 = if3 + 1
-!          m%cvFc(if1) = ix + (iy-1)*(nx+1)
-          m%cvFc(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
-          m%cvFc(if2) = ix+1 + (iy-1)*(nx+1)
+          m%cvFc(if1) = ix + (iy-1)*(nx+1)
+!          m%cvFc(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
+!          m%cvFc(if2) = ix+1 + (iy-1)*(nx+1)
+          m%cvFc(if2) = rightix(ix-1,iy-1)+1 + rightiy(ix-1,iy-1)*(nx+1)
           m%cvFc(if3) = nfx + iy + (ix-1)*(ny+1)
-          m%cvFc(if4) = nfx + iy+1 + (ix-1)*(ny+1)
+!          m%cvFc(if4) = nfx + iy+1 + (ix-1)*(ny+1)
+          m%cvFc(if4) = nfx + topiy(ix-1,iy-1)+1+topix(ix-1,iy-1)*(ny+1)
           m%intcellP(if1) = 1.0_R8
           m%intcellP(if2) = 1.0_R8
           m%intcellP(if3) = 0.0_R8
@@ -279,44 +281,57 @@ cwdk      type(B2StateExt), public, save :: state_ext
           m%intcellR(if2) = 0.0_R8
           m%intcellR(if3) = 1.0_R8
           m%intcellR(if4) = 1.0_R8
-!          m%cvVx(if1) = ix + (iy-1)*(nx+1)
-          m%cvVx(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
-          m%cvVx(if2) = ix+1 + (iy-1)*(nx+1)
-!          m%cvVx(if3) = ix + iy*(nx+1)
-          m%cvVx(if3) = leftix(ix-1,iy-1)+2 + iy*(nx+1)
-          m%cvVx(if4) = ix+1 + iy*(nx+1)
+          m%cvVx(if1) = ix + (iy-1)*(nx+1)
+!          m%cvVx(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
+!          m%cvVx(if2) = ix+1 + (iy-1)*(nx+1)
+          m%cvVx(if2) = rightix(ix-1,iy-1)+1 + rightiy(ix-1,iy-1)*(nx+1)
+          m%cvVx(if3) = topix(ix-1,iy-1)+1 + topiy(ix-1,iy-1)*(nx+1)
+!          m%cvVx(if3) = leftix(ix-1,iy-1)+2 + iy*(nx+1)
+!          m%cvVx(if4) = ix+1 + iy*(nx+1)
+          m%cvVx(if4) = rightix(topix(ix-1,iy-1),topiy(ix-1,iy-1))+1 + 
+     .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1))*(nx+1)
         end do
       end do
 
 ! list of cell faces and vertices for guard cells
       do ix = 1, nx
         ic = m%nCi + ix
-        m%cvFc(m%cvFcP(ic,1)) = nfx + 1 + (ix-1)*(ny+1)
+        m%cvFc(m%cvFcP(ic,1)) = nfx + 
+     .               topiy(ix-1,-1)+1 + topix(ix-1,-1)*(ny+1)
         m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
         m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-        m%cvVx(m%cvVxP(ic,1)) = ix 
-        m%cvVx(m%cvVxP(ic,1)+1) = ix+1 
+        m%cvVx(m%cvVxP(ic,1)) = 
+     .               topix(ix-1,-1)+1 + topiy(ix-1,-1)*(nx+1)
+        m%cvVx(m%cvVxP(ic,1)+1) = 
+     .               rightix(topix(ix-1,-1),topiy(ix-1,-1))+1 + 
+     .               rightiy(topix(ix-1,-1),topiy(ix-1,-1))*(nx+1) 
         ic = m%nCi + nx + ix
         m%cvFc(m%cvFcP(ic,1)) = nfx + ny+1 + (ix-1)*(ny+1)
         m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
         m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
         m%cvVx(m%cvVxP(ic,1)) = ix + ny*(nx+1)
-        m%cvVx(m%cvVxP(ic,1)+1) = ix+1 + ny*(nx+1)
+        m%cvVx(m%cvVxP(ic,1)+1) = 
+     .               rightix(ix-1,ny)+1 + rightiy(ix-1,ny)*(nx+1)
       end do
 
       do iy = 1, ny
         ic = m%nCi + 2*nx + iy
-        m%cvFc(m%cvFcP(ic,1)) = 1 + (iy-1)*(nx+1)
+        m%cvFc(m%cvFcP(ic,1)) = 
+     .               rightix(-1,iy-1)+1 + rightiy(-1,iy-1)*(nx+1)
         m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
         m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-        m%cvVx(m%cvVxP(ic,1)) = 1 + (iy-1)*(nx+1) 
-        m%cvVx(m%cvVxP(ic,1)+1) = 1 + iy*(nx+1) 
+        m%cvVx(m%cvVxP(ic,1)) = 
+     .               rightix(-1,iy-1)+1 + rightiy(-1,iy-1)*(nx+1)
+        m%cvVx(m%cvVxP(ic,1)+1) = 
+     .               rightix(topix(-1,iy-1),topiy(-1,iy-1))+1 + 
+     .               rightiy(topix(-1,iy-1),topiy(-1,iy-1))*(nx+1)
         ic = m%nCi + 2*nx + ny + iy
         m%cvFc(m%cvFcP(ic,1)) = nx+1 + (iy-1)*(nx+1)
         m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
         m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
         m%cvVx(m%cvVxP(ic,1)) = nx+1 + (iy-1)*(nx+1) 
-        m%cvVx(m%cvVxP(ic,1)+1) = nx+1 + iy*(nx+1) 
+        m%cvVx(m%cvVxP(ic,1)+1) = 
+     .               topix(nx,iy-1)+1 + topiy(nx,iy-1)*(nx+1)
       end do
 
 ! listing for every face the two corresponding cells
@@ -326,8 +341,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
          do ix = 2, nx
            ic = ix + (iy-1)*nx
            ifc = ix + (iy-1)*(nx+1)
-           m%fcCv(ifc,1) = ic - 1
-           m%fcCv(ifc,2) = rightix(ix-2,iy-1)+1 + (iy-1)*nx
+           m%fcCv(ifc,1) = leftix(ix-1,iy-1)+1 + (iy-1)*nx
+           m%fcCv(ifc,2) = ic
 !           m%fcNv(ifc,1) = 6
 !           m%fcNv(ifc,2) = 5
            m%fcVx(ifc,1) = ix + (iy-1)*(nx+1)
