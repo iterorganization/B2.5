@@ -154,11 +154,12 @@
          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
           ehxp(ix,iy) = 0.0e0_R8
          else
-          ehxp(ix,iy) = ((wrk0(ix,iy)+wrk0(leftix(ix,iy),leftiy(ix,iy)))
-     &                  *0.5e0_R8-
-     &                  (wrk1(ix,iy)+wrk1(leftix(ix,iy),leftiy(ix,iy)))
-     &                  *0.5e0_R8*qe*ne(ix,iy))
-     &                  *bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)
+          ehxp(ix,iy) = 
+     &      ((wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))
+     &      *0.5e0_R8-
+     &      (wrk1(ix,iy)+wrk1(rightix(ix,iy),rightiy(ix,iy)))
+     &      *0.5e0_R8*qe*ne(ix,iy))
+     &      *bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)
          endif
         enddo
        enddo

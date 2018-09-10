@@ -3189,23 +3189,23 @@ contains
     case default
       call xerrab('Unknown side in calc_fet')
     end select
-    if (present(fni0)) fni0 = fac_flux*fna(ix_flux,iy_flux,idir,idir,ismain)
-    if (present(fee0)) fee0 = fac_flux*fhe(ix_flux,iy_flux,idir,idir)
-    if (present(fei0)) fei0 = fac_flux*fhi(ix_flux,iy_flux,idir,idir)
-    if (present(fch0)) fch0 = fac_flux*fch(ix_flux,iy_flux,idir,idir)
-    fet = fac_flux*(fhe(ix_flux,iy_flux,idir,idir) + fhi(ix_flux,iy_flux,idir,idir) + fhi_ext(ix_flux,iy_flux,idir,idir))
+    if (present(fni0)) fni0 = fac_flux*(fna(ix_flux,iy_flux,idir,0,ismain)+fna(ix_flux,iy_flux,idir,1,ismain))
+    if (present(fee0)) fee0 = fac_flux*(fhe(ix_flux,iy_flux,idir,0)+fhe(ix_flux,iy_flux,idir,1))
+    if (present(fei0)) fei0 = fac_flux*(fhi(ix_flux,iy_flux,idir,0)+fhi(ix_flux,iy_flux,idir,1))
+    if (present(fch0)) fch0 = fac_flux*(fch(ix_flux,iy_flux,idir,0)+fch(ix_flux,iy_flux,idir,1))
+    fet = fac_flux*(fhe(ix_flux,iy_flux,idir,0) + fhi(ix_flux,iy_flux,idir,0) + fhi_ext(ix_flux,iy_flux,idir,0) + fhe(ix_flux,iy_flux,idir,1) + fhi(ix_flux,iy_flux,idir,1) + fhi_ext(ix_flux,iy_flux,idir,1))
     tef = (te(ix_adj,iy_adj)*h(ix,iy)+te(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
     tif = (ti(ix_adj,iy_adj)*h(ix,iy)+ti(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-    fet = fet + fac_flux*fne(ix_flux,iy_flux,idir,idir)*tef*(1.0_R8-BoRiS)
+    fet = fet + fac_flux*(fne(ix_flux,iy_flux,idir,0)+fne(ix_flux,iy_flux,idir,1))*tef*(1.0_R8-BoRiS)
     do is=0,ns-1
-      fet = fet + fac_flux*(fhm(ix_flux,iy_flux,idir,idir,is)+tif)*(1.0_R8-BoRiS) + fac_flux*fhp(ix_flux,iy_flux,idir,idir,is)
+      fet = fet + fac_flux*(fhm(ix_flux,iy_flux,idir,0,is)+fhm(ix_flux,iy_flux,idir,1,is)+tif)*(1.0_R8-BoRiS) + fac_flux*(fhp(ix_flux,iy_flux,idir,0,is)+fhp(ix_flux,iy_flux,idir,1,is))
     enddo
     do is=0,ns_ext-1
       kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
            ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
       rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+pt_ext(ix_adj,iy_adj,is)*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
       taf = (ta_ext(ix_adj,iy_adj,is)*h(ix,iy)+ta_ext(ix,iy,is)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-      fet = fet + fac_flux*(rpttmp*ev + (kintmp+taf)*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,idir,is)
+      fet = fet + fac_flux*(rpttmp*ev + (kintmp+taf)*(1.0_R8-BoRiS))*(fa_ext(ix_flux,iy_flux,idir,0,is)+fa_ext(ix_flux,iy_flux,idir,1,is))
     enddo
     if (present(pwr)) pwr = Abs(fet)/gs(ix_flux,iy_flux,idir)
   end subroutine calc_fet

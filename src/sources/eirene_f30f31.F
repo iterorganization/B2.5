@@ -448,7 +448,7 @@ c     internal cell -> full diamagnetic drift
           do iy=0,ny
             do ix=-1,nx
               if(bottomiy(ix,iy).ne.-2) then
-                fniyb(ix+1,iy,nflai)=fna(ix,iy,0,1,is)+fna(ix,iy,1,1,is)
+                fniyb(ix+1,iy,nflai)=fna(ix,iy,1,0,is)+fna(ix,iy,1,1,is)
               else
                 fniyb(ix+1,iy,nflai)=0.0_R8
               endif

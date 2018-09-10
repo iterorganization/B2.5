@@ -331,7 +331,7 @@
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
       wght = 1.0_R8
       call grad(nx, ny, hx, hy, wght, qz, qs, po,   dpo)
-      call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
+      call grad(nx, ny, hx, hy, wght, qz, qs, OnedBsq, dOnedBsq)
 !      call grad_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
 !     .  dOnedBsq(-1,-1,0,0))
 !      call grad_r(nx,ny, 1, hx, hy, wght, qz, qs, OnedBsq, OnedBsqc, 

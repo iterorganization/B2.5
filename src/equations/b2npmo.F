@@ -293,6 +293,10 @@
            enddo
          enddo
        else
+        smbfria  = 0.0_R8
+        smbfrea = 0.0_R8
+        smbtfia  = 0.0_R8
+        smbtfea = 0.0_R8
         if(b2sifr_ver.eq.0) then                                       !srv 26.10.08 {
          call b2sifr (nx, ny, ns, is, vol, hx, hz, bb,                 !srv 09.01.01
      &    na, ua, te, ti, ni, ne, ne2, ehxp, lnlam, cthe, cthi,        !srv 11.09.09

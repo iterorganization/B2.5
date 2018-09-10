@@ -175,8 +175,12 @@
       do is = 0, ns-1
        if (.not.is_neutral(is)) then
         cvsa(:,:,0,0,is)   = ft*cvsa_cl(:,:,0,0,is)   + cvsa(:,:,0,0,is)
+        cvsa(:,:,0,1,is)   =    cvsa_cl(:,:,0,1,is)   + cvsa(:,:,0,1,is)
+        cvsa(:,:,1,0,is)   = ft*cvsa_cl(:,:,1,0,is)   + cvsa(:,:,1,0,is)
         cvsa(:,:,1,1,is)   =    cvsa_cl(:,:,1,1,is)   + cvsa(:,:,1,1,is)
         cvsahz(:,:,0,0,is) = ft*cvsahz_cl(:,:,0,0,is)+cvsahz(:,:,0,0,is)
+        cvsahz(:,:,0,1,is) =    cvsahz_cl(:,:,0,1,is)+cvsahz(:,:,0,1,is)
+        cvsahz(:,:,1,0,is) = ft*cvsahz_cl(:,:,1,0,is)+cvsahz(:,:,1,0,is)
         cvsahz(:,:,1,1,is) =    cvsahz_cl(:,:,1,1,is)+cvsahz(:,:,1,1,is)
        else
         cvsa(:,:,:,:,is)   =    cvsa_cl(:,:,:,:,is) + cvsa(:,:,:,:,is)

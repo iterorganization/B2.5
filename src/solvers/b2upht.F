@@ -38,7 +38,7 @@
 *   ..local variables
       integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg
       real (kind=R8) ::
-     *  ctt, dte, dti, t0, t1, t2
+     *  ctt, dte(-1:nx,-1:ny), dti(-1:nx,-1:ny), t0, t1, t2
       save ncall, stylec, pot_eq
 *   ..procedures
       intrinsic min, max
@@ -88,52 +88,62 @@
         ireg = region(ix,iy,0)
         if (stylec.eq.0) then
          if (solvereg(ireg).and.solvireg(ireg)) then
-          dte = rxf*max(-te(ix,iy),(corte(ix,iy)+cortt(ix,iy))/2.0_R8)
-          dti = rxf*max(-ti(ix,iy),(corti(ix,iy)+cortt(ix,iy))/2.0_R8)
+          dte(ix,iy) = 
+     &      rxf*max(-te(ix,iy),(corte(ix,iy)+cortt(ix,iy))/2.0_R8)
+          dti(ix,iy) = 
+     &      rxf*max(-ti(ix,iy),(corti(ix,iy)+cortt(ix,iy))/2.0_R8)
          else
-          dte = rxf*max(-te(ix,iy),corte(ix,iy))
-          dti = rxf*max(-ti(ix,iy),corti(ix,iy))
+          dte(ix,iy) = rxf*max(-te(ix,iy),corte(ix,iy))
+          dti(ix,iy) = rxf*max(-ti(ix,iy),corti(ix,iy))
          endif
         else if (stylec.eq.1) then
          ctt = cortt(ix,iy)-
      &     med(corte(ix,iy),cortt(ix,iy),corti(ix,iy))
          if (solvereg(ireg).and.solvireg(ireg)) then
-          dte = rxf*max(-te(ix,iy),corte(ix,iy)+ctt)
-          dti = rxf*max(-ti(ix,iy),corti(ix,iy)+ctt)
+          dte(ix,iy) = rxf*max(-te(ix,iy),corte(ix,iy)+ctt)
+          dti(ix,iy) = rxf*max(-ti(ix,iy),corti(ix,iy)+ctt)
          else
-          dte = rxf*max(-te(ix,iy),corte(ix,iy))
-          dti = rxf*max(-ti(ix,iy),corti(ix,iy))
+          dte(ix,iy) = rxf*max(-te(ix,iy),corte(ix,iy))
+          dti(ix,iy) = rxf*max(-ti(ix,iy),corti(ix,iy))
          endif
         else if (stylec.eq.2) then
 *        !! This for testing purposes only
-         dte = rxf*max(-te(ix,iy),corte(ix,iy))
-         dti = 0.0_R8
+         dte(ix,iy) = rxf*max(-te(ix,iy),corte(ix,iy))
+         dti(ix,iy) = 0.0_R8
         else if (stylec.eq.3) then
 *        !! This for testing purposes only
-         dte = 0.0_R8
-         dti = rxf*max(-ti(ix,iy),corti(ix,iy))
+         dte(ix,iy) = 0.0_R8
+         dti(ix,iy) = rxf*max(-ti(ix,iy),corti(ix,iy))
         else if (stylec.eq.4) then
 *        !! This for testing purposes only
-         dte = rxf*max(-te(ix,iy),corte(ix,iy))
-         dti = rxf*max(-ti(ix,iy),corti(ix,iy))
+         dte(ix,iy) = rxf*max(-te(ix,iy),corte(ix,iy))
+         dti(ix,iy) = rxf*max(-ti(ix,iy),corti(ix,iy))
         endif
-        if (leftix(ix,iy).ne.-2) 
-     >   wrk0(ix,iy) = ne(ix,iy)*dte+ni(ix,iy,0)*dti-
-     &                 ne(leftix(ix,iy),leftiy(ix,iy))*dte-
-     &                 ni(leftix(ix,iy),leftiy(ix,iy),0)*dti
-        if (solvereg(ireg)) te(ix,iy) = max(1.0e-5_R8*ev,te(ix,iy)+dte)	 !xpb
+        if (solvereg(ireg)) 
+     &    te(ix,iy) = max(1.0e-5_R8*ev,te(ix,iy)+dte(ix,iy))	 !xpb
         if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
      &      leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
-                            po(ix,iy) = po(ix,iy)+dte/qe
+                            po(ix,iy) = po(ix,iy)+dte(ix,iy)/qe
         else if (pot_eq.eq.2) then
           po(ix,iy) = 3.1_R8*te(ix,iy)/qe
         end if
-        if (solvireg(ireg)) ti(ix,iy) = max(1.0e-5_R8*ev,ti(ix,iy)+dti)	 !xpb
+        if (solvireg(ireg)) 
+     &    ti(ix,iy) = max(1.0e-5_R8*ev,ti(ix,iy)+dti(ix,iy))	 !xpb
        enddo
       enddo
 *   ..adjust ua
       if (ua_solve) then
+       do iy = -1, ny
+        do ix = -1, nx
+         if (leftix(ix,iy).ne.-2) 
+     >    wrk0(ix,iy) = ne(ix,iy)*dte(ix,iy)+ni(ix,iy,0)*dti(ix,iy)-
+     &      ne(leftix(ix,iy),leftiy(ix,iy))*
+     &      dte(leftix(ix,iy),leftiy(ix,iy))-
+     &      ni(leftix(ix,iy),leftiy(ix,iy),0)*
+     &      dti(leftix(ix,iy),leftiy(ix,iy))
+        enddo
+       enddo
        do iy = -1, ny
         do ix = -1, nx
          ireg = region(ix,iy,0)

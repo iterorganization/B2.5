@@ -710,9 +710,7 @@ cwdk cancelation of some terms in poloidal and radial flux components
 !     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
            conb(ix,iy,0,0,3) = 0.25_R8*PSch*cddb(ix,iy,1,1)*
      &                         kmprti(ix,iy,1)
-           conb(ix,iy,0,1,3) = -conb(ix,iy,0,0,3)
            conb(ix,iy,0,0,4) = conb(ix,iy,0,0,3)                          !srv 21.10.10 }
-           conb(ix,iy,0,1,4) = conb(ix,iy,0,1,3)
           endif
          enddo
         enddo
@@ -760,9 +758,7 @@ cwdk cancelation of some terms in poloidal and radial flux components
 !     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
            conb(ix,iy,0,0,3) = 0.25_R8*PSch*cddb(ix,iy,1,1)*
      &                         kmprti(ix,iy,1)
-           conb(ix,iy,0,1,3) = -conb(ix,iy,0,0,3)
            conb(ix,iy,0,0,4) = conb(ix,iy,0,0,3)                            !srv 21.10.10 }
-           conb(ix,iy,0,1,4) = conb(ix,iy,0,1,3)
           endif
          enddo
         enddo
@@ -1294,7 +1290,7 @@ c          upwind discretization needed for the "effective convection"
      &        (kmpr(leftix(ix,iy),leftiy(ix,iy))+kmpr(ix,iy))/2.0_R8-    !srv 30.01.10
      &        (flo+flo9)*
      &        (kmpr(ix,iy)-kmpr(leftix(ix,iy),leftiy(ix,iy)))/4.0_R8+
-     &        cdpb(ix,iy,0,0)
+     &        cdpb(ix,iy,0,0) + cdpb(ix,iy,0,1)*t0
 cwdk for conb(ix,iy,0,1,0), assume that average kmpr between left and center
 c    is good enough approx. for average between corner values
              conb(ix,iy,0,1,0) = con9*                               !srv 13.10.06
@@ -1305,15 +1301,15 @@ c    is good enough approx. for average between corner values
      &         (kmpr(leftix(ix,iy),leftiy(ix,iy))+kmpr(ix,iy))/2.0_R8 - 
      &         (con_mdf(ix,iy) + 0.5_R8*abs(flo9_mdf))*
      &         (kmpr(ix,iy)-kmpr(leftix(ix,iy),leftiy(ix,iy))) - 
-     &         con9_mdf*dkmprr(ix,iy,0) - 
-     &         cddb(ix,iy,1,1)*dkmprti(ix,iy,1)                           !srv 21.10.10
+     &         con9_mdf*dkmprr(ix,iy,0)! - 
+!     &         cddb(ix,iy,1,1)*dkmprti(ix,iy,1)                           !srv 21.10.10
              flob(ix,iy,0,1) = 0.0_R8
              conb(ix,iy,0,0,0) = 
      &         (con_mdf(ix,iy)+con9_mdf*t0+0.5_R8*abs(flo9_mdf))*                           !srv 13.10.06
      &         (kmpr(leftix(ix,iy),leftiy(ix,iy))+kmpr(ix,iy))/2.0_R8-
      &         (flo_mdf+flo9_mdf)*
      &         (kmpr(ix,iy)-kmpr(leftix(ix,iy),leftiy(ix,iy)))/4.0_R8+
-     &          cdpb(ix,iy,0,0)
+     &          cdpb(ix,iy,0,0) + cdpb(ix,iy,0,1)*t0
 cwdk for conb(ix,iy,0,1,0), assume that average kmpr between left and center
 c    is good enough approx. for average between corner values
              conb(ix,iy,0,1,0) = con9_mdf*                               !srv 13.10.06
@@ -1740,12 +1736,13 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
           else
            flob(ix,iy,1,1) = flo_mdf*
      &       (kmpr(bottomix(ix,iy),bottomiy(ix,iy))+kmpr(ix,iy))/2.0_R8-
-     &       con_mdf(ix,iy)*dkmprr(ix,iy,1)+
-     &       cddb(ix,iy,0,0)*dkmprti(ix,iy,0)                           !srv 21.10.10
+     &       con_mdf(ix,iy)*dkmprr(ix,iy,1)!+
+!     &       cddb(ix,iy,0,0)*dkmprti(ix,iy,0)                           !srv 21.10.10
            conb(ix,iy,1,1,0) =                                             !srv 13.10.06
      &        con_mdf(ix,iy)*(kmpr(bottomix(ix,iy),bottomiy(ix,iy))
      &        +kmpr(ix,iy))/2.0_R8-
-     &        flo_mdf*dkmprr(ix,iy,1)/4.0_R8+
+     &        flo_mdf*(kmpr(ix,iy) - 
+     &        kmpr(bottomix(ix,iy),bottomiy(ix,iy)))/4.0_R8+
      &        cdpb(ix,iy,1,1)
             conb(ix,iy,1,0,0) = (con_mdf(ix,iy)-0.5_R8*abs(flo_mdf))*t0*
      &        (kmpr(bottomix(ix,iy),bottomiy(ix,iy))+kmpr(ix,iy))/2.0_R8
