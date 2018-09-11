@@ -49,9 +49,9 @@ c     File names will be appended with "*_st.dat".
 #ifndef WG_DEBUG         
         filename = trim(folder)//trim(first_name)//'_us.dat'
         if (iappend.eq.0) then
-          open (nwrite,file=filename)
+          open (nwrite,file=trim(filename))
         else
-          open (nwrite,file=filename,position='append')
+          open (nwrite,file=trim(filename),position='append')
         end if
         write(hlp_frm,"(a,i2,a,i2.2,a)")'(1x,i9,1x,es',ndigits+8,'.',ndigits,')' 
         do ic = 1, nel
@@ -66,9 +66,9 @@ c     File names will be appended with "*_st.dat".
 
         filename = trim(folder)//trim(first_name)//'_st.dat'
         if (iappend.eq.0) then
-          open (nwrite,file=filename)
+          open (nwrite,file=trim(filename))
         else
-          open (nwrite,file=filename,position='append')
+          open (nwrite,file=trim(filename),position='append')     !srv 07.09.18
         end if
         write(hlp_frm,"(a4,i4,a1,i2,a9)") 
      &       '(5x,',nx_st+2,'(',ndigits,'x,i3,5x))'
@@ -89,9 +89,9 @@ c     File names will be appended with "*_st.dat".
         do ic = 0,1  
           filename = trim(folder)//trim(first_name)//sf(ic)
           if (iappend.eq.0) then
-            open (nwrite,file=filename)
+            open (nwrite,file=trim(filename))
           else
-            open (nwrite,file=filename,position='append')
+            open (nwrite,file=trim(filename),position='append')
           end if
           write(hlp_frm,"(a4,i4,a1,i2,a9)") 
      &         '(5x,',nx_st+2,'(',ndigits,'x,i3,5x))'
