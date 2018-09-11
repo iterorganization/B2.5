@@ -55,8 +55,14 @@ ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS  += -DIMAS
 endif
+ifeq (,$(findstring hpc-login0,$(NODENAME)))
+EQUIVS  += -DGGD_OLD
+LD_UAL  ?= `pkg-config imas-gfortran ggd-gfortran --libs`
+INCMODS  = `pkg-config imas-gfortran ggd-gfortran --cflags`
+else
 LD_UAL  ?= `pkg-config imas-gfortran ggd --libs`
 INCMODS  = `pkg-config imas-gfortran ggd --cflags`
+endif
 IMASLIBS = ${LD_UAL}
 endif
 
