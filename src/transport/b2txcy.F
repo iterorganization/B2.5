@@ -38,6 +38,8 @@ cwdk note that fcHc is typically hx/2 or hy/2!
         if (t0*t1.gt.0.0_R8) then
          cony(iFc) = 
      &    t0*t1/(t0+t1)*geo%fcQalf(iFc,1)/geo%fcQgam(iFc,0)**2
+        else
+         cony(iFc) = 0.0_R8
         endif
        enddo
       else if (mode.eq.0) then

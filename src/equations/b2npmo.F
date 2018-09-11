@@ -255,6 +255,10 @@
 !WG_TODO : friction not yet implemented
        smbch = 0.0e0_R8
        smbtf = 0.0e0_R8
+       smbfria  = 0.0_R8
+       smbfrea = 0.0_R8
+       smbtfia  = 0.0_R8
+       smbtfea = 0.0_R8
 #ifdef WG_TODO       
        if(style.eq.2) then                                             !srv 13.01.17
          call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,        !srv 05.07.17
