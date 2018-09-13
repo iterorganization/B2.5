@@ -15,46 +15,13 @@
 #endif
 #include "DIMENSIONS.F"
 c
-c  version : 19.07.2001 18:46
+c  version : 22.06.2018 by Ilya Senichenkov
 c
 c======================================================================
 c*** Computes the global particle flows across the boundaries in
 c*** B2-Eirene and the global particle balance in B2
 c----------------------------------------------------------------------
-      implicit none
-c
-      integer nx, ny, ns, iline
-      real (kind=R8) :: dtim
-c
-      integer lun, ltrc
-      parameter (ltrc=ntrc_bln)
-      integer i, j, k, l, m, n, ic, ii, is, ix, iy, js, ks, ls, lv,
-     ,        nc, nv, kks, np_tmp
-      logical first, ex, hlp_lw, hlp_lt
-c<<<
-      logical hlp_tt
-      real (kind=R8) :: tdummy
-      real (kind=R8) :: hlp_wldpp
-      real (kind=R8) :: hlpit_l,hlpit_r
-      real (kind=R8), allocatable :: hlpit_lp(:),hlpit_rp(:),hlpit_pl(:)
-      real (kind=R8) :: hlp_pls(nbcd,ns)
-      real (kind=R8), allocatable, save :: hlp_neu(:,:)
-      integer kst_hlp
-      integer use_recyceir
-      real (kind=R8) :: recyctmp
-      real (kind=R8), save :: stim = 0.0_R8
-c>>>
-c
-c*** lv    :  version number to appear in the file
-c*** np_tmp:  number of output data for each species
-c
-      parameter (lv=961229, np_tmp=20)
-c
-      real (kind=R8) :: 
-     *     hlpic,hlpiw,hlpit,hlpia,hlpid,hlpnc,hlpnw,hlpnt,hlpis,hlpnp,
-     ,     hlpdt,hlp,hlpids
-      real (kind=R8), allocatable :: hlpic_s(:),hlpiw_s(:),hlpit_s(:)
-c
+
 c----------------------------------------------------------------------
 c*** debug_flags usage:
 c***  90  >0 : debugging printout on
@@ -62,24 +29,39 @@ c***  90, 91 : 'non-default surfaces' (90) to (91)
 c***  92, 93 : strata (92) to (93); 0 means the sum over all strata
 c***  94, 95 : more detailed output for strata (94) to (95)
 c----------------------------------------------------------------------
+
+
+c----------------------------------------------------------------------
 c*** Output data (for each species):
 c***
 c***    header   array
 c***                                        --- Global particle balance
-c***   ion_core  flxic  ion flow across the core boundary
-c***   ntr_core  flxnc  neutral flow across the core boundary
-c***   ion_targ  flxit  ion-driven net flow through the targets
-c***   ntr_targ  flxnt  neutral-driven net flow through the targets
-c***   ion_wall  flxiw  ion-driven net flow through the side walls
-c***   ntr_wall  flxnw  neutral-driven net flow through the side walls
-c***   ntr_puff  flxnp  flow from the gas puff
-c***   flux_tot  flxps  total flow coming to the volume
-c***   flux_ttr  flxrl  the same in terms of the inverse time scales
-c***   flx_d/dt  flxid  total flow equivalent to the time derivative
-c***   flux_bln  flxbl  error in particle balance (should be 0)
-c***   flux_blr  flxbr  the same in terms of the inverse time scales
+c***   ion_core        flxic       ion flow across the core boundary (based on fna array)
+c***   ion_core_mdf    flxic_mdf   ion flow across the core boundary (based on fna_mdf array)
+c***   ion_targ        flxit       ion flow to the targets (based on fna array)                                    ! IYS 12.01.2018
+c***   ion_wall        flxiw       ion flow to the side walls (based on fna array)                                 ! IYS 12.01.2018
+c***   ion_wall        flxi_out    ion flow to the side walls and divertors  (based on fna_mdf array)              ! IYS 12.01.2018
+c***   ion_dndt        flxid       time derivative of the ion content in the whole domain
+c***   src_ioniz       flxi_out    ion source due to ionization from neutral (ground) state
+
+c***   ntr_core        flxnc       neutral flow across the core boundary
+c***   ntr_targ_tot    flxnt       neutral net flow through the targets including recycling source
+c***   ntr_targ_rec    flxnt_r     neutral source due to ion recycling on targets       ! IYS 12.01.2018
+c***   ntr_targ_pmp    flxnt_pump  neutral-driven net flow through the targets without the source due to ion recycling            ! IYS 12.01.2018
+c***   ntr_wall_tot    flxnw       neutral net flow through the side walls including recycling source
+c***   ntr_wall_rec    flxnw_r     neutral source due to recycling on side walls       ! IYS 12.01.2018
+c***   ntr_wall_pmp    flxnw_pump  neutral-driven net flow through the side walls without the source due to ion recycling         ! IYS 12.01.2018
+c***   ntr_puff        flxnp       flow from the gas puff
+c***   pump            Npump_tmp   neutral pumping
+c***   flux_tot        flxps       total flow coming to the volume
+c***   Ftt_inv_time    flxrl       the same in terms of the inverse time scales
+c***   flux_balance    flxbl       error in particle balance (should be 0)
+c***   Bal_inv_time    flxbr       the same in terms of the inverse time scales
 c***
+
+
 c***                                        --- Ion balance in B2
+c***  { Excluded from the output variables list by IYS 12.01.2018
 c***                                            (fluxes in terms of the
 c***                                                inverse time scales)
 c***   ions_tot  blnna   the total number of ions
@@ -91,21 +73,56 @@ c***   bln_srce  blnns   integral sources
 c***   bln_blnc  blnne   error in particle balance
 c***   bln_blnr  blnnr   the same divided by the sum of the abs. values
 c***                     of the other terms (relative error)
+!      IYS 12.01.2018 }
+
 c----------------------------------------------------------------------
-      real (kind=R8), allocatable :: 
-     *     flxic_tmp(:),flxnc_tmp(:),flxit_tmp(:),
-     ,     flxnt_tmp(:),flxiw_tmp(:),flxnw_tmp(:),
-     ,     flxnp_tmp(:),flxps_tmp(:),blnna_tmp(:),
-     ,     blnnd_tmp(:),blnnc_tmp(:),blnnt_tmp(:),
-     ,     blnnw_tmp(:),blnns_tmp(:),blnne_tmp(:),
-     ,     blnnr_tmp(:),
+
+      implicit none
+c
+      integer nx, ny, ns, iline
+      real (kind=R8) :: dtim
+c
+      integer lun, ltrc
+      parameter (ltrc=ntrc_bln)
+
+      integer i, j, k, l, m, n, ic, ii, is, ix, iy, js, ks, ls, lv,
+     ,        nc, nv, kks, np_tmp
+
+      logical first, ex !, hlp_lw, hlp_lt
+      real (kind=R8) :: tdummy
+      integer, save :: mdf_fnb = 0, style_b2mndt = 0                ! IYS 12.01.2018
+
+      real (kind=R8), allocatable, save :: hlpit_lp(:),hlpit_rp(:),
+     &                                                 hlpit_pl(:)
+      real (kind=R8) :: hlp_pls(nbcd,ns)
+      integer use_recyceir
+      real (kind=R8) :: recyctmp
+      real (kind=R8), save :: stim = 0.0_R8
+
+c>>>
+c
+c*** lv    :  version number to appear in the file
+c*** np_tmp:  number of output data for each species
+c
+      parameter (lv=20180622, np_tmp=16)                            ! IYS 22.06.2018
+c
+      real (kind=R8) :: hlpdt, hlp 
+
+      real (kind=R8), allocatable, save :: 
+     *     flxic(:),flxnc(:),flxit(:),                                            ! IYS 12.01.2018
+     ,     flxnt(:),flxiw(:),flxnw(:),
+     ,     flxnp(:),flxps(:),flxnw_rec(:),flxnw_pump(:),flxnw_sput(:),            ! IYS 12.01.2018
+     ,     flxnt_rec(:),flxnt_pump(:),flxnt_sput(:),                              ! IYS 12.01.2018
 c*** from 960727 on
-     ,     flxid_tmp(:),flxbl_tmp(:),flxbr_tmp(:),
+     ,     flxid(:),!flxbl(:),flxbr(:),
 c*** from 960808 on
-     ,     flxrl_tmp(:)
+!     ,     flxrl(:),
+c*** from 20180604 on
+     ,     flxis(:), Nions(:)
+
 c----------------------------------------------------------------------
 c
-      character f*(lenfnm), hlp_c, hlp_h(np_tmp)*8, hlp_frm*80, tab
+      character f*(lenfnm), hlp_c, hlp_h(np_tmp)*12, hlp_frm*256, tab
 c
 c----------------------------------------------------------------------
 c*** Taken from the common blocks:
@@ -126,10 +143,12 @@ c*** lmolscl: pointer to the species with which these molecules scale
 c----------------------------------------------------------------------
 c*** Column headers:
       data hlp_h /
-     1          'ion_core','ntr_core','ion_targ','ntr_targ','ion_wall',
-     2          'ntr_wall','ntr_puff','flux_tot','ions_tot','bln_d/dt',
-     3          'bln_core','bln_targ','bln_wall','bln_srce','bln_blnc',
-     4          'bln_blnr','flx_d/dt','flux_bln','flux_blr','flux_ttr'/
+     1    '    ion_core','    ntr_core','    ion_targ','ntr_targ_tot',
+     2    'ntr_targ_rec','ntr_targ_spt','ntr_targ_pmp','    ion_wall',
+     3    'ntr_wall_tot','ntr_wall_rec','ntr_wall_spt','ntr_wall_pmp',
+     4    '   src_ioniz','    ntr_puff','    flux_tot','   ion_dn/dt'/
+!     5    'Ftt_inv_time',,'flux_balance','Bal_inv_time'/
+
 *   ..initialisation
       data use_recyceir /1/
 c
@@ -137,20 +156,19 @@ c
 c----------------------------------------------------------------------
       save lun, i, j, k, l, m, n, ic, is, ix, iy,
      1 js, ks, ls, nc, nv, kks, use_recyceir,
-     2 first, ex, hlp_lw, hlp_lt, hlp_tt,
-     3 hlpit_l,hlpit_r,hlpit_lp,hlpit_rp,hlpit_pl,
-     4 hlpic,hlpiw,hlpit,hlpia,hlpid,hlpnc,hlpnw,hlpnt,hlpis,hlpnp,
-     5 hlpdt,hlp,hlpids,hlpic_s,hlpiw_s,hlpit_s,
-     8 flxic_tmp,flxnc_tmp,flxit_tmp,flxnt_tmp,
-     , flxiw_tmp,flxnw_tmp,flxnp_tmp,flxps_tmp,
-     , blnna_tmp,blnnd_tmp,blnnc_tmp,blnnt_tmp,
-     , blnnw_tmp,blnns_tmp,blnne_tmp,blnnr_tmp,
-     , flxid_tmp,flxbl_tmp,flxbr_tmp,
-     , flxrl_tmp,
-     1 f, hlp_c, hlp_h, hlp_frm, tab
+     2 first, ex
 c======================================================================
 
+      if(first_time_step) return
+
+      if(ank_tracing.eq.0) return
+
       if(first) then
+
+        call ipgeti('b2tfnb_mdf',mdf_fnb)
+        call ipgeti('b2mndt_style',style_b2mndt)
+
+#ifdef B25_EIRENE
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
         print *,'=== Regions of the grid:'
@@ -169,6 +187,7 @@ c<<<
         end do
 c>>>
 c
+
 c*** Initialisation
 c
         do j=1,nstrat
@@ -227,6 +246,11 @@ c      do i=1,nlimps
       end do
 
 c<<<
+      debug_flags(90) = 1
+      debug_flags(91) = 6
+      debug_flags(92) = 1
+      debug_flags(93) = nstrat
+ 
       if(debug_flags(90).gt.0) then
         print *
         print *,'%%% Eirene data in B2 %%%'
@@ -250,121 +274,52 @@ c<<<
             print '(1p,i4,20e12.4)',j,wldpeb(j,k),
      ,         (wldpa(j,i,k),i=1,nnatmi),(wldpm(j,i,k),i=1,nnmoli),
      ,                                       (hlpit_pl(i),i=1,nspecies)
-           end do
-         end do
-       end if
-c>>>
-
-c*** The plasma flows across the boundaries
-
-      ks=0
-      do ls=1,nspecies
-        hlpic =0.0_R8
-        hlpit =0.0_R8
-        hlpiw =0.0_R8
-        hlpit_lp(ls)=0.0_R8
-        hlpit_rp(ls)=0.0_R8
-c<<<
-        do ic=1,nbc
-          hlp_pls(ic,ls)=0.0_R8
-          if (bcchar(ic).eq.'S' .or. bcchar(ic).eq.'N' .or.
-     .        bcchar(ic).eq.'E' .or. bcchar(ic).eq.'W') kst_hlp=ic
+          end do
         end do
-c>>>
-        do is=1,nfluids(ls)
-          ks=ks+1
-          do 1100 ic = 1, nbc
-            if (bcchar(ic).eq.'S') then
-              do j = 1, ncbs
-                if(ic.eq.lcbs(j)) then
-c***     core boundary
-                  do i = 1, bc_list_size(ic)
-                    hlpic=hlpic+
-     .               fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .                   topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .                   1,ions_list(ks))
-c<<<
-                    hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .               fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .                   topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .                   1,ions_list(ks))
-c>>>
-                  end do
-                  go to 1100
-                end if
-              end do
-c***     wall in PFR
-              do i = 1, bc_list_size(ic)
-                hlpiw=hlpiw+
-     .           fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               1,ions_list(ks))
-c<<<
-                hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .           fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               1,ions_list(ks))
-c>>>
-              end do
-            else if (bcchar(ic).eq.'N') then
-c***     outer wall
-              do i = 1, bc_list_size(ic)
-                hlpiw=hlpiw
-     .           -fna(bc_list_x(i,ic),bc_list_y(i,ic),1,ions_list(ks))
-c<<<
-                hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),1,ions_list(ks))
-c>>>
-              end do
-            else if (bcchar(ic).eq.'W') then
-c***     left target
-              do i = 1, bc_list_size(ic)
-                hlpit=hlpit+
-     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               0,ions_list(ks))
-                hlpit_lp(ls)=hlpit_lp(ls)+
-     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               0,ions_list(ks))
-c<<<
-                hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               0,ions_list(ks))
-c>>>
-              end do
-            else if (bcchar(ic).eq.'E') then
-c***     right target
-              do i = 1, bc_list_size(ic)
-                hlpit=hlpit-
-     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,ions_list(ks))
-                hlpit_rp(ls)=hlpit_rp(ls)-
-     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,ions_list(ks))
-c<<<
-                hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,ions_list(ks))
-c>>>
-              end do
-            end if
- 1100     continue
-        end do
-        hlpic_s(ls)=hlpic
-        hlpit_s(ls)=hlpit
-        hlpiw_s(ls)=hlpiw
-      end do
-c<<<
-      if(debug_flags(90).gt.0) then
-c        print '(a,1p,10e12.4)','%%% hlpit_lp, hlpit_rp: ',
-c     ,                           (hlpit_lp(i),hlpit_rp(i),i=1,nspecies)
-        print '(a,1p,10e12.4)','%%# hlpiw_s : ',
-     ,                                        (hlpiw_s(i),i=1,nspecies)
       end if
+
+#else
+        first=.false.
+      end if
+#endif
 c>>>
 
-      ks=0
-      do ls=1,nspecies
-        kks=eb2spcr(ls)+1
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+! {IYS 04.06.2018
+! The logics is changed completely
+
+! Set all output arrays to zero
+
+      flxic        = 0.0_R8                 ! Ion flux through core boundary based on fna array (sum over all core boundary segments and over all ionization states of given isonuclear sequence)
+
+      flxit        = 0.0_R8                 ! Ion flux through targets (sum over all targets and over all ionization states of given isonuclear sequence)
+
+      flxiw        = 0.0_R8                 ! Ion flux through wall boundaries based on fna array 
+
+      flxid        = 0.0_R8                 ! Time derivative of the ion content in the whole domain (sum over all cells and over all ionization states of given isonuclear sequence)
+
+      flxis        = 0.0_R8                 ! Ion source due to ionization from the neutral state (sum over all cells for first ionized state of given isonuclear sequence)
+
+      flxnc        = 0.0_R8                 ! Neutral flux through core boundary (sum over all core boundary segments for neutrals corresponding to given isonuclear sequence)
+      flxnt        = 0.0_R8                 ! Neutral flux through targets (sum over all targets and over all kind of molecules containing given atom)
+      flxnt_rec    = 0.0_R8                 ! Neutral flux emitted from the target due to plasma ion recycling (part of the source from b2stbr for fluid neutrals),  IYS 12.01.2018, 04.06.2018
+      flxnt_pump   = 0.0_R8                 ! Pumped/absorbed neutral flux at targets (source from b2stbc for fluid neutrals),  IYS 12.01.2018, 04.06.2018   
+      flxnt_sput   = 0.0_R8                 ! Sputtered neutral flux at targets (part of the source from b2stbr for fluid neutrals),  IYS 22.06.2018 
+      flxnw        = 0.0_R8                 ! Neutral flux through wall boundary (sum over all side wall segments for neutrals corresponding to given isonuclear sequence)
+      flxnw_rec    = 0.0_R8                 ! Neutral flux emitted from the side wall due to plasma ion recycling (part of the source from b2stbr for fluid neutrals),  IYS 12.01.2018, 04.06.2018
+      flxnw_pump   = 0.0_R8                 ! Pumped/absorbed neutral flux at wall (source from b2stbc for fluid neutrals),  IYS 12.01.2018, 04.06.2018
+      flxnw_sput   = 0.0_R8                 ! Sputtered neutral flux at wall (part of the source from b2stbr for fluid neutrals),  IYS 22.06.2018, 04.06.2018
+      flxnp        = 0.0_R8                 ! Neutral puff (for fluid neutrals -- the flux prescribed by BCCON=5,8 on walls)
+
+      flxps        = 0.0_R8                 ! Sum of ion and neutral fluxes into the domain with sign (positive: inside the domain; negative: outside the domain)
+
+c**********************************
+! The flows of B2 fluids
+c**********************************
+
+!     Loop over isonuclear sequence
+      do ls = 1,nspecies
+
 c<<<
         if(debug_flags(90).gt.0) then
           print *,'%%# Species # ',ls
@@ -372,265 +327,497 @@ c<<<
           print *,'%%# nfluids(ls) = ',nfluids(ls)
         end if
 c>>>
-c
-c*** Ion fluxes and average densities
-c
-        hlpid =0.0_R8
-        hlpids=0.0_R8
-        hlpia =0.0_R8
-        hlpis =0.0_R8
+
+!       Loop over species within given isonuclear sequence
+c***        EB2SPCR(ls) points to the first B2 fluid (i.e. the neutral fluid) corresponding to the isonuclear sequence labeled by ls
+c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) corresponding to the isonuclear sequence labeled by ls 
+        do is = EB2SPCR(ls), EB2SPCR(ls) + NFLUIDS(ls)
+
+!         Loop over B2 boundaries
+          do ic = 1,nbc
+
+!           Loop over poloidal coordinate along this boundary
+            do ix = 1, BC_LIST_SIZE(ic)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!             Check whether it is a southern boundary
+              if (BCCHAR(ic).EQ.'S') then
+
+!             Check whether it is a closed surface, i.e. is the part of the core boundary
+                if (on_closed_surface(BC_LIST_X(1,ic), 
+     .                                        BC_LIST_Y(1,ic))) then
+#ifndef B25_EIRENE
+! Count fluid neutrals if the Eirene is not coupled
+                  if (is_neutral(is)) then
+                     flxnc(ls) = flxnc(ls) + 
+     &     fna(topix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic)),
+     &               topiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic)),1,is)
+                  else  ! not neutral
+#endif
+                    if (mdf_fnb .eq. 0 .and. style_b2mndt .eq. 0) then
+                      flxic(ls) = flxic(ls) +
+     .     fna(topix(bc_list_x(ix,ic),bc_list_y(ix,ic)),
+     .                 topiy(bc_list_x(ix,ic),bc_list_y(ix,ic)),1,is)
+                    else 
+                      flxic(ls) = flxic(ls) +
+     .     fna_mdf(topix(bc_list_x(ix,ic),bc_list_y(ix,ic)),
+     .                  topiy(bc_list_x(ix,ic),bc_list_y(ix,ic)),1,is)
+                    endif
+
+                    if(debug_flags(90).gt.0) then
+                       hlp_pls(ic,ls)=hlp_pls(ic,ls)+
+     .      fna(topix(bc_list_x(ix,ic),bc_list_y(ix,ic)),
+     .                  topiy(bc_list_x(ix,ic),bc_list_y(ix,ic)),1,is)
+                    endif
+#ifndef B25_EIRENE
+                  endif    ! if (is_neutral(is)) ...
+#endif
+                else        ! .not. (on_closed_surface(:,:)), i.e. it is the Privatte Flux Region
+
+#ifndef B25_EIRENE
+                  if (is_neutral(is)) then
+                    flxnw(ls) = flxnw(ls) +
+     .      fna(topix(bc_list_x(ix,ic),bc_list_y(ix,ic)),
+     .                   topiy(bc_list_x(ix,ic),bc_list_y(ix,ic)),1,is)
+
+                    if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) + 
+     &   CONPAR(IS,IC,1) * gs(topix(BC_LIST_X(IX,IC),BC_LIST_Y(IX,IC)), 
+     &              topiy(BC_LIST_X(IX,IC),BC_LIST_Y(IX,IC)),1)              
+
+                  else
+#endif
+
+                    flxiw(ls) = flxiw(ls) +
+     .      fna(topix(bc_list_x(ix,ic),bc_list_y(ix,ic)),
+     .                   topiy(bc_list_x(ix,ic),bc_list_y(ix,ic)),1,is)
 c<<<
-        hlpit_l =0.0_R8
-        hlpit_r =0.0_R8
-c>>>
-        do is=1,nfluids(ls)
-          ks=ks+1
-c          print *,'%%% Fluid # ',is,ks     !###
-c*** total number of particles and time derivative
+                    if(debug_flags(90).gt.0) then
+                       hlp_pls(ic,ls)=hlp_pls(ic,ls) +
+     .      fna(topix(bc_list_x(ix,ic),bc_list_y(ix,ic)),
+     .                   topiy(bc_list_x(ix,ic),bc_list_y(ix,ic)),1,is)
+                    endif
+#ifndef B25_EIRENE
+                  endif
+#endif
+              
+                endif      ! if (on_closed_surface()) ... 
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!             Northern boundary
+!             Do the same as for PRF boundary, but add fluxes with opposite sign due to opposite surface normal orientation
+              elseif (BCCHAR(ic).EQ.'N') then
+
+#ifndef B25_EIRENE
+                  if (is_neutral(is)) then
+                    flxnw(ls) = flxnw(ls) -
+     .      fna(bc_list_x(ix,ic),bc_list_y(ix,ic),1,is)
+
+                    if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) + 
+     &      CONPAR(IS,IC,1) * gs(BC_LIST_X(IX,IC),BC_LIST_Y(IX,IC),1)               
+
+                  else
+#endif
+
+                    flxiw(ls) = flxiw(ls) -
+     .      fna(bc_list_x(ix,ic),bc_list_y(ix,ic),1,is)
+
+                    if(debug_flags(90).gt.0) then
+                      hlp_pls(ic,ls)=hlp_pls(ic,ls) -
+     .      fna(bc_list_x(ix,ic),bc_list_y(ix,ic),1,is)
+                    endif
+#ifndef B25_EIRENE
+                  endif
+#endif
+           
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!             Western boundary (left target(s))
+              elseif (BCCHAR(ic).EQ.'W') then
+
+#ifndef B25_EIRENE
+                if (is_neutral(is)) then
+                  flxnt(ls) = flxnt(ls) +
+     .      fna(rightix(bc_list_x(ix,ic),bc_list_y(ix,ic)),
+     .                 rightiy(bc_list_x(ix,ic),bc_list_y(ix,ic)),0,is)
+
+                  if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) + 
+     & CONPAR(IS,IC,1) * gs(rightix(bc_list_x(ix,ic),bc_list_y(ix,ic)),
+     &                    rightiy(bc_list_x(ix,ic),bc_list_y(ix,ic)),0)               
+
+                else
+#endif
+                  flxit(ls) = flxit(ls) +
+     .      fna(rightix(bc_list_x(ix,ic),bc_list_y(ix,ic)),
+     .                 rightiy(bc_list_x(ix,ic),bc_list_y(ix,ic)),0,is)
+
+                  if(debug_flags(90).gt.0) then
+                  
+                    hlpit_lp(ls) = hlpit_lp(ls) +
+     .               fna(rightix(bc_list_x(ix,ic),bc_list_y(ix,ic)),
+     .                 rightiy(bc_list_x(ix,ic),bc_list_y(ix,ic)),0,is)
+
+                    hlp_pls(ic,ls) = hlp_pls(ic,ls) +
+     .               fna(rightix(bc_list_x(ix,ic),bc_list_y(ix,ic)),
+     .                 rightiy(bc_list_x(ix,ic),bc_list_y(ix,ic)),0,is)
+                  endif
+#ifndef B25_EIRENE
+                endif
+#endif
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!             Eastern boundary (right target(s))
+!             Do the same as for left target, but add fluxes with opposite sign due to opposite surface normal orientation
+              elseif (BCCHAR(ic).EQ.'E') then
+
+#ifndef B25_EIRENE
+                if (is_neutral(is)) then
+                  flxnt(ls) = flxnt(ls) -
+     .      fna(bc_list_x(ix,ic),bc_list_y(ix,ic),0,is)
+
+                  if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) + 
+     &  CONPAR(is,ic,1) * gs(bc_list_x(ix,ic),bc_list_y(ix,ic),0)                
+
+                else
+#endif
+                  flxit(ls) = flxit(ls) -
+     .      fna(bc_list_x(ix,ic),bc_list_y(ix,ic),0,is)
+
+                  if(debug_flags(90).gt.0) then
+                  
+                    hlpit_lp(ls) = hlpit_lp(ls) -
+     .      fna(bc_list_x(ix,ic),bc_list_y(ix,ic),0,is)
+
+                    hlp_pls(ic,ls) = hlp_pls(ic,ls) -
+     .      fna(bc_list_x(ix,ic),bc_list_y(ix,ic),0,is)
+                  endif
+#ifndef B25_EIRENE
+                endif
+#endif
+              endif     ! if (BCCHAR(ic).EQ.'S')
+
+!           End of the loop over poloidal coordinate along the boundary
+            enddo
+
+#ifndef B25_EIRENE
+            if (is_neutral(is) ) then 
+
+! Compute the puffing rate
+              if (BCCON(is,ic).eq.8 .or. 
+     &            BCCON(is,ic).eq.16 .or. BCCON(is,ic).eq.26) then
+                flxnp(ls) = flxnp(ls) + CONPAR(is,ic,1)
+              endif
+
+! Compute neutral flux due ion recycling
+! and neutral pumped flux
+              if (BCCHAR(ic).EQ.'W' .or. BCCHAR(ic).EQ.'E') then
+
+!FIXME
+                  flxnt_rec(ls) = flxnt_rec(ls) + sna_stbr_neut(ls,ic)
+
+                  flxnt_pump(ls) = flxnt_pump(ls) + 
+     &                                    sna_stbc_neut(ls,ic)
+
+              elseif ( BCCHAR(ic).EQ.'N' .or. (BCCHAR(ic).EQ.'S' .and.
+     & .not. on_closed_surface(BC_LIST_X(1,ic),BC_LIST_Y(1,ic))) ) then
+
+!FIXME
+                    flxnw_rec(ls) = flxnw_rec(ls) + sna_stbr_neut(ls,ic)
+
+!             Exclude surfaces with puffing/seeding (for fluid neutrals)
+                    if (BCCON(is,ic).ne.5 .and. BCCON(is,ic).ne.8
+     &  .and. BCCON(is,ic).ne.16 .and. BCCON(is,ic).ne.26) then
+
+                      flxnw_pump(ls) = flxnw_pump(ls) + 
+     &                                    sna_stbc_neut(ls,ic)
+                    endif
+
+              endif
+            endif
+#endif
+
+!         End of the loop over B2 boundaries
+          enddo
+
+!!!!!
+! Compute the sum of ionization sources for all ionized states of given isonuclear sequence and the time derivative term
+!!!!!
           do iy=0,ny-1
             do ix=0,nx-1
+
               j=region(ix,iy,0)
-              if(j.ne.0 .and. 
-     &           leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-                hlpia=hlpia+na(ix,iy,ions_list(ks))*vol(ix,iy)
-                hlpis=hlpis+
-     1               sna(ix,iy,0,ions_list(ks))+
-     2               sna(ix,iy,1,ions_list(ks))*na(ix,iy,ions_list(ks))
-                if (solveco(ions_list(ks),j)) then
-                  hlpdt=dtim*dtco(ions_list(ks),j)*time_factor(ix,iy)
+
+              if (j.ne.0 .and. leftix(ix,iy).ne.-2 
+     &                    .and. rightix(ix,iy).ne.nx+1) then
+
+                if (solveco(is,j)) then
+                  hlpdt = dtim * dtco(is,j) * time_factor(ix,iy)     ! hlpdt is temporary variable - BE CAREFUL!!!!
                 else
-                  hlpdt=0.0_R8
+                  hlpdt = 0.0_R8
                 endif
-                if(hlpdt.gt.0.0_R8) then
-                  hlpdt=vol(ix,iy)/hlpdt
-                  hlpid=hlpid+na(ix,iy,ions_list(ks))*hlpdt
-                  hlpids=hlpids+na0(ix,iy,ions_list(ks))*hlpdt
-                end if
-              end if
-            end do
-          end do
-c<<<
-c          hlpit_l=hlpit_l+wldpp(nnlimi+7,ks,0)
-c          hlpit_r=hlpit_r+wldpp(nnlimi+8,ks,0)
-c>>>
-        end do
+                if (hlpdt .gt. 0.0_R8 .and. .not. is_neutral(is)) then
+                  flxid(ls) = flxid(ls) + 
+     &        (na(ix,iy,is) - na0(ix,iy,is)) * vol(ix,iy) / hlpdt     ! hlpdt is temporary variable - BE CAREFUL!!!!
+                endif
 
-        hlpid=hlpid-hlpids
-        hlpic=hlpic_s(ls)
-        hlpit=hlpit_s(ls)
-        hlpiw=hlpiw_s(ls)
-c*** Correct the source for d/dt terms
-        hlpis=hlpis+hlpid
-c<<<
-c        print '(a,1p,4e12.4)',
-c     ,      '%%% Ion fluxes: hlpit, hlpiw, hlpic, hlpid =',
-c     ,                       hlpit, hlpiw, hlpic, hlpid
-c        print *,'%%% hlpit_l     hlpit_r     hlpit_t'
-c        print '(i3,a)',ls,' hlpit_lp    hlpit_rp    hlpit'
-c        print '(1p,3e12.4)',hlpit_l,hlpit_r,hlpit_r+hlpit_l,
-c     ,                                  hlpit_lp(ls),hlpit_rp(ls),hlpit
-c>>>
-        blnna_tmp(ls)=hlpia
-        blnnd_tmp(ls)=hlpid/hlpia
-        blnnc_tmp(ls)=hlpic/hlpia
-        blnnt_tmp(ls)=hlpit/hlpia
-        blnnw_tmp(ls)=hlpiw/hlpia
-        blnns_tmp(ls)=hlpis/hlpia
-        blnne_tmp(ls)=blnns_tmp(ls)+blnnc_tmp(ls)+blnnt_tmp(ls)+
-     +                                      blnnw_tmp(ls)-blnnd_tmp(ls)
-        blnnr_tmp(ls)=blnne_tmp(ls)/(abs(blnns_tmp(ls))+
-     +        abs(blnnc_tmp(ls))+abs(blnnt_tmp(ls))+abs(blnnw_tmp(ls))+
-     +                                              abs(blnnd_tmp(ls)))
+                if (is .eq. EB2SPCR(ls)+1) then  ! means the first ionized state
+#ifdef B25_EIRENE
+!     If Eirene is coupled, just take the ionization source from Eirene for given isonuclear sequence
+                  flxis(ls) = sna_eir(ls)
+#else
+!     For standalone run take the source of neutrals with the opposite sign
+                  flxis(ls) = flxis(ls) - sna(ix,iy,0,is-1) -
+     1             sna(ix,iy,1,is-1) * na(ix,iy,is-1) 
 
-c
-c*** Neutral sources - assume the same order of species in B2 and Eirene
-c
-        hlpnc=0.0_R8
-        hlpnp=0.0_R8
-        hlpnw=0.0_R8
-        hlpnt=0.0_R8
-        hlp_neu=0.0_R8
+!     But be careful: the source due to time derivative should be counted
+                  if (hlpdt .gt. 0.0_R8) then
+                    flxis(ls) = flxis(ls) - 
+     &       (na(ix,iy,is-1) - na0(ix,iy,is-1)) * vol(ix,iy) / hlpdt     ! hlpdt is temporary variable - BE CAREFUL!!!!
+                  endif
+#endif
+                endif
+
+
+              endif ! if (j.ne.0 .and. leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
+
+            enddo
+          enddo
+
+!       End of the loop over species within given isonuclear sequence (is)
+        enddo
+
+c**********************************
+! The flows of B2 fluids are now computed
+c**********************************
+
+c****************************************************************
+! Now compute the neutral fluxes from Eirene, if Eirene is coupled
+
+#ifdef B25_EIRENE
+
 c*** Flux across the core boundary
-        do is=1,ncns
-          js=lcns(is)+nnlimi
-          do j=1,nnatmi
-            if(latmscl(j).eq.ls) then
-              hlpnc=hlpnc-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
+
+!       Loof over segments of Eirene core boundary
+        do is = 1,ncns
+
+c**       Here is is not a species index, but the index of eirene surface,
+!!!    because
+c**       ncns - Number of 'non-default' eirene surfaces which are part of the core boundary
+c**       lcns() - index of these 'non-default' surfaces
+
+          js = lcns(is) + nnlimi
+c**       js - index of the eirene surface, js > nnlimi means that this is the 'non-default' one
+
+          do j = 1,nnatmi
+            if (latmscl(j) .eq. ls) then
+              flxnc(ls) = flxnc(ls) 
+     &               - wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
               do ic=1,nnmoli
-                if(mlcmp(j,ic).gt.0) hlpnc=hlpnc-mlcmp(j,ic)*
-     .                (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
+                if (mlcmp(j,ic) .gt. 0) flxnc(ls) = flxnc(ls) - 
+     & mlcmp(j,ic) * (wldnm(js,ic,0) - wldrm(js,ic,0) - wldpm(js,ic,0))
               end do
             end if
           end do
         end do
+
 c*** Flux across the targets
-        do is=1,ntns
+
+!       Loop over segments of Eirene target boundaries
+        do is = 1,ntns
+
+c**       ntns - Number of 'non-default' eirene surfaces which are part of the target boundaries
+c**       ltns() - index of these 'non-default' surfaces
+
           js=ltns(is)+nnlimi
-          do j=1,nnatmi
-            if(latmscl(j).eq.ls) then
-              hlpnt=hlpnt-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
-              do ic=1,nnmoli
-                if(mlcmp(j,ic).gt.0) hlpnt=hlpnt-mlcmp(j,ic)*
-     .                (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
-              end do
+c**       js - index of the eirene surface, js > nnlimi means that this is the 'non-default' one
+
+          do j = 1,nnatmi
+
+            if (latmscl(j) .eq. ls) then
+
+              flxnt(ls) = flxnt(ls) - 
+     &             wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
+              flxnt_rec(ls) = flxnt_rec(ls) + wldpa(js,j,0)                        ! IYS 12.01.2018
+              flxnt_pump(ls) = flxnt_pump(ls) + wlpump(j,js)                       ! IYS 22.06.2018
+              flxnt_sput(ls) = flxnt_sput(ls) + wldspta(js,j,0)                    ! IYS 22.06.2018
+
+              do ic = 1,nnmoli
+
+                if (mlcmp(j,ic) .gt. 0) then
+ 
+                  flxnt(ls) = flxnt(ls) - mlcmp(j,ic) *
+     &               (wldnm(js,ic,0) - wldrm(js,ic,0) - wldpm(js,ic,0))
+                  flxnt_rec(ls) = flxnt_rec(ls) + 
+     &                            mlcmp(j,ic) * wldpm(js,ic,0)
+                  flxnt_pump(ls) = flxnt_pump(ls) + 
+     &                            mlcmp(j,ic) * wlpump(nnatmi+ic,js)  ! IYS 22.06.2018
+                  flxnt_sput(ls) = flxnt_sput(ls) + 
+     &                            mlcmp(j,ic) * wldsptm(js,ic,0)      ! IYS 22.06.2018
+
+                endif
+
+              end do ! end of the loop over molecules
+
             end if
-          end do
-        end do
+
+          end do ! end of the loop over atoms
+
+        end do ! end of the loop over target segments
+
 c*** Flux across the side walls
-        do js=1,nnlimi
-          do j=1,nnatmi
-            if(latmscl(j).eq.ls) then
-              hlpnw=hlpnw-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
-              do ic=1,nnmoli
-                if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
-     .           (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
-              end do
+
+!       Loop over segments of the side wall
+        do js = 1,nnlimi
+
+          do j = 1,nnatmi
+
+            if (latmscl(j) .eq. ls) then
+
+              flxnw(ls) = flxnw(ls) - 
+     &                 wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
+              flxnw_rec(ls) = flxnw_rec(ls) + wldpa(js,j,0)           ! IYS 12.01.2018, wldpa(js,j,0) should be zero, since no ion reaches side wall
+              flxnw_pump(ls) = flxnw_pump(ls) + wlpump(j,js)                       ! IYS 22.06.2018
+              flxnw_sput(ls) = flxnw_sput(ls) + wldspta(js,j,0)                    ! IYS 22.06.2018
+
+              do ic = 1,nnmoli
+
+                if (mlcmp(j,ic) .gt. 0) then
+
+                  flxnw(ls) = flxnw(ls) - mlcmp(j,ic) *
+     .              (wldnm(js,ic,0) - wldrm(js,ic,0) - wldpm(js,ic,0))        ! wldpm(js,j,0) should be zero, since no ion reaches side wall
+                  flxnw_rec(ls) = flxnw_rec(ls) + 
+     &                         mlcmp(j,ic) * wldpm(js,ic,0)
+                  flxnw_pump(ls) = flxnw_pump(ls) +
+     &                 mlcmp(j,ic) * wlpump(nnatmi+ic,js)  ! IYS 22.06.2018
+                  flxnw_sput(ls) = flxnw_sput(ls) +
+     &                 mlcmp(j,ic) * wldsptm(js,ic,0)      ! IYS 22.06.2018
+
+                endif
+
+              end do ! end of the loop over molecules
+
             end if
-          end do
-        end do
-c*** Gas puffing source and recycling
-        do ic=1,nstrat
-          hlp_tt = debug_flags(90).gt.0 .and.
-     .                ic.ge.debug_flags(94) .and. ic.le.debug_flags(95)
-          if(use_recyceir.gt.0) then
-            recyctmp=recyceir(ic)
+
+          end do ! end of the loop over atoms
+
+        end do ! end of the loop over wall segments
+
+c*** Puffing/seeding rate and recycling source
+
+!       Loop over strata
+
+        do ic = 1,nstrat
+
+         if(use_recyceir.gt.0) then
+              recyctmp=recyceir(ic)
           else
-            recyctmp=recyc(kks,ic)
+              recyctmp=recyc(kks,ic)
           endif
-          if (crcstra(ic).eq.'C') then
-            do j=1,nnatmi
-              if(latmscl(j).eq.ls)
-     >          hlpnp=hlpnp+userfluxparm(ic,1)*gpfc(j,ic)*recyctmp
+
+          if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding
+
+            do j = 1,nnatmi
+              if (latmscl(j) .eq. ls) flxnp(ls) = flxnp(ls) +
+     &                 userfluxparm(ic,1) * gpfc(j,ic) * recyctmp
             end do
-          else
-            hlp_lw = crcstra(ic).eq.'S' .or. crcstra(ic).eq.'N'
-            hlp_lt = crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W'
-c<<<
-            if(hlp_tt) print *,'%%% Recycling? - ',hlp_lt,hlp_lw
-c>>>
-            if(hlp_lw .or. hlp_lt) then
-              l=msns(1,ic)
-              m=msns(2,ic)
-              hlp=0.0_R8
-c<<<
-              if(hlp_tt) print *,'%%# ls,ic,crcstra,l,m,kks : ',
-     ,                                ls,ic,' ',crcstra(ic),' ',l,m,kks
-c>>>
-              do i=l,l+m-1
-                k=lsns(i)
-                if(k.lt.0) k=nnlimi-k
-                if(k.gt.0) then
-c<<<
-                  if(hlp_tt) then
-                    hlp_wldpp=0.0_R8
-                    do ii=kks,kks+nfluids(ls)-1
-                      hlp_wldpp=hlp_wldpp+wldpp(k,ii,ic)
-                    end do
-                    print '(1x,a,2i5,1p,40e12.4)',
-     ,                 '%%# i,k,hlp,wldpp= ',
-     ,                  i,k,hlp,hlp_wldpp
-                  end if
-c>>>
-                  do j=1,nnatmi
-                    if (latmscl(j).eq.ls) then
-                      hlp=hlp+wldpa(k,j,ic)*sclstra(j,ic)
-c<<<
-                      if(hlp_tt) print *,
-     ,                 '%%% wldpa(',k,',',j,',',ic,') =',
-     ,                      wldpa(k,j,ic)*sclstra(j,ic)
-c>>>
-                    end if
-                  end do
-                  do j=1,nnmoli
-                    do ii=1,nnatmi
-                      if (latmscl(ii).eq.ls) then
-                        hlp=hlp+mlcmp(ii,j)*wldpm(k,j,ic)*sclstra(ii,ic)
-c<<<
-                        if(hlp_tt) print '(1x,a,2i3,1p,40e12.4)',
-     ,                       '%%# j,mlcmp,wldpm,sclstra= ',
-     ,                       j,mlcmp(ii,j),wldpm(k,j,ic),sclstra(ii,ic)
-                        if(hlp_tt .and. mlcmp(ii,j).gt.0) print *,
-     ,                       '%%% wldpm(',k,',',j,',',ic,') =',
-     ,                            wldpm(k,j,ic)*sclstra(ii,ic)
-c>>>
-                      end if
-                    end do
-                  end do
-                end if
-              end do
-c<<<
-              hlp_neu(ic,ls)=hlp*recyctmp
-              if(hlp_tt) print '(1x,a,2l3,2i3,1p,4e12.4)',
-     ,          '%%# hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyc=',
-     ,               hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyctmp
-c>>>
-              if(hlp_lw) hlpiw=hlpiw+hlp*recyctmp
-              if(hlp_lt) hlpit=hlpit+hlp*recyctmp
-            end if
-          end if
-        end do
-c<<<
-        if(debug_flags(90).gt.0) then
-          print '(a,1p,5e12.4)',
-     ,      '%%# Total fluxes: hlpit, hlpiw, hlpic, hlpid, hlpnp =',
-     ,                                hlpit, hlpiw, hlpic, hlpid, hlpnp
-          print *,'%%# Recycling sources. ls= ',ls
-          print '(a4,8x,20(5x,i3,4x))',' %%#',(i,i=1,kst_hlp)
-          do j=1,nnatmi
-            if (latmscl(j).eq.ls) then
-              print '(1x,a,i3,a,1p,20e12.5)','%%# sclrtio(',j,':)= ',
-     ,                                       (sclrtio(j,i),i=1,nstrat)
-              print '(1x,a,i3,a,1p,20e12.5)','%%# sclstra(',j,':)= ',
-     ,                                       (sclstra(j,i),i=1,nstrat)
-            end if
-          end do
-          print '(1x,a8,1p,20e12.4)','%%# plasma  ',
-     ,                                      (hlp_pls(i,ls),i=1,kst_hlp)
-          print '(1x,a8,1p,20e12.4)','%%# neutrals',
-     ,                                      (hlp_neu(i,ls),i=1,nstrat)
-        end if
-c>>>
-        flxid_tmp(ls)=hlpid
-        flxic_tmp(ls)=hlpic
-        flxit_tmp(ls)=hlpit
-        flxiw_tmp(ls)=hlpiw
-        flxnc_tmp(ls)=hlpnc
-        flxnt_tmp(ls)=hlpnt
-        flxnw_tmp(ls)=hlpnw
-        flxnp_tmp(ls)=hlpnp
+
+          elseif (crcstra(ic) .eq. 'S' .or. crcstra(ic) .eq. 'N') then ! Recycling on the B2 outer boundaries except targets
+
+            hlp = 0.0_R8
+
+            do i = msns(1,ic), msns(1,ic) + msns(2,ic) - 1
+ 
+               k = lsns(i)
+               if (k .lt. 0) k=nnlimi-k
+
+               if (k .gt. 0) then
+
+                 do j=1,nnatmi                   
+                   if (latmscl(j).eq.ls) then
+                      hlp = hlp + wldpa(k,j,ic) * sclstra(j,ic)  ! BE CAREFUL: hlp is a temporary variable
+                   end if
+                 end do
+
+                 do j=1,nnmoli
+                   do ii=1,nnatmi
+                     if (latmscl(ii).eq.ls) then
+                       hlp = hlp + 
+     &                     mlcmp(ii,j) * wldpm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp is a temporary variable
+                     end if
+                   enddo
+                 enddo
+
+                endif
+
+              enddo
+          
+              flxnw_rec(ls) = flxnw_rec(ls) + hlp * recyctmp
+
+            endif
+
+!       End of the loop over strata
+        enddo
+
+c**********************************
+! The neutral fluxes from Eirene are now computed
+c**********************************
+#endif
+
+c**** Total flux coming to the volume =
+c       Ion and neutral flux through the core +
+c       Ion and neutral flux through targets +
+c       Ion and neutral flux through side walls
+
+c     For fluid neutrals "side walls" means northern boundary plus PRF southerm boundary.
+c     Puffing (BCCONs=5,8,16,26) and leackage (BCCONs=10,15 etc) fluxes are counted automatically,
+c     as well as recycling and sputtering?
+
+c     For coupled runs "side walls" means the real vessel boundary.
+c     Then the pumping is counted automatically, but puffing (which is located
+c     somewhere in between the vessel walls and B2 boundary) should be added manually.
+c     Also, since no ion reaches the vessel boundary (except targets), the neutral source
+c     due to ion recycling on B2 northern boundary and B2 PRF southerm boundary should
+c     be added to a global balance as a wall recycling source
+
+! FIXME
+
+        flxps(ls) =  flxic(ls) + flxnc(ls) + flxit(ls) + flxnt(ls) +
+     &          flxiw(ls) + flxnw(ls) 
+#ifdef B25_EIRENE
+     &          + flxnp(ls) + flxnw_rec(ls)
+#endif
+
+!     End of the loop over isonuclear sequence (ls)
+      enddo
+
+
+c********* Debug output **************
+      if(debug_flags(90).gt.0) then
+c        print '(a,1p,10e12.4)','%%% hlpit_lp, hlpit_rp: ',
+c     ,                           (hlpit_lp(i),hlpit_rp(i),i=1,nspecies)
+        print '(a,1p,10e12.4)','%%# hlpiw_s : ',
+     ,                                        (flxiw(i),i=1,nspecies)
+      end if
+c********* Debug output **************
 c
-c*** Sum of all the fluxes...
-c
-        flxps_tmp(ls)=flxic_tmp(ls)+flxnc_tmp(ls)+flxit_tmp(ls)+
-     +          flxnt_tmp(ls)+flxiw_tmp(ls)+flxnw_tmp(ls)+flxnp_tmp(ls)
-        flxrl_tmp(ls)=flxps_tmp(ls)/blnna_tmp(ls)
-c
-c*** ...minus the time derivative
-c
-        flxbl_tmp(ls)=flxps_tmp(ls)-flxid_tmp(ls)
-        flxbr_tmp(ls)=flxbl_tmp(ls)/blnna_tmp(ls)
-c
-      end do
-c
-      if(ank_tracing.eq.0) return
+
+c*** Write the data in a separate file for plotting...
       if(filedata(ltrc)) then
 c
-c*** Write the data in a separate file for plotting...
 c
         if(nc.gt.np_tmp .or. nc.le.0) then
           write(*,*) 'b2blnc: unexpected error. nc =',nc
           filedata(ltrc)=.false.
         else
           write(lun,hlp_frm) tim,
-     .      (flxic_tmp(i),flxnc_tmp(i),flxit_tmp(i),
-     ,       flxnt_tmp(i),flxiw_tmp(i),flxnw_tmp(i),
-     ,       flxnp_tmp(i),flxps_tmp(i),blnna_tmp(i),
-     ,       blnnd_tmp(i),blnnc_tmp(i),blnnt_tmp(i),
-     ,       blnnw_tmp(i),blnns_tmp(i),blnne_tmp(i),
-     ,       blnnr_tmp(i),
-     ,       flxid_tmp(i),flxbl_tmp(i),flxbr_tmp(i),
-     ,       flxrl_tmp(i),i=1,nspecies)
+     .      (flxic(i), flxnc(i), flxit(i),                                 ! IYS 12.01.2018
+     ,       flxnt(i), flxnt_rec(i), flxnt_sput(i), flxnt_pump(i),         ! IYS 12.01.2018
+     ,       flxiw(i), flxnw(i), flxnw_rec(i), flxnw_sput(i),              ! IYS 12.01.2018
+     ,       flxnw_pump(i),                                                ! IYS 12.01.2018
+     ,       flxis(i), flxnp(i), flxps(i),
+     ,       flxid(i),
+     ,       i=1,nspecies)
         end if
+
       else
 c
 c*** ... or just print out the data
@@ -639,17 +826,16 @@ c
         write(*,'(30(3x,a8,1x))') (hlp_h(i),i=1,np_tmp)
         do i=1,nspecies
           write(*,'(1p,30e12.3)') 
-     ,     flxic_tmp(i),flxnc_tmp(i),flxit_tmp(i),
-     ,     flxnt_tmp(i),flxiw_tmp(i),flxnw_tmp(i),
-     ,     flxnp_tmp(i),flxps_tmp(i),blnna_tmp(i),
-     ,     blnnd_tmp(i),blnnc_tmp(i),blnnt_tmp(i),
-     ,     blnnw_tmp(i),blnns_tmp(i),blnne_tmp(i),
-     ,     blnnr_tmp(i),
-     ,     flxid_tmp(i),flxbl_tmp(i),flxbr_tmp(i),
-     ,     flxrl_tmp(i)
+     ,     flxic(i), flxnc(i), flxit(i),                                   ! IYS 12.01.2018
+     ,       flxnt(i), flxnt_rec(i), flxnt_sput(i), flxnt_pump(i),         ! IYS 12.01.2018
+     ,       flxiw(i), flxnw(i), flxnw_rec(i), flxnw_sput(i),              ! IYS 12.01.2018
+     ,       flxnw_pump(i),                                                ! IYS 12.01.2018
+     ,       flxis(i),flxnp(i),  flxps(i),
+     ,       flxid(i)
         end do
       end if
       return
+
 c======================================================================
 c
       entry b2blnci(nx,ny,ns,dtim,iline)
@@ -658,21 +844,27 @@ c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_bln)=.true.
 c----------------------------------------------------------------------
 c
-      allocate(hlpit_lp(nspecies),hlpit_rp(nspecies),hlpit_pl(nspecies))
-      allocate(hlp_neu(nstra,nspecies))
-      allocate(hlpic_s(nspecies),hlpiw_s(nspecies),hlpit_s(nspecies))
-      allocate(
-     , flxic_tmp(nspecies),flxnc_tmp(nspecies),flxit_tmp(nspecies),
-     , flxnt_tmp(nspecies),flxiw_tmp(nspecies),flxnw_tmp(nspecies),
-     , flxnp_tmp(nspecies),flxps_tmp(nspecies),blnna_tmp(nspecies),
-     , blnnd_tmp(nspecies),blnnc_tmp(nspecies),blnnt_tmp(nspecies),
-     , blnnw_tmp(nspecies),blnns_tmp(nspecies),blnne_tmp(nspecies),
-     , blnnr_tmp(nspecies),
-c*** from 960727 on
-     , flxid_tmp(nspecies),flxbl_tmp(nspecies),flxbr_tmp(nspecies),
+      if (.not. allocated(hlpit_lp))
+     &   allocate(hlpit_lp(nspecies), hlpit_rp(nspecies), 
+     &            hlpit_pl(nspecies))
+
+      if (.not. allocated(flxic)) 
+     &      allocate(
+     &   flxic(nspecies), flxnc(nspecies), flxit(nspecies),
+     &   flxnt(nspecies), flxiw(nspecies), flxnw(nspecies),
+     &   flxnp(nspecies), flxps(nspecies), 
+     & flxnw_rec(nspecies), flxnw_pump(nspecies), flxnw_sput(nspecies),                                      ! IYS 12.01.2018
+     & flxnt_rec(nspecies), flxnt_pump(nspecies), flxnt_sput(nspecies),                                       ! IYS 12.01.2018
+c*** from 960727 on 
+     &   flxid(nspecies), !flxbl(nspecies), flxbr(nspecies),
 c*** from 960808 on
-     , flxrl_tmp(nspecies))
+!     &   flxrl(nspecies),
+c*** from 20180604 on
+     &   flxis(nspecies), Nions(nspecies))
+
+
       call ipgetr ('b2mndr_stim', stim)
+
       if(.not.filedata(ntrc_bln)) return
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
@@ -736,18 +928,26 @@ c*** It was a major change of the file format - impossible to continue
    50   read(lun,'(a1)',end=55) hlp_c
         go to 50
    55   backspace lun
-      else
-        nc=np_tmp
-        write(lun,700) lv,nspecies,np_tmp,label
-        write(hlp_frm,'(9h(5h#time,,i3,16h(1h'//tab//',a8,1h_,a2)))')
-     ,                                                  np_tmp*nspecies
+
+      else ! file 'blnc.trc' does not exist
+
+        nc = np_tmp
+
+        write(lun,700) lv, nspecies, np_tmp, label
+        write(hlp_frm,
+     &      '(18h(1h#,7x,4htime,4x,i3,17h(1h'//tab//',a16,1h_,a2)))')
+     &                                                  np_tmp*nspecies
+
 c       print *,'b2blnc: nspecies= ',nspecies                   !###
 c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
+
         write(lun,hlp_frm) ((hlp_h(i),species_list(j),i=1,np_tmp),
-     ,                                                    j=1,nspecies)
+     &                                                    j=1,nspecies)
+
       end if
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')
-     ,                                                  np_tmp*nspecies
+
+      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e16.7)))')
+     &                                                  np_tmp*nspecies
       return
 c======================================================================
    90 write(*,*) 'b2blnc: cannot open file ',trim(f)
@@ -799,12 +999,31 @@ c
       return
 c======================================================================
 c
-      entry b2blncf(nx,ny,ns,dtim,iline)
+      entry b2blncf(nx,ny,ns,dtim)
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
 c
+      if (allocated(flxic)) 
+     &  deallocate(
+     &    flxic, flxnc, flxit,
+     &    flxnt, flxiw, flxnw,
+     &    flxnp, flxps, !blnna_tmp,
+     &    flxnw_rec, flxnw_pump, flxnw_sput,                                       ! IYS 12.01.2018
+     &    flxnt_rec, flxnt_pump, flxnt_sput,                                       ! IYS 12.01.2018
+c*** from 960727 on 
+     &    flxid, !flxbl, flxbr,
+c*** from 960808 on
+!     &    flxrl,
+c*** from 20180604 on
+     &    flxis, Nions)
+
+      if (allocated(hlpit_pl)) 
+     &  deallocate(hlpit_pl, hlpit_lp, hlpit_rp)
+
+
       return
+
 c======================================================================
   700 format('#   ',3i8/'#  ',a)
   710 format(a1,3x,3i8/3x,a)
