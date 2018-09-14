@@ -1,27 +1,21 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mwqt (nput, nx, ny, ns, itim, itcnt, BoRiS, vol,
-     &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch,
-     &  aresco, aresmo, aresmt, areshe, areshi, arespo,
-     &  acorpa, acorua, acorut, acorte, acorti, acorpo)
+      subroutine b2mwqt (nput, nCv, ns, itim, itcnt, BoRiS, geo, pl, dv,
+     &  diag)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_plasma
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nput, nx, ny, ns, itim, itcnt
-      real (kind=R8) :: BoRiS,
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny)
-      real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
-      real (kind=R8) ::
-     *  aresco(0:ns-1), aresmo(0:ns-1), aresmt, areshe, areshi,
-     &  arespo, acorpa(0:ns-1), acorua(0:ns-1), acorut, acorte,
-     &  acorti, acorpo
+      integer nput, nCv, ns, itim, itcnt
+      real (kind=R8) :: BoRiS
+      type (geometry), intent (in) :: geo
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (in) :: dv
+      type (B2Diagnostic), intent (in) :: diag
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -123,7 +117,7 @@
       integer ncall, nfldmx, style, nfld
       parameter (nfldmx=1000)
       save ncall, style
-      integer k, ix, iy, is, iix, iiy, il, ix0(-1:5), iy0(-1:5)
+      integer k, icv, is, iicv, il, ix0(-1:5), iy0(-1:5)
       real (kind=R8) ::
      *   z(0:nfldmx-1), t0, t1, tv
 *   ..procedures
@@ -164,13 +158,13 @@
       call xertst (0.le.itim.and.0.le.itcnt,
      &  'faulty argument itim, itcnt')
 *   ..test residuals
-      call xertst (0.0_R8.le.smin(ns,aresco,1).and.
-     &  0.0_R8.le.areshe.and.0.0_R8.le.areshi.and.0.0_R8.le.arespo,
-     &  'faulty argument aresco/ee/ei/po')
+      call xertst (0.0_R8.le.smin(ns,diag%aresco,1).and.
+     &  0.0_R8.le.diag%areshe.and.0.0_R8.le.diag%areshi.and.
+     &  0.0_R8.le.diag%arespo,'faulty argument aresco/ee/ei/po')
 *   ..test corrections
-      call xertst (0.0_R8.le.smin(ns,acorpa,1).and.
-     &  0.0_R8.le.acorte.and.0.0_R8.le.acorti.and.0.0_R8.le.acorpo,
-     &  'faulty argument acorpa/te/ti/po')
+      call xertst (0.0_R8.le.smin(ns,diag%acorpa,1).and.
+     &  0.0_R8.le.diag%acorte.and.0.0_R8.le.diag%acorti.and.
+     &  0.0_R8.le.diag%acorpo,'faulty argument acorpa/te/ti/po')
 *   ..set and test nfld
       nfld = 0
       if (1.le.style) then
@@ -187,6 +181,7 @@
       endif
       call xertst (nfld.le.nfldmx, 'faulty parameter nfldmx')
 *   ..define region boundaries
+#ifdef WG_TODO
       ix0(-1) = -1
       do iix = 0, 4
        ix0(iix) = (iix*nx)/4
@@ -197,7 +192,7 @@
        iy0(iiy) = (iiy*ny)/4
       enddo
       iy0(5) = iy0(4)+1
-
+#endif
 * ..get data for output
       k = 0
       if (1.le.style) then
@@ -208,41 +203,43 @@
        k = k+1
 *    ..norms of residuals
        do is = 0, ns-1
-        z(k) = aresco(is)
+        z(k) = diag%aresco(is)
         k = k+1
        enddo
        do is = 0, ns-1
-        z(k) = aresmo(is)
+        z(k) = diag%aresmo(is)
         k = k+1
        enddo
-       z(k) = aresmt
+       z(k) = diag%aresmt
        k = k+1
-       z(k) = areshe
+       z(k) = diag%areshe
        k = k+1
-       z(k) = areshi
+       z(k) = diag%areshi
        k = k+1
-       z(k) = arespo
+       z(k) = diag%arespo
        k = k+1
 *    ..norms of corrections
        do is = 0, ns-1
-        z(k) = acorpa(is)
+        z(k) = diag%acorpa(is)
         k = k+1
        enddo
        do is = 0, ns-1
-        z(k) = acorua(is)
+        z(k) = diag%acorua(is)
         k = k+1
        enddo
-       z(k) = acorut
+       z(k) = diag%acorut
        k = k+1
-       z(k) = acorte/ev
+       z(k) = diag%acorte/ev
        k = k+1
-       z(k) = acorti/ev
+       z(k) = diag%acorti/ev
        k = k+1
-       z(k) = acorpo
+       z(k) = diag%acorpo
        k = k+1
       endif
       if (2.le.style) then
 *    ..total content on regions
+       call xerrab ('WG - to be done!')
+#ifdef WG_TODO
        do is = 0, ns-1
         do iiy = -1, 4
          do iix = -1, 4
@@ -299,9 +296,12 @@
          k = k+1
         enddo
        enddo
+#endif
       endif
       if (3.le.style) then
 *    ..integrated fluxes
+       call xerrab ('WG - to be done!')
+#ifdef WG_TODO
        do is = 0, ns-1
         do iiy = 0, 3
          do iix = 0, 4
@@ -376,9 +376,12 @@
          k = k+1
         enddo
        enddo
+#endif
       endif
       if (4.le.style) then
 *    ..min and max on regions
+       call xerrab ('WG - to be done!')
+#ifdef WG_TODO
        do is = 0, ns-1
         do iiy = -1, 4
          do iix = -1, 4
@@ -445,6 +448,7 @@
          k = k+1
         enddo
        enddo
+#endif
       endif
 *   ..test k
       call xertst (k.eq.nfld, 'faulty parameter nfld')

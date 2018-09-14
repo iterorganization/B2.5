@@ -448,16 +448,14 @@ ctmp.dpc
      &      (2.le.moitlv.or.istg(1).eq.0).and.
      &      (3.le.moitlv.or.istg(2).eq.0)
 *      ..maybe write quick trace
-#ifdef WG_TODO
            if (domoqt) then
             if (mod(ncall,ntim_step_out) .eq. 0) then                    !srv 31.01.07
-             call b2mwqt (nout(4), nx, ny, ns, itim, itcnt, BoRiS, vol,
-     &        na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch,
-     &        aresco, aresmo, aresmt, areshe, areshi, arespo,
-     &        acorpa, acorua, acorut, acorte, acorti, acorpo)
+             call b2mwqt (nout(4), nCv, ns, itim, itcnt, BoRiS, 
+     &        geo, st%pl, st%dv, st%diag)
              flush(nout(4))
             endif
            endif
+#ifdef WG_TODO
 *      ..maybe detailed monitor
            if (domoit) then
              call b2mwit (nout(5), nx, ny, ns, itim, itcnt, resco,
