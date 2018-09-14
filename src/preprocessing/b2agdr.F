@@ -98,6 +98,7 @@
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle
+      integer iFace, offset
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
@@ -335,6 +336,68 @@
      1 leftix1,rightix1,rightiy1,topix1,topiy1,bottomiy1,
      2 region1,nnreg,resignore1,crx1,cry1,periodic_bc)
       write(*,*) 'b2agdr0: bb1(nx1,ny1,0) ',bb1(nx1,ny1,0)
+*   ..compute cflags array if not provided by mesh file
+      if(maxval(cflags1).eq.0) then
+        cflags1(1:nx1-2,1:ny1-2,CELLFLAG_TYPE) = GRID_INTERNAL
+        cflags1(0,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags1(nx1-1,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags1(0:nx1-1,0,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags1(0:nx1-1,ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags1(-1,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
+        cflags1(nx1,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
+        cflags1(-1:nx1,-1,CELLFLAG_TYPE) = GRID_GUARD
+        cflags1(-1:nx1,ny1,CELLFLAG_TYPE) = GRID_GUARD
+        if (nncut.ge.2) then
+          iy = ny1/2
+          do ix = 1, nx1-2
+            if (rightix1(ix,iy).eq.nx1+1) then
+              cflags1(ix-1,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+              cflags1(ix,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
+            end if
+            if (leftix1(ix,iy).eq.-2) then
+              cflags1(ix,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
+              cflags1(ix+1,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+            end if
+          end do
+        end if
+        do iy=-1,ny1
+          do ix=-1,nx1
+            if (cflags1(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY) cycle
+            if (cflags1(leftix1(ix,iy),leftiy1(ix,iy),
+     .                  CELLFLAG_TYPE) == GRID_GUARD) then
+              iFace = CELLFLAG_LEFTFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
+              cflags1(leftix1(ix,iy),leftiy1(ix,iy),
+     .                CELLFLAG_RIGHTFACE) = cflags1(ix, iy, iFace)
+            end if
+            if (cflags1(rightix1(ix,iy),rightiy1(ix,iy),
+     .                  CELLFLAG_TYPE) == GRID_GUARD) then
+              iFace = CELLFLAG_RIGHTFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
+              cflags1(rightix1(ix,iy),rightiy1(ix,iy),
+     .                CELLFLAG_LEFTFACE) = cflags1(ix, iy, iFace)
+            end if
+            if (cflags1(topix1(ix,iy),topiy1(ix,iy),
+     .                  CELLFLAG_TYPE) == GRID_GUARD) then
+              iFace = CELLFLAG_TOPFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
+              cflags1(topix1(ix,iy),topiy1(ix,iy),
+     .                CELLFLAG_BOTTOMFACE) = cflags1(ix, iy, iFace)
+            end if
+            if (cflags1(bottomix1(ix,iy),bottomiy1(ix,iy),
+     .                  CELLFLAG_TYPE) == GRID_GUARD) then
+              iFace = CELLFLAG_BOTTOMFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags1(ix, iy, iFace) = offset - region(ix, iy, 0)
+              cflags1(bottomix1(ix,iy),bottomiy1(ix,iy),
+     .                CELLFLAG_TOPFACE) = cflags1(ix, iy, iFace)
+            end if
+          end do
+        end do
+      end if
 *   ..echo lblgm
       write (nout(0),'(/2x,a)') 'label for geometry'
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
@@ -409,9 +472,9 @@
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
-     1 leftix1,leftiy1,rightix1,rightiy1,
-     2 topix1,topiy1,bottomix1,bottomiy1,
-     3 leftcut1,rightcut1,bottomcut1,topcut1,cflags1)
+     1 leftix1, leftiy1, rightix1, rightiy1,
+     2 topix1, topiy1, bottomix1, bottomiy1,
+     3 leftcut1, rightcut1, bottomcut1, topcut1, cflags1)
 *   ..correct pbsx on the proper mesh
       if(redef_pbs.ne.0) then
         call b2agbs (nx, ny, nncutmax, leftix, rightix, region,
@@ -662,6 +725,11 @@ cdpc-debug
       call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
      &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
      &  cell_width, cell_height)
+*   ..create B2GridMap data structure
+      call b2CreateMap(nx, ny, crx, cry, cflags,
+     &     leftix, leftiy, rightix, rightiy,
+     &     topix, topiy, bottomix, bottomiy, .true., gmap)
+      mapInitialized = .true.
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')
       write(*,*) 'b2agdr3: bb(nx,ny,0) ',bb(nx,ny,0)

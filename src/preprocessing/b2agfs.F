@@ -210,6 +210,9 @@
         bb1(:,:,2)=bb1(:,:,2)*Bt_rescale
       endif
       bb1(:,:,3)=sqrt(bb1(:,:,0)**2+bb1(:,:,1)**2+bb1(:,:,2)**2)
+!!! FIXME: For now, until the cflag array is provided by the mesh generator
+!!!        as it will be for extended grids
+      cflag=0
 
  9999 continue
 
@@ -463,7 +466,6 @@ cxpb tranverse physics
           enddo
         endif
       endif
-
 
       write(*,*) 'istyle',istyle,'nncut',nncut
       if(nncut.eq.0) write(*,'(a)') 'No cuts found'
