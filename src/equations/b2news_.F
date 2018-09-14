@@ -89,6 +89,7 @@
       integer, save :: ue_style = 2                                      !srv 17.11.16
       real (kind=R8) ::
      *   potok
+      real (kind=R8), save :: cutlo = 1.0e-60_R8
       integer ncall, is, ier0, i, iCv, ireg
       character charns*3                                                 !srv 30.06.03
       real (kind=R8), save :: BoRiS = 0.0_R8
@@ -108,7 +109,7 @@
      3  ue(nCv), lnlam(nCv), zeff(nCv),          !srv 05.07.17
      &  pr(nCv), ro(nCv), cssb(nFc,0:1),         !iyv 06.02.14
      &  nep(nCv), wrk0(nCv), wrk1(nCv),
-     &  zero(nCv), zerof(nFc,0:1)
+     &  zero(nCv), zerof(nFc,0:1), wrkf(nFc)
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical inverted_ua, new_matrix
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                   !srv 09.07.99
@@ -431,29 +432,16 @@ c   extra call at this place within internal iteration)
      > call b2xpve (nCv, nFc, ns, geo, mpg, qe, rt%rza, rt%rz2, 
      &   co%alfx_c, co%sigx_c, dv%fch_pi_c, pl%po, dv%ne, 
      &   pl%te, pl%na, pl%ua, st_ext, dv%ue)
-#ifdef WG_TODO
       if (ue_style.ne.2 .or. iout.ne.0) then
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-              wrk0(ix,iy)=-(fch_p(ix,iy,0,0)/pbs(ix,iy,0)+
-     &          fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
-     &          pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
-            elseif(leftix(ix,iy).eq.-2) then
-              wrk0(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
-     &         pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
-            elseif(rightix(ix,iy).eq.nx+1) then
-              wrk0(ix,iy)=-fch_p(ix,iy,0,0)/pbs(ix,iy,0)/qe
-            endif
-!           wrk0(ix,iy)=wrk0(ix,iy)*prl_cur                              !srv 03.04.15
-          enddo
-        enddo
+        wrkf = -dv%fch_p(:,0)/(qe*(geo%fcPbs + cutlo))
+        call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,wrk0)
         do is=0,ns-1
-          wrk0(:,:)=wrk0(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
+          wrk0 = wrk0 + rt%rza(:,is)*pl%ua(:,is)*pl%na(:,is)
         enddo
-        wrk0(:,:)=wrk0(:,:)+ue_ext(:,:)*ne_ext(:,:)
-        wrk0(:,:)=wrk0(:,:)/ne(:,:)                                      !srv 05.03.11
+        wrk0 = wrk0 + st_ext%ue*st_ext%ne
+        wrk0 = wrk0/dv%ne                                                !srv 05.03.11
       endif
+#ifdef WG_TODO
       if(iout.ne.0) then                                                 !srv 05.07.17
        call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
        call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
@@ -463,8 +451,8 @@ c   extra call at this place within internal iteration)
        call my_out(70,nx,ny,ue,'b2news__ve')
        call my_out(70,nx,ny,wrk0,'b2news__ue')
       endif                                                              !srv 05.07.17
-      if (ue_style.ne.2) ue=wrk0
 #endif
+      if (ue_style.ne.2) dv%ue=wrk0
 
 csw 11oct2012 added check on coriolis force (taken from b2news())
       ier0=0
@@ -745,28 +733,14 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  floe, cone, floi, coni)
 #endif
       if(ue_style.ne.2) then
-#ifdef WG_TODO
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
-       do iy=-1,ny
-         do ix=-1,nx
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-             ue(ix,iy)=-(fch_p(ix,iy,0,0)/pbs(ix,iy,0)+
-     &        fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
-     &          pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
-           elseif(leftix(ix,iy).eq.-2) then
-             ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
-     &         pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
-           elseif(rightix(ix,iy).eq.nx+1) then
-             ue(ix,iy)=-fch_p(ix,iy,0,0)/pbs(ix,iy,0)/qe
-           endif
-	 enddo
-       enddo
+       wrkf = -dv%fch_p(:,0)/(qe*(geo%fcPbs + cutlo))
+       call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,dv%ue)
        do is=0,ns-1
-        ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
+         dv%ue = dv%ue + rt%rza(:,is)*pl%ua(:,is)*pl%na(:,is)
        enddo
-       ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
-       ue(:,:)=ue(:,:)/ne(:,:)                                           !srv 05.03.11 }
-#endif
+       dv%ue = dv%ue + st_ext%ue*st_ext%ne
+       dv%ue = dv%ue/dv%ne                                                !srv 05.03.11
       else
        call b2xpve (nCv, nFc, ns, geo, mpg, qe, rt%rza, rt%rz2, 
      &   co%alfx_c, co%sigx_c, dv%fch_pi_c, pl%po, dv%ne, 

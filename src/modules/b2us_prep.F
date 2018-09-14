@@ -2367,6 +2367,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
           fna_nodrift(ix,iy,0,0:1,0:ns-1) =
      .           st % dv % fna_nodrift(ifc,0:1,0:ns-1) 
 
+          fmo(ix,iy,0,0:1,0:ns-1)     = st % dv % fmo(ifc,0:1,0:ns-1)
+
           fhe(ix,iy,0,0:1)     = st % dv % fhe(ifc,0:1)
           fhe_mdf(ix,iy,0,0:1) = st % dv % fhe_mdf(ifc,0:1)
           fhet(ix,iy,0,0:1)    = st % dv % fhet(ifc,0:1)
@@ -2497,6 +2499,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
           fna_nodrift(ix,iy,1,0:1,0:ns-1) =
      .            st % dv % fna_nodrift(ifc,0:1,0:ns-1)
         
+          fmo(ix,iy,1,0:1,0:ns-1) = st % dv % fmo(ifc,0:1,0:ns-1)
+
           fhe(ix,iy,1,0:1)     = st % dv % fhe(ifc,0:1)
           fhe_mdf(ix,iy,1,0:1) = st % dv % fhe_mdf(ifc,0:1)
           fhePSch(ix,iy,1,0:1) = st % dv % fhePSch(ifc,0:1)
