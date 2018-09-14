@@ -39,6 +39,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, k
       integer, save :: style = 2                                     !srv 13.01.17
+      integer, save :: pressure_restriction = 1
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
       character chns*3 !, chk*1                                       !srv 17.06.02
@@ -61,6 +62,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2sigp_iout', iout)                             !srv 17.06.02
+       call ipgeti ('b2sigp_pressure_restriction', pressure_restriction)
        call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
        call ipgeti ('b2sigp_style', style)                           !srv 02.07.08
        call ipgeti ('b2npmo_iout', iout_b2npmo)                      !srv 11.09.09
@@ -372,24 +374,26 @@ cdjm compute b2sigp_pstat0to3 on left cell face
       endif                                                           !srv 02.07.08 }
 
 cxpb apply restriction to pressure gradient for minority ions
-      do iy = -1, ny                                                  !lk 23.06.17{  
-       do ix = -1, nx
-        if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1 .and.
-     &     bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1 .and.
-     &     nb(ix,iy)/ne(ix,iy) .lt. 0.1e0_R8) then
-          smbgp(ix,iy,0) = smbgp(ix,iy,0)*min(1.0e0_R8, 
-     &    (2.0e0_R8*hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))
-     &                       +hx(rightix(ix,iy),rightiy(ix,iy)))*
-     &     nb(ix,iy)*ti(ix,iy)/
-     &    ((hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &     nb(rightix(ix,iy),rightiy(ix,iy))
-     &    *ti(rightix(ix,iy),rightiy(ix,iy))+
-     &    (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*
-     &     nb(leftix(ix,iy),leftiy(ix,iy))
-     &    *ti(leftix(ix,iy),leftiy(ix,iy))))     
-        endif   
-       enddo
-      enddo                                                           !lk 23.06.17}
+      if (pressure_restriction .ne. 0) then
+       do iy = -1, ny                                                  !lk 23.06.17{  
+        do ix = -1, nx
+         if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1 .and.
+     &      bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1 .and.
+     &      nb(ix,iy)/ne(ix,iy) .lt. 0.1e0_R8) then
+           smbgp(ix,iy,0) = smbgp(ix,iy,0)*min(1.0e0_R8, 
+     &     (2.0e0_R8*hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))
+     &                        +hx(rightix(ix,iy),rightiy(ix,iy)))*
+     &      nb(ix,iy)*ti(ix,iy)/
+     &     ((hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &      nb(rightix(ix,iy),rightiy(ix,iy))
+     &     *ti(rightix(ix,iy),rightiy(ix,iy))+
+     &     (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*
+     &      nb(leftix(ix,iy),leftiy(ix,iy))
+     &     *ti(leftix(ix,iy),leftiy(ix,iy))))     
+         endif   
+        enddo
+       enddo                                                           !lk 23.06.17}
+      endif                                                         !lk 23.06.17}
 
       if (iout.ne.0 .or. iout_b2wdat.eq.4) then                       !srv 17.06.02 {
        write (chns,'(i3.3)') isb
@@ -397,6 +401,7 @@ cxpb apply restriction to pressure gradient for minority ions
 !        write (chk,'(i1)') k
 !        call my_out(70,nx,ny,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
 !      enddo
+       call my_out(70,nx,ny,smbgp(-1,-1,0),'b2sigp_smogp'//chns)
        if(style.eq.0 .or. style.eq.1 ) then
           call my_out(70,nx,ny,wrk5,'b2sigp_smogpi'//chns)
           call my_out(70,nx,ny,wrk6,'b2sigp_smogpe'//chns)
