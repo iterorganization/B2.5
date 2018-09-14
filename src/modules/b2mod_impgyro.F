@@ -44,13 +44,12 @@
       use b2mod_elements
       implicit none
       integer nxd,nyd,nsd,ismain
-      integer is,iss,is1,ix,iy,len
+      integer is,iss,ix,iy
       integer, save::ikmn,ikmx
       real(kind=R8), allocatable::pdum (:), pot(:)
       character*256 filename
       logical open_file
-      integer lnblnk
-      external xertst, xerrab, open_file, lnblnk
+      external xertst, xerrab, open_file
       logical brestarted
       integer fd
  

@@ -43,7 +43,6 @@
       real (kind=R8) :: aa7p2, aa7m2                               !srv 27.01.00
       save ncall                                                   !srv 27.01.00
 *   ..procedures
-      intrinsic min, abs
       external subini, subend, xertst, sfill
       external b2xvsg, b2xvff, b2ux7p                              !srv 11.01.00
 *   ..initialisation

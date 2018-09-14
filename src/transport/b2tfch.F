@@ -80,17 +80,16 @@
       real (kind=R8), save :: vis_q = 1.0e0_R8                          !srv 11.07.99
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny)                         !lk 31.01.08 }
       real (kind=R8) ::
-     *   ehx, ehy, flo, dif, floe0, flomx, cone0, t0,
-     &   tex, tex0, ehx_po, ehy_po,
-     1   flo_vedia, prefactor, floe0_nd, cone0_nd, t0_nd, tex0_nd
+     *   ehx, ehy, flo, dif, flomx,
+     &   tex, ehx_po, ehy_po,
+     1   floe0_nd, cone0_nd, t0_nd, tex0_nd
       real (kind=R8) ::                                                 !xpb
      * fch_ion_neutral, fch_anomalous, vis_par, vis_per, sig_stoch,     !xpb
      * ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny), zeff(-1:nx,-1:ny)          !srv 13.01.17
-      character*1 charnc
       save ncall, fch_ion_neutral, fch_anomalous, vis_par, pot_eq,
      *   no_current, conduction_only, no_hybr, vis_per, sig_stoch
 *   ..procedures
-      intrinsic max, abs, sqrt, log, mod                        	!xpb
+      intrinsic max, abs, sqrt                                   	!xpb
       real (kind=R8) ::
      *   hybr
       external subini, subend, xertst, ipgetr, ipgeti
@@ -255,29 +254,15 @@ c Drift terms
 cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
             if (conduction_only.eq.1) then
               floe0_nd = 0.0_R8
-              flo_vedia=0
             else
               floe0_nd = (1.5_R8+BoRiS)*fne_32(ix,iy,0)+
      1         2.5_R8*fne_52(ix,iy,0)+
      &         chve(ix,iy,0)*
      1         (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
-              prefactor=
-     1         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))    	 !xpb
-     &         /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))     	 !xpb
-     &         *(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
-              if (drift_style.eq.0) then
-                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,0) + 
-     1            vedia(leftix(ix,iy),leftiy(ix,iy),1))
-              else
-                flo_vedia=prefactor*vedia(ix,iy,0)
-              endif
             endif
-            floe0=floe0_nd+2.5_R8*flo_vedia
             if (no_hybr.eq.0) then
-              cone0 = hybr(floe0,chce(ix,iy,0))-abs(floe0/2.0_R8)
               cone0_nd = hybr(floe0_nd,chce(ix,iy,0))-abs(floe0_nd/2)
             else
-              cone0 = chce(ix,iy,0)
               cone0_nd = chce(ix,iy,0)
             endif
 cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no longer required
@@ -285,15 +270,11 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &        ne(ix,iy))/2.0_R8
             if (flomx.gt.0.0_R8 .and. 
      &        lim_flux.eq.1 .and. conductive_limit.eq.0) then
-              t0 = cone0*abs(tex)/(flomx*max(
-     &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
               t0_nd = cone0_nd*abs(tex)/(flomx*max(
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
             else
-              t0 = 0.0_R8
               t0_nd = 0.0_R8
             endif
-            tex0 = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)
             fch(ix,iy,0) = fch_p(ix,iy,0)                                !srv 13.01.17
      &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0)          !xpb

@@ -146,7 +146,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       endif
 
       return
- 999  call xerrab ('Error while reading TRANSPORT namelist!')
+  999 call xerrab ('Error while reading TRANSPORT namelist!')
       end subroutine read_b2mod_transport_namelist
 
       subroutine write_b2mod_transport_namelist

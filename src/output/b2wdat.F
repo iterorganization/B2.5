@@ -45,13 +45,13 @@
 *   ..common blocks
 *   ..local variables
       integer ncall, iout, is, ix, iy, ib, iw, iout_iout_ASTRA     !srv 05.10.01 03.04.13 19.04.13
-      integer n2, jsep, jxi, jxa, ndat, k, mintopcut, ixx,         !srv 12.07.10
+      integer jsep, jxi, jxa, ndat, k, mintopcut, ixx,             !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
       real (kind=R8) ::                                            !srv
-     *  Total_current(-1:ny), B0out, Total_flux(-1:ny),            !srv 31.08.00 19.02.02
+     *  Total_current(-1:ny), Total_flux(-1:ny),                   !srv 31.08.00 19.02.02
      *  Total_abscurrent(-1:ny), Total_absflux(-1:ny),
      *  Total_energy_flux_i(-1:ny), Total_energy_flux_e(-1:ny),    !srv 23.11.00
      *  wrk2(-1:nx,-1:ny), wrkt(-1:ny,-1:nx),                      !srv 23.11.00
@@ -81,7 +81,6 @@
       character*32 hlp_frm                                         !srv 03.04.13
       character*26 boundary_location(nbcd)
       character(7), save :: folder                                 !srv 26.09.17
-      logical ex                                                   !srv 26.09.17
 #ifdef B25_EIRENE
       integer js
       real (kind=R8), save :: hlp_neu_peak
@@ -126,12 +125,9 @@
        close(70)
        go to 20
 *    ..folder does not exist: future output will be done in current folder
- 10    folder=''
- 20    continue
+   10   folder=''
+   20   continue
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-
 * ..initialisation
       if (use_astra.ne.0) then
         iout_iout_ASTRA = 1
@@ -147,7 +143,6 @@
        call get_jsep(nx,ny,jxi,jxa,jsep)
        Total_current=0.0_R8
        Total_abscurrent=0.0_R8
-       B0out=0.0_R8
        Total_flux=0.0_R8
        Total_absflux=0.0_R8
        wrk2=0.0_R8
@@ -494,8 +489,9 @@
       do is = 0,ns-1
         write (70,"(a,1x,a2,i1)") 'Total_particle_flux ',
      &     adjustr(is_codes(is)),nint(zamin(is))
-        write(70,"(' iy ','   sfuadia  ','   sfvadia  ','   sfvaecrb ',
-     &     '    sfna   ','    sfna_mdf ')")
+        write(70,'(6a)')
+     &     ' iy ','   sfuadia  ','   sfvadia  ','   sfvaecrb ',
+     &     '    sfna   ','    sfna_mdf '
         do iy = ny,-1, -1
           sfuadia(iy,is)  =0.0_R8
           sfvadia(iy,is)  =0.0_R8
@@ -750,10 +746,12 @@
       end do !}
 #ifdef B25_EIRENE
       js=ltns(nncut*2)+nlim   ! iyv 15.05.2018
-      do iy=0,ny-1 !{
-      wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
+      if (ltns(nncut*2).gt.0) then
+        do iy=0,ny-1 !{
+          wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
      &                              hlp_neu_peak/hlp_s
-      enddo
+        enddo
+      endif
 #endif
 
 ! for double_null geometry     !iyv 04.02.11
@@ -889,10 +887,10 @@
 
       else
 
-        write (70,"(5x,'iy',5x,'qe_out',5x,'qi_out',4x,'qei_out',
-     &                    4x,'q_outtg',
-     &                    5x,'qe_inn',5x,'qi_inn',4x,'qei_inn',
-     &                    4x,'q_inntg')")
+        write (70,
+     &   "(5x,a2,5x,a6,5x,a6,4x,a7,4x,a7,5x,a6,5x,a6,4x,a7,4x,a7)")
+     &   'iy','qe_out','qi_out','qei_out','q_outtg','qe_inn',
+     &   'qi_inn','qei_inn','q_inntg'
         do iy = ny, -1, -1
           write(70,"(5x,i2,8(1x,es10.3))") iy,
      &             wrk0(0,iy), wrk0(4,iy), wrk0(0,iy) + wrk0(4,iy),
@@ -1086,24 +1084,29 @@
 
        open(70,file=trim(folder)//'separatrix_location_on_plate.dat')   !srv 26.09.17
        ix = -1
-       write(70,"(1x,' Separatrix Location on Inner Lower =',
-     &             12es14.6)") cry(ix+ishift,mintopcut,0)
+       write(70,"(1x,a,12es14.6)")
+     &  ' Separatrix Location on Inner Lower =',
+     &    cry(ix+ishift,mintopcut,0)
        ix = nx
-       write(70,"(1x,' Separatrix Location on Outer Lower =',
-     &             12es14.6)") crx(ix-ishift,mintopcut,0)
+       write(70,"(1x,a,12es14.6)")
+     &  ' Separatrix Location on Outer Lower =',
+     &    crx(ix-ishift,mintopcut,0)
        do ix = -1,nx
          if(leftix(ix,mintopcut).eq.-2 .and. ix.gt.-1) then
-           write(70,"(1x,' Separatrix Location on Outer Upper =',
-     &             12es14.6)") crx(ix+ishift,mintopcut,0)
+           write(70,"(1x,a,12es14.6)")
+     &      ' Separatrix Location on Outer Upper =',
+     &        crx(ix+ishift,mintopcut,0)
          endif
          if(rightix(ix,mintopcut).eq.nx+1 .and. ix.lt.nx) then
-           write(70,"(1x,' Separatrix Location on Inner Upper =',
-     &             12es14.6)") cry(ix-ishift,mintopcut,0)
+           write(70,"(1x,a,12es14.6)")
+     &      ' Separatrix Location on Inner Upper =',
+     &        cry(ix-ishift,mintopcut,0)
          endif
        enddo
        ix = nmdpl
-       write(70,"(1x,' Separatrix Location on Outer Mdpln =',
-     &             12es14.6)") crx(ix-ishift,mintopcut,0)
+       write(70,"(1x,a,12es14.6)")
+     &  ' Separatrix Location on Outer Mdpln =',
+     &    crx(ix-ishift,mintopcut,0)
        close(70)
 
 *   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at inner

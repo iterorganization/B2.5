@@ -253,18 +253,41 @@ c        write(lun,'(1p,e16.3)') a
 c        close(lun)
 c      end if
       write(*,*) '*** Target loading with neutrals ***'
-      write(*,700) 'Total power released',
+      if (ltns(2).eq.0) then
+       write(*,700) 'Total power released',
+     ,              wldnek(nlim+ltns(1),0)+wldnep(nlim+ltns(1),0)
+       write(*,700) 'incl. potential energy',wldnep(nlim+ltns(1),0)
+       do i=1,natmi
+        write(*,710) text_an(i),' atom flux',wldna(nlim+ltns(1),i,0)
+        write(*,710) text_an(i),' average energy',
+     ,                                       ewlda(nlim+ltns(1),i,0)
+       end do
+       if(ic .gt. 0) then
+        wwyn=wldra(nlim+ltns(1),ic,0)+wldpa(nlim+ltns(1),ic,0)
+     .      -wldna(nlim+ltns(1),ic,0)
+        do i=1,nmoli
+          if (mlcmp(ic,i).gt.0) then
+            wwyn=wwyn+mlcmp(ic,i)*(wldrm(nlim+ltns(1),i,0)
+     .                            +wldpm(nlim+ltns(1),i,0)
+     .                            -wldnm(nlim+ltns(1),i,0))
+          end if
+        end do
+        write(*,700) 'Net   C erosion',wwyn
+        write(*,700) 'Gross C erosion',wldspt(nlim+ltns(1),0)
+       end if
+      else
+       write(*,700) 'Total power released',
      ,              wldnek(nlim+ltns(1),0)+wldnep(nlim+ltns(1),0),
      ,              wldnek(nlim+ltns(2),0)+wldnep(nlim+ltns(2),0)
-      write(*,700) 'incl. potential energy',wldnep(nlim+ltns(1),0),
-     ,                                      wldnep(nlim+ltns(2),0)
-      do i=1,natmi
+       write(*,700) 'incl. potential energy',wldnep(nlim+ltns(1),0),
+     ,                                       wldnep(nlim+ltns(2),0)
+       do i=1,natmi
         write(*,710) text_an(i),' atom flux',
      ,               wldna(nlim+ltns(1),i,0),wldna(nlim+ltns(2),i,0)
         write(*,710) text_an(i),' average energy',
      ,               ewlda(nlim+ltns(1),i,0),ewlda(nlim+ltns(2),i,0)
-      end do
-      if(ic .gt. 0) then
+       end do
+       if(ic .gt. 0) then
         wwyn=wldra(nlim+ltns(1),ic,0)+wldpa(nlim+ltns(1),ic,0)
      .      -wldna(nlim+ltns(1),ic,0)
         wwyg=wldra(nlim+ltns(2),ic,0)+wldpa(nlim+ltns(2),ic,0)
@@ -282,6 +305,7 @@ c      end if
         write(*,700) 'Net   C erosion',wwyn,wwyg
         write(*,700) 'Gross C erosion',wldspt(nlim+ltns(1),0),
      .                                 wldspt(nlim+ltns(2),0)
+       end if
       end if
 c     if (j_h_at(1).ne.0) then
 c      print 700,'Hydrogen  atom flux',wldna(nlim+ltns(1),j_h_at(1),0),
@@ -317,7 +341,7 @@ c     end if
   710 format(1x,a2,a20,':',1p,2e14.3)
       return
 c----------------------------------------------------------------------
- 999  return 1
+  999 return 1
 c----------------------------------------------------------------------
       end subroutine b2pnwl
 c
@@ -360,7 +384,7 @@ c*** nwsrtwrk: a counter for this array
 c*** wsrttol : a tolerance parameter for defining adjacent segments
 c
       logical goup,placed(DEF_NLIM),found,direction_same,no_fort44
-      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j,ic
+      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j
       real (kind=R8) ::
      *   wsrttol, d2etol
       parameter (wsrttol=2.0e-4_R8, d2etol=1.0e-2_R8)
@@ -469,8 +493,8 @@ c*** Look in the opposite direction
               end do
 c*** No connection found
               go to 50
- 100        k=1
- 50         if(nwsrtwrk .ne. nwldlis(il)) then
+  100       k=1
+   50       if(nwsrtwrk .ne. nwldlis(il)) then
               write(*,*) 'The chain is broken: ',il
               nwldlis(il)=nwsrtwrk
             end if
@@ -492,7 +516,6 @@ c*** No connection found
                 do while (.not.found .and. k.le.nlim)
                   if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .               abs(p1(2,k)-pp1(2,j)) .le. wsrttol) then
-                    ic = 1
                     direction_same = abs(
      .               (((p2(1,k)-p1(1,k))*(pp2(1,j)-pp1(1,j))+
      .                 (p2(2,k)-p1(2,k))*(pp2(2,j)-pp1(2,j)))/
@@ -503,7 +526,6 @@ c*** No connection found
                   else
      .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol) then
-                    ic = 2
                     direction_same = abs(
      .               (((p2(1,k)-p1(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p2(2,k)-p1(2,k))*(pp1(2,j)-pp2(2,j)))/
@@ -514,7 +536,6 @@ c*** No connection found
                   else
      .            if(abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
-                    ic = 2
                     direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp2(1,j)-pp1(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp2(2,j)-pp1(2,j)))/
@@ -525,7 +546,6 @@ c*** No connection found
                   else
      .            if(abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
-                    ic = 1
                     direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp1(2,j)-pp2(2,j)))/

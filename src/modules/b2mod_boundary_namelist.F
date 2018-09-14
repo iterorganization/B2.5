@@ -899,7 +899,7 @@ c.. Test consistency with region boundaries
       end do
       return
 
- 999  call xerrab ('Error while reading BOUNDARY namelist!')
+  999 call xerrab ('Error while reading BOUNDARY namelist!')
       end subroutine read_b2mod_boundary_namelist
 
       subroutine write_b2mod_boundary_namelist

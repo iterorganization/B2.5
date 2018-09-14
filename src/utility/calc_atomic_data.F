@@ -6,27 +6,47 @@ c  version : 08.08.2000 11:35
       use b2mod_constants
       implicit none
 #     include <eir_reac.F>
-      integer iarg,iostat,nden,iden,iz1
-      integer ir,i_k,i_l,i_m,i_n,i,j,iargc
-      real (kind=R8) :: D11(0:8,0:8),density(101),csx(101),FP(6)
+      integer iarg,iostat,nden,iden
+      integer ir,i_k,i_l,i_m,i_n,i,j
+      real (kind=R8) :: D11(0:8,0:8),density(101),csx(101)
       real (kind=R8) :: t1, t2, te, tei, tef, de, dej, def, tfac, dnnn
-      real (kind=R8) :: rcmin, rcmax
-      CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3,ELNAME*2
+      CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
       character arg*256
+#ifdef NAGFOR
+      integer lenval, ierror
+#else
+      integer iargc
+#endif
 
+#ifndef NAGFOR
       iarg=iargc()
+#else
+      iarg=command_argument_count()
+#endif
       if(iarg.lt.6) then
         write(*,*) 'At least 6 arguments are necessary'
       endif
 
+#ifndef NAGFOR
       call getarg(1,filnam)
       call getarg(2,h123)
       call getarg(3,reac)
       call getarg(4,crc)
       call getarg(5,arg)
+#else
+      call get_command_argument(1,filnam,lenval,ierror)
+      call get_command_argument(2,h123,lenval,ierror)
+      call get_command_argument(3,reac,lenval,ierror)
+      call get_command_argument(4,crc,lenval,ierror)
+      call get_command_argument(5,arg,lenval,ierror)
+#endif
       read(arg,*,iostat=iostat) t1
       if(iostat.ne.0) t1=0.0_R8
+#ifndef NAGFOR
       call getarg(6,arg)
+#else
+      call get_command_argument(6,arg,lenval,ierror)
+#endif
       read(arg,*,iostat=iostat) t2
       if(iostat.ne.0) t2=0.0_R8
       if(t1.le.0.0_R8) t1=0.1_R8
@@ -35,19 +55,17 @@ c  version : 08.08.2000 11:35
       nden=iarg-6
       if(nden.gt.101) nden=101
       do iden=1,nden
+#ifndef NAGFOR
         call getarg(iden+6,arg)
+#else
+        call get_command_argument(iden+6,arg,lenval,ierror)
+#endif
         read(arg,*) density(iden)
       enddo
       if(nden.le.0) then
         nden=1
         density(1)=1.0e14_R8
       endif
-
-      RCMIN=0.0_R8
-      RCMAX=0.0_R8
-      FP=0.0_R8
-      ELNAME=' '
-      IZ1=1
 
       if(iarg.ge.3) then
         IR=1

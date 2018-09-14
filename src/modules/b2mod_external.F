@@ -331,7 +331,7 @@ cxpb
 
       initialised_externals=.true.
       return
- 974  continue
+  974 continue
       if (.not.initialised_externals)
      > call alloc_b2mod_external_dummy(nxd,nyd)
       initialised_externals=.true.

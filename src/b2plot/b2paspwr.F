@@ -157,21 +157,21 @@ c      print *,'hlp_frm: ',hlp_frm
 c*** read the file
 
         l=0
- 10     read(lun,'(a1)',end=20) hlp_u
+   10   read(lun,'(a1)',end=20) hlp_u
         if(hlp_u.eq.'#') then
           l=l+1
           go to 10
         end if
- 20     if(l.eq.0) then
+   20   if(l.eq.0) then
           write(0,*) 'b2paspwr: wrong format of the existing file ',
      ,                                                           hlp_fn
           write(0,*) '  -- no header found'
           stop
         end if
         backspace(lun)
- 30     read(lun,hlp_frm,err=40,end=40) j,(hlp_r,i=1,n_hlp),m
+   30   read(lun,hlp_frm,err=40,end=40) j,(hlp_r,i=1,n_hlp),m
         if(m.eq.1234) go to 30
- 40     backspace(lun)
+   40   backspace(lun)
       else
 
 c*** Write the header
@@ -202,7 +202,7 @@ c*** Write the data
       close(lun)
       return
 c======================================================================
- 900  write(0,*) 'b2paspwr: unable to open ',hlp_fn
+  900 write(0,*) 'b2paspwr: unable to open ',hlp_fn
       stop
 c======================================================================
       end

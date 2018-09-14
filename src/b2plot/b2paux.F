@@ -213,17 +213,19 @@ c-----------------------------------------------------------------------
      ,    (wldnm(nlim+ltns(1),i,0),i=1,nmoli),
      ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
      ,    wldspt(nlim+ltns(1),0)
-        do i=1,natmi
+        if (ltns(2).ne.0) then
+         do i=1,natmi
           hlp_at(i)=wldra(nlim+ltns(2),i,0)+wldpa(nlim+ltns(2),i,0)
-        end do
-        do i=1,nmoli
+         end do
+         do i=1,nmoli
           hlp_ml(i)=wldrm(nlim+ltns(2),i,0)+wldpm(nlim+ltns(2),i,0)
-        end do
-        write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
+         end do
+         write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
      ,    (wldna(nlim+ltns(2),i,0),i=1,natmi),
      ,    (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
      ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
      ,    wldspt(nlim+ltns(2),0)
+        end if
         deallocate(hlp_pi,hlp_po)
         deallocate(hlp_at,hlp_ml)
 c-----------------------------------------------------------------------
@@ -512,7 +514,8 @@ c-----------------------------------------------------------------------
         open(unit=lun,file=filename)
         write(lun,'(2a)') '# ', trim(extralabel)
         write(lun,'(2a)') '# ', trim(graphlabel(iwrk))
-        write(lun,'(3x,2hix,3x,2hiy,6x,1hx,11x,1hy,11x,3hz01)')
+        write(lun,'(3x,a2,3x,a2,6x,a1,11x,a1,11x,a3)')
+     .   'ix','iy','x','y','z01'
         do iy = 0, ny-1
           do ix = 0, nx-1
             write(lun,'(2i5,1p,3e12.4)')

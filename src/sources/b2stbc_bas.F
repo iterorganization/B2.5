@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_bas (nx, ny, ns, ismain,                         !xpb
-     1  facdrift, vol, hx, hy, qz, qc, gs,                               !xpb
+      subroutine b2stbc_bas (nx, ny, ns, ismain,                        !xpb
+     1  facdrift, vol, hx, hy, qz, qc, gs,                              !xpb
      1  pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1  fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &  sna0, smo0, she0, shi0, sch0, sne0,
@@ -70,7 +70,7 @@
       real (kind=R8) ::
      *  cutll, cutlo, tpr, tro, csb, cst, vte, s0, s1, fche, fchi, t0,
      1  csbm, cstm, fchy_dia, seec,
-     2  naf(0:ns-1), udf(0:ns-1), nef, nif, tef, tif, pof, wdiaf,
+     2  naf(0:ns-1), udf(0:ns-1), nef, tef, tif, pof, wdiaf,
      3  she_test, shi_test, zaf(0:ns-1), zxf, nxf, taf,
      4  prt(-1:nx,-1:ny)
       save ncall
@@ -177,9 +177,6 @@
      &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
        nef = (ne(ix,-1)*hy1(topix(ix,-1),topiy(ix,-1))+
      &        ne(topix(ix,-1),topiy(ix,-1))*hy1(ix,-1))/
-     &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-       nif = (ni(ix,-1,0)*hy1(topix(ix,-1),topiy(ix,-1))+
-     &        ni(topix(ix,-1),topiy(ix,-1),0)*hy1(ix,-1))/
      &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
        pof = (po(ix,-1)*hy1(topix(ix,-1),topiy(ix,-1))+
      &        po(topix(ix,-1),topiy(ix,-1))*hy1(ix,-1))/
@@ -369,7 +366,7 @@
        sch0(ix,-1,0) = sch0(ix,-1,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(ix,-1)
        sch0(ix,-1,1) = sch0(ix,-1,1)-t0
- 101   continue
+  101  continue
       enddo
 
 * ..compute conditions at north boundary
@@ -405,9 +402,6 @@
      &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
        nef = (ne(ix,ny)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
      &        ne(bottomix(ix,ny),bottomiy(ix,ny))*hy1(ix,ny))/
-     &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-       nif = (ni(ix,ny,0)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     &        ni(bottomix(ix,ny),bottomiy(ix,ny),0)*hy1(ix,ny))/
      &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
        pof = (po(ix,ny)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
      &        po(bottomix(ix,ny),bottomiy(ix,ny))*hy1(ix,ny))/
@@ -557,7 +551,7 @@
        sch0(ix,ny,0) = sch0(ix,ny,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(ix,ny)
        sch0(ix,ny,1) = sch0(ix,ny,1)-t0
- 202   continue
+  202  continue
       enddo
 
 * ..compute conditions at west boundary
@@ -607,9 +601,6 @@ cxpb  only include ExB terms and not diamagnetic contributions
      &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
        nef = (ne(-1,iy)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &        ne(rightix(-1,iy),rightiy(-1,iy))*hx(-1,iy))/
-     &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
-       nif = (ni(-1,iy,0)*hx(rightix(-1,iy),rightiy(-1,iy))+
-     &        ni(rightix(-1,iy),rightiy(-1,iy),0)*hx(-1,iy))/
      &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
        pof = (po(-1,iy)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &        po(rightix(-1,iy),rightiy(-1,iy))*hx(-1,iy))/
@@ -785,7 +776,7 @@ c         fchi=0.0_R8
        sch0(-1,iy,0) = sch0(-1,iy,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(-1,iy)
        sch0(-1,iy,1) = sch0(-1,iy,1)-t0
- 303   continue
+  303  continue
       enddo
 
 * ..compute conditions at east boundary
@@ -835,9 +826,6 @@ cxpb  only include ExB terms and not diamagnetic contributions
      &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
        nef = (ne(nx,iy)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &        ne(leftix(nx,iy),leftiy(nx,iy))*hx(nx,iy))/
-     &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
-       nif = (ni(nx,iy,0)*hx(leftix(nx,iy),leftiy(nx,iy))+
-     &        ni(leftix(nx,iy),leftiy(nx,iy),0)*hx(nx,iy))/
      &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
        pof = (po(nx,iy)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &        po(leftix(nx,iy),leftiy(nx,iy))*hx(nx,iy))/
@@ -1003,7 +991,7 @@ c         fchi=0.0_R8
        sch0(nx,iy,0) = sch0(nx,iy,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(nx,iy)
        sch0(nx,iy,1) = sch0(nx,iy,1)-t0
- 404   continue
+  404  continue
       enddo
 
 * ..return

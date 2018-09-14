@@ -83,6 +83,7 @@
       integer n2, i, ix, iy, is, ib, istra, ncall, k,
      * iwall, itargsp, zbulk
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
       character chns*3, chk*1                                        !srv 11.07.05
@@ -100,7 +101,7 @@
       integer sput_dst_bulk
       parameter (amtol=1.0e-2_R8)
 *   ..procedures
-      intrinsic abs, mod, exp
+      intrinsic abs, exp
       external subini, subend, xertst
       external b2xvsg, b2xvff, smin, smax
       real (kind=R8) :: 
@@ -140,10 +141,12 @@
       call subini ('b2stbr_phys')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then                                          !srv 22.08.08 {
-       write(*,*) ' First call of b2stbr_phys' 
+       write(*,*) 'First call of b2stbr_phys'
        call ipgeti ('b2stbr_phys_iout', iout)                       !srv 11.07.05
        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
+       call ipgeti ('b2npc7_iout', iout_b2npc7)                     !srv 02.04.18
+       call ipgeti ('b2npc11_iout', iout_b2npc11)                   !srv 02.04.18
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2npp7_iout', iout_b2npp7)
        call ipgeti ('b2nppo_iout', iout_b2nppo)
@@ -550,49 +553,50 @@
 
       if (iout.eq.1 .or. iout_b2npmo.eq.1) then                   !srv 11.07.05 11.09.09 {
        do is = 0, ns-1
-	write (chns,'(i3.3)') is
-!	  do k=0,3
-!	   write (chk,'(i1)') k
-!	   call my_out(70,nx,ny,smo0(-1,-1,k,is),
+        write (chns,'(i3.3)') is
+!         do k=0,3
+!          write (chk,'(i1)') k
+!          call my_out(70,nx,ny,smo0(-1,-1,k,is),
 !     &                       'b2stbr_phys_smo'//chk//chns)
-!	  enddo
+!         enddo
         wrk0=smo0(:,:,0,is)+
      &       smo0(:,:,1,is)*ua(:,:,is)+
      &       smo0(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &       smo0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-	call my_out(70,nx,ny,wrk0,'b2stbr_phys_smo'//chns)
+        call my_out(70,nx,ny,wrk0,'b2stbr_phys_smo'//chns)
        enddo
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or.
+     &                    iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1)) then !srv 02.04.18
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-!	  do k=0,1
-!	   write (chk,'(i1)') k
-!	   call my_out(70,nx,ny,sna0(-1,-1,k,is),
+!         do k=0,1
+!          write (chk,'(i1)') k
+!          call my_out(70,nx,ny,sna0(-1,-1,k,is),
 !     &                       'b2stbr_phys_sna'//chk//chns)
-!	  enddo
+!         enddo
         wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
-	call my_out(70,nx,ny,wrk0,'b2stbr_phys_sna'//chns)
+       call my_out(70,nx,ny,wrk0,'b2stbr_phys_sna'//chns)
        enddo
       endif
       if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
-!	 do k=0,3
-!	  write (chk,'(i1)') k
-!	  call my_out(70,nx,ny,she0(-1,-1,k),'b2stbr_phys_she'//chk)
-!	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbr_phys_shi'//chk)
-!	  call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbr_phys_sch'//chk)
-!	 enddo
+!        do k=0,3
+!         write (chk,'(i1)') k
+!         call my_out(70,nx,ny,she0(-1,-1,k),'b2stbr_phys_she'//chk)
+!         call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbr_phys_shi'//chk)
+!         call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbr_phys_sch'//chk)
+!        enddo
          wrk0=she0(:,:,0)+she0(:,:,1)*te+
      &        she0(:,:,2)*ne + she0(:,:,3)*te*ne
-	 call my_out(70,nx,ny,wrk0,'b2stbr_phys_she')
+         call my_out(70,nx,ny,wrk0,'b2stbr_phys_she')
          wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
      &        shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
-	 call my_out(70,nx,ny,wrk0,'b2stbr_phys_shi')
+         call my_out(70,nx,ny,wrk0,'b2stbr_phys_shi')
       endif
       if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
          wrk0=sch0(:,:,0)+sch0(:,:,1)*po+
      &        sch0(:,:,2)*ne+sch0(:,:,3)*po*ne(:,:)
-	 call my_out(70,nx,ny,wrk0,'b2stbr_phys_sch')
+         call my_out(70,nx,ny,wrk0,'b2stbr_phys_sch')
       endif
       if(iout.eq.1) then
         open(70,file='t_files.dat')
@@ -1169,7 +1173,7 @@ cxpb  with mixed materials model
      1                 phys_sput(is,istra)
                      ztmp=sputter2(is,sput_dst_bulk,Ei*ev) *
      1                 phys_sput(is,istra) *
-     2		       (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))
+     2                 (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))
                      if(sput_frac_flag.ne.0) then
                        ytmp=ytmp*sput_frac(0)
                        ztmp=ztmp*sput_frac(0)
@@ -1228,8 +1232,8 @@ cxpb  We must now add the energy brought back in by the self-sputtered material
      1                       phys_sput(is,istra) * sput_frac(itrack)
                         ztmp=sputter2(is,target_intcode(itrack),Ei*ev) *
      1                       phys_sput(is,istra) * sput_frac(itrack) *
-     2			     (1.0_R8-
-     3			      f_redep(ixn,iyn,target_intcode(itrack)))
+     2                       (1.0_R8-
+     3                        f_redep(ixn,iyn,target_intcode(itrack)))
                         t2=t0 * ztmp * Ei * ev
 cxpb  We now must remove the energy lost in ionizing the promptly redeposited material
 cxpb  but from the electrons

@@ -95,12 +95,11 @@
      *  nsmin, nsmax, no_current
 *   ..procedures
       intrinsic abs, min, mod
-      real (kind=R8) ::
-     *  smin, smax, b2sasum
+      real (kind=R8) :: smin, smax
       integer len_of_digits
       external len_of_digits
       external subini, subend, xertst, ipgetr, smin, smax,
-     &  b2scopy, b2saxpy, b2sasum, ipgeti
+     &  b2scopy, b2saxpy, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
      &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhe, b2tfhi,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2srsm,
@@ -334,11 +333,14 @@
         endif
 *   ..re-compute source terms if necessary                               !xpb
         if((wrong_flow .and. ipass.ne.0) .or. ncall.eq.0) then           !xpb
+*      ..compute electron drift velocities
+          call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,   !srv 05.06.18
+     &     te, po, vedia, veecrb)
 *     ..re-compute source linearisation                                  !xpb
           call b2sral (nx, ny, ns, nxtl, nxtr,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,                      !xpb
-     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, na,         !srv 09.01.01
+     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, lnlam, na,  !srv 09.01.01 02.04.18
      &     ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
      &     fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -370,10 +372,10 @@
      &                       fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,         !srv 10.10.17
-!     &          po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,     !srv 10.10.17
-!     &               lnlam, te, ti, ni, chci, fchvisq)
+        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,         !srv 10.10.17
+     &          po, ti, na, avisper, bvisper, cvisper, fchvisper)
+        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,     !srv 10.10.17
+     &               lnlam, te, ti, ni, chci, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
           call b2xpro (nx, ny, ns, mp, am, na, ro)
@@ -413,7 +415,7 @@
         call b2sral (nx, ny, ns, nxtl, nxtr,
      &    nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &    dtim, BoRiS, facdrift, fac_ExB, fac_vis,                       !xpb
-     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,              !srv 09.01.01
+     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, lnlam,       !srv 09.01.01 02.04.18
      &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                !srv 28.10.02
      &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -495,10 +497,10 @@ cxpb
      &                       fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy,  qz, bb,        !srv 10.10.17
-!     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
-!     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
+        call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy,  qz, bb,        !srv 10.10.17
+     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
+        call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
+     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
 !        do is = 0, ns-1
@@ -769,7 +771,7 @@ cxpb
      &           nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &           dtim, BoRiS, facdrift, fac_ExB, fac_vis,                !xpb
      &           vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,
-     &           na, ua,                                                 !srv 09.01.01
+     &           lnlam, na, ua,                                          !srv 09.01.01
      &           uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &           te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,         !srv 28.10.02
      &           fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -831,7 +833,6 @@ cxpb
                 ixmax = -2                                               !xpb
                 iymax = -2                                               !xpb
                 do iy = -1, ny
-cxpb       t0 = t0+b2sasum(nx+2,wrk0(-1,iy),1)
 cxpb  Do not count residuals from dead or unsolved cells
                   do ix = -1, nx
                     ireg = region(ix,iy,0)
@@ -1068,6 +1069,7 @@ c        write(*,*) 'Called b2stbr_neutr_scl'
       subroutine print_wrong_flows(label)
       implicit none
       character (len=*) :: label
+      integer iy
       logical inverted_ua
 
       inverted_ua = .true.

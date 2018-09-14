@@ -75,7 +75,9 @@
 *   ..local variables
       integer ncall, n2, ix, iy, ib, area_fix, no_hybr
       integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
-     &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
+     &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
+     &                 iout_b2npmo =0
       integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
       integer, save :: pflux_cor = 1                                     !srv 05.03.16
@@ -120,7 +122,7 @@
      *   kmpr, hybr, kap, cvmgp, hy1
       external subini, subend, xertst, ipgeti, ipgetr                    !xpb
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
-      intrinsic abs, max, min, mod, sqrt
+      intrinsic abs, max, min, sqrt
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       kmpr(ix,iy) = nb(ix,iy)/pb(ix,iy)
       kap(ix,iy) = 1.0_R8 / (zb(ix,iy)*te(ix,iy) + ti(ix,iy))
@@ -179,6 +181,8 @@
         call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                         !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                       !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgetr ('b2tfrn_xvecrb', xvecrb)                            !srv 27.01.12
         call ipgetr ('b2tfrn_xwdia', xwdia)                              !srv 27.01.12
@@ -458,8 +462,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &          +ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hy1(ix,iy)))*0.5_R8 !srv 05.02.05
      &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv 05.03.99
            wbdia(ix,iy,0) = - facdrift(ix,iy)/                           !srv 13.05.16 {
-     1      (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
-     2      (bb(ix,iy,2)/bb(ix,iy,3)**2
+     1        (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
+     2        (bb(ix,iy,2)/bb(ix,iy,3)**2
      2        +bb(leftix(ix,iy),leftiy(ix,iy),2)/
      2         bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*
      2         (nbtic(topix(ix,iy),topiy(ix,iy))-nbtic(ix,iy))/
@@ -982,7 +986,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        enddo
       enddo
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
+     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0                        !srv 02.04.18
      &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
@@ -1381,8 +1386,9 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      1   ' mb = ',mb/mp,' are ',maxfluxlimit
       endif
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
-     &       .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then               !srv 11.09.09 {
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
+     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0                        !srv 02.04.18
+     &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
@@ -1708,20 +1714,21 @@ csw 18feb2014 remove fluxes between guard cells
           if(iout.ne.0) then
             write(*,*)
             write(*,*) 'Before flux correction in b2tfnb, is = ', isb
-            write(*,fmt=
-     $"('isb = ',i4,' fnb_tot = ',es18.11,' fnb_mdf_tot = ',es18.11)")
-     $       isb, div_fnb, div_fnb_mdf
+            write(*,'(a,i4,a,es18.11,a,es18.11)')
+     $       ' isb = ',isb,' fnb_tot = ',div_fnb,
+     $       ' fnb_mdf_tot = ',div_fnb_mdf
 
             call b2tbfl(nx, ny,.false., fnb, tbfl_fnb, div_fnb)
             call b2tbfl(nx, ny,.false., fnb_mdf, tbfl_fnb_mdf,
      .                                                 div_fnb_mdf)
             write(*,*) 'After flux correction in b2tfnb, is = ', isb
-            write(*,fmt=
-     $"('isb = ',i4,' fnb_tot = ',es18.11,' fnb_mdf_tot = ',es18.11)")
-     $       isb, div_fnb, div_fnb_mdf
+            write(*,'(a,i4,a,es18.11,a,es18.11)')
+     $       ' isb = ',isb,' fnb_tot = ',div_fnb,
+     $       ' fnb_mdf_tot = ',div_fnb_mdf
             write(*,*)
-!            write(*,"(' is =',i3,' rdiv =',es15.7,' div_fnb =',es15.7,
-!     &       ' div_fnb_mdf =',es15.7)") isb, rdiv, div_fnb, div_fnb_mdf
+!            write(*,'(a,i3,a,es15.7,a,es15.7,a,es15.7)')
+!     &       ' is =',isb,' rdiv =',rdiv,' div_fnb =',div_fnb,
+!     &       ' div_fnb_mdf =',div_fnb_mdf
           endif
         endif
       endif                                                             !srv 05.03.16 }

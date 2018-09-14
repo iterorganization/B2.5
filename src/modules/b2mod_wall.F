@@ -508,7 +508,7 @@ cxpb Data file material properties
       call xertst(ndepth_nml.le.ndepth .and. ndepth_nml.ge.1,
      . 'Invalid array size NDEPTH_NML!')
       return
- 999  call xerrab ('Error while reading WALL_SAVE namelist!')
+  999 call xerrab ('Error while reading WALL_SAVE namelist!')
       end subroutine read_b2mod_wall_namelist
 
       subroutine write_b2mod_wall_namelist(nwrite,nx,ny,ns,edition)
@@ -943,7 +943,7 @@ cxpb Normalise surface constituents
             read(99,*) matbulk_Kappa_perp_A3(ibnd)
             read(99,*) matbulk_Kappa_perp_A4(ibnd)
             read(99,*) matbulk_Kappa_perp_A5(ibnd)
-98          close(99)
+   98       close(99)
             if (matbulk_Kappa_perp_A1(ibnd).eq.0.0_R8) then
               matbulk_Kappa_perp_A1(ibnd) = matbulk_Kappa_A1(ibnd)
               matbulk_Kappa_perp_A2(ibnd) = matbulk_Kappa_A2(ibnd)
@@ -1020,7 +1020,7 @@ cxpb Normalise surface constituents
               read(99,*) coating_Kappa_perp_A3(ibnd)
               read(99,*) coating_Kappa_perp_A4(ibnd)
               read(99,*) coating_Kappa_perp_A5(ibnd)
-97            close(99)
+   97         close(99)
               if (coating_Kappa_perp_A1(ibnd).eq.0.0_R8) then
                 coating_Kappa_perp_A1(ibnd) = coating_Kappa_A1(ibnd)
                 coating_Kappa_perp_A2(ibnd) = coating_Kappa_A2(ibnd)
@@ -1080,7 +1080,7 @@ cxpb Normalise surface constituents
             read(99,*) alloy_Cp_B2(ifile)
             read(99,*) alloy_Cp_B3(ifile)
             read(99,*) alloy_Cp_B4(ifile)
-96          close(99)
+   96       close(99)
           endif
           filename='Surface_properties/'//trim(layer_alloys(ifile))
           if(open_file(99,filename,

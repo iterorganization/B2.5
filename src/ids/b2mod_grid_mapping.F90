@@ -7,8 +7,6 @@
 !!      and some service routines to handle this data structure.
 !!
 !!      @subsection b2mod_gmap_pv  Parameters/variables
-!!      @param  geom_match_dist - Distance between two points at which the
-!!              points are declared to be equal
 !!      @param  ALIGNX, ALIGNY - Alignment index (for example in B2 flux arrays)
 !!      @param  MAX_SPECIAL_VERTICES - Maximum number of special vertices
 !!              expected in the grid
@@ -25,9 +23,6 @@ module b2mod_grid_mapping
     use b2mod_cellhelper
 
     implicit none
-
-    !! Distance between two points at which the points are declared to be equal
-    real(R8), private, parameter :: geom_match_dist = 1.0e-6_R8
 
     !! Alignment index (for example in B2 flux arrays)
     integer, parameter :: ALIGNX = 1
@@ -243,8 +238,6 @@ contains
         integer :: i2   !< Iterator
         integer :: nbix
         integer :: nbiy
-        integer :: nbix2
-        integer :: nbiy2
         integer :: iFace !< Face/edge index
         integer :: iCorner
         integer :: index
@@ -270,7 +263,7 @@ contains
         integer :: vxiReduce((nx + 2) * (ny + 2) * 4)
         integer :: nsector((nx + 2) * (ny + 2) * 4)
 
-        logical :: check, cell_done
+        logical :: cell_done
 
         !! list of identified special vertices
         !! vertex indices (ix, iy)

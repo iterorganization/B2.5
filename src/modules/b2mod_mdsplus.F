@@ -47,8 +47,8 @@
 
       call subini ('b2mod_mdsplus_write_to_db')
       write(dbline,
-     &     '(a,a,i10,a,3a,a,i10,a,a,f20.12,a,9a,3(a,i6,a),3a,
-     &     22(a,e30.20,a),19(a,a,a),2(a,i10,a),6a,a,a)')
+     &     '(a,a,i10,a,3a,a,i10,a,a,f20.12,a,9a,3(a,i6,a),3a,'//
+     &     '22(a,e30.20,a),19(a,a,a),2(a,i10,a),6a,a,a)')
      &    'sqlshot("insert into id set ',
      &    'solpsindex=',dbsolpsindex,',',
      &    'exp=''',trim(dbexp),''',',
@@ -127,8 +127,8 @@
 
       if(shotnumber.ne.'0') then
         write(dbline,
-     &   '(a,3a,a,i10,a,a,f20.12,a,9a,3(a,i6,a),3a,
-     &   22(a,e30.20,a),19(a,a,a),2(a,i10,a),6a,a,i10,a,a)')
+     &   '(a,3a,a,i10,a,a,f20.12,a,9a,3(a,i6,a),3a,'//
+     &    '22(a,e30.20,a),19(a,a,a),2(a,i10,a),6a,a,i10,a,a)')
      &   'sqlshot("update id set ',
      &   'exp=''',trim(dbexp),''',',
      &   'shot=',dbshot,',',

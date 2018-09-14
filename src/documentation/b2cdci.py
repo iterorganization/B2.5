@@ -1,3 +1,4 @@
+# - encoding utf8
 """
 Generates b2cdci.F
 """
@@ -203,9 +204,11 @@ fort += """*--------------------------------------------------------------------
 
 """
 
-f = open('b2cdci.F', 'w')
+
 if sys.version_info[0] >= 3:
-    f.write(fort)
+    f = open('b2cdci.F', 'wb')
+    f.write(fort.encode())
 else:
+    f = open('b2cdci.F', 'w')
     f.write(fort.encode('utf-8'))
 f.close()

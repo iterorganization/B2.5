@@ -15,7 +15,7 @@
       integer n2, ix, iy, ncall, area_fix
       real (kind=R8) ::
      *   t1, p0x, p0y, p1x, p1y
-      intrinsic abs, sqrt, min, max
+      intrinsic sqrt, min, max
       external subini, subend, xertst, b2xvsg, b2xvff, ipgeti
       real (kind=R8) ::
      *   trim1, norm, cosang
@@ -94,7 +94,7 @@
       integer n2, ix, iy, ncall, area_fix
       real (kind=R8) ::
      *   t1, p0x, p0y, p1x, p1y
-      intrinsic abs, sqrt, min, max
+      intrinsic sqrt, min, max
       external subini, subend, xertst, b2xvsg, b2xvfx, b2xvfy1, ipgeti
       real (kind=R8) ::
      *   trim1, norm, cosang

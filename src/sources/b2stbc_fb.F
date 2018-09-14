@@ -252,7 +252,7 @@
       integer, save :: fhiycore_kinetic_energy, ncallfeedback
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
-     &                 isfeedback, nesepm_istra
+     &                 isfeedback, nesepm_istra, use_eirene
       real (kind=R8) :: amtol,
      &  na_feedback_current, na_feedback_rescale, vol_feedback, dtim,
      &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
@@ -304,8 +304,8 @@
 *   ..initialisation
       parameter (amtol = 1.0e-2_R8)
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
-     &  n_flux_zero/0/, dtim/1.0/, na_feedback_save/DEF_NATM*0.0_R8/,
-     &  na_feedback_prev/DEF_NATM*0.0_R8/,
+     &  n_flux_zero/0/, dtim/1.0_R8/, na_feedback_save/DEF_NATM*0.0_R8/,
+     &  na_feedback_prev/DEF_NATM*0.0_R8/, use_eirene/0/,
      1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
      1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
      2  fhiycore/0.0_R8/, fhiycore_alpha/1.0e-1_R8/,
@@ -315,7 +315,7 @@
      3  nesepm_pfr/0.0_R8/, nesepm_alpha/1.0e-3_R8/,
      3  nesepm_beta/0.0_R8/, nesepm_gamma/0.99_R8/,
      3  nesepm_minpuff/0.0_R8/, nesepm_maxpuff/0.0_R8/,
-     3  nesepm_overshoot/0.0_R8/, nesepm_error_old/0.0/,
+     3  nesepm_overshoot/0.0_R8/, nesepm_error_old/0.0_R8/,
      3  nesepm_integral_error/0.0_R8/,
      4  volrec_sol/0.0_R8/, volrec_alpha/1.0e-3_R8/,
      4  volrec_beta/1.0_R8/, volrec_overshoot/0.0_R8/,
@@ -539,6 +539,7 @@
      *       neutral_sources_rescale)
        call xertst (0.0_R8.le.neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')
+       call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('eirene_nesepm_istra', nesepm_istra)
        if(nesepm_istra.gt.0) then
          call xertst (nesepm_istra.le.nstrat,
@@ -867,13 +868,14 @@
                     end do !}
                   end do !}
 #endif
-                  is_start = eb2spcr(ispecies+1)+1
+                  is_start = eb2spcr(ispecies+1)
                   is_end = eb2spcr(ispecies+1)+nfluids(ispecies+1)
                   allocate(charge_frac(1:is_end-is_start+1))
                   charge_frac = 0.0_R8
                   sum_s = 0.0_R8
                   do is = is_start, is_end
                     iss = is-is_start+1
+                    if (is_neutral(is).and.use_eirene.ne.0) cycle
                     do iy = na_feedback_iy1(ispecies),
      .                      na_feedback_iy2(ispecies)
                       do ix = na_feedback_ix1(ispecies),
@@ -901,28 +903,58 @@
                   is_start=-1
                   is_end=-1
                   do is=0, ns-1
-                     if(is_neutral(is)) cycle
-                     if(b2espcr(is).eq.ispecies+1) then
-                        if(is_start.eq.-1) is_start=is
-                        do iy = na_feedback_iy1(ispecies),
-     &                          na_feedback_iy2(ispecies)
-                           do ix = na_feedback_ix1(ispecies),
-     &                             na_feedback_ix2(ispecies)
-                             if(on_closed_surface(bottomix(ix,iy),
-     .                                            bottomiy(ix,iy)))
-     >                        then
-                                na_feedback_current =
-     &                             na_feedback_current +
-     &                             na(ix,iy,is) * gs(ix,iy,1)
-                                if (is.eq.is_start) then
-                                  sum_e = sum_e +
-     .                             ne(ix,iy) * gs(ix,iy,1)
-                                end if
-                              endif
-                           enddo
+                    if(b2espcr(is).eq.ispecies+1) then
+                      if(is_start.eq.-1) is_start=is
+                      if(is_neutral(is).and.use_eirene.ne.0) cycle
+                      do ix = 0, nx-1
+                        if(on_closed_surface(ix,jsep))
+     >                      then
+                          na_feedback_current =
+     &                           na_feedback_current + (na(ix,jsep,is) +
+     &                           na(topix(ix,jsep),topiy(ix,jsep),is)) *
+     &                           gs(topix(ix,jsep),topiy(ix,jsep),1)
+                          if (is.eq.is_start+1) then
+                            sum_e = sum_e + (ne(ix,jsep) +
+     &                           ne(topix(ix,jsep),topiy(ix,jsep))) *
+     &                           gs(topix(ix,jsep),topiy(ix,jsep),1)
+                          end if
+                        endif
+                      enddo
+                      is_end=is
+                    endif
+                  enddo
+                  na_feedback_current = na_feedback_current/sum_e
+
+               case (8) ! relative average concentration of this species on desired domain
+
+                  if(ncall.eq.0) then
+                     write(*,*)
+     &                 'b2stbc_fb_pre_choice: using average ',
+     &                 'concentration for sequence ', ispecies+1
+                  endif
+                  na_feedback_current = 0.0_R8
+                  sum_e = 0.0_R8
+                  is_start=-1
+                  is_end=-1
+                  do is=0, ns-1
+                    if(b2espcr(is).eq.ispecies+1) then
+                      if(is_start.eq.-1) is_start=is
+                      if(is_neutral(is).and.use_eirene.ne.0) cycle
+                      do iy = na_feedback_iy1(ispecies),
+     &                        na_feedback_iy2(ispecies)
+                        do ix = na_feedback_ix1(ispecies),
+     &                           na_feedback_ix2(ispecies)
+                          na_feedback_current =
+     &                           na_feedback_current +
+     &                           na(ix,iy,is) * vol(ix,iy)
+                          if (is.eq.is_start+1) then
+                                sum_e = sum_e +
+     .                           ne(ix,iy) * vol(ix,iy)
+                          end if
                         enddo
-                        is_end=is
-                     endif
+                      enddo
+                      is_end=is
+                    endif
                   enddo
                   na_feedback_current = na_feedback_current/sum_e
 
@@ -1111,8 +1143,7 @@
      &                    ispecies+1
                   endif
 
-                  if(feedback_namelist_used .and.
-     &                 ncall .eq. 0 .and.
+                  if((feedback_namelist_used .or. ncall .eq. 0) .and.
      &                 saved_na_feedback_actuator(ispecies) .eq. 0.0_R8)
      >             then
                     write(message,'(a,i3,a,i2,a)')

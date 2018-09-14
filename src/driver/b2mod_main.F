@@ -96,10 +96,10 @@
 *  4. references
 *
 *     (Refs. /1/ and /2/ are out of date; !! to be replaced.)
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -221,7 +221,7 @@ csw
 *   ..obtain version numbers						 !xpb
       call cfverw (nout(0), newversion)
       write(6,'(4a)')
-     &  'Running with VERSION ',newversion,' ', git_version_B25
+     &  'Running with VERSION ',newversion,' ', trim(git_version_B25)
       call cfverr (ninp(1), b2fgmtry_version)				 !xpb
       call cfverr (ninp(2), b2fparam_version)				 !xpb
       call cfverr (ninp(3), b2fstati_version)				 !xpb

@@ -74,8 +74,8 @@ csw 30apr2014 added fna_he, ia
       real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8          !srv 02.10.17
       real (kind=R8) ::
      *   flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,    !srv 17.05.99
-     &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf, dti0_mdf                 !srv 13.10.06 17.06.09
-cpax
+     &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf                           !srv 13.10.06 17.06.09
+cpax      
       real (kind=R8) ::
      *   flidia(-1:nx,-1:ny,0:1), facdriftm                             !srv 25.01.02
       real (kind=R8), allocatable ::
@@ -411,7 +411,6 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
 
            t0_mdf =coni0_mdf*abs(dti)/(flomx*
      &                  max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
-           dti0_mdf = dti/(1.0_R8+t0_mdf)
            t1_mdf = t0_mdf/(1.0_R8+t0_mdf)                              !srv 17.06.09 {
 
 csw 27nov2012 added check upwind (SOLPS4 style)

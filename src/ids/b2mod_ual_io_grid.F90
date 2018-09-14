@@ -31,6 +31,9 @@ module b2mod_ual_io_grid
     use ids_string          ! IGNORE
     use ids_grid_subgrid    ! IGNORE
     use ids_grid_structured ! IGNORE
+    use ids_grid_objectlist ! IGNORE
+    use ids_assert          ! IGNORE
+    use ids_grid_object     ! IGNORE
 #else
 # ifdef ITM
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
@@ -196,9 +199,13 @@ contains
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
+#ifdef GGD_OLD
         type(ids_generic_grid_dynamic), intent(out) :: ggd_grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
-
+#else
+        type(ids_generic_grid_aos3_root), intent(out) :: ggd_grid !< Type of IDS
+            !< data structure, designed for handling grid geometry data
+#endif
         integer, intent(in) :: nx   !< Number of interior cells
             !< along the first coordinate (used to define size of grid arrays:
             !< (-1:nx, -1:ny)
@@ -511,8 +518,9 @@ contains
             ix = gmap % mapFcix( ifc )
             iy = gmap % mapFciy( ifc )
 !!$            if (gmap%mapCvI(ix, iy) == B2_GRID_UNDEFINED) then
-!!$                call logmsg(LOGWARNING, "b2IMASFillGD: writing out faces
-!!$                for unused cell "//idsint2str(ix)//","//idsint2str(iy))
+!!$                call logmsg(LOGWARNING,
+!!$                "b2IMASFillGD: writing out faces for unused cell "//
+!!$                idsint2str(ix)//","//idsint2str(iy))
 !!$            end if
 
             select case ( gmap % mapFcIFace( ifc ) )
@@ -715,8 +723,13 @@ contains
 
     !> Set connectivity array for cells by defining nodes that form each cell
     subroutine set_Cells_Conn_Array_Nodes(ggd_grid)
+#ifdef GGD_OLD
         type(ids_generic_grid_dynamic), intent(inout) :: ggd_grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
+#else
+        type(ids_generic_grid_aos3_root), intent(inout) :: ggd_grid !< Type of IDS
+            !< data structure, designed for handling grid geometry data
+#endif
         !! Internal variables
         integer, allocatable :: objects2Darray(:,:)
         integer :: num_nodes_2D     !< Total number of nodes forming one cell
@@ -871,8 +884,8 @@ contains
         !! Initialize implicit object list for faces (class (/2/) )
         allocate(indexList1d(gmap%nfcx))
         indexList1d = (/ (i, i = 1, gmap%nfcx) /)
-        call createExplicitObjectListSingleSpace( ggd_grid,         &
-            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
+        call createExplicitObjectListSingleSpace( ggd_grid,            &
+            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),    &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,            &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
 
@@ -882,7 +895,7 @@ contains
             indexList1d = (/ 1 /)
             call createExplicitObjectListSingleSpace( ggd_grid,         &
                 &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES), &
-                &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,            &
+                &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,         &
                 &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         end if
 
@@ -905,15 +918,15 @@ contains
         deallocate(indexList1d)
         allocate(indexList1d(1))
         indexList1d = (/ 1 /)
-        call createExplicitObjectListSingleSpace( ggd_grid,         &
-            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES), &
+        call createExplicitObjectListSingleSpace( ggd_grid,           &
+            &   ggd_grid%grid_subset( GRID_SUBSET_Y_ALIGNED_FACES),   &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,           &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
         end if
 
         !! GRID_SUBSET_CELLS: all 2d cells, one implicit object list
-        call createGridSubsetForClass(  ggd_grid,           &
-            &   ggd_grid%grid_subset( GRID_SUBSET_CELLS ),  &
+        call createGridSubsetForClass(  ggd_grid,               &
+            &   ggd_grid%grid_subset( GRID_SUBSET_CELLS ),      &
             &   IDS_CLASS_CELL, 1, GRID_SUBSET_CELLS, "Cells",  &
             &   "All faces (1D objects) in the domain."  )
 
@@ -968,30 +981,31 @@ contains
                 !! subroutine collectIndexListForRegionSubroutine
                 !! (function collectIndexListForRegion transferred to subroutine,
                 !! as array of certain dimension is required as an output)
-                call collectIndexListForRegionSubroutine( gmap, region, iType,  &
-                    &   iRegion, indexList2d )
+                call collectIndexListForRegionSubroutine( gmap, region,   &
+                    &   iType, iRegion, indexList2d )
 
                 !! Initialize explicit object list for grid subset
                 !! TODO: Currently taking object indices only from space 1
                 !!      ( %space(1) ). Set
                 !!       to search all spaces
-                call createExplicitObjectListSingleSpace( ggd_grid,             &
-                    &   ggd_grid%grid_subset( GSubsetCount ), sum( cls ) - 1,   &
+                call createExplicitObjectListSingleSpace( ggd_grid,           &
+                    &   ggd_grid%grid_subset( GSubsetCount ), sum( cls ) - 1, &
                     &   indexList2d(:,1), sum(cls), 1)
             end do
         end do
 
         deallocate(indexList2d)
         !! Add midplane node grid subsets
-        !! Find the core boundary grid subset by looking for its name as defined in b2mod_connectivity
+        !! Find the core boundary grid subset by looking for its name as 
+        !! defined in b2mod_connectivity
         iCoreGS = findGridSubsetByName(ggd_grid, "Core boundary")
         !! For double null, we need the outer half of the core boundary
         if (iCoreGS == B2_GRID_UNDEFINED) then
             iCoreGS = findGridSubsetByName(ggd_grid, "Outer core boundary")
         end if
-        if (iCoreGS == B2_GRID_UNDEFINED) stop "fill_In_GridSubset_Desc:&
-            & did not find core boundary grid subset for assembling outer&
-            & midplane  grid subset"
+        if (iCoreGS == B2_GRID_UNDEFINED) stop "fill_In_GridSubset_Desc: "// &
+            & "did not find core boundary grid subset for assembling " // &
+            & " outer midplane grid subset"
 
         !! Figure out starting points for inner and outer midplane on core
         !! boundary
@@ -1088,12 +1102,12 @@ contains
             obj = getGridSubsetObject(GridSubset, iObj)
             !! Expect a face
             call xertst( all( obj%cls( 1:SPACE_COUNT ) ==               &
-                &   IDS_CLASS_POLOIDALRADIAL_FACE ), "b2mod_ual_io_grid&
-                & find_Midplane_Cells: assertion failure." )
+                &   IDS_CLASS_POLOIDALRADIAL_FACE ), &
+                & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
             !! ...which is aligned along the x-direction
             call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==   &
-                &   BOTTOM, "b2mod_ual_io_grid find_Midplane_Cells: assertion&
-                & failure." )
+                &   BOTTOM, &
+                & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
             ix = gmap % mapFcix( obj%ind( SPACE_POLOIDALPLANE ) )
             iy = gmap % mapFciy( obj%ind( SPACE_POLOIDALPLANE ) )
 
@@ -1488,8 +1502,8 @@ contains
       if (iCoreSg == GRID_UNDEFINED) then
           iCoreSg = gridFindSubGridByName(itmgrid, "Outer core boundary")
       end if
-      if (iCoreSg == GRID_UNDEFINED) stop "fillInSubGridDescription: &
-          & did not find core boundary subgrid for assembling outer midplane subgrid"
+      if (iCoreSg == GRID_UNDEFINED) stop "fillInSubGridDescription: "// &
+          & "did not find core boundary subgrid for assembling outer midplane subgrid"
 
       !! Figure out starting points for inner and outer midplane on core boundary
       call find_Midplane_Cells(itmgrid%subgrids(iCoreSg), gmap, crx, xIn, yIn, xOut, yOut)
@@ -1657,7 +1671,7 @@ contains
 
     !> Collect the grid indices of all vertices on the radial grid line outward
     !! starting at the vertex at position six,siy in computational space.
-    subroutine collectRadialVertexIndexListSubroutine(gmap, cflag, six, siy,  &
+    subroutine collectRadialVertexIndexListSubroutine(gmap, cflag, six, siy, &
             &   topix, topiy, indexList)
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
             !< b2CreateMap holding an intermediate grid description to be
@@ -1733,8 +1747,8 @@ contains
                 indexList(iVx, SPACE_POLOIDALPLANE) =   &
                     &   gmap%mapVxI(ix, iy, VX_UPPERLEFT)
             else
-                stop "collectRadialVertexIndexListSubroutine: cannot find    &
-                    &   expected vertex index"
+                stop "collectRadialVertexIndexListSubroutine: cannot " // &
+                   & "find expected vertex index"
             end if
 
             ix = nix
@@ -1772,7 +1786,7 @@ contains
             do iy = -1, gmap%b2ny
 
                 if ( region(ix, iy, iRegionType) == iRegion ) then
-                    !! Get index depending on what object type we're looking at
+                  !! Get index depending on what object type we are looking at
                     select case (iRegionType)
                     case (REGIONTYPE_CELL)
                         ind = gmap%mapCvI(ix, iy)
@@ -1798,7 +1812,7 @@ contains
             do iy = -1, gmap%b2ny
 
                 if ( region(ix, iy, iRegionType) == iRegion ) then
-                    !! Get index depending on what object type we're looking at
+                  !! Get index depending on what object type we are looking at
                     select case (iRegionType)
                     case (REGIONTYPE_CELL)
                         ind = gmap%mapCvI(ix, iy)
@@ -1827,7 +1841,7 @@ contains
     !! @result The list of indices for all objects that constitute this grid
     !! region. The array has two dimensions because it is given as a list of
     !! object descriptors.
-    subroutine collectIndexListForRegionSubroutine(gmap, region, iRegionType,   &
+    subroutine collectIndexListForRegionSubroutine(gmap, region, iRegionType, &
         &   iRegion, indexlist)
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
             !< b2CreateMap holding an intermediate grid description to be
@@ -1856,7 +1870,7 @@ contains
             do iy = -1, gmap%b2ny
 
                 if ( region(ix, iy, iRegionType) == iRegion ) then
-                    !! Get index depending on what object type we're looking at
+                  !! Get index depending on what object type we are looking at
                     select case (iRegionType)
                     case (REGIONTYPE_CELL)
                         ind = gmap%mapCvI(ix, iy)
@@ -1882,7 +1896,7 @@ contains
             do iy = -1, gmap%b2ny
 
                 if ( region(ix, iy, iRegionType) == iRegion ) then
-                    !! Get index depending on what object type we're looking at
+                  !! Get index depending on what object type we are looking at
                     select case (iRegionType)
                     case (REGIONTYPE_CELL)
                         ind = gmap%mapCvI(ix, iy)

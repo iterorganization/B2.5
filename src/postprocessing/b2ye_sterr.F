@@ -64,7 +64,7 @@
         meangroup2 = 0.0_R8
         meanbatch2 = 0.0_R8
         rho = 0.0_R8
-	logrho = 0.0_R8
+        logrho = 0.0_R8
         tau = 0.0_R8
       end if
 

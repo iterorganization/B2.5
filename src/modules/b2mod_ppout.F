@@ -4,7 +4,7 @@ C 2002.11.01
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
-      
+
       integer, save ::
      *  nxpp, nypp, nspp,
      *  iyeard
@@ -1257,6 +1257,10 @@ c=======================================================================
       integer nwrite
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -1275,12 +1279,29 @@ c     ------------------------------------------------------------------
       grpsolps=' '
       locsolps=' '
 #else
+#ifdef NAGFOR
+        call get_environment_variable('GRPSOLPS',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable('GRPSOLPS',value=grpsolps)
+        elseif (ierror.eq.1) then
+          grpsolps=' '
+        endif
+        call get_environment_variable('LOCSOLPS',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable('LOCSOLPS',value=locsolps)
+        elseif (ierror.eq.1) then
+          locsolps=' '
+        endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('GRPSOLPS', 0, grpsolps, lenval, ierror)
       CALL PXFGETENV ('LOCSOLPS', 0, locsolps, lenval, ierror)
 #else
       call getenv ('GRPSOLPS', grpsolps)
       call getenv ('LOCSOLPS', locsolps)
+#endif
 #endif
 #endif
       version = grpsolps//'_'//locsolps

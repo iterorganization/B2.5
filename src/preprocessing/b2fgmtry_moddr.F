@@ -38,8 +38,7 @@
       real (kind=R8) ::
      *   parg(0:99)
 *   ..procedures
-      logical streql
-      external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
+      external xertst, xerrab, cfwuin, cfwuch, cfwure
       external ipgeti, intfaceh1, intfacer1, intfacev1
       external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs1, b2wfgm, b2wugm

@@ -224,7 +224,6 @@ program b2_ual_write_b2mod
     use ids_routines    ! IGNORE
                         !! These are the Access Layer routines + management of
                         !! IDS structures
-    use ids_assert      ! IGNORE
     use ids_grid_common &       ! IGNORE
         & , IDS_COORDTYPE_R => COORDTYPE_R    &
         & , IDS_COORDTYPE_Z => COORDTYPE_Z
@@ -232,9 +231,11 @@ program b2_ual_write_b2mod
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
     use ids_grid_objectlist     ! IGNORE
-    use ids_grid_examples       ! IGNORE
     use ids_grid_unstructured   ! IGNORE
     use ids_grid_structured     ! IGNORE
+#ifdef GGD_OLD
+    use ids_grid_examples       ! IGNORE
+#endif
 
     implicit none
 
@@ -411,10 +412,17 @@ contains
 
         write(0,*) "homogeneous_time = ",   &
             &   edge_profiles%ids_properties%homogeneous_time
+#ifdef GGD_OLD
         write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
             &   grid_subset(gridSubset_index)%identifier%name
         write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &
             &   grid_subset(gridSubset_index)%identifier%index
+#else
+        write(0,*) "Grid subset 3 name = ", edge_profiles%grid_ggd(1)%  &
+            &   grid_subset(gridSubset_index)%identifier%name
+        write(0,*) "Grid subset 3 index = ", edge_profiles%grid_ggd(1)% &
+            &   grid_subset(gridSubset_index)%identifier%index
+#endif
         ! write(0,*) "Time = ", edge_profiles%time(1)
         call ids_deallocate( edge_profiles )
         call imas_close( idx )

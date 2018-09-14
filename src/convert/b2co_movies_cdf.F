@@ -7,10 +7,14 @@
       integer nx, ny, ns, natm, nmol
       real (kind=R8) :: tim
       real (kind=R8), save :: dtim = 1.0_R8
+#ifndef NO_CDF
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
 #endif
-#ifndef NO_CDF
+#endif
       integer :: status
       integer :: idim, ivar, iatt, iret, ib, it, ih, idum,
      1 itim, ibatch, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
@@ -121,12 +125,23 @@ c prepare the b2movies.nc.xxxx file
 #ifdef NO_GETENV
       extension='xxxx'
 #else
+#ifdef NAGFOR
+        call get_environment_variable('PLASMASTATE',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable('PLASMASTATE',value=plasmastate)
+          extension=plasmastate(lenval-3:lenval)
+        elseif (ierror.eq.1) then
+          extension='xxxx'
+        endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
 #else
       call getenv ('PLASMASTATE', plasmastate)
 #endif
       extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
+#endif
 #endif
       filename='b2movies.nc.'//extension
       idum=timedim

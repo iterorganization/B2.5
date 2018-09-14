@@ -29,6 +29,7 @@
         jxi=nx/4
         jxa=3*nx/4
         jsep=ny/2
+        call ipgeti ('b2mwti_jsep',jsep)
       elseif(nnreg(0).eq.4 .or. nnreg(0).eq.5) then
         jxi=leftcut(1)+(rightcut(1)-leftcut(1))/4
         jxa=rightcut(1)-(rightcut(1)-leftcut(1))/4

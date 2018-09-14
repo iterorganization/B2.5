@@ -108,7 +108,7 @@ cxpb Check that this is a standard X-point                               !xpb
               corner(ix2,iy)=corner(ix1,iy)                              !xpb
             endif                                                        !xpb
           endif                                                          !xpb
-	   endif
+         endif
         enddo                                                            !xpb
       enddo                                                              !xpb
 

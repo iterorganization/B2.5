@@ -26,9 +26,8 @@ c-----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer ix,iy,is,i,j,k,l,m,n
+      integer ix,iy,is,i,j,k,l
       integer, allocatable :: mz_hlp(:)
-      real (kind=R8) :: vr,vz,vt,u
       real (kind=R8), allocatable :: n_hlp(:),v_hlp(:)
       character hlp_frmr*600
       character*2, allocatable :: hlp_al(:)

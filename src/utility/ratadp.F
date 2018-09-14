@@ -65,22 +65,22 @@
 *
 *  4. references
 *
-*     /1/ R. A. Hulse, "Numerical Studies of Impurities in Fusion
-*     Plasmas", Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
+*     /1/ R. A. Hulse, Numerical Studies of Impurities in Fusion
+*     Plasmas, Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
 *     /2/ R. A. Hulse, ... (detailed description?).
 *     /3/ D. E. Post, R. V. Jensen, C. B. Tarter, W. H. Grasberger,
-*     and W. A. Lokke, "Steady-State Radiative Cooling Rates for Low-
-*     Density, High-Temperature Plasma", At. Data Nucl. Data Tables
+*     and W. A. Lokke, Steady-State Radiative Cooling Rates for Low-
+*     Density, High-Temperature Plasma, At. Data Nucl. Data Tables
 *     vol. 20 (1977) pp. 397ff.
-*     /4/ R. A. Hulse, D. E. Post, and D. R. Mikkelsen, "Charge
+*     /4/ R. A. Hulse, D. E. Post, and D. R. Mikkelsen, Charge
 *     Exchange as a Recombination Mechanism in High-Temperature
-*     Plasmas", J. Phys. B, vol. 13 (1980) pp. 3895ff.
+*     Plasmas, J. Phys. B, vol. 13 (1980) pp. 3895ff.
 *     /5/ K. L. Bell, H. B. Gilbody, J. G. Hughes, A. E. Kingston,
-*     and F. J. Smith, "Recommended Data on the Electron Impact
-*     Ionization of Light Atoms and Ions", J. Phys. Chem. Ref. Data,
+*     and F. J. Smith, Recommended Data on the Electron Impact
+*     Ionization of Light Atoms and Ions, J. Phys. Chem. Ref. Data,
 *     vol.12 (1983) pp.891-916
-*     /6/ R. K. Janev et al., "Survey of Atomic Processes in Edge
-*     Plasmas", J. Nucl. Mater. 121 (1984) 10-16.
+*     /6/ R. K. Janev et al., Survey of Atomic Processes in Edge
+*     Plasmas, J. Nucl. Mater. 121 (1984) 10-16.
 *
 *
 *  5. parameters

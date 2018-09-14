@@ -16,8 +16,7 @@
      *  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..local variables
       integer i, j, ix, iy, ixl, ixr, jxi, jxa, jsep
-      integer ntubes(-1:ny), ixref(nncutmax,-1:ny),
-     *  iseg(-1:nx,-1:ny), nseg(-1:nx,-1:ny),
+      integer ntubes(-1:ny), ixref(nncutmax,-1:ny), iseg(-1:nx,-1:ny),
      *  ixleft(nncutmax,-1:ny), ixright(nncutmax,-1:ny),
      *  isnum(nncutmax,-1:ny)
       real (kind=R8) :: hz(-1:nx,-1:ny)
@@ -53,7 +52,7 @@
           ixleft(iseg(ix,iy),iy) = ix
           ixr = ix
           ixright(iseg(ix,iy),iy) = ix
- 20       continue
+   20     continue
           if (leftix(ixl,iy).ne.-2) then
             ixl = leftix(ixl,iy)
             if (iseg(ixl,iy).ne.0) then
@@ -67,7 +66,7 @@
             end if
             goto 20
           end if
- 30       continue
+   30     continue
           if (rightix(ixr,iy).ne.nx+1) then
             ixr = rightix(ixr,iy)
             if (iseg(ixr,iy).ne.0) then
@@ -81,7 +80,7 @@
             end if
             goto 30
           end if
- 40       continue
+   40     continue
         end do
       end do
 

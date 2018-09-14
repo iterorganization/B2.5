@@ -12,15 +12,13 @@
 *     ------------------------------------------------------------------
 *     B2XPIF computes the ion parallel current on cell faces.
 *     ------------------------------------------------------------------
-      integer n2, ix, iy
+      integer ix, iy
       integer, save :: ncall = 0
       real (kind=R8), save  :: prl_cur = 1.0_R8
 *     ------------------------------------------------------------------
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_prl_cur', prl_cur)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 
       call intfaceh(nx,ny,leftix,leftiy,vol,fch_pi_c(-1,-1,0),
      .                                      fch_pi_f(-1,-1,0))
@@ -31,7 +29,7 @@
             fch_pi_f(ix,iy,0) = fch_pi_f(ix,iy,0)*
      &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))/
      &       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*prl_cur
-	  endif
+          endif
         enddo
       enddo
 

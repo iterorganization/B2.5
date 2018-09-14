@@ -41,7 +41,7 @@ c
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
       integer jvft46
-      integer is, i, j, n, jvftnew, nstra1, io, idummy
+      integer is, i, j, n, jvftnew, io, idummy
       real (kind=R8) :: width
       real (kind=R8), allocatable :: field1(:,:)
       character*16, allocatable :: textan1(:), textmn1(:)
@@ -53,8 +53,7 @@ c
 
 *  -- PROCEDURES --
       character*32 :: get_B25_hash
-      logical streql
-      external ipgeti, ipgetr, xertst, streql, get_B25_hash
+      external ipgeti, ipgetr, xertst, get_B25_hash
 #endif
       external subini, subend
 
@@ -436,27 +435,27 @@ C
 *//END B2YT_NTREAD//
 
 #ifndef HPUX
-1983  WRITE(*,*)
+ 1983 WRITE(*,*)
      w     "ERROR IN B2YT_NTREAD: CANNOT OPEN FORT.33 ",
      .     "(NODES OF TRIANGULAR GRID)"
       call xerrab('Cannot open fort.33 file!')
-1984  WRITE(*,*)
+ 1984 WRITE(*,*)
      w     "ERROR IN B2YT_NTREAD: CANNOT OPEN FORT.34 ",
      .     "(TABLE OF CELLS OF TRIANGULAR GRID)"
       call xerrab('Cannot open fort.34 file!')
-1985  WRITE(*,*) "ERROR IN B2YT_NTREAD: CANNOT OPEN FORT.35 ",
+ 1985 WRITE(*,*) "ERROR IN B2YT_NTREAD: CANNOT OPEN FORT.35 ",
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
       call xerrab('Cannot open fort.35 file!')
 #else
-1983  WRITE(*,*)
+ 1983 WRITE(*,*)
      w     "ERROR IN B2YT_NTREAD: CANNOT OPEN FTN33 ",
      .     "(NODES OF TRIANGULAR GRID)"
       call xerrab('Cannot open ftn33 file!')
-1984  WRITE(*,*)
+ 1984 WRITE(*,*)
      w     "ERROR IN B2YT_NTREAD: CANNOT OPEN FTN34 ",
      .     "(TABLE OF CELLS OF TRIANGULAR GRID)"
       call xerrab('Cannot open ftn34 file!')
-1985  WRITE(*,*) "ERROR IN B2YT_NTREAD: CANNOT OPEN FTN35 ",
+ 1985 WRITE(*,*) "ERROR IN B2YT_NTREAD: CANNOT OPEN FTN35 ",
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
       call xerrab('Cannot open ftn35 file!')
 #endif

@@ -20,15 +20,15 @@ c======================================================================
      ,        l_errt(nsgmx),l_errs(nsgmx)
       real (kind=R8) ::
      *   u
-c<<<
-c      integer lun_w
-c      parameter (lun_w=76)
-c      character tab
-c>>>
+#ifdef DBG
+      integer lun_w
+      parameter (lun_w=76)
+      character tab
+#endif
 c======================================================================
-c<<<
-c      tab=char(9)
-c>>>
+#ifdef DBG
+      tab=char(9)
+#endif
 c*** Fill in the input arrays for rlcomp.
 c*** First, translate the information on the wall segments belonging
 c*** to the "shadowing structure" and "plot zones" into the format used
@@ -36,6 +36,7 @@ c*** in rlcomp. That is, we make a "structure" polygon, which is closed,
 c*** and the target list referring to the segments of this polygon.
 c
       lrdlsp=.false.
+      lrdlcr=.false.
       do i=1,nsgmx !{
         luwrk(i)=0
       end do !}
@@ -50,14 +51,16 @@ c
         lbnd(i)=i
         radld(i)=0.0_R8
       end do
-	  
-c      print *,'b2pwrdld: nplgs,nbndry,nwldrad=',nplgs,nbndry,nwldrad
-c      print *,'lwldlis(i,1):'
-c      print '(20i5)',(lwldlis(i,1),i=1,nplgs)
-c      print *,'lbnd(i):'
-c      print '(20i5)',(lbnd(i),i=1,nplgs)
-c      print *,'luwrk:'
-c      print '(20i5)',luwrk
+
+#ifdef DBG
+      print *,'b2pwrdld: nplgs,nbndry,nwldrad=',nplgs,nbndry,nwldrad
+      print *,'lwldlis(i,1):'
+      print '(20i4)',(lwldlis(i,1),i=1,nplgs)
+      print *,'lbnd(i):'
+      print '(20i4)',(lbnd(i),i=1,nplgs)
+      print *,'luwrk:'
+      print '(20i4)',luwrk
+#endif
 
       k=0
       do i=1,nwldrad
@@ -77,20 +80,22 @@ c      print '(20i5)',luwrk
         end if
       end do
       ntrg=k
-c<<<
-c      print *,'Shadowing structure: ',nplgs,nbndry,nwldlis(1),lwldlis(1,1)
-c      print '(5(1x,2f7.2))',(xp(i),yp(i),i=1,nplgs)
-c      print '(a,12i5)','Radiation target ',ntrg,(nwldlis(i),i=2,nwldprt)
-c      print '(16i5)',(ltrg(i),i=1,ntrg)
+#ifdef DBG
+      print *,'Shadowing structure: ',
+     ,         nplgs,nbndry,nwldlis(1),lwldlis(1,1)
+      print '(20i4)',(lbnd(i),i=1,nplgs)
+      print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
+      print '(a,12i5)','Radiation target ',ntrg,(nwldlis(i),i=2,nwldprt)
+      print '(20i4)',(ltrg(i),i=1,ntrg)
 
-c      open(lun_w,file='layout-w.dat')
-c      write(lun_w,'(6a)') '#Wall layout : ',label
-c      write(lun_w,'(6a)') '#R',tab,'Z'
-c      do i=1,nplgs
-c        write(lun_w,*) xp(i),tab,yp(i)
-c      end do
-c      close(lun_w)
-c>>>
+      open(lun_w,file='layout-w.dat')
+      write(lun_w,'(6a)') '#Wall layout : ',label
+      write(lun_w,'(6a)') '#R',tab,'Z'
+      do i=1,nplgs
+        write(lun_w,*) xp(i),tab,yp(i)
+      end do
+      close(lun_w)
+#endif
 c
 c*** Now specify the radiation sources - in W (remember, the additional
 c*** sources are in MW !!!)
@@ -113,9 +118,9 @@ c
         end do
       end do
 
-c<<<
-c      print *,'nadsrc,add_rad = ',nadsrc,add_rad
-c>>>
+#ifdef DBG
+      print *,'nadsrc,add_rad = ',nadsrc,add_rad
+#endif
       if(nadsrc .gt. 0  .and.  add_rad .gt. 0.0_R8) then
         u=1.0e6_R8*add_rad/nadsrc
         do i=1,nadsrc
@@ -127,13 +132,13 @@ c>>>
       end if
 
       nsrc=k
-c<<<
-c      u=0.0_R8
-c      do i=1,nsrc
-c        u=u+ssrcm(i)
-c      end do
-c      print *,'Sources: nsrc, power = ',nsrc,u
-c>>>
+#ifdef DBG
+      u=0.0_R8
+      do i=1,nsrc
+        u=u+ssrcm(i)
+      end do
+      print *,'Sources: nsrc, power = ',nsrc,u
+#endif
 c
 c*** Calculate the radiation load
 c
@@ -226,6 +231,40 @@ c*** Calculate the radiation load split by impurity species from B2
         lrdlsp=.true.
       end if !}
 
+#ifdef DBG
+        print *,'ildparm,nadsrc,add_rad: ',ildparm,nadsrc,add_rad
+#endif
+      if(ildparm.eq.98 .and. nadsrc.gt.0 .and. add_rad.gt.0.0_R8) then !{
+
+c*** Calculate the radiation load from the core sources
+
+        write(*,*) '  Extra radiation from the core: ',1.0e6_R8*add_rad
+        do i=1,nplgs !{
+          radld(i)=0.0_R8
+        end do !}
+        k=0
+        u=1.0e6_R8*add_rad/nadsrc
+        do i=1,nadsrc !{
+          k=k+1
+          ssrcm(k)=u
+          xysrc(1,k)=addsrc_xy(1,i)
+          xysrc(2,k)=addsrc_xy(2,i)
+        end do !}
+        nsrc=k
+        call rlcomp
+        write(*,*) '  Total radiation      : ',ttsrc
+        write(*,*) '  Reaching the targets : ',tttrg
+        k=0
+        is=1
+        do i=1,nwldrad !{
+          l=lwldrad(i)
+          if(l.gt.0) then !{
+            k=k+1
+            wldrdlsp(l,is)=radld(k)/segm_area(l)
+          end if !}
+        end do !}
+        lrdlcr=.true.
+      end if !}
       return
 c======================================================================
       end subroutine b2pwrdld

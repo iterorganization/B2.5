@@ -45,12 +45,15 @@
       integer ncall, styl0, n2, ix, iy, is, js, k
       integer, save :: iout = 0, !iout_b2wdat = 0,                      !srv 30.06.08 11.09.09
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
       character chns*3, chcx*3, chk*1                                   !srv 11.09.09
       real (kind=R8) ::
      *  rg0, t0, t1, t2, du0, du1
+#ifdef ASTRA
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
+#endif
       save ncall, styl0, rg0
 *   ..procedures
       intrinsic abs
@@ -82,6 +85,8 @@
        call ipgeti ('b2stcx_iout', iout)                              !srv 11.09.09 {
        call ipgeti ('b2npc9_iout', iout_b2npc9)
        call ipgeti ('b2npco_iout', iout_b2npco)
+       call ipgeti ('b2npc7_iout', iout_b2npc7)                       !srv 02.04.18
+       call ipgeti ('b2npc11_iout', iout_b2npc11)                     !srv 02.04.18
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                       !srv 11.09.09 }
@@ -292,8 +297,9 @@ ctmp.dpc
 #endif
 
       write (chcx,'(i3.3)') is0
-!      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
-!     &              .or. iout_b2wdat.eq.4) then
+!      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1
+!     &              .or.  iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 )    !srv 02.04.18
+!     &        .or. iout_b2wdat.eq.4 ) then
 !        do is = 0, ns-1
 !          write (chns,'(i3.3)') is
 !!         do k=0,1

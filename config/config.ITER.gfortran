@@ -15,13 +15,13 @@ LINK_MOD =
 
 ifdef USE_MPI
 FC = mpif90
-MPI_CPP ?= `pkg-config mpich2-ch3 --cflags`
-LD_MPI  ?= `pkg-config mpich2-ch3 --libs`
+MPI_CPP ?= --with-pmi=pmi2
+LD_MPI  ?= -lpmi2
 else
 ifdef USE_IMPGYRO
 FC = mpif90
-MPI_CPP ?= `pkg-config mpich2-ch3 --cflags`
-LD_MPI  ?= `pkg-config mpich2-ch3 --libs`
+MPI_CPP ?= --with-pmi=pmi2
+LD_MPI  ?= -lpmi2
 else
 FC = gfortran
 endif
@@ -51,13 +51,19 @@ ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
-ifdef IMAS_PREFIX
+ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS  += -DIMAS
 endif
-LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
-INCMODS  = -I${IMAS_PREFIX}/include/gfortran
-IMASLIBS = ${LD_UAL} -lggd-${COMPILER}
+ifeq (,$(findstring hpc-login0,$(NODENAME)))
+EQUIVS  += -DGGD_OLD
+LD_UAL  ?= `pkg-config imas-gfortran ggd-gfortran --libs`
+INCMODS  = `pkg-config imas-gfortran ggd-gfortran --cflags`
+else
+LD_UAL  ?= `pkg-config imas-gfortran ggd --libs`
+INCMODS  = `pkg-config imas-gfortran ggd --cflags`
+endif
+IMASLIBS = ${LD_UAL}
 endif
 
 ifdef LD_CATALYST

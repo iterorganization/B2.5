@@ -41,11 +41,7 @@
 
       integer ::  iun, n2, itp, idum(0:2)
       integer, save :: naver, ntotdt
-      character lble*120, lbli*120
-      character*10, save ::
-     *   b2faveri_version = '00.000.000'
-      real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4)
+      character lble*120
 
       n2 = (nx+2)*(ny+2)
 

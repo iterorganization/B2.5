@@ -21,14 +21,13 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is
+      integer ix, iy, is
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
       real (kind=R8), save :: vis_per = 1.0e0_R8                        !srv 22.11.99
       real (kind=R8) ::
      &  fac_vism, t0, wrk0(-1:nx,-1:ny)
       character(3) :: chns
 *   ..procedures
-      intrinsic max, abs
       real (kind=R8) ::
      *   hy1
       external subini, subend, xertst
@@ -45,8 +44,6 @@
        call ipgetr ('b2tfhe_vis_per', vis_per)                          !srv 22.11.99
        call ipgeti ('b2txvspr_iout',iout)                               !srv 06.12.17
       end if
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99 

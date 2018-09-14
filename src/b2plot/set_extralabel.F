@@ -20,6 +20,10 @@ C ===================================================================
       character*1 backslash
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -36,7 +40,7 @@ C ===================================================================
 #ifndef PLPLOT
       call pcsetc('FC - function code character','@')
 #endif
-  10  istart=icpos
+   10 istart=icpos
       do i=istart,elength
         if(locallabel(icpos:icpos).eq.backslash) then
           if(locallabel(icpos+1:icpos+1).eq.'R') goto 12
@@ -57,47 +61,47 @@ C ===================================================================
         jcpos=jcpos+1
       enddo
       goto 1000
-  12  continue ! Switch to the "Roman" part of the PWRITX database
+   12 continue ! Switch to the "Roman" part of the PWRITX database
       tmp(jcpos:jcpos+2)='@R@'
       icpos=icpos+2
       jcpos=jcpos+3
       goto 10
-  14  continue ! Switch to the "Greek" part of the PWRITX database
+   14 continue ! Switch to the "Greek" part of the PWRITX database
       tmp(jcpos:jcpos+2)='@G@'
       icpos=icpos+2
       jcpos=jcpos+3
       goto 10
-  16  continue ! default characters
+   16 continue ! default characters
       tmp(jcpos:jcpos+3)='@F0@'
       icpos=icpos+2
       jcpos=jcpos+4
       goto 10
-  20  continue ! found greek letters
+   20 continue ! found greek letters
       tmp(jcpos:jcpos+4)='@F33@'
       icpos=icpos+2
       jcpos=jcpos+5
       goto 10
-  30  continue ! found roman letters
+   30 continue ! found roman letters
       tmp(jcpos:jcpos+4)='@F25@'
       icpos=icpos+2
       jcpos=jcpos+5
       goto 10
-  40  continue ! switch to normal level
+   40 continue ! switch to normal level
       tmp(jcpos:jcpos+2)='@N@'
       icpos=icpos+2
       jcpos=jcpos+3
       goto 10
-  50  continue ! resize font 130%
+   50 continue ! resize font 130%
       tmp(jcpos:jcpos+5)='@Z150@'
       icpos=icpos+2
       jcpos=jcpos+6
       goto 10
-  60  continue ! resize font 70%
+   60 continue ! resize font 70%
       tmp(jcpos:jcpos+4)='@Z50@'
       icpos=icpos+2
       jcpos=jcpos+5
       goto 10
-  80  continue ! found superscript
+   80 continue ! found superscript
       tmp(jcpos:jcpos+2)='@S@'
       icpos=icpos+1
       jcpos=jcpos+3
@@ -120,7 +124,7 @@ C ===================================================================
      .   'You did not close superscript braces')
       endif
       goto 10
-  90  continue ! found subscript
+   90 continue ! found subscript
       tmp(jcpos:jcpos+2)='@B@'
       icpos=icpos+1
       jcpos=jcpos+3
@@ -162,10 +166,23 @@ C ===================================================================
       elseif(var.eq.'sonnetfile'.or.var.eq.'SONNETFILE') then
         envvar=sonnetfile
       else
+#ifdef NO_GETENV
+        envvar=' '
+#else
+#ifdef NAGFOR
+        call get_environment_variable(var, status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable(var,value=envvar)
+        elseif (ierror.eq.1) then
+          envvar=' '
+        endif
+#else
 #ifdef USE_PXFGETENV
         CALL PXFGETENV (var, 0, envvar, lenval, ierror)
 #else
         call getenv (var, envvar)
+#endif
+#endif
 #endif
         if(envvar.eq.' ') then
           write(*,*) 'Environment variable ',var(1:lnblnk(var)),

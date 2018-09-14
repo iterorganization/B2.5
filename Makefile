@@ -10,11 +10,14 @@ SRCB2   = ${PWD}
 SRCDIR  = ${SRCB2}/src
 DOCDIR  = ${SRCDIR}/documentation
 PYTHON  = python
+INCLUDE =
+TAGSLIST =
 
 MAKES = ${SRCB2}/Makefile
 DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 # Include global SOLPS compiler settings
 ifndef SOLPS_CPP
+NODENAME = $(shell echo `hostname`)
 ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} ] && echo yes || echo no ),yes)
   include ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
   MAKES += ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
@@ -81,8 +84,6 @@ ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && ec
 endif
 
 # Add external includes first
-INCLUDE =
-TAGSLIST =
 ifdef NCDIR
 INCLUDE += -I${NCDIR}/include
 endif
@@ -211,9 +212,10 @@ PROG_OT = b2ah.exe b2ai.exe b2ar.exe b2yi_gnuplot.exe b2yh.exe b2yv.exe b2fgmtry
 PROG_OP = b2op.exe
 PROG_OQ = b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
-PROG_ID = b2_ual_write.exe b2_ual_write_gsl.exe b2_ual_write_b2mod.exe
+PROG_ID = b2_ual_write.exe b2_ual_write_b2mod.exe
+PROG_TT = test_shrink_label.exe
 
-EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID}}
+EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_ID}}
 
@@ -227,8 +229,9 @@ OPEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OP}}
 OQEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OQ}}
 MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 IDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_ID}}
+TTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_TT}}
 
-.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force
+.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force test
 
 DEFAULT: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE}
 ALL: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE} ${XDEXE}
@@ -756,8 +759,13 @@ ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
+${TTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
+
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}
+
+test:	${TTEXE}
 
 ${SOLPS4OBJS}: ${OBJDIR}/%.o: ${SOLPS4}/%.F
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o
@@ -923,20 +931,6 @@ endif
 	${MAKE} depend
 
 include ${OBJDIR}/dependencies
-
-${OBJDIR}/process.o : process.F
-	@- /bin/rm -f ${OBJDIR}/process.f ${OBJDIR}/process.o
-ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
-else
-ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/process.f
-else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${DBLSED} > ${OBJDIR}/process.f
-endif
-	${DBLFC} ${DBLOPTION} ${FCOPTS} -c ${INCMOD}${OBJDIR} ${OBJDIR}/process.f
-endif
-	@if [ -f process.o ] ; then /bin/mv process.o ${OBJDIR}/ ; fi
 
 ifeq ($(COMPILER),g77)
 ${OBJDIR}/b2stbc.o : b2stbc.F

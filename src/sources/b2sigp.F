@@ -37,7 +37,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, k
+      integer ncall, n2, ix, iy !,k
       integer, save :: style = 2                                     !srv 13.01.17
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
@@ -48,7 +48,6 @@
 *   ..procedures
       external subini, subend, xertst
       external b2xvsg
-      intrinsic abs
 *   ..initialisation
       data ncall/0/
 

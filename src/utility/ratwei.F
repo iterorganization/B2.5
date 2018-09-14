@@ -23,14 +23,14 @@
 *     RATWEI uses WEISHEIT data to improve tables of rate coefficients
 *     for ionisation, recombination, electron energy loss, charge
 *     exchange, and radiation; as function of temperature and density.
-*     The WEISHEIT data set is incomplete.  The call to ratwei must
+*     The WEISHEIT dataset is incomplete. The call to ratwei must
 *     be preceded by a call to one of the comprehensive routines.
 *
 *
 *  3. description
 *
 *     This routine employs WEISHEIT data /1,2/ to improve a table
-*     of atomic rate coefficients.  These data were made available
+*     of atomic rate coefficients. These data were made available
 *     by D. K. Stotler and D. E. Post of Princeton PPL.
 *
 *     rtt represents temperature or temperature per amu; units are ev.
@@ -51,7 +51,7 @@
 *
 *     The Weisheit table provides data for hydrogen only, and only for
 *     the processes of ionisation, recombination, and neutral hydrogen
-*     energy loss and radiation.  The rate coefficients for charge exchange 
+*     energy loss and radiation. The rate coefficients for charge exchange
 *     and for charged hydrogen energy loss must be obtained by a preceding 
 *     call to one of the comprehensive packages, such as STRAHL or ADPAK.
 *     The call to the present routine will then cause the rate
@@ -59,11 +59,11 @@
 *
 *  4. references
 *
-*     /1/ Jon C. Weisheit, "Recombination in Dense Plasmas", J. Phys. B
+*     /1/ Jon C. Weisheit, Recombination in Dense Plasmas, J. Phys. B
 *     (Atom. Molec. Phys.) 8 (1975) 2556.
 *     /2/ R. K. Janev, D. E. Post, W. D. Langer, K. Evans, D. B.
-*     Heifetz and J. C. Weisheit, "Survey of Atomic Processes in Edge
-*     Plasmas", J. Nuclear Mater. 121 (1984) 10-16.
+*     Heifetz and J. C. Weisheit, Survey of Atomic Processes in Edge
+*     Plasmas, J. Nuclear Mater. 121 (1984) 10-16.
 *
 *
 *  5. parameters
@@ -73,7 +73,7 @@
 *
 *     nz - integer, input.
 *     nz specifies the nuclear charge of the species for which the rate
-*     coefficients are to be evaluated.  In the present code it is
+*     coefficients are to be evaluated. In the present code it is
 *     required that nz.eq.1.
 *
 *     rtt - (0:nt) real*8 array, input.

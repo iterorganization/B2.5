@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2news_(nx, ny, ns, nxtl, nxtr, nscx, iscx,
-     &  ismain, ismain0, dtim, rxf, ierr) !srv 23.11.10
+     &  ismain, ismain0, dtim, rxf, ierr, ramp_call) !srv 23.11.10
       use b2mod_types
       use b2mod_geo
       use b2mod_plasma
@@ -26,7 +26,7 @@
      *   dtim, rxf
 *   ..output arguments                                                    !xpb
       integer ierr
-      logical wrong_flow
+      logical wrong_flow, ramp_call
 *   ..common blocks
 
 *-----------------------------------------------------------------------
@@ -66,7 +66,8 @@
       integer, save :: no_solve = 0                                      !srv 02.07.08
 !      integer, save :: re_compute_pb = 1                                !srv 15.02.10
       integer, save :: iout = 0,
-     &                 iout_b2npc9 = 0, iout_b2npco = 0,                 !srv 11.09.09 {
+     &                 iout_b2npc9 = 0, iout_b2npco = 0,                 !srv 11.09.09
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo = 0, iout_b2npp7 = 0,
      &                 iout_b2nppo = 0, iout_b2wdat = 0
@@ -82,7 +83,6 @@
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3,
      1  t0, vis_per,                                                     !srv 09.07.99 06.07.00
      &  pz(-1:nx,-1:ny)                                                  !srv 18.01.02 30.06.03 03.11.17
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
       real (kind=R8) ::                                                  !xpb
 !     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
 !     1  sne0(-1:nx,-1:ny,0:1),                                           !xpb
@@ -98,15 +98,10 @@
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                   !srv 09.07.99
      &     , vis_per, solving, area_fix, no_current                      !srv 06.07.00
      &     , nsmin, nsmax
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
-!      real (kind=R8) ::                                                 !srv 04.06.99
-!     *   fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1)                            !srv 04.06.99
 *   ..procedures
       intrinsic mod
       real (kind=R8) ::
      *  smin, smax, b2sasum
-      integer len_of_digits
-      external len_of_digits
       external subini, subend, xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
@@ -116,13 +111,12 @@
       data ncall/0/, xfm0/1.0e0_R8/, xfm1/1.0e0_R8/, xfm2/1.0e0_R8/,
      1   xfm3/1.0e0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,        !srv 09.07.99 09.03.09
      2   vis_per/1.0e0_R8/, no_current/0/                               !srv 06.07.00
-!     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
-!     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                  !srv 09.07.99
       integer, save :: no_neutr_scl = 0, no_b2sral_call = 1
       integer, save :: do_2nd_b2npco_call = 0
       integer, save :: re_eval_prtls_fluxes = 0                         !srv 28.06.13
       integer, save :: nhist = 0, neutr_avg = 0, nrelax = 0, nstg2 = 0
       integer, save :: use_eirene = 0
+      integer, save :: ramp_slow = 0
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -156,11 +150,7 @@
      &  'faulty internal parameter na_new')
        call xertst (na_new.gt.na_min,
      &  'na_new must be larger than na_min!')
-!       call ipgetr ('b2news_facdrift_target', facdrift_target)          !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_start', facdrift_start)            !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_inc', facdrift_inc)                !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_dec', facdrift_dec)                !srv 09.07.99
-!       facdrift=facdrift_start                                          !srv 09.07.99
+       call ipgeti ('b2news_ramp_slow', ramp_slow)
        call ipgeti ('b2news_potit', potit)
        call xertst (0.lt.potit,
      &   'faulty internal parameter potit')
@@ -178,6 +168,8 @@
        call ipgeti ('b2news_iout', iout)
        call ipgeti ('b2npc9_iout', iout_b2npc9)                          !srv 16.07.10 {
        call ipgeti ('b2npco_iout', iout_b2npco)
+       call ipgeti ('b2npc7_iout', iout_b2npc7)                          !srv 02.04.18
+       call ipgeti ('b2npc11_iout', iout_b2npc11)                        !srv 02.04.18
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2npp7_iout', iout_b2npp7)
        call ipgeti ('b2nppo_iout', iout_b2nppo)
@@ -241,6 +233,7 @@
      >   write(*,*) 'Not solving potential equation!'
        if(.not.solving(4))
      >   write(*,*) 'Not solving heat equations!'
+       call b2news_facdrift_fac_ExB_init(nx, ny, ramp_slow)
        call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
        call ipgeti ('b2news_no_b2sral_call', no_b2sral_call)
        call ipgeti ('b2news_do_2nd_b2npco_call', do_2nd_b2npco_call)
@@ -289,6 +282,13 @@ csw 26feb2014 some extra variables
      . 'invalid main neutral species index ismain0')
       call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      . 'invalid main neutral species ismain0; must be neutral')
+*   ..test facdrift
+      call xertst (0.0_R8.le.minval(facdrift) .and.
+     &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
+      call xertst (0.0_R8.le.minval(fac_ExB) .and.
+     &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
+      call xertst (0.0_R8.le.minval(fac_vis) .and.
+     &     1.0_R8.ge.maxval(fac_vis), 'faulty argument fac_vis')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of bb
@@ -326,8 +326,16 @@ csw 01oct2012 initialize potential if necessary
         po(:,:)=3.1_R8*te(:,:)/qe
       endif
 
-!      facdrift=min(facdrift*facdrift_inc,facdrift_target)               !srv 09.07.99
-!      write(*,*) 'facdrift',facdrift                                    !srv 09.07.99
+      if (ramp_call .or. ncall.eq.0) then
+        call b2news_facdrift_fac_ExB_inc(nx,ny,ramp_slow)
+      endif
+*   ..test facdrift, fac_ExB, fac_vis
+      call xertst (0.0_R8.le.minval(facdrift) .and.
+     &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
+      call xertst (0.0_R8.le.minval(fac_ExB) .and.
+     &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
+      call xertst (0.0_R8.le.minval(fac_vis) .and.
+     &     1.0_R8.ge.maxval(fac_vis), 'faulty argument fac_vis')
 * ..main computation
 *   ..compute ni, ne, ne2
       call b2xpni (nx, ny, ns, na, ni)
@@ -352,10 +360,10 @@ csw 01oct2012 initialize potential if necessary
      &                       fac_vis, fchvispar)
       call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
-!     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
-!     &             lnlam, te, ti, ni, chci, fchvisq)
+      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
+     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
+      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
+     &             lnlam, te, ti, ni, chci, fchvisq)
 
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                              !srv 01.10.99
@@ -403,7 +411,7 @@ c   extra call at this place within internal iteration)
         call b2sral (nx, ny, ns, nxtl, nxtr,
      &    nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &    dtim, BoRiS, facdrift, fac_ExB, fac_vis,                       !xpb
-     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,              !srv 09.01.01
+     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, lnlam,       !srv 09.01.01
      &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                !srv 28.10.02
      &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -519,10 +527,10 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
      &                       fac_vis, fchvispar)
       call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
-!     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
-!     &             lnlam, te, ti, ni, chci, fchvisq)
+      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
+     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
+      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
+     &             lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
 !      do is = 0, ns-1
@@ -674,6 +682,7 @@ csw 16oct2012 init ier0
      &  te, po, vedia, veecrb)
 
       if(iout.ne.0 .or. iout_b2npco.ne.0 .or. iout_b2npc9.ne.0           !srv 16.07.10
+     &             .or. iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0          !srv 02.04.18
      &             .or. iout_b2npmo.ne.0 .or. iout_b2npht.ne.0
      &             .or. iout_b2nph9.ne.0 .or. iout_b2nppo.ne.0
      &             .or. iout_b2npp7.ne.0 .or. iout_b2wdat.eq.4)
@@ -785,10 +794,10 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &                         fac_vis, fchvispar)
           call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-!          call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,       !srv 10.10.17
-!     &            po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!          call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,   !srv 10.10.17
-!     &                lnlam, te, ti, ni, chci, fchvisq)
+          call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,       !srv 10.10.17
+     &            po, ti, na, avisper, bvisper, cvisper, fchvisper)
+          call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,   !srv 10.10.17
+     &                lnlam, te, ti, ni, chci, fchvisq)
 
           if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
             call b2xpro (nx, ny, ns, mp, am, na, ro)
@@ -815,7 +824,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      1       wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,  !srv 19.05.03 08.10.04 04.02.05
      &       po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &       cddi(-1,-1,0,is),                                           !srv 13.10.06
-     &       cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is),cdnahz(-1,-1,0,is),  !srv 09.01.01 15.12.05
+     &       cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is), !srv 09.01.01 15.12.05
      &       cdpahz(-1,-1,0,is),
      &       fchvispar, fchvisper, fchinert, fchanml, fchvisq,           !srv 19.07.02 01.10.99 20.09.06
      &       fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
@@ -851,8 +860,8 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 
         if(i.gt.potit.and.solving(3)) then
           ierr=10
-!          write(*,*) 'Potential equation not converging'                !srv 09.07.99
-!          facdrift=max(facdrift*facdrift_dec,facdrift_start)            !srv 09.07.99
+          write(*,*) 'Potential equation not converging'
+          call b2news_facdrift_fac_ExB_dec(nx,ny,ramp_slow)
           goto 99999
         endif
       endif           ! if pot_eq                                        !srv 13.07.05

@@ -155,7 +155,7 @@
       real (kind=R8) ::
      *   p0x, p0y
 *   ..procedures
-      intrinsic min, max, sqrt
+      intrinsic sqrt
       real (kind=R8) ::
      *   norm, dist1
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)

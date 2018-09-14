@@ -234,7 +234,7 @@
       call cfrure (nget, n2*2, qz, 'qz')
 cxpb
       if(b2fgmtry_version.ge.'01.001.022') then
-	call cfrure (nget, n2, qc, 'qc')
+       call cfrure (nget, n2, qc, 'qc')
       else
        do iy = -1, ny
         do ix = -1, nx
@@ -253,7 +253,7 @@ cxpb
       endif
       qcb = 1.0_R8
       if(b2fgmtry_version.ge.'01.001.030') then
-	call cfrure_opt (nget, n2, qcb, 'qcb')
+       call cfrure_opt (nget, n2, qcb, 'qcb')
       end if
       if (maxval(qcb).eq.1.0_R8 .and. minval(qcb).eq.1.0_R8) then
        do iy = -1, ny
@@ -305,8 +305,8 @@ cdpc
 cdpc-end
 cxpb
       if(b2fgmtry_version.ge.'01.001.000') then
-	call cfruin (nget, 1, idum, 'periodic_bc')
-	periodic_bc=idum(0)
+        call cfruin (nget, 1, idum, 'periodic_bc')
+        periodic_bc=idum(0)
       else
         periodic_bc=0
       endif
@@ -385,7 +385,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
 *   ..read extended grid cell flags
       cflags = 0
       if(b2fgmtry_version.ge.'01.001.028') then
-	call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
+        call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
       endif
       if(maxval(cflags).eq.0) then
         cflags(1:nx-2,1:ny-2,CELLFLAG_TYPE) = GRID_INTERNAL

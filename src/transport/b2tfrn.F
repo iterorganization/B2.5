@@ -5,8 +5,8 @@
      &  facdrift, fac_ExB, rza, rz2,                                     !srv 13.01.17
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,   
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,         !srv 20.09.06
-     &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
-     &  uadia, fna_eir, fne_eir, fhe_eir, fhi_eir)
+     &  fne, cvla, cdna, cdpa, chce, chci, veecrb, vaecrb, wadia, ve,    !srv 05.06.18
+     &  wedia, uadia, fna_eir, fne_eir, fhe_eir, fhi_eir)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -65,7 +65,9 @@
       integer, save :: no_hybr = 0
       integer, save :: drift_style = 1
       integer, save :: iout = 0,
-     &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
+     &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
+     &                 iout_b2npmo =0
       integer, save :: style = 2                                         !srv 13.01.17
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       character chns*3                                                   !srv 16.09.02
@@ -91,7 +93,7 @@
      *   hybr, hy1
       external subini, subend, xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
-      intrinsic abs, max, min, mod, sqrt
+      intrinsic abs, max, min, sqrt
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       hybr(flo,dif) = max(dif,abs(flo/2.),sqrt(dif**2+flo**2/4.)) !!!
 *   ..initialisation
@@ -112,6 +114,8 @@
         call ipgeti ('b2tfrn_iout', iout)
         call ipgeti ('b2npc9_iout', iout_b2npc9)
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                         !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                       !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                          !srv 30.12.09
         call ipgetr ('b2tfnb_xfrhie', xfrhie)

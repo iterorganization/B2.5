@@ -60,6 +60,9 @@
       use eirmod_extrab25
       use b2mod_b2plot
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+#ifdef NAGFOR
+      use f90_unix_proc ! IGNORE
+#endif
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -88,7 +91,7 @@
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
-      real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
+      real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
@@ -1179,7 +1182,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        call xertst (0.le.isfb.and.isfb.lt.ns,
      &   'faulty internal parameter isfb')
        call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
-       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
+       call xertst (0.0_R8.le.fac_hz .and. 1.0_R8.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
 csw 09oct2012
        call ipgeti ('b2news_poteq', pot_eq)
@@ -1304,7 +1307,8 @@ csw 09oct2012
         signmf = bb(jxa,jsep,2)/abs(bb(jxa,jsep,2))
       else
         signmf = 0.0_R8
-        call xerrab ('error in b2mndr , signmf = 0 in b2mndr')         !srv 09.10.09
+        call xertst (isymm.eq.2.or.isymm.eq.4,
+     &   'error in b2mndr , signmf = 0 in b2mndr')
       endif
       write(*,*) 'conn'
       do iy=-1,ny
@@ -1773,7 +1777,7 @@ c new CDF movie option (1st frame at t=0)
 
       call subend()
       return
- 999  call xerrab
+  999 call xerrab
      . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
       end subroutine b2mndr_0
 
@@ -1787,9 +1791,14 @@ c new CDF movie option (1st frame at t=0)
 #ifdef WINDOWS
       logical(4) :: lresult
 #endif
-      integer i, is, js
+      integer i
       character*256 filename, fort31name
+#ifdef B25_EIRENE
       character*256 systemarg
+#ifdef NAGFOR
+      integer ierror, status
+#endif
+#endif
       logical ok, found
 *   ..procedures
       real(kind=R8) :: epoch_seconds
@@ -2163,23 +2172,39 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
             inquire(file='fort.13',exist=found)
             if (found) then
               systemarg='cp fort.13 fort.13.'//savefile(13:16)
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
             inquire(file='fort.15',exist=found)
             if (found) then
               systemarg='cp fort.15 fort.15.'//savefile(13:16)
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
 #else
             inquire(file='ftn13',exist=found)
             if (found) then
               systemarg='cp ftn13 ftn13.'//savefile(13:16)
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
             inquire(file='ftn15',exist=found)
             if (found) then
               systemarg='cp ftn15 ftn15.'//savefile(13:16)
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
               call system(systemarg)
+#endif
             endif
 #endif
           endif

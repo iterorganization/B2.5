@@ -76,7 +76,6 @@ c--------------------------------------------------------------------
 
       integer :: nenergy
       real (kind=r8) :: epsn, mu(3,3)
-      logical nltest
 
 c     define the proper thermodynamic forces for the calculation below
       do i = 0, nsl-1
@@ -98,7 +97,6 @@ c     calculate the viscosity
               visc(k,l,i,j) = 0.0_R8
             enddo
           enddo
-          nltest = .false.
           call viscos(nsdecl, nzdecl, nsl, i, j, nreg, bgradp, fc, 
      +                fm, mmx, nenergy, epsn, ntau, m, t, xi, den, 
      +                ncl, mu)

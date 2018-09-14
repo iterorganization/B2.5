@@ -92,6 +92,7 @@
       integer, save :: out_tfiles = 1                                !xpb 28.09.16
       integer, save :: iout = 0,        iout_b2npmo = 0,             !srv 11.09.09 {
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 ncall_iout = -1, iout_b2wdat = 0              !srv 23.03.12
@@ -99,20 +100,20 @@
 #ifdef B25_EIRENE
       integer ia, im
       character ch3*3
+      real (kind=R8) :: flxtmp(0:nx+1,0:ny+1)
 #endif
+      real (kind=R8) ::                                              !srv 29.04.10 {
+     &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
+     &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
+     &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),
+     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
+     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol)   !IYS 27.01.17
       real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8       !srv 12.04.08
       character chns*3, chk*1                                        !srv 11.09.09 } 23.03.12
       real (kind=R8) ::
      *  lnorm, tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1),
      *  tphye(0:ns-1), thevp(0:ns-1), thvpe(0:ns-1), tresn(0:ns-1),
      *  trese(0:ns-1), trfln(0:ns-1), trfle(0:ns-1), t_frac, t0
-      real (kind=R8) ::                                              !srv 29.04.10 {
-     &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
-     &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),
-     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
-     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),  !IYS 27.01.17
-     &  flxtmp(0:nx+1,0:ny+1)
       integer ncall, sput_src, first_flight,
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
@@ -208,6 +209,8 @@
         call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                     !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                   !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
@@ -940,8 +943,9 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
        enddo                                                          !srv 29.04.10 }
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
-     &         .or. iout_b2wdat.eq.4 ) then
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1
+     &              .or.  iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 )   !srv 02.04.18
+     &        .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
@@ -1057,6 +1061,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       data ncall/0/, use_eirene/0/, ank_mods/0/
       call subini ('b2stbr_neutr_scl')
       if (ncall.eq.0) then
+        call xertst(0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+        call xertst(1.le.ns, 'faulty argument ns')
         call ipgeti('b2mndr_eirene',use_eirene)
         call ipgeti('eirene_ank_mods',ank_mods)
       endif
@@ -1114,7 +1120,7 @@ c        write(*,*) 'Called neutr_scl'
       logical new_sputter_namelist, catch_up, wall_namelist_used
       character*256 filename
 *   ..procedures
-      intrinsic mod, nint
+      intrinsic mod
       external subini, subend, xertst, xerrab, ipgeti, ipgetr
 *   ..initialisation
       data use_eirene/0/, neutrals_namelist/0/,

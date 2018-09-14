@@ -14,7 +14,7 @@ c
          if(c(i).eq.' ' .or. c(i).eq.b) go to 100
          k=k+1
          c(k)=c(i)
- 100  continue
+  100 continue
       m=k
       if(m.lt.n) call bfill(c(k+1),n-k,' ')
       return
@@ -27,7 +27,7 @@ c=====================================================
          if(c(i).eq.' ' .or. c(i).eq.b) go to 110
          k=k-1
          c(k)=c(i)
- 110  continue
+  110 continue
       m=n+1-k
       if(m.lt.n) call bfill(c,n-k,' ')
 c=====================================================

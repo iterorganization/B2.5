@@ -25,7 +25,7 @@
               pz(ix,iy) = pz(ix,iy)+na(ix,iy,is)*ti(ix,iy)
             enddo
           enddo
-	endif
+        endif
       enddo
       do is = 0, ns_ext-1
         if (.not.is_ext_neutral(is)) then
@@ -34,7 +34,7 @@
               pz(ix,iy) = pz(ix,iy)+na_ext(ix,iy,is)*ta_ext(ix,iy,is)
             enddo
           enddo
-	endif
+        endif
       enddo
 *$$$  call subend ()
       return

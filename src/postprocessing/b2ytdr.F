@@ -55,7 +55,7 @@ c 2002-09-11: logic revised
      , , tio => ti0, til => ti1, tel => te1
       use eirmod_ctrig
       use eirmod_comusr
-     , ,only: NSPH, NMASSA, NCHARA,
+     , ,only: NMASSA, NCHARA,
      ,        eirene_alloc_comusr, eirene_dealloc_comusr
       use eirmod_comprt
      , , istr => istra
@@ -239,7 +239,7 @@ c 2002-09-11: logic revised
      4 r(:), f(:), dprof(:), felm(:), delm(:),
      5 px(:), pf(:), pelm(:),
      6 prdsa(:), pra(:), dsa(:), dsa1(:), deta(:),
-     7 pxdsa(:), pxa(:), xx(:), x(:), fx(:), dx(:),
+     7 pxa(:), xx(:), fx(:), dx(:),
      8 sr1(:), sf1(:), sd1(:), sr2(:), sf2(:), sd2(:),
      9 spr(:), spf1(:), spf2(:), s1d(:,:,:,:),
      * xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
@@ -260,7 +260,6 @@ c 2002-09-11: logic revised
       integer istyle_cur_contr_on_S_and_N
       integer is0(0:DEF_NSD-1), is1(0:ns-1)
       integer is1beginrange, is1endrange
-      integer iplsbeginrange, iplsendrange
       integer, allocatable :: iatm1(:), imol1(:), ipls1(:), istra1(:)
       integer, allocatable :: istmp(:), ns1data(:,:,:), nx1data(:,:,:)
       integer, allocatable :: mlcmp1(:,:), ifl1(:), ispecies1(:)
@@ -298,7 +297,7 @@ c 2002-09-11: logic revised
       integer IDIMP, INUMP, IRPTA1, IRPTE1, IRPTA2, IRPTE2, ILEQUI
       integer IRPTA3, IRPTE3
       integer NPHOTI, NPLSI, NNREAC, IPLTA, ILINE
-      integer NATMI1, NREAC1, NSTRA1, NPLSI1, NPLSM
+      integer NATMI1, NREAC1, NSTRA1, NPLSI1
       integer IREAD, IEND, IANF, ITOK, IER, ISTS, IH, I3, L, M, JSS
       integer size_mp, size_mt
       integer ICRM, IPLSS, ISTRA
@@ -311,7 +310,7 @@ c 2002-09-11: logic revised
       integer NCHORI, NCHENI, NCHOR1
       integer LNTSPEC, LNTSPUT, NMCSPUT, NLSTADDS, MTREADDS, NGWTIES
       integer NSNVI, NSNV1, NPWIN, NSPTAL
-      integer jatm, kint, kmod, iside
+      integer jatm, jmol, jion, jpls, jphot, kint, kmod, iside
       integer isbegin, isend, is1begin, is1end
       integer NTL, NFR
       integer IPOS0, IPOS1, IPOS2
@@ -321,6 +320,7 @@ c 2002-09-11: logic revised
       integer NSIGI_BGK, NSIGI_COP, NSIGI_SPC
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
+      integer iplsbeginrange, iplsendrange
       integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
       integer, allocatable :: NPOINT(:,:), ILIIN(:), IHELP(:), IGJUM0(:)
       integer, allocatable :: IREAC1(:)
@@ -428,7 +428,7 @@ c 2002-09-11: logic revised
       real (kind=R8), allocatable :: SCALV(:)
       real (kind=R8), allocatable :: zemin1(:), zemax1(:)
 #else
-      integer iatm, imol
+      integer jatm, jmol
 #endif
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch,
@@ -474,8 +474,8 @@ c 2002-09-11: logic revised
       character*4, allocatable :: TDMH2(:,:), TDMH21(:,:)
       character*9, allocatable :: TDMREACTION(:,:), TDMREACTION1(:,:)
       character*3, allocatable :: TDMCR(:,:), TDMCR1(:,:)
-#endif
       character*8 :: TEXTM(DEF_NMOL)
+#endif
       character*10, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary
       logical chemsp1(nstraid), savestratum(0:nstraid)
@@ -508,26 +508,26 @@ c 2002-09-11: logic revised
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
-      integer lnblnk, convert_position, len_of_digits, trace_convert
+      integer lnblnk, len_of_digits, trace_convert
 #ifdef B25_EIRENE
-      integer transform_tally
+      integer transform_tally, b2idez, convert_eirene
       logical isaletter
       logical species_present, element_present, molecule_present
-      external isaletter
+      external isaletter, b2idez, convert_eirene
       external species_present, element_present, molecule_present
+      intrinsic iabs, min0
 #endif
-      integer conformal_convert, convert_eirene, b2idez
+      integer conformal_convert
       real (kind=R8) :: cr, cz, cr1, cz1, rratio
       logical open_file, streql, is_comment
       external subini, subend, xertst, xerrab, cfruch, cfrure, cfwuin,
-     &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk, convert_position,
+     &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk,
      &  len_of_digits, open_file, get_jsep, conformal_convert,
-     &  convert_eirene, b2idez, streql, get_nxt, b2yt_nxt, b2yt_ngread,
-     &  b2yt_ntread, is_comment
+     &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr
       external E01BEF, E01BFF
-      intrinsic nint, mod, min0, index, iabs, sqrt
+      intrinsic nint, mod, index, sqrt
 *   ..initialisation
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
@@ -1161,8 +1161,7 @@ c 2002-09-11: logic revised
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
-     &    hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1,
-     &    naver, ntotdt,
+     &    bundle_frac, naver, ntotdt,
      &    na_mean, te_mean, ti_mean, ua_mean, po_mean,
      &    e_na, e_te, e_ti, e_ua, e_po,
      &    sna_mean, sne_mean, smo_mean,
@@ -3048,10 +3047,12 @@ cxpb This will need to be checked !!!
                     nx1data(ikind,j,js)=0   ! This profile has been absorbed in the current one
                   else if (bundle_frac(is1(is),js).gt.0.0_R8) then
                     if (ndat.gt.nx1+2) then  ! need to coarsen the profile according to the new grid
+                      xx(1:ndat) = x1d(1,1:ndat,j,is)
+                      fx(1:ndat) = x1d(2,1:ndat,j,is)
                       if (.not.axdone) then
-                        allocate(pxa(-1:nx1))
+                        allocate(pxa(1:nx1+2))
                         allocate(l_conn(-1:nx1))
-                        allocate(x(1:nx+2),fx(1:nx+2))
+                        allocate(fx(1:nx+2))
                         allocate(dx(1:nx+2))
                         ireg = mod(region1(ixref1,iyref1,0),4)
                         if (ikind.eq.1) then
@@ -3094,23 +3095,20 @@ cxpb This will need to be checked !!!
                         end if
                         nfitanf = -1
                         do i = 0, nx1
-                          if (pxa(i).lt.x(1)) nfitanf = nfitanf+1
+                          if (pxa(i).lt.xx(1)) nfitanf = nfitanf+1
                           nfitend=i-1
-                          if (pxa(i).gt.x(ndat)) exit
+                          if (pxa(i).gt.xx(ndat)) exit
                           nfitend=i
                         end do
                         ndim=nfitend+1-nfitanf
                         axdone = .true.
                       endif
-                      xx(1:ndat) = x1d(1,1:ndat,j,is)
-                      fx(1:ndat) = x1d(2,1:ndat,j,is)
                       call E01BEF(ndat,xx,fx,dx,ifail)
                       nfitanf=1
-                      do ix=1,nx1+2
-                        pxa(ix)=pxdsa(ix)
-                        if(pxa(ix).lt.x(1)) nfitanf=nfitanf+1
+                      do ix=-1,nx1
+                        if(pxa(ix).lt.xx(1)) nfitanf=nfitanf+1
                         nfitend=ix-1
-                        if (pxa(ix).GT.x(ndat)) exit
+                        if (pxa(ix).GT.xx(ndat)) exit
                         nfitend=ix
                       enddo
                       call xertst(nfitanf.lt.nfitend,
@@ -3128,7 +3126,7 @@ cxpb This will need to be checked !!!
                       x1data(1,1:ndat,j,is1(is)) = x1d(1,1:ndat,j,is)  ! profile position
                       x1data(2,1:ndat,j,is1(is)) = x1d(2,1:ndat,j,is)  ! profile value
                     endif
-                    if (axdone) deallocate(pxa,x,fx,dx)
+                    if (axdone) deallocate(pxa,fx,dx)
                   endif
                 enddo
                 deallocate(x1d)
@@ -3461,11 +3459,11 @@ cxpb start by identifying the correspondence with the new run species
         eb2atcr1=-1
         latmscl1=0
         same_atoms = .true.
-        do iatm = 1, NATMI
-          same_atoms = same_atoms .and. iatm1(iatm).eq.iatm
-          if (iatm1(iatm) == 0)
+        do jatm = 1, NATMI
+          same_atoms = same_atoms .and. iatm1(jatm).eq.jatm
+          if (iatm1(jatm) == 0)
      >     write(*,*) 'Atom species corresponding to ',
-     .     trim(TEXTA(IATM)),' not found! Removing...'
+     .     trim(TEXTA(JATM)),' not found! Removing...'
         end do
         iss = 1
         eb2spcr1(iss) = 0
@@ -3475,20 +3473,20 @@ cxpb start by identifying the correspondence with the new run species
             eb2spcr1(iss)=is
           end if
         end do
-        do iatm = 1, natmi
-          if (iatm1(iatm).ne.0) eb2atcr1(iatm1(iatm))=is1(eb2atcr(iatm))
+        do jatm = 1, natmi
+          if (iatm1(jatm).ne.0) eb2atcr1(iatm1(jatm))=is1(eb2atcr(jatm))
         end do
         iss = 0
-        do imol = 1, nmoli
-          if (maxval(mlcmp(1:natm,imol)).eq.0) then
-            write(6,*) 'Molecule composition for molecule ',imol,
+        do jmol = 1, nmoli
+          if (maxval(mlcmp(1:natm,jmol)).eq.0) then
+            write(6,*) 'Molecule composition for molecule ',jmol,
      .       ' unknown. Molecule assumed kept.'
             iss = iss + 1
-            imol1(imol) = iss
+            imol1(jmol) = iss
           else
             found = .true.
             do jatm = 1, natm
-              if (mlcmp(jatm,imol).ne.0) then
+              if (mlcmp(jatm,jmol).ne.0) then
                 if (iatm1(jatm).eq.0) then
                   iatm = jatm
                   found = .false.
@@ -3496,9 +3494,9 @@ cxpb start by identifying the correspondence with the new run species
               end if
             end do
             if (found) then
-              write(6,*) 'Molecule ',imol,' kept.'
+              write(6,*) 'Molecule ',jmol,' kept.'
               iss = iss + 1
-              imol1(imol) = iss
+              imol1(jmol) = iss
             else
               write(6,*) 'Component ',trim(TEXTA(IATM)),' not mapped.'
               write(6,*) 'Molecule dropped.'
@@ -3715,7 +3713,7 @@ C  RADIAL MESH
               DO 212 I=1,NR1ST
                 READ (IUNIN,6664) (XPOL(I,J),YPOL(I,J),J=1,idum(2))
                 WRITE(IUNOT,6664) (XPOL(I,J),YPOL(I,J),J=1,idum(2))
-212           CONTINUE
+  212         CONTINUE
               deallocate(NPOINT)
               deallocate(XPOL,YPOL)
             ENDIF
@@ -3735,7 +3733,7 @@ C  RADIAL MESH
                 WRITE(IUNOT,6666) idum(1:3) !   NCHBAR(2,J),NSEITE(2,J),INMTI(2,J)
                 READ (IUNIN,6666) idum(1:3) !   NCHBAR(3,J),NSEITE(3,J),INMTI(3,J)
                 WRITE(IUNOT,6666) idum(1:3) !   NCHBAR(3,J),NSEITE(3,J),INMTI(3,J)
-213           CONTINUE
+  213         CONTINUE
             ENDIF
           ELSEIF (INDGRD(1).EQ.6) THEN
 C  IS THERE ONE MORE LINE, OR IS NLPOL THE NEXT VARIABLE
@@ -4498,26 +4496,26 @@ Cxpb then rewrite the entire block
      .           ISRFA(NATMI),ISRTA(NATMI),ID1A(NATMI),
      .           NRCA(NATMI))
         allocate(NFOLA(NATMI),NGENA(NATMI),NHSTA(NATMI))
-        DO 421 IATM=1,NATMI
-          READ (IUNIN,66666) I,TEXTA(IATM),NMASSA(IATM),
-     .                         NCHARA(IATM),NPRTA(IATM),idum(3),
-     .                         ISRFA(IATM),ISRTA(IATM),ID1A(IATM),
-     .                         NRCA(IATM),NFOLA(IATM),NGENA(IATM),
-     .                         NHSTA(IATM)
-          DO 422 K=1,NRCA(IATM)
-            IF (ID1A(IATM).LT.3) THEN
+        DO 421 JATM=1,NATMI
+          READ (IUNIN,66666) I,TEXTA(JATM),NMASSA(JATM),
+     .                         NCHARA(JATM),NPRTA(JATM),idum(3),
+     .                         ISRFA(JATM),ISRTA(JATM),ID1A(JATM),
+     .                         NRCA(JATM),NFOLA(JATM),NGENA(JATM),
+     .                         NHSTA(JATM)
+          DO 422 K=1,NRCA(JATM)
+            IF (ID1A(JATM).LT.3) THEN
               READ (IUNIN,6666) idum(0:6)
-            ELSE IF (ID1A(IATM).EQ.3) THEN
+            ELSE IF (ID1A(JATM).EQ.3) THEN
               READ (IUNIN,6666) idum(0:7)
-            ELSE IF (ID1A(IATM).EQ.4) THEN
+            ELSE IF (ID1A(JATM).EQ.4) THEN
               READ (IUNIN,6666) idum(0:8)
             ENDIF
             READ (IUNIN,6664) rdum(0:5)
-422       CONTINUE
-421     CONTINUE
-        DO 4211 IATM=1,NATMI
+  422     CONTINUE
+  421   CONTINUE
+        DO 4211 JATM=1,NATMI
           backspace(IUNIN)
-          DO 4221 K=1,NRCA(IATM)
+          DO 4221 K=1,NRCA(JATM)
             backspace(IUNIN)
             backspace(IUNIN)
  4221     CONTINUE
@@ -4531,66 +4529,66 @@ Cxpb then rewrite the entire block
         allocate(EELECA(NATMI,NNREAC),EBULKA(NATMI,NNREAC),
      .           ESCD1A(NATMI,NNREAC),ESCD2A(NATMI,NNREAC),
      .           FREACA(NATMI,NNREAC),FLDLMA(NATMI,NNREAC))
-        DO 4212 IATM=1,NATMI
+        DO 4212 JATM=1,NATMI
           READ (IUNIN,'(A72)') ZEILE
-          DO 4222 K=1,NRCA(IATM)
-            IF (ID1A(IATM).LT.3) THEN
-              READ (IUNIN,6666) IREACA(IATM,K),IBULKA(IATM,K),
-     .                          ISCD1A(IATM,K),ISCD2A(IATM,K),
-     .                          ISCDEA(IATM,K),IESTMA(IATM,K),
-     .                          IBGKA(IATM,K)
-              ISCD3A(IATM,K) = 0
-              ISCD4A(IATM,K) = 0
-            ELSE IF (ID1A(IATM).EQ.3) THEN
-              READ (IUNIN,6666) IREACA(IATM,K),IBULKA(IATM,K),
-     .                          ISCD1A(IATM,K),ISCD2A(IATM,K),
-     .                          ISCD3A(IATM,K),
-     .                          ISCDEA(IATM,K),IESTMA(IATM,K),
-     .                          IBGKA(IATM,K)
-              ISCD4A(IATM,K) = 0
-            ELSE IF (ID1A(IATM).EQ.4) THEN
-              READ (IUNIN,6666) IREACA(IATM,K),IBULKA(IATM,K),
-     .                          ISCD1A(IATM,K),ISCD2A(IATM,K),
-     .                          ISCD3A(IATM,K),ISCD4A(IATM,K),
-     .                          ISCDEA(IATM,K),IESTMA(IATM,K),
-     .                          IBGKA(IATM,K)
+          DO 4222 K=1,NRCA(JATM)
+            IF (ID1A(JATM).LT.3) THEN
+              READ (IUNIN,6666) IREACA(JATM,K),IBULKA(JATM,K),
+     .                          ISCD1A(JATM,K),ISCD2A(JATM,K),
+     .                          ISCDEA(JATM,K),IESTMA(JATM,K),
+     .                          IBGKA(JATM,K)
+              ISCD3A(JATM,K) = 0
+              ISCD4A(JATM,K) = 0
+            ELSE IF (ID1A(JATM).EQ.3) THEN
+              READ (IUNIN,6666) IREACA(JATM,K),IBULKA(JATM,K),
+     .                          ISCD1A(JATM,K),ISCD2A(JATM,K),
+     .                          ISCD3A(JATM,K),
+     .                          ISCDEA(JATM,K),IESTMA(JATM,K),
+     .                          IBGKA(JATM,K)
+              ISCD4A(JATM,K) = 0
+            ELSE IF (ID1A(JATM).EQ.4) THEN
+              READ (IUNIN,6666) IREACA(JATM,K),IBULKA(JATM,K),
+     .                          ISCD1A(JATM,K),ISCD2A(JATM,K),
+     .                          ISCD3A(JATM,K),ISCD4A(JATM,K),
+     .                          ISCDEA(JATM,K),IESTMA(JATM,K),
+     .                          IBGKA(JATM,K)
             ENDIF
-            READ (IUNIN,6664) EELECA(IATM,K),EBULKA(IATM,K),
-     .                        ESCD1A(IATM,K),ESCD2A(IATM,K),
-     .                        FREACA(IATM,K),FLDLMA(IATM,K)
+            READ (IUNIN,6664) EELECA(JATM,K),EBULKA(JATM,K),
+     .                        ESCD1A(JATM,K),ESCD2A(JATM,K),
+     .                        FREACA(JATM,K),FLDLMA(JATM,K)
  4222     CONTINUE
           J=0
-          DO K=1,NRCA(IATM)
-            IF (IREAC1(IREACA(IATM,K)).GE.1) THEN
+          DO K=1,NRCA(JATM)
+            IF (IREAC1(IREACA(JATM,K)).GE.1) THEN
               J = J + 1
-              IREACA(IATM,J) = IREAC1(IREACA(IATM,K))
-              IBULKA(IATM,J) = IBULKA(IATM,K)
-              ISCD1A(IATM,J) = ISCD1A(IATM,K)
-              ISCD2A(IATM,J) = ISCD2A(IATM,K)
-              ISCD3A(IATM,J) = ISCD3A(IATM,K)
-              ISCD4A(IATM,J) = ISCD4A(IATM,K)
-              ISCDEA(IATM,J) = ISCDEA(IATM,K)
-              IESTMA(IATM,J) = IESTMA(IATM,K)
-              IBGKA(IATM,J) = IBGKA(IATM,K)
-              IF (B2IDEZ(ISCDEA(IATM,J),5,5).eq.3) THEN
-                IR = nint(EELECA(IATM,K))
-                EELECA(IATM,J) = dble(IREAC1(IR))
+              IREACA(JATM,J) = IREAC1(IREACA(JATM,K))
+              IBULKA(JATM,J) = IBULKA(JATM,K)
+              ISCD1A(JATM,J) = ISCD1A(JATM,K)
+              ISCD2A(JATM,J) = ISCD2A(JATM,K)
+              ISCD3A(JATM,J) = ISCD3A(JATM,K)
+              ISCD4A(JATM,J) = ISCD4A(JATM,K)
+              ISCDEA(JATM,J) = ISCDEA(JATM,K)
+              IESTMA(JATM,J) = IESTMA(JATM,K)
+              IBGKA(JATM,J) = IBGKA(JATM,K)
+              IF (B2IDEZ(ISCDEA(JATM,J),5,5).eq.3) THEN
+                IR = nint(EELECA(JATM,K))
+                EELECA(JATM,J) = dble(IREAC1(IR))
               ELSE
-                EELECA(IATM,J) = EELECA(IATM,K)
+                EELECA(JATM,J) = EELECA(JATM,K)
               END IF
-              EBULKA(IATM,J) = EBULKA(IATM,K)
-              IF (B2IDEZ(ISCDEA(IATM,J),3,5).eq.3) THEN
-                IR = nint(ESCD1A(IATM,K))
-                ESCD1A(IATM,J) = dble(IREAC1(IR))
+              EBULKA(JATM,J) = EBULKA(JATM,K)
+              IF (B2IDEZ(ISCDEA(JATM,J),3,5).eq.3) THEN
+                IR = nint(ESCD1A(JATM,K))
+                ESCD1A(JATM,J) = dble(IREAC1(IR))
               ELSE
-                ESCD1A(IATM,J) = ESCD1A(IATM,K)
+                ESCD1A(JATM,J) = ESCD1A(JATM,K)
               ENDIF
-              ESCD2A(IATM,J) = ESCD2A(IATM,K)
-              FREACA(IATM,J) = FREACA(IATM,K)
-              FLDLMA(IATM,J) = FLDLMA(IATM,K)
+              ESCD2A(JATM,J) = ESCD2A(JATM,K)
+              FREACA(JATM,J) = FREACA(JATM,K)
+              FLDLMA(JATM,J) = FLDLMA(JATM,K)
             END IF
           END DO
-          NRCA(IATM) = J
+          NRCA(JATM) = J
  4212   CONTINUE
 *4B.   NEUTRAL MOLECULE SPECIES CARDS, NMOLI SPECIES
         READ (IUNIN,'(A72)') TXTMOL
@@ -4600,59 +4598,59 @@ Cxpb then rewrite the entire block
      .           ISRFM(NMOLI),ISRTM(NMOLI),ID1M(NMOLI),
      .           NRCM(NMOLI))
         allocate(NFOLM(NMOLI),NGENM(NMOLI),NHSTM(NMOLI))
-        DO 431 IMOL=1,NMOLI
+        DO 431 JMOL=1,NMOLI
           IF (streql(eirene_format,'juelich') .or.
      .        streql(eirene_format,'iter')) THEN
-            READ (IUNIN,66666) I,TEXTM(IMOL),NMASSM(IMOL),NCHARM(IMOL),
-     .                         NPRTM(IMOL),idum(3),
-     .                         ISRFM(IMOL),ISRTM(IMOL),ID1M(IMOL),
-     .                         NRCM(IMOL),NFOLM(IMOL),NGENM(IMOL),
-     .                         NHSTM(IMOL),LKINDM(IMOL)
+            READ (IUNIN,66666) I,TEXTM(JMOL),NMASSM(JMOL),NCHARM(JMOL),
+     .                         NPRTM(JMOL),idum(3),
+     .                         ISRFM(JMOL),ISRTM(JMOL),ID1M(JMOL),
+     .                         NRCM(JMOL),NFOLM(JMOL),NGENM(JMOL),
+     .                         NHSTM(JMOL),LKINDM(JMOL)
           ELSE IF (streql(eirene_format,'facelift') .or.
      .             streql(eirene_format,'new')) THEN
-            READ (IUNIN,66666) I,TEXTM(IMOL),NMASSM(IMOL),NCHARM(IMOL),
-     .                         NPRTM(IMOL),idum(3),
-     .                         ISRFM(IMOL),ISRTM(IMOL),ID1M(IMOL),
-     .                         NRCM(IMOL),NFOLM(IMOL),NGENM(IMOL)
-            NHSTM(IMOL) = 0
-            LKINDM(IMOL) = LMOLSCL(IMOL)
+            READ (IUNIN,66666) I,TEXTM(JMOL),NMASSM(JMOL),NCHARM(JMOL),
+     .                         NPRTM(JMOL),idum(3),
+     .                         ISRFM(JMOL),ISRTM(JMOL),ID1M(JMOL),
+     .                         NRCM(JMOL),NFOLM(JMOL),NGENM(JMOL)
+            NHSTM(JMOL) = 0
+            LKINDM(JMOL) = LMOLSCL(JMOL)
           ELSE IF (streql(eirene_format,'old')) THEN
-            READ (IUNIN,66666) I,TEXTM(IMOL),NMASSM(IMOL),NCHARM(IMOL),
-     .                         NPRTM(IMOL),idum(3),
-     .                         ISRFM(IMOL),ISRTM(IMOL),ID1M(IMOL),
-     .                         NRCM(IMOL),LKINDM(IMOL)
-            NFOLM(IMOL) = 0
-            NGENM(IMOL) = 0
-            NHSTM(IMOL) = 0
+            READ (IUNIN,66666) I,TEXTM(JMOL),NMASSM(JMOL),NCHARM(JMOL),
+     .                         NPRTM(JMOL),idum(3),
+     .                         ISRFM(JMOL),ISRTM(JMOL),ID1M(JMOL),
+     .                         NRCM(JMOL),LKINDM(JMOL)
+            NFOLM(JMOL) = 0
+            NGENM(JMOL) = 0
+            NHSTM(JMOL) = 0
           ENDIF
-          IF (ISRTM(IMOL).LT.0) ISRTM(IMOL) = NMOLI+1
-          DO 432 K=1,NRCM(IMOL)
-            IF (ID1M(IMOL).LT.3) THEN
-              READ (IUNIN,6666) idum(0:6) ! IREACM(IMOL,K),IBULKM(IMOL,K),
-                                          ! ISCD1M(IMOL,K),ISCD2M(IMOL,K),
-                                          ! ISCDEM(IMOL,K),IESTMM(IMOL,K),
-                                          ! IBGKM(IMOL,K)
-            ELSE IF (ID1M(IMOL).EQ.3) THEN
-              READ (IUNIN,6666) idum(0:7) ! IREACM(IMOL,K),IBULKM(IMOL,K),
-                                          ! ISCD1M(IMOL,K),ISCD2M(IMOL,K),
-                                          ! ISCD3M(IMOL,K),
-                                          ! ISCDEM(IMOL,K),IESTMM(IMOL,K),
-                                          ! IBGKM(IMOL,K)
-            ELSE IF (ID1M(IMOL).EQ.4) THEN
-              READ (IUNIN,6666) idum(0:8) ! IREACM(IMOL,K),IBULKM(IMOL,K),
-                                          ! ISCD1M(IMOL,K),ISCD2M(IMOL,K),
-                                          ! ISCD3M(IMOL,K),ISCD4M(IMOL,K),
-                                          ! ISCDEM(IMOL,K),IESTMM(IMOL,K),
-                                          ! IBGKM(IMOL,K)
+          IF (ISRTM(JMOL).LT.0) ISRTM(JMOL) = NMOLI+1
+          DO 432 K=1,NRCM(JMOL)
+            IF (ID1M(JMOL).LT.3) THEN
+              READ (IUNIN,6666) idum(0:6) ! IREACM(JMOL,K),IBULKM(JMOL,K),
+                                          ! ISCD1M(JMOL,K),ISCD2M(JMOL,K),
+                                          ! ISCDEM(JMOL,K),IESTMM(JMOL,K),
+                                          ! IBGKM(JMOL,K)
+            ELSE IF (ID1M(JMOL).EQ.3) THEN
+              READ (IUNIN,6666) idum(0:7) ! IREACM(JMOL,K),IBULKM(JMOL,K),
+                                          ! ISCD1M(JMOL,K),ISCD2M(JMOL,K),
+                                          ! ISCD3M(JMOL,K),
+                                          ! ISCDEM(JMOL,K),IESTMM(JMOL,K),
+                                          ! IBGKM(JMOL,K)
+            ELSE IF (ID1M(JMOL).EQ.4) THEN
+              READ (IUNIN,6666) idum(0:8) ! IREACM(JMOL,K),IBULKM(JMOL,K),
+                                          ! ISCD1M(JMOL,K),ISCD2M(JMOL,K),
+                                          ! ISCD3M(JMOL,K),ISCD4M(JMOL,K),
+                                          ! ISCDEM(JMOL,K),IESTMM(JMOL,K),
+                                          ! IBGKM(JMOL,K)
             END IF
-            READ (IUNIN,6664) rdum(0:4) ! EELECM(IMOL,K),EBULKM(IMOL,K),
-                                        ! ESCD1M(IMOL,K),ESCD2M(IMOL,K),
-                                        ! FREACM(IMOL,K)
-432       CONTINUE
-431     CONTINUE
-        DO 4311 IMOL=1,NMOLI
+            READ (IUNIN,6664) rdum(0:4) ! EELECM(JMOL,K),EBULKM(JMOL,K),
+                                        ! ESCD1M(JMOL,K),ESCD2M(JMOL,K),
+                                        ! FREACM(JMOL,K)
+  432     CONTINUE
+  431   CONTINUE
+        DO 4311 JMOL=1,NMOLI
           backspace(IUNIN)
-          DO 4321 K=1,NRCM(IMOL)
+          DO 4321 K=1,NRCM(JMOL)
             backspace(IUNIN)
             backspace(IUNIN)
  4321     CONTINUE
@@ -4666,66 +4664,66 @@ Cxpb then rewrite the entire block
         allocate(EELECM(NMOLI,NNREAC),EBULKM(NMOLI,NNREAC),
      .           ESCD1M(NMOLI,NNREAC),ESCD2M(NMOLI,NNREAC),
      .           FREACM(NMOLI,NNREAC))
-        DO 4312 IMOL=1,NMOLI
+        DO 4312 JMOL=1,NMOLI
           READ (IUNIN,'(A72)') ZEILE
-          DO 4322 K=1,NRCM(IMOL)
-            IF (ID1M(IMOL).NE.3) THEN
-              READ (IUNIN,6666) IREACM(IMOL,K),IBULKM(IMOL,K),
-     .                          ISCD1M(IMOL,K),ISCD2M(IMOL,K),
-     .                          ISCDEM(IMOL,K),IESTMM(IMOL,K),
-     .                          IBGKM(IMOL,K)
-              ISCD3M(IMOL,K) = 0
-              ISCD4M(IMOL,K) = 0
-            ELSE IF (ID1M(IMOL).EQ.3) THEN
-              READ (IUNIN,6666) IREACM(IMOL,K),IBULKM(IMOL,K),
-     .                          ISCD1M(IMOL,K),ISCD2M(IMOL,K),
-     .                          ISCD3M(IMOL,K),
-     .                          ISCDEM(IMOL,K),IESTMM(IMOL,K),
-     .                          IBGKM(IMOL,K)
-              ISCD4M(IMOL,K) = 0
-            ELSE IF (ID1M(IMOL).EQ.4) THEN
-              READ (IUNIN,6666) IREACM(IMOL,K),IBULKM(IMOL,K),
-     .                          ISCD1M(IMOL,K),ISCD2M(IMOL,K),
-     .                          ISCD3M(IMOL,K),ISCD4M(IMOL,K),
-     .                          ISCDEM(IMOL,K),IESTMM(IMOL,K),
-     .                          IBGKM(IMOL,K)
+          DO 4322 K=1,NRCM(JMOL)
+            IF (ID1M(JMOL).NE.3) THEN
+              READ (IUNIN,6666) IREACM(JMOL,K),IBULKM(JMOL,K),
+     .                          ISCD1M(JMOL,K),ISCD2M(JMOL,K),
+     .                          ISCDEM(JMOL,K),IESTMM(JMOL,K),
+     .                          IBGKM(JMOL,K)
+              ISCD3M(JMOL,K) = 0
+              ISCD4M(JMOL,K) = 0
+            ELSE IF (ID1M(JMOL).EQ.3) THEN
+              READ (IUNIN,6666) IREACM(JMOL,K),IBULKM(JMOL,K),
+     .                          ISCD1M(JMOL,K),ISCD2M(JMOL,K),
+     .                          ISCD3M(JMOL,K),
+     .                          ISCDEM(JMOL,K),IESTMM(JMOL,K),
+     .                          IBGKM(JMOL,K)
+              ISCD4M(JMOL,K) = 0
+            ELSE IF (ID1M(JMOL).EQ.4) THEN
+              READ (IUNIN,6666) IREACM(JMOL,K),IBULKM(JMOL,K),
+     .                          ISCD1M(JMOL,K),ISCD2M(JMOL,K),
+     .                          ISCD3M(JMOL,K),ISCD4M(JMOL,K),
+     .                          ISCDEM(JMOL,K),IESTMM(JMOL,K),
+     .                          IBGKM(JMOL,K)
             ENDIF
-            READ (IUNIN,6664) EELECM(IMOL,K),EBULKM(IMOL,K),
-     .                        ESCD1M(IMOL,K),ESCD2M(IMOL,K),
-     .                        FREACM(IMOL,K)
+            READ (IUNIN,6664) EELECM(JMOL,K),EBULKM(JMOL,K),
+     .                        ESCD1M(JMOL,K),ESCD2M(JMOL,K),
+     .                        FREACM(JMOL,K)
  4322     CONTINUE
           J=0
-          DO K=1,NRCM(IMOL)
-            IF (IREAC1(IREACM(IMOL,K)).GE.1) THEN
+          DO K=1,NRCM(JMOL)
+            IF (IREAC1(IREACM(JMOL,K)).GE.1) THEN
               J = J + 1
-              IREACM(IMOL,J) = IREAC1(IREACM(IMOL,K))
-              IBULKM(IMOL,J) = IBULKM(IMOL,K)
-              ISCD1M(IMOL,J) = ISCD1M(IMOL,K)
-              ISCD2M(IMOL,J) = ISCD2M(IMOL,K)
-              ISCD3M(IMOL,J) = ISCD3M(IMOL,K)
-              ISCD4M(IMOL,J) = ISCD4M(IMOL,K)
-              ISCDEM(IMOL,J) = ISCDEM(IMOL,K)
-              IESTMM(IMOL,J) = IESTMM(IMOL,K)
-              IBGKM(IMOL,J) = IBGKM(IMOL,K)
-              IF (B2IDEZ(ISCDEM(IMOL,J),5,5).eq.3) THEN
-                IR = nint(EELECM(IMOL,K))
-                EELECM(IMOL,J) = dble(IREAC1(IR))
+              IREACM(JMOL,J) = IREAC1(IREACM(JMOL,K))
+              IBULKM(JMOL,J) = IBULKM(JMOL,K)
+              ISCD1M(JMOL,J) = ISCD1M(JMOL,K)
+              ISCD2M(JMOL,J) = ISCD2M(JMOL,K)
+              ISCD3M(JMOL,J) = ISCD3M(JMOL,K)
+              ISCD4M(JMOL,J) = ISCD4M(JMOL,K)
+              ISCDEM(JMOL,J) = ISCDEM(JMOL,K)
+              IESTMM(JMOL,J) = IESTMM(JMOL,K)
+              IBGKM(JMOL,J) = IBGKM(JMOL,K)
+              IF (B2IDEZ(ISCDEM(JMOL,J),5,5).eq.3) THEN
+                IR = nint(EELECM(JMOL,K))
+                EELECM(JMOL,J) = dble(IREAC1(IR))
               ELSE
-                EELECM(IMOL,J) = EELECM(IMOL,K)
+                EELECM(JMOL,J) = EELECM(JMOL,K)
               END IF
-              EBULKM(IMOL,J) = EBULKM(IMOL,K)
-              IF (B2IDEZ(ISCDEM(IMOL,J),3,5).eq.3) THEN
-                IR = nint(ESCD1M(IMOL,K))
-                ESCD1M(IMOL,J) = dble(IREAC1(IR))
+              EBULKM(JMOL,J) = EBULKM(JMOL,K)
+              IF (B2IDEZ(ISCDEM(JMOL,J),3,5).eq.3) THEN
+                IR = nint(ESCD1M(JMOL,K))
+                ESCD1M(JMOL,J) = dble(IREAC1(IR))
               ELSE
-                ESCD1M(IMOL,J) = ESCD1M(IMOL,K)
+                ESCD1M(JMOL,J) = ESCD1M(JMOL,K)
               END IF
-              ESCD2M(IMOL,J) = ESCD2M(IMOL,K)
-              FREACM(IMOL,J) = FREACM(IMOL,K)
+              ESCD2M(JMOL,J) = ESCD2M(JMOL,K)
+              FREACM(JMOL,J) = FREACM(JMOL,K)
             END IF
           END DO
-          NRCM(IMOL) = J
-4312   CONTINUE
+          NRCM(JMOL) = J
+ 4312  CONTINUE
 *4C.   TEST IONS SPECIES CARDS, NIONI SPECIES
         READ (IUNIN,'(A72)') TXTION
   440   READ (IUNIN,*) NIONI
@@ -4735,57 +4733,57 @@ Cxpb then rewrite the entire block
      .           ISRFI(NIONI),ISRTI(NIONI),ID1I(NIONI),
      .           NRCI(NIONI),NHSTI(NIONI))
         allocate(NFOLI(NIONI),NGENI(NIONI))
-        DO 441 IION=1,NIONI
+        DO 441 JION=1,NIONI
           IF (streql(eirene_format,'juelich') .or.
      .        streql(eirene_format,'iter')) THEN
-            READ (IUNIN,66666) I,TEXTI(IION),NMASSI(IION),NCHARI(IION),
-     .                         NPRTI(IION),NCHRGI(IION),
-     .                         ISRFI(IION),ISRTI(IION),ID1I(IION),
-     .                         NRCI(IION),NFOLI(IION),NGENI(IION),
-     .                         NHSTI(IION),LKINDI(IION)
+            READ (IUNIN,66666) I,TEXTI(JION),NMASSI(JION),NCHARI(JION),
+     .                         NPRTI(JION),NCHRGI(JION),
+     .                         ISRFI(JION),ISRTI(JION),ID1I(JION),
+     .                         NRCI(JION),NFOLI(JION),NGENI(JION),
+     .                         NHSTI(JION),LKINDI(JION)
           ELSE IF (streql(eirene_format,'facelift') .or.
      .             streql(eirene_format,'new')) THEN
-            READ (IUNIN,66666) I,TEXTI(IION),NMASSI(IION),NCHARI(IION),
-     .                         NPRTI(IION),NCHRGI(IION),
-     .                         ISRFI(IION),ISRTI(IION),ID1I(IION),
-     .                         NRCI(IION),NFOLI(IION),NGENI(IION)
-            NHSTI(IION) = 0
-            LKINDI(IION) = LIONSCL(IION)
+            READ (IUNIN,66666) I,TEXTI(JION),NMASSI(JION),NCHARI(JION),
+     .                         NPRTI(JION),NCHRGI(JION),
+     .                         ISRFI(JION),ISRTI(JION),ID1I(JION),
+     .                         NRCI(JION),NFOLI(JION),NGENI(JION)
+            NHSTI(JION) = 0
+            LKINDI(JION) = LIONSCL(JION)
           ELSE IF (streql(eirene_format,'old')) THEN
-            READ (IUNIN,66666) I,TEXTI(IION),NMASSI(IION),NCHARI(IION),
-     .                         NPRTI(IION),NCHRGI(IION),
-     .                         ISRFI(IION),ISRTI(IION),ID1I(IION),
-     .                         NRCI(IION),NFOLI(IION),LKINDI(IION)
-            NGENI(IION) = 0
-            NHSTI(IION) = 0
+            READ (IUNIN,66666) I,TEXTI(JION),NMASSI(JION),NCHARI(JION),
+     .                         NPRTI(JION),NCHRGI(JION),
+     .                         ISRFI(JION),ISRTI(JION),ID1I(JION),
+     .                         NRCI(JION),NFOLI(JION),LKINDI(JION)
+            NGENI(JION) = 0
+            NHSTI(JION) = 0
           ENDIF
-          DO 442 K=1,NRCI(IION)
-            IF (ID1I(IION).LT.3) THEN
-              READ (IUNIN,6666) idum(0:6) ! IREACI(IION,K),IBULKI(IION,K),
-                                          ! ISCD1I(IION,K),ISCD2I(IION,K),
-                                          ! ISCDEI(IION,K),IESTMI(IION,K),
-                                          ! IBGKI(IION,K)
-            ELSE IF (ID1I(IION).EQ.3) THEN
-              READ (IUNIN,6666) idum(0:7) ! IREACI(IION,K),IBULKI(IION,K),
-                                          ! ISCD1I(IION,K),ISCD2I(IION,K),
-                                          ! ISCD3I(IION,K),
-                                          ! ISCDEI(IION,K),IESTMI(IION,K),
-                                          ! IBGKI(IION,K)
-            ELSE IF (ID1I(IION).EQ.4) THEN
-              READ (IUNIN,6666) idum(0:8) ! IREACI(IION,K),IBULKI(IION,K),
-                                          ! ISCD1I(IION,K),ISCD2I(IION,K),
-                                          ! ISCD3I(IION,K),ISCD4I(IION,K),
-                                          ! ISCDEI(IION,K),IESTMI(IION,K),
-                                          ! IBGKI(IION,K)
+          DO 442 K=1,NRCI(JION)
+            IF (ID1I(JION).LT.3) THEN
+              READ (IUNIN,6666) idum(0:6) ! IREACI(JION,K),IBULKI(JION,K),
+                                          ! ISCD1I(JION,K),ISCD2I(JION,K),
+                                          ! ISCDEI(JION,K),IESTMI(JION,K),
+                                          ! IBGKI(JION,K)
+            ELSE IF (ID1I(JION).EQ.3) THEN
+              READ (IUNIN,6666) idum(0:7) ! IREACI(JION,K),IBULKI(JION,K),
+                                          ! ISCD1I(JION,K),ISCD2I(JION,K),
+                                          ! ISCD3I(JION,K),
+                                          ! ISCDEI(JION,K),IESTMI(JION,K),
+                                          ! IBGKI(JION,K)
+            ELSE IF (ID1I(JION).EQ.4) THEN
+              READ (IUNIN,6666) idum(0:8) ! IREACI(JION,K),IBULKI(JION,K),
+                                          ! ISCD1I(JION,K),ISCD2I(JION,K),
+                                          ! ISCD3I(JION,K),ISCD4I(JION,K),
+                                          ! ISCDEI(JION,K),IESTMI(JION,K),
+                                          ! IBGKI(JION,K)
             ENDIF
-            READ (IUNIN,6664) rdum(0:4) ! EELECI(IION,K),EBULKI(IION,K),
-                                        ! ESCD1I(IION,K),ESCD2I(IION,K),
-                                        ! FREACI(IION,K)
-442       CONTINUE
-441     CONTINUE
-        DO 4411 IION=1,NIONI
+            READ (IUNIN,6664) rdum(0:4) ! EELECI(JION,K),EBULKI(JION,K),
+                                        ! ESCD1I(JION,K),ESCD2I(JION,K),
+                                        ! FREACI(JION,K)
+  442     CONTINUE
+  441   CONTINUE
+        DO 4411 JION=1,NIONI
           backspace(IUNIN)
-          DO 4421 K=1,NRCI(IION)
+          DO 4421 K=1,NRCI(JION)
             backspace(IUNIN)
             backspace(IUNIN)
  4421     CONTINUE
@@ -4799,65 +4797,65 @@ Cxpb then rewrite the entire block
         allocate(EELECI(NIONI,NNREAC),EBULKI(NIONI,NNREAC),
      .           ESCD1I(NIONI,NNREAC),ESCD2I(NIONI,NNREAC),
      .           FREACI(NIONI,NNREAC))
-        DO 4412 IION=1,NIONI
+        DO 4412 JION=1,NIONI
           READ (IUNIN,'(A72)') ZEILE
-          DO 4422 K=1,NRCI(IION)
-            IF (ID1I(IION).LT.3) THEN
-              READ (IUNIN,6666) IREACI(IION,K),IBULKI(IION,K),
-     .                          ISCD1I(IION,K),ISCD2I(IION,K),
-     .                          ISCDEI(IION,K),IESTMI(IION,K),
-     .                          IBGKI(IION,K)
-              ISCD3I(IION,K) = 0
-              ISCD4I(IION,K) = 0
-            ELSE IF (ID1I(IION).EQ.3) THEN
-              READ (IUNIN,6666) IREACI(IION,K),IBULKI(IION,K),
-     .                          ISCD1I(IION,K),ISCD2I(IION,K),
-     .                          ISCD3I(IION,K),
-     .                          ISCDEI(IION,K),IESTMI(IION,K),
-     .                          IBGKI(IION,K)
-              ISCD4I(IION,K) = 0
-            ELSE IF (ID1I(IION).EQ.4) THEN
-              READ (IUNIN,6666) IREACI(IION,K),IBULKI(IION,K),
-     .                          ISCD1I(IION,K),ISCD2I(IION,K),
-     .                          ISCD3I(IION,K),ISCD4I(IION,K),
-     .                          ISCDEI(IION,K),IESTMI(IION,K),
-     .                          IBGKI(IION,K)
+          DO 4422 K=1,NRCI(JION)
+            IF (ID1I(JION).LT.3) THEN
+              READ (IUNIN,6666) IREACI(JION,K),IBULKI(JION,K),
+     .                          ISCD1I(JION,K),ISCD2I(JION,K),
+     .                          ISCDEI(JION,K),IESTMI(JION,K),
+     .                          IBGKI(JION,K)
+              ISCD3I(JION,K) = 0
+              ISCD4I(JION,K) = 0
+            ELSE IF (ID1I(JION).EQ.3) THEN
+              READ (IUNIN,6666) IREACI(JION,K),IBULKI(JION,K),
+     .                          ISCD1I(JION,K),ISCD2I(JION,K),
+     .                          ISCD3I(JION,K),
+     .                          ISCDEI(JION,K),IESTMI(JION,K),
+     .                          IBGKI(JION,K)
+              ISCD4I(JION,K) = 0
+            ELSE IF (ID1I(JION).EQ.4) THEN
+              READ (IUNIN,6666) IREACI(JION,K),IBULKI(JION,K),
+     .                          ISCD1I(JION,K),ISCD2I(JION,K),
+     .                          ISCD3I(JION,K),ISCD4I(JION,K),
+     .                          ISCDEI(JION,K),IESTMI(JION,K),
+     .                          IBGKI(JION,K)
             ENDIF
-            READ (IUNIN,6664) EELECI(IION,K),EBULKI(IION,K),
-     .                        ESCD1I(IION,K),ESCD2I(IION,K),
-     .                        FREACI(IION,K)
+            READ (IUNIN,6664) EELECI(JION,K),EBULKI(JION,K),
+     .                        ESCD1I(JION,K),ESCD2I(JION,K),
+     .                        FREACI(JION,K)
  4422     CONTINUE
           J=0
-          DO K=1,NRCI(IION)
-            IF (IREAC1(IREACI(IION,K)).GE.1) THEN
+          DO K=1,NRCI(JION)
+            IF (IREAC1(IREACI(JION,K)).GE.1) THEN
               J = J + 1
-              IREACI(IION,J) = IREAC1(IREACI(IION,K))
-              IBULKI(IION,J) = IBULKI(IION,K)
-              ISCD1I(IION,J) = ISCD1I(IION,K)
-              ISCD2I(IION,J) = ISCD2I(IION,K)
-              ISCD3I(IION,J) = ISCD3I(IION,K)
-              ISCD4I(IION,J) = ISCD4I(IION,K)
-              ISCDEI(IION,J) = ISCDEI(IION,K)
-              IESTMI(IION,J) = IESTMI(IION,K)
-              IBGKI(IION,J) = IBGKI(IION,K)
-              IF (B2IDEZ(ISCDEI(IION,J),5,5).eq.3) THEN
-                IR = nint(EELECI(IION,K))
-                EELECI(IION,J) = dble(IREAC1(IR))
+              IREACI(JION,J) = IREAC1(IREACI(JION,K))
+              IBULKI(JION,J) = IBULKI(JION,K)
+              ISCD1I(JION,J) = ISCD1I(JION,K)
+              ISCD2I(JION,J) = ISCD2I(JION,K)
+              ISCD3I(JION,J) = ISCD3I(JION,K)
+              ISCD4I(JION,J) = ISCD4I(JION,K)
+              ISCDEI(JION,J) = ISCDEI(JION,K)
+              IESTMI(JION,J) = IESTMI(JION,K)
+              IBGKI(JION,J) = IBGKI(JION,K)
+              IF (B2IDEZ(ISCDEI(JION,J),5,5).eq.3) THEN
+                IR = nint(EELECI(JION,K))
+                EELECI(JION,J) = dble(IREAC1(IR))
               ELSE
-                EELECI(IION,J) = EELECI(IION,K)
+                EELECI(JION,J) = EELECI(JION,K)
               END IF
-              EBULKI(IION,J) = EBULKI(IION,K)
-              IF (B2IDEZ(ISCDEI(IION,J),3,5).eq.3) THEN
-                IR = nint(ESCD1I(IION,K))
-                ESCD1I(IION,J) = dble(IREAC1(IR))
+              EBULKI(JION,J) = EBULKI(JION,K)
+              IF (B2IDEZ(ISCDEI(JION,J),3,5).eq.3) THEN
+                IR = nint(ESCD1I(JION,K))
+                ESCD1I(JION,J) = dble(IREAC1(IR))
               ELSE 
-                ESCD1I(IION,J) = ESCD1I(IION,K)
+                ESCD1I(JION,J) = ESCD1I(JION,K)
               END IF
-              ESCD2I(IION,J) = ESCD2I(IION,K)
-              FREACI(IION,J) = FREACI(IION,K)
+              ESCD2I(JION,J) = ESCD2I(JION,K)
+              FREACI(JION,J) = FREACI(JION,K)
             END IF
           END DO
-          NRCI(IION) = J
+          NRCI(JION) = J
  4412   CONTINUE
 *4D.   NEUTRAL PHOTONS SPECIES CARDS, NPHOTI SPECIES
         READ (IUNIN,'(A80)') ZEILE
@@ -4877,38 +4875,38 @@ Cxpb then rewrite the entire block
         allocate(ISRFPH(NPHOTI),ISRTPH(NPHOTI),ID1PH(NPHOTI),
      .           NRCPH(NPHOTI))
         allocate(NFOLPH(NPHOTI),NGENPH(NPHOTI),NHSTPH(NPHOTI))
-        DO 451 IPHOT=1,NPHOTI
-          READ (IUNIN,66666) I,TEXTPH(IPHOT),idum(0:3),
-     .                       ISRFPH(IPHOT),ISRTPH(IPHOT),ID1PH(IPHOT),
-     .                       NRCPH(IPHOT),NFOLPH(IPHOT),NGENPH(IPHOT),
-     .                       NHSTPH(IPHOT)
-          DO 452 K=1,NRCPH(IPHOT)
-            IF (ID1PH(IPHOT).LT.3) THEN
-              READ (IUNIN,6666) idum(0:6) ! IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
-                                          ! ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
-                                          ! ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
-                                          ! IBGKPH(IPHOT,K)
-            ELSE IF (ID1PH(IPHOT).EQ.3) THEN
-              READ (IUNIN,6666) idum(0:7) ! IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
-                                          ! ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
-                                          ! ISCD3PH(IPHOT,K),
-                                          ! ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
-                                          ! IBGKPH(IPHOT,K)
-            ELSE IF (ID1PH(IPHOT).EQ.4) THEN
-              READ (IUNIN,6666) idum(0:8) ! IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
-                                          ! ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
-                                          ! ISCD3PH(IPHOT,K),ISCD4PH(IPHOT,K),
-                                          ! ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
-                                          ! IBGKPH(IPHOT,K)
+        DO 451 JPHOT=1,NPHOTI
+          READ (IUNIN,66666) I,TEXTPH(JPHOT),idum(0:3),
+     .                       ISRFPH(JPHOT),ISRTPH(JPHOT),ID1PH(JPHOT),
+     .                       NRCPH(JPHOT),NFOLPH(JPHOT),NGENPH(JPHOT),
+     .                       NHSTPH(JPHOT)
+          DO 452 K=1,NRCPH(JPHOT)
+            IF (ID1PH(JPHOT).LT.3) THEN
+              READ (IUNIN,6666) idum(0:6) ! IREACPH(JPHOT,K),IBULKPH(JPHOT,K),
+                                          ! ISCD1PH(JPHOT,K),ISCD2PH(JPHOT,K),
+                                          ! ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
+                                          ! IBGKPH(JPHOT,K)
+            ELSE IF (ID1PH(JPHOT).EQ.3) THEN
+              READ (IUNIN,6666) idum(0:7) ! IREACPH(JPHOT,K),IBULKPH(JPHOT,K),
+                                          ! ISCD1PH(JPHOT,K),ISCD2PH(JPHOT,K),
+                                          ! ISCD3PH(JPHOT,K),
+                                          ! ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
+                                          ! IBGKPH(JPHOT,K)
+            ELSE IF (ID1PH(JPHOT).EQ.4) THEN
+              READ (IUNIN,6666) idum(0:8) ! IREACPH(JPHOT,K),IBULKPH(JPHOT,K),
+                                          ! ISCD1PH(JPHOT,K),ISCD2PH(JPHOT,K),
+                                          ! ISCD3PH(JPHOT,K),ISCD4PH(JPHOT,K),
+                                          ! ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
+                                          ! IBGKPH(JPHOT,K)
             ENDIF
-            READ (IUNIN,6664) rdum(0:5) ! EELECPH(IPHOT,K),EBULKPH(IPHOT,K),
-                                        ! ESCD1PH(IPHOT,K),ESCD2PH(IPHOT,K),
-                                        ! FREACPH(IPHOT,K),FLDLMPH(IPHOT,K)
-452       CONTINUE
-451     CONTINUE
-        DO 4511 IPHOT=1,NPHOTI
+            READ (IUNIN,6664) rdum(0:5) ! EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
+                                        ! ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
+                                        ! FREACPH(JPHOT,K),FLDLMPH(JPHOT,K)
+  452     CONTINUE
+  451   CONTINUE
+        DO 4511 JPHOT=1,NPHOTI
           backspace(IUNIN)
-          DO 4521 K=1,NRCPH(IPHOT)
+          DO 4521 K=1,NRCPH(JPHOT)
             backspace(IUNIN)
             backspace(IUNIN)
  4521     CONTINUE
@@ -4922,66 +4920,66 @@ Cxpb then rewrite the entire block
         allocate(EELECPH(NPHOTI,NNREAC),EBULKPH(NPHOTI,NNREAC),
      .           ESCD1PH(NPHOTI,NNREAC),ESCD2PH(NPHOTI,NNREAC),
      .           FREACPH(NPHOTI,NNREAC),FLDLMPH(NPHOTI,NNREAC))
-        DO 4512 IPHOT=1,NPHOTI
+        DO 4512 JPHOT=1,NPHOTI
           READ (IUNIN,'(A72)') ZEILE
-          DO 4522 K=1,NRCPH(IPHOT)
-            IF (ID1PH(IPHOT).LT.3) THEN
-              READ (IUNIN,6666) IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
-     .                          ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
-     .                          ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
-     .                          IBGKPH(IPHOT,K)
-              ISCD3PH(IPHOT,K)=0
-              ISCD4PH(IPHOT,K)=0
-            ELSE IF (ID1PH(IPHOT).EQ.3) THEN
-              READ (IUNIN,6666) IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
-     .                          ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
-     .                          ISCD3PH(IPHOT,K),
-     .                          ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
-     .                          IBGKPH(IPHOT,K)
-              ISCD4PH(IPHOT,K)=0
-            ELSE IF (ID1PH(IPHOT).EQ.4) THEN
-              READ (IUNIN,6666) IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
-     .                          ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
-     .                          ISCD3PH(IPHOT,K),ISCD4PH(IPHOT,K),
-     .                          ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
-     .                          IBGKPH(IPHOT,K)
+          DO 4522 K=1,NRCPH(JPHOT)
+            IF (ID1PH(JPHOT).LT.3) THEN
+              READ (IUNIN,6666) IREACPH(JPHOT,K),IBULKPH(JPHOT,K),
+     .                          ISCD1PH(JPHOT,K),ISCD2PH(JPHOT,K),
+     .                          ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
+     .                          IBGKPH(JPHOT,K)
+              ISCD3PH(JPHOT,K)=0
+              ISCD4PH(JPHOT,K)=0
+            ELSE IF (ID1PH(JPHOT).EQ.3) THEN
+              READ (IUNIN,6666) IREACPH(JPHOT,K),IBULKPH(JPHOT,K),
+     .                          ISCD1PH(JPHOT,K),ISCD2PH(JPHOT,K),
+     .                          ISCD3PH(JPHOT,K),
+     .                          ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
+     .                          IBGKPH(JPHOT,K)
+              ISCD4PH(JPHOT,K)=0
+            ELSE IF (ID1PH(JPHOT).EQ.4) THEN
+              READ (IUNIN,6666) IREACPH(JPHOT,K),IBULKPH(JPHOT,K),
+     .                          ISCD1PH(JPHOT,K),ISCD2PH(JPHOT,K),
+     .                          ISCD3PH(JPHOT,K),ISCD4PH(JPHOT,K),
+     .                          ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
+     .                          IBGKPH(JPHOT,K)
             ENDIF
-            READ (IUNIN,6664) EELECPH(IPHOT,K),EBULKPH(IPHOT,K),
-     .                        ESCD1PH(IPHOT,K),ESCD2PH(IPHOT,K),
-     .                        FREACPH(IPHOT,K),FLDLMPH(IPHOT,K)
+            READ (IUNIN,6664) EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
+     .                        ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
+     .                        FREACPH(JPHOT,K),FLDLMPH(JPHOT,K)
  4522     CONTINUE
           J=0
-          DO K=1,NRCPH(IPHOT)
-            IF (IREAC1(IREACPH(IPHOT,K)).GE.1) THEN
+          DO K=1,NRCPH(JPHOT)
+            IF (IREAC1(IREACPH(JPHOT,K)).GE.1) THEN
               J = J + 1
-              IREACPH(IPHOT,J) = IREAC1(IREACPH(IPHOT,K))
-              IBULKPH(IPHOT,J) = IBULKPH(IPHOT,K)
-              ISCD1PH(IPHOT,J) = ISCD1PH(IPHOT,K)
-              ISCD2PH(IPHOT,J) = ISCD2PH(IPHOT,K)
-              ISCD3PH(IPHOT,J) = ISCD3PH(IPHOT,K)
-              ISCD4PH(IPHOT,J) = ISCD4PH(IPHOT,K)
-              ISCDEPH(IPHOT,J) = ISCDEPH(IPHOT,K)
-              IESTMPH(IPHOT,J) = IESTMPH(IPHOT,K)
-              IBGKPH(IPHOT,J) = IBGKPH(IPHOT,K)
-              IF (B2IDEZ(ISCDEPH(IPHOT,J),5,5).eq.3) THEN
-                IR = nint(EELECPH(IPHOT,K))
-                EELECPH(IPHOT,J) = dble(IREAC1(IR))
+              IREACPH(JPHOT,J) = IREAC1(IREACPH(JPHOT,K))
+              IBULKPH(JPHOT,J) = IBULKPH(JPHOT,K)
+              ISCD1PH(JPHOT,J) = ISCD1PH(JPHOT,K)
+              ISCD2PH(JPHOT,J) = ISCD2PH(JPHOT,K)
+              ISCD3PH(JPHOT,J) = ISCD3PH(JPHOT,K)
+              ISCD4PH(JPHOT,J) = ISCD4PH(JPHOT,K)
+              ISCDEPH(JPHOT,J) = ISCDEPH(JPHOT,K)
+              IESTMPH(JPHOT,J) = IESTMPH(JPHOT,K)
+              IBGKPH(JPHOT,J) = IBGKPH(JPHOT,K)
+              IF (B2IDEZ(ISCDEPH(JPHOT,J),5,5).eq.3) THEN
+                IR = nint(EELECPH(JPHOT,K))
+                EELECPH(JPHOT,J) = dble(IREAC1(IR))
               ELSE
-                EELECPH(IPHOT,J) = EELECPH(IPHOT,K)
+                EELECPH(JPHOT,J) = EELECPH(JPHOT,K)
               END IF
-              EBULKPH(IPHOT,J) = EBULKPH(IPHOT,K)
-              IF (B2IDEZ(ISCDEPH(IPHOT,J),3,5).eq.3) THEN
-                IR = nint(ESCD1PH(IPHOT,K))
-                ESCD1PH(IPHOT,J) = dble(IREAC1(IR))
+              EBULKPH(JPHOT,J) = EBULKPH(JPHOT,K)
+              IF (B2IDEZ(ISCDEPH(JPHOT,J),3,5).eq.3) THEN
+                IR = nint(ESCD1PH(JPHOT,K))
+                ESCD1PH(JPHOT,J) = dble(IREAC1(IR))
               ELSE
-                ESCD1PH(IPHOT,J) = ESCD1PH(IPHOT,K)
+                ESCD1PH(JPHOT,J) = ESCD1PH(JPHOT,K)
               END IF
-              ESCD2PH(IPHOT,J) = ESCD2PH(IPHOT,K)
-              FREACPH(IPHOT,J) = FREACPH(IPHOT,K)
-              FLDLMPH(IPHOT,J) = FLDLMPH(IPHOT,K)
+              ESCD2PH(JPHOT,J) = ESCD2PH(JPHOT,K)
+              FREACPH(JPHOT,J) = FREACPH(JPHOT,K)
+              FLDLMPH(JPHOT,J) = FLDLMPH(JPHOT,K)
             END IF
           END DO
-          NRCPH(IPHOT) = J
+          NRCPH(JPHOT) = J
  4512   CONTINUE
 *4E. DATA FOR COLLISIONAL-RADIATIVE MODELS
         READ (IUNIN,'(A72)') ZEILE
@@ -5047,49 +5045,49 @@ Cxpb then rewrite the entire block
         allocate(TDMBOLTZ(NPLSI))
         allocate(TDMDELTAE(NPLSI))
         allocate(TDM_CORONA(NPLSI))
-        DO 511 IPLS=1,NPLSI
-          READ (IUNIN,66666) I,TEXTP(IPLS),NMASSP(IPLS),NCHARP(IPLS),
-     .                                     NPRTP(IPLS),NCHRGP(IPLS),
-     .                                     ISRFP(IPLS),ISRTP(IPLS),
-     .                                     ID1P(IPLS),NRCP(IPLS),
-     .                                     DENSLIM(IPLS),idum(0),
-     .                                     NHSTP(IPLS),idum(2),
-     .                                     CDENMODEL(IPLS),NRE(IPLS)
-          CALL EIRENE_UPPERCASE (CDENMODEL(IPLS))
-          DO 512 K=1,NRCP(IPLS)
-            IF (ID1P(IPLS).LT.3) THEN
+        DO 511 JPLS=1,NPLSI
+          READ (IUNIN,66666) I,TEXTP(JPLS),NMASSP(JPLS),NCHARP(JPLS),
+     .                                     NPRTP(JPLS),NCHRGP(JPLS),
+     .                                     ISRFP(JPLS),ISRTP(JPLS),
+     .                                     ID1P(JPLS),NRCP(JPLS),
+     .                                     DENSLIM(JPLS),idum(0),
+     .                                     NHSTP(JPLS),idum(2),
+     .                                     CDENMODEL(JPLS),NRE(JPLS)
+          CALL EIRENE_UPPERCASE (CDENMODEL(JPLS))
+          DO 512 K=1,NRCP(JPLS)
+            IF (ID1P(JPLS).LT.3) THEN
               READ (IUNIN,6666) idum(0:4)
-            ELSE IF (ID1P(IPLS).EQ.3) THEN
+            ELSE IF (ID1P(JPLS).EQ.3) THEN
               READ (IUNIN,6666) idum(0:5)
-            ELSE IF (ID1P(IPLS).EQ.4) THEN
+            ELSE IF (ID1P(JPLS).EQ.4) THEN
               READ (IUNIN,6666) idum(0:6)
             ENDIF
             READ (IUNIN,6664) rdum(0:4)
-512       CONTINUE
-          IF (CDENMODEL(IPLS).EQ.'FORT.13   ' .OR.
-     &        CDENMODEL(IPLS).EQ.'FTN13     ' .OR.
-     &        CDENMODEL(IPLS).EQ.'BOLTZMANN ' .OR.
-     &        CDENMODEL(IPLS).EQ.'CORONA    ') THEN
+  512     CONTINUE
+          IF (CDENMODEL(JPLS).EQ.'FORT.13   ' .OR.
+     &        CDENMODEL(JPLS).EQ.'FTN13     ' .OR.
+     &        CDENMODEL(JPLS).EQ.'BOLTZMANN ' .OR.
+     &        CDENMODEL(JPLS).EQ.'CORONA    ') THEN
             READ (IUNIN,'(A80)') ZEILE
-          ELSE IF (CDENMODEL(IPLS).EQ.'COLRAD    ') THEN
-            DO K=1,NRE(IPLS)
+          ELSE IF (CDENMODEL(JPLS).EQ.'COLRAD    ') THEN
+            DO K=1,NRE(JPLS)
               READ (IUNIN,'(A80)') ZEILE
             ENDDO
           ENDIF
-511     CONTINUE
-        DO 5111 IPLS=1,NPLSI
+  511   CONTINUE
+        DO 5111 JPLS=1,NPLSI
           backspace(IUNIN)
-          DO 5121 K=1,NRCP(IPLS)
+          DO 5121 K=1,NRCP(JPLS)
             backspace(IUNIN)
             backspace(IUNIN)
  5121     CONTINUE
-          IF (CDENMODEL(IPLS).EQ.'FORT.13   ' .OR.
-     &        CDENMODEL(IPLS).EQ.'FTN13     ' .OR.
-     &        CDENMODEL(IPLS).EQ.'BOLTZMANN ' .OR.
-     &        CDENMODEL(IPLS).EQ.'CORONA    ') THEN
+          IF (CDENMODEL(JPLS).EQ.'FORT.13   ' .OR.
+     &        CDENMODEL(JPLS).EQ.'FTN13     ' .OR.
+     &        CDENMODEL(JPLS).EQ.'BOLTZMANN ' .OR.
+     &        CDENMODEL(JPLS).EQ.'CORONA    ') THEN
             backspace(IUNIN)
-          ELSE IF (CDENMODEL(IPLS).EQ.'COLRAD    ') THEN
-            DO K=1,NRE(IPLS)
+          ELSE IF (CDENMODEL(JPLS).EQ.'COLRAD    ') THEN
+            DO K=1,NRE(JPLS)
               backspace(IUNIN)
             ENDDO
           ENDIF
@@ -5106,100 +5104,100 @@ Cxpb then rewrite the entire block
         allocate(TDMISP(NNREAC,NPLSI))
         allocate(TDMFNAME(NNREAC,NPLSI), TDMH2(NNREAC,NPLSI),
      .           TDMREACTION(NNREAC,NPLSI), TDMCR(NNREAC,NPLSI))
-        DO 5112 IPLS=1,NPLSI
+        DO 5112 JPLS=1,NPLSI
           READ (IUNIN,'(A72)') ZEILE
-          DO 5122 K=1,NRCP(IPLS)
-            IF (ID1P(IPLS).LT.3) THEN
-              READ (IUNIN,6666) IREACP(IPLS,K),IBULKP(IPLS,K),
-     .                          ISCD1P(IPLS,K),ISCD2P(IPLS,K),
-     .                          ISCDEP(IPLS,K)
-              ISCD3P(IPLS,K)=0
-              ISCD4P(IPLS,K)=0
-            ELSE IF (ID1P(IPLS).EQ.3) THEN
-              READ (IUNIN,6666) IREACP(IPLS,K),IBULKP(IPLS,K),
-     .                          ISCD1P(IPLS,K),ISCD2P(IPLS,K),
-     .                          ISCD3P(IPLS,K),ISCDEP(IPLS,K)
-              ISCD4P(IPLS,K)=0
-            ELSE IF (ID1P(IPLS).EQ.4) THEN
-              READ (IUNIN,6666) IREACP(IPLS,K),IBULKP(IPLS,K),
-     .                          ISCD1P(IPLS,K),ISCD2P(IPLS,K),
-     .                          ISCD3P(IPLS,K),ISCD4P(IPLS,K),
-     .                          ISCDEP(IPLS,K)
+          DO 5122 K=1,NRCP(JPLS)
+            IF (ID1P(JPLS).LT.3) THEN
+              READ (IUNIN,6666) IREACP(JPLS,K),IBULKP(JPLS,K),
+     .                          ISCD1P(JPLS,K),ISCD2P(JPLS,K),
+     .                          ISCDEP(JPLS,K)
+              ISCD3P(JPLS,K)=0
+              ISCD4P(JPLS,K)=0
+            ELSE IF (ID1P(JPLS).EQ.3) THEN
+              READ (IUNIN,6666) IREACP(JPLS,K),IBULKP(JPLS,K),
+     .                          ISCD1P(JPLS,K),ISCD2P(JPLS,K),
+     .                          ISCD3P(JPLS,K),ISCDEP(JPLS,K)
+              ISCD4P(JPLS,K)=0
+            ELSE IF (ID1P(JPLS).EQ.4) THEN
+              READ (IUNIN,6666) IREACP(JPLS,K),IBULKP(JPLS,K),
+     .                          ISCD1P(JPLS,K),ISCD2P(JPLS,K),
+     .                          ISCD3P(JPLS,K),ISCD4P(JPLS,K),
+     .                          ISCDEP(JPLS,K)
             ENDIF
-            READ (IUNIN,6664) EELECP(IPLS,K),EBULKP(IPLS,K),
-     .                        ESCD1P(IPLS,K),ESCD2P(IPLS,K),
-     .                        FREACP(IPLS,K)
+            READ (IUNIN,6664) EELECP(JPLS,K),EBULKP(JPLS,K),
+     .                        ESCD1P(JPLS,K),ESCD2P(JPLS,K),
+     .                        FREACP(JPLS,K)
  5122     CONTINUE
           J=0
-          DO K=1,NRCP(IPLS)
-            IF (IREAC1(IREACP(IPLS,K)).GE.1) THEN
+          DO K=1,NRCP(JPLS)
+            IF (IREAC1(IREACP(JPLS,K)).GE.1) THEN
               J = J + 1
-              IREACP(IPLS,J) = IREAC1(IREACP(IPLS,K))
-              IBULKP(IPLS,J) = IBULKP(IPLS,K)
-              ISCD1P(IPLS,J) = ISCD1P(IPLS,K)
-              ISCD2P(IPLS,J) = ISCD2P(IPLS,K)
-              ISCD3P(IPLS,J) = ISCD3P(IPLS,K)
-              ISCD4P(IPLS,J) = ISCD4P(IPLS,K)
-              ISCDEP(IPLS,J) = ISCDEP(IPLS,K)
-              IF (B2IDEZ(ISCDEP(IPLS,J),5,5).eq.3) THEN
-                IR = nint(EELECP(IPLS,K))
-                EELECP(IPLS,J) = dble(IREAC1(IR))
+              IREACP(JPLS,J) = IREAC1(IREACP(JPLS,K))
+              IBULKP(JPLS,J) = IBULKP(JPLS,K)
+              ISCD1P(JPLS,J) = ISCD1P(JPLS,K)
+              ISCD2P(JPLS,J) = ISCD2P(JPLS,K)
+              ISCD3P(JPLS,J) = ISCD3P(JPLS,K)
+              ISCD4P(JPLS,J) = ISCD4P(JPLS,K)
+              ISCDEP(JPLS,J) = ISCDEP(JPLS,K)
+              IF (B2IDEZ(ISCDEP(JPLS,J),5,5).eq.3) THEN
+                IR = nint(EELECP(JPLS,K))
+                EELECP(JPLS,J) = dble(IREAC1(IR))
               ELSE
-                EELECP(IPLS,J) = EELECP(IPLS,K)
+                EELECP(JPLS,J) = EELECP(JPLS,K)
               END IF
-              EBULKP(IPLS,J) = EBULKP(IPLS,K)
-              IF (B2IDEZ(ISCDEP(IPLS,J),3,5).eq.3) THEN
-                IR = nint(ESCD1P(IPLS,K))
-                ESCD1P(IPLS,J) = dble(IREAC1(IR))
+              EBULKP(JPLS,J) = EBULKP(JPLS,K)
+              IF (B2IDEZ(ISCDEP(JPLS,J),3,5).eq.3) THEN
+                IR = nint(ESCD1P(JPLS,K))
+                ESCD1P(JPLS,J) = dble(IREAC1(IR))
               ELSE
-                ESCD1P(IPLS,J) = ESCD1P(IPLS,K)
+                ESCD1P(JPLS,J) = ESCD1P(JPLS,K)
               END IF
-              ESCD2P(IPLS,J) = ESCD2P(IPLS,K)
-              FREACP(IPLS,J) = FREACP(IPLS,K)
+              ESCD2P(JPLS,J) = ESCD2P(JPLS,K)
+              FREACP(JPLS,J) = FREACP(JPLS,K)
             END IF
           END DO
-          NRCP(IPLS) = J
-          SELECT CASE (CDENMODEL(IPLS))
+          NRCP(JPLS) = J
+          SELECT CASE (CDENMODEL(JPLS))
           CASE ('FORT.13   ','FTN13     ')
-            READ (IUNIN,6666) TDMISP(1,IPLS)
+            READ (IUNIN,6666) TDMISP(1,JPLS)
           CASE ('BOLTZMANN ')
-            READ (IUNIN,'(I6,6X,2E12.4)') TDMISP(1,IPLS),
-     .           TDMBOLTZ(IPLS), TDMDELTAE(IPLS)
+            READ (IUNIN,'(I6,6X,2E12.4)') TDMISP(1,JPLS),
+     .           TDMBOLTZ(JPLS), TDMDELTAE(JPLS)
           CASE ('CORONA    ')
             READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
-     .           TDMISP(1,IPLS),TDMFNAME(1,IPLS),
-     .           TDMH2(1,IPLS),TDMREACTION(1,IPLS),
-     .           TDMCR(1,IPLS),TDM_CORONA(IPLS)
+     .           TDMISP(1,JPLS),TDMFNAME(1,JPLS),
+     .           TDMH2(1,JPLS),TDMREACTION(1,JPLS),
+     .           TDMCR(1,JPLS),TDM_CORONA(JPLS)
           CASE ('COLRAD    ')
-            DO I=1, NRE(IPLS)
+            DO I=1, NRE(JPLS)
               READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
-     .             TDMISP(I,IPLS),TDMFNAME(I,IPLS),
-     .             TDMH2(I,IPLS),TDMREACTION(I,IPLS),
-     .             TDMCR(I,IPLS)
+     .             TDMISP(I,JPLS),TDMFNAME(I,JPLS),
+     .             TDMH2(I,JPLS),TDMREACTION(I,JPLS),
+     .             TDMCR(I,JPLS)
             END DO
           CASE DEFAULT
             CONTINUE
           END SELECT
  5112   CONTINUE
 cxpb Now we have read the species data and can identify the bundles
-        DO 5113 IPLS=1,NPLSI
-          found = ipls.gt.(ns-nspecies)
+        DO 5113 JPLS=1,NPLSI
+          found = jpls.gt.(ns-nspecies)
           is = 0
           do while (.not.found .and. is.lt.ns1)
-            found = nint(am1(is)).eq.NMASSP(IPLS) .and.
-     .       nint(zn1(is)).eq.NCHARP(IPLS) .and.
-     .       nint(zamin1(is)).le.NCHRGP(IPLS) .and.
-     .       nint(zamax1(is)).ge.NCHRGP(IPLS)
+            found = nint(am1(is)).eq.NMASSP(JPLS) .and.
+     .       nint(zn1(is)).eq.NCHARP(JPLS) .and.
+     .       nint(zamin1(is)).le.NCHRGP(JPLS) .and.
+     .       nint(zamax1(is)).ge.NCHRGP(JPLS)
             if (found) then
-              eb2ibcr(ipls) = is
+              eb2ibcr(jpls) = is
             else
               is = is + 1
             endif
           enddo
           if (.not.found) then
-            eb2ibcr(ipls) = -1
+            eb2ibcr(jpls) = -1
             write(*,*) 'Ion species corresponding to ',
-     .       trim(TEXTP(IPLS)),' not found! Removing...'
+     .       trim(TEXTP(JPLS)),' not found! Removing...'
           end if
  5113   CONTINUE
         NPLSI1 = (ns1-nspecies1)+(NPLSI-(ns-nspecies))
@@ -5213,13 +5211,13 @@ cxpb Now we have read the species data and can identify the bundles
         allocate(zemin1(nplsi1))
         allocate(zemax1(nplsi1))
         ib = 0
-        do IATM = 1, nspecies1
-          if (iatm.eq.nspecies1) then
+        do JATM = 1, nspecies1
+          if (jatm.eq.nspecies1) then
             iend = ns1
           else
-            iend = eb2spcr1(iatm+1)
+            iend = eb2spcr1(jatm+1)
           endif
-          do iss = eb2spcr1(iatm)+1, iend-1
+          do iss = eb2spcr1(jatm)+1, iend-1
             ib = ib + 1
             NMASSP1(ib) = nint(am1(iss))
             NCHARP1(ib) = nint(zn1(iss))
@@ -5253,25 +5251,25 @@ cxpb Now we have read the species data and can identify the bundles
         isp = 0
         ipls = 0
         iplss = 0
-        do iatm = 1, nspecies
-          if (ispecies1(iatm).eq.-1) then
+        do jatm = 1, nspecies
+          if (ispecies1(jatm).eq.-1) then
             do while (NMASSP(min(nplsi,ipls+1)).eq.
-     .                NMASSA(b2eatcr(eb2spcr(iatm))) .and.
+     .                NMASSA(b2eatcr(eb2spcr(jatm))) .and.
      .                NCHARP(min(nplsi,ipls+1)).eq.
-     .                NCHARA(b2eatcr(eb2spcr(iatm))) .and.
+     .                NCHARA(b2eatcr(eb2spcr(jatm))) .and.
      .                ipls.lt.nplsi)
               ipls = ipls + 1
             end do
             cycle
-          end if
-          is = eb2spcr(iatm)+1
-          if (iatm.eq.nspecies) then
+          endif
+          is = eb2spcr(jatm)+1
+          if (jatm.eq.nspecies) then
             js = ns-1
           else
-            js = eb2spcr(iatm+1)-1
+            js = eb2spcr(jatm+1)-1
           endif
-          iplss = eb2spcr1(ispecies1(iatm))-ispecies1(iatm)+1
-          iss = eb2spcr1(ispecies1(iatm))+1
+          iplss = eb2spcr1(ispecies1(jatm))-ispecies1(jatm)+1
+          iss = eb2spcr1(ispecies1(jatm))+1
           jss = iss
           if (jss.lt.ns1-1) then
             do while (jss.le.ns1-2 .and.
@@ -5345,16 +5343,16 @@ cxpb  first one
             enddo
           enddo
         enddo
-        do IPLS = ns-nspecies+1, NPLSI
-          ib = (ns1-nspecies1) + IPLS-(ns-nspecies)
-          NMASSP1(ib) = NMASSP(IPLS)
-          NCHARP1(ib) = NCHARP(IPLS)
-          NCHRGP1(ib) = NCHRGP(IPLS)
-          ipls1(ipls) = ib
-          isp(ib) = ipls
-          e_bundle_start(ib) = ipls
-          e_bundle_end(ib) = ipls
-          e_bundle_contr(ib,ipls) = 1.0_R8
+        do JPLS = ns-nspecies+1, NPLSI
+          ib = (ns1-nspecies1) + JPLS-(ns-nspecies)
+          NMASSP1(ib) = NMASSP(JPLS)
+          NCHARP1(ib) = NCHARP(JPLS)
+          NCHRGP1(ib) = NCHRGP(JPLS)
+          ipls1(jpls) = ib
+          isp(ib) = jpls
+          e_bundle_start(ib) = jpls
+          e_bundle_end(ib) = jpls
+          e_bundle_contr(ib,jpls) = 1.0_R8
         end do
         if (.not.same_bundling) then
           write(*,*) 'e_bundle_contr:'
@@ -5366,7 +5364,6 @@ cxpb  first one
      .       (e_bundle_contr(iss,is), is = 1, nplsi)
           end do
         end if
-        NPLSM = max(NPLSI,NPLSI1)
 cxpb Must now convert the bulk ion data according to the new bundling
         allocate(TEXTP1(NPLSI1))
         allocate(NPRTP1(NPLSI1))
@@ -5434,10 +5431,10 @@ cxpb Must now convert the bulk ion data according to the new bundling
             NPRTP1(IB) = 0
             NHSTP1(IB) = -1
             NRCP1(IB) = 0
-            do ipls = e_bundle_start(IB), e_bundle_end(IB)
-              NPRTP1(IB) = NPRTP1(IB) + NPRTP(ipls)
-              NRCP1(IB) = NRCP1(IB) + NRCP(ipls)
-              IF (NHSTP(ipls).EQ.0) NHSTP1(IB) = 0
+            do jpls = e_bundle_start(IB), e_bundle_end(IB)
+              NPRTP1(IB) = NPRTP1(IB) + NPRTP(jpls)
+              NRCP1(IB) = NRCP1(IB) + NRCP(jpls)
+              IF (NHSTP(jpls).EQ.0) NHSTP1(IB) = 0
             end do
             NPRTP1(IB) =
      .       NPRTP1(IB) / (e_bundle_end(IB)-e_bundle_start(IB)+1)
@@ -5465,9 +5462,9 @@ cxpb Must now convert the bulk ion data according to the new bundling
      .       maxval(ID1P(e_bundle_start(IB):e_bundle_end(IB)))
             DENSLIM1(IB) = DENSLIM(e_bundle_end(IB))
             CDENMODEL1(IB) = CDENMODEL(e_bundle_end(IB))
-            DO IPLS = e_bundle_start(IB), e_bundle_end(IB)
+            DO JPLS = e_bundle_start(IB), e_bundle_end(IB)
               IF (CDENMODEL1(IB)(1:6).EQ.'COLRAD') THEN
-                NRE1(IB) = NRE1(IB) + NRE(IPLS)
+                NRE1(IB) = NRE1(IB) + NRE(JPLS)
               ELSE
                 NRE1(IB) = 1
               END IF
@@ -5500,14 +5497,14 @@ cxpb Must now convert the bulk ion data according to the new bundling
               TDM_CORONA1(IB) = TDM_CORONA(e_bundle_end(IB))
             CASE ('COLRAD    ')
               I1 = 0
-              do ipls = e_bundle_start(IB), e_bundle_end(IB)
-                DO I = 1, NRE(ipls)
+              do jpls = e_bundle_start(IB), e_bundle_end(IB)
+                DO I = 1, NRE(jpls)
                   I1 = I1 + 1
-                  TDMISP1(I1,IB) = ipls1(TDMISP(I,IPLS))
-                  TDMFNAME1(I1,IB) = TDMFNAME(I,IPLS)
-                  TDMH21(I1,IB) = TDMH2(I,IPLS)
-                  TDMREACTION1(I1,IB) = TDMREACTION(I,IPLS)
-                  TDMCR1(I1,IB) = TDMCR(I,IPLS)
+                  TDMISP1(I1,IB) = ipls1(TDMISP(I,JPLS))
+                  TDMFNAME1(I1,IB) = TDMFNAME(I,JPLS)
+                  TDMH21(I1,IB) = TDMH2(I,JPLS)
+                  TDMREACTION1(I1,IB) = TDMREACTION(I,JPLS)
+                  TDMCR1(I1,IB) = TDMCR(I,JPLS)
                 END DO
               end do
             CASE DEFAULT
@@ -5516,337 +5513,337 @@ cxpb Must now convert the bulk ion data according to the new bundling
           END IF
         END DO
 cxpb We now re-compute input data according to the new bundling for block 4
-        DO IATM = 1, NATMI
-         IF (IATM1(IATM).ne.0) then
-          DO K = 1, NRCA(IATM)
-            M = B2IDEZ(IBULKA(IATM,K),1,2)
-            L = B2IDEZ(IBULKA(IATM,K),2,3)
-            ICRM = B2IDEZ(IBULKA(IATM,K),3,3)
+        DO JATM = 1, NATMI
+         IF (IATM1(JATM).ne.0) then
+          DO K = 1, NRCA(JATM)
+            M = B2IDEZ(IBULKA(JATM,K),1,2)
+            L = B2IDEZ(IBULKA(JATM,K),2,3)
+            ICRM = B2IDEZ(IBULKA(JATM,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              IBULKA(IATM,K) = M + 10*L + 100*iatm1(icrm)
+              IBULKA(JATM,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              IBULKA(IATM,K) = M + 10*L + 100*imol1(icrm)
+              IBULKA(JATM,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              IBULKA(IATM,K) = M + 10*L + 100*ipls1(icrm)
+              IBULKA(JATM,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            M = B2IDEZ(ISCD1A(IATM,K),1,2)
-            L = B2IDEZ(ISCD1A(IATM,K),2,3)
-            ICRM = B2IDEZ(ISCD1A(IATM,K),3,3)
+            M = B2IDEZ(ISCD1A(JATM,K),1,2)
+            L = B2IDEZ(ISCD1A(JATM,K),2,3)
+            ICRM = B2IDEZ(ISCD1A(JATM,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              ISCD1A(IATM,K) = M + 10*L + 100*iatm1(icrm)
+              ISCD1A(JATM,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              ISCD1A(IATM,K) = M + 10*L + 100*imol1(icrm)
+              ISCD1A(JATM,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              ISCD1A(IATM,K) = M + 10*L + 100*ipls1(icrm)
+              ISCD1A(JATM,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            M = B2IDEZ(ISCD2A(IATM,K),1,2)
-            L = B2IDEZ(ISCD2A(IATM,K),2,3)
-            ICRM = B2IDEZ(ISCD2A(IATM,K),3,3)
+            M = B2IDEZ(ISCD2A(JATM,K),1,2)
+            L = B2IDEZ(ISCD2A(JATM,K),2,3)
+            ICRM = B2IDEZ(ISCD2A(JATM,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              ISCD2A(IATM,K) = M + 10*L + 100*iatm1(icrm)
+              ISCD2A(JATM,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              ISCD2A(IATM,K) = M + 10*L + 100*imol1(icrm)
+              ISCD2A(JATM,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              ISCD2A(IATM,K) = M + 10*L + 100*ipls1(icrm)
+              ISCD2A(JATM,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            IF (ID1A(IATM).GE.3) THEN
-              M = B2IDEZ(ISCD3A(IATM,K),1,2)
-              L = B2IDEZ(ISCD3A(IATM,K),2,3)
-              ICRM = B2IDEZ(ISCD3A(IATM,K),3,3)
+            IF (ID1A(JATM).GE.3) THEN
+              M = B2IDEZ(ISCD3A(JATM,K),1,2)
+              L = B2IDEZ(ISCD3A(JATM,K),2,3)
+              ICRM = B2IDEZ(ISCD3A(JATM,K),3,3)
               IF (M.EQ.1) THEN   ! we have an atom
-                ISCD3A(IATM,K) = M + 10*L + 100*iatm1(icrm)
+                ISCD3A(JATM,K) = M + 10*L + 100*iatm1(icrm)
               ELSE IF (M.EQ.2) THEN   ! we have a molecule
-                ISCD3A(IATM,K) = M + 10*L + 100*imol1(icrm)
+                ISCD3A(JATM,K) = M + 10*L + 100*imol1(icrm)
               ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-                ISCD3A(IATM,K) = M + 10*L + 100*ipls1(icrm)
+                ISCD3A(JATM,K) = M + 10*L + 100*ipls1(icrm)
               END IF
             END IF
-            IF (ID1A(IATM).GE.4) THEN
-              M = B2IDEZ(ISCD4A(IATM,K),1,2)
-              L = B2IDEZ(ISCD4A(IATM,K),2,3)
-              ICRM = B2IDEZ(ISCD4A(IATM,K),3,3)
+            IF (ID1A(JATM).GE.4) THEN
+              M = B2IDEZ(ISCD4A(JATM,K),1,2)
+              L = B2IDEZ(ISCD4A(JATM,K),2,3)
+              ICRM = B2IDEZ(ISCD4A(JATM,K),3,3)
               IF (M.EQ.1) THEN   ! we have an atom
-                ISCD4A(IATM,K) = M + 10*L + 100*iatm1(icrm)
+                ISCD4A(JATM,K) = M + 10*L + 100*iatm1(icrm)
               ELSE IF (M.EQ.2) THEN   ! we have a molecule
-                ISCD4A(IATM,K) = M + 10*L + 100*imol1(icrm)
+                ISCD4A(JATM,K) = M + 10*L + 100*imol1(icrm)
               ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-                ISCD4A(IATM,K) = M + 10*L + 100*ipls1(icrm)
+                ISCD4A(JATM,K) = M + 10*L + 100*ipls1(icrm)
               END IF
             END IF
-            M = B2IDEZ(IBGKA(IATM,K),1,3)
-            L = B2IDEZ(IBGKA(IATM,K),2,3)
-            ICRM = B2IDEZ(IBGKA(IATM,K),3,3)
+            M = B2IDEZ(IBGKA(JATM,K),1,3)
+            L = B2IDEZ(IBGKA(JATM,K),2,3)
+            ICRM = B2IDEZ(IBGKA(JATM,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              IBGKA(IATM,K) = M + 10*L + 100*iatm1(icrm)
+              IBGKA(JATM,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              IBGKA(IATM,K) = M + 10*L + 100*imol1(icrm)
+              IBGKA(JATM,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              IBGKA(IATM,K) = M + 10*L + 100*ipls1(icrm)
+              IBGKA(JATM,K) = M + 10*L + 100*ipls1(icrm)
             END IF
           END DO
          END IF
         END DO
-        DO IMOL = 1, NMOLI
-         IF (IMOL1(IMOL).ne.0) then
-          DO K = 1, NRCM(IMOL)
-            M = B2IDEZ(IBULKM(IMOL,K),1,2)
-            L = B2IDEZ(IBULKM(IMOL,K),2,3)
-            ICRM = B2IDEZ(IBULKM(IMOL,K),3,3)
+        DO JMOL = 1, NMOLI
+         IF (IMOL1(JMOL).ne.0) then
+          DO K = 1, NRCM(JMOL)
+            M = B2IDEZ(IBULKM(JMOL,K),1,2)
+            L = B2IDEZ(IBULKM(JMOL,K),2,3)
+            ICRM = B2IDEZ(IBULKM(JMOL,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              IBULKM(IMOL,K) = M + 10*L + 100*iatm1(icrm)
+              IBULKM(JMOL,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              IBULKM(IMOL,K) = M + 10*L + 100*imol1(icrm)
+              IBULKM(JMOL,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              IBULKM(IMOL,K) = M + 10*L + 100*ipls1(icrm)
+              IBULKM(JMOL,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            M = B2IDEZ(ISCD1M(IMOL,K),1,2)
-            L = B2IDEZ(ISCD1M(IMOL,K),2,3)
-            ICRM = B2IDEZ(ISCD1M(IMOL,K),3,3)
+            M = B2IDEZ(ISCD1M(JMOL,K),1,2)
+            L = B2IDEZ(ISCD1M(JMOL,K),2,3)
+            ICRM = B2IDEZ(ISCD1M(JMOL,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              ISCD1M(IMOL,K) = M + 10*L + 100*iatm1(icrm)
+              ISCD1M(JMOL,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              ISCD1M(IMOL,K) = M + 10*L + 100*imol1(icrm)
+              ISCD1M(JMOL,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              ISCD1M(IMOL,K) = M + 10*L + 100*ipls1(icrm)
+              ISCD1M(JMOL,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            M = B2IDEZ(ISCD2M(IMOL,K),1,2)
-            L = B2IDEZ(ISCD2M(IMOL,K),2,3)
-            ICRM = B2IDEZ(ISCD2M(IMOL,K),3,3)
+            M = B2IDEZ(ISCD2M(JMOL,K),1,2)
+            L = B2IDEZ(ISCD2M(JMOL,K),2,3)
+            ICRM = B2IDEZ(ISCD2M(JMOL,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              ISCD2M(IMOL,K) = M + 10*L + 100*iatm1(icrm)
+              ISCD2M(JMOL,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              ISCD2M(IMOL,K) = M + 10*L + 100*imol1(icrm)
+              ISCD2M(JMOL,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              ISCD2M(IMOL,K) = M + 10*L + 100*ipls1(icrm)
+              ISCD2M(JMOL,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            IF (ID1M(IMOL).GE.3) THEN
-              M = B2IDEZ(ISCD3M(IMOL,K),1,2)
-              L = B2IDEZ(ISCD3M(IMOL,K),2,3)
-              ICRM = B2IDEZ(ISCD3M(IMOL,K),3,3)
+            IF (ID1M(JMOL).GE.3) THEN
+              M = B2IDEZ(ISCD3M(JMOL,K),1,2)
+              L = B2IDEZ(ISCD3M(JMOL,K),2,3)
+              ICRM = B2IDEZ(ISCD3M(JMOL,K),3,3)
               IF (M.EQ.1) THEN   ! we have an atom
-                ISCD3M(IMOL,K) = M + 10*L + 100*iatm1(icrm)
+                ISCD3M(JMOL,K) = M + 10*L + 100*iatm1(icrm)
               ELSE IF (M.EQ.2) THEN   ! we have a molecule
-                ISCD3M(IMOL,K) = M + 10*L + 100*imol1(icrm)
+                ISCD3M(JMOL,K) = M + 10*L + 100*imol1(icrm)
               ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-                ISCD3M(IMOL,K) = M + 10*L + 100*ipls1(icrm)
+                ISCD3M(JMOL,K) = M + 10*L + 100*ipls1(icrm)
               END IF
             END IF
-            IF (ID1M(IMOL).GE.4) THEN
-              M = B2IDEZ(ISCD4M(IMOL,K),1,2)
-              L = B2IDEZ(ISCD4M(IMOL,K),2,3)
-              ICRM = B2IDEZ(ISCD4M(IMOL,K),3,3)
+            IF (ID1M(JMOL).GE.4) THEN
+              M = B2IDEZ(ISCD4M(JMOL,K),1,2)
+              L = B2IDEZ(ISCD4M(JMOL,K),2,3)
+              ICRM = B2IDEZ(ISCD4M(JMOL,K),3,3)
               IF (M.EQ.1) THEN   ! we have an atom
-                ISCD4M(IMOL,K) = M + 10*L + 100*iatm1(icrm)
+                ISCD4M(JMOL,K) = M + 10*L + 100*iatm1(icrm)
               ELSE IF (M.EQ.2) THEN   ! we have a molecule
-                ISCD4M(IMOL,K) = M + 10*L + 100*imol1(icrm)
+                ISCD4M(JMOL,K) = M + 10*L + 100*imol1(icrm)
               ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-                ISCD4M(IMOL,K) = M + 10*L + 100*ipls1(icrm)
+                ISCD4M(JMOL,K) = M + 10*L + 100*ipls1(icrm)
               END IF
             END IF
-            M = B2IDEZ(IBGKM(IMOL,K),1,3)
-            L = B2IDEZ(IBGKM(IMOL,K),2,3)
-            ICRM = B2IDEZ(IBGKM(IMOL,K),3,3)
+            M = B2IDEZ(IBGKM(JMOL,K),1,3)
+            L = B2IDEZ(IBGKM(JMOL,K),2,3)
+            ICRM = B2IDEZ(IBGKM(JMOL,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              IBGKM(IMOL,K) = M + 10*L + 100*iatm1(icrm)
+              IBGKM(JMOL,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              IBGKM(IMOL,K) = M + 10*L + 100*imol1(icrm)
+              IBGKM(JMOL,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              IBGKM(IMOL,K) = M + 10*L + 100*ipls1(icrm)
+              IBGKM(JMOL,K) = M + 10*L + 100*ipls1(icrm)
             END IF
           END DO
          END IF
         END DO
-        DO IION = 1, NIONI
-          DO K = 1, NRCI(IION)
-            M = B2IDEZ(IBULKI(IION,K),1,2)
-            L = B2IDEZ(IBULKI(IION,K),2,3)
-            ICRM = B2IDEZ(IBULKI(IION,K),3,3)
+        DO JION = 1, NIONI
+          DO K = 1, NRCI(JION)
+            M = B2IDEZ(IBULKI(JION,K),1,2)
+            L = B2IDEZ(IBULKI(JION,K),2,3)
+            ICRM = B2IDEZ(IBULKI(JION,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              IBULKI(IION,K) = M + 10*L + 100*iatm1(icrm)
+              IBULKI(JION,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              IBULKI(IION,K) = M + 10*L + 100*imol1(icrm)
+              IBULKI(JION,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              IBULKI(IION,K) = M + 10*L + 100*ipls1(icrm)
+              IBULKI(JION,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            M = B2IDEZ(ISCD1I(IION,K),1,2)
-            L = B2IDEZ(ISCD1I(IION,K),2,3)
-            ICRM = B2IDEZ(ISCD1I(IION,K),3,3)
+            M = B2IDEZ(ISCD1I(JION,K),1,2)
+            L = B2IDEZ(ISCD1I(JION,K),2,3)
+            ICRM = B2IDEZ(ISCD1I(JION,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              ISCD1I(IION,K) = M + 10*L + 100*iatm1(icrm)
+              ISCD1I(JION,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              ISCD1I(IION,K) = M + 10*L + 100*imol1(icrm)
+              ISCD1I(JION,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              ISCD1I(IION,K) = M + 10*L + 100*ipls1(icrm)
+              ISCD1I(JION,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            M = B2IDEZ(ISCD2I(IION,K),1,2)
-            L = B2IDEZ(ISCD2I(IION,K),2,3)
-            ICRM = B2IDEZ(ISCD2I(IION,K),3,3)
+            M = B2IDEZ(ISCD2I(JION,K),1,2)
+            L = B2IDEZ(ISCD2I(JION,K),2,3)
+            ICRM = B2IDEZ(ISCD2I(JION,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              ISCD2I(IION,K) = M + 10*L + 100*iatm1(icrm)
+              ISCD2I(JION,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              ISCD2I(IION,K) = M + 10*L + 100*imol1(icrm)
+              ISCD2I(JION,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              ISCD2I(IION,K) = M + 10*L + 100*ipls1(icrm)
+              ISCD2I(JION,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            IF (ID1I(IION).GE.3) THEN
-              M = B2IDEZ(ISCD3I(IION,K),1,2)
-              L = B2IDEZ(ISCD3I(IION,K),2,3)
-              ICRM = B2IDEZ(ISCD3I(IION,K),3,3)
+            IF (ID1I(JION).GE.3) THEN
+              M = B2IDEZ(ISCD3I(JION,K),1,2)
+              L = B2IDEZ(ISCD3I(JION,K),2,3)
+              ICRM = B2IDEZ(ISCD3I(JION,K),3,3)
               IF (M.EQ.1) THEN   ! we have an atom
-                ISCD3I(IION,K) = M + 10*L + 100*iatm1(icrm)
+                ISCD3I(JION,K) = M + 10*L + 100*iatm1(icrm)
               ELSE IF (M.EQ.2) THEN   ! we have a molecule
-                ISCD3I(IION,K) = M + 10*L + 100*imol1(icrm)
+                ISCD3I(JION,K) = M + 10*L + 100*imol1(icrm)
               ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-                ISCD3I(IION,K) = M + 10*L + 100*ipls1(icrm)
+                ISCD3I(JION,K) = M + 10*L + 100*ipls1(icrm)
               END IF
             ENDIF
-            IF (ID1I(IION).GE.4) THEN
-              M = B2IDEZ(ISCD4I(IION,K),1,2)
-              L = B2IDEZ(ISCD4I(IION,K),2,3)
-              ICRM = B2IDEZ(ISCD4I(IION,K),3,3)
+            IF (ID1I(JION).GE.4) THEN
+              M = B2IDEZ(ISCD4I(JION,K),1,2)
+              L = B2IDEZ(ISCD4I(JION,K),2,3)
+              ICRM = B2IDEZ(ISCD4I(JION,K),3,3)
               IF (M.EQ.1) THEN   ! we have an atom
-                ISCD4I(IION,K) = M + 10*L + 100*iatm1(icrm)
+                ISCD4I(JION,K) = M + 10*L + 100*iatm1(icrm)
               ELSE IF (M.EQ.2) THEN   ! we have a molecule
-                ISCD4I(IION,K) = M + 10*L + 100*imol1(icrm)
+                ISCD4I(JION,K) = M + 10*L + 100*imol1(icrm)
               ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-                ISCD4I(IION,K) = M + 10*L + 100*ipls1(icrm)
+                ISCD4I(JION,K) = M + 10*L + 100*ipls1(icrm)
               END IF
             ENDIF
-            M = B2IDEZ(IBGKI(IION,K),1,3)
-            L = B2IDEZ(IBGKI(IION,K),2,3)
-            ICRM = B2IDEZ(IBGKI(IION,K),3,3)
+            M = B2IDEZ(IBGKI(JION,K),1,3)
+            L = B2IDEZ(IBGKI(JION,K),2,3)
+            ICRM = B2IDEZ(IBGKI(JION,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              IBGKI(IION,K) = M + 10*L + 100*iatm1(icrm)
+              IBGKI(JION,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              IBGKI(IION,K) = M + 10*L + 100*imol1(icrm)
+              IBGKI(JION,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              IBGKI(IION,K) = M + 10*L + 100*ipls1(icrm)
+              IBGKI(JION,K) = M + 10*L + 100*ipls1(icrm)
             END IF
           END DO
         END DO
-        DO IPHOT = 1, NPHOTI
-          DO K = 1, NRCPH(IPHOT)
-            M = B2IDEZ(IBULKPH(IPHOT,K),1,2)
-            L = B2IDEZ(IBULKPH(IPHOT,K),2,3)
-            ICRM = B2IDEZ(IBULKPH(IPHOT,K),3,3)
+        DO JPHOT = 1, NPHOTI
+          DO K = 1, NRCPH(JPHOT)
+            M = B2IDEZ(IBULKPH(JPHOT,K),1,2)
+            L = B2IDEZ(IBULKPH(JPHOT,K),2,3)
+            ICRM = B2IDEZ(IBULKPH(JPHOT,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              IBULKPH(IPHOT,K) = M + 10*L + 100*iatm1(icrm)
+              IBULKPH(JPHOT,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              IBULKPH(IPHOT,K) = M + 10*L + 100*imol1(icrm)
+              IBULKPH(JPHOT,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              IBULKPH(IPHOT,K) = M + 10*L + 100*ipls1(icrm)
+              IBULKPH(JPHOT,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            M = B2IDEZ(ISCD1PH(IPHOT,K),1,2)
-            L = B2IDEZ(ISCD1PH(IPHOT,K),2,3)
-            ICRM = B2IDEZ(ISCD1PH(IPHOT,K),3,3)
+            M = B2IDEZ(ISCD1PH(JPHOT,K),1,2)
+            L = B2IDEZ(ISCD1PH(JPHOT,K),2,3)
+            ICRM = B2IDEZ(ISCD1PH(JPHOT,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              ISCD1PH(IPHOT,K) = M + 10*L + 100*iatm1(icrm)
+              ISCD1PH(JPHOT,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              ISCD1PH(IPHOT,K) = M + 10*L + 100*imol1(icrm)
+              ISCD1PH(JPHOT,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              ISCD1PH(IPHOT,K) = M + 10*L + 100*ipls1(icrm)
+              ISCD1PH(JPHOT,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            M = B2IDEZ(ISCD2PH(IPHOT,K),1,2)
-            L = B2IDEZ(ISCD2PH(IPHOT,K),2,3)
-            ICRM = B2IDEZ(ISCD2PH(IPHOT,K),3,3)
+            M = B2IDEZ(ISCD2PH(JPHOT,K),1,2)
+            L = B2IDEZ(ISCD2PH(JPHOT,K),2,3)
+            ICRM = B2IDEZ(ISCD2PH(JPHOT,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              ISCD2PH(IPHOT,K) = M + 10*L + 100*iatm1(icrm)
+              ISCD2PH(JPHOT,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              ISCD2PH(IPHOT,K) = M + 10*L + 100*imol1(icrm)
+              ISCD2PH(JPHOT,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              ISCD2PH(IPHOT,K) = M + 10*L + 100*ipls1(icrm)
+              ISCD2PH(JPHOT,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            IF (ID1PH(IPHOT).GE.3) THEN
-              M = B2IDEZ(ISCD3PH(IPHOT,K),1,2)
-              L = B2IDEZ(ISCD3PH(IPHOT,K),2,3)
-              ICRM = B2IDEZ(ISCD3PH(IPHOT,K),3,3)
+            IF (ID1PH(JPHOT).GE.3) THEN
+              M = B2IDEZ(ISCD3PH(JPHOT,K),1,2)
+              L = B2IDEZ(ISCD3PH(JPHOT,K),2,3)
+              ICRM = B2IDEZ(ISCD3PH(JPHOT,K),3,3)
               IF (M.EQ.1) THEN   ! we have an atom
-                ISCD3PH(IPHOT,K) = M + 10*L + 100*iatm1(icrm)
+                ISCD3PH(JPHOT,K) = M + 10*L + 100*iatm1(icrm)
               ELSE IF (M.EQ.2) THEN   ! we have a molecule
-                ISCD3PH(IPHOT,K) = M + 10*L + 100*imol1(icrm)
+                ISCD3PH(JPHOT,K) = M + 10*L + 100*imol1(icrm)
               ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-                ISCD3PH(IPHOT,K) = M + 10*L + 100*ipls1(icrm)
+                ISCD3PH(JPHOT,K) = M + 10*L + 100*ipls1(icrm)
               END IF
             ENDIF
-            IF (ID1PH(IPHOT).GE.4) THEN
-              M = B2IDEZ(ISCD4PH(IPHOT,K),1,2)
-              L = B2IDEZ(ISCD4PH(IPHOT,K),2,3)
-              ICRM = B2IDEZ(ISCD4PH(IPHOT,K),3,3)
+            IF (ID1PH(JPHOT).GE.4) THEN
+              M = B2IDEZ(ISCD4PH(JPHOT,K),1,2)
+              L = B2IDEZ(ISCD4PH(JPHOT,K),2,3)
+              ICRM = B2IDEZ(ISCD4PH(JPHOT,K),3,3)
               IF (M.EQ.1) THEN   ! we have an atom
-                ISCD4PH(IPHOT,K) = M + 10*L + 100*iatm1(icrm)
+                ISCD4PH(JPHOT,K) = M + 10*L + 100*iatm1(icrm)
               ELSE IF (M.EQ.2) THEN   ! we have a molecule
-                ISCD4PH(IPHOT,K) = M + 10*L + 100*imol1(icrm)
+                ISCD4PH(JPHOT,K) = M + 10*L + 100*imol1(icrm)
               ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-                ISCD4PH(IPHOT,K) = M + 10*L + 100*ipls1(icrm)
+                ISCD4PH(JPHOT,K) = M + 10*L + 100*ipls1(icrm)
               END IF
             ENDIF
-            M = B2IDEZ(IBGKPH(IPHOT,K),1,3)
-            L = B2IDEZ(IBGKPH(IPHOT,K),2,3)
-            ICRM = B2IDEZ(IBGKPH(IPHOT,K),3,3)
+            M = B2IDEZ(IBGKPH(JPHOT,K),1,3)
+            L = B2IDEZ(IBGKPH(JPHOT,K),2,3)
+            ICRM = B2IDEZ(IBGKPH(JPHOT,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              IBGKPH(IPHOT,K) = M + 10*L + 100*iatm1(icrm)
+              IBGKPH(JPHOT,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              IBGKPH(IPHOT,K) = M + 10*L + 100*imol1(icrm)
+              IBGKPH(JPHOT,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              IBGKPH(IPHOT,K) = M + 10*L + 100*ipls1(icrm)
+              IBGKPH(JPHOT,K) = M + 10*L + 100*ipls1(icrm)
             END IF
           END DO
         END DO
-        DO IPLS = 1, NPLSI
-         IF (IPLS1(IPLS).ne.0) then
-          DO K = 1, NRCP(IPLS)
-            M = B2IDEZ(IBULKP(IPLS,K),1,2)
-            L = B2IDEZ(IBULKP(IPLS,K),2,3)
-            ICRM = B2IDEZ(IBULKP(IPLS,K),3,3)
+        DO JPLS = 1, NPLSI
+         IF (IPLS1(JPLS).ne.0) then
+          DO K = 1, NRCP(JPLS)
+            M = B2IDEZ(IBULKP(JPLS,K),1,2)
+            L = B2IDEZ(IBULKP(JPLS,K),2,3)
+            ICRM = B2IDEZ(IBULKP(JPLS,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              IBULKP(IPLS,K) = M + 10*L + 100*iatm1(icrm)
+              IBULKP(JPLS,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              IBULKP(IPLS,K) = M + 10*L + 100*imol1(icrm)
+              IBULKP(JPLS,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              IBULKP(IPLS,K) = M + 10*L + 100*ipls1(icrm)
+              IBULKP(JPLS,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            M = B2IDEZ(ISCD1P(IPLS,K),1,2)
-            L = B2IDEZ(ISCD1P(IPLS,K),2,3)
-            ICRM = B2IDEZ(ISCD1P(IPLS,K),3,3)
+            M = B2IDEZ(ISCD1P(JPLS,K),1,2)
+            L = B2IDEZ(ISCD1P(JPLS,K),2,3)
+            ICRM = B2IDEZ(ISCD1P(JPLS,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              ISCD1P(IPLS,K) = M + 10*L + 100*iatm1(icrm)
+              ISCD1P(JPLS,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              ISCD1P(IPLS,K) = M + 10*L + 100*imol1(icrm)
+              ISCD1P(JPLS,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              ISCD1P(IPLS,K) = M + 10*L + 100*ipls1(icrm)
+              ISCD1P(JPLS,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            M = B2IDEZ(ISCD2P(IPLS,K),1,2)
-            L = B2IDEZ(ISCD2P(IPLS,K),2,3)
-            ICRM = B2IDEZ(ISCD2P(IPLS,K),3,3)
+            M = B2IDEZ(ISCD2P(JPLS,K),1,2)
+            L = B2IDEZ(ISCD2P(JPLS,K),2,3)
+            ICRM = B2IDEZ(ISCD2P(JPLS,K),3,3)
             IF (M.EQ.1) THEN   ! we have an atom
-              ISCD2P(IPLS,K) = M + 10*L + 100*iatm1(icrm)
+              ISCD2P(JPLS,K) = M + 10*L + 100*iatm1(icrm)
             ELSE IF (M.EQ.2) THEN   ! we have a molecule
-              ISCD2P(IPLS,K) = M + 10*L + 100*imol1(icrm)
+              ISCD2P(JPLS,K) = M + 10*L + 100*imol1(icrm)
             ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-              ISCD2P(IPLS,K) = M + 10*L + 100*ipls1(icrm)
+              ISCD2P(JPLS,K) = M + 10*L + 100*ipls1(icrm)
             END IF
-            IF (ID1P(IPLS).GE.3) THEN
-              M = B2IDEZ(ISCD3P(IPLS,K),1,2)
-              L = B2IDEZ(ISCD3P(IPLS,K),2,3)
-              ICRM = B2IDEZ(ISCD3P(IPLS,K),3,3)
+            IF (ID1P(JPLS).GE.3) THEN
+              M = B2IDEZ(ISCD3P(JPLS,K),1,2)
+              L = B2IDEZ(ISCD3P(JPLS,K),2,3)
+              ICRM = B2IDEZ(ISCD3P(JPLS,K),3,3)
               IF (M.EQ.1) THEN   ! we have an atom
-                ISCD3P(IPLS,K) = M + 10*L + 100*iatm1(icrm)
+                ISCD3P(JPLS,K) = M + 10*L + 100*iatm1(icrm)
               ELSE IF (M.EQ.2) THEN   ! we have a molecule
-                ISCD3P(IPLS,K) = M + 10*L + 100*imol1(icrm)
+                ISCD3P(JPLS,K) = M + 10*L + 100*imol1(icrm)
               ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-                ISCD3P(IPLS,K) = M + 10*L + 100*ipls1(icrm)
+                ISCD3P(JPLS,K) = M + 10*L + 100*ipls1(icrm)
               END IF
             END IF
-            IF (ID1P(IPLS).GE.4) THEN
-              M = B2IDEZ(ISCD4P(IPLS,K),1,2)
-              L = B2IDEZ(ISCD4P(IPLS,K),2,3)
-              ICRM = B2IDEZ(ISCD4P(IPLS,K),3,3)
+            IF (ID1P(JPLS).GE.4) THEN
+              M = B2IDEZ(ISCD4P(JPLS,K),1,2)
+              L = B2IDEZ(ISCD4P(JPLS,K),2,3)
+              ICRM = B2IDEZ(ISCD4P(JPLS,K),3,3)
               IF (M.EQ.1) THEN   ! we have an atom
-                ISCD4P(IPLS,K) = M + 10*L + 100*iatm1(icrm)
+                ISCD4P(JPLS,K) = M + 10*L + 100*iatm1(icrm)
               ELSE IF (M.EQ.2) THEN   ! we have a molecule
-                ISCD4P(IPLS,K) = M + 10*L + 100*imol1(icrm)
+                ISCD4P(JPLS,K) = M + 10*L + 100*imol1(icrm)
               ELSE IF (M.EQ.4) THEN   ! we have a bulk ion
-                ISCD4P(IPLS,K) = M + 10*L + 100*ipls1(icrm)
+                ISCD4P(JPLS,K) = M + 10*L + 100*ipls1(icrm)
               END IF
             END IF
           END DO
@@ -5964,53 +5961,53 @@ cxpb We now rewrite the modified block 4
 *4C.   TEST IONS SPECIES CARDS, NIONI SPECIES
         WRITE(IUNOT,'(A72)') TXTION
         WRITE(IUNOT,6666) NIONI
-        DO 4413 IION=1,NIONI
-          IF (ISRFI(IION).GT.0 .AND. ISRFI(IION).LE.NATMI) THEN
-            ISRFI(IION) = IATM1(ISRFI(IION))
+        DO 4413 JION=1,NIONI
+          IF (ISRFI(JION).GT.0 .AND. ISRFI(JION).LE.NATMI) THEN
+            ISRFI(JION) = IATM1(ISRFI(JION))
           ELSE
-            ISRFI(IION) = 0
+            ISRFI(JION) = 0
           ENDIF
-          IF (ISRTI(IION).GT.0.AND.ISRTI(IION).LE.NATMI) THEN
-            ISRTI(IION) = IATM1(ISRTI(IION))
-          ELSE IF (ISRTI(IION).GT.NATMI) THEN
-            ISRTI(IION) = NATMI1 + 1
-          ELSE IF (ISRTI(IION).LT.0.AND.ISRTI(IION).GE.-NMOLI) THEN
-            ISRTI(IION) =-IMOL1(-ISRTI(IION))
-          ELSE IF (ISRTI(IION).LT.-NMOLI) THEN
-            ISRTI(IION) =-(NMOL1 + 1)
+          IF (ISRTI(JION).GT.0.AND.ISRTI(JION).LE.NATMI) THEN
+            ISRTI(JION) = IATM1(ISRTI(JION))
+          ELSE IF (ISRTI(JION).GT.NATMI) THEN
+            ISRTI(JION) = NATMI1 + 1
+          ELSE IF (ISRTI(JION).LT.0.AND.ISRTI(JION).GE.-NMOLI) THEN
+            ISRTI(JION) =-IMOL1(-ISRTI(JION))
+          ELSE IF (ISRTI(JION).LT.-NMOLI) THEN
+            ISRTI(JION) =-(NMOL1 + 1)
           ENDIF
-          IF (LKINDI(IION).GT.0 .AND. LKINDI(IION).LE.NATMI) THEN
-            LKINDI(IION) = IATM1(LKINDI(IION))
+          IF (LKINDI(JION).GT.0 .AND. LKINDI(JION).LE.NATMI) THEN
+            LKINDI(JION) = IATM1(LKINDI(JION))
           ELSE
-            LKINDI(IION) = 0
+            LKINDI(JION) = 0
           ENDIF
-          WRITE(IUNOT,66666) IION,TEXTI(IION),NMASSI(IION),NCHARI(IION),
-     .                         NPRTI(IION),NCHRGI(IION),
-     .                         ISRFI(IION),ISRTI(IION),ID1I(IION),
-     .                         NRCI(IION),NFOLI(IION),NGENI(IION),
-     .                         NHSTI(IION),LKINDI(IION)
-          DO 4423 K=1,NRCI(IION)
-            IF (ID1I(IION).LT.3) THEN
-              WRITE(IUNOT,6666) IREACI(IION,K),IBULKI(IION,K),
-     .                          ISCD1I(IION,K),ISCD2I(IION,K),
-     .                          ISCDEI(IION,K),IESTMI(IION,K),
-     .                          IBGKI(IION,K)
-            ELSE IF (ID1I(IION).EQ.3) THEN
-              WRITE(IUNOT,6666) IREACI(IION,K),IBULKI(IION,K),
-     .                          ISCD1I(IION,K),ISCD2I(IION,K),
-     .                          ISCD3I(IION,K),
-     .                          ISCDEI(IION,K),IESTMI(IION,K),
-     .                          IBGKI(IION,K)
-            ELSE IF (ID1I(IION).EQ.4) THEN
-              WRITE(IUNOT,6666) IREACI(IION,K),IBULKI(IION,K),
-     .                          ISCD1I(IION,K),ISCD2I(IION,K),
-     .                          ISCD3I(IION,K),ISCD4I(IION,K),
-     .                          ISCDEI(IION,K),IESTMI(IION,K),
-     .                          IBGKI(IION,K)
+          WRITE(IUNOT,66666) JION,TEXTI(JION),NMASSI(JION),NCHARI(JION),
+     .                         NPRTI(JION),NCHRGI(JION),
+     .                         ISRFI(JION),ISRTI(JION),ID1I(JION),
+     .                         NRCI(JION),NFOLI(JION),NGENI(JION),
+     .                         NHSTI(JION),LKINDI(JION)
+          DO 4423 K=1,NRCI(JION)
+            IF (ID1I(JION).LT.3) THEN
+              WRITE(IUNOT,6666) IREACI(JION,K),IBULKI(JION,K),
+     .                          ISCD1I(JION,K),ISCD2I(JION,K),
+     .                          ISCDEI(JION,K),IESTMI(JION,K),
+     .                          IBGKI(JION,K)
+            ELSE IF (ID1I(JION).EQ.3) THEN
+              WRITE(IUNOT,6666) IREACI(JION,K),IBULKI(JION,K),
+     .                          ISCD1I(JION,K),ISCD2I(JION,K),
+     .                          ISCD3I(JION,K),
+     .                          ISCDEI(JION,K),IESTMI(JION,K),
+     .                          IBGKI(JION,K)
+            ELSE IF (ID1I(JION).EQ.4) THEN
+              WRITE(IUNOT,6666) IREACI(JION,K),IBULKI(JION,K),
+     .                          ISCD1I(JION,K),ISCD2I(JION,K),
+     .                          ISCD3I(JION,K),ISCD4I(JION,K),
+     .                          ISCDEI(JION,K),IESTMI(JION,K),
+     .                          IBGKI(JION,K)
             ENDIF
-            WRITE(IUNOT,6664) EELECI(IION,K),EBULKI(IION,K),
-     .                        ESCD1I(IION,K),ESCD2I(IION,K),
-     .                        FREACI(IION,K)
+            WRITE(IUNOT,6664) EELECI(JION,K),EBULKI(JION,K),
+     .                        ESCD1I(JION,K),ESCD2I(JION,K),
+     .                        FREACI(JION,K)
  4423     CONTINUE
  4413   CONTINUE
 *4D.   NEUTRAL PHOTONS SPECIES CARDS, NPHOTI SPECIES
@@ -6019,49 +6016,49 @@ cxpb We now rewrite the modified block 4
           WRITE(IUNOT,6666) NPHOTI
         END IF
         IF (NPHOTI.GT.0) THEN
-          DO 4513 IPHOT=1,NPHOTI
-            IF (ISRFPH(IPHOT).GT.0 .AND. ISRFPH(IPHOT).LE.NATMI) THEN
-              ISRFPH(IPHOT) = IATM1(ISRFPH(IPHOT))
+          DO 4513 JPHOT=1,NPHOTI
+            IF (ISRFPH(JPHOT).GT.0 .AND. ISRFPH(JPHOT).LE.NATMI) THEN
+              ISRFPH(JPHOT) = IATM1(ISRFPH(JPHOT))
             ELSE
-              ISRFPH(IPHOT) = 0
+              ISRFPH(JPHOT) = 0
             ENDIF
-            IF (ISRTPH(IPHOT).GT.0.AND.ISRTPH(IPHOT).LE.NATMI) THEN
-              ISRTPH(IPHOT) = IATM1(ISRTPH(IPHOT))
-            ELSE IF (ISRTPH(IPHOT).GT.NATMI) THEN
-              ISRTPH(IPHOT) = NATMI1 + 1
-            ELSE IF (ISRTPH(IPHOT).LT.0.AND.
-     &               ISRTPH(IPHOT).GE.-NMOLI) THEN
-              ISRTPH(IPHOT) =-IMOL1(-ISRTPH(IPHOT))
-            ELSE IF (ISRTPH(IPHOT).LT.-NMOLI) THEN
-              ISRTPH(IPHOT) =-(NMOL1 + 1)
+            IF (ISRTPH(JPHOT).GT.0.AND.ISRTPH(JPHOT).LE.NATMI) THEN
+              ISRTPH(JPHOT) = IATM1(ISRTPH(JPHOT))
+            ELSE IF (ISRTPH(JPHOT).GT.NATMI) THEN
+              ISRTPH(JPHOT) = NATMI1 + 1
+            ELSE IF (ISRTPH(JPHOT).LT.0.AND.
+     &               ISRTPH(JPHOT).GE.-NMOLI) THEN
+              ISRTPH(JPHOT) =-IMOL1(-ISRTPH(JPHOT))
+            ELSE IF (ISRTPH(JPHOT).LT.-NMOLI) THEN
+              ISRTPH(JPHOT) =-(NMOL1 + 1)
             ENDIF
-            WRITE(IUNOT,66666) IPHOT,TEXTPH(IPHOT),0,0,0,0,
-     .                         ISRFPH(IPHOT),ISRTPH(IPHOT),
-     .                         ID1PH(IPHOT),NRCPH(IPHOT),
-     .                         NFOLPH(IPHOT),NGENPH(IPHOT),
-     .                         NHSTPH(IPHOT)
-            DO 4523 K=1,NRCPH(IPHOT)
-              IF (ID1PH(IPHOT).LT.3) THEN
-                WRITE(IUNOT,6666) IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
-     .                            ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
-     .                            ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
-     .                            IBGKPH(IPHOT,K)
-              ELSE IF (ID1PH(IPHOT).EQ.3) THEN
-                WRITE(IUNOT,6666) IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
-     .                            ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
-     .                            ISCD3PH(IPHOT,K),
-     .                            ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
-     .                            IBGKPH(IPHOT,K)
-              ELSE IF (ID1PH(IPHOT).EQ.4) THEN
-                WRITE(IUNOT,6666) IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
-     .                            ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
-     .                            ISCD3PH(IPHOT,K),ISCD4PH(IPHOT,K),
-     .                            ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
-     .                            IBGKPH(IPHOT,K)
+            WRITE(IUNOT,66666) JPHOT,TEXTPH(JPHOT),0,0,0,0,
+     .                         ISRFPH(JPHOT),ISRTPH(JPHOT),
+     .                         ID1PH(JPHOT),NRCPH(JPHOT),
+     .                         NFOLPH(JPHOT),NGENPH(JPHOT),
+     .                         NHSTPH(JPHOT)
+            DO 4523 K=1,NRCPH(JPHOT)
+              IF (ID1PH(JPHOT).LT.3) THEN
+                WRITE(IUNOT,6666) IREACPH(JPHOT,K),IBULKPH(JPHOT,K),
+     .                            ISCD1PH(JPHOT,K),ISCD2PH(JPHOT,K),
+     .                            ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
+     .                            IBGKPH(JPHOT,K)
+              ELSE IF (ID1PH(JPHOT).EQ.3) THEN
+                WRITE(IUNOT,6666) IREACPH(JPHOT,K),IBULKPH(JPHOT,K),
+     .                            ISCD1PH(JPHOT,K),ISCD2PH(JPHOT,K),
+     .                            ISCD3PH(JPHOT,K),
+     .                            ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
+     .                            IBGKPH(JPHOT,K)
+              ELSE IF (ID1PH(JPHOT).EQ.4) THEN
+                WRITE(IUNOT,6666) IREACPH(JPHOT,K),IBULKPH(JPHOT,K),
+     .                            ISCD1PH(JPHOT,K),ISCD2PH(JPHOT,K),
+     .                            ISCD3PH(JPHOT,K),ISCD4PH(JPHOT,K),
+     .                            ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
+     .                            IBGKPH(JPHOT,K)
               ENDIF
-              WRITE(IUNOT,6664) EELECPH(IPHOT,K),EBULKPH(IPHOT,K),
-     .                          ESCD1PH(IPHOT,K),ESCD2PH(IPHOT,K),
-     .                          FREACPH(IPHOT,K),FLDLMPH(IPHOT,K)
+              WRITE(IUNOT,6664) EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
+     .                          ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
+     .                          FREACPH(JPHOT,K),FLDLMPH(JPHOT,K)
  4523       CONTINUE
  4513     CONTINUE
         ENDIF
@@ -6533,38 +6530,38 @@ cxpb We now rewrite the modified block 4
             ENDIF
           ENDIF
         ENDIF
- 620    allocate(DATD(NATMI),DATD1(NATMI1))
+  620   allocate(DATD(NATMI),DATD1(NATMI1))
         IF (IREAD.EQ.0) THEN
-          READ (IUNIN,6664) (DATD(IATM),IATM=1,NATMI)
+          READ (IUNIN,6664) (DATD(JATM),JATM=1,NATMI)
         ELSE IF (IREAD.EQ.1) THEN
-          READ (ZEILE,6664) (DATD(IATM),IATM=1,MIN(NATMI,6))
+          READ (ZEILE,6664) (DATD(JATM),JATM=1,MIN(NATMI,6))
           IREAD=0
           IF (NATMI.GT.6) THEN
-            READ (IUNIN,6664) (DATD(IATM),IATM=7,NATMI)
+            READ (IUNIN,6664) (DATD(JATM),JATM=7,NATMI)
           ENDIF
         ENDIF
         DATD1(1:NATMI1) = 0.0_R8
-        DO IATM = 1, NATMI
-          IF (IATM1(IATM).NE.0) THEN
-            DATD1(IATM1(IATM)) = DATD(IATM)
+        DO JATM = 1, NATMI
+          IF (IATM1(JATM).NE.0) THEN
+            DATD1(IATM1(JATM)) = DATD(JATM)
           ENDIF
         ENDDO
         WRITE(IUNOT,6664) DATD1(1:NATMI1)
         deallocate(DATD,DATD1)
         allocate(DMLD(NMOLI),DMLD1(NMOL1))
-        READ (IUNIN,6664) (DMLD(IMOL),IMOL=1,NMOLI)
+        READ (IUNIN,6664) (DMLD(JMOL),JMOL=1,NMOLI)
         DMLD1(1:NMOL1) = 0.0_R8
-        DO IMOL = 1, NMOLI
-          IF (IMOL1(IMOL).NE.0) THEN
-            DMLD1(IMOL1(IMOL)) = DMLD(IMOL)
+        DO JMOL = 1, NMOLI
+          IF (IMOL1(JMOL).NE.0) THEN
+            DMLD1(IMOL1(JMOL)) = DMLD(JMOL)
           ENDIF
         ENDDO
         WRITE(IUNOT,6664) DMLD1(1:NMOL1)
         deallocate(DMLD,DMLD1)
-        READ (IUNIN,6664) rdum(1:NIONI) ! (DIOD(IION),IION=1,NIONI)
+        READ (IUNIN,6664) rdum(1:NIONI) ! (DIOD(JION),JION=1,NIONI)
         WRITE(IUNOT,6664) rdum(1:NIONI)
         allocate(DPLD(NPLSI),DPLD1(NPLSI1))
-        READ (IUNIN,6664) (DPLD(IPLS),IPLS=1,NPLSI)
+        READ (IUNIN,6664) (DPLD(JPLS),JPLS=1,NPLSI)
         call e_bundle_transmit_r
      .   (nplsi,nplsi1,e_bundle_contr,DPLD,DPLD1,1)
 cxpb Rescaling for when the extent of the nuclear sequence has changed
@@ -6588,10 +6585,10 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
      .       rratio(isend-isbegin+1,is1end-is1begin+1)
           end if
         end do
-        WRITE(IUNOT,6664) (DPLD1(IPLS),IPLS=1,NPLSI1)
+        WRITE(IUNOT,6664) (DPLD1(JPLS),JPLS=1,NPLSI1)
         deallocate(DPLD,DPLD1)
         IF (NPHOTI.GT.0) THEN
-          READ (IUNIN,6664) rdum(1:NPHOTI) ! (DPHD(IPHOT),IPHOT=1,NPHOTI)
+          READ (IUNIN,6664) rdum(1:NPHOTI) ! (DPHD(JPHOT),JPHOT=1,NPHOTI)
           WRITE(IUNOT,6664) rdum(1:NPHOTI)
         END IF
         READ (IUNIN,'(A72)') ZEILE ! ERMIN,ERCUT,RPROB0,RINTEG,EINTEG,AINTEG
@@ -6638,9 +6635,9 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
             call EIRENE_uppercase (varname)
             spcname = zeile(10:17)
             call EIRENE_uppercase (spcname)
-            do IATM = 1, NATMI
-              if (streql(spcname,texta(iatm))) then
-                if (iatm1(iatm).eq.0) varname='ZERO'
+            do JATM = 1, NATMI
+              if (streql(spcname,texta(jatm))) then
+                if (iatm1(jatm).eq.0) varname='ZERO'
               end if
             end do
             select case (varname)
@@ -7047,7 +7044,7 @@ C  VELOCITY SPACE DISTRIBUTION
           WRITE(IUNOT,'(A80)') ZEILE
         ENDIF
         IREAD=0
-910     READ (IUNIN,'(A80)') ZEILE
+  910   READ (IUNIN,'(A80)') ZEILE
         IF (ZEILE(1:1) .EQ. '*') THEN
           WRITE(IUNOT,'(A72)') ZEILE
           GOTO 910
@@ -7071,16 +7068,16 @@ C  VELOCITY SPACE DISTRIBUTION
           DEALLOCATE (LOGRDH)
           allocate(NLPRCA1(NATMI1))
           NLPRCA1(1:NATMI1) = .false.
-          DO IATM = 1, NATMI
-            IF (IATM1(IATM).NE.0) THEN
-              NLPRCA1(IATM1(IATM)) = NLPRCA(IATM)
+          DO JATM = 1, NATMI
+            IF (IATM1(JATM).NE.0) THEN
+              NLPRCA1(IATM1(JATM)) = NLPRCA(JATM)
             ENDIF
           ENDDO
           allocate(NLPRCM1(NMOL1))
           NLPRCM1(1:NMOL1) = .false.
-          DO IMOL = 1, NMOLI
-            IF (IMOL1(IMOL).NE.0) THEN
-              NLPRCM1(IMOL1(IMOL)) = NLPRCM(IMOL)
+          DO JMOL = 1, NMOLI
+            IF (IMOL1(JMOL).NE.0) THEN
+              NLPRCM1(IMOL1(JMOL)) = NLPRCM(JMOL)
             ENDIF
           ENDDO
           WRITE(IUNOT,6665) (NLPRCA1(J),J=1,NATMI1),
@@ -8042,8 +8039,8 @@ C  SKIP READING REST OF THIS BLOCK
           WRITE(IUNOT,'(A80)') ZEILE
         END IF
         IREAD=0
-        READ (IUNIN,6666) idum(0) ! NPRNLI
-        WRITE(IUNOT,6666) idum(0)
+        READ (IUNIN,6666) idum(0:2) ! NPRNLI, NINITL_READ, NPRMUL
+        WRITE(IUNOT,6666) idum(0:2)
         IF (idum(0).LE.0) GOTO 1350
         READ (IUNIN,'(A80)') ZEILE ! NPTST,NTMSTP
         WRITE(IUNOT,'(A80)') ZEILE
@@ -8160,17 +8157,17 @@ C  SKIP READING REST OF THIS BLOCK
      .       idum(0),IFLB(I),FCTE(I),BMASS(I),LKINDP(I)
           ENDDO
           IPLS = 0
-          DO IATM=1,NSPECIES1
-            IS = EB2SPCR1(IATM)+1
-            IF (IATM.EQ.NSPECIES1) THEN
+          DO JATM=1,NSPECIES1
+            IS = EB2SPCR1(JATM)+1
+            IF (JATM.EQ.NSPECIES1) THEN
               JS = NS1-1
             ELSE
-              JS = EB2SPCR1(IATM+1)-1
+              JS = EB2SPCR1(JATM+1)-1
             ENDIF
             DO I = IS, JS
               IPLS = IPLS + 1
               IFLB1(IPLS) = IPLS
-              LKINDP1(IPLS) = IATM
+              LKINDP1(IPLS) = JATM
             ENDDO
           ENDDO
           call e_bundle_transmit_r
@@ -8836,11 +8833,11 @@ cxpb as they no longer necessarily point to the same species
           end if
         end do
         mlcmp1 = 0.0_R8
-        do imol = 1, nmol
-          if (imol1(imol).ne.0) then
+        do jmol = 1, nmol
+          if (imol1(jmol).ne.0) then
             do is = 1, natm
               if (iatm1(is).ne.0) then
-                mlcmp1(iatm1(is),imol1(imol)) = mlcmp(is,imol)
+                mlcmp1(iatm1(is),imol1(jmol)) = mlcmp(is,jmol)
               end if
             end do
           end if
@@ -9031,11 +9028,11 @@ cxpb as they no longer necessarily point to the same species
         end do
         do ib = 1, nstrai
           if (istra1(ib).gt.0) then
-            do iatm = 1, natm
-              if (iatm1(iatm).ne.0 .and. gpfc(iatm,ib).ne.0.0_R8)
+            do jatm = 1, natm
+              if (iatm1(jatm).ne.0 .and. gpfc(jatm,ib).ne.0.0_R8)
      .         write(99,'(a,i3,a,i2,a,f5.2,a)')
-     .          'GPFC(',iatm1(iatm),',',istra1(ib),')=',
-     .           gpfc(iatm,ib),','
+     .          'GPFC(',iatm1(jatm),',',istra1(ib),')=',
+     .           gpfc(jatm,ib),','
             end do
           end if
         end do
@@ -9414,10 +9411,9 @@ cxpb as they no longer necessarily point to the same species
      &                sputter_yield2_yt(ix,iy,is,1).ne.0.0_R8 .or.
      &                sputter_yield2_yt(ix,iy,is,2).ne.0.0_R8) then
                     do ib = 1, 2
-                      write(99,'(a14,i4,a1,i4,a1,i3,a1,i1,a2,
-     &                          1pe21.13e3,
-     &                          a17,i4,a1,i4,a1,i3,a1,i1,a2,
-     &                          1pe21.13e3,a1)')
+                      write(99,
+     &                 '(a14,i4,a1,i4,a1,i3,a1,i1,a2,1pe21.13e3,'//
+     &                  'a17,i4,a1,i4,a1,i3,a1,i1,a2,1pe21.13e3,a1)')
      .                 'SPUTTER_YIELD(',ix,',',iy,',',is,',',ib,')=',
      .                  sputter_yield_yt(ix,iy,is,ib),
      .               ', SPUTTER_YIELD2(',ix,',',iy,',',is,',',ib,')=',
@@ -9912,14 +9908,14 @@ cxpb as they no longer necessarily point to the same species
           write(*,*) 'Writing '//trim(new_filename)
           open(99,file=new_filename)
           write(nout(5),'(a)') trim(new_filename)
- 982      continue
+  982     continue
           read(98,*,end=983,err=983) indx, indy
           indx1=trace_convert(indx,ns,ns1,is1)
           indy1=trace_convert(indy,ns,ns1,is1)
           if (indx1.ne.0 .and. indy1.ne.0)
      >     write(99,'(2i6)') indx1, indy1
           goto 982
- 983      continue
+  983     continue
           close(99)
         else if (same_bundling) then
           write(*,*) 'No changes needed in ',trim(filename)
@@ -11169,7 +11165,7 @@ C
         IT=10**(IZIF-K)
         IQ=IZ/IT
         IZ=IZ-IQ*IT
-1     CONTINUE
+    1 CONTINUE
       B2IDEZ=IQ
       call subend()
       return

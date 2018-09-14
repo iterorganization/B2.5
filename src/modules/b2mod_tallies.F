@@ -352,10 +352,12 @@
       call check_cdf_status(status)
       status=nf_inq_vardimid(ncid,varid,dimids)
       call check_cdf_status(status)
-      do i=1,ndims-time_dep
-        start(i)=1
-        status=nf_inq_dimlen(ncid,dimids(i),count(i))
-      enddo
+      if (ndims.gt.time_dep) then
+        do i=1,ndims-time_dep
+          start(i)=1
+          status=nf_inq_dimlen(ncid,dimids(i),count(i))
+        enddo
+      end if
       if(time_dep.eq.1) then
         start(ndims)=ntstep
         count(ndims)=1
@@ -592,6 +594,9 @@
       call create_cdf_var_with_attrs(
      *  ncid,'b2radreg',NF_DOUBLE,
      *  2,vdims,'W','b2radreg')
+      call create_cdf_var_with_attrs(
+     *  ncid,'rdneureg',NF_DOUBLE,
+     *  2,vdims,'W','rdneureg')
 
       vdims(1)=vregid
       vdims(2)=nsid

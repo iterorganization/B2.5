@@ -54,10 +54,12 @@ c
       call b2pwrdld
       l2rdldt=.true.
 c<<<
-c      print '(a/(1p,5e17.4))','Inner target: load',
-c     ,                                      (wldrdld(lppp+i),i=1,ny)
-c      print '(a/(1p,5e17.4))','Outer target: load',
-c     ,                                      (wldrdld(lppp+ny+i),i=1,ny)
+#ifdef DBG
+      print '(a/(1p,5e17.4))','Inner target: load',
+     ,                                      (wldrdld(lppp+i),i=1,ny)
+      print '(a/(1p,5e17.4))','Outer target: load',
+     ,                                      (wldrdld(lppp+ny+i),i=1,ny)
+#endif
 c>>>
 c======================================================================
       end

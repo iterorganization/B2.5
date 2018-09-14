@@ -15,7 +15,7 @@
         read(nget,err=10) label,version_in
       endif
       if(label.eq.'VERSION') then
-	newversion=version_in
+        newversion=version_in
         write(*,'(a,a)') 'VERSION set to: ',newversion
         return
       endif
@@ -27,12 +27,13 @@
       entry cfverw(nput, newversion)
       inquire (nput,form=chf,err=20)
       if (streql(chf,'formatted')) then
-        write(nput,'(a,a,1x,a)') 'VERSION',newversion,git_version_B25
+        write(nput,'(a,a,1x,a)') 'VERSION',
+     .                          newversion,trim(git_version_B25)
       else
-        write(nput) 'VERSION',newversion,' ',git_version_B25
+        write(nput) 'VERSION',newversion,' ',trim(git_version_B25)
       endif
       write(*,'(4a)') 'VERSION: ',newversion,
-     .                ' GIT hash: ',git_version_B25
+     .                ' GIT hash: ',trim(git_version_B25)
    20 continue
       return
 

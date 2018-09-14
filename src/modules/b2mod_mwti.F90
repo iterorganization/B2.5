@@ -110,22 +110,21 @@ contains
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
-    integer iy, ix, ic, ixtl, ixtr, jsep, nbatch
+    integer iy, ix, ic, ixtl, ixtr, jsep
     integer jxi, jxa, target_offset, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend, iyiend, iylend, iyrend, iytlend, iytrend, &
-         nybl, nybr, nytl, nytr, nya, nyi, nc
+         nya, nyi, nybl, nybr, nytl, nytr, nc
 
     !   ..procedures
-    real(kind=R8) :: rratio
-    external rratio
     external subini, subend, xertst, ipgeti, batch_average
-    real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp, fac
+    real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp
     integer, save :: write_2d = 0
 #ifndef NO_CDF
-    integer, save :: ncid
+    integer, save :: ncid, nbatch
     integer imap(maxvdims), dims(1), iret
     integer nvars, natts, ndims, unlimid, nastepid
+    real (kind=R8) :: fac
     real (kind=R8) :: &
          nesepi(nncutmax), tesepi(nncutmax), tisepi(nncutmax), &
          nesepm(nncutmax), tesepm(nncutmax), tisepm(nncutmax), &
@@ -142,12 +141,14 @@ contains
     logical ex
     character*5 rw
     character*256, save :: filename
+    real(kind=R8) :: rratio
+    external rratio
 #endif
     !   ..initialisation
     save ncall, ntstep, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
          iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
-         nybl, nybr, nytl, nytr, nya, nyi, nc, nastep, nbatch
+         nc, nya, nyi, nybl, nybr, nytl, nytr, nastep
     data ncall/0/, target_offset/1/
 
     !-----------------------------------------------------------------------
@@ -311,7 +312,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_close(ncid)
       call check_cdf_status(iret)
-!cwdk    initialize writing of the .nc-file for monitoring based on
+!cwdk    initialize writing of the .nc file for monitoring based on
 !c       batch averaging
 !        call b2cravercdf()
 !        iret = nf_open('b2aver.nc',ncwrite,ncav)
