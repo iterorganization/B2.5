@@ -2728,8 +2728,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%smo0(iCv1,0,is)=
      .         VBIG*NE00*am(is)*mompar(is,ib,1)*geo%fcS(iFc)*hzf(iFc)
             srw%smo0(iCv1,1,is)=
@@ -2749,9 +2749,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
 cwdk      Note: specifies the gradient in the outward normal direction
 cwdk      Tmp: in "connector" direction - ok for orthogonal grids
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the corresponding domain cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%smo0(iCv1,0,is)=
      .         VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)*
      .         (mompar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
@@ -3328,8 +3328,8 @@ cxpb  and max(,,) statement for stability
      2       BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             cs   = sqrt(pr(iCv1)/ro(iCv1))
             s1hz = geo%fcPbshz(iFc)
             vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
