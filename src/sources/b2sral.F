@@ -227,7 +227,7 @@ csw 30sep2013, added cdpa in call, uadia
       if(style.eq.0 .or. style.eq.2) then                               !srv 28.07.08 03.11.17
        if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc called'
        call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS, geo,
-     &   mpg, pl, dv, co, rt, rtw, st_ext, srw,wrong_flow, main_call)
+     &   mpg, pl, dv, co, rt, rtw, st_ext, srw, wrong_flow, main_call)
 *   .. store contributions from BCs
        sr%sna = srw%sna0
        sr%smo = srw%smo0

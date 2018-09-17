@@ -631,7 +631,7 @@ cwdk  now need to recompute full diamagnetic component for ud
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the corresponding domain cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             srw%sna0(iCv1,0,is) =
      .        UBIG*geo%fcS(iFc)*pl%na(iCv2,is)
@@ -7810,7 +7810,7 @@ cwdk    Todo: check sign convention; do we want to specify gradient in
 cwdk          normal/radial/poloidal direction ???
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the corresponding domain cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%sch0(iCv1,0) =  PBIG*geo%fcS(iFc)*
      .      (potpar(ib,1)*(geo%fcHc(iFc,1)+geo%fcHc(iFc,2))+pl%po(iCv2))
