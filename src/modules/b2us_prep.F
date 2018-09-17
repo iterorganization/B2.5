@@ -703,14 +703,14 @@ cwdk      type(B2StateExt), public, save :: state_ext
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
             m%bcCv(inbc,1) = m%nCi + 2*nx + bcs(ib) + ibc
-            m%bcCv(inbc,2) = nx*bcs(ib) + 1
+            m%bcCv(inbc,2) = nx*(bcs(ib) + ibc - 1) + 1
             m%bcFcOr(inbc) = -1.0_R8
           enddo
         elseif (bcchar(ib).eq.'E') then 
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
             m%bcCv(inbc,1) = m%nCi + 2*nx + ny + bcs(ib) + ibc
-            m%bcCv(inbc,2) = nx*(bcs(ib) + 1)
+            m%bcCv(inbc,2) = nx*(bcs(ib) +ibc)
             m%bcFcOr(inbc) = 1.0_R8
           enddo
         else
@@ -787,7 +787,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
           do istrac = 1, rcl(istra)
             instra = instra + 1
             m%rcCv(instra,1) = m%nCi + 2*nx + rcs(istra) + istrac
-            m%rcCv(instra,2) = nx*rcs(istra) + 1
+            m%rcCv(instra,2) = nx*(rcs(istra) + istrac - 1) + 1
             m%rcFcOr(instra) = -1.0_R8
           enddo
         elseif (crcstra(istra).eq.'E') then 
@@ -795,7 +795,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
             instra = instra + 1
             m%rcCv(instra,1) = m%nCi + 2*nx + ny + rcs(istra) + 
      .        istrac
-            m%rcCv(instra,2) = nx*(rcs(istra) + 1)
+            m%rcCv(instra,2) = nx*(rcs(istra) + istrac)
             m%rcFcOr(instra) = 1.0_R8
           enddo
         endif
