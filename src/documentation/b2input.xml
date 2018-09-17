@@ -4562,6 +4562,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>LBCSTRA</name>
+				<default>0</default>
+				<type>integer array of size (NSTRAT)</type>
+				<description>
+					Contains the index of the B2 boundary which the strata ISTRA=1..NSTRAT corresponds to.
+                                        The array is meaningful if only both b2.boundary.namelist and b2.neutrals.namelist are read.
+				</description>
+			</switch>
+			<switch>
 				<name>LCNS</name>
 				<default>0</default>
 				<type>integer array of size (NSTS)</type>
