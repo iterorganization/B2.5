@@ -23,7 +23,7 @@
      *  corub(nCv), pccb(nCv,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *  aa(mpg%nCmxNv), aad0(nCv)
+     *  aa(mpg%nCmxNv), aad0(nCv), flcb0(nFc,0:1), cvsb0(nFc,0:1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -81,6 +81,9 @@
        call b2xvsg (nCv, smb(1,3), 1, 'smb3', '.le.')
       endif
 
+* ..apply discretization scheme
+      call calccoef(nCv,nFc,nVx,2,geo,mpg,flcb,cvsb,flcb0,cvsb0)
+
 * ..compute the correction
       aa = 0.0_R8
 *   ..compute the nine-point matrix
@@ -102,11 +105,11 @@
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
-*     ..contributions from flcb(:,0), cvsb(:,0) ('5-point' contributions)
+*     ..contributions from flcb0(:,0), cvsb0(:,0) ('5-point' contributions)
         iNv1 = mpg%fcNv(iFc,1) ! number of c2 as seen from c1 
         iNv2 = mpg%fcNv(iFc,2) ! number of c1 as seen from c2
-        t1 = - 0.5_R8*flcb(iFc,0) - cvsb(iFc,0)
-        t2 =   0.5_R8*flcb(iFc,0) - cvsb(iFc,0)
+        t1 = - 0.5_R8*flcb0(iFc,0) - cvsb0(iFc,0)
+        t2 =   0.5_R8*flcb0(iFc,0) - cvsb0(iFc,0)
         if (solvereg(mpg%cvReg(iCv1))) then
           aa(mpg%aaP(iCv1,1))        = aa(mpg%aaP(iCv1,1))        - t1
           aa(mpg%aaP(iCv1,1)+iNv1-1) = aa(mpg%aaP(iCv1,1)+iNv1-1) + t2
@@ -115,7 +118,7 @@
           aa(mpg%aaP(iCv2,1))        = aa(mpg%aaP(iCv2,1))        - t2
           aa(mpg%aaP(iCv2,1)+iNv2-1) = aa(mpg%aaP(iCv2,1)+iNv2-1) + t1
         endif
-*     ..contributions from flcb(:,1), cvsb(:,1) ('9-point' contributions)
+*     ..contributions from flcb0(:,1), cvsb0(:,1) ('9-point' contributions)
 !WG_TODO
       enddo
 *   ..compute pccb
@@ -150,8 +153,9 @@
 *   ..solve the correction equation
       write(*,'(a,a)') 'Calling b2uxus from ', name
       call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name)           !srv 18.03.10
-#ifdef WG_TODO
+
       if (iout.ne.0) then                                             !srv 17.06.02 {
+#ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-4),name//'_aam4')
        call my_out_us(70,nCv,0,aa(-1,-1,-3),name//'_aam3')
        call my_out_us(70,nCv,0,aa(-1,-1,-2),name//'_aam2')
@@ -161,12 +165,13 @@
        call my_out_us(70,nCv,0,aa(-1,-1, 2),name//'_aap2')
        call my_out_us(70,nCv,0,aa(-1,-1, 3),name//'_aap3')
        call my_out_us(70,nCv,0,aa(-1,-1, 4),name//'_aap4')
+#endif
        call my_out_us(70,nCv,0,resmb,name//'_resmb')
        call my_out_us(70,nCv,0,corub,name//'_corub')
-       call my_out_us(70,nCv,0,pccb(-1,-1,0,0),name//'_pccbx')
-       call my_out_us(70,nCv,0,pccb(-1,-1,1,1),name//'_pccby')
+       call my_out_us(70,nCv,0,pccb(1,0),name//'_pccbx')
+       call my_out_us(70,nCv,0,pccb(1,1),name//'_pccby')
       endif                                                           !srv 17.06.02 }
-#endif
+
 * ..return
       ncall = ncall+1
       call subend ()
