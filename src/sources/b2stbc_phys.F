@@ -536,9 +536,9 @@ cwdk  now need to recompute full diamagnetic component for ud
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             srw%sna0(iCv1,0,is) =
-     .        UBIG*geo%fcS(iFc)*conpar(is,iB,1)
+     .        VBIG*geo%fcS(iFc)*conpar(is,iB,1)
             srw%sna0(iCv1,1,is) =
-     .       -UBIG*geo%fcS(iFc)
+     .       -VBIG*geo%fcS(iFc)
             sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
             sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
           enddo
