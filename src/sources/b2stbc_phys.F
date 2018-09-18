@@ -1348,8 +1348,8 @@ cghgh
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
-              s0 = vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     .             hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))              !srv 26.02.09
+              s0 = gs(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
@@ -1390,8 +1390,7 @@ cghgh
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'N') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
-              s0=vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     .           hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))                !srv 26.02.09
+              s0=gs(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
@@ -1427,8 +1426,10 @@ cghgh
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
-              s0 = vol(bc_list_x(iy,ib),bc_list_y(iy,ib))/
-     .              hx(bc_list_x(iy,ib),bc_list_y(iy,ib))
+              s0 = gs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)*
+     .             qc(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
@@ -1469,8 +1470,8 @@ cghgh
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
-              s0 = vol(bc_list_x(iy,ib),bc_list_y(iy,ib))/
-     .              hx(bc_list_x(iy,ib),bc_list_y(iy,ib))
+              s0 = gs(bc_list_x(iy,ib),bc_list_y(iy,ib),0)*
+     .             qc(bc_list_x(iy,ib),bc_list_y(iy,ib),0)
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
