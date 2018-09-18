@@ -1292,12 +1292,12 @@ c dpc
           endif
           
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             s1 = abs(geo%fcPbs(iFc))
             cs = sqrt(pr(iCv1)/ro(iCv1))
             srw%sna0(iCv1,0,is) = 0.0_R8
-            srw%sna0(iCv1,1,is) = s1*conpar(is,ib,1)*cs
+            srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs
             sna0_no_mdf(iCv1,:,is) =
      &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
 !WG_TODO  if (mdf_fnb.ne.0) ; drift contributions...
