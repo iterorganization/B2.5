@@ -79,7 +79,7 @@ EQUIVS    += -DIMAS
 endif
 EQUIVS    += -DGGD_OLD
 LD_UAL    ?= `pkg-config imas-ifort --libs` -lxml2
-INCMODS   += `pkg-config imas-ifort --cflags` 
+INCMODS   += `pkg-config imas-ifort --cflags`
 IMASLIBS   = ${LD_UAL} -lggd-ifort -lstdc++
 else
 ifdef ITM_ENVIRONMENT_LOADED

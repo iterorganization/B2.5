@@ -2671,7 +2671,7 @@ c*** We only apply this in the outer SOL region
         call ipgeti ('set_transport_iyref', iyref)
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-call ipgeti ('neoclassical_ic', ic)
+        call ipgeti ('neoclassical_ic', ic)
         call xertst(0.le.ic .and. ic.le.4,
      .   'invalid parameter neoclassical_ic')
         write(*,*) 'NEOART option ', ic, ' has been used'
@@ -3339,47 +3339,47 @@ c      close(14)
       endif
 
 
- !       if (mod(ncall,200).eq.0) then
- !         write(*,*) 'temperature output', ncall
- ! c       open(15,file='temp.dat',form='unformatted')
- !         write(15) nx,ny
- !         write(15) nsl
- !         write(15) (ncl(is),is=0,nsl-1)
- !         if (ncall.lt.1) then
- !           write(15) ((0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)
- !      &               +crx(ix,iy,3)),ix=-1,nx),iy=-1,ny)
- !           write(15) ((0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)
- !      &               +cry(ix,iy,3)),ix=-1,nx),iy=-1,ny)
- !           write(15) ((bb(ix,iy,0),ix=-1,nx),iy=-1,ny)
- !           write(15) ((bb(ix,iy,1),ix=-1,nx),iy=-1,ny)
- !           write(15) ((bb(ix,iy,2),ix=-1,nx),iy=-1,ny)
- !           write(15) ((bb(ix,iy,3),ix=-1,nx),iy=-1,ny)
- !           write(15) ((hy(ix,iy),ix=-1,nx),iy=-1,ny)
- !           do ispecies=0, nsl-1
- !             write(15) m(ispecies)
- !             if (ispecies.ne.nsl-1) then
- !               do istate=0, ncl(ispecies)-1
- !                 write(15) ((rza(ix,iy,isort(ispecies,istate)),ix=-1,nx),
- !      &                    iy=-1,ny)
- !               enddo
- !             else
- !               write(15) -1.0_R8
- !             endif
- !           enddo
- !         endif
- !         write(15) tim
- !         write(15) ((te(ix,iy)/ev,ix=-1,nx),iy=-1,ny)
- !         write(15) ((ti(ix,iy)/ev,ix=-1,nx),iy=-1,ny)
- !         do ispecies=0, nsl-2
- !           do istate=0, ncl(ispecies)-1
- !             write(15) ((na(ix,iy,isort(ispecies,istate)),ix=-1,nx),
- !      &                 iy=-1,ny)
- !           enddo
- !         enddo
- !         write(15) ((ne(ix,iy),ix=-1,nx),iy=-1,ny)
- !         write(15) (fc_(iy),iy=-1,ny)
- !       endif
- ! c       close(15)
+!       if (mod(ncall,200).eq.0) then
+!         write(*,*) 'temperature output', ncall
+! c       open(15,file='temp.dat',form='unformatted')
+!         write(15) nx,ny
+!         write(15) nsl
+!         write(15) (ncl(is),is=0,nsl-1)
+!         if (ncall.lt.1) then
+!           write(15) ((0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)
+!      &               +crx(ix,iy,3)),ix=-1,nx),iy=-1,ny)
+!           write(15) ((0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)
+!      &               +cry(ix,iy,3)),ix=-1,nx),iy=-1,ny)
+!           write(15) ((bb(ix,iy,0),ix=-1,nx),iy=-1,ny)
+!           write(15) ((bb(ix,iy,1),ix=-1,nx),iy=-1,ny)
+!           write(15) ((bb(ix,iy,2),ix=-1,nx),iy=-1,ny)
+!           write(15) ((bb(ix,iy,3),ix=-1,nx),iy=-1,ny)
+!           write(15) ((hy(ix,iy),ix=-1,nx),iy=-1,ny)
+!           do ispecies=0, nsl-1
+!             write(15) m(ispecies)
+!             if (ispecies.ne.nsl-1) then
+!               do istate=0, ncl(ispecies)-1
+!                 write(15) ((rza(ix,iy,isort(ispecies,istate)),ix=-1,nx),
+!      &                    iy=-1,ny)
+!               enddo
+!             else
+!               write(15) -1.0_R8
+!             endif
+!           enddo
+!         endif
+!         write(15) tim
+!         write(15) ((te(ix,iy)/ev,ix=-1,nx),iy=-1,ny)
+!         write(15) ((ti(ix,iy)/ev,ix=-1,nx),iy=-1,ny)
+!         do ispecies=0, nsl-2
+!           do istate=0, ncl(ispecies)-1
+!             write(15) ((na(ix,iy,isort(ispecies,istate)),ix=-1,nx),
+!      &                 iy=-1,ny)
+!           enddo
+!         enddo
+!         write(15) ((ne(ix,iy),ix=-1,nx),iy=-1,ny)
+!         write(15) (fc_(iy),iy=-1,ny)
+!       endif
+! c       close(15)
 
 
 *    ..add the neoclassical contribution to the transport coefficients

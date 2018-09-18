@@ -996,7 +996,7 @@ contains
 
         deallocate(indexList2d)
         !! Add midplane node grid subsets
-        !! Find the core boundary grid subset by looking for its name as 
+        !! Find the core boundary grid subset by looking for its name as
         !! defined in b2mod_connectivity
         iCoreGS = findGridSubsetByName(ggd_grid, "Core boundary")
         !! For double null, we need the outer half of the core boundary

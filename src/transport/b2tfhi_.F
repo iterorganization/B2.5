@@ -75,7 +75,7 @@ csw 30apr2014 added fna_he, ia
       real (kind=R8) ::
      *   flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,    !srv 17.05.99
      &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf                           !srv 13.10.06 17.06.09
-cpax      
+cpax
       real (kind=R8) ::
      *   flidia(-1:nx,-1:ny,0:1), facdriftm                             !srv 25.01.02
       real (kind=R8), allocatable ::
