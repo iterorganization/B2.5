@@ -93,7 +93,7 @@
      *   hybr, hy1
       external subini, subend, xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
-      intrinsic abs, max, min, mod, sqrt
+      intrinsic abs, max, min, sqrt
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       hybr(flo,dif) = max(dif,abs(flo/2.),sqrt(dif**2+flo**2/4.)) !!!
 *   ..initialisation

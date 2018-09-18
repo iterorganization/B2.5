@@ -8,11 +8,11 @@
 *     ------------------------------------------------------------------
 *     SIP5F computes the SIP-ILU factorisation of a 2d 5-point matrix.
 *     ------------------------------------------------------------------
-*     /1/ Herbert L. Stone: "Iterative Solution of Implicit Approxima-
-*     tions of Multidimensional Partial Differential Equations",
+*     /1/ Herbert L. Stone: Iterative Solution of Implicit Approxima-
+*     tions of Multidimensional Partial Differential Equations,
 *     SIAM J. Numer. Anal. 5 (1968) 530-558.
-*     /2/ D. A. H. Jacobs: "SI205: A Subroutine for Iterating Using a
-*     Five Diagonal Matrix to Solve a System of Algebraic Equations",
+*     /2/ D. A. H. Jacobs: SI205: A Subroutine for Iterating Using a
+*     Five Diagonal Matrix to Solve a System of Algebraic Equations,
 *     Central Electricity Generating Board (UK) Report RD/L/P8/79,
 *     January 1980.
 *     /3/ Numerical Algorithms Group: NAG Fortran Library Routine

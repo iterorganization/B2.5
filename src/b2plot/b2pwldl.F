@@ -27,12 +27,10 @@ c*** Local variables
       integer lun_w, lfn_hlp
       parameter (lun_w=96, lfn_hlp=mlblprtx+9)
       integer i,l,il
-      character tab, fn_hlp*(lfn_hlp)
+      character fn_hlp*(lfn_hlp)
 c=======================================================================
 
       print *,'Starting b2pwldl...' !###
-
-      tab=char(9)
 
 c*** Calculate the radiation load on the specified wall zones
 c*** (data input and geometry initialisation also done there)
@@ -62,7 +60,7 @@ c*** Write the next line to the output file
           call b2pwldw(lun_w,.false.,il,i,boundary_namelist,BoRiS)
         end do !}
         close(lun_w)
- 20   continue !}
+   20 continue !}
 
       print *,'Leaving b2pwldl...' !###
 

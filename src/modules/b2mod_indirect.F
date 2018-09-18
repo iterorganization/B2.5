@@ -398,7 +398,6 @@
       implicit none
       real (kind=R8) :: quadArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-      intrinsic abs
 
       quadArea = TriangleArea(x0, y0, x1, y1, x2, y2) +
      .           TriangleArea(x2, y2, x3, y3, x0, y0)

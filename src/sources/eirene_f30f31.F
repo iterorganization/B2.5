@@ -546,7 +546,7 @@ c
 #endif
       implicit none
       integer nx,ny
-      integer ix,iy,i,nniso,idum
+      integer ix,iy,i,nniso
 
       integer nxcut1(nncutmax),nxcut2(nncutmax),
      &        nycut1(nncutmax),nycut2(nncutmax),
@@ -558,6 +558,7 @@ c
       logical ex
 
 #ifdef B25_EIRENE
+      integer idum
       integer, save :: exp_location, dot_location, spacing
       character*1 :: ldum(0:3)
       character*80 line
@@ -688,8 +689,8 @@ cxpb If the 1P was missing in the format, the numbers will start with 0
           new_format = 2
         end if
         goto 939
- 933    new_format = 2
- 939    continue
+  933   new_format = 2
+  939   continue
         close(33)
       else
         new_format = 2
@@ -825,8 +826,6 @@ csw 13apr2011 dummies for vparx,...,deltae_...
       call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
       call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathxb)
       call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathyb)
-
-
 
       deallocate(dummy)
 

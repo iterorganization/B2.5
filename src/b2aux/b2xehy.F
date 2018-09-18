@@ -75,26 +75,26 @@
         do ix = -1, nx
           if(bottomiy(ix,iy).eq.-2) then
             ehy(ix,iy) = 0.0_R8
-	  else
-	    if(mode_ehy.eq.0) then                                      !srv 06.04.15 {
-	      ehy(ix,iy) =
+          else
+            if(mode_ehy.eq.0) then                                      !srv 06.04.15 {
+              ehy(ix,iy) =
      &         -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
      &          (ne(ix,iy)*te(ix,iy)-
      &           ne(bottomix(ix,iy),bottomiy(ix,iy))*
-     &	         te(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &	        (2.0_R8/qe)/
+     &           te(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &          (2.0_R8/qe)/
      &          (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))
-	    else if(mode_ehy.eq.1) then
+            else if(mode_ehy.eq.1) then
               t0= (ne(bottomix(ix,iy),bottomiy(ix,iy))*hy1_(ix,iy)+
      &             ne(ix,iy)*hy1_(bottomix(ix,iy),bottomiy(ix,iy)))/
      &            (hy1_(bottomix(ix,iy),bottomiy(ix,iy))+hy1_(ix,iy))
-	      ehy(ix,iy) =
+              ehy(ix,iy) =
      &         -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &  	(ne(ix,iy)*te(ix,iy)-
+     &          (ne(ix,iy)*te(ix,iy)-
      &           ne(bottomix(ix,iy),bottomiy(ix,iy))*
-     &	         te(bottomix(ix,iy),bottomiy(ix,iy)))/(qe*t0)
-	    else
-	      ehy(ix,iy) =
+     &           te(bottomix(ix,iy),bottomiy(ix,iy)))/(qe*t0)
+            else
+              ehy(ix,iy) =
      &         -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
      &          (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy))+
      &          (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))*
@@ -103,7 +103,7 @@
      &           log(ne(bottomix(ix,iy),bottomiy(ix,iy)))))/qe          !srv 06.04.15 }
             endif
           endif
-	enddo
+        enddo
       enddo
 
 * ..return

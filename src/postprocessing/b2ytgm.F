@@ -228,7 +228,7 @@ cxpb
       endif
       qcb1 = 1.0_R8
       if(b2fgmtry_version.ge.'01.001.030') then
-	call cfrure_opt (nget, n2, qcb1, 'qcb')
+        call cfrure_opt (nget, n2, qcb1, 'qcb')
       end if
       if (maxval(qcb1).eq.1.0_R8 .and. minval(qcb1).eq.1.0_R8) then
        do iy = -1, ny1
@@ -348,7 +348,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
 *   ..read extended grid cell flags
       cflags1 = 0
       if(b2fgmtry_version.ge.'01.001.028') then
-	call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags1, 'cflags')
+        call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags1, 'cflags')
       endif
       if(maxval(cflags1).eq.0) then
         cflags1(1:nx1-2,1:ny1-2,CELLFLAG_TYPE) = GRID_INTERNAL

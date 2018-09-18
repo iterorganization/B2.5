@@ -74,7 +74,7 @@
       parameter (ce = 3.16e0_R8)
       save ncall, model
 *   ..procedures
-      intrinsic abs, sqrt, max, log
+      intrinsic abs, sqrt
       real (kind=R8) ::
      *  pitx, fke, fse, fal, fke_Zh
       external subini, subend, xertst, sfill

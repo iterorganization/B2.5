@@ -147,6 +147,9 @@ cank }
 #endif
 #endif
 
+csw 21feb2012
+      integer, save ::
+     . l_neutrad=0, l_neutflux
       real(kind=R8), save ::
      1 chemical_erosion_redep_fac,
      2 chemical_erosion_be_fac_a,
@@ -154,6 +157,7 @@ cank }
      4 chemical_erosion_be_fac_c
       logical, save ::
      1 chemical_erosion_be_fac
+      logical, save :: write_nml_neut = .true.
 
       namelist /neutrals_save/ saved_volrec
 
@@ -184,11 +188,6 @@ cank }
      7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr,
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
      .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata
-      logical, save :: write_nml_neut = .true.
-
-csw 21feb2012
-      integer, save ::
-     . l_neutrad=0, l_neutflux
 
       contains
 
@@ -469,10 +468,10 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
 
       subroutine read_neutrals_namelist(nx, ny, ns, dotest)
       use b2mod_wall
-     & ,only : track_index, ntrack, track_species, track_chem_sput
+     & , only : track_index, ntrack, track_species
       use b2mod_indirect
       use b2mod_elements
-     & ,only : is_codes
+     & , only : is_codes
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
       implicit none
@@ -480,7 +479,6 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       logical dotest
       integer is, ic, ix, istra, i, j, k, n, ii(1), itrack
       logical found, side
-      intrinsic mod
       real (kind=R8) hlp
       logical :: file_ok
       logical, allocatable :: old_style(:)
@@ -1051,7 +1049,7 @@ c.. Test consistency with physical edges within the computational domain
       enddo
       return
 
- 999  call xerrab ('Error while reading NEUTRALS namelist!')
+  999 call xerrab ('Error while reading NEUTRALS namelist!')
       end subroutine read_neutrals_namelist
 
       subroutine write_b2mod_neutrals_namelist
@@ -1098,7 +1096,7 @@ c.. Test consistency with physical edges within the computational domain
       enddo
 
       return
- 999  call xerrab ('Error while reading NEUTRALS_SAVE namelist!')
+  999 call xerrab ('Error while reading NEUTRALS_SAVE namelist!')
       end subroutine read_b2mod_neutrals_save
 
       subroutine write_b2mod_neutrals_save(nwrite,edition)

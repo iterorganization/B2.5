@@ -46,7 +46,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ixl, iyl, ixr, iyr, ixb, iyb, ixt, iyt
+      integer ncall, ix, iy, ixl, iyl, ixr, iyr, ixb, iyb, ixt, iyt
       integer ireg
       integer, save :: iout = 0                                          !sv 13.10.06
       real (kind=R8) ::
@@ -54,7 +54,6 @@
       save ncall
 !$OMP THREADPRIVATE(ncall, iout)
 *   ..procedures
-      intrinsic abs
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux5p
 *   ..initialization
@@ -76,8 +75,6 @@
          iout = 0
        endif
       endif                                                              !sv 06.07.06 }
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test itcnt

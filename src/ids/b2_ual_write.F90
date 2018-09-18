@@ -34,7 +34,6 @@ program b2_ual_write
     use ids_routines    ! IGNORE
                         !! These are the Access Layer routines + management of
                         !! IDS structures
-    use ids_assert      ! IGNORE
     use ids_grid_common &       ! IGNORE
         & , IDS_COORDTYPE_R => COORDTYPE_R    &
         & , IDS_COORDTYPE_Z => COORDTYPE_Z
@@ -42,12 +41,17 @@ program b2_ual_write
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
     use ids_grid_objectlist     ! IGNORE
-    use ids_grid_examples       ! IGNORE
     use ids_grid_unstructured   ! IGNORE
     use ids_grid_structured     ! IGNORE
+    use ids_grid_access         ! IGNORE
+    use ids_grid_object         ! IGNORE
 
 #ifdef USE_PXFGETENV
     integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
     implicit none
 
@@ -80,6 +84,8 @@ program b2_ual_write
         !< full kinetic energy equation (i.e. the energy flux takes into
         !< account the energy transported by the particle flux)
     character*256 systemarg
+    character*16 usrnam
+    external usrnam
 
     !! Set default value for IMAS major version and IDS treename
     version = '3'
@@ -92,24 +98,21 @@ program b2_ual_write
     call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
     call ipgeti( 'b2mndr_run_number', run )
     call xertst( 0.le.run.and.run.le.9999, 'Invalid run number')
-#ifdef NO_GETENV
-    username=' '
-#else
-#ifdef USE_PXFGETENV
-    CALL PXFGETENV ('USER', 0, username, lenval, ierror)
-#else
-    call getenv ('USER', username)
-#endif
-#endif
+    username=usrnam()
     call ipgetc( 'b2mndr_user', username )
     call xertst( .not.streql(username,' '), 'User name not defined !')
     device = 'solps-iter'
 #ifndef NO_GETENV
     device_env = ' '
+#ifdef NAGFOR
+    call get_environment_variable('DEVICE', status=ierror, length=lenval)
+    if (ierror.eq.0) call get_environment_variable('DEVICE',value=device_env)
+#else
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
 #else
     call getenv ('DEVICE', device_env)
+#endif
 #endif
     if (.not.streql(device_env,' ')) device = device_env
 #endif

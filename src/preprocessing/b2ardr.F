@@ -57,21 +57,21 @@
 *
 *  4. references
 *
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
-*     /3/ R. A. Hulse, "Numerical Studies of Impurities in Fusion
-*     Plasmas", Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
+*     /3/ R. A. Hulse, Numerical Studies of Impurities in Fusion
+*     Plasmas, Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
 *     /4/ R. A. Hulse, !! (detailed description?).
-*     /5/ K. Behringer, "Description of the Impurity Transport Code
-*     STRAHL", JET Report R(87)08, 1987.
+*     /5/ K. Behringer, Description of the Impurity Transport Code
+*     STRAHL, JET Report R(87)08, 1987.
 *     /6/ K. Behringer, !! (journal article?).
-*     /7/ Jon C. Weisheit, "Recombination in Dense Plasmas", J. Phys. B
+*     /7/ Jon C. Weisheit, Recombination in Dense Plasmas, J. Phys. B
 *     (Atom. Molec. Phys.) 8 (1975) 2556.
 *     /8/ R. K. Janev, D. E. Post, W. D. Langer, K. Evans, D. B.
-*     Heifetz and J. C. Weisheit, "Survey of Atomic Processes in Edge
-*     Plasmas", J. Nuclear Mater. 121 (1984) 10-16.
+*     Heifetz and J. C. Weisheit, Survey of Atomic Processes in Edge
+*     Plasmas, J. Nuclear Mater. 121 (1984) 10-16.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -113,7 +113,7 @@
       character flag*8
       integer i, j, k, nx, ny, ns, is, inuc, fix_cx, rtnt_in, rtnn_in,
      *  no_weisheit, fix_recomb, ns_pardf
-      integer kstart, kstart1, kend, kpart
+      integer kstart, kstart1, kend
       integer idum(0:9)
       integer, save :: no_smoothing = 0                        !srv 02.07.12
       character lblrc*120, lblcp*120, lblgm*120, cnamip*80, cvalip*80
@@ -452,7 +452,6 @@
         call ratadp (nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
         npart(inuc)=nz(inuc)+1
-        kpart=izhi(inuc)-izlo(inuc)+1
         kstart = izlo(inuc)
         kend = izhi(inuc)
         do k = izlo(inuc), izhi(inuc)
@@ -467,7 +466,6 @@
         call ratstr (ninp(1), nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
         npart(inuc)=nz(inuc)+1
-        kpart=izhi(inuc)-izlo(inuc)+1
         kstart = izlo(inuc)
         kend = izhi(inuc)
         do k = izlo(inuc), izhi(inuc)
@@ -496,7 +494,6 @@ cxpb  We must account for the case when the user does not want all bundles
           k = k - 1
         end do
         kend = k
-        kpart = kend - kstart + 1
         do k = kstart, kend
          rtzmin(is+k-kstart) = izpmin(k)
          rtzmax(is+k-kstart) = izpmax(k)
@@ -522,7 +519,6 @@ cxpb  We must account for the case when the user does not want all bundles
           k = k - 1
         end do
         kend = k
-        kpart = kend - kstart + 1
         do k = kstart, kend
          rtzmin(is+k-kstart) = izpmin(k)
          rtzmax(is+k-kstart) = izpmax(k)

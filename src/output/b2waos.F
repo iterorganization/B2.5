@@ -46,12 +46,11 @@
       REAL*8 T0,ROO,CS,MACH,T1
       real (kind=R8) ::
      * fni(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
-     1 wrk0(-1:nx,-1:ny),
-     2 ni(-1:nx,-1:ny,0:1), 
+     2 ni(-1:nx,-1:ny,0:1),
      3 ro(-1:nx,-1:ny), pr(-1:nx,-1:ny)
 
 *  -- PROCEDURES --
-      REAL*8  
+      REAL*8
      .      X, Y, XF, YF, RVX, RVY, RDX, RDY, RSX, RSY, PITX, PITY,
      .      SFEE, SFEI, SFNI(NBCD,0:NS)
       REAL*8 sxhelp,syhelp
@@ -109,7 +108,7 @@
         call xertst (0.0_R8.le.b2tqca_phm0, 'faulty input phm0')
         call ipgeti ('b2tlmv_style', style)                          !srv 30.05.08
         call ipgetr ('b2treq_phm0', b2treq_phm0)
-      end if	
+      end if
 
 *  -- TEST EDGE VALUES OF SX AND SY --
       if (sum(abs(gs(-1,-1:ny,0))) > 0._R8)
@@ -121,14 +120,14 @@
       call b2xpni (nx, ny, ns, na, ni)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       call b2xpro (nx, ny, ns, mp, am, na, ro)
-      call b2xpfe (nx, ny, ns, ns_ext, qe, 
+      call b2xpfe (nx, ny, ns, ns_ext, qe,
      &  rza, za_ext, fna, fa_ext, fch, fne)
       call b2xpfi (nx, ny, ns, fna, fni)
 *
       IXR = -1
-      IYR = NY/2 
+      IYR = NY/2
       IF (NNCUT > 0) THEN
-        IXR = rightcut(1) 
+        IXR = rightcut(1)
         IYR = topcut(1) + 2
       END IF
       IYR = MIN(IYR,NY)
@@ -285,8 +284,8 @@
 *  -- OUTPUT --
       do is = 0,ns-1
         if (is_neutral(is)) cycle
-	write (nprt,
-     .      '(//1x,A,I12,4(/1x,A,ES12.2),5(/1x,a,es12.2,a,i6))') 
+        write (nprt,
+     .      '(//1x,A,I12,4(/1x,A,ES12.2),5(/1x,a,es12.2,a,i6))')
      .      ' SPECIES   ', is,
      .      ' MASS MU   ', am(is),
      .      ' CHARGE ZI ', zn(is),
@@ -365,7 +364,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
           SFEE=SFEE+FHE(IX,BCPOS(IB)+1,1)
           SFEI=SFEI+FHI(IX,BCPOS(IB)+1,1)
           DO IS = 0, NS-1
-	    if (.not.is_neutral(is))
+            if (.not.is_neutral(is))
      .       SFNI(IB,IS)=SFNI(IB,IS)+FNA(IX,BCPOS(IB)+1,1,IS)
           ENDDO
         END DO
@@ -396,14 +395,14 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      (UA(IX,BCPOS(IB)-1,IS), IS = 0, NS-1),
      .      (UA(IX,BCPOS(IB),IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 3D11.3, 2X, (T59, 6D11.3))')
-     .      GS(IX,BCPOS(IB),1), 
+     .      GS(IX,BCPOS(IB),1),
      .      FHE(IX,BCPOS(IB),1), FHI(IX,BCPOS(IB),1),
      .      SUM(ZN(0:NS-1)*FNA(IX,BCPOS(IB),1,0:NS-1)),
      .      (FNA(IX,BCPOS(IB),1,IS), IS = 0, NS-1)
           SFEE=SFEE-FHE(IX,BCPOS(IB),1)
           SFEI=SFEI-FHI(IX,BCPOS(IB),1)
           DO IS = 0, NS-1
-	    if (.not.is_neutral(is))
+            if (.not.is_neutral(is))
      .        SFNI(IB,IS)=SFNI(IB,IS)-FNA(IX,BCPOS(IB),1,IS)
           ENDDO
         END DO
@@ -435,14 +434,14 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .                        /TI(BCPOS(IB),IY),
      .      MACH,(UA(BCPOS(IB),IY,IS),IS=0,NS-1)
           WRITE (NPRT, '(1PE12.3, 3D11.3, 2X, (T59, 6D11.3))')
-     .      GS(BCPOS(IB)+1,IY,0), 
+     .      GS(BCPOS(IB)+1,IY,0),
      .      FHE(BCPOS(IB)+1,IY,0),FHI(BCPOS(IB)+1,IY,0),
      .      SUM(ZN(0:NS-1)*FNA(BCPOS(IB)+1,IY,0,0:NS-1)),
      .      (FNA(BCPOS(IB)+1,IY,0,IS), IS = 0, NS-1)
           SFEE=SFEE+FHE(BCPOS(IB)+1,IY,0)
           SFEI=SFEI+FHI(BCPOS(IB)+1,IY,0)
           DO IS = 0, NS-1
-	    if (.not.is_neutral(is))
+            if (.not.is_neutral(is))
      .        SFNI(IB,IS)=SFNI(IB,IS)+FNA(BCPOS(IB)+1,IY,0,IS)
           ENDDO
         END DO
@@ -474,14 +473,14 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .    MACH,
      .    (UA(IX,IY,IS),IS=0,NS-1)
           WRITE (NPRT, '(1PE12.3, 3D11.3, 2X, (T59, 6D11.3))')
-     .      GS(IX,IY,0), 
+     .      GS(IX,IY,0),
      .      FHE(IX,IY,0), FHI(IX,IY,0),
      .      SUM(ZN(0:NS-1)*FNA(IX,IY,0,0:NS-1)),
      .      (FNA(IX,IY,0,IS), IS = 0, NS-1)
           SFEE=SFEE-FHE(IX,IY,0)
           SFEI=SFEI-FHI(IX,IY,0)
           DO IS = 0, NS-1
-	    if (.not.is_neutral(is))
+            if (.not.is_neutral(is))
      .        SFNI(IB,IS)=SFNI(IB,IS)-FNA(IX,IY,0,IS)
           ENDDO
         END DO
@@ -526,12 +525,12 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
   111 FORMAT (//'  CROSS-SECTIONAL FLUXES FHE, FHI, FNI.' //
      .      '  1. INTEGRATED OVER Y AS FUNCTION OF X:' //
      .      T8, 'X+', T19, 'SX', T31, 'FHEX', T42, 'FHIX',
-     .      T53, 'FCHX', T64, 'FNEX', T75, 'FNIX', 
+     .      T53, 'FCHX', T64, 'FNEX', T75, 'FNIX',
      .      T86, 'FNIX(1)', T97, 'FNIX(..)' /)
 
   112 FORMAT (/'  2. INTEGRATED OVER X AS FUNCTION OF Y:' //
      .      T8, 'Y+', T19, 'SY', T31, 'FHEY', T42, 'FHIY',
-     .      T53, 'FCHY', T64, 'FNEY', T75, 'FNIY', 
+     .      T53, 'FCHY', T64, 'FNEY', T75, 'FNIY',
      .      T86, 'FNIY(1)', T97, 'FNIY(..)' /)
 
  1112 FORMAT (//'  STATE OF THE PLASMA ON THE BOUNDARIES,',
@@ -545,7 +544,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      T16, 'DELTAE', T27, 'DELTAI', T39, 'VV', T52, 'VO',
      .      T63, 'UU(1)', T74,  'UU(..)' /
      .      T3, 'SY/SQ(1-SINYQ)',
-     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY', 
+     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY',
      .      T62, 'FNIY', T73,  'FNIY')
 
   114 FORMAT (/' NORTH EDGE:',I3, '   AT POSITION IY:', I3 //
@@ -557,7 +556,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      T16, 'DELTAE', T27, 'DELTAI', T39, 'VV', T52, 'VO',
      .      T63, 'UU(1)', T74,  'UU(..)' /
      .      T3, 'SY/SQ(1-SINYQ)',
-     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY', 
+     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY',
      .      T62, 'FNIY', T73,  'FNIY')
 
   115 FORMAT (/'  WEST EDGE:',I3, '   AT POSITION IX:', I3 //
@@ -569,7 +568,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      T16, 'DELTAE', T27, 'DELTAI', T38, 'MACH', T52 ,'UO',
      .      T63, 'UU(1)', T74,  'UU(..)' /
      .      T3, 'SX/SQ(1-SINXQ)',
-     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX', 
+     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX',
      .      T62, 'FNIX', T73,  'FNIX')
 
   116 FORMAT (/'  EAST EDGE:',I3, '   AT POSITION IX:', I3 //
@@ -581,7 +580,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      T16, 'DELTAE', T27, 'DELTAI', T38, 'MACH', T52, 'UO',
      .      T63, 'UU(1)', T74,  'UU(..)' /
      .      T3, 'SX/SQ(1-SINXQ)',
-     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX', 
+     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX',
      .      T62, 'FNIX', T73,  'FNIX')
 
  1001 FORMAT ('  TIME (SECONDS):', 2X, 1D11.4)
@@ -596,7 +595,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      T16, 'DELTAE', T27, 'DELTAI', T39, 'VV', T52 ,'VO',
      .      T63, 'UU(1)', T74,  'UU(..)' /
      .      T3, 'SY/SQ(1-SINYQ)',
-     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY', 
+     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY',
      .      T62, 'FNIY', T73,  'FNIY')
 
  1114 FORMAT (/' NORTH EDGE:',I3, '   AT POSITION IY:', I3 //
@@ -609,7 +608,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      T16, 'DELTAE', T27, 'DELTAI', T39, 'VV', T52,'VO',
      .      T63, 'UU(1)', T74,  'UU(..)' /
      .      T3, 'SY/SQ(1-SINYQ)',
-     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY', 
+     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY',
      .      T62, 'FNIY', T73,  'FNIY')
 
  1115 FORMAT (/'  WEST EDGE:',I3, '   AT POSITION IX:', I3 //
@@ -622,7 +621,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      T16, 'DELTAE', T27, 'DELTAI', T38, 'MACH', T52,'UO',
      .      T63, 'UU(1)', T74,  'UU(..)' /
      .      T3, 'SX/SQ(1-SINXQ)',
-     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX', 
+     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX',
      .      T62, 'FNIX', T73,  'FNIX')
 
  1116 FORMAT (/'  EAST EDGE:',I3, '   AT POSITION :', I3 //
@@ -635,7 +634,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      T16, 'DELTAE', T27, 'DELTAI', T38, 'MACH', T52,'UO',
      .      T63, 'UU(1)', T74,  'UU(..)' /
      .      T3, 'SX/SQ(1-SINXQ)',
-     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX', 
+     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX',
      .      T62, 'FNIX', T73,  'FNIX')
 
 
@@ -666,71 +665,73 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
       use b2mod_residuals
       implicit none
 
-      real (kind=R8) :: reshlp(-1:nx,-1:ny)
       integer, intent(in) :: NPRT, nx, ny, ns
+      real (kind=R8) :: reshlp(-1:nx,-1:ny)
       integer :: iz (-1:nx,-1:ny)
-      INTEGER :: IX,IY,IS,NXH
+      INTEGER :: IX,IY,IS
       EXTERNAL IPRI
 
-      NXH=NX
-      DO 1, IS = 0, NS-1
-      DO 2, IX = -1, NX
-      DO 2, IY = -1, NY
-        RESHLP(IX,IY)=RESCO(IX,IY,IS)
-        RESHLP(-1,IY)=0.0
-        RESHLP(NX,IY)=0.0
-        RESHLP(IX,-1)=0.0
-        RESHLP(IX,NY)=0.0
-   2  CONTINUE
-      CALL IPRI(NPRT,RESHLP(-1,-1),IZ(-1,-1),NX,NY,'RESCO   ')
-   1  CONTINUE
+      DO IS = 0, NS-1
+       DO IX = -1, NX
+        DO IY = -1, NY
+         RESHLP(IX,IY)=RESCO(IX,IY,IS)
+         RESHLP(-1,IY)=0.0
+         RESHLP(NX,IY)=0.0
+         RESHLP(IX,-1)=0.0
+         RESHLP(IX,NY)=0.0
+        END DO
+       END DO
+       CALL IPRI(NPRT,RESHLP(-1,-1),IZ(-1,-1),NX,NY,'RESCO   ')
+      END DO
 
-      DO 11, IS = 0, NS-1
-      DO 12, IX = -1, NX
-      DO 12, IY = -1, NY
-        RESHLP(IX,IY)=RESMO(IX,IY,IS)
-        RESHLP(-1,IY)=0.0
-        RESHLP(NX,IY)=0.0
-        RESHLP(NX,IY)=0.0
-        RESHLP(IX,-1)=0.0
-        RESHLP(IX,NY)=0.0
-  12  CONTINUE
-      CALL IPRI(NPRT,RESHLP(-1,-1),IZ(-1,-1),NX,NY,'RESMO   ')
-  11  CONTINUE
+      DO IS = 0, NS-1
+       DO IX = -1, NX
+        DO IY = -1, NY
+         RESHLP(IX,IY)=RESMO(IX,IY,IS)
+         RESHLP(-1,IY)=0.0
+         RESHLP(NX,IY)=0.0
+         RESHLP(NX,IY)=0.0
+         RESHLP(IX,-1)=0.0
+         RESHLP(IX,NY)=0.0
+        END DO
+       END DO
+       CALL IPRI(NPRT,RESHLP(-1,-1),IZ(-1,-1),NX,NY,'RESMO   ')
+      END DO
 
-      DO 22, IX = -1, NX
-      DO 22, IY = -1, NY
+      DO IX = -1, NX
+       DO IY = -1, NY
         RESHLP(IX,IY)=RESPO(IX,IY)
         RESHLP(-1,IY)=0.0
         RESHLP(NX,IY)=0.0
         RESHLP(IX,-1)=0.0
         RESHLP(IX,NY)=0.0
-  22  CONTINUE
+       END DO
+      END DO
       CALL IPRI(NPRT,RESHLP(-1,-1),IZ(-1,-1),NX,NY,'RESPO   ')
 
-      DO 32, IX = -1, NX
-      DO 32, IY = -1, NY
+      DO IX = -1, NX
+       DO IY = -1, NY
         RESHLP(IX,IY)=RESHE(IX,IY)
         RESHLP(-1,IY)=0.0
         RESHLP(NX,IY)=0.0
         RESHLP(IX,-1)=0.0
         RESHLP(IX,NY)=0.0
-  32  CONTINUE
+       END DO
+      END DO
       CALL IPRI(NPRT,RESHLP(-1,-1),IZ(-1,-1),NX,NY,'RESHE   ')
 
-      DO 42, IX = -1, NX
-      DO 42, IY = -1, NY
+      DO IX = -1, NX
+       DO IY = -1, NY
         RESHLP(IX,IY)=RESHI(IX,IY)
         RESHLP(-1,IY)=0.0
         RESHLP(NX,IY)=0.0
         RESHLP(IX,-1)=0.0
         RESHLP(IX,NY)=0.0
-  42  CONTINUE
+       END DO
+      END DO
       CALL IPRI(NPRT,RESHLP(-1,-1),IZ(-1,-1),NX,NY,'RESHI   ')
 
-
 *-----------------------------------------------------------------------
-
 
       RETURN
 
@@ -757,11 +758,11 @@ C
 C
       IMPLICIT NONE
 C
-      INTEGER NXD, NYD
+      INTEGER NX, NY, NPRT
       INTEGER IZ (-1:NX,-1:NY), ID (-1:39),
-     .        NPRT, NX, NY, IX, IY, NX1, NX2, NY1, NY2
+     .        IX, IY, NX1, NX2, NY1, NY2
       REAL*8 Z(-1:NX,-1:NY), YMIN, YMAX, ZMAX, SIGF
-      CHARACTER*8  TEXT, COTXT1, COTXT2
+      CHARACTER*8 TEXT, COTXT1, COTXT2
 C
       DATA  COTXT1 /'TE      '/,  COTXT2 /'TI      '/
 C
@@ -770,12 +771,13 @@ C
       YMIN = 0.0
       ZMAX = 0.0
 C
-      DO 11 IX=-1,NX
-      DO 11 IY=-1,NY
+      DO IX=-1,NX
+       DO IY=-1,NY
          YMAX = MAX (YMAX,Z(IX,IY))
          YMIN = MIN (YMIN,Z(IX,IY))
          ZMAX = MAX (ZMAX,ABS(Z(IX,IY)))
-   11 CONTINUE
+       END DO
+      END DO
 C
       DO 12 IX=-1,NX
 CCCCC    JX(IX) = IX
@@ -785,22 +787,22 @@ C
              SIGF = 1.0
              IF (Z(IX,IY).LT.0.0)   SIGF = -1.0
              IZ(IX,IY) = 100.0 * Z(IX,IY)/ZMAX + 0.5*SIGF
- 13        CONTINUE
+   13      CONTINUE
 C
         ELSE
 C
            DO 14 IY=-1,NY
              IZ(IX,IY) = 0
- 14        CONTINUE
+   14      CONTINUE
         ENDIF
 C
- 12   CONTINUE
-C     
+   12 CONTINUE
+C
       ZMAX = YMAX
       IF (ABS(YMIN).GT.YMAX)   ZMAX = YMIN
 C
       IF (TEXT.EQ.COTXT1 .OR. TEXT.EQ.COTXT2)   ZMAX = ZMAX/1.6021D-19
-C     
+C
       WRITE (NPRT,200) TEXT, ZMAX
   200 FORMAT (//1x,'   AUSDRUCK DES ARRAYS  >>>>>  ',A8,
      .        '  <<<<   ZMAX =',1PE13.3)

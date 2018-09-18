@@ -27,7 +27,7 @@
 *
 *  2. specification
 *
-*     
+*
 *
 *
 *  3. description (see also routine b2cdca)
@@ -124,7 +124,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       open(70,file='b2fparop.dat',form='unformatted')
       write(70) par_opt_phys
       close(70)
-      
+
       call cpu_time(cpu_s)
 
 #ifdef WINDOWS
@@ -141,7 +141,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        call system('rm b2fstati')
        call system('cp b2fstate b2fstati')
       endif
-#endif	 
+#endif
       call cpu_time(cpu_f)
       write(71,"(' b2obeq takes ',es10.2,' sec')") cpu_f-cpu_s
 * read the results of modelling
@@ -150,131 +150,131 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       func = 0.0_R8
 *   .. compute objective function and write the results of modelling
 *   .. for inner lower
-      call treat_exp_res_eq(l_ne_inner_lower, fnm_ne_inner_lower,   
+      call treat_exp_res_eq(l_ne_inner_lower, fnm_ne_inner_lower,
      & ny, cy_ne_inner_lower, ne_inner_lower_mod, b_ne_inner_lower_mod,
      & c_ne_inner_lower_mod, d_ne_inner_lower_mod,
      & ndat_ne_inner_lower_exp, cy_ne_inner_lower_exp+shift,
      & ne_inner_lower_exp, npoint, func, number_exp, dif)
 
-      call treat_exp_res_eq(l_te_inner_lower, fnm_te_inner_lower,   
+      call treat_exp_res_eq(l_te_inner_lower, fnm_te_inner_lower,
      & ny, cy_te_inner_lower, te_inner_lower_mod,
      & b_te_inner_lower_mod, c_te_inner_lower_mod, d_te_inner_lower_mod,
-     & ndat_te_inner_lower_exp, cy_te_inner_lower_exp+shift, 
+     & ndat_te_inner_lower_exp, cy_te_inner_lower_exp+shift,
      & te_inner_lower_exp, npoint, func, number_exp, dif)
-      
-      call treat_exp_res_eq(l_ti_inner_lower, fnm_ti_inner_lower,   
+
+      call treat_exp_res_eq(l_ti_inner_lower, fnm_ti_inner_lower,
      & ny, cy_ti_inner_lower, ti_inner_lower_mod,
      & b_ti_inner_lower_mod, c_ti_inner_lower_mod, d_ti_inner_lower_mod,
      & ndat_ti_inner_lower_exp, cy_ti_inner_lower_exp+shift,
      & ti_inner_lower_exp, npoint, func, number_exp, dif)
-      
-      call treat_exp_res_eq(l_js_inner_lower, fnm_js_inner_lower,   
+
+      call treat_exp_res_eq(l_js_inner_lower, fnm_js_inner_lower,
      & ny, cy_js_inner_lower, js_inner_lower_mod,
      & b_js_inner_lower_mod, c_js_inner_lower_mod, d_js_inner_lower_mod,
      & ndat_js_inner_lower_exp, cy_js_inner_lower_exp+shift,
      & js_inner_lower_exp, npoint, func, number_exp, dif)
 
 *   .. for inner upper
-      call treat_exp_res_eq(l_ne_inner_upper, fnm_ne_inner_upper,   
+      call treat_exp_res_eq(l_ne_inner_upper, fnm_ne_inner_upper,
      & ny, cy_ne_inner_upper, ne_inner_upper_mod, b_ne_inner_upper_mod,
      & c_ne_inner_upper_mod, d_ne_inner_upper_mod,
      & ndat_ne_inner_upper_exp, cy_ne_inner_upper_exp+shift,
      & ne_inner_upper_exp, npoint, func, number_exp, dif)
 
-      call treat_exp_res_eq(l_te_inner_upper, fnm_te_inner_upper,   
+      call treat_exp_res_eq(l_te_inner_upper, fnm_te_inner_upper,
      & ny, cy_te_inner_upper, te_inner_upper_mod,
      & b_te_inner_upper_mod, c_te_inner_upper_mod, d_te_inner_upper_mod,
-     & ndat_te_inner_upper_exp, cy_te_inner_upper_exp+shift, 
+     & ndat_te_inner_upper_exp, cy_te_inner_upper_exp+shift,
      & te_inner_upper_exp, npoint, func, number_exp, dif)
-      
-      call treat_exp_res_eq(l_ti_inner_upper, fnm_ti_inner_upper,   
+
+      call treat_exp_res_eq(l_ti_inner_upper, fnm_ti_inner_upper,
      & ny, cy_ti_inner_upper, ti_inner_upper_mod,
      & b_ti_inner_upper_mod, c_ti_inner_upper_mod, d_ti_inner_upper_mod,
      & ndat_ti_inner_upper_exp, cy_ti_inner_upper_exp+shift,
      & ti_inner_upper_exp, npoint, func, number_exp, dif)
-      
-      call treat_exp_res_eq(l_js_inner_upper, fnm_js_inner_upper,   
+
+      call treat_exp_res_eq(l_js_inner_upper, fnm_js_inner_upper,
      & ny, cy_js_inner_upper, js_inner_upper_mod,
      & b_js_inner_upper_mod, c_js_inner_upper_mod, d_js_inner_upper_mod,
      & ndat_js_inner_upper_exp, cy_js_inner_upper_exp+shift,
      & js_inner_upper_exp, npoint, func, number_exp, dif)
 
 *   .. for outer midplane
-      call treat_exp_res_eq(l_ne_outer_mdpl, fnm_ne_outer_mdpl,   
+      call treat_exp_res_eq(l_ne_outer_mdpl, fnm_ne_outer_mdpl,
      & ny, cy_ne_outer_mdpl, ne_outer_mdpl_mod,
      & b_ne_outer_mdpl_mod, c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod,
      & ndat_ne_outer_mdpl_exp, cy_ne_outer_mdpl_exp-shift,
      & ne_outer_mdpl_exp, npoint, func, number_exp, dif)
 
-      call treat_exp_res_eq(l_te_outer_mdpl, fnm_te_outer_mdpl,   
+      call treat_exp_res_eq(l_te_outer_mdpl, fnm_te_outer_mdpl,
      & ny, cy_te_outer_mdpl, te_outer_mdpl_mod,
      & b_te_outer_mdpl_mod, c_te_outer_mdpl_mod, d_te_outer_mdpl_mod,
-     & ndat_te_outer_mdpl_exp, cy_te_outer_mdpl_exp-shift, 
+     & ndat_te_outer_mdpl_exp, cy_te_outer_mdpl_exp-shift,
      & te_outer_mdpl_exp, npoint, func, number_exp, dif)
-      
-      call treat_exp_res_eq(l_ti_outer_mdpl, fnm_ti_outer_mdpl,   
+
+      call treat_exp_res_eq(l_ti_outer_mdpl, fnm_ti_outer_mdpl,
      & ny, cy_ti_outer_mdpl, ti_outer_mdpl_mod,
      & b_ti_outer_mdpl_mod, c_ti_outer_mdpl_mod, d_ti_outer_mdpl_mod,
-     & ndat_ti_outer_mdpl_exp, cy_ti_outer_mdpl_exp-shift, 
+     & ndat_ti_outer_mdpl_exp, cy_ti_outer_mdpl_exp-shift,
      & ti_outer_mdpl_exp, npoint, func, number_exp, dif)
 
 *   .. for outer lower
-      call treat_exp_res_eq(l_ne_outer_lower, fnm_ne_outer_lower,   
+      call treat_exp_res_eq(l_ne_outer_lower, fnm_ne_outer_lower,
      & ny, cy_ne_outer_lower, ne_outer_lower_mod, b_ne_outer_lower_mod,
      & c_ne_outer_lower_mod, d_ne_outer_lower_mod,
      & ndat_ne_outer_lower_exp, cy_ne_outer_lower_exp-shift,
      & ne_outer_lower_exp, npoint, func, number_exp, dif)
 
-      call treat_exp_res_eq(l_te_outer_lower, fnm_te_outer_lower,   
+      call treat_exp_res_eq(l_te_outer_lower, fnm_te_outer_lower,
      & ny, cy_te_outer_lower, te_outer_lower_mod,
      & b_te_outer_lower_mod, c_te_outer_lower_mod, d_te_outer_lower_mod,
-     & ndat_te_outer_lower_exp, cy_te_outer_lower_exp-shift, 
+     & ndat_te_outer_lower_exp, cy_te_outer_lower_exp-shift,
      & te_outer_lower_exp, npoint, func, number_exp, dif)
-      
-      call treat_exp_res_eq(l_ti_outer_lower, fnm_ti_outer_lower,   
+
+      call treat_exp_res_eq(l_ti_outer_lower, fnm_ti_outer_lower,
      & ny, cy_ti_outer_lower, ti_outer_lower_mod,
      & b_ti_outer_lower_mod, c_ti_outer_lower_mod, d_ti_outer_lower_mod,
      & ndat_ti_outer_lower_exp, cy_ti_outer_lower_exp-shift,
      & ti_outer_lower_exp, npoint, func, number_exp, dif)
-      
-      call treat_exp_res_eq(l_js_outer_lower, fnm_js_outer_lower,   
+
+      call treat_exp_res_eq(l_js_outer_lower, fnm_js_outer_lower,
      & ny, cy_js_outer_lower, js_outer_lower_mod,
      & b_js_outer_lower_mod, c_js_outer_lower_mod, d_js_outer_lower_mod,
      & ndat_js_outer_lower_exp, cy_js_outer_lower_exp-shift,
      & js_outer_lower_exp, npoint, func, number_exp, dif)
 
 *   .. for outer upper
-      call treat_exp_res_eq(l_ne_outer_upper, fnm_ne_outer_upper,   
+      call treat_exp_res_eq(l_ne_outer_upper, fnm_ne_outer_upper,
      & ny, cy_ne_outer_upper, ne_outer_upper_mod, b_ne_outer_upper_mod,
      & c_ne_outer_upper_mod, d_ne_outer_upper_mod,
      & ndat_ne_outer_upper_exp, cy_ne_outer_upper_exp-shift,
      & ne_outer_upper_exp, npoint, func, number_exp, dif)
 
-      call treat_exp_res_eq(l_te_outer_upper, fnm_te_outer_upper,   
+      call treat_exp_res_eq(l_te_outer_upper, fnm_te_outer_upper,
      & ny, cy_te_outer_upper, te_outer_upper_mod,
      & b_te_outer_upper_mod, c_te_outer_upper_mod, d_te_outer_upper_mod,
-     & ndat_te_outer_upper_exp, cy_te_outer_upper_exp-shift, 
+     & ndat_te_outer_upper_exp, cy_te_outer_upper_exp-shift,
      & te_outer_upper_exp, npoint, func, number_exp, dif)
-      
-      call treat_exp_res_eq(l_ti_outer_upper, fnm_ti_outer_upper,   
+
+      call treat_exp_res_eq(l_ti_outer_upper, fnm_ti_outer_upper,
      & ny, cy_ti_outer_upper, ti_outer_upper_mod,
      & b_ti_outer_upper_mod, c_ti_outer_upper_mod, d_ti_outer_upper_mod,
      & ndat_ti_outer_upper_exp, cy_ti_outer_upper_exp-shift,
      & ti_outer_upper_exp, npoint, func, number_exp, dif)
-      
-      call treat_exp_res_eq(l_js_outer_upper, fnm_js_outer_upper,   
+
+      call treat_exp_res_eq(l_js_outer_upper, fnm_js_outer_upper,
      & ny, cy_js_outer_upper, js_outer_upper_mod,
      & b_js_outer_upper_mod, c_js_outer_upper_mod, d_js_outer_upper_mod,
      & ndat_js_outer_upper_exp, cy_js_outer_upper_exp-shift,
      & js_outer_upper_exp, npoint, func, number_exp, dif)
 
       if(l_power) then
-	npoint=npoint+1
-	dif(npoint) = (power_mod-power_exp)/power_exp
-	func = func + dif(npoint)**2
+        npoint=npoint+1
+        dif(npoint) = (power_mod-power_exp)/power_exp
+        func = func + dif(npoint)**2
 
-	write(71,"(5x,'pw_mod',5x,'pw_exp',5x,'dif')") 
-	write(71,"(1x,3(es14.6))") power_mod, power_exp, dif(npoint)
+        write(71,"(5x,'pw_mod',5x,'pw_exp',5x,'dif')")
+        write(71,"(1x,3(es14.6))") power_mod, power_exp, dif(npoint)
       endif
 
       nfunc = nfunc + 1

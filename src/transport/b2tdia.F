@@ -44,7 +44,6 @@
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 #endif
 *   ..procedures
-      intrinsic max, abs
       real (kind=R8) ::
      *   smin, smax
       external subini, subend, xertst

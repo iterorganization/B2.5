@@ -227,10 +227,10 @@ for category in categories:
 fort += DELIMITER
 fort += """*.end b2cdcn\n\n      end subroutine b2cdcn\n"""
 
-
-f = open('b2cdcn.F', 'w')
 if sys.version_info[0] >= 3:
-    f.write(fort)
+    f = open('b2cdcn.F', 'wb')
+    f.write(fort.encode())
 else:
+    f = open('b2cdcn.F', 'w')
     f.write(fort.encode('utf-8'))
 f.close()

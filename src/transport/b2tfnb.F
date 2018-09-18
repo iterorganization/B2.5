@@ -136,7 +136,7 @@
      *   kmpr, hybr, kap, cvmgp, hy1
       external subini, subend, xertst, ipgeti, ipgetr                    !xpb
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
-      intrinsic abs, max, min, mod, sqrt
+      intrinsic abs, max, min, sqrt
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       kmpr(ix,iy) = nb(ix,iy)/pb(ix,iy)
       kap(ix,iy) = 1.0_R8 / (zb(ix,iy)*te(ix,iy) + ti(ix,iy))
@@ -476,8 +476,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &          +ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hy1(ix,iy)))*0.5_R8 !srv 05.02.05
      &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv 05.03.99
            wbdia(ix,iy,0) = - facdrift(ix,iy)/                           !srv 13.05.16 {
-     1      (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
-     2      (bb(ix,iy,2)/bb(ix,iy,3)**2
+     1        (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
+     2        (bb(ix,iy,2)/bb(ix,iy,3)**2
      2        +bb(leftix(ix,iy),leftiy(ix,iy),2)/
      2         bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*
      2         (nbtic(topix(ix,iy),topiy(ix,iy))-nbtic(ix,iy))/
@@ -1728,20 +1728,21 @@ csw 18feb2014 remove fluxes between guard cells
           if(iout.ne.0) then
             write(*,*)
             write(*,*) 'Before flux correction in b2tfnb, is = ', isb
-            write(*,fmt=
-     $"('isb = ',i4,' fnb_tot = ',es18.11,' fnb_mdf_tot = ',es18.11)")
-     $       isb, div_fnb, div_fnb_mdf
+            write(*,'(a,i4,a,es18.11,a,es18.11)')
+     $       ' isb = ',isb,' fnb_tot = ',div_fnb,
+     $       ' fnb_mdf_tot = ',div_fnb_mdf
 
             call b2tbfl(nx, ny,.false., fnb, tbfl_fnb, div_fnb)
             call b2tbfl(nx, ny,.false., fnb_mdf, tbfl_fnb_mdf,
      .                                                 div_fnb_mdf)
             write(*,*) 'After flux correction in b2tfnb, is = ', isb
-            write(*,fmt=
-     $"('isb = ',i4,' fnb_tot = ',es18.11,' fnb_mdf_tot = ',es18.11)")
-     $       isb, div_fnb, div_fnb_mdf
+            write(*,'(a,i4,a,es18.11,a,es18.11)')
+     $       ' isb = ',isb,' fnb_tot = ',div_fnb,
+     $       ' fnb_mdf_tot = ',div_fnb_mdf
             write(*,*)
-!            write(*,"(' is =',i3,' rdiv =',es15.7,' div_fnb =',es15.7,
-!     &       ' div_fnb_mdf =',es15.7)") isb, rdiv, div_fnb, div_fnb_mdf
+!            write(*,'(a,i3,a,es15.7,a,es15.7,a,es15.7)')
+!     &       ' is =',isb,' rdiv =',rdiv,' div_fnb =',div_fnb,
+!     &       ' div_fnb_mdf =',div_fnb_mdf
           endif
         endif
       endif                                                             !srv 05.03.16 }

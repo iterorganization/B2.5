@@ -40,7 +40,7 @@ C     minimization without derivatives, prentice - hall, inc. (1973).
 C
 C
       REAL (KIND=R8) :: A,B,C,D,E,EPS,XM,P,Q,R,TOL1,TOL2,U,V,W
-      REAL (KIND=R8) :: FU,FV,FW,FX,X,ABS,SIGN
+      REAL (KIND=R8) :: FU,FV,FW,FX,X
 C
 C     C is squared value of (1/golden ratio)
 C

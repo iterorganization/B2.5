@@ -198,7 +198,7 @@ C
         WRITE(EVCUT,1050) IEVCUT
         DO 50 I = 1 , 6
           IF( EVCUT(I:I).EQ.' ' ) LEVMIN = I
-  50    CONTINUE
+   50   CONTINUE
         LEVMIN = LEVMIN + 1
       END IF
 C
@@ -304,7 +304,7 @@ C
         WRITE(6,1020)
      .      'ITDIMD MUST BE LARGER THAN IZ1MAX-IZ1MIN+1'
         WRITE(6,1120) ITDIMD,IZ1MAX,IZ1MIN
-1120    FORMAT('ITDIMD = ',I4,' IZ1MAX = ',I4,' IZ1MIN = ',I4)
+ 1120   FORMAT('ITDIMD = ',I4,' IZ1MAX = ',I4,' IZ1MIN = ',I4)
         IFAIL=2
         GOTO 9999
       ENDIF

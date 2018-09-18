@@ -55,8 +55,10 @@
       call b2wuzd (iun, newversion, ns1, zamin1, zamax1, zn1, am1)
 
 *   ..write average state and sources
-      call cfwuin (iun, 1, naver, 'naver')
-      call cfwuin (iun, 1, ntotdt, 'ntotdt')
+      idum(0) = naver
+      call cfwuin (iun, 1, idum, 'naver')
+      idum(0) = ntotdt
+      call cfwuin (iun, 1, idum, 'ntotdt')
 
       call cfwure (iun, n2*ns1, na1_mean, 'na_mean')
       call cfwure (iun, n2,     te1_mean, 'te_mean')

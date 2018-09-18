@@ -259,7 +259,7 @@ c also set lenoff(1) to -1 and set permutation arrays.
   170 if (lbig) big1 = themax
       if (nsrch.le.n) go to 180
 c
-c perform l/u decomosition on diagonal blocks.
+c perform l/u decomposition on diagonal blocks.
       call ma30adcopy(n, icn, a, licn, ikeep, ikeep(1,4), idisp,
      *ikeep(1,2), ikeep(1,3), irn, lirn, iw(1,2), iw(1,3), iw(1,4),
      *iw(1,5), iw(1,6), iw(1,7), iw(1,8), iw, upriv, iflag)
@@ -921,8 +921,8 @@ c     values in icn. a(1) to a(idisp(1)-1) are neither required nor
 c     altered.
 c licn  is an integer variable which must be set by the user to the
 c     length of arrays icn and a. it must be big enough for a and icn
-c     to hold all the nonzeros of l and u and leave some "elbow
-c     room".  it is possible to calculate a minimum value for licn by
+c     to hold all the nonzeros of l and u and leave some elbow
+c     room.  it is possible to calculate a minimum value for licn by
 c     a preliminary run of ma30a/ad. the adequacy of the elbow room
 c     can be judged by the size of the common block variable icncp. it
 c     is not altered by ma30a/ad.
@@ -958,7 +958,7 @@ c lirn  is an integer variable. it should be greater than the
 c     largest number of nonzeros in a diagonal block of p1*a*q1 but
 c     need not be as large as licn. it is the length of array irn and
 c     should be large enough to hold the active part of any block,
-c     plus some "elbow room", the  a posteriori  adequacy of which can
+c     plus some elbow room, the  a posteriori  adequacy of which can
 c     be estimated by examining the size of common block variable
 c     irncp.
 c lenc,ifirst,lastr,nextr,lastc,nextc are all integer arrays of
@@ -1049,7 +1049,7 @@ c
      * jcount, jdiff, jroom, jmore, jzer, jzero,
      * kdrop, lenpp, lenpiv, msrch, morei,
      * nblock, num, nnm1, nzcol, nzmin, nzrow
-      integer(8) :: jcost, kcost                           !srv 26.02.11 12.03.15
+      integer(kind=I8) :: jcost, kcost                   !srv 26.02.11 12.03.15
 #ifdef DBG
       real (kind=R8) :: product
       real (kind=R8), save :: cutlo
@@ -1261,7 +1261,7 @@ c     control.
 c jcost is the markowitz cost of the best pivot so far,.. this
 c     pivot is in row ipiv and column jpiv.
           nz2 = nzmin
-          jcost = int(n,8)*int(n,8)    !srv 26.02.11 12.03.15
+          jcost = int(n,I8)*int(n,I8)    !srv 26.02.11 12.03.15
 c
 c examine rows/columns in order of ascending count.
           do 340 l=1,2
@@ -1270,7 +1270,7 @@ c examine rows/columns in order of ascending count.
             ll = l
 c a pass with l equal to 2 is only performed in the case of singularity.
             do 330 nz=nz2,n
-              if (jcost.le.int((nz-1),8)**2) go to 420               !srv 26.02.11 12.03.15
+              if (jcost.le.int((nz-1),I8)**2) go to 420               !srv 26.02.11 12.03.15
               ijfir = ifirst(nz)
               if (ijfir) 230, 220, 240
   220         if (ll.eq.1) nzmin = nz + 1
@@ -1281,7 +1281,7 @@ c a pass with l equal to 2 is only performed in the case of singularity.
   240         ll = 2
 c scan rows with nz nonzeros.
               do 270 idummy=1,n
-                if (jcost.le.int((nz-1),8)**2) go to 420             !srv 26.02.11 12.03.15
+                if (jcost.le.int((nz-1),I8)**2) go to 420             !srv 26.02.11 12.03.15
                 if (isrch.gt.msrch) go to 420
                 if (ijfir.eq.0) go to 280
 c row ijfir is now examined.
@@ -1300,7 +1300,7 @@ c scan row for possible pivots
                 do 260 jj=j1,j2
                   if (abs(a(jj)).le.au .and. l.eq.1) go to 260
                   j = icn(jj)
-                  kcost = int((nz-1),8)*int((lenc(j)-1),8)           !srv 26.02.11 12.03.15
+                  kcost = int((nz-1),I8)*int((lenc(j)-1),I8)           !srv 26.02.11 12.03.15
                   if (kcost.gt.jcost) go to 260
                   pivr = zero
                   if (amax.ne.zero) pivr = abs(a(jj))/amax
@@ -1311,7 +1311,7 @@ c best pivot so far is found.
                   ijpos = jj
                   ipiv = i
                   jpiv = j
-                  if (msrch.gt.nn+1 .and. jcost.le.int((nz-1),8)**2)
+                  if (msrch.gt.nn+1 .and. jcost.le.int((nz-1),I8)**2)
      *               go to 420                                        !srv 26.02.11 12.03.15
                   pivrat = pivr
   260           continue
@@ -1320,7 +1320,7 @@ c
 c columns with nz nonzeros now examined.
   280         ijfir = ifirst(nz)
               ijfir = -lastr(ijfir)
-  290         if (jcost.le.int(nz,8)*int((nz-1),8)) go to 420         !srv 26.02.11 12.03.15
+  290         if (jcost.le.int(nz,I8)*int((nz-1),I8)) go to 420         !srv 26.02.11 12.03.15
               if (msrch.le.nn) go to 330
               do 320 idummy=1,n
                 if (ijfir.eq.0) go to 330
@@ -1331,7 +1331,7 @@ c columns with nz nonzeros now examined.
 c scan column j.
                 do 310 ii=i1,i2
                   i = irn(ii)
-                  kcost = int((nz-1),8)*int((lenr(i)-lenrl(i)-1),8)   !srv 26.02.11 12.03.15
+                  kcost = int((nz-1),I8)*int((lenr(i)-lenrl(i)-1),I8)   !srv 26.02.11 12.03.15
                   if (kcost.ge.jcost) go to 310
 c pivot has best markowitz count so far ... now check its
 c     suitability on numeric grounds by examining the other nonzeros
@@ -1351,7 +1351,7 @@ c     problems with underdetermined systems.
                   jpiv = j
                   ijpos = jpos
                   if (amax.ne.zero) pivrat = abs(a(jpos))/amax
-                  if (jcost.le.int(nz,8)*int((nz-1),8)) go to 420     !srv 26.02.11 12.03.15
+                  if (jcost.le.int(nz,I8)*int((nz-1),I8)) go to 420     !srv 26.02.11 12.03.15
   310           continue
 c
   320         continue
@@ -2704,7 +2704,7 @@ c update value of lowl(iv) if necessary.
       go to 110
 c
 c put new node on the stack.
- 100  arp(iv)=i2-ii-1
+  100 arp(iv)=i2-ii-1
       prev(iw)=iv
       iv=iw
       ist=ist+1
@@ -2827,15 +2827,15 @@ c items kor, kor+1, .... ,kmax are in order
       if(iabs(ice).le.iabs(ik))go to 20
       inum(k-1)=ik
       a(k-1)=a(k)
-10    continue
+   10 continue
       k=kmax+1
-20    inum(k-1)=ice
+   20 inum(k-1)=ice
       a(k-1)=ace
       kor=kor-1
-25    continue
+   25 continue
 c        next column
       kmax=klo-2
-30    continue
+   30 continue
       return
       end subroutine mc20bdcopy
 c######date   01 jan 1984     copyright ukaea, harwell.
@@ -2999,15 +2999,15 @@ c     positions corresponding to the new position of this row in a/icn.
       j2=jj+length-1
       do 15 j=jj,j2
       iw1(j)=iold
- 15   continue
+   15 continue
       jj=j2+1
- 20   continue
+   20 continue
 c set inverse permutation to iq in iw(.,2).
       do 30 i=1,n
       iold=iq(i)
       iold=iabs(iold)
       iw(iold,2)=i
- 30   continue
+   30 continue
 c permute a and icn in place, changing to new column numbers.
 c
 c ***   main loop   ***
@@ -3040,11 +3040,11 @@ c is chain complete ?
       iold=iw1(ipos)
       iw1(ipos)=0
 c **  end of chain loop  **
- 100  continue
- 130  a(ipos)=aval
- 150  icn(ipos)=iw(jval,2)
+  100 continue
+  130 a(ipos)=aval
+  150 icn(ipos)=iw(jval,2)
 c ***   end of main loop   ***
- 200  continue
+  200 continue
 c
  1000 return
       end subroutine mc22adcopy
@@ -3269,7 +3269,7 @@ c######alias mc24adcopy
       amaxl=zero
       do 10 i=1,n
       w(i)=zero
- 10   continue
+   10 continue
       j0=1
       do 100 i=1,n
       if (lenr(i).eq.0) go to 100
@@ -3280,24 +3280,24 @@ c calculation of 1-norm of l.
       wrowl=zero
       do 30 jj=j0,j1
       wrowl=wrowl+abs(a(jj))
- 30   continue
+   30 continue
 c amaxl is the maximum norm of columns of l so far found.
       amaxl=max(amaxl,wrowl)
       j0=j1+1
 c calculation of norms of columns of u (max-norms).
- 50   j0=j0+1
+   50 j0=j0+1
       if (j0.gt.j2) go to 90
       do 80 jj=j0,j2
       j=icn(jj)
       w(j)=max(abs(a(jj)),w(j))
- 80   continue
- 90   j0=j2+1
- 100  continue
+   80 continue
+   90 j0=j2+1
+  100 continue
 c amaxu is set to maximum max-norm of columns of u.
       amaxu=zero
       do 200 i=1,n
       amaxu=max(amaxu,w(i))
- 200  continue
+  200 continue
 c grofac is max u max-norm times max l 1-norm.
       w(1)=amaxl*amaxu
       return
@@ -3349,8 +3349,8 @@ c     new decomposition using ma28a/ad.
 c resid is a real*8 variable which on exit from ma28c/cd gives the value
 c     of the maximum residual over all the equations unsatisfied because
 c     of dependency (zero pivots).
-c irncp,icncp are integer variables which monitor the adequacy of "elbow
-c     room" in irn and a/icn respectively. if either is quite large (say
+c irncp,icncp are integer variables which monitor the adequacy of elbow
+c     room in irn and a/icn respectively. if either is quite large (say
 c     greater than n/10), it will probably pay to increase the size of
 c     the corresponding array for subsequent runs. if either is very low
 c     or zero then one can perhaps save storage by reducing the size of
@@ -3512,7 +3512,7 @@ c     reduced to enable a successful decomposition to the point at
 c     which failure occurred.  notice that, on a successful entry
 c     idisp(2) gives the amount of space in a/icn required for the
 c     decomposition while minicn will usually be slightly greater
-c     because of the need for "elbow room".  if the user is very
+c     because of the need for elbow room.  if the user is very
 c     unsure how large to make licn, the variable minicn can be used
 c     to provide that information. a preliminary run should be
 c     performed with abort3 left set to .false. and licn about 3/2

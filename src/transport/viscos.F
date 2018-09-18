@@ -72,7 +72,7 @@ c--------------------------------------------------------------------
      *     mmx,i,j,nv,k,l
       logical nlerr
       real (kind=R8) ::
-     *       bgradp, twopi, fc, ft, pi, x, dum, vth,
+     *       bgradp, fc, ft, pi, x, dum, vth,
      +       nud, nue, nut, kb, kps, ommn, ntom, ktot, voorf,
      +       dx, weight, meanmuo
       real (kind=R8) ::
@@ -85,7 +85,6 @@ c     calculate vth
 
 c     the constant pi, 2 pi
       pi = 4.*atan(1.)
-      twopi = 2.*pi
 
 c     the constants to approximate the nut*irm function
       a(1) = 2. / 5.
@@ -211,8 +210,8 @@ c         frequency.
                 write(*,*) 'WARNING: refinement for viscosity'//
      +                     ' integral needed'
                 write(*,'(1x,a8,i1,a1,i1,a4,1p,e15.8)')
-     .		 '%err.mu(',k,',',l,') = ',
-     1		 (mu(k,l)-muo(k,l))/mu(k,l)*100.0_R8
+     .            '%err.mu(',k,',',l,') = ',
+     1           (mu(k,l)-muo(k,l))/mu(k,l)*100.0_R8
                 write(*,*) 'voorf =',voorf
                 write(*,*) 'nv=',nv
               endif
@@ -232,9 +231,9 @@ c         frequency.
           nv = nv*2
           if (nv.gt.4e8) then
             open(16,file='viscos.dat',form='formatted')
-	    do i = 0, 25600
-	      write(16,*) xpoints(i), cxi(i)
-	    enddo
+            do i = 0, 25600
+              write(16,*) xpoints(i), cxi(i)
+            enddo
             close(16)
             call perr(4)
           endif

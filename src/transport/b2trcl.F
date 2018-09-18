@@ -13,14 +13,14 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-      use b2mod_geo_corner
-     &                    , only : nmdpl
       use b2mod_transport
      &                    , only :
      &                     f_luc_ke, f_luc_ki, f_luc_et, f_luc_sg,
      &                     f_luc_al, fllim_ki, fllim_ke, fllim_al,       !srv 13.01.17
      &                     fllim_al_c, alfx_c, sigx_c                    !srv 08.10.14
 #ifdef ASTRA
+      use b2mod_geo_corner
+     &                    , only : nmdpl
       use b2mod_b2_to_astra
 #endif
       implicit none

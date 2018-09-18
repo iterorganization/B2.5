@@ -125,7 +125,7 @@
 *    ..test sign of conb
        if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !srv 06.07.06 {
         call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')                 !srv 18.11.05 13.10.06
-	 endif                                                        !srv 06.07.06 }
+       endif                                                          !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
        call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                 !srv 13.10.06 {
@@ -153,10 +153,10 @@ cdjm Jan2017 update particle source components for balance
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 15.02.10 { this part should be re-written
        do iy=-1, ny, ny+1                                             !srv 27.06.08 {
         do ix = -1, nx
-	 if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
-	  rescb(ix,iy) = 0.0_R8
-	 endif
-	enddo
+         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+          rescb(ix,iy) = 0.0_R8
+         endif
+        enddo
        enddo                                                          !srv 27.06.08 }
       endif                                                           !srv 15.02.10 }
 *   ..compute correction

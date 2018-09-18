@@ -15,7 +15,7 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  hcimx(-1:nx,-1:ny,0:1,0:ns-1),
-     &	fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1)
+     &  fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..common blocks
 *     ------------------------------------------------------------------
 *     B2TLH0 computes the conductive neutral heat transport flux limit.
@@ -96,8 +96,8 @@
                  c3=c3+1
                endif
                if (rightix(ix,iy).ne.nx+1.and.
-     1 	          (hcimx_flag.gt.0.or.
-     2 	          (leftix(ix,iy).eq.-2.and.hcimx_flag.ge.0))) then
+     1            (hcimx_flag.gt.0.or.
+     2            (leftix(ix,iy).eq.-2.and.hcimx_flag.ge.0))) then
                  t0 = max(flux_limit_min_ti,
      *                 ti(ix,iy), ti(rightix(ix,iy),rightiy(ix,iy)))
                  t1 = (na(ix,iy,is) +
@@ -145,8 +145,8 @@
                  c3=c3+1
                endif
                if (topiy(ix,iy).ne.ny+1.and.
-     1 	          (hcimx_flag.gt.0.or.
-     2 	          (bottomiy(ix,iy).eq.-2.and.hcimx_flag.ge.0))) then
+     1            (hcimx_flag.gt.0.or.
+     2            (bottomiy(ix,iy).eq.-2.and.hcimx_flag.ge.0))) then
                  t0 = max(flux_limit_min_ti,
      *                 ti(ix,iy), ti(topix(ix,iy),topiy(ix,iy)))
                  t1 = (na(ix,iy,is) +
@@ -251,7 +251,7 @@
             t2 = 1.0_R8/(1.0_R8 + (dti/(alpha*vthi*t1*t0))**gamma)
      .                                           **(1.0_R8/gamma)
             chcb(ix,iy,0,is) = chcb(ix,iy,0,is)*t2
-	    fllim0fhi(ix,iy,0,is) = t2
+            fllim0fhi(ix,iy,0,is) = t2
             maxfluxlimit(0)=max(maxfluxlimit(0),t2)
            end if
 *   .. compute perpendicular neutral heat conductivity flux limit
@@ -267,7 +267,7 @@
             t2 = 1.0_R8/(1.0_R8 +(dti/(alpha*vthi*t1*t0))**gamma)
      .                                          **(1.0_R8/gamma)
             chcb(ix,iy,1,is) = chcb(ix,iy,1,is)*t2
-	    fllim0fhi(ix,iy,1,is) = t2
+            fllim0fhi(ix,iy,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
            end if
           end do
@@ -276,7 +276,7 @@
        end do
       endif                                                       !srv 13.06.08 }
 
- 100  continue
+  100 continue
 
        if (ncall.lt.100) write(*,'(1x,a,1p,2e10.2)')
      .  'b2tlh0: maxfluxlimit = ',maxfluxlimit

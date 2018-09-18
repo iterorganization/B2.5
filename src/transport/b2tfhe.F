@@ -92,7 +92,7 @@
 #endif
       save ncall, no_current, conduction_only, no_hybr, pot_eq
 *   ..procedures
-      intrinsic dim, min, max, abs, sqrt, log, mod
+      intrinsic dim, min, max, abs, sqrt
       real (kind=R8) ::
      *   harm, hybr, upwind, hy1
       external subini, subend, xertst, ipgeti

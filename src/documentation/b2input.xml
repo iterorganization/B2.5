@@ -1697,7 +1697,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', Zhdanov's expression is used in the electron thermal conductivity. It is recommended to use 'b2tqce_fke_Zhdanov' '1'.
+					When set to '1', the Zhdanov expression is used in the electron thermal conductivity. It is recommended to use 'b2tqce_fke_Zhdanov' '1'.
 					This switch is only active if, simultaneously, one has b2tqce_model.eq.1 and b2tfhe_fch_pTe.eq.1.0.
 				</description>
 			</switch>
@@ -2595,7 +2595,7 @@
 				<name>b2stbr_*_netcdf</name>
 				<description>
 					If tallies_netcdf.ne.0, the file 'b2tallies.nc' is created, which contains the regional tallies in CDF format. If b2mndr_stim.lt.0, data from the current run is appended to the existing b2tallies.nc file, otherwise the file is overwritten.
-					If b2wall_netcdf.ne.0, the file 'b2wall.nc' is created, which contains the wall tallies in CDF format [written every b2wall_netcdf 'main calls']. If b2mndr_stim.lt.0, data from the current run is appended to the existing b2wall.nc file, otherwise the file is overwritten.
+					If b2wall_netcdf.ne.0, the file 'b2wall.nc' is created, which contains the wall tallies in CDF format [written every b2wall_netcdf main calls]. If b2mndr_stim.lt.0, data from the current run is appended to the existing b2wall.nc file, otherwise the file is overwritten.
 					If balance_netcdf.ne.0, the file 'balance.nc' is created, which contains all of the arrays required by the balance post-processing routines, in CDF format.
 					If balance_average.ne.0, the balance arrays are averaged over all b2mndr_ntim timesteps.
 				</description>
@@ -3083,8 +3083,8 @@
 				<type>integer</type>
 				<description>
 					If '0', use the SOLPS5.0 scheme for neutral heat conductivity flux limits.
-					If '1', Spb's form to calculate parallel and perpendicular neutral heat conductivity flux limit (does not preserve symmetry, kept for backward compatibility reasons).
-					If '2', modifies the Spb treatment for the flux limits to be applied on the transport coefficients directly.
+					If '1', SPB form to calculate parallel and perpendicular neutral heat conductivity flux limit (does not preserve symmetry, kept for backward compatibility reasons).
+					If '2', modifies the SPB treatment for the flux limits to be applied on the transport coefficients directly.
 					It is recommended '2'.
 				</description>
 			</switch>
@@ -3411,8 +3411,8 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '2', SPB's form of adding currents on the South core boundary is included by using BCPOT=12, and on the SOuth PFR and North boundaries by using BCPOT=13. It is recommended '2', in conjunction with the BCPOT=12 and BCPOT=13 settings, respectively.
-					When set to '1', SPb's form of adding currents on South and North boundaries is done explicitly in addition to other existing boundary conditions for the potential equation.
+					When set to '2', SPB form of adding currents on the South core boundary is included by using BCPOT=12, and on the SOuth PFR and North boundaries by using BCPOT=13. It is recommended '2', in conjunction with the BCPOT=12 and BCPOT=13 settings, respectively.
+					When set to '1', SPB form of adding currents on South and North boundaries is done explicitly in addition to other existing boundary conditions for the potential equation.
 					The old 5.0 calculation is recovered by using the value '0'.
 				</description>
 			</switch>
@@ -3722,7 +3722,7 @@
 			<switchgroup>
 				<name>b2nph*</name>
 				<description>
-					When set to '1', SPb's form of the program b2sihs_ is called. It is recommended '1'.
+					When set to '1', SPB form of the program b2sihs_ is called. It is recommended '1'.
 				</description>
 				<switch>
 					<name>b2npht_style</name>
@@ -3768,7 +3768,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					style specifies the precise form of interpolation used in the computation of flcb and cvcb. When set to '1', SPb's form of the transport terms in the momentum correction equation is used.
+					style specifies the precise form of interpolation used in the computation of flcb and cvcb. When set to '1', SPB form of the transport terms in the momentum correction equation is used.
 					It is recommended '1'.
 				</description>
 			</switch>
@@ -3777,7 +3777,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPb's form of an expression that occurs in the electron-atom thermal force is used.
+					When set to '1', SPB form of an expression that occurs in the electron-atom thermal force is used.
 					It is recommended '1'.
 				</description>
 			</switch>
@@ -3802,7 +3802,7 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPb's form of the pressure gradient term on the right hand of the momentum balance equation is used.
+					When set to '1', SPB form of the pressure gradient term on the right hand of the momentum balance equation is used.
 					When set to '2', the parallel current term contains a correction due to impurities, when Z_eff is not equal to the average plasma ion charge. Only usable if the potential equation is solved simultaneously (b2news_poteq.eq.1).
 					The default value of '2' is recommended for cases with one main hydrogenic species (or at least where the main species is the lightest one) and any amount of impurities. It is not guaranteed to yield correct results for hydrogen isotopic mixtures or non-hydrogenic plasmas.
 				</description>
@@ -4016,7 +4016,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', Spb's new form of calculating electron heat flux is used. It is recommended '1' for runs with drifts.
+					If '1', SPB new form of calculating electron heat flux is used. It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
 			<switch>
@@ -4040,7 +4040,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', Spb's new form of calculating ion heat flux is used.
+					If '1', SPB new form of calculating ion heat flux is used.
 					It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
@@ -4090,7 +4090,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', Spb's new form of calculating particle flux is used.
+					If '1', SPB new form of calculating particle flux is used.
 					It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
@@ -5499,7 +5499,7 @@
 				<default>.false.</default>
 				<type>logical</type>
 				<description>
-					If .true. will also call Bas' boundary condition routine after the end of the physics boundary condition routine (governed by the data from b2ah.dat and b2mn.dat).
+					If .true. will also call b2stbc_bas boundary condition routine after the end of the physics boundary condition routine (governed by the data from b2ah.dat and b2mn.dat).
 				</description>
 			</switch>
 			<switch>

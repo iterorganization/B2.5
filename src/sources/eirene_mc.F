@@ -1761,8 +1761,8 @@ c!###}
 
 
 csw 26feb2014 accumulate source terms for SOLPS4.3-like averaging procedure
-c             (this is new and similar to Kotov's SOLPS4 style, it is NOT IYSs
-c              style)
+c             (this is new and similar to SOLPS4 style from Kotov,
+c              it is NOT IYSs style)
       if(ncall .eq. 0 .and. .not.allocated(sni_av)) then
         allocate(sni_av(0:(size(sni,1)-1), 0:(size(sni,2)-1),
      .                    size(sni,3), size(sni,4)))
@@ -1897,7 +1897,7 @@ c              style)
        endif
        ih_end=ihist
       else if (nhist.gt.1) then
-csw 25feb2014  fix IYS's version of source term averaging (running average)
+csw 25feb2014  fix IYS version of source term averaging (running average)
 c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
        if(main_call.and.mod(ncall,eirene_mod).eq.0) then
         ihist=ihist+1

@@ -1,4 +1,4 @@
-     
+
 
 
 
@@ -8,19 +8,19 @@ c     this subroutine does the error handling
 c--------------------------------------------------------------------
 
       implicit none
- 
+
       integer ::
-     *        n,ifile, iwarn1, iwarn2, iwarn3, iwarn4, iwarn5, 
+     *        n,ifile, iwarn1, iwarn2, iwarn3, iwarn4, iwarn5,
      +        iwarn6, iwarn7
       logical nlwarn
       external subini, subend, xerrab
-      
+
       data ifile / 0 /
       data iwarn1, iwarn2, iwarn3, iwarn4, iwarn5, iwarn6, iwarn7
      +    /     0,      0,      0,      0,      0,      0,      0/
-      
+
       call subini ('perr')
-      nlwarn = .false. 
+      nlwarn = .false.
       if (n.le.10) then
         goto (1,2,3,4,5) n
       else
@@ -41,34 +41,34 @@ c       to switch off all warnings activate the line below
 c-------------------------------------------------------------------
 c     the error messages
 c-------------------------------------------------------------------
- 1    continue
+    1 continue
       write(*,*)'the parameters nsm and/or ncm are not consistently'
       write(*,*)'set throughout the code. they appear in different'
       write(*,*)'subroutines but must all have the same value'
       call xerrab ('Inconsistent parameters nsm and/or ncm')
 
- 2    continue
+    2 continue
       write(*,*)'sorry, you cannot run the code for rho = 0.'
       call xerrab ('Rho = 0 not allowed')
 
- 3    continue 
+    3 continue
       write(*,*)'the parameter nmaxgr is not consistently'
       write(*,*)'set throughout the code. they appear in different'
       write(*,*)'subroutines but must have the same value'
       call xerrab ('Inconsistent parameter nmaxgr')
 
- 4    continue
+    4 continue
       write(*,*)'unable to reach convergence in viscos'
       call xerrab ('No convergence in viscos')
 
- 5    continue
+    5 continue
       write(*,*)'unable to reach convergence in the routine geom'
       call xerrab ('No convergence in geom')
-      
+
 c-------------------------------------------------------------------
 c     the warning messages
 c-------------------------------------------------------------------
- 100  continue
+  100 continue
       if (iwarn1.eq.0) then
         write(11,*)'warning'
         write(11,*)'you have used nreg.ne.0. therefore a certain',
@@ -81,7 +81,7 @@ c-------------------------------------------------------------------
       call subend ()
       return
 
- 101  continue
+  101 continue
       if (iwarn2.eq.0) then
         write(11,*)'warning'
         write(11,*)'you have used nleg.ne.3. the number of leg',
@@ -94,7 +94,7 @@ c-------------------------------------------------------------------
       call subend ()
       return
 
- 102  continue
+  102 continue
       if (iwarn3.eq.0) then
         write(11,*)'warning'
         write(11,*)'you have used nenergy.ne.1 the energy scat',
@@ -107,7 +107,7 @@ c-------------------------------------------------------------------
       call subend ()
       return
 
- 103  continue
+  103 continue
       if (iwarn4.eq.0) then
         write(11,*)'warning'
         write(11,*)'you have used ncofc.ne.1. ion-electron col',
@@ -119,7 +119,7 @@ c-------------------------------------------------------------------
       call subend ()
       return
 
- 104  continue
+  104 continue
       if (iwarn5.eq.0) then
         write(11,*)'warning'
         write(11,*)'one of the sigmas does not have the value ',
@@ -133,7 +133,7 @@ c-------------------------------------------------------------------
       call subend ()
       return
 
- 105  continue
+  105 continue
       if (iwarn6.eq.0) then
         write(11,*)'warning'
         write(11,*)'both neogeo and neofrc are set true. however',
@@ -146,8 +146,8 @@ c-------------------------------------------------------------------
       endif
       call subend ()
       return
- 
- 106  continue
+
+  106 continue
       if (iwarn7.eq.0) then
         write(11,*)'warning'
         write(11,*)'the routine neoart has been called with dif',
@@ -160,5 +160,5 @@ c-------------------------------------------------------------------
       endif
       call subend ()
       return
-  
+
       end

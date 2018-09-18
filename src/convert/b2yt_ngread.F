@@ -359,7 +359,7 @@ C
 C
       do 114 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,rfluxa(:,:,is,1))
- 114  CONTINUE
+  114 CONTINUE
       allocate (rfa1(0:nx1+1,0:ny1+1,natm1))
       do is = 1, natmi
         if (iatm1(is).ne.0) then
@@ -381,7 +381,7 @@ C
 C
       do 115 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,rfluxm(:,:,is,1))
- 115  CONTINUE
+  115 CONTINUE
       allocate (rfm1(0:nx1+1,0:ny1+1,nmol1))
       do is = 1, nmoli
         if (imol1(is).ne.0) then
@@ -404,7 +404,7 @@ C
       allocate (pfa1(0:nx1+1,0:ny1+1,natm1))
       do 214 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,pfluxa(:,:,is,1))
- 214  CONTINUE
+  214 CONTINUE
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = pfluxa(0:nx+1,0:ny+1,is,1)
@@ -425,7 +425,7 @@ C
 C
       do 215 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pfluxm(:,:,is,1))
- 215  CONTINUE
+  215 CONTINUE
       allocate (pfm1(0:nx1+1,0:ny1+1,nmol1))
       do is = 1, nmoli
         if (imol1(is).ne.0) then
@@ -447,7 +447,7 @@ C
 C
       do 314 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,refluxa(:,:,is,1))
- 314  CONTINUE
+  314 CONTINUE
       allocate (refa1(0:nx1+1,0:ny1+1,natm1))
       do is = 1, natmi
         if (iatm1(is).ne.0) then
@@ -469,7 +469,7 @@ C
 C
       do 415 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,refluxm(:,:,is,1))
- 415  CONTINUE
+  415 CONTINUE
       allocate (refm1(0:nx1+1,0:ny1+1,nmol1))
       do is = 1, nmoli
         if (imol1(is).ne.0) then
@@ -492,7 +492,7 @@ C
       allocate (pefa1(0:nx1+1,0:ny1+1,natm1))
       do 514 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,pefluxa(:,:,is,1))
- 514  CONTINUE
+  514 CONTINUE
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = pefluxa(0:nx+1,0:ny+1,is,1)
@@ -513,7 +513,7 @@ C
 C
       do 515 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pefluxm(:,:,is,1))
- 515  CONTINUE
+  515 CONTINUE
       allocate (pefm1(0:nx1+1,0:ny1+1,nmol1))
       do is = 1, nmoli
         if (imol1(is).ne.0) then

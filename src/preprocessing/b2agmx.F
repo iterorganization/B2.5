@@ -10,9 +10,9 @@
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
-     1 leftix1,leftiy1,rightix1,rightiy1,
-     2 topix1,topiy1,bottomix1,bottomiy1,
-     3 leftcut1,rightcut1,bottomcut1,topcut1,
+     1 leftix1, leftiy1, rightix1, rightiy1,
+     2 topix1, topiy1, bottomix1, bottomiy1,
+     3 leftcut1, rightcut1, bottomcut1, topcut1,
      $ cflags1)
       use b2mod_types
       use b2mod_interp
@@ -155,7 +155,7 @@
       real (kind=R8) ::
      *   p0x, p0y
 *   ..procedures
-      intrinsic min, max, sqrt
+      intrinsic sqrt
       real (kind=R8) ::
      *   norm, dist1
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)

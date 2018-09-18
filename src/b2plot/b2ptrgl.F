@@ -47,10 +47,10 @@ c*  wid_par:  ideal parallel power flux at the targets
 c*  wid_trg:  ideal power on the targets
 c*  xwhm_tt:  exp. decay length on target, calc. from hw & mapped to OMP
       real (kind=R8) ::
-     *  h,ha,hb,hc,t,u,a,b,d,p,wo,wt,mion,mmol,t1(2),
+     *  h,ha,hb,hc,t,u,a,b,d,p,wo,wt,mion,t1(2),
      ,  z_hlp(ntrgsx),xtg_hlp(-1:ny-1,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
      ,  xmc_hlp(0:ny-1,ntrgsx),s(0:ny-1,ntrgsx),wi(ntrgsx),
-     ,  zctrg(0:ny-1,ntrgsx),rctrg(0:ny-1,ntrgsx),xctrg(0:ny-1,ntrgsx),
+     ,  zctrg(0:ny-1,ntrgsx),rctrg(0:ny-1,ntrgsx),
      ,  xtrg(0:ny-1,ntrgsx),netrg(0:ny-1,ntrgsx),tetrg(0:ny-1,ntrgsx),
      ,  titrg(0:ny-1,ntrgsx),wpttrg(0:ny-1,ntrgsx),
      ,  wpltrg(0:ny-1,ntrgsx),wnutrg(0:ny-1,ntrgsx),
@@ -110,17 +110,17 @@ c***    ewldrp_res  :   kinetic energy of reflected atoms+molecules originated f
 c***    ewldmr_res  :   energy due to recombination of atoms into molecules. ()PRFAML+PRFPML)*H_EDISS
 
       real (kind=R8) ::
-     *  sja(0:ny-1,ntrgsx,DEF_NATM), sjp(0:ny-1,ntrgsx,DEF_NATM), 
+     *  sja(0:ny-1,ntrgsx,DEF_NATM), sjp(0:ny-1,ntrgsx,DEF_NATM),
      *  sjt(0:ny-1,ntrgsx,DEF_NATM), spa(0:ny-1,ntrgsx,DEF_NATM),
      *  sje(0:ny-1,ntrgsx), sjs(0:ny-1,ntrgsx),
      *  sjm(0:ny-1,ntrgsx,DEF_NMOL),spm(0:ny-1,ntrgsx,DEF_NMOL)
       real (kind=R8) ::
      *   sja_t(0:ntrgsx,DEF_NATM), sjp_t(0:ntrgsx,DEF_NATM),
      ,   sja_w(0:ntrgsx,DEF_NATM), sjp_w(0:ntrgsx,DEF_NATM),
-     ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL), 
+     ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL),
      ,   sjt_w(0:ntrgsx,DEF_NATM), fpt_out(4*DEF_NATM),
      ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx),sptmass,
-     ,   sb_t,ss_t,sn_t,sg_t, spt_out(2),mol_out(2*DEF_NMOL)
+     ,   sn_t,spt_out(2),mol_out(2*DEF_NMOL)
       integer eb2atm(nspecies)
       character*11 spt_str(2,ntrgsx),fpt_str(4*DEF_NATM)
       character*15 mol_str(2,DEF_NMOL)
@@ -139,17 +139,17 @@ c***    ewldmr_res  :   energy due to recombination of atoms into molecules. ()P
 c*** Data for erosion calculations
 c***  n_srfs_m  : number of possible target materials
 c***  srfs_m    : list of possible target materials
-c***  srfs_x    : corresponding species (say, Fe for SS)
 c***  srfs_d    : specific masses of possible target materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible target materials
       integer n_srfs_m,spt_mat(ntrgsx),sptlis(ntrgsx)
       parameter (n_srfs_m=7)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m)
-      character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
+      character srfs_m(n_srfs_m)*4
       data srfs_m /'Be','C','CFC','Fe','SS','Mo' ,'W'/
-      data srfs_x /'Be','C','C'  ,'Fe','Fe','Mo' ,'W'/
-      data srfs_a /  9.,12., 12. , 56., 56., 96. , 184./
-      data srfs_d /1.8 ,2.0, 2.0 , 7.8, 7.8, 10.2, 19.3/
+      data srfs_a /  9.0_R8, 12.0_R8, 12.0_R8, 56.0_R8,
+     .              56.0_R8, 96.0_R8,184.0_R8/
+      data srfs_d /  1.8_R8,  2.0_R8,  2.0_R8,  7.8_R8,
+     .               7.8_R8, 10.2_R8, 19.3_R8/
 c
 c*** Text variables:
 c***  ftrg    filenames for the profiles along the targets
@@ -1030,7 +1030,7 @@ c*** Calculate the particle fluxes and erosion - if present
 c     carlis eb2atm contains the indexes of the B2 atoms mapped to Eirene
 c            so if in Eirene is [D He Be Ne] and in B2 [D Ne He Be] then
 c            eb2atm will be [1 4 2 3]
-#ifndef B25_EIRENE      
+#ifndef B25_EIRENE
       do ia=1,natmi
         TEXTA(ia)=adjustl(TEXTAN(ia-1))
       end do
@@ -1075,7 +1075,7 @@ c      print *,'Particle fluxes...' !###
           end do !}
           ersn_a(j)=0.0_R8
           ersn_p(j)=0.0_R8
-          ersn_l(j)=0.0_R8   
+          ersn_l(j)=0.0_R8
           sjs_w(j)=0.0_R8
           sjs_t(j)=0.0_R8
           do ia=1,natmi
@@ -1086,11 +1086,11 @@ c      print *,'Particle fluxes...' !###
             sjp_w(j,is)=0.0_R8
             sjt_w(j,is)=0.0_R8
             sjp_t(j,is)=0.0_R8
-          end do    
+          end do
           do imol=1,nmoli
             sjm_w(j,imol)=0.0_R8
             sjm_t(j,imol)=0.0_R8
-          end do  
+          end do
         end do !}
 
 c        do is=0,ns-1
@@ -1306,7 +1306,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
               print *,'target material = ', mtrtrgsg(j)
               print *,'sputtered atom from target = ',
      ,                ssmol
-              write(*,'(1x,a,1p,16e12.3)') 
+              write(*,'(1x,a,1p,16e12.3)')
      .         'Scaling factors for '//mtrtrgsg(j)//' Sp : ',
      ,          (sjs_t(i),i=1,ntrgts)
             else ! no sputtering
@@ -1322,10 +1322,10 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
 #else
      ,     ' track_species=0 or no ftn44 file available'
 #endif
-        end if 
-        
+        end if
+
         l=1
-	do ia=1,natmi
+        do ia=1,natmi
           fpt_str(1+3*(ia-1))=trim(TEXTA(ia))//'_flux_atm'
           fpt_str(2+3*(ia-1))=trim(TEXTA(ia))//'_temp_atm'
           fpt_str(3+3*(ia-1))=trim(TEXTA(ia))//'_pres_atm'
@@ -1389,7 +1389,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
      ,           (fpt_str(ia),ia=1,3*natmi+nspecies),
      ,           (mol_str(:,ia),ia=1,nmoli),spt_str(:,j),'xMP'
             write(fmt_peak,720) nclm_er,tab
-          else 
+          else
             write(lun,fmt_peak) 'x',
      ,           (fpt_str(ia),ia=1,3*natmi+nspecies),
      ,           (mol_str(:,ia),ia=1,nmoli),'xMP'
@@ -1420,7 +1420,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
      ,         (fpt_out(ia),ia=1,3*natmi+nspecies),
      ,         (mol_out(ia),ia=1,2*nmoli),
      ,          spt_out,xmp_hlp(iy,k)
-            else 
+            else
               write(lun,fmt_peak) xtrg(iy,j),
      ,         (fpt_out(ia),ia=1,3*natmi+nspecies),
      ,         (mol_out(ia),ia=1,2*nmoli),

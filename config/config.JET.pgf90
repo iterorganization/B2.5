@@ -37,7 +37,7 @@ FCOPTS = -fast -Mbackslash -Kieee
 FCOPTS = -fast -Mvect=nofuse -Mbackslash -Kieee
 endif
 
-ifdef IMAS_PREFIX
+ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS  += -DIMAS
 endif

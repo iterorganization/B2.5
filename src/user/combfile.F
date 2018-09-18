@@ -127,7 +127,7 @@ c!###}
         iret = -2
         return
       end if !}
-      write(frmi22,'(4h(a,i,i1,1h.,i1,1h))') lsuf,lsuf
+      write(frmi22,'(a4,i1,a1,i1,a1)') '(a,i',lsuf,'.',lsuf,')'
       i=1
       ivmax=0
       do j=1,lsuf !{
@@ -153,7 +153,7 @@ c*** is present.
         fbn=fn(1:j-3)
         iv=i
       end if !}
- 10   continue
+   10 continue
 
       ex=.true.
       call find_file(fn,ex)
@@ -195,7 +195,7 @@ c          write(0,*) 'opened: ',trim(fn) !###
 c          write(0,*) 'after parsehdr. nhd,m,nmr,ir= ',nhd,m,nmr,ir !###
 c          write(0,*) 'mrkr: ',mrkr !###
 c          write(0,*) 'mrks: ',mrks !###
- 20       if(ir.ne.0) then !{
+   20     if(ir.ne.0) then !{
             write(*,'(3a,i4,a,2i4,a,2i4,a,2i4)') '!!!! ',trim(fn),' : ',
      ,       ir,' : ',nhd,2*nhdr,' : ',m,mhdr,' : ',nmr,nmrk
             if(ir.gt.0) then !{
@@ -377,7 +377,7 @@ c          i=0 !###
             c=cc(1:1)
 c            i=i+1 !###
           end do !}
- 30       backspace lrd
+   30     backspace lrd
 c          write(0,*) 'read comment lines: ',i  !###
 
           lnrw=nhdr+ktrl
@@ -400,18 +400,19 @@ c          write(0,*) 'chdw',lnrw,' :',('  ',trim(chdw(i)),i=1,lvrw)!###
             write(lun,frmhdr) mrks
             write(lun,'(2a)') '#  ',titel
           end if !}
-          write(frmhdr,'(5h(1h#,,i4,2ha))') 2*lnrw
+          write(frmhdr,'(a5,i4,a2)') '(1h#,',2*lnrw,'a)'
           write(lun,frmhdr) (trim(chdw(i)),tab,i=1,lnrw)
 
 c*** re-write the existing file
 
           ncln=1
           allocate(cline(ncln))
-          write(frmhdr,'(1h(,i3,2ha))') ncln
+          write(frmhdr,'(a1,i3,a2)') '(',ncln,'a)'
           l=nhdr*48
           nrec=0
           first=.true.
-          write(frmdat,700) lwfs+8,lwfs,csep,lnrw-1,lwfr+8,lwfr,csep
+          write(frmdat,700) '(1p,1x,e',lwfs+8,'.',lwfs,',1h',csep,',',
+     .                     lnrw-1,'(e',lwfr+8,'.',lwfr,',1h',csep,'))'
 c          print *,trim(frmdat)  !###
           do while (.true.) !{
             read(lrd,frmhdr,end=45) (cline(j),j=1,ncln)
@@ -482,12 +483,12 @@ c*** non-space on both sides of the section borders - the field is split
               ncln=ncln+1
               deallocate(cline)
               allocate(cline(ncln))
-              write(frmhdr,'(1h(,i3,2ha))') ncln
+              write(frmhdr,'(a1,i3,a2)') '(',ncln,'a)'
               backspace lrd
             end if !}
- 40       continue
+   40     continue
           end do !}
- 45       continue
+   45     continue
           close(lrd)
           if(lnrw.eq.lvrw) then !{
             ntrl=lnrw-nhdr
@@ -501,9 +502,9 @@ c*** non-space on both sides of the section borders - the field is split
 
 c*** Read to the end of the file
 
- 50      read(lun,'(a1)',end=55) c
+   50    read(lun,'(a1)',end=55) c
          go to 50
- 55      backspace lun
+   55    backspace lun
         end if !}
 
       else !}{
@@ -520,7 +521,7 @@ c*** Write the header
           write(lun,frmhdr) mrks
           write(lun,'(2a)') '#  ',titel
         end if !}
-        write(frmhdr,'(5h(1h#,,i4,2ha))') 2*nhdr
+        write(frmhdr,'(a5,i4,a2)') '(1h#,',2*nhdr,'a)'
         write(lun,frmhdr) (trim(chdr(i)),tab,i=1,nhdr)
         ntrl=0
         iret=0
@@ -530,9 +531,9 @@ c*** Write the header
       if(allocated(chdw)) deallocate(chdw,roww,rowr)
       if(allocated(cline)) deallocate(cline)
 
-      write(frmd,700)lwfs+8,lwfs,csep,lnrw-1,lwfr+8,lwfr,csep
-  700 format('(1p,1x,e',i2,'.',i2,',1h',a1,',',
-     ,  i4,'(e',i2,'.',i2,',1h',a1,'))')
+      write(frmd,700) '(1p,1x,e',lwfs+8,'.',lwfs,',1h',csep,',',
+     .               lnrw-1,'(e',lwfr+8,'.',lwfr,',1h',csep,'))'
+  700 format(a8,i2,a1,i2,a3,a1,a1,i4,a2,i2,a1,i2,a3,a1,a2)
 c      write(0,*) 'leaving combfile. lnrw,frmd=',lnrw,'  ',trim(frmd) !###
 c=======================================================================
       end

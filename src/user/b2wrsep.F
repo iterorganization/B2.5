@@ -224,7 +224,7 @@ c          v=vol(ix,iy)
         end if !}
       end do !}
 
- 10   continue
+   10 continue
 
       do i=2,nnreg(0) !{
         hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
@@ -405,8 +405,8 @@ c*** f     :  the associated file name
       rewind(lun)
       if(ex) read(lun,*,end=91) hlp_c
       goto 93
- 91   ex = .false.
- 93   continue
+   91 ex = .false.
+   93 continue
       rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=92) hlp_c,
@@ -471,9 +471,9 @@ c          end if
         end if
         if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else
 c*** New file
         ng_tmp=nglb_tmp
@@ -534,15 +534,15 @@ c      print *,hlp_frm
 c>>>
       return
 c======================================================================
- 90   write(*,*) 'b2wrsep: cannot open file ',trim(f)
+   90 write(*,*) 'b2wrsep: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2wrsept: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2wrsept: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 94   write(*,*) 'b2wrsep: cannot write in the file ',trim(f)
+   94 write(*,*) 'b2wrsep: cannot write in the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================
@@ -570,10 +570,10 @@ c
         iline = iline+1
         read(lun,*,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2wrsep: cannot open file ',trim(f)
+  190 write(*,*) 'b2wrsep: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return

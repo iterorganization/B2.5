@@ -8,8 +8,10 @@ c
       use b2mod_b2plot_values
 #ifdef B25_EIRENE
       use eirmod_ctrig
+#endif
       implicit none
       character*(*) filename
+#ifdef B25_EIRENE
       character*80 dataname
       character*256 extralabel,tmpstring,titlestring
       logical open_file,vector

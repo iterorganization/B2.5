@@ -66,10 +66,10 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, k
+      integer ncall, styl0, n2, ix, iy, is
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
 !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
-      character chns*3, chk*1, chis*3
+      character chns*3, chis*3
       real (kind=R8) ::
      *  phm0, phm1, phm2, phm3, coef, t0, calfab, fllim_al_ab, jabmax
       real (kind=R8) ::
@@ -305,26 +305,26 @@ c   .. apply flux limit
       smbtfea = smbtfeal
 
       if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
-	write (chns,'(i3.3)') isb
+        write (chns,'(i3.3)') isb
 
-       wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+        !srv 05.07.17 {
+        wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+       !srv 05.07.17 {
      &        smbfria(:,:,2)*na(:,:,isb)*mp*am(isb)+
      &        smbfria(:,:,3)*ua(:,:,isb)*na(:,:,isb)*mp*am(isb))
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smofria'//chns)
+        call my_out(70,nx,ny,wrk,'b2sifrtf_smofria'//chns)
 
-       wrk = vol*hz*(smbfreal(:,:,0)+smbfreal(:,:,1)*ua(:,:,isb))
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smofrea'//chns)
-       wrk = vol*hz*smbtfial(:,:,0)
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smotfia'//chns)
-       wrk = vol*hz*smbtfeal(:,:,0)
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
-       call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
-	endif
+        wrk = vol*hz*(smbfreal(:,:,0)+smbfreal(:,:,1)*ua(:,:,isb))
+        call my_out(70,nx,ny,wrk,'b2sifrtf_smofrea'//chns)
+        wrk = vol*hz*smbtfial(:,:,0)
+        call my_out(70,nx,ny,wrk,'b2sifrtf_smotfia'//chns)
+        wrk = vol*hz*smbtfeal(:,:,0)
+        call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)             !srv 05.07.17 }
+        call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
+      endif
 
       if (iout.gt.1) then                                              !srv 05.07.17
-	 do is = 0,ns-1
-	  write (chis,'(i3.3)') is
-	  call my_out(70,nx,ny,fkabvp(isb, is),
+        do is = 0,ns-1
+          write (chis,'(i3.3)') is
+          call my_out(70,nx,ny,fkabvp(isb, is),
      &              'b2sifrtf_kabvp_'//chns//'_'//chis)
           call my_out(70,nx,ny,fkabtf(isb, is),
      &              'b2sifrtf_kabtf_'//chns//'_'//chis)

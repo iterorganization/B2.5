@@ -50,7 +50,7 @@ c
 c*** Local variables
       integer i,j,k,l,ix,iy,jmp,jtp
       real (kind=R8) :: rd_in, rd_out, x, a, b, cc, d, e, f, a0, a1, a2
-      real (kind=R8) :: sga,f1,fa,bgd,sgd,sgb
+      real (kind=R8) :: sga,bgd,sgd,sgb
       real (kind=R8) :: initparm(10), r0rad
       real (kind=R8) :: q_tmp(nnr,nnz)
       real (kind=R8), allocatable :: qpr_tmp(:), qpz_tmp(:)

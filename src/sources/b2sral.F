@@ -143,8 +143,7 @@
      8  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1), sne0(-1:nx,-1:ny,0:1),
      9  shi0(-1:nx,-1:ny,0:3), shi0_ion(-1:nx,-1:ny,0:3),
      &  shi0_rec(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),
-     &  smo0(-1:nx,-1:ny,0:3,0:ns-1), sch0(-1:nx,-1:ny,0:3),
-     1  wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), pb(-1:nx,-1:ny,0:ns-1)
+     &  smo0(-1:nx,-1:ny,0:3,0:ns-1), sch0(-1:nx,-1:ny,0:3)
       real (kind=R8), allocatable :: sna0_cx(:,:,:,:), smo0_cx(:,:,:,:),  ! IYS 06.11.2017
      &  shi0_cx(:,:,:)
       logical catch_up
@@ -509,7 +508,7 @@ csw 30sep2013, added cdpa in call, uadia
      &               smo0_cx(:,:,1,is)*ua(:,:,is)+
      &               smo0_cx(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &               smo0_cx(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-	  call my_out(70,nx,ny,wrk,'b2stcx_smq'//chns)
+          call my_out(70,nx,ny,wrk,'b2stcx_smq'//chns)
         enddo
         if (allocated(shi0_cx)) then
           write(*,*) 'Deallocating arrays for cx'

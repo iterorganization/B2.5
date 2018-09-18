@@ -26,7 +26,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy
+      integer ncall, ix, iy
       real (kind=R8) ::
      *   ft                                                            !srv 16.10.17
       save ncall
@@ -47,8 +47,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2nxfv')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..extensive tests on first few calls
@@ -61,19 +59,19 @@
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then         !srv 26.10.08
        do iy = -1, ny
         do ix = -1, nx
-	   if(leftix(ix,iy).ne.-2) then
+         if(leftix(ix,iy).ne.-2) then
           flubv(ix,iy,0) = ft*cvsbhz_cl(ix,iy,0)*                     !srv 16.10.17
      &      (log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))
-	   else
+         else
           flubv(ix,iy,0) = 0.0e0_R8
-	   endif
+         endif
         enddo
        enddo
 
-	 flubv(:,:,1) = 0.0_R8
-	else
-	 flubv = 0.0_R8
-	endif
+       flubv(:,:,1) = 0.0_R8
+      else
+       flubv = 0.0_R8
+      endif
 
 * ..return
       ncall = ncall+1

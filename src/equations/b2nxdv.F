@@ -43,10 +43,10 @@ cdjm Jan2017 Keep source at the start to calculate total change for balance rout
       else
        do iy = 0, ny-1
         do ix = 0, nx-1
-	 if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !sv 26.11.02  !sv 01.07.05
+         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !sv 26.11.02  !sv 01.07.05
           smb(ix,iy,0) = smb(ix,iy,0)-smqb(ix,iy,1)*smqdu(ix,iy)-
      &                  smqb(ix,iy,3)*rob(ix,iy)*smqdu(ix,iy)
-	 endif                                                         !sv 26.11.02
+         endif                                                         !sv 26.11.02
         enddo
        enddo
       endif

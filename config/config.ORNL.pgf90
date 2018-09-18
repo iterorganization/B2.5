@@ -39,7 +39,7 @@ else
 FCOPTS = -fast -Mbackslash -Kieee
 endif
 
-ifdef IMAS_PREFIX
+ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS  += -DIMAS
 endif

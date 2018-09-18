@@ -49,7 +49,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, k
+      integer ncall, ix, iy, k
       integer, save :: qstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
 !$OMP THREADPRIVATE(ncall, qstyle, lluciani, iout)
@@ -98,8 +98,6 @@
        call ipgeti ('b2trcl_lluciani', lluciani)                    !lk 03.12.09
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)	            !iyv 06.12.13
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
       s2 = sqrt(2.0_R8)                                             !iyv 02.12.13

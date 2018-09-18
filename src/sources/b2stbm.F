@@ -487,7 +487,7 @@ cdjm Jan2017 Keep linearised sources for balance
       endif
 
 * ..return
- 999  if (main_call.or.ncall.eq.0) ncall = ncall+1
+  999 if (main_call.or.ncall.eq.0) ncall = ncall+1
       call subend ()
       return
 

@@ -271,7 +271,7 @@ c
       integer itpos
 
       logical inside_triangle
-      integer i,ix,iy,icnt1,icnt2
+      integer i,icnt1,icnt2
       real (kind=R8) ::
      *   x,y,z,r,rmin,rmax,zmin,zmax
 
@@ -301,7 +301,7 @@ c
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
       external subini, subend, xerrab
-      save covered,rmin,rmax,zmin,zmax,first,tcov,icov,ix,iy
+      save covered,rmin,rmax,zmin,zmax,first,tcov,icov
 
       data first/.true./
 

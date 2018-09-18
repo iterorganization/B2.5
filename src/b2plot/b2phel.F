@@ -22,7 +22,7 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer i,j,k,l,m,n,is
+      integer i,j,k,m,n,is
       real (kind=R8) ::
      . hlp,hlp_tot,hlp_he,hlp_a,hlp_m,hlp_s,hlp_si,hlp_so
       real (kind=R8) ::

@@ -31,7 +31,7 @@ c*** ... and read the data from dg
       endif
       return
 c----------------------------------------------------------------------
- 998  print *,'Error opening the file ',ufile
+  998 print *,'Error opening the file ',ufile
       return 1
 c----------------------------------------------------------------------
       end subroutine b2pinp
@@ -79,7 +79,7 @@ c      print *,'b2prdn >> ',unm
       call scipit
       return
 c----------------------------------------------------------------------
- 10   if(ll.le.0 .or. ll.gt.nwldprtx) then
+   10 if(ll.le.0 .or. ll.gt.nwldprtx) then
           print '(1x,a,i4,a,i4)','Wrong wall segment number:',ll,
      ,                           '.  Must be positive and =< ',nwldprtx
           if(ll.gt.nwldprtx) 
@@ -89,7 +89,7 @@ c----------------------------------------------------------------------
       call resimi(lwldstrt(ll))
       return
 c----------------------------------------------------------------------
- 20   if(ll.le.0 .or. ll.gt.nwldprtx) then
+   20 if(ll.le.0 .or. ll.gt.nwldprtx) then
           print '(1x,a,i4,a,i4)','Wrong wall segment number:',ll,
      ,                           '.  Must be positive and =< ',nwldprtx
           if(ll.gt.nwldprtx) 
@@ -99,44 +99,44 @@ c----------------------------------------------------------------------
       call rearri(lwldlis(1,ll),nsgmx,nwldlis(ll))
       return
 c----------------------------------------------------------------------
- 30   call resimi(ll)
+   30 call resimi(ll)
       ll=ll+1
       nwldprt=max(nwldprt,ll)
       return
 c----------------------------------------------------------------------
- 40   call rearri(lpumplis,nlim,npumplis)
+   40 call rearri(lpumplis,nlim,npumplis)
       return
 c----------------------------------------------------------------------
- 50   call rearre(ppp1,3*DEF_NLIM,ll)
+   50 call rearre(ppp1,3*DEF_NLIM,ll)
       lppp=ll/3
       return
 c----------------------------------------------------------------------
- 60   call rearre(ppp2,3*DEF_NLIM,ll)
+   60 call rearre(ppp2,3*DEF_NLIM,ll)
       lppp=ll/3
       return
 c----------------------------------------------------------------------
 c*** Inner edge of inner target
- 90   call resimi(i)
+   90 call resimi(i)
       luswch=1
       goto 130
 c----------------------------------------------------------------------
 c*** Inner edge of outer target
- 100  call resimi(i)
+  100 call resimi(i)
       luswch=2
       goto 130
 c----------------------------------------------------------------------
 c*** Outer edge of inner target
- 110  call resimi(i)
+  110 call resimi(i)
       luswch=3
       goto 130
 c----------------------------------------------------------------------
 c*** Outer edge of outer target
- 120  call resimi(i)
+  120 call resimi(i)
       luswch=4
       goto 130
 c----------------------------------------------------------------------
 c*** Values for the target edges (old style, only worked for SN topologies)
- 130  if(luswch.ge.1 .and. luswch.le.4) then
+  130 if(luswch.ge.1 .and. luswch.le.4) then
         call rearri(jedge(luswch),1,i)
       else
         call scipit
@@ -145,7 +145,7 @@ c*** Values for the target edges (old style, only worked for SN topologies)
       return
 c----------------------------------------------------------------------
 c*** New style values for the target SOL edges
- 140  if (lt.eq.0) then
+  140 if (lt.eq.0) then
         call scipit
       else if(lt.lt.0 .or. lt.gt.ntrgsx) then
         write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lt,
@@ -156,7 +156,7 @@ c*** New style values for the target SOL edges
       return
 c----------------------------------------------------------------------
 c*** New style values for the target PFR edges
- 150  if (lt.eq.0) then
+  150 if (lt.eq.0) then
         call scipit
       else if(lt.lt.0 .or. lt.gt.ntrgsx) then
         write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lt,
@@ -167,21 +167,21 @@ c*** New style values for the target PFR edges
       return
 c----------------------------------------------------------------------
 c*** Target specifications
- 160  call resimi(lt)
+  160 call resimi(lt)
       if(lt.lt.0 .or. lt.gt.ntrgsx)
      >   write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lt,
      ,                            '.  Must be positive and =< ', ntrgsx
       return
 c----------------------------------------------------------------------
 c*** Plotzone label
- 170  i=lena
+  170 i=lena
       lena=8
       call resima(pltzlbl(ll))
       lena=i
       return
 c----------------------------------------------------------------------
 c*** Elements not for Eirene
- 180  call rearri(luwrk(luskel+1),nlim-luskel,i)
+  180 call rearri(luwrk(luskel+1),nlim-luskel,i)
       do j = luskel+1, luskel+i
         lskip(luwrk(j)) = .true.
       end do
@@ -189,7 +189,7 @@ c*** Elements not for Eirene
       return
 c----------------------------------------------------------------------
 c*** Shadowing structure
- 200  ll=1
+  200 ll=1
       nwldprt=max(nwldprt,ll)
       call scipit
       return

@@ -4,8 +4,8 @@
       character cnam*(*), cval*(*)
 *     ------------------------------------------------------------------
 *     IPMAIN is a group of routines (entry points in ipmain) that
-*     operate on a collection of names and values representing "internal
-*     parameters" in a code. The entry points are ipsetc, ipgetc, and
+*     operate on a collection of names and values representing internal
+*     parameters in a code. The entry points are ipsetc, ipgetc, and
 *     ipfini.
 *     IPSETC saves the value of an internal parameter.
 *     IPGETC returns the value of an internal parameter.

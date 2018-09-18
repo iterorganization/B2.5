@@ -107,8 +107,6 @@
       intrinsic mod
       real (kind=R8) ::
      *  smin, smax, b2sasum
-      integer len_of_digits
-      external len_of_digits
       external subini, subend, xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,

@@ -23,7 +23,7 @@ c======================================================================
       real (kind=R4) :: add_rdi, add_srci(2, nadsrcm)
       parameter (nnns=31)
       character*8 unm,unms(nnns),u
-      integer ll, lutrgt, luswch, luskel
+      integer ll, lutrgt, luswch
       integer i, j
       logical streql
       external streql
@@ -35,7 +35,7 @@ c======================================================================
      5        'skipelem','misselem','laddsrfs','gleirdat','pltz_lbl',
      6        'material','made_of' ,'tgspcsw' ,'tgsppsw' ,'jlsptp'  ,
      7        'jlsptc'  /
-      data ll / 0 /, luswch / 0 /, lutrgt / 0 /, luskel / 0 /
+      data ll / 0 /, luswch / 0 /, lutrgt / 0 /
 c======================================================================
 c
 c      print *,'b2pwinm >> ',unm
@@ -52,7 +52,7 @@ c      print *,'b2pwinm >> ',unm
       return
 c----------------------------------------------------------------------
 c*** Starting segment
- 10   if(ll.eq.0) then
+   10 if(ll.eq.0) then
         call scipit
       else if(ll.lt.0 .or. ll.gt.nwldprtx) then
         write(*,'(1x,a,i4,a,i4)') 'Wrong wall segment number:',ll,
@@ -65,7 +65,7 @@ c*** Starting segment
       return
 c----------------------------------------------------------------------
 c*** Target list
- 20   if(ll.eq.0) then
+   20 if(ll.eq.0) then
         call scipit
       else if(ll.le.0 .or. ll.gt.nwldprtx) then
         write(*,'(1x,a,i4,a,i4)') 'Wrong wall segment number:',ll,
@@ -78,19 +78,19 @@ c*** Target list
       return
 c----------------------------------------------------------------------
 c*** Plotting zone
- 30   call resimi(ll)
+   30 call resimi(ll)
       ll=ll+1
       nwldprt=max(nwldprt,ll)
       return
 c----------------------------------------------------------------------
 c*** Shadowing structure
- 40   ll=1
+   40 ll=1
       nwldprt=max(nwldprt,ll)
       call scipit
       return
 c----------------------------------------------------------------------
 c*** Starting points of the segments
- 50   call rearre(ppp1,3*DEF_NLIM,ll)
+   50 call rearre(ppp1,3*DEF_NLIM,ll)
       lppp=ll/3
       do i=1,lppp !{
         pp1(1,i)=0.001_R8*ppp1(1,i)
@@ -99,7 +99,7 @@ c*** Starting points of the segments
       return
 c----------------------------------------------------------------------
 c*** Ending points of the segments
- 60   call rearre(ppp2,3*DEF_NLIM,ll)
+   60 call rearre(ppp2,3*DEF_NLIM,ll)
       lppp=ll/3
       do i=1,lppp !{
         pp2(1,i)=0.001_R8*ppp2(1,i)
@@ -108,16 +108,16 @@ c*** Ending points of the segments
       return
 c----------------------------------------------------------------------
 c*** Additional source group (not implemented yet)
- 70   call scipit
+   70 call scipit
       return
 c----------------------------------------------------------------------
 c*** Power radiated from the group of additional sources (single group)
- 80   call resime(add_rdi)
+   80 call resime(add_rdi)
       add_rad=add_rdi
       return
 c----------------------------------------------------------------------
 c*** Coordinates of the additional source points
- 90   call rearre(add_srci,2*nadsrcm,nadsrc)
+   90 call rearre(add_srci,2*nadsrcm,nadsrc)
       nadsrc=nadsrc/2
       do i=1,nadsrc
         addsrc_xy(1,i)=0.001_R8*add_srci(1,i)
@@ -126,27 +126,27 @@ c*** Coordinates of the additional source points
       return
 c----------------------------------------------------------------------
 c*** Inner edge of inner target
- 100  call resimi(i)
+  100 call resimi(i)
       luswch=1
       goto 140
 c----------------------------------------------------------------------
 c*** Inner edge of outer target
- 110  call resimi(i)
+  110 call resimi(i)
       luswch=2
       goto 140
 c----------------------------------------------------------------------
 c*** Outer edge of inner target
- 120  call resimi(i)
+  120 call resimi(i)
       luswch=3
       goto 140
 c----------------------------------------------------------------------
 c*** Outer edge of outer target
- 130  call resimi(i)
+  130 call resimi(i)
       luswch=4
       goto 140
 c----------------------------------------------------------------------
 c*** Values for the target edges
- 140  if(luswch.ge.1 .and. luswch.le.4) then
+  140 if(luswch.ge.1 .and. luswch.le.4) then
         call rearri(jedge(luswch),1,i)
       else
         call scipit
@@ -155,7 +155,7 @@ c*** Values for the target edges
       return
 c-----------------------------------------------------------------------
 c*** Target edges
- 150  call resimi(ll)
+  150 call resimi(ll)
       if(ll.lt.0 .or. ll.gt.ntrgsx) then !{
         write(*,'(1x,a,i3,a,i3)') 'Wrong target number:',ll,
      ,                              '.  Must be positive =< ',ntrgsx
@@ -165,7 +165,7 @@ c*** Target edges
       return
 c-----------------------------------------------------------------------
 c*** SOL side edge
- 160  if(ll.eq.0) then          !{
+  160 if(ll.eq.0) then          !{
         call scipit
       else if(ll.lt.0 .or. ll.gt.ntrgsx) then !{
         write(*,'(1x,a,i3,a,i3)') 'Wrong target number:',ll,
@@ -176,7 +176,7 @@ c*** SOL side edge
       return
 c-----------------------------------------------------------------------
 c*** PFR side edge
- 170  if(ll.eq.0) then          !{
+  170 if(ll.eq.0) then          !{
         call scipit
       else if(ll.lt.0 .or. ll.gt.ntrgsx) then !}{
         write(*,'(1x,a,i3,a,i3)') 'Wrong target number:',ll,
@@ -187,7 +187,7 @@ c*** PFR side edge
       return
 c-----------------------------------------------------------------------
 c*** SOL side edge
- 180  if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
+  180 if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
         call scipit
       else !}{
         if(mtrgedge(2,lutrgt).gt.0) then !{
@@ -200,7 +200,7 @@ c*** SOL side edge
       return
 c-----------------------------------------------------------------------
 c*** PFR side edge
- 190  if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
+  190 if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
         call scipit
       else !}{
         if(mtrgedge(1,lutrgt).gt.0) then !{
@@ -213,7 +213,7 @@ c*** PFR side edge
       return
 c----------------------------------------------------------------------
 c*** Target specification
- 200  call resimi(lutrgt)
+  200 call resimi(lutrgt)
       if(lutrgt.lt.0 .or. lutrgt.gt.ntrgsx) then !{
         write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lutrgt,
      ,                            '.  Must be positive and =< ', ntrgsx
@@ -224,7 +224,7 @@ c*** Target specification
       return
 c-----------------------------------------------------------------------
 c*** List of segments to be skipped
- 210  call rearri(lskipel(nskipel+1),mskipel-nskipel,i)
+  210 call rearri(lskipel(nskipel+1),mskipel-nskipel,i)
       do j = nskipel+1, nskipel+i
         lskip(lskipel(j)) = .true.
       end do
@@ -232,16 +232,16 @@ c*** List of segments to be skipped
       return
 c-----------------------------------------------------------------------
 c*** Numbering offset
- 230  call resimi(lnumboff)
+  230 call resimi(lnumboff)
       return
 c-----------------------------------------------------------------------
 c*** DG v. 2.0 or later
- 240  call resimi(i)
+  240 call resimi(i)
       lvdg20=.true.
       return
 c-----------------------------------------------------------------------
 c*** Plot zone label
- 250  if(ll.eq.0) then          !{
+  250 if(ll.eq.0) then          !{
         call scipit
       else if(ll.le.0 .or. ll.gt.nwldprtx) then !}{
         write(*,'(1x,a,i3,a,i3)') 'Wrong wall segment number:',ll,
@@ -257,14 +257,14 @@ c*** Plot zone label
       return
 c-----------------------------------------------------------------------
 c*** Wall material
- 260  i=lena
+  260 i=lena
       lena=lnwlmtrl
       call rearra(mtrwldsg,nsgmx,j)
       lena=i
       return
 c-----------------------------------------------------------------------
 c*** Target material
- 270  if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
+  270 if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
         call scipit
       else !}{
         i=lena
@@ -275,7 +275,7 @@ c*** Target material
       return
 c-----------------------------------------------------------------------
 c*** Target sputtering - chemical
- 280  if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
+  280 if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
         call scipit
       else !}{
         call resimi(lcsptrg(lutrgt))
@@ -283,7 +283,7 @@ c*** Target sputtering - chemical
       return
 c-----------------------------------------------------------------------
 c*** Target sputtering - physical
- 290  if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
+  290 if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
         call scipit
       else !}{
         call resimi(lpsptrg(lutrgt))
@@ -291,11 +291,11 @@ c*** Target sputtering - physical
       return
 c-----------------------------------------------------------------------
 c*** Wall sputtering - physical
- 300  call rearri(lpspwll,mskipel,i)
+  300 call rearri(lpspwll,mskipel,i)
       return
 c-----------------------------------------------------------------------
 c*** Wall sputtering - chemical
- 310  call rearri(lcspwll,mskipel,i)
+  310 call rearri(lcspwll,mskipel,i)
       return
 c======================================================================
       end subroutine b2pwinm

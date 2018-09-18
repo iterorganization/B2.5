@@ -153,7 +153,7 @@ cc    -------------------------------------------------------------------------
          write(*,*) 'InitADAS: Specified data not supported'
          ERR=1
          return
-      endif        
+      endif
       call XXUID(UIDIN)
       call XXSPEC(GRPIN,TYPIN,EXTIN)
       IZIN=IC
@@ -224,7 +224,7 @@ cc    -------------------------------------------------------------------------
                if (streql(MIE,CINDM(count))) then
                   IBSELAE(countEX)=count
                   countEX=countEX+1
-                  write(*,*) 
+                  write(*,*)
      &            'GetIBSEL: selected transition excitation'
                   write(*,*) 'wavelength:',CWAVEL(count)
                   write(*,*) 'metastable index: ',CINDM(count)
@@ -249,7 +249,7 @@ cc    -------------------------------------------------------------------------
                   write(*,*) 'wavelength:',CWAVEL(count)
                   write(*,*) 'metastable index: ',CINDM(count)
                endif
-            endif            
+            endif
          endif
       enddo
       if ((countEX .eq. 1) .and. (countRE .eq. 1) .and.
@@ -258,7 +258,7 @@ cc    -------------------------------------------------------------------------
          write(*,*) 'ion charge: ',IZIN,' nuclear charge: ',IZ0IN
          ERR = 1
       endif
-      return     
+      return
       end subroutine GetIBSEL
 
 cc    -------------------------------------------------------------------------
@@ -303,7 +303,7 @@ cc    -------------------------------------------------------------------------
 
       return
       end subroutine InitIBSEL
-      
+
 
 cc    -------------------------------------------------------------------------
 cc    SUBROUTINE GetEmissivity(id,IBSELAE,IBSELAR,IBSELAC,NE,NI,NI1,NH,TE,dim,
@@ -451,7 +451,7 @@ c     OUTPUT: integer NBSEL
 c             character CWAVEL(NSTORE)*10
 c             character CTYPE (NSTORE)*8
 c             character CINDM (NSTORE)*2
-c             real T(NSTORE)        
+c             real T(NSTORE)
 c     -------------------------------------------------------------------------
 c     InitADAS must have been called before any call to this subroutine.
 c     GetInfo provides the following information about the selected input
@@ -462,7 +462,7 @@ c     04/02/97 bhs
 c     -------------------------------------------------------------------------
 
       subroutine GetInfo(NBSEL,CWAVEL,CTYPE,CINDM,T)
-      
+
       use b2mod_types
       implicit none
 
@@ -490,7 +490,7 @@ c     -------------------------------------------------------------------------
 c     initialising
       call subini ('GetInfo')
       IUNIT=4950
-      
+
 c     reading data
       call xxuid(UIDIN)
       call xxspec(GRPIN,TYPIN,EXTIN)
@@ -1085,11 +1085,11 @@ C IF NEW EMITTING ION ENTERED OR SOURCE DATA USERID HAS CHANGED:
 C - OPEN THE REQUESTED DATASET & READ IN COMPLETE SET OF RATE DATA.
 C-----------------------------------------------------------------------
 C
-               IF ( (IZLAST .NE. IZIN)   .OR. 
-     &              (IZ0LST .NE. IZ0IN)  .OR. 
-     &              (UIDLST .NE. UIDIN)  .OR. 
-     &              (GRPLST .NE. GRPIN)  .OR. 
-     &              (TYPLST .NE. TYPIN)  .OR. 
+               IF ( (IZLAST .NE. IZIN)   .OR.
+     &              (IZ0LST .NE. IZ0IN)  .OR.
+     &              (UIDLST .NE. UIDIN)  .OR.
+     &              (GRPLST .NE. GRPIN)  .OR.
+     &              (TYPLST .NE. TYPIN)  .OR.
      &              (EXTLST .NE. EXTIN)      )  THEN
 C
                   CALL E3FILE( IUNIT , IZ0IN , IZIN , IRCODE , DSNREQ )
@@ -1260,7 +1260,7 @@ C UPDATE:   1/11/94 - L. JALOTA: MODIFIED CODE FOR RUNNING UNDER UNIX
 C                                USING NEW FILE NAMING CONVENTION.
 C                                "ACTION" KEYWORD IN OPEN COMMAND IS IBM
 C                                SO REMOVED HERE.
-C UPDATE:   8/11/94 - L. JALOTA: ADDED DEFADF 
+C UPDATE:   8/11/94 - L. JALOTA: ADDED DEFADF
 C
 C UPDATE:  22/11/94 - L. JALOTA: TIDIED UP CHARACTER STRING LENGTHS
 C
@@ -1276,7 +1276,7 @@ C-----------------------------------------------------------------------
       INTEGER     IUNIT         , IZ0            , IZ         ,
      &            IRCODE        , IDLEN          , IZEND      ,
      &            LENF1         , LENF2          ,
-     &            LENF3         , LENF4          , 
+     &            LENF3         , LENF4          ,
      &            LENF5         , LENF6          ,
      &            LENF7         , LENF8
 C-----------------------------------------------------------------------
@@ -1327,10 +1327,10 @@ C
          HASH = '#'
       ENDIF
 C
-      IF (LENF3 .EQ. 0) THEN 
+      IF (LENF3 .EQ. 0) THEN
          DSNAME = DSNAME(1:IDLEN)//USRGRP(LENF1:LENF2)//'_'
      &      //USREXT(LENF7:LENF8)//HASH
-      ELSE 
+      ELSE
          DSNAME = DSNAME(1:IDLEN)//USRTYP(LENF3:LENF4)//'/'
      &      //USRGRP(LENF1:LENF2)//'_'//USREXT(LENF7:LENF8)//HASH
       ENDIF
@@ -1425,7 +1425,7 @@ C          (I*4)  LEN_NAME = LENGTH OF FILENAME
 C          (I*4)  IFIRST   = POSITION OF FIRST CHARACTER OF DSNAME
 C          (I*4)  ILAST    = POSITION OF LAST CHARACTER OF DSNAME
 C
-C ROUTINES: 
+C ROUTINES:
 C
 C AUTHOR:  PAUL E. BRIDEN (TESSELLA SUPPORT SERVICES PLC)
 C          K1/0/37
@@ -1433,7 +1433,7 @@ C          JET EXT. 2520
 C
 C DATE:    01/05/91
 C
-C UPDATE:  L. JALOTA  13/3/95   MODIFIED FOR USE UNDER UNIX 
+C UPDATE:  L. JALOTA  13/3/95   MODIFIED FOR USE UNDER UNIX
 C
 C VERSION 1.7   TIM HAMMOND     13/10/95
 C               ADDED VARIABLE C3 TO ALLOW 3 DIGIT DATA BLOCKS
@@ -1441,10 +1441,10 @@ C               TO BE READ FROM THE VARIABLE IBSEL
 C
 C VERSION 1.8   TIM HAMMOND     08/11/95
 C                - REMOVED SUPERFLUOUS VARIABLE TEMP_NAME
-C               
+C
 C VERSION 1.9   TIM HAMMOND     08/11/95
 C                - REMOVED SUPERFLUOUS VARIABLE I4UNIT
-C               
+C
 C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       INTEGER    IBSEL           , IZ
@@ -1452,7 +1452,7 @@ C     INTEGER    XXFCHR
       INTEGER    POS_NOW         , LEN_NAME
       INTEGER    IFIRST          , ILAST
 C-----------------------------------------------------------------------
-      CHARACTER  DSNAME*(*)      , ESYM*2         , 
+      CHARACTER  DSNAME*(*)      , ESYM*2         ,
      &           CINDM*2         , CWAVEL*10      , TITLX*296  ,
      &           C2*2            , C3*3
 C-----------------------------------------------------------------------
@@ -1464,7 +1464,7 @@ C-----------------------------------------------------------------------
       TITLX(POS_NOW:POS_NOW+8) =  ' BLK=' // C3 // ';'
       POS_NOW = POS_NOW+9
       WRITE(C2,1000) IZ
-      TITLX(POS_NOW:POS_NOW+6) = ESYM // '+' // C2  
+      TITLX(POS_NOW:POS_NOW+6) = ESYM // '+' // C2
       POS_NOW = POS_NOW + 5
       TITLX(POS_NOW:POS_NOW+30)=' WAVELENGTH= '//CWAVEL//
      &                          ' MET= '//CINDM
@@ -1573,7 +1573,7 @@ C
 C
          ELSE
 C
-               IF ( ( IZ0IN .NE. IZ0 )  .OR. 
+               IF ( ( IZ0IN .NE. IZ0 )  .OR.
      &              ( IZIN  .NE. IZ  )      ) THEN
                   IRCODE = 2
                ELSE
@@ -1732,7 +1732,7 @@ C                                         STATEMENTS FOR SCREEN MESSAGES
 C
 C UPDATE:  24/05/93 - PE BRIDEN - ADAS91: CHANGED I4UNIT(0)-> I4UNIT(-1)
 C
-C UPDATE:  27/2/95  - L. JALOTA - IDL_ADAS : INCREASED SIZE DSNAME FOR 
+C UPDATE:  27/2/95  - L. JALOTA - IDL_ADAS : INCREASED SIZE DSNAME FOR
 C                                            USE UNDER UNIX SYSTEMS
 C
 C UNIX-IDL PORT:
@@ -2056,7 +2056,7 @@ C
 C UPDATE:  L. JALOTA - 1/11/94  (TESSELLA SUPPORT SERVICES PLC)
 C                      CHANGED VALUES OF DEFGRP,DEFTYP, DEFEXT SUITABLE
 C                      FOR DEC ALPHA DIRECTORY STRUCTURE.
-C                                 
+C
 C UPDATE:  L.JALOTA - 23/11/94 : TIDIED UP STRING LENGTH DEFINITIONS.
 C-----------------------------------------------------------------------
        CHARACTER  DEFGRP*8             , DEFTYP*80     , DEFEXT*3
@@ -2135,7 +2135,7 @@ C  ****************** FORTRAN77 SUBROUTINE: XXUID  *********************
 C
 C  PURPOSE: ADAS ROUTINE - SETS UP THE DEFAULT USERID WHICH STORES THE
 C           DATA TO BE READ USING STANDARD ADAS DATA READING ROUTINES.
-CA          UNDER UNIX PORT THIS NOW GETS THE ENVIRONMENT VARIABLE 
+CA          UNDER UNIX PORT THIS NOW GETS THE ENVIRONMENT VARIABLE
 CA          "ADASCENT".
 C
 C           USERID: VALUE ON INPUT  =>  USERID: VALUE ON OUTPUT
@@ -2183,8 +2183,8 @@ C          K1/0/37
 C          JET EXT. 5023
 C
 C DATE:    10/03/93
-C 
-C UPDATE:  L. JALOTA  - 7/11/94 : ADDED CALL TO GETENV TO FETCH UNIX 
+C
+C UPDATE:  L. JALOTA  - 7/11/94 : ADDED CALL TO GETENV TO FETCH UNIX
 C                                 ENVIRONMENT VARIABLE ADASUSER
 C
 C VERSION: 1.2                          DATE: 08-08-96
@@ -2200,6 +2200,10 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -2210,10 +2214,20 @@ CA GET THE VALUE OF ADASCENT WHICH SETS UP TOPLEVEL DATA DIRECTORY.
 #ifdef NO_GETENV
       env=' '
 #else
+#ifdef NAGFOR
+        call get_environment_variable('ADASCENT',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable('ADASCENT',value=env)
+        elseif (ierror.eq.1) then
+          env=' '
+        endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('ADASCENT', 0, ENV, lenval, ierror)
 #else
       call getenv ('ADASCENT', ENV)
+#endif
 #endif
 #endif
       DEFUID = ENV
@@ -2737,7 +2751,7 @@ C
 C DATE:     12/02/91
 C
 C UPDATES:  25/10/94 L. JALOTA (TESSELLA SUPPORT SERVICES PLC)
-C                    CHANGED CASE OF SYMBOL TO LOWER CASE FOR UNIX 
+C                    CHANGED CASE OF SYMBOL TO LOWER CASE FOR UNIX
 C
 C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
@@ -2904,7 +2918,7 @@ C
          ELSEIF (IPOS1 .NE. 0) THEN
             IPOS1 = IPOS1 - 1
                IF ( (CTEXT(IPOS1:IPOS1) .EQ. ' '   )
-     &                        .OR. 
+     &                        .OR.
      &              (CTEXT(IPOS1:IPOS1) .EQ. CBREAK) ) THEN
                   IPOS1 = IPOS2
                ELSE

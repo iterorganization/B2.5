@@ -37,7 +37,7 @@
      .                             e_sch(:,:,:)
 
       integer :: io, ix, iy, is, istra, iun, k, n2, itp, idum(0:2)
-      real (kind=R8) :: gold, gnew
+!      real (kind=R8) :: gold, gnew
       integer, save :: ifirst=0, iaver_restart=0
       integer, save :: naver, ntotdt
       character lble*120, lbli*120
@@ -114,13 +114,16 @@ ctb..as the mean of the product does not equal the product of the means etc.
      &          zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
 
             if (iaver_restart > 0) then
-               call cfruin (iun, 1, naver, 'naver')
-               call cfruin (iun, 1, ntotdt, 'ntotdt')
+               call cfruin (iun, 1, idum, 'naver')
+               call cfruin (iun, 1, idum, 'ntotdt')
                naver = 0
+               ntotdt = idum(0)
                close (iun)
             else
-               call cfruin (iun, 1, naver, 'naver')
-               call cfruin (iun, 1, ntotdt, 'ntotdt')
+               call cfruin (iun, 1, idum, 'naver')
+               naver = idum(0)
+               call cfruin (iun, 1, idum, 'ntotdt')
+               ntotdt = idum(0)
                call cfrure (iun, n2*ns, na_mean, 'na_mean')
                call cfrure (iun, n2, te_mean, 'te_mean')
                call cfrure (iun, n2, ti_mean, 'ti_mean')
@@ -257,8 +260,10 @@ ctb..as the mean of the product does not equal the product of the means etc.
         call b2wuzd (iun, newversion, ns, zamin, zamax, zn, am)
 
 *   ..write average state and sources
-        call cfwuin (iun, 1, naver, 'naver')
-        call cfwuin (iun, 1, ntotdt, 'ntotdt')
+        idum(0) = naver
+        call cfwuin (iun, 1, idum, 'naver')
+        idum(0) = ntotdt
+        call cfwuin (iun, 1, idum, 'ntotdt')
 
         call cfwure (iun, n2*ns, na_mean, 'na_mean')
         call cfwure (iun, n2, te_mean, 'te_mean')

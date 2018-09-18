@@ -1,6 +1,6 @@
         SUBROUTINE DSPLINE(N, X, Y, B, C, D)
-	  use b2mod_types
-	  implicit none
+        use b2mod_types
+        implicit none
         INTEGER N
         REAL (kind=R8) :: X(N),Y(N),B(N),C(N),D(N)
 C
@@ -53,7 +53,7 @@ C
            B(I)=2.0e0_R8*(D(I-1)+D(I))
            C(I+1)=(Y(I+1)-Y(I))/D(I)
            C(I)=C(I+1)-C(I)
- 10     CONTINUE
+   10   CONTINUE
 C     ÃPAHÈ×HÛE ÓCËOBÈß.TPETÜÈ ÏPOÈÇBOÄHÛE B TO×KAX
 C     X(1) È X(N) BÛ×ÈCËßÞTCß C ÏOMOÙÜÞ PAÇÄEËEHHÛX
 C     PAÇHOCTEÉ
@@ -70,11 +70,11 @@ C
 C
 C     ÏPßMOÉ XOÄ
 C
- 15     DO 20 I=2,N
+   15   DO 20 I=2,N
            T=D(I-1)/B(I-1)
            B(I)=B(I)-T*D(I-1)
            C(I)=C(I)-T*C(I-1)
- 20     CONTINUE
+   20   CONTINUE
 C
 C     OÁPATHAß ÏOÄCTAHOBKA
 C
@@ -82,7 +82,7 @@ C
         DO 30 IB=1,NM1
            I=N-IB
            C(I)=(C(I)-D(I)*C(I+1))/B(I)
- 30     CONTINUE
+   30   CONTINUE
 C
 C     B C(I) TEÏEPÜ XPAHÈTCß BEËÈ×ÈHA SIGMA(I),OÏPEÄEËEH-
 C     HAß B  4.4
@@ -94,12 +94,12 @@ C
            B(I)=(Y(I+1)-Y(I))/D(I)-D(I)*(C(I+1)+2.0e0_R8*C(I))
            D(I)=(C(I+1)-C(I))/D(I)
            C(I)=3.0e0_R8*C(I)
- 40     CONTINUE
-         C(N)=3.0e0_R8*C(N)
-         D(N)=D(N-1)
-         RETURN
+   40   CONTINUE
+        C(N)=3.0e0_R8*C(N)
+        D(N)=D(N-1)
+        RETURN
 C
- 50     B(1)=(Y(2)-Y(1))/(X(2)-X(1))
+   50   B(1)=(Y(2)-Y(1))/(X(2)-X(1))
         C(1)=0.0e0_R8
         D(1)=0.0e0_R8
         B(2)=B(1)

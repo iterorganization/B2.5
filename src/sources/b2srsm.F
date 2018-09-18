@@ -19,13 +19,13 @@
       real (kind=R8) ::
      *  dtim
       real (kind=R8) ::
-     *  vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1), 
+     *  vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),
      *  ua(-1:nx,-1:ny,0:ns-1), ni(-1:nx,-1:ny,0:1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ne(-1:nx,-1:ny)
-      logical main_call 
+      logical main_call
 *   ..input/output arguments
       real (kind=R8) ::
-     *  snasm(-1:nx,-1:ny,0:1,0:ns-1), smosm(-1:nx,-1:ny,0:3,0:ns-1), 
+     *  snasm(-1:nx,-1:ny,0:1,0:ns-1), smosm(-1:nx,-1:ny,0:3,0:ns-1),
      &  shesm(-1:nx,-1:ny,0:3), shism(-1:nx,-1:ny,0:3),
      &  snesm(-1:nx,-1:ny,0:1)
 *   ..common blocks
@@ -49,18 +49,18 @@
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0                                
+     &                 iout_b2npmo = 0
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
       real (kind=R8) :: !djm Jan2017
-     &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1), 
+     &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1),
      &  shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3)
 *   ..procedures
       real (kind=R8) :: roxa
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
       external subini, subend, xertst, ipgeti, b2xvsg
-      intrinsic abs, min, mod, int
+      intrinsic abs, min, mod
 *   ..initialisation
       save ncall, diagno, enable
       data ncall/0/, diagno/0/, enable/0/
@@ -93,7 +93,7 @@
 *   ..obtain input
       if (ncall.eq.0) then
         call ipgeti ('b2srsm_iout', iout)                         !srv 11.09.09 {
-        call ipgeti ('b2npc9_iout', iout_b2npc9) 
+        call ipgeti ('b2npc9_iout', iout_b2npc9)
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npc7_iout', iout_b2npc7)                     !srv 02.04.18
         call ipgeti ('b2npc11_iout', iout_b2npc11)                   !srv 02.04.18
@@ -128,7 +128,7 @@ c*** before correction (1), after correction (2)
 c check particles
                 invtimescale =
      1           abs(snasm(ix,iy,0,is)+snasm(ix,iy,1,is)*na(ix,iy,is))
-     2           /(na(ix,iy,is)*vol(ix,iy))  
+     2           /(na(ix,iy,is)*vol(ix,iy))
                 hlp = invtimescale*time_factor_required*
      1           dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
                 if (hlp.gt.1.0_R8) then
@@ -146,16 +146,16 @@ c check particles
                   snasm(ix,iy,0,is) = snasm(ix,iy,0,is)/hlp
                   snasm(ix,iy,1,is) = snasm(ix,iy,1,is)/hlp
                   if (main_call.and.mod(ncall,eirene_mod).eq.0) then
-                    src_ni(region(ix,iy,0),2,b2espcr(is)) = 
+                    src_ni(region(ix,iy,0),2,b2espcr(is)) =
      &                src_ni(region(ix,iy,0),2,b2espcr(is)) +
      &                cor_ni(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
-                    src_ni(0,2,b2espcr(is)) = 
+                    src_ni(0,2,b2espcr(is)) =
      &                src_ni(0,2,b2espcr(is)) +
      &                cor_ni(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
                   endif
                 endif
               endif
-            enddo    
+            enddo
           enddo
           do ix = -1, nx
             do iy = -1, ny
@@ -163,17 +163,17 @@ c check particles
 c check parallel momentum
                 invtimescale = abs(smosm(ix,iy,0,is) +
      1           smosm(ix,iy,1,is)*ua(ix,iy,is) +
-     &           smosm(ix,iy,2,is)*roxa(ix,iy,is) + 
+     &           smosm(ix,iy,2,is)*roxa(ix,iy,is) +
      &           smosm(ix,iy,3,is)*roxa(ix,iy,is)*ua(ix,iy,is))
      2           /(sqrt(ti(ix,iy)/
-     3           (am(is)*mp))*roxa(ix,iy,is)*vol(ix,iy))  
+     3           (am(is)*mp))*roxa(ix,iy,is)*vol(ix,iy))
                 hlp = invtimescale*time_factor_required*
      1           dtim*dtmo(is,region(ix,iy,0))*time_factor(ix,iy)
                 if (hlp.gt.1.0_R8) then
                   timescale  = 1.0_R8/invtimescale
                   timefactor = min(timefactor,1.0_R8/hlp)
                   if ((main_call.and.diagno.ge.1).or.diagno.ge.2) then
-                    write(*,*) 
+                    write(*,*)
      1               'WARNING: parallel momentum sources very strong @'
                     write(*,'(a,2e10.3)') 'timescale,dt = ',
      ,               timescale,
@@ -187,13 +187,13 @@ c check parallel momentum
                   smosm(ix,iy,2,is) = smosm(ix,iy,2,is)/hlp
                   smosm(ix,iy,3,is) = smosm(ix,iy,3,is)/hlp
                   if (main_call.and.mod(ncall,eirene_mod).eq.0) then
-                    src_mo(region(ix,iy,0),2,b2espcr(is)) = 
+                    src_mo(region(ix,iy,0),2,b2espcr(is)) =
      &                src_mo(region(ix,iy,0),2,b2espcr(is)) +
      &                cor_mo(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
-                    src_mo(0,2,b2espcr(is)) = 
+                    src_mo(0,2,b2espcr(is)) =
      &                src_mo(0,2,b2espcr(is)) +
      &                cor_mo(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
-                    src_ms(region(ix,iy,0),2) = 
+                    src_ms(region(ix,iy,0),2) =
      &                src_ms(region(ix,iy,0),2) +
      &                cor_mo(ix,iy,b2espcr(is))*(1.0_R8/hlp-1.0_R8)
                     src_ms(0,2) = src_ms(0,2) +
@@ -201,7 +201,7 @@ c check parallel momentum
                   endif
                 endif
               endif
-            enddo    
+            enddo
           enddo
         enddo
 *   ..smooth electron heat, ion heat and electron particle sources
@@ -210,7 +210,7 @@ c check parallel momentum
             if (resignore(ix,iy,1).ne.0) then
 c check ion energy
               invtimescale =
-     1         abs(shism(ix,iy,0) + shism(ix,iy,1)*ti(ix,iy) + 
+     1         abs(shism(ix,iy,0) + shism(ix,iy,1)*ti(ix,iy) +
      &         shism(ix,iy,2)*ni(ix,iy,0) +
      &         shism(ix,iy,3)*ti(ix,iy)*ni(ix,iy,0))
      2         /(ti(ix,iy)*ni(ix,iy,0)*vol(ix,iy))
@@ -233,12 +233,12 @@ c check ion energy
                 shism(ix,iy,2) = shism(ix,iy,2)/hlp
                 shism(ix,iy,3) = shism(ix,iy,3)/hlp
                 if (main_call.and.mod(ncall,eirene_mod).eq.0) then
-                  src_ei(region(ix,iy,0),2) = 
+                  src_ei(region(ix,iy,0),2) =
      &              src_ei(region(ix,iy,0),2) +
      &              cor_ei(ix,iy)*(1.0_R8/hlp-1.0_R8)
                   src_ei(0,2) = src_ei(0,2) +
      &              cor_ei(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                  src_es(region(ix,iy,0),2) = 
+                  src_es(region(ix,iy,0),2) =
      &              src_es(region(ix,iy,0),2) +
      &              cor_ei(ix,iy)*(1.0_R8/hlp-1.0_R8)
                   src_es(0,2) = src_es(0,2) +
@@ -247,7 +247,7 @@ c check ion energy
               endif
 c check electron energy
               invtimescale =
-     1         abs(shesm(ix,iy,0) + shesm(ix,iy,1)*te(ix,iy) + 
+     1         abs(shesm(ix,iy,0) + shesm(ix,iy,1)*te(ix,iy) +
      &         shesm(ix,iy,2)*ne(ix,iy) +
      &         shesm(ix,iy,3)*te(ix,iy)*ne(ix,iy))
      2         /(te(ix,iy)*ne(ix,iy)*vol(ix,iy))
@@ -257,7 +257,7 @@ c check electron energy
                 timescale  = 1.0_R8/invtimescale
                 timefactor = min(timefactor,1.0_R8/hlp)
                 if ((main_call .and. diagno.ge.1) .or. diagno.ge.2) then
-                  write(*,*) 
+                  write(*,*)
      ,             'WARNING: electron heat sources very strong @'
                   write(*,'(a,2e10.3)') 'timescale,dt = ',
      ,             timescale,
@@ -271,12 +271,12 @@ c check electron energy
                 shesm(ix,iy,2) = shesm(ix,iy,2)/hlp
                 shesm(ix,iy,3) = shesm(ix,iy,3)/hlp
                 if (main_call.and.mod(ncall,eirene_mod).eq.0) then
-                  src_ee(region(ix,iy,0),2) = 
+                  src_ee(region(ix,iy,0),2) =
      &              src_ee(region(ix,iy,0),2) +
      &              cor_ee(ix,iy)*(1.0_R8/hlp-1.0_R8)
                   src_ee(0,2) = src_ee(0,2) +
      &              cor_ee(ix,iy)*(1.0_R8/hlp-1.0_R8)
-                  src_es(region(ix,iy,0),2) = 
+                  src_es(region(ix,iy,0),2) =
      &              src_es(region(ix,iy,0),2) +
      &              cor_ee(ix,iy)*(1.0_R8/hlp-1.0_R8)
                   src_es(0,2) = src_es(0,2) +
@@ -293,7 +293,7 @@ c check electron particle number
                 timescale  = 1.0_R8/invtimescale
                 timefactor = min(timefactor,1.0_R8/hlp)
                 if ((main_call .and. diagno.ge.1) .or. diagno.ge.2) then
-                  write(*,*) 
+                  write(*,*)
      ,             'WARNING: electron particle sources very strong @'
                   write(*,'(a,2e10.3)') 'timescale,dt = ',
      ,             timescale,dtim*time_factor(ix,iy)
@@ -304,7 +304,7 @@ c check electron particle number
                 snesm(ix,iy,0) = snesm(ix,iy,0)/hlp
                 snesm(ix,iy,1) = snesm(ix,iy,1)/hlp
                 if (main_call.and.mod(ncall,eirene_mod).eq.0) then
-                  src_ne(region(ix,iy,0),2) = 
+                  src_ne(region(ix,iy,0),2) =
      &              src_ne(region(ix,iy,0),2) +
      &              cor_ne(ix,iy)*(1.0_R8/hlp-1.0_R8)
                   src_ne(0,2) = src_ne(0,2) +
@@ -312,7 +312,7 @@ c check electron particle number
                 endif
               endif
             endif
-          enddo    
+          enddo
         enddo
       endif
 
@@ -325,52 +325,52 @@ cdjm Store the total change in linearised sources for balance
       endif
 
       if (iout_b2npmo.eq.1) then                                     !srv 11.09.09 {
-	 do is = 0, ns-1          
-	  write (chns,'(i3.3)') is
-!	  call my_out(70,nx,ny,smosm(:,:,0,is)+                        !srv 07.10.09
+         do is = 0, ns-1
+          write (chns,'(i3.3)') is
+!         call my_out(70,nx,ny,smosm(:,:,0,is)+                        !srv 07.10.09
 !     &        smosm(:,:,1,is)*ua(:,:,is)+
 !     &        smosm(:,:,2,is)*na(:,:,is)*mp*am(is)+
 !     &        smosm(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
 !     &        'b2srsm_smosm'//chns)
-	 enddo
+         enddo
       endif
       if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or.
      &    iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 ) then             !srv 02.04.18
         do is = 0, ns-1
-	  write (chns,'(i3.3)') is
+          write (chns,'(i3.3)') is
 !        call my_out(70,nx,ny,snasm(:,:,0,is)+                       !srv 07.10.09
 !     &             snasm(:,:,1,is)*na(:,:,is),'b2srsm_snasm'//chns)
         enddo
       endif
       if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
-!	 call my_out(70,nx,ny,shesm(:,:,0)+shesm(:,:,1)*te+            !srv 07.10.09
+!        call my_out(70,nx,ny,shesm(:,:,0)+shesm(:,:,1)*te+            !srv 07.10.09
 !     &   shesm(:,:,2)*ne + shesm(:,:,3)*te*ne,'b2srsm_shesm')
-!	 call my_out(70,nx,ny,shism(:,:,0)+shism(:,:,1)*ti+
-!     &   shism(:,:,2)*ni(:,:,0) + 
+!        call my_out(70,nx,ny,shism(:,:,0)+shism(:,:,1)*ti+
+!     &   shism(:,:,2)*ni(:,:,0) +
 !     &   shism(:,:,3)*ti*ni(:,:,0),'b2srsm_shism')
-      endif            
+      endif
 
       if (iout.eq.1) then
         do is = 0, ns-1
-	  write (chns,'(i3.3)') is
-	  do k=0,3
-	   write (chk,'(i1)') k
-	   call my_out(70,nx,ny,smosm(-1,-1,k,is),
+          write (chns,'(i3.3)') is
+          do k=0,3
+           write (chk,'(i1)') k
+           call my_out(70,nx,ny,smosm(-1,-1,k,is),
      &                       'b2srsm_smosm'//chk//chns)
-	  enddo
-	  do k=0,1
-	   write (chk,'(i1)') k
-	   call my_out(70,nx,ny,snasm(-1,-1,k,is),
+          enddo
+          do k=0,1
+           write (chk,'(i1)') k
+           call my_out(70,nx,ny,snasm(-1,-1,k,is),
      &                       'b2srsm_snasm'//chk//chns)
-	  enddo
-	enddo
+          enddo
+        enddo
         do k=0,3
-	  call my_out(70,nx,ny,shesm(-1,-1,k),'b2srsm_shesm'//chk)
-	  call my_out(70,nx,ny,shism(-1,-1,k),'b2srsm_shism'//chk)
-	enddo
-	do k=0,1
-	  call my_out(70,nx,ny,snesm(-1,-1,k),'b2srsm_snesm'//chk)
-	enddo
+          call my_out(70,nx,ny,shesm(-1,-1,k),'b2srsm_shesm'//chk)
+          call my_out(70,nx,ny,shism(-1,-1,k),'b2srsm_shism'//chk)
+        enddo
+        do k=0,1
+          call my_out(70,nx,ny,snesm(-1,-1,k),'b2srsm_snesm'//chk)
+        enddo
       endif                                                          !srv 11.09.09 }
 
 * ..return

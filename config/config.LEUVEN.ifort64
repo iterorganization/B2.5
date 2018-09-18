@@ -52,7 +52,7 @@ BLD      = ar rucv
 GRLIBES  = ${LD_NCARG} ${LD_MSCL}
 LDLIBES  = ${LD_NETCDF} ${LD_NAG} # -lblas
 
-ifdef IMAS_PREFIX
+ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS    += -DIMAS
 endif

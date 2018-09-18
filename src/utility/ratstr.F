@@ -78,8 +78,8 @@
 *
 *  4. references
 *
-*     /1/ K. Behringer, "Description of the Impurity Transport Code
-*     STRAHL", JET-Report R(87)08, 1987.
+*     /1/ K. Behringer, Description of the Impurity Transport Code
+*     STRAHL, JET-Report R(87)08, 1987.
 *     /2/ K. Behringer, ... (journal article?).
 *     /3/ W. Lotz, reports IPP 1/62 (1967) and IPP 1/76 (1968).
 *     /4/ S. von Goeler et al., Nucl. Fusion 15 (1975) 301.
@@ -87,10 +87,10 @@
 *     /6/ A. Burgess, Astrophys. J. 141 (1968) 1588.
 *     /7/ A. L. Merts et al., report LA-6220-MS (1976).
 *     /8/ D. E. Post et al., At. Data Nucl. Data Tables 20 (1977) 397.
-*     /9/ R. K. Janev et al., "Survey of Atomic Processes in Edge
-*     Plasmas", J. Nucl. Mater. 121 (1984) 10-16.
-*     /10/ Ya. B. Zeldovich and Yu. P. Raizer: "Physics of Shock Waves
-*     and High Temperature Hydrodynamic Phenomena", Academic Press, New
+*     /9/ R. K. Janev et al., Survey of Atomic Processes in Edge
+*     Plasmas, J. Nucl. Mater. 121 (1984) 10-16.
+*     /10/ Ya. B. Zeldovich and Yu. P. Raizer: Physics of Shock Waves
+*     and High Temperature Hydrodynamic Phenomena, Academic Press, New
 *     York, 1966.
 *
 *

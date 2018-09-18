@@ -33,7 +33,7 @@
 *     with the five-point discretization of a single scalar partial
 *     differential equation on a topologically rectangular mesh. The
 *     routine is an interface to one of two solvers. If the internal
-*     parameter "style" has the value 0 then a solver based on Stone's
+*     parameter "style" has the value 0 then a solver based on the Stone
 *     SIP-ILU procedure is used; if style.eq.1 then a direct band
 *     solver is used.
 *

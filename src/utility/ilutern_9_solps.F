@@ -40,10 +40,7 @@ c ma28 common blocks
 c
 
 *  -- PROCEDURES --
-      INTRINSIC MOD
-      real (kind=R8) ::
-     *   b2sasum
-      EXTERNAL XERRAB, b2sasum
+      EXTERNAL XERRAB
 
       logical lfirst
       integer ncall, nwrite
@@ -180,7 +177,7 @@ cdpc
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)                  !srv 09.07.02 28.06.16
      1     trim(name), iflag, minirn, solvdim1, minicn, solvdim      !srv 09.07.02 28.06.16
-   2  format(' ma28ad for ',a13,': iflag =',i9/,
+    2  format(' ma28ad for ',a13,': iflag =',i9/,
      1 ' minirn =',i9,' solvdim1 =',i9,
      2 ' minicn =',i9,' solvdim =',i9)                               !srv 09.07.02
         do i=1,solvdim
@@ -194,7 +191,7 @@ cdpc
      1 r1,s1,res,w,1,1e-10_R8,iflag)
       if(nltrsol.gt.0 .or. iflag.lt.0)                               !srv 09.07.02 28.06.16 {
      &   write(*,3)  trim(name), iflag, errmax, dres, noiter
-   3  format(' ma28id for ',a13,
+    3    format(' ma28id for ',a13,
      1       ': iflag =',i9,' errmax =',es9.1,
      2       ' dres =',es9.1,' noiter =',i2)                         !srv 09.07.02 28.06.16 }
 

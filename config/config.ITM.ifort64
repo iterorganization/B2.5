@@ -73,12 +73,13 @@ ifdef PERFMON
 LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
-ifdef IMAS_PREFIX
+ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS    += -DIMAS
 endif
-LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs` -lxml2
-INCMODS   += -I${IMAS_PREFIX}/include/ifort
+EQUIVS    += -DGGD_OLD
+LD_UAL    ?= `pkg-config imas-ifort --libs` -lxml2
+INCMODS   += `pkg-config imas-ifort --cflags` 
 IMASLIBS   = ${LD_UAL} -lggd-ifort -lstdc++
 else
 ifdef ITM_ENVIRONMENT_LOADED

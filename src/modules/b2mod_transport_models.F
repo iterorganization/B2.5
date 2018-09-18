@@ -46,7 +46,7 @@
       external xertst
 
       call xertst (transport_models_allocated,
-     .	'Error: transport_models not yet allocated')
+     .  'Error: transport_models not yet allocated')
       if (edition.eq.'    ') then
         filename = 'b2.transport_models_save.parameters'
       else
@@ -54,25 +54,25 @@
       endif
       call find_file(filename,file_ok)
       if(file_ok) then
-	if (edition.eq.'    ') open(nread,file=trim(filename))
-	write(*,*) 'Reading namelist transport_models from ',
+        if (edition.eq.'    ') open(nread,file=trim(filename))
+        write(*,*) 'Reading namelist transport_models from ',
      1   trim(filename)
 #ifdef USE_MPI
-	read(nread,transport_models,err=999)
+        read(nread,transport_models,err=999)
 #else
         read(nread,transport_models)
 #endif
-	write(*,*) 'Read namelist transport_models from ',
+        write(*,*) 'Read namelist transport_models from ',
      1   trim(filename)
         if (edition.eq.'    ') close(nread)
       else
-	eta_hce_mult=1.0_R8
+        eta_hce_mult=1.0_R8
         write(6,*) 'No ',trim(filename)
       endif
       found = maxval(eta_hce_mult).ne.1.0_R8 .or.
      .        minval(eta_hce_mult).ne.1.0_R8
       return
- 999  call xerrab ('Error while reading TRANSPORT_MODELS namelist!')
+  999 call xerrab ('Error while reading TRANSPORT_MODELS namelist!')
       end subroutine read_b2mod_transport_models
 
       subroutine write_b2mod_transport_models(nwrite,edition)

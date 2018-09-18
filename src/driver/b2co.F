@@ -67,6 +67,10 @@
 *   ..local variables
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
       integer ninp(0:5), nout(0:7), ns0, idum(0:9), io
       integer iflag
@@ -74,7 +78,9 @@
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
 #ifndef NAGF95
+#ifndef NAGFOR
       integer iargc
+#endif
 #endif
       integer :: b2time = 1, ntim_batch = 500
       integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
@@ -85,13 +91,16 @@
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
       character filename*256
       character b2fstate_only*256
+#ifdef B25_EIRENE
       character extension*4
+      integer lnblnk
+      external lnblnk
+#endif
       character cnamip*80, cvalip*80, line*500
       logical file_open, file_exists, todo
 *   ..procedures
-      integer lnblnk
       logical is_comment, streql
-      external lnblnk, is_comment, streql
+      external is_comment, streql
       external prgini, prgend, xerset, xertst, cfopen, cfruin
       external b2rucp, b2rups, b2wuzd, b2wups, b2xvps, ipgeti, ipgetr
 *   ..initialise input/output unit numbers
@@ -119,6 +128,7 @@
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
       call cfopen (ninp(2),'b2fpardf','old','un*formatted')
       call cfopen (ninp(3),'b2fstati','old','un*formatted')
+#ifndef NAGFOR
       call xertst (iargc().ge.1,
      &  'program should be supplied with a state number')
 #ifdef USE_PXFGETENV
@@ -126,8 +136,12 @@
 #else
       call getarg(1,arg)
 #endif
+#else
+      call xertst (command_argument_count().ge.1,
+     &  'program should be supplied with a state number')
+      call get_command_argument(1,arg,lenval,ierror)
+#endif
       savefile=arg
-      extension=savefile(lnblnk(savefile)-3:lnblnk(savefile))
       call cfopen (ninp(4), trim(savefile), 'old','unformatted')
       call cfopen (nout(0),'b2co.prt','new','formatted')
       call cfopen (nout(1),'b2co.files','new','formatted')
@@ -338,6 +352,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         nnmoli = 0
       else
 #ifdef B25_EIRENE
+        extension=savefile(lnblnk(savefile)-3:lnblnk(savefile))
 #ifndef HPUX
         filename='fort.44.'//extension
 #else
@@ -367,10 +382,21 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
 #ifdef NO_GETENV
       todo=.true.
 #else
+#ifdef NAGFOR
+      call get_environment_variable('B2FSTATE_ONLY',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('B2FSTATE_ONLY',
+     .                           value=b2fstate_only)
+      elseif (ierror.eq.1) then
+        b2fstate_only='no'
+      endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('B2FSTATE_ONLY', 0, b2fstate_only, lenval, ierror)
 #else
       call getenv ('B2FSTATE_ONLY', b2fstate_only)
+#endif
 #endif
       todo=.not.streql(b2fstate_only,'yes')
 #endif

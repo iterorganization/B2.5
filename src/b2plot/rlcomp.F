@@ -101,7 +101,7 @@ c>>>
           write(*,*) 'Error in rlcomp: target not in structure',j,jb
           call xerrab ('Target not in structure')
 c
- 10       continue
+   10     continue
 
           jcb=mod(jcb,nbndry)+1
           jc=lbnd(jcb)

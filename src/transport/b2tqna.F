@@ -1212,8 +1212,8 @@ c
      2        ' has given '//'negative coefficient')
            enddo
 
-           write(*,"(/' Exchanges of transport coefficients',
-     &               ' have been done'/)")
+           write(*,'(a)')
+     &      ' Exchanges of transport coefficients have been done'
            do is = 0, ns-1
              if(.not.is_neutral(is)) then
                cfdna(2,is)   = 1.0e0_R8
@@ -1358,10 +1358,12 @@ c
             open(70,file= 'output/Parameters_of_H-regime.dat')         !srv 23.01.18
             write(70,"(/' Parameters of H-regime')")
             write(70,"(' Number of midplane cell =',i4)") nmdpl
-            write(70,"(' Number of first cell in CORE where transport ',
-     &         ' coefficients are changed',2i5)") bottomdelta1
-            write(70,"(' Number of last  cell in SOL  where transport ',
-     &         ' coefficients are changed',2i5)") topdelta2            !srv 23.01.18
+            write(70,'(a,2i5)')
+     &        ' Number of first cell in CORE where transport '//
+     &        ' coefficients are changed', bottomdelta1
+            write(70,'(a,2i5)')
+     &        ' Number of last  cell in SOL  where transport '//
+     &        ' coefficients are changed', topdelta2                   !srv 23.01.18
             close(70)
            endif
           endif
@@ -1835,7 +1837,7 @@ c
      *  hy1
       external subini, subend, ipgetr, xertst, xerrab
       external b2xvsg, b2xppe, b2xppb
-      intrinsic sin, log, mod, max, min
+      intrinsic sin, log, max, min
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, alpha/1.0_R8/, min_df0/0.0_R8/, max_df0/1.0e30_R8/
@@ -2343,7 +2345,7 @@ c MW working end 3
       real (kind=R8) :: dbegin, dend, fac
 *   ..procedures
       real (kind=R8) :: hy1
-      intrinsic sqrt, max
+      intrinsic max
       external subini, subend, xerrab
 *   ..initialisation
       save ncall, ibegin, iend
@@ -2584,8 +2586,6 @@ c*** We only apply this in the outer SOL region
      *   hce0(-1:nx,-1:ny), sig0(-1:nx,-1:ny), alf0(-1:nx,-1:ny),
      &   hvi0(-1:nx,-1:ny,0:1), hve0(-1:nx,-1:ny,0:1)
 
-      integer ::
-     *  nar,nzm
 *     nints=number of intervals for integration
       integer nints
       parameter (nints=10)
@@ -2671,20 +2671,20 @@ c*** We only apply this in the outer SOL region
         call ipgeti ('set_transport_iyref', iyref)
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-	call ipgeti ('neoclassical_ic', ic)
+call ipgeti ('neoclassical_ic', ic)
         call xertst(0.le.ic .and. ic.le.4,
      .   'invalid parameter neoclassical_ic')
-	write(*,*) 'NEOART option ', ic, ' has been used'
-	if(ic.eq.0)
-     1	 write(*,*) '  NEOART: classical'
-	if(ic.eq.1)
-     1	 write(*,*) '  NEOART: banana plateau'
-	if(ic.eq.2)
-     1	 write(*,*) '  NEOART: Pfirsch-Schlueter'
-	if(ic.eq.3)
-     1	 write(*,*) '  NEOART: banana plateau + Pfirsch-Schlueter'
-	if(ic.eq.4)
-     1	 write(*,*) '  NEOART: all'
+        write(*,*) 'NEOART option ', ic, ' has been used'
+        if(ic.eq.0)
+     1   write(*,*) '  NEOART: classical'
+        if(ic.eq.1)
+     1   write(*,*) '  NEOART: banana plateau'
+        if(ic.eq.2)
+     1   write(*,*) '  NEOART: Pfirsch-Schlueter'
+        if(ic.eq.3)
+     1   write(*,*) '  NEOART: banana plateau + Pfirsch-Schlueter'
+        if(ic.eq.4)
+     1   write(*,*) '  NEOART: all'
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -2758,8 +2758,6 @@ c      enddo
       enddo
 
 *   ..split species into species and charge states
-      nar=nsdecl
-      nzm=nzdecl-1
       do ispecies=0,nsdecl
         ncl(ispecies)=0
         do istate=0,nzdecl-1

@@ -33,7 +33,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, k
+      integer ncall, ix, iy, k
       integer, save :: iout = 0
       character chns*3, chark*1
       real (kind=R8) ::
@@ -67,8 +67,6 @@
          iout = 0
        end if      
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       smban = 0.0_R8
@@ -77,7 +75,8 @@
         do iy = -1, ny
           do ix = -1, nx
            if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
-     &       bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
+     &        bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1 .or.
+     &        bb(ix,iy,2).eq.0.0_R8) then
             smban(ix,iy,0) = 0.0e0_R8
             smban(ix,iy,1) = 0.0e0_R8
             smban(ix,iy,2) = 0.0e0_R8

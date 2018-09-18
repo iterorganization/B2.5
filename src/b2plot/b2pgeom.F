@@ -56,10 +56,10 @@ c=======================================================================
         rewind(lun)
         write(lun,'(3a)',err=998) '# SOL magnetic surfaces'
         write(lun,'(3a)',err=998) '#',label
-        write(hlp_frmr,'(5h(1h#,,i2,24h(1hR,i2.2,a,1hZ,i2.2,a)))') 
-     -                                                            ny-k
+        write(hlp_frmr,'(a,i3,a)')
+     -    '(1h#,',ny-k,'(1hR,i2.2,a,1hZ,i2.2,a))'
         write(lun,hlp_frmr,err=998) (i,tab,i,tab,i=k,ny-1)
-        write(hlp_frmr,'(4h(1p,,i3,10h(e14.7,a)))') 2*(ny-k)
+        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(ny-k),'(e14.7,a))'
         do i=0,nx !{
           write(lun,hlp_frmr,err=998) (crx(i,j,2),tab,cry(i,j,2),tab,
      ,                                                         j=k,ny-1)
@@ -71,9 +71,10 @@ c=======================================================================
         rewind(lun)
         write(lun,'(3a)',err=998) '# PFR magnetic surfaces'
         write(lun,'(3a)',err=998) '#',label
-        write(hlp_frmr,'(5h(1h#,,i2,24h(1hR,i2.2,a,1hZ,i2.2,a)))') k+1
+        write(hlp_frmr,'(a,i2,a)')
+     ,   '(1h#,',k+1,'(1hR,i2.2,a,1hZ,i2.2,a))'
         write(lun,hlp_frmr,err=998) (i,tab,i,tab,i=0,k)
-        write(hlp_frmr,'(4h(1p,,i3,10h(e14.7,a)))') 2*(k+1)
+        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(k+1),'(e14.7,a))'
         i1=0
         i2=leftcut(1)-1
         do l=1,2 !{
@@ -93,9 +94,10 @@ c=======================================================================
         rewind(lun)
         write(lun,'(3a)',err=998) '# core magnetic surfaces'
         write(lun,'(3a)',err=998) '#',label
-        write(hlp_frmr,'(5h(1h#,,i2,24h(1hR,i2.2,a,1hZ,i2.2,a)))') k+1
+        write(hlp_frmr,'(a,i2,a)')
+     ,   '(1h#,',k+1,'(1hR,i2.2,a,1hZ,i2.2,a))'
         write(lun,hlp_frmr,err=998) (i,tab,i,tab,i=0,k)
-        write(hlp_frmr,'(4h(1p,,i3,10h(e14.7,a)))') 2*(k+1)
+        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(k+1),'(e14.7,a))'
         i1=leftcut(1)
         i2=rightcut(1)-1
         do i=i1,i2 !{
@@ -107,7 +109,7 @@ c=======================================================================
 
         close (lun)
       else if(nncut.eq.2) then !}{ === double null ===
-        
+
         write(0,*) 'b2pgeom: double null configuration yet to be ',
      ,                                                    'implemented'
         return
@@ -120,10 +122,10 @@ c=======================================================================
 
       return
 c=======================================================================
- 998  write(0,*) 'b2pgeom: error writing to the file ',ofile
+  998 write(0,*) 'b2pgeom: error writing to the file ',ofile
       return
 c=======================================================================
- 999  write(0,*) 'b2pgeom: unable to open file ',ofile
+  999 write(0,*) 'b2pgeom: unable to open file ',ofile
       return
 c=======================================================================
       end
