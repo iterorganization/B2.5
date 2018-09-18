@@ -93,7 +93,7 @@
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ub,wrkf)
 *     ..compute flcbx, cvcbx        
         do iFc = 1, nFc
-          flub0(iFc,0) = flub0(iFc,0) + geo%fcPbs(iFc)*wrkf(iFc)*
+          flub0(iFc,0) = flub0(iFc,0) + geo%fcPbshz(iFc)*wrkf(iFc)*
      &      (rob(mpg%fcCv(iFc,1))+rob(mpg%fcCv(iFc,2)))*0.5e0_R8
         enddo
       else
