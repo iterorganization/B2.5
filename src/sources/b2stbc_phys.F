@@ -3570,8 +3570,8 @@ cwdk      TODO: drift contributions
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          srw%she0(iCv1,0) =  UBIG*NE00*geo%fcS(iFc)*enepar(iB,1)*EV
-          srw%she0(iCv1,1) = -UBIG*NE00*geo%fcS(iFc)
+          srw%she0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*enepar(iB,1)*EV
+          srw%she0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
         enddo
 
         GOTO 30000
@@ -5451,8 +5451,8 @@ cwdk    Todo: corrections for mdf_fhe, BCCON.ne.14
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          srw%shi0(iCv1,0) =  UBIG*NE00*geo%fcS(iFc)*enipar(iB,1)*EV
-          srw%shi0(iCv1,1) = -UBIG*NE00*geo%fcS(iFc)
+          srw%shi0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*enipar(iB,1)*EV
+          srw%shi0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
         enddo
         GOTO 40000
 
