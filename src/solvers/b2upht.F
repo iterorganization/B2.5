@@ -161,6 +161,8 @@
 !          t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
 !    &     wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
 !     &       vol(rightix(ix,iy),rightiy(ix,iy)))
+         else
+          t0 = 0.0_R8
          endif
          do is = 0, ns-1
           if (solvmreg(is,ireg)) ua(ix,iy,is) = ua(ix,iy,is)-t0
