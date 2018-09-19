@@ -123,10 +123,12 @@
          ireg = region(ix,iy,0)
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &      solvereg(ireg))
-     &    ub(ix,iy) = ub(ix,iy)-pcm0*rxf*pccb0(ix,iy)*vol(ix,iy)*
-     &    (wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &     wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
-     &      vol(rightix(ix,iy),rightiy(ix,iy))))
+     &    ub(ix,iy) = ub(ix,iy)-pcm0*rxf*pccb0(ix,iy)*0.5_R8*
+     &    (wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))
+!     &    ub(ix,iy) = ub(ix,iy)-pcm0*rxf*pccb0(ix,iy)*vol(ix,iy)*
+!     &    (wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
+!     &     wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
+!     &      vol(rightix(ix,iy),rightiy(ix,iy))))
         enddo
        enddo
       endif

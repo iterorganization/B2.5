@@ -148,17 +148,19 @@
         do ix = -1, nx
          ireg = region(ix,iy,0)
          if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-          t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
-     &     (wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &      wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
-     &       vol(rightix(ix,iy),rightiy(ix,iy))))
-         elseif(rightix(ix,iy).eq.nx+1) then
-          t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
-     &     wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-         elseif(leftix(ix,iy).eq.-2) then
-          t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
-     &     wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
-     &       vol(rightix(ix,iy),rightiy(ix,iy)))
+          t0 = pcm0*pccm0(ix,iy)*0.5_R8*
+     &     (wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))
+!          t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
+!     &     (wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
+!     &      wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
+!     &       vol(rightix(ix,iy),rightiy(ix,iy))))
+!         elseif(rightix(ix,iy).eq.nx+1) then
+!          t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
+!     &     wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
+!         elseif(leftix(ix,iy).eq.-2) then
+!          t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
+!    &     wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
+!     &       vol(rightix(ix,iy),rightiy(ix,iy)))
          endif
          do is = 0, ns-1
           if (solvmreg(is,ireg)) ua(ix,iy,is) = ua(ix,iy,is)-t0
