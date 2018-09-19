@@ -124,10 +124,10 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
           do ix = -1, nx
 csw 24feb2014 check for guard cell (SOLPS4)
            if(iftimbound(ix,iy) .ne. 0) cycle
-           if((guard_flows.eq.2 .or.
-     &        (is_neutral(is) .and. use_eirene.ne.0)) .and. 
-     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
+!           if((guard_flows.eq.2 .or.
+!     &        (is_neutral(is) .and. use_eirene.ne.0)) .and. 
+!     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+!     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
            ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
            snadt(ix,iy,0,is) = snadt(ix,iy,0,is)+
      &      (phm0/ttim)*vol(ix,iy)*na0(ix,iy,is)

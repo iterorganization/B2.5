@@ -111,9 +111,9 @@
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
-           if(guard_flows.eq.2 .and.
-     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
+!           if(guard_flows.eq.2 .and.
+!     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+!     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
          t0 = sna(ix,iy,0,is)+sna(ix,iy,1,is)*na(ix,iy,is)
          sna(ix,iy,0,is) =
      &     max(sna(ix,iy,0,is),(1.0_R8+rf0)*t0,-rf0*t0)
@@ -121,18 +121,18 @@
      &     min(sna(ix,iy,1,is)*na(ix,iy,is),-rf0*t0,(1.0_R8+rf0)*t0)
         enddo
        enddo
-       if(guard_flows.eq.2 .or.                                      !srv 06.07.08 {
-     &    (is_neutral(is) .and. use_eirene.ne.0)) then               !srv 01.07.08 {
+!       if(guard_flows.eq.2 .or.                                      !srv 06.07.08 {
+!     &    (is_neutral(is) .and. use_eirene.ne.0)) then               !srv 01.07.08 {
 *     The corner cell value is defined by interpolation in b2npco and b2npc9
 *   ..There is some problem for 9-point stencil case.
-        do iy=-1, ny, ny+1                                           !srv 27.06.08 {
-         do ix = -1, nx
-	   if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
-	     if(sna(ix,iy,1,is).eq.0.0_R8) sna(ix,iy,1,is) = -1.0_R8
-	   endif
-	 enddo 
-	enddo                                                        !srv 27.06.08 }
-       endif                                                         !srv 01.07.08 }
+!        do iy=-1, ny, ny+1                                           !srv 27.06.08 {
+!         do ix = -1, nx
+!	   if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+!	     if(sna(ix,iy,1,is).eq.0.0_R8) sna(ix,iy,1,is) = -1.0_R8
+!	   endif
+!	 enddo 
+!	enddo                                                        !srv 27.06.08 }
+!       endif                                                         !srv 01.07.08 }
       enddo
 *   ..modify smo
       do is = 0, ns-1
