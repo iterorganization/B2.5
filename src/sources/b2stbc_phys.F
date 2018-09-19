@@ -5518,16 +5518,16 @@ cxpb code segment analog to b2tfhe
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
             CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))   !srv 01.02.09
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     2       hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs*ENEPAR(IB,1)
+     1       gs(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     2          topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)*
+     3       cs*ENEPAR(IB,1)
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
             CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))   !srv 01.02.09
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     2       hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs*ENEPAR(IB,1)
+     1       gs(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)*cs*ENEPAR(IB,1)
           ENDDO
         ELSE
           CALL XERRAB ('B2STBC -- BCENE=14, NOT AVAILABLE FOR W,E')
@@ -7636,16 +7636,16 @@ cxpb          endif
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
             CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))  !srv 01.02.09
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(bc_list_x(ix,ib),bc_list_y(ix,ib))/
-     .       hy1(bc_list_x(ix,ib),bc_list_y(ix,ib))*cs*ENIPAR(IB,1)
+     1       gs(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     2          topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*
+     .       cs*ENIPAR(IB,1)
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
             CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))  !srv 01.02.09
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(bc_list_x(ix,ib),bc_list_y(ix,ib))/
-     .       hy1(bc_list_x(ix,ib),bc_list_y(ix,ib))*cs*ENIPAR(IB,1)
+     1       gs(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*cs*ENIPAR(IB,1)
           ENDDO
         ELSE
           CALL XERRAB ('B2STBC -- BCENI=14, NOT AVAILABLE FOR W,E')
