@@ -216,8 +216,9 @@ cwdk radial contribution
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total')  !srv 18.05.02
-#ifdef WG_TODO
+
       if (iout.ne.0) then
+#ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_total_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_total_aam5')
        call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_total_aam4')
@@ -231,10 +232,11 @@ cwdk radial contribution
        call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_total_aap4')
        call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_total_aap5')
        call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_total_aap6')
+#endif
        call my_out_us(70,nCv,0,resht,'b2usht_resht')
        call my_out_us(70,nCv,0,cortt,'b2usht_cortt')
       endif
-#endif
+
 * ..electron temperature correction equation
       new_matrix = .false.
       do ireg = 0, nregionv
@@ -312,8 +314,9 @@ cwdk radial contribution
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')     !srv 18.05.02
-#ifdef WG_TODO
+
       if (iout.ne.0) then
+#ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_he_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_he_aam5')
        call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_he_aam4')
@@ -327,10 +330,11 @@ cwdk radial contribution
        call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_he_aap4')
        call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_he_aap5')
        call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_he_aap6')
+#endif
        call my_out_us(70,nCv,0,reshe,'b2usht_reshe')
        call my_out_us(70,nCv,0,corte,'b2usht_corte')
       endif
-#endif
+
 * ..atom temperature correction equation
       new_matrix = .false.
       do ireg = 0, nregionv
@@ -412,8 +416,9 @@ cwdk radial contribution
         corti(iCv) = corti(iCv)*scalr(ti(iCv))
       enddo
 
-#ifdef WG_TODO
+
       if (iout.ne.0) then
+#ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_hi_aam6')
        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2usht_hi_aam5')
        call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2usht_hi_aam4')
@@ -427,10 +432,11 @@ cwdk radial contribution
        call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2usht_hi_aap4')
        call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2usht_hi_aap5')
        call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2usht_hi_aap6')
+#endif
        call my_out_us(70,nCv,0,reshi,'b2usht_reshi')
        call my_out_us(70,nCv,0,corti,'b2usht_corti')
       endif
-#endif
+
 
 *   ..return
       ncall = ncall+1

@@ -266,11 +266,13 @@ cwdk      type(B2StateExt), public, save :: state_ext
           if2 = if1 + 1
           if3 = if2 + 1
           if4 = if3 + 1
-!          m%cvFc(if1) = ix + (iy-1)*(nx+1)
-          m%cvFc(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
-          m%cvFc(if2) = ix+1 + (iy-1)*(nx+1)
+          m%cvFc(if1) = ix + (iy-1)*(nx+1)
+!          m%cvFc(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
+!          m%cvFc(if2) = ix+1 + (iy-1)*(nx+1)
+          m%cvFc(if2) = rightix(ix-1,iy-1)+1 + rightiy(ix-1,iy-1)*(nx+1)
           m%cvFc(if3) = nfx + iy + (ix-1)*(ny+1)
-          m%cvFc(if4) = nfx + iy+1 + (ix-1)*(ny+1)
+!          m%cvFc(if4) = nfx + iy+1 + (ix-1)*(ny+1)
+          m%cvFc(if4) = nfx + topiy(ix-1,iy-1)+1+topix(ix-1,iy-1)*(ny+1)
           m%intcellP(if1) = 1.0_R8
           m%intcellP(if2) = 1.0_R8
           m%intcellP(if3) = 0.0_R8
@@ -279,44 +281,57 @@ cwdk      type(B2StateExt), public, save :: state_ext
           m%intcellR(if2) = 0.0_R8
           m%intcellR(if3) = 1.0_R8
           m%intcellR(if4) = 1.0_R8
-!          m%cvVx(if1) = ix + (iy-1)*(nx+1)
-          m%cvVx(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
-          m%cvVx(if2) = ix+1 + (iy-1)*(nx+1)
-!          m%cvVx(if3) = ix + iy*(nx+1)
-          m%cvVx(if3) = leftix(ix-1,iy-1)+2 + iy*(nx+1)
-          m%cvVx(if4) = ix+1 + iy*(nx+1)
+          m%cvVx(if1) = ix + (iy-1)*(nx+1)
+!          m%cvVx(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
+!          m%cvVx(if2) = ix+1 + (iy-1)*(nx+1)
+          m%cvVx(if2) = rightix(ix-1,iy-1)+1 + rightiy(ix-1,iy-1)*(nx+1)
+          m%cvVx(if3) = topix(ix-1,iy-1)+1 + topiy(ix-1,iy-1)*(nx+1)
+!          m%cvVx(if3) = leftix(ix-1,iy-1)+2 + iy*(nx+1)
+!          m%cvVx(if4) = ix+1 + iy*(nx+1)
+          m%cvVx(if4) = rightix(topix(ix-1,iy-1),topiy(ix-1,iy-1))+1 + 
+     .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1))*(nx+1)
         end do
       end do
 
 ! list of cell faces and vertices for guard cells
       do ix = 1, nx
         ic = m%nCi + ix
-        m%cvFc(m%cvFcP(ic,1)) = nfx + 1 + (ix-1)*(ny+1)
+        m%cvFc(m%cvFcP(ic,1)) = nfx + 
+     .               topiy(ix-1,-1)+1 + topix(ix-1,-1)*(ny+1)
         m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
         m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-        m%cvVx(m%cvVxP(ic,1)) = ix 
-        m%cvVx(m%cvVxP(ic,1)+1) = ix+1 
+        m%cvVx(m%cvVxP(ic,1)) = 
+     .               topix(ix-1,-1)+1 + topiy(ix-1,-1)*(nx+1)
+        m%cvVx(m%cvVxP(ic,1)+1) = 
+     .               rightix(topix(ix-1,-1),topiy(ix-1,-1))+1 + 
+     .               rightiy(topix(ix-1,-1),topiy(ix-1,-1))*(nx+1) 
         ic = m%nCi + nx + ix
         m%cvFc(m%cvFcP(ic,1)) = nfx + ny+1 + (ix-1)*(ny+1)
         m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
         m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
         m%cvVx(m%cvVxP(ic,1)) = ix + ny*(nx+1)
-        m%cvVx(m%cvVxP(ic,1)+1) = ix+1 + ny*(nx+1)
+        m%cvVx(m%cvVxP(ic,1)+1) = 
+     .               rightix(ix-1,ny)+1 + rightiy(ix-1,ny)*(nx+1)
       end do
 
       do iy = 1, ny
         ic = m%nCi + 2*nx + iy
-        m%cvFc(m%cvFcP(ic,1)) = 1 + (iy-1)*(nx+1)
+        m%cvFc(m%cvFcP(ic,1)) = 
+     .               rightix(-1,iy-1)+1 + rightiy(-1,iy-1)*(nx+1)
         m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
         m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-        m%cvVx(m%cvVxP(ic,1)) = 1 + (iy-1)*(nx+1) 
-        m%cvVx(m%cvVxP(ic,1)+1) = 1 + iy*(nx+1) 
+        m%cvVx(m%cvVxP(ic,1)) = 
+     .               rightix(-1,iy-1)+1 + rightiy(-1,iy-1)*(nx+1)
+        m%cvVx(m%cvVxP(ic,1)+1) = 
+     .               rightix(topix(-1,iy-1),topiy(-1,iy-1))+1 + 
+     .               rightiy(topix(-1,iy-1),topiy(-1,iy-1))*(nx+1)
         ic = m%nCi + 2*nx + ny + iy
         m%cvFc(m%cvFcP(ic,1)) = nx+1 + (iy-1)*(nx+1)
         m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
         m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
         m%cvVx(m%cvVxP(ic,1)) = nx+1 + (iy-1)*(nx+1) 
-        m%cvVx(m%cvVxP(ic,1)+1) = nx+1 + iy*(nx+1) 
+        m%cvVx(m%cvVxP(ic,1)+1) = 
+     .               topix(nx,iy-1)+1 + topiy(nx,iy-1)*(nx+1)
       end do
 
 ! listing for every face the two corresponding cells
@@ -326,8 +341,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
          do ix = 2, nx
            ic = ix + (iy-1)*nx
            ifc = ix + (iy-1)*(nx+1)
-           m%fcCv(ifc,1) = ic - 1
-           m%fcCv(ifc,2) = rightix(ix-2,iy-1)+1 + (iy-1)*nx
+           m%fcCv(ifc,1) = leftix(ix-1,iy-1)+1 + (iy-1)*nx
+           m%fcCv(ifc,2) = ic
 !           m%fcNv(ifc,1) = 6
 !           m%fcNv(ifc,2) = 5
            m%fcVx(ifc,1) = ix + (iy-1)*(nx+1)
@@ -688,14 +703,14 @@ cwdk      type(B2StateExt), public, save :: state_ext
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
             m%bcCv(inbc,1) = m%nCi + 2*nx + bcs(ib) + ibc
-            m%bcCv(inbc,2) = nx*bcs(ib) + 1
+            m%bcCv(inbc,2) = nx*(bcs(ib) + ibc - 1) + 1
             m%bcFcOr(inbc) = -1.0_R8
           enddo
         elseif (bcchar(ib).eq.'E') then 
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
             m%bcCv(inbc,1) = m%nCi + 2*nx + ny + bcs(ib) + ibc
-            m%bcCv(inbc,2) = nx*(bcs(ib) + 1)
+            m%bcCv(inbc,2) = nx*(bcs(ib) +ibc)
             m%bcFcOr(inbc) = 1.0_R8
           enddo
         else
@@ -772,7 +787,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
           do istrac = 1, rcl(istra)
             instra = instra + 1
             m%rcCv(instra,1) = m%nCi + 2*nx + rcs(istra) + istrac
-            m%rcCv(instra,2) = nx*rcs(istra) + 1
+            m%rcCv(instra,2) = nx*(rcs(istra) + istrac - 1) + 1
             m%rcFcOr(instra) = -1.0_R8
           enddo
         elseif (crcstra(istra).eq.'E') then 
@@ -780,7 +795,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
             instra = instra + 1
             m%rcCv(instra,1) = m%nCi + 2*nx + ny + rcs(istra) + 
      .        istrac
-            m%rcCv(instra,2) = nx*(rcs(istra) + 1)
+            m%rcCv(instra,2) = nx*(rcs(istra) + istrac)
             m%rcFcOr(instra) = 1.0_R8
           enddo
         endif
@@ -2353,6 +2368,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
           fna_nodrift(ix,iy,0,0:1,0:ns-1) =
      .           st % dv % fna_nodrift(ifc,0:1,0:ns-1) 
 
+          fmo(ix,iy,0,0:1,0:ns-1)     = st % dv % fmo(ifc,0:1,0:ns-1)
+
           fhe(ix,iy,0,0:1)     = st % dv % fhe(ifc,0:1)
           fhe_mdf(ix,iy,0,0:1) = st % dv % fhe_mdf(ifc,0:1)
           fhet(ix,iy,0,0:1)    = st % dv % fhet(ifc,0:1)
@@ -2483,6 +2500,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
           fna_nodrift(ix,iy,1,0:1,0:ns-1) =
      .            st % dv % fna_nodrift(ifc,0:1,0:ns-1)
         
+          fmo(ix,iy,1,0:1,0:ns-1) = st % dv % fmo(ifc,0:1,0:ns-1)
+
           fhe(ix,iy,1,0:1)     = st % dv % fhe(ifc,0:1)
           fhe_mdf(ix,iy,1,0:1) = st % dv % fhe_mdf(ifc,0:1)
           fhePSch(ix,iy,1,0:1) = st % dv % fhePSch(ifc,0:1)

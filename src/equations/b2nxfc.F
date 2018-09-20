@@ -20,7 +20,7 @@
      *   flcb(nFc,0:1), cvcb(nFc,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   wrkf(nFc), flub0(nFc,0:1)                          !srv 02.07.08
+     *   wrkf(nFc)                                                  !srv 02.07.08
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -81,28 +81,28 @@
        call b2xvsg (nCv, rob, 1, 'rob', '.gt.')
       endif
 
-* ..compute convection factors
-      flub0 = flub
+*   ..compute flcbx, cvcbx
       if (style.eq.0) then
 *     ..compute wrkf
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ub*rob,wrkf)
 *     ..compute flcbx, cvcbx
-        flub0(:,0) = flub0(:,0) + geo%fcPbshz*wrkf
+        flcb(:,0) = flub(:,0) + geo%fcPbshz*wrkf
+        cvcb(:,0) = cvsb(:,0)
       elseif (style.eq.1) then
 *     ..compute wrkf
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ub,wrkf)
 *     ..compute flcbx, cvcbx        
         do iFc = 1, nFc
-          flub0(iFc,0) = flub0(iFc,0) + geo%fcPbs(iFc)*wrkf(iFc)*
+          flcb(iFc,0) = flub(iFc,0) + geo%fcPbshz(iFc)*wrkf(iFc)*
      &      (rob(mpg%fcCv(iFc,1))+rob(mpg%fcCv(iFc,2)))*0.5e0_R8
         enddo
+        cvcb(:,0) = cvsb(:,0)
       else
         call xerrab ('Only style 0 or 1 in b2nxfc are included')
       endif
-* ..compute linearization
-!WG_TODO: change the mode "0" to an input to select different
-!WG_TODO: discretization schemes
-      call calccoef(nCv,nFc,nVx,0,geo,mpg,flub0,cvsb,flcb,cvcb)
+*   ..compute flcby, cvcby
+      flcb(:,1) = flub(:,1)
+      cvcb(:,1) = cvsb(:,1)
 
       if (iout.ne.0) then                                              !sv 17.06.02 {
         write (charns,'(i3.3)') isb    

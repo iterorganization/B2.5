@@ -255,6 +255,10 @@
 !WG_TODO : friction not yet implemented
        smbch = 0.0e0_R8
        smbtf = 0.0e0_R8
+       smbfria  = 0.0_R8
+       smbfrea = 0.0_R8
+       smbtfia  = 0.0_R8
+       smbtfea = 0.0_R8
 #ifdef WG_TODO       
        if(style.eq.2) then                                             !srv 13.01.17
          call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,        !srv 05.07.17
@@ -266,6 +270,10 @@
            smbtf(iCv,0:3) = geo%cvVol(iCv)*geo%cvH(iCv)*smbtf(iCv,0:3)
          enddo
        else
+        smbfria  = 0.0_R8
+        smbfrea = 0.0_R8
+        smbtfia  = 0.0_R8
+        smbtfea = 0.0_R8
         if(b2sifr_ver.eq.0) then                                       !srv 26.10.08 {
          call b2sifr (nx, ny, ns, is, vol, hx, hz, bb,                 !srv 09.01.01
      &    na, ua, te, ti, ni, ne, ne2, ehxp, lnlam, cthe, cthi,        !srv 11.09.09

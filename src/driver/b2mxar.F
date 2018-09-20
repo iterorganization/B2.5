@@ -83,8 +83,8 @@
        t0 = 0.0_R8
        t1 = 0.0_R8
        do iCv = 1, mpg%nCi
-        t0 = t0+dv%resco(iCv,is)
-        t1 = t1+dv%resmo(iCv,is)
+        t0 = t0+abs(dv%resco(iCv,is))
+        t1 = t1+abs(dv%resmo(iCv,is))
        enddo
        diag%aresco(is) = t0/navi
        diag%aresmo(is) = t1/movi
@@ -92,7 +92,7 @@
 *   ..compute aresmt
       t0 = 0.0_R8
       do iCv = 1, mpg%nCi
-       t0 = t0+dv%resmt(iCv)
+       t0 = t0+abs(dv%resmt(iCv))
       enddo
       diag%aresmt = t0/mtvi
 *   ..compute nevi, prvi
@@ -111,9 +111,9 @@
       t1 = 0.0_R8
       t2 = 0.0_R8
       do iCv = 1, mpg%nCi
-       t0 = t0+dv%reshe(iCv)
-       t1 = t1+dv%reshi(iCv)
-       t2 = t2+dv%respo(iCv)
+       t0 = t0+abs(dv%reshe(iCv))
+       t1 = t1+abs(dv%reshi(iCv))
+       t2 = t2+abs(dv%respo(iCv))
       enddo
       diag%areshe = t0/((1.5_R8+BoRiS)*prvi)
       diag%areshi = t1/((1.5_R8+BoRiS)*prvi)

@@ -392,6 +392,7 @@ cwdk move to dv
       deallocate( coeff % csig )
       deallocate( coeff % csigin )
       deallocate( coeff % csig_an )
+      deallocate( coeff % csig_cl )
       deallocate( coeff % calf )
       deallocate( coeff % calf_an )
       

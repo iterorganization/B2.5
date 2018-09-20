@@ -536,9 +536,9 @@ cwdk  now need to recompute full diamagnetic component for ud
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             srw%sna0(iCv1,0,is) =
-     .        UBIG*geo%fcS(iFc)*conpar(is,iB,1)
+     .        VBIG*geo%fcS(iFc)*conpar(is,iB,1)
             srw%sna0(iCv1,1,is) =
-     .       -UBIG*geo%fcS(iFc)
+     .       -VBIG*geo%fcS(iFc)
             sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
             sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
           enddo
@@ -631,7 +631,7 @@ cwdk  now need to recompute full diamagnetic component for ud
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the corresponding domain cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             srw%sna0(iCv1,0,is) =
      .        UBIG*geo%fcS(iFc)*pl%na(iCv2,is)
@@ -1292,12 +1292,12 @@ c dpc
           endif
           
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             s1 = abs(geo%fcPbs(iFc))
             cs = sqrt(pr(iCv1)/ro(iCv1))
             srw%sna0(iCv1,0,is) = 0.0_R8
-            srw%sna0(iCv1,1,is) = s1*conpar(is,ib,1)*cs
+            srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs
             sna0_no_mdf(iCv1,:,is) =
      &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
 !WG_TODO  if (mdf_fnb.ne.0) ; drift contributions...
@@ -2728,8 +2728,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%smo0(iCv1,0,is)=
      .         VBIG*NE00*am(is)*mompar(is,ib,1)*geo%fcS(iFc)*hzf(iFc)
             srw%smo0(iCv1,1,is)=
@@ -2749,9 +2749,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
 cwdk      Note: specifies the gradient in the outward normal direction
 cwdk      Tmp: in "connector" direction - ok for orthogonal grids
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the corresponding domain cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%smo0(iCv1,0,is)=
      .         VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)*
      .         (mompar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
@@ -3328,8 +3328,8 @@ cxpb  and max(,,) statement for stability
      2       BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             cs   = sqrt(pr(iCv1)/ro(iCv1))
             s1hz = geo%fcPbshz(iFc)
             vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
@@ -3570,8 +3570,8 @@ cwdk      TODO: drift contributions
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          srw%she0(iCv1,0) =  UBIG*NE00*geo%fcS(iFc)*enepar(iB,1)*EV
-          srw%she0(iCv1,1) = -UBIG*NE00*geo%fcS(iFc)
+          srw%she0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*enepar(iB,1)*EV
+          srw%she0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
         enddo
 
         GOTO 30000
@@ -5451,8 +5451,8 @@ cwdk    Todo: corrections for mdf_fhe, BCCON.ne.14
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          srw%shi0(iCv1,0) =  UBIG*NE00*geo%fcS(iFc)*enipar(iB,1)*EV
-          srw%shi0(iCv1,1) = -UBIG*NE00*geo%fcS(iFc)
+          srw%shi0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*enipar(iB,1)*EV
+          srw%shi0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
         enddo
         GOTO 40000
 
@@ -7810,7 +7810,7 @@ cwdk    Todo: check sign convention; do we want to specify gradient in
 cwdk          normal/radial/poloidal direction ???
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the corresponding domain cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%sch0(iCv1,0) =  PBIG*geo%fcS(iFc)*
      .      (potpar(ib,1)*(geo%fcHc(iFc,1)+geo%fcHc(iFc,2))+pl%po(iCv2))

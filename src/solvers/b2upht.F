@@ -134,7 +134,7 @@ cwdk: now: interpolate wrkf from faces to centers
 cwdk  needed: "distribute" wrkf to centers based on volume
       call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf, wrk)
       if (ua_solve) then
-       do iCv = 1, nCv
+       do iCv = 1, mpg%nCi
         ireg = mpg%cvReg(iCv)
         t0 = pcm0*pccm0(iCv)*wrk(iCv)
         do is = 0, ns-1
