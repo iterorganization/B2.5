@@ -831,8 +831,8 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
-      call b2tfcc (nx, ny, ns, hx, hy, vol, qs, na, te, ti, cdpa, 
-     &  floe, cone, floi, coni)
+!      call b2tfcc (nx, ny, ns, hx, hy, vol, qs, na, te, ti, cdpa, 
+!     &  floe, cone, floi, coni)
       if(ue_style.ne.2) then
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
        do iy=-1,ny
