@@ -178,7 +178,6 @@ csw 10oct2012
       dv%fchvisper = 0.0_R8
       dv%fchvisq   = 0.0_R8
       dv%fchinert  = 0.0_R8
-      dv%fchanml   = 0.0_R8
       dv%fhePSch   = 0.0_R8
 !WG_TODO      avisper = 0.0_R8
 !WG_TODO      bvisper = 0.0_R8
@@ -206,8 +205,10 @@ c Drift terms
 *  ..  calculate inertia current                                         !srv 07.07.99
       call b2tiner (nx, ny, ns, vol, gs, hx, hy, qs, bb, na, ua,         !srv 22.11.12
      &              facdrift, fchinert)
+#endif
 *  .. calculate the x,y-components of anomalous current
-      call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml)
+      call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an,pl%po,dv%fchanml)
+#ifdef WG_TODO
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,     !srv 07.07.14
@@ -267,12 +268,15 @@ c Drift terms
      .  cone, fhePSch)                                                   !srv 16.10.17
 
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
-
+#endif
 * ..compute parallel current
-      call b2xehx (nx, ny, hx, hy, qz, qs, te, po, ne, ehx_)             !srv 13.01.17 {
-      call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy_)             !srv 13.01.17
-      call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
+      call b2xehx (nCv, nFc, nVx, geo, mpg, pl%te, pl%po, dv%ne, ehx)    !srv 13.01.17 {
+      call b2xehy (nCv, nFc, nVx, geo, mpg, pl%te, pl%po, dv%ne, ehy)    !srv 13.01.17
+      call b2tcpa (nCv, nFc, nVx, geo, mpg, pl%te, pl%po, dv%ne, 
+     &             co%csig, co%calf, ehx, dv%fch_p)
       if(style.eq.2) then
+        call xerrab ('b2sigp_style 2 not yet supported')
+#ifdef WG_TODO
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
         call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
         call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
@@ -281,16 +285,19 @@ c Drift terms
             c071(ix,iy) = fce2n(zeff(ix,iy))
           end do
         end do
+#endif
       else
-        fch_pi_f = 0.0_R8                                              !srv 04.04.17
+        dv%fch_pi_f = 0.0_R8                                           !srv 04.04.17
         c071 = 0.71e0_R8                                               !srv 13.01.17
       endif
-      fch_p = fch_p - fch_pi_f                                         !srv 13.01.17 }
-#endif
-!WG_TODO: tmp: set zero
-      ehx  = 0.0e0_R8
-      ehy  = 0.0e0_R8
-      c071 = 0.71e0_R8
+      dv%fch_p = dv%fch_p - dv%fch_pi_f                                !srv 13.01.17 }
+
+      if(pot_eq.ne.1 .and. no_current.ne.0) then                       !srv 27.02.13
+        dv%fch_p = 0.0e0_R8
+        ehx      = 0.0_R8                                              !srv 27.02.13
+        ehy      = 0.0_R8                                              !srv 27.02.13
+      endif                                                            !srv 30.12.09 }
+
 
 *   ..interpolate ne and te to cell faces
       wght = 1.0_R8

@@ -1698,16 +1698,18 @@ cwdk      type(B2StateExt), public, save :: state_ext
           st % dv % fllimi(ifc) = fllimi(ix,iy)
           st % dv % floi(ifc,0:1) = floi(ix,iy,0,0:1)
           st % dv % coni(ifc,0:1,:) = coni(ix,iy,0,0:1,:)
+          st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,0,0:1)
+          st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,0,0:1)
 
 !B2PlasmaSnapshot
-          st % psnl % fch(ifc,0:1) = fch(ix,iy,0,0:1)
-          st % psnl % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
-          st % psnl % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
-          st % psnl % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
-          st % psnc % fch(ifc,0:1) = fch(ix,iy,0,0:1)
-          st % psnc % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
-          st % psnc % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
-          st % psnc % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
+!          st % psnl % fch(ifc,0:1) = fch(ix,iy,0,0:1)
+!          st % psnl % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
+!          st % psnl % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
+!          st % psnl % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
+!          st % psnc % fch(ifc,0:1) = fch(ix,iy,0,0:1)
+!          st % psnc % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
+!          st % psnc % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
+!          st % psnc % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
 
         end do
       end do
@@ -1831,16 +1833,19 @@ cwdk      type(B2StateExt), public, save :: state_ext
           st % dv % fllimi(ifc) = fllimi(ix,iy)
           st % dv % floi(ifc,0:1) = floi(ix,iy,1,0:1)
           st % dv % coni(ifc,0:1,:) = coni(ix,iy,1,0:1,:)
+          st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,1,0:1)
+          st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,1,0:1)
+
           
 ! B2PlasmaSnapshot
-          st % psnl % fch(ifc,0:1) = fch(ix,iy,1,0:1)
-          st % psnl % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
-          st % psnl % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
-          st % psnl % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
-          st % psnc % fch(ifc,0:1) = fch(ix,iy,1,0:1)
-          st % psnc % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
-          st % psnc % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
-          st % psnc % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
+!          st % psnl % fch(ifc,0:1) = fch(ix,iy,1,0:1)
+!          st % psnl % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
+!          st % psnl % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
+!          st % psnl % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
+!          st % psnc % fch(ifc,0:1) = fch(ix,iy,1,0:1)
+!         st % psnc % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
+!          st % psnc % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
+!          st % psnc % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
 
         end do
       end do     
@@ -2405,16 +2410,19 @@ cwdk      type(B2StateExt), public, save :: state_ext
           fllimi(ix,iy)       = st % dv % fllimi(ifc)
           floi(ix,iy,0,0:1)   = st % dv % floi(ifc,0:1)
           coni(ix,iy,0,0:1,:) = st % dv % coni(ifc,0:1,:)
+          floe_noc(ix,iy,0,0:1) = st % dv % floe_noc(ifc,0:1)
+          floi_noc(ix,iy,0,0:1) = st % dv % floi_noc(ifc,0:1)
+
 
 !B2PlasmaSnapshot
-          fch(ix,iy,0,0:1)        = st % psnl % fch(ifc,0:1)
-          fna(ix,iy,0,0:1,0:ns-1) = st % psnl % fna(ifc,0:1,0:ns-1)
-          fhe(ix,iy,0,0:1)        = st % psnl % fhe(ifc,0:1)
-          fhi(ix,iy,0,0:1)        = st % psnl % fhi(ifc,0:1)
-          fch(ix,iy,0,0:1)        = st % psnc % fch(ifc,0:1)
-          fna(ix,iy,0,0:1,0:ns-1) = st % psnc % fna(ifc,0:1,0:ns-1)
-          fhe(ix,iy,0,0:1)        = st % psnc % fhe(ifc,0:1)
-          fhi(ix,iy,0,0:1)        = st % psnc % fhi(ifc,0:1)
+!          fch(ix,iy,0,0:1)        = st % psnl % fch(ifc,0:1)
+!          fna(ix,iy,0,0:1,0:ns-1) = st % psnl % fna(ifc,0:1,0:ns-1)
+!          fhe(ix,iy,0,0:1)        = st % psnl % fhe(ifc,0:1)
+!          fhi(ix,iy,0,0:1)        = st % psnl % fhi(ifc,0:1)
+!          fch(ix,iy,0,0:1)        = st % psnc % fch(ifc,0:1)
+!          fna(ix,iy,0,0:1,0:ns-1) = st % psnc % fna(ifc,0:1,0:ns-1)
+!          fhe(ix,iy,0,0:1)        = st % psnc % fhe(ifc,0:1)
+!          fhi(ix,iy,0,0:1)        = st % psnc % fhi(ifc,0:1)
 
         end do
       end do
@@ -2540,16 +2548,18 @@ cwdk      type(B2StateExt), public, save :: state_ext
           fllimi(ix,iy)       = st % dv % fllimi(ifc)
           floi(ix,iy,1,0:1)   = st % dv % floi(ifc,0:1)
           coni(ix,iy,1,0:1,:) = st % dv % coni(ifc,0:1,:)
+          floe_noc(ix,iy,1,0:1) = st % dv % floe_noc(ifc,0:1)
+          floi_noc(ix,iy,1,0:1) = st % dv % floi_noc(ifc,0:1)
           
 ! B2PlasmaSnapshot
-          fch(ix,iy,1,0:1)        = st % psnl % fch(ifc,0:1)
-          fna(ix,iy,1,0:1,0:ns-1) = st % psnl % fna(ifc,0:1,0:ns-1)
-          fhe(ix,iy,1,0:1)        = st % psnl % fhe(ifc,0:1)
-          fhi(ix,iy,1,0:1)        = st % psnl % fhi(ifc,0:1)
-          fch(ix,iy,1,0:1)        = st % psnc % fch(ifc,0:1)
-          fna(ix,iy,1,0:1,0:ns-1) = st % psnc % fna(ifc,0:1,0:ns-1)
-          fhe(ix,iy,1,0:1)        = st % psnc % fhe(ifc,0:1)
-          fhi(ix,iy,1,0:1)        = st % psnc % fhi(ifc,0:1)
+!          fch(ix,iy,1,0:1)        = st % psnl % fch(ifc,0:1)
+!          fna(ix,iy,1,0:1,0:ns-1) = st % psnl % fna(ifc,0:1,0:ns-1)
+!          fhe(ix,iy,1,0:1)        = st % psnl % fhe(ifc,0:1)
+!          fhi(ix,iy,1,0:1)        = st % psnl % fhi(ifc,0:1)
+!          fch(ix,iy,1,0:1)        = st % psnc % fch(ifc,0:1)
+!          fna(ix,iy,1,0:1,0:ns-1) = st % psnc % fna(ifc,0:1,0:ns-1)
+!          fhe(ix,iy,1,0:1)        = st % psnc % fhe(ifc,0:1)
+!          fhi(ix,iy,1,0:1)        = st % psnc % fhi(ifc,0:1)
 
         end do
       end do     
