@@ -71,6 +71,7 @@ csw 30apr2014 added fna_he, ia
       integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
       integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
       integer, save :: b2kin=0, b2vis=0
+      integer, save :: guard_flows = 2   
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
@@ -132,6 +133,7 @@ cpax
        call ipgeti ('b2tfhi_flo53', flo53)
        call ipgeti ('b2tfhi_b2kin', b2kin)
        call ipgeti ('b2tfhi_b2vis', b2vis)
+       call ipgeti ('b2news_guard_flows', guard_flows)                  !xpb
       endif                                                             !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -1225,6 +1227,28 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
 
        enddo
       enddo
+
+      if (guard_flows.eq.0 .or. guard_flows.eq.2) then
+cxpb turn off flows between boundary cells
+        do iy = -1, ny
+          do ix = -1, nx
+            if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+             fhi(ix,iy,1,:)=0.0_R8
+             fhi_mdf(ix,iy,:,1)=0.0_R8
+             fhiPSch(ix,iy,:,1)=0.0_R8
+             floi(ix,iy,1,:)=0.0_R8
+             coni(ix,iy,1,:,:)=0.0_R8
+            endif
+            if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
+             fhi(ix,iy,0,:)=0.0_R8
+             fhi_mdf(ix,iy,:,0)=0.0_R8
+             fhiPSch(ix,iy,:,0)=0.0_R8
+             floi(ix,iy,0,:)=0.0_R8
+             coni(ix,iy,0,:,:)=0.0_R8
+            endif
+          enddo
+        enddo
+      endif
 
 csw 18feb2014 remove fluxes between guard cells 
         do ix=-1,nx

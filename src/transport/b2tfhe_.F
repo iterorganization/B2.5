@@ -100,6 +100,7 @@
 csw 10oct2012
       integer, save :: b2_upwind = 0
       integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
+      integer, save :: guard_flows = 2   
 
       character(3) :: charns, charns0
       real (kind=R8), save :: alfTeEh = 0.0_R8                           !srv 28.04.08 30.05.08
@@ -197,6 +198,7 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call ipgeti ('b2tfhe_hybr2', b2tfhe_hybr2)
        call ipgeti ('b2tfhe_flo53', flo53)
        call ipgeti ('b2sigp_style', style)                               !srv 13.01.17
+       call ipgeti ('b2news_guard_flows', guard_flows)                   !xpb
        endif                                                             !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -1122,6 +1124,28 @@ cwdk for now, fch(:,:,1,0) should stay zero...
 
        enddo
       enddo
+
+      if (guard_flows.eq.0 .or. guard_flows.eq.2) then
+cxpb turn off flows between boundary cells
+        do iy = -1, ny
+          do ix = -1, nx
+            if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+             fhe(ix,iy,1,:)=0.0_R8
+             fhe_mdf(ix,iy,1,:)=0.0_R8
+             fhePSch(ix,iy,1,:)=0.0_R8
+             floe(ix,iy,1,:)=0.0_R8
+             cone(ix,iy,1,:,:)=0.0_R8
+            endif
+            if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
+             fhe(ix,iy,0,:)=0.0_R8
+             fhe_mdf(ix,iy,:,0)=0.0_R8
+             fhePSch(ix,iy,:,0)=0.0_R8
+             floe(ix,iy,0,:)=0.0_R8
+             cone(ix,iy,0,:,:)=0.0_R8
+            endif
+          enddo
+        enddo
+      endif
 
 csw 18feb2014 remove fluxes between guard cells
       do ix=-1,nx
