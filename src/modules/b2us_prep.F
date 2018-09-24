@@ -2297,6 +2297,121 @@ cwdk      type(B2StateExt), public, save :: state_ext
         rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
       end do
 
+! Corner cells: add-hoc interpolation
+        iy=-1                                                         !srv 27.06.08 {
+        do ix = -1, nx
+          if(leftix(ix,iy).eq.-2 ) then
+           na(ix,iy,:) = exp(
+     .      log(na(rightix(ix,iy),rightiy(ix,iy),:)) + 
+     .      log(na(topix(ix,iy),topiy(ix,iy),:)) - 
+     &      log(na(topix(rightix(ix,iy),rightiy(ix,iy)),
+     &             topiy(rightix(ix,iy),rightiy(ix,iy)),:)))
+           ua(ix,iy,:) = 
+     .      ua(rightix(ix,iy),rightiy(ix,iy),:) + 
+     .      ua(topix(ix,iy),topiy(ix,iy),:) - 
+     &      ua(topix(rightix(ix,iy),rightiy(ix,iy)),
+     &             topiy(rightix(ix,iy),rightiy(ix,iy)),:)
+           te(ix,iy) = exp(
+     .      log(te(rightix(ix,iy),rightiy(ix,iy))) + 
+     .      log(te(topix(ix,iy),topiy(ix,iy))) - 
+     &      log(te(topix(rightix(ix,iy),rightiy(ix,iy)),
+     &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
+           ti(ix,iy) = exp(
+     .      log(ti(rightix(ix,iy),rightiy(ix,iy))) + 
+     .      log(ti(topix(ix,iy),topiy(ix,iy))) - 
+     &      log(ti(topix(rightix(ix,iy),rightiy(ix,iy)),
+     &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
+           po(ix,iy) = 
+     .      po(rightix(ix,iy),rightiy(ix,iy)) + 
+     .      po(topix(ix,iy),topiy(ix,iy)) - 
+     &      po(topix(rightix(ix,iy),rightiy(ix,iy)),
+     &             topiy(rightix(ix,iy),rightiy(ix,iy)))
+          endif
+          if(rightix(ix,iy).eq.nx+1 ) then
+           na(ix,iy,:) = exp(
+     .      log(na(leftix(ix,iy),leftiy(ix,iy),:)) + 
+     .      log(na(topix(ix,iy),topiy(ix,iy),:)) - 
+     &      log(na(topix(leftix(ix,iy),leftiy(ix,iy)),
+     &             topiy(leftix(ix,iy),leftiy(ix,iy)),:)))
+           ua(ix,iy,:) = 
+     .      ua(leftix(ix,iy),leftiy(ix,iy),:) + 
+     .      ua(topix(ix,iy),topiy(ix,iy),:) - 
+     &      ua(topix(leftix(ix,iy),leftiy(ix,iy)),
+     &             topiy(leftix(ix,iy),leftiy(ix,iy)),:)
+           te(ix,iy) = exp(
+     .      log(te(leftix(ix,iy),leftiy(ix,iy))) + 
+     .      log(te(topix(ix,iy),topiy(ix,iy))) - 
+     &      log(te(topix(leftix(ix,iy),leftiy(ix,iy)),
+     &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
+           ti(ix,iy) = exp(
+     .      log(ti(leftix(ix,iy),leftiy(ix,iy))) + 
+     .      log(ti(topix(ix,iy),topiy(ix,iy))) - 
+     &      log(ti(topix(leftix(ix,iy),leftiy(ix,iy)),
+     &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
+           po(ix,iy) = 
+     .      po(leftix(ix,iy),leftiy(ix,iy)) + 
+     .      po(topix(ix,iy),topiy(ix,iy)) - 
+     &      po(topix(leftix(ix,iy),leftiy(ix,iy)),
+     &             topiy(leftix(ix,iy),leftiy(ix,iy)))
+          endif
+        enddo
+        iy=ny
+        do ix = -1, nx
+          if(leftix(ix,iy).eq.-2 ) then
+           na(ix,iy,:) = exp(
+     .      log(na(rightix(ix,iy),rightiy(ix,iy),:)) + 
+     .      log(na(bottomix(ix,iy),bottomiy(ix,iy),:)) - 
+     &      log(na(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &             bottomiy(rightix(ix,iy),rightiy(ix,iy)),:)))
+           ua(ix,iy,:) = 
+     .      ua(rightix(ix,iy),rightiy(ix,iy),:) + 
+     .      ua(bottomix(ix,iy),bottomiy(ix,iy),:) - 
+     &      ua(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &             bottomiy(rightix(ix,iy),rightiy(ix,iy)),:)
+           te(ix,iy) = exp(
+     .      log(te(rightix(ix,iy),rightiy(ix,iy))) + 
+     .      log(te(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     &      log(te(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
+           ti(ix,iy) = exp(
+     .      log(ti(rightix(ix,iy),rightiy(ix,iy))) + 
+     .      log(ti(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     &      log(ti(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
+           po(ix,iy) = 
+     .      po(rightix(ix,iy),rightiy(ix,iy)) + 
+     .      po(bottomix(ix,iy),bottomiy(ix,iy)) - 
+     &      po(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))
+          endif
+          if(rightix(ix,iy).eq.nx+1 ) then
+           na(ix,iy,:) = exp(
+     .      log(na(leftix(ix,iy),leftiy(ix,iy),:)) + 
+     .      log(na(bottomix(ix,iy),bottomiy(ix,iy),:)) - 
+     &      log(na(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &             bottomiy(leftix(ix,iy),leftiy(ix,iy)),:)))
+           ua(ix,iy,:) = 
+     .      ua(leftix(ix,iy),leftiy(ix,iy),:) + 
+     .      ua(bottomix(ix,iy),bottomiy(ix,iy),:) - 
+     &      ua(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &             bottomiy(leftix(ix,iy),leftiy(ix,iy)),:)
+           te(ix,iy) = exp(
+     .      log(te(leftix(ix,iy),leftiy(ix,iy))) + 
+     .      log(te(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     &      log(te(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
+           ti(ix,iy) = exp(
+     .      log(ti(leftix(ix,iy),leftiy(ix,iy))) + 
+     .      log(ti(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     &      log(ti(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
+           po(ix,iy) = 
+     .      po(leftix(ix,iy),leftiy(ix,iy)) + 
+     .      po(bottomix(ix,iy),bottomiy(ix,iy)) - 
+     &      po(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))
+          endif
+        enddo                                                         !srv 27.06.08 }
 
 
 ! x faces
