@@ -20,7 +20,7 @@
      *   solveet(:),
      *   last_solve_5(:),
      *   last_solve_7(:),                                 !srv 02.04.18
-     *   last_solve_9(:)
+     *   last_solve_9(:),
      *   last_solve_11(:)                                 !srv 02.04.18
 #else
 #     include "DIMENSIONS.F"
