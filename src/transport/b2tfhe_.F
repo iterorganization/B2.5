@@ -1135,6 +1135,16 @@ cxpb turn off flows between boundary cells
              fhePSch(ix,iy,1,:)=0.0_R8
              floe(ix,iy,1,:)=0.0_R8
              cone(ix,iy,1,:,:)=0.0_R8
+             fch(ix,iy,1,:)=0.0_R8
+             fchin(ix,iy,1,:)=0.0_R8
+             fchdia(ix,iy,1,:)=0.0_R8
+             fchvispar(ix,iy,1,:)=0.0_R8
+             fchvisq(ix,iy,1,:)=0.0_R8
+             fchinert(ix,iy,1,:)=0.0_R8
+             fchvisper(ix,iy,1,:)=0.0_R8
+             fchanml(ix,iy,1,:)=0.0_R8
+             fchstoch(ix,iy)=0.0_R8
+             conc(ix,iy,1,:)=0.0_R8
             endif
             if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
              fhe(ix,iy,0,:)=0.0_R8
@@ -1142,6 +1152,15 @@ cxpb turn off flows between boundary cells
              fhePSch(ix,iy,:,0)=0.0_R8
              floe(ix,iy,0,:)=0.0_R8
              cone(ix,iy,0,:,:)=0.0_R8
+             fch(ix,iy,0,:)=0.0_R8
+             fchin(ix,iy,0,:)=0.0_R8
+             fchdia(ix,iy,0,:)=0.0_R8
+             fchvispar(ix,iy,0,:)=0.0_R8
+             fchvisq(ix,iy,0,:)=0.0_R8
+             fchinert(ix,iy,0,:)=0.0_R8
+             fchvisper(ix,iy,0,:)=0.0_R8
+             fchanml(ix,iy,0,:)=0.0_R8
+             conc(ix,iy,0,:)=0.0_R8
             endif
           enddo
         enddo
