@@ -55,7 +55,7 @@ csw 19oct2012, added save attribute!!!
 
       integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
-     1 nesepm_istra, use_recyceir
+     1 nesepm_istra, use_recyceir, b2stbc_feedback
       integer, allocatable, save :: feedback_strata(:)
       logical feedback_stratum
       real (kind=R8) ::
@@ -142,7 +142,7 @@ c      data lis_hlp / 110, 111, 112, 49 /
      1 repeat_first_call, ionising_core, dpc_fix, eircount,
      2 no_sseicorr, save_f30, stab_corr
       save ncall, output_style, saved_volrec_used,
-     * pfrregno1, pfrregno2, solregno, isfeedback,
+     * pfrregno1, pfrregno2, solregno, isfeedback, b2stbc_feedback,
      * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
      * neutral_sources_rescale, ncallfeedback, ank_mods, save_f31,
      1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
@@ -208,7 +208,7 @@ csw 26feb2014
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
 *   ..initialisation
       data ncall/0/, output_style/1/, saved_volrec_used/.false./,
-     .  linearisation/1/, solregno/3/,
+     .  linearisation/1/, solregno/3/, b2stbc_feedback/0/,
      1  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, ncallfeedback/0/,
      2  neutral_sources_rescale/1.0_R8/, rec_tol/1.e-4_R8/,
      3  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm_istra/-1/,
@@ -268,6 +268,8 @@ c not sure this is the right place
      >   call ipgeti ('eirene_mc_linearization', linearisation)
         call xertst (linearisation.eq.1 .or. linearisation.eq.0,
      .   'faulty input parameter linearisation')
+        call ipgetr ('b2stbc_feedback', b2stbc_feedback)
+        lfeedback = b2stbc_feedback.ne.0
         call ipgetr ('b2stbc_ndes', ndes)
         call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
         call ipgetr ('b2stbc_nesepm_sol', nesepm_sol)
@@ -290,7 +292,7 @@ c not sure this is the right place
      1   'faulty internal parameter isfeedback')
         feedback_strata=0
         call ipgeti ('eirene_nesepm_istra', nesepm_istra)
-        if(nesepm_istra.gt.0) then
+        if(nesepm_istra.gt.0.and.lfeedback) then
           call xertst (nesepm_istra.le.nstrat,
      1     'faulty internal parameter nesepm_istra')
           call xertst (crcstra(nesepm_istra).eq.'C',
@@ -302,15 +304,15 @@ c not sure this is the right place
             endif
           enddo
         endif
-        if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
+        if((ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
      &    private_flux_puff.gt.0.0_R8.or.nesepm_sol.gt.0.0_R8.or.
      *    volrec_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8.or.
-     &    nepedm_sol.gt.0.0_R8) then
+     &    nepedm_sol.gt.0.0_R8).and.lfeedback) then
           call xertst (nesepm_istra.gt.0,
      &     'No "C" stratum for feedback scheme specified !')
           icount = 0
           do istrai = 1, nstrat
-            if (crcstra(istrai).eq.'C' .and.
+            if (crcstra(istrai).eq.'C' .and. lfeedback .and.
      .          species_start(istrai).le.isfeedback .and.
      .          species_end(istrai).ge.isfeedback) icount = icount+1
           end do
@@ -335,20 +337,22 @@ c not sure this is the right place
         call ipgeti ('b2stbc_pfrregno1', pfrregno1)
         call ipgeti ('b2stbc_pfrregno2', pfrregno2)
         call ipgeti ('b2stbc_solregno', solregno)
-        if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
-     1     .or.nesepm_pfr.gt.0.0_R8) then !{
-          call xertst (cbirso.le.pfrregno1.and.
-     1     pfrregno1.le.cbirso+cbnrso-1,
-     2     'faulty internal parameter pfrregno1')
-          call xertst (cbirso.le.pfrregno2.and.
-     1     pfrregno2.le.cbirso+cbnrso-1,
-     2     'faulty internal parameter pfrregno2')
-        endif !}
-        if (nesepm_sol.gt.0.0_R8.or.volrec_sol.gt.0.0_R8.or.
-     1      nepedm_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8) then
-          call xertst (cbirno.le.solregno.and.
-     1     solregno.le.cbirno+cbnrno-1,
-     2     'faulty internal parameter solregno')
+        if (lfeedback) then
+           if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
+     1       .or.nesepm_pfr.gt.0.0_R8) then !{
+            call xertst (cbirso.le.pfrregno1.and.
+     1       pfrregno1.le.cbirso+cbnrso-1,
+     2       'faulty internal parameter pfrregno1')
+            call xertst (cbirso.le.pfrregno2.and.
+     1       pfrregno2.le.cbirso+cbnrso-1,
+     2       'faulty internal parameter pfrregno2')
+          endif !}
+          if (nesepm_sol.gt.0.0_R8.or.volrec_sol.gt.0.0_R8.or.
+     1        nepedm_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8) then
+            call xertst (cbirno.le.solregno.and.
+     1       solregno.le.cbirno+cbnrno-1,
+     2       'faulty internal parameter solregno')
+          endif
         endif
         call ipgetr ('b2mndr_rescale_neutrals_sources',
      *       neutral_sources_rescale)
@@ -609,7 +613,7 @@ c*** recyc     : fudge factors for the sources in B2
         else if(crcstra(istrai).eq.'C') then !}{
           if (ncall.ge.ncallfeedback.and.istrai.eq.nesepm_istra.and.
      &     (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
-     &      private_flux_puff.gt.0.0_R8)) then !{
+     &      private_flux_puff.gt.0.0_R8).and.lfeedback) then !{
             if (pfrregno1.ne.pfrregno2) then !{
               tflux(istrai)=(cbsna(0,isfeedback,pfrregno1)+
      1         cbsna(0,isfeedback,pfrregno2))/neutral_sources_rescale
@@ -617,7 +621,7 @@ c*** recyc     : fudge factors for the sources in B2
               tflux(istrai)=
      1         cbsna(0,isfeedback,pfrregno1)/neutral_sources_rescale
             end if !}
-            if(ncall.eq.0) then
+            if(ncall.eq.ncallfeedback) then
               if(nesepm_pfr.gt.0.0_R8) then
                 write(*,*) '"nesepm_pfr" feedback on stratum ',istrai
               else if(ndes.gt.0.0_R8) then
@@ -628,28 +632,28 @@ c*** recyc     : fudge factors for the sources in B2
               endif
             endif
           else if (ncall.ge.ncallfeedback.and.nesepm_sol.gt.0.0_R8.and.
-     1     istrai.eq.nesepm_istra) then !}{
+     1     istrai.eq.nesepm_istra.and.lfeedback) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
-            if(ncall.eq.0)
+            if(ncall.eq.ncallfeedback)
      1       write(*,*) '"nesepm_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.volrec_sol.gt.0.0_R8.and.
-     1     istrai.eq.nesepm_istra) then !}{
+     1     istrai.eq.nesepm_istra.and.lfeedback) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
-            if(ncall.eq.0)
+            if(ncall.eq.ncallfeedback)
      1       write(*,*) '"volrec_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.ndes_sol.gt.0.0_R8.and.
-     1     istrai.eq.nesepm_istra) then !}{
+     1     istrai.eq.nesepm_istra.and.lfeedback) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
-            if(ncall.eq.0)
+            if(ncall.eq.ncallfeedback)
      1       write(*,*) '"ndes_sol" feedback on stratum ',istrai
           else if (ncall.ge.ncallfeedback.and.nepedm_sol.gt.0.0_R8.and.
-     1     istrai.eq.nesepm_istra) then !}{
+     1     istrai.eq.nesepm_istra.and.lfeedback) then !}{
             TFLUX(istrai)=
      1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
-            if(ncall.eq.0)
+            if(ncall.eq.ncallfeedback)
      1       write(*,*) '"nepedm_sol" feedback on stratum ',istrai
           else if (time_dep_puff(istrai)) then !}{
             if (tim.lt.gpdata(1,1,istrai)) then
