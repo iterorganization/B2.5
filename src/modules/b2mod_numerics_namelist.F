@@ -193,7 +193,7 @@
      & 'faulty parameter core_dt_factor')
       call xertst (0.0_R8.lt.corr_core_dt,
      & 'faulty parameter corr_core_dt')
-      do is = 0, ns
+      do is = 0, ns-1
         call xertst (0.0_R8.lt.corr_core_dn(is),
      &   'faulty parameter corr_core_dn')
       end do
