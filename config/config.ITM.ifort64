@@ -42,10 +42,26 @@ FC       = ifort
 endif
 endif
 
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
+
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
 else
 FCOPTS   = -O2 -fPIC -assume no2underscore -xavx -fp-model precise
+endif
+
+ifdef USE_OPENMP
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
+else
+FCOPTS  += -openmp
+LDOPTS  += -openmp
+endif
+endif
+
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+LDOPTS  += -i_dynamic
 endif
 
 DBLFC    = ${FC}
@@ -75,12 +91,12 @@ endif
 
 ifdef IMAS_VERSION
 ifndef SOLPS_CPP
-EQUIVS    += -DIMAS
+EQUIVS  += -DIMAS
 endif
-EQUIVS    += -DGGD_OLD
-LD_UAL    ?= `pkg-config imas-ifort --libs` -lxml2
-INCMODS   += `pkg-config imas-ifort --cflags`
-IMASLIBS   = ${LD_UAL} -lggd-ifort -lstdc++
+EQUIVS  += -DGGD_OLD
+LD_UAL  ?= `pkg-config imas-ifort --libs` -lxml2
+INCMODS += `pkg-config imas-ifort --cflags`
+IMASLIBS = ${LD_UAL} -lggd-ifort -lstdc++
 else
 ifdef ITM_ENVIRONMENT_LOADED
 INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
@@ -92,9 +108,7 @@ ifdef LD_CATALYST
 CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
-
 LD       = ${FC}
-LDOPTS   = 
 
 LCPP     = ${LD_SONNET}
 

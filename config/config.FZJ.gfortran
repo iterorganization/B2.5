@@ -28,6 +28,11 @@ else
 FCOPTS = -O2 -fno-second-underscore -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 endif
 
+ifdef USE_OPENMP
+FCOPTS += -fopenmp
+LDOPTS += -fopenmp
+endif
+
 DBLFC = ${FC}
 DDBLOPTION = -Ad # ???
 DBLSED = sed -e s:\#PREC\#:d:g

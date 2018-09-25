@@ -28,6 +28,11 @@ else
 FCOPTS = -O2 -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 endif
 
+ifdef USE_OPENMP
+FCOPTS += -fopenmp
+LDOPTS += -fopenmp
+endif
+
 ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS  += -DIMAS

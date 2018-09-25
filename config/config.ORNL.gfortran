@@ -38,8 +38,15 @@ ifdef SOLPS_DEBUG
 FCOPTS = -g -frange-check -fbounds-check -Wcharacter-truncation -fcheck=all -fbacktrace -ffpe-trap=denormal -ftrapv \
 -Waliasing -Wampersand -Wconversion -Wsurprising -Wc-binding-type -Wintrinsics-std -Wintrinsic-shadow -Wline-truncation -Wtarget-lifetime -Winteger-division -Wreal-q-constant #-Wall
 # -Wimplicit-interface -Wunused-parameter -Wunused -Wtabs
+LDOPTS = -g -C
 else
 FCOPTS = -O2 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
+LDOPTS =
+endif
+
+ifdef USE_OPENMP
+FCOPTS += -fopenmp
+LDOPTS += -fopenmp
 endif
 
 ifdef IMAS_VERSION
@@ -72,12 +79,6 @@ ifdef USE_MPI
 LD = mpif90
 else
 LD = gfortran
-endif
-
-ifdef SOLPS_DEBUG
-LDOPTS = -g -C 
-else
-LDOPTS = 
 endif
 
 LCPP = ${LD_SONNET}

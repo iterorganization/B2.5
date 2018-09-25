@@ -127,10 +127,10 @@
 !$OMP THREADPRIVATE(alpha, gamma, flux_limit_min_ti, area_fix, no_hybr)
 !$OMP THREADPRIVATE(iout, iout_b2wdat, iout_b2npc9, iout_b2npco)
 !$OMP THREADPRIVATE(iout_b2npmo, mdf_fnb, no_Ptncr_x_co, no_Ptncr_y_co)
-!$OMP THREADPRIVATE(pflux_cor, PSch_style, ion_vlct_restrict)
+!$OMP THREADPRIVATE(pflux_cor, ion_vlct_restrict)
 !$OMP THREADPRIVATE(vlct_diagno, drift_style, alpha_, xcur, ycur)
 !$OMP THREADPRIVATE(vis_per, vis_q, xvecrb, xwdia, poleldr, radeldr)
-!$OMP THREADPRIVATE(poldidr, raddidr, PSch)
+!$OMP THREADPRIVATE(poldidr, raddidr)
 *   ..procedures
       real (kind=R8) ::
      *   kmpr, hybr, kap, cvmgp, hy1

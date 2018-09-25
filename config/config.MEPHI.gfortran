@@ -45,6 +45,11 @@ INCMODS  = -I${IMAS_PREFIX}/include/gfortran
 IMASLIBS = ${LD_UAL} -lggd-${COMPILER}
 endif
 
+ifdef USE_OPENMP
+FCOPTS += -fopenmp
+LDOPTS += -fopenmp
+endif
+
 DBLFC = ${FC}
 DDBLOPTION = -Ad # ???
 DBLSED = sed -e s:\#PREC\#:d:g
@@ -71,3 +76,7 @@ LD = $(FC)
 # LDOPTS = -Bstatic
 
 LCPP = ${LD_SONNET}
+
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:

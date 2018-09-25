@@ -46,8 +46,7 @@ c  Tp = Target surface temperature (K).
       real (kind=R8) :: Q, dt
       real (kind=R8) :: Tp(ndepth_nml)
       real (kind=R8) :: u(7*ndepth_nml), u1(7*ndepth_nml)
-      real (kind=R8) :: x(ndepth)
-      real (kind=R8) :: x0, xn, t0, tn, dx(ndepth-1)
+      real (kind=R8) :: t0, tn
       real (kind=R8) :: Cp, Kappa, mass_density
       external Cp, Kappa, mass_density
 

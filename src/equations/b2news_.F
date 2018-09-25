@@ -21,8 +21,6 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
-      use b2mod_ma28_for_9diag
-     &    , only:  loop2_over
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nxtl, nxtr
@@ -574,8 +572,9 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 !$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb)
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
 !$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
+!$OMP& SHARED(zn, zamax)
 !$OMP& SHARED(is_neutral, uadia, ncall, resmo, corua)
-!$OMP& SHARED(guard_flows, facdrift, fac_ExB, vol, pbs, pbshz)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, fac_vis, vol, pbs, pbshz)
 !$OMP& SHARED(cssb, vaecrb, vadia)
 !$OMP& SHARED(wadia, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)
 !$OMP& SHARED(cddi, cvlahz, cvmahz, cdnahz, cdpahz, fchvispar)
@@ -583,6 +582,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
+!$OMP& SHARED(last_solve_7, last_solve_11)
 !$OMP& SHARED(rxf0, sna, pcca, resco, corpa, b2stbr_sna, b2stbm_sna) 
 !$OMP& SHARED(ext_sna)
 #endif
@@ -876,6 +876,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 !! FR possible loop (3) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none) LASTPRIVATE(flob, conb, pb)
 !$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax, ismain)
+!$OMP& SHARED(zamin, zamax)
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
 !$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
 !$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, po, cvla, cdna, cdpa)

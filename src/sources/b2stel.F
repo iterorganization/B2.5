@@ -232,7 +232,7 @@
 !$OMP PARALLEL DO default(none), private(ix, iy, is, rf0, t0, t1)
 !$OMP& shared(ns, nx, ny, rightix, leftix, topiy, bottomiy, zn)
 !$OMP& shared(region, rlsa, rsa, vol, ne, na, ni, te, ti, am, ua)
-!$OMP& shared(rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1)
+!$OMP& shared(phm0, rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1)
 !$OMP& shared(rlra, rra, rpi, rlqa, rqa, rrd, hz)
 !$OMP& shared(sna0_ion, shi0_ion, smq0_ion, she0)
 !$OMP& shared(sna0_rec, shi0_rec, smq0_rec)

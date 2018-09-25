@@ -39,6 +39,11 @@ endif
 endif
 endif
 
+ifdef USE_OPENMP
+FCOPTS += -mp=nonuma
+LDOPTS += -mp=nonuma
+endif
+
 DBLFC = ${FC}
 DBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g

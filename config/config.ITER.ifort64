@@ -68,6 +68,8 @@ FC         = ifort
 endif
 endif
 
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
+
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
 FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all ${MPI_CPP}
@@ -80,26 +82,29 @@ endif
 endif
 else
 ifdef USE_MPI
-ifeq (${FC_VERSION},12.0.2)
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-else
 FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-endif
 else
 ifdef USE_IMPGYRO
-ifeq (${FC_VERSION},12.0.2)
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-else
 FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-endif
-else
-ifeq (${FC_VERSION},12.0.2)
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore
 else
 FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore
 endif
 endif
 endif
+
+ifdef USE_OPENMP
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS    += -qopenmp
+LDOPTS    += -qopenmp
+else
+FCOPTS    += -openmp
+LDOPTS    += -openmp
+endif
+endif
+
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+FCOPTS    += -vec_report0
+LDOPTS    += -i_dynamic
 endif
 
 DBLFC      = ${FC}
@@ -144,9 +149,6 @@ IMASLIBS   = ${LD_UAL}
 endif
 
 LD         = ${FC}
-ifeq (${FC_VERSION},12.0.2)
-LDOPTS     = -i_dynamic
-endif
 ifdef USE_MPI
 LDLIBES   += ${LD_MPI}
 else

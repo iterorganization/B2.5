@@ -29,6 +29,7 @@ else
 FC       = ifort
 endif
 endif
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
 
 ifdef USE_OPENMP
 DEFINES += -D_OPENMP
@@ -36,7 +37,6 @@ endif
 
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives
-LDOPTS   = -i_dynamic
 ifndef SOLPS_DEBUG
 FCOPTS  += -O2 -vec_report0
 else
@@ -47,13 +47,16 @@ FCOPTS  += ${MPI_CPP}
 LDOPTS  += ${LD_MPI}
 endif
 ifdef USE_OPENMP
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
 FCOPTS  += -qopenmp
 LDOPTS  += -qopenmp
 else
 FCOPTS  += -openmp
 LDOPTS  += -openmp
+endif
+
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+LDOPTS  += -i_dynamic
 endif
 
 DBLFC    = ${FC}

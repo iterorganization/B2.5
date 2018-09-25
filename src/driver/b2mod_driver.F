@@ -41,6 +41,7 @@
       use b2mod_boundary_namelist
       use b2mod_external
       use b2mod_mwti
+      use b2mod_openmp
       use b2mod_balance !djm Jan2017
      & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
@@ -870,6 +871,7 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
+       call print_openmp_info()
        balance_netcdf = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
        call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017

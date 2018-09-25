@@ -32,11 +32,14 @@ FCOPTS = -g -gdwarf-2 -fPIC -fbounds-check -fno-second-underscore -fbacktrace -f
 else
 FCOPTS  = -O2 -fPIC -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 endif
+
 ifdef USE_MPI
 FCOPTS += ${MPI_CPP}
 endif
+
 ifdef USE_OPENMP
 FCOPTS += -fopenmp
+LDOPTS += -fopenmp
 endif
 
 DBLFC = ${FC}
@@ -77,7 +80,6 @@ CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 LD = $(FC)
-LDOPTS = # -Bstatic
 
 LCPP = ${LD_SONNET}
 

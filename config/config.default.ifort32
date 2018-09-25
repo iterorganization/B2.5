@@ -31,6 +31,11 @@ else
 FCOPTS = -O3
 endif
 
+ifdef USE_OPENMP
+FCOPTS += -openmp
+LDOPTS += -openmp
+endif
+
 DBLFC=${FC}
 DDBLOPTION=-Ad # ???
 DBLSED = sed -e s:\#PREC\#:d:g
