@@ -126,8 +126,8 @@ c
       common /ma30fdc3/ mirncp, micncp, mirank, mirn, micn
       common /mc23bdc3/ mlp, numnz, num, large, abort
       common /lpivotc3/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
-!$OMP THREADPRIVATE(/ma28edc3/,/ma28fdc3/,/ma28gdc3/,/ma28hdc3/,/ma30idc3/)
-!$OMP THREADPRIVATE(/ma30edc3/,/ma30fdc3/,/mc23bdc3/,/lpivotc3/)
+!$OMP THREADPRIVATE(/ma28edc3/,/ma28fdc3/,/ma28gdc3/,/ma28hdc3/,
+!$OMP&  /ma30idc3/,/ma30edc3/,/ma30fdc3/,/mc23bdc3/,/lpivotc3/)
 c
       integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1,
      * newpos, knum, length, move
@@ -389,8 +389,8 @@ c
       common /ma30edc3/ nlp, aborta, abortb, abort3
       common /ma30gdc3/ meps, mrmin
       common /ma30idc3/ tol1, big1, ndrop1, nsrch1, lbig1
-!$OMP THREADPRIVATE(/ma28edc3/,/ma28fdc3/,/ma28gdc3/,/ma28hdc3/,/ma30edc3/)
-!$OMP THREADPRIVATE(/ma30gdc3/,/ma30idc3/)
+!$OMP THREADPRIVATE(/ma28edc3/,/ma28fdc3/,/ma28gdc3/,/ma28hdc3/,
+!$OMP&  /ma30edc3/,/ma30gdc3/,/ma30idc3/)
 c
       integer i1, idup, iend
 c
@@ -3441,7 +3441,7 @@ c
       common /ma28hdc3/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
 c     common /ma28gdc3/ idisp(2)
-!$OMP THREADPRIVATE(/ma28edc3/,/ma28fdc3/,/ma28hdc3/,/ma28gdc3/)
+!$OMP THREADPRIVATE(/ma28edc3/,/ma28fdc3/,/ma28hdc3/)
       data eps /1.0e-4_R8/
       data tol /0.0e0_R8/, cgce /0.5e0_R8/
       data lp /6/, mp /6/

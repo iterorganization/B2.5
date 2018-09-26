@@ -224,7 +224,7 @@
       logical, save :: lfirst=.true.
       integer i, j, ix, iy, ner, iw, jw, jak, jtemp, ipt, nxp2
       real (kind=R8) :: temp
-!$OMP_THREADPRIVATE(lfirst)
+!$OMP THREADPRIVATE(lfirst)
       if (lfirst) then
        indexes=0
        nxp2=nx+2

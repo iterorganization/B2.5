@@ -46,7 +46,7 @@ c ma28 common blocks
       logical lbig
       common /ma28hdc3/ tol,themax,big,dxmax,errmax,dres,cgce,     !srv 26.12.17
      1 ndrop,maxit,noiter,nsrch,istart,lbig
-!$OMP THREADPRIVATE(/ma28fdc3/,/ma28hdc/)
+!$OMP THREADPRIVATE(/ma28fdc3/,/ma28hdc3/)
 c
 
 *  -- PROCEDURES --
