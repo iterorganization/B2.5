@@ -15,7 +15,7 @@
       integer, save :: ndigits = 6
 #endif
       character(7), save :: folder                        !srv 26.09.17
-!$omp critical(my_out)
+!$omp critical(synch_my_out)
       if (ncall.eq.0) then
         call ipgeti('b2wdat_append', iappend)
         call ipgeti('my_out_digits', ndigits)
@@ -47,6 +47,6 @@
         write(nwrite,hlp_frm) iy, (fun(ix,iy), ix = -1, nx)
       enddo
       close (nwrite)
-!$omp end critical(my_out)
+!$omp end critical(synch_my_out)
       return
       end
