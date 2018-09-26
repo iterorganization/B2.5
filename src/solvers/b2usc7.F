@@ -8,6 +8,7 @@
       use b2mod_indirect
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
@@ -45,6 +46,7 @@
       real (kind=R8) ::
      *  t0, t1, aa5(-1:nx,-1:ny,-2:2)
       save ncall
+!$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout)
 *   ..procedures
       intrinsic abs
       real (kind=R8) ::
@@ -255,6 +257,14 @@ cxpb
        enddo
       enddo
       if (iout.ne.0) then                                              !srv 17.06.02 {
+       if (in_parallel()) then
+        if (ncall==0) then
+        !$OMP MASTER
+         write(*,*)'OpenMP warning from b2usco: not writing files ',
+     &        'in parallel mode'
+        !$OMP END MASTER
+        end if
+       else
        write (chns,'(i3.3)') isb
        call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2'//chns)
        call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1'//chns)
@@ -271,6 +281,7 @@ cxpb
        call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
        call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
        call my_out(70,nx,ny,nb,name//'_nb'//chns)
+       endif
       endif                                                            !srv 17.06.02 }
 
 * ..return

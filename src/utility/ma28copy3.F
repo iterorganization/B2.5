@@ -126,6 +126,8 @@ c
       common /ma30fdc3/ mirncp, micncp, mirank, mirn, micn
       common /mc23bdc3/ mlp, numnz, num, large, abort
       common /lpivotc3/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
+!$OMP THREADPRIVATE(/ma28edc3/,/ma28fdc3/,/ma28gdc3/,/ma28hdc3/,/ma30idc3/)
+!$OMP THREADPRIVATE(/ma30edc3/,/ma30fdc3/,/mc23bdc3/,/lpivotc3/)
 c
       integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1,
      * newpos, knum, length, move
@@ -387,6 +389,8 @@ c
       common /ma30edc3/ nlp, aborta, abortb, abort3
       common /ma30gdc3/ meps, mrmin
       common /ma30idc3/ tol1, big1, ndrop1, nsrch1, lbig1
+!$OMP THREADPRIVATE(/ma28edc3/,/ma28fdc3/,/ma28gdc3/,/ma28hdc3/,/ma30edc3/)
+!$OMP THREADPRIVATE(/ma30gdc3/,/ma30idc3/)
 c
       integer i1, idup, iend
 c
@@ -502,6 +506,7 @@ c     data or ma28a/ad.
      * irank, abort1, abort2
       common /ma28gdc3/ idisp
       common /ma30hdc3/ mresid
+!$OMP THREADPRIVATE(/ma28fdc3/,/ma28gdc3/,/ma30hdc3/)
 c
 c this call performs the solution of the set of equations.
       call ma30cdcopy3(n, icn, a, licn, ikeep, ikeep(1,4), ikeep(1,5),
@@ -529,6 +534,7 @@ c     it also calculates the largest element in the input matrix.
       logical lblock, grow, blockl
       common /ma28edc3/ lp, mp, lblock, grow
       common /ma28gdc3/ idisp
+!$OMP THREADPRIVATE(/ma28edc3/,/ma28gdc3/)
 c
       integer ii, i, jj, j1, j2, iold, inew, jnew, jold,
      * idisp2, iblock, jcomp, idummy, jdummy, midpt
@@ -719,6 +725,7 @@ c
       common /ma28edc3/ lp, mp, lblock, grow
       common /ma28hdc3/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
+!$OMP THREADPRIVATE(/ma28edc3/,/ma28hdc3/)
 c
       integer i, iterat, nrow, ncol
 c
@@ -1032,6 +1039,7 @@ c for comments of common block variables see block data subprogram.
       common /ma30fdc3/ irncp, icncp, irank, minirn, minicn
       common /ma30idc3/ tol, big, ndrop, nsrch, lbig
       common /lpivotc3/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
+!$OMP THREADPRIVATE(/ma30edc3/,/ma30fdc3/,/ma30idc3/,/lpivotc3/)
 c
       integer i, j, k, l, n, i1, i2, ii, j1, j2, jj, kk, ll, iii,
      * lc, lr, nc, nr, nz, nz2, nzpc,
@@ -1046,6 +1054,7 @@ c
 #ifdef DBG
       real (kind=R8) :: product
       real (kind=R8), save :: cutlo
+!$OMP THREADPRIVATE(cutlo)
 #endif
 c
       data umax/.999999999e0_R8/
@@ -2055,12 +2064,14 @@ c see block data for comments on variables in common.
       common /ma30edc3/ lp, abort1, abort2, abort3
       common /ma30idc3/ tol, big, ndrop, nsrch, lbig
       common /ma30gdc3/ eps, rmin
+!$OMP THREADPRIVATE(/ma30edc3/,/ma30idc3/,/ma30gdc3/)
 c
       integer i, j, jj, jay, jayjay, ifin, jfin, istart,
      * ilend, ipivj, ising
 #ifdef DBG
       real (kind=R8) :: product
       real (kind=R8), save :: cutlo
+!$OMP THREADPRIVATE(cutlo)
 #endif
 c
       data zero /0.0e0_R8/, one /1.0e0_R8/
@@ -2268,6 +2279,7 @@ c
       integer icn(licn), lenr(n), lenrl(n), lenoff(n), ip(n), iq(n)
 c see block data for comments on variables in common.
       common /ma30hdc3/ resid
+!$OMP THREADPRIVATE(/ma30hdc3/)
 c
       integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2,
      * iend, iback, ifirst, ilast, iblock, iblend,
@@ -2275,6 +2287,7 @@ c
 #ifdef DBG
       real (kind=R8) :: product
       real (kind=R8), save :: cutlo
+!$OMP THREADPRIVATE(cutlo)
 #endif
 c
       data zero /0.0e0_R8/
@@ -2539,6 +2552,7 @@ c
 c see block data for comments on variables in common.
       integer irncp, icncp, irank, minirn, minicn
       common /ma30fdc3/ irncp, icncp, irank, minirn, minicn
+!$OMP THREADPRIVATE(/ma30fdc3/)
 c
       integer j, jpos, k, kn, kl
 c
@@ -3052,6 +3066,7 @@ c###### calls   mc13    mc21
       integer icn(licn),lenr(n),ip(n),iq(n),lenoff(n),iw(n,5)
       integer lp,numnz,num,large
       common /mc23bdc3/ lp,numnz,num,large,abort
+!$OMP THREADPRIVATE(/mc23bdc3/)
 c input ... n,icn .. a,icn,lenr ....
       integer i, j, k, i1, i2, ii, jj, ibeg, iend, inew, iold,
      * jold, jnew, ilend, iblock, irowb, irowe, jnpos, leni, nz
@@ -3426,6 +3441,7 @@ c
       common /ma28hdc3/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
 c     common /ma28gdc3/ idisp(2)
+!$OMP THREADPRIVATE(/ma28edc3/,/ma28fdc3/,/ma28hdc3/,/ma28gdc3/)
       data eps /1.0e-4_R8/
       data tol /0.0e0_R8/, cgce /0.5e0_R8/
       data lp /6/, mp /6/
@@ -3579,6 +3595,7 @@ c
       common /ma30edc3/ lp, abort1, abort2, abort3
       common /ma30gdc3/ eps, rmin
       common /ma30idc3/ tol, big, ndrop, nsrch, lbig
+!$OMP THREADPRIVATE(/ma30edc3/,/ma30gdc3/,/ma30idc3/)
       data eps /1.0e-4_R8/, tol /0.0e0_R8/, big /0.0e0_R8/
       data lp /6/, nsrch /32768/
       data lbig /.false./
@@ -3590,5 +3607,6 @@ c
       integer lp,numnz,num,large
       logical abort
       common /mc23bdc3/ lp,numnz,num,large,abort
+!$OMP THREADPRIVATE(/mc23bdc3/)
       data lp/6/,abort/.false./
       end block data bd3copy3                                           !srv 26.12.17 }

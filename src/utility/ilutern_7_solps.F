@@ -3,6 +3,7 @@
       use b2mod_types
       use b2mod_ma28_for_7diag
       use b2mod_indirect
+      use b2mod_openmp
       IMPLICIT NONE
       external bd1copy3                                            !srv 26.12.17
 C
@@ -45,6 +46,7 @@ c ma28 common blocks
       logical lbig
       common /ma28hdc3/ tol,themax,big,dxmax,errmax,dres,cgce,     !srv 26.12.17
      1 ndrop,maxit,noiter,nsrch,istart,lbig
+!$OMP THREADPRIVATE(/ma28fdc3/,/ma28hdc/)
 c
 
 *  -- PROCEDURES --
@@ -55,6 +57,7 @@ c
       integer, save :: kwrite_fmt = -1                             !srv 18.05.02
       integer, save :: kwrite_bnr = -1                             !srv 18.05.02
       save lfirst, ncall, nwrite
+!$OMP THREADPRIVATE(lfirst, ncall, nwrite, kwrite_fmt, kwrite_bnr)
       data lfirst /.true./, ncall /0/, nwrite /0/
 
 *=======================================================================
@@ -71,6 +74,16 @@ c
         call ipgeti ('ma28_for_7d_kwrite_fmt', kwrite_fmt)          !srv 18.05.02
         call ipgeti ('ma28_for_7d_kwrite_bnr', kwrite_bnr)          !srv 18.05.02
         call ipgetr ('ma28_for_7d_prec', prec)                      !srv 16.01.18
+        if (in_parallel() .and. ( nwrite.ne.0 .or.
+     &     kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
+!$OMP MASTER
+         write(*,*) 'ilutern_9 OpenMP warning: no file IO ' ,
+     &       'in parallel mode'
+!$OMP END MASTER
+         nwrite = 0
+         kwrite_fmt = -1
+         kwrite_bnr = -1
+       endif 
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 

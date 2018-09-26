@@ -7,6 +7,7 @@
       use b2mod_ysmp_sdrv
 !      use b2mod_ma28
       use b2mod_indirect
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -75,6 +76,8 @@
       external subini, subend, xertst, ipgeti, ipgetr, slv5pt, iluter
 *   ..initialisation
       save ncall, style, acpar, cpu
+!$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
+!$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/             !srv 26.12.17
 
 *-----------------------------------------------------------------------
@@ -155,13 +158,21 @@
 *    ..use iluter
        iters = min(itmax,4)
        itpar = itcnt*iters
-       call iluter (nx+2, ny+2, aa7, resfun, iters, acpar, itpar,
+       if (in_parallel()) then
+          stop 'STOP: iluter not parallelised, re-run in serial'
+       else
+          call iluter (nx+2, ny+2, aa7, resfun, iters, acpar, itpar,
      &   corfun, nrmc, aaf, wrk0, wrk1, wrk2)
+       endif
       else if (style.eq.1) then
 *    ..use slv5pt
        iters = 1
-       call slv5pt (nx+2, ny+2, aa7, resfun, iters, corfun, nrmc,
+       if (in_parallel()) then
+         stop 'STOP: slv5pt not parallelised, re-run in serial'
+       else
+         call slv5pt (nx+2, ny+2, aa7, resfun, iters, corfun, nrmc,
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
+       endif
       else if (style.eq.2) then
 *    ..use ma28
         call ilutern_7(NX+2, NY+2, NX+2, aa7(-1,-1,-3),            !srv 11.01.00
@@ -213,7 +224,7 @@
       logical, save :: lfirst=.true.
       integer i, j, ix, iy, ner, iw, jw, jak, jtemp, ipt, nxp2
       real (kind=R8) :: temp
-
+!$OMP_THREADPRIVATE(lfirst)
       if (lfirst) then
        indexes=0
        nxp2=nx+2
