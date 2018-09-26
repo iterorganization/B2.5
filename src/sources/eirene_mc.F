@@ -268,7 +268,7 @@ c not sure this is the right place
      >   call ipgeti ('eirene_mc_linearization', linearisation)
         call xertst (linearisation.eq.1 .or. linearisation.eq.0,
      .   'faulty input parameter linearisation')
-        call ipgetr ('b2stbc_feedback', b2stbc_feedback)
+        call ipgeti ('b2stbc_feedback', b2stbc_feedback)
         lfeedback = b2stbc_feedback.ne.0
         call ipgetr ('b2stbc_ndes', ndes)
         call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
