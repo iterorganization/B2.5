@@ -555,7 +555,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
        endif
       endif                                                               !srv 16.06.08 }
 *   ..apply flux limit to calf                                            !srv 13.01.17 {
-      if(style.ne.2) then
+      if(style.eq.1) then
        if(cflim(0).ne.0.0e0_R8) then
         do iy = -1, ny
          do ix = -1, nx
@@ -574,7 +574,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
          enddo
         enddo
        endif
-      else
+      else if (style.eq.2) then
        if(cflim(3).ne.0.0e0_R8) then
 *   ..apply flux limit to calf at cell faces
         do iy = -1, ny
