@@ -26,7 +26,6 @@ CPPOPTS    = -P -I${srcdir} ${EQUIVS}
 SED        = sed s:\#PREC\#:d:g
 SED        =
 LINK_MOD   = 
-FC_VERSION = $(shell echo `ifort --version | head -1 | awk '{printf "%s ",$$3,"\n"}'`)
 
 ifdef USE_MPI
 ifeq (,$(findstring hpc-login0,${NODENAME}))

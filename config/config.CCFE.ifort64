@@ -12,13 +12,15 @@ ifndef LD_NAG
   $(error LD_NAG not defined)
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
+EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 CPPOPTS  = -C -P -I${srcdir} ${EQUIVS}
 SED      = sed s:\#PREC\#:d:g
 SED      =
 LINK_MOD = 
+
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
 
 ifdef USE_MPI
 FC       = mpif90
@@ -34,6 +36,16 @@ ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
 FCOPTS   = -O2 -fPIC -fp-model precise -assume no2underscore
+endif
+
+ifdef USE_OPENMP
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
+else
+FCOPTS  += -openmp
+LDOPTS  += -openmp
+endif
 endif
 
 DBLFC    = ${FC}
@@ -55,11 +67,11 @@ endif
 
 ifdef IMAS_PREFIX
 ifndef SOLPS_CPP
-EQUIVS    += -DIMAS
+EQUIVS  += -DIMAS
 endif
-LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
-INCMODS   += -I${IMAS_PREFIX}/include/ifort
-IMASLIBS   = ${LD_UAL} -lggd-ifort
+LD_UAL  ?= `pkg-config imas-lowlevel imas-ifort --libs`
+INCMODS += -I${IMAS_PREFIX}/include/ifort
+IMASLIBS = ${LD_UAL} -lggd-ifort
 endif
 
 #wd: removed; seems to be unused
