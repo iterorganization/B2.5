@@ -517,11 +517,17 @@ c<<<
                   flxnt_pump(ls) = flxnt_pump(ls) + 
      &                                    sna_stbc_neut(ls,ic)
 
+                  flxnt_sput(ls) = flxnt_sput(ls) + 
+     &                                    sna_stbr_sput(ls,ic)
+
               elseif ( BCCHAR(ic).EQ.'N' .or. (BCCHAR(ic).EQ.'S' .and.
      & .not. on_closed_surface(BC_LIST_X(1,ic),BC_LIST_Y(1,ic))) ) then
 
 !FIXME
                     flxnw_rec(ls) = flxnw_rec(ls) + sna_stbr_neut(ls,ic)
+
+                    flxnw_sput(ls) = flxnw_sput(ls) + 
+     &                                    sna_stbr_sput(ls,ic)
 
 !             Exclude surfaces with puffing/seeding (for fluid neutrals)
                     if (BCCON(is,ic).ne.5 .and. BCCON(is,ic).ne.8

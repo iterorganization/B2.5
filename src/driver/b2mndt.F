@@ -677,8 +677,8 @@ c-----------------------------------------------------------------------
           enddo
         endif
        endif
-!       write(*,*) 'istra = ',istra, 
-!     &       'lbcstra = ', lbcstra(istra) ! Control print
+       write(*,*) 'istra = ',istra, 
+     &       'lbcstra = ', lbcstra(istra) ! Control print
       enddo
 !  IYS 11.09.2018}
 

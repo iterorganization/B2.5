@@ -329,6 +329,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       neutrals_time_switch=0.0_R8
 
       lstrascl=0
+      lbcstra=0
       b2eatcr=0
       b2espcr=0
       eb2atcr=-1

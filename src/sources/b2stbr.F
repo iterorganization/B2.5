@@ -403,6 +403,9 @@
       fatm_eir = 0.0_R8
       datm_eir = 0.0_R8                                            !srv 29.04.10 }
 
+      sna_stbr_neut = 0.0
+      sna_stbr_sput = 0.0
+
       tchem=0.0_R8
       tchee=0.0_R8
       tphys=0.0_R8

@@ -24,7 +24,8 @@ c
      4  sseereg(:), sseireg(:), ssnireg(:,:),
      5  ssnastra(:,:)   ! IYS 29.09.2017
      6  , sna_eir(:)      ! IYS 12.01.2018
-     7  , sna_stbc_neut(:,:), sna_stbr_neut(:,:)      ! IYS 04.06.2018
+     7  , sna_stbc_neut(:,:), sna_stbr_neut(:,:)       ! IYS 04.06.2018
+     8  , sna_stbr_sput(:,:)
       REAL (kind=R8), allocatable :: 
      .      FEEXGT(:,:), FEEYGT(:,:),
      .      FEIXGT(:,:), FEIYGT(:,:)
@@ -127,7 +128,8 @@ c
       allocate(ssnastra(natm,nstra))      ! IYS 29.09.2017
       allocate(sna_eir(1:nspecies))             ! IYS 12.01.2018
       allocate(sna_stbr_neut(1:nspecies,1:nbcd), 
-     &             sna_stbc_neut(1:nspecies,1:nbcd))             ! IYS 04.06.2018
+     &             sna_stbc_neut(1:nspecies,1:nbcd),             ! IYS 04.06.2018
+     &         sna_stbr_sput(1:nspecies,1:nbcd))                 ! IYS 18.09.2018
       allocate( 
      .      FEEXGT(-1:NXD,-1:NYD), FEEYGT(-1:NXD,-1:NYD),
      .      FEIXGT(-1:NXD,-1:NYD), FEIYGT(-1:NXD,-1:NYD))
@@ -247,6 +249,7 @@ c>>>
       ssnireg=0.0_R8
       ssnastra=0.0_R8
       sna_eir=0.0_R8    ! IYS 12.01.2018
+      sna_stbr_sput=0.0_R8  ! IYS 28.09.2018
       sna_stbr_neut=0.0_R8  ! IYS 04.06.2018
       sna_stbc_neut=0.0_R8  ! IYS 04.06.2018
       rescoreg=0.0_R8
@@ -269,7 +272,7 @@ c>>>
      4  sseereg, sseireg, ssnireg,
      5  ssnastra)
       deallocate(sna_eir)
-      deallocate(sna_stbr_neut)
+      deallocate(sna_stbr_neut, sna_stbr_sput)
       deallocate(sna_stbc_neut)  ! IYS 12.01.2018, 04.06.2018
       deallocate(FEEXGT, FEEYGT, FEIXGT, FEIYGT)
       deallocate(RADARR)

@@ -29,6 +29,7 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_time
+      use b2mod_diag
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
@@ -677,6 +678,31 @@ c      write(*,*) 'Copying sne0 to b2stbc_sne'
      1 sne0(-1:nx,-1:ny,0)+
      2 sne0(-1:nx,-1:ny,1)*ne(-1:nx,-1:ny)
 c      write(*,*) 'Copied s..0 to b2stbc_s..'
+
+! { IYS 04.06.2018
+      sna_stbc_neut = 0.0_R8
+      if (ank_tracing .gt. 0) then    
+        do is = 1,nspecies  ! is stands here for the ls - the index of isonuclear sequences.  Do not mix with the fluid index!!!
+          do iy = 1, nbc  ! iy stands here for the boundary index
+            do ix = 1, BC_LIST_SIZE(iy) ! ix stands here for the index which conuts cells along the boundary
+!           avoid corner cells 
+              if ( .not. (
+     & ( leftix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2 .and. 
+     &       bottomiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2) .or.
+     & ( leftix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2 .and. 
+     &       topiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.ny+1) .or.
+     & ( rightix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.nx+1 .and. 
+     &       bottomiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2) .or.
+     & ( rightix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.nx+1 .and. 
+     &       topiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.ny+1) ) )
+     &        sna_stbc_neut(is,iy) = sna_stbc_neut(is,iy) +
+     &           sna0(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),0,EB2SPCR(is)) + 
+     &           sna0(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),1,EB2SPCR(is)) * 
+     &           na(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),EB2SPCR(is))
+            enddo
+          enddo
+        enddo
+      endif     ! IYS 04.06.2018 }
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
