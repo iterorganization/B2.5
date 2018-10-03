@@ -282,6 +282,11 @@ contains
         integer :: nfcy !< Number of y-aligned faces/edges (1D objects)
         integer :: nvx  !< Number of all vertices/nodes (0D objects)
 
+        character(*), parameter :: VERTEX_FILE = 'vertex_data.out'
+        character(256) :: VERTEX_FILE_TEMP
+        integer, parameter :: VERTEX_UNIT = 99
+        logical :: vertexfileExists
+
         call logmsg( LOGDEBUG, "b2CreateMap: create map for a nx="  &
             &   //int2str(nx)//", ny="//int2str(ny)//" b2 grid" )
 
@@ -712,9 +717,18 @@ contains
         call logmsg( LOGDEBUG, "b2CreateMap: map contains  "    &
             &   //int2str(gd%nvx)//" unique vertices")
 
-    !! Find out how many and which control volumes touch any given vertex
-        nsector = 0
-        do ix = -1, nx
+        !! Find out how many and which control volumes touch any given vertex
+        VERTEX_FILE_TEMP = trim(VERTEX_FILE)
+        call find_file(VERTEX_FILE_TEMP,vertexfileExists)
+        if (vertexfileExists) then
+          ! read vertex file
+          open(unit=VERTEX_UNIT, file=VERTEX_FILE_TEMP)
+          read(VERTEX_UNIT,*) gd%mapCvixVx
+          read(VERTEX_UNIT,*) gd%mapCviyVx
+          close(VERTEX_UNIT)
+        else
+          nsector = 0
+          do ix = -1, nx
             do iy = -1, ny
                 do iCorner = VX_LOWERLEFT, VX_UPPERRIGHT
                     if( vxi( ix, iy, iCorner ) == GRID_UNDEFINED ) cycle
@@ -751,8 +765,13 @@ contains
                     end do
                 end do
             end do
-        end do
-
+         end do
+          VERTEX_FILE_TEMP = trim("../"//VERTEX_FILE)
+          open(unit=VERTEX_UNIT, file=trim(VERTEX_FILE_TEMP))
+          write(VERTEX_UNIT,*) gd%mapCvixVx
+          write(VERTEX_UNIT,*) gd%mapCviyVx
+          close(VERTEX_UNIT)
+        endif
         return
 
 contains

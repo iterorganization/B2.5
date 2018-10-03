@@ -10,9 +10,9 @@
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
-     1 leftix1,leftiy1,rightix1,rightiy1,
-     2 topix1,topiy1,bottomix1,bottomiy1,
-     3 leftcut1,rightcut1,bottomcut1,topcut1,
+     1 leftix1, leftiy1, rightix1, rightiy1,
+     2 topix1, topiy1, bottomix1, bottomiy1,
+     3 leftcut1, rightcut1, bottomcut1, topcut1,
      $ cflags1)
       use b2mod_types
       use b2mod_interp
