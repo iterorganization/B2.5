@@ -69,6 +69,7 @@ c
       write (lun,'(2a)') '# R , Z   : R and Z coordinates of the ',
      ,                                              'cell centers [m];'
       write (lun,'(a)') '# Te : electron temperature [eV];'
+      write (lun,'(a)') '# Ti : ion temperature [eV];'
       write (lun,'(a)') '# ne : electron density [m^⁻3];'
       write (lun,'(a)') '# n_* : species density [m^⁻3];'
       write (lun,'(a)') '# rad_tot : total radiation [MW/m^3];'
@@ -78,14 +79,14 @@ c
       write (lun,'(a)')
 
       write(hlp_frmr,'(a,i3,a,i2,a,i3,a)')
-     , '(a9,7x,a1,11x,a1,10x,a2,10x,a2,7x,',
+     , '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,7x,',
      .  ns,'(1x,a10,1x),',nmoli,'(1x,a9,2x),a7,2x,',
      ,  nspecies,'(4x,a6,2x),3x,a7)'
-      write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','ne',
+      write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','Ti','ne',
      , (hlp_is(i),i=0,ns-1),(hlp_mn(i),i=0,nmoli-1),
      , 'rad_tot',(hlp_al(i),i=1,nspecies),'rad_brm'
       write(hlp_frmr,'(a,i3,a)')
-     , '(1x,1p,2i4,',6+ns+nmoli+nspecies,'e12.4)'
+     , '(1x,1p,2i4,',7+ns+nmoli+nspecies,'e12.4)'
 
       do iy=0,ny-1 !{
         write (lun,*)
@@ -111,7 +112,7 @@ c
             hlp=hlp+hlp_rad(i)
           end do !}
           write (lun,hlp_frmr) ix,iy,
-     ,       cr(ix,iy),cz(ix,iy),te(ix,iy)/ev,ne(ix,iy),
+     ,       cr(ix,iy),cz(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy),
      ,      (hlp_ni(is),is=0,ns-1),(dmb2(ix+1,iy+1,is,1),is=1,nmoli),
      ,       1.0e-6_R8*hlp/vol(ix,iy),
      ,      (1.0e-6_R8*hlp_rad(i)/vol(ix,iy),i=1,nspecies),
