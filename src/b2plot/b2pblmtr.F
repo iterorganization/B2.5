@@ -33,29 +33,34 @@ c
       real (kind=R8), allocatable :: hlp_rad(:), hlp_ni(:)
       real (kind=R8) :: hlp, hlp_brm
       character hlp_frmr*600, species_name*13
-      character*2, allocatable :: hlp_al(:)
-      character*8, allocatable :: hlp_is(:)
+      character*6, allocatable :: hlp_al(:)
+      character*10, allocatable :: hlp_is(:)
+      character*9, allocatable :: hlp_mn(:)
       data use_eirene /0/
 c-----------------------------------------------------------------------
 c*** The plasma data at the cell centers
 c
       call ipgeti ('b2mndr_eirene', use_eirene)
       allocate(hlp_al(nspecies),hlp_rad(nspecies))
+      allocate(hlp_mn(0:nmoli-1))
       allocate(hlp_ni(0:ns-1))
       allocate(hlp_is(0:ns-1))
       do j=1,nspecies !{
-        hlp_al(j)=elements(nfluids(j))
+        hlp_al(j)='rad_'//elements(nfluids(j))
         if(nfluids(j).eq.1) then !{
           if(nint(am(eb2spcr(j))).eq.2) then !{
-            hlp_al(j)='D'
+            hlp_al(j)='rad_D '
           else if(nint(am(eb2spcr(j))).eq.3) then !}{
-            hlp_al(j)='T'
+            hlp_al(j)='rad_T '
           end if !}
         end if !}
       end do !}
       do is=0,ns-1 !{
         call species(is,species_name,.false.)
-        hlp_is(is)=species_name(2:9)
+        hlp_is(is)='n_'//species_name(2:9)
+      enddo !}
+      do is=0,nmoli-1 !{
+        hlp_mn(is)='n_'//textmn(i)(2:8)
       enddo !}
 
       open(lun,file='radsources.dat')
@@ -74,12 +79,11 @@ c
 
       write(hlp_frmr,'(a,i3,a,i2,a,i3,a)')
      , '(a9,7x,a1,11x,a1,10x,a2,10x,a2,7x,',
-     .  ns,'(1x,a2,a8,1x),',nmoli,'(1x,a2,a7,2x),a7,2x,',
-     ,  nspecies,'(4x,a4,a2,2x),3x,a7)'
+     .  ns,'(1x,a10,1x),',nmoli,'(1x,a9,2x),a7,2x,',
+     ,  nspecies,'(4x,a6,2x),3x,a7)'
       write(lun,hlp_frmr) '#  ix  iy','R','Z','Te','ne',
-     , (('n_',hlp_is(i)),i=0,ns-1),
-     , (('n_',textmn(i)(2:8)),i=0,nmoli-1),
-     , 'rad_tot',(('rad_',hlp_al(i)),i=1,nspecies),'rad_brm'
+     , (hlp_is(i),i=0,ns-1),(hlp_mn(i),i=0,nmoli-1),
+     , 'rad_tot',(hlp_al(i),i=1,nspecies),'rad_brm'
       write(hlp_frmr,'(a,i3,a)')
      , '(1x,1p,2i4,',6+ns+nmoli+nspecies,'e12.4)'
 
@@ -115,7 +119,7 @@ c
         end do !}
       end do !}
       close (lun)
-      deallocate(hlp_al,hlp_rad,hlp_ni,hlp_is)
+      deallocate(hlp_al,hlp_rad,hlp_ni,hlp_is,hlp_mn)
       return
 c=======================================================================
       end
