@@ -190,10 +190,17 @@ c      if(nidim .ne. 2) call line(2)
             endif
           else
             if (iystart.le.iyref .and. iyend.ge.iyref) then
-              dsep=wrk(iyref)-
-     1         dist(cr(ixx,iyref),cz(ixx,iyref),
-     1            0.5_R8*(crx(ixx,iyref,0)+crx(ixx,iyref,1)),
-     2            0.5_R8*(cry(ixx,iyref,0)+cry(ixx,iyref,1)))
+              if (iyref.le.jsep) then
+                dsep=wrk(iyref)+
+     1           dist(cr(ixc,iyref),cz(ixc,iyref),
+     1              0.5_R8*(crx(ixc,iyref,2)+crx(ixc,iyref,3)),
+     2              0.5_R8*(cry(ixc,iyref,2)+cry(ixc,iyref,3)))
+              else
+                dsep=wrk(iyref)+
+     1           dist(cr(ixx,iyref),cz(ixx,iyref),
+     1              0.5_R8*(crx(ixx,iyref,2)+crx(ixx,iyref,3)),
+     2              0.5_R8*(cry(ixx,iyref,2)+cry(ixx,iyref,3)))
+              endif
             else
               dsep=0.0_R8
             endif
