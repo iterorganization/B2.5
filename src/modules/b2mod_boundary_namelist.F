@@ -70,6 +70,8 @@ cank }
       real (kind=R8), save :: NIISO(0:nsdmax-1)
       integer, save :: lcbs(NBCD)
 #endif
+      integer, save :: boundary_namelist
+      logical, save :: boundary_namelist_set = .false.
 csw 18feb2014 added for correct implementation of boundary conditions
       integer, save :: l_fbound=0, l_enebound=0, l_timbound=0
       integer, allocatable, save ::
@@ -98,6 +100,20 @@ csw 18feb2014 added for correct implementation of boundary conditions
       
       contains
 
+      subroutine get_boundary_namelist
+      implicit none
+
+cxpb The default is to force usage of b2.boundary.namelist for DN cases
+      if (boundary_namelist_set) return
+      boundary_namelist=0
+      call ipgeti('b2stbc_boundary_namelist', boundary_namelist)
+      if (boundary_namelist.eq.0) then
+        if (nnreg(0).ge.8) boundary_namelist=1
+      end if
+      boundary_namelist_set = .true.
+      return
+      end subroutine get_boundary_namelist
+      
       subroutine initialize_b2mod_boundary(nx,ny,ns,tim)
       implicit none
       integer nx ,ny, ns

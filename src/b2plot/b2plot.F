@@ -157,8 +157,7 @@ c
       real (kind=R8) ::
      *   mass,vel,vth,press
       integer ispecies(0:nsd_local-1), ismain, ismain0,
-     *   boundary_namelist, neutrals_namelist,
-     *   sput_frac_flag, use_eirene
+     *   neutrals_namelist, sput_frac_flag, use_eirene
 
 #ifndef NO_CDF
       real (kind=R8) ::
@@ -224,7 +223,6 @@ c
      6     vappr_a/-40181.0_R8/, vappr_b/14.80_R8/, stick_coef/0.4_R8/,
      7     sput_phys_col/3/, sput_chem_model/0/, refl_model/1/,
      8     sput_phys_model/1/, sput_phys/0.0_R8/, lambda/-5.0_R8/,
-     9     boundary_namelist/0/,
      *     neutrals_namelist/0/, BoRiS/0.0_R8/, sput_frac_flag/0/,
      1     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
      2     use_eirene/0/, ismain0/0/, drift_style/1/
@@ -232,7 +230,7 @@ c
      1     plate_kb, plate_ka, vappr_a, vappr_b, stick_coef, ismain,
      2     refl_model, sput_chem_model,
      3     sput_phys_model, sput_phys_col, sput_phys, lambda, BoRiS,
-     4     boundary_namelist, neutrals_namelist,
+     4     neutrals_namelist,
      5     sput_frac_flag, use_eirene, ismain0, drift_style
 
 c
@@ -514,7 +512,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
      .   'invalid main neutral species index ismain0')
        call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      .   'invalid main neutral species index ismain0')
-      call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+      call get_boundary_namelist
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call ipgeti ('b2mndr_eirene', use_eirene)
 

@@ -97,11 +97,11 @@
      x   nxf, taf, zxf,
      1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
      1   sum_sch0, sum_vol, integral_current
-      integer boundary_namelist, diagno, b2stbc_fchy_dia_coreonly,
+      integer diagno, b2stbc_fchy_dia_coreonly,
      *   area_fix, sheath_drift_fix
       integer element_done(-1:nx)
       integer b2stbc_feedback, secmodel
-      save ncall, sna0ep, she0ep, shi0ep, boundary_namelist, diagno,
+      save ncall, sna0ep, she0ep, shi0ep, diagno,
      *   b2stbc_neoclassical, b2stbc_fchy_dia, integral_current,
      1   b2stbc_feedback, b2stbc_fchy_dia_coreonly, secmodel,
      *   area_fix, sheath_drift_fix
@@ -116,7 +116,7 @@
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
-     1   shi0ep/1.0e-36_R8/, boundary_namelist/0/,diagno/0/,
+     1   shi0ep/1.0e-36_R8/, diagno/0/,
      2   b2stbc_neoclassical/0.0_R8/, b2stbc_fchy_dia/0.0_R8/,
      3   integral_current/0.0_R8/, b2stbc_feedback/0/, area_fix/3/,
      4   b2stbc_fchy_dia_coreonly/1/, secmodel/0/, 
@@ -138,7 +138,7 @@
        call ipgetr ('b2stbc_shi0ep', shi0ep)
        call xertst (0.0_R8.le.shi0ep, 
      .  'faulty internal parameter shi0ep')
-       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+       call get_boundary_namelist
        call ipgeti ('b2stbc_diagno',diagno)                              !xpb
        call ipgetr ('b2stbc_neoclassical', b2stbc_neoclassical)          !xpb
        call xertst (0.0_R8.le.b2stbc_neoclassical .and.                  !xpb

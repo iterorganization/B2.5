@@ -112,10 +112,12 @@ c      if(nidim .ne. 2) call line(2)
           enddo
           if (iystart.le.jsep+1.and.iyend.ge.jsep+1) then
             iy=jsep+1
-            wrk(iy)=wrk(iy-1)+0.5_R8*dist(cr(ixc,iy-1),cz(ixc,iy-1),
-     1                                    cr(ixc,iy),  cz(ixc,iy))
-     2                       +0.5_R8*dist(cr(ixx,iy-1),cz(ixx,iy-1),
-     1                                    cr(ixx,iy),  cz(ixx,iy))
+            wrk(iy)=wrk(iy-1)+dist(cr(ixc,iy-1),cz(ixc,iy-1),
+     1                    0.5_R8*(crx(ixc,iy-1,2)+crx(ixc,iy-1,3)),
+     2                    0.5_R8*(cry(ixc,iy-1,2)+cry(ixc,iy-1,3)))
+     2                       +dist(cr(ixx,iy),cz(ixx,iy),
+     1                    0.5_R8*(crx(ixx,iy,0)+crx(ixx,iy,1)),
+     2                    0.5_R8*(cry(ixx,iy,0)+cry(ixx,iy,1)))
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           end if
@@ -190,10 +192,17 @@ c      if(nidim .ne. 2) call line(2)
             endif
           else
             if (iystart.le.iyref .and. iyend.ge.iyref) then
-              dsep=wrk(iyref)-
-     1         dist(cr(ixx,iyref),cz(ixx,iyref),
-     1            0.5_R8*(crx(ixx,iyref,0)+crx(ixx,iyref,1)),
-     2            0.5_R8*(cry(ixx,iyref,0)+cry(ixx,iyref,1)))
+              if (iyref.le.jsep) then
+                dsep=wrk(iyref)+
+     1           dist(cr(ixc,iyref),cz(ixc,iyref),
+     1              0.5_R8*(crx(ixc,iyref,2)+crx(ixc,iyref,3)),
+     2              0.5_R8*(cry(ixc,iyref,2)+cry(ixc,iyref,3)))
+              else
+                dsep=wrk(iyref)+
+     1           dist(cr(ixx,iyref),cz(ixx,iyref),
+     1              0.5_R8*(crx(ixx,iyref,2)+crx(ixx,iyref,3)),
+     2              0.5_R8*(cry(ixx,iyref,2)+cry(ixx,iyref,3)))
+              endif
             else
               dsep=0.0_R8
             endif
