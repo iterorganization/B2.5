@@ -58,16 +58,16 @@ c<<<
       parameter (lun_w=76, lfn_hlp=mlblprtx+9)
       character tab, fn_hlp*(lfn_hlp)
 c>>>
-      integer boundary_namelist, use_eirene
-      data boundary_namelist/0/, use_eirene/0/
-      save boundary_namelist, use_eirene
+      integer use_eirene
+      data use_eirene/0/
+      save use_eirene
       data ib,ie,it/ntrgsx*0,ntrgsx*0,ntrgsx*0/
       intrinsic mod
       external ipgeti, ipgetr, subini, subend, xerrab
 c======================================================================
       call subini ('b2pwlprp')
       call ipgetr ('b2agmt_1d_width', width)
-      call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+      call get_boundary_namelist
       call ipgeti ('b2mndr_eirene', use_eirene)
 c<<<
       tab=char(9)

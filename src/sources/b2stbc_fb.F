@@ -277,7 +277,6 @@
       real (kind=R8), allocatable :: charge_frac(:)
       integer, save :: jsep, jxa, jxi, iyped
       integer, save :: b2sral_style = 2
-      integer, save :: boundary_namelist = 0
       character*72 message
       logical, save :: consistent
       logical consistent_core, consistent_sol, consistent_pfr1,
@@ -354,7 +353,7 @@
        dt_prev = dtim
 *   ..test for input consistency, i.e. are the cbs.. arrays used in the b.c settings
        call ipgeti ('b2sral_style', b2sral_style)
-       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+       call get_boundary_namelist
        consistent = .true.
        do ispecies = 0, nspecies-1
          if (na_feedback_ib(ispecies).le.0) cycle

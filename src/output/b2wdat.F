@@ -48,7 +48,6 @@
       integer jsep, jxi, jxa, ndat, k, mintopcut, ixx,             !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
-      integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
       real (kind=R8) ::                                            !srv
      *  Total_current(-1:ny), Total_flux(-1:ny),                   !srv 31.08.00 19.02.02
@@ -97,8 +96,8 @@
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *   ..initialisation
-      save ncall, iout, use_astra, boundary_namelist
-      data ncall/0/, iout/0/, use_astra/0/, boundary_namelist/0/
+      save ncall, iout, use_astra
+      data ncall/0/, iout/0/, use_astra/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -116,7 +115,7 @@
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
        call ipgeti('b2mndr_astra', use_astra)
-       call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
+       call get_boundary_namelist
 *    ..try to create a file in optional output folder
        open(70,file='output/__1__.dat',err=10)
 *    ..folder exists: future output will be done in folder

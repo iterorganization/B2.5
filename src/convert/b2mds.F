@@ -108,13 +108,11 @@ c
 #endif
 c
       integer ismain, refl_model, sput_phys_model, use_eirene,
-     . sput_phys_col, boundary_namelist, neutrals_namelist
+     . sput_phys_col, neutrals_namelist
       data ismain/1/, refl_model/1/, sput_phys_col/3/, use_eirene/0/,
-     3     sput_phys_model/1/, boundary_namelist/0/,
-     4     neutrals_namelist/0/
+     3     sput_phys_model/1/, neutrals_namelist/0/
       save ismain, refl_model, sput_phys_model,
-     2     sput_phys_col, boundary_namelist, neutrals_namelist,
-     3     use_eirene
+     2     sput_phys_col, neutrals_namelist, use_eirene
 
 #ifdef USE_PXFGETENV
       integer lenval, ierror
@@ -539,7 +537,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
      1 'faulty b2stbr_sput_phys_col')
       call ipgeti ('b2stbr_sput_phys_model', sput_phys_model)
       call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
-      call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+      call get_boundary_namelist
       if (boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
       call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')

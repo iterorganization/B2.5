@@ -152,7 +152,7 @@ c 2002-09-11: logic revised
       integer, allocatable :: idum(:)
       integer ii(1), i1, i2, ik, ikind, ic, inc, nnc
       integer nbc1, ndat, nds(ns-1)
-      integer boundary_namelist, neutrals_namelist, use_eirene
+      integer neutrals_namelist, use_eirene
       integer numerics_namelist, sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
       integer atomic_physics_rescale_flag
@@ -531,7 +531,7 @@ c 2002-09-11: logic revised
 *   ..initialisation
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
-      data boundary_namelist/0/, neutrals_namelist/0/, use_eirene/0/
+      data use_eirene/0/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/
@@ -1275,7 +1275,7 @@ c 2002-09-11: logic revised
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
 *   ..check parameters likely to need modification
-      call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+      call get_boundary_namelist
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
       call ipgeti ('b2tqna_transport_namelist', transport_namelist)
@@ -2161,7 +2161,9 @@ c 2002-09-11: logic revised
           found = .true.
         endif
         boundary_namelist = 0
+        boundary_namelist_set = .false.
       enddo
+      call get_boundary_namelist
       if (istyle_cur_contr_on_S_and_N.ne.2) write(nout(2),'(a,i1,a1)')
      >   '''b2stbc_istyle_cur_contr_on_S_and_N'''//tab//'''',
      &             istyle_cur_contr_on_S_and_N,         ''''

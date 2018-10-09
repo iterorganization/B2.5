@@ -1,4 +1,4 @@
-      subroutine b2pwldw(lun,trgl,izn,iln,boundary_namelist,BoRiS)
+      subroutine b2pwldw(lun,trgl,izn,iln,BoRiS)
       use b2mod_geo
       use b2mod_b2cmpa
       use b2mod_b2plot
@@ -86,7 +86,7 @@ c=======================================================================
 #else
       real (kind=R8) :: pump, pumptot
 #endif
-      integer lun,izn,iln,boundary_namelist
+      integer lun,izn,iln
       real (kind=R8) :: BoRiS
       logical trgl,ft44
 
