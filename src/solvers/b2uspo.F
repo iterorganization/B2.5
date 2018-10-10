@@ -118,12 +118,13 @@
 *   ..solve the correction equation
       write(*,*) 'Calling b2uxus from '//trim(name)
       call b2uxus (nCv, mpg, aa, itcnt, respo, corpo, name)           !srv 18.03.10
-#ifdef WG_TODO
+
       if (iout.ne.0) then                                          !srv 08.07.08 {
         do k=0,3
           write (chark,'(i1)') k
-          call my_out_us(70,nCv,0,sch(-1,-1,k),'b2uspo_sch'//chark)
+          call my_out_us(70,nCv,0,sch(1,k),'b2uspo_sch'//chark)
         enddo
+#ifdef WG_TODO
         call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2uspo_aam6')
         call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2uspo_aam5')
         call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2uspo_aam4')
@@ -137,10 +138,11 @@
         call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2uspo_aap4')
         call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2uspo_aap5')
         call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2uspo_aap6')
+#endif
         call my_out_us(70,nCv,0,respo,'b2uspo_respo')
         call my_out_us(70,nCv,0,corpo,'b2uspo_corpo')
       endif
-#endif
+
 * ..return
       ncall = ncall+1
       call subend ()

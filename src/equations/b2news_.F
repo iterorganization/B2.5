@@ -109,7 +109,8 @@
      3  ue(nCv), lnlam(nCv), zeff(nCv),          !srv 05.07.17
      &  pr(nCv), ro(nCv), cssb(nFc,0:1),         !iyv 06.02.14
      &  nep(nCv), wrk0(nCv), wrk1(nCv),
-     &  zero(nCv), zerof(nFc,0:1), wrkf(nFc)
+     &  zero(nCv), zerof(nFc,0:1), wrkf(nFc),
+     &  respo0(nCv), corpo0(nCv)
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical inverted_ua, new_matrix
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                   !srv 09.07.99
@@ -320,8 +321,9 @@ csw 01oct2012 initialize potential if necessary
 *   ..compute transport coefficients
       call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      1 geo, mpg, pl, dv, rt, st_ext, co)
+
+      call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an,pl%po,dv%fchanml)
 #ifdef WG_TODO
-      call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml)   !srv 20.09.06  }
       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,    !srv 20.09.06  {
      &                       fac_vis, fchvispar)
       call b2tiner (nx, ny, ns, vol,
@@ -344,7 +346,6 @@ csw 01oct2012 initialize potential if necessary
         cssb = 0.0_R8
       endif   
 #else
-      dv%fchanml   = 0.0_R8
       dv%fchvispar = 0.0_R8
       dv%fchinert  = 0.0_R8
       cssb = 0.0_R8
@@ -463,9 +464,9 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 *   ..set nep
 *     (= ne before continuity update)
       call b2scopy (nCv, dv%ne, 1, nep, 1)
-#ifdef WG_TODO
 *   ..recompute currents
-      call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml)   !srv 20.09.06 }
+      call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an,pl%po,dv%fchanml)
+#ifdef WG_TODO
       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,    !srv 20.09.06 {
      &                       fac_vis, fchvispar)
       call b2tiner (nx, ny, ns, vol,
@@ -475,7 +476,6 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 !      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
 !     &             lnlam, te, ti, ni, chci, fchvisq)
 #else
-      dv%fchanml   = 0.0_R8
       dv%fchvispar = 0.0_R8
       dv%fchinert  = 0.0_R8
 #endif
@@ -621,12 +621,14 @@ csw 16oct2012 init ier0
            if (vis_per.eq.0.0e0_R8) then  
 cwdk work-around because respo/corpo only determined on first iteration
 cwdk of potential equation...
-            wrk0 = dv%respo
-            wrk1 = dv%corpo
+            respo0 = dv%respo
+            corpo0 = dv%corpo
             call b2nppo (nCv, nFc, nVx, nnreg(0), solvepo, ncall, rxf2,
      &        geo, mpg, pl, dv, sr, ier0)
-            dv%respo = wrk0
-            dv%corpo = wrk1
+            wrk0 = dv%respo
+            wrk1 = dv%corpo
+            dv%respo = respo0
+            dv%corpo = corpo0
            else
              call xerrab ('visper not yet available for WG')
 #ifdef WG_TODO
@@ -635,13 +637,13 @@ cwdk of potential equation...
      &       sch, po, fch, wrk0, wrk1, ier0)                             !srv 27.01.00
 #endif
            endif                                                         !srv 06.07.00
-           t0 = b2sasum(nCv,dv%respo,1)
+           t0 = b2sasum(nCv,wrk0,1)
           endif
 
 *   ..recompute currents
+          call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an, pl%po,
+     &                      dv%fchanml)
 #ifdef WG_TODO
-          call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po,        !srv 20.09.06 }
-     &                         fchanml)
           call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua,cvsa_cl, !srv 20.09.06 {
      &                         fac_vis, fchvispar)
           call b2tiner (nx, ny, ns, vol,
@@ -659,7 +661,11 @@ cwdk of potential equation...
      &                    cssb(-1,-1,1))
           else
             cssb = 0.0_R8
-          endif                                                          !iyv 06.02.14
+          endif  
+#else
+          dv%fchvispar = 0.0_R8
+          dv%fchinert  = 0.0_R8
+          cssb = 0.0_R8
 #endif
           do is = 0, ns-1
 *    ..compute partial pressure

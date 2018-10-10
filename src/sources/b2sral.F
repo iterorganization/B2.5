@@ -199,7 +199,7 @@
 #ifdef WG_TODO
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
-       call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml) !srv 20.09.06 }
+       call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an,st%po,dv%fchanml)
        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,  !srv 20.09.06 {
      &                       fac_vis, fchvispar)
        call b2tiner (nx, ny, ns, vol,
