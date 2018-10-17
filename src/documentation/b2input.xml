@@ -4628,7 +4628,7 @@
 			</switch>
 			<switch>
 				<name>TRACK_INDEX</name>
-				<default>1 for species spud_dst, 0 for other</default>
+				<default>1 for species sput_dst, 0 for all others</default>
 				<type>integer array of size (0:NS-1)</type>
 				<description>
 					Specifies the mixed material species index related to B2 species (is).

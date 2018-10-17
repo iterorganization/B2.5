@@ -78,11 +78,12 @@
       real (kind=R8), save :: fch_inert = 1.0e0_R8                      !lk 31.01.08 {
       real (kind=R8), save :: dia_cur = 1.0e0_R8                        !srv 17.05.99
       real (kind=R8), save :: vis_q = 1.0e0_R8                          !srv 11.07.99
+      real (kind=R8), save :: prl_cur = 1.0_R8, phm2 = 1.0_R8           !srv 15.10.18
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny)                         !lk 31.01.08 }
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, flomx,
      &   tex, ehx_po, ehy_po,
-     1   floe0_nd, cone0_nd, t0_nd, tex0_nd
+     1   floe0_nd, cone0_nd, t0, t0_nd, tex0, tex0_nd                   !srv 15.10.18
       real (kind=R8) ::                                                 !xpb
      * fch_ion_neutral, fch_anomalous, vis_par, vis_per, sig_stoch,     !xpb
      * ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny), zeff(-1:nx,-1:ny)          !srv 13.01.17
@@ -150,6 +151,8 @@
        call ipgeti ('b2tfch_iout', iout)                                !srv 18.06.08
        call ipgeti ('b2tfnb_drift_style', drift_style)
        call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
+       call ipgetr ('b2sifr_phm2', phm2)                                !srv 15.10.18
+       call ipgetr ('b2tfhe_prl_cur', prl_cur)                          !srv 15.10.18
       endif                                                             !xpb
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -270,15 +273,25 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &        ne(ix,iy))/2.0_R8
             if (flomx.gt.0.0_R8 .and. 
      &        lim_flux.eq.1 .and. conductive_limit.eq.0) then
+              t0    = cone0_nd*abs(tex)/flomx                            !srv 15.10.18
               t0_nd = cone0_nd*abs(tex)/(flomx*max(
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
             else
+              t0    = 0.0_R8                                             !srv 15.10.18
               t0_nd = 0.0_R8
             endif
+            tex0 = tex/(1.0_R8+t0)                                       !srv 15.10.18
             tex0_nd = tex/(1.0_R8+t0_nd)
-            fch(ix,iy,0) = fch_p(ix,iy,0)                                !srv 13.01.17
+            if (style.eq.0) then                                         !srv 15.10.18 {
+              fch(ix,iy,0) = (csig(ix,iy,0)*ehx-
+     &                 phm2*calf(ix,iy,0)*tex0)*prl_cur 
      &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0)          !xpb
      &       +fchvisper(ix,iy,0)
+            else                                                         !srv 15.10.18 }
+              fch(ix,iy,0) = fch_p(ix,iy,0)                              !srv 13.01.17
+     &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0)          !xpb
+     &       +fchvisper(ix,iy,0)
+            endif                                                        !srv 15.10.18
             fch_32(ix,iy,0) = csig_cl(ix,iy,0)*ehx
      1       +fchin(ix,iy,0)+fchvispar(ix,iy,0)
      &       +fchvisper(ix,iy,0)

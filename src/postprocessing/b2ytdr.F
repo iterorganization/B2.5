@@ -1123,6 +1123,7 @@ c 2002-09-11: logic revised
         end if
       end do
       natm1 = nspecies1
+      nmol1 = 1
       allocate(eb2spcr1(nspecies1))
       allocate(isp1(nspecies1))
       eb2spcr1=-1
@@ -1554,7 +1555,12 @@ c 2002-09-11: logic revised
         read (line,*) cnamip, cvalip
       else if (.not.streql(line,' ')) then
         i = index(ligne,'''')
-        if (i.gt.0) read (line(i:132),*) cnamip, cvalip
+        if (i.gt.0) then
+          read (line(i:132),*) cnamip, cvalip
+        else
+          cnamip = ' '
+          cvalip = ' '
+        endif
       endif
 *   ..integer switches
       todo = .true.
@@ -1693,9 +1699,12 @@ c 2002-09-11: logic revised
       if (.not.is_comment(line) .and. .not.wait) then
         write(nout(2),'(a1,a,a,a,a1)')
      .   '''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
-      else if (.not.streql(line,' ') .and. .not.wait) then
+      else if (.not.streql(line,' ') .and. .not.streql(cnamip,' ')
+     .   .and. .not.wait) then
         write(nout(2),'(a,a2,a,a,a,a1)') line(1:1),
      .   ' ''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
+      else if (is_comment(line) .and. .not.streql(line,' ')) then
+        write(nout(2),'(a)') trim(line)
       else if (.not.wait) then
         write(nout(2),1028)
       endif
@@ -8503,8 +8512,11 @@ cxpb  Convert fort.46 file if needed
         allocate(eb2atcr1(natm1))
         allocate(mlcmp1(natm1,nmol1))
         allocate(latmscl1(natm1))
-        do is = 1, natm
+        do is = 1, natmi
           iatm1(is) = is
+        end do
+        do is = 1, nmoli
+          imol1(is) = is
         end do
         savestratum(0:nstrai) = .true.
 ! must fill new arrays b2espcr1 and eb2spcr1 not provided by modified input.dat file
@@ -8512,16 +8524,20 @@ cxpb  Convert fort.46 file if needed
         do is = 1, nspecies
           if (is1(eb2spcr(is)).ne.-1) then
             iss = iss + 1
-            eb2atcr1(iss) = iatm1(eb2atcr(is))
+            if (eb2atcr(is).gt.0) then
+              eb2atcr1(iss) = is1(eb2atcr(is))
+            else
+              eb2atcr1(iss) = is1(eb2spcr(is))
+            end if
             eb2spcr1(iss) = is1(eb2spcr(is))
             b2eatcr1(
      .   is1beginrange(eb2spcr(is),eb2spcr(is)+nfluids(is),ns,ns1,is1):
      .     is1endrange(eb2spcr(is),eb2spcr(is)+nfluids(is),ns,ns1,is1))=
-     .       iatm1(eb2atcr(is))
+     .       iss
             b2espcr1(
      .   is1beginrange(eb2spcr(is),eb2spcr(is)+nfluids(is),ns,ns1,is1):
      .     is1endrange(eb2spcr(is),eb2spcr(is)+nfluids(is),ns,ns1,is1))=
-     .       is
+     .       iss
           end if
         end do
 ! fill up the mapping between sequence numbers
@@ -8536,7 +8552,7 @@ cxpb  Convert fort.46 file if needed
             endif
           end do
         end if
-        do is = 1, natm
+        do is = 1, natmi
           if (latmscl(is).ne.0) then
             if (iatm1(is).gt.0 .and. iatm1(is).le.natm1)
      >        latmscl1(iatm1(is)) = ispecies1(latmscl(is))
@@ -8549,10 +8565,10 @@ cxpb  Convert fort.46 file if needed
       allocate(latmscl1(natm1))
       eb2atcr1=-1
       latmscl1=0
-      do is = 1, natm
+      do is = 1, natmi
         iatm1(is) = is
       end do
-      do is = 1, nmol
+      do is = 1, nmoli
         imol1(is) = is
       end do
       savestratum(0:nstrai) = .true.
@@ -8561,16 +8577,20 @@ cxpb  Convert fort.46 file if needed
       do is = 1, nspecies
         if (is1(eb2spcr(is)).ne.-1) then
           iss = iss + 1
-          eb2atcr1(iss) = iatm1(eb2atcr(is))
+          if (eb2atcr(is).gt.0) then
+            eb2atcr1(iss) = is1(eb2atcr(is))
+          else
+            eb2atcr1(iss) = is1(eb2spcr(is))
+          end if
           eb2spcr1(iss) = is1(eb2spcr(is))
           b2eatcr1(
      .   is1beginrange(eb2spcr(is),eb2spcr(is)+nfluids(is),ns,ns1,is1):
      .     is1endrange(eb2spcr(is),eb2spcr(is)+nfluids(is),ns,ns1,is1))=
-     .     iatm1(eb2atcr(is))
+     .     iss
           b2espcr1(
      .   is1beginrange(eb2spcr(is),eb2spcr(is)+nfluids(is),ns,ns1,is1):
      .     is1endrange(eb2spcr(is),eb2spcr(is)+nfluids(is),ns,ns1,is1))=
-     .     is
+     .     iss
         end if
       end do
 ! fill up the mapping between sequence numbers
@@ -8585,7 +8605,7 @@ cxpb  Convert fort.46 file if needed
           endif
         end do
       end if
-      do is = 1, natm
+      do is = 1, natmi
         if (latmscl(is).ne.0) then
           if (iatm1(is).gt.0 .and. iatm1(is).le.natm1)
      >      latmscl1(iatm1(is)) = ispecies1(latmscl(is))
@@ -8835,9 +8855,9 @@ cxpb as they no longer necessarily point to the same species
           end if
         end do
         mlcmp1 = 0.0_R8
-        do jmol = 1, nmol
+        do jmol = 1, nmoli
           if (imol1(jmol).ne.0) then
-            do is = 1, natm
+            do is = 1, natmi
               if (iatm1(is).ne.0) then
                 mlcmp1(iatm1(is),imol1(jmol)) = mlcmp(is,jmol)
               end if
@@ -8845,14 +8865,14 @@ cxpb as they no longer necessarily point to the same species
           end if
         end do
         lmolscl1 = 0
-        do is = 1, nmol
+        do is = 1, nmoli
           if (lmolscl(is).ne.0.and.imol1(is).ne.0) then
             if (iatm1(lmolscl(is)).gt.0 .and.
      .          iatm1(lmolscl(is)).le.nspecies)
      >                lmolscl1(imol1(is)) = ispecies1(lmolscl(is))
           end if
         end do
-        do is = 1, nion
+        do is = 1, nioni
           if (lionscl(is).ne.0) then
             if (iatm1(lionscl(is)).gt.0 .and.
      .          iatm1(lionscl(is)).le.nspecies)
@@ -9030,7 +9050,7 @@ cxpb as they no longer necessarily point to the same species
         end do
         do ib = 1, nstrai
           if (istra1(ib).gt.0) then
-            do jatm = 1, natm
+            do jatm = 1, natmi
               if (iatm1(jatm).ne.0 .and. gpfc(jatm,ib).ne.0.0_R8)
      .         write(99,'(a,i3,a,i2,a,f5.2,a)')
      .          'GPFC(',iatm1(jatm),',',istra1(ib),')=',
@@ -9088,19 +9108,20 @@ cxpb as they no longer necessarily point to the same species
         if (l_neutflux.ne.-1)
      >   write(99,'(a,i2,a)') 'L_NEUTFLUX=',l_neutflux,','
 #ifdef B25_EIRENE
-        write(hlp_frm,'(a,i2,a)') '(a,',natmi1,'(1x,i2,'',''))'
+        write(hlp_frm,'(a,i3,a)') '(a,',natmi1,'(1x,i3,'',''))'
         if (maxval(latmscl1).gt.0)
      >   write(99,hlp_frm) 'LATMSCL=',(latmscl1(is),is=1,natmi1)
 #else
-        write(hlp_frm,'(a,i2,a)') '(a,',natm1,'(1x,i2,'',''))'
+        write(hlp_frm,'(a,i3,a)') '(a,',natm1,'(1x,i3,'',''))'
         if (maxval(latmscl1).gt.0)
      >   write(99,hlp_frm) 'LATMSCL=',(latmscl1(is),is=1,natm1)
 #endif
-        write(hlp_frm,'(a,i2,a)') '(a,',nmol,'(1x,i2,'',''))'
+        write(hlp_frm,'(a,i3,a)') '(a,',nmol1,'(1x,i3,'',''))'
         if (maxval(lmolscl1).gt.0)
      >   write(99,hlp_frm) 'LMOLSCL=',(lmolscl1(is),is=1,nmol1)
+        write(hlp_frm,'(a,i3,a)') '(a,',nioni,'(1x,i3,'',''))'
         if (maxval(lionscl).gt.0)
-     >   write(99,hlp_frm) 'LIONSCL=',(lionscl(is),is=1,nion)
+     >   write(99,hlp_frm) 'LIONSCL=',(lionscl(is),is=1,nioni)
         write(hlp_frm,'(a,i3,a)') '(a,',ns1,'(1x,i3,'',''))'
         write(99,hlp_frm) 'B2ESPCR=',(b2espcr1(is),is=0,ns1-1)
         write(99,hlp_frm) 'B2EATCR=',(b2eatcr1(is),is=0,ns1-1)
@@ -9114,7 +9135,7 @@ cxpb as they no longer necessarily point to the same species
         write(hlp_frm,'(a,i2,a)') '(a,',nspecies1,'(1x,i3,'',''))'
         write(99,hlp_frm) 'EB2SPCR=',(eb2spcr1(is),is=1,nspecies1)
         write(hlp_frm,'(a,i2,a)') '(a,i2,a,',nspecies1,'(1x,i2,'',''))'
-        do ib = 1, nmol
+        do ib = 1, nmoli
           if (imol1(ib).ne.0) then
             if (maxval(mlcmp1(:,imol1(ib))).gt.0) then
 #ifdef B25_EIRENE
