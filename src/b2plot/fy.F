@@ -7,6 +7,7 @@ c
       use b2mod_b2plot_values
       use b2mod_boundary_namelist
       implicit none
+      character*12 hlp_frm
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
       real (kind=R8) ::
@@ -15,8 +16,9 @@ c
       integer ix,ixl,ixr,iy,is,iiso,lnblnk,ysepl,ysepr,iystart,iyend
       integer ixx, ixc
       logical iniso
+      integer len_of_digits
       intrinsic min,max,sqrt
-      external subini, subend, xertst, lnblnk
+      external subini, subend, xertst, lnblnk, len_of_digits
       dist(x1,y1,x2,y2)=sqrt((x1-x2)**2+(y1-y2)**2)
 c     the line format common
       character*10 linefmt
@@ -36,6 +38,7 @@ c      if(nidim .ne. 2) call line(2)
       call xertst(iystart.le.iyend, 'faulty parameter iyend')
       if (b2plot_debug.ge.6)
      > write(6,*) ' iystart, iyend : ', iystart, iyend
+      write(hlp_frm,'(a,i1,a)') '(a,i',len_of_digits(ix),',a)'
       if (.not.map_to_midplane) then
         ixx = ix
         ixc = ix
@@ -212,10 +215,10 @@ c      if(nidim .ne. 2) call line(2)
           enddo
         endif
         if (.not.map_to_midplane) then
-          write(tmpstring2,'('' <ix = '',i4,''>'')') ix
+          write(tmpstring2,hlp_frm) ' <ix = ',ix,'>'
         else
-          write(tmpstring2,
-     .     '('' <ix = '',i4,''> (mapped to midplane)'')') ix
+          write(tmpstring2,hlp_frm) ' <ix = ',ix,'> '//
+     &     '(mapped to midplane)'
         endif
         tmpstring =
      1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
@@ -346,7 +349,7 @@ c      if(nidim .ne. 2) call line(2)
           end if
           if(linlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
-          write(tmpstring2,'('' <ix = '',i4,''>'')') ix
+          write(tmpstring2,hlp_frm) ' <ix = ',ix,'>'
           call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)

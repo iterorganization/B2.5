@@ -6,18 +6,19 @@ c
       use b2mod_indirect
       use b2mod_b2plot_values
       implicit none
+      character*12 hlp_frm
       character*32 tmpstring1,tmpstring2
       character*256 tmpstring, titlestring
       real (kind=R8) ::
      *   lmin,lmax,dsep,xmin,xmax,xmult
-      integer ix,iy,is,lnblnk,ixstart,ixend
+      integer ix,iy,is,lnblnk,ixstart,ixend,len_of_digits
 
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
 
       intrinsic min,max,mod,sqrt
-      external xertst,lnblnk
+      external xertst,lnblnk,len_of_digits
 
       ixstart=-1
       do while (region(ixstart,iy,0).eq.0 .and. ixstart.le.nx)
@@ -29,6 +30,7 @@ c     the line format common
         ixend=ixend-1
       enddo
       call xertst(ixstart.le.ixend, 'faulty parameter ixend')
+      write(hlp_frm,'(a,i1,a)') '(a,i',len_of_digits(iy),',a)'
       do is=0,ndim(3,iwrk)-1
         tmpstring1=textwk(is,iwrk)
         lmin=work(ixstart,iy,is,iwrk)
@@ -56,7 +58,7 @@ cxpb : new default behaviour : zero of distance set at ixref
         do ix=ixstart,ixend
           wrk(ix)=wrk(ix)-dsep
         enddo
-        write(tmpstring2,'('' <iy = '',i4,''>'')') iy
+        write(tmpstring2,hlp_frm) ' <iy = ',iy,'>'
         tmpstring = 
      1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
      2     tmpstring2(1:lnblnk(tmpstring2))//

@@ -9236,6 +9236,9 @@ cxpb as they no longer necessarily point to the same species
           line = 'SPS_ID=  '
           len=9
           do ib = 1, n_spcsrf
+            if(lnblnk(sps_id(ib)).lt.8)
+     .       sps_id(ib)=sps_id(ib)(1:lnblnk(sps_id(ib)))//
+     .                  repeat(' ',8-lnblnk(sps_id(ib)))
             line = line(1:len)//''''//sps_id(ib)//''','
             len=len+1+8+2
           end do

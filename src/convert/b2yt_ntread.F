@@ -187,7 +187,7 @@ C
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
-      allocate(field1(ntrii,max(natm1,nmol1)))
+      allocate(field1(max(natm1,nmol1),ntrii))
 
 c
 * labels
@@ -237,14 +237,14 @@ C
       read(46,'(6e15.7)') ((PDENI(i,j),j=1,ntrii),i=1,nioni)
       do is = 1, natmi
         if (iatm1(is).ne.0) then
-          field1(1:ntrii,iatm1(is)) = pdena(1:ntrii,is)
+          field1(iatm1(is),1:ntrii) = pdena(is,1:ntrii)
         end if
       end do
       call write_title(47,'pdena',ntrii*natm1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
       do is = 1, nmoli
         if (imol1(is).ne.0) then
-          field1(1:ntrii,imol1(is)) = pdenm(1:ntrii,is)
+          field1(imol1(is),1:ntrii) = pdenm(is,1:ntrii)
         end if
       end do
       call write_title(47,'pdenm',ntrii*nmol1)
@@ -262,14 +262,14 @@ C
       read(46,'(6e15.7)') ((EDENI(i,j),j=1,ntrii),i=1,nioni)
       do is = 1, natmi
         if (iatm1(is).ne.0) then
-          field1(1:ntrii,iatm1(is)) = edena(1:ntrii,is)
+          field1(iatm1(is),1:ntrii) = edena(is,1:ntrii)
         end if
       end do
       call write_title(47,'edena',ntrii*natm1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
       do is = 1, nmoli
         if (imol1(is).ne.0) then
-          field1(1:ntrii,imol1(is)) = edenm(1:ntrii,is)
+          field1(imol1(is),1:ntrii) = edenm(is,1:ntrii)
         end if
       end do
       call write_title(47,'edenm',ntrii*nmol1)
@@ -287,14 +287,14 @@ C
       read(46,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,nioni)
       do is = 1, natmi
         if (iatm1(is).ne.0) then
-          field1(1:ntrii,iatm1(is)) = vxdena(1:ntrii,is)
+          field1(iatm1(is),1:ntrii) = vxdena(is,1:ntrii)
         end if
       end do
       call write_title(47,'vxdena',ntrii*natm1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
       do is = 1, nmoli
         if (imol1(is).ne.0) then
-          field1(1:ntrii,imol1(is)) = vxdenm(1:ntrii,is)
+          field1(imol1(is),1:ntrii) = vxdenm(is,1:ntrii)
         end if
       end do
       call write_title(47,'vxdenm',ntrii*nmol1)
@@ -312,14 +312,14 @@ C
       read(46,'(6e15.7)') ((VYDENI(i,j),j=1,ntrii),i=1,nioni)
       do is = 1, natmi
         if (iatm1(is).ne.0) then
-          field1(1:ntrii,iatm1(is)) = vydena(1:ntrii,is)
+          field1(iatm1(is),1:ntrii) = vydena(is,1:ntrii)
         end if
       end do
       call write_title(47,'vydena',ntrii*natm1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
       do is = 1, nmoli
         if (imol1(is).ne.0) then
-          field1(1:ntrii,imol1(is)) = vydenm(1:ntrii,is)
+          field1(imol1(is),1:ntrii) = vydenm(is,1:ntrii)
         end if
       end do
       call write_title(47,'vydenm',ntrii*nmol1)
@@ -337,14 +337,14 @@ C
       read(46,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,nioni)
       do is = 1, natmi
         if (iatm1(is).ne.0) then
-          field1(1:ntrii,iatm1(is)) = vzdena(1:ntrii,is)
+          field1(iatm1(is),1:ntrii) = vzdena(is,1:ntrii)
         end if
       end do
       call write_title(47,'vzdena',ntrii*natm1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
       do is = 1, nmoli
         if (imol1(is).ne.0) then
-          field1(1:ntrii,imol1(is)) = vzdenm(1:ntrii,is)
+          field1(imol1(is),1:ntrii) = vzdenm(is,1:ntrii)
         end if
       end do
       call write_title(47,'vzdenm',ntrii*nmol1)
