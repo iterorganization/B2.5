@@ -10749,6 +10749,10 @@ c
           stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call set_lbsz(rpop(rstack,irstack))
+        case('glsz')     ! globalheader size
+          stack_req=(/0,1,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          call set_glsz(rpop(rstack,irstack))
         case('ndec')     ! number of decades
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return

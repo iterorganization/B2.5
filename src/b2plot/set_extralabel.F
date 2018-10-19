@@ -220,7 +220,7 @@ C ===================================================================
       else
         write(*,*) 'jcpos = ',jcpos
         write(*,*) 'tmp = ',tmp
-!        call xerrab ('extralabel too long')
+!        call xerrab ('label too long')
         jcpos=256
       endif
       count=0
@@ -238,9 +238,9 @@ C ===================================================================
       enddo
       if(b2plot_debug.ge.4) then
         if (streql(tmp,' ')) then
-          write (*,*) 'parsed empty extralabel'
+          write (*,*) 'parsed empty label'
         else
-          write (*,*) 'parsed extralabel to:   ',trim(tmp)
+          write (*,*) 'parsed label to:   ',trim(tmp)
         end if
       end if
       customlabel=tmp

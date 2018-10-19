@@ -8304,7 +8304,7 @@ cxpb Careful here because of BC number clash
      .           ('BCENI types 16, 23, 24, 26 and 27 cannot be mixed!')
             endif
           ENDDO
-          call xertst(use_astra.ne.0.or.ENIPAR(IBW,1).gt.0.0_R8,
+          call xertst(use_astra.ne.0.or.ENIPAR(IB,1).gt.0.0_R8,
      1     'BCENI = 23, ENIPAR(,1) !> 0')
         endif
 
