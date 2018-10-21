@@ -24,11 +24,12 @@ c     the line format common
       real range,xmid,ymid,ceil,txtwdth,yframe,
      1 reserve_bottom,reserve_top,reserve_left,reserve_right,
      2 test,test1
-      integer ix,iy,n_page,itxtwdth,lnblnk,
+      integer ix,iy,n_page,itxtwdth,lnblnk,offset,
      1 nox,noxm,nfmtx,nnox,
      2 noy,noym,nfmty,nnoy
+      real (kind=R8) :: rratio
       logical streql
-      external lnblnk, streql
+      external lnblnk, streql, rratio
 
       if(b2plot_debug.ge.8) write(*,*) xwidth,yheight
 
@@ -161,11 +162,15 @@ c     the line format common
 
       n_page=max(nx_page,ny_page)
       itxtwdth=max(nint(12*lbsz/N_PAGE),4)
-      txtwdth=real(itxtwdth)/real(1024)
+      txtwdth=rratio(itxtwdth,1024)
+      offset=0
+      if(nx_page.gt.ny_page) offset=1
+      if(nx_page/ny_page.gt.3) offset=offset+((nx_page/ny_page)-1)/2
+      if(ny_page/nx_page.gt.3) offset=offset+1
 
       if(noax.gt.0) then
         reserve_bottom=txtwdth*5/ysize
-        reserve_top=txtwdth*6/ysize
+        reserve_top=txtwdth*(4+2*offset)/ysize
         reserve_left=txtwdth*(nfmty+3)/xsize
         reserve_right=0.0
         if(target.and.physical) then
@@ -186,8 +191,8 @@ c     the line format common
           colorbar_left=1.0-reserve_right
           reserve_right=reserve_right+0.02
         endif
-        if(.not.streql(extralabel,' '))
-     .     reserve_top=reserve_top+txtwdth*2/ysize
+        if(.not.streql(extralabel,' ')) reserve_top=reserve_top+
+     .    txtwdth*2*(1+offset+nx_page/5)/ysize
         if(reserve_right.eq.0.0) reserve_right=0.05*lbsz
       else
         reserve_bottom=0.0
@@ -263,21 +268,23 @@ c     the line format common
         call gsplci(1)
         if(bcol.gt.1) call gsplci(bcol)
         if(wall)
-     &   CALL PLCHHQ(wallbar_right,(1.0-txtwdth*2*n_page),
+     &   CALL PLCHHQ(wallbar_right,1.0-txtwdth*2*n_page,
      1   WALLBARLABEL(1:LNBLNK(WALLBARLABEL)),
      1   1.0/100.0/N_PAGE*lbsz,0.0,1.0)
         if(target.and.physical)
-     &   CALL PLCHHQ(targetbar_right,(1.0-txtwdth*2*n_page),
+     &   CALL PLCHHQ(targetbar_right,1.0-txtwdth*2*n_page,
      1   TARGETBARLABEL(1:LNBLNK(TARGETBARLABEL)),
      1   1.0/100.0/N_PAGE*lbsz,0.0,1.0)
         call gsplci(1)
       endif
       if(.not.streql(extralabel,' ')) then
         if(xcol.gt.1) call gsplci(xcol)
-        if(noax.gt.0)
-     1   CALL PLCHHQ(0.5,(1.0-txtwdth*4*n_page),
-     1   EXTRALABEL(1:LNBLNK(EXTRALABEL)),
-     1   1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        if(noax.gt.0) then
+          CALL PLCHHQ(0.5,
+     1     1.0-txtwdth*(5-(offset-(nx_page/ny_page)/5))*n_page,
+     1     EXTRALABEL(1:LNBLNK(EXTRALABEL)),
+     1     1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        endif
         call gsplci(1)
       endif
 
