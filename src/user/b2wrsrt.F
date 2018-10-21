@@ -399,16 +399,16 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
       return
