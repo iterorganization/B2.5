@@ -81,26 +81,26 @@
 
        do iFc = 1,nFc
 *    ..effective diffusion coefficients
-        t0 = sign(hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) - 
-     &    0.5_R8*abs(flo(iFc,0)), con(iFc,0))/(geo%fcQalf(iFc,0) + eps)  
-        t1 = sign(hybr(flo(iFc,1),con(iFc,1)*geo%fcQalf(iFc,1)) - 
-     &    0.5_R8*abs(flo(iFc,1)), con(iFc,1))/(geo%fcQalf(iFc,1) + eps)  
+        t0 = hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) - 
+     &    0.5_R8*abs(flo(iFc,0))  
+        t1 = hybr(flo(iFc,1),con(iFc,1)*geo%fcQalf(iFc,1)) - 
+     &    0.5_R8*abs(flo(iFc,1))  
 *    ..compute geometric factors for cell and vertex contributions
 *      to differences of cell faces (consistent with diff_p, diff_r)
-        t00 = geo%fcQalf(iFc,0)
+!        t00 = geo%fcQalf(iFc,0)
         t01 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     &         geo%fcQbet(iFc,1)
-        t10 = geo%fcQalf(iFc,1) 
+     &         geo%fcQbet(iFc,1)/(geo%fcQalf(iFc,0) + eps)
+!        t10 = geo%fcQalf(iFc,1) 
         t11 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     &         geo%fcQbet(iFc,0)
+     &         geo%fcQbet(iFc,0)/(geo%fcQalf(iFc,1) + eps)
 *    ..convective contributions to flob0, conb0
         flo0(iFc,0) = flo(iFc,0) + flo(iFc,1)
         flo0(iFc,1) = 0.0_R8
 !        flo0(iFc,0) = 0.5_R8*(flo(iFc,0) + flo(iFc,1))
 !        flo0(iFc,1) = 0.5_R8*(flo(iFc,0) + flo(iFc,1))
 *    ..conductive contributions to flob0, conb0
-        con0(iFc,0) = (t0 + 0.5_R8*abs(flo(iFc,0)))*t00 + 
-     &                (t1 + 0.5_R8*abs(flo(iFc,1)))*t10
+        con0(iFc,0) = t0 + 0.5_R8*abs(flo(iFc,0)) + 
+     &                t1 + 0.5_R8*abs(flo(iFc,1))
         con0(iFc,1) = t0*t01 + t1*t11
        enddo
 

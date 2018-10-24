@@ -167,8 +167,14 @@
        call b2xvsg (nCv, pl % na(:,isb), 1, 'nb', '.gt.')
        call b2xvsg (nCv, dv % ne       , 1, 'ne', '.gt.')
        call b2xvsg (nCv, dv % pa(:,isb), 1, 'pb', '.gt.')
-       call b2xvsg (nCv*2,co%cdna(1,0,isb)*geo%fcQalf, 1, 'cdna','.ge.')
-       call b2xvsg (nCv*2,co%cdpa(1,0,isb)*geo%fcQalf, 1, 'cdpa','.ge.')
+       call b2xvsg (nFc, co%cdna(:,0,isb)*geo%fcQalf(:,0), 1,
+     &   'cdna0','.ge.')
+       call b2xvsg (nFc, co%cdna(:,1,isb)*geo%fcQalf(:,1), 1,
+     &   'cdna1','.ge.')
+       call b2xvsg (nFc, co%cdpa(:,0,isb)*geo%fcQalf(:,0), 1,
+     &   'cdpa0','.ge.')
+       call b2xvsg (nFc, co%cdpa(:,1,isb)*geo%fcQalf(:,1), 1,
+     &   'cdna1','.ge.')
       endif
 
 *   ..precompute kmpr and its differences
