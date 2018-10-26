@@ -287,6 +287,12 @@ contains
         write(6,'(a)') trim(filename)//' will be appended'
         iret = nf_open(trim(filename),NCWRITE,ncid)
         call check_cdf_status(iret)
+        call rwcdf ('read', ncid, 'ntim_batch', imap, tstepn, iret)
+        call check_cdf_status(iret)
+        if (tstepn(1).ne.ntim_batch) then
+          write(*,*)'WARNING: ntim_batch has been changed'
+          write(*,*)'WARNING: statistical error assessment will not be reliable'
+        endif
       else
         ntstep = 0
         nastep = 0
