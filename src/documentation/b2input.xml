@@ -2465,7 +2465,7 @@
 				<type>integer</type>
 				<description>
 					If b2mndt_av_batch_all.ge.0, produces standard output for batch averages.
-					If b2mndt_av_batch_all.eq.1, entire 2D felds of batch averages and variances for ne, te, ... are written. Expert use only, check $SOLPSTOP/doc/SOLPS-ITER_Eirene_averaging.pdf.
+					If b2mndt_av_batch_all.eq.1, entire 2D fields of batch averages and variances for ne, te, ... are written. Expert use only, check $SOLPSTOP/doc/SOLPS-ITER_Eirene_averaging.pdf.
 				</description>
 			</switch>
 			<switch>
