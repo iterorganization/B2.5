@@ -25,7 +25,7 @@ module b2mod_mwti
   public :: rwcdf, rwcdf_settime, rwcdf_setbatch, b2crtimecdf
 #endif
 contains
-  
+
   subroutine b2mwti (itim, tim, ntim, ntim_batch, &
                      nx, ny, ns, ismain, ismain0, BoRiS, &
                      lwti, lwav, luav)
@@ -287,6 +287,12 @@ contains
         write(6,'(a)') trim(filename)//' will be appended'
         iret = nf_open(trim(filename),NCWRITE,ncid)
         call check_cdf_status(iret)
+        call rwcdf ('read', ncid, 'ntim_batch', imap, tstepn, iret)
+        call check_cdf_status(iret)
+        if (tstepn(1).ne.ntim_batch) then
+          write(*,*)'WARNING: ntim_batch has been changed'
+          write(*,*)'WARNING: statistical error assessment will not be reliable'
+        endif
       else
         ntstep = 0
         nastep = 0
@@ -434,9 +440,9 @@ contains
     !
     !    total flows to the divertor plates
     !
-            
+
     fnixip = 0.0_R8; feexip = 0.0_R8; feixip = 0.0_R8; fchxip = 0.0_R8; fetxip = 0.0_R8
-    nemxip = 0.0_R8; temxip = 0.0_R8; timxip = 0.0_R8; pomxip = 0.0_R8; pwmxip = 0.0_R8; tpmxip = 0.0_R8   
+    nemxip = 0.0_R8; temxip = 0.0_R8; timxip = 0.0_R8; pomxip = 0.0_R8; pwmxip = 0.0_R8; tpmxip = 0.0_R8
     ix = -1 ! 1
     ix_off  = ix + target_offset
     do iy = iylstrt,iylend
@@ -455,7 +461,7 @@ contains
         tpmxip(1) = max(tpmxip(1), target_temp(xymap(ix,iy),1))
       endif
     enddo
-    
+
     fnixap = 0.0_R8; feexap = 0.0_R8; feixap = 0.0_R8; fchxap = 0.0_R8; fetxap = 0.0_R8
     nemxap = 0.0_R8; temxap = 0.0_R8; timxap = 0.0_R8; pomxap = 0.0_R8; pwmxap = 0.0_R8; tpmxap = 0.0_R8
     ix = nx ! 2
@@ -476,7 +482,7 @@ contains
         tpmxap(1) = max(tpmxap(1), target_temp(xymap(ix,iy),1))
       endif
     enddo
-    
+
     if(nncut.ge.2) then
       ix = ixtr ! 3
       ix_off  = ix + target_offset
@@ -496,7 +502,7 @@ contains
           tpmxap(2) = max(tpmxap(2), target_temp(xymap(ix,iy),1))
         endif
       enddo
-      
+
       ix = ixtl ! 4
       ix_off  = ix - target_offset
       do iy = iytlstrt,iytlend
@@ -517,10 +523,10 @@ contains
       enddo
     endif
 
-    fnisip = 0.0_R8; feesip = 0.0_R8; feisip = 0.0_R8; fchsip = 0.0_R8; fetsip = 0.0_R8       
-    fnisap = 0.0_R8; feesap = 0.0_R8; feisap = 0.0_R8; fchsap = 0.0_R8; fetsap = 0.0_R8    
+    fnisip = 0.0_R8; feesip = 0.0_R8; feisip = 0.0_R8; fchsip = 0.0_R8; fetsip = 0.0_R8
+    fnisap = 0.0_R8; feesap = 0.0_R8; feisap = 0.0_R8; fchsap = 0.0_R8; fetsap = 0.0_R8
     fnisipp = 0.0_R8; feesipp = 0.0_R8; feisipp = 0.0_R8; fetsipp = 0.0_R8; fchsipp = 0.0_R8
-    fnisapp = 0.0_R8; feesapp = 0.0_R8; feisapp = 0.0_R8; fetsapp = 0.0_R8; fchsapp = 0.0_R8    
+    fnisapp = 0.0_R8; feesapp = 0.0_R8; feisapp = 0.0_R8; fetsapp = 0.0_R8; fchsapp = 0.0_R8
     if(nnreg(0).ge.3) then
       do ic = 1, nncut
         do iy = -1,jsep
@@ -600,7 +606,7 @@ contains
           feeyip(1) = feeyip(1) + feetmp
           feiyip(1) = feiyip(1) + feitmp
           fchyip(1) = fchyip(1) + fchtmp
-          fetyip(1) = fetyip(1) + fettmp          
+          fetyip(1) = fetyip(1) + fettmp
         endif
         if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
           iy = -1 ! 13
@@ -621,7 +627,7 @@ contains
           feeyip(region(ix,ny,0)/4+1) = feeyip(region(ix,ny,0)/4+1) + feetmp
           feiyip(region(ix,ny,0)/4+1) = feiyip(region(ix,ny,0)/4+1) + feitmp
           fchyip(region(ix,ny,0)/4+1) = fchyip(region(ix,ny,0)/4+1) + fchtmp
-          fetyip(region(ix,ny,0)/4+1) = fetyip(region(ix,ny,0)/4+1) + fettmp          
+          fetyip(region(ix,ny,0)/4+1) = fetyip(region(ix,ny,0)/4+1) + fettmp
         endif
         if(region(ix,ny,0).eq.3 .or. region(ix,ny,0).eq.8) then
           iy = ny ! 15
@@ -669,7 +675,7 @@ contains
           feeyip(1) = feeyip(1) + feetmp
           feiyip(1) = feiyip(1) + feitmp
           fchyip(1) = fchyip(1) + fchtmp
-          fetyip(1) = fetyip(1) + fettmp          
+          fetyip(1) = fetyip(1) + fettmp
         endif
       enddo
     else
@@ -680,10 +686,10 @@ contains
         feeyip(1) = feeyip(1) + feetmp
         feiyip(1) = feiyip(1) + feitmp
         fchyip(1) = fchyip(1) + fchtmp
-        fetyip(1) = fetyip(1) + fettmp          
+        fetyip(1) = fetyip(1) + fettmp
       enddo
     endif ! nnreg check
-    
+
     !
     !    other quantities related to the target plates
     !
@@ -838,7 +844,7 @@ contains
     tmte(1)=tmte(1)/ev
     tmti(1)=tmti(1)/ev
 
-#ifndef NO_CDF      
+#ifndef NO_CDF
     tmhacore(1)=0.0_R8
     tmhasol(1)=0.0_R8
     tmhadiv(1)=0.0_R8
@@ -907,7 +913,7 @@ contains
       endif
     endif
 !wdk end of batch averaging
-    
+
 !wdk only write time data if lwti is true
     if (lwti) then
 
@@ -1143,7 +1149,7 @@ contains
       call calc_fet(-1,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
     enddo
     call rwcdf(rw,ncid,'ft3dl',imap,slice(iylstrt),iret)
-    
+
     slice=0.0_R8
     do iy = iyrstrt, iyrend
       call calc_fet(nx,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
@@ -1155,7 +1161,7 @@ contains
         call calc_fet(ixtl,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
       enddo
       call rwcdf(rw,ncid,'ft3dtl',imap,slice(iytlstrt),iret)
-      
+
       slice=0.0_R8
       do iy = iytrstrt, iytrend
         call calc_fet(ixtr,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
@@ -1319,7 +1325,7 @@ contains
       call rwcdf(rw,ncid,'pomxap_std',imap,pomxap_std,iret)
 
     endif
-    !      
+    !
     if (lwti.or.lwav) then
       iret = nf_close(ncid)
       call check_cdf_status(iret)
@@ -1542,7 +1548,7 @@ contains
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rsahi2did, 'long_name', 21, 'iz energy source/sink')
           call check_cdf_status(iret)
-          iret = nf_put_att_text(ncid, rsahi2did, 'units', 1, 'W')      
+          iret = nf_put_att_text(ncid, rsahi2did, 'units', 1, 'W')
           call check_cdf_status(iret)
           iret = nf_def_var(ncid, 'rsana2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsana2did)
           call check_cdf_status(iret)
@@ -1586,7 +1592,7 @@ contains
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rqahe2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-        
+
           iret = nf_def_dim(ncid, 'idir', 2, idirdim)  ! Needed for fluxes
           call check_cdf_status(iret)
           iret = nf_def_var(ncid, 'fhe2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhe2did)
@@ -1599,13 +1605,13 @@ contains
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fhi2did, 'long_name', 13, 'Ion heat flux')
           call check_cdf_status(iret)
-          iret = nf_put_att_text(ncid, fhi2did, 'units', 1, 'W')      
+          iret = nf_put_att_text(ncid, fhi2did, 'units', 1, 'W')
           call check_cdf_status(iret)
           iret = nf_def_var(ncid, 'fch2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fch2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fch2did, 'long_name', 7, 'Current')
           call check_cdf_status(iret)
-          iret = nf_put_att_text(ncid, fch2did, 'units', 1, 'A')      
+          iret = nf_put_att_text(ncid, fch2did, 'units', 1, 'A')
           call check_cdf_status(iret)
           iret = nf_def_var(ncid, 'fna2d'  , NCDOUBLE, 5, (/nxdim,nydim,idirdim,nsdim,timedim/), fna2did)
           call check_cdf_status(iret)
@@ -2982,7 +2988,7 @@ contains
 
   subroutine rwcdf(rw,ncid,data_name,imap,data_set,iret)
 #     include <netcdf.inc>
-    
+
     character*(*) rw,data_name
     integer ncid,imap(*),iret,i,varid,dimlen
     real(kind=R8), Intent(InOut) :: data_set(*)
@@ -3161,16 +3167,16 @@ contains
     select case (side)
     case ('l','L')
       ix_flux = rightix(ix,iy) ! Index to cell with flux entering cell
-      iy_flux = rightiy(ix,iy)        
+      iy_flux = rightiy(ix,iy)
       ix_adj  = rightix(ix,iy) ! Index to cell adjacent
-      iy_adj  = rightiy(ix,iy)        
+      iy_adj  = rightiy(ix,iy)
       idir = 0                 ! Index in flux variables (x vs y direction)
       h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
     case ('r','R')
       ix_flux = ix
       iy_flux = iy
       ix_adj = leftix(ix,iy)
-      iy_adj = leftiy(ix,iy)        
+      iy_adj = leftiy(ix,iy)
       idir = 0
       h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
     case ('t','T')
@@ -3213,7 +3219,7 @@ contains
     enddo
     if (present(pwr)) pwr = Abs(fet)/gs(ix_flux,iy_flux,idir)
   end subroutine calc_fet
-      
+
 end module b2mod_mwti
 
 !!!Local Variables:

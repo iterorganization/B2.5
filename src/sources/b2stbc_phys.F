@@ -8290,7 +8290,7 @@ cxpb Careful here because of BC number clash
      &           'is consistent with '//
      &           'ion density boundary condition'  !srv 21.09.12
               end if
-              if (ns.gt.1) then
+              if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
                 write(0,*)
      &       'Use of BCENI=23 only meant for runs without impurities!'
                 write(6,*)
@@ -8304,7 +8304,7 @@ cxpb Careful here because of BC number clash
      .           ('BCENI types 16, 23, 24, 26 and 27 cannot be mixed!')
             endif
           ENDDO
-          call xertst(use_astra.ne.0.or.ENIPAR(IBW,1).gt.0.0_R8,
+          call xertst(use_astra.ne.0.or.ENIPAR(IB,1).gt.0.0_R8,
      1     'BCENI = 23, ENIPAR(,1) !> 0')
         endif
 
@@ -8417,7 +8417,7 @@ cxpb Careful here because of BC number clash
      &             'is consistent with '//
      &             'ion density boundary condition'  !srv 21.09.12
               end if
-              if (ns.gt.1) then
+              if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
                write(0,*)
      &       'Use of BCENI=24 only meant for runs without impurities!'
                write(6,*)

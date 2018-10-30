@@ -10417,8 +10417,14 @@ c
         case('page')     ! set number of graphs per page
           stack_req=(/2,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call b2page(istack(iistack-1),istack(iistack))
-          call pop_stack(stack_req)
+          iy=ipop(istack,iistack)
+          ix=ipop(istack,iistack)
+          if(ix.le.0.or.iy.le.0) then
+            write(*,*) 'Invalid values for page!'
+            write(*,*) 'Must be strictly positive'
+            return
+          end if
+          call b2page(ix,iy)
         case('logf')     ! log f plot
           if (mod(linlog,2).eq.1) linlog=linlog+1
         case('linf')     ! linear f plot
@@ -10749,6 +10755,10 @@ c
           stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call set_lbsz(rpop(rstack,irstack))
+        case('glsz')     ! globalheader size
+          stack_req=(/0,1,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          call set_glsz(rpop(rstack,irstack))
         case('ndec')     ! number of decades
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return

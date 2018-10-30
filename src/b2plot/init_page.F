@@ -21,13 +21,15 @@ c     the line format common
       real (kind=R8) :: xlod,xhid,ylod,yhid
       logical aspect,colorbar, physical
       integer linlog
-      real range,xmid,ymid,ceil,txtwdth,
+      real range,xmid,ymid,ceil,txtwdth,yframe,
      1 reserve_bottom,reserve_top,reserve_left,reserve_right,
      2 test,test1
-      integer ix,iy,n_page,itxtwdth,lnblnk,
+      integer ix,iy,n_page,itxtwdth,lnblnk,offset,
      1 nox,noxm,nfmtx,nnox,
      2 noy,noym,nfmty,nnoy
-      external lnblnk
+      real (kind=R8) :: rratio
+      logical streql
+      external lnblnk, streql, rratio
 
       if(b2plot_debug.ge.8) write(*,*) xwidth,yheight
 
@@ -92,11 +94,12 @@ c     the line format common
         ylo=ymid-range/2.0/ny_page*yheight
         yhi=ymid+range/2.0/ny_page*yheight
       endif
-      xsize=xwidth/real(nx_page)
-      ysize=yheight/real(ny_page)
-      if(globalheader.ne.' ') then
-        ysize=ysize*(1.00-0.02*lbsz)
+      yframe=yheight
+      if(.not.streql(globalheader,' ')) then
+        yframe=yframe*(1.00-0.02*glsz)
       endif
+      xsize=xwidth/real(nx_page)
+      ysize=yframe/real(ny_page)
       xpos=(ix_page-1)*xsize
       ypos=(ny_page-iy_page)*ysize
 
@@ -159,11 +162,15 @@ c     the line format common
 
       n_page=max(nx_page,ny_page)
       itxtwdth=max(nint(12*lbsz/N_PAGE),4)
-      txtwdth=real(itxtwdth)/real(1024)
+      txtwdth=rratio(itxtwdth,1024)
+      offset=0
+      if(nx_page.gt.ny_page) offset=1
+      if(nx_page/ny_page.gt.3) offset=offset+((nx_page/ny_page)-1)/2
+      if(ny_page/nx_page.gt.3) offset=offset+1
 
       if(noax.gt.0) then
         reserve_bottom=txtwdth*5/ysize
-        reserve_top=txtwdth*6/ysize
+        reserve_top=txtwdth*(4+2*offset)/ysize
         reserve_left=txtwdth*(nfmty+3)/xsize
         reserve_right=0.0
         if(target.and.physical) then
@@ -184,7 +191,8 @@ c     the line format common
           colorbar_left=1.0-reserve_right
           reserve_right=reserve_right+0.02
         endif
-        if(extralabel.ne.' ') reserve_top=reserve_top+txtwdth*2/ysize
+        if(.not.streql(extralabel,' ')) reserve_top=reserve_top+
+     .    txtwdth*2*(1+offset+nx_page/5)/ysize
         if(reserve_right.eq.0.0) reserve_right=0.05*lbsz
       else
         reserve_bottom=0.0
@@ -231,15 +239,16 @@ c     the line format common
       if(new_page) then
         call reset
         new_page=.false.
-        if(globalheader.ne.' ') then
+        if(.not.streql(globalheader,' ')) then
           if(hcol.gt.1) call gsplci(hcol)
           CALL SET(0.0*XWIDTH,1.0*XWIDTH,
      1     0.0*YHEIGHT,1.0*YHEIGHT,
      2     0.0,1.0,0.0,1.0,1)
           if(noax.gt.0)
-     1     CALL PLCHHQ(0.5,1.0-0.01*lbsz,
+     1     CALL PLCHHQ(0.5,1.0-0.01*glsz,
      1     GLOBALHEADER(1:LNBLNK(GLOBALHEADER)),
-     1     1.0/real(max(50,lnblnk(globalheader)))*xwidth/1.25,0.0,0.0)
+     1     1.0/real(max(50,lnblnk(globalheader)))*xwidth/1.25*glsz,
+     1     0.0,0.0)
           call gsplci(1)
         endif
       endif
@@ -259,23 +268,25 @@ c     the line format common
         call gsplci(1)
         if(bcol.gt.1) call gsplci(bcol)
         if(wall)
-     &   CALL PLCHHQ(wallbar_right,(1.0-txtwdth*2*n_page),
+     &   CALL PLCHHQ(wallbar_right,1.0-txtwdth*2*n_page,
      1   WALLBARLABEL(1:LNBLNK(WALLBARLABEL)),
      1   1.0/100.0/N_PAGE*lbsz,0.0,1.0)
         if(target.and.physical)
-     &   CALL PLCHHQ(targetbar_right,(1.0-txtwdth*2*n_page),
+     &   CALL PLCHHQ(targetbar_right,1.0-txtwdth*2*n_page,
      1   TARGETBARLABEL(1:LNBLNK(TARGETBARLABEL)),
      1   1.0/100.0/N_PAGE*lbsz,0.0,1.0)
         call gsplci(1)
       endif
-      IF(EXTRALABEL.NE.' ') THEN
+      if(.not.streql(extralabel,' ')) then
         if(xcol.gt.1) call gsplci(xcol)
-        if(noax.gt.0)
-     1   CALL PLCHHQ(0.5,(1.0-txtwdth*4*n_page),
-     1   EXTRALABEL(1:LNBLNK(EXTRALABEL)),
-     1   1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        if(noax.gt.0) then
+          CALL PLCHHQ(0.5,
+     1     1.0-txtwdth*(5-(offset-(nx_page/ny_page)/5))*n_page,
+     1     EXTRALABEL(1:LNBLNK(EXTRALABEL)),
+     1     1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        endif
         call gsplci(1)
-      ENDIF
+      endif
 
       if(b2plot_debug.ge.6) write(*,*) 'SET: ',
      1   reserve_left*XSIZE+XPOS,

@@ -144,6 +144,7 @@ c
       extralabel=' '
       globalheader=' '
       runtime=time
+      glsz=1.0
       lbsz=1.0
       ndec=10
       initialised_plotting=.false.
@@ -177,6 +178,10 @@ c
       same_page=0
       noax=1
       write(*,*) 'same_page set to ',same_page
+      return
+
+      entry set_glsz(rval)
+      glsz=rval
       return
 
       entry set_lbsz(rval)

@@ -1077,7 +1077,7 @@
 				<description>
 					If b2sigp_style is set to '2', this switch has no effect.
 					When set to '1', the new correct form of the friction force is used, applicable for non-hydrogenic plasmas or hydrogenic mixtures.
-					The value '0' corresponds to the old SOLPS5.0 treatment.
+					The value '0' corresponds to the old SOLPS5.0 treatment. Not recommended unless wanting to recover older 5.0 results.
 				</description>
 			</switch>
 			<switch>
@@ -2231,11 +2231,27 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tral_cvsa_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If '1', only the parallel ion classical contribution to the viscosity is multiplied by 4/3. If '0', all components (ions and neutrals, parallel and perpendicular) are multiplied by 4/3.
+				</description>
+			</switch>
+			<switch>
 				<name>b2trno_csig_an_style</name>
 				<default>1</default>
 				<type>integer</type>
 				<description>
 					If '1', the anomalous contributions in the parallel direction to the electrical conductivity csig and the thermo-electric coefficient calf are zeroed out.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqin_csigin_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If '1', the ion-neutral conductivity is computed from hydrogen gas diffusivity (SOLPS5.2 treatment). If '0', it is computed from the local CX rate (SOLPS5.0/5.1 treatments).
 				</description>
 			</switch>
 			<switch>
@@ -2464,7 +2480,8 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2mndt_av_batch_all.gt.0, produces standard output for batch averages.
+					If b2mndt_av_batch_all.ge.0, produces standard output for batch averages.
+					If b2mndt_av_batch_all.eq.1, entire 2D fields of batch averages and variances for ne, te, ... are written. Expert use only, check $SOLPSTOP/doc/SOLPS-ITER_Eirene_averaging.pdf.
 				</description>
 			</switch>
 			<switch>
@@ -2516,7 +2533,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If ird_aver.gt.0, the averaged solution is read from the b2faveri file and written in the b2favere file at the end of the run.
+					If b2mndr_av_read.gt.0, the initial plasma is the averaged solution read from the b2faveri file. Check $SOLPSTOP/doc/SOLPS-ITER_Eirene_averaging.pdf for details.
 				</description>
 			</switch>
 			<switchgroup>
@@ -4628,7 +4645,7 @@
 			</switch>
 			<switch>
 				<name>TRACK_INDEX</name>
-				<default>1 for species spud_dst, 0 for other</default>
+				<default>1 for species sput_dst, 0 for all others</default>
 				<type>integer array of size (0:NS-1)</type>
 				<description>
 					Specifies the mixed material species index related to B2 species (is).
@@ -6960,3 +6977,4 @@
 	To install adaptive-wrap do: M-x package-install RET adaptive-wrap RET
 	eval: (visual-line-mode t)
 -->
+

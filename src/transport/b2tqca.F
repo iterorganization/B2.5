@@ -61,16 +61,16 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, model, n2, ix, iy, is, js
+      integer ncall, model, style, n2, ix, iy, is, js
       integer, save :: icase = 0                                      !srv 20.09.11
       integer, save :: iout = 0, iout_b2wdat=0,                       !srv 16.06.08
-     &                 iout_b2nph9 = 0, iout_b2npht = 0, iout_b2npmo = 0
+     &                 iout_b2nph9 = 0, iout_b2npht = 0, iout_b2npmo = 0 
       character chns*3                                                !srv 16.06.08
       real (kind=R8) :: 
-     *  fki, fxi, eta, ctaup, ctaui, ci, 
+     *  fki, fxi, eta, ctaup, ctaui, ci, ft,
      *  t, t0, t1, tau(-1:nx,-1:ny), tnp, phm0, w                     !srv 11.09.09
       parameter (fki=2.253_R8, eta=0.96_R8, ci = 3.9e0_R8)
-      save ncall, model, phm0
+      save ncall, model, phm0, style
 *   ..procedures
       intrinsic abs, sqrt
       real (kind=R8) ::
@@ -79,7 +79,7 @@
       external b2xvsg
       pitx(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
 *   ..initialisation
-      data ncall/0/, phm0/1.0_R8/, model/1/
+      data ncall/0/, phm0/1.0_R8/, model/1/, style/1/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -111,6 +111,7 @@
         call ipgeti ('b2tqca_model', model)
         call ipgetr ('b2tqca_phm0', phm0)
         call xertst (0.0_R8.le.phm0, 'faulty input phm0')
+        call ipgeti ('b2tral_cvsa_style', style)
         call ipgeti ('b2tqca_iout', iout)                            !srv 16.06.08                       
         call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
         call ipgeti ('b2nph9_iout', iout_b2nph9)
@@ -139,6 +140,11 @@
 *     even for IEEE single precision arithmetic.
 !xpb The lnlam term has been removed and is put back in later so it may
 !xpb vary with space and species or be set by user.
+      if (style.eq.1) then
+        ft = 1.0_R8
+      else
+        ft = 4.0_R8/3.0_R8
+      endif
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
       ctaup = t0*sqrt(mp)                                          !xpb
@@ -167,7 +173,7 @@ c DPC/XPB changed to 4/3*  at the strong recommendation of Rozhansky
 c WDK/SRV 21.07.2016 factor 4/3 removed from vsa, but added explicitly to cvsahz (not cvsa),
 c         according to old model.eq.3 treatment
             vsa(ix,iy,0,is) = 
-     &       phm0*eta*sqrt(2.0_R8)*ti(ix,iy)*tnp
+     &       phm0*ft*eta*sqrt(2.0_R8)*ti(ix,iy)*tnp
           else if (model.eq.2) then ! old SOLPS4.0 model : Braginskii
             w = 0.0_R8
             t = 0.0_R8

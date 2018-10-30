@@ -116,7 +116,7 @@
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
      *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
       logical lwti, lwav, lrav, lrer
-      character(22) :: batch_name, aver_name, run_av_name 
+      character(22) :: batch_name, aver_name, run_av_name
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
@@ -1464,10 +1464,10 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
 *   initialize 2d batch averages
       if (ibatch_av_all > 0) call batch_av_all_init (nx, ny, ns)
 
-*   initialize and/or read running averages 
+*   initialize and/or read running averages
       if ((iav_run > 0) .or. (ird_aver > 0)) then
         lrer = (ird_aver == 0)
-        call run_av_init (iav_cont, nx, ny, ns,.true.,lrer) 
+        call run_av_init (iav_cont, nx, ny, ns,.true.,lrer)
       end if
 
 *   get averaged plasma profiles
@@ -1910,7 +1910,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
           call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
         endif
-*    ..extra writes of b2fplasmf.xxxx       
+*    ..extra writes of b2fplasmf.xxxx
         if (mod(itim_plas,plasinc).eq.0.and.nwrit_plas.le.plasnum
      &    .and.plasnum.gt.0.and.plasinc.gt.0) then
           nwrit_plas = nwrit_plas + 1
@@ -2035,17 +2035,17 @@ c new CDF movie option
      .              BoRiS,lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
-          write (batch_name,'(a18,i4.4)') 
+          write (batch_name,'(a18,i4.4)')
      .           'batch_av/batch_av.',edition_batch
           call batch_av_all_save (batch_name,nx,ny,ns)
           write(*,*) 'Saved ',batch_name
         end if
         if ((iav_run > 0) .and. (ntim_run > 0)) then
-          lrav = mod(itim,ntim_run) == 0 
-          write (*,*) ' itim,ntim_batch,lrav ', itim,ntim_run,lrav
+          lrav = mod(itim,ntim_run) == 0
+          write (*,*) ' itim,ntim_run,lrav ', itim,ntim_run,lrav
           if (lrav) then
              edition_run = edition_run + 1
-             write (run_av_name,'(a14,i4.4)') 
+             write (run_av_name,'(a14,i4.4)')
      .              'run_av/run_av.',edition_run
              call run_av_save (run_av_name,nx,ny,ns,.true.,.false.)
              write(*,*) 'Saved ',run_av_name
@@ -2229,7 +2229,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &   fch, pbshz, fhe_mdf, fhi_mdf, fchvispar,
      &   fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
      &   na, ua, kinrgy, rra, rqa, fna, fna_mdf, fna_fcor, uadia, vadia,
-     &   vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi, float(rightix), 
+     &   vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi, float(rightix),
      &   float(topiy))
         endif
 #endif
