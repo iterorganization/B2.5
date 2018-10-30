@@ -1077,7 +1077,7 @@
 				<description>
 					If b2sigp_style is set to '2', this switch has no effect.
 					When set to '1', the new correct form of the friction force is used, applicable for non-hydrogenic plasmas or hydrogenic mixtures.
-					The value '0' corresponds to the old SOLPS5.0 treatment.
+					The value '0' corresponds to the old SOLPS5.0 treatment. Not recommended unless wanting to recover older 5.0 results.
 				</description>
 			</switch>
 			<switch>
@@ -2231,11 +2231,27 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tral_cvsa_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If '1', only the parallel ion classical contribution to the viscosity is multiplied by 4/3. If '0', all components (ions and neutrals, parallel and perpendicular) are multiplied by 4/3.
+				</description>
+			</switch>
+			<switch>
 				<name>b2trno_csig_an_style</name>
 				<default>1</default>
 				<type>integer</type>
 				<description>
 					If '1', the anomalous contributions in the parallel direction to the electrical conductivity csig and the thermo-electric coefficient calf are zeroed out.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqin_csigin_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If '1', the ion-neutral conductivity is computed from hydrogen gas diffusivity (SOLPS5.2 treatment). If '0', it is computed from the local CX rate (SOLPS5.0/5.1 treatments).
 				</description>
 			</switch>
 			<switch>

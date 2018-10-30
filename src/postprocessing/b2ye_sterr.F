@@ -1,5 +1,5 @@
 
-      subroutine b2ye_sterr (meanbatch, nn, eps_s, tmax, T1, T2, 
+      subroutine b2ye_sterr (meanbatch, nn, eps_s, tmax, T1, T2,
      .                      meansample)
 
       use b2mod_types
@@ -25,7 +25,7 @@
 *  3. description
 *
 *     For a detailed description of the equations see K. Ghoos et al.,
-*     Numerical error estimation in Random Noise coupled plasma edge 
+*     Numerical error estimation in Random Noise coupled plasma edge
 *     simulations in nuclear fusion reactors, M&C2017
 *
 *     This routine performs the following steps.

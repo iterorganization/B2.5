@@ -82,7 +82,7 @@
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny)                         !lk 31.01.08 }
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, flomx,
-     &   tex, ehx_po, ehy_po,
+     &   tex, ehx_po, ehy_po, floe0, cone0,
      1   floe0_nd, cone0_nd, t0, t0_nd, tex0, tex0_nd                   !srv 15.10.18
       real (kind=R8) ::                                                 !xpb
      * fch_ion_neutral, fch_anomalous, vis_par, vis_per, sig_stoch,     !xpb
@@ -217,7 +217,11 @@ c Drift terms
 *   ..compute parallel current
       call b2xehx (nx, ny, hx, te, po, ne, ehx_)                        !srv 13.01.17 {
       if (no_current.ne.1) then
-        call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
+        if (style.eq.0) then
+          fch_p = 0.0_R8
+        else
+          call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
+        end if
         if (style.eq.2) then
           call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
           call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
@@ -263,9 +267,12 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         chve(ix,iy,0)*
      1         (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
             endif
+            floe0 = floe0_nd
             if (no_hybr.eq.0) then
+              cone0    = hybr(floe0   ,chce(ix,iy,0))-abs(floe0/2.0_R8)
               cone0_nd = hybr(floe0_nd,chce(ix,iy,0))-abs(floe0_nd/2)
             else
+              cone0    = chce(ix,iy,0)
               cone0_nd = chce(ix,iy,0)
             endif
 cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no longer required
@@ -273,7 +280,8 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &        ne(ix,iy))/2.0_R8
             if (flomx.gt.0.0_R8 .and. 
      &        lim_flux.eq.1 .and. conductive_limit.eq.0) then
-              t0    = cone0_nd*abs(tex)/flomx                            !srv 15.10.18
+              t0    = cone0*abs(tex)/(flomx*max(
+     &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
               t0_nd = cone0_nd*abs(tex)/(flomx*max(
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
             else
@@ -283,8 +291,12 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             tex0 = tex/(1.0_R8+t0)                                       !srv 15.10.18
             tex0_nd = tex/(1.0_R8+t0_nd)
             if (style.eq.0) then                                         !srv 15.10.18 {
-              fch(ix,iy,0) = (csig(ix,iy,0)*ehx-
-     &                 phm2*calf(ix,iy,0)*tex0)*prl_cur 
+              fch_p(ix,iy,0) = ((csig(ix,iy,0)-csig_an(ix,iy,0))*ehx-
+     &         phm2*calf(ix,iy,0)*tex0)*prl_cur
+              fch(ix,iy,0) = ((csig(ix,iy,0)-csig_an(ix,iy,0))*ehx-
+     &         phm2*calf(ix,iy,0)*tex0)*prl_cur
+     &       +fch_anomalous*(csig_an(ix,iy,0)*ehx_po-
+     &                  phm2*calf_an(ix,iy,0)*tex0)*prl_cur
      &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0)          !xpb
      &       +fchvisper(ix,iy,0)
             else                                                         !srv 15.10.18 }
@@ -295,8 +307,14 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             fch_32(ix,iy,0) = csig_cl(ix,iy,0)*ehx
      1       +fchin(ix,iy,0)+fchvispar(ix,iy,0)
      &       +fchvisper(ix,iy,0)
-            fch_52(ix,iy,0) = csig_an(ix,iy,0)*ehx_po
-     &                       -calf(ix,iy,0)*tex0_nd
+            if (style.eq.0) then
+              fch_52(ix,iy,0) =(csig_an(ix,iy,0)*ehx_po
+     &                         -calf_an(ix,iy,0)*tex0_nd)*fch_anomalous
+     &                         -calf(ix,iy,0)*tex0_nd
+            else
+              fch_52(ix,iy,0) = csig_an(ix,iy,0)*ehx_po
+     &                         -calf(ix,iy,0)*tex0_nd
+            end if
             conc(ix,iy,0) = csig(ix,iy,0)
             if(fch_ion_neutral.ne.0.0_R8) then                  	     !xpb
               do is = 0, ns-1

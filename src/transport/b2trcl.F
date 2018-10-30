@@ -633,8 +633,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 *   .. save the classical transport coefficients
       csig_cl = csig
       calf_cl = calf
-      cvsa_cl=cvsa
-      cvsahz_cl=cvsahz                                                    !srv 09.01.01
+      cvsa_cl = cvsa
+      cvsahz_cl = cvsahz                                                  !srv 09.01.01
 
       if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
        do is = 0, ns-1

@@ -52,7 +52,7 @@
      *   b2faveri_version = '00.000.000'
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
-       
+
       naver = 0
       ntotdt = 0
 
@@ -72,17 +72,17 @@
         call cfverr (iun, b2faveri_version)
         call cfruin (iun, 3, idum, 'nx,ny,ns')
         ns = idum(3)
-   	call cfruch (iun, 120, lbli, 'label')
-        call b2ruzd (iun, b2faveri_version, ns, 
+        call cfruch (iun, 120, lbli, 'label')
+        call b2ruzd (iun, b2faveri_version, ns,
      &          zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
         call cfruin (iun, 1, naver, 'naver')
-        call cfruin (iun, 1, ntotdt, 'ntotdt')  
+        call cfruin (iun, 1, ntotdt, 'ntotdt')
       else
         write (*,*) ' file b2favere not found '
-	write (*,*) ' results are questionable! '
+        write (*,*) ' results are questionable! '
       end if
       close (iun)
- 
+
 *  prepare reading from NETCDF file b2time.nc
       rw='read'
       call find_file('b2time.nc',ex)
@@ -177,202 +177,202 @@
       write (iout,'(a16,5a12)') ' variable ','mean value','t',
      .             't1','t2','eps_s'
       if (b2ye_tprf(nemxip_av(:,1),nastep)) then
-        call b2ye_sterr(nemxip_av(:,1), nastep, eps_s, tmax, t1, t2,  
+        call b2ye_sterr(nemxip_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' nemxip ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' nemxip ', meansample, tmax,
      .               t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant nemxip ', 
+        write (iout,'(a16,5es12.4)') 'constant nemxip ',
      .               nemxip_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(temxip_av(:,1),nastep)) then
-        call b2ye_sterr(temxip_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(temxip_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                  meansample)
-        write (iout,'(a16,5es12.4)') ' temxip ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' temxip ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant temxip ', 
+        write (iout,'(a16,5es12.4)') 'constant temxip ',
      .               temxip_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(timxip_av(:,1),nastep)) then
         call b2ye_sterr(timxip_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' timxip ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' timxip ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant timxip ', 
+        write (iout,'(a16,5es12.4)') 'constant timxip ',
      .               timxip_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(pomxip_av(:,1),nastep)) then
-        call b2ye_sterr(pomxip_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(pomxip_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' pomxip ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' pomxip ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant pomxip ', 
+        write (iout,'(a16,5es12.4)') 'constant pomxip ',
      .               pomxip_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(nemxap_av(:,1),nastep)) then
-        call b2ye_sterr(nemxap_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(nemxap_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' nemxap ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' nemxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant nemxap ', 
+        write (iout,'(a16,5es12.4)') 'constant nemxap ',
      .               nemxap_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(temxap_av(:,1),nastep)) then
-        call b2ye_sterr(temxap_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(temxap_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' temxap ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' temxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant temxap ', 
+        write (iout,'(a16,5es12.4)') 'constant temxap ',
      .               temxap_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(timxap_av(:,1),nastep)) then
-        call b2ye_sterr(timxap_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(timxap_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' timxap ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' timxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant timxap ', 
+        write (iout,'(a16,5es12.4)') 'constant timxap ',
      .               timxap_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(pomxap_av(:,1),nastep)) then
         call b2ye_sterr(pomxap_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' pomxap ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' pomxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant pomxap ', 
+        write (iout,'(a16,5es12.4)') 'constant pomxap ',
      .               pomxap_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(nesepi_av(:,1),nastep)) then
-        call b2ye_sterr(nesepi_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(nesepi_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' nesepi ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' nesepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant nesepi ', 
+        write (iout,'(a16,5es12.4)') 'constant nesepi ',
      .               nesepi_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(tesepi_av(:,1),nastep)) then
-        call b2ye_sterr(tesepi_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(tesepi_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' tesepi ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' tesepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tesepi ', 
+        write (iout,'(a16,5es12.4)') 'constant tesepi ',
      .               tesepi_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(tisepi_av(:,1),nastep)) then
-        call b2ye_sterr(tisepi_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(tisepi_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' tisepi ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' tisepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tisepi ', 
+        write (iout,'(a16,5es12.4)') 'constant tisepi ',
      .               tisepi_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(posepi_av(:,1),nastep)) then
-        call b2ye_sterr(posepi_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(posepi_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' posepi ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' posepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant posepi ', 
+        write (iout,'(a16,5es12.4)') 'constant posepi ',
      .               posepi_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(nesepm_av(:,1),nastep)) then
-        call b2ye_sterr(nesepm_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(nesepm_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' nesepm ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' nesepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant nesepm ', 
+        write (iout,'(a16,5es12.4)') 'constant nesepm ',
      .               nesepm_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(tesepm_av(:,1),nastep)) then
-        call b2ye_sterr(tesepm_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(tesepm_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' tesepm ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' tesepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tesepm ', 
+        write (iout,'(a16,5es12.4)') 'constant tesepm ',
      .               tesepm_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(tisepm_av(:,1),nastep)) then
-        call b2ye_sterr(tisepm_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(tisepm_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' tisepm ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' tisepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tisepm ', 
+        write (iout,'(a16,5es12.4)') 'constant tisepm ',
      .               tisepm_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(posepm_av(:,1),nastep)) then
-        call b2ye_sterr(posepm_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(posepm_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' posepm ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' posepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant posepm ', 
+        write (iout,'(a16,5es12.4)') 'constant posepm ',
      .               posepm_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(nesepa_av(:,1),nastep)) then
-        call b2ye_sterr(nesepa_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(nesepa_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' nesepa ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' nesepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant nesepa ', 
+        write (iout,'(a16,5es12.4)') 'constant nesepa ',
      .               nesepa_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(tesepa_av(:,1),nastep)) then
-        call b2ye_sterr(tesepa_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(tesepa_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' tesepa ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' tesepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tesepa ', 
+        write (iout,'(a16,5es12.4)') 'constant tesepa ',
      .               tesepa_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(tisepa_av(:,1),nastep)) then
-        call b2ye_sterr(tisepa_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(tisepa_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' tisepa ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' tisepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tisepa ', 
+        write (iout,'(a16,5es12.4)') 'constant tisepa ',
      .               tisepa_av(1,1),0.,0.,0.,0.
       end if
 
       if (b2ye_tprf(posepa_av(:,1),nastep)) then
-        call b2ye_sterr(posepa_av(:,1), nastep, eps_s, tmax, t1, t2, 
+        call b2ye_sterr(posepa_av(:,1), nastep, eps_s, tmax, t1, t2,
      .                 meansample)
-        write (iout,'(a16,5es12.4)') ' posepa ', meansample, tmax, 
+        write (iout,'(a16,5es12.4)') ' posepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant posepa ', 
+        write (iout,'(a16,5es12.4)') 'constant posepa ',
      .               posepa_av(1,1),0.,0.,0.,0.
       end if
 
@@ -403,6 +403,6 @@
 #else
       write(*,*) 'b2ye failed because compiled with NO_CDF option'
 #endif
-     
+
   999 stop
       end program b2ye
