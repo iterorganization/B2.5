@@ -1960,7 +1960,7 @@
 					Parameters for the flux limit to the convective neutral flow.
 					Alpha is a multiplier to the classical flux limit value.
 					The larger &alpha; is, the weaker the flux limit is.
-					&Gamma; is the exponent used in the flux-limiting formula.
+					&gamma; is the exponent used in the flux-limiting formula.
 					The smaller &gamma; is, the stronger the flux limit is.
 					If alpha.eq.0, no flux limit is applied.
 					flux_limit_min_ti specifies the minimum ti to be used (in eV).
@@ -1986,7 +1986,7 @@
 				<description>
 					Parameters for the flux limit to dpa0 - pressure driven neutral diffusion.
 					Alpha is a multiplier to the classical flux limit value.
-					&Gamma; is the exponent used in the flux-limiting formula. If alpha.eq.0, no flux limit is applied.
+					&gamma; is the exponent used in the flux-limiting formula. If alpha.eq.0, no flux limit is applied.
 				</description>
 				<switch>
 					<name>b2tlc0_alpha</name>
@@ -2004,7 +2004,7 @@
 				<description>
 					Parameters for the flux limit to the heat conductivity of the neutrals. Alpha is a multiplier to the classical flux limit value.
 					The larger &alpha; is, the weaker the flux limit is.
-					&Gamma; is the exponent used in the flux-limiting formula.
+					&gamma; is the exponent used in the flux-limiting formula.
 					The smaller &gamma; is, the stronger the flux limit is.
 					If alpha.eq.0, no flux limit is applied.
 					flux_limit_min_ti specifies the minimum ti to be used (in eV).
@@ -5357,7 +5357,7 @@
 							CONPAR(,,2) is the strength of the feedback,
 							CONPAR(,,3), when running with Eirene and the 'ionising core' switch is used, is set internally to match the re-entering flux of ionised neutrals that crossed the core boundary (one must then have 'ionising_core'.eq.-IB where IB is the boundary index).
 							The feedback scheme can be further tweaked with the switches 'b2stbc_type13_norm' and 'b2stbc_type13_fac'. See code for details.
-						14 : sound speed velocity flux, CONPAR(,,1) is a multiplier to the outgoing sound speed C<sub>s</sub>.
+						14 : sound speed velocity flux, CONPAR(,,1) is a multiplier to the outgoing sound speed C<sub>s</sub> .
 						15 : prescribe a radial leakage velocity, CONPAR(,,1) specifies the leakage velocity in units of the local thermal velocity.
 						16 : particle density to achieve specified total flux, used with ASTRA coupling. The total desired flux is summed over all BCCON=16 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup> .
 						18 : prescribe total main ion particle flux, used with ASTRA coupling.
@@ -5395,7 +5395,7 @@
 						13 : sheath boundary condition from b2stbc_spb for the parallel momentum
 						14 : Condition from b2stbc_spb for the parallel momentum
 						15 : Prescribe the value of the parallel velocity, scaled with B_average/B_local
-						16 : Prescribe the average value of the parallel velocity MOMPAR(,,1) specifies the parallel velocity in m.s -1
+						16 : Prescribe the average value of the parallel velocity MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup>
 						17 : leakage option for parallel momentum, MOMPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s,a</sub> m<sub>a</sub> n<sub>a</sub> u<sub>a</sub>
 				</description>
 			</switch>
