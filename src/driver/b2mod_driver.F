@@ -2030,7 +2030,7 @@ c new CDF movie option
         end if
         if ((iav_run > 0) .and. (ntim_run > 0)) then
           lrav = mod(itim,ntim_run) == 0 
-          write (*,*) ' itim,ntim_batch,lrav ', itim,ntim_run,lrav
+          write (*,*) ' itim,ntim_run,lrav ', itim,ntim_run,lrav
           if (lrav) then
              edition_run = edition_run + 1
              write (run_av_name,'(a14,i4.4)') 

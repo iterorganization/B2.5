@@ -2400,7 +2400,8 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2mndt_av_batch_all.gt.0, produces standard output for batch averages.
+					If b2mndt_av_batch_all.ge.0, produces standard output for batch averages.
+					If b2mndt_av_batch_all.eq.1, entire 2D felds of batch averages and variances for ne, te, ... are written. Expert use only, check $SOLPSTOP/doc/SOLPS-ITER_Eirene_averaging.pdf.
 				</description>
 			</switch>
 			<switch>
@@ -2452,7 +2453,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If ird_aver.gt.0, the averaged solution is read from the b2faveri file and written in the b2favere file at the end of the run.
+					If b2mndr_av_read.gt.0, the initial plasma is the averaged solution read from the b2faveri file. Check $SOLPSTOP/doc/SOLPS-ITER_Eirene_averaging.pdf for details.
 				</description>
 			</switch>
 			<switchgroup>
@@ -6876,3 +6877,4 @@
 	To install adaptive-wrap do: M-x package-install RET adaptive-wrap RET
 	eval: (visual-line-mode t)
 -->
+
