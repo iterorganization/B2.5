@@ -811,6 +811,24 @@
       wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
       call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
 
+*   .. copied from b2rugm (DPC 2018-11-07)
+      cell_width = hx
+      cell_height(:,:) = hy(:,:)*qz(:,:,1)
+      do iy = -1, ny
+         do ix = -1, nx
+            qcb(ix,iy) = cosang (
+     &         crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
+     &         (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
+     &         (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
+            if(qcb(ix,iy).le.0.0_R8) then
+               write(*,'(a,1f12.6,2i5)')
+     1            'Problem in b2rugm: qcb(ix,iy) <= 0',qcb(ix,iy),ix,iy
+               write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
+               write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
+            endif
+         enddo
+      enddo
+
 *   ..test geometry and plasma state
       n2 = (nx+2)*(ny+2)
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,

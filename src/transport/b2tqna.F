@@ -457,20 +457,22 @@ cxpb Corrected for dimensionality
       if(iout.ne.0) then                                            !srv 10.11.09 {
         do is = 0,ns-1
           write (chns,'(i3.3)') is
-          call my_out(70,nx,ny,dna0(-1,-1,is),'b2tqna_in_dna0'//chns)
-          call my_out(70,nx,ny,dpa0(-1,-1,is),'b2tqna_in_dpa0'//chns)
+          call my_out(70,nx,ny,dna0(-1,-1,is),'b2tqna_input_dna0'//chns)
+          call my_out(70,nx,ny,dpa0(-1,-1,is),'b2tqna_input_dpa0'//chns)
           wrk0=vsa0(:,:,is)/(mp*am(is)*na(:,:,is))
-          call my_out(70,nx,ny,wrk0,'b2tqna_in_vsa0'//chns)
-          call my_out(70,nx,ny,vla0(-1,-1,0,is),'b2tqna_in_vla0x'//chns)
-          call my_out(70,nx,ny,vla0(-1,-1,1,is),'b2tqna_in_vla0y'//chns)
+          call my_out(70,nx,ny,wrk0,'b2tqna_input_vsa0'//chns)
+          call my_out(70,nx,ny,vla0(-1,-1,0,is),
+     &                                      'b2tqna_input_vla0x'//chns)
+          call my_out(70,nx,ny,vla0(-1,-1,1,is),
+     &                                      'b2tqna_input_vla0y'//chns)
           wrk0=hcib(:,:,is)/na(:,:,is)
-          call my_out(70,nx,ny,wrk0,'b2tqna_in_hcib'//chns)
+          call my_out(70,nx,ny,wrk0,'b2tqna_input_hcib'//chns)
         enddo
-!       call my_out(70,nx,ny,hci0,'b2tqna_in_hci0')
+!       call my_out(70,nx,ny,hci0,'b2tqna_input_hci0')
         wrk0=hce0/ne
-        call my_out(70,nx,ny,wrk0,'b2tqna_in_hce0')
-        call my_out(70,nx,ny,sig0,'b2tqna_in_sig0')
-        call my_out(70,nx,ny,alf0,'b2tqna_in_alf0')
+        call my_out(70,nx,ny,wrk0,'b2tqna_input_hce0')
+        call my_out(70,nx,ny,sig0,'b2tqna_input_sig0')
+        call my_out(70,nx,ny,alf0,'b2tqna_input_alf0')
       endif                                                           !srv 10.11.09 }
 
       if(user_transport.eq.0) then
@@ -980,14 +982,19 @@ c
       if(iout.ne.0 .and. ncall.eq.0) then                             !srv 09.10.01
        do is = 0,ns-1
         write (chns,'(i3.3)') is                                      !srv 09.10.01
-        call my_out(70,nx,ny,fdnc(-1,-1,is),'Fdnc'//chns)             !srv 28.06.02
-        call my_out(70,nx,ny,fvsc(-1,-1,is),'Fvsc'//chns)             !srv 17.04.06
-        call my_out(70,nx,ny,ftic(-1,-1,is),'Ftic'//chns)             !srv 17.04.06
-        call my_out(70,nx,ny,fvlc(-1,-1,0,is),'Fvlcx'//chns)          !srv 19.04.10
-        call my_out(70,nx,ny,fvlc(-1,-1,1,is),'Fvlcy'//chns)          !srv 19.04.10
+        call my_out(70,nx,ny,fdnc(-1,-1,is),
+     &                               'set_transport_srv_Fdnc'//chns)
+        call my_out(70,nx,ny,fvsc(-1,-1,is),
+     &                               'set_transport_srv_Fvsc'//chns)
+        call my_out(70,nx,ny,ftic(-1,-1,is),
+     &                               'set_transport_srv_Ftic'//chns)
+        call my_out(70,nx,ny,fvlc(-1,-1,0,is),
+     &                               'set_transport_srv_Fvlcx'//chns)
+        call my_out(70,nx,ny,fvlc(-1,-1,1,is),
+     &                               'set_transport_srv_Fvlcy'//chns)
        enddo
-       call my_out(70,nx,ny,ftec,'Ftec')                              !srv 17.04.06
-       call my_out(70,nx,ny,sig0,'sig0')
+       call my_out(70,nx,ny,ftec,'set_transport_srv_Ftec')
+       call my_out(70,nx,ny,sig0,'set_transport_srv_sig0')
       endif
       do iy=-1,ny
         do ix=-1,nx
@@ -1010,19 +1017,27 @@ c
       if(iout.ne.0) then                             !srv 15.06.08 {
        do is = 0,ns-1
         write (chns,'(i3.3)') is
-        call my_out(70,nx,ny,dna0(-1,-1,is),'dna0'//chns)
-        call my_out(70,nx,ny,dpa0(-1,-1,is),'dpa0'//chns)
-        call my_out(70,nx,ny,vsa0(-1,-1,is),'vsa0'//chns)
-        call my_out(70,nx,ny,vla0(-1,-1,0,is),'vla0x'//chns)
-        call my_out(70,nx,ny,vla0(-1,-1,1,is),'vla0y'//chns)
-        call my_out(70,nx,ny,vma0(-1,-1,0,is),'vma0x'//chns)
-        call my_out(70,nx,ny,vma0(-1,-1,1,is),'vma0y'//chns)
-        call my_out(70,nx,ny,hcib(-1,-1,is),'hcib'//chns)
+        call my_out(70,nx,ny,dna0(-1,-1,is),
+     &                              'set_transport_srv_dna0'//chns)
+        call my_out(70,nx,ny,dpa0(-1,-1,is),
+     &                              'set_transport_srv_dpa0'//chns)
+        call my_out(70,nx,ny,vsa0(-1,-1,is),
+     &                              'set_transport_srv_vsa0'//chns)
+        call my_out(70,nx,ny,vla0(-1,-1,0,is),
+     &                              'set_transport_srv_vla0x'//chns)
+        call my_out(70,nx,ny,vla0(-1,-1,1,is),
+     &                              'set_transport_srv_vla0y'//chns)
+        call my_out(70,nx,ny,vma0(-1,-1,0,is),
+     &                              'set_transport_srv_vma0x'//chns)
+        call my_out(70,nx,ny,vma0(-1,-1,1,is),
+     &                             'set_transport_srv_vma0y'//chns)
+        call my_out(70,nx,ny,hcib(-1,-1,is),
+     &                             'set_transport_srv_hcib'//chns)
        enddo
-       call my_out(70,nx,ny,hci0,'hci0')
-       call my_out(70,nx,ny,hce0,'hce0')
-       call my_out(70,nx,ny,sig0,'sig0')
-       call my_out(70,nx,ny,alf0,'alf0')
+       call my_out(70,nx,ny,hci0,'set_transport_srv_hci0')
+       call my_out(70,nx,ny,hce0,'set_transport_srv_hce0')
+       call my_out(70,nx,ny,sig0,'set_transport_srv_sig0')
+       call my_out(70,nx,ny,alf0,'set_transport_srv_alf0')
       endif                                                           !srv 15.06.08
 
 *   ..return
