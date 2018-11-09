@@ -2173,7 +2173,12 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #ifndef HPUX
             inquire(file='fort.13',exist=found)
             if (found) then
+#ifdef WINDOWS
+              systemarg='copy fort.13 fort.13.'//savefile(13:16)//
+     &        ' > nul'
+#else
               systemarg='cp fort.13 fort.13.'//savefile(13:16)
+#endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)
 #else
@@ -2182,7 +2187,12 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
             endif
             inquire(file='fort.15',exist=found)
             if (found) then
+#ifdef WINDOWS
+              systemarg='copy fort.15 fort.15.'//savefile(13:16)//
+     &        ' > nul'
+#else
               systemarg='cp fort.15 fort.15.'//savefile(13:16)
+#endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)
 #else
@@ -2192,7 +2202,12 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #else
             inquire(file='ftn13',exist=found)
             if (found) then
+#ifdef WINDOWS
+              systemarg='copy ftn13 ftn13.'//savefile(13:16)//
+     &        ' > nul'
+#else
               systemarg='cp ftn13 ftn13.'//savefile(13:16)
+#endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)
 #else
@@ -2201,7 +2216,12 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
             endif
             inquire(file='ftn15',exist=found)
             if (found) then
+#ifdef WINDOWS
+              systemarg='copy ftn15 ftn15.'//savefile(13:16)//
+     &        ' > nul'
+#else
               systemarg='cp ftn15 ftn15.'//savefile(13:16)
+#endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)
 #else
