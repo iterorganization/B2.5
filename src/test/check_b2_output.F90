@@ -126,14 +126,15 @@ module check_module_local
     else
       write (*,*) 'There were ', n_error, 'errors in array ', trim(name)
     end if
-    write (*,'(a13,a10, E14.5E3,a8,i8)') 'Max error in ', trim(name), error_max, ' at idx ' , max_err_idx
+    write (*,'(a29,a12,E14.5E3,a8,i8)') &
+                                & 'Max error in                 ', trim(name), error_max, ' at idx ' , max_err_idx
     write (*,*) 'values', orig(max_err_idx), val(max_err_idx)
-    write (*,'(a22,a10, E14.5E3)') 'Max absolute error in ', trim(name), error_max_abs
-    write (*,'(a28,a10,E14.5E3)') 'Average relative error in    ',trim(name), avg_rel_error / n_error
-    write (*,'(a28,a10,E14.5E3)') 'Average absolute diff in     ',trim(name), avg_abs_diff / n_error
+    write (*,'(a29,a12,E14.5E3)') 'Max absolute error in        ',trim(name), error_max_abs
+    write (*,'(a29,a12,E14.5E3)') 'Average relative error in    ',trim(name), avg_rel_error / n_error
+    write (*,'(a29,a12,E14.5E3)') 'Average absolute diff in     ',trim(name), avg_abs_diff / n_error
     avg_abs_val = avg_abs_val / ub
-    write (*,'(a29,a10,E14.5E3)') 'Average array value (abs) in ',trim(name), avg_abs_val 
-    write (*,'(a29,a10,E14.5E3)') 'Max error / avg array value  ',trim(name), error_max_abs / avg_abs_val 
+    write (*,'(a29,a12,E14.5E3)') 'Average array value (abs) in ',trim(name), avg_abs_val
+    write (*,'(a29,a12,E14.5E3)') 'Max error / avg array value  ',trim(name), error_max_abs / avg_abs_val
     write (*,'(a30,F5.1,a1)')   'Number of errors / array size ', n_error * 100.0 / ub, '%'
     write (*,*) ' '
   end if
@@ -284,13 +285,13 @@ program test_b2output
         
         select case(idtyp1)
           case ('real')
-            write(*,'(a15,a10,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
+            write(*,'(a15,a12,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
             n_errors = n_errors + check_variable(r1, r2, vname1)
           case ('int')
-             write(*,'(a15,a10,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
+             write(*,'(a15,a12,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
             n_errors = n_errors + check_variable(i1, i2, vname1)
           case ('char')
-             write(*,'(a16,a10,a6,i8)') 'Skipping string ', vname1, 'size: ', size_n1 
+             write(*,'(a16,a12,a6,i8)') 'Skipping string ', vname1, 'size: ', size_n1
              ! might contain time when the simulation was started
             !n_errors = n_errors + check_variable(ch1, ch2, vname1)
           case default
@@ -301,7 +302,6 @@ program test_b2output
     call read_unknown_type (u2, size_n2, r2, i2, ch2, vname2, idtyp2)
   enddo
 
-  write(*,*)
   idx = index(input1, '/', back=.true.) + 1
   if (n_errors == 0) then
     write (*,*) 'There were no errors in ', input1(idx:len_trim(input1))
@@ -310,6 +310,7 @@ program test_b2output
   else
     write (*,*) 'There were', n_errors, 'errors in ', input1(idx:len_trim(input1))
   endif
+  write(*,*)
 
   close(u1)
   close(u2)

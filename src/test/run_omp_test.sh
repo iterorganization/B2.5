@@ -95,8 +95,13 @@ function run_test {
   export KMP_AFFINITY=verbose,norespect,compact
   export KMP_STACKSIZE=32MB
 
-  echo running B2 using $4 threads
-  make -f $SOLPSTOP/runs/Makefile STAND_ALONE=yes  b2mn.prt 2>&1 | tee b2run.log
+  if [ $4 -eq 1 ]; then
+    echo Running B2.5 in serial mode
+    b2run -s b2mn 2>&1 | tee b2run.log
+  else
+    echo Running B2.5 using $4 threads
+    b2run -s -t $4 b2mn 2>&1 | tee b2run.log
+  fi
   cd ..
 }
 
@@ -110,4 +115,5 @@ run_test $SOURCEDIR test2_$DATESTAMP $STEPS $MAX_THREADS
 # run_checks will call check_b2_output, make sure it is compiled
 # cd $SOLPSTOP/modules/B2.5/src/test/
 # ifort -g -O2 check_b2_output.F90 -o check_b2_output
+$SOLPSTOP/modules/B2.5/src/test/run_checks.sh $SOURCEDIR test1_$DATESTAMP
 $SOLPSTOP/modules/B2.5/src/test/run_checks.sh test1_$DATESTAMP test2_$DATESTAMP
