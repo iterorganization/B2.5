@@ -2,7 +2,7 @@
 # Script to run B2 OpenMP test using 1 and [max_threads] threads, compare the results.
 #
 # Usage:
-# run_omp_test banchmark rundir [steps] [max_threads]
+# run_omp_test benchmark rundir [steps] [max_threads]
 #
 # Arguments:
 # benchmark -- the name of a benchmark like AUG_16151_D+C+He, ITER_535_D+He+Ar, etc.
@@ -65,7 +65,7 @@ else
   MAX_THREADS=48
 fi
 
-echo We will run B2 for $STEPS steps.
+echo We will run B2.5 for $STEPS steps.
 
 function run_test {
   # run_test sourcedir targetdir nsteps nthreads
@@ -80,7 +80,7 @@ function run_test {
   fi
   rsync -avP $1/. $2
   cd $2
-  # touch b2fstati
+  touch b2fstati
   # change the number of time steps
   sed -i "s/\('b2mndr_ntim'\s*\)'[0-9]\+'/\1'$3'/" b2mn.dat
 
@@ -107,7 +107,7 @@ run_test $SOURCEDIR test1_$DATESTAMP $STEPS 1
 run_test $SOURCEDIR test2_$DATESTAMP $STEPS $MAX_THREADS
 
 # compare the results
-# run_checs will call check_b2_output, make sure it is compiled
+# run_checks will call check_b2_output, make sure it is compiled
 # cd $SOLPSTOP/modules/B2.5/src/test/
 # ifort -g -O2 check_b2_output.F90 -o check_b2_output
 $SOLPSTOP/modules/B2.5/src/test/run_checks.sh test1_$DATESTAMP test2_$DATESTAMP

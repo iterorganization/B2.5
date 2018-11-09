@@ -14,7 +14,7 @@ files="b2fmovie b2fparam b2fplasma b2fstate b2ftrace b2ftrack"
 
 #for f in $files; do 
 #   filenames="$1/$f $2/$f"; 
-#   $MYPATH/check_b2_output $filenames  
+#   check_b2_output $filenames
 #done  > compare_results.log
 
 missing=0
@@ -26,7 +26,7 @@ for f in $files; do
      echo "ERROR, file not found $2/$f";
      missing=$((missing+1))
    else
-     $MYPATH/check_b2_output $1/$f $2/$f  
+     check_b2_output $1/$f $2/$f
    fi
 done  > compare_results.log
 

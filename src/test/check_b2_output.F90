@@ -1,4 +1,4 @@
-! Compare output files from two different b2 runs.
+! Compare output files from two different B2.5 runs.
 ! It can be used to compare b2fxxx files
 !
 ! Compile: ifort -g -O2 check_b2_output.F90 -o check_b2_output
@@ -64,7 +64,11 @@ module check_module_local
     end if
   end do
   if (n_error > 0) then
-    write (*,*) 'There were ', n_error, 'errors in array ', name
+    if (n_error.eq.1) then
+      write (*,*) 'There was 1 error in array ', name
+    else
+      write (*,*) 'There were ', n_error, 'errors in array ', name
+    endif
     write (*,*) 'Max error is ', error_max, ' in array ', name
   end if
   end function
@@ -117,7 +121,11 @@ module check_module_local
     end if
   end do
   if (n_error > 0) then
-    write (*,*) 'There were ', n_error, 'errors in array ', trim(name)
+    if (n_error.eq.1) then
+      write (*,*) 'There was 1 error in array ', trim(name)
+    else
+      write (*,*) 'There were ', n_error, 'errors in array ', trim(name)
+    end if
     write (*,'(a13,a10, E14.5E3,a8,i8)') 'Max error in ', trim(name), error_max, ' at idx ' , max_err_idx
     write (*,*) 'values', orig(max_err_idx), val(max_err_idx)
     write (*,'(a22,a10, E14.5E3)') 'Max absolute error in ', trim(name), error_max_abs
@@ -187,7 +195,7 @@ module b2_file_io
 !     The file stores real, integer or character data.
 !     We check which type of data is next, and read it into one 
 !     of the output buffers (refun, infun or chfun)
-!     The variable name (id1) and type (idtyp) is also returned,
+!     The variable name (id1) and type (idtyp) are also returned,
 !     together with the size of the array that is read (n1)
     use b2mod_types_local   !IGNORE
     implicit none
@@ -297,6 +305,8 @@ program test_b2output
   idx = index(input1, '/', back=.true.) + 1
   if (n_errors == 0) then
     write (*,*) 'There were no errors in ', input1(idx:len_trim(input1))
+  else if (n_errors == 1) then
+    write (*,*) 'There was 1 error in ', input1(idx:len_trim(input1))
   else
     write (*,*) 'There were', n_errors, 'errors in ', input1(idx:len_trim(input1))
   endif
@@ -307,7 +317,7 @@ program test_b2output
  contains
 
  subroutine get_filenames(input1, input2)
-  ! Get the file names from the command line arguments
+  ! Get the filenames from the command line arguments
   character(len=200), intent(out) :: input1, input2
   logical :: ex
   call get_command_argument(1, input1)
@@ -334,7 +344,7 @@ program test_b2output
  
  function open_file(filename) result(my_unit)
 ! Open the file, read the header, and return the file unit specifier.
-! B2's output files can be both binary or text files. We open first as
+! B2.5 output files can be either binary or text files. We open first as
 ! formatted file, if it does not make sense, then reopen as unformatted.
    character(*), intent(in) :: filename
    logical:: use_formatted_io
@@ -353,19 +363,19 @@ program test_b2output
    read(my_unit,'(a,a)') label ,version_in
    if (label/='VERSION') then
      if (label == '*cf:') then
-       ! No version header, but seems to be text file
+       ! No version header, but seems to be a text file
        label='unknown'
        version_in = 'version'
        rewind(my_unit)
      else
-       ! If it does not mach, then it should be a binary file
+       ! If it does not match, then it should be a binary file
        close(my_unit)
        ! reopen in UNFORMATTED mode
        open(newunit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
        read(my_unit) label ,version_in
        if (label/='VERSION') then
          if (label == '*cf:') then
-           ! No version header, but seems to be valid file
+           ! No version header, but seems to be a valid file
            label='unknown'
            version_in = 'version'
            rewind(my_unit)
@@ -376,7 +386,7 @@ program test_b2output
        endif
      endif
    endif
-   if (ierr == 0) write(*,*) trim(filename),' opened successfuly'
+   if (ierr == 0) write(*,*) trim(filename),' opened successfully'
    write(*,*) label, ' ', version_in
  end function
 end program
