@@ -43,8 +43,7 @@
         real (kind=R8), allocatable :: intcellP(:)   ! factors for interpolation from faces to centers in poloidal direction
         real (kind=R8), allocatable :: intcellR(:)   ! factors for interpolation from faces to centers in radial direction
 
-        integer, allocatable :: fcNv(:,:)  !(nFc,2): indicating for each cell of a face the number of the neighboring cell in its stencil
-        integer, allocatable :: aaP(:,:) !(nCv,2): pointing for each cell to the start in cvNv array, and the number of points in its stencil
+        integer, allocatable :: cvNvP(:,:) !(nCv,2): pointing for each cell to the start in cvNv array, and the number of points in its stencil
         integer, allocatable :: cvNv(:)    !(nFc,2): indicating for each cell the numbers of the cells in its stencil
 
       end type mapping
@@ -81,8 +80,7 @@
       allocate (m%intcellP(m%nCmxFc))
       allocate (m%intcellR(m%nCmxFc))
 
-      allocate (m%fcNv(m%nFc,2))
-      allocate (m%aaP(m%nCv,2))
+      allocate (m%cvNvP(m%nCv,2))
       allocate (m%cvNv(m%nCmxNv))
 
 !      allocate (m%cvNv(m%nCmxVx*m%nCmxVx*m%nCv)) ! very conservative; reduce!
@@ -122,8 +120,7 @@
       deallocate (m%intcellP) 
       deallocate (m%intcellR)   
 
-      deallocate (m%fcNv)
-      deallocate (m%aaP)
+      deallocate (m%cvNvP)
       deallocate (m%cvNv)    
 
       return

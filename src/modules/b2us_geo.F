@@ -30,7 +30,6 @@
         real (kind=R8), allocatable  :: fcQbet(:,:)
         real (kind=R8), allocatable  :: fcPbs(:)
         real (kind=R8), allocatable  :: fcPbshz(:)
-
         real (kind=R8), allocatable  :: fcVol(:,:)
 
 !  vertex quantities
@@ -38,18 +37,21 @@
         real (kind=R8), allocatable  :: vxY(:)
         real (kind=R8), allocatable  :: vxFfbz(:)
         real (kind=R8), allocatable  :: vxFpsi(:)
+        real (kind=R8), allocatable  :: vxVol(:)
 
+!  flux surface quantities
         real (kind=R8), allocatable  :: fsConn(:)
+
       end type geometry
 
       contains
 
 ***********************************************************************
 
-      subroutine alloc_geometry (g, nCv, nFc, nVx, nFs)
+      subroutine alloc_geometry (g, nCv, nFc, nVx, nFs, nVmxCv)
 
       implicit none
-      integer, intent(in) :: nCv, nFc, nVx, nFs
+      integer, intent(in) :: nCv, nFc, nVx, nFs, nVmxCv
       type(geometry), intent(in out) :: g
 
       allocate (g%cvBb(nCv,0:3)) 
@@ -78,7 +80,8 @@
       allocate (g%vxY(nVx))
       allocate (g%vxFfbz(nVx))
       allocate (g%vxFpsi(nVx))
-      
+      allocate (g%vxVol(nVmxCv))            
+
       allocate (g%fsConn(nFs))
       
       return
@@ -117,7 +120,8 @@
       deallocate (g%vxY)
       deallocate (g%vxFfbz)
       deallocate (g%vxFpsi)
-      
+      deallocate (g%vxVol) 
+
       deallocate (g%fsConn)
       
       return

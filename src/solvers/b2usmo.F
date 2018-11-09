@@ -43,10 +43,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, iFc, iCv1, iCv2, iNv1, iNv2, ireg
+      integer ncall, iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
-     *  cfc0, t0, t1, t2, t3, t4, flo, dif, flo9, con9, csb, csb1
+     *  cfc0, t0, t1, t2, t3, t4, flo, dif, flo9, con9, csb, csb1,
+     *  t11, t22
       logical lnonzero
       save ncall, cfc0
 *   ..procedures
@@ -96,9 +97,9 @@
      &    smb(iCv,3)*rob(iCv)+
      &    cfc0*abs(geo%cvVol(iCv)*geo%cvH(iCv)/geo%cvHx(iCv)*       !srv 09.01.01
      &    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*csb)*rob(iCv)
-         aa(mpg%aaP(iCv,1)) = aad0(iCv)+abs(resmb(iCv))/(rxg*csb1)
+         aa(mpg%cvNvP(iCv,1)) = aad0(iCv)+abs(resmb(iCv))/(rxg*csb1)
         else
-         aa(mpg%aaP(iCv,1)) = 1.0_R8
+         aa(mpg%cvNvP(iCv,1)) = 1.0_R8
          aad0(iCv) = 0.0_R8
         endif
       enddo
@@ -106,20 +107,89 @@
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from flcb0(:,0), cvsb0(:,0) ('5-point' contributions)
-        iNv1 = mpg%fcNv(iFc,1) ! number of c2 as seen from c1 
-        iNv2 = mpg%fcNv(iFc,2) ! number of c1 as seen from c2
         t1 = - 0.5_R8*flcb0(iFc,0) - cvsb0(iFc,0)
-        t2 =   0.5_R8*flcb0(iFc,0) - cvsb0(iFc,0)
+        t2 =   0.5_R8*flcb0(iFc,0) - cvsb0(iFc,0) 
         if (solvereg(mpg%cvReg(iCv1))) then
-          aa(mpg%aaP(iCv1,1))        = aa(mpg%aaP(iCv1,1))        - t1
-          aa(mpg%aaP(iCv1,1)+iNv1-1) = aa(mpg%aaP(iCv1,1)+iNv1-1) + t2
+         aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
+         where (mpg%cvNv(mpg%cvNvP(iCv1,1):
+     &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
+          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+     &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) +
+     &     t2
+         end where
         endif
         if (solvereg(mpg%cvReg(iCv2))) then
-          aa(mpg%aaP(iCv2,1))        = aa(mpg%aaP(iCv2,1))        - t2
-          aa(mpg%aaP(iCv2,1)+iNv2-1) = aa(mpg%aaP(iCv2,1)+iNv2-1) + t1
+         aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
+         where (mpg%cvNv(mpg%cvNvP(iCv2,1):
+     &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
+          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+     &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
+     &     t1 
+         end where
         endif
 *     ..contributions from flcb0(:,1), cvsb0(:,1) ('9-point' contributions)
-!WG_TODO
+        iVx1 = mpg%fcVx(iFc,1) ! number of v1
+        iVx2 = mpg%fcVx(iFc,2) ! number of v2
+        t1 = - 0.5_R8*flcb0(iFc,1) - cvsb0(iFc,1)
+        t2 =   0.5_R8*flcb0(iFc,1) - cvsb0(iFc,1)
+        t11 = 0.0_R8
+        do inCv = 1, mpg%vxCvP(iVx1,2)
+          t11 = t11 + 1/geo%cvVol(mpg%vxCv(mpg%vxCvP(iVx1,1)+inCv-1))
+        enddo
+        t22 = 0.0_R8
+        do inCv = 1, mpg%vxCvP(iVx2,2)
+          t22 = t22 + 1/geo%cvVol(mpg%vxCv(mpg%vxCvP(iVx2,1)+inCv-1))
+        enddo
+        ! contribution to equation of iCv1
+        if (solvereg(mpg%cvReg(iCv1))) then
+         ! contribution from iVx1
+         do inCv = 1, mpg%vxCvP(iVx1,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
+          t3  = 1/(geo%cvVol(iCv)*t11)
+          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
+     &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
+     &      t3*t1
+          end where
+         enddo
+         ! contribution from iVx2
+         do inCv = 1, mpg%vxCvP(iVx2,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
+          t3  = 1/(geo%cvVol(iCv)*t22)
+          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
+     &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
+     &      t3*t2
+          end where
+         enddo
+        endif
+        ! contribution to equation of iCv2
+        if (solvereg(mpg%cvReg(iCv2))) then
+         ! contribution from iVx1
+         do inCv = 1, mpg%vxCvP(iVx1,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
+          t3  = 1/(geo%cvVol(iCv)*t11)
+          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
+     &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+ 
+     &      t3*t1
+          end where
+         enddo
+         ! contribution from iVx2
+         do inCv = 1, mpg%vxCvP(iVx2,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
+          t3  = 1/(geo%cvVol(iCv)*t22)
+          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
+     &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)- 
+     &      t3*t2
+          end where
+         enddo
+        endif
       enddo
 *   ..compute pccb
       pccb = 0.0_R8
@@ -127,7 +197,7 @@
         ireg = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
          pccb(iCv,0) = (geo%cvVol(iCv)*geo%cvH(iCv)/geo%cvHx(iCv))*      !srv 09.01.01
-     .    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)/aa(mpg%aaP(iCv,1))             !srv 11.01.13
+     .    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)/aa(mpg%cvNvP(iCv,1))             !srv 11.01.13
          pccb(iCv,1) = (geo%cvVol(iCv)*geo%cvH(iCv)/geo%cvHx(iCv))*      !srv 09.01.01
      .    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)/aad0(iCv)                      !srv 11.01.13
         else
@@ -136,16 +206,16 @@
       enddo
 *   ..contribution from linearization of centrifugal force
       do iCv = 1, nCv
-        aa(mpg%aaP(iCv,1)) = aa(mpg%aaP(iCv,1)) - 
+        aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) - 
      &    min(0.0e0_R8,ctcfb(iCv))
       enddo
       do iCv = 1, nCv
         lnonzero=.false.
-        do iNv1 = 1,mpg%aaP(iCv,2)
-          lnonzero = lnonzero.or.(aa(mpg%aaP(iCv,1)+iNv1-1).ne.0.0_R8)
+        do inCv = 1,mpg%cvNvP(iCv,2)
+          lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
         enddo
         if (.not.lnonzero) then
-          aa(mpg%aaP(iCv,1)) = 1.0_R8
+          aa(mpg%cvNvP(iCv,1)) = 1.0_R8
           resmb(iCv) = 0.0_R8
         endif
       enddo

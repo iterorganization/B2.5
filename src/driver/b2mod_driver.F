@@ -1528,7 +1528,8 @@ cwdk    backwards compatible behavior
 
 
       call prep_geometry (nx, ny,
-     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, gm, mpg)
+     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nVmxCv,
+     .        gm, mpg)
 
       write (*,*) 'Geometry created'
       
@@ -1580,8 +1581,8 @@ cwdk    backwards compatible behavior
        call my_out_us(70,nFc,1,state%dv%fhe(1,1),'b2mndr_fhey')
        call my_out_us(70,nFc,1,state%dv%fhi(1,0),'b2mndr_fhix')
        call my_out_us(70,nFc,1,state%dv%fhi(1,1),'b2mndr_fhiy')
-!       call my_out_us(70,nCv,0,qc,'b2mndr_qc')
-!       call my_out_us(70,nCv,0,qs,'b2mndr_qs0')
+       call my_out_us(70,nFc,1,gm%fcQgam(1,0),'b2mndr_fcQgam0')
+       call my_out_us(70,nFc,1,gm%fcQgam(1,1),'b2mndr_fcQgam1')
       endif                                                          !srv 25.01.16 }
       do is = 0,ns-1
         do iCv=1,nCv

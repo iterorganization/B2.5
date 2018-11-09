@@ -343,8 +343,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
            ifc = ix + (iy-1)*(nx+1)
            m%fcCv(ifc,1) = leftix(ix-1,iy-1)+1 + (iy-1)*nx
            m%fcCv(ifc,2) = ic
-!           m%fcNv(ifc,1) = 6
-!           m%fcNv(ifc,2) = 5
            m%fcVx(ifc,1) = ix + (iy-1)*(nx+1)
            m%fcVx(ifc,2) = ix + iy*(nx+1)
          end do
@@ -354,8 +352,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
          ifc = 1 + (iy-1)*(nx+1)
          m%fcCv(ifc,1) = m%nCi + 2*nx + iy
          m%fcCv(ifc,2) = ic
-!         m%fcNv(ifc,1) = 4
-!         m%fcNv(ifc,2) = 5
          m%fcVx(ifc,1) = 1 + (iy-1)*(nx+1)
          m%fcVx(ifc,2) = 1 + iy*(nx+1)
 
@@ -364,8 +360,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
          ifc = nx+1 + (iy-1)*(nx+1)
          m%fcCv(ifc,1) = ic - 1
          m%fcCv(ifc,2) = m%nCi + 2*nx + ny + iy
-!         m%fcNv(ifc,1) = 6
-!         m%fcNv(ifc,2) = 4
          m%fcVx(ifc,1) = nx+1 + (iy-1)*(nx+1)
          m%fcVx(ifc,2) = nx+1 + iy*(nx+1)
        end do
@@ -377,10 +371,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
            ifc = nfx + iy + (ix-1)*(ny+1)
            m%fcCv(ifc,2) = ic
            m%fcCv(ifc,1) = ic - nx
-!           m%fcNv(ifc,1) = 8
-!           m%fcNv(ifc,2) = 3
            m%fcVx(ifc,2) = ix + (iy-1)*(nx+1)
-           m%fcVx(ifc,1) = ix+1 + (iy-1)*(nx+1)
+           m%fcVx(ifc,1) = rightix(ix-1,iy-1)+1 + (iy-1)*(nx+1)
          end do
 
 ! lower guard cells
@@ -388,20 +380,16 @@ cwdk      type(B2StateExt), public, save :: state_ext
          ifc = nfx + 1 + (ix-1)*(ny+1)
          m%fcCv(ifc,2) = ic
          m%fcCv(ifc,1) = m%nCi + ix
-!         m%fcNv(ifc,1) = 5
-!         m%fcNv(ifc,2) = 3
          m%fcVx(ifc,2) = ix 
-         m%fcVx(ifc,1) = ix+1 
+         m%fcVx(ifc,1) = rightix(ix-1,0)+1 
 
 ! upper guard cells
          ic = ix + (ny-1)*nx
          ifc = nfx + ix*(ny+1)
          m%fcCv(ifc,2) = m%nCi + nx + ix
          m%fcCv(ifc,1) = ic
-!         m%fcNv(ifc,1) = 8
-!         m%fcNv(ifc,2) = 3
          m%fcVx(ifc,2) = ix + ny*(nx+1)
-         m%fcVx(ifc,1) = ix+1 + ny*(nx+1)
+         m%fcVx(ifc,1) = rightix(ix-1,ny)+1 + ny*(nx+1)
        end do
 
 ! merging x-point vertex
@@ -583,7 +571,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
       allocate (indCv(4*4+4+1)) ! max 4 vertices per cell, max 8 cells for each vertex (very conservative)
       inv = 1
       do icv = 1, m%nCv
-        m%aaP(icv,1) = inv
+        m%cvNvP(icv,1) = inv
         ! init: each cell appears in its own stencil
         indCv = icv
         invmx = 1
@@ -596,48 +584,25 @@ cwdk      type(B2StateExt), public, save :: state_ext
           invmx = invmx + m%vxCvP(ivx1,2)
         enddo
         ! remove duplicates
-        m%cvNv(m%aaP(icv,1)) = indCv(1)
+        m%cvNv(m%cvNvP(icv,1)) = indCv(1)
         i = 1
         outer: do inv1 = 2, invmx
           do inv2 = 1, i 
-            if (m%cvNv(m%aaP(icv,1)+inv2-1).eq.indCv(inv1)) then
+            if (m%cvNv(m%cvNvP(icv,1)+inv2-1).eq.indCv(inv1)) then
               ! duplicate element
               cycle outer
             endif
           enddo
           ! new element found
           i = i + 1
-          m%cvNv(m%aaP(icv,1)+i-1) = indCv(inv1)
+          m%cvNv(m%cvNvP(icv,1)+i-1) = indCv(inv1)
         end do outer
         ! TODO: sort by cell number, keeping first cell fixed (main diagonal)
-        m%aaP(icv,2) = i
+        m%cvNvP(icv,2) = i
         inv = inv + i
       enddo
 
       deallocate(indCv)
-
-      ! set connectivity information for the faces
-      do ifc = 1, m%nFc
-          ic1 = m%fcCv(ifc,1)
-          ic2 = m%fcCv(ifc,2)
-          ! find index of cell 2 as seen from c1
-          lfound = .false.
-          do inv = 1, m%aaP(ic1,2)
-            if (m%cvNv(m%aaP(ic1,1)+inv-1) .eq. ic2) then
-              m%fcNv(ifc,1) = inv
-              lfound = .true.
-            endif
-          enddo
-          if (.not.lfound) call xerrab ('Cell not found -- ic2')
-          ! find index of cell 2 as seen from c1
-          do inv = 1, m%aaP(ic2,2)
-            if (m%cvNv(m%aaP(ic2,1)+inv-1) .eq. ic1) then
-              m%fcNv(ifc,2) = inv
-              lfound = .true.
-            endif
-          enddo
-          if (.not.lfound) call xerrab ('Cell not found -- ic1')
-      enddo
 
       return
       end subroutine calc_mapping
@@ -822,7 +787,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
         write (*,*) ' file ', fname, ' cannot be written'
       else
 
-        call alloc_geometry (gm, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs)
+        call alloc_geometry (gm, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
+     .    mpg%nVmxCv)
 
 ! cell volumes 
         call cfrure (iun, mpg%nCv*4, gm%cvBb,   'cvBb')
@@ -915,10 +881,11 @@ cwdk      type(B2StateExt), public, save :: state_ext
 
 ***********************************************************************
 
-      subroutine prep_geometry(nx, ny, nCv, nCi, nFc, nVx, nFs, gm, mpg)
+      subroutine prep_geometry(nx, ny, nCv, nCi, nFc, nVx, nFs, nVmxCv,
+     .  gm, mpg)
 
       implicit none
-      integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs
+      integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs, nVmxCv
       integer :: ix, iy, ic, ifc, nfx, ivx, i, j
       real (kind=R8) :: hy1(-1:nx,-1:ny)
       type (mapping) , intent (in) :: mpg
@@ -928,7 +895,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
 
       nfx = (nx+1)*ny
 
-      call alloc_geometry (gm, nCv, nFc, nVx, nFs)
+      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nVmxCv)
 
 ! cell volumes 
       do iy = 0, ny-1
@@ -1083,7 +1050,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
            gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
            gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
            gm%fcQgam(ifc,0) = qc(ix,iy,1)
-           gm%fcQgam(ifc,1) = -qs(ix,iy,1)
+           gm%fcQgam(ifc,1) = qs(ix,iy,1)
            gm%fcQalf(ifc,0) = 0.0_R8
            gm%fcQalf(ifc,1) = 1.0_R8
            gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)
@@ -1103,7 +1070,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
          gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
          gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
          gm%fcQgam(ifc,0) = qc(ix,iy,1)
-         gm%fcQgam(ifc,1) = -qs(ix,iy,1)
+         gm%fcQgam(ifc,1) = qs(ix,iy,1)
          gm%fcQalf(ifc,0) = 0.0_R8
          gm%fcQalf(ifc,1) = 1.0_R8
          gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)
@@ -1122,7 +1089,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
          gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
          gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
          gm%fcQgam(ifc,0) = qc(ix,iy,1)
-         gm%fcQgam(ifc,1) = -qs(ix,iy,1)
+         gm%fcQgam(ifc,1) = qs(ix,iy,1)
          gm%fcQalf(ifc,0) = 0.0_R8
          gm%fcQalf(ifc,1) = 1.0_R8
          gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)
@@ -1139,6 +1106,10 @@ cwdk      type(B2StateExt), public, save :: state_ext
            gm%vxY(ivx) = cry(ix,iy,1)
            gm%vxFfbz(ivx) = ffbz(ix,iy,1)
            gm%vxFpsi(ivx) = fpsi(ix,iy,1)
+           do i = 1, mpg%vxCvP(ivx,2)
+             ic = mpg%vxCv(mpg%vxCvP(ivx,1) + i - 1)
+             gm%vxVol(mpg%vxCvP(ivx,1) + i - 1) = 0.25*gm%cvVol(ic)
+           end do
          end do
        end do
 
