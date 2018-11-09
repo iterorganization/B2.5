@@ -1776,7 +1776,7 @@
 			<switchgroup>
 				<name>b2tqna_m*</name>
 				<description>
-					Upper and lower limits of the diffusivity coefficients df0 computed in b2tqna for each species.
+					Upper and lower limits of the diffusivity coefficients df0 computed in b2tqna for each neutral species.
 				</description>
 				<switch>
 					<name>b2tqna_max_df0</name>
