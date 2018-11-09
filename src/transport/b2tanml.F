@@ -81,6 +81,7 @@
 
 *   ..compute differences of po, including 9-point terms
         wght = 1.0_R8
+        wght = vol
         call diff(nx, ny, hx, hy, wght, qs, po, dpo)
 
 *   ..compute the current

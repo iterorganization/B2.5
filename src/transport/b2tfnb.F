@@ -226,6 +226,7 @@ c     of cross flows across surfaces, dif may be negative
         enddo
       enddo
       weight = 1.0e0_R8
+      weight = vol
       call diff_r(nx, ny, 0, hx, hy, weight, qs, kmpr, wrk, dkmprr)
 
       write(chns,'(i3.3)') isb
@@ -936,6 +937,7 @@ cwdk cancelation of some terms in poloidal and radial flux components
 
 *   ..compute radial differences of nb and pb, for 9-point terms
       weight = 1.0e0_R8
+      weight = vol
       call diff_r(nx, ny, 0, hx, hy, weight, qs, nb, wrk, dnbr)
       call diff_r(nx, ny, 0, hx, hy, weight, qs, pb, wrk, dpbr)
 

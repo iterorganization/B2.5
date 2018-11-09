@@ -1,5 +1,5 @@
-      subroutine b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs, kapy, 
-     &  cony)
+      subroutine b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qc, qs,
+     &  kapy,  cony)
       use b2mod_types
       use b2mod_indirect
       implicit none
@@ -7,8 +7,8 @@
       real (kind=R8) ::
      *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
      &   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
-     &   qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), kapy(-1:nx,-1:ny), 
-     &   cony(-1:nx,-1:ny,0:1)
+     &   qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
+     &   kapy(-1:nx,-1:ny),  cony(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
 *     B2TXCY computes radial conductances between neighbouring cells, 
 *     given the conductivities.
@@ -38,12 +38,19 @@
         if(leftix(ix,iy).eq.-2) then
          cony(ix,iy,0) = 0.0_R8
         else
-         cony(ix,iy,0) = -gs(ix,iy,0)*qs(ix,iy,0)*
-     &     (vol(ix,iy)*kapy(leftix(ix,iy),leftiy(ix,iy))/
-     &      hy1(leftix(ix,iy),leftiy(ix,iy)) + 
-     &      vol(leftix(ix,iy),leftiy(ix,iy))*kapy(ix,iy)/
-     &      hy1(ix,iy))/
-     &     (vol(leftix(ix,iy),leftiy(ix,iy)) + vol(ix,iy))
+cwdk test updated computation for compatibility with wg-code
+         cony(ix,iy,0) = -2.0_R8*qs(ix,iy,0)/qc(ix,iy,0)**2*
+     &     (vol(ix,iy)*kapy(ix,iy) +
+     &      vol(leftix(ix,iy),leftiy(ix,iy))*
+     &      kapy(leftix(ix,iy),leftiy(ix,iy)))/
+     &     ((hy(leftix(ix,iy),leftiy(ix,iy)) + hy(ix,iy))*
+     &      (hx(leftix(ix,iy),leftiy(ix,iy)) + hx(ix,iy)))
+!         cony(ix,iy,0) = -gs(ix,iy,0)*qs(ix,iy,0)*
+!     &     (vol(ix,iy)*kapy(leftix(ix,iy),leftiy(ix,iy))/
+!     &      hy1(leftix(ix,iy),leftiy(ix,iy)) + 
+!     &      vol(leftix(ix,iy),leftiy(ix,iy))*kapy(ix,iy)/
+!     &      hy1(ix,iy))/
+!     &     (vol(leftix(ix,iy),leftiy(ix,iy)) + vol(ix,iy))
         endif
        enddo
       enddo

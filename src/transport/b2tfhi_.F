@@ -385,6 +385,7 @@ c  ..set null flux in guard cells  ?
 
 *   ..compute radial differences of ti for 9-point terms
       wght = 1.0_R8
+      wght = vol
       call diff_r(nx, ny, 0, hx, hy, wght, qs, ti, tic, dtir)
 
 

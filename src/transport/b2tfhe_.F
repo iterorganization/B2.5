@@ -330,6 +330,7 @@ c Drift terms
 
 *   ..compute radial differences of te and po, for 9-point terms
       wght = 1.0_R8
+      wght = vol
       call diff_r(nx, ny, 0, hx, hy, wght, qs, te, wrk0, dter)
       call diff_r(nx, ny, 0, hx, hy, wght, qs, po, wrk0, dpor)
       call diff_r(nx, ny, 0, hx, hy, wght, qs, ne*te, wrk0, dper)
