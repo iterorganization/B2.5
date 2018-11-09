@@ -745,7 +745,7 @@ c check left neighbours
         do ix=0,nx1
           ixl=leftix1(ix,iy)
           if(ixl.lt.-1.or.ixl.gt.nx1) then
-            write(*,*) 'No left neighbour for ',ix,iy
+            write(*,*) 'No left neighbour for  ',ix,iy
           elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
             distval=
      1       dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
@@ -846,7 +846,7 @@ c check left neighbours
         do ix=0,nx1
           ixl=leftix1(ix,iy)
           if(ixl.lt.-1.or.ixl.gt.nx1) then
-            write(*,*) 'No left neighbour for ',ix,iy
+            write(*,*) 'No left neighbour for  ',ix,iy
           elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
             distval=
      1     dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
@@ -1058,8 +1058,8 @@ c
      1     "Reading the geometry file assuming the 'new' format"
           read(lun,*) nnx,nny
           if(nnx.ne.nx.or.nny.ne.ny) then
-            write(*,*) 'b2gxdr_dummy: nx,ny code and data disagree',
-     1       nx,ny,nnx,nny
+            write(*,'(a,4i5)')
+     1       'b2gxdr_dummy: nx,ny code and data disagree',nx,ny,nnx,nny
             call xerrab ('Mismatch nx/ny and nnx/nny')
           endif
           do iy=0,ny+1
