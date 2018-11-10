@@ -347,7 +347,7 @@ cxpb Corrected for dimensionality
             endif
             min_df0_tmp=min(min_df0_tmp,df0)
             max_df0_tmp=max(max_df0_tmp,df0)
-            df0=max(min_df0,min(max_df0,df0))
+            if(is_neutral(is)) df0=max(min_df0,min(max_df0,df0))
 *      ..compute dna0, dpa0, vla0, vma0
             dna0(ix,iy,is) = cfdna(0,is)+
      &       cfdna(1,is)/(max(1.0e-50_R8,ne(ix,iy))/1.0e20_R8)+    ! dpc changed na(ix,iy,is) to ne(ix,iy)
