@@ -33,7 +33,7 @@ endif
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
-FCOPTS   = -O2 -vec_report0
+FCOPTS   = -O2
 endif
 
 DBLFC    = ${FC}
