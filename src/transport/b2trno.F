@@ -199,11 +199,11 @@
       enddo
 
 *   ..incorporate geometry and hz                                     !srv 09.01.01
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,wrk)
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk)
       wrk = geo%fcS*wrk 
       do iFc = 1, nFc
-        wrk1(iFc,1) = geo%fcVol(iFc,1)*geo%cvH(mpg%fcCv(iFc,1))
-        wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvH(mpg%fcCv(iFc,2))
+        wrk1(iFc,1) = geo%fcVol(iFc,1)*geo%cvHz(mpg%fcCv(iFc,1))
+        wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
       enddo
       do is = 0, ns-1
        call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
@@ -331,7 +331,7 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
         wrk = 1.0_R8
         call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na, pl%te, 
      &    pl%ti, rt%rza, co%cdpa, flc) !srv 09.07.03 30.11.15
-        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,wrk)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk)
         call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na, pl%te, 
      &    pl%ti, rt%rza, co%cdpahz, flchz) 
       endif                                                               !srv 15.06.08 }

@@ -176,7 +176,7 @@ ctmp.dpc
           if(mpg%cvReg(iCv).ne.0) then
 *       ..compute rate for is->is-1 and is0->is0+1
             t0 = rcx(iCv,is)*geo%cvVol(iCv)*na(iCv,is0)*na(iCv,is)
-     &           *geo%cvH(iCv)                                          !srv 09.01.01
+     &           *geo%cvHz(iCv)                                          !srv 09.01.01
             t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
             t2 = ((am(is0)+am(is0+1))/2.0_R8)*mp*t0
             if (styl0.eq.0) then

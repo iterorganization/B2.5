@@ -139,7 +139,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO            if(iftimbound(ix,iy) .ne. 0) cycle
 
             ttim=dtim*dtmo(is,mpg%cvReg(iCv))!WG_TODO*time_factor(ix,iy)
-            t0 = (phm1/ttim)*geo%cvVol(iCv)*geo%cvH(iCv)                    !srv 09.01.01
+            t0 = (phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)                    !srv 09.01.01
             sr%smo(iCv,0,is) = sr%smo(iCv,0,is)+
      1       t0*am(is)*mp*ua0(iCv,is)*
      &       na0(iCv,is)

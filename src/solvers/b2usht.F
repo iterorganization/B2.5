@@ -130,11 +130,12 @@
 *   ..compute flo0, con0
       do iFc = 1, nFc                                                 !srv 26.11.02 {
 !WG_TODO there was a loop here to check whether or not the ion/
-!WG_TODO electron energy equation is solved in the region -> still
-!WG_TODO to be added! Need to check both neighboring cells for this!
-!WG_TODO (not just a single one as in the original code)
+!WG_TODO electron energy equation is solved in the cell 
+!WG_TODO -> still to be added! 
+!WG_TODO However, need to check both neighboring cells for this
+!WG_TODO (not just a single one as in the original code), not 
+!WG_TODO obvious how to do this
 cwdk poloidal contribution
-cwdk need calccoeff here...
         t0 = 2.5_R8*geo%fcPbs(iFc)*pcm1*                            !srv 02.01.07 {
      &   (pccm1(mpg%fcCv(iFc,1))*
      &   (ne(mpg%fcCv(iFc,1))*te(mpg%fcCv(iFc,1))+
@@ -143,6 +144,7 @@ cwdk need calccoeff here...
      &   (ne(mpg%fcCv(iFc,2))*te(mpg%fcCv(iFc,2))+
      &    ni(mpg%fcCv(iFc,2),0)*ti(mpg%fcCv(iFc,2))))/2.0_R8        !srv 02.01.07 }
 !WG_TODO: correct linearization into flo0/con0 for misaligned faces
+!WG_TODO: need calccoeff here...
         flo0(iFc,0) = floe(iFc,0)+floi(iFc,0)
      &   -t0*(ne(mpg%fcCv(iFc,2))+ni(mpg%fcCv(iFc,2),0)- 
      &        ne(mpg%fcCv(iFc,1))-ni(mpg%fcCv(iFc,1),0))            !srv 02.01.07 }

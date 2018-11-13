@@ -95,7 +95,7 @@
          csb1 = sqrt(ub(iCv)**2+csb**2)
          aad0(iCv) = -smb(iCv,1)-
      &    smb(iCv,3)*rob(iCv)+
-     &    cfc0*abs(geo%cvVol(iCv)*geo%cvH(iCv)/geo%cvHx(iCv)*       !srv 09.01.01
+     &    cfc0*abs(geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv)*       !srv 09.01.01
      &    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*csb)*rob(iCv)
          aa(mpg%cvNvP(iCv,1)) = aad0(iCv)+abs(resmb(iCv))/(rxg*csb1)
         else
@@ -196,10 +196,10 @@
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
-         pccb(iCv,0) = (geo%cvVol(iCv)*geo%cvH(iCv)/geo%cvHx(iCv))*      !srv 09.01.01
-     .    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)/aa(mpg%cvNvP(iCv,1))             !srv 11.01.13
-         pccb(iCv,1) = (geo%cvVol(iCv)*geo%cvH(iCv)/geo%cvHx(iCv))*      !srv 09.01.01
-     .    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)/aad0(iCv)                      !srv 11.01.13
+         pccb(iCv,0) = (geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv))*    !srv 09.01.01
+     .    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)/aa(mpg%cvNvP(iCv,1))          !srv 11.01.13
+         pccb(iCv,1) = (geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv))*    !srv 09.01.01
+     .    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)/aad0(iCv)                     !srv 11.01.13
         else
          resmb(iCv) = 0.0_R8   ! take opportunity to correct RHS
         endif

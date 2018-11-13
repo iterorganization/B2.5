@@ -224,7 +224,7 @@
              rf0 = rg0+rxm1*max(0.0_R8,rt%rlsa(iCv,1,is))
 *       ..compute rate for is->is+1
              t0 = rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
-     &           pl%na(iCv,is)*geo%cvH(iCv)                                         !srv 09.01.01
+     &           pl%na(iCv,is)*geo%cvHz(iCv)                                         !srv 09.01.01
 *       ..compute parallel momentum source
              t1 = ((am(is)+am(is+1))/2.0_R8)*mp*t0
              if (styl0.eq.0) then
@@ -341,7 +341,7 @@ c accounted for)
            rf0 = rg1+rxm3*max(0.0_R8,-rt%rlra(iCv,1,is))
 *       ..compute rate for is->is-1
            t0 =rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
-     &         pl%na(iCv,is)*geo%cvH(iCv)                                            !srv 09.01.01
+     &         pl%na(iCv,is)*geo%cvHz(iCv)                                            !srv 09.01.01
 *       ..compute parallel momentum source
            t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
            smq0_rec(iCv,0,is) = smq0_rec(iCv,0,is)+

@@ -59,7 +59,7 @@
       ft = 4.0_R8/3.0_R8
 *   ..compute flubvx
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then         !srv 26.10.08
-        call diff_p(nCv,nFc,nVx,0,geo,mpg,log(geo%cvH),wrkv,dloghz)
+        call diff_p(nCv,nFc,nVx,0,geo,mpg,log(geo%cvHz),wrkv,dloghz)
         flubv(:,0) = ft*cvsbhz_cl(:,0)*dloghz
         flubv(:,1) = 0.0_R8
       else

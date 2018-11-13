@@ -495,6 +495,7 @@ cwdk move to dv
       allocate( dv % fnaPSch( nFc, 0:1 , 0:ns-1 ) )
       allocate( dv % fna_fcor( nFc, 0:1 , 0:ns-1 ) )        
       allocate( dv % fna_eir( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % fne_eir( nFc, 0:1 ) )
 
       allocate( dv % fna_nodrift( nFc, 0:1, 0:ns-1 ) )
       
@@ -611,6 +612,7 @@ cwdk move to dv
       deallocate( dv % fna_fcor )
       deallocate( dv % fna_nodrift )
       deallocate( dv % fna_eir )
+      deallocate( dv % fne_eir )
       
       deallocate( dv % fmo )
 

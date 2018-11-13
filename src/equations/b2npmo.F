@@ -266,8 +266,8 @@
      &    cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,      !srv 05.07.17
      &    smbch, smbtf)  ! smbch and smbtf will be multiplied by vol*hz below !srv 05.07.17
          do iCv = 1, nCv
-           smbch(iCv,0:3) = geo%cvVol(iCv)*geo%cvH(iCv)*smbch(iCv,0:3)
-           smbtf(iCv,0:3) = geo%cvVol(iCv)*geo%cvH(iCv)*smbtf(iCv,0:3)
+           smbch(iCv,0:3) = geo%cvVol(iCv)*geo%cvHz(iCv)*smbch(iCv,0:3)
+           smbtf(iCv,0:3) = geo%cvVol(iCv)*geo%cvHz(iCv)*smbtf(iCv,0:3)
          enddo
        else
         smbfria  = 0.0_R8
@@ -371,18 +371,18 @@ cdjm Jan2017 update momentum source components for balance
      &       smbcf(:,2)*pl%na(:,is)*mp*am(is)+
      &       smbcf(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
          call my_out_us(70,nCv,0,wrks,'b2npmo_smocf'//chns)
-         wrks = geo%cvVol*geo%cvH*(smbfria(:,0)+
+         wrks = geo%cvVol*geo%cvHz*(smbfria(:,0)+
      &        smbfria(:,1)*pl%ua(:,is)+      !srv 05.07.17 {
      &        smbfria(:,2)*pl%na(:,is)*mp*am(is)+
      &        smbfria(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is))
 	 call my_out_us(70,nCv,0,wrks,'b2npmo_smofria'//chns)
 
-         wrks = geo%cvVol*geo%cvH*(smbfrea(:,0)+
+         wrks = geo%cvVol*geo%cvHz*(smbfrea(:,0)+
      &                             smbfrea(:,1)*pl%ua(:,is))
 	 call my_out_us(70,nCv,0,wrks,'b2npmo_smofrea'//chns)
-         wrks = geo%cvVol*geo%cvH*smbtfia(:,0)
+         wrks = geo%cvVol*geo%cvHz*smbtfia(:,0)
 	 call my_out_us(70,nCv,0,wrks,'b2npmo_smotfia'//chns)
-         wrks = geo%cvVol*geo%cvH*smbtfea(:,0)
+         wrks = geo%cvVol*geo%cvHz*smbtfea(:,0)
 	 call my_out_us(70,nCv,0,wrks,'b2npmo_smotfea'//chns)
          call my_out_us(70,nCv,0,dv%ue,'b2npmo_ue')                        !srv 05.07.17 }
          wrks=smban(:,0)+smban(:,1)*pl%ua(:,is)+

@@ -302,7 +302,7 @@
       sna0_no_mdf = 0.0_R8
 
 *  .. interpolate hz to faces
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,hzf)
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,hzf)
 
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)!srv 18.01.02
 #ifdef WG_TODO

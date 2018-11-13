@@ -816,8 +816,8 @@ cwdk cancelation of some terms in poloidal and radial flux components
 !      call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,isb), wrkVx, dnb)
       call diff(nCv, nFc, nVx, 0, geo, mpg, dv%pa(:,isb), wrkVx, dpb)
 
-*   ..interpolate cvH ('hz') to cell faces
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,wrk3)
+*   ..interpolate cvHz ('hz') to cell faces
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk3)
 
 * ..poloidal fluxes
 
@@ -1057,7 +1057,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        wrk6 = dv%vadia(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)
        if(.not. is_neutral(isb)) 
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianax'//chns)
-       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,wrk3)
+       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk3)
        wrk6 = dv%vadia(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)*wrk3
        if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
      &   call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianahzx'//chns)
@@ -1098,7 +1098,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        wrk6 = dv%vadia(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)
        if(.not. is_neutral(isb)) 
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianay'//chns)
-       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,wrk3)
+       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk3)
        wrk6 = dv%vadia(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)*wrk3 
        if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianahzy'//chns)

@@ -12,9 +12,13 @@
       use b2mod_input_profile
       use b2mod_rates
       use b2mod_diag
+      use b2mod_time
+      use b2mod_version
+      use b2mod_b2cmpa
       use b2us_map
       use b2us_geo
       use b2us_plasma
+      use b2mod_b2cmfs
 
       implicit none
 
@@ -24,7 +28,9 @@
      .          read_geometry, prep_geometry, write_geometry,
      .          calc_mapping_bc, calc_mapping_rc,
      .          prep_plasma, prep_plasma_ext,
-     .          to_struct_plasma
+     .          to_struct_plasma, read_map_geo, write_map_geo,
+     .          write_plasma_state, read_plasma_state,
+     .          conv_bcparms, write_bcparms
 
 cwdk  eventually: take this outside of a module! (or: make sure this module is
 cwdk  only used at b2mod_driver level)
@@ -37,131 +43,172 @@ cwdk      type(B2StateExt), public, save :: state_ext
 
 ***********************************************************************
 
-      subroutine read_mapping (fname, mpg)
+      subroutine read_map_geo (ninp, mpg, gm)
+      use b2mod_types
+      use b2mod_version
+      use b2mod_b2cmfs
+
+      implicit none
+      integer, intent(in) :: ninp
+      type (mapping), intent (out) :: mpg
+      type (geometry), intent (out) :: gm
+      integer :: idum(0:9)
+      character lblgm*120, idout*80
+
+* ..read the geometry
+* ..obtain version number
+
+      call read_mapping (ninp, mpg)
+      call read_geometry (ninp, mpg, gm)
+
+!      close (ninp)
+      
+      end subroutine read_map_geo
+
+***********************************************************************
+
+      subroutine write_map_geo (fname, mpg, gm)
+      use b2mod_types
+      use b2mod_version
+      use b2mod_b2cmfs
 
       implicit none
       character(*),intent(in) :: fname
-      integer :: iun, io, idum(0:9)
-      type (mapping), intent (out) :: mpg
+      type (mapping), intent (in) :: mpg
+      type (geometry), intent (in) :: gm
+      integer :: nout, io, idum(0:9)
+      character lblgm*120, idout*80
 
-      open (newunit=iun,file=fname,status='old',iostat=io)
+      open (newunit=nout,file=fname,iostat=io)
 
       if (io /= 0) then
-        write (*,*) ' file ', fname, ' not readable'
-        mpg%nCv = 0
-        mpg%nFc = 0
-        mpg%nVx = 0
-      else
-        call cfruin (iun, 1, idum, 'nCi')
-        mpg%nCi = idum(0) 
-        call cfruin (iun, 1, idum, 'nCg')
-        mpg%nCg = idum(0) 
-        call cfruin (iun, 1, idum, 'nCv')
-        mpg%nCv = idum(0)
-        call cfruin (iun, 1, idum, 'nFc')
-        mpg%nFc = idum(0)
-        call cfruin (iun, 1, idum, 'nVx')
-        mpg%nVx = idum(0)
-        call cfruin (iun, 1, idum, 'nFs')
-        mpg%nFs = idum(0)
-        call cfruin (iun, 1, idum, 'nCmxVx')
-        mpg%nCmxVx = idum(0)
-        call cfruin (iun, 1, idum, 'nCmxFc')
-        mpg%nCmxFc = idum(0)
-        call cfruin (iun, 1, idum, 'nVmxCv')
-        mpg%nVmxCv = idum(0)
-        call cfruin (iun, 1, idum, 'nVmxFc')
-        mpg%nVmxFc = idum(0)
-        call cfruin (iun, 1, idum, 'mxnFs')
-        mpg%mxnFs = idum(0)
-
-        call alloc_mapping (mpg)
-        
-        call cfruin (iun, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
-        call cfruin (iun, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
-        call cfruin (iun, mpg%nFc*2,   mpg%fcCv,  'fcCv')
-        call cfruin (iun, mpg%nFc*2,   mpg%fcVx,  'fcVx')
-        call cfruin (iun, mpg%nCv*2,   mpg%cvVxP, 'cvVxP')
-        call cfruin (iun, mpg%nCmxVx,  mpg%cvVx,  'cvVx')
-        call cfruin (iun, mpg%nVx*2,   mpg%vxFcP, 'vxFcP')
-        call cfruin (iun, mpg%nVmxFc,  mpg%vxFc,  'vxFc')
-        call cfruin (iun, mpg%nVx*2,   mpg%vxCvP, 'vxCvP')
-        call cfruin (iun, mpg%nVmxCv,  mpg%vxCv,  'vxCv')
-        call cfruin (iun, mpg%mxnFs*2, mpg%cvFsP, 'cvFsP')
-        call cfruin (iun, mpg%nCv,     mpg%cvFs,  'cvFs')
-        call cfruin (iun, mpg%mxnFs*2, mpg%fcFsP, 'fcFsP')
-        call cfruin (iun, mpg%nCv,     mpg%fcFs,  'fcFs')
-        call cfruin (iun, mpg%nFc,     mpg%fcReg,  'fcReg')
-        call cfruin (iun, mpg%nCv,     mpg%cvReg,  'cvReg')
-!        call cfruin (iun, mpg%nCv,     mpg%cvOnClosedSurface,
-!     .                                            'cvOnClosedSurface')
+        write (*,*) ' file ', fname, ' not writable'
+        call xerrab ('write_map_geo -- no geometry file ')
       end if
+* ..set new version number
+      b2fgmtry_version = '03.002.000'
 
-      close  (iun)
+* ..read the geometry
+* ..obtain version number
+      call cfverw (nout, b2fgmtry_version)
+      lblgm = 'Test for b2fgmtry_us'
+      call cfwuch (nout, 120, lblgm, 'label')
+      idum(0) = isymm
+      call cfwuin (nout, 1, idum, 'isymm')
+
+      call write_mapping (nout, mpg)
+      call write_geometry (nout, mpg, gm)
+
+      close (nout)
+      
+      end subroutine write_map_geo
+
+***********************************************************************
+
+
+      subroutine read_mapping (iun, mpg)
+
+      implicit none
+      integer, intent(in) :: iun
+      integer :: idum(0:9)
+      type (mapping), intent (out) :: mpg
+
+      call cfruin (iun, 1, idum, 'nCi')
+      mpg%nCi = idum(0) 
+      call cfruin (iun, 1, idum, 'nCg')
+      mpg%nCg = idum(0) 
+      call cfruin (iun, 1, idum, 'nCv')
+      mpg%nCv = idum(0)
+      call cfruin (iun, 1, idum, 'nFc')
+      mpg%nFc = idum(0)
+      call cfruin (iun, 1, idum, 'nVx')
+      mpg%nVx = idum(0)
+      call cfruin (iun, 1, idum, 'nFs')
+      mpg%nFs = idum(0)
+      call cfruin (iun, 1, idum, 'nCmxVx')
+      mpg%nCmxVx = idum(0)
+      call cfruin (iun, 1, idum, 'nCmxFc')
+      mpg%nCmxFc = idum(0)
+      call cfruin (iun, 1, idum, 'nVmxCv')
+      mpg%nVmxCv = idum(0)
+      call cfruin (iun, 1, idum, 'nVmxFc')
+      mpg%nVmxFc = idum(0)
+
+      call alloc_mapping (mpg)
+        
+      call cfruin (iun, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
+      call cfruin (iun, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
+      call cfruin (iun, mpg%nFc*2,   mpg%fcCv,  'fcCv')
+      call cfruin (iun, mpg%nFc*2,   mpg%fcVx,  'fcVx')
+      call cfruin (iun, mpg%nCv*2,   mpg%cvVxP, 'cvVxP')
+      call cfruin (iun, mpg%nCmxVx,  mpg%cvVx,  'cvVx')
+      call cfruin (iun, mpg%nVx*2,   mpg%vxFcP, 'vxFcP')
+      call cfruin (iun, mpg%nVmxFc,  mpg%vxFc,  'vxFc')
+      call cfruin (iun, mpg%nVx*2,   mpg%vxCvP, 'vxCvP')
+      call cfruin (iun, mpg%nVmxCv,  mpg%vxCv,  'vxCv')
+      call cfruin (iun, mpg%nFs*2,   mpg%fsCvP, 'fsCvP')
+      call cfruin (iun, mpg%nCv,     mpg%fsCv,  'fsCv')
+      call cfruin (iun, mpg%nFs*2,   mpg%fsFcP, 'fsFcP')
+      call cfruin (iun, mpg%nFc,     mpg%fsFc,  'fsFc')
+      call cfruin (iun, mpg%nFc,     mpg%fcReg,  'fcReg')
+      call cfruin (iun, mpg%nCv,     mpg%cvReg,  'cvReg')
+!      call cfruin (iun, mpg%nCv,     mpg%cvOnClosedSurface,
+!     .                                  'cvOnClosedSurface')
+
+      nnreg(0) = maxval(mpg%cvReg)
+      nnreg(1) = maxval(mpg%fcReg)
 
       return
       end subroutine read_mapping
 
 ***********************************************************************
 
-      subroutine write_mapping (fname, mpg)
+      subroutine write_mapping (nout, mpg)
 
       implicit none
-      character(*),intent(in) :: fname
-      integer :: nout, io, idum(0:9)
+      integer, intent(in) :: nout
+      integer :: idum(0:9)
       type (mapping), intent (in) :: mpg
 
-      open (newunit=nout,file=fname,iostat=io)
+      idum(0) = mpg%nCi
+      call cfwuin (nout, 1, idum, 'nCi')
+      idum(0) = mpg%nCg
+      call cfwuin (nout, 1, idum, 'nCg')
+      idum(0) = mpg%nCv
+      call cfwuin (nout, 1, idum, 'nCv')
+      idum(0) = mpg%nFc
+      call cfwuin (nout, 1, idum, 'nFc')
+      idum(0) = mpg%nVx
+      call cfwuin (nout, 1, idum, 'nVx')
+      idum(0) = mpg%nFs
+      call cfwuin (nout, 1, idum, 'nFs')
+      idum(0) = mpg%nCmxVx
+      call cfwuin (nout, 1, idum, 'nCmxVx')
+      idum(0) = mpg%nCmxFc
+      call cfwuin (nout, 1, idum, 'nCmxFc')
+      idum(0) = mpg%nVmxCv
+      call cfwuin (nout, 1, idum, 'nVmxCv')
+      idum(0) = mpg%nVmxFc
+      call cfwuin (nout, 1, idum, 'nVmxFc')
 
-      if (io /= 0) then
-        write (*,*) ' file ', fname, ' cannot be written'
-      else
-
-        idum(0) = mpg%nCi
-        call cfwuin (nout, 1, idum, 'nCi')
-        idum(0) = mpg%nCg
-        call cfwuin (nout, 1, idum, 'nCg')
-        idum(0) = mpg%nCv
-        call cfwuin (nout, 1, idum, 'nCv')
-        idum(0) = mpg%nFc
-        call cfwuin (nout, 1, idum, 'nFc')
-        idum(0) = mpg%nVx
-        call cfwuin (nout, 1, idum, 'nVx')
-        idum(0) = mpg%nFs
-        call cfwuin (nout, 1, idum, 'nFs')
-        idum(0) = mpg%nCmxVx
-        call cfwuin (nout, 1, idum, 'nCmxVx')
-        idum(0) = mpg%nCmxFc
-        call cfwuin (nout, 1, idum, 'nCmxFc')
-        idum(0) = mpg%nVmxCv
-        call cfwuin (nout, 1, idum, 'nVmxCv')
-        idum(0) = mpg%nVmxFc
-        call cfwuin (nout, 1, idum, 'nVmxFc')
-        idum(0) = mpg%mxnFs
-        call cfwuin (nout, 1, idum, 'mxnFs')
-
-        call cfwuin (nout, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
-        call cfwuin (nout, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
-        call cfwuin (nout, mpg%nFc*2,   mpg%fcCv,  'fcCv')
-        call cfwuin (nout, mpg%nFc*2,   mpg%fcVx,  'fcVx')
-        call cfwuin (nout, mpg%nCv*2,   mpg%cvVxP, 'cvVxP')
-        call cfwuin (nout, mpg%nCmxVx,  mpg%cvVx,  'cvVx')
-        call cfwuin (nout, mpg%nVx*2,   mpg%vxFcP, 'vxFcP')
-        call cfwuin (nout, mpg%nVmxFc,  mpg%vxFc,  'vxFc')
-        call cfwuin (nout, mpg%nVx*2,   mpg%vxCvP, 'vxCvP')
-        call cfwuin (nout, mpg%nVmxCv,  mpg%vxCv,  'vxCv')
-        call cfwuin (nout, mpg%mxnFs*2, mpg%cvFsP, 'cvFsP')
-        call cfwuin (nout, mpg%nCv,     mpg%cvFs,  'cvFs')
-        call cfwuin (nout, mpg%mxnFs*2, mpg%fcFsP, 'fcFsP')
-        call cfwuin (nout, mpg%nCv,     mpg%fcFs,  'fcFs')
-        call cfwuin (nout, mpg%nFc,     mpg%fcReg,  'fcReg')
-        call cfwuin (nout, mpg%nCv,     mpg%cvReg,  'cvReg')
-!        call cfwuin (nout, mpg%nCv,     mpg%cvOnClosedSurface,
-!     .                                            'cvOnClosedSurface')
-
-      end if
-
-      close  (nout)
+      call cfwuin (nout, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
+      call cfwuin (nout, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
+      call cfwuin (nout, mpg%nFc*2,   mpg%fcCv,  'fcCv')
+      call cfwuin (nout, mpg%nFc*2,   mpg%fcVx,  'fcVx')
+      call cfwuin (nout, mpg%nCv*2,   mpg%cvVxP, 'cvVxP')
+      call cfwuin (nout, mpg%nCmxVx,  mpg%cvVx,  'cvVx')
+      call cfwuin (nout, mpg%nVx*2,   mpg%vxFcP, 'vxFcP')
+      call cfwuin (nout, mpg%nVmxFc,  mpg%vxFc,  'vxFc')
+      call cfwuin (nout, mpg%nVx*2,   mpg%vxCvP, 'vxCvP')
+      call cfwuin (nout, mpg%nVmxCv,  mpg%vxCv,  'vxCv')
+      call cfwuin (nout, mpg%nFs*2,   mpg%fsCvP, 'fsCvP')
+      call cfwuin (nout, mpg%nCv,     mpg%fsCv,  'fsCv')
+      call cfwuin (nout, mpg%nFs*2,   mpg%fsFcP, 'fsFcP')
+      call cfwuin (nout, mpg%nFc,     mpg%fsFc,  'fsFc')
+      call cfwuin (nout, mpg%nFc,     mpg%fcReg,  'fcReg')
+      call cfwuin (nout, mpg%nCv,     mpg%cvReg,  'cvReg')
+!      call cfwuin (nout, mpg%nCv,     mpg%cvOnClosedSurface,
+!     .                                   'cvOnClosedSurface')
 
       return
       end subroutine write_mapping
@@ -178,7 +225,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
       integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc, ic1, ic2, 
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
      .           ivx, ivx1, ivx2, nfx, mxreg, ifs, icv, ireg, istart,
-     .           inv, inv1, inv2, invmx
+     .           inv, inv1, inv2, invmx, ifcc
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:)
       logical lfound
 
@@ -204,6 +251,9 @@ cwdk      type(B2StateExt), public, save :: state_ext
 ! no. of vertices
       m%nVx = (nx+1) * (ny+1)
 
+! no. of flux surfaces (conservative estimate)
+      m%nFs = max(1,(1 + 2*nncut)*ny)
+
 ! max. no. of entries in cvVx (vertex list of each cell)
       m%nCmxVx = 4 * m%nCi + 2*m%nCg
 
@@ -221,9 +271,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
 ! each X-point vertex has 8; duplicate X-point vertices for slabs
       m%nVmxFc = 4 * m%nVx - 4*2*nncut - 2*((nx-1) + (ny-1)) + 2*nncut*4
 
-! max no. of flux surfaces (conservative estimate)
-      m%mxnFs = 8*nncut*ny
-
 ! max no. of entries in matrix
       m%nCmxNv = 9*m%nCi - 4*nncut + ! internal cells (corners only 8)
      .           6*m%nCg - 8*nncut + ! guard cells (at corners only 5)
@@ -232,9 +279,9 @@ cwdk      type(B2StateExt), public, save :: state_ext
       write (*,*) 'Mapping defined, with'
       write (*,*) 'nCv, nCi, nCg  = ', m%nCv, m%nCi, m%nCg
       write (*,*) 'nFc, nVx       = ', m%nFc, m%nVx
+      write (*,*) 'nFs            = ', m%nFs
       write (*,*) 'nCmxFc, nCmxVx = ', m%nCmxFc, m%nCmxVx
       write (*,*) 'nVmxFc, nVmxCv = ', m%nVmxFc, m%nVmxCv
-      write (*,*) 'nVmxFc, mxnFs  = ', m%mxnFs
       write (*,*) 'nCmxNv         = ', m%nCmxNv
 
       call alloc_mapping (m)
@@ -455,7 +502,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .          pack( indFc, fh == ivx )
        end if
        m%vxCvP(ivx,2) = count(ch == ivx)
-       vxCv_end = m%vxCvP(ivx,1) + m%vxCvP(ivx,2)
+       vxCv_end = m%vxCvP(ivx,1) + m%vxCvP(ivx,2) - 1
        if (m%vxCvP(ivx,2) > 0) then
          m%vxCv(m%vxCvP(ivx,1):vxCv_end) =
      .          pack( indCv, ch == ivx )
@@ -536,29 +583,36 @@ cwdk      type(B2StateExt), public, save :: state_ext
 
       ifs = 0
       icv = 0
+      ifcc = 0
       do ireg= 1, mxReg
 	do iy = 0, ny-1
 	  istart = -1
 	  do ix = 0, nx-1
             ic = (ix+1) + iy*nx
-            ifc = ix + iy*(nx+1)
+            ifc = ix+1 + iy*(nx+1)
             if (m%cvReg(ic) == ireg) then
 	      if (istart == -1) then
                 ifs = ifs + 1
 	        icv = icv + 1
-                m%cvFs(icv) = ic
-	        m%cvFsP(ifs,1) = icv
-	        m%fcFs(icv) = ifc
-                m%fcFsP(ifs,1) = icv
+                ifcc = ifcc + 1
+                m%fsCv(icv) = ic
+	        m%fsCvP(ifs,1) = icv
+	        m%fsFc(ifcc) = ifc
+                m%fsFcP(ifs,1) = ifcc
 	        istart = 1
               else
 	        icv = icv + 1
-		m%cvFs(icv) = ic
-	        m%fcFs(icv) = ifc
+                ifcc = ifcc + 1
+		m%fsCv(icv) = ic
+	        m%fsFc(ifcc) = ifc
+                m%fsCvP(ifs,2) = icv - m%fsCvP(ifs,1) + 1
+                m%fsFcP(ifs,2) = ifcc - m%fsFcP(ifs,1) + 1
+                if (ix == (nx-1)) then
+                  ifcc = ifcc + 1
+                  m%fsFc(ifcc) = ifc + 1
+                  m%fsFcP(ifs,2) = ifcc - m%fsFcP(ifs,1) + 1
+               end if
               end if
-	    else if (istart /= -1) then
-	      m%cvFsP(ifs,2) = icv - m%cvFsP(ifs,1) + 1
-	      m%fcFsP(ifs,2) = icv - m%fcFsP(ifs,1) + 1
             end if
           end do
         end do	
@@ -773,108 +827,93 @@ cwdk      type(B2StateExt), public, save :: state_ext
 ***********************************************************************
 
 
-      subroutine read_geometry (fname, mpg, gm)
+      subroutine read_geometry (iun, mpg, gm)
 
       implicit none
-      character(*),intent(in) :: fname
-      integer :: iun, io, idum(0:9)
+      integer, intent(in) :: iun
+      integer :: idum(0:9)
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
 
-      open (newunit=iun,file=fname,iostat=io)
-
-      if (io /= 0) then
-        write (*,*) ' file ', fname, ' cannot be written'
-      else
-
-        call alloc_geometry (gm, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
+      call alloc_geometry (gm, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
      .    mpg%nVmxCv)
 
 ! cell volumes 
-        call cfrure (iun, mpg%nCv*4, gm%cvBb,   'cvBb')
-        call cfrure (iun, mpg%nCv,   gm%cvX,    'cvX')
-        call cfrure (iun, mpg%nCv,   gm%cvY,    'cvY')
-        call cfrure (iun, mpg%nCv,   gm%cvS,    'cvS')
-        call cfrure (iun, mpg%nCv,   gm%cvH,    'cvH')
-        call cfrure (iun, mpg%nCv*2, gm%cvQgam, 'cvQgam')
-        call cfrure (iun, mpg%nCv,   gm%cvVol,  'cvVol')
-        call cfrure (iun, mpg%nCv,   gm%cvOnedBsq,'cvOnedBsq')
-        call cfrure (iun, mpg%nCv,   gm%cvBzb,  'cvBzb')
+      call cfrure (iun, mpg%nCv*4, gm%cvBb,   'cvBb')
+      call cfrure (iun, mpg%nCv,   gm%cvX,    'cvX')
+      call cfrure (iun, mpg%nCv,   gm%cvY,    'cvY')
+      call cfrure (iun, mpg%nCv,   gm%cvS,    'cvS')
+      call cfrure (iun, mpg%nCv,   gm%cvHz,   'cvHz')
+      call cfrure (iun, mpg%nCv*2, gm%cvQgam, 'cvQgam')
+      call cfrure (iun, mpg%nCv,   gm%cvVol,  'cvVol')
+!      call cfrure (iun, mpg%nCv,   gm%cvOnedBsq,'cvOnedBsq')
+!      call cfrure (iun, mpg%nCv,   gm%cvBzb,  'cvBzb')
 
 ! face quantities
-        call cfrure (iun, mpg%nFc*4, gm%fcBb,   'fcBb')
-        call cfrure (iun, mpg%nFc,   gm%fcS,    'fcS')
-        call cfrure (iun, mpg%nFc*2, gm%fcHc,   'fcHc')
-        call cfrure (iun, mpg%nFc,   gm%fcHt,   'fcHt')
-        call cfrure (iun, mpg%nFc*2, gm%fcQgam, 'fcQgam')
-        call cfrure (iun, mpg%nFc*2, gm%fcQalf, 'fcQalf')
-        call cfrure (iun, mpg%nFc*2, gm%fcQbet, 'fcQbet')
-        call cfrure (iun, mpg%nFc,   gm%fcPbs,  'fcPbs')
-        call cfrure (iun, mpg%nFc,   gm%fcPbshz,'fcPbshz')
+!      call cfrure (iun, mpg%nFc*4, gm%fcBb,   'fcBb')
+      call cfrure (iun, mpg%nFc,   gm%fcS,    'fcS')
+      call cfrure (iun, mpg%nFc*2, gm%fcHc,   'fcHc')
+      call cfrure (iun, mpg%nFc,   gm%fcHt,   'fcHt')
+      call cfrure (iun, mpg%nFc*2, gm%fcVol,  'fcVol')
+      call cfrure (iun, mpg%nFc*2, gm%fcQgam, 'fcQgam')
+      call cfrure (iun, mpg%nFc*2, gm%fcQalf, 'fcQalf')
+      call cfrure (iun, mpg%nFc*2, gm%fcQbet, 'fcQbet')
+      call cfrure (iun, mpg%nFc,   gm%fcPbs,  'fcPbs')
+!      call cfrure (iun, mpg%nFc,   gm%fcPbshz,'fcPbshz')
 
 ! vertice quantities
-        call cfrure (iun, mpg%nVx,   gm%vxX,    'vxX')
-        call cfrure (iun, mpg%nVx,   gm%vxY,    'vxY')
-        call cfrure (iun, mpg%nVx,   gm%vxFfbz, 'vxFfbz')
-        call cfrure (iun, mpg%nVx,   gm%vxFpsi, 'vxFpsi')
+      call cfrure (iun, mpg%nVx,   gm%vxX,    'vxX')
+      call cfrure (iun, mpg%nVx,   gm%vxY,    'vxY')
+      call cfrure (iun, mpg%nVmxCv,gm%vxVol,  'vxVol')
+      call cfrure (iun, mpg%nVx,   gm%vxFfbz, 'vxFfbz')
+      call cfrure (iun, mpg%nVx,   gm%vxFpsi, 'vxFpsi')
 
-        call cfrure (iun, mpg%nFs,   gm%fsConn, 'fsConn')
-
-      end if
-
-      close  (iun)
+      call cfrure (iun, mpg%nFs,   gm%fsConn, 'fsConn')
 
       return
       end subroutine read_geometry
 
 ***********************************************************************
 
-      subroutine write_geometry (fname, mpg, gm)
+      subroutine write_geometry (nout, mpg, gm)
 
       implicit none
-      character(*),intent(in) :: fname
-      integer :: nout, io, idum(0:9)
+      integer, intent(in) :: nout
+      integer :: idum(0:9)
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (in) :: gm
 
-      open (newunit=nout,file=fname,iostat=io)
-
-      if (io /= 0) then
-        write (*,*) ' file ', fname, ' cannot be written'
-      else
 ! cell volumes 
-        call cfwure (nout, mpg%nCv*4, gm%cvBb,   'cvBb')
-        call cfwure (nout, mpg%nCv,   gm%cvX,    'cvX')
-        call cfwure (nout, mpg%nCv,   gm%cvY,    'cvY')
-        call cfwure (nout, mpg%nCv,   gm%cvS,    'cvS')
-        call cfwure (nout, mpg%nCv,   gm%cvH,    'cvH')
-        call cfwure (nout, mpg%nCv*2, gm%cvQgam, 'cvQgam')
-        call cfwure (nout, mpg%nCv,   gm%cvVol,  'cvVol')
-        call cfwure (nout, mpg%nCv,   gm%cvOnedBsq,'cvOnedBsq')
-        call cfwure (nout, mpg%nCv,   gm%cvBzb,  'cvBzb')
+      call cfwure (nout, mpg%nCv*4, gm%cvBb,   'cvBb')
+      call cfwure (nout, mpg%nCv,   gm%cvX,    'cvX')
+      call cfwure (nout, mpg%nCv,   gm%cvY,    'cvY')
+      call cfwure (nout, mpg%nCv,   gm%cvS,    'cvS')
+      call cfwure (nout, mpg%nCv,   gm%cvHz,   'cvHz')
+      call cfwure (nout, mpg%nCv*2, gm%cvQgam, 'cvQgam')
+      call cfwure (nout, mpg%nCv,   gm%cvVol,  'cvVol')
+!      call cfwure (nout, mpg%nCv,   gm%cvOnedBsq,'cvOnedBsq')
+!      call cfwure (nout, mpg%nCv,   gm%cvBzb,  'cvBzb')
 
 ! face quantities
-        call cfwure (nout, mpg%nFc*4, gm%fcBb,   'fcBb')
-        call cfwure (nout, mpg%nFc,   gm%fcS,    'fcS')
-        call cfwure (nout, mpg%nFc*2, gm%fcHc,   'fcHc')
-        call cfwure (nout, mpg%nFc,   gm%fcHt,   'fcHt')
-        call cfwure (nout, mpg%nFc*2, gm%fcQgam, 'fcQgam')
-        call cfwure (nout, mpg%nFc*2, gm%fcQalf, 'fcQalf')
-        call cfwure (nout, mpg%nFc*2, gm%fcQbet, 'fcQbet')
-        call cfwure (nout, mpg%nFc,   gm%fcPbs,  'fcPbs')
-        call cfwure (nout, mpg%nFc,   gm%fcPbshz,'fcPbshz')
+!      call cfwure (nout, mpg%nFc*4, gm%fcBb,   'fcBb')
+      call cfwure (nout, mpg%nFc,   gm%fcS,    'fcS')
+      call cfwure (nout, mpg%nFc*2, gm%fcHc,   'fcHc')
+      call cfwure (nout, mpg%nFc,   gm%fcHt,   'fcHt')
+      call cfwure (nout, mpg%nFc*2, gm%fcVol,  'fcVol')
+      call cfwure (nout, mpg%nFc*2, gm%fcQgam, 'fcQgam')
+      call cfwure (nout, mpg%nFc*2, gm%fcQalf, 'fcQalf')
+      call cfwure (nout, mpg%nFc*2, gm%fcQbet, 'fcQbet')
+      call cfwure (nout, mpg%nFc,   gm%fcPbs,  'fcPbs')
+!      call cfwure (nout, mpg%nFc,   gm%fcPbshz,'fcPbshz')
 
 ! vertice quantities
-        call cfwure (nout, mpg%nVx,   gm%vxX,    'vxX')
-        call cfwure (nout, mpg%nVx,   gm%vxY,    'vxY')
-        call cfwure (nout, mpg%nVx,   gm%vxFfbz, 'vxFfbz')
-        call cfwure (nout, mpg%nVx,   gm%vxFpsi, 'vxFpsi')
+      call cfwure (nout, mpg%nVx,   gm%vxX,    'vxX')
+      call cfwure (nout, mpg%nVx,   gm%vxY,    'vxY')
+      call cfwure (nout, mpg%nVmxCv,gm%vxVol,  'vxVol')
+      call cfwure (nout, mpg%nVx,   gm%vxFfbz, 'vxFfbz')
+      call cfwure (nout, mpg%nVx,   gm%vxFpsi, 'vxFpsi')
 
-        call cfwure (nout, mpg%nFs,   gm%fsConn, 'fsConn')
-
-      end if
-
-      close  (nout)
+      call cfwure (nout, mpg%nFs,   gm%fsConn, 'fsConn')
 
       return
       end subroutine write_geometry
@@ -907,7 +946,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
           gm%cvX(ic) = 0.25_R8*sum(crx(ix,iy,0:3))
           gm%cvY(ic) = 0.25_R8*sum(cry(ix,iy,0:3))
           gm%cvS(ic) = gs(ix,iy,2)
-          gm%cvH(ic) = hz(ix,iy)
+          gm%cvHz(ic) = hz(ix,iy)
           gm%cvHx(ic) = hx(ix,iy)
           gm%cvQgam(ic,0) = qz(ix,iy,1)    ! cos
           gm%cvQgam(ic,1) = -qz(ix,iy,0)   ! sin
@@ -923,7 +962,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
         gm%cvX(ic) = 0.25_R8*sum(crx(ix,-1,0:3))
         gm%cvY(ic) = 0.25_R8*sum(cry(ix,-1,0:3))
         gm%cvS(ic) = gs(ix,-1,2)
-        gm%cvH(ic) = hz(ix,-1)
+        gm%cvHz(ic) = hz(ix,-1)
         gm%cvHx(ic) = hx(ix,-1)
         gm%cvQgam(ic,0) = qz(ix,-1,1)
         gm%cvQgam(ic,1) = -qz(ix,-1,0)
@@ -936,7 +975,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
         gm%cvX(ic) = 0.25_R8*sum(crx(ix,ny,0:3))
         gm%cvY(ic) = 0.25_R8*sum(cry(ix,ny,0:3))
         gm%cvS(ic) = gs(ix,ny,2)
-        gm%cvH(ic) = hz(ix,ny)
+        gm%cvHz(ic) = hz(ix,ny)
         gm%cvHx(ic) = hx(ix,ny)
         gm%cvQgam(ic,0) = qz(ix,ny,1)
         gm%cvQgam(ic,1) = -qz(ix,ny,0)
@@ -951,7 +990,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
         gm%cvX(ic) = 0.25_R8*sum(crx(-1,iy,0:3))
         gm%cvY(ic) = 0.25_R8*sum(cry(-1,iy,0:3))
         gm%cvS(ic) = gs(-1,iy,2)
-        gm%cvH(ic) = hz(-1,iy)
+        gm%cvHz(ic) = hz(-1,iy)
         gm%cvHx(ic) = hx(-1,iy)
         gm%cvQgam(ic,0) = qz(-1,iy,1)
         gm%cvQgam(ic,1) = -qz(-1,iy,0)
@@ -964,7 +1003,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
         gm%cvX(ic) = 0.25_R8*sum(crx(nx,iy,0:3))
         gm%cvY(ic) = 0.25_R8*sum(cry(nx,iy,0:3))
         gm%cvS(ic) = gs(nx,iy,2)
-        gm%cvH(ic) = hz(nx,iy)
+        gm%cvHz(ic) = hz(nx,iy)
         gm%cvHx(ic) = hx(nx,iy)
         gm%cvQgam(ic,0) = qz(nx,iy,1)
         gm%cvQgam(ic,1) = -qz(nx,iy,0)
@@ -1102,8 +1141,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
        do iy = 0, ny
          do ix = 0, nx
            ivx = ix+1 + iy*(nx+1)
-           gm%vxX(ivx) = crx(ix,iy,1)
-           gm%vxY(ivx) = cry(ix,iy,1)
+           gm%vxX(ivx) = crx(ix,iy,0)
+           gm%vxY(ivx) = cry(ix,iy,0)
            gm%vxFfbz(ivx) = ffbz(ix,iy,1)
            gm%vxFpsi(ivx) = fpsi(ix,iy,1)
            do i = 1, mpg%vxCvP(ivx,2)
@@ -1118,12 +1157,16 @@ cwdk      type(B2StateExt), public, save :: state_ext
 
       gm%fsConn = 0.0_R8
       do i = 1, nFs 
-       ic = mpg%cvFS(mpg%cvFsP(i,1))
-       if (mod(mpg%cvReg(ic),4) == 1) then        
-        do j=mpg%fcFsP(i,1), mpg%fcFsP(i,1)+mpg%fcFsp(i,2)-1
-          ifc = mpg%fcFs(j)
-          gm%fsconn(i) = gm%fsconn(i) + (gm%fcHc(ifc,1)+gm%fcHc(ifc,2))*
-     .                   gm%fcBb(ifc,3)/abs(gm%fcBb(ifc,0))
+       ic = mpg%fsCv(mpg%fsCvP(i,1))
+       if (mpg%cvOnClosedSurface(ic)) then        
+        do j=mpg%fsFcP(i,1), mpg%fsFcP(i,1)+mpg%fsFcP(i,2)-1
+          ifc = mpg%fsFc(j)
+cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
+          gm%fsconn(i) = gm%fsconn(i) + 
+     .                   gm%fcHc(ifc,1)*gm%cvBb(mpg%fcCv(ifc,1),3)/
+     .                              abs(gm%cvBb(mpg%fcCv(ifc,1),0)) + 
+     .                   gm%fcHc(ifc,2)*gm%cvBb(mpg%fcCv(ifc,2),3)/
+     .                              abs(gm%cvBb(mpg%fcCv(ifc,2),0))
         end do
        end if
       end do      
@@ -1630,6 +1673,10 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .              fna_32nd(ix,iy,0,0:1,0:ns-1)
           st % dv % fna_52nd(ifc,0:1,0:ns-1) = 
      .              fna_52nd(ix,iy,0,0:1,0:ns-1)
+          st % dv % fna_eir(ifc,0:1,0:ns-1) = 
+     .              fna_eir(ix,iy,0,0:1,0:ns-1)
+          st % dv % fne_eir(ifc,0:1) = 
+     .              fne_eir(ix,iy,0,0:1)
           st % dv % fna_nodrift(ifc,0:1,0:ns-1) = 
      .              fna_nodrift(ix,iy,0,0:1,0:ns-1)
 
@@ -1653,6 +1700,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .              vaecrb(ix,iy,0,0:1,0:ns-1)
           st % dv % wedia(ifc,0:1) = 
      .              wedia(ix,iy,0,0:1)
+          st % dv % vedia(ifc,0:1) = 
+     .              vedia(ix,iy,0,0:1)
           st % dv % veecrb(ifc,0:1) = 
      .              veecrb(ix,iy,0,0:1)
 ! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
@@ -1762,6 +1811,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .              fna_52nd(ix,iy,1,0:1,0:ns-1)
           st % dv % fna_eir(ifc,0:1,0:ns-1) = 
      .              fna_eir(ix,iy,1,0:1,0:ns-1)
+          st % dv % fne_eir(ifc,0:1) = 
+     .              fne_eir(ix,iy,1,0:1)
           st % dv % fna_nodrift(ifc,0:1,0:ns-1) = 
      .              fna_nodrift(ix,iy,1,0:1,0:ns-1)
         
@@ -1788,6 +1839,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .              vaecrb(ix,iy,1,0:1,0:ns-1)
           st % dv % wedia(ifc,0:1) = 
      .              wedia(ix,iy,1,0:1)
+          st % dv % vedia(ifc,0:1) = 
+     .              vedia(ix,iy,1,0:1)
           st % dv % veecrb(ifc,0:1) = 
      .              veecrb(ix,iy,1,0:1)
 ! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
@@ -2454,7 +2507,11 @@ cwdk      type(B2StateExt), public, save :: state_ext
           fna_32nd(ix,iy,0,0:1,0:ns-1) = 
      .           st % dv % fna_32nd(ifc,0:1,0:ns-1) 
           fna_52nd(ix,iy,0,0:1,0:ns-1) =
-     .           st % dv % fna_52nd(ifc,0:1,0:ns-1) 
+     .           st % dv % fna_52nd(ifc,0:1,0:ns-1)
+          fna_eir(ix,iy,0,0:1,0:ns-1) =
+     .            st % dv % fna_eir(ifc,0:1,0:ns-1)
+          fne_eir(ix,iy,0,0:1) =
+     .            st % dv % fne_eir(ifc,0:1)
           fna_nodrift(ix,iy,0,0:1,0:ns-1) =
      .           st % dv % fna_nodrift(ifc,0:1,0:ns-1) 
 
@@ -2480,6 +2537,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .          st % dv % vaecrb(ifc,0:1,0:ns-1)
           wedia(ix,iy,0,0:1) =
      .          st % dv % wedia(ifc,0:1)
+          vedia(ix,iy,0,0:1) =
+     .          st % dv % vedia(ifc,0:1)
           veecrb(ix,iy,0,0:1) =
      .          st % dv % veecrb(ifc,0:1)
 ! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
@@ -2590,6 +2649,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .            st % dv % fna_52nd(ifc,0:1,0:ns-1)
           fna_eir(ix,iy,1,0:1,0:ns-1) =
      .            st % dv % fna_eir(ifc,0:1,0:ns-1)
+          fne_eir(ix,iy,1,0:1) =
+     .            st % dv % fne_eir(ifc,0:1)
           fna_nodrift(ix,iy,1,0:1,0:ns-1) =
      .            st % dv % fna_nodrift(ifc,0:1,0:ns-1)
         
@@ -2618,6 +2679,8 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .          st % dv % vaecrb(ifc,0:1,0:ns-1)
           wedia(ix,iy,1,0:1) =
      .          st % dv % wedia(ifc,0:1)
+          vedia(ix,iy,1,0:1) =
+     .          st % dv % vedia(ifc,0:1)
           veecrb(ix,iy,1,0:1) =
      .          st % dv % veecrb(ifc,0:1)
 ! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
@@ -2680,6 +2743,406 @@ cwdk      type(B2StateExt), public, save :: state_ext
         call createB2StateExt( nCv, nFc, ns, st_ext )
 
       end subroutine prep_plasma_ext
+
+
+***********************************************************************
+
+
+      subroutine write_plasma_state (fname, ns, nCv, nFc, st)
+      
+      implicit none
+      character(*), intent(in) :: fname
+      integer, intent(in) :: ns, nCv, nFc
+      type(B2State), intent(inout) :: st
+      integer ::  nput, io, idum(0:2) 
+      real (kind=R8) :: time(1)
+      character lble*120
+      character*10, save ::
+     *   b2fstate_version =  '03.002.000'
+      real (kind=R8) ::
+     *   zpdum(0:nsdecl-1,4)
+
+*-----------------------------------------------------------------------
+*.computation
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini ('write_plasma_state')
+*   ..test ns
+      call xertst (1.le.ns, 'faulty argument ns')
+      
+* ..save state and fluxes
+*   ..save plasma state
+
+      open (newunit=nput,file=fname,iostat=io)
+
+*   ..get label
+      call b2xxid ('b2mn', lble(1:60))
+      lble(61:120) = 
+     *  '                                                            '
+
+*   ..write header
+      idum(0) = ns
+      idum(1) = nCv
+      idum(2) = nFc
+      call cfverw (nput, b2fstate_version)
+      call cfwuin (nput, 3, idum, 'ns,nCv,nFc')
+      call cfwuch (nput, 120, lble, 'label')
+      call b2wuzd (nput, b2fstate_version, ns, zamin, zamax, zn, am)
+
+      call cfwure (nput, nCv*ns,   st % pl % na, 'na')
+      call cfwure (nput, nCv,      st % dv % ne, 'ne')
+      call cfwure (nput, nCv*ns,   st % pl % ua, 'ua')
+      call cfwure (nput, nFc*2*ns, st % dv % uadia, 'uadia') 
+      call cfwure (nput, nCv,      st % pl % te, 'te')
+      call cfwure (nput, nCv,      st % pl % ti, 'ti')
+      call cfwure (nput, nCv,      st % pl % po, 'po')
+
+*   ..save fluxes
+      call cfwure (nput, nFc*2*ns, st % dv % fna, 'fna')
+      call cfwure (nput, nFc*2,    st % dv % fhe, 'fhe')
+      call cfwure (nput, nFc*2,    st % dv % fhi, 'fhi')
+      call cfwure (nput, nFc*2,    st % dv % fch, 'fch')
+      call cfwure (nput, nFc*2,    st % dv % fch_32, 'fch_32')
+      call cfwure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
+      call cfwure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
+
+*   ..save time
+      time(1)=tim
+      call cfwure (nput, 1, time, 'time')
+
+*   ..save parallel current
+      call cfwure (nput, nFc*2,    st % dv % fch_p, 'fch_p')
+
+*   ..saving various fluxes and velocities needed by advanced SOLPS-ITER features
+      call cfwure (nput, nFc*2*ns, st % dv % fna_mdf, 'fna_mdf')
+      call cfwure (nput, nFc*2,    st % dv % fhe_mdf, 'fhe_mdf')
+      call cfwure (nput, nFc*2,    st % dv % fhi_mdf, 'fhi_mdf')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_fcor, 'fna_fcor')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_nodrift, 'fna_nodrift')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_he, 'fna_he')
+      call cfwure (nput, nFc*2*ns, st % dv % fnaPSch, 'fnaPSch')
+      call cfwure (nput, nFc*2,    st % dv % fhePSch, 'fhePSch')
+      call cfwure (nput, nFc*2,    st % dv % fhiPSch, 'fhiPSch')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_eir, 'fna_eir')
+      call cfwure (nput, nFc*2,    st % dv % fne_eir, 'fne_eir')
+      call cfwure (nput, nFc*2,    st % dv % fhe_eir, 'fhe_eir')
+      call cfwure (nput, nFc*2,    st % dv % fhi_eir, 'fhi_eir')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_32, 'fna_32')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_52, 'fna_52')
+      call cfwure (nput, nFc*2,    st % dv % fni_32, 'fni_32')
+      call cfwure (nput, nFc*2,    st % dv % fni_52, 'fni_52')
+      call cfwure (nput, nFc*2,    st % dv % fne_32, 'fne_32')
+      call cfwure (nput, nFc*2,    st % dv % fne_52, 'fne_52')
+      call cfwure (nput, nFc*2,    st % dv % fchdia, 'fchdia')
+      call cfwure (nput, nFc*2,    st % dv % fchin, 'fchin')
+      call cfwure (nput, nFc*2,    st % dv % fchvispar, 'fchvispar')
+      call cfwure (nput, nFc*2,    st % dv % fchvisper, 'fchvisper')
+      call cfwure (nput, nFc*2,    st % dv % fchvisq, 'fchvisq')
+      call cfwure (nput, nFc*2,    st % dv % fchinert, 'fchinert')
+      call cfwure (nput, nFc*2*ns, st % dv % vaecrb, 'vaecrb')
+      call cfwure (nput, nFc*2*ns, st % dv % vadia, 'vadia')
+      call cfwure (nput, nFc*2*ns, st % dv % wadia, 'wadia')
+      call cfwure (nput, nFc*2,    st % dv % veecrb, 'veecrb')
+      call cfwure (nput, nFc*2,    st % dv % vedia, 'vedia')
+      call cfwure (nput, nFc*2,    st % dv % floe_noc, 'floe_noc')
+      call cfwure (nput, nFc*2,    st % dv % floi_noc, 'floi_noc')
+
+* ..return
+      call subend ()
+      return
+
+      end subroutine write_plasma_state
+
+
+***********************************************************************
+
+
+      subroutine read_plasma_state (nput, ns, nCv, nFc, st)
+      
+      implicit none
+      integer, intent(in) :: nput, ns, nCv, nFc
+      type(B2State), intent(inout) :: st
+      integer :: ix, iy, ic, ifc, nfx, idum(3)
+      real (kind=R8) :: time(1)
+      character lbli*120
+      real (kind=R8) ::
+     *   zpdum(0:nsdecl-1,4)
+      character*10, save :: b2fstate_version 
+
+*-----------------------------------------------------------------------
+*.computation
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini ('read_plasma_state')
+*   ..test nput
+      call xertst (1.le.nput, 'faulty argument nput')
+*   ..test ns
+      call xertst (1.le.ns, 'faulty argument ns')
+ 
+      call createB2State (nCv, nFc, ns, st)
+     
+* ..read state and fluxes
+*   ..read plasma state
+      call cfverr (nput, b2fstati_version)
+      call cfruin (nput, 3, idum, 'ns,nCv,nFc')
+      call cfruch (nput, 120, lbli, 'label')
+      call b2ruzd (nput, b2fstati_version, ns, 
+     &          zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
+
+      call cfrure (nput, nCv*ns,   st % pl % na, 'na')
+      call cfrure (nput, nCv,      st % dv % ne, 'ne')
+      call cfrure (nput, nCv*ns,   st % pl % ua, 'ua')
+      call cfrure (nput, nFc*2*ns, st % dv % uadia, 'uadia') 
+      call cfrure (nput, nCv,      st % pl % te, 'te')
+      call cfrure (nput, nCv,      st % pl % ti, 'ti')
+      call cfrure (nput, nCv,      st % pl % po, 'po')
+
+*   ..read fluxes
+      call cfrure (nput, nFc*2*ns, st % dv % fna, 'fna')
+      call cfrure (nput, nFc*2,    st % dv % fhe, 'fhe')
+      call cfrure (nput, nFc*2,    st % dv % fhi, 'fhi')
+      call cfrure (nput, nFc*2,    st % dv % fch, 'fch')
+      call cfrure (nput, nFc*2,    st % dv % fch_32, 'fch_32')
+      call cfrure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
+      call cfrure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
+
+*   ..read time
+      call cfrure (nput, 1, time, 'time')
+      tim = time(1)
+
+*   ..read parallel current
+      call cfrure (nput, nFc*2,    st % dv % fch_p, 'fch_p')
+
+*   ..read various fluxes and velocities needed by advanced SOLPS-ITER features
+      call cfrure (nput, nFc*2*ns, st % dv % fna_mdf, 'fna_mdf')
+      call cfrure (nput, nFc*2,    st % dv % fhe_mdf, 'fhe_mdf')
+      call cfrure (nput, nFc*2,    st % dv % fhi_mdf, 'fhi_mdf')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_fcor, 'fna_fcor')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_nodrift, 'fna_nodrift')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_he, 'fna_he')
+      call cfrure (nput, nFc*2*ns, st % dv % fnaPSch, 'fnaPSch')
+      call cfrure (nput, nFc*2,    st % dv % fhePSch, 'fhePSch')
+      call cfrure (nput, nFc*2,    st % dv % fhiPSch, 'fhiPSch')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_eir, 'fna_eir')
+      call cfrure (nput, nFc*2,    st % dv % fne_eir, 'fne_eir')
+      call cfrure (nput, nFc*2,    st % dv % fhe_eir, 'fhe_eir')
+      call cfrure (nput, nFc*2,    st % dv % fhi_eir, 'fhi_eir')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_32, 'fna_32')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_52, 'fna_52')
+      call cfrure (nput, nFc*2,    st % dv % fni_32, 'fni_32')
+      call cfrure (nput, nFc*2,    st % dv % fni_52, 'fni_52')
+      call cfrure (nput, nFc*2,    st % dv % fne_32, 'fne_32')
+      call cfrure (nput, nFc*2,    st % dv % fne_52, 'fne_52')
+      call cfrure (nput, nFc*2,    st % dv % fchdia, 'fchdia')
+      call cfrure (nput, nFc*2,    st % dv % fchin, 'fchin')
+      call cfrure (nput, nFc*2,    st % dv % fchvispar, 'fchvispar')
+      call cfrure (nput, nFc*2,    st % dv % fchvisper, 'fchvisper')
+      call cfrure (nput, nFc*2,    st % dv % fchvisq, 'fchvisq')
+      call cfrure (nput, nFc*2,    st % dv % fchinert, 'fchinert')
+      call cfrure (nput, nFc*2*ns, st % dv % vaecrb, 'vaecrb')
+      call cfrure (nput, nFc*2*ns, st % dv % vadia, 'vadia')
+      call cfrure (nput, nFc*2*ns, st % dv % wadia, 'wadia')
+      call cfrure (nput, nFc*2,    st % dv % veecrb, 'veecrb')
+      call cfrure (nput, nFc*2,    st % dv % vedia, 'vedia')
+      call cfrure (nput, nFc*2,    st % dv % floe_noc, 'floe_noc')
+      call cfrure (nput, nFc*2,    st % dv % floi_noc, 'floi_noc')
+
+* ..return
+      call subend ()
+      return
+
+      end subroutine read_plasma_state
+
+***********************************************************************
+
+      subroutine conv_bcparms (nx, ny, ns, m)
+      use b2mod_boundary_namelist
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      type (mapping), intent (inout) :: m
+      integer :: ib, ibc, is, inbc, nfx
+      integer :: bcs(nbc), bce(nbc), bcl(nbc)
+
+!      if (any(bc_list_size > 0))
+!     >   call xerrab ('conv_bcparms -- bc_list options not yet ready')
+
+      m%nBc   = nbc     ! number of boundary conditions
+      m%mxnBc = 0       ! number of cells with imposed BC
+      do ib = 1, nbc
+        bcs(ib) = bcstart(ib)
+        bce(ib) = bcend(ib)
+        ! exclude corner cells if present
+        if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S') then
+          if (leftix (bcstart(ib),bcpos(ib)) .eq. -2)  
+     >      bcs(ib) = bcs(ib) + 1
+          if (rightix(bcend(ib),  bcpos(ib)) .eq. nx+1) 
+     >      bce(ib) = bce(ib) - 1
+        elseif (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') then
+          if (bottomiy(bcpos(ib),bcstart(ib)) .eq. -2)
+     >      bcs(ib) = bcs(ib) + 1
+          if (topiy   (bcpos(ib),bcend(ib)  ) .eq. ny+1)
+     >      bce(ib) = bce(ib) - 1
+        else
+          call xerrab ('bchar not yet available for WG')
+        endif
+        bcl(ib) = bce(ib) - bcs(ib) + 1
+        m%mxnBc = m%mxnBc + bcl(ib)
+      enddo
+      if (m%mxnBc .ne. m%nCg ) 
+     >  call xerrab ('conv_bcparms -- wrong mxnBc')
+
+
+      call alloc_mapping_bc (m)
+
+      nfx = (nx+1)*ny     ! number of x-faces
+      inbc = 0 ! index in bcCv
+      do ib = 1, nbc
+        m%bcFcP(ib,1) = inbc + 1
+        m%bcFcP(ib,2) = bcl(ib)
+        if (bcchar(ib).eq.'S') then
+          do ibc = 1, bcl(ib)
+            inbc = inbc + 1
+            m%bcFc(inbc) = nfx + (bcs(ib)+ibc-1)*(ny+1) + 1    ! number of the corresponding domain face
+            m%bcFcOr(inbc) = -1.0_R8
+          enddo
+        elseif (bcchar(ib).eq.'N') then
+          do ibc = 1, bcl(ib)
+            inbc = inbc + 1
+            m%bcFc(inbc) = nfx + (bcs(ib)+ibc-1)*(ny+1) + ny+1
+            m%bcFcOr(inbc) = 1.0_R8
+          enddo
+        elseif (bcchar(ib).eq.'W') then
+          do ibc = 1, bcl(ib)
+            inbc = inbc + 1
+            m%bcFc(inbc) = (bcs(ib)+ibc-1)*(nx+1) + 1
+            m%bcFcOr(inbc) = -1.0_R8
+          enddo
+        elseif (bcchar(ib).eq.'E') then 
+          do ibc = 1, bcl(ib)
+            inbc = inbc + 1
+            m%bcFc(inbc) = (bcs(ib)+ibc-1)*(nx+1) + nx+1
+            m%bcFcOr(inbc) = 1.0_R8
+          enddo
+        else
+          call xerrab ('conv_bcparms -- wrong BCCHAR')
+        endif
+      enddo     
+
+      if (inbc .ne. m%nCg ) 
+     >  call xerrab ('conv_bcparms -- problem setting up bc arrays')
+
+      return
+      end subroutine conv_bcparms
+
+
+***********************************************************************
+
+      subroutine write_bcparms (ns, m)
+      use b2mod_boundary_namelist
+      implicit none
+      integer, intent(in) :: ns
+      type (mapping), intent (inout) :: m
+      integer :: ib, iout, ian, ien, is, i
+      character(1) :: ap =''''
+      character(10) :: new_boundary_version = '03.002.000'
+
+      open(newunit=iout,file='b2us.boundary.parameters')
+
+      call cfverw(iout,new_boundary_version)
+
+      write (iout,'(1x,a)') '&boundary'
+      write (iout,'(1x,a,i0)') 'NBC     = ',m%nBc
+      write (iout,'(1x,a,(10(2x,4a1)/))') 
+     .       'BCCHAR  =',(ap,bcchar(ib),ap,',',ib=1,m%nBc)
+
+      write (iout,'(1x,a,(10(1x,i4,a1)/))') 
+     .       'NFACES  =',(m%bcFcP(ib,2),',',ib=1,m%nBc)
+      do ib = 1, m%nBc
+        ian = m%bcFcP(ib,1)
+        ien = ian + m%bcFcP(ib,2) - 1
+        write (iout,'(1x,a,i2,a,(1x,T15,10(i5,a1,1x)))') 
+     .    'FACES(1,',ib,')= ',(m%bcFc(i),',',i=ian,ien)
+      end do
+
+      do ib = 1, m%nBc
+        ian = m%bcFcP(ib,1)
+        ien = ian + m%bcFcP(ib,2) - 1
+        write (iout,'(1x,a,i2,a,(1x,T18,10(f5.2,a1,1x)))') 
+     .    'FACE_ORI(1,',ib,')= ',(m%bcFcOr(i),',',i=ian,ien)
+      end do
+
+      write (iout,'(1x,a,(10(1x,i9,a1)/))') 
+     .       'BCENE   =   ',(bcene(ib),',',ib=1,m%nBc)
+      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+     .       'ENEPAR(1,1)=',(enepar(ib,1),',',ib=1,m%nBc)
+      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+     .       'ENEPAR(1,2)=',(enepar(ib,2),',',ib=1,m%nBc)
+
+      write (iout,'(1x,a,(10(1x,i9,a1)/))') 
+     .       'BCENI   =   ',(bceni(ib),',',ib=1,m%nBc)
+      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+     .       'ENIPAR(1,1)=',(enipar(ib,1),',',ib=1,m%nBc)
+      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+     .       'ENIPAR(1,2)=',(enipar(ib,2),',',ib=1,m%nBc)
+
+      write (iout,'(1x,a,(10(1x,i9,a1)/))') 
+     .      'BCPOT   =   ',(bcpot(ib),',',ib=1,m%nBc)
+      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+     .       'POTPAR(1,1)=',(potpar(ib,1),',',ib=1,m%nBc)
+      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+     .       'POTPAR(1,2)=',(potpar(ib,2),',',ib=1,m%nBc)
+
+      do ib = 1, m%nBc
+        write (iout,'(1x,a,i2,a,(10(1x,i9,a1)/))') 
+     .       'BCCON(0,',ib,') =  ',(bccon(is,ib),',',is=0,ns-1)
+        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
+     .       'CONPAR(0,',ib,',1)=',(conpar(is,ib,1),',',is=0,ns-1)
+        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
+     .       'CONPAR(0,',ib,',2)=',(conpar(is,ib,2),',',is=0,ns-1)
+      end do
+
+      do ib = 1, m%nBc
+        write (iout,'(1x,a,i2,a,(10(1x,i9,a1)/))') 
+     .       'BCMOM(0,',ib,') =  ',(bcmom(is,ib),',',is=0,ns-1)
+        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
+     .       'MOMPAR(0,',ib,',1)=',(mompar(is,ib,1),',',is=0,ns-1)
+        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
+     .       'MOMPAR(0,',ib,',2)=',(mompar(is,ib,2),',',is=0,ns-1)
+      end do
+
+      write (iout,'(1x,a,f10.7,a1)') 'GAMMAI=',gammai,','
+      write (iout,'(1x,a,f10.7,a1)') 'GAMMAE=',gammae,','
+      write (iout,'(1x,a,l1,a1)') 'LBNDUSR=',lbndusr,','
+      write (iout,'(1x,a,l1,a1)') 'LFEEDBACK=',lfeedback,','
+      
+      write (iout,'(1x,a,i0,a1)') 'NNISO = ',nniso,','
+      
+      if (nniso > 0) 
+     .   call xerrab ('write_bcparms -- nniso > 0')        
+
+      write (iout,'(1x,a,es10.2,a1)') 'TEISO = ',teiso,','
+      write (iout,'(1x,a,es10.2,a1)') 'TIISO = ',tiiso,','
+      write (iout,'(1x,a,es10.2,a1)') 'PHIISO = ',phiiso,','
+      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+     .       'NIISO(0)=',(niiso(is),',',is=0,ns)
+
+      write (iout,'(1x,a,(10(1x,i5,a1)/))') 
+     .      'lcbs=',(lcbs(ib),',',ib=1,ncbs)
+
+      write (iout,'(1x,5a)') 'BOUNDARY_FILENAME=',ap,
+     .                       trim(boundary_filename),ap,','
+      write (iout,'(1x,a,es10.2,a1)') 
+     .       'BOUNDARY_TIME_MOD = ',boundary_time_mod,','
+      write (iout,'(1x,a,es10.2,a1)') 
+     .       'BOUNDARY_TIME_SWITCH = ',boundary_time_switch,','
+      write (iout,'(1x,a,l1,a1)') 'WRITE_NML_BND=',write_nml_bnd,','
+    
+      write (iout,'(1x,a)') '/'
+      close (iout)
+
+      end subroutine write_bcparms
 
       end module b2us_prep
 
