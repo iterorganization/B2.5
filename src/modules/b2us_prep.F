@@ -231,6 +231,12 @@ cwdk      type(B2StateExt), public, save :: state_ext
 
 !  assume a structured quadrilateral grid
 
+!  store information for easy back-transformation to structured format
+      m%isClassicalGrid = 1
+      m%nx    = nx
+      m%ny    = ny
+      m%nncut = nncut
+
       write (*,*) 'Creating mapping ...'
 
 #ifdef WG_DEBUG

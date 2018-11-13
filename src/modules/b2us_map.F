@@ -48,6 +48,9 @@
         integer, allocatable :: cvNvP(:,:)             !(nCv,2): pointing for each cell to the start in cvNv array, and the number of points in its stencil
         integer, allocatable :: cvNv(:)                !         listing for each cell the numbers of the cells in its stencil
 
+        integer :: isClassicalGrid                     ! indicates whether grid is derived from an "original", structured grid
+        integer :: nx, ny, nncut                       ! some parameters related to the original grid
+
       end type mapping
 
       contains
