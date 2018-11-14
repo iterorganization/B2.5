@@ -349,7 +349,7 @@ csw 30sep2013, added cdpa in call, uadia
       call b2stbr (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
      &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy, te, ti,
-     &  po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
+     &  po, ne, ni, fna, fna_mdf, fhe, fhi, fch, fne, fni, rsa, bb,    !iyv 07.03.18
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
 *   ..zero out contributions in dead cells
       do is = 0, ns-1
