@@ -16,6 +16,7 @@
       use b2mod_first_flight
       use b2mod_constants
       use b2mod_indirect
+      use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
@@ -123,8 +124,7 @@
       integer ncall, sput_src, first_flight,
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
-     2  sput_chem_model, boundary_namelist,
-     3  reflection_on, sputter_energy_on,
+     2  sput_chem_model, reflection_on, sputter_energy_on,
      4  b2wall_netcdf, potential_at_guard_cell,
      5  sput_frac_flag
       real (kind=R8) ::
@@ -171,8 +171,7 @@
      1     use_eirene, neutral_rescale, neutral_sources_rescale, output,
      2     coreregno, coreregn2, core_sources_rescale, alpha,
      3     neutrals_namelist, therm_evap, sput_res,
-     5     sput_chem_model, boundary_namelist,
-     7     reflection_on, sputter_energy_on,
+     5     sput_chem_model, reflection_on, sputter_energy_on,
      8     b2wall_netcdf, sput_frac_flag,
      9     potential_at_guard_cell,
      1     sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
@@ -186,7 +185,7 @@
      *     neutral_sources_rescale/1.0_R8/, output/0/,
      1     coreregno/1/, coreregn2/4/, core_sources_rescale/1.0_R8/,
      2     neutrals_namelist/0/, therm_evap/0.0_R8/, sput_res/0.0_R8/,
-     7     sput_chem_model/0/, boundary_namelist/0/,
+     7     sput_chem_model/0/,
      8     reflection_on/1/, sputter_energy_on/1/, b2wall_netcdf/0/,
      2     sput_frac_flag/0/, sput_chem_cutoff_alpha/1.0_R8/,
      3     sput_chem_cutoff_beta/3.0_R8/,
@@ -233,7 +232,7 @@
      &                      recycled_neutrals_contr)
         call xertst (0.0_R8.le.recycled_neutrals_contr,
      &      'faulty internal parameter recycled_neutrals_contr')
-        call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+        call get_boundary_namelist
         call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
         call ipgeti ('b2stbr_first_flight', first_flight)
         if(first_flight.ne.0) then
@@ -415,6 +414,9 @@
       fatm_eir = 0.0_R8
       datm_eir = 0.0_R8                                            !srv 29.04.10 }
 
+      sna_stbr_neut = 0.0
+      sna_stbr_sput = 0.0
+
       tchem=0.0_R8
       tchee=0.0_R8
       tphys=0.0_R8
@@ -470,7 +472,7 @@ c   --> better solution wanted here..
      &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
-     &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
+     &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   neutral_sources_rescale, core_sources_rescale,
      &   sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
      &   sput_chem_model, therm_evap, sput_res,
@@ -499,7 +501,7 @@ c   --> better solution wanted here..
      &   vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
-     &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
+     &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,
      &   neutral_sources_rescale, core_sources_rescale,
      &   sput_src, sput_frc, sput_phys,

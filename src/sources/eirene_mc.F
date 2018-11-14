@@ -3385,6 +3385,20 @@ c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
       enddo
       cum_volrec=-cum_volrec/qe
 
+! { IYS 12.01.2018
+      sna_eir = 0.0_R8
+      if (ank_tracing .gt. 0) then    
+        do is = 1,nspecies
+          do iy = -1, ny
+            do ix = -1, nx
+              sna_eir(is) = sna_eir(is) +
+     &           sna0(ix,iy,0,EB2SPCR(is)+1) + 
+     &           sna0(ix,iy,1,EB2SPCR(is)+1) * na(ix,iy,EB2SPCR(is)+1)
+            enddo
+          enddo
+        enddo
+      endif     ! IYS 12.01.2018 }
+
       if((main_call.and.output_style.eq.1).or.output_style.gt.1) then !{
         do istrai=1, nstrat !{
           write (*,*) 'ISTRATUM = ',istrai

@@ -26,7 +26,7 @@ c*  l_neutflux    : if >=0, then correct treatment of the incident fluxes in
 c*                  B2 and b2plot; if <0, then old (approximate) treatment
 c*  dbg_eir_mc    : control of debugging output for eirene_mc
 c*  neut_scl_lim  : maximum variation of neutral sources allowed during
-c*                  source correction in eirene_mc
+c*                  source correction in eirene_mc 
 cank }
       use b2mod_types
       use b2mod_wall
@@ -83,7 +83,7 @@ cank }
      *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
-     2   ngpdata(:)
+     2   ngpdata(:), lbcstra(:)
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:)
       character*1, allocatable, save ::
@@ -125,7 +125,7 @@ cank }
       character*1, save :: CRCSTRA(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
-     ,  lcns(nstsid), ltns(nstsid),
+     ,  lcns(nstsid), ltns(nstsid),lbcstra(nstraid),
      ,  lsns(nstraid*DEF_NSRFS), ksns(NSTRAID), msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
 #endif
@@ -248,6 +248,7 @@ csw 21feb2012
       allocate(lsns(nstra_in*DEF_NSRFS))
       allocate(ksns(nstra_in))
       allocate(msns(2,nstra_in))
+      allocate(lbcstra(nstra_in))
 #ifndef NO_B2_CHEM_SPUT
       allocate(chemical_sputter_yield(0:nlimps))
 #endif
@@ -328,6 +329,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       neutrals_time_switch=0.0_R8
 
       lstrascl=0
+      lbcstra=0
       b2eatcr=0
       b2espcr=0
       eb2atcr=-1
@@ -452,6 +454,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(lsns)
       deallocate(ksns)
       deallocate(msns)
+      deallocate(lbcstra)
 #ifndef NO_B2_CHEM_SPUT
       deallocate(chemical_sputter_yield)
 #endif
