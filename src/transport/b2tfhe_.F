@@ -1149,8 +1149,8 @@ cxpb turn off flows between boundary cells
             endif
             if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
              fhe(ix,iy,0,:)=0.0_R8
-             fhe_mdf(ix,iy,:,0)=0.0_R8
-             fhePSch(ix,iy,:,0)=0.0_R8
+             fhe_mdf(ix,iy,0,:)=0.0_R8
+             fhePSch(ix,iy,0,:)=0.0_R8
              floe(ix,iy,0,:)=0.0_R8
              cone(ix,iy,0,:,:)=0.0_R8
              fch(ix,iy,0,:)=0.0_R8

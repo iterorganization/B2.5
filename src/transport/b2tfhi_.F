@@ -1235,15 +1235,15 @@ cxpb turn off flows between boundary cells
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
              fhi(ix,iy,1,:)=0.0_R8
-             fhi_mdf(ix,iy,:,1)=0.0_R8
-             fhiPSch(ix,iy,:,1)=0.0_R8
+             fhi_mdf(ix,iy,1,:)=0.0_R8
+             fhiPSch(ix,iy,1,:)=0.0_R8
              floi(ix,iy,1,:)=0.0_R8
              coni(ix,iy,1,:,:)=0.0_R8
             endif
             if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
              fhi(ix,iy,0,:)=0.0_R8
-             fhi_mdf(ix,iy,:,0)=0.0_R8
-             fhiPSch(ix,iy,:,0)=0.0_R8
+             fhi_mdf(ix,iy,0,:)=0.0_R8
+             fhiPSch(ix,iy,0,:)=0.0_R8
              floi(ix,iy,0,:)=0.0_R8
              coni(ix,iy,0,:,:)=0.0_R8
             endif
