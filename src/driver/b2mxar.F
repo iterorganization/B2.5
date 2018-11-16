@@ -69,7 +69,7 @@
       do is = 0, ns-1
        navi = 0.0_R8
        movi = 0.0_R8
-       do iCv = 1, nCv
+       do iCv = 1, mpg%nCi
           navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
           movi = movi+geo%cvVol(iCv)*
      &     pl%na(iCv,is)*sqrt(pl%ti(iCv)*am(is)*mp)
@@ -98,7 +98,7 @@
 *   ..compute nevi, prvi
       nevi = 0.0_R8
       prvi = 0.0_R8
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 !WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
         nevi = nevi+geo%cvVol(iCv)*dv%ne(iCv)
         prvi = prvi+geo%cvVol(iCv)*dv%ne(iCv)*pl%te(iCv)
@@ -126,14 +126,15 @@
       do is = 0, ns-1
        navi = 0.0_R8
        movi = 0.0_R8
-       do iCv = 1, nCv
+       do iCv = 1, mpg%nCi
 !WG_TODO: resignore!
         navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
         movi = movi+geo%cvVol(iCv)*
      &    pl%na(iCv,is)*sqrt(pl%ti(iCv)*am(is)*mp)
        enddo
 *   ..compute rescoreg, resmoreg
-       do iCv = 1, nCv
+       do iCv = 1, mpg%nCi
+!WG_TODO: resignore!
         diag%rescoreg(mpg%cvReg(iCv),is)=
      .     diag%rescoreg(mpg%cvReg(iCv),is)+abs(dv%resco(iCv,is))
         diag%resmoreg(mpg%cvReg(iCv),is)=
@@ -144,7 +145,7 @@
       enddo
 *   ..compute prvi
       prvi = 0.0_R8
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 !WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
         prvi = prvi+geo%cvVol(iCv)*dv%ne(iCv)*pl%te(iCv)
         do is = 0, ns-1
@@ -155,7 +156,7 @@
 *   ..compute reshereg, reshireg
       diag%reshereg = 0.0_R8
       diag%reshireg = 0.0_R8
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 !WG_TODO: resignore!
         diag%reshereg(mpg%cvReg(iCv)) = 
      .    diag%reshereg(mpg%cvReg(iCv))+abs(dv%reshe(iCv))
