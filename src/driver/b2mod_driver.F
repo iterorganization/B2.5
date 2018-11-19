@@ -2336,12 +2336,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       logical found
       
 cwdk  back-conversion to structured grid
-      call to_struct_plasma (nx,ny,ns,mpg%nCv,mpg%nCi,mpg%nFc,state)
+      call to_struct_plasma (ns, mpg, state)
 cwdk  deallocation of unstructured types
       call destroyB2State (state)
       call dealloc_geometry (gm)
-      call dealloc_mapping_bc (mpg)
-      call dealloc_mapping_rc (mpg)
       call dealloc_mapping (mpg)
 
       call subini ('b2mndr_2')

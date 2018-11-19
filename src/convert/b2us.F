@@ -97,6 +97,7 @@
       character filename*256
       character extension*4
       character cnamip*80, cvalip*80, line*500
+      character bcp_filename*260
       logical file_open, file_exists
 
       type(mapping), save :: mpg
@@ -238,16 +239,10 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 *   conversion to new, unstructured data-types
       call calc_mapping (nx, ny, mpg)
 
-!      if (boundary_namelist.ge.1) then
-!        call initialize_b2mod_boundary(nx,ny,ns,0.0_R8)
-!        call calc_mapping_bc (nx, ny, ns, mpg)
-!      else 
-!        call xerrab('b2us -- specify BCs using boundary_namelist')
-!      endif
       write (*,*) 'Mapping created'
       
       call prep_geometry (nx, ny,
-     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nVmxCv, 
+     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nVmxCv,
      .        gm, mpg)
       write (*,*) 'Geometry created'
       
@@ -274,16 +269,42 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call alloc_b2mod_elements(ns,zn,am)
-      call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
+
       if (boundary_namelist.eq.1) then
-        call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-        call conv_bcparms (nx, ny, ns, mpg)
-        call write_bcparms(ns,mpg)
+        bcp_filename=repeat(' ',260)
+        bcp_filename(1:22) = 'b2.boundary.parameters'
+        call get_version(bcp_filename,boundary_version)
+        if (boundary_version.lt.'03.002.000') then
+          call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
+          call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
+          call conv_bcparms (nx, ny, ns, mpg)
+          call write_bcparms(ns,mpg)
+!pb for testing
+          call calc_mapping_bc(nx, ny, ns, mpg)
+        else
+          call alloc_b2mod_boundary(mpg%nCi/2,mpg%nCi/2,ns,nbcd,nnisod)
+          call read_b2mod_boundary_namelist(ns, mpg, .false.)
+        end if
       end if
-      call alloc_b2mod_neutrals
-     . (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
-      if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
-     > call read_neutrals_namelist(nx, ny, ns, .false.)
+
+      if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
+        bcp_filename=repeat(' ',260)
+        bcp_filename(1:22) = 'b2.neutrals.parameters'
+        call get_version(bcp_filename,neutrals_version)
+        if (neutrals_version.lt.'03.002.000') then
+          call alloc_b2mod_neutrals
+     .     (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
+          call read_neutrals_namelist(nx, ny, ns, .false.)
+          call conv_rcparms (nx, ny, ns, mpg)
+          call write_rcparms(ns,mpg)
+!pb for testing
+          call calc_mapping_rc(nx, ny, ns, mpg)
+        else
+          call alloc_b2mod_neutrals (mpg%nCi/2,mpg%nCi/2, ns, 
+     .      natm, nmol, nion, nstraid, nsts, sput_dst)
+          call read_neutrals_namelist(ns, mpg, .false.)
+        end if
+      end if
 *   ..close other files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)
@@ -305,6 +326,12 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       call dealloc_b2mod_transport
       call dealloc_b2mod_wall_init
       call dealloc_anomalous_transport
+      call dealloc_b2mod_boundary
+      call dealloc_b2mod_neutrals
+      call dealloc_b2mod_neutrals_save
+      call dealloc_geometry(gm)
+      call dealloc_mapping(mpg)
+      call destroyB2State(state)
       call prgend ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)

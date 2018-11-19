@@ -4,7 +4,8 @@
       implicit none
       
       private
-      public :: alloc_geometry, dealloc_geometry
+      public :: alloc_geometry, dealloc_geometry,
+     .          read_geometry, write_geometry
 
       type, public :: geometry
         
@@ -95,7 +96,7 @@
       return
       end subroutine alloc_geometry
 
-**********************************************************************
+***********************************************************************
 
       subroutine dealloc_geometry (g)
 
@@ -141,6 +142,97 @@
       return
       end subroutine dealloc_geometry
 
-**********************************************************************
+***********************************************************************
+
+
+      subroutine read_geometry (iun, nCv, nFc, nVx, nFs, nVmxCv, gm)
+
+      implicit none
+      integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nVmxCv
+      integer :: idum(0:9)
+      type (geometry), intent (out) :: gm
+
+      call alloc_geometry (gm, nCv, nFc, nVx, nFs, nVmxCv)
+
+! cell volumes 
+      call cfrure (iun, nCv*4, gm%cvBb,   'cvBb')
+      call cfrure (iun, nCv,   gm%cvX,    'cvX')
+      call cfrure (iun, nCv,   gm%cvY,    'cvY')
+      call cfrure (iun, nCv,   gm%cvS,    'cvS')
+      call cfrure (iun, nCv,   gm%cvHz,   'cvHz')
+      call cfrure (iun, nCv*2, gm%cvQgam, 'cvQgam')
+      call cfrure (iun, nCv,   gm%cvVol,  'cvVol')
+!      call cfrure (iun, nCv,   gm%cvOnedBsq,'cvOnedBsq')
+!      call cfrure (iun, nCv,   gm%cvBzb,  'cvBzb')
+
+! face quantities
+!      call cfrure (iun, nFc*4, gm%fcBb,   'fcBb')
+      call cfrure (iun, nFc,   gm%fcS,    'fcS')
+      call cfrure (iun, nFc*2, gm%fcHc,   'fcHc')
+      call cfrure (iun, nFc,   gm%fcHt,   'fcHt')
+      call cfrure (iun, nFc*2, gm%fcVol,  'fcVol')
+      call cfrure (iun, nFc*2, gm%fcQgam, 'fcQgam')
+      call cfrure (iun, nFc*2, gm%fcQalf, 'fcQalf')
+      call cfrure (iun, nFc*2, gm%fcQbet, 'fcQbet')
+      call cfrure (iun, nFc,   gm%fcPbs,  'fcPbs')
+!      call cfrure (iun, nFc,   gm%fcPbshz,'fcPbshz')
+
+! vertice quantities
+      call cfrure (iun, nVx,   gm%vxX,    'vxX')
+      call cfrure (iun, nVx,   gm%vxY,    'vxY')
+      call cfrure (iun, nVmxCv,gm%vxVol,  'vxVol')
+      call cfrure (iun, nVx,   gm%vxFfbz, 'vxFfbz')
+      call cfrure (iun, nVx,   gm%vxFpsi, 'vxFpsi')
+
+      call cfrure (iun, nFs,   gm%fsConn, 'fsConn')
+
+      return
+      end subroutine read_geometry
+
+***********************************************************************
+
+      subroutine write_geometry (nout, nCv, nFc, nVx, nFs, nVmxCv, gm)
+
+      implicit none
+      integer, intent(in) :: nout, nCv, nFc, nVx, nFs, nVmxCv
+      integer :: idum(0:9)
+      type (geometry), intent (in) :: gm
+
+! cell volumes 
+      call cfwure (nout, nCv*4, gm%cvBb,   'cvBb')
+      call cfwure (nout, nCv,   gm%cvX,    'cvX')
+      call cfwure (nout, nCv,   gm%cvY,    'cvY')
+      call cfwure (nout, nCv,   gm%cvS,    'cvS')
+      call cfwure (nout, nCv,   gm%cvHz,   'cvHz')
+      call cfwure (nout, nCv*2, gm%cvQgam, 'cvQgam')
+      call cfwure (nout, nCv,   gm%cvVol,  'cvVol')
+!      call cfwure (nout, nCv,   gm%cvOnedBsq,'cvOnedBsq')
+!      call cfwure (nout, nCv,   gm%cvBzb,  'cvBzb')
+
+! face quantities
+!      call cfwure (nout, nFc*4, gm%fcBb,   'fcBb')
+      call cfwure (nout, nFc,   gm%fcS,    'fcS')
+      call cfwure (nout, nFc*2, gm%fcHc,   'fcHc')
+      call cfwure (nout, nFc,   gm%fcHt,   'fcHt')
+      call cfwure (nout, nFc*2, gm%fcVol,  'fcVol')
+      call cfwure (nout, nFc*2, gm%fcQgam, 'fcQgam')
+      call cfwure (nout, nFc*2, gm%fcQalf, 'fcQalf')
+      call cfwure (nout, nFc*2, gm%fcQbet, 'fcQbet')
+      call cfwure (nout, nFc,   gm%fcPbs,  'fcPbs')
+!      call cfwure (nout, nFc,   gm%fcPbshz,'fcPbshz')
+
+! vertice quantities
+      call cfwure (nout, nVx,   gm%vxX,    'vxX')
+      call cfwure (nout, nVx,   gm%vxY,    'vxY')
+      call cfwure (nout, nVmxCv,gm%vxVol,  'vxVol')
+      call cfwure (nout, nVx,   gm%vxFfbz, 'vxFfbz')
+      call cfwure (nout, nVx,   gm%vxFpsi, 'vxFpsi')
+
+      call cfwure (nout, nFs,   gm%fsConn, 'fsConn')
+
+      return
+      end subroutine write_geometry
+
+***********************************************************************
 
       end module b2us_geo

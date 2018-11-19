@@ -24,13 +24,11 @@
 
       private
 
-      public :: read_mapping, calc_mapping, write_mapping,
-     .          read_geometry, prep_geometry, write_geometry,
-     .          calc_mapping_bc, calc_mapping_rc,
+      public :: calc_mapping,
+     .          prep_geometry,
      .          prep_plasma, prep_plasma_ext,
      .          to_struct_plasma, read_map_geo, write_map_geo,
-     .          write_plasma_state, read_plasma_state,
-     .          conv_bcparms, write_bcparms
+     .          write_plasma_state, read_plasma_state
 
 cwdk  eventually: take this outside of a module! (or: make sure this module is
 cwdk  only used at b2mod_driver level)
@@ -56,10 +54,14 @@ cwdk      type(B2StateExt), public, save :: state_ext
       character lblgm*120, idout*80
 
 * ..read the geometry
-* ..obtain version number
+*   ..obtain label and symmetry
+      call cfruch (ninp, 120, lblgm, 'label')
+      call cfruin (ninp,   1, isymm, 'isymm') 
 
+*   ..obtain mapping and geometry
       call read_mapping (ninp, mpg)
-      call read_geometry (ninp, mpg, gm)
+      call read_geometry (ninp, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
+     .  mpg%nVmxCv, gm)
 
 !      close (ninp)
       
@@ -97,121 +99,12 @@ cwdk      type(B2StateExt), public, save :: state_ext
       call cfwuin (nout, 1, idum, 'isymm')
 
       call write_mapping (nout, mpg)
-      call write_geometry (nout, mpg, gm)
+      call write_geometry (nout, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
+     .  mpg%nVmxCv, gm)
 
       close (nout)
       
       end subroutine write_map_geo
-
-***********************************************************************
-
-
-      subroutine read_mapping (iun, mpg)
-
-      implicit none
-      integer, intent(in) :: iun
-      integer :: idum(0:9)
-      type (mapping), intent (out) :: mpg
-
-      call cfruin (iun, 1, idum, 'nCi')
-      mpg%nCi = idum(0) 
-      call cfruin (iun, 1, idum, 'nCg')
-      mpg%nCg = idum(0) 
-      call cfruin (iun, 1, idum, 'nCv')
-      mpg%nCv = idum(0)
-      call cfruin (iun, 1, idum, 'nFc')
-      mpg%nFc = idum(0)
-      call cfruin (iun, 1, idum, 'nVx')
-      mpg%nVx = idum(0)
-      call cfruin (iun, 1, idum, 'nFs')
-      mpg%nFs = idum(0)
-      call cfruin (iun, 1, idum, 'nCmxVx')
-      mpg%nCmxVx = idum(0)
-      call cfruin (iun, 1, idum, 'nCmxFc')
-      mpg%nCmxFc = idum(0)
-      call cfruin (iun, 1, idum, 'nVmxCv')
-      mpg%nVmxCv = idum(0)
-      call cfruin (iun, 1, idum, 'nVmxFc')
-      mpg%nVmxFc = idum(0)
-
-      call alloc_mapping (mpg)
-        
-      call cfruin (iun, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
-      call cfruin (iun, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
-      call cfruin (iun, mpg%nFc*2,   mpg%fcCv,  'fcCv')
-      call cfruin (iun, mpg%nFc*2,   mpg%fcVx,  'fcVx')
-      call cfruin (iun, mpg%nCv*2,   mpg%cvVxP, 'cvVxP')
-      call cfruin (iun, mpg%nCmxVx,  mpg%cvVx,  'cvVx')
-      call cfruin (iun, mpg%nVx*2,   mpg%vxFcP, 'vxFcP')
-      call cfruin (iun, mpg%nVmxFc,  mpg%vxFc,  'vxFc')
-      call cfruin (iun, mpg%nVx*2,   mpg%vxCvP, 'vxCvP')
-      call cfruin (iun, mpg%nVmxCv,  mpg%vxCv,  'vxCv')
-      call cfruin (iun, mpg%nFs*2,   mpg%fsCvP, 'fsCvP')
-      call cfruin (iun, mpg%nCv,     mpg%fsCv,  'fsCv')
-      call cfruin (iun, mpg%nFs*2,   mpg%fsFcP, 'fsFcP')
-      call cfruin (iun, mpg%nFc,     mpg%fsFc,  'fsFc')
-      call cfruin (iun, mpg%nFc,     mpg%fcReg,  'fcReg')
-      call cfruin (iun, mpg%nCv,     mpg%cvReg,  'cvReg')
-!      call cfruin (iun, mpg%nCv,     mpg%cvOnClosedSurface,
-!     .                                  'cvOnClosedSurface')
-
-      nnreg(0) = maxval(mpg%cvReg)
-      nnreg(1) = maxval(mpg%fcReg)
-
-      return
-      end subroutine read_mapping
-
-***********************************************************************
-
-      subroutine write_mapping (nout, mpg)
-
-      implicit none
-      integer, intent(in) :: nout
-      integer :: idum(0:9)
-      type (mapping), intent (in) :: mpg
-
-      idum(0) = mpg%nCi
-      call cfwuin (nout, 1, idum, 'nCi')
-      idum(0) = mpg%nCg
-      call cfwuin (nout, 1, idum, 'nCg')
-      idum(0) = mpg%nCv
-      call cfwuin (nout, 1, idum, 'nCv')
-      idum(0) = mpg%nFc
-      call cfwuin (nout, 1, idum, 'nFc')
-      idum(0) = mpg%nVx
-      call cfwuin (nout, 1, idum, 'nVx')
-      idum(0) = mpg%nFs
-      call cfwuin (nout, 1, idum, 'nFs')
-      idum(0) = mpg%nCmxVx
-      call cfwuin (nout, 1, idum, 'nCmxVx')
-      idum(0) = mpg%nCmxFc
-      call cfwuin (nout, 1, idum, 'nCmxFc')
-      idum(0) = mpg%nVmxCv
-      call cfwuin (nout, 1, idum, 'nVmxCv')
-      idum(0) = mpg%nVmxFc
-      call cfwuin (nout, 1, idum, 'nVmxFc')
-
-      call cfwuin (nout, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
-      call cfwuin (nout, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
-      call cfwuin (nout, mpg%nFc*2,   mpg%fcCv,  'fcCv')
-      call cfwuin (nout, mpg%nFc*2,   mpg%fcVx,  'fcVx')
-      call cfwuin (nout, mpg%nCv*2,   mpg%cvVxP, 'cvVxP')
-      call cfwuin (nout, mpg%nCmxVx,  mpg%cvVx,  'cvVx')
-      call cfwuin (nout, mpg%nVx*2,   mpg%vxFcP, 'vxFcP')
-      call cfwuin (nout, mpg%nVmxFc,  mpg%vxFc,  'vxFc')
-      call cfwuin (nout, mpg%nVx*2,   mpg%vxCvP, 'vxCvP')
-      call cfwuin (nout, mpg%nVmxCv,  mpg%vxCv,  'vxCv')
-      call cfwuin (nout, mpg%nFs*2,   mpg%fsCvP, 'fsCvP')
-      call cfwuin (nout, mpg%nCv,     mpg%fsCv,  'fsCv')
-      call cfwuin (nout, mpg%nFs*2,   mpg%fsFcP, 'fsFcP')
-      call cfwuin (nout, mpg%nFc,     mpg%fsFc,  'fsFc')
-      call cfwuin (nout, mpg%nFc,     mpg%fcReg,  'fcReg')
-      call cfwuin (nout, mpg%nCv,     mpg%cvReg,  'cvReg')
-!      call cfwuin (nout, mpg%nCv,     mpg%cvOnClosedSurface,
-!     .                                   'cvOnClosedSurface')
-
-      return
-      end subroutine write_mapping
 
 ***********************************************************************
 
@@ -666,263 +559,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
 
       return
       end subroutine calc_mapping
-
-***********************************************************************
-
-      subroutine calc_mapping_bc (nx, ny, ns, m)
-      use b2mod_boundary_namelist
-      implicit none
-      integer :: nx, ny, ns, ib, ibc, is, inbc
-      integer :: bcs(nbc), bce(nbc), bcl(nbc)
-      type (mapping), intent (inout) :: m
-
-
-
-      m%nBc   = nbc     ! number of boundary conditions
-      m%mxnBc = 0       ! number of cells with imposed BC
-      do ib = 1, nbc
-        bcs(ib) = bcstart(ib)
-        bce(ib) = bcend(ib)
-        ! exclude corner cells if present
-        if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S') then
-          if (leftix (bcstart(ib),bcpos(ib)) .eq. -2)  
-     >      bcs(ib) = bcs(ib) + 1
-          if (rightix(bcend(ib),  bcpos(ib)) .eq. nx+1) 
-     >      bce(ib) = bce(ib) - 1
-        elseif (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') then
-          if (bottomiy(bcpos(ib),bcstart(ib)) .eq. -2)
-     >      bcs(ib) = bcs(ib) + 1
-          if (topiy   (bcpos(ib),bcend(ib)  ) .eq. ny+1)
-     >      bce(ib) = bce(ib) - 1
-        else
-          call xerrab ('bchar not yet available for WG')
-        endif
-        bcl(ib) = bce(ib) - bcs(ib) + 1
-        m%mxnBc = m%mxnBc + bcl(ib)
-      enddo
-      if (m%mxnBc .ne. m%nCg ) 
-     >  call xerrab ('calc_mapping_bc -- wrong mxnBc')
-
-
-      call alloc_mapping_bc (m)
-
-      inbc = 0 ! index in bcCv
-      do ib = 1, nbc
-        m%bcCvP(ib,1) = inbc + 1
-        m%bcCvP(ib,2) = bcl(ib)
-        if (bcchar(ib).eq.'S') then
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcCv(inbc,1) = m%nCi + bcs(ib) + ibc ! number of the guard cell
-            m%bcCv(inbc,2) = bcs(ib) + ibc           ! number of the corresponding domain cell
-            m%bcFcOr(inbc) = -1.0_R8
-          enddo
-        elseif (bcchar(ib).eq.'N') then
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcCv(inbc,1) = m%nCi + nx + bcs(ib) + ibc
-            m%bcCv(inbc,2) = nx*(ny-1) + bcs(ib) + ibc 
-            m%bcFcOr(inbc) = 1.0_R8
-          enddo
-        elseif (bcchar(ib).eq.'W') then
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcCv(inbc,1) = m%nCi + 2*nx + bcs(ib) + ibc
-            m%bcCv(inbc,2) = nx*(bcs(ib) + ibc - 1) + 1
-            m%bcFcOr(inbc) = -1.0_R8
-          enddo
-        elseif (bcchar(ib).eq.'E') then 
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcCv(inbc,1) = m%nCi + 2*nx + ny + bcs(ib) + ibc
-            m%bcCv(inbc,2) = nx*(bcs(ib) +ibc)
-            m%bcFcOr(inbc) = 1.0_R8
-          enddo
-        else
-          call xerrab ('calc_mapping_bc -- wrong BCCHAR')
-        endif
-      enddo     
-
-      if (inbc .ne. m%nCg ) 
-     >  call xerrab ('calc_mapping_bc -- problem setting up bc arrays')
-
-      return
-      end subroutine calc_mapping_bc
-
-
-***********************************************************************
-
-
-
-      subroutine calc_mapping_rc (nx, ny, ns, m)
-      use b2mod_neutrals_namelist
-      implicit none
-      integer :: nx, ny, ns, istra, istrac, instra
-      integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
-      type (mapping), intent (inout) :: m
-
-      m%nRc   = nstrat  ! number of recycling boundaries
-      m%mxnRc = 0       ! number of cells with imposed recycling
-      do istra = 1, nstrat
-        rcs(istra) = rcstart(istra)
-        rce(istra) = rcend(istra)
-        ! exclude corner cells if present
-        if (crcstra(istra).eq.'N' .or. crcstra(istra).eq.'S') then
-          if (leftix (rcstart(istra),rcpos(istra)) .eq. -2)  
-     >      rcs(istra) = rcs(istra) + 1
-          if (rightix(rcend(istra),  rcpos(istra)) .eq. nx+1) 
-     >      rce(istra) = rce(istra) - 1
-          rcl(istra) = rce(istra) - rcs(istra) + 1
-          m%mxnRc = m%mxnRc + rcl(istra)
-        elseif (crcstra(istra).eq.'E' .or. crcstra(istra).eq.'W') then
-          if (bottomiy(rcpos(istra),rcstart(istra)) .eq. -2)
-     >      rcs(istra) = rcs(istra) + 1
-          if (topiy   (rcpos(istra),rcend(istra)  ) .eq. ny+1)
-     >      rce(istra) = rce(istra) - 1
-          rcl(istra) = rce(istra) - rcs(istra) + 1
-          m%mxnRc = m%mxnRc + rcl(istra)
-        elseif (crcstra(istra).eq.'V' .or. crcstra(istra).eq.'T') then
-          rcl(istra) = 0
-        else
-          call xerrab ('Wrong CRCSTRA or not yet available for WG')
-        endif
-      enddo
-
-      call alloc_mapping_rc (m)
-
-      instra = 0 ! index in rcCv
-      do istra = 1, nstrat
-        m%rcCvP(istra,1) = instra + 1
-        m%rcCvP(istra,2) = rcl(istra)
-        if (crcstra(istra).eq.'S') then
-          do istrac = 1, rcl(istra)
-            instra = instra + 1
-            m%rcCv(instra,1) = m%nCi + rcs(istra) + istrac ! number of the guard cell
-            m%rcCv(instra,2) = rcs(istra) + istrac           ! number of the corresponding domain cell
-            m%rcFcOr(instra) = -1.0_R8
-          enddo
-        elseif (crcstra(istra).eq.'N') then
-          do istrac = 1, rcl(istra)
-            instra = instra + 1
-            m%rcCv(instra,1) = m%nCi + nx + rcs(istra) + istrac
-            m%rcCv(instra,2) = nx*(ny-1) + rcs(istra) + istrac
-            m%rcFcOr(instra) = 1.0_R8
-          enddo
-        elseif (crcstra(istra).eq.'W') then
-          do istrac = 1, rcl(istra)
-            instra = instra + 1
-            m%rcCv(instra,1) = m%nCi + 2*nx + rcs(istra) + istrac
-            m%rcCv(instra,2) = nx*(rcs(istra) + istrac - 1) + 1
-            m%rcFcOr(instra) = -1.0_R8
-          enddo
-        elseif (crcstra(istra).eq.'E') then 
-          do istrac = 1, rcl(istra)
-            instra = instra + 1
-            m%rcCv(instra,1) = m%nCi + 2*nx + ny + rcs(istra) + 
-     .        istrac
-            m%rcCv(instra,2) = nx*(rcs(istra) + istrac)
-            m%rcFcOr(instra) = 1.0_R8
-          enddo
-        endif
-      enddo 
-    
-      return
-      end subroutine calc_mapping_rc
-
-
-***********************************************************************
-
-
-      subroutine read_geometry (iun, mpg, gm)
-
-      implicit none
-      integer, intent(in) :: iun
-      integer :: idum(0:9)
-      type (mapping) , intent (in) :: mpg
-      type (geometry), intent (out) :: gm
-
-      call alloc_geometry (gm, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
-     .    mpg%nVmxCv)
-
-! cell volumes 
-      call cfrure (iun, mpg%nCv*4, gm%cvBb,   'cvBb')
-      call cfrure (iun, mpg%nCv,   gm%cvX,    'cvX')
-      call cfrure (iun, mpg%nCv,   gm%cvY,    'cvY')
-      call cfrure (iun, mpg%nCv,   gm%cvS,    'cvS')
-      call cfrure (iun, mpg%nCv,   gm%cvHz,   'cvHz')
-      call cfrure (iun, mpg%nCv*2, gm%cvQgam, 'cvQgam')
-      call cfrure (iun, mpg%nCv,   gm%cvVol,  'cvVol')
-!      call cfrure (iun, mpg%nCv,   gm%cvOnedBsq,'cvOnedBsq')
-!      call cfrure (iun, mpg%nCv,   gm%cvBzb,  'cvBzb')
-
-! face quantities
-!      call cfrure (iun, mpg%nFc*4, gm%fcBb,   'fcBb')
-      call cfrure (iun, mpg%nFc,   gm%fcS,    'fcS')
-      call cfrure (iun, mpg%nFc*2, gm%fcHc,   'fcHc')
-      call cfrure (iun, mpg%nFc,   gm%fcHt,   'fcHt')
-      call cfrure (iun, mpg%nFc*2, gm%fcVol,  'fcVol')
-      call cfrure (iun, mpg%nFc*2, gm%fcQgam, 'fcQgam')
-      call cfrure (iun, mpg%nFc*2, gm%fcQalf, 'fcQalf')
-      call cfrure (iun, mpg%nFc*2, gm%fcQbet, 'fcQbet')
-      call cfrure (iun, mpg%nFc,   gm%fcPbs,  'fcPbs')
-!      call cfrure (iun, mpg%nFc,   gm%fcPbshz,'fcPbshz')
-
-! vertice quantities
-      call cfrure (iun, mpg%nVx,   gm%vxX,    'vxX')
-      call cfrure (iun, mpg%nVx,   gm%vxY,    'vxY')
-      call cfrure (iun, mpg%nVmxCv,gm%vxVol,  'vxVol')
-      call cfrure (iun, mpg%nVx,   gm%vxFfbz, 'vxFfbz')
-      call cfrure (iun, mpg%nVx,   gm%vxFpsi, 'vxFpsi')
-
-      call cfrure (iun, mpg%nFs,   gm%fsConn, 'fsConn')
-
-      return
-      end subroutine read_geometry
-
-***********************************************************************
-
-      subroutine write_geometry (nout, mpg, gm)
-
-      implicit none
-      integer, intent(in) :: nout
-      integer :: idum(0:9)
-      type (mapping) , intent (in) :: mpg
-      type (geometry), intent (in) :: gm
-
-! cell volumes 
-      call cfwure (nout, mpg%nCv*4, gm%cvBb,   'cvBb')
-      call cfwure (nout, mpg%nCv,   gm%cvX,    'cvX')
-      call cfwure (nout, mpg%nCv,   gm%cvY,    'cvY')
-      call cfwure (nout, mpg%nCv,   gm%cvS,    'cvS')
-      call cfwure (nout, mpg%nCv,   gm%cvHz,   'cvHz')
-      call cfwure (nout, mpg%nCv*2, gm%cvQgam, 'cvQgam')
-      call cfwure (nout, mpg%nCv,   gm%cvVol,  'cvVol')
-!      call cfwure (nout, mpg%nCv,   gm%cvOnedBsq,'cvOnedBsq')
-!      call cfwure (nout, mpg%nCv,   gm%cvBzb,  'cvBzb')
-
-! face quantities
-!      call cfwure (nout, mpg%nFc*4, gm%fcBb,   'fcBb')
-      call cfwure (nout, mpg%nFc,   gm%fcS,    'fcS')
-      call cfwure (nout, mpg%nFc*2, gm%fcHc,   'fcHc')
-      call cfwure (nout, mpg%nFc,   gm%fcHt,   'fcHt')
-      call cfwure (nout, mpg%nFc*2, gm%fcVol,  'fcVol')
-      call cfwure (nout, mpg%nFc*2, gm%fcQgam, 'fcQgam')
-      call cfwure (nout, mpg%nFc*2, gm%fcQalf, 'fcQalf')
-      call cfwure (nout, mpg%nFc*2, gm%fcQbet, 'fcQbet')
-      call cfwure (nout, mpg%nFc,   gm%fcPbs,  'fcPbs')
-!      call cfwure (nout, mpg%nFc,   gm%fcPbshz,'fcPbshz')
-
-! vertice quantities
-      call cfwure (nout, mpg%nVx,   gm%vxX,    'vxX')
-      call cfwure (nout, mpg%nVx,   gm%vxY,    'vxY')
-      call cfwure (nout, mpg%nVmxCv,gm%vxVol,  'vxVol')
-      call cfwure (nout, mpg%nVx,   gm%vxFfbz, 'vxFfbz')
-      call cfwure (nout, mpg%nVx,   gm%vxFpsi, 'vxFpsi')
-
-      call cfwure (nout, mpg%nFs,   gm%fsConn, 'fsConn')
-
-      return
-      end subroutine write_geometry
 
 ***********************************************************************
 
@@ -1897,12 +1533,25 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
       
 ******************************************************************************
       
-      subroutine to_struct_plasma (nx, ny, ns, nCv, nCi, nFc, st)
+      subroutine to_struct_plasma (ns, mpg, st)
       
       implicit none
-      integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
+      integer, intent(in) :: ns
+      type(mapping), intent(in) :: mpg
       type(B2State), intent(in) :: st
+      integer :: nx, ny, nCi, nCv, nFc
       integer :: ix, iy, ic, ifc, nfx
+
+      nCv = mpg%nCv
+      nCi = mpg%nCi
+      nFc = mpg%nFc
+
+      if (mpg.isClassicalGrid == 1) then
+        nx = mpg%nx
+        ny = mpg%ny
+      else
+        call xerrab ('Not a classical grid!')
+      endif
 
       if (.not.allocated(fch)) call alloc_b2mod_plasma(nx,ny,ns)
       if (.not.allocated(ceqp)) call alloc_b2mod_transport(nx,ny,ns)
@@ -2893,6 +2542,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 *   ..read plasma state
       call cfverr (nput, b2fstati_version)
       call cfruin (nput, 3, idum, 'ns,nCv,nFc')
+      call xertst (idum(1).eq.nCv.and.idum(2).eq.nFc,
+     &  'faulty input nCv, nFc from plasma state file')
+      call xertst (1.le.idum(0).and.idum(0).le.ns,
+     &  'faulty input ns from plasma state file')
       call cfruch (nput, 120, lbli, 'label')
       call b2ruzd (nput, b2fstati_version, ns, 
      &          zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
@@ -2961,194 +2614,6 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 
       end subroutine read_plasma_state
 
-***********************************************************************
-
-      subroutine conv_bcparms (nx, ny, ns, m)
-      use b2mod_boundary_namelist
-      implicit none
-      integer, intent(in) :: nx, ny, ns
-      type (mapping), intent (inout) :: m
-      integer :: ib, ibc, is, inbc, nfx
-      integer :: bcs(nbc), bce(nbc), bcl(nbc)
-
-!      if (any(bc_list_size > 0))
-!     >   call xerrab ('conv_bcparms -- bc_list options not yet ready')
-
-      m%nBc   = nbc     ! number of boundary conditions
-      m%mxnBc = 0       ! number of cells with imposed BC
-      do ib = 1, nbc
-        bcs(ib) = bcstart(ib)
-        bce(ib) = bcend(ib)
-        ! exclude corner cells if present
-        if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S') then
-          if (leftix (bcstart(ib),bcpos(ib)) .eq. -2)  
-     >      bcs(ib) = bcs(ib) + 1
-          if (rightix(bcend(ib),  bcpos(ib)) .eq. nx+1) 
-     >      bce(ib) = bce(ib) - 1
-        elseif (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') then
-          if (bottomiy(bcpos(ib),bcstart(ib)) .eq. -2)
-     >      bcs(ib) = bcs(ib) + 1
-          if (topiy   (bcpos(ib),bcend(ib)  ) .eq. ny+1)
-     >      bce(ib) = bce(ib) - 1
-        else
-          call xerrab ('bchar not yet available for WG')
-        endif
-        bcl(ib) = bce(ib) - bcs(ib) + 1
-        m%mxnBc = m%mxnBc + bcl(ib)
-      enddo
-      if (m%mxnBc .ne. m%nCg ) 
-     >  call xerrab ('conv_bcparms -- wrong mxnBc')
-
-
-      call alloc_mapping_bc (m)
-
-      nfx = (nx+1)*ny     ! number of x-faces
-      inbc = 0 ! index in bcCv
-      do ib = 1, nbc
-        m%bcFcP(ib,1) = inbc + 1
-        m%bcFcP(ib,2) = bcl(ib)
-        if (bcchar(ib).eq.'S') then
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcFc(inbc) = nfx + (bcs(ib)+ibc-1)*(ny+1) + 1    ! number of the corresponding domain face
-            m%bcFcOr(inbc) = -1.0_R8
-          enddo
-        elseif (bcchar(ib).eq.'N') then
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcFc(inbc) = nfx + (bcs(ib)+ibc-1)*(ny+1) + ny+1
-            m%bcFcOr(inbc) = 1.0_R8
-          enddo
-        elseif (bcchar(ib).eq.'W') then
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcFc(inbc) = (bcs(ib)+ibc-1)*(nx+1) + 1
-            m%bcFcOr(inbc) = -1.0_R8
-          enddo
-        elseif (bcchar(ib).eq.'E') then 
-          do ibc = 1, bcl(ib)
-            inbc = inbc + 1
-            m%bcFc(inbc) = (bcs(ib)+ibc-1)*(nx+1) + nx+1
-            m%bcFcOr(inbc) = 1.0_R8
-          enddo
-        else
-          call xerrab ('conv_bcparms -- wrong BCCHAR')
-        endif
-      enddo     
-
-      if (inbc .ne. m%nCg ) 
-     >  call xerrab ('conv_bcparms -- problem setting up bc arrays')
-
-      return
-      end subroutine conv_bcparms
-
-
-***********************************************************************
-
-      subroutine write_bcparms (ns, m)
-      use b2mod_boundary_namelist
-      implicit none
-      integer, intent(in) :: ns
-      type (mapping), intent (inout) :: m
-      integer :: ib, iout, ian, ien, is, i
-      character(1) :: ap =''''
-      character(10) :: new_boundary_version = '03.002.000'
-
-      open(newunit=iout,file='b2us.boundary.parameters')
-
-      call cfverw(iout,new_boundary_version)
-
-      write (iout,'(1x,a)') '&boundary'
-      write (iout,'(1x,a,i0)') 'NBC     = ',m%nBc
-      write (iout,'(1x,a,(10(2x,4a1)/))') 
-     .       'BCCHAR  =',(ap,bcchar(ib),ap,',',ib=1,m%nBc)
-
-      write (iout,'(1x,a,(10(1x,i4,a1)/))') 
-     .       'NFACES  =',(m%bcFcP(ib,2),',',ib=1,m%nBc)
-      do ib = 1, m%nBc
-        ian = m%bcFcP(ib,1)
-        ien = ian + m%bcFcP(ib,2) - 1
-        write (iout,'(1x,a,i2,a,(1x,T15,10(i5,a1,1x)))') 
-     .    'FACES(1,',ib,')= ',(m%bcFc(i),',',i=ian,ien)
-      end do
-
-      do ib = 1, m%nBc
-        ian = m%bcFcP(ib,1)
-        ien = ian + m%bcFcP(ib,2) - 1
-        write (iout,'(1x,a,i2,a,(1x,T18,10(f5.2,a1,1x)))') 
-     .    'FACE_ORI(1,',ib,')= ',(m%bcFcOr(i),',',i=ian,ien)
-      end do
-
-      write (iout,'(1x,a,(10(1x,i9,a1)/))') 
-     .       'BCENE   =   ',(bcene(ib),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
-     .       'ENEPAR(1,1)=',(enepar(ib,1),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
-     .       'ENEPAR(1,2)=',(enepar(ib,2),',',ib=1,m%nBc)
-
-      write (iout,'(1x,a,(10(1x,i9,a1)/))') 
-     .       'BCENI   =   ',(bceni(ib),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
-     .       'ENIPAR(1,1)=',(enipar(ib,1),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
-     .       'ENIPAR(1,2)=',(enipar(ib,2),',',ib=1,m%nBc)
-
-      write (iout,'(1x,a,(10(1x,i9,a1)/))') 
-     .      'BCPOT   =   ',(bcpot(ib),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
-     .       'POTPAR(1,1)=',(potpar(ib,1),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
-     .       'POTPAR(1,2)=',(potpar(ib,2),',',ib=1,m%nBc)
-
-      do ib = 1, m%nBc
-        write (iout,'(1x,a,i2,a,(10(1x,i9,a1)/))') 
-     .       'BCCON(0,',ib,') =  ',(bccon(is,ib),',',is=0,ns-1)
-        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
-     .       'CONPAR(0,',ib,',1)=',(conpar(is,ib,1),',',is=0,ns-1)
-        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
-     .       'CONPAR(0,',ib,',2)=',(conpar(is,ib,2),',',is=0,ns-1)
-      end do
-
-      do ib = 1, m%nBc
-        write (iout,'(1x,a,i2,a,(10(1x,i9,a1)/))') 
-     .       'BCMOM(0,',ib,') =  ',(bcmom(is,ib),',',is=0,ns-1)
-        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
-     .       'MOMPAR(0,',ib,',1)=',(mompar(is,ib,1),',',is=0,ns-1)
-        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
-     .       'MOMPAR(0,',ib,',2)=',(mompar(is,ib,2),',',is=0,ns-1)
-      end do
-
-      write (iout,'(1x,a,f10.7,a1)') 'GAMMAI=',gammai,','
-      write (iout,'(1x,a,f10.7,a1)') 'GAMMAE=',gammae,','
-      write (iout,'(1x,a,l1,a1)') 'LBNDUSR=',lbndusr,','
-      write (iout,'(1x,a,l1,a1)') 'LFEEDBACK=',lfeedback,','
-      
-      write (iout,'(1x,a,i0,a1)') 'NNISO = ',nniso,','
-      
-      if (nniso > 0) 
-     .   call xerrab ('write_bcparms -- nniso > 0')        
-
-      write (iout,'(1x,a,es10.2,a1)') 'TEISO = ',teiso,','
-      write (iout,'(1x,a,es10.2,a1)') 'TIISO = ',tiiso,','
-      write (iout,'(1x,a,es10.2,a1)') 'PHIISO = ',phiiso,','
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
-     .       'NIISO(0)=',(niiso(is),',',is=0,ns)
-
-      write (iout,'(1x,a,(10(1x,i5,a1)/))') 
-     .      'lcbs=',(lcbs(ib),',',ib=1,ncbs)
-
-      write (iout,'(1x,5a)') 'BOUNDARY_FILENAME=',ap,
-     .                       trim(boundary_filename),ap,','
-      write (iout,'(1x,a,es10.2,a1)') 
-     .       'BOUNDARY_TIME_MOD = ',boundary_time_mod,','
-      write (iout,'(1x,a,es10.2,a1)') 
-     .       'BOUNDARY_TIME_SWITCH = ',boundary_time_switch,','
-      write (iout,'(1x,a,l1,a1)') 'WRITE_NML_BND=',write_nml_bnd,','
-    
-      write (iout,'(1x,a)') '/'
-      close (iout)
-
-      end subroutine write_bcparms
 
       end module b2us_prep
 

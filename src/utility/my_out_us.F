@@ -53,7 +53,8 @@ c     File names will be appended with "*_st.dat".
         else
           open (nwrite,file=trim(filename),position='append')
         end if
-        write(hlp_frm,"(a,i2,a,i2.2,a)")'(1x,i9,1x,es',ndigits+8,'.',ndigits,')' 
+        write(hlp_frm,"(a,i2,a,i2.2,a)")
+     .        '(1x,i9,1x,es',ndigits+8,'.',ndigits,')' 
         do ic = 1, nel
           write (nwrite,hlp_frm) ic, fun_us(ic)
         end do
