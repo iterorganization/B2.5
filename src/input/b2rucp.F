@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2rucp (nget, version, nx, ns)
+      subroutine b2rucp (nget, version, ns)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -9,7 +9,7 @@
       use b2mod_b2cmpt
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nget, nx, ns
+      integer nget, ns
       character*10 version
 *   ..output arguments (unspecified on entry)
 *     (in common)
@@ -34,11 +34,6 @@
 *
 *     nget - integer, input.
 *     nget specifies a unit number for un*formatted input.
-*
-*     nx - integer, input.
-*     nx specifies the number of poloidal cells in the mesh.
-*     The cells are indexed by (-1:nx).
-*     It will hold that 1.le.nx.
 *
 *     ns - integer, input.
 *     ns specifies the number of atomic species in the calculation.
@@ -288,8 +283,6 @@
       call subini ('b2rucp')
 *   ..test nget
       call xertst (1.le.nget, 'faulty argument nget')
-*   ..test nx
-      call xertst (1.le.nx, 'faulty argument nx')
 *   ..test ns
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test nsdecl
@@ -333,7 +326,7 @@
       call cfrure (nget, 8, cfalf, 'cfalf')
       call cfrure (nget, 8, cflim, 'cflim')
 *   ..test /b2cmpa/, /b2cmpb/, /b2cmpt/
-      call b2xvcp (nx, ns)
+      call b2xvcp (ns)
 
 * ..return
       call subend ()

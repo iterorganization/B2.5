@@ -8,7 +8,7 @@
      .          alloc_mapping_bc, dealloc_mapping_bc,
      .          alloc_mapping_rc, dealloc_mapping_rc,
      .          read_mapping, write_mapping,
-     .          get_version
+     .          init_mapping, get_version
       
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
@@ -95,7 +95,13 @@
       allocate (m%cvNvP(m%nCv,2))
       allocate (m%cvNv(m%nCmxNv))
 
+      write (*,*) '=================================='
       write (*,*) 'Mapping allocated'
+      write (*,*) 'nCv, nCi, nCg', m%nCv, m%nCi, m%nCg
+      write (*,*) 'nFc, nVx, nFs', m%nFc, m%nVx, m%nFs
+      write (*,*) 'nCmxVx, nCmxFc', m%nCmxVx, m%nCmxFc
+      write (*,*) 'nVmxCv, nVmxFc', m%nVmxCv, m%nVmxFc
+      write (*,*) '=================================='
 
       return
       end subroutine alloc_mapping 
@@ -221,45 +227,17 @@
       implicit none
       integer, intent(in) :: iun
       integer :: idum(0:9)
-      type (mapping), intent (out) :: mpg
+      type (mapping), intent (inout) :: mpg
 
+      call alloc_mapping (mpg)
 
       call cfruin (iun, 1, idum, 'isClassicalGrid')
       mpg%isClassicalGrid = idum(0)
-      if (mpg%isClassicalGrid == 1) then
-        call cfruin (iun, 3, idum, 'nx,ny,nncut')
-        mpg%nx    = idum(0)
-        mpg%ny    = idum(1)
-        mpg%nncut = idum(2)
-      else
-        ! unstructured grid; set dummy values
-        mpg%nx    = -1
-        mpg%ny    = -1
-        mpg%nncut = -1
-      endif
-      call cfruin (iun, 1, idum, 'nCi')
-      mpg%nCi = idum(0) 
-      call cfruin (iun, 1, idum, 'nCg')
-      mpg%nCg = idum(0) 
-      call cfruin (iun, 1, idum, 'nCv')
-      mpg%nCv = idum(0)
-      call cfruin (iun, 1, idum, 'nFc')
-      mpg%nFc = idum(0)
-      call cfruin (iun, 1, idum, 'nVx')
-      mpg%nVx = idum(0)
-      call cfruin (iun, 1, idum, 'nFs')
-      mpg%nFs = idum(0)
-      call cfruin (iun, 1, idum, 'nCmxVx')
-      mpg%nCmxVx = idum(0)
-      call cfruin (iun, 1, idum, 'nCmxFc')
-      mpg%nCmxFc = idum(0)
-      call cfruin (iun, 1, idum, 'nVmxCv')
-      mpg%nVmxCv = idum(0)
-      call cfruin (iun, 1, idum, 'nVmxFc')
-      mpg%nVmxFc = idum(0)
+      call cfruin (iun, 3, idum, 'nx,ny,nncut')
+      mpg%nx    = idum(0)
+      mpg%ny    = idum(1)
+      mpg%nncut = idum(2)
 
-      call alloc_mapping (mpg)
-        
       call cfruin (iun, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
       call cfruin (iun, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
       call cfruin (iun, mpg%nFc*2,   mpg%fcCv,  'fcCv')
@@ -274,13 +252,12 @@
       call cfruin (iun, mpg%nCv,     mpg%fsCv,  'fsCv')
       call cfruin (iun, mpg%nFs*2,   mpg%fsFcP, 'fsFcP')
       call cfruin (iun, mpg%nFc,     mpg%fsFc,  'fsFc')
-      call cfruin (iun, mpg%nFc,     mpg%fcReg,  'fcReg')
-      call cfruin (iun, mpg%nCv,     mpg%cvReg,  'cvReg')
-!      call cfruin (iun, mpg%nCv,     mpg%cvOnClosedSurface,
-!     .                                  'cvOnClosedSurface')
+      call cfruin (iun, mpg%nFc,     mpg%fcReg, 'fcReg')
+      call cfruin (iun, mpg%nCv,     mpg%cvReg, 'cvReg')
+      call cfrure (iun, mpg%nCmxFc,  mpg%intcellP,'intcellP')
+      call cfrure (iun, mpg%nCmxFc,  mpg%intcellR,'intcellR')
 
-      mpg%nnreg(0) = maxval(mpg%cvReg)
-      mpg%nnreg(1) = maxval(mpg%fcReg)
+      call init_mapping (mpg)
 
       return
       end subroutine read_mapping
@@ -301,28 +278,13 @@
         idum(0) = mpg%nx
         idum(1) = mpg%ny
         idum(2) = mpg%nncut
-        call cfwuin (nout, 3, idum, 'nx,ny,nncut')
+      else
+        ! dummy values for unstructured grid
+        idum(0) = -1
+        idum(1) = -1
+        idum(2) = -1
       endif      
-      idum(0) = mpg%nCi
-      call cfwuin (nout, 1, idum, 'nCi')
-      idum(0) = mpg%nCg
-      call cfwuin (nout, 1, idum, 'nCg')
-      idum(0) = mpg%nCv
-      call cfwuin (nout, 1, idum, 'nCv')
-      idum(0) = mpg%nFc
-      call cfwuin (nout, 1, idum, 'nFc')
-      idum(0) = mpg%nVx
-      call cfwuin (nout, 1, idum, 'nVx')
-      idum(0) = mpg%nFs
-      call cfwuin (nout, 1, idum, 'nFs')
-      idum(0) = mpg%nCmxVx
-      call cfwuin (nout, 1, idum, 'nCmxVx')
-      idum(0) = mpg%nCmxFc
-      call cfwuin (nout, 1, idum, 'nCmxFc')
-      idum(0) = mpg%nVmxCv
-      call cfwuin (nout, 1, idum, 'nVmxCv')
-      idum(0) = mpg%nVmxFc
-      call cfwuin (nout, 1, idum, 'nVmxFc')
+      call cfwuin (nout, 3, idum, 'nx,ny,nncut')
 
       call cfwuin (nout, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
       call cfwuin (nout, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
@@ -338,13 +300,83 @@
       call cfwuin (nout, mpg%nCv,     mpg%fsCv,  'fsCv')
       call cfwuin (nout, mpg%nFs*2,   mpg%fsFcP, 'fsFcP')
       call cfwuin (nout, mpg%nFc,     mpg%fsFc,  'fsFc')
-      call cfwuin (nout, mpg%nFc,     mpg%fcReg,  'fcReg')
-      call cfwuin (nout, mpg%nCv,     mpg%cvReg,  'cvReg')
-!      call cfwuin (nout, mpg%nCv,     mpg%cvOnClosedSurface,
-!     .                                   'cvOnClosedSurface')
+      call cfwuin (nout, mpg%nFc,     mpg%fcReg, 'fcReg')
+      call cfwuin (nout, mpg%nCv,     mpg%cvReg, 'cvReg')
+      call cfwure (nout, mpg%nCmxFc,  mpg%intcellP,'intcellP')
+      call cfwure (nout, mpg%nCmxFc,  mpg%intcellR,'intcellR')
 
       return
       end subroutine write_mapping
+
+**********************************************************************
+
+      subroutine init_mapping(m)
+      implicit none
+      type (mapping), intent (inout) :: m
+      integer :: i, iCv, iVx, iVx1, iNv, iNv1, iNv2, iNvmx
+      integer, allocatable :: indCv(:)
+cwdk  This initialization routine precomputes a number of arrays
+cwdk  in the mapping that are not stored in the b2fgmtry file, but 
+cwdk  can be derived directly from data in that file
+
+*   ..regions
+      m%nnreg(0) = maxval(m%cvReg)
+      m%nnreg(1) = maxval(m%fcReg)
+
+*   ..identify cells on closed surfaces
+      if (m%nnreg(0).eq.1) then
+        call xerrab ('WG_TODO!')
+!WG_TODO        m%cvOnClosedSurface = periodic_bc.eq.1
+      else if (m%nnreg(0).eq.2 .or. m%nnreg(0).eq.4 .or.
+     .         m%nnreg(0).eq.5 .or. m%nnreg(0).eq.8) then
+        m%cvOnClosedSurface = mod(m%cvReg,4).eq.1
+      else
+        call xerrab ('Unknown number of regions!')
+      end if
+
+*   ..set up connectivity information for the matrix stencil
+
+      allocate (indCv(4*4+4+1)) ! max 4 vertices per cell, max 8 cells for each vertex (very conservative)
+
+      iNv = 1
+      do iCv = 1, m%nCv
+        m%cvNvP(iCv,1) = iNv
+        ! init: each cell appears in its own stencil
+        indCv = iCv
+        iNvmx = 1
+        ! list all cells surrounding cell iCv, by listing the
+        ! cells connecting to all vertices of cell iCv
+        do iVx = 1, m%cvVxP(iCv,2)
+          iVx1 = m%cvVx(m%cvVxP(iCv,1)+iVx-1)     ! the number in the vertex list
+          indCv(iNvmx+1:iNvmx+m%vxCvP(iVx1,2)) =  ! all cells connecting to this vertex
+     .      m%vxCv(m%vxCvP(iVx1,1):m%vxCvP(iVx1,1)+m%vxCvP(iVx1,2)-1)
+          iNvmx = iNvmx + m%vxCvP(iVx1,2)
+        enddo
+        ! remove duplicates
+        m%cvNv(m%cvNvP(iCv,1)) = indCv(1)
+        i = 1
+        outer: do iNv1 = 2, iNvmx
+          do iNv2 = 1, i 
+            if (m%cvNv(m%cvNvP(iCv,1)+iNv2-1).eq.indCv(iNv1)) then
+              ! duplicate element
+              cycle outer
+            endif
+          enddo
+          ! new element found
+          i = i + 1
+          m%cvNv(m%cvNvP(iCv,1)+i-1) = indCv(iNv1)
+        end do outer
+        ! TODO: sort by cell number, keeping first cell fixed (main diagonal)
+        m%cvNvP(iCv,2) = i
+        iNv = iNv + i
+      enddo
+
+      deallocate(indCv)
+
+
+
+      return
+      end subroutine init_mapping
 
 **********************************************************************
 

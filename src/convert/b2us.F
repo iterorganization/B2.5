@@ -136,8 +136,8 @@
       call cfopen (ninp(2),'b2fpardf','old','un*formatted')
       call cfopen (ninp(3),'b2fstati','old','un*formatted')
       call cfopen (nout(0),'b2us.prt','new','formatted')
-!      call cfopen (nout(1),'b2us.files','new','formatted')
-!      call cfopen (nout(2),'b2fstate_us','new','un*formatted')
+      call cfopen (nout(1),'b2fgmtry_us','new','formatted')
+      call cfopen (nout(2),'b2fstati_us','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers                                           !xpb
@@ -167,7 +167,7 @@
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_residuals(nx,ny,ns)
       call alloc_b2mod_sources(nx,ny,ns)
-      call alloc_b2mod_sputter(nx,ny,ns)
+!WG_TODO      call alloc_b2mod_sputter(nx,ny,ns)
       call alloc_b2mod_transport(nx,ny,ns)
       call alloc_b2mod_anomalous_transport(nx,ny,ns)
       call alloc_b2mod_work(nx,ny,ns)
@@ -178,13 +178,13 @@
       label = lblmn
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
-      call b2rucp (ninp(2), b2fparam_version, nx, ns)
+      call b2rucp (ninp(2), b2fparam_version, ns)
 *   ..read revised parameters in physics common
 *     (ninp(0) need supply only parameters that are to be changed from
 *     the values read in as default physics common.)
       call b2rfcp (ninp(0), ns)
 *   ..test parameters
-      call b2xvcp (nx, ns)
+      call b2xvcp (ns)
 *   ..read and echo code internal parameters
     1 continue
        read (ninp(0),'(a)',end=2,err=91) line
@@ -209,6 +209,8 @@
       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
 *   ..compute hz                                                         !srv 09.01.01  09.06.08 {
+!WG_TODO probably should always write correct hz here,
+!WG_TODO and overwrite with value 1.0 in b2mn if b2mndr_hz = 0.0
 c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 !      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)              !srv 09.01.01
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
@@ -260,11 +262,36 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 !     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
 
-*   ..save state
-      call write_map_geo('b2fgmtry_us', mpg, gm)
+*   ..write headers for output files
+      call cfverw (nout(1), newversion)
+      idum(0) = mpg%nCi
+      idum(1) = mpg%nCg
+      idum(2) = mpg%nCv
+      idum(3) = mpg%nFc
+      idum(4) = mpg%nVx
+      idum(5) = mpg%nFs
+      call cfwuin (nout(1),6,idum,'nCi,nCg,nCv,nFc,nVx,nFs')
+      idum(0) = mpg%nCmxVx
+      idum(1) = mpg%nCmxFc
+      idum(2) = mpg%nVmxCv
+      idum(3) = mpg%nVmxFc
+      idum(4) = mpg%nCmxNv
+      call cfwuin (nout(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+      lblgm = 'Test for b2fgmtry_us'
+      call cfwuch (nout(1), 120, lblgm, 'label')
+      idum(0) = isymm
+      call cfwuin (nout(1), 1, idum, 'isymm')
+      idum(0) = mpg%nCv
+      idum(1) = mpg%nFc
+      idum(2) = ns
+      call cfverw (nout(2), newversion)
+      call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
+      call cfwuch (nout(2), 120, lblmn, 'label')
+      call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
 
-      call write_plasma_state ('b2fstati_us',
-     .                         ns, mpg%nCv, mpg%nFc, state)
+*   ..write state and geometry
+      call write_map_geo(nout(1), mpg, gm)
+      call write_plasma_state (nout(2), ns, mpg%nCv, mpg%nFc, state)
 
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
@@ -320,7 +347,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       call dealloc_b2mod_rates
       call dealloc_b2mod_plasma
       call dealloc_b2mod_sources
-      call dealloc_b2mod_sputter
+!WG_TODO      call dealloc_b2mod_sputter
       call dealloc_b2mod_indirect
       call dealloc_b2mod_residuals
       call dealloc_b2mod_transport

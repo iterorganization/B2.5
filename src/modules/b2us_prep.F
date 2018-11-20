@@ -27,8 +27,7 @@
       public :: calc_mapping,
      .          prep_geometry,
      .          prep_plasma, prep_plasma_ext,
-     .          to_struct_plasma, read_map_geo, write_map_geo,
-     .          write_plasma_state, read_plasma_state
+     .          to_struct_plasma, read_map_geo, write_map_geo
 
 cwdk  eventually: take this outside of a module! (or: make sure this module is
 cwdk  only used at b2mod_driver level)
@@ -48,61 +47,34 @@ cwdk      type(B2StateExt), public, save :: state_ext
 
       implicit none
       integer, intent(in) :: ninp
-      type (mapping), intent (out) :: mpg
-      type (geometry), intent (out) :: gm
-      integer :: idum(0:9)
-      character lblgm*120, idout*80
+      type (mapping), intent (inout) :: mpg
+      type (geometry), intent (inout) :: gm
 
-* ..read the geometry
-*   ..obtain label and symmetry
-      call cfruch (ninp, 120, lblgm, 'label')
-      call cfruin (ninp,   1, isymm, 'isymm') 
+* ..read the mapping and geometry
 
-*   ..obtain mapping and geometry
       call read_mapping (ninp, mpg)
       call read_geometry (ninp, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
      .  mpg%nVmxCv, gm)
-
-!      close (ninp)
       
       end subroutine read_map_geo
 
 ***********************************************************************
 
-      subroutine write_map_geo (fname, mpg, gm)
+      subroutine write_map_geo (nout, mpg, gm)
       use b2mod_types
       use b2mod_version
       use b2mod_b2cmfs
 
       implicit none
-      character(*),intent(in) :: fname
+      integer :: nout
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: gm
-      integer :: nout, io, idum(0:9)
-      character lblgm*120, idout*80
 
-      open (newunit=nout,file=fname,iostat=io)
-
-      if (io /= 0) then
-        write (*,*) ' file ', fname, ' not writable'
-        call xerrab ('write_map_geo -- no geometry file ')
-      end if
-* ..set new version number
-      b2fgmtry_version = '03.002.000'
-
-* ..read the geometry
-* ..obtain version number
-      call cfverw (nout, b2fgmtry_version)
-      lblgm = 'Test for b2fgmtry_us'
-      call cfwuch (nout, 120, lblgm, 'label')
-      idum(0) = isymm
-      call cfwuin (nout, 1, idum, 'isymm')
+* ..write the geometry
 
       call write_mapping (nout, mpg)
       call write_geometry (nout, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
      .  mpg%nVmxCv, gm)
-
-      close (nout)
       
       end subroutine write_map_geo
 
@@ -518,6 +490,10 @@ cwdk      type(B2StateExt), public, save :: state_ext
       end do
       m%nFs = ifs
 
+
+#ifdef WG_TODO
+! moved to init_mapping!
+
 ! setting up connectivity information for the matrix stencil
 ! consider writing separate routine/module for matrix setup; is generic
 
@@ -556,7 +532,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
       enddo
 
       deallocate(indCv)
-
+#endif
       return
       end subroutine calc_mapping
 
@@ -587,7 +563,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
 ! cell center
           gm%cvX(ic) = 0.25_R8*sum(crx(ix,iy,0:3))
           gm%cvY(ic) = 0.25_R8*sum(cry(ix,iy,0:3))
-          gm%cvS(ic) = gs(ix,iy,2)
+          gm%cvSz(ic) = gs(ix,iy,2)
           gm%cvHz(ic) = hz(ix,iy)
           gm%cvHx(ic) = hx(ix,iy)
           gm%cvQgam(ic,0) = qz(ix,iy,1)    ! cos
@@ -603,7 +579,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
         gm%cvBb(ic,0:3) = bb(ix,-1,0:3)
         gm%cvX(ic) = 0.25_R8*sum(crx(ix,-1,0:3))
         gm%cvY(ic) = 0.25_R8*sum(cry(ix,-1,0:3))
-        gm%cvS(ic) = gs(ix,-1,2)
+        gm%cvSz(ic) = gs(ix,-1,2)
         gm%cvHz(ic) = hz(ix,-1)
         gm%cvHx(ic) = hx(ix,-1)
         gm%cvQgam(ic,0) = qz(ix,-1,1)
@@ -616,7 +592,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
         gm%cvBb(ic,0:3) = bb(ix,ny,0:3)
         gm%cvX(ic) = 0.25_R8*sum(crx(ix,ny,0:3))
         gm%cvY(ic) = 0.25_R8*sum(cry(ix,ny,0:3))
-        gm%cvS(ic) = gs(ix,ny,2)
+        gm%cvSz(ic) = gs(ix,ny,2)
         gm%cvHz(ic) = hz(ix,ny)
         gm%cvHx(ic) = hx(ix,ny)
         gm%cvQgam(ic,0) = qz(ix,ny,1)
@@ -631,7 +607,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
         gm%cvBb(ic,0:3) = bb(-1,iy,0:3)
         gm%cvX(ic) = 0.25_R8*sum(crx(-1,iy,0:3))
         gm%cvY(ic) = 0.25_R8*sum(cry(-1,iy,0:3))
-        gm%cvS(ic) = gs(-1,iy,2)
+        gm%cvSz(ic) = gs(-1,iy,2)
         gm%cvHz(ic) = hz(-1,iy)
         gm%cvHx(ic) = hx(-1,iy)
         gm%cvQgam(ic,0) = qz(-1,iy,1)
@@ -644,7 +620,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
         gm%cvBb(ic,0:3) = bb(nx,iy,0:3)
         gm%cvX(ic) = 0.25_R8*sum(crx(nx,iy,0:3))
         gm%cvY(ic) = 0.25_R8*sum(cry(nx,iy,0:3))
-        gm%cvS(ic) = gs(nx,iy,2)
+        gm%cvSz(ic) = gs(nx,iy,2)
         gm%cvHz(ic) = hz(nx,iy)
         gm%cvHx(ic) = hx(nx,iy)
         gm%cvQgam(ic,0) = qz(nx,iy,1)
@@ -2400,219 +2376,6 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
       end subroutine prep_plasma_ext
 
 
-***********************************************************************
-
-
-      subroutine write_plasma_state (fname, ns, nCv, nFc, st)
-      
-      implicit none
-      character(*), intent(in) :: fname
-      integer, intent(in) :: ns, nCv, nFc
-      type(B2State), intent(inout) :: st
-      integer ::  nput, io, idum(0:2) 
-      real (kind=R8) :: time(1)
-      character lble*120
-      character*10, save ::
-     *   b2fstate_version =  '03.002.000'
-      real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4)
-
-*-----------------------------------------------------------------------
-*.computation
-
-* ..preliminaries
-*   ..subprogram start-up calls
-      call subini ('write_plasma_state')
-*   ..test ns
-      call xertst (1.le.ns, 'faulty argument ns')
-      
-* ..save state and fluxes
-*   ..save plasma state
-
-      open (newunit=nput,file=fname,iostat=io)
-
-*   ..get label
-      call b2xxid ('b2mn', lble(1:60))
-      lble(61:120) = 
-     *  '                                                            '
-
-*   ..write header
-      idum(0) = ns
-      idum(1) = nCv
-      idum(2) = nFc
-      call cfverw (nput, b2fstate_version)
-      call cfwuin (nput, 3, idum, 'ns,nCv,nFc')
-      call cfwuch (nput, 120, lble, 'label')
-      call b2wuzd (nput, b2fstate_version, ns, zamin, zamax, zn, am)
-
-      call cfwure (nput, nCv*ns,   st % pl % na, 'na')
-      call cfwure (nput, nCv,      st % dv % ne, 'ne')
-      call cfwure (nput, nCv*ns,   st % pl % ua, 'ua')
-      call cfwure (nput, nFc*2*ns, st % dv % uadia, 'uadia') 
-      call cfwure (nput, nCv,      st % pl % te, 'te')
-      call cfwure (nput, nCv,      st % pl % ti, 'ti')
-      call cfwure (nput, nCv,      st % pl % po, 'po')
-
-*   ..save fluxes
-      call cfwure (nput, nFc*2*ns, st % dv % fna, 'fna')
-      call cfwure (nput, nFc*2,    st % dv % fhe, 'fhe')
-      call cfwure (nput, nFc*2,    st % dv % fhi, 'fhi')
-      call cfwure (nput, nFc*2,    st % dv % fch, 'fch')
-      call cfwure (nput, nFc*2,    st % dv % fch_32, 'fch_32')
-      call cfwure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
-      call cfwure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
-
-*   ..save time
-      time(1)=tim
-      call cfwure (nput, 1, time, 'time')
-
-*   ..save parallel current
-      call cfwure (nput, nFc*2,    st % dv % fch_p, 'fch_p')
-
-*   ..saving various fluxes and velocities needed by advanced SOLPS-ITER features
-      call cfwure (nput, nFc*2*ns, st % dv % fna_mdf, 'fna_mdf')
-      call cfwure (nput, nFc*2,    st % dv % fhe_mdf, 'fhe_mdf')
-      call cfwure (nput, nFc*2,    st % dv % fhi_mdf, 'fhi_mdf')
-      call cfwure (nput, nFc*2*ns, st % dv % fna_fcor, 'fna_fcor')
-      call cfwure (nput, nFc*2*ns, st % dv % fna_nodrift, 'fna_nodrift')
-      call cfwure (nput, nFc*2*ns, st % dv % fna_he, 'fna_he')
-      call cfwure (nput, nFc*2*ns, st % dv % fnaPSch, 'fnaPSch')
-      call cfwure (nput, nFc*2,    st % dv % fhePSch, 'fhePSch')
-      call cfwure (nput, nFc*2,    st % dv % fhiPSch, 'fhiPSch')
-      call cfwure (nput, nFc*2*ns, st % dv % fna_eir, 'fna_eir')
-      call cfwure (nput, nFc*2,    st % dv % fne_eir, 'fne_eir')
-      call cfwure (nput, nFc*2,    st % dv % fhe_eir, 'fhe_eir')
-      call cfwure (nput, nFc*2,    st % dv % fhi_eir, 'fhi_eir')
-      call cfwure (nput, nFc*2*ns, st % dv % fna_32, 'fna_32')
-      call cfwure (nput, nFc*2*ns, st % dv % fna_52, 'fna_52')
-      call cfwure (nput, nFc*2,    st % dv % fni_32, 'fni_32')
-      call cfwure (nput, nFc*2,    st % dv % fni_52, 'fni_52')
-      call cfwure (nput, nFc*2,    st % dv % fne_32, 'fne_32')
-      call cfwure (nput, nFc*2,    st % dv % fne_52, 'fne_52')
-      call cfwure (nput, nFc*2,    st % dv % fchdia, 'fchdia')
-      call cfwure (nput, nFc*2,    st % dv % fchin, 'fchin')
-      call cfwure (nput, nFc*2,    st % dv % fchvispar, 'fchvispar')
-      call cfwure (nput, nFc*2,    st % dv % fchvisper, 'fchvisper')
-      call cfwure (nput, nFc*2,    st % dv % fchvisq, 'fchvisq')
-      call cfwure (nput, nFc*2,    st % dv % fchinert, 'fchinert')
-      call cfwure (nput, nFc*2*ns, st % dv % vaecrb, 'vaecrb')
-      call cfwure (nput, nFc*2*ns, st % dv % vadia, 'vadia')
-      call cfwure (nput, nFc*2*ns, st % dv % wadia, 'wadia')
-      call cfwure (nput, nFc*2,    st % dv % veecrb, 'veecrb')
-      call cfwure (nput, nFc*2,    st % dv % vedia, 'vedia')
-      call cfwure (nput, nFc*2,    st % dv % floe_noc, 'floe_noc')
-      call cfwure (nput, nFc*2,    st % dv % floi_noc, 'floi_noc')
-
-* ..return
-      call subend ()
-      return
-
-      end subroutine write_plasma_state
-
-
-***********************************************************************
-
-
-      subroutine read_plasma_state (nput, ns, nCv, nFc, st)
-      
-      implicit none
-      integer, intent(in) :: nput, ns, nCv, nFc
-      type(B2State), intent(inout) :: st
-      integer :: ix, iy, ic, ifc, nfx, idum(3)
-      real (kind=R8) :: time(1)
-      character lbli*120
-      real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4)
-      character*10, save :: b2fstate_version 
-
-*-----------------------------------------------------------------------
-*.computation
-
-* ..preliminaries
-*   ..subprogram start-up calls
-      call subini ('read_plasma_state')
-*   ..test nput
-      call xertst (1.le.nput, 'faulty argument nput')
-*   ..test ns
-      call xertst (1.le.ns, 'faulty argument ns')
- 
-      call createB2State (nCv, nFc, ns, st)
-     
-* ..read state and fluxes
-*   ..read plasma state
-      call cfverr (nput, b2fstati_version)
-      call cfruin (nput, 3, idum, 'ns,nCv,nFc')
-      call xertst (idum(1).eq.nCv.and.idum(2).eq.nFc,
-     &  'faulty input nCv, nFc from plasma state file')
-      call xertst (1.le.idum(0).and.idum(0).le.ns,
-     &  'faulty input ns from plasma state file')
-      call cfruch (nput, 120, lbli, 'label')
-      call b2ruzd (nput, b2fstati_version, ns, 
-     &          zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
-
-      call cfrure (nput, nCv*ns,   st % pl % na, 'na')
-      call cfrure (nput, nCv,      st % dv % ne, 'ne')
-      call cfrure (nput, nCv*ns,   st % pl % ua, 'ua')
-      call cfrure (nput, nFc*2*ns, st % dv % uadia, 'uadia') 
-      call cfrure (nput, nCv,      st % pl % te, 'te')
-      call cfrure (nput, nCv,      st % pl % ti, 'ti')
-      call cfrure (nput, nCv,      st % pl % po, 'po')
-
-*   ..read fluxes
-      call cfrure (nput, nFc*2*ns, st % dv % fna, 'fna')
-      call cfrure (nput, nFc*2,    st % dv % fhe, 'fhe')
-      call cfrure (nput, nFc*2,    st % dv % fhi, 'fhi')
-      call cfrure (nput, nFc*2,    st % dv % fch, 'fch')
-      call cfrure (nput, nFc*2,    st % dv % fch_32, 'fch_32')
-      call cfrure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
-      call cfrure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
-
-*   ..read time
-      call cfrure (nput, 1, time, 'time')
-      tim = time(1)
-
-*   ..read parallel current
-      call cfrure (nput, nFc*2,    st % dv % fch_p, 'fch_p')
-
-*   ..read various fluxes and velocities needed by advanced SOLPS-ITER features
-      call cfrure (nput, nFc*2*ns, st % dv % fna_mdf, 'fna_mdf')
-      call cfrure (nput, nFc*2,    st % dv % fhe_mdf, 'fhe_mdf')
-      call cfrure (nput, nFc*2,    st % dv % fhi_mdf, 'fhi_mdf')
-      call cfrure (nput, nFc*2*ns, st % dv % fna_fcor, 'fna_fcor')
-      call cfrure (nput, nFc*2*ns, st % dv % fna_nodrift, 'fna_nodrift')
-      call cfrure (nput, nFc*2*ns, st % dv % fna_he, 'fna_he')
-      call cfrure (nput, nFc*2*ns, st % dv % fnaPSch, 'fnaPSch')
-      call cfrure (nput, nFc*2,    st % dv % fhePSch, 'fhePSch')
-      call cfrure (nput, nFc*2,    st % dv % fhiPSch, 'fhiPSch')
-      call cfrure (nput, nFc*2*ns, st % dv % fna_eir, 'fna_eir')
-      call cfrure (nput, nFc*2,    st % dv % fne_eir, 'fne_eir')
-      call cfrure (nput, nFc*2,    st % dv % fhe_eir, 'fhe_eir')
-      call cfrure (nput, nFc*2,    st % dv % fhi_eir, 'fhi_eir')
-      call cfrure (nput, nFc*2*ns, st % dv % fna_32, 'fna_32')
-      call cfrure (nput, nFc*2*ns, st % dv % fna_52, 'fna_52')
-      call cfrure (nput, nFc*2,    st % dv % fni_32, 'fni_32')
-      call cfrure (nput, nFc*2,    st % dv % fni_52, 'fni_52')
-      call cfrure (nput, nFc*2,    st % dv % fne_32, 'fne_32')
-      call cfrure (nput, nFc*2,    st % dv % fne_52, 'fne_52')
-      call cfrure (nput, nFc*2,    st % dv % fchdia, 'fchdia')
-      call cfrure (nput, nFc*2,    st % dv % fchin, 'fchin')
-      call cfrure (nput, nFc*2,    st % dv % fchvispar, 'fchvispar')
-      call cfrure (nput, nFc*2,    st % dv % fchvisper, 'fchvisper')
-      call cfrure (nput, nFc*2,    st % dv % fchvisq, 'fchvisq')
-      call cfrure (nput, nFc*2,    st % dv % fchinert, 'fchinert')
-      call cfrure (nput, nFc*2*ns, st % dv % vaecrb, 'vaecrb')
-      call cfrure (nput, nFc*2*ns, st % dv % vadia, 'vadia')
-      call cfrure (nput, nFc*2*ns, st % dv % wadia, 'wadia')
-      call cfrure (nput, nFc*2,    st % dv % veecrb, 'veecrb')
-      call cfrure (nput, nFc*2,    st % dv % vedia, 'vedia')
-      call cfrure (nput, nFc*2,    st % dv % floe_noc, 'floe_noc')
-      call cfrure (nput, nFc*2,    st % dv % floi_noc, 'floi_noc')
-
-* ..return
-      call subend ()
-      return
-
-      end subroutine read_plasma_state
 
 
       end module b2us_prep

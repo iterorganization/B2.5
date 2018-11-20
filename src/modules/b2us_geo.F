@@ -5,7 +5,8 @@
       
       private
       public :: alloc_geometry, dealloc_geometry,
-     .          read_geometry, write_geometry
+     .          read_geometry, write_geometry,
+     .          init_geometry
 
       type, public :: geometry
         
@@ -13,7 +14,7 @@
         real (kind=R8), allocatable  :: cvBb(:,:)      ! Magnetic field: (nCv,0:3) Bx, By, Bz, |B|
         real (kind=R8), allocatable  :: cvX(:)         ! X-co of cell center
         real (kind=R8), allocatable  :: cvY(:)         ! Y-co of cell center
-        real (kind=R8), allocatable  :: cvS(:)         ! Area perp. to third (z) direction; rename cvSz?
+        real (kind=R8), allocatable  :: cvSz(:)        ! Area perp. to third (z) direction
         real (kind=R8), allocatable  :: cvHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: cvHx(:)        ! Temp: characteristic poloidal length; remove?
         real (kind=R8), allocatable  :: cvQgam(:,:)    ! Temp: complementary angle between poloidal and radial directions; remove?
@@ -57,11 +58,13 @@
       integer, intent(in) :: nCv, nFc, nVx, nFs, nVmxCv
       type(geometry), intent(in out) :: g
 
+      if (allocated(g%cvBb)) return
+
 !  cell quantites
       allocate (g%cvBb(nCv,0:3)) 
       allocate (g%cvX(nCv))
       allocate (g%cvY(nCv))
-      allocate (g%cvS(nCv))
+      allocate (g%cvSz(nCv))
       allocate (g%cvHz(nCv))
       allocate (g%cvHx(nCv))
       allocate (g%cvQgam(nCv,0:1))
@@ -103,11 +106,13 @@
       implicit none
       type(geometry), intent(in out) :: g
 
+      if (.not.allocated(g%cvBb)) return
+
 !  cell quantites
       deallocate (g%cvBb) 
       deallocate (g%cvX)
       deallocate (g%cvY)
-      deallocate (g%cvS)
+      deallocate (g%cvSz)
       deallocate (g%cvHz)
       deallocate (g%cvHx)
       deallocate (g%cvQgam)
@@ -150,7 +155,7 @@
       implicit none
       integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nVmxCv
       integer :: idum(0:9)
-      type (geometry), intent (out) :: gm
+      type (geometry), intent (inout) :: gm
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nVmxCv)
 
@@ -158,15 +163,13 @@
       call cfrure (iun, nCv*4, gm%cvBb,   'cvBb')
       call cfrure (iun, nCv,   gm%cvX,    'cvX')
       call cfrure (iun, nCv,   gm%cvY,    'cvY')
-      call cfrure (iun, nCv,   gm%cvS,    'cvS')
+      call cfrure (iun, nCv,   gm%cvSz,   'cvSz')
       call cfrure (iun, nCv,   gm%cvHz,   'cvHz')
+      call cfrure (iun, nCv,   gm%cvHx,   'cvHx') !WG temp!
       call cfrure (iun, nCv*2, gm%cvQgam, 'cvQgam')
       call cfrure (iun, nCv,   gm%cvVol,  'cvVol')
-!      call cfrure (iun, nCv,   gm%cvOnedBsq,'cvOnedBsq')
-!      call cfrure (iun, nCv,   gm%cvBzb,  'cvBzb')
 
 ! face quantities
-!      call cfrure (iun, nFc*4, gm%fcBb,   'fcBb')
       call cfrure (iun, nFc,   gm%fcS,    'fcS')
       call cfrure (iun, nFc*2, gm%fcHc,   'fcHc')
       call cfrure (iun, nFc,   gm%fcHt,   'fcHt')
@@ -175,9 +178,8 @@
       call cfrure (iun, nFc*2, gm%fcQalf, 'fcQalf')
       call cfrure (iun, nFc*2, gm%fcQbet, 'fcQbet')
       call cfrure (iun, nFc,   gm%fcPbs,  'fcPbs')
-!      call cfrure (iun, nFc,   gm%fcPbshz,'fcPbshz')
 
-! vertice quantities
+! vertex quantities
       call cfrure (iun, nVx,   gm%vxX,    'vxX')
       call cfrure (iun, nVx,   gm%vxY,    'vxY')
       call cfrure (iun, nVmxCv,gm%vxVol,  'vxVol')
@@ -202,15 +204,13 @@
       call cfwure (nout, nCv*4, gm%cvBb,   'cvBb')
       call cfwure (nout, nCv,   gm%cvX,    'cvX')
       call cfwure (nout, nCv,   gm%cvY,    'cvY')
-      call cfwure (nout, nCv,   gm%cvS,    'cvS')
+      call cfwure (nout, nCv,   gm%cvSz,   'cvSz')
       call cfwure (nout, nCv,   gm%cvHz,   'cvHz')
+      call cfwure (nout, nCv,   gm%cvHx,   'cvHx') !WG temp!
       call cfwure (nout, nCv*2, gm%cvQgam, 'cvQgam')
       call cfwure (nout, nCv,   gm%cvVol,  'cvVol')
-!      call cfwure (nout, nCv,   gm%cvOnedBsq,'cvOnedBsq')
-!      call cfwure (nout, nCv,   gm%cvBzb,  'cvBzb')
 
 ! face quantities
-!      call cfwure (nout, nFc*4, gm%fcBb,   'fcBb')
       call cfwure (nout, nFc,   gm%fcS,    'fcS')
       call cfwure (nout, nFc*2, gm%fcHc,   'fcHc')
       call cfwure (nout, nFc,   gm%fcHt,   'fcHt')
@@ -219,9 +219,8 @@
       call cfwure (nout, nFc*2, gm%fcQalf, 'fcQalf')
       call cfwure (nout, nFc*2, gm%fcQbet, 'fcQbet')
       call cfwure (nout, nFc,   gm%fcPbs,  'fcPbs')
-!      call cfwure (nout, nFc,   gm%fcPbshz,'fcPbshz')
 
-! vertice quantities
+! vertex quantities
       call cfwure (nout, nVx,   gm%vxX,    'vxX')
       call cfwure (nout, nVx,   gm%vxY,    'vxY')
       call cfwure (nout, nVmxCv,gm%vxVol,  'vxVol')
@@ -232,6 +231,77 @@
 
       return
       end subroutine write_geometry
+
+***********************************************************************
+
+      subroutine init_geometry (mpg, gm)
+      use b2mod_constants
+      use b2us_map
+      implicit none
+      type (mapping), intent (in) :: mpg
+      type (geometry), intent (inout) :: gm
+      integer :: nCv, nFc, nVx, nFx
+      integer :: use_9pt_stencil = 1
+      real (kind=R8) :: hzconst, fac_hz = 0.0_R8
+
+      call ipgetr ('b2mndr_hz', fac_hz)
+      call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
+     &  'faulty parameter b2mndr_hz')
+      call ipgeti ('b2mndr_use_9pt_stencil',use_9pt_stencil)
+
+      nCv = mpg%nCv
+      nFc = mpg%nFc
+      nVx = mpg%nVx
+
+*   ..interpolate magnetic field to cell faces and vertices
+      call intface1(nCv,nFc,2,mpg%fcCv,gm%fcVol,gm%cvBb,gm%fcBb)
+      call intvertex1(nCv,nVx,2,mpg,gm%vxVol,gm%cvBb,gm%vxBb)
+
+*   ..compute fcBb(:,3) and vxBb(:,3) components
+      ! guarantee that bb(:,3)=sqrt(bb(:,0:2)**2)
+      gm%fcBb(:,3) = 
+     .  sqrt(gm%fcBb(:,0)**2 + gm%fcBb(:,1)**2 + gm%fcBb(:,2)**2)
+      gm%vxBb(:,3) = 
+     .  sqrt(gm%vxBb(:,0)**2 + gm%vxBb(:,1)**2 + gm%vxBb(:,2)**2)
+
+*  .. calculate 1/B/B
+      gm%cvOnedBsq = 1.0_R8/gm%cvBb(:,3)**2
+
+*  .. interpolate OnedBsq for corners of cell
+      call intvertex(nCv,nVx,mpg,gm%vxVol,gm%cvOnedBsq,gm%vxOnedBsq) !WG: interpolate 1/cvBb**2, or compute as 1/vxBb**2 ???
+
+*   ..compute cvHz
+      hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
+      hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
+      hzconst = 1.0_R8
+      gm%cvHz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*gm%cvVol/gm%cvSz
+
+*   ..compute fcPbshz (magnetic field pitch * cell face area * hz)
+      call intface(nCv,nFc,mpg%fcCv,gm%fcVol,gm%cvHz,gm%fcPbshz)
+      gm%fcPbshz = gm%fcPbs * gm%fcPbshz
+
+*   ..modify geometry to recover 5-point stencil behavior
+      ! only supported for cases derived from original, structured grid
+      if (use_9pt_stencil.eq.0) then
+        if (mpg%isClassicalGrid.eq.1) then
+          nfx = (mpg%nx + 1)*mpg%ny
+          ! 'poloidal' faces
+          gm%fcQgam(1:nfx,1) = 0.0_R8
+          gm%fcQalf(1:nfx,1) = 0.0_R8
+          ! 'radial' faces
+          gm%fcQgam(nfx+1:mpg%nFc,1) = 0.0_R8
+          gm%fcQbet(nfx+1:mpg%nFc,0) = 0.0_R8
+        else
+          call xerrab ('5-point stencil option not supported for UG')
+        endif
+      endif
+
+*   ..compute Bz/B**2 - Bz/<B**2>
+      call b2xbzb (nCv, mpg, gm%cvBb, gm%cvVol, gm%cvBzb)
+
+      return
+      end subroutine init_geometry
+
 
 ***********************************************************************
 

@@ -14,25 +14,25 @@ c
       real (kind=R8) :: b2brem, b2rad
 #endif
       real (kind=R8), allocatable :: rad_imp(:)
-      REAL (kind=R8), allocatable :: RESHLP(:,:)
+      REAL (kind=R8), allocatable :: RESHLP(:)
       real (kind=R8), allocatable :: rdneureg(:),
      2  b2radirreg(:), b2radlrreg(:),
      3  recycereg(:), recycireg(:),
      4  sseereg(:), sseireg(:), ssnireg(:,:),
      5  ssnastra(:,:)   ! IYS 29.09.2017
       REAL (kind=R8), allocatable :: 
-     .      FEEXGT(:,:), FEEYGT(:,:),
-     .      FEIXGT(:,:), FEIYGT(:,:)
-      real (kind=R8), allocatable ::  RADARR(:,:)
+     .      FEEXGT(:), FEEYGT(:),
+     .      FEIXGT(:), FEIYGT(:)
+      real (kind=R8), allocatable ::  RADARR(:)
       real (kind=R8), allocatable :: 
      ,     src_ee(:,:)   , src_ei(:,:),
      ,     src_es(:,:)   , src_ms(:,:),
      ,     src_ni(:,:,:) , src_mo(:,:,:),
      ,     src_ne(:,:)
       real (kind=R8), allocatable :: 
-     ,     cor_ee(:,:)   , cor_ei(:,:),
-     ,     cor_ni(:,:,:) , cor_mo(:,:,:),
-     ,     cor_ne(:,:)
+     ,     cor_ee(:)   , cor_ei(:),
+     ,     cor_ni(:,:) , cor_mo(:,:),
+     ,     cor_ne(:)
       real (kind=R8), allocatable :: 
      ,     rescoreg(:,:) , resmoreg(:,:),
      ,     reshereg(:), reshireg(:)
@@ -47,7 +47,7 @@ c*** sclrtio: (S/I from B2) / (S/I from Eirene)
 c----------------------------------------------------------------------
       integer lstime, ltime, lmovie, ldiag, ldiag2, ldiag3, ldiag4,
      1 nldetail, nstages
-      integer, allocatable :: IZ(:,:), nfluids(:)
+      integer, allocatable :: IZ(:), nfluids(:)
 c----------------------------------------------------------------------
 c*** Specification of the output files and units
 c***
@@ -92,17 +92,17 @@ c
 
       contains 
 
-      subroutine alloc_b2mod_diag(nxd,nyd,nsd,nregionv,nstra,natm)
+      subroutine alloc_b2mod_diag(nCv,nFc,nsd,nregionv,nstra,natm)
       use b2mod_b2cmpa
       implicit none
-      integer nxd,nyd,nsd,nregionv,nstra,natm
+      integer nCv,nFc,nsd,nregionv,nstra,natm
       integer i, is, iss
       character*18 hlp_frm
       logical streql
       external streql
 
-      call xertst(1.le.nxd, 'faulty input nxd')
-      call xertst(1.le.nyd, 'faulty input nyd')
+      call xertst(1.le.nCv, 'faulty input nCv')
+      call xertst(1.le.nFc, 'faulty input nFc')
       call xertst(1.le.nsd, 'faulty input nsd')
       call xertst(1.le.nregionv, 'faulty input nnreg(0)')
       call xertst(0.le.nstra, 'faulty input nstra')
@@ -111,8 +111,8 @@ c
       call ipgeti ('ank_tracing', ank_tracing)
 
       if (allocated(IZ)) return
-      allocate(IZ(-1:NXD,-1:NYD))
-      allocate(RESHLP(-1:NXD,-1:NYD))
+      allocate(IZ(nCv))
+      allocate(RESHLP(nCv))
       allocate(rad_imp(1:nspecies))
       allocate(rdneureg(nregionv),
      2  b2radirreg(nregionv),b2radlrreg(nregionv),
@@ -121,9 +121,9 @@ c
      5  ssnireg(nspecies,nregionv))
       allocate(ssnastra(natm,nstra))      ! IYS 29.09.2017
       allocate( 
-     .      FEEXGT(-1:NXD,-1:NYD), FEEYGT(-1:NXD,-1:NYD),
-     .      FEIXGT(-1:NXD,-1:NYD), FEIYGT(-1:NXD,-1:NYD))
-      allocate(RADARR(0:NXD+1,0:NYD+1))
+     .      FEEXGT(nFc), FEEYGT(nFc),
+     .      FEIXGT(nFc), FEIYGT(nFc))
+      allocate(RADARR(nCv))
       allocate(species_list(1:nspecies))
       allocate(atoms_list(1:natm))
       allocate(ions_list(1:nsd))
@@ -136,10 +136,10 @@ c
      ,     src_mo(0:nregionv,3,nspecies),
      ,     src_ne(0:nregionv,3))
       allocate(
-     ,     cor_ee(-1:nxd,-1:nyd)     , cor_ei(-1:nxd,-1:nyd),
-     ,     cor_ni(-1:nxd,-1:nyd,nspecies),
-     ,     cor_mo(-1:nxd,-1:nyd,nspecies),
-     ,     cor_ne(-1:nxd,-1:nyd))
+     ,     cor_ee(nCv)     , cor_ei(nCv),
+     ,     cor_ni(nCv,nspecies),
+     ,     cor_mo(nCv,nspecies),
+     ,     cor_ne(nCv))
       allocate(
      ,     rescoreg(0:nregionv,0:nsd-1), resmoreg(0:nregionv,0:nsd-1),
      ,     reshereg(0:nregionv)        , reshireg(0:nregionv))

@@ -197,18 +197,16 @@
        call ipgeti ('b2mndt_av', iav_run)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
-!WG_TODO       if (boundary_namelist.ge.1) then
-!WG_TODO: for now: keep nx,ny around for this initialization; 
-!WG_TODO: need better solution eventually!
-!WG_TODO         call initialize_b2mod_boundary(nx,ny,ns,tim)
-!WG_TODO         call calc_mapping_bc (nx, ny, ns, mpg)
-!WG_TODO       else
+       if (boundary_namelist.ge.1) then
+!WG_TODO         call initialize_b2mod_boundary(ns,mpg,tim)
+       else
+         call xerrab('b2mndr -- specify BCs using boundary_namelist')
 !WG_TODO         call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
-!WG_TODO       endif
+       endif
       else
-!WG_TODO       if (boundary_namelist.ge.1) then
-!WG_TODO         call catchup_b2mod_boundary(nx,ny,ns,tim)
-!WG_TODO       endif
+       if (boundary_namelist.ge.1) then
+!WG_TODO         call catchup_b2mod_boundary(ns,mpg,tim)
+       endif
       endif
 *   ..test nCv, nFc, ns, ismain
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')

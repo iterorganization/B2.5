@@ -361,12 +361,12 @@
       ext_sch(:,:)=sch0(:,:,0)
 
 cdjm Jan2017 Keep linearised sources for balance
-      if (balance_netcdf.ne.0) then
-        ext_sna0to1 = sna0
-        ext_smo0to3 = smo0
-        ext_she0to3 = she0
-        ext_shi0to3 = shi0
-      endif
+!WG_TODO      if (balance_netcdf.ne.0) then
+!WG_TODO        ext_sna0to1 = sna0
+!WG_TODO        ext_smo0to3 = smo0
+!WG_TODO        ext_she0to3 = she0
+!WG_TODO        ext_shi0to3 = shi0
+!WG_TODO      endif
        
       if (new_files) then
         if (maxval(nsdata).gt.0) close(93)

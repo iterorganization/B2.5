@@ -317,6 +317,7 @@ c  ..set null flux in guard cells  ?
          fhit(ix,iy,0,0) = 0.0_R8
          fllimi(ix,iy) = 1.0_R8
          w1(ix,iy,:) = 0.0_R8
+#ifdef WG_TODO
          if (balance.and.(balance_netcdf.ne.0)) then
            fhi_32(ix,iy,0,0) = 0.0_R8                               !djm Jan2017
            fhi_52(ix,iy,0,0) = 0.0_R8
@@ -331,6 +332,7 @@ c  ..set null flux in guard cells  ?
            fhi_visq(ix,iy,0,0) = 0.0_R8
            fhi_anml(ix,iy,0,0) = 0.0_R8
          endif
+#endif
         else
          dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
          w1(ix,iy,:) = 0.0_R8
@@ -427,6 +429,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &                          +ti(ix,iy))/2.0_R8-
      &                  abs(floi0_mdf/2.0_R8)*dti-coni0_mdf*dti0_mdf
      &                       - fhiPSch(ix,iy,0,0)                      !srv 13.10.06 }
+#ifdef WG_TODO
            if (balance.and.
      &         (balance_netcdf.ne.0).and.
      &         (mdf_fhi.eq.0)) then !djm Jan2017
@@ -514,6 +517,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
      &         hybfac*1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur/2.0_R8*dti
            endif
+#endif
          else
            t1 = dim ( coni0/fllimi(ix,iy),
      .         abs(floi0) *
@@ -527,6 +531,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      .         upwind(floi0_mdf,
      .                 ti(leftix(ix,iy),leftiy(ix,iy)), ti(ix,iy))
      .         - t1 * (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
+#ifdef WG_TODO
            if (balance.and.
      &         (balance_netcdf.ne.0).and.
      &         (mdf_fhi.eq.0)) then !djm Jan2017
@@ -609,17 +614,20 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
            endif
+#endif
          endif
          do is = 0, ns-1
            fhi(ix,iy,0,0) = fhi(ix,iy,0,0) + w1(ix,iy,is)
            fhi_mdf(ix,iy,0,0) = fhi_mdf(ix,iy,0,0) + w1(ix,iy,is)
          end do
+#ifdef WG_TODO
          if (balance_netcdf.ne.0) then
            fhi_kevis(ix,iy,0,0) = 0.0_R8
            do is = 0, ns-1
              fhi_kevis(ix,iy,0,0) = fhi_kevis(ix,iy,0,0)+w1(ix,iy,is)
            enddo
          endif
+#endif
          fhit(ix,iy,0,0) = fhi(ix,iy,0,0) +
      1    ((1.0_R8-BoRiS)*fni_32(ix,iy,0,0)+cum_flo_vaecrb)*
      &    (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
@@ -657,6 +665,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          fhit(ix,iy,1,1) = 0.0_R8
          w2(ix,iy,:) = 0.0_R8
          if (balance.and.(balance_netcdf.ne.0)) then
+#ifdef WG_TODO
            fhi_32(ix,iy,1,1) = 0.0_R8                               !djm Jan2017
            fhi_52(ix,iy,1,1) = 0.0_R8
            fhi_cond(ix,iy,1,1) = 0.0_R8
@@ -669,6 +678,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            fhi_visper(ix,iy,1,1) = 0.0_R8
            fhi_visq(ix,iy,1,1) = 0.0_R8
            fhi_anml(ix,iy,1,1) = 0.0_R8
+#endif
          endif
         else
          w2(ix,iy,:) = 0.0_R8
@@ -746,6 +756,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &       coni(ix,iy,1,1,0)*                                     !srv 02.01.07
      1      (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -fhiPSch(ix,iy,1,1)                                     !srv 13.10.06 }
+#ifdef WG_TODO
            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
              fhi_32(ix,iy,1,1) = (1.5_R8+BoRiS)*fni_32(ix,iy,1,1)*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
@@ -781,6 +792,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              fhi_anml(ix,iy,1,1) = 1.5e0_R8/qe*fchanml(ix,iy,1,1)*ycur*
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            endif
+#endif
          else
            coni(ix,iy,1,1,0) = chci(ix,iy,1,1)                    !srv 02.01.07
            t1 = dim ( coni(ix,iy,1,1,0),                          !srv 02.01.07
@@ -816,6 +828,7 @@ cxpb turn off flows between boundary cells
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
               fhi(ix,iy,1,1)=0.0_R8
               if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+#ifdef WG_TODO
                 fhi_32(ix,iy,1,1) = 0.0_R8
                 fhi_52(ix,iy,1,1) = 0.0_R8
                 fhi_cond(ix,iy,1,1) = 0.0_R8
@@ -828,6 +841,7 @@ cxpb turn off flows between boundary cells
                 fhi_visper(ix,iy,1,1) = 0.0_R8
                 fhi_visq(ix,iy,1,1) = 0.0_R8
                 fhi_anml(ix,iy,1,1) = 0.0_R8
+#endif
              endif
               floi(ix,iy,1,1)=0.0_R8
               fhit(ix,iy,1,1)=0.0_R8
@@ -841,6 +855,7 @@ cxpb turn off poloidal flows in core boundary
           if(on_closed_surface(ix,-1)) then
             fhi(ix,-1,0,0) = 0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+#ifdef WG_TODO
               fhi_32(ix,-1,0,0) = 0.0_R8
               fhi_52(ix,-1,0,0) = 0.0_R8
               fhi_cond(ix,-1,0,0) = 0.0_R8
@@ -853,6 +868,7 @@ cxpb turn off poloidal flows in core boundary
               fhi_visper(ix,-1,0,0) = 0.0_R8
               fhi_visq(ix,-1,0,0) = 0.0_R8
               fhi_anml(ix,-1,0,0) = 0.0_R8
+#endif
             endif
             floi(ix,-1,0,0) = 0.0_R8
             fhit(ix,-1,0,0) = 0.0_R8
@@ -868,6 +884,7 @@ cxpb turn off poloidal flows in core boundary
           DO IY=NYISO1(IB), NYISO2(IB)
             fhi(ix,iy,0,0)=0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+#ifdef WG_TODO
               fhi_32(ix,iy,0,0) = 0.0_R8
               fhi_52(ix,iy,0,0) = 0.0_R8
               fhi_cond(ix,iy,0,0) = 0.0_R8
@@ -892,6 +909,7 @@ cxpb turn off poloidal flows in core boundary
               fhi_visper(ix,iy,1,1) = 0.0_R8
               fhi_visq(ix,iy,1,1) = 0.0_R8
               fhi_anml(ix,iy,1,1) = 0.0_R8
+#endif
             endif
             floi(ix,iy,0,0)=0.0_R8
             fhit(ix,iy,0,0)=0.0_R8

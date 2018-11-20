@@ -1082,21 +1082,22 @@ c        write(*,*) 'Called neutr_scl'
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_init (nx, ny, ns, BoRiS)
+      subroutine b2stbr_init (ns, mpg, BoRiS)
       use b2mod_types
       use b2mod_time
       use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_sputter
-      use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
+      use b2us_map
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer, intent(in) :: nx, ny, ns
+      integer, intent(in) :: ns
+      type (mapping), intent(inout) :: mpg
       real (kind=R8), intent(in) :: BoRiS
 *-----------------------------------------------------------------------
 *.documentation
@@ -1110,7 +1111,7 @@ c        write(*,*) 'Called neutr_scl'
 *.declarations
 
 *   ..local variables
-      integer nx_tmp, ny_tmp, ns_tmp
+      integer nCg_tmp, ns_tmp
       integer is, istra
       integer use_eirene, neutrals_namelist
       integer sput_src, sput_chem_model
@@ -1130,8 +1131,7 @@ c        write(*,*) 'Called neutr_scl'
 *   ..subprogram start-up calls
       call subini ('b2stbr_init')
       write(*,*) 'Start of b2stbr_init'
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test ns
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read in needed data
       call ipgeti ('b2mndr_eirene', use_eirene)
@@ -1188,8 +1188,7 @@ c        write(*,*) 'Called neutr_scl'
 
 cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       new_sputter_namelist=neutrals_namelist.eq.1.or.use_eirene.ne.0
-      call read_neutrals_namelist
-     1   (nx, ny, ns, new_sputter_namelist)
+      call read_neutrals_namelist (ns, mpg, new_sputter_namelist)
       call xertst (nstrat.le.nstraid,
      &   'Increase DEF_NSTRA in DIMENSIONS.F')
       call alloc_b2mod_neutr_src_scaling(ns,nstrat)
@@ -1203,7 +1202,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       do while(catch_up)
         if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch) then
           write(*,*) 'b2stbr_init: catching up ...'
-          call read_neutrals_namelist(nx, ny, ns, .true.)
+          call read_neutrals_namelist(ns, mpg, .true.)
           new_sputter_namelist=.true.
           call xertst (nstrat.le.nstraid,
      &       'Increase DEF_NSTRA in DIMENSIONS.F')
@@ -1251,7 +1250,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
         if(sput_dst3.ge.0)
      1   write(*,*) 'Additional sputtering producing ',sput_dst3
       end if
-
+#ifdef WG_TODO
 *   ..reading wall and sputter namelist data on first call
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)
@@ -1265,12 +1264,10 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
      .   'Inconsistent values of ndepth_nml and plate_model')
       call get_wall_data (nx,ny,ns,BoRiS,wall_namelist_used)
 #ifdef ALLOCATE_AND_NAMELIST
-      nx_tmp = nx
-      ny_tmp = ny
+      nCg_tmp = mpg%nCg
       ns_tmp = ns
 #else
-      nx_tmp = DEF_NXD
-      ny_tmp = DEF_NYD
+      nCg_tmp = 2*(DEF_NXD+2)+(DEF_NCUT+2)*(DEF_NYD+2)
       ns_tmp = DEF_NSD
 #endif
       filename='b2.sputter_save.parameters'
@@ -1282,10 +1279,9 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
         sputter_yield =0.0_R8
         sputter_yield2=0.0_R8
       endif
-      nx_sp = nx_tmp
-      ny_sp = ny_tmp
+      nCg_sp = nCg_tmp
       ns_sp = ns_tmp
-
+#endif
       call subend ()
       return
 

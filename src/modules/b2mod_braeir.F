@@ -5,46 +5,46 @@ c
 c*** Plasma data: ni,te,ti,vv,uu,pr,up,rr,fnix,fniy (Braams ---> Eirene)
 c
       real (kind=R8), allocatable ::
-     &  dnib(:,:,:), teb(:,:), tib(:,:), pob(:,:), prb(:,:),
-     &  vvb(:,:,:), uub(:,:,:), wwb(:,:,:), upb(:,:,:),
-     &  rrb(:,:), volb(:,:), bfeldb(:,:),
-     &  bpolb(:,:), bradb(:,:), btorb(:,:),
-     &  fnixb(:,:,:), fniyb(:,:,:),
-     &  feixb(:,:), feiyb(:,:), feexb(:,:), feeyb(:,:),
-     &  uudiab(:,:,:), vvdiab(:,:,:),
-     &  delta_sheathxb(:,:), delta_sheathyb(:,:)
+     &  dnib(:,:), teb(:), tib(:), pob(:), prb(:),
+     &  vvb(:,:), uub(:,:), wwb(:,:), upb(:,:),
+     &  rrb(:), volb(:), bfeldb(:),
+     &  bpolb(:), bradb(:), btorb(:),
+     &  fnixb(:,:), fniyb(:,:),
+     &  feixb(:), feiyb(:), feexb(:), feeyb(:),
+     &  uudiab(:,:), vvdiab(:,:),
+     &  delta_sheathxb(:), delta_sheathyb(:)
 
       contains
 
-      subroutine alloc_b2mod_braeir(nxd,nyd,nsd)
+      subroutine alloc_b2mod_braeir(nCv,nFc,nsd)
       implicit none
-      integer nxd,nyd,nsd
+      integer nCv,nFc,nsd
 
-      allocate(dnib(0:nxd+1,0:nyd+1,nsd))
-      allocate(teb(0:nxd+1,0:nyd+1))
-      allocate(tib(0:nxd+1,0:nyd+1))
-      allocate(pob(0:nxd+1,0:nyd+1))
-      allocate(prb(0:nxd+1,0:nyd+1))
-      allocate(vvb(0:nxd+1,0:nyd+1,nsd))
-      allocate(uub(0:nxd+1,0:nyd+1,nsd))
-      allocate(wwb(0:nxd+1,0:nyd+1,nsd))
-      allocate(upb(0:nxd+1,0:nyd+1,nsd))
-      allocate(rrb(0:nxd+1,0:nyd+1))
-      allocate(volb(0:nxd+1,0:nyd+1))
-      allocate(bfeldb(0:nxd+1,0:nyd+1))
-      allocate(bpolb(0:nxd+1,0:nyd+1))
-      allocate(bradb(0:nxd+1,0:nyd+1))
-      allocate(btorb(0:nxd+1,0:nyd+1))
-      allocate(fnixb(0:nxd+1,0:nyd+1,nsd))
-      allocate(fniyb(0:nxd+1,0:nyd+1,nsd))
-      allocate(feixb(0:nxd+1,0:nyd+1))
-      allocate(feiyb(0:nxd+1,0:nyd+1))
-      allocate(feexb(0:nxd+1,0:nyd+1))
-      allocate(feeyb(0:nxd+1,0:nyd+1))
-      allocate(uudiab(0:nxd+1,0:nyd+1,nsd))
-      allocate(vvdiab(0:nxd+1,0:nyd+1,nsd))
-      allocate(delta_sheathxb(0:nxd+1,0:nyd+1))
-      allocate(delta_sheathyb(0:nxd+1,0:nyd+1))
+      allocate(dnib(nCv,nsd))
+      allocate(teb(nCv))
+      allocate(tib(nCv))
+      allocate(pob(nCv))
+      allocate(prb(nCv))
+      allocate(vvb(nCv,nsd))
+      allocate(uub(nCv,nsd))
+      allocate(wwb(nCv,nsd))
+      allocate(upb(nCv,nsd))
+      allocate(rrb(nCv))
+      allocate(volb(nCv))
+      allocate(bfeldb(nCv))
+      allocate(bpolb(nCv))
+      allocate(bradb(nCv))
+      allocate(btorb(nCv))
+      allocate(fnixb(nFc,nsd))
+      allocate(fniyb(nFc,nsd))
+      allocate(feixb(nFc))
+      allocate(feiyb(nFc))
+      allocate(feexb(nFc))
+      allocate(feeyb(nFc))
+      allocate(uudiab(nCv,nsd))
+      allocate(vvdiab(nCv,nsd))
+      allocate(delta_sheathxb(nFc))
+      allocate(delta_sheathyb(nFc))
 
       dnib=0.0_R8
       teb=0.0_R8

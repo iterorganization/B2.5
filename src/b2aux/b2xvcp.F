@@ -1,16 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xvcp (nx, ns)
+      subroutine b2xvcp (ns)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ns
+      integer ns
 *   ..common blocks
 
 *-----------------------------------------------------------------------
@@ -119,6 +118,10 @@
       call xertst (1.0_R8.lt.cbrbrk(cbirea+cbnrea-1),
      &  'faulty argument cbrbrk, east, endpoint')
 *   ..test boundary cross-consistency in /b2cmpb/
+#ifdef WG_TODO
+cwdk  this check relies on nx and b2mod_indirect
+cwdk  not available anymore; needed at all with new solver?
+cwdk  can probably be removed completely?
       do ic = 1, nncut
         found = .false.
         ireg = 0
@@ -137,6 +140,7 @@
         call xertst (found, 
      .   'Mismatch between rightcut and cbrbrk (South)!')
       end do
+#endif
 *   ..test parameters in /b2cmpb/
       do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
 *    ..test cbsna, cbsmo, cbshi

@@ -314,8 +314,8 @@ c     1      write(*,*) ix,iy,isb,cthi(ix,iy,isb)
 
 cdjm Jan2017 Store the linearised sources for balance
       if (balance_netcdf.ne.0) then
-        b2sifr_smoch0to3(-1:nx,-1:ny,0:3,isb)=smbch
-        b2sifr_smotf0to3(-1:nx,-1:ny,0:3,isb)=smbtf
+!WG_TODO        b2sifr_smoch0to3(-1:nx,-1:ny,0:3,isb)=smbch
+!WG_TODO        b2sifr_smotf0to3(-1:nx,-1:ny,0:3,isb)=smbtf
       endif
 
 * ..return

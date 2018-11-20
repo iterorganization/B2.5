@@ -101,7 +101,7 @@
 
       subroutine alloc_b2mod_tallies(nnreg,nsd)
       implicit none
-      integer nnreg(0:2), nsd
+      integer nnreg(0:1), nsd
 
       allocate(rsanareg(0:nnreg(0),0:nsd-1))
       allocate(rsahireg(0:nnreg(0),0:nsd-1))
@@ -129,21 +129,21 @@
       rcxmoreg=0.0_R8
 
       allocate(fnaxreg(0:nnreg(1),0:nsd-1))
-      allocate(fnayreg(0:nnreg(2),0:nsd-1))
+      allocate(fnayreg(0:nnreg(1),0:nsd-1))
       allocate(fhmxreg(0:nnreg(1),0:nsd-1))
-      allocate(fhmyreg(0:nnreg(2),0:nsd-1))
+      allocate(fhmyreg(0:nnreg(1),0:nsd-1))
       allocate(fhpxreg(0:nnreg(1),0:nsd-1))
-      allocate(fhpyreg(0:nnreg(2),0:nsd-1))
+      allocate(fhpyreg(0:nnreg(1),0:nsd-1))
       allocate(fhixreg(0:nnreg(1)))
-      allocate(fhiyreg(0:nnreg(2)))
+      allocate(fhiyreg(0:nnreg(1)))
       allocate(fhexreg(0:nnreg(1)))
-      allocate(fheyreg(0:nnreg(2)))
+      allocate(fheyreg(0:nnreg(1)))
       allocate(fchxreg(0:nnreg(1)))
-      allocate(fchyreg(0:nnreg(2)))
+      allocate(fchyreg(0:nnreg(1)))
       allocate(fhtxreg(0:nnreg(1)))                                 !cjk
-      allocate(fhtyreg(0:nnreg(2)))
+      allocate(fhtyreg(0:nnreg(1)))
       allocate(fhjxreg(0:nnreg(1)))
-      allocate(fhjyreg(0:nnreg(2)))
+      allocate(fhjyreg(0:nnreg(1)))
       allocate(nareg(0:nnreg(0),0:nsd-1))
       allocate(tereg(0:nnreg(0)))
       allocate(nereg(0:nnreg(0)))
@@ -153,9 +153,9 @@
       allocate(poreg(0:nnreg(0)))
       allocate(volreg(0:nnreg(0)))
       allocate(qconvixreg(0:nnreg(1),0:nsd-1))                      !cjk
-      allocate(qconviyreg(0:nnreg(2),0:nsd-1))
+      allocate(qconviyreg(0:nnreg(1),0:nsd-1))
       allocate(qconvexreg(0:nnreg(1)))
-      allocate(qconveyreg(0:nnreg(2)))
+      allocate(qconveyreg(0:nnreg(1)))
       allocate(b2stbr_sna_reg(0:nnreg(0),0:nsd-1))
       allocate(b2stbr_smo_reg(0:nnreg(0),0:nsd-1))
       allocate(b2stbr_sne_reg(0:nnreg(0)))
@@ -436,7 +436,7 @@
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'xreg',nnreg(1)+1,xregid)
       call check_cdf_status(status)
-      status=nf_def_dim(ncid,'yreg',nnreg(2)+1,yregid)
+      status=nf_def_dim(ncid,'yreg',nnreg(1)+1,yregid)
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'ns',nsd,nsid)
       call check_cdf_status(status)

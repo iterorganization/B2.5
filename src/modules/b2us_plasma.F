@@ -138,6 +138,11 @@ cwdk move to dv
         real(R8), dimension(:,:,:), allocatable :: smo, smq, sna
       end type B2Source
 
+      type B2SourceEir
+        real(R8), dimension(:,:), allocatable :: sch, she, shi, sne
+        real(R8), dimension(:,:,:), allocatable :: smo, smq, sna
+      end type B2SourceEir
+
       type B2SourceWork
         real(R8), dimension(:,:), allocatable :: sch0, she0, shi0, sne0
         real(R8), dimension(:,:,:), allocatable :: smo0, smq0, sna0         
@@ -145,6 +150,10 @@ cwdk move to dv
 
   ! b2mod_rates
       type B2Rates
+
+        integer :: nscx, nscxmax = 3
+        integer,allocatable :: iscx(:)
+
         ! nCv, dir, ns, 0:nscxmax-1
         real(R8), allocatable :: rlcx(:,:,:,:)
         ! nCv, dir, is
@@ -197,13 +206,15 @@ cwdk move to dv
 
   ! Full set of state variables  
       type B2State
-        integer :: ns ! number of species
+        integer :: ns           ! number of species
         integer :: ismain       ! index of main species
+        integer :: ismain0      ! index of main neutral species
 
         type(B2Plasma) :: pl 
         type(B2Coeff) :: co
         type(B2Derivatives) :: dv
         type(B2Source) :: sr
+        type(B2SourceEir) :: sr_eir
         type(B2SourceWork) :: srw
         type(B2Rates) :: rt
         type(B2RatesWork) :: rtw
@@ -252,7 +263,7 @@ cwdk move to dv
       call createB2RatesWork( nCv, ns, st % rtw )
       call createB2PlasmaSnapshot( nCv, nFc, ns, st % psnl )
       call createB2PlasmaSnapshot( nCv, nFc, ns, st % psnc )
-      call createB2Diagnostic( nCv, ns, st % diag )
+!WG_TODO      call createB2Diagnostic( nCv, ns, nnreg, st % diag )
       call createB2Update( nCv, ns, st % update )
 
       return
@@ -281,6 +292,8 @@ cwdk move to dv
       subroutine createB2Plasma( nCv, ns, plasma )
       integer, intent(in) :: nCv, ns
       type(B2Plasma), intent(inout) :: plasma
+
+      if (allocated(plasma % na)) return
 
       plasma % ns = ns
 
@@ -312,6 +325,7 @@ cwdk move to dv
       integer, intent(in) :: nCv, nFc, ns
       type(B2Coeff), intent(inout) :: coeff
 
+      if (allocated(coeff % calf)) return
 
       allocate( coeff % calf( nFc, 0:1 ) )
       allocate( coeff % calf_cl( nFc, 0:1 ) )
@@ -462,6 +476,8 @@ cwdk move to dv
       subroutine createB2Derivatives( nCv, nFc, ns, dv )
       integer, intent(in) :: nCv, nFc, ns
       type(B2Derivatives), intent(inout) :: dv
+
+      if (allocated(dv % fch)) return
       
 ! fluxes
       allocate( dv % fch( nFc, 0:1 ) )
@@ -692,6 +708,8 @@ cwdk move to dv
       subroutine createB2Source( nCv, ns, sr )
       integer, intent(in) :: nCv, ns
       type(B2Source), intent(inout) :: sr
+
+      if (allocated(sr % sch)) return
       
       allocate( sr % sch( nCv, 0:3 ) )
       allocate( sr % she( nCv, 0:3 ) )
@@ -703,7 +721,7 @@ cwdk move to dv
 
       return      
       end subroutine createB2Source
-      
+
       subroutine destroyB2Source( sr )
       type(B2Source), intent(inout) :: sr
       
@@ -717,10 +735,42 @@ cwdk move to dv
 
       return
       end subroutine destroyB2Source
+
+      subroutine createB2SourceEir( nCv, ns, nstra, sr_eir )
+      integer, intent(in) :: nCv, ns, nstra
+      type(B2SourceEir), intent(inout) :: sr_eir
+
+      if (allocated(sr_eir % sch)) return
       
+      allocate( sr_eir % sch( nCv, nstra) )
+      allocate( sr_eir % she( nCv, nstra) )
+      allocate( sr_eir % shi( nCv, nstra) )
+      allocate( sr_eir % smo( nCv, 0:ns-1 , nstra) )
+      allocate( sr_eir % sna( nCv, 0:ns-1 , nstra) )
+      allocate( sr_eir % sne( nCv, nstra) )
+
+      return      
+      end subroutine createB2SourceEir
+      
+      subroutine destroyB2SourceEir( sr_eir )
+      type(B2SourceEir), intent(inout) :: sr_eir
+      
+      deallocate( sr_eir % sch )
+      deallocate( sr_eir % she )
+      deallocate( sr_eir % shi )
+      deallocate( sr_eir % smo )
+      deallocate( sr_eir % sna )
+      deallocate( sr_eir % sne )
+
+      return
+      end subroutine destroyB2SourceEir
+
+
       subroutine createB2SourceWork( nCv, ns, srw )
       integer, intent(in) :: nCv, ns
       type(B2SourceWork), intent(inout) :: srw
+
+      if (allocated(srw % sch0)) return
       
       allocate( srw % sch0( nCv, 0:3 ) )
       allocate( srw % she0( nCv, 0:3 ) )
@@ -753,8 +803,12 @@ cwdk move to dv
       
       integer, intent(in) :: nCv, ns
       type(B2Rates), intent(inout) :: rt
+
+      if (allocated(rt % iscx)) return
       
-      allocate( rt%rlcx( nCv, 0:1, 0:ns-1, 0:nscxmax-1 ) ) ! nscxmax is from b2mod_rates
+      allocate (rt%iscx( 0:rt%nscxmax-1 ) )
+
+      allocate( rt%rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1 ) )
       
       allocate( rt%rlqa( nCv, 0:1, 0:ns-1 ) )
       allocate( rt%rlrd( nCv, 0:1, 0:ns-1 ) )
@@ -778,6 +832,7 @@ cwdk move to dv
       subroutine destroyB2Rates( rt )
       type(B2Rates), intent(inout) :: rt
       
+      deallocate (rt%iscx )
       deallocate( rt%rlcx )
       deallocate( rt%rlqa )
       deallocate( rt%rlrd )
@@ -800,6 +855,8 @@ cwdk move to dv
       subroutine createB2RatesWork( nCv, ns, rtw )
       integer, intent(in) :: nCv, ns
       type(B2RatesWork), intent(inout) :: rtw
+
+      if (allocated(rtw % rsa)) return
       
       allocate( rtw%rsa( nCv, 0:ns-1 ) )
       allocate( rtw%rra( nCv, 0:ns-1 ) )
@@ -827,6 +884,8 @@ cwdk move to dv
       subroutine createB2PlasmaSnapshot( nCv, nFc, ns, snap )
       integer, intent(in) :: nCv, nFc, ns
       type(B2PlasmaSnapshot), intent(inout) :: snap
+
+      if (allocated(snap % na)) return
       
       allocate( snap % na( nCv, 0:ns-1 ) )
       allocate( snap % ua( nCv, 0:ns-1 ) )
@@ -867,11 +926,12 @@ cwdk move to dv
       return
       end subroutine destroyB2PlasmaSnapshot
       
-      subroutine createB2Diagnostic( nCv, ns, diag )
-      use b2mod_indirect , only: nnreg
+      subroutine createB2Diagnostic( nCv, ns, nnreg, diag )
       
-      integer, intent(in) :: nCv, ns
+      integer, intent(in) :: nCv, ns, nnreg(0:1)
       type(B2Diagnostic), intent(inout) :: diag
+
+      if (allocated(diag % srcna)) return
       
       allocate( diag % srcna( nCv, 0:ns-1 ) )
       allocate( diag % srcmo( nCv, 0:ns-1 ) )
@@ -920,6 +980,8 @@ cwdk move to dv
       subroutine createB2Update( nCv, ns, update )
       integer, intent(in) :: nCv, ns
       type(B2Update), intent(inout) :: update
+
+      if (allocated(update % pa)) return
       
 ! corrections
       allocate( update % pa( nCv, 0:ns-1 ) )
@@ -950,53 +1012,56 @@ cwdk move to dv
 
  ! External plasma
       subroutine createB2StateExt( nCv, nFc, ns_ext, state_ext )
-        integer, intent(in) :: nCv, nFc, ns_ext
-        type(B2StateExt), intent(inout) :: state_ext
+      integer, intent(in) :: nCv, nFc, ns_ext
+      type(B2StateExt), intent(inout) :: state_ext
 
-        allocate( state_ext % text (0:ns_ext-1) )
-        allocate( state_ext % is_neutral (0:ns_ext-1) )
-        allocate( state_ext % zn (0:ns_ext-1) )
-        allocate( state_ext % am (0:ns_ext-1) )
-        allocate( state_ext % za (1:nCv, 0:ns_ext-1) )
-        allocate( state_ext % za2 (1:nCv, 0:ns_ext-1) )
-        allocate( state_ext % pt (1:nCv, 0:ns_ext-1) )
-        allocate( state_ext % ne (1:nCv) )
-        allocate( state_ext % ne2 (1:nCv) )
-        allocate( state_ext % ue (1:nCv))
-        allocate( state_ext % na (1:nCv, 0:ns_ext-1) )
-        allocate( state_ext % ni (1:nCv, 0:1) )
-        allocate( state_ext % ua (1:nCv, 0:ns_ext-1) )
-        allocate( state_ext % ta (1:nCv, 0:ns_ext-1) )
-        allocate( state_ext % fhi (1:nFc, 0:1) )
-        allocate( state_ext % fa (1:nFc, 0:1, 0:ns_ext-1) )
-        allocate( state_ext % sne (1:nCv) )
-        allocate( state_ext % she (1:nCv)  )
-        allocate( state_ext % shi (1:nCv) )
-        allocate( state_ext % sch (1:nCv) )
-        allocate( state_ext % sna (1:nCv, 0:ns_ext-1) )
-        allocate( state_ext % smo (1:nCv, 0:ns_ext-1) )
-        state_ext % text       = ''
-        state_ext % is_neutral = .false.
-        state_ext % zn         = 0.0_R8
-        state_ext % am         = 0.0_R8
-        state_ext % za         = 0.0_R8
-        state_ext % za2        = 0.0_R8
-        state_ext % pt         = 0.0_R8
-        state_ext % ne         = 0.0_R8
-        state_ext % ne2        = 0.0_R8
-        state_ext % ue         = 0.0_R8
-        state_ext % na         = 0.0_R8
-        state_ext % ni         = 0.0_R8
-        state_ext % ua         = 0.0_R8
-        state_ext % ta         = 0.0_R8
-        state_ext % fhi        = 0.0_R8
-        state_ext % fa         = 0.0_R8
-        state_ext % sne        = 0.0_R8
-        state_ext % she        = 0.0_R8
-        state_ext % shi        = 0.0_R8
-        state_ext % sch        = 0.0_R8
-        state_ext % sna        = 0.0_R8
-        state_ext % smo        = 0.0_R8
+      if (allocated(state_ext % text)) return
+
+      allocate( state_ext % text (0:ns_ext-1) )
+      allocate( state_ext % is_neutral (0:ns_ext-1) )
+      allocate( state_ext % zn (0:ns_ext-1) )
+      allocate( state_ext % am (0:ns_ext-1) )
+      allocate( state_ext % za (1:nCv, 0:ns_ext-1) )
+      allocate( state_ext % za2 (1:nCv, 0:ns_ext-1) )
+      allocate( state_ext % pt (1:nCv, 0:ns_ext-1) )
+      allocate( state_ext % ne (1:nCv) )
+      allocate( state_ext % ne2 (1:nCv) )
+      allocate( state_ext % ue (1:nCv))
+      allocate( state_ext % na (1:nCv, 0:ns_ext-1) )
+      allocate( state_ext % ni (1:nCv, 0:1) )
+      allocate( state_ext % ua (1:nCv, 0:ns_ext-1) )
+      allocate( state_ext % ta (1:nCv, 0:ns_ext-1) )
+      allocate( state_ext % fhi (1:nFc, 0:1) )
+      allocate( state_ext % fa (1:nFc, 0:1, 0:ns_ext-1) )
+      allocate( state_ext % sne (1:nCv) )
+      allocate( state_ext % she (1:nCv)  )
+      allocate( state_ext % shi (1:nCv) )
+      allocate( state_ext % sch (1:nCv) )
+      allocate( state_ext % sna (1:nCv, 0:ns_ext-1) )
+      allocate( state_ext % smo (1:nCv, 0:ns_ext-1) )
+      state_ext % text       = ''
+      state_ext % is_neutral = .false.
+      state_ext % zn         = 0.0_R8
+      state_ext % am         = 0.0_R8
+      state_ext % za         = 0.0_R8
+      state_ext % za2        = 0.0_R8
+      state_ext % pt         = 0.0_R8
+      state_ext % ne         = 0.0_R8
+      state_ext % ne2        = 0.0_R8
+      state_ext % ue         = 0.0_R8
+      state_ext % na         = 0.0_R8
+      state_ext % ni         = 0.0_R8
+      state_ext % ua         = 0.0_R8
+      state_ext % ta         = 0.0_R8
+      state_ext % fhi        = 0.0_R8
+      state_ext % fa         = 0.0_R8
+      state_ext % sne        = 0.0_R8
+      state_ext % she        = 0.0_R8
+      state_ext % shi        = 0.0_R8
+      state_ext % sch        = 0.0_R8
+      state_ext % sna        = 0.0_R8
+      state_ext % smo        = 0.0_R8
+
       return
       end subroutine createB2StateExt
 
@@ -1074,7 +1139,184 @@ cwdk move to dv
       return
       end subroutine putB2PlasmaSnapshot
 
+***********************************************************************
 
+
+      subroutine read_plasma_state (nput, ns, nCv, nFc, st)
+      use b2mod_time
+      implicit none
+      integer, intent(in) :: nput, ns, nCv, nFc
+      type(B2State), intent(inout) :: st
+      integer :: ix, iy, ic, ifc, nfx, idum(3)
+      real (kind=R8) :: time(1)
+
+*-----------------------------------------------------------------------
+*.computation
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini ('read_plasma_state')
+*   ..test nput
+      call xertst (1.le.nput, 'faulty argument nput')
+*   ..test ns
+      call xertst (1.le.ns, 'faulty argument ns')
+ 
+      call createB2State (nCv, nFc, ns, st)
+     
+* ..read state and fluxes
+
+*   ..read plasma state
+      call cfrure (nput, nCv*ns,   st % pl % na, 'na')
+      call cfrure (nput, nCv,      st % dv % ne, 'ne')
+      call cfrure (nput, nCv*ns,   st % pl % ua, 'ua')
+      call cfrure (nput, nFc*2*ns, st % dv % uadia, 'uadia') 
+      call cfrure (nput, nCv,      st % pl % te, 'te')
+      call cfrure (nput, nCv,      st % pl % ti, 'ti')
+      call cfrure (nput, nCv,      st % pl % po, 'po')
+
+*   ..read fluxes
+      call cfrure (nput, nFc*2*ns, st % dv % fna, 'fna')
+      call cfrure (nput, nFc*2,    st % dv % fhe, 'fhe')
+      call cfrure (nput, nFc*2,    st % dv % fhi, 'fhi')
+      call cfrure (nput, nFc*2,    st % dv % fch, 'fch')
+      call cfrure (nput, nFc*2,    st % dv % fch_32, 'fch_32')
+      call cfrure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
+      call cfrure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
+
+*   ..read time
+      call cfrure (nput, 1, time, 'time')
+      tim = time(1)
+
+*   ..read parallel current
+      call cfrure (nput, nFc*2,    st % dv % fch_p, 'fch_p')
+
+*   ..read various fluxes and velocities needed by advanced SOLPS-ITER features
+      call cfrure (nput, nFc*2*ns, st % dv % fna_mdf, 'fna_mdf')
+      call cfrure (nput, nFc*2,    st % dv % fhe_mdf, 'fhe_mdf')
+      call cfrure (nput, nFc*2,    st % dv % fhi_mdf, 'fhi_mdf')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_fcor, 'fna_fcor')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_nodrift, 'fna_nodrift')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_he, 'fna_he')
+      call cfrure (nput, nFc*2*ns, st % dv % fnaPSch, 'fnaPSch')
+      call cfrure (nput, nFc*2,    st % dv % fhePSch, 'fhePSch')
+      call cfrure (nput, nFc*2,    st % dv % fhiPSch, 'fhiPSch')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_eir, 'fna_eir')
+      call cfrure (nput, nFc*2,    st % dv % fne_eir, 'fne_eir')
+      call cfrure (nput, nFc*2,    st % dv % fhe_eir, 'fhe_eir')
+      call cfrure (nput, nFc*2,    st % dv % fhi_eir, 'fhi_eir')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_32, 'fna_32')
+      call cfrure (nput, nFc*2*ns, st % dv % fna_52, 'fna_52')
+      call cfrure (nput, nFc*2,    st % dv % fni_32, 'fni_32')
+      call cfrure (nput, nFc*2,    st % dv % fni_52, 'fni_52')
+      call cfrure (nput, nFc*2,    st % dv % fne_32, 'fne_32')
+      call cfrure (nput, nFc*2,    st % dv % fne_52, 'fne_52')
+      call cfrure (nput, nFc*2,    st % dv % fchdia, 'fchdia')
+      call cfrure (nput, nFc*2,    st % dv % fchin, 'fchin')
+      call cfrure (nput, nFc*2,    st % dv % fchvispar, 'fchvispar')
+      call cfrure (nput, nFc*2,    st % dv % fchvisper, 'fchvisper')
+      call cfrure (nput, nFc*2,    st % dv % fchvisq, 'fchvisq')
+      call cfrure (nput, nFc*2,    st % dv % fchinert, 'fchinert')
+      call cfrure (nput, nFc*2*ns, st % dv % vaecrb, 'vaecrb')
+      call cfrure (nput, nFc*2*ns, st % dv % vadia, 'vadia')
+      call cfrure (nput, nFc*2*ns, st % dv % wadia, 'wadia')
+      call cfrure (nput, nFc*2,    st % dv % veecrb, 'veecrb')
+      call cfrure (nput, nFc*2,    st % dv % vedia, 'vedia')
+      call cfrure (nput, nFc*2,    st % dv % floe_noc, 'floe_noc')
+      call cfrure (nput, nFc*2,    st % dv % floi_noc, 'floi_noc')
+
+* ..return
+      call subend ()
+      return
+
+      end subroutine read_plasma_state
+
+
+***********************************************************************
+
+
+      subroutine write_plasma_state (nput, ns, nCv, nFc, st)
+      use b2mod_time
+      implicit none
+      integer, intent(in) :: nput, ns, nCv, nFc
+      type(B2State), intent(inout) :: st
+      integer ::  idum(0:2) 
+      real (kind=R8) :: time(1)
+
+*-----------------------------------------------------------------------
+*.computation
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini ('write_plasma_state')
+*   ..test ns
+      call xertst (1.le.ns, 'faulty argument ns')
+      
+* ..save state and fluxes
+
+*   ..save plasma state
+      call cfwure (nput, nCv*ns,   st % pl % na, 'na')
+      call cfwure (nput, nCv,      st % dv % ne, 'ne')
+      call cfwure (nput, nCv*ns,   st % pl % ua, 'ua')
+      call cfwure (nput, nFc*2*ns, st % dv % uadia, 'uadia') 
+      call cfwure (nput, nCv,      st % pl % te, 'te')
+      call cfwure (nput, nCv,      st % pl % ti, 'ti')
+      call cfwure (nput, nCv,      st % pl % po, 'po')
+
+*   ..save fluxes
+      call cfwure (nput, nFc*2*ns, st % dv % fna, 'fna')
+      call cfwure (nput, nFc*2,    st % dv % fhe, 'fhe')
+      call cfwure (nput, nFc*2,    st % dv % fhi, 'fhi')
+      call cfwure (nput, nFc*2,    st % dv % fch, 'fch')
+      call cfwure (nput, nFc*2,    st % dv % fch_32, 'fch_32')
+      call cfwure (nput, nFc*2,    st % dv % fch_52, 'fch_52')
+      call cfwure (nput, nCv*ns,   st % dv % kinrgy, 'kinrgy')
+
+*   ..save time
+      time(1)=tim
+      call cfwure (nput, 1, time, 'time')
+
+*   ..save parallel current
+      call cfwure (nput, nFc*2,    st % dv % fch_p, 'fch_p')
+
+*   ..saving various fluxes and velocities needed by advanced SOLPS-ITER features
+      call cfwure (nput, nFc*2*ns, st % dv % fna_mdf, 'fna_mdf')
+      call cfwure (nput, nFc*2,    st % dv % fhe_mdf, 'fhe_mdf')
+      call cfwure (nput, nFc*2,    st % dv % fhi_mdf, 'fhi_mdf')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_fcor, 'fna_fcor')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_nodrift, 'fna_nodrift')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_he, 'fna_he')
+      call cfwure (nput, nFc*2*ns, st % dv % fnaPSch, 'fnaPSch')
+      call cfwure (nput, nFc*2,    st % dv % fhePSch, 'fhePSch')
+      call cfwure (nput, nFc*2,    st % dv % fhiPSch, 'fhiPSch')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_eir, 'fna_eir')
+      call cfwure (nput, nFc*2,    st % dv % fne_eir, 'fne_eir')
+      call cfwure (nput, nFc*2,    st % dv % fhe_eir, 'fhe_eir')
+      call cfwure (nput, nFc*2,    st % dv % fhi_eir, 'fhi_eir')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_32, 'fna_32')
+      call cfwure (nput, nFc*2*ns, st % dv % fna_52, 'fna_52')
+      call cfwure (nput, nFc*2,    st % dv % fni_32, 'fni_32')
+      call cfwure (nput, nFc*2,    st % dv % fni_52, 'fni_52')
+      call cfwure (nput, nFc*2,    st % dv % fne_32, 'fne_32')
+      call cfwure (nput, nFc*2,    st % dv % fne_52, 'fne_52')
+      call cfwure (nput, nFc*2,    st % dv % fchdia, 'fchdia')
+      call cfwure (nput, nFc*2,    st % dv % fchin, 'fchin')
+      call cfwure (nput, nFc*2,    st % dv % fchvispar, 'fchvispar')
+      call cfwure (nput, nFc*2,    st % dv % fchvisper, 'fchvisper')
+      call cfwure (nput, nFc*2,    st % dv % fchvisq, 'fchvisq')
+      call cfwure (nput, nFc*2,    st % dv % fchinert, 'fchinert')
+      call cfwure (nput, nFc*2*ns, st % dv % vaecrb, 'vaecrb')
+      call cfwure (nput, nFc*2*ns, st % dv % vadia, 'vadia')
+      call cfwure (nput, nFc*2*ns, st % dv % wadia, 'wadia')
+      call cfwure (nput, nFc*2,    st % dv % veecrb, 'veecrb')
+      call cfwure (nput, nFc*2,    st % dv % vedia, 'vedia')
+      call cfwure (nput, nFc*2,    st % dv % floe_noc, 'floe_noc')
+      call cfwure (nput, nFc*2,    st % dv % floi_noc, 'floi_noc')
+
+* ..return
+      call subend ()
+      return
+
+      end subroutine write_plasma_state
 
       end module b2us_plasma
       

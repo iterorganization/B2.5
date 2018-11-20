@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mnds (ninp, nout, nx, ny, ns, ns0)
+      subroutine b2mnds (ninp, nout, nCv, nFc, ns, ns0)
       use b2mod_types
       use b2mod_version
       use b2mod_constants
@@ -16,7 +16,7 @@
      . , only : label
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:5), nout(0:5), nx, ny, ns, ns0
+      integer ninp(0:5), nout(0:5), nCv, nFc, ns, ns0
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -56,11 +56,10 @@
 *     nout(4): un*formatted; provides data on the numerical evolution.
 *     nout(5): un*formatted; may provide detailed convergence data.
 *
-*     nx, ny - integer, input.
-*     nx and ny specify the number of interior cells along the first
-*     and the second coordinate, respectively. The total number of
-*     cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
-*     It will hold that 0.le.nx and 0.le.ny.
+*     nCv, nFc - integer, input.
+*     nCv and nFc specify the number of cells and faces in the
+*     unstructured data format.
+*     It will hold that 0.le.nCv and 0.le.nFc.
 *
 *     ns - integer, input.
 *     ns specifies the number of atomic species in the calculation.
@@ -144,8 +143,8 @@
      &             1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2).and.
      &             1.le.nout(3).and.1.le.nout(4).and.1.le.nout(5),
      &    'faulty argument ninp, nout')
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc, ns
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
 
@@ -163,13 +162,13 @@
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read default physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
-      call b2rucp (ninp(2), b2fparam_version, nx, ns)
+      call b2rucp (ninp(2), b2fparam_version, ns)
 *   ..read revised parameters in physics common
 *     (ninp(0) need supply only parameters that are to be changed from
 *     the values read in as default physics common.)
       call b2rfcp (ninp(0), ns)
 *   ..test parameters
-      call b2xvcp (nx, ns)
+      call b2xvcp (ns)
 *   ..read header for initial state
 *     (zamin, zamax, zn, am from ninp(3) will be checked against the data
 *     already read in)
@@ -239,7 +238,7 @@
 *   ..check for prohibited switches
       call ipprhp ()
 *   ..test /b2cmpa/, /b2cmpb/, /b2cmpt/
-      call b2xvcp (nx, ns)
+      call b2xvcp (ns)
 *   ..write physics parameters
       call b2wfcp (nout(0), 0, ns)
 *   ..write header to nout(1)
@@ -248,21 +247,21 @@
       call cfwuin (nout(1), 1, idum, 'ns')
       call cfwuch (nout(1), 120, lblmn, 'label')
 *   ..save physics parameters to nout(1)
-      call b2wucp (nout(1), newversion, nx, ns)
+      call b2wucp (nout(1), newversion, ns)
 *   ..write header to nout(2), nout(3) and nout(5)
-      idum(0) = nx
-      idum(1) = ny
+      idum(0) = nCv
+      idum(1) = nFc
       idum(2) = ns
       call cfverw (nout(2), newversion)					 !xpb
-      call cfwuin (nout(2), 3, idum, 'nx,ny,ns')
+      call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
       call cfwuch (nout(2), 120, lblmn, 'label')
       call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
       call cfverw (nout(3), newversion)					 !xpb
-      call cfwuin (nout(3), 3, idum, 'nx,ny,ns')
+      call cfwuin (nout(3), 3, idum, 'nCv,nFc,ns')
       call cfwuch (nout(3), 120, lblmn, 'label')
       call b2wuzd (nout(3), newversion, ns, zamin, zamax, zn, am)
       call cfverw (nout(5), newversion)					 !xpb
-      call cfwuin (nout(5), 3, idum, 'nx,ny,ns')
+      call cfwuin (nout(5), 3, idum, 'nCv,nFc,ns')
       call cfwuch (nout(5), 120, lblmn, 'label')
       call b2wuzd (nout(5), newversion, ns, zamin, zamax, zn, am)
 *   ..write header to nout(4)

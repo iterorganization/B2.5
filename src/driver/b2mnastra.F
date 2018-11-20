@@ -224,9 +224,9 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call write_to_check_astra_to_b2(70)
       close(70)                                                 !srv 28.07.11 }
 *   ..call driver routines
-      call b2mndr_0 (ninp, nout, nx, ny, ns, ns0)
-      call b2mndr_1 (nout, nx, ny, ns, 0)
-      call b2mndr_2 (nout, nx, ny, ns)
+!WG_TODO      call b2mndr_0 (ninp, nout, nx, ny, ns, ns0)
+!WG_TODO      call b2mndr_1 (nout, nx, ny, ns, 0)
+!WG_TODO      call b2mndr_2 (nout, nx, ny, ns)
 *   ..write plasma state
       call cfopen (nout(7),'b2fplasma','replace','unformatted')
       call cfverw(nout(7), newversion)
