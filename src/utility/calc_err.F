@@ -74,13 +74,13 @@
        type (B2Plasma), intent (in) :: pl
        type (B2Derivatives), intent (in) :: dv
 
-       integer is, iCv
+       integer is, iCv, ind                                             !srv 09.07.18
        real (kind=R8) ::
      &    exact_na(nCv,0:ns-1), exact_ua(nCv,0:ns-1),
      &    exact_ua_st(nCv,0:ns-1),
      &    exact_te(nCv), exact_ti(nCv),
      &    exact_po(nCv), err(nCv), era(nCv),
-     &    uacf(nCv)
+     &    uacf(nCv), L2norm, Cnorm                                      !srv 09.07.18
        logical l_exist
        character chns*2, chnCv*3
 
@@ -94,27 +94,42 @@
        close(70)
 
        do is =0,ns-1
-!        if(.not.is_neutral(is)) then
          write (chns,'(i2.2)') is
          call my_out_us(70,nCv,0,pl%na(1,is),'na'//chns)
          call my_out_us(70,nCv,0,exact_na(1,is),'na'//chns//'_precise')
          era = pl%na(:,is)-exact_na(:,is)
          call my_out_us(70,nCv,0,era,'na'//chns//'_aerr')
-         write(71,"(' Max|eraNa',a2,'|',8x,'=',es10.3)")
-     &              chns,maxval(abs(era))
-!	   write(71,"(' Max|eraNa',a2,'|',8x,'=',es10.3,
-!     &              ' ix=',i4,' iy=',i4)")
-!     &              chns,maxval(abs(era)), maxloc(abs(era))-(/2,2/)
+         ind = maxloc(abs(era),1)                                       !srv 09.07.18
+         write(71,"(' Max|eraNa',a2,'|',8x,'=',es10.3,a,i4)")
+     &              chns,abs(era(ind)),
+     &        '   is in iCv = ', ind
          if(all(exact_na(:,is).ne.0.0_R8)) then
           err = abs(era)/exact_na(:,is)
-          write(71,"(' Max|eraNa',a2,'/Na|     =',es10.3)")
-     &          chns,maxval(err)
+          ind = maxloc(err,1)
+          write(71,"(' Max|eraNa',a2,'/Na|',a2,'|   =',es10.3,a,i4)")
+     &          chns, chns, err(ind),
+     &      '   is in iCv = ', ind
           call my_out_us(70,nCv,0,err,'na'//chns//'_rerr')
          else
-          write(71,"(' Max|eraNa',a2,'/Na|     =',a4)") chns, ' inf'
+          write(71,"(' Max|eraNa',a2,'/Na',a2,'|   =',a4)") 
+     &          chns, chns,' inf'                                       !srv 09.07.18
          endif
+
+         L2norm=norm2(exact_na(:,is))                                   !srv 09.07.18 {
+         if(L2norm.ne.0.0_R8) then
+          write(71,"(' L2eraNa',a2,'/L2Na',a2,'    =',es10.3)")
+     &       chns, chns, norm2(era)/L2norm
+          write(71,"(' C_eraNa',a2,'/C_Na',a2,'    =',es10.3)")
+     &       chns, chns, maxval(abs(era))/maxval(abs(exact_na(:,is)))
+         else
+          write(71,"(' L2eraNa',a2,'/L2Na',a2,'    =',a4)") 
+     &       chns, chns,' inf'
+          write(71,"(' C_eraNa',a2,'/C_Na',a2,'    =',a4)") 
+     &       chns, chns,' inf'
+         endif                                                           !srv 09.07.18 }
+         
          write(71,*)
-!        endif
+
        enddo
 
        call calc_err_cc(nCv, 'Ti', pl%ti, exact_ti, qe) 
@@ -128,60 +143,43 @@
        close(70)
 
        do is =0,ns-1
-!        if(.not.is_neutral(is)) then
          write (chns,'(i2.2)') is
          call my_out_us(70,nCv,0,pl%ua(1,is),'ua'//chns)
          call my_out_us(70,nCv,0,exact_ua(1,is),'ua'//chns//'_precise')
          era = pl%ua(:,is)-exact_ua(:,is)
          call my_out_us(70,nCv,0,era,'ua'//chns//'_aerr')
-         write(71,"(' Max|eraUa',a2,'|',8x,'=',es10.3)")
-     &              chns,maxval(abs(era))
-!	   write(71,"(' Max|eraUa',a2,'|',8x,'=',es10.3,
-!     &              ' ix=',i4,' iy=',i4)")
-!     &              chns,maxval(abs(era)), maxloc(abs(era))-(/2,2/)
+         ind = maxloc(abs(era),1)                                       !srv 09.07.18
+         write(71,"(' Max|eraUa',a2,'|',8x,'=',es10.3,a,i4)")
+     &              chns,abs(era(ind)),
+     &        '   is in iCv = ', ind
          if(all(exact_ua(:,is).ne.0.0_R8)) then
           err = abs(era/exact_ua(:,is))
-          write(71,"(' Max|eraUa',a2,'/ua|     =',es10.3)")
-     &          chns,maxval(err)
+          ind = maxloc(err,1)
+          write(71,"(' Max|eraUa',a2,'/Ua',a2,'|   =',es10.3,a,i4)")
+     &          chns, chns, err(ind),                                   !srv 09.07.18
+     &      '   is in iCv = ', ind
           call my_out_us(70,nCv,0,err,'ua'//chns//'_rerr')
          else
-          write(71,"(' Max|eraUa/Ua|     =',a4)") ' inf'
+          write(71,"(' Max|eraUa',a2,'/Ua',a2,'|   =',a4)") 
+     &          chns, chns,' inf'                                       !srv 09.07.18
          endif
+         
+         L2norm=norm2(exact_ua(:,is))                                   !srv 09.07.18 {
+         if(L2norm.ne.0.0_R8) then
+          write(71,"(' L2eraUa',a2,'/L2Ua',a2,'    =',es10.3)")
+     &          chns, chns, norm2(era)/L2norm
+          write(71,"(' C_eraUa',a2,'/C_Ua',a2,'    =',es10.3)")
+     &       chns, chns, maxval(abs(era))/maxval(abs(exact_ua(:,is)))
+         else
+          write(71,"(' L2eraUa',a2,'/L2Ua',a2,'    =',a4)") 
+     &       chns, chns,' inf'
+          write(71,"(' C_eraUa',a2,'/C_Ua',a2,'    =',a4)") 
+     &       chns, chns,' inf'
+         endif                                                          !srv 09.07.18 }
+
          write(71,*)
-!        endif
+
        enddo
-
-!       inquire(file='../exact_ua_st.dat',exist=l_exist)
-!       call xertst(l_exist,'No '//'../exact_ua_st.dat')
-!	 open(70,file='../exact_ua_st.dat')
-!        read (70,*) 
-!     &    (((exact_ua_st(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-!	 close(70)
-
-!	 do is =0,ns-1
-!!	  if(.not.is_neutral(is)) then
-!	   write (chns,'(i2.2)') is
-!         call intfaceh(nx,ny,leftix,leftiy,vol,ua(-1,-1,is),uacf)
-!         call my_out(70,nx,ny,uacf,'uacf'//chns)
-!         call my_out(70,nx,ny,exact_ua_st(-1,-1,is),'uacf'
-!     &                                       //chns//'_precise')
-!         era = uacf(:,:)-exact_ua_st(:,:,is)
-!         call my_out(70,nx,ny,era,'uacf'//chns//'_aerr')
-!	   write(71,"(' Max|eraUacf',a2,'|',6x,'=',es10.3)")
-!     &              chns,maxval(abs(era))
-!!	   write(71,"(' Max|eraUacf',a2,'|',6x,'=',es10.3,
-!!     &              ' ix=',i4,' iy=',i4)")
-!!     &              chns,maxval(abs(era)), maxloc(abs(era))
-!	   if(all(exact_ua_st(:,:,is).ne.0.0_R8)) then
-!	    err = abs((era)/exact_ua_st(:,:,is))
-!	    write(71,"(' Max|eraUacf',a2,'/uacf  =',es10.3)")
-!     &          chns,maxval(err)
-!          call my_out(70,nx,ny,err,'uacf'//chns//'_rerr')
-!	   else
-!	    write(71,"(' Max|eraUacf',a2,'/uacf| =',a4)") chns,'inf'
-!	   endif
-!!        endif
-!       enddo
 
        call calc_err_cc(nCv, 'Po', pl%po, exact_po, 1.0_R8) 
 
@@ -221,10 +219,10 @@
 
        real (kind=R8) ::
      &    var(nCv), exact_var(nCv), scl,
-     &    err(nCv), era(nCv)
+     &    err(nCv), era(nCv), L2norm, Cnorm                             !srv 09.07.18
 
        logical l_exist
-       integer iCv
+       integer iCv, ind                                                 !srv 09.07.18
        character(32) :: pass
 
        pass='../exact_'//trim(nmvar)//'.dat'
@@ -235,24 +233,40 @@
        read (70,*) (exact_var(iCv),iCv=1,nCv)
        close(70)
 
-       call my_out_us(70,nCv,0,var,trim(nmvar))
-       call my_out_us(70,nCv,0,exact_var,trim(nmvar)//'_precise')
+       call my_out_us(70,nCv,0,var/scl,trim(nmvar))
+       call my_out_us(70,nCv,0,exact_var/scl,trim(nmvar)//'_precise')
 
        era = var-exact_var
-       call my_out_us(70,nCv,0,era,trim(nmvar)//'_aerr')
-       write(71,"(' Max|era',a,'|',10x,'=',es10.3)")
-     &              trim(nmvar),maxval(abs(era))/scl
-!       write(71,"(' Max|eravar|',10x,'=',es10.3,' ix=',i4,' iy=',i4)")
-!     &              maxval(abs(era)), maxloc(abs(era))-(/2,2/)
+       call my_out_us(70,nCv,0,era/scl,trim(nmvar)//'_aerr')
+       ind = maxloc(abs(era),1)                                         !srv 09.07.18
+       write(71,"(' Max|era',a,'|',10x,'=',es10.3,a,i4)")
+     &              trim(nmvar),abs(era(ind))/scl,
+     &          '   is in iCv = ', ind
        if(all(var.ne.0.0_R8)) then
         err = abs(era)/exact_var
-        write(71,"(' Max|era',a,'/',a,'|       =',es10.3)")
-     &              trim(nmvar),trim(nmvar),maxval(err)
+        ind = maxloc(abs(err),1)                                        !srv 09.07.18
+        write(71,"(' Max|era',a,'/',a,'|       =',es10.3,a,i4)")
+     &              trim(nmvar),trim(nmvar),err(ind),                   !srv 09.07.18
+     &          '   is in iCv = ', ind
         call my_out_us(70,nCv,0,err,trim(nmvar)//'_rerr')
        else
         write(71,"(' Max|era',a,'/',a'|     =',a4)")
      &              trim(nmvar), trim(nmvar),' inf'
        endif
+
+       L2norm=norm2(exact_var)                                          !srv 09.07.18 {
+       if(L2norm.ne.0.0_R8) then
+        write(71,"(' L2era',a,'/L2',a,'        =',es10.3)")
+     &   trim(nmvar),trim(nmvar),norm2(era)/L2norm
+        write(71,"(' C_era',a,'/C_',a,'        =',es10.3)")
+     &   trim(nmvar),trim(nmvar),maxval(abs(era))/maxval(abs(exact_var))
+       else
+        write(71,"(' L2era',a,'/L2',a,'        =',a4)") 
+     &              trim(nmvar),trim(nmvar),' inf'
+        write(71,"(' C_era',a,'/C_',a,'        =',a4)") 
+     &              trim(nmvar),trim(nmvar),' inf'
+       endif                                                             !srv 09.07.18 }
+
        write(71,*)
 
       end subroutine calc_err_cc                                        !srv 26.02.18 }
