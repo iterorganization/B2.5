@@ -1381,11 +1381,32 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
         enddo
       enddo                                                          !srv 11.03.08 }
       if (use_9pt_stencil.eq.1) then
-cwdk    For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
-cwdk    temporary computation; should go into geometry routines!
-        call intfacev(nx,ny,bottomix,bottomiy,vol,qz(-1,-1,0),
-     .    qs(-1,-1,1))
-        qc(:,:,1) = sqrt(1.0_R8 - qs(:,:,1)**2)                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
+!cwdk    For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
+!cwdk    temporary computation; should go into geometry routines!
+!        call intfacev(nx,ny,bottomix,bottomiy,vol,qz(-1,-1,0),
+!     .    qs(-1,-1,1))
+!        qc(:,:,1) = sqrt(1.0_R8 - qs(:,:,1)**2)                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
+cwdk  For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
+cwdk  temporary computation; should go into geometry routines!
+cwk:  this interpolation for backwards compatibility in computation of radial conductances etc.
+       do ix = -1, nx
+        do iy = -1, ny
+         if (bottomiy(ix,iy).eq.-2) then
+          qc(ix,iy,1)=1.0_R8
+         else
+          qc(ix,iy,1) =
+     .     (hy(ix,iy)*qz(ix,iy,1) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     .      qz(bottomix(ix,iy),bottomiy(ix,iy),1))/ 
+     .     (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+          qs(ix,iy,1) =
+     .     (hy(ix,iy)*qz(ix,iy,0) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     .      qz(bottomix(ix,iy),bottomiy(ix,iy),0))/ 
+     .     (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+         endif
+        enddo
+       enddo
+cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
+       qs(:,:,1) = sign(sqrt(1.0_R8 - qc(:,:,1)**2),qs(:,:,1))
       else
 cwdk    Use 5-point stencil. Overwrite values of qz, qc and qs to ensure
 cwdk    backwards compatible behavior
