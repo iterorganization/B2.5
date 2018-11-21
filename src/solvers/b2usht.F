@@ -620,7 +620,7 @@ cwdk radial contribution
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
-      last_solve_9(0:nnreg(0)) = solveei(0:nnreg(0))
+      last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
       do iCv = 1, nCv
         corti(iCv) = corti(iCv)*scalr(ti(iCv))
       enddo

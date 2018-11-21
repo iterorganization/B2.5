@@ -1880,7 +1880,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
           call b2mndt (nout, nCv, nFc, nVx, ns, nxtl, nxtr,
-     .      ismain, ismain0, itim, dtim, ntim, 
+     .      ismain, ismain0, state%rt%nscx, state%rt%nscxmax, 
+     .      state%rt%iscx, itim, dtim, ntim, 
      .      geo, mpg, state, state_ext, ierr)
 
           if(ierr.eq.10) then
@@ -2250,9 +2251,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       character*256 filename
       logical found
       
-cwdk  back-conversion to structured grid
-      call to_struct_plasma (ns,mpg,state)
-
       call subini ('b2mndr_2')
       if(quitexist)
      1 write(*,*) 'stopping because .quit seen'
@@ -2304,15 +2302,10 @@ cwdk  back-conversion to structured grid
 #endif
 *   ..save final state
       call write_plasma_state (nout(2), ns, mpg%nCv, mpg%nFc, state)
-#ifdef WG_RM
-      call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
-#endif
+*   ..conversion to structured format and output
+      if (mpg%isClassicalGrid.eq.1) then
+        call to_struct_plasma (ns,mpg,state)
+      endif
 #ifdef WG_TODO
       call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
       if (use_astra.ne.0) then

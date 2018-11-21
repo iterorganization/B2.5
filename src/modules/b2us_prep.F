@@ -7,6 +7,7 @@
       use b2mod_plasma
       use b2mod_transport
       use b2mod_anomalous_transport
+      use b2mod_sources
       use b2mod_work
       use b2mod_residuals
       use b2mod_input_profile
@@ -801,6 +802,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
       integer :: ix, iy, ic, ifc, nfx
 
       call createB2State (nCv, nFc, ns, st)
+      call createB2Diagnostic( nCv, ns, nnreg, st % diag )
 
       nfx = (nx+1)*ny
 
@@ -1517,6 +1519,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
       type(B2State), intent(in) :: st
       integer :: nx, ny, nCi, nCv, nFc
       integer :: ix, iy, ic, ifc, nfx
+      integer :: nout_st, io, idum(0:9)
+      character lblst*120, lblps*120
+
 
       nCv = mpg%nCv
       nCi = mpg%nCi
@@ -1529,14 +1534,15 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         call xerrab ('Not a classical grid!')
       endif
 
-      if (.not.allocated(fch)) call alloc_b2mod_plasma(nx,ny,ns)
+*   ..allocate modules for structured grid
+      if (.not.allocated(fch))  call alloc_b2mod_plasma(nx,ny,ns)
       if (.not.allocated(ceqp)) call alloc_b2mod_transport(nx,ny,ns)
       if (.not.allocated(dna0)) 
      .    call alloc_b2mod_anomalous_transport(nx,ny,ns)
-      if (.not.allocated(pcca)) call alloc_b2mod_work(nx,ny,ns)
-      if (.not.allocated(pcca)) call alloc_b2mod_residuals(nx,ny,ns)
-
-!      ns = st % ns
+      if (.not.allocated(conb))  call alloc_b2mod_work(nx,ny,ns)
+      if (.not.allocated(resco)) call alloc_b2mod_residuals(nx,ny,ns)
+      if (.not.allocated(rlqa))  call alloc_b2mod_rates(nx,ny,ns)
+      if (.not.allocated(sch))   call alloc_b2mod_sources(nx,ny,ns)
 
       nfx = (nx+1)*ny
 
@@ -1598,13 +1604,13 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
           pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
 
-! B2SourceWork
-!         sch0(ix,iy,0:3)        = st % srw % sch0(ic,0:3)
-!         she0(ix,iy,0:3)        = st % srw % she0(ic,0:3)
-!         shi0(ix,iy,0:3)        = st % srw % shi0(ic,0:3)
-!         smo0(ix,iy,0:3,0:ns-1) = st % srw % smo0(ic,0:3,0:ns-1)
-!         smq0(ix,iy,0:3,0:ns-1) = st % srw % smq0(ic,0:3,0:ns-1)
-!         sna0(ix,iy,0:3,0:ns-1) = st % srw % sna0(ic,0:3,0:ns-1)
+! B2Source
+          sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
+          she(ix,iy,0:3)        = st % sr % she(ic,0:3)
+          shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+          smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
+          smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
+          sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
           rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
@@ -1684,13 +1690,13 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
         
 ! B2SourceWork
-!       sch0(ix,iy,0:3) = st % srw % sch0(ic,0:3)
-!       she0(ix,iy,0:3) = st % srw % she0(ic,0:3)
-!       shi0(ix,iy,0:3) = st % srw % shi0(ic,0:3)
-!       smo0(ix,iy,0:3,0:ns-1) = st % srw % smo0(ic,0:3,0:ns-1)
-!       smq0(ix,iy,0:3,0:ns-1) = st % srw % smq0(ic,0:3,0:ns-1)
-!       sna0(ix,iy,0:3,0:ns-1) = st % srw % sna0(ic,0:3,0:ns-1)
-        
+        sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
+        she(ix,iy,0:3)        = st % sr % she(ic,0:3)
+        shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+        smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
+        smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
+        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
+       
 ! B2rates
         rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
         rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
@@ -1764,12 +1770,12 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
 
 ! B2SourceWork
-!       sch0(ix,iy,0:3)        = st % srw % sch0(ic,0:3)
-!       she0(ix,iy,0:3)        = st % srw % she0(ic,0:3)
-!       shi0(ix,iy,0:3)        = st % srw % shi0(ic,0:3)
-!       smo0(ix,iy,0:3,0:ns-1) = st % srw % smo0(ic,0:3,0:ns-1)
-!       smq0(ix,iy,0:3,0:ns-1) = st % srw % smq0(ic,0:3,0:ns-1)
-!       sna0(ix,iy,0:3,0:ns-1) = st % srw % sna0(ic,0:3,0:ns-1)
+        sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
+        she(ix,iy,0:3)        = st % sr % she(ic,0:3)
+        shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+        smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
+        smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
+        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:3,0:ns-1)
 
 ! B2rates
         rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
@@ -1847,12 +1853,12 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
 
 ! B2SourceWork
-!       sch0(ix,iy,0:3)        = st % srw % sch0(ic,0:3)
-!       she0(ix,iy,0:3)        = st % srw % she0(ic,0:3)
-!       shi0(ix,iy,0:3)        = st % srw % shi0(ic,0:3)
-!       smo0(ix,iy,0:3,0:ns-1) = st % srw % smo0(ic,0:3,0:ns-1)
-!       smq0(ix,iy,0:3,0:ns-1) = st % srw % smq0(ic,0:3,0:ns-1)
-!       sna0(ix,iy,0:3,0:ns-1) = st % srw % sna0(ic,0:3,0:ns-1)
+        sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
+        she(ix,iy,0:3)        = st % sr % she(ic,0:3)
+        shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+        smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
+        smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
+        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
         rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
@@ -1928,12 +1934,12 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
 
 ! B2SourceWork
-!       sch0(ix,iy,0:3)        = st % srw % sch0(ic,0:3)
-!       she0(ix,iy,0:3)        = st % srw % she0(ic,0:3)
-!       shi0(ix,iy,0:3)        = st % srw % shi0(ic,0:3)
-!       smo0(ix,iy,0:3,0:ns-1) = st % srw % smo0(ic,0:3,0:ns-1)
-!       smq0(ix,iy,0:3,0:ns-1) = st % srw % smq0(ic,0:3,0:ns-1)
-!       sna0(ix,iy,0:3,0:ns-1) = st % srw % sna0(ic,0:3,0:ns-1)
+        sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
+        she(ix,iy,0:3)        = st % sr % she(ic,0:3)
+        shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+        smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
+        smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
+        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:3,0:ns-1)
 
 ! B2rates
         rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
@@ -1952,6 +1958,9 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
       end do
 
+#ifdef WG_TODO
+! Cannot do this anymore => b2mod_indirect not available in general
+! Need a back-transformation to_struct_geometry first !?!
 ! Corner cells: add-hoc interpolation
         iy=-1                                                         !srv 27.06.08 {
         do ix = -1, nx
@@ -2067,6 +2076,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
      &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))
           endif
         enddo                                                         !srv 27.06.08 }
+#endif
 
 
 ! x faces
@@ -2188,17 +2198,6 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           coni(ix,iy,0,0:1,:) = st % dv % coni(ifc,0:1,:)
           floe_noc(ix,iy,0,0:1) = st % dv % floe_noc(ifc,0:1)
           floi_noc(ix,iy,0,0:1) = st % dv % floi_noc(ifc,0:1)
-
-
-!B2PlasmaSnapshot
-!          fch(ix,iy,0,0:1)        = st % psnl % fch(ifc,0:1)
-!          fna(ix,iy,0,0:1,0:ns-1) = st % psnl % fna(ifc,0:1,0:ns-1)
-!          fhe(ix,iy,0,0:1)        = st % psnl % fhe(ifc,0:1)
-!          fhi(ix,iy,0,0:1)        = st % psnl % fhi(ifc,0:1)
-!          fch(ix,iy,0,0:1)        = st % psnc % fch(ifc,0:1)
-!          fna(ix,iy,0,0:1,0:ns-1) = st % psnc % fna(ifc,0:1,0:ns-1)
-!          fhe(ix,iy,0,0:1)        = st % psnc % fhe(ifc,0:1)
-!          fhi(ix,iy,0,0:1)        = st % psnc % fhi(ifc,0:1)
 
         end do
       end do
@@ -2330,33 +2329,82 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           coni(ix,iy,1,0:1,:) = st % dv % coni(ifc,0:1,:)
           floe_noc(ix,iy,1,0:1) = st % dv % floe_noc(ifc,0:1)
           floi_noc(ix,iy,1,0:1) = st % dv % floi_noc(ifc,0:1)
-          
-! B2PlasmaSnapshot
-!          fch(ix,iy,1,0:1)        = st % psnl % fch(ifc,0:1)
-!          fna(ix,iy,1,0:1,0:ns-1) = st % psnl % fna(ifc,0:1,0:ns-1)
-!          fhe(ix,iy,1,0:1)        = st % psnl % fhe(ifc,0:1)
-!          fhi(ix,iy,1,0:1)        = st % psnl % fhi(ifc,0:1)
-!          fch(ix,iy,1,0:1)        = st % psnc % fch(ifc,0:1)
-!          fna(ix,iy,1,0:1,0:ns-1) = st % psnc % fna(ifc,0:1,0:ns-1)
-!          fhe(ix,iy,1,0:1)        = st % psnc % fhe(ifc,0:1)
-!          fhi(ix,iy,1,0:1)        = st % psnc % fhi(ifc,0:1)
 
         end do
-      end do     
+      end do
 
-      aresco(0:ns-1) = st % diag % aresco(0:ns-1)
-      aresmo(0:ns-1) = st % diag % aresmo(0:ns-1)
+!      aresco(0:ns-1) = st % diag % aresco(0:ns-1)
+!      aresmo(0:ns-1) = st % diag % aresmo(0:ns-1)
 
-!     acorpa(0:ns-1) = st % diag % acorpa(0:ns-1)
-!     acorua(0:ns-1) = st % diag % acorua(0:ns-1)
 
-!     rescoreg(0:nnreg(0),0:ns-1) =
-!    .         st % diag % rescoreg(0:nnreg(0),0:ns-1)
-!     resmoreg(0:nnreg(0),0:ns-1)
-!    .         st % diag % resmoreg(0:nnreg(0),0:ns-1)
-!     reshereg(0:nnreg(0)) = st % diag % reshereg(0:nnreg(0))
-!     reshireg(0:nnreg(0)) = st % diag % reshireg(0:nnreg(0))
 
+!      rescoreg(0:nnreg(0),0:ns-1) =
+!     .         st % diag % rescoreg(0:nnreg(0),0:ns-1)
+!      resmoreg(0:nnreg(0),0:ns-1)
+!     .         st % diag % resmoreg(0:nnreg(0),0:ns-1)
+!      reshereg(0:nnreg(0)) = st % diag % reshereg(0:nnreg(0))
+!      reshireg(0:nnreg(0)) = st % diag % reshireg(0:nnreg(0))
+
+
+*   ..write b2fstate_st in structured format
+      open (newunit=nout_st,file='b2fstate_st',iostat=io)
+      if (io /= 0) then
+        write (*,*) ' File b2fstate_st not writable'
+        call xerrab ('to_struct_plasma -- no state file ')
+      end if
+      lblst = 'Plasma state in structured format'
+
+*   ..write file header
+      call cfverw (nout_st, newversion)
+      idum(0) = nx
+      idum(1) = ny
+      idum(2) = ns
+      call cfwuin (nout_st, 3, idum, 'nx,ny,ns')
+      call cfwuch (nout_st, 120, lblst, 'label')
+      call b2wuzd (nout_st, newversion, ns, zamin, zamax, zn, am)
+
+*   ..write plasma state
+      call b2wups (nout_st, nx, ny, ns, ne, na, ua, uadia, te,
+     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
+
+      close(nout_st)
+
+*   ..write b2fplasmf_st in structured format
+      open (newunit=nout_st,file='b2fplasmf_st',iostat=io)
+      if (io /= 0) then
+        write (*,*) ' File b2fplasmf_st not writable'
+        call xerrab ('to_struct_plasma -- no plasma file ')
+      end if
+      lblps = 'Plasma state in structured format'
+
+      call cfverw(nout_st, newversion)
+!WG_TODO      call write_b2mod_geo(nout_st)
+      call write_b2mod_plasma(nout_st)
+      call write_b2mod_residuals(nout_st)
+      call write_b2mod_sources(nout_st)
+      call write_b2mod_transport(nout_st)
+      call write_b2mod_anomalous_transport(nout_st)
+      call write_b2mod_neutr_src_scaling(nout_st,nstrat)
+
+      close(nout_st)
+
+
+*   ..deallocate modules for structured grid
+      call dealloc_b2mod_plasma
+      call dealloc_b2mod_transport
+      call dealloc_anomalous_transport
+      call dealloc_b2mod_work
+      call dealloc_b2mod_residuals
+      call dealloc_b2mod_rates
+      call dealloc_b2mod_sources
+
+
+      return
       end subroutine to_struct_plasma
       
 ******************************************************************************

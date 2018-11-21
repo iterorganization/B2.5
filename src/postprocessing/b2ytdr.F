@@ -1344,7 +1344,8 @@ c 2002-09-11: logic revised
       if (sputter_namelist_used.or.wall_namelist_used)
      > call alloc_b2mod_sputter(nx,ny,ns)
       if (transport_namelist.ge.1) call alloc_transport_namelist(ns)
-      if (numerics_namelist.ge.1) call alloc_b2mod_numerics(nx, ny, ns)
+      if (numerics_namelist.ge.1) 
+     >  call alloc_b2mod_numerics((nx+2)*(ny+2), ns, nnreg)
       filename='b2.neutrals.parameters'
       call find_file(filename,todo)
       filename='b2.feedback_save.parameters'
@@ -3158,8 +3159,10 @@ cxpb This will need to be checked !!!
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
-        if (numerics_namelist.eq.0) call alloc_b2mod_numerics(nx,ny,ns)
-        call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
+        if (numerics_namelist.eq.0) 
+     >   call alloc_b2mod_numerics((nx+2)*(ny+2),ns,nnreg)
+        call read_b2mod_numerics_namelist((nx+2)*(ny+2),nsmin,nsmax,
+     >    nnreg,on_closed_surface)
         if (same_bundling) then
           if (first_pass)
      >     write(nout(5),'(a)') 'b2.numerics.parameters'

@@ -110,7 +110,7 @@
       real (kind=R8) ::
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)             !srv 13.01.17 05.07.17
-      logical new_matrix, solvedum(0:NNREGMAX), main_lightest
+      logical new_matrix, solvedum(0:CVREGMAX), main_lightest
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
       intrinsic min, max
@@ -412,20 +412,20 @@ cdjm Jan2017 update momentum source components for balance
        endif                                                           !srv 12.07.02 }
 
        if (solving) then                                               !srv 06.07.10
-         solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
+         solvedum(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
 c     ..compare matrices
          new_matrix = .false.
-         do ireg = 0, nnreg(0)
+         do ireg = 0, mpg%nnreg(0)
           new_matrix = new_matrix.or.
      &     solvemo(is,ireg).neqv.last_solve_9(ireg)
          end do
          if (new_matrix.or..true.) call restart_ma28_for_us
 *     ..compute correction
-         call b2usmo (nCv, nFc, nVx, is, geo, mpg, nnreg(0), solvedum,
-     &     itcnt, rxg, rob, pb, pl%ua(1,is), smb, flcb, cvcb,
+         call b2usmo (nCv, nFc, nVx, is, geo, mpg, mpg%nnreg(0),
+     &     solvedum, itcnt, rxg, rob, pb, pl%ua(1,is), smb, flcb, cvcb,
      &     dv%resmo(1,is),  ctcfb, dv%corua(1,is), dv%pcca(1,0,is), aa,
      &     wrk1, 'b2usmo_'//chns)
-         last_solve_9(0:nnreg(0)) = solvemo(is,0:nnreg(0))
+         last_solve_9(0:mpg%nnreg(0)) = solvemo(is,0:mpg%nnreg(0))
 csw 21feb2014 added this else branch
        else
          dv%pcca(:,:,is)  = 0.0_R8
@@ -463,22 +463,22 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
       enddo
 
 csw 21feb2014, execute simultaneous corrections always
-c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.07.10
+c      if (solving.and.solvemt(0:mpg%nnreg(0))) then                       !srv 06.07.10
       if (solving) then
 *     ..compute simultaneous correction
         call sfill (nCv, 0.0_R8, wrk0, 1)
 c     ..compare 9-pt stencil matrices
         new_matrix = .false.
-        do ireg = 0, nnreg(0)
+        do ireg = 0, mpg%nnreg(0)
          new_matrix = new_matrix.or.
      &    solvemt(ireg).neqv.last_solve_9(ireg)
         end do
         if (new_matrix.or..true.) call restart_ma28_for_us
 *     ..compute correction
-        call b2usmo (nCv, nFc, nVx, ns, geo, mpg, nnreg(0), 
+        call b2usmo (nCv, nFc, nVx, ns, geo, mpg, mpg%nnreg(0), 
      &    solvemt, itcnt, rxg, ro, pr, wrk0, smt, flct, cvct, dv%resmt, 
      &    ctcft, dv%corut, dv%pccm, aa, wrk1, 'b2usmo_total')
-        last_solve_9(0:nnreg(0)) = solvemt(0:nnreg(0))
+        last_solve_9(0:mpg%nnreg(0)) = solvemt(0:mpg%nnreg(0))
       else
         dv%pccm  = 0.0_R8
         dv%resmt = 0.0_R8

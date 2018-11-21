@@ -277,7 +277,6 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       idum(3) = mpg%nVmxFc
       idum(4) = mpg%nCmxNv
       call cfwuin (nout(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      lblgm = 'Test for b2fgmtry_us'
       call cfwuch (nout(1), 120, lblgm, 'label')
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
@@ -286,7 +285,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       idum(2) = ns
       call cfverw (nout(2), newversion)
       call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
-      call cfwuch (nout(2), 120, lblmn, 'label')
+      call cfwuch (nout(2), 120, lblps, 'label')
       call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
 
 *   ..write state and geometry

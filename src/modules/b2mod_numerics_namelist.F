@@ -1,6 +1,5 @@
       module b2mod_numerics_namelist
       use b2mod_types
-      use b2mod_indirect
       implicit none
 
 #ifdef ALLOCATE_AND_NAMELIST
@@ -21,25 +20,26 @@
      *   last_solve_9(:)
 #else
 #     include "DIMENSIONS.F"
-      integer NSDMAX
+      integer NSDMAX, CVREGMAX
       parameter (NSDMAX=DEF_NSD)
-      real (kind=R8), save :: dtco(0:nsdmax-1,0:NNREGMAX)
-      real (kind=R8), save :: dtmo(0:nsdmax-1,0:NNREGMAX)
-      real (kind=R8), save :: dtee(0:NNREGMAX)
-      real (kind=R8), save :: dtei(0:NNREGMAX)
-      logical, save :: solveco(0:nsdmax-1,0:NNREGMAX)
-      logical, save :: solvemo(0:nsdmax-1,0:NNREGMAX)
-      logical, save :: solvemt(0:NNREGMAX)
-      logical, save :: solvepo(0:NNREGMAX)
-      logical, save :: solveee(0:NNREGMAX)
-      logical, save :: solveei(0:NNREGMAX)
-      logical, save :: solveet(0:NNREGMAX)
-      logical, save :: last_solve_5(0:NNREGMAX)
-      logical, save :: last_solve_9(0:NNREGMAX)
+      parameter (CVREGMAX=8)
+      real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX)
+      real (kind=R8), save :: dtmo(0:nsdmax-1,0:CVREGMAX)
+      real (kind=R8), save :: dtee(0:CVREGMAX)
+      real (kind=R8), save :: dtei(0:CVREGMAX)
+      logical, save :: solveco(0:nsdmax-1,0:CVREGMAX)
+      logical, save :: solvemo(0:nsdmax-1,0:CVREGMAX)
+      logical, save :: solvemt(0:CVREGMAX)
+      logical, save :: solvepo(0:CVREGMAX)
+      logical, save :: solveee(0:CVREGMAX)
+      logical, save :: solveei(0:CVREGMAX)
+      logical, save :: solveet(0:CVREGMAX)
+      logical, save :: last_solve_5(0:CVREGMAX)
+      logical, save :: last_solve_9(0:CVREGMAX)
 #endif
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
-      real (kind=R8), allocatable, save :: time_factor(:,:)
+      real (kind=R8), allocatable, save :: time_factor(:)
       character*256, save :: numerics_filename
       real (kind=R8), save :: numerics_time_mod
       real (kind=R8), save :: numerics_time_switch
@@ -56,14 +56,14 @@
 
       contains
 
-      subroutine alloc_b2mod_numerics(nxd,nyd,nsd)
+      subroutine alloc_b2mod_numerics(nCv,nsd,nnreg)
       implicit none
-      integer nxd,nyd,nsd
+      integer nCv,nsd,nnreg(0:1)
 
       if (b2mod_numerics_allocated) return
       write(*,*) 'Allocating space for b2mod_numerics'                !srv 25.02.06 11.06.08
 
-      allocate(time_factor(-1:nxd,-1:nyd))
+      allocate(time_factor(nCv))
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(dtco(0:nsd-1,0:nnreg(0)))
       allocate(dtmo(0:nsd-1,0:nnreg(0)))
@@ -81,8 +81,7 @@
 #else
       call xertst (nsd.le.nsdmax,
      1 'increase DEF_NSD in DIMENSIONS.F')
-      call xertst (nnreg(0).le.nnregmax,
-     1 'increase NNREGMAX in b2mod_indirect')
+      call xertst (nnreg(0).le.cvregmax,'increase CVREGMAX')
 #endif
       dtco=1.0_R8
       dtmo=1.0_R8
@@ -134,12 +133,13 @@
       return
       end subroutine dealloc_b2mod_numerics
 
-      subroutine read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
+      subroutine read_b2mod_numerics_namelist(nCv,nsmin,nsmax,nnreg,
+     .  cvOnClosedSurface)
       implicit none
 
-      integer nx,ny,nsmin,nsmax
-      logical :: file_ok
-      integer ix,iy
+      integer nCv,nsmin,nsmax,nnreg(0:1)
+      logical :: file_ok, cvOnClosedSurface(nCv)
+      integer iCv, is, ireg
       real (kind=R8) :: ttf
       character*260 filename
 
@@ -154,11 +154,11 @@
         read(99,numerics)
 #endif
         write(*,*) 'Read namelist numerics from ',trim(filename)
-        do ix = 0, nnreg(0)
-          solveet(ix) = solveee(ix).or.solveei(ix)
-          solvemt(ix) = .false.
-          do iy = nsmin, nsmax-1
-            solvemt(ix) = solvemt(ix) .or. solvemo(iy,ix)
+        do ireg = 0, nnreg(0)
+          solveet(ireg) = solveee(ireg).or.solveei(ireg)
+          solvemt(ireg) = .false.
+          do is = nsmin, nsmax-1
+            solvemt(ireg) = solvemt(ireg) .or. solvemo(is,ireg)
           end do
         end do
       else
@@ -185,17 +185,15 @@
      & 'faulty parameter dtei')
 
 c additional time-modification factor
-!WG_TODO      ttf=core_dt_suppression
-!WG_TODO      do iy=-1,ny
-!WG_TODO        if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
-!WG_TODO        do ix=-1,nx
-!WG_TODO          if(on_closed_surface(ix,iy)) then
-!WG_TODO            time_factor(ix,iy)=ttf
-!WG_TODO          else
-!WG_TODO            time_factor(ix,iy)=1.0_R8
-!WG_TODO          endif
-!WG_TODO        enddo
-!WG_TODO      enddo
+      ttf=core_dt_suppression
+      do iCv = 1,nCv
+        ttf=min(ttf*core_dt_factor,1.0_R8)
+        if(cvOnClosedSurface(iCv)) then
+          time_factor(iCv)=ttf
+        else
+          time_factor(iCv)=1.0_R8
+        endif
+      enddo
 
       return
  999  call xerrab ('Error while reading NUMERICS namelist!')

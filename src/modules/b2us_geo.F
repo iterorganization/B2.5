@@ -280,6 +280,9 @@
       call intface(nCv,nFc,mpg%fcCv,gm%fcVol,gm%cvHz,gm%fcPbshz)
       gm%fcPbshz = gm%fcPbs * gm%fcPbshz
 
+*   ..compute Bz/B**2 - Bz/<B**2>
+      call b2xbzb (nCv, mpg, gm%cvBb, gm%cvVol, gm%cvBzb)
+
 *   ..modify geometry to recover 5-point stencil behavior
       ! only supported for cases derived from original, structured grid
       if (use_9pt_stencil.eq.0) then
@@ -295,9 +298,6 @@
           call xerrab ('5-point stencil option not supported for UG')
         endif
       endif
-
-*   ..compute Bz/B**2 - Bz/<B**2>
-      call b2xbzb (nCv, mpg, gm%cvBb, gm%cvVol, gm%cvBzb)
 
       return
       end subroutine init_geometry
