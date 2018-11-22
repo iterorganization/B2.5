@@ -146,11 +146,11 @@
      *  b2sigp_smogpgr0to3(:,:,:,:),
      *  b2sigp_smogpgr_bal(:,:,:),
      *  b2sigp_pstat0to3(:,:,:,:),
-     *  b2sigp_pstat_bal(:,:,:)
+     *  b2sigp_pstat_bal(:,:,:),
      *  b2sigp_pstati0to3(:,:,:,:),
      *  b2sigp_pstati_bal(:,:,:),
      *  b2sigp_pstate0to3(:,:,:),
-     *  b2sigp_pstate_bal(:,:),
+     *  b2sigp_pstate_bal(:,:)
 *     Time-averaged quantities
       real (kind=R8), allocatable, save ::
      *  fmo_flua_av(:,:,:,:),
