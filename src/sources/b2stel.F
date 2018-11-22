@@ -418,6 +418,11 @@ c accounted for)
           she0(ix,iy,0) = she0(ix,iy,0)+rf0*t0
           she0(ix,iy,3) = she0(ix,iy,3)-
      &     (1.0_R8+rf0)*t0/(ne(ix,iy)*te(ix,iy))
+          if (balance_netcdf.ne.0) then
+            b2stel_she0to3(ix,iy,0,is) = rf0*t0
+            b2stel_she0to3(ix,iy,3,is) =
+     &           -(1.0_R8+rf0)*t0/(ne(ix,iy)*te(ix,iy))
+          endif
           rqahe(ix,iy,is) = rqahe(ix,iy,is) + t0
 *      ..compute line radiation rate for is->any
           t0 = phm0*rrd(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)      !srv 05.06.18
@@ -579,7 +584,6 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stel_sna_rec0to1 = sna0_rec
         b2stel_smq_ion0to3 = smq0_ion
         b2stel_smq_rec0to3 = smq0_rec
-        b2stel_she0to3=she0
         b2stel_shi_ion0to3=shi0_ion
         b2stel_shi_rec0to3=shi0_rec
       endif
