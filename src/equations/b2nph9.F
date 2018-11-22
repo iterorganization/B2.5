@@ -200,7 +200,7 @@
 
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
-        call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
+        call update_balance_sources_heat(nx,ny,ne,ni,te,ti,ns)
       endif
 
 *   ..compute provisional reshe, reshi
