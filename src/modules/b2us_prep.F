@@ -453,6 +453,10 @@ cwdk      type(B2StateExt), public, save :: state_ext
 
       mxReg = maxval(m%cvReg(1:m%nCv))
 
+! identify the various flux surfaces
+      m%fsCv = 0 ! init to 0
+      m%fsFc = 0 ! init to 0
+
       ifs = 0
       icv = 0
       ifcc = 0

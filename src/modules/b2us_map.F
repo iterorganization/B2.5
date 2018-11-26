@@ -325,7 +325,9 @@ cwdk  can be derived directly from data in that file
 
 *   ..identify cells on closed surfaces
       if (m%nnreg(0).eq.1) then
-        call xerrab ('WG_TODO!')
+        write (*,*) ('WG-warning: periodic_bc not yet supported.')
+        write (*,*) ('WG-warning: assuming periodic_bc .eq. 0.')
+        m%cvOnClosedSurface = .false.
 !WG_TODO        m%cvOnClosedSurface = periodic_bc.eq.1
       else if (m%nnreg(0).eq.2 .or. m%nnreg(0).eq.4 .or.
      .         m%nnreg(0).eq.5 .or. m%nnreg(0).eq.8) then
