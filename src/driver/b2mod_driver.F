@@ -2323,7 +2323,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       endif
 *   ..mms error analysis
       if(use_mms.ne.0) then                                              !srv 26.02.18 {
-        call calc_err(nCv, ns, state % pl, state % dv)
+        call calc_err(mpg%nCv, ns, state % pl, state % dv)
       endif                                                              !srv 26.02.18 }
 #ifdef WG_TODO
       call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01

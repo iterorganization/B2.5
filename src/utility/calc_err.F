@@ -82,9 +82,9 @@
      &    exact_po(nCv), err(nCv), era(nCv),
      &    uacf(nCv), L2norm, Cnorm                                      !srv 09.07.18
        logical l_exist
-       character chns*2, chnCv*3
+       character chns*2, chnCv*6
 
-       write (chnCv,'(i3.3)') nCv
+       write (chnCv,'(i6.6)') nCv
        open(71, file='output/'//'errors_'//chnCv//'.dat')
 
        inquire(file='../exact_na.dat',exist=l_exist)
@@ -106,12 +106,12 @@
          if(all(exact_na(:,is).ne.0.0_R8)) then
           err = abs(era)/exact_na(:,is)
           ind = maxloc(err,1)
-          write(71,"(' Max|eraNa',a2,'/Na|',a2,'|   =',es10.3,a,i4)")
+          write(71,"(' Max|eraNa',a2,'|/Na',a2,'   =',es10.3,a,i4)")
      &          chns, chns, err(ind),
      &      '   is in iCv = ', ind
           call my_out_us(70,nCv,0,err,'na'//chns//'_rerr')
          else
-          write(71,"(' Max|eraNa',a2,'/Na',a2,'|   =',a4)") 
+          write(71,"(' Max|eraNa',a2,'|/Na',a2,'   =',a4)") 
      &          chns, chns,' inf'                                       !srv 09.07.18
          endif
 
