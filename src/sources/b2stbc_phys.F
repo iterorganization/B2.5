@@ -122,8 +122,8 @@
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: istyle_cur_contr_on_S_and_N = 2                  !srv 01.02.09 03.03.15
-      integer, save :: bcene_16_style =0, bceni_16_style = 0            !srv 16.02.12
-      integer, save :: bcene_15_style =0                                !srv 19.04.13
+      integer, save :: bcene_16_style = 0, bceni_16_style = 0           !srv 16.02.12
+      integer, save :: bcene_15_style = 0                               !srv 19.04.13
       integer, save :: pot_eq = 1                                       !srv 27.02.13
       integer, save :: use_astra
       integer, save :: drift_style
@@ -2443,6 +2443,14 @@ cxpb Careful here because of BC number clash
      .       'constant density',CONPAR(IS,IB,1)
             call xertst(is.eq.ismain,
      1       'BCCON = 21 is applied for main ion only ')
+            if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
+              write(0,*)
+     &         'Use of BCCON=21 only meant for single-fluid runs!'
+              write(0,*) 'Use BCCON=25 instead!'
+              write(6,*)
+     &         'Use of BCCON=21 only meant for single-fluid runs!'
+              write(6,*) 'Use BCCON=25 instead!'
+            endif
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
@@ -2556,6 +2564,14 @@ cxpb Careful here because of BC number clash
      &       'given total particle flux with constant',
      &       ' density for ion is =', is
 !           write all boundaries with this type of boundary condition
+            if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
+              write(0,*)
+     &         'Use of BCCON=22 only meant for single-fluid runs!'
+              write(0,*) 'Use BCCON=26 instead!'
+              write(6,*)
+     &         'Use of BCCON=22 only meant for single-fluid runs!'
+              write(6,*) 'Use BCCON=26 instead!'
+            endif
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
@@ -2693,6 +2709,14 @@ cxpb Careful here because of BC number clash
      .       'given total particle flux with constant',
      &       ' density for main ion is =', ismain
 !          write all boundaries with this type of boundary condition
+            if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
+              write(0,*)
+     &         'Use of BCCON=23 only meant for single-fluid runs!'
+              write(0,*) 'Use BCCON=27 instead!'
+              write(6,*)
+     &         'Use of BCCON=23 only meant for single-fluid runs!'
+              write(0,*) 'Use BCCON=27 instead!'
+            endif
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
@@ -8292,9 +8316,11 @@ cxpb Careful here because of BC number clash
               end if
               if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
                 write(0,*)
-     &       'Use of BCENI=23 only meant for runs without impurities!'
+     &           'Use of BCENI=23 only meant for single-fluid runs!'
+                write(0,*) 'Use BCENI=26 instead!'
                 write(6,*)
-     &       'Use of BCENI=23 only meant for runs without impurities!'
+     &           'Use of BCENI=23 only meant for single-fluid runs!'
+                write(6,*) 'Use BCENI=26 instead!'
               endif
             endif
             if(BCCHAR(IBW).EQ.'S'.and.
@@ -8419,9 +8445,11 @@ cxpb Careful here because of BC number clash
               end if
               if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
                write(0,*)
-     &       'Use of BCENI=24 only meant for runs without impurities!'
+     &          'Use of BCENI=24 only meant for single-fluid runs!'
+               write(0,*) 'Use BCENI=27 instead!'
                write(6,*)
-     &       'Use of BCENI=24 only meant for runs without impurities!'
+     &          'Use of BCENI=24 only meant for single-fluid runs!'
+               write(6,*) 'Use BCENI=27 instead!'
               endif
             endif
             if(BCCHAR(IBW).EQ.'S'.and.

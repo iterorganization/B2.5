@@ -950,11 +950,15 @@ cxpb
             ixr=rightix1(ix,iy)
             do while(ixr.ne.ix.and.ixr.ge.-1.and.ixr.le.nx1)
               zone(ixr)=ireg
+              call xertst(rightix1(ixr,iy).ne.ixr,
+     .         'Problem in connectivity to the right!') 
               ixr=rightix1(ixr,iy)
             enddo
             ixl=leftix1(ix,iy)
             do while(ixl.ne.ix.and.ixl.ge.-1.and.ixl.le.nx1)
               zone(ixl)=ireg
+              call xertst(leftix1(ixl,iy).ne.ixl,
+     .         'Problem in connectivity to the left!')
               ixl=leftix1(ixl,iy)
             enddo
           endif
