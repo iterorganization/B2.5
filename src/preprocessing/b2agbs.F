@@ -96,11 +96,11 @@
           else if (i.eq.iseg(jxi,iy)) then
             ixref(i,iy) = jxi
           else
-            ix = ixleft(i,iy)
-            do j = 1, isnum(i,iy)/2
-              ix = rightix(ix,iy)
-            end do
-            ixref(i,iy) = ix
+!            ix = ixleft(i,iy)
+!            do j = 1, isnum(i,iy)/2
+!              ix = rightix(ix,iy)
+!            end do
+            ixref(i,iy) = ixleft(i,iy) + 1
           end if
         end do
       end do
