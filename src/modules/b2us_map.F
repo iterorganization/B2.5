@@ -223,7 +223,9 @@
 
 
       subroutine read_mapping (iun, mpg)
-
+#ifdef WG_DEBUG
+      use b2us_debug
+#endif
       implicit none
       integer, intent(in) :: iun
       integer :: idum(0:9)
@@ -237,6 +239,10 @@
       mpg%nx    = idum(0)
       mpg%ny    = idum(1)
       mpg%nncut = idum(2)
+#ifdef WG_DEBUG
+      nx_st = mpg%nx
+      ny_st = mpg%ny
+#endif
 
       call cfruin (iun, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
       call cfruin (iun, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
@@ -270,7 +276,6 @@
       integer, intent(in) :: nout
       integer :: idum(0:9)
       type (mapping), intent (in) :: mpg
-
 
       idum(0) = mpg%isClassicalGrid
       call cfwuin (nout, 1, idum, 'isClassicalGrid')

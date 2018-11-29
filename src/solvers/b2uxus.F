@@ -105,7 +105,7 @@
          call ipgeti ('b2uxus_mult_solvdim', mult_solvdim)
          call ipgeti ('b2uxus_mult_solvdim1', mult_solvdim1)
          nnd=nCv
-         n_nonzeros=mult_nonzero*nnd
+         n_nonzeros=mpg%nCmxNv
          solvdim=mult_solvdim*n_nonzeros
          solvdim1=mult_solvdim1*n_nonzeros
          call alloc_b2mod_ma28_for_us                                  !sv 13.10.06
