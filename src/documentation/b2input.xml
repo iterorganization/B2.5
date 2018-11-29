@@ -6455,8 +6455,8 @@
 				<default>1.0</default>
 				<type>real*8 array of size (0:NS-1)</type>
 				<description>
-				Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a.
-					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below.
+				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a.
+				  See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
 				</description>
 			</switch>
 			<switch>
