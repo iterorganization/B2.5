@@ -73,16 +73,16 @@
         funf(iFc) = 0.5_R8*(fun(mpg%fcCv(iFc,1)) + fun(mpg%fcCv(iFc,2)))
 
 *    ..poloidal flow
-        t0 = sign(hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) - 
-     &    0.5_R8*abs(flo(iFc,0)), con(iFc,0))/(geo%fcQalf(iFc,0) + eps) 
+        t0 = (hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) - 
+     &    0.5_R8*abs(flo(iFc,0)))/(geo%fcQalf(iFc,0) + eps) 
         flowf(iFc,0) =
      &    upwind(flo(iFc,0),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2))) 
         flow(iFc,0) = 
      &    flowf(iFc,0) - t0*dfun(iFc,0)
 
 *    ..radial flow
-        t0 = sign(hybr(flo(iFc,1),con(iFc,1)*geo%fcQalf(iFc,1)) - 
-     &    0.5_R8*abs(flo(iFc,1)), con(iFc,1))/(geo%fcQalf(iFc,1) + eps)  
+        t0 = (hybr(flo(iFc,1),con(iFc,1)*geo%fcQalf(iFc,1)) - 
+     &    0.5_R8*abs(flo(iFc,1)))/(geo%fcQalf(iFc,1) + eps)  
         flowf(iFc,1) = 
      &    upwind(flo(iFc,1),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2)))
         flow(iFc,1) = 

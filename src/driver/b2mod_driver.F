@@ -1,20 +1,20 @@
       module b2mod_driver
       use b2mod_types
       use b2mod_version
-      use b2mod_geo
-      use b2mod_ma28
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_transport
+!WG_RM      use b2mod_geo
+!WG_RM      use b2mod_ma28
+!WG_RM      use b2mod_plasma
+!WG_RM      use b2mod_rates
+!WG_RM      use b2mod_residuals
+!WG_RM      use b2mod_sources
+!WG_RM      use b2mod_transport
       use b2mod_tallies
-      use b2mod_indirect
+!WG_RM      use b2mod_indirect
       use b2mod_constants
-      use b2mod_geo_corner
+!WG_RM      use b2mod_geo_corner
       use b2mod_time
       use b2mod_diag
-      use b2mod_work
+!WG_RM      use b2mod_work
       use b2mod_elements
       use b2mod_feedback
       use b2mod_sputter
@@ -23,27 +23,30 @@
       use b2mod_first_flight
       use b2mod_input_profile
       use b2mod_user_namelist
-      use b2mod_ma28_for_7diag
-      use b2mod_ma28_for_9diag
+!WG_RM      use b2mod_ma28_for_7diag
+!WG_RM      use b2mod_ma28_for_9diag
+      use b2mod_ma28_for_us
       use b2mod_transport_models
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
-      use b2mod_anomalous_transport
+!WG_RM      use b2mod_anomalous_transport
       use b2mod_transport_disruption
       use b2mod_b2cmfs
-      use b2mod_b2cmgs
+!WG_RM      use b2mod_b2cmgs
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
-      use b2mod_external
+!WG_RM      use b2mod_external
       use b2mod_mwti
       use b2mod_balance !djm Jan2017
-     & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
+     & , only : balance_netcdf, alloc_b2mod_balance,!WG_TODO write_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
-     &          balance_average, update_average_balance
+     &          balance_average!WG_TODO, update_average_balance
+      use b2mod_equation_sources                                        !srv 26.02.18
+      use b2mod_boundary_sources                                        !srv 26.02.18
       use b2us_map
       use b2us_geo
       use b2us_plasma
@@ -65,7 +68,7 @@
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 #else
       use b2mod_braeir
-      use b2mod_eirbra
+!WG_RM      use b2mod_eirbra
 #endif
       use b2mod_b2_to_astra
      , ,only: write_b2_to_astra
@@ -82,8 +85,7 @@
       integer ncall, ntim, mvinc, mvnum, jsep, jxi, jxa,
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
      &  nxtl, nxtr
-      integer nscx, iscx(0:nscxmax-1)
-      save nscx, iscx, isfb,
+      save isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
       integer, save :: b2mndr_redef_pbs = 0
@@ -91,6 +93,8 @@
       integer, save :: boundary_namelist = 0
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
+      integer, save :: use_mms = 0                                   !srv 26.02.18
+      integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
       integer, save :: use_9pt_stencil = 1
       integer, save :: use_unstructured_grid = 0
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
@@ -109,7 +113,7 @@
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
       character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
       character chns*3                                               !srv 25.01.16
-      integer n2, itim, ierr, edition, b2time, coronal, use_eirene,
+      integer itim, ierr, edition, b2time, coronal, use_eirene,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
@@ -156,11 +160,6 @@
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
       real (kind=R8) :: hzconst                                      !srv 30.01.10
-
-      type(mapping), public, save :: mpg
-      type(geometry), public, save :: gm
-      type(B2State), public, save :: state
-      type(B2StateExt), public, save :: state_ext
 
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
@@ -216,18 +215,24 @@
 
       contains
 
-      subroutine b2mndr_0 (ninp, nout, nx, ny, ns, ns0)
+      subroutine b2mndr_0 (ninp, nout, ns, ns0, geo, mpg, state, 
+     &  state_ext)
       implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
-      integer ninp(0:5), nout(0:9), nx, ny, ns, ns0
+      integer ninp(0:5), nout(0:9)
 #else
-      integer ninp(0:5), nout(0:8), nx, ny, ns, ns0
+      integer ninp(0:5), nout(0:8)
 #endif
-      integer nCv, nFc
+      integer nCv, nFc, nVx, ns, ns0
+      type(mapping), intent (inout)    :: mpg
+      type(geometry), intent (inout)   :: geo
+      type(B2State), intent (inout)    :: state
+      type(B2StateExt), intent (inout) :: state_ext
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..local variables
+      real (kind=R8) :: wrkf(mpg%nFc)
       real (kind=R8) ::
      1  rescale_sa(0:nsdecl-1), rescale_ra(0:nsdecl-1),
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
@@ -872,8 +877,11 @@
       call subini ('b2mndr_0')
 *   ..test input data
 *     (done in b2mnds)
+      nCv = mpg%nCv
+      nFc = mpg%nFc
+      nVx = mpg%nVx
 *   ..initialise files and common
-      call b2mnds (ninp, nout, nx, ny, ns, ns0)
+      call b2mnds (ninp, nout, nCv, nFc, ns, ns0)
 *   ..set internal parameters on first (and only) call
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
@@ -882,13 +890,20 @@
        balance_average = 0 ! Default: do not perform averages of balance arrays
        call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
        call ipgeti ('balance_average',balance_average)
-       if (balance_netcdf.ne.0) call alloc_b2mod_balance(nx,ny,ns)
+       if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
        call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
+       call ipgeti ('b2mndr_use_mms',use_mms)                           !srv 26.02.18 {
+       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
+       if(boundary_sources.ne.0) 
+     &    call alloc_b2mod_boundary_sources(nCv,ns)
+       call ipgeti ('b2mndr_equation_sources', equation_sources)
+       if(equation_sources.ne.0) 
+     &    call alloc_b2mod_equation_sources(nCv,ns)                   !srv 26.02.18 }
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
        call xertst (0.le.ntim.and.0.0_R8.lt.dtim,
      &   'faulty internal parameter ntim, dtim')
-       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                 !srv 11.01.13
+       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                    !srv 11.01.13
        call ipgetr ('b2mndr_stim', stim)
        call ipgetr ('b2mndr_etim', etim)
        call ipgetr ('b2news_BoRiS', BoRiS)
@@ -1149,23 +1164,27 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      &  call dpc_mod_rates(te_hot, ne_hot_frac)
        call ipgeti ('b2mndr_external_species', external_species)
        if (external_species.ne.0) then
+        call xerrab ('WG -- External species not yet supported')
+cwdk for now, dummy external state is created in b2mod_main
+#ifdef WG_TODO
         call read_b2mod_external(nx,ny,ns,ismain)
        else
         call alloc_b2mod_external_dummy(nx,ny)
+#endif
        endif
 *   ..find nscx, iscx
 *     (indices for neutral hydrogen species)
-       nscx = 0
+       state%rt%nscx = 0
        do is = 0, ns-1
         if (is_neutral(is).and.nint(zn(is)).eq.1) then
-         call xertst (nscx.lt.nscxmax,
+         call xertst (state%rt%nscx.lt.state%rt%nscxmax,
      1    'too many neutral hydrogen species')
-         iscx(nscx) = is
-         nscx = nscx+1
+         state%rt%iscx(state%rt%nscx) = is
+         state%rt%nscx = state%rt%nscx+1
         endif
        enddo
-       do k = nscx, nscxmax-1
-        iscx(k) = -1
+       do k = state%rt%nscx, state%rt%nscxmax-1
+        state%rt%iscx(k) = -1
        enddo
        call ipgetr ('b2tfnb_ycur', ycur)
        call ipgetr ('b2tfnb_xcur', xcur)
@@ -1178,8 +1197,8 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .  'Currents assignment to ions only supported for single '//
      .  'hydrogenic species!')
 *
-       ixfb=rratio(5*nx,8)
-       iyfb=rratio(ny,2)
+       ixfb=rratio(nCv,8) !WG_TODO dummy values provided now; probably need icvfb instead...
+       iyfb=rratio(nCv,2) !WG_TODO dummy values provided now
        isfb=ismain
        call ipgetr ('b2mndr_ixfb', ixfb)
        call ipgetr ('b2mndr_iyfb', iyfb)
@@ -1206,8 +1225,6 @@ csw 09oct2012
       else
        call xerrab ('error, b2mndr has been called more than once')
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 
 * ..initialisation
 #ifdef USE_IMPGYRO
@@ -1262,14 +1279,14 @@ csw 09oct2012
       CALL EIRENE_ALLOC_CCOUPL(1)
       CALL EIRENE_ALLOC_CTRCEI
 #else
-      call alloc_b2mod_braeir(nx,ny,ns)
-      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
+      call alloc_b2mod_braeir(nCv,nFc,ns)
+      call createB2SourceEir( nCv, ns, nstra, state % sr_eir )
 #endif
 
 *   ..read geometry and metric
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+      call read_map_geo (ninp(1), mpg, geo)
+      call init_geometry(mpg, geo)
+
       call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
       if (b2mndr_redef_pbs.ne.0) then
         if (redef_pbs.eq.1) then
@@ -1284,6 +1301,7 @@ csw 09oct2012
           call xerrab ('Obsolete switch b2mndr_redef_pbs!')
         endif
       endif
+#ifdef WG_TODO
 ! can only be calculated after the indirect arrays have been read
       ix1=int(ixfb)
       call xertst(0.le.ix1.and.ix1.lt.nx, 'faulty ixfb (1)')
@@ -1310,106 +1328,37 @@ csw 09oct2012
       write(*,*) 'ix# ', ix1, ix2, ix3, ix4, ix5
       write(*,*) 'iy# ', iy1, iy2, iy3, iy4, iy5
       write(*,*) 'ax,ay ', ax, ay
+#endif
 !
-      call alloc_b2mod_tallies(nnreg,ns)
-      call get_jsep(nx,ny,jxi,jxa,jsep)
-      call get_nxt(nx, nxtl, nxtr)
-      if (bb(jxa,jsep,2).ne.0.0_R8) then
-        signmf = bb(jxa,jsep,2)/abs(bb(jxa,jsep,2))
-      else
-        signmf = 0.0_R8
-        call xerrab ('error in b2mndr , signmf = 0 in b2mndr')         !srv 09.10.09
-      endif
-      write(*,*) 'conn'
-      do iy=-1,ny
-         conn(iy)=0.0_R8
-         do ix=-1,nx
-            ! do not count guard cells in annular cases
-            if(nnreg(0).eq.1 .and. (ix.eq.-1 .or. ix.eq.nx)) cycle
-            if(on_closed_surface(ix,iy))
-     >       conn(iy)=conn(iy)+hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))
-         enddo
-         write(*,*) iy,conn(iy)
-      enddo
+      call alloc_b2mod_tallies(mpg%nnreg,ns)
+#ifdef WG_TODO
+!moved to init_geometry
 *  .. calculate 1/B/B                                                    !sv
-      do iy=-1,ny                                                        !sv
-        do ix=-1,nx                                                      !sv
-          OnedBsq(ix,iy)=1.0_R8/bb(ix,iy,3)**2                           !sv
-        enddo                                                            !sv
-      enddo                                                              !sv
+      geo%cvOnedBsq = 1.0_R8/geo%cvBb(:,3)**2
 *  .. interpolate OnedBsq for corners of cell                            !sv
-      call my_intcor (nx,ny,vol,periodic_bc,nncut,
-     1     leftix,leftiy,rightix,rightiy,
-     1     bottomix,bottomiy,topix,topiy,region,OnedBsq,OnedBsqc)        !sv
+      call intvertex(nCv,nVx,mpg,geo%cvVol,geo%cvOnedBsq,geo%vxOnedBsq)
 *  .. interpolate magnetic field to cell corners                         !xpb
-c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
-     1     leftix,leftiy,rightix,rightiy,
-     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)                 !xpb
-*   ..compute extrapolated wbbc(:,:,3) component
-      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
+      call intvertex1(nCv,nVx,2,mpg,geo%cvVol,geo%cvBb,geo%vxBb)
+*   ..compute extrapolated vxBb(:,3) component
+      ! guarantee that bb(3)=sqrt(bb(0:2)**2)
+      geo%vxBb(:,3) = 
+     .  sqrt(geo%vxBb(:,0)**2+geo%vxBb(:,1)**2+geo%vxBb(:,2)**2)
 *   ..compute hz                                                         !srv 09.01.01  09.06.08 {
 c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 !      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)              !srv 09.01.01
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
       hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
       hzconst = 1.0_R8                                                   !srv 30.01.10
-      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
-*   ..compute pbshz (magnetic field pitch * surface area  at cell faces * hz)
-c      wrk0 = hz*vol
-c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
-      do iy=-1,ny                                                        !srv 11.03.08 {
-        do ix=-1,nx
-          if(leftix(ix,iy).ne.-2) then
-            pbshz(ix,iy,0)=pbs(ix,iy,0)*
-     &       (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))
-     &       +hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))
-     &       /(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-          else
-            pbshz(ix,iy,0)=0.0e0_R8
-          endif
-        enddo
-      enddo
-      do iy=-1,ny
-        do ix=-1,nx
-          if(bottomiy(ix,iy).ne.-2) then
-            pbshz(ix,iy,1)=pbs(ix,iy,1)*
-     &       (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))
-     &       +hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))
-     &       /(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
-          else
-            pbshz(ix,iy,1)=0.0e0_R8
-          endif
-        enddo
-      enddo                                                          !srv 11.03.08 }
-cwdk  For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
-cwdk  temporary computation; should go into geometry routines!
-cwk:  this interpolation for backwards compatibility in computation of radial conductances etc.
-      do ix = -1, nx
-       do iy = -1, ny
-        if (bottomiy(ix,iy).eq.-2) then
-         qc(ix,iy,1)=0.0_R8
-        else
-         qc(ix,iy,1) =
-     .    (hy(ix,iy)*qz(ix,iy,1) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
-     .     qz(bottomix(ix,iy),bottomiy(ix,iy),1))/ 
-     .    (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
-         qs(ix,iy,1) =
-     .    (hy(ix,iy)*qz(ix,iy,0) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
-     .     qz(bottomix(ix,iy),bottomiy(ix,iy),0))/ 
-     .    (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
-        endif
-       enddo
-      enddo
-cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
-      qs(:,:,1) = sign(sqrt(1.0_R8 - qc(:,:,1)**2),qs(:,:,1))
+      geo%cvHz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*geo%cvVol/geo%cvS       !srv 16.06.09
+*   ..compute fcPbshz (magnetic field pitch * surface area  at cell faces * hz)
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrkf)
+      geo%fcPbshz = geo%fcPbs * wrkf
+*   ..modify geometry to recover 5-point stencil
       if (use_9pt_stencil.eq.0) then
-cwdk    Use 5-point stencil. Overwrite values of qz and qs (sin) to ensure
-cwdk    backwards compatible behavior
-        qs(:,:,:) = 0.0_R8 ! will make all 9-point contributions on faces 0
-        qz(:,:,0) = 0.0_R8 ! will make all 9-point contributions in cell centers 0
-!        qc(:,:,1) = 1.0_R8 ! keep qc(:,:,0) unmodified, for corrections to poloidal face areas
+        call xerrab ('5-point stencil option not yet adapted for UG')
       endif
+#endif
+#ifdef WG_TODO
 *   ..find the poloidal number of midplane cell as a number of cell with min Bz
       if(nncut.eq.2) then                                            !srv 22.05.09 {
         nmdpl = rightcut(nncut)
@@ -1484,18 +1433,16 @@ cwdk    backwards compatible behavior
         iy = ny
         crdy_c_cell(ix,iy) = crdy_surf(ix,iy)
       enddo                                                          !srv 02.05.09 }
-*
+#endif
+#ifdef WG_TODO
+!moved to init_geometry
 *   ..compute Bz/B**2 - Bz/<B**2>
-      call b2xbzb (nx, ny, bb, vol, bzb)                             !srv 13.10.06 09.06.08 23.07.10}
+      call b2xbzb (nCv, mpg, geo%cvBb, geo%cvVol, geo%cvBzb)                             !srv 13.10.06 09.06.08 23.07.10}
+#endif
 *   ..read initial state
-      call b2rups (ninp(3), nx, ny, ns0, ne, na, ua, uadia, te, ti, po,
-     &  fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     &  b2fstati_version)
+      call read_plasma_state (ninp(3), ns, mpg%nCv, mpg%nFc, state)
+      call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
+!WG_TODO      call init_state(mpg, geo, state)
 
 #ifdef WG_TODO
 *   initialize 2d batch averages
@@ -1513,46 +1460,12 @@ cwdk    backwards compatible behavior
 #endif
       write (*,*) 'Starting conversion to unstructured format...'
 
-*   conversion to new, ustructured data-types
-      call calc_mapping (nx, ny, mpg)
-
+!WG_TODO: move this back to original location...
       if (boundary_namelist.ge.1) then
-        call initialize_b2mod_boundary(nx,ny,ns,0.0_R8)
-        call calc_mapping_bc (nx, ny, ns, mpg)
+        call initialize_b2mod_boundary(ns,mpg,0.0_R8)
       else 
         call xerrab('b2mndr -- specify BCs using boundary_namelist')
       endif
-
-      write (*,*) 'Mapping created'
-      
-
-
-      call prep_geometry (nx, ny,
-     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, gm, mpg)
-
-      write (*,*) 'Geometry created'
-      
-
-      call prep_plasma (nx, ny, ns,
-     .                    mpg%nCv, mpg%nCi, mpg%nFc, state)
-
-      write (*,*) 'State created'
-
-      call prep_plasma_ext(nx, ny, ns,
-     .                    mpg%nCv, mpg%nCi, mpg%nFc, state_ext)
-
-      write (*,*) 'State_ext created'
-
-      call write_mapping('mapping.dat', mpg)
-      call write_geometry('geometry.dat', mpg, gm)
-
-!      call my_out(70,nx,ny,na(-1,-1,1),'na_1_structured')
-!      call my_out_us(70,nCv,0,state%pl%na(1,1),'na_1_unstructured')
-
-
-*   ..set some local variables related to US grid
-      nCv = mpg % nCv
-      nFc = mpg % nFc
 
       if(iout.ne.0) then                                             !srv 25.01.16 {
        call my_out_us(70,nCv,0,state%dv%ne,'b2mndr_ne')
@@ -1580,14 +1493,18 @@ cwdk    backwards compatible behavior
        call my_out_us(70,nFc,1,state%dv%fhe(1,1),'b2mndr_fhey')
        call my_out_us(70,nFc,1,state%dv%fhi(1,0),'b2mndr_fhix')
        call my_out_us(70,nFc,1,state%dv%fhi(1,1),'b2mndr_fhiy')
-!       call my_out_us(70,nCv,0,qc,'b2mndr_qc')
-!       call my_out_us(70,nCv,0,qs,'b2mndr_qs0')
+       call my_out_us(70,nFc,1,geo%fcQgam(1,0),'b2mndr_fcQgam0')
+       call my_out_us(70,nFc,1,geo%fcQgam(1,1),'b2mndr_fcQgam1')
       endif                                                          !srv 25.01.16 }
       do is = 0,ns-1
         do iCv=1,nCv
           state % pl % na(iCv,is) = max(state % pl % na(iCv,is),na_min)
         enddo
       enddo
+      if(use_mms.ne.0) then                                          !srv 26.02.18 {
+*   ..reset initial state using exact solution 
+       call set_exact_solution(nCv, ns, state % pl, state % dv)
+      endif                                                          !srv 26.02.18 {
 *   ..test plasma state
       call b2xvps (nCv, nFc, ns, state % pl, state % dv)
 *   ..compute log-log electron rate coefficients
@@ -1812,7 +1729,7 @@ c   --> better way doing this is necessary)
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
       call alloc_b2mod_neutrals
-     & (nx,ny,ns,natm,nmol,nion,nstraid,nsts,sput_dst)
+     & (mpg%nCi/2,mpg%nCi/2,ns,natm,nmol,nion,nstraid,nsts,sput_dst)
       natmi = 0
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1
@@ -1820,11 +1737,11 @@ c   --> better way doing this is necessary)
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
-      call b2stbr_init (nx, ny, ns, BoRiS)
+      call b2stbr_init (ns, mpg, BoRiS)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 !      call read_neutrals_namelist(nx, ny, ns, .true.)
-      call calc_mapping_rc (nx, ny, ns, mpg)
+!WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
 
 #ifdef B25_EIRENE
 #ifndef HPUX
@@ -1860,6 +1777,8 @@ c new CDF movie option (1st frame at t=0)
       elapsedval = 0.0_R8
       stack_ptr = 0
       first_time_step=.true.
+      
+      write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
 
       call subend()
       return
@@ -1867,7 +1786,8 @@ c new CDF movie option (1st frame at t=0)
      . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
       end subroutine b2mndr_0
 
-      subroutine b2mndr_1 (nout, nx, ny, ns, add_ntim)
+      subroutine b2mndr_1 (nout, ns, add_ntim, geo, mpg, state, 
+     &  state_ext)
       implicit none
 #ifdef JET
       integer nout(0:9), nx, ny, ns, add_ntim
@@ -1877,6 +1797,10 @@ c new CDF movie option (1st frame at t=0)
 #ifdef WINDOWS
       logical(4) :: lresult
 #endif
+      type(mapping), intent (inout)    :: mpg
+      type(geometry), intent (inout)   :: geo
+      type(B2State), intent (inout)    :: state
+      type(B2StateExt), intent (inout) :: state_ext
       integer nCv, nFc, nVx
       integer i, is, js
       character*256 filename, fort31name
@@ -1902,6 +1826,8 @@ cwdk  set some integers
       nCv = mpg%nCv
       nFc = mpg%nFc
       nVx = mpg%nVx
+
+      write (*,*) 'b2mndr_1, start: nCv = ',nCv
 
     1 continue
       write(*,'(1x,a,i9,1p,g14.7,i9,i3,1x,l1)')
@@ -1969,8 +1895,9 @@ csw 09oct2012 set default potential already at this point (BCs)
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
           call b2mndt (nout, nCv, nFc, nVx, ns, nxtl, nxtr,
-     .      ismain, ismain0, nscx, nscxmax, iscx, itim, dtim, ntim, 
-     .      gm, mpg, state, state_ext, ierr)
+     .      ismain, ismain0, state%rt%nscx, state%rt%nscxmax, 
+     .      state%rt%iscx, itim, dtim, ntim, 
+     .      geo, mpg, state, state_ext, ierr)
 
           if(ierr.eq.10) then
             stack_ptr=stack_ptr+1
@@ -2154,7 +2081,7 @@ c new CDF movie option
         endif
         if (first_time_step) then
           if(.not.allocated(iz))
-     >     call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
+     >     call alloc_b2mod_diag(nCv,nFc,ns,nnreg(0),nstra,natm)
           call b2trci(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
           if (write_nml_user) call write_b2mod_user_namelist(nx,ns)
         endif
@@ -2243,6 +2170,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
 *       ..write additional save namelist data
+#ifdef WG_TODO
           filename='b2.feedback_save.parameters'
           call find_file(filename,found)
           if (found) call write_b2mod_feedback(99,savefile(13:16))
@@ -2263,7 +2191,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           if (found) call write_b2mod_transport_models(99,
      >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef(0,ns,nnreg)
-
+#endif
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) then
             call write_f44(savefile(13:16))
@@ -2323,26 +2251,21 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       return
       end subroutine b2mndr_1
 
-      subroutine b2mndr_2(nout, nx, ny, ns)
+      subroutine b2mndr_2(nout, ns, geo, mpg, state, state_ext)
       implicit none
 #ifdef JET
       integer nout(0:9), nx, ny, ns
 #else
       integer nout(0:8), nx, ny, ns
 #endif
+      type(mapping), intent (inout)    :: mpg
+      type(geometry), intent (inout)   :: geo
+      type(B2State), intent (inout)    :: state
+      type(B2StateExt), intent (inout) :: state_ext
       integer nCv, nFc
       character*256 filename
       logical found
       
-cwdk  back-conversion to structured grid
-      call to_struct_plasma (nx,ny,ns,mpg%nCv,mpg%nCi,mpg%nFc,state)
-cwdk  deallocation of unstructured types
-      call destroyB2State (state)
-      call dealloc_geometry (gm)
-      call dealloc_mapping_bc (mpg)
-      call dealloc_mapping_rc (mpg)
-      call dealloc_mapping (mpg)
-
       call subini ('b2mndr_2')
       if(quitexist)
      1 write(*,*) 'stopping because .quit seen'
@@ -2373,12 +2296,13 @@ cwdk  deallocation of unstructured types
 * finalise transport_models
       call write_b2mod_transport_models(99,'    ')
 * finalise sputtering
+#ifdef WG_TODO
       call write_b2mod_sputter_namelist(99, nx, ny, ns, '    ')
 * finalise time-dependent wall data
       filename='b2.wall_save.parameters'
       call find_file(filename,found)
       call wall_final(nx,ny,ns,found)
-
+#endif
 * ..display and save the result of the calculation
 #ifdef WG_TODO
 *   ..write summary of final state
@@ -2392,13 +2316,15 @@ cwdk  deallocation of unstructured types
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 #endif
 *   ..save final state
-      call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
+      call write_plasma_state (nout(2), ns, mpg%nCv, mpg%nFc, state)
+*   ..conversion to structured format and output
+      if (mpg%isClassicalGrid.eq.1) then
+        call to_struct_plasma (ns,mpg,state)
+      endif
+*   ..mms error analysis
+      if(use_mms.ne.0) then                                              !srv 26.02.18 {
+        call calc_err(mpg%nCv, ns, state % pl, state % dv)
+      endif                                                              !srv 26.02.18 }
 #ifdef WG_TODO
       call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
       if (use_astra.ne.0) then
@@ -2496,7 +2422,7 @@ cwdk  deallocation of unstructured types
       ncall = ncall+1
 !WG_TODO      deallocate(rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
-      call dealloc_b2mod_ma28
+!WG_RM      call dealloc_b2mod_ma28
       call dealloc_b2mod_wall
       call dealloc_b2mod_layer
       call dealloc_b2mod_b2cmrc
@@ -2509,18 +2435,21 @@ cwdk  deallocation of unstructured types
       call dealloc_b2mod_boundary
       call dealloc_b2mod_neutrals
       call dealloc_b2mod_numerics
-      call dealloc_b2mod_external
+!WG_RM      call dealloc_b2mod_external
       call dealloc_b2mod_wall_init
       call dealloc_b2mod_ysmp_sdrv
       call dealloc_transport_namelist
       call dealloc_b2mod_first_flight
       call dealloc_b2mod_neoclassical
-      call dealloc_b2mod_ma28_for_7diag
-      call dealloc_b2mod_ma28_for_9diag
+!WG_RM      call dealloc_b2mod_ma28_for_7diag
+!WG_RM      call dealloc_b2mod_ma28_for_9diag
+      call dealloc_b2mod_ma28_for_us
       call dealloc_b2mod_eirene_sources
-      call dealloc_b2mod_external_dummy
+!WG_TODO      call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption
+      if(boundary_sources.ne.0) call dealloc_b2mod_boundary_sources     !srv 26.02.18
+      if(equation_sources.ne.0) call dealloc_b2mod_equation_sources     !srv 26.02.18
 #ifdef B25_EIRENE
       call dealloc_b2mod_b2plot
       CALL EIRENE_DEALLOC_BRAEIR
@@ -2529,7 +2458,7 @@ cwdk  deallocation of unstructured types
       CALL EIRENE_DEALLOC_CTRCEI
 #else
       call dealloc_b2mod_braeir
-      call dealloc_b2mod_eirbra
+      call destroyB2SourceEir( state % sr_eir )
 #endif
       call subend ()
       return

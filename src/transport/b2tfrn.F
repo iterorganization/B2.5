@@ -697,6 +697,7 @@ cxpb turn off poloidal flows in core boundary
       enddo
 
 csw 18feb2014 remove fluxes between guard cells 
+#ifdef WG_OUT
         do ix=-1,nx
          do iy=-1,ny
            if(iffboundx(ix,iy).ne.0) then
@@ -713,6 +714,7 @@ csw 18feb2014 remove fluxes between guard cells
            endif
          enddo
         enddo
+#endif
 
       if(iout.ne.0) then                                                 !srv 18.06.08 {
         do is = 0,ns-1

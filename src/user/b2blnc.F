@@ -397,7 +397,8 @@ c*** total number of particles and time derivative
      1               sna(ix,iy,0,ions_list(ks))+
      2               sna(ix,iy,1,ions_list(ks))*na(ix,iy,ions_list(ks))
                 if (solveco(ions_list(ks),j)) then
-                  hlpdt=dtim*dtco(ions_list(ks),j)*time_factor(ix,iy)
+                  hlpdt=dtim*dtco(ions_list(ks),j)*
+     &              time_factor(ix+2+(iy+1)*(nx+2))!WG_TODO
                 else
                   hlpdt=0.0_R8
                 endif

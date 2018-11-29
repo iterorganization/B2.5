@@ -63,7 +63,7 @@
         wrkf = fchanml(:,1)/(geo%fcS*geo%fcQalf(:,1) + eps)
         call intcell(nFc,nCv,mpg,mpg%intcellR,wrkf,wrk)
         do iCv = 1, mpg%nCi
-            smban(iCv,0) = -phm0*geo%cvH(iCv)*geo%cvVol(iCv)*
+            smban(iCv,0) = -phm0*geo%cvHz(iCv)*geo%cvVol(iCv)*
      &          geo%cvBb(iCv,0)/geo%cvBb(iCv,2)*geo%cvBb(iCv,3)*wrk(iCv)
         enddo
       endif

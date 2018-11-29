@@ -204,7 +204,7 @@
 
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
-        call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
+!WG_TODO        call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
       endif
 
 *   ..compute provisional reshe, reshi
@@ -228,7 +228,7 @@ cdjm Jan2017 update particle source components for balance
       enddo
 
       if (balance_netcdf.ne.0) then
-        b2npht_shei_bal(-1:nx,-1:ny) = shei(-1:nx,-1:ny)                !djm Jan2017
+!WG_TODO        b2npht_shei_bal(-1:nx,-1:ny) = shei(-1:nx,-1:ny)                !djm Jan2017
       endif
 
 *   ..compute final resht, reshe, reshi

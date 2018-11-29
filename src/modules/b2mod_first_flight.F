@@ -195,7 +195,7 @@
       dist_start=src/no_of_slices
       eion=sri/src
       flight_time=dtim*dtco(isneut,region(ix0,iy0,0))*
-     .            time_factor(ix0,iy0)
+     .            time_factor(ix0+2+(iy0+1)*(nx+2))!WG_TODO!
       if (eion.eq.0.0_R8) eion=1.0_R8 ! recover the old default value of 1.0 eV
       k=0
       do while (iscx(k).ne.isneut .and. k.lt.nscx)

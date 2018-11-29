@@ -271,7 +271,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
        enddo
       enddo
       if (balance_netcdf.ne.0) then !djm Jan2017
-        b2sihs_divue0to3=she0-shetmp
+!WG_TODO        b2sihs_divue0to3=she0-shetmp
       endif
 *   ..contribution from divergence(ua,va)
       b2divua=0.0_R8
@@ -299,7 +299,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         enddo
       enddo
       if (balance_netcdf.ne.0) then !djm Jan2017
-        b2sihs_divua0to3=shi0-shitmp
+!WG_TODO        b2sihs_divua0to3=shi0-shitmp
       endif
 *   ..contribution from divergence of the electrical drift       !sv 02.06.99
       call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpov)
@@ -331,7 +331,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         enddo
       enddo
       if (balance_netcdf.ne.0) then !djm Jan2017
-        b2sihs_exbe0to3=she0-shetmp
+!WG_TODO        b2sihs_exbe0to3=she0-shetmp
       endif
 *   ..contribution from divergence of the electrical drift    !sv 02.06.99
       b2exba=0.0_R8
@@ -361,7 +361,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         endif
       enddo
       if (balance_netcdf.ne.0) then !djm Jan2017
-        b2sihs_exba0to3=shi0-shitmp
+!WG_TODO        b2sihs_exba0to3=shi0-shitmp
       endif
 *   ..contribution from viscous heating
       b2visa=0.0_R8
@@ -394,7 +394,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
        endif
       enddo
       if (balance_netcdf.ne.0) then !djm Jan2017
-        b2sihs_visa0to3=shi0-shitmp
+!WG_TODO        b2sihs_visa0to3=shi0-shitmp
       endif
 
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
@@ -534,7 +534,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         enddo
        enddo
        if (balance_netcdf.ne.0) then !djm Jan2017
-        b2sihs_joule0to3=she0-shetmp
+!WG_TODO        b2sihs_joule0to3=she0-shetmp
        endif
 *   ..contribution from atom-atom friction
        b2fraa=0.0_R8
@@ -580,7 +580,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         enddo
        enddo
        if (balance_netcdf.ne.0) then !djm Jan2017
-         b2sihs_fraa0to3=shi0-shitmp
+ !WG_TODO        b2sihs_fraa0to3=shi0-shitmp
        endif
       endif                                                              !srv 05.07.17
 
@@ -884,7 +884,7 @@ c
           endif
         enddo
         if (balance_netcdf.ne.0) then !djm Jan2017
-          b2sihs_diaa0to3=shi-shitmp
+!WG_TODO          b2sihs_diaa0to3=shi-shitmp
         endif
         b2wrong3=0.0_R8
         if (balance_netcdf.ne.0) then !djm Jan2017
@@ -939,7 +939,7 @@ c
           enddo
         enddo
         if (balance_netcdf.ne.0) then !djm Jan2017
-          b2sihs_diae0to3=she-shetmp
+ !WG_TODO         b2sihs_diae0to3=she-shetmp
         endif
       endif
 

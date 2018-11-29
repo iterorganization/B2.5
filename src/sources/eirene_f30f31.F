@@ -177,7 +177,7 @@ c
         call my_out(70,nx,ny,ti,'copy_ti')
         call my_out(70,nx,ny,po,'copy_po')
       endif 
-
+#ifdef WG_TODO
 * cell centred
       do iy=-1,ny
         do ix=-1,nx
@@ -534,7 +534,7 @@ c declared -1:nx,-1:ny
        call my_out(70,nx,ny,tib(0:nx+1,0:ny+1),'copy_tib')
        call my_out(70,nx,ny,pob(0:nx+1,0:ny+1),'copy_pob')
       endif 
-
+#endif
 
       ncall=ncall+1
       call subend ()
@@ -759,7 +759,7 @@ c      nxx=nxdd
 c      nyy=nydd
       nxx=ndx
       nyy=ndy
-
+#ifdef WG_TODO
       write(*,*) 'NX, NY, NFLAI = ',nx,ny,nflai
       rewind(31)
 c ion density
@@ -829,6 +829,6 @@ csw 13apr2011 dummies for vparx,...,deltae_...
 
       write(*,*) 'Background plasma written'
       close(31)
-
+#endif
       return
       end subroutine write_f31

@@ -8,7 +8,7 @@
 
       public :: to_struct_cell, to_struct_face
 
-      integer, public :: nx_st, ny_st
+      integer, public :: nx_st, ny_st, isClassicalGrid
 
       contains
 

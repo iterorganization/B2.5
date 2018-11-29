@@ -124,7 +124,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO     &        (is_neutral(is) .and. use_eirene.ne.0)) .and. 
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
-         ttim=dtim*dtco(is,mpg%cvReg(iCv))!WG_TODO*time_factor(iCv)
+         ttim=dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)
          sr%sna(iCv,0,is) = sr%sna(iCv,0,is)+
      &    (phm0/ttim)*geo%cvVol(iCv)*na0(iCv,is)
          sr%sna(iCv,1,is) = sr%sna(iCv,1,is)-
@@ -138,8 +138,8 @@ csw 24feb2014 check for guard cell (SOLPS4)
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO            if(iftimbound(ix,iy) .ne. 0) cycle
 
-            ttim=dtim*dtmo(is,mpg%cvReg(iCv))!WG_TODO*time_factor(ix,iy)
-            t0 = (phm1/ttim)*geo%cvVol(iCv)*geo%cvH(iCv)                    !srv 09.01.01
+            ttim=dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)
+            t0 = (phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)                    !srv 09.01.01
             sr%smo(iCv,0,is) = sr%smo(iCv,0,is)+
      1       t0*am(is)*mp*ua0(iCv,is)*
      &       na0(iCv,is)
@@ -153,7 +153,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
-          ttim=dtim*dtee(mpg%cvReg(iCv))!WG_TODO*time_factor(ix,iy)
+          ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
           t0 = (phm3/ttim)*geo%cvVol(iCv)
           sr%she(iCv,0) = sr%she(iCv,0)+
      &     1.5_R8*t0*ne0(iCv)*te0(iCv)
@@ -165,7 +165,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
-          ttim=dtim*dtei(mpg%cvReg(iCv))!WG_TODO*time_factor(ix,iy)
+          ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
           t0 = (phm3/ttim)*geo%cvVol(iCv)
           sr%shi(iCv,0) = sr%shi(iCv,0)+
      &     1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
@@ -189,7 +189,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
-          t0 = (phm4/dtim)*geo%cvVol(iCv)*qe!WG_TODO*time_factor(ix,iy)		 !xpb
+          t0 = (phm4/dtim)*geo%cvVol(iCv)*qe*time_factor(iCv)		 !xpb
           sr%sch(iCv,0) = sr%sch(iCv,0)+t0*(ni0(iCv,0)-ne0(iCv))	 !xpb
 *         schdt(iCv,1) = (unchanged)
 *         schdt(iCv,2) = (unchanged)
@@ -197,7 +197,7 @@ cxpb  This treatment added as a fix to get the ExB runs going
       enddo
       do iCv = 1, nCv
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
-          t0 = (phm5/dtim)*geo%cvVol(iCv)!WG_TODO*time_factor(ix,iy)		 !xpb
+          t0 = (phm5/dtim)*geo%cvVol(iCv)*time_factor(iCv)		 !xpb
           sr%sne(iCv,0) = sr%sne(iCv,0)+t0*ne0(iCv)
           sr%sne(iCv,1) = sr%sne(iCv,1)-t0
       enddo

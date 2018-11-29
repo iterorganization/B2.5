@@ -139,7 +139,7 @@
 
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
-        call update_balance_sources_particles(nx,ny,isb,nb)
+!WG_TODO        call update_balance_sources_particles(nx,ny,isb,nb)
       endif
 
 * ..particle balance

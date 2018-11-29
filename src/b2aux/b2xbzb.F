@@ -1,14 +1,15 @@
-      subroutine b2xbzb (nx, ny, bb, vol, bzb)              !srv 13.10.06 23.07.10 {
+      subroutine b2xbzb (nCv, mpg, bb, vol, bzb)              !srv 13.10.06 23.07.10 {
       use b2mod_types
-      use b2mod_indirect
+      use b2us_map
       implicit none
-      integer nx, ny
+      integer nCv
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), bzb(-1:nx,-1:ny)
+     *   bb(nCv,0:3), vol(nCv), bzb(nCv)
 *     ------------------------------------------------------------------
 *     B2XBZB calculates Bz/B**2 - Bz/<B**2>.
 *     ------------------------------------------------------------------
-      integer ix, iy
+      integer iCv
       real (kind=R8) ::
      *   bbsum, volsum
 *     ------------------------------------------------------------------
@@ -16,17 +17,15 @@
 
       bbsum  = 0.0e0_R8
       volsum = 0.0e0_R8
-      do iy = -1,ny
-       do ix = -1,nx
-        if(on_closed_surface(ix,iy)) then      ! for CORE
-         bbsum = bbsum + bb(ix,iy,3)**2*vol(ix,iy)
-         volsum = volsum + vol(ix,iy)
+      do iCv = 1, nCv
+        if(mpg%cvOnClosedSurface(iCv)) then      ! for CORE
+          bbsum  = bbsum  + bb(iCv,3)**2*vol(iCv)
+          volsum = volsum + vol(iCv)
         endif
-       enddo
       enddo
       if(volsum.gt.0.0_R8) then
         bzb = bbsum/volsum
-        bzb = bb(:,:,2)/bb(:,:,3)**2 - bb(:,:,2)/bzb
+        bzb = bb(:,2)/bb(:,3)**2 - bb(:,2)/bzb
       else
         bzb = 0.0_R8
       endif

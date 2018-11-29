@@ -45,7 +45,7 @@
 
 *   ..interpolate fun to cell vertices, using volume weighted averaging
       if (mode.eq.0) then
-        call intvertex(nCv,nVx,mpg,geo%cvVol,fun,funv)
+        call intvertex(nCv,nVx,mpg,geo%vxVol,fun,funv)
       endif
 
 *   ..compute radial difference at faces

@@ -15,6 +15,8 @@
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+      use b2mod_external
+      use b2mod_boundary_sources                                        !srv 26.02.18
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -302,7 +304,7 @@
       sna0_no_mdf = 0.0_R8
 
 *  .. interpolate hz to faces
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,hzf)
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,hzf)
 
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)!srv 18.01.02
 #ifdef WG_TODO
@@ -829,13 +831,26 @@ cghgh
      .       SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)
           ENDDO                                                     !srv 23.09.08 }
           GOTO 10000
-cghgh
 #endif
-* -- BCCON=7 -- PRESCRIBE THE DENSITY AS A FUNCTION OF OTHER
-*                 PLASMA PARAMETERS
+
+* -- BCCON=7 -- PRESCRIBE THE GIVEN PROFILE OF DENSITY
 
   700     CONTINUE
-          CALL XERRAB ('B2STBC -- BCCON=7, NOT YET AVAILABLE')
+          if(ncall.eq.0) then                                       !srv 26.02.18 {
+            write(*,'(a,a,a,a,a,i3)')
+     .       'profile of density ',' on ',
+     1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            srw%sna0(iCv1,0,is) =
+     .        VBIG*geo%fcS(iFc)*bv_na(iCv1,is)
+            srw%sna0(iCv1,1,is) =
+     .       -VBIG*geo%fcS(iFc)
+            sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
+            sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
+          enddo
           GOTO 10000
 
 * -- BCCON=8 -- PRESCRIBE THE TOTAL PARTICLE FLUX WITH
@@ -3032,11 +3047,21 @@ cxpb  and max(,,) statement for stability
           CALL XERRAB ('B2STBC -- BCMOM=6, NOT YET AVAILABLE')
           GOTO 20000
 
-* -- BCMOM=7 -- PRESCRIBE THE PARALLEL MOMENTUM AS A FUNCTION OF OTHER
-*                 PLASMA PARAMETERS
+* -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOSITY
 
 10700     CONTINUE
-          CALL XERRAB ('B2STBC -- BCMOM=7, NOT YET AVAILABLE')
+          if(ncall.eq.0) then                                           !srv 26.02.18 {
+            write(*,'(4a,i3)') 'specified parallel velocity on ',
+     .       BCCHAR(IB), boundary_location(ib), ' for species ',IS
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            srw%smo0(iCv1,0,is)=
+     .         VBIG*NE00*am(is)*bv_ua(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
+            srw%smo0(iCv1,1,is)=
+     .        -VBIG*NE00*am(is)*geo%fcS(iFc)*hzf(iFc)
+          enddo
           GOTO 20000
 
 * -- BCMOM=8 -- SPECIAL : LIMITED SHEAR
@@ -4274,11 +4299,20 @@ cxpb code segment analog to b2tfhe
         GOTO 30000
 cghgh
 #endif
-* -- BCENE=7 -- PRESCRIBE THE ELECTRON TEMPERATURE AS A FUNCTION OF
-*                 OTHER PLASMA PARAMETERS
+* -- BCENE=7 -- PRESCRIBE THE ELECTRON TEMPERATURE PROFILE
 
 20700   CONTINUE
-        CALL XERRAB ('B2STBC -- BCENE=7, NOT YET AVAILABLE')
+        if(ncall.eq.0) then                                             !srv 26.02.18 {
+          write(*,'(3a)')
+     .     'specified electron temperature on ',
+     1     BCCHAR(IB), boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          srw%she0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*bv_te(iCv1)*EV
+          srw%she0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
         GOTO 30000
 
 * -- BCENE=8 -- PRESCRIBE THE TOTAL ELECTRON HEAT FLUX WITH CONSTANT
@@ -6116,11 +6150,20 @@ cxpb code segment analog to b2tfhi
         GOTO 40000
 cghgh
 #endif
-* -- BCENI=7 -- PRESCRIBE THE ION TEMPERATURE AS A FUNCTION OF OTHER
-*                 PLASMA PARAMETERS
+
+* -- BCENI=7 -- PRESCRIBE THE ION TEMPERATURE PROFILE
 
 30700   CONTINUE
-        CALL XERRAB ('B2STBC -- BCENI=7, NOT YET AVAILABLE')
+       if(ncall.eq.0) then                                   !srv 26.02.18 {
+          write(*,'(3a)') 'specified ion temperature on ',
+     1     BCCHAR(IB), boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          srw%shi0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*bv_ti(iCv1)*EV
+          srw%shi0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
         GOTO 40000
 
 * -- BCENI=8 -- PRESCRIBE THE TOTAL ION HEAT FLUX WITH CONSTANT
@@ -8097,11 +8140,19 @@ c              fchi=0.0_R8
         CALL XERRAB ('B2STBC -- BCPOT=6, NOT YET AVAILABLE')
         GOTO 50000
 
-* -- BCPOT=7 -- PRESCRIBE THE POTENTIAL AS A FUNCTION OF
-*                 OTHER PLASMA PARAMETERS
+* -- BCPOT=7 -- PRESCRIBE THE GIVEN PROFILE OF POTENTIAL
 
 40700   CONTINUE
-        CALL XERRAB ('B2STBC -- BCPOT=7, NOT YET AVAILABLE')
+        if(ncall.eq.0) then                                             !srv 26.02.18 {
+          write(*,'(3a)') 'specified potential on ',
+     1     BCCHAR(IB), boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          srw%sch0(iCv1,0) =  PBIG*geo%fcS(iFc)*bv_po(iCv1)
+          srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
+        enddo
         GOTO 50000
 
 * -- BCPOT=8 -- PRESCRIBE THE TOTAL ELECTRON CURRENT WITH CONSTANT

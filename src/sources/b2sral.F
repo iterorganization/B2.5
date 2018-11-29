@@ -156,9 +156,10 @@
 *   ..test facdrift and fac_ExB
       if (ncall.eq.0) then                                              !xpb
         call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
-        call alloc_b2mod_numerics(nCv,1,ns) !WG_TODO : time_factor
+        call alloc_b2mod_numerics(nCv,ns,mpg%nnreg)
         if(numerics_namelist.ge.1) then
-          call read_b2mod_numerics_namelist(nCv,1,nsmin,nsmax) !WG_TODO : time_factor
+          call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
+     .      mpg%cvOnClosedSurface)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
@@ -171,7 +172,8 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch)
      1     then
             write(*,*) 'b2srsm: catching up ...'
-            call read_b2mod_numerics_namelist(nCv,1,nsmin,nsmax) !WG_TODO : time_factor
+            call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
+     .        mpg%cvOnClosedSurface)
             call write_b2mod_numerics_namelist
             catch_up=numerics_time_mod.gt.0.0_R8
           else
@@ -186,7 +188,8 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
      1     int(tim/numerics_time_mod).gt.elm_count) then
             elm_count=tim/numerics_time_mod
-            call read_b2mod_numerics_namelist(nCv,1,nsmin,nsmax) !WG_TODO : time_factor
+            call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
+     .        mpg%cvOnClosedSurface)
             call write_b2mod_numerics_namelist
           endif
         endif

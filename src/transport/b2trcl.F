@@ -197,11 +197,11 @@ csw 13mar2012
       alfx_c(:) = alf(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
       sigx_c(:) = sig(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
 *   ..incorporate geometry with hz                                    !srv 09.01.01
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvH,wrk)
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk)
       wrk = geo%fcS*wrk 
       do iFc = 1, nFc
-        wrk1(iFc,1) = geo%fcVol(iFc,1)*geo%cvH(mpg%fcCv(iFc,1))
-        wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvH(mpg%fcCv(iFc,2))
+        wrk1(iFc,1) = geo%fcVol(iFc,1)*geo%cvHz(mpg%fcCv(iFc,1))
+        wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
       enddo
       do is = 0, ns-1
        call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,              !srv 01.07.05 {

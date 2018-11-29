@@ -102,7 +102,7 @@
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nput
-      call xertst (1.le.nput, 'faulty argument nput')
+!WG      call xertst (1.le.nput, 'faulty argument nput')
 *   ..test nx, ny, ns
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')

@@ -767,7 +767,7 @@ cwdk  recycle toroidal componenent of parallel momentum, factor mrecyc
 c     (toroidal piec only, because poloidal piece of parallel velocity flips sign after reflection)
          srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0) + mrecyc(is,istra)*
      &    am(is)*mp*pl%ua(iCv,is)*geo%cvBb(iCv,2)**2/geo%cvBb(iCv,3)**2*
-     &    recyc(is,istra)*t0*geo%cvH(iCv)
+     &    recyc(is,istra)*t0*geo%cvHz(iCv)
          srw%shi0(iCv,0) = srw%shi0(iCv,0)+recycled_neutrals_contr*max(
      &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
@@ -1315,7 +1315,7 @@ cwdk  recycling of true parallel momentum
 c     (at core, cell faces will be flux-surface aligned)
                srw%smo0(iCv,0,is0) = srw%smo0(iCv,0,is0)+
      .           mrecyc(is,istra)*am(is)*mp*pl%ua(iCv,is)*
-     .           recyc(is,istra)*t0*geo%cvH(iCv)
+     .           recyc(is,istra)*t0*geo%cvHz(iCv)
                srw%shi0(iCv,0) = srw%shi0(iCv,0)+erecyc(is,istra)*
      .          (1.5_R8+BoRiS)*(zaf(is)*tef+tif)*recyc(is,istra)*t0
      &          *recycled_neutrals_contr  !srv          

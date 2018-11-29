@@ -331,6 +331,7 @@ c  ...set null flux in guard cells  ?
             fhet(ix,iy,0,0) = 0.0_R8
             fllime(ix,iy) = 1.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then
+#ifdef WG_TODO
               fhe_32(ix,iy,0,0) = 0.0_R8                               !djm Jan2017
               fhe_52(ix,iy,0,0) = 0.0_R8
               fhe_thermj(ix,iy,0,0) = 0.0_R8
@@ -339,6 +340,7 @@ c  ...set null flux in guard cells  ?
               fhe_ecrb(ix,iy,0,0) = 0.0_R8
               fhe_strange(ix,iy,0,0) = 0.0_R8
               fhe_pschused(ix,iy,0,0) = 0.0_R8
+#endif
             endif
           else
 !xpb        ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
@@ -429,6 +431,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &         alfTeEh*alfe0_mdf*
      &         harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
      &         -fhePSch(ix,iy,0,0)                                       !srv 13.06.06 }
+#ifdef WG_TODO
               if (balance.and.
      &            (balance_netcdf.ne.0).and.
      &            (mdf_fhe.eq.0)) then !djm Jan2017
@@ -500,6 +503,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
                 fhe_cond(ix,iy,0,0) = -cone0_mdf*tex0_mdf
                 fhe_pschused(ix,iy,0,0) = -fhePSch(ix,iy,0,0)
               endif
+#endif
             else
               t1 = dim ( cone0/fllime(ix,iy),
      .         abs(floe0) *
@@ -511,6 +515,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      .         - t1 * (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))) 
      &         +alfTeEh*alfe0*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
+#ifdef WG_TODO
               if (balance.and.
      &            (balance_netcdf.ne.0).and.
      &            (mdf_fhe.eq.0)) then !djm Jan2017
@@ -545,6 +550,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &             (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))) 
                 fhe_pschused(ix,iy,0,0) = 0.0_R8
               endif
+#endif
             endif
             fhet(ix,iy,0,0) = fhe(ix,iy,0,0) +
      1       ((1.0_R8-BoRiS)*fne_32(ix,iy,0,0)+flo_veecrb)*
@@ -576,6 +582,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             fhe(ix,iy,1,1) = 0.0_R8
             fhet(ix,iy,1,1) = 0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then
+#ifdef WG_TODO
               fhe_32(ix,iy,1,1) = 0.0_R8                               !djm Jan2017
               fhe_52(ix,iy,1,1) = 0.0_R8
               fhe_thermj(ix,iy,1,1) = 0.0_R8
@@ -584,6 +591,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               fhe_ecrb(ix,iy,1,1) = 0.0_R8
               fhe_strange(ix,iy,1,1) = 0.0_R8
               fhe_pschused(ix,iy,1,1) = 0.0_R8
+#endif
             endif
           else
             if (no_current.eq.1) then
@@ -634,6 +642,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &          +alfTeEh*calf(ix,iy,1,1)*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
      &            -fhePSch(ix,iy,1,1)                                !srv 13.10.06
+#ifdef WG_TODO
               if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
                 fhe_32(ix,iy,1,1) = (1.5_R8+BoRiS)*fne_32(ix,iy,1,1)*
      &           (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
@@ -657,6 +666,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
                 fhe_thermj(ix,iy,1,1) = alfTeEh*calf(ix,iy,1,1)*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
               endif
+#endif
             else
               cone0 = chce(ix,iy,1,1)
               t1 = dim ( cone0,
@@ -671,6 +681,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      .          - t1 * (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &          +alfTeEh*calf(ix,iy,1,1)*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
+#ifdef WG_TODO
               if (balance.and.(balance_netcdf.ne.0)) then
                 if(floe0_mdf.ge.0.0_R8) then
                   upfac=1.0_R8
@@ -699,6 +710,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
                 fhe_thermj(ix,iy,1,1) = alfTeEh*calf(ix,iy,1,1)*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
               endif
+#endif
             endif
             fhet(ix,iy,1,1) = fhe(ix,iy,1,1)+
      1    ((1.0_R8-BoRiS)*fne_32(ix,iy,1,1)+flo_veecrb)*
@@ -718,6 +730,7 @@ cxpb turn off flows between boundary cells
               fhe(ix,iy,1,1)=0.0_R8
               fhe_mdf(ix,iy,1,1)=0.0_R8
               if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+#ifdef WG_TODO
                 fhe_32(ix,iy,1,1) = 0.0_R8
                 fhe_52(ix,iy,1,1) = 0.0_R8
                 fhe_thermj(ix,iy,1,1) = 0.0_R8
@@ -726,6 +739,7 @@ cxpb turn off flows between boundary cells
                 fhe_ecrb(ix,iy,1,1) = 0.0_R8
                 fhe_strange(ix,iy,1,1) = 0.0_R8
                 fhe_pschused(ix,iy,1,1) = 0.0_R8
+#endif
              endif
               fhet(ix,iy,1,1)=0.0_R8
               floe(ix,iy,1,1)=0.0_R8
@@ -740,6 +754,7 @@ cxpb turn off poloidal flows in core boundary
             fhe(ix,-1,0,0) = 0.0_R8
             fhe_mdf(ix,-1,0,0) = 0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+#ifdef WG_TODO
               fhe_32(ix,-1,0,0) = 0.0_R8
               fhe_52(ix,-1,0,0) = 0.0_R8
               fhe_thermj(ix,-1,0,0) = 0.0_R8
@@ -748,6 +763,7 @@ cxpb turn off poloidal flows in core boundary
               fhe_ecrb(ix,-1,0,0) = 0.0_R8
               fhe_strange(ix,-1,0,0) = 0.0_R8
               fhe_pschused(ix,-1,0,0) = 0.0_R8
+#endif
             endif
             fhet(ix,-1,0,0)=0.0_R8
             floe(ix,-1,0,0) = 0.0_R8
@@ -764,6 +780,7 @@ cxpb turn off poloidal flows in core boundary
             fhe(ix,iy,0,0)=0.0_R8
             fhe_mdf(ix,iy,0,0)=0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+#ifdef WG_TODO
               fhe_32(ix,iy,0,0) = 0.0_R8
               fhe_52(ix,iy,0,0) = 0.0_R8
               fhe_thermj(ix,iy,0,0) = 0.0_R8
@@ -780,6 +797,7 @@ cxpb turn off poloidal flows in core boundary
               fhe_ecrb(ix,iy,1,1) = 0.0_R8
               fhe_strange(ix,iy,1,1) = 0.0_R8
               fhe_pschused(ix,iy,1,1) = 0.0_R8
+#endif
             endif
             fhet(ix,iy,0,0)=0.0_R8
             floe(ix,iy,0,0)=0.0_R8

@@ -105,7 +105,7 @@
          call ipgeti ('b2uxus_mult_solvdim', mult_solvdim)
          call ipgeti ('b2uxus_mult_solvdim1', mult_solvdim1)
          nnd=nCv
-         n_nonzeros=mult_nonzero*nnd
+         n_nonzeros=mpg%nCmxNv
          solvdim=mult_solvdim*n_nonzeros
          solvdim1=mult_solvdim1*n_nonzeros
          call alloc_b2mod_ma28_for_us                                  !sv 13.10.06
@@ -216,14 +216,14 @@
         ip(1)=1
         do iCv = 1,nCv
           ner=0
-          do iNv = 1,mpg%aaP(iCv,2)
-            if (aa(mpg%aaP(iCv,1)+iNv-1) .ne. 0.0e0_R8 ) then
+          do iNv = 1,mpg%cvNvP(iCv,2)
+            if (aa(mpg%cvNvP(iCv,1)+iNv-1) .ne. 0.0e0_R8 ) then
               k      = k+1
               ner    = ner+1
-              a(k)   = aa(mpg%aaP(iCv,1)+iNv-1)
-              ind(k) = mpg%aaP(iCv,1)+iNv-1
+              a(k)   = aa(mpg%cvNvP(iCv,1)+iNv-1)
+              ind(k) = mpg%cvNvP(iCv,1)+iNv-1
               ia(k)  = iCv
-              ja(k)  = mpg%cvNv(mpg%aaP(iCv,1)+iNv-1)
+              ja(k)  = mpg%cvNv(mpg%cvNvP(iCv,1)+iNv-1)
             endif
           enddo
           ip(iCv+1)=ip(iCv) + ner

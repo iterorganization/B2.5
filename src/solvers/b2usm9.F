@@ -6,8 +6,10 @@
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa9, aad0, name) !srv 06.04.07
       use b2mod_indirect
       use b2mod_types
+#ifdef WG_OUT
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
@@ -120,12 +122,14 @@
 
       do iy = -1, ny
        do ix = -1, nx
+#ifdef WG_OUT
 csw 18feb2014 corrected BCs (SOLPS4)
 !        if(iffboundx(ix,iy).ne.0) then
 !          aa9(ix,iy,-1) = 0.0_R8
 !         aa9(ix,iy,1) = 0.0_R8
 !          cycle
 !        endif
+#endif
 
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
@@ -196,12 +200,14 @@ cwdk add 9-point contributions to matrix
 
       do iy = -1, ny
        do ix = -1, nx
+#ifdef WG_OUT
 csw 18feb2014 corrected BCs (SOLPS4)
 !        if(iffboundy(ix,iy).ne.0) then
 !          aa9(ix,iy,-3) = 0.0_R8
 !          aa9(ix,iy,3) = 0.0_R8
 !          cycle
 !        endif
+#endif
 
         ireg = region(ix,iy,0)
         if(bottomiy(ix,iy).eq.-2) then

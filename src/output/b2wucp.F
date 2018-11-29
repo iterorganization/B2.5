@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wucp (nput, version, nx, ns)
+      subroutine b2wucp (nput, version, ns)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -9,7 +9,7 @@
       use b2mod_b2cmpt
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nput, nx, ns
+      integer nput, ns
       character*10 version
 *   ..output arguments (unspecified on entry)
 *     (none)
@@ -34,11 +34,6 @@
 *
 *     nput - integer, input.
 *     nput specifies a unit number for un*formatted output.
-*
-*     nx - integer, input.
-*     nx specifies the number of poloidal cells in the mesh.
-*     The cells are indexed by (-1:nx).
-*     It will hold that 1.le.nx.
 *
 *     ns - integer, input.
 *     ns specifies the number of atomic species in the calculation.
@@ -81,12 +76,10 @@
       call subini ('b2wucp')
 *   ..test nput
       call xertst (1.le.nput, 'faulty argument nput')
-*   ..test nx
-      call xertst (1.le.nx, 'faulty argument nx')
 *   ..test ns
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test /b2cmpa/, /b2cmpb/, /b2cmpt/
-      call b2xvcp (nx, ns)
+      call b2xvcp (ns)
 
 * ..save common blocks
 *   ..save /b2cmpa/
