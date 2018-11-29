@@ -46,7 +46,9 @@ c     File names will be appended with "*_st.dat".
  20     continue
       end if
       
-#ifndef WG_DEBUG         
+#ifdef WG_DEBUG
+      if (isClassicalGrid.eq.0) then
+#endif
         filename = trim(folder)//trim(first_name)//'_us.dat'
         if (iappend.eq.0) then
           open (nwrite,file=trim(filename))
@@ -59,7 +61,8 @@ c     File names will be appended with "*_st.dat".
           write (nwrite,hlp_frm) ic, fun_us(ic)
         end do
         close (nwrite)
-#else
+#ifdef WG_DEBUG
+      else
 
       if(flag.eq.0) then  ! cell centers case    
         
@@ -104,6 +107,8 @@ c     File names will be appended with "*_st.dat".
           enddo
           close (nwrite)
         enddo
+      endif
+
       endif
 #endif
       return

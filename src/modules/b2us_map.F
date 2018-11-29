@@ -242,6 +242,7 @@
 #ifdef WG_DEBUG
       nx_st = mpg%nx
       ny_st = mpg%ny
+      isClassicalGrid = mpg%isClassicalGrid
 #endif
 
       call cfruin (iun, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
