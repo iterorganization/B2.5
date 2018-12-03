@@ -205,7 +205,7 @@ c***  m_hdln    : max. length of the header line
 c***  n_hdpr_c  : number of common quantities
 c***  n_hdpr_t  : number of target quantities
 c***  n_hdpr_a  : number of quantities by atoms
-c***  n_hdpr_u  : number of quantities by molecules
+c***  n_hdpr_ml : number of quantities by molecules
 c***  n_hdpr_s  : number of quantities by species
 c***  n_hdpr_sp : number of quantities for sputtering
 c***  n_hdpr_er : number of quantities for erosion
@@ -224,7 +224,7 @@ c***  sfpr_a    : list of active atoms
 c***  sfpr_m    : list of active materials
 
       integer n_hdpr_c,n_hdpr_t,n_hdpr_s,n_hdpr_a,n_hdpr_sp,n_sfpr_s,
-     ,  m_hdpr,m_hdln,n_hdpr_u,n_hdpr_ml,n_hdpr_er,n_srfs_m
+     ,  m_hdpr,m_hdln,n_hdpr_ml,n_hdpr_er,n_srfs_m
       parameter
      , (n_hdpr_c=10, n_hdpr_t=4, n_hdpr_s=2, n_hdpr_a=4, n_hdpr_sp=2,
      ,  n_hdpr_er=2, m_hdpr=5, n_hdpr_ml=4, n_srfs_m=8,

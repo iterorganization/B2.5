@@ -15,7 +15,7 @@
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
      *  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..local variables
-      integer i, j, ix, iy, ixl, ixr, jxi, jxa, jsep
+      integer i, ix, iy, ixl, ixr, jxi, jxa, jsep
       integer ntubes(-1:ny), ixref(nncutmax,-1:ny), iseg(-1:nx,-1:ny),
      *  ixleft(nncutmax,-1:ny), ixright(nncutmax,-1:ny),
      *  isnum(nncutmax,-1:ny)

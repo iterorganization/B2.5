@@ -66,7 +66,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ib, is, ixl, iyl, ixb, iyb,
+      integer ncall, n2, ix, iy, ib,
      *   no_current, conduction_only, no_hybr, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
       integer, save :: lim_flux = 0, mdf_fhe = 0                        !srv 04.02.03 13.10.06
