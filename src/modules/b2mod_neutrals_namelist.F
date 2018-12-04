@@ -1990,7 +1990,7 @@ c.. Test consistency with physical edges within the computational domain
       write (iout,'(1x,a,(10(2x,4a1)/))') 
      .       'CRCSTRA = ',(ap,crcstra(istra),ap,',',istra=1,m%nRc)
 
-      write (iout,'(1x,a,(10(1x,i4,a1)/))') 
+      write (iout,'(1x,a,(10(1x,i7,a1)/))') 
      .       'NRCFACES =',(m%rcFcP(istra,2),',',istra=1,m%nRc)
       do istra = 1, m%nRc
         ian = m%rcFcP(istra,1)

@@ -52,7 +52,7 @@
        INQUIRE (FILE = '../art_sna.dat', EXIST = art_exists)
        if(art_exists) then
          open(70,FILE = '../art_sna.dat')
-         read (70,"(<nCv>(2x,e23.16))") 
+         read (70,"(2x,e23.16)") 
      &       ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
          close(70)
        else
@@ -63,7 +63,7 @@
        INQUIRE (FILE = '../art_smo.dat', EXIST = art_exists)
        if(art_exists) then
          open(70,FILE = '../art_smo.dat')
-         read (70,"(<nCv>(2x,e23.16))") 
+         read (70,"(2x,e23.16)") 
      &       ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
          close(70)
        else
@@ -74,7 +74,7 @@
        INQUIRE (FILE = '../art_she.dat', EXIST = art_exists)
        if(art_exists) then
          open(70,FILE = '../art_she.dat')
-         read (70,"(<nCv>(2x,e23.16))") 
+         read (70,"(2x,e23.16)") 
      &        (art_she(iCv,0),iCv=1,nCv)
          close(70)
        else
@@ -85,7 +85,7 @@
        INQUIRE (FILE = '../art_shi.dat', EXIST = art_exists)
        if(art_exists) then
          open(70,FILE = '../art_shi.dat')
-         read (70,"(<nCv>(2x,e23.16))") 
+         read (70,"(2x,e23.16)") 
      &        (art_shi(iCv,0),iCv=1,nCv)
          close(70)
        else
@@ -96,13 +96,21 @@
        INQUIRE (FILE = '../art_sch.dat', EXIST = art_exists)
        if(art_exists) then
          open(70,FILE = '../art_sch.dat')
-         read (70,"(<nCv>(2x,e23.16))") 
+         read (70,"(2x,e23.16)") 
      &        (art_sch(iCv,0),iCv=1,nCv)
          close(70)
        else
          write(*,*) ' There is no file ../art_sch.dat'
          stop
-       endif 
+       endif
+      
+!        call my_out_us(70,nCv,0,art_sna(1,0,0),'art_sna000')        !srv 03.12.18 {
+!        call my_out_us(70,nCv,0,art_sna(1,0,1),'art_sna001')
+!        call my_out_us(70,nCv,0,art_smo(1,0,0),'art_smo000')
+!        call my_out_us(70,nCv,0,art_smo(1,0,1),'art_smo001')
+!        call my_out_us(70,nCv,0,art_she(1,0),'art_she0')
+!        call my_out_us(70,nCv,0,art_shi(1,0),'art_shi0')
+!        call my_out_us(70,nCv,0,art_sch(1,0),'art_sch0')            !srv 03.12.18 }
 
       end subroutine read_equation_sources
 

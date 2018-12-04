@@ -1554,7 +1554,7 @@ c.. Test consistency with region boundaries
       write (iout,'(1x,a,(10(2x,4a1)/))') 
      .       'BCCHAR  =  ',(ap,bcchar(ib),ap,',',ib=1,m%nBc)
 
-      write (iout,'(1x,a,(10(1x,i4,a1)/))') 
+      write (iout,'(1x,a,(10(1x,i7,a1)/))') 
      .       'NBCFACES  =',(m%bcFcP(ib,2),',',ib=1,m%nBc)
       do ib = 1, m%nBc
         ian = m%bcFcP(ib,1)
