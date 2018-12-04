@@ -1559,7 +1559,7 @@ c.. Test consistency with region boundaries
       do ib = 1, m%nBc
         ian = m%bcFcP(ib,1)
         ien = ian + m%bcFcP(ib,2) - 1
-        write (iout,'(1x,a,i2,a,(1x,T18,10(i5,a1,1x)))') 
+        write (iout,'(1x,a,i2,a,(1x,T18,10(i7,a1,1x)))')        !srv 04.12.18
      .    'BC_FACES(1,',ib,')= ',(m%bcFc(i),',',i=ian,ien)
       end do
 

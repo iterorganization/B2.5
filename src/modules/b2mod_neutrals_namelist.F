@@ -1996,7 +1996,7 @@ c.. Test consistency with physical edges within the computational domain
         ian = m%rcFcP(istra,1)
         ien = ian + m%rcFcP(istra,2) - 1
         if (ien-ian+1 > 0)
-     .    write (iout,'(1x,a,i2,a,(1x,T17,10(i5,a1,1x)))') 
+     .    write (iout,'(1x,a,i2,a,(1x,T17,10(i7,a1,1x)))')                                 !srv 04.12.18
      .    'RC_FACES(1,',istra,')= ',(m%rcFc(i),',',i=ian,ien)
       end do
 

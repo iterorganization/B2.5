@@ -19,46 +19,46 @@
        call ipgeti ('b2mndr_set_po_numerical', set_po_numerical)
 
        if(set_na_numerical.ne.0) then 
-        inquire(file='../exact_na.dat',exist=l_exist)
-        call xertst(l_exist,'No '//'../exact_na.dat')
-        open(70,file='../exact_na.dat')
+        inquire(file='../exact_na_us.dat',exist=l_exist)
+        call xertst(l_exist,'No '//'../exact_na_us.dat')
+        open(70,file='../exact_na_us.dat')
         read (70,*) ((pl%na(iCv,is),iCv=1,nCv),is=0,ns-1)
         close(70)
-        inquire(file='../exact_ne.dat',exist=l_exist)
-        call xertst(l_exist,'No '//'../exact_ne.dat')
-        open(70,file='../exact_ne.dat')
+        inquire(file='../exact_ne_us.dat',exist=l_exist)
+        call xertst(l_exist,'No '//'../exact_ne_us.dat')
+        open(70,file='../exact_ne_us.dat')
         read (70,*) (dv%ne(iCv),iCv=1,nCv)
         close(70)
        endif
 
        if(set_ua_numerical.ne.0) then
-        inquire(file='../exact_ua.dat',exist=l_exist)
-        call xertst(l_exist,'No '//'../exact_ua.dat')
-        open(70,file='../exact_ua.dat')
+        inquire(file='../exact_ua_us.dat',exist=l_exist)
+        call xertst(l_exist,'No '//'../exact_ua_us.dat')
+        open(70,file='../exact_ua_us.dat')
         read (70,*) ((pl%ua(iCv,is),iCv=1,nCv),is=0,ns-1)
         close(70)
        endif
 
        if(set_te_numerical.ne.0) then
-        inquire(file='../exact_te.dat',exist=l_exist)
-        call xertst(l_exist,'No '//'../exact_te.dat')
-        open(70,file='../exact_te.dat')
+        inquire(file='../exact_te_us.dat',exist=l_exist)
+        call xertst(l_exist,'No '//'../exact_te_us.dat')
+        open(70,file='../exact_te_us.dat')
         read (70,*) (pl%te(iCv),iCv=1,nCv)
         close(70)
        endif
 
        if(set_ti_numerical.ne.0) then
-        inquire(file='../exact_ti.dat',exist=l_exist)
-        call xertst(l_exist,'No ../exact_ti.dat')
-        open(70,file='../exact_ti.dat')
+        inquire(file='../exact_ti_us.dat',exist=l_exist)
+        call xertst(l_exist,'No ../exact_ti_us.dat')
+        open(70,file='../exact_ti_us.dat')
         read (70,*) (pl%ti(iCv),iCv=1,nCv)
         close(70)
        endif
 
        if(set_po_numerical.ne.0) then
-        inquire(file='../exact_po.dat',exist=l_exist)
-        call xertst(l_exist,'No ../exact_po.dat')
-        open(70,file='../exact_po.dat')
+        inquire(file='../exact_po_us.dat',exist=l_exist)
+        call xertst(l_exist,'No ../exact_po_us.dat')
+        open(70,file='../exact_po_us.dat')
         read (70,*) (pl%po(iCv),iCv=1,nCv)
         close(70)
        endif
@@ -85,11 +85,11 @@
        character chns*2, chnCv*6
 
        write (chnCv,'(i6.6)') nCv
-       open(71, file='output/'//'errors_'//chnCv//'.dat')
+       open(71, file='output/'//'errors_'//chnCv//'_us.dat')
 
-       inquire(file='../exact_na.dat',exist=l_exist)
-       call xertst(l_exist,'No '//'../exact_na.dat')
-       open(70,file='../exact_na.dat')
+       inquire(file='../exact_na_us.dat',exist=l_exist)
+       call xertst(l_exist,'No '//'../exact_na_us.dat')
+       open(70,file='../exact_na_us.dat')
        read (70,*) ((exact_na(iCv,is),iCv=1,nCv),is=0,ns-1)
        close(70)
 
@@ -100,13 +100,13 @@
          era = pl%na(:,is)-exact_na(:,is)
          call my_out_us(70,nCv,0,era,'na'//chns//'_aerr')
          ind = maxloc(abs(era),1)                                       !srv 09.07.18
-         write(71,"(' Max|eraNa',a2,'|',8x,'=',es10.3,a,i4)")
+         write(71,"(' Max|eraNa',a2,'|',8x,'=',es10.3,a,i7)")
      &              chns,abs(era(ind)),
      &        '   is in iCv = ', ind
          if(all(exact_na(:,is).ne.0.0_R8)) then
           err = abs(era)/exact_na(:,is)
           ind = maxloc(err,1)
-          write(71,"(' Max|eraNa',a2,'|/Na',a2,'   =',es10.3,a,i4)")
+          write(71,"(' Max|eraNa',a2,'|/Na',a2,'   =',es10.3,a,i7)")
      &          chns, chns, err(ind),
      &      '   is in iCv = ', ind
           call my_out_us(70,nCv,0,err,'na'//chns//'_rerr')
@@ -136,9 +136,9 @@
 
        call calc_err_cc(nCv, 'Te', pl%te, exact_te, qe) 
 
-       inquire(file='../exact_ua.dat',exist=l_exist)
-       call xertst(l_exist,'No '//'../exact_ua.dat')
-       open(70,file='../exact_ua.dat')
+       inquire(file='../exact_ua_us.dat',exist=l_exist)
+       call xertst(l_exist,'No '//'../exact_ua_us.dat')
+       open(70,file='../exact_ua_us.dat')
        read (70,*) ((exact_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
        close(70)
 
@@ -149,13 +149,13 @@
          era = pl%ua(:,is)-exact_ua(:,is)
          call my_out_us(70,nCv,0,era,'ua'//chns//'_aerr')
          ind = maxloc(abs(era),1)                                       !srv 09.07.18
-         write(71,"(' Max|eraUa',a2,'|',8x,'=',es10.3,a,i4)")
+         write(71,"(' Max|eraUa',a2,'|',8x,'=',es10.3,a,i7)")
      &              chns,abs(era(ind)),
      &        '   is in iCv = ', ind
          if(all(exact_ua(:,is).ne.0.0_R8)) then
           err = abs(era/exact_ua(:,is))
           ind = maxloc(err,1)
-          write(71,"(' Max|eraUa',a2,'/Ua',a2,'|   =',es10.3,a,i4)")
+          write(71,"(' Max|eraUa',a2,'/Ua',a2,'|   =',es10.3,a,i7)")
      &          chns, chns, err(ind),                                   !srv 09.07.18
      &      '   is in iCv = ', ind
           call my_out_us(70,nCv,0,err,'ua'//chns//'_rerr')
@@ -225,7 +225,7 @@
        integer iCv, ind                                                 !srv 09.07.18
        character(32) :: pass
 
-       pass='../exact_'//trim(nmvar)//'.dat'
+       pass='../exact_'//trim(nmvar)//'_us.dat'
        inquire(file=trim(pass),exist=l_exist)
        call xertst(l_exist,'No '//trim(pass))
 
@@ -239,13 +239,13 @@
        era = var-exact_var
        call my_out_us(70,nCv,0,era/scl,trim(nmvar)//'_aerr')
        ind = maxloc(abs(era),1)                                         !srv 09.07.18
-       write(71,"(' Max|era',a,'|',10x,'=',es10.3,a,i4)")
+       write(71,"(' Max|era',a,'|',10x,'=',es10.3,a,i7)")
      &              trim(nmvar),abs(era(ind))/scl,
      &          '   is in iCv = ', ind
        if(all(var.ne.0.0_R8)) then
         err = abs(era)/exact_var
         ind = maxloc(abs(err),1)                                        !srv 09.07.18
-        write(71,"(' Max|era',a,'/',a,'|       =',es10.3,a,i4)")
+        write(71,"(' Max|era',a,'/',a,'|       =',es10.3,a,i7)")
      &              trim(nmvar),trim(nmvar),err(ind),                   !srv 09.07.18
      &          '   is in iCv = ', ind
         call my_out_us(70,nCv,0,err,trim(nmvar)//'_rerr')

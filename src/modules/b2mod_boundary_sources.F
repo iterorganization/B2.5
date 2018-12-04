@@ -49,33 +49,33 @@
        integer ib, is, iCv
        logical ltemp, lexist
 
-       inquire(file='../bv_na.dat',exist=lexist)
-       call xertst(lexist,'../bv_na.dat does not exist')
-       open(70,file='../bv_na.dat')
+       inquire(file='../bv_na_us.dat',exist=lexist)
+       call xertst(lexist,'../bv_na_us.dat does not exist')
+       open(70,file='../bv_na_us.dat')
        read (70,*) ((bv_na(iCv,is),iCv=1,nCv),is=0,ns-1)
        close(70)
 
-       inquire(file='../bv_ua.dat',exist=lexist)
-       call xertst(lexist,'../bv_ua.dat  does not exist')
-       open(70,file='../bv_ua.dat')
+       inquire(file='../bv_ua_us.dat',exist=lexist)
+       call xertst(lexist,'../bv_ua_us.dat  does not exist')
+       open(70,file='../bv_ua_us.dat')
        read (70,*) ((bv_ua(iCv,is),iCv=1,nCv),is=0,ns-1)
        close(70)
 
-       inquire(file='../bv_te.dat',exist=lexist)
-       call xertst(lexist,'../bv_te.dat  does not exist')
-       open(70,file='../bv_te.dat')
+       inquire(file='../bv_te_us.dat',exist=lexist)
+       call xertst(lexist,'../bv_te_us.dat  does not exist')
+       open(70,file='../bv_te_us.dat')
        read (70,*) (bv_te(iCv),iCv=1,nCv)
        close(70)
 
-       inquire(file='../bv_ti.dat',exist=lexist)
-       call xertst(lexist,'../bv_ti.dat  does not exist')
-       open(70,file='../bv_ti.dat')
+       inquire(file='../bv_ti_us.dat',exist=lexist)
+       call xertst(lexist,'../bv_ti_us.dat  does not exist')
+       open(70,file='../bv_ti_us.dat')
        read (70,*) (bv_ti(iCv),iCv=1,nCv)
        close(70)
 
-       inquire(file='../bv_po.dat',exist=lexist)
-       call xertst(lexist,'../bv_po.dat does not exist')
-       open(70,file='../bv_po.dat')
+       inquire(file='../bv_po_us.dat',exist=lexist)
+       call xertst(lexist,'../bv_po_us.dat does not exist')
+       open(70,file='../bv_po_us.dat')
        read (70,*) (bv_po(iCv),iCv=1,nCv)
        close(70)
  
