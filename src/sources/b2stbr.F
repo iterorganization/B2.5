@@ -88,9 +88,9 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k, iatm, imol   !iyv 07.03.18
+      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k!, ia, im   !iyv 07.03.18
       integer, save :: jxi, jxa, jsep
-      integer, save :: no_b2stbr_phys_call=0
+      integer, save :: no_b2stbr_phys_call=0, mdf_fnb = 0                    !IYS 27.11.2018
       integer, save :: out_tfiles = 1                                   !xpb 28.09.16
       integer, save :: iout = 0,        iout_b2npmo = 0,                !srv 11.09.09 {
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
@@ -224,6 +224,7 @@
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
         call ipgetr ('b2stbr_sna_corr', sna_corr)                    !iyv 07.03.18 {
+        call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !IYS 27.11.2018
         if( sna_corr .gt. 0.0_R8 ) then
            allocate(t1(1:nnatmi))
            t1=0.0_R8
@@ -663,15 +664,47 @@ c   --> better solution wanted here..
      &      write(*,*) '******* sna_eir correction calculations *******'
             sna_core = 0.0_R8
             iy = 0
-            do ix = -1, nx
-              if(on_closed_surface(ix,iy)) then
-                do is = 0, ns-1
-                  if ( is_neutral(is) ) cycle
+            if(mdf_fnb.ne.0) then
+              do ix = -1, nx
+                if(on_closed_surface(ix,iy)) then
+                  do is = 0, ns-1
+                    if ( is_neutral(is) ) cycle
                     k = b2espcr(is)
                     sna_core(k) = sna_core(k) + fna_mdf(ix,iy,1,is) 
-                end do 
-              end if 
-            enddo    
+                  end do 
+                end if 
+              enddo    
+            else
+              do ix = -1, nx
+                if(on_closed_surface(ix,iy)) then
+                  do is = 0, ns-1
+                    if ( is_neutral(is) ) cycle
+                    k = b2espcr(is)
+                    sna_core(k) = sna_core(k) + fna(ix,iy,1,is)  ! IYS 27.11.2018 following recommendation by Sven Wiesen
+                  end do 
+                end if 
+              enddo
+            endif    
+
+cxpb  Add contribution from Eirene core boundary fluxes
+!            do ia = 1, nnatmi
+!              if (latmscl(ia).eq.b2espcr(is)) then
+!                do k = 1, ncns
+!                  ix = nlim + lcns(k)
+!                  sna_core(b2espcr(EB2ATCR(ia))) = 
+!     &               sna_core(b2espcr(EB2ATCR(ia))) -
+!     &               wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
+!                  do im = 1, nnmoli
+!                    if (mlcmp(ia,im).gt.0) then
+!                      totfluxn = totfluxn - mlcmp(ia,im) *
+!     &                   (wldnm(ix,im,0) - wldrm(ix,im,0)
+!     &                                    - wldpm(ix,im,0))
+!                    end if
+!                  end do
+!                end do
+!              end if
+!            end do
+
      
             sna_eir_tot= 0.0_R8
             do ix=-1, nx
@@ -688,46 +721,46 @@ c   --> better solution wanted here..
       
       sna_puff =0.0_R8
       do is=1,nstrat
-       do iatm=1,nnatmi
+       do ia=1,nnatmi
         if(crcstra(is).eq.'C') then
-          if(gpfc(iatm,is) .ne. 0.0_R8) 
-     &       sna_puff(iatm) = userfluxparm(is,1)*gpfc(iatm,is) !*recyctmp
+          if(gpfc(ia,is) .ne. 0.0_R8) 
+     &       sna_puff(ia) = userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
         end if     
        end do
       enddo
 
       sna_pump =0.0_R8
-      do iatm = 1, nnatmi
-         is = latmscl(iatm)
-         if (is.eq.0) cycle
-          sna_pump(is) = sna_pump(is) + eirpump(is)
-          do imol = 1, nnmoli
-           if (mlcmp(iatm,imol).gt.0) then
-             sna_pump(is)   = sna_pump(is) +
-     &             mlcmp(iatm,imol) * eirpump(nnatmi+imol)
+      do ia = 1, nnatmi
+!         is = latmscl(ia)
+!         if (is.eq.0) cycle
+          sna_pump(ia) = sna_pump(ia) + eirpump(ia)
+          do im = 1, nnmoli
+           if (mlcmp(ia,im).gt.0) then
+             sna_pump(ia)   = sna_pump(ia) +
+     &             mlcmp(ia,im) * eirpump(nnatmi+im)
            endif
           enddo            
       end do            
       if ( iout .ne. 0 ) then
-        write(*,'(a5,5a16)') 'iatm', 'sna_cor', 'sna_eir_tot',
+        write(*,'(a5,5a16)') 'ia', 'sna_cor', 'sna_eir_tot',
      &                      'sna_puff', 'sna_pump', 't1'
         do k = 1, nnatmi
          write(*, '(i5, 5es16.7)') k, sna_core(k),  sna_eir_tot(k), 
      &                             sna_puff(k), sna_pump(k), t1(k)
         enddo                                  
 
-        write(*,'(a3,2a17)') 'iatm', 'dG/sna_eir_tot', 't(iatm)'
+        write(*,'(a3,2a17)') 'ia', 'dG/sna_eir_tot', 't(ia)'
       endif  
-        do iatm = 1, nnatmi
-          t01(iatm) =  sna_corr*( sna_puff(iatm) + sna_core(iatm)  
-     &            - sna_pump(iatm) ) / sna_eir_tot(iatm) 
-          t01(iatm) = t01(iatm)* ( 1.0_R8 - exp(-c_pumpavr) ) + 
-     &                     exp(-c_pumpavr)*t1(iatm)
-          t1(iatm) = t01(iatm)
-          t(iatm) = 1.0_R8 + 
-     &              max( min( 0.05_R8,t01(iatm) ),-0.05_R8 )       
+        do ia = 1, nnatmi
+          t01(ia) =  sna_corr*( sna_puff(ia) + sna_core(ia)  
+     &            - sna_pump(ia) ) / sna_eir_tot(ia) 
+          t01(ia) = t01(ia)* ( 1.0_R8 - exp(-c_pumpavr) ) + 
+     &                     exp(-c_pumpavr)*t1(ia)
+          t1(ia) = t01(ia)
+          t(ia) = 1.0_R8 + 
+     &              max( min( 0.05_R8,t01(ia) ),-0.05_R8 )       
          if ( iout .ne. 0 ) 
-     &       write(*,'(i3,2es17.4)') iatm, t01(iatm), t(iatm)
+     &       write(*,'(i3,2es17.4)') ia, t01(ia), t(ia)
         enddo
    
         do is = 0, ns-1
