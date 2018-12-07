@@ -111,7 +111,8 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
       if(ank_tracing.eq.0) return
 c*** Particle balance in old style by Andrei Kukushkin
       if(filedata(ntrc_bln)) call b2blnc(nx,ny,ns,dtim,iline)
-c*** Particle balance in SPb style (compatible with the speed-up scheme #3)
+c*** Particle balance in SPb style (for use in the Method of effective source for code speed-up,
+c***  see E. Kaveeva et al 2018 Nucl. Fusion 58 126018)
       if(filedata(ntrc_bln_SPb)) call b2blnc_SPb(nx,ny,ns,dtim,iline)
 c*** Power balance
       if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,BoRiS,iline)

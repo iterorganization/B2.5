@@ -143,7 +143,7 @@
      *  old_erosion(:,:), old_deposition(:,:)
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
-      real (kind=R8), save :: c_pumpavr=0.02                            !iyv 07.03.18
+      real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8             !iyv 07.03.18
       logical new_sputter_namelist
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
@@ -225,6 +225,7 @@
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
         call ipgetr ('b2stbr_sna_corr', sna_corr)                    !iyv 07.03.18 {
         call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !IYS 27.11.2018
+        call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
         if( sna_corr .gt. 0.0_R8 ) then
            allocate(t1(1:nnatmi))
            t1=0.0_R8
@@ -758,7 +759,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &                     exp(-c_pumpavr)*t1(ia)
           t1(ia) = t01(ia)
           t(ia) = 1.0_R8 + 
-     &              max( min( 0.05_R8,t01(ia) ),-0.05_R8 )       
+     &              max( min( taumax,t01(ia) ),taumax )       
          if ( iout .ne. 0 ) 
      &       write(*,'(i3,2es17.4)') ia, t01(ia), t(ia)
         enddo

@@ -3416,6 +3416,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2stbr_taumax</name>
+				<default>0.05</default>
+				<type>real</type>
+				<description>
+					Maximum allowed fraction of source to be added to real source in the method of effective sources for code speed-up.  
+					See E. Kaveeva et al 2018 Nucl. Fusion 58 126018
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbr_first_flight_no_of_flights</name>
 				<default>9</default>
 				<type>integer</type>
