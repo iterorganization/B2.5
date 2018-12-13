@@ -147,6 +147,9 @@
           allocate(wrk2(1:1))
           allocate(iwrk(1:n2))
         else if (style.eq.2) then
+          continue
+        else if (style.eq.3) then
+          continue
         endif
         write(*,*) 
      .   'Allocated space for solver for 7-point stencil matrix'   !srv 11.01.00

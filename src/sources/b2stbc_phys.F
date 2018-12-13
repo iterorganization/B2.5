@@ -112,7 +112,7 @@
      1  bc_type20_ref, bc_type20_ix, bc_type20_iy, bc_type20_ixx,
      1  bc_type21_ref, bc_type21_ix, bc_type21_iy, bc_type21_ixx,
      1  bc_type16_kinetic_energy
-      integer       :: num_inner, k, ism                                !srv 26.11.02
+      integer       :: num_inner, k                                     !srv 26.11.02
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0           !srv 08.08.02 14.02.05
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0, iout = 0, !srv 13.10.06
@@ -122,8 +122,8 @@
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: istyle_cur_contr_on_S_and_N = 2                  !srv 01.02.09 03.03.15
-      integer, save :: bcene_16_style =0, bceni_16_style = 0            !srv 16.02.12
-      integer, save :: bcene_15_style =0                                !srv 19.04.13
+      integer, save :: bcene_16_style = 0, bceni_16_style = 0           !srv 16.02.12
+      integer, save :: bcene_15_style = 0                               !srv 19.04.13
       integer, save :: pot_eq = 1                                       !srv 27.02.13
       integer, save :: use_astra
       integer, save :: drift_style
@@ -665,6 +665,9 @@ cwdk  now need to recompute full diamagnetic component for ud
       subroutine b2stbc_phys_species(IB)
       integer ib
       integer ix, iy, is, isa, isb, ibw
+#ifdef B25_EIRENE
+      integer k, ism
+#endif
       integer bc_type13_i, bc_type20_i, bc_type21_i
 
       if (bcpos(ib).eq.-2) then
@@ -2443,6 +2446,14 @@ cxpb Careful here because of BC number clash
      .       'constant density',CONPAR(IS,IB,1)
             call xertst(is.eq.ismain,
      1       'BCCON = 21 is applied for main ion only ')
+            if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
+              write(0,*)
+     &         'Use of BCCON=21 only meant for single-fluid runs!'
+              write(0,*) 'Use BCCON=25 instead!'
+              write(6,*)
+     &         'Use of BCCON=21 only meant for single-fluid runs!'
+              write(6,*) 'Use BCCON=25 instead!'
+            endif
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
@@ -2556,6 +2567,14 @@ cxpb Careful here because of BC number clash
      &       'given total particle flux with constant',
      &       ' density for ion is =', is
 !           write all boundaries with this type of boundary condition
+            if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
+              write(0,*)
+     &         'Use of BCCON=22 only meant for single-fluid runs!'
+              write(0,*) 'Use BCCON=26 instead!'
+              write(6,*)
+     &         'Use of BCCON=22 only meant for single-fluid runs!'
+              write(6,*) 'Use BCCON=26 instead!'
+            endif
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
@@ -2693,6 +2712,14 @@ cxpb Careful here because of BC number clash
      .       'given total particle flux with constant',
      &       ' density for main ion is =', ismain
 !          write all boundaries with this type of boundary condition
+            if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
+              write(0,*)
+     &         'Use of BCCON=23 only meant for single-fluid runs!'
+              write(0,*) 'Use BCCON=27 instead!'
+              write(6,*)
+     &         'Use of BCCON=23 only meant for single-fluid runs!'
+              write(0,*) 'Use BCCON=27 instead!'
+            endif
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
@@ -4344,7 +4371,7 @@ cxpb  and max(,,) statement for stability
 
       subroutine b2stbc_phys_ene(IB)
       integer ib
-      integer ix, iy, is, ibw
+      integer ix, iy, is, ibw, ism
       integer bc_type16_i, bc_type20_i, bc_type21_i
 
 * -- BOUNDARY CONDITIONS FOR ELECTRON ENERGY EQUATION --
@@ -8292,9 +8319,11 @@ cxpb Careful here because of BC number clash
               end if
               if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
                 write(0,*)
-     &       'Use of BCENI=23 only meant for runs without impurities!'
+     &           'Use of BCENI=23 only meant for single-fluid runs!'
+                write(0,*) 'Use BCENI=26 instead!'
                 write(6,*)
-     &       'Use of BCENI=23 only meant for runs without impurities!'
+     &           'Use of BCENI=23 only meant for single-fluid runs!'
+                write(6,*) 'Use BCENI=26 instead!'
               endif
             endif
             if(BCCHAR(IBW).EQ.'S'.and.
@@ -8419,9 +8448,11 @@ cxpb Careful here because of BC number clash
               end if
               if (.not.(ns.eq.1.or.(ns.eq.2.and.is_neutral(0)))) then
                write(0,*)
-     &       'Use of BCENI=24 only meant for runs without impurities!'
+     &          'Use of BCENI=24 only meant for single-fluid runs!'
+               write(0,*) 'Use BCENI=27 instead!'
                write(6,*)
-     &       'Use of BCENI=24 only meant for runs without impurities!'
+     &          'Use of BCENI=24 only meant for single-fluid runs!'
+               write(6,*) 'Use BCENI=27 instead!'
               endif
             endif
             if(BCCHAR(IBW).EQ.'S'.and.

@@ -39,7 +39,7 @@ c<<<
       parameter (lun_s=76, lun_t=75, lun_l=74)
       real (kind=R8) :: uu_xe, uu_ye
       logical uu_dbg
-      character tab, uu_file*48
+      character tab
 c>>>
 c======================================================================
 c
