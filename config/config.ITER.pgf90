@@ -62,18 +62,12 @@ ifdef IMAS_VERSION
 ifndef SOLPS_CPP
 EQUIVS  += -DIMAS
 endif
-ifeq (,$(findstring hpc-login0,$(NODENAME)))
-EQUIVS  += -DGGD_OLD
-LD_UAL  ?= `pkg-config imas-pgi ggd-pgi --libs`
-INCMODS += `pkg-config imas-pgi ggd-pgi --cflags`
-else
 ifdef USE_MPI
 LD_UAL  := `pkg-config imas-gfortran --libs` -L/work/imas/opt/EasyBuild/software/GGD/1.8.1-GCC-6.4.0-2.28/lib -lggd
 INCMODS += `pkg-config imas-gfortran --cflags` -I/work/imas/opt/EasyBuild/software/GGD/1.8.1-GCC-6.4.0-2.28/include
 else
 LD_UAL  ?= `pkg-config imas-pgi ggd --libs`
 INCMODS += `pkg-config imas-pgi ggd --cflags`
-endif
 endif
 IMASLIBS = ${LD_UAL}
 endif
