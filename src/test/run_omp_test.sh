@@ -97,10 +97,10 @@ function run_test {
 
   if [ $4 -eq 1 ]; then
     echo Running B2.5 in serial mode
-    b2run -s b2mn 2>&1 | tee b2run.log
+    b2run -s b2mn 2>&1 | tee run.log
   else
     echo Running B2.5 using $4 threads
-    b2run -s -t $4 b2mn 2>&1 | tee b2run.log
+    b2run -s -t $4 b2mn 2>&1 | tee run.log
   fi
   cd ..
 }
