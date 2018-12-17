@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_geo_corner
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -29,6 +30,7 @@
       real (kind=R8) ::
      &  fac_vism, t0, wrk0(-1:nx,-1:ny)
       character(3) :: chns
+!$OMP THREADPRIVATE(ncall, iout, vis_per)
 *   ..procedures
       real (kind=R8) ::
      *   hy1
@@ -45,6 +47,13 @@
       if (ncall.eq.0) then                                              !srv
        call ipgetr ('b2tfhe_vis_per', vis_per)                          !srv 22.11.99
        call ipgeti ('b2txvsprco_iout',iout)                             !srv 06.12.17
+       if (in_parallel() .and. iout.ne.0) then
+!$OMP MASTER
+         write(*,*)
+     .    'b2txvsprco OpenMP warning: no file IO in parallel mode'
+!$OMP END MASTER
+         iout = 0
+       endif
       end if
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')

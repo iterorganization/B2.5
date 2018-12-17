@@ -5,7 +5,9 @@ c###### calls   ma30    mc20    mc22    mc23    mc24
      * iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1, bd2, bd3
+#endif
 c this subroutine performs the LU factorisation of a.
 c
 c the parameters are as follows.....
@@ -317,7 +319,9 @@ c set flag if the only error is due to duplicate elements.
      * iflag)
       use b2mod_types
       implicit none
+#ifdef GFORTRAN
       external bd1, bd2
+#endif
 c this subroutine factorises a matrix of a similar sparsity
 c     pattern to that previously factorised by ma28a/ad.
 c the parameters are as follows ...
@@ -461,7 +465,9 @@ c set flag if the only error is due to duplicate elements.
       subroutine ma28cd(n, a, licn, icn, ikeep, rhs, w, mtype)
       use b2mod_types
       implicit none
+#ifdef GFORTRAN
       external bd1, bd2
+#endif
 c
 c this subroutine uses the factors from ma28a/ad or ma28b/bd to
 c     solve a system of equations without iterative refinement.
@@ -653,7 +659,9 @@ c also calculate maximum element of a.
      * ikeep, rhs, x, r, w, mtype, prec, iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1
+#endif
 c this subroutine uses the factors from an earlier call to ma28a/ad
 c     or ma28b/bd to solve the system of equations with iterative
 c     refinement.
@@ -1758,10 +1766,9 @@ c innermost fill-in loop which also resets icn.
               j = icn(jj)
               if (j.lt.0) go to 820
 #ifdef DBG
-              if((au.ge.tiny(1.0_R8) .or. au.le.-tiny(1.0_R8)).and.
-     &           (a(jj).ge.tiny(1.0_R8) .or. a(jj).le.-tiny(1.0_R8)))
-     >         then
-                product = log(abs(au))+log(abs(a(jj)))
+              if((au   .ge.tiny(1.0_R8).or.au   .le.-tiny(1.0_R8)).and.
+     &           (a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8))) then
+                product = log(abs(au)) + log(abs(a(jj)))
                 if (product.ge.cutlo) then
                   anew = au*a(jj)
                   aanew = abs(anew)
@@ -1772,7 +1779,7 @@ c innermost fill-in loop which also resets icn.
               else
                 anew = 0.0_R8
                 aanew = 0.0_R8
-             end if
+              end if
 #else
               anew = au*a(jj)
               aanew = abs(anew)
@@ -2115,13 +2122,14 @@ c ipivj is position of pivot in row j.
           ipivj = iw(j) + lenrl(j)
 c form multiplier au.
 #ifdef DBG
-          if (abs(w(j)).gt.tiny(1.0_R8) .and.
-     &        abs(a(ipivj)).gt.tiny(1.0_R8)) then
+          if((w(j).ge.tiny(1.0_R8).or.w(j).le.-tiny(1.0_R8)).and.
+     &        (a(ipivj).ge. tiny(1.0_R8).or.
+     &         a(ipivj).le.-tiny(1.0_R8))) then
             product = log(abs(w(j))) - log(abs(a(ipivj)))
-            if (product .le. cutlo) then
-              au = 0.0_R8
-            else
+            if (product.ge.cutlo) then
               au = -w(j)/a(ipivj)
+            else
+              au = 0.0_R8
             end if
           else
             au = 0.0_R8
@@ -2140,8 +2148,8 @@ c innermost loop.
           do 40 jayjay=ipivj,jfin
             jay = icn(jayjay)
 #ifdef DBG
-            if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)) .and.
-     &         (a(jayjay).ge.tiny(1.0_R8).or.
+            if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)).and.
+     &         (a(jayjay).ge. tiny(1.0_R8).or.
      &          a(jayjay).le.-tiny(1.0_R8))) then
               product = log(abs(au)) + log(abs(a(jayjay)))
               if (product.ge.cutlo) w(jay) = w(jay) + au*a(jayjay)
@@ -2288,10 +2296,10 @@ c
      * jpiv, jpivp1, lt, ltend, numblk
 c
       data zero /0.0e0_R8/
+c
 #ifdef DBG
       cutlo = log(tiny(1.0_R8))
 #endif
-c
 c the final value of resid is the maximum residual for an inconsistent
 c     set of equations.
       resid = zero
@@ -3307,6 +3315,7 @@ c grofac is max u max-norm times max l 1-norm.
       w(1)=amaxl*amaxu
       return
       end subroutine mc24ad
+#ifndef GFORTRAN
       block data bd1
       use b2mod_types
       implicit none
@@ -3428,8 +3437,8 @@ c     increase the time for ma28a/ad marginally and that for ma28b/bd
 c     by about 20%.  the default value for lbig is .false.
 c
       real (kind=R8) ::
-     *   eps, rmin, resid, tol, themax, big, dxmax,
-     * errmax, dres, cgce
+     *   eps, rmin, resid
+      real (kind=R8) :: tol, themax, big, dxmax, errmax, dres, cgce
       integer lp, mp
       integer irncp, icncp, minirn, minicn, irank
       integer ndrop, maxit, noiter, nsrch, istart
@@ -3608,3 +3617,73 @@ c
 !$OMP THREADPRIVATE(/mc23bd/)
       data lp/6/,abort/.false./
       end block data bd3
+#else
+      subroutine set_data_bd1
+      use b2mod_types
+      implicit none
+      real (kind=R8) ::
+     *   eps, rmin, resid
+      real (kind=R8) :: tol, themax, big, dxmax, errmax, dres, cgce
+      integer lp, mp
+      integer irncp, icncp, minirn, minicn, irank
+      integer ndrop, maxit, noiter, nsrch, istart
+      logical lblock, grow
+      logical abort1, abort2
+      logical lbig
+      common /ma28ed/ lp, mp, lblock, grow
+      common /ma28fd/ eps, rmin, resid, irncp, icncp, minirn, minicn,
+     * irank, abort1, abort2
+      common /ma28hd/ tol, themax, big, dxmax, errmax, dres, cgce,
+     * ndrop, maxit, noiter, nsrch, istart, lbig
+!$OMP THREADPRIVATE(/ma28ed/,/ma28fd/,/ma28hd/)
+      eps = 1.0e-4_R8
+      tol = 0.0e0_R8
+      big = 0.0e0_R8
+      cgce = 0.5e0_R8
+      lp = 6
+      mp = 6
+      maxit = 16
+      nsrch = 32768
+      istart = 0
+      lbig = .false.
+      abort1 = .true.
+      abort2 = .true.
+      lblock = .true.
+      grow = .true.
+      end subroutine set_data_bd1
+      subroutine set_data_bd2
+      use b2mod_types
+      implicit none
+      real (kind=R8) ::
+     *   eps, rmin
+      real (kind=R8) :: tol, big
+      integer lp
+      integer ndrop, nsrch
+      logical abort1, abort2, abort3
+      logical lbig
+      common /ma30ed/ lp, abort1, abort2, abort3
+      common /ma30gd/ eps, rmin
+      common /ma30id/ tol, big, ndrop, nsrch, lbig
+!$OMP THREADPRIVATE(/ma30ed/,/ma30gd/,/ma30id/)
+      lp = 6
+      eps = 1.0e-4_R8
+      tol = 0.0e0_R8
+      big = 0.0e0_R8
+      nsrch = 32768
+      lbig = .false.
+      abort1 = .true.
+      abort2 = .true.
+      abort3 = .false.
+      end subroutine set_data_bd2
+      subroutine set_data_bd3
+      use b2mod_types
+      implicit none
+      integer lp, numnz, num, large
+      logical abort
+      common /mc23bd/ lp, numnz, num, large, abort
+!$OMP THREADPRIVATE(/mc23bd/)
+      lp = 6
+      abort = .false.
+      end subroutine set_data_bd3
+#endif
+

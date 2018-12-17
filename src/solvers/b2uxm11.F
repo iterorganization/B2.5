@@ -5,6 +5,7 @@
      &                    solvereg, po, ti, nb, pb, conb, aa11, name)    !srv 02.04.18
       use b2mod_types
       use b2mod_indirect
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
@@ -68,6 +69,7 @@
       real (kind=R8) ::
      *   aaf(-1:nx,-1:ny,-2:2), aa7(-1:nx,-1:ny,-3:3)
       save ncall
+!$OMP THREADPRIVATE(ncall, iout)
 *   ..procedures
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux5p
@@ -83,6 +85,13 @@
 *   ..set internal parameters on first call                              !srv 25.08.99
       if (ncall.eq.0) then                                               !srv 06.07.06 {
        call ipgeti ('b2uxm11_iout', iout)                                 !srv 13.10.06
+       if (in_parallel() .and. iout.ne.0) then
+!$OMP MASTER
+         write(*,*)
+     .    'b2uxm11 OpenMP warning: no file IO in parallel mode'
+!$OMP END MASTER
+         iout = 0
+       endif
       endif                                                              !srv 06.07.06 }
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')

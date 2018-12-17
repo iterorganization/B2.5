@@ -5,7 +5,9 @@ c###### calls   ma30    mc20    mc22    mc23    mc24
      & (n, nz, a, licn, irn, lirn,icn,u,ikeep,iw, w, iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy3, bd2copy3, bd3copy3
+#endif
 c this subroutine performs the LU factorisation of a.
 c
 c the parameters are as follows.....
@@ -102,8 +104,8 @@ c see block data for further comments on common block variables.
 c see code for comments on private variables.
 c
       real (kind=R8) ::
-     *   tol, themax, big, dxmax, errmax, dres, cgce,
-     * tol1, big1, upriv, rmin, eps, resid, zero
+     *  tol, themax, big, dxmax, errmax, dres, cgce,
+     *  tol1, big1, upriv, rmin, eps, resid, zero
       integer lp, mp
       integer irncp, icncp, minirn, minicn, irank
       integer idisp(2)
@@ -114,13 +116,13 @@ c
       integer mlp, numnz, num, large
       integer lpiv(10),lnpiv(10),mapiv,manpiv,iavpiv,ianpiv,kountl
       logical grow, lblock, abort, abort1, abort2, abort3, aborta,
-     * abortb, lbig, lbig1
+     *  abortb, lbig, lbig1
       common /ma28edc3/ lp, mp, lblock, grow
       common /ma28fdc3/ eps, rmin, resid, irncp, icncp, minirn, minicn,
-     * irank, abort1, abort2
+     *  irank, abort1, abort2
       common /ma28gdc3/ idisp
       common /ma28hdc3/ tol, themax, big, dxmax, errmax, dres, cgce,
-     * ndrop, maxit, noiter, nsrch, istart, lbig
+     *  ndrop, maxit, noiter, nsrch, istart, lbig
       common /ma30idc3/ tol1, big1, ndrop1, nsrch1, lbig1
       common /ma30edc3/ nlp, aborta, abortb, abort3
       common /ma30fdc3/ mirncp, micncp, mirank, mirn, micn
@@ -130,7 +132,7 @@ c
 !$OMP&  /ma30idc3/,/ma30edc3/,/ma30fdc3/,/mc23bdc3/,/lpivotc3/)
 c
       integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1,
-     * newpos, knum, length, move
+     *  newpos, knum, length, move
 c
 c some  initialisation and transfer of information between
 c     common blocks (see earlier comments).
@@ -208,7 +210,7 @@ c first time column has ocurred in current row.
           ikeep(j,2) = i
           ikeep(j,3) = jj - move - newj1
           if (move.eq.0) go to 120
-c shift necessary because of  previous duplicate element.
+c shift necessary because of previous duplicate element.
           newpos = jj - move
           a(newpos) = a(jj)
           icn(newpos) = icn(jj)
@@ -303,21 +305,23 @@ c set flag if the only error is due to duplicate elements.
 99998 format (36x, 'nz non positive = ', i10)
 99997 format (36x, 'licn too small = ', i10)
 99996 format (36x, 'lirn too small = ', i10)
-99995 format (' error return from ma28a/adc because indices found out',
+99995 format (' error return from ma28a/adc3 because indices found out',
      * ' of range')
 99994 format (1x, i6, 'th element with value ', 1pd22.14, ' is out o',
      * 'f range with indices ', i8, ' ,', i8)
 99993 format (' duplicate element in position ', i8, ' ,', i8,
      * ' with value ', 1pd22.14)
-99992 format (36x, 'error return from mc23a/adc')
-99991 format (36x, 'error return from ma30a/adc')
-99990 format ('+error return from ma28a/adc because ')
+99992 format (36x, 'error return from mc23a/adc3')
+99991 format (36x, 'error return from ma30a/adc3')
+99990 format ('+error return from ma28a/adc3 because ')
       end subroutine ma28adcopy3
       subroutine ma28bdcopy3
      &  (n, nz, a, licn, ivect, jvect, icn, ikeep, iw, w, iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy3, bd2copy3
+#endif
 c this subroutine factorises a matrix of a similar sparsity
 c     pattern to that previously factorised by ma28a/ad.
 c the parameters are as follows ...
@@ -451,18 +455,20 @@ c set flag if the only error is due to duplicate elements.
       go to 70
    60 if (lp.ne.0) write (lp,99994)
    70 return
-99999 format (' error return from ma28b/bdc with iflag=', i4/i7,
-     * ' entries dropped from structure by ma28a/adc')
+99999 format (' error return from ma28b/bdc3 with iflag=', i4/i7,
+     * ' entries dropped from structure by ma28a/adc3')
 99998 format (36x, 'n out of range = ', i10)
 99997 format (36x, 'nz non positive = ', i10)
 99996 format (36x, 'licn too small = ', i10)
-99995 format (36x, 'error return from ma30b/bdc')
-99994 format ('+error return from ma28b/bdc because ')
+99995 format (36x, 'error return from ma30b/bdc3')
+99994 format ('+error return from ma28b/bdc3 because ')
       end subroutine ma28bdcopy3
       subroutine ma28cdcopy3(n, a, licn, icn, ikeep, rhs, w, mtype)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy3, bd2copy3
+#endif
 c
 c this subroutine uses the factors from ma28a/ad or ma28b/bd to
 c     solve a system of equations without iterative refinement.
@@ -654,7 +660,9 @@ c also calculate maximum element of a.
      * ikeep, rhs, x, r, w, mtype, prec, iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy3
+#endif
 c this subroutine uses the factors from an earlier call to ma28a/ad
 c     or ma28b/bd to solve the system of equations with iterative
 c     refinement.
@@ -847,8 +855,8 @@ c
   140 errmax = dd
   150 continue
   160 return
-99999 format (' error return from ma28i/idc with iflag = ', i3/' more ',
-     * 'than', i5, ' iterations required')
+99999 format (' error return from ma28i/idc3 with iflag = ',
+     * i3/'more than', i5, ' iterations required')
 99998 format (' error return from ma28id with iflag = ', i3/' converge', !srv 16.01.18
      * 'nce rate of ', 1pe9.2, ' too slow'/' maximum acceptable rate',
      * ' set to ', 1pe9.2)
@@ -1609,9 +1617,9 @@ c innermost loop.
               iop = iop + 1
               pivrow = ijpos - iq(j)
 #ifdef DBG
-              if ((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)).and.
-     &            (a(pivrow).ge. tiny(1.0_R8).or.
-     &             a(pivrow).le.-tiny(1.0_R8))) then
+              if((au.ge.tiny(1.0_R8) .or. au.le.-tiny(1.0_R8)).and.
+     &           (a(pivrow).ge.tiny(1.0_R8).or.
+     &            a(pivrow).le.-tiny(1.0_R8))) then
                 product = log(abs(au)) + log(abs(a(pivrow)))
                 if (product.ge.cutlo) a(jj) = a(jj) + au*a(pivrow)
               end if
@@ -1993,16 +2001,16 @@ c   ***    error returns    ***
 c
 c
  1120 return
-99999 format (' error return from ma30a/adc because matrix is structu',
-     * 'rally singular')
-99998 format (' error return from ma30a/adc because matrix is numeric',
-     * 'ally singular')
+99999 format (' error return from ma30a/adc3 because matrix is struct',
+     * 'urally singular')
+99998 format (' error return from ma30a/adc3 because matrix is numeri',
+     * 'cally singular')
 99997 format (' lu decomposition destroyed to create more space')
-99996 format (' error return from ma30a/adc because licn not big',
+99996 format (' error return from ma30a/adc3 because licn not big',
      * ' enough')
-99995 format (' error return from ma30a/adc because lirn not big',
+99995 format (' error return from ma30a/adc3 because lirn not big',
      * ' enough')
-99994 format (' error return from ma30a/adc lirn and licn too small')
+99994 format (' error return from ma30a/adc3 lirn and licn too small')
 99993 format (' at stage ', i5, ' in block ', i5, ' with first row ',
      * i5, ' and last row ', i5)
 99992 format (' to continue set lirn to at least ', i8)
@@ -2213,7 +2221,7 @@ c   ***   error return   ***
       iflag = -i
 c
   180 return
-99999 format (' error return from ma30b/bdc singularity detected in ',
+99999 format (' error return from ma30b/bdc3 singularity detected in ',
      * 'row', i8)
       end subroutine ma30bdcopy3
       subroutine ma30cdcopy3(n, icn, a, licn,lenr,lenrl,lenoff,idisp,ip,
@@ -2341,7 +2349,15 @@ c ltend is the end of row i in the off-diagonal blocks.
         ltend = lt + lenoff(i) - 1
         do 20 jj=lt,ltend
           j = icn(jj)
+#ifdef DBG
+          if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
+     &       (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
+            product = log(abs(a(jj))) + log(abs(w(j)))
+            if (product.ge.cutlo) wi = wi - a(jj)*w(j)
+          end if
+#else
           wi = wi - a(jj)*w(j)
+#endif
    20   continue
 c lt is set the beginning of the next off-diagonal row.
         lt = ltend + 1
@@ -2596,8 +2612,8 @@ c######alias mc13dcopy3
       integer n, licn, num
       integer ip(n)
       integer icn(licn),lenr(n),ior(n),ib(n),iw(n,3)
-      call
-     & mc13ecopy3(n,icn,licn,ip,lenr,ior,ib,num,iw(1,1),iw(1,2),iw(1,3))
+      call mc13ecopy3
+     & (n,icn,licn,ip,lenr,ior,ib,num,iw(1,1),iw(1,2),iw(1,3))
       return
       end subroutine mc13dcopy3
       subroutine mc13ecopy3
@@ -3255,7 +3271,7 @@ c error return
   200 format(33x,' licn not big enough increase by ',i6)
       idisp(1)=-2
   210 if (lp.ne.0) write(lp,220)
-  220 format('+error return from mc23adc because')
+  220 format('+error return from mc23adc3 because')
 c
   230 return
       end subroutine mc23adcopy3
@@ -3306,6 +3322,7 @@ c grofac is max u max-norm times max l 1-norm.
       w(1)=amaxl*amaxu
       return
       end subroutine mc24adcopy3
+#ifndef GFORTRAN
       block data bd1copy3
       use b2mod_types
       implicit none
@@ -3610,3 +3627,72 @@ c
 !$OMP THREADPRIVATE(/mc23bdc3/)
       data lp/6/,abort/.false./
       end block data bd3copy3                                           !srv 26.12.17 }
+#else
+      subroutine set_data_bd1copy3
+      use b2mod_types
+      implicit none
+      real (kind=R8) ::
+     *   eps, rmin, resid
+      real (kind=R8) :: tol, themax, big, dxmax, errmax, dres, cgce
+      integer lp, mp
+      integer irncp, icncp, minirn, minicn, irank
+      integer ndrop, maxit, noiter, nsrch, istart
+      logical lblock, grow
+      logical abort1, abort2
+      logical lbig
+      common /ma28edc3/ lp, mp, lblock, grow
+      common /ma28fdc3/ eps, rmin, resid, irncp, icncp, minirn, minicn,
+     * irank, abort1, abort2
+      common /ma28hdc3/ tol, themax, big, dxmax, errmax, dres, cgce,
+     * ndrop, maxit, noiter, nsrch, istart, lbig
+!$OMP THREADPRIVATE(/ma28edc3/,/ma28fdc3/,/ma28hdc3/)
+      eps = 1.0e-4_R8
+      tol = 0.0e0_R8
+      big = 0.0e0_R8
+      cgce = 0.5e0_R8
+      lp = 6
+      mp = 6
+      maxit = 16
+      nsrch = 32768
+      istart = 0
+      lbig = .false.
+      abort1 = .true.
+      abort2 = .true.
+      lblock = .true.
+      grow = .true.
+      end subroutine set_data_bd1copy3
+      subroutine set_data_bd2copy3
+      use b2mod_types
+      implicit none
+      real (kind=R8) ::
+     *   eps, rmin
+      real (kind=R8) :: tol, big
+      integer lp
+      integer ndrop, nsrch
+      logical abort1, abort2, abort3
+      logical lbig
+      common /ma30edc3/ lp, abort1, abort2, abort3
+      common /ma30gdc3/ eps, rmin
+      common /ma30idc3/ tol, big, ndrop, nsrch, lbig
+!$OMP THREADPRIVATE(/ma30edc3/,/ma30gdc3/,/ma30idc3/)
+      lp = 6
+      eps = 1.0e-4_R8
+      tol = 0.0e0_R8
+      big = 0.0e0_R8
+      nsrch = 32768
+      lbig = .false.
+      abort1 = .true.
+      abort2 = .true.
+      abort3 = .false.
+      end subroutine set_data_bd2copy3
+      subroutine set_data_bd3copy3
+      use b2mod_types
+      implicit none
+      integer lp, numnz, num, large
+      logical abort
+      common /mc23bdc3/ lp, numnz, num, large, abort
+!$OMP THREADPRIVATE(/mc23bdc3/)
+      lp = 6
+      abort = .false.
+      end subroutine set_data_bd3copy3
+#endif

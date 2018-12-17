@@ -5,7 +5,9 @@
       use b2mod_indirect
       use b2mod_openmp
       IMPLICIT NONE
+#ifndef GFORTRAN
       external bd1
+#endif
 C
 
 *  -- INPUT ARGUMENTS --
@@ -77,6 +79,11 @@ c
        call ipgeti ('ma28_ilutern_kwrite_fmt', kwrite_fmt)            !srv 18.05.02
        call ipgeti ('ma28_ilutern_kwrite_bnr', kwrite_bnr)            !srv 18.05.02
        call ipgeti ('b2swtest', b2swtest)
+#ifdef GFORTRAN
+       call set_data_bd1
+       call set_data_bd2
+       call set_data_bd3
+#endif
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 

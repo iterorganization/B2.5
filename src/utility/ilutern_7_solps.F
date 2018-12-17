@@ -5,7 +5,9 @@
       use b2mod_indirect
       use b2mod_openmp
       IMPLICIT NONE
+#ifndef GFORTRAN
       external bd1copy3                                            !srv 26.12.17
+#endif
 C
 
 *  -- INPUT ARGUMENTS --
@@ -77,13 +79,18 @@ c
         if (in_parallel() .and. ( nwrite.ne.0 .or.
      &     kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
 !$OMP MASTER
-         write(*,*) 'ilutern_9 OpenMP warning: no file IO ' ,
+         write(*,*) 'ilutern_7 OpenMP warning: no file IO ' ,
      &       'in parallel mode'
 !$OMP END MASTER
          nwrite = 0
          kwrite_fmt = -1
          kwrite_bnr = -1
        endif 
+#ifdef GFORTRAN
+       call set_data_bd1copy3
+       call set_data_bd2copy3
+       call set_data_bd3copy3
+#endif
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
@@ -317,6 +324,6 @@ cdpc
       return
 
 *=======================================================================
-*//END ILUTERN//
+*//END ILUTERN_7//
 
       END

@@ -6,6 +6,7 @@
      &    rescb, corpb, aa11, name)                                      !srv 18.05.02
       use b2mod_types
       use b2mod_indirect
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt, isb, nregionv
@@ -76,6 +77,7 @@
      *   t0, t1
       character chns*3
       save ncall
+!$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout, iadd_11)
 *   ..procedures
       intrinsic abs
       real (kind=R8) ::
@@ -99,6 +101,13 @@
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
        call ipgeti ('b2usc11_add_11', iadd_11)
        call ipgeti ('b2usc11_iout', iout)
+       if (in_parallel() .and. iout.ne.0) then
+!$OMP MASTER
+         write(*,*)
+     .    'b2usc11 OpenMP warning: no file IO in parallel mode'
+!$OMP END MASTER
+         iout = 0
+       endif
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

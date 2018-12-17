@@ -260,7 +260,7 @@ cxpb
        if (in_parallel()) then
         if (ncall==0) then
         !$OMP MASTER
-         write(*,*)'OpenMP warning from b2usco: not writing files ',
+         write(*,*)'OpenMP warning from b2usc7: not writing files ',
      &        'in parallel mode'
         !$OMP END MASTER
         end if

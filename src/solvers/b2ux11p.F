@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_ma28_for_11diag
       use b2mod_indirect
+      use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -80,6 +81,9 @@
      &  slv5pt, iluter, xerrab
 *   ..initialization
       save ncall, style, acpar, cpu
+!$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
+!$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
+!$OMP THREADPRIVATE (indexes, iasave, jasave)
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
@@ -153,14 +157,22 @@
        iters = min(itmax,4)
        itpar = itcnt*iters
        call xerrab ('b2ux11p: Style 0 is not implemented')
-       call iluter (nx+2, ny+2, aa11, resfun, iters, acpar, itpar,
-     &   corfun, nrmc, aaf, wrk0, wrk1, wrk2)
+       if (in_parallel()) then
+          stop 'STOP: iluter not parallelised, re-run in serial'
+       else
+         call iluter (nx+2, ny+2, aa11, resfun, iters, acpar, itpar,
+     &    corfun, nrmc, aaf, wrk0, wrk1, wrk2)
+       endif
       else if (style.eq.1) then
 *    ..use slv5pt
        iters = 1
        call xerrab ('b2ux11p: Style 1 is not implemented')
-       call slv5pt (nx+2, ny+2, aa11, resfun, iters, corfun, nrmc,
-     &   min(nx+2,ny+2), aaf, wrk0, iwrk)
+       if (in_parallel()) then
+         stop 'STOP: slv5pt not parallelised, re-run in serial'
+       else
+         call slv5pt (nx+2, ny+2, aa11, resfun, iters, corfun, nrmc,
+     &    min(nx+2,ny+2), aaf, wrk0, iwrk)
+       endif
       else if (style.eq.2) then
        call cpu_time(c_start)
        call storage_11 (nx, ny, aa11, n_nonzeros, irnh, icnh, a1h, nz,
@@ -195,6 +207,7 @@
       subroutine storage_11 (nx, ny, aa11, nnz, ia, ja, a, k,            !srv 02.04.18 {
      *                      indexes, iasave, jasave, name)
       use b2mod_types
+      use b2mod_openmp
       use b2mod_indirect
       implicit none
 *  ..input
@@ -247,10 +260,20 @@
       integer, save :: ncall = 0
       integer, save :: kwrite_fmt = -1
       integer, save :: kwrite_bnr = -1
+!$OMP THREADPRIVATE(lfirst, ncall, kwrite_fmt, kwrite_bnr)
 
       if(ncall.eq.0) then
         call ipgeti ('storage_11_kwrite_fmt', kwrite_fmt)
         call ipgeti ('storage_11_kwrite_bnr', kwrite_bnr)
+        if (in_parallel() .and. 
+     &     (kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
+!$OMP MASTER
+         write(*,*) 'storage_11 OpenMP warning: no file IO ' ,
+     &       'in parallel mode'
+!$OMP END MASTER
+         kwrite_fmt = -1
+         kwrite_bnr = -1
+       endif
       endif
 
       n = (nx+2)*(ny+2)

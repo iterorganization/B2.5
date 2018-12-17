@@ -19,6 +19,8 @@ ifdef USE_MPI
 FC = mpif90
 LD = mpif90
 OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
+DEFINES := $(shell echo ${SOLPS_CPP} | sed -e 's:PGF90:GFORTRAN:' -e 's: -DNOQUAD::')
+DEFINES += ${B25_DEFINES}
 INCMOD = -B
 else
 ifdef USE_IMPGYRO
@@ -44,8 +46,13 @@ endif
 endif
 
 ifdef USE_OPENMP
+ifdef USE_MPI
+FCOPTS += -fopenmp
+LDOPTS += -fopenmp
+else
 FCOPTS += -mp=nonuma
 LDOPTS += -mp=nonuma
+endif
 endif
 
 DBLFC = ${FC}

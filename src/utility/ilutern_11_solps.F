@@ -2,7 +2,11 @@
       use b2mod_types
       use b2mod_ma28_for_11diag
       use b2mod_indirect
+      use b2mod_openmp
       IMPLICIT NONE
+#ifndef GFORTRAN
+      external bd1copy4
+#endif
 C
 
 *  -- INPUT ARGUMENTS --
@@ -31,10 +35,12 @@ c ma28 common blocks
       common /ma28fdc4/ eps,rmin,resid,irncp,icncp,minirn,minicn,
      1 irank,abort1,abort2
       real (kind=R8) ::
-     *   rtol,themax,big,dxmax,errmax,dres,cgce
-      integer ndrop,maxit,noiter,nsrch,istart,ibig
-      common /ma28hdc4/ rtol,themax,big,dxmax,errmax,dres,cgce,
-     1 ndrop,maxit,noiter,nsrch,istart,ibig
+     *   tol,themax,big,dxmax,errmax,dres,cgce
+      integer ndrop,maxit,noiter,nsrch,istart
+      logical lbig
+      common /ma28hdc4/ tol,themax,big,dxmax,errmax,dres,cgce,
+     1 ndrop,maxit,noiter,nsrch,istart,lbig
+!$OMP THREADPRIVATE(/ma28fdc4/,/ma28hdc4/)
 c
 
 *  -- PROCEDURES --
@@ -42,13 +48,16 @@ c
 
       logical lfirst
       integer ncall, nwrite
-      integer, save :: kwrite_fmt = -1                                !srv 18.05.02
-      integer, save :: kwrite_bnr = -1                                !srv 18.05.02
+      integer, save :: kwrite_fmt = -1                             !srv 18.05.02
+      integer, save :: kwrite_bnr = -1                             !srv 18.05.02
       save lfirst, ncall, nwrite
+!$OMP THREADPRIVATE(lfirst, ncall, nwrite, kwrite_fmt, kwrite_bnr)
       data lfirst /.true./, ncall /0/, nwrite /0/
 
 *=======================================================================
 *//COMPUTATION//
+*   ..subprogram start-up calls
+      call subini ('ilutern_11')
 
 *  ---------------------------------------------------------------------
 *  TEST INPUTS AND SET AUXILIARIES.
@@ -58,6 +67,21 @@ c
         call ipgeti ('ma28_for_11d_nwrite', nwrite)
         call ipgeti ('ma28_for_11d_kwrite_fmt', kwrite_fmt)            !srv 18.05.02
         call ipgeti ('ma28_for_11d_kwrite_bnr', kwrite_bnr)            !srv 18.05.02
+        if (in_parallel() .and. ( nwrite.ne.0 .or.
+     &     kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
+!$OMP MASTER
+         write(*,*) 'ilutern_11 OpenMP warning: no file IO ' ,
+     &       'in parallel mode'
+!$OMP END MASTER
+         nwrite = 0
+         kwrite_fmt = -1
+         kwrite_bnr = -1
+        endif 
+#ifdef GFORTRAN
+        call set_data_bd1copy4
+        call set_data_bd2copy4
+        call set_data_bd3copy4
+#endif
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
@@ -229,6 +253,6 @@ cdpc
       return
 
 *=======================================================================
-*//END ILUTERN_11//                                                    !srv 13.10.06
+*//END ILUTERN_11//                                                !srv 13.10.06
 
       END

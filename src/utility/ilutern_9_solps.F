@@ -4,6 +4,9 @@
       use b2mod_indirect
       use b2mod_openmp
       IMPLICIT NONE
+#ifndef GFORTRAN
+      external bd1copy
+#endif
 C
 
 *  -- INPUT ARGUMENTS --
@@ -71,6 +74,11 @@ c
          kwrite_fmt = -1
          kwrite_bnr = -1
        endif 
+#ifdef GFORTRAN
+       call set_data_bd1copy
+       call set_data_bd2copy
+       call set_data_bd3copy
+#endif
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
