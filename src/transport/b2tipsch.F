@@ -48,12 +48,8 @@
      *   facdriftm                                                      !srv 25.01.02
       save ncall
 *   ..procedures
-      intrinsic max, abs
-      real (kind=R8) ::
-     *   hy1
       external subini, subend, xertst
       external b2xvsg, b2xvff
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *   ..initialization
       data ncall/0/
 

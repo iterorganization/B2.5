@@ -37,7 +37,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, area_fix
+      integer ncall, ix, iy, area_fix
       integer, save :: iout = 0                                          !srv 02.04.18
       integer, save :: PSch_style = 1                                    !srv 12.11.08
       character chns*3                                                   !srv 16.09.02
@@ -46,7 +46,6 @@
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr                    !xpb
       external b2xvsg, b2xvff, intfaceh, intfacev
-      intrinsic abs, max, min, mod, sqrt
 *   ..initialisation
       data ncall/0/, area_fix/3/
 
@@ -56,8 +55,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tnpsch')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..set internal parameters on first call

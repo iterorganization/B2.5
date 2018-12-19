@@ -112,7 +112,7 @@
      1  bc_type20_ref, bc_type20_ix, bc_type20_iy, bc_type20_ixx,
      1  bc_type21_ref, bc_type21_ix, bc_type21_iy, bc_type21_ixx,
      1  bc_type16_kinetic_energy
-      integer       :: num_inner, k, ism                                !srv 26.11.02
+      integer       :: num_inner, k                                     !srv 26.11.02
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0           !srv 08.08.02 14.02.05
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0, iout = 0, !srv 13.10.06
@@ -665,6 +665,9 @@ cwdk  now need to recompute full diamagnetic component for ud
       subroutine b2stbc_phys_species(IB)
       integer ib
       integer ix, iy, is, isa, isb, ibw
+#ifdef B25_EIRENE
+      integer k, ism
+#endif
       integer bc_type13_i, bc_type20_i, bc_type21_i
 
       if (bcpos(ib).eq.-2) then
@@ -4368,7 +4371,7 @@ cxpb  and max(,,) statement for stability
 
       subroutine b2stbc_phys_ene(IB)
       integer ib
-      integer ix, iy, is, ibw
+      integer ix, iy, is, ibw, ism
       integer bc_type16_i, bc_type20_i, bc_type21_i
 
 * -- BOUNDARY CONDITIONS FOR ELECTRON ENERGY EQUATION --

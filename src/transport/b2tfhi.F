@@ -64,8 +64,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ib, conduction_only, no_hybr, 
-     &        ixl, iyl, ixb, iyb
+      integer ncall, n2, ix, iy, is, ib, conduction_only, no_hybr
       integer, save :: iout = 0                                      !srv 16.09.02
       integer, save :: lim_flux = 0, mdf_fhi = 0                     !srv 04.02.03 13.10.06
       integer, save :: drift_style = 1

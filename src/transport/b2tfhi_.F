@@ -60,7 +60,7 @@ csw 30apr2014 added fna_he, ia
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ib, ixl, iyl, ixb, iyb
+      integer ncall, n2, ix, iy, is, ib
       integer, save :: iout = 0, iout_b2wdat = 0,                       !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0
       integer, save :: lim_flux = 0, mdf_fhi = 0                        !srv 04.02.03 13.10.06

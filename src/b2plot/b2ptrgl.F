@@ -38,7 +38,7 @@ c======================================================================
 #endif
 c
       integer i,j,jj,k,kk,l,m,n,iss,imol,iy,js,nn,nclm_ld,nclm_er,nx_hlp
-      integer i1,i2,i3,ia,ib,ic,is,ix,ik,imin,imax,ind,ims,ias
+      integer i1,i2,i3,ia,ib,ic,is,ix,ik,ind,ims,ias
       integer ixstart(ntrgsx,2),ixend(ntrgsx,2)
       integer m_hlp(ntrgsx),npar_hlp(ntrgsx),ntrg_hlp(ntrgsx)
       logical match_found,do_sput(ntrgsx)
@@ -64,7 +64,7 @@ c*  xwhm_tt:  exp. decay length on target, calc. from hw & mapped to OMP
 c* Integrals of total and radiated power to the targets, power widths
      ,  pwr_tt(ntrgsx),pwr_rd(ntrgsx),fwht_tt(ntrgsx),fwxt_tt(ntrgsx),
      ,  pwr_cr(ntrgsx),frc_cr(ntrgsx),
-     ,  hwht_tt(ntrgsx),hwhm_tt(ntrgsx),hwhx_tt(ntrgsx),hwxt_tt(ntrgsx),
+     ,  hwht_tt(ntrgsx),hwhm_tt(ntrgsx),hwxt_tt(ntrgsx),
      ,  hwxm_tt(ntrgsx),lcnnt(0:ny-1,ntrgsx),lcnnx(0:ny-1,ntrgsx),
      ,  hwxm_idp(ntrgsx),hwxm_idt(ntrgsx),
      ,  hwhm_idp(ntrgsx),hwhm_idt(ntrgsx),

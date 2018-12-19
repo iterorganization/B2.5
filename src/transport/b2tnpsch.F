@@ -52,12 +52,8 @@
       real (kind=R8) :: weight(-1:nx,-1:ny)                              !lk
       save ncall, area_fix
 *   ..procedures
-      real (kind=R8) ::
-     *   hy1
       external subini, subend, xertst, ipgeti, ipgetr                    !xpb
       external b2xvsg, b2xvff, intfaceh, intfacev
-      intrinsic abs, max, min, mod, sqrt
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, area_fix/3/
 

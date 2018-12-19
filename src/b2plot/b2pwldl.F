@@ -1,4 +1,4 @@
-      subroutine b2pwldl(boundary_namelist,BoRiS)
+      subroutine b2pwldl(BoRiS)
       use b2mod_types
       use b2mod_diag
       use b2mod_b2plot_wall_loading
@@ -19,7 +19,6 @@ c*** coordinates of the segment centers and the corresponding values of
 c*** the distance along the wall.
 c=======================================================================
       implicit none
-      integer boundary_namelist
       real (kind=R8) :: BoRiS
 
 c*** Local variables
