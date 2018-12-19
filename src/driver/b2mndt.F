@@ -73,8 +73,7 @@
 
 *   ..local variables
       integer ncall, nstg(0:2), moqtlv, moitlv, itcnt, density_control,  !xpb
-     *  ramp_slow, ier0, no_solve, ix, iy,
-     *  nsmin, nsmax, neutrals_namelist
+     *  ramp_slow, ier0, no_solve, ix, iy, nsmin, nsmax
       integer, save :: style = 1, guard_flows = 2                        !srv 18.06.08
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
@@ -85,8 +84,7 @@
      *  nstg_areshe, nstg_areshi, nstg_aresco
       save ncall, nstg, moqtlv, moitlv, rxf, itcnt, nsmin, nsmax,        !xpb
      *  density_control, ramp_slow, BoRiS, no_solve,
-     *  nstg_areshe, nstg_areshi, nstg_aresco, 
-     *  neutrals_namelist
+     *  nstg_areshe, nstg_areshi, nstg_aresco
       logical domoqt, domoit, wrong_flow, ramp_call                      !xpb
       logical test_residual, quit_residual, main_call
       logical solving(4)
@@ -108,7 +106,7 @@
 *   ..initialisation
       data ncall/0/, nstg/1,1,1/, moqtlv/3/, moitlv/-1/, rxf/0.5_R8/
       data itcnt/0/, density_control/0/, ramp_slow/0/, BoRiS/0.0_R8/
-      data no_solve/0/, neutrals_namelist/0/
+      data no_solve/0/
       data nstg_areshe/0.0_R8/, nstg_areshi/0.0_R8/, nstg_aresco/0.0_R8/
 *
 *-----------------------------------------------------------------------
@@ -167,7 +165,6 @@
        call xertst (1.le.ntim_step_out,
      &   'faulty internal parameter ntim_step_out')                   !srv 31.01.07 }
        call ipgeti ('b2mndt_use_b2srst', use_b2srst)                  !srv 13.07.12
-       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
        call get_boundary_namelist
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
@@ -186,8 +183,6 @@
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (boundary_namelist.ge.1) then
          call initialize_b2mod_boundary(nx,ny,ns,tim)
-         if (neutrals_namelist.ge.1) 
-     &        call map_strata_to_boundaries(nx,ny,ns)
        else
          call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
        endif
@@ -584,178 +579,4 @@ ctmp.dpc
 *.end b2mndt
 
       end subroutine b2mndt
-
-
-c-----------------------------------------------------------------------
-
-      subroutine map_strata_to_boundaries(nx,ny,ns)
-!      use b2mod_types
-!      use b2mod_indirect
-!      use b2mod_version
-      use b2mod_neutrals_namelist
-      use b2mod_boundary_namelist
-
-      implicit none
-
-      integer nx,ny,ns,istra,ib,ix,jx,iy,jy
-      logical coincide
-!      character*11, fmt_line
-
-! Try to create a list which maps strata to boundaries
-! { IYS 11.09.2018
-      do istra = 1,nstrai
-       lbcstra(istra) = 0                   ! This is the list. 
-       if (crcstra(istra).ne.'') then            ! Check whether the stratum is defined
-!        write(*,*) 'istra = ',istra, 'crc = ', crcstra(istra)  ! Print the character label of the stratum, for test
-!        write(*,*) 'rc_list_size = ', rc_list_size(istra)      ! Control print   
-!        fmt_line = '(a12,000i5)'
-!        write(fmt_line(6:8),fmt="(i3)") rc_list_size(istra)    ! Control print
-!        write(*,*) fmt_line
-!        write(*,fmt=fmt_line) 'rc_list_x = ',                      ! Control print
-!     &              (rc_list_x(i,istra),i=1,rc_list_size(istra))
-!        write(*,fmt=fmt_line) 'rc_list_y = ',                      ! Control print
-!     &              (rc_list_y(i,istra),i=1,rc_list_size(istra))
-
-        if (crcstra(istra).eq.'S' .or. crcstra(istra).eq.'N') then  ! Northern or southern boundary/stratum
-
-          do ib = 1,nbc                                             ! Loop over boundaries
-                                                                    ! trying to find a boundary which is located in the same place as the stratum is.
-!           write(*,*) 'ib = ',ib, 'bc_list_size = ', bc_list_size(ib)    ! Control print
-
-           if (bc_list_y(1,ib) .ne. rc_list_y(1,istra)) cycle       ! If locations of stratum and boundary are different in y-derection,
-                                                                    ! there is no chances that the considered stratum corresponds to given boundary. Go to the next boundary then!
-
-           if ( leftix(bc_list_x(1,ib),bc_list_y(1,ib)).eq.-2) then
-              ix=2                                                  ! ix is the index (in lists b2_list_*) of first physical cell along given boundary, so it starts from 1
-           else                                                     ! Be not confused with the cell index on physical mesh, which starts from -1
-              ix=1
-           endif
-
-           do while ((bc_list_x(ix,ib) .lt. rc_list_x(1,istra)) .and.! Look for the ix which corresponds to the beginning of the stratum,
-     &       (ix.le.bc_list_size(ib)))                              ! while we are within the surface 
-             ix = ix + 1
-           enddo
-
-           if ((ix.gt.bc_list_size(ib)) .or.                        ! If we have gone away from the boundary or
-     &        (bc_list_x(ix,ib) .ne. rc_list_x(1,istra))) cycle      ! have not found the beginnig of the stratum within this boundary, then there is no chances that this
-                                                                    ! stratum corresponds to given boundary. Go to the next boundary then!
-
-           coincide = .TRUE.
-           jx = 1
-
-           do while (coincide .and. (ix.le.bc_list_size(ib)) .and.  ! If the stratum beginning is found within the boundary, then go along both stratum and boundary...
-     &           (jx.le.rc_list_size(istra)))                       
-             if ((bc_list_x(ix,ib) .ne. rc_list_x(jx,istra)) .and.  ! ...and check whether cells truly coincide in two lists
-     &          (bc_list_y(ix,ib) .ne. rc_list_y(jx,istra))) 
-     &             coincide = .FALSE.
-             ix = ix+1
-             jx = jx+1
-           enddo            
-            
-           if ((ix.gt.bc_list_size(ib)) .and.                       ! If the end of boundary is reached before the end of stratum, then stratum do not lie
-     &            (jx.le.rc_list_size(istra))) coincide = .FALSE.   ! within given boundary
-
-           if (coincide) lbcstra(istra) = ib                 ! The boundary coincides with the stratum: fill in the list!              
-           
-
-
-!           if ((bc_list_size(ib) == rc_list_size(istra) + 2 .and.  ! Check whether the boundary covers the whole
-!     &        bc_list_x(1,ib) + 1 == rc_list_x(1,istra) .and.      ! side of the computational mesh including 2 guard cells
-!     &        bc_list_x(bc_list_size(ib),ib) - 1 ==
-!     &         rc_list_x(rc_list_size(istra),istra)) 
-!     &       .or.           
-!     &        (bc_list_size(ib) == rc_list_size(istra) + 1 .and.   ! Check whether the boundary starts or ends at the guard cell
-!     &        (rc_list_x(1,istra) - bc_list_x(1,ib) == 1 .or.      ! while the other edge of the boundary is located somewhere 
-!     &        bc_list_x(bc_list_size(ib),ib) -                     ! in the middle of the side of the computational mesh
-!     &         rc_list_x(rc_list_size(istra),istra) == 1)) 
-!     &       .or. 
-!     &        (bc_list_size(ib) == rc_list_size(istra) .and.       ! Check whether the boundary is fully internal with
-!     &        bc_list_x(1,ib) == rc_list_x(1,istra) .and.          ! respect to the side of the computational mesh, i.e.
-!     &        bc_list_x(bc_list_size(ib),ib) ==                    ! does not include any guard cells.
-!     &         rc_list_x(rc_list_size(istra),istra))) then
-!            coincide = .TRUE.
-!            i = 1
-!
-!            do while (coincide .and. i <= rc_list_size(istra))     ! Additional check whether the locations of the stratum and boundary 
-!              if (bc_list_y(i,ib).ne.rc_list_y(i,istra))           ! are the same with respect to the second coordinate too.
-!     &          coincide = .FALSE.
-!              i = i+1
-!            enddo
-!            if (coincide) lbcstra(istra) = ib                 ! The boundary coincides with the stratum: fill in the list!              
-!           endif
-          enddo
-
-        elseif (crcstra(istra).eq.'W' .or. crcstra(istra).eq.'E') then ! Similar algorythm for target boundaries
-
-          do ib = 1,nbc
-!           write(*,*) 'ib = ',ib, 'bc_list_size = ', bc_list_size(ib)
-
-           if (bc_list_x(1,ib) .ne. rc_list_x(1,istra)) cycle       ! If locations of stratum and boundary are different in x-derection,
-                                                                    ! there is no chances that the considered stratum corresponds to given boundary. Go to the next boundary then!
-
-           if ( bottomiy(bc_list_x(1,ib),bc_list_y(1,ib)).eq.-2) then
-              iy=2                                                  ! iy is the index (in lists b2_list_*) of first physical cell along given boundary, so it starts from 1
-           else                                                     ! Be not confused with the cell index on physical mesh, which starts from -1
-              iy=1
-           endif
-
-           do while ((bc_list_y(iy,ib) .lt. rc_list_y(1,istra)) .and.! Look for the iy which corresponds to the beginning of the stratum,
-     &       (iy.le.bc_list_size(ib)))                              ! while we are within the surface 
-             iy = iy + 1
-           enddo
-
-           if ((iy.gt.bc_list_size(ib)) .or.                        ! If we have gone away from the boundary or
-     &        (bc_list_y(iy,ib) .ne. rc_list_y(1,istra))) cycle      ! have not found the beginnig of the stratum within this boundary, then there is no chances that this
-                                                                    ! stratum corresponds to given boundary. Go to the next boundary then!
-
-           coincide = .TRUE.
-           jy = 1
-
-           do while (coincide .and. (iy.le.bc_list_size(ib)) .and.  ! If the stratum beginning is found within the boundary, then go along both stratum and boundary...
-     &           (jy.le.rc_list_size(istra)))                       
-             if ((bc_list_x(iy,ib) .ne. rc_list_x(jy,istra)) .and.  ! ...and check whether cells truly coincide in two lists
-     &          (bc_list_y(iy,ib) .ne. rc_list_y(jy,istra))) 
-     &             coincide = .FALSE.
-             iy = iy+1
-             jy = jy+1
-           enddo            
-            
-           if ((iy.gt.bc_list_size(ib)) .and.                       ! If the end of boundary is reached before the end of stratum, then stratum do not lie
-     &            (jy.le.rc_list_size(istra))) coincide = .FALSE.   ! within given boundary
-
-           if (coincide) lbcstra(istra) = ib                 ! The boundary coincides with the stratum: fill in the list!              
-
-!           if ((bc_list_size(ib) == rc_list_size(istra) + 2 .and.
-!     &        bc_list_y(1,ib) + 1 == rc_list_y(1,istra) .and.
-!     &        bc_list_y(bc_list_size(ib),ib) - 1 ==
-!     &         rc_list_y(rc_list_size(istra),istra)) 
-!     &       .or.
-!     &        (bc_list_size(ib) == rc_list_size(istra) + 1 .and.
-!     &        (rc_list_y(1,istra) - bc_list_y(1,ib) == 1 .or.
-!     &        bc_list_y(bc_list_size(ib),ib) -
-!     &         rc_list_y(rc_list_size(istra),istra) == 1)) 
-!     &       .or.
-!     &        (bc_list_size(ib) == rc_list_size(istra) .and.
-!     &        bc_list_y(1,ib) == rc_list_y(1,istra) .and.
-!     &        bc_list_y(bc_list_size(ib),ib) ==
-!     &         rc_list_y(rc_list_size(istra),istra))) then
-!            coincide = .TRUE.
-!            ix = 1
-!            do while (coincide .and. ix <= rc_list_size(istra))
-!              if (bc_list_x(ix,ib).ne.rc_list_x(ix,istra)) 
-!     &          coincide = .FALSE.
-!              ix = ix+1
-!            enddo
-!            if (coincide) lbcstra(istra) = ib
-!           endif
-          enddo
-        endif
-       endif
-       write(*,*) 'istra = ',istra, 
-     &       'lbcstra = ', lbcstra(istra) ! Control print
-      enddo
-!  IYS 11.09.2018}
-
-      return
-      end subroutine map_strata_to_boundaries
 

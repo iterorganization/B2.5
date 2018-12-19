@@ -113,7 +113,7 @@ c*** Particle balance in old style by Andrei Kukushkin
       if(filedata(ntrc_bln)) call b2blnc(nx,ny,ns,dtim,iline)
 c*** Particle balance in SPb style (for use in the Method of effective source for code speed-up,
 c***  see E. Kaveeva et al 2018 Nucl. Fusion 58 126018)
-      if(filedata(ntrc_bln_SPb)) call b2blnc_SPb(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_bls)) call b2blns(nx,ny,ns,dtim,iline)
 c*** Power balance
       if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,BoRiS,iline)
 c*** Parallel momentum balance
@@ -137,7 +137,7 @@ c*** Initialisation call
 c*** Initialise tracing routines
       if(ank_tracing.eq.0) return
       if(filedata(ntrc_bln)) call b2blnci(nx,ny,ns,dtim,iline)
-      if(filedata(ntrc_bln_SPb)) call b2blnci_SPb(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_bls)) call b2blnsi(nx,ny,ns,dtim,iline)
       if(filedata(ntrc_ble)) call b2blnei(nx,ny,ns,BoRiS,iline)
       if(filedata(ntrc_blm)) call b2blnmi(nx,ny,ns,iline)
       if(filedata(ntrc_int)) call b2wrinti(nx,ny,ns,nnreg(0),iline)
@@ -155,10 +155,10 @@ c*** Truncate to match savefile
         if (iline.gt.0)
      >   write(nput,'(a,i8)') trim(fn_ntrc(ntrc_bln)), iline
       end if
-      if(filedata(ntrc_bln_SPb)) then
-        call b2blncc_SPb(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_bls)) then
+        call b2blnsc(nx,ny,ns,dtim,iline)
         if (iline.gt.0)
-     >   write(nput,'(a,i8)') trim(fn_ntrc(ntrc_bln_SPb)), iline
+     >   write(nput,'(a,i8)') trim(fn_ntrc(ntrc_bls)), iline
       end if
       if(filedata(ntrc_ble)) then
         call b2blnec(nx,ny,ns,BoRiS,iline)
@@ -196,7 +196,7 @@ c======================================================================
 c*** - to be called BEFORE each timestep
       if(ank_tracing.eq.0) return
       if(filedata(ntrc_bln)) call b2blncs(nx,ny,ns,dtim,iline)
-      if(filedata(ntrc_bln_SPb)) call b2blncs_SPb(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_bls)) call b2blnss(nx,ny,ns,dtim,iline)
       if(filedata(ntrc_ble)) call b2blnes(nx,ny,ns,BoRiS,iline)
       if(filedata(ntrc_blm)) call b2blnms(nx,ny,ns,iline)
       if(filedata(ntrc_int)) call b2wrints(nx,ny,ns,nnreg(0),iline)
@@ -212,7 +212,7 @@ c*** Finalization call
       call dealloc_b2mod_user
       if(ank_tracing.eq.0) return
       if(filedata(ntrc_bln)) call b2blncf(nx,ny,ns,dtim,iline)
-      if(filedata(ntrc_bln_SPb)) call b2blncf_SPb(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_bls)) call b2blnsf(nx,ny,ns,dtim,iline)
       if(filedata(ntrc_ble)) call b2blnef(nx,ny,ns,BoRiS,iline)
       if(filedata(ntrc_blm)) call b2blnmf(nx,ny,ns,iline)
       if(filedata(ntrc_int)) call b2wrintf(nx,ny,ns,nnreg(0),iline)

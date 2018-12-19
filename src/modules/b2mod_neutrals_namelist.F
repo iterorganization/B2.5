@@ -26,7 +26,7 @@ c*  l_neutflux    : if >=0, then correct treatment of the incident fluxes in
 c*                  B2 and b2plot; if <0, then old (approximate) treatment
 c*  dbg_eir_mc    : control of debugging output for eirene_mc
 c*  neut_scl_lim  : maximum variation of neutral sources allowed during
-c*                  source correction in eirene_mc 
+c*                  source correction in eirene_mc
 cank }
       use b2mod_types
       use b2mod_wall
@@ -83,7 +83,7 @@ cank }
      *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
-     2   ngpdata(:), lbcstra(:)
+     2   ngpdata(:)
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:)
       character*1, allocatable, save ::
@@ -125,13 +125,14 @@ cank }
       character*1, save :: CRCSTRA(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
-     ,  lcns(nstsid), ltns(nstsid),lbcstra(nstraid),
+     ,  lcns(nstsid), ltns(nstsid),
      ,  lsns(nstraid*DEF_NSRFS), ksns(NSTRAID), msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
 #endif
 
       integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns,
      .     dbg_eir_mc, debug_flags(100), neutrals_count
+      integer, allocatable, save :: lbcstra(:)
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
      .     volrecinc, volrecwt
@@ -248,7 +249,6 @@ csw 21feb2012
       allocate(lsns(nstra_in*DEF_NSRFS))
       allocate(ksns(nstra_in))
       allocate(msns(2,nstra_in))
-      allocate(lbcstra(nstra_in))
 #ifndef NO_B2_CHEM_SPUT
       allocate(chemical_sputter_yield(0:nlimps))
 #endif
@@ -260,9 +260,10 @@ csw 21feb2012
       call xertst (nmol_in.le.NMOLID, 'faulty parameter nmol_in')
       call xertst (nion_in.le.NIONID, 'faulty parameter nion_in')
       call xertst (nsts_in.le.NSTSID, 'faulty parameter nsts_in')
-      call xertst (nstra_in.le.NSTRAID, 'faulty parameter nstraid_in')
 #endif
+      call xertst (nstra_in.le.NSTRAID, 'faulty parameter nstraid_in')
       call xertst (natm_in.ge.nspecies, 'faulty parameter natm_in')
+      allocate(lbcstra(nstra_in))
       CRCSTRA=' '
       SPS_ID=' '
       SPS_MTRL=' '
@@ -454,11 +455,11 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(lsns)
       deallocate(ksns)
       deallocate(msns)
-      deallocate(lbcstra)
 #ifndef NO_B2_CHEM_SPUT
       deallocate(chemical_sputter_yield)
 #endif
 #endif
+      deallocate(lbcstra)
       return
       end subroutine dealloc_b2mod_neutrals
 
@@ -1050,6 +1051,7 @@ c.. Test consistency with physical edges within the computational domain
      .     'Mismatch with left internal edge (North) !')
         endif
       enddo
+      call map_strata_to_boundaries(nx,ny)
       return
 
   999 call xerrab ('Error while reading NEUTRALS namelist!')
@@ -1122,5 +1124,57 @@ c.. Test consistency with physical edges within the computational domain
       return
 
       end subroutine write_b2mod_neutrals_save
+
+      subroutine map_strata_to_boundaries(nx,ny)
+      use b2mod_boundary_namelist
+      implicit none
+      integer nx, ny
+      integer ib, ix, iy
+      integer, allocatable :: bc(:,:), rc(:,:)
+      logical, allocatable :: coincide(:)
+
+! Try to create a list which maps strata to boundaries
+! LBCSTRA(ISTRA) will contain the index of the boundary condition corresponding
+! to the recycling stratum ISTRA
+! Can only be determined if both b2.boundary.parameters and
+! b2.neutrals.parameters have been read
+      lbcstra = 0
+      allocate (bc(-1:nx,-1:ny))
+      allocate (rc(-1:nx,-1:ny))
+      allocate (coincide(nstrai))
+      bc = 0
+      rc = 0
+      do ib = 1, nbc
+        do ix = 1, bc_list_size(ib)
+          bc(bc_list_x(ix,ib),bc_list_y(ix,ib)) = ib
+        end do
+      end do
+      do ib = 1, nstrai
+        do ix = 1, rc_list_size(ib)
+          rc(rc_list_x(ix,ib),rc_list_y(ix,ib)) = ib
+        end do
+      end do
+      coincide = .true.
+      do iy = -1, ny
+        do ix = -1, nx
+          if (rc(ix,iy).eq.0) cycle
+          if (lbcstra(rc(ix,iy)).ne.0) then
+            coincide(rc(ix,iy)) = coincide(rc(ix,iy)) .and.
+     &                            bc(ix,iy).eq.lbcstra(rc(ix,iy))
+          else
+            lbcstra(rc(ix,iy)) = bc(ix,iy)
+          end if
+        end do
+      end do
+      do ib = 1, nstrai
+        call xertst (coincide(ib),
+     &   'Mapping between recycling strata and '//
+     &   'boundary conditions is not unique!')
+      end do
+      deallocate(bc,rc)
+      deallocate(coincide)
+
+      return
+      end subroutine map_strata_to_boundaries
 
       end module b2mod_neutrals_namelist

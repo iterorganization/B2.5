@@ -22,10 +22,10 @@ c
      2  b2radirreg(:), b2radlrreg(:),
      3  recycereg(:), recycireg(:),
      4  sseereg(:), sseireg(:), ssnireg(:,:),
-     5  ssnastra(:,:)   ! IYS 29.09.2017
-     6  , sna_eir(:)      ! IYS 12.01.2018
-     7  , sna_stbc_neut(:,:), sna_stbr_neut(:,:)       ! IYS 04.06.2018
-     8  , sna_stbr_sput(:,:)
+     5  ssnastra(:,:),   ! IYS 29.09.2017
+     6  sna_eir(:),      ! IYS 12.01.2018
+     7  sna_stbc_neut(:,:), sna_stbr_neut(:,:),       ! IYS 04.06.2018
+     8  sna_stbr_sput(:,:)
       REAL (kind=R8), allocatable :: 
      .      FEEXGT(:,:), FEEYGT(:,:),
      .      FEIXGT(:,:), FEIYGT(:,:)
@@ -62,17 +62,17 @@ c*** lv_trc  : their versions
 c*** filedata: if true, produce the file
 c*** fn_ntrc :  file names for the tracing data
 c***
-c***  ntrc_srt      :  tracing/intshrt.trc    :  integral data (short version)
-c***  ntrc_tst      :  tracing/test.trc       :  test data (can be absent)
-c***  ntrc_res      :  tracing/residuals.trc  :  residuals by regions
-c***  ntrc_src      :  tracing/sources.trc    :  integral sources
-c***  ntrc_bln      :  tracing/blnn.trc       :  particle balance - old style by A.Kukushkin
-c***  ntrc_bln_SPb  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018) 
-c***  ntrc_ble      :  tracing/blne.trc       :  energy balance
-c***  ntrc_int      :  tracing/integral.trc   :  additional integrals
-c***  ntrc_usr      :  tracing/user.trc       :  user-specific data
-c***  ntrc_blm      :  tracing/blnm.trc       :  parallel momentum balance
-c***  ntrc_sep      :  tracing/sepdata.trc    :  separatrix data
+c***  ntrc_srt  :  tracing/intshrt.trc    :  integral data (short version)
+c***  ntrc_tst  :  tracing/test.trc       :  test data (can be absent)
+c***  ntrc_res  :  tracing/residuals.trc  :  residuals by regions
+c***  ntrc_src  :  tracing/sources.trc    :  integral sources
+c***  ntrc_bln  :  tracing/blnn.trc       :  particle balance - old style by A.Kukushkin
+c***  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018) 
+c***  ntrc_ble  :  tracing/blne.trc       :  energy balance
+c***  ntrc_int  :  tracing/integral.trc   :  additional integrals
+c***  ntrc_usr  :  tracing/user.trc       :  user-specific data
+c***  ntrc_blm  :  tracing/blnm.trc       :  parallel momentum balance
+c***  ntrc_sep  :  tracing/sepdata.trc    :  separatrix data
 c***
 c*** print_first_step : if false, skip the first timestep in the history
 c***                    tracing
@@ -81,10 +81,10 @@ c***                    tracing
       parameter (len_ntrc=11)
       integer ntrc_srt, ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
      ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep,
-     ,        ntrc_bln_SPb
-      parameter (ntrc_srt=1, ntrc_tst=2, ntrc_res=3, ntrc_src=4,
-     ,           ntrc_bln=5, ntrc_ble=6, ntrc_int=7, ntrc_usr=8,
-     ,           ntrc_blm=9, ntrc_sep=10, ntrc_bln_SPb=11)
+     ,        ntrc_bls
+      parameter (ntrc_srt=1, ntrc_tst=2 , ntrc_res=3, ntrc_src=4,
+     ,           ntrc_bln=5, ntrc_ble=6 , ntrc_int=7, ntrc_usr=8,
+     ,           ntrc_blm=9, ntrc_sep=10, ntrc_bls=11)
       integer ntrc(len_ntrc), lv_trc(len_ntrc)
       logical filedata(len_ntrc), print_first_step
       integer lenfnm, mhdr
@@ -128,10 +128,10 @@ c
      4  sseereg(nregionv), sseireg(nregionv),
      5  ssnireg(nspecies,nregionv))
       allocate(ssnastra(natm,nstra))      ! IYS 29.09.2017
-      allocate(sna_eir(1:nspecies))             ! IYS 12.01.2018
+      allocate(sna_eir(1:nspecies))       ! IYS 12.01.2018
       allocate(sna_stbr_neut(1:nspecies,1:nbcd), 
-     &             sna_stbc_neut(1:nspecies,1:nbcd),             ! IYS 04.06.2018
-     &         sna_stbr_sput(1:nspecies,1:nbcd))                 ! IYS 18.09.2018
+     &         sna_stbc_neut(1:nspecies,1:nbcd),       ! IYS 04.06.2018
+     &         sna_stbr_sput(1:nspecies,1:nbcd))       ! IYS 18.09.2018
       allocate( 
      .      FEEXGT(-1:NXD,-1:NYD), FEEYGT(-1:NXD,-1:NYD),
      .      FEIXGT(-1:NXD,-1:NYD), FEIYGT(-1:NXD,-1:NYD))
@@ -219,8 +219,8 @@ c>>>
       fn_ntrc(ntrc_src) = 'tracing/sources.trc'
       NTRC(ntrc_bln) = 74
       fn_ntrc(ntrc_bln) = 'tracing/blnn.trc'
-      NTRC(ntrc_bln_SPb) = 174                        ! IYS 07.11.2018
-      fn_ntrc(ntrc_bln_SPb) = 'tracing/blnn_SPb.trc'  ! IYS 07.11.2018
+      NTRC(ntrc_bls) = 174                        ! IYS 07.11.2018
+      fn_ntrc(ntrc_bls) = 'tracing/blnn_SPb.trc'  ! IYS 07.11.2018
       NTRC(ntrc_ble) = 75
       fn_ntrc(ntrc_ble) = 'tracing/blne.trc'
       NTRC(ntrc_int) = 76
@@ -252,7 +252,7 @@ c>>>
       sseireg=0.0_R8
       ssnireg=0.0_R8
       ssnastra=0.0_R8
-      sna_eir=0.0_R8    ! IYS 12.01.2018
+      sna_eir=0.0_R8        ! IYS 12.01.2018
       sna_stbr_sput=0.0_R8  ! IYS 28.09.2018
       sna_stbr_neut=0.0_R8  ! IYS 04.06.2018
       sna_stbc_neut=0.0_R8  ! IYS 04.06.2018

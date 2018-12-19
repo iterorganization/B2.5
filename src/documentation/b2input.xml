@@ -3030,6 +3030,15 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>b2stbr_sna_corr</name>
+			  <default>0.0</default>
+			  <type>real</type>
+			  <description>
+				Multiplier to the neutral source differential between puffing and pumping strata for code speed-up.
+				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details.
+			  </description>
+			</switch>
+			<switch>
 				<name>b2stbr_eir_src_nhist</name>
 				<default>1</default>
 				<type>integer</type>
@@ -3420,8 +3429,15 @@
 				<default>0.05</default>
 				<type>real</type>
 				<description>
-					Maximum allowed fraction of source to be added to real source in the method of effective sources for code speed-up.  
-					See E. Kaveeva et al 2018 Nucl. Fusion 58 126018
+					Maximum allowed fraction of source to be added or substracted to the real source in the method of effective sources for code speed-up.  
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_c_pumpavr</name>
+				<default>0.02</default>
+				<type>real</type>
+				<description>
+					Underrelaxation parameter to compute the artificial source in the method of effective sources for code speed-up.  
 				</description>
 			</switch>
 			<switch>
@@ -4700,15 +4716,6 @@
 				<type>integer array of size (NION)</type>
 				<description>
 					Contains the index of the Eirene atomic species with which the Eirene test ion species (IION) should be scaled.
-				</description>
-			</switch>
-			<switch>
-				<name>LBCSTRA</name>
-				<default>0</default>
-				<type>integer array of size (NSTRAT)</type>
-				<description>
-					Contains the index of the B2 boundary which the strata ISTRA=1..NSTRAT corresponds to.
-                                        The array is meaningful if only both b2.boundary.namelist and b2.neutrals.namelist are read.
 				</description>
 			</switch>
 			<switch>

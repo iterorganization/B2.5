@@ -1,4 +1,4 @@
-      subroutine b2blnc_SPb(nx,ny,ns,dtim,iline)
+      subroutine b2blns(nx,ny,ns,dtim,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -83,7 +83,7 @@ c
       real (kind=R8) :: dtim
 c
       integer lun, ltrc
-      parameter (ltrc=ntrc_bln_SPb)
+      parameter (ltrc=ntrc_bls)
 
       integer i, j, k, l, m, n, ic, ii, is, ix, iy, js, ks, ls, lv,
      ,        nc, nv, kks, np_tmp
@@ -811,7 +811,7 @@ c*** Write the data in a separate file for plotting...
 c
 c
         if(nc.gt.np_tmp .or. nc.le.0) then
-          write(*,*) 'b2blnc_SPb: unexpected error. nc =',nc
+          write(*,*) 'b2blns: unexpected error. nc =',nc
           filedata(ltrc)=.false.
         else
           write(lun,hlp_frm) tim,
@@ -844,10 +844,10 @@ c
 
 c======================================================================
 c
-      entry b2blnci_SPb(nx,ny,ns,dtim,iline)
+      entry b2blnsi(nx,ny,ns,dtim,iline)
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
-c*** Only called with filedata(ntrc_bln_SPb)=.true.
+c*** Only called with filedata(ntrc_bls)=.true.
 c----------------------------------------------------------------------
 c
       if (.not. allocated(hlpit_lp))
@@ -871,7 +871,7 @@ c*** from 20180604 on
 
       call ipgetr ('b2mndr_stim', stim)
 
-      if(.not.filedata(ntrc_bln_SPb)) return
+      if(.not.filedata(ntrc_bls)) return
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
@@ -900,7 +900,7 @@ c*** f     :  the associated file name
         end if
    42   if(nv.ne.lv) then
           write(*,'(a,i8,3a,i8)')
-     ,     '!!! b2blnc_SPb: current version ',lv,
+     ,     '!!! b2blns: current version ',lv,
      ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. 960727) then
 c*** It was a major change of the file format - impossible to continue
@@ -912,7 +912,7 @@ c*** It was a major change of the file format - impossible to continue
         end if
         if(nc.ne.np_tmp) then
           write(*,'(a,i4,3a,i4)')
-     ,     '!!! b2blnc_SPb: current number of columns ',np_tmp,
+     ,     '!!! b2blns: current number of columns ',np_tmp,
      ,     ' differs from that in the file ',trim(f),' : ',nc
           if(nc.gt.np_tmp) then
             write(*,*) 'No ',trim(f),' tracing file - ',
@@ -924,7 +924,7 @@ c*** It was a major change of the file format - impossible to continue
         end if
         if(j.ne.nspecies) then
           write(*,'(a,i2,3a,i2)')
-     ,     '!!! b2blnc_SPb: current number of species ',nspecies,
+     ,     '!!! b2blns: current number of species ',nspecies,
      ,      ' differs from that in the file ',trim(f),' : ',j
           write(*,*) 'No ',trim(f),' tracing file - ',
      ,                              'remove the existing file first!'
@@ -944,7 +944,7 @@ c*** It was a major change of the file format - impossible to continue
      &      '(18h(1h#,7x,4htime,4x,i3,17h(1h'//tab//',a16,1h_,a2)))')
      &                                                  np_tmp*nspecies
 
-c       print *,'b2blnc_SPb: nspecies= ',nspecies                   !###
+c       print *,'b2blns: nspecies= ',nspecies                       !###
 c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
 
         write(lun,hlp_frm) ((hlp_h(i),species_list(j),i=1,np_tmp),
@@ -956,21 +956,21 @@ c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
      &                                                  np_tmp*nspecies
       return
 c======================================================================
-   90 write(*,*) 'b2blnc_SPb: cannot open file ',trim(f)
+   90 write(*,*) 'b2blns: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
-   92 write(*,*) 'b2blnc_SPb: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2blns: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================
 c
-      entry b2blncc_SPb(nx,ny,ns,dtim,iline)
+      entry b2blnsc(nx,ny,ns,dtim,iline)
 c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
 c
-      if(.not.filedata(ntrc_bln_SPb)) return
+      if(.not.filedata(ntrc_bls)) return
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
       call find_file(f,ex)
@@ -991,13 +991,13 @@ c
   155 continue
       return
 c======================================================================
-  190 write(*,*) 'b2blnc_SPb: cannot open file ',trim(f)
+  190 write(*,*) 'b2blns: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return
 c======================================================================
 c
-      entry b2blncs_SPb(nx,ny,ns,dtim,iline)
+      entry b2blnss(nx,ny,ns,dtim,iline)
 c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
 c----------------------------------------------------------------------
@@ -1005,7 +1005,7 @@ c
       return
 c======================================================================
 c
-      entry b2blncf_SPb(nx,ny,ns,dtim)
+      entry b2blnsf(nx,ny,ns,dtim)
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
@@ -1034,4 +1034,4 @@ c======================================================================
   700 format('#   ',3i8/'#  ',a)
   710 format(a1,3x,3i8/3x,a)
 c======================================================================
-      end subroutine b2blnc_SPb
+      end subroutine b2blns
