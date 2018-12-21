@@ -910,7 +910,7 @@ cxpb
 
         if(dbg_eir_mc.gt.9 .and.
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
-          print *
+          write(*,'()')
           print *,'%%% Eirene data in B2 %%%',nlimps
           print '(a,5(i3,1x))','nnatmi,nnmoli,nnplsi,nnstsi,nnlimi = ',
      ,       nnatmi,nnmoli,nnplsi,nnstsi,nnlimi
@@ -923,7 +923,7 @@ cxpb
           write(hlp_frm4,'(a,i2,a)')
      ,     '(1p,i4,',1+nnatmi+nnmoli,'e11.4)'
           do k=0,nstrat !{
-            print *
+            write(*,'()')
             print *,'wldna, wldnm, wldra, wldrm:',k
             write (*,hlp_frm1)
      ,         ('na',i,i=1,nnatmi),('nm',i,i=1,nnmoli),
@@ -949,7 +949,7 @@ cxpb
               end if !}
             end do !}
 
-            print *
+            write(*,'()')
             print *,'wldpp:',k
             do j=nnlimi+1,nnlimi+nnstsi !{
               hlp_pr=.false.
@@ -959,7 +959,7 @@ cxpb
               if (hlp_pr)
      >         write(*,hlp_frm3) j,(wldpp(j,i,k),i=1,nnplsi)
             end do !}
-            print *
+            write(*,'()')
             print *,'wldpeb, wldpa, wldpm:',k
             do j=nnlimi+1,nnlimi+nnstsi !{
               hlp_pr=wldpeb(j,k).ne.0.0_R8
@@ -974,7 +974,7 @@ cxpb
      ,           (wldpm(j,i,k),i=1,nnmoli)
             end do !}
           end do !}
-          print *,'%%%'
+          print '(a)','%%%'
         end if !}
         if(dbg_eir_mc.gt.0 .and.
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{

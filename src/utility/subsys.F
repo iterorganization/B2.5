@@ -65,6 +65,7 @@ cxpb      write(*,'(a,a8,i3)') 'subini: ',trim(srname),nchs
 *   ..pop data from the stack
 *     (lcr0 and lci0 are the base addresses at invocation of the present
 *     subprogram)
+      chstck(nchs) = ' '
       nchs = nchs-1
       lcr0 = lcstck(0,nchs)
       lci0 = lcstck(1,nchs)

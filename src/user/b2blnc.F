@@ -154,7 +154,7 @@ c======================================================================
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
         print *,'=== Regions of the grid:'
-        print *
+        write(*,'()')
         l=ny+1
         n=mod(l-1,10)+1
         do k=0,ny-1

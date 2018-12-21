@@ -245,6 +245,7 @@ cdpc
 *  ---------------------------------------------------------------------
       call cpu_time(cpu_end)
       ncall=ncall+1
+      call subend()
       RETURN
 
       entry restart_ma28_for_11

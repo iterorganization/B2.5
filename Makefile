@@ -57,7 +57,7 @@ ifdef USE_EIRENE
 PREF_OBJDIR = couple_SOLPS-ITER
 endif
 
-# Extension for OBJDIR if mpi and/or debug options are used
+# Extensions for object directories when various options are used
 ifdef USE_MPI
 EXT_MPI = .mpi
 endif
