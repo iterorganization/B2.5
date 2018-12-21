@@ -14,17 +14,10 @@
 module b2mod_ual_io_data
 
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
-#ifdef IMAS
-    use ids_schemas ! IGNORE
-    ! use ids_assert
-    use ids_string  ! IGNORE
-    use ids_grid_structured ! IGNORE
-#else
 #ifdef ITM
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
     use euITM_schemas ! IGNORE
     use itm_constants , pi => itm_pi ! IGNORE
-#endif
 #endif
     use helper
     use logging , only: logmsg, LOGDEBUG
@@ -33,9 +26,14 @@ module b2mod_ual_io_data
     use b2mod_cellhelper
 
     use b2mod_grid_mapping
-    use b2mod_ual_io_grid
-
 #ifdef IMAS
+    use b2mod_ual_io_grid &
+     & , only : ids_generic_grid_aos3_root, IDS_real, GridObject, &
+     &          getGridSubsetObject, SPACE_POLOIDALPLANE, &
+     &          GridWriteData
+    use ids_grid_subgrid  & ! IGNORE
+     & , only : getGridSubsetSize
+
     !> Provides service routines to transform data from B2 to IMAS IDS
     !! (data in form of vertex, face or cell)
     interface b2_IMAS_Transform_Data_B2_To_IDS

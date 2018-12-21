@@ -218,21 +218,6 @@ program b2_ual_write_b2mod
     use b2mod_ual
     use b2mod_grid_mapping
     use b2mod_ual_io
-    use ids_schemas     ! IGNORE
-                        !! These are the Fortran type definitions for the
-                        !! Physics Data Model
-    use ids_routines    ! IGNORE
-                        !! These are the Access Layer routines + management of
-                        !! IDS structures
-    use ids_grid_common &       ! IGNORE
-        & , IDS_COORDTYPE_R => COORDTYPE_R    &
-        & , IDS_COORDTYPE_Z => COORDTYPE_Z
-        ! &   GRID_UNDEFINED  => B2_GRID_UNDEFINED
-    use ids_string              ! IGNORE
-    use ids_grid_subgrid        ! IGNORE
-    use ids_grid_objectlist     ! IGNORE
-    use ids_grid_unstructured   ! IGNORE
-    use ids_grid_structured     ! IGNORE
 #ifdef GGD_OLD
     use ids_grid_examples       ! IGNORE
 #endif

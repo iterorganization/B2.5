@@ -29,31 +29,26 @@ module b2mod_ual_io
     use b2mod_indirect
     use b2mod_interp
 
-    !! B2/CPO Mapping
-    use b2mod_ual_io_data
-    use b2mod_ual_io_grid
-
     use logging
 
     !! UAL Access
 #ifdef IMAS
-    use ids_schemas  ! IGNORE
-    use ids_routines ! IGNORE
+    !! B2/CPO Mapping
+    use b2mod_ual_io_data &
+     & , only : b2_IMAS_Transform_Data_B2_To_IDS, &
+     &          b2_IMAS_Transform_Data_B2_To_IDS_Vertex
+    use b2mod_ual_io_grid &
+     & , only : findGridSubsetByName, GridWriteData, &
+     &          b2_IMAS_Fill_Grid_Desc
 #ifdef GGD_OLD
     use ids_grid_examples  ! IGNORE
 #else
-    use ids_utility  ! IGNORE
+    use ids_utility        ! IGNORE
 #endif
     use ids_grid_common , &     ! IGNORE
         &   IDS_COORDTYPE_R => COORDTYPE_R,    &
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,    &
         &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
-    use ids_string              ! IGNORE
-    use ids_grid_subgrid        ! IGNORE
-    use ids_grid_objectlist     ! IGNORE
-    use ids_grid_unstructured   ! IGNORE
-    use ids_grid_structured     ! IGNORE
-    use ids_grid_data           ! IGNORE
 #else
 #ifdef ITM
     use euITM_schemas   ! IGNORE
@@ -64,9 +59,9 @@ module b2mod_ual_io
 
   implicit none
 
-  logical, parameter, private :: INCLUDE_GHOST_CELLS = .false.
-
 #ifdef IMAS
+
+  logical, parameter, private :: INCLUDE_GHOST_CELLS = .false.
 
 contains
 
@@ -1080,6 +1075,8 @@ contains
 
 #else
 # ifdef ITM
+
+  logical, parameter, private :: INCLUDE_GHOST_CELLS = .false.
 
 contains
 
