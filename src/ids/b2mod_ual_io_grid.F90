@@ -38,7 +38,7 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_Y_ALIGNED_FACES, GRID_SUBSET_CELLS, &
      &          GridObject
     use ids_grid_structured & ! IGNORE
-     & , only : GridWriteData
+     & , only : GridWriteData, GridSetupStruct1dSpace
     use ids_grid_common   & ! IGNORE
      & , only : COORDTYPE_R, COORDTYPE_Z, COORDTYPE_PHI
 #else
