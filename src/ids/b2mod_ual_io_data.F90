@@ -14,11 +14,6 @@
 module b2mod_ual_io_data
 
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
-#ifdef ITM
-    use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
-    use euITM_schemas ! IGNORE
-    use itm_constants , pi => itm_pi ! IGNORE
-#endif
     use helper
     use logging , only: logmsg, LOGDEBUG
     use b2mod_connectivity , REMOVED_B2_R8 => R8
@@ -212,6 +207,10 @@ contains
 
 #else
 #ifdef ITM
+
+    use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
+    use euITM_schemas ! IGNORE
+    use itm_constants , pi => itm_pi ! IGNORE
 
   implicit none
 
