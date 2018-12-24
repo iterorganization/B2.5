@@ -28,6 +28,7 @@
       use b2mod_ma28_for_11diag                                         !srv 02.04.18
       use b2mod_transport_models
       use b2mod_neutr_src_scaling
+      use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
       use b2mod_anomalous_transport
@@ -1737,6 +1738,12 @@ c   --> better way doing this is necessary)
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
+      call get_boundary_namelist
+      if (boundary_namelist.ge.1) then
+        call initialize_b2mod_boundary(nx,ny,ns,tim)
+      else
+        call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
+      endif
       call b2stbr_init (nx, ny, ns, BoRiS)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys

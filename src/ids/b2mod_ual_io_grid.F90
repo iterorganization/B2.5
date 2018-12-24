@@ -116,7 +116,7 @@ module b2mod_ual_io_grid
     !!      Class 2 - edges/faces (1D objects)
     !!      Class 2 - 2D cells (2D objects)
     !! Fortran90 does not allow initialization of constants using SUM. This is
-    !! permitted in newer Fortran 2003. Current workaraund is to directly
+    !! permitted in newer Fortran 2003. Current workaround is to directly
     !! specify the primary IDS class constants
 
     ! integer, parameter :: IDS_CLASS_NODE = sum(CLASS_NODE) + 1

@@ -1150,6 +1150,8 @@ c.. Test consistency with physical edges within the computational domain
         end do
       end do
       do ib = 1, nstrai
+        if (crcstra(ib).ne.'N' .and. crcstra(ib).ne.'S' .and.
+     &      crcstra(ib).ne.'W' .and. crcstra(ib).ne.'E') cycle
         do ix = 1, rc_list_size(ib)
           rc(rc_list_x(ix,ib),rc_list_y(ix,ib)) = ib
         end do

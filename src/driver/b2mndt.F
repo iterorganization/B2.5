@@ -165,7 +165,6 @@
        call xertst (1.le.ntim_step_out,
      &   'faulty internal parameter ntim_step_out')                   !srv 31.01.07 }
        call ipgeti ('b2mndt_use_b2srst', use_b2srst)                  !srv 13.07.12
-       call get_boundary_namelist
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
          nsmin=ns
@@ -181,11 +180,6 @@
        call ipgeti ('b2mndt_av', iav_run)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
-       if (boundary_namelist.ge.1) then
-         call initialize_b2mod_boundary(nx,ny,ns,tim)
-       else
-         call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
-       endif
       else
        if (boundary_namelist.ge.1) then
          call catchup_b2mod_boundary(nx,ny,ns,tim)
