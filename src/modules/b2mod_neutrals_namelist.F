@@ -1144,6 +1144,7 @@ c.. Test consistency with physical edges within the computational domain
       allocate (coincide(nstrai))
       bc = 0
       rc = 0
+      coincide = .true.
       do ib = 1, nbc
         do ix = 1, bc_list_size(ib)
           bc(bc_list_x(ix,ib),bc_list_y(ix,ib)) = ib
@@ -1155,17 +1156,10 @@ c.. Test consistency with physical edges within the computational domain
         do ix = 1, rc_list_size(ib)
           rc(rc_list_x(ix,ib),rc_list_y(ix,ib)) = ib
         end do
-      end do
-      coincide = .true.
-      do iy = -1, ny
-        do ix = -1, nx
-          if (rc(ix,iy).eq.0) cycle
-          if (lbcstra(rc(ix,iy)).ne.0) then
-            coincide(rc(ix,iy)) = coincide(rc(ix,iy)) .and.
-     &                            bc(ix,iy).eq.lbcstra(rc(ix,iy))
-          else
-            lbcstra(rc(ix,iy)) = bc(ix,iy)
-          end if
+        lbcstra(ib) = bc(rc_list_x(1,ib),rc_list_y(1,ib))
+        do ix = 2, rc_list_size(ib)
+          coincide(ib) = coincide(ib) .and.
+     &     bc(rc_list_x(ix,ib),rc_list_y(ix,ib)).eq.lbcstra(ib)
         end do
       end do
       do ib = 1, nstrai
