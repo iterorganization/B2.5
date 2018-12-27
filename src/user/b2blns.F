@@ -34,29 +34,25 @@ c----------------------------------------------------------------------
 c----------------------------------------------------------------------
 c*** Output data (for each species):
 c***
-c***    header   array
+c***    header         array
 c***                                        --- Global particle balance
 c***   ion_core        flxic       ion flow across the core boundary (based on fna array)
-c***   ion_core_mdf    flxic_mdf   ion flow across the core boundary (based on fna_mdf array)
 c***   ion_targ        flxit       ion flow to the targets (based on fna array)                                    ! IYS 12.01.2018
 c***   ion_wall        flxiw       ion flow to the side walls (based on fna array)                                 ! IYS 12.01.2018
-c***   ion_wall        flxi_out    ion flow to the side walls and divertors  (based on fna_mdf array)              ! IYS 12.01.2018
 c***   ion_dndt        flxid       time derivative of the ion content in the whole domain
-c***   src_ioniz       flxi_out    ion source due to ionization from neutral (ground) state
+c***   src_ioniz       flxis       ion source due to ionization from neutral (ground) state
 
 c***   ntr_core        flxnc       neutral flow across the core boundary
 c***   ntr_targ_tot    flxnt       neutral net flow through the targets including recycling source
-c***   ntr_targ_rec    flxnt_r     neutral source due to ion recycling on targets       ! IYS 12.01.2018
+c***   ntr_targ_rec    flxnt_rec   neutral source due to ion recycling on targets       ! IYS 12.01.2018
+c***   ntr_targ_spt    flxnt_sput  neutral source due sputtering on targets             ! IYS 04.06.2018
 c***   ntr_targ_pmp    flxnt_pump  neutral-driven net flow through the targets without the source due to ion recycling            ! IYS 12.01.2018
 c***   ntr_wall_tot    flxnw       neutral net flow through the side walls including recycling source
-c***   ntr_wall_rec    flxnw_r     neutral source due to recycling on side walls       ! IYS 12.01.2018
+c***   ntr_wall_rec    flxnw_rec   neutral source due to recycling on side walls        ! IYS 12.01.2018
+c***   ntr_wall_spt    flxnw_sput  neutral source due to sputtering on side walls       ! IYS 04.06.2018
 c***   ntr_wall_pmp    flxnw_pump  neutral-driven net flow through the side walls without the source due to ion recycling         ! IYS 12.01.2018
 c***   ntr_puff        flxnp       flow from the gas puff
-c***   pump            Npump_tmp   neutral pumping
 c***   flux_tot        flxps       total flow coming to the volume
-c***   Ftt_inv_time    flxrl       the same in terms of the inverse time scales
-c***   flux_balance    flxbl       error in particle balance (should be 0)
-c***   Bal_inv_time    flxbr       the same in terms of the inverse time scales
 c***
 
 
@@ -106,7 +102,7 @@ c*** np_tmp:  number of output data for each species
 c
       parameter (lv=20180622, np_tmp=16)                            ! IYS 22.06.2018
 c
-      real (kind=R8) :: hlpdt, hlp 
+      real (kind=R8) :: hlpdt, hlp_rec, hlp_sput, hlp 
 
       real (kind=R8), allocatable, save :: 
      *     flxic(:),flxnc(:),flxit(:),                                            ! IYS 12.01.2018
@@ -502,8 +498,9 @@ c<<<
             if (is_neutral(is) ) then 
 
 ! Compute the puffing rate
-              if (BCCON(is,ic).eq.8 .or. 
-     &            BCCON(is,ic).eq.16 .or. BCCON(is,ic).eq.26) then
+              if ((BCCON(is,ic).eq.5 .or. BCCON(is,ic).eq.8 .or.
+     &            BCCON(is,ic).eq.16 .or. BCCON(is,ic).eq.26) .and.
+     &            CONPAR(is,ic,1) .gt. 0.0_R8) then
                 flxnp(ls) = flxnp(ls) + CONPAR(is,ic,1)
               endif
 
@@ -530,8 +527,9 @@ c<<<
      &                                    sna_stbr_sput(ls,ic)
 
 !             Exclude surfaces with puffing/seeding (for fluid neutrals)
-                    if (BCCON(is,ic).ne.5 .and. BCCON(is,ic).ne.8
-     &  .and. BCCON(is,ic).ne.16 .and. BCCON(is,ic).ne.26) then
+                    if (.not.((BCCON(is,ic).eq.5 .or. BCCON(is,ic).eq.8
+     &  .or. BCCON(is,ic).eq.16 .or. BCCON(is,ic).eq.26) .and.
+     &   CONPAR(is,ic,1) .gt. 0.0_R8)) then
 
                       flxnw_pump(ls) = flxnw_pump(ls) + 
      &                                    sna_stbc_neut(ls,ic)
@@ -713,7 +711,7 @@ c*** Puffing/seeding rate and recycling source
 
         do ic = 1,nstrat
 
-         if(use_recyceir.gt.0) then
+          if(use_recyceir.gt.0) then
               recyctmp=recyceir(ic)
           else
               recyctmp=recyc(kks,ic)
@@ -728,7 +726,8 @@ c*** Puffing/seeding rate and recycling source
 
           elseif (crcstra(ic) .eq. 'S' .or. crcstra(ic) .eq. 'N') then ! Recycling on the B2 outer boundaries except targets
 
-            hlp = 0.0_R8
+            hlp_rec = 0.0_R8
+            hlp_sput = 0.0_R8
 
             do i = msns(1,ic), msns(1,ic) + msns(2,ic) - 1
  
@@ -739,26 +738,31 @@ c*** Puffing/seeding rate and recycling source
 
                  do j=1,nnatmi                   
                    if (latmscl(j).eq.ls) then
-                      hlp = hlp + wldpa(k,j,ic) * sclstra(j,ic)  ! BE CAREFUL: hlp is a temporary variable
+                      hlp_rec = hlp_rec + wldpa(k,j,ic) * sclstra(j,ic)      ! BE CAREFUL: hlp_rec is a temporary variable
+                      hlp_sput = hlp_sput + 
+     &                         wldspta(k,j,ic) * sclstra(j,ic)  ! BE CAREFUL: hlp_sput is a temporary variable
                    end if
                  end do
 
                  do j=1,nnmoli
                    do ii=1,nnatmi
                      if (latmscl(ii).eq.ls) then
-                       hlp = hlp + 
-     &                     mlcmp(ii,j) * wldpm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp is a temporary variable
+                       hlp_rec = hlp_rec + 
+     &                     mlcmp(ii,j) * wldpm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_rec is a temporary variable
+                       hlp_sput = hlp_sput + 
+     &                   mlcmp(ii,j) * wldsptm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_rec is a temporary variable
                      end if
                    enddo
                  enddo
 
                 endif
 
-              enddo
+             enddo
           
-              flxnw_rec(ls) = flxnw_rec(ls) + hlp * recyctmp
+             flxnw_rec(ls) = flxnw_rec(ls) + hlp_rec * recyctmp
+             flxnw_sput(ls) = flxnw_sput(ls) + hlp_sput * recyctmp
 
-            endif
+           endif
 
 !       End of the loop over strata
         enddo
