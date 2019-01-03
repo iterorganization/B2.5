@@ -11,9 +11,6 @@
       use b2mod_external
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-#endif
 c
 c  version : 03.03.2001 00:37
 c

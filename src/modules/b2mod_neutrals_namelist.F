@@ -1163,8 +1163,10 @@ c.. Test consistency with physical edges within the computational domain
         end do
       end do
       do ib = 1, nstrai
+#ifdef DBG
         write(*,*) 'istra = ',ib,' crcstra = ', crcstra(ib),
      &    ' lbcstra = ',lbcstra(ib)
+#endif
         call xertst (coincide(ib),
      &   'Mapping between recycling strata and '//
      &   'boundary conditions is not unique!')
