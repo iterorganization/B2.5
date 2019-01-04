@@ -385,48 +385,51 @@ c*** Calculate the basic quantities for each surface/species
 
         hlp_ardts=0.0_R8
         ndta_tmp=nmnt_tmp
-        do k=1,nntrgrp !{
-          do i=intrgrp(k),jntrgrp(k) !{
-            l=lntrgrp(i)
-            hlp_ardts(k)=hlp_ardts(k)+wlarea(l)
-            do j=1,ndts_tmp !{
-              m=ndtx_tmp(j)
-              if(i.eq.intrgrp(k)) then !{
-                x=wlabsrp(m,l)
-                if(x.gt.0.0_R8) ndta_tmp(k,j)=ndtk_tmp
-                hlp_ksdts(k,j)=x
-              else !}{
-                if(x.ge.0.0_R8 .and. wlabsrp(m,l).ne.x) then !{
-                  ndta_tmp(k,j)=nmnt_tmp
-                  print *,'b2usrtrc: different absorption coefficients',
+        if (use_eirene.ne.0) then
+          do k=1,nntrgrp !{
+            do i=intrgrp(k),jntrgrp(k) !{
+              l=lntrgrp(i)
+              hlp_ardts(k)=hlp_ardts(k)+wlarea(l)
+              do j=1,ndts_tmp !{
+                m=ndtx_tmp(j)
+                if(i.eq.intrgrp(k)) then !{
+                  x=wlabsrp(m,l)
+                  if(x.gt.0.0_R8) ndta_tmp(k,j)=ndtk_tmp
+                  hlp_ksdts(k,j)=x
+                else !}{
+                  if(x.ge.0.0_R8 .and. wlabsrp(m,l).ne.x) then !{
+                    ndta_tmp(k,j)=nmnt_tmp
+                    print *,
+     ,                 'b2usrtrc: different absorption coefficients',
      ,                 ' for diagnostic surface group ',gntrgrp(k),
      ,                 ', species ',j
-                  hlp_ksdts(k,j)=0.0_R8
-                  exit
+                    hlp_ksdts(k,j)=0.0_R8
+                    exit
+                  end if !}
                 end if !}
-              end if !}
+              end do !}
             end do !}
           end do !}
-        end do !}
 c!###{
-c        print *
-c        print *,'b2usrtrc: after initialisation. ',
-c     ,           'nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp=',
-c     ,            nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp
-c        write(f,'(10h(1x,a9,2x,,i2,3hi3))') ndts_tmp
-c        print *,'tallies (ndta_tmp):'
-c        print f,(gntrgrp(i),(ndta_tmp(i,j),j=1,ndts_tmp),i=1,nntrgrp)
-c        print *
-c        print f,'ndtm_tmp',(ndtm_tmp(j),j=1,ndts_tmp)
-c        print f,'ndtx_tmp',(ndtx_tmp(j),j=1,ndts_tmp)
-c        write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp
-c        print f,'hlp_awdts',(hlp_awdts(j),j=1,ndts_tmp)
-c        print *,'area/absorption:'
-c        write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp+1
-c        print f,(gntrgrp(i),hlp_ardts(i),
+c          print *
+c          print *,'b2usrtrc: after initialisation. ',
+c     ,            'nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp=',
+c     ,             nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp
+c          write(f,'(10h(1x,a9,2x,,i2,3hi3))') ndts_tmp
+c          print *,'tallies (ndta_tmp):'
+c          print f,(gntrgrp(i),(ndta_tmp(i,j),j=1,ndts_tmp),i=1,nntrgrp)
+c          print *
+c          print f,'ndtm_tmp',(ndtm_tmp(j),j=1,ndts_tmp)
+c          print f,'ndtx_tmp',(ndtx_tmp(j),j=1,ndts_tmp)
+c          write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp
+c          print f,'hlp_awdts',(hlp_awdts(j),j=1,ndts_tmp)
+c          print *,'area/absorption:'
+c          write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp+1
+c          print f,(gntrgrp(i),hlp_ardts(i),
 c     ,                       (hlp_ksdts(i,j),j=1,ndts_tmp),i=1,nntrgrp)
-c        print *
+c          print *
 c!###}
+        end if
 
 c*** Find the Eirene surfaces corresponding to PFR interfaces
 c***  (npfs_tmp, lpfs_tmp, hlp_arpfs)
@@ -434,24 +437,26 @@ c***  (npfs_tmp, lpfs_tmp, hlp_arpfs)
         npfs_tmp=0
         lpfs_tmp=0
         hlp_arpfs=0
-        do i=1,nstrai !{
-          k=0
-          if(crcstra(i).eq.'S') then !{
-            if(rcend(i).le.leftcut(1)-1) then !{
-              k=1
-            else if(rcstart(i).gt.leftcut(nncut)-1) then !}{
-              k=2
-            end if !}
-            if(k.gt.0) then !{
+        if (use_eirene.ne.0) then
+          do i=1,nstrai !{
+            k=0
+            if(crcstra(i).eq.'S') then !{
+              if(rcend(i).le.leftcut(1)-1) then !{
+                k=1
+              else if(rcstart(i).gt.leftcut(nncut)-1) then !}{
+                k=2
+              end if !}
+              if(k.gt.0) then !{
 c              print *,'i,k,msns=',i,k,msns(1,i),msns(2,i) !###
-              do j=msns(1,i),msns(1,i)+msns(2,i)-1 !{
-                npfs_tmp(k)=npfs_tmp(k)+1
-                lpfs_tmp(npfs_tmp(k),k)=lsns(j)
-                hlp_arpfs(k)=hlp_arpfs(k)+wlarea(lsns(j))
-              end do !}
+                do j=msns(1,i),msns(1,i)+msns(2,i)-1 !{
+                  npfs_tmp(k)=npfs_tmp(k)+1
+                  lpfs_tmp(npfs_tmp(k),k)=lsns(j)
+                  hlp_arpfs(k)=hlp_arpfs(k)+wlarea(lsns(j))
+                end do !}
+              end if !}
             end if !}
-          end if !}
-        end do !}
+          end do !}
+        end if
 
 c*** Find the B2 cell ranges corresponding to PFR interfaces
 c***  (ipfc_tmp, jpfc_tmp)

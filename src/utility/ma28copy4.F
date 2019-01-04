@@ -1562,7 +1562,18 @@ c
               if (icn(jj).ne.jpiv) go to 570
 c if pivot is zero, rest of column is and so multiplier is zero.
               au = zero
-              if (a(ijpos).ne.zero) au = -a(jj)/a(ijpos)
+              if (a(ijpos).ne.zero) then
+#ifdef DBG
+                if((a(jj).ge.tiny(1.0_R8) .or. a(jj).le.-tiny(1.0_R8))
+     &           .and.(a(ijpos).ge. tiny(1.0_R8).or.
+     &                 a(ijpos).le.-tiny(1.0_R8))) then
+                  product = log(abs(a(jj))) - log(abs(a(ijpos)))
+                  if (product.ge.cutlo) au = -a(jj)/a(ijpos)
+                end if 
+#else
+                au = -a(jj)/a(ijpos)
+#endif
+              end if
               if (lbig) big = max(big,abs(au))
               a(jj) = a(j1)
               a(j1) = au
