@@ -6525,6 +6525,14 @@
 					If .true. (default), writes the content of the namelist to stdout after it has been read.
 				</description>
 			</switch>
+			<switch>
+				<name>CORRECT_PO</name>
+				<default>.true.</default>
+				<type>logical array of size (NREG)</type>
+				<description>
+					If .true. (default), adds a 3.1*dte(ix,iy)/qe to a potential locally after the internal energy balance equations are solved, where dte(ix,iy) is an electron temperature increment on a time step.
+				</description>
+			</switch>
 		</category>
 		<category name="b2.transport_models_save.parameters">
 			<introduction>
