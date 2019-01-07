@@ -43,17 +43,17 @@
 
 *  -- LOCAL VARIABLES --
       INTEGER :: IX, IY, IS, IB, IXR, IYR
-      REAL*8 T0,ROO,CS,MACH,T1
+      REAL (KIND=R8) :: T0,ROO,CS,MACH,T1
       real (kind=R8) ::
      * fni(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
      2 ni(-1:nx,-1:ny,0:1),
      3 ro(-1:nx,-1:ny), pr(-1:nx,-1:ny)
 
 *  -- PROCEDURES --
-      REAL*8
+      REAL (KIND=R8) ::
      .      X, Y, XF, YF, RVX, RVY, RDX, RDY, RSX, RSY, PITX, PITY,
      .      SFEE, SFEI, SFNI(NBCD,0:NS)
-      REAL*8 sxhelp,syhelp
+      REAL (KIND=R8) :: sxhelp,syhelp
       real (kind=R8) :: XX(-1:NX,6), YY(-1:NY,6)
       real (kind=R8) :: b2tqca_phm0, b2treq_phm0
       real (kind=R8) ::
@@ -746,7 +746,7 @@ C                    DIE Y-KOORDINATE (2. INDEX) LAEUFT WAAGRECHT
 C
 C
 C    BEIM AUFRUF MUESSEN DEFINIERT SEIN:
-C      Z    REAL*8*4 (0:NXD+1,0:NYD+1) ...WERTE DES ARRAYS
+C      Z    REAL*8 (0:NXD+1,0:NYD+1) ...WERTE DES ARRAYS
 C      IZ   INT *4 (0:NXD+1,0:NYD+1) ...MUSS NUR DIMENSIONIERT SEIN
 C      NXD                           ...DIMENSION DES 1. INDEX VON Z
 C      NYD                           ...DIMENSION DES 2. INDEX VON Z
@@ -756,12 +756,13 @@ C      TEXT CHAR*8                   ...TABELLENUEBERSCHRIFT
 C
       SUBROUTINE IPRI (NPRT, Z, IZ, NX, NY, TEXT)
 C
+      USE B2MOD_TYPES
       IMPLICIT NONE
 C
       INTEGER NX, NY, NPRT
       INTEGER IZ (-1:NX,-1:NY), ID (-1:39),
      .        IX, IY, NX1, NX2, NY1, NY2
-      REAL*8 Z(-1:NX,-1:NY), YMIN, YMAX, ZMAX, SIGF
+      REAL(KIND=R8) Z(-1:NX,-1:NY), YMIN, YMAX, ZMAX, SIGF
       CHARACTER*8 TEXT, COTXT1, COTXT2
 C
       DATA  COTXT1 /'TE      '/,  COTXT2 /'TI      '/

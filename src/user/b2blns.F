@@ -90,8 +90,7 @@ c
       real (kind=R8) :: tdummy
       integer, save :: mdf_fnb = 0, style_b2mndt = 0                ! IYS 12.01.2018
 
-      real (kind=R8), allocatable, save :: hlpit_lp(:),hlpit_rp(:),
-     &                                                 hlpit_pl(:)
+      real (kind=R8), allocatable, save :: hlpit_lp(:), hlpit_pl(:)
       real (kind=R8) :: hlp_pls(nbcd,ns)
       integer use_recyceir, use_eirene
       real (kind=R8) :: recyctmp
@@ -250,6 +249,8 @@ c      do i=1,nlimps
 #endif
 
 c<<<
+      hlp_pls = 0.0_R8
+      hlpit_lp = 0.0_R8
       debug_flags(90) = 1
       debug_flags(91) = 6
       debug_flags(92) = 1
@@ -742,9 +743,9 @@ c     boundaries should be added to a global balance as a wall recycling source
 
 c********* Debug output **************
       if(debug_flags(90).gt.0) then
-c        print '(a,1p,10e12.4)','%%% hlpit_lp, hlpit_rp: ',
-c     ,                           (hlpit_lp(i),hlpit_rp(i),i=1,nspecies)
-        write (hlp_prt,'(a,i2,a)') '(a,1p,',nspecies,'e12.4)'
+c        print '(1x,a,1p,10e12.4)','%%% hlpit_lp: ',
+c     ,                           (hlpit_lp(i),i=1,nspecies)
+        write (hlp_prt,'(a,i2,a)') '(1x,a,1p,',nspecies,'e12.4)'
         write (*,hlp_prt) '%%# hlpiw_s : ', (flxiw(i),i=1,nspecies)
       end if
 c********* Debug output **************
@@ -794,8 +795,7 @@ c*** Only called with filedata(ntrc_bls)=.true.
 c----------------------------------------------------------------------
 c
       if (.not. allocated(hlpit_lp))
-     &   allocate(hlpit_lp(nspecies), hlpit_rp(nspecies), 
-     &            hlpit_pl(nspecies))
+     &   allocate(hlpit_lp(nspecies), hlpit_pl(nspecies))
 
       if (.not. allocated(flxic)) 
      &      allocate(
@@ -969,7 +969,7 @@ c*** from 20180604 on
      &    flxis, Nions)
 
       if (allocated(hlpit_pl)) 
-     &  deallocate(hlpit_pl, hlpit_lp, hlpit_rp)
+     &  deallocate(hlpit_pl, hlpit_lp)
 
       return
 

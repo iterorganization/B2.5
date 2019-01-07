@@ -1556,7 +1556,7 @@ cxpb turn off poloidal flows in core boundary
          enddo
         enddo
 *     turn off flows between boundary cells in south and in north
-         do iy = -1, ny, ny+1
+        do iy = -1, ny, ny+1
           fnb(:,iy,0)         = 0.0_R8
 !          fnb_32(:,iy,0) = 0.0_R8
 !          fnb_52(:,iy,0) = 0.0_R8
@@ -1584,12 +1584,12 @@ cxpb turn off poloidal flows in core boundary
              fna_ch(:,iy,0,isb)=0.0_R8
              fna_pschused(:,iy,0,isb)=0.0_R8
           endif
-         enddo                                                          !srv 20.06.08 }
+        enddo                                                           !srv 20.06.08 }
       endif                                                             !xpb
 
 csw 18feb2014 remove fluxes between guard cells
-        do ix=-1,nx
-         do iy=-1,ny
+      do ix=-1,nx
+        do iy=-1,ny
           if(iffboundx(ix,iy).ne.0) then
             fnb(ix,iy,0)=0.0_R8
             fnb_32(ix,iy,0)=0.0_R8
@@ -1644,8 +1644,8 @@ csw 18feb2014 remove fluxes between guard cells
                fna_pschused(ix,iy,1,isb)=0.0_R8
             endif
           endif
-         enddo
         enddo
+      enddo
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO

@@ -352,9 +352,9 @@ c>>>
       end do
 c<<<
       if(debug_flags(90).gt.0) then
-c        print '(a,1p,10e12.4)','%%% hlpit_lp, hlpit_rp: ',
+c        print '(1x,a,1p,10e12.4)','%%% hlpit_lp, hlpit_rp: ',
 c     ,                           (hlpit_lp(i),hlpit_rp(i),i=1,nspecies)
-        print '(a,1p,10e12.4)','%%# hlpiw_s : ',
+        print '(1x,a,1p,10e12.4)','%%# hlpiw_s : ',
      ,                                        (hlpiw_s(i),i=1,nspecies)
       end if
 c>>>
@@ -419,7 +419,7 @@ c>>>
 c*** Correct the source for d/dt terms
         hlpis=hlpis+hlpid
 c<<<
-c        print '(a,1p,4e12.4)',
+c        print '(1x,a,1p,4e12.4)',
 c     ,      '%%% Ion fluxes: hlpit, hlpiw, hlpic, hlpid =',
 c     ,                       hlpit, hlpiw, hlpic, hlpid
 c        print *,'%%% hlpit_l     hlpit_r     hlpit_t'
@@ -568,7 +568,7 @@ c>>>
         end do
 c<<<
         if(debug_flags(90).gt.0) then
-          print '(a,1p,5e12.4)',
+          print '(1x,a,1p,5e12.4)',
      ,      '%%# Total fluxes: hlpit, hlpiw, hlpic, hlpid, hlpnp =',
      ,                                hlpit, hlpiw, hlpic, hlpid, hlpnp
           print *,'%%# Recycling sources. ls= ',ls

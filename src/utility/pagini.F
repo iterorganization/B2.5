@@ -38,7 +38,7 @@
 *     -----------------------------------------------------------------
 *   ..test domain parameters
       call xertst (xmin.lt.xmax.and.ymin.lt.ymax,
-     &  'pagini--faulty arguments for domain specification')
+     &  'pagini--faulty domain specification for '//title)
 *   ..set styl4
       if (0.le.style.and.style.lt.8) then
        styl4 = mod(style,4)
