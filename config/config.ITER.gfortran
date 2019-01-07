@@ -6,6 +6,9 @@ NCDIR     ?= /work/imas/opt/netcdf-fortran/4.2-GCC-4.1.2
 LD_NETCDF ?= `nf-config --flibs`
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DDOFLUSH # -DNO_CDF -DNO_PROCESS
+ifndef SOLPS_CPP
+EQUIVS += -DGFORTRAN
+endif
 
 CPP = /lib/cpp -traditional -DNO_IEEE
 CPPOPTS = -P -I${srcdir} ${EQUIVS}

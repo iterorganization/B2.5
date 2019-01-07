@@ -13,6 +13,9 @@ ifndef LD_NETCDF
 endif
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
+ifndef SOLPS_CPP
+EQUIVS += -DGFORTRAN
+endif
 
 CPP = /lib/cpp -traditional -ffreestanding -DNO_IEEE
 CPPOPTS = -P -I${srcdir} ${EQUIVS}

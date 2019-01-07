@@ -97,7 +97,7 @@ C          (R*8 ADAS FUNCTION - 'R8FUN1' ( X -> X) )
 C
 C AUTHOR : JAMES SPENCE (TESSELLA SUPPORT SERVICES PLC)
 C          K1/0/80
-C          JET  EXT. 4866
+C          JET EXT. 4866
 C
 C DATE   : 22/02/90
 C
@@ -138,7 +138,7 @@ C
 C
       integer IZMAXD, IDMAXD, ITMAXD, IEVCUT, ICLASS, IZ1, IZ0, IFAIL
       integer ITMAX, ITDIMD, IZ1MIN, IZ0SV, ICLSV, IEVSV, LEN
-      integer lnblnk, LEVMIN, IZ1MAX, IZMAX, I, ID, IT, IZ, INDXZ1
+      integer LEVMIN, IZ1MAX, IZMAX, I, ID, IT, IZ, INDXZ1
 c
       real (kind=R8) :: DTEV(ITMAX)   , DDENS(ITMAX)
       real (kind=R8) :: DTEVD(ITDIMD) , DDENSD(ITDIMD) , ZDATA(ITDIMD)
@@ -156,8 +156,8 @@ C
       LOGICAL   LEXIST  , LSETX
 C
       real (kind=R8) :: R8FUN1
-      EXTERNAL  R8FUN1
-      external lnblnk, subini, subend
+      EXTERNAL R8FUN1
+      external subini, subend
       logical open_file, silent_open
       external open_file, silent_open
 C
