@@ -10,7 +10,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
-     , , only : corr_core_dt, correct_po                ! IYS 19.12.2017, 21.09.2018
+     , , only : corr_core_dt, add_te_corr_to_po                ! IYS 19.12.2017, 21.09.2018
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv
@@ -39,7 +39,6 @@
 
 *   ..local variables
       integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg
-!      integer, save :: correct_po = 1    ! IYS 05.09.2018
       real (kind=R8) ::
      *  ctt, dte, dti, t0, t1, t2
       real (kind=R8) :: 
@@ -69,7 +68,6 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2upht_stylec', stylec)
-!       call ipgeti ('b2upht_correct_po', correct_po)
        call xertst (0.le.stylec, 'faulty internal parameter stylec')
        call ipgeti ('b2news_poteq', pot_eq)
       endif
@@ -163,7 +161,7 @@
         if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
      &      leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 
-     &                                 .and. correct_po(ireg)) then
+     &                             .and. add_te_corr_to_po(ireg)) then
                             po(ix,iy) = po(ix,iy)+dte/qe
         else if (pot_eq.eq.2) then
           po(ix,iy) = 3.1_R8*te(ix,iy)/qe
