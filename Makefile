@@ -224,7 +224,7 @@ PROG_NC = nc2text_simple.exe
 
 EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
-EX90LIST = ${patsubst %.exe, %.o, ${PROG_ID} ${PROG_NC}}
+EX90LIST = ${patsubst %.exe, %.o, ${PROG_ID}}
 
 GEEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_GE}}
 GREXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_GR}}
@@ -780,6 +780,10 @@ ${TTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 ${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${MAKES}
 ifdef LD_NETCDF
 	${LD} ${LDOPTS} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
+	@-ln -sf ${NCEXE} ${NCODIR}/nc2text_simple
+ifeq (,$(findstring nc2text,${NC2TXT}))
+	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
+endif
 endif
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
@@ -788,7 +792,6 @@ ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cd
 test:	${TTEXE}
 
 nc2text_simple: ${NCEXE}
-	@-ln -sf ${NCEXE} ${NCODIR}/nc2text_simple
 
 ${NCODIR}/nc2text_simple.o: ${NCSDIR}/nc2text_simple.F90
 ifdef LD_NETCDF
@@ -796,9 +799,6 @@ ifdef LD_NETCDF
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< $*.f90
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c -o $*.o $*.f90
-ifeq (,$(findstring nc2text,${NC2TXT}))
-	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
-endif
 else
 	$(warning NETCDF library not present!)
 endif
