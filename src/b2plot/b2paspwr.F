@@ -150,7 +150,7 @@ c*** Produce the output
 
       call find_file(hlp_fn,ex)
       open(lun,file=hlp_fn,err=900)
-      write(hlp_frm,'(10h(1x,i4,1p,, i3, 9he12.4,i5))') n_hlp
+      write(hlp_frm,'(a10,i3,a9)') '(1x,i4,1p,',n_hlp,'e12.4,i5)'
 c      print *,'hlp_frm: ',hlp_frm
       if(ex) then
 

@@ -324,6 +324,7 @@ c**********************************
 !     Loop over isonuclear sequences
       do ls = 1,nspecies
 
+        kks=eb2spcr(ls)+1
 c<<<
         if(debug_flags(90).gt.0) then
           print *,'%%# Species # ',ls
@@ -654,9 +655,9 @@ c*** Puffing/seeding rate and recycling source
         do ic = 1,nstrat
 
           if(use_recyceir.gt.0) then
-              recyctmp=recyceir(ic)
+            recyctmp=recyceir(ic)
           else
-              recyctmp=recyc(kks,ic)
+            recyctmp=recyc(kks,ic)
           endif
 
           if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding

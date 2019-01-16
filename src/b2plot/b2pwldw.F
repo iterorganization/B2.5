@@ -814,7 +814,7 @@ c*** Particle fluxes and energies
                 IAS=IND+1
 c!###{
 c                print *,'is,j,i1,i2,k,kk,ib=',is,j,i1,i2,k,kk,ib
-c                zz=0
+c                zz=0.0_R8
 c                print '(3x,12(2x,a8))','phi','fti','tn','wo','wwo',
 c     ,            'fiitrg','eiitrg','faitrg','eaitrg','dab2',
 c     ,            'tab2','s'
