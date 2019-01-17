@@ -161,7 +161,7 @@
         if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
      &      leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 
-     &                             .and. add_te_corr_to_po(ireg)) then
+     &                            .and. add_te_corr_to_po(ireg)) then
                             po(ix,iy) = po(ix,iy)+dte/qe
         else if (pot_eq.eq.2) then
           po(ix,iy) = 3.1_R8*te(ix,iy)/qe

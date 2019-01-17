@@ -740,7 +740,7 @@ c-----------------------------------------------------------------------
         hlp_s=0.0_R8
         hlp_hep=0.0_R8
 #ifdef DBG
-        print '(a,6i4)',
+        print '(1x,a,6i4)',
      ,          '%%## j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o',!###
      ,                j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o  !###
 #endif

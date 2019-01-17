@@ -248,7 +248,7 @@ cdpc
       call ma28idcopy3                                             !srv 26.12.17
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
      1 r1,s1,res,w,1,prec,iflag)                                   !srv 16.01.18
-      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(a,i3,1p,2g15.8,i6)')
+      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(1x,a,i3,1p,2g15.8,i6)')
      1 'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
 
       if(iflag.lt.0) then                                          !srv 28.06.16 {

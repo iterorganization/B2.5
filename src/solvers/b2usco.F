@@ -227,7 +227,7 @@ cxpb
       enddo
       
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ',name
+      write(*,'(1x,a,a)') 'Calling b2ux5p from ',name
       call b2ux5p (nx, ny, aa5, itcnt, rescb, corpb, name)             !srv 18.03.10
 *   ..redo the scaling
       do iy = -1, ny

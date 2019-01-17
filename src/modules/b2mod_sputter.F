@@ -1295,7 +1295,7 @@ cxpb Also need to consider alloy contributions
 
 
 c  Subroutine to find the surface temperature of a plasma facing
-c  surface assuming a 1-D. steady state, heat diffusion with a
+c  surface assuming a 1-D steady state, heat diffusion with a
 c  thermal conductivity that varies with temperature as
 c   K(T) = 1/(KA * T + KB)
 

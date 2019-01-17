@@ -6528,9 +6528,9 @@
 			<switch>
 				<name>ADD_TE_CORR_TO_PO</name>
 				<default>.true.</default>
-				<type>logical array of size (NREG)</type>
+				<type>logical array of size (0:NREG)</type>
 				<description>
-					If .true. (default), adds a dte(ix,iy)/qe to a potential locally after the internal energy balance equations are solved, where dte(ix,iy) is an electron temperature increment on a time step.
+					If .true. (default), adds dte(ix,iy)/qe to the potential correction after the internal energy balance equations are solved, where dte(ix,iy) is the electron temperature correction on the time step. Individually set for each region index.
 				</description>
 			</switch>
 		</category>
