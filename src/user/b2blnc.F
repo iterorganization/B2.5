@@ -105,7 +105,8 @@ c*** from 960808 on
      ,     flxrl_tmp(:)
 c----------------------------------------------------------------------
 c
-      character f*(lenfnm), hlp_c, hlp_h(np_tmp)*8, hlp_frm*80, tab
+      character f*(lenfnm), hlp_c, hlp_h(np_tmp)*8, hlp_frm*80, tab,
+     ,     hlp_prt*26
 c
 c----------------------------------------------------------------------
 c*** Taken from the common blocks:
@@ -157,13 +158,14 @@ c<<<
         write(*,'()')
         l=ny+1
         n=mod(l-1,10)+1
+        i=(nx+2)/10+1
+        write(hlp_prt,'(a,i3,a)') '(1x,i4,1x,i1,',i,'(1x,10i1))'
         do k=0,ny-1
           m=l
           l=max(0,m-n+1)
           n=10
           do j=m-1,l-1,-1
-            print '(1x,i4,1x,i1,40(1x,10i1))',j,
-     ,                                         (region(i,j,0),i=-1,nx)
+            write(*,hlp_prt) j,(region(i,j,0),i=-1,nx)
           end do
           l=l-1
         end do
@@ -233,11 +235,14 @@ c<<<
         do k=debug_flags(92),debug_flags(93)
           print *
           print *,'wldpp:',k
+          write (hlp_prt,'(a,i3,a)') '(1p,i4,',nnplsi,'e9.2)'
           do j=nnlimi+debug_flags(90),nnlimi+debug_flags(91)
-            print '(1p,i4,20e9.2)',j,(wldpp(j,i,k),i=1,nnplsi)
+            write(*,hlp_prt) j,(wldpp(j,i,k),i=1,nnplsi)
           end do
           print *
           print *,'wldpeb, wldpa, wldpm, hlpit_pl:',k
+          write (hlp_prt,'(a,i3,a)')
+     .     '(1p,i4,',1+nnatmi+nnmoli+nspecies,'e9.2)'
           do j=nnlimi+debug_flags(90),nnlimi+debug_flags(91)
             ks=0
             do ls=1,nspecies
@@ -247,7 +252,7 @@ c<<<
                 hlpit_pl(ls)=hlpit_pl(ls)+wldpp(j,ks,k)
               end do
             end do
-            print '(1p,i4,20e12.4)',j,wldpeb(j,k),
+            write(*,hlp_prt) j,wldpeb(j,k),
      ,         (wldpa(j,i,k),i=1,nnatmi),(wldpm(j,i,k),i=1,nnmoli),
      ,                                       (hlpit_pl(i),i=1,nspecies)
            end do
@@ -355,10 +360,11 @@ c>>>
       end do
 c<<<
       if(debug_flags(90).gt.0) then
-c        print '(a,1p,10e12.4)','%%% hlpit_lp, hlpit_rp: ',
+c       write (hlp_prt,'(a,i2,a)') '(1x,a,1p,',2*nspecies,'e12.4)'
+c       write (*,hlp_prt) '%%% hlpit_lp, hlpit_rp: ',
 c     ,                           (hlpit_lp(i),hlpit_rp(i),i=1,nspecies)
-        print '(a,1p,10e12.4)','%%# hlpiw_s : ',
-     ,                                        (hlpiw_s(i),i=1,nspecies)
+        write (hlp_prt,'(a,i2,a)') '(1x,a,1p,',nspecies,'e12.4)'
+        write (*,hlp_prt) '%%# hlpiw_s : ',(hlpiw_s(i),i=1,nspecies)
       end if
 c>>>
 

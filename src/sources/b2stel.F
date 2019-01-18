@@ -71,7 +71,8 @@
 
 #     include <DIMENSIONS.F>
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, js, fix_recomb_energy, k
+      integer ncall, styl0, n2, ix, iy, is, js, k, ireg
+      integer, save :: fix_recomb_energy
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
@@ -81,8 +82,7 @@
       character chns*3, chk*1                                     !srv 30.06.08
       real (kind=R8) ::
      *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
-      save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
-     *  fix_recomb_energy
+      save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       real (kind=R8) ::
      *  rf0, t0, t1
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
@@ -230,7 +230,8 @@
       call timer%start("parallel")
 #endif
 !$OMP PARALLEL DO default(none), private(ix, iy, is, rf0, t0, t1)
-!$OMP& shared(ns, nx, ny, rightix, leftix, topiy, bottomiy, zn)
+!$OMP& shared(ns, nx, ny, nspecies)
+!$OMP& shared(rightix, leftix, topiy, bottomiy, zn)
 !$OMP& shared(region, rlsa, rsa, vol, ne, na, ni, te, ti, am, ua)
 !$OMP& shared(phm0, rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1)
 !$OMP& shared(rlra, rra, rpi, rlqa, rqa, rrd, hz)
@@ -239,45 +240,39 @@
 !$OMP& shared(rsana, rsahi, rsamo, rrana, rrahi, rqahe, rramo, rbr)
 !$OMP& shared(rqrad, rqbrm, zamax, zamin)
 !$OMP& shared(fix_recomb_energy, styl0, BoRiS, is_neutral)
-!$OMP& shared(jimp_tmp, b2espcr)
-!$OMP& reduction(+:rsanareg, rsahireg, rsamoreg, rranareg, rrahireg)
-!$OMP& reduction(+:rqahereg, rramoreg, rqradreg, b2radreg)
-!$OMP& reduction(+:b2rad, rad_imp, rqbrmreg, b2bremreg, b2brem)
+!$OMP& reduction(+:b2rad, b2brem)
 #endif
       do iy = -1, ny
-      do is = 0, ns-2
-       if (lnext(is,is+1)) then
+       do is = 0, ns-2
+        if (lnext(is,is+1)) then
 *     ..particle source and heat source
-         do ix = -1, nx
-          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
-     &       region(ix,iy,0).ne.0) then
+          do ix = -1, nx
+           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
+     &        topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
+     &        region(ix,iy,0).ne.0) then
 *       ..compute damping coefficient
-           rf0 = rxm0*max(0.0_R8,rlsa(ix,iy,1,is))
+            rf0 = rxm0*max(0.0_R8,rlsa(ix,iy,1,is))
 *       ..compute rate for is->is+1
-           t0 = phm0*rsa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)                 !srv 05.06.18
+            t0 = phm0*rsa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)                 !srv 05.06.18
 *       ..compute particle source
-           sna0_ion(ix,iy,0,is+1) = sna0_ion(ix,iy,0,is+1)+             !srv 11.09.09 {
-     &      (1.0_R8+rf0)*t0*na(ix,iy,is)
-           sna0_ion(ix,iy,1,is+1) = sna0_ion(ix,iy,1,is+1)-
-     &      rf0*t0*na(ix,iy,is)/na(ix,iy,is+1)
-           sna0_ion(ix,iy,0,is) = sna0_ion(ix,iy,0,is)+
-     &      rf0*t0*na(ix,iy,is)
-           sna0_ion(ix,iy,1,is) = sna0_ion(ix,iy,1,is)-(1.0_R8+rf0)*t0  !srv 11.09.09 }
-           rsana(ix,iy,is) = t0*na(ix,iy,is)
-           rsanareg(region(ix,iy,0),is)=rsanareg(region(ix,iy,0),is)+
-     1      t0*na(ix,iy,is)
+            sna0_ion(ix,iy,0,is+1) = sna0_ion(ix,iy,0,is+1)+             !srv 11.09.09 {
+     &       (1.0_R8+rf0)*t0*na(ix,iy,is)
+            sna0_ion(ix,iy,1,is+1) = sna0_ion(ix,iy,1,is+1)-
+     &       rf0*t0*na(ix,iy,is)/na(ix,iy,is+1)
+            sna0_ion(ix,iy,0,is) = sna0_ion(ix,iy,0,is)+
+     &       rf0*t0*na(ix,iy,is)
+            sna0_ion(ix,iy,1,is) = sna0_ion(ix,iy,1,is)-(1.0_R8+rf0)*t0  !srv 11.09.09 }
+            rsana(ix,iy,is) = t0*na(ix,iy,is)
 *       ..compute atom heat source
-           t1 = t0*na(ix,iy,is)*(1.0_R8-BoRiS)*
+            t1 = t0*na(ix,iy,is)*(1.0_R8-BoRiS)*
      &       ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
      &       ((ua(ix,iy,is)-ua(ix,iy,is+1))**2)
-           shi0_ion(ix,iy,0) = shi0_ion(ix,iy,0)+(1.0_R8+rf0)*t1
-           shi0_ion(ix,iy,3) = shi0_ion(ix,iy,3)-
-     &                         rf0*t1/(ni(ix,iy,0)*ti(ix,iy))
-           rsahi(ix,iy,is) = t1
-           rsahireg(region(ix,iy,0),is)=rsahireg(region(ix,iy,0),is)+t1
-          endif
-         enddo
+            shi0_ion(ix,iy,0) = shi0_ion(ix,iy,0)+(1.0_R8+rf0)*t1
+            shi0_ion(ix,iy,3) = shi0_ion(ix,iy,3)-
+     &                          rf0*t1/(ni(ix,iy,0)*ti(ix,iy))
+            rsahi(ix,iy,is) = t1
+           endif
+          enddo
 *     ..parallel momentum source
           do ix = -1, nx
             if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
@@ -329,18 +324,14 @@
      &         (1.0_R8+rf0)*t1
              endif
              rsamo(ix,iy,is) = rsamo(ix,iy,is)+t1*ua(ix,iy,is)
-             rsamoreg(region(ix,iy,0),is) =
-     &        rsamoreg(region(ix,iy,0),is)+t1*ua(ix,iy,is)
              rsamo(ix,iy,is+1) = rsamo(ix,iy,is+1)-t1*ua(ix,iy,is)
-             rsamoreg(region(ix,iy,0),is+1) =
-     &        rsamoreg(region(ix,iy,0),is+1)-t1*ua(ix,iy,is)
            endif
           enddo
-       endif
-      enddo
+        endif
+       enddo
 *   ..compute sources due to recombination
-      do is = 1, ns-1
-       if (lnext(is-1,is)) then
+       do is = 1, ns-1
+        if (lnext(is-1,is)) then
 *     ..particle source and heat source
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
@@ -359,8 +350,6 @@
            sna0_rec(ix,iy,1,is-1) = sna0_rec(ix,iy,1,is-1)-           !srv 11.09.09 {
      &      rf0*t0*na(ix,iy,is)/na(ix,iy,is-1)
            rrana(ix,iy,is) = t0*na(ix,iy,is)
-           rranareg(region(ix,iy,0),is)=rranareg(region(ix,iy,0),is)+
-     1      t0*na(ix,iy,is)
 *       ..compute atom heat source
            t1 = t0*na(ix,iy,is)*(1.0_R8-BoRiS)*
      &       ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
@@ -369,7 +358,6 @@
            shi0_rec(ix,iy,3) = shi0_rec(ix,iy,3)-
      *                         rf0*t1/(ni(ix,iy,0)*ti(ix,iy))
            rrahi(ix,iy,is) = t1
-           rrahireg(region(ix,iy,0),is)=rrahireg(region(ix,iy,0),is)+t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
            if(fix_recomb_energy.ne.0) then
 c the default treatment is to have the entire ionization potential
@@ -384,9 +372,6 @@ c accounted for)
              she0(ix,iy,3)=she0(ix,iy,3)-rf0*
      &        t0*rpi(ix,iy,is)*ev*na(ix,iy,is)/(ne(ix,iy)*te(ix,iy))
              rqahe(ix,iy,is) = rqahe(ix,iy,is) -
-     &        t0*rpi(ix,iy,is)*ev*na(ix,iy,is)
-             rqahereg(region(ix,iy,0),is) =
-     &        rqahereg(region(ix,iy,0),is) -
      &        t0*rpi(ix,iy,is)*ev*na(ix,iy,is)
            endif
           endif
@@ -410,17 +395,13 @@ c accounted for)
      &      t1*(ua(ix,iy,is)+rf0*ua(ix,iy,is-1))
            smq0_rec(ix,iy,1,is-1) = smq0_rec(ix,iy,1,is-1)-rf0*t1
            rramo(ix,iy,is) = rramo(ix,iy,is)+t1*ua(ix,iy,is)
-           rramoreg(region(ix,iy,0),is) =
-     &      rramoreg(region(ix,iy,0),is)+t1*ua(ix,iy,is)
            rramo(ix,iy,is-1) = rramo(ix,iy,is-1)+t1*ua(ix,iy,is)
-           rramoreg(region(ix,iy,0),is-1) =
-     &      rramoreg(region(ix,iy,0),is-1)+t1*ua(ix,iy,is)
           endif
          enddo
-       endif
-      enddo
+        endif
+       enddo
 *   ..compute source terms for electron heat loss and radiation
-      do is = 0, ns-1
+       do is = 0, ns-1
         do ix = -1, nx
          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &      topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -436,24 +417,15 @@ c accounted for)
           she0(ix,iy,3) = she0(ix,iy,3)-
      &     (1.0_R8+rf0)*t0/(ne(ix,iy)*te(ix,iy))
           rqahe(ix,iy,is) = rqahe(ix,iy,is) + t0
-          rqahereg(region(ix,iy,0),is)=rqahereg(region(ix,iy,0),is)+t0
 *      ..compute line radiation rate for is->any
           t0 = phm0*rrd(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)      !srv 05.06.18
 *      ..compute line radiation
           rqrad(ix,iy,is) = t0
-          rqradreg(region(ix,iy,0),is)=rqradreg(region(ix,iy,0),is)+t0
-          b2radreg(region(ix,iy,0))=b2radreg(region(ix,iy,0))-t0
           b2rad=b2rad-t0
-          if (.not.is_neutral(is) .and. jimp_tmp(b2espcr(is)).ne.0) then
-            rad_imp(jimp_tmp(b2espcr(is)))=
-     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
-          endif
 *      ..compute bremsstrahlung radiation rate for is->any
           t0 = phm0*rbr(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)    !srv 05.06.18
 *      ..compute bremsstrahlung radiation
           rqbrm(ix,iy,is) = t0
-          rqbrmreg(region(ix,iy,0),is)=rqbrmreg(region(ix,iy,0),is)+t0
-          b2bremreg(region(ix,iy,0))=b2bremreg(region(ix,iy,0))-t0
           b2brem=b2brem-t0
          endif
         enddo
@@ -464,6 +436,47 @@ c accounted for)
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
 #endif
+#endif
+#ifndef NO_OPENMP_B2STEL
+!$OMP SINGLE
+#endif
+      do iy = -1, ny
+        do ix = -1, nx
+          ireg = region(ix,iy,0)
+          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
+     &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
+     &       ireg.ne.0) then
+            do is = 0, ns-1
+              b2radreg(ireg) =b2radreg(ireg) -rqrad(ix,iy,is)
+              b2bremreg(ireg)=b2bremreg(ireg)-rqbrm(ix,iy,is)
+              rqahereg(ireg,is)=rqahereg(ireg,is)+rqahe(ix,iy,is)
+              rqradreg(ireg,is)=rqradreg(ireg,is)+rqrad(ix,iy,is)
+              rqbrmreg(ireg,is)=rqbrmreg(ireg,is)+rqbrm(ix,iy,is)
+              if (is.le.ns-2) then
+               if (lnext(is,is+1)) then
+                rsanareg(ireg,is)=rsanareg(ireg,is)+rsana(ix,iy,is)
+                rsamoreg(ireg,is)=rsamoreg(ireg,is)+rsamo(ix,iy,is)
+                rsahireg(ireg,is)=rsahireg(ireg,is)+rsahi(ix,iy,is)
+               end if
+              end if
+              if (is.gt.0) then
+               if (lnext(is-1,is)) then
+                rranareg(ireg,is)=rranareg(ireg,is)+rrana(ix,iy,is)
+                rramoreg(ireg,is)=rramoreg(ireg,is)+rramo(ix,iy,is)
+                rrahireg(ireg,is)=rrahireg(ireg,is)+rrahi(ix,iy,is)
+               end if
+              end if
+              if (.not.is_neutral(is) .and.
+     &         jimp_tmp(b2espcr(is)).ne.0) then
+                rad_imp(jimp_tmp(b2espcr(is)))=
+     &           rad_imp(jimp_tmp(b2espcr(is)))-rqrad(ix,iy,is)
+              end if
+            end do 
+          end if
+        end do
+      end do
+#ifndef NO_OPENMP_B2STEL
+!$OMP END SINGLE
 #endif
 #ifdef ASTRA
       do is = 0, ns-1                                                 !srv 28.07.11 {

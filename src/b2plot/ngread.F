@@ -114,9 +114,11 @@ C
    11 CONTINUE
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natmi,'(a2,1x))'
 #ifndef HPUX
-      write(*,hlp_frm) 'atoms_list (fort.44) : ', atoms_list(1:natmi)
+      write(*,hlp_frm) 'atoms_list (fort.44) : ',
+     . (trim(atoms_list(is)),is=1,natmi)
 #else
-      write(*,hlp_frm) 'atoms_list (ftn44) : ', atoms_list(1:natmi)
+      write(*,hlp_frm) 'atoms_list (ftn44) : ',
+     . (trim(atoms_list(is)),is=1,natmi)
 #endif
 C
 * neutral molecules

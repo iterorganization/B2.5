@@ -872,7 +872,7 @@
 *     the call to b2mnds.)
       if (ncall.eq.0) then
        call print_openmp_info()
-       balance_netcdf = 0 ! Default: do not create balance arrays
+       balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
        call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
        call ipgeti ('balance_average',balance_average)
