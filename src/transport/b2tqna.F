@@ -448,11 +448,13 @@ cxpb Corrected for dimensionality
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,dna0(1,is),'b2tqna_in_dna0'//chns)
           call my_out_us(70,nCv,0,dpa0(1,is),'b2tqna_in_dpa0'//chns)
-          wrk0=vsa0(:,is)/(mp*am(is)*pl%na(:,is))
+!          wrk0=vsa0(:,is)/(mp*am(is)*pl%na(:,is))
+          wrk0=vsa0(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2tqna_in_vsa0'//chns)
           call my_out_us(70,nCv,0,vla0(1,0,is),'b2tqna_in_vla0x'//chns)
           call my_out_us(70,nCv,0,vla0(1,1,is),'b2tqna_in_vla0y'//chns)
-          wrk0=hcib(:,is)/pl%na(:,is)
+!          wrk0=hcib(:,is)/pl%na(:,is)
+          wrk0=hcib(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2tqna_in_hcib'//chns)
         enddo
        call my_out_us(70,nCv,0,hci0,'b2tqna_in_hci0')
