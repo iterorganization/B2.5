@@ -1493,8 +1493,17 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
        call my_out_us(70,nFc,1,state%dv%fhe(1,1),'b2mndr_fhey')
        call my_out_us(70,nFc,1,state%dv%fhi(1,0),'b2mndr_fhix')
        call my_out_us(70,nFc,1,state%dv%fhi(1,1),'b2mndr_fhiy')
-       call my_out_us(70,nFc,1,geo%fcQgam(1,0),'b2mndr_fcQgam0')
-       call my_out_us(70,nFc,1,geo%fcQgam(1,1),'b2mndr_fcQgam1')
+       call my_out_us(70,nFc,1,geo%fcQgam(1,0),'b2mndr_fcQgam0_cosg')
+       call my_out_us(70,nFc,1,geo%fcQgam(1,1),'b2mndr_fcQgam1_sing')
+       call my_out_us(70,nFc,1,geo%fcQalf(1,0),'b2mndr_fcQalf0_cosa')
+       call my_out_us(70,nFc,1,geo%fcQalf(1,1),'b2mndr_fcQalf1_sina')
+       call my_out_us(70,nFc,1,geo%fcQbet(1,0),'b2mndr_fcQbet0_cosb')
+       call my_out_us(70,nFc,1,geo%fcQbet(1,1),'b2mndr_fcQbet1_sinb')
+       call my_out_us(70,nFc,1,geo%fcHc(1,1),'b2mndr_fcHc1_0p5h')
+       call my_out_us(70,nFc,1,geo%fcHc(1,2),'b2mndr_fcHc2_0p5h')
+       call my_out_us(70,nFc,1,geo%fcHt,'b2mndr_fcHt_hti')
+       call my_out_us(70,nCv,0,geo%cvVol,'b2mndr_cvVol')
+       call my_out_us(70,nCv,0,geo%cvHz,'b2mndr_cvHz')
       endif                                                          !srv 25.01.16 }
       do is = 0,ns-1
         do iCv=1,nCv
@@ -2262,7 +2271,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
-      integer nCv, nFc
+      integer nCv, nFc, is                                            !srv 29.11.18 
       character*256 filename
       logical found
       
@@ -2325,6 +2334,18 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       if(use_mms.ne.0) then                                              !srv 26.02.18 {
         call calc_err(mpg%nCv, ns, state % pl, state % dv)
       endif                                                              !srv 26.02.18 }
+      if(use_mms.eq.0) then                                              !srv 29.11.18 {
+       do is = 0,ns-1                                                 
+        write (chns,'(i3.3)') is
+        call my_out_us(70,nCv,0,state%pl%na(1,is),'b2mndr_na'//chns)
+        call my_out_us(70,nCv,0,state%pl%ua(1,is),'b2mndr_ua'//chns)
+       enddo
+       call my_out_us(70,nCv,0,state%pl%te,'b2mndr_te')
+       call my_out_us(70,nCv,0,state%pl%te/ev,'b2mndr_te_eV')
+       call my_out_us(70,nCv,0,state%pl%ti,'b2mndr_ti')
+       call my_out_us(70,nCv,0,state%pl%ti/ev,'b2mndr_ti_eV')
+       call my_out_us(70,nCv,0,state%pl%po,'b2mndr_po')                
+      endif                                                              !srv 29.11.18 }
 #ifdef WG_TODO
       call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
       if (use_astra.ne.0) then

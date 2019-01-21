@@ -74,7 +74,7 @@
 *   ..procedures
       intrinsic sqrt
       external subini, subend, xertst, ipgetr, lwget, b2saxpy
-      external b2xvsg, b2xvff, b2xvfx, b2sihs, b2ursd, b2ush9, b2upht   !srv 02.01.07
+      external b2xvsg, b2xvff, b2xvfx, b2ursd, b2ush9, b2upht   !srv 02.01.07
 *   ..initialization
       data ncall/0/, rxg/1.0e0_R8/, pcm0/1.0e0_R8/, pcm1/1.0e0_R8/
 
@@ -200,6 +200,7 @@ cdjm Jan2017 update particle source components for balance
 
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
         call my_out_us(70,nCv,0,shei,'b2npht_shei')
+        call my_out_us(70,nCv,0,co%ceqp,'b2npht_ceqp')
 !        do is = 0,ns-1
 !         write (chns,'(i3.3)') is
 !         call my_out_us(70,nCv,0,na(1,is),'b2npht_na'//chns//'_input')
@@ -255,6 +256,9 @@ cdjm Jan2017 update particle source components for balance
         call my_out_us(70,nCv,0,pl%te,'b2npht_te')
         call my_out_us(70,nCv,0,pl%ti,'b2npht_ti')
         call my_out_us(70,nCv,0,pl%po,'b2npht_po')
+        call my_out_us(70,nCv,0,dv%corte,'b2npht_corte')
+        call my_out_us(70,nCv,0,dv%corti,'b2npht_corti')
+        call my_out_us(70,nCv,0,dv%cortt,'b2npht_cortt')
       elseif (iout_b2wdat.eq.4) then
         call my_out_us(70,nCv,0,pl%te,'b2npht_te')
         call my_out_us(70,nCv,0,pl%ti,'b2npht_ti')

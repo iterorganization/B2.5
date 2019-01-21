@@ -455,8 +455,9 @@ cxpb Corrected for dimensionality
           wrk0=hcib(:,is)/pl%na(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2tqna_in_hcib'//chns)
         enddo
-!       call my_out_us(70,nCv,0,hci0,'b2tqna_in_hci0')
-        wrk0=hce0/dv%ne
+       call my_out_us(70,nCv,0,hci0,'b2tqna_in_hci0')
+!        wrk0=hce0/dv%ne
+        wrk0=hce0
         call my_out_us(70,nCv,0,wrk0,'b2tqna_in_hce0')
         call my_out_us(70,nCv,0,sig0,'b2tqna_in_sig0')
         call my_out_us(70,nCv,0,alf0,'b2tqna_in_alf0')

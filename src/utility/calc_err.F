@@ -132,9 +132,10 @@
 
        enddo
 
+       call calc_err_cc(nCv, 'Te', pl%te, exact_te, qe)               !srv 29.12.18
+       
        call calc_err_cc(nCv, 'Ti', pl%ti, exact_ti, qe) 
 
-       call calc_err_cc(nCv, 'Te', pl%te, exact_te, qe) 
 
        inquire(file='../exact_ua_us.dat',exist=l_exist)
        call xertst(l_exist,'No '//'../exact_ua_us.dat')

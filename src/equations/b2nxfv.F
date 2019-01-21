@@ -30,8 +30,9 @@
 
 *   ..local variables
       integer ncall
+      real (kind=R8) ::  phm0 = 1.0_R8                                  !srv 06.12.18
       real (kind=R8) ::
-     *   ft, wrkv(nVx), dloghz(nFc)                                   !srv 16.10.17
+     *   ft, wrkv(nVx), dloghz(nFc)                                     !srv 16.10.17
       save ncall
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
@@ -49,6 +50,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2nxfv')
+      if (ncall.eq.0) then                                              !srv 06.12.18 {
+       call ipgetr ('b2nxfv_phm0', phm0)
+      endif                                                             !srv 06.12.18 }
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
@@ -60,7 +64,7 @@
 *   ..compute flubvx
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then         !srv 26.10.08
         call diff_p(nCv,nFc,nVx,0,geo,mpg,log(geo%cvHz),wrkv,dloghz)
-        flubv(:,0) = ft*cvsbhz_cl(:,0)*dloghz
+        flubv(:,0) = phm0*ft*cvsbhz_cl(:,0)*dloghz                    !srv 06.12.18
         flubv(:,1) = 0.0_R8
       else
         flubv = 0.0_R8

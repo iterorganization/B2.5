@@ -85,7 +85,7 @@
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,
      &  rxm1/0.0_R8/, rxm2/0.0_R8/,
-     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/0.0_R8/,
+     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/,           !srv 05.06.18
      &  fix_recomb_energy/0/
 
 *-----------------------------------------------------------------------
@@ -193,7 +193,7 @@
 *       ..compute damping coefficient
            rf0 = rxm0*max(0.0_R8,rt%rlsa(iCv,1,is))
 *       ..compute rate for is->is+1
-           t0 = rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)
+           t0 = phm0*rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)      !srv 05.06.18
 *       ..compute particle source
            sna0_ion(iCv,0,is+1) = sna0_ion(iCv,0,is+1)+             !srv 11.09.09 {
      &      (1.0_R8+rf0)*t0*pl%na(iCv,is)
@@ -223,8 +223,8 @@
 *       ..compute damping coefficient
              rf0 = rg0+rxm1*max(0.0_R8,rt%rlsa(iCv,1,is))
 *       ..compute rate for is->is+1
-             t0 = rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
-     &           pl%na(iCv,is)*geo%cvHz(iCv)                                         !srv 09.01.01
+             t0 = phm0*rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*   !srv 05.06.18
+     &           pl%na(iCv,is)*geo%cvHz(iCv)                        !srv 09.01.01
 *       ..compute parallel momentum source
              t1 = ((am(is)+am(is+1))/2.0_R8)*mp*t0
              if (styl0.eq.0) then
@@ -292,7 +292,7 @@
 *       ..compute damping coefficient
            rf0 = rxm2*max(0.0_R8,-rt%rlra(iCv,1,is))
 *       ..compute rate for is->is-1
-           t0 = rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)
+           t0 = phm0*rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)    !srv 05.06.18
 *       ..compute particle source
            sna0_rec(iCv,0,is) = sna0_rec(iCv,0,is)+               !srv 11.09.09 {
      &       rf0*t0*pl%na(iCv,is)
@@ -340,8 +340,8 @@ c accounted for)
 *       ..compute damping coefficient
            rf0 = rg1+rxm3*max(0.0_R8,-rt%rlra(iCv,1,is))
 *       ..compute rate for is->is-1
-           t0 =rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
-     &         pl%na(iCv,is)*geo%cvHz(iCv)                                            !srv 09.01.01
+           t0 =phm0*rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*      !srv 05.06.18
+     &         pl%na(iCv,is)*geo%cvHz(iCv)                          !srv 09.01.01
 *       ..compute parallel momentum source
            t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
            smq0_rec(iCv,0,is) = smq0_rec(iCv,0,is)+
@@ -377,7 +377,8 @@ c accounted for)
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
 *      ..if adpak_used, also contains recombination and CX terms
-          t0 = rtw%rqa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
+          t0 = phm0*rtw%rqa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
+     &                                             pl%na(iCv,is)    !srv 05.06.18
 *      ..compute electron heat sink
           srw%she0(iCv,0) = srw%she0(iCv,0)+rf0*t0
           srw%she0(iCv,3) = srw%she0(iCv,3)-
@@ -385,7 +386,8 @@ c accounted for)
 !WG_TODO          rqahe(iCv,is) = rqahe(iCv,is) + t0
           rqahereg(mpg%cvReg(iCv),is)=rqahereg(mpg%cvReg(iCv),is)+t0
 *      ..compute line radiation rate for is->any
-          t0 = rtw%rrd(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
+          t0 = phm0*rtw%rrd(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
+     &                                             pl%na(iCv,is)    !srv 05.06.18
 *      ..compute line radiation
 !WG_TODO          rqrad(iCv,is) = t0
           rqradreg(mpg%cvReg(iCv),is)=rqradreg(mpg%cvReg(iCv),is)+t0
@@ -396,7 +398,8 @@ c accounted for)
 !WG_TODO     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
 !WG_TODO          endif
 *      ..compute bremsstrahlung radiation rate for is->any
-          t0 = rtw%rbr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)
+          t0 = phm0*rtw%rbr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
+     &                                             pl%na(iCv,is)    !srv 05.06.18
 *      ..compute bremsstrahlung radiation
 !WG_TODO          rqbrm(iCv,is) = t0
           rqbrmreg(mpg%cvReg(iCv),is)=rqbrmreg(mpg%cvReg(iCv),is)+t0

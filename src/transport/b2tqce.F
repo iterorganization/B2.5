@@ -69,6 +69,7 @@
       integer, save :: style = 2                                        !srv 13.01.17
       character(23) hlp_frm                                             !srv 11.03.13
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
+      real (kind=R8), save :: prl_cur = 1.0_R8                          !srv 15.06.18
       real (kind=R8) ::
      *  ctaue, ce, t0, t1, z, tau(nCv), tnp                             !srv 11.09.09
 !xpb      parameter (lnlam=12.0_R8)
@@ -153,6 +154,7 @@
      &               'faulty input b2tlnl_ee')
         call ipgeti ('b2tqce_style_guard_cells', style_guard_cells)      !srv 19.04.13
         call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
+        call ipgetr ('b2tfhe_prl_cur', prl_cur)                         !srv 15.06.18
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -255,6 +257,8 @@
       else
        call xerrab ('B2TQCE - incorrect value of style_guard_cells')
       endif
+      sig(:,:) = sig(:,:)*prl_cur                                    !srv 15.06.18
+      alf(:,:) = alf(:,:)*prl_cur                                    !srv 15.06.18
 *   ..compute hcey, sigy, alfy
 *!!   (classical perpendicular transport is set to 0)
       call sfill (nCv, 0.0_R8, hce(1,1), 1)

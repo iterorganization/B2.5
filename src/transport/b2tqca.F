@@ -195,7 +195,7 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
           endif
         enddo
         if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                      .or. iout_b2wdat.eq.4) then
+     &     .or. iout.ne.0  .or. iout_b2wdat.eq.4) then
          write (chns,'(i3.3)') is
          call my_out_us(70,nCv,0,tau,'b2tqca_taua'//chns)
 	endif
@@ -208,7 +208,7 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
       enddo
       call sfill (nCv, 0.0_R8, hci(1,1), 1)
 
-      if(iout_b2npmo.ne.0) then                                        !srv 16.06.08 30.01.10 {
+      if(iout.ne.0 .or. iout_b2npmo.ne.0) then                         !srv 16.06.08 30.01.10 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nCv,0,vsa(1,0,is),'b2tqca_vsax'//chns)
@@ -223,11 +223,11 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
 !        call my_out_us(70,nCv,0,geo%cvBb(1,3),'b2tqca_BB')
       endif                                                          !srv 16.06.08 }
 
-      if(iout_b2wdat.eq.4) then                                      !srv 16.06.08 30.01.10 {
+      if(iout.ne.0 .or. iout_b2wdat.eq.4) then                       !srv 16.06.08 30.01.10 {
         call my_out_us(70,nCv,0,dv%lnlam,'b2tqca_lnlam')
       endif
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      if(iout.ne.0 .or. iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
         call my_out_us(70,nCv,0,hci(1,0),'b2tqca_hcix')
         call my_out_us(70,nCv,0,hci(1,1),'b2tqca_hciy')
       endif                                                          !srv 16.06.08 30.01.10 }

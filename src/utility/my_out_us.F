@@ -107,7 +107,24 @@ c     File names will be appended with "*_st.dat".
           enddo
           close (nwrite)
         enddo
-      endif
+        
+        filename = trim(folder)//trim(first_name)//'_sum_st.dat'                !srv 13.12.18 {
+        if (iappend.eq.0) then
+          open (nwrite,file=trim(filename))
+        else
+            open (nwrite,file=trim(filename),position='append')
+        end if
+        write(hlp_frm,"(a4,i4,a1,i2,a9)") 
+     &         '(5x,',nx_st+2,'(',ndigits,'x,i3,5x))'
+        write (nwrite,hlp_frm) (ix,ix=-1,nx_st)
+        write(hlp_frm,"(a10,i4,a3,i2.2,a1,i2.2,a2)")
+     &         '(1x,i3,1x,',nx_st+2,'(es',ndigits+8,'.',ndigits,'))'
+        do iy=ny_st,-1,-1
+         write(nwrite,hlp_frm)iy,(funf_st(ix,iy,0)+funf_st(ix,iy,1),
+     &         ix=-1,nx_st)
+        enddo       
+        close (nwrite)
+      endif                                                                     !srv 13.12.18  }
 
       endif
 #endif

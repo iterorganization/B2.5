@@ -44,6 +44,7 @@
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
       character chns*3 !, chk*1                                       !srv 17.06.02
+      real (kind=R8) :: phm0 = 1.0_R8                                 !srv 26.06.18
       real (kind=R8) ::
      *   t0, wrkf(nFc), wrkv(nVx)
       save ncall
@@ -63,6 +64,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2sigp_iout', iout)                             !srv 17.06.02
+       call ipgetr ('b2sigp_phm0', phm0)                             !srv 26.06.18
        call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
        call ipgeti ('b2sigp_style', style)                           !srv 02.07.08
        call ipgeti ('b2npmo_iout', iout_b2npmo)                      !srv 11.09.09
@@ -83,6 +85,7 @@
        call b2xvsg (nCv, rzb, 1, 'rzb', '.ge.')
       endif
 
+      if (phm0.ne.0.0_R8) then                                     !srv 26.06.18
 * ..compute pressure gradient term
 *   ..compute smbgp
       if(style.eq.0) then                                            !srv 02.07.08
@@ -335,6 +338,15 @@ cxpb apply restriction to pressure gradient for minority ions
        enddo
       enddo                                                           !lk 23.06.17}
 #endif
+      else                                                            !srv 26.06.18 {
+        smbgp = 0.0_R8
+#ifdef WG_TODO
+        b2sigp_pstat0to3 = 0.0_R8
+#endif
+        wrk5 = 0.0_R8
+        wrk6 = 0.0_R8       
+      endif                                                           !srv 26.06.18 }
+      
       if (iout.ne.0 .or. iout_b2wdat.eq.4) then                       !srv 17.06.02 {
        write (chns,'(i3.3)') isb
 !      do k=0,3
