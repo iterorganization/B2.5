@@ -80,7 +80,7 @@ c----------------------------------------------------------------------
 #endif
       
 c*** PFR specification - for He enrichment and neutral pressure
-c***  Standard setup:
+c***  Standard set-up:
       lpfrs_pmp=0            ! no pumping
       fusion_power=0.0_R8    ! no helium
       Spmp_He_to_D=1.0_R8    ! same pumping speed for He and D

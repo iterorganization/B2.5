@@ -75,7 +75,7 @@ module b2mod_ual_io_grid
     integer, parameter :: SPACE_TOROIDALANGLE = 2   !< Space indice
                                                     !< (toroidal angle)
     integer, parameter :: SPACE_COUNT = SPACE_POLOIDALPLANE !< Space count
-        !< setup:
+        !< set up:
         !< SPACE_COUNT = SPACE_POLOIDALPLANE: do only the poloidal plane space;
         !< SPACE_COUNT = SPACE_TOROIDALANGLE: will do the full 3d grid with two
         !< spaces
