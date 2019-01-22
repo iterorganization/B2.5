@@ -320,7 +320,11 @@
                 dion=expu(
      2           rlsa(ix,iy,0,is)+
      3           rlsa(ix,iy,1,is)*log(te(ix,iy)/ev))
-                lion=wrk0(ix,iy)/sqrt(am(is))/ne(ix,iy)/dion
+                if (dion.gt.0.0_R8) then
+                  lion=wrk0(ix,iy)/sqrt(am(is))/ne(ix,iy)/dion
+                else
+                  lion=1.0e30_R8
+                endif  
                 din=(wrk0(ix,iy)/sqrt(am(is)))**2/
      1           (vcx+dion*ne(ix,iy))
 c               if(lcx.gt.lion) then

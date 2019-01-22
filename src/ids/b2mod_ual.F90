@@ -12,8 +12,9 @@ module b2mod_ual
 
     use b2mod_types
 #ifdef IMAS
-    use ids_schemas  ! IGNORE
-    use ids_routines ! IGNORE
+    use b2mod_ual_io &
+     & , only : b25_process_ids, ids_put, ids_deallocate, &
+     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport
 #else
 # ifdef ITM
     use euITM_schemas  ! IGNORE
@@ -28,6 +29,8 @@ module b2mod_ual
   public open_ual, close_ual
 #ifdef IMAS
   public put_ids_edge
+  public b25_process_ids
+  public ids_edge_profiles, ids_edge_sources, ids_edge_transport
 #endif
 
 
@@ -114,8 +117,8 @@ contains
                                                     !< database
         character(*), intent(in), optional :: tokamak !< Device name of the
             !< database (i. e. solps-iter, iter, aug)
-        character(*), intent(in), optional :: dataversion   !< Major version of the
-                                                            !< database
+        character(*), intent(in), optional :: dataversion   !< Major version of
+                                                            !< the database
         logical, intent(in), optional :: doCreate
         logical, intent(in), optional :: useHdf5
         character(*), intent(in), optional :: nmlFile
@@ -145,7 +148,8 @@ contains
         logical :: namelistExists, openEnv = .false.
 
         namelist /ual_namelist/ lTreename, lShot, lRun, lTime, lRefshot,    &
-            &   lRefrun, lUser, lTokamak, lDataversion, openEnv, lDoCreate, lUseHdf5
+            &   lRefrun, lUser, lTokamak, lDataversion, openEnv, lDoCreate, &
+            &   lUseHdf5
 
         if( present( shot ) ) lShot = shot
         if( present( run ) ) lRun = run
@@ -174,7 +178,8 @@ contains
             close( unit=NAMELIST_UNIT )
         else
             if( present( nmlFile ) ) then
-                open( unit=NAMELIST_UNIT, file=nmlFile, status="new", action="write")
+                open( unit=NAMELIST_UNIT, file=nmlFile, status="new", &
+                    &   action="write" )
             else
                 open( unit=NAMELIST_UNIT, file=NAMELIST_FILE, status="new", &
                     &   action="write" )
@@ -187,13 +192,15 @@ contains
         if( lDoCreate) then
 #ifdef IMAS
             if( lUseHdf5) then
-                call imas_create_hdf5(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+                call imas_create_hdf5(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
             else
                 if( openEnv) then
                     call imas_create_env(lTreename, lShot, lRun, lRefshot,  &
                         &   lRefrun, idx, lUser, lTokamak, lDataversion)
                 else
-                    call imas_create(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+                    call imas_create(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
                 end if
             end if
         else
@@ -201,22 +208,25 @@ contains
                 call imas_open_hdf5(lTreename, lShot, lRun, idx)
             else
                 if( openEnv) then
-                    call imas_open_env(lTreename, lShot, lRun, idx,  lUser, &
+                    call imas_open_env(lTreename, lShot, lRun, idx, lUser, &
                         &   lTokamak, lDataversion)
                 else
-                    call imas_open(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+                    call imas_open(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
                 end if
             end if
 #else
 #ifdef ITM
             if( lUseHdf5) then
-                call euITM_create_hdf5(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+                call euITM_create_hdf5(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
             else
                 if( openEnv) then
                     call euITM_create_env(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx, lUser, lTokamak, lDataversion)
                 else
-                    call euITM_create(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+                    call euITM_create(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
                 end if
             end if
         else
@@ -224,10 +234,11 @@ contains
                 call euITM_open_hdf5(lTreename, lShot, lRun, idx)
             else
                 if( openEnv) then
-                    call euITM_open_env(lTreename, lShot, lRun, idx,  lUser,    &
+                    call euITM_open_env(lTreename, lShot, lRun, idx,  lUser,  &
                         &   lTokamak, lDataversion)
                 else
-                    call euITM_open(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+                    call euITM_open(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
                 end if
             end if
 #else

@@ -4,8 +4,8 @@
       subroutine b2stbr (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
      &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy,
-     &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
-     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
+     &  te, ti, po, ne, ni, fna, fna_mdf, fhe, fhi, fch, fne, fni, rsa, !iyv 07.03.18
+     &  bb, sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
       use b2mod_wall
       use b2mod_diag
@@ -57,7 +57,8 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),    !iyv 07.03.18
+     &  fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      &  rsa(-1:nx,-1:ny,0:ns-1), bb(-1:nx,-1:ny,0:3)
@@ -87,30 +88,35 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k
+      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k               !iyv 07.03.18
       integer, save :: jxi, jxa, jsep
-      integer, save :: no_b2stbr_phys_call=0
-      integer, save :: out_tfiles = 1                                !xpb 28.09.16
-      integer, save :: iout = 0,        iout_b2npmo = 0,             !srv 11.09.09 {
+      integer, save :: no_b2stbr_phys_call=0, mdf_fnb = 0               !IYS 27.11.2018
+      integer, save :: out_tfiles = 1                                   !xpb 28.09.16
+      integer, save :: iout = 0,        iout_b2npmo = 0,                !srv 11.09.09 {
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
-     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
-     &                 ncall_iout = -1, iout_b2wdat = 0              !srv 23.03.12
-      integer, save :: ird_aver=0                                    !pb 30.09.16
+     &                 ncall_iout = -1, iout_b2wdat = 0                 !srv 23.03.12
+      integer, save :: ird_aver=0                                       !pb 30.09.16
 #ifdef B25_EIRENE
       integer ia, im
       character ch3*3
       real (kind=R8) :: flxtmp(0:nx+1,0:ny+1)
 #endif
-      real (kind=R8) ::                                              !srv 29.04.10 {
+      real (kind=R8) ::                                                 !srv 29.04.10 {
      &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),
      &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
-     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol)   !IYS 27.01.17
-      real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8       !srv 12.04.08
-      character chns*3, chk*1                                        !srv 11.09.09 } 23.03.12
+     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),     !IYS 27.01.17
+     &  sna_core(nnatmi), sna_pump(nnatmi),                             !iyv 07.03.18 {
+     &  sna_eir_tot(nnatmi), sna_puff(nnatmi),
+     &  t(nnatmi), t01(nnatmi)
+      real (kind=R8), allocatable, save :: t1(:)                        !iyv 07.03.18 }
+      real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8,         !srv 12.04.08
+     *                        sna_corr = 0.0_R8                         !iyv 07.03.18                        
+      character chns*3, chk*1                                           !srv 11.09.09 } 23.03.12
       real (kind=R8) ::
      *  lnorm, tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1),
      *  tphye(0:ns-1), thevp(0:ns-1), thvpe(0:ns-1), tresn(0:ns-1),
@@ -137,6 +143,7 @@
      *  old_erosion(:,:), old_deposition(:,:)
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
+      real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8             !iyv 07.03.18
       logical new_sputter_namelist
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
@@ -216,8 +223,16 @@
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
+        call ipgetr ('b2stbr_sna_corr', sna_corr)                    !iyv 07.03.18 {
+        call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !IYS 27.11.2018
+        call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
+        call ipgetr ('b2stbr_c_pumpavr', c_pumpavr)
+        if( sna_corr .gt. 0.0_R8 ) then
+           allocate(t1(1:nnatmi))
+           t1=0.0_R8
+        endif                                                        !iyv 07.03.18 } 
         call ipgetr ('b2stbr_recycled_neutrals_contr',               !srv 12.04.08
-     &                      recycled_neutrals_contr)
+     &                       recycled_neutrals_contr)
         call xertst (0.0_R8.le.recycled_neutrals_contr,
      &      'faulty internal parameter recycled_neutrals_contr')
         call get_boundary_namelist
@@ -401,6 +416,9 @@
       call sfill (n2*4, 0.0_R8, shi0_eir, 1)
       fatm_eir = 0.0_R8
       datm_eir = 0.0_R8                                            !srv 29.04.10 }
+
+      sna_stbr_neut = 0.0
+      sna_stbr_sput = 0.0
 
       tchem=0.0_R8
       tchee=0.0_R8
@@ -642,6 +660,114 @@ c   --> better solution wanted here..
         call eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,   !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call)
+*   ..main part of implementation of method of effective sources (ES) 
+        if (sna_corr .gt. 0.0_R8 ) then                                  !iyv 07.03.18 {
+          if ( iout .ne. 0 )
+     >      write(*,*) '******* sna_eir correction calculations *******'
+          sna_core = 0.0_R8
+          iy = 0
+          do ix = -1, nx
+            if(on_closed_surface(ix,iy)) then
+              do is = 0, ns-1
+                if ( is_neutral(is) ) cycle
+                k = b2espcr(is)
+                if (mdf_fnb.ne.0) then
+                  sna_core(k) = sna_core(k) + fna_mdf(ix,iy,1,is)
+                else
+                  sna_core(k) = sna_core(k) + fna(ix,iy,1,is)
+                end if
+              end do 
+            end if 
+          end do    
+
+cxpb  Add contribution from Eirene core boundary fluxes
+!         do ia = 1, nnatmi
+!           if (latmscl(ia).eq.b2espcr(is)) then
+!             do k = 1, ncns
+!               ix = nlim + lcns(k)
+!               sna_core(b2espcr(eb2atcr(ia))) = 
+!     &          sna_core(b2espcr(eb2atcr(ia))) -
+!     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
+!               do im = 1, nnmoli
+!                 if (mlcmp(ia,im).gt.0) then
+!                   totfluxn = totfluxn - mlcmp(ia,im) *
+!     &              (wldnm(ix,im,0) - wldrm(ix,im,0)
+!     &                              - wldpm(ix,im,0))
+!                 end if
+!               end do
+!             end do
+!           end if
+!         end do
+
+          sna_eir_tot= 0.0_R8
+          do ix=-1, nx
+            do iy=-1,ny
+              do is = 0, ns-1
+                if( is_neutral(is) ) cycle
+                k = b2espcr(is)
+                sna_eir_tot(k) = sna_eir_tot(k) + 
+     &           sna0_eir(ix,iy,0,is) + 
+     &           sna0_eir(ix,iy,1,is)*na(ix,iy,is)
+              enddo     
+            enddo
+          enddo 
+      
+          sna_puff =0.0_R8
+          do is=1,nstrat
+            do ia=1,nnatmi
+              if(crcstra(is).eq.'C') then
+                if(gpfc(ia,is) .ne. 0.0_R8) 
+     >           sna_puff(ia) = userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
+              end if     
+            end do
+          enddo
+
+          sna_pump =0.0_R8
+          do ia = 1, nnatmi
+            sna_pump(ia) = sna_pump(ia) + eirpump(ia)
+            do im = 1, nnmoli
+              if (mlcmp(ia,im).gt.0) then
+                sna_pump(ia)   = sna_pump(ia) +
+     &           mlcmp(ia,im) * eirpump(nnatmi+im)
+              endif
+            enddo            
+          end do            
+          if ( iout .ne. 0 ) then
+            write(*,'(a5,5a16)') 'ia', 'sna_cor', 'sna_eir_tot',
+     &                           'sna_puff', 'sna_pump', 't1'
+            do k = 1, nnatmi
+              write(*, '(i5, 5es16.7)') k, sna_core(k),  sna_eir_tot(k), 
+     &                                  sna_puff(k), sna_pump(k), t1(k)
+            enddo                                  
+
+            write(*,'(a3,2a17)') 'ia', 'dG/sna_eir_tot', 't(ia)'
+          endif  
+          do ia = 1, nnatmi
+            t01(ia) =  sna_corr*( sna_puff(ia) + sna_core(ia)  
+     &               - sna_pump(ia) ) / sna_eir_tot(ia) 
+            t01(ia) = t01(ia)* ( 1.0_R8 - exp(-c_pumpavr) ) + 
+     &                                    exp(-c_pumpavr)*t1(ia)
+            t1(ia) = t01(ia)
+            t(ia)  = 1.0_R8 + 
+     &               max( min( taumax,t01(ia) ),-taumax )       
+            if ( iout .ne. 0 ) 
+     >       write(*,'(i3,2es17.4)') ia, t01(ia), t(ia)
+          enddo
+   
+          do is = 0, ns-1
+            if( is_neutral(is) ) cycle
+            k = b2espcr(is)
+            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
+              sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k) 
+              sna0_eir(:,:,1,is) = sna0_eir(:,:,1,is)*t(k)
+            else
+!             write(*,'(a,i3, a5, i3, a3)')
+!     &   'Source correction is not applied for sputtered particles k=', 
+!     &        k,  'is=', is, eirtxt(k)
+            endif   
+          enddo
+      
+        end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }     
 
         if(ncall.le.999. and. ncall.le.ncall_iout) then
          do is = 0, ns-1

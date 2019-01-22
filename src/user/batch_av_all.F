@@ -195,7 +195,7 @@ ctb..as the mean of the product does not equal the product of the means etc.
 
       idum(0) = naver
       call cfwuin (iun, 1, idum, 'naver')
-      idum(0) = ntotdt
+!     idum(0) = ntotdt
 !     call cfwuin (iun, 1, idum, 'ntotdt')
       
       call cfwure (iun, n2*ns, na_mean, 'na_mean')

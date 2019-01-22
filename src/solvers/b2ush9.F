@@ -141,7 +141,7 @@
         new_matrix = new_matrix.or.
      &   solveet(ireg).neqv.last_solve_9(ireg)
       end do
-      if (new_matrix) call restart_ma28_for_9
+      if (new_matrix.or.ncall.eq.0) call restart_ma28_for_9
 * ..total heat correction equation
 *   ..compute flo0x, con0x
       do iy = -1, ny

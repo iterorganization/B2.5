@@ -10,9 +10,6 @@
       use b2mod_numerics_namelist
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-#endif
 #include "DIMENSIONS.F"
 c
 c  version : 19.07.2001 18:46
@@ -155,7 +152,6 @@ c======================================================================
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
         print *,'=== Regions of the grid:'
-        write(*,'()')
         l=ny+1
         n=mod(l-1,10)+1
         i=(nx+2)/10+1
@@ -169,6 +165,7 @@ c<<<
           end do
           l=l-1
         end do
+        write(*,'()')
 c>>>
 c
 c*** Initialisation
@@ -428,7 +425,7 @@ c>>>
 c*** Correct the source for d/dt terms
         hlpis=hlpis+hlpid
 c<<<
-c        print '(a,1p,4e12.4)',
+c        print '(1x,a,1p,4e12.4)',
 c     ,      '%%% Ion fluxes: hlpit, hlpiw, hlpic, hlpid =',
 c     ,                       hlpit, hlpiw, hlpic, hlpid
 c        print *,'%%% hlpit_l     hlpit_r     hlpit_t'
@@ -577,7 +574,7 @@ c>>>
         end do
 c<<<
         if(debug_flags(90).gt.0) then
-          print '(a,1p,5e12.4)',
+          print '(1x,a,1p,5e12.4)',
      ,      '%%# Total fluxes: hlpit, hlpiw, hlpic, hlpid, hlpnp =',
      ,                                hlpit, hlpiw, hlpic, hlpid, hlpnp
           print *,'%%# Recycling sources. ls= ',ls

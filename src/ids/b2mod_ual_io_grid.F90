@@ -22,18 +22,25 @@ module b2mod_ual_io_grid
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
     use b2mod_constants , B2_PI => PI
 #ifdef IMAS
-    use ids_schemas         ! IGNORE
-    use ids_routines        ! IGNORE
-    use ids_types           ! IGNORE
-    !! IMAS constants definitions (coordinate types identifiers, grid subset
-    !! identifiers ...)
-    use ids_grid_common     ! IGNORE
-    use ids_string          ! IGNORE
-    use ids_grid_subgrid    ! IGNORE
-    use ids_grid_structured ! IGNORE
-    use ids_grid_objectlist ! IGNORE
-    use ids_assert          ! IGNORE
-    use ids_grid_object     ! IGNORE
+    use ids_string        & ! IGNORE
+     & , only : idsInt2str
+    use ids_assert        & ! IGNORE
+     & , only : assert
+    use ids_grid_subgrid  & ! IGNORE
+     & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
+     &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
+     &          CreateExplicitObjectListSingleSpace
+    use ids_grid_object   & ! IGNORE
+     & , only : ids_generic_grid_aos3_root, IDS_real, &
+     &          ids_generic_grid_dynamic_grid_subset, &
+     &          GRID_SUBSET_NODES, GRID_SUBSET_FACES, &
+     &          GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_X_POINTS, &
+     &          GRID_SUBSET_Y_ALIGNED_FACES, GRID_SUBSET_CELLS, &
+     &          GridObject
+    use ids_grid_structured & ! IGNORE
+     & , only : GridWriteData, GridSetupStruct1dSpace
+    use ids_grid_common   & ! IGNORE
+     & , only : COORDTYPE_R, COORDTYPE_Z, COORDTYPE_PHI
 #else
 # ifdef ITM
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
@@ -68,7 +75,7 @@ module b2mod_ual_io_grid
     integer, parameter :: SPACE_TOROIDALANGLE = 2   !< Space indice
                                                     !< (toroidal angle)
     integer, parameter :: SPACE_COUNT = SPACE_POLOIDALPLANE !< Space count
-        !< setup:
+        !< set up:
         !< SPACE_COUNT = SPACE_POLOIDALPLANE: do only the poloidal plane space;
         !< SPACE_COUNT = SPACE_TOROIDALANGLE: will do the full 3d grid with two
         !< spaces
@@ -109,7 +116,7 @@ module b2mod_ual_io_grid
     !!      Class 2 - edges/faces (1D objects)
     !!      Class 2 - 2D cells (2D objects)
     !! Fortran90 does not allow initialization of constants using SUM. This is
-    !! permitted in newer Fortran 2003. Current workaraund is to directly
+    !! permitted in newer Fortran 2003. Current workaround is to directly
     !! specify the primary IDS class constants
 
     ! integer, parameter :: IDS_CLASS_NODE = sum(CLASS_NODE) + 1

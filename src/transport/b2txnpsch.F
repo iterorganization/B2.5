@@ -12,10 +12,10 @@
       use b2mod_b2cmfs
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, isb, guard_flows                                   !xpb !srv 08.09.01 !lk 02.06.11
+      integer nx, ny, isb, guard_flows                                  !xpb !srv 08.09.01 !lk 02.06.11
       real (kind=R8) ::
-     &  kmprti(-1:nx,-1:ny,0:1), facdrift(-1:nx,-1:ny), 
-     &  cddb(-1:nx,-1:ny,0:1)                                            !srv 13.10.06 !iyv 06.02.14
+     &  kmprti(-1:nx,-1:ny,0:1), facdrift(-1:nx,-1:ny),
+     &  cddb(-1:nx,-1:ny,0:1)                                           !srv 13.10.06 !iyv 06.02.14
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  conb(-1:nx,-1:ny,0:1,0:4) 
@@ -25,7 +25,7 @@
 *
 *  1. purpose
 *
-*     B2TXNPSCH computes the coefficients of the Pfirsch-Schlueter particle 
+*     B2TXNPSCH computes the coefficients of the Pfirsch-Schlueter particle
 *     fluxes approximation
 *
 *  3. description (see also routine b2cdca)
@@ -38,13 +38,13 @@
 
 *   ..local variables
       integer ncall, ix, iy, area_fix
-      integer, save :: iout = 0                                          !srv 02.04.18
-      integer, save :: PSch_style = 1                                    !srv 12.11.08
-      character chns*3                                                   !srv 16.09.02
-      real (kind=R8), save :: PSch = 1.0_R8                              !srv 17.01.07
+      integer, save :: iout = 0                                         !srv 02.04.18
+      integer, save :: PSch_style = 1                                   !srv 12.11.08
+      character chns*3                                                  !srv 16.09.02
+      real (kind=R8), save :: PSch = 1.0_R8                             !srv 17.01.07
       save ncall, area_fix
 *   ..procedures
-      external subini, subend, xertst, ipgeti, ipgetr                    !xpb
+      external subini, subend, xertst, ipgeti, ipgetr                   !xpb
       external b2xvsg, b2xvff, intfaceh, intfacev
 *   ..initialisation
       data ncall/0/, area_fix/3/
@@ -60,21 +60,21 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgeti ('b2news_area_fix', area_fix)
-        call ipgeti ('b2tnpsch_iout', iout)                              !srv 02.04.18
-        call ipgetr ('b2tfnb_PSch', PSch)                                !srv 17.01.07
-        call ipgeti ('b2tfnb_PSch_style', PSch_style)                    !srv 12.11.08
+        call ipgeti ('b2tnpsch_iout', iout)                             !srv 02.04.18
+        call ipgetr ('b2tfnb_PSch', PSch)                               !srv 17.01.07
+        call ipgeti ('b2tfnb_PSch_style', PSch_style)                   !srv 12.11.08
       endif
 
       write(chns,'(i3.3)') isb
-      conb  = 0.0e0_R8                                                   !srv 13.10.06
+      conb  = 0.0e0_R8                                                  !srv 13.10.06
 
-*   ..compute P.Sch x-flux                                               !srv 13.10.06 {
-       if(PSch_style.eq.0) then                                          !srv 12.11.08
+*   ..compute P.Sch x-flux                                              !srv 13.10.06 {
+       if(PSch_style.eq.0) then                                         !srv 12.11.08
         do iy = 0, ny-1
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. 
-     &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then        !srv 26.05.08
-           conb(ix,iy,0,3) = 0.0e0_R8                                    !srv 26.05.08
+     &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then       !srv 26.05.08
+           conb(ix,iy,0,3) = 0.0e0_R8                                   !srv 26.05.08
            conb(ix,iy,0,4) = 0.0e0_R8
           else
 !           conb(ix,iy,0,3) = 0.25e0_R8*PSch*cddb(ix,iy,1)*ti(ix,iy)    !srv 21.10.10 {
@@ -143,7 +143,7 @@
            conb(ix,iy,0:1,4) = conb(ix,iy,0:1,4)*facdrift(ix,iy)
          enddo
        enddo                                                           !srv 02.01.07 }
-      if(guard_flows.eq.0) then                                         !xpb
+      if(guard_flows.eq.0) then                                        !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
          do ix = -1, nx
@@ -178,7 +178,7 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,conb(-1,-1,1,2),'b2txnpsch_conby2'//chns)
        call my_out(70,nx,ny,conb(-1,-1,1,3),'b2txnpsch_conby3'//chns)
        call my_out(70,nx,ny,conb(-1,-1,1,4),'b2txnpsch_conby4'//chns)
-       endif                                                             !srv 18.06.08 }
+       endif                                                            !srv 18.06.08 }
 
 * ..return
       ncall = ncall+1
@@ -188,4 +188,4 @@ csw 18feb2014 remove fluxes between guard cells
 *-----------------------------------------------------------------------
 *.end b2tnpsch
 
-      end subroutine b2txnpsch                                            !srv 02.04.18 }
+      end subroutine b2txnpsch                                          !srv 02.04.18 }

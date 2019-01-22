@@ -196,7 +196,7 @@ csw
       endif
 #else
 #ifdef USE_IMPGYRO
-      write(*,*) 'b2ig: running B25EIRENE'
+      write(*,*) 'b2ig: running B2.5-EIRENE'
       call mpi_init(ierr_mpi)
       call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
       call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)

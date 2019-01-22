@@ -3030,6 +3030,15 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>b2stbr_sna_corr</name>
+			  <default>0.0</default>
+			  <type>real</type>
+			  <description>
+				Multiplier to the neutral source differential between puffing and pumping strata for code speed-up.
+				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details.
+			  </description>
+			</switch>
+			<switch>
 				<name>b2stbr_eir_src_nhist</name>
 				<default>1</default>
 				<type>integer</type>
@@ -3413,6 +3422,22 @@
 				<type>real</type>
 				<description>
 					Step length (in meters) for computing the first flight model chords.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_taumax</name>
+				<default>0.05</default>
+				<type>real</type>
+				<description>
+					Maximum allowed fraction of source to be added or substracted to the real source in the method of effective sources for code speed-up.  
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_c_pumpavr</name>
+				<default>0.02</default>
+				<type>real</type>
+				<description>
+					Underrelaxation parameter to compute the artificial source in the method of effective sources for code speed-up.  
 				</description>
 			</switch>
 			<switch>
@@ -6498,6 +6523,14 @@
 				<type>logical</type>
 				<description>
 					If .true. (default), writes the content of the namelist to stdout after it has been read.
+				</description>
+			</switch>
+			<switch>
+				<name>ADD_TE_CORR_TO_PO</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					If .true. (default), adds dte(ix,iy)/qe to the potential correction after the internal energy balance equations are solved, where dte(ix,iy) is the electron temperature correction on the time step. Individually set for each region index.
 				</description>
 			</switch>
 		</category>

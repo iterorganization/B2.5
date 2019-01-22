@@ -39,25 +39,17 @@ endif
 
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
 
+FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
+FCOPTS    += -g -C -debug all -traceback -check all
+else
+FCOPTS    += -O2 -fp-model precise
+endif
 ifdef USE_MPI
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all ${MPI_CPP}
+FCOPTS    += ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all ${MPI_CPP}
-else
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all
-endif
-endif
-else
-ifdef USE_MPI
-FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-else
-ifdef USE_IMPGYRO
-FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-else
-FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore
-endif
+FCOPTS    += ${MPI_CPP}
 endif
 endif
 

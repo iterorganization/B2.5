@@ -158,7 +158,7 @@ cxpb
       enddo
 
 *   ..solve the correction equation
-      write(*,*) 'Calling b2ux5p from '//trim(name)
+      write(*,'(1x,a,a)') 'Calling b2ux5p from '//trim(name)
       call b2ux5p (nx, ny, aa5, itcnt, respo, corpo, name)           !srv 18.03.10
 
 * ..return

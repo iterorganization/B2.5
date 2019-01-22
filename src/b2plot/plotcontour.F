@@ -746,7 +746,7 @@ cxpb Region 10 is the missing SOL section in the eastern half
           nyend(kreg)=ny
           nperd(kreg)=-1
         end if
-C =============================== Setup individual zones
+C =============================== Set up individual zones
  5250   continue
         do l=1,3
           do k=1,kreg

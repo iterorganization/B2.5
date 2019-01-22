@@ -259,10 +259,18 @@
         zy2 = x2(k)/rtt(i)
         zy1c = zy1+c1(k)
         zy2c = zy2+c2(k)
-        zs1 = a1(k)*z1(k)*expu(-zy1)*
-     &    (sei1(zy1)/zy1-b1(k)*sei1(zy1c)/zy1c)
-        zs2 = a2(k)*z2(k)*expu(-zy2)*
-     &    (sei1(zy2)/zy2-b2(k)*sei1(zy2c)/zy2c)
+        if (abs(zy1).lt.abs(cutll)) then
+          zs1 = a1(k)*z1(k)*expu(-zy1)*
+     &     (sei1(zy1)/zy1-b1(k)*sei1(zy1c)/zy1c)
+        else
+          zs1 = 0.0_R8
+        end if
+        if (abs(zy2).lt.abs(cutll)) then
+          zs2 = a2(k)*z2(k)*expu(-zy2)*
+     &     (sei1(zy2)/zy2-b2(k)*sei1(zy2c)/zy2c)
+        else
+          zs2 = 0.0_R8
+        end if
         val = 6.7e-07_R8*(zs1+zs2)/rtt(i)**1.5_R8
         do j = 0, nn
          rtsa(i,j,k) = cm3*val

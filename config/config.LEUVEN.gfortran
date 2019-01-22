@@ -13,6 +13,9 @@ ifndef LD_NETCDF
 endif
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
+ifndef SOLPS_CPP
+EQUIVS += -DGFORTRAN
+endif
 
 CPP = /lib/cpp -traditional -DNO_IEEE
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
@@ -23,7 +26,7 @@ LINK_MOD =
 FC = gfortran
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -fbounds-check -fno-second-underscore -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -ffpe-trap=denormal -ftrapv
+FCOPTS = -g -fbounds-check -fno-second-underscore -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
 else
 FCOPTS = -O2 -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 endif
