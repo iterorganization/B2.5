@@ -36,7 +36,7 @@
 
       END SUBROUTINE GFSUB3
 c
-      subroutine copy_background(nx, ny, ns, BoRiS)
+      subroutine copy_background(nCv, nFc, ns, mpg, gm, pl, dv, BoRiS)
       use b2mod_types
       use b2mod_plasma
       use b2mod_indirect
@@ -44,6 +44,9 @@ c
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_parmmod
@@ -60,8 +63,13 @@ c
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer nx,ny,ns
+      integer nCv, nFc, ns
       real (kind=R8) :: BoRiS
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: gm
+      type(B2Plasma), intent(in) :: pl
+      type(B2Derivatives), intent(in) :: dv
+
       character chns*3                                                 !srv 16.09.02
       integer, save :: drift_style = 1, iout = 0                        !srv 21.06.08
       integer ix,iy,is,ncall,eirene_extrap,in,
@@ -70,21 +78,26 @@ c
       real (kind=R8) ::
      * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max,
      * te_min_val, te_max_val, ti_min_val, ti_max_val,
-     * na_min_val, na_max_val, ua_min_val, ua_max_val
+     * na_min_val, na_max_val, ua_min_val, ua_max_val,
+     * ne_min_val, ne_max_val, ne_min, ne_max
       save te_min, te_max, ti_min, ti_max,
-     1 na_min, na_max, ua_min, ua_max, ncall,
+     1 na_min, na_max, ua_min, ua_max, ncall, ne_min, ne_max,
      2 eirene_extrap, eirene_uub_style, print_minmax
       data te_min/0.0_R8/, te_max/1.0e30_R8/,
      1 ti_min/0.0_R8/, ti_max/1.0e30_R8/,
      1 na_min/0.0_R8/, na_max/1.0e30_R8/,
+     1 ne_min/0.0_R8/, ne_max/1.0e30_R8/,
      2 ncall/0/, eirene_extrap/1/,
      & eirene_uub_style/0/, print_minmax/0/, eirene_background/1/
-      real (kind=R8) :: kintmp
-      real (kind=R8) :: hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
+      real (kind=R8) :: kintmp(nFc)
       real (kind=R8) :: 
-     &  vaecrbc(-1:nx,-1:ny,0:1,0:ns-1), wadiac(-1:nx,-1:ny,0:1,0:ns-1),
-     &  vadiac(-1:nx,-1:ny,0:1,0:ns-1), wrk(-1:nx,-1:ny)
+     &  vaecrbc(nCv,0:1,0:ns-1), wadiac(nCv,0:1,0:ns-1),
+     &  vadiac(nCv,0:1,0:ns-1), wrk(nCv)
+      real (kind=R8) :: naf(nFc,0:ns-1), fna_tmp(nFc,0:1,0:ns-1),
+     &  uuc(nCv,0:ns-1),vvc(nCv,0:ns-1),nafsqalf(nFc,0:1,0:ns-1)
+      integer :: ic, ifc, ian, ien, ntrgdat, ifl, i, istra
+      real (kind=R8) :: intface_s
+      real (kind=R8) :: evi
 
       call subini ('copy_background')
       if(ncall.eq.0) then
@@ -96,6 +109,8 @@ c
         call ipgetr('eirene_ti_max',ti_max)
         call ipgetr('eirene_na_min',na_min)
         call ipgetr('eirene_na_max',na_max)
+        call ipgetr('eirene_ne_min',ne_min)
+        call ipgetr('eirene_ne_max',ne_max)
         call ipgetr('eirene_ua_min',ua_min)
         call ipgetr('eirene_ua_max',ua_max)
         call ipgeti('eirene_extrap',eirene_extrap)
@@ -106,94 +121,107 @@ c
         call ipgeti('copy_background_iout', iout)                      !srv 14.07.10
       endif 
 
-      call xertst (nx.lt.NDXP, 'eirene_mc: increase size of ndxp')
-      call xertst (ny.lt.NDYP, 'eirene_mc: increase size of ndyp')
+      evi = 1.0_R8 / ev
       if(print_minmax.ne.0) then
-         te_min_val=minval(te(-1:nx,-1:ny))/ev
-         te_max_val=maxval(te(-1:nx,-1:ny))/ev
-         ti_min_val=minval(ti(-1:nx,-1:ny))/ev
-         ti_max_val=maxval(ti(-1:nx,-1:ny))/ev
-         na_min_val=minval(na(-1:nx,-1:ny,0:ns-1))
-         na_max_val=maxval(na(-1:nx,-1:ny,0:ns-1))
-         ua_min_val=minval(ua(-1:nx,-1:ny,0:ns-1))
-         ua_max_val=maxval(ua(-1:nx,-1:ny,0:ns-1))
-         write(*,'(a,1p,8(1x,g12.3))') 'minmax: te, ti, na, ua ',
+         te_min_val=minval(pl%te(:))*evi
+         te_max_val=maxval(pl%te(:))*evi
+         ti_min_val=minval(pl%ti(:))*evi
+         ti_max_val=maxval(pl%ti(:))*evi
+         na_min_val=minval(pl%na(:,0:ns-1))
+         na_max_val=maxval(pl%na(:,0:ns-1))
+         ne_min_val=minval(dv%ne(:))
+         ne_max_val=maxval(dv%ne(:))
+         ua_min_val=minval(pl%ua(:,0:ns-1))
+         ua_max_val=maxval(pl%ua(:,0:ns-1))
+         write(*,'(a,1p,10(1x,g12.3))') 'minmax: te, ti, na, ua, ne',
      &     te_min_val, te_max_val, ti_min_val, ti_max_val,
-     &     na_min_val, na_max_val, ua_min_val, ua_max_val
+     &     na_min_val, na_max_val, ua_min_val, ua_max_val,
+     &     ne_min_val, ne_max_val
       endif
 
 * get drift velocities in cell centers
-      do is=0,ns-1
-        vaecrbc(:,:,0,is) = vaecrb(:,:,0,0,is)
-        wadiac(:,:,0,is)  = wadia(:,:,0,0,is)
-        vadiac(:,:,0,is)  = vadia(:,:,0,0,is)
-        vaecrbc(:,:,1,is) = vaecrb(:,:,1,1,is)
-        wadiac(:,:,1,is)  = wadia(:,:,1,1,is)
-        vadiac(:,:,1,is)  = vadia(:,:,1,1,is)
-        if (drift_style.eq.1) then
-          call mapx(nx,ny,1,vaecrbc(:,:,0,is),wrk)
-          call mapy(nx,ny,1,vaecrbc(:,:,1,is),wrk)
-          call mapx(nx,ny,1,wadiac(:,:,0,is),wrk)
-          call mapy(nx,ny,1,wadiac(:,:,1,is),wrk)
-          call mapx(nx,ny,1,vadiac(:,:,0,is),wrk)
-          call mapy(nx,ny,1,vadiac(:,:,1,is),wrk)
-        endif
-      enddo
+      if (drift_style.eq.1) then
+        do is=0,ns-1
+          call intcell(nFc,nCv,mpg,mpg%intcellP,
+     &                 dv%vaecrb(:,0,is),vaecrbc(:,0,is))
+          call intcell(nFc,nCv,mpg,mpg%intcellP,
+     &                 dv%wadia(:,0,is),wadiac(:,0,is))
+          call intcell(nFc,nCv,mpg,mpg%intcellP,
+     &                 dv%vadia(:,0,is),vadiac(:,0,is))
+          call intcell(nFc,nCv,mpg,mpg%intcellR,
+     &                 dv%vaecrb(:,1,is),vaecrbc(:,1,is))
+          call intcell(nFc,nCv,mpg,mpg%intcellR,
+     &                 dv%wadia(:,1,is),wadiac(:,1,is))
+          call intcell(nFc,nCv,mpg,mpg%intcellR,
+     &                 dv%vadia(:,1,is),vadiac(:,1,is))
+        enddo
+      else
+        call xerrab ('copy_background -- drift_style .ne. 1')
+      endif
 
       if(iout.ne.0) then                                               !srv 18.06.08 {
         do is = 0,ns-1
          write (chns,'(i3.3)') is
-         call my_out(70,nx,ny,fna(-1,-1,0,0,is),'copy_fnax'//chns)
-         call my_out(70,nx,ny,fna(-1,-1,0,1,is),'copy_fnaxy'//chns)
-         call my_out(70,nx,ny,fna(-1,-1,1,0,is),'copy_fnayx'//chns)
-         call my_out(70,nx,ny,fna(-1,-1,1,1,is),'copy_fnay'//chns)
-      call my_out(70,nx,ny,fna_eir(-1,-1,0,0,is),'copy_fna_eirx'//chns)
-      call my_out(70,nx,ny,fna_eir(-1,-1,0,1,is),'copy_fna_eirxy'//chns)
-      call my_out(70,nx,ny,fna_eir(-1,-1,1,0,is),'copy_fna_eiryx'//chns)
-      call my_out(70,nx,ny,fna_eir(-1,-1,1,1,is),'copy_fna_eiry'//chns)
-         call my_out(70,nx,ny,vaecrb(-1,-1,0,0,is),'copy_vecrbx'//chns)
-         call my_out(70,nx,ny,vaecrb(-1,-1,1,1,is),'copy_vecrby'//chns)
-         call my_out(70,nx,ny,wadia(-1,-1,0,0,is),'copy_wadiax'//chns)
-         call my_out(70,nx,ny,wadia(-1,-1,1,1,is),'copy_wadiay'//chns)
-         call my_out(70,nx,ny,vadia(-1,-1,0,0,is),'copy_vadiax'//chns)
-         call my_out(70,nx,ny,vadia(-1,-1,1,1,is),'copy_vadiay'//chns)
-         call my_out(70,nx,ny,vaecrbc(-1,-1,0,is),'copy_vecrbcx'//chns)
-         call my_out(70,nx,ny,vaecrbc(-1,-1,1,is),'copy_vecrbcy'//chns)
-         call my_out(70,nx,ny,wadiac(-1,-1,0,is),'copy_wadiacx'//chns)
-         call my_out(70,nx,ny,wadiac(-1,-1,1,is),'copy_wadiacy'//chns)
-         call my_out(70,nx,ny,vadiac(-1,-1,0,is),'copy_vadiacx'//chns)
-         call my_out(70,nx,ny,vadiac(-1,-1,1,is),'copy_vadiacy'//chns)
-         call my_out(70,nx,ny,ua(-1,-1,is),'copy_ua'//chns)
-         call my_out(70,nx,ny,na(-1,-1,is),'copy_na'//chns)
+         call my_out_us(70,nFc,dv%fna(1,0,is),'copy_fnax'//chns)
+         call my_out_us(70,nFc,dv%fna(1,1,is),'copy_fnay'//chns)
+         call my_out_us(70,nFc,dv%fna_eir(1,0,is),'copy_fna_eirx'//chns)
+         call my_out_us(70,nFc,dv%fna_eir(1,1,is),'copy_fna_eiry'//chns)
+         call my_out_us(70,nFc,dv%vaecrb(1,0,is),'copy_vecrbx'//chns)
+         call my_out_us(70,nFc,dv%vaecrb(1,1,is),'copy_vecrby'//chns)
+         call my_out_us(70,nFc,dv%wadia(1,0,is),'copy_wadiax'//chns)
+         call my_out_us(70,nFc,dv%wadia(1,1,is),'copy_wadiay'//chns)
+         call my_out_us(70,nFc,dv%vadia(1,0,is),'copy_vadiax'//chns)
+         call my_out_us(70,nFc,dv%vadia(1,1,is),'copy_vadiay'//chns)
+         call my_out_us(70,nCv,vaecrbc(1,0,is),'copy_vecrbcx'//chns)
+         call my_out_us(70,nCv,vaecrbc(1,1,is),'copy_vecrbcy'//chns)
+         call my_out_us(70,nCv,wadiac(1,0,is),'copy_wadiacx'//chns)
+         call my_out_us(70,nCv,wadiac(1,1,is),'copy_wadiacy'//chns)
+         call my_out_us(70,nCv,vadiac(1,0,is),'copy_vadiacx'//chns)
+         call my_out_us(70,nCv,vadiac(1,1,is),'copy_vadiacy'//chns)
+         call my_out_us(70,nCv,pl%ua(1,is),'copy_ua'//chns)
+         call my_out_us(70,nCv,pl%na(1,is),'copy_na'//chns)
         enddo
-        call my_out(70,nx,ny,fne_eir(-1,-1,0,0),'copy_fne_eirx')
-        call my_out(70,nx,ny,fne_eir(-1,-1,1,1),'copy_fne_eiry')
-        call my_out(70,nx,ny,fhe_eir(-1,-1,0,0),'copy_fhe_eirx')
-        call my_out(70,nx,ny,fhe_eir(-1,-1,1,1),'copy_fhe_eiry')
-        call my_out(70,nx,ny,fhi_eir(-1,-1,0,0),'copy_fhi_eirx')
-        call my_out(70,nx,ny,fhi_eir(-1,-1,1,1),'copy_fhi_eiry')
-        call my_out(70,nx,ny,ne,'copy_ne')
-        call my_out(70,nx,ny,te,'copy_te')
-        call my_out(70,nx,ny,ti,'copy_ti')
-        call my_out(70,nx,ny,po,'copy_po')
+        call my_out_us(70,nFc,dv%fne_eir(1,0),'copy_fne_eirx')
+        call my_out_us(70,nFc,dv%fne_eir(1,1),'copy_fne_eiry')
+        call my_out_us(70,nFc,dv%fhe_eir(1,0),'copy_fhe_eirx')
+        call my_out_us(70,nFc,dv%fhe_eir(1,1),'copy_fhe_eiry')
+        call my_out_us(70,nFc,dv%fhi_eir(1,0),'copy_fhi_eirx')
+        call my_out_us(70,nFc,dv%fhi_eir(1,1),'copy_fhi_eiry')
+        call my_out_us(70,nCv,dv%ne,'copy_ne')
+        call my_out_us(70,nCv,pl%te,'copy_te')
+        call my_out_us(70,nCv,pl%ti,'copy_ti')
+        call my_out_us(70,nCv,pl%po,'copy_po')
       endif 
-#ifdef WG_TODO
 * cell centred
-      do iy=-1,ny
-        do ix=-1,nx
-          teb(ix+1,iy+1)=max(min(te(ix,iy),te_max*ev),te_min*ev)
-          tib(ix+1,iy+1)=max(min(ti(ix,iy),ti_max*ev),ti_min*ev)
-          pob(ix+1,iy+1)=po(ix,iy)
-          prb(ix+1,iy+1)=teb(ix+1,iy+1)*
-     1     max(min(ne(ix,iy),na_max),na_min)
-          rrb(ix+1,iy+1)=abs(bb(ix,iy,0)/bb(ix,iy,3))
-          volb(ix+1,iy+1)=vol(ix,iy)
-          bpolb(ix+1,iy+1)=bb(ix,iy,0)
-          bradb(ix+1,iy+1)=bb(ix,iy,1)
-          btorb(ix+1,iy+1)=bb(ix,iy,2)
-          bfeldb(ix+1,iy+1)=bb(ix,iy,3)
-        enddo
+      do ic=1,nCv
+        neb(ic)=max(min(dv%ne(ic),ne_max),ne_min)
+        teb(ic)=max(min(pl%te(ic)*evi,te_max),te_min)
+        tib(ic)=max(min(pl%ti(ic)*evi,ti_max),ti_min)
+        pob(ic)=pl%po(ic)
+        prb(ic)=teb(ic)*max(min(dv%ne(ic),na_max),na_min)
+        rrb(ic)=abs(gm%cvBb(ic,0)/gm%cvBb(ic,3))
+        volb(ic)=gm%cvVol(ic)
+!        bpolb(ic)=gm%cvBb(ic,0)
+!        bradb(ic)=gm%cvBb(ic,1)
+!        btorb(ic)=gm%cvBb(ic,2)
+!        bfeldb(ic)=gm%cvBb(ic,3)
+        bbxb(ic)=gm%cvBb(ic,3) * gm%cvEb(ic,0)
+        bbyb(ic)=gm%cvBb(ic,3) * gm%cvEb(ic,1)
+        bbzb(ic)=gm%cvBb(ic,3) * gm%cvEb(ic,2)
+        bfeldb(ic)=gm%cvBb(ic,3)
       enddo
+
+* faces
+      call intface(nCv,nFc,mpg%fcCv,gm%fcVol,dv%kinrgy,kintmp)
+      do ifc = 1, nFc
+        feib(ifc) = dv%fhi(ifc,0) + dv%fhi(ifc,1)
+        feeb(ifc) = dv%fhe(ifc,0) + dv%fhe(ifc,1)
+        do is = 0, ns-1
+          feib(ifc) = feib(ifc) + kintmp(ifc)*(1.0_R8-BoRiS)
+     .                *(dv%fna(ifc,0,is) + dv%fna(ifc,1,is))
+        end do
+      end do
+#ifdef WG_TODO
 * cell face x
       do iy=-1,ny
         do ix=0,nx
@@ -242,27 +270,96 @@ c
       enddo
       feiyb(:,ny+1)=0.0_R8
       feeyb(:,ny+1)=0.0_R8
+#endif
+
 * by ns
+      if (eirene_uub_style.eq.1) then
+*   ..interpolate density to cell faces
+        call intface1(nCv,nFc,ns-1,mpg%fcCv,gm%fcVol,pl%na,naf)
+        do is = 0,ns-1
+          nafsqalf(1:nFc,0,is) = gm%fcS(1:nFc)*gm%fcQalf(1:nFc,0)*
+     .                           naf(1:nFc,is)+1.E-30_R8
+          nafsqalf(1:nFc,1,is) = gm%fcS(1:nFc)*gm%fcQalf(1:nFc,1)*
+     .                           naf(1:nFc,is)+1.E-30_R8
+        end do
+        if (eirene_background.eq.0) then
+!         fna_tmp(1:nFc,0,0:ns-1) = dv%fna(1:nFc,0,0:ns-1)/
+!    .      (gm%fcS(1:nFc)*gm%fcQalf(1:nFc,0)*naf(1:nFc,0:ns-1)+
+!    .       1.E-30_R8)
+          fna_tmp(1:nFc,0,0:ns-1) = dv%fna(1:nFc,0,0:ns-1)/
+     .                              nafsqalf(1:nFc,0,0:ns-1)
+!         fna_tmp(1:nFc,1,0:ns-1) = dv%fna(1:nFc,1,0:ns-1)/
+!    .      (gm%fcS(1:nFc)*gm%fcQalf(1:nFc,1)*naf(1:nFc,0:ns-1)+
+!    .      1.E-30_R8)
+          fna_tmp(1:nFc,1,0:ns-1) = dv%fna(1:nFc,1,0:ns-1)/
+     .                              nafsqalf(1:nFc,1,0:ns-1)
+        else
+!         fna_tmp(1:nFc,0,0:ns-1) = dv%fna_eir(1:nFc,0,0:ns-1)/
+!    .      (gm%fcS(1:nFc)*gm%fcQalf(1:nFc,0)*naf(1:nFc,0:ns-1)+
+!    .      1.E-30_R8)
+          fna_tmp(1:nFc,0,0:ns-1) = dv%fna_eir(1:nFc,0,0:ns-1)/
+     .                              nafsqalf(1:nFc,0,0:ns-1)
+!         fna_tmp(1:nFc,1,0:ns-1) = dv%fna_eir(1:nFc,1,0:ns-1)/
+!    .      (gm%fcS(1:nFc)*gm%fcQalf(1:nFc,1)*naf(1:nFc,0:ns-1)+
+!    .      1.E-30_R8)
+          fna_tmp(1:nFc,1,0:ns-1) = dv%fna_eir(1:nFc,1,0:ns-1)/
+     .                              nafsqalf(1:nFc,1,0:ns-1)
+        endif
+        call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellP,
+     .                fna_tmp(:,0,:),uuc)
+        call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellR,
+     .                fna_tmp(:,1,:),vvc)
+      end if
+
       nflai=0
       do is=0,ns-1
         if(.not.is_neutral(is)) then
           nflai=nflai+1
           call xertst (nflai.le.NFL, 'eirene_mc: increase size of nfl')
+          amb(nflai)=am(is)
+          znb(nflai)=zn(is)
+          if (zamin(is) == zamax(is)) then
+            zab(nflai)=zamin(is)
+          else
+            call xerrab ('eirene_mc: do not use bundled ' // 
+     .                   'species for Eirene') 
+          end if
 * cell centred
-          do iy=-1,ny
-            do ix=-1,nx
-              dnib(ix+1,iy+1,nflai)=max(min(na(ix,iy,is),na_max),na_min)
-              upb(ix+1,iy+1,nflai)=max(min(ua(ix,iy,is),ua_max),ua_min)
-              uudiab(ix+1,iy+1,nflai)=max(min(
-     1         wadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is),ua_max),ua_min)
-              vvdiab(ix+1,iy+1,nflai)=max(min(
-     1         wadiac(ix,iy,1,is)+vaecrbc(ix,iy,1,is),ua_max),ua_min)
-              prb(ix+1,iy+1)=prb(ix+1,iy+1)+tib(ix+1,iy+1)*
-     1         dnib(ix+1,iy+1,nflai)
+          do ic = 1, nCv
+            dnib(ic,nflai)=max(min(pl%na(ic,is),na_max),na_min)
+            upb(ic,nflai)=max(min(pl%ua(ic,is),ua_max),ua_min)
+            uudiab(ic,nflai)=max(min(
+     1         wadiac(ic,0,is)+vaecrbc(ic,0,is),ua_max),ua_min)
+            vvdiab(ic,nflai)=max(min(
+     1         wadiac(ic,1,is)+vaecrbc(ic,1,is),ua_max),ua_min)
+            prb(ic)=prb(ic)+tib(ic)*dnib(ic,nflai)
 c     Velocities uub, vvb, wwb
 c     * cell centered
 c     * internal cell values used for plasma background properties in infcop
 c     * guard cell values used for source sampling in infcop
+            if(eirene_uub_style.eq.0) then
+              if (eirene_background.eq.0) then
+c     internal cell, old treatment -> grad-B drift only
+                uub(ic,nflai)=max(min(
+     1               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
+     2               vadiac(ic,0,is)+vaecrbc(ic,0,is),
+     3               ua_max),ua_min)
+              else
+c     internal cell -> full diamagnetic drift
+                uub(ic,nflai)=max(min(
+     1               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
+     2               wadiac(ic,0,is)+vaecrbc(ic,0,is),
+     3               ua_max),ua_min)
+                 endif
+            elseif(eirene_uub_style.eq.1) then
+cwdk  uub computed from face fluxes, and interpolated to cell centers
+c     Should be fully compatible with anom. transport, including all contributions to the flow.
+c     Note, computation at N/S boundaries questionable at present, because (certain/all) terms
+c     in fna may have been set 0. Should consider using the eirene_uub_style.eq.0 treatment 
+c     in these cells!
+              uub(ic,nflai)=max(min(uuc(ic,is),ua_max),ua_min)
+            end if
+#ifdef WG_TODO
               if(eirene_uub_style.eq.0) then
 cwdk  uub directly computed from cell-centered velocities.
 c     Compatible with SOLPS4.3, and consistent with sign convention ua,
@@ -272,22 +369,22 @@ c     diamagnetic velocities are missing (case b2trno_pol_anom_scale.ne.0.0)
                if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      .           bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
 c     guard cell -> use grad-B drift only
-                 uub(ix+1,iy+1,nflai)=max(min(
-     1             upb(ix+1,iy+1,nflai)*bb(ix,iy,0)/bb(ix,iy,3)+
-     2             vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is),
+                 uub(ic,nflai)=max(min(
+     1             upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
+     2             vadiac(ic,0,is)+vaecrbc(ic,0,is),
      3             ua_max),ua_min)
                else
                  if (eirene_background.eq.0) then
 c     internal cell, old treatment -> grad-B drift only
-                   uub(ix+1,iy+1,nflai)=max(min(
-     1               upb(ix+1,iy+1,nflai)*bb(ix,iy,0)/bb(ix,iy,3)+
-     2               vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is),
+                   uub(ic,nflai)=max(min(
+     1               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
+     2               vadiac(ic,0,is)+vaecrbc(ic,0,is),
      3               ua_max),ua_min)
                  else
 c     internal cell -> full diamagnetic drift
-                   uub(ix+1,iy+1,nflai)=max(min(
-     1               upb(ix+1,iy+1,nflai)*bb(ix,iy,0)/bb(ix,iy,3)+
-     2               wadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is),
+                   uub(ic,nflai)=max(min(
+     1               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
+     2               wadiac(ic,0,is)+vaecrbc(ic,0,is),
      3               ua_max),ua_min)
                  endif
                endif
@@ -297,8 +394,9 @@ c     Should be fully compatible with anom. transport, including all contributio
 c     Note, computation at N/S boundaries questionable at present, because (certain/all) terms
 c     in fna may have been set 0. Should consider using the eirene_uub_style.eq.0 treatment 
 c     in these cells!
-               if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-     .           bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
+!              if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+!    .           bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
+               if (ic > nCi) then
 c     guard cell -> use grad-B drift only (fna)
                  if (leftix(ix,iy).eq.-2) then
                    uub(ix+1,iy+1,nflai)=max(min(
@@ -345,11 +443,14 @@ c     internal cell -> full diamagnetic drift (fna_eir)
                  endif
                endif
               endif
+#endif
 cwdk  vvb computed from face fluxes, and interpolated to cell centers
 c     Compatible with SOLPS4.3.
 c     Should be fully compatible with anom. transport, including all contributions to the flow.
 c     Note, computation at E/W boundaries questionable, because (certain/all) terms
 c     in fna may have been set 0. 
+            vvb(ic,nflai)=max(min(vvc(ic,is),ua_max),ua_min)
+#ifdef WG_TODO
               if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      .          bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
 c     guard cell -> use grad-B drift only (fna)
@@ -395,11 +496,35 @@ c     internal cell -> full diamagnetic drift (fna_eir)
      7              ua_max),ua_min)
                 endif
               endif
+#endif
 cwdk  wwb directly computed from cell-centered velocities.
 c     Compatible with SOLPS4.3, and consistent with sign convention ua,
 c     but may not be fully consistent with respect to drifts.
 c     In particular: convective anomalous contribution  (if present) is missing
 c                    (diffusive anomalous contribution zero due to toroidal symm.)
+              if (eirene_background.eq.0) then
+c     internal cell, old treatment -> grad-B drift only (fna)
+                wwb(ic,nflai)=max(min(
+     .            upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
+     2            (vadiac(ic,0,is)+vaecrbc(ic,0,is))*
+     3            gm%cvBb(ic,0)/gm%cvBb(ic,2),
+     4            ua_max),ua_min)
+              else
+c     internal cell -> full diamagnetic drift
+                 wwb(ic,nflai)=max(min(
+     1             upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
+     2             (wadiac(ic,0,is)+vaecrbc(ic,0,is))*
+     3             gm%cvBb(ic,0)/gm%cvBb(ic,2),
+     4             ua_max),ua_min)
+              end if
+              
+              vxb(ic,nflai) = gm%cvEb(ic,0)*(uub(ic,nflai) +
+     1                        vvb(ic,nflai))
+              vyb(ic,nflai) = gm%cvEb(ic,1)*(uub(ic,nflai) +
+     1                        vvb(ic,nflai))
+              vzb(ic,nflai) = wwb(ic,nflai)
+
+#ifdef WG_TODO
               if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      .          bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
 c     guard cell -> use grad-B drift only
@@ -425,8 +550,13 @@ c     internal cell -> full diamagnetic drift
      4             ua_max),ua_min)
                 endif
               endif
-            enddo
+#endif
           enddo
+* cell faces
+          do ifc = 1, nFc
+            fnib(ifc,nflai) = dv%fna(ifc,0,is) + dv%fna(ifc,1,is)
+          end do
+#ifdef WG_TODO
 * cell face x
           do iy=-1,ny
             do ix=0,nx
@@ -456,8 +586,11 @@ c     internal cell -> full diamagnetic drift
           enddo
           fniyb(:,ny+1,nflai)=0.0_R8
         endif
+#endif
+        endif
       enddo
 
+#ifdef WG_TODO
       if(eirene_extrap.eq.0) then
         ! do nothing
       elseif(eirene_extrap.eq.1) then
@@ -503,16 +636,17 @@ c declared -1:nx,-1:ny
         write(*,*) eirene_extrap,
      1   ' not avaible as an eirene_extrap option'
       endif
+#endif
 
       if(print_minmax.ne.0) then
-         te_min_val=minval(teb(0:nx+1,0:ny+1))/ev
-         te_max_val=maxval(teb(0:nx+1,0:ny+1))/ev
-         ti_min_val=minval(tib(0:nx+1,0:ny+1))/ev
-         ti_max_val=maxval(tib(0:nx+1,0:ny+1))/ev
-         na_min_val=minval(dnib(0:nx+1,0:ny+1,1:nflai))
-         na_max_val=maxval(dnib(0:nx+1,0:ny+1,1:nflai))
-         ua_min_val=minval(uub(0:nx+1,0:ny+1,1:nflai))
-         ua_max_val=maxval(uub(0:nx+1,0:ny+1,1:nflai))
+         te_min_val=minval(teb(:))
+         te_max_val=maxval(teb(:))
+         ti_min_val=minval(tib(:))
+         ti_max_val=maxval(tib(:))
+         na_min_val=minval(dnib(:,1:nflai))
+         na_max_val=maxval(dnib(:,1:nflai))
+         ua_min_val=minval(uub(:,1:nflai))
+         ua_max_val=maxval(uub(:,1:nflai))
          write(*,'(a,1p,8(1x,g12.3))') 'minmax:teb,tib,nab,uub ',
      &     te_min_val, te_max_val, ti_min_val, ti_max_val,
      &     na_min_val, na_max_val, ua_min_val, ua_max_val
@@ -524,216 +658,72 @@ c declared -1:nx,-1:ny
         if(.not.is_neutral(is)) then
          nflai=nflai+1
          write (chns,'(i3.3)') is
-         call my_out(70,nx,ny,uub(0:nx+1,0:ny+1,nflai),'copy_uub'//chns)
-         call my_out(70,nx,ny,vvb(0:nx+1,0:ny+1,nflai),'copy_vvb'//chns)
-         call my_out(70,nx,ny,wwb(0:nx+1,0:ny+1,nflai),'copy_wwb'//chns)
-         call my_out(70,nx,ny,upb(0:nx+1,0:ny+1,nflai),'copy_upb'//chns)
+         call my_out_us(70,nCv,uub(1,nflai),'copy_uub'//chns)
+         call my_out_us(70,nCv,vvb(1,nflai),'copy_vvb'//chns)
+         call my_out_us(70,nCv,wwb(1,nflai),'copy_wwb'//chns)
+         call my_out_us(70,nCv,upb(1,nflai),'copy_upb'//chns)
         endif
        enddo
-       call my_out(70,nx,ny,teb(0:nx+1,0:ny+1),'copy_teb')
-       call my_out(70,nx,ny,tib(0:nx+1,0:ny+1),'copy_tib')
-       call my_out(70,nx,ny,pob(0:nx+1,0:ny+1),'copy_pob')
+       call my_out_us(70,nCv,teb,'copy_teb')
+       call my_out_us(70,nCv,tib,'copy_tib')
+       call my_out_us(70,nCv,pob,'copy_pob')
       endif 
-#endif
+
+!  .. define target data
+
+      if (.not.allocated(trgt)) allocate(trgt(mpg%nRc))
+      do istra = 1, mpg%nRc
+        ian = mpg%rcFcP(istra,1)
+        ien = ian + mpg%rcFcP(istra,2) - 1
+        ntrgdat = ien-ian+1
+        if (ien-ian+1 <= 0) cycle
+        
+        call alloc_target_data(istra,ntrgdat,nflai)
+
+        do i = 1, ntrgdat
+          iFc = mpg%rcFc(ian+i-1)
+          trgt(istra)%faces(i) = iFc
+          trgt(istra)%tet(i) = intface_s(iFc,nCv,nFc,mpg%fcCv,
+     >                                   gm%fcVol,pl%te)*evi
+          trgt(istra)%tit(i) = intface_s(iFc,nCv,nFc,mpg%fcCv,
+     >                                   gm%fcVol,pl%ti)*evi
+          trgt(istra)%fe(i) = 2.0_R8     ! to be specified correctly
+          trgt(istra)%fsh(i) = delta_sheathb(iFc)
+          do ifl = 1, nflai
+            trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)
+            trgt(istra)%dnit(i,ifl) = intface_s(iFc,nCv,nFc,mpg%fcCv,
+     >                                   gm%fcVol,dnib(:,ifl))
+            trgt(istra)%vxt(i,ifl) = intface_s(iFc,nCv,nFc,mpg%fcCv,
+     >                                   gm%fcVol,vxb(:,ifl))
+            trgt(istra)%vyt(i,ifl) = intface_s(iFc,nCv,nFc,mpg%fcCv,
+     >                                   gm%fcVol,vyb(:,ifl))
+            trgt(istra)%vzt(i,ifl) = intface_s(iFc,nCv,nFc,mpg%fcCv,
+     >                                   gm%fcVol,vzb(:,ifl))
+            trgt(istra)%fi(i,ifl) = 2.5_R8
+            trgt(istra)%fel(i,ifl) = 0.0_R8
+            trgt(istra)%vpart(i,ifl) = 0.0_R8
+            trgt(istra)%mach(i,ifl) = 1.0_R8
+            trgt(istra)%usr(i,ifl) = 0.0_R8
+          end do
+        end do
+      end do
 
       ncall=ncall+1
       call subend ()
       return
       end subroutine copy_background
-c
-      subroutine write_f30(nx, ny)
-      use b2mod_types
-      use b2mod_indirect
-      use b2mod_geo
-#ifdef B25_EIRENE
-#ifndef SOLPS4_3
-      use eirmod_ctrig
-#else
-      use ctrig    ! IGNORE
-#endif
-#endif
-      implicit none
-      integer nx,ny
-      integer ix,iy,i,nniso,idum
 
-      integer nxcut1(nncutmax),nxcut2(nncutmax),
-     &        nycut1(nncutmax),nycut2(nncutmax),
-     &        nxiso1(nncutmax),nxiso2(nncutmax),
-     &        nyiso1(nncutmax),nyiso2(nncutmax)
-
-      character*54 format_string(2)
-      integer, save :: new_format
-      logical ex
-
-#ifdef B25_EIRENE
-      integer, save :: exp_location, dot_location
-      character*80 line
-      data new_format/1/
-      logical open_file
-      external open_file
-#else
-      data new_format/2/
-#endif
-      data format_string/ '(1P,4E15.7)', '(1P,4E16.8)' /
-
-#ifndef HPUX
-      inquire(file='fort.30',exist=ex)
-      if (ex) then
-        write(*,*)
-     .   'Skipping writing fort.30 because file already present'
-        return
-      endif
-#else
-      inquire(file='ftn30',exist=ex)
-      if (ex) then
-        write(*,*)
-     .   'Skipping writing ftn30 because file already present'
-        return
-      endif
-#endif
-      nniso=nncut-1
-      if(nncut.eq.1) then
-        if (nnreg(0).eq.1) then
-          nxcut1=0
-          nxcut2=0
-          nycut1=0
-          nycut2=0
-        else
-          nxcut1(1)=leftcut(1)
-          nxcut1(2)=rightcut(1)
-          nxcut2(1)=rightcut(1)+1
-          nxcut2(2)=leftcut(1)+1
-          nycut1(1)=bottomcut(1)+1
-          nycut1(2)=bottomcut(1)+1
-          nycut2(1)=topcut(1)
-          nycut2(2)=topcut(1)
-        endif
-      elseif(nncut.eq.2) then
-        nxcut1(1)=leftcut(1)
-        nxcut1(2)=leftcut(2)
-        nxcut1(3)=rightcut(2)
-        nxcut1(4)=rightcut(1)
-        nxcut2(1)=rightcut(1)+1
-        nxcut2(2)=rightcut(2)+1
-        nxcut2(3)=leftcut(2)+1
-        nxcut2(4)=leftcut(1)+1
-        nycut1(1)=bottomcut(1)+1
-        nycut1(2)=bottomcut(2)+1
-        nycut1(3)=bottomcut(2)+1
-        nycut1(4)=bottomcut(1)+1
-        nycut2(1)=topcut(1)
-        nycut2(2)=topcut(2)
-        nycut2(3)=topcut(2)
-        nycut2(4)=topcut(1)
-        ix=0
-        do while (rightix(ix,ny/2).ne.nx+1 .and. ix.lt.nx)
-          ix=ix+1
-        enddo
-        if(ix.ne.nx) nxiso1(1)=ix+1
-        do while (leftix(ix,ny/2).ne.-2 .and. ix.lt.nx)
-          ix=ix+1
-        enddo
-        if(ix.ne.nx) nxiso2(1)=ix
-        nyiso1(1)=0
-        nyiso2(1)=ny
-      endif
-
-#ifdef B25_EIRENE
-cxpb Deduce from fort.33 triangle vertices files which format precision to use
-#ifndef HPUX
-      if (open_file(33,'fort.33','')) then
-#else
-      if (open_file(33,'ftn33','')) then
-#endif
-        rewind(33)
-        read(33,*,end=933,err=933) idum
-        if (nrknot.eq.0) nrknot = idum
-        if (nrknot.gt.0) then
-          read(33,'(A80)') line
-          exp_location = 81
-          dot_location = 0
-          if (index(line,'E').ne.0)
-     .     exp_location = min(exp_location,index(line,'E'))
-          if (index(line,'e').ne.0)
-     .     exp_location = min(exp_location,index(line,'e'))
-          if (index(line,'d').ne.0)
-     .     exp_location = min(exp_location,index(line,'d'))
-          if (index(line,'D').ne.0)
-     .     exp_location = min(exp_location,index(line,'D'))
-          if (exp_location.ne.81)
-     .     dot_location = index(line(1:exp_location),'.')
-          if (dot_location.ne.0) then
-            if (exp_location-dot_location.eq.8) then
-              new_format = 1
-            else if (exp_location-dot_location.eq.9) then
-              new_format = 2
-            else
-#ifndef HPUX
-              call xerrab ('Unrecognized format (1) in fort.33 file')
-#else
-              call xerrab ('Unrecognized format (1) in ftn33 file')
-#endif
-            end if
-          else
-#ifndef HPUX
-            call xerrab ('Unrecognized format (2) in fort.33 file')
-#else
-            call xerrab ('Unrecognized format (2) in ftn33 file')
-#endif
-          end if
-        else
-          new_format = 2
-        end if
-        goto 939
- 933    new_format = 2
- 939    continue
-        close(33)
-      else
-        new_format = 2
-      end if
-#endif
-#ifndef HPUX
-      write(*,'(a,a)')
-     . 'Writing fort.30 with ', format_string(new_format)
-#else
-      write(*,'(a,a)')
-     . 'Writing ftn30 with ', format_string(new_format)
-#endif
-      rewind(30)
-      write (30,*) 'Geometry from B2'
-      write (30,*) ' '
-      if (nnreg(0).eq.1) then
-        write (30,*) nx,ny,' 0 '
-        write (30,*) ' 0 0 0 0 '
-      else
-        write (30,*) nx,ny,nncut*2
-        write (30,*)
-     1   (nxcut1(i),nxcut2(i),nycut1(i),nycut2(i),i=1,nncut*2)
-      endif
-      if(nniso.gt.0) then
-        write (30,*) nniso
-        write (30,*)
-     1   (nxiso1(i),nxiso2(i),nyiso1(i),nyiso2(i),i=1,nniso)
-      endif
-      write (30,*) ' '
-      do ix=0,nx-1
-        do iy=0,ny-1
-          write (30,format_string(new_format))
-     1     crx(ix,iy,1),crx(ix,iy,3),crx(ix,iy,2),crx(ix,iy,0)
-          write (30,format_string(new_format))
-     1     cry(ix,iy,1),cry(ix,iy,3),cry(ix,iy,2),cry(ix,iy,0)
-        end do
-      end do
-      close (30)
-
+      subroutine write_f30
       return
- 1028 format()
       end subroutine write_f30
 c
-      subroutine write_f31(nx, ny)
+      subroutine write_f31(mpg)
       use b2mod_types
       use b2mod_eirene_globals
       use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_parmmod
@@ -750,15 +740,106 @@ c
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer nx,ny
-      integer nxx,nyy
+      type(mapping), intent(in) :: mpg
       real*8, allocatable :: dummy(:,:,:)
+      integer :: i, ic, iFc, ifl, ntrgdat, istra
 
-csw 2013 corrected
-c      nxx=nxdd
-c      nyy=nydd
-      nxx=ndx
-      nyy=ndy
+!  .. use approach to generalized user interface
+
+!  .. plasma data
+      rewind(31)
+      write (31,'(a)') '* EIRENE PLASMA FILE '
+      write (31,'(a)') '*'
+      write (31,'(a)') '*** MISC PLASMA DATA'
+      write (31,'(a)') '*'
+      write (31,'(a1,a6,11a15)') '*','Index','Te','ne',
+     .      'Bx','By','Bz','Ex','Ey','Ez','pot','psi','f'
+      write (31,'(a1,a6,11a15)') '*',' ','(eV)','(1/m^3)',
+     .      'Tesla','Tesla','Tesla','(V/m)','(V/m)','(V/m)',
+     .      'V','??','??'
+
+      write (31,'(i6)') mpg%nCv, mpg%nFc
+      
+      do ic = 1, mpg%nCv
+        write (31,'(i7,11es15.7)') ic, teb(ic), neb(ic), 
+     .      bbxb(ic), bbyb(ic), bbzb(ic), 0.0_R8, 0.0_R8, 0.0_R8,
+     .      pob(ic), 0.0_R8, 0.0_R8
+      end do
+
+      do ifl = 1, nflai
+
+        write (31,'(a)') '*'
+        write (31,'(a,i0,a)') '*** ION #',ifl,' PLASMA DATA'
+        write (31,'(a)') '*'
+        write (31,'(a1,a6,5a15)') '*','Index','Ti','ni',
+     .      'Vx','Vy','Vz'
+        write (31,'(a1,a6,5a15)') '*',' ','(eV)','(1/m^3)',
+     .      'm/s','m/s','m/s'
+
+        write (31,'(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
+
+        write (31,'(i6)') mpg%nCv
+      
+        do ic = 1, mpg%nCv
+          write (31,'(i7,5es15.7)') ic, tib(ic), dnib(ic,ifl), 
+     .      vxb(ic,ifl), vyb(ic,ifl), vzb(ic,ifl)
+        end do
+
+      end do
+  
+!  .. target data
+      write (31,'(a)') '*'
+      write (31,'(a)') '*** TARGET DATA'
+      write (31,'(a)') '*'
+      write (31,'(i6)') mpg%nRc
+
+      do istra = 1, mpg%nRc
+        ntrgdat = trgt(istra)%ntrgdat
+        write (31,'(a)') '*'
+        write (31,'(a,i0)') '*** MISC TARGET DATA #',istra
+        write (31,'(a)') '*'
+        write (31,'(a1,2a6,4a15)') '*','Index','face','Te',
+     .      'fe','fsh'
+        write (31,'(a1,2a6,5a15)') '*',' ',' ','(eV)',' ',
+     .      ' ',' '
+        write (31,'(i6)') ntrgdat
+ 
+        do i = 1, ntrgdat
+          write (31,'(i7,i6,3es15.7)')
+     .      i,trgt(istra)%faces(i),trgt(istra)%tet(i),
+     .        trgt(istra)%fe(i),trgt(istra)%fsh(i)
+        end do
+
+        do ifl = 1, nflai
+
+          write (31,'(a)') '*'
+          write (31,'(a,i0,a,i0)') '*** ION #',ifl,
+     .                             ' TARGET DATA #',istra
+          write (31,'(a)') '*'
+
+          write (31,'(a1,a6,11a15)') '*','Index','Flux','Ti','ni',
+     .      'Vx','Vy','Vz','fi','fel','vpart','mach','usr'
+          write (31,'(a1,a6,11a15)') '*',' ',' ','(eV)','(1/m^3)',
+     .      'm/s','m/s','m/s',' ',' ',' ',' '
+
+          write (31,'(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
+          write (31,'(i6)') ntrgdat
+ 
+          do i = 1, ntrgdat
+            write (31,'(i7,11es15.7)')
+     .        i,trgt(istra)%flux(i,ifl),trgt(istra)%tit(i),
+     .          trgt(istra)%dnit(i,ifl),trgt(istra)%vxt(i,ifl),
+     .          trgt(istra)%vyt(i,ifl),trgt(istra)%vzt(i,ifl),
+     .          trgt(istra)%fi(i,ifl),trgt(istra)%fel(i,ifl),
+     .          trgt(istra)%vpart(i,ifl),trgt(istra)%mach(i,ifl),
+     .          trgt(istra)%usr(i,ifl)
+          end do
+        end do ! ifl
+      end do   ! istra
+        
+
+      
+      
 #ifdef WG_TODO
       write(*,*) 'NX, NY, NFLAI = ',nx,ny,nflai
       rewind(31)

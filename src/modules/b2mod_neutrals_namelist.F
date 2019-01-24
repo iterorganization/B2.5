@@ -1931,6 +1931,8 @@ c.. Test consistency with physical edges within the computational domain
       do istra = 1,m%nRc
         m%rcCvP(istra,1) = instra + 1
         m%rcCvP(istra,2) = nrcfaces(istra)
+        m%rcFcP(istra,1) = instra + 1
+        m%rcFcP(istra,2) = nrcfaces(istra)
         do istrac = 1, nrcfaces(istra)
           instra = instra + 1
           ifc = rc_faces(istrac,istra)
@@ -1940,6 +1942,7 @@ c.. Test consistency with physical edges within the computational domain
             m%rcCv(instra,1) = ic2
             m%rcCv(instra,2) = ic1
             m%rcFcOr(instra) = rc_face_ori(istrac,istra)
+            m%rcFc(instra) = ifc
           else
             call xerrab('rc_to_struct -- problem with boundary face') 
           end if

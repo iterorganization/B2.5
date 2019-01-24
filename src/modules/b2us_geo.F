@@ -21,6 +21,7 @@
         real (kind=R8), allocatable  :: cvVol(:)       ! Cell volume
         real (kind=R8), allocatable  :: cvOnedBsq(:)   ! 1/B**2 in cell centers
         real (kind=R8), allocatable  :: cvBzb(:)       ! Factor for P-S/mdf flows
+        real (kind=R8), allocatable  :: cvEb(:,:)      ! 
 
 !  face based quantities
         real (kind=R8), allocatable  :: fcBb(:,:)      ! Magnetic field: (nFc,0:3) to be recomputed at cell faces (Bx,By,Bz,|B|)
@@ -33,8 +34,7 @@
         real (kind=R8), allocatable  :: fcQbet(:,:)    ! Cosine (:,0) and sine (:,1) of beta
         real (kind=R8), allocatable  :: fcPbs(:)       ! Magnetic contact area
         real (kind=R8), allocatable  :: fcPbshz(:)     ! Magnetic contact area * hz (at faces)
-
-!  vertex quantities
+        real (kind=R8), allocatable  :: fcEb(:,:)      ! 
         real (kind=R8), allocatable  :: vxBb(:,:)      ! Magnetic field: (nVx,0:3) to be recomputed at vertices (Bx,By,Bz,|B|)
         real (kind=R8), allocatable  :: vxX(:)         ! X-co of vertex
         real (kind=R8), allocatable  :: vxY(:)         ! Y-co of vertex
@@ -71,6 +71,7 @@
       allocate (g%cvVol(nCv))
       allocate (g%cvOnedBsq(nCv))
       allocate (g%cvBzb(nCv))
+      allocate (g%cvEb(nCv,0:2)) 
 
 !  face quantites
       allocate (g%fcBb(nFc,0:3)) 
@@ -83,6 +84,7 @@
       allocate (g%fcQbet(nFc,0:1))
       allocate (g%fcPbs(nFc))
       allocate (g%fcPbshz(nFc))
+      allocate (g%fcEb(nFc,0:2)) 
 
 !  vertex quantites
       allocate (g%vxBb(nVx,0:3))
@@ -119,6 +121,7 @@
       deallocate (g%cvVol)
       deallocate (g%cvOnedBsq)
       deallocate (g%cvBzb)
+      deallocate (g%cvEb) 
       
 !  face quantites
       deallocate (g%fcBb) 
@@ -131,6 +134,7 @@
       deallocate (g%fcQbet)
       deallocate (g%fcPbs)
       deallocate (g%fcPbshz)
+      deallocate (g%fcEb) 
       
 !  vertex quantites
       deallocate (g%vxBb)
@@ -188,6 +192,9 @@
 
       call cfrure (iun, nFs,   gm%fsConn, 'fsConn')
 
+      call cfrure (iun, nCv*3, gm%cvEb,   'cvEb')
+      call cfrure (iun, nFc*3, gm%fcEb,   'fcEb')
+
       return
       end subroutine read_geometry
 
@@ -229,6 +236,9 @@
 
       call cfwure (nout, nFs,   gm%fsConn, 'fsConn')
 
+      call cfwure (nout, nCv*3, gm%cvEb,   'cvEb')
+      call cfwure (nout, nFc*3, gm%fcEb,   'fcEb')
+
       return
       end subroutine write_geometry
 
@@ -269,6 +279,15 @@
 
 *  .. interpolate OnedBsq for corners of cell
       call intvertex(nCv,nVx,mpg,gm%vxVol,gm%cvOnedBsq,gm%vxOnedBsq) !WG: interpolate 1/cvBb**2, or compute as 1/vxBb**2 ???
+
+*  .. for the time being
+      gm%cvEb(:,0) = 0.0_R8
+      gm%cvEb(:,1) = 0.0_R8
+      gm%cvEb(:,2) = 1.0_R8
+
+      gm%fcEb(:,0) = 0.0_R8
+      gm%fcEb(:,1) = 0.0_R8
+      gm%fcEb(:,2) = 1.0_R8
 
 *   ..compute cvHz
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing

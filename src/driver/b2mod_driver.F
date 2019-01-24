@@ -1279,7 +1279,7 @@ csw 09oct2012
       CALL EIRENE_ALLOC_CCOUPL(1)
       CALL EIRENE_ALLOC_CTRCEI
 #else
-      call alloc_b2mod_braeir(nCv,nFc,ns)
+      call alloc_b2mod_braeir(nCv,nFc,ns,nstra)
       call createB2SourceEir( nCv, ns, nstra, state % sr_eir )
 #endif
 
@@ -1766,7 +1766,9 @@ c new CDF movie option (1st frame at t=0)
      1 delta_cdfmovie_time.gt.0.0_R8) then
         if(use_eirene.eq.0) then
 #ifndef NO_CDF
+#ifdef WG_TODO
           call cdfmovie(ncid,nx,ny,ns)
+#endif
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -2003,7 +2005,6 @@ csw 09oct2012 set default potential already at this point (BCs)
      1                itim,dtim,ntim,stack_ptr
         end do
 *    ..produce time dependent file
-#ifdef WG_TODO
         if (save_f31.lt.0) then
 #ifndef HPUX
           write(fort31name,'(a,i8.8)') 'fort.31.', itim
@@ -2012,11 +2013,12 @@ csw 09oct2012 set default potential already at this point (BCs)
 #endif
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
-          call copy_background(nx, ny, ns, BoRiS)
-          call write_f31(nx, ny)
+          call copy_background(nCv, nFc, ns, mpg, geo, 
+     .                         state%pl, state%dv,BoRiS)
+          call write_f31(mpg)
           close(31)
         end if
-#endif
+
 #ifdef JET
         if(tim.ge.save_tran_time.and.delta_tran_time.gt.0.0_R8) then
           tran_num=tran_num+1

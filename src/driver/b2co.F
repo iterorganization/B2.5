@@ -315,8 +315,9 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #else
-      call alloc_b2mod_braeir(nx,ny,ns)
-      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
+      call alloc_b2mod_braeir(nx,ny,ns,nstra)
+!PB      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nx*ny,ns,natm,npls,nstra)
 #endif
       call alloc_b2mod_elements(ns,zn,am)
       call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
