@@ -7,7 +7,7 @@
       implicit none
       integer n, incx
       real (kind=R8) ::
-     *   sa, sx(0:*)
+     *   sa, sx(0:(n*incx)-1)
 *     ------------------------------------------------------------------
 *     SFILL (BLAS-like routine) fills a vector with a constant value.
 *     sfill(n,sa,sx,incx) sets all elements of the s.p. real*8 vector x
