@@ -396,28 +396,19 @@ c                    (diffusive anomalous contribution zero due to toroidal symm
               if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      .          bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
 c     guard cell -> use grad-B drift only
-               wwb(ix+1,iy+1,nflai)=max(min(
-     1           upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-
-     2           (vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is))*
-     3           bb(ix,iy,0)/bb(ix,iy,2),
-     4           ua_max),ua_min)
-              else
-                if (eirene_background.eq.0) then
+                vdrift=vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is)
+              else if (eirene_background.eq.0) then
 c     internal cell, old treatment -> grad-B drift only (fna)
-                 wwb(ix+1,iy+1,nflai)=max(min(
-     1             upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-
-     2             (vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is))*
-     3             bb(ix,iy,0)/bb(ix,iy,2),
-     4             ua_max),ua_min)
-                else
+                vdrift=vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is)
+              else
 c     internal cell -> full diamagnetic drift
-                 wwb(ix+1,iy+1,nflai)=max(min(
-     1             upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-
-     2             (wadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is))*
-     3             bb(ix,iy,0)/bb(ix,iy,2),
-     4             ua_max),ua_min)
-                endif
+                vdrift=wadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is)
               endif
+              if (bb(ix,iy,2).ne.0.0_R8)
+     >         vdrift=vdrift*bb(ix,iy,0)/bb(ix,iy,2)
+              wwb(ix+1,iy+1,nflai)=max(min(
+     1          upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-vdrift,
+     2          ua_max),ua_min)
             enddo
           enddo
 * cell face x
