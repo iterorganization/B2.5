@@ -82,7 +82,7 @@ c
       real (kind=R8) :: kintmp
       real (kind=R8) :: hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
-      real (kind=R8) :: 
+      real (kind=R8) :: vdrift,
      &  vaecrbc(-1:nx,-1:ny,0:1,0:ns-1), wadiac(-1:nx,-1:ny,0:1,0:ns-1),
      &  vadiac(-1:nx,-1:ny,0:1,0:ns-1), wrk(-1:nx,-1:ny)
 
