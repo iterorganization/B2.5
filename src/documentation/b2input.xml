@@ -4995,7 +4995,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (0:NLIM+NSTS)</type>
 				<description>
-					Passed to Eirene. Chemical sputter yield of wall surface (ilim).
+					Passed to Eirene. Chemical sputter yield of wall surface (ilim). Element 0 corresponds to the default setting for all surfaces.
 				</description>
 			</switch>
 			<switch>
