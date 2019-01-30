@@ -5003,7 +5003,7 @@
 				<default>0</default>
 				<type>real*8</type>
 				<description>
-					Nuclear charge of atomic species causing the sputtering. Default means no chemical sputtering.
+					Nuclear charge of atomic species causing the sputtering. If set to its default value of 0, then the chemical sputtering switches from this block are not used and the settings from the Eirene input file are used.
 				</description>
 			</switch>
 			<switch>
