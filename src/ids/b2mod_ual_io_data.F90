@@ -25,9 +25,12 @@ module b2mod_ual_io_data
     use b2mod_ual_io_grid &
      & , only : ids_generic_grid_aos3_root, IDS_real, GridObject, &
      &          getGridSubsetObject, SPACE_POLOIDALPLANE, &
-     &          GridWriteData
+     &          GridWriteData, IDS_CLASS_CELL, IDS_CLASS_NODE, &
+     &          IDS_CLASS_POLOIDALRADIAL_FACE
     use ids_grid_subgrid  & ! IGNORE
      & , only : getGridSubsetSize
+
+    implicit none
 
     !> Provides service routines to transform data from B2 to IMAS IDS
     !! (data in form of vertex, face or cell)

@@ -2666,7 +2666,7 @@ c*** We only apply this in the outer SOL region
 *     3 --- both banana and PS
 *     4 --- all contributions
 *     mind that B2 already calculates the classical transport !
-*     avoid double transport, 0+4 for cross checks only !
+*     avoid double transport, 0+4 for cross-checks only !
       data ic /3/
 
 *   ..subprogram start-up calls

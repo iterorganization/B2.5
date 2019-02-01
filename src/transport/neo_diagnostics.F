@@ -24,7 +24,7 @@
 *     3 --- both banana and PS
 *     4 --- all contributions
 *     mind that B2 already calculates the classical transport !
-*     avoid double transport, 0+4 for cross checks only !
+*     avoid double transport, 0+4 for cross-checks only !
       integer ic
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
