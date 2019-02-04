@@ -199,11 +199,13 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call cfverr (ninp(2), b2fparam_version)				 !xpb
       call cfverr (ninp(3), b2fstati_version)				 !xpb
 *   ..obtain nx, ny from geometry file
+      if (b2fgmtry_version .lt. 03.002.000) then                         !pb
       call cfruin (ninp(1), 2, idum, 'nx,ny')
       nx = idum(0)
       ny = idum(1)
       call xertst (0.le.nx.and.0.le.ny,
      &  'faulty input nx, ny from geometry file')
+      end if
 *   ..obtain ns from parameters file
       call cfruin (ninp(2), 1, idum, 'ns')
       ns = idum(0)

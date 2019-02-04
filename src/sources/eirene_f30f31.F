@@ -758,7 +758,7 @@ c
      .      'Tesla','Tesla','Tesla','(V/m)','(V/m)','(V/m)',
      .      'V','??','??'
 
-      write (31,'(i6)') mpg%nCv, mpg%nFc
+      write (31,'(2i6)') mpg%nCv, mpg%nFc
       
       do ic = 1, mpg%nCv
         write (31,'(i7,11es15.7)') ic, teb(ic), neb(ic), 
@@ -791,10 +791,12 @@ c
       write (31,'(a)') '*'
       write (31,'(a)') '*** TARGET DATA'
       write (31,'(a)') '*'
-      write (31,'(i6)') mpg%nRc
+!      write (31,'(i6)') mpg%nRc
+      write (31,'(i6)') count(trgt(1:mpg%nRc)%ntrgdat > 0)
 
       do istra = 1, mpg%nRc
         ntrgdat = trgt(istra)%ntrgdat
+        if (ntrgdat == 0) cycle
         write (31,'(a)') '*'
         write (31,'(a,i0)') '*** MISC TARGET DATA #',istra
         write (31,'(a)') '*'

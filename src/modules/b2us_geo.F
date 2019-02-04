@@ -282,8 +282,8 @@
 
 *  .. for the time being
       gm%cvEb(:,0) = 0.0_R8
-      gm%cvEb(:,1) = 0.0_R8
-      gm%cvEb(:,2) = 1.0_R8
+      gm%cvEb(:,1) = -0.075_R8
+      gm%cvEb(:,2) = sqrt(1.0_R8-0.075_R8**2)
 
       gm%fcEb(:,0) = 0.0_R8
       gm%fcEb(:,1) = 0.0_R8
