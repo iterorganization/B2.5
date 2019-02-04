@@ -690,7 +690,7 @@ c declared -1:nx,-1:ny
           trgt(istra)%fe(i) = 2.0_R8     ! to be specified correctly
           trgt(istra)%fsh(i) = delta_sheathb(iFc)
           do ifl = 1, nflai
-            trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)
+            trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*mpg%rcFcOr(ian+i-1)
             trgt(istra)%dnit(i,ifl) = intface_s(iFc,nCv,nFc,mpg%fcCv,
      >                                   gm%fcVol,dnib(:,ifl))
             trgt(istra)%vxt(i,ifl) = intface_s(iFc,nCv,nFc,mpg%fcCv,
@@ -758,9 +758,9 @@ c
      .      'Tesla','Tesla','Tesla','(V/m)','(V/m)','(V/m)',
      .      'V','??','??'
 
-      write (31,'(2i6)') mpg%nCv, mpg%nFc
+      write (31,'(2i6)') mpg%nCi, mpg%nFc
       
-      do ic = 1, mpg%nCv
+      do ic = 1, mpg%nCi
         write (31,'(i7,11es15.7)') ic, teb(ic), neb(ic), 
      .      bbxb(ic), bbyb(ic), bbzb(ic), 0.0_R8, 0.0_R8, 0.0_R8,
      .      pob(ic), 0.0_R8, 0.0_R8
@@ -778,9 +778,9 @@ c
 
         write (31,'(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
 
-        write (31,'(i6)') mpg%nCv
+        write (31,'(i6)') mpg%nCi
       
-        do ic = 1, mpg%nCv
+        do ic = 1, mpg%nCi
           write (31,'(i7,5es15.7)') ic, tib(ic), dnib(ic,ifl), 
      .      vxb(ic,ifl), vyb(ic,ifl), vzb(ic,ifl)
         end do

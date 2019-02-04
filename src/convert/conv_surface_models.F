@@ -1,0 +1,530 @@
+      subroutine conv_surface_models (nout, mpg, gm, 
+     .           bndmdl, trifc,nelem, nx, ny)
+
+      use b2mod_types
+      use b2mod_boundary_namelist
+      use b2mod_neutrals_namelist
+      use b2mod_indirect
+      use b2us_map
+      use b2us_geo
+
+      implicit none
+
+      integer, intent(in) :: nout, nelem, nx, ny
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: gm
+      integer, intent(in) :: trifc(3,nelem)
+      integer, intent(inout) :: bndmdl(3,nelem)
+      character(500) :: line
+      integer :: ineir, iouteir, nstsi, ists, i, ier, icut, nd, nsf,
+     .           isf, j, ifc, ib, ntrg, ihelp(12), isum
+      integer, allocatable :: idim(:), ipos(:), istart(:), iend(:)
+      integer, allocatable :: idim_eir(:), ipos_eir(:), 
+     .                        istart_eir(:), iend_eir(:), idtrg(:)
+      logical :: found
+
+
+      nd = mpg%nRc + mpg%nBc
+      allocate (idim(nd))
+      allocate (ipos(nd))
+      allocate (istart(nd))
+      allocate (iend(nd))
+      allocate (idtrg(nd))
+      idtrg = 0
+      
+      call find_eirene_numbering(mpg, idim, ipos, istart, iend, nd, nsf)
+
+      open (newunit=ineir,file='input.dat',iostat=ier)
+      if (ier /= 0) 
+     .  call xerrab ('input.dat not found')
+      open (newunit=iouteir,file='input.dat.us')
+
+      do
+        read (ineir,'(a500)') line
+        write (iouteir,'(a)') trim(line)
+        if (index(line,'*** 3') > 0) exit
+      end do
+
+!  input block 3 found        
+!      write (iouteir,'(a)') trim(line)
+      read (ineir,'(i6)') nstsi
+      write (iouteir,'(i6)') nstsi
+
+      allocate (idim_eir(nstsi))
+      allocate (ipos_eir(nstsi))
+      allocate (istart_eir(nstsi))
+      allocate (iend_eir(nstsi))
+      ists = 0
+      do
+        do
+          read (ineir,'(a500)') line
+          write (iouteir,'(a)') trim(line)
+          if (line(1:1) /= '*') exit 
+        end do
+        ists = ists + 1
+        read (line,'(12i6)') i,idim_eir(ists),ipos_eir(ists),
+     .                         istart_eir(ists), iend_eir(ists)
+        do
+          read (ineir,'(a500)') line
+          write (iouteir,'(a)') trim(line)
+          if (line(1:1) == '*') exit
+        end do
+        if (line(1:3) == '***') exit         
+      end do
+
+!  finshed reading input block 3
+
+!  find triangles on nondefault standard surfaces
+
+      ntrg = 0
+      do ists = 1, nstsi
+        found = .false.
+        
+!  check neutral source regions and boundary surfaces for matching definitions
+        do isf = 1, nsf
+          if (idim(isf) < 0) cycle
+          if (idim_eir(ists) == idim(isf)) then
+            if ((ipos_eir(ists) == ipos(isf)) .and.
+     .          (istart_eir(ists) == istart(isf)) .and.
+     .          (iend_eir(ists) == iend(isf))) then
+!  matching surfaces identified
+              if ( isf <= mpg%nRc) then
+!  neutral source  
+                found = .true.
+                do i = 1, mpg%rcFcP(isf,2)
+                  j = mpg%rcFcP(isf,1)+i-1
+                  ifc = mpg%rcFc(j) ! face on neutral source 
+                  where (trifc == ifc)
+                    bndmdl = -ists
+                  end where
+                end do
+                ntrg = ntrg + 1
+                idtrg(isf) = -ists
+                exit  ! surface marked
+              else
+!  boundary
+                found = .true.
+                ib = isf - mpg%nRc
+                do i = 1, mpg%bcFcP(ib,2)
+                  j = mpg%bcFcP(ib,1)+i-1
+                  ifc = mpg%bcFc(j) ! face on boundary
+                  where (trifc == ifc)
+                    bndmdl = -ists
+                  end where
+                end do
+                exit  ! surface marked 
+              end if
+            end if
+          end if
+        end do
+
+        if (.not. found) then
+          write (*,*) ' Eirene nondefault standard surface ',ists,
+     .                ' could not be identified '
+        end if
+
+      end do
+
+!  copy input file until block 14
+      do
+        read (ineir,'(a500)') line
+        write (iouteir,'(a)') trim(line)
+        if (index(line,'*** 14') > 0) exit
+      end do
+
+!  copy line of logicals
+      read (ineir,'(a500)') line
+      write (iouteir,'(a)') trim(line)
+
+!  nfla ntrfrm ...
+!  ntrfrm=1 
+      read (ineir,'(12i6)') ihelp
+      write (iouteir,'(12i6)') ihelp(1),1,ihelp(5:12)
+      
+!  iflb ...
+      do
+        read (ineir,'(a500)') line
+        if (scan(line,'eEdD-') > 0) then
+          write (iouteir,'(a)') trim(line)
+        else
+!  ndxa, ndya
+!  nothing to be done, line has to be removed
+         exit
+        end if
+      end do
+
+!  number of targets
+      read (ineir,'(12i6)') ihelp(1)
+      if (ihelp(1) /= ntrg) 
+     .    call xerrab ('number of targets mismatch')
+      write (iouteir,'(12i6)') ntrg
+!  number of target parts  
+      isum = 0
+      do i = 1, ntrg, 12
+        ihelp = 0
+        read (ineir,'(12i6)') ihelp
+        isum = isum + sum(ihelp)
+      end do
+!  write target information
+      do i = 1, isum
+        read (ineir,'(12i6)') ihelp
+        if (i <= ntrg) then
+          write (iouteir,'(12i6)') ihelp(1), idtrg(i), ihelp(7:12)
+        else
+!  nothing to be done 
+        end if
+      end do
+        
+!  copy input file until block 14
+      do
+        read (ineir,'(a500)',end=99) line
+        write (iouteir,'(a)') trim(line)
+        if (index(line,'*** 14') > 0) exit
+      end do
+
+ 99   continue
+      close (iouteir)
+      close (ineir)
+
+      deallocate (idim)
+      deallocate (ipos)
+      deallocate (istart)
+      deallocate (iend)
+      deallocate (idim_eir)
+      deallocate (ipos_eir)
+      deallocate (istart_eir)
+      deallocate (iend_eir)
+
+      end subroutine conv_surface_models
+
+      subroutine find_nondef_surfaces (nout, mpg, gm, 
+     .           elem, bndmdl, elem_cv,nelem)
+
+      use b2mod_types
+      use b2mod_boundary_namelist
+      use b2mod_neutrals_namelist
+      use b2mod_indirect
+      use b2us_map
+      use b2us_geo
+
+      implicit none
+
+      integer, intent(in) :: nout, nelem
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: gm
+      integer, intent(in) :: elem(3,nelem), elem_cv(nelem)
+      integer, intent(inout) :: bndmdl(3,nelem)
+      integer, allocatable :: indelm(:), tris(:), jsts(:)
+      integer :: istra, imodel, i, j, ifc, ifcmin, ifcmax, ic, nt, it,
+     .           jt, is, is1, itmin, itmax, ibold, ib, icol,
+     .           ntarg, nblk3, nblk14, icut, nd, nsf, istb
+      integer, allocatable :: idim(:), ipos(:), istart(:), iend(:) 
+
+!  set recycling boundary model indicators 
+      bndmdl = 0
+
+      allocate (indelm(nelem))
+      indelm = (/ (i, i=1,nelem) /)
+
+      imodel = 0
+      do istra = 1, mpg%nRc
+!  skip neutral sources without associated faces 
+!  CRCSTRA = 'V','C','T'
+        if (mpg%rcFcP(istra,2) == 0) cycle 
+        imodel = imodel + 1
+        write (nout,'(a15,i6,a,i6)') 'recyc. surface ',istra, 
+     .   ' is associated with nondefault standard surface ',imodel 
+        do i = 1, mpg%rcFcP(istra,2)
+          j = mpg%rcFcP(istra,1)+i-1
+          ifc = mpg%rcFc(j) ! face on neutral source 
+          ifcmin = min(mpg%fcVx(ifc,1),mpg%fcVx(ifc,2))
+          ifcmax = max(mpg%fcVx(ifc,1),mpg%fcVx(ifc,2))
+          ic = mpg%rcCv(j,2) ! cell inside plasma
+!  identify triangle side that represents the face ifc
+!  therefore check all triangles of former cell ic 
+          nt = count(elem_cv == ic)
+          if (nt > 0) then
+            allocate(tris(nt))
+            tris = pack(indelm, elem_cv == ic)
+            itloop: do it = 1, nt
+              jt = tris(it)
+              do is = 1, 3
+                is1 = is + 1
+                if (is1 > 3) is1 = 1
+                itmin = min(elem(is,jt), elem(is1,jt))
+                itmax = max(elem(is,jt), elem(is1,jt))
+                if ((ifcmin == itmin) .and. (ifcmax == itmax)) then
+                  bndmdl(is,jt) = -imodel
+                  exit itloop
+                end if
+              end do
+            end do itloop
+            deallocate (tris)
+          end if
+        end do
+      end do
+
+      ntarg = imodel
+
+!  now check for triangle sides on non recycling boundaries
+
+      ibold = -1
+      do ib = 1, mpg%nBc
+        do i = 1, mpg%bcFcP(ib,2)
+          j = mpg%bcFcP(ib,1)+i-1
+          ifc = mpg%bcFc(j) ! face on boundary
+          ifcmin = min(mpg%fcVx(ifc,1),mpg%fcVx(ifc,2))
+          ifcmax = max(mpg%fcVx(ifc,1),mpg%fcVx(ifc,2))
+          ic = mpg%bcCv(j,2) ! cell inside plasma
+!  identify triangle side that represents the face ifc
+!  therefore check all triangles of former cell ic 
+          nt = count(elem_cv == ic)
+          if (nt > 0) then
+            allocate(tris(nt))
+            tris = pack(indelm, elem_cv == ic)
+            ibloop: do it = 1, nt
+              jt = tris(it)
+              do is = 1, 3
+                is1 = is + 1
+                if (is1 > 3) is1 = 1
+                itmin = min(elem(is,jt), elem(is1,jt))
+                itmax = max(elem(is,jt), elem(is1,jt))
+                if ((ifcmin == itmin) .and. (ifcmax == itmax)) then
+                  if (bndmdl(is,jt) == 0) then
+                    if (ib /= ibold) then
+                      imodel = imodel + 1
+                      ibold = ib
+                      write (nout,'(a15,i6,a,i6)') 'bound. surface ',ib, 
+     .   ' is associated with nondefault standard surface ',imodel 
+                   end if
+                    bndmdl(is,jt) = -imodel
+                  end if
+                  exit ibloop
+                end if
+              end do
+            end do ibloop
+            deallocate (tris)
+          end if
+        end do
+      end do
+
+      deallocate (indelm)
+
+!  write nondefault standard surface block for Eirene input
+
+      open (newunit=nblk3,file='eirene_block3.dat')
+      write (nblk3,'(a)') 
+     .  '*** 3A DATA FOR NONDEFAULT STANDARD SURFACES, NSTSI='
+      write (nblk3,'(i6)') imodel
+
+      nd = mpg%nRc + mpg%nBc
+      allocate (idim(nd))
+      allocate (ipos(nd))
+      allocate (istart(nd))
+      allocate (iend(nd))
+      
+      call find_eirene_numbering(mpg, idim, ipos, istart, iend, nd, nsf)
+
+!  ... from neutral sources
+      imodel = 0
+      allocate (jsts(ntarg))
+      jsts = 0
+
+      do istra = 1, mpg%nRc
+        if (idim(istra) < 0) cycle
+        imodel = imodel + 1
+        jsts(imodel) = -imodel
+ 
+        write (nblk3,'(a1,i3,a2,a)')
+     .    '*',imodel,crcstra(istra),' surface from B2.5'
+        write (nblk3,'(5i6)')
+     .    imodel, idim(istra), ipos(istra), istart(istra), iend(istra)
+        write (nblk3,'(12i6)') 1, 2, 0, 0, 0, imodel, 0, 0, 0
+        write (nblk3,'(12i6)') 1, 0
+        write (nblk3,'(6es12.4)') 1206., 2., 0., 0., 0., 2.8
+        write (nblk3,'(6es12.4)') 1., 1., 1., 1., 0.5, 1.
+      end do
+
+!  ... from boundaries
+      istb = mpg%nRc
+      bound: do ib = 1, mpg%nBc
+        do istra = 1, mpg%nRc
+          if ((bcchar(ib) == crcstra(istra)) .and.
+     .        (bcpos(ib) == rcpos(istra)) .and.
+     .        (bcstart(ib) <= rcstart(istra)) .and.
+     .        (bcend(ib) >= rcend(istra))) cycle bound
+        end do
+
+        imodel = imodel + 1 
+        istb = istb + 1
+        write (nblk3,'(a1,i3,a2,a)')
+     .    '*',imodel,bcchar(istra),' boundary from B2.5'
+        write (nblk3,'(5i6)')
+     .    imodel, idim(istb), ipos(istb), istart(istb), iend(istb)
+        write (nblk3,'(12i6)') 2, 2, 0, 0, 0, imodel, 0, 0, 0
+        write (nblk3,'(12i6)') 1, 0
+        write (nblk3,'(6es12.4)') 1206., 2., 0., 0., 0., 2.8
+        write (nblk3,'(6es12.4)') 1., 1., 1., 1., 0.5, 1.
+      end do bound
+        
+      close (nblk3)
+
+!  write target information for Eirene input block 14
+
+      open (newunit=nblk14,file='eirene_block14.dat')
+      write (nblk14,'(i6)') ntarg
+      do i = 1, ntarg
+        write (nblk14,'(12i6)') i, jsts(i), 0, 0, 1, 1
+      end do
+      close (nblk14)
+      
+      deallocate(jsts)
+      deallocate (idim)
+      deallocate (ipos)
+      deallocate (istart)
+      deallocate (iend)
+
+      return
+      end subroutine find_nondef_surfaces
+
+
+      subroutine find_eirene_numbering (mpg,
+     .           idim, ipos, istart, iend, nd, nsf)
+      use b2mod_types
+      use b2mod_boundary_namelist
+      use b2mod_neutrals_namelist
+      use b2mod_indirect
+      use b2us_map
+      use b2us_geo
+
+      implicit none
+
+      type(mapping), intent(in) :: mpg
+      integer, intent(in) :: nd
+      integer, intent(out) :: nsf
+      integer, intent(out) :: idim(nd), ipos(nd), istart(nd),
+     .                        iend(nd)
+      integer :: icut, istra, ib
+
+      nsf = 0
+      idim = -1
+
+! find grid lines numbers for neutral source surfaces
+      do istra = 1, mpg%nRc
+        nsf = nsf + 1
+        if (index('WESN',crcstra(istra)) == 0) cycle
+        select case (crcstra(istra))
+        case ('S')
+          idim(nsf) = 1
+          ipos(nsf) = rcpos(istra) + 2
+          istart(nsf) = rcstart(istra) + 1
+          iend(nsf) = rcend(istra) + 2
+          do icut = 1, nncut
+            if (rcstart(istra) >= leftcut(icut)) 
+     .        istart(nsf) = istart(nsf) + 1
+            if (rcstart(istra) >= rightcut(icut)) 
+     .        istart(nsf) = istart(nsf) + 1
+            if (rcend(istra) >= leftcut(icut)) 
+     .        iend(nsf) = iend(nsf) + 1
+            if (rcend(istra) >= rightcut(icut)) 
+     .        iend(nsf) = iend(nsf) + 1
+          end do
+        case ('N')
+          idim(nsf) = 1
+          ipos(nsf) = rcpos(istra) + 1
+          istart(nsf) = rcstart(istra) + 1
+          iend(nsf) = rcend(istra) + 2
+          do icut = 1, nncut
+            if (rcstart(istra) >= leftcut(icut)) 
+     .        istart(nsf) = istart(nsf) + 1 
+            if (rcstart(istra) >= rightcut(icut)) 
+     .        istart(nsf) = istart(nsf) + 1
+            if (rcend(istra) >= leftcut(icut)) 
+     .        iend(nsf) = iend(nsf) + 1
+            if (rcend(istra) >= rightcut(icut)) 
+     .        iend(nsf) = iend(nsf) + 1
+          end do
+        case ('W')
+          idim(nsf) = 2
+          ipos(nsf) = rcpos(istra) + 2
+          istart(nsf) = rcstart(istra) + 1
+          iend(nsf) = rcend(istra) + 2
+          do icut = 1, nncut
+            if (rcpos(istra) > leftcut(icut)) 
+     .        ipos(nsf) = ipos(nsf) + 1
+            if (rcpos(istra) >= rightcut(icut)) 
+     .        ipos(nsf) = ipos(nsf) + 1
+          end do
+        case ('E')
+          idim(nsf) = 2
+          ipos(nsf) = rcpos(istra) + 1
+          istart(nsf) = rcstart(istra) + 1
+          iend(nsf) = rcend(istra) + 2
+          do icut = 1, nncut
+            if (rcpos(istra) > leftcut(icut)) 
+     .        ipos(nsf) = ipos(nsf) + 1
+            if (rcpos(istra) >= rightcut(icut)) 
+     .        ipos(nsf) = ipos(nsf) + 1
+          end do
+        case default
+          call xerrab ('Wrong CRCSTRA or not yet available for WG')
+        end select
+      end do
+
+!  ... from boundaries
+      bound: do ib = 1, mpg%nBc
+        nsf = nsf + 1
+        select case (bcchar(ib))
+        case ('S')
+          idim(nsf) = 1
+          ipos(nsf) = bcpos(ib) + 2
+          istart(nsf) = bcstart(ib) + 1
+          iend(nsf) = bcend(ib) + 2
+          do icut = 1, nncut
+            if (bcstart(ib) >= leftcut(icut)) 
+     .        istart(nsf) = istart(nsf) + 1
+            if (bcstart(ib) >= rightcut(icut)) 
+     .        istart(nsf) = istart(nsf) + 1
+            if (bcend(ib) >= leftcut(icut)) iend(nsf) = iend(nsf) + 1
+            if (bcend(ib) >= rightcut(icut)) iend(nsf) = iend(nsf) + 1
+          end do
+        case ('N')
+          idim(nsf) = 1
+          ipos(nsf) = bcpos(ib) + 1
+          istart(nsf) = bcstart(ib) + 1
+          iend(nsf) = bcend(ib) + 2
+          do icut = 1, nncut
+            if (bcstart(ib) >= leftcut(icut)) 
+     .        istart(nsf) = istart(nsf) + 1
+            if (bcstart(ib) >= rightcut(icut)) 
+     .        istart(nsf) = istart(nsf) + 1
+            if (bcend(ib) >= leftcut(icut)) iend(nsf) = iend(nsf) + 1
+            if (bcend(ib) >= rightcut(icut)) iend(nsf) = iend(nsf) + 1
+          end do
+        case ('W')
+          idim(nsf) = 2
+          ipos(nsf) = bcpos(ib) + 2
+          istart(nsf) = bcstart(ib) + 1
+          iend(nsf) = bcend(ib) + 2
+          do icut = 1, nncut
+            if (bcpos(ib) > leftcut(icut)) ipos(nsf) = ipos(nsf) + 1
+            if (bcpos(ib) >= rightcut(icut)) ipos(nsf) = ipos(nsf) + 1
+          end do
+        case ('E')
+          idim(nsf) = 2
+          ipos(nsf) = bcpos(ib) + 1
+          istart(nsf) = bcstart(ib) + 1
+          iend(nsf) = bcend(ib) + 2
+          do icut = 1, nncut
+            if (bcpos(ib) > leftcut(icut)) ipos(nsf) = ipos(nsf) + 1
+            if (bcpos(ib) >= rightcut(icut)) ipos(nsf) = ipos(nsf) + 1
+          end do
+        case default
+          call xerrab ('Wrong BCCHAR or not yet available for WG')
+        end select
+      end do bound
+
+      return
+      end subroutine find_eirene_numbering
+
+
