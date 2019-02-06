@@ -1145,6 +1145,8 @@ c
       call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
       cr=0.25_R8*sum(crx,3)
       cz=0.25_R8*sum(cry,3)
+      psi=0.25_R8*sum(fpsi,3)
+      fbz=0.25_R8*sum(ffbz,3)
       targetr=0.5_R8*sum(targetcr,3)
       targetz=0.5_R8*sum(targetcz,3)
       icell=0
@@ -1214,6 +1216,7 @@ c
       call vesselon(.false.)       ! same for vessel
       call separatrixon(.false.)   ! same for separatrix
       call adjust_axes(.false.)    ! nice axes by default
+      call set_psi_plotting(.false.)     ! do not plot against psi
       call set_midplane_mapping(.false.) ! do not map to midplane by default
       call wallon(.false.,0,values(14),values(15),1)
       call targeton(.false.,values(32),values(33),1)
@@ -1555,6 +1558,14 @@ c
           description='B (T) (components)'
           nz=4
           call copy(bb,1.0_R8,nz,textcomponents)
+        case('ffbz')
+          description='Toroidal magnetic flux function (Wb)'
+          nz=1
+          call copy(fbz,1.0_R8,nz,textbl)
+        case('psi')
+          description='Normalised poloidal magnetic flux function'
+          nz=1
+          call copy(psi,1.0_R8,nz,textbl)
         case('na')
           description='Ion density (m^{-3})'
           nz=ns
@@ -10539,6 +10550,8 @@ c
           call vesselon(.true.)
         case('mmid')     ! map to midplane
           call set_midplane_mapping(.true.)
+        case('mpsi')     ! plot versus psi
+          call set_psi_plotting(.true.)
         case('nocp')     ! do not plot contour plot
           call contourplot(.false.)
         case('nice')     ! toggle whether axes will have nice values

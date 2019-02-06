@@ -63,9 +63,10 @@
 *   ..local variables
       integer i, j, k
       real (kind=R8) ::
-     *   t0, t1, ds
+     *   t0, t1, rt0, rt1, rtt0, rtt1, ds, cutll
 *   ..procedures
       intrinsic log
+      real (kind=R8) :: machsfr
       external subini, subend, xertst
 
 *-----------------------------------------------------------------------
@@ -73,6 +74,8 @@
 
 * ..preliminaries
       call subini ('rattai')
+*   ..set cutll
+      cutll = log(machsfr())
 *   ..test nt, ndum, tailep
       call xertst (0.le.nt, 'rattai--faulty argument nt')
       call xertst (1.le.ndum, 'rattai--faulty argument ndum')
@@ -101,9 +104,21 @@
          t1 = (rtt(j+1)/rtt(i))**(-1/tailep)
          ds = log(rtt(j+1)/rtt(j))
          do k = 0, ndum-1
-          rtmod(i,k) = rtmod(i,k)+(ds/2.0_R8)*
-     &     ((rtorg(j,k)-rtorg(i,k))*t0+
-     &      (rtorg(j+1,k)-rtorg(i,k))*t1)
+          rt0 = rtorg(j,k)-rtorg(i,k)
+          rt1 = rtorg(j+1,k) - rtorg(i,k)
+          rtt0 = log(rt0)+log(t0)
+          rtt1 = log(rt1)+log(t1)
+          if (rtt0.gt.cutll) then
+            rtt0 = exp(rtt0)
+          else
+            rtt0 = 0.0_R8
+          end if
+          if (rtt1.gt.cutll) then
+            rtt1 = exp(rtt1)
+          else
+            rtt1 = 0.0_R8
+          end if
+          rtmod(i,k) = rtmod(i,k)+(ds/2.0_R8)*(rtt0+rtt1)
          enddo
         enddo
        endif

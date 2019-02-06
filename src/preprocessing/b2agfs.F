@@ -110,7 +110,8 @@
       data local_sonnet /'upgrade.geometry'/
       real (kind=R8) ::
      *  bp((nx1+2)*(ny1+2)),bt((nx1+2)*(ny1+2)),
-     .  crxs((nx1+2)*(ny1+2)*5),crys((nx1+2)*(ny1+2)*5)
+     .  crxs((nx1+2)*(ny1+2)*5),crys((nx1+2)*(ny1+2)*5),
+     .  fpsi((nx1+2)*(ny1+2)*4),ffbz((nx1+2)*(ny1+2)*4)
       real (kind=R8) ::
      *  xoffset, yoffset, xrescale, yrescale, Bt_rescale, pit_rescale,
      .  min_pitch, geom_match_dist, distval,
@@ -177,7 +178,7 @@
      &  'faulty argument geom_match_dist')
 
       call b2gxdr_dummy(local_sonnet, nx1, ny1, istyle, isymm,
-     & crxs, crys, bp, bt)
+     & crxs, crys, bp, bt, fpsi, ffbz)
       n2=(nx1+2)*(ny1+2)
       ic=1
       do  iy = -1, ny1
@@ -199,6 +200,14 @@
             bb1(ix,iy,0)=bp(ic)/bt(ic)*bb1(ix,iy,2)
             bb1(ix,iy,3)=sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
           endif
+          fpsi1(ix,iy,0)=fpsi(ic)
+          fpsi1(ix,iy,1)=fpsi(ic+1*n2)
+          fpsi1(ix,iy,2)=fpsi(ic+2*n2)
+          fpsi1(ix,iy,3)=fpsi(ic+3*n2)
+          ffbz1(ix,iy,0)=ffbz(ic)
+          ffbz1(ix,iy,1)=ffbz(ic+1*n2)
+          ffbz1(ix,iy,2)=ffbz(ic+2*n2)
+          ffbz1(ix,iy,3)=ffbz(ic+3*n2)
           ic=ic+1
         enddo
       enddo
@@ -975,7 +984,7 @@ cxpb
       end subroutine b2agfs
 c
       subroutine b2gxdr_dummy(local_sonnet, nx, ny, istyle, isymm,
-     & crxs, crys, bp, bt)
+     & crxs, crys, bp, bt, fpsi, ffbz)
       use b2mod_types
 #ifdef NAGF95
       use f90_unix           ! IGNORE
@@ -983,10 +992,10 @@ c
       implicit none
       integer nx, ny, istyle, isymm
       real (kind=R8) ::
-     *   crxs(0:nx+1,0:ny+1,0:4),
+     * crxs(0:nx+1,0:ny+1,0:4),
      1 crys(0:nx+1,0:ny+1,0:4),
-     2 bp(0:nx+1,0:ny+1),
-     3 bt(0:nx+1,0:ny+1)
+     2 bp(0:nx+1,0:ny+1),bt(0:nx+1,0:ny+1),
+     3 fpsi(0:nx+1,0:ny+1,0:3),ffbz(0:nx+1,0:ny+1,0:3)
       character*(*) local_sonnet
 
       integer nnx, nny,
@@ -1074,6 +1083,17 @@ c
      2         bp(ix,iy),bt(ix,iy)
             enddo
           enddo
+          fpsi=0.0_R8
+          ffbz=0.0_R8
+          read(lun,'(a)',end=110) uline
+          backspace (lun)
+          do iy=0,ny+1
+            do ix=0,nx+1
+              read(lun,*,err=10,iostat=iostat) ixd,iyd,
+     1         (fpsi(ix,iy,i),i=0,3),(ffbz(ix,iy,i),i=0,3)
+            end do
+          end do
+  110     continue
           close(lun)
         else
           call xerrab('Error in reading geometry file')
@@ -1209,6 +1229,17 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
             call xerrab
      .       ('b2gxdr_dummy: Sonnet file inconsistent with the grid')
           end if
+          fpsi=0.0_R8
+          ffbz=0.0_R8
+          read(lun,'(a)',end=210) uline
+          backspace (lun)
+          do iy=0,ny+1
+            do ix=0,nx+1
+              read(lun,*,err=10) ixd,iyd,
+     1         (fpsi(ix,iy,i),i=0,3),(ffbz(ix,iy,i),i=0,3)
+            end do
+          end do
+  210     continue
           close(lun)
         else
           call xerrab('Error in reading geometry file')

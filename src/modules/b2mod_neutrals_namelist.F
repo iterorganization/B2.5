@@ -876,7 +876,7 @@ c>>>
           endif
         endif
       enddo
-      write(hlp_frm,'(a,i2,a)') '(a,',ntrack,'(a2,1x))'
+      write(hlp_frm,'(a,i2,a)') '(1x,a,',ntrack,'(a2,1x))'
       write(*,hlp_frm) 'track_species : Bulk ', track_species(1:ntrack)
 c.. Test consistency with region boundaries
       if (.not.dotest) return

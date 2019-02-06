@@ -11,7 +11,7 @@ c
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
       real (kind=R8) ::
-     *   lmin,lmax,x1,x2,y1,y2,dsep,dist,xmin,xmax,
+     *   lmin,lmax,x1,x2,y1,y2,dsep,dist,xmin,xmax,psign,
      1   y_transform
       integer ix,ixl,ixr,iy,is,iiso,lnblnk,ysepl,ysepr,iystart,iyend
       integer ixx, ixc
@@ -97,6 +97,38 @@ c      if(nidim .ne. 2) call line(2)
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           enddo
+        else if (plot_vs_psi) then
+          if (iystart.le.jsep) then
+            x1 = psi(ixc,iystart)
+          else
+            x1 = psi(ixx,iystart)
+          end if
+          if (iyend.le.jsep) then
+            x2 = psi(ixc,iyend)
+          else
+            x2 = psi(ixx,iyend)
+          end if
+          if (x1.eq.x2) then
+            write(6,*) 'No psi variation over the range to plot'
+            write(6,*) 'Graph abandoned'
+            call subend ()
+            return
+          else
+            if (x1.lt.x2) then
+              psign = 1.0_R8
+            else
+              psign = -1.0_R8
+            endif
+            do iy = iystart, iyend
+              if (iy.le.jsep) then
+                wrk(iy)=(psi(ixc,iy)*psign)+1.0_R8
+              else
+                wrk(iy)=(psi(ixx,iy)*psign)+1.0_R8
+              end if
+              lmin=min(lmin,work(ix,iy,is,iwrk))
+              lmax=max(lmax,work(ix,iy,is,iwrk))
+            end do
+          endif
         else
           if (iystart.le.jsep) then
             wrk(iystart)=dist(cr(ixc,iystart),cz(ixc,iystart),

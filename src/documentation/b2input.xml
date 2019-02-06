@@ -240,7 +240,7 @@
 				<description>
 					local_sonnet - character string.
 					local_sonnet is the file name of the geometry file to be read.
-					The file will be looked for in the run directory, in the ../baserun directory and in $SOLPSTOP/data/meshes. To be used in b2ag.dat.
+					The file will be looked for in the run directory, in the ../baserun directory, in $SOLPSTOP/data.local/meshes, in $SOLPSTOP/data/meshes and in $SOLPSTOP/modules/Carre/meshes/$DEVICE. To be used in b2ag.dat.
 				</description>
 			</switch>
 			<switch>

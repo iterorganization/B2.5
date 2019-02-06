@@ -305,7 +305,8 @@ contains
 
         !! Write plasma state
         if ( B2_WRITE_DATA ) then
-            write (*,*) "b2mod_ual_io.B25_process_ids: writing plasma state"
+            call logmsg( LOGDEBUG, &
+            &   "b2mod_ual_io.B25_process_ids: writing plasma state" )
 
             !! Find grid subset base indices out of the available grid subset
             !! data stored in the IDS. That is done using IMAS GGD routine
@@ -1139,7 +1140,7 @@ contains
 
     if ( B2_WRITE_DATA ) then
 
-        write (*,*) "b2mod_ual_io.write_cpo: writing plasma state"
+        call logmsg( LOGDEBUG, "b2mod_ual_io.write_cpo: writing plasma state" )
 
         iSgCore = gridFindSubGridByName( edgecpo%grid, "Core boundary" )
         iSgInnerMidplane = gridFindSubGridByName( edgecpo%grid, "Inner midplane" )
