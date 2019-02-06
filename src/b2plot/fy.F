@@ -246,17 +246,6 @@ c      if(nidim .ne. 2) call line(2)
             wrk(iy)=wrk(iy)-dsep
           enddo
         endif
-        if (.not.map_to_midplane) then
-          write(tmpstring2,hlp_frm) ' <ix = ',ix,'>'
-        else
-          write(tmpstring2,hlp_frm) ' <ix = ',ix,'> '//
-     &     '(mapped to midplane)'
-        endif
-        tmpstring =
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1))
-        call customise_label(tmpstring,titlestring)
         if(values(9) .ne. values(10)) then
           lmin=values(9)
           lmax=values(10)
@@ -272,6 +261,19 @@ c      if(nidim .ne. 2) call line(2)
         if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
         if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
         if(mod(typeofplot,2) .eq. 1) then
+          if (plot_vs_psi) then
+            write(tmpstring2,hlp_frm) ' <ix = ',ix,'> (vs \Gw\R)'
+          else if (map_to_midplane) then
+            write(tmpstring2,hlp_frm) ' <ix = ',ix,'> '//
+     &       '(mapped to midplane)'
+          else
+            write(tmpstring2,hlp_frm) ' <ix = ',ix,'>'
+          endif
+          tmpstring =
+     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     2     tmpstring2(1:lnblnk(tmpstring2))//
+     3     tmpstring1(1:lnblnk(tmpstring1))
+          call customise_label(tmpstring,titlestring)
           if(values(11).ne.init_value .and.
      &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
             xmin=values(11)
@@ -382,6 +384,11 @@ c      if(nidim .ne. 2) call line(2)
           if(linlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
           write(tmpstring2,hlp_frm) ' <ix = ',ix,'>'
+          tmpstring =
+     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     2     tmpstring2(1:lnblnk(tmpstring2))//
+     3     tmpstring1(1:lnblnk(tmpstring1))
+          call customise_label(tmpstring,titlestring)
           call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
