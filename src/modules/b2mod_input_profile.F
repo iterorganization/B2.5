@@ -441,7 +441,8 @@ cdjm Jan2017 Keep linearised sources for balance
       real(kind=R8), dimension(-1:nx,-1:ny) :: 
      &    hci0,hce0,sig0,alf0,ne,te,ti
        
-      real(kind=R8) :: scaling_width(nscale), scaling_strength(nscale)
+      real(kind=R8), save :: scaling_width(nscale)
+      real(kind=R8), save :: scaling_strength(nscale)
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
      &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr),
      &    vla0(-1:nx,-1:ny,0:1,0:ns-1),hcib(-1:nx,-1:ny,0:ns-1)
