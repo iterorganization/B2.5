@@ -368,7 +368,6 @@ contains
 
             !! ni (SOLPS 4.x) /
             !! na (SOLPS 5.x): Ion Density
-            allocate( edge_profiles%ggd( time_sind )%ion( ns ) )
             allocate( edge_transport%model(1)%ggd( time_sind )%ion( ns ) )
             allocate( edge_sources%source(1)%ggd( time_sind )%ion( ns ) )
 
