@@ -12,8 +12,9 @@ c
       character*256 tmpstring,titlestring
       real (kind=R8) ::
      *   lmin,lmax,x1,x2,y1,y2,dsep,dist,xmin,xmax,psign,
-     1   y_transform
-      integer ix,ixl,ixr,iy,is,iiso,lnblnk,ysepl,ysepr,iystart,iyend
+     1   y_transform,poffset
+      integer ix,ixl,ixr,iy,is,iiso,lnblnk
+      integer ysep,ysepl,ysepr,iystart,iyend
       integer ixx, ixc
       logical iniso
       integer len_of_digits
@@ -84,6 +85,62 @@ c      if(nidim .ne. 2) call line(2)
         tmpstring1=textwk(is,iwrk)
         lmin=work(ix,iystart,is,iwrk)
         lmax=work(ix,iystart,is,iwrk)
+        if (iyref.eq.-2) then
+          if (iystart.le.jsep) then
+            ixl=ixc
+            ixr=ixc
+          else
+            ixl=ixx
+            ixr=ixx
+          end if
+          ysepl=iystart
+          iy=iystart
+          iniso=.false.
+          do while (ixl.gt.-1 .and. .not.iniso .and.
+     &              leftix(ixl,iy).eq.ixl-1)
+            ixl=ixl-1
+            iniso=.false.
+            do iiso = 1,nniso
+              iniso = iniso .or.
+     &         (ixl.ge.nxiso1(iiso).and.ixl.le.nxiso2(iiso).and.
+     &          iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
+            end do
+          end do
+          if(.not.iniso .and. ixl.ne.-1) then
+            do while (ysepl.lt.iyend .and.
+     &                leftix(ixl,ysepl).ne.ixl-1)
+              ysepl=ysepl+1
+            end do
+          end if
+          if(ysepl.eq.iystart) ysepl=iyend
+          ysepr=iystart
+          iniso=.false.
+          do while (ixr.lt.nx .and. .not.iniso .and.
+     &              rightix(ixr,iy).eq.ixr+1)
+            ixr=ixr+1
+            iniso=.false.
+            do iiso = 1,nniso
+              iniso = iniso .or.
+     &         (ixr.ge.nxiso1(iiso).and.ixr.le.nxiso2(iiso).and.
+     &          iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
+            end do
+          end do
+          if(.not.iniso .and. ixr.ne.nx) then
+            do while(ysepr.lt.iyend .and.
+     &               rightix(ixr,ysepr).ne.ixr+1)
+              ysepr=ysepr+1
+            end do
+          end if
+          if(ysepr.eq.iystart) ysepr=iyend
+          ysep=min(ysepr,ysepl)
+          if((ysepl.ne.iyend .or. ysepr.ne.iyend) .and.
+     &       (iystart.le.ysep.and.iyend.ge.ysep)) then
+            if (b2plot_debug.ge.6)
+     >        write(6,*) ' ysepr, ysepl : ', ysepr, ysepl
+          endif
+        else
+          ysep=iyref
+        endif
         if(y_transform_l .ne. 0) then
           do iy=iystart,jsep
             wrk(iy)=y_transform(cr(ixc,iy),cz(ixc,iy))
@@ -97,7 +154,8 @@ c      if(nidim .ne. 2) call line(2)
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           enddo
-        else if (plot_vs_psi) then
+        else if (plot_vs_norm_psi.or.plot_vs_full_psi.or.
+     &           plot_vs_root_psi) then
           if (iystart.le.jsep) then
             x1 = psi(ixc,iystart)
           else
@@ -108,23 +166,30 @@ c      if(nidim .ne. 2) call line(2)
           else
             x2 = psi(ixx,iyend)
           end if
+          if (iystart.le.jsep.and.iyend.gt.jsep) then
+            dsep = 0.5_R8*(fpsi(ixc,ysep,2)+fpsi(ixc,ysep,3))
+          else            
+            dsep = 0.0_R8
+          end if
           if (x1.eq.x2) then
             write(6,*) 'No psi variation over the range to plot'
             write(6,*) 'Graph abandoned'
             call subend ()
             return
           else
-            if (x1.lt.x2) then
-              psign = 1.0_R8
+            psign = sign(1.0_R8,x2-x1)
+            if (plot_vs_norm_psi.or.plot_vs_root_psi) then
+              poffset = 1.0_R8
             else
-              psign = -1.0_R8
-            endif
+              poffset = 0.0_R8
+            end if
             do iy = iystart, iyend
               if (iy.le.jsep) then
-                wrk(iy)=(psi(ixc,iy)*psign)+1.0_R8
+                wrk(iy)=(psi(ixc,iy)*psign)+poffset
               else
-                wrk(iy)=(psi(ixx,iy)*psign)+1.0_R8
+                wrk(iy)=(psi(ixx,iy)*psign)+poffset
               end if
+              if (plot_vs_root_psi) wrk(iy)=sqrt(wrk(iy))
               lmin=min(lmin,work(ix,iy,is,iwrk))
               lmax=max(lmax,work(ix,iy,is,iwrk))
             end do
@@ -162,66 +227,13 @@ c      if(nidim .ne. 2) call line(2)
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           enddo
-          if (iyref.eq.-2) then
-            if (iystart.le.jsep) then
-              ixl=ixc
-              ixr=ixc
-            else
-              ixl=ixx
-              ixr=ixx
-            end if
-            ysepl=iystart
-            iy=iystart
-            iniso=.false.
-            do while (ixl.gt.-1 .and. .not.iniso .and.
-     &                leftix(ixl,iy).eq.ixl-1)
-              ixl=ixl-1
-              iniso=.false.
-              do iiso = 1,nniso
-                iniso = iniso .or.
-     &           (ixl.ge.nxiso1(iiso).and.ixl.le.nxiso2(iiso).and.
-     &            iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
-              end do
-            end do
-            if(.not.iniso .and. ixl.ne.-1) then
-              do while (ysepl.lt.iyend .and.
-     &                  leftix(ixl,ysepl).ne.ixl-1)
-                ysepl=ysepl+1
-              end do
-            end if
-            if(ysepl.eq.iystart) ysepl=iyend
-            ysepr=iystart
-            iniso=.false.
-            do while (ixr.lt.nx .and. .not.iniso .and.
-     &                rightix(ixr,iy).eq.ixr+1)
-              ixr=ixr+1
-              iniso=.false.
-              do iiso = 1,nniso
-                iniso = iniso .or.
-     &           (ixr.ge.nxiso1(iiso).and.ixr.le.nxiso2(iiso).and.
-     &            iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
-              end do
-            end do
-            if(.not.iniso .and. ixr.ne.nx) then
-              do while(ysepr.lt.iyend .and.
-     &                 rightix(ixr,ysepr).ne.ixr+1)
-                ysepr=ysepr+1
-              end do
-            end if
-            if(ysepr.eq.iystart) ysepr=iyend
+          if (iyref.ne.-2) then
             if((ysepl.ne.iyend .or. ysepr.ne.iyend) .and.
-     &         (iystart.le.min(ysepr,ysepl).and.
-     &          iyend  .ge.min(ysepr,ysepl))) then
-!            dsep=0.5_R8*(wrk(min(ysepr,ysepl))+wrk(min(ysepr,ysepl)-1))
-              dsep=wrk(min(ysepr,ysepl))-
-     1         dist(
-     1          cr(ixx,min(ysepr,ysepl)),cz(ixx,min(ysepr,ysepl)),
-     1            0.5_R8*(crx(ixx,min(ysepr,ysepl),0)+
-     1                    crx(ixx,min(ysepr,ysepl),1)),
-     2            0.5_R8*(cry(ixx,min(ysepr,ysepl),0)+
-     2                    cry(ixx,min(ysepr,ysepl),1)))
-              if (b2plot_debug.ge.6)
-     >          write(6,*) ' ysepr, ysepl : ', ysepr, ysepl
+     &         (iystart.le.ysep.and.iyend.ge.ysep)) then
+              dsep=wrk(ysep)-
+     1         dist(cr(ixx,ysep),cz(ixx,ysep),
+     1            0.5_R8*(crx(ixx,ysep,0)+crx(ixx,ysep,1)),
+     2            0.5_R8*(cry(ixx,ysep,0)+cry(ixx,ysep,1)))
             else
               dsep=0.0_R8
             endif
@@ -241,7 +253,7 @@ c      if(nidim .ne. 2) call line(2)
             else
               dsep=0.0_R8
             endif
-          endif
+          endif  
           do iy=iystart,iyend
             wrk(iy)=wrk(iy)-dsep
           enddo
@@ -261,8 +273,12 @@ c      if(nidim .ne. 2) call line(2)
         if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
         if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
         if(mod(typeofplot,2) .eq. 1) then
-          if (plot_vs_psi) then
+          if (plot_vs_norm_psi) then
             write(tmpstring2,hlp_frm) ' <ix = ',ix,'> (vs \Gw\R)'
+          else if (plot_vs_full_psi) then
+            write(tmpstring2,hlp_frm) ' <ix = ',ix,'> (vs \GW\R)'
+          else if (plot_vs_root_psi) then
+            write(tmpstring2,hlp_frm) ' <ix = ',ix,'> (vs \Gq\R_{pol})'
           else if (map_to_midplane) then
             write(tmpstring2,hlp_frm) ' <ix = ',ix,'> '//
      &       '(mapped to midplane)'
@@ -339,6 +355,23 @@ c      if(nidim .ne. 2) call line(2)
 #endif
             endif
           enddo
+          if (plotting_sep.and.iystart.le.ysep.and.iyend.gt.ysep) then
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
+            call gslwsc_d(sepwidth)
+            call dashdc('$',1,0)
+#endif
+            if ((wrk(ysep)+wrk(ysep+1)).gt.0.0_R8.or.linlog.le.2)
+     >        call lined_d((wrk(ysep)+wrk(ysep+1))/2.0_R8,lmin,
+     1                     (wrk(ysep)+wrk(ysep+1))/2.0_R8,lmax)
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
+            call gslwsc_d(lwidth)
+            call dashdc(linefmt,8,lfsz)
+#endif
+          endif
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
@@ -435,6 +468,23 @@ c      if(nidim .ne. 2) call line(2)
 #endif
             endif
           enddo
+          if (plotting_sep.and.iystart.le.ysep.and.iyend.gt.ysep) then
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
+            call gslwsc_d(sepwidth)
+            call dashdc('$',1,0)
+#endif
+            if ((wrk(ysep)+wrk(ysep+1)).gt.0.0_R8.or.linlog.le.2)
+     >        call lined_d((wrk(ysep)+wrk(ysep+1))/2.0_R8,lmin,
+     1                     (wrk(ysep)+wrk(ysep+1))/2.0_R8,lmax)
+#ifndef PLPLOT
+            call lastd
+            if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
+            call gslwsc_d(lwidth)
+            call dashdc(linefmt,8,lfsz)
+#endif
+          endif
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
