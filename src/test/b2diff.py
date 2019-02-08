@@ -44,7 +44,7 @@ Examples:
   - Check max relative error for ni and te, also use tolerance 1e-12 for them:
     ./b2diff.py --maxerr 'ni te' --specific-tolerance 'ni 1e-12 te 1e-12'
 """
-from __future__ import print_function
+
 from sys import exit
 from sys import stdin
 import argparse
@@ -164,7 +164,7 @@ print_these = list()
 N = args.nout
 i = 0
 correct = True
-for x in sorted(errors.items(), key=lambda elem: elem[1][0], reverse=True):
+for x in sorted(list(errors.items()), key=lambda elem: elem[1][0], reverse=True):
     # x[0] is the key of the dictionary == variable name
     # x[1] is the list of properties that we collected [max err, max_abs_err, etc]
     if ignore and ignore.match(x[0]):
