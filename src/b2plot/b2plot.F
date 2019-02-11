@@ -88,7 +88,7 @@ c
      *   r_ref, z_ref, s_ref(-1:nyd), profile(-1:nyd),
      7   uedge_c(-1:nxd,-1:nyd), uedge_v(-1:nxd,-1:nyd,1:4),
      8   corners(-1:nxd+1,-1:nyd+1),
-     9   zaf(0:nsd_local-1), tif, pxf
+     9   zaf(0:nsd_local-1), tif, pxf, psep
       real (kind=R8), allocatable ::
      *   wall_tmp(:,:), trg_tmp(:,:)
       real (kind=R8) ::
@@ -1145,7 +1145,8 @@ c
       call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
       cr=0.25_R8*sum(crx,3)
       cz=0.25_R8*sum(cry,3)
-      psi=0.25_R8*sum(fpsi,3)
+      psep=0.5_R8*(fpsi(jxa,jsep,2)+fpsi(jxa,jsep,3))
+      psi=0.25_R8*sum(fpsi,3)-psep
       fbz=0.25_R8*sum(ffbz,3)
       targetr=0.5_R8*sum(targetcr,3)
       targetz=0.5_R8*sum(targetcz,3)
@@ -1216,11 +1217,14 @@ c
       call vesselon(.false.)       ! same for vessel
       call separatrixon(.false.)   ! same for separatrix
       call adjust_axes(.false.)    ! nice axes by default
-      call set_psi_plotting(.false.)     ! do not plot against psi
-      call set_midplane_mapping(.false.) ! do not map to midplane by default
+      call set_full_psi_plotting(.false.) ! do not plot against full psi
+      call set_norm_psi_plotting(.false.) ! do not plot against normalised psi
+      call set_root_psi_plotting(.false.) ! do not plot against root(psi)
+      call set_midplane_mapping(.false.)  ! do not map to midplane by default
       call wallon(.false.,0,values(14),values(15),1)
       call targeton(.false.,values(32),values(33),1)
       call set_partition_colors(0.0_R8)
+      plotting_sep=.false.
       plotting_wall=.false.
       b2plot_debug=0
       sepwidth=1.0_R8            ! standard separatrix line width
@@ -1563,7 +1567,7 @@ c
           nz=1
           call copy(fbz,1.0_R8,nz,textbl)
         case('psi')
-          description='Normalised poloidal magnetic flux function'
+          description='Poloidal magnetic flux function (Wb)'
           nz=1
           call copy(psi,1.0_R8,nz,textbl)
         case('na')
@@ -10545,13 +10549,18 @@ c
           acol=istack(iistack)
           call pop_stack(stack_req)
         case('sep')      ! plot separatrix
+          plotting_sep=.not.plotting_sep
           call separatrixon(.true.)
         case('vesl')     ! plot vessel walls from mesh.extra file
           call vesselon(.true.)
         case('mmid')     ! map to midplane
           call set_midplane_mapping(.true.)
-        case('mpsi')     ! plot versus psi
-          call set_psi_plotting(.true.)
+        case('fpsi')     ! plot versus full psi
+          call set_full_psi_plotting(.true.)
+        case('mpsi')     ! plot versus normalised psi
+          call set_norm_psi_plotting(.true.)
+        case('rpsi')     ! plot versus root(normalised psi)
+          call set_root_psi_plotting(.true.)
         case('nocp')     ! do not plot contour plot
           call contourplot(.false.)
         case('nice')     ! toggle whether axes will have nice values

@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=354,nfns=207,nsparameters=32,nelabels=36,
+      parameter(nlabels=354,nfns=209,nsparameters=32,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -99,7 +99,7 @@
      9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
      *  'flke'    , 'flki'    , 'flal'    , 'flalc'   , 'b2eatcr' /
       data labels(351:354) /
-     1  'fnex'    , 'fney'    , 'fpsi'    , 'ffbz'    /
+     1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -488,7 +488,7 @@
       data descriptions(351:354) /
      1    'Poloidal electron flux (s^{-1})',
      2    'Radial electron flux (s^{-1})',
-     3    'Normalised poloidal magnetic flux function',
+     3    'Poloidal magnetic flux function (Wb)',
      4    'Toroidal magnetic flux function (Wb)'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
@@ -613,9 +613,9 @@
      8 'sprt' , 'list' , 'acol' , 'dcol'   , 'wcol'  ,
      9 'tcol' , 'lfsz' , 'zwid' , 'psxperp', 'expl'  ,
      * 'exps' , 'mdims', 'itoe' , 'rtoe'   , 'stoe'  /
-      data fns(201:207) /
+      data fns(201:209) /
      1 'trigmesh', 'earox', 'earoy', 'earow', 'nice' ,
-     2 'glsz' , 'mpsi' /
+     2 'glsz' , 'mpsi' , 'fpsi' , 'rpsi'   /
       data wlabels /
      1 'wallarea', 'ei'      , 'wallflux', 'wallhflx', 'r1'      ,
      2 'r2'      , 'z1'      , 'z2'      , 'walltemp', 'plathick',
