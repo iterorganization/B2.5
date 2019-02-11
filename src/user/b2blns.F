@@ -103,8 +103,13 @@ c*** np_tmp:  number of output data for each species
 c
       parameter (lv=20180622, np_tmp=16)                            ! IYS 22.06.2018
 c
-      real (kind=R8) :: hlpdt, hlp_rec, hlp_sput, hlp, bsign 
+!!!!      real (kind=R8) :: hlpdt, hlp_rec, hlp_sput, hlp, 
+      real (kind=R8) :: hlpdt, hlp, hlp_rec, hlp_sput, 
+     &                        bsign, hlp_nw, hlp_pump 
+      logical 
+     &     hlp_pump_counted(nnatmi+nnmoli+nnioni+nnplsi,nnstsi+nnlimi)
 
+ 
       real (kind=R8), allocatable, save :: 
      *     flxic(:),flxnc(:),flxit(:),                                            ! IYS 12.01.2018
      ,     flxnt(:),flxiw(:),flxnw(:),
@@ -608,6 +613,11 @@ c**       js - index of the Eirene surface, js > nnlimi means that this is the '
 
             end do ! end of the loop over atoms
 
+          do j = 1, nnplsi
+            if (leb2bulk(j).eq.ls) flxnt_pump(ls) = 
+     &         flxnt_pump(ls) + wlpump(nnatmi+nnmoli+nnioni+j,js)
+          enddo
+          
           end do ! end of the loop over target segments
 
 c*** Flux across the side walls
@@ -646,66 +656,107 @@ c*** Flux across the side walls
 
           end do ! end of the loop over atoms
 
-        end do ! end of the loop over wall segments
+          do j = 1, nnplsi
+            if (leb2bulk(j).eq.ls) flxnt_pump(ls) = 
+     &         flxnt_pump(ls) + wlpump(nnatmi+nnmoli+nnioni+j,js)
+          enddo
+
+          end do ! end of the loop over wall segments
 
 c*** Puffing/seeding rate and recycling source
 
 !       Loop over strata
 
+        hlp_pump_counted = .FALSE.
+
         do ic = 1,nstrat
 
           if(use_recyceir.gt.0) then
-            recyctmp=recyceir(ic)
+              recyctmp=recyceir(ic)
           else
-            recyctmp=recyc(kks,ic)
+              recyctmp=recyc(kks,ic)
           endif
 
           if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding
 
-            do j = 1,nnatmi
+           do j = 1,nnatmi
               if (latmscl(j) .eq. ls) flxnp(ls) = flxnp(ls) +
      &                 userfluxparm(ic,1) * gpfc(j,ic) * recyctmp
             end do
 
-          elseif (crcstra(ic) .eq. 'S' .or. crcstra(ic) .eq. 'N') then ! Recycling on the B2.5 outer boundaries except targets
+          elseif (crcstra(ic) .eq. 'S' .or. crcstra(ic) .eq. 'N') then ! Recycling on the B2 outer boundaries except targets
 
-            hlp_rec = 0.0_R8
+            hlp_rec  = 0.0_R8
             hlp_sput = 0.0_R8
+            hlp_pump = 0.0_R8
+            hlp_nw = 0.0_R8
 
-            do i = msns(1,ic), msns(1,ic) + msns(2,ic) - 1
+
+           do i = msns(1,ic), msns(1,ic) + msns(2,ic) - 1
  
-              k = lsns(i)
-              if (k .lt. 0) k=nnlimi-k
+               k = lsns(i)
 
-              if (k .gt. 0) then
+ 
+               if (k .lt. 0) k=nnlimi-k
 
-                do j=1,nnatmi                   
-                  if (latmscl(j).eq.ls) then
-                    hlp_rec = hlp_rec + wldpa(k,j,ic) * sclstra(j,ic)      ! BE CAREFUL: hlp_rec is a temporary variable
-                    hlp_sput = hlp_sput + 
-     &                         wldspta(k,j,ic) * sclstra(j,ic)  ! BE CAREFUL: hlp_sput is a temporary variable
-                  end if
-                end do
+               if (k .gt. 0) then
 
-                do j=1,nnmoli
-                  do ii=1,nnatmi
-                    if (latmscl(ii).eq.ls) then
-                      hlp_rec = hlp_rec + 
-     &                     mlcmp(ii,j) * wldpm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_rec is a temporary variable
+                 do j=1,nnatmi                   
+                   if (latmscl(j).eq.ls) then
+                      hlp_rec = hlp_rec + wldpa(k,j,ic) * sclstra(j,ic)  ! BE CAREFUL: hlp_rec is a temporary variable
                       hlp_sput = hlp_sput + 
-     &                   mlcmp(ii,j) * wldsptm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_rec is a temporary variable
-                    end if
-                  enddo
-                enddo
+     &                         wldspta(k,j,ic) * sclstra(j,ic)  ! BE CAREFUL: hlp_sput is a temporary variable
 
-              endif
+                      if (.not. hlp_pump_counted(j,k)) then  ! to count each atom on each surface only once, do not sum over srtata
+                        hlp_pump = hlp_pump + wlpump(j,k)  ! BE CAREFUL: hlp_sput is a temporary variable
+                        hlp_pump_counted(j,k) = .TRUE.
+                      endif
+ 
+                     hlp_nw = hlp_nw - sclstra(j,ic) *
+     &                   (wldna(k,j,ic) - wldra(k,j,ic) - wldpa(k,j,ic))  ! BE CAREFUL: hlp_nw is a temporary variable
+                   end if
+                 end do
 
-            enddo
+                 do j=1,nnmoli
+                   do ii=1,nnatmi
+                     if (latmscl(ii).eq.ls) then
+                       hlp_rec = hlp_rec + 
+     &                     mlcmp(ii,j) * wldpm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_rec is a temporary variable
+                       hlp_sput = hlp_sput + 
+     &                   mlcmp(ii,j) * wldsptm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_sput is a temporary variable
+
+                       if (.not. hlp_pump_counted(j+nnatmi,k)) then
+                         hlp_pump = hlp_pump + wlpump(j+nnatmi,k)  ! BE CAREFUL: hlp_sput is a temporary variable
+                         hlp_pump_counted(j+nnatmi,k) = .TRUE.
+                       endif
+
+                       hlp_nw = hlp_nw - sclstra(j,ic) * mlcmp(ii,j) *
+     &                   (wldnm(k,j,ic) - wldrm(k,j,ic) - wldpm(k,j,ic))  ! BE CAREFUL: hlp_nw is a temporary variable
+                      end if
+                   enddo
+                 enddo
+
+                 do j=1,nnplsi
+                   if (leb2bulk(j).eq.ls) then
+                    if (.not. 
+     &                hlp_pump_counted(j+nnatmi+nnmoli+nnioni,k)) then
+                      hlp_pump = 
+     &                hlp_pump + wlpump(j+nnatmi+nnmoli+nnioni,k)  ! BE CAREFUL: hlp_sput is a temporary variable
+                      hlp_pump_counted(j+nnatmi+nnmoli+nnioni,k) = 
+     &                                                      .TRUE.
+                    endif
+                   endif   
+                 enddo
+
+                endif
+
+              enddo
           
-            flxnw_rec(ls) = flxnw_rec(ls) + hlp_rec * recyctmp
-            flxnw_sput(ls) = flxnw_sput(ls) + hlp_sput * recyctmp
-
-          endif
+              flxnw_rec(ls) = flxnw_rec(ls) + hlp_rec * recyctmp
+              flxnw_sput(ls) = flxnw_sput(ls) + hlp_sput !* recyctmp
+              flxnw(ls) = flxnw(ls) + hlp_nw !* recyctmp
+              flxnw_pump(ls) = flxnw_pump(ls) + hlp_pump
+            endif
 
 !       End of the loop over strata
         enddo
@@ -950,7 +1001,7 @@ c
       return
 c======================================================================
 c
-      entry b2blnsf(nx,ny,ns,dtim)
+      entry b2blnsf(nx,ny,ns,dtim,iline)
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
