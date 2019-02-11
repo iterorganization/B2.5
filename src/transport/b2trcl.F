@@ -428,7 +428,7 @@ csw 13mar2012
            chci(ix,iy,0)=chci(ix,iy,0)*f_luc_ki(ix,iy)                    !lk 20.11.07
            sigx_c(ix,iy)=sigx_c(ix,iy)*f_luc_sg(ix,iy)
            alfx_c(ix,iy)=alfx_c(ix,iy)*f_luc_al(ix,iy)
-           if( iy .eq. -1 ) then
+           if( bottomiy(ix,iy).eq.-2 ) then
             csig(ix,iy,0) = csig_mltpl*csig(ix,iy,0)              !iyv
             sigx_c(ix,iy) = csig_mltpl*sigx_c(ix,iy)
            endif 

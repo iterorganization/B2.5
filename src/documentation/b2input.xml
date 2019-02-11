@@ -3233,6 +3233,14 @@
 					Can be applied &lt;&gt;1 during the convergence and turned off for the final stage of calculations. Use with caution.
 				</description>
 			</switch>
+			<switch>
+				<name>b2trcl_csig_mltpl</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the poloidal electrical conductivity on the bottom ring of the grid on closed flux surfaces.
+				</description>
+			</switch>
 			<switchgroup>
 			  <name>b2ux*</name>
 			  <description>

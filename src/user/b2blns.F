@@ -613,10 +613,10 @@ c**       js - index of the Eirene surface, js > nnlimi means that this is the '
 
             end do ! end of the loop over atoms
 
-          do j = 1, nnplsi
-            if (leb2bulk(j).eq.ls) flxnt_pump(ls) = 
+            do j = 1, nnplsi
+              if (latmscl(lkindp(j)).eq.ls) flxnt_pump(ls) = 
      &         flxnt_pump(ls) + wlpump(nnatmi+nnmoli+nnioni+j,js)
-          enddo
+            enddo
           
           end do ! end of the loop over target segments
 
@@ -635,31 +635,31 @@ c*** Flux across the side walls
                 flxnw_pump(ls) = flxnw_pump(ls) + wlpump(j,js)                       ! IYS 22.06.2018
                 flxnw_sput(ls) = flxnw_sput(ls) + wldspta(js,j,0)                    ! IYS 22.06.2018
 
-              do ic = 1,nnmoli
+                do ic = 1,nnmoli
 
-                if (mlcmp(j,ic) .gt. 0) then
+                  if (mlcmp(j,ic) .gt. 0) then
 
-                  flxnw(ls) = flxnw(ls) - mlcmp(j,ic) *
-     .              (wldnm(js,ic,0) - wldrm(js,ic,0) - wldpm(js,ic,0))        ! wldpm(js,j,0) should be zero, since no ion reaches the side wall
-                  flxnw_rec(ls) = flxnw_rec(ls) + 
+                    flxnw(ls) = flxnw(ls) - mlcmp(j,ic) *
+     .                (wldnm(js,ic,0) - wldrm(js,ic,0) - wldpm(js,ic,0))        ! wldpm(js,j,0) should be zero, since no ion reaches the side wall
+                    flxnw_rec(ls) = flxnw_rec(ls) + 
      &                         mlcmp(j,ic) * wldpm(js,ic,0)
-                  flxnw_pump(ls) = flxnw_pump(ls) +
+                    flxnw_pump(ls) = flxnw_pump(ls) +
      &                 mlcmp(j,ic) * wlpump(nnatmi+ic,js)  ! IYS 22.06.2018
-                  flxnw_sput(ls) = flxnw_sput(ls) +
+                    flxnw_sput(ls) = flxnw_sput(ls) +
      &                 mlcmp(j,ic) * wldsptm(js,ic,0)      ! IYS 22.06.2018
 
-                endif
+                  endif
 
-              end do ! end of the loop over molecules
+                end do ! end of the loop over molecules
 
-            end if
+              end if
 
-          end do ! end of the loop over atoms
+            end do ! end of the loop over atoms
 
-          do j = 1, nnplsi
-            if (leb2bulk(j).eq.ls) flxnt_pump(ls) = 
+            do j = 1, nnplsi
+              if (latmscl(lkindp(j)).eq.ls) flxnt_pump(ls) = 
      &         flxnt_pump(ls) + wlpump(nnatmi+nnmoli+nnioni+j,js)
-          enddo
+            enddo
 
           end do ! end of the loop over wall segments
 
@@ -667,86 +667,84 @@ c*** Puffing/seeding rate and recycling source
 
 !       Loop over strata
 
-        hlp_pump_counted = .FALSE.
+          hlp_pump_counted = .FALSE.
 
-        do ic = 1,nstrat
+          do ic = 1,nstrat
 
-          if(use_recyceir.gt.0) then
+            if(use_recyceir.gt.0) then
               recyctmp=recyceir(ic)
-          else
+            else
               recyctmp=recyc(kks,ic)
-          endif
+            endif
 
-          if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding
+            if (crcstra(ic) .eq. 'C') then  ! Puffing or seeding
 
-           do j = 1,nnatmi
-              if (latmscl(j) .eq. ls) flxnp(ls) = flxnp(ls) +
+             do j = 1,nnatmi
+               if (latmscl(j) .eq. ls) flxnp(ls) = flxnp(ls) +
      &                 userfluxparm(ic,1) * gpfc(j,ic) * recyctmp
-            end do
+             end do
 
-          elseif (crcstra(ic) .eq. 'S' .or. crcstra(ic) .eq. 'N') then ! Recycling on the B2 outer boundaries except targets
+            elseif (crcstra(ic) .eq. 'S' .or. crcstra(ic) .eq. 'N') then ! Recycling on the B2 outer boundaries except targets
 
-            hlp_rec  = 0.0_R8
-            hlp_sput = 0.0_R8
-            hlp_pump = 0.0_R8
-            hlp_nw = 0.0_R8
+              hlp_rec  = 0.0_R8
+              hlp_sput = 0.0_R8
+              hlp_pump = 0.0_R8
+              hlp_nw = 0.0_R8
 
-
-           do i = msns(1,ic), msns(1,ic) + msns(2,ic) - 1
+              do i = msns(1,ic), msns(1,ic) + msns(2,ic) - 1
  
-               k = lsns(i)
+                k = lsns(i)
 
- 
-               if (k .lt. 0) k=nnlimi-k
+                if (k .lt. 0) k=nnlimi-k
 
-               if (k .gt. 0) then
+                if (k .gt. 0) then
 
-                 do j=1,nnatmi                   
-                   if (latmscl(j).eq.ls) then
+                  do j=1,nnatmi                   
+                    if (latmscl(j).eq.ls) then
                       hlp_rec = hlp_rec + wldpa(k,j,ic) * sclstra(j,ic)  ! BE CAREFUL: hlp_rec is a temporary variable
                       hlp_sput = hlp_sput + 
      &                         wldspta(k,j,ic) * sclstra(j,ic)  ! BE CAREFUL: hlp_sput is a temporary variable
 
                       if (.not. hlp_pump_counted(j,k)) then  ! to count each atom on each surface only once, do not sum over srtata
-                        hlp_pump = hlp_pump + wlpump(j,k)  ! BE CAREFUL: hlp_sput is a temporary variable
+                        hlp_pump = hlp_pump + wlpump(j,k)  ! BE CAREFUL: hlp_pump is a temporary variable
                         hlp_pump_counted(j,k) = .TRUE.
                       endif
  
-                     hlp_nw = hlp_nw - sclstra(j,ic) *
+                      hlp_nw = hlp_nw - sclstra(j,ic) *
      &                   (wldna(k,j,ic) - wldra(k,j,ic) - wldpa(k,j,ic))  ! BE CAREFUL: hlp_nw is a temporary variable
-                   end if
-                 end do
+                    end if
+                  end do
 
-                 do j=1,nnmoli
-                   do ii=1,nnatmi
-                     if (latmscl(ii).eq.ls) then
-                       hlp_rec = hlp_rec + 
+                  do j=1,nnmoli
+                    do ii=1,nnatmi
+                      if (latmscl(ii).eq.ls) then
+                        hlp_rec = hlp_rec + 
      &                     mlcmp(ii,j) * wldpm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_rec is a temporary variable
-                       hlp_sput = hlp_sput + 
+                        hlp_sput = hlp_sput + 
      &                   mlcmp(ii,j) * wldsptm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_sput is a temporary variable
 
-                       if (.not. hlp_pump_counted(j+nnatmi,k)) then
-                         hlp_pump = hlp_pump + wlpump(j+nnatmi,k)  ! BE CAREFUL: hlp_sput is a temporary variable
-                         hlp_pump_counted(j+nnatmi,k) = .TRUE.
-                       endif
+                        if (.not. hlp_pump_counted(j+nnatmi,k)) then
+                          hlp_pump = hlp_pump + wlpump(j+nnatmi,k)  ! BE CAREFUL: hlp_sput is a temporary variable
+                          hlp_pump_counted(j+nnatmi,k) = .TRUE.
+                        endif
 
-                       hlp_nw = hlp_nw - sclstra(j,ic) * mlcmp(ii,j) *
+                        hlp_nw = hlp_nw - sclstra(j,ic) * mlcmp(ii,j) *
      &                   (wldnm(k,j,ic) - wldrm(k,j,ic) - wldpm(k,j,ic))  ! BE CAREFUL: hlp_nw is a temporary variable
                       end if
-                   enddo
-                 enddo
+                    enddo
+                  enddo
 
-                 do j=1,nnplsi
-                   if (leb2bulk(j).eq.ls) then
-                    if (.not. 
-     &                hlp_pump_counted(j+nnatmi+nnmoli+nnioni,k)) then
-                      hlp_pump = 
-     &                hlp_pump + wlpump(j+nnatmi+nnmoli+nnioni,k)  ! BE CAREFUL: hlp_sput is a temporary variable
-                      hlp_pump_counted(j+nnatmi+nnmoli+nnioni,k) = 
+                  do j=1,nnplsi
+                    if (latmscl(lkindp(j)).eq.ls) then
+                      if (.not. 
+     &                 hlp_pump_counted(j+nnatmi+nnmoli+nnioni,k)) then
+                        hlp_pump = 
+     &                   hlp_pump + wlpump(j+nnatmi+nnmoli+nnioni,k)  ! BE CAREFUL: hlp_pump is a temporary variable
+                        hlp_pump_counted(j+nnatmi+nnmoli+nnioni,k) = 
      &                                                      .TRUE.
-                    endif
-                   endif   
-                 enddo
+                      endif
+                    endif   
+                  enddo
 
                 endif
 
@@ -759,12 +757,12 @@ c*** Puffing/seeding rate and recycling source
             endif
 
 !       End of the loop over strata
-        enddo
+          enddo
 
 c**********************************
 ! The neutral fluxes from Eirene are now computed
 c**********************************
-      endif ! use_eirene
+        endif ! use_eirene
 
 c**** Total flux coming to the volume =
 c       Ion and neutral flux through the core +

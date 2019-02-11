@@ -348,16 +348,10 @@ program test_b2output
 ! B2.5 output files can be either binary or text files. We open first as
 ! formatted file, if it does not make sense, then reopen as unformatted.
    character(*), intent(in) :: filename
-   logical:: use_formatted_io
    integer :: my_unit
-   integer, dimension(:), allocatable :: idum
-   character(len=:), allocatable ::  lblmn
-   character(len=32) :: id
-   integer :: n 
    character(len=10) :: version_in
    character(len=7) :: label
    integer :: ierr
-   logical :: b2fstate
    
    open(newunit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
    ! Read the header

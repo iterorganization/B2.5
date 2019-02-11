@@ -83,7 +83,7 @@ cank }
      *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
-     2   ngpdata(:), leb2bulk(:)
+     2   ngpdata(:)
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:)
       character*1, allocatable, save ::
@@ -125,14 +125,14 @@ cank }
       character*1, save :: CRCSTRA(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
-     ,  lcns(nstsid), ltns(nstsid),! leb2bulk(NSDMAX),
+     ,  lcns(nstsid), ltns(nstsid),
      ,  lsns(nstraid*DEF_NSRFS), ksns(NSTRAID), msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
 #endif
 
       integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns,
      .     dbg_eir_mc, debug_flags(100), neutrals_count
-      integer, allocatable, save :: lbcstra(:),leb2bulk(:)
+      integer, allocatable, save :: lbcstra(:)
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
      .     volrecinc, volrecwt
@@ -264,7 +264,6 @@ csw 21feb2012
       call xertst (nstra_in.le.NSTRAID, 'faulty parameter nstraid_in')
       call xertst (natm_in.ge.nspecies, 'faulty parameter natm_in')
       allocate(lbcstra(nstra_in))
-      allocate(leb2bulk(NSDMAX))
       CRCSTRA=' '
       SPS_ID=' '
       SPS_MTRL=' '
@@ -331,7 +330,6 @@ cwdk 0% momentum recycling, for backwards compatibility
       neutrals_time_switch=0.0_R8
 
       lstrascl=0
-      leb2bulk=0
       lbcstra=0
       b2eatcr=0
       b2espcr=0
@@ -462,7 +460,6 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
 #endif
 #endif
       deallocate(lbcstra)
-      deallocate(leb2bulk)
       return
       end subroutine dealloc_b2mod_neutrals
 
@@ -1179,43 +1176,5 @@ c.. Test consistency with physical edges within the computational domain
 
       return
       end subroutine map_strata_to_boundaries
-
-#ifdef B25_EIRENE
-      subroutine map_bulk_ions_E2B2(ns)
-
-      use eirmod_comusr
-      use b2mod_b2cmpa
-
-      implicit none
-
-      integer ipls, is, ns
-      logical ions_coincide
-
-#ifdef DBG
-      write(*,*) 'NSPZ = ',NSPZ
-      write(*,*) 'NATM = ',NATM
-      write(*,*) 'NMOL = ',NMOL
-      write(*,*) 'NION = ',NION
-      write(*,*) 'NPLS = ',NPLS
-#endif
-
-      do ipls = 1,NPLS
-        do is=0,ns-1
-
-          ions_coincide = ( (AM(is) - NMASSP(ipls)) .le. 
-     &       1.0e-3_R8 * (AM(is) + NMASSP(ipls)) ) .and. 
-     &       ( zn(is) .eq. NCHARP(ipls) ) .and.
-     & (zamin(is) .le. NCHRGP(ipls) .and. NCHRGP(ipls) .le. zamax(is))
- 
-          if (ions_coincide) leb2bulk(ipls) = b2espcr(is)
-
-        enddo
-#ifdef DBG
-        write(*,*) 'ipls = ',ipls,' leb2bulk = ', leb2bulk(ipls)
-#endif
-      enddo
-
-      endsubroutine map_bulk_ions_E2B2
-#endif
 
       end module b2mod_neutrals_namelist

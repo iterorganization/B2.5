@@ -1176,7 +1176,9 @@ c        print *,'size wldpp(,,)',size(wldpp,1),size(wldpp,2),size(wldpp,3)
               sja_w(j,ia)=sja_w(j,ia)+wldna(js,ia,0)
             end do
             do is=1,ns-nspecies !loop over Eirene background ions
-              sjp_w(j,lkindp(is))=sjp_w(j,lkindp(is))+wldpp(js,is,0)
+              ia=latmscl(lkindp(is))
+              if (ia.eq.0) cycle
+              sjp_w(j,ia)=sjp_w(j,ia)+wldpp(js,is,0)
             end do
             do ia=1,natmi !loop over Eirene atoms
               if(sja_t(j,ia).gt.0.0_R8) then !{
