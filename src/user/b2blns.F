@@ -34,14 +34,14 @@ c----------------------------------------------------------------------
 c----------------------------------------------------------------------
 c*** Output data (for each species):
 c***
-c***    header   array
+c***    header         array
 c***                                        --- Global particle balance
 c***   ion_core        flxic       ion flow across the core boundary (based on fna array)
 c***   ion_core_mdf    flxic_mdf   ion flow across the core boundary (based on fna_mdf array)
 c***   ion_targ        flxit       ion flow to the targets (based on fna array)                                    ! IYS 12.01.2018
 c***   ion_wall        flxiw       ion flow to the side walls (based on fna array)                                 ! IYS 12.01.2018
 c***   ion_wall        flxi_out    ion flow to the side walls and divertors  (based on fna_mdf array)              ! IYS 12.01.2018
-c***   ion_dndt        flxid       time derivative of the ion content in the whole domain
+c***   ion_dndt        flxid       time derivative of the ion content over the whole domain
 c***   src_ioniz       flxi_out    ion source due to ionization from neutral (ground) state
 
 c***   ntr_core        flxnc       neutral flow across the core boundary
@@ -122,7 +122,8 @@ c*** from 20180604 on
 
 c----------------------------------------------------------------------
 c
-      character f*(lenfnm), hlp_c, hlp_h(np_tmp)*12, hlp_frm*256, tab
+      character f*(lenfnm), hlp_c, hlp_h(np_tmp)*12, hlp_frm*256, tab,
+     ,     hlp_prt*26
 c
 c----------------------------------------------------------------------
 c*** Taken from the common blocks:
@@ -156,7 +157,7 @@ c
 c----------------------------------------------------------------------
       save lun, i, j, k, l, m, n, ic, is, ix, iy,
      1 js, ks, ls, nc, nv, kks, use_recyceir,
-     2 first, ex
+     2 first, ex, hlp_frm
 c======================================================================
 
       if(first_time_step) return
@@ -172,19 +173,20 @@ c======================================================================
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
         print *,'=== Regions of the grid:'
-        print *
         l=ny+1
         n=mod(l-1,10)+1
+        i=(nx+2)/10+1
+        write(hlp_prt,'(a,i3,a)') '(1x,i4,1x,i1,',i,'(1x,10i1))'
         do k=0,ny-1
           m=l
           l=max(0,m-n+1)
           n=10
           do j=m-1,l-1,-1
-            print '(1x,i4,1x,i1,40(1x,10i1))',j,
-     ,                                         (region(i,j,0),i=-1,nx)
+            write(*,hlp_prt) j,(region(i,j,0),i=-1,nx)
           end do
           l=l-1
         end do
+        write(*,'()')
 c>>>
 c
 
@@ -257,11 +259,14 @@ c<<<
         do k=debug_flags(92),debug_flags(93)
           print *
           print *,'wldpp:',k
+          write (hlp_prt,'(a,i3,a)') '(1p,i4,',nnplsi,'e9.2)'
           do j=nnlimi+debug_flags(90),nnlimi+debug_flags(91)
-            print '(1p,i4,20e9.2)',j,(wldpp(j,i,k),i=1,nnplsi)
+            write(*,hlp_prt) j,(wldpp(j,i,k),i=1,nnplsi)
           end do
           print *
           print *,'wldpeb, wldpa, wldpm, hlpit_pl:',k
+          write (hlp_prt,'(a,i3,a)')
+     .     '(1p,i4,',1+nnatmi+nnmoli+nspecies,'e9.2)'
           do j=nnlimi+debug_flags(90),nnlimi+debug_flags(91)
             ks=0
             do ls=1,nspecies
@@ -271,9 +276,9 @@ c<<<
                 hlpit_pl(ls)=hlpit_pl(ls)+wldpp(j,ks,k)
               end do
             end do
-            print '(1p,i4,20e12.4)',j,wldpeb(j,k),
+            write(*,hlp_prt) j,wldpeb(j,k),
      ,         (wldpa(j,i,k),i=1,nnatmi),(wldpm(j,i,k),i=1,nnmoli),
-     ,                                       (hlpit_pl(i),i=1,nspecies)
+     ,                                   (hlpit_pl(i),i=1,nspecies)
           end do
         end do
       end if
@@ -286,7 +291,7 @@ c>>>
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ! {IYS 04.06.2018
-! The logics is changed completely
+! The logic is changed completely
 
 ! Set all output arrays to zero
 
@@ -317,9 +322,10 @@ c**********************************
 ! The flows of B2 fluids
 c**********************************
 
-!     Loop over isonuclear sequence
+!     Loop over isonuclear sequences
       do ls = 1,nspecies
 
+        kks=eb2spcr(ls)+1
 c<<<
         if(debug_flags(90).gt.0) then
           print *,'%%# Species # ',ls
@@ -502,12 +508,13 @@ c<<<
             if (is_neutral(is) ) then 
 
 ! Compute the puffing rate
-              if (BCCON(is,ic).eq.8 .or. 
-     &            BCCON(is,ic).eq.16 .or. BCCON(is,ic).eq.26) then
+              if ((BCCON(is,ic).eq.8  .or.
+     &             BCCON(is,ic).eq.16 .or. BCCON(is,ic).eq.26) .and.
+     &             CONPAR(is,ic,1) .gt. 0.0_R8) then
                 flxnp(ls) = flxnp(ls) + CONPAR(is,ic,1)
               endif
 
-! Compute neutral flux due ion recycling
+! Compute neutral flux due to ion recycling
 ! and neutral pumped flux
               if (BCCHAR(ic).EQ.'W' .or. BCCHAR(ic).EQ.'E') then
 
@@ -530,8 +537,9 @@ c<<<
      &                                    sna_stbr_sput(ls,ic)
 
 !             Exclude surfaces with puffing/seeding (for fluid neutrals)
-                    if (BCCON(is,ic).ne.5 .and. BCCON(is,ic).ne.8
-     &  .and. BCCON(is,ic).ne.16 .and. BCCON(is,ic).ne.26) then
+                    if (.not.((BCCON(is,ic).eq.5 .or. BCCON(is,ic).eq.8
+     &  .or. BCCON(is,ic).eq.16 .or. BCCON(is,ic).eq.26) .and.
+     &   CONPAR(is,ic,1) .gt. 0.0_R8)) then
 
                       flxnw_pump(ls) = flxnw_pump(ls) + 
      &                                    sna_stbc_neut(ls,ic)
@@ -553,7 +561,7 @@ c<<<
               j=region(ix,iy,0)
 
               if (j.ne.0 .and. leftix(ix,iy).ne.-2 
-     &                    .and. rightix(ix,iy).ne.nx+1) then
+     &                   .and. rightix(ix,iy).ne.nx+1) then
 
                 if (solveco(is,j)) then
                   hlpdt = dtim * dtco(is,j) * time_factor(ix,iy)     ! hlpdt is temporary variable - BE CAREFUL!!!!
@@ -576,7 +584,7 @@ c<<<
 
 !     But be careful: the source due to time derivative should be counted
                   if (hlpdt .gt. 0.0_R8) then
-                    flxis(ls) = flxis(ls) - 
+                    flxis(ls) = flxis(ls) -
      &       (na(ix,iy,is-1) - na0(ix,iy,is-1)) * vol(ix,iy) / hlpdt     ! hlpdt is temporary variable - BE CAREFUL!!!!
                   endif
 #endif
@@ -605,7 +613,7 @@ c*** Flux across the core boundary
 !       Loof over segments of Eirene core boundary
         do is = 1,ncns
 
-c**       Here is is not a species index, but the index of eirene surface,
+c**       Here "is" is not a species index, but the index of Eirene surface,
 !!!    because
 c**       ncns - Number of 'non-default' eirene surfaces which are part of the core boundary
 c**       lcns() - index of these 'non-default' surfaces
@@ -630,11 +638,11 @@ c*** Flux across the targets
 !       Loop over segments of Eirene target boundaries
         do is = 1,ntns
 
-c**       ntns - Number of 'non-default' eirene surfaces which are part of the target boundaries
+c**       ntns - Number of 'non-default' Eirene surfaces which are part of the target boundaries
 c**       ltns() - index of these 'non-default' surfaces
 
           js=ltns(is)+nnlimi
-c**       js - index of the eirene surface, js > nnlimi means that this is the 'non-default' one
+c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
 
           do j = 1,nnatmi
 
@@ -680,7 +688,7 @@ c*** Flux across the side walls
 
               flxnw(ls) = flxnw(ls) - 
      &                 wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
-              flxnw_rec(ls) = flxnw_rec(ls) + wldpa(js,j,0)           ! IYS 12.01.2018, wldpa(js,j,0) should be zero, since no ion reaches side wall
+              flxnw_rec(ls) = flxnw_rec(ls) + wldpa(js,j,0)           ! IYS 12.01.2018, wldpa(js,j,0) should be zero, since no ion reaches the side wall
               flxnw_pump(ls) = flxnw_pump(ls) + wlpump(j,js)                       ! IYS 22.06.2018
               flxnw_sput(ls) = flxnw_sput(ls) + wldspta(js,j,0)                    ! IYS 22.06.2018
 
@@ -689,7 +697,7 @@ c*** Flux across the side walls
                 if (mlcmp(j,ic) .gt. 0) then
 
                   flxnw(ls) = flxnw(ls) - mlcmp(j,ic) *
-     .              (wldnm(js,ic,0) - wldrm(js,ic,0) - wldpm(js,ic,0))        ! wldpm(js,j,0) should be zero, since no ion reaches side wall
+     .              (wldnm(js,ic,0) - wldrm(js,ic,0) - wldpm(js,ic,0))        ! wldpm(js,j,0) should be zero, since no ion reaches the side wall
                   flxnw_rec(ls) = flxnw_rec(ls) + 
      &                         mlcmp(j,ic) * wldpm(js,ic,0)
                   flxnw_pump(ls) = flxnw_pump(ls) +
@@ -773,16 +781,16 @@ c       Ion and neutral flux through the core +
 c       Ion and neutral flux through targets +
 c       Ion and neutral flux through side walls
 
-c     For fluid neutrals "side walls" means northern boundary plus PRF southerm boundary.
-c     Puffing (BCCONs=5,8,16,26) and leackage (BCCONs=10,15 etc) fluxes are counted automatically,
+c     For fluid neutrals "side walls" means northern boundary plus PFR southern boundary.
+c     Puffing (BCCONs=5,8,16,26) and leakage (BCCONs=10,15 etc) fluxes are counted automatically,
 c     as well as recycling and sputtering?
 
 c     For coupled runs "side walls" means the real vessel boundary.
 c     Then the pumping is counted automatically, but puffing (which is located
 c     somewhere in between the vessel walls and B2 boundary) should be added manually.
-c     Also, since no ion reaches the vessel boundary (except targets), the neutral source
-c     due to ion recycling on B2 northern boundary and B2 PRF southerm boundary should
-c     be added to a global balance as a wall recycling source
+c     Also, since no ion reaches the vessel boundary (except at the targets), the neutral
+c     source due to ion recycling on the B2 northern boundary and B2 PFR southern 
+c     boundaries should be added to a global balance as a wall recycling source
 
 ! FIXME
 
@@ -798,17 +806,16 @@ c     be added to a global balance as a wall recycling source
 
 c********* Debug output **************
       if(debug_flags(90).gt.0) then
-c        print '(a,1p,10e12.4)','%%% hlpit_lp, hlpit_rp: ',
+c        print '(1x,a,1p,10e12.4)','%%% hlpit_lp, hlpit_rp: ',
 c     ,                           (hlpit_lp(i),hlpit_rp(i),i=1,nspecies)
-        print '(a,1p,10e12.4)','%%# hlpiw_s : ',
-     ,                                        (flxiw(i),i=1,nspecies)
+        write (hlp_prt,'(a,i2,a)') '(1x,a,1p,',nspecies,'e12.4)'
+        write (*,hlp_prt) '%%# hlpiw_s : ', (flxiw(i),i=1,nspecies)
       end if
 c********* Debug output **************
 c
 
 c*** Write the data in a separate file for plotting...
       if(filedata(ltrc)) then
-c
 c
         if(nc.gt.np_tmp .or. nc.le.0) then
           write(*,*) 'b2blns: unexpected error. nc =',nc
@@ -832,11 +839,11 @@ c
         write(*,'(30(3x,a8,1x))') (hlp_h(i),i=1,np_tmp)
         do i=1,nspecies
           write(*,'(1p,30e12.3)') 
-     ,     flxic(i), flxnc(i), flxit(i),                                   ! IYS 12.01.2018
+     ,       flxic(i), flxnc(i), flxit(i),                                 ! IYS 12.01.2018
      ,       flxnt(i), flxnt_rec(i), flxnt_sput(i), flxnt_pump(i),         ! IYS 12.01.2018
      ,       flxiw(i), flxnw(i), flxnw_rec(i), flxnw_sput(i),              ! IYS 12.01.2018
      ,       flxnw_pump(i),                                                ! IYS 12.01.2018
-     ,       flxis(i),flxnp(i),  flxps(i),
+     ,       flxis(i), flxnp(i), flxps(i),
      ,       flxid(i)
         end do
       end if
@@ -859,15 +866,16 @@ c
      &   flxic(nspecies), flxnc(nspecies), flxit(nspecies),
      &   flxnt(nspecies), flxiw(nspecies), flxnw(nspecies),
      &   flxnp(nspecies), flxps(nspecies), 
-     & flxnw_rec(nspecies), flxnw_pump(nspecies), flxnw_sput(nspecies),                                      ! IYS 12.01.2018
-     & flxnt_rec(nspecies), flxnt_pump(nspecies), flxnt_sput(nspecies),                                       ! IYS 12.01.2018
+     &   flxnw_rec(nspecies), flxnw_pump(nspecies),
+     &   flxnw_sput(nspecies),                                       ! IYS 12.01.2018
+     &   flxnt_rec(nspecies), flxnt_pump(nspecies),
+     &   flxnt_sput(nspecies),                                       ! IYS 12.01.2018
 c*** from 960727 on 
      &   flxid(nspecies), !flxbl(nspecies), flxbr(nspecies),
 c*** from 960808 on
 !     &   flxrl(nspecies),
 c*** from 20180604 on
      &   flxis(nspecies), Nions(nspecies))
-
 
       call ipgetr ('b2mndr_stim', stim)
 
@@ -1005,7 +1013,7 @@ c
       return
 c======================================================================
 c
-      entry b2blnsf(nx,ny,ns,dtim)
+      entry b2blnsf(nx,ny,ns,dtim,iline)
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
