@@ -37,7 +37,7 @@ c<<<
       real (kind=R8) :: hlp_pls(nbcd,ns)
       real (kind=R8), allocatable, save :: hlp_neu(:,:)
       integer kst_hlp
-      integer use_recyceir
+      integer use_recyceir, use_eirene
       real (kind=R8) :: recyctmp
       real (kind=R8), save :: stim = 0.0_R8
 c>>>
@@ -129,7 +129,7 @@ c*** Column headers:
      3          'bln_core','bln_targ','bln_wall','bln_srce','bln_blnc',
      4          'bln_blnr','flx_d/dt','flux_bln','flux_blr','flux_ttr'/
 *   ..initialisation
-      data use_recyceir /1/
+      data use_recyceir /1/, use_eirene /0/
 c
       data first / .true. /
 c----------------------------------------------------------------------
@@ -151,6 +151,7 @@ c======================================================================
       if(first) then
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
+        call ipgeti ('b2mndr_eirene', use_eirene)
         print *,'=== Regions of the grid:'
         l=ny+1
         n=mod(l-1,10)+1
@@ -226,7 +227,7 @@ c      do i=1,nlimps
       end do
 
 c<<<
-      if(debug_flags(90).gt.0) then
+      if(debug_flags(90).gt.0.and.use_eirene.ne.0) then
         print *
         print *,'%%% Eirene data in B2 %%%'
         do k=debug_flags(92),debug_flags(93)

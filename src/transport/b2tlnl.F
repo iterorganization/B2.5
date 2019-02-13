@@ -75,18 +75,19 @@
       if (lambda.lt.0.0_R8) then
         select case(icase)
          case(0)      ! Braginsky formula
-        do iy = -1, ny
-         do ix = -1, nx
+          do iy = -1, ny
+           do ix = -1, nx
             if(te(ix,iy)/ev .le. 50.0_R8) then
-           lnlam(ix,iy)=max(-lambda,
-     &     23.4_R8 - 1.15_R8*log10(ne(ix,iy)/1.0e6_R8) +
+             lnlam(ix,iy)=max(-lambda,
+     &        23.4_R8 - 1.15_R8*log10(ne(ix,iy)/1.0e6_R8) +
      &                            3.45_R8*log10(te(ix,iy)/ev))
             else
-           lnlam(ix,iy)=max(-lambda,
+             lnlam(ix,iy)=max(-lambda,
      &             25.3_R8 - 1.15_R8*log10(ne(ix,iy)/1.0e6_R8) + 
      &                            2.30_R8*log10(te(ix,iy)/ev))
             endif
             if(lnlam(ix,iy).le.0.0_R8) then
+            !$OMP MASTER
              open(70,file='info_b2tlnl.dat')
              write(70,"(a)")
      &     ' ix   iy   ne(ix,iy)      te(ix,iy)  lnlam(ix,iy)'
@@ -97,40 +98,40 @@
      &     ' ix   iy   ne(ix,iy)      te(ix,iy)  lnlam(ix,iy)'
              write(*,"(2i5,3es13.4)")
      &       ix,iy,ne(ix,iy),te(ix,iy),lnlam(ix,iy)
+            !$OMP END MASTER
              call xertst (lnlam(ix,iy).gt.0.0_R8,
      &                  'Negative Coulomb logarithm')     !srv 12.01.16
             endif
-         enddo
-        enddo
+           enddo
+          enddo
          case(1)     ! Wesson formula for ion-ion collisions
-        do iy = -1, ny
-         do ix = -1, nx
-           lnlam(ix,iy)=max(-lambda,17.3_R8-
+          do iy = -1, ny
+           do ix = -1, nx
+            lnlam(ix,iy)=max(-lambda,17.3_R8-
      &       log(ne(ix,iy)/1.0e20_R8)/2.0_R8+
      &       1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
-
-         enddo
-        enddo
+           enddo
+          enddo
          case(2)    ! Wesson formula for electron-electron collisions
-        do iy = -1, ny
-         do ix = -1, nx
-           lnlam(ix,iy)=max(-lambda,14.9_R8-
-     &     log(ne(ix,iy)/1.0e20_R8)/2.0_R8+
-     &     log(te(ix,iy)/ev/1000.0_R8))
-         enddo
-        enddo
+          do iy = -1, ny
+           do ix = -1, nx
+            lnlam(ix,iy)=max(-lambda,14.9_R8-
+     &       log(ne(ix,iy)/1.0e20_R8)/2.0_R8+
+     &       log(te(ix,iy)/ev/1000.0_R8))
+           enddo
+          enddo
          case(3)   !  Wesson formula for electron-ion collisions
-        do iy = -1, ny
-         do ix = -1, nx
-           lnlam(ix,iy)=max(-lambda,15.2-
-     &    log(ne(ix,iy)/1e20_R8)/2.0_R8+
-     &    log(te(ix,iy)/ev/1000.0_R8))
-         enddo
-        enddo
+          do iy = -1, ny
+           do ix = -1, nx
+            lnlam(ix,iy)=max(-lambda,15.2-
+     &       log(ne(ix,iy)/1e20_R8)/2.0_R8+
+     &       log(te(ix,iy)/ev/1000.0_R8))
+           enddo
+          enddo
          case default
           write(*,*) ' b2tlnl: incorrect value icase =',icase
           call xerrab ('Incorrect icase value in b2tlnl')
-         end select
+        end select
       else
         lnlam = lambda
       endif

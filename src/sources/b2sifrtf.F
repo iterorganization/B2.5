@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sifrtf (nx, ny, ns, isb, ismain, hx, bb, na,         !srv 09.01.01 18.10.02 13.01.17 05.07.17
+      subroutine b2sifrtf (nx, ny, ns, isb, ismain, bb, na,            !srv 09.01.01 18.10.02 13.01.17 05.07.17
      &   ua, ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2, !srv 01.07.09 11.09.09 05.07.17
      &   cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,        !srv 05.07.17
      &   smbch, smbtf)
@@ -26,7 +26,6 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
       real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), ! hz(-1:nx,-1:ny), vol(-1:nx,-1:ny),           !srv 05.07.17
      &  bb(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ue(-1:nx,-1:ny),
@@ -63,8 +62,6 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..global named constants
-      
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
@@ -79,11 +76,13 @@
      &  ka(-1:nx,-1:ny), kb(-1:nx,-1:ny),
      &  wrk(-1:nx,-1:ny)
 ! Local arrays smb*al have been introduced specially.
-! The usage of smb*a instaed of smb*al should be checked.
+! The usage of smb*a instead of smb*al should be checked.
       real (kind=R8) ::
      *  smbfrial(-1:nx,-1:ny,0:3), smbfreal(-1:nx,-1:ny,0:3),
      *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)              !srv 13.01.17 }
+#ifdef WITH_FTIMINGS
       logical :: do_parallel
+#endif
 *   ..procedures
       intrinsic sqrt
       real (kind=R8) ::
@@ -133,7 +132,9 @@
         end if
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
+#ifdef WITH_FTIMINGS
       do_parallel = .not. in_parallel()
+#endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -165,9 +166,9 @@
 #ifndef NO_OPENMP_B2SIFRTF
 !$OMP PARALLEL DO IF (.not. OMP_IN_PARALLEL())
 !$OMP& DEFAULT(NONE)
-!$OMP& PRIVATE(is, KabVp, ix, iy, coef, t0)
-!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix, 
-!$OMP&   rz2, am, zetap, na, ua)
+!$OMP& PRIVATE(KabVp, ix, iy, coef, t0)
+!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix) 
+!$OMP& SHARED(rz2, am, zetap, na, ua)
 !$OMP& REDUCTION(+: smbfrial)
 #endif
       do is = 0, ns-1
@@ -200,6 +201,9 @@
         enddo
        endif
       enddo
+#ifndef NO_OPENMP_B2SIFRTF
+!$OMP END PARALLEL DO
+#endif
 #ifdef WITH_FTIMINGS
       if (do_parallel) call timer%stop("parallel")
 #endif
@@ -246,11 +250,11 @@
 #ifndef NO_OPENMP_B2SIFRTF
 !$OMP PARALLEL DO IF (.not.OMP_IN_PARALLEL()) 
 !$OMP& DEFAULT(NONE)
-!$OMP& PRIVATE(is, KabVp, Kbatf, Kabtf, ka, kb, ix, iy, coef, t0,
-!$OMP&   calfab, delti, jabmax, fllim_al_ab)
-!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix,
-!$OMP&   rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy,
-!$OMP&   on_closed_surface)
+!$OMP& PRIVATE(KabVp, Kbatf, Kabtf, ka, kb, ix, iy, coef, t0)
+!$OMP& PRIVATE(calfab, delti, jabmax, fllim_al_ab)
+!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
+!$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
+!$OMP& SHARED(on_closed_surface)
 !$OMP& REDUCTION(+: smbtfial)
 #endif
       do is = 0, ns-1
@@ -294,6 +298,9 @@ c   .. apply flux limit
         enddo
        endif
       enddo
+#ifndef NO_OPENMP_B2SIFRTF
+!$OMP END PARALLEL DO
+#endif
 #ifdef WITH_FTIMINGS
       if (do_parallel) call timer%stop("parallel")
 #endif

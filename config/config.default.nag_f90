@@ -26,6 +26,10 @@ FCOPTS = -O -Nl99 -x77 # -mismatch
 INCMOD = -I
 MOD = mod
 
+ifdef USE_OPENMP
+FCOPTS += -openmp
+endif
+
 BLD = ar rucv
 
 GRLIBES = ${LD_NCARG} ${LD_MSCL}

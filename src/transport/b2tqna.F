@@ -1051,37 +1051,37 @@ c
 
       contains                          !srv 24.04.02 {
 
-       function barier1(x, x1, level1, x2, level2, x3, level3)
+       function barrier1(x, x1, level1, x2, level2, x3, level3)
         implicit none
         real (kind=R8) :: x, x1, level1, x2, level2, x3, level3
-        real (kind=R8) :: barier1
+        real (kind=R8) :: barrier1
 *   ..   x1 < x2 < x3
          if(x .le. x1) then
-          barier1 = level1
+          barrier1 = level1
          elseif(x .le. x2) then
-          barier1 = level1+(x - x1)*(level2 - level1)/(x2 - x1)
+          barrier1 = level1+(x - x1)*(level2 - level1)/(x2 - x1)
          elseif(x .le. x3) then
-          barier1 = level2
+          barrier1 = level2
          else
-          barier1 = level3
+          barrier1 = level3
          endif
-       end function barier1
+       end function barrier1
 
-       function barier2(x, x1, level1, x2, level2, x3, level3)
+       function barrier2(x, x1, level1, x2, level2, x3, level3)
         implicit none
         real (kind=R8) :: x, x1, level1, x2, level2, x3, level3
-        real (kind=R8) :: barier2
+        real (kind=R8) :: barrier2
 *   ..   x1 > x2 > x3
          if(x .le. x1) then
-          barier2 = level1
+          barrier2 = level1
          elseif(x .le. x2) then
-          barier2 = level2
+          barrier2 = level2
          elseif(x .le. x3) then
-          barier2 = level2+(x - x2)*(level3 - level2)/(x3 - x2)
+          barrier2 = level2+(x - x2)*(level3 - level2)/(x3 - x2)
          else
-          barier2 = level3
+          barrier2 = level3
          endif
-       end function barier2
+       end function barrier2
 
        subroutine defdc(nx, ny, itype, ns, fdnc, fvlc, fvsc, ftec, ftic) !srv 13.11.02 01.03.07 09.03.17
         implicit none
@@ -1130,18 +1130,18 @@ c
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
 
-               fdnc(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
+               fdnc(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8, delta2-step,
      &          alfa2, delta2, alfa3)
-               fvsc(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
+               fvsc(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8, vs_delta2-step,
      &          vs_alfa2, vs_delta2, vs_alfa3)
-               ftic(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
+               ftic(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8, ti_delta2-step,
      &          ti_alfa2, ti_delta2, ti_alfa3)
               endif
              enddo
-             ftec(ix,iy)= barier2(crdy_c_cell(nmdpl,iy),
+             ftec(ix,iy)= barrier2(crdy_c_cell(nmdpl,iy),
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8, te_delta2-step,
      &          te_alfa2, te_delta2, te_alfa3)
             endif
@@ -1154,18 +1154,18 @@ c
             if(on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-               fdnc(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy),
+               fdnc(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
      &          -delta1, 1.0_R8, -delta1+step, alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
-               fvsc(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy),
+               fvsc(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
      &          -vs_delta1, 1.0_R8, -vs_delta1+step, vs_alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
-               ftic(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy),
+               ftic(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
      &          -ti_delta1, 1.0_R8, -ti_delta1+step, ti_alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
               endif
              enddo
-             ftec(ix,iy)= barier1(crdy_c_cell(nmdpl,iy),
+             ftec(ix,iy)= barrier1(crdy_c_cell(nmdpl,iy),
      &          -te_delta1, 1.0_R8, -te_delta1+step, te_alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
             endif

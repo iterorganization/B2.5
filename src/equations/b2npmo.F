@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,      !srv 13.01.17
-     &  qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,
+     &  qz, vol, hx, hy, hz, bb, pbshz, lnlam,
      &  na, te, ti, po, ue, fna_fcor,                                  !srv 09.01.01 01.07.09 05.07.17
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
      &  smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
@@ -14,9 +14,7 @@
       use b2mod_sources
      1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
      2          smpr, smpt, smfr, smcf
-      use b2mod_balance !djm Jan2017
-     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-     2          balance_netcdf
+      use b2mod_balance
       use b2mod_plasma
      & , only : fmo, fchanml                                           !srv 25.09.17
       use b2mod_numerics_namelist
@@ -24,6 +22,12 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_openmp
+#ifndef NO_OPENMP_B2NPMO
+      use b2mod_b2cmpt
+      use b2mod_b2cmgs
+      use b2mod_transport
+     , , only : f_luc_sg, alfx_c, sigx_c
+#endif
 #ifdef WITH_FTIMINGS
       use timings
 #endif
@@ -34,7 +38,7 @@
      *  rxf, 
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),             !srv 09.01.01
      &  qz(-1:nx,-1:ny,0:1),
-     &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
+     &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3),
      &  pbshz(-1:nx,-1:ny,0:1), ue(-1:nx,-1:ny),   !srv 01.07.09 05.07.17
      &  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
@@ -305,9 +309,9 @@
 !$OMP& PRIVATE(chns, wrks, new_matrix)
 !$OMP& FIRSTPRIVATE(lnlam) LASTPRIVATE(lnlam)
 !$OMP& LASTPRIVATE(kt_neo)
-!$OMP& REDUCTION(+:resmt,flct,cvct,smt, ctcft)
+!$OMP& REDUCTION(+: resmt, flct, cvct, smt, ctcft)
 !$OMP& SHARED(ns, n2, na, am, nx, ny, rza, ne, te, ti, vol, hx, hz, bb)
-!$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, pbs, cvsa, zn)
+!$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, cvsa, zn)
 !$OMP& SHARED(zamax, cvsa_cl, wadia, vaecrb, smo, smq, smqdu, resmo)
 !$OMP$ SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
 !$OMP& SHARED(b2npmo_smav, fmo, solving, ro, solvemo)
@@ -316,6 +320,35 @@
 !$OMP& SHARED(pbshz, cvsahz, hy, qz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(is_neutral, ue, zetap, zetae, gti, gte, ce1, ce2, cimp1)
 !$OMP& SHARED(cimp2, zeff, fna_fcor, iout, iout_b2wdat, rxg)
+!$OMP& SHARED(rz2, ne_ext)
+!$OMP& SHARED(leftix, rightix, leftiy, rightiy, on_closed_surface)
+!$OMP& SHARED(bottomix, bottomiy, topix, topiy)
+!$OMP& SHARED(b2stbr_phys_smo_bal, b2stbr_phys_smo0to3)
+!$OMP& SHARED(b2stbr_bas_smo_bal, b2stbr_bas_smo0to3)
+!$OMP& SHARED(b2stbc_smo_bal, b2stbc_smo0to3)
+!$OMP& SHARED(eirene_mc_mapl_smo_bal, eirene_mc_mapl_smo0to3)
+!$OMP& SHARED(eirene_mc_mmpl_smo_bal, eirene_mc_mmpl_smo0to3)
+!$OMP& SHARED(eirene_mc_mipl_smo_bal, eirene_mc_mipl_smo0to3)
+!$OMP& SHARED(eirene_mc_cppv_smo_bal, eirene_mc_cppv_smo0to3)
+!$OMP& SHARED(b2stbm_smo_bal, b2stbm_smo0to3)
+!$OMP& SHARED(ext_smo_bal, ext_smo0to3)
+!$OMP& SHARED(b2stel_smq_ion_bal, b2stel_smq_ion0to3)
+!$OMP& SHARED(b2stel_smq_rec_bal, b2stel_smq_rec0to3)
+!$OMP& SHARED(b2stcx_smq_bal, b2stcx_smq0to3)
+!$OMP& SHARED(b2srsm_smo_bal, b2srsm_smo0to3)
+!$OMP& SHARED(b2srdt_smo_bal, b2srdt_smo0to3)
+!$OMP& SHARED(b2srst_smo_bal, b2srst_smo0to3)
+!$OMP& SHARED(b2sifr_smoch_bal, b2sifr_smoch0to3)
+!$OMP& SHARED(b2sifr_smotf_bal, b2sifr_smotf0to3)
+!$OMP& SHARED(b2sigp_smogp_bal, b2sigp_smogp0to3)
+!$OMP& SHARED(b2sigp_pstat_bal, b2sigp_pstat0to3)
+!$OMP& SHARED(b2siav_smovh_bal, b2siav_smovh0to3)
+!$OMP& SHARED(b2siav_smovv_bal, b2siav_smovv0to3)
+!$OMP& SHARED(b2sicf_smo_bal, b2sicf_smo0to3)
+!$OMP& SHARED(b2sian_smo_bal, b2sian_smo0to3)
+!$OMP& SHARED(b2nxdv_smo_bal, b2nxdv_smo0to3)
+!$OMP& SHARED(nlreg, nlloc, nlxlo, nlxhi, nlylo, nlyhi) 
+!$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim)
 #endif
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
@@ -325,7 +358,7 @@
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute extended friction term
        if(style.eq.2) then                                             !srv 13.01.17
-         call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,        !srv 05.07.17
+         call b2sifrtf (nx, ny, ns, is, ismain, bb, na, ua,            !srv 05.07.17
      &    ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2,   !srv 05.07.17
      &    cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,      !srv 05.07.17
      &    smbch, smbtf)  ! smbch and smbtf will be multiplied by vol*hz below !srv 05.07.17

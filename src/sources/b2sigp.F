@@ -400,7 +400,7 @@ cxpb apply restriction to pressure gradient for minority ions
           !$OMP MASTER
           if (ncall==0) then
             write(*,*) 'b2sigp OpenMP warning: no file output ',
-     &                 'in prallel mode'
+     &                 'in parallel mode'
           end if
           !$OMP END MASTER
        else

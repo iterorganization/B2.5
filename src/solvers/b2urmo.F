@@ -56,7 +56,7 @@
       integer, save :: iout_b2npmo = 0, iout_b2wdat = 0           !srv 11.09.09
       character chns*3                                            !srv 02.06.11
       save ncall
-!$OMP THREADPRIVATE(ncall, no_Ptncr_x_co , no_Ptncr_y_co, iout_b2npmo)
+!$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout_b2npmo)
 !$OMP THREADPRIVATE(iout_b2wdat)
       real (kind=R8) ::
      *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo, dif     !srv 11.09.09
@@ -153,7 +153,7 @@
 !$OMP MASTER
           if (ncall==0) then
             write(*,*) 'b2urmo OpenMP warning: no file output ',
-     &                 'in prallel mode'
+     &                 'in parallel mode'
           end if
 !$OMP END MASTER
         else

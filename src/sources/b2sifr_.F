@@ -54,8 +54,6 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..global named constants
-      
 *   ..local variables
       integer ncall, styl0, styl1, n2, ix, iy, is, k                  !srv 17.06.02
       integer, save :: iout = 0                                       !srv 17.06.02
@@ -74,7 +72,7 @@
       external b2xvff, b2xvfx, b2xvsg
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                          !srv 01.07.05
 *   ..initialisation
-!$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase) 
+!$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase, zlitest) 
 !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
       save ncall, styl0, styl1, 
      1     phm0, phm1, phm2, phm3, limthii, limthee, zlitest

@@ -79,7 +79,7 @@ c    Version 01.001.030  08.05.09 corrected boundary conditions bcene=3 in b2stb
 c    Version 01.001.031  11.05.09 introduced subroutine b2tinnt for calculating
 c                                 ion-neutrals current
 c    Version 01.001.032  15.05.09 exchanged subroutine set_transport_srv for case(5)
-c    Version 01.001.033  22.05.09 introduced case(9) instaed of case(5) with new barier
+c    Version 01.001.033  22.05.09 introduced case(9) instead of case(5) with new barrier
 c                                 function for h-regime
 c    Version 01.001.034  10.06.09 exchanged definition of sig0(ix,iy) in b2tqna
 c    Version 01.001.035  16.06.09 corrected definition of alfe0(ix,iy,0) in b2tfhe_

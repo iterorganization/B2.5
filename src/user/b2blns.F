@@ -109,7 +109,6 @@ c
       logical 
      &     hlp_pump_counted(nnatmi+nnmoli+nnioni+nnplsi,nnstsi+nnlimi)
 
- 
       real (kind=R8), allocatable, save :: 
      *     flxic(:),flxnc(:),flxit(:),                                            ! IYS 12.01.2018
      ,     flxnt(:),flxiw(:),flxnw(:),
@@ -521,7 +520,7 @@ c<<<
 
 !     But be careful: the source due to time derivative should be counted
                     if (hlpdt .gt. 0.0_R8) then
-                      flxis(ls) = flxis(ls) - 
+                      flxis(ls) = flxis(ls) -
      &       (na(ix,iy,is-1) - na0(ix,iy,is-1)) * vol(ix,iy) / hlpdt     ! hlpdt is temporary variable - BE CAREFUL!!!!
                     endif
                   endif
