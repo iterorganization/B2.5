@@ -281,7 +281,8 @@
      .           access='SEQUENTIAL',form='FORMATTED')
       write (iun,'(i9)') mpg%nVx
       do i = 1, mpg%nVx
-        write (iun,'(i9,2es24.16)') i, gm%vxX(i), gm%vxY(i)
+        write (iun,'(i9,2es24.16)') i, gm%vxX(i)*100._R8, 
+     .                                 gm%vxY(i)*100._R8
       end do
       close (iun)
 
