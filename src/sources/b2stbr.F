@@ -106,7 +106,7 @@
      &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),     !IYS 27.01.17
      &  sna_eir_tot(nspecies), sna_puff(nspecies),
      &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),     !iyv 07.03.18 {
-     &  t(nnatmi), t01(nnatmi)
+     &  t(nspecies), t01(nspecies)
 #endif
       real (kind=R8) ::                                                 !srv 29.04.10 {
      &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
@@ -228,7 +228,7 @@
         call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
         call ipgetr ('b2stbr_c_pumpavr', c_pumpavr)
         if( sna_corr .gt. 0.0_R8 ) then
-           allocate(t1(1:nnatmi))
+           allocate(t1(1:nspecies))
            t1=0.0_R8
         endif                                                        !iyv 07.03.18 } 
         call ipgetr ('b2stbr_recycled_neutrals_contr',               !srv 12.04.08
