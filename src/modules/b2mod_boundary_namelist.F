@@ -1625,7 +1625,8 @@ c.. Test consistency with region boundaries
       write (iout,'(1x,a,(10(es10.2,a1)/))') 
      .       'NIISO(0)=',(niiso(is),',',is=0,ns)
 
-      write (iout,'(1x,a,(10(1x,i5,a1)/))') 
+      if (ncbs > 0)
+     .  write (iout,'(1x,a,(10(1x,i5,a1)/))') 
      .      'lcbs=',(lcbs(ib),',',ib=1,ncbs)
 
       write (iout,'(1x,5a)') 'BOUNDARY_FILENAME=',ap,

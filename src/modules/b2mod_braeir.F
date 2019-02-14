@@ -5,22 +5,37 @@ c
 c*** Plasma data: ni,te,ti,vv,uu,pr,up,rr,fnix,fniy (Braams ---> Eirene)
 c
       real (kind=R8), allocatable ::
-     &  dnib(:,:), teb(:), tib(:), pob(:), prb(:),
+     &  dnib(:,:), teb(:), tib(:), pob(:), prb(:), neb(:),
      &  vvb(:,:), uub(:,:), wwb(:,:), upb(:,:),
      &  rrb(:), volb(:), bfeldb(:),
-     &  bpolb(:), bradb(:), btorb(:),
-     &  fnixb(:,:), fniyb(:,:),
-     &  feixb(:), feiyb(:), feexb(:), feeyb(:),
+     &  bbxb(:), bbyb(:), bbzb(:),
+     &  fnib(:,:), feib(:), feeb(:),
+     &  vxb(:,:), vyb(:,:), vzb(:,:),
      &  uudiab(:,:), vvdiab(:,:),
-     &  delta_sheathxb(:), delta_sheathyb(:)
+     &  delta_sheathb(:)
+
+      real (kind=R8), allocatable ::
+     &  amb(:), znb(:), zab(:)
+
+      type :: targetdata
+        integer :: ntrgdat
+        integer, allocatable :: faces(:)
+        real (kind=R8), allocatable :: 
+     &    tet(:), tit(:), fe(:), fsh(:),
+     &    flux(:,:), dnit(:,:), vxt(:,:), vyt(:,:), vzt(:,:),
+     &    fi(:,:), fel(:,:), vpart(:,:), mach(:,:), usr(:,:)
+      end type targetdata
+
+      type(targetdata), allocatable :: trgt(:)
 
       contains
 
-      subroutine alloc_b2mod_braeir(nCv,nFc,nsd)
+      subroutine alloc_b2mod_braeir(nCv,nFc,nsd,nRc)
       implicit none
-      integer nCv,nFc,nsd
+      integer, intent(in) :: nCv,nFc,nsd,nRc
 
       allocate(dnib(nCv,nsd))
+      allocate(neb(nCv))
       allocate(teb(nCv))
       allocate(tib(nCv))
       allocate(pob(nCv))
@@ -32,21 +47,27 @@ c
       allocate(rrb(nCv))
       allocate(volb(nCv))
       allocate(bfeldb(nCv))
-      allocate(bpolb(nCv))
-      allocate(bradb(nCv))
-      allocate(btorb(nCv))
-      allocate(fnixb(nFc,nsd))
-      allocate(fniyb(nFc,nsd))
-      allocate(feixb(nFc))
-      allocate(feiyb(nFc))
-      allocate(feexb(nFc))
-      allocate(feeyb(nFc))
+      allocate(bbxb(nCv))
+      allocate(bbyb(nCv))
+      allocate(bbzb(nCv))
+      allocate(fnib(nFc,nsd))
+      allocate(feib(nFc))
+      allocate(feeb(nFc))
+      allocate(vxb(nFc,nsd))
+      allocate(vyb(nFc,nsd))
+      allocate(vzb(nFc,nsd))
       allocate(uudiab(nCv,nsd))
       allocate(vvdiab(nCv,nsd))
-      allocate(delta_sheathxb(nFc))
-      allocate(delta_sheathyb(nFc))
+      allocate(delta_sheathb(nFc))
+
+      allocate(trgt(nrc))
+
+      allocate(amb(nsd))
+      allocate(znb(nsd))
+      allocate(zab(nsd))
 
       dnib=0.0_R8
+      neb=0.0_R8
       teb=0.0_R8
       tib=0.0_R8
       pob=0.0_R8
@@ -58,27 +79,77 @@ c
       rrb=0.0_R8
       volb=0.0_R8
       bfeldb=0.0_R8
-      bpolb=0.0_R8
-      bradb=0.0_R8
-      btorb=0.0_R8
-      fnixb=0.0_R8
-      fniyb=0.0_R8
-      feixb=0.0_R8
-      feiyb=0.0_R8
-      feexb=0.0_R8
-      feeyb=0.0_R8
+      bbxb=0.0_R8
+      bbyb=0.0_R8
+      bbzb=0.0_R8
+      fnib=0.0_R8
+      feib=0.0_R8
+      feeb=0.0_R8
+      vxb=0.0_R8
+      vyb=0.0_R8
+      vzb=0.0_R8
       uudiab=0.0_R8
       vvdiab=0.0_R8
-      delta_sheathxb=0.0_R8
-      delta_sheathyb=0.0_R8
+      delta_sheathb=0.0_R8
+
+      amb=0.0_R8
+      znb=0.0_R8
+      zab=0.0_R8
 
       return
       end subroutine alloc_b2mod_braeir
 
+      subroutine alloc_target_data(ist,ndat,nfl)
+      implicit none
+      integer, intent(in) :: ist,ndat,nfl
+
+      if (ist < ubound(trgt,1)) then
+        trgt(ist)%ntrgdat = ndat
+        if (.not.allocated(trgt(ist)%faces)) then
+          allocate (trgt(ist)%faces(ndat))
+          allocate (trgt(ist)%tet(ndat))
+          allocate (trgt(ist)%tit(ndat))
+          allocate (trgt(ist)%fe(ndat))
+          allocate (trgt(ist)%fsh(ndat))
+          allocate (trgt(ist)%flux(ndat,nfl))
+          allocate (trgt(ist)%dnit(ndat,nfl))
+          allocate (trgt(ist)%vxt(ndat,nfl))
+          allocate (trgt(ist)%vyt(ndat,nfl))
+          allocate (trgt(ist)%vzt(ndat,nfl))
+          allocate (trgt(ist)%fi(ndat,nfl))
+          allocate (trgt(ist)%fel(ndat,nfl))
+          allocate (trgt(ist)%vpart(ndat,nfl))
+          allocate (trgt(ist)%mach(ndat,nfl))
+          allocate (trgt(ist)%usr(ndat,nfl))
+        end if
+        
+        trgt(ist)%faces = 0.0_R8
+        trgt(ist)%tet = 0.0_R8
+        trgt(ist)%tit = 0.0_R8
+        trgt(ist)%fe = 0.0_R8
+        trgt(ist)%fsh = 0.0_R8
+        trgt(ist)%flux = 0.0_R8
+        trgt(ist)%dnit = 0.0_R8
+        trgt(ist)%vxt = 0.0_R8
+        trgt(ist)%vyt = 0.0_R8
+        trgt(ist)%vzt = 0.0_R8
+        trgt(ist)%fi = 0.0_R8
+        trgt(ist)%fel = 0.0_R8
+        trgt(ist)%vpart = 0.0_R8
+        trgt(ist)%mach = 0.0_R8
+        trgt(ist)%usr = 0.0_R8
+        
+      end if
+
+      return
+      end subroutine alloc_target_data
+
       subroutine dealloc_b2mod_braeir
       implicit none
+      integer :: i
 
       deallocate(dnib)
+      deallocate(neb)
       deallocate(teb)
       deallocate(tib)
       deallocate(pob)
@@ -88,21 +159,48 @@ c
       deallocate(prb)
       deallocate(upb)
       deallocate(rrb)
-      deallocate(fnixb)
-      deallocate(fniyb)
-      deallocate(feixb)
-      deallocate(feiyb)
-      deallocate(feexb)
-      deallocate(feeyb)
+      deallocate(fnib)
+      deallocate(feib)
+      deallocate(feeb)
       deallocate(uudiab)
       deallocate(vvdiab)
       deallocate(volb)
       deallocate(bfeldb)
-      deallocate(bpolb)
-      deallocate(bradb)
-      deallocate(btorb)
-      deallocate(delta_sheathxb)
-      deallocate(delta_sheathyb)
+      deallocate(bbxb)
+      deallocate(bbyb)
+      deallocate(bbzb)
+      deallocate(vxb)
+      deallocate(vyb)
+      deallocate(vzb)
+      deallocate(delta_sheathb)
+
+      deallocate (amb)
+      deallocate (znb)
+      deallocate (zab)
+
+
+      IF (ALLOCATED(TRGT)) THEN
+        DO I=LBOUND(TRGT,1), UBOUND(TRGT,1)
+          IF (ALLOCATED(TRGT(I)%FACES)) THEN
+            DEALLOCATE (TRGT(I)%FACES)
+            DEALLOCATE (TRGT(I)%TET)
+            DEALLOCATE (TRGT(I)%TIT)
+            DEALLOCATE (TRGT(I)%FE)
+            DEALLOCATE (TRGT(I)%FSH)
+            DEALLOCATE (TRGT(I)%FLUX)
+            DEALLOCATE (TRGT(I)%DNIT)
+            DEALLOCATE (TRGT(I)%VXT)
+            DEALLOCATE (TRGT(I)%VYT)
+            DEALLOCATE (TRGT(I)%VZT)
+            DEALLOCATE (TRGT(I)%FI)
+            DEALLOCATE (TRGT(I)%FEL)
+            DEALLOCATE (TRGT(I)%VPART)
+            DEALLOCATE (TRGT(I)%MACH)
+            DEALLOCATE (TRGT(I)%USR)
+          END IF
+        ENDDO
+        DEALLOCATE (TRGT)
+      END IF
 
       return
       end subroutine dealloc_b2mod_braeir

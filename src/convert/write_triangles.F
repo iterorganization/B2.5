@@ -1,0 +1,375 @@
+      subroutine write_triangles (nout,mpg, gm, nx, ny)
+
+      use b2mod_types
+      use b2mod_boundary_namelist
+      use b2mod_neutrals_namelist
+      use b2us_map
+      use b2us_geo
+
+      implicit none
+
+      integer, intent(in) :: nout, nx, ny
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: gm
+
+      type :: elem_queue
+        integer :: iv1, iv2, iv3, ic, ifc1, ifc2, ifc3
+        type(elem_queue), pointer :: next
+      end type 
+
+      type :: tri
+        integer :: notri
+        type(tri), pointer :: nxt_tri
+      end type tri
+
+      type :: tri_list
+        integer :: co
+        type(tri), pointer :: p
+      end type tri_list
+
+      type(elem_queue), pointer :: qhead, qlast, qp
+      type(tri_list), allocatable :: ctri(:)
+      type(tri), pointer :: ct
+
+      integer :: ic, i1, i2, i3, mxCvFc, nelem, ielem, is, ifc, i, jfc, 
+     .           j, is1, js, js1, imin, imax, jmin, jmax, jelem, 
+     .           ifcmin, ifcmax, it, 
+     .           iun, unused, nopen, ifc1, ifc2, ifc3,
+     .           ileft, last(1)
+      real (kind=R8) :: areat, x1, y1, x2, y2, x3, y3
+      integer, allocatable :: ifcused(:), elem(:,:), elem_cv(:),
+     .                        neighbor(:,:,:), bndmdl(:,:),
+     .                        trifc(:,:)
+      logical, allocatable :: fcused(:)
+      logical :: ffound
+
+      AREAT(X1,Y1,X2,Y2,X3,Y3) = 0.5*(X1*(Y2-Y3)+X2*(Y3-Y1)+X3*(Y1-Y2))
+
+      nullify(qhead)
+      nullify(qlast)
+
+      mxCvFc = maxval(mpg%cvFcP(:,2))
+      allocate (fcused(mxCvFc))
+      allocate (ifcused(mxCvFc))
+
+      nelem = 0
+
+!  cut each plasma cell into triangles and store the vertices in elem_queue
+      do ic = 1, mpg%nCi
+        
+        if (mpg%cvVxP(ic,2) == 3) then
+
+!  cell is a triangle, store vertex numbers
+          i1 = mpg%cvVx(mpg%cvVxP(ic,1))
+          i2 = mpg%cvVx(mpg%cvVxP(ic,1)+1)
+          i3 = mpg%cvVx(mpg%cvVxP(ic,1)+2)
+          ifc1 = find_face(i1,i2,ic)
+          ifc2 = find_face(i2,i3,ic)
+          ifc3 = find_face(i3,i1,ic)
+          call set_element(i1,i2,i3,ic,ifc1,ifc2,ifc3)
+          nelem = nelem + 1
+
+        else
+
+!  cell has more then 3 vertices and needs to be split in triangles
+          fcused = .false.
+          do ifc = 1, mpg%cvFcP(ic,2)
+! face numbers for cell is
+            ifcused(ifc) = mpg%cvFc(mpg%cvFcP(ic,1)+ifc-1) 
+          end do
+!  find faces connected with first vertex of cell
+          i1 = mpg%cvVx(mpg%cvVxP(ic,1))  ! first vertex of cell ic
+          i2 = 0
+          i3 = 0
+!  we need to identify the two faces connected to vertex i1 of cell ic
+!  providing us with vertices i2 and i3 of the first triangle
+!  taken from cell ic 
+         do i = 1, mpg%vxFcP(i1,2)   ! for all faces connected to vertex i1
+!           ifc = mpg%vxFc(mpg%vxFcP(i1,1)+i-1)
+!           if ((mpg%fcCv(ifc,1) == ic) .or.   ! cell ic is connected
+!     .         (mpg%fcCv(ifc,2) == ic)) then  ! to face ifc
+!  look for faces of cell ic which are connected to vertex i1 
+              jfc = 0
+              do j = 1, mpg%cvFcP(ic,2) ! for all faces belonging to cell ic
+                ifc = ifcused(j)
+!               if (.not.fcused(j) .and. (ifcused(j) == ifc)) then
+                if (.not.fcused(j)) then
+!  check if first vertex i1 of cell ic belongs to face ifc
+                  if ((mpg%fcVx(ifc,1) == i1) .or.
+     .                (mpg%fcVx(ifc,2) == i1)) then
+                    jfc = j   ! face starting at vertex i1 found
+                    exit
+                  end if
+                end if
+              end do
+              if ((jfc > 0) .and. .not.fcused(jfc)) then
+                fcused(jfc) = .true.  ! mark face as used
+!  identified the second vertex of face ifc
+!  one vertex of face ifc is equal to i1, thus summing up the 
+!  vertex numbers and subtracting i1 will provide the vertex number we require
+                if (i2 == 0) then
+                  i2 = mpg%fcVx(ifc,1) + mpg%fcVx(ifc,2) - i1 
+                  ifc1 = ifc
+                else if (i3 == 0) then
+                  i3 = mpg%fcVx(ifc,1) + mpg%fcVx(ifc,2) - i1
+                  ifc3 = ifc
+                  exit
+                else
+                  call xerrab('write_triangles -- too many faces')
+                end if
+              else
+                call xerrab('write_triangles -- wrong face')
+              end if
+!           end if
+         end do
+
+          ifc2 = 0  ! new face inside cell ic 
+          call set_element(i1,i2,i3,ic,ifc1,ifc2,ifc3)
+          nelem = nelem + 1
+
+!  first triangle finished, now find all others
+
+          do 
+            ileft = count(.not.fcused)
+            if (ileft == 1) exit
+!  use first vertex of side 2 of previously found triangle as starting point
+            i1 = qlast%iv2
+            i2 = qlast%iv3
+            ifc1 = qlast%ifc2
+            i3 = 0
+            do jfc = 1, mpg%cvFcP(ic,2)
+              if (fcused(jfc)) cycle
+              ifc = ifcused(jfc)
+              if ((mpg%fcVx(ifc,1) == i1) .or. 
+     .            (mpg%fcVx(ifc,2) == i1)) then
+!  face needed to form the next triangle found
+                i3 = mpg%fcVx(ifc,1) + mpg%fcVx(ifc,2) - i1 
+                ifc3 = ifc
+                fcused(jfc) = .true.
+!  only two usable faces left => both belong to triangle
+                if (ileft == 2) then
+!  identify face number of last triangle side
+                  last = pack(ifcused,.not.fcused) 
+                  ifc2 = last(1)
+                end if
+                exit
+              end if
+            end do
+            if (i3 == 0) 
+     .        call xerrab ('write_triangles -- ')
+
+            call set_element(i1,i2,i3,ic,ifc1,ifc2,ifc3)
+            nelem = nelem + 1
+            
+          end do
+
+!  check that the last unused face of cell ic is part of the
+!  last constructed triangle
+          unused = 0
+          do jfc = 1, mpg%cvFcP(ic,2)
+            if (.not.fcused(jfc)) unused = jfc
+          end do
+          ifcmin = min(mpg%fcVx(ifcused(unused),1),
+     .                 mpg%fcVx(ifcused(unused),2))
+          ifcmax = max(mpg%fcVx(ifcused(unused),1),
+     .                 mpg%fcVx(ifcused(unused),2))
+          if (.not.(((ifcmin == min(i1,i2)) .or. 
+     .               (ifcmin == min(i2,i3)) .or.
+     .               (ifcmin == min(i1,i3))) .and.
+     .              ((ifcmax == max(i1,i2)) .or. 
+     .               (ifcmax == max(i2,i3)) .or.
+     .               (ifcmax == max(i1,i3)))))
+     .      call xerrab ('write_triangles -- wrong face')                              
+
+        end if
+        
+      end do
+
+!  fetch element information from queue and store it in arrays for easier access
+
+      allocate (elem(3,nelem))
+      allocate (elem_cv(nelem))
+      allocate (neighbor(3,2,nelem))
+      allocate (bndmdl(3,nelem))
+      allocate (trifc(3,nelem))
+      allocate (ctri(mpg%nVx))
+      do i = 1, mpg%nVx
+        ctri(i)%co = 0
+        nullify(ctri(i)%p)
+      end do
+
+      ielem = 0
+      do while (associated(qhead))
+        ielem = ielem + 1
+        if (ielem > nelem) 
+     .    call xerrab('write_triangles -- element number')
+        qp => qhead
+        qhead => qhead%next
+        elem(1:3,ielem) = (/ qp%iv1, qp%iv2, qp%iv3 /)
+        elem_cv(ielem) = qp%ic
+        trifc(1:3,ielem) = (/ qp%ifc1, qp%ifc2, qp%ifc3 /) 
+
+        call add_tri(qp%iv1, ielem)
+        call add_tri(qp%iv2, ielem)
+        call add_tri(qp%iv3, ielem)
+      end do
+      if (ielem /= nelem) 
+     .    call xerrab('write_triangles -- total element number')
+
+!  find neighbors
+      neighbor = 0
+      
+      do ielem = 1, nelem
+        do is = 1, 3
+          if (neighbor(is,1,ielem) == 0) then
+            is1 = is + 1
+            if (is1 > 3) is1 = 1
+            imin = min(elem(is,ielem),elem(is1,ielem))
+            imax = max(elem(is,ielem),elem(is1,ielem))
+            ct => ctri(elem(is,ielem))%p
+!            write (*,*) ' ielem, is ',ielem, is,
+!     .        ' no of triangles ',ctri(elem(is,ielem))%co
+            jloop: do while (associated(ct))
+              jelem = ct%notri
+              if (jelem /= ielem) then  ! do not check triangle ielem
+                do js = 1, 3
+                  if (neighbor(js,1,jelem) == 0) then
+                    js1 = js + 1
+                    if (js1 > 3) js1 = 1
+                    jmin = min(elem(js,jelem),elem(js1,jelem))
+                    jmax = max(elem(js,jelem),elem(js1,jelem))
+                    if ((imin == jmin) .and. (imax == jmax)) then ! neighbor found
+                      neighbor(is,1,ielem) = jelem
+                      neighbor(is,2,ielem) = js
+                      neighbor(js,1,jelem) = ielem
+                      neighbor(js,2,jelem) = is
+                      exit jloop
+                    end if
+                  end if
+                end do ! js
+              end if
+              ct => ct%nxt_tri
+            end do jloop
+          end if
+        end do
+      end do
+
+!  set recycling boundary model indicators 
+      inquire (file='input.dat',exist=ffound)
+      if (ffound) then
+        call conv_surface_models (nout, mpg, gm, 
+     .     bndmdl, trifc, nelem)
+      else
+        call find_nondef_surfaces (nout, mpg, gm, 
+     .     elem, bndmdl, elem_cv, nelem, nx, ny)
+      end if
+
+!  check for holes in the triangle mesh
+      nopen = 0
+      do it = 1, nelem
+        do is = 1, 3
+          if (neighbor(is,1,it)+abs(bndmdl(is,it)) == 0) then
+            write (*,*) ' is, it ',is,it,' open'
+            nopen = nopen + 1
+          end if
+        end do
+      end do
+      if (nopen > 0)
+     .  call xerrab ('write_triangles -- open mesh')
+
+      open (newunit=iun,file='triangle.coordinates',
+     .           access='SEQUENTIAL',form='FORMATTED')
+      write (iun,'(i9)') mpg%nVx
+      do i = 1, mpg%nVx
+        write (iun,'(i9,2es24.16)') i, gm%vxX(i)*100._R8, 
+     .                                 gm%vxY(i)*100._R8
+      end do
+      close (iun)
+
+      open (newunit=iun,file='triangle.elements',
+     .           access='SEQUENTIAL',form='FORMATTED')
+      write (iun,'(i9)') nelem
+      do i = 1, nelem
+        write (iun,'(4i9)') i, (elem(is,i), is = 1,3)
+      end do
+      close (iun)
+
+      open (newunit=iun,file='triangle.neighbors',
+     .           access='SEQUENTIAL',form='FORMATTED')
+      write (iun,'(i9)') nelem
+      do i = 1, nelem
+        write (iun,'(i9,3x,3(3i9,3x),4i9)') 
+     .     i, (neighbor(is,1,i), neighbor(is,2,i), 
+     .         bndmdl(is,i), is = 1,3), elem_cv(i),
+     .        (trifc(js,i), js = 1,3)
+      end do
+      close (iun)
+      
+      contains 
+
+      subroutine add_tri (iv, ic)
+      integer, intent(in) :: iv, ic
+        allocate (ct)
+        ct%notri = ic
+        nullify(ct%nxt_tri)
+        if (associated(ctri(iv)%p)) then
+          ct%nxt_tri => ctri(iv)%p
+        end if
+        ctri(iv)%p => ct
+        ctri(iv)%co = ctri(iv)%co + 1
+      end subroutine add_tri
+
+      subroutine set_element(i1, i2, i3, ic, ifc1, ifc2, ifc3)
+      integer, intent(in) :: i1, i2, i3, ic, ifc1, ifc2, ifc3
+      real(kind=R8) :: at
+        allocate(qp)
+        nullify(qp%next)
+        qp%ic = ic
+        qp%iv1 = i1
+        qp%iv2 = i2
+        qp%iv3 = i3
+        qp%ifc1 = ifc1
+        qp%ifc2 = ifc2
+        qp%ifc3 = ifc3
+        at = areat(gm%vxX(qp%iv1),gm%vxY(qp%iv1),
+     .             gm%vxX(qp%iv2),gm%vxY(qp%iv2),
+     .             gm%vxX(qp%iv3),gm%vxY(qp%iv3))
+        if (at < 0._R8) call switch_points
+        call push_queue
+      end subroutine set_element
+
+      subroutine switch_points
+      integer :: ih, ifh
+        ih = qp%iv2
+        qp%iv2 = qp%iv3
+        qp%iv3 = ih
+        ifh = qp%ifc1
+        qp%ifc1 = qp%ifc3
+        qp%ifc3 = ifh
+      end subroutine switch_points
+      
+      subroutine push_queue       
+        if (.not.associated(qhead)) then
+          qhead => qp
+          qlast => qp
+        else
+          qlast%next => qp
+          qlast => qp
+        end if
+      end subroutine push_queue
+
+      function find_face(i1, i2, ic) result(ifc)
+      integer, intent(in) :: i1, i2, ic
+      integer :: ifc, j1, j2, i
+        do i = 1, mpg%cvFcP(ic,2)
+          ifc = mpg%cvFc(mpg%cvFcP(ic,1)+i-1)
+          j1 = mpg%fcVx(jfc,1) 
+          j2 = mpg%fcVx(jfc,2) 
+          if (((i1 == j1) .and. (i2 == j2)) .or.
+     .        ((i1 == j2) .and. (i2 == j1))) return
+        end do
+        ifc = 0
+        return
+      end function find_face
+       
+      end subroutine write_triangles

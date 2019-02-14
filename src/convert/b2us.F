@@ -353,6 +353,7 @@ cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
           call read_neutrals_namelist(ns, mpg, .false.)
         end if
       end if
+      call write_triangles(nout(0),mpg, gm, nx, ny)
 *   ..close other files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)

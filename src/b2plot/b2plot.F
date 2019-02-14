@@ -311,8 +311,9 @@ c
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #else
-      call alloc_b2mod_braeir(nxd,nyd,nsd_local)
-      call alloc_b2mod_eirbra(nxd,nyd,nsd_local,natm,npls,nstra)
+      call alloc_b2mod_braeir(nxd,nyd,nsd_local,nstra)
+!pb  quick and dirty, to be cleaned up 
+      call alloc_b2mod_eirbra(nxd*nyd,nsd_local,natm,npls,nstra)
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)

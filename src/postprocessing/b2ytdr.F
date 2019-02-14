@@ -433,6 +433,7 @@ c 2002-09-11: logic revised
 #else
       integer iatm, imol
 #endif
+      integer :: nCv, nFc
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch,
      .  scaling_width(nscale), scaling_strength(nscale),
@@ -844,7 +845,7 @@ c 2002-09-11: logic revised
       CALL EIRENE_EXTRAB25_WNEUINIT
       CALL EIRENE_extrab25_eirpbls_init(1,natm,nmol,nion,npls,nstra,nfl)
 #else
-      call alloc_b2mod_braeir(nx,ny,ns)
+      call alloc_b2mod_braeir(nCv,nFc,ns,nstra)
       ex = .false.
 #endif
 

@@ -5,15 +5,15 @@ c
 C     EIRENE TO BRAAMS
 c
       real (kind=R8), allocatable ::
-     ,  sni(:,:,:,:), smo(:,:,:,:), see(:,:,:), sei(:,:,:),
-     ,  sni_papl(:,:,:,:), sni_pmpl(:,:,:,:),
-     ,  sni_pipl(:,:,:,:), sni_pppl(:,:,:,:),
-     ,  smo_mapl(:,:,:,:), smo_mmpl(:,:,:,:),
-     ,  smo_mipl(:,:,:,:), smo_cppv(:,:,:,:),
-     ,  see_eael(:,:,:), see_emel(:,:,:),
-     ,  see_eiel(:,:,:), see_epel(:,:,:),
-     ,  sei_eapl(:,:,:), sei_empl(:,:,:),
-     ,  sei_eipl(:,:,:), sei_eppl(:,:,:),
+     ,  sni(:,:,:), smo(:,:,:), see(:,:), sei(:,:),
+     ,  sni_papl(:,:,:), sni_pmpl(:,:,:),
+     ,  sni_pipl(:,:,:), sni_pppl(:,:,:),
+     ,  smo_mapl(:,:,:), smo_mmpl(:,:,:),
+     ,  smo_mipl(:,:,:), smo_cppv(:,:,:),
+     ,  see_eael(:,:), see_emel(:,:),
+     ,  see_eiel(:,:), see_epel(:,:),
+     ,  sei_eapl(:,:), sei_empl(:,:),
+     ,  sei_eipl(:,:), sei_eppl(:,:),
      ,  fluxh(:,:),
      ,  srcstrn(:),
      ,  volsumn(:), volsumm(:), volsumei(:), volsumee(:),
@@ -29,30 +29,30 @@ C
 
       contains
 
-      subroutine alloc_b2mod_eirbra(nxd,nyd,nsd,natmd,nplsd,nstrad)
+      subroutine alloc_b2mod_eirbra(ncv,nsd,natmd,nplsd,nstrad)
       implicit none
-      integer nxd, nyd, nsd, natmd, nplsd, nstrad
+      integer ncv, nsd, natmd, nplsd, nstrad
 
-      allocate(sni(0:nxd+1,0:nyd+1,nsd,nstrad))
-      allocate(smo(0:nxd+1,0:nyd+1,nsd,nstrad))
-      allocate(see(0:nxd+1,0:nyd+1,nstrad))
-      allocate(sei(0:nxd+1,0:nyd+1,nstrad))
-      allocate(sni_papl(0:nxd+1,0:nyd+1,nsd,nstrad))
-      allocate(sni_pmpl(0:nxd+1,0:nyd+1,nsd,nstrad))
-      allocate(sni_pipl(0:nxd+1,0:nyd+1,nsd,nstrad))
-      allocate(sni_pppl(0:nxd+1,0:nyd+1,nsd,nstrad))
-      allocate(smo_mapl(0:nxd+1,0:nyd+1,nsd,nstrad))
-      allocate(smo_mmpl(0:nxd+1,0:nyd+1,nsd,nstrad))
-      allocate(smo_mipl(0:nxd+1,0:nyd+1,nsd,nstrad))
-      allocate(smo_cppv(0:nxd+1,0:nyd+1,nsd,nstrad))
-      allocate(see_eael(0:nxd+1,0:nyd+1,nstrad))
-      allocate(see_emel(0:nxd+1,0:nyd+1,nstrad))
-      allocate(see_eiel(0:nxd+1,0:nyd+1,nstrad))
-      allocate(see_epel(0:nxd+1,0:nyd+1,nstrad))
-      allocate(sei_eapl(0:nxd+1,0:nyd+1,nstrad))
-      allocate(sei_empl(0:nxd+1,0:nyd+1,nstrad))
-      allocate(sei_eipl(0:nxd+1,0:nyd+1,nstrad))
-      allocate(sei_eppl(0:nxd+1,0:nyd+1,nstrad))
+      allocate(sni(ncv,nsd,nstrad))
+      allocate(smo(ncv,nsd,nstrad))
+      allocate(see(ncv,nstrad))
+      allocate(sei(ncv,nstrad))
+      allocate(sni_papl(ncv,nsd,nstrad))
+      allocate(sni_pmpl(ncv,nsd,nstrad))
+      allocate(sni_pipl(ncv,nsd,nstrad))
+      allocate(sni_pppl(ncv,nsd,nstrad))
+      allocate(smo_mapl(ncv,nsd,nstrad))
+      allocate(smo_mmpl(ncv,nsd,nstrad))
+      allocate(smo_mipl(ncv,nsd,nstrad))
+      allocate(smo_cppv(ncv,nsd,nstrad))
+      allocate(see_eael(ncv,nstrad))
+      allocate(see_emel(ncv,nstrad))
+      allocate(see_eiel(ncv,nstrad))
+      allocate(see_epel(ncv,nstrad))
+      allocate(sei_eapl(ncv,nstrad))
+      allocate(sei_empl(ncv,nstrad))
+      allocate(sei_eipl(ncv,nstrad))
+      allocate(sei_eppl(ncv,nstrad))
       allocate(fluxh(10,nstrad))
       allocate(srcstrn(nstrad))
       allocate(volsumn(nstrad))

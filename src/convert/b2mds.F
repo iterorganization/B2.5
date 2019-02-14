@@ -32,6 +32,12 @@
       use b2mod_mdsplus
 #endif
       use b2mod_version
+
+      use b2us_map
+      use b2us_geo
+      use b2us_plasma
+      use b2us_prep
+
 #ifdef B25_EIRENE
       use eirmod_cinit
      * , only : eirene_init_cinit
@@ -118,6 +124,8 @@ c
      2     sput_phys_col, boundary_namelist, neutrals_namelist,
      3     use_eirene
 
+      integer nCv, nFc, nVx
+
 #ifdef USE_PXFGETENV
       integer lenval, ierror
 #endif
@@ -187,8 +195,8 @@ c
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #else
-      call alloc_b2mod_braeir(nxd,nyd,nsd_local)
-      call alloc_b2mod_eirbra(nxd,nyd,nsd_local,natm,npls,nstra)
+      call alloc_b2mod_braeir(nCv,nFc,nsd_local,nstra)
+      call alloc_b2mod_eirbra(nCv,nsd_local,natm,npls,nstra)
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)

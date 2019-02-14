@@ -1513,7 +1513,8 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 
       end subroutine prep_plasma
       
-******************************************************************************
+
+**********************************************************************
       
       subroutine to_struct_plasma (ns, mpg, st)
       
@@ -1582,7 +1583,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           ne(ix,iy)     = st % dv % ne(ic)
           ne2(ix,iy)    = st % dv % ne2(ic)
           ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
-!          ue(ix,iy)     = st % dv % ue(ic)
+!         ue(ix,iy)     = st % dv % ue(ic)
       
 ! residuals
           resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
@@ -1590,7 +1591,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           respo(ix,iy)        = st % dv % respo(ic)
           reshe(ix,iy)        = st % dv % reshe(ic)
           reshi(ix,iy)        = st % dv % reshi(ic)
-!          resht(ix,iy)        = st % dv % resht(ic)
+!         resht(ix,iy)        = st % dv % resht(ic)
           resmt(ix,iy)        = st % dv % resmt(ic)
       
 ! corrections
@@ -1598,7 +1599,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
           corut(ix,iy)        = st % dv % corut(ic)
           corpo(ix,iy)        = st % dv % corpo(ic)
-!          cortt(ix,iy)        = st % dv % cortt(ic)
+!         cortt(ix,iy)        = st % dv % cortt(ic)
           corte(ix,iy)        = st % dv % corte(ic)
           corti(ix,iy)        = st % dv % corti(ic)
       
@@ -1667,7 +1668,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         ne(ix,iy)     = st % dv % ne(ic)
         ne2(ix,iy)    = st % dv % ne2(ic)
         ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
-!        ue(ix,iy)     = st % dv % ue(ic)
+!       ue(ix,iy)     = st % dv % ue(ic)
         
 ! residuals
         resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
@@ -1675,7 +1676,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         respo(ix,iy)        = st % dv % respo(ic)
         reshe(ix,iy)        = st % dv % reshe(ic)
         reshi(ix,iy)        = st % dv % reshi(ic)
-!        resht(ix,iy)        = st % dv % resht(ic)
+!       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
       
 ! corrections
@@ -1683,7 +1684,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
         corut(ix,iy)        = st % dv % corut(ic)
         corpo(ix,iy)        = st % dv % corpo(ic)
-!        cortt(ix,iy)        = st % dv % cortt(ic)
+!       cortt(ix,iy)        = st % dv % cortt(ic)
         corte(ix,iy)        = st % dv % corte(ic)
         corti(ix,iy)        = st % dv % corti(ic)
       
@@ -1747,7 +1748,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         ne(ix,iy)     = st % dv % ne(ic) 
         ne2(ix,iy)    = st % dv % ne2(ic)
         ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
-!        ue(ix,iy)     = st % dv % ue(ic)
+!       ue(ix,iy)     = st % dv % ue(ic)
         
 ! residuals
         resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
@@ -1755,7 +1756,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         respo(ix,iy)        = st % dv % respo(ic)
         reshe(ix,iy)        = st % dv % reshe(ic)
         reshi(ix,iy)        = st % dv % reshi(ic)
-!        resht(ix,iy)        = st % dv % resht(ic)
+!       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
       
 ! corrections
@@ -1763,7 +1764,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
         corut(ix,iy)        = st % dv % corut(ic)
         corpo(ix,iy)        = st % dv % corpo(ic)
-!        cortt(ix,iy)        = st % dv % cortt(ic)
+!       cortt(ix,iy)        = st % dv % cortt(ic)
         corte(ix,iy)        = st % dv % corte(ic)
         corti(ix,iy)        = st % dv % corti(ic)
       
@@ -1830,7 +1831,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         ne(ix,iy)     = st % dv % ne(ic)
         ne2(ix,iy)    = st % dv % ne2(ic)
         ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
-!        ue(ix,iy)     = st % dv % ue(ic)
+!       ue(ix,iy)     = st % dv % ue(ic)
         
 ! residuals
         resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
@@ -1838,7 +1839,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         respo(ix,iy)        = st % dv % respo(ic)
         reshe(ix,iy)        = st % dv % reshe(ic)
         reshi(ix,iy)        = st % dv % reshi(ic)
-!        resht(ix,iy)        = st % dv % resht(ic)
+!       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
       
 ! corrections
@@ -1846,7 +1847,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
         corut(ix,iy)        = st % dv % corut(ic)
         corpo(ix,iy)        = st % dv % corpo(ic)
-!        cortt(ix,iy)        = st % dv % cortt(ic)
+!       cortt(ix,iy)        = st % dv % cortt(ic)
         corte(ix,iy)        = st % dv % corte(ic)
         corti(ix,iy)        = st % dv % corti(ic)
       
@@ -1911,7 +1912,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         ne(ix,iy)     = st % dv % ne(ic)
         ne2(ix,iy)    = st % dv % ne2(ic)
         ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
-!        ue(ix,iy)     = st % dv % ue(ic)
+!       ue(ix,iy)     = st % dv % ue(ic)
         
 ! residuals
         resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
@@ -1919,7 +1920,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         respo(ix,iy)        = st % dv % respo(ic)
         reshe(ix,iy)        = st % dv % reshe(ic)
         reshi(ix,iy)        = st % dv % reshi(ic)
-!        resht(ix,iy)        = st % dv % resht(ic)
+!       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
       
 ! corrections
@@ -1927,7 +1928,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
         corut(ix,iy)        = st % dv % corut(ic)
         corpo(ix,iy)        = st % dv % corpo(ic)
-!        cortt(ix,iy)        = st % dv % cortt(ic)
+!       cortt(ix,iy)        = st % dv % cortt(ic)
         corte(ix,iy)        = st % dv % corte(ic)
         corti(ix,iy)        = st % dv % corti(ic)
       
@@ -2410,7 +2411,8 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 
       return
       end subroutine to_struct_plasma
-      
+ 
+     
 ******************************************************************************
 
 
