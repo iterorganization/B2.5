@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2npc7 (nx, ny, fac_vis, guard_flows, zb,              !srv 05.07.08 02.04.18 {
-     &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb, rxf,
-     &  vol, pbs, flob, conb, snb,
+     &  nregionv, solving, solvcreg, ua_solve, solvmreg, itcnt, isb,    !srv 22.05.18
+     &  rxf, vol, pbs, flob, conb, snb,
      &  pccb, ti, pb, nb, ub, fnb, rescb, corpb, ierr)
       use b2mod_types
       use b2mod_b2cmpa
@@ -19,7 +19,8 @@
      &  flob(-1:nx,-1:ny,0:1), conb(-1:nx,-1:ny,0:1,0:4),               !srv 13.10.06
      &  snb(-1:nx,-1:ny,0:1), pccb(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny),
      &  ti(-1:nx,-1:ny), zb(-1:nx,-1:ny)
-      logical solvcreg(0:nregionv), ua_solve, solvmreg(0:nregionv)
+      logical solving, solvcreg(0:nregionv), ua_solve,                  !srv 22.05.18
+     &  solvmreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
      *  pb(-1:nx,-1:ny), nb(-1:nx,-1:ny), ub(-1:nx,-1:ny),
@@ -59,6 +60,7 @@
       integer ncall, n2, ix, iy, use_eirene
       integer, save :: iout = 0, iout_b2wdat = 0                   !srv 04.07.08
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0        !srv 06.07.06
+      integer, save :: get_residuals = 0                           !srv 22.05.18
       character chns*3                                             !srv 04.07.08
 !$OMP THREADPRIVATE(iout, iout_b2wdat, no_Ptncr_x_co, no_Ptncr_y_co)
       real (kind=R8) ::
@@ -110,6 +112,7 @@
        call ipgeti ('b2npc7_iout', iout)                              !srv 04.07.08
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2mndr_eirene', use_eirene)
+       call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -149,6 +152,8 @@ cdjm Jan2017 update particle source components for balance
 
 * ..particle balance
 *   ..compute residual
+      if((solving.and.all(solvcreg(0:nnreg(0))))
+     &            .or.get_residuals.eq.1) then                          !srv 22.05.18
       call b2ursc (nx, ny, nb, snb, fnb, rescb)
       if(guard_flows.eq.2 .or.                                          !srv 06.07.08 {
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then
@@ -160,9 +165,10 @@ cdjm Jan2017 update particle source components for balance
         enddo
        enddo                                                            !srv 27.06.08 }
       endif
+      endif                                                             !srv 22.05.18
 csw 11dec2012, check for solv flags
       write (chns,'(i3.3)') isb
-      if(all(solvcreg(0:nnreg(0)))) then
+      if(solving.and.all(solvcreg(0:nnreg(0)))) then                    !srv 22.05.18
 *   ..compute correction
        call b2usc7 (nx, ny, fac_vis, isb, zb, nregionv, solvcreg,
      &  itcnt, rxg, pcm1, vol, pbs, ti, nb, pb, snb(-1,-1,1), flob,

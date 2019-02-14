@@ -96,6 +96,7 @@
       integer, save :: icase = 0                                       !srv 13.01.17
       integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       integer, save :: vlct_diagno = 1
+      integer, save :: get_residuals = 0                               !srv 22.05.18
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
       character chns*3                                                 !srv 04.07.08
@@ -194,6 +195,7 @@
         endif
         call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii') 
+        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -441,10 +443,12 @@ cdjm Jan2017 update momentum source components for balance
        endif
 
 *    ..compute residual
+      if((solving.and.all(solvemo(is,0:nnreg(0))))
+     &            .or.get_residuals.eq.1) then                         !srv 22.05.18
        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
        fmo(:,:,:,is)=wrkf
-
+      endif                                                            !srv 22.05.18
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
        if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 12.07.02 {
@@ -508,7 +512,7 @@ cdjm Jan2017 update momentum source components for balance
         call my_out(70,nx,ny,wrks,'b2npmo_smogp'//chns)
        endif                                                           !srv 12.07.02 }
 
-       if (solving) then                                               !srv 06.07.10
+       if (solving.and.all(solvemo(is,0:nnreg(0)))) then               !srv 06.07.10 22.05.18
         solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
 c    ..compare 5-pt stencil matrices
         new_matrix = .false.
@@ -526,13 +530,14 @@ c    ..compare 5-pt stencil matrices
 csw 21feb2014 added this else branch
        else
          pcca(:,:,:,is)  = 0.0_R8
-         resmo(:,:,is) = 0.0_R8
+!         resmo(:,:,is) = 0.0_R8       ! it is useful to know resmo    !srv 22.05.18
          corua(:,:,is) = 0.0_R8
        endif
 *    ..compute contribution to total residual
 
 csw 21feb2014 and do this only for the solved species, i.e. added next branch
-       if (solving) then
+      if((solving.and.all(solvemo(0:ns-1,0:nnreg(0)))
+     &           .and.all(solvemt(0:nnreg(0))))) then                  !srv 22.05.18
         call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
         if(style.eq.2) then                                            !srv 13.01.17 {
 *       (in this case thermal force and the friction are taken into account)
@@ -556,7 +561,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2*2, 1.0_R8, flcb, 1, flct, 1)
         call b2saxpy (n2*2, 1.0_R8, cvcb, 1, cvct, 1)
         call b2saxpy (n2, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
-       endif
+       endif                                                           !srv 22.05.18
       enddo
 #ifndef NO_OPENMP_B2NPMO
 !$OMP END PARALLEL DO
@@ -565,8 +570,9 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
 #endif
 #endif
 csw 21feb2014, execute simultaneous corrections always
-c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.07.10
-      if (solving) then
+      if (solving.and.all(solvemo(0:ns-1,0:nnreg(0)))
+     &                  .and.all(solvemt(0:nnreg(0)))) then           !srv 06.07.10 22.05.18
+!      if (solving) then                                              !srv 22.05.18
 *   ..compute simultaneous correction
        call sfill (n2, 0.0_R8, wrk0, 1)
        new_matrix = .false.
@@ -581,7 +587,7 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.0
        last_solve_5(0:nnreg(0)) = solvemt(0:nnreg(0))
       else
        pccm  = 0.0_R8
-       resmt = 0.0_R8
+!       resmt = 0.0_R8                                                 !srv 22.05.18
        corut = 0.0_R8
       endif                                                            !srv 06.07.10
 
@@ -595,9 +601,13 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.0
      &       (bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) ) then  !srv 27.01.11
                ua(ix,iy,is) = ua(ix,iy,is) + corua(ix,iy,is)
             else
-              ua(ix,iy,is) = ua(ix,iy,is)+
-     &         rxf*med(corua(ix,iy,is),corut(ix,iy),
-     &         corua(ix,iy,is)+corut(ix,iy))
+              if(solvemt(ireg)) then                                   !srv 22.05.18
+                ua(ix,iy,is) = ua(ix,iy,is)+
+     &          rxf*med(corua(ix,iy,is),corut(ix,iy),
+     &          corua(ix,iy,is)+corut(ix,iy))
+              else                                                     !srv 22.05.18  {
+                ua(ix,iy,is) = ua(ix,iy,is)+rxf*corua(ix,iy,is)
+              endif                                                    !srv 22.05.18  }
             endif
           endif
         enddo

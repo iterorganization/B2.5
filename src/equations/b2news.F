@@ -628,7 +628,7 @@ cxpb
             call hbout('b2ne_npco   ',nx,ny,ns,te,'te',ti,'ti',
      &       na,'na',ua,'ua',na,'na',ua,'ua')
           endif
-          if (solving(2)) then
+!        if (solving(2)) then                           !srv 22.05.18             if (all(solveco(is,0:nnreg(0)))) then 
 *    ..perform iteration
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
@@ -641,9 +641,9 @@ cxpb
                 end do
                 if(new_matrix) call restart_ma28_for_7
                 call b2npc7 (nx, ny, fac_vis, guard_flows,
-     &           rza(-1,-1,is), nnreg(0), solvedum, solving(1),
-     &           solvedm2, ncall, is, rxf0, vol, pbs, flob, conb,       !srv 22.01.02 01.07.05
-     &           sna(-1,-1,0,is), pcca(-1,-1,0,is), ti, pb,
+     &           rza(-1,-1,is), nnreg(0), solving(2), solvedum,          !srv 22.05.18 
+     &           solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,  !srv 22.01.02 01.07.05
+     &           conb, sna(-1,-1,0,is), pcca(-1,-1,0,is), ti, pb,
      &           na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                  call xertst (ier0.eq.0, 'error return from b2npc7')
@@ -655,7 +655,7 @@ cxpb
                 end do
                 if(new_matrix) call restart_ma28
                 call b2npco (nx, ny, guard_flows,                        !srv 05.07.08
-     &           nnreg(0), solvedum, solving(1), solvedm2,
+     &           nnreg(0), solving(2), solvedum, solving(1), solvedm2,   !srv 22.05.18
      &           ncall, is, rxf0, vol, pbs, flob, conb,
      &           sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &           ua(-1,-1,is), fna(-1,-1,0,is), resco(-1,-1,is),
@@ -672,8 +672,8 @@ cxpb
                   end do
                   if(new_matrix) call restart_ma28_for_11
                   call b2npc11 (nx, ny, fac_vis, guard_flows,
-     &             rza(-1,-1,is), nnreg(0), solvedum, solving(1),
-     &             solvedm2, ncall, is, rxf0, vol,
+     &             rza(-1,-1,is), nnreg(0), solving(2), solvedum,        !srv 22.05.18
+     &             solving(1), solvedm2, ncall, is, rxf0, vol,
      &             pbs, flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
      &             po, ti, pb, na(-1,-1,is), ua(-1,-1,is),
      &             fna_mdf(-1,-1,0,is), resco(-1,-1,is),
@@ -686,8 +686,9 @@ cxpb
      &               solveco(is,ireg).neqv.last_solve_9(ireg)
                   end do
                   if(new_matrix) call restart_ma28_for_9
-                  call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
-     &             solving(1), solvedm2, ncall, is, rxf0, vol, pbs,
+                  call b2npc9 (nx, ny, guard_flows, nnreg(0),  
+     &             solving(2), solvedum, solving(1), solvedm2, ncall,    !srv 22.05.18
+     &             is, rxf0, vol, pbs,
      &             flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
      &             pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &             resco(-1,-1,is), corpa(-1,-1,is), ier0)
@@ -700,9 +701,9 @@ cxpb
      &             solveco(is,ireg).neqv.last_solve_5(ireg)
                 end do
                 if(new_matrix) call restart_ma28
-                call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,
-     &           solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,
-     &           conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
+                call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
+     &           solvedum, solving(1), solvedm2, ncall, is, rxf0, vol, 
+     &           pbs, flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
      &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npco')
@@ -729,7 +730,7 @@ cxpb
      1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)           !djm Jan2017
-          endif
+!          endif                                                        !srv 22.05.18
         enddo
 !$OMP END PARALLEL DO
 !! FR End of loop (2)
@@ -759,7 +760,7 @@ cxpb
      .       qe, te, nep, ne, wrk0)
             call b2saxpy (n2, 1.0_R8, wrk0, 1, po, 1)
           endif
-          if(.not.wrong_flow.and.solving(3)) then                        !xpb
+          if(.not.wrong_flow) then                                      !xpb !srv 22.05.18
 *   ..iterate several times on the potential equation                    !xpb
             i=0                                                          !xpb
             t0=1.0e40_R8                                                 !xpb
@@ -869,12 +870,13 @@ cxpb
      &               solvepo(ireg).neqv.last_solve_5(ireg)
                   end do
                   if (new_matrix.and.ncall.ne.0) call restart_ma28
-                  call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
-     &             ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
+                  call b2nppo (nx, ny, nnreg(0), solving(3), solvepo,    !srv 22.05.18
+     &             ncall, rxf2,ne, te, conc, sch, po, fch, wrk0, wrk1,
+     &             ier0)
                   last_solve_5(0:nnreg(0)) = solvepo(0:nnreg(0))
                 else
-                  call b2npp7 (nx, ny, nnreg(0), solvepo, ncall, rxf2,
-     &             ne, te, conc,
+                  call b2npp7 (nx, ny, nnreg(0), solving(3), solvepo,    !srv 22.05.18
+     &             ncall, rxf2, ne, te, conc,
      1             avisper, bvisper, cvisper,
      &             sch, po, fch, wrk0, wrk1, ier0)
                 endif
@@ -977,6 +979,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                   write(*,*) 'No potential residuals, respo = ', t0
                 endif
                 call xertst (ier0.eq.0, 'error return from b2nppo')
+                if(.not.solving(3)) exit                                 !srv 22.05.18
                 if(t0.gt.potok.and.(i.eq.(potit/3).or.i.eq.(potit*2/3)
      &           .or.mod(i+1,50).eq.0)) then
                   if(vis_per.eq.0.0_R8) then

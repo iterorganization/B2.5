@@ -45,6 +45,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
+      integer, save :: get_residuals = 0                               !srv 22.05.18
       logical new_matrix
       save ncall
       real (kind=R8) ::
@@ -65,6 +66,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2usht')
+      if (ncall.eq.0) then
+       call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
+      endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, ns
@@ -253,15 +257,18 @@ cxpb
      &      aa5(ix,iy,1).eq.0.0_R8 .and. aa5(ix,iy,-1).eq.0.0_R8 .and.
      &      aa5(ix,iy,2).eq.0.0_R8 .and. aa5(ix,iy,-2).eq.0.0_R8) then
           aa5(ix,iy,0) = 1.0_R8
-          resht(ix,iy) = 0.0_R8
+!          resht(ix,iy) = 0.0_R8                                    !srv 22.05.18
         end if
-        if (.not.solveet(ireg)) resht(ix,iy) = 0.0_R8
+        if (.not.solveet(ireg).and.get_residuals.eq.0)
+     &      resht(ix,iy) = 0.0_R8
        enddo
       enddo
 
 *   ..solve the correction equation
-      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'tt'
-      call b2ux5p (nx, ny, aa5, itcnt, resht, cortt, name//'tt')    !srv 18.03.10
+      if (all(solveet(0:nnreg(0)))) then                              !srv 22.05.18
+        write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'tt'
+        call b2ux5p (nx, ny, aa5, itcnt, resht, cortt, name//'tt')    !srv 18.03.10
+      endif                                                           !srv 22.05.18
 
 * ..electron temperature correction equation
       new_matrix = .false.
@@ -406,15 +413,18 @@ cxpb
      &      aa5(ix,iy,1).eq.0.0_R8 .and. aa5(ix,iy,-1).eq.0.0_R8 .and.
      &      aa5(ix,iy,2).eq.0.0_R8 .and. aa5(ix,iy,-2).eq.0.0_R8) then
           aa5(ix,iy,0) = 1.0_R8
-          reshe(ix,iy) = 0.0_R8
+!          reshe(ix,iy) = 0.0_R8                                      !srv 22.05.18
         end if
-        if (.not.solveee(ireg)) reshe(ix,iy) = 0.0_R8
+        if (.not.solveee(ireg).and.get_residuals.eq.0) 
+     &     reshe(ix,iy) = 0.0_R8                                      !srv 22.05.18
        enddo
       enddo
 
 *   ..solve the correction equation
-      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'te'
-      call b2ux5p (nx, ny, aa5, itcnt, reshe, corte, name//'te')    !srv 18.03.10
+      if (all(solveee(0:nnreg(0)))) then                              !srv 22.05.18
+        write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'te'
+        call b2ux5p (nx, ny, aa5, itcnt, reshe, corte, name//'te')    !srv 18.03.10
+      endif                                                           !srv 22.05.18
 
 * ..atom temperature correction equation
       new_matrix = .false.
@@ -561,21 +571,24 @@ cxpb
      &      aa5(ix,iy,1).eq.0.0_R8 .and. aa5(ix,iy,-1).eq.0.0_R8 .and.
      &      aa5(ix,iy,2).eq.0.0_R8 .and. aa5(ix,iy,-2).eq.0.0_R8) then
           aa5(ix,iy,0) = 1.0_R8
-          reshi(ix,iy) = 0.0_R8
+!         reshi(ix,iy) = 0.0_R8                                       !srv 22.05.18
         end if
-        if (.not.solveei(ireg)) reshi(ix,iy) = 0.0_R8
+        if (.not.solveei(ireg).and.get_residuals.eq.0) 
+     &      reshi(ix,iy) = 0.0_R8                                     !srv 22.05.18
        enddo
       enddo
 
 *   ..solve the correction equation
-      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'ti'
-      call b2ux5p (nx, ny, aa5, itcnt, reshi, corti, name//'ti')    !srv 18.03.10
-      last_solve_5(0:nnreg(0)) = solveei(0:nnreg(0))
-      do iy = -1, ny
-       do ix = -1, nx
-        corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
-       enddo
-      enddo
+      if (all(solveei(0:nnreg(0)))) then                              !srv 22.05.18
+        write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'ti'
+        call b2ux5p (nx, ny, aa5, itcnt, reshi, corti, name//'ti')    !srv 18.03.10
+       last_solve_5(0:nnreg(0)) = solveei(0:nnreg(0))
+        do iy = -1, ny
+          do ix = -1, nx
+            corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
+          enddo
+        enddo
+      endif                                                           !srv 22.05.18
 
 *   ..return
       ncall = ncall+1

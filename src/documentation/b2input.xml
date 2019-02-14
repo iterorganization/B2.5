@@ -2520,6 +2520,15 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>get_residuals</name>
+			  <default>0</default>
+			  <type>integer</type>
+			  <description>
+				If get_residuals.eq.1, then the residuals of unsolved equations will be outputted into b2ftrace. Equations are unsolved is 'b2news_no_solve' is nonzero or any elements of the solveco, solvemo, solveee, solveei, or solvepo are set to .false. .
+				By default, get_residuals.eq.0 and the residuals for unsolved equations are set to zero.
+			  </description>
+			</switch>
+			<switch>
 				<name>b2wdat_append</name>
 				<default>0</default>
 				<type>integer</type>

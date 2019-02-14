@@ -10,6 +10,7 @@
      &  corte, corti, ierr)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_tallies                                                 !srv 22.05.18
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
@@ -87,6 +88,7 @@
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0             !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
       integer, save :: style = 1                                        !srv 09.07.08
+      integer, save :: get_residuals = 0                                !srv 22.05.18
       character chns*3                                                  !srv 17.07.05
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
@@ -135,6 +137,7 @@
        call ipgeti ('b2nph9_iout', iout)                                !srv 02.01.07
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        call ipgeti ('b2nph9_style', style)                              !srv 09.07.08
+       call ipgeti ('get_residuals', get_residuals)                     !srv 22.05.18
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -209,8 +212,10 @@ cdjm Jan2017 update particle source components for balance
       shef = she0
 *   ..save final ion heat source ignoring equipartition
       shif = shi0                                                       !srv 10.11.02 }
-      call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
-      call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
+      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
+        call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
+        call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
+      endif                                                             !srv 22.05.18
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
@@ -228,13 +233,21 @@ cdjm Jan2017 update particle source components for balance
       endif
 
 *   ..compute final resht, reshe, reshi
-      do iy = -1, ny
+      b2qie=0.0_R8
+      do iy = -1, ny                                                    !srv 22.05.18
        do ix = -1, nx
-        resht(ix,iy) = reshe(ix,iy) + reshi(ix,iy)
-        reshe(ix,iy) = reshe(ix,iy) - shei(ix,iy)
-        reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
+        b2qie(region(ix,iy,0))=b2qie(region(ix,iy,0))+shei(ix,iy)
        enddo
-      enddo                                                             !srv 18.09.09 30.01.09 }
+      enddo                                                             !srv 22.05.18
+      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
+        do iy = -1, ny
+          do ix = -1, nx
+            resht(ix,iy) = reshe(ix,iy) + reshi(ix,iy)
+            reshe(ix,iy) = reshe(ix,iy) - shei(ix,iy)
+            reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
+          enddo
+        enddo                                                           !srv 18.09.09 30.01.09 }
+      endif                                                             !srv 22.05.18
 
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
         call my_out(70,nx,ny,shei,'b2nph9_shei')

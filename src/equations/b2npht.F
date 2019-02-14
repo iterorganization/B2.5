@@ -78,6 +78,7 @@
       integer ncall, n2, ix, iy, is
       integer, save :: iout = 0, iout_b2wdat = 0                       !srv 17.07.05
       integer, save :: style = 1                                       !srv 09.07.08
+      integer, save :: get_residuals = 0                                !srv 22.05.18
       character chns*3                                                 !srv 17.07.05
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
@@ -129,6 +130,7 @@
        call ipgeti ('b2npht_iout', iout)                              !srv 02.01.07
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2npht_style', style)                            !srv 09.07.08
+       call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -239,8 +241,10 @@ cdjm Jan2017 update particle source components for balance
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
-      call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
-      call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
+      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
+        call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
+        call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
+      endif                                                             !srv 22.05.18
 *   ..compute heat source due to electron-ions collisions            !srv 18.09.09 30.01.10 {
       do iy = -1, ny
        do ix = -1, nx
@@ -271,12 +275,18 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
       b2qie=0.0_R8
       do iy = -1, ny
        do ix = -1, nx
-        resht(ix,iy) = reshe(ix,iy)+reshi(ix,iy)
         b2qie(region(ix,iy,0))=b2qie(region(ix,iy,0))+shei(ix,iy)
-        reshe(ix,iy) = reshe(ix,iy) - shei(ix,iy)
-        reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
        enddo
-      enddo                                                           !srv 18.09.09 30.01.10 }
+      enddo
+      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
+        do iy = -1, ny
+          do ix = -1, nx
+            resht(ix,iy) = reshe(ix,iy)+reshi(ix,iy)
+            reshe(ix,iy) = reshe(ix,iy) - shei(ix,iy)
+            reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
+          enddo
+        enddo                                                           !srv 18.09.09 30.01.10 }
+      endif                                                             !srv 22.05.18
       if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                      !srv 17.07.05 {
        call my_out(70,nx,ny,shei,'b2npht_shei')
        call my_out(70,nx,ny,te,'b2npht_te')
