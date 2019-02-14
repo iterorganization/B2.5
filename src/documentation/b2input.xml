@@ -3247,7 +3247,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier to the poloidal electrical conductivity on the bottom ring of the grid on closed flux surfaces.
+					Multiplier to the poloidal electrical conductivity on the bottom ring of the grid on closed flux surfaces in order to ensure Boltzmann relation between distribution of electron density, temperature and electrostatic potential.
 				</description>
 			</switch>
 			<switchgroup>
