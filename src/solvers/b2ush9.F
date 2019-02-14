@@ -59,10 +59,10 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
-      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
-      integer, save :: iadd_9 = 1                                      !srv 02.01.07
-      integer, save :: get_residuals = 0                               !srv 22.05.18
+      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
+      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
+      integer, save :: iadd_9 = 1                                     !srv 02.01.07
+      integer, save :: get_residuals = 0                              !srv 22.05.18
       integer ireg, ileft, ibot
       save ncall
       real (kind=R8) ::
@@ -138,8 +138,6 @@
        call b2xvsg (n2, ceqp, 1, 'ceqp', '.ge.')
       endif
       
-      call my_out(70,nx,ny,reshe,'b2ush9_input_reshe')
-
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -298,15 +296,15 @@
      &      aa9(ix,iy,5).eq.0.0_R8 .and. aa9(ix,iy,-5).eq.0.0_R8 .and.
      &      aa9(ix,iy,6).eq.0.0_R8 .and. aa9(ix,iy,-6).eq.0.0_R8) then
          aa9(ix,iy,0) = 1.0_R8
-!         resht(ix,iy) = 0.0_R8                                         !srv 22.05.18
+!         resht(ix,iy) = 0.0_R8                                       !srv 22.05.18
         end if
         if (.not.solveet(ireg).and.get_residuals.eq.0)
-     &      resht(ix,iy) = 0.0_R8                                       !srv 22.05.18
+     &      resht(ix,iy) = 0.0_R8                                     !srv 22.05.18
        enddo
       enddo
 *   ..solve the correction equation
-      if (all(solveet(0:nnreg(0))))                                     !srv 22.05.18
-     &  call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')  !srv 18.05.02
+      if (all(solveet(0:nnreg(0))))                                   !srv 22.05.18
+     &  call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total') !srv 18.05.02
 
 * ..electron temperature correction equation
       new_matrix = .false.
