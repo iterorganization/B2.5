@@ -20,7 +20,8 @@
       use b2mod_neutrals_namelist
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
-     2          b2stbr_sne
+     2          b2stbr_sne,
+     3          sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot
       use b2mod_balance !djm Jan2017
      & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
      &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
@@ -786,6 +787,49 @@ cxpb  Add contribution from Eirene core boundary fluxes
       
         end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }     
 
+*       compute total eirene sources for averaging
+cwdk only total eirene source are averaged!
+cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
+cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
+cwdk       down in this routine
+        do is = 0, ns-1
+          sna0_eir_tot(:,:,is) = sna0_eir(:,:,0,is) + 
+     &      sna0_eir(:,:,1,is)*na(:,:,is)
+          smo0_eir_tot(:,:,is) = smo0_eir(:,:,0,is) + 
+     &      smo0_eir(:,:,1,is)*ua(:,:,is) +
+     &      smo0_eir(:,:,2,is)*am(is)*mp*na(:,:,is) +
+     &      smo0_eir(:,:,3,is)*am(is)*mp*na(:,:,is)*ua(:,:,is)
+        enddo
+        she0_eir_tot = she0_eir(:,:,0) + she0_eir(:,:,1)*te +
+     &    she0_eir(:,:,2)*ne + she0_eir(:,:,3)*ne*te
+        shi0_eir_tot = shi0_eir(:,:,0) + shi0_eir(:,:,1)*ti +
+     &    shi0_eir(:,:,2)*ni(:,:,0) + shi0_eir(:,:,3)*ni(:,:,0)*ti
+
+*       get averaged sources
+        if (ird_aver > 0) then
+
+cwdk if ird_aver > 0, all sources computed by eirene are overwritten (!!!), 
+cwdk i.e. fully replaced by the averaged values from b2faveri
+          sna0_eir = 0.0_R8
+          smo0_eir = 0.0_R8
+          she0_eir = 0.0_R8
+          shi0_eir = 0.0_R8
+
+cwdk get the averaged sources
+          call run_av_get_sources(sna0_eir_tot, smo0_eir_tot,
+     &                            she0_eir_tot, shi0_eir_tot,
+     &                            nx, ny, ns)
+
+cwdk note: only total eirene source are averaged!
+cwdk these are now put back into the constant part of the sources (0-component)
+          do is = 0,ns-1
+            sna0_eir(:,:,0,is) = sna0_eir_tot(:,:,is)
+            smo0_eir(:,:,0,is) = smo0_eir_tot(:,:,is)
+          enddo
+          she0_eir(:,:,0) = she0_eir_tot
+          shi0_eir(:,:,0) = shi0_eir_tot
+        endif
+
         if(ncall.le.999. and. ncall.le.ncall_iout) then
          do is = 0, ns-1
           write (chns,'(i3.3)') is
@@ -802,10 +846,6 @@ cxpb  Add contribution from Eirene core boundary fluxes
         she0 = she0 + she0_eir
         shi0 = shi0 + shi0_eir
 
-*   get averaged sources
-        if (ird_aver > 0) 
-     &    call run_av_get_sources(sna0, smo0, she0, shi0, sch0, sne0,
-     &                            nx, ny, ns)
 #ifdef ASTRA
         if (use_astra.ne.0) then
           do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
