@@ -88,7 +88,7 @@ c
      *   r_ref, z_ref, s_ref(-1:nyd), profile(-1:nyd),
      7   uedge_c(-1:nxd,-1:nyd), uedge_v(-1:nxd,-1:nyd,1:4),
      8   corners(-1:nxd+1,-1:nyd+1),
-     9   zaf(0:nsd_local-1), tif, pxf, psep
+     9   zaf(0:nsd_local-1), tif, pxf
       real (kind=R8), allocatable ::
      *   wall_tmp(:,:), trg_tmp(:,:)
       real (kind=R8) ::
@@ -1145,8 +1145,8 @@ c
       call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
       cr=0.25_R8*sum(crx,3)
       cz=0.25_R8*sum(cry,3)
-      psep=0.5_R8*(fpsi(jxa,jsep,2)+fpsi(jxa,jsep,3))
-      psi=0.25_R8*sum(fpsi,3)-psep
+      psi_sep=0.5_R8*(fpsi(jxa,jsep,2)+fpsi(jxa,jsep,3))
+      psi=0.25_R8*sum(fpsi,3)-psi_sep
       fbz=0.25_R8*sum(ffbz,3)
       targetr=0.5_R8*sum(targetcr,3)
       targetz=0.5_R8*sum(targetcz,3)

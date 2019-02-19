@@ -3008,7 +3008,7 @@ contains
     call check_cdf_status(iret)
     if(iret.ne.0) then
       write(*,*) 'Error: Could not inquire data_name: ',trim(data_name)
-      call xerrab('Data name not declared')
+      call xerrab('Data name '//trim(data_name)//' not declared')
     endif
     if (debug) write(*,*) "Subroutine rwcdf in mode: ", rw
     if (debug) write(*,*) "Working on variable: ", data_name
