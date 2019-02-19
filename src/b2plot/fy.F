@@ -12,7 +12,7 @@ c
       character*256 tmpstring,titlestring
       real (kind=R8) ::
      *   lmin,lmax,x1,x2,y1,y2,dsep,dist,xmin,xmax,psign,
-     1   y_transform,poffset
+     1   y_transform,poffset,pnorm
       integer ix,ixl,ixr,iy,is,iiso,lnblnk
       integer ysep,ysepl,ysepr,iystart,iyend
       integer ixx, ixc
@@ -180,14 +180,16 @@ c      if(nidim .ne. 2) call line(2)
             psign = sign(1.0_R8,x2-x1)
             if (plot_vs_norm_psi.or.plot_vs_root_psi) then
               poffset = 1.0_R8
+              pnorm = psi_sep
             else
               poffset = 0.0_R8
+              pnorm = 1.0_R8
             end if
             do iy = iystart, iyend
               if (iy.le.jsep) then
-                wrk(iy)=(psi(ixc,iy)*psign)+poffset
+                wrk(iy)=(psi(ixc,iy)*psign/pnorm)+poffset
               else
-                wrk(iy)=(psi(ixx,iy)*psign)+poffset
+                wrk(iy)=(psi(ixx,iy)*psign/pnorm)+poffset
               end if
               if (plot_vs_root_psi) wrk(iy)=sqrt(wrk(iy))
               lmin=min(lmin,work(ix,iy,is,iwrk))
