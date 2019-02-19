@@ -15,21 +15,14 @@ SED = sed s:\#PREC\#:d:g
 
 FC = nagfor
 
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
-
 FCOPTS = -O -x77 -PIC -compatible # -mismatch
 INCMOD = -I
 MOD = mod
 OBJDEST = -mdir ${OBJDIR} -o ${OBJDIR}/$*.o
 
 ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS    += -qopenmp
-LDOPTS    += -qopenmp
-else
-FCOPTS    += -openmp
-LDOPTS    += -openmp
-endif
+FCOPTS += -openmp
+LDOPTS += -openmp
 endif
 
 BLD = ar rucv
