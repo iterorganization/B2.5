@@ -9,8 +9,8 @@
 # rundir    -- is the subdirectory specific for the test case, a few examples:
 #
 #   ./run_omp_test.sh AUG_16151_D+C+He 16151_1.6MW_2.0e19_D=0.4_chi=1.6_standalone
-#   ./run_omp_test.sh ITER_535_D+He+Ar run_as_5.2
-#   ./run_omp_test.sh ITER_Be-W_D+T+He+Ne testrun_coupled
+#   ./run_omp_test.sh ITER_535_D+He+Ar standalone
+#   ./run_omp_test.sh ITER_2171_D+He+Be+Ne standalone
 #
 # Optional arguments:
 # steps       -- number of time steps to take (default 1)
