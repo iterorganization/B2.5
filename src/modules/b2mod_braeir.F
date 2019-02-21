@@ -17,6 +17,9 @@ c
       real (kind=R8), allocatable ::
      &  amb(:), znb(:), zab(:)
 
+      REAL(kind=R8), ALLOCATABLE, SAVE, PUBLIC :: 
+     &  PUX(:),  PUY(:),  PVX(:),  PVY(:)
+
       type :: targetdata
         integer :: ntrgdat
         integer, allocatable :: faces(:)
@@ -66,6 +69,11 @@ c
       allocate(znb(nsd))
       allocate(zab(nsd))
 
+      ALLOCATE (PUX(NCV))
+      ALLOCATE (PUY(NCV))
+      ALLOCATE (PVX(NCV))
+      ALLOCATE (PVY(NCV))
+
       dnib=0.0_R8
       neb=0.0_R8
       teb=0.0_R8
@@ -95,6 +103,11 @@ c
       amb=0.0_R8
       znb=0.0_R8
       zab=0.0_R8
+
+      PUX  = 0.0_R8
+      PUY  = 0.0_R8
+      PVX  = 0.0_R8
+      PVY  = 0.0_R8
 
       return
       end subroutine alloc_b2mod_braeir
@@ -177,6 +190,11 @@ c
       deallocate (amb)
       deallocate (znb)
       deallocate (zab)
+
+      DEALLOCATE (PUX)
+      DEALLOCATE (PUY)
+      DEALLOCATE (PVX)
+      DEALLOCATE (PVY)
 
 
       IF (ALLOCATED(TRGT)) THEN

@@ -97,7 +97,7 @@ c
      &  uuc(nCv,0:ns-1),vvc(nCv,0:ns-1),nafsqalf(nFc,0:1,0:ns-1)
       integer :: ic, ifc, ian, ien, ntrgdat, ifl, i, istra
       real (kind=R8) :: intface_s
-      real (kind=R8) :: evi
+      real (kind=R8) :: evi, ebx, eby, ebn
 
       call subini ('copy_background')
       if(ncall.eq.0) then
@@ -520,10 +520,19 @@ c     internal cell -> full diamagnetic drift
      4             ua_max),ua_min)
               end if
               
-              vxb(ic,nflai) = gm%cvEb(ic,0)*(uub(ic,nflai) +
-     1                        vvb(ic,nflai))
-              vyb(ic,nflai) = gm%cvEb(ic,1)*(uub(ic,nflai) +
-     1                        vvb(ic,nflai))
+              ebx = gm%cvEb(ic,0)
+              eby = gm%cvEb(ic,1)
+              ebn = sqrt(ebx*ebx + eby*eby)
+              ebx = ebx / ebn
+              eby = eby / ebn
+              pux(ic) = ebx
+              puy(ic) = eby
+              pvx(ic) = -eby
+              pvy(ic) = ebx
+              vxb(ic,nflai) = uub(ic,nflai)*pux(ic) +
+     1                        vvb(ic,nflai)*pvx(ic)
+              vyb(ic,nflai) = uub(ic,nflai)*puy(ic) +
+     1                        vvb(ic,nflai)*pvy(ic)
               vzb(ic,nflai) = wwb(ic,nflai)
 
 #ifdef WG_TODO
@@ -754,18 +763,20 @@ c
       write (31,'(a)') '*'
       write (31,'(a)') '*** MISC PLASMA DATA'
       write (31,'(a)') '*'
-      write (31,'(a1,a6,11a15)') '*','Index','Te','ne',
-     .      'Bx','By','Bz','Ex','Ey','Ez','pot','psi','f'
-      write (31,'(a1,a6,11a15)') '*',' ','(eV)','(1/m^3)',
+      write (31,'(a1,a6,15a15)') '*','Index','Te','ne',
+     .      'Bx','By','Bz','Ex','Ey','Ez','pot','psi','f',
+     .      'Pux','Puy','Pvx','Pvy'
+      write (31,'(a1,a6,15a15)') '*',' ','(eV)','(1/m^3)',
      .      'Tesla','Tesla','Tesla','(V/m)','(V/m)','(V/m)',
-     .      'V','??','??'
+     .      'V','??','??',' ',' ',' ',' '
 
       write (31,'(2i6)') mpg%nCi, mpg%nFc
       
       do ic = 1, mpg%nCi
-        write (31,'(i7,11es15.7)') ic, teb(ic), neb(ic), 
+        write (31,'(i7,15es15.7)') ic, teb(ic), neb(ic), 
      .      bbxb(ic), bbyb(ic), bbzb(ic), 0.0_R8, 0.0_R8, 0.0_R8,
-     .      pob(ic), 0.0_R8, 0.0_R8
+     .      pob(ic), 0.0_R8, 0.0_R8, 
+     .      pux(ic), puy(ic), pvx(ic), pvy(ic)
       end do
 
       do ifl = 1, nflai
