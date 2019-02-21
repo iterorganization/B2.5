@@ -50,8 +50,9 @@
       logical, save :: write_nml_num = .true.
       namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
-     2 solveco,solvemo,solvepo,solveee,solveei,write_nml_num,
-     3 numerics_filename,numerics_time_mod,numerics_time_switch
+     2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveet,        !srv 22.05.18
+     3 write_nml_num,numerics_filename,numerics_time_mod,
+     $ numerics_time_switch
 
 
       contains
@@ -154,13 +155,20 @@
         read(99,numerics)
 #endif
         write(*,*) 'Read namelist numerics from ',trim(filename)
-        do ireg = 0, nnreg(0)
-          solveet(ireg) = solveee(ireg).or.solveei(ireg)
-          solvemt(ireg) = .false.
+!        do ireg = 0, nnreg(0)
+!          solveet(ireg) = solveee(ireg).or.solveei(ireg)
+!          solvemt(ireg) = .false.
+!          do is = nsmin, nsmax-1
+!            solvemt(ireg) = solvemt(ireg) .or. solvemo(is,ireg)
+!          end do
+!        end do
+        do ireg = 0, nnreg(0)                                     !srv 22.05.18 {
+          solveet(ireg) = (solveee(ireg).and.solveei(ireg))
+     &                                  .and.solveet(ireg)
           do is = nsmin, nsmax-1
-            solvemt(ireg) = solvemt(ireg) .or. solvemo(is,ireg)
+            solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
-        end do
+        end do                                                    !srv 22.05.18 }
       else
         call xerrab ('No '//trim(filename))
       endif

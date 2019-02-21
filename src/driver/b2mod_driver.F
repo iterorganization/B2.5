@@ -1504,16 +1504,22 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
        call my_out_us(70,nFc,1,geo%fcHt,'b2mndr_fcHt_hti')
        call my_out_us(70,nCv,0,geo%cvVol,'b2mndr_cvVol')
        call my_out_us(70,nCv,0,geo%cvHz,'b2mndr_cvHz')
+       call my_out_us(70,nCv,0,geo%cvEb(1,0),'b2mndr_cvEbX')
+       call my_out_us(70,nCv,0,geo%cvEb(1,1),'b2mndr_cvEbY')
+       call my_out_us(70,nCv,0,geo%cvEb(1,2),'b2mndr_cvEbZ')
+       call my_out_us(70,nFc,1,geo%fcEb(1,0),'b2mndr_fcEbX')
+       call my_out_us(70,nFc,1,geo%fcEb(1,1),'b2mndr_fcEbY')
+       call my_out_us(70,nFc,1,geo%fcEb(1,2),'b2mndr_fcEbZ')
       endif                                                          !srv 25.01.16 }
       do is = 0,ns-1
         do iCv=1,nCv
           state % pl % na(iCv,is) = max(state % pl % na(iCv,is),na_min)
         enddo
       enddo
-      if(use_mms.ne.0) then                                          !srv 26.02.18 {
+!      if(use_mms.ne.0) then                                          !srv 26.02.18 {
 *   ..reset initial state using exact solution 
        call set_exact_solution(nCv, ns, state % pl, state % dv)
-      endif                                                          !srv 26.02.18 {
+!      endif                                                          !srv 26.02.18 {
 *   ..test plasma state
       call b2xvps (nCv, nFc, ns, state % pl, state % dv)
 *   ..compute log-log electron rate coefficients

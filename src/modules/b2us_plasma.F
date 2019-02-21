@@ -577,6 +577,13 @@ cwdk move to dv
       allocate( dv % reshi( nCv ) )
       allocate( dv % resht( nCv ) )
       allocate( dv % resmt( nCv ) )
+      dv % resmo = 0.0_R8                             !srv 22.05.18 {     
+      dv % resco = 0.0_R8
+      dv % respo = 0.0_R8
+      dv % reshe = 0.0_R8
+      dv % reshi = 0.0_R8
+      dv % resht = 0.0_R8
+      dv % resmt = 0.0_R8                             !srv 22.05.18 }    
       
 ! corrections
       allocate( dv % corua( nCv, 0:ns-1 ) )
@@ -586,7 +593,13 @@ cwdk move to dv
       allocate( dv % cortt( nCv ) )
       allocate( dv % corte( nCv ) )
       allocate( dv % corti( nCv ) )
-      
+      dv % corua = 0.0_R8                             !srv 22.05.18 {     
+      dv % corpa = 0.0_R8
+      dv % corut = 0.0_R8
+      dv % corpo = 0.0_R8
+      dv % cortt = 0.0_R8
+      dv % corte = 0.0_R8
+      dv % corti = 0.0_R8                             !srv 22.05.18 }    
 ! coupling coefficients
       allocate( dv % pcca( nCv, 0:1, 0:ns-1 ) )
       allocate( dv % pccm( nCv, 0:1 ) )

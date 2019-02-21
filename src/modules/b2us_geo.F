@@ -165,6 +165,7 @@
 
 ! cell volumes 
       call cfrure (iun, nCv*4, gm%cvBb,   'cvBb')
+      call cfrure (iun, nCv*3, gm%cvEb,   'cvEb')
       call cfrure (iun, nCv,   gm%cvX,    'cvX')
       call cfrure (iun, nCv,   gm%cvY,    'cvY')
       call cfrure (iun, nCv,   gm%cvSz,   'cvSz')
@@ -192,9 +193,6 @@
 
       call cfrure (iun, nFs,   gm%fsConn, 'fsConn')
 
-      call cfrure (iun, nCv*3, gm%cvEb,   'cvEb')
-      call cfrure (iun, nFc*3, gm%fcEb,   'fcEb')
-
       return
       end subroutine read_geometry
 
@@ -209,6 +207,7 @@
 
 ! cell volumes 
       call cfwure (nout, nCv*4, gm%cvBb,   'cvBb')
+      call cfwure (nout, nCv*3, gm%cvEb,   'cvEb')
       call cfwure (nout, nCv,   gm%cvX,    'cvX')
       call cfwure (nout, nCv,   gm%cvY,    'cvY')
       call cfwure (nout, nCv,   gm%cvSz,   'cvSz')
@@ -236,9 +235,6 @@
 
       call cfwure (nout, nFs,   gm%fsConn, 'fsConn')
 
-      call cfwure (nout, nCv*3, gm%cvEb,   'cvEb')
-      call cfwure (nout, nFc*3, gm%fcEb,   'fcEb')
-
       return
       end subroutine write_geometry
 
@@ -250,9 +246,9 @@
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nCv, nFc, nVx, nFx
+      integer :: nCv, nFc, nVx, nFx, iFc
       integer :: use_9pt_stencil = 1
-      real (kind=R8) :: hzconst, fac_hz = 0.0_R8
+      real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du
 
       call ipgetr ('b2mndr_hz', fac_hz)
       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
@@ -280,15 +276,33 @@
 *  .. interpolate OnedBsq for corners of cell
       call intvertex(nCv,nVx,mpg,gm%vxVol,gm%cvOnedBsq,gm%vxOnedBsq) !WG: interpolate 1/cvBb**2, or compute as 1/vxBb**2 ???
 
-*  .. for the time being
-      gm%cvEb(:,0) = 0.0_R8
-!      gm%cvEb(:,1) = -0.075_R8
-      gm%cvEb(:,1) = 0.1_R8
-      gm%cvEb(:,2) = sqrt(1.0_R8-0.1_R8**2)
+*  .. unit vector of magnetic field in X,Y,Z coordinates at faces
+      do iFc = 1, mpg%nFc
 
-      gm%fcEb(:,0) = 0.0_R8
-      gm%fcEb(:,1) = 0.0_R8
-      gm%fcEb(:,2) = 1.0_R8
+        ! Construct unit vector normal to face
+        dux =   gm%vxY(mpg%fcVx(iFc,2))-gm%vxY(mpg%fcVx(iFc,1))
+        duy = -(gm%vxX(mpg%fcVx(iFc,2))-gm%vxX(mpg%fcVx(iFc,1)))
+          
+        ! length
+        du  = sqrt(dux**2+duy**2)
+
+        ! rotate over angle -alpha; scale with poloidal pitch
+        gm%fcEb(ifc,0) = abs(gm%fcBb(ifc,0))/gm%fcBb(ifc,3)*
+     &    ( gm%fcQalf(ifc,0)*dux + gm%fcQalf(ifc,1)*duy)/du
+        gm%fcEb(ifc,1) = abs(gm%fcBb(ifc,0))/gm%fcBb(ifc,3)*
+     &    (-gm%fcQalf(ifc,1)*dux + gm%fcQalf(ifc,0)*duy)/du
+        gm%fcEb(ifc,2) = gm%fcBb(ifc,2)/gm%fcBb(ifc,3)
+
+      end do
+
+      ! normalize
+      gm%fcEb(:,0) = gm%fcEb(:,0)/
+     &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
+      gm%fcEb(:,1) = gm%fcEb(:,1)/
+     &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
+      gm%fcEb(:,2) = gm%fcEb(:,2)/
+     &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
+
 
 *   ..compute cvHz
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing

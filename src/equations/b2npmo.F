@@ -78,6 +78,7 @@
       integer, save :: icase = 0                                       !srv 13.01.17
       integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       integer, save :: vlct_diagno = 1
+      integer, save :: get_residuals = 0                               !srv 22.05.18
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
       character chns*3, chk*1                                          !srv 04.07.08
@@ -120,7 +121,7 @@
      &  b2sscal, b2saxpy
       external b2xvsg, b2xvff, b2xpne, b2xpro, b2xppr,
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,
-     &  b2sifr, b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
+     &  b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
       data ncall/0/, rxg/1.0e6_R8/, diagno/0/
@@ -168,6 +169,7 @@
         endif
         call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii') 
+        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -342,9 +344,12 @@ cdjm Jan2017 update momentum source components for balance
 !WG_TODO       endif
 
 *    ..compute residual
-       call b2urmo (nCv, nFc, nVx, geo, mpg,  is, pl%ua(1,is), rob,
+      if((solving.and.all(solvemo(is,0:mpg%nnreg(0))))
+     &            .or.get_residuals.eq.1) then                         !srv 22.05.18
+        call b2urmo (nCv, nFc, nVx, geo, mpg,  is, pl%ua(1,is), rob,
      .    smb, flub, co%cvsahz(1,0,is), dv%resmo(1,is), wrkf)          !srv 04.07.08
-       dv%fmo(:,:,is)=wrkf
+        dv%fmo(:,:,is)=wrkf
+      endif                                                            !srv 22.05.18
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
@@ -411,7 +416,7 @@ cdjm Jan2017 update momentum source components for balance
         call my_out_us(70,nCv,0,wrks,'b2npmo_smogp'//chns)
        endif                                                           !srv 12.07.02 }
 
-       if (solving) then                                               !srv 06.07.10
+       if (solving.and.all(solvemo(is,0:mpg%nnreg(0)))) then           !srv 06.07.10 22.05.18
          solvedum(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
 c     ..compare matrices
          new_matrix = .false.
@@ -429,15 +434,17 @@ c     ..compare matrices
 csw 21feb2014 added this else branch
        else
          dv%pcca(:,:,is)  = 0.0_R8
-         dv%resmo(:,is) = 0.0_R8
+!         dv%resmo(:,is) = 0.0_R8       ! it is useful to know resmo    !srv 22.05.18
          dv%corua(:,is) = 0.0_R8
        endif
 *    ..compute contribution to total residual
 
 csw 21feb2014 and do this only for the solved species, i.e. added next branch
-       if (solving) then
+      if((solving.and.all(solvemo(0:ns-1,0:mpg%nnreg(0)))
+     &   .and.all(solvemt(0:mpg%nnreg(0))))) then !srv 22.05.18 resmt is non-zero when all equations are solved
+!     &   .and.all(solvemt(0:mpg%nnreg(0)))).or.get_residuals.eq.1) then !srv 22.05.18
         call b2scopy (nCv*4, sr%smo(1,0,is), 1, smb, 1)
-        if(style.eq.2) then                                            !srv 13.01.17 {
+        if(style.eq.2) then                                             !srv 13.01.17 {
 *       (in this case thermal force and the friction are taken into account)
          call b2saxpy (nCv*4, 1.0_R8, smbtf, 1, smb, 1)                 !srv 08.10.14
          call b2saxpy (nCv*4, 1.0_R8, smbch, 1, smb, 1)
@@ -459,12 +466,12 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (nFc*2, 1.0_R8, flcb, 1, flct, 1)
         call b2saxpy (nFc*2, 1.0_R8, cvcb, 1, cvct, 1)
         call b2saxpy (nCv, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
-       endif
+       endif                                                            !srv 22.05.18
       enddo
 
 csw 21feb2014, execute simultaneous corrections always
-c      if (solving.and.solvemt(0:mpg%nnreg(0))) then                       !srv 06.07.10
-      if (solving) then
+      if (solving.and.all(solvemo(0:ns-1,0:mpg%nnreg(0)))
+     &                  .and.all(solvemt(0:mpg%nnreg(0)))) then           !srv 06.07.10 22.05.18
 *     ..compute simultaneous correction
         call sfill (nCv, 0.0_R8, wrk0, 1)
 c     ..compare 9-pt stencil matrices
@@ -481,7 +488,7 @@ c     ..compare 9-pt stencil matrices
         last_solve_9(0:mpg%nnreg(0)) = solvemt(0:mpg%nnreg(0))
       else
         dv%pccm  = 0.0_R8
-        dv%resmt = 0.0_R8
+!        dv%resmt = 0.0_R8                 ! it is useful to know resmt     !srv 22.05.18
         dv%corut = 0.0_R8
       endif                                                            !srv 06.07.10
 
@@ -490,9 +497,13 @@ c     ..compare 9-pt stencil matrices
        do iCv = 1, mpg%nCi ! internal cells
         ireg = mpg%cvReg(iCv)
         if (solvemo(is,ireg)) then
-         pl%ua(iCv,is) = pl%ua(iCv,is)+
-     &     rxf*med(dv%corua(iCv,is),dv%corut(iCv),
-     &     dv%corua(iCv,is)+dv%corut(iCv))
+          if(solvemt(ireg)) then                                   !srv 22.05.18
+            pl%ua(iCv,is) = pl%ua(iCv,is)+
+     &        rxf*med(dv%corua(iCv,is),dv%corut(iCv),
+     &        dv%corua(iCv,is)+dv%corut(iCv))
+          else                                                     !srv 22.05.18  {
+            pl%ua(iCv,is) = pl%ua(iCv,is) + dv%corua(iCv,is)
+          endif                                                    !srv 22.05.18  }
         endif
        enddo
        do iCv = mpg%nCi+1, nCv ! guard cells

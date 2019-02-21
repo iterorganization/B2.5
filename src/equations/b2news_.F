@@ -128,8 +128,8 @@
       external subini, subend, xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
-     &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhe, b2tfhi,
-     &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2npp7, b2xppz  !srv 06.07.00 18.01.02
+     &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhi,
+     &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2xppz  !srv 06.07.00 18.01.02
 *   ..initialization
       data ncall/0/, xfm0/1.0e0_R8/, xfm1/1.0e0_R8/, xfm2/1.0e0_R8/,
      1   xfm3/1.0e0_R8/, potit/50/, potok/1e-2_R8/                     !srv 09.07.99 09.03.09
@@ -497,7 +497,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 *    ..perform iteration
 csw 16oct2012 init ier0
         ier0=0
-        if (solving(2).and.all(solveco(is,0:mpg%nnreg(0)))) then             !srv 26.09.12
+!        if (all(solveco(is,0:mpg%nnreg(0)))) then                        !srv 26.09.12 22.05.18
           solvedum(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
           solvedm2(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
           new_matrix = .false.
@@ -506,12 +506,12 @@ csw 16oct2012 init ier0
      &       solveco(is,ireg).neqv.last_solve_9(ireg)
           end do
           if(new_matrix.or..true.) call restart_ma28_for_us
-          call b2npco (nCv, nFc, nVx, mpg%nnreg(0), solvedum,
+          call b2npco (nCv, nFc, nVx, mpg%nnreg(0), solving(2),solvedum,  !srv 22.05.18
      &      solving(1),  solvedm2, ncall, is, rxf0, geo, mpg, pl, dv, 
      &      sr, ier0)
           call xertst (ier0.eq.0, 'error return from b2npco')
           last_solve_9(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
-        endif                                                            !srv 13.10.06 }
+!        endif                                                            !srv 13.10.06 } 22.05.18
 
         do iCv = 1, nCv
           pl%na(iCv,is)=max(pl%na(iCv,is),na_min) ! abs(na(ix,iy,is))    !srv 24.04.09
@@ -584,7 +584,7 @@ csw 16oct2012 init ier0
 *   ..iterate several times on the potential equation
         i=0
         t0=1.0e40_R8
-        do while(i.le.potit.and.t0.gt.potok.and.solving(3))
+        do while(i.le.potit.and.t0.gt.potok)                             !srv 22.05.18
 *    ..compute current
 !          call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, ehx, fch_p)  !!!???
           call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe, 
@@ -604,14 +604,14 @@ csw 16oct2012 init ier0
      &        solvepo(ireg).neqv.last_solve_9(ireg)
             end do
             if (new_matrix.or..true.) call restart_ma28_for_us
-            call b2nppo (nCv, nFc, nVx, mpg%nnreg(0), solvepo, ncall,
-     &        rxf2, geo, mpg, pl, dv, sr, ier0)
+              call b2nppo (nCv, nFc, nVx, mpg%nnreg(0), solving(3),      !srv 22.05.18
+     &        solvepo, ncall, rxf2, geo, mpg, pl, dv, sr, ier0)
             last_solve_9(0:mpg%nnreg(0))=solvepo(0:mpg%nnreg(0))
            else
              call xerrab ('visper not yet available for WG')
 #ifdef WG_TODO
-            call b2npp7 (nx, ny, mpg%nnreg(0), solvepo, ncall, rxf2,         !srv 27.01.00
-     &       ne, te, conc, avisper, bvisper, cvisper,                    !srv 27.01.00
+            call b2npp7 (nx, ny, mpg%nnreg(0), solving(3), solvepo,      !srv 27.01.00 22.05.18
+     &       ncall, rxf2, ne, te, conc, avisper, bvisper, cvisper,       !srv 27.01.00
      &       sch, po, fch, respo, corpo, ier0)                           !srv 27.01.00
 #endif
            endif                                                         !srv 06.07.00
@@ -623,8 +623,8 @@ cwdk work-around because respo/corpo only determined on first iteration
 cwdk of potential equation...
             respo0 = dv%respo
             corpo0 = dv%corpo
-            call b2nppo (nCv, nFc, nVx, mpg%nnreg(0), solvepo, ncall,
-     &        rxf2, geo, mpg, pl, dv, sr, ier0)
+            call b2nppo (nCv, nFc, nVx, mpg%nnreg(0), solving(3),        !srv 22.05.18
+     &        solvepo, ncall, rxf2, geo, mpg, pl, dv, sr, ier0)
             wrk0 = dv%respo
             wrk1 = dv%corpo
             dv%respo = respo0
@@ -632,8 +632,8 @@ cwdk of potential equation...
            else
              call xerrab ('visper not yet available for WG')
 #ifdef WG_TODO
-            call b2npp7 (nx, ny, mpg%nnreg(0), solvepo, ncall, rxf2,         !srv 27.01.00
-     &       ne, te, conc, avisper, bvisper, cvisper,                    !srv 27.01.00
+            call b2npp7 (nx, ny, mpg%nnreg(0), solving(3), solvepo,      !srv 27.01.00 22.05.18
+     &       ncall, rxf2, ne, te, conc, avisper, bvisper, cvisper,       !srv 27.01.00
      &       sch, po, fch, wrk0, wrk1, ier0)                             !srv 27.01.00
 #endif
            endif                                                         !srv 06.07.00
@@ -690,6 +690,7 @@ cwdk of potential equation...
             call my_out_us(70,nCv,0,dv%respo,'b2news__respo'//charns)
             call my_out_us(70,nCv,0,pl%po,'b2news__po'//charns)
           endif                                                          !srv 12.07.05 }
+          if(.not.solving(3).or..not.all(solvepo(0:mpg%nnreg(0)))) exit  !srv 22.05.18
           if(t0.gt.potok.and.(i.eq.potit/3.or.i.eq.potit*2/3)) then      !srv 06.07.00
             if (vis_per.eq.0.0e0_R8) then
               call restart_ma28_for_us
@@ -703,7 +704,7 @@ cwdk of potential equation...
           i=i+1
         enddo
 
-        if(i.gt.potit.and.solving(3)) then
+        if(i.gt.potit) then                                              !srv 22.05.18
           ierr=10
 !          write(*,*) 'Potential equation not converging'                !srv 09.07.99
 !          facdrift=max(facdrift*facdrift_dec,facdrift_start)            !srv 09.07.99
@@ -755,7 +756,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 
 *   ..iterate on heat balance
       call b2npht (nCv, nFc, nVx, ns, geo, mpg, mpg%nnreg(0), ncall,
-     &  ismain, solving, solveee, solveei, solvepo, solvemo,
+     &  ismain, solving, solveee, solveei, solveet, solvepo, solvemo,       !srv 22.05.18
      &  rxf3, BoRiS, pl, dv, co, sr, ier0)
 
 csw 16aug2011 init potential 
@@ -784,7 +785,7 @@ c   recompute particle fluxes
 *    ..perform iteration
         new_matrix = .false.
         if(mdf_fnb.eq.0) then                                            !srv 13.10.06
-          if (solving(2).and.all(solveco(is,0:mpg%nnreg(0)))) then 
+!          if (all(solveco(is,0:mpg%nnreg(0)))) then                      !srv 22.05.18
             solvedum(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
             solvedm2(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
             do ireg = 0, mpg%nnreg(0)
@@ -792,15 +793,15 @@ c   recompute particle fluxes
      &         solveco(is,ireg).neqv.last_solve_5(ireg)
             end do
             if(new_matrix) call restart_ma28
-            call b2npco (nx, ny, mpg%nnreg(0), solvedum, 
+            call b2npco (nx, ny, mpg%nnreg(0), solving(2), solvedum,     !srv 22.05.18 
      &       solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,conb, !srv 22.01.02 01.07.05
      &       sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
      &       ua(-1,-1,is), fna(-1,-1,0,0,is),
      &       resco(-1,-1,is), corpa(-1,-1,is), ier0)
             last_solve_5(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
-          endif
+!          endif                                                         !srv 22.05.18
         else                                                             !srv 13.10.06 {
-          if (solving(2).and.all(solveco(is,0:mpg%nnreg(0)))) then
+ !         if (all(solveco(is,0:mpg%nnreg(0)))) then                      !srv 22.05.18
             solvedum(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
             solvedm2(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
 cwdk tmp: always use 9-point stencil, also for neutrals
@@ -824,7 +825,7 @@ cwdk      need a master-switch to decide to use 9-point stencil...
      &           solveco(is,ireg).neqv.last_solve_5(ireg)
               end do
               if(new_matrix) call restart_ma28
-              call b2npco (nx, ny, mpg%nnreg(0), solvedum,  
+              call b2npco (nx, ny, mpg%nnreg(0),  solving(2), solvedum,  !srv 22.05.18  
      &         solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
      &         sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
@@ -832,7 +833,7 @@ cwdk      need a master-switch to decide to use 9-point stencil...
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               last_solve_5(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
             endif
-          endif
+!          endif                                                         !srv 22.05.18
         endif                                                            !srv 13.10.06 }
         call xertst (ier0.eq.0, 'error return from b2npco')
        enddo

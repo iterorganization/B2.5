@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nppo (nCv, nFc, nVx, nregionv, solvereg, itcnt, rxf,
-     &  geo, mpg, pl, dv, sr, ierr)
+      subroutine b2nppo (nCv, nFc, nVx, nregionv, solving, solvereg,           !srv 22.05.18 
+     &  itcnt, rxf, geo, mpg, pl, dv, sr, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -16,7 +16,7 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  rxf
-      logical solvereg(0:nregionv)
+      logical solving, solvereg(0:nregionv)                                     !srv 22.05.18
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
@@ -52,6 +52,7 @@
 *   ..local variables
       integer ncall
       integer, save :: iout = 0, iout_b2wdat = 0
+      integer, save :: get_residuals = 0                              !srv 22.05.18
       real (kind=R8) ::
      *  aa(mpg%nCmxNv), wrk0(nCv)
       save ncall
@@ -71,6 +72,7 @@
       if (ncall.eq.0) then
        call ipgeti ('b2nppo_iout', iout)                            !srv 08.07.08
        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
+       call ipgeti ('get_residuals', get_residuals)                 !srv 22.05.18
       endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -89,8 +91,11 @@
 
 * ..main computation
 *   ..compute residual
-      call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%po, sr%sch, dv%fch, 
-     &  dv%respo)
+      if((solving.and.all(solvereg(0:nregionv))).or.
+     &    get_residuals.eq.1) then                                  !srv 22.05.18
+        call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%po, sr%sch, dv%fch, 
+     &    dv%respo)
+      endif                                                         !srv 22.05.18
 c-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)
 c-rfs      write(6,*) 'ix=20, iy=-1, sch ',
 c-rfs     .  sch(20,-1,0), sch(20,-1,1),
@@ -102,11 +107,13 @@ c-rfs      write(6,*) 'ix=21, iy=-1, fch, respo',
 c-rfs     .  fch(21,-1,0), fch(21,-1,1),
 c-rfs     .  fch(21,0,1), respo(21,-1)
 *   ..compute correction
-      call b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, geo,
-     &  mpg, dv%ne, pl%te, dv%conc, sr%sch, dv%respo, dv%corpo, aa, 
+      if(solving.and.all(solvereg(0:nregionv))) then                !srv 22.05.18
+        call b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, geo,
+     &   mpg, dv%ne, pl%te, dv%conc, sr%sch, dv%respo, dv%corpo, aa, 
      &  'b2nppo')
 *   ..apply correction
-      call b2uppo (nCv, rxf, dv%corpo, pl%po)
+        call b2uppo (nCv, rxf, dv%corpo, pl%po)
+      endif                                                         !srv 22.05.18
 
       if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                    !srv 11.09.09 {
 !       call my_out_us(70,nCv,0,pl%te,'b2nppo_te')

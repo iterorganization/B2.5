@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,  !srv 05.07.17
-     &  ismain, solving, solvereg, solvireg, solvpreg, solvmreg,
-     &  rxf, BoRiS, pl, dv, co, sr, ierr)
+      subroutine b2npht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt, !srv 05.07.17
+     &  ismain, solving, solvereg, solvireg, solvtreg, solvpreg,       !srv 22.05.18
+     &  solvmreg, rxf, BoRiS, pl, dv, co, sr, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -15,13 +15,14 @@
 !WG_TODO     &          balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nregionv, itcnt, ismain                !srv 05.07.17
+      integer nCv, nFc, nVx, ns, nregionv, itcnt, ismain               !srv 05.07.17
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  rxf, BoRiS
       logical solving(4),
-     *  solvereg(0:nregionv), solvireg(0:nregionv),
+     *  solvereg(0:nregionv), solvireg(0:nregionv), 
+     *  solvtreg(0:nregionv),                                          !srv 22.05.18
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
@@ -69,6 +70,7 @@
       integer, save :: iout = 0, iout_b2wdat = 0                        !srv 17.07.05
       integer, save :: mdf_fhe = 0, mdf_fhi = 0
       integer, save :: style = 1                                        !srv 09.07.08
+      integer, save :: get_residuals = 0                                !srv 22.05.18
       character chns*3                                                  !srv 17.07.05
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
@@ -115,6 +117,7 @@
        call ipgeti ('b2npht_style', style)                              !srv 09.07.08
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
        call ipgeti ('b2tfhi_mdf', mdf_fhi) 
+       call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -167,20 +170,27 @@ cdjm Jan2017 update particle source components for balance
       shef = she0
 *   ..save final ion heat source ignoring equipartition
       shif = shi0                                                       !srv 10.11.02 }
-      if (mdf_fhe.eq.0) then
-        call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%te, she0, dv%fhe,
+      if ((solving(4).and.all(solvereg(0:nregionv))).or.
+     &     get_residuals.eq.1) then                                     !srv 22.05.18
+        if (mdf_fhe.eq.0) then
+          call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%te, she0, dv%fhe,
      &     dv%reshe)
-      else
-        call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%te, she0, dv%fhe_mdf,
-     &     dv%reshe)
-      endif
-      if (mdf_fhi.eq.0) then
-        call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shi0, dv%fhi, 
+        else
+          call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%te, she0,
+     &     dv%fhe_mdf, dv%reshe)
+        endif
+      endif                                                             !srv 22.05.18
+      if ((solving(4).and.all(solvireg(0:nregionv))).or.
+     &     get_residuals.eq.1) then    !srv 22.05.18
+       if (mdf_fhi.eq.0) then
+          call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shi0, dv%fhi, 
      &     dv%reshi)
-      else
-        call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shi0, dv%fhi_mdf, 
-     &     dv%reshi)
-      endif
+        else
+          call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shi0,
+     &     dv%fhi_mdf, dv%reshi)
+        endif
+      endif                                                             !srv 22.05.18
+      
       do iCv = 1, mpg%nCi
         shei(iCv) = co%ceqp(iCv)*dv%ne(iCv)*dv%ni(iCv,0)/
      &     (pl%te(iCv)*sqrt(pl%te(iCv)))*(pl%te(iCv)-pl%ti(iCv))
@@ -194,10 +204,19 @@ cdjm Jan2017 update particle source components for balance
       endif
 #endif
 *   ..compute final resht, reshe, reshi
-      dv%resht = dv%reshe + dv%reshi
-      dv%reshe = dv%reshe - shei
-      dv%reshi = dv%reshi + shei
-
+!      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
+!        dv%resht = dv%reshe + dv%reshi
+!        dv%reshe = dv%reshe - shei
+!        dv%reshi = dv%reshi + shei
+!      endif                                                             !srv 22.05.18
+      if ((solving(4).and.all(solvereg(0:nregionv)))                     !srv 22.05.18 {
+     &    .or.get_residuals.eq.1) dv%reshe = dv%reshe - shei                     
+      if ((solving(4).and.all(solvireg(0:nregionv)))
+     &    .or.get_residuals.eq.1) dv%reshi = dv%reshi + shei
+      if (solving(4).and.all(solvereg(0:nregionv)).and.            ! if total equation is not solved then resmt = 0            
+     &   all(solvireg(0:nregionv)).and.all(solvtreg(0:nregionv)))
+     &   dv%resht = dv%reshe + dv%reshi                                 !srv 22.05.18 }
+      
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
         call my_out_us(70,nCv,0,shei,'b2npht_shei')
         call my_out_us(70,nCv,0,co%ceqp,'b2npht_ceqp')
@@ -220,6 +239,7 @@ cdjm Jan2017 update particle source components for balance
      &       she0(:,3)*pl%te*dv%ne
 	call my_out_us(70,nCv,0,wrk0,'b2npht_she')
 	call my_out_us(70,nCv,0,dv%reshi,'b2npht_reshi')
+	call my_out_us(70,nCv,0,dv%resht,'b2npht_resht')                  !srv 22.05.18
 	call my_out_us(70,nFc,1,dv%fhi(1,0),'b2npht_fhix')
 	call my_out_us(70,nFc,1,dv%fhi(1,1),'b2npht_fhiy')
 !	 call my_out_us(70,nCv,0,shi0(1,0),'b2npht_shi0')
@@ -239,8 +259,8 @@ cdjm Jan2017 update particle source components for balance
      &  dv%corti, wrkf, wrkc, aa)
 *   ..apply correction
         call b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
-     &  solving(3), solving(1), solvereg, solvireg, solvpreg, solvmreg,
-     &  rxf, pcm0, dv%cortt, dv%corte, dv%corti,
+     &  solving(3), solving(1), solvereg, solvireg, solvtreg, solvpreg, !srv 22.05.18
+     &  solvmreg, rxf, pcm0, dv%cortt, dv%corte, dv%corti,
      &  dv%pccm(1,0), pl%na, pl%ua, pl%te, pl%ti, pl%po, dv%ne, dv%ni)
       endif
 *   ..set error parameter and return

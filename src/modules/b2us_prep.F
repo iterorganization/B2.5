@@ -549,7 +549,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
       implicit none
       integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs, nVmxCv
       integer :: ix, iy, ic, ifc, nfx, ivx, i, j
-      real (kind=R8) :: hy1(-1:nx,-1:ny)
+      real (kind=R8) :: hy1(-1:nx,-1:ny), du, dux, duy
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
 
@@ -649,9 +649,12 @@ cwdk      type(B2StateExt), public, save :: state_ext
            gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
            gm%fcQgam(ifc,0) = qc(ix,iy,0)
            gm%fcQgam(ifc,1) = -qs(ix,iy,0)
-           gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)
-           gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)
-           gm%fcQbet(ifc,0) = 1.0_R8
+           gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQbet(ifc,0) = 1.0_R8*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
            gm%fcQbet(ifc,1) = 0.0_R8
            gm%fcPbs(ifc) = pbs(ix,iy,0)
            gm%fcPbshz(ifc) = pbshz(ix,iy,0)
@@ -669,9 +672,12 @@ cwdk      type(B2StateExt), public, save :: state_ext
          gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
          gm%fcQgam(ifc,0) = qc(ix,iy,0)
          gm%fcQgam(ifc,1) = -qs(ix,iy,0)
-         gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)
-         gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)
-         gm%fcQbet(ifc,0) = 1.0_R8
+         gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+         gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+         gm%fcQbet(ifc,0) = 1.0_R8*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcQbet(ifc,1) = 0.0_R8
          gm%fcPbs(ifc) = pbs(ix,iy,0)
          gm%fcPbshz(ifc) = pbshz(ix,iy,0)
@@ -688,9 +694,12 @@ cwdk      type(B2StateExt), public, save :: state_ext
          gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
          gm%fcQgam(ifc,0) = qc(ix,iy,0)
          gm%fcQgam(ifc,1) = -qs(ix,iy,0)
-         gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)
-         gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)
-         gm%fcQbet(ifc,0) = 1.0_R8
+         gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+         gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+         gm%fcQbet(ifc,0) = 1.0_R8*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcQbet(ifc,1) = 0.0_R8
          gm%fcPbs(ifc) = pbs(ix,iy,0)
          gm%fcPbshz(ifc) = pbshz(ix,iy,0)
@@ -714,9 +723,12 @@ cwdk      type(B2StateExt), public, save :: state_ext
            gm%fcQgam(ifc,0) = qc(ix,iy,1)
            gm%fcQgam(ifc,1) = qs(ix,iy,1)
            gm%fcQalf(ifc,0) = 0.0_R8
-           gm%fcQalf(ifc,1) = 1.0_R8
-           gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)
-           gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)
+           gm%fcQalf(ifc,1) = 1.0_R8*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
+     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
            gm%fcPbs(ifc) = pbs(ix,iy,1)
            gm%fcPbshz(ifc) = pbshz(ix,iy,1)
          end do
@@ -734,9 +746,12 @@ cwdk      type(B2StateExt), public, save :: state_ext
          gm%fcQgam(ifc,0) = qc(ix,iy,1)
          gm%fcQgam(ifc,1) = qs(ix,iy,1)
          gm%fcQalf(ifc,0) = 0.0_R8
-         gm%fcQalf(ifc,1) = 1.0_R8
-         gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)
-         gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)
+         gm%fcQalf(ifc,1) = 1.0_R8*
+     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+         gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
+     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+         gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
+     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcPbs(ifc) = pbs(ix,iy,1)
          gm%fcPbshz(ifc) = pbshz(ix,iy,1)
 
@@ -753,9 +768,12 @@ cwdk      type(B2StateExt), public, save :: state_ext
          gm%fcQgam(ifc,0) = qc(ix,iy,1)
          gm%fcQgam(ifc,1) = qs(ix,iy,1)
          gm%fcQalf(ifc,0) = 0.0_R8
-         gm%fcQalf(ifc,1) = 1.0_R8
-         gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)
-         gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)
+         gm%fcQalf(ifc,1) = 1.0_R8*
+     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+         gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
+     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+         gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
+     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcPbs(ifc) = pbs(ix,iy,1)
          gm%fcPbshz(ifc) = pbshz(ix,iy,1)
        end do      
@@ -792,7 +810,118 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
      .                              abs(gm%cvBb(mpg%fcCv(ifc,2),0))
         end do
        end if
-      end do      
+      end do
+
+
+*  .. unit vector of the magnetic field in X,Y,Z coorinates
+
+cwdk  cell centers
+cwdk  assumption: poloidal direction is direction of line between 
+cwdk              poloidal face centers (E/W)
+      do iy = 0, ny-1
+        do ix = 0, nx-1
+          ic = (ix+1) + iy*nx
+
+          ! Construct unit vector in poloidal direction:
+          dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
+     &          (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
+          duy = (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
+     &          (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8
+
+          ! length should be hx; recomputed for safety
+          du  = sqrt(dux**2+duy**2)
+
+          ! implicit assumption: gm%cvBb(ic,1) = 0.0
+          gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
+          gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
+          gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
+
+        enddo
+      enddo
+
+      do ix = 0, nx-1
+        ! bottom guard cells
+        ic = nCi + ix+1
+        iy = -1
+        
+        ! Construct unit vector in poloidal direction:
+        dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
+     &        (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
+        duy = (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
+     &        (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8
+
+        ! length should be hx; recomputed for safety
+        du  = sqrt(dux**2+duy**2)
+
+        ! implicit assumption: gm%cvBb(ic,1) = 0.0
+        gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
+        gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
+        gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
+
+        ! top guard cells
+        ic = nCi + nx + ix+1
+        iy = ny
+
+        ! Construct unit vector in poloidal direction:
+        dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
+     &        (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
+        duy = (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
+     &        (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8
+
+        ! length should be hx; recomputed for safety
+        du  = sqrt(dux**2+duy**2)
+
+        ! implicit assumption: gm%cvBb(ic,1) = 0.0
+        gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
+        gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
+        gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
+
+      end do
+ 
+      do iy = 0, ny-1
+        ic = nCi + 2*nx + iy+1
+        ix = -1
+
+        ! Construct unit vector in poloidal direction:
+        dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
+     &        (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
+        duy = (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
+     &        (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8
+
+        ! length should be hx; recomputed for safety
+        du  = sqrt(dux**2+duy**2)
+
+        ! implicit assumption: gm%cvBb(ic,1) = 0.0
+        gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
+        gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
+        gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
+
+        ic = nCi + 2*nx + ny + iy+1
+        ix = nx
+
+        ! Construct unit vector in poloidal direction:
+        dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
+     &        (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
+        duy = (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
+     &        (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8
+
+        ! length should be hx; recomputed for safety
+        du  = sqrt(dux**2+duy**2)
+
+        ! implicit assumption: gm%cvBb(ic,1) = 0.0
+        gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
+        gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
+        gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
+
+      end do
+
+      ! normalize
+      gm%cvEb(:,0) = gm%cvEb(:,0)/
+     &  sqrt(gm%cvEb(:,0)**2 + gm%cvEb(:,1)**2 + gm%cvEb(:,2)**2)
+      gm%cvEb(:,1) = gm%cvEb(:,1)/
+     &  sqrt(gm%cvEb(:,0)**2 + gm%cvEb(:,1)**2 + gm%cvEb(:,2)**2)
+      gm%cvEb(:,2) = gm%cvEb(:,2)/
+     &  sqrt(gm%cvEb(:,0)**2 + gm%cvEb(:,1)**2 + gm%cvEb(:,2)**2)
 
       end subroutine prep_geometry
 

@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npco (nCv, nFc, nVx, nregionv, solvcreg, ua_solve, 
-     &  solvmreg, itcnt, isb, rxf, geo, mpg, pl, dv, sr, ierr)
+      subroutine b2npco (nCv, nFc, nVx, nregionv, solving, solvcreg,         !srv 22.05.18
+     &  ua_solve, solvmreg, itcnt, isb, rxf, geo, mpg, pl, dv, sr, ierr)
       use b2mod_types
       use b2mod_b2cmpa
       use b2us_geo
@@ -12,13 +12,14 @@
 !WG_TODO     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, nregionv, itcnt, isb                       !srv 05.07.08
+      integer nCv, nFc, nVx, nregionv, itcnt, isb                            !srv 05.07.08
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Source), intent (in) :: sr
       real (kind=R8) ::
      *  rxf
-      logical solvcreg(0:nregionv), ua_solve, solvmreg(0:nregionv)
+      logical solving, solvcreg(0:nregionv), ua_solve,                       !srv 22.05.18
+     *  solvmreg(0:nregionv)
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
@@ -52,6 +53,7 @@
 *   ..local variables
       integer ncall
       integer, save :: iout = 0, iout_b2wdat = 0                     !srv 04.07.08
+      integer, save :: get_residuals = 0                             !srv 22.05.18
       character chns*3                                               !srv 04.07.08
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
@@ -97,6 +99,7 @@
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
        call ipgeti ('b2npco_iout', iout)                              !srv 13.07.05
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
+       call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -123,19 +126,24 @@ cdjm Jan2017 update particle source components for balance
 #endif
 * ..particle balance
 *   ..compute residual
-      call b2ursc (nCv, nFc, geo, mpg, pl%na(1,isb), sr%sna(1,0,isb), 
-     &  dv%fna(1,0,isb), dv%resco(1,isb))
+      if((solving.and.all(solvcreg(0:mpg%nnreg(0))))
+     &            .or.get_residuals.eq.1) then                          !srv 22.05.18
+        call b2ursc (nCv, nFc, geo, mpg, pl%na(1,isb), sr%sna(1,0,isb), 
+     &    dv%fna(1,0,isb), dv%resco(1,isb))
+      endif                                                             !srv 22.05.18
 *   ..compute correction
       write (chns,'(i3.3)') isb
-      call b2usco (nCv, nFc, nVx, isb, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
-     &  solvcreg, itcnt, rxg, pcm1, pl%na(1,isb), dv%pa(1,isb), 
-     &  sr%sna(1,1,isb), dv%flob, dv%conb, dv%pcca(1,1,isb), 
-     &  dv%resco(1,isb), dv%corpa(1,isb), aa, 'b2usco_'//chns)
+      if(solving.and.all(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18
+        call b2usco (nCv, nFc, nVx, isb, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
+     &   solvcreg, itcnt, rxg, pcm1, pl%na(1,isb), dv%pa(1,isb), 
+     &   sr%sna(1,1,isb), dv%flob, dv%conb, dv%pcca(1,1,isb), 
+     &   dv%resco(1,isb), dv%corpa(1,isb), aa, 'b2usco_'//chns)
 *   ..apply correction
-      call b2upco (nCv, nFc, nVx, geo, mpg, nregionv, ua_solve,
-     &  solvmreg, rxf, pcm0, dv%corpa(1,isb), dv%pcca(1,0,isb), 
-     &  dv%pa(1,isb), pl%na(1,isb), pl%ua(1,isb))
-      if (iout.ne.0) then                                             !srv 12.07.02 {
+        call b2upco (nCv, nFc, nVx, geo, mpg, nregionv, ua_solve,
+     &   solvmreg, rxf, pcm0, dv%corpa(1,isb), dv%pcca(1,0,isb), 
+     &   dv%pa(1,isb), pl%na(1,isb), pl%ua(1,isb))
+      endif                                                             !srv 22.05.18
+      if (iout.ne.0) then                                               !srv 12.07.02 {
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,dv%pa(1,isb),'b2npco_pa'//chns)
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)

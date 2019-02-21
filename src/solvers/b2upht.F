@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
-     &  po_solve, ua_solve, solvereg, solvireg, solvpreg, solvmreg,
-     &  rxf, pcm0, cortt, corte, corti,
+     &  po_solve, ua_solve, solvereg, solvireg, solvtreg, solvpreg,      !srv 22.05.18
+     &  solvmreg, rxf, pcm0, cortt, corte, corti,
      &  pccm0, na, ua, te, ti, po, ne, ni)
       use b2mod_types
       use b2mod_constants
@@ -20,6 +20,7 @@
      &  corti(nCv), pccm0(nCv)
       logical po_solve, ua_solve,
      &  solvereg(0:nregionv), solvireg(0:nregionv),
+     &  solvtreg(0:nregionv),                             !srv 22.05.18
      &  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -88,7 +89,7 @@
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (stylec.eq.0) then
-         if (solvereg(ireg).and.solvireg(ireg)) then
+         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then     !srv 22.05.18
           dte(iCv) = rxf*max(-te(iCv),(corte(iCv)+cortt(iCv))/2.0_R8)
           dti(iCv) = rxf*max(-ti(iCv),(corti(iCv)+cortt(iCv))/2.0_R8)
          else
@@ -96,9 +97,8 @@
           dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
          endif
         else if (stylec.eq.1) then
-         ctt = cortt(iCv)-
-     &     med(corte(iCv),cortt(iCv),corti(iCv))
-         if (solvereg(ireg).and.solvireg(ireg)) then
+         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then     !srv 22.05.18
+          ctt = cortt(iCv) - med(corte(iCv),cortt(iCv),corti(iCv))
           dte(iCv) = rxf*max(-te(iCv),corte(iCv)+ctt)
           dti(iCv) = rxf*max(-ti(iCv),corti(iCv)+ctt)
          else

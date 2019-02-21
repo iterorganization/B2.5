@@ -64,6 +64,7 @@
       integer, save :: iadd_9 = 1                                      !srv 02.01.07
       integer, save :: last_ion
       integer, save :: iout = 0
+      integer, save :: get_residuals = 0                               !srv 22.05.18
       integer ireg
       logical lnonzero
       save ncall
@@ -93,6 +94,7 @@
        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
        call ipgeti ('b2usht_add_9', iadd_9)                           !srv 02.01.07
        call ipgeti ('b2usht_iout', iout)
+       call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -160,7 +162,7 @@ cwdk radial contribution
 *   ..compute the nine-point matrix
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
-        if (solveee(ireg) .and. solveei(ireg)) then
+        if (solveee(ireg) .and. solveei(ireg). and. solveet(ireg)) then !srv 22.05.18
           aa(mpg%cvNvP(iCv,1)) =
      &    -she(iCv,1)-she(iCv,3)*ne(iCv)-
      &     shi(iCv,1)-shi(iCv,3)*ni(iCv,0)
@@ -275,6 +277,7 @@ cwdk radial contribution
       endif
 #endif
       do iCv = 1, nCv
+        ireg = mpg%cvReg(iCv)                                        !srv 22.05.18
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
           lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
@@ -283,11 +286,14 @@ cwdk radial contribution
           aa(mpg%cvNvP(iCv,1)) = 1.0_R8
           resht(iCv) = 0.0_R8
         endif
+        if (.not.solveet(ireg)) resht(iCv) = 0.0_R8                 !srv 22.05.18
       enddo
 
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total')  !srv 18.05.02
-
+      if (all(solveet(0:mpg%nnreg(0)))) then                             !srv 22.05.18
+        call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total')  !srv 18.05.02
+      endif                                                              !srv 22.05.18
+      
       if (iout.ne.0) then
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_total_aam6')
@@ -442,6 +448,7 @@ cwdk radial contribution
       endif
 #endif
       do iCv = 1, nCv
+        ireg = mpg%cvReg(iCv)                                        !srv 22.05.18
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
           lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
@@ -450,10 +457,14 @@ cwdk radial contribution
           aa(mpg%cvNvP(iCv,1)) = 1.0_R8
           reshe(iCv) = 0.0_R8
         endif
+        if (.not.solveee(ireg).and.get_residuals.eq.0) 
+     &     reshe(iCv) = 0.0_R8                                           !srv 22.05.18
       enddo
 
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')     !srv 18.05.02
+      if (all(solveee(0:mpg%nnreg(0)))) then                             !srv 22.05.18
+        call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')     !srv 18.05.02
+      endif                                                              !srv 22.05.18
 
       if (iout.ne.0) then
 #ifdef WG_TODO
@@ -608,6 +619,7 @@ cwdk radial contribution
       endif
 #endif
       do iCv = 1, nCv
+        ireg = mpg%cvReg(iCv)                                        !srv 22.05.18
         lnonzero=.false.
         do inCv = 1,mpg%cvNvP(iCv,2)
           lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
@@ -616,14 +628,18 @@ cwdk radial contribution
           aa(mpg%cvNvP(iCv,1)) = 1.0_R8
           reshi(iCv) = 0.0_R8
         endif
+        if (.not.solveei(ireg).and.get_residuals.eq.0) 
+     &     reshi(iCv) = 0.0_R8                                       !srv 22.05.18
       enddo
 
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
-      last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
-      do iCv = 1, nCv
-        corti(iCv) = corti(iCv)*scalr(ti(iCv))
-      enddo
+      if (all(solveei(0:mpg%nnreg(0)))) then                         !srv 22.05.18
+        call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
+        last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
+        do iCv = 1, nCv
+          corti(iCv) = corti(iCv)*scalr(ti(iCv))
+        enddo
+      endif                                                          !srv 22.05.18
 
 
       if (iout.ne.0) then
