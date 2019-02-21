@@ -58,7 +58,7 @@ c
       enddo
       call plottripatch(nx,ny,ntrii,nrknot,0,
      2 xtrian,ytrian,necke,wrkarr,
-     1 0.0_R8,1.0_R8,.true.,linlog)
+     1 0.0_R8,1.0_R8,linlog)
       call data_copy(0)
       call additional_elements(nx,ny,.true.)
       call end_page

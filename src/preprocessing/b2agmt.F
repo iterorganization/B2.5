@@ -337,10 +337,9 @@ C Corners are numbered in the B2 convention 2-3
 C                                           0-1
       function XquadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
       use b2mod_types
+      use b2mod_indirect, only: triangleArea
       implicit none
       real (kind=R8) :: XquadCentroid
-      real (kind=R8) :: triangleArea
-      external triangleArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
   
       XquadCentroid =
@@ -355,10 +354,9 @@ C                                           0-1
 
       function YquadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
       use b2mod_types
+      use b2mod_indirect, only: triangleArea
       implicit none
       real (kind=R8) :: YquadCentroid
-      real (kind=R8) :: triangleArea
-      external triangleArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
   
       YquadCentroid =
@@ -394,15 +392,3 @@ C Coordinates of centroid of a triangle given by vertex coordinates
 
       end subroutine b2agmt
 
-C Area of triangle given by vertex coordinates
-      function triangleArea( x0, y0, x1, y1, x2, y2 )
-      use b2mod_types
-      implicit none
-      real (kind=R8) :: triangleArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2
-      intrinsic abs
-  
-      triangleArea = 0.5_R8 * abs( (x1-x0)*(y2-y0)
-     & - (y1-y0)*(x2-x0) )
-      return
-      end function triangleArea
