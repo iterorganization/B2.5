@@ -287,11 +287,11 @@
         du  = sqrt(dux**2+duy**2)
 
         ! rotate over angle -alpha; scale with poloidal pitch
-        gm%fcEb(ifc,0) = abs(gm%fcBb(ifc,0))/gm%fcBb(ifc,3)*
-     &    ( gm%fcQalf(ifc,0)*dux + gm%fcQalf(ifc,1)*duy)/du
-        gm%fcEb(ifc,1) = abs(gm%fcBb(ifc,0))/gm%fcBb(ifc,3)*
-     &    (-gm%fcQalf(ifc,1)*dux + gm%fcQalf(ifc,0)*duy)/du
-        gm%fcEb(ifc,2) = gm%fcBb(ifc,2)/gm%fcBb(ifc,3)
+        gm%fcEb(iFc,0) = abs(gm%fcBb(iFc,0))/gm%fcBb(iFc,3)*
+     &    ( gm%fcQalf(iFc,0)*dux + gm%fcQalf(iFc,1)*duy)/du
+        gm%fcEb(iFc,1) = abs(gm%fcBb(iFc,0))/gm%fcBb(iFc,3)*
+     &    (-gm%fcQalf(iFc,1)*dux + gm%fcQalf(iFc,0)*duy)/du
+        gm%fcEb(iFc,2) = gm%fcBb(iFc,2)/gm%fcBb(iFc,3)
 
       end do
 
