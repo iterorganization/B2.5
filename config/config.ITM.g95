@@ -59,8 +59,8 @@ ifndef SOLPS_CPP
 EQUIVS   += -DIMAS
 endif
 EQUIVS   += -DGGD_OLD
-LD_UAL   ?= `pkg-config imas-g95 --libs`
-INCMODS  += `pkg-config imas-g95 --cflags`
+LD_UAL   ?= `pkg-config imas-g95 ggd --libs`
+INCMODS  += `pkg-config imas-g95 ggd --cflags`
 IMASLIBS  = ${LD_UAL} -lggd-${COMPILER} -L/cineca/prod/opt/compilers/gnu/6.1.0/none/lib64 -lstdc++
 else
 ifdef ITM_ENVIRONMENT_LOADED
