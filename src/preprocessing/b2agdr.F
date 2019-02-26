@@ -98,7 +98,7 @@
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle
-      integer iFace, offset
+      integer, save :: redef_qc = 0, qc_style = 1
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
@@ -319,6 +319,13 @@
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
       redef_pbs = 1 ! In version 3.0.6, we apply the pbsx correction by default
       call ipgeti ('b2agdr_redef_pbs', redef_pbs)
+      call ipgeti ('b2agdr_redef_qc',  redef_qc )
+      call ipgeti ('b2agmt_qc_style',  qc_style )
+      if (redef_qc .eq. 1 .and. qc_style .eq. 1) then
+       write (*,*) 'b2agdr_redef_qc = b2agmt_qc_style = 1'
+       write (*,*) 'Double correction of qc specified; '//
+     &             'only b2agmt_qc_style will apply'
+      endif
 *   ..use parg, obtain isymm and lblgm
       call b2xxid ('b2ag', lblgm(1:60))
       call b2agsi (nx, ny, parg, isymm, lblgm(61:120), istyle)
@@ -406,7 +413,15 @@
 *   ..compute metric coefficients on auxiliary mesh
       call b2agmt (nx1, ny1, isymm, crx1, cry1, vol1,
      & hx1, hy1, qz1, qc1, qcb1, gs1,
-     & cell_width1, cell_height1, leftix1, bottomiy1)
+     & cell_width1, cell_height1, leftix1, leftiy1, bottomiy1)
+*   ..improved computation of qc based on interpolation of qz values
+cwdk  attempt to avoid artificial reduction of poloidal contact area at faces for
+cwdk  curvilinear grids; angle between left face and average direction of top/bottom
+cwdk  faces is not representative for orthogonality of left face to field!
+      if (redef_qc.eq.1.and.qc_style.eq.0) then
+        call intfaceh(nx1,ny1,leftix1,leftiy1,vol1,qz1(-1,-1,1),
+     .    qc1(-1,-1))
+      endif
 *    ..interpolate magnetic field to cell faces
       call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
       call intfacer1(nx1,ny1,2,rightix1,rightiy1,vol1,bb1,wbbr1)
