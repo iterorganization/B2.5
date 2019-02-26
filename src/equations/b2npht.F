@@ -170,7 +170,7 @@ cdjm Jan2017 update particle source components for balance
       shef = she0
 *   ..save final ion heat source ignoring equipartition
       shif = shi0                                                       !srv 10.11.02 }
-      if ((solving(4).and.all(solvereg(0:nregionv))).or.
+      if ((solving(4).and.any(solvereg(0:nregionv))).or.
      &     get_residuals.eq.1) then                                     !srv 22.05.18
         if (mdf_fhe.eq.0) then
           call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%te, she0, dv%fhe,
@@ -180,7 +180,7 @@ cdjm Jan2017 update particle source components for balance
      &     dv%fhe_mdf, dv%reshe)
         endif
       endif                                                             !srv 22.05.18
-      if ((solving(4).and.all(solvireg(0:nregionv))).or.
+      if ((solving(4).and.any(solvireg(0:nregionv))).or.
      &     get_residuals.eq.1) then    !srv 22.05.18
        if (mdf_fhi.eq.0) then
           call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shi0, dv%fhi, 
@@ -209,12 +209,12 @@ cdjm Jan2017 update particle source components for balance
 !        dv%reshe = dv%reshe - shei
 !        dv%reshi = dv%reshi + shei
 !      endif                                                             !srv 22.05.18
-      if ((solving(4).and.all(solvereg(0:nregionv)))                     !srv 22.05.18 {
+      if ((solving(4).and.any(solvereg(0:nregionv)))                     !srv 22.05.18 {
      &    .or.get_residuals.eq.1) dv%reshe = dv%reshe - shei                     
-      if ((solving(4).and.all(solvireg(0:nregionv)))
+      if ((solving(4).and.any(solvireg(0:nregionv)))
      &    .or.get_residuals.eq.1) dv%reshi = dv%reshi + shei
-      if (solving(4).and.all(solvereg(0:nregionv)).and.            ! if total equation is not solved then resmt = 0            
-     &   all(solvireg(0:nregionv)).and.all(solvtreg(0:nregionv)))
+      if (solving(4).and.any(solvereg(0:nregionv)).and.            ! if total equation is not solved then resmt = 0            
+     &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
      &   dv%resht = dv%reshe + dv%reshi                                 !srv 22.05.18 }
       
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {

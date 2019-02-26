@@ -126,14 +126,14 @@ cdjm Jan2017 update particle source components for balance
 #endif
 * ..particle balance
 *   ..compute residual
-      if((solving.and.all(solvcreg(0:mpg%nnreg(0))))
+      if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
      &            .or.get_residuals.eq.1) then                          !srv 22.05.18
         call b2ursc (nCv, nFc, geo, mpg, pl%na(1,isb), sr%sna(1,0,isb), 
      &    dv%fna(1,0,isb), dv%resco(1,isb))
       endif                                                             !srv 22.05.18
 *   ..compute correction
       write (chns,'(i3.3)') isb
-      if(solving.and.all(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18
+      if(solving.and.any(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18
         call b2usco (nCv, nFc, nVx, isb, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
      &   solvcreg, itcnt, rxg, pcm1, pl%na(1,isb), dv%pa(1,isb), 
      &   sr%sna(1,1,isb), dv%flob, dv%conb, dv%pcca(1,1,isb), 

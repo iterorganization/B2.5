@@ -690,7 +690,7 @@ cwdk of potential equation...
             call my_out_us(70,nCv,0,dv%respo,'b2news__respo'//charns)
             call my_out_us(70,nCv,0,pl%po,'b2news__po'//charns)
           endif                                                          !srv 12.07.05 }
-          if(.not.solving(3).or..not.all(solvepo(0:mpg%nnreg(0)))) exit  !srv 22.05.18
+          if(.not.solving(3).or..not.any(solvepo(0:mpg%nnreg(0)))) exit  !srv 22.05.18
           if(t0.gt.potok.and.(i.eq.potit/3.or.i.eq.potit*2/3)) then      !srv 06.07.00
             if (vis_per.eq.0.0e0_R8) then
               call restart_ma28_for_us

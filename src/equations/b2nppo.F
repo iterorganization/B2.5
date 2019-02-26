@@ -91,7 +91,7 @@
 
 * ..main computation
 *   ..compute residual
-      if((solving.and.all(solvereg(0:nregionv))).or.
+      if((solving.and.any(solvereg(0:nregionv))).or.
      &    get_residuals.eq.1) then                                  !srv 22.05.18
         call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%po, sr%sch, dv%fch, 
      &    dv%respo)
@@ -107,7 +107,7 @@ c-rfs      write(6,*) 'ix=21, iy=-1, fch, respo',
 c-rfs     .  fch(21,-1,0), fch(21,-1,1),
 c-rfs     .  fch(21,0,1), respo(21,-1)
 *   ..compute correction
-      if(solving.and.all(solvereg(0:nregionv))) then                !srv 22.05.18
+      if(solving.and.any(solvereg(0:nregionv))) then                !srv 22.05.18
         call b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, geo,
      &   mpg, dv%ne, pl%te, dv%conc, sr%sch, dv%respo, dv%corpo, aa, 
      &  'b2nppo')
