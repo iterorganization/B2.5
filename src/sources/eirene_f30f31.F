@@ -162,35 +162,37 @@ c
       if(iout.ne.0) then                                               !srv 18.06.08 {
         do is = 0,ns-1
          write (chns,'(i3.3)') is
-         call my_out_us(70,nFc,dv%fna(1,0,is),'copy_fnax'//chns)
-         call my_out_us(70,nFc,dv%fna(1,1,is),'copy_fnay'//chns)
-         call my_out_us(70,nFc,dv%fna_eir(1,0,is),'copy_fna_eirx'//chns)
-         call my_out_us(70,nFc,dv%fna_eir(1,1,is),'copy_fna_eiry'//chns)
-         call my_out_us(70,nFc,dv%vaecrb(1,0,is),'copy_vecrbx'//chns)
-         call my_out_us(70,nFc,dv%vaecrb(1,1,is),'copy_vecrby'//chns)
-         call my_out_us(70,nFc,dv%wadia(1,0,is),'copy_wadiax'//chns)
-         call my_out_us(70,nFc,dv%wadia(1,1,is),'copy_wadiay'//chns)
-         call my_out_us(70,nFc,dv%vadia(1,0,is),'copy_vadiax'//chns)
-         call my_out_us(70,nFc,dv%vadia(1,1,is),'copy_vadiay'//chns)
-         call my_out_us(70,nCv,vaecrbc(1,0,is),'copy_vecrbcx'//chns)
-         call my_out_us(70,nCv,vaecrbc(1,1,is),'copy_vecrbcy'//chns)
-         call my_out_us(70,nCv,wadiac(1,0,is),'copy_wadiacx'//chns)
-         call my_out_us(70,nCv,wadiac(1,1,is),'copy_wadiacy'//chns)
-         call my_out_us(70,nCv,vadiac(1,0,is),'copy_vadiacx'//chns)
-         call my_out_us(70,nCv,vadiac(1,1,is),'copy_vadiacy'//chns)
-         call my_out_us(70,nCv,pl%ua(1,is),'copy_ua'//chns)
-         call my_out_us(70,nCv,pl%na(1,is),'copy_na'//chns)
+         call my_out_us(70,nFc,1,dv%fna(1,0,is),'copy_fnax'//chns)
+         call my_out_us(70,nFc,1,dv%fna(1,1,is),'copy_fnay'//chns)
+         call my_out_us(70,nFc,1,dv%fna_eir(1,0,is),
+     &     'copy_fna_eirx'//chns)
+         call my_out_us(70,nFc,1,dv%fna_eir(1,1,is),
+     &     'copy_fna_eiry'//chns)
+         call my_out_us(70,nFc,1,dv%vaecrb(1,0,is),'copy_vecrbx'//chns)
+         call my_out_us(70,nFc,1,dv%vaecrb(1,1,is),'copy_vecrby'//chns)
+         call my_out_us(70,nFc,1,dv%wadia(1,0,is),'copy_wadiax'//chns)
+         call my_out_us(70,nFc,1,dv%wadia(1,1,is),'copy_wadiay'//chns)
+         call my_out_us(70,nFc,1,dv%vadia(1,0,is),'copy_vadiax'//chns)
+         call my_out_us(70,nFc,1,dv%vadia(1,1,is),'copy_vadiay'//chns)
+         call my_out_us(70,nCv,0,vaecrbc(1,0,is),'copy_vecrbcx'//chns)
+         call my_out_us(70,nCv,0,vaecrbc(1,1,is),'copy_vecrbcy'//chns)
+         call my_out_us(70,nCv,0,wadiac(1,0,is),'copy_wadiacx'//chns)
+         call my_out_us(70,nCv,0,wadiac(1,1,is),'copy_wadiacy'//chns)
+         call my_out_us(70,nCv,0,vadiac(1,0,is),'copy_vadiacx'//chns)
+         call my_out_us(70,nCv,0,vadiac(1,1,is),'copy_vadiacy'//chns)
+         call my_out_us(70,nCv,0,pl%ua(1,is),'copy_ua'//chns)
+         call my_out_us(70,nCv,0,pl%na(1,is),'copy_na'//chns)
         enddo
-        call my_out_us(70,nFc,dv%fne_eir(1,0),'copy_fne_eirx')
-        call my_out_us(70,nFc,dv%fne_eir(1,1),'copy_fne_eiry')
-        call my_out_us(70,nFc,dv%fhe_eir(1,0),'copy_fhe_eirx')
-        call my_out_us(70,nFc,dv%fhe_eir(1,1),'copy_fhe_eiry')
-        call my_out_us(70,nFc,dv%fhi_eir(1,0),'copy_fhi_eirx')
-        call my_out_us(70,nFc,dv%fhi_eir(1,1),'copy_fhi_eiry')
-        call my_out_us(70,nCv,dv%ne,'copy_ne')
-        call my_out_us(70,nCv,pl%te,'copy_te')
-        call my_out_us(70,nCv,pl%ti,'copy_ti')
-        call my_out_us(70,nCv,pl%po,'copy_po')
+        call my_out_us(70,nFc,1,dv%fne_eir(1,0),'copy_fne_eirx')
+        call my_out_us(70,nFc,1,dv%fne_eir(1,1),'copy_fne_eiry')
+        call my_out_us(70,nFc,1,dv%fhe_eir(1,0),'copy_fhe_eirx')
+        call my_out_us(70,nFc,1,dv%fhe_eir(1,1),'copy_fhe_eiry')
+        call my_out_us(70,nFc,1,dv%fhi_eir(1,0),'copy_fhi_eirx')
+        call my_out_us(70,nFc,1,dv%fhi_eir(1,1),'copy_fhi_eiry')
+        call my_out_us(70,nCv,0,dv%ne,'copy_ne')
+        call my_out_us(70,nCv,0,pl%te,'copy_te')
+        call my_out_us(70,nCv,0,pl%ti,'copy_ti')
+        call my_out_us(70,nCv,0,pl%po,'copy_po')
       endif 
 * cell centred
       do ic=1,nCv
@@ -658,15 +660,15 @@ c declared -1:nx,-1:ny
         if(.not.is_neutral(is)) then
          nflai=nflai+1
          write (chns,'(i3.3)') is
-         call my_out_us(70,nCv,uub(1,nflai),'copy_uub'//chns)
-         call my_out_us(70,nCv,vvb(1,nflai),'copy_vvb'//chns)
-         call my_out_us(70,nCv,wwb(1,nflai),'copy_wwb'//chns)
-         call my_out_us(70,nCv,upb(1,nflai),'copy_upb'//chns)
+         call my_out_us(70,nCv,0,uub(1,nflai),'copy_uub'//chns)
+         call my_out_us(70,nCv,0,vvb(1,nflai),'copy_vvb'//chns)
+         call my_out_us(70,nCv,0,wwb(1,nflai),'copy_wwb'//chns)
+         call my_out_us(70,nCv,0,upb(1,nflai),'copy_upb'//chns)
         endif
        enddo
-       call my_out_us(70,nCv,teb,'copy_teb')
-       call my_out_us(70,nCv,tib,'copy_tib')
-       call my_out_us(70,nCv,pob,'copy_pob')
+       call my_out_us(70,nCv,0,teb,'copy_teb')
+       call my_out_us(70,nCv,0,tib,'copy_tib')
+       call my_out_us(70,nCv,0,pob,'copy_pob')
       endif 
 
 !  .. define target data
