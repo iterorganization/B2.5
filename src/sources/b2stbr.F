@@ -103,9 +103,9 @@
      &  sna0_eir(nCv,0:1,0:ns-1),
      &  smo0_eir(nCv,0:3,0:ns-1),
      &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3),
-     &  fatm_eir(nCv,0:1,nnatmi), datm_eir(nCv,nnatmi), !srv 29.04.10 }
-     &  fmol_eir(nCv,0:1,nmol), dmol_eir(nCv,nmol)!,  !IYS 27.01.17
-!WG_TODO     &  flxtmp(0:nx+1,0:ny+1)
+     &  fatm_eir(nFc,0:1,nnatmi), datm_eir(nCv,nnatmi), !srv 29.04.10 }
+     &  fmol_eir(nFc,0:1,nnmoli), dmol_eir(nCv,nnmoli), !IYS 27.01.17
+     &  flxtmp(nCv)
       integer ncall, sput_src, first_flight,
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
@@ -647,27 +647,29 @@ c   --> better solution wanted here..
           write (chns,'(i3.3)') is
           write (ch3 ,'(i3.3)') ncall
           if(.not.is_neutral(is)) then
-           wrk0=sna0_eir(:,:,0,is)+
-     &          sna0_eir(:,:,1,is)*na(:,:,is)
-           call my_out(70,nx,ny,wrk0,'b2stbr_sna_eir'//chns//'_'//ch3)
+           wrk0=sna0_eir(:,0,is)+
+     &          sna0_eir(:,1,is)*pl%na(:,is)
+           call my_out_us(70,nCv,wrk0,'b2stbr_sna_eir'//chns//'_'//ch3)
           endif
          enddo
         endif
-        sna0 = sna0 + sna0_eir
-        smo0 = smo0 + smo0_eir
-        she0 = she0 + she0_eir
-        shi0 = shi0 + shi0_eir
+        srw%sna0 = srw%sna0 + sna0_eir
+        srw%smo0 = srw%smo0 + smo0_eir
+        srw%she0 = srw%she0 + she0_eir
+        srw%shi0 = srw%shi0 + shi0_eir
 
 *   get averaged sources
+#ifdef WG_TODO
         if (ird_aver > 0) 
      &    call run_av_get_sources(sna0, smo0, she0, shi0, sch0, sne0,
      &                            nx, ny, ns)
+#endif
 #ifdef ASTRA
         if (use_astra.ne.0) then
           do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
             if(is.eq.ismain) then
-              wrk0=sna0_eir(:,:,0,is)+
-     &             sna0_eir(:,:,1,is)*na(:,:,is)
+              wrk0=sna0_eir(:,0,is)+
+     &             sna0_eir(:,1,is)*pl%na(:,is)
               call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
             endif
           enddo                                                           !srv 28.07.11 20.02.12 }
@@ -683,39 +685,31 @@ c   --> better solution wanted here..
 #endif
         do ia = 1, nnatmi
 !         is = eb2spcr(ia)  ! IYS 27.01.2017
-         do iy = -1,ny
-          do ix = -1,nx
 ! IYS 27.01.2017
 !           fatm_eir(ix,iy,0,is) = pfluxa(ix+1,iy+1,ia,1)
 !           fatm_eir(ix,iy,1,is) = rfluxa(ix+1,iy+1,ia,1)
 ! IYS 27.01.2017
-           datm_eir(ix,iy,ia)   = dab2(ix+1,iy+1,ia,1)
-          enddo
-         enddo
+         datm_eir(:,ia)   = dab2(:,ia,1)
 ! IYS 27.01.2017
 ! interpolate atom fluxes to cell faces (for output only)
-         flxtmp(0:nx+1,0:ny+1) = pfluxa(0:nx+1,0:ny+1,ia,1)
-         call intfaceh(nx,ny,leftix,leftiy,vol,
-     &                 flxtmp,fatm_eir(:,:,0,ia))
-         flxtmp(0:nx+1,0:ny+1) = rfluxa(0:nx+1,0:ny+1,ia,1)
-         call intfacev(nx,ny,bottomix,bottomiy,vol,
-     &                 flxtmp,fatm_eir(:,:,1,ia))
+         flxtmp(:) = pfluxa(:,ia,1)
+         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,
+     &                flxtmp,fatm_eir(:,0,ia))
+         flxtmp(:) = rfluxa(:,ia,1)
+         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,
+     &                flxtmp,fatm_eir(:,1,ia))
 ! IYS 27.01.2017
         enddo
 ! IYS 27.01.2017
-        do im = 1, nmol
-         do iy = -1,ny
-          do ix = -1,nx
-           dmol_eir(ix,iy,im)   = dmb2(ix+1,iy+1,im,1)
-          enddo
-         enddo
+        do im = 1, nnmoli
+          dmol_eir(:,im)   = dmb2(:,im,1)
 ! interpolate molecule fluxes to cell faces (for output only)
-         flxtmp(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,im,1)
-         call intfaceh(nx,ny,leftix,leftiy,vol,
-     &                 flxtmp,fmol_eir(:,:,0,im))
-         flxtmp(0:nx+1,0:ny+1) = rfluxm(0:nx+1,0:ny+1,im,1)
-         call intfacev(nx,ny,bottomix,bottomiy,vol,
-     &                 flxtmp,fmol_eir(:,:,1,im))
+          flxtmp(:) = pfluxm(:,im,1)
+          call intface(nCv,nFc,mpg%fcCv,geo%fcVol,
+     &                 flxtmp,fmol_eir(:,0,im))
+          flxtmp(:) = rfluxm(:,im,1)
+          call intface(nCv,nFc,mpg%fcCv,geo%fcVol,
+     &                 flxtmp,fmol_eir(:,1,im))
         enddo
 ! IYS 27.01.2017
 
@@ -724,9 +718,7 @@ c   --> better solution wanted here..
 #endif
       else
 cwdk remove this if-test, to allow runs without Eirene if code is compiled with Eirene
-#ifdef WG_TODO
-        call eirene_mc_init(nx,ny)             ! EIRDIAG = 0   !srv 03.04.13
-#endif
+        call eirene_mc_init(nCv,nFc)             ! EIRDIAG = 0   !srv 03.04.13
       endif
 
 * ..sources
@@ -972,36 +964,36 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 #ifdef B25_EIRENE
        do ia = 1,nnatmi
         write (chns,'(i3.3)') ia
-        wrk0(-1:nx,-1:ny)=rfluxa(0:nx+1,0:ny+1,ia,1)
+        wrk0(:)=rfluxa(:,ia,1)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_rfluxa_eir'//chns)
-        wrk0(-1:nx,-1:ny)=tfluxa(0:nx+1,0:ny+1,ia,1)
+        wrk0(:)=tfluxa(:,ia,1)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_tfluxa_eir'//chns)
-        call my_out_us(70,nCv,0,fatm_eir(:,:,1,ia),              ! IYS 27.01.2017
+        call my_out_us(70,nFc,0,fatm_eir(:,1,ia),              ! IYS 27.01.2017
      &                'b2stbr_fatmy_eir'//chns)
-        wrk0(-1:nx,-1:ny)=pfluxa(0:nx+1,0:ny+1,ia,1)
+        wrk0(:)=pfluxa(:,ia,1)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_pfluxa_eir'//chns)
-        call my_out_us(70,nCv,0,fatm_eir(:,:,0,ia),              ! IYS 27.01.2017
+        call my_out_us(70,nFc,0,fatm_eir(:,0,ia),              ! IYS 27.01.2017
      &                'b2stbr_fatmx_eir'//chns)
-        wrk0(-1:nx,-1:ny)=dab2(0:nx+1,0:ny+1,ia,1)
+        wrk0(:)=dab2(:,ia,1)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_dab2_eir'//chns)
-        wrk0(-1:nx,-1:ny)=tab2(0:nx+1,0:ny+1,ia,1)
+        wrk0(:)=tab2(:,ia,1)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_tab2_eir'//chns)
        enddo
-       do im = 1,nmol
+       do im = 1,nnmoli
         write (chns,'(i3.3)') im
-        wrk0(-1:nx,-1:ny)=rfluxm(0:nx+1,0:ny+1,im,1)
+        wrk0(:)=rfluxm(:,im,1)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_rfluxm_eir'//chns)
-        wrk0(-1:nx,-1:ny)=tfluxm(0:nx+1,0:ny+1,im,1)
+        wrk0(:)=tfluxm(:,im,1)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_tfluxm_eir'//chns)
-        call my_out_us(70,nCv,0,fmol_eir(:,:,1,im),              ! IYS 27.01.2017
+        call my_out_us(70,nFc,0,fmol_eir(:,1,im),              ! IYS 27.01.2017
      &              'b2stbr_fmoly_eir'//chns)
-        wrk0(-1:nx,-1:ny)=pfluxm(0:nx+1,0:ny+1,im,1)
+        wrk0(:)=pfluxm(:,im,1)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_pfluxm_eir'//chns)
-        call my_out_us(70,nCv,0,fmol_eir(:,:,0,im),              ! IYS 27.01.2017
+        call my_out_us(70,nFc,0,fmol_eir(:,0,im),              ! IYS 27.01.2017
      &              'b2stbr_fmolx_eir'//chns)
-        wrk0(-1:nx,-1:ny)=dmb2(0:nx+1,0:ny+1,im,1)
+        wrk0(:)=dmb2(:,im,1)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_dmb2_eir'//chns)
-        wrk0(-1:nx,-1:ny)=tmb2(0:nx+1,0:ny+1,im,1)
+        wrk0(:)=tmb2(:,im,1)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_tmb2_eir'//chns)
        enddo
 #endif

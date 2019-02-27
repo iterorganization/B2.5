@@ -25,8 +25,12 @@ c
       use b2mod_indirect
       use b2mod_b2cmpa
 #ifdef B25_EIRENE
+      use eirmod_parmmod
+     .   , only : natm, nmol, nion, nstra, nlmpgs, nspz, ndx, ndy
       use eirmod_extrab25
       use eirmod_clogau
+      use eirmod_braeir
+     .   , only : pux, puy, pvx, pvy
 #endif
       implicit none
 
@@ -86,12 +90,12 @@ C
       write(*,'(a,5i4)')
      . ' Dimensions in ftn44 = ',nnx,nny,natmi,nmoli,nioni
 #endif
-      write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
+!WG_TODO      write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
-      call xertst(nnx   .le. ndx , 'NGREAD:   NNX > NDX ')
-      call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
+!WG_TODO      call xertst(nnx   .le. ndx , 'NGREAD:   NNX > NDX ')
+!WG_TODO      call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
       allocate(ft44data(0:nx+1,0:ny+1))
       filename='input.dat'
@@ -134,6 +138,7 @@ C
 * data
 * neutral atoms
 C
+#ifdef WG_TODO
       do 14 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,dab2(:,:,is,1))
         write(charns,'(i3.3)') is
@@ -228,6 +233,7 @@ cank 960511
           end do
         end do
       end do
+#endif
       do istra=0,nstra
         do ix=1,nlimps
           wldnek(ix,istra)=0.0_R8
@@ -245,12 +251,14 @@ cank 960511
         end do
       end do
       if(jvft44 .ge. 960511) then
+#ifdef WG_TODO
         do is=1,nmoli
           call gfsub2(44,ndx,ndy,nnx,nny,srcml(:,:,is,1))
         end do
         do is=1,nmoli
           call gfsub2(44,ndx,ndy,nnx,nny,edissml(:,:,is,0))
         end do
+#endif
       end if
       if(jvft44 .ge. 960513) then
         read(44,'(3i6)') nlimi,nstsi,nstrai
@@ -469,9 +477,11 @@ cank
         end if
 
         if(jvft44 .ge. 20071209) then
+#ifdef WG_TODO
           do is = 1, natmi
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
           end do
+#endif
         end if
 
         if(jvft44 .ge. 20080706) then
@@ -618,9 +628,11 @@ cank
  999    continue
       else  ! NLWRMSH
         if(jvft44 .ge. 20071209) then
+#ifdef WG_TODO
           do is = 1, natmi
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
           end do
+#endif
         end if
       end if
 

@@ -146,6 +146,10 @@ cwdk move to dv
       type B2SourceWork
         real(R8), dimension(:,:), allocatable :: sch0, she0, shi0, sne0
         real(R8), dimension(:,:,:), allocatable :: smo0, smq0, sna0         
+        real(R8), dimension(:), allocatable :: 
+     .            b2stbm_sch, b2stbm_she, b2stbm_shi, b2stbm_sne
+        real(R8), dimension(:,:), allocatable :: 
+     .            b2stbm_smo, b2stbm_smq, b2stbm_sna       
       end type B2SourceWork
 
   ! b2mod_rates
@@ -793,6 +797,14 @@ cwdk move to dv
       allocate( srw % sna0( nCv, 0:1, 0:ns-1 ) )
       allocate( srw % sne0( nCv, 0:1 ) )
 
+      allocate( srw % b2stbm_sch( nCv ) )
+      allocate( srw % b2stbm_she( nCv ) )
+      allocate( srw % b2stbm_shi( nCv ) )
+      allocate( srw % b2stbm_smo( nCv, 0:ns-1 ) )
+      allocate( srw % b2stbm_smq( nCv, 0:ns-1 ) )
+      allocate( srw % b2stbm_sna( nCv, 0:ns-1 ) )
+      allocate( srw % b2stbm_sne( nCv ) )
+
       return      
       end subroutine createB2SourceWork
 
@@ -806,6 +818,14 @@ cwdk move to dv
       deallocate( srw % smq0 )
       deallocate( srw % sna0 )
       deallocate( srw % sne0 )
+      
+      deallocate( srw % b2stbm_sch )
+      deallocate( srw % b2stbm_she )
+      deallocate( srw % b2stbm_shi )
+      deallocate( srw % b2stbm_smo )
+      deallocate( srw % b2stbm_smq )
+      deallocate( srw % b2stbm_sna )
+      deallocate( srw % b2stbm_sne )
 
       return
       end subroutine destroyB2SourceWork

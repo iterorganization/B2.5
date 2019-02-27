@@ -1,4 +1,5 @@
-      subroutine b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)     !srv 05.10.01
+      subroutine b2wdat (nCv, nFc, ns, ismain, ismain0, 
+     .                   mpg, geo, state, state_ext, BoRiS)     !srv 05.10.01
       use b2mod_types
       use b2mod_constants
       use b2mod_geo
@@ -22,12 +23,22 @@
       use b2mod_b2cmpt
       use b2mod_b2cmrc
 #ifdef B25_EIRENE
+      use eirmod_parmmod
+     *   , only : natm, nmol, nstra,  npls
       use eirmod_extrab25
 #endif
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
+      use b2us_prep
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain, ismain0
+      integer nCv, nFc, ns, ismain, ismain0
       real (kind=R8) :: BoRiS
+      type(mapping)    :: mpg
+      type(geometry)   :: geo
+      type(B2State)    :: state
+      type(B2StateExt) :: state_ext
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -44,18 +55,23 @@
 
 *   ..common blocks
 *   ..local variables
-      integer ncall, iout, is, ix, iy, ib, iw, iout_iout_ASTRA     !srv 05.10.01 03.04.13 19.04.13
+      integer ncall, iout, is, ic, ix, iy, ib, iw, iout_iout_ASTRA !srv 05.10.01 03.04.13 19.04.13
       integer n2, jsep, jxi, jxa, ndat, k, mintopcut, ixx,         !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
       integer, save :: use_mms = 0                                 !srv 26.02.18
+#ifdef WG_TODO
       real (kind=R8) ::                                            !srv
      *  Total_current(-1:ny), B0out, Total_flux(-1:ny),            !srv 31.08.00 19.02.02
      *  Total_abscurrent(-1:ny), Total_absflux(-1:ny),
      *  Total_energy_flux_i(-1:ny), Total_energy_flux_e(-1:ny),    !srv 23.11.00
-     *  wrk2(-1:nx,-1:ny), wrkt(-1:ny,-1:nx),                      !srv 23.11.00
+#endif
+      real (kind=R8) ::                                            !srv
+     *  wrk2(nCv), wrkt(nCv)                                       !srv 23.11.00
+#ifdef WG_TODO
+      real (kind=R8) ::                                            !srv
      *  Total_energy_flux(-1:ny), power,                           !srv 23.11.00
      *  Total_energy_flux_mdf(-1:ny),
      *  Total_energy_flux_i_mdf(-1:ny),
@@ -63,13 +79,18 @@
 !     *  kintmp,
      *  sfuadia(-1:ny,0:ns-1), sfvadia(-1:ny,0:ns-1),
      *  sfvaecrb(-1:ny,0:ns-1), sfna(-1:ny,0:ns-1),
-     &  sfna_mdf(-1:ny,0:ns-1), sfn(-1:ny), sfn_mdf(-1:ny),
+     &  sfna_mdf(-1:ny,0:ns-1), sfn(-1:ny), sfn_mdf(-1:ny)
+#endif
+      real (kind=R8) ::                                            !srv
      &  boundary_flux(1:nbc,0:ns-1), sum_sdiv, sum_ssna,
      &  sdiv(0:ns-1), ssna(0:ns-1),                                !srv 12.04.12
-     &  cutll, cutlo, t0, phi_app,
+     &  cutll, cutlo, t0, phi_app
+#ifdef WG_TODO
+      real (kind=R8) ::                                            !srv
      &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
       real (kind=R8) ::  bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
      &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
+#endif
       real (kind=R8) ::
      *     hlp, hlp_s, s
       real (kind=R8)  ::                                           !iyv 15.10.09
@@ -130,7 +151,8 @@
  20    continue
       endif
 *   ..set n2
-      n2 = (nx+2)*(ny+2)
+!WG_TO      n2 = (nx+2)*(ny+2)
+      n2 = nCv
 
 * ..initialisation
       if (use_astra.ne.0) then
@@ -139,6 +161,7 @@
         iout_iout_ASTRA = 0
       endif
 
+#ifdef WG_TODO
       mintopcut = ny                                               !srv 25.02.16
       if(nncut > 0) mintopcut = minval(topcut(1:nncut))            !iyv 29.11.13 25.02.16
 
@@ -1209,6 +1232,7 @@
        Total_energy_flux_i=0.0_R8
        Total_energy_flux_e_mdf=0.0_R8                          !srv 30.04.15 }
        Total_energy_flux_i_mdf=0.0_R8
+#endif
 
 #ifdef B25_EIRENE
        if (iout.ne.4) then
@@ -1220,29 +1244,28 @@
         close(70)
         do is = 1,nnatmi                                            !srv 04.06.09 16.02.12{
          write (chns,'(i3.3)') is
-         call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,is,1),'dab2'//chns)
-         call my_out(70,nx,ny,tab2(0:nx+1,0:ny+1,is,1),'tab2'//chns)
-         call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,is,1),'rfluxa'//chns)
-         call my_out(70,nx,ny,refluxa(0:nx+1,0:ny+1,is,1),
+         call my_out_us(70,nCv,dab2(1,is,1),'dab2'//chns)
+         call my_out_us(70,nCv,tab2(1,is,1),'tab2'//chns)
+         call my_out_us(70,nCv,rfluxa(1,is,1),'rfluxa'//chns)
+         call my_out_us(70,nCv,refluxa(1,is,1),
      .                       'refluxa'//chns)
-         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,is,1),'pfluxa'//chns)
-         call my_out(70,nx,ny,pefluxa(0:nx+1,0:ny+1,is,1),
+         call my_out_us(70,nCv,pfluxa(1,is,1),'pfluxa'//chns)
+         call my_out_us(70,nCv,pefluxa(1,is,1),
      .                       'pefluxa'//chns)
         enddo
         do is = 1,nnmoli                                            !srv 16.02.12
          write (chns,'(i3.3)') is
-         call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,is,1),'dmb2'//chns) !srv 29.04.10
-         call my_out(70,nx,ny,tmb2(0:nx+1,0:ny+1,is,1),'tmb2'//chns) !srv 29.04.10
-         call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,is,1),'rfluxm'//chns)
-         call my_out(70,nx,ny,refluxm(0:nx+1,0:ny+1,is,1),
-     .                       'refluxm'//chns)
-         call my_out(70,nx,ny,pfluxm(0:nx+1,0:ny+1,is,1),'pfluxm'//chns)
-         call my_out(70,nx,ny,pefluxm(0:nx+1,0:ny+1,is,1),
-     .                       'pefluxm'//chns)
+         call my_out_us(70,nCv,dmb2(1,is,1),'dmb2'//chns) !srv 29.04.10
+         call my_out_us(70,nCv,tmb2(1,is,1),'tmb2'//chns) !srv 29.04.10
+         call my_out_us(70,nCv,rfluxm(1,is,1),'rfluxm'//chns)
+         call my_out_us(70,nCv,refluxm(1,is,1),'refluxm'//chns)
+         call my_out_us(70,nCv,pfluxm(1,is,1),'pfluxm'//chns)
+         call my_out_us(70,nCv,pefluxm(1,is,1),'pefluxm'//chns)
         enddo                                                       !srv 04.06.09 }
        endif
 #endif
 
+#ifdef WG_RM
        call my_outi(70,nx,ny,bottomix,'bottomix')
        call my_outi(70,nx,ny,bottomiy,'bottomiy')
        call my_outi(70,nx,ny,topix,'topix')
@@ -1251,10 +1274,12 @@
        call my_outi(70,nx,ny,leftiy,'leftiy')
        call my_outi(70,nx,ny,rightix,'rightix')
        call my_outi(70,nx,ny,rightiy,'rightiy')
+#endif
 
-       call my_out(70,nx,ny,po,'po')                                !srv
+       call my_out_us(70,nCv,po,'po')                                !srv
 
        wrk0=0.0e0_R8
+#ifdef WG_TODO
        do iy=0,ny
          do ix=-1,nx
            wrk0(ix,iy)=
@@ -1263,8 +1288,10 @@
      *          *2.0e0_R8
          enddo
        enddo
-       call my_out(70,nx,ny,wrk0,'Eyf')                              !srv 15.06.04 }
+#endif
+       call my_out_us(70,nCv,'Eyf')                              !srv 15.06.04 }
        wrk0=0.0e0_R8                                                 !iyv 15.10.09 {
+#ifdef WG_TODO
        do iy=0,ny
          do ix=-1,nx
            if(topiy(ix,iy).ne.ny+1) then
@@ -1282,7 +1309,7 @@
            endif
          enddo
        enddo
-       call my_out(70,nx,ny,wrk0,'Eyc')
+       call my_out_us(70,nCv,wrk0,'Eyc')
 
 *     calculate shear
        wrk1=0.0e0_R8
@@ -1342,23 +1369,27 @@
 
        call b2xzef(nx,ny,ns,rz2,na,ne,wrk0)                        !srv 13.01.17
        call my_out(70,nx,ny,wrk0,'Zeff')                           !iyv 12.12.13 }
+#endif
 
        if (iout.ne.4) then
          wrk2=0.0_R8
          do is = 0,ns-1
            write (chns,'(i3.3)') is
-           call my_out(70,nx,ny,na(-1,-1,is),'na'//chns)           !srv
-           call my_out(70,nx,ny,ua(-1,-1,is),'ua'//chns)           !srv
-           wrk2 = ua(:,:,is)/cst                                   !srv 30.01.15
-           call my_out(70,nx,ny,wrk2,'ua_Mcst_'//chns)             !srv 30.01.15
+           call my_out_us(70,nCv,state%pl%na(1,is),'na'//chns)           !srv
+           call my_out_us(70,nCv,state%pl%ua(1,is),'ua'//chns)           !srv
+#ifdef WG_TODO
+           wrk2 = state%pl%ua(:,is)/cst                                   !srv 30.01.15
+           call my_out_us(70,nCv,wrk2,'ua_Mcst_'//chns)             !srv 30.01.15
+#endif
          end do
        end if
 
-       call my_out(70,nx,ny,ne,'ne')                               !srv
-       wrk0=te/ev
-       call my_out(70,nx,ny,wrk0,'te_eV')
-       wrk0=ti/ev
-       call my_out(70,nx,ny,wrk0,'ti_eV')
+       call my_out_us(70,nCv,state%dv%ne,'ne')                               !srv
+       wrk2=state%pl%te/ev
+       call my_out_us(70,nCv,wrk2,'te_eV')
+       wrk2=state%pl%ti/ev
+       call my_out_us(70,nCv,wrk2,'ti_eV')
+#ifdef WG_TODO
        call my_out(70,nx,ny,lengthx,'lengthx')                     !srv 13.02.17
        wrkt=transpose(lengthx)
        call my_out(70,ny,nx,wrkt,'lengthxTrans')                   !srv 13.02.17
@@ -1454,6 +1485,7 @@
        write (70,*) ' Row number of top right corner ',
      &   'of the dead region NYISO2', (NYISO2(IS),IS=1,NNISO)
        close (70)                                                   !srv
+#endif
 
        open(70,file=trim(folder)//'Total_boundary_particle_fluxes.dat')   !srv 26.09.17
 
@@ -1511,6 +1543,7 @@
      &         ' flux =',boundary_flux(ib,is)
         enddo
 
+#ifdef WG_RM
         do iy = -1,ny
           do ix = -1,nx
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
@@ -1520,6 +1553,9 @@
             endif
           enddo
         enddo
+#endif
+        ssna(is)=ssna(is)+sum(state%sr%sna(:,0,is))+
+     &       sum(state%sr%sna(:,1,is)*state%pl%na(:,is))
 
         sum_ssna = sum_ssna + ssna(is)
 
@@ -1584,6 +1620,7 @@
      &         ' flux =',boundary_flux(ib,is)
         enddo
 
+#ifdef WG_RM
         do iy = -1,ny
           do ix = -1,nx
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
@@ -1593,6 +1630,9 @@
             endif
           enddo
         enddo
+#endif
+        ssna(is)=ssna(is)+sum(state%sr%sna(:,0,is))+
+     &       sum(state%sr%sna(:,1,is)*state%pl%na(:,is))
 
         sum_ssna = sum_ssna + ssna(is)
 
@@ -1608,49 +1648,59 @@
      &      ' sum_Ssna-sum_Sdiv =', sum_ssna - sum_sdiv
        close(70)                                                          !srv 12.04.12 }
 
-       call my_out(70,nx,ny,crx(-1,-1,0),'crx0')
-       call my_out(70,nx,ny,crx(-1,-1,1),'crx1')
-       call my_out(70,nx,ny,crx(-1,-1,2),'crx2')
-       call my_out(70,nx,ny,crx(-1,-1,3),'crx3')
-       call my_out(70,nx,ny,cry(-1,-1,0),'cry0')
-       call my_out(70,nx,ny,cry(-1,-1,1),'cry1')
-       call my_out(70,nx,ny,cry(-1,-1,2),'cry2')
-       call my_out(70,nx,ny,cry(-1,-1,3),'cry3')
-       call my_out(70,nx,ny,bb(-1,-1,0),'bbx')
-       call my_out(70,nx,ny,bb(-1,-1,2),'bbz')
-       call my_out(70,nx,ny,bb(-1,-1,3),'bb')
-       call my_out(70,nx,ny,hx,'hx')
-       call my_out(70,nx,ny,hy,'hy')
-       call my_out(70,nx,ny,hz,'hz')
-       call my_out(70,nx,ny,qc,'qc')
+#ifdef WG_RM
+       call my_out_us(70,nCv,crx(-1,-1,0),'crx0')
+       call my_out_us(70,nCv,crx(-1,-1,1),'crx1')
+       call my_out_us(70,nCv,crx(-1,-1,2),'crx2')
+       call my_out_us(70,nCv,crx(-1,-1,3),'crx3')
+       call my_out_us(70,nCv,cry(-1,-1,0),'cry0')
+       call my_out_us(70,nCv,cry(-1,-1,1),'cry1')
+       call my_out_us(70,nCv,cry(-1,-1,2),'cry2')
+       call my_out_us(70,nCv,cry(-1,-1,3),'cry3')
+#endif
+       call my_out_us(70,nCv,geo%cvBb(1,0),'bbx')
+       call my_out_us(70,nCv,geo%cvBb(1,2),'bbz')
+       call my_out_us(70,nCv,geo%cvBb(1,3),'bb')
+       call my_out_us(70,nCv,geo%cvHx,'hx')
+       call my_out_us(70,nFc,geo%fcHt,'hy')
+       call my_out_us(70,nCv,geo%cvHz,'hz')
+       call my_out_us(70,nFc,geo%fcQgam(1,0),'qc')
+#ifdef WG_TODO
        do iy=-1,ny
          do ix=-1,nx
            wrk0(ix,iy)=hy1(ix,iy)
          enddo
        enddo
        call my_out(70,nx,ny,wrk0,'hy1')                                !srv 07.11.12
-       call my_out(70,nx,ny,vol,'vol')
-       call my_out(70,nx,ny,pbs(-1,-1,0),'pbsx')
+#endif
+       call my_out_us(70,nCv,geo%cvVol,'vol')
+       call my_out_us(70,nFc,geo%fcPbs,'pbsx')
 
 c     calculate coordinates of cell centre
-       wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))      !srv 18.12.14 {
-       call my_out(70,nx,ny,wrk0,'crc_')
+!WG_RM    wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))      !srv 18.12.14 {
+       call my_out_us(70,nCv,geo%cvX,'crc_')
        open(70,file=trim(folder)//'crc.dat')   ! R-coordinate of the (ix,iy) cell centre !srv 26.09.17
-       write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'                !srv 07.08.15
+       write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
+#ifdef WG_RM
        do iy = -1, ny
          write(70,hlp_frm) (wrk0(ix,iy),ix = -1, nx)                   !srv 07.08.15
        enddo
+#endif
+       write(70,hlp_frm) (geo%cvX(ic),ic=1,nCv)
        close(70)
-       wrk1=0.25_R8*(cry(:,:,0)+cry(:,:,1)+cry(:,:,2)+cry(:,:,3))
-       call my_out(70,nx,ny,wrk1,'czc_')
+!WG_RM        wrk1=0.25_R8*(cry(:,:,0)+cry(:,:,1)+cry(:,:,2)+cry(:,:,3))
+       call my_out_us(70,nCv,geo%cvY,'czc_')
        open(70,file=trim(folder)//'czc.dat')   ! Z-coordinate of the (ix,iy) cell centre !srv 26.09.17
-       write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'                !srv 07.08.15
+       write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
+#ifdef WG_RM
        do iy = -1, ny
          write(70,hlp_frm) (wrk1(ix,iy),ix = -1, nx)                   !srv 07.08.15
        enddo
+#endif
+       write(70,hlp_frm) (geo%cvY(ic),ic=1,nCv)
        close(70)
 
-      endif              !srv   endif for iout=1 .or. iout=3
+!WG_TODO      endif              !srv   endif for iout=1 .or. iout=3
       
       if(use_mms .and. iout.eq.10) then                                 !srv 26.02.18 {
 !WG_TODO        call calc_err(nx, ny, ns)

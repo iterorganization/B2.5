@@ -6,6 +6,8 @@
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
+      use eirmod_parmmod
+     .   , only : nmol
       use eirmod_extrab25
 #endif
 c

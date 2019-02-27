@@ -110,6 +110,7 @@
       enddo
       write(*,*) 'put_cdf_field2: rqradsum'
       call put_cdf_field2(ncid,'rqradsum',dummy,nx+2,ny+2)
+#ifdef WG_TODO
       if(nnatmi.gt.0) then
 	dummy3=0.0_R8
 	dummy3(-1:nx,-1:ny,1:nnatmi)=dab2(0:nx+1,0:ny+1,1:nnatmi,1)
@@ -122,6 +123,7 @@
 	write(*,*) 'put_cdf_field3: dmb2'
 	call put_cdf_field3(ncid,'dmb2',dummy3,nx+2,ny+2,nnmoli)
       endif
+#endif
       write(*,*) 'put_cdf_end'
       call put_cdf_end(ncid)
 

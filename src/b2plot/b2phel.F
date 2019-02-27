@@ -85,6 +85,7 @@ c*** Inner divertor
       else
         n=leftcut(1)+lpfrt_i
       end if
+#ifdef WG_TODO
       do j=m,n
         hlp_s=hlp_s+gs(j,0,1)
         hlp_si=hlp_si+gs(j,0,1)
@@ -98,6 +99,7 @@ c*** Inner divertor
         hlp_p=hlp_p+hlp*gs(j,0,1)
         hlp_pi=hlp_pi+hlp*gs(j,0,1)
       end do
+#endif
 c
 c*** Outer divertor
       hlp_po=0.0_R8
@@ -112,6 +114,7 @@ c*** Outer divertor
       else
         n=nx+lpfrb_o
       endif
+#ifdef WG_TODO
       do j=m,n
         hlp_s=hlp_s+gs(j,0,1)
         hlp_so=hlp_so+gs(j,0,1)
@@ -125,6 +128,7 @@ c*** Outer divertor
         hlp_p=hlp_p+hlp*gs(j,0,1)
         hlp_po=hlp_po+hlp*gs(j,0,1)
       end do
+#endif
 c
 c*** Averaging and output
 c

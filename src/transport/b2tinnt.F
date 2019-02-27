@@ -148,6 +148,7 @@
 !        endif
 !       enddo
 !      enddo
+#ifdef WG_TODO
           sigi(:,:) = am(ismain)*mp*na(:,:,ismain)*sec/
      .                              (2.0_R8*bb(:,:,3)**2)
 !      sigia(:,:) = sigi(:,:)*dab2_(:,:)
@@ -199,6 +200,7 @@
               endif
             enddo
           enddo
+#endif
 
 !!! These mapping routines seems to be not necessary here, since [rp]flux[am]
 !!! comes already in cell centers                         ! IYS 27.01.2017
@@ -501,6 +503,7 @@
         endif
       endif  !
 #ifdef B25_EIRENE
+#ifdef WG_TODO
       if(iout.ne.0) then
        do ia = 1,natm
         write (chns,'(i3.3)') ia
@@ -535,6 +538,7 @@
 !       call my_out(70,nx,ny,vntrc(-1,-1,0),'b2tinnt_vntrcx')
 !       call my_out(70,nx,ny,vntrc(-1,-1,1),'b2tinnt_vntrcy')
       endif
+#endif
 #endif
 
 * ..return

@@ -50,6 +50,7 @@ c
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_parmmod
+     .   , ncv_eir => ncv
       use eirmod_braeir
       use eirmod_extrab25
 #else
@@ -689,7 +690,11 @@ c declared -1:nx,-1:ny
         ntrgdat = ien-ian+1
         if (ien-ian+1 <= 0) cycle
         
+#ifdef B25_EIRENE
+        call eirene_alloc_target_data(istra,ntrgdat,nflai,ifoff)
+#else
         call alloc_target_data(istra,ntrgdat,nflai)
+#endif
 
         do i = 1, ntrgdat
           iFc = mpg%rcFc(ian+i-1)

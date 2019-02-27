@@ -350,6 +350,7 @@ c-----------------------------------------------------------------------
             mach(i,j,2)=0.0_R8
           end do
         end do
+#ifdef WG_TODO
         do i=-1,nx
           do j=-1,ny ! Only hydrogen atoms appear in momentum balance
             do is = 1, 3
@@ -360,6 +361,7 @@ c-----------------------------------------------------------------------
             end do
           end do
         end do
+#endif
         open(lun,file='prn.dat')
         write(lun,'(2a)') '#  Neutral pressure:  ',label
         write(frm,700) nx+2,tab
@@ -420,6 +422,7 @@ c
 c*** Add the neutrals and molecules
 c***  (for now, the test ions are neglected)
 c
+#ifdef WG_TODO
           do j=1,natmi
             if (latmscl(j).eq.i) then
               do ix=0,nx-1
@@ -443,6 +446,7 @@ c
               end if
             end do
           end do
+#endif
           hlp_n = hlp_a + hlp_m + hlp_p
           write(lun,'(a,1p,4e12.4)')
      .     species_list(i),hlp_n,hlp_p,hlp_a,hlp_m

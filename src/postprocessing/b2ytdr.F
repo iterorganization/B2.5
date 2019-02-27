@@ -50,6 +50,7 @@ c 2002-09-11: logic revised
       use b2mod_work
 #ifdef B25_EIRENE
       use eirmod_parmmod
+     *   , ncv_eir => ncv
       use eirmod_braeir
       use eirmod_cinit
      , , tio => ti0, til => ti1, tel => te1
@@ -6691,6 +6692,7 @@ cxpb  to see if some strata need to be removed
         DO 712 ISTRA=1,NSTRAI
           IF (INDSRC(ISTRA).EQ.6) THEN
             savestratum(ISTRA) = .false.
+#ifdef WG_TODO
             DO J = 1, NTGPRT(ISTRA)
               idum(0) = iplsbeginrange(NSPZI(ISTRA,J),NSPZE(ISTRA,J),
      .                                 ns-nspecies,ipls1)
@@ -6699,6 +6701,7 @@ cxpb  to see if some strata need to be removed
               savestratum(ISTRA) = savestratum(ISTRA) .or.
      .         (idum(0).gt.0 .AND. idum(1).gt.0)
             END DO
+#endif
             GOTO 712
           ENDIF
           IF (IREAD.EQ.0) THEN
@@ -8135,6 +8138,7 @@ C  NUMBER OF TARGETS ON B2 SURFACES: NTARGI
             ENDIF
           END IF
           ILINE = 0
+#ifdef WG_TODO
           DO 3030 I=1,NTARGI
             DO 3033 J=1,NTGPRT(I)
  3031         READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
@@ -8233,6 +8237,7 @@ C  HERE: B2 VOLUME TALLIES
             READ (IUNIN,'(2A24)') TXTSPC,TXTUNT
             WRITE(IUNOT,'(2A24)') TXTSPC,TXTUNT
  3040     CONTINUE
+#endif
 C  READ ADDITIONAL DATA TO BE TRANSFERRED FROM EIRENE INTO B2
 C  HERE: EIRENE SURFACE TALLIES
           READ (IUNIN,'(I6)') NAOTB

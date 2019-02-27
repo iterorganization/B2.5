@@ -263,6 +263,7 @@ csw 09jan2014 add extra allocates
          enddo
 
 #ifdef B25_EIRENE
+#ifdef WG_TODO
          if (is_neutral(is)) isa = b2eatcr(is)
          if (is_neutral(is) .and. isa.gt.0) then
           do iy = 0,mintopcut   ! for closed surfaces and through separatrix
@@ -332,6 +333,7 @@ csw 09jan2014 add extra allocates
            enddo
           enddo
          endif                                                                !srv 20.12.12 }
+#endif
 #endif
         enddo
 
@@ -516,6 +518,7 @@ csw 09jan2014 add extra allocates
         write (*,*) 'data for b2mod_b2_to_astra has been written'
 
 #ifdef B25_EIRENE
+#ifdef WG_TODO
         if(iout.ne.0) then                                         !srv 14.03.12 {
          do iy = -1,nyd 
           do ix = -1,nxd
@@ -595,6 +598,7 @@ csw 09jan2014 add extra allocates
         write(70,*)' Index of neutral in write_b2_to_astra_intrl',intrl
         close(70)
        endif                                                       !srv 14.03.12 }
+#endif         
 #endif         
        ncall = ncall +1
 

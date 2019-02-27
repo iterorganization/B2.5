@@ -22,6 +22,8 @@ c======================================================================
       use b2mod_external
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
+      use eirmod_parmmod
+     .   , only : natm, nmol
       use eirmod_extrab25
       use eirmod_ccona
 #endif
@@ -367,12 +369,14 @@ c             carlis Using values directly calculated from Eirene
                 endif
                 imol=imol+1
               enddo
+#ifdef WG_TODO
               t=tib2(k+l+1,iy+1,is,1)/ev
               if (mion.gt.0.0_R8)
      >         wnutrg(iy,j)=wnutrg(iy,j)+
      .          s(iy,j)*dib2(k+l+1,iy+1,is,1)*
      *          sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
      .          (2.0_R8*tib2(k+l+1,iy+1,is,1)+EionH2*ev)
+#endif
             enddo
           endif
 c carlis  21 feb 2017 added calculation of connection length from midplane to targets
@@ -811,7 +815,9 @@ c          print *,'j,ltrgpos = ',j,k  !###
             if (ft44) then
               do ia=1,natmi !loop on atoms according to Eirene
                 sja(iy,j,ia)=wldna_res(ia,iy+IAS)*sarea_res(iy+IAS)
+#ifdef WG_TODO
                 spa(iy,j,ia)=dab2(k+l+1,iy+1,ia,1)*tab2(k+l+1,iy+1,ia,1)
+#endif
               end do
             else
               do is=1,nspecies !loop on species according to B2.5
@@ -829,8 +835,10 @@ c          print *,'j,ltrgpos = ',j,k  !###
               if (ft44) then
                 sjm(iy,j,imol)=wldnm_res(imol,iy+IAS)*
      .                       sarea_res(iy+IAS)
+#ifdef WG_TODO
                 spm(iy,j,imol)=dmb2(k+l+1,iy+1,imol,1)*
      *                       tmb2(k+l+1,iy+1,imol,1)
+#endif
               else
                 sjm(iy,j,imol)=0.0
                 spm(iy,j,imol)=0.0
@@ -1092,7 +1100,9 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           do iy=lytg,ny-1 !{
             do ia=1,natmi
               fpt_out(1+3*(ia-1))=sja(iy,j,ia)/s(iy,j)
+#ifdef WG_TODO
               fpt_out(2+3*(ia-1))=tab2(nx_hlp+1,iy+1,ia,1)/ev
+#endif
               fpt_out(3+3*(ia-1))=spa(iy,j,ia)
             end do
             do is=1,nspecies

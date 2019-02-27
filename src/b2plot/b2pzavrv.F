@@ -77,13 +77,14 @@ c
           do j=1,3
             if (j_h_at(j).ne.0) then
               i=i+1
-              hlp_f(i)=dab2(ix+1,iy+1,j_h_at(j),1)
+!WG_TODO              hlp_f(i)=dab2(ix+1,iy+1,j_h_at(j),1)
             end if
           end do
           write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),
      ,        (hlp_f(i),i=1,in),
      ,         ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
-     ,         na(ix,iy,k1+1),na(ix,iy,k1),dab2(ix+1,iy+1,k0,1)
+     ,         na(ix,iy,k1+1),na(ix,iy,k1)
+!WG_TODO     ,        ,dab2(ix+1,iy+1,k0,1)
   700     format(1x,1p,2i4,48e12.3)
         end do
       end do

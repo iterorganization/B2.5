@@ -8202,7 +8202,9 @@ c              fchi=0.0_R8
 *     ..set sheath potential drop for Eirene
             if (eirene_sheath_pot.eq.1) then
               ! B2 indexing for delta_sheathxb
-              delta_sheathxb(BC_LIST_X(IY,IB)+1,BC_LIST_Y(IY,IB)+1) = 
+!pb              delta_sheathb(BC_LIST_X(IY,IB)+1,BC_LIST_Y(IY,IB)+1) = 
+!pb     &          qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1)
+              delta_sheathb(ifc) = 
      &          qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1)
             endif
 #endif

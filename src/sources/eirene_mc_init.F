@@ -1,14 +1,15 @@
-      subroutine eirene_mc_init(nx,ny)
+      subroutine eirene_mc_init(nCv,nFc)
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_parmmod
+     &   , ncv_eir => ncv
       use eirmod_extrab25
 #else
       use b2mod_eirbra
       use b2mod_eirdiag
 #endif
       implicit none
-      integer nx, ny
+      integer, intent(in) :: nCv, nFc
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
@@ -24,24 +25,24 @@ cwdk  copy-paste from eirene_extrab25_eirdiag_alloc (Eirene_dummy)
 c     avoids double module definition in case code is compiled with Eirene 
       if(.not.allocated(dab2)) then
 #ifdef B25_EIRENE
-        allocate(dab2(0:nxdd,0:nydd,natm,1))
-        allocate(dmb2(0:nxdd,0:nydd,nmol,1))
-        allocate(dib2(0:nxdd,0:nydd,nion,1))
-        allocate(tab2(0:nxdd,0:nydd,natm,1))
-        allocate(tmb2(0:nxdd,0:nydd,nmol,1))
-        allocate(tib2(0:nxdd,0:nydd,nion,1))
-        allocate(rfluxa(0:nxdd,0:nydd,natm,1))
-        allocate(rfluxm(0:nxdd,0:nydd,nmol,1))
-        allocate(refluxa(0:nxdd,0:nydd,natm,1))
-        allocate(refluxm(0:nxdd,0:nydd,nmol,1))
-        allocate(pfluxa(0:nxdd,0:nydd,natm,1))
-        allocate(pfluxm(0:nxdd,0:nydd,nmol,1))
-        allocate(pefluxa(0:nxdd,0:nydd,natm,1))
-        allocate(pefluxm(0:nxdd,0:nydd,nmol,1))
-        allocate(emiss(0:nxdd,0:nydd,1,1))
-        allocate(emissmol(0:nxdd,0:nydd,1,1))
-        allocate(srcml(0:nxdd,0:nydd,nmol,1))
-        allocate(edissml(0:nxdd,0:nydd,nmol,0:nstra+1))
+        allocate(dab2(nCv,natm,1))
+        allocate(dmb2(nCv,nmol,1))
+        allocate(dib2(nCv,nion,1))
+        allocate(tab2(nCv,natm,1))
+        allocate(tmb2(nCv,nmol,1))
+        allocate(tib2(nCv,nion,1))
+        allocate(rfluxa(nCv,natm,1))
+        allocate(rfluxm(nCv,nmol,1))
+        allocate(refluxa(nCv,natm,1))
+        allocate(refluxm(nCv,nmol,1))
+        allocate(pfluxa(nCv,natm,1))
+        allocate(pfluxm(nCv,nmol,1))
+        allocate(pefluxa(nCv,natm,1))
+        allocate(pefluxm(nCv,nmol,1))
+        allocate(emiss(nCv,1,1))
+        allocate(emissmol(nCv,1,1))
+        allocate(srcml(nCv,nmol,1))
+        allocate(edissml(nCv,nmol,0:nstra+1))
         allocate(wldnek(nlimps,0:nstra+1)) 
         allocate(wldnep(nlimps,0:nstra+1))
         allocate(wldna(nlimps,natm,0:nstra+1))
@@ -55,7 +56,7 @@ c     avoids double module definition in case code is compiled with Eirene
         allocate(wldpm(nlimps,nmol,0:nstra+1))
         allocate(wldpeb(nlimps,0:nstra+1))
         allocate(wldspt(nlimps,0:nstra+1))
-        allocate(eneutrad(0:nxdd,0:nydd,natm,0:nstra+1))
+        allocate(eneutrad(nCv,natm,0:nstra+1))
         allocate(isrftype(nlimps))
 #else
         call alloc_b2mod_eirdiag(nx,ny,

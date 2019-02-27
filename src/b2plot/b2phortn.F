@@ -93,6 +93,7 @@ c
       nf=2*in+im
       allocate(hlp_f(nf))
       write(hlp_frmr,'(a,i2,a)') '(1x,1p,2i4,',5+nf,'e12.3)'
+#ifdef WG_TODO
       do ix=0,nx-1
         do iy=0,ny-1
           is=0
@@ -112,6 +113,7 @@ c
      ,                        (hlp_f(i),i=1,nf)
         end do
       end do
+#endif
       close (lun)
       deallocate(mz_hlp,hlp_al,hlp_ml,hlp_f,imol)
 c

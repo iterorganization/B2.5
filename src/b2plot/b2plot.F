@@ -1105,9 +1105,11 @@ c
           do iss=1,natmi
             stmp2=trim(textan(iss-1))//'0'
             call lower_case(stmp2)
+#ifdef WG_TODO
             if(streql(stmp1,stmp2)) then
               nh(-1:nx,-1:ny)=nh(-1:nx,-1:ny)+dab2(0:nx+1,0:ny+1,iss,1)
             endif
+#endif
           enddo
         endif
       enddo
@@ -1967,39 +1969,53 @@ c
         case('dab2')
           description='Atomic density (m^{-3})'
           nz=natmi
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=dab2(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8,nz,textan)
         case('dmb2')
           description='Molecular density (m^{-3})'
           nz=nmoli
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=dmb2(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8,nz,textmn)
         case('ahal')
           description=
      1     'Atomic H-\Ga\R emissivity (photons.m^{-3}.s^{-1})'
           nz=1
+#ifdef WG_TODO
           mach(:,:,0)=emiss(0:nx+1,0:ny+1,1,1)
+#endif
           call copy(mach,1.0_R8,nz,textbl)
         case ('mhal')
           description=
      1     'Molecular H-\Ga\R emissivity (photons.m^{-3}.s^{-1})'
           nz=1
+#ifdef WG_TODO
           mach(:,:,0)=emissmol(0:nx+1,0:ny+1,1,1)
+#endif
           call copy(mach,1.0_R8,nz,textbl)
         case ('srcml')
           description='Molecule dissociation rate (#.s^{-1})'
           nz=nmoli
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=srcml(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,-1.0_R8/qe,nz,textmn)
         case ('edissml')
           description='Power to atoms due to molecule dissociation (W)'
           nz=nmoli
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
+#endif
           call copy(mach,-1.0_R8,nz,textmn)
         case ('neutrad')
           description='Total power loss due to atom radiation (W)'
           nz=natmi
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=eneutrad(0:nx+1,0:ny+1,1:nz,0)
+#endif
           call copy(mach,-1.0_R8,nz,textan)
         case ('rqae')
           description='Electron cooling rate (W) [rqahe]'
@@ -2097,53 +2113,73 @@ c
         case ('tab2')
           description='Neutral atom temperature (eV)'
           nz=natmi
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=tab2(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8/ev,nz,textan)
         case ('tmb2')
           description='Neutral molecule temperature (eV)'
           nz=nmoli
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=tmb2(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8/ev,nz,textmn)
         case ('rfla')
           description='Radial atomic flux (s^{-1}.m^{-2})'
           nz=natmi
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=rfluxa(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8,nz,textan)
         case ('rflm')
           description='Radial molecular flux (s^{-1}.m^{-2})'
           nz=nmoli
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=rfluxm(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8,nz,textmn)
         case ('refa')
           description='Radial atomic energy flux (W.m^{-2})'
           nz=natmi
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=refluxa(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8,nz,textan)
         case ('refm')
           description='Radial molecular energy flux (W.m^{-2})'
           nz=nmoli
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=refluxm(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8,nz,textmn)
         case ('pfla')
           description='Poloidal atomic flux (s^{-1}.m^{-2})'
           nz=natmi
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=pfluxa(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8,nz,textan)
         case ('pflm')
           description='Poloidal molecular flux (s^{-1}.m^{-2})'
           nz=nmoli
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=pfluxm(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8,nz,textmn)
         case ('pefa')
           description='Poloidal atomic energy flux (W.m^{-2})'
           nz=natmi
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=pefluxa(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8,nz,textan)
         case ('pefm')
           description=
      1             'Poloidal molecular energy flux (W.m^{-2})'
           nz=nmoli
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=pefluxm(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8,nz,textmn)
         case ('mch2')
           description='Normalised parallel velocity'
@@ -3592,12 +3628,16 @@ c     assumes that bb is OK for 1d cases
         case ('dib2')
           description='Test ion density (m^{-3})'
           nz=nioni
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=dib2(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8,nz,textin)
         case ('tib2')
           description='Test ion temperature (eV)'
           nz=nioni
+#ifdef WG_TODO
           mach(:,:,0:nz-1)=tib2(0:nx+1,0:ny+1,1:nz,1)
+#endif
           call copy(mach,1.0_R8/ev,nz,textin)
         case ('brna')
           description='Recycling particle source (#.s^{-1})'
@@ -5238,12 +5278,14 @@ c     assumes that bb is OK for 1d cases
      &            trim(textpl(iss)),' and ',
      &            trim(textan(is-1))//'0',
      &           '  (',iss,' & ',is,')'
+#ifdef WG_TODO
                 do iy=-1,ny
                   do ix=-1,nx
                     na(ix,iy,iss)=na(ix,iy,iss)+
      &                            dab2(ix+1,iy+1,is,1)
                   enddo
                 enddo
+#endif
               endif
             enddo
           enddo
@@ -5269,6 +5311,7 @@ c     assumes that bb is OK for 1d cases
         case('dase')     ! set dab2 from matrix stack
           stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
+#ifdef WG_TODO
           do is=0,natmi-1
             do iy=-1,ndim(2,iwrk)
               do ix=-1,ndim(1,iwrk)
@@ -5277,6 +5320,7 @@ c     assumes that bb is OK for 1d cases
               enddo
             enddo
           enddo
+#endif
           goto 2059
         case('uuse')     ! set uutraj from matrix stack
           stack_req=(/0,0,0,1,0,0,0/)

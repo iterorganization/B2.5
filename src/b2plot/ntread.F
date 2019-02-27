@@ -32,6 +32,8 @@ c
      , , only: eirene_alloc_comusr
       use eirmod_coutau
      , , only: eirene_alloc_coutau
+      use eirmod_braeir
+     .   , only : pux, puy, pvx, pvy
 #endif
       implicit none
 

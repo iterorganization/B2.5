@@ -103,9 +103,11 @@ c
           do is=0,ns-1
             u=u+rqrad(ix,iy,is)+rqbrm(ix,iy,is)
           end do
+#ifdef WG_TODO
           do is=1,natmi
             u=u-eneutrad(ix+1,iy+1,is,0)
           end do
+#endif
           k=k+1
           ssrcm(k)=u
           xysrc(1,k)=cr(ix,iy)
@@ -195,10 +197,12 @@ c*** Calculate the radiation load split by impurity species from B2
             do iy=0,ny-1 !{
               k=k+1
               ssrcm(k)=0.0_R8
+#ifdef WG_TODO
               do iatm=1,natmi !{
                 if (latmscl(iatm).eq.j)
      >            ssrcm(k)=ssrcm(k)-eneutrad(ix+1,iy+1,iatm,0)
               end do !}
+#endif
               do is=eb2spcr(j),eb2spcr(j)+nfluids(j)
                 ssrcm(k)=ssrcm(k)+rqrad(ix,iy,is)+rqbrm(ix,iy,is)
               end do

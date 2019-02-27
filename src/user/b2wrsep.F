@@ -211,6 +211,7 @@ c          v=vol(ix,iy)
      2               sna(ix,i,1,ions_list(is))*na(ix,i,ions_list(is))
               end do !}
             end do !}
+#ifdef WG_TODO
             do k=1,nnatmi !{
               if (latmscl(k).eq.j) then !{
                 nasp_tmp(j)=nasp_tmp(j)+v*dab2(ix+1,iy+1,k,1)
@@ -218,6 +219,7 @@ c          v=vol(ix,iy)
      .                                   *tab2(ix+1,iy+1,k,1)
               end if !}
             end do !}
+#endif
           end do !}
         end if !}
       end do !}

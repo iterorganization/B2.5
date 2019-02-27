@@ -309,11 +309,10 @@ csw 30sep2013, added cdpa in call, uadia
       if(main_call.or.wrong_flow)                                  !xpb !srv 18.05.09 }
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
 *   ..compute more special contributions
+      call b2stbm (nCv, nFc, nVx, ns, ismain, dtim,
+     &  geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
+     &  main_call)
 #ifdef WG_TODO
-      call b2stbm (nx, ny, ns, ismain, dtim,
-     &  vol, gs, hx, hy, qz, qc, pbs, bb,
-     &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
         call b2xzdd (nCv, 1, mpg, srw%sna0(1,0,is))

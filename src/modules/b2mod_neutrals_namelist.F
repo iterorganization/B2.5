@@ -37,6 +37,7 @@ cank }
 #ifndef SOLPS4_3
       use eirmod_extrab25
       use eirmod_parmmod
+     &    , only: nlim, nsts, nlimps
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE

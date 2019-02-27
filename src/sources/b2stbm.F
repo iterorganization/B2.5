@@ -1,10 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbm (nx, ny, ns, ismain, dtim,
-     &  vol, gs, hx, hy, qz, qc, pbs, bb,
-     &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
+      subroutine b2stbm (nCv, nFc, nVx, ns, ismain, dtim,
+     &  geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
+     &  main_call)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -14,36 +13,36 @@
       use b2mod_impgyro
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
+#ifdef WG_RM
       use b2mod_sources
      1 , only : b2stbm_sna,b2stbm_smo,b2stbm_she,b2stbm_shi,b2stbm_sch,
      2          b2stbm_sne
+#endif
       use b2mod_balance !djm Jan2017
      1 , only : b2stbm_sna0to1,b2stbm_smo0to3,b2stbm_she0to3,
      2          b2stbm_shi0to3, balance_netcdf
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
-      implicit none
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
+       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain
+      integer nCv, nFc, nVx, ns, ismain
       logical main_call
-      real (kind=R8) :: dtim,
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
-      real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
-      real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
-     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1)
-*   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
-     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
+      real (kind=R8) :: dtim
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2StateExt), intent (inout) :: st_ext
+*   ..input/output arguments 
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Rates), intent (inout) :: rt
+      type (B2RatesWork), intent (inout) :: rtw
+      type (B2Coeff), intent (inout) :: co
+      type (B2Source), intent (inout) :: sr
+      type (B2SourceWork), intent (inout) :: srw
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -59,15 +58,15 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ia, is, is0, ix, iy, ixr, iyr, ireg
+      integer ia, is, is0, iCv, iFc, ireg
       real (kind=R8) :: t0, vthe, ua_tmp, dua
       real (kind=R8) :: n0_tmp, nr_tmp, nt_tmp, p0_tmp, pr_tmp, r0_tmp,
      *                  pe_tmp, re_tmp
       real (kind=R8) ::
-     *  na_tot(-1:nx,-1:ny), na0(-1:nx,-1:ny,0:ns-1),
-     *  ua0(-1:nx,-1:ny,0:ns-1), fna0(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     *  fhi0(-1:nx,-1:ny,0:1,0:1), ti0(-1:nx,-1:ny),
-     *  fhe0(-1:nx,-1:ny,0:1,0:1), fch0(-1:nx,-1:ny,0:1,0:1)
+     *  na_tot(nCv), na0(nCv,0:ns-1),
+     *  ua0(nCv,0:ns-1), fna0(nFc,0:1,0:ns-1),
+     *  fhi0(nFc,0:1), ti0(nCv),
+     *  fhe0(nFc,0:1), fch0(nFc,0:1)
       integer, save :: ncall, impgyro_mod
       real (kind=R8), save :: linearisation
       logical, save :: internal_energy_sources
@@ -103,30 +102,34 @@
      .    'faulty input parameter linearisation')
         call ipgeti ('b2stbm_impgyro_mod', impgyro_mod)
       endif !}
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc, ns
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
 *    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test range of qz
-       call xertst (-1.lt.smin(n2,qz(-1,-1,0),1).and.
-     &   smax(n2,qz(-1,-1,0),1).lt.1, 'faulty argument range qz(,,0)')
-       call xertst (0.lt.smin(n2,qz(-1,-1,1),1).and.
-     &   smax(n2,qz(-1,-1,1),1).le.1, 'faulty argument range qz(,,1)')
-*    ..test sign of na, ni, ne, te, ti
-       call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
-       call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
-       call b2xvsg (n2, ne, 1, 'ne', '.gt.')
-       call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2, ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
+       call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
+       call b2xvsg (nCv, geo%cvHx, 1, 'hx', '.gt.')
+       call b2xvsg (nFc, geo%fcHt, 1, 'hy', '.gt.')
+*    ..test range of cvQgam, fcQgam
+       call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
+     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8, 
+     &   'faulty argument range cvQgam(,1)')
+       call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
+     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8, 
+     &   'faulty argument range cvQgam(,0)')
+       call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
+     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8, 
+     &   'faulty argument range fcQgam(,1)')
+       call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
+     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8, 
+     &   'faulty argument range fcQgam(,0)')
+*    ..test state
+       call b2xvps (nCv, nFc, ns, pl, dv)
 
 *   ..test edge values of fluxes
+#ifdef WG_TODO
        do is = 0, ns-1
         call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
        enddo
@@ -135,21 +138,22 @@
        call b2xvff (nx, ny, fch, 'fch')
        call b2xvff (nx, ny, fne, 'fne')
        call b2xvff (nx, ny, fni, 'fni')
+#endif
       endif
 
 *   ..initialise sources to 0
-      call sfill (n2*2*ns, 0.0_R8, sna0, 1)
-      call sfill (n2*4*ns, 0.0_R8, smo0, 1)
-      call sfill (n2*2, 0.0_R8, sne0, 1)
-      call sfill (n2*4, 0.0_R8, she0, 1)
-      call sfill (n2*4, 0.0_R8, shi0, 1)
-      call sfill (n2*4, 0.0_R8, sch0, 1)
-      call sfill (n2*ns, 0.0_R8, b2stbm_sna, 1)
-      call sfill (n2*ns, 0.0_R8, b2stbm_smo, 1)
-      call sfill (n2, 0.0_R8, b2stbm_sne, 1)
-      call sfill (n2, 0.0_R8, b2stbm_she, 1)
-      call sfill (n2, 0.0_R8, b2stbm_shi, 1)
-      call sfill (n2, 0.0_R8, b2stbm_sch, 1)
+      srw%sna0 = 0.0_R8
+      srw%smo0 = 0.0_R8
+      srw%sne0 = 0.0_R8
+      srw%she0 = 0.0_R8
+      srw%shi0 = 0.0_R8
+      srw%sch0 = 0.0_R8
+      srw%b2stbm_sna = 0.0_R8
+      srw%b2stbm_smo = 0.0_R8
+      srw%b2stbm_sne = 0.0_R8
+      srw%b2stbm_she = 0.0_R8
+      srw%b2stbm_shi = 0.0_R8
+      srw%b2stbm_sch = 0.0_R8
 
 * ..obtain sources from IMPGYRO
       if (impgyro_mod.eq.0) goto 999
@@ -166,95 +170,86 @@ cxpb Must convert fluxes to flux densities
           is0 = 0
         endif
         if (is0.ne.0) then
-          do ix = -1, nx
-            do iy = -1, ny
-              if (bottomiy(ix,iy).eq.-2) cycle
-              if (topiy(ix,iy).eq.ny+1) cycle
-              ixr = rightix(ix,iy)
-              iyr = rightiy(ix,iy)
-              n0_tmp = 0.0_R8
-              nr_tmp = 0.0_R8
-              nt_tmp = 0.0_R8
-              p0_tmp = 0.0_R8
-              pe_tmp = 0.0_R8
-              pr_tmp = 0.0_R8
-              r0_tmp = 0.0_R8
-              re_tmp = 0.0_R8
-              do ia = 1, nnatmi
-                if (latmscl(ia).eq.is0) then
-                  n0_tmp = n0_tmp + dab2(ix+1,iy+1,ia,1)
-                  nr_tmp = nr_tmp + dab2(ixr+1,iyr+1,ia,1)
-                  nt_tmp = nt_tmp + dab2(ix+1,iy+1,ia,1)*
-     .                              tab2(ix+1,iy+1,ia,1)
-                  p0_tmp = p0_tmp + pfluxa(ix+1,iy+1,ia,1)
-                  pe_tmp = pe_tmp + pefluxa(ix+1,iy+1,ia,1)
-                  pr_tmp = pr_tmp + pfluxa(ixr+1,iyr+1,ia,1)
-                  r0_tmp = r0_tmp + rfluxa(ix+1,iy+1,ia,1)
-                  re_tmp = re_tmp + refluxa(ix+1,iy+1,ia,1)
-                end if
-              end do
-              if (leftix(ix,iy).ne.-2 .and. n0_tmp.gt.0.0_R8 .and.
-     .            rightix(ix,iy).ne.nx+1 .and. nr_tmp.gt.0.0_R8) then
-                ua_tmp = (p0_tmp/n0_tmp+pr_tmp/nr_tmp)/2.0_R8
-              elseif (leftix(ix,iy).ne.-2 .and. n0_tmp.gt.0.0_R8) then
-                ua_tmp = p0_tmp/n0_tmp
-              elseif (rightix(ix,iy).ne.nx+1 .and.
-     .                                          nr_tmp.gt.0.0_R8) then
-                ua_tmp = pr_tmp/nr_tmp
-              else
-                ua_tmp = 0.0_R8
-              endif  
-              na_tot(ix,iy) = na_tot(ix,iy) + n0_tmp
-              na0(ix,iy,is) = na(ix,iy,is) + n0_tmp
-              ti0(ix,iy) = ti0(ix,iy) + nt_tmp
-              ua0(ix,iy,is) = (ua(ix,iy,is)*na(ix,iy,is)*
-     .         sign(1.0_R8,bb(ix,iy,0)) + ua_tmp*n0_tmp)/na0(ix,iy,is)
-              fna0(ix,iy,0,0,is) = 
-     .         fna(ix,iy,0,0,is)/gs(ix,iy,0)/qc(ix,iy,0) + p0_tmp
-              fna0(ix,iy,1,1,is) = fna(ix,iy,1,1,is)/gs(ix,iy,1) +r0_tmp
-              fhi0(ix,iy,0,0) = fhi0(ix,iy,0,0) + pe_tmp
-              fhi0(ix,iy,1,1) = fhi0(ix,iy,1,1) + re_tmp
+          do iCv = 1, nCv
+            n0_tmp = 0.0_R8
+            nr_tmp = 0.0_R8
+            nt_tmp = 0.0_R8
+            p0_tmp = 0.0_R8
+            pe_tmp = 0.0_R8
+            pr_tmp = 0.0_R8
+            r0_tmp = 0.0_R8
+            re_tmp = 0.0_R8
+            do ia = 1, nnatmi
+              if (latmscl(ia).eq.is0) then
+                n0_tmp = n0_tmp + dab2(iCv,ia,1)
+!WG_TODO        nr_tmp = nr_tmp + dab2(ixr+1,iyr+1,ia,1)
+                nt_tmp = nt_tmp + dab2(iCv,ia,1)*
+     .                            tab2(iCv,ia,1)
+                p0_tmp = p0_tmp + pfluxa(iCv,ia,1)
+                pe_tmp = pe_tmp + pefluxa(iCv,ia,1)
+!WG_TODO        pr_tmp = pr_tmp + pfluxa(ixr+1,iyr+1,ia,1)
+                r0_tmp = r0_tmp + rfluxa(iCv,ia,1)
+                re_tmp = re_tmp + refluxa(iCv,ia,1)
+              end if
             end do
+            if (n0_tmp.gt.0.0_R8 .and.
+     .          nr_tmp.gt.0.0_R8) then
+              ua_tmp = (p0_tmp/n0_tmp+pr_tmp/nr_tmp)/2.0_R8
+            elseif (n0_tmp.gt.0.0_R8) then
+              ua_tmp = p0_tmp/n0_tmp
+            elseif (nr_tmp.gt.0.0_R8) then
+              ua_tmp = pr_tmp/nr_tmp
+            else
+              ua_tmp = 0.0_R8
+            endif  
+            na_tot(iCv) = na_tot(iCv) + n0_tmp
+            na0(iCv,is) = pl%na(iCv,is) + n0_tmp
+            ti0(iCv) = ti0(iCv) + nt_tmp
+            ua0(iCv,is) = (pl%ua(iCv,is)*pl%na(icV,is)*
+     .         sign(1.0_R8,geo%cvBb(iCv,0)) + ua_tmp*n0_tmp)/na0(iCv,is)
+          end do
+          do iFc = 1, nFc
+            fna0(iFc,0,is) = 
+     .         dv%fna(iFc,0,is)/geo%fcS(iFc)/geo%fcQgam(iFc,0) + p0_tmp
+            fna0(iFc,1,is) = dv%fna(iFc,1,is)/geo%fcS(iFc) +r0_tmp
+            fhi0(iFc,0) = fhi0(iFc,0) + pe_tmp
+            fhi0(iFc,1) = fhi0(iFc,1) + re_tmp
           end do
         else
-          na0(:,:,is) = na(:,:,is)
-          ua0(:,:,is) = ua(:,:,is)*sign(1.0_R8,bb(:,:,0))
-          fna0(:,:,0,0,is) = fna(:,:,0,0,is)/gs(:,:,0)/qc(:,:,0)
-          fna0(:,:,1,1,is) = fna(:,:,1,1,is)/gs(:,:,1)
+          na0(:,is) = pl%na(:,is)
+          ua0(:,is) = pl%ua(:,is)*sign(1.0_R8,geo%cvBb(:,0))
+          fna0(:,0,is) = dv%fna(:,0,is)/geo%fcS(:)/geo%fcQgam(iFc,0)
+          fna0(:,1,is) = dv%fna(:,1,is)/geo%fcS(:)
         end if
       end do
       do is = 1, nnmoli
-        do ix = -1, nx
-          do iy = -1, ny
-            na_tot(ix,iy) = na_tot(ix,iy) + dmb2(ix+1,iy+1,is,1)
-            ti0(ix,iy) = ti0(ix,iy) + 
-     .       dmb2(ix+1,iy+1,is,1)*tmb2(ix+1,iy+1,is,1)
-          end do
+        do iCv = 1, nCv
+          na_tot(iCv) = na_tot(iCv) + dmb2(iCv,is,1)
+          ti0(iCv) = ti0(iCv) + 
+     .       dmb2(iCv,is,1)*tmb2(iCv,is,1)
         end do
       end do
       do is = 1, nnioni
-        do ix = -1, nx
-          do iy = -1, ny
-            na_tot(ix,iy) = na_tot(ix,iy) + dib2(ix+1,iy+1,is,1)
-            ti0(ix,iy) = ti0(ix,iy) + 
-     .       dib2(ix+1,iy+1,is,1)*tib2(ix+1,iy+1,is,1)
-          end do
+        do iCv = 1, nCv
+          na_tot(iCv) = na_tot(iCv) + dib2(iCv,is,1)
+          ti0(iCv) = ti0(iCv) + 
+     .       dib2(iCv,is,1)*tib2(iCv,is,1)
         end do
       end do
-      do ix = -1, nx
-        do iy = -1, ny
-          ti0(ix,iy) = (ti0(ix,iy) + 
-     .                  ti(ix,iy)*ni(ix,iy,0)) /
-     .                 (na_tot(ix,iy) + ni(ix,iy,0))
-          fhi0(ix,iy,0,0) = fhi0(ix,iy,0,0) + 
-     .     fhi(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy,0)
-          fhi0(ix,iy,1,1) = fhi0(ix,iy,1,1) + 
-     .     fhi(ix,iy,1,1)/gs(ix,iy,1)
-          fhe0(ix,iy,0,0) = fhe(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy,0)
-          fhe0(ix,iy,1,1) = fhe(ix,iy,1,1)/gs(ix,iy,1)
-          fch0(ix,iy,0,0) = fch(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy,0)
-          fch0(ix,iy,1,1) = fch(ix,iy,1,1)/gs(ix,iy,1)
-        end do
+      do iCv = 1, nCv
+        ti0(iCv) = (ti0(iCv) + 
+     .                  pl%ti(iCv)*dv%ni(iCv,0)) /
+     .                 (na_tot(iCv) + dv%ni(iCv,0))
+      end do
+      do iFc = 1, nFc
+        fhi0(iFc,0) = fhi0(iFc,0) + 
+     .     dv%fhi(iFc,0)/geo%fcS(iFc)/geo%fcQgam(iFc,0)
+        fhi0(iFc,1) = fhi0(iFc,1) + 
+     .     dv%fhi(iFc,1)/geo%fcS(iFc)
+        fhe0(iFc,0) = dv%fhe(iFc,0)/geo%fcS(iFc)/geo%fcQgam(iFc,0)
+        fhe0(iFc,1) = dv%fhe(iFc,1)/geo%fcS(iFc)
+        fch0(iFc,0) = dv%fch(iFc,0)/geo%fcS(iFc)/geo%fcQgam(iFc,0)
+        fch0(iFc,1) = dv%fch(iFc,1)/geo%fcS(iFc)
       end do
 
       if (ncall.eq.0 .or.
@@ -269,16 +264,17 @@ cxpb It would be best to have instead as primary quantities:
 cxpb na_ext, fa_ext, ta_ext, fhi_ext
 cxpb And then derive: ua_ext
 
-       sna_ext = 0.0_R8
-       sne_ext = 0.0_R8
-       smo_ext = 0.0_R8
-       she_ext = 0.0_R8
-       shi_ext = 0.0_R8
-       sch_ext = 0.0_R8
-       na_ext = 0.0_R8
-       ua_ext = 0.0_R8
-       ta_ext = 0.0_R8
+       st_ext%sna = 0.0_R8
+       st_ext%sne = 0.0_R8
+       st_ext%smo = 0.0_R8
+       st_ext%she = 0.0_R8
+       st_ext%shi = 0.0_R8
+       st_ext%sch = 0.0_R8
+       st_ext%na = 0.0_R8
+       st_ext%ua = 0.0_R8
+       st_ext%ta = 0.0_R8
 
+#ifdef WG_TODO
        call impgyro_main(
      *  nx, ny, ns, ns_ext,
      *  bb, na0, ne, ua0, te, ti0, po,
@@ -359,124 +355,124 @@ cxpb
            endif
          enddo
        enddo
+#endif
       end if
 
 * ..linearise external sources
-      do ix = 0, nx-1
-        do iy = 0, ny-1
-          ireg = region(ix,iy,0)
-          if (linearisation.gt.0.0_R8) then
+      do iCv = 1, nCv
+        ireg = mpg%cvReg(iCv)
+        if (linearisation.gt.0.0_R8) then
 *  ...electron particle source
-            t0 = sne_ext(ix,iy)
-            if (t0.ge.0.0_R8) then
-              sne0(ix,iy,0) = t0
-            else
-              sne0(ix,iy,1) = t0/ne(ix,iy)
-            end if
-            sne0(ix,iy,0) = sne0(ix,iy,0)+linearisation*abs(t0)
-            sne0(ix,iy,1) = sne0(ix,iy,1)-
-     .       linearisation*abs(t0)/ne(ix,iy)
-            do is = 0, ns-1
-*  ...heavy particles sources
-              t0 = sna_ext(ix,iy,is)
-              if (t0.ge.0.0_R8) then
-                sna0(ix,iy,0,is) = t0
-              else
-                sna0(ix,iy,1,is) = t0/na(ix,iy,is)
-              end if
-              sna0(ix,iy,0,is) = sna0(ix,iy,0,is)+linearisation*abs(t0)
-              sna0(ix,iy,1,is) = sna0(ix,iy,1,is)-
-     .         linearisation*abs(t0)/na(ix,iy,is)
-*  ...parallel momentum sources
-              vthe=sqrt(te(ix,iy)/me)
-              vthe=vthe/sqrt(am(is)*mp/me)
-              t0 = smo_ext(ix,iy,is)*
-     .         sign(1.0_R8,bb(ix,iy,0))
-              smo0(ix,iy,0,is) = smo0(ix,iy,0,is)+
-     .         t0+linearisation*abs(t0)*ua(ix,iy,is)/vthe
-              smo0(ix,iy,1,is) = smo0(ix,iy,1,is)-
-     .         linearisation*abs(t0)/vthe
-            end do
-*  ...electron energy source
-            t0 = she_ext(ix,iy)
-            if (t0.ge.0.0_R8) then
-              she0(ix,iy,0) = t0
-            else
-              she0(ix,iy,1) = t0/te(ix,iy)
-            end if
-            she0(ix,iy,0) = she0(ix,iy,0)+linearisation*abs(t0)
-            she0(ix,iy,1) = she0(ix,iy,1)-
-     .       linearisation*abs(t0)/te(ix,iy)
-*  ...ion energy source
-            t0 = shi_ext(ix,iy)
-            if (.not.internal_energy_sources) then
-              do is = 0, ns-1
-                if (smo_ext(ix,iy,is).eq.0.0_R8 .and.
-     .              sna_ext(ix,iy,is).eq.0.0_R8) cycle
-                ua_tmp = (ua0(ix,iy,is)*na0(ix,iy,is) +
-     .           smo_ext(ix,iy,is)*dtim*dtmo(is,ireg)/(am(is)*mp))/
-     .          (na0(ix,iy,is)+sna_ext(ix,iy,is)*dtim*dtco(is,ireg))
-                dua = ua_tmp - ua0(ix,iy,is)
-                t0 = t0 - ua0(ix,iy,is)*smo_ext(ix,iy,is) + 
-     .           0.5_R8*(am(is)*mp)*(ua0(ix,iy,is)**2)*
-     .           sna_ext(ix,iy,is) -
-     .          (na0(ix,iy,is)+sna_ext(ix,iy,is)*dtim*dtco(is,ireg))/
-     .          (dtim*dtei(ireg))*0.5_R8*(am(is)*mp)*dua**2 
-              end do
-            end if
-            if (t0.ge.0.0_R8) then
-              shi0(ix,iy,0) = t0
-            else
-              shi0(ix,iy,1) = t0/ti(ix,iy)
-            end if
-            shi0(ix,iy,0) = shi0(ix,iy,0)+linearisation*abs(t0)
-            shi0(ix,iy,1) = shi0(ix,iy,1)-
-     .       linearisation*abs(t0)/ti(ix,iy)
-*  ...electric charge source
-            t0 = sch_ext(ix,iy)
-            if (t0.ge.0.0_R8) then
-              sch0(ix,iy,0) = t0
-            else
-              sch0(ix,iy,1) = t0/po(ix,iy)
-            end if
-            sch0(ix,iy,0) = sch0(ix,iy,0)+linearisation*abs(t0)
-            sch0(ix,iy,1) = sch0(ix,iy,1)-
-     .       linearisation*abs(t0)/po(ix,iy)
+          t0 = st_ext%sne(iCv)
+          if (t0.ge.0.0_R8) then
+            srw%sne0(iCv,0) = t0
           else
-*  ...raw sources: no linearisation
-            sne0(ix,iy,0) = sne_ext(ix,iy)
-            sna0(ix,iy,0,0:ns-1) = sna_ext(ix,iy,0:ns-1)
-            smo0(ix,iy,0,0:ns-1) = smo_ext(ix,iy,0:ns-1)*
-     .         sign(1.0_R8,bb(ix,iy,0))
-            she0(ix,iy,0) = she_ext(ix,iy)
-            sch0(ix,iy,0) = sch_ext(ix,iy)
-            shi0(ix,iy,0) = shi_ext(ix,iy)
-            if (.not.internal_energy_sources) then
-              do is = 0, ns-1
-                if (smo_ext(ix,iy,is).eq.0.0_R8 .and.
-     .              sna_ext(ix,iy,is).eq.0.0_R8) cycle
-                ua_tmp = (ua0(ix,iy,is)*na0(ix,iy,is) +
-     .           smo_ext(ix,iy,is)*dtim*dtmo(is,ireg)/(am(is)*mp))/
-     .          (na0(ix,iy,is)+sna_ext(ix,iy,is)*dtim*dtco(is,ireg))
-                dua = ua_tmp - ua0(ix,iy,is)
-                shi0(ix,iy,0) = shi0(ix,iy,0) - 
-     .           ua0(ix,iy,is)*smo_ext(ix,iy,is) + 
-     .           0.5_R8*(am(is)*mp)*(ua0(ix,iy,is)**2)*
-     .           sna_ext(ix,iy,is) -
-     .          (na0(ix,iy,is)+sna_ext(ix,iy,is)*dtim*dtco(is,ireg))/
-     .          (dtim*dtei(ireg))*0.5_R8*(am(is)*mp)*dua**2
-              end do
-            end if
+            srw%sne0(iCv,1) = t0/dv%ne(iCv)
           end if
-        end do
+          srw%sne0(iCv,0) = srw%sne0(iCv,0)+linearisation*abs(t0)
+          srw%sne0(iCv,1) = srw%sne0(iCv,1)-
+     .       linearisation*abs(t0)/dv%ne(iCv)
+          do is = 0, ns-1
+*  ...heavy particles sources
+            t0 = st_ext%sna(iCv,is)
+            if (t0.ge.0.0_R8) then
+              srw%sna0(iCv,0,is) = t0
+            else
+              srw%sna0(iCv,1,is) = t0/pl%na(iCv,is)
+            end if
+            srw%sna0(iCv,0,is) = srw%sna0(iCv,0,is)+
+     .         linearisation*abs(t0)
+            srw%sna0(iCv,1,is) = srw%sna0(iCv,1,is)-
+     .         linearisation*abs(t0)/pl%na(iCv,is)
+*  ...parallel momentum sources
+            vthe=sqrt(pl%te(iCv)/me)
+            vthe=vthe/sqrt(am(is)*mp/me)
+            t0 = st_ext%smo(iCv,is)*
+     .         sign(1.0_R8,geo%cvBb(iCv,0))
+            srw%smo0(iCv,0,is) = srw%smo0(iCv,0,is)+
+     .         t0+linearisation*abs(t0)*pl%ua(iCv,is)/vthe
+            srw%smo0(iCv,1,is) = srw%smo0(iCv,1,is)-
+     .         linearisation*abs(t0)/vthe
+          end do
+*  ...electron energy source
+          t0 = st_ext%she(iCv)
+          if (t0.ge.0.0_R8) then
+            srw%she0(iCv,0) = t0
+          else
+            srw%she0(iCv,1) = t0/pl%te(iCv)
+          end if
+          srw%she0(iCv,0) = srw%she0(iCv,0)+linearisation*abs(t0)
+          srw%she0(iCv,1) = srw%she0(iCv,1)-
+     .       linearisation*abs(t0)/pl%te(iCv)
+*  ...ion energy source
+          t0 = st_ext%shi(iCv)
+          if (.not.internal_energy_sources) then
+            do is = 0, ns-1
+              if (st_ext%smo(iCv,is).eq.0.0_R8 .and.
+     .            st_ext%sna(iCv,is).eq.0.0_R8) cycle
+              ua_tmp = (ua0(iCv,is)*na0(iCv,is) +
+     .           st_ext%smo(iCv,is)*dtim*dtmo(is,ireg)/(am(is)*mp))/
+     .          (na0(iCv,is)+st_ext%sna(iCv,is)*dtim*dtco(is,ireg))
+              dua = ua_tmp - ua0(iCv,is)
+              t0 = t0 - ua0(iCv,is)*st_ext%smo(iCv,is) + 
+     .           0.5_R8*(am(is)*mp)*(ua0(iCv,is)**2)*
+     .           st_ext%sna(iCv,is) -
+     .          (na0(iCv,is)+st_ext%sna(iCv,is)*dtim*dtco(is,ireg))/
+     .          (dtim*dtei(ireg))*0.5_R8*(am(is)*mp)*dua**2 
+            end do
+          end if
+          if (t0.ge.0.0_R8) then
+            srw%shi0(iCv,0) = t0
+          else
+            srw%shi0(iCv,1) = t0/pl%ti(iCv)
+          end if
+          srw%shi0(iCv,0) = srw%shi0(iCv,0)+linearisation*abs(t0)
+          srw%shi0(iCv,1) = srw%shi0(iCv,1)-
+     .       linearisation*abs(t0)/pl%ti(iCv)
+*  ...electric charge source
+          t0 = st_ext%sch(iCv)
+          if (t0.ge.0.0_R8) then
+            srw%sch0(iCv,0) = t0
+          else
+            srw%sch0(iCv,1) = t0/pl%po(iCv)
+          end if
+          srw%sch0(iCv,0) = srw%sch0(iCv,0)+linearisation*abs(t0)
+          srw%sch0(iCv,1) = srw%sch0(iCv,1)-
+     .       linearisation*abs(t0)/pl%po(iCv)
+        else
+*  ...raw sources: no linearisation
+          srw%sne0(iCv,0) = st_ext%sne(iCv)
+          srw%sna0(iCv,0,0:ns-1) = st_ext%sna(iCv,0:ns-1)
+          srw%smo0(iCv,0,0:ns-1) = st_ext%smo(iCv,0:ns-1)*
+     .         sign(1.0_R8,geo%cvBb(iCv,0))
+          srw%she0(iCv,0) = st_ext%she(iCv)
+          srw%sch0(iCv,0) = st_ext%sch(iCv)
+          srw%shi0(iCv,0) = st_ext%shi(iCv)
+          if (.not.internal_energy_sources) then
+            do is = 0, ns-1
+              if (st_ext%smo(iCv,is).eq.0.0_R8 .and.
+     .            st_ext%sna(iCv,is).eq.0.0_R8) cycle
+              ua_tmp = (ua0(iCv,is)*na0(iCv,is) +
+     .           st_ext%smo(iCv,is)*dtim*dtmo(is,ireg)/(am(is)*mp))/
+     .          (na0(iCv,is)+st_ext%sna(iCv,is)*dtim*dtco(is,ireg))
+              dua = ua_tmp - ua0(iCv,is)
+              srw%shi0(iCv,0) = srw%shi0(iCv,0) - 
+     .           ua0(iCv,is)*st_ext%smo(iCv,is) + 
+     .           0.5_R8*(am(is)*mp)*(ua0(iCv,is)**2)*
+     .           st_ext%sna(iCv,is) -
+     .          (na0(iCv,is)+st_ext%sna(iCv,is)*dtim*dtco(is,ireg))/
+     .          (dtim*dtei(ireg))*0.5_R8*(am(is)*mp)*dua**2
+            end do
+          end if
+        end if
       end do
 
-      b2stbm_sna(:,:,:)=sna0(:,:,0,:)+sna0(:,:,1,:)*na(:,:,:)
-      b2stbm_smo(:,:,:)=smo0(:,:,0,:)+smo0(:,:,1,:)*ua(:,:,:)
-      b2stbm_sne(:,:)=sne0(:,:,0)+sne0(:,:,1)*ne(:,:)
-      b2stbm_she(:,:)=she0(:,:,0)+she0(:,:,1)*te(:,:)
-      b2stbm_shi(:,:)=shi0(:,:,0)+shi0(:,:,1)*ti(:,:)
-      b2stbm_sch(:,:)=sch0(:,:,0)+sch0(:,:,1)*po(:,:)
+      srw%b2stbm_sna(:,:)=srw%sna0(:,0,:)+srw%sna0(:,1,:)*pl%na(:,:)
+      srw%b2stbm_smo(:,:)=srw%smo0(:,0,:)+srw%smo0(:,1,:)*pl%ua(:,:)
+      srw%b2stbm_sne(:)=srw%sne0(:,0)+srw%sne0(:,1)*dv%ne(:)
+      srw%b2stbm_she(:)=srw%she0(:,0)+srw%she0(:,1)*pl%te(:)
+      srw%b2stbm_shi(:)=srw%shi0(:,0)+srw%shi0(:,1)*pl%ti(:)
+      srw%b2stbm_sch(:)=srw%sch0(:,0)+srw%sch0(:,1)*pl%po(:)
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then

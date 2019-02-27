@@ -13,6 +13,8 @@ c======================================================================
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
+      use eirmod_parmmod
+     .   , only : natm, nmol
       use eirmod_extrab25
 #endif
       implicit none

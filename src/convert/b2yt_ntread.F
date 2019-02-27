@@ -28,9 +28,13 @@ c
       use b2mod_b2cmpa
       use b2mod_b2cmfs
 #ifdef B25_EIRENE
+      use eirmod_parmmod
+     *   , only : ndx, ndy, nion, nstra, natm, nmol, npls
       use eirmod_extrab25
       use eirmod_ctrig
       use eirmod_cestim
+      use eirmod_braeir
+     :   , only : pux, puy, pvx, pvy
 #endif
       implicit none
 

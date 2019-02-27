@@ -35,6 +35,8 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
 #ifdef B25_EIRENE
+      use eirmod_parmmod
+     ,   , ncv_eir => ncv
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_braeir

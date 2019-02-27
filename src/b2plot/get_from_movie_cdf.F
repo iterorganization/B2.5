@@ -78,7 +78,7 @@
 	call check_cdf_status(iret)
 	iret=nf_get_vara_double(ncidcdf,varid,start,count,dab2)
 	call check_cdf_status(iret)
-	dab2(0:nx+1,0:ny+1,1:natmi,1)=dummy(0:nx+1,0:ny+1,1:natmi)
+!WG_TODO	dab2(0:nx+1,0:ny+1,1:natmi,1)=dummy(0:nx+1,0:ny+1,1:natmi)
 	deallocate(dummy)
       endif
       if(nmoli.gt.0) then
@@ -89,7 +89,7 @@
 	call check_cdf_status(iret)
 	iret=nf_get_vara_double(ncidcdf,varid,start,count,dummy)
 	call check_cdf_status(iret)
-	dmb2(0:nx+1,0:ny+1,1:nmoli,1)=dummy(0:nx+1,0:ny+1,1:nmoli)
+!WG_TODO	dmb2(0:nx+1,0:ny+1,1:nmoli,1)=dummy(0:nx+1,0:ny+1,1:nmoli)
 	deallocate(dummy)
       endif
 #endif

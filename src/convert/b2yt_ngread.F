@@ -32,6 +32,8 @@ c
       use b2mod_constants
       use b2mod_b2cmpa
 #ifdef B25_EIRENE
+      use eirmod_parmmod
+     *   , only : ndx, ndy, nion, nstra, natm, nmol, npls
       use eirmod_extrab25
       use eirmod_clogau
 #endif
@@ -129,6 +131,7 @@ C
       write(*,*) 'Writing ftn44.2'
 #endif
 C
+#ifdef WG_TODO
       READ (44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
       if((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
      &   .and.
@@ -1500,7 +1503,7 @@ cank
       if(jvft44.ge.960513) nlimi = nlim1
 
 #endif
-
+#endif
 *  ---------------------------------------------------------------------
    99 CONTINUE
       close(44)

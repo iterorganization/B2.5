@@ -11,6 +11,8 @@
       use b2mod_boundary_namelist
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
+      use eirmod_parmmod
+     .   , only : natm, nmol
       use eirmod_extrab25
       use eirmod_ccona
 #endif
@@ -721,12 +723,14 @@ c                   carlis Using values directly calculated from Eirene
                       endif
                       imol=imol+1
                     enddo
+#ifdef WG_TODO
                     t=tib2(kk+1,iy+1,is,1)/ev
                     if (mion.gt.0.0_R8)
      >               wnutrg(iy,j)=wnutrg(iy,j)+
      .                s(iy,j)*dib2(kk+1,iy+1,is,1)*
      *                sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
      .                (2.0_R8*tib2(kk+1,iy+1,is,1)+EionH2*ev)
+#endif
                   enddo
                 end if
               end do !} loop over b2 cells
@@ -847,9 +851,11 @@ c*** Atomic fluxes and energies
                 IAS=IND+1
                 do iy=0,ny-1 !{
                   if (ft44) then
+#ifdef WG_TODO
                     naitrg(iy,j,iatm)=dab2(kk+1,iy+1,iatm,1)
                     paitrg(iy,j,iatm)=dab2(kk+1,iy+1,iatm,1)*
      *                                tab2(kk+1,iy+1,iatm,1)
+#endif
 c carlis using values directly from Eirene
                     faitrg(iy,j,iatm)=wldna_res(iatm,iy+IAS)*
      .                       sarea_res(iy+IAS) !units in 1/m2/s*m2
@@ -922,9 +928,11 @@ c*** Molecules fluxes and energies
                   if (ft44) then
                     fmitrg(iy,j,imol)=wldnm_res(imol,iy+IAS)*
      .                     sarea_res(iy+IAS)
+#ifdef WG_TODO
                     pmitrg(iy,j,imol)=dmb2(kk+1,iy+1,imol,1)*
      *                     tmb2(kk+1,iy+1,imol,1)
                     nmitrg(iy,j,imol)=dmb2(kk+1,iy+1,imol,1)
+#endif
                     emitrg(iy,j,imol)=ewldm_res(imol,iy+IAS)*
      .                     sarea_res(iy+IAS) !units in W/m2*m2
                   else

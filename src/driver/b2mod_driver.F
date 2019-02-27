@@ -54,6 +54,9 @@
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
+     * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
+     *          nsrfs, n1st, n2nd, n3rd, nreac, ifoff,
+     *          eirene_set_parmmod
       use eirmod_cinit
      * , only : eirene_init_cinit
       use eirmod_ccoupl
@@ -1767,6 +1770,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       call find_file(filename,ex)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
+#ifdef WG_TODO
       if (ex) then
         call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      .                          natm,nmol,nion,nlimps)
@@ -1775,6 +1779,7 @@ cxpb for neutral fluxes used in b2stbc_phys
           call ngread(ismain,iflag)
         endif
       endif
+#endif
 #endif
 c new CDF movie option (1st frame at t=0)
       if(tim.ge.save_cdfmovie_time.and.

@@ -50,8 +50,8 @@ c
           vz=sin(u)*abs(bb(ix,iy,0))/bb(ix,iy,3)
           vt=sqrt(max(0.0_R8,1.0_R8-(bb(ix,iy,0)/bb(ix,iy,3))**2))
           write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),ne(ix,iy),
-     ,                    te(ix,iy)/ev,ti(ix,iy)/ev,vr,vz,vt,
-     ,                    dab2(ix+1,iy+1,j_h_at,1),dmb2(ix+1,iy+1,1,1)
+     ,                    te(ix,iy)/ev,ti(ix,iy)/ev,vr,vz,vt
+!WG_TODO     ,                    ,dab2(ix+1,iy+1,j_h_at,1),dmb2(ix+1,iy+1,1,1)
   700     format(1x,1p,2i4,48e12.3)
         end do
       end do

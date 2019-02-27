@@ -39,7 +39,11 @@
       use b2us_prep
 
 #ifdef B25_EIRENE
-      use eirmod_cinit
+      use eirmod_parmmod
+     * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
+     *          nsrfs, n1st, n2nd, n3rd, nreac, ifoff, 
+     *          eirene_set_parmmod
+       use eirmod_cinit
      * , only : eirene_init_cinit
       use eirmod_clogau
       use eirmod_ctrcei
@@ -189,8 +193,8 @@ c
 #endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL,ifoff)
+      CALL EIRENE_ALLOC_EIRBRA(nCv,nFc,NFL,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CTRCEI
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
@@ -1366,6 +1370,7 @@ c
      1 nx+2,ny+2,respo,'')
 
 #ifdef B25_EIRENE
+#ifdef WG_TODO
       if(natmi.gt.0) then
         forall (ix=-1:nx,iy=-1:ny,is=0:natmi-1)
      1   tmp(ix,iy,is)=dab2(ix+1,iy+1,is+1,1)
@@ -1401,7 +1406,9 @@ c
      1   ny+2,natmi,tmp,'TEXTAN','')
       endif
 #endif
+#endif
 #ifdef B25_EIRENE
+#ifdef WG_TODO
       if(nmoli.gt.0) then
         forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
      1   tmp(ix,iy,is)=dmb2(ix+1,iy+1,is+1,1)
@@ -1441,7 +1448,9 @@ c
      1   ny+2,nmoli,tmp,'TEXTMN','')
       endif
 #endif
+#endif
 #ifdef B25_EIRENE
+#ifdef WG_TODO
       if(nioni.gt.0) then
         forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
      1   tmp(ix,iy,is)=dib2(ix+1,iy+1,is+1,1)
@@ -1452,6 +1461,7 @@ c
         call mds_put_double_rzns('\TOP.SNAPSHOT:TIB2','eV',nx+2,
      1   ny+2,nioni,tmp,'TEXTIN','')
       endif
+#endif
 #endif
 
       rtmp=(te(jxi,jsep)/qe*vol(jxi,jsep+1)+

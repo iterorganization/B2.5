@@ -351,6 +351,7 @@ csw 20sep2013 added
             endif
           end do
 #ifdef B25_EIRENE
+#ifdef WG_TODO
           do iatm = 1, nnatmi
             is = latmscl(iatm)
             if (is.eq.0) cycle
@@ -362,6 +363,7 @@ csw 20sep2013 added
      .           mlcmp(iatm,imol)*dmb2(ix+1,iy+1,imol,1)*vol(ix,iy)
             end do
           end do
+#endif
 #endif
         enddo
       enddo

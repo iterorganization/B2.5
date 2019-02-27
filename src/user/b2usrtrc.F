@@ -15,6 +15,8 @@
       use b2mod_boundary_namelist
       use b2mod_numerics_namelist
 #ifdef B25_EIRENE
+      use eirmod_parmmod
+     .   , only : nstra, natm
       use eirmod_extrab25
       use eirmod_eirbra
 #else
@@ -776,6 +778,7 @@ c*** Inner divertor
           do j=m,n !{
             hlp_si=hlp_si+gs(j,iy,1)
             hlp=0.0_R8
+#ifdef WG_TODO
             do k=1,nnatmi !{
               hlp=hlp+dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)
               if(k.eq.j_he_at) hlp_hep=hlp_hep+
@@ -784,6 +787,7 @@ c*** Inner divertor
             do k=1,nnmoli !{
               hlp=hlp+dmb2(j+1,iyp,k,1)*tmb2(j+1,iyp,k,1)
             end do !}
+#endif
             hlp_pi=hlp_pi+hlp*gs(j,iy,1)
           end do !}
 
@@ -823,6 +827,7 @@ c*** Outer divertor
           do j=m,n !{
             hlp_so=hlp_so+gs(j,iy,1)
             hlp=0.0_R8
+#ifdef WG_TODO
             do k=1,nnatmi !{
               hlp=hlp+dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)
               if(k.eq.j_he_at) hlp_hep=hlp_hep+
@@ -831,6 +836,7 @@ c*** Outer divertor
             do k=1,nnmoli !{
               hlp=hlp+dmb2(j+1,iyp,k,1)*tmb2(j+1,iyp,k,1)
             end do !}
+#endif
             hlp_po=hlp_po+hlp*gs(j,iy,1)
           end do !}
 
@@ -1192,6 +1198,7 @@ c*** e the temperature*density*area, v the flux*area
           v=0.0_R8
           do i=ipfc_tmp(k),jpfc_tmp(k) !{
             s=s+gs(i,is,1)
+#ifdef WG_TODO
             if(ndtm_tmp(j).gt.0) then !{
               g=dab2(i,iy,ndtm_tmp(j),1)
               t=tab2(i,iy,ndtm_tmp(j),1)/ev
@@ -1199,6 +1206,7 @@ c*** e the temperature*density*area, v the flux*area
               g=dmb2(i,iy,-ndtm_tmp(j),1)
               t=tmb2(i,iy,-ndtm_tmp(j),1)/ev
             end if !}
+#endif
             d=d+gs(i,is,1)*g
             e=e+gs(i,is,1)*g*t
             v=v+gs(i,is,1)*g*sqrt(max(t,0.0_R8))
