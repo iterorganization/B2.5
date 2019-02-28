@@ -712,52 +712,28 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=5 -- PRESCRIBE THE PARTICLE FLUX PER UNIT AREA
 
   500     CONTINUE
-          call xerrab ('b2stbc_phys -- BCCON = 5 not adapted for WG')
-#ifdef WG_TODO
           if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'particle flux per area ',CONPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
-          IF(BCCHAR(IB).EQ.'S') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     1         CONPAR(IS,IB,1)*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=0.0_R8
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'N') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         CONPAR(IS,IB,1)*
-     1         SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .           BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=0.0_R8
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'W') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     1         CONPAR(IS,IB,1)*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=0.0_R8
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'E') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     .         CONPAR(IS,IB,1)*
-     1         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .           LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=0.0_R8
-            end do
-          ELSE
-            CALL XERRAB
-     1       ('B2STBC -- BCCON=5, NOT YET AVAILABLE')
-          END IF
-          DO IX = 1, BC_LIST_SIZE(IB)
-            SNA0_NO_MDF(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)=
-     .       SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)
-          ENDDO                                                     !srv 23.09.08 }
+cwdk      Possible backwards-compatibility issue: 
+cwdk      In the unstructured solver, we impose flux per unit area normal
+cwdk      to the surface/boundary. 
+cwdk      In the original code, the flux per unit area in the poloidal
+cwdk      direction was imposed at E/W boundaries (and normal to the 
+cwdk      radial direction at N/S - unchanged for aligned grids)
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            srw%sna0(iCv1,0,is) = conpar(is,iB,1)*geo%fcS(iFc)
+            srw%sna0(iCv1,1,is) = 0.0_R8
+            sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
+            sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
+          enddo  
 
           GOTO 10000
-#endif
+
 * -- BCCON=6 -- PRESCRIBE THE TOTAL PARTICLE FLUX FOR A
 *                 CONSTANT DENSITY
 
@@ -873,7 +849,7 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             US   = US + geo%fcS(iFc)
           enddo
-          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) + 
@@ -1316,64 +1292,40 @@ c dpc
             sna0_no_mdf(iCv1,:,is) =
      &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
 !WG_TODO  if (mdf_fnb.ne.0) ; drift contributions...
-          enddo 
-
+          enddo
           GOTO 10000
 
 * -- BCCON=15 -- prescribe a radial leakage velocity, as a multiplier to the local thermal velocity
 
  1500     CONTINUE                                                  !srv 25.09.09 16.02.12{
-          call xerrab ('b2stbc_phys -- BCCON = 15 not adapted for WG')
-#ifdef WG_TODO
           if(ncall.eq.0) then
             write(*,'(2a,1p,g14.7,a,a,a,a,i3)')
      .       'prescribe the decay length for the density',
      &       ' for drifs switched on ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
-          IF(BCCHAR(IB).EQ.'S') THEN                                !srv 23.07.10 {
-            DO IX = 1, BC_LIST_SIZE(IB)
-              csb=sqrt((rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
-     &                   te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
-     &                   ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
-     &                 (am(is)*mp))
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)= VBIG*
-     &         CDNA(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &              TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,IS)*
-     .           NA(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .              TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),IS)
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=-VBIG*
-     &         (CDNA(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &               TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,IS)-
-     &          CONPAR(IS,IB,1)*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     &          csb)
-            END DO
-          ELSEIF(BCCHAR(IB).EQ.'N') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              csb=sqrt((rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
-     &                   te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
-     &                   ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
-     &                 (am(is)*mp))
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)= VBIG*
-     &         CDNA(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,IS)*
-     .         NA(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),IS)
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)= -VBIG*
-     &         (CDNA(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,IS)-
-     &          CONPAR(IS,IB,1)*
-     .          SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &             BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*csb)
-            END DO
-          ELSE
-            CALL XERRAB
-     1       ('B2STBC -- BCCON=15, NO IN POLOIDAL DIR.')
-          END IF                                                    !srv 23.07.10 }
-          DO IX = 1, BC_LIST_SIZE(IB)
-            SNA0_NO_MDF(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)=
-     .       SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)
-          ENDDO                                                     !srv 23.09.08 }
+cwdk      Notes: 
+cwdk       * need correction for misaligned grids -> t1
+cwdk       * need to correct this BC for hybrid scheme
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            csb  = sqrt((rt%rza(iCv1,is)*pl%te(iCv1) + pl%ti(iCv1))/
+     &                  (am(is)*mp))            
+            t0   = geo%fcQalf(iFc,1) 
+            t1   = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     &              geo%fcQbet(iFc,0)
+            srw%sna0(iCv1,0,is) =  VBIG*
+     &          co%cdna(iFc,1,is)*t0*pl%na(iCv2,is)
+            srw%sna0(iCv1,1,is) = -VBIG*
+     &         (co%cdna(iFc,1,is)*t0 + co%cdna(iFc,1,is)*t1*
+     &         (pl%na(mpg%fcVx(iFc,2),is) - pl%na(mpg%fcVx(iFc,1),is)) -
+     &         CONPAR(is,iB,1)*geo%fcS(iFc)*csb)
+            sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
+          enddo
           GOTO 10000                                                !srv 25.09.09 }
-#endif
+
 * -- BCCON=16 -- Feedback boundary condition: given total particle flux with constant density  !srv 16.02.12 {
 
  1600     CONTINUE
@@ -3371,14 +3323,26 @@ cwdk      TODO: drift contributions
 * -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM  !srv 01.02.09 {
 
 11400     CONTINUE
-          call xerrab ('b2stbc_phys -- BCMOM = 14 not adapted for WG')
-#ifdef WG_TODO
           if(ncall.eq.0) then !srv added accumulation in order to account twice b.c. for corner cells
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
      .       'from b2stbc_spb momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
      2       BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            srw%smo0(iCv1,0,is) = 0.0_R8 !TODO: drift contributions!
+            srw%smo0(iCv1,1,IS) = 0.0_R8
+            srw%smo0(iCv1,2,IS) = 0.0_R8
+            srw%smo0(iCv1,3,IS) = srw%smo0(iCv1,3,IS) + 
+     &         MOMPAR(IS,IB,2)*geo%fcS(iFc)*hzf(iFc) + MOMPAR(IS,IB,1)*
+     &         max(0.0e0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &         dv%fna_fcor(iFc,1,is))/pl%na(iCv1,is)
+          enddo
+          GOTO 20000
+
+#ifdef WG_TODO
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
               s0hz = hz(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
@@ -3431,8 +3395,8 @@ cwdk      TODO: drift contributions
             CALL XERRAB
      1       ('B2STBC -- BCMOM=14, NOT AVAILABLE FOR N,W,E')
           ENDIF
-          GOTO 20000
 #endif
+
 * -- BCMOM=15 -- PRESCRIBE THE VALUE OF THE PARALLEL VELOCITY, SCALED WITH
 *                B_average/B_local
 
@@ -5417,45 +5381,31 @@ cwdk    Todo: corrections for mdf_fhe, BCCON.ne.14
 *                UNITS OF THE ELECTRON THERMAL VELOCITY
 
 22200   CONTINUE
-        call xerrab ('b2stbc_phys -- BCENE = 22 not adapted for WG')
-#ifdef WG_TODO
         if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     ' BCENE=22 with ENEPAR(IB,1)=',ENEPAR(IB,1),
      1     ' on',BCCHAR(IB),boundary_location(ib)
         endif
-        IF(BCCHAR(IB).EQ.'S') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            vte = sqrt(te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/me)
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=VBIG*NE00*EV*
-     &           CHCE(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)*
-     &             TE(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                 TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=- VBIG*NE00*EV*
-     &           (CHCE(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                 TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)-
-     &            ENEPAR(IB,1)*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     &            VTE*NE(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'N') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            vte = sqrt(te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/me)
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=VBIG*NE00*EV*
-     &           CHCE(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)*
-     &             TE(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=- VBIG*NE00*EV*
-     &       (CHCE(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)-ENEPAR(IB,1)*
-     &          SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &             BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*
-     &               VTE*NE(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-          end do
-        ELSE
-          CALL XERRAB ('B2STBC -- BCENE=22, NOT AVAILABLE FOR W,E')
-        END IF                                                         !srv 23.07.10 }
+cwdk    Notes: 
+cwdk     * need correction for misaligned grids -> t1
+cwdk     * need to correct this BC for hybrid scheme
+        do ibc = 1, mpg%bcCvP(ib,2)                                    ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                     ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                     ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+          vte  = sqrt(pl%te(iCv1)/me)            
+          t0   = geo%fcQalf(iFc,1) 
+          t1   = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     &            geo%fcQbet(iFc,0)
+          srw%she0(iCv1,0) =  VBIG*NE00*EV*
+     &        co%chce(iFc,1)*t0*pl%te(iCv2)
+          srw%she0(iCv1,1) = -VBIG*NE00*EV*
+     &       (co%chce(iFc,1)*t0 + co%chce(iFc,1)*t1*
+     &       (pl%te(mpg%fcVx(iFc,2)) - pl%te(mpg%fcVx(iFc,1))) -
+     &       ENEPAR(iB,1)*geo%fcS(iFc)*vte*dv%ne(iCv1))
+        enddo
         GOTO 30000
-#endif
+
 * -- BOUNDARY CONDITIONS FOR ION ENERGY EQUATIONS --
 
 30000   continue
@@ -7130,61 +7080,38 @@ cxpb Careful here because of BC number clash
 *                UNITS OF THE COLLECTIVE ION THERMAL VELOCITY
 
 32200   CONTINUE
-        call xerrab ('b2stbc_phys -- BCENI = 22 not adapted for WG')
-#ifdef WG_TODO
         if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      &     ' BCENI=22 with ENIPAR(IB,1) =',ENIPAR(IB,1),
      &     ' on ', BCCHAR(IB),boundary_location(ib)
         endif
-        IF(BCCHAR(IB).EQ.'S') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            t0 = 0.0_R8
-            do is = 0, ns-1
-              if(.not.is_neutral(is)) then                           !srv 19.03.09 {
-                csb = sqrt((rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
-     &                       te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
-     &                       ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
-     &                     (am(is)*mp))
-                t0 = t0 + csb*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
-              endif                                                  !srv 19.03.09 }
-            enddo
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*EV*
-     &       CHCI(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)*
-     &         TI(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-VBIG*NE00*EV*
-     &       (CHCI(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &             TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)-
-     &       ENIPAR(IB,1)*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*T0)
-          ENDDO
-        ELSEIF(BCCHAR(IB).EQ.'N') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            t0 = 0.0_R8
-            do is = 0, ns-1
-              if(.not.is_neutral(is)) then                           !srv 19.03.09 {
-                csb = sqrt((rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
-     &                       te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
-     &                       ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
-     &                     (am(is)*mp))
-                t0 = t0 + csb*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
-              endif                                                  !srv 19.03.09 }
-            enddo
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=VBIG*NE00*EV*
-     &       CHCI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)*
-     &       TI(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=- VBIG*NE00*EV*
-     &       (CHCI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)-ENIPAR(IB,1)*   !srv 02.02.11
-     &        SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &           BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*T0)
-          ENDDO
-        ELSE
-          CALL XERRAB ('B2STBC -- BCENI=22, NOT AVAILABLE FOR W,E')
-        ENDIF
+cwdk    Notes: 
+cwdk     * need correction for misaligned grids -> t1
+cwdk     * need to correct this BC for hybrid scheme
+        do ibc = 1, mpg%bcCvP(ib,2)                                    ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                     ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                     ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+          t0   = geo%fcQalf(iFc,1) 
+          t1   = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     &            geo%fcQbet(iFc,0)
+          t2   = 0.0_R8
+          do is = 0, ns-1
+            if(.not.is_neutral(is)) then
+              csb = sqrt((rt%rza(iCv1,is)*pl%te(iCv1) + pl%ti(iCv1))/
+     &                  (am(is)*mp))
+              t2  = t2 + csb*pl%na(iCv1,is)
+            endif
+          enddo
+          srw%shi0(iCv1,0) =  VBIG*NE00*EV*
+     &        co%chci(iFc,1)*t0*pl%ti(iCv2)
+          srw%shi0(iCv1,1) = -VBIG*NE00*EV*
+     &       (co%chci(iFc,1)*t0 + co%chci(iFc,1)*t1*
+     &       (pl%ti(mpg%fcVx(iFc,2)) - pl%ti(mpg%fcVx(iFc,1))) -
+     &       ENIPAR(iB,1)*geo%fcS(iFc)*t2)
+        enddo
         GOTO 40000                                                   !srv 23.07.10 }
-#endif
+
 * -- BCENI=23 -- PRESCRIBE THE POLOIDALLY AVERAGED VALUE OF THE ION TEMPERATURE
 * AND INTRODUCE A POLOIDAL VARIATION AS CLOSE AS POSSIBLE TO NEOCLASSICAL SOLUTION.
 * IT IS RECOMMENDED TO USE THIS BOUNDARY CONDITION TOGETHER WITH CORRESPONDING
