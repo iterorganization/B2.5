@@ -223,6 +223,11 @@
 *----------------------------------------------------
 *        | -14   |  +   |  -   |  +   |  +   |  +   |
 *----------------------------------------------------
+* An alternative to the 'no_solve' switch for controlling of the 
+* solving of equations is to use the SOLVEMO, SOLVECO, SOLVEEE, SOLVEEI, 
+* SOLVEPO, SOLVEMT, SOLVEET array from b2.numerics.parameters.
+* Please consult the code documentation.
+
        solving(1:4)=no_solve.eq.0
        do i=1,4
          solving(i)=solving(i).or.
@@ -931,7 +936,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
             call my_out(70,nx,ny,respo,'b2news__respo'//charns)
             call my_out(70,nx,ny,po,'b2news__po'//charns)
           endif                                                          !srv 12.07.05 }
-          if(.not.solving(3)) exit                                       !srv 22.05.18
+          if(.not.solving(3).or..not.any(solvepo(0:nnreg(0)))) exit      !srv 22.05.18
           if(t0.gt.potok.and.(i.eq.potit/3.or.i.eq.potit*2/3)) then      !srv 06.07.00
             if (vis_per.eq.0.0e0_R8) then
               call restart_ma28
@@ -1030,7 +1035,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 *   ..iterate on heat balance
       if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                           !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,        !srv 05.07.17
-     &  solveee, solveei, solvepo, solvemo,
+     &  solveee, solveei, solveet, solvepo, solvemo,                     !srv 22.05.18
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                       !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,             !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
@@ -1041,7 +1046,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 !       if(all(solveee(0:nnreg(0))).and.all(solveei(0:nnreg(0))))         !srv 26.09.12
 !     &  call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,       !srv 05.07.17
         call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,       !srv 05.07.17 22.05.18
-     &   solveee, solveei, solvepo, solvemo,
+     &  solveee, solveei, solveet, solvepo, solvemo,                     !srv 22.05.18
      &   rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &   pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &   fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,            !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
@@ -1050,7 +1055,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       endif                                                              !srv 13.10.06 }
       if(mdf_fhe.eq.0 .and. mdf_fhi.ne.0) then                           !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,        !srv 05.07.17
-     &  solveee, solveei, solvepo, solvemo,
+     &  solveee, solveei, solveet, solvepo, solvemo,                     !srv 22.05.18
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                       !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,             !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
@@ -1059,7 +1064,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       endif                                                              !srv 13.10.06 }
       if(mdf_fhe.ne.0 .and. mdf_fhi.eq.0) then                           !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,        !srv 05.07.17
-     &  solveee, solveei, solvepo, solvemo,
+     &  solveee, solveei, solveet, solvepo, solvemo,                     !srv 22.05.18
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                       !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,             !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17

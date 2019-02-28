@@ -62,7 +62,6 @@
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
       integer, save :: iadd_9 = 1                                     !srv 02.01.07
-      integer, save :: get_residuals = 0                              !srv 22.05.18
       integer ireg, ileft, ibot
       save ncall
       real (kind=R8) ::
@@ -90,7 +89,6 @@
        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
        call ipgeti ('b2ush9_add_9', iadd_9)                           !srv 02.01.07
-       call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -138,6 +136,8 @@
        call b2xvsg (n2, ceqp, 1, 'ceqp', '.ge.')
       endif
       
+      if (any(solveee(0:nnreg(0))).and.any(solveei(0:nnreg(0))).and.
+     &    any(solveet(0:nnreg(0)))) then                                 !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -287,7 +287,6 @@
       endif
       do iy=-1,ny
        do ix=-1,nx
-        ireg = region(ix,iy,0)                                        !srv 22.05.18
         if (aa9(ix,iy,0).eq.0.0_R8 .and.
      &      aa9(ix,iy,1).eq.0.0_R8 .and. aa9(ix,iy,-1).eq.0.0_R8 .and.
      &      aa9(ix,iy,2).eq.0.0_R8 .and. aa9(ix,iy,-2).eq.0.0_R8 .and.
@@ -296,17 +295,16 @@
      &      aa9(ix,iy,5).eq.0.0_R8 .and. aa9(ix,iy,-5).eq.0.0_R8 .and.
      &      aa9(ix,iy,6).eq.0.0_R8 .and. aa9(ix,iy,-6).eq.0.0_R8) then
          aa9(ix,iy,0) = 1.0_R8
-!         resht(ix,iy) = 0.0_R8                                       !srv 22.05.18
+         resht(ix,iy) = 0.0_R8
         end if
-        if (.not.solveet(ireg).and.get_residuals.eq.0)
-     &      resht(ix,iy) = 0.0_R8                                     !srv 22.05.18
        enddo
       enddo
 *   ..solve the correction equation
-      if (all(solveet(0:nnreg(0))))                                   !srv 22.05.18
-     &  call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total') !srv 18.05.02
+      call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total') !srv 18.05.02
+      endif                                                          !srv 22.05.18
 
 * ..electron temperature correction equation
+      if (any(solveee(0:nnreg(0)))) then                                 !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -363,6 +361,7 @@
         else                                                          !srv 26.11.02 }
          t0 =  flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                   !srv 02.01.07
          t1 = -flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                   !srv 02.01.07
+         ileft = region(leftix(ix,iy),leftiy(ix,iy),0)                !srv 25.02.19
          if (solveee(ileft))
      >    aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0
          if (solveee(ireg))
@@ -402,7 +401,6 @@
       endif
       do iy=-1,ny
        do ix=-1,nx
-        ireg = region(ix,iy,0)                                        !srv 22.05.18
         if (aa9(ix,iy,0).eq.0.0_R8 .and.
      &      aa9(ix,iy,1).eq.0.0_R8 .and. aa9(ix,iy,-1).eq.0.0_R8 .and.
      &      aa9(ix,iy,2).eq.0.0_R8 .and. aa9(ix,iy,-2).eq.0.0_R8 .and.
@@ -411,17 +409,16 @@
      &      aa9(ix,iy,5).eq.0.0_R8 .and. aa9(ix,iy,-5).eq.0.0_R8 .and.
      &      aa9(ix,iy,6).eq.0.0_R8 .and. aa9(ix,iy,-6).eq.0.0_R8) then
          aa9(ix,iy,0) = 1.0_R8
-!         reshe(ix,iy) = 0.0_R8                                       !srv 22.05.18
+         reshe(ix,iy) = 0.0_R8
         end if
-        if (.not.solveee(ireg).and.get_residuals.eq.0) 
-     &     reshe(ix,iy) = 0.0_R8                                      !srv 22.05.18
        enddo
       enddo
 *   ..solve the correction equation
-      if (all(solveee(0:nnreg(0))))                                   !srv 22.05.18
-     &  call b2ux9p (nx, ny, aa9, itcnt, reshe, corte, 'b2ush9_Te')   !srv 18.05.02
+      call b2ux9p (nx, ny, aa9, itcnt, reshe, corte, 'b2ush9_Te')   !srv 18.05.02
+      endif                                                         !srv 22.05.18
 
 * ..atom temperature correction equation
+      if (any(solveei(0:nnreg(0)))) then                                 !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -521,7 +518,6 @@
       endif
       do iy=-1,ny
        do ix=-1,nx
-        ireg = region(ix,iy,0)                                        !srv 22.05.18
         if (aa9(ix,iy,0).eq.0.0_R8 .and.
      &      aa9(ix,iy,1).eq.0.0_R8 .and. aa9(ix,iy,-1).eq.0.0_R8 .and.
      &      aa9(ix,iy,2).eq.0.0_R8 .and. aa9(ix,iy,-2).eq.0.0_R8 .and.
@@ -530,21 +526,18 @@
      &      aa9(ix,iy,5).eq.0.0_R8 .and. aa9(ix,iy,-5).eq.0.0_R8 .and.
      &      aa9(ix,iy,6).eq.0.0_R8 .and. aa9(ix,iy,-6).eq.0.0_R8) then
          aa9(ix,iy,0) = 1.0_R8
-!         reshi(ix,iy) = 0.0_R8                                       !srv 22.05.18
+         reshi(ix,iy) = 0.0_R8
         end if
-        if (.not.solveei(ireg).and.get_residuals.eq.0) 
-     &      reshi(ix,iy) = 0.0_R8                                     !srv 22.05.18
        enddo
       enddo
 *   ..solve the correction equation
-      if (all(solveei(0:nnreg(0)))) then                              !srv 22.05.18
-        call b2ux9p (nx, ny, aa9, itcnt, reshi, corti, 'b2ush9_Ti')
-        last_solve_9(0:nnreg(0)) = solveei(0:nnreg(0))
-        do iy = -1, ny
-          do ix = -1, nx
-            corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
-          enddo
+      call b2ux9p (nx, ny, aa9, itcnt, reshi, corti, 'b2ush9_Ti')
+      last_solve_9(0:nnreg(0)) = solveei(0:nnreg(0))
+      do iy = -1, ny
+        do ix = -1, nx
+          corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
         enddo
+      enddo
       endif                                                           !srv 22.05.18
         
 *   ..return

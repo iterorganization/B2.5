@@ -205,6 +205,11 @@
 *----------------------------------------------------
 *        | -14   |  +   |  -   |  +   |  +   |  +   |
 *----------------------------------------------------
+* An alternative to the 'no_solve' switch for controlling of the 
+* solving of equations is to use the SOLVEMO, SOLVECO, SOLVEEE, SOLVEEI, 
+* SOLVEPO, SOLVEMT, SOLVEET array from b2.numerics.parameters.
+* Please consult the code documentation.
+
        solving(1:4)=no_solve.eq.0
        do i=1,4
          solving(i)=solving(i).or.
@@ -979,7 +984,8 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                   write(*,*) 'No potential residuals, respo = ', t0
                 endif
                 call xertst (ier0.eq.0, 'error return from b2nppo')
-                if(.not.solving(3)) exit                                 !srv 22.05.18
+                if(.not.solving(3).or..not.any(solvepo(0:nnreg(0))))
+     &           exit                                                    !srv 22.05.18
                 if(t0.gt.potok.and.(i.eq.(potit/3).or.i.eq.(potit*2/3)
      &           .or.mod(i+1,50).eq.0)) then
                   if(vis_per.eq.0.0_R8) then
@@ -1095,7 +1101,7 @@ c     with diamagnetic drift part                                        !xpb
 *   ..iterate on heat balance
         if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                         !srv 13.10.06
           call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,     !srv 05.07.17
-     &     solveee, solveei, solvepo, solvemo,
+     &     solveee, solveei, solveet, solvepo, solvemo,                  !srv 22.05.18
      &     rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 09.07.08 07.07.09
@@ -1104,7 +1110,7 @@ c     with diamagnetic drift part                                        !xpb
         endif                                                            !srv 13.10.06 }
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.1) then !srv 13.10.06
           call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,     !srv 05.07.17
-     &     solveee, solveei, solvepo, solvemo,
+     &     solveee, solveei, solveet, solvepo, solvemo,                  !srv 22.05.18
      &     rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                    !srv 07.06.00 02.06.99
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 07.06.00 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -1113,7 +1119,7 @@ c     with diamagnetic drift part                                        !xpb
         endif                                                            !srv 13.10.06 }
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.0) then !srv 13.10.06
           call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,     !srv 05.07.17
-     &     solveee, solveei, solvepo, solvemo,
+     &     solveee, solveei, solveet, solvepo, solvemo,                  !srv 22.05.18
      &     rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                    !srv 07.06.00 02.06.99
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 07.06.00 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 27.12.01 28.06.03 30.06.03 07.07.09

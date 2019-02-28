@@ -60,9 +60,9 @@
       logical, save :: write_nml_num = .true.
       namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
-     2 solveco,solvemo,solvepo,solveee,solveei,write_nml_num,
-     3 numerics_filename,numerics_time_mod,numerics_time_switch,
-     4 corr_core_dn,corr_core_dt,add_te_corr_to_po    ! IYS 19.12.2017
+     2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveet,          !srv 22.05.18
+     3 write_nml_num,numerics_filename,numerics_time_mod,
+     4 numerics_time_switch,corr_core_dn,corr_core_dt,add_te_corr_to_po  ! IYS 19.12.2017
 
       contains
 
@@ -162,7 +162,7 @@
 
       integer nx,ny,ns,nsmin,nsmax
       logical :: file_ok
-      integer ix,iy,is
+      integer ix, iy, ireg, is
       real (kind=R8) :: ttf
       character*260 filename
 
@@ -177,11 +177,11 @@
         read(99,numerics)
 #endif
         write(*,*) 'Read namelist numerics from ',trim(filename)
-        do ix = 0, nnreg(0)
-          solveet(ix) = solveee(ix).or.solveei(ix)
-          solvemt(ix) = .false.
-          do iy = nsmin, nsmax-1
-            solvemt(ix) = solvemt(ix) .or. solvemo(iy,ix)
+        do ireg = 0, nnreg(0)
+          solveet(ireg) = (solveee(ireg).and.solveei(ireg))
+     &                                  .and.solveet(ireg)
+          do is = nsmin, nsmax-1
+            solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
         end do
       else

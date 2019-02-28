@@ -103,11 +103,12 @@
 
 * ..main computation
 *   ..compute residual
-      if(solving.or.get_residuals.eq.1) then                       !srv 22.05.18
+      if((solving.and.any(solvereg(0:nregionv))).or.
+     &                get_residuals.eq.1) then                      !srv 22.05.18
        call b2ursd (nx, ny, ne, po, sch, fch, respo)
       endif                                                         !srv 22.05.18
 *   ..compute correction
-      if(solving) then                                              !srv 22.05.18
+      if(solving.and.any(solvereg(0:nregionv))) then                !srv 22.05.18
         call b2usp7 (nx, ny, nregionv, solvereg, itcnt,             !srv 27.12.17
      &    ne, te, conc, avisper, bvisper, cvisper,
      &    sch, respo, corpo, aa7)

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2nph9 (nx, ny, ns, nregionv, itcnt, ismain, solving,  !srv 05.07.17
-     &  solvereg, solvireg, solvpreg, solvmreg,
+     &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,               !srv 22.05.18
      &  rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb, pbs, lnlam,
      &  floe, cone, floi, coni, ceqp, pccm, she, shi, fne, fch, cvsa,   !srv 28.06.03
      1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
@@ -38,6 +38,7 @@
      3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)   !srv 07.07.09
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
+     *  solvtreg(0:nregionv),                                           !srv 22.05.18
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -212,8 +213,12 @@ cdjm Jan2017 update particle source components for balance
       shef = she0
 *   ..save final ion heat source ignoring equipartition
       shif = shi0                                                       !srv 10.11.02 }
-      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
+      if ((solving(4).and.any(solvereg(0:nregionv))).or.
+     &                    get_residuals.eq.1) then                      !srv 22.05.18
         call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
+      endif                                                             !srv 22.05.18
+      if ((solving(4).and.any(solvireg(0:nregionv))).or.
+     &                   get_residuals.eq.1) then                       !srv 22.05.18
         call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
       endif                                                             !srv 22.05.18
       do iy = -1, ny
@@ -239,15 +244,14 @@ cdjm Jan2017 update particle source components for balance
         b2qie(region(ix,iy,0))=b2qie(region(ix,iy,0))+shei(ix,iy)
        enddo
       enddo                                                             !srv 22.05.18
-      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
-        do iy = -1, ny
-          do ix = -1, nx
-            resht(ix,iy) = reshe(ix,iy) + reshi(ix,iy)
-            reshe(ix,iy) = reshe(ix,iy) - shei(ix,iy)
-            reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
-          enddo
-        enddo                                                           !srv 18.09.09 30.01.09 }
-      endif                                                             !srv 22.05.18
+
+      if ((solving(4).and.any(solvereg(0:nregionv)))                    !srv 22.05.18 {
+     &    .or.get_residuals.eq.1) reshe = reshe - shei
+      if ((solving(4).and.any(solvireg(0:nregionv)))
+     &    .or.get_residuals.eq.1) reshi = reshi + shei
+      if (solving(4).and.any(solvereg(0:nregionv)).and.                 ! if total equation is not solved then resht = 0            
+     &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
+     &   resht = reshe + reshi                                          !srv 22.05.18 }
 
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
         call my_out(70,nx,ny,shei,'b2nph9_shei')
@@ -270,6 +274,7 @@ cdjm Jan2017 update particle source components for balance
      &                   she0(:,:,3)*te*ne
         call my_out(70,nx,ny,wrk0,'b2nph9_she')
         call my_out(70,nx,ny,reshi,'b2nph9_reshi')
+        call my_out(70,nx,ny,resht,'b2nph9_resht')
         call my_out(70,nx,ny,fhi(-1,-1,0),'b2nph9_fhix')
         call my_out(70,nx,ny,fhi(-1,-1,1),'b2nph9_fhiy')
 !        call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')
@@ -288,7 +293,7 @@ cdjm Jan2017 update particle source components for balance
      &   resht, reshe, reshi, cortt, corte, corti, wrkf, wrkc, aa9)
 *   ..apply correction
         call b2upht (nx, ny, ns, nregionv, solving(3), solving(1),
-     &   solvereg, solvireg, solvpreg, solvmreg,
+     &   solvereg, solvireg, solvtreg, solvpreg, solvmreg,              !srv 22.05.18
      &   rxf, pcm0, cortt, corte, corti,
      &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
       endif

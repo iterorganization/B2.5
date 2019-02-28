@@ -151,7 +151,7 @@ cdjm Jan2017 update particle source components for balance
 
 * ..particle balance
 *   ..compute residual
-      if((solving.and.all(solvcreg(0:nnreg(0))))
+      if((solving.and.any(solvcreg(0:nnreg(0))))
      &           .or.get_residuals.eq.1) then                          !srv 22.05.18
       call b2ursc (nx, ny, nb, snb, fnb, rescb)
       if(guard_flows.eq.2 .or.                                          !srv 06.07.08 {
@@ -167,7 +167,7 @@ cdjm Jan2017 update particle source components for balance
       endif                                                             !srv 22.05.18
 *   ..compute correction
       write (chns,'(i3.3)') isb
-      if(solving.and.all(solvcreg(0:nnreg(0)))) then                    !srv 22.05.18
+      if(solving.and.any(solvcreg(0:nnreg(0)))) then                    !srv 22.05.18
         call b2usc9 (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, !srv 13.10.06 26.09.12
      &    pbs, nb, pb, snb(-1,-1,1), flob, conb, pccb(-1,-1,1), rescb,  
      &    corpb, aa9, '_b2usc9_'//chns)                                 !srv 18.05.02 02.04.18

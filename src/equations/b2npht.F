@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2npht (nx, ny, ns, nregionv, itcnt, ismain, solving,   !srv 05.07.17
-     &  solvereg, solvireg, solvpreg, solvmreg,
+     &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,                !srv 22.05.18
      1  rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,
@@ -36,6 +36,7 @@
      3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)    !srv 07.07.09
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
+     *  solvtreg(0:nregionv),                                            !srv 22.05.18
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -241,8 +242,12 @@ cdjm Jan2017 update particle source components for balance
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
-      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
+      if ((solving(4).and.any(solvereg(0:nregionv))).or.
+     &                    get_residuals.eq.1) then                      !srv 22.05.18
         call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
+      endif                                                             !srv 22.05.18
+      if ((solving(4).and.any(solvireg(0:nregionv))).or.
+     &                   get_residuals.eq.1) then                       !srv 22.05.18
         call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
       endif                                                             !srv 22.05.18
 *   ..compute heat source due to electron-ions collisions            !srv 18.09.09 30.01.10 {
@@ -278,15 +283,15 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
         b2qie(region(ix,iy,0))=b2qie(region(ix,iy,0))+shei(ix,iy)
        enddo
       enddo
-      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
-        do iy = -1, ny
-          do ix = -1, nx
-            resht(ix,iy) = reshe(ix,iy)+reshi(ix,iy)
-            reshe(ix,iy) = reshe(ix,iy) - shei(ix,iy)
-            reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
-          enddo
-        enddo                                                           !srv 18.09.09 30.01.10 }
-      endif                                                             !srv 22.05.18
+
+      if ((solving(4).and.any(solvereg(0:nregionv)))                    !srv 22.05.18 {
+     &    .or.get_residuals.eq.1) reshe = reshe - shei
+      if ((solving(4).and.any(solvireg(0:nregionv)))
+     &    .or.get_residuals.eq.1) reshi = reshi + shei
+      if (solving(4).and.any(solvereg(0:nregionv)).and.                 ! if total equation is not solved then resht = 0            
+     &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
+     &   resht = reshe + reshi                                          !srv 22.05.18 }
+      
       if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                      !srv 17.07.05 {
        call my_out(70,nx,ny,shei,'b2npht_shei')
        call my_out(70,nx,ny,te,'b2npht_te')
@@ -321,7 +326,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
      &   wrkf, wrkc, aa5, 'b2npht_')                                  !srv 18.03.10
 *   ..apply correction
         call b2upht (nx, ny, ns, nregionv, solving(3), solving(1),
-     &   solvereg, solvireg, solvpreg, solvmreg,
+     &   solvereg, solvireg, solvtreg, solvpreg, solvmreg,            !srv 22.05.18
      &   rxf, pcm0, cortt, corte, corti,
      &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
       endif

@@ -732,6 +732,7 @@
 					no_solve.eq.-8 will activate the heat equations only. These can be combined. For example, no_solve.eq.-3 will activate the parallel momentum and particle conservation equations.
 					If the no_solve switch requires an equation not to be solved, the settings in the corresponding solvexx arrays from b2.numerics.parameters are moot.
 					The latter are reserved for fine-tuning numerical diagnostics.
+					If wishing to toggle whether to solve or not to solve each equation separately, one should set, in the b2.numerics.parameters input file, the SOLVEMO, SOLVEMT, SOLVECO, SOLVEE, SOLVEEI and SOLVEET arrays, respectively, for each of the parallel momentum equations, the total momentum equation, each density equation, the electron and ion heat equations, and the total energy equation.
 					The table below shows which combination of equations will be solved	depending on the value of switch 'b2news_no_solve'
 					*----------------------------------------------------
 					*        | value |  co  |  mo  |  he  |  hi  |  po  |
@@ -6445,6 +6446,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>SOLVEMT</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					Indicates whether the total parallel momentum equation is to be solved in region (ireg). For the total parallel momentum equation to be solved in a region, all momentum equations in the range defined by 'b2news_nsmin' and 'b2news_nsmax' must have SOLVEMO true in that region. Subservient to 'no_solve' switch.
+					It is important to note that the 'b2news_no_solve' switch allows for solving or not all momentum equations together as a whole, along with the total equation.
+				</description>
+			</switch>
+			<switch>
 				<name>SOLVEPO</name>
 				<default>.true.</default>
 				<type>logical array of size (0:NREG)</type>
@@ -6466,6 +6476,15 @@
 				<type>logical array of size (0:NREG)</type>
 				<description>
 					Indicates whether the ion energy equation is to be solved in region (ireg). Subservient to 'no_solve' switch.
+				</description>
+			</switch>
+			<switch>
+				<name>SOLVEET</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					Indicates whether the total energy equation is to be solved in region (ireg). For the equation to be solved in region (ireg), both SOLVEEE and SOLVEEI must be true in that region. Subservient to 'no_solve' switch.
+					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with total energy equation, as a group.
 				</description>
 			</switch>
 			<switch>

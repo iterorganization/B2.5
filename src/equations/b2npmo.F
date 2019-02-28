@@ -443,7 +443,7 @@ cdjm Jan2017 update momentum source components for balance
        endif
 
 *    ..compute residual
-      if((solving.and.all(solvemo(is,0:nnreg(0))))
+      if((solving.and.any(solvemo(is,0:nnreg(0))))
      &            .or.get_residuals.eq.1) then                         !srv 22.05.18
        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
@@ -512,7 +512,7 @@ cdjm Jan2017 update momentum source components for balance
         call my_out(70,nx,ny,wrks,'b2npmo_smogp'//chns)
        endif                                                           !srv 12.07.02 }
 
-       if (solving.and.all(solvemo(is,0:nnreg(0)))) then               !srv 06.07.10 22.05.18
+       if (solving.and.any(solvemo(is,0:nnreg(0)))) then               !srv 06.07.10 22.05.18
         solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
 c    ..compare 5-pt stencil matrices
         new_matrix = .false.
@@ -536,8 +536,8 @@ csw 21feb2014 added this else branch
 *    ..compute contribution to total residual
 
 csw 21feb2014 and do this only for the solved species, i.e. added next branch
-      if((solving.and.all(solvemo(0:ns-1,0:nnreg(0)))
-     &           .and.all(solvemt(0:nnreg(0))))) then                  !srv 22.05.18
+      if((solving.and.any(solvemo(0:ns-1,0:nnreg(0)))
+     &           .and.any(solvemt(0:nnreg(0))))) then                  !srv 22.05.18
         call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
         if(style.eq.2) then                                            !srv 13.01.17 {
 *       (in this case thermal force and the friction are taken into account)
@@ -570,8 +570,8 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
 #endif
 #endif
 csw 21feb2014, execute simultaneous corrections always
-      if (solving.and.all(solvemo(0:ns-1,0:nnreg(0)))
-     &                  .and.all(solvemt(0:nnreg(0)))) then           !srv 06.07.10 22.05.18
+      if (solving.and.any(solvemo(0:ns-1,0:nnreg(0)))
+     &                  .and.any(solvemt(0:nnreg(0)))) then           !srv 06.07.10 22.05.18
 !      if (solving) then                                              !srv 22.05.18
 *   ..compute simultaneous correction
        call sfill (n2, 0.0_R8, wrk0, 1)
