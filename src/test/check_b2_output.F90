@@ -239,7 +239,11 @@ module b2_file_io
           endif
         case ('char')
           n = n1
+#ifdef GFORTRAN ! workaround needed for gfortran version 4.7.2
+          chfun = repeat(' ',n)
+#else
           allocate(character(n) :: chfun)
+#endif
           if (0.lt.n1) then
             if (chf=='FORMATTED') then
               read (nget,'(1x,a)') chfun(1:n1)
