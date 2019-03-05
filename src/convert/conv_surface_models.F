@@ -1,5 +1,5 @@
       subroutine conv_surface_models (nout, mpg, gm, 
-     .           bndmdl, trifc,nelem, nx, ny)
+     .           bndmdl, trifc,nelem)
 
       use b2mod_types
       use b2mod_boundary_namelist
@@ -10,7 +10,7 @@
 
       implicit none
 
-      integer, intent(in) :: nout, nelem, nx, ny
+      integer, intent(in) :: nout, nelem
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
       integer, intent(in) :: trifc(3,nelem)

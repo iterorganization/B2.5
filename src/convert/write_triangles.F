@@ -261,7 +261,7 @@
      .     bndmdl, trifc, nelem)
       else
         call find_nondef_surfaces (nout, mpg, gm, 
-     .     elem, bndmdl, elem_cv, nelem, nx, ny)
+     .     elem, bndmdl, elem_cv, nelem)
       end if
 
 !  check for holes in the triangle mesh
