@@ -26,7 +26,7 @@
       use b2mod_b2cmpt
       use b2mod_b2cmgs
       use b2mod_transport
-     , , only : f_luc_sg, alfx_c, sigx_c
+     & , only : f_luc_sg, alfx_c, sigx_c
 #endif
 #ifdef WITH_FTIMINGS
       use timings
