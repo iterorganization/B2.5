@@ -255,7 +255,7 @@ c      if(nidim .ne. 2) call line(2)
             else
               dsep=0.0_R8
             endif
-          endif  
+          endif
           do iy=iystart,iyend
             wrk(iy)=wrk(iy)-dsep
           enddo

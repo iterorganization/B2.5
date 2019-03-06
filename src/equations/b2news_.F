@@ -744,7 +744,7 @@ csw 16oct2012 init ier0
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .false.)                                                        !djm Jan2017
-      enddo 
+      enddo
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
 !$OMP END PARALLEL DO
 !! FR End of loop (2)

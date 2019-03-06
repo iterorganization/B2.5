@@ -347,7 +347,8 @@ c 2002-09-11: logic revised
      .                        ISCD4PH(:,:), ISCDEPH(:,:)
       integer, allocatable :: NMASSP(:), NCHARP(:), NPRTP(:), NCHRGP(:),
      &                        ISRFP(:), ISRTP(:), ID1P(:), NRCP(:),
-     &                        DENSLIM(:), NRE(:), NHSTP(:), TDMISP(:,:),
+     &                        DENSLIM(:), NRE(:), NHSTP(:),
+     &                        TDMISP(:,:),
      &                        IREACP(:,:), IBULKP(:,:),
      .                        ISCD1P(:,:), ISCD2P(:,:), ISCD3P(:,:),
      .                        ISCD4P(:,:), ISCDEP(:,:)
@@ -5078,12 +5079,12 @@ Cxpb then rewrite the entire block
             ENDIF
             READ (IUNIN,6664) rdum(0:4)
   512     CONTINUE
-          IF (CDENMODEL(JPLS).EQ.'FORT.13   ' .OR.
-     &        CDENMODEL(JPLS).EQ.'FTN13     ' .OR.
-     &        CDENMODEL(JPLS).EQ.'BOLTZMANN ' .OR.
-     &        CDENMODEL(JPLS).EQ.'CORONA    ') THEN
+          IF (streql(CDENMODEL(JPLS),'FORT.13').OR.
+     &        streql(CDENMODEL(JPLS),'FTN13').OR.
+     &        streql(CDENMODEL(JPLS),'BOLTZMANN').OR.
+     &        streql(CDENMODEL(JPLS),'CORONA')) THEN
             READ (IUNIN,'(A80)') ZEILE
-          ELSE IF (CDENMODEL(JPLS).EQ.'COLRAD    ') THEN
+          ELSE IF (streql(CDENMODEL(JPLS),'COLRAD')) THEN
             DO K=1,NRE(JPLS)
               READ (IUNIN,'(A80)') ZEILE
             ENDDO
@@ -5095,12 +5096,12 @@ Cxpb then rewrite the entire block
             backspace(IUNIN)
             backspace(IUNIN)
  5121     CONTINUE
-          IF (CDENMODEL(JPLS).EQ.'FORT.13   ' .OR.
-     &        CDENMODEL(JPLS).EQ.'FTN13     ' .OR.
-     &        CDENMODEL(JPLS).EQ.'BOLTZMANN ' .OR.
-     &        CDENMODEL(JPLS).EQ.'CORONA    ') THEN
+          IF (streql(CDENMODEL(JPLS),'FORT.13').OR.
+     &        streql(CDENMODEL(JPLS),'FTN13').OR.
+     &        streql(CDENMODEL(JPLS),'BOLTZMANN').OR.
+     &        streql(CDENMODEL(JPLS),'CORONA')) THEN
             backspace(IUNIN)
-          ELSE IF (CDENMODEL(JPLS).EQ.'COLRAD    ') THEN
+          ELSE IF (streql(CDENMODEL(JPLS),'COLRAD')) THEN
             DO K=1,NRE(JPLS)
               backspace(IUNIN)
             ENDDO
@@ -5172,22 +5173,22 @@ Cxpb then rewrite the entire block
           END DO
           NRCP(JPLS) = J
           SELECT CASE (CDENMODEL(JPLS))
-          CASE ('FORT.13   ','FTN13     ')
+          CASE ('FORT.13','FTN13')
             READ (IUNIN,6666) TDMISP(1,JPLS)
-          CASE ('BOLTZMANN ')
+          CASE ('BOLTZMANN')
             READ (IUNIN,'(I6,6X,2E12.4)') TDMISP(1,JPLS),
      .           TDMBOLTZ(JPLS), TDMDELTAE(JPLS)
-          CASE ('CORONA    ')
+          CASE ('CORONA')
             READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
      .           TDMISP(1,JPLS),TDMFNAME(1,JPLS),
      .           TDMH2(1,JPLS),TDMREACTION(1,JPLS),
      .           TDMCR(1,JPLS),TDM_CORONA(JPLS)
-          CASE ('COLRAD    ')
+          CASE ('COLRAD')
             DO I=1, NRE(JPLS)
-              READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
-     .             TDMISP(I,JPLS),TDMFNAME(I,JPLS),
-     .             TDMH2(I,JPLS),TDMREACTION(I,JPLS),
-     .             TDMCR(I,JPLS)
+              READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3)')
+     .           TDMISP(I,JPLS),TDMFNAME(I,JPLS),
+     .           TDMH2(I,JPLS),TDMREACTION(I,JPLS),
+     .           TDMCR(I,JPLS)
             END DO
           CASE DEFAULT
             CONTINUE
@@ -5517,20 +5518,20 @@ cxpb Must now convert the bulk ion data according to the new bundling
           IS = ISP(IB)
           IF (IS.NE.0) THEN
             SELECT CASE (CDENMODEL1(IB))
-            CASE ('FORT.13   ','FTN13     ')
+            CASE ('FORT.13','FTN13')
               TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
-            CASE ('BOLTZMANN ')
+            CASE ('BOLTZMANN')
               TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
               TDMBOLTZ1(IB) = TDMBOLTZ(e_bundle_end(IB))
               TDMDELTAE1(IB) = TDMDELTAE(e_bundle_end(IB))
-            CASE ('CORONA    ')
+            CASE ('CORONA')
               TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
               TDMFNAME1(1,IB) = TDMFNAME(1,e_bundle_end(IB))
               TDMH21(1,IB) = TDMH2(1,e_bundle_end(IB))
               TDMREACTION1(1,IB) = TDMREACTION(1,e_bundle_end(IB))
               TDMCR1(1,IB) = TDMCR(1,e_bundle_end(IB))
               TDM_CORONA1(IB) = TDM_CORONA(e_bundle_end(IB))
-            CASE ('COLRAD    ')
+            CASE ('COLRAD')
               I1 = 0
               do jpls = e_bundle_start(IB), e_bundle_end(IB)
                 DO I = 1, NRE(jpls)
@@ -6159,21 +6160,21 @@ cxpb We now rewrite the modified block 4
             END DO
           END IF
           SELECT CASE (CDENMODEL1(IB))
-          CASE ('FORT.13   ','FTN13     ')
+          CASE ('FORT.13','FTN13')
             WRITE(IUNOT,6666) TDMISP1(1,IB)
-          CASE ('BOLTZMANN ')
+          CASE ('BOLTZMANN')
             WRITE(IUNOT,'(I6,6X,2E12.4)') TDMISP1(1,IB),
      .            TDMBOLTZ1(IB), TDMDELTAE1(IB)
-          CASE ('CORONA    ')
+          CASE ('CORONA')
             WRITE(IUNOT,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
      .            TDMISP1(1,IB),TDMFNAME(1,IB),
-     .            TDMH21(1,IB),TDMREACTION(1,IB),
-     .            TDMCR1(1,IB),TDM_CORONA(IB)
-          CASE ('COLRAD    ')
+     .            TDMH21(1,IB), TDMREACTION(1,IB),
+     .            TDMCR1(1,IB), TDM_CORONA(IB)
+          CASE ('COLRAD')
             DO I = 1, NRE1(IB)
               WRITE(IUNOT,'(I6,1X,A6,1X,A4,A9,A3)')
      .              TDMISP1(I,IB),TDMFNAME(I,IB),
-     .              TDMH21(I,IB),TDMREACTION(I,IB),
+     .              TDMH21(I,IB), TDMREACTION(I,IB),
      .              TDMCR1(I,IB)
             END DO
           CASE DEFAULT

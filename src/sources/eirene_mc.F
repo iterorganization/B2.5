@@ -783,7 +783,7 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
-       call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
+        call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
         call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
