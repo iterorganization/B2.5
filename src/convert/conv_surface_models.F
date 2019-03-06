@@ -148,7 +148,7 @@
           write (iouteir,'(a)') trim(line)
         else
 !  ndxa, ndya
-!  nothing to be done, line has to be removed
+          write (iouteir,'(2i6)') mpg%nCv, mpg%nFc
          exit
         end if
       end do

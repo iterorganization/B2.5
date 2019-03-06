@@ -846,21 +846,20 @@ cwdk      need a master-switch to decide to use 9-point stencil...
 csw 06dec2012 finally re-evaluate particle fluxes
 c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
       if(re_eval_prtls_fluxes.eq.1 .or. use_eirene.ne.0) then            !srv 28.06.13 {
-        call xerrab ('b2news_ re_eval_prtls_fluxes not yet for WG')
-#ifdef WG_TODO
        do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            na(ix,iy,is)= max(na(ix,iy,is),na_min)   !abs(na(ix,iy,is))  !srv 24.04.09
-          enddo
+        do iCv = 1, nCv
+          pl%na(iCv,is)=max(pl%na(iCv,is),na_min) ! abs(na(ix,iy,is))    !srv 24.04.09
         enddo
 *    ..compute partial pressure
-        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)    !srv 01.10.99
+!pb        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)    !srv 01.10.99
+        call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,              !srv 01.10.99
+     &    pl%ti, dv%pa(1,is))
 *    ..compute particle flux
         call b2tfnb (nCv, nFc, nVx, is, ismain, geo, mpg, pl, dv,
      &  co, rt, .false.)
        enddo                                                             !srv 01.10.99
 *      ..compute electron drift velocities
+#ifdef WG_TODO
        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc, qs, 
      &  bb, te, po, vedia, veecrb)
 #endif

@@ -20,7 +20,8 @@ c     File names will be appended with "*_st.dat".
       real (kind=R8) :: fun_us(1:nel)
       character *(*) first_name
 
-      character *64 filename
+!pb      character *64 filename
+      character(len=:), allocatable :: filename, finame
       character(24) hlp_frm
       integer ic, ix, iy
       integer, save :: ncall = 0
@@ -49,7 +50,9 @@ c     File names will be appended with "*_st.dat".
 #ifdef WG_DEBUG
       if (isClassicalGrid.eq.0) then
 #endif
-        filename = trim(folder)//trim(first_name)//'_us.dat'
+!        filename = trim(folder)//trim(first_name)//'_us.dat'
+        finame=first_name
+        filename = trim(folder)//trim(finame)//'_us.dat'
         if (iappend.eq.0) then
           open (nwrite,file=trim(filename))
         else

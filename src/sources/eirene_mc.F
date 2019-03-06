@@ -1,5 +1,5 @@
       subroutine eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, 
-     1 BoRiS, sna0, smo0, she0, shi0, main_call, geo, mpg, pl, dv)
+     1 BoRiS, sna0, smo0, she0, shi0, main_call, geo, mpg, pl, dv, rt)
 
 c  version : 26.07.2002 23:39
 
@@ -36,6 +36,8 @@ c  version : 26.07.2002 23:39
      &         balance_netcdf
 #ifdef B25_EIRENE
       use b2mod_work
+      use eirmod_parmmod
+     &   , only : natm, nmol, nion, nfl, nstra
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
@@ -57,10 +59,11 @@ c  version : 26.07.2002 23:39
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
+      type (B2Rates), intent (inout) :: rt
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
-      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
+      integer ic,ifc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
       real (kind=R8) ::
@@ -129,7 +132,7 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       real (kind=R8), save :: core_surface
       logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
       logical, allocatable, save ::  hlp_pff(:,:)
-      integer i,j,k,l,js,ls,kks,n,itmp,icount
+      integer i,j,k,l,js,ls,kks,n,itmp,icount,ind
       integer, save :: l_ddt
       integer, save, allocatable :: ispc_ref(:), ishigh(:)
       character*13, save, allocatable :: ion_name(:)
@@ -224,7 +227,7 @@ csw 26feb2014
 
 *-----------------------------------------------------------------------
 *.computation
-#ifdef WG_TODO
+!pb#ifdef WG_TODO
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini('eirene_mc')
@@ -414,7 +417,7 @@ csw 26feb2013
       endif
 #endif
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
-        call copy_background(nCv,nFc,ns,mpg,geo,state%pl,state%dv,BoRiS)
+        call copy_background(nCv,nFc,ns,mpg,geo,pl,dv,BoRiS)
         if(ncall.eq.0.or.save_f31.ne.0) then
           call write_f31(mpg)
         endif
@@ -549,13 +552,14 @@ c*** recyc     : fudge factors for the sources in B2
         if(index('WESN',crcstra(istrai)) > 0) then
           do is = species_start(istrai),species_end(istrai) !{
             if(.not.is_neutral(is)) then !{
-              do i=1,mpg%rcFcP(istra,2) !{
-                ind = mpg%rcFcP(istra,1) + i - 1
+              do i=1,mpg%rcFcP(istrai,2) !{
+                ind = mpg%rcFcP(istrai,1) + i - 1
                 ifc = mpg%rcFc(ind)
-                tflux(istrai)=tflux(istrai)+
-     1             mpg%rcFcOr(ifc)*(fna(ifc,0,istrai)+fna(ifa,1,istrai)
+                tflux(istrai)=tflux(istrai)+mpg%rcFcOr(ind)*
+     1             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
-     1             mpg%rcFcOr(ifc)*(fna(ifc,0,istrai)+fna(ifa,1,istrai)
+     1             mpg%rcFcOr(ind)*
+     2             (dv%fna(ifc,0,is)+dv%fna(ifc,1,is))
               end do !}
             end if !}
           end do   
@@ -2249,7 +2253,7 @@ c   and apply linearisation
             endif
             recyc_hlp=max(recyc_hlp,recyctmp)
             do ic=1,nCv !{
-              if((ic <= nCi) .and.
+              if((ic <= mpg%nCi) .and.
      &           (mpg%cvReg(ic).ne.0)) then !{
 * continuity
                   rf0=RF_NEUT(1)
@@ -2425,29 +2429,29 @@ c*** before correction (r), after correction (c), after iteration (i)
                   if (main_call.and.mod(ncall,eirene_mod).eq.0) then
                     src_ni(mpg%cvReg(ic),1,b2espcr(is))=
      .               src_ni(mpg%cvReg(ic),1,b2espcr(is))+t0
-                    src_ni(mpg%Reg(ic),2,b2espcr(is))=
-     .               src_ni(mpg%Reg(ic),2,b2espcr(is))+t0
+                    src_ni(mpg%cvReg(ic),2,b2espcr(is))=
+     .               src_ni(mpg%cvReg(ic),2,b2espcr(is))+t0
                     cor_ni(ic,b2espcr(is))=
      .               cor_ni(ic,b2espcr(is))+t0
                     src_ni(0,1,b2espcr(is))=src_ni(0,1,b2espcr(is))+t0
                     src_ni(0,2,b2espcr(is))=src_ni(0,2,b2espcr(is))+t0
                   else
-                    src_ni(mpg%Reg(ic),3,b2espcr(is))=
-     .               src_ni(mpg%Reg(ic,0),3,b2espcr(is))+t0
+                    src_ni(mpg%cvReg(ic),3,b2espcr(is))=
+     .               src_ni(mpg%cvReg(ic),3,b2espcr(is))+t0
                     src_ni(0,3,b2espcr(is))=src_ni(0,3,b2espcr(is))+t0
                   endif
 
 csw 21feb2012, add l_neutrad (SOLPS4.3)
                   if(l_neutrad.lt.0) then
-                    radarr(ic)=radarr(ic)+t0*rpt(ic,is)*ev
-                    rad_neutr=rad_neutr+t0*rpt(ic,is)*ev
-                    rdneureg(mpg%Reg(ic))=
-     .               rdneureg(mpg%Reg(ic))+t0*rpt(ic,is)*ev
-                    recycereg(mpg%Reg(ic))=
-     .               recycereg(mpg%Reg(ic,0))+t0*rpt(ic,is)*ev
+                    radarr(ic)=radarr(ic)+t0*rt%rpt(ic,is)*ev
+                    rad_neutr=rad_neutr+t0*rt%rpt(ic,is)*ev
+                    rdneureg(mpg%cvReg(ic))=
+     .               rdneureg(mpg%cvReg(ic))+t0*rt%rpt(ic,is)*ev
+                    recycereg(mpg%cvReg(ic))=
+     .               recycereg(mpg%cvReg(ic))+t0*rt%rpt(ic,is)*ev
                   endif
-                  ssnireg(b2espcr(is),mpg%Reg(ic))=
-     .             ssnireg(b2espcr(is),mpg%Reg(ic))+t0
+                  ssnireg(b2espcr(is),mpg%cvReg(ic))=
+     .             ssnireg(b2espcr(is),mpg%cvReg(ic))+t0
                   ssnastra(j,istrai)=
      .             ssnastra(j,istrai)+t0
 * parallel momentum
@@ -2584,25 +2588,25 @@ c$$$                    endif
 c*** calculate the integral sources for nregion regions, 3 instants:
 c*** before correction (r), after correction (c), after iteration (i)
                   if (main_call.and.mod(ncall,eirene_mod).eq.0) then
-                    src_mo(mpg%Reg(ic),1,b2espcr(is))=
-     .               src_mo(mpg%Reg(ic),1,b2espcr(is))+t0
-                    src_mo(mpg%Reg(ic),2,b2espcr(is))=
-     .               src_mo(mpg%Reg(ic),2,b2espcr(is))+t0
+                    src_mo(mpg%cvReg(ic),1,b2espcr(is))=
+     .               src_mo(mpg%cvReg(ic),1,b2espcr(is))+t0
+                    src_mo(mpg%cvReg(ic),2,b2espcr(is))=
+     .               src_mo(mpg%cvReg(ic),2,b2espcr(is))+t0
                     cor_mo(ic,b2espcr(is))=
      .               cor_mo(ic,b2espcr(is))+t0
                     src_mo(0,1,b2espcr(is))=src_mo(0,1,b2espcr(is))+t0
                     src_mo(0,2,b2espcr(is))=src_mo(0,2,b2espcr(is))+t0
-                    src_ms(mpg%Reg(ic),1)=
-     .               src_ms(mpg%Reg(ic),1)+t0
-                    src_ms(mpg%Reg(ic),2)=
-     .               src_ms(mpg%Reg(ic),2)+t0
+                    src_ms(mpg%cvReg(ic),1)=
+     .               src_ms(mpg%cvReg(ic),1)+t0
+                    src_ms(mpg%cvReg(ic),2)=
+     .               src_ms(mpg%cvReg(ic),2)+t0
                     src_ms(0,1)=src_ms(0,1)+t0
                     src_ms(0,2)=src_ms(0,2)+t0
                   else
-                    src_mo(mpg%Reg(ic),3,b2espcr(is))=
-     .               src_mo(mpg%Reg(ic),3,b2espcr(is))+t0
-                    src_ms(mpg%Reg(ic),3)=
-     .               src_ms(mpg%Reg(ic),3)+t0
+                    src_mo(mpg%cvReg(ic),3,b2espcr(is))=
+     .               src_mo(mpg%cvReg(ic),3,b2espcr(is))+t0
+                    src_ms(mpg%cvReg(ic),3)=
+     .               src_ms(mpg%cvReg(ic),3)+t0
                     src_mo(0,3,b2espcr(is))=src_mo(0,3,b2espcr(is))+t0
                     src_ms(0,3)=src_ms(0,3)+t0
                   endif
@@ -2611,8 +2615,8 @@ c*** before correction (r), after correction (c), after iteration (i)
           end if !}
         end do !}  ! is
         do ic=1,nCv !{
-            if(ic <= nCi .and.
-     &         mpg%Reg(ic,0).ne.0) then !{
+            if(ic <= mpg%nCi .and.
+     &         mpg%cvReg(ic).ne.0) then !{
 * electron energy
               rf0=RF_NEUT(3)
 csw 26feb2014 averaging
@@ -2637,9 +2641,9 @@ c     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
               endif
 
               if (linearisation.eq.1) then !{
-                she0(ic,0)=she0(ix,iy,0)+max(0.0_R8,t0)+abs(t0)*rf0
-                she0(ic,1)=she0(ix,iy,1)+
-     1           (min(0.0_R8,t0)-abs(t0)*rf0)/te(ix,iy)
+                she0(ic,0)=she0(ic,0)+max(0.0_R8,t0)+abs(t0)*rf0
+                she0(ic,1)=she0(ic,1)+
+     1           (min(0.0_R8,t0)-abs(t0)*rf0)/pl%te(ic)
                 if (balance_netcdf.ne.0) then
 cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
@@ -2725,24 +2729,24 @@ c$$$                    endif
 c*** calculate the integral sources for nregion regions, 3 instants:
 c*** before correction (r), after correction (c), after iteration (i)
               if (main_call.and.mod(ncall,eirene_mod).eq.0) then
-                src_ee(mpg%Reg(ic),1)=
-     .           src_ee(mpg%Reg(ic),1)+t0
-                src_ee(mpg%Reg(ic),2)=
-     .           src_ee(mpg%Reg(ic),2)+t0
-                cor_ee(ix,iy)=cor_ee(ix,iy)+t0
-                src_es(mpg%Reg(ic),1)=
-     .           src_es(mpg%Reg(ic),1)+t0
-                src_es(mpg%Reg(ic),2)=
-     .           src_es(mpg%Reg(ic),2)+t0
+                src_ee(mpg%cvReg(ic),1)=
+     .           src_ee(mpg%cvReg(ic),1)+t0
+                src_ee(mpg%cvReg(ic),2)=
+     .           src_ee(mpg%cvReg(ic),2)+t0
+                cor_ee(ic)=cor_ee(ic)+t0
+                src_es(mpg%cvReg(ic),1)=
+     .           src_es(mpg%cvReg(ic),1)+t0
+                src_es(mpg%cvReg(ic),2)=
+     .           src_es(mpg%cvReg(ic),2)+t0
                 src_ee(0,1)=src_ee(0,1)+t0
                 src_ee(0,2)=src_ee(0,2)+t0
                 src_es(0,1)=src_es(0,1)+t0
                 src_es(0,2)=src_es(0,2)+t0
               else
-                src_ee(mpg%Reg(ic),3)=
-     .           src_ee(mpg%Reg(ic),3)+t0
-                src_es(mpg%Reg(ic),3)=
-     .           src_es(mpg%Reg(ic),3)+t0
+                src_ee(mpg%cvReg(ic),3)=
+     .           src_ee(mpg%cvReg(ic),3)+t0
+                src_es(mpg%cvReg(ic),3)=
+     .           src_es(mpg%cvReg(ic),3)+t0
                 src_ee(0,3)=src_ee(0,3)+t0
                 src_es(0,3)=src_es(0,3)+t0
               endif
@@ -2750,11 +2754,11 @@ csw 21feb2012, add l_neutrad (SOLPS4.3)
               if(l_neutrad.lt.0) then
                 radarr(ic)=radarr(ic)+t0
                 rad_neutr=rad_neutr+t0
-                rdneureg(mpg%Reg(ic))=rdneureg(mpg%Reg(ic))+t0
-                recycereg(mpg%Reg(ic))=recycereg(mpg%Reg(ic))
+                rdneureg(mpg%cvReg(ic))=rdneureg(mpg%cvReg(ic))+t0
+                recycereg(mpg%cvReg(ic))=recycereg(mpg%cvReg(ic))
      .                                     +t0
               endif
-              sseereg(mpg%Reg(ic))=sseereg(mpg%Reg(ic))+t0
+              sseereg(mpg%cvReg(ic))=sseereg(mpg%cvReg(ic))+t0
 * ion energy
               rf0=RF_NEUT(4)
 csw 26feb2014 averaging
@@ -2782,31 +2786,31 @@ c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
 c ? RADARR ?
 csw 06mar2012 add l_neutrad
               if(l_neutrad.lt.0) then
-                recycireg(mpg%Reg(ic))=recycireg(mpg%Reg(ic))
+                recycireg(mpg%cvReg(ic))=recycireg(mpg%cvReg(ic))
      .                                     +t0
               endif
-              sseireg(mpg%Reg(ic))=sseireg(mpg%Reg(ic))+t0
+              sseireg(mpg%cvReg(ic))=sseireg(mpg%cvReg(ic))+t0
 c*** calculate the integral sources for nregion regions, 3 instants:
 c*** before correction (r), after correction (c), after iteration (i)
               if (main_call.and.mod(ncall,eirene_mod).eq.0) then
-                src_ei(mpg%Reg(ic),1)=
-     .           src_ei(mpg%Reg(ic),1)+t0
-                src_ei(mpg%Reg(ic),2)=
-     .           src_ei(mpg%Reg(ic),2)+t0
-                cor_ei(ix,iy)=cor_ei(ix,iy)+t0
-                src_es(mpg%Reg(ic),1)=
-     .           src_es(mpg%Reg(ic),1)+t0
-                src_es(mpg%Reg(ic),2)=
-     .           src_es(mpg%Reg(ic),2)+t0
+                src_ei(mpg%cvReg(ic),1)=
+     .           src_ei(mpg%cvReg(ic),1)+t0
+                src_ei(mpg%cvReg(ic),2)=
+     .           src_ei(mpg%cvReg(ic),2)+t0
+                cor_ei(ic)=cor_ei(ic)+t0
+                src_es(mpg%cvReg(ic),1)=
+     .           src_es(mpg%cvReg(ic),1)+t0
+                src_es(mpg%cvReg(ic),2)=
+     .           src_es(mpg%cvReg(ic),2)+t0
                 src_ei(0,1)=src_ei(0,1)+t0
                 src_es(0,1)=src_es(0,1)+t0
                 src_ei(0,2)=src_ei(0,2)+t0
                 src_es(0,2)=src_es(0,2)+t0
               else
-                src_ei(mpg%Reg(ic),3)=
-     .           src_ei(mpg%Reg(ic),3)+t0
-                src_es(mpg%Reg(ic),3)=
-     .           src_es(mpg%Reg(ic),3)+t0
+                src_ei(mpg%cvReg(ic),3)=
+     .           src_ei(mpg%cvReg(ic),3)+t0
+                src_es(mpg%cvReg(ic),3)=
+     .           src_es(mpg%cvReg(ic),3)+t0
                 src_ei(0,3)=src_ei(0,3)+t0
                 src_es(0,3)=src_es(0,3)+t0
               endif
@@ -2832,12 +2836,12 @@ cxpb Only necessary for SOLPS5.0 equation formulation
                     if (smo_tot(ic,ifl).ne.0.0_R8 .and.
      .                  sni_tot(ic,ifl).ne.0.0_R8) then
                       dua = (smo_tot(ic,ifl)*
-     .                       dtim*dtmo(is,mpg%Reg(ic))/(am(is)*mp) -
+     .                       dtim*dtmo(is,mpg%cvReg(ic))/(am(is)*mp) -
      .                       pl%ua(ic,is)*sni_tot(ic,ifl)*
-     .                       dtim*dtco(is,mpg%Reg(ic)) )/
+     .                       dtim*dtco(is,mpg%cvReg(ic)) )/
      .                      (pl%na(ic,is)*geo%cvVol(ic) +
      .                       sni_tot(ic,ifl)*
-     .                       dtim*dtco(is,mpg%Reg(ic)))
+     .                       dtim*dtco(is,mpg%cvReg(ic)))
                     else
                       dua = 0.0_R8
                     end if
@@ -2846,7 +2850,7 @@ csw 06mar2012 momentum source
 csw 26feb2014 averaging
 c                    t2=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
-                    t2=smo_av(ic,ic,ifl,istrai)*tflux(istrai)*
+                    t2=smo_av(ic,ifl,istrai)*tflux(istrai)*
      *               recyctmp*flux_scale(istrai)/
      *               dble(ih_end)
                     if (balance_netcdf.ne.0) then
@@ -2942,29 +2946,29 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
      .                  stab_corr.eq.1) then
                       t4=(pl%na(ic,is)*geo%cvVol(ic)*
      .                    (t2/smo_tot(ic,ifl))+
-     .                    t3*dtim*dtco(is,mpg%Reg(ic)))/
-     .                      (dtim*dtei(mpg%Reg(ic)))*
+     .                    t3*dtim*dtco(is,mpg%cvReg(ic)))/
+     .                      (dtim*dtei(mpg%cvReg(ic)))*
      .                    0.5_R8*mp*am(is)*dua**2
                       if (balance_netcdf.ne.0) then
                         t4_apl=(pl%na(ic,is)*geo%cvVol(ic)* !djm Jan2017
      .                      (t2_apl/smo_tot(ic,ifl))+
-     .                      t3_apl*dtim*dtco(is,mpg%Reg(ic)))/
-     .                        (dtim*dtei(mpg%Reg(ic)))*
+     .                      t3_apl*dtim*dtco(is,mpg%cvReg(ic)))/
+     .                        (dtim*dtei(mpg%cvReg(ic)))*
      .                      0.5_R8*mp*am(is)*dua**2
                         t4_mpl=(pl%na(ic,is)*geo%cvVol(ic)*
      .                      (t2_mpl/smo_tot(ic,ifl))+
-     .                      t3_mpl*dtim*dtco(is,mpg%Reg(ic)))/
-     .                        (dtim*dtei(mpg%Reg(ic)))*
+     .                      t3_mpl*dtim*dtco(is,mpg%cvReg(ic)))/
+     .                        (dtim*dtei(mpg%cvReg(ic)))*
      .                      0.5_R8*mp*am(is)*dua**2
                         t4_ipl=(pl%na(ic,is)*geo%cvVol(ic)*
      .                      (t2_ipl/smo_tot(ic,ifl))+
-     .                      t3_ipl*dtim*dtco(is,mpg%Reg(ic)))/
-     .                        (dtim*dtei(mpg%Reg(ic)))*
+     .                      t3_ipl*dtim*dtco(is,mpg%cvReg(ic)))/
+     .                        (dtim*dtei(mpg%cvReg(ic)))*
      .                      0.5_R8*mp*am(is)*dua**2
                         t4_ppl=(pl%na(ic,is)*geo%cvVol(ic)*
      .                      (t2_ppl/smo_tot(ic,ifl))+
-     .                      t3_ppl*dtim*dtco(is,mpg%Reg(ic)))/
-     .                        (dtim*dtei(mpg%Reg(ic)))*
+     .                      t3_ppl*dtim*dtco(is,mpg%cvReg(ic)))/
+     .                        (dtim*dtei(mpg%cvReg(ic)))*
      .                      0.5_R8*mp*am(is)*dua**2
                       endif
                     else
@@ -3089,9 +3093,9 @@ c
 csw 21feb2012 add test l_neutrad (SOLPS4.3)
       if(l_neutrad.lt.0) then
         do ic=1,nCv
-          if (ic <= nCi .and.
-     &        mpg%Reg(ic).ne.0) then
-            k=mpg%Reg(ic)
+          if (ic <= mpg%nCi .and.
+     &        mpg%cvReg(ic).ne.0) then
+            k=mpg%cvReg(ic)
             do imol = 1, nnmoli
 !pb  eneutrad dimensioned per stratum to allow for short cycling
 !pb  only sum over strata used here
@@ -3119,9 +3123,9 @@ c
         rdneureg=0.0_R8
         recycereg=0.0_R8
         do ic=1,nCv
-          if (ic <= nCi .and.
-     &        mpg%Reg(ic).ne.0) then
-            k=mpg%Reg(ic)
+          if (ic <= mpg%nCi .and.
+     &        mpg%cvReg(ic).ne.0) then
+            k=mpg%cvReg(ic)
             do iatm = 1, nnatmi
 !pb  18.12.2013
 !pb  eneutrad dimensioned per stratum to allow for short cycling
@@ -3302,7 +3306,7 @@ C           call xerrab ('eirene_mc: bccon <> 13')
 
 * ..return
       call subend ()
-#endif
+!pb#endif
       return
 
 * ..finalise save

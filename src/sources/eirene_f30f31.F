@@ -699,6 +699,7 @@ c declared -1:nx,-1:ny
         do i = 1, ntrgdat
           iFc = mpg%rcFc(ian+i-1)
           trgt(istra)%faces(i) = iFc
+          trgt(istra)%fcori(i) = mpg%rcFcOr(ian+i-1)
           trgt(istra)%tet(i) = intface_s(iFc,nCv,nFc,mpg%fcCv,
      >                                   gm%fcVol,pl%te)*evi
           trgt(istra)%tit(i) = intface_s(iFc,nCv,nFc,mpg%fcCv,
@@ -818,15 +819,15 @@ c
         write (31,'(a)') '*'
         write (31,'(a,i0)') '*** MISC TARGET DATA #',istra
         write (31,'(a)') '*'
-        write (31,'(a1,2a6,4a15)') '*','Index','face','Te',
+        write (31,'(a1,2a6,5a15)') '*','Index','face','ori','Te',
      .      'fe','fsh'
-        write (31,'(a1,2a6,5a15)') '*',' ',' ','(eV)',' ',
-     .      ' ',' '
+        write (31,'(a1,2a6,5a15)') '*',' ',' ',' ','(eV)',' ',' '
         write (31,'(i6)') ntrgdat
  
         do i = 1, ntrgdat
-          write (31,'(i7,i6,3es15.7)')
-     .      i,trgt(istra)%faces(i),trgt(istra)%tet(i),
+          write (31,'(i7,i6,4es15.7)')
+     .      i,trgt(istra)%faces(i),trgt(istra)%fcori(i),
+     .        trgt(istra)%tet(i),
      .        trgt(istra)%fe(i),trgt(istra)%fsh(i)
         end do
 

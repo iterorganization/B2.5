@@ -59,7 +59,9 @@ c     avoids double module definition in case code is compiled with Eirene
         allocate(eneutrad(nCv,natm,0:nstra+1))
         allocate(isrftype(nlimps))
 #else
-        call alloc_b2mod_eirdiag(nx,ny,
+!        call alloc_b2mod_eirdiag(nx,ny,
+!     .   natm,nmol,nion,npls,nlimps,nstra,nsts,nsgmx)
+        call alloc_b2mod_eirdiag(nCv,
      .   natm,nmol,nion,npls,nlimps,nstra,nsts,nsgmx)
 #endif
 !       write(*,*) ' Allocated arrays in eirene_extrab25_eirdiag_alloc ',  &

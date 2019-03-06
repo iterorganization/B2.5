@@ -3,14 +3,14 @@
       implicit none
 
       real (kind=R8), allocatable ::
-     &  dab2(:,:,:,:), dmb2(:,:,:,:), dib2(:,:,:,:),
-     &  tab2(:,:,:,:), tmb2(:,:,:,:), tib2(:,:,:,:),
-     &  rfluxa(:,:,:,:), rfluxm(:,:,:,:),
-     &  refluxa(:,:,:,:), refluxm(:,:,:,:),
-     &  pfluxa(:,:,:,:), pfluxm(:,:,:,:),
-     &  pefluxa(:,:,:,:), pefluxm(:,:,:,:),
-     &  emiss(:,:,:,:), emissmol(:,:,:,:),
-     &  srcml(:,:,:,:), edissml(:,:,:,:),
+     &  dab2(:,:,:), dmb2(:,:,:), dib2(:,:,:),
+     &  tab2(:,:,:), tmb2(:,:,:), tib2(:,:,:),
+     &  rfluxa(:,:,:), rfluxm(:,:,:),
+     &  refluxa(:,:,:), refluxm(:,:,:),
+     &  pfluxa(:,:,:), pfluxm(:,:,:),
+     &  pefluxa(:,:,:), pefluxm(:,:,:),
+     &  emiss(:,:,:), emissmol(:,:,:),
+     &  srcml(:,:,:), edissml(:,:,:),
      &  wldnek(:,:), wldnep(:,:),
      &  wldna(:,:,:), ewlda(:,:,:),
      &  wldnm(:,:,:), ewldm(:,:,:),
@@ -18,7 +18,7 @@
      &  wldpp(:,:,:), wldpa(:,:,:),
      &  wldpm(:,:,:), wldpeb(:,:),
      &  wldspt(:,:), wldspta(:,:,:), wldsptm(:,:,:),
-     &  eneutrad(:,:,:,:),
+     &  eneutrad(:,:,:),
      &  wlarea(:), wlabsrp(:,:),
      &  wldna_res(:,:),     !incident atom flux
      &  wldnm_res(:,:),     !incident molecule flux
@@ -95,30 +95,30 @@ c
 
       contains
 
-      subroutine alloc_b2mod_eirdiag(nxd,nyd,
+      subroutine alloc_b2mod_eirdiag(nCv,
      ,  natmd,nmold,niond,nplsd,nlimps,nstrad,nstsd,nsgmx)
       implicit none
-      integer nxd, nyd, natmd, nmold, niond, nplsd,
+      integer nCv, natmd, nmold, niond, nplsd,
      &        nlimps, nstrad, nstsd, nsgmx
 
-      allocate(dab2(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(dmb2(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(dib2(0:nxd+1,0:nyd+1,niond,1))
-      allocate(tab2(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(tmb2(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(tib2(0:nxd+1,0:nyd+1,niond,1))
-      allocate(rfluxa(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(rfluxm(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(refluxa(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(refluxm(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(pfluxa(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(pfluxm(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(pefluxa(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(pefluxm(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(emiss(0:nxd+1,0:nyd+1,1,1))
-      allocate(emissmol(0:nxd+1,0:nyd+1,1,1))
-      allocate(srcml(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(edissml(0:nxd+1,0:nyd+1,nmold,0:nstrad))
+      allocate(dab2(nCv,natmd,1))
+      allocate(dmb2(nCv,nmold,1))
+      allocate(dib2(nCv,niond,1))
+      allocate(tab2(nCv,natmd,1))
+      allocate(tmb2(nCv,nmold,1))
+      allocate(tib2(nCv,niond,1))
+      allocate(rfluxa(nCv,natmd,1))
+      allocate(rfluxm(nCv,nmold,1))
+      allocate(refluxa(nCv,natmd,1))
+      allocate(refluxm(nCv,nmold,1))
+      allocate(pfluxa(nCv,natmd,1))
+      allocate(pfluxm(nCv,nmold,1))
+      allocate(pefluxa(nCv,natmd,1))
+      allocate(pefluxm(nCv,nmold,1))
+      allocate(emiss(nCv,1,1))
+      allocate(emissmol(nCv,1,1))
+      allocate(srcml(nCv,nmold,1))
+      allocate(edissml(nCv,nmold,0:nstrad))
       allocate(wldnek(nlimps,0:nstrad))
       allocate(wldnep(nlimps,0:nstrad))
       allocate(wldna(nlimps,natmd,0:nstrad))
@@ -134,7 +134,7 @@ c
       allocate(wldspt(nlimps,0:nstrad))
       allocate(wldspta(nlimps,natmd,0:nstrad))
       allocate(wldsptm(nlimps,nmold,0:nstrad))
-      allocate(eneutrad(0:nxd+1,0:nyd+1,natmd,0:nstrad))
+      allocate(eneutrad(nCv,natmd,0:nstrad))
       allocate(wlarea(nlimps))
       allocate(wlabsrp(natmd+nmold+niond+nplsd,nlimps))
       allocate(wldna_res(natmd,nsgmx))
