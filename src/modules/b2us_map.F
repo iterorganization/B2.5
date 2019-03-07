@@ -55,6 +55,9 @@
 
         integer :: isClassicalGrid                     ! indicates whether grid is derived from an "original", structured grid
         integer :: nx, ny, nncut                       ! some parameters related to the original grid
+        integer, allocatable  :: imapcv(:,:)           ! used in b2us_prep
+        integer, allocatable  :: imapFcx(:,:), imapFcy(:,:) ! used in b2us_prep
+        integer, allocatable  :: imapVx(:,:)           ! used in b2us_prep
 
       end type mapping
 
@@ -94,6 +97,11 @@
 
       allocate (m%cvNvP(m%nCv,2))
       allocate (m%cvNv(m%nCmxNv))
+
+      allocate (m%imapcv(-1:m%nx,-1:m%ny))
+      allocate (m%imapFcx(-1:m%nx,-1:m%ny))
+      allocate (m%imapFcy(-1:m%nx,-1:m%ny))
+      allocate (m%imapVx(-1:m%nx,-1:m%ny))
 
       write (*,*) '=================================='
       write (*,*) 'Mapping allocated'
@@ -142,7 +150,12 @@
       deallocate (m%intcellR)   
 
       deallocate (m%cvNvP)
-      deallocate (m%cvNv)    
+      deallocate (m%cvNv)  
+    
+      deallocate (m%imapcv)  
+      deallocate (m%imapFcx)  
+      deallocate (m%imapFcy)  
+      deallocate (m%imapVx)  
 
       return
       end subroutine dealloc_mapping 
@@ -236,6 +249,7 @@
       call cfruin (iun, 1, idum, 'isClassicalGrid')
       mpg%isClassicalGrid = idum(0)
       call cfruin (iun, 3, idum, 'nx,ny,nncut')
+
       mpg%nx    = idum(0)
       mpg%ny    = idum(1)
       mpg%nncut = idum(2)

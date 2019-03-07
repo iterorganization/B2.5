@@ -91,8 +91,15 @@ cwdk      type(B2StateExt), public, save :: state_ext
       integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc, ic1, ic2, 
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
      .           ivx, ivx1, ivx2, nfx, mxreg, ifs, icv, ireg, istart,
-     .           inv, inv1, inv2, invmx, ifcc
-      integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:)
+     .           inv, inv1, inv2, invmx, ifcc, icount, n2, nghosti,
+     .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, 
+     .           nghostvxi, ici, icg
+      integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
+     .           ighost(:,:), icorner(:,:), ighostcv(:,:),
+     .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
+     .           ighostfcx(:,:), ixghostfcx(:), iyghostfcx(:), 
+     .           ighostfcy(:,:), ixghostfcy(:), iyghostfcy(:), 
+     .           ighostvx(:,:), ixghostvx(:), iyghostvx(:)
       logical lfound
 
 !  assume a structured quadrilateral grid
@@ -111,17 +118,139 @@ cwdk      type(B2StateExt), public, save :: state_ext
 #endif
 
 !  no. of cells
-      m%nCi = nx*ny                         ! internal cells
-      m%nCg = 2*nx + 2*ny                   ! guard cells
+! Count internal ghost cells and "corner" points
+! Remark in this mapping routine the old B2-numbering is used; do loop over internal cells run from 1->nx, etc. 
+! CTB TO BE DONE ALLOCATE THE NEW ARRAYS
+
+! Initialize the mapping matrices
+      n2 = (nx+2)*(ny+2)
+      allocate (ighost(-1:nx,-1:ny))
+      allocate (icorner(-1:nx,-1:ny))
+      allocate (ighostcv(-1:nx,-1:ny))
+      allocate (ixghostcv(n2))
+      allocate (iyghostcv(n2))
+      allocate (ixcorner(n2)) 
+      allocate (iycorner(n2))
+      allocate (ighostfcx(-1:nx,-1:ny))
+      allocate (ixghostfcx(n2))
+      allocate (iyghostfcx(n2))
+      allocate (ighostfcy(-1:nx,-1:ny))
+      allocate (ixghostfcy(n2))
+      allocate (iyghostfcy(n2))
+      allocate (ighostvx(-1:nx,-1:ny))
+      allocate (ixghostvx(n2))
+      allocate (iyghostvx(n2))
+      ighostcv = 0
+      icorner = 0
+      ixghostcv = 0
+      iyghostcv = 0
+      ixcorner = 0
+      iycorner = 0
+      ighostfcx = 0
+      ixghostfcx = 0
+      iyghostfcx = 0
+      ighostfcy = 0
+      ixghostfcy = 0
+      iyghostfcy = 0
+      ighostvx = 0
+      ixghostvx = 0
+      iyghostvx = 0
+
+! Count internal ghost cells
+      icount = 0
+      do iy = 1, ny
+        do ix = 1, nx 
+          if((leftix(ix-1,iy-1)==-2).or.(rightix(ix-1,iy-1)==nx+1).or.   
+     .       (bottomiy(ix-1,iy-1)==-2).or.(topiy(ix-1,iy-1)==ny+1)) then  
+            ighostcv(ix-1,iy-1)=1
+            icount=icount+1
+            ixghostcv(icount) = ix-1
+            iyghostcv(icount) = iy-1
+		  endif	
+        enddo
+      enddo
+      nghosti = icount              ! internal ghost cells
+      icount = 0
+      do ix = 0, nx+1
+        ighost(ix-1,-1)=1
+        ighost(ix-1,ny)=1
+      enddo
+      do iy = 1, ny
+        ighost(-1,iy-1)=1
+        ighost(nx,iy-1)=1
+      enddo
+      nghostcvi = icount 
+      
+! Count internal "corner" points, by checking whether it is surrounded by ghost cells
+      icount = 0      
+      do iy = 1, ny
+        do ix = 1, nx 
+          if((ighostcv(ix-1,iy-1)==1).and.
+     .       (ighostcv(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))==1).and.
+     .       (ighostcv(leftix(ix-1,iy-1),leftiy(ix-1,iy-1))==1).and.   
+     .       (ighostcv(bottomix(ix-1,iy-1),bottomiy(ix-1,iy-1))==1).and.
+     .       (ighostcv(topix(ix-1,iy-1),topiy(ix-1,iy-1))==1)) then  
+            icorner(ix-1,iy-1)=1
+            icount=icount+1
+            ixcorner(icount) = ix-1
+            iycorner(icount) = iy-1
+          endif	
+        enddo
+      enddo
+      ncorneri = icount
+
+      m%nCi = nx*ny-nghostcvi             ! internal cells
+      m%nCg = 2*nx + 2*ny + nghostcvi -ncorneri               ! guard cells
       m%nCv = m%nCi + m%nCg             ! total number of cells
 
       write (*,*) 'nCv, nCi, nCg', m%nCv, m%nCi, m%nCg
 
 !  no. of cell faces
-      m%nFc = ny*(nx+1) + nx*(ny+1)
+! Count internal faces in between ghost cells (first x-faces then y-faces)
+      icount = 0      
+      do iy = 1, ny
+        do ix = 1, nx+1
+          if((ighostcv(ix-2,iy-1)==1).and.(ighostcv(ix-1,iy-1)==1))then
+            ighostfcx(ix-1,iy-1)=1
+            icount=icount+1
+            ixghostfcx(icount) = ix-1
+            iyghostfcx(icount) = iy-1
+		  endif	
+        enddo
+      enddo
+      nghostfcxi = icount
+
+      icount = 0      
+      do ix = 1, nx
+        do iy = 1, ny+1
+          if((ighostcv(ix-1,iy-2)==1).and.(ighostcv(ix-1,iy-1)==1)) then
+            ighostfcy(ix-1,iy-1)=1
+            icount=icount+1
+            ixghostfcy(icount) = ix-1
+            iyghostfcy(icount) = iy-1
+		  endif	
+        enddo
+      enddo
+      nghostfcyi = icount
+
+      m%nFc = ny*(nx+1) + nx*(ny+1)-nghostfcxi-nghostfcyi
 
 ! no. of vertices
-      m%nVx = (nx+1) * (ny+1)
+! Count internal vertices surrrounded by ghost cells
+      icount = 0      
+      do iy = 1, ny+1
+        do ix = 1, nx+1
+          if((ighostcv(ix-2,iy-1)==1).and.(ighostcv(ix-1,iy-1)==1).and.
+     .       (ighostcv(ix-2,iy-2)==1).and.(ighostcv(ix-1,iy-2)==1)) then           
+            ighostvx(ix-1,iy-1)=1
+            icount=icount+1
+            ixghostvx(icount) = ix-1
+            iyghostvx(icount) = iy-1
+		  endif	
+        enddo
+      enddo
+      nghostvxi = icount
+      m%nVx = (nx+1) * (ny+1) - nghostvxi
 
 ! no. of flux surfaces (conservative estimate)
       m%nFs = max(1,(1 + 2*nncut)*ny)
@@ -158,6 +287,106 @@ cwdk      type(B2StateExt), public, save :: state_ext
 
       call alloc_mapping (m)
 
+! Compose the mapping matrix from structured to unstructured index
+
+! for Cv's
+      m%imapCv= 0 ! 0 means not in use in unstructured
+      ici =0
+      icg = m%nCi
+      do iy = 1, ny
+        do ix = 1, nx
+          if(ighostcv(ix-1,iy-1)==0) then
+            ici = ici + 1          
+            m%imapCv(ix-1,iy-1) = ici
+          elseif(icorner(ix-1,iy-1)==0) then
+            icg = icg+1
+            m%imapCv(ix-1,iy-1) = icg
+          endif
+        enddo
+      enddo
+
+      iy = 0
+      do ix = 1, nx
+        if(icorner(ix-1,iy-1)==0) then
+          icg = icg+1
+          m%imapCv(ix-1,iy-1) = icg
+        endif
+      enddo
+      iy=ny+1
+      do ix = 1, nx
+        if(icorner(ix-1,iy-1)==0) then
+          icg = icg+1
+          m%imapCv(ix-1,iy-1) = icg
+        endif
+      enddo
+      ix = 0
+      do iy = 1, ny
+        if(icorner(ix-1,iy-1)==0) then
+          icg = icg+1
+          m%imapCv(ix-1,iy-1) = icg
+        endif
+      enddo     
+      ix = nx+1
+      do iy = 1, ny
+        if(icorner(ix-1,iy-1)==0) then
+          icg = icg+1
+          m%imapCv(ix-1,iy-1) = icg
+        endif
+      enddo     
+
+      if (ici /= m%nCi) then
+        call xerrab 
+     .    ('Inconsistency between counting and mapping in nCi!')
+      endif
+      if (icg /= m%nCv) then
+        call xerrab 
+     .    ('Inconsistency between counting and mapping in nCv!')
+      endif
+
+! for Fcx's and Fcy's
+      m%imapFcx= 0 ! 0 means not in use in unstructured
+      ici =0
+      do iy = 1, ny
+        do ix = 1, nx+1
+          if(ighostfcx(ix-1,iy-1)==0) then
+            ici = ici + 1          
+            m%imapFcx(ix-1,iy-1) = ici
+           endif
+        enddo
+      enddo
+
+      m%imapFcy= 0 ! 0 means not in use in unstructured
+      do ix = 1, nx
+        do iy = 1, ny+1
+          if(ighostfcy(ix-1,iy-1)==0) then
+            ici = ici + 1          
+            m%imapFcy(ix-1,iy-1) = ici
+           endif
+        enddo
+      enddo
+   
+      if (ici /= m%nFc) then
+        call xerrab 
+     .  ('Inconsistency between counting and mapping in nFc!')
+      endif
+ 
+! for Vx
+      m%imapVx= 0 ! 0 means not in use in unstructured
+      ici =0
+      do iy = 1, ny+1
+        do ix = 1, nx+1
+          if(ighostfcx(ix-1,iy-1)==0) then
+            ici = ici + 1          
+            m%imapVx(ix-1,iy-1) = ici
+           endif
+        enddo
+      enddo
+
+      if (ici /= m%nVx) then
+        call xerrab 
+     .    ('Inconsistency between counting and mapping in nVx!')
+      endif
+
 ! no. of faces to be considered for this cell
       m%cvFcP(1:m%nCi,2) = 4
       m%cvFcP(m%nCi+1:m%nCv,2) = 1
@@ -180,145 +409,238 @@ cwdk      type(B2StateExt), public, save :: state_ext
       nfx = (nx+1)*ny
       do iy = 1, ny
         do ix = 1, nx
-          ic = ix + (iy-1)*nx
-          if1 = m%cvFcP(ic,1)
-          if2 = if1 + 1
-          if3 = if2 + 1
-          if4 = if3 + 1
-          m%cvFc(if1) = ix + (iy-1)*(nx+1)
-!          m%cvFc(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
-!          m%cvFc(if2) = ix+1 + (iy-1)*(nx+1)
-          m%cvFc(if2) = rightix(ix-1,iy-1)+1 + rightiy(ix-1,iy-1)*(nx+1)
-          m%cvFc(if3) = nfx + iy + (ix-1)*(ny+1)
-!          m%cvFc(if4) = nfx + iy+1 + (ix-1)*(ny+1)
-          m%cvFc(if4) = nfx + topiy(ix-1,iy-1)+1+topix(ix-1,iy-1)*(ny+1)
-          m%intcellP(if1) = 1.0_R8
-          m%intcellP(if2) = 1.0_R8
-          m%intcellP(if3) = 0.0_R8
-          m%intcellP(if4) = 0.0_R8
-          m%intcellR(if1) = 0.0_R8
-          m%intcellR(if2) = 0.0_R8
-          m%intcellR(if3) = 1.0_R8
-          m%intcellR(if4) = 1.0_R8
-          m%cvVx(if1) = ix + (iy-1)*(nx+1)
-!          m%cvVx(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
-!          m%cvVx(if2) = ix+1 + (iy-1)*(nx+1)
-          m%cvVx(if2) = rightix(ix-1,iy-1)+1 + rightiy(ix-1,iy-1)*(nx+1)
-          m%cvVx(if3) = topix(ix-1,iy-1)+1 + topiy(ix-1,iy-1)*(nx+1)
-!          m%cvVx(if3) = leftix(ix-1,iy-1)+2 + iy*(nx+1)
-!          m%cvVx(if4) = ix+1 + iy*(nx+1)
-          m%cvVx(if4) = rightix(topix(ix-1,iy-1),topiy(ix-1,iy-1))+1 + 
-     .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1))*(nx+1)
+          if(m%imapCv(ix-1,iy-1) /= 0) then
+            ic = m%imapCv(ix-1,iy-1)!! seems not te be needed in this loop??
+!          ic = ix + (iy-1)*nx
+            if1 = m%cvFcP(ic,1)
+            if2 = if1 + 1
+            if3 = if2 + 1
+            if4 = if3 + 1
+            m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
+!          m%cvFc(if1) = ix + (iy-1)*(nx+1)
+!!          m%cvFc(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
+!!          m%cvFc(if2) = ix+1 + (iy-1)*(nx+1)
+            m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
+     .                              rightiy(ix-1,iy-1))
+!          m%cvFc(if2) = rightix(ix-1,iy-1)+1 + rightiy(ix-1,iy-1)*(nx+1)
+            m%cvFc(if3) = m%imapFcy(ix-1,iy-1)   
+!          m%cvFc(if3) = nfx + iy + (ix-1)*(ny+1)
+!!          m%cvFc(if4) = nfx + iy+1 + (ix-1)*(ny+1)
+            m%cvFc(if4) = m%imapFcy(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+!          m%cvFc(if4) = nfx + topiy(ix-1,iy-1)+1+topix(ix-1,iy-1)*(ny+1)
+            m%intcellP(if1) = 1.0_R8
+            m%intcellP(if2) = 1.0_R8
+            m%intcellP(if3) = 0.0_R8
+            m%intcellP(if4) = 0.0_R8
+            m%intcellR(if1) = 0.0_R8
+            m%intcellR(if2) = 0.0_R8
+            m%intcellR(if3) = 1.0_R8
+            m%intcellR(if4) = 1.0_R8
+            m%cvVx(if1) = m%imapVx(ix-1,iy-1)
+!          m%cvVx(if1) = ix + (iy-1)*(nx+1)
+!!          m%cvVx(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
+!!          m%cvVx(if2) = ix+1 + (iy-1)*(nx+1)
+            m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
+     .                             rightiy(ix-1,iy-1))
+!          m%cvVx(if2) = rightix(ix-1,iy-1)+1 + rightiy(ix-1,iy-1)*(nx+1)
+            m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+!          m%cvVx(if3) = topix(ix-1,iy-1)+1 + topiy(ix-1,iy-1)*(nx+1)
+!!          m%cvVx(if3) = leftix(ix-1,iy-1)+2 + iy*(nx+1)
+!!          m%cvVx(if4) = ix+1 + iy*(nx+1)
+            m%cvVx(if4) = m%imapVx(rightix(topix(ix-1,iy-1),
+     .                             topiy(ix-1,iy-1)), 
+     .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1)))
+!          m%cvVx(if4) = rightix(topix(ix-1,iy-1),topiy(ix-1,iy-1))+1 + 
+!     .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1))*(nx+1)
+          endif
         end do
       end do
 
+
+
 ! list of cell faces and vertices for guard cells
       do ix = 1, nx
-        ic = m%nCi + ix
-        m%cvFc(m%cvFcP(ic,1)) = nfx + 
-     .               topiy(ix-1,-1)+1 + topix(ix-1,-1)*(ny+1)
-        m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
-        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-        m%cvVx(m%cvVxP(ic,1)) = 
-     .               topix(ix-1,-1)+1 + topiy(ix-1,-1)*(nx+1)
-        m%cvVx(m%cvVxP(ic,1)+1) = 
-     .               rightix(topix(ix-1,-1),topiy(ix-1,-1))+1 + 
-     .               rightiy(topix(ix-1,-1),topiy(ix-1,-1))*(nx+1) 
-        ic = m%nCi + nx + ix
-        m%cvFc(m%cvFcP(ic,1)) = nfx + ny+1 + (ix-1)*(ny+1)
-        m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
-        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-        m%cvVx(m%cvVxP(ic,1)) = ix + ny*(nx+1)
-        m%cvVx(m%cvVxP(ic,1)+1) = 
-     .               rightix(ix-1,ny)+1 + rightiy(ix-1,ny)*(nx+1)
+        if(m%imapCv(ix-1,-1) /= 0 ) then
+          ic = m%imapCv(ix-1,-1)
+          m%cvFc(m%cvFcP(ic,1)) = m%imapFcy(topix(ix-1,-1),
+     .                                      topiy(ix-1,-1))
+          m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
+          m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
+          m%cvVx(m%cvVxP(ic,1)) = m%imapVx(topix(ix-1,-1),
+     .                                     topiy(ix-1,-1))
+          m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(
+     .               rightix(topix(ix-1,-1),topiy(ix-1,-1)), 
+     .               rightiy(topix(ix-1,-1),topiy(ix-1,-1))) 
+!        ic = m%nCi + ix
+!        m%cvFc(m%cvFcP(ic,1)) = nfx + 
+!     .               topiy(ix-1,-1)+1 + topix(ix-1,-1)*(ny+1)
+!        m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
+!        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
+!        m%cvVx(m%cvVxP(ic,1)) = 
+!     .               topix(ix-1,-1)+1 + topiy(ix-1,-1)*(nx+1)
+!        m%cvVx(m%cvVxP(ic,1)+1) = 
+!     .               rightix(topix(ix-1,-1),topiy(ix-1,-1))+1 + 
+!     .               rightiy(topix(ix-1,-1),topiy(ix-1,-1))*(nx+1) 
+        endif
+        if(m%imapCv(ix-1,ny)/=0) then
+          ic = m%imapCv(ix-1,ny)
+          m%cvFc(m%cvFcP(ic,1)) = m%imapFcy(ix-1,ny)
+          m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
+          m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
+          m%cvVx(m%cvVxP(ic,1)) = m%imapVx(ix-1,ny)
+          m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(rightix(ix-1,ny),
+     .                                     rightiy(ix-1,ny))         
+!        ic = m%nCi + nx + ix
+!     .               rightiy(topix(ix-1,-1),topiy(ix-1,-1))*(nx+1) 
+!        m%cvFc(m%cvFcP(ic,1)) = nfx + ny+1 + (ix-1)*(ny+1)
+!        m%intcellP(m%cvFcP(ib2us_prep.Fc,1)) = 1.0_R8
+!        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
+!        m%cvVx(m%cvVxP(ic,1)) = ix + ny*(nx+1)
+!        m%cvVx(m%cvVxP(ic,1)+1) = 
+!     .               rightix(ix-1,ny)+1 + rightiy(ix-1,ny)*(nx+1)
+         endif      
       end do
 
       do iy = 1, ny
-        ic = m%nCi + 2*nx + iy
-        m%cvFc(m%cvFcP(ic,1)) = 
-     .               rightix(-1,iy-1)+1 + rightiy(-1,iy-1)*(nx+1)
-        m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
-        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-        m%cvVx(m%cvVxP(ic,1)) = 
-     .               rightix(-1,iy-1)+1 + rightiy(-1,iy-1)*(nx+1)
-        m%cvVx(m%cvVxP(ic,1)+1) = 
-     .               rightix(topix(-1,iy-1),topiy(-1,iy-1))+1 + 
-     .               rightiy(topix(-1,iy-1),topiy(-1,iy-1))*(nx+1)
-        ic = m%nCi + 2*nx + ny + iy
-        m%cvFc(m%cvFcP(ic,1)) = nx+1 + (iy-1)*(nx+1)
-        m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
-        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-        m%cvVx(m%cvVxP(ic,1)) = nx+1 + (iy-1)*(nx+1) 
-        m%cvVx(m%cvVxP(ic,1)+1) = 
-     .               topix(nx,iy-1)+1 + topiy(nx,iy-1)*(nx+1)
+        if(m%imapCv(-1,iy-1)/=0) then
+          ic = m%imapCv(-1,iy-1)
+          m%cvFc(m%cvFcP(ic,1)) = m%imapFcx(rightix(-1,iy-1),
+     .                                      rightiy(-1,iy-1))
+          m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
+          m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
+          m%cvVx(m%cvVxP(ic,1)) = m%imapVx(rightix(-1,iy-1),
+     .                                     rightiy(-1,iy-1))
+          m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(rightix(topix(-1,iy-1),
+     .                                              topiy(-1,iy-1)),
+     .                                      rightiy(topix(-1,iy-1),
+     .                                              topiy(-1,iy-1)))
+        endif 
+!        ic = m%nCi + 2*nx + iy
+!        m%cvFc(m%cvFcP(ic,1)) = 
+!     .               rightix(-1,iy-1)+1 + rightiy(-1,iy-1)*(nx+1)
+!        m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
+!        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
+!        m%cvVx(m%cvVxP(ic,1)) = 
+!     .               rightix(-1,iy-1)+1 + rightiy(-1,iy-1)*(nx+1)
+!        m%cvVx(m%cvVxP(ic,1)+1) = 
+!     .               rightix(topix(-1,iy-1),topiy(-1,iy-1))+1 + 
+!     .               rightiy(topix(-1,iy-1),topiy(-1,iy-1))*(nx+1)
+        if(m%imapCv(nx,iy-1)/=0) then        
+          ic = m%imapCv(nx,iy-1)
+          m%cvFc(m%cvFcP(ic,1)) = m%imapFcx(nx,iy-1)
+          m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
+          m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
+          m%cvVx(m%cvVxP(ic,1)) = m%imapVx(nx,iy-1)
+          m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(topix(nx,iy-1),
+     .                                      topiy(nx,iy-1))
+        endif
+!        ic = m%nCi + 2*nx + ny + iy
+!        m%cvFc(m%cvFcP(ic,1)) = nx+1 + (iy-1)*(nx+1)
+!        m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
+!        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
+!        m%cvVx(m%cvVxP(ic,1)) = nx+1 + (iy-1)*(nx+1) 
+!        m%cvVx(m%cvVxP(ic,1)+1) = 
+!     .               topix(nx,iy-1)+1 + topiy(nx,iy-1)*(nx+1)
       end do
 
 ! listing for every face the two corresponding cells
 ! and the corresponding vertices
 ! x faces
-       do iy = 1, ny
-         do ix = 2, nx
-           ic = ix + (iy-1)*nx
-           ifc = ix + (iy-1)*(nx+1)
-           m%fcCv(ifc,1) = leftix(ix-1,iy-1)+1 + (iy-1)*nx
-           m%fcCv(ifc,2) = ic
-           m%fcVx(ifc,1) = ix + (iy-1)*(nx+1)
-           m%fcVx(ifc,2) = ix + iy*(nx+1)
+       do iy = 1, ny 
+         do ix = 1, nx+1
+           if(m%imapFcx(ix-1,iy-1)/=0) then
+             ifc =m%imapFcx(ix-1,iy-1)
+             m%fcCv(ifc,1) = m%imapCv(leftix(ix-1,iy-1),
+     .                                leftiy(ix-1,iy-1))
+             m%fcCv(ifc,2) = m%imapCv(ix-1,iy-1)
+             m%fcVx(ifc,1) = m%imapVx(ix-1,iy-1)
+             m%fcVx(ifc,2) = m%imapCv(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+           endif  
          end do
-
-! left guard cells
-         ic = 1 + (iy-1)*nx
-         ifc = 1 + (iy-1)*(nx+1)
-         m%fcCv(ifc,1) = m%nCi + 2*nx + iy
-         m%fcCv(ifc,2) = ic
-         m%fcVx(ifc,1) = 1 + (iy-1)*(nx+1)
-         m%fcVx(ifc,2) = 1 + iy*(nx+1)
-
-! right guard cells
-         ic = nx+1 + (iy-1)*nx
-         ifc = nx+1 + (iy-1)*(nx+1)
-         m%fcCv(ifc,1) = ic - 1
-         m%fcCv(ifc,2) = m%nCi + 2*nx + ny + iy
-         m%fcVx(ifc,1) = nx+1 + (iy-1)*(nx+1)
-         m%fcVx(ifc,2) = nx+1 + iy*(nx+1)
        end do
+
+!       do iy = 1, ny
+!         do ix = 2, nx
+!           ic = ix + (iy-1)*nx
+!           ifc = ix + (iy-1)*(nx+1)
+!           m%fcCv(ifc,1) = leftix(ix-1,iy-1)+1 + (iy-1)*nx
+!           m%fcCv(ifc,2) = ic
+!           m%fcVx(ifc,1) = ix + (iy-1)*(nx+1)
+!           m%fcVx(ifc,2) = ix + iy*(nx+1)
+!         end do
+
+!! left guard cells
+!         ic = 1 + (iy-1)*nx
+!         ifc = 1 + (iy-1)*(nx+1)
+!         m%fcCv(ifc,1) = m%nCi + 2*nx + iy
+!         m%fcCv(ifc,2) = ic
+!         m%fcVx(ifc,1) = 1 + (iy-1)*(nx+1)
+!         m%fcVx(ifc,2) = 1 + iy*(nx+1)
+
+!! right guard cells
+!         ic = nx+1 + (iy-1)*nx
+!         ifc = nx+1 + (iy-1)*(nx+1)
+!         m%fcCv(ifc,1) = ic - 1
+!         m%fcCv(ifc,2) = m%nCi + 2*nx + ny + iy
+!         m%fcVx(ifc,1) = nx+1 + (iy-1)*(nx+1)
+!         m%fcVx(ifc,2) = nx+1 + iy*(nx+1)
+!       end do
 
 ! y faces
-       do ix = 1, nx
-         do iy = 2, ny
-           ic = ix + (iy-1)*nx
-           ifc = nfx + iy + (ix-1)*(ny+1)
-           m%fcCv(ifc,2) = ic
-           m%fcCv(ifc,1) = ic - nx
-           m%fcVx(ifc,2) = ix + (iy-1)*(nx+1)
-           m%fcVx(ifc,1) = rightix(ix-1,iy-1)+1 + (iy-1)*(nx+1)
+
+       do ix = 1, nx 
+         do iy = 1, ny+1
+           if(m%imapFcy(ix-1,iy-1)/=0) then
+             ifc =m%imapFcy(ix-1,iy-1)
+             m%fcCv(ifc,2) = m%imapCv(ix-1,iy-1)
+             m%fcCv(ifc,1) = m%imapCv(bottomix(ix-1,iy-1),
+     .                                bottomiy(ix-1,iy-1))
+             m%fcVx(ifc,2) = m%imapVx(ix-1,iy-1)
+             m%fcVx(ifc,1) = m%imapCv(rightix(ix-1,iy-1),
+     .                                rightiy(ix-1,iy-1))
+           endif
          end do
-
-! lower guard cells
-         ic = ix
-         ifc = nfx + 1 + (ix-1)*(ny+1)
-         m%fcCv(ifc,2) = ic
-         m%fcCv(ifc,1) = m%nCi + ix
-         m%fcVx(ifc,2) = ix 
-         m%fcVx(ifc,1) = rightix(ix-1,0)+1 
-
-! upper guard cells
-         ic = ix + (ny-1)*nx
-         ifc = nfx + ix*(ny+1)
-         m%fcCv(ifc,2) = m%nCi + nx + ix
-         m%fcCv(ifc,1) = ic
-         m%fcVx(ifc,2) = ix + ny*(nx+1)
-         m%fcVx(ifc,1) = rightix(ix-1,ny)+1 + ny*(nx+1)
        end do
 
-! merging x-point vertex
+!       do ix = 1, nx
+!         do iy = 2, ny
+!           ic = ix + (iy-1)*nx
+!           ifc = nfx + iy + (ix-1)*(ny+1)
+!           m%fcCv(ifc,2) = ic
+!           m%fcCv(ifc,1) = ic - nx
+!           m%fcVx(ifc,2) = ix + (iy-1)*(nx+1)
+!           m%fcVx(ifc,1) = rightix(ix-1,iy-1)+1 + (iy-1)*(nx+1)
+!         end do
+
+!! lower guard cells
+!         ic = ix
+!         ifc = nfx + 1 + (ix-1)*(ny+1)
+!         m%fcCv(ifc,2) = ic
+!         m%fcCv(ifc,1) = m%nCi + ix
+!         m%fcVx(ifc,2) = ix 
+!         m%fcVx(ifc,1) = rightix(ix-1,0)+1 
+
+! upper guard cells
+!         ic = ix + (ny-1)*nx
+!         ifc = nfx + ix*(ny+1)
+!         m%fcCv(ifc,2) = m%nCi + nx + ix
+!         m%fcCv(ifc,1) = ic
+!         m%fcVx(ifc,2) = ix + ny*(nx+1)
+!         m%fcVx(ifc,1) = rightix(ix-1,ny)+1 + ny*(nx+1)
+!       end do
+
+! merging x-point vertex !!! TB not changed... seems not to be necessary
        do icut = 1, nncut
          ix1 = leftcut(icut)
          iy1 = topcut(icut)
          ix2 = rightcut(icut)
          iy2 = topcut(icut)
-         ivx1 = ix1+1 + iy1*(nx+1)
-         ivx2 = ix2+1 + iy2*(nx+1)
+         ivx1 = m%imapVx(ix1,iy1)
+         ivx2 = m%imapVx(ix2,iy2)
+
+         where (m%imapVx == ivx2)
+           m%imapVx = ivx1
+         end where
 
          where (m%cvVx == ivx2)
            m%cvVx = ivx1
@@ -386,69 +708,87 @@ cwdk      type(B2StateExt), public, save :: state_ext
        deallocate (ch)
 
 ! regions (cell volumes)
-      do iy = 0, ny-1
-        do ix = 0, nx-1
-          ic = (ix+1) + iy*nx
-          m%cvReg(ic) = region(ix,iy,0)
-          m%cvOnClosedSurface(ic) = on_closed_surface(ix,iy)
-	end do
+      do iy = 0, ny+1
+        do ix = 0, nx+1
+          if(m%imapCv(ix-1,iy-1)/=0) then          
+            ic = m%imapCv(ix-1,iy-1)
+!          ic = (ix+1) + iy*nx
+            m%cvReg(ic) = region(ix-1,iy-1,0)
+            m%cvOnClosedSurface(ic) = on_closed_surface(ix-1,iy-1)
+          endif
+        end do
       end do	
 
-      do ix = 0, nx-1
-        ic = m%nCi + ix+1
-        m%cvReg(ic) = region(ix,-1,0)
-        m%cvOnClosedSurface(ic) = on_closed_surface(ix,-1)
-
-        ic = m%nCi + nx + ix+1
-        m%cvReg(ic) = region(ix,ny,0)
-        m%cvOnClosedSurface(ic) = on_closed_surface(ix,ny)
-      end do
+!      do ix = 1, nx
+!        ic = m%nCi + ix+1
+!        m%cvReg(ic) = region(ix,-1,0)
+!        m%cvOnClosedSurface(ic) = on_closed_surface(ix,-1)
+!        ic = m%nCi + nx + ix+1
+!        m%cvReg(ic) = region(ix,ny,0)
+!        m%cvOnClosedSurface(ic) = on_closed_surface(ix,ny)
+!      end do
  
-      do iy = 0, ny-1
-        ic = m%nCi + 2*nx + iy+1
-        m%cvReg(ic) = region(-1,iy,0)
-        m%cvOnClosedSurface(ic) = on_closed_surface(-1,iy)
-
-        ic = m%nCi + 2*nx + ny + iy+1
-        m%cvReg(ic) = region(nx,iy,0)
-        m%cvOnClosedSurface(ic) = on_closed_surface(nx,iy)
-      end do
+!      do iy = 0, ny-1
+!        ic = m%nCi + 2*nx + iy+1
+!        m%cvReg(ic) = region(-1,iy,0)
+!        m%cvOnClosedSurface(ic) = on_closed_surface(-1,iy)
+!
+!        ic = m%nCi + 2*nx + ny + iy+1
+!        m%cvReg(ic) = region(nx,iy,0)
+!        m%cvOnClosedSurface(ic) = on_closed_surface(nx,iy)
+!      end do
 
 ! regions (faces)
- ! x faces
-       do iy = 0, ny-1
-         do ix = 1, nx-1
-           ifc = ix+1 + iy*(nx+1)
-           m%fcReg(ifc) = region(ix,iy,1)
+! x faces
+       do iy = 1, ny
+         do ix = 1, nx+1
+           if(m%imapFcx(ix-1,iy-1)/=0) then
+             ifc = m%imapFcx(ix-1,iy-1)
+             m%fcReg(ifc) = region(ix-1,iy-1,1)
+           endif
          end do
 
-! left boundary face (to guard cells)
-         ix = 0
-         ifc = ix+1 + iy*(nx+1)
-         m%fcReg(ifc) = region(ix,iy,1)
+!       do iy = 0, ny-1
+!         do ix = 1, nx-1
+!           ifc = ix+1 + iy*(nx+1)
+!           m%fcReg(ifc) = region(ix,iy,1)
+!         end do
+
+!! left boundary face (to guard cells)
+!         ix = 0
+!         ifc = ix+1 + iy*(nx+1)
+!         m%fcReg(ifc) = region(ix,iy,1)
 
 ! right guard cells
-         ix = nx
-         ifc = ix+1 + iy*(nx+1)
-         m%fcReg(ifc) = region(ix,iy,1)
+!         ix = nx
+!         ifc = ix+1 + iy*(nx+1)
+!         m%fcReg(ifc) = region(ix,iy,1)
         end do
 
 ! y faces
-       do ix = 0, nx-1
-         do iy = 1, ny-1
-           ifc = nfx + iy+1 + ix*(ny+1)
-           m%fcReg(ifc) = region(ix,iy,2)
+       do ix = 1, nx
+         do iy = 1, ny+1
+           if(m%imapFcy(ix-1,iy-1)/=0) then
+             ifc = m%imapFcy(ix-1,iy-1)
+             m%fcReg(ifc) = region(ix-1,iy-1,2)
+           end if
          end do
 
-! lower guard cells
-         iy = 0
-         ifc = nfx + 1 + ix*(ny+1)
-         m%fcReg(ifc) = region(ix,iy,2)
+!       do ix = 0, nx-1
+!         do iy = 1, ny-1
+!           ifc = nfx + iy+1 + ix*(ny+1)
+!           m%fcReg(ifc) = region(ix,iy,2)
+!         end do
 
-! upper guard cells
-         iy = ny
-         ifc = nfx + (ix+1)*(ny+1)
-         m%fcReg(ifc) = region(ix,iy,2)
+!! lower guard cells
+!         iy = 0
+!         ifc = nfx + 1 + ix*(ny+1)
+!         m%fcReg(ifc) = region(ix,iy,2)
+
+!! upper guard cells
+!         iy = ny
+!         ifc = nfx + (ix+1)*(ny+1)
+!         m%fcReg(ifc) = region(ix,iy,2)
       end do
 
       mxReg = maxval(m%cvReg(1:m%nCv))
@@ -461,35 +801,42 @@ cwdk      type(B2StateExt), public, save :: state_ext
       icv = 0
       ifcc = 0
       do ireg= 1, mxReg
-	do iy = 0, ny-1
-	  istart = -1
-	  do ix = 0, nx-1
-            ic = (ix+1) + iy*nx
-            ifc = ix+1 + iy*(nx+1)
-            if (m%cvReg(ic) == ireg) then
-	      if (istart == -1) then
-                ifs = ifs + 1
-	        icv = icv + 1
-                ifcc = ifcc + 1
-                m%fsCv(icv) = ic
-	        m%fsCvP(ifs,1) = icv
-	        m%fsFc(ifcc) = ifc
-                m%fsFcP(ifs,1) = ifcc
-	        istart = 1
-              else
-	        icv = icv + 1
-                ifcc = ifcc + 1
-		m%fsCv(icv) = ic
-	        m%fsFc(ifcc) = ifc
-                m%fsCvP(ifs,2) = icv - m%fsCvP(ifs,1) + 1
-                m%fsFcP(ifs,2) = ifcc - m%fsFcP(ifs,1) + 1
-                if (ix == (nx-1)) then
+    	do iy = 1, ny
+	      istart = -1
+	      do ix = 1, nx
+            if(m%imapCv(ix-1,iy-1)/=0) then
+              ic = m%imapCv(ix-1,iy-1)
+              ifc = m%imapFcx(ix-1,iy-1)
+!	do iy = 0, ny-1
+!	  istart = -1
+!	  do ix = 0, nx-1
+!            ic = (ix+1) + iy*nx
+!            ifc = ix+1 + iy*(nx+1)
+              if (m%cvReg(ic) == ireg) then
+	            if (istart == -1) then
+                  ifs = ifs + 1
+                  icv = icv + 1
                   ifcc = ifcc + 1
-                  m%fsFc(ifcc) = ifc + 1
+                  m%fsCv(icv) = ic
+	              m%fsCvP(ifs,1) = icv
+	              m%fsFc(ifcc) = ifc
+                  m%fsFcP(ifs,1) = ifcc
+     	          istart = 1
+                else
+     	          icv = icv + 1
+                  ifcc = ifcc + 1
+        		  m%fsCv(icv) = ic
+     	          m%fsFc(ifcc) = ifc
+                  m%fsCvP(ifs,2) = icv - m%fsCvP(ifs,1) + 1
                   m%fsFcP(ifs,2) = ifcc - m%fsFcP(ifs,1) + 1
-               end if
+                  if (ix == (nx-1)) then
+                    ifcc = ifcc + 1
+                    m%fsFc(ifcc) = ifc + 1
+                    m%fsFcP(ifs,2) = ifcc - m%fsFcP(ifs,1) + 1
+                  end if
+                end if
               end if
-            end if
+            end if 
           end do
         end do	
       end do
@@ -560,149 +907,162 @@ cwdk      type(B2StateExt), public, save :: state_ext
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nVmxCv)
 
 ! cell volumes 
-      do iy = 0, ny-1
-        do ix = 0, nx-1
-          ic = (ix+1) + iy*nx
+!      do iy = 0, ny-1
+!        do ix = 0, nx-1
+      do iy = -1, ny
+        do ix = -1, nx
+           if(mpg%imapCv(ix,iy)/=0) then           
+             ic = mpg%imapCv(ix,iy)
+!          ic = (ix+1) + iy*nx
 ! b field
-          gm%cvBb(ic,0:3) = bb(ix,iy,0:3)
+            gm%cvBb(ic,0:3) = bb(ix,iy,0:3)
 ! cell center
-          gm%cvX(ic) = 0.25_R8*sum(crx(ix,iy,0:3))
-          gm%cvY(ic) = 0.25_R8*sum(cry(ix,iy,0:3))
-          gm%cvSz(ic) = gs(ix,iy,2)
-          gm%cvHz(ic) = hz(ix,iy)
-          gm%cvHx(ic) = hx(ix,iy)
-          gm%cvQgam(ic,0) = qz(ix,iy,1)    ! cos
-          gm%cvQgam(ic,1) = -qz(ix,iy,0)   ! sin
-          gm%cvVol(ic) = vol(ix,iy)
-          gm%cvOnedBsq(ic) = OnedBsq(ix,iy)
-          gm%cvBzb(ic) = bzb(ix,iy)
+            gm%cvX(ic) = 0.25_R8*sum(crx(ix,iy,0:3))
+            gm%cvY(ic) = 0.25_R8*sum(cry(ix,iy,0:3))
+            gm%cvSz(ic) = gs(ix,iy,2)
+            gm%cvHz(ic) = hz(ix,iy)
+            gm%cvHx(ic) = hx(ix,iy)
+            gm%cvQgam(ic,0) = qz(ix,iy,1)    ! cos
+            gm%cvQgam(ic,1) = -qz(ix,iy,0)   ! sin
+            gm%cvVol(ic) = vol(ix,iy)
+            gm%cvOnedBsq(ic) = OnedBsq(ix,iy)
+            gm%cvBzb(ic) = bzb(ix,iy)
+          end if 
         end do
       end do
 
-      do ix = 0, nx-1
-        ic = nCi + ix+1
-        gm%cvBb(ic,0:3) = bb(ix,-1,0:3)
-        gm%cvX(ic) = 0.25_R8*sum(crx(ix,-1,0:3))
-        gm%cvY(ic) = 0.25_R8*sum(cry(ix,-1,0:3))
-        gm%cvSz(ic) = gs(ix,-1,2)
-        gm%cvHz(ic) = hz(ix,-1)
-        gm%cvHx(ic) = hx(ix,-1)
-        gm%cvQgam(ic,0) = qz(ix,-1,1)
-        gm%cvQgam(ic,1) = -qz(ix,-1,0)
-        gm%cvVol(ic) = vol(ix,-1)
-        gm%cvOnedBsq(ic) = OnedBsq(ix,-1)
-        gm%cvBzb(ic) = bzb(ix,-1)
+!      do ix = 0, nx-1
+!        ic = nCi + ix+1
+!        gm%cvBb(ic,0:3) = bb(ix,-1,0:3)
+!        gm%cvX(ic) = 0.25_R8*sum(crx(ix,-1,0:3))
+!        gm%cvY(ic) = 0.25_R8*sum(cry(ix,-1,0:3))
+!        gm%cvSz(ic) = gs(ix,-1,2)
+!        gm%cvHz(ic) = hz(ix,-1)
+!        gm%cvHx(ic) = hx(ix,-1)
+!        gm%cvQgam(ic,0) = qz(ix,-1,1)
+!        gm%cvQgam(ic,1) = -qz(ix,-1,0)
+!        gm%cvVol(ic) = vol(ix,-1)
+!        gm%cvOnedBsq(ic) = OnedBsq(ix,-1)
+!        gm%cvBzb(ic) = bzb(ix,-1)
 
-        ic = nCi + nx + ix+1
-        gm%cvBb(ic,0:3) = bb(ix,ny,0:3)
-        gm%cvX(ic) = 0.25_R8*sum(crx(ix,ny,0:3))
-        gm%cvY(ic) = 0.25_R8*sum(cry(ix,ny,0:3))
-        gm%cvSz(ic) = gs(ix,ny,2)
-        gm%cvHz(ic) = hz(ix,ny)
-        gm%cvHx(ic) = hx(ix,ny)
-        gm%cvQgam(ic,0) = qz(ix,ny,1)
-        gm%cvQgam(ic,1) = -qz(ix,ny,0)
-        gm%cvVol(ic) = vol(ix,ny)
-        gm%cvOnedBsq(ic) = OnedBsq(ix,ny)
-        gm%cvBzb(ic) = bzb(ix,ny)
-      end do
+!        ic = nCi + nx + ix+1
+!        gm%cvBb(ic,0:3) = bb(ix,ny,0:3)
+!        gm%cvX(ic) = 0.25_R8*sum(crx(ix,ny,0:3))
+!        gm%cvY(ic) = 0.25_R8*sum(cry(ix,ny,0:3))
+!        gm%cvSz(ic) = gs(ix,ny,2)
+!        gm%cvHz(ic) = hz(ix,ny)
+!        gm%cvHx(ic) = hx(ix,ny)
+!        gm%cvQgam(ic,0) = qz(ix,ny,1)
+!        gm%cvQgam(ic,1) = -qz(ix,ny,0)
+!        gm%cvVol(ic) = vol(ix,ny)
+!        gm%cvOnedBsq(ic) = OnedBsq(ix,ny)
+!        gm%cvBzb(ic) = bzb(ix,ny)
+!      end do
  
-      do iy = 0, ny-1
-        ic = nCi + 2*nx + iy+1
-        gm%cvBb(ic,0:3) = bb(-1,iy,0:3)
-        gm%cvX(ic) = 0.25_R8*sum(crx(-1,iy,0:3))
-        gm%cvY(ic) = 0.25_R8*sum(cry(-1,iy,0:3))
-        gm%cvSz(ic) = gs(-1,iy,2)
-        gm%cvHz(ic) = hz(-1,iy)
-        gm%cvHx(ic) = hx(-1,iy)
-        gm%cvQgam(ic,0) = qz(-1,iy,1)
-        gm%cvQgam(ic,1) = -qz(-1,iy,0)
-        gm%cvVol(ic) = vol(-1,iy)
-        gm%cvOnedBsq(ic) = OnedBsq(-1,iy)
-        gm%cvBzb(ic) = bzb(-1,iy)
+!      do iy = 0, ny-1
+!        ic = nCi + 2*nx + iy+1
+!        gm%cvBb(ic,0:3) = bb(-1,iy,0:3)
+!        gm%cvX(ic) = 0.25_R8*sum(crx(-1,iy,0:3))
+!        gm%cvY(ic) = 0.25_R8*sum(cry(-1,iy,0:3))
+!        gm%cvSz(ic) = gs(-1,iy,2)
+!        gm%cvHz(ic) = hz(-1,iy)
+!        gm%cvHx(ic) = hx(-1,iy)
+!        gm%cvQgam(ic,0) = qz(-1,iy,1)
+!        gm%cvQgam(ic,1) = -qz(-1,iy,0)
+!        gm%cvVol(ic) = vol(-1,iy)
+!        gm%cvOnedBsq(ic) = OnedBsq(-1,iy)
+!        gm%cvBzb(ic) = bzb(-1,iy)
 
-        ic = nCi + 2*nx + ny + iy+1
-        gm%cvBb(ic,0:3) = bb(nx,iy,0:3)
-        gm%cvX(ic) = 0.25_R8*sum(crx(nx,iy,0:3))
-        gm%cvY(ic) = 0.25_R8*sum(cry(nx,iy,0:3))
-        gm%cvSz(ic) = gs(nx,iy,2)
-        gm%cvHz(ic) = hz(nx,iy)
-        gm%cvHx(ic) = hx(nx,iy)
-        gm%cvQgam(ic,0) = qz(nx,iy,1)
-        gm%cvQgam(ic,1) = -qz(nx,iy,0)
-        gm%cvVol(ic) = vol(nx,iy)
-        gm%cvOnedBsq(ic) = OnedBsq(nx,iy)
-        gm%cvBzb(ic) = bzb(nx,iy)
-      end do
+!        ic = nCi + 2*nx + ny + iy+1
+!        gm%cvBb(ic,0:3) = bb(nx,iy,0:3)
+!        gm%cvX(ic) = 0.25_R8*sum(crx(nx,iy,0:3))
+!        gm%cvY(ic) = 0.25_R8*sum(cry(nx,iy,0:3))
+!        gm%cvSz(ic) = gs(nx,iy,2)
+!        gm%cvHz(ic) = hz(nx,iy)
+!        gm%cvHx(ic) = hx(nx,iy)
+!        gm%cvQgam(ic,0) = qz(nx,iy,1)
+!        gm%cvQgam(ic,1) = -qz(nx,iy,0)
+!        gm%cvVol(ic) = vol(nx,iy)
+!        gm%cvOnedBsq(ic) = OnedBsq(nx,iy)
+!        gm%cvBzb(ic) = bzb(nx,iy)
+!      end do
 
 ! x faces
        do iy = 0, ny-1
          do ix = 1, nx-1
-           ifc = ix+1 + iy*(nx+1)
-           gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
-           gm%fcS(ifc) = gs(ix,iy,0)
-           gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
-           gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
-           gm%fcHt(ifc)   = 
-     .       0.5_R8*(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))             !cwdk: computation could be made exact
-           gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
-           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-           gm%fcQgam(ifc,0) = qc(ix,iy,0)
-           gm%fcQgam(ifc,1) = -qs(ix,iy,0)
+!           ifc = ix+1 + iy*(nx+1)
+           if(mpg%imapFcx(ix,iy)/=0) then
+             ifc = mpg%imapFcx(ix,iy)
+             gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
+             gm%fcS(ifc) = gs(ix,iy,0)
+             gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
+             gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
+             gm%fcHt(ifc)   = 
+     .         0.5_R8*(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))             !cwdk: computation could be made exact
+             gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
+             gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
+             gm%fcQgam(ifc,0) = qc(ix,iy,0)
+             gm%fcQgam(ifc,1) = -qs(ix,iy,0)
            gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
            gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
            gm%fcQbet(ifc,0) = 1.0_R8*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,1) = 0.0_R8
-           gm%fcPbs(ifc) = pbs(ix,iy,0)
-           gm%fcPbshz(ifc) = pbshz(ix,iy,0)
+             gm%fcQbet(ifc,1) = 0.0_R8
+             gm%fcPbs(ifc) = pbs(ix,iy,0)
+             gm%fcPbshz(ifc) = pbshz(ix,iy,0)
+           end if
          end do
 
 ! left boundary face (to guard cells)
          ix = 0
-         ifc = ix+1 + iy*(nx+1)
-         gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
-         gm%fcS(ifc) = gs(ix,iy,0)
-         gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
-         gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
-         gm%fcHt(ifc)   = hy(leftix(ix,iy),leftiy(ix,iy))                   !cwdk: computation could be made exact
-         gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
-         gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-         gm%fcQgam(ifc,0) = qc(ix,iy,0)
-         gm%fcQgam(ifc,1) = -qs(ix,iy,0)
+!         ifc = ix+1 + iy*(nx+1)
+         if(mpg%imapFcx(ix,iy)/=0) then
+           ifc = mpg%imapFcx(ix,iy)
+           gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
+           gm%fcS(ifc) = gs(ix,iy,0)
+           gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
+           gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
+           gm%fcHt(ifc)   = hy(leftix(ix,iy),leftiy(ix,iy))                   !cwdk: computation could be made exact
+           gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
+           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
+           gm%fcQgam(ifc,0) = qc(ix,iy,0)
+           gm%fcQgam(ifc,1) = -qs(ix,iy,0)
          gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcQbet(ifc,0) = 1.0_R8*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcQbet(ifc,1) = 0.0_R8
-         gm%fcPbs(ifc) = pbs(ix,iy,0)
-         gm%fcPbshz(ifc) = pbshz(ix,iy,0)
-
+           gm%fcQbet(ifc,1) = 0.0_R8
+           gm%fcPbs(ifc) = pbs(ix,iy,0)
+           gm%fcPbshz(ifc) = pbshz(ix,iy,0)
+         end if
 ! right guard cells
          ix = nx
-         ifc = ix+1 + iy*(nx+1)
-         gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
-         gm%fcS(ifc) = gs(ix,iy,0)
-         gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
-         gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
-         gm%fcHt(ifc)   = hy(ix,iy)                                         !cwdk: computation could be made exact
-         gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
-         gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-         gm%fcQgam(ifc,0) = qc(ix,iy,0)
-         gm%fcQgam(ifc,1) = -qs(ix,iy,0)
+!         ifc = ix+1 + iy*(nx+1)
+         if(mpg%imapFcx(ix,iy)/=0) then 
+           ifc = mpg%imapFcx(ix,iy)
+           gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
+           gm%fcS(ifc) = gs(ix,iy,0)
+           gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
+           gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
+           gm%fcHt(ifc)   = hy(ix,iy)                                         !cwdk: computation could be made exact
+           gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
+           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
+           gm%fcQgam(ifc,0) = qc(ix,iy,0)
+           gm%fcQgam(ifc,1) = -qs(ix,iy,0)
          gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcQbet(ifc,0) = 1.0_R8*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcQbet(ifc,1) = 0.0_R8
-         gm%fcPbs(ifc) = pbs(ix,iy,0)
-         gm%fcPbshz(ifc) = pbshz(ix,iy,0)
+           gm%fcQbet(ifc,1) = 0.0_R8
+           gm%fcPbs(ifc) = pbs(ix,iy,0)
+           gm%fcPbshz(ifc) = pbshz(ix,iy,0)
+         endif
        end do
 
 ! y faces
@@ -711,85 +1071,97 @@ cwdk      type(B2StateExt), public, save :: state_ext
 !     .               qs(-1,-1,1))
        do ix = 0, nx-1
          do iy = 1, ny-1
-           ifc = nfx + iy+1 + ix*(ny+1)
-           gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
-           gm%fcS(ifc) = gs(ix,iy,1)
-           gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))       !cwdk: change orientation ??
-           gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
-           gm%fcHt(ifc)   = 
-     .       0.5_R8*(hx(bottomix(ix,iy),bottomiy(ix,iy)) + hx(ix,iy))       !cwdk: computation could be made exact
-           gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
-           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-           gm%fcQgam(ifc,0) = qc(ix,iy,1)
-           gm%fcQgam(ifc,1) = qs(ix,iy,1)
-           gm%fcQalf(ifc,0) = 0.0_R8
+!           ifc = nfx + iy+1 + ix*(ny+1)
+           if(mpg%imapFcy(ix,iy)/=0) then
+             ifc = mpg%imapFcy(ix,iy)
+             gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
+             gm%fcS(ifc) = gs(ix,iy,1)
+             gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))       !cwdk: change orientation ??
+             gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
+             gm%fcHt(ifc)   = 
+     .         0.5_R8*(hx(bottomix(ix,iy),bottomiy(ix,iy)) + hx(ix,iy))       !cwdk: computation could be made exact
+             gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),
+     .                                    bottomiy(ix,iy))
+             gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
+             gm%fcQgam(ifc,0) = qc(ix,iy,1)
+             gm%fcQgam(ifc,1) = qs(ix,iy,1)
+             gm%fcQalf(ifc,0) = 0.0_R8
            gm%fcQalf(ifc,1) = 1.0_R8*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
            gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
            gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
      .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcPbs(ifc) = pbs(ix,iy,1)
-           gm%fcPbshz(ifc) = pbshz(ix,iy,1)
+             gm%fcPbs(ifc) = pbs(ix,iy,1)
+             gm%fcPbshz(ifc) = pbshz(ix,iy,1)
+           end if
          end do
 
 ! lower guard cells
          iy = 0
-         ifc = nfx + 1 + ix*(ny+1)
-         gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
-         gm%fcS(ifc) = gs(ix,iy,1)
-         gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))
-         gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
-         gm%fcHt(ifc)   = hx(bottomix(ix,iy),bottomiy(ix,iy))               !cwdk: computation could be made exact
-         gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
-         gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-         gm%fcQgam(ifc,0) = qc(ix,iy,1)
-         gm%fcQgam(ifc,1) = qs(ix,iy,1)
-         gm%fcQalf(ifc,0) = 0.0_R8
+!         ifc = nfx + 1 + ix*(ny+1)
+         if(mpg%imapFcy(ix,iy)/=0) then
+           ifc = mpg%imapFcy(ix,iy)  
+           gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
+           gm%fcS(ifc) = gs(ix,iy,1)
+           gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))
+           gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
+           gm%fcHt(ifc)   = hx(bottomix(ix,iy),bottomiy(ix,iy))               !cwdk: computation could be made exact
+           gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
+           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
+           gm%fcQgam(ifc,0) = qc(ix,iy,1)
+           gm%fcQgam(ifc,1) = qs(ix,iy,1)
+           gm%fcQalf(ifc,0) = 0.0_R8
          gm%fcQalf(ifc,1) = 1.0_R8*
      .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
      .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
      .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcPbs(ifc) = pbs(ix,iy,1)
-         gm%fcPbshz(ifc) = pbshz(ix,iy,1)
-
+           gm%fcPbs(ifc) = pbs(ix,iy,1)
+           gm%fcPbshz(ifc) = pbshz(ix,iy,1)
+         endif
 ! upper guard cells
          iy = ny
-         ifc = nfx + (ix+1)*(ny+1)
-         gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
-         gm%fcS(ifc) = gs(ix,iy,1)
-         gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))
-         gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
-         gm%fcHt(ifc)   = hx(ix,iy)                                         !cwdk: computation could be made exact
-         gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
-         gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-         gm%fcQgam(ifc,0) = qc(ix,iy,1)
-         gm%fcQgam(ifc,1) = qs(ix,iy,1)
-         gm%fcQalf(ifc,0) = 0.0_R8
+!         ifc = nfx + (ix+1)*(ny+1)
+         if(mpg%imapFcy(ix,iy)/=0) then
+           ifc = mpg%imapFcy(ix,iy)
+           gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
+           gm%fcS(ifc) = gs(ix,iy,1)
+           gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))
+           gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
+           gm%fcHt(ifc)   = hx(ix,iy)                                         !cwdk: computation could be made exact
+           gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
+           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
+           gm%fcQgam(ifc,0) = qc(ix,iy,1)
+           gm%fcQgam(ifc,1) = qs(ix,iy,1)
+           gm%fcQalf(ifc,0) = 0.0_R8
          gm%fcQalf(ifc,1) = 1.0_R8*
      .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
      .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
          gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
      .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcPbs(ifc) = pbs(ix,iy,1)
-         gm%fcPbshz(ifc) = pbshz(ix,iy,1)
+           gm%fcPbs(ifc) = pbs(ix,iy,1)
+           gm%fcPbshz(ifc) = pbshz(ix,iy,1)
+         end if
        end do      
 
 ! vertices
        do iy = 0, ny
          do ix = 0, nx
-           ivx = ix+1 + iy*(nx+1)
-           gm%vxX(ivx) = crx(ix,iy,0)
-           gm%vxY(ivx) = cry(ix,iy,0)
-           gm%vxFfbz(ivx) = ffbz(ix,iy,1)
-           gm%vxFpsi(ivx) = fpsi(ix,iy,1)
-           do i = 1, mpg%vxCvP(ivx,2)
-             ic = mpg%vxCv(mpg%vxCvP(ivx,1) + i - 1)
-             gm%vxVol(mpg%vxCvP(ivx,1) + i - 1) = 0.25*gm%cvVol(ic)
-           end do
+!           ivx = ix+1 + iy*(nx+1)
+           if(mpg%imapVx(ix,iy)/=0) then
+             ivx = mpg%imapVx(ix,iy)
+             gm%vxX(ivx) = crx(ix,iy,0)
+             gm%vxY(ivx) = cry(ix,iy,0)
+             gm%vxFfbz(ivx) = ffbz(ix,iy,1)
+             gm%vxFpsi(ivx) = fpsi(ix,iy,1)
+             do i = 1, mpg%vxCvP(ivx,2)
+               ic = mpg%vxCv(mpg%vxCvP(ivx,1) + i - 1)
+               gm%vxVol(mpg%vxCvP(ivx,1) + i - 1) = 0.25*gm%cvVol(ic)
+             end do
+           end if
          end do
        end do
 
@@ -810,7 +1182,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
      .                              abs(gm%cvBb(mpg%fcCv(ifc,2),0))
         end do
        end if
-      end do
+      end do      
 
 
 *  .. unit vector of the magnetic field in X,Y,Z coorinates
@@ -927,17 +1299,18 @@ cwdk              poloidal face centers (E/W)
 
 **********************************************************************
       
-      subroutine prep_plasma (nx, ny, ns, nCv, nCi, nFc, st)
+      subroutine prep_plasma (nx, ny, ns, nCv, nCi, nFc, mpg, st)
       
       implicit none
       integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
+      type(mapping), intent(in) :: mpg
       type(B2State), intent(inout) :: st
       integer :: ix, iy, ic, ifc, nfx
 
       call createB2State (nCv, nFc, ns, st)
       call createB2Diagnostic( nCv, ns, nnreg, st % diag )
 
-      nfx = (nx+1)*ny
+!      nfx = (nx+1)*ny
 
       st % ns = ns
       st % ismain = 1
@@ -945,7 +1318,96 @@ cwdk              poloidal face centers (E/W)
 ! cell volumes 
       do iy = 0, ny-1
         do ix = 0, nx-1
-          ic = (ix+1) + iy*nx
+          if(mpg%imapCv(ix,iy)/=0) then
+            ic =  mpg%imapCv(ix,iy)
+!          ic = (ix+1) + iy*nx
+! B2plasma
+            st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
+            st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
+            st % pl % po(ic) = po(ix,iy)
+            st % pl % te(ic) = te(ix,iy)
+            st % pl % ti(ic) = ti(ix,iy)
+
+! B2coeff
+            st % co % ceqp(ic) = ceqp(ix,iy)
+
+! from b2coeffwork
+            st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
+            st % co % dpa0(ic,0:ns-1) = dpa0(ix,iy,0:ns-1)
+            st % co % vla0(ic,0:1,0:ns-1) = vla0(ix,iy,0:1,0:ns-1)
+            st % co % vsa0(ic,0:ns-1) = vsa0(ix,iy,0:ns-1)
+            st % co % hci0(ic) = hci0(ix,iy)
+            st % co % hcib(ic,0:ns-1) = hcib(ix,iy,0:ns-1)
+            st % co % hce0(ic) = hce0(ix,iy)
+            st % co % sig0(ic) = sig0(ix,iy)
+            st % co % alf0(ic) = alf0(ix,iy)
+      
+! kinetic energy
+            st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
+     
+! derived state quantities
+            st % dv % ne(ic) = ne(ix,iy)
+            st % dv % ne2(ic) = ne2(ix,iy)
+            st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
+!          st % dv % ue(ic) = ue(ix,iy)
+      
+! residuals
+            st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
+            st % dv % resco(ic,0:ns-1) = resco(ix,iy,0:ns-1)
+            st % dv % respo(ic) = respo(ix,iy)
+            st % dv % reshe(ic) = reshe(ix,iy)
+            st % dv % reshi(ic) = reshi(ix,iy)
+!          st % dv % resht(ic) = resht(ix,iy)
+            st % dv % resmt(ic) = resmt(ix,iy)
+      
+! corrections
+            st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
+            st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
+            st % dv % corut(ic) = corut(ix,iy)
+            st % dv % corpo(ic) = corpo(ix,iy)
+!          st % dv % cortt(ic) = cortt(ix,iy)
+            st % dv % corte(ic) = corte(ix,iy)
+            st % dv % corti(ic) = corti(ix,iy)
+      
+! coupling coefficients
+            st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
+            st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
+            st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
+            st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
+
+! B2SourceWork
+!          st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!          st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!          st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!          st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!          st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!          st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+
+! B2rates
+            st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
+            st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
+            st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
+            st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
+            st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
+            st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
+            st % rt % rlz2(ic,0:1,0:ns-1) = rlz2(ix,iy,0:1,0:ns-1)
+            st % rt % rlpt(ic,0:1,0:ns-1) = rlpt(ix,iy,0:1,0:ns-1)
+            st % rt % rlpi(ic,0:1,0:ns-1) = rlpi(ix,iy,0:1,0:ns-1)
+
+            st % rt % rza(ic,0:ns-1) = rza(ix,iy,0:ns-1)
+            st % rt % rz2(ic,0:ns-1) = rz2(ix,iy,0:ns-1)
+            st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
+            st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
+          end if
+        end do
+      end do
+      
+! guard cells iy = -1 and iy = ny
+      do ix = 0, nx-1
+!        ic = nCi + ix+1
+        iy = -1
+        if(mpg%imapCv(ix,iy)/=0) then
+          ic=mpg%imapCv(ix,iy)
 ! B2plasma
           st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
           st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
@@ -966,7 +1428,7 @@ cwdk              poloidal face centers (E/W)
           st % co % hce0(ic) = hce0(ix,iy)
           st % co % sig0(ic) = sig0(ix,iy)
           st % co % alf0(ic) = alf0(ix,iy)
-      
+        
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
      
@@ -974,15 +1436,15 @@ cwdk              poloidal face centers (E/W)
           st % dv % ne(ic) = ne(ix,iy)
           st % dv % ne2(ic) = ne2(ix,iy)
           st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!          st % dv % ue(ic) = ue(ix,iy)
-      
+!        st % dv % ue(ic) = ue(ix,iy)
+        
 ! residuals
           st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
           st % dv % resco(ic,0:ns-1) = resco(ix,iy,0:ns-1)
           st % dv % respo(ic) = respo(ix,iy)
           st % dv % reshe(ic) = reshe(ix,iy)
           st % dv % reshi(ic) = reshi(ix,iy)
-!          st % dv % resht(ic) = resht(ix,iy)
+!        st % dv % resht(ic) = resht(ix,iy)
           st % dv % resmt(ic) = resmt(ix,iy)
       
 ! corrections
@@ -990,7 +1452,89 @@ cwdk              poloidal face centers (E/W)
           st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
           st % dv % corut(ic) = corut(ix,iy)
           st % dv % corpo(ic) = corpo(ix,iy)
-!          st % dv % cortt(ic) = cortt(ix,iy)
+!        st % dv % cortt(ic) = cortt(ix,iy)
+          st % dv % corte(ic) = corte(ix,iy)
+          st % dv % corti(ic) = corti(ix,iy)
+      
+! coupling coefficients
+          st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
+          st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
+          st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
+          st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
+        
+! B2SourceWork
+!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+        
+! B2rates
+          st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
+          st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
+          st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
+          st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
+          st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
+          st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
+          st % rt % rlz2(ic,0:1,0:ns-1) = rlz2(ix,iy,0:1,0:ns-1)
+          st % rt % rlpt(ic,0:1,0:ns-1) = rlpt(ix,iy,0:1,0:ns-1)
+          st % rt % rlpi(ic,0:1,0:ns-1) = rlpi(ix,iy,0:1,0:ns-1)
+
+          st % rt % rza(ic,0:ns-1) = rza(ix,iy,0:ns-1)
+          st % rt % rz2(ic,0:ns-1) = rz2(ix,iy,0:ns-1)
+          st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
+          st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
+        endif
+ !       ic = nCi + nx + ix+1
+        iy = ny
+        if(mpg%imapCv(ix,iy)/=0) then
+          ic=mpg%imapCv(ix,iy)
+! B2plasma
+          st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
+          st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
+          st % pl % po(ic) = po(ix,iy)
+          st % pl % te(ic) = te(ix,iy)
+          st % pl % ti(ic) = ti(ix,iy)
+        
+! B2coeff
+          st % co % ceqp(ic) = ceqp(ix,iy)
+         
+! from b2coeffwork
+          st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
+          st % co % dpa0(ic,0:ns-1) = dpa0(ix,iy,0:ns-1)
+          st % co % vla0(ic,0:1,0:ns-1) = vla0(ix,iy,0:1,0:ns-1)
+          st % co % vsa0(ic,0:ns-1) = vsa0(ix,iy,0:ns-1)
+          st % co % hci0(ic) = hci0(ix,iy)
+          st % co % hcib(ic,0:ns-1) = hcib(ix,iy,0:ns-1)
+          st % co % hce0(ic) = hce0(ix,iy)
+          st % co % sig0(ic) = sig0(ix,iy)
+          st % co % alf0(ic) = alf0(ix,iy)
+        
+! kinetic energy
+          st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
+        
+! derived state quantities
+          st % dv % ne(ic) = ne(ix,iy)
+          st % dv % ne2(ic) = ne2(ix,iy)
+          st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
+!        st % dv % ue(ic) = ue(ix,iy)
+        
+! residuals
+          st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
+          st % dv % resco(ic,0:ns-1) = resco(ix,iy,0:ns-1)
+          st % dv % respo(ic) = respo(ix,iy)
+          st % dv % reshe(ic) = reshe(ix,iy)
+          st % dv % reshi(ic) = reshi(ix,iy)
+!        st % dv % resht(ic) = resht(ix,iy)
+          st % dv % resmt(ic) = resmt(ix,iy)
+      
+! corrections
+          st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
+          st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
+          st % dv % corut(ic) = corut(ix,iy)
+          st % dv % corpo(ic) = corpo(ix,iy)
+!        st % dv % cortt(ic) = cortt(ix,iy)
           st % dv % corte(ic) = corte(ix,iy)
           st % dv % corti(ic) = corti(ix,iy)
       
@@ -1001,12 +1545,98 @@ cwdk              poloidal face centers (E/W)
           st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
-!          st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!          st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!          st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!          st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!          st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!          st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
+
+! B2rates
+          st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
+          st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
+          st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
+          st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
+          st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
+          st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
+          st % rt % rlz2(ic,0:1,0:ns-1) = rlz2(ix,iy,0:1,0:ns-1)
+          st % rt % rlpt(ic,0:1,0:ns-1) = rlpt(ix,iy,0:1,0:ns-1)
+          st % rt % rlpi(ic,0:1,0:ns-1) = rlpi(ix,iy,0:1,0:ns-1)
+ 
+          st % rt % rza(ic,0:ns-1) = rza(ix,iy,0:ns-1)
+          st % rt % rz2(ic,0:ns-1) = rz2(ix,iy,0:ns-1)
+          st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
+          st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
+        endif    
+      end do
+
+! guard cells ix = -1 and ix = nx
+      do iy = 0, ny-1
+!        ic = nCi + 2*nx + iy+1
+        ix = -1
+        if(mpg%imapCv(ix,iy)/=0) then
+          ic=mpg%imapCv(ix,iy)
+! B2plasma
+          st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
+          st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
+          st % pl % po(ic) = po(ix,iy)
+          st % pl % te(ic) = te(ix,iy)
+          st % pl % ti(ic) = ti(ix,iy)
+        
+! B2coeff
+          st % co % ceqp(ic) = ceqp(ix,iy)
+        
+! from b2coeffwork
+          st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
+          st % co % dpa0(ic,0:ns-1) = dpa0(ix,iy,0:ns-1)
+          st % co % vla0(ic,0:1,0:ns-1) = vla0(ix,iy,0:1,0:ns-1)
+          st % co % vsa0(ic,0:ns-1) = vsa0(ix,iy,0:ns-1)
+          st % co % hci0(ic) = hci0(ix,iy)
+          st % co % hcib(ic,0:ns-1) = hcib(ix,iy,0:ns-1)
+          st % co % hce0(ic) = hce0(ix,iy)
+          st % co % sig0(ic) = sig0(ix,iy)
+          st % co % alf0(ic) = alf0(ix,iy)
+        
+! kinetic energy
+          st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
+        
+! derived state quantities
+          st % dv % ne(ic) = ne(ix,iy)
+          st % dv % ne2(ic) = ne2(ix,iy)
+          st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
+!        st % dv % ue(ic) = ue(ix,iy)
+        
+! residuals
+          st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
+          st % dv % resco(ic,0:ns-1) = resco(ix,iy,0:ns-1)
+          st % dv % respo(ic) = respo(ix,iy)
+          st % dv % reshe(ic) = reshe(ix,iy)
+          st % dv % reshi(ic) = reshi(ix,iy)
+!        st % dv % resht(ic) = resht(ix,iy)
+          st % dv % resmt(ic) = resmt(ix,iy)
+      
+! corrections
+          st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
+          st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
+          st % dv % corut(ic) = corut(ix,iy)
+          st % dv % corpo(ic) = corpo(ix,iy)
+!        st % dv % cortt(ic) = cortt(ix,iy)
+          st % dv % corte(ic) = corte(ix,iy)
+          st % dv % corti(ic) = corti(ix,iy)
+      
+! coupling coefficients
+          st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
+          st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
+          st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
+          st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
+
+! B2SourceWork
+!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
+!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
+!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
+!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
+!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
+!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
@@ -1023,311 +1653,65 @@ cwdk              poloidal face centers (E/W)
           st % rt % rz2(ic,0:ns-1) = rz2(ix,iy,0:ns-1)
           st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
           st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
+        end if
 
-        end do
-      end do
-      
-! guard cells iy = -1 and iy = ny
-      do ix = 0, nx-1
-        ic = nCi + ix+1
-        iy = -1
-! B2plasma
-        st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
-        st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
-        st % pl % po(ic) = po(ix,iy)
-        st % pl % te(ic) = te(ix,iy)
-        st % pl % ti(ic) = ti(ix,iy)
-
-! B2coeff
-        st % co % ceqp(ic) = ceqp(ix,iy)
-
-! from b2coeffwork
-        st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
-        st % co % dpa0(ic,0:ns-1) = dpa0(ix,iy,0:ns-1)
-        st % co % vla0(ic,0:1,0:ns-1) = vla0(ix,iy,0:1,0:ns-1)
-        st % co % vsa0(ic,0:ns-1) = vsa0(ix,iy,0:ns-1)
-        st % co % hci0(ic) = hci0(ix,iy)
-        st % co % hcib(ic,0:ns-1) = hcib(ix,iy,0:ns-1)
-        st % co % hce0(ic) = hce0(ix,iy)
-        st % co % sig0(ic) = sig0(ix,iy)
-        st % co % alf0(ic) = alf0(ix,iy)
-        
-! kinetic energy
-        st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
-     
-! derived state quantities
-        st % dv % ne(ic) = ne(ix,iy)
-        st % dv % ne2(ic) = ne2(ix,iy)
-        st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!        st % dv % ue(ic) = ue(ix,iy)
-        
-! residuals
-        st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
-        st % dv % resco(ic,0:ns-1) = resco(ix,iy,0:ns-1)
-        st % dv % respo(ic) = respo(ix,iy)
-        st % dv % reshe(ic) = reshe(ix,iy)
-        st % dv % reshi(ic) = reshi(ix,iy)
-!        st % dv % resht(ic) = resht(ix,iy)
-        st % dv % resmt(ic) = resmt(ix,iy)
-      
-! corrections
-        st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
-        st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
-        st % dv % corut(ic) = corut(ix,iy)
-        st % dv % corpo(ic) = corpo(ix,iy)
-!        st % dv % cortt(ic) = cortt(ix,iy)
-        st % dv % corte(ic) = corte(ix,iy)
-        st % dv % corti(ic) = corti(ix,iy)
-      
-! coupling coefficients
-        st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
-        st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
-        st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
-        st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
-        
-! B2SourceWork
-!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
-        
-! B2rates
-        st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-        st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
-        st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-        st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
-        st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
-        st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
-        st % rt % rlz2(ic,0:1,0:ns-1) = rlz2(ix,iy,0:1,0:ns-1)
-        st % rt % rlpt(ic,0:1,0:ns-1) = rlpt(ix,iy,0:1,0:ns-1)
-        st % rt % rlpi(ic,0:1,0:ns-1) = rlpi(ix,iy,0:1,0:ns-1)
-
-        st % rt % rza(ic,0:ns-1) = rza(ix,iy,0:ns-1)
-        st % rt % rz2(ic,0:ns-1) = rz2(ix,iy,0:ns-1)
-        st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
-        st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
-
-        ic = nCi + nx + ix+1
-        iy = ny
-! B2plasma
-        st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
-        st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
-        st % pl % po(ic) = po(ix,iy)
-        st % pl % te(ic) = te(ix,iy)
-        st % pl % ti(ic) = ti(ix,iy)
-        
-! B2coeff
-        st % co % ceqp(ic) = ceqp(ix,iy)
-        
-! from b2coeffwork
-        st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
-        st % co % dpa0(ic,0:ns-1) = dpa0(ix,iy,0:ns-1)
-        st % co % vla0(ic,0:1,0:ns-1) = vla0(ix,iy,0:1,0:ns-1)
-        st % co % vsa0(ic,0:ns-1) = vsa0(ix,iy,0:ns-1)
-        st % co % hci0(ic) = hci0(ix,iy)
-        st % co % hcib(ic,0:ns-1) = hcib(ix,iy,0:ns-1)
-        st % co % hce0(ic) = hce0(ix,iy)
-        st % co % sig0(ic) = sig0(ix,iy)
-        st % co % alf0(ic) = alf0(ix,iy)
-        
-! kinetic energy
-        st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
-        
-! derived state quantities
-        st % dv % ne(ic) = ne(ix,iy)
-        st % dv % ne2(ic) = ne2(ix,iy)
-        st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!        st % dv % ue(ic) = ue(ix,iy)
-        
-! residuals
-        st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
-        st % dv % resco(ic,0:ns-1) = resco(ix,iy,0:ns-1)
-        st % dv % respo(ic) = respo(ix,iy)
-        st % dv % reshe(ic) = reshe(ix,iy)
-        st % dv % reshi(ic) = reshi(ix,iy)
-!        st % dv % resht(ic) = resht(ix,iy)
-        st % dv % resmt(ic) = resmt(ix,iy)
-      
-! corrections
-        st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
-        st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
-        st % dv % corut(ic) = corut(ix,iy)
-        st % dv % corpo(ic) = corpo(ix,iy)
-!        st % dv % cortt(ic) = cortt(ix,iy)
-        st % dv % corte(ic) = corte(ix,iy)
-        st % dv % corti(ic) = corti(ix,iy)
-      
-! coupling coefficients
-        st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
-        st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
-        st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
-        st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
-
-! B2SourceWork
-!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
-
-! B2rates
-        st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-        st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
-        st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-        st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
-        st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
-        st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
-        st % rt % rlz2(ic,0:1,0:ns-1) = rlz2(ix,iy,0:1,0:ns-1)
-        st % rt % rlpt(ic,0:1,0:ns-1) = rlpt(ix,iy,0:1,0:ns-1)
-        st % rt % rlpi(ic,0:1,0:ns-1) = rlpi(ix,iy,0:1,0:ns-1)
-
-        st % rt % rza(ic,0:ns-1) = rza(ix,iy,0:ns-1)
-        st % rt % rz2(ic,0:ns-1) = rz2(ix,iy,0:ns-1)
-        st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
-        st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
-      end do
-
-! guard cells ix = -1 and ix = nx
-      do iy = 0, ny-1
-        ic = nCi + 2*nx + iy+1
-        ix = -1
-! B2plasma
-        st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
-        st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
-        st % pl % po(ic) = po(ix,iy)
-        st % pl % te(ic) = te(ix,iy)
-        st % pl % ti(ic) = ti(ix,iy)
-        
-! B2coeff
-        st % co % ceqp(ic) = ceqp(ix,iy)
-        
-! from b2coeffwork
-        st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
-        st % co % dpa0(ic,0:ns-1) = dpa0(ix,iy,0:ns-1)
-        st % co % vla0(ic,0:1,0:ns-1) = vla0(ix,iy,0:1,0:ns-1)
-        st % co % vsa0(ic,0:ns-1) = vsa0(ix,iy,0:ns-1)
-        st % co % hci0(ic) = hci0(ix,iy)
-        st % co % hcib(ic,0:ns-1) = hcib(ix,iy,0:ns-1)
-        st % co % hce0(ic) = hce0(ix,iy)
-        st % co % sig0(ic) = sig0(ix,iy)
-        st % co % alf0(ic) = alf0(ix,iy)
-        
-! kinetic energy
-        st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
-        
-! derived state quantities
-        st % dv % ne(ic) = ne(ix,iy)
-        st % dv % ne2(ic) = ne2(ix,iy)
-        st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
-!        st % dv % ue(ic) = ue(ix,iy)
-        
-! residuals
-        st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
-        st % dv % resco(ic,0:ns-1) = resco(ix,iy,0:ns-1)
-        st % dv % respo(ic) = respo(ix,iy)
-        st % dv % reshe(ic) = reshe(ix,iy)
-        st % dv % reshi(ic) = reshi(ix,iy)
-!        st % dv % resht(ic) = resht(ix,iy)
-        st % dv % resmt(ic) = resmt(ix,iy)
-      
-! corrections
-        st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
-        st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
-        st % dv % corut(ic) = corut(ix,iy)
-        st % dv % corpo(ic) = corpo(ix,iy)
-!        st % dv % cortt(ic) = cortt(ix,iy)
-        st % dv % corte(ic) = corte(ix,iy)
-        st % dv % corti(ic) = corti(ix,iy)
-      
-! coupling coefficients
-        st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
-        st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
-        st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
-        st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
-
-! B2SourceWork
-!        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
-!        st % srw % she0(ic,0:3) = she0(ix,iy,0:3)
-!        st % srw % shi0(ic,0:3) = shi0(ix,iy,0:3)
-!        st % srw % smo0(ic,0:3,0:ns-1) = smo0(ix,iy,0:3,0:ns-1)
-!        st % srw % smq0(ic,0:3,0:ns-1) = smq0(ix,iy,0:3,0:ns-1)
-!        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
-
-! B2rates
-        st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-        st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
-        st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-        st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
-        st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
-        st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
-        st % rt % rlz2(ic,0:1,0:ns-1) = rlz2(ix,iy,0:1,0:ns-1)
-        st % rt % rlpt(ic,0:1,0:ns-1) = rlpt(ix,iy,0:1,0:ns-1)
-        st % rt % rlpi(ic,0:1,0:ns-1) = rlpi(ix,iy,0:1,0:ns-1)
-
-        st % rt % rza(ic,0:ns-1) = rza(ix,iy,0:ns-1)
-        st % rt % rz2(ic,0:ns-1) = rz2(ix,iy,0:ns-1)
-        st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
-        st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
-
-
-        ic = nCi + 2*nx + ny + iy+1
+!        ic = nCi + 2*nx + ny + iy+1
         ix = nx
+        if(mpg%imapCv(ix,iy)/=0) then
+          ic = mpg%imapCv(ix,iy)
 ! B2plasma
-        st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
-        st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
-        st % pl % po(ic) = po(ix,iy)
-        st % pl % te(ic) = te(ix,iy)
-        st % pl % ti(ic) = ti(ix,iy)
+          st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
+          st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
+          st % pl % po(ic) = po(ix,iy)
+          st % pl % te(ic) = te(ix,iy)
+          st % pl % ti(ic) = ti(ix,iy)
         
 ! B2coeff
-        st % co % ceqp(ic) = ceqp(ix,iy)
+          st % co % ceqp(ic) = ceqp(ix,iy)
         
 ! from b2coeffwork
-        st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
-        st % co % dpa0(ic,0:ns-1) = dpa0(ix,iy,0:ns-1)
-        st % co % vla0(ic,0:1,0:ns-1) = vla0(ix,iy,0:1,0:ns-1)
-        st % co % vsa0(ic,0:ns-1) = vsa0(ix,iy,0:ns-1)
-        st % co % hci0(ic) = hci0(ix,iy)
-        st % co % hcib(ic,0:ns-1) = hcib(ix,iy,0:ns-1)
-        st % co % hce0(ic) = hce0(ix,iy)
-        st % co % sig0(ic) = sig0(ix,iy)
-        st % co % alf0(ic) = alf0(ix,iy)
+          st % co % dna0(ic,0:ns-1) = dna0(ix,iy,0:ns-1)
+          st % co % dpa0(ic,0:ns-1) = dpa0(ix,iy,0:ns-1)
+          st % co % vla0(ic,0:1,0:ns-1) = vla0(ix,iy,0:1,0:ns-1)
+          st % co % vsa0(ic,0:ns-1) = vsa0(ix,iy,0:ns-1)
+          st % co % hci0(ic) = hci0(ix,iy)
+          st % co % hcib(ic,0:ns-1) = hcib(ix,iy,0:ns-1)
+          st % co % hce0(ic) = hce0(ix,iy)
+          st % co % sig0(ic) = sig0(ix,iy)
+          st % co % alf0(ic) = alf0(ix,iy)
         
 ! kinetic energy
-        st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
+          st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
         
 ! derived state quantities
-        st % dv % ne(ic) = ne(ix,iy)
-        st % dv % ne2(ic) = ne2(ix,iy)
-        st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
+          st % dv % ne(ic) = ne(ix,iy)
+          st % dv % ne2(ic) = ne2(ix,iy)
+          st % dv % ni(ic,0:1) = ni(ix,iy,0:1)
 !        st % dv % ue(ic) = ue(ix,iy)
         
 ! residuals
-        st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
-        st % dv % resco(ic,0:ns-1) = resco(ix,iy,0:ns-1)
-        st % dv % respo(ic) = respo(ix,iy)
-        st % dv % reshe(ic) = reshe(ix,iy)
-        st % dv % reshi(ic) = reshi(ix,iy)
+          st % dv % resmo(ic,0:ns-1) = resmo(ix,iy,0:ns-1)
+          st % dv % resco(ic,0:ns-1) = resco(ix,iy,0:ns-1)
+          st % dv % respo(ic) = respo(ix,iy)
+          st % dv % reshe(ic) = reshe(ix,iy)
+          st % dv % reshi(ic) = reshi(ix,iy)
 !        st % dv % resht(ic) = resht(ix,iy)
-        st % dv % resmt(ic) = resmt(ix,iy)
+          st % dv % resmt(ic) = resmt(ix,iy)
       
 ! corrections
-        st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
-        st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
-        st % dv % corut(ic) = corut(ix,iy)
-        st % dv % corpo(ic) = corpo(ix,iy)
+          st % dv % corua(ic,0:ns-1) = corua(ix,iy,0:ns-1)
+          st % dv % corpa(ic,0:ns-1) = corpa(ix,iy,0:ns-1)
+          st % dv % corut(ic) = corut(ix,iy)
+          st % dv % corpo(ic) = corpo(ix,iy)
 !        st % dv % cortt(ic) = cortt(ix,iy)
-        st % dv % corte(ic) = corte(ix,iy)
-        st % dv % corti(ic) = corti(ix,iy)
+          st % dv % corte(ic) = corte(ix,iy)
+          st % dv % corti(ic) = corti(ix,iy)
       
 ! coupling coefficients
-        st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
-        st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
-        st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
-        st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
+          st % dv % pcca(ic,0,0:ns-1) = pcca(ix,iy,0,0,0:ns-1)
+          st % dv % pccm(ic,0) = pccm(ix,iy,0,0)
+          st % dv % pcca(ic,1,0:ns-1) = pcca(ix,iy,1,1,0:ns-1)
+          st % dv % pccm(ic,1) = pccm(ix,iy,1,1)
 
 ! B2SourceWork
 !        st % srw % sch0(ic,0:3) = sch0(ix,iy,0:3)
@@ -1338,20 +1722,21 @@ cwdk              poloidal face centers (E/W)
 !        st % srw % sna0(ic,0:3,0:ns-1) = sna0(ix,iy,0:3,0:ns-1)
 
 ! B2rates
-        st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-        st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
-        st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-        st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
-        st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
-        st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
-        st % rt % rlz2(ic,0:1,0:ns-1) = rlz2(ix,iy,0:1,0:ns-1)
-        st % rt % rlpt(ic,0:1,0:ns-1) = rlpt(ix,iy,0:1,0:ns-1)
-        st % rt % rlpi(ic,0:1,0:ns-1) = rlpi(ix,iy,0:1,0:ns-1)
+          st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
+          st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
+          st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
+          st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
+          st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
+          st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
+          st % rt % rlz2(ic,0:1,0:ns-1) = rlz2(ix,iy,0:1,0:ns-1)
+          st % rt % rlpt(ic,0:1,0:ns-1) = rlpt(ix,iy,0:1,0:ns-1)
+          st % rt % rlpi(ic,0:1,0:ns-1) = rlpi(ix,iy,0:1,0:ns-1)
 
-        st % rt % rza(ic,0:ns-1) = rza(ix,iy,0:ns-1)
-        st % rt % rz2(ic,0:ns-1) = rz2(ix,iy,0:ns-1)
-        st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
-        st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
+          st % rt % rza(ic,0:ns-1) = rza(ix,iy,0:ns-1)
+          st % rt % rz2(ic,0:ns-1) = rz2(ix,iy,0:ns-1)
+          st % rt % rpt(ic,0:ns-1) = rpt(ix,iy,0:ns-1)
+          st % rt % rpi(ic,0:ns-1) = rpi(ix,iy,0:ns-1)
+        end if
       end do
 
 
@@ -1359,120 +1744,121 @@ cwdk              poloidal face centers (E/W)
 ! x faces
       do iy = 0, ny-1
         do ix = 0, nx
-          ifc = ix+1 + iy*(nx+1)
-
+!          ifc = ix+1 + iy*(nx+1)
+          if(mpg%imapFcx(ix,iy)/=0) then
+            ifc = mpg%imapFcx(ix,iy) 
 ! B2coeff
-          st % co % csig_an(ifc,0:1) = csig_an(ix,iy,0,0:1)
-          st % co % calf(ifc,0:1) = calf(ix,iy,0,0:1)
+            st % co % csig_an(ifc,0:1) = csig_an(ix,iy,0,0:1)
+            st % co % calf(ifc,0:1) = calf(ix,iy,0,0:1)
 
-          st % co % csig(ifc,0:1) = csig(ix,iy,0,0:1)
-          st % co % csigin(ifc,0:1,0:ns-1,0:ns-1) = 
+            st % co % csig(ifc,0:1) = csig(ix,iy,0,0:1)
+            st % co % csigin(ifc,0:1,0:ns-1,0:ns-1) = 
      .              csigin(ix,iy,0,0:1,0:ns-1,0:ns-1)
 
-          st % co % chve(ifc,0:1) = chve(ix,iy,0,0:1)
-          st % co % chce(ifc,0:1) = chce(ix,iy,0,0:1)
-          st % co % chvemx(ifc) = chvemx(ix,iy)
+            st % co % chve(ifc,0:1) = chve(ix,iy,0,0:1)
+            st % co % chce(ifc,0:1) = chce(ix,iy,0,0:1)
+            st % co % chvemx(ifc) = chvemx(ix,iy)
 
-          st % co % chvi(ifc,0:1) = chvi(ix,iy,0,0:1)
-          st % co % chci(ifc,0:1) = chci(ix,iy,0,0:1)
-          st % co % chvimx(ifc) = chvimx(ix,iy)
+            st % co % chvi(ifc,0:1) = chvi(ix,iy,0,0:1)
+            st % co % chci(ifc,0:1) = chci(ix,iy,0,0:1)
+            st % co % chvimx(ifc) = chvimx(ix,iy)
 
-          st % co % cvla(ifc,0:1,0:ns-1) = cvla(ix,iy,0,0:1,0:ns-1)
-          st % co % cdna(ifc,0:1,0:ns-1) = cdna(ix,iy,0,0:1,0:ns-1)
-          st % co % cdpa(ifc,0:1,0:ns-1) = cdpa(ix,iy,0,0:1,0:ns-1)
+            st % co % cvla(ifc,0:1,0:ns-1) = cvla(ix,iy,0,0:1,0:ns-1)
+            st % co % cdna(ifc,0:1,0:ns-1) = cdna(ix,iy,0,0:1,0:ns-1)
+            st % co % cdpa(ifc,0:1,0:ns-1) = cdpa(ix,iy,0,0:1,0:ns-1)
 
-          st % co % cvsa(ifc,0:1,0:ns-1) = cvsa(ix,iy,0,0:1,0:ns-1)
-          st % co % cthe(ifc,0:ns-1) = cthe(ix,iy,0:ns-1)
-          st % co % cthi(ifc,0:ns-1) = cthi(ix,iy,0:ns-1)
-          st % co % cvsa_cl(ifc,0:1,0:ns-1) = 
+            st % co % cvsa(ifc,0:1,0:ns-1) = cvsa(ix,iy,0,0:1,0:ns-1)
+            st % co % cthe(ifc,0:ns-1) = cthe(ix,iy,0:ns-1)
+            st % co % cthi(ifc,0:ns-1) = cthi(ix,iy,0:ns-1)
+            st % co % cvsa_cl(ifc,0:1,0:ns-1) = 
      .                                 cvsa_cl(ix,iy,0,0:1,0:ns-1)
 
-          st % co % cddi(ifc,0:1,0:ns-1) = cddi(ix,iy,0,0:1,0:ns-1)
+            st % co % cddi(ifc,0:1,0:ns-1) = cddi(ix,iy,0,0:1,0:ns-1)
 
-          st % co % fllim0fna(ifc,0:1,0:ns-1) = 
+            st % co % fllim0fna(ifc,0:1,0:ns-1) = 
      &              fllim0fna(ix,iy,0,0:1,0:ns-1)
-          st % co % fllim0fhi(ifc,0:1,0:ns-1) = 
+            st % co % fllim0fhi(ifc,0:1,0:ns-1) = 
      &              fllim0fhi(ix,iy,0,0:1,0:ns-1)
-          st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
-      
+            st % co % fllimvisc(ifc,0:ns-1) = fllimvisc(ix,iy,0:ns-1)
+       
 ! fluxes
-          st % dv % fch(ifc,0:1) = fch(ix,iy,0,0:1)
-          st % dv % fch_32(ifc,0:1) = fch_32(ix,iy,0,0:1)
-          st % dv % fch_52(ifc,0:1) = fch_52(ix,iy,0,0:1)
-          st % dv % fch_p(ifc,0:1) = fch_p(ix,iy,0,0:1)
-          st % dv % fchdia(ifc,0:1) = fchdia(ix,iy,0,0:1)
-          st % dv % fchin(ifc,0:1) = fchin(ix,iy,0,0:1)
-          st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,0,0:1)
-          st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,0,0:1)
-          st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,0,0:1)
-          st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,0,0:1)
-          st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,0,0:1)
+            st % dv % fch(ifc,0:1) = fch(ix,iy,0,0:1)
+            st % dv % fch_32(ifc,0:1) = fch_32(ix,iy,0,0:1)
+            st % dv % fch_52(ifc,0:1) = fch_52(ix,iy,0,0:1)
+            st % dv % fch_p(ifc,0:1) = fch_p(ix,iy,0,0:1)
+            st % dv % fchdia(ifc,0:1) = fchdia(ix,iy,0,0:1)
+            st % dv % fchin(ifc,0:1) = fchin(ix,iy,0,0:1)
+            st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,0,0:1)
+            st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,0,0:1)
+            st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,0,0:1)
+            st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,0,0:1)
+            st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,0,0:1)
 
-          st % dv % fne(ifc,0:1) = fne(ix,iy,0,0:1)
-          st % dv % fne_32(ifc,0:1) = fne_32(ix,iy,0,0:1)
-          st % dv % fne_52(ifc,0:1) = fne_52(ix,iy,0,0:1)
+            st % dv % fne(ifc,0:1) = fne(ix,iy,0,0:1)
+            st % dv % fne_32(ifc,0:1) = fne_32(ix,iy,0,0:1)
+            st % dv % fne_52(ifc,0:1) = fne_52(ix,iy,0,0:1)
 
-          st % dv % fni(ifc,0:1) = fni(ix,iy,0,0:1)
-          st % dv % fni_32(ifc,0:1) = fni_32(ix,iy,0,0:1)
-          st % dv % fni_52(ifc,0:1) = fni_52(ix,iy,0,0:1)
+            st % dv % fni(ifc,0:1) = fni(ix,iy,0,0:1)
+            st % dv % fni_32(ifc,0:1) = fni_32(ix,iy,0,0:1)
+            st % dv % fni_52(ifc,0:1) = fni_52(ix,iy,0,0:1)
 
-          st % dv % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
-          st % dv % fna_mdf(ifc,0:1,0:ns-1) = 
+            st % dv % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_mdf(ifc,0:1,0:ns-1) = 
      .              fna_mdf(ix,iy,0,0:1,0:ns-1)
-          st % dv % fna_he(ifc,0:1,0:ns-1) = fna_he(ix,iy,0,0:1,0:ns-1)
-          st % dv % fna_32(ifc,0:1,0:ns-1) = fna_32(ix,iy,0,0:1,0:ns-1)
-          st % dv % fna_52(ifc,0:1,0:ns-1) = fna_52(ix,iy,0,0:1,0:ns-1)
-          st % dv % fna_32nd(ifc,0:1,0:ns-1) = 
+            st % dv % fna_he(ifc,0:1,0:ns-1)=fna_he(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_32(ifc,0:1,0:ns-1)=fna_32(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_52(ifc,0:1,0:ns-1)=fna_52(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_32nd(ifc,0:1,0:ns-1) = 
      .              fna_32nd(ix,iy,0,0:1,0:ns-1)
-          st % dv % fna_52nd(ifc,0:1,0:ns-1) = 
+            st % dv % fna_52nd(ifc,0:1,0:ns-1) = 
      .              fna_52nd(ix,iy,0,0:1,0:ns-1)
-          st % dv % fna_eir(ifc,0:1,0:ns-1) = 
+            st % dv % fna_eir(ifc,0:1,0:ns-1) = 
      .              fna_eir(ix,iy,0,0:1,0:ns-1)
-          st % dv % fne_eir(ifc,0:1) = 
+            st % dv % fne_eir(ifc,0:1) = 
      .              fne_eir(ix,iy,0,0:1)
-          st % dv % fna_nodrift(ifc,0:1,0:ns-1) = 
+           st % dv % fna_nodrift(ifc,0:1,0:ns-1) = 
      .              fna_nodrift(ix,iy,0,0:1,0:ns-1)
 
-          st % dv % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
-          st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,0,0:1)
-          st % dv % fhet(ifc,0:1) = fhet(ix,iy,0,0:1)
-          st % dv % fhe_eir(ifc,0:1) = fhe_eir(ix,iy,0,0:1)
-          st % dv % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
-          st % dv % fhi_mdf(ifc,0:1) = fhi_mdf(ix,iy,0,0:1)
-          st % dv % fhit(ifc,0:1) = fhit(ix,iy,0,0:1)
-          st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,0,0:1)
+            st % dv % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
+            st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,0,0:1)
+            st % dv % fhet(ifc,0:1) = fhet(ix,iy,0,0:1)
+            st % dv % fhe_eir(ifc,0:1) = fhe_eir(ix,iy,0,0:1)
+            st % dv % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
+            st % dv % fhi_mdf(ifc,0:1) = fhi_mdf(ix,iy,0,0:1)
+            st % dv % fhit(ifc,0:1) = fhit(ix,iy,0,0:1)
+            st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,0,0:1)
 
 ! derived quantities
-          st % dv % uadia(ifc,0:1,0:ns-1) = 
+            st % dv % uadia(ifc,0:1,0:ns-1) = 
      .              uadia(ix,iy,0,0:1,0:ns-1)
-          st % dv % vadia(ifc,0:1,0:ns-1) = 
-     .              vadia(ix,iy,0,0:1,0:ns-1)
-          st % dv % wadia(ifc,0:1,0:ns-1) = 
-     .              wadia(ix,iy,0,0:1,0:ns-1)
-          st % dv % vaecrb(ifc,0:1,0:ns-1) = 
+            st % dv % vadia(ifc,0:1,0:ns-1) = 
+     .               vadia(ix,iy,0,0:1,0:ns-1)
+            st % dv % wadia(ifc,0:1,0:ns-1) = 
+     .               wadia(ix,iy,0,0:1,0:ns-1)
+            st % dv % vaecrb(ifc,0:1,0:ns-1) = 
      .              vaecrb(ix,iy,0,0:1,0:ns-1)
-          st % dv % wedia(ifc,0:1) = 
+            st % dv % wedia(ifc,0:1) = 
      .              wedia(ix,iy,0,0:1)
-          st % dv % vedia(ifc,0:1) = 
+            st % dv % vedia(ifc,0:1) = 
      .              vedia(ix,iy,0,0:1)
-          st % dv % veecrb(ifc,0:1) = 
+            st % dv % veecrb(ifc,0:1) = 
      .              veecrb(ix,iy,0,0:1)
 ! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
 ! but actually used as face quantities in case of drift_flows = 1
-          st % dv % facdrift(ifc) = facdrift(ix,iy)
-          st % dv % fac_ExB(ifc) = fac_ExB(ix,iy)
-          st % dv % fac_vis(ifc) = fac_vis(ix,iy)
+            st % dv % facdrift(ifc) = facdrift(ix,iy)
+            st % dv % fac_ExB(ifc) = fac_ExB(ix,iy)
+            st % dv % fac_vis(ifc) = fac_vis(ix,iy)
       
 ! numerical coefficients
-          st % dv % conc(ifc,0:1) = conc(ix,iy,0,0:1)
-          st % dv % fllime(ifc) = fllime(ix,iy)
-          st % dv % floe(ifc,0:1) = floe(ix,iy,0,0:1)
-          st % dv % cone(ifc,0:1,:) = cone(ix,iy,0,0:1,:)
-          st % dv % fllimi(ifc) = fllimi(ix,iy)
-          st % dv % floi(ifc,0:1) = floi(ix,iy,0,0:1)
-          st % dv % coni(ifc,0:1,:) = coni(ix,iy,0,0:1,:)
-          st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,0,0:1)
-          st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,0,0:1)
+            st % dv % conc(ifc,0:1) = conc(ix,iy,0,0:1)
+            st % dv % fllime(ifc) = fllime(ix,iy)
+            st % dv % floe(ifc,0:1) = floe(ix,iy,0,0:1)
+            st % dv % cone(ifc,0:1,:) = cone(ix,iy,0,0:1,:)
+            st % dv % fllimi(ifc) = fllimi(ix,iy)
+            st % dv % floi(ifc,0:1) = floi(ix,iy,0,0:1)
+            st % dv % coni(ifc,0:1,:) = coni(ix,iy,0,0:1,:)
+            st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,0,0:1)
+            st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,0,0:1)
 
 !B2PlasmaSnapshot
 !          st % psnl % fch(ifc,0:1) = fch(ix,iy,0,0:1)
@@ -1483,7 +1869,7 @@ cwdk              poloidal face centers (E/W)
 !          st % psnc % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
 !          st % psnc % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
 !          st % psnc % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
-
+          end if
         end do
       end do
 
@@ -1493,7 +1879,9 @@ cwdk              poloidal face centers (E/W)
 
       do ix = 0, nx-1
         do iy = 0, ny
-          ifc = nfx + iy+1 + ix*(ny+1)
+!          ifc = nfx + iy+1 + ix*(ny+1)
+          if(mpg%imapFcy(ix,iy)/=0) then
+            ifc = mpg%imapFcy(ix,iy)
 
 ! B2coeff
           st % co % csig_an(ifc,0:1) = csig_an(ix,iy,1,0:1)
@@ -1623,7 +2011,7 @@ cwdk              poloidal face centers (E/W)
 !         st % psnc % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
 !          st % psnc % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
 !          st % psnc % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
-
+          end if
         end do
       end do     
 
@@ -2096,6 +2484,9 @@ cwdk              poloidal face centers (E/W)
 ! Cannot do this anymore => b2mod_indirect not available in general
 ! Need a back-transformation to_struct_geometry first !?!
 ! Corner cells: add-hoc interpolation
+
+!!!! CTB: I think this needs still to be adapted for Double null?
+
         iy=-1                                                         !srv 27.06.08 {
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2 ) then

@@ -24,6 +24,7 @@ c
       use b2mod_b2plot
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
       use eirmod_parmmod
      .   , only : natm, nmol, nion, nstra, nlmpgs, nspz, ndx, ndy
@@ -96,7 +97,7 @@ C
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
 !WG_TODO      call xertst(nnx   .le. ndx , 'NGREAD:   NNX > NDX ')
 !WG_TODO      call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
-      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
+      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natmi)
       allocate(ft44data(0:nx+1,0:ny+1))
       filename='input.dat'
       call find_file(filename,ex)

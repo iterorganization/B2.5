@@ -274,7 +274,7 @@ cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
       
 
       call prep_plasma (nx, ny, ns,
-     .                    mpg%nCv, mpg%nCi, mpg%nFc, state)
+     .                    mpg%nCv, mpg%nCi, mpg%nFc, mpg, state)
       write (*,*) 'State created'
 
       call prep_plasma_ext(nx, ny, ns,

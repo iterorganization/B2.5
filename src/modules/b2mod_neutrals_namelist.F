@@ -273,6 +273,7 @@ csw 21feb2012
       call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
       call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
 #endif
+      write (*,*) ' natm_id,natmid ',natm_in, natmid
       call xertst (natm_in.le.NATMID, 'faulty parameter natm_in')
       call xertst (nmol_in.le.NMOLID, 'faulty parameter nmol_in')
       call xertst (nion_in.le.NIONID, 'faulty parameter nion_in')
