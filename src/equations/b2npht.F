@@ -284,14 +284,14 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        enddo
       enddo
 
-      if ((solving(4).and.any(solvereg(0:nregionv)))                    !srv 22.05.18 {
+      if ((solving(4).and.any(solvereg(0:nregionv)))                  !srv 22.05.18 {
      &    .or.get_residuals.eq.1) reshe = reshe - shei
       if ((solving(4).and.any(solvireg(0:nregionv)))
      &    .or.get_residuals.eq.1) reshi = reshi + shei
-      if (solving(4).and.any(solvereg(0:nregionv)).and.                 ! if total equation is not solved then resht = 0            
+      if (solving(4).and.any(solvereg(0:nregionv)).and.               ! if total equation is not solved then resht = 0            
      &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
-     &   resht = reshe + reshi                                          !srv 22.05.18 }
-      
+     &   resht = reshe + reshi                                        !srv 22.05.18 }
+
       if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                      !srv 17.07.05 {
        call my_out(70,nx,ny,shei,'b2npht_shei')
        call my_out(70,nx,ny,te,'b2npht_te')

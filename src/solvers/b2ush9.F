@@ -135,7 +135,7 @@
        call b2xvsg (n2, shi(-1,-1,3), 1, 'shi3', '.le.')
        call b2xvsg (n2, ceqp, 1, 'ceqp', '.ge.')
       endif
-      
+
       if (any(solveee(0:nnreg(0))).and.any(solveei(0:nnreg(0))).and.
      &    any(solveet(0:nnreg(0)))) then                                 !srv 22.05.18
       new_matrix = .false.
@@ -539,7 +539,7 @@
         enddo
       enddo
       endif                                                           !srv 22.05.18
-        
+
 *   ..return
       ncall = ncall+1
       call subend ()

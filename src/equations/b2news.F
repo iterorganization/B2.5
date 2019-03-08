@@ -207,7 +207,7 @@
 *----------------------------------------------------
 * An alternative to the 'no_solve' switch for controlling of the 
 * solving of equations is to use the SOLVEMO, SOLVECO, SOLVEEE, SOLVEEI, 
-* SOLVEPO, SOLVEMT, SOLVEET array from b2.numerics.parameters.
+* SOLVEPO, SOLVEMT, SOLVEET arrays from b2.numerics.parameters.
 * Please consult the code documentation.
 
        solving(1:4)=no_solve.eq.0
@@ -702,7 +702,7 @@ cxpb
      &               solveco(is,ireg).neqv.last_solve_9(ireg)
                   end do
                   if(new_matrix) call restart_ma28_for_9
-                  call b2npc9 (nx, ny, guard_flows, nnreg(0),  
+                  call b2npc9 (nx, ny, guard_flows, nnreg(0), 
      &             solving(2), solvedum, solving(1), solvedm2, ncall,    !srv 22.05.18
      &             is, rxf0, vol, pbs,
      &             flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
@@ -746,7 +746,7 @@ cxpb
      1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)           !djm Jan2017
-!          endif                                                        !srv 22.05.18
+!          endif                                                         !srv 22.05.18
         enddo
 !$OMP END PARALLEL DO
 !! FR End of loop (2)
@@ -887,7 +887,7 @@ cxpb
                   end do
                   if (new_matrix.and.ncall.ne.0) call restart_ma28
                   call b2nppo (nx, ny, nnreg(0), solving(3), solvepo,    !srv 22.05.18
-     &             ncall, rxf2,ne, te, conc, sch, po, fch, wrk0, wrk1,
+     &             ncall, rxf2, ne, te, conc, sch, po, fch, wrk0, wrk1,
      &             ier0)
                   last_solve_5(0:nnreg(0)) = solvepo(0:nnreg(0))
                 else

@@ -410,7 +410,12 @@
       write (nout(0),'(/2x,a)') 'label for geometry'
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
 *   ..compute geometry and flux/field functions on auxiliary mesh
-      if(istyle.ge.0) call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
+      if(istyle.ge.0) then
+        call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
+      else
+        fpsi1=0.0_R8
+        ffbz1=0.0_R8
+      endif
 *   ..compute metric coefficients on auxiliary mesh
       call b2agmt (nx1, ny1, isymm, crx1, cry1, vol1,
      & hx1, hy1, qz1, qc1, qcb1, gs1,
@@ -595,7 +600,11 @@ cdpc-debug
 *   ..compute geometry and flux/field functions on proper mesh
         call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
 *   ..compute magnetic field on proper mesh
-        call b2agbb (nx, ny, vol, hx, hy, qz, fpsi, ffbz, bb)
+        call b2agbb (nx, ny, vol, hx, hy, qz, 
+     &   fpsi, ffbz, bb)
+      else
+        fpsi=0.0_R8
+        ffbz=0.0_R8
       endif
       write(*,*) 'b2agdr2: bb(nx,ny,0) ',bb(nx,ny,0)
       write(*,'()')

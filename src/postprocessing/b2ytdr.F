@@ -5176,18 +5176,19 @@ Cxpb then rewrite the entire block
           CASE ('FORT.13','FTN13')
             READ (IUNIN,6666) TDMISP(1,JPLS)
           CASE ('BOLTZMANN')
-            READ (IUNIN,'(I6,6X,2E12.4)') TDMISP(1,JPLS),
+            READ (IUNIN,'(I6,6X,2E12.4)')
+     .           TDMISP(1,JPLS),
      .           TDMBOLTZ(JPLS), TDMDELTAE(JPLS)
           CASE ('CORONA')
             READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
-     .           TDMISP(1,JPLS),TDMFNAME(1,JPLS),
-     .           TDMH2(1,JPLS),TDMREACTION(1,JPLS),
+     .           TDMISP(1,JPLS),
+     .           TDMFNAME(1,JPLS),TDMH2(1,JPLS), TDMREACTION(1,JPLS),
      .           TDMCR(1,JPLS),TDM_CORONA(JPLS)
           CASE ('COLRAD')
             DO I=1, NRE(JPLS)
               READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3)')
-     .           TDMISP(I,JPLS),TDMFNAME(I,JPLS),
-     .           TDMH2(I,JPLS),TDMREACTION(I,JPLS),
+     .           TDMISP(I,JPLS),
+     .           TDMFNAME(I,JPLS),TDMH2(I,JPLS), TDMREACTION(I,JPLS),
      .           TDMCR(I,JPLS)
             END DO
           CASE DEFAULT
@@ -6163,18 +6164,19 @@ cxpb We now rewrite the modified block 4
           CASE ('FORT.13','FTN13')
             WRITE(IUNOT,6666) TDMISP1(1,IB)
           CASE ('BOLTZMANN')
-            WRITE(IUNOT,'(I6,6X,2E12.4)') TDMISP1(1,IB),
+            WRITE(IUNOT,'(I6,6X,2E12.4)')
+     .            TDMISP1(1,IB),
      .            TDMBOLTZ1(IB), TDMDELTAE1(IB)
           CASE ('CORONA')
             WRITE(IUNOT,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
-     .            TDMISP1(1,IB),TDMFNAME(1,IB),
-     .            TDMH21(1,IB), TDMREACTION(1,IB),
+     .            TDMISP1(1,IB),
+     .            TDMFNAME(1,IB), TDMH21(1,IB), TDMREACTION(1,IB),
      .            TDMCR1(1,IB), TDM_CORONA(IB)
           CASE ('COLRAD')
             DO I = 1, NRE1(IB)
               WRITE(IUNOT,'(I6,1X,A6,1X,A4,A9,A3)')
-     .              TDMISP1(I,IB),TDMFNAME(I,IB),
-     .              TDMH21(I,IB), TDMREACTION(I,IB),
+     .              TDMISP1(I,IB),
+     .              TDMFNAME(I,IB), TDMH21(I,IB), TDMREACTION(I,IB),
      .              TDMCR1(I,IB)
             END DO
           CASE DEFAULT
@@ -8174,8 +8176,10 @@ C  SKIP READING REST OF THIS BLOCK
             WRITE(IUNOT,'(2A24)') TXTSPC,TXTUNT
  3020     CONTINUE
         ELSE IF (NMODE.NE.0) THEN
-          READ (IUNIN,'(A72)') ZEILE ! LSYMET,LBALAN,LCHKQUD
-          WRITE(IUNOT,'(A72)') ZEILE
+          READ (IUNIN,'(A72)') ZEILE
+          call fix_logical_input(zeile,3)
+          READ (ZEILE,6665) ldum(0:2) ! LSYMET,LBALAN,LCHKQUD
+          WRITE(IUNOT,6665) ldum(0:2)
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(9I6)') idum(0:8) ! NFLA,NCUTB,NCUTL,IMF,
                                          ! ntrfrm,nfull,ibrad,ibpol,ibtor

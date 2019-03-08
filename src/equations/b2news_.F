@@ -224,7 +224,7 @@
 *----------------------------------------------------
 * An alternative to the 'no_solve' switch for controlling of the 
 * solving of equations is to use the SOLVEMO, SOLVECO, SOLVEEE, SOLVEEI, 
-* SOLVEPO, SOLVEMT, SOLVEET array from b2.numerics.parameters.
+* SOLVEPO, SOLVEMT, SOLVEET arrays from b2.numerics.parameters.
 * Please consult the code documentation.
 
        solving(1:4)=no_solve.eq.0
@@ -1180,7 +1180,7 @@ c   recompute particle fluxes
                 end do
                 if(new_matrix) call restart_ma28_for_9
                 call b2npc9 (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
-     &            solvedum, solving(1), solvedm2, ncall, is, rxf0,
+     &           solvedum, solving(1), solvedm2, ncall, is, rxf0,
      &           vol, pbs, flob, conb,
      &           sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &           ua(-1,-1,is), fna_mdf(-1,-1,0,is),

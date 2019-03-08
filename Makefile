@@ -189,6 +189,10 @@ endif
 #DEFINES += -DNO_OPENMP_B2STEL
 #DEFINES += -DNO_OPENMP_MYBLAS
 #DEFINES += -DNO_OPENMP_SFILL
+#DEFINES += -DNO_OPENMP_B2NEWS_LOOP1
+#DEFINES += -DNO_OPENMP_B2NEWS_LOOP2
+#DEFINES += -DNO_OPENMP_B2NEWS_LOOP3
+#DEFINES += -DNO_OPENMP_B2NEWS_LOOP4
 #DEFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
 #DEFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
 #DEFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
@@ -936,7 +940,7 @@ ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
 endif
 	@egrep -aiH '^ {6,}use ' ${SRCDIR}/*/*.F | grep -v 'IGNORE' | tr , ' ' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 4a' >> ${OBJDIR}/dependencies
-	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | tr , ' '  |awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | tr , ' ' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 4b' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
 	@egrep -aiH '^ {6,}use ' ${MODLISTF} | grep -v 'IGNORE' | tr , ' ' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("\\.f:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies

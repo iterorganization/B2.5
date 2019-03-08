@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sifrtf (nx, ny, ns, isb, ismain, bb, na,            !srv 09.01.01 18.10.02 13.01.17 05.07.17
+      subroutine b2sifrtf (nx, ny, ns, isb, ismain, bb, na,             !srv 09.01.01 18.10.02 13.01.17 05.07.17
      &   ua, ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2, !srv 01.07.09 11.09.09 05.07.17
      &   cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,        !srv 05.07.17
      &   smbch, smbtf)

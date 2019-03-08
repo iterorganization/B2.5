@@ -103,8 +103,7 @@ c*** np_tmp:  number of output data for each species
 c
       parameter (lv=20180622, np_tmp=16)                            ! IYS 22.06.2018
 c
-!!!!      real (kind=R8) :: hlpdt, hlp_rec, hlp_sput, hlp, 
-      real (kind=R8) :: hlpdt, hlp, hlp_rec, hlp_sput, 
+      real (kind=R8) :: hlpdt, hlp, hlp_rec, hlp_sput,
      &                        bsign, hlp_nw, hlp_pump 
       logical 
      &     hlp_pump_counted(nnatmi+nnmoli+nnioni+nnplsi,nnstsi+nnlimi)
@@ -683,7 +682,7 @@ c*** Puffing/seeding rate and recycling source
      &                 userfluxparm(ic,1) * gpfc(j,ic) * recyctmp
              end do
 
-            elseif (crcstra(ic) .eq. 'S' .or. crcstra(ic) .eq. 'N') then ! Recycling on the B2 outer boundaries except targets
+            elseif (crcstra(ic) .eq. 'S' .or. crcstra(ic) .eq. 'N') then ! Recycling on the B2.5 outer boundaries except targets
 
               hlp_rec  = 0.0_R8
               hlp_sput = 0.0_R8
@@ -742,7 +741,7 @@ c*** Puffing/seeding rate and recycling source
                         hlp_pump_counted(j+nnatmi+nnmoli+nnioni,k) = 
      &                                                      .TRUE.
                       endif
-                    endif   
+                    endif
                   enddo
 
                 endif

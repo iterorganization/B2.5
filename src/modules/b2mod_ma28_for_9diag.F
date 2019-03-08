@@ -60,6 +60,7 @@
       allocate(iw28(1:nnd,8))
       allocate(irnh_save(1:n_nonzeros))
       allocate(icnh_save(1:n_nonzeros))
+
       write(*,*) 'Allocated space for b2mod_ma28_for_9diag'
 
       end subroutine alloc_b2mod_ma28_for_9diag
