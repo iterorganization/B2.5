@@ -24,8 +24,6 @@ module b2mod_ual_io_grid
 #ifdef IMAS
     use ids_string        & ! IGNORE
      & , only : idsInt2str
-    use ids_assert        & ! IGNORE
-     & , only : assert
     use ids_grid_subgrid  & ! IGNORE
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
      &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
@@ -260,7 +258,8 @@ contains
         !! Internal variables
         integer, parameter :: NDIM = 2  !< Dimension of the space
 
-        call assert( present( gs ) .EQV. present( qc ) )
+        call xertst( present( gs ) .EQV. present( qc ) , &
+            "Assert error ( gz or qc missing ) in b2_IMAS_Fill_Grid_Desc" )
 
         !! Set GGD grid geometry
         call fill_In_Grid_Desc()
@@ -1066,7 +1065,9 @@ contains
             &   //idsInt2str(GSubsetCount)//" grid subsets (expected was "  &
             &   //idsInt2str(size(ggd_grid%grid_subset))//")" )
 
-        call assert( GSubsetCount == size(ggd_grid%grid_subset) )
+        call xertst( GSubsetCount == size(ggd_grid%grid_subset), &
+            &  "Assert error (grid subset count) in fill_In_GridSubset_Desc" )
+
     end subroutine fill_In_GridSubset_Desc
 
     end subroutine b2_IMAS_Fill_Grid_Desc
@@ -1176,7 +1177,8 @@ contains
     ! internal
     integer, parameter :: NDIM = 2
 
-    call assert( present(gs) .EQV. present(qc) )
+    call xertst( present( gs ) .EQV. present( qc ) , &
+        "Assert error ( gz or qc missing ) in b2ITMFillGridDescription" )
 
     call fill_In_Grid_Desc()
     call fillInSubGridDescription()
@@ -1530,7 +1532,9 @@ contains
       call logmsg( LOGDEBUG, "b2ITMFillGridDescription: wrote total of "&
           &//int2str(subgridCount)//" subgrids (expected was "//int2str(size(itmgrid%subgrids))//")" )
 
-      call assert( subgridCount == size(itmgrid%subgrids) )
+      call xertst( subgridCount == size(itmgrid%subgrids), &
+       &  "Assert error (subgrid count) in fillInSubGridDescription" )
+
     end subroutine fillInSubGridDescription
 
   end subroutine b2ITMFillGridDescription
@@ -1560,9 +1564,12 @@ contains
     do iObj = 1, gridSubGridSize(coreBndSubgrid)
         obj = subGridGetObject(coreBndSubgrid, iObj)
         !! Expect a face
-        call assert( all(obj%cls(1:SPACE_COUNT) == CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT)) )
+        call xertst( all(obj%cls(1:SPACE_COUNT) == CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT)), &
+        &   "Assert error 1 (face test) in find_Midplane_Cells" )
+
         !! ...which is aligned along the x-direction
-        call assert( gmap % mapFcIFace(obj%ind(SPACE_POLOIDALPLANE)) == BOTTOM )
+        call xertst( gmap % mapFcIFace(obj%ind(SPACE_POLOIDALPLANE)) == BOTTOM, &
+        &   "Assert error 2 (bottom face) in find_Midplane_Cells" )
         ix = gmap % mapFcix( obj%ind(SPACE_POLOIDALPLANE) )
         iy = gmap % mapFciy( obj%ind(SPACE_POLOIDALPLANE) )
 
@@ -1672,7 +1679,8 @@ contains
             iy = niy
         end do
 
-        call assert( iVx == nVx )
+        call xertst( iVx == nVx , &
+        &   "Assert error (vertex count) in collectRadialVertexIndexList" )
 
     end function collectRadialVertexIndexList
 
@@ -1762,7 +1770,8 @@ contains
             iy = niy
         end do
 
-        call assert( iVx == nVx )
+        call xertst( iVx == nVx , &
+        &   "Assert error (vertex count) in collectRadialVertexIndexListSubroutine" )
 
     end subroutine collectRadialVertexIndexListSubroutine
 
@@ -1831,7 +1840,8 @@ contains
 
                     if ( ind /= B2_GRID_UNDEFINED ) then
                         iInd = iInd + 1
-                        call assert(iInd <= nInd)
+                        call xertst(iInd <= nInd, &
+                        &   "Assert error 1 (index) in collectIndexListForRegion" )
                         indexList( iInd, SPACE_POLOIDALPLANE ) = ind
                     end if
                 end if
@@ -1839,7 +1849,8 @@ contains
             end do
         end do
 
-        call assert( iInd == nInd )
+        call xertst( iInd == nInd, &
+        &   "Assert error 2 (index) in collectIndexListForRegion" )
 
     end function collectIndexListForRegion
 
@@ -1915,7 +1926,8 @@ contains
 
                     if ( ind /= B2_GRID_UNDEFINED ) then
                         iInd = iInd + 1
-                        call assert(iInd <= nInd)
+                        call xertst(iInd <= nInd, &
+                        &   "Assert error 1 (index) in collectIndexListForRegionSubroutine" )
                         indexList( iInd, SPACE_POLOIDALPLANE ) = ind
                     end if
                 end if
@@ -1923,7 +1935,8 @@ contains
             end do
         end do
 
-        call assert( iInd == nInd )
+        call xertst( iInd == nInd, &
+        &   "Assert error 2 (index) in collectIndexListForRegionSubroutine" )
 
     end subroutine collectIndexListForRegionSubroutine
 
