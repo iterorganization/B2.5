@@ -25,7 +25,11 @@ SED = sed s:\#PREC\#:d:g
 SED =
 LINK_MOD = 
 
+ifdef USE_MPI
+FC = mpif90
+else
 FC = gfortran
+endif
 
 ifdef SOLPS_DEBUG
 FCOPTS = -g -fbounds-check -fno-second-underscore -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -ffpe-trap=denormal -ftrapv
@@ -61,7 +65,6 @@ IMASLIBS = ${LD_UAL}
 endif
 
 ifdef USE_MPI
-INCMODS += ${MPI_CPP}
 LDLIBES += ${LD_MPI}
 endif
 
