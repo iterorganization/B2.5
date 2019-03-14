@@ -751,7 +751,7 @@ cxpb
                   end do
                   if (new_matrix.and.ncall.ne.0) call restart_ma28
                   call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
-     &             ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
+     &             vol, ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
                   last_solve_5(0:nnreg(0)) = solvepo(0:nnreg(0))
                 else
                   call b2npp7 (nx, ny, nnreg(0), solvepo, ncall, rxf2,

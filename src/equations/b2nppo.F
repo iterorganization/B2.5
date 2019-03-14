@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nppo (nx, ny, nregionv, solvereg, itcnt, rxf,
+      subroutine b2nppo (nx, ny, nregionv, solvereg, itcnt, rxf, vol,
      &  ne, te, conc, sch, po, fch, respo, corpo, ierr)
       use b2mod_types
       use b2mod_indirect
@@ -12,7 +12,8 @@
       integer nx, ny, nregionv, itcnt
       real (kind=R8) ::
      *  rxf, ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
-     &  conc(-1:nx,-1:ny,0:1,0:1), sch(-1:nx,-1:ny,0:3)
+     &  conc(-1:nx,-1:ny,0:1,0:1), sch(-1:nx,-1:ny,0:3),
+     &  vol(-1:nx,-1:ny)
       logical solvereg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -108,7 +109,7 @@ c-rfs      write(6,*) 'ix=21, iy=-1, fch, respo',
 c-rfs     .  fch(21,-1,0), fch(21,-1,1),
 c-rfs     .  fch(21,0,1), respo(21,-1)
 *   ..compute correction
-      call b2uspo (nx, ny, nregionv, solvereg, itcnt,
+      call b2uspo (nx, ny, nregionv, solvereg, itcnt, vol,
      &  ne, te, conc, sch, respo, corpo, aa9, 'b2nppo')             !srv 18.03.10
 *   ..apply correction
       call b2uppo (nx, ny, rxf, corpo, po)

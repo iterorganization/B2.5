@@ -280,6 +280,9 @@ cxpb
      &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
         enddo
        enddo
+cwdk   ensure qc(:,:,0)**2 + qs(:,:,0)**2 = 1, in possible event 
+cwdk   of improved computation of qc
+       qs(:,:,0) = sign(sqrt(1 - qc(:,:,0)**2),qs(:,:,0))
       endif
 c-xpb-end
       call cfrure (nget, n2*3, gs, 'gs')

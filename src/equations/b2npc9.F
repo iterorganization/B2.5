@@ -158,8 +158,8 @@ cdjm Jan2017 update particle source components for balance
 *   ..compute correction
       write (chns,'(i3.3)') isb
       call b2usc9 (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, !srv 13.10.06 26.09.12
-     &   pbs, nb, pb, snb(-1,-1,1), flob, conb, pccb(-1,-1,1,1), rescb,  
-     &   corpb, aa9, 'b2usc9_'//chns)                                 !srv 18.05.02
+     &   vol, pbs, nb, pb, snb(-1,-1,1), flob, conb, pccb(-1,-1,1,1), 
+     &   rescb, corpb, aa9, 'b2usc9_'//chns)                          !srv 18.05.02
 *   ..apply correction
       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
      & vol, corpb, pccb(-1,-1,0,0), pb, nb, ub)
@@ -169,32 +169,36 @@ cdjm Jan2017 update particle source components for balance
         iy=-1                                                         !srv 27.06.08 {
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2 )
-     &     nb(ix,iy) = exp(
-     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
-     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
-     &      log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
-     &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
+     &     nb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy))
+!     &     nb(ix,iy) = exp(
+!     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
+!     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+!     &      log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
+!     &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
           if(rightix(ix,iy).eq.nx+1 )
-     &     nb(ix,iy) = exp(
-     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
-     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
-     &      log(nb(topix(leftix(ix,iy),leftiy(ix,iy)),
-     &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
+     &     nb(ix,iy) = nb(leftix(ix,iy),leftiy(ix,iy))
+!     &     nb(ix,iy) = exp(
+!     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
+!     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+!     &      log(nb(topix(leftix(ix,iy),leftiy(ix,iy)),
+!     &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
         enddo
         iy=ny
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2 )
-     &     nb(ix,iy) = exp(
-     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
-     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
-     &      log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
-     &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
+     &     nb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy))
+!     &     nb(ix,iy) = exp(
+!     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
+!     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+!     &      log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+!     &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
           if(rightix(ix,iy).eq.nx+1 )
-     &     nb(ix,iy) = exp(
-     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
-     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
-     &      log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
+     &     nb(ix,iy) = nb(leftix(ix,iy),leftiy(ix,iy))
+!     &     nb(ix,iy) = exp(
+!     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
+!     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+!     &      log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+!     &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
         enddo                                                         !srv 27.06.08 }
       endif                                                           !srv 06.07.08 }
       if (iout.ne.0) then                                             !srv 12.07.02 {

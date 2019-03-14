@@ -687,7 +687,7 @@ cwdk tmp: always use 9-point stencil
      &        solvepo(ireg).neqv.last_solve_9(ireg)
             end do
             if (new_matrix.or..true.) call restart_ma28_for_9
-            call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
+            call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2, vol,
      &       ne, te, conc, sch, po, fch, respo, corpo, ier0)
             last_solve_9(0:nnreg(0))=solvepo(0:nnreg(0))
            else
@@ -703,7 +703,7 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
            if (rxf2 .eq. 0.0e0_R8) t0 = 0.0e0_R8
           else
            if (vis_per.eq.0.0e0_R8) then  
-            call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
+            call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2, vol,
      &       ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
            else
             call b2npp7 (nx, ny, nnreg(0), solvepo, ncall, rxf2,         !srv 27.01.00

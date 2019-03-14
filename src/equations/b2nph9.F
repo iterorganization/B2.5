@@ -255,10 +255,10 @@ cdjm Jan2017 update particle source components for balance
 	call my_out(70,nx,ny,fhe(-1,-1,1,1),'b2nph9_fhey')
 	call my_out(70,nx,ny,fhe(-1,-1,0,1),'b2nph9_fhexy')
 	call my_out(70,nx,ny,fhe(-1,-1,1,0),'b2nph9_fheyx')
-!	 call my_out(70,nx,ny,she0(-1,-1,0),'b2nph9_she0')
-!	 call my_out(70,nx,ny,she0(-1,-1,1),'b2nph9_she1')
-!	 call my_out(70,nx,ny,she0(-1,-1,2),'b2nph9_she2')
-!	 call my_out(70,nx,ny,she0(-1,-1,3),'b2nph9_she3')
+        call my_out(70,nx,ny,she0(-1,-1,0),'b2nph9_she0')
+        call my_out(70,nx,ny,she0(-1,-1,1),'b2nph9_she1')
+        call my_out(70,nx,ny,she0(-1,-1,2),'b2nph9_she2')
+        call my_out(70,nx,ny,she0(-1,-1,3),'b2nph9_she3')
         wrk0=she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
      &                   she0(:,:,3)*te*ne
 	call my_out(70,nx,ny,wrk0,'b2nph9_she')
@@ -267,10 +267,10 @@ cdjm Jan2017 update particle source components for balance
 	call my_out(70,nx,ny,fhi(-1,-1,1,1),'b2nph9_fhiy')
 	call my_out(70,nx,ny,fhi(-1,-1,0,1),'b2nph9_fhixy')
 	call my_out(70,nx,ny,fhi(-1,-1,1,0),'b2nph9_fhiyx')
-!	 call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')
-!	 call my_out(70,nx,ny,shi0(-1,-1,1),'b2nph9_shi1')
-!	 call my_out(70,nx,ny,shi0(-1,-1,2),'b2nph9_shi2')
-!	 call my_out(70,nx,ny,shi0(-1,-1,3),'b2nph9_shi3')
+        call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')
+        call my_out(70,nx,ny,shi0(-1,-1,1),'b2nph9_shi1')
+        call my_out(70,nx,ny,shi0(-1,-1,2),'b2nph9_shi2')
+        call my_out(70,nx,ny,shi0(-1,-1,3),'b2nph9_shi3')
         wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_shi')
@@ -278,7 +278,7 @@ cdjm Jan2017 update particle source components for balance
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
         call b2ush9 (nx, ny, ns, nregionv, itcnt,
-     &   rxg, pcm1, pbs, ne, ni, te, ti,
+     &   rxg, pcm1, vol, pbs, ne, ni, te, ti,
      &   floe, cone, floi, coni, pccm(-1,-1,1,1), she0, shi0, ceqp,
      &   resht, reshe, reshi, cortt, corte, corti, wrkf, wrkc, aa9)
 *   ..apply correction
