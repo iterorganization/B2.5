@@ -231,10 +231,10 @@ cdjm Jan2017 update particle source components for balance
 	call my_out_us(70,nCv,0,dv%reshe,'b2npht_reshe')
 	call my_out_us(70,nFc,1,dv%fhe(1,0),'b2npht_fhex')
 	call my_out_us(70,nFc,1,dv%fhe(1,1),'b2npht_fhey')
-!	 call my_out_us(70,nCv,0,she0(1,0),'b2npht_she0')
-!	 call my_out_us(70,nCv,0,she0(1,1),'b2npht_she1')
-!	 call my_out_us(70,nCv,0,she0(1,2),'b2npht_she2')
-!	 call my_out_us(70,nCv,0,she0(1,3),'b2npht_she3')
+        call my_out_us(70,nCv,0,she0(1,0),'b2npht_she0')
+        call my_out_us(70,nCv,0,she0(1,1),'b2npht_she1')
+        call my_out_us(70,nCv,0,she0(1,2),'b2npht_she2')
+        call my_out_us(70,nCv,0,she0(1,3),'b2npht_she3')
         wrk0=she0(:,0)+she0(:,1)*pl%te+she0(:,2)*dv%ne+
      &       she0(:,3)*pl%te*dv%ne
 	call my_out_us(70,nCv,0,wrk0,'b2npht_she')
@@ -242,10 +242,10 @@ cdjm Jan2017 update particle source components for balance
 	call my_out_us(70,nCv,0,dv%resht,'b2npht_resht')                  !srv 22.05.18
 	call my_out_us(70,nFc,1,dv%fhi(1,0),'b2npht_fhix')
 	call my_out_us(70,nFc,1,dv%fhi(1,1),'b2npht_fhiy')
-!	 call my_out_us(70,nCv,0,shi0(1,0),'b2npht_shi0')
-!	 call my_out_us(70,nCv,0,shi0(1,1),'b2npht_shi1')
-!	 call my_out_us(70,nCv,0,shi0(1,2),'b2npht_shi2')
-!	 call my_out_us(70,nCv,0,shi0(1,3),'b2npht_shi3')
+        call my_out_us(70,nCv,0,shi0(1,0),'b2npht_shi0')
+        call my_out_us(70,nCv,0,shi0(1,1),'b2npht_shi1')
+        call my_out_us(70,nCv,0,shi0(1,2),'b2npht_shi2')
+        call my_out_us(70,nCv,0,shi0(1,3),'b2npht_shi3')
         wrk0=shi0(:,0)+shi0(:,1)*pl%ti+
      &       shi0(:,2)*dv%ni(:,0)+shi0(:,3)*pl%ti*dv%ni(:,0)
         call my_out_us(70,nCv,0,wrk0,'b2npht_shi')
