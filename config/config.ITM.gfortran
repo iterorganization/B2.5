@@ -61,7 +61,7 @@ EQUIVS  += -DIMAS
 endif
 LD_UAL  ?= `pkg-config imas-gfortran ggd --libs`
 INCMODS  = `pkg-config imas-gfortran ggd --cflags`
-IMASLIBS = ${LD_UAL}
+IMASLIBS = ${LD_UAL} -lstdc++
 endif
 
 ifdef USE_MPI
