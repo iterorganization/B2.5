@@ -162,9 +162,9 @@
        iters = min(itmax,4)
        itpar = itcnt*iters
        if (in_parallel()) then
-          stop 'STOP: iluter not parallelised, re-run in serial'
+         stop 'STOP: iluter not parallelised, re-run in serial'
        else
-          call iluter (nx+2, ny+2, aa7, resfun, iters, acpar, itpar,
+         call iluter (nx+2, ny+2, aa7, resfun, iters, acpar, itpar,
      &   corfun, nrmc, aaf, wrk0, wrk1, wrk2)
        endif
       else if (style.eq.1) then

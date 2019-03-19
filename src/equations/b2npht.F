@@ -243,13 +243,13 @@ cdjm Jan2017 update particle source components for balance
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
       if ((solving(4).and.any(solvereg(0:nregionv))).or.
-     &                    get_residuals.eq.1) then                      !srv 22.05.18
+     &                    get_residuals.eq.1) then                   !srv 22.05.18
         call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
-      endif                                                             !srv 22.05.18
+      endif                                                          !srv 22.05.18
       if ((solving(4).and.any(solvireg(0:nregionv))).or.
-     &                   get_residuals.eq.1) then                       !srv 22.05.18
+     &                   get_residuals.eq.1) then                    !srv 22.05.18
         call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
-      endif                                                             !srv 22.05.18
+      endif                                                          !srv 22.05.18
 *   ..compute heat source due to electron-ions collisions            !srv 18.09.09 30.01.10 {
       do iy = -1, ny
        do ix = -1, nx

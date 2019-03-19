@@ -13,6 +13,9 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_ccona
+      use eirmod_cinit
+#else
+      use b2mod_eirbra
 #endif
 c
 c  version : 12.01.2002 01:19
@@ -297,11 +300,7 @@ c-----------------------------------------------------------------------
       if(first) then !{
 c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         tab=char(9)
-#ifndef HPUX
-        filename='fort.44'
-#else
-        filename='ftn44'
-#endif
+        filename=fort_lc//'44'
         call find_file(filename,ft44)
         do_trg=.true.
         write(frmt_hlp,'(a7,i5,a11)') '(1p,1x,',n_line_x,'(e12.5,a1))'

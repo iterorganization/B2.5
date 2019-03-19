@@ -644,7 +644,8 @@ cxpb
             call hbout('b2ne_npco   ',nx,ny,ns,te,'te',ti,'ti',
      &       na,'na',ua,'ua',na,'na',ua,'ua')
           endif
-!        if (solving(2)) then                           !srv 22.05.18             if (all(solveco(is,0:nnreg(0)))) then 
+!        if (solving(2)) then                           !srv 22.05.18
+!        if (all(solveco(is,0:nnreg(0)))) then
 *    ..perform iteration
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))

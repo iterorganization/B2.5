@@ -106,7 +106,7 @@
       endif
 
       if (any(solveee(0:nnreg(0))).and.any(solveei(0:nnreg(0))).and.
-     &    any(solveet(0:nnreg(0)))) then                                 !srv 22.05.18
+     &    any(solveet(0:nnreg(0)))) then                             !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -265,7 +265,7 @@ cxpb
       endif                                                           !srv 22.05.18
 
 * ..electron temperature correction equation
-      if (any(solveee(0:nnreg(0)))) then                                 !srv 22.05.18
+      if (any(solveee(0:nnreg(0)))) then                              !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -418,7 +418,7 @@ cxpb
       endif                                                           !srv 22.05.18
 
 * ..atom temperature correction equation
-      if (any(solveei(0:nnreg(0)))) then                                 !srv 22.05.18
+      if (any(solveei(0:nnreg(0)))) then                              !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -568,15 +568,15 @@ cxpb
       enddo
 
 *   ..solve the correction equation
-        write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'ti'
-        call b2ux5p (nx, ny, aa5, itcnt, reshi, corti, name//'ti')    !srv 18.03.10
-       last_solve_5(0:nnreg(0)) = solveei(0:nnreg(0))
-        do iy = -1, ny
-          do ix = -1, nx
-            corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
-          enddo
+      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'ti'
+      call b2ux5p (nx, ny, aa5, itcnt, reshi, corti, name//'ti')    !srv 18.03.10
+      last_solve_5(0:nnreg(0)) = solveei(0:nnreg(0))
+      do iy = -1, ny
+        do ix = -1, nx
+          corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
         enddo
-      endif                                                           !srv 22.05.18
+      enddo
+      endif                                                         !srv 22.05.18
 
 *   ..return
       ncall = ncall+1

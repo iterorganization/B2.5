@@ -167,7 +167,7 @@
 !!FR iluter and slv5pt are not parallelised thus we need to stop the 
 !!FR code if attempting to run them in parallel
        if (in_parallel()) then
-          stop 'STOP: iluter not parallelised, re-run in serial'
+         stop 'STOP: iluter not parallelised, re-run in serial'
        else
          call iluter (nx+2, ny+2, aa5, resfun, iters, acpar, itpar,
      &     corfun, nrmc, aaf, wrk0, wrk1, wrk2)

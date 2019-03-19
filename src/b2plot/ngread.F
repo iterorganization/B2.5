@@ -27,6 +27,7 @@ c
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_clogau
+      use eirmod_cinit
 #endif
       implicit none
 
@@ -79,13 +80,8 @@ C
 C
       READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
-#ifndef HPUX
-      write(*,'(a,5i4)')
-     . ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
-#else
-      write(*,'(a,5i4)')
-     . ' Dimensions in ftn44 = ',nnx,nny,natmi,nmoli,nioni
-#endif
+      write(*,'(3a,5i4)')
+     . ' Dimensions in ',fort_lc,'44 = ',nnx,nny,natmi,nmoli,nioni
       write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
@@ -96,11 +92,7 @@ C
       allocate(ft44data(0:nx+1,0:ny+1))
       filename='input.dat'
       call find_file(filename,ex)
-#ifndef HPUX
-      filename='fort.33'
-#else
-      filename='ftn33'
-#endif
+      filename=fort_lc//'33'
       if (.not.ex) call find_file(filename,nlwrmsh)
 c
 * labels
@@ -112,14 +104,9 @@ C
         call strip_spaces(charns)
         atoms_list(is)=charns(1:2)
    11 CONTINUE
-      write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natmi,'(a2,1x))'
-#ifndef HPUX
-      write(*,hlp_frm) 'atoms_list (fort.44) : ',
+      write(hlp_frm,'(a7,i3,a8)') '(1x,3a,',natmi,'(a2,1x))'
+      write(*,hlp_frm) 'atoms_list (',fort_lc,'44) : ',
      . (trim(atoms_list(is)),is=1,natmi)
-#else
-      write(*,hlp_frm) 'atoms_list (ftn44) : ',
-     . (trim(atoms_list(is)),is=1,natmi)
-#endif
 C
 * neutral molecules
 C

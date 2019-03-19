@@ -20,7 +20,7 @@
      &  conb(-1:nx,-1:ny,0:1,0:4), snb(-1:nx,-1:ny,0:1),             !srv 13.10.06
      &  pccb(-1:nx,-1:ny,0:1), fnb(-1:nx,-1:ny,0:1),
      &  po(-1:nx,-1:ny), ti(-1:nx,-1:ny), zb(-1:nx,-1:ny)
-      logical solving, solvcreg(0:nregionv), ua_solve,                  !srv 22.05.18
+      logical solving, solvcreg(0:nregionv), ua_solve,               !srv 22.05.18
      &  solvmreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::

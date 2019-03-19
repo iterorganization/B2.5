@@ -300,11 +300,11 @@
        enddo
       enddo
 *   ..solve the correction equation
-      call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total') !srv 18.05.02
-      endif                                                          !srv 22.05.18
+      call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')  !srv 18.05.02
+      endif                                                           !srv 22.05.18
 
 * ..electron temperature correction equation
-      if (any(solveee(0:nnreg(0)))) then                                 !srv 22.05.18
+      if (any(solveee(0:nnreg(0)))) then                              !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -414,11 +414,11 @@
        enddo
       enddo
 *   ..solve the correction equation
-      call b2ux9p (nx, ny, aa9, itcnt, reshe, corte, 'b2ush9_Te')   !srv 18.05.02
-      endif                                                         !srv 22.05.18
+      call b2ux9p (nx, ny, aa9, itcnt, reshe, corte, 'b2ush9_Te')     !srv 18.05.02
+      endif                                                           !srv 22.05.18
 
 * ..atom temperature correction equation
-      if (any(solveei(0:nnreg(0)))) then                                 !srv 22.05.18
+      if (any(solveei(0:nnreg(0)))) then                              !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.

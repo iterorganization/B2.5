@@ -62,8 +62,9 @@
       namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
      2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveet,          !srv 22.05.18
-     3 write_nml_num,numerics_filename,numerics_time_mod,
-     4 numerics_time_switch,corr_core_dn,corr_core_dt,add_te_corr_to_po  ! IYS 19.12.2017
+     & write_nml_num,
+     3 numerics_filename,numerics_time_mod,numerics_time_switch,
+     4 corr_core_dn,corr_core_dt,add_te_corr_to_po  ! IYS 19.12.2017
 
       contains
 

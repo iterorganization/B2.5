@@ -52,7 +52,7 @@ c 2002-09-11: logic revised
       use eirmod_ctrcei
       use eirmod_ctrig
       use eirmod_cinit
-     , , only: eirene_init_cinit
+     , , only: eirene_init_cinit, fort_lc
       use eirmod_extrab25
       use eirmod_braeir
       use eirmod_cestim
@@ -992,11 +992,7 @@ c
       call mapx(nx,ny,1,fllim_al,work)
 c
 #ifdef B25_EIRENE
-#ifndef HPUX
-      filename='fort.44'
-#else
-      filename='ftn44'
-#endif
+      filename=fort_lc//'44'
       call find_file(filename,ex)
 #else
       ex = .false.
@@ -1023,11 +1019,7 @@ c
       endif
 
 #ifdef B25_EIRENE
-#ifndef HPUX
-      filename='fort.46'
-#else
-      filename='ftn46'
-#endif
+      filename=fort_lc//'46'
       call find_file(filename,ex)
       if(ex.and.use_eirene.ne.0) then
         open(unit=46,file=filename)

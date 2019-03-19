@@ -51,7 +51,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_cinit
-     * , only : eirene_init_cinit
+     * , only : eirene_init_cinit, fort_lc
       use eirmod_ccoupl
       use eirmod_clogau
       use eirmod_ctrcei
@@ -1750,11 +1750,7 @@ cxpb initialize the data necessary for boundary conditions
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 #ifdef B25_EIRENE
-#ifndef HPUX
-      filename='fort.44'
-#else
-      filename='ftn44'
-#endif
+      filename=fort_lc//'44'
       call find_file(filename,ex)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
@@ -1991,11 +1987,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         end do
 *    ..produce time dependent file
         if (save_f31.lt.0) then
-#ifndef HPUX
-          write(fort31name,'(a,i8.8)') 'fort.31.', itim
-#else
-          write(fort31name,'(a,i8.8)') 'ftn31.', itim
-#endif
+          write(fort31name,'(a,i8.8)') fort_lc//'31.', itim
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
           call copy_background(nx, ny, ns, BoRiS)
@@ -2177,14 +2169,16 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) then
             call write_f44(savefile(13:16))
-#ifndef HPUX
-            inquire(file='fort.13',exist=found)
+            filename=fort_lc//'13'
+            inquire(file=filename,exist=found)
             if (found) then
 #ifdef WINDOWS
-              systemarg='copy fort.13 fort.13.'//savefile(13:16)//
+              systemarg='copy '//trim(filename)//' '//
+     &                           trim(filename)//'.'//savefile(13:16)//
      &        ' > nul'
 #else
-              systemarg='cp fort.13 fort.13.'//savefile(13:16)
+              systemarg='cp '//trim(filename)//' '//
+     &                         trim(filename)//'.'//savefile(13:16)
 #endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)
@@ -2192,13 +2186,16 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
               call system(systemarg)
 #endif
             endif
-            inquire(file='fort.15',exist=found)
+            filename=fort_lc//'15'
+            inquire(file=filename,exist=found)
             if (found) then
 #ifdef WINDOWS
-              systemarg='copy fort.15 fort.15.'//savefile(13:16)//
+              systemarg='copy '//trim(filename)//' '//
+     &                           trim(filename)//'.'//savefile(13:16)//
      &        ' > nul'
 #else
-              systemarg='cp fort.15 fort.15.'//savefile(13:16)
+              systemarg='cp '//trim(filename)//' '//
+     &                         trim(filename)//'.'//savefile(13:16)
 #endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)
@@ -2206,36 +2203,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
               call system(systemarg)
 #endif
             endif
-#else
-            inquire(file='ftn13',exist=found)
-            if (found) then
-#ifdef WINDOWS
-              systemarg='copy ftn13 ftn13.'//savefile(13:16)//
-     &        ' > nul'
-#else
-              systemarg='cp ftn13 ftn13.'//savefile(13:16)
-#endif
-#ifdef NAGFOR
-              call system(systemarg, status, ierror)
-#else
-              call system(systemarg)
-#endif
-            endif
-            inquire(file='ftn15',exist=found)
-            if (found) then
-#ifdef WINDOWS
-              systemarg='copy ftn15 ftn15.'//savefile(13:16)//
-     &        ' > nul'
-#else
-              systemarg='cp ftn15 ftn15.'//savefile(13:16)
-#endif
-#ifdef NAGFOR
-              call system(systemarg, status, ierror)
-#else
-              call system(systemarg)
-#endif
-            endif
-#endif
           endif
 #endif
           close(nout(6))

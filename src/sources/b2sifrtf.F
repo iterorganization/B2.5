@@ -81,7 +81,7 @@
 ! The usage of smb*a instead of smb*al should be checked.
       real (kind=R8) ::
      *  smbfrial(-1:nx,-1:ny,0:3), smbfreal(-1:nx,-1:ny,0:3),
-     *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)              !srv 13.01.17 }
+     *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)            !srv 13.01.17 }
 #ifdef WITH_FTIMINGS
       logical :: do_parallel
 #endif
@@ -176,6 +176,9 @@
 !$OMP& SHARED(phm0, styl0)
 #endif
 !$OMP& PRIVATE(KabVp, ix, iy, coef, t0)
+#ifndef NO_OPENMP_B2NPMO
+!$OMP& PRIVATE(styl0, phm0)
+#endif
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix) 
 !$OMP& SHARED(rz2, am, zetap, na, ua)
 !$OMP& REDUCTION(+: smbfrial)
@@ -269,6 +272,9 @@
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
 !$OMP& SHARED(on_closed_surface)
+#ifndef NO_OPENMP_B2NPMO
+!$OMP& PRIVATE(phm3)
+#endif
 !$OMP& REDUCTION(+: smbtfial)
 #endif
       do is = 0, ns-1
@@ -325,10 +331,10 @@ c   .. apply flux limit
       smbtfia = smbtfial
       smbtfea = smbtfeal
 
-      if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
+      if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then               !srv 05.07.17
         write (chns,'(i3.3)') isb
 
-        wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+       !srv 05.07.17 {
+        wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+        !srv 05.07.17 {
      &        smbfria(:,:,2)*na(:,:,isb)*mp*am(isb)+
      &        smbfria(:,:,3)*ua(:,:,isb)*na(:,:,isb)*mp*am(isb))
         call my_out(70,nx,ny,wrk,'b2sifrtf_smofria'//chns)
@@ -338,11 +344,11 @@ c   .. apply flux limit
         wrk = vol*hz*smbtfial(:,:,0)
         call my_out(70,nx,ny,wrk,'b2sifrtf_smotfia'//chns)
         wrk = vol*hz*smbtfeal(:,:,0)
-        call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)             !srv 05.07.17 }
+        call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
         call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
       endif
 
-      if (iout.gt.1) then                                              !srv 05.07.17
+      if (iout.gt.1) then                                               !srv 05.07.17
         do is = 0,ns-1
           write (chis,'(i3.3)') is
           call my_out(70,nx,ny,fkabvp(isb, is),

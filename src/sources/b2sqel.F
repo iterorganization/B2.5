@@ -118,7 +118,6 @@
 !$OMP& shared(rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
 !$OMP& shared(zamin, zamax, phm0, phm1, phm2, ev, ns, nx, ny)
 !$OMP& shared(cutll, cutlo, art_rad, ismain, TNORM, TE)
-
 !$OMP DO
 #endif
 *   ..compute wrk0(,)=log(te(,)/ev)

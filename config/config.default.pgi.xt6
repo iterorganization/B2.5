@@ -26,9 +26,16 @@ LINK_MOD =
 FC = ftn
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -C -mp=nonuma
+FCOPTS = -g -C
+LDOPTS = -g -C
 else
-FCOPTS = -O3 -mp=nonuma
+FCOPTS = -O3
+LDOPTS =
+endif
+
+ifdef SOLPS_OPENMP
+FCOPTS += -mp=nonuma
+LDOPTS += -mp=nonuma
 endif
 
 DBLFC=${FC}
@@ -55,19 +62,6 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = $(FC)
-ifdef SOLPS_OPENMP
-ifdef SOLPS_DEBUG
-LDOPTS = -g -C -mp=nonuma
-else
-LDOPTS = -mp=nonuma
-endif
-else
-ifdef SOLPS_DEBUG
-LDOPTS = -g -C
-else
-LDOPTS = 
-endif
-endif
 
 LCPP= ${LD_SONNET}
 

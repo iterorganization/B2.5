@@ -329,6 +329,7 @@
 !$OMP& SHARED(rz2, ne_ext)
 !$OMP& SHARED(leftix, rightix, leftiy, rightiy, on_closed_surface)
 !$OMP& SHARED(bottomix, bottomiy, topix, topiy)
+!$OMP& SHARED(last_solve_5)
 !$OMP& SHARED(b2stbr_phys_smo_bal, b2stbr_phys_smo0to3)
 !$OMP& SHARED(b2stbr_bas_smo_bal, b2stbr_bas_smo0to3)
 !$OMP& SHARED(b2stbc_smo_bal, b2stbc_smo0to3)
@@ -577,7 +578,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
        endif                                                           !srv 22.05.18
       enddo
 #ifndef NO_OPENMP_B2NPMO
-!$OMP END PARALLEL DO
+      !$OMP END PARALLEL DO
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
 #endif

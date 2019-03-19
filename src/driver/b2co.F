@@ -34,7 +34,7 @@
       use eirmod_ctrcei
       use eirmod_braeir
       use eirmod_cinit
-     , , only: eirene_init_cinit
+     , , only: eirene_init_cinit, fort_lc
       use eirmod_comprt
      , , only: iunout
       use eirmod_eirbra
@@ -353,11 +353,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       else
 #ifdef B25_EIRENE
         extension=savefile(lnblnk(savefile)-3:lnblnk(savefile))
-#ifndef HPUX
-        filename='fort.44.'//extension
-#else
-        filename='ftn44.'//extension
-#endif
+        filename=fort_lc//'44.'//extension
         call find_file(filename,file_exists)
 #else
         file_exists = .false.

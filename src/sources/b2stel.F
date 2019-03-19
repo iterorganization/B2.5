@@ -329,11 +329,11 @@
              rsamo(ix,iy,is+1) = rsamo(ix,iy,is+1)-t1*ua(ix,iy,is)
            endif
           enddo
-        endif
-       enddo
+         endif
+        enddo
 *   ..compute sources due to recombination
-       do is = 1, ns-1
-        if (lnext(is-1,is)) then
+        do is = 1, ns-1
+         if (lnext(is-1,is)) then
 *     ..particle source and heat source
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.

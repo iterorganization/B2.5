@@ -634,7 +634,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 
 csw 16oct2012 init ier0
         ier0=0
-!        if (solving(2).and.all(solveco(is,0:nnreg(0)))) then             !srv 26.09.12 22.05.18
+!       if (solving(2).and.all(solveco(is,0:nnreg(0)))) then             !srv 26.09.12 22.05.18
           solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
           solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
           new_matrix = .false.
@@ -716,7 +716,7 @@ csw 16oct2012 init ier0
               last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
             endif
           endif
-!        endif                                                            !srv 13.10.06 }  22.05.18
+!       endif                                                            !srv 13.10.06 }  22.05.18
 
         do iy=-1,ny
           do ix=-1,nx
@@ -1121,7 +1121,7 @@ c   recompute particle fluxes
 *    ..perform iteration
         new_matrix = .false.
         if(mdf_fnb.eq.0) then                                            !srv 13.10.06
-!          if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv  22.05.18
+!         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv  22.05.18
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 02.04.18
@@ -1152,9 +1152,9 @@ c   recompute particle fluxes
               call xertst (ier0.eq.0, 'error return from b2npco')
               last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
             endif
-!          endif                                                        !srv 22.05.18
+!         endif                                                          !srv 22.05.18
         else                                                             !srv 13.10.06 {
-!          if (solving(2).and.all(solveco(is,0:nnreg(0)))) then         !srv 22.05.18 
+!         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv 22.05.18 
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if(.not.is_neutral(is)) then
@@ -1203,7 +1203,7 @@ c   recompute particle fluxes
               last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
               call xertst (ier0.eq.0, 'error return from b2npco')
             endif
-!          endif                                                            !srv 22.05.18
+!         endif                                                          !srv 22.05.18
         endif                                                            !srv 13.10.06 }
        enddo
 *      ..compute electron drift velocities

@@ -158,7 +158,7 @@
        itpar = itcnt*iters
        call xerrab ('b2ux11p: Style 0 is not implemented')
        if (in_parallel()) then
-          stop 'STOP: iluter not parallelised, re-run in serial'
+         stop 'STOP: iluter not parallelised, re-run in serial'
        else
          call iluter (nx+2, ny+2, aa11, resfun, iters, acpar, itpar,
      &    corfun, nrmc, aaf, wrk0, wrk1, wrk2)

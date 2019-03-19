@@ -34,7 +34,7 @@
       use b2mod_version
 #ifdef B25_EIRENE
       use eirmod_cinit
-     * , only : eirene_init_cinit
+     * , only : eirene_init_cinit, fort_lc
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_comprt
@@ -563,11 +563,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call get_wall_data(nx,ny,ns,BoRiS,ex)
 
 #ifdef B25_EIRENE
-#ifndef HPUX
-      filename='fort.44'
-#else
-      filename='ftn44'
-#endif
+      filename=fort_lc//'44'
       call find_file(filename,ex)
 #else
       ex = .false.
@@ -708,8 +704,8 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         do ix=0,nx
           dspol(ix,iy)=dspol(ix-1,iy)+(hx(ix-1,iy)+hx(ix,iy))/2.0_R8
           dspar(ix,iy)=dspar(ix-1,iy)+
-     1     (hx(ix-1,iy)*abs(bb(ix-1,iy,2)/bb(ix-1,iy,0))+
-     2      hx(ix,iy)*abs(bb(ix,iy,2)/bb(ix,iy,0)))/2.0_R8
+     1     (hx(ix-1,iy)*abs(bb(ix-1,iy,3)/bb(ix-1,iy,0))+
+     2      hx(ix,iy)*abs(bb(ix,iy,3)/bb(ix,iy,0)))/2.0_R8
         enddo
       enddo
       write(*,*) 'dspol :',(dspol(ix,jsep),ix=-1,nx)
@@ -774,8 +770,9 @@ c     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 c 23: fht definition changed to 5/2 formulation
 c 24: removed drift velocity contributions from kinrgy
 c 25: debugged indexing error for eneutrad
+c 26: using total field for computing dspar
 
-      dbversion=25
+      dbversion=26
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)

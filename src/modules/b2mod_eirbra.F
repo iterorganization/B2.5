@@ -27,6 +27,15 @@ c*** flxspci: fluxes of plasma ions to the recycling surfaces
 c*** srccrfc: source correction factors (from infcop)
 C
 
+C> Default output file prefix
+#ifndef HPUX
+      CHARACTER(5), PUBLIC, PARAMETER :: FORT    = 'FORT.'
+      CHARACTER(5), PUBLIC, PARAMETER :: FORT_LC = 'fort.'
+#else
+      CHARACTER(3), PUBLIC, PARAMETER :: FORT    = 'FTN'
+      CHARACTER(3), PUBLIC, PARAMETER :: FORT_LC = 'ftn'
+#endif
+
       contains
 
       subroutine alloc_b2mod_eirbra(nxd,nyd,nsd,natmd,nplsd,nstrad)

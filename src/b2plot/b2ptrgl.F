@@ -24,6 +24,9 @@ c======================================================================
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_ccona
+      use eirmod_cinit
+#else
+      use b2mod_eirbra
 #endif
       implicit none
 #include <DIMENSIONS.F>
@@ -192,11 +195,7 @@ c*** which are calculated in Eirene.
       print *,'ers_factor,lrdlsp= ',ers_factor,lrdlsp
 #endif
       tab=char(9)
-#ifndef HPUX
-      filename='fort.44'
-#else
-      filename='ftn44'
-#endif
+      filename=fort_lc//'44'
       call find_file(filename,ft44)
 
 c----------------------------------------------------------------------
@@ -1318,12 +1317,8 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
             end if
           end do !loop on targets
         else
-          print *, 'b2ptrgl, no sputtering calculated:',
-#ifndef HPUX
-     ,     ' track_species=0 or no fort.44 file available'
-#else
-     ,     ' track_species=0 or no ftn44 file available'
-#endif
+          print '(4a)', 'b2ptrgl, no sputtering calculated:',
+     ,     ' track_species=0 or no ',fort_lc,'44 file available'
         end if
 
         l=1
