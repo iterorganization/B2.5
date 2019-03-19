@@ -176,6 +176,9 @@
 !$OMP& SHARED(phm0, styl0)
 #endif
 !$OMP& PRIVATE(KabVp, ix, iy, coef, t0)
+#ifndef NO_OPENMP_B2NPMO
+!$OMP& PRIVATE(styl0, phm0)
+#endif
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix) 
 !$OMP& SHARED(rz2, am, zetap, na, ua)
 !$OMP& REDUCTION(+: smbfrial)
@@ -269,6 +272,9 @@
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
 !$OMP& SHARED(on_closed_surface)
+#ifndef NO_OPENMP_B2NPMO
+!$OMP& PRIVATE(phm3)
+#endif
 !$OMP& REDUCTION(+: smbtfial)
 #endif
       do is = 0, ns-1
