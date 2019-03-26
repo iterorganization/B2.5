@@ -31,7 +31,7 @@ c     File names will be appended with "*_st.dat".
 
       if (ncall.eq.0) then
         call ipgeti('b2wdat_append', iappend)
-        call ipgeti('my_out_us_digits', ndigits)
+        call ipgeti('my_out_digits', ndigits)
         call xertst(0.le.ndigits, 'invalid ndigits value')
         ncall = 1
 *    ..try to create a file in optional output folder
