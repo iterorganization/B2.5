@@ -262,7 +262,11 @@
         t0 = sei1(zy1)/zy1-b1(k)*sei1(zy1c)/zy1c
         if (a1(k)*z1(k).gt.0.0_R8) then
           t0 = log(a1(k)*z1(k)*t0)-zy1
-          zs1 = expu(t0)
+          if (t0.gt.cutll) then
+            zs1 = exp(t0)
+          else
+            zs1 = 0.0_R8
+          endif
         else
           zs1 = 0.0_R8
         end if

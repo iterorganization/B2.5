@@ -22,11 +22,13 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_openmp
+#ifdef _OPENMP
 #ifndef NO_OPENMP_B2NPMO
       use b2mod_b2cmpt
       use b2mod_b2cmgs
       use b2mod_transport
      & , only : f_luc_sg, alfx_c, sigx_c
+#endif
 #endif
 #ifdef WITH_FTIMINGS
       use timings

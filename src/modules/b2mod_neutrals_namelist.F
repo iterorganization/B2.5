@@ -1129,7 +1129,7 @@ c.. Test consistency with physical edges within the computational domain
       use b2mod_boundary_namelist
       implicit none
       integer nx, ny
-      integer ib, ix, iy
+      integer ib, ix
       integer, allocatable :: bc(:,:), rc(:,:)
       logical, allocatable :: coincide(:)
 

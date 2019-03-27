@@ -81,7 +81,7 @@
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
       character chns*3
-!     character chk*1
+!     character chk*1                                             !srv 30.06.08
       real (kind=R8) ::
      *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0

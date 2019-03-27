@@ -331,7 +331,7 @@ c   .. apply flux limit
       smbtfia = smbtfial
       smbtfea = smbtfeal
 
-      if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then               !srv 05.07.17
+      if (iout.ne.0) then !  .or. iout_b2wdat.eq.4) then                !srv 05.07.17
         write (chns,'(i3.3)') isb
 
         wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+        !srv 05.07.17 {

@@ -80,7 +80,7 @@ C
 C
       READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
-      write(*,'(3a,5i4)')
+      write(*,'(3a,t27,5i5)')
      . ' Dimensions in ',fort_lc,'44 = ',nnx,nny,natmi,nmoli,nioni
       write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')

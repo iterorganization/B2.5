@@ -2304,15 +2304,15 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If 0 then no calculation of halpha in wneutral, otherwise halpha is calculated
+					Deprecated. Use "DEFINE_LINES" in block 12 of Eirene input file instead.
 				</description>
 			</switch>
 			<switch>
 				<name>eirene_lvib</name>
-				<default>0</default>
+				<default>1</default>
 				<type>integer</type>
 				<description>
-					If 0 then the sigadd4 (molecular ions) and sigadd5 (negative ions) contributions to the halpha in wneutral are not included, otherwise they are
+					Deprecated. Use "DEFINE_LINES" in block 12 of Eirene input file instead.
 				</description>
 			</switch>
 			<switch>

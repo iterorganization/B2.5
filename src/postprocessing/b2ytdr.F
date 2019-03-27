@@ -72,6 +72,8 @@ c 2002-09-11: logic revised
      ,        eirene_extrab25_eirpbls_init, eirene_extrab25_wneuinit,
      ,        eirene_extrab25_cleanup
       use eirmod_clogau
+      use b2mod_b2plot
+     , ,only : nstsi
 #else
       use b2mod_braeir
 #endif
@@ -170,7 +172,7 @@ c 2002-09-11: logic revised
       integer mw_jxa1, mw_jsep1
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
       integer indx, indy, indx1, indy1
-      integer coriolis
+      integer coriolis, lhalpha
       integer nncut1, nnreg1(0:2), periodic_bc1
       integer scaling_ix_begin(nscale), scaling_ix_end(nscale)
       integer elm_ix_begin, elm_ix_end
@@ -309,6 +311,10 @@ c 2002-09-11: logic revised
       integer NALSI, NALS1, NADSPC1
       integer ISPL, IPROJ, NPLI1, NPLO1, NPLI2, NPLO2
       integer NPLIN2, NPLOT2, NPLDL2
+      integer NUM_LINES1, NUM_COMPO, NUM_COMPO1
+      integer NUM_CONTRIB, NUM_CONTRIB1
+      integer MOD_ADDV, MLINE, JLINE, KLINE, JCOMP, KCONTR
+      integer ISL, ITP, IRATIO
       integer NCHORI, NCHENI, NCHOR1
       integer LNTSPEC, LNTSPUT, NMCSPUT, NLSTADDS, MTREADDS, NGWTIES
       integer NSNVI, NSNV1, NPWIN, NSPTAL
@@ -348,7 +354,7 @@ c 2002-09-11: logic revised
       integer, allocatable :: NMASSP(:), NCHARP(:), NPRTP(:), NCHRGP(:),
      &                        ISRFP(:), ISRTP(:), ID1P(:), NRCP(:),
      &                        DENSLIM(:), NRE(:), NHSTP(:),
-     &                        TDMISP(:,:),
+     &                        TDMISP(:,:), TDMITP(:,:), TDMISTR(:,:),
      &                        IREACP(:,:), IBULKP(:,:),
      .                        ISCD1P(:,:), ISCD2P(:,:), ISCD3P(:,:),
      .                        ISCD4P(:,:), ISCDEP(:,:)
@@ -359,7 +365,7 @@ c 2002-09-11: logic revised
      &                        NPRTP1(:), NCHRGP1(:),
      &                        ISRFP1(:), ISRTP1(:), ID1P1(:), NRCP1(:),
      &                        DENSLIM1(:), NRE1(:), NHSTP1(:),
-     &                        TDMISP1(:,:)
+     &                        TDMISP1(:,:), TDMITP1(:,:), TDMISTR1(:,:)
       integer, allocatable :: IPLAA(:), IPLEA(:)
       integer, allocatable :: IPLAS(:), IPLES(:)
       integer, allocatable :: IFLB1(:), LKINDP1(:)
@@ -386,6 +392,7 @@ c 2002-09-11: logic revised
      .                        ISCLS(:), ISCLT(:), ISCL1(:),
      .                        ISCL2(:), ISCL3(:), ISCLB(:),
      .                        ISCLA(:)
+      integer, allocatable :: ILBEG(:), ILEND(:)
       integer, allocatable :: NTGPR1(:)
       real (kind=R8) :: rdum(0:17), DPP, R1MN, R1MX, R2MN, R2MX
       real (kind=R8) :: ALLOC, MPTS
@@ -396,19 +403,21 @@ c 2002-09-11: logic revised
       real (kind=R8), allocatable :: VOLCOR(:), VOLADD(:)
       real (kind=R8), allocatable :: RLB(:)
       real (kind=R8), allocatable :: EELECA(:,:), EBULKA(:,:),
-     .           ESCD1A(:,:), ESCD2A(:,:), FREACA(:,:), FLDLMA(:,:)
+     .           ESCD1A(:,:), ESCD2A(:,:), FREACA(:,:), EDPOTA(:,:)
       real (kind=R8), allocatable :: EELECM(:,:), EBULKM(:,:),
      .           ESCD1M(:,:), ESCD2M(:,:), FREACM(:,:)
       real (kind=R8), allocatable :: EELECI(:,:), EBULKI(:,:),
      .           ESCD1I(:,:), ESCD2I(:,:), FREACI(:,:)
       real (kind=R8), allocatable :: EELECPH(:,:),EBULKPH(:,:),
-     .           ESCD1PH(:,:),ESCD2PH(:,:),FREACPH(:,:),FLDLMPH(:,:)
+     .           ESCD1PH(:,:),ESCD2PH(:,:),FREACPH(:,:),EDPOTPH(:,:)
       real (kind=R8), allocatable :: EELECP(:,:), EBULKP(:,:),
      .           ESCD1P(:,:), ESCD2P(:,:), FREACP(:,:)
       real (kind=R8), allocatable ::
      .           TDMBOLTZ(:), TDMDELTAE(:), TDM_CORONA(:)
       real (kind=R8), allocatable ::
      .           TDMBOLTZ1(:), TDMDELTAE1(:), TDM_CORONA1(:)
+      real (kind=R8), allocatable ::
+     .           TDMPRM(:,:), TDMPRM1(:,:)
       real (kind=R8), allocatable ::
      .  P0(:),P1(:),P2(:),P3(:),P4(:),P5(:)
       real (kind=R8), allocatable :: DATD(:), DATD1(:)
@@ -455,7 +464,7 @@ c 2002-09-11: logic revised
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
       character*500 line
 #ifdef B25_EIRENE
-      character*80 ZEILE, ZEILEN(100)
+      character*80 ZEILE, ULINE, ZEILEN(100)
       character*96, allocatable :: REAC_LINE(:)
       character*98 REACZEILE
       character*24 TXTSPC, TXTUNT, TEXTLA
@@ -465,6 +474,7 @@ c 2002-09-11: logic revised
       character HANDLE*6
       character FILNAM*8,H123*4,REAC*9,REAC2*50,CRC*3,CHR*12
       character ELNAME*2,MOLNAME*8,REACSTR*11
+      character FNAME*6,FRATIO*6
       character*8 eirene_format
       character*8 varname, spcname
       data eirene_format / 'iter' /
@@ -500,7 +510,7 @@ c 2002-09-11: logic revised
       logical, allocatable :: nlpbls(:), nlpbl1(:)
       logical, allocatable :: done(:)
       logical LRPSCUT
-      logical in_bundle, charges_match, skip_reac
+      logical in_bundle, charges_match, skip_reac, keep_contr
 #endif
       logical todo, wait, same_bundling, same_atoms, non_default
       logical averaging
@@ -542,7 +552,7 @@ c 2002-09-11: logic revised
       data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
       data iy_nocoreExB/-2/, bc_type16_ref/1/, bc_type20_ref/1/
-      data mw_jxa/-1/, mw_jsep/-1/
+      data mw_jxa/-1/, mw_jsep/-1/, lhalpha/1/
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
@@ -826,8 +836,8 @@ c 2002-09-11: logic revised
       NPLSI = NPLS
       NMOLI = NMOL
       NIONI = NION
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA)
       CALL EIRENE_ALLOC_CCOUPL(1)
       CALL EIRENE_ALLOC_CTRIG
       CALL EIRENE_ALLOC_CESTIM(1)
@@ -1313,6 +1323,7 @@ c 2002-09-11: logic revised
       call ipgeti ('b2tqna_ixref', ixref)
       call ipgeti ('set_transport_ixref', ixref)
       call ipgeti ('set_transport_iyref', iyref)
+      call ipgeti ('eirene_lhalpha', lhalpha)
       call ipgeti ('b2tqna_iy1', iy1)
       call ipgeti ('b2tqna_iy2', iy2)
       call ipgeti ('b2tqna_ix1', ix1)
@@ -1628,7 +1639,7 @@ c 2002-09-11: logic revised
           todo = .false.
           wait = .true.
         case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
-     &       'b2npp7_style')
+     &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
@@ -3534,13 +3545,14 @@ cxpb  Start reading input.dat file
         ELSE
           IF (streql(eirene_format,'old')) THEN
             READ (ZEILE,6666) idum(0:5)  ! NMACH,NMODE,NTIME,NFILE,NITER,lfrm15
+            idum(0) = 0
             idum(5) = idum(4)
             idum(4) = 1
             idum(6) = 1
             idum(7) = 1
             idum(8) = 0
           ELSE
-            READ (ZEILE,6666) idum(0:8)  ! NMACH,NMODE,NTCPU,NFILE,NITER0,NITER,
+            READ (ZEILE,6666) idum(0:8)  ! NPRLL,NMODE,NTCPU,NFILE,NITER0,NITER,
                                          ! NTIME0,NTIME,NFULLRUN
           END IF
           NMODE = idum(1)
@@ -4530,7 +4542,7 @@ Cxpb then rewrite the entire block
         allocate(IESTMA(NATMI,NNREAC),IBGKA(NATMI,NNREAC))
         allocate(EELECA(NATMI,NNREAC),EBULKA(NATMI,NNREAC),
      .           ESCD1A(NATMI,NNREAC),ESCD2A(NATMI,NNREAC),
-     .           FREACA(NATMI,NNREAC),FLDLMA(NATMI,NNREAC))
+     .           FREACA(NATMI,NNREAC),EDPOTA(NATMI,NNREAC))
         DO 4212 JATM=1,NATMI
           READ (IUNIN,'(A72)') ZEILE
           DO 4222 K=1,NRCA(JATM)
@@ -4557,7 +4569,7 @@ Cxpb then rewrite the entire block
             ENDIF
             READ (IUNIN,6664) EELECA(JATM,K),EBULKA(JATM,K),
      .                        ESCD1A(JATM,K),ESCD2A(JATM,K),
-     .                        FREACA(JATM,K),FLDLMA(JATM,K)
+     .                        FREACA(JATM,K),EDPOTA(JATM,K)
  4222     CONTINUE
           J=0
           DO K=1,NRCA(JATM)
@@ -4587,7 +4599,7 @@ Cxpb then rewrite the entire block
               ENDIF
               ESCD2A(JATM,J) = ESCD2A(JATM,K)
               FREACA(JATM,J) = FREACA(JATM,K)
-              FLDLMA(JATM,J) = FLDLMA(JATM,K)
+              EDPOTA(JATM,J) = EDPOTA(JATM,K)
             END IF
           END DO
           NRCA(JATM) = J
@@ -4903,7 +4915,7 @@ Cxpb then rewrite the entire block
             ENDIF
             READ (IUNIN,6664) rdum(0:5) ! EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
                                         ! ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
-                                        ! FREACPH(JPHOT,K),FLDLMPH(JPHOT,K)
+                                        ! FREACPH(JPHOT,K),EDPOTPH(JPHOT,K)
   452     CONTINUE
   451   CONTINUE
         DO 4511 JPHOT=1,NPHOTI
@@ -4921,7 +4933,7 @@ Cxpb then rewrite the entire block
         allocate(IESTMPH(NPHOTI,NNREAC),IBGKPH(NPHOTI,NNREAC))
         allocate(EELECPH(NPHOTI,NNREAC),EBULKPH(NPHOTI,NNREAC),
      .           ESCD1PH(NPHOTI,NNREAC),ESCD2PH(NPHOTI,NNREAC),
-     .           FREACPH(NPHOTI,NNREAC),FLDLMPH(NPHOTI,NNREAC))
+     .           FREACPH(NPHOTI,NNREAC),EDPOTPH(NPHOTI,NNREAC))
         DO 4512 JPHOT=1,NPHOTI
           READ (IUNIN,'(A72)') ZEILE
           DO 4522 K=1,NRCPH(JPHOT)
@@ -4948,7 +4960,7 @@ Cxpb then rewrite the entire block
             ENDIF
             READ (IUNIN,6664) EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
      .                        ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
-     .                        FREACPH(JPHOT,K),FLDLMPH(JPHOT,K)
+     .                        FREACPH(JPHOT,K),EDPOTPH(JPHOT,K)
  4522     CONTINUE
           J=0
           DO K=1,NRCPH(JPHOT)
@@ -4978,7 +4990,7 @@ Cxpb then rewrite the entire block
               END IF
               ESCD2PH(JPHOT,J) = ESCD2PH(JPHOT,K)
               FREACPH(JPHOT,J) = FREACPH(JPHOT,K)
-              FLDLMPH(JPHOT,J) = FLDLMPH(JPHOT,K)
+              EDPOTPH(JPHOT,J) = EDPOTPH(JPHOT,K)
             END IF
           END DO
           NRCPH(JPHOT) = J
@@ -5070,6 +5082,8 @@ Cxpb then rewrite the entire block
      &        streql(CDENMODEL(JPLS),'FTN13').OR.
      &        streql(CDENMODEL(JPLS),'FORT.10').OR.
      &        streql(CDENMODEL(JPLS),'FTN10').OR.
+     &        streql(CDENMODEL(JPLS),'CONSTANT').OR.
+     &        streql(CDENMODEL(JPLS),'MULTIPLY').OR.
      &        streql(CDENMODEL(JPLS),'BOLTZMANN').OR.
      &        streql(CDENMODEL(JPLS),'CORONA')) THEN
             READ (IUNIN,'(A80)') ZEILE
@@ -5089,6 +5103,8 @@ Cxpb then rewrite the entire block
      &        streql(CDENMODEL(JPLS),'FTN13').OR.
      &        streql(CDENMODEL(JPLS),'FORT.10').OR.
      &        streql(CDENMODEL(JPLS),'FTN10').OR.
+     &        streql(CDENMODEL(JPLS),'CONSTANT').OR.
+     &        streql(CDENMODEL(JPLS),'MULTIPLY').OR.
      &        streql(CDENMODEL(JPLS),'BOLTZMANN').OR.
      &        streql(CDENMODEL(JPLS),'CORONA')) THEN
             backspace(IUNIN)
@@ -5107,7 +5123,9 @@ Cxpb then rewrite the entire block
      .           ESCD1P(NPLSI,NNREAC),ESCD2P(NPLSI,NNREAC),
      .           FREACP(NPLSI,NNREAC))
         NNREAC=max(1,maxval(NRE(1:NPLSI)))
-        allocate(TDMISP(NNREAC,NPLSI))
+        allocate(TDMISP(NNREAC,NPLSI),TDMITP(NNREAC,NPLSI))
+        allocate(TDMISTR(NNREAC,NPLSI))
+        allocate(TDMPRM(5,NPLSI))
         allocate(TDMFNAME(NNREAC,NPLSI), TDMH2(NNREAC,NPLSI),
      .           TDMREACTION(NNREAC,NPLSI), TDMCR(NNREAC,NPLSI))
         DO 5112 JPLS=1,NPLSI
@@ -5167,20 +5185,30 @@ Cxpb then rewrite the entire block
           CASE ('FORT.13','FTN13')
             READ (IUNIN,6666) TDMISP(1,JPLS)
           CASE ('FORT.10','FTN10')
-            READ (IUNIN,6666) TDMISP(1,JPLS)
+            READ (IUNIN,6666) TDMISP(1,JPLS),
+     .                        TDMITP(1,JPLS),TDMISTR(1,JPLS)
+          CASE ('CONSTANT')
+            READ (IUNIN,6664) TDMPRM(1,JPLS),
+     .                        TDMPRM(2,JPLS),TDMPRM(3,JPLS),
+     .                        TDMPRM(4,JPLS),TDMPRM(5,JPLS)
+          CASE ('MULTIPLY')
+            READ (IUNIN,'(3I6,6X,3E12.4)')
+     .           TDMISP(1,JPLS), TDMITP(1,JPLS), TDMISTR(1,JPLS),
+     .           TDMPRM(1,JPLS), TDMPRM(2,JPLS), TDMPRM(3,JPLS)
+            TDMITP(1,JPLS)=4
           CASE ('BOLTZMANN')
-            READ (IUNIN,'(I6,6X,2E12.4)')
-     .           TDMISP(1,JPLS),
+            READ (IUNIN,'(3I6,6X,2E12.4)')
+     .           TDMISP(1,JPLS), TDMITP(1,JPLS), TDMISTR(1,JPLS),
      .           TDMBOLTZ(JPLS), TDMDELTAE(JPLS)
           CASE ('CORONA')
-            READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
-     .           TDMISP(1,JPLS),
+            READ (IUNIN,'(3I6,1X,A6,1X,A4,A9,A3,E12.4)')
+     .           TDMISP(1,JPLS), TDMITP(1,JPLS), TDMISTR(1,JPLS),
      .           TDMFNAME(1,JPLS),TDMH2(1,JPLS), TDMREACTION(1,JPLS),
      .           TDMCR(1,JPLS),TDM_CORONA(JPLS)
           CASE ('COLRAD')
             DO I=1, NRE(JPLS)
-              READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3)')
-     .           TDMISP(I,JPLS),
+              READ (IUNIN,'(3I6,1X,A6,1X,A4,A9,A3)')
+     .           TDMISP(I,JPLS), TDMITP(I,JPLS), TDMISTR(I,JPLS),
      .           TDMFNAME(I,JPLS),TDMH2(I,JPLS), TDMREACTION(I,JPLS),
      .           TDMCR(I,JPLS)
             END DO
@@ -5405,6 +5433,7 @@ cxpb Must now convert the bulk ion data according to the new bundling
         allocate(DENSLIM1(NPLSI1))
         allocate(CDENMODEL1(NPLSI1))
         allocate(NRE1(NPLSI1))
+        allocate(TDMPRM1(5,NPLSI1))
         allocate(TDMBOLTZ1(NPLSI1))
         allocate(TDMDELTAE1(NPLSI1))
         allocate(TDM_CORONA1(NPLSI1))
@@ -5504,6 +5533,8 @@ cxpb Must now convert the bulk ion data according to the new bundling
         END DO
         NREAC1 = max(1,maxval(NRE1(1:NPLSI1)))
         allocate(TDMISP1(NREAC1,NPLSI1))
+        allocate(TDMITP1(NREAC1,NPLSI1))
+        allocate(TDMISTR1(NREAC1,NPLSI1))
         allocate(TDMFNAME1(NREAC1,NPLSI1))
         allocate(TDMH21(NREAC1,NPLSI1))
         allocate(TDMREACTION1(NREAC1,NPLSI1))
@@ -5517,13 +5548,50 @@ cxpb Must now convert the bulk ion data according to the new bundling
               TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
             CASE ('FORT.10','FTN10')
               CDENMODEL1(IB) = FORT//'10'
+              IF (TDMITP(1,e_bundle_end(IB)).eq.1) THEN
+                TDMISP1(1,IB) = iatm1(TDMISP(1,e_bundle_end(IB)))
+              ELSE IF (TDMITP(1,e_bundle_end(IB)).eq.2) THEN
+                TDMISP1(1,IB) = imol1(TDMISP(1,e_bundle_end(IB)))
+              ELSE IF (TDMITP(1,e_bundle_end(IB)).eq.4) THEN
+                TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
+              ELSE
+                TDMISP1(1,IB) = TDMISP(1,e_bundle_end(IB))
+              END IF
+              TDMITP1(1,IB) = TDMITP(1,e_bundle_end(IB))
+              TDMISTR1(1,IB) = istra1(TDMISTR1(1,e_bundle_end(IB)))
+            CASE ('CONSTANT')
+              TDMPRM1(1:5,IB) = TDMPRM(1:5,e_bundle_end(IB))
+            CASE ('MULTIPLY')
               TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
+              TDMITP1(1,IB) = TDMITP(1,e_bundle_end(IB))
+              TDMISTR1(1,IB) = istra1(TDMISTR1(1,e_bundle_end(IB)))
+              TDMPRM1(1:3,IB) = TDMPRM(1:3,e_bundle_end(IB))
             CASE ('BOLTZMANN')
-              TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
+              IF (TDMITP(1,e_bundle_end(IB)).eq.1) THEN
+                TDMISP1(1,IB) = iatm1(TDMISP(1,e_bundle_end(IB)))
+              ELSE IF (TDMITP(1,e_bundle_end(IB)).eq.2) THEN
+                TDMISP1(1,IB) = imol1(TDMISP(1,e_bundle_end(IB)))
+              ELSE IF (TDMITP(1,e_bundle_end(IB)).eq.4) THEN
+                TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
+              ELSE
+                TDMISP1(1,IB) = TDMISP(1,e_bundle_end(IB))
+              END IF
+              TDMITP1(1,IB) = TDMITP(1,e_bundle_end(IB))
+              TDMISTR1(1,IB) = istra1(TDMISTR1(1,e_bundle_end(IB)))
               TDMBOLTZ1(IB) = TDMBOLTZ(e_bundle_end(IB))
               TDMDELTAE1(IB) = TDMDELTAE(e_bundle_end(IB))
             CASE ('CORONA')
-              TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
+              IF (TDMITP(1,e_bundle_end(IB)).eq.1) THEN
+                TDMISP1(1,IB) = iatm1(TDMISP(1,e_bundle_end(IB)))
+              ELSE IF (TDMITP(1,e_bundle_end(IB)).eq.2) THEN
+                TDMISP1(1,IB) = imol1(TDMISP(1,e_bundle_end(IB)))
+              ELSE IF (TDMITP(1,e_bundle_end(IB)).eq.4) THEN
+                TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
+              ELSE
+                TDMISP1(1,IB) = TDMISP(1,e_bundle_end(IB))
+              END IF
+              TDMITP1(1,IB) = TDMITP(1,e_bundle_end(IB))
+              TDMISTR1(1,IB) = istra1(TDMISTR1(1,e_bundle_end(IB)))
               TDMFNAME1(1,IB) = TDMFNAME(1,e_bundle_end(IB))
               TDMH21(1,IB) = TDMH2(1,e_bundle_end(IB))
               TDMREACTION1(1,IB) = TDMREACTION(1,e_bundle_end(IB))
@@ -5534,7 +5602,17 @@ cxpb Must now convert the bulk ion data according to the new bundling
               do jpls = e_bundle_start(IB), e_bundle_end(IB)
                 DO I = 1, NRE(jpls)
                   I1 = I1 + 1
-                  TDMISP1(I1,IB) = ipls1(TDMISP(I,JPLS))
+                  IF (TDMITP(I,JPLS).eq.1) THEN
+                    TDMISP1(I1,IB) = iatm1(TDMISP(I,JPLS))
+                  ELSE IF (TDMITP(I,JPLS).eq.2) THEN
+                    TDMISP1(I1,IB) = imol1(TDMISP(I,JPLS))
+                  ELSE IF (TDMITP(I,JPLS).eq.4) THEN
+                    TDMISP1(I1,IB) = ipls1(TDMISP(I,JPLS))
+                  ELSE
+                    TDMISP1(I1,IB) = TDMISP(I,JPLS)
+                  END IF
+                  TDMITP1(I1,IB) = TDMITP(I,JPLS)
+                  TDMISTR1(I1,IB) = istra1(TDMISTR1(I,JPLS))
                   TDMFNAME1(I1,IB) = TDMFNAME(I,JPLS)
                   TDMH21(I1,IB) = TDMH2(I,JPLS)
                   TDMREACTION1(I1,IB) = TDMREACTION(I,JPLS)
@@ -5931,7 +6009,7 @@ cxpb We now rewrite the modified block 4
             ENDIF
             WRITE(IUNOT,6664) EELECA(IATM,K),EBULKA(IATM,K),
      .                        ESCD1A(IATM,K),ESCD2A(IATM,K),
-     .                        FREACA(IATM,K),FLDLMA(IATM,K)
+     .                        FREACA(IATM,K),EDPOTA(IATM,K)
  4223      CONTINUE
           END IF
           IATM = IATM + 1
@@ -6092,7 +6170,7 @@ cxpb We now rewrite the modified block 4
               ENDIF
               WRITE(IUNOT,6664) EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
      .                          ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
-     .                          FREACPH(JPHOT,K),FLDLMPH(JPHOT,K)
+     .                          FREACPH(JPHOT,K),EDPOTPH(JPHOT,K)
  4523       CONTINUE
  4513     CONTINUE
         ENDIF
@@ -6161,20 +6239,29 @@ cxpb We now rewrite the modified block 4
           CASE ('FORT.13','FTN13')
             WRITE(IUNOT,6666) TDMISP1(1,IB)
           CASE ('FORT.10','FTN10')
-            WRITE(IUNOT,6666) TDMISP1(1,IB)
+            WRITE(IUNOT,6666) TDMISP1(1,IB),
+     .                        TDMITP1(1,IB), TDMISTR1(1,IB)
+          CASE ('CONSTANT')
+            WRITE(IUNOT,6664) TDMPRM1(1,IB),
+     .                        TDMPRM1(2,IB),TDMPRM1(3,IB),
+     .                        TDMPRM1(4,IB),TDMPRM1(5,IB)
+          CASE ('MULTIPLY')
+            WRITE(IUNOT,'(3I6,6X,3E12.4)')
+     .           TDMISP1(1,IB), TDMITP1(1,IB), TDMISTR1(1,IB),
+     .           TDMPRM1(1,IB), TDMPRM1(2,IB), TDMPRM1(3,IB)
           CASE ('BOLTZMANN')
-            WRITE(IUNOT,'(I6,6X,2E12.4)')
-     .            TDMISP1(1,IB),
+            WRITE(IUNOT,'(3I6,6X,2E12.4)')
+     .            TDMISP1(1,IB), TDMITP1(1,IB), TDMISTR1(1,IB),
      .            TDMBOLTZ1(IB), TDMDELTAE1(IB)
           CASE ('CORONA')
-            WRITE(IUNOT,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
-     .            TDMISP1(1,IB),
+            WRITE(IUNOT,'(3I6,1X,A6,1X,A4,A9,A3,E12.4)')
+     .            TDMISP1(1,IB), TDMITP1(1,IB), TDMISTR1(1,IB),
      .            TDMFNAME(1,IB), TDMH21(1,IB), TDMREACTION(1,IB),
      .            TDMCR1(1,IB), TDM_CORONA(IB)
           CASE ('COLRAD')
             DO I = 1, NRE1(IB)
-              WRITE(IUNOT,'(I6,1X,A6,1X,A4,A9,A3)')
-     .              TDMISP1(I,IB),
+              WRITE(IUNOT,'(3I6,1X,A6,1X,A4,A9,A3)')
+     .              TDMISP1(I,IB), TDMITP1(I,IB), TDMISTR1(I,IB),
      .              TDMFNAME(I,IB), TDMH21(I,IB), TDMREACTION(I,IB),
      .              TDMCR1(I,IB)
             END DO
@@ -6195,7 +6282,7 @@ cxpb We now rewrite the modified block 4
         deallocate(NHSTA,NHSTM,NHSTI,NHSTP,NHSTP1)
         deallocate(TEXTI,TEXTP,TEXTP1)
         deallocate(IREACA,IBULKA,ISCD1A,ISCD2A,ISCD3A,ISCD4A,ISCDEA)
-        deallocate(EELECA,EBULKA,ESCD1A,ESCD2A,FREACA,FLDLMA)
+        deallocate(EELECA,EBULKA,ESCD1A,ESCD2A,FREACA,EDPOTA)
         deallocate(IREACM,IBULKM,ISCD1M,ISCD2M,ISCD3M,ISCD4M,ISCDEM)
         deallocate(EELECM,EBULKM,ESCD1M,ESCD2M,FREACM)
         deallocate(IREACI,IBULKI,ISCD1I,ISCD2I,ISCD3I,ISCD4I,ISCDEI)
@@ -6203,8 +6290,9 @@ cxpb We now rewrite the modified block 4
         deallocate(IREACP,IBULKP,ISCD1P,ISCD2P,ISCD3P,ISCD4P,ISCDEP)
         deallocate(EELECP,EBULKP,ESCD1P,ESCD2P,FREACP)
         deallocate(IESTMA,IBGKA,IESTMM,IBGKM,IESTMI,IBGKI)
-        deallocate(DENSLIM,NRE,TDMISP)
-        deallocate(DENSLIM1,CDENMODEL1,NRE1,TDMISP1)
+        deallocate(DENSLIM,NRE,TDMISP,TDMITP,TDMISTR)
+        deallocate(DENSLIM1,CDENMODEL1,NRE1,TDMISP1,TDMITP1,TDMISTR1)
+        deallocate(TDMPRM,TDMPRM1)
         deallocate(TDMBOLTZ,TDMDELTAE,TDM_CORONA)
         deallocate(TDMBOLTZ1,TDMDELTAE1,TDM_CORONA1)
         deallocate(TDMFNAME,TDMH2,TDMREACTION,TDMCR)
@@ -6219,7 +6307,7 @@ cxpb We now rewrite the modified block 4
           deallocate(TEXTPH)
           deallocate(IREACPH,IBULKPH)
           deallocate(ISCD1PH,ISCD2PH,ISCD3PH,ISCD4PH,ISCDEPH)
-          deallocate(EELECPH,EBULKPH,ESCD1PH,ESCD2PH,FREACPH,FLDLMPH)
+          deallocate(EELECPH,EBULKPH,ESCD1PH,ESCD2PH,FREACPH,EDPOTPH)
           deallocate(IESTMPH,IBGKPH)
         endif
         if (NCRM.GT.0) then
@@ -7600,6 +7688,7 @@ cxpb Read first, transform and rewrite
           WRITE(IUNOT,'(A80)') ZEILE
         END IF
  1110   READ (IUNIN,'(A80)') ZEILE
+        call fix_logical_input(zeile,35)
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:1) .EQ. '*') GOTO 1110
         allocate(TRCSR1(0:NSTRA1+1))
@@ -7920,15 +8009,140 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
           GOTO 1210
         END IF
         ILINE = 1
-        WRITE(ZEILEN(1),'(A)') trim(ZEILE)
+        ULINE = ZEILE
+        CALL EIRENE_UPPERCASE(ULINE)
+        IF (INDEX(ULINE,'DEFINE_LINES').GT.0) THEN
+          WRITE(ZEILEN(1),'(A)') ULINE
+          READ (IUNIN,6666) NUM_LINES, MOD_ADDV
+          ILINE = 2
+          NUM_LINES1 = 0
+          allocate(ILBEG(NUM_LINES), ILEND(NUM_LINES))
+          DO I = 1, NUM_LINES
+            ILBEG(I) = ILINE + 1
+            call xertst(ILINE+1.le.100,
+     .       'increase size of ZEILEN in b2ytdr!')
+            READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+            DO WHILE (ZEILEN(ILINE+1)(1:1).EQ.'*')
+              ILINE = ILINE + 1
+              call xertst(ILINE+1.le.100,
+     .         'increase size of ZEILEN in b2ytdr!')
+              READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+            END DO
+            call xertst(ILINE+2.le.100,
+     .       'increase size of ZEILEN in b2ytdr!')
+            MLINE = ILINE + 1
+            READ (IUNIN,6666) NUM_COMPO  ! components of line I
+            NUM_COMPO1 = 0
+            READ (IUNIN,'(A)') ZEILEN(ILINE+2)
+            ILINE = ILINE + 2
+            DO JCOMP = 1, NUM_COMPO
+              KLINE = ILINE + 1
+              call xertst(ILINE+2.le.100,
+     .         'increase size of ZEILEN in b2ytdr!')
+              READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+              READ (IUNIN,*) NUM_CONTRIB ! contributions to component JCOMP for line I
+              ILINE = ILINE + 2
+              NUM_CONTRIB1 = 0
+              DO KCONTR = 1, NUM_CONTRIB
+                call xertst(ILINE+6.le.100,
+     .           'increase size of ZEILEN in b2ytdr!')
+                JLINE = ILINE + 1
+                READ (IUNIN,'(A80)') ZEILEN(JLINE)
+                READ (ZEILEN(JLINE),'(3I6,1X,A6)')
+     .                               ISL, ITP, IRATIO, FNAME
+                IF (INDEX(FNAME,'ADAS') .NE.0 .OR.
+     .              INDEX(FNAME,'TAB2D').NE.0) THEN
+                  JLINE = JLINE + 1
+                  READ(IUNIN,'(A80)') ZEILEN(JLINE)
+                END IF
+                IF (IRATIO.GT.0) THEN
+                  JLINE = JLINE + 1
+                  READ(IUNIN,'(A80)') ZEILEN(JLINE)
+                  READ(ZEILEN(JLINE),'(18X,1X,A6)') FRATIO
+                  IF (INDEX(FRATIO,'ADAS') .NE.0 .OR.
+     .                INDEX(FRATIO,'TAB2D').NE.0) THEN
+                    JLINE = JLINE + 1
+                    READ(IUNIN,'(A80)') ZEILEN(JLINE)
+                  END IF
+                  IF (IRATIO.EQ.2) THEN
+                    JLINE = JLINE + 1
+                    READ(IUNIN,'(A80)') ZEILEN(JLINE)
+                    READ(ZEILEN(JLINE),'(18X,1X,A6)') FRATIO
+                    IF (INDEX(FRATIO,'ADAS') .NE.0 .OR.
+     .                  INDEX(FRATIO,'TAB2D').NE.0) THEN
+                      JLINE = JLINE + 1
+                      READ (IUNIN,'(A80)') ZEILEN(JLINE)
+                    END IF
+                  END IF  ! IRATIO = 2
+                END IF    ! IRATIO > 0
+                keep_contr = .true.
+                IF (ITP.EQ.1) THEN
+                  IF (IATM1(ISL).EQ.0) keep_contr = .false.
+                ELSE IF (ITP.EQ.2) THEN
+                  IF (IMOL1(ISL).EQ.0) keep_contr = .false.
+                ELSE IF (ITP.EQ.4) THEN
+                  IF (IPLS1(ISL).EQ.0) keep_contr = .false.
+                END IF
+                IF (keep_contr) then
+                  NUM_CONTRIB1 = NUM_CONTRIB1 + 1
+                  IF (ITP.EQ.1) THEN
+                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+     .               IATM1(ISL), ITP, IRATIO, FNAME
+                  ELSE IF (ITP.EQ.2) THEN
+                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+     .               IMOL1(ISL), ITP, IRATIO, FNAME
+                  ELSE IF (ITP.EQ.4) THEN
+                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+     .               IPLS1(ISL), ITP, IRATIO, FNAME
+                  END IF
+                  ILINE = JLINE
+                ELSE
+                  JLINE = ILINE
+                END IF
+              END DO      ! NUM_CONTRIB loop
+              IF (NUM_CONTRIB1.GT.0) THEN
+                WRITE(ZEILEN(KLINE),'(I6)') NUM_CONTRIB1
+                NUM_COMPO1 = NUM_COMPO1 + 1
+              END IF
+            END DO        ! NUM_COMPO loop
+            IF (NUM_COMPO1.GT.0) THEN
+              ILEND(I) = ILINE
+              NUM_LINES1 = NUM_LINES1 + 1
+              WRITE(ZEILEN(MLINE),'(I6)') NUM_COMPO1
+            ELSE
+              ILEND(I) = ILBEG(I) - 1
+            END IF
+          END DO          ! NUM_LINES loop
+          IF (NUM_LINES1.GT.0) THEN
+            WRITE(IUNOT,'(A80)') ZEILEN(1)
+            WRITE(ZEILEN(2),6666) NUM_LINES1, MOD_ADDV
+            WRITE(IUNOT,'(A80)') ZEILEN(2)
+            DO I = 1, NUM_LINES
+              DO J = ILBEG(I), ILEND(I)
+                WRITE(IUNOT,'(A80)') ZEILEN(J)
+              END DO
+            END DO
+          END IF
+          deallocate(ILBEG, ILEND)
+          ILINE = 1
+          READ (IUNIN,'(A80)') ZEILEN(1)
+        ELSE
+          IF (lhalpha.ne.0.or..not.streql(solps_version,'iter')) THEN
+            WRITE(IUNOT,'(A)') "DEFINE_LINES"
+            NUM_LINES1 = 0
+            MOD_ADDV = 1
+            WRITE(IUNOT,6666) NUM_LINES1, MOD_ADDV
+          END IF
+          WRITE(ZEILEN(1),'(A80)') ZEILE
+        END IF
         if (streql(eirene_format,'iter') .or.
      .      streql(eirene_format,'new')) THEN
           READ (ZEILEN(1),6666) NCHORI,NCHENI
         else if (streql(eirene_format,'juelich') .or.
      .           streql(eirene_format,'facelift') .or.
      .           streql(eirene_format,'old')) THEN
-          READ (ZEILEN(1),6666) NCHORI,NCHENI,lntspec,lntsput,nmcsput,
-     .                    nlstadds,mtreadds,ngwties
+          READ (ZEILEN(1),6666) NCHORI,NCHENI,lntspec,lntsput,
+     .                              nmcsput,nlstadds,mtreadds,ngwties
         end if
         NCHOR1 = 0
         IF (NCHORI.LE.0) GOTO 1228
@@ -7977,8 +8191,8 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         END DO
         READ (IUNIN,'(A80)') ZEILE
         call fix_logical_input(zeile,2)
-        READ (ZEILE,6665) ldum(0:1) ! PLCHOR,PLSPEC
-        WRITE(IUNOT,6665) ldum(0:1)
+        READ (ZEILE,6665) ldum(0:4) ! PLCHOR,PLSPEC,PRSPEC,PLARGL,PRARGL
+        WRITE(IUNOT,6665) ldum(0:4)
  1225   CONTINUE
         if (streql(eirene_format,'juelich') .or.
      .      streql(eirene_format,'facelift') .or.
