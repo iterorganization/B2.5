@@ -736,12 +736,6 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      &      (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8         !srv 13.09.02
      &          *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w3(ix,iy)= -cone0*tex0
-            if(alfTeEh.eq.1.0_R8)
-     &       w4(ix,iy)=
-     *        alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-            if(fch_pTe.eq.1.0_R8)
-     &       w4(ix,iy)=-c071(ix,iy)*fch_p(ix,iy,0)/qe*                   !srv 13.01.17
-     *        (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w6(ix,iy) = cone0
            else
             w1(ix,iy)=1.5e0_R8*fne(ix,iy,0)
@@ -750,10 +744,14 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      &       (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
      &       *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w3(ix,iy)= -cone0_mdf*tex0
-            w4(ix,iy)=
-     *       alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
             w6(ix,iy) = cone0_mdf
            endif
+           if(alfTeEh.eq.1.0_R8)
+     &       w4(ix,iy)=
+     *        alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
+           if(fch_pTe.eq.1.0_R8)
+     &       w4(ix,iy)=-c071(ix,iy)*fch_p(ix,iy,0)/qe*                   !srv 13.01.17
+     *        (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
            w5(ix,iy) = 2.5e0_R8*fledia(ix,iy,0)*                         !srv 13.09.02 11.01.13 *signmf
      &       (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
      &          *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
@@ -1230,8 +1228,40 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fhePSch(-1,-1,1),'b2tfhe__fhePSchy')
       endif
 
-      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
-     &                          .or. iout_b2wdat.eq.4) then
+
+      if((iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0)
+     &                          .and. .not. balance) then
+!       call my_out(70,nx,ny,fch(-1,-1,0),'b2tfhe__fchx')
+!       call my_out(70,nx,ny,fch(-1,-1,1),'b2tfhe__fchy')
+       call my_out(70,nx,ny,fchin(-1,-1,0),'b2tfhe__for_po_fchinx')
+       call my_out(70,nx,ny,fchin(-1,-1,1),'b2tfhe__for_po_fchiny')
+       call my_out(70,nx,ny,fchvispar(-1,-1,0),
+     &   'b2tfhe__for_po_fchvisparx')
+       call my_out(70,nx,ny,fchvispar(-1,-1,1),
+     &  'b2tfhe__for_po_fchvispary')
+!       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfhe__for_po_fchvisqx')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfhe__for_po_fchvisqy')
+!       call my_out(70,nx,ny,fchvisper(-1,-1,0),
+!     &    'b2tfhe__for_po_fchvisperx')
+       call my_out(70,nx,ny,fchvisper(-1,-1,1),
+     &     'b2tfhe__for_po_fchvispery')
+       call my_out(70,nx,ny,fchinert(-1,-1,0),
+     &      'b2tfhe__for_po_fchinertx')
+       call my_out(70,nx,ny,fchinert(-1,-1,1),
+     &      'b2tfhe__for_po_fchinerty')
+       call my_out(70,nx,ny,fchdia(-1,-1,0),'b2tfhe__for_po_fchdiax')
+       call my_out(70,nx,ny,fchdia(-1,-1,1),'b2tfhe__for_po_fchdiay')
+       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfhe__for_po_fchanmlx')
+       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfhe__for_po_fchanmly')
+       call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfhe__for_po_fch_px')
+!      call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfhe__fch_py')
+       call my_out(70,nx,ny,csig_an(-1,-1,0),'b2tfhe__for_po_csig_anx')
+       call my_out(70,nx,ny,csig_an(-1,-1,1),'b2tfhe__for_po_csig_any')
+       call my_out(70,nx,ny,fchstoch,'b2tfhe__for_po_fchstochy')            !lk 31.01.08
+      endif                                                          !srv 11.09.09 }
+      
+      
+      if(iout_b2wdat.eq.4 .and. balance) then
 !       call my_out(70,nx,ny,fch(-1,-1,0),'b2tfhe__fchx')
 !       call my_out(70,nx,ny,fch(-1,-1,1),'b2tfhe__fchy')
        call my_out(70,nx,ny,fchin(-1,-1,0),'b2tfhe__fchinx')

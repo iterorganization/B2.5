@@ -1000,9 +1000,11 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        enddo
       enddo
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
-     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0                        !srv 02.04.18
-     &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
+      if((iout_b2npc9.ne.0 .and. balance) .or. 
+     &   (iout_b2npco.ne.0 .and. balance) .or.
+     &   (iout_b2npc7.ne.0 .and. balance) .or. 
+     &   (iout_b2npc11.ne.0 .and. balance) .or.                         !srv 02.04.18
+     &    iout .eq. 1 .or. (iout_b2wdat.eq.4 .and. balance)) then       !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
@@ -1045,13 +1047,14 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        endif
        call my_out(70,nx,ny,wrk1,'b2tfnb_bxuanax'//chns)
        call my_out(70,nx,ny,wrk2,'b2tfnb_dpccornax'//chns)
-       if (iout_b2wdat .ne. 4)
+       if (iout_b2wdat.eq.4 .and. balance)
      &           call my_out(70,nx,ny,wrk6,'b2tfnb_dpccorhznax'//chns)            !srv 05.11.09
        if (iout.eq.1) call my_out(70,nx,ny,wrk8,'b2tfnb_cvlbnax'//chns)                !iys 17.04.2012
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diax'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfx'//chns)
       endif
-      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 .or. iout.eq.1) then
+      if((iout_b2npmo.ne.0 .and. balance) 
+     &   .or. (iout_b2wdat.eq.4 .and. balance) .or. iout.eq.1) then
        write(chns,'(i3.3)') isb
        do iy = -1, ny
         do ix = -1, nx
@@ -1080,7 +1083,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           endif
          enddo
         enddo
-        if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
+        if(.not. is_neutral(isb) .and. (iout_b2wdat.eq.4 .and. balance))
      &   call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzx'//chns)
         call my_out(70,nx,ny,fnb_fcor(-1,-1,0),'b2tfnb_fnb_fcorx'//chns)
       endif                                                             !srv 11.09.09 }
@@ -1400,9 +1403,11 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      1   ' mb = ',mb/mp,' are ',maxfluxlimit
       endif
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
-     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0                        !srv 02.04.18
-     &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
+      if((iout_b2npc9.ne.0 .and. balance) .or. 
+     &   (iout_b2npco.ne.0 .and. balance) .or.
+     &   (iout_b2npc7.ne.0 .and. balance) .or. 
+     &   (iout_b2npc11.ne.0 .and. balance) .or.                         !srv 02.04.18
+     &    iout .eq. 1 .or. (iout_b2wdat.eq.4 .and. balance)) then       !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
@@ -1440,7 +1445,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diay'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfy'//chns)
       endif
-      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 .or. iout.eq.1) then
+      if((iout_b2npmo.ne.0 .and. balance) .or. 
+     &     (iout_b2wdat.eq.4 .and. balance) .or. iout.eq.1) then
        write(chns,'(i3.3)') isb
        do iy = -1, ny
         do ix = -1, nx
@@ -1469,7 +1475,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          endif
         enddo
        enddo
-       if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
+       if(.not. is_neutral(isb) .and. (iout_b2wdat.eq.4 .and. balance))
      &  call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzy'//chns)
        call my_out(70,nx,ny,fnb_fcor(-1,-1,1),'b2tfnb_fnb_fcory'//chns)
       endif                                                             !srv 11.09.09 }
@@ -1747,7 +1753,7 @@ csw 18feb2014 remove fluxes between guard cells
         endif
       endif                                                             !srv 05.03.16 }
 
-      if (iout_b2wdat .eq. 4) then
+      if (iout_b2wdat.eq.4 .and. balance) then
        call my_out(70,nx,ny,fnb(-1,-1,0),'b2tfnb_fnbx'//chns)
        call my_out(70,nx,ny,fnb(-1,-1,1),'b2tfnb_fnby'//chns)
        call my_out(70,nx,ny,fnb_fcor(-1,-1,0),'b2tfnb_fnb_fcorx'//chns)
@@ -1767,6 +1773,24 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,wbdia(-1,-1,0),'b2tfnb_wbdiax'//chns)
        call my_out(70,nx,ny,wbdia(-1,-1,1),'b2tfnb_wbdiay'//chns)
        call my_out(70,nx,ny,kbnrgy,'b2tfnb_kbnrgy'//chns)
+       call my_out(70,nx,ny,fchvispar(-1,-1,0),
+     &             'b2tfnb_fchvisparx')
+       call my_out(70,nx,ny,fchvispar(-1,-1,1),
+     &             'b2tfnb_fchvispary')
+       call my_out(70,nx,ny,fchvisq(-1,-1,0),
+     &             'b2tfnb_fchvisqx')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1),
+     &             'b2tfnb_fchvisqy')
+       call my_out(70,nx,ny,vis_per*fchvisper(-1,-1,0),
+     &             'b2tfnb_fchvisperx')
+       call my_out(70,nx,ny,vis_per*fchvisper(-1,-1,1),
+     &             'b2tfnb_fchvispery')
+       call my_out(70,nx,ny,fchinert(-1,-1,0),
+     &             'b2tfnb_fchinertx')
+       call my_out(70,nx,ny,fchinert(-1,-1,1),
+     &             'b2tfnb_fchinerty')
+       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfnb_fchanmlx')
+       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfnb_fchanmly')
       endif
 
       if(iout.ne.0) then                                                !srv 18.06.08 {
@@ -1857,6 +1881,14 @@ csw 18feb2014 remove fluxes between guard cells
      &             'b2tfnb_fchvisparx')
        call my_out(70,nx,ny,fchvispar(-1,-1,1),
      &             'b2tfnb_fchvispary')
+       call my_out(70,nx,ny,fchvisq(-1,-1,0),
+     &             'b2tfnb_fchvisqx')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1),
+     &             'b2tfnb_fchvisqy')
+       call my_out(70,nx,ny,vis_per*fchvisper(-1,-1,0),
+     &             'b2tfnb_fchvisperx')
+       call my_out(70,nx,ny,vis_per*fchvisper(-1,-1,1),
+     &             'b2tfnb_fchvispery')
        call my_out(70,nx,ny,fchinert(-1,-1,0),
      &             'b2tfnb_fchinertx')
        call my_out(70,nx,ny,fchinert(-1,-1,1),
