@@ -239,7 +239,8 @@ module b2_file_io
           endif
         case ('char')
           n = n1
-#ifdef GFORTRAN ! workaround needed for gfortran version 4.7.2
+! workaround needed for gfortran version 4.7.2
+#ifdef GFORTRAN
           chfun = repeat(' ',n)
 #else
           allocate(character(n) :: chfun)

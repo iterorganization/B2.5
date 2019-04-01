@@ -338,7 +338,7 @@ csw
       write(*,'(a)') "####"
       write(*,'(a)') "# Sorted timings, not listing entries < 0.5s"
       call timer%sort()
-      call timer%print("b2mn", threshold=0.5_r8)
+      call timer%print("b2mn", threshold=0.5_R8)
       write(*,'(a)') "#"
       write(*,'(a)') "####"
 #endif

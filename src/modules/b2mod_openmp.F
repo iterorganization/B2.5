@@ -19,13 +19,29 @@
 !$OMP end parallel
       end function
 
+      integer function get_thread_num()
+      get_thread_num = 0
+!$    get_thread_num = omp_get_thread_num()
+      end function
+
+      integer function get_stacksize_s()
+      get_stacksize_s = 0
+#if !defined GFORTRAN && !defined NAGFOR && !defined PGF90 
+!$    get_stacksize_s = kmp_get_stacksize_s()
+#endif
+      end function
+
       subroutine print_openmp_info()
 #ifdef _OPENMP
       write(*,fmt='(A,I3,A)') 'B2.5 running in OpenMP mode using ',
      &  get_num_threads(),' threads.'
+#if !defined GFORTRAN && !defined NAGFOR && !defined PGF90 
+      write(*,*) ' Stack size allotted per thread is : ',
+     &  get_stacksize_s()
+#endif
 #else
       write(*,*) 'B2.5 running in serial mode, without ',
-     &  'OpenMP threads.'
+     & 'OpenMP threads.'
 #endif
       end subroutine
 

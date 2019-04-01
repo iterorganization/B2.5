@@ -708,8 +708,8 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         do ix=0,nx
           dspol(ix,iy)=dspol(ix-1,iy)+(hx(ix-1,iy)+hx(ix,iy))/2.0_R8
           dspar(ix,iy)=dspar(ix-1,iy)+
-     1     (hx(ix-1,iy)*abs(bb(ix-1,iy,2)/bb(ix-1,iy,0))+
-     2      hx(ix,iy)*abs(bb(ix,iy,2)/bb(ix,iy,0)))/2.0_R8
+     1     (hx(ix-1,iy)*abs(bb(ix-1,iy,3)/bb(ix-1,iy,0))+
+     2      hx(ix,iy)*abs(bb(ix,iy,3)/bb(ix,iy,0)))/2.0_R8
         enddo
       enddo
       write(*,*) 'dspol :',(dspol(ix,jsep),ix=-1,nx)
@@ -774,8 +774,9 @@ c     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 c 23: fht definition changed to 5/2 formulation
 c 24: removed drift velocity contributions from kinrgy
 c 25: debugged indexing error for eneutrad
+c 26: using total field for computing dspar
 
-      dbversion=25
+      dbversion=26
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)

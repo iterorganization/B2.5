@@ -103,7 +103,7 @@
 #endif
 
 #ifndef NO_OPENMP_B2SQCX
-!$OMP DO schedule(static)!$OMP DO schedule(static)
+!$OMP DO schedule(static)
 #endif
 *   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
       do iy = -1, ny

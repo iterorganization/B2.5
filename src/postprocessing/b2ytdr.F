@@ -6475,6 +6475,7 @@ cxpb We now rewrite the modified block 4
         READ (ZEILE,6665) ldum(0) ! NLTRIM
         IREAD=0
         IF (ldum(0)) THEN
+          NFR = 0
           READ (IUNIN,'(A80)') ZEILE
           IREAD=1
           IF (INDEX(ZEILE,'PATH')+INDEX(ZEILE,'path').EQ.0) THEN
@@ -6484,11 +6485,13 @@ cxpb We now rewrite the modified block 4
               if (index(zeile,'_').gt.0) then
                 write(elname,'(a2)') zeile(1:2)
                 if (elname(2:2).eq.'_') elname(2:2)=' '
-                if (element_present(natm,natmi,iatm1,elname))
-     >           WRITE(IUNOT,'(A80)') ZEILE
+                if (element_present(natm,natmi,iatm1,elname)) NFR=NFR+1
               else
-                WRITE(IUNOT,'(A80)') ZEILE
+                NFR=NFR+1
               end if
+              IF (NFR.EQ.1) WRITE(IUNOT,'(A)') 'cpath '//
+     &         'modules/Eirene/Database/Surfacedata/TRIM/'
+              WRITE(IUNOT,'(A80)') ZEILE
               READ (IUNIN,'(A80)') ZEILE
               IREAD=1
               GOTO 615
@@ -6501,10 +6504,8 @@ cxpb We now rewrite the modified block 4
             I2=INDEX(PATH,' ')
             FILE=REPEAT(' ',74)
             FILE(1:)=PATH(1:I2-1)
-!            WRITE(IUNOT,'(A80)') ZEILE ! this writes the path
             READ (IUNIN,'(A80)') ZEILE
             IREAD=1
-            NFR=0
   625       IF (INDEX(ZEILE,'ON')+INDEX(ZEILE,'on').EQ.0) THEN
               GOTO 620
             ELSE
@@ -6520,14 +6521,12 @@ cxpb We now rewrite the modified block 4
               IF(I.GT.0.AND.I.LE.LEN_TRIM(RFILNM)) RFILNM(I:I)=' ' !VK TO REMOVE \r
               FILE(I2:)=RFILNM
               IF (NFR.EQ.1) THEN
-                IF (open_file(29,FILE,
-     .           'modules/Eirene/Database/Surfacedata/TRIM')) THEN  ! Path is valid, write it
+                IF (open_file(29,FILE,'')) THEN  ! Path is valid, write it
                   WRITE(IUNOT,'(A6,A74)') 'cpath ',PATH
                   close(29)
                 ELSE
-                  WRITE(6,*)
-     .             'Invalid CPATH specification in this environment: '//
-     .             'CPATH line removed'
+                  WRITE(IUNOT,'(A)') 'cpath '//
+     &             'modules/Eirene/Database/Surfacedata/TRIM/'
                 END IF
                 if (element_present(natm,natmi,iatm1,elname))
      >           WRITE(IUNOT,'(A74)') RFILNM

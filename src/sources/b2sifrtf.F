@@ -22,6 +22,9 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
+#ifndef NO_IEEE
+      use ieee_arithmetic    ! IGNORE
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
@@ -63,7 +66,8 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is
+      integer ncall, styl0, n2, i, ix, iy, is
+      integer tid
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
 !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
       character chns*3, chis*3
@@ -79,7 +83,7 @@
 ! The usage of smb*a instead of smb*al should be checked.
       real (kind=R8) ::
      *  smbfrial(-1:nx,-1:ny,0:3), smbfreal(-1:nx,-1:ny,0:3),
-     *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)              !srv 13.01.17 }
+     *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)             !srv 13.01.17 }
 #ifdef WITH_FTIMINGS
       logical :: do_parallel
 #endif
@@ -90,9 +94,14 @@
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                           !srv 01.07.05
+#ifdef NO_IEEE
+      logical, external :: my_isnan
+#endif
 *   ..initialization
       save ncall, styl0, phm0, phm1, phm2, phm3
+#ifdef NO_OPENMP_B2NPMO 
 !$OMP THREADPRIVATE(ncall, styl0, phm0, phm1, phm2, phm3)
+#endif
       data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
      &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/ 
 
@@ -154,10 +163,10 @@
 *   ..initialize to 0
       call sfill (n2*4, 0.0e0_R8, smbch, 1)                             !srv 11.09.09
       call sfill (n2*4, 0.0e0_R8, smbtf, 1)                             !srv 11.09.09
-      call sfill (n2*4, 0.0e0_R8, smbfrial, 1)                          !srv 13.01.17 { !srv 05.07.17
+      call sfill (n2*4, 0.0e0_R8, smbfrial, 1)
       call sfill (n2*4, 0.0e0_R8, smbfreal, 1)
       call sfill (n2*4, 0.0e0_R8, smbtfial, 1)
-      call sfill (n2*4, 0.0e0_R8, smbtfeal, 1)                          !srv 13.01.17 }
+      call sfill (n2*4, 0.0e0_R8, smbtfeal, 1)                          !srv 13.01.17
 * ..compute friction
 *   ..loop over all other species
 #ifdef WITH_FTIMINGS
@@ -166,9 +175,14 @@
 #ifndef NO_OPENMP_B2SIFRTF
 !$OMP PARALLEL DO IF (.not. OMP_IN_PARALLEL())
 !$OMP& DEFAULT(NONE)
-!$OMP& PRIVATE(KabVp, ix, iy, coef, t0)
+!$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix) 
 !$OMP& SHARED(rz2, am, zetap, na, ua)
+#ifndef NO_OPENMP_B2NPMO
+!$OMP& PRIVATE(styl0, phm0)
+#else
+!$OMP& COPYIN(styl0, phm0)
+#endif
 !$OMP& REDUCTION(+: smbfrial)
 #endif
       do is = 0, ns-1
@@ -183,19 +197,21 @@
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
            t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
+           !$omp critical (ionfriction)
            if (styl0.eq.0) then
              smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbfrial(ix,iy,1) = smbfrial(ix,iy,1)-coef*t0
+             smbfrial(ix,iy,1) = smbfrial(ix,iy,1)+(-coef*t0)
            else if (styl0.eq.1) then
              smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)-
-     &                           coef*t0/roxa(ix,iy,isb)
+             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
+     &                       roxa(ix,iy,isb))
            else if (styl0.eq.2) then
              smbfrial(ix,iy,2) = smbfrial(ix,iy,2)+coef*t0*ua(ix,iy,is)/
      &                       roxa(ix,iy,isb)
-             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)-coef*t0/
-     &                       roxa(ix,iy,isb)
+             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
+     &                       roxa(ix,iy,isb))
            endif
+           !$omp end critical (ionfriction)
           endif
          enddo
         enddo
@@ -204,6 +220,7 @@
 #ifndef NO_OPENMP_B2SIFRTF
 !$OMP END PARALLEL DO
 #endif
+      call nancheck(nx, ny, smbfrial(:,:,0), 'smbfrial(,,0)')
 #ifdef WITH_FTIMINGS
       if (do_parallel) call timer%stop("parallel")
 #endif
@@ -250,11 +267,16 @@
 #ifndef NO_OPENMP_B2SIFRTF
 !$OMP PARALLEL DO IF (.not.OMP_IN_PARALLEL()) 
 !$OMP& DEFAULT(NONE)
-!$OMP& PRIVATE(KabVp, Kbatf, Kabtf, ka, kb, ix, iy, coef, t0)
+!$OMP& PRIVATE(KabVp, Kbatf, Kabtf, ka, kb, is, ix, iy, coef, t0)
 !$OMP& PRIVATE(calfab, delti, jabmax, fllim_al_ab)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
 !$OMP& SHARED(on_closed_surface)
+#ifndef NO_OPENMP_B2NPMO
+!$OMP& PRIVATE(phm3)
+#else
+!$OMP& COPYIN(phm3)
+#endif
 !$OMP& REDUCTION(+: smbtfial)
 #endif
       do is = 0, ns-1
@@ -301,6 +323,7 @@ c   .. apply flux limit
 #ifndef NO_OPENMP_B2SIFRTF
 !$OMP END PARALLEL DO
 #endif
+      call nancheck(nx, ny, smbtfial(:,:,0), 'smbtfial(,,0)')
 #ifdef WITH_FTIMINGS
       if (do_parallel) call timer%stop("parallel")
 #endif

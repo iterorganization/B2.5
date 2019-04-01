@@ -587,7 +587,6 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
-!$OMP& SHARED(last_solve_7, last_solve_11)
 !$OMP& SHARED(rxf0, sna, pcca, resco, corpa, b2stbr_sna, b2stbm_sna) 
 !$OMP& SHARED(ext_sna)
 #endif
@@ -876,7 +875,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
           endif                                                          !iyv 06.02.14
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
 #ifdef WITH_FTIMINGS
-      call timer%start("parallel")
+          call timer%start("parallel")
 #endif
 !! FR possible loop (3) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none) LASTPRIVATE(flob, conb, pb)
@@ -922,7 +921,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 !$OMP END PARALLEL DO
 !!FR End of loop (3)
 #ifdef WITH_FTIMINGS
-      call timer%stop("parallel")
+          call timer%stop("parallel")
 #endif
 #endif
 *      ..compute electron drift velocities
@@ -1010,7 +1009,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        enddo
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
 #ifdef WITH_FTIMINGS
-      call timer%start("parallel")
+       call timer%start("parallel")
 #endif
 !!FR loop (4) over ns suitable for OpenMP parallelisation
 !$OMP PARALLEL DO DEFAULT(none) SHARED(rza,ua,na,ns) REDUCTION(+:ue)
@@ -1022,7 +1021,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 !$OMP END PARALLEL DO
 !!FR end of loop (4)
 #ifdef WITH_FTIMINGS
-      call timer%stop("parallel")
+       call timer%stop("parallel")
 #endif
 #endif
        ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)

@@ -290,8 +290,8 @@ ctmp.dpc
      1       rcxmoreg(region(ix,iy,0),is0)-t2*ua(ix,iy,is0)
           endif
          enddo
-       endif
-      enddo
+        endif
+       enddo
       enddo
 #ifndef NO_OPENMP_B2STCX
 !$OMP END PARALLEL DO
