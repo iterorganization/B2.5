@@ -3983,6 +3983,14 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>b2sigp_pressure_restriction</name>
+			  <default>1</default>
+			  <type>integer</type>
+			  <description>
+				When set to '1', a CFL-like restriction is applied to the pressure gradient term for minority ions and for neutrals species.
+			  </description>
+			</switch>
+			<switch>
 				<name>b2xzdd_zero_dead_and_core</name>
 				<default>1</default>
 				<type>integer</type>

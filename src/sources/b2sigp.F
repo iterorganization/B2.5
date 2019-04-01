@@ -40,13 +40,14 @@
 *   ..local variables
       integer ncall, n2, ix, iy !,k
       integer, save :: style = 2                                     !srv 13.01.17
+      integer, save :: pressure_restriction = 1                      !srv 29.03.19
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
       character chns*3 !, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *   t0
 !$OMP THREADPRIVATE(ncall, style, iout, iout_b2npmo, iout_b2wdat)
-!$OMP THREADPRIVATE(pot_eq, no_current)
+!$OMP THREADPRIVATE(pot_eq, no_current, pressure_restriction)
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -70,6 +71,7 @@
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
+       call ipgeti ('b2sigp_pressure_restriction', pressure_restriction) !srv 29.03.19
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -373,8 +375,8 @@ cdjm compute b2sigp_pstat0to3 on left cell face
         endif
       endif                                                           !srv 02.07.08 }
 
-cxpb apply restriction to pressure gradient for minority ions
-      if (style.ne.0) then
+cxpb apply restriction to pressure gradient for minority ions and neutrals
+      if (style.ne.0 .and. pressure_restriction.eq.1) then
        do iy = -1, ny                                                 !lk 23.06.17{  
         do ix = -1, nx
          if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1 .and.
