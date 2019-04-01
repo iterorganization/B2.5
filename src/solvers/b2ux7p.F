@@ -162,18 +162,18 @@
        iters = min(itmax,4)
        itpar = itcnt*iters
        if (in_parallel()) then
-         stop 'STOP: iluter not parallelised, re-run in serial'
+        stop 'STOP: iluter not parallelised, re-run in serial'
        else
-         call iluter (nx+2, ny+2, aa7, resfun, iters, acpar, itpar,
+        call iluter (nx+2, ny+2, aa7, resfun, iters, acpar, itpar,
      &   corfun, nrmc, aaf, wrk0, wrk1, wrk2)
        endif
       else if (style.eq.1) then
 *    ..use slv5pt
        iters = 1
        if (in_parallel()) then
-         stop 'STOP: slv5pt not parallelised, re-run in serial'
+        stop 'STOP: slv5pt not parallelised, re-run in serial'
        else
-         call slv5pt (nx+2, ny+2, aa7, resfun, iters, corfun, nrmc,
+        call slv5pt (nx+2, ny+2, aa7, resfun, iters, corfun, nrmc,
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
        endif
       else if (style.eq.2) then

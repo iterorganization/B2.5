@@ -294,7 +294,7 @@ c 2002-09-11: logic revised
       integer nstrai1, nstrat1
 #ifdef B25_EIRENE
       integer IUNOT, NR1ST, NP2ND, NT3RD
-      integer NMODE, NAINI
+      integer NMODE, NAINI, NFILEK, NFILEL
       integer NZADD, NVOLPL, NSP
       integer NPLINR,NPLOTR,NPLDLR,NPLINP,NPLOTP,NPLDLP,
      .        NPLINT,NPLOTT,NPLDLT
@@ -552,7 +552,7 @@ c 2002-09-11: logic revised
       data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
       data iy_nocoreExB/-2/, bc_type16_ref/1/, bc_type20_ref/1/
-      data mw_jxa/-1/, mw_jsep/-1/, lhalpha/1/
+      data mw_jxa/-1/, mw_jsep/-1/
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
@@ -3556,6 +3556,9 @@ cxpb  Start reading input.dat file
                                          ! NTIME0,NTIME,NFULLRUN
           END IF
           NMODE = idum(1)
+          nfilek = b2idez(idum(3),4,5)
+          if (nfilek.eq.0) nfilek = 5
+          idum(3) = (idum(3)/100)*100 + nfilek*10 + mod(idum(3),10)
           filename=fort_lc//'11'
           inquire(file=filename,exist=ex)
           if (ex) idum(3) = (idum(3)/10)*10 + 6
@@ -3566,6 +3569,8 @@ cxpb  Start reading input.dat file
           filename=fort_lc//'15'
           inquire(file=filename,exist=ex)
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
+          nfilel = b2idez(idum(3),3,5)
+          if (nfilel.gt.5) idum(3) = idum(3) - 500  ! remove XDR option
           WRITE(IUNOT,6666) idum(0:8)
         ENDIF
         READ (IUNIN,'(A80)') ZEILE
@@ -3647,12 +3652,10 @@ c   cfile card found. Is this one of the permitted external files?
               else if (streql(handle,'AMMONX')) then
                 WRITE(IUNOT,'(A47)')
      .           'CFILE AMMONX Database/AMdata/ammoniaex.tex     '
-              else if (streql(handle,'gr_ext')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE gr_ext Database/graphite_ext.dat         '
-              else if (streql(handle,'mo_ext')) then
-                WRITE(IUNOT,'(A47)')
-     .           'CFILE mo_ext Database/mo_ext.dat               '
+              else if (streql(handle,'gr_ext')) then ! removed
+                continue
+              else if (streql(handle,'mo_ext')) then ! removed
+                continue
               else if (streql(handle,'ADAS')) then
                 WRITE(IUNOT,'(A47)')
      .           'CFILE ADAS   modules/adas/adf11                '
@@ -8391,7 +8394,7 @@ C  SKIP READING REST OF THIS BLOCK
         ELSE IF (NMODE.NE.0) THEN
           READ (IUNIN,'(A72)') ZEILE
           call fix_logical_input(zeile,3)
-          READ (ZEILE,6665) ldum(0:2) ! LSYMET,LBALAN,LCHKQUD
+          READ (ZEILE,6665) ldum(0:2) ! LSYMET,LBALAN,LCOARSE
           WRITE(IUNOT,6665) ldum(0:2)
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(9I6)') idum(0:8) ! NFLA,NCUTB,NCUTL,IMF,

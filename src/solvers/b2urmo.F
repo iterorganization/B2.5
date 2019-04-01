@@ -149,22 +149,22 @@
         fmo_flua(:,:,:,isb)=fmb(-1:nx,-1:ny,0:1)-flv(-1:nx,-1:ny,0:1)
       endif
       if(iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then
-        if (in_parallel()) then
-          !$OMP MASTER
-          if (ncall==0) then
-            write(*,*) 'b2urmo OpenMP warning: no file output ',
-     &                 'in parallel mode'
-          end if
-          !$OMP END MASTER
-        else
-         write (chns,'(i3.3)') isb
-         call my_out(70,nx,ny,flv(-1,-1,0),
-     &        'b2urmo_etaPat_graduax'//chns)
-         call my_out(70,nx,ny,flv(-1,-1,1),
-     &        'b2urmo_etaPat_graduay'//chns)
-!        call my_out(70,nx,ny,con(-1,-1,0),'b2urmo_etaPatx')
-!        call my_out(70,nx,ny,con(-1,-1,1),'b2urmo_etaPaty')
+       if (in_parallel()) then
+        !$OMP MASTER
+        if (ncall==0) then
+          write(*,*) 'b2urmo OpenMP warning: no file output ',
+     &               'in parallel mode'
         end if
+        !$OMP END MASTER
+       else
+        write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,flv(-1,-1,0),
+     &      'b2urmo_etaPat_graduax'//chns)
+        call my_out(70,nx,ny,flv(-1,-1,1),
+     &      'b2urmo_etaPat_graduay'//chns)
+!       call my_out(70,nx,ny,con(-1,-1,0),'b2urmo_etaPatx')
+!       call my_out(70,nx,ny,con(-1,-1,1),'b2urmo_etaPaty')
+       end if
       endif      
 * ..compute residual
 *   ..contribution from right hand side
