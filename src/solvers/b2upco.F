@@ -32,9 +32,11 @@
 
 *   ..local variables
       integer ncall, ix, iy, ireg
+     &  , nrings, mintopcut                ! IYS 27.03.2019
 !      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       save ncall
       !$OMP THREADPRIVATE (ncall)
+      save nrings, mintopcut
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
@@ -47,7 +49,7 @@
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2xxgs
 *   ..initialisation
-      data ncall/0/
+      data ncall/0/, nrings/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -58,6 +60,8 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2mndr_na_min', na_min)                              ! IYS 27.11.2017
+       call ipgeti ('nrings_for_no_speedUP_averaging', nrings)             ! IYS 27.03.2019
+       mintopcut = minval(topcut(1:nncut))     ! IYS 27.03.2019
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -98,7 +102,8 @@
         tt2 = 0.0e0_R8
         do iy = -1,ny
           do ix = -1,nx
-            if(on_closed_surface(ix,iy).and.bottomiy(ix,iy).ne.-2) then
+            if(on_closed_surface(ix,iy) .and. 
+     *    iy .lt. mintopcut - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
               tt0(iy) = tt0(iy) + vol(ix,iy)
               tt1(iy) = tt1(iy) + vol(ix,iy)*(nb_(ix,iy)-nb(ix,iy))
               tt2(iy) = tt2(iy) + vol(ix,iy)*(pb_(ix,iy)-pb(ix,iy))
@@ -111,7 +116,8 @@
 ! If it happens, cancel the smoothing of the correction for the whole
 ! flux surface where such event happens.
           do ix = -1,nx
-            if(on_closed_surface(ix,iy).and.bottomiy(ix,iy).ne.-2) then
+            if(on_closed_surface(ix,iy) .and. 
+     *    iy .lt. mintopcut - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
               t0 = pb(ix,iy)+tt2(iy)/tt0(iy) +
      *         corr_core_dn(isb)*(pb_(ix,iy)-pb(ix,iy)-tt2(iy)/tt0(iy))   ! IYS 19.12.2017
               if (t0 .lt. pb(ix,iy)*na_min / nb(ix,iy)) then
