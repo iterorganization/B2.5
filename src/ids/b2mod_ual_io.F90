@@ -97,6 +97,10 @@ contains
             !< checks for correct use of the routine.
 
         !! Internal variables
+        character(len=24) :: ion_label !< Ion specie label (e.g. D+1)
+        character(len=12) :: ion_charge !< Ion charge (e.g. '1', '2' etc.)
+        integer :: ion_charge_int !< Ion charge (e.g. 1, 2 etc.)
+        integer :: ion_label_tlen !< Length of the (trimmed) ion label
         integer :: ns   !< Total number of ion species
         integer :: nx   !< Specifies the number of interior cells
                         !< along the first coordinate
@@ -105,6 +109,9 @@ contains
         integer :: is   !< Ion specie index (iterator)
         integer :: i    !< Iterator
         integer :: j    !< Iterator
+        integer :: k    !< Iterator
+        integer :: o    !< Dummy integer
+        integer :: p    !< Dummy integer
         integer :: iGsCoreBoundary  !< Variable to hold Core grid subset base
             !< index, later found by findGridSubsetByName() routine.
         integer :: iGsInnerMidplane !< Variable to hold Inner Midplane grid
@@ -260,20 +267,64 @@ contains
         !! List of species
         allocate( edge_profiles%ggd( time_sind )%ion( ns ) )
         do is = 0, ns-1
+            allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%label(1) )
             allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1) )
             allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%label(1) )
             allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1) )
 
+            ! Put label to ion(is + 1).state(1).label
             call species( is, edge_profiles%ggd( time_sind )%ion( is + 1 )% &
                 &   state(1)%label, .false.)
+            ! Set (previous) label
+            ion_label = edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%label(1)
+            ! Trim label (remove  whitespaces on the right side)
+            ion_label_tlen = len_trim(ion_label)
+            ! Set default values for variables marking the position of '+' and '0'
+            p = 0
+            o = 0
+            ! Loop through characters in ion label string
+            do i = 1, ion_label_tlen
+                if (ion_label(i:i) .eq. '0') then
+                    ! Set the variable, marking the position of '0' of present
+                    o = i
+                endif
+                ! When '+' is found, remember the position (set new variable)
+                if (ion_label(i:i) .eq. "+") then
+                    ! Set the variable, marking the position of '+' if present
+                    p = i
+                endif
+            enddo
+            ! Find charge
+            ! (and ion atom label and position of '+' if found - commented out)
+            if (p > 0 .and. (p > 0 .or. o > 0)) then
+                !! ion = ion_label(1:p-1)
+                !! plus = ion_label(p:p)
+                ion_charge = ion_label(p+1:)
+            else if (o > 0) then
+                !! ion = ion_label(1:o-1)
+                ion_charge = ion_label(o:)
+            endif
+            ! Convert charge from string to integer
+            read(ion_charge, *), ion_charge_int
+
+            ! Put (complete) ion label identifying the species
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%label(1) = ion_label
+            ! Put ion charge
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%z_ion = ion_charge_int
+            ! Put mass of atom
             edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%a =     &
                 &   am( is )
+            ! Put nuclear charge
             edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%z_n =   &
                 &   zn( is )
+            ! Put minimum Z of the charge state bundle
+            ! (z_min = z_max = 0 for a neutral)
             edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%z_min =   &
                 &   zamin( is )
+            ! Put maximum Z of the charge state bundle
             edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%z_max =   &
                 &   zamax( is )
+
         enddo
 
         write(*,*) "Running b2CreateMap subroutine"
