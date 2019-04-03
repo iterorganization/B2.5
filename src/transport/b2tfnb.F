@@ -1296,12 +1296,12 @@ cdjm Jan2017 store components of fnb for balance
      2      (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      cdpb(ix,iy,1)*(pb(ix,iy)
      &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
-          if(mdf_fnb.eq.0) then                                         !srv 13.10.06 {
+          if(mdf_fnb.eq.0) then                                          !srv 13.10.06 {
            flob(ix,iy,1) = flo*(kmpr(bottomix(ix,iy),bottomiy(ix,iy))
      &        +kmpr(ix,iy))/2.0_R8-
      &        con(ix,iy)*(kmpr(ix,iy)-
      &                    kmpr(bottomix(ix,iy),bottomiy(ix,iy)))
-           conb(ix,iy,1,0) =                                            !srv 13.10.06
+           conb(ix,iy,1,0) =                                             !srv 13.10.06
      &        con(ix,iy)*(kmpr(bottomix(ix,iy),bottomiy(ix,iy))
      &        +kmpr(ix,iy))/2.0_R8-
      &        flo*(kmpr(ix,iy)
@@ -1443,7 +1443,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        else
         call my_out(70,nx,ny,wrk5,'b2tfnb_dgradpby'//chns)
        endif
-       call my_out(70,nx,ny,wrk8,'b2tfnb_cvlbnay'//chns)               !iys 17.04.2012
+       call my_out(70,nx,ny,wrk8,'b2tfnb_cvlbnay'//chns)                !iys 17.04.2012
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diay'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfy'//chns)
       endif
@@ -1606,8 +1606,8 @@ cxpb turn off poloidal flows in core boundary
              fna_ch(:,iy,0,isb)=0.0_R8
              fna_pschused(:,iy,0,isb)=0.0_R8
           endif
-        enddo                                                           !srv 20.06.08 }
-      endif                                                             !xpb
+        enddo                                                            !srv 20.06.08 }
+      endif                                                              !xpb
 
 csw 18feb2014 remove fluxes between guard cells
       do ix=-1,nx
@@ -1881,7 +1881,7 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfnb_fchinerty')
        call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfnb_fchanmlx')
        call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfnb_fchanmly')
-      endif                                                             !srv 18.06.08 }
+      endif                                                              !srv 18.06.08 }
 
 * ..return
       ncall = ncall+1
