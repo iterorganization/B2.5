@@ -97,9 +97,9 @@ contains
             !< checks for correct use of the routine.
 
         !! Internal variables
-        character(len=24) :: ion_label !< Ion specie label (e.g. D+1)
-        character(len=12) :: ion_charge !< Ion charge (e.g. '1', '2' etc.)
-        integer :: ion_charge_int !< Ion charge (e.g. 1, 2 etc.)
+        character(len=24) :: ion_label !< Ion species label (e.g. D+1)
+        character(len=12) :: ion_charge !< Ion charge (e.g. '1', '2', etc.)
+        integer :: ion_charge_int !< Ion charge (e.g. 1, 2, etc.)
         integer :: ion_label_tlen !< Length of the (trimmed) ion label
         integer :: ns   !< Total number of ion species
         integer :: nx   !< Specifies the number of interior cells
@@ -277,7 +277,7 @@ contains
                 &   state(1)%label, .false.)
             ! Set (previous) label
             ion_label = edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%label(1)
-            ! Trim label (remove  whitespaces on the right side)
+            ! Trim label (remove whitespaces on the right side)
             ion_label_tlen = len_trim(ion_label)
             ! Set default values for variables marking the position of '+' and '0'
             p = 0
@@ -285,7 +285,7 @@ contains
             ! Loop through characters in ion label string
             do i = 1, ion_label_tlen
                 if (ion_label(i:i) .eq. '0') then
-                    ! Set the variable, marking the position of '0' of present
+                    ! Set the variable, marking the position of '0' if present
                     o = i
                 endif
                 ! When '+' is found, remember the position (set new variable)

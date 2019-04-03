@@ -294,7 +294,7 @@ c 2002-09-11: logic revised
       integer nstrai1, nstrat1
 #ifdef B25_EIRENE
       integer IUNOT, NR1ST, NP2ND, NT3RD
-      integer NMODE, NAINI, NFILEK, NFILEL
+      integer NMODE, NAINI, NFILEL
       integer NZADD, NVOLPL, NSP
       integer NPLINR,NPLOTR,NPLDLR,NPLINP,NPLOTP,NPLDLP,
      .        NPLINT,NPLOTT,NPLDLT
@@ -795,6 +795,7 @@ c 2002-09-11: logic revised
         call xerrab ('Unrecognized SOLPS version format!')
       endif
 *   ..import parameters from Eirene input.dat file
+      CALL EIRENE_DEFAULTS_USR
       inquire(file='input.dat',exist=ex)
       if (ex) then
         open(unit=45,file='input.dat')
@@ -3565,7 +3566,7 @@ cxpb  Start reading input.dat file
           filename=fort_lc//'13'
           inquire(file=filename,exist=ex)
           if (ex .or. nfl.lt.nplsi)
-     >     idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
+     >     idum(3) = (idum(3)/1000)*1000 + 300 + mod(idum(3),100)
           filename=fort_lc//'15'
           inquire(file=filename,exist=ex)
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
@@ -4592,6 +4593,12 @@ Cxpb then rewrite the entire block
                 EELECA(JATM,J) = dble(IREAC1(IR))
               ELSE
                 EELECA(JATM,J) = EELECA(JATM,K)
+                IF (NCHARA(JATM).EQ.2) THEN
+ ! Correct round-off of He ionization energy
+                  IF (ABS(EELECA(JATM,J)+24.55).LT.0.01) THEN
+                    EELECA(JATM,J)=-24.5874
+                  ENDIF
+                ENDIF
               END IF
               EBULKA(JATM,J) = EBULKA(JATM,K)
               IF (B2IDEZ(ISCDEA(JATM,J),3,5).eq.3) THEN
@@ -6644,7 +6651,9 @@ cxpb We now rewrite the modified block 4
                 ELSE
                   WRITE(6,*)
      .             'Invalid CPATH specification in this environment: '//
-     .             'CPATH line removed'
+     .             'CPATH line replaced'
+                  WRITE(IUNOT,'(A)') 'cpath '//
+     .             'modules/Eirene/Database/Surfacedata/TRIM/'
                 END IF
                 if (element_present(natm,natmi,iatm1,elname))
      >           WRITE(IUNOT,'(A74)') RFILNM

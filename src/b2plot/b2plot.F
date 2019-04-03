@@ -254,6 +254,7 @@ c Function to check the correct parameters!
 c
       call subini ('b2plot')
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
       if (ex) then
