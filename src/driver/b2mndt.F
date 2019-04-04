@@ -12,8 +12,8 @@
 !      use b2mod_sources
 !      use b2mod_transport
       use b2mod_constants
-      use b2mod_diag
-     &   , only : nnatmi, alloc_b2mod_diag
+!WG_TODO      use b2mod_diag
+!WG_TODO     &   , only : nnatmi, alloc_b2mod_diag
 !      use b2mod_work
       use b2mod_time
       use b2mod_b2cmpa
@@ -180,7 +180,7 @@
        test_residual=nstg_areshe.gt.0.0_R8.or.nstg_areshi.gt.0.0_R8.or.
      &               nstg_aresco.gt.0.0_R8
        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
-       call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstrat,nnatmi)
+!WG_TODO       call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstrat,nnatmi)
        call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)              !srv 31.01.07 {
        call xertst (1.le.ntim_step_out,
      &   'faulty internal parameter ntim_step_out')                     !srv 31.01.07 }

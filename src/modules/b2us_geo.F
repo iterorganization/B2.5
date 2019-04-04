@@ -249,6 +249,7 @@
       integer :: nCv, nFc, nVx, nFx, iFc
       integer :: use_9pt_stencil = 1
       real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du
+      intrinsic maxval
 
       call ipgetr ('b2mndr_hz', fac_hz)
       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
@@ -321,7 +322,7 @@
       ! only supported for cases derived from original, structured grid
       if (use_9pt_stencil.eq.0) then
         if (mpg%isClassicalGrid.eq.1) then
-          nfx = (mpg%nx + 1)*mpg%ny
+          nfx = maxval(mpg%imapFcx)
           ! 'poloidal' faces
           gm%fcQgam(1:nfx,1) = 0.0_R8
           gm%fcQalf(1:nfx,1) = 0.0_R8

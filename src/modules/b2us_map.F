@@ -66,6 +66,9 @@
 **********************************************************************
 
       subroutine alloc_mapping (m)
+#ifdef WG_DEBUG
+      use b2us_debug
+#endif
 
       implicit none
       type(mapping), intent(inout) :: m
@@ -98,10 +101,18 @@
       allocate (m%cvNvP(m%nCv,2))
       allocate (m%cvNv(m%nCmxNv))
 
-      allocate (m%imapcv(-1:m%nx,-1:m%ny))
-      allocate (m%imapFcx(-1:m%nx,-1:m%ny))
-      allocate (m%imapFcy(-1:m%nx,-1:m%ny))
-      allocate (m%imapVx(-1:m%nx,-1:m%ny))
+      if (m%isClassicalGrid.eq.1) then
+        allocate (m%imapCv(-1:m%nx,-1:m%ny))
+        allocate (m%imapFcx(-1:m%nx,-1:m%ny))
+        allocate (m%imapFcy(-1:m%nx,-1:m%ny))
+        allocate (m%imapVx(-1:m%nx,-1:m%ny))
+#ifdef WG_DEBUG
+        allocate (imapCv(-1:m%nx,-1:m%ny))
+        allocate (imapFcx(-1:m%nx,-1:m%ny))
+        allocate (imapFcy(-1:m%nx,-1:m%ny))
+        allocate (imapVx(-1:m%nx,-1:m%ny))
+#endif
+      endif
 
       write (*,*) '=================================='
       write (*,*) 'Mapping allocated'
@@ -117,6 +128,9 @@
 **********************************************************************
 
       subroutine dealloc_mapping (m)
+#ifdef WG_DEBUG
+      use b2us_debug
+#endif
 
       implicit none
       type(mapping), intent(in out) :: m
@@ -152,10 +166,19 @@
       deallocate (m%cvNvP)
       deallocate (m%cvNv)  
     
-      deallocate (m%imapcv)  
-      deallocate (m%imapFcx)  
-      deallocate (m%imapFcy)  
-      deallocate (m%imapVx)  
+      if (m%isClassicalGrid.eq.1) then
+        deallocate (m%imapCv)
+        deallocate (m%imapFcx)
+        deallocate (m%imapFcy)
+        deallocate (m%imapVx)
+#ifdef WG_DEBUG
+        deallocate (imapCv)
+        deallocate (imapFcx)
+        deallocate (imapFcy)
+        deallocate (imapVx)
+#endif
+
+      endif
 
       return
       end subroutine dealloc_mapping 
@@ -241,23 +264,16 @@
 #endif
       implicit none
       integer, intent(in) :: iun
-      integer :: idum(0:9)
+      integer :: idum(0:9), n2
       type (mapping), intent (inout) :: mpg
 
-      call alloc_mapping (mpg)
-
-      call cfruin (iun, 1, idum, 'isClassicalGrid')
-      mpg%isClassicalGrid = idum(0)
-      call cfruin (iun, 3, idum, 'nx,ny,nncut')
-
-      mpg%nx    = idum(0)
-      mpg%ny    = idum(1)
-      mpg%nncut = idum(2)
 #ifdef WG_DEBUG
       nx_st = mpg%nx
       ny_st = mpg%ny
       isClassicalGrid = mpg%isClassicalGrid
 #endif
+
+      call alloc_mapping (mpg)
 
       call cfruin (iun, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
       call cfruin (iun, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
@@ -278,6 +294,20 @@
       call cfrure (iun, mpg%nCmxFc,  mpg%intcellP,'intcellP')
       call cfrure (iun, mpg%nCmxFc,  mpg%intcellR,'intcellR')
 
+      n2 = 0
+      if (mpg%isClassicalGrid == 1) n2 = (mpg%nx+2)*(mpg%ny+2)
+      call cfruin (iun, n2, mpg%imapCv,  'imapCv')
+      call cfruin (iun, n2, mpg%imapFcx, 'imapFcx')
+      call cfruin (iun, n2, mpg%imapFcy, 'imapFcy')
+      call cfruin (iun, n2, mpg%imapVx,  'imapVx')
+
+#ifdef WG_DEBUG
+      imapCv  = mpg%imapCv
+      imapFcx = mpg%imapFcx
+      imapFcy = mpg%imapFcy
+      imapVx  = mpg%imapVx
+#endif
+
       call init_mapping (mpg)
 
       return
@@ -289,22 +319,8 @@
 
       implicit none
       integer, intent(in) :: nout
-      integer :: idum(0:9)
+      integer :: idum(0:9), n2
       type (mapping), intent (in) :: mpg
-
-      idum(0) = mpg%isClassicalGrid
-      call cfwuin (nout, 1, idum, 'isClassicalGrid')
-      if (mpg%isClassicalGrid == 1) then
-        idum(0) = mpg%nx
-        idum(1) = mpg%ny
-        idum(2) = mpg%nncut
-      else
-        ! dummy values for unstructured grid
-        idum(0) = -1
-        idum(1) = -1
-        idum(2) = -1
-      endif      
-      call cfwuin (nout, 3, idum, 'nx,ny,nncut')
 
       call cfwuin (nout, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
       call cfwuin (nout, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
@@ -324,6 +340,19 @@
       call cfwuin (nout, mpg%nCv,     mpg%cvReg, 'cvReg')
       call cfwure (nout, mpg%nCmxFc,  mpg%intcellP,'intcellP')
       call cfwure (nout, mpg%nCmxFc,  mpg%intcellR,'intcellR')
+
+      if (mpg%isClassicalGrid.eq.1) then
+        n2 = (mpg%nx+2)*(mpg%ny+2)
+        call cfwuin (nout, n2, mpg%imapCv,  'imapCv')
+        call cfwuin (nout, n2, mpg%imapFcx, 'imapFcx')
+        call cfwuin (nout, n2, mpg%imapFcy, 'imapFcy')
+        call cfwuin (nout, n2, mpg%imapVx,  'imapVx')
+      else
+        call cfwuin (nout, 0, idum, 'imapCv')
+        call cfwuin (nout, 0, idum, 'imapFcx')
+        call cfwuin (nout, 0, idum, 'imapFcy')
+        call cfwuin (nout, 0, idum, 'imapVx')
+      endif      
 
       return
       end subroutine write_mapping

@@ -301,6 +301,19 @@ cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
       idum(3) = mpg%nVmxFc
       idum(4) = mpg%nCmxNv
       call cfwuin (nout(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+      idum(0) = mpg%isClassicalGrid
+      call cfwuin (nout(1),1,idum,'isClassicalGrid')
+      if (mpg%isClassicalGrid == 1) then
+        idum(0) = mpg%nx
+        idum(1) = mpg%ny
+        idum(2) = mpg%nncut
+      else
+        ! dummy values for unstructured grid
+        idum(0) = -1
+        idum(1) = -1
+        idum(2) = -1
+      endif
+      call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
       call cfwuch (nout(1), 120, lblgm, 'label')
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
@@ -355,7 +368,9 @@ cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
           call read_neutrals_namelist(ns, mpg, .false.)
         end if
       end if
-      call write_triangles(nout(0),mpg, gm, nx, ny)
+      if (use_eirene.ne.0) then
+        call write_triangles(nout(0),mpg, gm, nx, ny)
+      endif
 *   ..close other files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)

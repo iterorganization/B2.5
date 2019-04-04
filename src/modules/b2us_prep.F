@@ -91,11 +91,11 @@ cwdk      type(B2StateExt), public, save :: state_ext
       integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc, ic1, ic2, 
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
      .           ivx, ivx1, ivx2, nfx, mxreg, ifs, icv, ireg, istart,
-     .           inv, inv1, inv2, invmx, ifcc, icount, n2, nghosti,
+     .           inv, inv1, inv2, invmx, ifcc, icount, n2,
      .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, 
      .           nghostvxi, ici, icg
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
-     .           ighost(:,:), icorner(:,:), ighostcv(:,:),
+     .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
      .           ighostfcx(:,:), ixghostfcx(:), iyghostfcx(:), 
      .           ighostfcy(:,:), ixghostfcy(:), iyghostfcy(:), 
@@ -124,7 +124,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
 
 ! Initialize the mapping matrices
       n2 = (nx+2)*(ny+2)
-      allocate (ighost(-1:nx,-1:ny))
       allocate (icorner(-1:nx,-1:ny))
       allocate (ighostcv(-1:nx,-1:ny))
       allocate (ixghostcv(n2))
@@ -166,42 +165,95 @@ cwdk      type(B2StateExt), public, save :: state_ext
             icount=icount+1
             ixghostcv(icount) = ix-1
             iyghostcv(icount) = iy-1
-		  endif	
-        enddo
-      enddo
-      nghosti = icount              ! internal ghost cells
-      icount = 0
-      do ix = 0, nx+1
-        ighost(ix-1,-1)=1
-        ighost(ix-1,ny)=1
-      enddo
-      do iy = 1, ny
-        ighost(-1,iy-1)=1
-        ighost(nx,iy-1)=1
-      enddo
-      nghostcvi = icount 
-      
-! Count internal "corner" points, by checking whether it is surrounded by ghost cells
-      icount = 0      
-      do iy = 1, ny
-        do ix = 1, nx 
-          if((ighostcv(ix-1,iy-1)==1).and.
-     .       (ighostcv(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))==1).and.
-     .       (ighostcv(leftix(ix-1,iy-1),leftiy(ix-1,iy-1))==1).and.   
-     .       (ighostcv(bottomix(ix-1,iy-1),bottomiy(ix-1,iy-1))==1).and.
-     .       (ighostcv(topix(ix-1,iy-1),topiy(ix-1,iy-1))==1)) then  
-            icorner(ix-1,iy-1)=1
-            icount=icount+1
-            ixcorner(icount) = ix-1
-            iycorner(icount) = iy-1
           endif	
         enddo
       enddo
+      nghostcvi = icount              ! internal ghost cells
+      do ix = 0, nx+1
+        ighostcv(ix-1,-1)=1
+        ighostcv(ix-1,ny)=1
+      enddo
+      do iy = 1, ny
+        ighostcv(-1,iy-1)=1
+        ighostcv(nx,iy-1)=1
+      enddo
+      
+! Count internal "corner" points, by checking whether it is surrounded by ghost cells
+      icount = 0      
+cwdk this loop fails because rightix = nx+1 etc. for internal guard cells
+!      do iy = 1, ny
+!        do ix = 1, nx 
+!          if((ighostcv(ix-1,iy-1)==1).and.
+!     .       (ighostcv(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))==1).and.
+!    .       (ighostcv(leftix(ix-1,iy-1),leftiy(ix-1,iy-1))==1).and.   
+!     .       (ighostcv(bottomix(ix-1,iy-1),bottomiy(ix-1,iy-1))==1).and.
+!     .       (ighostcv(topix(ix-1,iy-1),topiy(ix-1,iy-1))==1)) then  
+!            icorner(ix-1,iy-1)=1
+!            icount=icount+1
+!            ixcorner(icount) = ix-1
+!            iycorner(icount) = iy-1
+!          endif	
+!        enddo
+!      enddo
+cwdk assume corner cells will only appear on edges of nx,ny grid
+! Count "corner" points on boundaries, by checking whether it is surrounded by ghosts
+      iy = 0 ! south
+      do ix = 1, nx 
+       if (ighostcv(ix-1,iy-1)==1) then
+        if (((rightix(ix-1,iy-1)==nx+1).or.
+     .       (leftix(ix-1,iy-1)==-2)).and.
+     .      (ighostcv(topix(ix-1,iy-1),topiy(ix-1,iy-1))==1)) then
+         icorner(ix-1,iy-1)=1
+         icount=icount+1
+         ixcorner(icount) = ix-1
+         iycorner(icount) = iy-1
+        endif
+       endif	
+      enddo
+      iy = ny+1 ! north
+      do ix = 1, nx 
+       if (ighostcv(ix-1,iy-1)==1) then
+        if (((rightix(ix-1,iy-1)==nx+1).or.
+     .       (leftix(ix-1,iy-1)==-2)).and.
+     .      (ighostcv(bottomix(ix-1,iy-1),bottomiy(ix-1,iy-1))==1)) then
+         icorner(ix-1,iy-1)=1
+         icount=icount+1
+         ixcorner(icount) = ix-1
+         iycorner(icount) = iy-1
+        endif
+       endif	
+      enddo
+      ix = 0 ! west
+      do iy = 1, ny 
+       if (ighostcv(ix-1,iy-1)==1) then
+        if (((topiy(ix-1,iy-1)==ny+1).or.
+     .       (bottomiy(ix-1,iy-1)==-2)).and.
+     .      (ighostcv(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))==1)) then
+         icorner(ix-1,iy-1)=1
+         icount=icount+1
+         ixcorner(icount) = ix-1
+         iycorner(icount) = iy-1
+        endif
+       endif	
+      enddo
+      ix = nx+1 ! east
+      do iy = 1, ny 
+       if (ighostcv(ix-1,iy-1)==1) then
+        if (((topiy(ix-1,iy-1)==ny+1).or.
+     .       (bottomiy(ix-1,iy-1)==-2)).and.
+     .      (ighostcv(leftix(ix-1,iy-1),leftiy(ix-1,iy-1))==1)) then
+         icorner(ix-1,iy-1)=1
+         icount=icount+1
+         ixcorner(icount) = ix-1
+         iycorner(icount) = iy-1
+        endif
+       endif	
+      enddo
       ncorneri = icount
 
-      m%nCi = nx*ny-nghostcvi             ! internal cells
-      m%nCg = 2*nx + 2*ny + nghostcvi -ncorneri               ! guard cells
-      m%nCv = m%nCi + m%nCg             ! total number of cells
+      m%nCi = nx*ny - nghostcvi                   ! internal cells
+      m%nCg = 2*nx + 2*ny + nghostcvi - ncorneri  ! guard cells
+      m%nCv = m%nCi + m%nCg                       ! total number of cells
 
       write (*,*) 'nCv, nCi, nCg', m%nCv, m%nCi, m%nCg
 
@@ -215,7 +267,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
             icount=icount+1
             ixghostfcx(icount) = ix-1
             iyghostfcx(icount) = iy-1
-		  endif	
+          endif	
         enddo
       enddo
       nghostfcxi = icount
@@ -228,7 +280,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
             icount=icount+1
             ixghostfcy(icount) = ix-1
             iyghostfcy(icount) = iy-1
-		  endif	
+          endif	
         enddo
       enddo
       nghostfcyi = icount
@@ -246,7 +298,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
             icount=icount+1
             ixghostvx(icount) = ix-1
             iyghostvx(icount) = iy-1
-		  endif	
+          endif	
         enddo
       enddo
       nghostvxi = icount
@@ -375,7 +427,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
       ici =0
       do iy = 1, ny+1
         do ix = 1, nx+1
-          if(ighostfcx(ix-1,iy-1)==0) then
+          if(ighostvx(ix-1,iy-1)==0) then
             ici = ici + 1          
             m%imapVx(ix-1,iy-1) = ici
            endif
@@ -386,6 +438,14 @@ cwdk      type(B2StateExt), public, save :: state_ext
         call xerrab 
      .    ('Inconsistency between counting and mapping in nVx!')
       endif
+
+#ifdef WG_DEBUG
+      imapCv  = m%imapCv
+      imapFcx = m%imapFcx
+      imapFcy = m%imapFcy
+      imapVx  = m%imapVx
+#endif
+
 
 ! no. of faces to be considered for this cell
       m%cvFcP(1:m%nCi,2) = 4
@@ -409,25 +469,18 @@ cwdk      type(B2StateExt), public, save :: state_ext
       nfx = (nx+1)*ny
       do iy = 1, ny
         do ix = 1, nx
-          if(m%imapCv(ix-1,iy-1) /= 0) then
-            ic = m%imapCv(ix-1,iy-1)!! seems not te be needed in this loop??
-!          ic = ix + (iy-1)*nx
+          if ((m%imapCv(ix-1,iy-1) /= 0).and.
+     .        (m%imapCv(ix-1,iy-1) .le. m%nCi)) then
+            ic = m%imapCv(ix-1,iy-1)
             if1 = m%cvFcP(ic,1)
             if2 = if1 + 1
             if3 = if2 + 1
             if4 = if3 + 1
             m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
-!          m%cvFc(if1) = ix + (iy-1)*(nx+1)
-!!          m%cvFc(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
-!!          m%cvFc(if2) = ix+1 + (iy-1)*(nx+1)
             m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
      .                              rightiy(ix-1,iy-1))
-!          m%cvFc(if2) = rightix(ix-1,iy-1)+1 + rightiy(ix-1,iy-1)*(nx+1)
             m%cvFc(if3) = m%imapFcy(ix-1,iy-1)   
-!          m%cvFc(if3) = nfx + iy + (ix-1)*(ny+1)
-!!          m%cvFc(if4) = nfx + iy+1 + (ix-1)*(ny+1)
             m%cvFc(if4) = m%imapFcy(topix(ix-1,iy-1),topiy(ix-1,iy-1))
-!          m%cvFc(if4) = nfx + topiy(ix-1,iy-1)+1+topix(ix-1,iy-1)*(ny+1)
             m%intcellP(if1) = 1.0_R8
             m%intcellP(if2) = 1.0_R8
             m%intcellP(if3) = 0.0_R8
@@ -437,21 +490,41 @@ cwdk      type(B2StateExt), public, save :: state_ext
             m%intcellR(if3) = 1.0_R8
             m%intcellR(if4) = 1.0_R8
             m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-!          m%cvVx(if1) = ix + (iy-1)*(nx+1)
-!!          m%cvVx(if1) = leftix(ix-1,iy-1)+2 + (iy-1)*(nx+1)
-!!          m%cvVx(if2) = ix+1 + (iy-1)*(nx+1)
             m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
      .                             rightiy(ix-1,iy-1))
-!          m%cvVx(if2) = rightix(ix-1,iy-1)+1 + rightiy(ix-1,iy-1)*(nx+1)
             m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
-!          m%cvVx(if3) = topix(ix-1,iy-1)+1 + topiy(ix-1,iy-1)*(nx+1)
-!!          m%cvVx(if3) = leftix(ix-1,iy-1)+2 + iy*(nx+1)
-!!          m%cvVx(if4) = ix+1 + iy*(nx+1)
             m%cvVx(if4) = m%imapVx(rightix(topix(ix-1,iy-1),
      .                             topiy(ix-1,iy-1)), 
      .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1)))
-!          m%cvVx(if4) = rightix(topix(ix-1,iy-1),topiy(ix-1,iy-1))+1 + 
-!     .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1))*(nx+1)
+          elseif ((m%imapCv(ix-1,iy-1) /= 0).and.
+     .            (m%imapCv(ix-1,iy-1) .gt. m%nCi)) then
+            if (rightix(ix-1,iy-1).eq.nx+1) then
+              ic = m%imapCv(ix-1,iy-1)
+              if1 = m%cvFcP(ic,1)
+              m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
+              m%intcellP(if1) = 1.0_R8
+              m%intcellR(if1) = 1.0_R8
+              if1 = m%cvVxP(ic,1)
+              m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
+              m%cvVx(if1+1) = 
+     .          m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+            elseif (leftix(ix-1,iy-1).eq.-2) then
+              ic = m%imapCv(ix-1,iy-1)
+              if1 = m%cvFcP(ic,1)
+              m%cvFc(if1) = m%imapFcx(rightix(ix-1,iy-1),
+     .                                rightiy(ix-1,iy-1))
+              m%intcellP(if1) = 1.0_R8
+              m%intcellR(if1) = 1.0_R8
+              if1 = m%cvVxP(ic,1)
+              m%cvVx(if1)   = m%imapVx(rightix(ix-1,iy-1),
+     .                                 rightiy(ix-1,iy-1))
+              m%cvVx(if1+1) = m%imapVx(rightix(topix(ix-1,iy-1),
+     .                                         topiy(ix-1,iy-1)), 
+     .                                 rightiy(topix(ix-1,iy-1),
+     .                                         topiy(ix-1,iy-1)))
+            else
+              call xerrab ('Internal N/S guard cell; not yet available')
+            endif
           endif
         end do
       end do
@@ -471,16 +544,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
           m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(
      .               rightix(topix(ix-1,-1),topiy(ix-1,-1)), 
      .               rightiy(topix(ix-1,-1),topiy(ix-1,-1))) 
-!        ic = m%nCi + ix
-!        m%cvFc(m%cvFcP(ic,1)) = nfx + 
-!     .               topiy(ix-1,-1)+1 + topix(ix-1,-1)*(ny+1)
-!        m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
-!        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-!        m%cvVx(m%cvVxP(ic,1)) = 
-!     .               topix(ix-1,-1)+1 + topiy(ix-1,-1)*(nx+1)
-!        m%cvVx(m%cvVxP(ic,1)+1) = 
-!     .               rightix(topix(ix-1,-1),topiy(ix-1,-1))+1 + 
-!     .               rightiy(topix(ix-1,-1),topiy(ix-1,-1))*(nx+1) 
         endif
         if(m%imapCv(ix-1,ny)/=0) then
           ic = m%imapCv(ix-1,ny)
@@ -490,14 +553,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
           m%cvVx(m%cvVxP(ic,1)) = m%imapVx(ix-1,ny)
           m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(rightix(ix-1,ny),
      .                                     rightiy(ix-1,ny))         
-!        ic = m%nCi + nx + ix
-!     .               rightiy(topix(ix-1,-1),topiy(ix-1,-1))*(nx+1) 
-!        m%cvFc(m%cvFcP(ic,1)) = nfx + ny+1 + (ix-1)*(ny+1)
-!        m%intcellP(m%cvFcP(ib2us_prep.Fc,1)) = 1.0_R8
-!        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-!        m%cvVx(m%cvVxP(ic,1)) = ix + ny*(nx+1)
-!        m%cvVx(m%cvVxP(ic,1)+1) = 
-!     .               rightix(ix-1,ny)+1 + rightiy(ix-1,ny)*(nx+1)
          endif      
       end do
 
@@ -515,16 +570,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .                                      rightiy(topix(-1,iy-1),
      .                                              topiy(-1,iy-1)))
         endif 
-!        ic = m%nCi + 2*nx + iy
-!        m%cvFc(m%cvFcP(ic,1)) = 
-!     .               rightix(-1,iy-1)+1 + rightiy(-1,iy-1)*(nx+1)
-!        m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
-!        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-!        m%cvVx(m%cvVxP(ic,1)) = 
-!     .               rightix(-1,iy-1)+1 + rightiy(-1,iy-1)*(nx+1)
-!        m%cvVx(m%cvVxP(ic,1)+1) = 
-!     .               rightix(topix(-1,iy-1),topiy(-1,iy-1))+1 + 
-!     .               rightiy(topix(-1,iy-1),topiy(-1,iy-1))*(nx+1)
         if(m%imapCv(nx,iy-1)/=0) then        
           ic = m%imapCv(nx,iy-1)
           m%cvFc(m%cvFcP(ic,1)) = m%imapFcx(nx,iy-1)
@@ -534,13 +579,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
           m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(topix(nx,iy-1),
      .                                      topiy(nx,iy-1))
         endif
-!        ic = m%nCi + 2*nx + ny + iy
-!        m%cvFc(m%cvFcP(ic,1)) = nx+1 + (iy-1)*(nx+1)
-!        m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
-!        m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-!        m%cvVx(m%cvVxP(ic,1)) = nx+1 + (iy-1)*(nx+1) 
-!        m%cvVx(m%cvVxP(ic,1)+1) = 
-!     .               topix(nx,iy-1)+1 + topiy(nx,iy-1)*(nx+1)
       end do
 
 ! listing for every face the two corresponding cells
@@ -554,37 +592,11 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .                                leftiy(ix-1,iy-1))
              m%fcCv(ifc,2) = m%imapCv(ix-1,iy-1)
              m%fcVx(ifc,1) = m%imapVx(ix-1,iy-1)
-             m%fcVx(ifc,2) = m%imapCv(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+             m%fcVx(ifc,2) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
            endif  
          end do
        end do
 
-!       do iy = 1, ny
-!         do ix = 2, nx
-!           ic = ix + (iy-1)*nx
-!           ifc = ix + (iy-1)*(nx+1)
-!           m%fcCv(ifc,1) = leftix(ix-1,iy-1)+1 + (iy-1)*nx
-!           m%fcCv(ifc,2) = ic
-!           m%fcVx(ifc,1) = ix + (iy-1)*(nx+1)
-!           m%fcVx(ifc,2) = ix + iy*(nx+1)
-!         end do
-
-!! left guard cells
-!         ic = 1 + (iy-1)*nx
-!         ifc = 1 + (iy-1)*(nx+1)
-!         m%fcCv(ifc,1) = m%nCi + 2*nx + iy
-!         m%fcCv(ifc,2) = ic
-!         m%fcVx(ifc,1) = 1 + (iy-1)*(nx+1)
-!         m%fcVx(ifc,2) = 1 + iy*(nx+1)
-
-!! right guard cells
-!         ic = nx+1 + (iy-1)*nx
-!         ifc = nx+1 + (iy-1)*(nx+1)
-!         m%fcCv(ifc,1) = ic - 1
-!         m%fcCv(ifc,2) = m%nCi + 2*nx + ny + iy
-!         m%fcVx(ifc,1) = nx+1 + (iy-1)*(nx+1)
-!         m%fcVx(ifc,2) = nx+1 + iy*(nx+1)
-!       end do
 
 ! y faces
 
@@ -596,38 +608,11 @@ cwdk      type(B2StateExt), public, save :: state_ext
              m%fcCv(ifc,1) = m%imapCv(bottomix(ix-1,iy-1),
      .                                bottomiy(ix-1,iy-1))
              m%fcVx(ifc,2) = m%imapVx(ix-1,iy-1)
-             m%fcVx(ifc,1) = m%imapCv(rightix(ix-1,iy-1),
+             m%fcVx(ifc,1) = m%imapVx(rightix(ix-1,iy-1),
      .                                rightiy(ix-1,iy-1))
            endif
          end do
        end do
-
-!       do ix = 1, nx
-!         do iy = 2, ny
-!           ic = ix + (iy-1)*nx
-!           ifc = nfx + iy + (ix-1)*(ny+1)
-!           m%fcCv(ifc,2) = ic
-!           m%fcCv(ifc,1) = ic - nx
-!           m%fcVx(ifc,2) = ix + (iy-1)*(nx+1)
-!           m%fcVx(ifc,1) = rightix(ix-1,iy-1)+1 + (iy-1)*(nx+1)
-!         end do
-
-!! lower guard cells
-!         ic = ix
-!         ifc = nfx + 1 + (ix-1)*(ny+1)
-!         m%fcCv(ifc,2) = ic
-!         m%fcCv(ifc,1) = m%nCi + ix
-!         m%fcVx(ifc,2) = ix 
-!         m%fcVx(ifc,1) = rightix(ix-1,0)+1 
-
-! upper guard cells
-!         ic = ix + (ny-1)*nx
-!         ifc = nfx + ix*(ny+1)
-!         m%fcCv(ifc,2) = m%nCi + nx + ix
-!         m%fcCv(ifc,1) = ic
-!         m%fcVx(ifc,2) = ix + ny*(nx+1)
-!         m%fcVx(ifc,1) = rightix(ix-1,ny)+1 + ny*(nx+1)
-!       end do
 
 ! merging x-point vertex !!! TB not changed... seems not to be necessary
        do icut = 1, nncut
@@ -673,7 +658,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
        
        m%vxFcP(1,1) = 1
        m%vxCvP(1,1) = 1
-       do ivx = 1, (nx+1)*(ny+1)-1
+       do ivx = 1, m%nVx-1
          m%vxFcP(ivx,2) = count(fh == ivx)
          m%vxFcP(ivx+1,1) = m%vxFcP(ivx,1) + m%vxFcP(ivx,2)  
          if (m%vxFcP(ivx,2) > 0) then
@@ -688,7 +673,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
          end if
        end do
 
-       ivx = (nx+1)*(ny+1)
+       ivx = m%nVx
        m%vxFcP(ivx,2) = count(fh == ivx)
        vxFc_end = m%vxFcP(ivx,1) + m%vxFcP(ivx,2)
        if (m%vxFcP(ivx,2) > 0) then
@@ -712,7 +697,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
         do ix = 0, nx+1
           if(m%imapCv(ix-1,iy-1)/=0) then          
             ic = m%imapCv(ix-1,iy-1)
-!          ic = (ix+1) + iy*nx
             m%cvReg(ic) = region(ix-1,iy-1,0)
             m%cvOnClosedSurface(ic) = on_closed_surface(ix-1,iy-1)
           endif
@@ -796,15 +780,16 @@ cwdk      type(B2StateExt), public, save :: state_ext
 ! identify the various flux surfaces
       m%fsCv = 0 ! init to 0
       m%fsFc = 0 ! init to 0
-
+#ifdef WG_TODO
       ifs = 0
       icv = 0
       ifcc = 0
       do ireg= 1, mxReg
     	do iy = 1, ny
-	      istart = -1
-	      do ix = 1, nx
-            if(m%imapCv(ix-1,iy-1)/=0) then
+          istart = -1
+          do ix = 1, nx
+            if((m%imapCv(ix-1,iy-1)/=0) .and. 
+     &         (m%imapCv(ix-1,iy-1) .le. m%nCi)) then
               ic = m%imapCv(ix-1,iy-1)
               ifc = m%imapFcx(ix-1,iy-1)
 !	do iy = 0, ny-1
@@ -813,25 +798,28 @@ cwdk      type(B2StateExt), public, save :: state_ext
 !            ic = (ix+1) + iy*nx
 !            ifc = ix+1 + iy*(nx+1)
               if (m%cvReg(ic) == ireg) then
-	            if (istart == -1) then
+                if (istart == -1) then
                   ifs = ifs + 1
                   icv = icv + 1
                   ifcc = ifcc + 1
                   m%fsCv(icv) = ic
-	              m%fsCvP(ifs,1) = icv
-	              m%fsFc(ifcc) = ifc
+                  m%fsCvP(ifs,1) = icv
+                  m%fsFc(ifcc) = ifc
                   m%fsFcP(ifs,1) = ifcc
      	          istart = 1
                 else
      	          icv = icv + 1
                   ifcc = ifcc + 1
-        		  m%fsCv(icv) = ic
+                  m%fsCv(icv) = ic
      	          m%fsFc(ifcc) = ifc
                   m%fsCvP(ifs,2) = icv - m%fsCvP(ifs,1) + 1
                   m%fsFcP(ifs,2) = ifcc - m%fsFcP(ifs,1) + 1
-                  if (ix == (nx-1)) then
+                  if (m%imapCv(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))
+     &              .gt.m%nCi) then
                     ifcc = ifcc + 1
-                    m%fsFc(ifcc) = ifc + 1
+                    ifc = 
+     &                m%imapFcx(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))
+                    m%fsFc(ifcc) = ifc
                     m%fsFcP(ifs,2) = ifcc - m%fsFcP(ifs,1) + 1
                   end if
                 end if
@@ -841,7 +829,23 @@ cwdk      type(B2StateExt), public, save :: state_ext
         end do	
       end do
       m%nFs = ifs
+#endif
 
+      deallocate (icorner)
+      deallocate (ighostcv)
+      deallocate (ixghostcv)
+      deallocate (iyghostcv)
+      deallocate (ixcorner) 
+      deallocate (iycorner)
+      deallocate (ighostfcx)
+      deallocate (ixghostfcx)
+      deallocate (iyghostfcx)
+      deallocate (ighostfcy)
+      deallocate (ixghostfcy)
+      deallocate (iyghostfcy)
+      deallocate (ighostvx)
+      deallocate (ixghostvx)
+      deallocate (iyghostvx)
 
 #ifdef WG_TODO
 ! moved to init_mapping!
@@ -1169,6 +1173,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
 ! connection length for core region
 
       gm%fsConn = 0.0_R8
+#ifdef WG_TODO
       do i = 1, nFs 
        ic = mpg%fsCv(mpg%fsCvP(i,1))
        if (mpg%cvOnClosedSurface(ic)) then        
@@ -1183,7 +1188,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         end do
        end if
       end do      
-
+#endif
 
 *  .. unit vector of the magnetic field in X,Y,Z coorinates
 
@@ -1192,7 +1197,9 @@ cwdk  assumption: poloidal direction is direction of line between
 cwdk              poloidal face centers (E/W)
       do iy = 0, ny-1
         do ix = 0, nx-1
-          ic = (ix+1) + iy*nx
+          if(mpg%imapCv(ix,iy)/=0) then           
+            ic = mpg%imapCv(ix,iy)
+
 
           ! Construct unit vector in poloidal direction:
           dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
@@ -1208,13 +1215,15 @@ cwdk              poloidal face centers (E/W)
           gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
           gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
 
+          endif
         enddo
       enddo
 
       do ix = 0, nx-1
         ! bottom guard cells
-        ic = nCi + ix+1
         iy = -1
+        if(mpg%imapCv(ix,iy)/=0) then           
+          ic = mpg%imapCv(ix,iy)
         
         ! Construct unit vector in poloidal direction:
         dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
@@ -1229,10 +1238,12 @@ cwdk              poloidal face centers (E/W)
         gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
         gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
         gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
+        endif
 
         ! top guard cells
-        ic = nCi + nx + ix+1
         iy = ny
+        if(mpg%imapCv(ix,iy)/=0) then           
+          ic = mpg%imapCv(ix,iy)
 
         ! Construct unit vector in poloidal direction:
         dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
@@ -1248,12 +1259,13 @@ cwdk              poloidal face centers (E/W)
         gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
         gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
 
+        endif
       end do
  
       do iy = 0, ny-1
-        ic = nCi + 2*nx + iy+1
         ix = -1
-
+        if(mpg%imapCv(ix,iy)/=0) then           
+          ic = mpg%imapCv(ix,iy)
         ! Construct unit vector in poloidal direction:
         dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
      &        (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
@@ -1267,9 +1279,11 @@ cwdk              poloidal face centers (E/W)
         gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
         gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
         gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
+        endif
 
-        ic = nCi + 2*nx + ny + iy+1
         ix = nx
+        if(mpg%imapCv(ix,iy)/=0) then           
+          ic = mpg%imapCv(ix,iy)
 
         ! Construct unit vector in poloidal direction:
         dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
@@ -1285,6 +1299,7 @@ cwdk              poloidal face centers (E/W)
         gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
         gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
 
+        endif
       end do
 
       ! normalize
@@ -2066,12 +2081,13 @@ cwdk              poloidal face centers (E/W)
       if (.not.allocated(rlqa))  call alloc_b2mod_rates(nx,ny,ns)
       if (.not.allocated(sch))   call alloc_b2mod_sources(nx,ny,ns)
 
-      nfx = (nx+1)*ny
+!      nfx = (nx+1)*ny
 
 ! cell volumes 
       do iy = 0, ny-1
         do ix = 0, nx-1
-          ic = (ix+1) + iy*nx
+          if(mpg%imapCv(ix,iy)/=0) then
+            ic =  mpg%imapCv(ix,iy)
 ! B2plasma
           na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
           ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
@@ -2149,14 +2165,16 @@ cwdk              poloidal face centers (E/W)
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
-
+          endif
         end do
       end do
       
 ! gueard cells iy = -1 and iy = ny
       do ix = 0, nx-1
-        ic = nCi + ix+1
         iy = -1
+        if(mpg%imapCv(ix,iy)/=0) then
+          ic =  mpg%imapCv(ix,iy)
+
 ! B2plasma
         na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
         ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
@@ -2234,9 +2252,12 @@ cwdk              poloidal face centers (E/W)
         rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
         rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
         rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+        endif
 
-        ic = nCi + nx + ix+1
         iy = ny
+        if(mpg%imapCv(ix,iy)/=0) then
+          ic =  mpg%imapCv(ix,iy)
+
 ! B2plasma
         na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
         ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
@@ -2314,12 +2335,15 @@ cwdk              poloidal face centers (E/W)
         rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
         rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
         rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+        endif
       end do
 
 ! guard cells ix = -1 and ix = nx
       do iy = 0, ny-1
-        ic = nCi + 2*nx + iy+1
         ix = -1
+        if(mpg%imapCv(ix,iy)/=0) then
+          ic =  mpg%imapCv(ix,iy)
+
 ! B2plasma
         na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
         ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1) 
@@ -2397,10 +2421,12 @@ cwdk              poloidal face centers (E/W)
         rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
         rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
         rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+        endif
 
-
-        ic = nCi + 2*nx + ny + iy+1
         ix = nx
+        if(mpg%imapCv(ix,iy)/=0) then
+          ic =  mpg%imapCv(ix,iy)
+
 ! B2plasma
         na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
         ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
@@ -2478,6 +2504,7 @@ cwdk              poloidal face centers (E/W)
         rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
         rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
         rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+        endif
       end do
 
 #ifdef WG_TODO
@@ -2607,7 +2634,8 @@ cwdk              poloidal face centers (E/W)
 ! x faces
       do iy = 0, ny-1
         do ix = 0, nx
-          ifc = ix+1 + iy*(nx+1)
+          if(mpg%imapFcx(ix,iy)/=0) then
+            ifc = mpg%imapFcx(ix,iy) 
 
 ! B2coeff
           csig_an(ix,iy,0,0:1) = st % co % csig_an(ifc,0:1)
@@ -2723,7 +2751,7 @@ cwdk              poloidal face centers (E/W)
           coni(ix,iy,0,0:1,:) = st % dv % coni(ifc,0:1,:)
           floe_noc(ix,iy,0,0:1) = st % dv % floe_noc(ifc,0:1)
           floi_noc(ix,iy,0,0:1) = st % dv % floi_noc(ifc,0:1)
-
+          endif
         end do
       end do
 
@@ -2733,7 +2761,8 @@ cwdk              poloidal face centers (E/W)
 
       do ix = 0, nx-1
         do iy = 0, ny
-          ifc = nfx + iy+1 + ix*(ny+1)
+          if(mpg%imapFcy(ix,iy)/=0) then
+            ifc = mpg%imapFcy(ix,iy)
 
 ! B2coeff
           csig_an(ix,iy,1,0:1) = st % co % csig_an(ifc,0:1)
@@ -2854,7 +2883,7 @@ cwdk              poloidal face centers (E/W)
           coni(ix,iy,1,0:1,:) = st % dv % coni(ifc,0:1,:)
           floe_noc(ix,iy,1,0:1) = st % dv % floe_noc(ifc,0:1)
           floi_noc(ix,iy,1,0:1) = st % dv % floi_noc(ifc,0:1)
-
+          endif
         end do
       end do
 

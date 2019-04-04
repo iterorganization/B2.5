@@ -245,6 +245,12 @@ csw
       mpg%nVmxCv = idum(2)
       mpg%nVmxFc = idum(3)
       mpg%nCmxNv = idum(4)
+      call cfruin (ninp(1),1,idum,'isClassicalGrid')
+      mpg%isClassicalGrid = idum(0)
+      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
+      mpg%nx    = idum(0)
+      mpg%ny    = idum(1)
+      mpg%nncut = idum(2)
 *   ..obtain ns from parameters file
       call cfruin (ninp(2), 1, idum, 'ns')
       ns = idum(0)

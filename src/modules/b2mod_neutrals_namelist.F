@@ -1790,30 +1790,45 @@ c.. Test consistency with physical edges within the computational domain
         if (crcstra(istra).eq.'S') then
           do istrac = 1, rcl(istra)
             instra = instra + 1
-            m%rcCv(instra,1) = m%nCi + rcs(istra) + istrac ! number of the guard cell
-            m%rcCv(instra,2) = rcs(istra) + istrac           ! number of the corresponding domain cell
+            m%rcCv(instra,1) = 
+     >        m%imapCv(rcs(istra)+istrac-1,rcpos(istra))      ! number of the guard cell
+            m%rcCv(instra,2) = min(m%fcCv(m%cvFc(             ! number of the corresponding domain cell
+     >        m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1)),1),
+     >        m%fcCv(m%cvFc(
+     >        m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1)),2))
             m%rcFcOr(instra) = -1.0_R8
           enddo
         elseif (crcstra(istra).eq.'N') then
           do istrac = 1, rcl(istra)
             instra = instra + 1
-            m%rcCv(instra,1) = m%nCi + nx + rcs(istra) + istrac
-            m%rcCv(instra,2) = nx*(ny-1) + rcs(istra) + istrac
+            m%rcCv(instra,1) = 
+     >        m%imapCv(rcs(istra)+istrac-1,rcpos(istra))      ! number of the guard cell
+            m%rcCv(instra,2) = min(m%fcCv(m%cvFc(             ! number of the corresponding domain cell
+     >        m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1)),1),
+     >        m%fcCv(m%cvFc(
+     >        m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1)),2))
             m%rcFcOr(instra) = 1.0_R8
           enddo
         elseif (crcstra(istra).eq.'W') then
           do istrac = 1, rcl(istra)
             instra = instra + 1
-            m%rcCv(instra,1) = m%nCi + 2*nx + rcs(istra) + istrac
-            m%rcCv(instra,2) = nx*(rcs(istra) + istrac - 1) + 1
+           m%rcCv(instra,1) = 
+     >        m%imapCv(rcpos(istra),rcs(istra)+istrac-1)      ! number of the guard cell
+            m%rcCv(instra,2) = min(m%fcCv(m%cvFc(             ! number of the corresponding domain cell
+     >        m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1)),1),
+     >        m%fcCv(m%cvFc(
+     >        m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1)),2))
             m%rcFcOr(instra) = -1.0_R8
           enddo
         elseif (crcstra(istra).eq.'E') then 
           do istrac = 1, rcl(istra)
             instra = instra + 1
-            m%rcCv(instra,1) = m%nCi + 2*nx + ny + rcs(istra) + 
-     .        istrac
-            m%rcCv(instra,2) = nx*(rcs(istra) + istrac)
+            m%rcCv(instra,1) = 
+     >        m%imapCv(rcpos(istra),rcs(istra)+istrac-1)      ! number of the guard cell
+            m%rcCv(instra,2) = min(m%fcCv(m%cvFc(             ! number of the corresponding domain cell
+     >        m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1)),1),
+     >        m%fcCv(m%cvFc(
+     >        m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1)),2))
             m%rcFcOr(instra) = 1.0_R8
           enddo
         endif
@@ -1846,7 +1861,7 @@ c.. Test consistency with physical edges within the computational domain
       subroutine conv_rcparms (nx, ny, ns, m)
       use b2mod_indirect
       implicit none
-      integer :: nx, ny, ns, istra, istrac, instra, nfx
+      integer :: nx, ny, ns, istra, istrac, instra
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
       type (mapping), intent (inout) :: m
 
@@ -1880,33 +1895,36 @@ c.. Test consistency with physical edges within the computational domain
 
       call alloc_mapping_rc (m)
 
-      nfx = (nx+1)*ny     ! number of x-faces
-      instra = 0 ! index in bcCv
+      instra = 0 ! index in rcCv
       do istra = 1, nstrat
         m%rcFcP(istra,1) = instra + 1
         m%rcFcP(istra,2) = rcl(istra)
         if (crcstra(istra).eq.'S') then
           do istrac = 1, rcl(istra)
             instra = instra + 1
-            m%rcFc(instra) = nfx + (rcs(istra)+istrac-1)*(ny+1) + 1    ! number of the corresponding domain face
+            m%rcFc(instra) = m%cvFc(
+     >         m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1))    ! number of the corresponding domain face
             m%rcFcOr(instra) = -1.0_R8
           enddo
         elseif (crcstra(istra).eq.'N') then
           do istrac = 1, rcl(istra)
             instra = instra + 1
-            m%rcFc(instra) = nfx + (rcs(istra)+istrac-1)*(ny+1) + ny+1
+            m%rcFc(instra) = m%cvFc(
+     >         m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1))    ! number of the corresponding domain face
             m%rcFcOr(instra) = 1.0_R8
           enddo
         elseif (crcstra(istra).eq.'W') then
           do istrac = 1, rcl(istra)
             instra = instra + 1
-            m%rcFc(instra) = (rcs(istra)+istrac-1)*(nx+1) + 1
+            m%rcFc(instra) = m%cvFc(
+     >         m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1))    ! number of the corresponding domain face
             m%rcFcOr(instra) = -1.0_R8
           enddo
         elseif (crcstra(istra).eq.'E') then 
           do istrac = 1, rcl(istra)
             instra = instra + 1
-            m%rcFc(instra) = (rcs(istra)+istrac-1)*(nx+1) + nx+1
+            m%rcFc(instra) = m%cvFc(
+     >         m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1))    ! number of the corresponding domain face
             m%rcFcOr(instra) = 1.0_R8
           enddo
         else
@@ -1925,11 +1943,11 @@ c.. Test consistency with physical edges within the computational domain
       integer :: iout, ian, ien, i
 
       m%nRc = nstrai
-      m%mxnRc = sum(nrcfaces(1:nstrai))       ! number of cells with imposed BC
+      m%mxnRc = sum(nrcfaces(1:nstrai))       ! number of cells with imposed stratum
 
       call alloc_mapping_rc(m)
 
-      instra = 0 ! index in bcCv
+      instra = 0 ! index in rcCv
       do istra = 1,m%nRc
         m%rcCvP(istra,1) = instra + 1
         m%rcCvP(istra,2) = nrcfaces(istra)

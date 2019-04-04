@@ -1463,7 +1463,7 @@ c.. Test consistency with region boundaries
       implicit none
       integer, intent(in) :: nx, ny, ns
       type (mapping), intent (inout) :: m
-      integer :: ib, ibc, is, inbc, nfx
+      integer :: ib, ibc, is, inbc
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
 
       m%nBc   = nbc     ! number of boundary conditions
@@ -1494,7 +1494,6 @@ c.. Test consistency with region boundaries
 
       call alloc_mapping_bc (m)
 
-      nfx = (nx+1)*ny     ! number of x-faces
       inbc = 0 ! index in bcCv
       do ib = 1, nbc
         m%bcFcP(ib,1) = inbc + 1
@@ -1502,25 +1501,29 @@ c.. Test consistency with region boundaries
         if (bcchar(ib).eq.'S') then
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
-            m%bcFc(inbc) = nfx + (bcs(ib)+ibc-1)*(ny+1) + 1    ! number of the corresponding domain face
+            m%bcFc(inbc) = 
+     >         m%cvFc(m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1))    ! number of the corresponding domain face
             m%bcFcOr(inbc) = -1.0_R8
           enddo
         elseif (bcchar(ib).eq.'N') then
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
-            m%bcFc(inbc) = nfx + (bcs(ib)+ibc-1)*(ny+1) + ny+1
+            m%bcFc(inbc) = 
+     >         m%cvFc(m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1))
             m%bcFcOr(inbc) = 1.0_R8
           enddo
         elseif (bcchar(ib).eq.'W') then
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
-            m%bcFc(inbc) = (bcs(ib)+ibc-1)*(nx+1) + 1
+            m%bcFc(inbc) = 
+     >         m%cvFc(m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1))
             m%bcFcOr(inbc) = -1.0_R8
           enddo
         elseif (bcchar(ib).eq.'E') then 
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
-            m%bcFc(inbc) = (bcs(ib)+ibc-1)*(nx+1) + nx+1
+            m%bcFc(inbc) =
+     >         m%cvFc(m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1))
             m%bcFcOr(inbc) = 1.0_R8
           enddo
         else
@@ -1733,29 +1736,45 @@ c.. Test consistency with region boundaries
         if (bcchar(ib).eq.'S') then
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
-            m%bcCv(inbc,1) = m%nCi + bcs(ib) + ibc ! number of the guard cell
-            m%bcCv(inbc,2) = bcs(ib) + ibc           ! number of the corresponding domain cell
+            m%bcCv(inbc,1) = 
+     >         m%imapCv(bcs(ib)+ibc-1,bcpos(ib))      ! number of the corresponding guard cell
+            m%bcCv(inbc,2) = min(m%fcCv(m%cvFc(       ! number of the corresponding domain cell
+     >         m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1)),1),
+     >         m%fcCv(m%cvFc(
+     >         m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1)),2))
             m%bcFcOr(inbc) = -1.0_R8
           enddo
         elseif (bcchar(ib).eq.'N') then
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
-            m%bcCv(inbc,1) = m%nCi + nx + bcs(ib) + ibc
-            m%bcCv(inbc,2) = nx*(ny-1) + bcs(ib) + ibc 
+            m%bcCv(inbc,1) = 
+     >         m%imapCv(bcs(ib)+ibc-1,bcpos(ib))      ! number of the corresponding guard cell
+            m%bcCv(inbc,2) = min(m%fcCv(m%cvFc(       ! number of the corresponding domain cell
+     >         m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1)),1),
+     >         m%fcCv(m%cvFc(
+     >         m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1)),2))
             m%bcFcOr(inbc) = 1.0_R8
           enddo
         elseif (bcchar(ib).eq.'W') then
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
-            m%bcCv(inbc,1) = m%nCi + 2*nx + bcs(ib) + ibc
-            m%bcCv(inbc,2) = nx*(bcs(ib) + ibc - 1) + 1
+            m%bcCv(inbc,1) = 
+     >         m%imapCv(bcpos(ib),bcs(ib)+ibc-1)      ! number of the corresponding guard cell
+            m%bcCv(inbc,2) = min(m%fcCv(m%cvFc(       ! number of the corresponding domain cell
+     >         m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1)),1),
+     >         m%fcCv(m%cvFc(
+     >         m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1)),2))
             m%bcFcOr(inbc) = -1.0_R8
           enddo
         elseif (bcchar(ib).eq.'E') then 
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
-            m%bcCv(inbc,1) = m%nCi + 2*nx + ny + bcs(ib) + ibc
-            m%bcCv(inbc,2) = nx*(bcs(ib) +ibc)
+            m%bcCv(inbc,1) = 
+     >         m%imapCv(bcpos(ib),bcs(ib)+ibc-1)      ! number of the corresponding guard cell
+            m%bcCv(inbc,2) = min(m%fcCv(m%cvFc(       ! number of the corresponding domain cell
+     >         m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1)),1),
+     >         m%fcCv(m%cvFc(
+     >         m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1)),2))
             m%bcFcOr(inbc) = 1.0_R8
           enddo
         else
