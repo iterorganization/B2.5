@@ -250,6 +250,8 @@ program b2_ual_write_b2mod
         !< data on edge plasma transport. Energy terms correspond to the
         !< full kinetic energy equation (i.e. the energy flux takes into
         !< account the energy transported by the particle flux)
+    type (ids_radiation) :: radiation !< IDS designed to store
+        !< data on radiation emitted by the plasma species
 
     !! Dummy variables
     character(len=24) :: shot_string
@@ -340,12 +342,14 @@ program b2_ual_write_b2mod
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    call B25_process_ids( edge_profiles, edge_sources, edge_transport )
+    call B25_process_ids( edge_profiles, edge_sources, edge_transport , &
+        &  radiation, tim, dtim )
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,   &
-        &   shot, run, idx, username, device, version )
+    call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
+        &   radiation, &
+        &   treename, shot, run, idx, username, device, version )
 
     ! call read_ids(treename, shot, run, idx, username, &
     !                                     & device, version )
@@ -376,7 +380,7 @@ contains
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
         integer, intent(in) :: shot !< The shot number of the database being created
         integer, intent(in) :: run  !< The run number of the database being created
-        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
+        integer, intent(out) :: idx !< The returned identifier to be used in the subsequent
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS database
         character(len=24), intent(in) :: device !< Device name of the IMAS IDS database
             !< (i. e. solps-iter, iter, aug)
