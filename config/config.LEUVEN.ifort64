@@ -70,8 +70,9 @@ GRLIBES  = ${LD_NCARG} ${LD_MSCL}
 LDLIBES  = ${LD_NETCDF} ${LD_NAG} # -lblas
 
 ifdef IMAS_VERSION
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -c1)
 ifndef SOLPS_CPP
-EQUIVS  += -DIMAS
+EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION}
 endif
 LD_UAL  ?= `pkg-config imas-lowlevel imas-ifort --libs`
 INCMODS += -I${IMAS_PREFIX}/include/ifort

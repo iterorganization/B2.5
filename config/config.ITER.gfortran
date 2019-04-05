@@ -66,8 +66,9 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifdef IMAS_VERSION
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -c1 )
 ifndef SOLPS_CPP
-EQUIVS  += -DIMAS
+EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION}
 endif
 LD_UAL  ?= `pkg-config imas-gfortran ggd --libs`
 INCMODS  = `pkg-config imas-gfortran ggd --cflags`

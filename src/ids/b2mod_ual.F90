@@ -13,8 +13,14 @@ module b2mod_ual
     use b2mod_types
 #ifdef IMAS
     use b2mod_ual_io &
-     & , only : b25_process_ids, ids_put, ids_deallocate, &
-     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport
+     & , only : b25_process_ids, ids_put, ids_deallocate, imas_close, &
+     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &          ids_radiation, &
+     &          imas_create, imas_create_env, imas_open_env
+#if UAL_MAJOR_VERSION < 4
+    use b2mod_ual_io &
+     & , only : imas_create_hdf5, imas_open_hdf5, imas_open
+#endif
 #else
 # ifdef ITM
     use euITM_schemas  ! IGNORE
@@ -30,7 +36,8 @@ module b2mod_ual
 #ifdef IMAS
   public put_ids_edge
   public b25_process_ids
-  public ids_edge_profiles, ids_edge_sources, ids_edge_transport
+  public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+    &    ids_radiation
 #endif
 
 
@@ -39,26 +46,29 @@ contains
 #ifdef IMAS
     !> Subroutine used to put data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
-    subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &
+    subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport, &
+            &   radiation, &
             &   treename, shot, run, idx, username, device, version )
-        type(ids_edge_profiles), intent(inout)  :: edge_profiles    !< IDS
+        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
             !< designed to store data on edge plasma profiles  (includes the
             !< scrape-off layer and possibly part of the confined plasma)
-        type (ids_edge_sources), intent(inout)  :: edge_sources     !< IDS
+        type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
             !< designed to store data on edge plasma sources. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
-        type (ids_edge_transport), intent(inout)  :: edge_transport !< IDS
+        type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
             !< designed to store  data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
+        type (ids_radiation), intent(inout) :: radiation !< IDS
+            !< designed to store data about plasma radiation 
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
             !< (i.e. "edge_profiles" (mandatory) )
         integer, intent(in) :: shot !< The shot number of the database being created
         integer, intent(in) :: run  !< The run number of the database being created
-        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
+        integer, intent(out) :: idx  !< The returned identifier to be used in the subsequent
             !< data access operation
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
             !< database
@@ -82,14 +92,17 @@ contains
         ! call ids_put_slice( idx, "edge_profiles", edge_profiles )
         ! call ids_put_slice( idx, "edge_transport", edge_sources )
         ! call ids_put_slice( idx, "edge_transport", edge_transport )
+        ! call ids_put_slice( idx, "radiation", radiation)
         call ids_put( idx, "edge_profiles", edge_profiles )
         call ids_put( idx, "edge_sources", edge_sources )
         call ids_put( idx, "edge_transport", edge_transport )
+        call ids_put( idx, "radiation", radiation )
 
         !! Close IDS
         call ids_deallocate( edge_profiles )
         call ids_deallocate( edge_sources )
         call ids_deallocate( edge_transport )
+        call ids_deallocate( radiation )
         call imas_close( idx )
 
         write(0,*) "IDS write finished"
@@ -192,8 +205,12 @@ contains
         if( lDoCreate) then
 #ifdef IMAS
             if( lUseHdf5) then
+#if UAL_MAJOR_VERSION < 4
                 call imas_create_hdf5(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
+#else
+                call xerrab ('HDF5 IMAS format not supported with UAL v4!')
+#endif
             else
                 if( openEnv) then
                     call imas_create_env(lTreename, lShot, lRun, lRefshot,  &
@@ -205,14 +222,22 @@ contains
             end if
         else
             if( lUseHdf5) then
+#if UAL_MAJOR_VERSION < 4
                 call imas_open_hdf5(lTreename, lShot, lRun, idx)
+#else
+                call xerrab ('HDF5 IMAS format not supported with UAL v4!')
+#endif
             else
                 if( openEnv) then
                     call imas_open_env(lTreename, lShot, lRun, idx, lUser, &
                         &   lTokamak, lDataversion)
                 else
+#if UAL_MAJOR_VERSION < 4
                     call imas_open(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
+#else
+                    call xerrab ('Must define username!')
+#endif
                 end if
             end if
 #else
