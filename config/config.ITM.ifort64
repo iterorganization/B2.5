@@ -90,9 +90,11 @@ LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 ifdef IMAS_VERSION
-UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -c1 )
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
+IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifndef SOLPS_CPP
-EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION}
+EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION}
 endif
 LD_UAL  ?= `pkg-config imas-ifort ggd --libs` -lxml2
 INCMODS += `pkg-config imas-ifort ggd --cflags` 

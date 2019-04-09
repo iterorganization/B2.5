@@ -218,7 +218,7 @@ program b2_ual_write_b2mod
     use b2mod_ual
     use b2mod_grid_mapping
     use b2mod_ual_io
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
     use ids_grid_examples       ! IGNORE
 #endif
 
@@ -401,7 +401,7 @@ contains
 
         write(0,*) "homogeneous_time = ",   &
             &   edge_profiles%ids_properties%homogeneous_time
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
         write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
             &   grid_subset(gridSubset_index)%identifier%name
         write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &

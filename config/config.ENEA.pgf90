@@ -41,8 +41,10 @@ LDOPTS += -mp=nonuma
 endif
 
 ifdef IMAS_VERSION
-UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -c1 )
-EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION}
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
+IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
+EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION}
 LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
 INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
 IMASLIBS = ${LD_UAL} -lggd-pgi
