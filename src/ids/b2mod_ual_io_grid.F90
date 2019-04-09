@@ -206,7 +206,7 @@ contains
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
         type(ids_generic_grid_dynamic), intent(out) :: ggd_grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -282,6 +282,15 @@ contains
         integer :: j    !< Iterator
         integer :: dir
         integer :: nfc  !< Number of all faces/edges (x + y aligned)
+        integer :: geometryType  !< Geometry identifier index
+
+        geometryType = geometryId(nnreg, periodic_bc, topcut)
+
+        allocate( ggd_grid%identifier%name(1) )
+        ggd_grid%identifier%name = geometryName(geometryType)
+        ggd_grid%identifier%index = geometryType
+        allocate( ggd_grid%identifier%description(1) )
+        ggd_grid%identifier%description = geometryDescription(geometryType)
 
         allocate( ggd_grid%space( SPACE_COUNT ) )
 
@@ -330,19 +339,19 @@ contains
             !! /marconi_work/eufus_gw/work/g2penkod/imasdb/solps-iter/3/0
             !! or
             !! /marconi_work/eufus_gw/work/g2kosl/imasdb/solps-iter/3/0
-            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%     &
-                &   object( ivx )%geometry(1) = crx(    gmap%mapVxix( ivx ),    &
-                                                    &   gmap%mapVxiy( ivx ),    &
-                                                    &   gmap%mapVxIVx( ivx ))
-            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%     &
-                &   object( ivx )%geometry(2) = cry(    gmap%mapVxix( ivx ),    &
-                                                    &   gmap%mapVxiy( ivx ),    &
-                                                    &   gmap%mapVxIVx( ivx ))
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%   &
+                &   object( ivx )%geometry(1) = crx(  gmap%mapVxix( ivx ),    &
+                                                    & gmap%mapVxiy( ivx ),    &
+                                                    & gmap%mapVxIVx( ivx ))
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%   &
+                &   object( ivx )%geometry(2) = cry(  gmap%mapVxix( ivx ),    &
+                                                    & gmap%mapVxiy( ivx ),    &
+                                                    & gmap%mapVxIVx( ivx ))
 
             !! Set additional node index (REQUIRED!)
             allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
                 &   objects_per_dimension(1)%object( ivx )%nodes(1))
-            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%     &
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%   &
                 &   object( ivx )%nodes(1) = ivx
         end do
 
@@ -730,7 +739,7 @@ contains
 
     !> Set connectivity array for cells by defining nodes that form each cell
     subroutine set_Cells_Conn_Array_Nodes(ggd_grid)
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
         type(ids_generic_grid_dynamic), intent(inout) :: ggd_grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else

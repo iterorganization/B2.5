@@ -16,10 +16,10 @@ module b2mod_ual
      & , only : b25_process_ids, ids_put, ids_deallocate, imas_close, &
      &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, &
-     &          imas_create, imas_create_env, imas_open_env
+     &          imas_create_env, imas_open_env
 #if UAL_MAJOR_VERSION < 4
     use b2mod_ual_io &
-     & , only : imas_create_hdf5, imas_open_hdf5, imas_open
+     & , only : imas_create, imas_create_hdf5, imas_open_hdf5, imas_open
 #endif
 #else
 # ifdef ITM
@@ -205,43 +205,47 @@ contains
         if( lDoCreate) then
 #ifdef IMAS
             if( lUseHdf5) then
-#if UAL_MAJOR_VERSION < 4
+# if UAL_MAJOR_VERSION < 4
                 call imas_create_hdf5(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
-#else
+# else
                 call xerrab ('HDF5 IMAS format not supported with UAL v4!')
-#endif
+# endif
             else
                 if( openEnv) then
                     call imas_create_env(lTreename, lShot, lRun, lRefshot,  &
                         &   lRefrun, idx, lUser, lTokamak, lDataversion)
                 else
+# if UAL_MAJOR_VERSION < 4
                     call imas_create(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
+# else
+                    call xerrab ('Must define username!')
+# endif
                 end if
             end if
         else
             if( lUseHdf5) then
-#if UAL_MAJOR_VERSION < 4
+# if UAL_MAJOR_VERSION < 4
                 call imas_open_hdf5(lTreename, lShot, lRun, idx)
-#else
+# else
                 call xerrab ('HDF5 IMAS format not supported with UAL v4!')
-#endif
+# endif
             else
                 if( openEnv) then
                     call imas_open_env(lTreename, lShot, lRun, idx, lUser, &
                         &   lTokamak, lDataversion)
                 else
-#if UAL_MAJOR_VERSION < 4
+# if UAL_MAJOR_VERSION < 4
                     call imas_open(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
-#else
+# else
                     call xerrab ('Must define username!')
-#endif
+# endif
                 end if
             end if
 #else
-#ifdef ITM
+# ifdef ITM
             if( lUseHdf5) then
                 call euITM_create_hdf5(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
@@ -266,9 +270,9 @@ contains
                         &   lRefrun, idx)
                 end if
             end if
-#else
+# else
             idx = 0
-#endif
+# endif
 #endif
         end if
 
@@ -288,9 +292,9 @@ contains
 #ifdef IMAS
         call imas_close(idx)
 #else
-#ifdef ITM
+# ifdef ITM
         call euITM_close(idx)
-#endif
+# endif
 #endif
     end subroutine close_ual
 
