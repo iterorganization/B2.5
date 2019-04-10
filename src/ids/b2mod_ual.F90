@@ -13,9 +13,10 @@ module b2mod_ual
     use b2mod_types
 #ifdef IMAS
     use b2mod_ual_io &
+     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &          ids_radiation
+    use b2mod_ual_io &
      & , only : b25_process_ids, ids_put, ids_deallocate, imas_close, &
-     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, &
      &          imas_create_env, imas_open_env
 #if UAL_MAJOR_VERSION < 4
     use b2mod_ual_io &

@@ -168,7 +168,7 @@ contains
         character*5 zone
         integer tvalues(8)
         character*16 usrnam
-        character*8 ual_version
+        character*8 imas_version, ual_version
         logical match_found, streql
 #ifdef USE_PXFGETENV
         integer lenval, ierror
@@ -184,12 +184,16 @@ contains
         call ipgeti('b2mndr_eirene', use_eirene)
         call date_and_time (date, ctime, zone, tvalues)
 #ifdef NAGFOR
+        call get_environment_variable('IMAS_VERSION',status=ierror, length=lenval)
+        if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
         call get_environment_variable('UAL_VERSION',status=ierror, length=lenval)
         if (ierror.eq.0) call get_environment_variable('UAL_VERSION',value=ual_version)
 #else
 #ifdef USE_PXFGETENV
+        CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
         CALL PXFGETENV ('UAL_VERSION', 0, ual_version, lenval, ierror)
 #else
+        call getenv ('IMAS_VERSION', imas_version)
         call getenv ('UAL_VERSION', ual_version)
 #endif
 #endif
@@ -416,6 +420,15 @@ contains
                 &   date//' '//ctime//' '//' '//zone
 
 #if IMAS_MINOR_VERSION > 21
+            allocate( edge_profiles%ids_properties%version_put%data_dictionary(1) )
+            edge_profiles%ids_properties%version_put%data_dictionary = imas_version
+            allocate( edge_transport%ids_properties%version_put%data_dictionary(1) )
+            edge_transport%ids_properties%version_put%data_dictionary = imas_version
+            allocate( edge_sources%ids_properties%version_put%data_dictionary(1) )
+            edge_sources%ids_properties%version_put%data_dictionary = imas_version
+            allocate( radiation%ids_properties%version_put%data_dictionary(1) )
+            radiation%ids_properties%version_put%data_dictionary = imas_version
+
             allocate( edge_profiles%ids_properties%version_put%access_layer(1) )
             edge_profiles%ids_properties%version_put%access_layer = ual_version
             allocate( edge_transport%ids_properties%version_put%access_layer(1) )
