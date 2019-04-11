@@ -112,66 +112,67 @@
      1  bc_type20_ref, bc_type20_ix, bc_type20_iy, bc_type20_ixx,
      1  bc_type21_ref, bc_type21_ix, bc_type21_iy, bc_type21_ixx,
      1  bc_type16_kinetic_energy
-      integer       :: num_inner, k                                     !srv 26.11.02
-      integer, save :: istyle_average_pr = 0, istyle_fchi = 0           !srv 08.08.02 14.02.05
-      integer, save :: iform_corr_dia = 0                               !srv 25.07.05
-      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0, iout = 0, !srv 13.10.06
+      integer       :: num_inner, k                                  !srv 26.11.02
+      integer, save :: istyle_average_pr = 0, istyle_fchi = 0        !srv 08.08.02 14.02.05
+      integer, save :: iform_corr_dia = 0                            !srv 25.07.05
+      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0,
+     &                 iout = 0,                                     !srv 13.10.06
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
-     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 iout_b2npmo = 0, iout_b2wdat = 0
-      integer, save :: istyle_cur_contr_on_S_and_N = 2                  !srv 01.02.09 03.03.15
-      integer, save :: bcene_16_style = 0, bceni_16_style = 0           !srv 16.02.12
-      integer, save :: bcene_15_style = 0                               !srv 19.04.13
-      integer, save :: pot_eq = 1                                       !srv 27.02.13
+      integer, save :: istyle_cur_contr_on_S_and_N = 2               !srv 01.02.09 03.03.15
+      integer, save :: bcene_16_style = 0, bceni_16_style = 0        !srv 16.02.12
+      integer, save :: bcene_15_style = 0                            !srv 19.04.13
+      integer, save :: pot_eq = 1                                    !srv 27.02.13
       integer, save :: use_astra
       integer, save :: drift_style
-      logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
-      real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
-      real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
-      real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
-     &                         scurpar
-      real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,       !Solovyev 01.05.14
-     * po_prev, po_curr, coeff_16                                       !Solovyev 01.05.14, 24.05.14
-      integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
+      logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot !srv 16.02.12 12.02.15 29.09.15
+      real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01         !srv 14.10.99
+      real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01      !IYS 07.03.2013 11.04.13
+      real (kind=R8) , save :: senepar, senipar,                     !srv 16.02.12 29.09.15
+     &                         sconpar(0:DEF_NSD-1), scurpar
+      real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,    !Solovyev 01.05.14
+     * po_prev, po_curr, coeff_16                                    !Solovyev 01.05.14, 24.05.14
+      integer, save :: bcpot_16_step = 50                            !Solovyev 23.05.14 !srv 29.09.15 }
       integer, save :: eirene_sheath_pot = 1
       real (kind=R8) ::
-     *  cutll, cutlo, vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,  !srv 15.11.07
+     *  cutll, cutlo, vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2, !srv 15.11.07
      1  t3, totflux, weight,
      1  naave, volave, teave, neave, tiave, niave, poave,
      2  vwest, veast, totfluxn, totfluxi
-     &  ,pzaverage, pzsum, volsum                                       !srv 24.03.99 18.01.02
-     &  ,ua2sum, ua2average(0:ns-1)                                     !srv 07.04.00 15.02.02
-     &  ,uasum, uaaverage(0:ns-1)                                       !srv 15.02.02
-     &  ,nesum, tisum, tiaverage, tesum                                 !srv 15.12.00 25.01.02
-     &  ,nasum, naaverage(0:ns-1), bbsum, bbaverage                     !srv 22.01.02 18.10.04
-      real (kind=R8) :: bzhzsum, bzhzaverage                            !lk 20.11.07
+     &  ,pzaverage, pzsum, volsum                                    !srv 24.03.99 18.01.02
+     &  ,ua2sum, ua2average(0:ns-1)                                  !srv 07.04.00 15.02.02
+     &  ,uasum, uaaverage(0:ns-1)                                    !srv 15.02.02
+     &  ,nesum, tisum, tiaverage, tesum                              !srv 15.12.00 25.01.02
+     &  ,nasum, naaverage(0:ns-1), bbsum, bbaverage                  !srv 22.01.02 18.10.04
+      real (kind=R8) :: bzhzsum, bzhzaverage                         !lk 20.11.07
       real (kind=R8) ::
      *  pr(-1:nx,-1:ny), wdia(-1:nx,-1:ny), wrk0(-1:nx,-1:ny),
      *  uu(-1:nx,-1:ny,0:ns+ns_ext-1),
      *  sx(-1:nx,-1:ny), ud(-1:nx,-1:ny,0:ns-1),
-     *  sxhz(-1:nx,-1:ny), pz(-1:nx,-1:ny),                             !srv 24.08.08
-     &  sna0_no_mdf(-1:nx,-1:ny,0:1,0:ns-1)                             !srv 23.09.08
-      real (kind=R8), save ::                                           !srv 16.02.12
+     *  sxhz(-1:nx,-1:ny), pz(-1:nx,-1:ny),                          !srv 24.08.08
+     &  sna0_no_mdf(-1:nx,-1:ny,0:1,0:ns-1)                          !srv 23.09.08
+      real (kind=R8), save ::                                        !srv 16.02.12
      *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
-     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                             !srv 29.09.15
+     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                          !srv 29.09.15
       real (kind=R8), save :: ycur = 1.0e0_R8
-      real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8          !srv 02.10.17
+      real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8       !srv 02.10.17
       real (kind=R8), save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
      &                        phm2 = 1.0e0_R8,
-     &                        corr_flux   = 0.0e0_R8                    !srv 25.07.05
+     &                        corr_flux   = 0.0e0_R8                 !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
-      character chns*3, chk*1                                           !srv 11.07.05
+      character chns*3, chk*1                                        !srv 11.07.05
       logical decay_length_ok, fedback_species, core_boundary, ishigh
-      logical, save :: BCCON14_W(NBCD), BCCON14_E(NBCD)                 !srv 20.09.17
+      logical, save :: BCCON14_W(NBCD), BCCON14_E(NBCD)              !srv 20.09.17
       real (kind=R8) ::
-     *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
-     *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
+     *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,  !srv 01.02.09
+     *  fchy_dia, fchy_inertia, seec                                 !srv 07.04.00
       integer isfeedback, fix_fch_in_fhe_sheath
-      integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
+      integer, save :: fix_sx_in_fhe_sheath = 1                      !srv 08.05.09
       integer, save :: use_eirene, no_current, ionising_core
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
      1 bc_type13_norm, bc_type13_fac, na_min, na_new
@@ -184,7 +185,7 @@
 *   ..procedures
       intrinsic min, abs, sqrt, exp, log, dim, mod
       real (kind=R8) ::
-     *  machsfr, expu2, hy1, sy, bcint, syhz                            !srv 24.08.08
+     *  machsfr, expu2, hy1, sy, bcint, syhz                         !srv 24.08.08
       logical lnext
       external subini, subend, xertst, ipgeti, machsfr, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps
@@ -193,7 +194,7 @@
 *     large values limited at a somewhat arbitrary level.)
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
-      syhz(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)*                      !srv 24.08.08
+      syhz(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)*                   !srv 24.08.08
      &            hz(ix,iy)
 !     &            hz(topix(ix,iy),topiy(ix,iy))
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
@@ -227,9 +228,9 @@
       call subini ('b2stbc_phys')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2stbc_phm0', phm0)                                !srv 17.01.07
-       call ipgetr ('b2stbc_phm1', phm1)                                !srv 17.01.07
-       call ipgetr ('b2stbc_phm2', phm2)                                !srv 17.01.07
+       call ipgetr ('b2stbc_phm0', phm0)                             !srv 17.01.07
+       call ipgetr ('b2stbc_phm1', phm1)                             !srv 17.01.07
+       call ipgetr ('b2stbc_phm2', phm2)                             !srv 17.01.07
        call ipgeti ('b2stbc_coreregno', coreregno)
        call xertst (cbirso.le.coreregno.and.
      1   coreregno.le.cbirso+cbnrso-1,
@@ -261,45 +262,45 @@
        call ipgeti ('b2stbc_fix_fch_in_fhe_sheath',
      1   fix_fch_in_fhe_sheath)
        call ipgeti ('b2stbc_fix_sx_in_fhe_sheath',
-     1   fix_sx_in_fhe_sheath)                                          !srv 08.05.09
+     1   fix_sx_in_fhe_sheath)                                       !srv 08.05.09
        call ipgeti ('b2stbc_type16_kinetic_energy',
      1   bc_type16_kinetic_energy)
-       call ipgetr ('b2stbc_cbc', cbc)                                  !srv 14.10.99
-       call ipgeti ('b2stbc_average_pr', istyle_average_pr)             !srv 08.08.02
-       call ipgeti ('b2stbc_istyle_fchi', istyle_fchi)                  !srv 14.02.05
-       call ipgetr ('b2stbc_corr_flux_in_core', corr_flux)              !srv 25.07.05
-       call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)            !srv 25.07.05
-       call ipgeti ('b2stbc_iout', iout)                                !srv 11.07.05
-       call ipgeti ('b2tfnb_mdf', mdf_fnb)                              !srv 13.10.06
-       call ipgeti ('b2tfhe_mdf', mdf_fhe)                              !srv 13.10.06
-       call ipgeti ('b2tfhi_mdf', mdf_fhi)                              !srv 13.10.06
-       call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                          !srv 28.04.08
+       call ipgetr ('b2stbc_cbc', cbc)                               !srv 14.10.99
+       call ipgeti ('b2stbc_average_pr', istyle_average_pr)          !srv 08.08.02
+       call ipgeti ('b2stbc_istyle_fchi', istyle_fchi)               !srv 14.02.05
+       call ipgetr ('b2stbc_corr_flux_in_core', corr_flux)           !srv 25.07.05
+       call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)         !srv 25.07.05
+       call ipgeti ('b2stbc_iout', iout)                             !srv 11.07.05
+       call ipgeti ('b2tfnb_mdf', mdf_fnb)                           !srv 13.10.06
+       call ipgeti ('b2tfhe_mdf', mdf_fhe)                           !srv 13.10.06
+       call ipgeti ('b2tfhi_mdf', mdf_fhi)                           !srv 13.10.06
+       call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                       !srv 28.04.08
        call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
-     &                      istyle_cur_contr_on_S_and_N)                !srv 01.02.09
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
-       call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09 {
+     &                      istyle_cur_contr_on_S_and_N)             !srv 01.02.09
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
+       call ipgeti ('b2npc9_iout', iout_b2npc9)                      !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
-       call ipgeti ('b2npc7_iout', iout_b2npc7)                         !srv 02.04.18
-       call ipgeti ('b2npc11_iout', iout_b2npc11)                       !srv 02.04.18
+       call ipgeti ('b2npc7_iout', iout_b2npc7)                      !srv 02.04.18
+       call ipgeti ('b2npc11_iout', iout_b2npc11)                    !srv 02.04.18
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
        call ipgeti ('b2npp7_iout', iout_b2npp7)
-       call ipgeti ('b2nppo_iout', iout_b2nppo)                         !srv 11.09.09 }
+       call ipgeti ('b2nppo_iout', iout_b2nppo)                      !srv 11.09.09 }
        call ipgetr ('b2stbc_bc_ref', bc_ref)
-       call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                      !srv 11.04.13
-       call ipgetr ('b2stbc_bc_ref_ti', bc_ref_ti)                      !srv 11.04.13
+       call ipgetr ('b2stbc_bc_ref_te', bc_ref_te)                   !srv 11.04.13
+       call ipgetr ('b2stbc_bc_ref_ti', bc_ref_ti)                   !srv 11.04.13
        call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
        call ipgeti ('b2stbc_bcene_16_style', bcene_16_style)
        call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
        call ipgeti ('b2tfhe_no_current', no_current)
-       call ipgeti ('b2news_poteq', pot_eq)                             !srv 27.02.13
+       call ipgeti ('b2news_poteq', pot_eq)                          !srv 27.02.13
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-       call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)              !Solovyev 23.05.14 !srv 29.09.15
+       call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)           !Solovyev 23.05.14 !srv 29.09.15
        call ipgetr ('b2tfhi_ycur', ycur)
-       call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
-       call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
+       call ipgetr ('b2tfnb_vis_per', vis_per)                       !srv 02.10.17
+       call ipgetr ('b2tfnb_vis_q', vis_q)                           !srv 02.10.17
        call ipgeti ('eirene_sheath_pot',eirene_sheath_pot)
        call ipgeti ('eirene_ionising_core', ionising_core)
        if (ionising_core.eq.0)     ! for backward compatibility

@@ -8,14 +8,14 @@
 #ifdef USE_MPI
       include 'mpif.h'
 
-      integer::mpi_err,mpi_stat,mpi_dum
-      integer::mpi_rank,mpi_size,mpi_local
+      integer :: mpi_err,mpi_stat,mpi_dum
+      integer :: mpi_rank,mpi_size,mpi_local
 #else
 #ifdef USE_IMPGYRO
       include 'mpif.h'
 
-      integer::mpi_err,mpi_stat,mpi_dum
-      integer::mpi_rank,mpi_size,mpi_local
+      integer :: mpi_err,mpi_stat,mpi_dum
+      integer :: mpi_rank,mpi_size,mpi_local
 #endif
 #endif
 
@@ -30,8 +30,8 @@
      &     b2zfw (:,:,:),   ! impurity mean velocity
      &     b2ztw (:,:,:)    ! impurity mean random energy
 
-      public::impgyro_init,impgyro_main,impgyro_last
-      logical, public:: use_impgyro
+      public :: impgyro_init,impgyro_main,impgyro_last
+      logical, public :: use_impgyro
 
       contains
 
@@ -45,8 +45,8 @@
       implicit none
       integer nxd,nyd,nsd,ismain
       integer is,iss,ix,iy
-      integer, save::ikmn,ikmx
-      real(kind=R8), allocatable::pdum (:), pot(:)
+      integer, save :: ikmn,ikmx
+      real(kind=R8), allocatable :: pdum (:), pot(:)
       character*256 filename
       logical open_file
       external xertst, xerrab, open_file
@@ -300,9 +300,9 @@ cxpb
      &  sna_ext,sne_ext,smo_ext,she_ext,shi_ext,sch_ext,
      &  na_ext,ua_ext,ta_ext)
 
-      integer,intent(in)::nx,ny,ns,ns_ext
+      integer,intent(in) :: nx,ny,ns,ns_ext
 
-      real(kind=R8),intent(in)::
+      real(kind=R8),intent(in) ::
      &  bb (-1:nx,-1:ny,0:3),
      &  na (-1:nx,-1:ny,0:ns-1),
      &  ne (-1:nx,-1:ny),
@@ -315,7 +315,7 @@ cxpb
      &  fhi (-1:nx,-1:ny,0:1),
      &  fch (-1:nx,-1:ny,0:1)
 
-      real(kind=R8),intent(out)::
+      real(kind=R8),intent(out) ::
      &  sna_ext (-1:nx,-1:ny,0:ns-1),
      &  sne_ext (-1:nx,-1:ny),
      &  smo_ext (-1:nx,-1:ny,0:ns-1),
@@ -514,11 +514,11 @@ cxpb
 
       subroutine my_open_file (fd ,fname)
 
-      integer , intent(out) ::fd
+      integer , intent(out) :: fd
 
-      character*(*) ,intent(in) ::fname
+      character*(*) ,intent(in) :: fname
 
-      logical ::bopened
+      logical :: bopened
 
       do fd = 10 , 10000
         inquire (fd, opened = bopened )

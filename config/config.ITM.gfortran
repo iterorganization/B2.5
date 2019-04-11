@@ -21,13 +21,21 @@ SED = sed s:\#PREC\#:d:g
 SED =
 LINK_MOD = 
 
+ifdef USE_MPI
+FC = mpif90
+else
 FC = gfortran
+endif
 
 FCOPTS = -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 ifdef SOLPS_DEBUG
 FCOPTS += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
 else
 FCOPTS += -O2
+endif
+ifdef USE_OPENMP
+FCOPTS += -fopenmp
+LDOPTS += -fopenmp
 endif
 
 DBLFC = ${FC}

@@ -27,6 +27,7 @@ module check_module_local
  contains 
 
  function check_variable_c0(val, orig, name) result(n_error)
+  implicit none
   character(len=*), intent(in) :: val, orig
   character(len=*), intent(in) :: name
   integer :: n_error 
@@ -39,6 +40,7 @@ module check_module_local
   end function 
 
   function check_variable_i1(val, orig, name) result(n_error)
+  implicit none
   integer, dimension(:), intent(in) :: val, orig
   character(len=*), intent(in) :: name
   integer :: n_error
@@ -74,6 +76,7 @@ module check_module_local
   end function
 
   function check_variable_r1(val, orig, name) result(n_error)
+  implicit none
   double precision, dimension(:), intent(in) :: val, orig
   character(len=*), intent(in) :: name
   integer :: n_error
@@ -150,6 +153,7 @@ module b2_file_io
   contains
  
   subroutine read_record_description(nget, chf, idcod, idtyp, n, id, ierr)
+      implicit none
       integer, intent(in) :: nget
       character, intent(out) :: chf*12, idcod*8, idtyp*8, id*32
       integer, intent(out) :: n
@@ -166,6 +170,7 @@ module b2_file_io
   end subroutine
 
   subroutine check_record_description(idcod, id0, id1, idtyp0, idtyp1, n0, n1, strict)
+    implicit none
     character(len=*), intent(in) :: idcod, idtyp0, idtyp1, id0, id1
     integer, intent(in) :: n0, n1
     logical, optional :: strict
@@ -203,9 +208,14 @@ module b2_file_io
       integer, intent(in) :: nget  !< file descriptor
       integer, intent(out) :: n1 !< array size
       !> Buffers to store real, integer or character data
-      real(kind=r8), dimension(:), allocatable, intent(out) :: refun
+      real(kind=R8), dimension(:), allocatable, intent(out) :: refun
       integer, dimension(:), allocatable, intent(out) :: infun
+#ifdef F2003
       character(len=:), allocatable, intent(out) :: chfun
+#else
+      integer, parameter :: strmax = 512
+      character(len=strmax), intent(out) :: chfun
+#endif
       character(len=32), intent(inout) :: id1 !< variable name
       character(len=8), intent(out) :: idtyp  !< variable type
       integer :: i, ierr, n
@@ -239,11 +249,11 @@ module b2_file_io
           endif
         case ('char')
           n = n1
-! workaround needed for gfortran version 4.7.2
-#ifdef GFORTRAN
-          chfun = repeat(' ',n)
+#ifdef F2003
+          allocate(character(len=n) :: chfun)
 #else
-          allocate(character(n) :: chfun)
+          call xertst(n.le.strmax, 'increase size of strmax in check_b2_output')
+          chfun = repeat(' ',n)
 #endif
           if (0.lt.n1) then
             if (chf=='FORMATTED') then
@@ -265,9 +275,14 @@ program test_b2output
 
   character(len=200) :: input1, input2
   integer :: u1, u2, idx
-  real (kind=r8), dimension(:), allocatable :: r1, r2
+  real (kind=R8), dimension(:), allocatable :: r1, r2
   integer, dimension(:), allocatable :: i1, i2
+#ifdef F2003
   character(len=:), allocatable :: ch1, ch2
+#else
+  integer, parameter :: strmax = 512
+  character(len=strmax) :: ch1, ch2
+#endif
   integer :: size_n1, size_n2, n_errors
   character(len=32) :: vname1, vname2
   character(len=8) :: idtyp1, idtyp2
@@ -323,6 +338,7 @@ program test_b2output
  contains
 
  subroutine get_filenames(input1, input2)
+  implicit none
   ! Get the filenames from the command line arguments
   character(len=200), intent(out) :: input1, input2
   logical :: ex
@@ -352,13 +368,22 @@ program test_b2output
 ! Open the file, read the header, and return the file unit specifier.
 ! B2.5 output files can be either binary or text files. We open first as
 ! formatted file, if it does not make sense, then reopen as unformatted.
+#ifdef B25_EIRENE
+   use eirmod_infcop, only : newunit
+#endif
+   implicit none
    character(*), intent(in) :: filename
    integer :: my_unit
    character(len=10) :: version_in
    character(len=7) :: label
    integer :: ierr
    
-   open(newunit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
+#ifdef B25_EIRENE
+   my_unit=newunit()
+#else
+   my_unit=99
+#endif
+   open(unit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
    ! Read the header
    read(my_unit,'(a,a)') label ,version_in
    if (label/='VERSION') then
@@ -371,7 +396,7 @@ program test_b2output
        ! If it does not match, then it should be a binary file
        close(my_unit)
        ! reopen in UNFORMATTED mode
-       open(newunit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
+       open(unit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
        read(my_unit) label ,version_in
        if (label/='VERSION') then
          if (label == '*cf:') then
