@@ -799,8 +799,8 @@ ${OQEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
 
-${O9EXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${MAKES}
-	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o
+${O9EXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA}
 
 ${GEEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${GRLIBES} ${LDLIBES} ${LDOPTSend}

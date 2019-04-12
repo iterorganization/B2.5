@@ -543,6 +543,8 @@ cxpb
 !$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, ix, iy, new_matrix)
 !$OMP& PRIVATE(ireg)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
+!$OMP& COPYIN(last_solve_5, last_solve_9) 
+!$OMP& COPYIN(last_solve_7, last_solve_11)
 !$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb)
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
 !$OMP& SHARED(topiy, na, rza, zn, zamax, te, ti, am, ua, ne)
