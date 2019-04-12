@@ -305,7 +305,7 @@ contains
                 ion_charge = ion_label(o:)
             endif
             ! Convert charge from string to integer
-            read(ion_charge, *), ion_charge_int
+            read(ion_charge, *) ion_charge_int
 
             ! Put (complete) ion label identifying the species
             edge_profiles%ggd( time_sind )%ion( is + 1 )%label(1) = ion_label
