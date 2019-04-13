@@ -52,7 +52,7 @@
       real (kind=R8) ::
      *   aaf(-1:nx,-1:ny,-2:2)
       save ncall
-!$OMP THREADPRIVATE(ncall, iout)
+      !$OMP THREADPRIVATE(ncall, iout)
 *   ..procedures
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux5p
@@ -69,9 +69,9 @@
       if (ncall.eq.0) then                                               !sv 06.07.06 {
        call ipgeti ('b2uxm9_iout', iout)                                 !sv 13.10.06
        if (in_parallel() .and. iout.ne.0) then
-!$OMP MASTER
+         !$OMP MASTER
          write(*,*) 'b2uxm9 OpenMP warning: no file IO in parallel mode'
-!$OMP END MASTER
+         !$OMP END MASTER
          iout = 0
        endif
       endif                                                              !sv 06.07.06 }

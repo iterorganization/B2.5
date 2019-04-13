@@ -197,8 +197,8 @@ c*** Local variables of general use
       real (kind=R8) :: tdummy
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
-      integer iatm ! IYS 29.09.2017
 #ifdef B25_EIRENE
+      integer iatm ! IYS 29.09.2017
       integer imol
 #endif
 c#ifdef SCL_IMP_RCI

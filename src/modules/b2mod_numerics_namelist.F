@@ -45,8 +45,8 @@
       logical, save :: last_solve_11(0:NNREGMAX)         !srv 02.04.18
       logical, save :: add_te_corr_to_po(0:NNREGMAX)            ! IYS 21.09.2018
 #endif
-!$OMP THREADPRIVATE(last_solve_5, last_solve_7)
-!$OMP THREADPRIVATE(last_solve_9, last_solve_11)
+      !$OMP THREADPRIVATE(last_solve_5, last_solve_7)
+      !$OMP THREADPRIVATE(last_solve_9, last_solve_11)
       real (kind=R8), save :: corr_core_dt               ! IYS 19.12.2017 
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor

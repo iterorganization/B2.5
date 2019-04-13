@@ -46,7 +46,7 @@
       real (kind=R8) ::
      *  t0, t1, aa5(-1:nx,-1:ny,-2:2)
       save ncall
-!$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout)
+      !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout)
 *   ..procedures
       intrinsic abs
       real (kind=R8) ::

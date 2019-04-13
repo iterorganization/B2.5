@@ -2483,7 +2483,8 @@ c
       real (R8) :: ne_hot_frac
       real (R8) :: rlte, fxte
       real (R8) :: rate_sa, rate_ra, rate_qa, rate_rd, rate_br,
-     * rate_cx,  rate_za, rate_z2, rate_pt, rate_pi
+     *             rate_za, rate_z2, rate_pt, rate_pi
+!!    real (R8) :: rate_cx
       integer ite, ine, ise, ixte
 
       write(*,*) 'dpc_mod_rates: ', te_hot, ne_hot_frac

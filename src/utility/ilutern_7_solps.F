@@ -48,7 +48,7 @@ c ma28 common blocks
       logical lbig
       common /ma28hdc3/ tol,themax,big,dxmax,errmax,dres,cgce,     !srv 26.12.17
      1 ndrop,maxit,noiter,nsrch,istart,lbig
-!$OMP THREADPRIVATE(/ma28fdc3/,/ma28hdc3/)
+      !$OMP THREADPRIVATE(/ma28fdc3/,/ma28hdc3/)
 c
 
 *  -- PROCEDURES --
@@ -59,7 +59,8 @@ c
       integer, save :: kwrite_fmt = -1                             !srv 18.05.02
       integer, save :: kwrite_bnr = -1                             !srv 18.05.02
       save lfirst, ncall, nwrite
-!$OMP THREADPRIVATE(lfirst, ncall, nwrite, kwrite_fmt, kwrite_bnr)
+      !$OMP THREADPRIVATE(lfirst, ncall, nwrite)
+      !$OMP THREADPRIVATE(kwrite_fmt, kwrite_bnr)
       data lfirst /.true./, ncall /0/, nwrite /0/
 
 *=======================================================================
@@ -78,10 +79,10 @@ c
         call ipgetr ('ma28_for_7d_prec', prec)                      !srv 16.01.18
         if (in_parallel() .and. ( nwrite.ne.0 .or.
      &     kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
-!$OMP MASTER
+         !$OMP MASTER
          write(*,*) 'ilutern_7 OpenMP warning: no file IO ' ,
      &       'in parallel mode'
-!$OMP END MASTER
+         !$OMP END MASTER
          nwrite = 0
          kwrite_fmt = -1
          kwrite_bnr = -1

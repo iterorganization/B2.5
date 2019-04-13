@@ -148,7 +148,7 @@ c***  wrd_pk  : radiation at total peak
 c***  wpl_pk  : plasma at total peak
 c***  wnu_pk  : neutrals at total peak
 
-      real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,
+      real (kind=R8) :: h,p,t,u,wo,wwo,eni_hlp(ntrgsx),mion,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
      ,  s(0:NY-1,ntrgsx),xmp_hlp(0:NY-1,ntrgsx),xtrg(0:NY-1,ntrgsx),
      ,  netrg(0:NY-1,ntrgsx),  tetrg(0:NY-1,ntrgsx),
@@ -172,6 +172,7 @@ c***  wnu_pk  : neutrals at total peak
      ,  erntrg(0:NY-1,ntrgsx), spttrg(0:NY-1,ntrgsx),
      ,  sjs(0:NY-1,ntrgsx), sjs_t(ntrgsx),
      ,  sjs_w(0:ntrgsx),sptmass,sptflx(DEF_NLIM+DEF_NSTS)
+c     real (kind=R8) :: zz
 
 c*** Recap of fluxes from eirene
 c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOTIO

@@ -39,7 +39,7 @@
       real (kind=R8) ::
      *    phm0
       save ncall, phm0
-!$OMP THREADPRIVATE(ncall, phm0, iout)
+      !$OMP THREADPRIVATE(ncall, phm0, iout)
 *   ..procedures
       real (kind=R8) ::
      *   hy1

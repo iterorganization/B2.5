@@ -574,8 +574,18 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 !$OMP& LASTPRIVATE(new_matrix)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
 !$OMP& LASTPRIVATE(pb, flob, conb)
-!$OMP& COPYIN(last_solve_5, last_solve_9) 
-!$OMP& COPYIN(last_solve_7, last_solve_11)
+#ifndef GFORTRAN
+#ifndef PGF90
+!$OMP& COPYIN(last_solve_5, last_solve_7)
+!$OMP& COPYIN(last_solve_9, last_solve_11)
+#else
+!$OMP& PRIVATE(last_solve_5, last_solve_7)
+!$OMP& PRIVATE(last_solve_9, last_solve_11)
+#endif
+#else
+!$OMP& PRIVATE(last_solve_5, last_solve_7)
+!$OMP& PRIVATE(last_solve_9, last_solve_11)
+#endif
 !$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb)
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
 !$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)

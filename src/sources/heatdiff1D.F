@@ -47,8 +47,6 @@ c  Tp = Target surface temperature (K).
       real (kind=R8) :: Tp(ndepth_nml)
       real (kind=R8) :: u(7*ndepth_nml), u1(7*ndepth_nml)
       real (kind=R8) :: t0, tn
-      real (kind=R8) :: Cp, Kappa, mass_density
-      external Cp, Kappa, mass_density
 
 #ifdef NO_NAG
       integer ier, iflg, iopt, neq, nmax, nstep
@@ -67,7 +65,7 @@ c  Tp = Target surface temperature (K).
       integer, allocatable, save :: iw(:)
       real (kind=R8), allocatable, save :: U_nag(:,:), w(:)
       real (kind=R8) :: acc
-!$OMP threadprivate(ncall, npde, nw, niw, U_nag, iw, w)
+      !$OMP THREADPRIVATE(ncall, npde, nw, niw, U_nag, iw, w)
       external xertst, subini, subend
 
       call subini('heatdiff1D')
@@ -188,7 +186,7 @@ c The above dependence follows the reference
       use b2mod_wall
       use b2mod_layer
       use b2mod_heatdiff_common
-     &    , only: Qtot, Tcbc, dx, x0, xn, x, active
+     &    , only: Qtot, Tcbc, xn, x
       implicit none
 
       integer i, ibnd
@@ -224,7 +222,7 @@ cxpb  Will need to update this later for a better computation
      .     (Tc + KBc/KAc) *
      .     exp(-KAc*Qtot*(x(i)-coating_thickness(ibnd))) - KBc/KAc ))
         endif
-c        print*,x(i),' ',uu(i),' ',i,' ',xn,' ',x0
+c        print*,x(i),' ',uu(i),' ',i,' ',xn,' ',xn
       enddo
       xx(1) = x(1)
       Tl = uu(2)
@@ -243,7 +241,7 @@ c_______________________________________________________________________
       use b2mod_types
       use b2mod_wall
       use b2mod_heatdiff_common
-     &    , only: x, dx, x0, xn
+     &    , only: x, dx
 
       implicit none
 
@@ -845,13 +843,13 @@ c  qevap -> Energy lost (Joules / m^2 / s)
 
       call subini ('qevap')
       if (lfirst) then
-!$omp critical (heatdiff1D)
+        !$OMP CRITICAL (heatdiff1D)
         call ipgetr('b2stbr_therm_evap', therm_evap)
         call xertst(0.0_R8.le.therm_evap.and.
      &              1.0_R8.ge.therm_evap,
      .    'faulty parameter therm_evap')
         lfirst = .false.
-!$omp end critical (heatdiff1D)
+        !$OMP END CRITICAL (heatdiff1D)
       endif
 
       do is = 0, ns-1
@@ -883,7 +881,7 @@ c  Checking inputs
       use b2mod_types
       use b2mod_wall
       use b2mod_heatdiff_common
-     &    , only: active, qtot, Tcbc, iwall, ns
+     &    , only: iwall
       implicit none
       integer npde, ires
       real (kind=R8) :: T, X, U(NPDE), UX(NPDE),

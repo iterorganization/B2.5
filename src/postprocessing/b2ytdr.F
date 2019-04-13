@@ -44,11 +44,13 @@ c 2002-09-11: logic revised
      , ,only: nx, ny, ns, wklng,
      ,        ixref, iyref,
      ,        jsep, jxa, jxi, nxtl, nxtr,
-     ,        nstsi, nlimi, natmi, nmoli, nioni,
+     ,        nlimi, natmi, nmoli, nioni,
      ,        alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_external
       use b2mod_work
 #ifdef B25_EIRENE
+      use b2mod_b2plot
+     , ,only: nstsi
       use eirmod_parmmod
       use eirmod_braeir
       use eirmod_cinit

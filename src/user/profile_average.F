@@ -36,7 +36,8 @@
      .                             e_shi(:,:,:),
      .                             e_sch(:,:,:)
 
-      integer :: io, ix, iy, is, iun, k, n2, itp, idum(0:2)
+      integer :: io, iun, n2, itp, idum(0:2)
+!      integer :: is, ix, iy, k
 !      real (kind=R8) :: gold, gnew
       integer, save :: ifirst=0, iaver_restart=0
       integer, save :: naver, ntotdt

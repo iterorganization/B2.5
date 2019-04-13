@@ -81,9 +81,9 @@
      &  slv5pt, iluter, xerrab
 *   ..initialization
       save ncall, style, acpar, cpu
-!$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
-!$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
-!$OMP THREADPRIVATE (indexes, iasave, jasave)
+      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
+      !$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
+      !$OMP THREADPRIVATE (indexes, iasave, jasave)
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
@@ -260,17 +260,17 @@
       integer, save :: ncall = 0
       integer, save :: kwrite_fmt = -1
       integer, save :: kwrite_bnr = -1
-!$OMP THREADPRIVATE(lfirst, ncall, kwrite_fmt, kwrite_bnr)
+      !$OMP THREADPRIVATE(lfirst, ncall, kwrite_fmt, kwrite_bnr)
 
       if(ncall.eq.0) then
         call ipgeti ('storage_11_kwrite_fmt', kwrite_fmt)
         call ipgeti ('storage_11_kwrite_bnr', kwrite_bnr)
         if (in_parallel() .and. 
      &     (kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
-!$OMP MASTER
+         !$OMP MASTER
          write(*,*) 'storage_11 OpenMP warning: no file IO ' ,
      &       'in parallel mode'
-!$OMP END MASTER
+         !$OMP END MASTER
          kwrite_fmt = -1
          kwrite_bnr = -1
        endif

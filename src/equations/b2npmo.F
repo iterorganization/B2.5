@@ -351,6 +351,15 @@
 !$OMP& SHARED(b2nxdv_smo_bal, b2nxdv_smo0to3)
 !$OMP& SHARED(nlreg, nlloc, nlxlo, nlxhi, nlylo, nlyhi) 
 !$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim)
+#ifndef GFORTRAN
+#ifndef PGF90
+!$OMP& COPYIN(last_solve_5)
+#else
+!$OMP& PRIVATE(last_solve_5)
+#endif
+#else
+!$OMP& PRIVATE(last_solve_5)
+#endif
 #endif
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1

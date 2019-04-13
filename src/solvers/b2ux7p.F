@@ -76,8 +76,8 @@
       external subini, subend, xertst, ipgeti, ipgetr, slv5pt, iluter
 *   ..initialisation
       save ncall, style, acpar, cpu
-!$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
-!$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
+      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
+      !$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/             !srv 26.12.17
 
 *-----------------------------------------------------------------------
@@ -227,7 +227,7 @@
       logical, save :: lfirst=.true.
       integer i, j, ix, iy, ner, iw, jw, jak, jtemp, ipt, nxp2
       real (kind=R8) :: temp
-!$OMP THREADPRIVATE(lfirst)
+      !$OMP THREADPRIVATE(lfirst)
       if (lfirst) then
        indexes=0
        nxp2=nx+2

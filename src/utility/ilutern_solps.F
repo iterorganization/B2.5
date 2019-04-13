@@ -59,9 +59,9 @@ c
       integer, save :: b2swtest=0
       save lfirst, ncall, nwrite
 !!FR Make all the save and common block variables threadprivate
-!$OMP THREADPRIVATE (lfirst, ncall, nwrite)
-!$OMP THREADPRIVATE (/ma28fd/,/ma28hd/)
-!$OMP THREADPRIVATE (kwrite_fmt, kwrite_bnr, b2swtest)
+      !$OMP THREADPRIVATE (lfirst, ncall, nwrite)
+      !$OMP THREADPRIVATE (/ma28fd/,/ma28hd/)
+      !$OMP THREADPRIVATE (kwrite_fmt, kwrite_bnr, b2swtest)
       data lfirst /.true./, ncall /0/, nwrite /0/
 
 *=======================================================================
