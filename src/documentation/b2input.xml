@@ -1096,7 +1096,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier to the parallel momentum source term associated with the anomalous current. It is recommended '1.0'.
+					Multiplier to the parallel momentum source term associated with the anomalous current. It is recommended '1.0'. Only active if both the ExB and diamagnetic drifts are turned on.
 					The value '0.0' corresponds to the old SOLPS5.0 treatment.
 				</description>
 			</switch>
