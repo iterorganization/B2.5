@@ -124,7 +124,7 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       real (kind=R8), save :: core_surface
       logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
       logical, allocatable, save ::  hlp_pff(:,:)
-      integer i,j,k,l,js,ls,kks,n,itmp,icount
+      integer i,j,k,l,js,ls,kks,n,icount
       integer, save :: l_ddt
       integer, save, allocatable :: ispc_ref(:), ishigh(:)
       character*13, save, allocatable :: ion_name(:)

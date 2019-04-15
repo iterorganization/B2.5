@@ -3557,9 +3557,6 @@ cxpb  Start reading input.dat file
                                          ! NTIME0,NTIME,NFULLRUN
           END IF
           NMODE = idum(1)
-          nfilek = b2idez(idum(3),4,5)
-          if (nfilek.eq.0) nfilek = 5
-          idum(3) = (idum(3)/100)*100 + nfilek*10 + mod(idum(3),10)
           filename=fort_lc//'11'
           inquire(file=filename,exist=ex)
           if (ex) idum(3) = (idum(3)/10)*10 + 6
