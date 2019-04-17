@@ -8,7 +8,7 @@
      *   wght(mpg%nCmxFc),face(nFc,0:nz),centre(nCv,0:nz)
       integer is
       do is=0,nz
-        call intcell(nCv,nFc,mpg,wght,face(1,is),centre(1,is))
+        call intcell(nFc,nCv,mpg,wght,face(1,is),centre(1,is))
       enddo
       return
       end subroutine intcell1
