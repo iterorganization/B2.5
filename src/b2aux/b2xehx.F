@@ -36,7 +36,7 @@
       integer, save :: mode_ehx = 0                                     !srv 06.04.15
       real (kind=R8) ::
      *   t0, hy1_(-1:nx,-1:ny),
-     *   dpop(-1:nx,-1:ny,0:1), wrk0(-1:nx,-1:nx,0:1), 
+     *   dpop(-1:nx,-1:ny,0:1), wrk0(-1:nx,-1:ny,0:1), 
      *   wrk1(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny,0:1), wrk(-1:nx,-1:ny),
      *   dum(-1:nx,-1:ny)
       save ncall
