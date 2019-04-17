@@ -47,7 +47,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy
       save ncall
-!$OMP THREADPRIVATE (ncall)
+      !$OMP THREADPRIVATE (ncall)
 *   ..procedures
       external subini, subend, xertst
       external b2xvsg, b2xvff

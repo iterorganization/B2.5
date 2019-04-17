@@ -11,8 +11,8 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-      use b2mod_plasma
-     , , only :  po
+!      use b2mod_plasma
+!     , , only :  po
       use b2mod_transport
      , , only : f_luc_sg, alfx_c, sigx_c                                !srv 08.10.14
       use b2mod_external
@@ -66,10 +66,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, styl0, n2, i, ix, iy, is
-      integer tid
-      integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
-!$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
+      integer ncall, styl0, n2, ix, iy, is
+      integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
+#ifdef NO_OPENMP_B2NPMO 
+      !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
+#endif
       character chns*3, chis*3
       real (kind=R8) ::
      *  phm0, phm1, phm2, phm3, coef, t0, calfab, fllim_al_ab, jabmax
@@ -99,8 +100,8 @@
 #endif
 *   ..initialization
       save ncall, styl0, phm0, phm1, phm2, phm3
-#ifdef NO_OPENMP_B2NPMO 
-!$OMP THREADPRIVATE(ncall, styl0, phm0, phm1, phm2, phm3)
+#ifdef NO_OPENMP_B2NPMO
+      !$OMP THREADPRIVATE(ncall, styl0, phm0, phm1, phm2, phm3)
 #endif
       data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
      &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/ 
@@ -125,18 +126,18 @@
      &  'faulty internal parameter phm0, phm1, phm2, phm3')
        call ipgeti ('b2sifrtf_iout', iout)
        if ((iout.ne.0) .and. in_parallel()) then
-!$OMP MASTER
+          !$OMP MASTER
           write(*,*) 'b2sifrtf OpenMP warning: no file out in ',
      &               'parallel mode'
-!$OMP END MASTER
+          !$OMP END MASTER
           iout = 0
         end if
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        if ((iout_b2wdat==4) .and. in_parallel()) then
-!$OMP MASTER
+          !$OMP MASTER
           write(*,*) 'b2sifrtf OpenMP warning: no file out in ',
      &               'parallel mode (b2wdat)'
-!$OMP END MASTER
+          !$OMP END MASTER
           iout_b2wdat = 0
         end if
        call ipgeti ('b2npmo_iout', iout_b2npmo)

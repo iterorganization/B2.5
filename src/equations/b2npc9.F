@@ -59,14 +59,15 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0          !srv 06.07.06
       integer, save :: iout = 0, iout_b2wdat = 0                     !srv 04.07.08
       integer, save :: get_residuals = 0                           !srv 22.05.18
-!$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co, iout, iout_b2wdat)
+      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+      !$OMP THREADPRIVATE(iout, iout_b2wdat)
       character chns*3                                               !srv 04.07.08
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
      *   aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1, use_eirene
-!$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
+      !$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
 *   ..procedures
       external subini, subend, xertst, ipgetr, lwget
       external b2xvsg, b2xvff, b2ursc, b2usc9, b2upco
@@ -107,9 +108,9 @@
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
        call ipgeti ('b2npc9_iout', iout)                              !srv 13.07.05
        if (in_parallel() .and. iout.ne.0) then
-!$OMP MASTER
+         !$OMP MASTER
          write(*,*) 'b2npc9 OpenMP warning: no file IO in parallel mode'
-!$OMP END MASTER
+         !$OMP END MASTER
          iout = 0
        endif
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17

@@ -109,7 +109,7 @@
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      *   wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny), wrk5(-1:nx,-1:ny),        !srv 11.09.09
      *   wrk6(-1:nx,-1:ny), wrk7(-1:nx,-1:ny), wrk8(-1:nx,-1:ny),        !srv 11.09.09 !iys 17.04.12
-     &   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny)
+     &   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
       real (kind=R8) ::
      *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1),                      !srv 01.10.99 !lk 09.06.11
      *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                          !srv 08.10.04
@@ -123,14 +123,16 @@
 !!FR potentially be written to by multiple threads on their ncall==0 
 !!FR iteration we need to make them THREADPRIVATE too. 
 !!TF Note that variables that appear in DATA statement have implied SAVE attribute.
-!$OMP THREADPRIVATE(ncall) 
-!$OMP THREADPRIVATE(alpha, gamma, flux_limit_min_ti, area_fix, no_hybr)
-!$OMP THREADPRIVATE(iout, iout_b2wdat, iout_b2npc9, iout_b2npco)
-!$OMP THREADPRIVATE(iout_b2npmo, mdf_fnb, no_Ptncr_x_co, no_Ptncr_y_co)
-!$OMP THREADPRIVATE(pflux_cor, ion_vlct_restrict)
-!$OMP THREADPRIVATE(vlct_diagno, drift_style, alpha_, xcur, ycur)
-!$OMP THREADPRIVATE(vis_per, vis_q, xvecrb, xwdia, poleldr, radeldr)
-!$OMP THREADPRIVATE(poldidr, raddidr)
+      !$OMP THREADPRIVATE(ncall) 
+      !$OMP THREADPRIVATE(alpha, gamma)
+      !$OMP THREADPRIVATE(flux_limit_min_ti, area_fix, no_hybr)
+      !$OMP THREADPRIVATE(iout, iout_b2wdat, iout_b2npc9, iout_b2npco)
+      !$OMP THREADPRIVATE(iout_b2npmo, mdf_fnb)
+      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+      !$OMP THREADPRIVATE(pflux_cor, ion_vlct_restrict)
+      !$OMP THREADPRIVATE(vlct_diagno, drift_style, alpha_, xcur, ycur)
+      !$OMP THREADPRIVATE(vis_per, vis_q, xvecrb, xwdia)
+      !$OMP THREADPRIVATE(poldidr, raddidr, poleldr, radeldr)
 *   ..procedures
       real (kind=R8) ::
      *   kmpr, hybr, kap, cvmgp, hy1
@@ -1773,22 +1775,16 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,wbdia(-1,-1,0),'b2tfnb_wbdiax'//chns)
        call my_out(70,nx,ny,wbdia(-1,-1,1),'b2tfnb_wbdiay'//chns)
        call my_out(70,nx,ny,kbnrgy,'b2tfnb_kbnrgy'//chns)
-       call my_out(70,nx,ny,fchvispar(-1,-1,0),
-     &             'b2tfnb_fchvisparx')
-       call my_out(70,nx,ny,fchvispar(-1,-1,1),
-     &             'b2tfnb_fchvispary')
-       call my_out(70,nx,ny,fchvisq(-1,-1,0),
-     &             'b2tfnb_fchvisqx')
-       call my_out(70,nx,ny,fchvisq(-1,-1,1),
-     &             'b2tfnb_fchvisqy')
-       call my_out(70,nx,ny,vis_per*fchvisper(-1,-1,0),
-     &             'b2tfnb_fchvisperx')
-       call my_out(70,nx,ny,vis_per*fchvisper(-1,-1,1),
-     &             'b2tfnb_fchvispery')
-       call my_out(70,nx,ny,fchinert(-1,-1,0),
-     &             'b2tfnb_fchinertx')
-       call my_out(70,nx,ny,fchinert(-1,-1,1),
-     &             'b2tfnb_fchinerty')
+       call my_out(70,nx,ny,fchvispar(-1,-1,0),'b2tfnb_fchvisparx')
+       call my_out(70,nx,ny,fchvispar(-1,-1,1),'b2tfnb_fchvispary')
+       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfnb_fchvisqx')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfnb_fchvisqy')
+       wrk(:,:)=vis_per*fchvisper(:,:,0)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvisperx')
+       wrk(:,:)=vis_per*fchvisper(:,:,1)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvispery')
+       call my_out(70,nx,ny,fchinert(-1,-1,0),'b2tfnb_fchinertx')
+       call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfnb_fchinerty')
        call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfnb_fchanmlx')
        call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfnb_fchanmly')
       endif
@@ -1813,14 +1809,10 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fnb_32(-1,-1,1),'b2tfnb_fnb_32y'//chns)
        call my_out(70,nx,ny,fnb_52(-1,-1,0),'b2tfnb_fnb_52x'//chns)
        call my_out(70,nx,ny,fnb_52(-1,-1,1),'b2tfnb_fnb_52y'//chns)
-       call my_out(70,nx,ny,fnb_32nd(-1,-1,0),
-     &             'b2tfnb_fnb_32ndx'//chns)
-       call my_out(70,nx,ny,fnb_32nd(-1,-1,1),
-     &             'b2tfnb_fnb_32ndy'//chns)
-       call my_out(70,nx,ny,fnb_52nd(-1,-1,0),
-     &             'b2tfnb_fnb_52ndx'//chns)
-       call my_out(70,nx,ny,fnb_52nd(-1,-1,1),
-     &             'b2tfnb_fnb_52ndy'//chns)
+       call my_out(70,nx,ny,fnb_32nd(-1,-1,0),'b2tfnb_fnb_32ndx'//chns)
+       call my_out(70,nx,ny,fnb_32nd(-1,-1,1),'b2tfnb_fnb_32ndy'//chns)
+       call my_out(70,nx,ny,fnb_52nd(-1,-1,0),'b2tfnb_fnb_52ndx'//chns)
+       call my_out(70,nx,ny,fnb_52nd(-1,-1,1),'b2tfnb_fnb_52ndy'//chns)
        call my_out(70,nx,ny,fllim0fnb(-1,-1,0),
      &             'b2tfnb_fllim0fnbx'//chns)
        call my_out(70,nx,ny,fllim0fnb(-1,-1,1),
@@ -1877,22 +1869,16 @@ csw 18feb2014 remove fluxes between guard cells
 !      call my_out(70,nx,ny,zb,'b2tfnb_zb')
        call my_out(70,nx,ny,facdrift,'b2tfnb_facdrift'//chns)
        call my_out(70,nx,ny,fac_ExB,'b2tfnb_fac_ExB'//chns)
-       call my_out(70,nx,ny,fchvispar(-1,-1,0),
-     &             'b2tfnb_fchvisparx')
-       call my_out(70,nx,ny,fchvispar(-1,-1,1),
-     &             'b2tfnb_fchvispary')
-       call my_out(70,nx,ny,fchvisq(-1,-1,0),
-     &             'b2tfnb_fchvisqx')
-       call my_out(70,nx,ny,fchvisq(-1,-1,1),
-     &             'b2tfnb_fchvisqy')
-       call my_out(70,nx,ny,vis_per*fchvisper(-1,-1,0),
-     &             'b2tfnb_fchvisperx')
-       call my_out(70,nx,ny,vis_per*fchvisper(-1,-1,1),
-     &             'b2tfnb_fchvispery')
-       call my_out(70,nx,ny,fchinert(-1,-1,0),
-     &             'b2tfnb_fchinertx')
-       call my_out(70,nx,ny,fchinert(-1,-1,1),
-     &             'b2tfnb_fchinerty')
+       call my_out(70,nx,ny,fchvispar(-1,-1,0),'b2tfnb_fchvisparx')
+       call my_out(70,nx,ny,fchvispar(-1,-1,1),'b2tfnb_fchvispary')
+       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfnb_fchvisqx')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfnb_fchvisqy')
+       wrk(:,:)=vis_per*fchvisper(:,:,0)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvisperx')
+       wrk(:,:)=vis_per*fchvisper(:,:,1)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvispery')
+       call my_out(70,nx,ny,fchinert(-1,-1,0),'b2tfnb_fchinertx')
+       call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfnb_fchinerty')
        call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfnb_fchanmlx')
        call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfnb_fchanmly')
       endif                                                             !srv 18.06.08 }

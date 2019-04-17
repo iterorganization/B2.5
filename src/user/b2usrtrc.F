@@ -139,7 +139,7 @@ c*** Global values
       character hlp_hg3(ngl3_tmp)*10
       integer ngl4_tmp
       parameter (ngl4_tmp=3)
-      integer kgl4_tmp(2)
+c     integer kgl4_tmp(2)
       real (kind=R8) ::
      *     equg4_tmp(ngl4_tmp)
       real (kind=R8) ::
@@ -238,7 +238,8 @@ c-----------------------------------------------------------------------
      ,  j_he_i, l_pad_str, n_pad_str
 #ifdef B25_EIRENE
       integer ia, im, iyp, ls
-      real (kind=R8) :: a, g, t, v, e0, hlp_h, hlp_p, hlp_tot, hlpnw
+      real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_tot, hlpnw
+c     real (kind=R8) :: e0
 #endif
 c*** radial position of the separatrix and poloidal positions of
 c*** targets and midplane for DoD calculation for each target

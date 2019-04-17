@@ -40,7 +40,7 @@
      *    phm0, phm1
       real (kind=R8) :: wrks(-1:nx,-1:ny)
       save ncall, style, phm0, phm1
-!$OMP THREADPRIVATE(ncall, style, phm0, phm1, iout)
+      !$OMP THREADPRIVATE(ncall, style, phm0, phm1, iout)
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr
       external b2xvff, b2xvsg

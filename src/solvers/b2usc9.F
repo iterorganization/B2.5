@@ -57,12 +57,12 @@
       integer ncall, n2, ix, iy, ireg, ileft, ibot
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iadd_9 = 1, iout = 0                           !srv 13.10.06
-!$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co, iadd_9, iout)
+      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co, iadd_9, iout)
       real (kind=R8) ::
      *   t0, t1
       character chns*3
       save ncall
-!$OMP THREADPRIVATE(ncall)
+      !$OMP THREADPRIVATE(ncall)
 *   ..procedures
       intrinsic abs
       real (kind=R8) ::
@@ -87,9 +87,9 @@
        call ipgeti ('b2usc9_add_9', iadd_9)                              !srv 13.10.06
        call ipgeti ('b2usc9_iout', iout)                                 !srv 13.10.06
        if (in_parallel() .and. iout.ne.0) then
-!$OMP MASTER
+         !$OMP MASTER
          write(*,*) 'b2usc9 OpenMP warning: no file IO in parallel mode'
-!$OMP END MASTER
+         !$OMP END MASTER
          iout = 0
        endif
       endif                                                              !srv 06.07.06 }

@@ -69,13 +69,14 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0        !srv 06.07.06
       integer, save :: get_residuals = 0                           !srv 22.05.18
       character chns*3                                             !srv 04.07.08
-!$OMP THREADPRIVATE(iout, iout_b2wdat, no_Ptncr_x_co, no_Ptncr_y_co)
+      !$OMP THREADPRIVATE(iout, iout_b2wdat)
+      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
       real (kind=R8) ::
      *  aa5(-1:nx,-1:ny,-2:2), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1, use_eirene
-!$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
+      !$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
 *   ..procedures
       external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2ursc, b2usco, b2upco

@@ -16,7 +16,7 @@
      2          smpr, smpt, smfr, smcf
       use b2mod_balance
       use b2mod_plasma
-     & , only : fmo, fchanml                                           !srv 25.09.17
+     & , only : fmo, fchanml, facdrift, fac_ExB                        !srv 25.09.17 15.04.19
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -320,6 +320,7 @@
 !$OMP& SHARED(nsmin, nsmax, ismain, style, b2sifr_ver, solvemt)
 !$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl, balance_netcdf, fmo_b2nxfv)
 !$OMP& SHARED(pbshz, cvsahz, hy, qz, chci, smcf, fchanml, smof)
+!$OMP& SHARED(facdrift, fac_ExB)
 !$OMP& SHARED(is_neutral, ue, zetap, zetae, gti, gte, ce1, ce2, cimp1)
 !$OMP& SHARED(cimp2, zeff, fna_fcor, iout, iout_b2wdat, rxg)
 !$OMP& SHARED(rz2, ne_ext)
@@ -351,6 +352,15 @@
 !$OMP& SHARED(b2nxdv_smo_bal, b2nxdv_smo0to3)
 !$OMP& SHARED(nlreg, nlloc, nlxlo, nlxhi, nlylo, nlyhi) 
 !$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim)
+#ifndef GFORTRAN
+#ifndef PGF90
+!$OMP& COPYIN(last_solve_5)
+#else
+!$OMP& PRIVATE(last_solve_5)
+#endif
+#else
+!$OMP& PRIVATE(last_solve_5)
+#endif
 #endif
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
@@ -418,8 +428,8 @@
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb, 
      *     wrk0)                                                       !srv 09.07.01 31.07.02 22.07.05} 06.04.07
 *    ..compute correcting source due to artificial anomalous electric conductivity
-       call b2sian (nx, ny, is, bb, vol, hx, hy, hz, qz, fchanml,      !srv 25.09.17
-     &           smban)
+       call b2sian (nx, ny, is, facdrift, fac_ExB, bb, vol,            !srv 25.09.17 15.04.19
+     &           hx, hy, hz, qz, fchanml, smban)
 *    ..compute total parallel momentum source
        call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smq(-1,-1,0,is), 1, smb, 1)

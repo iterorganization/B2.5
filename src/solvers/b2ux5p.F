@@ -80,8 +80,8 @@
 !!FR declared threadprivate to ensure any attempts to allocate them on 
 !!FR multiple threads will work. However, the code will be stopped if 
 !!FR the iluter or slv5pt are used as these have not been parallelised.
-!$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
-!$OMP THREADPRIVATE (ncall, style, acpar, cpu)
+      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
+      !$OMP THREADPRIVATE (ncall, style, acpar, cpu)
       data ncall/0/, style/2/, acpar/8.0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------

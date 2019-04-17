@@ -34,7 +34,7 @@
       integer ncall, ix, iy, ireg
 !      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       save ncall
-!$OMP THREADPRIVATE (ncall)
+      !$OMP THREADPRIVATE (ncall)
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)

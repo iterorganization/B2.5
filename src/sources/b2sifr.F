@@ -72,8 +72,8 @@
       external b2xvfx, b2xvsg, b2xxgs
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
-!$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase) 
-!$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
+      !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase) 
+      !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
       save ncall, styl0, styl1, 
      &  phm0, phm1, phm2, phm3, limthii, limthee
       data ncall/0/, styl0/0/, styl1/0/, 

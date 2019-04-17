@@ -1305,7 +1305,7 @@ c   K(T) = 1/(KA * T + KB)
       real (kind=R8) :: qin, qel, Qtot, TL, L, K, KB, KA, Tp, Tc, Td
       real (kind=R8), save :: cutll, cutlo
       logical, save  :: lfirst, coating
-!$omp threadprivate(coating)
+      !$OMP THREADPRIVATE(coating)
       real (kind=R8) :: t0
       real (kind=R8) :: machsfr, expu2, layer_Kappa
       external machsfr, layer_Kappa
@@ -1341,11 +1341,11 @@ c  Consider adding the option of layer_thermal_contact
 
 *   ..set cutll, cutlo
       if (lfirst) then
-!$omp critical (heatdiff0)
+        !$OMP CRITICAL (heatdiff0)
         cutll = log(machsfr())
         cutlo = max(machsfr(),exp(cutll))
         lfirst = .false.
-!$omp end critical (heatdiff0)
+        !$OMP END CRITICAL (heatdiff0)
       end if
 
       TL = backplate_temp(ibnd)
@@ -1618,7 +1618,7 @@ cxpb   in mixed materials scenarios, the layer_ arrays may vary over time
       delta = a1 / a2
 c     write(*,*)'delta = ',delta
       if (delta.gt.4.5_R8 .and. icount.le.100) then
-!$omp atomic
+        !$OMP ATOMIC
         icount = icount + 1
         write(*,'(a,f7.2,a)')
      .   'delta projectile/target > 4.5', delta, '. Continuing...'

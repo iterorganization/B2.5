@@ -33,7 +33,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy
       real (kind=R8), save :: lambda=-5.0e0_R8
-!$OMP THREADPRIVATE(ncall, lambda)
+      !$OMP THREADPRIVATE(ncall, lambda)
       save ncall
 *   ..procedures
       external subini, subend, xertst, sfill
@@ -87,7 +87,7 @@
      &                            2.30_R8*log10(te(ix,iy)/ev))
             endif
             if(lnlam(ix,iy).le.0.0_R8) then
-            !$OMP MASTER
+             !$OMP MASTER
              open(70,file='info_b2tlnl.dat')
              write(70,"(a)")
      &     ' ix   iy   ne(ix,iy)      te(ix,iy)  lnlam(ix,iy)'
@@ -98,7 +98,7 @@
      &     ' ix   iy   ne(ix,iy)      te(ix,iy)  lnlam(ix,iy)'
              write(*,"(2i5,3es13.4)")
      &       ix,iy,ne(ix,iy),te(ix,iy),lnlam(ix,iy)
-            !$OMP END MASTER
+             !$OMP END MASTER
              call xertst (lnlam(ix,iy).gt.0.0_R8,
      &                  'Negative Coulomb logarithm')     !srv 12.01.16
             endif

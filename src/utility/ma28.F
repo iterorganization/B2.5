@@ -128,8 +128,8 @@ c
       common /ma30fd/ mirncp, micncp, mirank, mirn, micn
       common /mc23bd/ mlp, numnz, num, large, abort
       common /lpivot/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
-!$OMP THREADPRIVATE(/ma28ed/,/ma28fd/,/ma28gd/,/ma28hd/,/ma30id/)
-!$OMP THREADPRIVATE(/ma30ed/,/ma30fd/,/mc23bd/,/lpivot/)
+      !$OMP THREADPRIVATE(/ma28ed/,/ma28fd/,/ma28gd/,/ma28hd/,/ma30id/)
+      !$OMP THREADPRIVATE(/ma30ed/,/ma30fd/,/mc23bd/,/lpivot/)
 c
       integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1,
      *  newpos, knum, length, move
@@ -393,8 +393,8 @@ c
       common /ma30ed/ nlp, aborta, abortb, abort3
       common /ma30gd/ meps, mrmin
       common /ma30id/ tol1, big1, ndrop1, nsrch1, lbig1
-!$OMP THREADPRIVATE(/ma28ed/,/ma28fd/,/ma28gd/,/ma28hd/,/ma30ed/)
-!$OMP THREADPRIVATE(/ma30gd/,/ma30id/)
+      !$OMP THREADPRIVATE(/ma28ed/,/ma28fd/,/ma28gd/,/ma28hd/,/ma30ed/)
+      !$OMP THREADPRIVATE(/ma30gd/,/ma30id/)
 c
       integer i1, idup, iend
 c
@@ -511,7 +511,7 @@ c     data or ma28a/ad.
      * irank, abort1, abort2
       common /ma28gd/ idisp
       common /ma30hd/ mresid
-!$OMP THREADPRIVATE(/ma28fd/,/ma28gd/,/ma30hd/)
+      !$OMP THREADPRIVATE(/ma28fd/,/ma28gd/,/ma30hd/)
 c
 c this call performs the solution of the set of equations.
       call ma30cd(n, icn, a, licn, ikeep, ikeep(1,4), ikeep(1,5),
@@ -539,7 +539,7 @@ c     it also calculates the largest element in the input matrix.
       logical lblock, grow, blockl
       common /ma28ed/ lp, mp, lblock, grow
       common /ma28gd/ idisp
-!$OMP THREADPRIVATE(/ma28ed/,/ma28gd/)
+      !$OMP THREADPRIVATE(/ma28ed/,/ma28gd/)
 c
       integer ii, i, jj, j1, j2, iold, inew, jnew, jold,
      * idisp2, iblock, jcomp, idummy, jdummy, midpt
@@ -732,7 +732,7 @@ c
       common /ma28ed/ lp, mp, lblock, grow
       common /ma28hd/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
-!$OMP THREADPRIVATE(/ma28ed/,/ma28hd/)
+      !$OMP THREADPRIVATE(/ma28ed/,/ma28hd/)
 c
       integer i, iterat, nrow, ncol
 c
@@ -1046,7 +1046,7 @@ c for comments of common block variables see block data subprogram.
       common /ma30fd/ irncp, icncp, irank, minirn, minicn
       common /ma30id/ tol, big, ndrop, nsrch, lbig
       common /lpivot/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
-!$OMP THREADPRIVATE(/ma30ed/,/ma30fd/,/ma30id/,/lpivot/)
+      !$OMP THREADPRIVATE(/ma30ed/,/ma30fd/,/ma30id/,/lpivot/)
 c
       integer i, j, k, l, n, i1, i2, ii, j1, j2, jj, kk, ll, iii,
      * lc, lr, nc, nr, nz, nz2, nzpc,
@@ -1061,7 +1061,7 @@ c
 #ifdef DBG
       real (kind=R8) :: product, cutlo
       save cutlo
-!$OMP THREADPRIVATE(cutlo)
+      !$OMP THREADPRIVATE(cutlo)
 #endif
 c
       data umax/.999999999e0_R8/
@@ -2080,14 +2080,14 @@ c see block data for comments on variables in common.
       common /ma30ed/ lp, abort1, abort2, abort3
       common /ma30id/ tol, big, ndrop, nsrch, lbig
       common /ma30gd/ eps, rmin
-!$OMP THREADPRIVATE(/ma30ed/,/ma30id/,/ma30gd/)
+      !$OMP THREADPRIVATE(/ma30ed/,/ma30id/,/ma30gd/)
 c
       integer i, j, jj, jay, jayjay, ifin, jfin, istart,
      * ilend, ipivj, ising
 #ifdef DBG
       real (kind=R8) :: product, cutlo
       save cutlo
-!$OMP THREADPRIVATE(cutlo)
+      !$OMP THREADPRIVATE(cutlo)
 #endif
 c
       data zero /0.0e0_R8/, one /1.0e0_R8/
@@ -2295,11 +2295,11 @@ c
       integer icn(licn), lenr(n), lenrl(n), lenoff(n), ip(n), iq(n)
 c see block data for comments on variables in common.
       common /ma30hd/ resid
-!$OMP THREADPRIVATE(/ma30hd/)
+      !$OMP THREADPRIVATE(/ma30hd/)
 #ifdef DBG
       real (kind=R8) :: product, cutlo
       save cutlo
-!$OMP THREADPRIVATE(cutlo)
+      !$OMP THREADPRIVATE(cutlo)
 #endif
 c
       integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2,
@@ -2576,7 +2576,7 @@ c
 c see block data for comments on variables in common.
       integer irncp, icncp, irank, minirn, minicn
       common /ma30fd/ irncp, icncp, irank, minirn, minicn
-!$OMP THREADPRIVATE(/ma30fd/)
+      !$OMP THREADPRIVATE(/ma30fd/)
 c
       integer j, jpos, k, kn, kl
 c
@@ -3086,7 +3086,7 @@ c###### calls   mc13    mc21
       integer icn(licn),lenr(n),ip(n),iq(n),lenoff(n),iw(n,5)
       integer lp,numnz,num,large
       common /mc23bd/ lp,numnz,num,large,abort
-!$OMP THREADPRIVATE(/mc23bd/)
+      !$OMP THREADPRIVATE(/mc23bd/)
 c input ... n,icn .. a,icn,lenr ....
       integer i, j, k, i1, i2, ii, jj, ibeg, iend, inew, iold,
      * jold, jnew, ilend, iblock, irowb, irowe, jnpos, leni, nz
@@ -3460,7 +3460,7 @@ c
 c     common /ma28gd/ idisp(2)
       common /ma28hd/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
-!$OMP THREADPRIVATE(/ma28ed/,/ma28fd/,/ma28hd/)
+      !$OMP THREADPRIVATE(/ma28ed/,/ma28fd/,/ma28hd/)
       data eps /1.0e-4_R8/, tol /0.0e0_R8/, cgce /0.5e0_R8/
       data maxit /16/
       data lp /6/, mp /6/, nsrch /32768/, istart /0/
@@ -3613,7 +3613,7 @@ c
       common /ma30ed/ lp, abort1, abort2, abort3
       common /ma30gd/ eps, rmin
       common /ma30id/ tol, big, ndrop, nsrch, lbig
-!$OMP THREADPRIVATE(/ma30ed/,/ma30gd/,/ma30id/)
+      !$OMP THREADPRIVATE(/ma30ed/,/ma30gd/,/ma30id/)
       data eps /1.0e-4_R8/, tol /0.0e0_R8/, big /0.0e0_R8/
       data lp /6/, nsrch /32768/
       data lbig /.false./
@@ -3625,7 +3625,7 @@ c
       integer lp,numnz,num,large
       logical abort
       common /mc23bd/ lp,numnz,num,large,abort
-!$OMP THREADPRIVATE(/mc23bd/)
+      !$OMP THREADPRIVATE(/mc23bd/)
       data lp/6/,abort/.false./
       end block data bd3
 #else
@@ -3646,7 +3646,7 @@ c
      * irank, abort1, abort2
       common /ma28hd/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
-!$OMP THREADPRIVATE(/ma28ed/,/ma28fd/,/ma28hd/)
+      !$OMP THREADPRIVATE(/ma28ed/,/ma28fd/,/ma28hd/)
       eps = 1.0e-4_R8
       tol = 0.0e0_R8
       big = 0.0e0_R8
@@ -3675,7 +3675,7 @@ c
       common /ma30ed/ lp, abort1, abort2, abort3
       common /ma30gd/ eps, rmin
       common /ma30id/ tol, big, ndrop, nsrch, lbig
-!$OMP THREADPRIVATE(/ma30ed/,/ma30gd/,/ma30id/)
+      !$OMP THREADPRIVATE(/ma30ed/,/ma30gd/,/ma30id/)
       lp = 6
       eps = 1.0e-4_R8
       tol = 0.0e0_R8
@@ -3692,7 +3692,7 @@ c
       integer lp, numnz, num, large
       logical abort
       common /mc23bd/ lp, numnz, num, large, abort
-!$OMP THREADPRIVATE(/mc23bd/)
+      !$OMP THREADPRIVATE(/mc23bd/)
       lp = 6
       abort = .false.
       end subroutine set_data_bd3

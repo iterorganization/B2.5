@@ -46,8 +46,8 @@
       character chns*3 !, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *   t0
-!$OMP THREADPRIVATE(ncall, style, iout, iout_b2npmo, iout_b2wdat)
-!$OMP THREADPRIVATE(pot_eq, no_current, pressure_restriction)
+      !$OMP THREADPRIVATE(ncall, style, iout, iout_b2npmo, iout_b2wdat)
+      !$OMP THREADPRIVATE(pot_eq, no_current, pressure_restriction)
       save ncall
 *   ..procedures
       external subini, subend, xertst

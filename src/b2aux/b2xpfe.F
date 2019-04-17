@@ -28,9 +28,10 @@
       call timer%start("parallel")
 #endif
 #ifndef NO_OPENMP_B2XPFE
-!$OMP PARALLEL DO DEFAULT(none), private(ix, iy, is),
-!$OMP& shared(fne, fna, fa_ext, rza, za_ext, ns, ns_ext, nx, ny)
-!$OMP& shared(leftix, leftiy, vol, bottomix, bottomiy)
+!$OMP PARALLEL DO DEFAULT(none)
+!$OMP& PRIVATE(ix, iy, is)
+!$OMP& SHARED(fne, fna, fa_ext, rza, za_ext, ns, ns_ext, nx, ny)
+!$OMP& SHARED(leftix, leftiy, vol, bottomix, bottomiy)
 #endif /* NO_OPENMP_B2XPFE */
       do iy = -1, ny
         do is = 0, ns-1
@@ -63,7 +64,7 @@
         enddo
       enddo
 #ifndef NO_OPENMP_B2XPFE
-!$OMP END PARALLEL DO
+      !$OMP END PARALLEL DO
 #endif
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")

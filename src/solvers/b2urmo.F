@@ -56,8 +56,8 @@
       integer, save :: iout_b2npmo = 0, iout_b2wdat = 0           !srv 11.09.09
       character chns*3                                            !srv 02.06.11
       save ncall
-!$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout_b2npmo)
-!$OMP THREADPRIVATE(iout_b2wdat)
+      !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co)
+      !$OMP THREADPRIVATE(iout_b2wdat, iout_b2npmo)
       real (kind=R8) ::
      *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo, dif     !srv 11.09.09
 *   ..procedures
