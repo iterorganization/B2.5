@@ -58,6 +58,7 @@
       integer, save :: istyle_Joule_heating = 1                         !srv 17.01.14
       integer, save :: b2sigp_style = 2                                 !srv 05.07.17
       integer, save :: use_eirene = 0
+      integer, save :: style_int_vel = 0                              !srv 01.04.19
       real (kind=R8), save :: eps = 1.0e-60_R8
       real (kind=R8) ::
      *  vti32(nCv)
@@ -146,6 +147,7 @@
      &                      istyle_Joule_heating)                  !srv 17.01.14
        call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
        call ipgeti ('b2mndr_eirene', use_eirene)
+       call ipgeti ('b2sihs_style_int_vel', style_int_vel)         !srv 01.04.19
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -219,7 +221,11 @@
       endif                                                         !lk 31.01.08 }
       call b2saxpy (nCv*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
 *   ..contribution from divergence ue
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ue,wrkf(1,0))
+      if(style_int_vel.eq.0) then
+        call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ue,wrkf(1,0))
+      else
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ue,wrkf(1,0))
+      endif
       wrkf(:,0) = wrkf(:,0)*geo%fcPbs
       call div0(nCv, nFc, mpg, wrkf(1,0), wrkc)
 !WG_TODO      b2divue=0.0_R8
@@ -241,7 +247,11 @@
 !WG_TODO      b2divua=0.0_R8
 !WG_TODO      b2sihs_divua=0.0_R8
       do is = 0, ns-1
-        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ua(:,is),wrkf(1,0))
+        if(style_int_vel.eq.0) then
+          call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ua(:,is),wrkf(1,0))
+        else
+          call intface(nCv,nFc,mpg%fcCv,geo%fcVol,ua(:,is),wrkf(1,0))
+        endif
         wrkf(:,0) = wrkf(:,0)*geo%fcPbs
         call div0(nCv, nFc, mpg, wrkf(1,0), wrkc)
         do iCv = 1, mpg%nCi
