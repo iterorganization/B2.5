@@ -65,6 +65,7 @@
       integer, save :: istyle_Joule_heating = 1                       !srv 17.01.14
       integer, save :: b2sigp_style = 2                               !srv 05.07.17
       integer, save :: use_eirene = 0
+      integer, save :: style_int_vel = 0                              !srv 01.04.19
       real (kind=R8) ::
      *  vti32(-1:nx,-1:ny)
       real (kind=R8) ::
@@ -157,6 +158,7 @@
      &                      istyle_Joule_heating)                  !srv 17.01.14
        call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
        call ipgeti ('b2mndr_eirene', use_eirene)
+       call ipgeti ('b2sihs_style_int_vel', style_int_vel)         !srv 01.04.19
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -250,9 +252,15 @@
           if(leftix(ix,iy).eq.-2) then
             wrk0(ix,iy) = 0.0e0_R8
           else
-            wrk0(ix,iy)=(vol(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
+            if(style_int_vel.eq.0) then                               !srv 01.04.19 {
+              wrk0(ix,iy)=(hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
+     1                   hx(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
+     2        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
+            else
+              wrk0(ix,iy)=(vol(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
      1                   vol(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
-     2       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))*pbs(ix,iy,0)
+     2        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))*pbs(ix,iy,0)
+            endif                                                     !srv 01.04.19 }
           endif
         enddo
       enddo                                                           !srv 05.03.11 }
@@ -286,9 +294,15 @@
           if(leftix(ix,iy).eq.-2) then
             wrk0(ix,iy) = 0.0e0_R8
           else
-            wrk0(ix,iy)=(vol(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
-     1                 vol(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
+            if(style_int_vel.eq.0) then                               !srv 01.04.19 {
+             wrk0(ix,iy)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
+     1                hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
+     2        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
+            else
+             wrk0(ix,iy)=(vol(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
+     1                vol(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
      2       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))*pbs(ix,iy,0)
+            endif                                                     !srv 01.04.19 }
           endif                                                       !srv 21.07.05 }
 !         if(leftix(ix,iy).eq.-2) then
 !           wrk0(ix,iy) = 0.0e0_R8
