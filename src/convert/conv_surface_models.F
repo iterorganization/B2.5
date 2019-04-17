@@ -148,7 +148,7 @@
           write (iouteir,'(a)') trim(line)
         else
 !  ndxa, ndya
-          write (iouteir,'(2i6)') mpg%nCv, mpg%nFc
+          write (iouteir,'(3i6)') mpg%nCv, mpg%nCi, mpg%nFc
          exit
         end if
       end do
