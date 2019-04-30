@@ -706,7 +706,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
       enddo
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &   .or. (iout_b2wdat.eq.4 .and. balance)) then                   !srv 16.09.02 {
+     &   .or. (iout_b2wdat.eq.4 .and. balance)) then                    !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhi__qi_32x')
        call my_out(70,nx,ny,w2,'b2tfhi__qi_ki_gTx')
 !       w3=w1+w2
@@ -779,7 +779,7 @@ csw 30apr2014 only for TESTING
 
 
         if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &          .or. (iout_b2wdat.eq.4 .and. balance)) then                 !srv 16.09.02 {
+     &          .or. (iout_b2wdat.eq.4 .and. balance)) then             !srv 16.09.02 {
          if(mdf_fhi.eq.0) then                                          !srv 13.10.06 {
           w1(ix,iy)=1.5e0_R8*fni(ix,iy,1)*
      1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
@@ -1039,7 +1039,7 @@ csw 18feb2014 remove fluxes between guard cells
 
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &           .or. (iout_b2wdat.eq.4 .and. balance)) then                   !srv 16.09.02 {
+     &           .or. (iout_b2wdat.eq.4 .and. balance)) then            !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhi__qi_32y')
 !       call my_out(70,nx,ny,w2,'qiy2')
        call my_out(70,nx,ny,w3,'b2tfhi__qi_ki_gTy')

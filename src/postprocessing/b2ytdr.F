@@ -49,8 +49,6 @@ c 2002-09-11: logic revised
       use b2mod_external
       use b2mod_work
 #ifdef B25_EIRENE
-      use b2mod_b2plot
-     , ,only: nstsi
       use eirmod_parmmod
       use eirmod_braeir
       use eirmod_cinit

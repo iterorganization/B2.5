@@ -777,7 +777,7 @@ cxpb
      .       qe, te, nep, ne, wrk0)
             call b2saxpy (n2, 1.0_R8, wrk0, 1, po, 1)
           endif
-          if(.not.wrong_flow) then                                      !xpb !srv 22.05.18
+          if(.not.wrong_flow) then                                       !xpb !srv 22.05.18
 *   ..iterate several times on the potential equation                    !xpb
             i=0                                                          !xpb
             t0=1.0e40_R8                                                 !xpb
