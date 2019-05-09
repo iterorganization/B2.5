@@ -2188,6 +2188,23 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
               call system(systemarg)
 #endif
             endif
+            filename=fort_lc//'14'
+            inquire(file=filename,exist=found)
+            if (found) then
+#ifdef WINDOWS
+              systemarg='copy '//trim(filename)//' '//
+     &                           trim(filename)//'.'//savefile(13:16)//
+     &        ' > nul'
+#else
+              systemarg='cp '//trim(filename)//' '//
+     &                         trim(filename)//'.'//savefile(13:16)
+#endif
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
+              call system(systemarg)
+#endif
+            endif
             filename=fort_lc//'15'
             inquire(file=filename,exist=found)
             if (found) then

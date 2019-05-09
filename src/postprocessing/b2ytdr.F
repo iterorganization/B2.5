@@ -292,7 +292,7 @@ c 2002-09-11: logic revised
       integer nstrai1, nstrat1
 #ifdef B25_EIRENE
       integer IUNOT, NR1ST, NP2ND, NT3RD
-      integer NMODE, NAINI, NFILEL
+      integer NMODE, NAINI, NFILEK, NFILEL
       integer NZADD, NVOLPL, NSP
       integer NPLINR,NPLOTR,NPLDLR,NPLINP,NPLOTP,NPLDLP,
      .        NPLINT,NPLOTT,NPLDLT
@@ -3555,6 +3555,10 @@ cxpb  Start reading input.dat file
                                          ! NTIME0,NTIME,NFULLRUN
           END IF
           NMODE = idum(1)
+          nfilek = b2idez(idum(3),4,5)
+          if (nfilek.eq.0) nfilek = 5
+          idum(3) = (idum(3)/10000)*10000 + nfilek*1000 +
+     .     mod(idum(3),1000)
           filename=fort_lc//'11'
           inquire(file=filename,exist=ex)
           if (ex) idum(3) = (idum(3)/10)*10 + 6
