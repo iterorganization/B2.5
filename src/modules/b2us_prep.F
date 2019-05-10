@@ -780,6 +780,10 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 ! identify the various flux surfaces
       m%fsCv = 0 ! init to 0
       m%fsFc = 0 ! init to 0
+      m%fsCvP = 0
+      m%fsCv  = 0
+      m%fsFcP = 0
+      m%fsFc  = 0
 #ifdef WG_TODO
       ifs = 0
       icv = 0
