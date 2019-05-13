@@ -69,7 +69,7 @@
       real (kind=R8) ::
      *  snatot(0:ns-1),                                                 !srv 18.05.09
 !     4  smq0_ion(nCv,0:3,0:ns-1), smq0_rec(nCv,0:3,0:ns-1),
-     4  fni(nFc,0:1), fne(nFc,0:1), wrk(nCv)!,
+     4  wrk(nCv)!,
 !     8  sna0_ion(nCv,0:1,0:ns-1), sna0_rec(nCv,0:1,0:ns-1),
 !     9  shi0_ion(nCv,0:3), shi0_rec(nCv,0:3)
       real (kind=R8), allocatable :: sna0_cx(:,:,:), smo0_cx(:,:,:),  ! IYS 06.11.2017
@@ -150,8 +150,8 @@
       endif
 *   ..compute fne, fni
       call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe, 
-     &  rt%rza, st_ext%za, dv%fna, st_ext%fa, dv%fch, fne)
-      call b2xpfi (nFc, ns, dv%fna, fni)
+     &  rt%rza, st_ext%za, dv%fna, st_ext%fa, dv%fch, dv%fne)
+      call b2xpfi (nFc, ns, dv%fna, dv%fni)
 
 *   ..test facdrift and fac_ExB
       if (ncall.eq.0) then                                              !xpb
@@ -199,10 +199,11 @@
       call xertst (0.0_R8.le.minval(dv%fac_ExB) .and.
      &     1.0_R8.ge.maxval(dv%fac_ExB), 'faulty argument fac_ExB')
 
-#ifdef WG_TODO
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
-       call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an,st%po,dv%fchanml)
+       call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an, pl%po,
+     &   dv%fchanml)
+#ifdef WG_TODO
        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,  !srv 20.09.06 {
      &                       fac_vis, fchvispar)
        call b2tiner (nx, ny, ns, vol,
@@ -211,16 +212,13 @@
 !     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
 !      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,       !srv 10.10.17
 !     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
+#else
+       dv%fchvispar = 0.0_R8
+       dv%fchinert  = 0.0_R8
+#endif 
 csw 30sep2013, added cdpa in call, uadia
-       call b2tfrn (nx, ny, ns, guard_flows,
-     &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
-     &  vol, hx, hy, hz, qz, gs, qc, qs, bb, pbs, ua, na, ne, te, ti,
-     &  po, fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,
-     &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
-     &  uadia,
-     &  fna_eir, fne_eir, fhe_eir, fhi_eir)
+       call b2tfrn (nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt, st_ext)
       endif                                                             !srv 14.07.10 }
-#endif
 
 * ..compute source coefficients
 *   ..compute electron rate coefficients

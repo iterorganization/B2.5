@@ -372,14 +372,14 @@ c  ..set null flux in guard cells  ?
      &  vis_q*dv%fchvisq(:,1))*ycur
 
 *   ..convective coefficients
-      floi0(:,0) = 1.5e0_R8*dv%fni(:,0) + co%chvi(:,0)*nif + 
+      floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
      &  flidia(:,0) + scur(:,0)
-      floi0(:,1) = 1.5e0_R8*dv%fni(:,1) + co%chvi(:,1)*nif + 
+      floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif + 
      &  flidia(:,1) + scur(:,1)
 
-      floi0_mdf(:,0) = 1.5e0_R8*dv%fni(:,0) + co%chvi(:,0)*nif + 
+      floi0_mdf(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif + 
      &  scur(:,0)
-      floi0_mdf(:,1) = 1.5e0_R8*dv%fni(:,1) + co%chvi(:,1)*nif + 
+      floi0_mdf(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif + 
      &  scur(:,1)
 
 *   ..apply discretization scheme
@@ -450,7 +450,7 @@ csw 27nov2012  added check upwind (SOLPS4 style)
              else
                upfac=0.0_R8
              endif             
-             fhi_32(ix,iy,0,0) = 1.5e0_R8*fni(ix,iy,0,0)*
+             fhi_32(ix,iy,0,0) = 1.5e0_R8*fni_he(ix,iy,0,0)*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
              fhi_52(ix,iy,0,0) = 0.0_R8
@@ -487,7 +487,7 @@ csw 27nov2012  added check upwind (SOLPS4 style)
            if (balance.and.
      &         (balance_netcdf.ne.0).and.
      &         (mdf_fhi.eq.0)) then !djm Jan2017
-             fhi_32(ix,iy,0,0) = 1.5e0_R8*fni(ix,iy,0,0)*
+             fhi_32(ix,iy,0,0) = 1.5e0_R8*fni_he(ix,iy,0,0)*
      &        (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_52(ix,iy,0,0) = 0.0_R8
              fhi_strange(ix,iy,0,0) = chvi(ix,iy,0,0)*
@@ -588,7 +588,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
                else
                  upfac=0.0_R8
                endif
-               fhi_32(ix,iy,0,0) = 1.5e0_R8*fni(ix,iy,0,0)*
+               fhi_32(ix,iy,0,0) = 1.5e0_R8*fni_he(ix,iy,0,0)*
      &                           (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                            (1.0_R8-upfac)*ti(ix,iy))
                fhi_strange(ix,iy,0,0) = chvi(ix,iy,0,0)*
@@ -639,9 +639,9 @@ csw 27nov2012 added check upwind (SOLPS4 style)
                else
                  hybfac=-1.0_R8
                endif
-               fhi_32(ix,iy,0,0) = 1.5e0_R8*fni(ix,iy,0,0)*
+               fhi_32(ix,iy,0,0) = 1.5e0_R8*fni_he(ix,iy,0,0)*
      &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &           hybfac*1.5e0_R8*fni(ix,iy,0,0)/2.0_R8*dti
+     &           hybfac*1.5e0_R8*fni_he(ix,iy,0,0)/2.0_R8*dti
                fhi_strange(ix,iy,0,0) = chvi(ix,iy,0,0)*
      &          (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
      &          (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
@@ -681,7 +681,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
             if (balance.and.
      &          (balance_netcdf.ne.0).and.
      &          (mdf_fhi.eq.0)) then !djm Jan2017
-              fhi_32(ix,iy,0,0) = 1.5e0_R8*fni(ix,iy,0,0)*
+              fhi_32(ix,iy,0,0) = 1.5e0_R8*fni_he(ix,iy,0,0)*
      &               (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0
               fhi_52(ix,iy,0,0) = 0.0_R8
               fhi_strange(ix,iy,0,0) = chvi(ix,iy,0,0)*
@@ -706,7 +706,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
             if (balance.and.
      &          (balance_netcdf.ne.0).and.
      &          (mdf_fhi.ne.0)) then !djm Jan2017
-              fhi_32(ix,iy,0,0) = 1.5e0_R8*fni(ix,iy,0,0)*
+              fhi_32(ix,iy,0,0) = 1.5e0_R8*fni_he(ix,iy,0,0)*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
               fhi_52(ix,iy,0,0) = 0.0_R8
               fhi_strange(ix,iy,0,0) = chvi(ix,iy,0,0)*
@@ -732,7 +732,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
          if (balance.and.
      &       (balance_netcdf.ne.0).and.
      &       (mdf_fhi.eq.0)) then !djm Jan2017
-           fhi_32(ix,iy,1,1) = 1.5e0_R8*fni(ix,iy,1,1)*
+           fhi_32(ix,iy,1,1) = 1.5e0_R8*fni_he(ix,iy,1,1)*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_strange(ix,iy,1,1) = chvi(ix,iy,1,1)*
      &      (ni(bottomix(ix,iy),bottomiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
@@ -759,7 +759,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
          if (balance.and.
      &       (balance_netcdf.ne.0).and.
      &       (mdf_fhi.ne.0)) then !djm Jan2017
-           fhi_32(ix,iy,1,1) = 1.5e0_R8*fni(ix,iy,1,1)*
+           fhi_32(ix,iy,1,1) = 1.5e0_R8*fni_he(ix,iy,1,1)*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_strange(ix,iy,1,1) = chvi(ix,iy,1,1)*
      &      (ni(bottomix(ix,iy),bottomiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
@@ -823,7 +823,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
         if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &          .or. iout_b2wdat.eq.4) then                 !srv 16.09.02 {
          if(mdf_fhi.eq.0) then                                          !srv 13.10.06 {
-          w1(ix,iy)=1.5e0_R8*fni(ix,iy,1,1)*
+          w1(ix,iy)=1.5e0_R8*fni_he(ix,iy,1,1)*
      1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
           w2(ix,iy)=flidia(ix,iy,1,1)*
      1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
@@ -832,7 +832,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
           w4(ix,iy)=0.0e0_R8
           w6(ix,iy)=  coni0
          else
-          w1(ix,iy)=1.5e0_R8*fni(ix,iy,1,1)*
+          w1(ix,iy)=1.5e0_R8*fni_he(ix,iy,1,1)*
      1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
           w2(ix,iy)=0.0e0_R8
           w3(ix,iy)=-coni0_mdf*
@@ -890,8 +890,8 @@ csw 27nov2012 added check upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,dv%fchinert(1,1),'b2tfhi__fchinerty')
        call my_out_us(70,nFc,1,dv%fchanml(1,0),'b2tfhi__fchanmlx')
        call my_out_us(70,nFc,1,dv%fchanml(1,1),'b2tfhi__fchanmly')
-       call my_out_us(70,nFc,1,dv%fni(1,0),'b2tfhi__fnix')
-       call my_out_us(70,nFc,1,dv%fni(1,1),'b2tfhi__fniy')
+       call my_out_us(70,nFc,1,dv%fni_he(1,0),'b2tfhi__fnix')
+       call my_out_us(70,nFc,1,dv%fni_he(1,1),'b2tfhi__fniy')
        call my_out_us(70,nCv,0,dv%ni(:,0),'b2tfhi__ni0')
        call my_out_us(70,nCv,0,dv%ni(:,1),'b2tfhi__ni1')
       endif                                                             !srv 18.06.08 }

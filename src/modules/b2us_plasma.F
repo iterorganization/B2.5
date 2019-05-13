@@ -29,7 +29,7 @@
      .                           fchanml(:,:),
      .                           fch_pi_c(:,:), fch_pi_f(:,:)
         real(R8), allocatable :: fni_32(:,:), fni_52(:,:), 
-     .                           fni(:,:)
+     .                           fni(:,:), fni_he(:,:)
         real(R8), allocatable :: fna(:,:,:), fna_mdf(:,:,:), 
      .                           fna_52(:,:,:), fna_32(:,:,:), 
      .                           fna_52nd(:,:,:), fna_32nd(:,:,:),
@@ -37,7 +37,7 @@
      .                           fnaPSch(:,:,:), fna_fcor(:,:,:),
      .                           fna_eir(:,:,:),
      .                           fmo(:,:,:)
-        real(R8), allocatable :: fne(:,:), fne_32(:,:), 
+        real(R8), allocatable :: fne(:,:), fne_he(:,:), fne_32(:,:), 
      .                           fne_52(:,:), fne_eir(:,:),
      .                           fhe(:,:), fhe_mdf(:,:), fhet(:,:),
      .                           fhePSch(:,:), fhe_eir(:,:)
@@ -498,10 +498,12 @@ cwdk move to dv
       allocate( dv % fch_pi_c( nCv, 0:1 ) )
       allocate( dv % fch_pi_f( nFc, 0:1 ) )                        
       allocate( dv % fne( nFc, 0:1 ) )
+      allocate( dv % fne_he( nFc, 0:1 ) )
       allocate( dv % fne_32( nFc, 0:1 ) )
       allocate( dv % fne_52( nFc, 0:1 ) )
       
-      allocate( dv % fni( nFc, 0:1 ) )    
+      allocate( dv % fni( nFc, 0:1 ) )
+      allocate( dv % fni_he( nFc, 0:1 ) )
       allocate( dv % fni_32( nFc, 0:1 ) )
       allocate( dv % fni_52( nFc, 0:1 ) )
       
@@ -616,9 +618,11 @@ cwdk move to dv
       type(B2Derivatives), intent(inout) :: dv
       
       deallocate( dv % fne )
-      deallocate( dv % fni )
+      deallocate( dv % fne_he )
       deallocate( dv % fne_32 )
       deallocate( dv % fne_52 )
+      deallocate( dv % fni )
+      deallocate( dv % fni_he )
       deallocate( dv % fni_32 )
       deallocate( dv % fni_52 )
       deallocate( dv % fch )

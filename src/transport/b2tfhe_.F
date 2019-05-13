@@ -310,17 +310,17 @@ c Drift terms
       call diff(nCv, nFc, nVx, 0, geo, mpg, pl%te*dv%ne, wrkv, dpe)
 
 * ..compute fluxes and linearization
-       floe0(:,0) = 1.5e0_R8*dv%fne(:,0) +
+       floe0(:,0) = 1.5e0_R8*dv%fne_he(:,0) +
      &    (co%chve(:,0) + 2.5e0_R8*fledia(:,0))*nef                    !srv 13.09.02 18.01.07 11.01.13  *signmf
-     &    -c071*dv%fch_p(:,0)/qe*fch_pTe                                  !srv 30.12.09 13.01.17
-       floe0(:,1) = 1.5e0_R8*dv%fne(:,1) +                           
-     &    (co%chve(:,1) + 2.5e0_R8*fledia(:,1))*nef !WG_TODO-                  !srv 11.05.99
+     &    -c071*dv%fch_p(:,0)/qe*fch_pTe                               !srv 30.12.09 13.01.17
+       floe0(:,1) = 1.5e0_R8*dv%fne_he(:,1) +                           
+     &    (co%chve(:,1) + 2.5e0_R8*fledia(:,1))*nef !WG_TODO-          !srv 11.05.99
 !WG_TODO      &      5.0e0_R8/3.0e0_R8*fchstoch/qe)
 
-       floe0_mdf(:,0) = 1.5e0_R8*dv%fne(:,0) +                          !srv 13.06.06 {
-     &    co%chve(:,0)*nef - c071*dv%fch_p(:,0)/qe*fch_pTe                     !srv 30.12.09 13.01.17
-       floe0_mdf(:,1) = 1.5e0_R8*dv%fne(:,1) +
-     &    co%chve(:,1)*nef !WG_TODO-                  !srv 11.05.99
+       floe0_mdf(:,0) = 1.5e0_R8*dv%fne_he(:,0) +                      !srv 13.06.06 {
+     &    co%chve(:,0)*nef - c071*dv%fch_p(:,0)/qe*fch_pTe             !srv 30.12.09 13.01.17
+       floe0_mdf(:,1) = 1.5e0_R8*dv%fne_he(:,1) +
+     &    co%chve(:,1)*nef !WG_TODO-                                   !srv 11.05.99
 !WG_TODO      &      5.0e0_R8/3.0e0_R8*fchstoch/qe)
 
 *   ..apply discretization scheme
@@ -408,7 +408,7 @@ c Drift terms
 
 #ifdef WG_TODO
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-              fhe_32(ix,iy,0,0) = 1.5e0_R8*fne(ix,iy,0,0)*
+              fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
      &               (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
               fhe_52(ix,iy,0,0) = 0.0_R8
               fhe_strange(ix,iy,0,0) = chve(ix,iy,0,0)*
@@ -450,7 +450,7 @@ c Drift terms
               else
                 upfac=0.0_R8
               endif
-              fhe_32(ix,iy,0,0) = 1.5e0_R8*fne(ix,iy,0,0)*
+              fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
      &                          (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &                           (1.0_R8-upfac)*te(ix,iy))
               fhe_52(ix,iy,0,0) = 0.0_R8
@@ -480,7 +480,7 @@ c Drift terms
               else
                 upfac=0.0_R8
               endif
-              fhe_32(ix,iy,0,0) = 1.5e0_R8*fne(ix,iy,0,0)*
+              fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
      &                          (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &                           (1.0_R8-upfac)*te(ix,iy))
               fhe_52(ix,iy,0,0) = 0.0_R8
@@ -505,7 +505,7 @@ c Drift terms
           if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                             .or. iout_b2wdat.eq.4) then           !srv 16.09.02 {
            if(mdf_fhe.eq.0) then                                         !srv 13.10.06 {
-            w1(ix,iy)=1.5e0_R8*fne(ix,iy,0,0)
+            w1(ix,iy)=1.5e0_R8*fne_he(ix,iy,0,0)
      &           *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w2(ix,iy)=(chve(ix,iy,0,0)+2.5e0_R8*fledia(ix,iy,0,0))*      !srv 13.09.02 11.01.13 *signmf
      &      (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8         !srv 13.09.02
@@ -519,7 +519,7 @@ c Drift terms
      *        (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w6(ix,iy) = cone0
            else
-            w1(ix,iy)=1.5e0_R8*fne(ix,iy,0,0)
+            w1(ix,iy)=1.5e0_R8*fne_he(ix,iy,0,0)
      &           *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w2(ix,iy)= chve(ix,iy,0,0)*                                  !srv 13.09.02
      &       (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
@@ -593,7 +593,7 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
                else
                  upfac=0.0_R8
                endif
-               fhe_32(ix,iy,0,0) = 1.5e0_R8*fne(ix,iy,0,0)*
+               fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
      &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &                            (1.0_R8-upfac)*te(ix,iy))
                fhe_52(ix,iy,0,0) = 0.0_R8
@@ -624,7 +624,7 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
              if (balance.and.
      &           (balance_netcdf.ne.0).and.
      &           (mdf_fhe.eq.0)) then !djm Jan2017
-               fhe_32(ix,iy,0,0) = 1.5e0_R8*fne(ix,iy,0,0)*
+               fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
      &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
                fhe_52(ix,iy,0,0) = 0.0_R8
                fhe_strange(ix,iy,0,0) = chve(ix,iy,0,0)*
@@ -698,7 +698,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
                 else
                   upfac=0.0_R8
                 endif
-                fhe_32(ix,iy,0,0) = 1.5e0_R8*fne(ix,iy,0,0)*
+                fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
      &                          (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*te(ix,iy))
                 fhe_52(ix,iy,0,0) = 0.0_R8
@@ -732,9 +732,9 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
                 else
                   hybfac=-1.0_R8
                 endif
-                fhe_32(ix,iy,0,0) = 1.5e0_R8*fne(ix,iy,0,0)*
+                fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
      &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
-     &            hybfac*1.5e0_R8*fne(ix,iy,0,0)/2.0_R8*tex
+     &            hybfac*1.5e0_R8*fne_he(ix,iy,0,0)/2.0_R8*tex
                 fhe_52(ix,iy,0,0) = 0.0_R8
                 fhe_strange(ix,iy,0,0) = chve(ix,iy,0,0)*
      &           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5_R8*
@@ -793,7 +793,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
         if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                        .or. iout_b2wdat.eq.4) then                !srv 16.09.02 {
          if(mdf_fhe.eq.0) then                                           !srv 13.10.06 {
-          w1(ix,iy)=1.5e0_R8*fne(ix,iy,1,1)*
+          w1(ix,iy)=1.5e0_R8*fne_he(ix,iy,1,1)*
      1      (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
           w2(ix,iy)=2.5e0_R8*fledia(ix,iy,1,1)*
      &      (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8
@@ -804,7 +804,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &       harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
           w6(ix,iy) = cone0
          else
-          w1(ix,iy)=1.5e0_R8*fne(ix,iy,1,1)*
+          w1(ix,iy)=1.5e0_R8*fne_he(ix,iy,1,1)*
      1      (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
           w2(ix,iy)=0.0e0_R8
           w3(ix,iy)=-cone0_mdf*
@@ -822,7 +822,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 #ifdef WG_TODO
 
          if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-           fhe_32(ix,iy,1,1) = 1.5e0_R8*fne(ix,iy,1,1)*
+           fhe_32(ix,iy,1,1) = 1.5e0_R8*fne_he(ix,iy,1,1)*
      &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
            fhe_52(ix,iy,1,1) = 0.0_R8
            fhe_strange(ix,iy,1,1) = chve(ix,iy,1,1)*
@@ -887,8 +887,8 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,dv%fchanml(1,0),'b2tfhe__fchanmlx')
        call my_out_us(70,nFc,1,dv%fchanml(1,1),'b2tfhe__fchanmly')
 !WG_TODO       call my_out_us(70,nFc,1,fchstoch,'b2tfhe__fchstochy')        !lk 31.01.08
-       call my_out_us(70,nFc,1,dv%fne(1,0),'b2tfhe__fnex')
-       call my_out_us(70,nFc,1,dv%fne(1,1),'b2tfhe__fney')
+       call my_out_us(70,nFc,1,dv%fne_he(1,0),'b2tfhe__fnex')
+       call my_out_us(70,nFc,1,dv%fne_he(1,1),'b2tfhe__fney')
        call my_out_us(70,nFc,1,dv%conc(1,0),'b2tfhe__concx')
        call my_out_us(70,nFc,1,dv%conc(1,1),'b2tfhe__concy')
        call my_out_us(70,nFc,1,dv%floe(1,0),'b2tfhe__floex')

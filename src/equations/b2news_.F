@@ -106,8 +106,8 @@
 !     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-     3  ue(nCv), lnlam(nCv), zeff(nCv),          !srv 05.07.17
-     &  pr(nCv), ro(nCv), cssb(nFc,0:1),         !iyv 06.02.14
+     &  ue(nCv), lnlam(nCv), zeff(nCv),                                  !srv 05.07.17
+     &  pr(nCv), ro(nCv), cssb(nFc,0:1),                                 !iyv 06.02.14
      &  nep(nCv), wrk0(nCv), wrk1(nCv),
      &  zero(nCv), zerof(nFc,0:1), wrkf(nFc),
      &  respo0(nCv), corpo0(nCv)
@@ -588,7 +588,8 @@ csw 16oct2012 init ier0
 *    ..compute current
 !          call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, ehx, fch_p)  !!!???
           call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe, 
-     &      rt%rza, st_ext%za, dv%fna_he, st_ext%fa, dv%fch_p, dv%fne)
+     &      rt%rza, st_ext%za, dv%fna_he, st_ext%fa, dv%fch_p, 
+     &      dv%fne_he)
           call b2tfhe_ (nCv, nFc, nVx, ns, ismain, ismain0, geo, mpg, 
      &      pl, dv, co, rt, .false.)                                                     !djm Jan2017
           call b2xpen (nCv, nFc, ns, mpg, dv%fna, dv%fne, dv%fch, 
@@ -712,15 +713,15 @@ cwdk of potential equation...
         endif
       endif           ! if pot_eq                                        !srv 13.07.05
 
-*   ..compute fne, fni
+*   ..compute fne_he, fni_he
 c      with diamagnetic drift part                                       !srv 13.05.99
       call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe, 
-     &  rt%rza, st_ext%za, dv%fna_he, st_ext%fa, dv%fch_p, dv%fne)       !srv 13.05.99 21.01.00 11.10.02
+     &  rt%rza, st_ext%za, dv%fna_he, st_ext%fa, dv%fch_p, dv%fne_he)    !srv 13.05.99 21.01.00 11.10.02
       call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe, 
      &  rt%rza, st_ext%za, dv%fna_32nd, st_ext%fa, dv%fch_32, dv%fne_32)
       call b2xpfe (nCv, nFc, ns, 0, geo, mpg, qe, 
      &      rt%rza, zero, dv%fna_52nd, zerof, dv%fch_52, dv%fne_52)
-      call b2xpfi (nFc, ns, dv%fna_he, dv%fni)                           !srv 13.05.99 21.01.00
+      call b2xpfi (nFc, ns, dv%fna_he, dv%fni_he)                        !srv 13.05.99 21.01.00
       call b2xpfi (nFc, ns, dv%fna_32nd, dv%fni_32)                      !xpb
       call b2xpfi (nFc, ns, dv%fna_52nd, dv%fni_52)                      !xpb
 *   ..compute heat fluxes
