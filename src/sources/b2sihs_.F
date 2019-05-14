@@ -579,7 +579,7 @@ cwdk compute radial differences of ua at cell faces
 *     in case of arbitrary impurity amount see above for b2sigp_style.eq.2
       if(b2sigp_style.ne.2) then                                      !srv 05.07.17
        call b2xehx (nx, ny, hx, hy, qz, qs, te, po, ne, ehx)          !srv 13.01.17
-       if (istyle_Joule_heating.eq.0)
+       if (istyle_Joule_heating.eq.0 .or. istyle_Joule_heating.eq.3)
      &   call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy)        !srv 13.01.17
        b2joule=0.0_R8
        b2sihs_joule=0.0_R8
@@ -588,6 +588,13 @@ cwdk compute radial differences of ua at cell faces
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &     bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &     region(ix,iy,0).ne.0) then
+          if (istyle_Joule_heating.le.1) then
+            t0 = fch(ix,iy,0,0)*ehx(ix,iy,0)/
+     &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
+     &        fch(rightix(ix,iy),rightiy(ix,iy),0,0)*
+     &        ehx(rightix(ix,iy),rightiy(ix,iy),0)/
+     &       (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
+          else
            t0 = fch(ix,iy,0,0)*ehx(ix,iy,0)/(gs(ix,iy,0)*qc(ix,iy,0)*
      &      (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))) +
      &      fch(rightix(ix,iy),rightiy(ix,iy),0,0)*
@@ -595,7 +602,14 @@ cwdk compute radial differences of ua at cell faces
      &      gs(rightix(ix,iy),rightiy(ix,iy),0)*
      &      qc(rightix(ix,iy),rightiy(ix,iy),0)*
      &      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy))))
+          endif
           if (istyle_Joule_heating.eq.0) t0 = t0 +
+     &      fch(ix,iy,1,1)*ehy(ix,iy,1)/
+     &      (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
+     &       fch(topix(ix,iy),topiy(ix,iy),1,1)*
+     &       ehy(topix(ix,iy),topiy(ix,iy),1)/
+     &      (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
+          if (istyle_Joule_heating.eq.2) t0 = t0 +
      &      fch(ix,iy,1,1)*ehy(ix,iy,1)/(gs(ix,iy,1)*
      &     (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))) +
      &      fch(topix(ix,iy),topiy(ix,iy),1,1)*
