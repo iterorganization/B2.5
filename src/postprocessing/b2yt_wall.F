@@ -295,8 +295,9 @@ cxpb lb and ub and lower and upper interval bounds
       logical found
 
       intrinsic max, min
+      logical streql
       external xertst, subini, subend
-      external convert_bundle_r
+      external convert_bundle_r, streql
       external E01BEF, E01BFF
 
       call subini('b2yt_wall')
@@ -438,6 +439,7 @@ cxpb Copy data arrays into new geometry
           layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
      .     zn1(sput_dst)
         end do
+        track_source = 0.0_R8
         do iw = 1, nbnd
           track_source(iw) =
      .     layer_nrelconstituents(iw,matsurf_nconstituents(iw)+1)
@@ -472,6 +474,7 @@ cxpb Copy data arrays into new geometry
      .       zn1(sput_dst)
           end if
         end do
+        track_source = 0.0_R8
         do iw = 1, nbnd
           track_source(iw) =
      .     layer_nrelconstituents(iw,matsurf_nconstituents(iw)+2)
@@ -509,6 +512,7 @@ cxpb Copy data arrays into new geometry
      .       zn1(sput_dst)
           endif
         end do
+        track_source = 0.0_R8
         do iw = 1, nbnd
           track_source(iw) =
      .     layer_nrelconstituents(iw,matsurf_nconstituents(iw)+3)
@@ -529,6 +533,7 @@ cxpb Copy data arrays into new geometry
      .   layer_nrelconstituents1(ibnd1,1:layer_nconstituents1(ibnd1))/
      .   sum
       end do
+      wall_data = 0.0_R8
       wall_data(1:nbnd,0:ns-1+natm+nmol+nion) =
      . physical_sputtering(1:nbnd,0:ns-1+natm+nmol+nion)
       call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
@@ -706,9 +711,9 @@ cxpb but in computational space
       write(6,*) 'Writing b2.wall_save.parameters.2'
       write(99,'(a10)') '&WALL_SAVE'
       do itrack=1,nalloys
-        if(layer_alloys(itrack).ne.' ') write(99,'(a13,i1,a4,a6,a2)')
-     .    'LAYER_ALLOYS(',itrack,')= ''',
-     .     layer_alloys(itrack),''','
+        if(.not.streql(layer_alloys(itrack),' '))
+     .   write(99,'(a13,i1,a4,a6,a2)')
+     .    'LAYER_ALLOYS(',itrack,')= ''',layer_alloys(itrack),''','
       enddo
       write(99,'(a11,i4,a1)') 'NDEPTH_NML=',ndepth_nml,','
       if (layer_thermal_contact.ne.1.0_R8) write(99,'(a22,1es15.8,a1)')
@@ -998,11 +1003,11 @@ cxpb Now for each new species, we do the space mapping
       real (kind=R8) wall_source(nwall)
       real (kind=R8) wall_map(nwall1)
       integer iw, iw1
-      real (kind=R8) sum
+      real (kind=R8) :: sum
 
       wall_map = 0.0_R8
-      if (maxval(wall_source(1:nwall)).eq.minval(wall_source(1:nwall)))
-     > then
+      if (maxval(wall_source(1:nwall)).eq.
+     .    minval(wall_source(1:nwall))) then
         wall_map(1:nwall1) = wall_source(1)
       else
         do iw1 = 1, nwall1

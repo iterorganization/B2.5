@@ -854,16 +854,6 @@ c 2002-09-11: logic revised
 *   ..read species data
       call b2ruzd (ninp(1), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
-*   ..read plasma state
-      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     1  b2fstate_version)
-      if (invert_bpol .eq. 1) ua = -ua
 *   ..write label
       write (nout(0),'(/2x,a)') 'label for this calculation:'
       write (nout(0),'(/4x,a/4x,a)') lblmn(1:60), lblmn(61:120)
@@ -964,6 +954,17 @@ c 2002-09-11: logic revised
       endif
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call get_nxt(nx,nxtl,nxtr)
+*   ..read plasma state
+      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
+     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
+     1  b2fstate_version)
+      if (invert_bpol .eq. 1) ua = -ua
+*   ..prepare conversion arrays
       call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       nsm=max(ns,ns1)
@@ -5194,10 +5195,11 @@ Cxpb then rewrite the entire block
  5112   CONTINUE
 cxpb Now we have read the species data and can identify the bundles
         DO 5113 JPLS=1,NPLSI
-          found = jpls.gt.(ns-nspecies)
+          found = .false.
           is = 0
           do while (.not.found .and. is.lt.ns1)
-            found = nint(am1(is)).eq.NMASSP(JPLS) .and.
+            found = index(TEXTP(JPLS),'(B)').eq.0 .and.
+     .       nint(am1(is)).eq.NMASSP(JPLS) .and.
      .       nint(zn1(is)).eq.NCHARP(JPLS) .and.
      .       nint(zamin1(is)).le.NCHRGP(JPLS) .and.
      .       nint(zamax1(is)).ge.NCHRGP(JPLS)
@@ -5208,9 +5210,15 @@ cxpb Now we have read the species data and can identify the bundles
             endif
           enddo
           if (.not.found) then
-            eb2ibcr(jpls) = -1
-            write(*,*) 'Ion species corresponding to ',
-     .       trim(TEXTP(JPLS)),' not found! Removing...'
+            if (index(TEXTP(JPLS),'(B)').GT.0) then
+              eb2ibcr(jpls) = ns1
+              write(*,*) 'Identified BGK species ',
+     .         trim(TEXTP(JPLS)),'.'
+            else
+              eb2ibcr(jpls) = -1
+              write(*,*) 'Ion species corresponding to ',
+     .         trim(TEXTP(JPLS)),' not found! Removing...'
+            end if
           end if
  5113   CONTINUE
         NPLSI1 = (ns1-nspecies1)+(NPLSI-(ns-nspecies))
@@ -5293,6 +5301,10 @@ cxpb Now we have read the species data and can identify the bundles
           end if
           do i = is, js
             ipls = ipls+1
+            do while(ipls.lt.nplsi.and.index(textp(ipls),'(B)').gt.0)
+              ipls = ipls+1
+            end do
+            if(ipls.eq.nplsi.and.index(textp(ipls),'(B)').gt.0) exit
             do j = iss, jss
               if (iplss.lt.nplsi1) then
                 if (NMASSP1(iplss+1).eq.NMASSP(ipls) .and.
@@ -5356,17 +5368,27 @@ cxpb  first one
             enddo
           enddo
         enddo
-        do JPLS = ns-nspecies+1, NPLSI
-          ib = (ns1-nspecies1) + JPLS-(ns-nspecies)
-          NMASSP1(ib) = NMASSP(JPLS)
-          NCHARP1(ib) = NCHARP(JPLS)
-          NCHRGP1(ib) = NCHRGP(JPLS)
-          ipls1(jpls) = ib
-          isp(ib) = jpls
-          e_bundle_start(ib) = jpls
-          e_bundle_end(ib) = jpls
-          e_bundle_contr(ib,jpls) = 1.0_R8
+        ib = ns1-nspecies1
+        do JPLS = 1, NPLSI
+          if (index(TEXTP(JPLS),'(B)').GT.0) then
+            ib = ib + 1
+            NMASSP1(ib) = NMASSP(JPLS)
+            NCHARP1(ib) = NCHARP(JPLS)
+            NCHRGP1(ib) = NCHRGP(JPLS)
+            zemin1(ib) = NCHRGP(JPLS)
+            zemax1(ib) = NCHRGP(JPLS)
+            ipls1(jpls) = ib
+            isp(ib) = jpls
+            e_bundle_start(ib) = jpls
+            e_bundle_end(ib) = jpls
+            e_bundle_contr(ib,jpls) = 1.0_R8
+          end if
         end do
+        write(hlp_frm,'(a,i3,a)') '(a,3x,',nplsi1,'(1x,i4))'
+        write(*,hlp_frm) ' e_bundle_start: ',
+     .   (e_bundle_start(is),is=1,nplsi1)
+        write(*,hlp_frm) ' e_bundle_end  : ',
+     .   (e_bundle_end(is),is=1,nplsi1)
         if (.not.same_bundling) then
           write(*,*) 'e_bundle_contr:'
           write(hlp_frm,'(a,i3,a)') '(3x,',nplsi,'(1x,i4))'
@@ -8186,16 +8208,13 @@ C  SKIP READING REST OF THIS BLOCK
      .     (nplsi,nplsi1,e_bundle_contr,FCTE,FCTE1,3)
           call e_bundle_transmit_r
      .     (nplsi,nplsi1,e_bundle_contr,BMASS,BMASS1,3)
-          DO I=1,NPLSI
-            IF (I.GT.(NS-NSPECIES)) THEN
-              IFLB1(I-(NS-NSPECIES)+(NS1-NSPECIES1))=IFLB(I)
-              FCTE1(I-(NS-NSPECIES)+(NS1-NSPECIES1))=FCTE(I)
-              BMASS1(I-(NS-NSPECIES)+(NS1-NSPECIES1))=BMASS(I)
-              LKINDP1(I-(NS-NSPECIES)+(NS1-NSPECIES1))=LKINDP(I)
-            ELSEIF (ipls1(I).GT.0) THEN
-              IF (LKINDP(I).GT.0 .AND. LKINDP(I).LE.NATMI) THEN
-                LKINDP1(IPLS1(I))=IATM1(LKINDP(I))
-              END IF
+          call e_bundle_transmit_i
+     .     (nplsi,nplsi1,e_bundle_contr,IFLB,IFLB1,3)
+          call e_bundle_transmit_i
+     .     (nplsi,nplsi1,e_bundle_contr,LKINDP,LKINDP1,3)
+          DO I=1,NPLSI1
+            IF (LKINDP1(I).GT.0 .AND. LKINDP1(I).LE.NATMI) THEN
+              LKINDP1(I)=IATM1(LKINDP1(I))
             END IF
           END DO
           DO I=1,NPLSI1
