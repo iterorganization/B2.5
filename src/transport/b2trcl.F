@@ -620,8 +620,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 *   ..apply flux limit to cvsa
       cflmv = cflim(2)
       do is = 0, ns-1
-       call b2tlmv (nCv, nFc, is, cflmv, geo, mpg, pl%na(1,is), pl%ti, 
-     &   pl%ua(1,is), cvsa(1,0,is), cvsahz(1,0,is), fllimvisc(1,is))
+       call b2tlmv (nCv, nFc, nVx, is, cflmv, geo, mpg, pl%na(1,is),
+     &   pl%ti, pl%ua(1,is), cvsa(1,0,is), cvsahz(1,0,is),
+     &   fllimvisc(1,is))
       enddo
 *   .. save the classical transport coefficients
       csig_cl = csig
