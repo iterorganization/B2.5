@@ -2070,7 +2070,7 @@ c dpc
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=16: Summed value is ', SCONPAR(IS)
               NAS = 0.0_R8
               VS = 0.0_R8
               DO IBW=IB,NBC
@@ -2112,7 +2112,7 @@ c dpc
 !              NAS = NAS *
 !     &         (1.0_R8-max(-bc_ref,min(bc_ref,T0)))
               write(*,'(a,es14.7,a,es14.7,a,es14.7,a,i3)')
-     &         ' BCCON=16: NAS=',NAS,' totflux=',totflux,
+     &         'NAS=',NAS,' totflux=',totflux,
      &         ' SCONPAR=',SCONPAR(IS),' IS=',IS
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
@@ -2255,7 +2255,7 @@ c dpc
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=19: Summed value is ', SCONPAR(IS)
               NAS = 0.0_R8
               VS = 0.0_R8
               DO IBW=IB,NBC
@@ -2331,7 +2331,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           max(abs(totfluxn+totfluxi),abs(SCONPAR(IS))))
               write(*,'(a,es14.7,a,es14.7,a,es14.7,a,es14.7,a,es14.7)')
-     *         ' BCCON=19: NAS=',NAS,' totfluxn=',totfluxn,
+     *         'NAS=',NAS,' totfluxn=',totfluxn,
      &         ' totfluxi=',totfluxi,' SCONPAR=',SCONPAR(IS),
      &         ' totfluxn+totfluxi=',totfluxn+totfluxi
               DO IBW=IB,NBC
@@ -2627,7 +2627,7 @@ cxpb Careful here because of BC number clash
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=22: Summed value is ', SCONPAR(IS)
               totflux = 0.0_R8
               t0=0.0e0_R8   ! Volume between two surfaces             !lk 12.12.12 {
               t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
@@ -2670,7 +2670,7 @@ cxpb Careful here because of BC number clash
 !              NAS = NA((BCEND(IB)+BCSTART(IB))/2,BCPOS(IB),is) *
 !     &         (1.0_R8-max(-bc_ref,min(bc_ref,T0)))
               write(*,'(a,es14.7,a,es14.7,a,es14.7,a,i3)')
-     .         ' BCCON=22: NAS=',NAS,' totflux=',totflux,
+     .         'NAS=',NAS,' totflux=',totflux,
      &         ' SCONPAR=',SCONPAR(IS),' IS=',IS
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
@@ -2774,7 +2774,7 @@ cxpb Careful here because of BC number clash
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=23: Summed value is ', SCONPAR(IS)
               totfluxn = 0.0_R8
               totfluxi = 0.0_R8
               t0=0.0e0_R8   ! Volume between two surfaces               !lk 12.12.12 {
@@ -2838,7 +2838,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))
               write(*,'(5(a,es14.7))')
-     *          ' BCCON=23: NAS=',NAS,' totfluxn=',totfluxn,
+     *          'NAS=',NAS,' totfluxn=',totfluxn,
      &          ' totfluxi=',totfluxi,' SCONPAR=', SCONPAR(IS),
      &          ' totfluxn+totfluxi=',totfluxn+totfluxi
               DO IBW=IB,NBC
@@ -3150,7 +3150,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=26: Summed value is ', SCONPAR(IS)
               totflux = 0.0_R8
               t0=0.0e0_R8   ! Volume between two surfaces               !lk 12.12.12 {
               t1=0.0e0_R8   ! Volume-averaged density on previous surface
@@ -3189,7 +3189,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &           (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
      &             max(abs(totflux),abs(SCONPAR(IS))))
               write(*,'(a,es14.7,a,es14.7,a,es14.7,a,i3)')
-     .         ' BCCON=26: NAS=',NAS,' totflux=',totflux,
+     .         'NAS=',NAS,' totflux=',totflux,
      .         ' SCONPAR=',SCONPAR(IS),' IS=',IS
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
@@ -3282,7 +3282,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=27: Summed value is ', SCONPAR(IS)
               totfluxn = 0.0_R8
               totfluxi = 0.0_R8
               t0=0.0e0_R8   ! Volume between two surfaces              !lk 12.12.12 {
@@ -3363,7 +3363,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))
               write(*,'(5(a,es14.7))')
-     *         ' BCCON=27: NAS=',NAS,' totfluxn=',totfluxn,
+     *         'NAS=',NAS,' totfluxn=',totfluxn,
      &         ' totfluxi=',totfluxi,' SCONPAR=',SCONPAR(IS),
      &         ' totfluxn+totfluxi=',totfluxn+totfluxi
               DO IBW=IB,NBC
@@ -5793,7 +5793,7 @@ cxpb code segment analog to b2tfhe
                   endif
                 END DO
               endif
-              write(*,*) ' Summed value is ', SENEPAR
+              write(*,*) 'BCENE=16: Summed value is ', SENEPAR
               TES = 0.0_R8
               volsum = 0.0_R8
               DO IBW=IB,NBC
@@ -5846,7 +5846,7 @@ cxpb code segment analog to b2tfhe
      &         (1.0_R8-bc_ref_te*(totflux-SENEPAR)/                     !srv 11.04.13
      &           max(abs(totflux),SENEPAR))
               write(*,'(3(a,es14.7))')
-     &         ' BCENE=16: TES=',TES/ev,' totflux=',totflux,
+     &         'TES=',TES/ev,' totflux=',totflux,
      &         ' SENEPAR=',SENEPAR
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
@@ -7707,7 +7707,7 @@ cxpb          endif
                  endif
                ENDDO
              endif
-             write(*,*) ' Summed value is ', SENIPAR
+             write(*,*) 'BCENI=16: Summed value is ', SENIPAR
              TIS = 0.0_R8
              NIVS = 0.0_R8
              DO IBW=IB,NBC
@@ -7762,7 +7762,7 @@ cxpb          endif
      &         (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/                     !srv 11.04.13
      &           max(abs(totflux),SENIPAR))
              write(*,'(3(a,es14.7))')
-     &         ' BCENI=16: TIS=',TIS/ev,' totflux=',totflux,
+     &         'TIS=',TIS/ev,' totflux=',totflux,
      &         ' SENIPAR=',SENIPAR
              DO IBW=IB,NBC
                IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
@@ -8349,7 +8349,7 @@ cxpb Careful here because of BC number clash
               endif
             ENDDO
           endif
-          write(*,*) ' Summed value is ', SENIPAR
+          write(*,*) 'BCENI=24: Summed value is ', SENIPAR
 
           IF(BCCHAR(IB).EQ.'S' .and.
      $     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
@@ -8423,7 +8423,7 @@ cxpb Careful here because of BC number clash
      &          (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/
      &            max(abs(totflux),SENIPAR))
             write(*,'(3(a,es14.7))')
-     &        ' BCENI=24: TIS=',TIS/ev,' totflux=',totflux,
+     &        'TIS=',TIS/ev,' totflux=',totflux,
      &        ' SENIPAR=',SENIPAR
             DO IBW=IB,NBC
               IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
@@ -8689,7 +8689,7 @@ cxpb Careful here because of BC number clash
                 endif
               ENDDO
             endif
-            write(*,*) ' Summed value is ', SENIPAR
+            write(*,*) 'BCENI=27: Summed value is ', SENIPAR
             TIS = 0.0_R8 ! Poloidally density-averaged ion temperature in the boundary cell
             NIVS = 0.0_R8
             t0=0.0e0_R8   ! Volume                                      !lk 12.12.12 {
@@ -8748,7 +8748,7 @@ cxpb Careful here because of BC number clash
      &          (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/
      &            max(abs(totflux),SENIPAR))
             write(*,'(3(a,es14.7))')
-     &        ' BCENI=27: TIS=',TIS/ev,' totflux=',totflux,
+     &        'TIS=',TIS/ev,' totflux=',totflux,
      &        ' SENIPAR=',SENIPAR
             DO IBW=IB,NBC
               IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN

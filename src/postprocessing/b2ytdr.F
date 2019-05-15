@@ -855,7 +855,8 @@ c 2002-09-11: logic revised
       CALL EIRENE_ALLOC_CESTIM(1)
       CALL EIRENE_ALLOC_COMUSR(1)
       CALL EIRENE_ALLOC_COUTAU
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_ALLOC_CINIT
       CALL EIRENE_SETPRM
       CALL EIRENE_ALLOC_CESTIM(2)
@@ -3666,7 +3667,7 @@ cxpb  Start reading input.dat file
           call fix_logical_input(zeile,16)
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,nltrimesh
+                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,NLTRIMESH
           ELSE
             READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
@@ -3677,7 +3678,7 @@ cxpb  Start reading input.dat file
           call fix_logical_input(zeile,16)
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,nltrimesh
+                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,NLTRIMESH
           ELSE
             READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
@@ -3701,7 +3702,8 @@ cxpb  Start reading input.dat file
         filename=fort_lc//'33'
         inquire(file=filename,exist=NLWRMSH)
         ldum(13)=NLWRMSH
-        WRITE(IUNOT,6665) ldum(0:15)
+        NLTRIMESH = ldum(15)
+        WRITE(IUNOT,6665) ldum(0:14) ! NLTRIMESH now moved to block 14
         READ (IUNIN,'(A80)') ZEILE
         I1 = INDEX(ZEILE,'CFILE')
         IF (I1.EQ.0) THEN
@@ -8626,7 +8628,18 @@ cxpb Read first, transform and rewrite
         END IF
  1110   READ (IUNIN,'(A80)') ZEILE
         call fix_logical_input(zeile,35)
-        WRITE(IUNOT,'(A80)') ZEILE
+        READ (ZEILE,6665) ldum(1:35)
+        if (b2fstate_version.le.'03.000.006') then
+! Move TRCHKTIM from position 35 to position 26
+          ldum(0) = ldum(35)
+          do i = 34, 26, -1
+            ldum(i+1) = ldum(i)
+          end do
+          ldum(26) = ldum(0)
+        end if
+! Merge usage of TRCDBGG and TRCGRD
+        ldum(6) = ldum(6).or.ldum(33)
+        WRITE(IUNOT,6665) ldum(1:35)
         IF (ZEILE(1:1) .EQ. '*') GOTO 1110
         allocate(TRCSR1(0:NSTRA1+1))
         DO I = 0, NSTRA, 60
@@ -9343,9 +9356,10 @@ C  SKIP READING REST OF THIS BLOCK
  3020     CONTINUE
         ELSE IF (NMODE.NE.0) THEN
           READ (IUNIN,'(A72)') ZEILE
-          call fix_logical_input(zeile,3)
-          READ (ZEILE,6665) ldum(0:2) ! LSYMET,LBALAN,LCOARSE
-          WRITE(IUNOT,6665) ldum(0:2)
+          call fix_logical_input(zeile,4)
+          READ (ZEILE,6665) ldum(0:3) ! LSYMET,LBALAN,LCOARSE,NLTRIMESH
+          IF (NLTRIMESH) ldum(3)=.true.
+          WRITE(IUNOT,6665) ldum(0:3)
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(9I6)') idum(0:8) ! NFLA,NCUTB,NCUTL,IMF,
                                          ! ntrfrm,nfull,ibrad,ibpol,ibtor
