@@ -30,7 +30,6 @@
      *   dtim, rxf
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type (B2StateExt), intent (in) :: st_ext
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
@@ -39,6 +38,7 @@
       type (B2RatesWork), intent (inout) :: rtw
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
+      type (B2StateExt), intent (inout) :: st_ext
       type (B2PlasmaSnapshot), intent (inout) :: psnc
 *   ..output arguments                                                    !xpb
       integer ierr

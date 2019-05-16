@@ -37,9 +37,9 @@
      *  dtim
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type (B2StateExt), intent (in) :: st_ext
 *   ..input/output arguments
       type (B2State), intent (inout) :: st
+      type (B2StateExt), intent (inout) :: st_ext
 *   ..output arguments (unspecified on entry)
       integer ierr
 *   ..common blocks

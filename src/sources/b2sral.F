@@ -31,12 +31,12 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
-      type (B2StateExt), intent (in) :: st_ext
 *   ..input/output arguments
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (inout) :: rt
       type (B2RatesWork), intent (inout) :: rtw
       type (B2Coeff), intent (inout) :: co
+      type (B2StateExt), intent (inout) :: st_ext
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
       logical wrong_flow                                                 !xpb
