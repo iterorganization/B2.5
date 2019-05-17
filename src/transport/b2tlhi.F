@@ -55,7 +55,7 @@ cwdk 10.03.16 Divide by ni*ti at cell faces, so chvimx contains the same informa
 c           as case b2tqca_model.eq.1
 c           Removes need for different treatment later on in the code (b2tfhi), and 
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
-        chvimx(iFc) = cflmi*geo%fcS(iFc)*geo%fcQalf(iFc,0)*
+        chvimx(iFc) = cflmi*geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))*
      &   (nirm(mpg%fcCv(iFc,2))*pit(mpg%fcCv(iFc,2))*sqrt(t0/mp)*t0 + 
      &    nirm(mpg%fcCv(iFc,1))*pit(mpg%fcCv(iFc,1))*sqrt(t1/mp)*t1)/
      &   ((ni(mpg%fcCv(iFc,1),0)+ni_ext(mpg%fcCv(iFc,1),0)+

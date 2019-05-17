@@ -529,15 +529,16 @@ csw 13mar2012
         do iFc = 1, nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c            if(.not.on_closed_surface(ix,iy)) then                         !lk 06.05.07
-!WG_TODO           if(core_cond_limit.ne.0.or.
-!     &        .not.on_closed_surface(ix,iy)) then
-            flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
-     &                              dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
-            t0 = chce(iFc,0)*abs(dte(iFc))/(flomx*max(
-     &        pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + cutlo)
-            fllim_ke(iFc)=1.0_R8/(1.0e0_R8+t0)
-            chce(iFc,0)=chce(iFc,0)*fllim_ke(iFc)
-!WG_TODO           endif
+         if(core_cond_limit.ne.0.or.
+     &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
+          flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
+     &                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
+          t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
+     &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + cutlo)
+          fllim_ke(iFc)=1.0_R8/(1.0e0_R8+t0)
+          chce(iFc,0)=chce(iFc,0)*fllim_ke(iFc)
+         endif
         enddo
        endif
 *   .. apply the conductive limit of parallel ion heat flux
@@ -545,15 +546,16 @@ c            if(.not.on_closed_surface(ix,iy)) then                         !lk 
         do iFc = 1,nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c          if(.not.on_closed_surface(ix,iy)) then                           !lk 06.05.07
-!WG_TODO           if(core_cond_limit.ne.0.or.
-!     &        .not.on_closed_surface(ix,iy)) then
-            flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
-     &                             +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
-            t0 = chci(iFc,0)*abs(dti(iFc))/(flomx*max(
-     &        pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + cutlo)
-            fllim_ki(iFc) = 1.0_R8/(1.0e0_R8+t0)
-            chci(iFc,0)=chci(iFc,0)*fllim_ki(iFc)
-!WG_TODO           endif
+         if(core_cond_limit.ne.0.or.
+     &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
+          flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
+     &                           +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
+          t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
+     &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + cutlo)
+          fllim_ki(iFc) = 1.0_R8/(1.0e0_R8+t0)
+          chci(iFc,0)=chci(iFc,0)*fllim_ki(iFc)
+         endif
         enddo
        endif
       endif                                                               !srv 16.06.08 }
@@ -561,22 +563,24 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       if(style.ne.2) then
        if(cflim(0).ne.0.0e0_R8) then
         do iFc = 1, nFc
-!WG_TODO             if(.not.on_closed_surface(ix,iy)) then
+         if(.not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
             flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
      & 	                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
-            t0 = wrk(iFc)*abs(dte(iFc))/(flomx*max(
+            t0 = abs(wrk(iFc)*dte(iFc))/(flomx*max(
      & 	      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + cutlo)
             fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
             calf(iFc,0)=calf(iFc,0)*fllim_al(iFc)            !srv 13.01.17
-!WG_TODO            alfx_c(iFc)=alfx_c(iFc)*fllim_al(iFc)                !iyv 19.11.13 !srv 08.10.14
-!WG_TODO             endif
+!WG_TODO            alfx_c(iCv)=alfx_c(iCv)*fllim_al(iCv)                !iyv 19.11.13 !srv 08.10.14
+         endif
         enddo
        endif
       else
        if(cflim(3).ne.0.0e0_R8) then
 *   ..apply flux limit to calf at cell faces
         do iFc = 1, nFc
-!WG_TODO           if(.not.on_closed_surface(ix,iy)) then
+         if(.not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
             jemax = sqrt(
      &       (pl%te(mpg%fcCv(iFc,1))+pl%te(mpg%fcCv(iFc,2)))/2.0_R8/me)*
      &        qe*(dv%ne(mpg%fcCv(iFc,1))+dv%ne(mpg%fcCv(iFc,2)))/2.0_R8*
@@ -584,7 +588,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             t0 = abs(calf(iFc,0)*dte(iFc))/(cflim(3)*jemax + cutlo)
             fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
             calf(iFc,0)=calf(iFc,0)*fllim_al(iFc)                !srv 13.01.17
-!WG_TODO           endif
+         endif
         enddo
 *   ..apply flux limit to alfx_c at cell centers
 #ifdef WG_TODO

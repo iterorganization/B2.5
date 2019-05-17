@@ -59,7 +59,7 @@ cwdk 10.03.16 Divide by ne*te at cell faces, so chvemx contains the same informa
 c           as case b2tqce_model.eq.1
 c           Removes need for different treatment later on in the code (b2tfhe), and 
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
-	  chvemx(iFc) = cflme * geo%fcS(iFc) * geo%fcQalf(iFc,0) *
+	  chvemx(iFc) = cflme * geo%fcS(iFc) * abs(geo%fcQalf(iFc,0)) *
      .	     (ne(mpg%fcCv(iFc,2))*pit(mpg%fcCv(iFc,2))*sqrt(t0/me)*t0 +
      .	      ne(mpg%fcCv(iFc,1))*pit(mpg%fcCv(iFc,1))*sqrt(t1/me)*t1)/
      .       ((ne(mpg%fcCv(iFc,1))+ne(mpg%fcCv(iFc,2)))*max(t0,t1))  
