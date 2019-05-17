@@ -50,6 +50,7 @@
 
       call sfill(nFc*2*ns, 1.0_R8, flc, 1)
       call sfill(2, 1.0_R8, maxfluxlimit, 1)
+
 *   ..nothing done if alpha.eq.0
       if (alpha.ne.0.0_R8) then
        do is = 0, ns-1
@@ -62,21 +63,21 @@
            t0 = (ti(mpg%fcCv(iFc,1)) + ti(mpg%fcCv(iFc,2)))/2.0_R8
            t1 = (na(mpg%fcCv(iFc,1),is) + na(mpg%fcCv(iFc,2),is))/2.0_R8
 *    ..poloidal
-           dpb = cdpa(iFc,0,is)*dpbf(iFc,0)
+           dpb = abs(cdpa(iFc,0,is)*dpbf(iFc,0))
            vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp))) *
-     &       geo%fcS(iFc)*geo%fcQalf(iFc,0)*fcHz(iFc)
+     &       geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))*fcHz(iFc)
            t2 = 1.0_R8/(1.0_R8 + 
-     &       abs(dpb/(alpha*vbar/4.0e0_R8*t1 + cutlo))**gamma)
+     &       (dpb/(alpha*vbar/4.0e0_R8*t1 + cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
            cdpa(iFc,0,is) = cdpa(iFc,0,is)*t2
            flc(iFc,0,is) = t2
            maxfluxlimit(0)=max(maxfluxlimit(0),t2)
 *    ..perpendicular
-           dpb = cdpa(iFc,1,is)*dpbf(iFc,1)
+           dpb = abs(cdpa(iFc,1,is)*dpbf(iFc,1))
            vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp))) *
-     &       geo%fcS(iFc)*geo%fcQalf(iFc,1)*fcHz(iFc)
+     &       geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))*fcHz(iFc)
            t2 = 1.0_R8/(1.0_R8 + 
-     &       abs(dpb/(alpha*vbar/4.0e0_R8*t1 + cutlo))**gamma)
+     &       (dpb/(alpha*vbar/4.0e0_R8*t1 + cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
            cdpa(iFc,1,is) = cdpa(iFc,1,is)*t2
            flc(iFc,1,is) = t2

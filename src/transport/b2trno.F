@@ -63,7 +63,7 @@
 
 *   ..local variables
       integer ncall, iCv, iFc, is
-      integer hcimx_flag, mode
+      integer mode
       integer, save :: iout = 0, iout_b2wdat = 0,                     !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
@@ -77,12 +77,12 @@
      &  csig_stoch(nFc), fchstoch(nFc),                               !lk 31.01.08
      &  chce_stoch(nFc)                                               !srv 20.09.17
       real (kind=R8) ::
-     *  hcimx(nCv,0:1,0:ns-1), wrk(nFc), wrk1(nFc,2), wrkv(nVx), 
+     *  wrk(nFc), wrk1(nFc,2), wrkv(nVx), 
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),          !srv 09.07.03 30.11.15
      3  flchz(nFc,0:1,0:ns-1),                            !srv 09.07.03 30.11.15
      1	pol_anom_scale
-      save ncall, pol_anom_scale, hcimx_flag, mode
+      save ncall, pol_anom_scale, mode
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -90,7 +90,7 @@
       external ipgetr, ipgeti
       external b2tqna, b2txcx, b2txcy, b2txcv, b2txsx, b2txsy
 *   ..initialisation
-      data ncall/0/, pol_anom_scale/1.0_R8/, hcimx_flag/1/, mode/1/
+      data ncall/0/, pol_anom_scale/1.0_R8/, mode/1/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -104,11 +104,9 @@
 *   ..read data on first call
       if (ncall.eq.0) then
         call ipgetr ('b2trno_pol_anom_scale', pol_anom_scale)
-        call ipgeti ('b2trno_hcimx_flag', hcimx_flag)
         call ipgeti ('b2tral_mode', mode)
         call ipgeti ('b2trno_flux_limit_to_dpa', flux_limit_to_dpa)
         call ipgeti ('b2trno_csig_an_style', csig_an_style)          !srv 15.06.08
-        call ipgeti ('b2tlh0_flux_limit_style', flux_limit_style)    !srv 07.12.15
         call ipgeti ('b2trno_iout', iout)                            !srv 17.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 19.05.10 {
         call ipgeti ('b2npco_iout', iout_b2npco)
@@ -153,25 +151,6 @@
       call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, geo, mpg,
      &  pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0, co%vma0, co%vsa0,
      &  co%hci0, co%hcib, co%hce0, co%sig0, co%alf0, hvi0, hve0)
-      if(flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then      !srv 07.12.15
-*   ..apply flux limit to neutrals contribution to hci
-      call xerrab('b2trno -- option to be adapted for WG')
-#ifdef WG_TODO
-      call b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ti,
-     &  co%hcib, co%chcb, hcimx, fllim0fhi)
-        if(hcimx_flag.eq.1) then
-          co%hcib(:,:)=hcimx(:,:,1,:)
-          do ix=-1,nx
-            do iy=-1,ny
-              hci0(ix,iy)=0.0_R8
-              do is=0,ns-1
-                co%hci0(ix,iy)=co%hci0(ix,iy)+co%hcib(ix,iy,is)
-              enddo
-            enddo
-          enddo
-        endif
-#endif
-      endif
 *   ..incorporate geometry
       do is = 0, ns-1
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
@@ -190,12 +169,10 @@
      &   co%vsa0(1,is), co%cvsa(1,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vsa0(1,is), co%cvsa(1,1,is))
-        if(flux_limit_style.eq.2) then                                !srv 07.12.15 {
-         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &    co%hcib(1,is), co%chcb(1,0,is))
-         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &    co%hcib(1,is), co%chcb(1,1,is))
-        endif                                                         !srv 07.12.15 }
+        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hcib(1,is), co%chcb(1,0,is))
+        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hcib(1,is), co%chcb(1,1,is))
       enddo
 
 *   ..incorporate geometry and hz                                     !srv 09.01.01
@@ -251,24 +228,6 @@
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS, 
      &  co%alf0, co%calf(1,1))
 
-      if(flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then       !srv 07.12.15
-      call xerrab('b2trno -- option to be adapted (removed!?) for WG')
-#ifdef WG_TODO
-csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
-        if(hcimx_flag .eq. 0) then
-          call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, co%hci0,
-     &     co%chci(-1,-1,0,0))
-          call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qs, co%hci0,
-     &     co%chci(-1,-1,0,1))
-        else
-          call b2txfx (nx, ny, ns, mode, vol, gs, hx, qz, hcimx, 
-     &     co%chci(-1,-1,0,0))
-          call b2txfy (nx, ny, ns, mode, vol, gs, hy, qz, hcimx, 
-     &     co%chci(-1,-1,1,1))
-        endif
-#endif
-      endif
-
 *   .. set csigx = 0 and calfx = 0
       if (csig_an_style.eq.1) then
         call sfill (nFc, 0.0e0_R8, co%csig(1,0), 1)
@@ -307,18 +266,10 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
             co%cdpahz(:,0,is) = co%cdpahz(:,0,is) * pol_anom_scale
             co%cvlahz(:,0,is) = co%cvlahz(:,0,is) * pol_anom_scale
             co%cvsahz(:,0,is) = co%cvsahz(:,0,is) * pol_anom_scale
-            if (flux_limit_style.eq.2) then                               !srv 07.12.15 {
-              co%chcb(:,0,is) = co%chcb(:,0,is) * pol_anom_scale
-            end if                                                        !srv 07.12.15 }
+            co%chcb(:,0,is) = co%chcb(:,0,is) * pol_anom_scale
           end if
         end do
         co%chce(:,0) = co%chce(:,0) * pol_anom_scale
-        if (flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then        !srv 07.12.15
-          call xerrab('b2trno -- option to be adapted for WG')
-#ifdef WG_TODO
-          chci(:,:,:,0) = chci(:,:,:,0) * pol_anom_scale
-#endif
-	endif                                                             !srv 07.12.15
         co%calf(:,0) = co%calf(:,0) * pol_anom_scale
         co%csig(:,0) = co%csig(:,0) * pol_anom_scale
       end if
@@ -336,15 +287,13 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
      &    pl%ti, rt%rza, co%cdpahz, flchz) 
       endif                                                               !srv 15.06.08 }
 
-      if (flux_limit_style.eq.2) then                                     !srv 07.12.15 {
 *   ..apply flux limit to neutrals contribution to chcb
-       call b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ti,
-     &   co%hcib, co%chcb, hcimx, co%fllim0fhi)
-     	co%chci = 0.0_R8
-        do is = 0, ns-1
-          co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
-        enddo 
-      endif                                                               !srv 07.12.15 }
+      call b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ti,
+     &  co%chcb, co%fllim0fhi)
+       co%chci = 0.0_R8
+      do is = 0, ns-1
+        co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
+      enddo 
 
 *    ..test sign of chce, chci
       call b2xvsg (nFc, co%chce(:,0)*geo%fcQalf(:,0), 1, 'chce', '.ge.')
