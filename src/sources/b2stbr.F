@@ -105,16 +105,16 @@
       integer ia, im, ip
       character ch3*3
       real (kind=R8) :: flxtmp(0:nx+1,0:ny+1),
+     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
      &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),     !IYS 27.01.17
      &  sna_eir_tot(nspecies), sna_puff(nspecies),
      &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),     !iyv 07.03.18 {
      &  t(nspecies), t01(nspecies)
 #endif
-      real (kind=R8) ::                                                 !srv 29.04.10 {
+      real (kind=R8) ::
      &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
-     &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),
-     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi)  !srv 29.04.10 }
+     &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3)
       real (kind=R8), allocatable, save :: t1(:)                        !iyv 07.03.18 }
       real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8,         !srv 12.04.08
      *                        sna_corr = 0.0_R8                         !iyv 07.03.18                        
@@ -416,8 +416,6 @@
       call sfill (n2*4*ns, 0.0_R8, smo0_eir, 1)
       call sfill (n2*4, 0.0_R8, she0_eir, 1)
       call sfill (n2*4, 0.0_R8, shi0_eir, 1)
-      fatm_eir = 0.0_R8
-      datm_eir = 0.0_R8                                            !srv 29.04.10 }
 
       sna_stbr_neut = 0.0
       sna_stbr_sput = 0.0
@@ -659,7 +657,9 @@ c   --> better solution wanted here..
 
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
-        call eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,   !srv 29.04.10 {
+        fatm_eir = 0.0_R8
+        datm_eir = 0.0_R8                                                !srv 29.04.10
+        call eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,      !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call)
 
