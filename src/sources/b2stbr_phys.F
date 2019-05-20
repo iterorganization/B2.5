@@ -81,8 +81,8 @@
 *.declarations
 
 *   ..local variables
-      integer n2, i, ix, iy, is, ib, istra, ncall, k,
-     * iwall, itargsp, zbulk
+      integer n2, i, ix, iy, is, ib, istra, ncall, iwall, itargsp, zbulk
+!     integer k
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
