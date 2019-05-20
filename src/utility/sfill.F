@@ -22,11 +22,9 @@
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
 
-#ifndef NO_OPENMP_SFILL
       do_parallel =
      &  (.not. in_parallel())
      &  .and. (n > 16384)
-#endif
 
 #ifdef WITH_FTIMINGS
       call timer%start("sfill")

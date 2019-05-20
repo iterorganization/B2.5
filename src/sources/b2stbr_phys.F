@@ -81,13 +81,14 @@
 *.declarations
 
 *   ..local variables
-      integer n2, i, ix, iy, is, ib, istra, ncall, k,
-     * iwall, itargsp, zbulk
+      integer n2, i, ix, iy, is, ib, istra, ncall, iwall, itargsp, zbulk
+!     integer k
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
-      character chns*3, chk*1                                        !srv 11.07.05
+      character chns*3
+!     character chk*1
       character*15 hlp_frm
       integer, allocatable :: flux_x(:), flux_y(:)
       real (kind=R8), allocatable :: area(:)

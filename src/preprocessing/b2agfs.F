@@ -1258,7 +1258,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
   701 format(19x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
   702 format(21x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
   710 format(18x,e17.0,14x,e17.0,1x,e17.0)
-  720 format(30x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0/)
+  720 format(32x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0/)
 
   990 continue
       write(*,*) 'Error: i,j ',i,j
