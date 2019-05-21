@@ -571,7 +571,7 @@ ctmp.dpc
            solving = .false.
            call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,  !srv 05.07.17
      &      solveee, solveei, solvepo, solvemo,
-     &      rxf, BoRiS, fac_ExB, hx, hy, qz, qs, vol, bb,
+     &      rxf, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
      &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09
      &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                  !srv 09.07.08
