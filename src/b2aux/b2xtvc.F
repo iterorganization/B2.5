@@ -787,10 +787,10 @@
         iya = jsep+1
         iym = jsep
         iyc = jsep1+1
-        ixa = rightcut(1)
-        ixb = rightcut(2)-1
-        ixc = rightcut1(1)
-        ixd = rightcut1(2)-1
+        ixa = rightcut(2)
+        ixb = rightcut(1)-1
+        ixc = rightcut1(2)
+        ixd = rightcut1(1)-1
         if (topcut(1).eq.topcut(2)) then
          ixm = rightcut(2)-1
          ixp = rightcut(1)
@@ -830,9 +830,14 @@
          wrk1(ixb+1,iya-1) = fun(ixp,iym)
          wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
          wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
-!!!! To be done !!!!
+         call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
+     .    xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
+     .    wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
          ixm = rightcut(2)-1
          ixp = rightcut(1)
+         iya = max(topcut(1),topcut(2))+1
+         iym = max(topcut(1),topcut(2))
+         iyc = max(topcut1(1),topcut1(2))+1
          iyb = ny-1
          iyp = ny-1
          iyd = ny1-1
