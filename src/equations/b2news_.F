@@ -736,10 +736,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  dv%fhe, dv%fhi, dv%kinrgy, rt%rpt, pl%te, pl%ti, pl%po,
      &  BoRiS, dv%fhm, dv%fhp, dv%fhj, dv%fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
-#ifdef WG_TODO
-      call b2tfcc (nx, ny, ns, hx, hy, vol, qs, na, te, ti, cdpa, 
-     &  floe, cone, floi, coni)
-#endif
+      call b2tfcc (nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt)
       if(ue_style.ne.2) then
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
        wrkf = -dv%fch_p(:,0)/(qe*(geo%fcPbs + cutlo))
