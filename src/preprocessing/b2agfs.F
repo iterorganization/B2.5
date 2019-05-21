@@ -1171,8 +1171,14 @@ c
             endif
           end if
           read (lun,710,end=990) upsi,crxs(i,j,0),crys(i,j,0)
-          read (lun,720,end=990) crxs(i,j,1),crys(i,j,1),
-     ,     crxs(i,j,2),crys(i,j,2)
+          read (lun,'(a)',end=990) uline
+          if (uline(32:32).eq.'(') then
+            read (uline,720) crxs(i,j,1),crys(i,j,1),
+     ,        crxs(i,j,2),crys(i,j,2)
+          else if (uline(30:30).eq.'(') then
+            read (uline,721) crxs(i,j,1),crys(i,j,1),
+     ,        crxs(i,j,2),crys(i,j,2)
+          end if
           if(uop) then
             print *,'*0* ',i,j,crxs(i,j,0),crys(i,j,0)
             print *,'*1* ',i,j,crxs(i,j,1),crys(i,j,1)
@@ -1259,6 +1265,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
   702 format(21x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
   710 format(18x,e17.0,14x,e17.0,1x,e17.0)
   720 format(32x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0/)
+  721 format(30x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0/)
 
   990 continue
       write(*,*) 'Error: i,j ',i,j
