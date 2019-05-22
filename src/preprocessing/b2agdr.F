@@ -98,6 +98,7 @@
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle
+      integer iFace, offset
       integer, save :: redef_qc = 0, qc_style = 1
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
