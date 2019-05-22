@@ -156,7 +156,7 @@
      *  pr(-1:nx,-1:ny), wdia(-1:nx,-1:ny), wrk0(-1:nx,-1:ny),
      *  uu(-1:nx,-1:ny,0:ns+ns_ext-1),
      *  sx(-1:nx,-1:ny), ud(-1:nx,-1:ny,0:ns-1),
-     *  sxhz(-1:nx,-1:ny), pz(-1:nx,-1:ny),                             !srv 24.08.08
+     *  sxhz(-1:nx,-1:ny), pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),            !srv 24.08.08
      &  sna0_no_mdf(-1:nx,-1:ny,0:1,0:ns-1)                             !srv 23.09.08
       real (kind=R8), save ::                                           !srv 16.02.12
      *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
@@ -431,6 +431,7 @@
       enddo                                                        !srv 22.01.02 }
 
       call b2xpro (nx, ny, ns, mp, am, na, ro)                     !srv 01.02.09
+      call b2xprz (nx, ny, ns, mp, am, na, rz)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       wdia(:,:)=(ne(:,:)*te(:,:)+ni(:,:,1)*ti(:,:))*bb(:,:,2)
       do is = 0, ns_ext-1
@@ -1799,9 +1800,9 @@ c dpc
                 S1 = ABS(
      1           PBS(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))
-                CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     .                  RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-!                CS=SQRT(BCINT(PR,NX,NY,IY,IB)/BCINT(RO,NX,NY,IY,IB))
+                CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     .                  RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+!                CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
@@ -1826,9 +1827,9 @@ c dpc
             ELSEIF(BCCHAR(IB).EQ.'E') THEN
               DO IY = 1, BC_LIST_SIZE(IB)
                 S1 = ABS(PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
-                CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     .                  RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-!                CS=SQRT(BCINT(PR,NX,NY,IY,IB)/BCINT(RO,NX,NY,IY,IB))
+                CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     .                  RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+!                CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
@@ -3411,7 +3412,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
           IF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               IF(MOMPAR(IS,IB,2).LT.0.5_R8) THEN
-                CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+                CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
                 UUOUT=MOMPAR(IS,IB,1)*CS*
      .           abs(wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
      .               wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3))
@@ -3482,7 +3483,7 @@ cxpb  and max(,,) statement for stability
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               IF(MOMPAR(IS,IB,2).LT.0.5_R8) THEN
-                CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+                CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
                 UUOUT=MOMPAR(IS,IB,1)*CS*
      .           abs(wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
      .               wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3))
@@ -4000,9 +4001,9 @@ cxpb  and max(,,) statement for stability
           endif
           IF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
-!              CS=SQRT(BCINT(PR,NX,NY,IY,IB)/BCINT(RO,NX,NY,IY,IB))
-              cs=sqrt(pr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &                ro(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+!              CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
+              cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
               s1hz = pbshz(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &                     rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0) !srv 11.01.13
               vwest=-cs*s1hz -                          !srv 17.02.04 19.02.08 11.01.13
@@ -4039,9 +4040,9 @@ cxpb  and max(,,) statement for stability
             END DO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
-!             CS=SQRT(BCINT(PR,NX,NY,IY,IB)/BCINT(RO,NX,NY,IY,IB))
-              cs=sqrt(pr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &                ro(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+!             CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
+              cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
               s1hz = pbshz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)      !srv 11.01.13
              veast = cs*s1hz-                                      !srv 17.02.04 19.02.08 25.04.08 { 11.01.13
      &          hz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
@@ -4489,7 +4490,7 @@ cxpb  and max(,,) statement for stability
         IF(BCCHAR(IB).EQ.'W') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
             IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
-              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))  !srv 01.02.09
+              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))  !srv 01.02.09
               UUOUT=abs(wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .                  wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3))*
      .         MOMPAR(ismain,IB,1)*CS
@@ -4597,7 +4598,7 @@ cxpb  and max(,,) statement for stability
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
             IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
-              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))  !srv 01.02.09
+              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))  !srv 01.02.09
               UUOUT=MOMPAR(ismain,IB,1)*CS*
      .         abs(wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .             wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3))
@@ -5578,9 +5579,9 @@ cxpb code segment analog to b2tfhe
           endif
           IF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17 {
-!            CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
-              CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &                RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+!            CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
+              CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
               if(bccon14_w(ib)) then                                    !srv 20.09.17 {
 *    .. apply bcene=15 according to the form of bccon=14
                 t0 = 0.0_R8
@@ -5620,9 +5621,9 @@ cxpb code segment analog to b2tfhe
             END DO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17
-!              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
-              CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &                RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+!              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
+              CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
               if(bccon14_e(ib)) then                                    !srv 20.09.17 {
 *    .. apply bcene=15 according to the form of bccon=14
                 t0 = 0.0_R8
@@ -5670,7 +5671,7 @@ cxpb code segment analog to b2tfhe
           endif
           IF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17
-!              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+!              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
               s1=abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &                   rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)) !srv 18.04.13 {
               vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
@@ -5698,8 +5699,8 @@ cxpb code segment analog to b2tfhe
      &            (1.0e0_R8-GAMMAE)*
      &            qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
               else                                                      !srv 27.02.13
-                cs=sqrt(pr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &                  ro(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+                cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
      &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
@@ -5716,7 +5717,7 @@ cxpb code segment analog to b2tfhe
             END DO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17
-!              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+!              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
               s1=abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))          !srv 18.04.13 {
               vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
               if(bccon14_e(ib)) then                                    !srv 20.09.17 {
@@ -5743,8 +5744,8 @@ cxpb code segment analog to b2tfhe
      &           (1.0e0_R8-GAMMAE)*qe*
      &           po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
               else                               !srv 27.02.13
-                cs=sqrt(pr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &                  ro(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+                cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
      &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
@@ -6566,7 +6567,7 @@ cxpb code segment analog to b2tfhe
         IF(BCCHAR(IB).EQ.'W') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
             IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
-              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))  !srv 01.02.09
+              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))  !srv 01.02.09
               UUOUT=MOMPAR(ismain,IB,1)*CS*
      .         abs(wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .             wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3))
@@ -6644,7 +6645,7 @@ cxpb code segment analog to b2tfhe
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
             IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
-              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))       !srv 01.02.09
+              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))       !srv 01.02.09
               UUOUT=MOMPAR(ismain,IB,1)*CS*
      .         abs(wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .             wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3))
@@ -7697,9 +7698,9 @@ cxpb          endif
         IF(BCCHAR(IB).EQ.'W') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
 !            SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=0.0_R8
-!            CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
-            CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &              RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+!            CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
+            CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &              RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
             if(bccon14_w(ib)) then                                      !srv 20.09.17 {
 *    .. apply bceni=15 according to the form of bccon=14
               t0 = 0.0_R8
@@ -7729,9 +7730,9 @@ cxpb          endif
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
 !            SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=0.0_R8
-!            CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
-            CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     .              RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+!            CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
+            CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     .              RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
             if(bccon14_e(ib)) then                                      !srv 20.09.17 {
 *    .. apply bceni=15 according to the form of bccon=14
               t0 = 0.0_R8
@@ -9554,8 +9555,8 @@ c              fchi=0.0_R8
             vte = sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
             wrong_flow=.false.
 *    ..set boundary condition in explicit form (the same form as fna)
-            CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &              RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &              RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
             t0 = 0.0e0_R8
             do is = 0, ns-1
               if(istyle_fchi.eq.1 .and. BCCON(IS,IB).eq.14) then        !srv 14.02.05 {
@@ -9676,8 +9677,8 @@ c              fchi=0.0_R8
 !     .       bcint(te,nx,ny,iy,ib))
             vte = sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
             wrong_flow=.false.
-            CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &              RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &              RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
             t0 = 0.0e0_R8
             do is = 0, ns-1
               if(istyle_fchi.eq.1 .and. BCCON(IS,IB).eq.14) then        !srv 14.02.05 {
