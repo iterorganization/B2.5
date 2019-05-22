@@ -231,7 +231,7 @@ c-----------------------------------------------------------------------
      ,  hlp_ne_he_c, hlp_ne_he_s
       real (kind=R8) ::
      *  d, e, s, x
-      real (kind=R8) :: pr(-1:nx,-1:ny), xdum(1)
+      real (kind=R8) :: pz(-1:nx,-1:ny), xdum(1)
       real (kind=R8) :: stim = 0.0_R8
       real (kind=R8) :: tdummy
       integer i, j, k, l, m, n, i0, is, ix, iy, js, nv, irt,
@@ -448,7 +448,7 @@ c***  (npfs_tmp, lpfs_tmp, hlp_arpfs)
                 k=2
               end if !}
               if(k.gt.0) then !{
-c              print *,'i,k,msns=',i,k,msns(1,i),msns(2,i) !###
+c                print *,'i,k,msns=',i,k,msns(1,i),msns(2,i) !###
                 do j=msns(1,i),msns(1,i)+msns(2,i)-1 !{
                   npfs_tmp(k)=npfs_tmp(k)+1
                   lpfs_tmp(npfs_tmp(k),k)=lsns(j)
@@ -665,7 +665,7 @@ c*** ... and separatrix
         hlp_ne_he_s=0.0_R8
         iy=jsep+1
 
-c      print *,'%% b2usrtrc: j_he_i,iy = ',j_he_i,iy !###
+c        print *,'%% b2usrtrc: j_he_i,iy = ',j_he_i,iy !###
 
         do ix=0,nx-1 !{
           if (on_closed_surface(ix,iy-1)) then  !{
@@ -846,8 +846,8 @@ c*** Outer divertor
           hlp_p=hlp_pi+hlp_po
         end if !}
 c<<<
-c      print '(a,1p,2i4,20e12.3)',' %%## m,n,hlp_so,hlp_hep,hlp_p: ',
-c     ,                                  m,n,hlp_so,hlp_hep,hlp_p
+c        print '(a,1p,2i4,20e12.3)',' %%## m,n,hlp_so,hlp_hep,hlp_p: ',
+c     ,                                    m,n,hlp_so,hlp_hep,hlp_p
 c>>>
         if(hlp_s.gt.0.0_R8) then !{
           hlp_ppfr=hlp_p/hlp_s
@@ -1247,15 +1247,15 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
       hlp_dod=0.0_R8
       hlp_isat=0.0_R8
       mgl3_tmp=0
-      call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
+      call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
 c      print *,'### print_isat=',print_isat    !###
       do k=1,4 !{
         if(itg_tmp(k).ne.-2) then !{
 c          print * !###
           d=1.e18_R8
           do iy=isp_tmp(k),ny-1 !{
-            e=2.0_R8*pr(itg_tmp(k),iy)
-            if(e.gt.0.0_R8) d=min(d,pr(imp_tmp(k),iy)/e)
+            e=2.0_R8*pz(itg_tmp(k),iy)
+            if(e.gt.0.0_R8) d=min(d,pz(imp_tmp(k),iy)/e)
 c            print *,'e,d=',e,d  !###
           end do !}
           hlp_dod(k)=d

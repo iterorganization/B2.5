@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=354,nfns=209,nsparameters=32,nelabels=36,
+      parameter(nlabels=355,nfns=209,nsparameters=32,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -98,8 +98,8 @@
      8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      ,
      9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
      *  'flke'    , 'flki'    , 'flal'    , 'flalc'   , 'b2eatcr' /
-      data labels(351:354) /
-     1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    /
+      data labels(351:355) /
+     1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    , 'pz'      /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -205,7 +205,7 @@
      3    'Nuclear charge (e)',
      4    'Poloidal mass flux (kg/s)',
      5    'Radial mass flux (kg/s)',
-     6    'Dynamic pressure (Pa)',
+     6    'Dynamic plasma pressure (Pa)',
      7    'Connection length (m)',
      8    'CR (m)',
      9    'CZ (m)',
@@ -485,11 +485,12 @@
      8    'Thermo-electric classical flux limit factor',
      9    'Thermo-electric coefficient limit factor',
      *    'Eirene atomic species index'/
-      data descriptions(351:354) /
+      data descriptions(351:355) /
      1    'Poloidal electron flux (s^{-1})',
      2    'Radial electron flux (s^{-1})',
      3    'Poloidal magnetic flux function (Wb)',
-     4    'Toroidal magnetic flux function (Wb)'/
+     4    'Toroidal magnetic flux function (Wb)',
+     5    'Plasma pressure (Pa)'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
      2    3,      3,      3,      3,      3,
@@ -567,8 +568,8 @@
      8    2,      2,      3,      3,      2,
      9    2,      2,      2,      2,      2,
      *    2,      2,      2,      2,      3/
-      data dimensions(351:354) /
-     1    2,      2,      2,      2/
+      data dimensions(351:355) /
+     1    2,      2,      2,      2,      2/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',

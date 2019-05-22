@@ -112,7 +112,7 @@ ctb..as the mean of the product does not equal the product of the means etc.
             call cfruin (iun, 3, idum, 'nx,ny,ns')
             call cfruch (iun, 120, lbli, 'label')
             call b2ruzd (iun, b2faveri_version, ns, 
-     &          zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
+     &         zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
 
             if (iaver_restart > 0) then
                call cfruin (iun, 1, idum, 'naver')

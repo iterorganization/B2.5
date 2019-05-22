@@ -112,10 +112,10 @@ c
      +  ndiv, nd_tmp, ndv_tmp,
      +  equdiv,
      +  prsup, prstg, flmup,
-     ,     flmtg, prsnu, prsmf,
-     ,     rsfrc, rlptg, rlmup,
-     ,     rlmtg, rlfnu, rlfmf,
-     ,     rlres,
+     ,  flmtg, prsnu, prsmf,
+     ,  rsfrc, rlptg, rlmup,
+     ,  rlmtg, rlfnu, rlfmf,
+     ,  rlres,
      +  hlp_div, hlp_hdv,
      +  lun,
      +  i, j, ic, is, ix, iy, nv,
@@ -140,10 +140,12 @@ c
       hlp_fo=0.0_R8
       pr=ne*te
       do is = 0, ns-1
+        if (is_neutral(is)) cycle
         pr(-1:nx,-1:ny)=pr(-1:nx,-1:ny)+
      .   na(-1:nx,-1:ny,is)*ti(-1:nx,-1:ny)
       end do
       do is = 0, ns_ext-1
+        if (is_ext_neutral(is)) cycle
         pr(-1:nx,-1:ny)=pr(-1:nx,-1:ny)+
      .   na_ext(-1:nx,-1:ny,is)*ta_ext(-1:nx,-1:ny,is)
       end do

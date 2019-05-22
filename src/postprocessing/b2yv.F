@@ -118,7 +118,7 @@
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data
       call b2ruzd (ninp(3), b2fstati_version,
-     & ns, zamin, zamax, zn, am, .true.)
+     &  ns, zamin, zamax, zn, am, .true.)
       lbc = -1
       lbr = -1
       ubc = ny

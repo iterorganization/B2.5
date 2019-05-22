@@ -112,8 +112,8 @@
      *  flubv(-1:nx,-1:ny,0:1),                                        !srv 11.09.09
      3  wrkf(-1:nx,-1:ny,0:1), aa5(-1:nx,-1:ny,-2:2),
      4  smb(-1:nx,-1:ny,0:3), flcb(-1:nx,-1:ny,0:1),
-     5  cvcb(-1:nx,-1:ny,0:1), ro(-1:nx,-1:ny),
-     6  pr(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
+     5  cvcb(-1:nx,-1:ny,0:1), ro(-1:nx,-1:ny), rz(-1:nx,-1:ny),
+     6  pr(-1:nx,-1:ny), pz(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
      7  ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
      8  ehxp(-1:nx,-1:ny), smt(-1:nx,-1:ny,0:3), cst,                  !srv 17.01.14
      9  flct(-1:nx,-1:ny,0:1), wrk1(-1:nx,-1:ny), wrks(-1:nx,-1:ny),
@@ -135,7 +135,8 @@
      *  med
       external subini, subend, xertst, ipgetr, sfill, b2scopy,
      &  b2sscal, b2saxpy
-      external b2xvsg, b2xvff, b2xpne, b2xpro, b2xppr,
+      external
+     &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,
      &  b2sifr, b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
@@ -233,12 +234,14 @@
         call b2xvsg (n2, smq(-1,-1,3,is), 1, 'smq 3', '.le.')
        enddo
       endif
-*   ..compute ne, ne2, ro, pr
+*   ..compute ne, ne2, ro, rz, pr, pz
       call b2xpni (nx, ny, ns, na, ni)
       call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
       call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
       call b2xpro (nx, ny, ns, mp, am, na, ro)
+      call b2xprz (nx, ny, ns, mp, am, na, rz)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
+      call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !srv 13.01.17 {
       call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
       do iy = -1, ny
@@ -453,12 +456,12 @@ cdjm Jan2017 update momentum source components for balance
        endif
 
 *    ..compute residual
-      if((solving.and.any(solvemo(is,0:nnreg(0))))
+       if((solving.and.any(solvemo(is,0:nnreg(0))))
      &            .or.get_residuals.eq.1) then                         !srv 22.05.18
-       call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
+        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
-       fmo(:,:,:,is)=wrkf
-      endif                                                            !srv 22.05.18
+        fmo(:,:,:,is)=wrkf
+       endif                                                           !srv 22.05.18
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
        if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 12.07.02 {
@@ -533,7 +536,7 @@ c    ..compare 5-pt stencil matrices
         if (new_matrix) call restart_ma28
 *    ..compute correction
         call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
-     &   vol, hx, hz, bb, rob, pb, ua(-1,-1,is),                       !srv 09.01.01
+     &   vol, hx, hz, bb, rob, rob, pb, pb, ua(-1,-1,is),              !srv 09.01.01
      &   smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
      &   pcca(-1,-1,0,is), aa5, wrk1, 'b2usmo_'//chns)
         last_solve_5(0:nnreg(0)) = solvemo(is,0:nnreg(0))
@@ -592,7 +595,7 @@ csw 21feb2014, execute simultaneous corrections always
        end do
        if (new_matrix) call restart_ma28
        call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,         !srv 04.07.08
-     &  vol, hx, hz, bb, ro, pr, wrk0, smt, flct, cvct,                !srv 09.01.01
+     &  vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,        !srv 09.01.01
      &  resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')          !srv 06.04.07
        last_solve_5(0:nnreg(0)) = solvemt(0:nnreg(0))
       else
@@ -630,7 +633,7 @@ csw 21feb2014, execute simultaneous corrections always
           do ix = -1,nx
             do is = 0, ns-1
               if (.not.is_neutral(is)) then
-                cst=sqrt(pr(ix,iy)/ro(ix,iy))                          !iyv 03.02.14
+                cst=sqrt(pz(ix,iy)/rz(ix,iy))                          !iyv 03.02.14
 !                cst=sqrt( (ti(ix,iy)+te(ix,iy)*rza(ix,iy,is))/
 !     *                                              ( am(is)*mp ))
                 if( abs(ua(ix,iy,is)) .gt. 3.0_R8*cst ) then

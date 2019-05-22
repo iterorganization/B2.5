@@ -246,7 +246,7 @@
 *   ..read parameters
       call cfruch (ninp(1), 120, lblmn, 'label')
       call b2ruzd (ninp(1), b2ftrack_version,
-     & ns, zamin, zamax, zn, am, .true.)
+     &  ns, zamin, zamax, zn, am, .true.)
 *   ..write label
       write (nout(0),'(/2x,a)') 'label for this calculation:'
       write (nout(0),'(/4x,a/4x,a)') lblmn(1:60), lblmn(61:120)
@@ -287,7 +287,7 @@
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *    ..compute log-log electron rate coefficients
       call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
-     &     rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
+     &  rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
 *   ..compute electron rate coefficients
       call ipgeti ('b2mndr_ismain', ismain)
       call xertst (0.le.ismain.and.ismain.lt.ns,
@@ -295,8 +295,8 @@
       call xertst (.not.is_neutral(ismain),
      . 'invalid main plasma species ismain; must not be neutral')
       call b2sqel (nx, ny, ns, ismain, ev, te,
-     &    rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
+     &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
+     &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 
 * ..produce plots
 *   ..activate graphics on nout(1)
