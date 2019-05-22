@@ -109,7 +109,7 @@
      &  ,nasum, naaverage(0:ns-1), bbsum, bbaverage                     !srv 22.01.02 18.10.04
       real (kind=R8) :: bzhzsum, bzhzaverage                            !lk 20.11.07
       real (kind=R8) ::
-     *  pz(nCv), wdia(nCv), wrk0(nCv),
+     *  wdia(nCv), wrk0(nCv),
      *  uu(nFc,0:ns+st_ext%ns-1),
      *  ud(nFc,0:ns-1), !sx(-1:nx,-1:ny), 
      *  pz(nCv), hzf(nFc), !sxhz(-1:nx,-1:ny),                          !srv 24.08.08
@@ -376,7 +376,7 @@
 cwdk  ro and pr based on charged particles only!
 cwdk  no neutral contribution to sound speed definition
       call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)             !srv 01.02.09
-      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
+!      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
       wdia=(dv%ne*pl%te+dv%ni(:,1)*pl%ti)*geo%cvBb(:,2)
       do is = 0, st_ext%ns-1
         if (.not.st_ext%is_neutral(is)) wdia=wdia+

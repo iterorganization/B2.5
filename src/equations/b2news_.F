@@ -96,8 +96,7 @@
       real (kind=R8), save :: na_min = 1.0e4_R8, na_new = 1.0e14_R8
       real (kind=R8) :: 
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3,
-     1  t0, vis_per,                                                     !srv 09.07.99 06.07.00
-     &  pz(nCv)                                                          !srv 18.01.02 30.06.03 03.11.17
+     1  t0, vis_per                                                      !srv 09.07.99 06.07.00
 !     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
       real (kind=R8) ::                                                  !xpb
 !     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
@@ -107,7 +106,7 @@
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
      &  ue(nCv), lnlam(nCv), zeff(nCv),                                  !srv 05.07.17
-     &  pr(nCv), ro(nCv), cssb(nFc,0:1),                                 !iyv 06.02.14
+     &  pz(nCv), rz(nCv), cssb(nFc,0:1),                                 !iyv 06.02.14
      &  nep(nCv), wrk0(nCv), wrk1(nCv),
      &  zero(nCv), zerof(nFc,0:1), wrkf(nFc),
      &  respo0(nCv), corpo0(nCv)
@@ -337,9 +336,9 @@ csw 01oct2012 initialize potential if necessary
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                              !srv 01.10.99
       if(ion_vlct_restrict .ne. 0 ) then                                 !iyv 06.02.14
-        call b2xpro (nx, ny, ns, mp, am, na, ro)
-        call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-        wrk0(:,:)=sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+        call b2xprz (nx, ny, ns, mp, am, na, rz)
+        call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+        wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
         call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
         call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,cssb(-1,-1,1))
       else
@@ -654,9 +653,9 @@ cwdk of potential equation...
 !          call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,    !srv 10.10.17
 !     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
           if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
-            call b2xpro (nx, ny, ns, mp, am, na, ro)
-            call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-            wrk0(:,:)=sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+            call b2xprz (nx, ny, ns, mp, am, na, rz)
+            call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+            wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
             call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
             call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,
      &                    cssb(-1,-1,1))

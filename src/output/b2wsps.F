@@ -57,7 +57,7 @@
      * fni(-1:nx,-1:ny,0:1,0:1), fne(-1:nx,-1:ny,0:1,0:1),
      1 wrk1(-1:nx,-1:ny), wrk0(-1:nx,-1:ny),
      2 ni(-1:nx,-1:ny,0:1), 
-     3 ro(-1:nx,-1:ny), pr(-1:nx,-1:ny)
+     3 ro(-1:nx,-1:ny), rz(-1:nx,-1:ny), pr(-1:nx,-1:ny)
 *   ..procedures
       external subini, subend, xertst
       external b2xpni, b2xppr, b2xpro, b2xpfe, b2xpfi, b2wsst
@@ -79,6 +79,7 @@
       call b2xpni (nx, ny, ns, na, ni)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       call b2xpro (nx, ny, ns, mp, am, na, ro)
+      call b2xprz (nx, ny, ns, mp, am, na, rz)
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
      &  rza, za_ext, fna, fa_ext, fch, fne)
       call b2xpfi (nx, ny, ns, fna, fni)
@@ -87,7 +88,7 @@
      &  crx, cry, bb, vol,
      &  hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height,
      &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ni,
-     &  pr, ro, fne, fni, wrk0, wrk1)
+     &  pr, ro, rz, fne, fni, wrk0, wrk1)
 
 * ..return
       call subend ()

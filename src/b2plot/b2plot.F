@@ -83,7 +83,7 @@ c
       real (kind=R8) ::
      *   pr(-1:nxd,-1:nyd),
      3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
-     4   hy1(-1:nxd,-1:nyd),
+     4   pz(-1:nxd,-1:nyd), hy1(-1:nxd,-1:nyd),
      4   energy_balance_old(-1:nxd,-1:nyd),
      3   particle_balance(-1:nxd,-1:nyd,0:nsd_local-1), pb0,
      4   bas_vis_piece(-1:nxd,-1:nyd,0:nsd_local-1),
@@ -1140,6 +1140,7 @@ c
       end do
       
       call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
+      call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
       call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
       cr=0.25_R8*sum(crx,3)
       cz=0.25_R8*sum(cry,3)
@@ -1599,6 +1600,10 @@ c
           description='Static pressure (Pa)'
           nz=1
           call copy(pr,1.0_R8,nz,textbl)
+        case('pz')
+          description='Plasma pressure (Pa)'
+          nz=1
+          call copy(pz,1.0_R8,nz,textbl)
         case('ne')
           description='Electron density (m^{-3})'
           nz=1
@@ -1907,16 +1912,18 @@ c
               vth=0.0_R8
               vel=0.0_R8
               do is=0,ns-1
+                if (is_neutral(is)) cycle
                 vth=vth+na(ix,iy,is)*
      .           (rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))/
-     .           (am(is)*(ni(ix,iy,0)+ni_ext(ix,iy,0))*mp)
+     .           (am(is)*(ni(ix,iy,1)+ni_ext(ix,iy,1))*mp)
                 vel=vel+ua(ix,iy,is)*rza(ix,iy,is)*na(ix,iy,is)/
      .            ne(ix,iy)
               end do
               do is=0,ns_ext-1
+                if (is_ext_neutral(is)) cycle
                 vth=vth+na_ext(ix,iy,is)*
      .           (za_ext(ix,iy,is)*te(ix,iy)+ta_ext(ix,iy,is))/
-     .           (am_ext(is)*(ni(ix,iy,0)+ni_ext(ix,iy,0))*mp)
+     .           (am_ext(is)*(ni(ix,iy,1)+ni_ext(ix,iy,1))*mp)
                 vel=vel+
      .            ua_ext(ix,iy,is)*za_ext(ix,iy,is)*na_ext(ix,iy,is)/
      .            ne(ix,iy)
@@ -2279,24 +2286,26 @@ c
           end do
           call copy(mach,1.0_R8,nz,textpl)
         case ('p*')
-          description='Dynamic pressure (Pa)'
+          description='Dynamic plasma pressure (Pa)'
           nz=1
           do iy=-1,ny
             do ix=-1,nx
               mass=0.0_R8
               vel=0.0_R8
               do is=0,ns-1
+                if (is_neutral(is)) cycle
                 mass=mass+mp*am(is)*na(ix,iy,is)
                 vel=vel+rza(ix,iy,is)*na(ix,iy,is)*ua(ix,iy,is)
               end do
               do is=0,ns_ext-1
+                if (is_ext_neutral(is)) cycle
                 mass=mass+mp*am_ext(is)*na_ext(ix,iy,is)
                 vel=vel+
      .           za_ext(ix,iy,is)*na_ext(ix,iy,is)*ua_ext(ix,iy,is)
               end do
-              vth=sqrt(pr(ix,iy)/mass)
+              vth=sqrt(pz(ix,iy)/mass)
               mach(ix,iy,0)=vel/(vth*ne(ix,iy))
-              mach(ix,iy,0)=pr(ix,iy)*(1.0_R8+mach(ix,iy,0)**2)
+              mach(ix,iy,0)=pz(ix,iy)*(1.0_R8+mach(ix,iy,0)**2)
             end do
           end do
           sumjxa=0.0_R8
@@ -2482,8 +2491,12 @@ c
           do is=0,ns-1
             do ix=-1,nx
               do iy=-1,ny
-                mach(ix,iy,is)=bb(ix,iy,3)/
-     1           sqrt(mu0*na(ix,iy,is)*am(is)*mp)
+                if (.not.is_neutral(is)) then
+                  mach(ix,iy,is)=0.0_R8
+                else
+                  mach(ix,iy,is)=bb(ix,iy,3)/
+     1             sqrt(mu0*na(ix,iy,is)*am(is)*mp)
+                end if
               end do
             end do
           enddo
@@ -3229,13 +3242,13 @@ c     assumes that bb is OK for 1d cases
               else
                 if (bottomiy(ix,iy).ne.-2) then
                   mach(ix,iy,0)=r0*
-     1             (pr(bottomix(ix,iy),bottomiy(ix,iy))-pr(ix,iy))/
+     1             (pz(bottomix(ix,iy),bottomiy(ix,iy))-pz(ix,iy))/
      .              (rave(bottomiy(ix,iy))-rave(iy))/
      2             (bb(ix,iy,3)**2/2.0_R8/mu0)/
      3             (0.0537_R8+0.534_R8*shear(iy)/safetyfactor(iy)**2)
                 else if (topiy(ix,iy).ne.ny+1) then
                   mach(ix,iy,0)=r0*
-     1             (pr(ix,iy)-pr(topix(ix,iy),topiy(ix,iy)))/
+     1             (pz(ix,iy)-pz(topix(ix,iy),topiy(ix,iy)))/
      .             (rave(iy)-rave(topiy(ix,iy)))/
      2             (bb(ix,iy,3)**2/2.0_R8/mu0)/
      3             (0.0537_R8+0.534_R8*shear(iy)/safetyfactor(iy)**2)

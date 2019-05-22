@@ -1,6 +1,7 @@
       subroutine b2xprz (nCv, ns, mp, am, na, rz, st_ext)
       use b2mod_types
       use b2mod_b2cmpa
+     *  , only: is_neutral
       use b2us_plasma
       implicit none
       integer nCv, ns
@@ -14,7 +15,7 @@
       integer is
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xprz')
-      ro = 0.0_R8
+      rz = 0.0_R8
       do is = 0, ns-1
         if (.not.is_neutral(is)) then
           rz = rz + mp*am(is)*na(:,is)

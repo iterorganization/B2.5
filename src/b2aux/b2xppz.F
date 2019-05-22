@@ -18,12 +18,12 @@
       do is = 0, ns-1
         if (.not.is_neutral(is)) then
           pz = pz + na(:,is)*ti
-	endif
+        endif
       enddo
       do is = 0, st_ext%ns-1
         if (.not.st_ext%is_neutral(is)) then
           pz = pz + st_ext%na(:,is)*st_ext%ta(:,is)
-	endif
+        endif
       enddo
 *$$$  call subend ()
       return

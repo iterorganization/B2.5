@@ -103,7 +103,7 @@
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, nasum, na0sum, 
-     &  pr(nCv), ro(nCv), cssb(nCv,0:1)         !iyv 06.02.14
+     &  pz(nCv), rz(nCv), cssb(nCv,0:1)         !iyv 06.02.14
 !WG_TODO: add some sources locally here, until a module/data-type for WG
 !WG_TODO: is available
       real (kind=R8) ::                                                  !xpb
@@ -501,9 +501,9 @@ ctmp.dpc
          else if (ntim.eq.0) then ! compute derived quantities
 #ifdef WG_TODO
            if(ion_vlct_restrict .ne. 0 ) then                            !iyv 06.02.14
-             call b2xpro (nx, ny, ns, mp, am, na, ro)
-             call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-             wrk0(:,:)=sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+             call b2xprz (nx, ny, ns, mp, am, na, rz)
+             call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+             wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
              call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
              call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,
      &                     cssb(-1,-1,1))

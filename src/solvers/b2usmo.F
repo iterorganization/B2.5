@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2usmo (nCv, nFc, nVx, isb, geo, mpg, 
-     &  nregionv, solvereg, itcnt, rxg, rob, pb, ub,                !srv 09.01.01
-     &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa, aad0, name) !srv 06.04.07
+     &  nregionv, solvereg, itcnt, rxg, rob, rzb, pb, pz, ub,        !srv 09.01.01
+     &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa, aad0, name)  !srv 06.04.07
       use b2mod_types
       use b2us_geo
       use b2us_map
@@ -14,8 +14,8 @@
       type (mapping), intent (in) :: mpg
       character*(*) name                                             !srv 18.05.02
       real (kind=R8) ::
-     *  rxg, rob(nCv),
-     &  pb(nCv), ub(nCv), smb(nCv,0:3), flcb(nFc,0:1), cvsb(nFc,0:1),
+     *  rxg, rob(nCv), rzb(nCv), pb(nCv), pz(nCv),
+     &  ub(nCv), smb(nCv,0:3), flcb(nFc,0:1), cvsb(nFc,0:1),
      &  resmb(nCv), ctcfb(nCv)                                       !srv 06.04.07
       logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
@@ -75,9 +75,11 @@
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of rob, pb, smb1, smb3, cvsb
+*    ..test sign of rob, rzb, pb, pz, smb1, smb3, cvsb
        call b2xvsg (nCv, rob, 1, 'rob', '.gt.')
+       call b2xvsg (nCv, rzb, 1, 'rzb', '.gt.')
        call b2xvsg (nCv, pb, 1, 'pb', '.gt.')
+       call b2xvsg (nCv, pz, 1, 'pz', '.gt.')
        call b2xvsg (nCv, smb(1,1), 1, 'smb1', '.le.')
        call b2xvsg (nCv, smb(1,3), 1, 'smb3', '.le.')
       endif
@@ -91,7 +93,7 @@
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
-         csb = sqrt(pb(iCv)/rob(iCv))
+         csb = sqrt(pz(iCv)/rzb(iCv))
          csb1 = sqrt(ub(iCv)**2+csb**2)
          aad0(iCv) = -smb(iCv,1)-
      &    smb(iCv,3)*rob(iCv)+

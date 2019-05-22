@@ -94,8 +94,8 @@
      *  flubv(nFc,0:1),                                    !srv 11.09.09
      3  wrkf(nFc,0:1), wrkv(nVx), aa(mpg%nCmxNv),
      4  smb(nCv,0:3), flcb(nFc,0:1),
-     5  cvcb(nFc,0:1), ro(nCv),
-     6  pr(nCv), !WG_TODO ne2(nCv),
+     5  cvcb(nFc,0:1), ro(nCv), rz(nCv),
+     6  pr(nCv), pz(nCv), !WG_TODO ne2(nCv),
 !WG_TODO     7  ni(nCv,0:1), ne(nCv),
      8  ehxp(nCv), smt(nCv,0:3), cst,                  !srv 17.01.14
      9  flct(nFc,0:1), wrk1(nCv), wrks(nCv),
@@ -119,7 +119,8 @@
      *  med
       external subini, subend, xertst, ipgetr, sfill, b2scopy,
      &  b2sscal, b2saxpy
-      external b2xvsg, b2xvff, b2xpne, b2xpro, b2xppr,
+      external
+     &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,
      &  b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
@@ -202,12 +203,14 @@
         call b2xvsg (nCv, sr%smq(1,3,is), 1, 'smq 3', '.le.')
        enddo
       endif
-*   ..compute ne, ne2, ro, pr
+*   ..compute ne, ne2, ro, rz, pr, pz
       call b2xpni (nCv, ns, pl%na, dv%ni)
       call b2xpne (nCv, ns, rt%rza, pl%na, st_ext%ne, dv%ne)
       call b2xpne (nCv, ns, rt%rz2, pl%na, st_ext%ne2, dv%ne2)
       call b2xpro (nCv, ns, mp, am, pl%na, ro, st_ext)
+      call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
       call b2xppr (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pr, st_ext)
+      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
       call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext)                      !srv 13.01.17 {
       call b2xzmf (nCv, ns, ismain, rt%rz2, pl%na, zmff)
       do iCv = 1, nCv
@@ -427,9 +430,9 @@ c     ..compare matrices
          if (new_matrix.or..true.) call restart_ma28_for_us
 *     ..compute correction
          call b2usmo (nCv, nFc, nVx, is, geo, mpg, mpg%nnreg(0),
-     &     solvedum, itcnt, rxg, rob, pb, pl%ua(1,is), smb, flcb, cvcb,
-     &     dv%resmo(1,is),  ctcfb, dv%corua(1,is), dv%pcca(1,0,is), aa,
-     &     wrk1, 'b2usmo_'//chns)
+     &     solvedum, itcnt, rxg, rob, rob, pb, pb, pl%ua(1,is), smb,
+     &     flcb, cvcb, dv%resmo(1,is),  ctcfb, dv%corua(1,is),
+     &     dv%pcca(1,0,is), aa, wrk1, 'b2usmo_'//chns)
          last_solve_9(0:mpg%nnreg(0)) = solvemo(is,0:mpg%nnreg(0))
 csw 21feb2014 added this else branch
        else
@@ -483,8 +486,8 @@ c     ..compare 9-pt stencil matrices
         if (new_matrix.or..true.) call restart_ma28_for_us
 *     ..compute correction
         call b2usmo (nCv, nFc, nVx, ns, geo, mpg, mpg%nnreg(0), 
-     &    solvemt, itcnt, rxg, ro, pr, wrk0, smt, flct, cvct, dv%resmt, 
-     &    ctcft, dv%corut, dv%pccm, aa, wrk1, 'b2usmo_total')
+     &    solvemt, itcnt, rxg, ro, rz, pr, pz, wrk0, smt, flct, cvct,
+     &    dv%resmt, ctcft, dv%corut, dv%pccm, aa, wrk1, 'b2usmo_total')
         last_solve_9(0:mpg%nnreg(0)) = solvemt(0:mpg%nnreg(0))
       else
         dv%pccm  = 0.0_R8
@@ -521,7 +524,7 @@ c     ..compare 9-pt stencil matrices
           do ix = -1,nx
             do is = 0, ns-1
               if (.not.is_neutral(is)) then
-                cst=sqrt(pr(ix,iy)/ro(ix,iy))                          !iyv 03.02.14
+                cst=sqrt(pz(ix,iy)/rz(ix,iy))                          !iyv 03.02.14
 !                cst=sqrt( (ti(ix,iy)+te(ix,iy)*rza(ix,iy,is))/
 !     *                                              ( am(is)*mp ))
                 if( abs(ua(ix,iy,is)) .gt. 3.0_R8*cst ) then

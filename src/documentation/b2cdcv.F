@@ -415,15 +415,26 @@
 *     pressure on the (ix,iy) cell. The defining expression for pr is
 *       pr(,) = ne(,)*te(,) + (sum is :: na(,,is)*ti(,)).
 *
+*     pz - (-1:nx,-1:ny) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), pz(ix,iy) specifies the plasma
+*     pressure on the (ix,iy) cell. The defining expression for pr is
+*       pr(,) = ne(,)*te(,) + (sum is :: na(,,is)*ti(,), not including neutrals).
+*
 *     pe - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), pe(ix,iy) specifies the electron
 *     pressure on the (ix,iy) cell.
-*     The defining expression for pe is  pe(,) = ne(,)*te(,).
+*     The defining expression for pe is pe(,) = ne(,)*te(,).
 *
 *     ro - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), ro(ix,iy) specifies the mass
 *     density on the (ix,iy) cell. The defining expression for ro is
 *       ro(,) = (sum is : 0.le.is.lt.ns : am(is)*mp**na(,,is)).
+*
+*     rz - (-1:nx,-1:ny) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), rz(ix,iy) specifies the ion mass
+*     density on the (ix,iy) cell. The defining expression for rz is
+*       rz(,) = (sum is : 0.le.is.lt.ns .and. .not.is_neutral(is) : 
+*                         am(is)*mp**na(,,is)).
 *
 *     ne2m - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), ne2m(ix,iy) specifies the atom
