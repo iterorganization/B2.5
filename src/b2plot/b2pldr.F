@@ -130,7 +130,7 @@
 *   ..read parameters from tracing file
       call cfruch (ninp(6), 120, lblmn, 'label')
       call b2ruzd (ninp(6), b2ftrack_version,
-     & ns, zamin, zamax, zn, am, .true.)
+     &  ns, zamin, zamax, zn, am, .true.)
 *   ..tracing loop
    10 if (.not.cfendf(ninp(6))) then
 *    ..get itim, itcnt

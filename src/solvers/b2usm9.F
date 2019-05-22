@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2usm9 (nx, ny, isb, nregionv, solvereg, itcnt,     !srv 04.07.08
-     &  rxg, vol, hx, hy, hz, qz, qs, bb, rob, pb, ub,               !srv 09.01.01
+     &  rxg, vol, hx, hy, hz, qz, qs, bb, rob, rzb, pb, pz, ub,      !srv 09.01.01
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa9, aad0, name) !srv 06.04.07
       use b2mod_indirect
       use b2mod_types
@@ -13,10 +13,12 @@
       integer nx, ny, isb, nregionv, itcnt
       character*(*) name                                             !srv 18.05.02
       real (kind=R8) ::
-     *  rxg, bb(-1:nx,-1:ny,0:3), rob(-1:nx,-1:ny),
+     *  rxg, bb(-1:nx,-1:ny,0:3), 
+     &  rob(-1:nx,-1:ny), rzb(-1:nx,-1:ny),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),          !srv 09.01.01
      &  hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
-     &  pb(-1:nx,-1:ny), ub(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3),
+     &  pb(-1:nx,-1:ny), pz(-1:nx,-1:ny),
+     &  ub(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3),
      &  flcb(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),
      &  resmb(-1:nx,-1:ny), ctcfb(-1:nx,-1:ny)                       !srv 06.04.07
       logical solvereg(0:nregionv)
@@ -87,7 +89,9 @@
       if (ncall.lt.3) then
 *    ..test sign of rob, pb, smb1, smb3, cvsb
        call b2xvsg (n2, rob, 1, 'rob', '.gt.')
+       call b2xvsg (n2, rzb, 1, 'rzb', '.gt.')
        call b2xvsg (n2, pb, 1, 'pb', '.gt.')
+       call b2xvsg (n2, pz, 1, 'pz', '.gt.')
        call b2xvsg (n2, smb(-1,-1,1), 1, 'smb1', '.le.')
        call b2xvsg (n2, smb(-1,-1,3), 1, 'smb3', '.le.')
        call b2xvsg (n2, cvsb(-1,-1,0,0), 1, 'cvsb', '.ge.')
@@ -104,7 +108,7 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solvereg(ireg)) then
-         csb = sqrt(pb(ix,iy)/rob(ix,iy))
+         csb = sqrt(pz(ix,iy)/rzb(ix,iy))
          csb1 = sqrt(ub(ix,iy)**2+csb**2)
          aad0(ix,iy) = -smb(ix,iy,1)-
      &    smb(ix,iy,3)*rob(ix,iy)+

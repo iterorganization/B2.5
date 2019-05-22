@@ -5517,8 +5517,8 @@ cxpb code segment analog to b2tfhe
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(PR(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     .              RO(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      1       gs(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      2          topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)*
@@ -5527,8 +5527,8 @@ cxpb code segment analog to b2tfhe
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(PR(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     .              RO(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      1       gs(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)*cs*ENEPAR(IB,1)
           ENDDO
@@ -7637,8 +7637,8 @@ cxpb          endif
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(PR(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     .              RO(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      1       gs(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      2          topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*
@@ -7647,8 +7647,8 @@ cxpb          endif
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(PR(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     .              RO(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      1       gs(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*cs*ENIPAR(IB,1)
           ENDDO

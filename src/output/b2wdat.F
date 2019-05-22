@@ -67,6 +67,7 @@
      &  boundary_flux(1:nbc,0:ns-1), sum_sdiv, sum_ssna,
      &  sdiv(0:ns-1), ssna(0:ns-1),                                !srv 12.04.12
      &  cutll, cutlo, t0, phi_app,
+     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),
      &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
       real (kind=R8) ::  bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
      &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
@@ -139,10 +140,10 @@
         iout_iout_ASTRA = 0
       endif
 
-      mintopcut = ny                                               !srv 25.02.16
-      if(nncut > 0) mintopcut = minval(topcut(1:nncut))            !iyv 29.11.13 25.02.16
+      mintopcut = ny                                              !srv 25.02.16
+      if(nncut > 0) mintopcut = minval(topcut(1:nncut))           !iyv 29.11.13 25.02.16
 
-      if (iout.eq.1) then                                          !srv begin if for iout
+      if (iout.eq.1) then                                         !srv begin if for iout
 
        call get_jsep(nx,ny,jxi,jxa,jsep)
        Total_current=0.0_R8
@@ -151,14 +152,18 @@
        Total_flux=0.0_R8
        Total_absflux=0.0_R8
        wrk2=0.0_R8
-       call b2xpro (nx, ny, ns, mp, am, na, ro)                     !srv 30.01.15 {
+       call b2xpro (nx, ny, ns, mp, am, na, ro)                   !srv 30.01.15 {
+       call b2xprz (nx, ny, ns, mp, am, na, rz)                   !srv 30.01.15 {
        call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-       cst = sqrt(pr/ro)
+       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+       cst = sqrt(pz/rz)
        call my_out(70,nx,ny,cst,'usound_cst')
        call my_out(70,nx,ny,ro,'ro')
-       call my_out(70,nx,ny,pr,'pr')                                !srv 30.01.15 }
-       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                      !srv
-       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                      !srv
+       call my_out(70,nx,ny,rz,'rz')
+       call my_out(70,nx,ny,pr,'pr')                              !srv 30.01.15 }
+       call my_out(70,nx,ny,pz,'pz')                              !srv 30.01.15 }
+       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                    !srv
+       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                    !srv
 
        do is = 0,ns-1
         write (chns,'(i3.3)') is
@@ -925,7 +930,8 @@
         write(70,"(1x,9es14.6)")                               !srv 03.04.13
      &     crdy_c_cell(ixx+ishift,iy),
      &     0.5_R8*( crx(ixx+ishift,iy,0) + crx(ixx+ishift,iy,2) ),
-     &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,ne(ixx+ishift,iy),
+     &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,
+     &     ne(ixx+ishift,iy),
      &     qe * hy1(ixx+ishift,iy)/hy(ixx+ishift,iy) *
      &     abs(bb(ixx+ishift,iy,0))/bb(ixx+ishift,iy,3) *
      &     na(ixx+ishift,iy,ismain) *
