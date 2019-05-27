@@ -1041,7 +1041,7 @@ c
       i=-1
       j=-1
       lun=96
-      meshpath = 'data.local/meshes|data/meshes'
+      meshpath = 'data.local/meshes'
 #ifdef JET
       device = 'jet'
 #else
@@ -1151,7 +1151,9 @@ c
           end if
    32     continue
           first_read = .false.
-          uop = i.le.5 .and. j.le.1 .and. .false.
+#ifdef DBG
+          uop = i.le.5 .and. j.le.1
+#endif
           if(uop) then
             print *,'*3* ',i,j,crxs(i,j,3),crys(i,j,3)
             print *,'*4* ',i,j,crxs(i,j,4),crys(i,j,4)
@@ -1179,6 +1181,7 @@ c
             read (uline,721) crxs(i,j,1),crys(i,j,1),
      ,        crxs(i,j,2),crys(i,j,2)
           end if
+          read (lun,'()')
           if(uop) then
             print *,'*0* ',i,j,crxs(i,j,0),crys(i,j,0)
             print *,'*1* ',i,j,crxs(i,j,1),crys(i,j,1)
@@ -1264,8 +1267,8 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
   701 format(19x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
   702 format(21x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
   710 format(18x,e17.0,14x,e17.0,1x,e17.0)
-  720 format(32x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0/)
-  721 format(30x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0/)
+  720 format(32x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
+  721 format(30x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
 
   990 continue
       write(*,*) 'Error: i,j ',i,j
