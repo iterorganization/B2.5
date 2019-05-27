@@ -591,9 +591,6 @@ csw 09jan2014 add extra allocates
 !         call my_out(70,nxd,nyd,pefluxm(0:nxd+1,0:nyd+1,ism,1),
 !     &   'write_b2_to_astra_pefluxm'//chns)
         enddo
-        open(70,file='write_b2_to_astra_intrl.dat')
-        write(70,*)' Index of neutral in write_b2_to_astra_intrl',intrl
-        close(70)
        endif                                                       !srv 14.03.12 }
 #endif         
        ncall = ncall +1
