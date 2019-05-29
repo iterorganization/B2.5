@@ -180,8 +180,8 @@ ifdef LD_CATALYST
 MODLIST += ${SRCDIR}/catalyst/*.F90
 MODLISTF90 += ${SRCDIR}/catalyst/*.F90
 endif
-MODLIST += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
-MODLISTF += ${SRCDIR}/*/b2mod_*.F
+MODLIST += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/*/b2us_*.F ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
+MODLISTF += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/*/b2us_*.F
 MODLISTF90 += ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
 
 ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
