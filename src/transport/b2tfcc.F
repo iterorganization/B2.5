@@ -28,7 +28,6 @@
       real (kind=R8) ::
      *   xfac, t0, t1
       real (kind=R8) ::
-     *   dtir(-1:nx,-1:ny,0:1), dter(-1:nx,-1:ny,0:1),
      *   nw(-1:nx,-1:ny,0:ns-1), dnwr(-1:nx,-1:ny,0:1,0:ns-1),
      *   wght(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
       save ncall, xfac
@@ -80,8 +79,6 @@
 
 *   ..compute radial differences of te, ti, nw for 9-point terms
       wght = 1.0_R8
-      call diff_r(nx, ny, 0, hx, hy, wght, qs, te, wrk, dter)
-      call diff_r(nx, ny, 0, hx, hy, wght, qs, ti, wrk, dtir)
       do is = 0, ns-1
         nw(:,:,is) = (rza(:,:,is) + 1.0_R8)*na(:,:,is)
         call diff_r(nx, ny, 0, hx, hy, wght, qs, nw(-1,-1,is), 
