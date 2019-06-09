@@ -21,7 +21,7 @@ module b2mod_connectivity
 
     !! Geometry/topology IDs (obtain using function geometryId(..:))
 
-    integer, parameter :: GEOMETRY_COUNT = 9
+    integer, parameter :: GEOMETRY_COUNT = 10
         !< Number of different geometry/topology situations = max(GEOMETRY_*)
 
     !! The IDs, matching the IDS definitions of the GGD identifiers
@@ -33,7 +33,8 @@ module b2mod_connectivity
     integer, parameter :: GEOMETRY_CDN = 5
     integer, parameter :: GEOMETRY_DDN_BOTTOM = 6
     integer, parameter :: GEOMETRY_DDN_TOP = 7
-    integer, parameter :: GEOMETRY_STELLARATORISLAND = 8
+    integer, parameter :: GEOMETRY_ANNULUS = 8
+    integer, parameter :: GEOMETRY_STELLARATORISLAND = 9
 
     !! Region types
     !! Region type indices are the ones used in the B2 region array,
@@ -65,6 +66,7 @@ module b2mod_connectivity
         &       8, 12, 14,  & !! GEOMETRY_CDN
         &       8, 13, 14,  & !! GEOMETRY_DDN_BOTTOM
         &       8, 13, 14,  & !! GEOMETRY_DDN_TOP
+        &       1,  2,  2,  & !! GEOMETRY_ANNULUS
         &       5,  7,  8   & !! GEOMETRY_STELLARATORISLAND
         &    /),            &
         &    (/ REGIONTYPE_COUNT, GEOMETRY_COUNT /) )   !< Region counts
@@ -79,6 +81,7 @@ module b2mod_connectivity
         &    'CDN        ', &
         &    'DDN_BOTTOM ', &
         &    'DDN_TOP    ', &
+        &    'ANNULUS    ', &
         &    'ISLAND     '  &
         &   /)
 
@@ -86,12 +89,13 @@ module b2mod_connectivity
         &   (/     &
         &    'Unspecified geometry                              ', &
         &    'Linear case                                       ', &
-        &    'Cylinder or annular geometry                      ', &
+        &    'Cylinder geometry, straight in the third direction', &
         &    'Limiter geometry                                  ', &
         &    'Single null geometry                              ', &
         &    'Connected double null                             ', &
         &    'Disconnected double null, bottom X-point is active', &
         &    'Disconnected double null, top X-point is active   ', &
+        &    'Annular geometry, curved in the third direction   ', &
         &    'Stellarator island geometry                       '  &
         &   /)
  
@@ -296,7 +300,16 @@ module b2mod_connectivity
         &   'Upper outer baffle              ',                         &
         &   'Outer main chamber wall         ',                         &
         &   'Lower outer baffle              ',                         &
+        & & ! GEOMETRY_ANNULUS
+        &   'Plasma'//repeat(' ',26),                                   &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
         & &
+        &   'Periodicity boundary            ',                         &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
+        & &
+        &   'Top boundary                    ',                         &
+        &   'Bottom boundary                 ',                         &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
         & & ! GEOMETRY_STELLARATORISLAND
         &   'Core                            ',                         &
         &   'SOL                             ',                         &
@@ -880,7 +893,7 @@ contains
 !!$        & region(-1:nx,-1:ny,0:2),nnreg(0:2), &
 !!$        & resignore(-1:nx,-1:ny,1:2)
 !!$    !
-!!$    !      Cylindrical slab (core) case
+!!$    !      Cylindrical slab (core) and annular cases
 !!$    !    ++-----------------------------++
 !!$    !    ||                             ||
 !!$    !    ||                             ||
@@ -905,7 +918,7 @@ contains
 !!$    !    ||                             ||
 !!$    !    ++--------------1--------------++
 !!$    !
-!!$    !            Limiter case (ID=1)
+!!$    !            Limiter case
 !!$    !    +-------------------------------+
 !!$    !    |                               |
 !!$    !    |               2               |
@@ -2484,8 +2497,8 @@ contains
 
   !> Identify what geometry/topology is present from cut and periodicity data.
   !> Returns one of the GEOMETRY_* constants. Stops if unknown geometry.
-  integer function geometryId( nnreg, periodic_bc, topcut )
-    integer, intent(in) :: nnreg(0:2), periodic_bc, topcut(:)
+  integer function geometryId( nnreg, isymm, periodic_bc, topcut )
+    integer, intent(in) :: nnreg(0:2), isymm, periodic_bc, topcut(:)
     logical, save :: first
     data first/.true./
 
@@ -2499,12 +2512,21 @@ contains
     end if
 
     if (nnreg(0) == 1 .and. periodic_bc == 1) then
+      if (isymm == 0) then
         geometryId = GEOMETRY_CYLINDER
         if (first) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CYLINDER")
             first = .false.
         end if
         return
+      else
+        geometryId = GEOMETRY_ANNULUS
+        if (first) then
+            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_ANNULUS")
+            first = .false.
+        end if
+        return
+      end if
     end if
 
     if (nnreg(0) == 2) then

@@ -64,6 +64,7 @@ module b2mod_ual_io_grid
 
     use b2mod_grid_mapping
     use b2mod_indirect
+    use b2mod_b2cmfs
 
     implicit none
 
@@ -284,7 +285,7 @@ contains
         integer :: nfc  !< Number of all faces/edges (x + y aligned)
         integer :: geometryType  !< Geometry identifier index
 
-        geometryType = geometryId(nnreg, periodic_bc, topcut)
+        geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
 
         allocate( ggd_grid%identifier%name(1) )
         ggd_grid%identifier%name = geometryName(geometryType)
@@ -862,7 +863,7 @@ contains
         integer, dimension(:,:), allocatable :: indexList2d
         integer :: i    !< Iterator
 
-        geoId = geometryId(nnreg, periodic_bc, topcut)
+        geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
 
         !! Figure out total number of grid subsets
         !! Do generic grid subsets + grid subsets
@@ -1422,7 +1423,7 @@ contains
       integer :: cls(SPACE_COUNT_MAX)
       integer, allocatable :: xpoints(:,:)
 
-      geoId = geometryId(nnreg, periodic_bc, topcut)
+      geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
 
       !! Figure out total number of subgrids
       !! Do generic subgrids + subgrids
