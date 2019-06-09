@@ -237,8 +237,8 @@
 			<switch>
 				<name>b2agfs_geometry</name>
 				<default>upgrade.geometry</default>
+				<type>string</type>
 				<description>
-					local_sonnet - character string.
 					local_sonnet is the file name of the geometry file to be read.
 					The file will be looked for in the run directory, in the ../baserun directory, in $SOLPSTOP/data.local/meshes, in $SOLPSTOP/data/meshes and in $SOLPSTOP/modules/Carre/meshes/$DEVICE. To be used in b2ag.dat.
 				</description>
@@ -246,8 +246,8 @@
 			<switch>
 				<name>b2mwti_jxa</name>
 				<default>See description (integer)</default>
+				<type>integer</type>
 				<description>
-					jxa - integer.
 					Cell index, on the basis mesh, of the outer midplane. Default value depends on geometry:
 					Single-null : jxa=rightcut1(1)-(rightcut1(1)-leftcut1(1))/4, i.e. three quarters of the way between the two cuts.
 					Double-null : jxa=(rightcut1(1)+rightcut1(2))/2, i.e. halfway between the two outer cuts. Straight geometry : jxa=3*nx/4
@@ -323,7 +323,6 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					periodic_bc - integer.
 					periodic_bc specifies if this is either an island or limiter geometry.
 					If periodic_bc.eq.1 then island/limiter treatment is turned on. We differentiate between the two case through nncut:
 					nncut.eq.0 = limiter case
@@ -337,7 +336,6 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					isymm - integer.
 					isymm specifies the type of symmetry of the geometry: isymm.eq.0 implies a slab geometry,
 					isymm.eq.1.or.isymm.eq.2 imply rotational symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4 indicate rotational symmetry about the cry=0 axis.
 					Other values are not allowed.
@@ -348,7 +346,7 @@
 			<switchgroup>
 				<name>b2stbc_coreregn*</name>
 				<description>
-					coreregno, coreregn2 - integers. coreregno is the boundary index of the core boundary in the input files b2ah.dat and b2mn.dat. For a standard single-null case, coreregno is 1. For a straight geometry or limiter case, it is likely that coreregno need be set to 0, depending on the actual geometry details.
+					coreregno is the boundary index of the core boundary in the input files b2ah.dat and b2mn.dat. For a standard single-null case, coreregno is 1. For a straight geometry or limiter case, it is likely that coreregno need be set to 0, depending on the actual geometry details.
 					coreregn2 is the boundary index of the second core boundary in case of a double-null geometry, and is not used otherwise.
 				</description>
 				<switch>
@@ -365,7 +363,6 @@
 			<switchgroup>
 				<name>b2stbc_pfrregno*</name>
 				<description>
-					pfrregno1, pfrregno2 - integers.
 					pfrregno1 is the boundary index of the first half of the private flux region boundary on which feedback is being applied (through b2stbc_ndes or b2stbc_private_flux_puff) in the input files b2ah.dat and b2mn.dat. pfrregno2 is the second half of the same private flux region. For a standard single null, the pair should be (0,2). For a standard double-null, the lower private flux region is labelled with the pair (0,5), and the upper private flux region with the pair (2,3). One can use only one private flux region by setting pfrregno1.eq.pfrregno2.
 				</description>
 				<switch>
@@ -384,7 +381,6 @@
 				<default>3</default>
 				<type>integer</type>
 				<description>
-					solregno - integer.
 					solregno is the boundary index of the SOL North boundary in the input files b2ah.dat and b2mn.dat. For a standard single-null case, solregno is 3. For a standard double-null case, solregno for the outer SOL North boundary would be 7.
 				</description>
 			</switch>
@@ -418,8 +414,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Bt_adjust - integer.
-					If the mesh is offset (See b2agfs_xoffset, b2agfs_yoffset below) and Bt_adjust.eq.1, then the magnetic field is recomputed, keeping the pitch constant but changing the toroidal field magnitude according to Bt = Bt0/R. To be used in b2ag.dat.
+					If the mesh is offset (See b2agfs_xoffset, b2agfs_yoffset below) and Bt_adjust.eq.1, then the magnetic field is recomputed for toroidal geometries, keeping the pitch constant but changing the toroidal field magnitude according to Bt = Bt0/R. To be used in b2ag.dat.
 				</description>
 			</switch>
 			<switch>
@@ -427,7 +422,6 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Bt_rescale - real*8.
 					The magnetic field will be multiplied by Bt_rescale. All components of the field are scaled together. To be used in b2ag.dat.
 				</description>
 			</switch>
@@ -436,7 +430,6 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					pit_rescale - real*8.
 					The magnetic field line pitch will be multiplied by pit_rescale.
 					This means that the poloidal field component is multiplied by pit_rescale, while the toroidal field component is left unchanged. To reverse the plasma current direction, set pit_rescale to -1.0.
 					The sign convention used is that a positive poloidal field points in the direction of increasing &lt;ix&gt;. Be mindful however that, when inverting the sign of the poloidal magnetic field, you are also inverting the direction of the parallel velocity. You will then need to use the 'b2mndr_inverse_ua' switch to correct for that. To be used in b2ag.dat.
@@ -447,7 +440,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Bt_reversal - integer. If Bt_reversal.eq.1, then the sign of the toroidal field component only is reversed. The sign convention used is that a positive toroidal field leads to a Bx(grad(B)) direction pointing down, so B is out of the page when looking at the usual view of the poloidal plane with the center line on the left. To be used in b2ag.dat.
+					If Bt_reversal.eq.1, then the sign of the toroidal field component only is reversed. The sign convention used is that a positive toroidal field leads to a Bx(grad(B)) direction pointing down, so B is out of the page when looking at the usual view of the poloidal plane with the center line on the left. To be used in b2ag.dat.
 				</description>
 			</switch>
 			<switch>
@@ -461,7 +454,6 @@
 			<switchgroup>
 				<name>b2agfs_.offset</name>
 				<description>
-					xoffset, yoffset - real*8.
 					xoffset and yoffset are offsets of the basis mesh in the x- and y-direction respectively. The mesh will be translated by (xoffset,yoffset) if any of the two is non-zero from its position given in the local_sonnet (See 'b2agfs_geometry' above) file.
 					To be used in b2ag.dat.
 				</description>
@@ -479,7 +471,6 @@
 			<switchgroup>
 				<name>b2agfs_.rescale</name>
 				<description>
-					yrescale - real*8.
 					Rescaling factors of the x- and y- coordinates of the basis mesh.
 					To be used in b2ag.dat.
 				</description>

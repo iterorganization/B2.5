@@ -195,8 +195,12 @@
           cry1(ix,iy,2)=crys(ic+3*n2)*yrescale+yoffset
           crx1(ix,iy,0)=crxs(ic+1*n2)*xrescale+xoffset  	 ! bottom left
           cry1(ix,iy,0)=crys(ic+1*n2)*yrescale+yoffset
-          if(Bt_adjust.eq.1 .and. xoffset.ne.0.0_R8) then
-            bb1(ix,iy,2)=bt(ic)*crxs(ic)/(crxs(ic)+xoffset)
+          if (Bt_adjust.eq.1) then
+            if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
+              bb1(ix,iy,2)=bt(ic)*crxs(ic)/(crxs(ic)+xoffset)
+            else if (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
+              bb1(ix,iy,2)=bt(ic)*crys(ic)/(crys(ic)+yoffset)
+            end if
             bb1(ix,iy,0)=bp(ic)/bt(ic)*bb1(ix,iy,2)
             bb1(ix,iy,3)=sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
           endif
@@ -208,15 +212,51 @@
           ffbz1(ix,iy,1)=ffbz(ic+1*n2)
           ffbz1(ix,iy,2)=ffbz(ic+2*n2)
           ffbz1(ix,iy,3)=ffbz(ic+3*n2)
+          if (Bt_adjust.eq.1) then
+            if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
+              fpsi1(ix,iy,0)=fpsi(ic)/crxs(ic+1*n2)*
+     .                               (crxs(ic+1*n2)+xoffset)
+              fpsi1(ix,iy,1)=fpsi(ic+1*n2)/crxs(ic+2*n2)*
+     .                                    (crxs(ic+2*n2)+xoffset)
+              fpsi1(ix,iy,2)=fpsi(ic+2*n2)/crxs(ic+3*n2)*
+     .                                    (crxs(ic+3*n2)+xoffset)
+              fpsi1(ix,iy,3)=fpsi(ic+3*n2)/crxs(ic+4*n2)*
+     .                                    (crxs(ic+4*n2)+xoffset)
+            else if (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
+              fpsi1(ix,iy,0)=fpsi(ic)/crys(ic+1*n2)*
+     .                               (crys(ic+1*n2)+yoffset)
+              fpsi1(ix,iy,1)=fpsi(ic+1*n2)/crys(ic+2*n2)*
+     .                                    (crys(ic+2*n2)+yoffset)
+              fpsi1(ix,iy,2)=fpsi(ic+2*n2)/crys(ic+3*n2)*
+     .                                    (crys(ic+3*n2)+yoffset)
+              fpsi1(ix,iy,3)=fpsi(ic+3*n2)/crys(ic+4*n2)*
+     .                                    (crys(ic+4*n2)+yoffset)
+            end if
+          end if
           ic=ic+1
         enddo
       enddo
       bb1(:,:,0)=bb1(:,:,0)*Bt_rescale*pit_rescale
       bb1(:,:,1)=bb1(:,:,1)*Bt_rescale*pit_rescale
+      fpsi1(:,:,:)=fpsi1(:,:,:)*Bt_rescale*pit_rescale
       if (Bt_reversal.eq.1) then
         bb1(:,:,2)=-bb1(:,:,2)*Bt_rescale
+        if (isymm.eq.0) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale
+        else if (isymm.eq.1.or.isymm.eq.2) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale*xrescale
+        else if (isymm.eq.3.or.isymm.eq.4) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale*yrescale
+        end if
       else
         bb1(:,:,2)=bb1(:,:,2)*Bt_rescale
+        if (isymm.eq.0) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale
+        else if (isymm.eq.1.or.isymm.eq.2) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale*xrescale
+        else if (isymm.eq.3.or.isymm.eq.4) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale*yrescale
+        end if
       endif
       bb1(:,:,3)=sqrt(bb1(:,:,0)**2+bb1(:,:,1)**2+bb1(:,:,2)**2)
 !!! FIXME: For now, until the cflag array is provided by the mesh generator
