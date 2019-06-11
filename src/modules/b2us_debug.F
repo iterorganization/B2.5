@@ -23,14 +23,26 @@
 
       do iy = -1, ny_st
         do ix = -1, nx_st
-          if(imapCv(ix,iy) /= 0) then          
+          if(imapCv(ix,iy) /= 0) then
             fun_st(ix,iy) = fun_us(imapCv(ix,iy))
-          else
-            ! perhaps here should be the interpolated values 
-            fun_st(ix,iy) = 0.0_R8  
           endif
         enddo
       enddo
+      ! corner cells: pragmatic solution
+      do iy = -1, ny_st
+        do ix = -1, nx_st
+          if(imapCv(ix,iy) == 0) then
+            if (iy == -1) then
+              fun_st(ix,iy) = fun_st(ix,0)
+            elseif (iy == ny_st) then
+              fun_st(ix,iy) = fun_st(ix,ny_st-1)
+            else
+              fun_st(ix,iy) = 0.0_R8
+            endif
+          endif
+        enddo
+      enddo
+
       
       end subroutine to_struct_cell
 

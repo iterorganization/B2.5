@@ -4,8 +4,6 @@ c     unstructured grid similar to the functionality of the my_out-routine
 c     for "original" B2.5 grids.
 c     File names will be appended with "*_st.dat".
       
-!     This subroutine sould be modified for double null case
-
       use b2mod_types
 #ifdef WG_DEBUG
       use b2us_debug
