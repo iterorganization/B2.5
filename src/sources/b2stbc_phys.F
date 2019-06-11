@@ -109,7 +109,7 @@
      &  ,nasum, naaverage(0:ns-1), bbsum, bbaverage                     !srv 22.01.02 18.10.04
       real (kind=R8) :: bzhzsum, bzhzaverage                            !lk 20.11.07
       real (kind=R8) ::
-     *  pr(nCv), wdia(nCv), wrk0(nCv),
+     *  pz(nCv), wdia(nCv), wrk0(nCv),
      *  uu(nFc,0:ns+st_ext%ns-1),
      *  ud(nFc,0:ns-1), !sx(-1:nx,-1:ny), 
      *  pz(nCv), hzf(nFc), !sxhz(-1:nx,-1:ny),                          !srv 24.08.08
@@ -129,7 +129,7 @@
       logical decay_length_ok, fedback_species
       logical, save :: BCCON14_W(NBCD), BCCON14_E(NBCD)                 !srv 20.09.17
       real (kind=R8) ::
-     *  ro(nCv), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
+     *  rz(nCv), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
       integer isfeedback, fix_fch_in_fhe_sheath
       integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
@@ -373,8 +373,10 @@
        naaverage(is) = nasum/volsum
       enddo                                                        !srv 22.01.02 }
 #endif
-      call b2xpro (nCv, ns, mp, am, pl%na, ro, st_ext)             !srv 01.02.09
-      call b2xppr (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pr, st_ext)
+cwdk  ro and pr based on charged particles only!
+cwdk  no neutral contribution to sound speed definition
+      call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)             !srv 01.02.09
+      call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
       wdia=(dv%ne*pl%te+dv%ni(:,1)*pl%ti)*geo%cvBb(:,2)
       do is = 0, st_ext%ns-1
         if (.not.st_ext%is_neutral(is)) wdia=wdia+
@@ -1286,7 +1288,7 @@ c dpc
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             s1 = abs(geo%fcPbs(iFc))
-            cs = sqrt(pr(iCv1)/ro(iCv1))
+            cs = sqrt(pz(iCv1)/rz(iCv1))
             srw%sna0(iCv1,0,is) = 0.0_R8
             srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs
             sna0_no_mdf(iCv1,:,is) =
@@ -2742,7 +2744,7 @@ cwdk      Tmp: in "connector" direction - ok for orthogonal grids
           IF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               IF(MOMPAR(IS,IB,2).LT.0.5_R8) THEN
-                CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+                CS=SQRT(bcint(pz,nx,ny,IY,IB)/bcint(rz,nx,ny,IY,IB))
                 UUOUT=MOMPAR(IS,IB,1)*CS*
      .           abs(wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
      .               wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3))
@@ -2813,7 +2815,7 @@ cxpb  and max(,,) statement for stability
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               IF(MOMPAR(IS,IB,2).LT.0.5_R8) THEN
-                CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+                CS=SQRT(bcint(pz,nx,ny,IY,IB)/bcint(rz,nx,ny,IY,IB))
                 UUOUT=MOMPAR(IS,IB,1)*CS*
      .           abs(wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
      .               wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3))
@@ -3307,7 +3309,7 @@ cxpb  and max(,,) statement for stability
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
-            cs   = sqrt(pr(iCv1)/ro(iCv1))
+            cs   = sqrt(pz(iCv1)/rz(iCv1))
             s1hz = geo%fcPbshz(iFc)
             vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
             srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                        !srv 07.05.09 {
@@ -3662,7 +3664,7 @@ cwdk      TODO: drift contributions
         IF(BCCHAR(IB).EQ.'W') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
             IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
-              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))  !srv 01.02.09
+              CS=SQRT(bcint(pz,nx,ny,IY,IB)/bcint(rz,nx,ny,IY,IB))  !srv 01.02.09
               UUOUT=abs(wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .                  wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3))*
      .         MOMPAR(ismain,IB,1)*CS
@@ -3770,7 +3772,7 @@ cwdk      TODO: drift contributions
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
             IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
-              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))  !srv 01.02.09
+              CS=SQRT(bcint(pz,nx,ny,IY,IB)/bcint(rz,nx,ny,IY,IB))  !srv 01.02.09
               UUOUT=MOMPAR(ismain,IB,1)*CS*
      .         abs(wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .             wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3))
@@ -4598,7 +4600,7 @@ cghgh
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          cs   = sqrt(pr(iCv1)/ro(iCv1))
+          cs   = sqrt(pz(iCv1)/rz(iCv1))
           srw%she0(iCv1,0) = 0.0_R8
           srw%she0(iCv1,3) = geo%fcS(iFc)*cs*enepar(ib,1)
         enddo  
@@ -4649,7 +4651,7 @@ cghgh
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-            cs   = sqrt(pr(iCv1)/ro(iCv1))
+            cs   = sqrt(pz(iCv1)/rz(iCv1))
             t0 = 0.0_R8
             do is = 0, ns-1
               t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*
@@ -4677,7 +4679,7 @@ cwdk    Todo: corrections for mdf_fhe, BCCON.ne.14
           endif
           IF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17
-!              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+!              CS=SQRT(bcint(pz,nx,ny,IY,IB)/bcint(rz,nx,ny,IY,IB))
               s1=abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &                   rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)) !srv 18.04.13 {
               vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
@@ -4705,8 +4707,8 @@ cwdk    Todo: corrections for mdf_fhe, BCCON.ne.14
      &            (1.0e0_R8-GAMMAE)*
      &            qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
               else                                                      !srv 27.02.13
-                cs=sqrt(pr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &                  ro(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+                cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
      &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
@@ -4723,7 +4725,7 @@ cwdk    Todo: corrections for mdf_fhe, BCCON.ne.14
             END DO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17
-!              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+!              CS=SQRT(bcint(pz,nx,ny,IY,IB)/bcint(rz,nx,ny,IY,IB))
               s1=abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))          !srv 18.04.13 {
               vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
               if(bccon14_e(ib)) then                                    !srv 20.09.17 {
@@ -4750,8 +4752,8 @@ cwdk    Todo: corrections for mdf_fhe, BCCON.ne.14
      &           (1.0e0_R8-GAMMAE)*qe*
      &           po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
               else                               !srv 27.02.13
-                cs=sqrt(pr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &                  ro(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+                cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
      &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
@@ -5529,7 +5531,7 @@ cwdk     * need to correct this BC for hybrid scheme
         IF(BCCHAR(IB).EQ.'W') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
             IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
-              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))  !srv 01.02.09
+              CS=SQRT(bcint(pz,nx,ny,IY,IB)/bcint(rz,nx,ny,IY,IB))  !srv 01.02.09
               UUOUT=MOMPAR(ismain,IB,1)*CS*
      .         abs(wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .             wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3))
@@ -5607,7 +5609,7 @@ cwdk     * need to correct this BC for hybrid scheme
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
             IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
-              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))       !srv 01.02.09
+              CS=SQRT(bcint(pz,nx,ny,IY,IB)/bcint(rz,nx,ny,IY,IB))       !srv 01.02.09
               UUOUT=MOMPAR(ismain,IB,1)*CS*
      .         abs(wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .             wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3))
@@ -6498,7 +6500,7 @@ cxpb          endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          cs   = sqrt(pr(iCv1)/ro(iCv1))
+          cs   = sqrt(pz(iCv1)/rz(iCv1))
           srw%shi0(iCv1,0) = 0.0_R8
           srw%shi0(iCv1,3) = geo%fcS(iFc)*cs*enipar(ib,1)
         enddo  
@@ -6549,7 +6551,7 @@ cxpb          endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          cs   = sqrt(pr(iCv1)/ro(iCv1))
+          cs   = sqrt(pz(iCv1)/rz(iCv1))
           t0 = 0.0_R8
           do is = 0, ns-1
             if(.not.is_neutral(is)) 
@@ -8182,7 +8184,7 @@ c              fchi=0.0_R8
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           s1   = abs(geo%fcPbs(iFc))
-          cs   = sqrt(pr(iCv1)/ro(iCv1))
+          cs   = sqrt(pz(iCv1)/rz(iCv1))
           vte  = sqrt(pl%te(iCv1)/me)
           t0 = 0.0_R8
           do is = 0, ns-1
