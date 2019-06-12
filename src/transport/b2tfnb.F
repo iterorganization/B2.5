@@ -75,7 +75,7 @@
       real (kind=R8) :: 
      &   vbecrb_(nCv,0:1), wbdia_(nCv,0:1),
      &   kmprti(nFc), dkmprti(nFc,0:1),              !srv 21.10.10
-     &   kmpr(nCv),kmprf(nFc),dkmpr(nFc,0:1)!,
+     &   kmpr(nCv),kmprf(nFc),kmprv(nVx),dkmpr(nFc,0:1)!,
 !     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
 !     &   rdiv                                                            !srv 05.03.16
       parameter (cutlo=1.0e-60_R8)
@@ -954,11 +954,22 @@ cwdk cancelation of some terms in poloidal and radial flux components
       if (mdf_fnb .eq. 0) then
         flob0 = flob0 + flo - flo_mdf
       endif
-      call intface(nCv,nFc,mpg%fcCv,weight,kmpr,kmprf)
-      dv%flob(:,0)   = flob0(:,0)*kmprf 
-      dv%flob(:,1)   = flob0(:,1)*kmprf 
-      dv%conb(:,0,0) = conb0(:,0)*kmprf 
-      dv%conb(:,1,0) = conb0(:,1)*kmprf 
+
+      call intvertex(nCv,nVx,mpg,geo%vxVol,kmpr,kmprv)
+      do iFc = 1, nFc
+        dv%flob(iFc,0)   = 0.5_R8*flob0(iFc,0)*
+     &     (kmpr(mpg%fcCv(iFc,1))+kmpr(mpg%fcCv(iFc,2))) - 
+     &     conb0(iFc,0)*(kmpr(mpg%fcCv(iFc,2))-kmpr(mpg%fcCv(iFc,1)))
+        dv%flob(iFc,1)   = 0.5_R8*flob0(iFc,1)*
+     &     (kmprv(mpg%fcVx(iFc,1))+kmprv(mpg%fcVx(iFc,2))) - 
+     &     conb0(iFc,1)*(kmprv(mpg%fcVx(iFc,2))-kmprv(mpg%fcVx(iFc,1)))
+        dv%conb(iFc,0,0) = 0.5_R8*conb0(iFc,0)*
+     &     (kmpr(mpg%fcCv(iFc,1))+kmpr(mpg%fcCv(iFc,2))) - 0.25_R8*
+     &     flob0(iFc,0)*(kmpr(mpg%fcCv(iFc,2))-kmpr(mpg%fcCv(iFc,1)))
+        dv%conb(iFc,1,0) = 0.5_R8*conb0(iFc,1)*
+     &     (kmprv(mpg%fcVx(iFc,1))+kmprv(mpg%fcVx(iFc,2))) - 0.25_R8*
+     &     flob0(iFc,0)*(kmprv(mpg%fcVx(iFc,2))-kmprv(mpg%fcVx(iFc,1)))
+      enddo
 
 *   ..contribution from pressure diffusion
       dumm0 = 0.0_R8
@@ -973,6 +984,7 @@ cwdk cancelation of some terms in poloidal and radial flux components
 *   ..flux limit
       if ((alpha.gt.0.0_R8 .and. maxval(rt%rza(:,isb)).eq.0.0_R8) .and.          !srv 20.11.08
      *     alpha_.eq.0.0_R8 ) then                                   ! neutral flux limit
+       call xerrab('Flux limit to be adapted for WG')
 cwdk try to introduce a common flux limit here?
        do iFc = 1,nFc
         t2 = max(flux_limit_min_ti,
