@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=357,nfns=209,nsparameters=32,nelabels=36,
+      parameter(nlabels=357,nfns=210,nsparameters=32,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -618,9 +618,9 @@
      8 'sprt' , 'list' , 'acol' , 'dcol'   , 'wcol'  ,
      9 'tcol' , 'lfsz' , 'zwid' , 'psxperp', 'expl'  ,
      * 'exps' , 'mdims', 'itoe' , 'rtoe'   , 'stoe'  /
-      data fns(201:209) /
+      data fns(201:210) /
      1 'trigmesh', 'earox', 'earoy', 'earow', 'nice' ,
-     2 'glsz' , 'mpsi' , 'fpsi' , 'rpsi'   /
+     2 'glsz' , 'mpsi' , 'fpsi' , 'rpsi'   , 'etal'  /
       data wlabels /
      1 'wallarea', 'ei'      , 'wallflux', 'wallhflx', 'r1'      ,
      2 'r2'      , 'z1'      , 'z2'      , 'walltemp', 'plathick',

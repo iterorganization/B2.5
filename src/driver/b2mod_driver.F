@@ -57,6 +57,8 @@
       use eirmod_ctrcei
       use eirmod_comprt
      , ,only: iunout
+      use eirmod_comusr
+     , ,only: eirene_alloc_comusr
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25

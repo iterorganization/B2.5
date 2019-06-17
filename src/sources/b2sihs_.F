@@ -101,8 +101,8 @@
       data ncall/0/, style/0/
       data rf0/1.0e0_R8/, rf1/1.0e0_R8/, rf2/1.0e0_R8/, rf3/1.0e0_R8/,
      &   rf4/1.0e0_R8/, phm0/1.0e0_R8/, phm1/1.0e0_R8/, phm2/1.0e0_R8/,
-     &  phm3/1.0e0_R8/, phm4/1.0e0_R8/, phm5/1.0e0_R8/, phm6/1.0e0_R8/ !srv 02.06.99
-     &  ,phm7/0.0e0_R8/, phm8/1.0e0_R8/                                !srv 27.12.01 28.08.02
+     &  phm3/1.0e0_R8/, phm4/1.0e0_R8/, phm5/1.0e0_R8/, phm6/1.0e0_R8/, !srv 02.06.99
+     &  phm7/0.0e0_R8/, phm8/1.0e0_R8/                                !srv 27.12.01 28.08.02
 *     Note 0: style determines the form of the strange electron-atom
 *     energy transfer term.
 *     Note 1: rf0-5 are numerical parameters, see the code. All must
