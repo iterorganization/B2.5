@@ -401,9 +401,9 @@ contains
             edge_profiles%ids_properties%provider = usrnam()
             allocate( edge_transport%ids_properties%provider(1) )
             edge_transport%ids_properties%provider = usrnam()
-            allocate( edge_transport%ids_properties%provider(1) )
-            edge_sources%ids_properties%provider = usrnam()
             allocate( edge_sources%ids_properties%provider(1) )
+            edge_sources%ids_properties%provider = usrnam()
+            allocate( radiation%ids_properties%provider(1) )
             radiation%ids_properties%provider = usrnam()
 
             allocate( edge_profiles%ids_properties%creation_date(1) )

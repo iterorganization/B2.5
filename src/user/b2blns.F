@@ -707,7 +707,7 @@ c*** Puffing/seeding rate and recycling source
                         hlp_pump = hlp_pump + wlpump(j,k)  ! BE CAREFUL: hlp_pump is a temporary variable
                         hlp_pump_counted(j,k) = .TRUE.
                       endif
- 
+
                       hlp_nw = hlp_nw - sclstra(j,ic) *
      &                   (wldna(k,j,ic) - wldra(k,j,ic) - wldpa(k,j,ic))  ! BE CAREFUL: hlp_nw is a temporary variable
                     end if

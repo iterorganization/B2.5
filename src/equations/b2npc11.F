@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2npc11 (nx, ny, fac_vis, guard_flows, zb,              !srv 05.07.08 02.04.18 {
-     &  nregionv, solving, solvcreg, ua_solve, solvmreg, itcnt, isb, 
+     &  nregionv, solving, solvcreg, ua_solve, solvmreg, itcnt, isb,
      &  rxf, vol, pbs, flob, conb, snb,                                  !srv 22.01.02 13.10.06
      &  pccb, po, ti, pb, nb, ub, fnb, rescb, corpb, ierr)
       use b2mod_types

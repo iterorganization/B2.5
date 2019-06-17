@@ -703,7 +703,7 @@ cxpb
      &               solveco(is,ireg).neqv.last_solve_9(ireg)
                   end do
                   if(new_matrix) call restart_ma28_for_9
-                  call b2npc9 (nx, ny, guard_flows, nnreg(0), 
+                  call b2npc9 (nx, ny, guard_flows, nnreg(0),
      &             solving(2), solvedum, solving(1), solvedm2, ncall,    !srv 22.05.18
      &             is, rxf0, vol, pbs,
      &             flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
@@ -719,7 +719,7 @@ cxpb
                 end do
                 if(new_matrix) call restart_ma28
                 call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
-     &           solvedum, solving(1), solvedm2, ncall, is, rxf0, vol, 
+     &           solvedum, solving(1), solvedm2, ncall, is, rxf0, vol,
      &           pbs, flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
      &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
