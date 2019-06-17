@@ -18,7 +18,6 @@ CPPOPTS    = -P -I${srcdir} ${EQUIVS}
 SED        = sed s:\#PREC\#:d:g
 SED        =
 LINK_MOD   = 
-FC_VERSION = $(shell echo `ifort --version | head -1 | awk '{printf "%s ",$$3,"\n"}'`)
 
 ifdef USE_MPI
 FC         = mpiifort
@@ -38,38 +37,25 @@ FC         = ifort
 endif
 endif
 
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
+
+FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
+FCOPTS    += -g -C -debug all -traceback -check all
+else
+FCOPTS    += -O2 -fp-model precise
+endif
 ifdef USE_MPI
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all ${MPI_CPP}
+FCOPTS    += ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all ${MPI_CPP}
-else
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all
+FCOPTS    += ${MPI_CPP}
 endif
 endif
-else
-ifdef USE_MPI
-ifeq (${FC_VERSION},12.0.2)
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-else
-FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-endif
-else
-ifdef USE_IMPGYRO
-ifeq (${FC_VERSION},12.0.2)
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-else
-FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-endif
-else
-ifeq (${FC_VERSION},12.0.2)
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore
-else
-FCOPTS     = -O2 -fPIC -fp-model precise -assume no2underscore
-endif
-endif
-endif
+
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+FCOPTS    += -vec_report0
+LDOPTS    += -i_dynamic
 endif
 
 DBLFC      = ${FC}
@@ -99,8 +85,11 @@ LDLIBES   += -L${SOLPSLIB} -lperf
 endif
 
 ifdef IMAS_VERSION
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
+IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifndef SOLPS_CPP
-EQUIVS    += -DIMAS
+EQUIVS    += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION}
 endif
 LD_UAL    ?= `pkg-config imas-ifort ggd --libs`
 INCMODS   += `pkg-config imas-ifort ggd --cflags`
@@ -108,9 +97,6 @@ IMASLIBS   = ${LD_UAL}
 endif
 
 LD         = ${FC}
-ifeq (${FC_VERSION},12.0.2)
-LDOPTS     = -i_dynamic
-endif
 ifdef USE_MPI
 LDLIBES   += ${LD_MPI}
 else

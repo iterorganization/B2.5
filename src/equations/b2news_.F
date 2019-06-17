@@ -81,8 +81,7 @@
       real (kind=R8), save :: na_min = 1.0e4_R8, na_new = 1.0e14_R8
       real (kind=R8) ::
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3,
-     1  t0, vis_per,                                                     !srv 09.07.99 06.07.00
-     &  pz(-1:nx,-1:ny)                                                  !srv 18.01.02 30.06.03 03.11.17
+     1  t0, vis_per                                                      !srv 09.07.99 06.07.00
       real (kind=R8) ::                                                  !xpb
 !     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
 !     1  sne0(-1:nx,-1:ny,0:1),                                           !xpb
@@ -91,7 +90,7 @@
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
      3  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), zeff(-1:nx,-1:ny),          !srv 05.07.17
-     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
+     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
      &  zero(-1:nx,-1:ny)
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical inverted_ua, new_matrix
@@ -220,6 +219,11 @@
 *----------------------------------------------------
 *        | -14   |  +   |  -   |  +   |  +   |  +   |
 *----------------------------------------------------
+* An alternative to the 'no_solve' switch for controlling of the 
+* solving of equations is to use the SOLVEMO, SOLVECO, SOLVEEE, SOLVEEI, 
+* SOLVEPO arrays from b2.numerics.parameters.
+* Please consult the code documentation.
+
        solving(1:4)=no_solve.eq.0
        do i=1,4
          solving(i)=solving(i).or.
@@ -368,9 +372,9 @@ csw 01oct2012 initialize potential if necessary
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                              !srv 01.10.99
       if(ion_vlct_restrict .ne. 0 ) then                                 !iyv 06.02.14
-        call b2xpro (nx, ny, ns, mp, am, na, ro)
-        call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-        wrk0(:,:)=sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+        call b2xprz (nx, ny, ns, mp, am, na, rz)
+        call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+        wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
         call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
         call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,cssb(-1,-1,1))
       else
@@ -511,7 +515,7 @@ c   extra call at this place within internal iteration)
 csw 11oct2012 added check on coriolis force (taken from b2news())
       ier0=0
       call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1,          !srv 13.01.17
-     &   qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                     !srv 23.07.99 09.01.01 01.07.09
+     &   qz, vol, hx, hy, hz, bb, pbshz, lnlam,                          !srv 23.07.99 09.01.01 01.07.09
      &   na, te, ti, po, ue, fna_fcor,                                   !srv 05.07.17
      &   cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                       !srv 19.07.02
      &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,            !srv 23.07.99 01.10.99 04.10.99 09.01.01
@@ -577,8 +581,8 @@ csw 16oct2012 init ier0
      &           solveco(is,ireg).neqv.last_solve_7(ireg)
               end do
               if(new_matrix) call restart_ma28_for_7
-              call b2npc7 (nx, ny, fac_vis, guard_flows,
-     &         rza(-1,-1,is), nnreg(0), solvedum, solving(1),
+              call b2npc7 (nx, ny, fac_vis, guard_flows, rza(-1,-1,is),
+     &         nnreg(0), solvedum, solving(1),
      &         solvedm2, ncall, is, rxf0, vol, pbs, flob, conb,          !srv 22.01.02 01.07.05
      &         sna(-1,-1,0,is), pcca(-1,-1,0,is), ti, pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna(-1,-1,0,is),
@@ -591,8 +595,8 @@ csw 16oct2012 init ier0
      &           solveco(is,ireg).neqv.last_solve_5(ireg)
               end do
               if(new_matrix) call restart_ma28
-              call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,
-     &         solving(1), solvedm2, ncall, is, rxf0, vol,
+              call b2npco (nx, ny, guard_flows, nnreg(0),
+     &         solvedum, solving(1), solvedm2, ncall, is, rxf0, vol,
      &         pbs, flob, conb,                                          !srv 22.01.02 01.07.05
      &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna(-1,-1,0,is),
@@ -609,8 +613,8 @@ csw 16oct2012 init ier0
                 end do
                 if(new_matrix) call restart_ma28_for_11
                 call b2npc11 (nx, ny, fac_vis, guard_flows,
-     &           rza(-1,-1,is), nnreg(0), solvedum, solving(1),
-     &           solvedm2, ncall, is, rxf0,
+     &           rza(-1,-1,is), nnreg(0), solvedum,
+     &           solving(1), solvedm2, ncall, is, rxf0,
      &           vol, pbs, flob, conb, sna(-1,-1,0,is),
      &           pcca(-1,-1,0,is), po, ti, pb, na(-1,-1,is),
      &           ua(-1,-1,is), fna_mdf(-1,-1,0,is),
@@ -623,8 +627,8 @@ csw 16oct2012 init ier0
      &            solveco(is,ireg).neqv.last_solve_9(ireg)
                 end do
                 if(new_matrix) call restart_ma28_for_9
-                call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
-     &           solving(1), solvedm2, ncall, is, rxf0,
+                call b2npc9 (nx, ny, guard_flows, nnreg(0),
+     &           solvedum, solving(1), solvedm2, ncall, is, rxf0,
      &           vol, pbs, flob, conb,
      &           sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &           ua(-1,-1,is), fna_mdf(-1,-1,0,is),
@@ -638,8 +642,8 @@ csw 16oct2012 init ier0
      &           solveco(is,ireg).neqv.last_solve_5(ireg)
               end do
               if(new_matrix) call restart_ma28
-              call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,
-     &         solving(1), solvedm2, ncall, is, rxf0,
+              call b2npco (nx, ny, guard_flows, nnreg(0),
+     &         solvedum, solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
      &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna_mdf(-1,-1,0,is),
@@ -759,13 +763,13 @@ csw 16oct2012 init ier0
      &        solvepo(ireg).neqv.last_solve_5(ireg)
             end do
             if (new_matrix) call restart_ma28
-            call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
-     &       ne, te, conc, sch, po, fch, respo, corpo, ier0)
+            call b2nppo (nx, ny, nnreg(0), solvepo, ncall,
+     &       rxf2, ne, te, conc, sch, po, fch, respo, corpo, ier0)
             last_solve_5(0:nnreg(0))=solvepo(0:nnreg(0))
            else
-            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall, rxf2,         !srv 27.01.00
-     &       ne, te, conc, avisper, bvisper, cvisper,                    !srv 27.01.00
-     &       sch, po, fch, respo, corpo, ier0)                           !srv 27.01.00
+            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall,               !srv 27.01.00
+     &       rxf2, ne, te, conc, avisper, bvisper, cvisper,
+     &       sch, po, fch, respo, corpo, ier0)
            endif                                                         !srv 06.07.00
 crfs       do iy = 0, ny-1
            do iy = -1, ny
@@ -774,12 +778,12 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
            enddo
           else
            if (vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
-            call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
-     &       ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
+            call b2nppo (nx, ny, nnreg(0), solvepo, ncall,
+     &       rxf2, ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
            else
-            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall, rxf2,         !srv 27.01.00
-     &       ne, te, conc, avisper, bvisper, cvisper,                    !srv 27.01.00
-     &       sch, po, fch, wrk0, wrk1, ier0)                             !srv 27.01.00
+            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall,               !srv 27.01.00
+     &       rxf2, ne, te, conc, avisper, bvisper, cvisper,
+     &       sch, po, fch, wrk0, wrk1, ier0)
            endif                                                         !srv 06.07.00
 crfs       do iy = 0, ny-1
            do iy = -1, ny
@@ -800,9 +804,9 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &                lnlam, te, ti, ni, chci, fchvisq)
 
           if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
-            call b2xpro (nx, ny, ns, mp, am, na, ro)
-            call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-            wrk0(:,:)=sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+            call b2xprz (nx, ny, ns, mp, am, na, rz)
+            call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+            wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
             call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
             call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,
      &                    cssb(-1,-1,1))
@@ -1015,8 +1019,8 @@ c   recompute particle fluxes
      &           solveco(is,ireg).neqv.last_solve_7(ireg)
               end do
               if(new_matrix) call restart_ma28_for_7
-              call b2npc7 (nx, ny, fac_vis, guard_flows,
-     &         rza(-1,-1,is), nnreg(0), solvedum, solving(1),
+              call b2npc7 (nx, ny, fac_vis, guard_flows, rza(-1,-1,is),
+     &         nnreg(0), solvedum, solving(1),
      &         solvedm2, ncall, is, rxf0, vol, pbs, flob, conb,          !srv 22.01.02 01.07.05
      &         sna(-1,-1,0,is), pcca(-1,-1,0,is), ti, pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna(-1,-1,0,is),
@@ -1029,9 +1033,9 @@ c   recompute particle fluxes
      &            solveco(is,ireg).neqv.last_solve_5(ireg)
               end do
               if(new_matrix) call restart_ma28
-              call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,
-     &         solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob, !srv 22.01.02 01.07.05
-     &         conb, sna(-1,-1,0,is), pcca(-1,-1,0,is), pb,
+              call b2npco (nx, ny, guard_flows, nnreg(0),
+     &         solvedum, solving(1), solvedm2, ncall, is, rxf0, vol,     !srv 22.01.02 01.07.05
+     &         pbs, flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is), pb,
      &         na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npco')
@@ -1050,8 +1054,8 @@ c   recompute particle fluxes
                 end do
                 if(new_matrix) call restart_ma28_for_11
                 call b2npc11 (nx, ny, fac_vis, guard_flows,
-     &           rza(-1,-1,is), nnreg(0), solvedum, solving(1),
-     &           solvedm2, ncall, is, rxf0,
+     &           rza(-1,-1,is), nnreg(0), solvedum,
+     &           solving(1), solvedm2, ncall, is, rxf0,
      &           vol, pbs, flob, conb, sna(-1,-1,0,is),
      &           pcca(-1,-1,0,is), po, ti, pb, na(-1,-1,is),
      &           ua(-1,-1,is), fna_mdf(-1,-1,0,is),
@@ -1064,8 +1068,8 @@ c   recompute particle fluxes
      &             solveco(is,ireg).neqv.last_solve_9(ireg)
                 end do
                 if(new_matrix) call restart_ma28_for_9
-                call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
-     &           solving(1), solvedm2, ncall, is, rxf0,
+                call b2npc9 (nx, ny, guard_flows, nnreg(0),
+     &           solvedum, solving(1), solvedm2, ncall, is, rxf0,
      &           vol, pbs, flob, conb,
      &           sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &           ua(-1,-1,is), fna_mdf(-1,-1,0,is),
@@ -1079,8 +1083,8 @@ c   recompute particle fluxes
      &           solveco(is,ireg).neqv.last_solve_5(ireg)
               end do
               if(new_matrix) call restart_ma28
-              call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,
-     &         solving(1), solvedm2, ncall, is, rxf0,
+              call b2npco (nx, ny, guard_flows, nnreg(0),
+     &         solvedum, solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
      &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna_mdf(-1,-1,0,is),

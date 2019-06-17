@@ -100,7 +100,7 @@
      &    k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)        !lk 19.09.07
       real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),           !lk 12.05.11
      &    k1(-1:nx,-1:ny), t1, t2                                     !lk 12.05.11
-      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.12.13
+      real (kind=R8), save :: cvsa_mltpl = 1.0_R8, csig_mltpl=1.0_R8  !iyv 06.12.13
       real (kind=R8) ::
      *  hce(-1:nx,-1:ny,0:1), sig(-1:nx,-1:ny,0:1),
      1  alf(-1:nx,-1:ny,0:1), vsa(-1:nx,-1:ny,0:1,0:ns-1),
@@ -152,6 +152,7 @@ csw 13mar2012
         call xertst (0.0_R8.le.cthev,
      &   'faulty internal parameter cthev')
         call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
+        call ipgetr ('b2trcl_csig_mltpl', csig_mltpl)                !iyv 06.12.13
         call ipgeti ('b2trcl_conductive_limit', conductive_limit)    !srv 16.06.08
         call ipgeti ('b2trcl_iout', iout)                            !srv 17.06.08
         call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
@@ -427,6 +428,10 @@ csw 13mar2012
            chci(ix,iy,0)=chci(ix,iy,0)*f_luc_ki(ix,iy)                    !lk 20.11.07
            sigx_c(ix,iy)=sigx_c(ix,iy)*f_luc_sg(ix,iy)
            alfx_c(ix,iy)=alfx_c(ix,iy)*f_luc_al(ix,iy)
+           if( bottomiy(ix,iy).eq.-2 ) then
+            csig(ix,iy,0) = csig_mltpl*csig(ix,iy,0)              !iyv
+            sigx_c(ix,iy) = csig_mltpl*sigx_c(ix,iy)
+           endif 
           endif                                                           !lk 12.05.11}
          enddo
         enddo

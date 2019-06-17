@@ -1,16 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfnb (nx, ny, isb, ismain,                            !srv 08.09.01 !lk 02.06.11
-     &  guard_flows, facdrift, fac_ExB, mb, vol, cssb, zb,               !xpb !iyv 06.02.14
-     &  pbs, pbshz, nb, pb, ub, ubdia, vbecrb, vbdia, wbdia, ne,         !xpb !srv 09.01.01
-     &  te, ti, bb, hx, hy, hz, qz, gs, qc, po, cvlb, cdnb, cdpb, cddb,  !srv 09.01.01 13.10.06
-     &  cvlbhz, cvmbhz, cdnbhz, cdpbhz,                                  !srv 09.01.01
-     &  fchvispar, fchvisper, fchinert, fchanml, fchvisq,                !srv 20.09.06
-     &  fnb, fnb_nodrift, fnb_fcor, fnb_he, fnbPSch, fnb_mdf,            !srv 13.10.06
+      subroutine b2tfnb (nx, ny, isb, ismain,                           !srv 08.09.01 !lk 02.06.11
+     &  guard_flows, facdrift, fac_ExB, mb, vol, cssb, zb,              !xpb !iyv 06.02.14
+     &  pbs, pbshz, nb, pb, ub, ubdia, vbecrb, vbdia, wbdia, ne,        !xpb !srv 09.01.01
+     &  te, ti, bb, hx, hy, hz, qz, gs, qc, po, cvlb, cdnb, cdpb, cddb, !srv 09.01.01 13.10.06
+     &  cvlbhz, cvmbhz, cdnbhz, cdpbhz,                                 !srv 09.01.01
+     &  fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 20.09.06
+     &  fnb, fnb_nodrift, fnb_fcor, fnb_he, fnbPSch, fnb_mdf,           !srv 13.10.06
      &  flob, conb, fnb_32, fnb_52, fnb_32nd,
      &  fnb_52nd, kbnrgy, fllim0fnb,
-     &  balance)                                                         !djm Jan2017
+     &  balance)                                                        !djm Jan2017
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -18,39 +18,39 @@
       use b2mod_geo_corner
       use b2mod_b2cmpa
       use b2mod_b2cmfs
-      use b2mod_balance                                                  !djm Jan2017
+      use b2mod_balance                                                 !djm Jan2017
      & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
      &          fna_ch, fna_pschused, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, isb, guard_flows, ismain                           !xpb !srv 08.09.01 !lk 02.06.11
+      integer nx, ny, isb, guard_flows, ismain                          !xpb !srv 08.09.01 !lk 02.06.11
       real (kind=R8) ::
-     *  pbs(-1:nx,-1:ny,0:1), pbshz(-1:nx,-1:ny,0:1), nb(-1:nx,-1:ny),   !srv 09.01.01
+     *  pbs(-1:nx,-1:ny,0:1), pbshz(-1:nx,-1:ny,0:1), nb(-1:nx,-1:ny),  !srv 09.01.01
      &  pb(-1:nx,-1:ny),
      &  ub(-1:nx,-1:ny), cvlb(-1:nx,-1:ny,0:1), cdnb(-1:nx,-1:ny,0:1),
      &  cdpb(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),               !srv 09.01.01
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),              !srv 09.01.01
      &  po(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3),
      2  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
      2  facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny), zb(-1:nx,-1:ny),
      3  vol(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny), mb,
-     &  cvlbhz(-1:nx,-1:ny,0:1), cvmbhz(-1:nx,-1:ny,0:1),                !srv 09.01.01
-     &  cdnbhz(-1:nx,-1:ny,0:1), cdpbhz(-1:nx,-1:ny,0:1),                !srv 09.01.01
-     &  cddb(-1:nx,-1:ny,0:1), cssb(-1:nx,-1:ny,0:1),                    !srv 13.10.06 !iyv 06.02.14
-     &  fchvispar(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),           !srv 20.09.06
+     &  cvlbhz(-1:nx,-1:ny,0:1), cvmbhz(-1:nx,-1:ny,0:1),               !srv 09.01.01
+     &  cdnbhz(-1:nx,-1:ny,0:1), cdpbhz(-1:nx,-1:ny,0:1),               !srv 09.01.01
+     &  cddb(-1:nx,-1:ny,0:1), cssb(-1:nx,-1:ny,0:1),                   !srv 13.10.06 !iyv 06.02.14
+     &  fchvispar(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),          !srv 20.09.06
      &  fchvisper(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),
      &  fchanml(-1:nx,-1:ny,0:1)
-      logical balance                                                    !djm Jan2017
+      logical balance                                                   !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  fnb(-1:nx,-1:ny,0:1), fnb_32(-1:nx,-1:ny,0:1),
      1  fnb_52(-1:nx,-1:ny,0:1), fnb_nodrift(-1:nx,-1:ny,0:1),
      1  fnb_32nd(-1:nx,-1:ny,0:1), fnb_52nd(-1:nx,-1:ny,0:1),
-     1  flob(-1:nx,-1:ny,0:1), fnb_fcor(-1:nx,-1:ny,0:1),                !srv 01.10.99
-     2  fnb_he(-1:nx,-1:ny,0:1),                                         !srv 21.01.00
-     &  fnbPSch(-1:nx,-1:ny,0:1), fnb_mdf(-1:nx,-1:ny,0:1),              !srv 13.10.06
-     &  conb(-1:nx,-1:ny,0:1,0:4), ubdia(-1:nx,-1:ny,0:1),               !srv 13.10.06
-     &  vbecrb(-1:nx,-1:ny,0:1), vbdia(-1:nx,-1:ny,0:1),                 !xpb
+     1  flob(-1:nx,-1:ny,0:1), fnb_fcor(-1:nx,-1:ny,0:1),               !srv 01.10.99
+     2  fnb_he(-1:nx,-1:ny,0:1),                                        !srv 21.01.00
+     &  fnbPSch(-1:nx,-1:ny,0:1), fnb_mdf(-1:nx,-1:ny,0:1),             !srv 13.10.06
+     &  conb(-1:nx,-1:ny,0:1,0:4), ubdia(-1:nx,-1:ny,0:1),              !srv 13.10.06
+     &  vbecrb(-1:nx,-1:ny,0:1), vbdia(-1:nx,-1:ny,0:1),                !xpb
      &  wbdia(-1:nx,-1:ny,0:1), kbnrgy(-1:nx,-1:ny),
      &  fllim0fnb(-1:nx,-1:ny,0:1)
 *   ..common blocks
@@ -74,53 +74,53 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ib, area_fix, no_hybr
-      integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
+      integer, save :: iout = 0, iout_b2wdat = 0,                       !srv 16.09.02
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
-     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2npmo =0
-      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
-      integer, save :: pflux_cor = 1                                     !srv 05.03.16
-      integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
+      integer, save :: mdf_fnb = 0                                      !srv 13.10.06
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
+      integer, save :: pflux_cor = 1                                    !srv 05.03.16
+      integer, save :: ion_vlct_restrict = 0                            !iyv 06.02.14
       integer, save :: vlct_diagno = 1
-      character chns*3                                                   !srv 16.09.02
-      integer, save :: drift_style = 1                                   !srv 21.06.08
-      real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
-      real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
-      real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
-      real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8           !srv 02.10.17
-      real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
+      character chns*3                                                  !srv 16.09.02
+      integer, save :: drift_style = 1                                  !srv 21.06.08
+      real (kind=R8), save :: alpha_ = 0.0_R8                           !srv 09.07.03
+      real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
+      real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
+      real (kind=R8), save :: vis_per = 1.0_R8, vis_q = 1.0_R8          !srv 02.10.17
+      real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8           !srv 27.01.12
       real (kind=R8), save ::
-     &   poleldr = 1.0_R8, radeldr = 1.0_R8,                             !srv 25.04.00
-     &   poldidr = 1.0_R8, raddidr = 1.0_R8                              !srv 25.04.00
+     &   poleldr = 1.0_R8, radeldr = 1.0_R8,                            !srv 25.04.00
+     &   poldidr = 1.0_R8, raddidr = 1.0_R8                             !srv 25.04.00
       real (kind=R8) ::
      *   con(-1:nx,-1:ny), dif, flo, con_nodrift, flo_nodrift, xfrhie,
      *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
      *   flux_limit_min_ti,
-     *   flo2dia, con_2dia(-1:nx,-1:ny), flo_mdf, con_mdf(-1:nx,-1:ny),  !srv 01.10.99 21.01.00 22.05.03 04.02.05 13.10.06
-     *   term(-1:nx,-1:ny), flo_he, con_he(-1:nx,-1:ny),                 !srv 25.04.00 13.09.02 11.09.09
-     &   termhz(-1:nx,-1:ny)                                             !srv 05.11.09
+     *   flo2dia, con_2dia(-1:nx,-1:ny), flo_mdf, con_mdf(-1:nx,-1:ny), !srv 01.10.99 21.01.00 22.05.03 04.02.05 13.10.06
+     *   term(-1:nx,-1:ny), flo_he, con_he(-1:nx,-1:ny),                !srv 25.04.00 13.09.02 11.09.09
+     &   termhz(-1:nx,-1:ny)                                            !srv 05.11.09
       real (kind=R8) ::
-     &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1),              !srv 21.10.10
-     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
-     &   rdiv, scur, vsprcur                                             !srv 05.03.16 02.04.18
+     &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1),             !srv 21.10.10
+     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,    !srv 05.03.16
+     &   rdiv, scur, vsprcur                                            !srv 05.03.16 02.04.18
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
-     *   wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny), wrk5(-1:nx,-1:ny),        !srv 11.09.09
-     *   wrk6(-1:nx,-1:ny), wrk7(-1:nx,-1:ny), wrk8(-1:nx,-1:ny),        !srv 11.09.09 !iys 17.04.12
-     &   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny)
+     *   wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny), wrk5(-1:nx,-1:ny),       !srv 11.09.09
+     *   wrk6(-1:nx,-1:ny), wrk7(-1:nx,-1:ny), wrk8(-1:nx,-1:ny),       !srv 11.09.09 !iys 17.04.12
+     &   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1),                      !srv 01.10.99 !lk 09.06.11
-     *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                          !srv 08.10.04
-     *   nbzb(-1:nx,-1:ny), nbzbc(-1:nx,-1:ny)                           !srv 13.05.16
-      real (kind=R8) :: weight(-1:nx,-1:ny)                              !lk
+     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1),                     !srv 01.10.99 !lk 09.06.11
+     *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                         !srv 08.10.04
+     *   nbzb(-1:nx,-1:ny), nbzbc(-1:nx,-1:ny)                          !srv 13.05.16
+      real (kind=R8) :: weight(-1:nx,-1:ny)                             !lk
       integer :: xcount, ycount
       save ncall, alpha, gamma, flux_limit_min_ti, area_fix, no_hybr
 *   ..procedures
       real (kind=R8) ::
      *   kmpr, hybr, kap, cvmgp, hy1
-      external subini, subend, xertst, ipgeti, ipgetr                    !xpb
+      external subini, subend, xertst, ipgeti, ipgetr                   !xpb
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
       intrinsic abs, max, min, sqrt
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
@@ -986,9 +986,11 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        enddo
       enddo
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
-     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0                        !srv 02.04.18
-     &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
+      if((iout_b2npc9.ne.0 .and. balance) .or. 
+     &   (iout_b2npco.ne.0 .and. balance) .or.
+     &   (iout_b2npc7.ne.0 .and. balance) .or. 
+     &   (iout_b2npc11.ne.0 .and. balance) .or.                         !srv 02.04.18
+     &    iout .eq. 1 .or. (iout_b2wdat.eq.4 .and. balance)) then       !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
@@ -1031,13 +1033,14 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        endif
        call my_out(70,nx,ny,wrk1,'b2tfnb_bxuanax'//chns)
        call my_out(70,nx,ny,wrk2,'b2tfnb_dpccornax'//chns)
-       if (iout_b2wdat .ne. 4)
+       if (iout_b2wdat.eq.4 .and. balance)
      &           call my_out(70,nx,ny,wrk6,'b2tfnb_dpccorhznax'//chns)            !srv 05.11.09
-       if (iout.eq.1) call my_out(70,nx,ny,wrk8,'b2tfnb_cvlbnax'//chns)                !iys 17.04.2012
+       if (iout.eq.1) call my_out(70,nx,ny,wrk8,'b2tfnb_cvlbnax'//chns)           !iys 17.04.2012
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diax'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfx'//chns)
       endif
-      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 .or. iout.eq.1) then
+      if((iout_b2npmo.ne.0 .and. balance) 
+     &   .or. (iout_b2wdat.eq.4 .and. balance) .or. iout.eq.1) then
        write(chns,'(i3.3)') isb
        do iy = -1, ny
         do ix = -1, nx
@@ -1066,7 +1069,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           endif
          enddo
         enddo
-        if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
+        if(.not. is_neutral(isb) .and. (iout_b2wdat.eq.4 .and. balance))
      &   call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzx'//chns)
         call my_out(70,nx,ny,fnb_fcor(-1,-1,0),'b2tfnb_fnb_fcorx'//chns)
       endif                                                             !srv 11.09.09 }
@@ -1386,9 +1389,11 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      1   ' mb = ',mb/mp,' are ',maxfluxlimit
       endif
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0 .or.
-     &   iout_b2npc7.ne.0 .or. iout_b2npc11.ne.0                        !srv 02.04.18
-     &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
+      if((iout_b2npc9.ne.0 .and. balance) .or. 
+     &   (iout_b2npco.ne.0 .and. balance) .or.
+     &   (iout_b2npc7.ne.0 .and. balance) .or. 
+     &   (iout_b2npc11.ne.0 .and. balance) .or.                         !srv 02.04.18
+     &    iout .eq. 1 .or. (iout_b2wdat.eq.4 .and. balance)) then       !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
@@ -1426,7 +1431,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diay'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfy'//chns)
       endif
-      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 .or. iout.eq.1) then
+      if((iout_b2npmo.ne.0 .and. balance) .or. 
+     &     (iout_b2wdat.eq.4 .and. balance) .or. iout.eq.1) then
        write(chns,'(i3.3)') isb
        do iy = -1, ny
         do ix = -1, nx
@@ -1455,7 +1461,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          endif
         enddo
        enddo
-       if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
+       if(.not. is_neutral(isb) .and. (iout_b2wdat.eq.4 .and. balance))
      &  call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzy'//chns)
        call my_out(70,nx,ny,fnb_fcor(-1,-1,1),'b2tfnb_fnb_fcory'//chns)
       endif                                                             !srv 11.09.09 }
@@ -1733,7 +1739,7 @@ csw 18feb2014 remove fluxes between guard cells
         endif
       endif                                                             !srv 05.03.16 }
 
-      if (iout_b2wdat .eq. 4) then
+      if (iout_b2wdat.eq.4 .and. balance) then
        call my_out(70,nx,ny,fnb(-1,-1,0),'b2tfnb_fnbx'//chns)
        call my_out(70,nx,ny,fnb(-1,-1,1),'b2tfnb_fnby'//chns)
        call my_out(70,nx,ny,fnb_fcor(-1,-1,0),'b2tfnb_fnb_fcorx'//chns)
@@ -1753,6 +1759,18 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,wbdia(-1,-1,0),'b2tfnb_wbdiax'//chns)
        call my_out(70,nx,ny,wbdia(-1,-1,1),'b2tfnb_wbdiay'//chns)
        call my_out(70,nx,ny,kbnrgy,'b2tfnb_kbnrgy'//chns)
+       call my_out(70,nx,ny,fchvispar(-1,-1,0),'b2tfnb_fchvisparx')
+       call my_out(70,nx,ny,fchvispar(-1,-1,1),'b2tfnb_fchvispary')
+       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfnb_fchvisqx')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfnb_fchvisqy')
+       wrk(:,:)=vis_per*fchvisper(:,:,0)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvisperx')
+       wrk(:,:)=vis_per*fchvisper(:,:,1)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvispery')
+       call my_out(70,nx,ny,fchinert(-1,-1,0),'b2tfnb_fchinertx')
+       call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfnb_fchinerty')
+       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfnb_fchanmlx')
+       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfnb_fchanmly')
       endif
 
       if(iout.ne.0) then                                                !srv 18.06.08 {
@@ -1775,14 +1793,10 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fnb_32(-1,-1,1),'b2tfnb_fnb_32y'//chns)
        call my_out(70,nx,ny,fnb_52(-1,-1,0),'b2tfnb_fnb_52x'//chns)
        call my_out(70,nx,ny,fnb_52(-1,-1,1),'b2tfnb_fnb_52y'//chns)
-       call my_out(70,nx,ny,fnb_32nd(-1,-1,0),
-     &             'b2tfnb_fnb_32ndx'//chns)
-       call my_out(70,nx,ny,fnb_32nd(-1,-1,1),
-     &             'b2tfnb_fnb_32ndy'//chns)
-       call my_out(70,nx,ny,fnb_52nd(-1,-1,0),
-     &             'b2tfnb_fnb_52ndx'//chns)
-       call my_out(70,nx,ny,fnb_52nd(-1,-1,1),
-     &             'b2tfnb_fnb_52ndy'//chns)
+       call my_out(70,nx,ny,fnb_32nd(-1,-1,0),'b2tfnb_fnb_32ndx'//chns)
+       call my_out(70,nx,ny,fnb_32nd(-1,-1,1),'b2tfnb_fnb_32ndy'//chns)
+       call my_out(70,nx,ny,fnb_52nd(-1,-1,0),'b2tfnb_fnb_52ndx'//chns)
+       call my_out(70,nx,ny,fnb_52nd(-1,-1,1),'b2tfnb_fnb_52ndy'//chns)
        call my_out(70,nx,ny,fllim0fnb(-1,-1,0),
      &             'b2tfnb_fllim0fnbx'//chns)
        call my_out(70,nx,ny,fllim0fnb(-1,-1,1),
@@ -1839,17 +1853,19 @@ csw 18feb2014 remove fluxes between guard cells
 !      call my_out(70,nx,ny,zb,'b2tfnb_zb')
        call my_out(70,nx,ny,facdrift,'b2tfnb_facdrift'//chns)
        call my_out(70,nx,ny,fac_ExB,'b2tfnb_fac_ExB'//chns)
-       call my_out(70,nx,ny,fchvispar(-1,-1,0),
-     &             'b2tfnb_fchvisparx')
-       call my_out(70,nx,ny,fchvispar(-1,-1,1),
-     &             'b2tfnb_fchvispary')
-       call my_out(70,nx,ny,fchinert(-1,-1,0),
-     &             'b2tfnb_fchinertx')
-       call my_out(70,nx,ny,fchinert(-1,-1,1),
-     &             'b2tfnb_fchinerty')
+       call my_out(70,nx,ny,fchvispar(-1,-1,0),'b2tfnb_fchvisparx')
+       call my_out(70,nx,ny,fchvispar(-1,-1,1),'b2tfnb_fchvispary')
+       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfnb_fchvisqx')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfnb_fchvisqy')
+       wrk(:,:)=vis_per*fchvisper(:,:,0)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvisperx')
+       wrk(:,:)=vis_per*fchvisper(:,:,1)
+       call my_out(70,nx,ny,wrk,'b2tfnb_fchvispery')
+       call my_out(70,nx,ny,fchinert(-1,-1,0),'b2tfnb_fchinertx')
+       call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfnb_fchinerty')
        call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfnb_fchanmlx')
        call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfnb_fchanmly')
-      endif                                                             !srv 18.06.08 }
+      endif                                                              !srv 18.06.08 }
 
 * ..return
       ncall = ncall+1

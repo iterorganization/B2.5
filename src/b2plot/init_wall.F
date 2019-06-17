@@ -350,7 +350,7 @@ cxpb Recopy geometrical arrays into namelist defaults
       call subini('get_wall_data')
 cxpb  Test namelist input
       if (ntargsp.gt.0) then
-        write(hlp_frm,'(a,i2,a)') '(a,',ntargsp,'(a2,1x))'
+        write(hlp_frm,'(a,i2,a)') '(1x,a,',ntargsp,'(a2,1x))'
         write(*,hlp_frm) 'track_species : Bulk ', 
      .   track_species(1:ntargsp)
       else

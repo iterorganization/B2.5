@@ -159,7 +159,7 @@ c>>>
       filedata(ntrc_tst)=.true.
       go to 1000
 c
-  900 write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+  900 write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Residuals
 c
@@ -238,7 +238,7 @@ c>>>
       filedata(ntrc_res)=.true.
       go to 10
 c
-    5 write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+    5 write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Sources
 c
@@ -306,7 +306,7 @@ c>>>
       filedata(ntrc_src)=.true.
       go to 35
 
-   30 write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+   30 write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
 c----------------------------------------------------------------------
 c*** Position the files for appending the data
 c
@@ -364,7 +364,7 @@ c----------------------------------------------------------------------
      ,     (sclbase(i,k),i=0,nnatmi),(sclrtio(i,k),i=0,nnatmi),
      ,     (sclsrcn(i,k),i=0,nnatmi),k=1,nstrai)
         go to 65
-   62   write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+   62   write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_tst)=.false.
       end if
 c
@@ -380,7 +380,7 @@ c
      ,    ((rescoreg(i,ions_list(j)),i=1,nnreg(0)),
      ,     (resmoreg(i,ions_list(j)),i=1,nnreg(0)),j=1,nis_tmp)
         go to 75
-   72   write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+   72   write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_res)=.false.
       end if
 c
@@ -398,7 +398,7 @@ c
      ,         (((src_ni(i,k,j),k=1,3),i=0,nnreg(0)),
      ,          ((src_mo(i,k,j),k=1,3),i=0,nnreg(0)),j=1,nspecies)
         return
-   77   write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+   77   write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_src)=.false.
       end if
       return
@@ -432,7 +432,7 @@ c
 #endif
           go to 100
 c
-   86     write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+   86     write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
           filedata(j)=.false.
         end if
   100 continue

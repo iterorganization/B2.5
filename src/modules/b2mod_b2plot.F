@@ -129,7 +129,7 @@ cank
       logical, save ::
      *  writing_to_file,color_set,use_compile,
      *  set_resignore_regions_to_zero,plotting_wall,map_to_midplane,
-     *  xparallel,expline
+     *  xparallel,plotting_sep,expline
 
       character*256, save ::
      *  graphlabel(wklng),

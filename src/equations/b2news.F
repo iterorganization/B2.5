@@ -84,7 +84,7 @@
      5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
      6  ue(-1:nx,-1:ny), zeff(-1:nx,-1:ny), pz(-1:nx,-1:ny),             !srv 05.07.17
      7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny),
-     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
+     &  rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),                          !iyv 06.02.14
      &  fchstoch(-1:nx,-1:ny)                                            !srv 17.12.13
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
@@ -202,6 +202,11 @@
 *----------------------------------------------------
 *        | -14   |  +   |  -   |  +   |  +   |  +   |
 *----------------------------------------------------
+* An alternative to the 'no_solve' switch for controlling of the 
+* solving of equations is to use the SOLVEMO, SOLVECO, SOLVEEE, SOLVEEI, 
+* SOLVEPO arrays from b2.numerics.parameters.
+* Please consult the code documentation.
+
        solving(1:4)=no_solve.eq.0
        do i=1,4
          solving(i)=solving(i).or.
@@ -378,9 +383,9 @@
      &               lnlam, te, ti, ni, chci, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
-          call b2xpro (nx, ny, ns, mp, am, na, ro)
-          call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-          wrk0(:,:)=sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+          call b2xprz (nx, ny, ns, mp, am, na, rz)
+          call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+          wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
           call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
           call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,cssb(-1,-1,1))
         else
@@ -482,7 +487,7 @@
 cxpb
 *   ..iterate on parallel momentum balance
         call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1,        !srv 13.01.17
-     &    qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                    !srv 01.07.09
+     &    qz, vol, hx, hy, hz, bb, pbshz, lnlam,                         !srv 01.07.09
      &    na, te, ti, po, ue, fna_fcor,                                  !srv 05.07.17
      &    cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                      !srv 02.07.08
      &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
@@ -597,8 +602,8 @@ cxpb
                 if(new_matrix) call restart_ma28_for_7
                 call b2npc7 (nx, ny, fac_vis, guard_flows,
      &           rza(-1,-1,is), nnreg(0), solvedum, solving(1),
-     &           solvedm2, ncall, is, rxf0, vol, pbs, flob, conb,       !srv 22.01.02 01.07.05
-     &           sna(-1,-1,0,is), pcca(-1,-1,0,is), ti, pb,
+     &           solvedm2, ncall, is, rxf0, vol, pbs, flob,              !srv 22.01.02 01.07.05
+     &           conb, sna(-1,-1,0,is), pcca(-1,-1,0,is), ti, pb,
      &           na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                  call xertst (ier0.eq.0, 'error return from b2npc7')
@@ -641,8 +646,9 @@ cxpb
      &               solveco(is,ireg).neqv.last_solve_9(ireg)
                   end do
                   if(new_matrix) call restart_ma28_for_9
-                  call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
-     &             solving(1), solvedm2, ncall, is, rxf0, vol, pbs,
+                  call b2npc9 (nx, ny, guard_flows, nnreg(0),
+     &             solvedum, solving(1), solvedm2, ncall,
+     &             is, rxf0, vol, pbs,
      &             flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
      &             pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &             resco(-1,-1,is), corpa(-1,-1,is), ier0)
@@ -655,9 +661,9 @@ cxpb
      &             solveco(is,ireg).neqv.last_solve_5(ireg)
                 end do
                 if(new_matrix) call restart_ma28
-                call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,
-     &           solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,
-     &           conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
+                call b2npco (nx, ny, guard_flows, nnreg(0),
+     &           solvedum, solving(1), solvedm2, ncall, is, rxf0, vol,
+     &           pbs, flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
      &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npco')
@@ -819,12 +825,13 @@ cxpb
      &               solvepo(ireg).neqv.last_solve_5(ireg)
                   end do
                   if (new_matrix.and.ncall.ne.0) call restart_ma28
-                  call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
-     &             ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
+                  call b2nppo (nx, ny, nnreg(0), solvepo,
+     &             ncall, rxf2, ne, te, conc, sch, po, fch, wrk0, wrk1,
+     &             ier0)
                   last_solve_5(0:nnreg(0)) = solvepo(0:nnreg(0))
                 else
-                  call b2npp7 (nx, ny, nnreg(0), solvepo, ncall, rxf2,
-     &             ne, te, conc,
+                  call b2npp7 (nx, ny, nnreg(0), solvepo,
+     &             ncall, rxf2, ne, te, conc,
      1             avisper, bvisper, cvisper,
      &             sch, po, fch, wrk0, wrk1, ier0)
                 endif
@@ -862,10 +869,10 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      &             na,'na',ua,'ua',resmo,'resmo',corua,'corua')
                 endif
                 if(ion_vlct_restrict .ne. 0 ) then                       !iyv 06.02.14
-                  call b2xpro (nx, ny, ns, mp, am, na, ro)
-                  call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
+                  call b2xprz (nx, ny, ns, mp, am, na, rz)
+                  call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
                   wrk0(:,:)=
-     &                 sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+     &                 sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
                   call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,
      &                        cssb(-1,-1,0))
                   call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,

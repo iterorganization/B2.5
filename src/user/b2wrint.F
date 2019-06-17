@@ -197,8 +197,8 @@ c*** Local variables of general use
       real (kind=R8) :: tdummy
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
-      integer iatm ! IYS 29.09.2017
 #ifdef B25_EIRENE
+      integer iatm ! IYS 29.09.2017
       integer imol
 #endif
 c#ifdef SCL_IMP_RCI
@@ -277,15 +277,11 @@ c
 c*** Compute the data
 c
 csw 18nov2013 check alloc
-#ifdef B25_EIRENE
       if(allocated(volsumn)) then
-#endif
         hlp_sumn=sum(volsumn(1:nstrat))
         hlp_sume=sum(volsumee(1:nstrat))
         hlp_sumi=sum(volsumei(1:nstrat))
-#ifdef B25_EIRENE
       endif
-#endif
 
       hlp_brms = 0.0_R8
       hlp_rdim = 0.0_R8
@@ -311,8 +307,8 @@ csw 18nov2013 check alloc
           ssna_tmp(is,k) = ssna_tmp(is,k) + ssnireg(is,k)
         end do
       end do
-      do iatm = 1, nnatmi
 #ifdef B25_EIRENE
+      do iatm = 1, nnatmi
         is = latmscl(iatm)
         if (is.eq.0) cycle
         Natm_tmp(is) = Natm_tmp(is) + pdena_int(iatm,0)
@@ -321,8 +317,8 @@ csw 18nov2013 check alloc
      &      Natm_tmp(is)   = Natm_tmp(is) +
      &        mlcmp(is,imol) * pdenm_int(imol,0)
         enddo
-#endif
       end do
+#endif
 
 csw 20sep2013 added
       do iy=0,ny-1

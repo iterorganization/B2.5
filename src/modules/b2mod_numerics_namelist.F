@@ -21,7 +21,8 @@
      *   last_solve_5(:),
      *   last_solve_7(:),                                 !srv 02.04.18
      *   last_solve_9(:),
-     *   last_solve_11(:)                                 !srv 02.04.18
+     *   last_solve_11(:),                                 !srv 02.04.18
+     *   add_te_corr_to_po(:)  ! IYS 21.09.2018
 #else
 #     include "DIMENSIONS.F"
       integer NSDMAX
@@ -42,6 +43,7 @@
       logical, save :: last_solve_7(0:NNREGMAX)          !srv 02.04.18
       logical, save :: last_solve_9(0:NNREGMAX)
       logical, save :: last_solve_11(0:NNREGMAX)         !srv 02.04.18
+      logical, save :: add_te_corr_to_po(0:NNREGMAX)            ! IYS 21.09.2018
 #endif
       real (kind=R8), save :: corr_core_dt               ! IYS 19.12.2017 
       real (kind=R8), save :: time_factor_required,
@@ -57,9 +59,10 @@
       logical, save :: write_nml_num = .true.
       namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
-     2 solveco,solvemo,solvepo,solveee,solveei,write_nml_num,
+     2 solveco,solvemo,solvepo,solveee,solveei,
+     & write_nml_num,
      3 numerics_filename,numerics_time_mod,numerics_time_switch,
-     4 corr_core_dn,corr_core_dt    ! IYS 19.12.2017
+     4 corr_core_dn,corr_core_dt,add_te_corr_to_po  ! IYS 19.12.2017
 
       contains
 
@@ -88,6 +91,7 @@
       allocate(last_solve_7(0:nnreg(0)))        !srv 02.04.18
       allocate(last_solve_9(0:nnreg(0)))
       allocate(last_solve_11(0:nnreg(0)))       !srv 02.04.18
+      allocate(add_te_corr_to_po(0:nnreg(0)))                      ! IYS 21.09.2018, 21.09.2018
 #else
       call xertst (nsd.le.nsdmax,
      1 'increase DEF_NSD in DIMENSIONS.F')
@@ -107,6 +111,7 @@
       solvemo=.true.
       solvemt=.true.
       solvepo=.true.
+      add_te_corr_to_po=.true.            ! IYS 21.09.2018
       solveee=.true.
       solveei=.true.
       solveet=.true.
@@ -139,6 +144,7 @@
       deallocate(solvemo)
       deallocate(solvemt)
       deallocate(solvepo)
+      deallocate(add_te_corr_to_po)            ! IYS 21.09.2018
       deallocate(solveee)
       deallocate(solveei)
       deallocate(solveet)
@@ -156,7 +162,7 @@
 
       integer nx,ny,ns,nsmin,nsmax
       logical :: file_ok
-      integer ix,iy,is
+      integer ix, iy, ireg, is
       real (kind=R8) :: ttf
       character*260 filename
 
@@ -171,11 +177,11 @@
         read(99,numerics)
 #endif
         write(*,*) 'Read namelist numerics from ',trim(filename)
-        do ix = 0, nnreg(0)
-          solveet(ix) = solveee(ix).or.solveei(ix)
-          solvemt(ix) = .false.
-          do iy = nsmin, nsmax-1
-            solvemt(ix) = solvemt(ix) .or. solvemo(iy,ix)
+        do ireg = 0, nnreg(0)
+          solveet(ireg) = solveee(ireg).or.solveei(ireg)
+          solvemt(ireg) = .false.
+          do is = nsmin, nsmax-1
+            solvemt(ireg) = solvemt(ireg) .or. solvemo(is,ireg)
           end do
         end do
       else

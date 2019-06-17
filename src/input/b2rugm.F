@@ -192,7 +192,10 @@
       integer n2, ix, iy, idum(0:9)
       integer iFace, offset
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y
+     *   p0x, p0y, p1x, p1y, t0, t1
+      real (kind=R8) ::
+     *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1)
+      logical qc_to_do
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -233,23 +236,11 @@
 *   ..read qz, qc, gs
       call cfrure (nget, n2*2, qz, 'qz')
 cxpb
+      qc_to_do = .false.
       if(b2fgmtry_version.ge.'01.001.022') then
        call cfrure (nget, n2, qc, 'qc')
       else
-       do iy = -1, ny
-        do ix = -1, nx
-         qc(ix,iy) = cosang (
-     &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
-     &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &     crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
-         if(qc(ix,iy).le.0.0_R8) then
-          write(*,'(a,1f12.6,2i5)')
-     1     'Problem in b2rugm: qc(ix,iy) <= 0',qc(ix,iy),ix,iy
-          write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
-          write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
-         endif
-        enddo
-       enddo
+       qc_to_do = .true.
       endif
       qcb = 1.0_R8
       if(b2fgmtry_version.ge.'01.001.030') then
@@ -326,6 +317,40 @@ cxpb-end
       end do
 
 *  ..interpolate magnetic field to cell faces
+      if (qc_to_do) then
+cwdk   poloidal unit vector in cell centers, ebc
+       do iy = -1, ny
+        do ix = -1, nx
+         t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
+         t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
+         ebc(ix,iy,0) = t0/norm(t0,t1)
+         ebc(ix,iy,1) = t1/norm(t0,t1)
+        enddo
+       enddo
+cwdk   poloidal unit vector at left faces, ebf
+       call intfaceh(nx,ny,leftix,leftiy,vol,ebc(-1,-1,0),ebf(-1,-1,0))
+       call intfaceh(nx,ny,leftix,leftiy,vol,ebc(-1,-1,1),ebf(-1,-1,1))
+       do iy = -1, ny
+        do ix = -1, nx
+cwdk     note: qc in left ghosts unchanged
+         if (leftix(ix,iy).ne.-2) then
+          qc(ix,iy) = cosang ( ebf(ix,iy,0), ebf(ix,iy,1), 
+     &      crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+         else
+          qc(ix,iy) = cosang (
+     &     (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &     (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &      crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
+         end if
+         if(qc(ix,iy).le.0.0_R8) then
+          write(*,'(a,1f12.6,2i5)')
+     1     'Problem in b2rugm: qc(ix,iy) <= 0',qc(ix,iy),ix,iy
+          write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
+          write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
+         endif
+        enddo
+       enddo
+      endif
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
       call intfacer1(nx,ny,2,rightix,rightiy,vol,bb,wbbr)

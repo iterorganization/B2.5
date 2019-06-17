@@ -1561,7 +1561,18 @@ c
               if (icn(jj).ne.jpiv) go to 570
 c if pivot is zero, rest of column is and so multiplier is zero.
               au = zero
-              if (a(ijpos).ne.zero) au = -a(jj)/a(ijpos)
+              if (a(ijpos).ne.zero) then
+#ifdef DBG
+                if((a(jj).ge.tiny(1.0_R8) .or. a(jj).le.-tiny(1.0_R8))
+     &           .and.(a(ijpos).ge. tiny(1.0_R8).or.
+     &                 a(ijpos).le.-tiny(1.0_R8))) then
+                  product = log(abs(a(jj))) - log(abs(a(ijpos)))
+                  if (product.ge.cutlo) au = -a(jj)/a(ijpos)
+                end if 
+#else
+                au = -a(jj)/a(ijpos)
+#endif
+              end if
               if (lbig) big = max(big,abs(au))
               a(jj) = a(j1)
               a(j1) = au
@@ -1749,10 +1760,9 @@ c innermost fill-in loop which also resets icn.
               j = icn(jj)
               if (j.lt.0) go to 820
 #ifdef DBG
-              if((au.ge.tiny(1.0_R8) .or. au.le.-tiny(1.0_R8)).and.
-     &           (a(jj).ge.tiny(1.0_R8) .or. a(jj).le.-tiny(1.0_R8)))
-     >         then
-                product = log(abs(au))+log(abs(a(jj)))
+              if((au   .ge.tiny(1.0_R8).or.au   .le.-tiny(1.0_R8)).and.
+     &           (a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8))) then
+                product = log(abs(au)) + log(abs(a(jj)))
                 if (product.ge.cutlo) then
                   anew = au*a(jj)
                   aanew = abs(anew)
@@ -1763,7 +1773,7 @@ c innermost fill-in loop which also resets icn.
               else
                 anew = 0.0_R8
                 aanew = 0.0_R8
-             end if
+              end if
 #else
               anew = au*a(jj)
               aanew = abs(anew)
@@ -2104,13 +2114,14 @@ c ipivj is position of pivot in row j.
           ipivj = iw(j) + lenrl(j)
 c form multiplier au.
 #ifdef DBG
-          if (abs(w(j)).gt.tiny(1.0_R8) .and.
-     &        abs(a(ipivj)).gt.tiny(1.0_R8)) then
+          if((w(j).ge.tiny(1.0_R8).or.w(j).le.-tiny(1.0_R8)).and.
+     &        (a(ipivj).ge. tiny(1.0_R8).or.
+     &         a(ipivj).le.-tiny(1.0_R8))) then
             product = log(abs(w(j))) - log(abs(a(ipivj)))
-            if (product .le. cutlo) then
-              au = 0.0_R8
-            else
+            if (product.ge.cutlo) then
               au = -w(j)/a(ipivj)
+            else
+              au = 0.0_R8
             end if
           else
             au = 0.0_R8
@@ -2129,8 +2140,8 @@ c innermost loop.
           do 40 jayjay=ipivj,jfin
             jay = icn(jayjay)
 #ifdef DBG
-            if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)) .and.
-     &         (a(jayjay).ge.tiny(1.0_R8).or.
+            if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)).and.
+     &         (a(jayjay).ge. tiny(1.0_R8).or.
      &          a(jayjay).le.-tiny(1.0_R8))) then
               product = log(abs(au)) + log(abs(a(jayjay)))
               if (product.ge.cutlo) w(jay) = w(jay) + au*a(jayjay)
@@ -2275,10 +2286,10 @@ c
      * jpiv, jpivp1, lt, ltend, numblk
 c
       data zero /0.0e0_R8/
+c
 #ifdef DBG
       cutlo = log(tiny(1.0_R8))
 #endif
-c
 c the final value of resid is the maximum residual for an inconsistent
 c     set of equations.
       resid = zero
@@ -3413,8 +3424,8 @@ c     increase the time for ma28a/ad marginally and that for ma28b/bd
 c     by about 20%.  the default value for lbig is .false.
 c
       real (kind=R8) ::
-     *   eps, rmin, resid, tol, themax, big, dxmax,
-     * errmax, dres, cgce
+     *   eps, rmin, resid
+      real (kind=R8) :: tol, themax, big, dxmax, errmax, dres, cgce
       integer lp, mp
       integer irncp, icncp, minirn, minicn, irank
       integer ndrop, maxit, noiter, nsrch, istart

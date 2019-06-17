@@ -22,7 +22,7 @@
 				<default>None</default>
 				<type>None</type>
 				<description>
-					atomic charge, nuclear charge, atomic mass and atomic charge squared for each charge stateminimum atomic charge of the stage, maximum atomic charge of the stage, nuclear charge, and atomic mass; this data should match that given in b2ah.dat
+					atomic charge, nuclear charge, atomic mass and atomic charge squared for each charge state, minimum atomic charge of the stage, maximum atomic charge of the stage, nuclear charge, and atomic mass; this data should match that given in b2ah.dat
 				</description>
 			</switch>
 			<switch>
@@ -281,6 +281,25 @@
 					If pbs_from_basis_mesh.eq.0, the pbs array is computed from values on the actual working mesh (old treatment).
 					If pbs_from_basis_mesh.eq.1, the pbs array is computed from values on the (possibly) finer basis mesh from the geometry file and the contributions from each basis cell are added to obtain the value on the working mesh.
 					In both cases, mind the value of 'b2news_area_fix', which should be also declared in b2ag.dat if the non-default behaviour is wanted.
+				</description>
+			</switch>
+			<switch>
+				<name>b2agmt_qc_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When b2agmt_qc_style.eq.1, the cosine of the angle between the left face of cells and the magnetic field direction is computed using information from cells to both the left and right of the face.
+					When b2agmt_qc_style.eq.0, we only use information from the cell at the right of the face. This is the treatment used up to version 3.0.6, inclusively.
+				</description>
+			</switch>
+			<switch>
+				<name>b2agdr_redef_qc</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When b2agdr_redef_qc.eq.1, the cosine of the angle between the left face of a cell and the magnetic field direction is interpolated from the values at the cell centers.
+					When b2agdr_redef_qc.eq.0, we only use information from the cell at the right of the face. This is the treatment used up to version 3.0.6, inclusively.
+					This switch is superseded by b2agmt_qc_style.
 				</description>
 			</switch>
 			<switch>
@@ -732,6 +751,7 @@
 					no_solve.eq.-8 will activate the heat equations only. These can be combined. For example, no_solve.eq.-3 will activate the parallel momentum and particle conservation equations.
 					If the no_solve switch requires an equation not to be solved, the settings in the corresponding solvexx arrays from b2.numerics.parameters are moot.
 					The latter are reserved for fine-tuning numerical diagnostics.
+					If wishing to toggle whether to solve or not to solve each equation separately, one should set, in the b2.numerics.parameters input file, the SOLVEMO, SOLVECO, SOLVEE, SOLVEEI and SOLVEPO arrays, respectively, for each of the parallel momentum equations, the total momentum equation, each density equation, the electron and ion heat equations, and the total energy equation.
 					The table below shows which combination of equations will be solved	depending on the value of switch 'b2news_no_solve'
 					*----------------------------------------------------
 					*        | value |  co  |  mo  |  he  |  hi  |  po  |
@@ -933,7 +953,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Turns on coupling with the Eirene Monte-Carlo neutral code if nonzero.
+					Turns on coupling with the Eirene Monte Carlo neutral code if nonzero.
 					To be used, the code must be compiled with the -DB25_EIRENE option.
 				</description>
 			</switch>
@@ -1095,7 +1115,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier to the parallel momentum source term associated with the anomalous current. It is recommended '1.0'.
+					Multiplier to the parallel momentum source term associated with the anomalous current. It is recommended '1.0'. Only active if both the ExB and diamagnetic drifts are turned on.
 					The value '0.0' corresponds to the old SOLPS5.0 treatment.
 				</description>
 			</switch>
@@ -1200,7 +1220,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Integer switch to turn off or on the ion-neutral current in the core region (applies to coupled runs only). This is recommended in cases where the neutral densities are very low in the core region and the ion-neutral current is likely to vary widely from one iteration to the next as a result of Monte-Carlo noise.
+					Integer switch to turn off or on the ion-neutral current in the core region (applies to coupled runs only). This is recommended in cases where the neutral densities are very low in the core region and the ion-neutral current is likely to vary widely from one iteration to the next as a result of Monte Carlo noise.
 					If fchin_in_core.eq.0 (default), then fchin is set to zero in the core.
 					If fchin_in_core.eq.1, then fchin is unchanged.
 				</description>
@@ -2456,7 +2476,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Another option for plasma state file output. Give the number of B2.5 full interations between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals. Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte-Carlo averaging scheme.
+					Another option for plasma state file output. Give the number of B2.5 full interations between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals. Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte Carlo averaging scheme.
 				</description>
 			</switch>
 			<switch>
@@ -3233,6 +3253,14 @@
 					Can be applied &lt;&gt;1 during the convergence and turned off for the final stage of calculations. Use with caution.
 				</description>
 			</switch>
+			<switch>
+				<name>b2trcl_csig_mltpl</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the electrical conductivity between guard cells along the core boundary. A large value helps to damp numerical instabilities in the potential when drifts are turned on and the electron density and temperature are kept constant along the core boundary.
+				</description>
+			</switch>
 			<switchgroup>
 			  <name>b2ux*</name>
 			  <description>
@@ -3965,6 +3993,14 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>b2sigp_pressure_restriction</name>
+			  <default>1</default>
+			  <type>integer</type>
+			  <description>
+				When set to '1', a CFL-like restriction is applied to the pressure gradient term for minority ions and for neutrals species.
+			  </description>
+			</switch>
+			<switch>
 				<name>b2xzdd_zero_dead_and_core</name>
 				<default>1</default>
 				<type>integer</type>
@@ -4092,7 +4128,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					Specifies the type of linearisation used in the sources derived from the Monte-Carlo neutrals. If linearisation.eq.0, all sources are fed to the constant term, if linearisation.eq.1, positive terms go in the constant term, and negative terms in the proportional term. 'eirene_mc_linearization' is an alias for this switch.
+					Specifies the type of linearisation used in the sources derived from the Monte Carlo neutrals. If linearisation.eq.0, all sources are fed to the constant term, if linearisation.eq.1, positive terms go in the constant term, and negative terms in the proportional term. 'eirene_mc_linearization' is an alias for this switch.
 				</description>
 			</switch>
 			<switch>
@@ -4378,7 +4414,7 @@
 			<introduction>
 				<namelist>NEUTRALS</namelist>
 				<description>
-					This namelist is used to either set parameters for the B2 neutral fluid model or for the Eirene Monte-Carlo neutrals run.
+					This namelist is used to either set parameters for the B2 neutral fluid model or for the Eirene Monte Carlo neutrals run.
 					When coupling to Eirene, it is essential that the neutral boundaries conditions declared here be in the same exact order than they are in the Eirene input file.
 					For coupled cases, some of the parameters will become active only on the second call to Eirene, while values inherited from the Eirene input file will be used for the first call. In such cases, use of the switch 'eirene_repeat_first_call' is recommended.
 					This namelist is read if either 'b2stbr_neutrals_namelist' or 'b2mndr_eirene' are set to 1.
@@ -6523,6 +6559,14 @@
 				<type>logical</type>
 				<description>
 					If .true. (default), writes the content of the namelist to stdout after it has been read.
+				</description>
+			</switch>
+			<switch>
+				<name>ADD_TE_CORR_TO_PO</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					If .true. (default), adds dte(ix,iy)/qe to the potential correction after the internal energy balance equations are solved, where dte(ix,iy) is the electron temperature correction on the time step. Individually set for each region index.
 				</description>
 			</switch>
 		</category>

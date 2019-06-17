@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npc11 (nx, ny, fac_vis, guard_flows, zb,          !srv 05.07.08 02.04.18 {
-     &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb, rxf,
-     &  vol, pbs, flob, conb, snb,                                   !srv 22.01.02 13.10.06
+      subroutine b2npc11 (nx, ny, fac_vis, guard_flows, zb,              !srv 05.07.08 02.04.18 {
+     &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb,
+     &  rxf, vol, pbs, flob, conb, snb,                                  !srv 22.01.02 13.10.06
      &  pccb, po, ti, pb, nb, ub, fnb, rescb, corpb, ierr)
       use b2mod_types
       use b2mod_b2cmpa
@@ -19,7 +19,8 @@
      &  conb(-1:nx,-1:ny,0:1,0:4), snb(-1:nx,-1:ny,0:1),             !srv 13.10.06
      &  pccb(-1:nx,-1:ny,0:1), fnb(-1:nx,-1:ny,0:1),
      &  po(-1:nx,-1:ny), ti(-1:nx,-1:ny), zb(-1:nx,-1:ny)
-      logical solvcreg(0:nregionv), ua_solve, solvmreg(0:nregionv)
+      logical solvcreg(0:nregionv), ua_solve,
+     &  solvmreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
      *   pb(-1:nx,-1:ny), nb(-1:nx,-1:ny), ub(-1:nx,-1:ny)
@@ -153,9 +154,9 @@ cdjm Jan2017 update particle source components for balance
       endif                                                           !srv 15.02.10 }
 *   ..compute correction
       write (chns,'(i3.3)') isb
-      call b2usc11 (nx, ny, fac_vis, isb, zb, nregionv, solvcreg, itcnt, !srv 13.10.06 26.09.12
-     &   rxg, pcm1, pbs, po, ti, nb, pb, snb(-1,-1,1), flob, conb,
-     &   pccb(-1,-1,1), rescb, corpb, aa11, '_b2usc11_'//chns)           !srv 18.05.02 02.04.18
+      call b2usc11 (nx, ny, fac_vis, isb, zb, nregionv, solvcreg,     !srv 13.10.06 26.09.12
+     &   itcnt, rxg, pcm1, pbs, po, ti, nb, pb, snb(-1,-1,1), flob,
+     &   conb, pccb(-1,-1,1), rescb, corpb, aa11, '_b2usc11_'//chns)  !srv 18.05.02 02.04.18
 *   ..apply correction
       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      & vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                    !IYS 19.12.2017

@@ -30,6 +30,8 @@
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
      &          balance_netcdf
 #ifdef B25_EIRENE
+      use b2mod_sources
+     , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot
       use eirmod_extrab25
 #endif
       use b2mod_b2cmpa
@@ -100,7 +102,7 @@
      &                 ncall_iout = -1, iout_b2wdat = 0                 !srv 23.03.12
       integer, save :: ird_aver=0                                       !pb 30.09.16
 #ifdef B25_EIRENE
-      integer ia, im
+      integer ia, im, ip
       character ch3*3
       real (kind=R8) :: flxtmp(0:nx+1,0:ny+1),
      &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
@@ -228,7 +230,7 @@
         call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
         call ipgetr ('b2stbr_c_pumpavr', c_pumpavr)
         if( sna_corr .gt. 0.0_R8 ) then
-           allocate(t1(1:nnatmi))
+           allocate(t1(1:nspecies))
            t1=0.0_R8
         endif                                                        !iyv 07.03.18 } 
         call ipgetr ('b2stbr_recycled_neutrals_contr',               !srv 12.04.08
@@ -660,6 +662,7 @@ c   --> better solution wanted here..
         call eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,      !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call)
+
 *   ..main part of implementation of method of effective sources (ES) 
         if (sna_corr .gt. 0.0_R8 ) then                                  !iyv 07.03.18 {
           if ( iout .ne. 0 )
@@ -715,59 +718,118 @@ cxpb  Add contribution from Eirene core boundary fluxes
           sna_puff =0.0_R8
           do is=1,nstrat
             do ia=1,nnatmi
+              if(latmscl(ia).eq.0) cycle
               if(crcstra(is).eq.'C') then
-                if(gpfc(ia,is) .ne. 0.0_R8) 
-     >           sna_puff(ia) = userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
+                if(gpfc(ia,is) .ne. 0.0_R8) sna_puff(latmscl(ia)) = 
+     &           userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
               end if     
             end do
           enddo
 
-          sna_pump =0.0_R8
+          sna_pump = 0.0_R8
+          sna_sptt = 0.0_R8
           do ia = 1, nnatmi
-            sna_pump(ia) = sna_pump(ia) + eirpump(ia)
+            is = latmscl(ia)
+            if (is.eq.0) cycle
+            sna_sptt(latmscl(ia)) = sna_sptt(latmscl(ia)) + eirspta(ia)
+            sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) + eirpump(ia)
             do im = 1, nnmoli
               if (mlcmp(ia,im).gt.0) then
-                sna_pump(ia)   = sna_pump(ia) +
-     &           mlcmp(ia,im) * eirpump(nnatmi+im)
+                sna_pump(latmscl(ia))   = sna_pump(latmscl(ia)) +
+     &             mlcmp(ia,im) * eirpump(nnatmi+im)
+                sna_sptt(latmscl(ia)) = sna_sptt(latmscl(ia)) +
+     &             mlcmp(ia,im) * eirsptm(nnatmi+im)                 
               endif
             enddo            
-          end do            
+          end do 
+          do ip = 1, nnplsi
+            is = latmscl(lkindp(ip))
+            if (is.eq.0) cycle   
+            sna_pump(is) = sna_pump(is) + 
+     &                         eirpump(nnatmi+nnmoli+nnioni+ip)
+          enddo
+
+       
           if ( iout .ne. 0 ) then
-            write(*,'(a5,5a16)') 'ia', 'sna_cor', 'sna_eir_tot',
-     &                           'sna_puff', 'sna_pump', 't1'
-            do k = 1, nnatmi
+            write(*,'(a5,6a16)') 'ia', 'sna_cor', 'sna_eir_tot',
+     &               'sna_puff', 'sna_pump', 'sna_sptt', 't1'
+            do k = 1, nspecies
               write(*, '(i5, 5es16.7)') k, sna_core(k),  sna_eir_tot(k), 
-     &                                  sna_puff(k), sna_pump(k), t1(k)
+     &                 sna_puff(k), sna_pump(k), sna_sptt(k), t1(k)
             enddo                                  
 
             write(*,'(a3,2a17)') 'ia', 'dG/sna_eir_tot', 't(ia)'
           endif  
-          do ia = 1, nnatmi
-            t01(ia) =  sna_corr*( sna_puff(ia) + sna_core(ia)  
-     &               - sna_pump(ia) ) / sna_eir_tot(ia) 
-            t01(ia) = t01(ia)* ( 1.0_R8 - exp(-c_pumpavr) ) + 
-     &                                    exp(-c_pumpavr)*t1(ia)
-            t1(ia) = t01(ia)
-            t(ia)  = 1.0_R8 + 
-     &               max( min( taumax,t01(ia) ),-taumax )       
+
+          do is = 1, nspecies
+            t01(is) =  sna_corr*( sna_puff(is) + sna_core(is)  
+     &            + sna_sptt(is) - sna_pump(is) ) / sna_eir_tot(is) 
+            t01(is) = t01(is)* ( 1.0_R8 - exp(-c_pumpavr) ) + 
+     &                     exp(-c_pumpavr)*t1(is)
+            t1(is) = t01(is)
+            t(is) = 1.0_R8 + 
+     &              max( min( taumax,t01(is) ), -taumax )       
             if ( iout .ne. 0 ) 
-     >       write(*,'(i3,2es17.4)') ia, t01(ia), t(ia)
+     &       write(*,'(i3,2es17.4)') is, t01(is), t(is)
           enddo
    
           do is = 0, ns-1
             if( is_neutral(is) ) cycle
             k = b2espcr(is)
-            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
-              sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k) 
-              sna0_eir(:,:,1,is) = sna0_eir(:,:,1,is)*t(k)
-            else
-!             write(*,'(a,i3, a5, i3, a3)')
-!     &   'Source correction is not applied for sputtered particles k=', 
-!     &        k,  'is=', is, eirtxt(k)
-            endif   
+!            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
+            sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k) 
+            sna0_eir(:,:,1,is) = sna0_eir(:,:,1,is)*t(k)
+!            else
+!!            write(*,'(a,i3, a5, i3, a3)')
+!!     &   'Source correction is not applied for sputtered particles k=', 
+!!     &       k,  'is=', is, eirtxt(k)
+!          endif   
           enddo
       
         end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }     
+
+*       compute total eirene sources for averaging
+cwdk only total eirene source are averaged!
+cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
+cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
+cwdk       down in this routine
+        do is = 0, ns-1
+          sna0_eir_tot(:,:,is) = sna0_eir(:,:,0,is) + 
+     &      sna0_eir(:,:,1,is)*na(:,:,is)
+          smo0_eir_tot(:,:,is) = smo0_eir(:,:,0,is) + 
+     &      smo0_eir(:,:,1,is)*ua(:,:,is) +
+     &      smo0_eir(:,:,2,is)*am(is)*mp*na(:,:,is) +
+     &      smo0_eir(:,:,3,is)*am(is)*mp*na(:,:,is)*ua(:,:,is)
+        enddo
+        she0_eir_tot = she0_eir(:,:,0) + she0_eir(:,:,1)*te +
+     &    she0_eir(:,:,2)*ne + she0_eir(:,:,3)*ne*te
+        shi0_eir_tot = shi0_eir(:,:,0) + shi0_eir(:,:,1)*ti +
+     &    shi0_eir(:,:,2)*ni(:,:,0) + shi0_eir(:,:,3)*ni(:,:,0)*ti
+
+*       get averaged sources
+        if (ird_aver > 0) then
+
+cwdk if ird_aver > 0, all sources computed by eirene are overwritten (!!!), 
+cwdk i.e. fully replaced by the averaged values from b2faveri
+          sna0_eir = 0.0_R8
+          smo0_eir = 0.0_R8
+          she0_eir = 0.0_R8
+          shi0_eir = 0.0_R8
+
+cwdk get the averaged sources
+          call run_av_get_sources(sna0_eir_tot, smo0_eir_tot,
+     &                            she0_eir_tot, shi0_eir_tot,
+     &                            nx, ny, ns)
+
+cwdk note: only total eirene source are averaged!
+cwdk these are now put back into the constant part of the sources (0-component)
+          do is = 0,ns-1
+            sna0_eir(:,:,0,is) = sna0_eir_tot(:,:,is)
+            smo0_eir(:,:,0,is) = smo0_eir_tot(:,:,is)
+          enddo
+          she0_eir(:,:,0) = she0_eir_tot
+          shi0_eir(:,:,0) = shi0_eir_tot
+        endif
 
         if(ncall.le.999. and. ncall.le.ncall_iout) then
          do is = 0, ns-1
@@ -785,10 +847,6 @@ cxpb  Add contribution from Eirene core boundary fluxes
         she0 = she0 + she0_eir
         shi0 = shi0 + shi0_eir
 
-*   get averaged sources
-        if (ird_aver > 0) 
-     &    call run_av_get_sources(sna0, smo0, she0, shi0, sch0, sne0,
-     &                            nx, ny, ns)
 #ifdef ASTRA
         if (use_astra.ne.0) then
           do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {

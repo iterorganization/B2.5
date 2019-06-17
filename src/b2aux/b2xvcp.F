@@ -54,6 +54,7 @@
 
 *   ..local variables
       integer i, ic, is, ireg
+      character*80 message
       logical found
 *   ..procedures
       intrinsic nint
@@ -176,6 +177,12 @@
        call b2xvsg (3, cfdpa(0,is), 1, 'cfdpa', '.ge.')
        call b2xvsg (3, cfvsa(0,is), 1, 'cfvsa', '.ge.')
        call b2xvsg (3, cfhci(0,is), 1, 'cfhci', '.ge.')
+       if (cfdf0(2,is).gt.0.0_R8) then
+         write(message,'(a,i3,a,i3,a)')
+     &    'Need to specify cfdf0(3,',is,') and/or cfdf0(4,',is,')!'
+         call xertst (cfdf0(3,is).gt.0.0_R8.or.cfdf0(4,is).gt.0.0_R8,
+     &    trim(message))
+       end if
       enddo
       call b2xvsg (3, cfhce(0), 1, 'cfhce', '.ge.')
       call b2xvsg (3, cfsig(0), 1, 'cfsig', '.ge.')

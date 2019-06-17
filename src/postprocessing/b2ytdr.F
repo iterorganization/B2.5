@@ -44,7 +44,7 @@ c 2002-09-11: logic revised
      , ,only: nx, ny, ns, wklng,
      ,        ixref, iyref,
      ,        jsep, jxa, jxi, nxtl, nxtr,
-     ,        nstsi, nlimi, natmi, nmoli, nioni,
+     ,        nlimi, natmi, nmoli, nioni,
      ,        alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_external
       use b2mod_work
@@ -70,6 +70,8 @@ c 2002-09-11: logic revised
      ,        eirene_extrab25_eirpbls_init, eirene_extrab25_wneuinit,
      ,        eirene_extrab25_cleanup
       use eirmod_clogau
+      use b2mod_b2plot
+     , ,only : nstsi
 #else
       use b2mod_braeir
 #endif
@@ -852,16 +854,6 @@ c 2002-09-11: logic revised
 *   ..read species data
       call b2ruzd (ninp(1), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
-*   ..read plasma state
-      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     1  b2fstate_version)
-      if (invert_bpol .eq. 1) ua = -ua
 *   ..write label
       write (nout(0),'(/2x,a)') 'label for this calculation:'
       write (nout(0),'(/4x,a/4x,a)') lblmn(1:60), lblmn(61:120)
@@ -962,6 +954,17 @@ c 2002-09-11: logic revised
       endif
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call get_nxt(nx,nxtl,nxtr)
+*   ..read plasma state
+      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
+     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
+     1  b2fstate_version)
+      if (invert_bpol .eq. 1) ua = -ua
+*   ..prepare conversion arrays
       call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       nsm=max(ns,ns1)
@@ -3549,14 +3552,14 @@ cxpb  Start reading input.dat file
           if (ex) idum(3) = (idum(3)/10)*10 + 6
           inquire(file='fort.13',exist=ex)
           if (ex .or. nfl.lt.nplsi)
-     >     idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
+     >     idum(3) = (idum(3)/1000)*1000 + 300 + mod(idum(3),100)
           inquire(file='fort.15',exist=ex)
 #else
           inquire(file='ftn11',exist=ex)
           if (ex) idum(3) = (idum(3)/10)*10 + 6
           inquire(file='ftn13',exist=ex)
           if (ex .or. nfl.lt.nplsi)
-     >     idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
+     >     idum(3) = (idum(3)/1000)*1000 + 300 + mod(idum(3),100)
           inquire(file='ftn15',exist=ex)
 #endif
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
@@ -3846,7 +3849,7 @@ C  FIND START OF NEXT INPUT BLOCK: 3A
           IF (ZEILE(1:3) .NE. '***') GOTO 252
           IREAD=1
         ENDIF
-*** 3A. DATA FOR NON DEFAULT STANDARD SURFACES
+*** 3A. DATA FOR NON-DEFAULT STANDARD SURFACES
         IF (IREAD.EQ.0) THEN
           READ (IUNIN,'(A80)') ZEILE
           WRITE(IUNOT,'(A80)') ZEILE
@@ -4586,6 +4589,12 @@ Cxpb then rewrite the entire block
                 EELECA(JATM,J) = dble(IREAC1(IR))
               ELSE
                 EELECA(JATM,J) = EELECA(JATM,K)
+                IF (NCHARA(JATM).EQ.2) THEN
+ ! Correct round-off of He ionization energy
+                  IF (ABS(EELECA(JATM,J)+24.55).LT.0.01) THEN
+                    EELECA(JATM,J)=-24.5874
+                  ENDIF
+                ENDIF
               END IF
               EBULKA(JATM,J) = EBULKA(JATM,K)
               IF (B2IDEZ(ISCDEA(JATM,J),3,5).eq.3) THEN
@@ -5075,12 +5084,12 @@ Cxpb then rewrite the entire block
             ENDIF
             READ (IUNIN,6664) rdum(0:4)
   512     CONTINUE
-          IF (CDENMODEL(JPLS).EQ.'FORT.13   ' .OR.
-     &        CDENMODEL(JPLS).EQ.'FTN13     ' .OR.
-     &        CDENMODEL(JPLS).EQ.'BOLTZMANN ' .OR.
-     &        CDENMODEL(JPLS).EQ.'CORONA    ') THEN
+          IF (streql(CDENMODEL(JPLS),'FORT.13').OR.
+     &        streql(CDENMODEL(JPLS),'FTN13').OR.
+     &        streql(CDENMODEL(JPLS),'BOLTZMANN').OR.
+     &        streql(CDENMODEL(JPLS),'CORONA')) THEN
             READ (IUNIN,'(A80)') ZEILE
-          ELSE IF (CDENMODEL(JPLS).EQ.'COLRAD    ') THEN
+          ELSE IF (streql(CDENMODEL(JPLS),'COLRAD')) THEN
             DO K=1,NRE(JPLS)
               READ (IUNIN,'(A80)') ZEILE
             ENDDO
@@ -5092,12 +5101,12 @@ Cxpb then rewrite the entire block
             backspace(IUNIN)
             backspace(IUNIN)
  5121     CONTINUE
-          IF (CDENMODEL(JPLS).EQ.'FORT.13   ' .OR.
-     &        CDENMODEL(JPLS).EQ.'FTN13     ' .OR.
-     &        CDENMODEL(JPLS).EQ.'BOLTZMANN ' .OR.
-     &        CDENMODEL(JPLS).EQ.'CORONA    ') THEN
+          IF (streql(CDENMODEL(JPLS),'FORT.13').OR.
+     &        streql(CDENMODEL(JPLS),'FTN13').OR.
+     &        streql(CDENMODEL(JPLS),'BOLTZMANN').OR.
+     &        streql(CDENMODEL(JPLS),'CORONA')) THEN
             backspace(IUNIN)
-          ELSE IF (CDENMODEL(JPLS).EQ.'COLRAD    ') THEN
+          ELSE IF (streql(CDENMODEL(JPLS),'COLRAD')) THEN
             DO K=1,NRE(JPLS)
               backspace(IUNIN)
             ENDDO
@@ -5169,22 +5178,23 @@ Cxpb then rewrite the entire block
           END DO
           NRCP(JPLS) = J
           SELECT CASE (CDENMODEL(JPLS))
-          CASE ('FORT.13   ','FTN13     ')
+          CASE ('FORT.13','FTN13')
             READ (IUNIN,6666) TDMISP(1,JPLS)
-          CASE ('BOLTZMANN ')
-            READ (IUNIN,'(I6,6X,2E12.4)') TDMISP(1,JPLS),
+          CASE ('BOLTZMANN')
+            READ (IUNIN,'(I6,6X,2E12.4)')
+     .           TDMISP(1,JPLS),
      .           TDMBOLTZ(JPLS), TDMDELTAE(JPLS)
-          CASE ('CORONA    ')
+          CASE ('CORONA')
             READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
-     .           TDMISP(1,JPLS),TDMFNAME(1,JPLS),
-     .           TDMH2(1,JPLS),TDMREACTION(1,JPLS),
+     .           TDMISP(1,JPLS),
+     .           TDMFNAME(1,JPLS),TDMH2(1,JPLS), TDMREACTION(1,JPLS),
      .           TDMCR(1,JPLS),TDM_CORONA(JPLS)
-          CASE ('COLRAD    ')
+          CASE ('COLRAD')
             DO I=1, NRE(JPLS)
               READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
-     .             TDMISP(I,JPLS),TDMFNAME(I,JPLS),
-     .             TDMH2(I,JPLS),TDMREACTION(I,JPLS),
-     .             TDMCR(I,JPLS)
+     .           TDMISP(I,JPLS),
+     .           TDMFNAME(I,JPLS),TDMH2(I,JPLS), TDMREACTION(I,JPLS),
+     .           TDMCR(I,JPLS)
             END DO
           CASE DEFAULT
             CONTINUE
@@ -5192,10 +5202,11 @@ Cxpb then rewrite the entire block
  5112   CONTINUE
 cxpb Now we have read the species data and can identify the bundles
         DO 5113 JPLS=1,NPLSI
-          found = jpls.gt.(ns-nspecies)
+          found = .false.
           is = 0
           do while (.not.found .and. is.lt.ns1)
-            found = nint(am1(is)).eq.NMASSP(JPLS) .and.
+            found = index(TEXTP(JPLS),'(B)').eq.0 .and.
+     .       nint(am1(is)).eq.NMASSP(JPLS) .and.
      .       nint(zn1(is)).eq.NCHARP(JPLS) .and.
      .       nint(zamin1(is)).le.NCHRGP(JPLS) .and.
      .       nint(zamax1(is)).ge.NCHRGP(JPLS)
@@ -5206,9 +5217,15 @@ cxpb Now we have read the species data and can identify the bundles
             endif
           enddo
           if (.not.found) then
-            eb2ibcr(jpls) = -1
-            write(*,*) 'Ion species corresponding to ',
-     .       trim(TEXTP(JPLS)),' not found! Removing...'
+            if (index(TEXTP(JPLS),'(B)').GT.0) then
+              eb2ibcr(jpls) = ns1
+              write(*,*) 'Identified BGK species ',
+     .         trim(TEXTP(JPLS)),'.'
+            else
+              eb2ibcr(jpls) = -1
+              write(*,*) 'Ion species corresponding to ',
+     .         trim(TEXTP(JPLS)),' not found! Removing...'
+            end if
           end if
  5113   CONTINUE
         NPLSI1 = (ns1-nspecies1)+(NPLSI-(ns-nspecies))
@@ -5291,6 +5308,10 @@ cxpb Now we have read the species data and can identify the bundles
           end if
           do i = is, js
             ipls = ipls+1
+            do while(ipls.lt.nplsi.and.index(textp(ipls),'(B)').gt.0)
+              ipls = ipls+1
+            end do
+            if(ipls.eq.nplsi.and.index(textp(ipls),'(B)').gt.0) exit
             do j = iss, jss
               if (iplss.lt.nplsi1) then
                 if (NMASSP1(iplss+1).eq.NMASSP(ipls) .and.
@@ -5354,17 +5375,27 @@ cxpb  first one
             enddo
           enddo
         enddo
-        do JPLS = ns-nspecies+1, NPLSI
-          ib = (ns1-nspecies1) + JPLS-(ns-nspecies)
-          NMASSP1(ib) = NMASSP(JPLS)
-          NCHARP1(ib) = NCHARP(JPLS)
-          NCHRGP1(ib) = NCHRGP(JPLS)
-          ipls1(jpls) = ib
-          isp(ib) = jpls
-          e_bundle_start(ib) = jpls
-          e_bundle_end(ib) = jpls
-          e_bundle_contr(ib,jpls) = 1.0_R8
+        ib = ns1-nspecies1
+        do JPLS = 1, NPLSI
+          if (index(TEXTP(JPLS),'(B)').GT.0) then
+            ib = ib + 1
+            NMASSP1(ib) = NMASSP(JPLS)
+            NCHARP1(ib) = NCHARP(JPLS)
+            NCHRGP1(ib) = NCHRGP(JPLS)
+            zemin1(ib) = NCHRGP(JPLS)
+            zemax1(ib) = NCHRGP(JPLS)
+            ipls1(jpls) = ib
+            isp(ib) = jpls
+            e_bundle_start(ib) = jpls
+            e_bundle_end(ib) = jpls
+            e_bundle_contr(ib,jpls) = 1.0_R8
+          end if
         end do
+        write(hlp_frm,'(a,i3,a)') '(a,3x,',nplsi1,'(1x,i4))'
+        write(*,hlp_frm) ' e_bundle_start: ',
+     .   (e_bundle_start(is),is=1,nplsi1)
+        write(*,hlp_frm) ' e_bundle_end  : ',
+     .   (e_bundle_end(is),is=1,nplsi1)
         if (.not.same_bundling) then
           write(*,*) 'e_bundle_contr:'
           write(hlp_frm,'(a,i3,a)') '(3x,',nplsi,'(1x,i4))'
@@ -5493,20 +5524,20 @@ cxpb Must now convert the bulk ion data according to the new bundling
           IS = ISP(IB)
           IF (IS.NE.0) THEN
             SELECT CASE (CDENMODEL1(IB))
-            CASE ('FORT.13   ','FTN13     ')
+            CASE ('FORT.13','FTN13')
               TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
-            CASE ('BOLTZMANN ')
+            CASE ('BOLTZMANN')
               TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
               TDMBOLTZ1(IB) = TDMBOLTZ(e_bundle_end(IB))
               TDMDELTAE1(IB) = TDMDELTAE(e_bundle_end(IB))
-            CASE ('CORONA    ')
+            CASE ('CORONA')
               TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
               TDMFNAME1(1,IB) = TDMFNAME(1,e_bundle_end(IB))
               TDMH21(1,IB) = TDMH2(1,e_bundle_end(IB))
               TDMREACTION1(1,IB) = TDMREACTION(1,e_bundle_end(IB))
               TDMCR1(1,IB) = TDMCR(1,e_bundle_end(IB))
               TDM_CORONA1(IB) = TDM_CORONA(e_bundle_end(IB))
-            CASE ('COLRAD    ')
+            CASE ('COLRAD')
               I1 = 0
               do jpls = e_bundle_start(IB), e_bundle_end(IB)
                 DO I = 1, NRE(jpls)
@@ -6135,21 +6166,22 @@ cxpb We now rewrite the modified block 4
             END DO
           END IF
           SELECT CASE (CDENMODEL1(IB))
-          CASE ('FORT.13   ','FTN13     ')
+          CASE ('FORT.13','FTN13')
             WRITE(IUNOT,6666) TDMISP1(1,IB)
-          CASE ('BOLTZMANN ')
-            WRITE(IUNOT,'(I6,6X,2E12.4)') TDMISP1(1,IB),
+          CASE ('BOLTZMANN')
+            WRITE(IUNOT,'(I6,6X,2E12.4)')
+     .            TDMISP1(1,IB),
      .            TDMBOLTZ1(IB), TDMDELTAE1(IB)
-          CASE ('CORONA    ')
+          CASE ('CORONA')
             WRITE(IUNOT,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
-     .            TDMISP1(1,IB),TDMFNAME(1,IB),
-     .            TDMH21(1,IB),TDMREACTION(1,IB),
-     .            TDMCR1(1,IB),TDM_CORONA(IB)
-          CASE ('COLRAD    ')
+     .            TDMISP1(1,IB),
+     .            TDMFNAME(1,IB), TDMH21(1,IB), TDMREACTION(1,IB),
+     .            TDMCR1(1,IB), TDM_CORONA(IB)
+          CASE ('COLRAD')
             DO I = 1, NRE1(IB)
               WRITE(IUNOT,'(I6,1X,A6,1X,A4,A9,A3)')
-     .              TDMISP1(I,IB),TDMFNAME(I,IB),
-     .              TDMH21(I,IB),TDMREACTION(I,IB),
+     .              TDMISP1(I,IB),
+     .              TDMFNAME(I,IB), TDMH21(I,IB), TDMREACTION(I,IB),
      .              TDMCR1(I,IB)
             END DO
           CASE DEFAULT
@@ -6527,7 +6559,9 @@ cxpb We now rewrite the modified block 4
                 ELSE
                   WRITE(6,*)
      .             'Invalid CPATH specification in this environment: '//
-     .             'CPATH line removed'
+     .             'CPATH line replaced'
+                  WRITE(IUNOT,'(A)') 'cpath '//
+     .             'modules/Eirene/Database/Surfacedata/TRIM/'
                 END IF
                 if (element_present(natm,natmi,iatm1,elname))
      >           WRITE(IUNOT,'(A74)') RFILNM
@@ -7574,6 +7608,7 @@ cxpb Read first, transform and rewrite
           WRITE(IUNOT,'(A80)') ZEILE
         END IF
  1110   READ (IUNIN,'(A80)') ZEILE
+        call fix_logical_input(zeile,35)
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:1) .EQ. '*') GOTO 1110
         allocate(TRCSR1(0:NSTRA1+1))
@@ -7901,8 +7936,8 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         else if (streql(eirene_format,'juelich') .or.
      .           streql(eirene_format,'facelift') .or.
      .           streql(eirene_format,'old')) THEN
-          READ (ZEILEN(1),6666) NCHORI,NCHENI,lntspec,lntsput,nmcsput,
-     .                    nlstadds,mtreadds,ngwties
+          READ (ZEILEN(1),6666) NCHORI,NCHENI,lntspec,lntsput,
+     .                              nmcsput,nlstadds,mtreadds,ngwties
         end if
         NCHOR1 = 0
         IF (NCHORI.LE.0) GOTO 1228
@@ -8149,8 +8184,10 @@ C  SKIP READING REST OF THIS BLOCK
             WRITE(IUNOT,'(2A24)') TXTSPC,TXTUNT
  3020     CONTINUE
         ELSE IF (NMODE.NE.0) THEN
-          READ (IUNIN,'(A72)') ZEILE ! LSYMET,LBALAN,LCHKQUD
-          WRITE(IUNOT,'(A72)') ZEILE
+          READ (IUNIN,'(A72)') ZEILE
+          call fix_logical_input(zeile,3)
+          READ (ZEILE,6665) ldum(0:2) ! LSYMET,LBALAN,LCHKQUD
+          WRITE(IUNOT,6665) ldum(0:2)
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(9I6)') idum(0:8) ! NFLA,NCUTB,NCUTL,IMF,
                                          ! ntrfrm,nfull,ibrad,ibpol,ibtor
@@ -8185,16 +8222,13 @@ C  SKIP READING REST OF THIS BLOCK
      .     (nplsi,nplsi1,e_bundle_contr,FCTE,FCTE1,3)
           call e_bundle_transmit_r
      .     (nplsi,nplsi1,e_bundle_contr,BMASS,BMASS1,3)
-          DO I=1,NPLSI
-            IF (I.GT.(NS-NSPECIES)) THEN
-              IFLB1(I-(NS-NSPECIES)+(NS1-NSPECIES1))=IFLB(I)
-              FCTE1(I-(NS-NSPECIES)+(NS1-NSPECIES1))=FCTE(I)
-              BMASS1(I-(NS-NSPECIES)+(NS1-NSPECIES1))=BMASS(I)
-              LKINDP1(I-(NS-NSPECIES)+(NS1-NSPECIES1))=LKINDP(I)
-            ELSEIF (ipls1(I).GT.0) THEN
-              IF (LKINDP(I).GT.0 .AND. LKINDP(I).LE.NATMI) THEN
-                LKINDP1(IPLS1(I))=IATM1(LKINDP(I))
-              END IF
+          call e_bundle_transmit_i
+     .     (nplsi,nplsi1,e_bundle_contr,IFLB,IFLB1,3)
+          call e_bundle_transmit_i
+     .     (nplsi,nplsi1,e_bundle_contr,LKINDP,LKINDP1,3)
+          DO I=1,NPLSI1
+            IF (LKINDP1(I).GT.0 .AND. LKINDP1(I).LE.NATMI) THEN
+              LKINDP1(I)=IATM1(LKINDP1(I))
             END IF
           END DO
           DO I=1,NPLSI1

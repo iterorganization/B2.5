@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sifrtf (nx, ny, ns, isb, ismain, hx, bb, na,         !srv 09.01.01 18.10.02 13.01.17 05.07.17
+      subroutine b2sifrtf (nx, ny, ns, isb, ismain, bb, na,             !srv 09.01.01 18.10.02 13.01.17 05.07.17
      &   ua, ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2, !srv 01.07.09 11.09.09 05.07.17
      &   cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,        !srv 05.07.17
      &   smbch, smbtf)
@@ -11,8 +11,8 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-      use b2mod_plasma
-     , , only :  po
+!      use b2mod_plasma
+!     , , only :  po
       use b2mod_transport
      , , only : f_luc_sg, alfx_c, sigx_c                                !srv 08.10.14
       use b2mod_external
@@ -22,7 +22,6 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
       real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), ! hz(-1:nx,-1:ny), vol(-1:nx,-1:ny),           !srv 05.07.17
      &  bb(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ue(-1:nx,-1:ny),
@@ -59,11 +58,9 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..global named constants
-      
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is
-      integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
+      integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
       character chns*3, chis*3
       real (kind=R8) ::
      *  phm0, phm1, phm2, phm3, coef, t0, calfab, fllim_al_ab, jabmax
@@ -74,10 +71,10 @@
      &  ka(-1:nx,-1:ny), kb(-1:nx,-1:ny),
      &  wrk(-1:nx,-1:ny)
 ! Local arrays smb*al have been introduced specially.
-! The usage of smb*a instaed of smb*al should be checked.
+! The usage of smb*a instead of smb*al should be checked.
       real (kind=R8) ::
      *  smbfrial(-1:nx,-1:ny,0:3), smbfreal(-1:nx,-1:ny,0:3),
-     *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)              !srv 13.01.17 }
+     *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)            !srv 13.01.17 }
 *   ..procedures
       intrinsic sqrt
       real (kind=R8) ::
@@ -254,10 +251,10 @@ c   .. apply flux limit
       smbtfia = smbtfial
       smbtfea = smbtfeal
 
-      if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
+      if (iout.ne.0) then !  .or. iout_b2wdat.eq.4) then                !srv 05.07.17
         write (chns,'(i3.3)') isb
 
-        wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+       !srv 05.07.17 {
+        wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+        !srv 05.07.17 {
      &        smbfria(:,:,2)*na(:,:,isb)*mp*am(isb)+
      &        smbfria(:,:,3)*ua(:,:,isb)*na(:,:,isb)*mp*am(isb))
         call my_out(70,nx,ny,wrk,'b2sifrtf_smofria'//chns)
@@ -267,11 +264,11 @@ c   .. apply flux limit
         wrk = vol*hz*smbtfial(:,:,0)
         call my_out(70,nx,ny,wrk,'b2sifrtf_smotfia'//chns)
         wrk = vol*hz*smbtfeal(:,:,0)
-        call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)             !srv 05.07.17 }
+        call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
         call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
       endif
 
-      if (iout.gt.1) then                                              !srv 05.07.17
+      if (iout.gt.1) then                                               !srv 05.07.17
         do is = 0,ns-1
           write (chis,'(i3.3)') is
           call my_out(70,nx,ny,fkabvp(isb, is),

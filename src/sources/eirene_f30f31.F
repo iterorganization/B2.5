@@ -64,7 +64,7 @@ c
       real (kind=R8) :: BoRiS
       character chns*3                                                 !srv 16.09.02
       integer, save :: drift_style = 1, iout = 0                        !srv 21.06.08
-      integer ix,iy,is,ncall,eirene_extrap,in,
+      integer ix,iy,is,ncall,eirene_extrapolate,in,
      1 eirene_uub_style, print_minmax, eirene_background
       external ipgetr, ipgeti, subini, subend, xerrab
       real (kind=R8) ::
@@ -73,16 +73,16 @@ c
      * na_min_val, na_max_val, ua_min_val, ua_max_val
       save te_min, te_max, ti_min, ti_max,
      1 na_min, na_max, ua_min, ua_max, ncall,
-     2 eirene_extrap, eirene_uub_style, print_minmax
+     2 eirene_extrapolate, eirene_uub_style, print_minmax
       data te_min/0.0_R8/, te_max/1.0e30_R8/,
      1 ti_min/0.0_R8/, ti_max/1.0e30_R8/,
      1 na_min/0.0_R8/, na_max/1.0e30_R8/,
-     2 ncall/0/, eirene_extrap/1/,
+     2 ncall/0/, eirene_extrapolate/1/,
      & eirene_uub_style/0/, print_minmax/0/, eirene_background/1/
       real (kind=R8) :: kintmp
       real (kind=R8) :: hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
-      real (kind=R8) :: 
+      real (kind=R8) :: vdrift,
      &  vaecrbc(-1:nx,-1:ny,0:1,0:ns-1), wadiac(-1:nx,-1:ny,0:1,0:ns-1),
      &  vadiac(-1:nx,-1:ny,0:1,0:ns-1), wrk(-1:nx,-1:ny)
 
@@ -98,7 +98,7 @@ c
         call ipgetr('eirene_na_max',na_max)
         call ipgetr('eirene_ua_min',ua_min)
         call ipgetr('eirene_ua_max',ua_max)
-        call ipgeti('eirene_extrap',eirene_extrap)
+        call ipgeti('eirene_extrap',eirene_extrapolate)
         call ipgeti('eirene_uub_style',eirene_uub_style)
         call ipgeti('eirene_background',eirene_background)
         call ipgeti('eirene_print_minmax',print_minmax)
@@ -396,28 +396,19 @@ c                    (diffusive anomalous contribution zero due to toroidal symm
               if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      .          bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
 c     guard cell -> use grad-B drift only
-               wwb(ix+1,iy+1,nflai)=max(min(
-     1           upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-
-     2           (vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is))*
-     3           bb(ix,iy,0)/bb(ix,iy,2),
-     4           ua_max),ua_min)
-              else
-                if (eirene_background.eq.0) then
+                vdrift=vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is)
+              else if (eirene_background.eq.0) then
 c     internal cell, old treatment -> grad-B drift only (fna)
-                 wwb(ix+1,iy+1,nflai)=max(min(
-     1             upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-
-     2             (vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is))*
-     3             bb(ix,iy,0)/bb(ix,iy,2),
-     4             ua_max),ua_min)
-                else
+                vdrift=vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is)
+              else
 c     internal cell -> full diamagnetic drift
-                 wwb(ix+1,iy+1,nflai)=max(min(
-     1             upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-
-     2             (wadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is))*
-     3             bb(ix,iy,0)/bb(ix,iy,2),
-     4             ua_max),ua_min)
-                endif
+                vdrift=wadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is)
               endif
+              if (bb(ix,iy,2).ne.0.0_R8)
+     >         vdrift=vdrift*bb(ix,iy,0)/bb(ix,iy,2)
+              wwb(ix+1,iy+1,nflai)=max(min(
+     1          upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-vdrift,
+     2          ua_max),ua_min)
             enddo
           enddo
 * cell face x
@@ -450,9 +441,9 @@ c     internal cell -> full diamagnetic drift
         endif
       enddo
 
-      if(eirene_extrap.eq.0) then
+      if(eirene_extrapolate.eq.0) then
         ! do nothing
-      elseif(eirene_extrap.eq.1) then
+      elseif(eirene_extrapolate.eq.1) then
 c we derive the guard cell value from its neighbouring interior cell
         do in=1,2    ! do twice so we get the corner cells as well
           do iy=-1,ny
@@ -492,7 +483,7 @@ c declared -1:nx,-1:ny
           enddo
         enddo
       else
-        write(*,*) eirene_extrap,
+        write(*,*) eirene_extrapolate,
      1   ' not avaible as an eirene_extrap option'
       endif
 
@@ -697,10 +688,10 @@ cxpb If the 1P was missing in the format, the numbers will start with 0
       end if
 #endif
 #ifndef HPUX
-      write(*,'(a,a)')
+      write(*,'(2a)')
      . 'Writing fort.30 with ', format_string(new_format)
 #else
-      write(*,'(a,a)')
+      write(*,'(2a)')
      . 'Writing ftn30 with ', format_string(new_format)
 #endif
       rewind(30)

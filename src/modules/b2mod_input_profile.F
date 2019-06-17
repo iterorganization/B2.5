@@ -521,8 +521,8 @@ cdjm Jan2017 Keep linearised sources for balance
         ixwidth(isc) = scaling_ix_end(isc) - scaling_ix_begin(isc) + 1
         ixmean(isc) = (scaling_ix_end(isc) + scaling_ix_begin(isc)) / 2
         if (scaling_width(isc).eq.0.0_R8 .and. ixwidth(isc).gt.1)
-     $    scaling_width(isc) = 0.5_R8*
-     $      sqrt((ixwidth(isc)+1.0_R8)*(ixwidth(isc)-1.0_R8)/3.0_R8)
+     >   scaling_width(isc) = 0.5_R8*
+     .      sqrt((ixwidth(isc)+1.0_R8)*(ixwidth(isc)-1.0_R8)/3.0_R8)
       enddo
       if (elm_time_period.gt.0.)then
         elm_time=mod(tim,elm_time_period).ge.elm_time_begin.and.

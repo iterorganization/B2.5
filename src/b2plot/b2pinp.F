@@ -71,127 +71,113 @@ c======================================================================
 c
 c      print *,'b2prdn >> ',unm
       call locase(unm,u,8)
-      do 1000 i=1,nnns
-          if(streql(u,unms(i))) go to (10,20,30,40,50,60,20,30,90,100,
-     ,                                 110,120,130,140,150,160,170,180,
-     ,                                 180,200),i
- 1000 continue
-      call scipit
-      return
-c----------------------------------------------------------------------
-   10 if(ll.le.0 .or. ll.gt.nwldprtx) then
+      i = 0
+      do i = 1, nnns
+        if (streql(u,unms(i))) exit
+      end do
+      select case (i)
+      case (1)
+        if(ll.le.0 .or. ll.gt.nwldprtx) then
           print '(1x,a,i4,a,i4)','Wrong wall segment number:',ll,
      ,                           '.  Must be positive and =< ',nwldprtx
           if(ll.gt.nwldprtx) 
      >     print *,'Check nwldprtx in b2mod_b2plot_wall_loading.F'
-          return
-      end if
-      call resimi(lwldstrt(ll))
-      return
-c----------------------------------------------------------------------
-   20 if(ll.le.0 .or. ll.gt.nwldprtx) then
+        else
+          call resimi(lwldstrt(ll))
+        end if
+      case (2,7)
+        if(ll.le.0 .or. ll.gt.nwldprtx) then
           print '(1x,a,i4,a,i4)','Wrong wall segment number:',ll,
      ,                           '.  Must be positive and =< ',nwldprtx
           if(ll.gt.nwldprtx) 
      >     print *,'Check nwldprtx in b2mod_b2plot_wall_loading.F'
-          return
-      end if
-      call rearri(lwldlis(1,ll),nsgmx,nwldlis(ll))
-      return
-c----------------------------------------------------------------------
-   30 call resimi(ll)
-      ll=ll+1
-      nwldprt=max(nwldprt,ll)
-      return
-c----------------------------------------------------------------------
-   40 call rearri(lpumplis,nlim,npumplis)
-      return
-c----------------------------------------------------------------------
-   50 call rearre(ppp1,3*DEF_NLIM,ll)
-      lppp=ll/3
-      return
-c----------------------------------------------------------------------
-   60 call rearre(ppp2,3*DEF_NLIM,ll)
-      lppp=ll/3
-      return
-c----------------------------------------------------------------------
+        else
+          call rearri(lwldlis(1,ll),nsgmx,nwldlis(ll))
+        end if
+      case (3,8)
+        call resimi(ll)
+        ll=ll+1
+        nwldprt=max(nwldprt,ll)
+      case (4)
+        call rearri(lpumplis,nlim,npumplis)
+      case (5)
+        call rearre(ppp1,3*DEF_NLIM,ll)
+        lppp=ll/3
+      case (6)
+        call rearre(ppp2,3*DEF_NLIM,ll)
+        lppp=ll/3
+      case (9:13)
+        if (streql(u,unms(9))) then
 c*** Inner edge of inner target
-   90 call resimi(i)
-      luswch=1
-      goto 130
-c----------------------------------------------------------------------
+          call resimi(i)
+          luswch=1
+        else if (streql(u,unms(10))) then
 c*** Inner edge of outer target
-  100 call resimi(i)
-      luswch=2
-      goto 130
-c----------------------------------------------------------------------
+          call resimi(i)
+          luswch=2
+        else if (streql(u,unms(11))) then
 c*** Outer edge of inner target
-  110 call resimi(i)
-      luswch=3
-      goto 130
-c----------------------------------------------------------------------
+          call resimi(i)
+          luswch=3
+        else if (streql(u,unms(12))) then
 c*** Outer edge of outer target
-  120 call resimi(i)
-      luswch=4
-      goto 130
-c----------------------------------------------------------------------
+          call resimi(i)
+          luswch=4
+        end if
 c*** Values for the target edges (old style, only worked for SN topologies)
-  130 if(luswch.ge.1 .and. luswch.le.4) then
-        call rearri(jedge(luswch),1,i)
-      else
-        call scipit
-      end if
-      luswch=0
-      return
-c----------------------------------------------------------------------
+        if(luswch.ge.1 .and. luswch.le.4) then
+          call rearri(jedge(luswch),1,i)
+        else
+          call scipit
+        end if
+        luswch=0
+      case (14)
 c*** New style values for the target SOL edges
-  140 if (lt.eq.0) then
-        call scipit
-      else if(lt.lt.0 .or. lt.gt.ntrgsx) then
-        write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lt,
+        if (lt.eq.0) then
+          call scipit
+        else if(lt.lt.0 .or. lt.gt.ntrgsx) then
+          write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lt,
      ,                            '.  Must be positive and =< ', ntrgsx
-      else if (lt.ge.1 .and. lt.le.ntrgsx) then
-        call resimi(jedge(ntrgsx+lt))
-      end if
-      return
-c----------------------------------------------------------------------
+        else if (lt.ge.1 .and. lt.le.ntrgsx) then
+          call resimi(jedge(ntrgsx+lt))
+        end if
+      case (15)
 c*** New style values for the target PFR edges
-  150 if (lt.eq.0) then
-        call scipit
-      else if(lt.lt.0 .or. lt.gt.ntrgsx) then
-        write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lt,
+        if (lt.eq.0) then
+          call scipit
+        else if(lt.lt.0 .or. lt.gt.ntrgsx) then
+          write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lt,
      ,                            '.  Must be positive and =< ', ntrgsx
-      else if (lt.ge.1 .and. lt.le.ntrgsx) then
-        call resimi(jedge(lt))
-      end if
-      return
-c----------------------------------------------------------------------
+        else if (lt.ge.1 .and. lt.le.ntrgsx) then
+          call resimi(jedge(lt))
+        end if
+      case (16)
 c*** Target specifications
-  160 call resimi(lt)
-      if(lt.lt.0 .or. lt.gt.ntrgsx)
+        call resimi(lt)
+        if(lt.lt.0 .or. lt.gt.ntrgsx)
      >   write(*,'(1x,a,i4,a,i4)') 'Wrong target number:',lt,
      ,                            '.  Must be positive and =< ', ntrgsx
-      return
-c----------------------------------------------------------------------
+      case (17)
 c*** Plotzone label
-  170 i=lena
-      lena=8
-      call resima(pltzlbl(ll))
-      lena=i
-      return
-c----------------------------------------------------------------------
+        i=lena
+        lena=8
+        call resima(pltzlbl(ll))
+        lena=i
+      case (18:19)
 c*** Elements not for Eirene
-  180 call rearri(luwrk(luskel+1),nlim-luskel,i)
-      do j = luskel+1, luskel+i
-        lskip(luwrk(j)) = .true.
-      end do
-      luskel=i+luskel
-      return
-c----------------------------------------------------------------------
+        call rearri(luwrk(luskel+1),nlim-luskel,i)
+        do j = luskel+1, luskel+i
+          lskip(luwrk(j)) = .true.
+        end do
+        luskel=i+luskel
+      case (20)
 c*** Shadowing structure
-  200 ll=1
-      nwldprt=max(nwldprt,ll)
-      call scipit
+        ll=1
+        nwldprt=max(nwldprt,ll)
+        call scipit
+      case default
+        call scipit
+      end select
       return
 c======================================================================
       end subroutine b2prdn

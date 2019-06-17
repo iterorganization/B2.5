@@ -58,8 +58,7 @@ c  Tp = Target surface temperature (K).
 #else
       external pdedef, bndary, D03PCF
 #endif
-      integer ncall
-      data ncall/0/
+      integer, save :: ncall = 0
       common /zzline/ dx,x0,xn,x
       common /phyparams/ Qtot,Tcbc,active
       common /location/ iwall, ns
@@ -228,7 +227,7 @@ cxpb  Will need to update this later for a better computation
      .     (Tc + KBc/KAc) *
      .     exp(-KAc*Qtot*(x(i)-coating_thickness(ibnd))) - KBc/KAc ))
         endif
-c        print*,x(i),' ',uu(i),' ',i,' ',xn,' ',x0
+c        print*,x(i),' ',uu(i),' ',i,' ',xn,' ',xn
       enddo
       xx(1) = x(1)
       Tl = uu(2)

@@ -21,19 +21,20 @@ module b2mod_connectivity
 
     !! Geometry/topology IDs (obtain using function geometryId(..:))
 
-    integer, parameter :: GEOMETRY_COUNT = 8
+    integer, parameter :: GEOMETRY_COUNT = 10
         !< Number of different geometry/topology situations = max(GEOMETRY_*)
 
-    !! The IDs
-    integer, parameter :: GEOMETRY_LINEAR = 1   !< First of geometry IDs
-    integer, parameter :: GEOMETRY_CYLINDER = 2 !< Second of geometry IDs
-    integer, parameter :: GEOMETRY_LIMITER = 3  !< Third of geometry IDs
-    integer, parameter :: GEOMETRY_SN = 4   !< Fourth of geometry IDs
-    integer, parameter :: GEOMETRY_STELLARATORISLAND = 5
-        !< Fifth of geometry IDs
-    integer, parameter :: GEOMETRY_CDN = 6  !< Sixth of geometry IDs
-    integer, parameter :: GEOMETRY_DDN_BOTTOM = 7   !< Seventh of geometry IDs
-    integer, parameter :: GEOMETRY_DDN_TOP = 8  !< Eighth of geometry IDs
+    !! The IDs, matching the IDS definitions of the GGD identifiers
+    integer, parameter :: GEOMETRY_UNSPECIFIED = 0
+    integer, parameter :: GEOMETRY_LINEAR = 1
+    integer, parameter :: GEOMETRY_CYLINDER = 2
+    integer, parameter :: GEOMETRY_LIMITER = 3
+    integer, parameter :: GEOMETRY_SN = 4
+    integer, parameter :: GEOMETRY_CDN = 5
+    integer, parameter :: GEOMETRY_DDN_BOTTOM = 6
+    integer, parameter :: GEOMETRY_DDN_TOP = 7
+    integer, parameter :: GEOMETRY_ANNULUS = 8
+    integer, parameter :: GEOMETRY_STELLARATORISLAND = 9
 
     !! Region types
     !! Region type indices are the ones used in the B2 region array,
@@ -54,20 +55,50 @@ module b2mod_connectivity
     !! Region counts
     !! First dimension: geometry type
     !! Second dimension: region type
-    integer, dimension(0:REGIONTYPE_COUNT-1, GEOMETRY_COUNT), parameter ::  &
+    integer, dimension(0:REGIONTYPE_COUNT-1, 0:GEOMETRY_COUNT-1), parameter ::  &
         &   regionCounts =  &
         &   reshape( (/     &
+        &       1,  0,  0,  & !! GEOMETRY_UNSPECIFIED
         &       1,  2,  2,  & !! GEOMETRY_LINEAR
         &       1,  1,  2,  & !! GEOMETRY_CYLINDER
         &       2,  3,  3,  & !! GEOMETRY_LIMITER
         &       4,  6,  7,  & !! GEOMETRY_SN
-        &       5,  7,  8,  & !! GEOMETRY_STELLARATORISLAND
         &       8, 12, 14,  & !! GEOMETRY_CDN
         &       8, 13, 14,  & !! GEOMETRY_DDN_BOTTOM
-        &       8, 13, 14   & !! GEOMETRY_DDN_TOP
+        &       8, 13, 14,  & !! GEOMETRY_DDN_TOP
+        &       1,  2,  2,  & !! GEOMETRY_ANNULUS
+        &       5,  7,  8   & !! GEOMETRY_STELLARATORISLAND
         &    /),            &
         &    (/ REGIONTYPE_COUNT, GEOMETRY_COUNT /) )   !< Region counts
 
+    character(11), dimension(0:GEOMETRY_COUNT-1), parameter :: geometryName = &
+        &   (/     &
+        &    'UNSPECIFIED', &
+        &    'LINEAR     ', &
+        &    'CYLINDER   ', &
+        &    'LIMITER    ', &
+        &    'SN         ', &
+        &    'CDN        ', &
+        &    'DDN_BOTTOM ', &
+        &    'DDN_TOP    ', &
+        &    'ANNULUS    ', &
+        &    'ISLAND     '  &
+        &   /)
+
+    character(50), dimension(0:GEOMETRY_COUNT-1), parameter :: geometryDescription = &
+        &   (/     &
+        &    'Unspecified geometry                              ', &
+        &    'Linear case                                       ', &
+        &    'Cylinder geometry, straight in the third direction', &
+        &    'Limiter geometry                                  ', &
+        &    'Single null geometry                              ', &
+        &    'Connected double null                             ', &
+        &    'Disconnected double null, bottom X-point is active', &
+        &    'Disconnected double null, top X-point is active   ', &
+        &    'Annular geometry, curved in the third direction   ', &
+        &    'Stellarator island geometry                       '  &
+        &   /)
+ 
     !! Region names
     !! First dimension: geometry type (given in comments)
     !! Second dimension: region type
@@ -76,8 +107,19 @@ module b2mod_connectivity
     character(32), parameter, private :: UU = repeat(' ', 32) !< UnUsed string
 
     character(32), dimension(REGION_COUNT_MAX, 0:REGIONTYPE_COUNT-1,    &
-        &   GEOMETRY_COUNT) :: regionNames =                            &
+        &   0:GEOMETRY_COUNT-1) :: regionNames =                        &
         &   reshape( (/                                                 &
+        & & ! GEOMETRY_UNSPECIFIED
+        &   'Plasma'//repeat(' ',26),                                   &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
+        & &
+        &   'Left boundary                   ',                         &
+        &   'Right boundary                  ',                         &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        & &
+        &   'Top boundary                    ',                         &
+        &   'Bottom boundary                 ',                         &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
         & & ! GEOMETRY_LINEAR
         &   'Plasma'//repeat(' ',26),                                   &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
@@ -136,32 +178,6 @@ module b2mod_connectivity
         &   'Main chamber wall               ',                         &
         &   'Outer baffle                    ',                         &
         &   UU, UU, UU, UU, UU, UU, UU,                                 &
-        & & ! GEOMETRY_STELLARATORISLAND - not fully done yet
-        &   'Core                            ',                         &
-        &   'SOL                             ',                         &
-        &   'Inner divertor                  ',                         &
-        &   'Outer divertor                  ',                         &
-        &   'Island                          ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
-        & &
-        &   'Inner target                    ',                         &
-        &   'Inner throat                    ',                         &
-        &   'Outer throat                    ',                         &
-        &   'Outer target                    ',                         &
-        &   'Core cut                        ',                         &
-        &   'PFR cut                         ',                         &
-        &   'Island cut                      ',                         &
-        &   UU, UU, UU, UU, UU, UU, UU,                                 &
-        & &
-        &   'Inner PFR wall                  ',                         &
-        &   'Core boundary                   ',                         &
-        &   'Outer PFR wall                  ',                         &
-        &   'Separatrix                      ',                         &
-        &   '?                               ',                         &
-        &   'Island center                   ',                         &
-        &   '?                               ',                         &
-        &   'Island boundary                 ',                         &
-        &   UU, UU, UU, UU, UU, UU,                                     &
         & & ! GEOMETRY_CDN Connected double null
         &   'Inner core                      ',                         &
         &   'Inner SOL                       ',                         &
@@ -283,8 +299,43 @@ module b2mod_connectivity
         &   'Outer separatrix                ',                         &
         &   'Upper outer baffle              ',                         &
         &   'Outer main chamber wall         ',                         &
-        &   'Lower outer baffle              '                          &
+        &   'Lower outer baffle              ',                         &
+        & & ! GEOMETRY_ANNULUS
+        &   'Plasma'//repeat(' ',26),                                   &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
         & &
+        &   'Periodicity boundary            ',                         &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
+        & &
+        &   'Top boundary                    ',                         &
+        &   'Bottom boundary                 ',                         &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        & & ! GEOMETRY_STELLARATORISLAND
+        &   'Core                            ',                         &
+        &   'SOL                             ',                         &
+        &   'Inner divertor                  ',                         &
+        &   'Outer divertor                  ',                         &
+        &   'Island                          ',                         &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
+        & &
+        &   'Inner target                    ',                         &
+        &   'Inner throat                    ',                         &
+        &   'Outer throat                    ',                         &
+        &   'Outer target                    ',                         &
+        &   'Core cut                        ',                         &
+        &   'PFR cut                         ',                         &
+        &   'Island cut                      ',                         &
+        &   UU, UU, UU, UU, UU, UU, UU,                                 &
+        & &
+        &   'Inner PFR wall                  ',                         &
+        &   'Core boundary                   ',                         &
+        &   'Outer PFR wall                  ',                         &
+        &   'Separatrix                      ',                         &
+        &   'Entrance to inner PFR           ',                         &
+        &   'Island center                   ',                         &
+        &   'Entrance to outer PFR           ',                         &
+        &   'Island boundary                 ',                         &
+        &   UU, UU, UU, UU, UU, UU                                      &
         & &
         &  /), &
         & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
@@ -820,7 +871,6 @@ contains
   end subroutine test_connectivity
 
 
-
 !!$  subroutine init_region(nx,ny,nncut,nncutmax, &
 !!$      & leftcut,rightcut,topcut,bottomcut, &
 !!$      & leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy, &
@@ -843,7 +893,7 @@ contains
 !!$        & region(-1:nx,-1:ny,0:2),nnreg(0:2), &
 !!$        & resignore(-1:nx,-1:ny,1:2)
 !!$    !
-!!$    !      Cylindrical slab (core) case
+!!$    !      Cylindrical slab (core) and annular cases
 !!$    !    ++-----------------------------++
 !!$    !    ||                             ||
 !!$    !    ||                             ||
@@ -868,7 +918,7 @@ contains
 !!$    !    ||                             ||
 !!$    !    ++--------------1--------------++
 !!$    !
-!!$    !            Limiter case (ID=1)
+!!$    !            Limiter case
 !!$    !    +-------------------------------+
 !!$    !    |                               |
 !!$    !    |               2               |
@@ -2445,11 +2495,10 @@ contains
 !!$    return
 !!$  end subroutine init_region
 
-
   !> Identify what geometry/topology is present from cut and periodicity data.
   !> Returns one of the GEOMETRY_* constants. Stops if unknown geometry.
-  integer function geometryId( nnreg, periodic_bc, topcut )
-    integer, intent(in) :: nnreg(0:2), periodic_bc, topcut(:)
+  integer function geometryId( nnreg, isymm, periodic_bc, topcut )
+    integer, intent(in) :: nnreg(0:2), isymm, periodic_bc, topcut(:)
     logical, save :: first
     data first/.true./
 
@@ -2463,12 +2512,21 @@ contains
     end if
 
     if (nnreg(0) == 1 .and. periodic_bc == 1) then
+      if (isymm == 0) then
         geometryId = GEOMETRY_CYLINDER
         if (first) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CYLINDER")
             first = .false.
         end if
         return
+      else
+        geometryId = GEOMETRY_ANNULUS
+        if (first) then
+            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_ANNULUS")
+            first = .false.
+        end if
+        return
+      end if
     end if
 
     if (nnreg(0) == 2) then
@@ -2526,6 +2584,12 @@ contains
         end if
     end if
 
+    geometryId = GEOMETRY_UNSPECIFIED
+    if (first) then
+        call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED")
+        first = .false.
+    end if
+
     stop 'b2mod_connectivity.geometryId: unknown geometry'
 
   end function geometryId
@@ -2575,7 +2639,6 @@ contains
   elemental logical function isUnusedCell(celltype)
     integer, intent(in) :: celltype
 
-
     isUnusedCell = (celltype == GRID_UNDEFINED) &
         & .or. (celltype == GRID_EXTERNAL) &
         & .or. (celltype == GRID_DEAD)
@@ -2608,7 +2671,6 @@ contains
     isClassicalGrid = count( cflags(:, :, CELLFLAG_TYPE) == GRID_EXTERNAL ) == 0
   end function isClassicalGrid
 
-
   logical function isInDomain(nx, ny, ix, iy)
     integer, intent(in) :: nx, ny, ix, iy
 
@@ -2616,7 +2678,6 @@ contains
           & .and. iy >= -1 .and. iy <= ny)
 
   end function isInDomain
-
 
 !!$  !> Check if points (x1,y1) and (x2,y2) are identical
 !!$  !> (i.e, very very close to each other)

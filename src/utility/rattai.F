@@ -63,10 +63,11 @@
 *   ..local variables
       integer i, j, k
       real (kind=R8) ::
-     *   t0, t1, rt0, rt1, rtt0, rtt1, ds, cutll
+     *   t0, t1, t2, rtm, rt0, rt1, rtt0, rtt1, ds, cutll, cutlo
 *   ..procedures
       intrinsic log
-      real (kind=R8) :: machsfr
+      real (kind=R8) :: expu, machsfr
+      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
       external subini, subend, xertst
 
 *-----------------------------------------------------------------------
@@ -74,8 +75,9 @@
 
 * ..preliminaries
       call subini ('rattai')
-*   ..set cutll
+*   ..set cutll, cutlo
       cutll = log(machsfr())
+      cutlo = max(machsfr(),exp(cutll))
 *   ..test nt, ndum, tailep
       call xertst (0.le.nt, 'rattai--faulty argument nt')
       call xertst (1.le.ndum, 'rattai--faulty argument ndum')
@@ -106,19 +108,37 @@
          do k = 0, ndum-1
           rt0 = rtorg(j,k)-rtorg(i,k)
           rt1 = rtorg(j+1,k) - rtorg(i,k)
-          rtt0 = log(rt0)+log(t0)
-          rtt1 = log(rt1)+log(t1)
+          if (rt0.gt.0.0_R8) then
+            rtt0 = log(rt0)+log(t0)
+          else
+            rtt0 = cutll
+          endif
+          if (rt1.gt.0.0_R8) then
+            rtt1 = log(rt1)+log(t1)
+          else
+            rtt1 = cutll
+          endif
           if (rtt0.gt.cutll) then
-            rtt0 = exp(rtt0)
+            rtt0 = expu(rtt0)
           else
             rtt0 = 0.0_R8
           end if
           if (rtt1.gt.cutll) then
-            rtt1 = exp(rtt1)
+            rtt1 = expu(rtt1)
           else
             rtt1 = 0.0_R8
           end if
-          rtmod(i,k) = rtmod(i,k)+(ds/2.0_R8)*(rtt0+rtt1)
+          if (rtt0+rtt1.gt.cutlo) then
+            t2 = log(ds/2.0_R8)+log(rtt0+rtt1)
+          else
+            t2 = cutll
+          end if
+          if (t2.gt.cutll) then
+            rtm = exp(t2)
+          else
+            rtm = 0.0_R8
+          endif
+          rtmod(i,k) = rtmod(i,k)+rtm
          enddo
         enddo
        endif

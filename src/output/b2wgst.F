@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2wgst (nprt, idout, nx, ny, ns, crx, cry, na, ua,
-     &  te, ti, po, fna, fhe, fhi, fch, ne, ni, pr, ro, fne, fni,
+     &  te, ti, po, fna, fhe, fhi, fch, ne, ni, pr, pz, rz, fne, fni,
      &  wrk0)
       use b2mod_types
       use b2mod_rates
@@ -21,8 +21,9 @@
      &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
-     *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
-     &  ro(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
+     &  pr(-1:nx,-1:ny), pz(-1:nx,-1:ny),
+     &  rz(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
@@ -64,7 +65,7 @@
 *
 *     crx, cry - (-1:nx,-1:ny,0:3) real*8 array, input.
 *     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
-*     ne, ni, pr, ro, fne, fni - real*8 array, input.
+*     ne, ni, pr, rz, fne, fni - real*8 array, input.
 *     See the calling routine for description.
 *
 *     wrk0 - (-1:nx,-1:ny) real*8 array, workspace.
@@ -189,6 +190,14 @@
        call b2wgx5 (nx, ny, header, crx, cry, pr, 0, 1.0_R8,
      &   wrkx, wrky)
       endif
+*   ..make log-contour plots of plasma pressure
+      if (strmas(idout,'cppz')) then
+       write (header,fmtl) 'PLASMA PRESSURE (N/m**2).'
+       write (nprt,fmtp) '+cppz', header
+       call b2wgx4 (nx, ny, header, crx, cry, pz, 0, 1.0_R8)
+       call b2wgx5 (nx, ny, header, crx, cry, pz, 0, 1.0_R8,
+     &   wrkx, wrky)
+      endif
 *   ..make contour plots of electric potential
       if (strmas(idout,'cppo')) then
        t0 = scal10(0.8_R8*samax(n2,po,1))
@@ -242,7 +251,7 @@
 *   ..make contour plots of mach number
       if (strmas(idout,'cpmc')) then
        do is = 0, ns-1
-        call b2xpmc (nx, ny, ua(-1,-1,is), pr, ro, wrk0)
+        call b2xpmc (nx, ny, ua(-1,-1,is), pz, rz, wrk0)
         t0 = 1
         write (header,fmth2) 'MACH NUMBER.', is, t0/100
         write (nprt,fmtp) '+cpmc', header

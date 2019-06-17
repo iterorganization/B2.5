@@ -16,6 +16,7 @@
      $ cflags1)
       use b2mod_types
       use b2mod_interp
+      use b2mod_b2cmfs
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
@@ -855,7 +856,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
         wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
 *   ..compute pbs (magnetic field pitch * surface area) at cell faces
-        geometryType = geometryId(nnreg, periodic_bc, topcut)
+        geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
         call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
       endif
 

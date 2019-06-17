@@ -337,6 +337,7 @@
 *   ..obtain range and species data
       call b2arin (ninp(0), nnucm, nzmax, tlo, thi, nlo, nhi,
      &  nnuc, nz, izlo, izhi, flag, tailep)
+      b2frates_flag = flag
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue

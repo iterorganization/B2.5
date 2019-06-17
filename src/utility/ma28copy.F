@@ -102,8 +102,8 @@ c see block data for further comments on common block variables.
 c see code for comments on private variables.
 c
       real (kind=R8) ::
-     *   tol, themax, big, dxmax, errmax, dres, cgce,
-     * tol1, big1, upriv, rmin, eps, resid, zero
+     *  tol, themax, big, dxmax, errmax, dres, cgce,
+     *  tol1, big1, upriv, rmin, eps, resid, zero
       integer lp, mp
       integer irncp, icncp, minirn, minicn, irank
       integer idisp(2)
@@ -114,13 +114,13 @@ c
       integer mlp, numnz, num, large
       integer lpiv(10),lnpiv(10),mapiv,manpiv,iavpiv,ianpiv,kountl
       logical grow, lblock, abort, abort1, abort2, abort3, aborta,
-     * abortb, lbig, lbig1
+     *  abortb, lbig, lbig1
       common /ma28edc/ lp, mp, lblock, grow
       common /ma28fdc/ eps, rmin, resid, irncp, icncp, minirn, minicn,
-     * irank, abort1, abort2
+     *  irank, abort1, abort2
       common /ma28gdc/ idisp
       common /ma28hdc/ tol, themax, big, dxmax, errmax, dres, cgce,
-     * ndrop, maxit, noiter, nsrch, istart, lbig
+     *  ndrop, maxit, noiter, nsrch, istart, lbig
       common /ma30idc/ tol1, big1, ndrop1, nsrch1, lbig1
       common /ma30edc/ nlp, aborta, abortb, abort3
       common /ma30fdc/ mirncp, micncp, mirank, mirn, micn
@@ -128,7 +128,7 @@ c
       common /lpivotc/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
 c
       integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1,
-     * newpos, knum, length, move
+     *  newpos, knum, length, move
 c
 c some  initialisation and transfer of information between
 c     common blocks (see earlier comments).
@@ -206,7 +206,7 @@ c first time column has ocurred in current row.
           ikeep(j,2) = i
           ikeep(j,3) = jj - move - newj1
           if (move.eq.0) go to 120
-c shift necessary because of  previous duplicate element.
+c shift necessary because of previous duplicate element.
           newpos = jj - move
           a(newpos) = a(jj)
           icn(newpos) = icn(jj)
@@ -1561,7 +1561,18 @@ c
               if (icn(jj).ne.jpiv) go to 570
 c if pivot is zero, rest of column is and so multiplier is zero.
               au = zero
-              if (a(ijpos).ne.zero) au = -a(jj)/a(ijpos)
+              if (a(ijpos).ne.zero) then
+#ifdef DBG
+                if((a(jj).ge.tiny(1.0_R8) .or. a(jj).le.-tiny(1.0_R8))
+     &           .and.(a(ijpos).ge. tiny(1.0_R8).or.
+     &                 a(ijpos).le.-tiny(1.0_R8))) then
+                  product = log(abs(a(jj))) - log(abs(a(ijpos)))
+                  if (product.ge.cutlo) au = -a(jj)/a(ijpos)
+                end if
+#else
+                au = -a(jj)/a(ijpos)
+#endif
+              end if
               if (lbig) big = max(big,abs(au))
               a(jj) = a(j1)
               a(j1) = au
@@ -1599,9 +1610,9 @@ c innermost loop.
               iop = iop + 1
               pivrow = ijpos - iq(j)
 #ifdef DBG
-              if ((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)).and.
-     &            (a(pivrow).ge. tiny(1.0_R8).or.
-     &             a(pivrow).le.-tiny(1.0_R8))) then
+              if((au.ge.tiny(1.0_R8) .or. au.le.-tiny(1.0_R8)).and.
+     &           (a(pivrow).ge.tiny(1.0_R8).or.
+     &            a(pivrow).le.-tiny(1.0_R8))) then
                 product = log(abs(au)) + log(abs(a(pivrow)))
                 if (product.ge.cutlo) a(jj) = a(jj) + au*a(pivrow)
               end if
@@ -2327,7 +2338,15 @@ c ltend is the end of row i in the off-diagonal blocks.
         ltend = lt + lenoff(i) - 1
         do 20 jj=lt,ltend
           j = icn(jj)
+#ifdef DBG
+          if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
+     &       (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
+            product = log(abs(a(jj))) + log(abs(w(j)))
+            if (product.ge.cutlo) wi = wi - a(jj)*w(j)
+          end if
+#else
           wi = wi - a(jj)*w(j)
+#endif
    20   continue
 c lt is set the beginning of the next off-diagonal row.
         lt = ltend + 1
@@ -2581,8 +2600,8 @@ c######alias mc13dcopy
       integer n, licn, num
       integer ip(n)
       integer icn(licn),lenr(n),ior(n),ib(n),iw(n,3)
-      call
-     & mc13ecopy(n,icn,licn,ip,lenr,ior,ib,num,iw(1,1),iw(1,2),iw(1,3))
+      call mc13ecopy
+     & (n,icn,licn,ip,lenr,ior,ib,num,iw(1,1),iw(1,2),iw(1,3))
       return
       end subroutine mc13dcopy
       subroutine mc13ecopy(n,icn,licn,ip,lenr,arp,ib,num,lowl,numb,prev)

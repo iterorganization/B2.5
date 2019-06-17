@@ -10,6 +10,17 @@ endif
 LD_SONNET ?= -L${SOLPSLIB} -lsonnet -lstdc++
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
+ifndef SOLPS_CPP
+ifdef USE_MPI
+EQUIVS += -DGFORTRAN
+else
+ifdef USE_IMPGYRO
+EQUIVS += -DGFORTRAN
+else
+EQUIVS += -DPGF90
+endif
+endif
+endif
 
 CPP = /lib/cpp -C -traditional -ffreestanding
 SED = sed s:\#PREC\#:d:g
@@ -19,6 +30,8 @@ ifdef USE_MPI
 FC = mpif90
 LD = mpif90
 OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
+DEFINES := $(shell echo ${SOLPS_CPP} | sed -e 's:PGF90:GFORTRAN:' -e 's: -DNOQUAD::')
+DEFINES += ${B25_DEFINES}
 INCMOD = -B
 else
 ifdef USE_IMPGYRO
@@ -59,8 +72,11 @@ CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef IMAS_VERSION
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
+IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifndef SOLPS_CPP
-EQUIVS  += -DIMAS
+EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION}
 endif
 ifdef USE_MPI
 LD_UAL  := `pkg-config imas-gfortran --libs` -L/work/imas/opt/EasyBuild/software/GGD/1.8.1-GCC-6.4.0-2.28/lib -lggd

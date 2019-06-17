@@ -46,11 +46,11 @@ contains
     !> Transform data from B2 to IDS cell
     function b2_IMAS_Transform_Data_B2_To_IDS_Cell( grid, gridSubsetId, gmap,  &
             &   b2CellData ) result( idsdata )
-#ifdef GGD_OLD
-        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
+#if IMAS_MINOR_VERSION > 14
+        type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
-        type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS
+        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
         integer, intent(in) :: gridSubsetId !< ID (base index) of the
@@ -69,11 +69,11 @@ contains
     !> Transform data from B2 to IDS face
     function b2_IMAS_Transform_Data_B2_To_IDS_Face( grid, gridSubsetId, gmap,  &
             &   b2FaceData ) result( idsdata )
-#ifdef GGD_OLD
-        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
+#if IMAS_MINOR_VERSION > 14
+        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
-        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
+        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
         integer, intent(in) :: gridSubsetId !< ID (base index) of the
@@ -97,11 +97,11 @@ contains
     !> Transform data from B2 to IDS vertex
     function b2_IMAS_Transform_Data_B2_To_IDS_Vertex( grid, gridSubsetId,   &
             &   gmap, b2VertexData ) result( idsdata )
-#ifdef GGD_OLD
-        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
+#if IMAS_MINOR_VERSION > 14
+        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
-        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
+        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
         integer, intent(in)         :: gridSubsetId !< ID (base index) of the
@@ -124,11 +124,11 @@ contains
     !! interface b2_IMAS_Transform_Data_B2_To_IDS instead.
     function b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetId,  &
             &   gmap, b2CellData, b2FaceData, b2VertexData ) result( idsdata )
-#ifdef GGD_OLD
-        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
+#if IMAS_MINOR_VERSION
+        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
-        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
+        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
         integer, intent(in) :: gridSubsetId !< Base grid subset index

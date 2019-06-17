@@ -4,7 +4,7 @@ c  version : 07.09.2000 16:07
 c=======================================================================
 c***  Produces tables with coordinates of grid cell corners along the
 c***  separatrix and along the magnetic surfaces
-c***  for subsequent plotting with stand-alone software
+c***  for subsequent plotting with standalone software
 c***
 c*** Output files:
 c***

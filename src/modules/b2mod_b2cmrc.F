@@ -20,6 +20,7 @@
       integer, allocatable, save ::
      &  rtyr(:)
       logical, save ::  adpak_used
+      character*8, save :: b2frates_flag
 
       contains
 

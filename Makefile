@@ -71,6 +71,13 @@ ifdef USE_EIRENE
   SRCEIR = ${SOLPSTOP}/modules/Eirene/src
   EIRDIR = ${SOLPSTOP}/modules/Eirene/builds/couple_SOLPS-ITER.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_IMPGYRO}${EXT_DEBUG}
 endif
+ifdef SOLPSTOP
+NCSDIR = ${SOLPSTOP}/scripts/nc2text_simple
+NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_IMPGYRO}${EXT_DEBUG}
+ifdef LD_NETCDF
+  NC2TXT = $(shell echo `which nc2text`)
+endif
+endif
 
 ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
   include ${OBJDIR}/LISTOBJ
@@ -213,6 +220,7 @@ PROG_OQ = b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
 PROG_ID = b2_ual_write.exe b2_ual_write_b2mod.exe
 PROG_TT = test_shrink_label.exe
+PROG_NC = nc2text_simple.exe
 
 EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
@@ -229,8 +237,9 @@ OQEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OQ}}
 MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 IDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_ID}}
 TTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_TT}}
+NCEXE = ${patsubst %.exe, ${NCODIR}/%.exe, ${PROG_NC}}
 
-.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force test
+.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force test nc2text_simple
 
 DEFAULT: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE}
 ALL: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE} ${XDEXE}
@@ -249,6 +258,13 @@ ifdef IMAS_VERSION
 DEFAULT: ${IDEXE}
 ids: ${IDEXE}
 NOPLOT: ${IDEXE}
+endif
+ifdef SOLPSTOP
+ifdef LD_NETCDF
+DEFAULT: ${NCEXE}
+ALL: ${NCEXE}
+NOPLOT: ${NCEXE}
+endif
 endif
 MAIN: VERSION ${MNEXE}
 
@@ -761,10 +777,31 @@ ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${TTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
 
+${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${MAKES}
+ifdef LD_NETCDF
+	${LD} ${LDOPTS} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
+	@-ln -sf ${NCEXE} ${NCODIR}/nc2text_simple
+ifeq (,$(findstring nc2text,${NC2TXT}))
+	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
+endif
+endif
+
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}
 
 test:	${TTEXE}
+
+nc2text_simple: ${NCEXE}
+
+${NCODIR}/nc2text_simple.o: ${NCSDIR}/nc2text_simple.F90
+ifdef LD_NETCDF
+	@- /bin/rm -f ${NCODIR}/$*.o
+	@-mkdir -p ${NCODIR}
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< $*.f90
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c -o $*.o $*.f90
+else
+	$(warning NETCDF library not present!)
+endif
 
 ${SOLPS4OBJS}: ${OBJDIR}/%.o: ${SOLPS4}/%.F
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o
@@ -832,6 +869,11 @@ clean :
 ifneq (${MOD},o)
 	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete >& /dev/null
 endif
+ifdef SOLPSTOP
+ifdef LD_NETCDF
+	-rm ${NCODIR}/*.f90 ${NCODIR}/*.o ${NCODIR}/*.exe
+endif
+endif
 	-rm -rf ${OBJDIR}/.delete &
 
 depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXELIST:.o=.F} ${EX90LIST:.o=.F90}
@@ -851,7 +893,7 @@ ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
 endif
 	@egrep -aiH '^ {6,}use ' ${SRCDIR}/*/*.F | grep -v 'IGNORE' | tr , ' ' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 4a' >> ${OBJDIR}/dependencies
-	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | tr , ' '  |awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | tr , ' ' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 4b' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
 	@egrep -aiH '^ {6,}use ' ${MODLISTF} | grep -v 'IGNORE' | tr , ' ' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("\\.f:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies

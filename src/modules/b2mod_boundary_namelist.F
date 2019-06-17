@@ -196,7 +196,7 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
      .        bc_list_y(1:bc_list_size(ib),ib),1) = 0
       enddo
 
-csw 21feb2014, setup some additional work variables for boundary conditions
+csw 21feb2014, set up some additional work variables for boundary conditions
 cxpb overwrite the defaults with the namelist data
       iffboundx=0
       iffboundy=0
@@ -337,7 +337,7 @@ cxpb overwrite the defaults with the namelist data
       boundary_time_mod=0.0_R8
       boundary_time_switch=0.0_R8
 
-csw 21feb2014, setup some additional work variables for boundary conditions
+csw 21feb2014, set up some additional work variables for boundary conditions
 cxpb Have to do this here already in case the namelist is not used
       call ipgeti ('b2news_l_fbound', l_fbound)
       call ipgeti ('b2news_l_enebound', l_enebound)

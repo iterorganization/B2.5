@@ -260,7 +260,7 @@ cxpb
       enddo
 
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ', name//'tt'
+      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'tt'
       call b2ux5p (nx, ny, aa5, itcnt, resht, cortt, name//'tt')    !srv 18.03.10
 
 * ..electron temperature correction equation
@@ -413,7 +413,7 @@ cxpb
       enddo
 
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ', name//'te'
+      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'te'
       call b2ux5p (nx, ny, aa5, itcnt, reshe, corte, name//'te')    !srv 18.03.10
 
 * ..atom temperature correction equation
@@ -568,13 +568,13 @@ cxpb
       enddo
 
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ', name//'ti'
+      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'ti'
       call b2ux5p (nx, ny, aa5, itcnt, reshi, corti, name//'ti')    !srv 18.03.10
       last_solve_5(0:nnreg(0)) = solveei(0:nnreg(0))
       do iy = -1, ny
-       do ix = -1, nx
-        corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
-       enddo
+        do ix = -1, nx
+          corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
+        enddo
       enddo
 
 *   ..return

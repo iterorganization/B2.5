@@ -876,7 +876,7 @@ c>>>
           endif
         endif
       enddo
-      write(hlp_frm,'(a,i2,a)') '(a,',ntrack,'(a2,1x))'
+      write(hlp_frm,'(a,i2,a)') '(1x,a,',ntrack,'(a2,1x))'
       write(*,hlp_frm) 'track_species : Bulk ', track_species(1:ntrack)
 c.. Test consistency with region boundaries
       if (.not.dotest) return
@@ -1129,7 +1129,7 @@ c.. Test consistency with physical edges within the computational domain
       use b2mod_boundary_namelist
       implicit none
       integer nx, ny
-      integer ib, ix, iy
+      integer ib, ix
       integer, allocatable :: bc(:,:), rc(:,:)
       logical, allocatable :: coincide(:)
 
@@ -1163,6 +1163,10 @@ c.. Test consistency with physical edges within the computational domain
         end do
       end do
       do ib = 1, nstrai
+#ifdef DBG
+        write(*,*) 'istra = ',ib,' crcstra = ', crcstra(ib),
+     &    ' lbcstra = ',lbcstra(ib)
+#endif
         call xertst (coincide(ib),
      &   'Mapping between recycling strata and '//
      &   'boundary conditions is not unique!')

@@ -983,10 +983,9 @@ c
       implicit none
       integer nx, ny, istyle, isymm
       real (kind=R8) ::
-     *   crxs(0:nx+1,0:ny+1,0:4),
+     * crxs(0:nx+1,0:ny+1,0:4),
      1 crys(0:nx+1,0:ny+1,0:4),
-     2 bp(0:nx+1,0:ny+1),
-     3 bt(0:nx+1,0:ny+1)
+     2 bp(0:nx+1,0:ny+1),bt(0:nx+1,0:ny+1)
       character*(*) local_sonnet
 
       integer nnx, nny,
@@ -1010,7 +1009,7 @@ c
       character*80 format_string(4)
       integer, save :: new_format
       character*12 device
-      logical open_file, uop, first_read
+      logical open_file, uop, first_read, ex
       character uline*(line_length)
       external xertst, subini, subend, open_file
       intrinsic index, sqrt
@@ -1057,6 +1056,7 @@ c
       if(istyle.eq.-1) then        !xpb  DG-CARRE-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/Carre/meshes/'//trim(device)
+        call find_file(local_sonnet,ex)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
      1     "Reading the geometry file assuming the 'new' format"

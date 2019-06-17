@@ -61,7 +61,7 @@ C AREAS OF THE SURFACE ELEMENTS
           end do
           call b2neut_ind(2,k+l,1,ny,shift(j)) !index range in the Eirene arrays
           if(shift(j).lt.0) then
-            write(*,*) "error in b2usr_loads: the EIRENE data on ",
+            write(*,*) "Error in b2usr_loads: the EIRENE data on ",
      w                 "neutral fluxes is incorrect. ",
      w                 "No neutral fluxes will be calculated."
           else
@@ -72,7 +72,7 @@ C AREAS OF THE SURFACE ELEMENTS
         ifirst=.false.
       end if
 
-      write(*,*) "calculating incident power flux in b2usr_loads"
+      write(*,*) "Calculating incident power flux in b2usr_loads"
 
       l=0
       do j=1,ntrgs

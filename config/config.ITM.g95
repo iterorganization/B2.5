@@ -55,12 +55,14 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifdef IMAS_VERSION
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
+IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifndef SOLPS_CPP
-EQUIVS   += -DIMAS
+EQUIVS   += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION}
 endif
-EQUIVS   += -DGGD_OLD
-LD_UAL   ?= `pkg-config imas-g95 ggd --libs`
-INCMODS  += `pkg-config imas-g95 ggd --cflags`
+LD_UAL   ?= `pkg-config imas-g95 --libs`
+INCMODS  += `pkg-config imas-g95 --cflags`
 IMASLIBS  = ${LD_UAL} -lggd-${COMPILER} -L/cineca/prod/opt/compilers/gnu/6.1.0/none/lib64 -lstdc++
 else
 ifdef ITM_ENVIRONMENT_LOADED

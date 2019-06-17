@@ -66,7 +66,7 @@
       logical wrong_flow
       real (kind=R8) ::
      *   sna0ep, she0ep, shi0ep,
-     1  cutll, cutlo, tpr, tro, csb, cst, vte, s0, s1, fche, fchi, t0,
+     1  cutll, cutlo, tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
      4  csbm, cstm,   ! cstm1                                       !sv 14.10.99
      6    s0hz, s1hz, vwest, veast, vminus, vplus  !, v0              !sv 09.01.01 18.07.03 28.01.05
       real (kind=R8) ::
@@ -298,13 +298,14 @@
         s0hz = hz(ix,-1)*vol(ix,-1)/hy1(ix,-1)                         !sv 09.01.01
         s1hz = abs(pbshz(ix,0,1))                                      !sv 09.01.01
 *    ..compute cst, vte
-        tpr = 0
-        tro = 0
+        tpz = 0
+        trz = 0
         do is = 0, ns-1
-         tpr = tpr+na(ix,-1,is)*(rza(ix,-1,is)*te(ix,-1)+ti(ix,-1))
-         tro = tro+am(is)*mp*na(ix,-1,is)
+         if (is_neutral(is)) cycle
+         tpz = tpz+na(ix,-1,is)*(rza(ix,-1,is)*te(ix,-1)+ti(ix,-1))
+         trz = trz+am(is)*mp*na(ix,-1,is)
         enddo
-        cst = sqrt(tpr/tro)
+        cst = sqrt(tpz/trz)
         vte = sqrt(te(ix,-1)/me)
 *    ..compute Bohm fchi, fche
         t0 = 0
@@ -531,13 +532,14 @@
         s0hz = hz(ix,ny)*vol(ix,ny)/hy1(ix,ny)                         !sv 09.01.01
         s1hz = abs(pbshz(ix,ny,1))                                     !sv 09.01.01
 *    ..compute cst, vte
-        tpr = 0
-        tro = 0
+        tpz = 0
+        trz = 0
         do is = 0, ns-1
-         tpr = tpr+na(ix,ny,is)*(rza(ix,ny,is)*te(ix,ny)+ti(ix,ny))
-         tro = tro+am(is)*mp*na(ix,ny,is)
+         if (is_neutral(is)) cycle
+         tpz = tpz+na(ix,ny,is)*(rza(ix,ny,is)*te(ix,ny)+ti(ix,ny))
+         trz = trz+am(is)*mp*na(ix,ny,is)
         enddo
-        cst = sqrt(tpr/tro)
+        cst = sqrt(tpz/trz)
         vte = sqrt(te(ix,ny)/me)
 *    ..compute Bohm fchi, fche
         t0 = 0
@@ -551,7 +553,7 @@
 !        if(facdriftm.ne.0.0e0_R8) then                                !sv 09.07.99
          if(fchy_dia_at_north .ne. 0.0e0_R8) then                      !sv 09.07.99
 !         iy=ny                                                        !sv 01.07.99 { 18.05.02
-!         fchy_dia =-signmf*pr(ix,iy)*bb(ix,iy,2)                      !sv 31.03.00 18.01.02
+!         fchy_dia =-signmf*pz(ix,iy)*bb(ix,iy,2)                      !sv 31.03.00 18.01.02
 !     &      *vol(ix,iy)/gs(ix,iy,2)                                   !sv 01.07.99
 !     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))!sv 01.07.99 } 18.05.02
           iy=ny                                                        !sv 21.10.02
@@ -702,13 +704,14 @@
           s0hz = hz(ix,iy)*vol(ix,iy)/hx(ix,iy)                          !sv 09.01.01 26.11.02
           s1hz = abs(pbshz(rightix(ix,iy),rightiy(ix,iy),0))             !sv 09.01.01 26.11.02
 *    ..compute cst, vte
-          tpr = 0
-          tro = 0
+          tpz = 0
+          trz = 0
           do is = 0, ns-1
-           tpr = tpr+na(ix,iy,is)*(rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))    !sv 26.11.02
-           tro = tro+am(is)*mp*na(ix,iy,is)                              !sv 26.11.02
+           if (is_neutral(is)) cycle
+           tpz = tpz+na(ix,iy,is)*(rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))    !sv 26.11.02
+           trz = trz+am(is)*mp*na(ix,iy,is)                              !sv 26.11.02
           enddo
-          cst = sqrt(tpr/tro)
+          cst = sqrt(tpz/trz)
           vte = sqrt(te(ix,iy)/me)                                       !sv 26.11.02
 *    ..compute Bohm fchi, fche
           wrong_flow=.false.
@@ -915,13 +918,14 @@ c         sna0(-1,iy,1,1) = -1.0d60
           s0hz = hz(ix,iy)*vol(ix,iy)/hx(ix,iy)                       !sv 09.01.01 26.11.02
           s1hz = abs(pbshz(ix,iy,0))                                  !sv 09.01.01 26.11.02
 *    ..compute cst, vte
-          tpr = 0
-          tro = 0
+          tpz = 0
+          trz = 0
           do is = 0, ns-1
-           tpr = tpr+na(ix,iy,is)*(rza(ix,iy,is)*te(ix,iy)+ti(ix,iy)) !sv 26.11.02
-           tro = tro+am(is)*mp*na(ix,iy,is)                           !sv 26.11.02
+           if (is_neutral(is)) cycle
+           tpz = tpz+na(ix,iy,is)*(rza(ix,iy,is)*te(ix,iy)+ti(ix,iy)) !sv 26.11.02
+           trz = trz+am(is)*mp*na(ix,iy,is)                           !sv 26.11.02
           enddo
-          cst = sqrt(tpr/tro)
+          cst = sqrt(tpz/trz)
           vte = sqrt(te(ix,iy)/me)                                    !sv 26.11.02
 *    ..compute Bohm fchi, fche
           wrong_flow=.false.

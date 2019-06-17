@@ -530,10 +530,9 @@ cxpb Data file material properties
       open(nwrite,file=trim(filename))
       write(nwrite,'(a10)') '&WALL_SAVE'
       do itrack=1,nalloys
-        if(layer_alloys(itrack).ne.' ')
+        if(.not.streql(layer_alloys(itrack),' '))
      .    write(nwrite,'(a13,i1,a4,a6,a2)')
-     .    'LAYER_ALLOYS(',itrack,')= ''',
-     .     layer_alloys(itrack),''','
+     .    'LAYER_ALLOYS(',itrack,')= ''', layer_alloys(itrack),''','
       enddo
       write(nwrite,'(a11,i4,a1)') 'NDEPTH_NML=',ndepth_nml,','
       do itrack=1,ntargsp
@@ -790,10 +789,10 @@ cxpb  Use explicit writing of non-default elements only
       integer nmax, i, ic, ibnd, ifile, itrack
       integer old_file, idone(100), idum(0:9)
       real (kind=R8) :: sum
-      logical open_file, silent_open, done
-      external open_file, silent_open, xertst
+      logical open_file, silent_open, streql, done, written
+      external open_file, silent_open, streql, xertst
       character*2  adum
-      character*24 filename, name(100)
+      character*24 filename, fname(100)
       character*32 str_dummy
       character*256 filenamecat
 
@@ -807,15 +806,20 @@ cxpb  Use explicit writing of non-default elements only
 
       nmax=1
       ifile=0
+      idone=0
+      fname=' '
       write(*,*) 'Obtaining nominal surface properties'
       do ibnd = 1, nbnd
+        if (streql(surface_material_name(ibnd),' ')) cycle
         filename='Surface_properties/'
      &   //trim(surface_material_name(ibnd))
-        name(ifile+1) = filename
+        call xertst(ifile.lt.100,
+     .   'increase array sizes in read_b2mod_wall')
+        fname(ifile+1) = filename
         idone(ifile+1) = ibnd
         done = .false.
         do i = 1, ifile
-          if (trim(filename).eq.trim(name(i))) then
+          if (streql(filename,fname(i))) then
             done = .true.
             old_file = idone(i)
           end if
@@ -857,19 +861,24 @@ cxpb  Use explicit writing of non-default elements only
       matsurf_nzconstituents=0
       matsurf_nrelconstituents=0
 
-      ifile=0
+      ifile = 0
       do ibnd = 1, nbnd
+        if (streql(surface_material_name(ibnd),' ')) cycle
         filename='Surface_properties/'
      &   //trim(surface_material_name(ibnd))
         done = .false.
         do i = 1, ifile
-          if (trim(filename).eq.trim(name(i))) then
+          if (streql(filename,fname(i))) then
             done = .true.
             old_file = idone(i)
           end if
         end do
         if (.not.done) then
+          call xertst(ifile.lt.100,
+     .     'increase array sizes in read_b2mod_wall')
           ifile = ifile + 1
+          fname(ifile) = filename
+          idone(ifile) = ibnd
           if(silent_open(99,filename,
      .       'data.local|modules/B2.5/Database',filenamecat)) then
             read(99,*) str_dummy
@@ -902,6 +911,8 @@ cxpb Normalise surface constituents
       end do
 
       ifile=0
+      idone=0
+      fname=' '
       write(*,*) 'Obtaining nominal bulk properties'
       do ibnd = 1, nbnd
         matbulk_Kappa_perp_A1(ibnd) = 0.0_R8
@@ -909,12 +920,15 @@ cxpb Normalise surface constituents
         matbulk_Kappa_perp_A3(ibnd) = 0.0_R8
         matbulk_Kappa_perp_A4(ibnd) = 0.0_R8
         matbulk_Kappa_perp_A5(ibnd) = 0.0_R8
+        if (streql(bulk_material_name(ibnd),' ')) cycle
         filename='Bulk_properties/'//trim(bulk_material_name(ibnd))
-        name(ifile+1) = filename
+        call xertst(ifile.lt.100,
+     .   'increase array sizes in read_b2mod_wall')
+        fname(ifile+1) = filename
         idone(ifile+1) = ibnd
         done = .false.
         do i = 1, ifile
-          if (trim(filename).eq.trim(name(i))) then
+          if (streql(filename,fname(i))) then
             done = .true.
             old_file = idone(i)
           end if
@@ -977,7 +991,7 @@ cxpb Normalise surface constituents
         endif
       enddo
 
-      ifile=0
+      ifile = 0
       do ibnd = 1, nbnd
         if (coating_thickness(ibnd).gt.0.0_R8) then
           if (ifile.eq.0) write(*,*) 'Obtaining coating properties'
@@ -986,12 +1000,15 @@ cxpb Normalise surface constituents
           coating_Kappa_perp_A3(ibnd) = 0.0_R8
           coating_Kappa_perp_A4(ibnd) = 0.0_R8
           coating_Kappa_perp_A5(ibnd) = 0.0_R8
+          if (streql(coating_material_name(ibnd),' ')) cycle
           filename='Bulk_properties/'//trim(coating_material_name(ibnd))
-          name(ifile+1) = filename
+          call xertst(ifile.lt.100,
+     .     'increase array sizes in read_b2mod_wall')
+          fname(ifile+1) = filename
           idone(ifile+1) = ibnd
           done = .false.
           do i = 1, ifile
-            if (trim(filename).eq.trim(name(i))) then
+            if (streql(filename,fname(i))) then
               done = .true.
               old_file = idone(i)
             end if
@@ -1031,7 +1048,7 @@ cxpb Normalise surface constituents
             endif
           else
             coating_long_name(ibnd) = coating_long_name(old_file)
-            coating_temp_unit(ibnd) = coating_temp_unit(ibnd)
+            coating_temp_unit(ibnd) = coating_temp_unit(old_file)
             coating_format(ibnd) = coating_format(old_file)
             coating_target_density(ibnd) =
      .       coating_target_density(old_file)
@@ -1060,9 +1077,11 @@ cxpb Normalise surface constituents
         endif
       enddo
 
+      written = .false.
       do ifile = 1, nalloys
-        if(layer_alloys(ifile).ne.' ') then
-          if (ifile.eq.0) write(*,*) 'Obtaining alloy properties'
+        if(.not.streql(layer_alloys(ifile),' ')) then
+          if (.not.written) write(*,*) 'Obtaining alloy properties'
+          written = .true.
           filename='Bulk_properties/'//trim(layer_alloys(ifile))
           if(open_file(99,filename,
      .       'data.local|modules/B2.5/Database')) then
@@ -1103,10 +1122,12 @@ cxpb Normalise surface constituents
         endif
       enddo
 
+      written = .false.
       do itrack = 1, ntargsp
-        if (track_species(itrack).ne.'  ') then
-          if (itrack.eq.1)
+        if (.not.streql(track_species(itrack),'  ')) then
+          if (.not.written)
      >     write(*,*) 'Obtaining tracked species properties'
+          written = .true.
           filename='Bulk_properties/'//trim(track_species(itrack))
           if(open_file(99,filename,
      .       'data.local|modules/B2.5/Database')) then

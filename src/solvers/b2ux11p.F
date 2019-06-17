@@ -131,7 +131,7 @@
         allocate(wrk1(1:n2))
         allocate(wrk2(1:n2))
         allocate(iwrk(1:1))
-      else if (style.eq.1) then
+       else if (style.eq.1) then
         call xerrab ('b2ux11p: Style 1 is not implemented')
 *    ..obtain workspace for slv5pt
         allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
@@ -139,11 +139,11 @@
         allocate(wrk1(1:1))
         allocate(wrk2(1:1))
         allocate(iwrk(1:n2))
-      else if (style.eq.2) then
+       else if (style.eq.2) then
         allocate(indexes(1:3,1:solvdim))
         allocate(iasave(1:solvdim),jasave(1:solvdim))
-      endif
-      write(*,*) 'Allocated space for solver b2ux11p'
+       endif
+       write(*,*) 'Allocated space for solver b2ux11p'
       endif
 
 *   ..solve the correction equation

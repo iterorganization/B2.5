@@ -227,7 +227,7 @@ cxpb
       enddo
       
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ',name
+      write(*,'(1x,a,a)') 'Calling b2ux5p from ',name
       call b2ux5p (nx, ny, aa5, itcnt, rescb, corpb, name)             !srv 18.03.10
 *   ..redo the scaling
       do iy = -1, ny
@@ -235,16 +235,17 @@ cxpb
         corpb(ix,iy) = corpb(ix,iy)*rscal(pb(ix,iy))
        enddo
       enddo
+
       if (iout.ne.0) then                                              !srv 17.06.02 {
-       write (chns,'(i3.3)') isb
-       call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 0),name//'_aa5m0'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 1),name//'_aa5p1'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 2),name//'_aa5p2'//chns)
-       call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
-       call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
-       call my_out(70,nx,ny,nb,name//'_nb'//chns)
+        write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2'//chns)
+        call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1'//chns)
+        call my_out(70,nx,ny,aa5(-1,-1, 0),name//'_aa5m0'//chns)
+        call my_out(70,nx,ny,aa5(-1,-1, 1),name//'_aa5p1'//chns)
+        call my_out(70,nx,ny,aa5(-1,-1, 2),name//'_aa5p2'//chns)
+        call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
+        call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
+        call my_out(70,nx,ny,nb,name//'_nb'//chns)
       endif                                                            !srv 17.06.02 }
 
 * ..return
