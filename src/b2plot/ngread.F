@@ -656,10 +656,10 @@ c      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
 cank
 cxpb 20130210
 c      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
+c      call extend(emolrad,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(eionrad,ndx,ndy,nion,nnx,nny,nioni)
 cxpb
 cxpb 20180323
-      call extend(emolrad,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(eionrad,ndx,ndy,nion,nnx,nny,nioni)
 cxpb
       deallocate(ft44data)
 #endif
