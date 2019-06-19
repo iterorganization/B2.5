@@ -33,11 +33,10 @@
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *   vti32(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny), 
-     &   lnlam(-1:nx,-1:ny)
-      real (kind=R8) ::                                               !djm Jul2018
-     *     smbtf_cthe(-1:nx,-1:ny),
-     *     smbtf_cthi(-1:nx,-1:ny)
-*   ..common blocks
+     &   lnlam(-1:nx,-1:ny),
+     *   smbtf_cthe(-1:nx,-1:ny), !djm Jul2018
+     *   smbtf_cthi(-1:nx,-1:ny)
+*     ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
