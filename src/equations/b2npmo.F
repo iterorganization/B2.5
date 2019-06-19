@@ -14,7 +14,10 @@
       use b2mod_sources
      1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
      2          smpr, smpt, smfr, smcf
-      use b2mod_balance
+      use b2mod_balance !djm Jan2017
+     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
+     2          balance_netcdf, tot_smo0to3, fmo_tot,
+     3          b2sifr_smoch0to3,b2sifr_smotf0to3
       use b2mod_plasma
      & , only : fmo, fchanml, facdrift, fac_ExB                        !srv 25.09.17 15.04.19
       use b2mod_numerics_namelist
@@ -404,7 +407,11 @@
      &    wrk0, wrk1, wrk2)                                            !srv 01.07.09
         endif                                                          !srv 26.10.08 }
        endif
-*    ..compute pressure gradient term
+       if (balance_netcdf.ne.0) then !djm Mar2019
+         b2sifr_smoch0to3(-1:nx,-1:ny,0:3,is)=smbch
+         b2sifr_smotf0to3(-1:nx,-1:ny,0:3,is)=smbtf
+       endif
+*     ..compute pressure gradient term
        call b2sigp (nx, ny, is, rza(-1,-1,is), vol, hx, hz, bb,  
      &   na(-1,-1,is), ti, ne, te, po, smbgp, wrk0, wrk1, wrk2)        !srv 02.07.08
 *    ..compute flub
@@ -454,6 +461,7 @@
 
 cdjm Jan2017 update momentum source components for balance
        if (balance_netcdf.ne.0) then
+         tot_smo0to3(:,:,:,is)=smb
          call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
        endif
 
@@ -462,8 +470,18 @@ cdjm Jan2017 update momentum source components for balance
      &            .or.get_residuals.eq.1) then                         !srv 22.05.18
         call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
+<<<<<<< HEAD
         fmo(:,:,:,is)=wrkf
        endif                                                           !srv 22.05.18
+=======
+       fmo(:,:,:,is)=wrkf
+
+cdjm Mar2019 output the total momentum flux and source for balance
+       if (balance_netcdf.ne.0) then
+         fmo_tot(:,:,:,is)=wrkf
+       endif
+
+>>>>>>> 9173f5a2... Fixed error in decomposition of drift fluxes, store total particle and momentum fluxes and sources
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
        if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 12.07.02 {
