@@ -15,8 +15,9 @@ module b2mod_ual
     use b2mod_ual_io &
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport
     use b2mod_ual_io &
-     & , only : b25_process_ids, ids_put, ids_deallocate, imas_close, &
-     &          imas_create_env, imas_open_env
+     & , only : b25_process_ids, ids_put, ids_deallocate
+    use b2mod_ual_io &
+     & , only : imas_close, imas_create_env, imas_open_env
 #if UAL_MAJOR_VERSION < 4
     use b2mod_ual_io &
      & , only : imas_create, imas_create_hdf5, imas_open_hdf5, imas_open
