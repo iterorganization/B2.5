@@ -6,6 +6,9 @@ NCDIR     ?= /work/imas/opt/netcdf-fortran/4.2-GCC-4.1.2
 LD_NETCDF ?= `nf-config --flibs`
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DDOFLUSH # -DNO_CDF -DNO_PROCESS
+ifndef SOLPS_CPP
+EQUIVS += -DGFORTRAN
+endif
 
 CPP = /lib/cpp -traditional -DNO_IEEE
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
@@ -27,10 +30,16 @@ FC = gfortran
 endif
 endif
 
+FCOPTS  = -fPIC -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
+LDOPTS  = -fPIC
 ifdef SOLPS_DEBUG
-FCOPTS = -g -gdwarf-2 -fPIC -fbounds-check -fno-second-underscore -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -ffpe-trap=denormal -ftrapv
+FCOPTS += -g -gdwarf-2 -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
 else
-FCOPTS = -O2 -fPIC -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
+FCOPTS += -O2
+endif
+
+ifdef USE_MPI
+FCOPTS += ${MPI_CPP}
 endif
 
 DBLFC = ${FC}
@@ -52,17 +61,14 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifdef IMAS_VERSION
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
+IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifndef SOLPS_CPP
-EQUIVS  += -DIMAS
+EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION}
 endif
-ifeq (,$(findstring hpc-login0,$(NODENAME)))
-EQUIVS  += -DGGD_OLD
-LD_UAL  ?= `pkg-config imas-gfortran ggd-gfortran --libs`
-INCMODS  = `pkg-config imas-gfortran ggd-gfortran --cflags`
-else
 LD_UAL  ?= `pkg-config imas-gfortran ggd --libs`
 INCMODS  = `pkg-config imas-gfortran ggd --cflags`
-endif
 IMASLIBS = ${LD_UAL}
 endif
 
@@ -71,7 +77,6 @@ CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 LD = $(FC)
-LDOPTS = # -Bstatic
 
 LCPP = ${LD_SONNET}
 

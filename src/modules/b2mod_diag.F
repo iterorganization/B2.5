@@ -5,6 +5,8 @@
       use b2mod_eirene_globals
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
+      use b2mod_boundary_namelist 
+     &                    , only : nbcd
       implicit none
 c
 c  version : 27.04.2005
@@ -20,7 +22,10 @@ c
      2  b2radirreg(:), b2radlrreg(:),
      3  recycereg(:), recycireg(:),
      4  sseereg(:), sseireg(:), ssnireg(:,:),
-     5  ssnastra(:,:)   ! IYS 29.09.2017
+     5  ssnastra(:,:),   ! IYS 29.09.2017
+     6  sna_eir(:),      ! IYS 12.01.2018
+     7  sna_stbc_neut(:,:), sna_stbr_neut(:,:),       ! IYS 04.06.2018
+     8  sna_stbr_sput(:,:)
       REAL (kind=R8), allocatable :: 
      .      FEEXGT(:,:), FEEYGT(:,:),
      .      FEIXGT(:,:), FEIYGT(:,:)
@@ -61,7 +66,8 @@ c***  ntrc_srt  :  tracing/intshrt.trc    :  integral data (short version)
 c***  ntrc_tst  :  tracing/test.trc       :  test data (can be absent)
 c***  ntrc_res  :  tracing/residuals.trc  :  residuals by regions
 c***  ntrc_src  :  tracing/sources.trc    :  integral sources
-c***  ntrc_bln  :  tracing/blnn.trc       :  particle balance
+c***  ntrc_bln  :  tracing/blnn.trc       :  particle balance - old style by A.Kukushkin
+c***  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018) 
 c***  ntrc_ble  :  tracing/blne.trc       :  energy balance
 c***  ntrc_int  :  tracing/integral.trc   :  additional integrals
 c***  ntrc_usr  :  tracing/user.trc       :  user-specific data
@@ -72,12 +78,13 @@ c*** print_first_step : if false, skip the first timestep in the history
 c***                    tracing
 
       integer len_ntrc, ntrc_used
-      parameter (len_ntrc=10)
+      parameter (len_ntrc=11)
       integer ntrc_srt, ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
-     ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep
-      parameter (ntrc_srt=1, ntrc_tst=2, ntrc_res=3, ntrc_src=4,
-     ,           ntrc_bln=5, ntrc_ble=6, ntrc_int=7, ntrc_usr=8,
-     ,           ntrc_blm=9, ntrc_sep=10)
+     ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep,
+     ,        ntrc_bls
+      parameter (ntrc_srt=1, ntrc_tst=2 , ntrc_res=3, ntrc_src=4,
+     ,           ntrc_bln=5, ntrc_ble=6 , ntrc_int=7, ntrc_usr=8,
+     ,           ntrc_blm=9, ntrc_sep=10, ntrc_bls=11)
       integer ntrc(len_ntrc), lv_trc(len_ntrc)
       logical filedata(len_ntrc), print_first_step
       integer lenfnm, mhdr
@@ -121,6 +128,10 @@ c
      4  sseereg(nregionv), sseireg(nregionv),
      5  ssnireg(nspecies,nregionv))
       allocate(ssnastra(natm,nstra))      ! IYS 29.09.2017
+      allocate(sna_eir(1:nspecies))       ! IYS 12.01.2018
+      allocate(sna_stbr_neut(1:nspecies,1:nbcd), 
+     &         sna_stbc_neut(1:nspecies,1:nbcd),       ! IYS 04.06.2018
+     &         sna_stbr_sput(1:nspecies,1:nbcd))       ! IYS 18.09.2018
       allocate( 
      .      FEEXGT(-1:NXD,-1:NYD), FEEYGT(-1:NXD,-1:NYD),
      .      FEIXGT(-1:NXD,-1:NYD), FEIYGT(-1:NXD,-1:NYD))
@@ -181,11 +192,13 @@ c
       write(*,hlp_frm) 'b2espcr : ', b2espcr(0:nsd-1)
       write(*,hlp_frm) 'b2eatcr : ', b2eatcr(0:nsd-1)
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',nsd,'(a2,1x))'
-      write(*,hlp_frm) 'is_codes : ', is_codes
+      write(*,hlp_frm) 'is_codes : ', (trim(is_codes(is)),is=0,nsd-1)
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',nspecies,'(a2,1x))'
-      write(*,hlp_frm) 'species_list : ', species_list(1:nspecies)
+      write(*,hlp_frm) 'species_list : ',
+     .                        (trim(species_list(is)),is=1,nspecies)
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natm,'(a2,1x))'
-      write(*,hlp_frm) 'atoms_list (B2) : ', atoms_list(1:natm)
+      write(*,hlp_frm) 'atoms_list (B2) : ',
+     .                        (trim(atoms_list(is)),is=1,natm)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',i,'i4)'
       write(*,hlp_frm) 'ions_list : ', ions_list(1:i)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nspecies,'i4)'
@@ -208,6 +221,8 @@ c>>>
       fn_ntrc(ntrc_src) = 'tracing/sources.trc'
       NTRC(ntrc_bln) = 74
       fn_ntrc(ntrc_bln) = 'tracing/blnn.trc'
+      NTRC(ntrc_bls) = 174                        ! IYS 07.11.2018
+      fn_ntrc(ntrc_bls) = 'tracing/blnn_SPb.trc'  ! IYS 07.11.2018
       NTRC(ntrc_ble) = 75
       fn_ntrc(ntrc_ble) = 'tracing/blne.trc'
       NTRC(ntrc_int) = 76
@@ -239,6 +254,10 @@ c>>>
       sseireg=0.0_R8
       ssnireg=0.0_R8
       ssnastra=0.0_R8
+      sna_eir=0.0_R8        ! IYS 12.01.2018
+      sna_stbr_sput=0.0_R8  ! IYS 28.09.2018
+      sna_stbr_neut=0.0_R8  ! IYS 04.06.2018
+      sna_stbc_neut=0.0_R8  ! IYS 04.06.2018
       rescoreg=0.0_R8
       resmoreg=0.0_R8
       reshereg=0.0_R8
@@ -258,6 +277,9 @@ c>>>
      3  recycereg, recycireg,
      4  sseereg, sseireg, ssnireg,
      5  ssnastra)
+      deallocate(sna_eir)
+      deallocate(sna_stbr_neut, sna_stbr_sput)
+      deallocate(sna_stbc_neut)  ! IYS 12.01.2018, 04.06.2018
       deallocate(FEEXGT, FEEYGT, FEIXGT, FEIYGT)
       deallocate(RADARR)
       deallocate(species_list)

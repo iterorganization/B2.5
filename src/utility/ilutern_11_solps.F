@@ -31,10 +31,11 @@ c ma28 common blocks
       common /ma28fdc4/ eps,rmin,resid,irncp,icncp,minirn,minicn,
      1 irank,abort1,abort2
       real (kind=R8) ::
-     *   rtol,themax,big,dxmax,errmax,dres,cgce
-      integer ndrop,maxit,noiter,nsrch,istart,ibig
-      common /ma28hdc4/ rtol,themax,big,dxmax,errmax,dres,cgce,
-     1 ndrop,maxit,noiter,nsrch,istart,ibig
+     *   tol,themax,big,dxmax,errmax,dres,cgce
+      integer ndrop,maxit,noiter,nsrch,istart
+      logical lbig
+      common /ma28hdc4/ tol,themax,big,dxmax,errmax,dres,cgce,
+     1 ndrop,maxit,noiter,nsrch,istart,lbig
 c
 
 *  -- PROCEDURES --
@@ -42,13 +43,15 @@ c
 
       logical lfirst
       integer ncall, nwrite
-      integer, save :: kwrite_fmt = -1                                !srv 18.05.02
-      integer, save :: kwrite_bnr = -1                                !srv 18.05.02
+      integer, save :: kwrite_fmt = -1                             !srv 18.05.02
+      integer, save :: kwrite_bnr = -1                             !srv 18.05.02
       save lfirst, ncall, nwrite
       data lfirst /.true./, ncall /0/, nwrite /0/
 
 *=======================================================================
 *//COMPUTATION//
+*   ..subprogram start-up calls
+      call subini ('ilutern_11')
 
 *  ---------------------------------------------------------------------
 *  TEST INPUTS AND SET AUXILIARIES.
@@ -221,6 +224,7 @@ cdpc
 *  ---------------------------------------------------------------------
       call cpu_time(cpu_end)
       ncall=ncall+1
+      call subend()
       RETURN
 
       entry restart_ma28_for_11
@@ -229,6 +233,6 @@ cdpc
       return
 
 *=======================================================================
-*//END ILUTERN_11//                                                    !srv 13.10.06
+*//END ILUTERN_11//                                                !srv 13.10.06
 
       END

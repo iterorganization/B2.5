@@ -983,10 +983,9 @@ c
       implicit none
       integer nx, ny, istyle, isymm
       real (kind=R8) ::
-     *   crxs(0:nx+1,0:ny+1,0:4),
+     * crxs(0:nx+1,0:ny+1,0:4),
      1 crys(0:nx+1,0:ny+1,0:4),
-     2 bp(0:nx+1,0:ny+1),
-     3 bt(0:nx+1,0:ny+1)
+     2 bp(0:nx+1,0:ny+1),bt(0:nx+1,0:ny+1)
       character*(*) local_sonnet
 
       integer nnx, nny,
@@ -1010,7 +1009,7 @@ c
       character*80 format_string(4)
       integer, save :: new_format
       character*12 device
-      logical open_file, uop, first_read
+      logical open_file, uop, first_read, ex
       character uline*(line_length)
       external xertst, subini, subend, open_file
       intrinsic index, sqrt
@@ -1032,7 +1031,7 @@ c
       i=-1
       j=-1
       lun=96
-      meshpath = 'data.local/meshes|data/meshes'
+      meshpath = 'data.local/meshes'
 #ifdef JET
       device = 'jet'
 #else
@@ -1057,6 +1056,7 @@ c
       if(istyle.eq.-1) then        !xpb  DG-CARRE-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/Carre/meshes/'//trim(device)
+        call find_file(local_sonnet,ex)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
      1     "Reading the geometry file assuming the 'new' format"
@@ -1130,7 +1130,9 @@ c
           end if
    32     continue
           first_read = .false.
-          uop = i.le.5 .and. j.le.1 .and. .false.
+#ifdef DBG
+          uop = i.le.5 .and. j.le.1
+#endif
           if(uop) then
             print *,'*3* ',i,j,crxs(i,j,3),crys(i,j,3)
             print *,'*4* ',i,j,crxs(i,j,4),crys(i,j,4)
@@ -1150,8 +1152,15 @@ c
             endif
           end if
           read (lun,710,end=990) upsi,crxs(i,j,0),crys(i,j,0)
-          read (lun,720,end=990) crxs(i,j,1),crys(i,j,1),
-     ,     crxs(i,j,2),crys(i,j,2)
+          read (lun,'(a)',end=990) uline
+          if (uline(32:32).eq.'(') then
+            read (uline,720) crxs(i,j,1),crys(i,j,1),
+     ,        crxs(i,j,2),crys(i,j,2)
+          else if (uline(30:30).eq.'(') then
+            read (uline,721) crxs(i,j,1),crys(i,j,1),
+     ,        crxs(i,j,2),crys(i,j,2)
+          end if
+          read (lun,'()')
           if(uop) then
             print *,'*0* ',i,j,crxs(i,j,0),crys(i,j,0)
             print *,'*1* ',i,j,crxs(i,j,1),crys(i,j,1)
@@ -1226,7 +1235,8 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
   701 format(19x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
   702 format(21x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
   710 format(18x,e17.0,14x,e17.0,1x,e17.0)
-  720 format(30x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0/)
+  720 format(32x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
+  721 format(30x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
 
   990 continue
       write(*,*) 'Error: i,j ',i,j

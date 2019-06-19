@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npc9 (nx, ny, guard_flows,                        !srv 05.07.08
-     &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb, rxf,
-     &  vol, pbs, flob, conb, snb,                                   !srv 22.01.02 13.10.06
+      subroutine b2npc9 (nx, ny, guard_flows,                         !srv 05.07.08
+     &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb,
+     &  rxf, vol, pbs, flob, conb, snb,                               !srv 22.01.02 13.10.06
      &  pccb, pb, nb, ub, fnb, rescb, corpb, ierr)
       use b2mod_types
       use b2mod_b2cmpa
@@ -18,7 +18,8 @@
      &  flob(-1:nx,-1:ny,0:1),
      &  conb(-1:nx,-1:ny,0:1,0:4), snb(-1:nx,-1:ny,0:1),             !srv 13.10.06
      &  pccb(-1:nx,-1:ny,0:1), fnb(-1:nx,-1:ny,0:1)
-      logical solvcreg(0:nregionv), ua_solve, solvmreg(0:nregionv)
+      logical solvcreg(0:nregionv), ua_solve,
+     &  solvmreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
      *   pb(-1:nx,-1:ny), nb(-1:nx,-1:ny), ub(-1:nx,-1:ny)
@@ -140,28 +141,28 @@ cdjm Jan2017 update particle source components for balance
 * ..particle balance
 *   ..compute residual
       call b2ursc (nx, ny, nb, snb, fnb, rescb)
-      if(guard_flows.eq.2 .or.                                        !srv 06.07.08 {
-     &    (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 15.02.10 { this part should be re-written
-       do iy=-1, ny, ny+1                                             !srv 27.06.08 {
+      if(guard_flows.eq.2 .or.                                          !srv 06.07.08 {
+     &    (is_neutral(isb) .and. use_eirene.ne.0)) then                 !srv 15.02.10 { this part should be re-written
+       do iy=-1, ny, ny+1                                               !srv 27.06.08 {
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
           rescb(ix,iy) = 0.0_R8
          endif
         enddo
-       enddo                                                          !srv 27.06.08 }
-      endif                                                           !srv 15.02.10 }
+       enddo                                                            !srv 27.06.08 }
+      endif                                                             !srv 15.02.10 }
 *   ..compute correction
       write (chns,'(i3.3)') isb
-      call b2usc9 (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, !srv 13.10.06 26.09.12
+      call b2usc9 (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1,   !srv 13.10.06 26.09.12
      &   pbs, nb, pb, snb(-1,-1,1), flob, conb, pccb(-1,-1,1), rescb,  
-     &   corpb, aa9, '_b2usc9_'//chns)                                !srv 18.05.02 02.04.18
+     &   corpb, aa9, '_b2usc9_'//chns)                                  !srv 18.05.02 02.04.18
 *   ..apply correction
       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
-     & vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                    !IYS 19.12.2017
-      if(guard_flows.eq.2 .or.                                        !srv 06.07.08 {
-     &    (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 06.07.08 {
-*   ..replace the incorrect corner values by the interpolated values  !srv 30.04.08 {
-        iy=-1                                                         !srv 27.06.08 {
+     & vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                      !IYS 19.12.2017
+      if(guard_flows.eq.2 .or.                                          !srv 06.07.08 {
+     &    (is_neutral(isb) .and. use_eirene.ne.0)) then                 !srv 06.07.08 {
+*   ..replace the incorrect corner values by the interpolated values    !srv 30.04.08 {
+        iy=-1                                                           !srv 27.06.08 {
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2 )
      &     nb(ix,iy) = exp(
@@ -190,9 +191,10 @@ cdjm Jan2017 update particle source components for balance
      .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
      &      log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
-        enddo                                                         !srv 27.06.08 }
-      endif                                                           !srv 06.07.08 }
-      if (iout.ne.0) then                                             !srv 12.07.02 {
+        enddo                                                           !srv 27.06.08 }
+      endif                                                             !srv 06.07.08 }
+
+      if (iout.ne.0) then                                               !srv 12.07.02 {
         write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,pb,'b2npc9_pa'//chns)
         call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
@@ -204,7 +206,7 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc9_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc9_fnay'//chns)
-      elseif (iout_b2wdat.eq.4) then                                  !iys 17.04.17
+      elseif (iout_b2wdat.eq.4) then                                    !iys 17.04.17
         write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
         call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)

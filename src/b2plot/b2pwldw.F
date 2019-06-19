@@ -148,7 +148,7 @@ c***  wrd_pk  : radiation at total peak
 c***  wpl_pk  : plasma at total peak
 c***  wnu_pk  : neutrals at total peak
 
-      real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,
+      real (kind=R8) :: h,p,t,u,wo,wwo,eni_hlp(ntrgsx),mion,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
      ,  s(0:NY-1,ntrgsx),xmp_hlp(0:NY-1,ntrgsx),xtrg(0:NY-1,ntrgsx),
      ,  netrg(0:NY-1,ntrgsx),  tetrg(0:NY-1,ntrgsx),
@@ -172,6 +172,7 @@ c***  wnu_pk  : neutrals at total peak
      ,  erntrg(0:NY-1,ntrgsx), spttrg(0:NY-1,ntrgsx),
      ,  sjs(0:NY-1,ntrgsx), sjs_t(ntrgsx),
      ,  sjs_w(0:ntrgsx),sptmass,sptflx(DEF_NLIM+DEF_NSTS)
+c     real (kind=R8) :: zz
 
 c*** Recap of fluxes from eirene
 c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOTIO
@@ -205,7 +206,7 @@ c***  m_hdln    : max. length of the header line
 c***  n_hdpr_c  : number of common quantities
 c***  n_hdpr_t  : number of target quantities
 c***  n_hdpr_a  : number of quantities by atoms
-c***  n_hdpr_u  : number of quantities by molecules
+c***  n_hdpr_ml : number of quantities by molecules
 c***  n_hdpr_s  : number of quantities by species
 c***  n_hdpr_sp : number of quantities for sputtering
 c***  n_hdpr_er : number of quantities for erosion
@@ -224,7 +225,7 @@ c***  sfpr_a    : list of active atoms
 c***  sfpr_m    : list of active materials
 
       integer n_hdpr_c,n_hdpr_t,n_hdpr_s,n_hdpr_a,n_hdpr_sp,n_sfpr_s,
-     ,  m_hdpr,m_hdln,n_hdpr_u,n_hdpr_ml,n_hdpr_er,n_srfs_m
+     ,  m_hdpr,m_hdln,n_hdpr_ml,n_hdpr_er,n_srfs_m
       parameter
      , (n_hdpr_c=10, n_hdpr_t=4, n_hdpr_s=2, n_hdpr_a=4, n_hdpr_sp=2,
      ,  n_hdpr_er=2, m_hdpr=5, n_hdpr_ml=4, n_srfs_m=8,
@@ -814,7 +815,7 @@ c*** Particle fluxes and energies
                 IAS=IND+1
 c!###{
 c                print *,'is,j,i1,i2,k,kk,ib=',is,j,i1,i2,k,kk,ib
-c                zz=0
+c                zz=0.0_R8
 c                print '(3x,12(2x,a8))','phi','fti','tn','wo','wwo',
 c     ,            'fiitrg','eiitrg','faitrg','eaitrg','dab2',
 c     ,            'tab2','s'

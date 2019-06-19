@@ -28,6 +28,7 @@
       use b2mod_ma28_for_11diag                                         !srv 02.04.18
       use b2mod_transport_models
       use b2mod_neutr_src_scaling
+      use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
       use b2mod_anomalous_transport
@@ -870,7 +871,7 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
-       balance_netcdf = 0 ! Default: do not create balance arrays
+       balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
        call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
        call ipgeti ('balance_average',balance_average)
@@ -1119,13 +1120,13 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        if(use_eirene.eq.0) neutral_sources_rescale=1.0_R8
        if(use_eirene.ne.0) then
          if (neutral_sources_rescale.ne.1.0_R8) then
-           write(*,*) 'Adding ',log(neutral_sources_rescale),
-     *         ' to relevant rtlra'
+           write(*,*)
+     *      'Adding ',log(neutral_sources_rescale),' to relevant rtlra'
            do is=0,ns-2
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
      *             log(neutral_sources_rescale)
-                write(*,*) is,zamax(is),rtlra(0,0,is+1)
+                write(*,'(i3,1p,2e15.8)') is,zamax(is),rtlra(0,0,is+1)
              endif
            enddo
          else
@@ -1737,6 +1738,12 @@ c   --> better way doing this is necessary)
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
+      call get_boundary_namelist
+      if (boundary_namelist.ge.1) then
+        call initialize_b2mod_boundary(nx,ny,ns,tim)
+      else
+        call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
+      endif
       call b2stbr_init (nx, ny, ns, BoRiS)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
@@ -2073,25 +2080,25 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         call cpu_time(cpuval)
         elapsedval=epoch_seconds()
         if (b2mndr_cpu.gt.0.0_R8) then
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining CPU time (s) =',
      &            min((ntim-itim)*(cpuval-cpustart),
      &      max(0.0_R8,b2mndr_cpu-(cpuval-cpuinit)))                     !srv 18.05.09
         else if (b2mndr_elapsed.gt.0.0_R8) then
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining elapsed time (s) =',
      &                min((ntim-itim)*(elapsedval-elapsedstart),
      &      max(0.0_R8,b2mndr_elapsed-(elapsedval-elapsedinit)))         !srv 18.05.09
         else if (etim.ne.0.0_R8 .and. etim.gt.stim) then
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining elapsed time (s) =',
      &                 min((ntim-itim)*(elapsedval-elapsedstart),
      &      max(0.0_R8,(etim-tim)/dtim-(elapsedval-elapsedstart)))       !srv 18.05.09
         else
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining elapsed time (s) =',
      &                 (ntim-itim)*(elapsedval-elapsedstart)
@@ -2274,17 +2281,18 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      1 write(*,*) 'stopping because .quit seen'
       if(quitexist_) write(*,*) 'stopping because _quit seen'         !srv 13.04.11
       if(cpuval.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8)
-     1 write(*,'(a,1p,2(e12.5,1x))')
+     1 write(*,'(1x,a,1p,2(e12.5,1x))')
      . 'stopping because cpu > limit: ',cpuval,b2mndr_cpu
-      if(itim.ge.ntim) write(*,'(a,2(i8,1x))')
+      if(itim.ge.ntim) write(*,'(1x,a,2(i8,1x))')
      1 'stopping because itim >= ntim: ',itim,ntim
       if(etim.gt.stim.and.tim.ge.etim.and.etim.ne.0.0_R8)
-     1 write(*,'(a,1p,2(e12.5,1x))')
+     1 write(*,'(1x,a,1p,2(e12.5,1x))')
      . 'stopping because tim >= etim: ',tim,etim
-      if(etim.eq.stim.and.stim.gt.0.0_R8) write(*,'(a,1p,2(e12.5,1x))')
+      if(etim.eq.stim.and.stim.gt.0.0_R8)
+     & write(*,'(1x,a,1p,2(e12.5,1x))')
      1 'stopping because etim = stim: ',etim,stim
       if(elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
-     &   b2mndr_elapsed.gt.0.0_R8) write(*,'(a,1p,2(e12.5,1x))')
+     &   b2mndr_elapsed.gt.0.0_R8) write(*,'(1x,a,1p,2(e12.5,1x))')
      1 'stopping because elapsed CPU time > limit: ',
      .  elapsedval-elapsedinit,b2mndr_elapsed
       if(ierr.ne.0)
@@ -2473,7 +2481,8 @@ c
       real (R8) :: ne_hot_frac
       real (R8) :: rlte, fxte
       real (R8) :: rate_sa, rate_ra, rate_qa, rate_rd, rate_br,
-     * rate_cx,  rate_za, rate_z2, rate_pt, rate_pi
+     *             rate_za, rate_z2, rate_pt, rate_pi
+!!    real (R8) :: rate_cx
       integer ite, ine, ise, ixte
 
       write(*,*) 'dpc_mod_rates: ', te_hot, ne_hot_frac

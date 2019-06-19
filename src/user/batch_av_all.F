@@ -40,7 +40,8 @@
      .                             e_sch(:,:,:)
 
       integer ::  iun, n2, itp, idum(0:2)
-      integer, save :: naver, ntotdt
+      integer, save :: naver
+!     integer, save :: ntotdt
       character lble*120
 
       n2 = (nx+2)*(ny+2)
@@ -195,7 +196,7 @@ ctb..as the mean of the product does not equal the product of the means etc.
 
       idum(0) = naver
       call cfwuin (iun, 1, idum, 'naver')
-      idum(0) = ntotdt
+!     idum(0) = ntotdt
 !     call cfwuin (iun, 1, idum, 'ntotdt')
       
       call cfwure (iun, n2*ns, na_mean, 'na_mean')

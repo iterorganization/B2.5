@@ -62,14 +62,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ixl, iyl, ixr, iyr, ixb, iyb, ixt, iyt
+      integer ncall, ix, iy, ixl, iyl, ixr, iyr, ixb, iyb, ixt, iyt
       integer ireg
       integer, save :: iout = 0                                          !srv 13.10.06
       real (kind=R8) ::
      *   aaf(-1:nx,-1:ny,-2:2), aa7(-1:nx,-1:ny,-3:3)
       save ncall
 *   ..procedures
-      intrinsic abs
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux5p
 *   ..initialization
@@ -85,8 +84,6 @@
       if (ncall.eq.0) then                                               !srv 06.07.06 {
        call ipgeti ('b2uxm11_iout', iout)                                 !srv 13.10.06
       endif                                                              !srv 06.07.06 }
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test itcnt

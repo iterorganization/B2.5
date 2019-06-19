@@ -62,8 +62,21 @@ C
       allocate(flxspci(nplsd,nstrad))
       allocate(srccrfc(natmd,nstrad))
 
+      call init_b2mod_eirbra
+
       return
       end subroutine alloc_b2mod_eirbra
+
+      subroutine init_b2mod_eirbra
+      implicit none
+
+      volsumn  = 0.0_R8
+      volsumm  = 0.0_R8
+      volsumei = 0.0_R8
+      volsumee = 0.0_R8
+
+      return
+      end subroutine init_b2mod_eirbra
 
       subroutine dealloc_b2mod_eirbra
       implicit none

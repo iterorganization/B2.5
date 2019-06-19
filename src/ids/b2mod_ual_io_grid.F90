@@ -22,18 +22,23 @@ module b2mod_ual_io_grid
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
     use b2mod_constants , B2_PI => PI
 #ifdef IMAS
-    use ids_schemas         ! IGNORE
-    use ids_routines        ! IGNORE
-    use ids_types           ! IGNORE
-    !! IMAS constants definitions (coordinate types identifiers, grid subset
-    !! identifiers ...)
-    use ids_grid_common     ! IGNORE
-    use ids_string          ! IGNORE
-    use ids_grid_subgrid    ! IGNORE
-    use ids_grid_structured ! IGNORE
-    use ids_grid_objectlist ! IGNORE
-    use ids_assert          ! IGNORE
-    use ids_grid_object     ! IGNORE
+    use ids_string        & ! IGNORE
+     & , only : idsInt2str
+    use ids_grid_subgrid  & ! IGNORE
+     & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
+     &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
+     &          CreateExplicitObjectListSingleSpace
+    use ids_grid_object   & ! IGNORE
+     & , only : ids_generic_grid_aos3_root, IDS_real, &
+     &          ids_generic_grid_dynamic_grid_subset, &
+     &          GRID_SUBSET_NODES, GRID_SUBSET_FACES, &
+     &          GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_X_POINTS, &
+     &          GRID_SUBSET_Y_ALIGNED_FACES, GRID_SUBSET_CELLS, &
+     &          GridObject
+    use ids_grid_structured & ! IGNORE
+     & , only : GridWriteData, GridSetupStruct1dSpace
+    use ids_grid_common   & ! IGNORE
+     & , only : COORDTYPE_R, COORDTYPE_Z, COORDTYPE_PHI
 #else
 # ifdef ITM
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
@@ -57,6 +62,7 @@ module b2mod_ual_io_grid
 
     use b2mod_grid_mapping
     use b2mod_indirect
+    use b2mod_b2cmfs
 
     implicit none
 
@@ -68,7 +74,7 @@ module b2mod_ual_io_grid
     integer, parameter :: SPACE_TOROIDALANGLE = 2   !< Space indice
                                                     !< (toroidal angle)
     integer, parameter :: SPACE_COUNT = SPACE_POLOIDALPLANE !< Space count
-        !< setup:
+        !< set up:
         !< SPACE_COUNT = SPACE_POLOIDALPLANE: do only the poloidal plane space;
         !< SPACE_COUNT = SPACE_TOROIDALANGLE: will do the full 3d grid with two
         !< spaces
@@ -109,7 +115,7 @@ module b2mod_ual_io_grid
     !!      Class 2 - edges/faces (1D objects)
     !!      Class 2 - 2D cells (2D objects)
     !! Fortran90 does not allow initialization of constants using SUM. This is
-    !! permitted in newer Fortran 2003. Current workaraund is to directly
+    !! permitted in newer Fortran 2003. Current workaround is to directly
     !! specify the primary IDS class constants
 
     ! integer, parameter :: IDS_CLASS_NODE = sum(CLASS_NODE) + 1
@@ -199,7 +205,7 @@ contains
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
         type(ids_generic_grid_dynamic), intent(out) :: ggd_grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -253,7 +259,8 @@ contains
         !! Internal variables
         integer, parameter :: NDIM = 2  !< Dimension of the space
 
-        call assert( present( gs ) .EQV. present( qc ) )
+        call xertst( present( gs ) .EQV. present( qc ) , &
+            "Assert error ( gz or qc missing ) in b2_IMAS_Fill_Grid_Desc" )
 
         !! Set GGD grid geometry
         call fill_In_Grid_Desc()
@@ -275,6 +282,15 @@ contains
         integer :: j    !< Iterator
         integer :: dir
         integer :: nfc  !< Number of all faces/edges (x + y aligned)
+        integer :: geometryType  !< Geometry identifier index
+
+        geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
+
+        allocate( ggd_grid%identifier%name(1) )
+        ggd_grid%identifier%name = geometryName(geometryType)
+        ggd_grid%identifier%index = geometryType
+        allocate( ggd_grid%identifier%description(1) )
+        ggd_grid%identifier%description = geometryDescription(geometryType)
 
         allocate( ggd_grid%space( SPACE_COUNT ) )
 
@@ -323,19 +339,19 @@ contains
             !! /marconi_work/eufus_gw/work/g2penkod/imasdb/solps-iter/3/0
             !! or
             !! /marconi_work/eufus_gw/work/g2kosl/imasdb/solps-iter/3/0
-            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%     &
-                &   object( ivx )%geometry(1) = crx(    gmap%mapVxix( ivx ),    &
-                                                    &   gmap%mapVxiy( ivx ),    &
-                                                    &   gmap%mapVxIVx( ivx ))
-            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%     &
-                &   object( ivx )%geometry(2) = cry(    gmap%mapVxix( ivx ),    &
-                                                    &   gmap%mapVxiy( ivx ),    &
-                                                    &   gmap%mapVxIVx( ivx ))
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%   &
+                &   object( ivx )%geometry(1) = crx(  gmap%mapVxix( ivx ),    &
+                                                    & gmap%mapVxiy( ivx ),    &
+                                                    & gmap%mapVxIVx( ivx ))
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%   &
+                &   object( ivx )%geometry(2) = cry(  gmap%mapVxix( ivx ),    &
+                                                    & gmap%mapVxiy( ivx ),    &
+                                                    & gmap%mapVxIVx( ivx ))
 
             !! Set additional node index (REQUIRED!)
             allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
                 &   objects_per_dimension(1)%object( ivx )%nodes(1))
-            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%     &
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%   &
                 &   object( ivx )%nodes(1) = ivx
         end do
 
@@ -723,7 +739,7 @@ contains
 
     !> Set connectivity array for cells by defining nodes that form each cell
     subroutine set_Cells_Conn_Array_Nodes(ggd_grid)
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
         type(ids_generic_grid_dynamic), intent(inout) :: ggd_grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
@@ -846,7 +862,7 @@ contains
         integer, dimension(:,:), allocatable :: indexList2d
         integer :: i    !< Iterator
 
-        geoId = geometryId(nnreg, periodic_bc, topcut)
+        geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
 
         !! Figure out total number of grid subsets
         !! Do generic grid subsets + grid subsets
@@ -996,7 +1012,7 @@ contains
 
         deallocate(indexList2d)
         !! Add midplane node grid subsets
-        !! Find the core boundary grid subset by looking for its name as 
+        !! Find the core boundary grid subset by looking for its name as
         !! defined in b2mod_connectivity
         iCoreGS = findGridSubsetByName(ggd_grid, "Core boundary")
         !! For double null, we need the outer half of the core boundary
@@ -1059,7 +1075,9 @@ contains
             &   //idsInt2str(GSubsetCount)//" grid subsets (expected was "  &
             &   //idsInt2str(size(ggd_grid%grid_subset))//")" )
 
-        call assert( GSubsetCount == size(ggd_grid%grid_subset) )
+        call xertst( GSubsetCount == size(ggd_grid%grid_subset), &
+            &  "Assert error (grid subset count) in fill_In_GridSubset_Desc" )
+
     end subroutine fill_In_GridSubset_Desc
 
     end subroutine b2_IMAS_Fill_Grid_Desc
@@ -1169,7 +1187,8 @@ contains
     ! internal
     integer, parameter :: NDIM = 2
 
-    call assert( present(gs) .EQV. present(qc) )
+    call xertst( present( gs ) .EQV. present( qc ) , &
+        "Assert error ( gz or qc missing ) in b2ITMFillGridDescription" )
 
     call fill_In_Grid_Desc()
     call fillInSubGridDescription()
@@ -1406,7 +1425,7 @@ contains
       integer :: cls(SPACE_COUNT_MAX)
       integer, allocatable :: xpoints(:,:)
 
-      geoId = geometryId(nnreg, periodic_bc, topcut)
+      geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
 
       !! Figure out total number of subgrids
       !! Do generic subgrids + subgrids
@@ -1523,7 +1542,9 @@ contains
       call logmsg( LOGDEBUG, "b2ITMFillGridDescription: wrote total of "&
           &//int2str(subgridCount)//" subgrids (expected was "//int2str(size(itmgrid%subgrids))//")" )
 
-      call assert( subgridCount == size(itmgrid%subgrids) )
+      call xertst( subgridCount == size(itmgrid%subgrids), &
+       &  "Assert error (subgrid count) in fillInSubGridDescription" )
+
     end subroutine fillInSubGridDescription
 
   end subroutine b2ITMFillGridDescription
@@ -1553,9 +1574,12 @@ contains
     do iObj = 1, gridSubGridSize(coreBndSubgrid)
         obj = subGridGetObject(coreBndSubgrid, iObj)
         !! Expect a face
-        call assert( all(obj%cls(1:SPACE_COUNT) == CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT)) )
+        call xertst( all(obj%cls(1:SPACE_COUNT) == CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT)), &
+        &   "Assert error 1 (face test) in find_Midplane_Cells" )
+
         !! ...which is aligned along the x-direction
-        call assert( gmap % mapFcIFace(obj%ind(SPACE_POLOIDALPLANE)) == BOTTOM )
+        call xertst( gmap % mapFcIFace(obj%ind(SPACE_POLOIDALPLANE)) == BOTTOM, &
+        &   "Assert error 2 (bottom face) in find_Midplane_Cells" )
         ix = gmap % mapFcix( obj%ind(SPACE_POLOIDALPLANE) )
         iy = gmap % mapFciy( obj%ind(SPACE_POLOIDALPLANE) )
 
@@ -1665,7 +1689,8 @@ contains
             iy = niy
         end do
 
-        call assert( iVx == nVx )
+        call xertst( iVx == nVx , &
+        &   "Assert error (vertex count) in collectRadialVertexIndexList" )
 
     end function collectRadialVertexIndexList
 
@@ -1755,7 +1780,8 @@ contains
             iy = niy
         end do
 
-        call assert( iVx == nVx )
+        call xertst( iVx == nVx , &
+        &   "Assert error (vertex count) in collectRadialVertexIndexListSubroutine" )
 
     end subroutine collectRadialVertexIndexListSubroutine
 
@@ -1824,7 +1850,8 @@ contains
 
                     if ( ind /= B2_GRID_UNDEFINED ) then
                         iInd = iInd + 1
-                        call assert(iInd <= nInd)
+                        call xertst(iInd <= nInd, &
+                        &   "Assert error 1 (index) in collectIndexListForRegion" )
                         indexList( iInd, SPACE_POLOIDALPLANE ) = ind
                     end if
                 end if
@@ -1832,7 +1859,8 @@ contains
             end do
         end do
 
-        call assert( iInd == nInd )
+        call xertst( iInd == nInd, &
+        &   "Assert error 2 (index) in collectIndexListForRegion" )
 
     end function collectIndexListForRegion
 
@@ -1908,7 +1936,8 @@ contains
 
                     if ( ind /= B2_GRID_UNDEFINED ) then
                         iInd = iInd + 1
-                        call assert(iInd <= nInd)
+                        call xertst(iInd <= nInd, &
+                        &   "Assert error 1 (index) in collectIndexListForRegionSubroutine" )
                         indexList( iInd, SPACE_POLOIDALPLANE ) = ind
                     end if
                 end if
@@ -1916,7 +1945,8 @@ contains
             end do
         end do
 
-        call assert( iInd == nInd )
+        call xertst( iInd == nInd, &
+        &   "Assert error 2 (index) in collectIndexListForRegionSubroutine" )
 
     end subroutine collectIndexListForRegionSubroutine
 

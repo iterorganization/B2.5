@@ -68,18 +68,20 @@
 
 #     include <DIMENSIONS.F>
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, js, fix_recomb_energy, k
+      integer ncall, styl0, n2, ix, iy, is, js, ireg
+!     integer k
+      integer, save :: fix_recomb_energy
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,         !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
-      character chns*3, chk*1                                     !srv 30.06.08
+      character chns*3
+!     character chk*1                                             !srv 30.06.08
       real (kind=R8) ::
      *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
-      save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
-     *  fix_recomb_energy
+      save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       real (kind=R8) ::
      *  rf0, t0, t1
       real (kind=R8) :: wrk0(-1:nx,-1:ny)

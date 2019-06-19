@@ -42,10 +42,16 @@ FC       = ifort
 endif
 endif
 
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
+
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
 else
 FCOPTS   = -O2 -fPIC -assume no2underscore -xavx -fp-model precise
+endif
+
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+LDOPTS  += -i_dynamic
 endif
 
 DBLFC    = ${FC}
@@ -74,12 +80,15 @@ LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 ifdef IMAS_VERSION
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
+IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifndef SOLPS_CPP
-EQUIVS    += -DIMAS
+EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION}
 endif
-LD_UAL    ?= `pkg-config imas-ifort ggd --libs` -lxml2
-INCMODS   += `pkg-config imas-ifort ggd --cflags` 
-IMASLIBS   = ${LD_UAL} -lstdc++
+LD_UAL  ?= `pkg-config imas-ifort ggd --libs` -lxml2
+INCMODS += `pkg-config imas-ifort ggd --cflags` 
+IMASLIBS = ${LD_UAL} -lstdc++
 else
 ifdef ITM_ENVIRONMENT_LOADED
 INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
@@ -91,9 +100,7 @@ ifdef LD_CATALYST
 CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
-
 LD       = ${FC}
-LDOPTS   = 
 
 LCPP     = ${LD_SONNET}
 

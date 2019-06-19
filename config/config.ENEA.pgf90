@@ -13,6 +13,9 @@ ifndef LD_NETCDF
 endif
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DGOT_AMNSPROTO
+ifndef SOLPS_CPP
+EQUIVS += -DPGF90
+endif
 
 AMNS = ${shell echo ~amnsdata/public/library/4.09a/lib/pgi}
 MODINCLUDE += -I${AMNS} -I${UAL}/fortraninterface/amd64_pgi
@@ -25,13 +28,19 @@ LINK_MOD =
 FC = pgf90
 ifdef SOLPS_DEBUG
 FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
+LDOPTS = -g -C
 else
 FCOPTS = -O2 -Mbackslash
 FCOPTS = -fast -Mbackslash
 FCOPTS = -fast -Mvect=nofuse -Mbackslash
+LDOPTS =
 endif
 
 ifdef IMAS_VERSION
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
+IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
+EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION}
 LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
 INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
 IMASLIBS = ${LD_UAL} -lggd-pgi
@@ -59,11 +68,6 @@ CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 LD = pgf90
-ifdef SOLPS_DEBUG
-LDOPTS = -g -C
-else
-LDOPTS =
-endif
 
 #!!!Local Variables:
 #!!! mode: Makefile

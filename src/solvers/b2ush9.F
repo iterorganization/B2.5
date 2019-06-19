@@ -44,7 +44,7 @@
 !                 |     |     |                     |     |     |
 !                 |     |     |                     |     |     |
 !                -4____-3____-2                    -6_____|____-5
-
+!
 !                (ix-1,iy+1)______(ix,iy+1)____(ix+1,iy+1)
 !                     |              |              |
 !                     |              |              |
@@ -59,9 +59,9 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
-      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
-      integer, save :: iadd_9 = 1                                      !srv 02.01.07
+      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
+      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
+      integer, save :: iadd_9 = 1                                     !srv 02.01.07
       integer ireg, ileft, ibot
       save ncall
       real (kind=R8) ::
@@ -141,7 +141,7 @@
         new_matrix = new_matrix.or.
      &   solveet(ireg).neqv.last_solve_9(ireg)
       end do
-      if (new_matrix) call restart_ma28_for_9
+      if (new_matrix.or.ncall.eq.0) call restart_ma28_for_9
 * ..total heat correction equation
 *   ..compute flo0x, con0x
       do iy = -1, ny
@@ -357,6 +357,7 @@
         else                                                          !srv 26.11.02 }
          t0 =  flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                   !srv 02.01.07
          t1 = -flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                   !srv 02.01.07
+         ileft = region(leftix(ix,iy),leftiy(ix,iy),0)                !srv 25.02.19
          if (solveee(ileft))
      >    aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0
          if (solveee(ireg))
@@ -527,9 +528,9 @@
       call b2ux9p (nx, ny, aa9, itcnt, reshi, corti, 'b2ush9_Ti')
       last_solve_9(0:nnreg(0)) = solveei(0:nnreg(0))
       do iy = -1, ny
-       do ix = -1, nx
-        corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
-       enddo
+        do ix = -1, nx
+          corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
+        enddo
       enddo
 
 *   ..return

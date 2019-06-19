@@ -608,11 +608,11 @@ C
         if (jvft44 .ge. 20130210) then
           call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
 #ifndef HPUX
-          write(6,*) 'In this fort.44 version,',
-     .               ' the eneutrad data is summed over species!'
+          write(6,'(2a)') 'In this fort.44 version,',
+     .                    ' the eneutrad data is summed over species!'
 #else
-          write(6,*) 'In this ftn44 version,',
-     .               ' the eneutrad data is summed over species!'
+          write(6,'(2a)') 'In this ftn44 version,',
+     .                    ' the eneutrad data is summed over species!'
 #endif
           do is = 2, natmi
             eneutrad(:,:,is,0) = 0.0_R8
@@ -1104,11 +1104,11 @@ cank
      &        streql(eirene_format,'facelift')) then
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
 #ifndef HPUX
-            write(6,*) 'In this fort.44 version,',
-     .                 ' the eneutrad data is summed over species!'
+            write(6,'(2a)') 'In this fort.44 version,',
+     .                      ' the eneutrad data is summed over species!'
 #else
-            write(6,*) 'In this ftn44 version,',
-     .                 ' the eneutrad data is summed over species!'
+            write(6,'(2a)') 'In this ftn44 version,',
+     .                      ' the eneutrad data is summed over species!'
 #endif
             do is = 2, natmi
               eneutrad(:,:,is,0) = 0.0_R8
@@ -1461,11 +1461,11 @@ cank
           if (jvft44.ge.20130210) then
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
 #ifndef HPUX
-            write(6,*) 'In this fort.44 version,',
-     .                 ' the eneutrad data is summed over species!'
+            write(6,'(2a)') 'In this fort.44 version,',
+     .                      ' the eneutrad data is summed over species!'
 #else
-            write(6,*) 'In this ftn44 version,',
-     .                 ' the eneutrad data is summed over species!'
+            write(6,'(2a)') 'In this ftn44 version,',
+     .                      ' the eneutrad data is summed over species!'
 #endif
             do is = 2, natmi
               eneutrad(:,:,is,0) = 0.0_R8

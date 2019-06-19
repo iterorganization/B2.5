@@ -1295,7 +1295,7 @@ cxpb Also need to consider alloy contributions
 
 
 c  Subroutine to find the surface temperature of a plasma facing
-c  surface assuming a 1-D. steady state, heat diffusion with a
+c  surface assuming a 1-D steady state, heat diffusion with a
 c  thermal conductivity that varies with temperature as
 c   K(T) = 1/(KA * T + KB)
 
@@ -1645,17 +1645,19 @@ c     write(*,*)'delta = ',delta
         saeff = saeff + wi * sa
         sl = d(layer_nzconstituents(ibnd,i)) * z1p *
      .   ( aa/zz ) ** 1.5_R8 * sa / sqrt(a1)
-        if ( z2 - 12.9_R8 ) 10 , 10 , 20
-   10   fi0 = 12.0_R8 + 7.0_R8 / z2
-        go to 30
-   20   fi0 = 9.76_R8 + 58.5_R8 / z2 ** 1.19_R8
+        if ( z2 .le. 12.9_R8) then
+          fi0 = 12.0_R8 + 7.0_R8 / z2
+        else
+          fi0 = 9.76_R8 + 58.5_R8 / z2 ** 1.19_R8
+        end if
    30   tau = eps * z2 ** 2.0_R8 * w / a1 / 3.03055e7_R8
         beta2 = tau * ( tau + 2.0_R8 ) / ( tau + 1.0_R8 ) ** 2
         epsb = 1.022e6_R8 * beta2 / z2 / fi0
-        if ( z1 - 2.9_R8 ) 40,40,50
-   40   ch = 100.0_R8 * z1 / z2
-        go to 60
-   50   ch = 5.0_R8
+        if ( z1 .le. 2.9_R8) then
+          ch = 100.0_R8 * z1 / z2
+        else
+          ch = 5.0_R8
+        endif
    60   sb = 61.474_R8 / fmu * w *
      .   ( log ( epsb/(1.0_R8-beta2) + 1.0_R8 + ch/epsb ) - beta2 )
      .   / fi0 / epsb
@@ -1782,30 +1784,32 @@ c  gamma( 0 , x ) = - eibar( - x )      for x < 0
      .  9.5733223454_R8 /
       data conver / 1.0e-7_R8 /
       z = dble(x)
-      if (x-1.0_R8) 10,40,40
-   10 p = 0.57721566490153_R8
-      if (x) 12,30,15
-   12 if ( x + 83.5_R8 ) 13,15,15
-   13 expint = - 1.0e38_R8
-      return
-   15 p = p + log(abs(z))
-      f = 1.0_R8
-      t = - z
-   20 q = t + p
-      if ( abs(p-q) - conver ) 30,30,22
-   22 p = q
-      t = - z * f * t
-      f = f + 1.0_R8
-      t = t / f ** 2
-      go to 20
-   30 expint = - p
-      return
-   40 if ( x - 84.0_R8 ) 43,43,41
-   41 expint = 1.0e-38_R8
-      return
-   43 p = (((( z + a(4) ) * z + a(3)) * z + a(2)) * z + a(1) ) /
-     .  (((( z + b(4) ) * z + b(3)) * z + b(2)) * z + b(1) )
-      expint = exp ( -z ) * p / z
+      if (x .lt. 1.0_R8) then
+        p = 0.57721566490153_R8
+        if (x .lt. -83.5_R8) then
+          expint = - 1.0e38_R8
+        else if (x .eq. 0.0_R8) then
+          expint = - p
+        else
+          p = p + log(abs(z))
+          f = 1.0_R8
+          t = - z
+   20     q = t + p
+          if ( abs(p-q) - conver ) 30,30,22
+   22     p = q
+          t = - z * f * t
+          f = f + 1.0_R8
+          t = t / f ** 2
+          go to 20
+   30     expint = - p
+        end if
+      elseif (x .gt. 84.0_R8) then
+        expint = 1.0e-38_R8
+      else
+        p = (((( z + a(4) ) * z + a(3)) * z + a(2)) * z + a(1) ) /
+     .      (((( z + b(4) ) * z + b(3)) * z + b(2)) * z + b(1) )
+        expint = exp ( -z ) * p / z
+      end if
       return
       end function expint
 

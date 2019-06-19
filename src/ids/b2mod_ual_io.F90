@@ -28,32 +28,28 @@ module b2mod_ual_io
     use b2mod_anomalous_transport
     use b2mod_indirect
     use b2mod_interp
-
-    !! B2/CPO Mapping
-    use b2mod_ual_io_data
-    use b2mod_ual_io_grid
+    use b2mod_b2cmrc
+    use b2mod_version
+    use b2mod_grid_mapping
 
     use logging
 
     !! UAL Access
 #ifdef IMAS
-    use ids_schemas  ! IGNORE
-    use ids_routines ! IGNORE
-#ifdef GGD_OLD
-    use ids_grid_examples  ! IGNORE
-#else
-    use ids_utility  ! IGNORE
+    !! B2/CPO Mapping
+    use b2mod_ual_io_data &
+     & , only : b2_IMAS_Transform_Data_B2_To_IDS, &
+     &          b2_IMAS_Transform_Data_B2_To_IDS_Vertex
+    use b2mod_ual_io_grid &
+     & , only : findGridSubsetByName, GridWriteData, &
+     &          b2_IMAS_Fill_Grid_Desc
+#if IMAS_MINOR_VERSION > 14
+    use ids_utility        ! IGNORE
 #endif
     use ids_grid_common , &     ! IGNORE
         &   IDS_COORDTYPE_R => COORDTYPE_R,    &
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,    &
         &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
-    use ids_string              ! IGNORE
-    use ids_grid_subgrid        ! IGNORE
-    use ids_grid_objectlist     ! IGNORE
-    use ids_grid_unstructured   ! IGNORE
-    use ids_grid_structured     ! IGNORE
-    use ids_grid_data           ! IGNORE
 #else
 #ifdef ITM
     use euITM_schemas   ! IGNORE
@@ -64,9 +60,9 @@ module b2mod_ual_io
 
   implicit none
 
-  logical, parameter, private :: INCLUDE_GHOST_CELLS = .false.
-
 #ifdef IMAS
+
+  logical, parameter, private :: INCLUDE_GHOST_CELLS = .false.
 
 contains
 
@@ -80,6 +76,7 @@ contains
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
     subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+            &   time_IN, &
             &   time_step_IN, time_slice_ind_IN, num_time_slices_IN )
 #       include <git_version_B25.h>
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
@@ -93,23 +90,31 @@ contains
             !< data on edge plasma transport. Energy terms correspond to the
             !< full kinetic energy equation (i.e. the energy flux takes into
             !< account the energy transported by the particle flux)
+        real(IDS_real), intent(in), optional :: time_IN !< Time 
         real(IDS_real), intent(in), optional :: time_step_IN !< Time step
         integer, intent(in), optional :: time_slice_ind_IN
             !< Time step index for the current time slice
         integer, intent(in), optional :: num_time_slices_IN
-            !< Total number of time steps. it is required to beforehand allocate
+            !< Total number of time steps. It is required to beforehand allocate
             !< required ggd(:) array of nodes structure and for additional
             !< checks for correct use of the routine.
 
         !! Internal variables
+        character(len=24) :: ion_label !< Ion species label (e.g. D+1)
+        character(len=12) :: ion_charge !< Ion charge (e.g. '1', '2', etc.)
+        integer :: ion_charge_int !< Ion charge (e.g. 1, 2, etc.)
+        integer :: ion_label_tlen !< Length of the (trimmed) ion label
         integer :: ns   !< Total number of ion species
         integer :: nx   !< Specifies the number of interior cells
                         !< along the first coordinate
         integer :: ny   !< Specifies the number of interior cells
                         !< along the second coordinate
-        integer :: is   !< Ion specie index (iterator)
+        integer :: is   !< Species index (iterator)
         integer :: i    !< Iterator
         integer :: j    !< Iterator
+        integer :: k    !< Iterator
+        integer :: o    !< Dummy integer
+        integer :: p    !< Dummy integer
         integer :: iGsCoreBoundary  !< Variable to hold Core grid subset base
             !< index, later found by findGridSubsetByName() routine.
         integer :: iGsInnerMidplane !< Variable to hold Inner Midplane grid
@@ -142,8 +147,41 @@ contains
         type(ids_generic_grid_dynamic_grid_subset) :: gs_face
         type(ids_generic_grid_dynamic_grid_subset) :: gs_bnd_core
 
+        integer, save :: use_eirene = 0
+        character*8 date
+        character*10 ctime
+        character*5 zone
+        integer tvalues(8)
+        character*16 usrnam
+        character*8 imas_version, ual_version
+        logical match_found, streql
+#ifdef USE_PXFGETENV
+        integer lenval, ierror
+#else
+#ifdef NAGFOR
+        integer lenval, ierror
+#endif
+#endif
+        external usrnam, streql
+
         !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
+        call ipgeti('b2mndr_eirene', use_eirene)
+        call date_and_time (date, ctime, zone, tvalues)
+#ifdef NAGFOR
+        call get_environment_variable('IMAS_VERSION',status=ierror, length=lenval)
+        if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
+        call get_environment_variable('UAL_VERSION',status=ierror, length=lenval)
+        if (ierror.eq.0) call get_environment_variable('UAL_VERSION',value=ual_version)
+#else
+#ifdef USE_PXFGETENV
+        CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
+        CALL PXFGETENV ('UAL_VERSION', 0, ual_version, lenval, ierror)
+#else
+        call getenv ('IMAS_VERSION', imas_version)
+        call getenv ('UAL_VERSION', ual_version)
+#endif
+#endif
 
         !! Preparing database for writing
         !! Through practice it was disclosed that there are some mandatory
@@ -152,12 +190,45 @@ contains
         !! process of writing to IDS are to be expected.
         !! This can be done using setIDSFundamentals routine
         homogeneous_time = 1
-        time = 0.0_IDS_real
-#ifdef GGD_OLD
-        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time )
-#else
-        call setIDSFundamentals( edge_profiles, homogeneous_time, time )
-#endif
+        if ( present( time_IN ) ) then
+            time = time_IN
+        else
+            time = 0.0_IDS_real
+        end if
+
+        !! Set default time step values
+        time_sind = 1
+        time_slice_value = 0.0_IDS_real
+        time_step = IDS_GRID_UNDEFINED
+        num_time_slices = 1
+        !! If present, set time step values
+        if( present( time_step_IN ) ) time_step = time_step_IN
+        if( present( time_slice_ind_IN ) ) then
+            time_sind = time_slice_ind_IN
+        !! Get time slice value
+            time_slice_value = time_sind * time_step
+        else
+            time_slice_value = time
+        end if
+        if( present( num_time_slices_IN ) ) num_time_slices = num_time_slices_IN
+        !! Check if num_time_slices >= time_sind
+        call xertst( num_time_slices .ge. time_sind, &
+            & "B25_process_ids: Time step index cannot be greater " // &
+            & "than total number of time steps!" )
+
+        !! Preparing edge_profiles IDS for writing
+        !! In order to write to IDS database there are next steps that are
+        !! mandatory to do, otherwise there is high change that writing to IDS
+        !! database will fail
+        !! 1. Set homogeneous_time to 0 or 1
+        edge_profiles%ids_properties%homogeneous_time = homogeneous_time
+        allocate( edge_profiles%ids_properties%comment(1) )
+        edge_profiles%ids_properties%comment(1) = "Done by b2_ual_write_b2mod"
+        !! 2. Allocate edge_profiles.time and set it to desired values
+        allocate( edge_profiles%time(num_time_slices) )
+        do i = 1, num_time_slices
+          edge_profiles%time(i) = time - (num_time_slices-i) * time_step
+        end do
 
         !! Preparing edge_transport IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -167,9 +238,11 @@ contains
         edge_transport%ids_properties%homogeneous_time = homogeneous_time
         allocate( edge_transport%ids_properties%comment(1) )
         edge_transport%ids_properties%comment(1) = "Done by b2_ual_write_b2mod"
-        !! 2. Allocate edge_transport.time and set it to desired value
-        allocate( edge_transport%time(1) )
-        edge_transport%time(1) = time
+        !! 2. Allocate edge_transport.time and set it to desired values
+        allocate( edge_transport%time(num_time_slices) )
+        do i = 1, num_time_slices
+          edge_transport%time(i) = time - (num_time_slices-i) * time_step
+        end do
 
         !! Preparing edge_sources IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -179,29 +252,19 @@ contains
         edge_sources%ids_properties%homogeneous_time = homogeneous_time
         allocate( edge_sources%ids_properties%comment(1) )
         edge_sources%ids_properties%comment(1) = "Done by b2_ual_write_b2mod"
-        !! 2. Allocate edge_sources.time and set it to desired value
-        allocate( edge_sources%time(1) )
-        edge_sources%time(1) = time
+        !! 2. Allocate edge_sources.time and set it to desired values
+        allocate( edge_sources%time(num_time_slices) )
+        do i = 1, num_time_slices
+          edge_sources%time(i) = time - (num_time_slices-i) * time_step
+        end do
 
-        !! Set default time step values
-        time_sind = 1
-        time_slice_value = 0.0_IDS_real
-        time_step = IDS_GRID_UNDEFINED
-        num_time_slices = 1
-        !! If present, set time step values
-        if( present( time_step_IN ) ) then
-            time_step = time_step_IN
-        else if( present( time_slice_ind_IN ) ) then
-            time_sind = time_slice_ind_IN
-        else if( present( num_time_slices_IN ) ) then
-            num_time_slices = num_time_slices_IN
-        end if
-        !! Check if num_time_slices >= time_sind
-        call xertst( num_time_slices .ge. time_sind, &
-            & "B25_process_ids: Time step index cannot be greater " // &
-            & "than total number of time steps!" )
-        !! Get time slice value
-        time_slice_value = time_sind * time_step
+        write(*,*) "Running b2CreateMap subroutine"
+        !! Set up the B2<->IDS mappings
+        call b2CreateMap( nx, ny, crx( -1:nx, -1:ny, : ),             &
+            &   cry( -1:nx, -1:ny, : ), cflags, leftix, leftiy,       &
+            &   rightix, rightiy, topix, topiy, bottomix,bottomiy,    &
+            &   INCLUDE_GHOST_CELLS, gmap )
+        mapInitialized = .true.
 
         !! To be done only on the run of the first time step. If already
         !! allocated structure is allocated again it deletes all previously
@@ -213,7 +276,7 @@ contains
             !! Allocate ggd for number of different time steps
             time_sind = 1
             allocate( edge_profiles%ggd( num_time_slices ) )
-#ifndef GGD_OLD
+#if IMAS_MINOR_VERSION > 14
             allocate( edge_profiles%grid_ggd( time_sind ) )
             allocate( edge_transport%grid_ggd( time_sind ) )
             allocate( edge_sources%grid_ggd( time_sind ) )
@@ -241,15 +304,110 @@ contains
             edge_sources%code%name = "B2.5"
 # endif
             allocate( edge_profiles%code%version(1) )
-            edge_profiles%code%version = git_version_B25
+            edge_profiles%code%version = newversion
             allocate( edge_transport%code%version(1) )
-            edge_transport%code%version = git_version_B25
+            edge_transport%code%version = newversion
             allocate( edge_sources%code%version(1) )
-            edge_sources%code%version = git_version_B25
+            edge_sources%code%version = newversion
+
+            allocate( edge_profiles%code%commit(1) )
+            edge_profiles%code%commit = git_version_B25
+            allocate( edge_transport%code%commit(1) )
+            edge_transport%code%commit = git_version_B25
+            allocate( edge_sources%code%commit(1) )
+            edge_sources%code%commit = git_version_B25
+
+            allocate( edge_profiles%code%repository(1) )
+            edge_profiles%code%repository = "git.iter.org"
+            allocate( edge_transport%code%repository(1) )
+            edge_transport%code%repository = "git.iter.org"
+            allocate( edge_sources%code%repository(1) )
+            edge_sources%code%repository = "git.iter.org"
+
+            allocate( edge_profiles%ids_properties%provider(1) )
+            edge_profiles%ids_properties%provider = usrnam()
+            allocate( edge_transport%ids_properties%provider(1) )
+            edge_transport%ids_properties%provider = usrnam()
+            allocate( edge_sources%ids_properties%provider(1) )
+            edge_sources%ids_properties%provider = usrnam()
+
+            allocate( edge_profiles%ids_properties%creation_date(1) )
+            edge_profiles%ids_properties%creation_date = &
+                &   date//' '//ctime//' '//' '//zone
+            allocate( edge_transport%ids_properties%creation_date(1) )
+            edge_transport%ids_properties%creation_date = &
+                &   date//' '//ctime//' '//' '//zone
+            allocate( edge_sources%ids_properties%creation_date(1) )
+            edge_sources%ids_properties%creation_date = &
+                &   date//' '//ctime//' '//' '//zone
+
+#if IMAS_MINOR_VERSION > 21
+            allocate( edge_profiles%ids_properties%version_put%data_dictionary(1) )
+            edge_profiles%ids_properties%version_put%data_dictionary = imas_version
+            allocate( edge_transport%ids_properties%version_put%data_dictionary(1) )
+            edge_transport%ids_properties%version_put%data_dictionary = imas_version
+            allocate( edge_sources%ids_properties%version_put%data_dictionary(1) )
+            edge_sources%ids_properties%version_put%data_dictionary = imas_version
+
+            allocate( edge_profiles%ids_properties%version_put%access_layer(1) )
+            edge_profiles%ids_properties%version_put%access_layer = ual_version
+            allocate( edge_transport%ids_properties%version_put%access_layer(1) )
+            edge_transport%ids_properties%version_put%access_layer = ual_version
+            allocate( edge_sources%ids_properties%version_put%access_layer(1) )
+            edge_sources%ids_properties%version_put%access_layer = ual_version
+
+            allocate( edge_profiles%ids_properties%version_put%access_layer_language(1) )
+            edge_profiles%ids_properties%version_put%access_layer_language = 'FORTRAN'
+            allocate( edge_transport%ids_properties%version_put%access_layer_language(1) )
+            edge_transport%ids_properties%version_put%access_layer_language = 'FORTRAN'
+            allocate( edge_sources%ids_properties%version_put%access_layer_language(1) )
+            edge_sources%ids_properties%version_put%access_layer_language = 'FORTRAN'
+#endif
         end if
 
+        !! Write grid & grid subsets/subgrids
+#if IMAS_MINOR_VERSION < 15
+        call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
+            &   edge_profiles%ggd( time_sind )%grid,                        &
+            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+            &   bottomiy, nnreg, topcut, region, cflags,                    &
+            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+        call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
+            &   edge_transport%model(1)%ggd( time_sind )%grid,              &
+            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+            &   bottomiy, nnreg, topcut, region, cflags,                    &
+            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+        call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
+            &   edge_sources%source(1)%ggd( time_sind )%grid,               &
+            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+            &   bottomiy, nnreg, topcut, region, cflags,                    &
+            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#else
+        call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
+            &   edge_profiles%grid_ggd( time_sind ),                        &
+            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+            &   bottomiy, nnreg, topcut, region, cflags,                    &
+            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+        call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
+            &   edge_transport%grid_ggd( time_sind ),                       &
+            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+            &   bottomiy, nnreg, topcut, region, cflags,                    &
+            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+        call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
+            &   edge_sources%grid_ggd( time_sind ),                         &
+            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+            &   bottomiy, nnreg, topcut, region, cflags,                    &
+            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#endif
+
         !! Allocate and set time slice value
-#ifndef GGD_OLD
+#if IMAS_MINOR_VERSION > 14
         edge_profiles%grid_ggd( time_sind )%time = time_slice_value
         edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
         edge_sources%grid_ggd( time_sind )%time = time_slice_value
@@ -265,57 +423,83 @@ contains
         !! List of species
         allocate( edge_profiles%ggd( time_sind )%ion( ns ) )
         do is = 0, ns-1
+            allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%label(1) )
             allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1) )
             allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%label(1) )
             allocate( edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1) )
 
+            ! Put label to ion(is + 1).state(1).label
             call species( is, edge_profiles%ggd( time_sind )%ion( is + 1 )% &
                 &   state(1)%label, .false.)
+            ! Set (previous) label
+            ion_label = edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%label(1)
+            ! Trim label (remove whitespaces on the right side)
+            ion_label_tlen = len_trim(ion_label)
+            ! Set default values for variables marking the position of '+' and '0'
+            p = 0
+            o = 0
+            ! Loop through characters in ion label string
+            do i = 1, ion_label_tlen
+                if (ion_label(i:i) .eq. '0') then
+                    ! Set the variable, marking the position of '0' if present
+                    o = i
+                endif
+                ! When '+' is found, remember the position (set new variable)
+                if (ion_label(i:i) .eq. "+") then
+                    ! Set the variable, marking the position of '+' if present
+                    p = i
+                endif
+            enddo
+            ! Find charge
+            ! (and ion atom label and position of '+' if found - commented out)
+            if (p > 0 .and. (p > 0 .or. o > 0)) then
+                !! ion = ion_label(1:p-1)
+                !! plus = ion_label(p:p)
+                ion_charge = ion_label(p+1:)
+            else if (o > 0) then
+                !! ion = ion_label(1:o-1)
+                ion_charge = ion_label(o:)
+            endif
+            ! Convert charge from string to integer
+            read(ion_charge, *) ion_charge_int
+
+            ! Put (complete) ion label identifying the species
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%label(1) = ion_label
+
+            ! Put ion charge
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%z_ion = ion_charge_int
+
+            ! Put mass of ion
             edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%a =     &
                 &   am( is )
+
+            ! Put nuclear charge
             edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%z_n =   &
                 &   zn( is )
+
+            ! Put number of atoms
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%atoms_n = 1
+
+            ! Put minimum Z of the charge state bundle
+            ! (z_min = z_max = 0 for a neutral)
             edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%z_min =   &
                 &   zamin( is )
+
+            ! Put maximum Z of the charge state bundle
             edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%z_max =   &
                 &   zamax( is )
+
         enddo
-
-        write(*,*) "Running b2CreateMap subroutine"
-        !! Set up the B2<->IDS mappings
-        call b2CreateMap( nx, ny, crx( -1:nx, -1:ny, : ),             &
-            &   cry( -1:nx, -1:ny, : ), cflags, leftix, leftiy,       &
-            &   rightix, rightiy, topix, topiy, bottomix,bottomiy,    &
-            &   INCLUDE_GHOST_CELLS, gmap )
-        mapInitialized = .true.
-
-        !! Write grid & grid subsets/subgrids
-#ifdef GGD_OLD
-        call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
-            &   edge_profiles%ggd( time_sind )%grid,                        &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
-#else
-        call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
-            &   edge_profiles%grid_ggd( time_sind ),                        &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
-#endif
-        call xertst( geometryId( nnreg, periodic_bc, topcut ) ==    &
-            &   GEOMETRY_SN, "B25_process_ids: can only do single null" )
 
         !! Write plasma state
         if ( B2_WRITE_DATA ) then
-            write (*,*) "b2mod_ual_io.B25_process_ids: writing plasma state"
+            call logmsg( LOGDEBUG, &
+            &   "b2mod_ual_io.B25_process_ids: writing plasma state" )
 
             !! Find grid subset base indices out of the available grid subset
             !! data stored in the IDS. That is done using IMAS GGD routine
             !! findGridSubsetByName().
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             iGsCoreBoundary = findGridSubsetByName(         &
                 &   edge_profiles%ggd( time_sind )%grid,    &
                 &   "Core boundary" )
@@ -372,7 +556,6 @@ contains
 
             !! ni (SOLPS 4.x) /
             !! na (SOLPS 5.x): Ion Density
-            allocate( edge_profiles%ggd( time_sind )%ion( ns ) )
             allocate( edge_transport%model(1)%ggd( time_sind )%ion( ns ) )
             allocate( edge_sources%source(1)%ggd( time_sind )%ion( ns ) )
 
@@ -447,27 +630,34 @@ contains
                 &   e(:,:,:,2), e(:,:,:,3))
 
             !! Write the three unit basis vectors
-            call write_cell_vector_component(                                   &
-                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field,   &
-                &   b2CellData = e(:,:,:,1),                                    &
+            call write_cell_vector_component(                                 &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field, &
+                &   b2CellData = e(:,:,:,1),                                  &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
 
-            call write_cell_vector_component(                                   &
-                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field,   &
-                &   b2CellData = e(:,:,:,2),                                    &
+            call write_cell_vector_component(                                 &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field, &
+                &   b2CellData = e(:,:,:,2),                                  &
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
-            call write_cell_vector_component(                                   &
-                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field,   &
-                &   b2CellData = e(:,:,:,3),                                    &
+            call write_cell_vector_component(                                 &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field, &
+                &   b2CellData = e(:,:,:,3),                                  &
                 &   vectorID = VEC_ALIGN_TOROIDAL_ID )
 
             !! write the magnetic field vector in the b2 coordinate system
-            call write_cell_vector_component(                                   &
-                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field,   &
-                &   b2CellData = bb(:,:,0:2),                                   &
+            call write_cell_vector_component(                                 &
+                &   vectorComponent = edge_profiles%ggd( time_sind )%e_field, &
+                &   b2CellData = bb(:,:,0:2),                                 &
                 &   vectorID = "diamagnetic" )
         end if
+
+        allocate( edge_profiles%code%output_flag( time_sind ) )
+        edge_profiles%code%output_flag( time_sind ) = 0
+        allocate( edge_transport%code%output_flag( time_sind ) )
+        edge_transport%code%output_flag( time_sind ) = 0
+        allocate( edge_sources%code%output_flag( time_sind ) )
+        edge_sources%code%output_flag( time_sind ) = 0
 
         call logmsg( LOGDEBUG, "b2mod_ual_io.B25_process_ids: done" )
 
@@ -482,7 +672,7 @@ contains
             ! real(IDS_real), pointer, intent(inout)  :: val(:)
             type (ids_generic_grid_scalar), pointer, intent(inout) :: fluxes(:)
                 !< Type of IDS data structure, designed for scalar data handling
-                !< (in this case scalars regarding fluxes )
+                !< (in this case scalars regarding fluxes)
             real(IDS_real), intent(in) :: value( -1:gmap%b2nx, -1:gmap%b2ny )
             real(IDS_real), intent(in) :: flux( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )
             integer, intent(in) :: time_sind    !< General grid description
@@ -495,7 +685,7 @@ contains
             allocate( val(9) )
 
             !! Write data for Cells grid subset
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
                 &   ggd( time_sind )%grid, GRID_SUBSET_CELLS, gmap, value )
 #else
@@ -511,7 +701,7 @@ contains
             ival = ival + 1
             tmpFace = 0.0_IDS_real
             call value_on_faces( nx, ny, vol, value, tmpFace)
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                    &
                 &   edge_profiles%ggd( time_sind )%grid, iGsCoreBoundary,   &
                 &   gmap, tmpFace )
@@ -527,7 +717,7 @@ contains
             ival = ival + 1
             tmpVx = interpolateToVertices(  &
                 &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex( &
                 &   edge_profiles%ggd( time_sind )%grid,        &
                 &   iGsInnerMidplane, gmap, tmpVx )
@@ -541,7 +731,7 @@ contains
 
             !! Write data for Outer Midplane grid subset
             ival = ival + 1
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
                 &   edge_profiles%ggd( time_sind )%grid, iGsOuterMidplane,  &
                 &   gmap, tmpVx )
@@ -555,7 +745,7 @@ contains
 
             !! Write data for Nodes grid subset
             ival = ival + 1
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(             &
                 &   edge_profiles%ggd( time_sind )%grid, GRID_SUBSET_NODES, &
                 &   gmap, tmpVx )
@@ -582,7 +772,7 @@ contains
             !!       works as it should for all other grid subsets (e.g. SOL,
             !!       Inner divertor and Outer divertor)
             ival = ival + 1
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
                 &   ggd( time_sind )%grid, iGsCore, gmap, value )
 #else
@@ -595,7 +785,7 @@ contains
 
             !! Write data for SOL grid subset
             ival = ival + 1
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
                 &   ggd( time_sind )%grid, iGsSOL, gmap, value )
 #else
@@ -608,7 +798,7 @@ contains
 
             !! Write data for Inner Divertor grid subset
             ival = ival + 1
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
                 &   ggd( time_sind )%grid, iGsIDivertor, gmap, value )
 #else
@@ -620,7 +810,7 @@ contains
 
             !! Write data for Outer Divertor grid subset
             ival = ival + 1
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
                 &   ggd( time_sind )%grid, iGsODivertor, gmap, value )
 #else
@@ -642,7 +832,7 @@ contains
             allocate( scalar(1) )
 
             !! TODO: add checks whether already allocated
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
                 &   ggd( time_sind )%grid, GRID_SUBSET_CELLS,           &
                 &   gmap, b2CellData )
@@ -681,7 +871,7 @@ contains
             end if
 
             !! TODO: add checks whether already allocated
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
                 &   ggd( time_sind )%grid, GRID_SUBSET_CELLS,           &
                 &   gmap, b2CellData )
@@ -912,7 +1102,7 @@ contains
 
             if ( .not. present(gridSubsetId) ) then
                 !! Fill in vector component data
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%ggd( time_sind )%grid,    &
                     &   GRID_SUBSET_Y_ALIGNED_FACES, gmap, b2FaceData)
@@ -923,7 +1113,7 @@ contains
 #endif
                 call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%ggd( time_sind )%grid,    &
                     &   GRID_SUBSET_X_ALIGNED_FACES, gmap, b2FaceData)
@@ -935,7 +1125,7 @@ contains
                 call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_FACES, idsdata )
                 deallocate(idsdata)
             else
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
                     &   edge_profiles%ggd( time_sind )%grid,    &
                     &   gridSubsetId, gmap, b2FaceData)
@@ -1081,6 +1271,8 @@ contains
 #else
 # ifdef ITM
 
+  logical, parameter, private :: INCLUDE_GHOST_CELLS = .false.
+
 contains
 
   subroutine write_cpo(edgecpo)
@@ -1142,7 +1334,7 @@ contains
 
     if ( B2_WRITE_DATA ) then
 
-        write (*,*) "b2mod_ual_io.write_cpo: writing plasma state"
+        call logmsg( LOGDEBUG, "b2mod_ual_io.write_cpo: writing plasma state" )
 
         iSgCore = gridFindSubGridByName( edgecpo%grid, "Core boundary" )
         iSgInnerMidplane = gridFindSubGridByName( edgecpo%grid, "Inner midplane" )
@@ -1161,7 +1353,8 @@ contains
                 &   value = na(:,:,is-1),                    &
                 &   flux = fna(:,:,:,is-1) )
             call write_cell_scalar( edgecpo%fluid%ni(is)%source, &
-                &   b2CellData = sna(:,:,0,is-1) + sna(:,:,1,is-1)*na(:,:,is-1) )
+                &   b2CellData = sna(:,:,0,is-1) +               &
+                &                sna(:,:,1,is-1)*na(:,:,is-1) )
         end do
 
 !!$    ! ue TODO: must be computed, refactor code from b2news into function
@@ -1205,7 +1398,8 @@ contains
         allocate(edgecpo%fluid%te_aniso%comps(4))
 
         !! Compute unit basis vectors along the field directions
-        call compute_Coordinate_Unit_Vectors(crx, cry, e(:,:,:,1), e(:,:,:,2), e(:,:,:,3))
+        call compute_Coordinate_Unit_Vectors(crx, cry, e(:,:,:,1), &
+            &                                          e(:,:,:,2), e(:,:,:,3))
 
         !! Write the three unit basis vectors
         do i = 1, 3

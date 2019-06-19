@@ -22,7 +22,7 @@
 				<default>None</default>
 				<type>None</type>
 				<description>
-					atomic charge, nuclear charge, atomic mass and atomic charge squared for each charge stateminimum atomic charge of the stage, maximum atomic charge of the stage, nuclear charge, and atomic mass; this data should match that given in b2ah.dat
+					atomic charge, nuclear charge, atomic mass and atomic charge squared for each charge state, minimum atomic charge of the stage, maximum atomic charge of the stage, nuclear charge, and atomic mass; this data should match that given in b2ah.dat
 				</description>
 			</switch>
 			<switch>
@@ -240,7 +240,7 @@
 				<description>
 					local_sonnet - character string.
 					local_sonnet is the file name of the geometry file to be read.
-					The file will be looked for in the run directory, in the ../baserun directory and in $SOLPSTOP/data/meshes. To be used in b2ag.dat.
+					The file will be looked for in the run directory, in the ../baserun directory, in $SOLPSTOP/data.local/meshes, in $SOLPSTOP/data/meshes and in $SOLPSTOP/modules/Carre/meshes/$DEVICE. To be used in b2ag.dat.
 				</description>
 			</switch>
 			<switch>
@@ -281,6 +281,25 @@
 					If pbs_from_basis_mesh.eq.0, the pbs array is computed from values on the actual working mesh (old treatment).
 					If pbs_from_basis_mesh.eq.1, the pbs array is computed from values on the (possibly) finer basis mesh from the geometry file and the contributions from each basis cell are added to obtain the value on the working mesh.
 					In both cases, mind the value of 'b2news_area_fix', which should be also declared in b2ag.dat if the non-default behaviour is wanted.
+				</description>
+			</switch>
+			<switch>
+				<name>b2agmt_qc_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When b2agmt_qc_style.eq.1, the cosine of the angle between the left face of cells and the magnetic field direction is computed using information from cells to both the left and right of the face.
+					When b2agmt_qc_style.eq.0, we only use information from the cell at the right of the face. This is the treatment used up to version 3.0.6, inclusively.
+				</description>
+			</switch>
+			<switch>
+				<name>b2agdr_redef_qc</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When b2agdr_redef_qc.eq.1, the cosine of the angle between the left face of a cell and the magnetic field direction is interpolated from the values at the cell centers.
+					When b2agdr_redef_qc.eq.0, we only use information from the cell at the right of the face. This is the treatment used up to version 3.0.6, inclusively.
+					This switch is superseded by b2agmt_qc_style.
 				</description>
 			</switch>
 			<switch>
@@ -732,6 +751,7 @@
 					no_solve.eq.-8 will activate the heat equations only. These can be combined. For example, no_solve.eq.-3 will activate the parallel momentum and particle conservation equations.
 					If the no_solve switch requires an equation not to be solved, the settings in the corresponding solvexx arrays from b2.numerics.parameters are moot.
 					The latter are reserved for fine-tuning numerical diagnostics.
+					If wishing to toggle whether to solve or not to solve each equation separately, one should set, in the b2.numerics.parameters input file, the SOLVEMO, SOLVECO, SOLVEE, SOLVEEI and SOLVEPO arrays, respectively, for each of the parallel momentum equations, the total momentum equation, each density equation, the electron and ion heat equations, and the total energy equation.
 					The table below shows which combination of equations will be solved	depending on the value of switch 'b2news_no_solve'
 					*----------------------------------------------------
 					*        | value |  co  |  mo  |  he  |  hi  |  po  |
@@ -933,7 +953,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Turns on coupling with the Eirene Monte-Carlo neutral code if nonzero.
+					Turns on coupling with the Eirene Monte Carlo neutral code if nonzero.
 					To be used, the code must be compiled with the -DB25_EIRENE option.
 				</description>
 			</switch>
@@ -1095,7 +1115,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier to the parallel momentum source term associated with the anomalous current. It is recommended '1.0'.
+					Multiplier to the parallel momentum source term associated with the anomalous current. It is recommended '1.0'. Only active if both the ExB and diamagnetic drifts are turned on.
 					The value '0.0' corresponds to the old SOLPS5.0 treatment.
 				</description>
 			</switch>
@@ -1200,7 +1220,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Integer switch to turn off or on the ion-neutral current in the core region (applies to coupled runs only). This is recommended in cases where the neutral densities are very low in the core region and the ion-neutral current is likely to vary widely from one iteration to the next as a result of Monte-Carlo noise.
+					Integer switch to turn off or on the ion-neutral current in the core region (applies to coupled runs only). This is recommended in cases where the neutral densities are very low in the core region and the ion-neutral current is likely to vary widely from one iteration to the next as a result of Monte Carlo noise.
 					If fchin_in_core.eq.0 (default), then fchin is set to zero in the core.
 					If fchin_in_core.eq.1, then fchin is unchanged.
 				</description>
@@ -1453,6 +1473,22 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
+			<switch>
+			  <name>b2stbc_bcene_16_style</name>
+			  <default>0</default>
+			  <type>integer</type>
+			  <description>
+				If bcene_16_style.eq.1, the boundary condition is enforced using the modified fluxes fhe_mdf. Recommended when running cases with drifts.
+			  </description>
+			</switch>
+			<switch>
+			  <name>b2stbc_bceni_16_style</name>
+			  <default>0</default>
+			  <type>integer</type>
+			  <description>
+				If bceni_16_style.eq.1, the boundary condition is enforced using the modified fluxes fhi_mdf. Recommended when running cases with drifts.
+			  </description>
+			</switch>
 			<switch>
 				<name>b2stbc_secmodel</name>
 				<default>0</default>
@@ -2180,7 +2216,7 @@
 			</switch>
 			<switch>
 				<name>b2tfhi_lim_flux</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
 					If '0', flux limit is not applied directly to the ion heat flux but is applied through transport coefficients if 'b2trcl_conductive_limit' is '1'. It is recommended '0'.
@@ -2358,7 +2394,7 @@
 					3 --- both banana and PS
 					4 --- all contributions
 					mind that B2 already calculates the classical transport !
-					avoid double transport, 0+4 for cross checks only !
+					avoid double transport, 0+4 for cross-checks only !
 				</description>
 			</switch>
 		</category>
@@ -2440,7 +2476,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Another option for plasma state file output. Give the number of B2.5 full interations between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals. Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte-Carlo averaging scheme.
+					Another option for plasma state file output. Give the number of B2.5 full interations between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals. Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte Carlo averaging scheme.
 				</description>
 			</switch>
 			<switch>
@@ -2717,18 +2753,36 @@
 					Controls level of output in b2srsm. If diagno.ge.2, output will be given on every call. If diagno.eq.1, output will be given on main calls only.
 				</description>
 			</switch>
-			<switch>
-				<name>b2ux5p_cpu</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If cpu.gt.0, prints out the time spent in the matrix solver.
-				</description>
-			</switch>
 			<switchgroup>
 				<name>b2ux*</name>
 				<description>
-					Output flag for the iluter matrix solver. Larger numbers mean increasing output level.
+					If cpu.gt.0, prints out the time spent in the matrix solver.
+				</description>
+				<switch>
+				  <name>b2ux5p_cpu</name>
+				  <default>0</default>
+				  <type>integer</type>
+				</switch>
+				<switch>
+				  <name>b2ux7p_cpu</name>
+				  <default>0</default>
+				  <type>integer</type>
+				</switch>
+				<switch>
+				  <name>b2ux9p_cpu</name>
+				  <default>0</default>
+				  <type>integer</type>
+				</switch>
+				<switch>
+				  <name>b2ux11p_cpu</name>
+				  <default>0</default>
+				  <type>integer</type>
+				</switch>
+			</switchgroup>
+			<switchgroup>
+				<name>b2ux*</name>
+				<description>
+					Output flag for the matrix solvers. Larger numbers mean increasing output level.
 				</description>
 				<switch>
 					<name>b2ux5p_nltrsol</name>
@@ -2737,12 +2791,17 @@
 				</switch>
 				<switch>
 					<name>b2ux7p_nltrsol</name>
-					<default>0</default>
+					<default>2</default>
 					<type>integer</type>
 				</switch>
 				<switch>
 					<name>b2ux9p_nltrsol</name>
-					<default>0</default>
+					<default>2</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2ux11p_nltrsol</name>
+					<default>2</default>
 					<type>integer</type>
 				</switch>
 			</switchgroup>
@@ -2991,6 +3050,15 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>b2stbr_sna_corr</name>
+			  <default>0.0</default>
+			  <type>real</type>
+			  <description>
+				Multiplier to the neutral source differential between puffing and pumping strata for code speed-up.
+				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details.
+			  </description>
+			</switch>
+			<switch>
 				<name>b2stbr_eir_src_nhist</name>
 				<default>1</default>
 				<type>integer</type>
@@ -3186,15 +3254,41 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2ux5p_mult_nonzero</name>
-				<default>10</default>
-				<type>integer</type>
+				<name>b2trcl_csig_mltpl</name>
+				<default>1.0</default>
+				<type>real</type>
 				<description>
-					Number of expected nonzero matrix elements per matrix row.
+					Multiplier to the electrical conductivity between guard cells along the core boundary. A large value helps to damp numerical instabilities in the potential when drifts are turned on and the electron density and temperature are kept constant along the core boundary.
 				</description>
 			</switch>
 			<switchgroup>
-				<name>b2ux5p_mult_solvdim*</name>
+			  <name>b2ux*</name>
+			  <description>
+					Number of expected nonzero matrix elements per matrix row.
+			  </description>
+			  <switch>
+				<name>b2ux5p_mult_nonzero</name>
+				<default>10</default>
+				<type>integer</type>
+			  </switch>
+			  <switch>
+				<name>b2ux7p_mult_nonzero</name>
+				<default>10</default>
+				<type>integer</type>
+			  </switch>
+			  <switch>
+				<name>b2ux9p_mult_nonzero</name>
+				<default>10</default>
+				<type>integer</type>
+			  </switch>
+			  <switch>
+				<name>b2ux11p_mult_nonzero</name>
+				<default>10</default>
+				<type>integer</type>
+			  </switch>
+			</switchgroup>
+			<switchgroup>
+				<name>b2ux*</name>
 				<description>
 					Multipliers to the number of nonzero elements in the solution matrix for workspace arrays in the matrix solver.
 				</description>
@@ -3204,7 +3298,37 @@
 					<type>integer</type>
 				</switch>
 				<switch>
+					<name>b2ux7p_mult_solvdim</name>
+					<default>15</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2ux9p_mult_solvdim</name>
+					<default>15</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2ux11p_mult_solvdim</name>
+					<default>15</default>
+					<type>integer</type>
+				</switch>
+				<switch>
 					<name>b2ux5p_mult_solvdim1</name>
+					<default>10</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2ux7p_mult_solvdim1</name>
+					<default>10</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2ux9p_mult_solvdim1</name>
+					<default>10</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2ux11p_mult_solvdim1</name>
 					<default>10</default>
 					<type>integer</type>
 				</switch>
@@ -3214,8 +3338,8 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = 5-pt stencil, Style.eq.2 = MA28.
-					NOTE: Only style.eq.2 will give good results. Other values are NOT recommended!
+					Choose the type of 5-point stencil matrix solver. Style.eq.0 = iluter, Style.eq.1 = slv5pt, Style.eq.2 = MA28.
+					NOTE: Only style.eq.2 will give good results. Other values are NOT recommended! style.eq.0 and style.eq.1 are only applicable to linear geometries with no cuts and no isolated regions.
 				</description>
 			</switch>
 			<switch>
@@ -3223,8 +3347,8 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-				Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = 5-pt stencil, Style.eq.2 = MA28copy3. Style.eq.3 = SDRV from YSMP
-				NOTE: Only style.eq.2 will give good results. Applying of style.eq.3 should be corrected and is no longer recommended. It might give slow convergence or even divergence of the potential equation. Other values are NOT recommended!
+				Choose the type of 7-point stencil matrix solver. Style.eq.0 = iluter, Style.eq.1 = slv5pt, Style.eq.2 = MA28copy3. Style.eq.3 = SDRV from YSMP.
+				NOTE: Only style.eq.2 will give good results. Applying style.eq.3 should be corrected and is no longer recommended. It might give slow convergence or even divergence of the potential equation. Other values are NOT recommended! style.eq.0 .or. style.eq.1 will return an error.
 				</description>
 			</switch>
 			<switch>
@@ -3232,18 +3356,45 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = 5-pt stencil, Style.eq.2 = MA28copy.
-					NOTE: Only style.eq.2 will give good results. Other values are NOT recommended!
+					Choose the type of 9-point stencil matrix solver. Style.eq.0 = iluter, Style.eq.1 = slv5pt, Style.eq.2 = MA28copy.
+					NOTE: Only style.eq.2 will give good results. Other values are NOT recommended! style.eq.0 and style.eq.1 will return an error.
 				</description>
 			</switch>
 			<switch>
-				<name>b2ux5p_acpar</name>
-				<default>8.0</default>
-				<type>real</type>
+				<name>b2ux11p_style</name>
+				<default>2</default>
+				<type>integer</type>
+				<description>
+					Choose the type of 11-point stencil matrix solver. Style.eq.0 = iluter, Style.eq.1 = slv5pt, Style.eq.2 = MA28copy4.
+					NOTE: Only style.eq.2 will give good results. Other values are NOT recommended! style.eq.0 and style.eq.1 will return an error.
+				</description>
+			</switch>
+			<switchgroup>
+			  <name>b2ux*</name>
 				<description>
 					Paremeter needed for iluter matrix solver.
 				</description>
-			</switch>
+				<switch>
+				  <name>b2ux5p_acpar</name>
+				  <default>8.0</default>
+				  <type>real</type>
+				</switch>
+				<switch>
+				  <name>b2ux7p_acpar</name>
+				  <default>8.0</default>
+				  <type>real</type>
+				</switch>
+				<switch>
+				  <name>b2ux9p_acpar</name>
+				  <default>8.0</default>
+				  <type>real</type>
+				</switch>
+				<switch>
+				  <name>b2ux11p_acpar</name>
+				  <default>8.0</default>
+				  <type>real</type>
+				</switch>
+			</switchgroup>
 			<switch>
 				<name>b2stbc_fchy_dia</name>
 				<default>0.0</default>
@@ -3299,6 +3450,22 @@
 				<type>real</type>
 				<description>
 					Step length (in meters) for computing the first flight model chords.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_taumax</name>
+				<default>0.05</default>
+				<type>real</type>
+				<description>
+					Maximum allowed fraction of source to be added or substracted to the real source in the method of effective sources for code speed-up.  
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_c_pumpavr</name>
+				<default>0.02</default>
+				<type>real</type>
+				<description>
+					Underrelaxation parameter to compute the artificial source in the method of effective sources for code speed-up.  
 				</description>
 			</switch>
 			<switch>
@@ -3826,6 +3993,14 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>b2sigp_pressure_restriction</name>
+			  <default>1</default>
+			  <type>integer</type>
+			  <description>
+				When set to '1', a CFL-like restriction is applied to the pressure gradient term for minority ions and for neutrals species.
+			  </description>
+			</switch>
+			<switch>
 				<name>b2xzdd_zero_dead_and_core</name>
 				<default>1</default>
 				<type>integer</type>
@@ -3953,7 +4128,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					Specifies the type of linearisation used in the sources derived from the Monte-Carlo neutrals. If linearisation.eq.0, all sources are fed to the constant term, if linearisation.eq.1, positive terms go in the constant term, and negative terms in the proportional term. 'eirene_mc_linearization' is an alias for this switch.
+					Specifies the type of linearisation used in the sources derived from the Monte Carlo neutrals. If linearisation.eq.0, all sources are fed to the constant term, if linearisation.eq.1, positive terms go in the constant term, and negative terms in the proportional term. 'eirene_mc_linearization' is an alias for this switch.
 				</description>
 			</switch>
 			<switch>
@@ -4239,7 +4414,7 @@
 			<introduction>
 				<namelist>NEUTRALS</namelist>
 				<description>
-					This namelist is used to either set parameters for the B2 neutral fluid model or for the Eirene Monte-Carlo neutrals run.
+					This namelist is used to either set parameters for the B2 neutral fluid model or for the Eirene Monte Carlo neutrals run.
 					When coupling to Eirene, it is essential that the neutral boundaries conditions declared here be in the same exact order than they are in the Eirene input file.
 					For coupled cases, some of the parameters will become active only on the second call to Eirene, while values inherited from the Eirene input file will be used for the first call. In such cases, use of the switch 'eirene_repeat_first_call' is recommended.
 					This namelist is read if either 'b2stbr_neutrals_namelist' or 'b2mndr_eirene' are set to 1.
@@ -4856,7 +5031,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (0:NLIM+NSTS)</type>
 				<description>
-					Passed to Eirene. Chemical sputter yield of wall surface (ilim).
+					Passed to Eirene. Chemical sputter yield of wall surface (ilim). Element 0 corresponds to the default setting for all surfaces.
 				</description>
 			</switch>
 			<switch>
@@ -4864,7 +5039,7 @@
 				<default>0</default>
 				<type>real*8</type>
 				<description>
-					Nuclear charge of atomic species causing the sputtering. Default means no chemical sputtering.
+					Nuclear charge of atomic species causing the sputtering. If set to its default value of 0, then the chemical sputtering switches from this block are not used and the settings from the Eirene input file are used.
 				</description>
 			</switch>
 			<switch>
@@ -5419,7 +5594,7 @@
 						 12 : sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission factor, delta<sub>e</sub> in Q<sub>e</sub> = delta<sub>e</sub> &Gamma;<sub>e</sub> T<sub>e</sub>
 						 13 : prescribe the electron energy flux per unit area proportional to temperature, ENEPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
 						 14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>
-						 15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.6.4 of manual for details). Linked to using BCCON=14 for all ion species.
+						 15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.4 of manual for details). Linked to using BCCON=14 for all ion species.
 						 16 : Feedback boundary condition with constant temperature, ENEPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bcene_16_style=0 (default). If bcene_16_style=1, integrated electron heat flux with constant electron temperature, summed over all core boundaries with BCENE=16.
 						 17 : Feedback boundary condition with constant shared temperature for both electrons and ions, with ENEPAR(,1) + ENIPAR(,1) giving the total power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Replaces [16] for high densities and large values of 'b2stbc_type16_ref'.
 						 18 : Fractional drop condition. Not yet working.
@@ -5452,7 +5627,7 @@
 						12 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> &Gamma;<sub>a</sub>
 						13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
 						14 : leakage option for ion energy, ENIPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>T<sub>i</sub>
-						15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.6.5 of manual for details). Linked to using BCCON=14 for all ion species.
+						15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.5 of manual for details). Linked to using BCCON=14 for all ion species.
 						16 : Feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16.
 							ENIPAR(,1) specifies the power flux in W
 						17 : Feedback boundary condition with constant shared temperature for both electrons and ions, see BCENE=17 above for description.
@@ -6341,8 +6516,8 @@
 				<default>1.0</default>
 				<type>real*8 array of size (0:NS-1)</type>
 				<description>
-				Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a.
-					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below.
+				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a.
+				  See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
 				</description>
 			</switch>
 			<switch>
@@ -6384,6 +6559,14 @@
 				<type>logical</type>
 				<description>
 					If .true. (default), writes the content of the namelist to stdout after it has been read.
+				</description>
+			</switch>
+			<switch>
+				<name>ADD_TE_CORR_TO_PO</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					If .true. (default), adds dte(ix,iy)/qe to the potential correction after the internal energy balance equations are solved, where dte(ix,iy) is the electron temperature correction on the time step. Individually set for each region index.
 				</description>
 			</switch>
 		</category>

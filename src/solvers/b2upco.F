@@ -5,6 +5,7 @@
      &  rxf, pcm0, vol, corpb, pccb0, pb, nb, ub, isb)
       use b2mod_indirect
       use b2mod_types
+      use b2mod_b2cmpa
       use b2mod_numerics_namelist
      , , only : corr_core_dn
       implicit none
@@ -87,10 +88,8 @@
         pb_(ix,iy) = t0*pb(ix,iy)                        !lk 30.06.2017
        enddo
       enddo
-      if(corr_core_dn(isb).eq.1.0_R8) then               !srv 25.07.17 {  IYS 19.12.2017
-        nb = nb_
-        pb = pb_
-      else                                               !srv 25.07.17 }
+      if(corr_core_dn(isb).ne.1.0_R8 .and. 
+     &               (.not. is_neutral(isb))) then               !srv 25.07.17 {  IYS 19.12.2017
 *   ..smooth the correction for inner flux surfaces      !lk 30.06.2017{
         tt0 = 0.0e0_R8
         tt1 = 0.0e0_R8
@@ -139,7 +138,10 @@
             enddo
           endif
         enddo                                             !lk 30.06.2017}
-      endif                                               !srv 25.07.17
+      else         ! do not smooth the correction 
+        nb = nb_
+        pb = pb_
+      endif                                                !srv 25.07.17 }
 *   ..compute new ub
       if (ua_solve) then
        do iy = -1, ny
@@ -165,3 +167,4 @@
 *.end b2upco
 
       end
+

@@ -189,8 +189,8 @@ cdpc
             iy = (i-1)/n1+1
             ix = i-(iy-1)*n1
             write(69,'(i6,2(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
-     .       aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy), ano(ix,iy),
-     .       rhs(ix,iy)
+     .       aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy),
+     .       ano(ix,iy), rhs(ix,iy)
           enddo
           write(69,*) nz,' nz'
           do i=1,nz
@@ -249,7 +249,7 @@ cdpc
       call ma28id
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
      1 r1,s1,res,w,1,1e-10_R8,iflag)
-      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(a,i3,1p,2g15.8,i6)') !srv 28.06.16
+      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(1x,a,i3,1p,2g15.8,i6)') !srv 28.06.16
      1 'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
 
       if(iflag.lt.0) then                                            !srv 28.06.16 {

@@ -433,7 +433,7 @@ c*** initialise the chain counter and the chain list
             lwsrtwrk(nwsrtwrk)=is
 c*** both ends of the first element will be checked (goup=.true. here)
             k=2
-            do 100 ii=2,nwldlis(il)
+            do ii=2,nwldlis(il)
 c              print *,'do 100:',ii,is,goup
               do ik=1,k
 c                print *,'do ik:',ik,is,goup
@@ -493,7 +493,8 @@ c*** Look in the opposite direction
               end do
 c*** No connection found
               go to 50
-  100       k=1
+  100         k=1
+            end do
    50       if(nwsrtwrk .ne. nwldlis(il)) then
               write(*,*) 'The chain is broken: ',il
               nwldlis(il)=nwsrtwrk

@@ -39,7 +39,7 @@
       integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k             !srv 26.01.00
       integer, save :: iout = 0                                    !srv 08.07.08
       character chark*1                                            !srv 08.07.08
-      integer ireg, ileft, ibot, itop
+      integer ireg, ileft, ibot
       real (kind=R8) :: aa7p2, aa7m2                               !srv 27.01.00
       save ncall                                                   !srv 27.01.00
 *   ..procedures

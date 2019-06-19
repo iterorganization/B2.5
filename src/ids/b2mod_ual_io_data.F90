@@ -14,18 +14,6 @@
 module b2mod_ual_io_data
 
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
-#ifdef IMAS
-    use ids_schemas ! IGNORE
-    ! use ids_assert
-    use ids_string  ! IGNORE
-    use ids_grid_structured ! IGNORE
-#else
-#ifdef ITM
-    use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
-    use euITM_schemas ! IGNORE
-    use itm_constants , pi => itm_pi ! IGNORE
-#endif
-#endif
     use helper
     use logging , only: logmsg, LOGDEBUG
     use b2mod_connectivity , REMOVED_B2_R8 => R8
@@ -33,9 +21,17 @@ module b2mod_ual_io_data
     use b2mod_cellhelper
 
     use b2mod_grid_mapping
-    use b2mod_ual_io_grid
-
 #ifdef IMAS
+    use b2mod_ual_io_grid &
+     & , only : ids_generic_grid_aos3_root, IDS_real, GridObject, &
+     &          getGridSubsetObject, SPACE_POLOIDALPLANE, &
+     &          GridWriteData, IDS_CLASS_CELL, IDS_CLASS_NODE, &
+     &          IDS_CLASS_POLOIDALRADIAL_FACE
+    use ids_grid_subgrid  & ! IGNORE
+     & , only : getGridSubsetSize
+
+    implicit none
+
     !> Provides service routines to transform data from B2 to IMAS IDS
     !! (data in form of vertex, face or cell)
     interface b2_IMAS_Transform_Data_B2_To_IDS
@@ -50,11 +46,11 @@ contains
     !> Transform data from B2 to IDS cell
     function b2_IMAS_Transform_Data_B2_To_IDS_Cell( grid, gridSubsetId, gmap,  &
             &   b2CellData ) result( idsdata )
-#ifdef GGD_OLD
-        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
+#if IMAS_MINOR_VERSION > 14
+        type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
-        type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS
+        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
         integer, intent(in) :: gridSubsetId !< ID (base index) of the
@@ -73,11 +69,11 @@ contains
     !> Transform data from B2 to IDS face
     function b2_IMAS_Transform_Data_B2_To_IDS_Face( grid, gridSubsetId, gmap,  &
             &   b2FaceData ) result( idsdata )
-#ifdef GGD_OLD
-        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
+#if IMAS_MINOR_VERSION > 14
+        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
-        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
+        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
         integer, intent(in) :: gridSubsetId !< ID (base index) of the
@@ -101,11 +97,11 @@ contains
     !> Transform data from B2 to IDS vertex
     function b2_IMAS_Transform_Data_B2_To_IDS_Vertex( grid, gridSubsetId,   &
             &   gmap, b2VertexData ) result( idsdata )
-#ifdef GGD_OLD
-        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
+#if IMAS_MINOR_VERSION > 14
+        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
-        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
+        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
         integer, intent(in)         :: gridSubsetId !< ID (base index) of the
@@ -128,11 +124,11 @@ contains
     !! interface b2_IMAS_Transform_Data_B2_To_IDS instead.
     function b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetId,  &
             &   gmap, b2CellData, b2FaceData, b2VertexData ) result( idsdata )
-#ifdef GGD_OLD
-        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
+#if IMAS_MINOR_VERSION
+        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
-        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
+        type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
         integer, intent(in) :: gridSubsetId !< Base grid subset index
@@ -214,6 +210,10 @@ contains
 
 #else
 #ifdef ITM
+
+    use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
+    use euITM_schemas ! IGNORE
+    use itm_constants , pi => itm_pi ! IGNORE
 
   implicit none
 
@@ -302,7 +302,8 @@ contains
         if (present(b2CellData)) then
             !! Cell data case
             !! check that it is a cell
-            call assert( all( curObj%cls == CLASS_CELL(1:SPACE_COUNT) ) )
+            call xertst( all( curObj%cls == CLASS_CELL(1:SPACE_COUNT) ), &
+                "Assert error 1 (cell test) in b2ITMTransformDataB2ToCPOGeneral" )
             !! get the subobject index for the face in the 2d poloidal plane space
             icv = curObj%ind(SPACE_POLOIDALPLANE)
             !! copy data
@@ -310,7 +311,8 @@ contains
         else if (present(b2FaceData)) then
             !! Face data case
             !! check that it is a face
-            call assert( all( curObj%cls == CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) ) )
+            call xertst( all( curObj%cls == CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) ), &
+                "Assert error 2 (face test) in b2ITMTransformDataB2ToCPOGeneral" )
             !! get the subobject index for the face in the 2d poloidal plane space
             ifc = curObj%ind(SPACE_POLOIDALPLANE)
             !! copy data
@@ -318,7 +320,8 @@ contains
         else if (present(b2VertexData)) then
             !! Vertex/Node data case
             !! check that it is a vertex
-            call assert( all( curObj%cls == CLASS_NODE(1:SPACE_COUNT) ) )
+            call xertst( all( curObj%cls == CLASS_NODE(1:SPACE_COUNT) ), &
+                "Assert error 3 (vertex test) in b2ITMTransformDataB2ToCPOGeneral" )
             !! get the subobject index for the face in the 2d poloidal plane space
             ivx = curObj%ind(SPACE_POLOIDALPLANE)
             !! copy data

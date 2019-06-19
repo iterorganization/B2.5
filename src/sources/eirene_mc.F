@@ -783,7 +783,7 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
-       call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
+        call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
         call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
@@ -910,7 +910,7 @@ cxpb
 
         if(dbg_eir_mc.gt.9 .and.
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
-          print *
+          write(*,'()')
           print *,'%%% Eirene data in B2 %%%',nlimps
           print '(a,5(i3,1x))','nnatmi,nnmoli,nnplsi,nnstsi,nnlimi = ',
      ,       nnatmi,nnmoli,nnplsi,nnstsi,nnlimi
@@ -923,7 +923,7 @@ cxpb
           write(hlp_frm4,'(a,i2,a)')
      ,     '(1p,i4,',1+nnatmi+nnmoli,'e11.4)'
           do k=0,nstrat !{
-            print *
+            write(*,'()')
             print *,'wldna, wldnm, wldra, wldrm:',k
             write (*,hlp_frm1)
      ,         ('na',i,i=1,nnatmi),('nm',i,i=1,nnmoli),
@@ -949,7 +949,7 @@ cxpb
               end if !}
             end do !}
 
-            print *
+            write(*,'()')
             print *,'wldpp:',k
             do j=nnlimi+1,nnlimi+nnstsi !{
               hlp_pr=.false.
@@ -959,7 +959,7 @@ cxpb
               if (hlp_pr)
      >         write(*,hlp_frm3) j,(wldpp(j,i,k),i=1,nnplsi)
             end do !}
-            print *
+            write(*,'()')
             print *,'wldpeb, wldpa, wldpm:',k
             do j=nnlimi+1,nnlimi+nnstsi !{
               hlp_pr=wldpeb(j,k).ne.0.0_R8
@@ -974,7 +974,7 @@ cxpb
      ,           (wldpm(j,i,k),i=1,nnmoli)
             end do !}
           end do !}
-          print *,'%%%'
+          print '(a)','%%%'
         end if !}
         if(dbg_eir_mc.gt.0 .and.
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
@@ -3384,6 +3384,20 @@ c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
         cum_volrec=cum_volrec+VOLSUMN(istrai)
       enddo
       cum_volrec=-cum_volrec/qe
+
+! { IYS 12.01.2018
+      sna_eir = 0.0_R8
+      if (ank_tracing .gt. 0) then    
+        do is = 1, nspecies
+          do iy = -1, ny
+            do ix = -1, nx
+              sna_eir(is) = sna_eir(is) +
+     &           sna0(ix,iy,0,eb2spcr(is)+1) + 
+     &           sna0(ix,iy,1,eb2spcr(is)+1) * na(ix,iy,eb2spcr(is)+1)
+            enddo
+          enddo
+        enddo
+      endif     ! IYS 12.01.2018 }
 
       if((main_call.and.output_style.eq.1).or.output_style.gt.1) then !{
         do istrai=1, nstrat !{

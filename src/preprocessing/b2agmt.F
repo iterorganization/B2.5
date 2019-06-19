@@ -3,13 +3,14 @@
 
       subroutine b2agmt (nx, ny, isymm, 
      & crx, cry, vol, hx, hy, qz, qc, qcb, gs,
-     & cell_width, cell_height, leftix, bottomiy)
+     & cell_width, cell_height, leftix, leftiy, bottomiy)
       use b2mod_types
       use b2mod_constants
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
-      integer leftix(-1:nx,-1:ny), bottomiy(-1:nx,-1:ny) 
+      integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny),
+     &  bottomiy(-1:nx,-1:ny) 
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
@@ -114,7 +115,10 @@
       integer n2, ix, iy, i, j
       integer volhmk
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, width, centroid(0:1)
+     *   p0x, p0y, p1x, p1y, width, centroid(0:1), t0, t1
+      real (kind=R8) ::
+     *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1)
+      integer, save :: qc_style = 1
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -152,6 +156,7 @@
 *   ..read input data
       call ipgeti ('b2agmt_volhmk', volhmk)
       call ipgetr ('b2agmt_1d_width', width)
+      call ipgeti ('b2agmt_qc_style', qc_style)
       call xertst (0.0_R8.lt.width, 'faulty input width')
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -320,8 +325,47 @@
         enddo
        enddo
       endif
+
 *   ..test sign of vol
       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
+
+*   ..improved computation of qc 
+cwdk  based on average field direction of neighboring cells
+cwdk  avoids artificial reduction of poloidal contact area at faces for
+cwdk  curvilinear grids; angle between left face and average direction of top/bottom
+cwdk  faces is not representative for orthogonality of left face to field!
+      if (qc_style.eq.1) then
+cwdk   poloidal unit vector in cell centers, ebc
+       do iy = -1, ny
+        do ix = -1, nx
+         t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
+         t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
+         ebc(ix,iy,0) = t0/norm(t0,t1)
+         ebc(ix,iy,1) = t1/norm(t0,t1)
+        enddo
+       enddo
+cwdk   poloidal unit vector at left faces, ebf
+       call intfaceh(nx,ny,leftix,leftiy,vol,ebc(-1,-1,0),ebf(-1,-1,0))
+       call intfaceh(nx,ny,leftix,leftiy,vol,ebc(-1,-1,1),ebf(-1,-1,1))
+cwdk   computation of qc
+       do iy = -1, ny
+        do ix = -1, nx
+cwdk     note: qc in left ghosts unchanged
+         if (leftix(ix,iy).ne.-2) then
+          qc(ix,iy) = cosang ( ebf(ix,iy,0), ebf(ix,iy,1), 
+     &      crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+         endif
+         if(qc(ix,iy).le.0.0_R8) then
+          write(*,'(a,1x,1f9.6,2i4)')
+     1     'Problem in b2agmt: qc(ix,iy) <= 0',qc(ix,iy),ix,iy
+          write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
+          write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
+         endif
+        enddo
+       enddo
+*    ..test sign of qc
+       call b2xvsg (n2, qc, 1, 'qc', '.gt.')
+      endif
 
 * ..return
       call subend ()
@@ -337,10 +381,9 @@ C Corners are numbered in the B2 convention 2-3
 C                                           0-1
       function XquadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
       use b2mod_types
+      use b2mod_indirect, only: triangleArea
       implicit none
       real (kind=R8) :: XquadCentroid
-      real (kind=R8) :: triangleArea
-      external triangleArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
   
       XquadCentroid =
@@ -355,10 +398,9 @@ C                                           0-1
 
       function YquadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
       use b2mod_types
+      use b2mod_indirect, only: triangleArea
       implicit none
       real (kind=R8) :: YquadCentroid
-      real (kind=R8) :: triangleArea
-      external triangleArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
   
       YquadCentroid =
@@ -394,15 +436,3 @@ C Coordinates of centroid of a triangle given by vertex coordinates
 
       end subroutine b2agmt
 
-C Area of triangle given by vertex coordinates
-      function triangleArea( x0, y0, x1, y1, x2, y2 )
-      use b2mod_types
-      implicit none
-      real (kind=R8) :: triangleArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2
-      intrinsic abs
-  
-      triangleArea = 0.5_R8 * abs( (x1-x0)*(y2-y0)
-     & - (y1-y0)*(x2-x0) )
-      return
-      end function triangleArea

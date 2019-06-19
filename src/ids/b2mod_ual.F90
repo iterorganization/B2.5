@@ -12,8 +12,15 @@ module b2mod_ual
 
     use b2mod_types
 #ifdef IMAS
-    use ids_schemas  ! IGNORE
-    use ids_routines ! IGNORE
+    use b2mod_ual_io &
+     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport
+    use b2mod_ual_io &
+     & , only : b25_process_ids, ids_put, ids_deallocate, imas_close, &
+     &          imas_create_env, imas_open_env
+#if UAL_MAJOR_VERSION < 4
+    use b2mod_ual_io &
+     & , only : imas_create, imas_create_hdf5, imas_open_hdf5, imas_open
+#endif
 #else
 # ifdef ITM
     use euITM_schemas  ! IGNORE
@@ -28,6 +35,8 @@ module b2mod_ual
   public open_ual, close_ual
 #ifdef IMAS
   public put_ids_edge
+  public b25_process_ids
+  public ids_edge_profiles, ids_edge_sources, ids_edge_transport
 #endif
 
 
@@ -36,17 +45,17 @@ contains
 #ifdef IMAS
     !> Subroutine used to put data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
-    subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &
+    subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport, &
             &   treename, shot, run, idx, username, device, version )
-        type(ids_edge_profiles), intent(inout)  :: edge_profiles    !< IDS
+        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
             !< designed to store data on edge plasma profiles  (includes the
             !< scrape-off layer and possibly part of the confined plasma)
-        type (ids_edge_sources), intent(inout)  :: edge_sources     !< IDS
+        type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
             !< designed to store data on edge plasma sources. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
-        type (ids_edge_transport), intent(inout)  :: edge_transport !< IDS
+        type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
             !< designed to store  data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
@@ -55,7 +64,7 @@ contains
             !< (i.e. "edge_profiles" (mandatory) )
         integer, intent(in) :: shot !< The shot number of the database being created
         integer, intent(in) :: run  !< The run number of the database being created
-        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
+        integer, intent(out) :: idx  !< The returned identifier to be used in the subsequent
             !< data access operation
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
             !< database
@@ -114,8 +123,8 @@ contains
                                                     !< database
         character(*), intent(in), optional :: tokamak !< Device name of the
             !< database (i. e. solps-iter, iter, aug)
-        character(*), intent(in), optional :: dataversion   !< Major version of the
-                                                            !< database
+        character(*), intent(in), optional :: dataversion   !< Major version of
+                                                            !< the database
         logical, intent(in), optional :: doCreate
         logical, intent(in), optional :: useHdf5
         character(*), intent(in), optional :: nmlFile
@@ -145,7 +154,8 @@ contains
         logical :: namelistExists, openEnv = .false.
 
         namelist /ual_namelist/ lTreename, lShot, lRun, lTime, lRefshot,    &
-            &   lRefrun, lUser, lTokamak, lDataversion, openEnv, lDoCreate, lUseHdf5
+            &   lRefrun, lUser, lTokamak, lDataversion, openEnv, lDoCreate, &
+            &   lUseHdf5
 
         if( present( shot ) ) lShot = shot
         if( present( run ) ) lRun = run
@@ -174,7 +184,8 @@ contains
             close( unit=NAMELIST_UNIT )
         else
             if( present( nmlFile ) ) then
-                open( unit=NAMELIST_UNIT, file=nmlFile, status="new", action="write")
+                open( unit=NAMELIST_UNIT, file=nmlFile, status="new", &
+                    &   action="write" )
             else
                 open( unit=NAMELIST_UNIT, file=NAMELIST_FILE, status="new", &
                     &   action="write" )
@@ -187,36 +198,57 @@ contains
         if( lDoCreate) then
 #ifdef IMAS
             if( lUseHdf5) then
-                call imas_create_hdf5(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+# if UAL_MAJOR_VERSION < 4
+                call imas_create_hdf5(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
+# else
+                call xerrab ('HDF5 IMAS format not supported with UAL v4!')
+# endif
             else
                 if( openEnv) then
                     call imas_create_env(lTreename, lShot, lRun, lRefshot,  &
                         &   lRefrun, idx, lUser, lTokamak, lDataversion)
                 else
-                    call imas_create(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+# if UAL_MAJOR_VERSION < 4
+                    call imas_create(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
+# else
+                    call xerrab ('Must define username!')
+# endif
                 end if
             end if
         else
             if( lUseHdf5) then
+# if UAL_MAJOR_VERSION < 4
                 call imas_open_hdf5(lTreename, lShot, lRun, idx)
+# else
+                call xerrab ('HDF5 IMAS format not supported with UAL v4!')
+# endif
             else
                 if( openEnv) then
-                    call imas_open_env(lTreename, lShot, lRun, idx,  lUser, &
+                    call imas_open_env(lTreename, lShot, lRun, idx, lUser, &
                         &   lTokamak, lDataversion)
                 else
-                    call imas_open(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+# if UAL_MAJOR_VERSION < 4
+                    call imas_open(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
+# else
+                    call xerrab ('Must define username!')
+# endif
                 end if
             end if
 #else
-#ifdef ITM
+# ifdef ITM
             if( lUseHdf5) then
-                call euITM_create_hdf5(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+                call euITM_create_hdf5(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
             else
                 if( openEnv) then
                     call euITM_create_env(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx, lUser, lTokamak, lDataversion)
                 else
-                    call euITM_create(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+                    call euITM_create(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
                 end if
             end if
         else
@@ -224,15 +256,16 @@ contains
                 call euITM_open_hdf5(lTreename, lShot, lRun, idx)
             else
                 if( openEnv) then
-                    call euITM_open_env(lTreename, lShot, lRun, idx,  lUser,    &
+                    call euITM_open_env(lTreename, lShot, lRun, idx,  lUser,  &
                         &   lTokamak, lDataversion)
                 else
-                    call euITM_open(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+                    call euITM_open(lTreename, lShot, lRun, lRefshot, &
+                        &   lRefrun, idx)
                 end if
             end if
-#else
+# else
             idx = 0
-#endif
+# endif
 #endif
         end if
 
@@ -252,9 +285,9 @@ contains
 #ifdef IMAS
         call imas_close(idx)
 #else
-#ifdef ITM
+# ifdef ITM
         call euITM_close(idx)
-#endif
+# endif
 #endif
     end subroutine close_ual
 

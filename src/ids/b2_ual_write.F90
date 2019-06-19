@@ -25,26 +25,10 @@
 program b2_ual_write
 
     use b2mod_main
-    use b2mod_ual
     use b2mod_grid_mapping
-    use b2mod_ual_io
-    use ids_schemas     ! IGNORE
-                        !! These are the Fortran type definitions for the
-                        !! Physics Data Model
-    use ids_routines    ! IGNORE
-                        !! These are the Access Layer routines + management of
-                        !! IDS structures
-    use ids_grid_common &       ! IGNORE
-        & , IDS_COORDTYPE_R => COORDTYPE_R    &
-        & , IDS_COORDTYPE_Z => COORDTYPE_Z
-        ! &   GRID_UNDEFINED  => B2_GRID_UNDEFINED
-    use ids_string              ! IGNORE
-    use ids_grid_subgrid        ! IGNORE
-    use ids_grid_objectlist     ! IGNORE
-    use ids_grid_unstructured   ! IGNORE
-    use ids_grid_structured     ! IGNORE
-    use ids_grid_access         ! IGNORE
-    use ids_grid_object         ! IGNORE
+    use b2mod_ual    &
+     & , only : put_ids_edge, b25_process_ids, &
+     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport
 
 #ifdef USE_PXFGETENV
     integer lenval, ierror
@@ -128,12 +112,13 @@ program b2_ual_write
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    call B25_process_ids( edge_profiles, edge_sources, edge_transport )
+    call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+        &  tim, dtim )
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,   &
-        &   shot, run, idx, username, device, version )
+    call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
+        &   treename, shot, run, idx, username, device, version )
 
 end program b2_ual_write
 

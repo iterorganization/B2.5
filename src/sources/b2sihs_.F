@@ -512,7 +512,7 @@
        shefr = 0.0_R8
        do is = 0,ns-1
          if(.not. is_neutral(is)) then
-           call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,
+           call b2sifrtf (nx, ny, ns, is, ismain, bb, na, ua,
      &      ue, te, ti, ni, ne, ne2,
      &      zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2,           !srv 05.07.17
      &      zeff, smbfrea, smbfria, smbtfea, smbtfia,                 !srv 05.07.17
@@ -639,7 +639,7 @@
          else
 *      ..contribution from friction involving neutral species
 *        (We ignore such a term, except for charge exchange friction
-*        between H0 and H1.d0 That term is calculated via the atomic
+*        between H0 and H1. That term is calculated via the atomic
 *        physics routines.)
          endif
         enddo

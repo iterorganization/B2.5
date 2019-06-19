@@ -1040,7 +1040,7 @@ C----SET TMP TO PERMUTED B
     1   CONTINUE
 C
 C----SOLVE  UT D Y = B  BY FORWARD SUBSTITUTION
-        DO 3 K=1,N
+        DO K=1,N
           TMPK = TMP(K)
           JMIN = IU(K)
           JMAX = IU(K+1) - 1
@@ -1050,6 +1050,7 @@ C----SOLVE  UT D Y = B  BY FORWARD SUBSTITUTION
             TMP(JU(MU+J)) = TMP(JU(MU+J)) + U(J) * TMPK
     2     CONTINUE
     3     TMP(K) = TMPK * D(K)
+        ENDDO
 C
 C----SOLVE  U X = Y  BY BACK SUBSTITUTION
         K = N
@@ -1149,7 +1150,7 @@ C----FOR EACH NONZERO ELEMENT (IN REVERSE ORDER)
         JMIN = IA(1)
         JMAX = IA(N+1) - 1
         J = JMAX
-        DO 6 JDUMMY=JMIN,JMAX
+        DO JDUMMY=JMIN,JMAX
           I = R(J)
           IF (.NOT.DFLAG .OR. JA(J).NE.I .OR. I.EQ.ILAST)  GO TO 5
 C
@@ -1163,6 +1164,7 @@ C------PUT (OFF-DIAGONAL) NONZERO IN LAST UNUSED LOCATION IN ROW
             R(J) = Q(I)
 C
     6     J = J-1
+        END DO
 C
 C
 C--PHASE 3 -- PERMUTE (JA,A) TO UPPER TRIANGULAR FORM (WRT NEW ORDERING)
@@ -1318,7 +1320,7 @@ C----INITIALIZATION
     1   CONTINUE
 C
 C----FOR EACH ROW K
-        DO 18 K=1,N
+        DO K=1,N
           LUK = 0
           Q(K) = N+1
 C
@@ -1431,6 +1433,7 @@ C------ADD K TO ROW LIST FOR FIRST NONZERO ELEMENT IN K-TH ROW
             JL(I) = K
 C
    18     IU(K+1) = IU(K) + LUK
+        END DO
 C
         FLAG = 0
         RETURN

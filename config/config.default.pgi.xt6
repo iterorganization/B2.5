@@ -24,8 +24,10 @@ FC = ftn
 
 ifdef SOLPS_DEBUG
 FCOPTS = -g -C
+LDOPTS = -g -C
 else
 FCOPTS = -O3
+LDOPTS =
 endif
 
 DBLFC=${FC}
@@ -52,11 +54,6 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = $(FC)
-ifdef SOLPS_DEBUG
-LDOPTS = -g -C
-else
-LDOPTS = 
-endif
 
 LCPP= ${LD_SONNET}
 

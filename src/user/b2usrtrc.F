@@ -139,7 +139,7 @@ c*** Global values
       character hlp_hg3(ngl3_tmp)*10
       integer ngl4_tmp
       parameter (ngl4_tmp=3)
-      integer kgl4_tmp(2)
+c     integer kgl4_tmp(2)
       real (kind=R8) ::
      *     equg4_tmp(ngl4_tmp)
       real (kind=R8) ::
@@ -231,14 +231,15 @@ c-----------------------------------------------------------------------
      ,  hlp_ne_he_c, hlp_ne_he_s
       real (kind=R8) ::
      *  d, e, s, x
-      real (kind=R8) :: pr(-1:nx,-1:ny), xdum(1)
+      real (kind=R8) :: pz(-1:nx,-1:ny), xdum(1)
       real (kind=R8) :: stim = 0.0_R8
       real (kind=R8) :: tdummy
       integer i, j, k, l, m, n, i0, is, ix, iy, js, nv, irt,
      ,  j_he_i, l_pad_str, n_pad_str
 #ifdef B25_EIRENE
       integer ia, im, iyp, ls
-      real (kind=R8) :: a, g, t, v, e0, hlp_h, hlp_p, hlp_tot, hlpnw
+      real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_tot, hlpnw
+c     real (kind=R8) :: e0
 #endif
 c*** radial position of the separatrix and poloidal positions of
 c*** targets and midplane for DoD calculation for each target
@@ -385,48 +386,51 @@ c*** Calculate the basic quantities for each surface/species
 
         hlp_ardts=0.0_R8
         ndta_tmp=nmnt_tmp
-        do k=1,nntrgrp !{
-          do i=intrgrp(k),jntrgrp(k) !{
-            l=lntrgrp(i)
-            hlp_ardts(k)=hlp_ardts(k)+wlarea(l)
-            do j=1,ndts_tmp !{
-              m=ndtx_tmp(j)
-              if(i.eq.intrgrp(k)) then !{
-                x=wlabsrp(m,l)
-                if(x.gt.0.0_R8) ndta_tmp(k,j)=ndtk_tmp
-                hlp_ksdts(k,j)=x
-              else !}{
-                if(x.ge.0.0_R8 .and. wlabsrp(m,l).ne.x) then !{
-                  ndta_tmp(k,j)=nmnt_tmp
-                  print *,'b2usrtrc: different absorption coefficients',
+        if (use_eirene.ne.0) then
+          do k=1,nntrgrp !{
+            do i=intrgrp(k),jntrgrp(k) !{
+              l=lntrgrp(i)
+              hlp_ardts(k)=hlp_ardts(k)+wlarea(l)
+              do j=1,ndts_tmp !{
+                m=ndtx_tmp(j)
+                if(i.eq.intrgrp(k)) then !{
+                  x=wlabsrp(m,l)
+                  if(x.gt.0.0_R8) ndta_tmp(k,j)=ndtk_tmp
+                  hlp_ksdts(k,j)=x
+                else !}{
+                  if(x.ge.0.0_R8 .and. wlabsrp(m,l).ne.x) then !{
+                    ndta_tmp(k,j)=nmnt_tmp
+                    print *,
+     ,                 'b2usrtrc: different absorption coefficients',
      ,                 ' for diagnostic surface group ',gntrgrp(k),
      ,                 ', species ',j
-                  hlp_ksdts(k,j)=0.0_R8
-                  exit
+                    hlp_ksdts(k,j)=0.0_R8
+                    exit
+                  end if !}
                 end if !}
-              end if !}
+              end do !}
             end do !}
           end do !}
-        end do !}
 c!###{
-c        print *
-c        print *,'b2usrtrc: after initialisation. ',
-c     ,           'nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp=',
-c     ,            nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp
-c        write(f,'(10h(1x,a9,2x,,i2,3hi3))') ndts_tmp
-c        print *,'tallies (ndta_tmp):'
-c        print f,(gntrgrp(i),(ndta_tmp(i,j),j=1,ndts_tmp),i=1,nntrgrp)
-c        print *
-c        print f,'ndtm_tmp',(ndtm_tmp(j),j=1,ndts_tmp)
-c        print f,'ndtx_tmp',(ndtx_tmp(j),j=1,ndts_tmp)
-c        write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp
-c        print f,'hlp_awdts',(hlp_awdts(j),j=1,ndts_tmp)
-c        print *,'area/absorption:'
-c        write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp+1
-c        print f,(gntrgrp(i),hlp_ardts(i),
+c          print *
+c          print *,'b2usrtrc: after initialisation. ',
+c     ,            'nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp=',
+c     ,             nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp
+c          write(f,'(10h(1x,a9,2x,,i2,3hi3))') ndts_tmp
+c          print *,'tallies (ndta_tmp):'
+c          print f,(gntrgrp(i),(ndta_tmp(i,j),j=1,ndts_tmp),i=1,nntrgrp)
+c          print *
+c          print f,'ndtm_tmp',(ndtm_tmp(j),j=1,ndts_tmp)
+c          print f,'ndtx_tmp',(ndtx_tmp(j),j=1,ndts_tmp)
+c          write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp
+c          print f,'hlp_awdts',(hlp_awdts(j),j=1,ndts_tmp)
+c          print *,'area/absorption:'
+c          write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp+1
+c          print f,(gntrgrp(i),hlp_ardts(i),
 c     ,                       (hlp_ksdts(i,j),j=1,ndts_tmp),i=1,nntrgrp)
-c        print *
+c          print *
 c!###}
+        end if
 
 c*** Find the Eirene surfaces corresponding to PFR interfaces
 c***  (npfs_tmp, lpfs_tmp, hlp_arpfs)
@@ -434,24 +438,26 @@ c***  (npfs_tmp, lpfs_tmp, hlp_arpfs)
         npfs_tmp=0
         lpfs_tmp=0
         hlp_arpfs=0
-        do i=1,nstrai !{
-          k=0
-          if(crcstra(i).eq.'S') then !{
-            if(rcend(i).le.leftcut(1)-1) then !{
-              k=1
-            else if(rcstart(i).gt.leftcut(nncut)-1) then !}{
-              k=2
+        if (use_eirene.ne.0) then
+          do i=1,nstrai !{
+            k=0
+            if(crcstra(i).eq.'S') then !{
+              if(rcend(i).le.leftcut(1)-1) then !{
+                k=1
+              else if(rcstart(i).gt.leftcut(nncut)-1) then !}{
+                k=2
+              end if !}
+              if(k.gt.0) then !{
+c                print *,'i,k,msns=',i,k,msns(1,i),msns(2,i) !###
+                do j=msns(1,i),msns(1,i)+msns(2,i)-1 !{
+                  npfs_tmp(k)=npfs_tmp(k)+1
+                  lpfs_tmp(npfs_tmp(k),k)=lsns(j)
+                  hlp_arpfs(k)=hlp_arpfs(k)+wlarea(lsns(j))
+                end do !}
+              end if !}
             end if !}
-            if(k.gt.0) then !{
-c              print *,'i,k,msns=',i,k,msns(1,i),msns(2,i) !###
-              do j=msns(1,i),msns(1,i)+msns(2,i)-1 !{
-                npfs_tmp(k)=npfs_tmp(k)+1
-                lpfs_tmp(npfs_tmp(k),k)=lsns(j)
-                hlp_arpfs(k)=hlp_arpfs(k)+wlarea(lsns(j))
-              end do !}
-            end if !}
-          end if !}
-        end do !}
+          end do !}
+        end if
 
 c*** Find the B2 cell ranges corresponding to PFR interfaces
 c***  (ipfc_tmp, jpfc_tmp)
@@ -659,7 +665,7 @@ c*** ... and separatrix
         hlp_ne_he_s=0.0_R8
         iy=jsep+1
 
-c      print *,'%% b2usrtrc: j_he_i,iy = ',j_he_i,iy !###
+c        print *,'%% b2usrtrc: j_he_i,iy = ',j_he_i,iy !###
 
         do ix=0,nx-1 !{
           if (on_closed_surface(ix,iy-1)) then  !{
@@ -735,7 +741,7 @@ c-----------------------------------------------------------------------
         hlp_s=0.0_R8
         hlp_hep=0.0_R8
 #ifdef DBG
-        print '(a,6i4)',
+        print '(1x,a,6i4)',
      ,          '%%## j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o',!###
      ,                j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o  !###
 #endif
@@ -840,8 +846,8 @@ c*** Outer divertor
           hlp_p=hlp_pi+hlp_po
         end if !}
 c<<<
-c      print '(a,1p,2i4,20e12.3)',' %%## m,n,hlp_so,hlp_hep,hlp_p: ',
-c     ,                                  m,n,hlp_so,hlp_hep,hlp_p
+c        print '(a,1p,2i4,20e12.3)',' %%## m,n,hlp_so,hlp_hep,hlp_p: ',
+c     ,                                    m,n,hlp_so,hlp_hep,hlp_p
 c>>>
         if(hlp_s.gt.0.0_R8) then !{
           hlp_ppfr=hlp_p/hlp_s
@@ -1241,15 +1247,15 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
       hlp_dod=0.0_R8
       hlp_isat=0.0_R8
       mgl3_tmp=0
-      call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
+      call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
 c      print *,'### print_isat=',print_isat    !###
       do k=1,4 !{
         if(itg_tmp(k).ne.-2) then !{
 c          print * !###
           d=1.e18_R8
           do iy=isp_tmp(k),ny-1 !{
-            e=2.0_R8*pr(itg_tmp(k),iy)
-            if(e.gt.0.0_R8) d=min(d,pr(imp_tmp(k),iy)/e)
+            e=2.0_R8*pz(itg_tmp(k),iy)
+            if(e.gt.0.0_R8) d=min(d,pz(imp_tmp(k),iy)/e)
 c            print *,'e,d=',e,d  !###
           end do !}
           hlp_dod(k)=d

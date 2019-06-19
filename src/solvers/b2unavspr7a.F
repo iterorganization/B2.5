@@ -26,7 +26,7 @@
 *
 *   ..local variables
       integer, save :: ncall = 0, iout = 0
-      integer n2, ix, iy, ixt, ixb, iyt, iyb, ireg
+      integer ix, iy, ixt, ixb, iyt, iyb, ireg
       real (kind=R8), save :: vis_per = 1.0_R8
       real (kind=R8) ::
      &   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
@@ -45,8 +45,6 @@
        call ipgeti ('b2unavspr7a_iout', iout)
        call ipgetr ('b2tfnb_vis_per', vis_per)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 

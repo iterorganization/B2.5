@@ -4,8 +4,9 @@ c     -------------------------------------------------------------------------
 c     03/21/97 bhs
 c     09/12/07 xpb : source CODATA 2006 (http://www.nist.gov/)
 c     19/03/18 xpb : source CODATA 2014 (http://www.nist.gov/)
+c     03/06/19 xpb : source CODATA 2018 (http://www.nist.gov/)
 c     -------------------------------------------------------------------------
 
       real (kind=R8) ::
      *   const_h
-      parameter (const_h=6.626070040e-34_R8)
+      parameter (const_h=6.62607015e-34_R8)

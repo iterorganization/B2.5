@@ -218,22 +218,7 @@ program b2_ual_write_b2mod
     use b2mod_ual
     use b2mod_grid_mapping
     use b2mod_ual_io
-    use ids_schemas     ! IGNORE
-                        !! These are the Fortran type definitions for the
-                        !! Physics Data Model
-    use ids_routines    ! IGNORE
-                        !! These are the Access Layer routines + management of
-                        !! IDS structures
-    use ids_grid_common &       ! IGNORE
-        & , IDS_COORDTYPE_R => COORDTYPE_R    &
-        & , IDS_COORDTYPE_Z => COORDTYPE_Z
-        ! &   GRID_UNDEFINED  => B2_GRID_UNDEFINED
-    use ids_string              ! IGNORE
-    use ids_grid_subgrid        ! IGNORE
-    use ids_grid_objectlist     ! IGNORE
-    use ids_grid_unstructured   ! IGNORE
-    use ids_grid_structured     ! IGNORE
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
     use ids_grid_examples       ! IGNORE
 #endif
 
@@ -355,12 +340,13 @@ program b2_ual_write_b2mod
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    call B25_process_ids( edge_profiles, edge_sources, edge_transport )
+    call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+        &  tim, dtim )
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,   &
-        &   shot, run, idx, username, device, version )
+    call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
+        &   treename, shot, run, idx, username, device, version )
 
     ! call read_ids(treename, shot, run, idx, username, &
     !                                     & device, version )
@@ -391,7 +377,7 @@ contains
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
         integer, intent(in) :: shot !< The shot number of the database being created
         integer, intent(in) :: run  !< The run number of the database being created
-        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
+        integer, intent(out) :: idx !< The returned identifier to be used in the subsequent
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS database
         character(len=24), intent(in) :: device !< Device name of the IMAS IDS database
             !< (i. e. solps-iter, iter, aug)
@@ -412,7 +398,7 @@ contains
 
         write(0,*) "homogeneous_time = ",   &
             &   edge_profiles%ids_properties%homogeneous_time
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
         write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
             &   grid_subset(gridSubset_index)%identifier%name
         write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &

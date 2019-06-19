@@ -10,7 +10,7 @@
       integer ix1, iy1, ix, iy
       real (kind=R8) ::
      *   t0, t1, t2
-      intrinsic min, max, real
+      intrinsic min, max
       external b2xvfx, rratio
       real (kind=R8) ::
      *   med, rratio

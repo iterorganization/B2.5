@@ -29,11 +29,20 @@ else
 FC       = ifort
 endif
 endif
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
 
-ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -debug all -traceback -check all
+ifndef SOLPS_DEBUG
+FCOPTS  += -O2 -vec_report0
 else
-FCOPTS   = -O2 -vec_report0
+FCOPTS  += -g -C -traceback -debug all -check all
+endif
+ifdef USE_MPI
+FCOPTS  += ${MPI_CPP}
+LDOPTS  += ${LD_MPI}
+endif
+
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+LDOPTS  += -i_dynamic
 endif
 
 DBLFC    = ${FC}
@@ -54,24 +63,22 @@ CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef IMAS_VERSION
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MINOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f2 )
 ifndef SOLPS_CPP
-EQUIVS    += -DIMAS
+EQUIVS    += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION}
 endif
 LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
 IMASLIBS   = ${LD_UAL} -lggd-ifort
 endif
 
-#wd: removed; seems to be unused
-#ifdef B25_EIRENE
-#LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
-#endif
 ifdef PERFMON
 LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 LD       = ${FC}
-LDOPTS   = -i_dynamic
 
 LCPP     = ${LD_SONNET}
 

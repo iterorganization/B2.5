@@ -132,6 +132,7 @@ cank }
 
       integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns,
      .     dbg_eir_mc, debug_flags(100), neutrals_count
+      integer, allocatable, save :: lbcstra(:)
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
      .     volrecinc, volrecwt
@@ -259,9 +260,10 @@ csw 21feb2012
       call xertst (nmol_in.le.NMOLID, 'faulty parameter nmol_in')
       call xertst (nion_in.le.NIONID, 'faulty parameter nion_in')
       call xertst (nsts_in.le.NSTSID, 'faulty parameter nsts_in')
-      call xertst (nstra_in.le.NSTRAID, 'faulty parameter nstraid_in')
 #endif
+      call xertst (nstra_in.le.NSTRAID, 'faulty parameter nstraid_in')
       call xertst (natm_in.ge.nspecies, 'faulty parameter natm_in')
+      allocate(lbcstra(nstra_in))
       CRCSTRA=' '
       SPS_ID=' '
       SPS_MTRL=' '
@@ -328,6 +330,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       neutrals_time_switch=0.0_R8
 
       lstrascl=0
+      lbcstra=0
       b2eatcr=0
       b2espcr=0
       eb2atcr=-1
@@ -456,6 +459,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(chemical_sputter_yield)
 #endif
 #endif
+      deallocate(lbcstra)
       return
       end subroutine dealloc_b2mod_neutrals
 
@@ -872,7 +876,7 @@ c>>>
           endif
         endif
       enddo
-      write(hlp_frm,'(a,i2,a)') '(a,',ntrack,'(a2,1x))'
+      write(hlp_frm,'(a,i2,a)') '(1x,a,',ntrack,'(a2,1x))'
       write(*,hlp_frm) 'track_species : Bulk ', track_species(1:ntrack)
 c.. Test consistency with region boundaries
       if (.not.dotest) return
@@ -1047,6 +1051,7 @@ c.. Test consistency with physical edges within the computational domain
      .     'Mismatch with left internal edge (North) !')
         endif
       enddo
+      call map_strata_to_boundaries(nx,ny)
       return
 
   999 call xerrab ('Error while reading NEUTRALS namelist!')
@@ -1119,5 +1124,57 @@ c.. Test consistency with physical edges within the computational domain
       return
 
       end subroutine write_b2mod_neutrals_save
+
+      subroutine map_strata_to_boundaries(nx,ny)
+      use b2mod_boundary_namelist
+      implicit none
+      integer nx, ny
+      integer ib, ix
+      integer, allocatable :: bc(:,:), rc(:,:)
+      logical, allocatable :: coincide(:)
+
+! Try to create a list which maps strata to boundaries
+! LBCSTRA(ISTRA) will contain the index of the boundary condition corresponding
+! to the recycling stratum ISTRA
+! Can only be determined if both b2.boundary.parameters and
+! b2.neutrals.parameters have been read
+      lbcstra = 0
+      allocate (bc(-1:nx,-1:ny))
+      allocate (rc(-1:nx,-1:ny))
+      allocate (coincide(nstrai))
+      bc = 0
+      rc = 0
+      coincide = .true.
+      do ib = 1, nbc
+        do ix = 1, bc_list_size(ib)
+          bc(bc_list_x(ix,ib),bc_list_y(ix,ib)) = ib
+        end do
+      end do
+      do ib = 1, nstrai
+        if (crcstra(ib).ne.'N' .and. crcstra(ib).ne.'S' .and.
+     &      crcstra(ib).ne.'W' .and. crcstra(ib).ne.'E') cycle
+        do ix = 1, rc_list_size(ib)
+          rc(rc_list_x(ix,ib),rc_list_y(ix,ib)) = ib
+        end do
+        lbcstra(ib) = bc(rc_list_x(1,ib),rc_list_y(1,ib))
+        do ix = 2, rc_list_size(ib)
+          coincide(ib) = coincide(ib) .and.
+     &     bc(rc_list_x(ix,ib),rc_list_y(ix,ib)).eq.lbcstra(ib)
+        end do
+      end do
+      do ib = 1, nstrai
+#ifdef DBG
+        write(*,*) 'istra = ',ib,' crcstra = ', crcstra(ib),
+     &    ' lbcstra = ',lbcstra(ib)
+#endif
+        call xertst (coincide(ib),
+     &   'Mapping between recycling strata and '//
+     &   'boundary conditions is not unique!')
+      end do
+      deallocate(bc,rc)
+      deallocate(coincide)
+
+      return
+      end subroutine map_strata_to_boundaries
 
       end module b2mod_neutrals_namelist
