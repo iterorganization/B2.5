@@ -1237,12 +1237,14 @@ cdjm Jan2017 store components of fnb for balance
      &                (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
               else
                 fna_drift(ix,iy,1,isb) = vbecrb(ix,iy,1)*
-     &                (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &                (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &            (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &            (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
               endif
             endif
             if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
-              fna_ch(ix,iy,1,isb) = scur
+              fna_ch(ix,iy,1,isb) = scur*
+     &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
             else
               fna_ch(ix,iy,1,isb) = 0.0_R8
             endif
