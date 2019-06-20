@@ -835,7 +835,7 @@ csw 16oct2012 init ier0
             end do
             if (new_matrix) call restart_ma28
             call b2nppo (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 22.05.18
-     &        rxf2, ne, te, conc, sch, po, fch, respo, corpo, ier0)
+     &       rxf2, ne, te, conc, sch, po, fch, respo, corpo, ier0)
             last_solve_5(0:nnreg(0))=solvepo(0:nnreg(0))
            else
             call b2npp7 (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 27.01.00 22.05.18
@@ -852,7 +852,7 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
             call b2nppo (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 22.05.18
      &       rxf2, ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
            else
-            call b2npp7 (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 27.01.00  22.05.18
+            call b2npp7 (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 27.01.00 22.05.18
      &       rxf2, ne, te, conc, avisper, bvisper, cvisper,
      &       sch, po, fch, wrk0, wrk1, ier0)
            endif                                                         !srv 06.07.00

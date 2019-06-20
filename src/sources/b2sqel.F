@@ -117,7 +117,7 @@
 !$OMP& shared(rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
 !$OMP& shared(rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
 !$OMP& shared(zamin, zamax, phm0, phm1, phm2, ev, ns, nx, ny)
-!$OMP& shared(cutll, cutlo, art_rad, ismain, TNORM, TE)
+!$OMP& shared(cutll, cutlo, art_rad, ismain, ncall, TNORM, TE)
 !$OMP DO
 #endif
 *   ..compute wrk0(,)=log(te(,)/ev)
@@ -175,6 +175,11 @@
 
 * ..artificial radiation                DPC 2000.08.25
       if(art_rad.ne.0.0_R8) then
+        if(ncall.eq.0) then
+          art_rad=abs(art_rad)
+          write(*,*)
+     1     'Artificial radiation model active, art_rad = ',art_rad
+        endif
         is=ismain    ! XPB 2007.11.02 was ns-1
 #ifndef NO_OPENMP_B2SQEL
 !$OMP DO

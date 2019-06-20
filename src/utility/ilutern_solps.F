@@ -149,8 +149,8 @@ c        IF (A1HN.EQ.0.0_R8) THEN
 
 csw 12oct2012 in case of b2swtest=T --> reinit solver
 c             (maybe necessary in case of multi-fluid?)
-
       if(b2swtest.eq.1) lfirst=.true.
+
 !!FR The b2_matrix file will not write out correctly if code runs in parallel 
 !!FR thus ensure that the code will not be executed if accessed in parallel region.
       if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
@@ -224,7 +224,7 @@ cdpc
               iy = (i-1)/n1+1
               ix = i-(iy-1)*n1
               write(69,'(i6,2(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
-     .         aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy), 
+     .         aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy),
      .         ano(ix,iy), rhs(ix,iy)
             enddo
             write(69,*) nz,' nz'

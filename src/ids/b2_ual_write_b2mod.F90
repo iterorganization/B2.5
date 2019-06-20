@@ -342,7 +342,7 @@ program b2_ual_write_b2mod
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    call B25_process_ids( edge_profiles, edge_sources, edge_transport , &
+    call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
         &  radiation, tim, dtim )
 
     !! Create Write the set data to IDSs

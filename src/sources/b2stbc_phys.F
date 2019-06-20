@@ -8801,7 +8801,7 @@ cxpb Careful here because of BC number clash
         write(*,*) BCENI(IB)
         call xerrab ('BCENI out of bounds')
       end select
-        
+
       return
       end subroutine b2stbc_phys_eni
 
@@ -9883,7 +9883,7 @@ c end of implementation
         write(*,*) BCPOT(IB)
         call xerrab ('BCPOT out of bounds')
       end select
-        
+
       if(istyle_cur_contr_on_S_and_N.eq.0) then                       !srv 01.02.09
 !xpb
 !xpb  Adding fchy_dia contributions on south and north boundaries
