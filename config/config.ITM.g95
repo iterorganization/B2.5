@@ -54,6 +54,10 @@ ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
+ifndef SOLPS_CPP
+EQUIVS   += -DITM
+endif
+
 ifdef IMAS_VERSION
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
@@ -64,14 +68,6 @@ endif
 LD_UAL   ?= `pkg-config imas-g95 --libs`
 INCMODS  += `pkg-config imas-g95 --cflags`
 IMASLIBS  = ${LD_UAL} -lggd-${COMPILER} -L/cineca/prod/opt/compilers/gnu/6.1.0/none/lib64 -lstdc++
-else
-ifdef ITM_ENVIRONMENT_LOADED
-ifndef SOLPS_CPP
-EQUIVS   += -DITM
-endif
-INCMODS  += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_g95_0.93 -I${ITM_GGD_HOME}/include/amd64_g95_0.93 -I${UAL_INCLUDE}/amd64_g95 -I${ITM_ITMCONSTANTS_DIR}/include/amd64_g95_0.93
-IMASLIBS  = ${LD_UAL} -lUALFORTRANInterface_g95
-endif
 endif
 
 LD = $(FC)

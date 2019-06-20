@@ -12,18 +12,9 @@ module b2mod_ual
 
     use b2mod_types
 #ifdef IMAS
-    use b2mod_ual_io &
-     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport
-    use b2mod_ual_io &
-     & , only : b25_process_ids, ids_put, ids_deallocate
-    use b2mod_ual_io &
-     & , only : imas_close, imas_create_env, imas_open_env
-#if UAL_MAJOR_VERSION < 4
-    use b2mod_ual_io &
-     & , only : imas_create, imas_create_hdf5, imas_open_hdf5, imas_open
-#endif
+    use b2mod_ual_io
 #else
-# ifdef ITM
+# ifdef ITM_ENVIRONMENT_LOADED
     use euITM_schemas  ! IGNORE
     use euITM_routines ! IGNORE
 # endif
@@ -139,7 +130,7 @@ contains
 #ifdef IMAS
         character(32) :: lTreename = "ids"
 #else
-# ifdef ITM
+# ifdef ITM_ENVIRONMENT_LOADED
         character(32) :: lTreename = "euitm"
 # else
         character(32) :: lTreename = "none"
@@ -239,7 +230,7 @@ contains
                 end if
             end if
 #else
-# ifdef ITM
+# ifdef ITM_ENVIRONMENT_LOADED
             if( lUseHdf5) then
                 call euITM_create_hdf5(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
@@ -286,7 +277,7 @@ contains
 #ifdef IMAS
         call imas_close(idx)
 #else
-# ifdef ITM
+# ifdef ITM_ENVIRONMENT_LOADED
         call euITM_close(idx)
 # endif
 #endif

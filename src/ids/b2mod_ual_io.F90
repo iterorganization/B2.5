@@ -43,6 +43,7 @@ module b2mod_ual_io
     use b2mod_ual_io_grid &
      & , only : findGridSubsetByName, GridWriteData, &
      &          b2_IMAS_Fill_Grid_Desc
+    use ids_routines       ! IGNORE
 #if IMAS_MINOR_VERSION > 14
     use ids_utility        ! IGNORE
 #endif
@@ -51,7 +52,7 @@ module b2mod_ual_io
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,    &
         &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
 #else
-#ifdef ITM
+#ifdef ITM_ENVIRONMENT_LOADED
     use euITM_schemas   ! IGNORE
     use euITM_routines  ! IGNORE
     use itm_grid_common ! IGNORE
@@ -1269,7 +1270,7 @@ contains
     end function unitVector
 
 #else
-# ifdef ITM
+# ifdef ITM_ENVIRONMENT_LOADED
 
   logical, parameter, private :: INCLUDE_GHOST_CELLS = .false.
 
