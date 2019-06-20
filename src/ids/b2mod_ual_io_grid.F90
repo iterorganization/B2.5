@@ -40,7 +40,7 @@ module b2mod_ual_io_grid
     use ids_grid_common   & ! IGNORE
      & , only : COORDTYPE_R, COORDTYPE_Z, COORDTYPE_PHI
 #else
-# ifdef ITM
+# ifdef ITM_ENVIRONMENT_LOADED
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
     use euITM_schemas ! IGNORE
     use itm_constants , pi => itm_pi ! IGNORE
@@ -150,7 +150,7 @@ module b2mod_ual_io_grid
 
     !! IMAS uses GGD grid subset identifier definitions defined in GSL
     !! (in ids_grid_common)
-#ifdef ITM
+#ifdef ITM_ENVIRONMENT_LOADED
     !! For ITM duplicates were made (old and new variable) in case of ITM code
     !! requiring old variables
     integer, parameter :: B2_GENERIC_SUBGRID_COUNT = 6  !< Total number of
@@ -1149,7 +1149,7 @@ contains
     end subroutine find_Midplane_Cells
 
 #else
-#ifdef ITM
+#ifdef ITM_ENVIRONMENT_LOADED
 
   !> Routine that fills in a grid description which is part of a CPO
   !> using the given grid data and prepared mappings

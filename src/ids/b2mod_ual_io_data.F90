@@ -209,7 +209,7 @@ contains
     end function b2_IMAS_Transform_Data_B2_To_IDS_General
 
 #else
-#ifdef ITM
+#ifdef ITM_ENVIRONMENT_LOADED
 
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
     use euITM_schemas ! IGNORE
