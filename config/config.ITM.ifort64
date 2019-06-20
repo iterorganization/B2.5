@@ -89,6 +89,10 @@ ifdef PERFMON
 LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
+ifndef SOLPS_CPP
+EQUIVS  += -DITM
+endif
+
 ifdef IMAS_VERSION
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
