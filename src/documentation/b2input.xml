@@ -2877,6 +2877,14 @@
 					'iter' for input files from SOLPS-ITER runs (no conversion necessary)
 				</description>
 			</switch>
+			<switch>
+				<name>nrings_for_no_speedUP_averaging</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of poloidal rings in the confined region (counted from separatrix towards the core boundary) where the speed-up method of the partial flux surface averaging should not be implemented
+				</description>
+			</switch>
 		</category>
 		<category name="Numerics">
 			<switchgroup>
