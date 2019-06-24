@@ -40,15 +40,13 @@
 
 *   ..local variables
       integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg 
-     &  , nrings, mintopcut                ! IYS 27.03.2019
       real (kind=R8) ::
      *  ctt, dte, dti, t0, t1, t2
       real (kind=R8) :: 
      *  dte1(-1:nx,-1:ny), dti1(-1:nx,-1:ny),                             !lk 26.10.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny), tt3(-1:ny)                    !lk 26.10.17
-*   ..procedures
-
-      save ncall, stylec, pot_eq, nrings, mintopcut                ! IYS 27.03.2019
+      integer, save :: nrings, jxi, jxa, jsep
+      save ncall, stylec, pot_eq
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
@@ -69,11 +67,11 @@
       n2=(nx+2)*(ny+2)
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       call get_jsep(nx,ny,jxi,jxa,jsep)
        call ipgeti ('b2upht_stylec', stylec)
-       call ipgeti ('nrings_for_no_speedUP_averaging', nrings)     ! IYS 27.03.2019
+       call ipgeti ('nrings_for_no_speedup_averaging', nrings)     ! IYS 27.03.2019
        call xertst (0.le.stylec, 'faulty internal parameter stylec')
        call ipgeti ('b2news_poteq', pot_eq)
-       mintopcut = minval(topcut(1:nncut))     ! IYS 27.03.2019
       endif
 *   ..test nx, ny, ns
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -135,7 +133,7 @@
         dti1(ix,iy) = dti
 *   ..smooth the correction for inner flux surfaces      !lk 26.10.2017{
         if(on_closed_surface(ix,iy) .and. 
-     *    iy .lt. mintopcut - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
+     *     iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
           tt0(iy) = tt0(iy) + vol(ix,iy)*ni(ix,iy,1)
           tt1(iy) = tt1(iy) + vol(ix,iy)*ni(ix,iy,1)*dti1(ix,iy)
           tt2(iy) = tt2(iy) + vol(ix,iy)*ne(ix,iy)
@@ -148,7 +146,7 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if(on_closed_surface(ix,iy) .and. 
-     *    iy .lt. mintopcut - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
+     *     iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
           dti1(ix,iy) = tt1(iy)/tt0(iy) +
      *         corr_core_dt*(dti1(ix,iy)-tt1(iy)/tt0(iy))    ! IYS 19.12.2017
           dte1(ix,iy) = tt3(iy)/tt2(iy) +

@@ -2877,14 +2877,6 @@
 					'iter' for input files from SOLPS-ITER runs (no conversion necessary)
 				</description>
 			</switch>
-			<switch>
-				<name>nrings_for_no_speedUP_averaging</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Number of poloidal rings in the confined region (counted from separatrix towards the core boundary) where the speed-up method of the partial flux surface averaging should not be implemented
-				</description>
-			</switch>
 		</category>
 		<category name="Numerics">
 			<switchgroup>
@@ -3600,11 +3592,19 @@
 				</switch>
 			</switchgroup>
 			<switch>
+				<name>nrings_for_no_speedup_averaging</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of poloidal rings in the confined region (counted from the separatrix towards the core boundary) where the speed-up method of the partial flux surface averaging (CORR_CORE_DN and CORR_CORE_DT) should not be used.
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbc_istyle_cur_contr_on_S_and_N</name>
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '2', SPB form of adding currents on the South core boundary is included by using BCPOT=12, and on the SOuth PFR and North boundaries by using BCPOT=13. It is recommended '2', in conjunction with the BCPOT=12 and BCPOT=13 settings, respectively.
+					When set to '2', SPB form of adding currents on the South core boundary is included by using BCPOT=12, and on the South PFR and North boundaries by using BCPOT=13. It is recommended '2', in conjunction with the BCPOT=12 and BCPOT=13 settings, respectively.
 					When set to '1', SPB form of adding currents on South and North boundaries is done explicitly in addition to other existing boundary conditions for the potential equation.
 					The old 5.0 calculation is recovered by using the value '0'.
 				</description>
@@ -6542,7 +6542,7 @@
 				<default>1.0</default>
 				<type>real*8 array of size (0:NS-1)</type>
 				<description>
-				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a.
+				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 				  See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
 				</description>
 			</switch>
@@ -6551,7 +6551,7 @@
 				<default>1.0</default>
 				<type>real*8</type>
 				<description>
-				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions.
+				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
 				</description>
 			</switch>
