@@ -29,7 +29,7 @@
      *  pb(-1:nx,-1:ny)
       save ncall, alpha, gamma
 *   ..initialization
-      data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/
+      data ncall/0/, alpha/1.0_R8/, gamma/1.0_R8/
 *   ..procedures
       intrinsic max, abs, sqrt
       real (kind=R8) ::
