@@ -11,12 +11,7 @@
       use b2mod_transport
       use b2mod_anomalous_transport
       use b2mod_work
-      use b2mod_diag
-      use b2mod_b2plot
       use b2mod_indirect
-      use b2mod_external
-      use b2mod_elements
-      use b2mod_constants
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -25,10 +20,10 @@
 #include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
-*     b2plasmastate_time reads in a formatted plasmastate file, and
-*     displays the value of "tim"
+*     b2plasmastate_inspect reads in a formatted plasmastate file, and
+*     displays the value of the plasma time stamp "tim"
 *
-*     Run as: b2plasmastate_time plasmastate.xxxx
+*     Run as: b2plasmastate_inspect.exe plasmastate.xxxx
 *-----------------------------------------------------------------------
       
 #ifdef USE_PXFGETENV
@@ -43,14 +38,13 @@
       integer iargc
 #endif
 #endif
-      integer :: ninp(0:5), ns0, idum(0:9)
+      integer :: ninp(0:5), nx, ny, ns, ns0, idum(0:9)
       character :: arg*256
 *   ..procedures
       external xerset, xertst, cfopen, cfruin
       external b2rucp, b2rups
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
-
 
 *-----------------------------------------------------------------------
 
