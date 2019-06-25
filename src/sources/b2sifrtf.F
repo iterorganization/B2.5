@@ -18,6 +18,9 @@
       use b2mod_external
       use b2mod_geo
      , , only : hz, vol                                                 !srv 05.07.17
+      use b2mod_balance                                                 !djm Jun2019
+     & , only : b2sifr_smofrea0to3, b2sifr_smofria0to3,
+     &          b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
@@ -251,6 +254,21 @@ c   .. apply flux limit
       smbtfia = smbtfial
       smbtfea = smbtfeal
 
+      if (balance_netcdf.ne.0) then !djm Jun2019
+        do iy=-1,ny
+          do ix =-1,nx
+            b2sifr_smofria0to3(ix,iy,0:3,isb)=vol(ix,iy)*hz(ix,iy)*
+     &                                        smbfria(ix,iy,0:3)
+            b2sifr_smofrea0to3(ix,iy,0:3,isb)=vol(ix,iy)*hz(ix,iy)*
+     &                                        smbfrea(ix,iy,0:3)
+            b2sifr_smotfia0to3(ix,iy,0:3,isb)=vol(ix,iy)*hz(ix,iy)*
+     &                                        smbtfia(ix,iy,0:3)
+            b2sifr_smotfea0to3(ix,iy,0:3,isb)=vol(ix,iy)*hz(ix,iy)*
+     &                                        smbtfea(ix,iy,0:3)
+          enddo
+        enddo 
+      endif
+        
       if (iout.ne.0) then !  .or. iout_b2wdat.eq.4) then                !srv 05.07.17
         write (chns,'(i3.3)') isb
 

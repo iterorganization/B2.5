@@ -125,14 +125,20 @@
      *  b2srst_smo_bal(:,:,:),
      *  b2sifr_smoch0to3(:,:,:,:),
      *  b2sifr_smoch_bal(:,:,:),
-     *  b2sifr_smotf0to3(:,:,:,:),
-     *  b2sifr_smotf_ehxb0to3(:,:,:,:),
+     *  b2sifr_smotf_ehxp0to3(:,:,:,:),
      *  b2sifr_smotf_cthe0to3(:,:,:,:),
      *  b2sifr_smotf_cthi0to3(:,:,:,:),
-     *  b2sifr_smotf_bal(:,:,:),
-     *  b2sifr_smotf_ehxb_bal(:,:,:),
+     *  b2sifr_smotf_ehxp_bal(:,:,:),
      *  b2sifr_smotf_cthe_bal(:,:,:),
      *  b2sifr_smotf_cthi_bal(:,:,:),
+     *  b2sifr_smofrea0to3(:,:,:,:),
+     *  b2sifr_smofrea_bal(:,:,:), 
+     *  b2sifr_smofria0to3(:,:,:,:),
+     *  b2sifr_smofria_bal(:,:,:),
+     *  b2sifr_smotfea0to3(:,:,:,:),
+     *  b2sifr_smotfea_bal(:,:,:), 
+     *  b2sifr_smotfia0to3(:,:,:,:),
+     *  b2sifr_smotfia_bal(:,:,:),
      *  b2siav_smovh0to3(:,:,:,:),
      *  b2siav_smovh_bal(:,:,:),
      *  b2siav_smovv0to3(:,:,:,:),
@@ -182,10 +188,13 @@
      *  b2srdt_smo_bal_av(:,:,:),
      *  b2srst_smo_bal_av(:,:,:),
      *  b2sifr_smoch_bal_av(:,:,:),
-     *  b2sifr_smotf_bal_av(:,:,:),
-     *  b2sifr_smotf_ehxb_bal_av(:,:,:),
+     *  b2sifr_smotf_ehxp_bal_av(:,:,:),
      *  b2sifr_smotf_cthe_bal_av(:,:,:),
      *  b2sifr_smotf_cthi_bal_av(:,:,:),
+     *  b2sifr_smofrea_bal_av(:,:,:), 
+     *  b2sifr_smofria_bal_av(:,:,:),
+     *  b2sifr_smotfea_bal_av(:,:,:), 
+     *  b2sifr_smotfia_bal_av(:,:,:),
      *  b2siav_smovh_bal_av(:,:,:),
      *  b2siav_smovv_bal_av(:,:,:),
      *  b2sicf_smo_bal_av(:,:,:),
@@ -534,14 +543,20 @@
       allocate(b2srst_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sifr_smoch0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(b2sifr_smoch_bal(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2sifr_smotf0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
-      allocate(b2sifr_smotf_bal(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2sifr_smotf_ehxb0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
-      allocate(b2sifr_smotf_ehxb_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sifr_smotf_ehxp0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2sifr_smotf_ehxp_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sifr_smotf_cthe0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(b2sifr_smotf_cthe_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sifr_smotf_cthi0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(b2sifr_smotf_cthi_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sifr_smofrea0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2sifr_smofrea_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sifr_smofria0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2sifr_smofria_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sifr_smotfea0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2sifr_smotfea_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sifr_smotfia0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2sifr_smotfia_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2siav_smovh0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(b2siav_smovh_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2siav_smovv0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
@@ -592,14 +607,20 @@
       b2srst_smo_bal=0.0_R8
       b2sifr_smoch0to3=0.0_R8
       b2sifr_smoch_bal=0.0_R8
-      b2sifr_smotf0to3=0.0_R8
-      b2sifr_smotf_bal=0.0_R8
-      b2sifr_smotf_ehxb0to3=0.0_R8
-      b2sifr_smotf_ehxb_bal=0.0_R8
+      b2sifr_smotf_ehxp0to3=0.0_R8
+      b2sifr_smotf_ehxp_bal=0.0_R8
       b2sifr_smotf_cthe0to3=0.0_R8
       b2sifr_smotf_cthe_bal=0.0_R8
       b2sifr_smotf_cthi0to3=0.0_R8
       b2sifr_smotf_cthi_bal=0.0_R8
+      b2sifr_smofrea0to3=0.0_R8
+      b2sifr_smofrea_bal=0.0_R8
+      b2sifr_smofria0to3=0.0_R8
+      b2sifr_smofria_bal=0.0_R8
+      b2sifr_smotfea0to3=0.0_R8
+      b2sifr_smotfea_bal=0.0_R8
+      b2sifr_smotfia0to3=0.0_R8
+      b2sifr_smotfia_bal=0.0_R8
       b2siav_smovh0to3=0.0_R8
       b2siav_smovh_bal=0.0_R8
       b2siav_smovv0to3=0.0_R8
@@ -644,10 +665,13 @@
       allocate(b2srdt_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2srst_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sifr_smoch_bal_av(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2sifr_smotf_bal_av(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2sifr_smotf_ehxb_bal_av(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sifr_smotf_ehxp_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sifr_smotf_cthe_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sifr_smotf_cthi_bal_av(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sifr_smofrea_bal_av(-1:nxd,-1:nyd,0:nsd-1)) 
+      allocate(b2sifr_smofria_bal_av(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sifr_smotfea_bal_av(-1:nxd,-1:nyd,0:nsd-1)) 
+      allocate(b2sifr_smotfia_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2siav_smovh_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2siav_smovv_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sicf_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))
@@ -983,14 +1007,20 @@ cdjm Jan2017 Flux arrays:
       deallocate(b2srst_smo_bal)
       deallocate(b2sifr_smoch0to3)
       deallocate(b2sifr_smoch_bal)
-      deallocate(b2sifr_smotf0to3)
-      deallocate(b2sifr_smotf_bal)
-      deallocate(b2sifr_smotf_ehxb0to3)
-      deallocate(b2sifr_smotf_ehxb_bal)
+      deallocate(b2sifr_smotf_ehxp0to3)
+      deallocate(b2sifr_smotf_ehxp_bal)
       deallocate(b2sifr_smotf_cthe0to3)
       deallocate(b2sifr_smotf_cthe_bal)
       deallocate(b2sifr_smotf_cthi0to3)
       deallocate(b2sifr_smotf_cthi_bal)
+      deallocate(b2sifr_smofrea0to3)
+      deallocate(b2sifr_smofrea_bal)
+      deallocate(b2sifr_smofria0to3)
+      deallocate(b2sifr_smofria_bal)
+      deallocate(b2sifr_smotfea0to3)
+      deallocate(b2sifr_smotfea_bal)
+      deallocate(b2sifr_smotfia0to3)
+      deallocate(b2sifr_smotfia_bal)
       deallocate(b2siav_smovh0to3)
       deallocate(b2siav_smovh_bal)
       deallocate(b2siav_smovv0to3)
@@ -1035,10 +1065,13 @@ cdjm Jan2017 Flux arrays:
       deallocate(b2srdt_smo_bal_av)
       deallocate(b2srst_smo_bal_av)
       deallocate(b2sifr_smoch_bal_av)
-      deallocate(b2sifr_smotf_bal_av)
-      deallocate(b2sifr_smotf_ehxb_bal_av)
+      deallocate(b2sifr_smotf_ehxp_bal_av)
       deallocate(b2sifr_smotf_cthe_bal_av)
       deallocate(b2sifr_smotf_cthi_bal_av)
+      deallocate(b2sifr_smofrea_bal_av) 
+      deallocate(b2sifr_smofria_bal_av)
+      deallocate(b2sifr_smotfea_bal_av) 
+      deallocate(b2sifr_smotfia_bal_av)
       deallocate(b2siav_smovh_bal_av)
       deallocate(b2siav_smovv_bal_av)
       deallocate(b2sicf_smo_bal_av)
@@ -1606,15 +1639,11 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
      &            b2sifr_smoch0to3(ix,iy,1,isb)*ub(ix,iy)+
      &            b2sifr_smoch0to3(ix,iy,2,isb)*rob(ix,iy)+
      &            b2sifr_smoch0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
-          b2sifr_smotf_bal(ix,iy,isb)=b2sifr_smotf0to3(ix,iy,0,isb)+
-     &            b2sifr_smotf0to3(ix,iy,1,isb)*ub(ix,iy)+
-     &            b2sifr_smotf0to3(ix,iy,2,isb)*rob(ix,iy)+
-     &            b2sifr_smotf0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
-          b2sifr_smotf_ehxb_bal(ix,iy,isb)=
-     &           b2sifr_smotf_ehxb0to3(ix,iy,0,isb)+
-     &           b2sifr_smotf_ehxb0to3(ix,iy,1,isb)*ub(ix,iy)+
-     &           b2sifr_smotf_ehxb0to3(ix,iy,2,isb)*rob(ix,iy)+
-     &           b2sifr_smotf_ehxb0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2sifr_smotf_ehxp_bal(ix,iy,isb)=
+     &           b2sifr_smotf_ehxp0to3(ix,iy,0,isb)+
+     &           b2sifr_smotf_ehxp0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &           b2sifr_smotf_ehxp0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &           b2sifr_smotf_ehxp0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
           b2sifr_smotf_cthe_bal(ix,iy,isb)=
      &           b2sifr_smotf_cthe0to3(ix,iy,0,isb)+
      &           b2sifr_smotf_cthe0to3(ix,iy,1,isb)*ub(ix,iy)+
@@ -1625,6 +1654,26 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
      &           b2sifr_smotf_cthi0to3(ix,iy,1,isb)*ub(ix,iy)+
      &           b2sifr_smotf_cthi0to3(ix,iy,2,isb)*rob(ix,iy)+
      &           b2sifr_smotf_cthi0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2sifr_smofrea_bal(ix,iy,isb)=
+     &           b2sifr_smofrea0to3(ix,iy,0,isb)+
+     &           b2sifr_smofrea0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &           b2sifr_smofrea0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &           b2sifr_smofrea0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2sifr_smofria_bal(ix,iy,isb)=
+     &           b2sifr_smofria0to3(ix,iy,0,isb)+
+     &           b2sifr_smofria0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &           b2sifr_smofria0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &           b2sifr_smofria0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2sifr_smotfea_bal(ix,iy,isb)=
+     &           b2sifr_smotfea0to3(ix,iy,0,isb)+
+     &           b2sifr_smotfea0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &           b2sifr_smotfea0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &           b2sifr_smotfea0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2sifr_smotfia_bal(ix,iy,isb)=
+     &           b2sifr_smotfia0to3(ix,iy,0,isb)+
+     &           b2sifr_smotfia0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &           b2sifr_smotfia0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &           b2sifr_smotfia0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
           b2siav_smovh_bal(ix,iy,isb)=b2siav_smovh0to3(ix,iy,0,isb)+
      &            b2siav_smovh0to3(ix,iy,1,isb)*ub(ix,iy)+
      &            b2siav_smovh0to3(ix,iy,2,isb)*rob(ix,iy)+
@@ -2005,10 +2054,13 @@ cdjm Update ion heat sources
         b2srdt_smo_bal_av=0.0_R8
         b2srst_smo_bal_av=0.0_R8
         b2sifr_smoch_bal_av=0.0_R8
-        b2sifr_smotf_bal_av=0.0_R8
-        b2sifr_smotf_ehxb_bal_av=0.0_R8
+        b2sifr_smotf_ehxp_bal_av=0.0_R8
         b2sifr_smotf_cthe_bal_av=0.0_R8
         b2sifr_smotf_cthi_bal_av=0.0_R8
+        b2sifr_smofrea_bal_av=0.0_R8 
+        b2sifr_smofria_bal_av=0.0_R8
+        b2sifr_smotfea_bal_av=0.0_R8 
+        b2sifr_smotfia_bal_av=0.0_R8
         b2siav_smovh_bal_av=0.0_R8
         b2siav_smovv_bal_av=0.0_R8
         b2sicf_smo_bal_av=0.0_R8
@@ -2229,14 +2281,20 @@ cdjm Update ion heat sources
      &                    curmlt*b2srst_smo_bal
       b2sifr_smoch_bal_av = avmlt*b2sifr_smoch_bal_av +
      &                      curmlt*b2sifr_smoch_bal
-      b2sifr_smotf_bal_av = avmlt*b2sifr_smotf_bal_av +
-     &                      curmlt*b2sifr_smotf_bal
-      b2sifr_smotf_ehxb_bal_av = avmlt*b2sifr_smotf_ehxb_bal_av +
-     &                      curmlt*b2sifr_smotf_ehxb_bal
+      b2sifr_smotf_ehxp_bal_av = avmlt*b2sifr_smotf_ehxp_bal_av +
+     &                      curmlt*b2sifr_smotf_ehxp_bal
       b2sifr_smotf_cthe_bal_av = avmlt*b2sifr_smotf_cthe_bal_av +
      &                      curmlt*b2sifr_smotf_cthe_bal
       b2sifr_smotf_cthi_bal_av = avmlt*b2sifr_smotf_cthi_bal_av +
      &                      curmlt*b2sifr_smotf_cthi_bal
+      b2sifr_smofrea_bal_av = avmlt*b2sifr_smofrea_bal_av +
+     &                      curmlt*b2sifr_smofrea_bal
+      b2sifr_smofria_bal_av = avmlt*b2sifr_smofria_bal_av +
+     &                      curmlt*b2sifr_smofria_bal
+      b2sifr_smotfea_bal_av = avmlt*b2sifr_smotfea_bal_av +
+     &                      curmlt*b2sifr_smotfea_bal
+      b2sifr_smotfia_bal_av = avmlt*b2sifr_smotfia_bal_av +
+     &                      curmlt*b2sifr_smotfia_bal
       b2siav_smovh_bal_av = avmlt*b2siav_smovh_bal_av +
      &                      curmlt*b2siav_smovh_bal
       b2siav_smovv_bal_av = avmlt*b2siav_smovv_bal_av +
@@ -2429,7 +2487,7 @@ cdjm Update ion heat sources
       subroutine write_balance(nxd,nyd,nsd)
 #ifndef NO_CDF
       use b2mod_geo
-     & , only : crx,cry,hx,bb,vol,gs
+     & , only : crx,cry,hx,hy,hz,bb,vol,gs
       use b2mod_indirect
      & , only : leftix,leftiy,rightix,rightiy,
      &          topix,topiy,bottomix,bottomiy
@@ -2458,6 +2516,7 @@ cdjm Update ion heat sources
       character*13, allocatable :: species_name(:)
       integer use_eirene
       integer, allocatable :: za(:)
+      real (kind=R8), save :: fac_hz = 1.0e0_R8
 *   ..procedures
       intrinsic size
       external ipgeti
@@ -2513,9 +2572,11 @@ cdjm Update ion heat sources
       vdims(3)=n4id
       call write_cdf_double(ncid,'crx',crx,vdims,3)
       call write_cdf_double(ncid,'cry',cry,vdims,3)
-*   ..bb,hx,vol,gs,am:
+*   ..bb,hx,hz,vol,gs,am:
       call write_cdf_double(ncid,'bb',bb,vdims,3)
       call write_cdf_double(ncid,'hx',hx,vdims,2)
+      call write_cdf_double(ncid,'hy',hx,vdims,2)
+      call write_cdf_double(ncid,'hz',hx,vdims,2)
       call write_cdf_double(ncid,'vol',vol,vdims,2)
       vdims(3)=n3id
       call write_cdf_double(ncid,'gs',gs,vdims,3)
@@ -2551,6 +2612,9 @@ cdjm Update ion heat sources
       use_eirene=0
       call ipgeti ('b2mndr_eirene',use_eirene)
       call write_cdf_int_single(ncid,'b2mndr_eirene',use_eirene,n1id)
+*   ..fac_hz:
+      call ipgetr ('b2mndr_hz',fac_hz)
+      call write_cdf_double_single(ncid,'b2mndr_hz',fac_hz,n1id)
 *   ..za:
       vdims(1)=nsid
       allocate(za(0:nsd-1))
@@ -2643,14 +2707,20 @@ cdjm Update ion heat sources
      &                   b2srst_smo_bal_av,vdims,3)
       call write_cdf_double(ncid,'b2sifr_smoch_bal',
      &                   b2sifr_smoch_bal_av,vdims,3)
-      call write_cdf_double(ncid,'b2sifr_smotf_bal',
-     &                   b2sifr_smotf_bal_av,vdims,3)
-      call write_cdf_double(ncid,'b2sifr_smotf_ehxb_bal',
-     &                   b2sifr_smotf_ehxb_bal_av,vdims,3)
+      call write_cdf_double(ncid,'b2sifr_smotf_ehxp_bal',
+     &                   b2sifr_smotf_ehxp_bal_av,vdims,3)
       call write_cdf_double(ncid,'b2sifr_smotf_cthe_bal',
      &                   b2sifr_smotf_cthe_bal_av,vdims,3)
       call write_cdf_double(ncid,'b2sifr_smotf_cthi_bal',
      &                   b2sifr_smotf_cthi_bal_av,vdims,3)
+      call write_cdf_double(ncid,'b2sifr_smofrea_bal',
+     &                      b2sifr_smofrea_bal_av,vdims,3)
+      call write_cdf_double(ncid,'b2sifr_smofria_bal',
+     &                      b2sifr_smofria_bal_av,vdims,3)
+      call write_cdf_double(ncid,'b2sifr_smotfea_bal',
+     &                      b2sifr_smotfea_bal_av,vdims,3)
+      call write_cdf_double(ncid,'b2sifr_smotfia_bal',
+     &                      b2sifr_smotfia_bal_av,vdims,3)      
       call write_cdf_double(ncid,'b2siav_smovh_bal',
      &                   b2siav_smovh_bal_av,vdims,3)
       call write_cdf_double(ncid,'b2siav_smovv_bal',

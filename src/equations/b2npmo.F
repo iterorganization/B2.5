@@ -16,8 +16,7 @@
      2          smpr, smpt, smfr, smcf
       use b2mod_balance
      1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-     2          balance_netcdf, tot_smo0to3, fmo_tot,
-     3          b2sifr_smoch0to3,b2sifr_smotf0to3
+     2          balance_netcdf, tot_smo0to3, fmo_tot
       use b2mod_plasma
      & , only : fmo, fchanml, facdrift, fac_ExB                        !srv 25.09.17 15.04.19
       use b2mod_numerics_namelist
@@ -312,10 +311,6 @@
      &    wrk0, wrk1, wrk2)                                            !srv 01.07.09
         endif                                                          !srv 26.10.08 }
        endif
-       if (balance_netcdf.ne.0) then !djm Mar2019
-         b2sifr_smoch0to3(-1:nx,-1:ny,0:3,is)=smbch
-         b2sifr_smotf0to3(-1:nx,-1:ny,0:3,is)=smbtf
-       endif
 *     ..compute pressure gradient term
        call b2sigp (nx, ny, is, rza(-1,-1,is), vol, hx, hz, bb,  
      &   na(-1,-1,is), ti, ne, te, po, smbgp, wrk0, wrk1, wrk2)        !srv 02.07.08
@@ -326,7 +321,6 @@
 *    ..add convective term due to new form of ion viscosity term only
        call b2nxfv (nx, ny, is, hz, cvsahz_cl(-1,-1,0,is), flubv)      !srv 01.07.05 11.09.09 16.10.17
        if (balance_netcdf.ne.0) then
-         tot_smo0to3(:,:,:,is)=smb !djm Mar2019
          fmo_b2nxfv(:,:,:,is)=flubv !djm Jan2017
        endif
        call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
@@ -367,6 +361,7 @@
 
 cdjm Jan2017 update momentum source components for balance
        if (balance_netcdf.ne.0) then
+         tot_smo0to3(:,:,:,is)=smb !djm Mar2019
          call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
        endif
 
