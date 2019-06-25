@@ -373,7 +373,7 @@ c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) co
                 iyf = BC_LIST_Y(ix,ic)
               else if (BCCHAR(ic).EQ.'W') then
                 ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                iyf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+                iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
               else if (BCCHAR(ic).eq.'E') then
                 ixf = BC_LIST_X(ix,ic)
                 iyf = BC_LIST_Y(ix,ic)
