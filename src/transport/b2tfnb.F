@@ -1241,19 +1241,23 @@ cdjm Jan2017 store components of fnb for balance
      &                0.5_R8*(ubdia(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)+
      &                        ubdia(bottomix(ix,iy),bottomiy(ix,iy),1)*
      &                        vol(bottomix(ix,iy),bottomiy(ix,iy))/
-     &                        hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &                        hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
               else
                 fna_drift(ix,iy,1,isb) =
      &                0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)+
      &                        vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
      &                        vol(bottomix(ix,iy),bottomiy(ix,iy))
-     &                        /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &                        /hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
               endif
             else
               if (mdf_fnb.eq.0) then
                 fna_drift(ix,iy,1,isb) = ubdia(ix,iy,1)*
-     &                (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &                (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &            (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &            (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+
               else
                 fna_drift(ix,iy,1,isb) = vbecrb(ix,iy,1)*
      &            (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
