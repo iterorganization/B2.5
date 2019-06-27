@@ -17,11 +17,11 @@
       integer, intent(inout) :: bndmdl(3,nelem)
       character(500) :: line
       integer :: ineir, iouteir, nstsi, ists, i, ier, icut, nd, nsf,
-     .           isf, j, ifc, ib, ntrg, ihelp(12), isum
+     .           isf, j, ifc, ib, ntrg, ihelp(12), isum, nadmod, nasmod
       integer, allocatable :: idim(:), ipos(:), istart(:), iend(:)
       integer, allocatable :: idim_eir(:), ipos_eir(:), 
      .                        istart_eir(:), iend_eir(:), idtrg(:)
-      logical :: found
+      logical :: found,lhelp(60)
 
 
       nd = mpg%nRc + mpg%nBc
@@ -38,6 +38,26 @@
       if (ier /= 0) 
      .  call xerrab ('input.dat not found')
       open (newunit=iouteir,file='input.dat.us')
+
+      do
+        read (ineir,'(a500)') line
+        write (iouteir,'(a)') trim(line)
+        if (index(line,'*** 2') > 0) exit
+      end do
+!  input block 2 found  
+!  indgrd      
+      read (ineir,'(a500)') line
+      write (iouteir,'(a)') trim(line)
+!  nlrad      
+      read (ineir,'(a500)') line
+      write (iouteir,'(a)') trim(line)
+
+      read (ineir,'(12(5l1,1x))') lhelp(1:8)
+      if (lhelp(5)) then
+        lhelp(5) = .false.
+        lhelp(6) = .true.
+      end if
+      write (iouteir,'(12(5l1,1x))') lhelp(1:8)
 
       do
         read (ineir,'(a500)') line
@@ -94,7 +114,7 @@
                 do i = 1, mpg%rcFcP(isf,2)
                   j = mpg%rcFcP(isf,1)+i-1
                   ifc = mpg%rcFc(j) ! face on neutral source 
-                  where (trifc == ifc)
+                  where (abs(trifc) == ifc)
                     bndmdl = -ists
                   end where
                 end do
@@ -108,7 +128,7 @@
                 do i = 1, mpg%bcFcP(ib,2)
                   j = mpg%bcFcP(ib,1)+i-1
                   ifc = mpg%bcFc(j) ! face on boundary
-                  where (trifc == ifc)
+                  where (abs(trifc) == ifc)
                     bndmdl = -ists
                   end where
                 end do
@@ -169,17 +189,41 @@
       do i = 1, isum
         read (ineir,'(12i6)') ihelp
         if (i <= ntrg) then
-          write (iouteir,'(12i6)') ihelp(1), idtrg(i), ihelp(7:12)
+          write (iouteir,'(12i6)') ihelp(1), idtrg(i), ihelp(8:12)
         else
 !  nothing to be done 
         end if
       end do
         
-!  copy input file until block 14
+!  copy input file until block 15 or end of file
       do
         read (ineir,'(a500)',end=99) line
         write (iouteir,'(a)') trim(line)
-        if (index(line,'*** 14') > 0) exit
+        if (index(line,'*** 15') > 0) exit
+      end do
+
+!  adapt block 15
+      read (ineir,'(12i6)') nadmod, nasmod
+      write (iouteir,'(12i6)') nadmod, nasmod
+
+      do i = 1, nadmod
+        read (ineir,'(a500)') line
+        write (iouteir,'(a)') trim(line)
+      end do
+
+      if (count(mpg%icornVx > 0) /= nasmod)
+     .  call xerrab('conv_surface_models -- nasmod')
+
+      do i = 1, nasmod
+        read (ineir,'(2i6)') ihelp(1), ihelp(2)
+        write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(i)
+      end do
+
+!  copy input file until end of file
+      do
+        read (ineir,'(a500)',end=99) line
+        write (iouteir,'(a)') trim(line)
+        if (index(line,'*** 15') > 0) exit
       end do
 
  99   continue

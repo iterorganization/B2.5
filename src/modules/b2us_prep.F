@@ -588,7 +588,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
            endif
         enddo
       enddo
-  
+   
       if (ici /= m%nFc) then
         call xerrab 
      .  ('Inconsistency between counting and mapping in nFc!')
@@ -972,7 +972,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
           m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(rightix(ix-1,ny),
      .                                     rightiy(ix-1,ny))         
          endif      
-       end do
+      end do
 
       do iy = 1, ny
         if(m%imapCv(-1,iy-1)/=0) then
@@ -998,11 +998,6 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
      .                                      topiy(nx,iy-1))
         endif
       end do
-
-
-
-
-
 
 ! listing for every face the two corresponding cells
 ! and the corresponding vertices
@@ -1098,7 +1093,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 
        ivx = m%nVx
        m%vxFcP(ivx,2) = count(fh == ivx)
-       vxFc_end = m%vxFcP(ivx,1) + m%vxFcP(ivx,2)
+       vxFc_end = m%vxFcP(ivx,1) + m%vxFcP(ivx,2) -1
        if (m%vxFcP(ivx,2) > 0) then
          m%vxFc(m%vxFcP(ivx,1):vxFc_end) =
      .          pack( indFc, fh == ivx )
@@ -1432,12 +1427,12 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
              gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
              gm%fcQgam(ifc,0) = qc(ix,iy,0)
              gm%fcQgam(ifc,1) = -qs(ix,iy,0)
-           gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,0) = 1.0_R8*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+             gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
+     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+             gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
+     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+             gm%fcQbet(ifc,0) = 1.0_R8*
+     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
              gm%fcQbet(ifc,1) = 0.0_R8
              gm%fcPbs(ifc) = pbs(ix,iy,0)
              gm%fcPbshz(ifc) = pbshz(ix,iy,0)
@@ -1458,12 +1453,12 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
            gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
            gm%fcQgam(ifc,0) = qc(ix,iy,0)
            gm%fcQgam(ifc,1) = -qs(ix,iy,0)
-         gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcQbet(ifc,0) = 1.0_R8*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQbet(ifc,0) = 1.0_R8*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
            gm%fcQbet(ifc,1) = 0.0_R8
            gm%fcPbs(ifc) = pbs(ix,iy,0)
            gm%fcPbshz(ifc) = pbshz(ix,iy,0)
@@ -1482,12 +1477,12 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
            gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
            gm%fcQgam(ifc,0) = qc(ix,iy,0)
            gm%fcQgam(ifc,1) = -qs(ix,iy,0)
-         gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcQbet(ifc,0) = 1.0_R8*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQbet(ifc,0) = 1.0_R8*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
            gm%fcQbet(ifc,1) = 0.0_R8
            gm%fcPbs(ifc) = pbs(ix,iy,0)
            gm%fcPbshz(ifc) = pbshz(ix,iy,0)
@@ -1515,12 +1510,12 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
              gm%fcQgam(ifc,0) = qc(ix,iy,1)
              gm%fcQgam(ifc,1) = qs(ix,iy,1)
              gm%fcQalf(ifc,0) = 0.0_R8
-           gm%fcQalf(ifc,1) = 1.0_R8*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
-     .       gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+             gm%fcQalf(ifc,1) = 1.0_R8*
+     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+             gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
+     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+             gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
+     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
              gm%fcPbs(ifc) = pbs(ix,iy,1)
              gm%fcPbshz(ifc) = pbshz(ix,iy,1)
            end if
@@ -1541,12 +1536,12 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
            gm%fcQgam(ifc,0) = qc(ix,iy,1)
            gm%fcQgam(ifc,1) = qs(ix,iy,1)
            gm%fcQalf(ifc,0) = 0.0_R8
-         gm%fcQalf(ifc,1) = 1.0_R8*
-     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
-     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
-     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQalf(ifc,1) = 1.0_R8*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
            gm%fcPbs(ifc) = pbs(ix,iy,1)
            gm%fcPbshz(ifc) = pbshz(ix,iy,1)
          endif
@@ -1565,12 +1560,12 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
            gm%fcQgam(ifc,0) = qc(ix,iy,1)
            gm%fcQgam(ifc,1) = qs(ix,iy,1)
            gm%fcQalf(ifc,0) = 0.0_R8
-         gm%fcQalf(ifc,1) = 1.0_R8*
-     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
-     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-         gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
-     .     gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQalf(ifc,1) = 1.0_R8*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
+           gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
+     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
            gm%fcPbs(ifc) = pbs(ix,iy,1)
            gm%fcPbshz(ifc) = pbshz(ix,iy,1)
          end if
@@ -2743,7 +2738,7 @@ cwdk              poloidal face centers (E/W)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
-        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:3,0:ns-1)
+        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
         rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
@@ -2912,7 +2907,7 @@ cwdk              poloidal face centers (E/W)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
-        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:3,0:ns-1)
+        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
         rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)

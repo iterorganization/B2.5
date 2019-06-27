@@ -7787,6 +7787,13 @@ cwdk          normal/radial/poloidal direction ???
           srw%sch0(iCv1,0) =  PBIG*geo%fcS(iFc)*
      .      (potpar(ib,1)*(geo%fcHc(iFc,1)+geo%fcHc(iFc,2))+pl%po(iCv2))
           srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+          if (eirene_sheath_pot.eq.1) then
+            delta_sheathb(iFc) = 
+     &           qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1)
+          endif
+#endif
         enddo
 
         GOTO 50000

@@ -35,7 +35,7 @@
      .           j, is1, js, js1, imin, imax, jmin, jmax, jelem, 
      .           ifcmin, ifcmax, it, 
      .           iun, unused, nopen, ifc1, ifc2, ifc3,
-     .           ileft, last(1)
+     .           ileft, last(1), isig(3)
       real (kind=R8) :: areat, x1, y1, x2, y2, x3, y3
       integer, allocatable :: ifcused(:), elem(:,:), elem_cv(:),
      .                        neighbor(:,:,:), bndmdl(:,:),
@@ -208,7 +208,18 @@
         elem(1:3,ielem) = (/ qp%iv1, qp%iv2, qp%iv3 /)
         elem_cv(ielem) = qp%ic
         trifc(1:3,ielem) = (/ qp%ifc1, qp%ifc2, qp%ifc3 /) 
-
+        isig = 1
+        if (trifc(1,ielem) > 0) then
+          if (elem_cv(ielem) == mpg%fcCv(trifc(1,ielem),2)) isig(1) = -1
+        end if
+        if (trifc(2,ielem) > 0) then
+          if (elem_cv(ielem) == mpg%fcCv(trifc(2,ielem),2)) isig(2) = -1
+        end if
+        if (trifc(3,ielem) > 0) then
+          if (elem_cv(ielem) == mpg%fcCv(trifc(3,ielem),2)) isig(3) = -1
+        end if
+        trifc(1:3,ielem) = trifc(1:3,ielem) * isig
+        
         call add_tri(qp%iv1, ielem)
         call add_tri(qp%iv2, ielem)
         call add_tri(qp%iv3, ielem)
@@ -277,33 +288,11 @@
       if (nopen > 0)
      .  call xerrab ('write_triangles -- open mesh')
 
-      open (newunit=iun,file='triangle.coordinates',
-     .           access='SEQUENTIAL',form='FORMATTED')
-      write (iun,'(i9)') mpg%nVx
-      do i = 1, mpg%nVx
-        write (iun,'(i9,2es24.16)') i, gm%vxX(i)*100._R8, 
-     .                                 gm%vxY(i)*100._R8
-      end do
-      close (iun)
+      call write_npco (mpg%nVx, gm%vxX, gm%vxY, 100._R8)
 
-      open (newunit=iun,file='triangle.elements',
-     .           access='SEQUENTIAL',form='FORMATTED')
-      write (iun,'(i9)') nelem
-      do i = 1, nelem
-        write (iun,'(4i9)') i, (elem(is,i), is = 1,3)
-      end do
-      close (iun)
-
-      open (newunit=iun,file='triangle.neighbors',
-     .           access='SEQUENTIAL',form='FORMATTED')
-      write (iun,'(i9)') nelem
-      do i = 1, nelem
-        write (iun,'(i9,3x,3(3i9,3x),4i9)') 
-     .     i, (neighbor(is,1,i), neighbor(is,2,i), 
-     .         bndmdl(is,i), is = 1,3), elem_cv(i),
-     .        (trifc(js,i), js = 1,3)
-      end do
-      close (iun)
+      call write_elemente (nelem, elem)
+      
+      call write_neighbors (nelem, neighbor, bndmdl, elem_cv, trifc)
       
       contains 
 
@@ -373,3 +362,69 @@
       end function find_face
        
       end subroutine write_triangles
+
+
+      subroutine write_npco (nco, xco, yco, sclfac)
+
+      use b2mod_types
+
+      implicit none
+      integer, intent(in) :: nco
+      real(R8), intent(in) :: xco(nco), yco(nco), sclfac
+      integer :: iun, i
+
+      open (newunit=iun,file='triangle.coordinates',
+     .           access='SEQUENTIAL',form='FORMATTED')
+      write (iun,'(i9)') nco
+      do i = 1, nco
+        write (iun,'(i9,2es24.16)') i, xco(i)*sclfac, 
+     .                                 yco(i)*sclfac
+      end do
+      close (iun)
+
+      return 
+      end subroutine write_npco
+
+
+      subroutine write_elemente (nel, elem)
+
+      use b2mod_types
+
+      implicit none
+      integer, intent(in) :: nel, elem(3,nel)
+      integer :: iun, i, is
+
+      open (newunit=iun,file='triangle.elements',
+     .           access='SEQUENTIAL',form='FORMATTED')
+      write (iun,'(i9)') nel
+      do i = 1, nel
+        write (iun,'(4i9)') i, (elem(is,i), is = 1,3)
+      end do
+      close (iun)
+
+      return 
+      end subroutine write_elemente
+
+
+      subroutine write_neighbors (nel, neighbor, bndmdl, elem_cv, trifc)
+
+      use b2mod_types
+
+      implicit none
+      integer, intent(in) :: nel, neighbor(3,2,nel),bndmdl(3,nel),
+     .                       elem_cv(nel), trifc(3,nel)
+      integer :: iun, i, is, js
+
+      open (newunit=iun,file='triangle.neighbors',
+     .           access='SEQUENTIAL',form='FORMATTED')
+      write (iun,'(i9)') nel
+      do i = 1, nel
+        write (iun,'(i9,3x,3(3i9,3x),4i9)') 
+     .     i, (neighbor(is,1,i), neighbor(is,2,i), 
+     .         bndmdl(is,i), is = 1,3), elem_cv(i),
+     .        (trifc(js,i), js = 1,3)
+      end do
+      close (iun)
+
+      return 
+      end subroutine write_neighbors

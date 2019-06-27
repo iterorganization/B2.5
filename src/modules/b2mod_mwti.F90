@@ -1210,14 +1210,21 @@ contains
     slice=0.0_R8
     if(minval(xymap(-1,0:ny-1)).gt.0) then
       slice(-1)=target_temp(xymap(-1,0),1)
-      slice(0:ny-1)=target_temp(xymap(-1,0:ny-1),1)
+!pb   this is a gather 
+!pb      slice(0:ny-1)=target_temp(xymap(-1,0:ny-1),1)
+      do iy=0,ny-1
+        slice(iy) = target_temp(xymap(-1,iy),1)
+      end do
       slice(ny)=target_temp(xymap(-1,ny-1),1)
     endif
     call rwcdf(rw,ncid,'tp3dl',imap,slice,iret)
     slice=0.0_R8
     if(minval(xymap(nx,0:ny-1)).gt.0) then
       slice(-1)=target_temp(xymap(nx,0),1)
-      slice(0:ny-1)=target_temp(xymap(nx,0:ny-1),1)
+!pb      slice(0:ny-1)=target_temp(xymap(nx,0:ny-1),1)
+      do iy=0,ny-1
+        slice(iy) = target_temp(xymap(nx,iy),1)
+      end do
       slice(ny)=target_temp(xymap(nx,ny-1),1)
     endif
     call rwcdf(rw,ncid,'tp3dr',imap,slice,iret)
@@ -1225,14 +1232,20 @@ contains
       slice=0.0_R8
       if(minval(xymap(ixtl,0:ny-1)).gt.0) then
         slice(-1)=target_temp(xymap(ixtl,0),1)
-        slice(0:ny-1)=target_temp(xymap(ixtl,0:ny-1),1)
+!pb        slice(0:ny-1)=target_temp(xymap(ixtl,0:ny-1),1)
+        do iy=0,ny-1
+          slice(iy) = target_temp(xymap(ixtl,iy),1)
+        end do
         slice(ny)=target_temp(xymap(ixtl,ny-1),1)
       endif
       call rwcdf(rw,ncid,'tp3dtl',imap,slice,iret)
       slice=0.0_R8
       if(minval(xymap(ixtr,0:ny-1)).gt.0) then
         slice(-1)=target_temp(xymap(ixtr,0),1)
-        slice(0:ny-1)=target_temp(xymap(ixtr,0:ny-1),1)
+!pb        slice(0:ny-1)=target_temp(xymap(ixtr,0:ny-1),1)
+        do iy=0,ny-1
+          slice(iy) = target_temp(xymap(ixtr,iy),1)
+        end do
         slice(ny)=target_temp(xymap(ixtr,ny-1),1)
       endif
       call rwcdf(rw,ncid,'tp3dtr',imap,slice,iret)

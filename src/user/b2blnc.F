@@ -1,4 +1,4 @@
-      subroutine b2blnc(nx,ny,ns,dtim,iline)
+      subroutine b2blnc(ns,geo,mpg,st,dtim,iline)
       use b2mod_types
       use b2mod_geo
       use b2mod_time
@@ -15,6 +15,9 @@
      .   , only : nstra
       use eirmod_extrab25
 #endif
+      use b2us_map
+      use b2us_geo
+      use b2us_plasma
 #include "DIMENSIONS.F"
 c
 c  version : 19.07.2001 18:46
@@ -25,13 +28,17 @@ c*** B2-Eirene and the global particle balance in B2
 c----------------------------------------------------------------------
       implicit none
 c
-      integer nx, ny, ns, iline
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      type(B2state), intent(in) :: st
+
+      integer ns, iline
       real (kind=R8) :: dtim
 c
       integer lun, ltrc
       parameter (ltrc=ntrc_bln)
       integer i, j, k, l, m, n, ic, ii, is, ix, iy, js, ks, ls, lv,
-     ,        nc, nv, kks, np_tmp
+     ,        nc, nv, kks, np_tmp, iCv, ilks, ifc
       logical first, ex, hlp_lw, hlp_lt
 c<<<
       logical hlp_tt
@@ -154,6 +161,7 @@ c======================================================================
 
       if(first) then
 c<<<
+#ifdef WG_TODO
         call ipgeti ('eirene_use_recyceir', use_recyceir)
         print *,'=== Regions of the grid:'
         print *
@@ -169,6 +177,7 @@ c<<<
           end do
           l=l-1
         end do
+#endif
 c>>>
 c
 c*** Initialisation
@@ -275,77 +284,68 @@ c<<<
 c>>>
         do is=1,nfluids(ls)
           ks=ks+1
-          do 1100 ic = 1, nbc
+          do 1100 ic = 1, mpg%nbc
             if (bcchar(ic).eq.'S') then
               do j = 1, ncbs
                 if(ic.eq.lcbs(j)) then
 c***     core boundary
-                  do i = 1, bc_list_size(ic)
+                  do i = 1, mpg%bcFcp(ic,2)
+                    ifc = mpg%bcfcp(ic,1)+i-1
                     hlpic=hlpic+
-     .               fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .                   topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .                   1,1,ions_list(ks))
+     .               st%dv%fna(ifc,1,ions_list(ks))
 c<<<
                     hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .               fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .                   topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .                   1,1,ions_list(ks))
+     .               st%dv%fna(ifc,1,ions_list(ks))
 c>>>
                   end do
                   go to 1100
                 end if
               end do
 c***     wall in PFR
-              do i = 1, bc_list_size(ic)
+              do i = 1, mpg%bcFcp(ic,2)
+                ifc = mpg%bcfcp(ic,1)+i-1
                 hlpiw=hlpiw+
-     .           fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               1,1,ions_list(ks))
+     .           st%dv%fna(ifc,1,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .           fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               1,1,ions_list(ks))
+     .           st%dv%fna(ifc,1,ions_list(ks))
 c>>>
               end do
             else if (bcchar(ic).eq.'N') then
 c***     outer wall
-              do i = 1, bc_list_size(ic)
+              do i = 1, mpg%bcFcp(ic,2)
+                ifc = mpg%bcfcp(ic,1)+i-1
                 hlpiw=hlpiw
-     .           -fna(bc_list_x(i,ic),bc_list_y(i,ic),1,1,ions_list(ks))
+     .           -st%dv%fna(ifc,1,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),1,1,ions_list(ks))
+     .           st%dv%fna(ifc,1,ions_list(ks))
 c>>>
               end do
             else if (bcchar(ic).eq.'W') then
 c***     left target
-              do i = 1, bc_list_size(ic)
+              do i = 1, mpg%bcFcp(ic,2)
+                ifc = mpg%bcfcp(ic,1)+i-1
                 hlpit=hlpit+
-     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               0,0,ions_list(ks))
+     .           st%dv%fna(ifc,0,ions_list(ks))
                 hlpit_lp(ls)=hlpit_lp(ls)+
-     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               0,0,ions_list(ks))
+     .           st%dv%fna(ifc,0,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               0,0,ions_list(ks))
+     .           st%dv%fna(ifc,0,ions_list(ks))
 c>>>
               end do
             else if (bcchar(ic).eq.'E') then
 c***     right target
-              do i = 1, bc_list_size(ic)
+              do i = 1, mpg%bcFcp(ic,2)
+                ifc = mpg%bcfcp(ic,1)+i-1
                 hlpit=hlpit-
-     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,0,ions_list(ks))
+     .           st%dv%fna(ifc,0,ions_list(ks))
                 hlpit_rp(ls)=hlpit_rp(ls)-
-     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,0,ions_list(ks))
+     .           st%dv%fna(ifc,0,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,0,ions_list(ks))
+     .           st%dv%fna(ifc,0,ions_list(ks))
 c>>>
               end do
             end if
@@ -389,28 +389,24 @@ c>>>
           ks=ks+1
 c          print *,'%%% Fluid # ',is,ks     !###
 c*** total number of particles and time derivative
-          do iy=0,ny-1
-            do ix=0,nx-1
-              j=region(ix,iy,0)
-              if(j.ne.0 .and. 
-     &           leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-                hlpia=hlpia+na(ix,iy,ions_list(ks))*vol(ix,iy)
-                hlpis=hlpis+
-     1               sna(ix,iy,0,ions_list(ks))+
-     2               sna(ix,iy,1,ions_list(ks))*na(ix,iy,ions_list(ks))
-                if (solveco(ions_list(ks),j)) then
-                  hlpdt=dtim*dtco(ions_list(ks),j)*
-     &              time_factor(ix+2+(iy+1)*(nx+2))!WG_TODO
-                else
-                  hlpdt=0.0_R8
-                endif
-                if(hlpdt.gt.0.0_R8) then
-                  hlpdt=vol(ix,iy)/hlpdt
-                  hlpid=hlpid+na(ix,iy,ions_list(ks))*hlpdt
-                  hlpids=hlpids+na0(ix,iy,ions_list(ks))*hlpdt
-                end if
-              end if
-            end do
+          do iCv=1,mpg%nCi
+            j = mpg%cvReg(iCv)
+            if (j == 0) cycle
+            ilks = ions_list(ks)
+            hlpia=hlpia+st%pl%na(iCv,ilks)*geo%cvVol(iCv)
+            hlpis=hlpis+
+     1            st%sr%sna(iCv,0,ilks)+
+     2            st%sr%sna(iCv,1,ilks)*st%pl%na(iCv,ilks)
+            if (solveco(ilks,j)) then
+              hlpdt=dtim*dtco(ilks,j)*time_factor(iCv)
+            else
+              hlpdt=0.0_R8
+            endif
+            if(hlpdt.gt.0.0_R8) then
+              hlpdt=geo%cvVol(iCv)/hlpdt
+              hlpid=hlpid+st%pl%na(iCv,ilks)*hlpdt
+              hlpids=hlpids+st%psnl%na(iCv,ilks)*hlpdt
+            end if
           end do
 c<<<
 c          hlpit_l=hlpit_l+wldpp(nnlimi+7,ks,0)
@@ -655,7 +651,7 @@ c
       return
 c======================================================================
 c
-      entry b2blnci(nx,ny,ns,dtim,iline)
+      entry b2blnci(ns,geo,mpg,st,dtim,iline)
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_bln)=.true.
@@ -756,7 +752,7 @@ c
       return
 c======================================================================
 c
-      entry b2blncc(nx,ny,ns,dtim,iline)
+      entry b2blncc(ns,geo,mpg,st,dtim,iline)
 c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
@@ -788,7 +784,7 @@ c======================================================================
       return
 c======================================================================
 c
-      entry b2blncs(nx,ny,ns,dtim,iline)
+      entry b2blncs(ns,geo,mpg,st,dtim,iline)
 c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
 c----------------------------------------------------------------------
@@ -796,7 +792,7 @@ c
       return
 c======================================================================
 c
-      entry b2blncf(nx,ny,ns,dtim,iline)
+      entry b2blncf(ns,geo,mpg,st,dtim,iline)
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------

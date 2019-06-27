@@ -2101,19 +2101,19 @@ c new CDF movie option
             call tallies(nx,ny,ns,BoRiS)
           endif
         endif
+#endif
         if (first_time_step) then
           if(.not.allocated(iz))
      >     call alloc_b2mod_diag(nCv,nFc,ns,nnreg(0),nstra,natm)
-          call b2trci(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+          call b2trci(70,ns,nxtl,nxtr,ismain,dtim,BoRiS,geo,mpg,state)
           if (write_nml_user) call write_b2mod_user_namelist(nx,ns)
         endif
         if (ank_tracing.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >     call b2trace(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+     >     call b2trace(70,ns,nxtl,nxtr,ismain,dtim,BoRiS,geo,mpg,state)
         endif
 c-rfs       write(*,*) 'fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)',
 c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
-#endif
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)

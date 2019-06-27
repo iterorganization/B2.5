@@ -23,7 +23,7 @@ c
       type :: targetdata
         integer :: ntrgdat
         integer, allocatable :: faces(:)
-        real (kind=R8), allocatable :: fcori(:)
+        real (kind=R8), allocatable :: fcori(:), flength(:)
         real (kind=R8), allocatable :: 
      &    tet(:), tit(:), fe(:), fsh(:),
      &    flux(:,:), dnit(:,:), vxt(:,:), vyt(:,:), vzt(:,:),
@@ -122,6 +122,7 @@ c
         if (.not.allocated(trgt(ist)%faces)) then
           allocate (trgt(ist)%faces(ndat))
           allocate (trgt(ist)%fcori(ndat))
+          allocate (trgt(ist)%flength(ndat))
           allocate (trgt(ist)%tet(ndat))
           allocate (trgt(ist)%tit(ndat))
           allocate (trgt(ist)%fe(ndat))
@@ -140,6 +141,7 @@ c
         
         trgt(ist)%faces = 0
         trgt(ist)%fcori = 0.0_R8
+        trgt(ist)%flength = 0.0_R8
         trgt(ist)%tet = 0.0_R8
         trgt(ist)%tit = 0.0_R8
         trgt(ist)%fe = 0.0_R8
@@ -205,6 +207,7 @@ c
           IF (ALLOCATED(TRGT(I)%FACES)) THEN
             DEALLOCATE (TRGT(I)%FACES)
             DEALLOCATE (TRGT(I)%FCORI)
+            DEALLOCATE (TRGT(I)%FLENGTH)
             DEALLOCATE (TRGT(I)%TET)
             DEALLOCATE (TRGT(I)%TIT)
             DEALLOCATE (TRGT(I)%FE)

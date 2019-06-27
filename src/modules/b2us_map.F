@@ -55,9 +55,12 @@
 
         integer :: isClassicalGrid                     ! indicates whether grid is derived from an "original", structured grid
         integer :: nx, ny, nncut                       ! some parameters related to the original grid
-        integer, allocatable  :: imapcv(:,:)           ! used in b2us_prep
-        integer, allocatable  :: imapFcx(:,:), imapFcy(:,:) ! used in b2us_prep
-        integer, allocatable  :: imapVx(:,:)           ! used in b2us_prep
+        integer, allocatable :: imapCv(:,:)            ! back projection of cv indices to structured grid
+        integer, allocatable :: imapFcx(:,:)           ! back projection of fc indices for x-faces to structured grid
+        integer, allocatable :: imapFcy(:,:)           ! back projection of fc indices for y-faces to structured grid
+        integer, allocatable :: imapVx(:,:)            ! back projection of Vx indices to structured grid 
+
+        integer, allocatable :: icornVx(:)             ! corner indices; to be used in converting target information
 
       end type mapping
 
@@ -106,6 +109,7 @@
         allocate (m%imapFcx(-1:m%nx,-1:m%ny))
         allocate (m%imapFcy(-1:m%nx,-1:m%ny))
         allocate (m%imapVx(-1:m%nx,-1:m%ny))
+        allocate (m%icornVx(1:m%nx))
 #ifdef WG_DEBUG
         allocate (imapCv(-1:m%nx,-1:m%ny))
         allocate (imapFcx(-1:m%nx,-1:m%ny))
@@ -168,9 +172,10 @@
     
       if (m%isClassicalGrid.eq.1) then
         deallocate (m%imapCv)
-        deallocate (m%imapFcx)
-        deallocate (m%imapFcy)
-        deallocate (m%imapVx)
+        deallocate (m%imapFcx)  
+        deallocate (m%imapFcy)  
+        deallocate (m%imapVx)  
+        deallocate (m%icornVx)
 #ifdef WG_DEBUG
         deallocate (imapCv)
         deallocate (imapFcx)
@@ -300,6 +305,7 @@
       call cfruin (iun, n2, mpg%imapFcx, 'imapFcx')
       call cfruin (iun, n2, mpg%imapFcy, 'imapFcy')
       call cfruin (iun, n2, mpg%imapVx,  'imapVx')
+      call cfruin (iun, mpg%nx, mpg%icornVX, 'icornVx')
 
 #ifdef WG_DEBUG
       imapCv  = mpg%imapCv
@@ -347,6 +353,7 @@
         call cfwuin (nout, n2, mpg%imapFcx, 'imapFcx')
         call cfwuin (nout, n2, mpg%imapFcy, 'imapFcy')
         call cfwuin (nout, n2, mpg%imapVx,  'imapVx')
+        call cfwuin (nout, mpg%nx, mpg%icornVx,  'icornVx')
       else
         call cfwuin (nout, 0, idum, 'imapCv')
         call cfwuin (nout, 0, idum, 'imapFcx')

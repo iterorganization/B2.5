@@ -101,12 +101,17 @@
       character extension*4
       character cnamip*80, cvalip*80, line*500
       character bcp_filename*260
-      logical file_open, file_exists
+#ifdef B25_EIRENE
+      character*72 zeile
+#endif
+      logical file_open, file_exists, ex, 
+     .        linq_33, linq_34, linq_35, lcheck
 
       type(mapping), save :: mpg
       type(geometry), save :: gm
       type(B2State), save :: state
       type(B2StateExt), save :: state_ext
+      integer :: ntm, is, io_33, io_34, io_35, ico, iel, iel2
 *   ..procedures
       integer lnblnk
       logical is_comment
@@ -368,9 +373,35 @@ cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
           call read_neutrals_namelist(ns, mpg, .false.)
         end if
       end if
+#ifdef B25_EIRENE
+      open (unit=33)
+      read (33,*,iostat=io_33) ico
+      linq_33 = (io_33 == 0)
+      close (33)
+      open (unit=34)
+      read (34,*,iostat=io_34) iel
+      linq_34 = (io_34 == 0)
+      close (34)
+      open (unit=35)
+      read (35,*,iostat=io_35) iel2
+      linq_35 = (io_35 == 0)
+      close (35)
+      lcheck = (ico > 0) .and. (iel > 0) .and. (iel2 > 0) .and.
+     .         (iel == iel2)
+      if (linq_33 .and. linq_34 .and. linq_35 .and. lcheck) then
+        write (*,*) ' files fort.33, fort.34 and fort.35 found '
+        write (*,*) ' convert files to represent unstructured mesh '
+        call conv_triangles(nout(0), mpg, gm, nx, ny)
+      else
+        write (*,*) ' no files fort.33, fort.34 and fort.35 available'
+        write (*,*) ' create files fort.33, fort.34 and fort.35 '
+        call write_triangles(nout(0), mpg, gm, nx, ny)
+      end if
+#else
       if (use_eirene.ne.0) then
         call write_triangles(nout(0),mpg, gm, nx, ny)
       endif
+#endif
 *   ..close other files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)

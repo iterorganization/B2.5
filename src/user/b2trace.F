@@ -1,4 +1,5 @@
-      subroutine b2trace(nput,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+      subroutine b2trace(nput,ns,nxtl,nxtr,ismain,dtim,BoRiS,
+     .                   geo, mpg, st)
       use b2mod_types
       use b2mod_diag
       use b2mod_b2cmpa
@@ -10,6 +11,9 @@
      .   , only : nmol
       use eirmod_extrab25
 #endif
+      use b2us_map
+      use b2us_geo
+      use b2us_plasma
 c
 c  version : 29.08.2000 00:26
 c
@@ -20,7 +24,10 @@ c*** redirected to the log file for the first call and there is no
 c*** further output
 c----------------------------------------------------------------------
       implicit none
-      integer nput, nx, ny, ns, nxtl, nxtr, ismain, lun
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      type(B2state), intent(in) :: st
+      integer nput, ns, nxtl, nxtr, ismain, lun
       real (kind=R8) :: dtim, tim, BoRiS
       integer ix, iy, is, istra, iline
       integer, save :: use_recyceir
@@ -111,7 +118,8 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
 #endif
       if(ank_tracing.eq.0) return
 c*** Particle balance
-      if(filedata(ntrc_bln)) call b2blnc(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_bln)) call b2blnc(ns,geo,mpg,st,dtim,iline)
+#ifdef WG_TODO
 c*** Power balance
       if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,BoRiS,iline)
 c*** Parallel momentum balance
@@ -124,17 +132,19 @@ c*** Separatrix data
 c*** User-specific data
       if(filedata(ntrc_usr))
      > call b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+#endif
 c
       return
 c======================================================================
-      entry b2trci(nput,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+      entry b2trci(nput,ns,nxtl,nxtr,ismain,dtim,BoRiS,geo,mpg,st)
 c*** Initialisation call
       if (tracing_initialised) return
-      call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+!wg_todo     call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
       call ipgeti ('eirene_use_recyceir', use_recyceir)
 c*** Initialise tracing routines
       if(ank_tracing.eq.0) return
-      if(filedata(ntrc_bln)) call b2blnci(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_bln)) call b2blnci(ns,geo,mpg,st,dtim,iline)
+#ifdef WG_TODO
       if(filedata(ntrc_ble)) call b2blnei(nx,ny,ns,BoRiS,iline)
       if(filedata(ntrc_blm)) call b2blnmi(nx,ny,ns,iline)
       if(filedata(ntrc_int)) call b2wrinti(nx,ny,ns,nnreg(0),iline)
@@ -142,16 +152,18 @@ c*** Initialise tracing routines
       if(filedata(ntrc_sep)) call b2wrsepi(nx,ny,ns,BoRiS,iline)
       if(filedata(ntrc_usr))
      > call b2usrtri(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+#endif
       tracing_initialised = .true.
       return
 c======================================================================
-      entry b2trcc(nput,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+      entry b2trcc(nput,ns,nxtl,nxtr,ismain,dtim,BoRiS,geo,mpg,st)
 c*** Truncate to match savefile
       if(filedata(ntrc_bln)) then
-        call b2blncc(nx,ny,ns,dtim,iline)
+        call b2blncc(ns,geo,mpg,st,dtim,iline)
         if (iline.gt.0)
      >   write(nput,'(a,i8)') trim(fn_ntrc(ntrc_bln)), iline
       end if
+#ifdef WG_TODO
       if(filedata(ntrc_ble)) then
         call b2blnec(nx,ny,ns,BoRiS,iline)
         if (iline.gt.0)
@@ -182,12 +194,14 @@ c*** Truncate to match savefile
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_usr)), iline
       end if
+#endif
       return
 c======================================================================
-      entry b2trcs(nput,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+      entry b2trcs(nput,ns,nxtl,nxtr,ismain,dtim,BoRiS,geo,mpg,st)
 c*** - to be called BEFORE each timestep
       if(ank_tracing.eq.0) return
-      if(filedata(ntrc_bln)) call b2blncs(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_bln)) call b2blncs(ns,geo,mpg,st,dtim,iline)
+#ifdef WG_TODO
       if(filedata(ntrc_ble)) call b2blnes(nx,ny,ns,BoRiS,iline)
       if(filedata(ntrc_blm)) call b2blnms(nx,ny,ns,iline)
       if(filedata(ntrc_int)) call b2wrints(nx,ny,ns,nnreg(0),iline)
@@ -195,14 +209,16 @@ c*** - to be called BEFORE each timestep
       if(filedata(ntrc_sep)) call b2wrseps(nx,ny,ns,BoRiS,iline)
       if(filedata(ntrc_usr))
      > call b2usrtrs(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+#endif
       return
 c======================================================================
-      entry b2trcf(nput,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+      entry b2trcf(nput,ns,nxtl,nxtr,ismain,dtim,BoRiS,geo,mpg,st)
 c*** Finalization call
       if (.not.tracing_initialised) return
       call dealloc_b2mod_user
       if(ank_tracing.eq.0) return
-      if(filedata(ntrc_bln)) call b2blncf(nx,ny,ns,dtim,iline)
+      if(filedata(ntrc_bln)) call b2blncf(ns,geo,mpg,st,dtim,iline)
+#ifdef WG_TODO
       if(filedata(ntrc_ble)) call b2blnef(nx,ny,ns,BoRiS,iline)
       if(filedata(ntrc_blm)) call b2blnmf(nx,ny,ns,iline)
       if(filedata(ntrc_int)) call b2wrintf(nx,ny,ns,nnreg(0),iline)
@@ -210,6 +226,7 @@ c*** Finalization call
       if(filedata(ntrc_sep)) call b2wrsepf(nx,ny,ns,BoRiS,iline)
       if(filedata(ntrc_usr))
      > call b2usrtrf(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+#endif
       tracing_initialised = .false.
       return
 c======================================================================
