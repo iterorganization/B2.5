@@ -20,7 +20,7 @@
       use b2mod_neutrals_namelist
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
-     2          b2stbr_sne
+     2          b2stbr_sne, ext_sna
       use b2mod_balance !djm Jan2017
      & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
      &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
@@ -109,7 +109,7 @@
      &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),     !IYS 27.01.17
      &  sna_eir_tot(nspecies), sna_puff(nspecies),
      &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),     !iyv 07.03.18 {
-     &  t(nspecies), t01(nspecies)
+     &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies) 
 #endif
       real (kind=R8) ::
      &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
@@ -703,6 +703,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 !         end do
 
           sna_eir_tot= 0.0_R8
+          ext_sna_tot= 0.0_R8
           do ix=-1, nx
             do iy=-1,ny
               do is = 0, ns-1
@@ -711,6 +712,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 sna_eir_tot(k) = sna_eir_tot(k) + 
      &           sna0_eir(ix,iy,0,is) + 
      &           sna0_eir(ix,iy,1,is)*na(ix,iy,is)
+                ext_sna_tot(k) = ext_sna_tot(k) + ext_sna(ix,iy,is) 
               enddo     
             enddo
           enddo 
@@ -762,8 +764,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
           endif  
 
           do is = 1, nspecies
-            t01(is) =  sna_corr*( sna_puff(is) + sna_core(is)  
-     &            + sna_sptt(is) - sna_pump(is) ) / sna_eir_tot(is) 
+            t01(is) =  sna_corr*( sna_puff(is) + sna_core(is) +  
+     &            sna_sptt(is) - sna_pump(is) + ext_sna_tot(is) ) / 
+     &            sna_eir_tot(is) 
             t01(is) = t01(is)* ( 1.0_R8 - exp(-c_pumpavr) ) + 
      &                     exp(-c_pumpavr)*t1(is)
             t1(is) = t01(is)
