@@ -238,10 +238,11 @@
 !$OMP& shared(phm0, rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1)
 !$OMP& shared(rlra, rra, rpi, rlqa, rqa, rrd, hz)
 !$OMP& shared(sna0_ion, shi0_ion, smq0_ion, she0)
-!$OMP& shared(sna0_rec, shi0_rec, smq0_rec)
+!$OMP& shared(sna0_rec, shi0_rec, smq0_rec, b2stel_she0to3)
 !$OMP& shared(rsana, rsahi, rsamo, rrana, rrahi, rqahe, rramo, rbr)
 !$OMP& shared(rqrad, rqbrm, zamax, zamin)
 !$OMP& shared(fix_recomb_energy, styl0, BoRiS, is_neutral)
+!$OMP& shared(balance_netcdf)
 !$OMP& reduction(+:b2rad, b2brem)
 #endif
       do iy = -1, ny

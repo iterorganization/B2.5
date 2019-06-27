@@ -25,6 +25,43 @@
       use b2mod_external
       use b2mod_openmp
 #ifdef _OPENMP
+      use b2mod_balance
+     1 ,only : b2stbr_phys_smo_bal, b2stbr_phys_smo0to3,
+     2         b2stbr_bas_smo_bal, b2stbr_bas_smo0to3,
+     3         b2stbc_smo_bal, b2stbc_smo0to3,
+     4         eirene_mc_mapl_smo_bal, eirene_mc_mapl_smo0to3,
+     5         eirene_mc_mmpl_smo_bal, eirene_mc_mmpl_smo0to3,
+     6         eirene_mc_mipl_smo_bal, eirene_mc_mipl_smo0to3,
+     7         eirene_mc_cppv_smo_bal, eirene_mc_cppv_smo0to3,
+     8         b2stbm_smo_bal, b2stbm_smo0to3,
+     9         ext_smo_bal, ext_smo0to3,
+     *         tot_smo_bal, tot_smo0to3,
+     *         b2stel_smq_ion_bal, b2stel_smq_ion0to3,
+     1         b2stel_smq_rec_bal, b2stel_smq_rec0to3,
+     2         b2stcx_smq_bal, b2stcx_smq0to3,
+     3         b2srsm_smo_bal, b2srsm_smo0to3,
+     4         b2srdt_smo_bal, b2srdt_smo0to3,
+     5         b2srst_smo_bal, b2srst_smo0to3,
+     6         b2sifr_smoch_bal, b2sifr_smoch0to3,
+     &         b2sifr_smotf_ehxp0to3, b2sifr_smotf_ehxp_bal,
+     &         b2sifr_smotf_cthe0to3, b2sifr_smotf_cthe_bal,
+     &         b2sifr_smotf_cthi0to3, b2sifr_smotf_cthi_bal,
+     &         b2sifr_smofrea_bal, b2sifr_smofrea0to3,
+     &         b2sifr_smofria_bal, b2sifr_smofria0to3,
+     &         b2sifr_smotfea_bal, b2sifr_smotfea0to3,
+     &         b2sifr_smotfia_bal, b2sifr_smotfia0to3,
+     8         b2sigp_smogp_bal, b2sigp_smogp0to3,
+     &         b2sigp_smogpi_bal, b2sigp_smogpi0to3,
+     &         b2sigp_smogpe_bal, b2sigp_smogpe0to3,
+     &         b2sigp_smogpgr_bal, b2sigp_smogpgr0to3,
+     9         b2sigp_pstat_bal, b2sigp_pstat0to3,
+     &         b2sigp_pstati_bal, b2sigp_pstati0to3,
+     &         b2sigp_pstate_bal, b2sigp_pstate0to3,
+     *         b2siav_smovh_bal, b2siav_smovh0to3,
+     1         b2siav_smovv_bal, b2siav_smovv0to3,
+     2         b2sicf_smo_bal, b2sicf_smo0to3,
+     3         b2sian_smo_bal, b2sian_smo0to3,
+     4         b2nxdv_smo_bal, b2nxdv_smo0to3
 #ifndef NO_OPENMP_B2NPMO
       use b2mod_b2cmpt
       use b2mod_b2cmgs
@@ -342,6 +379,7 @@
 !$OMP& SHARED(eirene_mc_cppv_smo_bal, eirene_mc_cppv_smo0to3)
 !$OMP& SHARED(b2stbm_smo_bal, b2stbm_smo0to3)
 !$OMP& SHARED(ext_smo_bal, ext_smo0to3)
+!$OMP& SHARED(tot_smo_bal, tot_smo0to3)
 !$OMP& SHARED(b2stel_smq_ion_bal, b2stel_smq_ion0to3)
 !$OMP& SHARED(b2stel_smq_rec_bal, b2stel_smq_rec0to3)
 !$OMP& SHARED(b2stcx_smq_bal, b2stcx_smq0to3)
@@ -349,14 +387,26 @@
 !$OMP& SHARED(b2srdt_smo_bal, b2srdt_smo0to3)
 !$OMP& SHARED(b2srst_smo_bal, b2srst_smo0to3)
 !$OMP& SHARED(b2sifr_smoch_bal, b2sifr_smoch0to3)
-!$OMP& SHARED(b2sifr_smotf_bal, b2sifr_smotf0to3)
+!$OMP& SHARED(b2sifr_smotf_ehxp0to3, b2sifr_smotf_ehxp_bal)
+!$OMP& SHARED(b2sifr_smotf_cthe0to3, b2sifr_smotf_cthe_bal)
+!$OMP& SHARED(b2sifr_smotf_cthi0to3, b2sifr_smotf_cthi_bal)
+!$OMP& SHARED(b2sifr_smofrea_bal, b2sifr_smofrea0to3)
+!$OMP& SHARED(b2sifr_smofria_bal, b2sifr_smofria0to3)
+!$OMP& SHARED(b2sifr_smotfea_bal, b2sifr_smotfea0to3)
+!$OMP& SHARED(b2sifr_smotfia_bal, b2sifr_smotfia0to3)
 !$OMP& SHARED(b2sigp_smogp_bal, b2sigp_smogp0to3)
+!$OMP& SHARED(b2sigp_smogpi_bal, b2sigp_smogpi0to3)
+!$OMP& SHARED(b2sigp_smogpe_bal, b2sigp_smogpe0to3)
+!$OMP& SHARED(b2sigp_smogpgr_bal, b2sigp_smogpgr0to3)
 !$OMP& SHARED(b2sigp_pstat_bal, b2sigp_pstat0to3)
+!$OMP& SHARED(b2sigp_pstati_bal, b2sigp_pstati0to3)
+!$OMP& SHARED(b2sigp_pstate_bal, b2sigp_pstate0to3)
 !$OMP& SHARED(b2siav_smovh_bal, b2siav_smovh0to3)
 !$OMP& SHARED(b2siav_smovv_bal, b2siav_smovv0to3)
 !$OMP& SHARED(b2sicf_smo_bal, b2sicf_smo0to3)
 !$OMP& SHARED(b2sian_smo_bal, b2sian_smo0to3)
 !$OMP& SHARED(b2nxdv_smo_bal, b2nxdv_smo0to3)
+!$OMP& SHARED(fmo_tot)
 !$OMP& SHARED(nlreg, nlloc, nlxlo, nlxhi, nlylo, nlyhi) 
 !$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim)
 #ifndef GFORTRAN
