@@ -436,18 +436,18 @@
            do ix =-1,nx
              smbch(ix,iy,0:3) = vol(ix,iy)*hz(ix,iy)*smbch(ix,iy,0:3)
              smbtf(ix,iy,0:3) = vol(ix,iy)*hz(ix,iy)*smbtf(ix,iy,0:3)
-             smfr(ix,iy,is) = vol(ix,iy)*hz(ix,iy)*
+             smfr(ix,iy,is) = vol(ix,iy)*hz(ix,iy)*(
      &        ( smbfrea(ix,iy,0) + smbfria(ix,iy,0) ) +
      &        ( smbfrea(ix,iy,1) + smbfria(ix,iy,1) ) * ua(ix,iy,is) +
      &        ( smbfrea(ix,iy,2) + smbfria(ix,iy,2) ) * roxa(ix,iy,is) +
      &        ( smbfrea(ix,iy,3) + smbfria(ix,iy,3) ) * ua(ix,iy,is) *
-     &                                                  roxa(ix,iy,is)
-             smpt(ix,iy,is) = vol(ix,iy)*hz(ix,iy)*
+     &                                                  roxa(ix,iy,is) )
+             smpt(ix,iy,is) = vol(ix,iy)*hz(ix,iy)*(
      &        ( smbtfea(ix,iy,0) + smbtfia(ix,iy,0) ) +
      &        ( smbtfea(ix,iy,1) + smbtfia(ix,iy,1) ) * ua(ix,iy,is) +
      &        ( smbtfea(ix,iy,2) + smbtfia(ix,iy,2) ) * roxa(ix,iy,is) +
      &        ( smbtfea(ix,iy,3) + smbtfia(ix,iy,3) ) * ua(ix,iy,is) *
-     &                                                  roxa(ix,iy,is)
+     &                                                  roxa(ix,iy,is) )
            enddo
          enddo
        else
