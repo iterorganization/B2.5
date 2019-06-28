@@ -1116,7 +1116,7 @@ c   recompute particle fluxes
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
-     &   .false.)                                                        !djm Jan2017
+     &   .true.)                                                        !djm Jan2017
 
 *    ..perform iteration
         new_matrix = .false.

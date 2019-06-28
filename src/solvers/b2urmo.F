@@ -6,7 +6,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_balance                                                 !djm Jan2017
-     & , only : fmo_flua, fmo_cvsa, balance_netcdf
+     & , only : fmo_flua, fmo_cvsa, fmo_hybr, balance_netcdf
       use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -17,6 +17,9 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   resmb(-1:nx,-1:ny), fmb(-1:nx,-1:ny,0:1)
+*   ..local variables
+      real (kind=R8) ::
+     *   conhyb !djm Jan2018 viscosity coefficient associated with hybrid correction
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -121,6 +124,27 @@
      &         +ub(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8 
      &         +flv(ix,iy,0)
         endif
+        if (balance_netcdf.ne.0) then !djm Jan2018
+         if(leftix(ix,iy).eq.-2) then
+          fmo_cvsa(ix,iy,0,isb) = 0.0_R8
+          fmo_flua(ix,iy,0,isb) = 0.0_R8
+         else
+          if(no_Ptncr_x_co.eq.0) then
+           conhyb = con(ix,iy,0)-abs(flo)/2.0_R8-cvsb(ix,iy,0)
+           fmo_flua(ix,iy,0,isb) =
+     &       (flo-abs(flo))/2.0_R8*ub(ix,iy)+
+     &       (flo+abs(flo))/2.0_R8*ub(leftix(ix,iy),leftiy(ix,iy))
+           fmo_cvsa(ix,iy,0,isb) = -cvsb(ix,iy,0)*
+     &       (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
+           fmo_hybr(ix,iy,0,isb) = -conhyb*
+     &       (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
+          else
+           fmo_flua(ix,iy,0,isb) = fmb(ix,iy,0)-flv(ix,iy,0)
+           fmo_cvsa(ix,iy,0,isb) = flv(ix,iy,0)
+           fmo_hybr(ix,iy,0,isb) = 0.0_R8
+          endif          
+         endif
+        endif
        enddo
       enddo
 *   ..compute parallel momentum transport fmby
@@ -142,12 +166,29 @@
          fmb(ix,iy,1) = flo*(ub(bottomix(ix,iy),bottomiy(ix,iy))
      &         +ub(ix,iy))/2.0_R8 + flv(ix,iy,1)
         endif
+        if (balance_netcdf.ne.0) then !djm Jan2018
+         if(bottomiy(ix,iy).eq.-2) then
+          fmo_cvsa(ix,iy,1,isb) = 0.0_R8
+          fmo_flua(ix,iy,1,isb) = 0.0_R8
+         else
+          if(no_Ptncr_y_co.eq.0) then
+           conhyb = con(ix,iy,1)-abs(flo)/2.0_R8-cvsb(ix,iy,1)
+           fmo_flua(ix,iy,1,isb) =
+     &       (flo-abs(flo))/2.0_R8*ub(ix,iy)+
+     &       (flo+abs(flo))/2.0_R8*ub(bottomix(ix,iy),bottomiy(ix,iy))
+           fmo_cvsa(ix,iy,1,isb) = -cvsb(ix,iy,1)*
+     &       (ub(ix,iy)-ub(bottomix(ix,iy),bottomiy(ix,iy)))
+           fmo_hybr(ix,iy,1,isb) = -conhyb*
+     &       (ub(ix,iy)-ub(bottomix(ix,iy),bottomiy(ix,iy)))
+          else
+           fmo_flua(ix,iy,1,isb) = fmb(ix,iy,1)-flv(ix,iy,1)
+           fmo_cvsa(ix,iy,1,isb) = flv(ix,iy,1)
+           fmo_hybr(ix,iy,1,isb) = 0.0_R8
+          endif
+         endif
+        endif
        enddo
       enddo
-      if (balance_netcdf.ne.0) then !djm Jan2017
-        fmo_cvsa(:,:,:,isb)=flv(-1:nx,-1:ny,0:1)
-        fmo_flua(:,:,:,isb)=fmb(-1:nx,-1:ny,0:1)-flv(-1:nx,-1:ny,0:1)
-      endif
       if(iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then
        if (in_parallel()) then
         !$OMP MASTER

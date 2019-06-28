@@ -495,10 +495,12 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,
      &     cell_width, cell_height)
 *   ..create B2GridMap data structure
-      call b2CreateMap(nx, ny, crx, cry, cflags,
+      if (nget.ne.70) then ! skip case when reading b2fgmtry.old from b2yt
+        call b2CreateMap(nx, ny, crx, cry, cflags,
      &     leftix, leftiy, rightix, rightiy,
      &     topix, topiy, bottomix, bottomiy, .true., gmap)
-      mapInitialized = .true.
+        mapInitialized = .true.
+      endif
 
 * ..return
       call subend ()
