@@ -2103,7 +2103,8 @@ c dpc
                   endif
                 ENDIF
               ENDDO
-              NAS = NAS *
+              IF (max(abs(totflux),abs(SCONPAR(IS))).GT.0.0_R8)
+     >         NAS = NAS *
      &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
      &                 max(abs(totflux),abs(SCONPAR(IS))))
 !              T0 = (totflux-CONPAR(IS,IB,1))/
@@ -2325,7 +2326,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
                   ENDDO
                 ENDIF
               ENDDO
-              NAS = NAS *
+              IF(max(abs(totfluxn+totfluxi),abs(SCONPAR(IS))).GT.0.0_R8)
+     >         NAS = NAS *
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           max(abs(totfluxn+totfluxi),abs(SCONPAR(IS))))
               write(*,'(a,es14.7,a,es14.7,a,es14.7,a,es14.7,a,es14.7)')
@@ -2659,7 +2661,8 @@ cxpb Careful here because of BC number clash
               ENDDO
               t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
               NAS=NAS/t0      ! Volume-averaged density
-              NAS = NAS*
+              IF (max(abs(totflux),abs(SCONPAR(IS))).GT.0.0_R8)
+     >         NAS = NAS*
      &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
      &           max(abs(totflux),abs(SCONPAR(IS))))
 !              T0 = (totflux-CONPAR(IS,IB,1))/
@@ -2830,7 +2833,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
               ENDDO
               t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
               NAS=NAS/t0      ! Volume-averaged density
-              NAS = NAS*
+              IF(abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS)).GT.0.0_R8)
+     >         NAS = NAS*
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))
               write(*,'(5(a,es14.7))')
@@ -3180,9 +3184,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
               ENDDO
               t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
               NAS=NAS/t0      ! Volume-averaged density
-              NAS = NAS*
-     &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
-     &           max(abs(totflux),abs(SCONPAR(IS))))
+              if (max(abs(totflux),abs(SCONPAR(IS))).GT.0.0_R8)
+     >         NAS = NAS*
+     &           (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
+     &             max(abs(totflux),abs(SCONPAR(IS))))
               write(*,'(a,es14.7,a,es14.7,a,es14.7,a,i3)')
      .         ' BCCON=26: NAS=',NAS,' totflux=',totflux,
      .         ' SCONPAR=',SCONPAR(IS),' IS=',IS
@@ -3353,7 +3358,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
               ENDDO
               t1=t1/t0        !
               NAS = NAS/t0    ! Volume-averaged density
-              NAS = NAS*
+              IF(abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS)).GT.0.0_R8)
+     >         NAS = NAS*
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))
               write(*,'(5(a,es14.7))')
