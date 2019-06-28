@@ -789,7 +789,7 @@ c     boundaries should be added to a global balance as a wall recycling source
         flxps(ls) =  flxic(ls) + flxnc(ls) + flxit(ls) + flxnt(ls) +
      &          flxiw(ls) + flxnw(ls) 
         if (use_eirene.ne.0) flxps(ls) = flxps(ls) +
-     &                                   flxnp(ls) + flxnw_rec(ls) + flxex(ls)
+     &                         flxnp(ls) + flxnw_rec(ls) + flxex(ls)
 
 !     End of the loop over isonuclear sequence (ls)
       enddo
