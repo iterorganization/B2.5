@@ -360,51 +360,59 @@ c     ADAS file names
       call strip_spaces(fnzav)
       call strip_spaces(fnza2)
       call strip_spaces(fnpot)
-      inquire(file=trim(UIDIN)//fnrec, exist=ex)
+      filename=trim(UIDIN)//fnrec
+      call find_file(filename,ex)
       if(ex) then
-        fnrec=trim(UIDIN)//fnrec
+        fnrec=trim(filename)
       else
         fnrec=trim(UIDSTD)//fnrec
       endif
-      inquire(file=trim(UIDIN)//fnion, exist=ex)
+      filename=trim(UIDIN)//fnion
+      call find_file(filename,ex)
       if(ex) then
-        fnion=trim(UIDIN)//fnion
+        fnion=trim(filename)
       else
         fnion=trim(UIDSTD)//fnion
       endif
-      inquire(file=trim(UIDIN)//fncex, exist=ex)
+      filename=trim(UIDIN)//fncex
+      call find_file(filename,ex)
       if(ex) then
-        fncex=trim(UIDIN)//fncex
+        fncex=trim(filename)
       else
         fncex=trim(UIDSTD)//fncex
       endif
-      inquire(file=trim(UIDIN)//fnprb, exist=ex)
+      filename=trim(UIDIN)//fnprb
+      call find_file(filename,ex)
       if(ex) then
-        fnprb=trim(UIDIN)//fnprb
+        fnprb=trim(filename)
       else
         fnprb=trim(UIDSTD)//fnprb
       endif
-      inquire(file=trim(UIDIN)//fnplt, exist=ex)
+      filename=trim(UIDIN)//fnplt
+      call find_file(filename,ex)
       if(ex) then
-        fnplt=trim(UIDIN)//fnplt
+        fnplt=trim(filename)
       else
         fnplt=trim(UIDSTD)//fnplt
       endif
-      inquire(file=trim(UIDIN)//fnzav, exist=ex)
+      filename=trim(UIDIN)//fnzav
+      call find_file(filename,ex)
       if(ex) then
-        fnzav=trim(UIDIN)//fnzav
+        fnzav=trim(filename)
       else
         fnzav=trim(UIDSTD)//fnzav
       endif
-      inquire(file=trim(UIDIN)//fnza2, exist=ex)
+      filename=trim(UIDIN)//fnza2
+      call find_file(filename,ex)
       if(ex) then
-        fnza2=trim(UIDIN)//fnza2
+        fnza2=trim(filename)
       else
         fnza2=trim(UIDSTD)//fnza2
       endif
-      inquire(file=trim(UIDIN)//fnpot, exist=ex)
+      filename=trim(UIDIN)//fnpot
+      call find_file(filename,ex)
       if(ex) then
-        fnpot=trim(UIDIN)//fnpot
+        fnpot=trim(filename)
       else
         fnpot=trim(UIDSTD)//fnpot
       endif
