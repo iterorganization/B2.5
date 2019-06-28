@@ -38,6 +38,7 @@ c***   ion_targ        flxit       ion flow to the targets (based on fna array) 
 c***   ion_wall        flxiw       ion flow to the side walls (based on fna array)      ! IYS 12.01.2018
 c***   ion_dndt        flxid       time derivative of the ion content over the whole domain
 c***   src_ioniz       flxis       ion source due to ionization from neutral (ground) state
+c***   src_ext         flxex       external source (provided by b2.sources.profile)
 
 c***   ntr_core        flxnc       neutral flow across the core boundary
 c***   ntr_targ_tot    flxnt       neutral net flow through the targets
@@ -101,7 +102,7 @@ c
 c*** lv    :  version number to appear in the file
 c*** np_tmp:  number of output data for each species
 c
-      parameter (lv=20180622, np_tmp=16)                            ! IYS 22.06.2018
+      parameter (lv=20190627, np_tmp=17)                            ! IYS 22.06.2018, 27.06.2019
 c
       real (kind=R8) :: hlpdt, hlp, hlp_rec, hlp_sput,
      &                        bsign, hlp_nw, hlp_pump 
@@ -118,7 +119,9 @@ c*** from 960727 on
 c*** from 960808 on
 !     ,     flxrl(:),
 c*** from 20180604 on
-     ,     flxis(:), Nions(:)
+     ,     flxis(:), Nions(:),
+C*** from 20190627 on
+     ,     flxex(:)
 
 c----------------------------------------------------------------------
 c
@@ -147,7 +150,8 @@ c*** Column headers:
      1    '    ion_core','    ntr_core','    ion_targ','ntr_targ_tot',
      2    'ntr_targ_rec','ntr_targ_spt','ntr_targ_pmp','    ion_wall',
      3    'ntr_wall_tot','ntr_wall_rec','ntr_wall_spt','ntr_wall_pmp',
-     4    '   src_ioniz','    ntr_puff','    flux_tot','   ion_dn/dt'/
+     4    '   src_ioniz','    ntr_puff','    flux_tot','     src_ext',
+     5    '   ion_dn/dt'/
 !     5    'Ftt_inv_time',,'flux_balance','Bal_inv_time'/
 
 *   ..initialisation
@@ -319,6 +323,8 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       flxnp        = 0.0_R8                 ! Neutral puff (for fluid neutrals -- the flux prescribed by BCCON=5,8 on walls)
 
       flxps        = 0.0_R8                 ! Sum of ion and neutral fluxes into the domain with sign (positive: inside the domain; negative: outside the domain)
+
+      flxex        = 0.0_R8                 ! External source
 
 c**********************************
 ! The flows of B2 fluids
@@ -516,14 +522,14 @@ c<<<
 !     For standalone run take the source of neutrals with the opposite sign
                     flxis(ls) = flxis(ls) - sna(ix,iy,0,is-1) -
      1               sna(ix,iy,1,is-1) * na(ix,iy,is-1) 
-
 !     But be careful: the source due to time derivative should be counted
                     if (hlpdt .gt. 0.0_R8) then
                       flxis(ls) = flxis(ls) -
      &       (na(ix,iy,is-1) - na0(ix,iy,is-1)) * vol(ix,iy) / hlpdt     ! hlpdt is temporary variable - BE CAREFUL!!!!
                     endif
                   endif
-                endif
+                  flxex(ls) = flxex(ls) + ext_sna(ix,iy,is-1) ! External source
+               endif
 
 
               endif ! if (j.ne.0 .and. leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
@@ -812,7 +818,7 @@ c
      ,       flxiw(i), flxnw(i), flxnw_rec(i), flxnw_sput(i),              ! IYS 12.01.2018
      ,       flxnw_pump(i),                                                ! IYS 12.01.2018
      ,       flxis(i), flxnp(i), flxps(i),
-     ,       flxid(i),
+     ,       flxex(i), flxid(i),
      ,       i=1,nspecies)
         end if
 
@@ -829,7 +835,7 @@ c
      ,       flxiw(i), flxnw(i), flxnw_rec(i), flxnw_sput(i),              ! IYS 12.01.2018
      ,       flxnw_pump(i),                                                ! IYS 12.01.2018
      ,       flxis(i), flxnp(i), flxps(i),
-     ,       flxid(i)
+     ,       flxex(i), flxid(i)
         end do
       end if
       return
@@ -859,7 +865,9 @@ c*** from 960727 on
 c*** from 960808 on
 !     &   flxrl(nspecies),
 c*** from 20180604 on
-     &   flxis(nspecies), Nions(nspecies))
+     &   flxis(nspecies), Nions(nspecies),
+c*** from 20190627 on
+     &   flxex(nspecies))
 
       call ipgetr ('b2mndr_stim', stim)
 
@@ -1014,7 +1022,9 @@ c*** from 960727 on
 c*** from 960808 on
 !     &    flxrl,
 c*** from 20180604 on
-     &    flxis, Nions)
+     &    flxis, Nions, !)
+c*** from 20190627 on
+     &    flxex)
 
       if (allocated(hlpit_pl)) 
      &  deallocate(hlpit_pl, hlpit_lp)
