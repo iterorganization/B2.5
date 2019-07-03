@@ -5315,7 +5315,7 @@ c     assumes that bb is OK for 1d cases
           nedim(1,iewrk)=ntrii
           nedim(2,iewrk)=ndim(3,iwrk)
           do i = 1, ntrii
-            if (ixtri(i).ne.-1 .and. iytri(i).ne.-1) then
+            if (b2_cell(ixtri(i),iytri(i))) then
               eirene_stack(i,0:ndim(3,iwrk)-1,iewrk)=
      .         work(ix_e2b(ixtri(i)),iytri(i)-1,0:ndim(3,iwrk)-1,iwrk)
             else
@@ -6698,19 +6698,19 @@ cdpc still in testing phase
         case('pux')
           description='PUX'
           nz=1
-          call eirene_copy(pux,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(pux,1.0_R8,nz,textbl)
         case('puy')
           description='PUY'
           nz=1
-          call eirene_copy(puy,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(puy,1.0_R8,nz,textbl)
         case('pvx')
           description='PVX'
           nz=1
-          call eirene_copy(pvx,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(pvx,1.0_R8,nz,textbl)
         case('pvy')
           description='PVY'
           nz=1
-          call eirene_copy(pvy,1.0_R8,nz,textbl)
+          call eirene_coarse_copy(pvy,1.0_R8,nz,textbl)
         case('tindex')
           description='Triangle index'
           nz=1
@@ -7396,7 +7396,7 @@ cdpc still in testing phase
           work(-1:nx,-1:ny,0:ndim(3,iwrk)-1,iwrk)=0.0_R8
           nntria(0:nx-1,0:ny-1)=0
           do i=1,ntrii
-            if (ixtri(i).ne.-1 .and. iytri(i).ne.-1) then
+            if (b2_cell(ixtri(i),iytri(i))) then
               nntria(ix_e2b(ixtri(i)),iytri(i)-1)=
      .         nntria(ix_e2b(ixtri(i)),iytri(i)-1)+1
               work(ix_e2b(ixtri(i)),iytri(i)-1,0:ndim(3,iwrk)-1,iwrk)=
@@ -7439,7 +7439,7 @@ cdpc still in testing phase
           if(bad_args(stack_req)) return ! 4900
           do is=0,nedim(2,iewrk)-1
             do i=1,nedim(1,iewrk)
-              if (ixtri(i).eq.-1 .and. iytri(i).eq.-1) then
+              if (.not.b2_cell(ixtri(i),iytri(i))) then
                 eirene_stack(i,is,iewrk) = rstack(irstack)
               end if
             enddo
