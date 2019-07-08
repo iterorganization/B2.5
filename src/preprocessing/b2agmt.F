@@ -123,6 +123,8 @@
       intrinsic min, max, sqrt
       real (kind=R8) ::
      *   trim1, norm, dist, sinang, cosang
+      real (kind=R8) ::
+     &  sin_t, cos_t, sin_tl, cos_tl, tt
       external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
@@ -193,6 +195,44 @@
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+
+        if (qc_style .eq. 2) then
+          sin_t = sinang (
+     &       (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &       (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &       crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+          cos_t = cosang (
+     &       (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &       (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &       crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+          if (leftix(ix,iy) .gt. -2) then
+            sin_tl = sinang (
+     &        (crx(ix,iy,0)+crx(ix,iy,2))-
+     &        (crx(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         crx(leftix(ix,iy),leftiy(ix,iy),2)),
+     &        (cry(ix,iy,0)+cry(ix,iy,2))-
+     &        (cry(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         cry(leftix(ix,iy),leftiy(ix,iy),2)),
+     &        crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+           cos_tl = cosang (
+     &        (crx(ix,iy,0)+crx(ix,iy,2))-
+     &        (crx(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         crx(leftix(ix,iy),leftiy(ix,iy),2)),
+     &        (cry(ix,iy,0)+cry(ix,iy,2))-
+     &        (cry(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         cry(leftix(ix,iy),leftiy(ix,iy),2)),
+     &        crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+
+            tt = sqrt(0.25_R8 * (cos_t + 1.0_R8) * (cos_tl + 1.0_R8))
+            qc(ix,iy) =
+     &             tt - 0.25_R8 * sin_t * sin_tl / tt
+          else
+            tt = 0.5_R8 * (cos_t + 1.0_R8)
+            qc(ix,iy) =
+     &             tt  - 0.25_R8 * sin_t * sin_t / tt
+          endif
+        endif
+
         qcb(ix,iy) = 1.0_R8
         if(qz(ix,iy,1).le.0.0_R8) then
           write(*,'(a,1x,1f9.6,2i4)')

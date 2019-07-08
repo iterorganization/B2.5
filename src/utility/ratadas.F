@@ -201,10 +201,6 @@ c     ionisation potentials
         Ddummy(ic) = (12.0_R8+9.0_R8*(ic-1.0_R8)/(iddimd-1.0_R8))
       enddo
 
-      if(fix_recomb.ne.0) then
-         write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb
-      endif
-
 c     reading in filename and mass
       filename='ratadas.filelist'
       uidstd=trim(solpstop()) // '/modules/adas'
@@ -897,7 +893,7 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
                 endif 
 c there should also be an electron heating term corresponding to 
 c ip(ic-1)*rtra(cT,cD,ic) but this could make the cooling rate negative and 
-c so is included explicitly in b2stel if 'b2stel_fix_recomb_energy' is nonzero
+c so is included explicitly in b2stel if fix_recomb is nonzero
               else 
                 rtqa(cT,cD,ic)=0.0_R8 
               endif 
@@ -1174,7 +1170,7 @@ c     read in data
       rtz2=-1.0_R8
       rtpi=-1.0_R8
       if(fix_recomb.ne.0) then
-        write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb
+        write(*,*) 'RATAMNS: FIX_RECOMB <> 0 : ',fix_recomb
       endif
 
 #ifdef GOT_AMNSPROTO
@@ -1238,7 +1234,7 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
       if(fix_recomb.eq.0) then
          rtqa(:,:,:)=rtbr(:,:,:)
       else
-         stop 'Not yet coded'
+         call xerrab ('RATAMNS: fix_recomb <> 0 : Not yet coded!')
       endif
       rtqa(:,:,:)=rtqa(:,:,:)+rtrd(:,:,:)
       do ic=0,nc-1

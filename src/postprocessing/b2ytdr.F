@@ -893,7 +893,8 @@ c 2002-09-11: logic revised
         call cfruin (70, 1, idum, 'isymm')
 *   ..read old geometry and metric
         call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &   bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &   cell_width, cell_height, gmap)
         if (non_commensurate.eq.1) then
         call xertst (nnreg(0).eq.nnreg1(0) .and. nncut.eq.nncut1 .and.
@@ -918,7 +919,8 @@ c 2002-09-11: logic revised
         call cfruch (ninp(3), 120, lblgm, 'label')
         call cfruin (ninp(3), 1, idum, 'isymm')
         call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &   bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &   cell_width, cell_height, gmap)
       endif
       if (invert_bpol.eq.1) then
@@ -954,7 +956,7 @@ c 2002-09-11: logic revised
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
         call b2wugm (nout(6), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &   vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &   vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
      &   cell_width, cell_height)
         close(nout(6))
       endif
@@ -1063,8 +1065,9 @@ c 2002-09-11: logic revised
       nsmax=ns
 *   ..read new atomic rate data
       call cfruch (ninp(4), 120, lblrc, 'label')
+      call get_AM_flag (lblrc, b2frates_flag)
       call alloc_b2mod_ppout(nx1,ny1,ns1)
-      call read_b2mod_ppout('rates', ninp(4), lblrc)
+      call read_b2mod_ppout('rates', ninp(4), b2frates_flag)
       call b2rurc (ninp(4), b2frates_version)
 *   ..save and test rtns, rtzmin, rtzmax, rtzn
       call xertst (ns1.eq.rtns, 'faulty input rtns--wrong rate table?')
@@ -1633,12 +1636,19 @@ c 2002-09-11: logic revised
         case('b2trcl_conductive limit')
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
+        case('b2agdr_redef_pbs')
+          cnamip = 'b2agdr_redef_gmtry'
+          todo = .false.
         case('b2news_coriolis','b2npht_style_shei',
      &                         'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
         case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
-     &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib')
+     &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib',
+     &       'b2mndr_redef_pbs')
+          todo = .false.
+          wait = .true.
+        case('b2stel_fix_recomb_energy')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')

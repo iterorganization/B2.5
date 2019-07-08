@@ -220,6 +220,12 @@
           rtlpt(0:rtnt,0:rtnn,k)=(potmin(k)+potmax(k))/2.0_R8
           rtlpi(0:rtnt,0:rtnn,k)=(potimin(k)+potimax(k))/2.0_R8
         enddo
+      endif
+      if (version.ge.'03.000.007') then
+        call cfruin (nget, 1, idum, 'fix_recomb')
+        fix_recomb = idum(0)
+      else
+        fix_recomb = 0 ! corresponding to the default pre-3.0.7 version
       endif 
 
 * ..test rate coefficients
@@ -272,3 +278,44 @@
 *-----------------------------------------------------------------------
 *.end b2rurc
       end subroutine b2rurc
+
+      subroutine get_AM_flag (label, flag)
+      implicit none
+      character*120 label
+      character*8 flag
+      integer i, lt(4)
+      logical found
+      logical streql
+      external streql
+
+      flag = 'unknown'
+      found = .false.
+      lt(1) = index(label,'ADPAK')
+      lt(2) = index(label,'STRAHL')
+      lt(3) = index(label,'ADAS')
+      lt(4) = index(label,'AMNS')
+      do i = 1, 4
+        if (lt(i).eq.0) cycle
+        if (found) then
+          flag = 'multiple'
+        else
+          select case (i)
+          case (1)
+            flag = 'adpak'
+          case (2)
+            flag = 'strahl'
+          case (3)
+            flag = 'adas'
+          case (4)
+            flag = 'amns'
+          end select
+        end if
+        found = .true.
+      end do
+      call xerrab(.not.streql(flag,'unknown'),
+     . 'Could not identify A&M data package !')
+      call xerrab(.not.streql(flag,'multiple'),
+     . 'Ambiguous multiple A&M data package setting !')
+
+      return
+      end

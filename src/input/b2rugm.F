@@ -2,12 +2,15 @@
 *.specification
 
       subroutine b2rugm (nget, nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
       use b2mod_types
       use b2mod_indirect
       use b2mod_version
       use b2mod_b2cmgs
+      use b2mod_b2cmfs
+      use b2mod_constants
       use b2mod_grid_mapping
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -17,7 +20,9 @@
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), 
+     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),
+     &  hz(-1:nx,-1:ny), hyl(-1:nx,-1:ny), hxb(-1:nx,-1:ny),
+     &  hzl(-1:nx,-1:ny), hzb(-1:nx,-1:ny),
      &  qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
      &  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3), 
      &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
@@ -104,6 +109,23 @@
 *     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
 *     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
+*
+*     hxb, hyl - (-1:nx,-1:ny) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), hxb(ix,iy) and hyl(ix,iy) specify the
+*     x-diameter and the y-diameter, respectively, of the bottom and
+*     left faces of the (ix,iy) cell.
+*     It will hold that 0.lt.hxb(,) and 0.lt.hyl(,).
+*
+*     hz - (-1:nx,-1:ny) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), hz(ix,iy) specifies the
+*     length along the toroidal direction of the (ix,iy) cell.
+*     It will hold that 0.lt.hz(,).
+*
+*     hzb, hzl - (-1:nx,-1:ny) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), hzb(ix,iy) and hzl(ix,iy) specify the
+*     length along the toroidal direction, respectively, of the bottom and
+*     left faces of the (ix,iy) cell.
+*     It will hold that 0.lt.hzb(,) and 0.lt.hzl(,).
 *
 *     cell_width, cell_height - (-1:nx,-1:ny) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), cell_width(ix,iy) and cell_height(ix,iy)
@@ -192,10 +214,13 @@
       integer n2, ix, iy, idum(0:9)
       integer iFace, offset
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, t0, t1
+     *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1),
+     *   hzc(-1:nx+1,-1:ny+1)
       real (kind=R8) ::
-     *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1)
-      logical qc_to_do
+     *   p0x, p0y, p1x, p1y, t0, t1
+      logical qc_to_do, pbs_to_do
+      real (kind=R8), save :: fac_hz = 1.0e0_R8
+      real (kind=R8) :: hzconst
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -219,6 +244,10 @@
 *   ..test nget, nx, ny
       call xertst (1.le.nget, 'faulty argument nget')
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..read hz flags
+      call ipgetr ('b2mndr_hz', fac_hz)
+      call xertst (0.0_R8.le.fac_hz .and. 1.0_R8.ge.fac_hz,
+     &  'faulty parameter b2mndr_hz')
 
 * ..read geometry and field
 *   ..read coordinates
@@ -302,6 +331,27 @@ cxpb
         periodic_bc=0
       endif
 cxpb-end
+*   ..read pbs (magnetic field pitch * surface area) at cell faces
+      pbs_to_do = .false.
+      if(b2fgmtry_version.ge.'01.001.063') then                      !srv 15.02.11
+        call cfrure (nget, n2*2, pbs, 'pbs')
+      else
+        pbs_to_do = .true.
+      endif
+      if(b2fgmtry_version.eq.'03.000.006') then
+        call cfruin (nget, 1, idum, 'redef_pbs')
+        redef_gmtry=idum(0)
+      elseif(b2fgmtry_version.ge.'03.000.007') then
+        call cfruin (nget, 1, idum, 'redef_gmtry')
+        redef_gmtry=idum(0)
+        call cfrure (nget, n2*4, wbbl, 'wbbl')
+        if (redef_gmtry.eq.0) write(*,*)
+     .   'Warning: wbbl value read from b2fgmtry will be overwritten '//
+     .   'because redef_gmtry.eq.0 !'
+      else
+        redef_gmtry=0
+      endif
+
       do iy = -1, ny
         do ix = -1, nx
           if (nnreg(0).eq.1) then
@@ -316,7 +366,7 @@ cxpb-end
         end do
       end do
 
-*  ..interpolate magnetic field to cell faces
+*  ..compute qc if not yet known
       if (qc_to_do) then
 cwdk   poloidal unit vector in cell centers, ebc
        do iy = -1, ny
@@ -351,62 +401,212 @@ cwdk     note: qc in left ghosts unchanged
         enddo
        enddo
       endif
+
+*   ..compute hz                                                         !srv 09.01.01  09.06.08 {
+!      hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
+!      hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
+      hzconst = 1.0_R8                                                   !srv 30.01.10
+      hz(:,:) = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)           !srv 16.06.09
+      hyl(:,:)= sqrt((crx(:,:,2)-crx(:,:,0))**2+
+     &               (cry(:,:,2)-cry(:,:,0))**2)                         ! IYS 04.03.2019
+      hxb(:,:)= sqrt((crx(:,:,1)-crx(:,:,0))**2+
+     &               (cry(:,:,1)-cry(:,:,0))**2)                         ! IYS 04.03.2019
+      if (isymm.eq.0) then
+        hzl(:,:) = hz(:,:)
+        hzb(:,:) = hz(:,:)
+        hzc(-1:nx,-1:ny) = hz(-1:nx,-1:ny)
+        hzc(nx+1,-1:ny) = hz(nx,-1:ny)
+        hzc(-1:nx,ny+1) = hz(-1:nx,ny)
+        hzc(nx+1,ny+1)  = hz(nx,ny)
+      else if (isymm.eq.1 .or. isymm.eq.2) then
+        hzl(:,:) = pi * (crx(:,:,0)+crx(:,:,2))
+        hzb(:,:) = pi * (crx(:,:,0)+crx(:,:,1))
+        hzc(-1:nx,-1:ny) = pi * crx(:,:,0)
+        hzc(nx+1,-1:ny)  = pi * crx(nx,-1:ny,1)
+        hzc(-1:nx,ny+1)  = pi * crx(-1:nx,ny,2)
+        hzc(nx+1,ny+1)   = pi * crx(nx,ny,3)
+      else if (isymm.eq.3 .or. isymm.eq.4) then
+        hzl(:,:) = pi * (cry(:,:,0)+cry(:,:,2))
+        hzb(:,:) = pi * (cry(:,:,0)+cry(:,:,1))
+        hzc(-1:nx,-1:ny) = pi * cry(:,:,0)
+        hzc(nx+1,-1:ny)  = pi * cry(nx,-1:ny,1)
+        hzc(-1:nx,ny+1)  = pi * cry(-1:nx,ny,2)
+        hzc(nx+1,ny+1)   = pi * cry(nx,ny,3)
+      end if
+      if (redef_gmtry.eq.0) then
+*  ..old treatment: interpolate magnetic field to cell faces : overwrite wbbl
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
-      call intfacer1(nx,ny,2,rightix,rightiy,vol,bb,wbbr)
-      call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
-      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+        call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
+        call intfacer1(nx,ny,2,rightix,rightiy,vol,bb,wbbr)
+        call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
+        call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
      1     leftix,leftiy,rightix,rightiy,
      1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
 *   ..extrapolate magnetic field to edges
-      do iy = -1, ny
-        do ix = -1, nx
-          if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) = 
-     &     bb(ix,iy,0:2) - (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
-          if (rightix(ix,iy).eq.nx+1) wbbr(ix,iy,0:2) = 
-     &     bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
-          if (bottomiy(ix,iy).eq.-2) wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
-     &     (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
-        enddo
-      enddo
-*   .. correct interpolation of magnetic field for diverted island case
-*      as B is not a periodic quantity
-      if(periodic_bc.eq.1 .and. nncut.ge.1) then
         do iy = -1, ny
           do ix = -1, nx
-            if(leftix(ix,iy).ne.ix-1) then
-              if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.4) then
-                wbbl(ix,iy,0)=bb(ix,iy,0)-(wbbr(ix,iy,0)-bb(ix,iy,0))
-                wbbl(ix,iy,1)=bb(ix,iy,1)-(wbbr(ix,iy,1)-bb(ix,iy,1))
-                wbbl(ix,iy,2)=bb(ix,iy,2)-(wbbr(ix,iy,2)-bb(ix,iy,2))
+            if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) =
+     &       bb(ix,iy,0:2) - (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
+            if (rightix(ix,iy).eq.nx+1) wbbr(ix,iy,0:2) =
+     &       bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
+            if (bottomiy(ix,iy).eq.-2) wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
+     &       (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
+          enddo
+        enddo
+*   .. correct interpolation of magnetic field for diverted island case
+*      as B is not a periodic quantity
+        if(periodic_bc.eq.1 .and. nncut.ge.1) then
+          do iy = -1, ny
+            do ix = -1, nx
+              if(leftix(ix,iy).ne.ix-1) then
+                if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.4) then
+                  wbbl(ix,iy,0)=bb(ix,iy,0)-(wbbr(ix,iy,0)-bb(ix,iy,0))
+                  wbbl(ix,iy,1)=bb(ix,iy,1)-(wbbr(ix,iy,1)-bb(ix,iy,1))
+                  wbbl(ix,iy,2)=bb(ix,iy,2)-(wbbr(ix,iy,2)-bb(ix,iy,2))
+                  wbbc(ix,iy,0)=
+     &             wbbv(ix,iy,0)-(wbbc(ix+1,iy,0)-wbbv(ix,iy,0))
+                  wbbc(ix,iy,1)=
+     &             wbbv(ix,iy,1)-(wbbc(ix+1,iy,1)-wbbv(ix,iy,1))
+                  wbbc(ix,iy,2)=
+     &             wbbv(ix,iy,2)-(wbbc(ix+1,iy,2)-wbbv(ix,iy,2))
+                endif
+              else if(rightix(ix,iy).ne.ix+1) then
+                if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.3) then
+                  wbbr(ix,iy,0)=bb(ix,iy,0)-(wbbl(ix,iy,0)-bb(ix,iy,0))
+                  wbbr(ix,iy,1)=bb(ix,iy,1)-(wbbl(ix,iy,1)-bb(ix,iy,1))
+                  wbbr(ix,iy,2)=bb(ix,iy,2)-(wbbl(ix,iy,2)-bb(ix,iy,2))
+                endif
               endif
-            else if(rightix(ix,iy).ne.ix+1) then
-              if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.3) then
-                wbbr(ix,iy,0)=bb(ix,iy,0)-(wbbl(ix,iy,0)-bb(ix,iy,0))
-                wbbr(ix,iy,1)=bb(ix,iy,1)-(wbbl(ix,iy,1)-bb(ix,iy,1))
-                wbbr(ix,iy,2)=bb(ix,iy,2)-(wbbl(ix,iy,2)-bb(ix,iy,2))
+            enddo
+          enddo
+          do ix = -1, nx
+            if(leftix(ix,ny).ne.ix-1) then
+              if(region(ix,ny,0).eq.1 .or. region(ix,ny,0).eq.4) then
+                wbbc(ix,ny,0)=
+     &           wbbv(ix,ny,0)-(wbbc(ix+1,ny,0)-wbbv(ix,ny,0))
+                wbbc(ix,ny,1)=
+     &           wbbv(ix,ny,1)-(wbbc(ix+1,ny,1)-wbbv(ix,ny,1))
+                wbbc(ix,ny,2)=
+     &           wbbv(ix,ny,2)-(wbbc(ix+1,ny,2)-wbbv(ix,ny,2))
               endif
             endif
           enddo
-        enddo
-      endif
+        endif
 *   ..compute extrapolated wbb.(:,:,3) components
-      wbbl(:,:,3)=sqrt(wbbl(:,:,0)**2+wbbl(:,:,1)**2+wbbl(:,:,2)**2)
-      wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
-      wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
-      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
-*   ..compute or read pbs (magnetic field pitch * surface area) at cell faces
-      if(b2fgmtry_version.ge.'01.001.063') then                      !srv 15.02.11
-        call cfrure (nget, n2*2, pbs, 'pbs')
-      else
-        call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
-      endif
-      if(b2fgmtry_version.ge.'03.000.006') then
-        call cfruin (nget, 1, idum, 'redef_pbs')
-        redef_pbs=idum(0)
-      else
-        redef_pbs=0
-      endif
+        wbbl(:,:,3)=sqrt(wbbl(:,:,0)**2+wbbl(:,:,1)**2+wbbl(:,:,2)**2)
+        wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
+        wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
+        wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
+      else ! redef_gmtry.eq.1 treatment
+        wbbr = 0.0_R8
+        wbbv = 0.0_R8
+        wbbc = 0.0_R8
+        do iy = -1, ny
+          do ix = -1, nx
+            if (rightix(ix,iy).lt.nx+1) then
+              wbbr(ix,iy,0) = wbbl(rightix(ix,iy),rightiy(ix,iy),0)
+              wbbr(ix,iy,2) = wbbl(rightix(ix,iy),rightiy(ix,iy),2)
+            else
+              wbbr(ix,iy,0) =
+     &         bb(ix,iy,0) - (wbbl(ix,iy,0)-bb(ix,iy,0))
+              wbbr(ix,iy,2) =
+     &         bb(ix,iy,2) - (wbbl(ix,iy,2)-bb(ix,iy,2))
+            end if
+            if (bottomiy(ix,iy).gt.-2) then
+              wbbv(ix,iy,0) = (
+     &          bb(ix,iy,0) * hy(ix,iy) * hz(ix,iy) * qz(ix,iy,1) +
+     &          bb(bottomix(ix,iy),bottomiy(ix,iy),0) *
+     &          hy(bottomix(ix,iy),bottomiy(ix,iy)) *
+     &          hz(bottomix(ix,iy),bottomiy(ix,iy)) *
+     &          qz(bottomix(ix,iy),bottomiy(ix,iy),1) ) /
+     &        ( hy(ix,iy) * hz(ix,iy) * qz(ix,iy,1) +
+     &          hy(bottomix(ix,iy),bottomiy(ix,iy)) *
+     &          hz(bottomix(ix,iy),bottomiy(ix,iy)) *
+     &          qz(bottomix(ix,iy),bottomiy(ix,iy),1) )
+            else
+              wbbv(ix,iy,0) = bb(ix,iy,0) -
+     &         (wbbv(topix(ix,iy),topiy(ix,iy),0)-bb(ix,iy,0))
+            end if
+            wbbv(ix,iy,2) =(ffbz(ix,iy,0)+ffbz(ix,iy,1)) /
+     &       (2.0_R8*hzb(ix,iy))
+            wbbc(ix,iy,2) = ffbz(ix,iy,0) / hzc(ix,iy)
+            if (bottomiy(ix,iy).gt.-2) wbbc(ix,iy,0) =
+     &         (wbbl(ix,iy,0) * gs(ix,iy,0) * qc(ix,iy) +
+     &          wbbl(bottomix(ix,iy),bottomiy(ix,iy),0) *
+     &            gs(bottomix(ix,iy),bottomiy(ix,iy),0) *
+     &            qc(bottomix(ix,iy),bottomiy(ix,iy)) ) /
+     &         (gs(ix,iy,0) * qc(ix,iy) +
+     &          gs(bottomix(ix,iy),bottomiy(ix,iy),0) *
+     &          qc(bottomix(ix,iy),bottomiy(ix,iy)) )
+          end do
+          if (bottomiy(nx,iy).gt.-2) wbbc(nx+1,iy,0) =
+     &      (wbbr(nx,iy,0) * hy(nx,iy) * hz(nx,iy) * qz(nx,iy,1) +
+     &       wbbr(bottomix(nx,iy),bottomiy(nx,iy),0) *
+     &         hy(bottomix(nx,iy),bottomiy(nx,iy)) *
+     &         hz(bottomix(nx,iy),bottomiy(nx,iy)) *
+     &         qz(bottomix(nx,iy),bottomiy(nx,iy),1) ) /
+     &      (hy(nx,iy) * hz(nx,iy) * qz(nx,iy,1) +
+     &       hy(bottomix(nx,iy),bottomiy(nx,iy)) *
+     &       hz(bottomix(nx,iy),bottomiy(nx,iy)) *
+     &       qz(bottomix(nx,iy),bottomiy(nx,iy),1) )
+          wbbc(nx+1,iy,2) = ffbz(nx,iy,1) / hzc(nx+1,iy)
+        end do
+        do iy = -1, ny
+          do ix = -1, nx
+            if (bottomiy(ix,iy).eq.-2) wbbc(ix,iy,0) = wbbl(ix,iy,0) -
+     &       (wbbc(topix(ix,iy),topiy(ix,iy),0) - wbbl(ix,iy,0))
+          end do
+          if (bottomiy(nx,iy).eq.-2) wbbc(nx+1,iy,0) = wbbl(nx,iy,0) -
+     &       (wbbc(topix(nx,iy),topiy(nx,iy),0) - wbbl(nx,iy,0))
+        end do
+        do ix = -1, nx
+          wbbc(ix,ny+1,0) =
+     &     wbbl(ix,ny,0) - (wbbc(ix,ny,0) - wbbl(ix,ny,0))
+          wbbc(ix,ny+1,2) = ffbz(ix,ny,2) / hzc(ix,ny+1)
+        end do
+        wbbc(nx+1,ny+1,0) =
+     &   wbbr(nx,ny,0) - (wbbc(nx,ny,0) - wbbl(nx,ny,0))
+        wbbc(nx+1,ny+1,0) = ffbz(nx+1,ny+1,3) / hzc(nx+1,ny+1)
+*   .. correct interpolation of magnetic field for diverted island case
+*      as B is not a periodic quantity
+        if(periodic_bc.eq.1 .and. nncut.ge.1) then
+          do iy = -1, ny
+            do ix = -1, nx
+              if(leftix(ix,iy).ne.ix-1) then
+                if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.4) then
+                  wbbc(ix,iy,0)=
+     &             wbbv(ix,iy,0)-(wbbc(ix+1,iy,0)-wbbv(ix,iy,0))
+                  wbbc(ix,iy,2)=
+     &             wbbv(ix,iy,2)-(wbbc(ix+1,iy,2)-wbbv(ix,iy,2))
+                endif
+              elseif(rightix(ix,iy).ne.ix+1) then
+                if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.3) then
+                  wbbr(ix,iy,0)=bb(ix,iy,0)-(wbbl(ix,iy,0)-bb(ix,iy,0))
+                  wbbr(ix,iy,2)=bb(ix,iy,2)-(wbbl(ix,iy,2)-bb(ix,iy,2))
+                endif
+              endif
+            enddo
+          enddo
+          do ix = -1, nx
+            if(leftix(ix,ny).ne.ix-1) then
+              if(region(ix,ny,0).eq.1 .or. region(ix,ny,0).eq.4) then
+                wbbc(ix,ny,0)=
+     &           wbbv(ix,ny,0)-(wbbc(ix+1,ny,0)-wbbv(ix,ny,0))
+                wbbc(ix,ny,2)=
+     &           wbbv(ix,ny,2)-(wbbc(ix+1,ny,2)-wbbv(ix,ny,2))
+              endif
+            endif
+          enddo
+        endif
+*   ..compute extrapolated wbb.(:,:,3) components
+        wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
+        wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
+        wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
+      end if
+*   ..compute pbs (magnetic field pitch * surface area) at cell faces if needed
+      if(pbs_to_do)
+     > call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
+
 *   ..read extended grid cell flags
       cflags = 0
       if(b2fgmtry_version.ge.'01.001.028') then

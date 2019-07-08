@@ -10,6 +10,8 @@
       use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_geo
+     &   , only : hyl, hxb                 ! IYS 04.03.2019
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -82,11 +84,15 @@ c Drift terms
                fchinert(ix,iy,0)=fchinert(ix,iy,0)                      !srv 07.07.99
      &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*     ! signmf*    !srv 23.07.05 11.01.13
      &          facdrift(ix,iy)*                                        !srv 22.06.08
-     &          (ua(ix,iy,is)**2+ua(leftix(ix,iy),leftiy(ix,iy),is)**2) !srv 07.07.99 05.02.05 23.07.05
-     &         *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8 !srv 07.07.99
-     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8  !srv 07.07.99
-     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))           !srv 07.07.99
-     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))         !srv 07.07.99
+     &         (ua(ix,iy,is)**2 * na(ix,iy,is) +                        ! IYS 04.03.2019
+     &          ua(leftix(ix,iy),leftiy(ix,iy),is)**2 *
+     &          na(leftix(ix,iy),leftiy(ix,iy),is)) *
+     &          gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)
+!     &          (ua(ix,iy,is)**2+ua(leftix(ix,iy),leftiy(ix,iy),is)**2) !srv 07.07.99 05.02.05 23.07.05
+!     &         *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8 !srv 07.07.99
+!     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8  !srv 07.07.99
+!     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))           !srv 07.07.99
+!     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))         !srv 07.07.99
      &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))   !srv 07.07.99
                endif                                                    !srv 26.11.02
              enddo                                                      !srv 07.07.99
@@ -97,15 +103,19 @@ c Drift terms
                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then !srv 26.11.02
                fchinert(ix,iy,1)=fchinert(ix,iy,1)                      !srv 07.07.99
      &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy) ! signmf* !srv 07.07.99 21.04.00 22.06.08 11.01.13
-     &          *(                                                      !srv 07.07.99
-     &           na(ix,iy,is)+na(bottomix(ix,iy),bottomiy(ix,iy),is)    !srv 07.07.99
-     &           )/2.0e0_R8                                             !srv 07.07.99
-     &          *0.5e0_R8*(ua(ix,iy,is)**2 +                            !srv 07.07.99 18.02.00 23.07.05
-     &                     ua(bottomix(ix,iy),bottomiy(ix,iy),is)**2)   !srv 07.07.99 23.07.05
-     &          *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2))    !srv 07.07.99
-     &          /2.0e0_R8                                               !srv 07.07.99
-     &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))      !srv 07.07.99
-     &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))    !srv 07.07.99
+     &          *0.5e0_R8*( na(ix,iy,is) * ua(ix,iy,is)**2 +            ! IYS 04.03.2019
+     &           na(bottomix(ix,iy),bottomiy(ix,iy),is) *
+     &           ua(bottomix(ix,iy),bottomiy(ix,iy),is)**2) *
+     &           gs(ix,iy,1) * wbbv(ix,iy,2) / hxb(ix,iy)
+!     &          *(                                                      !srv 07.07.99
+!     &           na(ix,iy,is)+na(bottomix(ix,iy),bottomiy(ix,iy),is)    !srv 07.07.99
+!     &           )/2.0e0_R8                                             !srv 07.07.99
+!     &          *0.5e0_R8*(ua(ix,iy,is)**2 +                            !srv 07.07.99 18.02.00 23.07.05
+!     &                     ua(bottomix(ix,iy),bottomiy(ix,iy),is)**2)   !srv 07.07.99 23.07.05
+!     &          *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2))    !srv 07.07.99
+!     &          /2.0e0_R8                                               !srv 07.07.99
+!     &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))      !srv 07.07.99
+!     &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))    !srv 07.07.99
      &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-
      &            OnedBsqc(ix,iy))                                      !srv 07.07.99
                endif                                                    !srv 26.11.02

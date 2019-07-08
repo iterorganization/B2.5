@@ -5,6 +5,8 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
+      use b2mod_geo
+     &   , only : hyl, hxb                 ! IYS 04.03.2019
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -87,11 +89,13 @@
             if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
              fchdia(ix,iy,0)=fchdia(ix,iy,0)+
      &                       dia_cur*facdrift(ix,iy)* ! signmf*          !srv 25.04.00 05.02.05 11.01.13 16.10.17
-     &      (pz(ix,iy)*bb(ix,iy,2)+                                      !srv 31.03.00 18.01.02
-     &        pz(leftix(ix,iy),leftiy(ix,iy))                            !srv 31.03.00
-     &       *bb(leftix(ix,iy),leftiy(ix,iy),2))*0.5e0_R8                !srv 31.03.00
-     &      *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-     &      /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))
+     &     0.5e0_R8 * (pz(ix,iy) + pz(leftix(ix,iy),leftiy(ix,iy))) *    ! IYS 04.03.2019
+     &       gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)
+!     &      (pz(ix,iy)*bb(ix,iy,2)+                                      !srv 31.03.00 18.01.02
+!     &        pz(leftix(ix,iy),leftiy(ix,iy))                            !srv 31.03.00
+!     &       *bb(leftix(ix,iy),leftiy(ix,iy),2))*0.5e0_R8                !srv 31.03.00
+!     &      *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+!     &      /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))
      &      *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))
 !     &       (ne(ix,iy)+ne(leftix(ix,iy),leftiy(ix,iy)))/2.0e0_R8       !srv
 !     &      *(te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy))                 !srv
@@ -119,11 +123,13 @@
 !     &      *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))          !srv
 !     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))        !srv
 !     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))  !srv
-     &       (pz(ix,iy)*bb(ix,iy,2)+                                     !srv 31.03.00 18.01.02 {
-     &        pz(bottomix(ix,iy),bottomiy(ix,iy))                        !srv 31.03.00
-     &       *bb(bottomix(ix,iy),bottomiy(ix,iy),2))*0.5e0_R8            !srv 31.03.00 18.01.02 }
-     &      *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))           !srv
-     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))         !srv
+     &   0.5e0_R8 * (pz(ix,iy) + pz(bottomix(ix,iy),bottomiy(ix,iy))) *  ! IYS 04.03.2019
+     &         gs(ix,iy,1) * wbbv(ix,iy,2) / hxb(ix,iy)
+!     &       (pz(ix,iy)*bb(ix,iy,2)+                                     !srv 31.03.00 18.01.02 {
+!     &        pz(bottomix(ix,iy),bottomiy(ix,iy))                        !srv 31.03.00
+!     &       *bb(bottomix(ix,iy),bottomiy(ix,iy),2))*0.5e0_R8            !srv 31.03.00 18.01.02 }
+!     &      *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))           !srv
+!     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))         !srv
      &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))   !srv
 
 !     &      -(ne(ix,iy)+ne(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8   !srv

@@ -112,7 +112,7 @@
       integer izpmin(0:nzmax), izpmax(0:nzmax)
       character flag*8
       integer i, j, k, nx, ny, ns, is, inuc, fix_cx, rtnt_in, rtnn_in,
-     *  no_weisheit, fix_recomb, ns_pardf
+     *  no_weisheit, ns_pardf
       integer kstart, kstart1, kend
       integer idum(0:9)
       integer, save :: no_smoothing = 0                        !srv 02.07.12
@@ -127,7 +127,7 @@
      &  rtz2(:,:,:), rtpt(:,:,:),
      &  rtzz(:,:,:), rtpi(:,:,:),
      &  wrk(:,:,:)
-      save fix_cx, no_weisheit, rtnt_in, rtnn_in, fix_recomb
+      save fix_cx, no_weisheit, rtnt_in, rtnn_in
       parameter (lnzero=-1.0e30_R8)
       logical unread
 *   ..procedures
@@ -138,8 +138,7 @@
       external b2xxid, b2arin, b2wfr0, b2wfr1, b2wurc, b2rucp
       external cfverr, cfruin, is_comment
 *   ..initialisation
-      data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/32/,
-     & fix_recomb/0/
+      data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/32/
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -351,6 +350,8 @@
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
 *   ..internal parameters
+      fix_recomb = 0
+      if (streql(flag,'adas')) fix_recomb = 1
       call ipgeti('b2ardr_fix_cx', fix_cx)
       call ipgeti('b2ardr_fix_recomb', fix_recomb)
       call ipgeti('b2ardr_no_weisheit', no_weisheit)
@@ -369,7 +370,7 @@
      &   ' K. Behringer'
       else if (streql(flag,'adas')) then
        lblrc(61:120) = 'ADAS rate coefficients, courtesy of'//
-     &   ' H. Summers'
+     &   ' M. O Mullane'
 #ifdef ITM
       else if (streql(flag,'amns')) then
        lblrc(61:120) = 'AMNS rate coefficients, courtesy of'//
@@ -450,6 +451,8 @@
       do inuc = 0, nnuc-1
 *    ..compute table
        if (streql(flag,'adpak')) then
+        fix_recomb = 0  ! must be set to zero as ADPAK rates are incompatible
+                        ! with fix_recomb treatment
         call ratadp (nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
         npart(inuc)=nz(inuc)+1

@@ -251,7 +251,8 @@
       isymm = idum(0)
 *   ..read geometry and metric
       call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 *   ..read species data
       call b2ruzd (ninp(1), b2fstate_version,
@@ -272,7 +273,8 @@
       call b2xpni (nx, ny, ns, na, ni)
 *   ..read atomic rate data
       call cfruch (ninp(2), 120, lblrc, 'label')
-      call read_b2mod_ppout('rates', ninp(2), lblrc)
+      call get_AM_flag (lblrc, b2frates_flag)
+      call read_b2mod_ppout('rates', ninp(2), b2frates_flag)
       call b2rurc (ninp(2), b2frates_version)
 *    ..compute log-log electron rate coefficients
       call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,

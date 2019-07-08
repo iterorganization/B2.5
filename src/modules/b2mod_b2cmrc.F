@@ -19,7 +19,7 @@
      &  rtlpi(:,:,:)
       integer, allocatable, save ::
      &  rtyr(:)
-      logical, save ::  adpak_used
+      integer, save :: fix_recomb
       character*8, save :: b2frates_flag
 
       contains

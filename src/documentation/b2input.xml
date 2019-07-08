@@ -288,7 +288,8 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When b2agmt_qc_style.eq.1, the cosine of the angle between the left face of cells and the magnetic field direction is computed using information from cells to both the left and right of the face.
+					When b2agmt_qc_style.eq.1, the cosine of the angle between the left face of cells and the magnetic field direction is computed using information from cells to both the left and right of the face, based on interpolations of the qz array (cosine at cell centers).
+					When b2agmt_qc_style.eq.2, the cosine of the angle between the left face of cells and the magnetic field direction is computed assuming that it is the angle between the left cell face and the bisector of the poloidal direction in the left and right cells sharing the common face.
 					When b2agmt_qc_style.eq.0, we only use information from the cell at the right of the face. This is the treatment used up to version 3.0.6, inclusively.
 				</description>
 			</switch>
@@ -303,19 +304,11 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2agdr_redef_pbs</name>
+				<name>b2agdr_redef_gmtry</name>
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When b2agdr_redef_pbs.eq.1, geometrical quantities are adjusted so as to ensure that the poloidal flux between two flux surfaces remains constant.
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndr_redef_pbs</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Obsolete. Should use b2agdr_redef_pbs instead.
+					When b2agdr_redef_gmtry.eq.1, geometrical quantities are adjusted so as to ensure that the poloidal flux between two flux surfaces remains constant.
 				</description>
 			</switch>
 			<switch>
@@ -1237,7 +1230,6 @@
 				<name>b2tfhe_vis_q</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!srv 20.11.08</note>
 				<description>
 					Real parameter which multiplies the current driven by heat viscosity effects.
 				</description>
@@ -1682,7 +1674,6 @@
 				<name>b2mndr_hz</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!srv 09.06.08</note>
 				<description>
 					hz has been introduced into the new form of the parallel momentum balance equation. If fac_hz = 0.0 then hz = 1 and old form of equations is used. If fac_hz = 1.0 then new form of equations is used.
 				</description>
@@ -1691,7 +1682,6 @@
 				<name>b2stbr_bas_recycled_neutrals_contr</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!srv 12.04.08</note>
 				<description>
 					Introduced for nulling recycling energy when it is zero.
 				</description>
@@ -2080,7 +2070,6 @@
 				<name>b2tlmv_style</name>
 				<default>1</default>
 				<type>integer</type>
-				<note>!srv 30.05.08</note>
 				<description>
 					if style = 0 then it is applied the origin flux limit to the viscosity else it is applied the SPb flux limit to the viscosity
 				</description>
@@ -2377,16 +2366,6 @@
 					If eirene_sheath_pot.eq.0, the sheath potential drop is
 					recomputed by EIRENE, usually assuming zero current and secondary
 					electron emission.
-				</description>
-			</switch>
-			<switch>
-				<name>b2stel_fix_recomb_energy</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If changed to 1, then the recombination energy (rpi) is added to the electron energy for each recombination. This should only be used if the is--&gt;is-1 energy terms have been included in the electron cooling rates (as done by setting the switch 'b2ardr_fix_recomb' in b2ar.dat to a non-zero value and recalculating b2frates).
-					See 'Atomic Physics' section.
-					*** Use with caution! ***
 				</description>
 			</switch>
 			<switch>
@@ -3137,7 +3116,6 @@
 				<name>b2tfhe_vis_per</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!srv 20.11.08</note>
 				<description>
 					vis_per is a multiplier to the perpendicular viscosity current.
 					If vis_per.ne.0.0, the electric potential equation is solved by the subroutine b2npp7 using a 7-point stencil.
@@ -3271,7 +3249,6 @@
 				<name>b2trcl_cvsa_mltpl</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!iys 06.12.13</note>
 				<description>
 					Artificial coefficient providing faster convergence to the neoclassical electric field but giving a distortion of the flows in the SOL as a side-effect.
 					Can be applied &lt;&gt;1 during the convergence and turned off for the final stage of calculations. Use with caution.
@@ -4381,21 +4358,18 @@
 				<name>b2ardr_no_smoothing</name>
 				<default>0</default>
 				<type>integer</type>
-				<note>!srv 02.07.12</note>
 				<description>
 					When set to 1, disables the tail smoothing for of rate coefficients to represent the effect of a power-law tail on the distribution function. It has been added for compatibility with SOLPS4.3
 				</description>
 			</switch>
 			<switch>
 				<name>b2ardr_fix_recomb</name>
-				<default>0</default>
+				<default>1 for ADAS, 0 otherwise</default>
 				<type>integer</type>
 				<description>
 					When changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
 					This term includes the bremsstrahlung.
-					The default option ('0') only contains the bremsstrahlung for the is--&gt;is-1 process.
-					This option should be used with the 'b2stel_fix_recomb_energy' option b2mn.dat set to '1'. See 'Physics' section.
-					*** Use with caution! ***
+					The '0' option only contains the bremsstrahlung for the is--&gt;is-1 process.
 				</description>
 			</switch>
 			<switchgroup>

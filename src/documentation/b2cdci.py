@@ -29,8 +29,8 @@ def fort_switch(name, default, category, note):
         pdefault = default
     fort = "*    "
     fort += pname
-    fort += (27-len(pname) if 27-len(pname) >= 0 else 1) * ' ' + pdefault
-    fort += (55-len(fort) if 55-len(fort) >= 0 else 1) * ' ' + category
+    fort += (27-len(pname) if 26-len(pname) >= 0 else 1) * ' ' + pdefault
+    fort += (55-len(fort) if 54-len(fort) >= 0 else 1) * ' ' + category
     if note:
         fort += (67 - len(fort)) * ' ' + note + '\n'
     else:

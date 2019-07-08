@@ -285,6 +285,12 @@ cdjm Jan2017 update particle source components for balance
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_shi')
       endif                                                             !srv 17.07.05 01.11.10 }
+
+      if (iout.eq.1) then
+        call my_out(70,nx,ny,te,'b2nph9_te0')
+        call my_out(70,nx,ny,ti,'b2nph9_ti0')
+      endif
+
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
         call b2ush9 (nx, ny, ns, nregionv, itcnt,

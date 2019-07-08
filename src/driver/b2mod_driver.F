@@ -90,12 +90,10 @@
       save nscx, iscx, isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
-      integer, save :: b2mndr_redef_pbs = 0
       integer, save :: pot_eq = 1
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
-      real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
@@ -157,7 +155,6 @@
       logical quit_residual, test_residual
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
-      real (kind=R8) :: hzconst                                      !srv 30.01.10
 
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
@@ -1186,9 +1183,6 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        call ipgetr ('b2mndr_ne_wanted_mod_time', ne_wanted_mod_time)
        call xertst (0.le.isfb.and.isfb.lt.ns,
      &   'faulty internal parameter isfb')
-       call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
-       call xertst (0.0_R8.le.fac_hz .and. 1.0_R8.ge.fac_hz,
-     &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
 csw 09oct2012
        call ipgeti ('b2news_poteq', pot_eq)
        call ipgeti ('b2tfhe_no_current', no_current)
@@ -1264,22 +1258,9 @@ csw 09oct2012
 
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
-      call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
-      if (b2mndr_redef_pbs.ne.0) then
-        if (redef_pbs.eq.1) then
-          write(6,*)
-     &     'Magnetic flux correction of pbsx already done in b2ag.'
-        else
-          write(6,*)
-     &     'Magnetic flux correction must now be done in b2ag.'
-          write(6,*)
-     &     'Please set b2agdr_redef_pbs to 1 in b2ag.dat ',
-     &     'and re-run b2ag.'
-          call xerrab ('Obsolete switch b2mndr_redef_pbs!')
-        endif
-      endif
 ! can only be calculated after the indirect arrays have been read
       ix1=int(ixfb)
       call xertst(0.le.ix1.and.ix1.lt.nx, 'faulty ixfb (1)')
@@ -1334,27 +1315,8 @@ csw 09oct2012
           OnedBsq(ix,iy)=1.0_R8/bb(ix,iy,3)**2                           !sv
         enddo                                                            !sv
       enddo                                                              !sv
-*  .. interpolate OnedBsq for corners of cell                            !sv
-      call my_intcor (nx,ny,vol,periodic_bc,nncut,
-     1     leftix,leftiy,rightix,rightiy,
-     1     bottomix,bottomiy,topix,topiy,region,OnedBsq,OnedBsqc)        !sv
-*  .. interpolate magnetic field to cell corners                         !xpb
-c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
-     1     leftix,leftiy,rightix,rightiy,
-     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)                 !xpb
-*   ..compute extrapolated wbbc(:,:,3) component
-      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
-*   ..compute hz                                                         !srv 09.01.01  09.06.08 {
-c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
-!      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)              !srv 09.01.01
-      hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
-      hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
-      hzconst = 1.0_R8                                                   !srv 30.01.10
-      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
+      OnedBsqc(:,:)=1.0_R8/wbbc(:,:,3)**2
 *   ..compute pbshz (magnetic field pitch * surface area  at cell faces * hz)
-c      wrk0 = hz*vol
-c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       do iy=-1,ny                                                        !srv 11.03.08 {
         do ix=-1,nx
           if(leftix(ix,iy).ne.-2) then
@@ -2240,12 +2202,12 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #ifdef CATALYST
         if (use_catalyst .eqv. .true.) then
            call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,ns,itim,tim,
-     &   vol, hx, hy, qc, te, ti, po, bzb, OnedBsq,ne,qz, pbs, fhe, fhi,
-     &   fch, pbshz, fhe_mdf, fhi_mdf, fchvispar,
-     &   fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
-     &   na, ua, kinrgy, rra, rqa, fna, fna_mdf, fna_fcor, uadia, vadia,
-     &   vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi, float(rightix),
-     &   float(topiy))
+     &      vol, hx, hy, qc, te, ti, po, bzb, OnedBsq,ne,qz, pbs,
+     &      fhe, fhi, fch, pbshz, fhe_mdf, fhi_mdf, fchvispar,
+     &      fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
+     &      na, ua, kinrgy, rra, rqa, fna, fna_mdf, fna_fcor,
+     &      uadia, vadia, vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi,
+     &      float(rightix), float(topiy))
         endif
 #endif
         goto 1

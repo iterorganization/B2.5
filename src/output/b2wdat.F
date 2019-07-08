@@ -1654,6 +1654,28 @@
        call my_out(70,nx,ny,vol,'vol')
        call my_out(70,nx,ny,pbs(-1,-1,0),'pbsx')
 
+       call my_out(70,nx,ny,wbbl(-1,-1,0),'bbxl')
+       call my_out(70,nx,ny,wbbl(-1,-1,2),'bbzl')
+       call my_out(70,nx,ny,wbbl(-1,-1,3),'bbl')
+       call my_out(70,nx,ny,wbbr(-1,-1,0),'bbxr')
+       call my_out(70,nx,ny,wbbr(-1,-1,2),'bbzr')
+       call my_out(70,nx,ny,wbbr(-1,-1,3),'bbr')
+       call my_out(70,nx,ny,wbbv(-1,-1,0),'bbxv')
+       call my_out(70,nx,ny,wbbv(-1,-1,2),'bbzv')
+       call my_out(70,nx,ny,wbbv(-1,-1,3),'bbv')
+       call my_out(70,nx,ny,wbbc(-1:nx,-1:ny,0),'bbxc')
+       call my_out(70,nx,ny,wbbc(-1:nx,-1:ny,2),'bbzc')
+       call my_out(70,nx,ny,wbbc(-1:nx,-1:ny,3),'bbc')
+       call my_out(70,nx,ny,hxb,'hxb')
+       call my_out(70,nx,ny,hyl,'hyl')
+       call my_out(70,nx,ny,hzl,'hzl')
+       call my_out(70,nx,ny,hzb,'hzb')
+       call my_out(70,nx,ny,gs(-1,-1,0),'gsx')
+       call my_out(70,nx,ny,gs(-1,-1,1),'gsy')
+       call my_out(70,nx,ny,gs(-1,-1,2),'gsz')
+       call my_out(70,nx,ny,qz(-1,-1,0),'qz0cost')
+       call my_out(70,nx,ny,qz(-1,-1,1),'qz1sint')
+
 c     calculate coordinates of cell centre
        wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))      !srv 18.12.14 {
        call my_out(70,nx,ny,wrk0,'crc_')

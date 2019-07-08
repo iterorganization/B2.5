@@ -1026,6 +1026,7 @@ c
       subroutine b2gxdr_dummy(local_sonnet, nx, ny, istyle, isymm,
      & crxs, crys, bp, bt, fpsi, ffbz)
       use b2mod_types
+      use b2mod_constants
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -1063,6 +1064,7 @@ c
       character uline*(line_length)
       external xertst, subini, subend, open_file
       intrinsic index, sqrt
+      real (kind=R8) :: t0
 
       data new_format/1/
       data format_string/
@@ -1135,10 +1137,26 @@ c
           end do
   110     continue
           close(lun)
+! If the toroidal flux function is not provided, compute it
+          if (maxval(ffbz).eq.0.0_R8 .and. minval(ffbz).eq.0.0_R8) then
+            write(*,*) 'Toroidal flux function missing!'
+            write(*,*) 'Trying to fix this automatically'
+            t0 = 0.0_R8
+            do iy=0,ny+1
+              do ix=0,nx+1
+                if (isymm.eq.1) then
+                  t0 = t0 + bt(ix,iy) * crxs(ix,iy,4)
+                else if (isymm.eq.3) then
+                  t0 = t0 + bt(ix,iy) * crys(ix,iy,4)
+                end if
+              end do
+            end do
+            ffbz =2.0_R8 * pi * t0 / (nx + 2) / (ny + 2)
+          endif
         else
           call xerrab('Error in reading geometry file')
         endif
-      elseif(istyle.eq.-2) then  	 !xpb  SONNET-format geometry input
+      elseif(istyle.eq.-2) then   !xpb  SONNET-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/DivGeo/device/'//trim(device)
         if(open_file(lun,local_sonnet,meshpath)) then
@@ -1156,6 +1174,8 @@ c
      >     then
             go to 20
           end if
+
+          ffbz = 2.0_R8 * pi * ubr  ! IYS 14.05.2019
 c----------------------------------------------------------------------
           if(ubr.eq.0.0_R8) then
             write(*,*) 'b2gxdr_dummy: the value of R*Btor undefined.'

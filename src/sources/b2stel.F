@@ -73,7 +73,6 @@
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is, js, ireg
 !     integer k
-      integer, save :: fix_recomb_energy
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
@@ -90,11 +89,11 @@
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
 *   ..procedures
       intrinsic abs
-      logical lnext
+      logical lnext, streql
       real (kind=R8) ::
      *   samax, roxa
       external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
-      external b2xvsg
+      external b2xvsg, streql
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
@@ -102,8 +101,7 @@
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,
      &  rxm1/0.0_R8/, rxm2/0.0_R8/,
-     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/,           !srv 05.06.18
-     &  fix_recomb_energy/0/
+     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -131,13 +129,9 @@
        call ipgeti ('b2stel_styl0', styl0)
        call xertst (0.le.styl0.and.styl0.lt.4,
      &   'faulty internal parameter styl0')
-       call ipgeti ('b2stel_fix_recomb_energy', fix_recomb_energy)
-       call xertst (.not.(adpak_used.and.fix_recomb_energy.ne.0),
-     &   'fix_recomb_energy should not be used with ADPAK rates!')
-       if(fix_recomb_energy.ne.0) then
-         write(*,*)
-     &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!'
-       endif
+       call xertst
+     &  (.not.(streql(b2frates_flag,'adpak').and.fix_recomb.ne.0),
+     &   'fix_recomb should not be used with ADPAK rates!')
 *   ..identify impurity homonuclear sequences
        nimp_tmp=0
        jimp_tmp=0
@@ -241,7 +235,7 @@
 !$OMP& shared(sna0_rec, shi0_rec, smq0_rec, b2stel_she0to3)
 !$OMP& shared(rsana, rsahi, rsamo, rrana, rrahi, rqahe, rramo, rbr)
 !$OMP& shared(rqrad, rqbrm, zamax, zamin)
-!$OMP& shared(fix_recomb_energy, styl0, BoRiS, is_neutral)
+!$OMP& shared(fix_recomb, styl0, BoRiS, is_neutral)
 !$OMP& shared(balance_netcdf)
 !$OMP& reduction(+:b2rad, b2brem)
 #endif
@@ -362,7 +356,7 @@
      *                         rf0*t1/(ni(ix,iy,0)*ti(ix,iy))
            rrahi(ix,iy,is) = t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
-           if(fix_recomb_energy.ne.0) then
+           if(fix_recomb.ne.0) then
 c the default treatment is to have the entire ionization potential
 c difference lost, and the only additional cooling rate correction
 c to be the Bremsstrahlung
@@ -413,7 +407,7 @@ c accounted for)
           rf0 = rxm4*max(0.0_R8,rlqa(ix,iy,1,is))
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
-*      ..if adpak_used, also contains recombination and CX terms
+*      ..for adpak rates, also contains recombination and CX terms
           t0 = phm0*rqa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)       !srv 05.06.18
 *      ..compute electron heat sink
           she0(ix,iy,0) = she0(ix,iy,0)+rf0*t0

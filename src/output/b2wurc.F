@@ -171,6 +171,10 @@
         call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlpt, 'rtlpt')
         call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlpi, 'rtlpi')
       end if
+      if (version.ge.'03.000.007') then
+        idum(0) = fix_recomb
+        call cfwuin (nput, 1, idum, 'fix_recomb')
+      end if
 
 * ..return
       call subend ()
