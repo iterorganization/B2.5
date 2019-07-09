@@ -477,16 +477,20 @@ cdpc
 cdpc-end
 cxpb
       if(newversion.ge.'01.001.000') then
-	idum(0)=periodic_bc
-	call cfwuin (nput, 1, idum, 'periodic_bc')
+        idum(0)=periodic_bc
+        call cfwuin (nput, 1, idum, 'periodic_bc')
       endif
 cxpb-end
       if(newversion.ge.'01.001.063') then          !srv 15.02.11
-	call cfwure (nput, n2*2, pbs, 'pbs')
+        call cfwure (nput, n2*2, pbs, 'pbs')
       endif
-      if(newversion.ge.'03.000.006') then
-        idum(0)=redef_pbs
+      if(newversion.eq.'03.000.006') then
+        idum(0)=redef_gmtry
         call cfwuin (nput, 1, idum, 'redef_pbs')
+      elseif(newversion.ge.'03.000.007') then
+        idum(0)=redef_gmtry
+        call cfwuin (nput, 1, idum, 'redef_gmtry')
+!WG_TODO        call cfwure (nput, n2*4, wbbl, 'wbbl')
       endif
 * ..return
       call subend ()

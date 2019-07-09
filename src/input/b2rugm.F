@@ -318,8 +318,8 @@ cdpc
 cdpc-end
 cxpb
       if(b2fgmtry_version.ge.'01.001.000') then
-	call cfruin (nget, 1, idum, 'periodic_bc')
-	periodic_bc=idum(0)
+        call cfruin (nget, 1, idum, 'periodic_bc')
+        periodic_bc=idum(0)
       else
         periodic_bc=0
       endif
@@ -389,16 +389,23 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       else
         call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
       endif
-      if(b2fgmtry_version.ge.'03.000.006') then
+      if(b2fgmtry_version.eq.'03.000.006') then
         call cfruin (nget, 1, idum, 'redef_pbs')
-        redef_pbs=idum(0)
+        redef_gmtry=idum(0)
+      elseif(b2fgmtry_version.ge.'03.000.007') then
+        call cfruin (nget, 1, idum, 'redef_gmtry')
+        redef_gmtry=idum(0)
+        call cfrure (nget, n2*4, wbbl, 'wbbl')
+        if (redef_gmtry.eq.0) write(*,*)
+     .   'Warning: wbbl value read from b2fgmtry will be overwritten '//
+     .   'because redef_gmtry.eq.0 !'
       else
-        redef_pbs=0
+        redef_gmtry=0
       endif
 *   ..read extended grid cell flags
       cflags = 0
       if(b2fgmtry_version.ge.'01.001.028') then
-	call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
+        call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
       endif
       if(maxval(cflags).eq.0) then
         cflags(1:nx-2,1:ny-2,CELLFLAG_TYPE) = GRID_INTERNAL

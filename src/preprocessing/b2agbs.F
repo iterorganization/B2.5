@@ -1,12 +1,19 @@
-      subroutine b2agbs (nx, ny, nncutmax, leftix, rightix, region,
-     1 bb, wbbl, gs, qz, qc, hx, hy, vol, pbs, cell_width, cell_height)
+      subroutine b2agbs (nx, ny, nncutmax,
+     1 leftix, rightix, rightiy, region, crx, cry,
+     1 ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
+     1 pbs, cell_width, cell_height)
       use b2mod_types
+      use b2mod_b2cmfs
+      use b2mod_constants
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nncutmax
-      integer leftix(-1:nx,-1:ny), rightix(-1:nx,-1:ny)
+      integer leftix(-1:nx,-1:ny)
+      integer rightix(-1:nx,-1:ny), rightiy(-1:nx,-1:ny)
       integer region(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
+     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
+     *  ffbz(-1:nx,-1:ny,0:3),
      *  bb(-1:nx,-1:ny,0:3), wbbl(-1:nx,-1:ny,0:3),
      *  gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1),
      *  qc(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny)
@@ -15,12 +22,15 @@
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
      *  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..local variables
-      integer i, j, ix, iy, ixl, ixr, jxi, jxa, jsep
-      integer ntubes(-1:ny), ixref(nncutmax,-1:ny),
-     *  iseg(-1:nx,-1:ny), nseg(-1:nx,-1:ny),
+      integer i, ix, iy, ixl, ixr, jxi, jxa, jsep
+      integer ntubes(-1:ny), ixref(nncutmax,-1:ny), iseg(-1:nx,-1:ny),
      *  ixleft(nncutmax,-1:ny), ixright(nncutmax,-1:ny),
      *  isnum(nncutmax,-1:ny)
-      real (kind=R8) :: hz(-1:nx,-1:ny)
+      real (kind=R8) :: hz(-1:nx,-1:ny),
+     *                  hzl(-1:nx,-1:ny),    ! hz at the left cell face
+     *                  pol_flux, width
+      data width /1.0_R8/
+      save width
 *     ------------------------------------------------------------------
 *     B2AGBS computes a correction to the pbsx array to ensure the
 *     constancy of magnetic flux along flux tubes.
@@ -30,9 +40,29 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2agbs')
+      call ipgetr ('b2agmt_1d_width', width)
       
 *   ..preparatory quantities
       hz(:,:) = vol(:,:)/gs(:,:,2)
+      if (isymm.eq.0) then
+        hzl(:,:) = width
+      else if (isymm.eq.1 .or. isymm.eq.2) then
+        hzl(:,:) = pi * ( crx(:,:,0) + crx(:,:,2) )
+      else if (isymm.eq.3 .or. isymm.eq.4) then
+        hzl(:,:) = pi * ( cry(:,:,0) + cry(:,:,2) )
+      end if
+
+*   ..toroidal magnetic field
+      if (isymm.eq.1 .or. isymm.eq.3) then
+        if (maxval(abs(ffbz(:,:,:))).gt.0.0_R8) then
+          bb(:,:,2) =
+     .     (ffbz(:,:,0) + ffbz(:,:,1) + ffbz(:,:,2) + ffbz(:,:,3)) /
+     .     (4.0_R8 * hz(:,:))
+          wbbl(:,:,2) = (ffbz(:,:,0) + ffbz(:,:,2)) /
+     .     (2.0_R8 * hzl(:,:))
+        end if
+      end if
+      wbbl(:,:,1) = 0.0_R8
 
 *   ..identify flux tubes
       iseg = 0
@@ -53,7 +83,7 @@
           ixleft(iseg(ix,iy),iy) = ix
           ixr = ix
           ixright(iseg(ix,iy),iy) = ix
- 20       continue
+   20     continue
           if (leftix(ixl,iy).ne.-2) then
             ixl = leftix(ixl,iy)
             if (iseg(ixl,iy).ne.0) then
@@ -67,7 +97,7 @@
             end if
             goto 20
           end if
- 30       continue
+   30     continue
           if (rightix(ixr,iy).ne.nx+1) then
             ixr = rightix(ixr,iy)
             if (iseg(ixr,iy).ne.0) then
@@ -81,13 +111,13 @@
             end if
             goto 30
           end if
- 40       continue
+   40     continue
         end do
       end do
 
 *   ..select reference location for each flux tube
 *   ..we use the outer midplane whenever possible, then the inner midplane,
-*   ..otherwise the cell half-way along the flux tube in computational space
+*   ..otherwise the cell to the right of the left end of the flux tube.
       ixref = -2
       call get_jsep(nx,ny,jxi,jxa,jsep)
       do iy = -1, ny
@@ -97,34 +127,38 @@
           else if (i.eq.iseg(jxi,iy)) then
             ixref(i,iy) = jxi
           else
-            ix = ixleft(i,iy)
-            do j = 1, isnum(i,iy)/2
-              ix = rightix(ix,iy)
-            end do
-            ixref(i,iy) = ix
+            ixref(i,iy) = rightix(ixleft(i,iy),iy)
           end if
         end do
       end do
 
 *   ..correct pbsx, hx, and hy to enforce:
-*   ..B_{pol}*hy1*hz constant (at western cell face and cell centers)
+*   ..B_{pol}*hy1*hz constant (on western cell faces and at cell centers)
 *   ..vol = hy1*hx*hz
       do iy = -1, ny
         do ix = -1, nx
           if (region(ix,iy,0).eq.0) cycle
           if (iseg(ix,iy).eq.0) cycle
           if (ixref(iseg(ix,iy),iy).eq.-2) cycle
+
+          pol_flux = wbbl(ixref(iseg(ix,iy),iy),iy,0) *
+     &                 gs(ixref(iseg(ix,iy),iy),iy,0) *
+     &                 qc(ixref(iseg(ix,iy),iy),iy,0)
+
           if (leftix(ix,iy).ne.-2) then ! do not adjust pbs if leftix=-2
                                         ! since there is no western face
-            pbs(ix,iy,0) =
-     .         gs(ixref(iseg(ix,iy),iy),iy,0)*
-     .       wbbl(ixref(iseg(ix,iy),iy),iy,0)/wbbl(ix,iy,3)*
-     .         qc(ixref(iseg(ix,iy),iy),iy,0)
+            wbbl(ix,iy,0) = pol_flux / (gs(ix,iy,0) * qc(ix,iy,0))
+            wbbl(ix,iy,3) =
+     &       sqrt(wbbl(ix,iy,0)**2+wbbl(ix,iy,1)**2+wbbl(ix,iy,2)**2)
+            pbs(ix,iy,0) = pol_flux / wbbl(ix,iy,3)
+          else
+            wbbl(ix,iy,0) = pol_flux /
+     &       (gs(rightix(ix,iy),rightiy(ix,iy),0) *
+     &        qc(rightix(ix,iy),rightiy(ix,iy),0))
+            wbbl(ix,iy,3) =
+     &       sqrt(wbbl(ix,iy,0)**2+wbbl(ix,iy,1)**2+wbbl(ix,iy,2)**2)
           end if
-          hy(ix,iy) = hz(ixref(iseg(ix,iy),iy),iy)*
-     .                hy(ixref(iseg(ix,iy),iy),iy)*
-     .                qz(ixref(iseg(ix,iy),iy),iy,1)*
-     .                bb(ixref(iseg(ix,iy),iy),iy,0)/
+          hy(ix,iy) = pol_flux /
      .               (hz(ix,iy)*qz(ix,iy,1)*bb(ix,iy,0))
           hx(ix,iy) = vol(ix,iy)/
      .               (hz(ix,iy)*hy(ix,iy)*qz(ix,iy,1))
@@ -134,6 +168,8 @@
 *   ..copying over modified data
       cell_width = hx
       cell_height = hy
+
+      bb(:,:,3)=sqrt(bb(:,:,0)**2+bb(:,:,1)**2+bb(:,:,2)**2)
 
 *   ..return
       call subend ()

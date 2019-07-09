@@ -1292,14 +1292,14 @@ csw 09oct2012
 
       call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
       if (b2mndr_redef_pbs.ne.0) then
-        if (redef_pbs.eq.1) then
+        if (redef_gmtry.eq.1) then
           write(6,*)
      &     'Magnetic flux correction of pbsx already done in b2ag.'
         else
           write(6,*)
      &     'Magnetic flux correction must now be done in b2ag.'
           write(6,*)
-     &     'Please set b2agdr_redef_pbs to 1 in b2ag.dat ',
+     &     'Please set b2agdr_redef_gmtry to 1 in b2ag.dat ',
      &     'and re-run b2ag.'
           call xerrab ('Obsolete switch b2mndr_redef_pbs!')
         endif

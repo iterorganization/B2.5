@@ -10,12 +10,13 @@
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
-     1 leftix1,leftiy1,rightix1,rightiy1,
-     2 topix1,topiy1,bottomix1,bottomiy1,
-     3 leftcut1,rightcut1,bottomcut1,topcut1,
+     1 leftix1, leftiy1, rightix1, rightiy1,
+     2 topix1, topiy1, bottomix1, bottomiy1,
+     3 leftcut1, rightcut1, bottomcut1, topcut1,
      $ cflags1)
       use b2mod_types
       use b2mod_interp
+      use b2mod_b2cmfs
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
@@ -273,21 +274,23 @@
             do jy1 = 0, ky1-1
               t0 = t0+pi*dist1(ix1,iy1+jy1,0,2)*
      .         (crx1(ix1,iy1+jy1,0)+crx1(ix1,iy1+jy1,2))
-              t1 = t1+qc1(ix1,iy1+jy1,0)*pi*dist1(ix1,iy1+jy1,0,2)*
+              t1 = t1+qs1(ix1,iy1+jy1,0)*pi*dist1(ix1,iy1+jy1,0,2)*
      .         (crx1(ix1,iy1+jy1,0)+crx1(ix1,iy1+jy1,2))
             enddo
-            qc(ix,iy,0) = t1/t0
+            qs(ix,iy,0) = t1/t0
+            qc(ix,iy,0) = sqrt(1 - (t1/t0)**2)
           else
             t0 = 0.0_R8
             t1 = 0.0_R8
             t2 = 0.0_R8
             do jy1 = 0, ky1-1
               t0 = t0+gs1(ix1,iy1+jy1,0)
-              t1 = t1+qc1(ix1,iy1+jy1,0)*gs1(ix1,iy1+jy1,0)
+              t1 = t1+qs1(ix1,iy1+jy1,0)*gs1(ix1,iy1+jy1,0)
               t2 = t2+pbs1(ix1,iy1+jy1,0)
             enddo
             gs(ix,iy,0) = t0
-            qc(ix,iy,0) = t1/t0
+            qs(ix,iy,0) = t1/t0
+            qc(ix,iy,0) = sqrt(1 - (t1/t0)**2)
             pbs(ix,iy,0) = t2
           endif
 *     ..project gsy, pbsy and qc(,,1) to cell (ix,iy)
@@ -300,24 +303,25 @@
             do jx1 = 0, kx1-1
               t0 = t0+pi*dist1(ix1+jx1,iy1,0,1)*
      .         (crx1(ix1+jx1,iy1,0)+crx1(ix1+jx1,iy1,1))
-              t1 = t1+qc1(ix1+jx1,iy1,1)*pi*dist1(ix1+jx1,iy1,0,1)*
+              t1 = t1+qs1(ix1+jx1,iy1,1)*pi*dist1(ix1+jx1,iy1,0,1)*
      .         (crx1(ix1+jx1,iy1,0)+crx1(ix1+jx1,iy1,1))
             enddo
-            qc(ix,iy,1) = t1/t0
+            qs(ix,iy,1) = t1/t0
+            qc(ix,iy,1) = sqrt(1 - (t1/t0)**2)
           else
             t0 = 0.0_R8
             t1 = 0.0_R8
             t2 = 0.0_R8
             do jx1 = 0, kx1-1
               t0 = t0+gs1(ix1+jx1,iy1,1)
-              t1 = t1+qc1(ix1+jx1,iy1,1)*gs1(ix1+jx1,iy1,1)
+              t1 = t1+qs1(ix1+jx1,iy1,1)*gs1(ix1+jx1,iy1,1)
               t2 = t2+pbs1(ix1+jx1,iy1,1)
             enddo
             gs(ix,iy,1) = t0
-            qc(ix,iy,1) = t1/t0
+            qs(ix,iy,1) = t1/t0
+            qc(ix,iy,1) = sqrt(1 - (t1/t0)**2)
             pbs(ix,iy,1) = t2
           endif
-cwdk projection of qs still to be added!
 *     ..project vol, gsz, and qz to cell (ix,iy)
           t0 = 0.0_R8
           t1 = 0.0_R8
@@ -803,7 +807,7 @@ cxpb  extra test since cases beyond double-null are not yet coded
 
 cxpb  extra code to allow for overwriting the pbs array with the 
 cxpb  working mesh values
-      if (pbs_from_basis_mesh.eq.0 .or. redef_pbs.eq.1) then
+      if (pbs_from_basis_mesh.eq.0 .or. redef_gmtry.eq.1) then
 *  ..interpolate magnetic field to cell faces
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
