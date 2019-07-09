@@ -15,6 +15,7 @@
      *  gs1(:,:,:),
      *  hx1(:,:),
      *  hy1(:,:),
+     *  hz1(:,:),
      *  qz1(:,:,:),
      *  qc1(:,:),
      *  qcb1(:,:),
@@ -61,6 +62,7 @@
       allocate(gs1(-1:nxd,-1:nyd,0:2))
       allocate(hx1(-1:nxd,-1:nyd))
       allocate(hy1(-1:nxd,-1:nyd))
+      allocate(hz1(-1:nxd,-1:nyd))
       allocate(qz1(-1:nxd,-1:nyd,0:1))
       allocate(qc1(-1:nxd,-1:nyd))
       allocate(qcb1(-1:nxd,-1:nyd))
@@ -103,6 +105,7 @@
          deallocate(gs1)
          deallocate(hx1)
          deallocate(hy1)
+         deallocate(hz1)
          deallocate(qz1)
          deallocate(qc1)
          deallocate(qcb1)

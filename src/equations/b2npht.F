@@ -292,6 +292,10 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
      &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
      &   resht = reshe + reshi                                        !srv 22.05.18 }
 
+*   ..save total heat sources for printout at end of run
+      she = she0
+      shi = shi0
+
       if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                      !srv 17.07.05 {
        call my_out(70,nx,ny,shei,'b2npht_shei')
        call my_out(70,nx,ny,te,'b2npht_te')

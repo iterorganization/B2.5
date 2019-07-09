@@ -406,7 +406,7 @@ cwdk     note: qc in left ghosts unchanged
 !      hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
 !      hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
       hzconst = 1.0_R8                                                   !srv 30.01.10
-      hz(:,:) = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)           !srv 16.06.09
+      hz(:,:) = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol(:,:)/gs(:,:,2)      !srv 16.06.09
       hyl(:,:)= sqrt((crx(:,:,2)-crx(:,:,0))**2+
      &               (cry(:,:,2)-cry(:,:,0))**2)                         ! IYS 04.03.2019
       hxb(:,:)= sqrt((crx(:,:,1)-crx(:,:,0))**2+
