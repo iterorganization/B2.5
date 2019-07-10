@@ -312,9 +312,9 @@
         end if
         found = .true.
       end do
-      call xerrab(.not.streql(flag,'unknown'),
+      call xertst(.not.streql(flag,'unknown'),
      . 'Could not identify A&M data package !')
-      call xerrab(.not.streql(flag,'multiple'),
+      call xertst(.not.streql(flag,'multiple'),
      . 'Ambiguous multiple A&M data package setting !')
 
       return

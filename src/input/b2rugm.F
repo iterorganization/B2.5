@@ -512,8 +512,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
               wbbr(ix,iy,2) =
      &         bb(ix,iy,2) - (wbbl(ix,iy,2)-bb(ix,iy,2))
             end if
-            if (bottomiy(ix,iy).gt.-2) then
-              wbbv(ix,iy,0) = (
+            if (bottomiy(ix,iy).gt.-2) wbbv(ix,iy,0) = (
      &          bb(ix,iy,0) * hy(ix,iy) * hz(ix,iy) * qz(ix,iy,1) +
      &          bb(bottomix(ix,iy),bottomiy(ix,iy),0) *
      &          hy(bottomix(ix,iy),bottomiy(ix,iy)) *
@@ -523,21 +522,38 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
      &          hy(bottomix(ix,iy),bottomiy(ix,iy)) *
      &          hz(bottomix(ix,iy),bottomiy(ix,iy)) *
      &          qz(bottomix(ix,iy),bottomiy(ix,iy),1) )
-            else
-              wbbv(ix,iy,0) = bb(ix,iy,0) -
-     &         (wbbv(topix(ix,iy),topiy(ix,iy),0)-bb(ix,iy,0))
-            end if
             wbbv(ix,iy,2) =(ffbz(ix,iy,0)+ffbz(ix,iy,1)) /
      &       (2.0_R8*hzb(ix,iy))
-            wbbc(ix,iy,2) = ffbz(ix,iy,0) / hzc(ix,iy)
-            if (bottomiy(ix,iy).gt.-2) wbbc(ix,iy,0) =
+            if (bottomiy(ix,iy).gt.-2 .and. topiy(ix,iy).lt.ny+1) then
+              if (leftix(ix,iy).gt.-2) then
+               wbbc(ix,iy,0) =
      &         (wbbl(ix,iy,0) * gs(ix,iy,0) * qc(ix,iy) +
      &          wbbl(bottomix(ix,iy),bottomiy(ix,iy),0) *
      &            gs(bottomix(ix,iy),bottomiy(ix,iy),0) *
      &            qc(bottomix(ix,iy),bottomiy(ix,iy)) ) /
-     &         (gs(ix,iy,0) * qc(ix,iy) +
-     &          gs(bottomix(ix,iy),bottomiy(ix,iy),0) *
-     &          qc(bottomix(ix,iy),bottomiy(ix,iy)) )
+     &           (gs(ix,iy,0) * qc(ix,iy) +
+     &            gs(bottomix(ix,iy),bottomiy(ix,iy),0) *
+     &            qc(bottomix(ix,iy),bottomiy(ix,iy)) )
+              else
+               wbbc(ix,iy,0) =
+     &         (wbbl(ix,iy,0) *
+     &            gs(rightix(ix,iy),rightiy(ix,iy),0) *
+     &            qc(rightix(ix,iy),rightiy(ix,iy)) +
+     &          wbbl(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     &               rightiy(bottomix(ix,iy),bottomiy(ix,iy)),0) *
+     &            gs(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     &               rightiy(bottomix(ix,iy),bottomiy(ix,iy)),0) *
+     &            qc(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     &               rightiy(bottomix(ix,iy),bottomiy(ix,iy))) ) /
+     &           (gs(rightix(ix,iy),rightiy(ix,iy),0) *
+     &            qc(rightix(ix,iy),rightiy(ix,iy)) +
+     &            gs(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     &               rightiy(bottomix(ix,iy),bottomiy(ix,iy)),0) *
+     &            qc(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     &               rightiy(bottomix(ix,iy),bottomiy(ix,iy))) )
+              endif
+            endif
+            wbbc(ix,iy,2) = ffbz(ix,iy,0) / hzc(ix,iy)
           end do
           if (bottomiy(nx,iy).gt.-2) wbbc(nx+1,iy,0) =
      &      (wbbr(nx,iy,0) * hy(nx,iy) * hz(nx,iy) * qz(nx,iy,1) +
@@ -553,11 +569,23 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         end do
         do iy = -1, ny
           do ix = -1, nx
-            if (bottomiy(ix,iy).eq.-2) wbbc(ix,iy,0) = wbbl(ix,iy,0) -
-     &       (wbbc(topix(ix,iy),topiy(ix,iy),0) - wbbl(ix,iy,0))
+            if (bottomiy(ix,iy).eq.-2) then
+              wbbv(ix,iy,0) = bb(ix,iy,0) -
+     &         (wbbv(topix(ix,iy),topiy(ix,iy),0)-bb(ix,iy,0))
+              wbbc(ix,iy,0) = wbbl(ix,iy,0) -
+     &         (wbbc(topix(ix,iy),topiy(ix,iy),0) - wbbl(ix,iy,0))
+            end if
+            if (topiy(ix,iy).eq.ny+1) then
+              wbbc(ix,iy,0) = wbbl(bottomix(ix,iy),bottomiy(ix,iy),0) -
+     &         (wbbc(bottomix(ix,iy),bottomiy(ix,iy),0) -
+     &          wbbl(bottomix(bottomix(ix,iy),bottomiy(ix,iy)),
+     &               bottomiy(bottomix(ix,iy),bottomiy(ix,iy)),0))
+            end if
           end do
-          if (bottomiy(nx,iy).eq.-2) wbbc(nx+1,iy,0) = wbbl(nx,iy,0) -
+          if (bottomiy(nx,iy).eq.-2) then
+            wbbc(nx+1,iy,0) = wbbl(nx,iy,0) -
      &       (wbbc(topix(nx,iy),topiy(nx,iy),0) - wbbl(nx,iy,0))
+          end if
         end do
         do ix = -1, nx
           wbbc(ix,ny+1,0) =
@@ -566,7 +594,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         end do
         wbbc(nx+1,ny+1,0) =
      &   wbbr(nx,ny,0) - (wbbc(nx,ny,0) - wbbl(nx,ny,0))
-        wbbc(nx+1,ny+1,0) = ffbz(nx+1,ny+1,3) / hzc(nx+1,ny+1)
+        wbbc(nx+1,ny+1,2) = ffbz(nx,ny,3) / hzc(nx+1,ny+1)
 *   .. correct interpolation of magnetic field for diverted island case
 *      as B is not a periodic quantity
         if(periodic_bc.eq.1 .and. nncut.ge.1) then

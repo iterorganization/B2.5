@@ -491,7 +491,7 @@ cwdk  faces is not representative for orthogonality of left face to field!
 *   ..correct pbsx on the proper mesh
       if(redef_gmtry.ne.0) then
         call b2agbs (nx, ny, nncutmax,
-     1   leftix, rightix, rightiy, region, crx, cry,
+     1   leftix, rightix, rightiy, bottomiy, topiy, region, crx, cry,
      1   ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
      2   pbs, cell_width, cell_height)
       end if

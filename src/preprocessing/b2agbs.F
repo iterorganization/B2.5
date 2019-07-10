@@ -1,5 +1,5 @@
       subroutine b2agbs (nx, ny, nncutmax,
-     1 leftix, rightix, rightiy, region, crx, cry,
+     1 leftix, rightix, rightiy, bottomiy, topiy, region, crx, cry,
      1 ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
      1 pbs, cell_width, cell_height)
       use b2mod_types
@@ -10,6 +10,7 @@
       integer nx, ny, nncutmax
       integer leftix(-1:nx,-1:ny)
       integer rightix(-1:nx,-1:ny), rightiy(-1:nx,-1:ny)
+      integer bottomiy(-1:nx,-1:ny), topiy(-1:nx,-1:ny)
       integer region(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
