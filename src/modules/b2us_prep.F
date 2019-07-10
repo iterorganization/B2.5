@@ -94,7 +94,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .           ivx, ivx1, ivx2, nfx, mxreg, ifs, icv, ireg, istart,
      .           inv, inv1, inv2, invmx, ifcc, icount, n2,
      .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, 
-     .           nghostvxi, ici, icg
+     .           nghostvxi, ici, icg, ict, j, itmpx, itmpy
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -171,6 +171,19 @@ cwdk      type(B2StateExt), public, save :: state_ext
             iyghostcv(icount) = iy-1
           endif	
         enddo
+        if (iy == 1) then
+! find position of central cut
+          m%nctcnt = count(leftix(0:nx-1,iy-1) == -2)
+          allocate (m%ictcntrl(m%nctcnt))
+          m%ictcntrl = 0
+          ict = 0
+          do ix = 1, nx
+            if (leftix(ix-1,iy-1) == -2) then
+              ict = ict+1
+              m%ictcntrl(ict) = ix-1
+            end if
+          end do
+        end if
       enddo
       nghostcvi = icount              ! internal ghost cells
       do ix = 0, nx+1
@@ -3397,8 +3410,6 @@ cwdk              poloidal face centers (E/W)
         call createB2StateExt( nCv, nFc, ns, st_ext )
 
       end subroutine prep_plasma_ext
-
-
 
 
       end module b2us_prep

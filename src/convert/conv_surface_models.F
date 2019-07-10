@@ -17,7 +17,8 @@
       integer, intent(inout) :: bndmdl(3,nelem)
       character(500) :: line
       integer :: ineir, iouteir, nstsi, ists, i, ier, icut, nd, nsf,
-     .           isf, j, ifc, ib, ntrg, ihelp(12), isum, nadmod, nasmod
+     .           isf, j, ifc, ib, ntrg, ihelp(12), isum, nadmod, nasmod,
+     .           itrg
       integer, allocatable :: idim(:), ipos(:), istart(:), iend(:)
       integer, allocatable :: idim_eir(:), ipos_eir(:), 
      .                        istart_eir(:), iend_eir(:), idtrg(:)
@@ -175,9 +176,13 @@
 
 !  number of targets
       read (ineir,'(12i6)') ihelp(1)
-      if (ihelp(1) /= ntrg) 
+      itrg = 0
+      do i = 1, ntrg
+        if (index('EWSN',crcstra(i)) > 0) itrg = itrg + 1
+      end do
+      if (ihelp(1) /= itrg) 
      .    call xerrab ('number of targets mismatch')
-      write (iouteir,'(12i6)') ntrg
+      write (iouteir,'(12i6)') itrg
 !  number of target parts  
       isum = 0
       do i = 1, ntrg, 12
@@ -473,6 +478,12 @@
             if (rcend(istra) >= rightcut(icut)) 
      .        iend(nsf) = iend(nsf) + 1
           end do
+          do icut = 1, mpg%nctcnt
+            if (rcstart(istra) >= mpg%ictcntrl(icut)) 
+     .        istart(nsf) = istart(nsf) + 1
+            if (rcend(istra) >= mpg%ictcntrl(icut)) 
+     .        iend(nsf) = iend(nsf) + 1
+          end do
         case ('N')
           idim(nsf) = 1
           ipos(nsf) = rcpos(istra) + 1
@@ -488,6 +499,12 @@
             if (rcend(istra) >= rightcut(icut)) 
      .        iend(nsf) = iend(nsf) + 1
           end do
+          do icut = 1, mpg%nctcnt
+            if (rcstart(istra) >= mpg%ictcntrl(icut)) 
+     .        istart(nsf) = istart(nsf) + 1
+            if (rcend(istra) >= mpg%ictcntrl(icut)) 
+     .        iend(nsf) = iend(nsf) + 1
+          end do
         case ('W')
           idim(nsf) = 2
           ipos(nsf) = rcpos(istra) + 2
@@ -497,6 +514,10 @@
             if (rcpos(istra) > leftcut(icut)) 
      .        ipos(nsf) = ipos(nsf) + 1
             if (rcpos(istra) >= rightcut(icut)) 
+     .        ipos(nsf) = ipos(nsf) + 1
+          end do
+          do icut = 1, mpg%nctcnt
+            if (rcpos(istra) >= mpg%ictcntrl(icut)) 
      .        ipos(nsf) = ipos(nsf) + 1
           end do
         case ('E')
@@ -510,6 +531,11 @@
             if (rcpos(istra) >= rightcut(icut)) 
      .        ipos(nsf) = ipos(nsf) + 1
           end do
+          do icut = 1, mpg%nctcnt
+            if (rcpos(istra) >= mpg%ictcntrl(icut)) 
+     .        ipos(nsf) = ipos(nsf) + 1
+          end do
+        case ('C','V','T')
         case default
           call xerrab ('Wrong CRCSTRA or not yet available for WG')
         end select
@@ -532,6 +558,12 @@
             if (bcend(ib) >= leftcut(icut)) iend(nsf) = iend(nsf) + 1
             if (bcend(ib) >= rightcut(icut)) iend(nsf) = iend(nsf) + 1
           end do
+          do icut = 1, mpg%nctcnt
+            if (bcstart(ib) >= mpg%ictcntrl(icut)) 
+     .        istart(nsf) = istart(nsf) + 1
+            if (bcend(ib) >= mpg%ictcntrl(icut)) 
+     .        iend(nsf) = iend(nsf) + 1
+          end do
         case ('N')
           idim(nsf) = 1
           ipos(nsf) = bcpos(ib) + 1
@@ -545,6 +577,12 @@
             if (bcend(ib) >= leftcut(icut)) iend(nsf) = iend(nsf) + 1
             if (bcend(ib) >= rightcut(icut)) iend(nsf) = iend(nsf) + 1
           end do
+          do icut = 1, mpg%nctcnt
+            if (bcstart(ib) >= mpg%ictcntrl(icut)) 
+     .        istart(nsf) = istart(nsf) + 1
+            if (bcend(ib) >= mpg%ictcntrl(icut)) 
+     .        iend(nsf) = iend(nsf) + 1
+          end do
         case ('W')
           idim(nsf) = 2
           ipos(nsf) = bcpos(ib) + 2
@@ -553,6 +591,10 @@
           do icut = 1, nncut
             if (bcpos(ib) > leftcut(icut)) ipos(nsf) = ipos(nsf) + 1
             if (bcpos(ib) >= rightcut(icut)) ipos(nsf) = ipos(nsf) + 1
+          end do
+          do icut = 1, mpg%nctcnt
+            if (bcpos(ib) >= mpg%ictcntrl(icut)) 
+     .        ipos(nsf) = ipos(nsf) + 1
           end do
         case ('E')
           idim(nsf) = 2
@@ -563,7 +605,11 @@
             if (bcpos(ib) > leftcut(icut)) ipos(nsf) = ipos(nsf) + 1
             if (bcpos(ib) >= rightcut(icut)) ipos(nsf) = ipos(nsf) + 1
           end do
-        case default
+          do icut = 1, mpg%nctcnt
+            if (bcpos(ib) >= mpg%ictcntrl(icut)) 
+     .        ipos(nsf) = ipos(nsf) + 1
+          end do
+         case default
           call xerrab ('Wrong BCCHAR or not yet available for WG')
         end select
       end do bound

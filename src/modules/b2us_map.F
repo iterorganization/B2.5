@@ -54,14 +54,14 @@
         integer, allocatable :: cvNv(:)                !         listing for each cell the numbers of the cells in its stencil
 
         integer :: isClassicalGrid                     ! indicates whether grid is derived from an "original", structured grid
-        integer :: nx, ny, nncut                       ! some parameters related to the original grid
+        integer :: nx, ny, nncut, nctcnt               ! some parameters related to the original grid
         integer, allocatable :: imapCv(:,:)            ! back projection of cv indices to structured grid
         integer, allocatable :: imapFcx(:,:)           ! back projection of fc indices for x-faces to structured grid
         integer, allocatable :: imapFcy(:,:)           ! back projection of fc indices for y-faces to structured grid
         integer, allocatable :: imapVx(:,:)            ! back projection of Vx indices to structured grid 
 
         integer, allocatable :: icornVx(:)             ! corner indices; to be used in converting target information
-
+        integer, allocatable :: ictcntrl(:)            ! indices of central cuts; to be used in converting triangle information
       end type mapping
 
       contains
@@ -176,6 +176,7 @@
         deallocate (m%imapFcy)  
         deallocate (m%imapVx)  
         deallocate (m%icornVx)
+        if (allocated(m%ictcntrl)) deallocate (m%ictcntrl)
 #ifdef WG_DEBUG
         deallocate (imapCv)
         deallocate (imapFcx)

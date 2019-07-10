@@ -22,7 +22,7 @@
       logical :: inserted
       integer :: nco_old, ic, nnodes, ico, ivx, nelem, iel, i1, i2, i3,
      .           idum, i, nel2, is, jdum, is1, ifc, icv, icut, ixt, iyt,
-     .           iad, ix, iy, ix_b25, nopen, it, isig
+     .           iad, ix, iy, ix_b25, nopen, it, isig, iused
       real(R8), allocatable :: xc_old(:), yc_old(:)
       real(R8), allocatable :: xc_new(:), yc_new(:)
       integer, allocatable :: im_old_new(:), elem_new(:,:), 
@@ -66,11 +66,11 @@
         yc = gm%vxY(ivx)*100._R8    ! convert to cm
         call EIRENE_insert (baum, xc, yc, 
      .                      0._R8, 1._R8, ic, inserted)
-        IF (INSERTED) THEN
+!        IF (INSERTED) THEN
           NNODES=NNODES+1
           xc_new(NNODES)=xc
           yc_new(NNODES)=yc
-        END IF       
+!        END IF       
       end do
 
 !  now check coordinates from old fort.33 file for new index
@@ -94,12 +94,21 @@
 
       if (nnodes /= nco_old+nncut) then
         write (*,*) ' unidentified new coordinates '
+        ico = 0
         do i = 1, mpg%nVx
           if (im_new_old(i) == 0) then
             write (*,*) i, gm%vxX(i), gm%vxY(i)
+            iused = count(mpg%cvVx == im_new_old(i))
+            if (iused > 0) then
+              write (*,*) ' is used in ', iused,' cells'
+              ico = ico + 1
+            else
+              write (*,*) ' is unused '
+            end if
           end if
         end do
-        call xerrab ('conv_triangles -- coordinate numbers mismatch')
+        if (ico > 0)
+     >    call xerrab ('conv_triangles -- coordinate numbers mismatch')
       end if
 
       call write_npco (nnodes, xc_new, yc_new, 1._R8)
@@ -146,13 +155,17 @@
 !  setup conversion arrays 
 
       allocate (ix_b2_eir(0:nx+1))
-      allocate (ix_eir_b25(1:nx+2*nncut))
+      allocate (ix_eir_b25(1:nx+3*nncut))
       ix_eir_b25 = -2
 
       ix_b2_eir = [ (ix, ix = 1, nx) ]
       do icut = 1, nncut
         ix_b2_eir(leftcut(icut)+1:nx)=ix_b2_eir(leftcut(icut)+1:nx)+1
         ix_b2_eir(rightcut(icut)+1:nx)=ix_b2_eir(rightcut(icut)+1:nx)+1
+      end do
+      do icut = 1, mpg%nctcnt
+        ix_b2_eir(mpg%ictcntrl(icut)+1:nx)=
+     .     ix_b2_eir(mpg%ictcntrl(icut)+1:nx)+1
       end do
 
       do ix = 1, nx
@@ -235,6 +248,9 @@
      .          trifc(neigh(is,2,iel),neigh(is,1,iel)) = -isig * ifc
             end if
           end do
+          if (count(trifc(1:3,iel) /= 0) == 0) then
+            write (*,*) ' triangle ',iel,' matched no faces '
+          end if
         end if
       end do
 
@@ -338,7 +354,7 @@
           vfy = fy2 - fy1
 !  check if p and f are parallel
           det = abs(vfx*vpy - vfy*vpx)
-          if (det > 1.D-6) cycle
+          if (det > 1.D-4) cycle
 !  check that the "new" point lies on interval (x1,y1) -- (x2,y2)
           if ((iv1 /= jv1) .and. (iv1 /= jv2)) then 
             d = vfy*px1 - vfx*py1 + (fx2*fy1-fx1*fy2) 
@@ -347,7 +363,7 @@
           end if
           dq = d*d
           lq = vfx*vfx + vfy*vfy
-          if (dq < 1.D-8*LQ) then
+          if (dq < 1.D-6*LQ) then
             ifc = jfc
             return
           end if

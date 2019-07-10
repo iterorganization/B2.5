@@ -1774,7 +1774,8 @@ c.. Test consistency with physical edges within the computational domain
      >      rce(istra) = rce(istra) - 1
           rcl(istra) = rce(istra) - rcs(istra) + 1
           m%mxnRc = m%mxnRc + rcl(istra)
-        elseif (crcstra(istra).eq.'V' .or. crcstra(istra).eq.'T') then
+        elseif (crcstra(istra).eq.'V' .or. crcstra(istra).eq.'T' .or.
+     >          crcstra(istra).eq.'C') then
           rcl(istra) = 0
         else
           call xerrab ('Wrong CRCSTRA or not yet available for WG')
@@ -1886,7 +1887,8 @@ c.. Test consistency with physical edges within the computational domain
      >      rce(istra) = rce(istra) - 1
           rcl(istra) = rce(istra) - rcs(istra) + 1
           m%mxnRc = m%mxnRc + rcl(istra)
-        elseif (crcstra(istra).eq.'V' .or. crcstra(istra).eq.'T') then
+        elseif (crcstra(istra).eq.'V' .or. crcstra(istra).eq.'T' .or.
+     >          crcstra(istra).eq.'C') then
           rcl(istra) = 0
         else
           call xerrab ('Wrong CRCSTRA or not yet available for WG')
@@ -2010,10 +2012,10 @@ c.. Test consistency with physical edges within the computational domain
       write (iout,'(1x,a,i0)') 'EIRENE_MOD = ',eirene_mod
 
       write (iout,'(1x,a,i0)') 'NSTRAI     = ',m%nRc
-      write (iout,'(1x,a,(10(2x,4a1)/))') 
+      write (iout,'(1x,a,(1x,T17,10(2x,4a1)))') 
      .       'CRCSTRA = ',(ap,crcstra(istra),ap,',',istra=1,m%nRc)
 
-      write (iout,'(1x,a,(10(1x,i7,a1)/))') 
+      write (iout,'(1x,a,(1x,T17,10(1x,i7,a1)))') 
      .       'NRCFACES =',(m%rcFcP(istra,2),',',istra=1,m%nRc)
       do istra = 1, m%nRc
         ian = m%rcFcP(istra,1)
@@ -2079,9 +2081,9 @@ c.. Test consistency with physical edges within the computational domain
       write (iout,'(1x,a,es10.2,a1)') 'neut_scl_lim= ',neut_scl_lim,','
 
       write (iout,'(1x,a,i2,a,(10(es10.2,a1,1x)))') 
-     .    'userfluxparm(',1,',1)= ',(userfluxparm(is,1),',',i=1,m%nRc)
+     .    'userfluxparm(',1,',1)= ',(userfluxparm(i,1),',',i=1,m%nRc)
       write (iout,'(1x,a,i2,a,(10(es10.2,a1,1x)))') 
-     .    'userfluxparm(',1,',2)= ',(userfluxparm(is,2),',',i=1,m%nRc)
+     .    'userfluxparm(',1,',2)= ',(userfluxparm(i,2),',',i=1,m%nRc)
 
 #ifndef NO_B2_CHEM_SPUT
       write (iout,'(1x,a,(1x,T25,10(f6.2,a1,1x)))') 

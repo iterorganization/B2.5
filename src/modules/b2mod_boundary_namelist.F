@@ -1554,10 +1554,10 @@ c.. Test consistency with region boundaries
 
       write (iout,'(1x,a)') '&boundary'
       write (iout,'(1x,a,i0)') 'NBC     = ',m%nBc
-      write (iout,'(1x,a,(10(2x,4a1)/))') 
+      write (iout,'(1x,a,(1x,T14,10(2x,4a1)))') 
      .       'BCCHAR  =  ',(ap,bcchar(ib),ap,',',ib=1,m%nBc)
 
-      write (iout,'(1x,a,(10(1x,i7,a1)/))') 
+      write (iout,'(1x,a,(1x,T14,10(1x,i7,a1)))') 
      .       'NBCFACES  =',(m%bcFcP(ib,2),',',ib=1,m%nBc)
       do ib = 1, m%nBc
         ian = m%bcFcP(ib,1)
@@ -1573,42 +1573,42 @@ c.. Test consistency with region boundaries
      .    'BC_FACE_ORI(1,',ib,')= ',(m%bcFcOr(i),',',i=ian,ien)
       end do
 
-      write (iout,'(1x,a,(10(1x,i9,a1)/))') 
+      write (iout,'(1x,a,(1x,T14,10(1x,i9,a1)))') 
      .       'BCENE   =   ',(bcene(ib),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+      write (iout,'(1x,a,(1x,T14,10(es10.2,a1)))') 
      .       'ENEPAR(1,1)=',(enepar(ib,1),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+      write (iout,'(1x,a,(1x,T14,10(es10.2,a1)))') 
      .       'ENEPAR(1,2)=',(enepar(ib,2),',',ib=1,m%nBc)
 
-      write (iout,'(1x,a,(10(1x,i9,a1)/))') 
+      write (iout,'(1x,a,(1x,T14,10(1x,i9,a1)))') 
      .       'BCENI   =   ',(bceni(ib),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+      write (iout,'(1x,a,(1x,T14,10(es10.2,a1)))') 
      .       'ENIPAR(1,1)=',(enipar(ib,1),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+      write (iout,'(1x,a,(1x,T14,10(es10.2,a1)))') 
      .       'ENIPAR(1,2)=',(enipar(ib,2),',',ib=1,m%nBc)
 
-      write (iout,'(1x,a,(10(1x,i9,a1)/))') 
+      write (iout,'(1x,a,(1x,T14,10(1x,i9,a1)))') 
      .      'BCPOT   =   ',(bcpot(ib),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+      write (iout,'(1x,a,(1x,T14,10(es10.2,a1)))') 
      .       'POTPAR(1,1)=',(potpar(ib,1),',',ib=1,m%nBc)
-      write (iout,'(1x,a,(10(es10.2,a1)/))') 
+      write (iout,'(1x,a,(1x,T14,10(es10.2,a1)))') 
      .       'POTPAR(1,2)=',(potpar(ib,2),',',ib=1,m%nBc)
 
       do ib = 1, m%nBc
-        write (iout,'(1x,a,i2,a,(10(1x,i9,a1)/))') 
+        write (iout,'(1x,a,i2,a,(1x,T17,10(1x,i9,a1)))') 
      .       'BCCON(0,',ib,') =  ',(bccon(is,ib),',',is=0,ns-1)
-        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
+        write (iout,'(1x,a,i2,a,(1x,T17,10(es10.2,a1)))') 
      .       'CONPAR(0,',ib,',1)=',(conpar(is,ib,1),',',is=0,ns-1)
-        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
+        write (iout,'(1x,a,i2,a,(1x,T17,10(es10.2,a1)))') 
      .       'CONPAR(0,',ib,',2)=',(conpar(is,ib,2),',',is=0,ns-1)
       end do
 
       do ib = 1, m%nBc
-        write (iout,'(1x,a,i2,a,(10(1x,i9,a1)/))') 
+        write (iout,'(1x,a,i2,a,(1x,T17,10(1x,i9,a1)))') 
      .       'BCMOM(0,',ib,') =  ',(bcmom(is,ib),',',is=0,ns-1)
-        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
+        write (iout,'(1x,a,i2,a,(1x,T17,10(es10.2,a1)))') 
      .       'MOMPAR(0,',ib,',1)=',(mompar(is,ib,1),',',is=0,ns-1)
-        write (iout,'(1x,a,i2,a,(10(es10.2,a1)/))') 
+        write (iout,'(1x,a,i2,a,(1x,T17,10(es10.2,a1)))') 
      .       'MOMPAR(0,',ib,',2)=',(mompar(is,ib,2),',',is=0,ns-1)
       end do
 
