@@ -102,7 +102,7 @@
       end do
 
 *   ..correct pbsx, hx, and hy to enforce:
-*   ..B_{pol}*hy1*hz constant (at western cell face and cell centers)
+*   ..B_{pol}*hy1*hz constant (on western cell face and at cell centers)
 *   ..vol = hy1*hx*hz
       do iy = -1, ny
         do ix = -1, nx

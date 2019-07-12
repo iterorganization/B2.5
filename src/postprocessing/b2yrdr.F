@@ -316,8 +316,8 @@
        write (nout(0),'(/a/a)')
      &   ' Please check the origin of these rate coefficients;'//
      &   ' this program is unable to determine if they stem from',
-     &   ' the ADPAK package, the STRAHL package, or from some'//
-     &   ' other source.'
+     &   ' the ADPAK package, the STRAHL package, ADAS,'//
+     &   ' or from some other source.'
       endif
 *   ..write rtns, rtzmin, rtzmax, rtzn
       write (nout(0),'(/2x,a,i3)')

@@ -2975,7 +2975,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 call xertst(CONPAR(IS,IB,1).eq.CONPAR(IS,IBW,1),  ! IYS 22.01.2015
      1           'BCCON = 25, Average density on all parts ' //
      1             'of the surface should be the same')
-                if (bceni(ibw).ne.25.and.bceni(ibw).ne.26) then
+                if (bceni(ibw).ne.26.and.bceni(ibw).ne.27) then
                   write(0,*)
      &    'Should use BCCON(IS,IB).EQ.25 together with BCENI=26 or 27'
                   write(*,*)

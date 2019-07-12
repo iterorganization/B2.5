@@ -414,7 +414,7 @@ c accounted for)
           rf0 = rxm4*max(0.0_R8,rlqa(ix,iy,1,is))
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
-*      ..if adpak_used, also contains recombination and CX terms
+*      ..for adpak rates, also contains recombination and CX terms
           t0 = phm0*rqa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)       !srv 05.06.18
 *      ..compute electron heat sink
           she0(ix,iy,0) = she0(ix,iy,0)+rf0*t0

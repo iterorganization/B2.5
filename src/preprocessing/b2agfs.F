@@ -186,16 +186,20 @@
           bb1(ix,iy,1)=0
           bb1(ix,iy,2)=bt(ic)
           bb1(ix,iy,3)=sqrt(bp(ic)*bp(ic)+bt(ic)*bt(ic))
-          crx1(ix,iy,1)=crxs(ic+2*n2)*xrescale+xoffset  	 ! bottom right
+          crx1(ix,iy,1)=crxs(ic+2*n2)*xrescale+xoffset   ! bottom right
           cry1(ix,iy,1)=crys(ic+2*n2)*yrescale+yoffset
-          crx1(ix,iy,3)=crxs(ic+4*n2)*xrescale+xoffset  	 ! top right
+          crx1(ix,iy,3)=crxs(ic+4*n2)*xrescale+xoffset   ! top right
           cry1(ix,iy,3)=crys(ic+4*n2)*yrescale+yoffset
-          crx1(ix,iy,2)=crxs(ic+3*n2)*xrescale+xoffset  	 ! top left
+          crx1(ix,iy,2)=crxs(ic+3*n2)*xrescale+xoffset   ! top left
           cry1(ix,iy,2)=crys(ic+3*n2)*yrescale+yoffset
-          crx1(ix,iy,0)=crxs(ic+1*n2)*xrescale+xoffset  	 ! bottom left
+          crx1(ix,iy,0)=crxs(ic+1*n2)*xrescale+xoffset   ! bottom left
           cry1(ix,iy,0)=crys(ic+1*n2)*yrescale+yoffset
-          if(Bt_adjust.eq.1 .and. xoffset.ne.0.0_R8) then
-            bb1(ix,iy,2)=bt(ic)*crxs(ic)/(crxs(ic)+xoffset)
+          if (Bt_adjust.eq.1) then
+            if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
+              bb1(ix,iy,2)=bt(ic)*crxs(ic)/(crxs(ic)+xoffset)
+            else if (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
+              bb1(ix,iy,2)=bt(ic)*crys(ic)/(crys(ic)+yoffset)
+            end if
             bb1(ix,iy,0)=bp(ic)/bt(ic)*bb1(ix,iy,2)
             bb1(ix,iy,3)=sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
           endif
@@ -419,19 +423,19 @@ cxpb  reconnect the guard cells on both sides of the island.
           write(*,*) 'ix,iy,iyb',i,inselbot,inseltop
           bottomiy1(nx1-1-i,inselbot)=inseltop
           write(*,*) 'ix,iy,iyb',nx1-1-i,inselbot,inseltop
-          if(inselbot.gt.-1) then   	 ! connected region on North side
-            topix1(i,inselbot-1)=nx1-1-i 	 ! connect to the other side
-            topiy1(i,inselbot-1)=inselbot-1       ! of the island
+          if(inselbot.gt.-1) then                  ! connected region on North side
+            topix1(i,inselbot-1)=nx1-1-i           ! connect to the other side
+            topiy1(i,inselbot-1)=inselbot-1        ! of the island
             write(*,*) 'ix,iy,ixt,iyt',i,inselbot-1,nx1-1-i,inselbot-1
-            topix1(nx1-1-i,inselbot-1)=i 	 ! connect to the other side
-            topiy1(nx1-1-i,inselbot-1)=inselbot-1 ! of the island
+            topix1(nx1-1-i,inselbot-1)=i           ! connect to the other side
+            topiy1(nx1-1-i,inselbot-1)=inselbot-1  ! of the island
             write(*,*) 'ix,iy,ixt,iyt',nx1-1-i,inselbot-1,i,inselbot-1
           end if
-          if(inseltop.lt.ny1) then   	 ! connected region on South side
-            bottomix1(i,inseltop+1)=nx1-1-i       ! connect to the other side
-            bottomiy1(i,inseltop+1)=inseltop+1    ! of the limited SOL
+          if(inseltop.lt.ny1) then                 ! connected region on South side
+            bottomix1(i,inseltop+1)=nx1-1-i        ! connect to the other side
+            bottomiy1(i,inseltop+1)=inseltop+1     ! of the limited SOL
             write(*,*) 'ix,iy,ixb,iyb',i,inseltop+1,nx1-1-i,inseltop+1
-            bottomix1(nx1-1-i,inseltop+1)=i 	 ! connect to the other side
+            bottomix1(nx1-1-i,inseltop+1)=i        ! connect to the other side
             bottomiy1(nx1-1-i,inseltop+1)=inseltop+1 ! of the limited SOL
             write(*,*) 'ix,iy,ixb,iyb',nx1-1-i,inseltop+1,i,inseltop+1
 cxpb  Remove neighbours for guard cells next to tangency point
@@ -1077,7 +1081,7 @@ c
         else
           call xerrab('Error in reading geometry file')
         endif
-      elseif(istyle.eq.-2) then  	 !xpb  SONNET-format geometry input
+      elseif(istyle.eq.-2) then   !xpb  SONNET-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/DivGeo/device/'//trim(device)
         if(open_file(lun,local_sonnet,meshpath)) then

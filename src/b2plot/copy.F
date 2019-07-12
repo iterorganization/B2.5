@@ -51,7 +51,7 @@ c      write(*,*) 'Copying Eirene array: ntrii, nz = ',ntrii,nz
       textewk(0:nz-1,iewrk)=texttmp(0:nz-1)
       nedim(1,iewrk)=ntrii
       nedim(2,iewrk)=nz
-c      write(*,*) src(0,1)*scale,eirene_stack(1,0,iewrk)
+c      write(*,*) src(1,1)*scale,eirene_stack(1,0,iewrk)
       return
       end subroutine eirene_copy
 
@@ -87,7 +87,7 @@ c      write(*,*) 'Copying Eirene array: ntrii, nx, ny, nz = ',ntrii,nx,ny,nz
       textewk(0:nz-1,iewrk)=texttmp(0:nz-1)
       nedim(1,iewrk)=ntrii
       nedim(2,iewrk)=nz
-c      write(*,*) src(0,1)*scale,eirene_stack(1,0,iewrk)
+c      write(*,*) src(1,1)*scale,eirene_stack(1,0,iewrk)
       return
       end subroutine eirene_coarse_copy
 #endif
