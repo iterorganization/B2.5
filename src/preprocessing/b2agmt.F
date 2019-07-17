@@ -2,23 +2,35 @@
 *.specification
 
       subroutine b2agmt (nx, ny, isymm, 
-     & crx, cry, vol, hx, hy, qz, qc, qs, gs,
-     & cell_width, cell_height, leftix, leftiy, bottomiy)
+     & crx, cry, fpsi, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
+     & gs, cell_width, cell_height, leftix, leftiy, bottomix, bottomiy, 
+     & rightix, rightiy, topix, topiy, cflag)
       use b2mod_types
       use b2mod_constants
+      use tradui_constants
+      use b2mod_connectivity
+      use b2mod_cellhelper
+      use b2mod_indirect
+     , ,only : TriangleArea, TriangleCentroid, quadCentroid, quadArea
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
-      integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny),
-     &  bottomiy(-1:nx,-1:ny) 
+      integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny), 
+     &  bottomix(-1:nx,-1:ny), bottomiy(-1:nx,-1:ny),
+     &  rightix(-1:nx,-1:ny), rightiy(-1:nx,-1:ny),
+     &  topix(-1:nx,-1:ny), topiy(-1:nx,-1:ny),
+     $  cflag(-1:nx,-1:ny,GRID_N_CELLFLAGS) 
       real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
+     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
+     &  fpsi(-1:nx,-1:ny,0:3,0:2)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx,-1:ny,0:2), qs(-1:nx,-1:ny,0:1),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
+     &  gs(-1:nx,-1:ny,0:2), qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1),
+     &  ebc(-1:nx,-1:ny,0:1), 
+     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny),
+     &  hc(-1:nx,-1:ny,0:3), ht(-1:nx,-1:ny,0:1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -112,12 +124,15 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, i, j
-      integer volhmk
+      integer ix, iy, i, j
+      integer i1, i2, ii
+      integer volhmk, cgeo
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, width, centroid(0:1), t0, t1
+     *   p0x, p0y, p1x, p1y, width, centroid(0:1), t0, t1, psic
+      logical classical
       real (kind=R8) ::
-     *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1)
+     *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
+     *   isx(0:1), isy(0:1)
       integer, save :: qc_style = 1
 *   ..procedures
       intrinsic min, max, sqrt
@@ -160,99 +175,381 @@
       call ipgetr ('b2agmt_1d_width', width)
       call ipgeti ('b2agmt_qc_style', qc_style)
       call xertst (0.0_R8.lt.width, 'faulty input width')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, isymm
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (0.le.isymm.and.isymm.le.4,
      &  'faulty argument isymm')
 
 * ..compute metric coefficients
-*   ..compute hx, hy, qz, qc
+      classical = isClassicalGrid(cflag)
+
+*   ..compute hx, hy, hc, ht, ecc, ebc
+      hx = INVALID_DOUBLE
+      hy = INVALID_DOUBLE
+      cell_width = INVALID_DOUBLE
+      cell_height = INVALID_DOUBLE
+      qz(:,:,0) = 0.0_R8
+      qz(:,:,1) = 1.0_R8
       do iy = -1, ny
        do ix = -1, nx
-        hx(ix,iy) = norm((crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
-     &                   (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8,
-     &                   (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
-     &                   (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8)
-        hy(ix,iy) = norm((crx(ix,iy,2)+crx(ix,iy,3))/2.0_R8-
-     &                   (crx(ix,iy,0)+crx(ix,iy,1))/2.0_R8,
-     &                   (cry(ix,iy,2)+cry(ix,iy,3))/2.0_R8-
-     &                   (cry(ix,iy,0)+cry(ix,iy,1))/2.0_R8) 
-        cell_width(ix,iy) = hx(ix,iy)
-        cell_height(ix,iy) = hy(ix,iy)
-        qz(ix,iy,0) = sinang (
-     &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
-     &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &    (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
-     &    (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
-        qz(ix,iy,1) = cosang (
-     &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
-     &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &    (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
-     &    (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
-        qc(ix,iy,0) = cosang (
-     &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
-     &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
-        qc(ix,iy,1) = 1.0_R8
-        qs(ix,iy,0) = sinang (
-     &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
-     &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
-        qs(ix,iy,1) = 0.0_R8
-        if (qc_style .eq. 2) then
-          sin_t = sinang (
-     &       (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
-     &       (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &       crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
-          cos_t = cosang (
-     &       (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
-     &       (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &       crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
-          if (leftix(ix,iy) .gt. -2) then
-            sin_tl = sinang (
-     &        (crx(ix,iy,0)+crx(ix,iy,2))-
-     &        (crx(leftix(ix,iy),leftiy(ix,iy),0)+
-     &         crx(leftix(ix,iy),leftiy(ix,iy),2)),
-     &        (cry(ix,iy,0)+cry(ix,iy,2))-
-     &        (cry(leftix(ix,iy),leftiy(ix,iy),0)+
-     &         cry(leftix(ix,iy),leftiy(ix,iy),2)),
-     &        crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
-           cos_tl = cosang (
-     &        (crx(ix,iy,0)+crx(ix,iy,2))-
-     &        (crx(leftix(ix,iy),leftiy(ix,iy),0)+
-     &         crx(leftix(ix,iy),leftiy(ix,iy),2)),
-     &        (cry(ix,iy,0)+cry(ix,iy,2))-
-     &        (cry(leftix(ix,iy),leftiy(ix,iy),0)+
-     &         cry(leftix(ix,iy),leftiy(ix,iy),2)),
-     &        crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+        if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
 
-            tt = sqrt(0.25_R8 * (cos_t + 1.0_R8) * (cos_tl + 1.0_R8))
-            qc(ix,iy,0) =
-     &             tt - 0.25_R8 * sin_t * sin_tl / tt
+        ! Requirements for US solver:
+        ! hx: not needed
+        ! hy: not needed
+        ! qz: not needed
+        ! hc(:,:,0:3): distance between cell centroid and face centers
+        ! ht(:,:,0:1): length of left and bottom faces
+        ! ecc(:,:,0:3,0:1): unit vectors of the centroid-face connections
+        ! ebc(:,:,0:1): unit vector poloidal field in cell center
 
-            qs(ix,iy,0) = 0.5_R8*(
-     &         sin_t  * sqrt((cos_tl + 1.0_R8) / (cos_t  + 1.0_R8)) + 
-     &         sin_tl * sqrt((cos_t  + 1.0_R8) / (cos_tl + 1.0_R8)))
+        cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
+        select case (cgeo)
+        case(CGEO_BROKEN)
+          write(*,*) 'Problem in b2agmt: broken cell', ix,iy
+          write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
+          write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
+          call xerrab('Broken cell geometry')
+        case(CGEO_QUAD)
+          ! For quadrangular cells: assume cell center = geometric mean
+          hx(ix,iy) = norm(0.5_R8*(crx(ix,iy,1)+crx(ix,iy,3))-
+     &                     0.5_R8*(crx(ix,iy,0)+crx(ix,iy,2)),
+     &                     0.5_R8*(cry(ix,iy,1)+cry(ix,iy,3))-
+     &                     0.5_R8*(cry(ix,iy,0)+cry(ix,iy,2)))
+          hy(ix,iy) = norm(0.5_R8*(crx(ix,iy,2)+crx(ix,iy,3))-
+     &                     0.5_R8*(crx(ix,iy,0)+crx(ix,iy,1)),
+     &                     0.5_R8*(cry(ix,iy,2)+cry(ix,iy,3))-
+     &                     0.5_R8*(cry(ix,iy,0)+cry(ix,iy,1))) 
+          cell_width(ix,iy)  = hx(ix,iy)
+          cell_height(ix,iy) = hy(ix,iy)
+
+          ! Distances centroid to faces
+          hc(ix,iy,0) = 0.5*hx(ix,iy)
+          hc(ix,iy,1) = 0.5*hy(ix,iy)
+          hc(ix,iy,2) = 0.5*hx(ix,iy) 
+          hc(ix,iy,3) = 0.5*hy(ix,iy) 
+
+          ! Distances along faces (only W/S)
+          ht(ix,iy,0) = dist(ix,iy,0,2)
+          ht(ix,iy,1) = dist(ix,iy,0,1)
+
+          ! Unit vectors of connector lines cell center to face centers
+          t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
+          t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
+          ecc(ix,iy,0,0) = t0/norm(t0,t1)
+          ecc(ix,iy,0,1) = t1/norm(t0,t1)
+          ecc(ix,iy,2,0) = t0/norm(t0,t1)
+          ecc(ix,iy,2,1) = t1/norm(t0,t1)
+
+          t0 = (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)) 
+          t1 = (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1))
+          ecc(ix,iy,1,0) = t0/norm(t0,t1)
+          ecc(ix,iy,1,1) = t1/norm(t0,t1)
+          ecc(ix,iy,3,0) = t0/norm(t0,t1)
+          ecc(ix,iy,3,1) = t1/norm(t0,t1)
+
+          ! Unit vector of poloidal field in cell center
+          if ((cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL) .or.
+     &         classical ) then 
+            ! Assumptions: - internal cells have N and S faces aligned
+            !              - for classical grids, the above is true for all cells
+            ! Set ebc equal to ecc for numerical accuary
+            ebc(ix,iy,0) = ecc(ix,iy,0,0)
+            ebc(ix,iy,1) = ecc(ix,iy,0,1)
           else
-            qc(ix,iy,0) = cos_t
-            qs(ix,iy,0) = sin_t
+            ! For arbitrary (quad) cells, compute as average between 
+            ! poloidal directions at vertices
+            t0 = 0.25_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1) + 
+     &                    fpsi(ix,iy,2,1) + fpsi(ix,iy,3,1))
+            t1 = 0.25_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2) + 
+     &                    fpsi(ix,iy,2,2) + fpsi(ix,iy,3,2))
+            ebc(ix,iy,0) = t0/norm(t0,t1)
+            ebc(ix,iy,1) = t1/norm(t0,t1)
           endif
-        endif
 
+          ! complementary angle between x and y
+          qz(ix,iy,0) = sinang (
+     &      (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &      (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &      (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
+     &      (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
+          qz(ix,iy,1) = cosang (
+     &      (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &      (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &      (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
+     &      (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
+
+        case(CGEO_TRIA_NOLEFT, CGEO_TRIA_NORIGHT,
+     &       CGEO_TRIA_NOBOT,  CGEO_TRIA_NOTOP)
+cwdk      General approach for arbitrary triangle cases:
+cwdk      1) identify vertices with max and min psi values psi_min, psi_max
+cwdk      2) assume the triangle lies on the flux surface with psic = 0.5*(psi_min + psi_max)
+cwdk         => through middle of the corresponding face; defines 1st intersection
+cwdk      3) identify 2nd intersection of this surface with one of the other two faces
+cwdk      4) centroid: average between the intersections with faces
+
+          ! Identify vertices with min and max psi values
+          i1 = minloc(fpsi(ix,iy,0:3,0),1)-1
+          i2 = maxloc(fpsi(ix,iy,0:3,0),1)-1
+          psic = 0.5_R8*(fpsi(ix,iy,i1,0) + fpsi(ix,iy,i2,0))
+
+          ! Loop over faces to find which ones are intersected by the psic surface
+          ! (Loop includes degenerate face; should not cause problems)
+          ii = 0
+          if (psic.ge.min(fpsi(ix,iy,0,0),fpsi(ix,iy,2,0)) .and.
+     &        psic.lt.max(fpsi(ix,iy,0,0),fpsi(ix,iy,2,0))) then ! intersection with W
+            t0 = (psic - fpsi(ix,iy,0,0))/
+     &           (fpsi(ix,iy,2,0) - fpsi(ix,iy,0,0))
+            isx(ii) = crx(ix,iy,0) + t0*(crx(ix,iy,2) - crx(ix,iy,0)) ! x-co intersection
+            isy(ii) = cry(ix,iy,0) + t0*(cry(ix,iy,2) - cry(ix,iy,0)) ! y-co intersection
+            ii = ii + 1
+          endif
+          if (psic.ge.min(fpsi(ix,iy,0,0),fpsi(ix,iy,1,0)) .and.
+     &        psic.lt.max(fpsi(ix,iy,0,0),fpsi(ix,iy,1,0))) then ! intersection with S
+            t0 = (psic - fpsi(ix,iy,0,0))/
+     &           (fpsi(ix,iy,1,0) - fpsi(ix,iy,0,0))
+            isx(ii) = crx(ix,iy,0) + t0*(crx(ix,iy,1) - crx(ix,iy,0)) ! x-co intersection
+            isy(ii) = cry(ix,iy,0) + t0*(cry(ix,iy,1) - cry(ix,iy,0)) ! y-co intersection
+            ii = ii + 1
+          endif
+          if (psic.ge.min(fpsi(ix,iy,1,0),fpsi(ix,iy,3,0)) .and.
+     &        psic.lt.max(fpsi(ix,iy,1,0),fpsi(ix,iy,3,0))) then ! intersection with E
+            t0 = (psic - fpsi(ix,iy,1,0))/
+     &           (fpsi(ix,iy,3,0) - fpsi(ix,iy,1,0))
+            isx(ii) = crx(ix,iy,1) + t0*(crx(ix,iy,3) - crx(ix,iy,1)) ! x-co intersection
+            isy(ii) = cry(ix,iy,1) + t0*(cry(ix,iy,3) - cry(ix,iy,1)) ! y-co intersection
+            ii = ii + 1
+          endif
+          if (psic.ge.min(fpsi(ix,iy,2,0),fpsi(ix,iy,3,0)) .and.
+     &        psic.lt.max(fpsi(ix,iy,2,0),fpsi(ix,iy,3,0))) then ! intersection with N
+            t0 = (psic - fpsi(ix,iy,2,0))/
+     &           (fpsi(ix,iy,3,0) - fpsi(ix,iy,2,0))
+            isx(ii) = crx(ix,iy,2) + t0*(crx(ix,iy,3) - crx(ix,iy,2)) ! x-co intersection
+            isy(ii) = cry(ix,iy,2) + t0*(cry(ix,iy,3) - cry(ix,iy,2)) ! y-co intersection
+            ii = ii + 1
+          endif
+          if (ii.ne.2) then
+            write(*,*) 'Problem with intersections in triangle  ',ix,iy
+            write(*,*) 'Number of intersections found: ',ii
+            call xerrab('Intersections in triangle not found!')
+          endif
+
+          ! Compute centroid
+          centroid(0) = 0.5_R8*sum(isx)
+          centroid(1) = 0.5_R8*sum(isy)
+
+          ! hx:   distance between intersection points
+          ! hy:   half distance between points of min/max psi
+          ! Note: hx, hy not needed by unstructured solver!
+          hx(ix,iy) = norm(isx(1)-isx(0),isy(1)-isy(0))
+          hy(ix,iy) = 0.5_R8*dist(ix,iy,i1,i2)
+          cell_width(ix,iy)  = hx(ix,iy)
+          cell_height(ix,iy) = hy(ix,iy)
+
+          ! Distances centroid to faces
+          hc(ix,iy,0) = norm(
+     &      0.5_R8*(crx(ix,iy,0)+crx(ix,iy,2)) - centroid(0),
+     &      0.5_R8*(cry(ix,iy,0)+cry(ix,iy,2)) - centroid(1))          
+          hc(ix,iy,1) = norm(
+     &      0.5_R8*(crx(ix,iy,0)+crx(ix,iy,1)) - centroid(0),
+     &      0.5_R8*(cry(ix,iy,0)+cry(ix,iy,1)) - centroid(1))
+          hc(ix,iy,2) = norm(
+     &      0.5_R8*(crx(ix,iy,1)+crx(ix,iy,3)) - centroid(0),
+     &      0.5_R8*(cry(ix,iy,1)+cry(ix,iy,3)) - centroid(1))
+          hc(ix,iy,3) = norm(
+     &      0.5_R8*(crx(ix,iy,2)+crx(ix,iy,3)) - centroid(0),
+     &      0.5_R8*(cry(ix,iy,2)+cry(ix,iy,3)) - centroid(1))
+
+          ! Distances along faces (only W/S)
+          ht(ix,iy,0) = dist(ix,iy,0,2)
+          ht(ix,iy,1) = dist(ix,iy,0,1)
+
+          ! Unit vectors of connector lines cell center to face centers
+          t0 = centroid(0) - 0.5_R8*(crx(ix,iy,0)+crx(ix,iy,2)) 
+          t1 = centroid(1) - 0.5_R8*(cry(ix,iy,0)+cry(ix,iy,2))
+          ecc(ix,iy,0,0) = t0/norm(t0,t1)
+          ecc(ix,iy,0,1) = t1/norm(t0,t1)
+
+          t0 = centroid(0) - 0.5_R8*(crx(ix,iy,0)+crx(ix,iy,1)) 
+          t1 = centroid(1) - 0.5_R8*(cry(ix,iy,0)+cry(ix,iy,1))
+          ecc(ix,iy,1,0) = t0/norm(t0,t1)
+          ecc(ix,iy,1,1) = t1/norm(t0,t1)
+
+          t0 = 0.5_R8*(crx(ix,iy,1)+crx(ix,iy,3)) - centroid(0) 
+          t1 = 0.5_R8*(cry(ix,iy,1)+cry(ix,iy,3)) - centroid(1)
+          ecc(ix,iy,2,0) = t0/norm(t0,t1)
+          ecc(ix,iy,2,1) = t1/norm(t0,t1)
+
+          t0 = 0.5_R8*(crx(ix,iy,2)+crx(ix,iy,3)) - centroid(0) 
+          t1 = 0.5_R8*(cry(ix,iy,2)+cry(ix,iy,3)) - centroid(1)
+          ecc(ix,iy,3,0) = t0/norm(t0,t1)
+          ecc(ix,iy,3,1) = t1/norm(t0,t1)
+
+          ! Unit vector of poloidal field in cell center
+          ! WG-TMP: based on simple geom. avg. (consistency with carre_b2agbb)
+          t0 = 0.25_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1) + 
+     &                  fpsi(ix,iy,2,1) + fpsi(ix,iy,3,1))
+          t1 = 0.25_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2) + 
+     &                  fpsi(ix,iy,2,2) + fpsi(ix,iy,3,2))
+          ebc(ix,iy,0) = t0/norm(t0,t1)
+          ebc(ix,iy,1) = t1/norm(t0,t1)
+
+          ! Note: qz loses meaning for a triangle; not computed
+
+        end select
         if(qz(ix,iy,1).le.0.0_R8) then
           write(*,'(a,1x,1f9.6,2i4)')
      1     'Problem in b2agmt: qz(ix,iy,1) <= 0',qz(ix,iy,1),ix,iy
           write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
           write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
         endif
-        if(qc(ix,iy,0).le.0.0_R8) then
-          write(*,'(a,1x,1f9.6,2i4)')
-     1     'Problem in b2agmt: qc(ix,iy,0) <= 0',qc(ix,iy,0),ix,iy
-          write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
-          write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
+       enddo
+      enddo
+
+*   ..compute qc, qs, qac, qas at cell faces
+      ! Requirements for US solver:
+      ! qc:  cosine of angle between connector line and face normal
+      ! qs:    sine of angle between connector line and face normal
+      !      => qc and qs will translate into fcQgam
+      ! qac: cosine of angle between poloidal field and face normal
+      ! qas:   sine of angle between poloidal field and face normal
+      !     => qac and qas will translate into fcQalf
+      qc  = 1.0_R8
+      qs  = 0.0_R8
+      qac = 0.0_R8
+      qas = 1.0_R8
+*   ..poloidal faces
+cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
+      do ix = -1, nx
+       do iy = -1, ny
+        if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+        if (leftix(ix,iy).eq.-2 .or. 
+     &      leftix(ix,iy).eq.NO_CONNECTIVITY) cycle
+
+        ! unit vectors at left faces (not re-normalized)
+        if ((cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .and.
+     &       cflag(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE) == 
+     &       GRID_INTERNAL) .or. classical ) then 
+          
+          ! Implicit assumption made here: internal cells are quads
+          ! Standard treatment for magnetically rectangular cells
+          ! Backwards compatible
+          ebf(0) = 
+     &       (hc(ix,iy,0)*ebc(leftix(ix,iy),leftiy(ix,iy),0)+
+     &        hc(leftix(ix,iy),leftiy(ix,iy),2)*ebc(ix,iy,0))/
+     &       (hc(leftix(ix,iy),leftiy(ix,iy),2)+hc(ix,iy,0))
+          ebf(1) =
+     &       (hc(ix,iy,0)*ebc(leftix(ix,iy),leftiy(ix,iy),1)+
+     &        hc(leftix(ix,iy),leftiy(ix,iy),2)*ebc(ix,iy,1))/
+     &       (hc(leftix(ix,iy),leftiy(ix,iy),2)+hc(ix,iy,0))
+
+          ! Connector line is purely poloidal
+          ecf = ebf
+
+        else
+          ! "Special" faces (not between aligned quads)
+          ! Compute local field direction at face from fpsi
+          t0 = 0.5_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,2,1))
+          t1 = 0.5_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,2,2))
+          ebf(0) = t0/norm(t0,t1)
+          ebf(1) = t1/norm(t0,t1)
+
+          ! Orientation of connector line at faces
+          ecf(0) = 
+     &       (hc(ix,iy,0)*ecc(ix,iy,0,0)+
+     &        hc(leftix(ix,iy),leftiy(ix,iy),2)*
+     &       ecc(leftix(ix,iy),leftiy(ix,iy),2,0))/
+     &       (hc(leftix(ix,iy),leftiy(ix,iy),2)+hc(ix,iy,0))
+          ecf(1) =
+     &       (hc(ix,iy,0)*ecc(ix,iy,0,1)+
+     &        hc(leftix(ix,iy),leftiy(ix,iy),2)*
+     &       ecc(leftix(ix,iy),leftiy(ix,iy),2,1))/
+     &       (hc(leftix(ix,iy),leftiy(ix,iy),2)+hc(ix,iy,0))
+
         endif
+
+        ! angles at left face
+        qc(ix,iy,0) = cosang ( ecf(0), ecf(1), 
+     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+        qs(ix,iy,0) = sinang ( ecf(0), ecf(1), 
+     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+
+        qac(ix,iy,0) = cosang ( ebf(0), ebf(1), 
+     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+        qas(ix,iy,0) = sinang ( ebf(0), ebf(1), 
+     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+
+        if(qc(ix,iy,0).le.0.0_R8) then
+          write(*,'(a,1f12.6,2i5)') 
+     1     'Problem in b2agmt: qc(ix,iy,0) <= 0',qc(ix,iy,0),ix,iy
+          write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
+          write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
+          write(*,*) "Cell geometry is ", cgeo
+        endif
+       enddo
+      enddo
+
+*   ..radial faces
+      do ix = -1, nx
+       do iy = -1, ny
+        if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+        if (bottomiy(ix,iy).eq.-2 .or. 
+     &      bottomiy(ix,iy).eq.NO_CONNECTIVITY) cycle
+
+        ! unit vectors at bottom faces (not re-normalized)
+        if ((cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .and.
+     &       cflag(bottomix(ix,iy),bottomiy(ix,iy),CELLFLAG_TYPE) == 
+     &       GRID_INTERNAL) .or. classical ) then 
+
+          ! Implicit assumption made here: internal cells are quads
+          ! Standard treatment for magnetically rectangular cells
+          ! Assume perfectly aligned face
+          ! WG-TODO: check for negative poloidal field! qas = -1?
+          qac(ix,iy,1) = 0.0_R8
+          qas(ix,iy,1) = 1.0_R8
+
+          ! qc and qs for backwards compatibility
+          qc(ix,iy,1) =
+     .     (hy(ix,iy)*qz(ix,iy,1) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     .      qz(bottomix(ix,iy),bottomiy(ix,iy),1))/ 
+     .     (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+          qs(ix,iy,1) =
+     .     (hy(ix,iy)*qz(ix,iy,0) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     .      qz(bottomix(ix,iy),bottomiy(ix,iy),0))/ 
+     .     (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+
+        else
+          ! "Special" faces (not between aligned quads)
+          ! Compute local field direction at face from fpsi
+          t0 = 0.5_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1))
+          t1 = 0.5_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2))
+          ebf(0) = t0/norm(t0,t1)
+          ebf(1) = t1/norm(t0,t1)
+
+          ecf(0) = 
+     &       (hc(ix,iy,1)*ecc(ix,iy,1,0)+
+     &        hc(bottomix(ix,iy),bottomiy(ix,iy),3)*
+     &       ecc(bottomix(ix,iy),bottomiy(ix,iy),3,0))/
+     &       (hc(bottomix(ix,iy),bottomiy(ix,iy),3)+hc(ix,iy,1))
+          ecf(1) = 
+     &       (hc(ix,iy,1)*ecc(ix,iy,1,1)+
+     &        hc(bottomix(ix,iy),bottomiy(ix,iy),3)*
+     &       ecc(bottomix(ix,iy),bottomiy(ix,iy),3,1))/
+     &       (hc(bottomix(ix,iy),bottomiy(ix,iy),3)+hc(ix,iy,1))
+
+          ! angles at bottom face
+          qc(ix,iy,1) = cosang ( ecf(0), ecf(1), 
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0))
+          qs(ix,iy,1) = sinang ( ecf(0), ecf(1), 
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0))
+
+          qac(ix,iy,1) = cosang ( ebf(0), ebf(1), 
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0))
+          qas(ix,iy,1) = sinang ( ebf(0), ebf(1), 
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0))
+
+        endif
+
         if(qc(ix,iy,1).le.0.0_R8) then
           write(*,'(a,1f12.6,2i4)')
      1     'Problem in b2agmt: qc(ix,iy,1) <= 0',qc(ix,iy,1),ix,iy
@@ -265,155 +562,102 @@
 *     (A negative entry in qz(,,1) corresponds to a left-handed
 *     orientation of the coordinate system, which is not allowed in
 *     this code.)
-      call b2xvsg (n2, qz(-1,-1,1), 1, 'qz1', '.gt.')
-      call b2xvsg (n2*2, qc, 1, 'qc', '.gt.')
+      call b2xvsg1(nx, ny, qz(-1,-1,1), 1, 'qz1', '.gt.')
+      call b2xvsg1(nx, ny, qc(-1,-1,0), 1, 'qc', '.gt.')
+!      call b2xvsg1(nx, ny, qc(-1,-1,1), 1, 'qc', '.gt.')
 *   ..compute vol, gs
+      vol = INVALID_DOUBLE
+      gs(:,:,0) = 0.0_R8
+      gs(:,:,1) = 0.0_R8
+      gs(:,:,2) = INVALID_DOUBLE
       if (isymm.eq.0) then
 *    ..slab geometry
        do iy = -1, ny
         do ix = -1, nx
-         gs(ix,iy,2) = 0.5_R8*
-     &     ((crx(ix,iy,3)-crx(ix,iy,0))*(cry(ix,iy,2)-cry(ix,iy,1))-
-     &      (crx(ix,iy,2)-crx(ix,iy,1))*(cry(ix,iy,3)-cry(ix,iy,0)))
+         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+         gs(ix,iy,2) = quadArea(  ! the vertices must be in sequence
+     &     crx(ix,iy,0), cry(ix,iy,0), crx(ix,iy,1), cry(ix,iy,1),
+     &     crx(ix,iy,3), cry(ix,iy,3), crx(ix,iy,2), cry(ix,iy,2))
          vol(ix,iy) = gs(ix,iy,2)*width
         enddo
        enddo
        do iy = -1, ny
         do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-          gs(ix,iy,0) = 0.0_R8
-         else
-          gs(ix,iy,0) = dist(ix,iy,0,2)*width
-         endif
-         if(bottomiy(ix,iy).eq.-2) then
-          gs(ix,iy,1) = 0.0_R8
-         else
-          gs(ix,iy,1) = dist(ix,iy,0,1)*width
-         endif
+         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+         if(isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) 
+     &    gs(ix,iy,0) = dist(ix,iy,0,2)*width
+         if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) 
+     &    gs(ix,iy,1) = dist(ix,iy,0,1)*width
         enddo
        enddo
       else if (isymm.eq.1 .or. isymm.eq.2) then
 *    ..case of rotational symmetry about crx=0 axis
        do iy = -1, ny
         do ix = -1, nx
-         gs(ix,iy,2) = 0.5_R8*
-     &     ((crx(ix,iy,3)-crx(ix,iy,0))*(cry(ix,iy,2)-cry(ix,iy,1))-
-     &      (crx(ix,iy,2)-crx(ix,iy,1))*(cry(ix,iy,3)-cry(ix,iy,0)))
+         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+         gs(ix,iy,2) = quadArea(  ! the vertices must be in sequence
+     &     crx(ix,iy,0), cry(ix,iy,0), crx(ix,iy,1), cry(ix,iy,1),
+     &     crx(ix,iy,3), cry(ix,iy,3), crx(ix,iy,2), cry(ix,iy,2))
          if (volhmk.eq.0) then
           centroid(0) = 0.25_R8*
      &     (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
           centroid(1) = 0.25_R8*
      &     (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
          else
-          centroid(0) = XquadCentroid(crx(ix,iy,0),cry(ix,iy,0),
-     &                                crx(ix,iy,1),cry(ix,iy,1),
-     &                                crx(ix,iy,2),cry(ix,iy,2),
-     &                                crx(ix,iy,3),cry(ix,iy,3))
-          centroid(1) = YquadCentroid(crx(ix,iy,0),cry(ix,iy,0),
-     &                                crx(ix,iy,1),cry(ix,iy,1),
-     &                                crx(ix,iy,2),cry(ix,iy,2),
-     &                                crx(ix,iy,3),cry(ix,iy,3))
+          centroid = quadCentroid(crx(ix,iy,0),cry(ix,iy,0),
+     &                            crx(ix,iy,1),cry(ix,iy,1),
+     &                            crx(ix,iy,2),cry(ix,iy,2),
+     &                            crx(ix,iy,3),cry(ix,iy,3)) 
          endif
          vol(ix,iy) = gs(ix,iy,2)*2.0_R8*pi*centroid(0)
         enddo
        enddo
        do iy = -1, ny
         do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-          gs(ix,iy,0) = 0.0_R8
-         else
-          gs(ix,iy,0) = pi*dist(ix,iy,0,2)*(crx(ix,iy,0)+crx(ix,iy,2))
-         endif
-         if(bottomiy(ix,iy).eq.-2) then
-          gs(ix,iy,1) = 0.0_R8
-         else
-          gs(ix,iy,1) = pi*dist(ix,iy,0,1)*(crx(ix,iy,0)+crx(ix,iy,1))
-         endif
+         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+         if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) 
+     &    gs(ix,iy,0) = pi*dist(ix,iy,0,2)*(crx(ix,iy,0)+crx(ix,iy,2))
+         if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) 
+     &    gs(ix,iy,1) = pi*dist(ix,iy,0,1)*(crx(ix,iy,0)+crx(ix,iy,1))
         enddo
        enddo
       else if (isymm.eq.3 .or. isymm.eq.4) then
 *    ..case of rotational symmetry about cry=0 axis
        do iy = -1, ny
         do ix = -1, nx
-         gs(ix,iy,2) = 0.5_R8*
-     &     ((crx(ix,iy,3)-crx(ix,iy,0))*(cry(ix,iy,2)-cry(ix,iy,1))-
-     &      (crx(ix,iy,2)-crx(ix,iy,1))*(cry(ix,iy,3)-cry(ix,iy,0)))
+         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+         gs(ix,iy,2) = quadArea(  ! the vertices must be in sequence
+     &     crx(ix,iy,0), cry(ix,iy,0), crx(ix,iy,1), cry(ix,iy,1),
+     &     crx(ix,iy,3), cry(ix,iy,3), crx(ix,iy,2), cry(ix,iy,2))
          if (volhmk.eq.0) then
           centroid(0) = 0.25_R8*
      &     (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
           centroid(1) = 0.25_R8*
      &     (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
          else
-          centroid(0) = XquadCentroid(crx(ix,iy,0),cry(ix,iy,0),
-     &                                crx(ix,iy,1),cry(ix,iy,1),
-     &                                crx(ix,iy,2),cry(ix,iy,2),
-     &                                crx(ix,iy,3),cry(ix,iy,3))
-          centroid(1) = YquadCentroid(crx(ix,iy,0),cry(ix,iy,0),
-     &                                crx(ix,iy,1),cry(ix,iy,1),
-     &                                crx(ix,iy,2),cry(ix,iy,2),
-     &                                crx(ix,iy,3),cry(ix,iy,3))
+          centroid = quadCentroid(crx(ix,iy,0),cry(ix,iy,0),
+     &                            crx(ix,iy,1),cry(ix,iy,1),
+     &                            crx(ix,iy,2),cry(ix,iy,2),
+     &                            crx(ix,iy,3),cry(ix,iy,3)) 
          endif
          vol(ix,iy) = gs(ix,iy,2)*2.0_R8*pi*centroid(1)
         enddo
        enddo
        do iy = -1, ny
         do ix = -1, nx
-         if(leftix(ix,iy).eq.-2) then
-          gs(ix,iy,0) = 0.0_R8
-         else
-          gs(ix,iy,0) = pi*dist(ix,iy,0,2)*(cry(ix,iy,0)+cry(ix,iy,2))
-         endif
-         if(bottomiy(ix,iy).eq.-2) then
-          gs(ix,iy,1) = 0.0_R8
-         else
-          gs(ix,iy,1) = pi*dist(ix,iy,0,1)*(cry(ix,iy,0)+cry(ix,iy,1))
-         endif
+         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+         if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) 
+     &    gs(ix,iy,0) = pi*dist(ix,iy,0,2)*(cry(ix,iy,0)+cry(ix,iy,2))
+         if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) 
+     &    gs(ix,iy,1) = pi*dist(ix,iy,0,1)*(cry(ix,iy,0)+cry(ix,iy,1))
         enddo
        enddo
       endif
-
-*   ..test sign of vol
-      call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-
-*   ..improved computation of qc 
-cwdk  based on average field direction of neighboring cells
-cwdk  avoids artificial reduction of poloidal contact area at faces for
-cwdk  curvilinear grids; angle between left face and average direction of top/bottom
-cwdk  faces is not representative for orthogonality of left face to field!
-      if (qc_style.eq.1) then
-cwdk   poloidal unit vector in cell centers, ebc
-       do iy = -1, ny
-        do ix = -1, nx
-         t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
-         t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
-         ebc(ix,iy,0) = t0/norm(t0,t1)
-         ebc(ix,iy,1) = t1/norm(t0,t1)
-        enddo
-       enddo
-cwdk   poloidal unit vector at left faces, ebf
-       call intfaceh(nx,ny,leftix,leftiy,vol,ebc(-1,-1,0),ebf(-1,-1,0))
-       call intfaceh(nx,ny,leftix,leftiy,vol,ebc(-1,-1,1),ebf(-1,-1,1))
-cwdk   computation of qc and qs
-       do iy = -1, ny
-        do ix = -1, nx
-cwdk     note: qc and qs in left ghosts unchanged
-         if (leftix(ix,iy).ne.-2) then
-          qc(ix,iy,0) = cosang ( ebf(ix,iy,0), ebf(ix,iy,1), 
-     &      crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
-          qs(ix,iy,0) = sinang ( ebf(ix,iy,0), ebf(ix,iy,1), 
-     &      crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
-         endif
-         if(qc(ix,iy,0).le.0.0_R8) then
-          write(*,'(a,1x,1f9.6,2i4)')
-     1     'Problem in b2agmt: qc(ix,iy,0) <= 0',qc(ix,iy,0),ix,iy
-          write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
-          write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
-         endif
-        enddo
-       enddo
-*    ..test sign of qc
-       call b2xvsg (n2*2, qc, 1, 'qc', '.gt.')
-      endif
+*   ..test sign of vol, gs
+      call b2xvsg1(nx, ny, vol(-1,-1),  1, 'vol', '.gt.')
+!      call b2xvsg1(nx, ny, gs(-1,-1,0), 1, 'gsx', '.gt.')
+!      call b2xvsg1(nx, ny, gs(-1,-1,1), 1, 'gsy', '.gt.')
+      call b2xvsg1(nx, ny, gs(-1,-1,2), 1, 'gsz', '.gt.')
 
 * ..return
       call subend ()
@@ -422,79 +666,4 @@ cwdk     note: qc and qs in left ghosts unchanged
 *-----------------------------------------------------------------------
 *.end b2agmt
 
-      contains
-
-C Coordinates of centroid of a quadrangle given by vertex coordinates
-C Corners are numbered in the B2 convention 2-3
-C                                           0-1
-      function XquadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
-      use b2mod_types
-      implicit none
-      real (kind=R8) :: XquadCentroid
-      real (kind=R8) :: triangleArea
-      external triangleArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-  
-      XquadCentroid =
-     & ( XtriangleCentroid(x0,y0,x1,y1,x3,y3)
-     & * triangleArea(x0,y0,x1,y1,x3,y3)
-     & + XtriangleCentroid(x0,y0,x2,y2,x3,y3)
-     & * triangleArea(x0,y0,x2,y2,x3,y3) )
-     & / ( triangleArea(x0,y0,x1,y1,x3,y3)
-     &   + triangleArea(x0,y0,x2,y2,x3,y3) )
-      return
-      end function XquadCentroid
-
-      function YquadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
-      use b2mod_types
-      implicit none
-      real (kind=R8) :: YquadCentroid
-      real (kind=R8) :: triangleArea
-      external triangleArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-  
-      YquadCentroid =
-     & ( YtriangleCentroid(x0,y0,x1,y1,x3,y3)
-     & * triangleArea(x0,y0,x1,y1,x3,y3)
-     & + YtriangleCentroid(x0,y0,x2,y2,x3,y3)
-     & * triangleArea(x0,y0,x2,y2,x3,y3) )
-     & / ( triangleArea(x0,y0,x1,y1,x3,y3)
-     &   + triangleArea(x0,y0,x2,y2,x3,y3) )
-      return
-      end function YquadCentroid
-
-C Coordinates of centroid of a triangle given by vertex coordinates
-      function XtriangleCentroid( x0, y0, x1, y1, x2, y2 )
-      use b2mod_types
-      implicit none
-      real (kind=R8) :: XtriangleCentroid
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2
-
-      XtriangleCentroid = ( x0 + x1 + x2 ) / 3.0_R8
-      return
-      end function XtriangleCentroid
-
-      function YtriangleCentroid( x0, y0, x1, y1, x2, y2 )
-      use b2mod_types
-      implicit none
-      real (kind=R8) :: YtriangleCentroid
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2
-
-      YtriangleCentroid = ( y0 + y1 + y2 ) / 3.0_R8
-      return
-      end function YtriangleCentroid
-
       end subroutine b2agmt
-
-C Area of triangle given by vertex coordinates
-      function triangleArea( x0, y0, x1, y1, x2, y2 )
-      use b2mod_types
-      implicit none
-      real (kind=R8) :: triangleArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2
-      intrinsic abs
-  
-      triangleArea = 0.5_R8 * abs( (x1-x0)*(y2-y0)
-     & - (y1-y0)*(x2-x0) )
-      return
-      end function triangleArea

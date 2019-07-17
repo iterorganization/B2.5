@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2wugm (nput, nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qs, gs, pbs, wbbc,
+     &  vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc, gs, pbs, wbbl,
      &  cell_width, cell_height)
       use b2mod_types
       use b2mod_indirect
@@ -13,11 +13,13 @@
       integer nput, nx, ny
       real (kind=R8) ::
      *   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
+     &  fpsi(-1:nx,-1:ny,0:3,0:2), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), 
-     &  qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
-     &  pbs(-1:nx,-1:ny,0:1), wbbc(-1:nx+1,-1:ny+1,0:3),
+     &  hy(-1:nx,-1:ny), hc(-1:nx,-1:ny,0:3), ht(-1:nx,-1:ny,0:1), 
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), 
+     &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1),
+     &  ebc(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
+     &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx,-1:ny,0:3),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
 *     (none)
@@ -95,7 +97,7 @@
       call xertst (1.le.nput, 'faulty argument nput')
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test sign of bb
-      call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
+      call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.ge.')
 *   ..test geometry
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      &  cell_width, cell_height)
@@ -429,7 +431,7 @@ cdpc-end
       call cfwure (nput, n2*4, crx, 'crx')
       call cfwure (nput, n2*4, cry, 'cry')
 *   ..save flux functions
-      call cfwure (nput, n2*4, fpsi, 'fpsi')
+      call cfwure (nput, n2*12, fpsi, 'fpsi')
       call cfwure (nput, n2*4, ffbz, 'ffbz')
 *   ..save magnetic field
       call cfwure (nput, n2*4, bb, 'bb')
@@ -490,8 +492,15 @@ cxpb-end
       elseif(newversion.ge.'03.000.007') then
         idum(0)=redef_gmtry
         call cfwuin (nput, 1, idum, 'redef_gmtry')
-!WG_TODO        call cfwure (nput, n2*4, wbbl, 'wbbl')
+        call cfwure (nput, n2*4, wbbl, 'wbbl')
       endif
+cwdk  additional set of geometric parameters for extended grids
+      call cfwuin(nput, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
+      call cfwure(nput, n2*4, hc, 'hc')
+      call cfwure(nput, n2*2, ht, 'ht')
+      call cfwure(nput, n2*2, qac, 'qac')
+      call cfwure(nput, n2*2, qas, 'qas')
+      call cfwure(nput, n2*2, ebc, 'ebc')
 * ..return
       call subend ()
       return

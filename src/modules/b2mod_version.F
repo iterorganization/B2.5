@@ -12,7 +12,8 @@
      5 b2fgmtry_version = '00.000.000',
      6 b2fparam_version = '00.000.000',
      7 boundary_version = '00.000.000',
-     8 neutrals_version = '00.000.000'
+     8 neutrals_version = '00.000.000',
+     9 grid_version = '00.000.000'
 
       end module b2mod_version
 cxpb Version 1.1 corresponds to adding a version number and the UADIA array

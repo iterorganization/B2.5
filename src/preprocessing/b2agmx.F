@@ -2,11 +2,11 @@
 *.specification
 
       subroutine b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, qz1, qc1, qs1,
+     & vol1, hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
-     & vol, hx, hy, qz, qc, qs,
+     & vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
@@ -26,12 +26,14 @@
       integer nx1, ny1, nx, ny
       real (kind=R8) ::
      *  vol1(-1:nx1,-1:ny1), hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1),
+     &  hc1(-1:nx1,-1:ny1,0:3), ht1(-1:nx1,-1:ny1,0:1),
      &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1,0:1), 
-     &  qs1(-1:nx1,-1:ny1,0:1),
+     &  qs1(-1:nx1,-1:ny1,0:1), qac1(-1:nx1,-1:ny1,0:1), 
+     &  qas1(-1:nx1,-1:ny1,0:1), ebc1(-1:nx1,-1:ny1,0:1),
      &  gs1(-1:nx1,-1:ny1,0:2),
      1	crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
      2	bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
-     3  fpsi1(-1:nx1,-1:ny1,0:3), ffbz1(-1:nx1,-1:ny1,0:3),
+     3  fpsi1(-1:nx1,-1:ny1,0:3,0:2), ffbz1(-1:nx1,-1:ny1,0:3),
      4  wbbl1(-1:nx1,-1:ny1,0:3), wbbr1(-1:nx1,-1:ny1,0:3),
      &  wbbv1(-1:nx1,-1:ny1,0:3), wbbc1(-1:nx1+1,-1:ny1+1,0:3),
      5  cell_width1(-1:nx1,-1:ny1), cell_height1(-1:nx1,-1:ny1)
@@ -46,10 +48,13 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  hc(-1:nx1,-1:ny1,0:3), ht(-1:nx1,-1:ny1,0:1),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
+     &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1), 
+     &  ebc(-1:nx,-1:ny,0:1),
      1	gs(-1:nx,-1:ny,0:2), crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      2	bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
-     3  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
+     3  fpsi(-1:nx,-1:ny,0:3,0:2), ffbz(-1:nx,-1:ny,0:3),
      4  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
      &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
      5  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
@@ -175,6 +180,65 @@
      . cell_width1, cell_height1, bottomiy1)
 *   ..read input switch
       call ipgeti ('b2agmx_pbs_from_basis_mesh', pbs_from_basis_mesh)
+
+
+!     Mesh coarsening is currently only possible for classical meshes.
+!     For extended meshes, we just copy the values
+!      if ((nx1 /= nx .or. ny1 /= ny).and. .not.isClassicalGrid(cflags1))
+!     &  call xerrab('cannot coarsen extended mesh.')
+      if ((nx1 /= nx .or. ny1 /= ny))
+     &  call xerrab('mesh coarsening not adapted yet.')
+
+!      if (.not. isClassicalGrid(cflags1)) then
+         vol = vol1
+         hx = hx1
+         hy = hy1
+         hc = hc1
+         ht = ht1
+         qc = qc1
+         qs = qs1
+         qac = qac1
+         qas = qas1
+         qz = qz1
+         gs = gs1
+         crx = crx1
+         cry = cry1
+         ebc = ebc1
+         bb = bb1
+         wbbl = wbbl1
+         wbbr = wbbr1
+         wbbv = wbbv1
+         wbbc = wbbc1
+         fpsi = fpsi1
+         ffbz = ffbz1
+         pbs = pbs1
+         cell_width  = cell_width1
+         cell_height = cell_height1
+         leftix = leftix1
+         leftiy = leftiy1
+         rightix = rightix1
+         rightiy = rightiy1
+         topix = topix1
+         topiy = topiy1
+         bottomix = bottomix1
+         bottomiy = bottomiy1
+         leftcut = leftcut1
+         rightcut = rightcut1
+         bottomcut = bottomcut1
+         topcut = topcut1
+         cflags = cflags1
+
+         call init_region(nx,ny,nncut,nncutmax,
+     1     leftcut,rightcut,topcut,bottomcut,
+     1     leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy,
+     2     region,nnreg,resignore,crx,cry,periodic_bc,cflags)
+
+         geometryType = geometryId(nnreg, periodic_bc, topcut)
+
+         call subend ()
+         return
+ !     endif
+
 
 * ..compute metric coefficients on coarse mesh
 *   ..for multiple-null case, identify inner isolating cuts
@@ -360,10 +424,10 @@ cdpc
           cry(ix,iy,1)=cry1(ix1+kx1-1,iy1,1)
           cry(ix,iy,2)=cry1(ix1,iy1+ky1-1,2)
           cry(ix,iy,3)=cry1(ix1+kx1-1,iy1+ky1-1,3)
-          fpsi(ix,iy,0)=fpsi1(ix1,iy1,0)
-          fpsi(ix,iy,1)=fpsi1(ix1+kx1-1,iy1,1)
-          fpsi(ix,iy,2)=fpsi1(ix1,iy1+ky1-1,2)
-          fpsi(ix,iy,3)=fpsi1(ix1+kx1-1,iy1+ky1-1,3)
+          fpsi(ix,iy,0,:)=fpsi1(ix1,iy1,0,:)
+          fpsi(ix,iy,1,:)=fpsi1(ix1+kx1-1,iy1,1,:)
+          fpsi(ix,iy,2,:)=fpsi1(ix1,iy1+ky1-1,2,:)
+          fpsi(ix,iy,3,:)=fpsi1(ix1+kx1-1,iy1+ky1-1,3,:)
           ffbz(ix,iy,0)=ffbz1(ix1,iy1,0)
           ffbz(ix,iy,1)=ffbz1(ix1+kx1-1,iy1,1)
           ffbz(ix,iy,2)=ffbz1(ix1,iy1+ky1-1,2)
@@ -801,9 +865,9 @@ cxpb  extra test since cases beyond double-null are not yet coded
      1 leftcut(2), rightcut(2), topcut(2), bottomcut(2)
 
       call init_region(nx,ny,nncut,nncutmax,
-     1 leftcut,rightcut,topcut,bottomcut,
-     1 leftix,rightix,rightiy,topix,topiy,bottomiy,
-     2 region,nnreg,resignore,crx,cry,periodic_bc)
+     1  leftcut,rightcut,topcut,bottomcut,
+     1  leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy,
+     2  region,nnreg,resignore,crx,cry,periodic_bc,cflags)
 
 cxpb  extra code to allow for overwriting the pbs array with the 
 cxpb  working mesh values
@@ -854,7 +918,8 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
 *   ..compute pbs (magnetic field pitch * surface area) at cell faces
         geometryType = geometryId(nnreg, periodic_bc, topcut)
-        call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
+        call b2xgbs (nx, ny, wbbl, wbbv, gs, qac, pbs,
+     &  leftix, leftiy, bottomix, bottomiy, cflags)      
       endif
 
 * ..return

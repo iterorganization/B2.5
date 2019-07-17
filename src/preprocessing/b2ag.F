@@ -6,6 +6,7 @@
       use b2mod_geo
       use b2mod_geo2
       use b2mod_indirect
+      use b2ag_parameters
       implicit none
 #ifdef USE_MPI
       include 'mpif.h'
@@ -147,8 +148,8 @@
       call cfopen (nout(1),'b2fgmtry','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain nx, ny, nx1, ny1
-      call b2agx0 (ninp(0), nx, ny, nx1, ny1)
+*   ..read b2ag.dat file
+      call b2ag_read_parameters(ninp,nout,nx,ny,nx1,ny1)
 *   ..call principal driver routine
       call alloc_b2mod_indirect(nx,ny,nncutmax)
       call alloc_b2mod_geo(nx,ny)

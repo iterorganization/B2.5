@@ -14,6 +14,8 @@
       use b2mod_connectivity
       use b2mod_indirect
      . ,only: GRID_N_CELLFLAGS
+      use b2ag_parameters
+      use b2ag_ghostcells
       use carre_constants
       implicit none
 #include "DIMENSIONS.F"
@@ -22,7 +24,7 @@
 *   .. output arguments
       real (kind=R8) ::
      * crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
-     1 bb1(-1:nx1,-1:ny1,0:3),fpsi1(-1:nx1,-1:ny1,0:3),
+     1 bb1(-1:nx1,-1:ny1,0:3),fpsi1(-1:nx1,-1:ny1,0:3,0:2),
      2 ffbz1(-1:nx1,-1:ny1,0:3),wbbc1(-1:nx1+1,-1:ny1+1,0:3)
       integer
      *  leftix1(-1:nx1,-1:ny1),leftiy1(-1:nx1,-1:ny1),
@@ -104,19 +106,25 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, ic, n2, ixl, ixr, iyt, iyb, inseltop, inselbot
+      integer ix, iy, i, ic, ixl, ixr, iyl, iyr, inseltop, inselbot
       integer Bt_adjust, Bt_reversal
       character*256 local_sonnet
       data local_sonnet /'upgrade.geometry'/
       real (kind=R8) ::
-     *  bp((nx1+2)*(ny1+2)),bt((nx1+2)*(ny1+2)),
-     .  crxs((nx1+2)*(ny1+2)*5),crys((nx1+2)*(ny1+2)*5)
+     *     crxs(-1:nx1,-1:ny1,0:4),
+     1     crys(-1:nx1,-1:ny1,0:4),
+     2     bp(-1:nx1,-1:ny1),
+     3     bt(-1:nx1,-1:ny1),
+     4     psi(-1:nx1,-1:ny1,0:4,0:2), ! Dims: 1,2: cell position, 3: center=0/corners=1..4, 4: value, ddx, ddy
+     5     ffbz(-1:nx1,-1:ny1,0:3), ! ffbz at cell corners
+     6     wbbc(-1:nx1+1,-1:ny1+1,0:3)
       real (kind=R8) ::
      *  xoffset, yoffset, xrescale, yrescale, Bt_rescale, pit_rescale,
      .  min_pitch, geom_match_dist, distval,
      .  r1,r2,r3,rf,z1,z2,z3,z4,numer,denom,aaa,bbb,
      .  nhatr,nhatz,bphatr,bphatz,bdotn,beta,cosa,cosb,cose,sinb
-      integer ireg,zone(-1:nx1),errors
+      integer ireg,errors
+      character*1 zone(-1:nx1)
       logical found, concave
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
      .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/, 
@@ -176,30 +184,36 @@
       call xertst (geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
 
+      ! Read in grid input file (as typically produced by traduit)
+      ! This routine also ensures the existence of ghost cells
       call b2gxdr_dummy(local_sonnet, nx1, ny1, istyle, isymm,
-     & crxs, crys, bp, bt)
-      n2=(nx1+2)*(ny1+2)
-      ic=1
+     &     crxs, crys, psi, bp, bt, ffbz, wbbc, cflag)
+
+      ! Set up magnetic field and shift coordinates
       do  iy = -1, ny1
         do  ix = -1, nx1
-          bb1(ix,iy,0)=bp(ic)
-          bb1(ix,iy,1)=0
-          bb1(ix,iy,2)=bt(ic)
-          bb1(ix,iy,3)=sqrt(bp(ic)*bp(ic)+bt(ic)*bt(ic))
-          crx1(ix,iy,1)=crxs(ic+2*n2)*xrescale+xoffset  	 ! bottom right
-          cry1(ix,iy,1)=crys(ic+2*n2)*yrescale+yoffset
-          crx1(ix,iy,3)=crxs(ic+4*n2)*xrescale+xoffset  	 ! top right
-          cry1(ix,iy,3)=crys(ic+4*n2)*yrescale+yoffset
-          crx1(ix,iy,2)=crxs(ic+3*n2)*xrescale+xoffset  	 ! top left
-          cry1(ix,iy,2)=crys(ic+3*n2)*yrescale+yoffset
-          crx1(ix,iy,0)=crxs(ic+1*n2)*xrescale+xoffset  	 ! bottom left
-          cry1(ix,iy,0)=crys(ic+1*n2)*yrescale+yoffset
+          if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+          bb1(ix,iy,0)=bp(ix,iy)
+          bb1(ix,iy,1)=0.0_R8
+          bb1(ix,iy,2)=bt(ix,iy)
+          bb1(ix,iy,3)=sqrt(bp(ix,iy)**2 + bt(ix,iy)**2)
+          crx1(ix,iy,0:3)=crxs(ix,iy,1:4)*xrescale+xoffset
+          cry1(ix,iy,0:3)=crys(ix,iy,1:4)*yrescale+yoffset
+          fpsi1(ix,iy,0:3,0:2) = psi(ix,iy,1:4,0:2)
+          ffbz1(ix,iy,0:3) = ffbz(ix,iy,0:3)
+          wbbc1(ix,iy,0:3) = wbbc(ix,iy,0:3)
+          if (ix.eq.nx1 .and. iy.lt.ny1) then
+            wbbc1(nx1+1,iy,0:3) = wbbc(nx1+1,iy,0:3)
+          else if (ix.lt.nx1 .and. iy.eq.ny1) then
+            wbbc1(ix,ny1+1,0:3) = wbbc(ix,ny1+1,0:3)
+          else if (ix.eq.nx1 .and. iy.eq.ny1) then
+            wbbc1(nx1+1,ny1+1,0:3) = wbbc(nx1+1,ny1+1,0:3)
+          end if
           if(Bt_adjust.eq.1 .and. xoffset.ne.0.0_R8) then
-            bb1(ix,iy,2)=bt(ic)*crxs(ic)/(crxs(ic)+xoffset)
-            bb1(ix,iy,0)=bp(ic)/bt(ic)*bb1(ix,iy,2)
+            bb1(ix,iy,2)=bt(ix,iy)*crxs(ix,iy,0)/(crxs(ix,iy,0)+xoffset)
+            bb1(ix,iy,0)=bp(ix,iy)/bt(ix,iy)*bb1(ix,iy,2)
             bb1(ix,iy,3)=sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
           endif
-          ic=ic+1
         enddo
       enddo
       bb1(:,:,0)=bb1(:,:,0)*Bt_rescale*pit_rescale
@@ -213,272 +227,26 @@
       
  9999 continue
 
-      nncut=0
-      do ic=1,nncutmax
-        bottomcut1(ic)=ny1+1
-        topcut1(ic)=-2
-        rightcut1(ic)=-2
-        leftcut1(ic)=nx1+1
-      enddo
-      inselbot=ny1+1
-      inseltop=-2
-      ic=0
-      do iy=-1,ny1
-        do ix=-1,nx1
-          leftix1(ix,iy)=ix-1
-          if(ix.gt.-1) then
-            if(.not.match(leftix1(ix,iy),iy,ix,iy)) then
-              leftix1(ix,iy)=-2
-              do ixl=-1,nx1
-                if(match(ixl,iy,ix,iy)) then
-                  leftix1(ix,iy)=ixl
-                  exit
-                endif
-              enddo
-              if(leftix1(ix,iy).eq.-2.and.periodic_bc.eq.0) then
-                write(*,*) 'Left neighbour not found for ',ix,iy
-              elseif(periodic_bc.eq.1) then
-                do ixl=nx1-1,-1,-1
-                  if (.not.match(ixl,iy,ixl+1,iy).and.ixl.ne.ix-1) exit
-                enddo
-                leftix1(ix,iy)=ixl
-                if(ic.eq.0) then
-                  found=.false.
-                else
-                  found=.false.
-                  do i = 1, ic
-                    if(ixl+1.eq.rightcut1(i) .or.
-     &                 ixl+1.eq.leftcut1(i)) then
-                      found = .true.
-                      exit
-                    endif                
-                  end do
-                endif
-                if (.not.found) then
-                  ic = ic + 1
-                  write(*,*) 'ic',ic
-                  i = ic
-                endif
-                write(*,'(a,3i4)') 'iy,ix,ixl',iy,ix,ixl
-                bottomcut1(i)=min(iy,bottomcut1(i))
-                topcut1(i)=max(iy+1,topcut1(i))
-                rightcut1(i)=max(ix,rightcut1(i))
-              else
-                write(*,'(a,3i4)') 'iy,ix,ixl',iy,ix,ixl
-                if(ic.eq.0) then
-                  found=.false.
-                else
-                  found=.false.
-                  do i = 1, ic
-                    if(ixl+1.eq.rightcut1(i) .or.
-     &                 ixl+1.eq.leftcut1(i)) then
-                      found = .true.
-                      exit
-                    endif                
-                  end do
-                endif
-                if (.not.found) then
-                  ic = ic + 1
-                  write(*,*) 'ic',ic
-                  i = ic
-                endif
-                bottomcut1(i)=min(iy,bottomcut1(i))
-                topcut1(i)=max(iy+1,topcut1(i))
-                rightcut1(i)=max(ix,rightcut1(i))
-              endif
-            endif
-          endif
-          rightix1(ix,iy)=ix+1
-          if(ix.lt.nx1) then
-            if(.not.match(ix,iy,rightix1(ix,iy),iy)) then
-              rightix1(ix,iy)=nx1+1
-              do ixr=-1,nx1
-                if(match(ix,iy,ixr,iy)) then
-                  rightix1(ix,iy)=ixr
-                  exit
-                endif
-              enddo
-              if(rightix1(ix,iy).eq.nx1+1.and.periodic_bc.eq.0) then
-                write(*,*) 'Right neighbour not found for ',ix,iy
-              elseif(periodic_bc.eq.1) then
-                do ixr=0,nx1
-                  if(.not.match(ixr-1,iy,ixr,iy).and.ixr.ne.ix+1) exit
-                enddo
-                rightix1(ix,iy)=ixr
-                write(*,'(a,3i4)') 'iy,ix,ixr',iy,ix,ixr
-                if(ic.eq.0) then
-                  found=.false.
-                else
-                  found=.false.
-                  do i = 1, ic
-                    if(ixr.eq.rightcut1(i) .or. ixr.eq.leftcut1(i)) then
-                      found = .true.
-                      exit
-                    endif                
-                  end do
-                endif
-                if (.not.found) then
-                  ic = ic + 1
-                  write(*,*) 'ic',ic
-                  i = ic
-                endif
-                bottomcut1(i)=min(iy,bottomcut1(i))
-                topcut1(i)=max(iy+1,topcut1(i))
-                leftcut1(i)=min(ixr,leftcut1(i))
-              else
-                write(*,'(a,3i4)') 'iy,ix,ixr',iy,ix,ixr
-                if(ic.eq.0) then
-                  found=.false.
-                else
-                  found=.false.
-                  do i = 1, ic
-                    if(ixr.eq.rightcut1(i) .or. ixr.eq.leftcut1(i)) then
-                      found = .true.
-                      exit
-                    endif                
-                  end do
-                endif
-                if (.not.found) then
-                  ic = ic + 1
-                  write(*,*) 'ic',ic
-                  i = ic
-                endif
-                bottomcut1(i)=min(iy,bottomcut1(i))
-                topcut1(i)=max(iy+1,topcut1(i))
-                leftcut1(i)=min(ixr,leftcut1(i))
-              endif
-            endif
-          endif
+      call init_connectivity(nx1,ny1,crx1,cry1,cflag,
+     & leftix1,leftiy1,rightix1,rightiy1, 
+     & topix1,topiy1,bottomix1,bottomiy1, 
+     & leftcut1,rightcut1,bottomcut1,topcut1, 
+     & periodic_bc,nncut,nncutmax, inseltop, inselbot, geom_match_dist, 
+     & istyle )
 
-c Assume rest OK
-   
-          topix1(ix,iy)=ix
-          bottomix1(ix,iy)=ix
-          leftiy1(ix,iy)=iy
-          rightiy1(ix,iy)=iy
-          topiy1(ix,iy)=iy+1
-          bottomiy1(ix,iy)=iy-1
+      call test_connectivity(nx1,ny1,crx1,cry1,cflag,
+     & leftix1,leftiy1,rightix1,rightiy1, 
+     & topix1,topiy1,bottomix1,bottomiy1 )      
 
-        end do
-
-cxpb Must now re-direct neighbours for periodic boundary BC case when the
-cxpb two edges of the mesh coincide in real space.
-cxpb The exact position of the "cut" depends on problem implementation.
-cxpb The dead region is made into a topological torus so as not to
-cxpb interact with the rest of the plasma domain.
-
-        if (periodic_bc.eq.1) then
-          ixl=-2
-          do i=1,-1,-1
-            if(match(nx1-1-i,iy,i,iy)) then
-              inselbot=min(inselbot,iy)
-              inseltop=max(inseltop,iy)
-              leftix1(i,iy)=nx1-1-i
-              write(*,'(a,3i4)') 'iy,ix,ixl',iy,i,nx1-1-i
-              ixl=i
-              rightix1(nx1-1-i,iy)=i
-              write(*,'(a,3i4)') 'iy,ix,ixr',iy,nx1-1-i,i
-              exit
-            end if
-          end do
-          do i=-1,ixl-1
-            rightix1(i,iy)=nx1-1-i
-            write(*,'(a,2i4)') 'Dummy cell ix,iy',i,iy
-            leftix1(nx1-1-i,iy)=i
-            write(*,'(a,2i4)') 'Dummy cell ix,iy',nx1-1-i,iy
-          end do
-        end if
-
-        nncut=max(nncut,ic)
-        if(nncut.gt.nncutmax) then
-          write(*,*) ' Increase DEF_NCUT in DIMENSIONS.F!'
-          write(*,*) ' nncut = ',nncut,' DEF_NCUT = ',DEF_NCUT
-          call xertst (nncut.le.DEF_NCUT,'faulty parameter DEF_NCUT')
-        end if
-      end do
-
-cxpb  Once we know the vertical boundaries of the periodic region, we can
-cxpb  now finish reconnecting the top and bottom rows of the dead regions
-cxpb  to each other, and, in the case of the diverted island geometry, also
-cxpb  reconnect the guard cells on both sides of the island.
-
-      if (periodic_bc.eq.1) then
-        ixl=-2
-        do i=1,-1,-1
-          if(match(nx1-1-i,(inseltop+inselbot)/2,
-     &                   i,(inseltop+inselbot)/2)) then
-            ixl=i
-            exit
-          end if
-        end do
-        do i=-1,ixl-1
-          bottomiy1(i,inselbot)=inseltop
-          write(*,*) 'ix,iy,iyb',i,inselbot,inseltop
-          bottomiy1(nx1-1-i,inselbot)=inseltop
-          write(*,*) 'ix,iy,iyb',nx1-1-i,inselbot,inseltop
-          if(inselbot.gt.-1) then   	 ! connected region on North side
-            topix1(i,inselbot-1)=nx1-1-i 	 ! connect to the other side
-            topiy1(i,inselbot-1)=inselbot-1       ! of the island
-            write(*,*) 'ix,iy,ixt,iyt',i,inselbot-1,nx1-1-i,inselbot-1
-            topix1(nx1-1-i,inselbot-1)=i 	 ! connect to the other side
-            topiy1(nx1-1-i,inselbot-1)=inselbot-1 ! of the island
-            write(*,*) 'ix,iy,ixt,iyt',nx1-1-i,inselbot-1,i,inselbot-1
-          end if
-          if(inseltop.lt.ny1) then   	 ! connected region on South side
-            bottomix1(i,inseltop+1)=nx1-1-i       ! connect to the other side
-            bottomiy1(i,inseltop+1)=inseltop+1    ! of the limited SOL
-            write(*,*) 'ix,iy,ixb,iyb',i,inseltop+1,nx1-1-i,inseltop+1
-            bottomix1(nx1-1-i,inseltop+1)=i 	 ! connect to the other side
-            bottomiy1(nx1-1-i,inseltop+1)=inseltop+1 ! of the limited SOL
-            write(*,*) 'ix,iy,ixb,iyb',nx1-1-i,inseltop+1,i,inseltop+1
-cxpb  Remove neighbours for guard cells next to tangency point
-!            bottomiy1(i,inseltop+1)=-2
-!            bottomiy1(nx1-1-i,inseltop+1)=-2
-cxpb
-          endif
-          topiy1(i,inseltop)=inselbot
-          write(*,*) 'ix,iy,iyt',i,inseltop,inselbot
-          topiy1(nx1-1-i,inseltop)=inselbot
-          write(*,*) 'ix,iy,iyt',nx1-1-i,inseltop,inselbot
-        end do
-      end if
-
-cxpb For 1-D cases where we apply periodic boundary conditions to eliminate
-cxpb tranverse physics
-      if(periodic_bc.eq.-1) then
-        if(nx1.eq.1) then
-          do iy = -1, ny1
-            rightix1(-1,iy) = nx1
-            leftix1(nx1,iy) = -1
-            rightix1(0,iy) = 0
-            leftix1(0,iy) = 0
-          enddo
-        endif
-        if(ny1.eq.1) then
-          do ix = -1, nx1
-            topiy1(ix,-1) = ny1
-            bottomiy1(ix,ny1) = -1
-            topiy1(ix,0) = 0
-            bottomiy1(ix,0) = 0
-          enddo
-        endif
-      endif
-            
-
-      write(*,*) 'istyle',istyle,'nncut',nncut
-      if(nncut.eq.0) write(*,'(a)') 'No cuts found'
-      if(nncut.ge.1) write(*,'(a,4i4)')
-     1 'Calculated leftcut1, rightcut1, topcut1, bottomcut1 = ',
-     1 leftcut1(1), rightcut1(1), topcut1(1), bottomcut1(1)
-      if(nncut.ge.2) write(*,'(a,4i4)')
-     1 'Calculated leftcut2, rightcut2, topcut2, bottomcut2 = ',
-     1 leftcut1(2), rightcut1(2), topcut1(2), bottomcut1(2)
-
+cxpb For classical grids only
 cxpb Check the pitch angle at the plates and make sure it is at least min_pitch
 cxpb Do not correct corner cells
-      if (min_pitch.gt.0.0_R8) then
+      if (min_pitch.gt.0.0_R8 .and. isClassicalGrid(cflag)) then
         do ix = -1, nx1
           do iy = 0, ny1-1
+!             Skip unused cells
+             if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+
 cxpb Western edge
             if (.not.isInDomain(nx1,ny1,leftix1(ix,iy),leftiy1(ix,iy)))
      >       then
@@ -709,255 +477,61 @@ cxpb  if just below the top corner, make the corner cell follow
           enddo
         enddo
       endif
-cxpb
-cxpb  Additional checks on basis mesh
-cxpb
-      write(*,*) 'Checking CRX1'
-      errors=0
-      do iy=-1,ny1
-c check right neighbours       
-        do ix=-1,nx1-1
-          ixr=rightix1(ix,iy)
-          if(ixr.lt.-1.or.ixr.gt.nx1) then
-            write(*,*) 'No right neighbour for ',ix,iy
-          elseif(periodic_bc.eq.0 .or. ixr.eq.ix+1) then
-            distval=
-     1       dist(ix,iy,1,ixr,rightiy1(ix,iy),0)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1         'Error with right neighbour of ',
-     2         ix,iy,' (lower point), ','dist=',distval
-            endif
-            distval=
-     1       dist(ix,iy,3,ixr,rightiy1(ix,iy),2)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1         'Error with right neighbour of ',
-     2         ix,iy,' (upper point), ','dist=',distval
-            endif
-          endif
-        enddo
-c check left neighbours       
-        do ix=0,nx1
-          ixl=leftix1(ix,iy)
-          if(ixl.lt.-1.or.ixl.gt.nx1) then
-            write(*,*) 'No left neighbour for ',ix,iy
-          elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
-            distval=
-     1       dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
-            if(distval.ne.0) then
-            if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1         'Error with left neighbour of ',ix,iy,' (lower point), ',
-     2         'dist=',distval
-            endif
-            distval=
-     1       dist(ix,iy,2,ixl,leftiy1(ix,iy),3)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1         'Error with left neighbour of ',ix,iy,' (upper point), ',
-     2         'dist=',distval
-            endif
-          endif
-        enddo
-      enddo
-      do ix=-1,nx1
-c check top neighbours       
-        do iy=-1,ny1-1
-          iyt=topiy1(ix,iy)
-          if(iyt.lt.-1.or.iyt.gt.ny1) then
-            write(*,*) 'No top neighbour for ',ix,iy
-          elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
-            distval=
-     1       dist(ix,iy,2,topix1(ix,iy),iyt,0)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with top neighbour of ',ix,iy,' (left point), ',
-     2       'dist=',distval
-            endif
-            distval=
-     1       dist(ix,iy,3,topix1(ix,iy),iyt,1)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with top neighbour of ',ix,iy,' (right point), ',
-     2       'dist=',distval
-            endif
-          endif
-        enddo
-c check bottom neighbours       
-        do iy=0,ny1
-          iyb=bottomiy1(ix,iy)
-          if(iyb.lt.-1.or.iyb.gt.ny1) then
-            write(*,*) 'No bottom neighbour for ',ix,iy
-          elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
-            distval=
-     1       dist(ix,iy,0,bottomix1(ix,iy),iyb,2)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with bottom neighbour of ',ix,iy,' (left point), ',
-     2       'dist=',distval
-            endif
-            distval=
-     1       dist(ix,iy,1,bottomix1(ix,iy),iyb,3)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with bottom neighbour of ',ix,iy,' (right point), ',
-     2       'dist=',distval
-            endif
-          endif
-        enddo
-      enddo
-      write(*,*) 'Checking CRY1'
-      do iy=-1,ny1
-c check right neighbours       
-        do ix=-1,nx1-1
-          ixr=rightix1(ix,iy)
-          if(ixr.lt.-1.or.ixr.gt.nx1) then
-            write(*,*) 'No right neighbour for ',ix,iy
-          elseif(periodic_bc.eq.0 .or. ixr.eq.ix+1) then
-            distval=
-     1       dist(ix,iy,1,ixr,rightiy1(ix,iy),0)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with right neighbour of ',ix,iy,' (lower point), ',
-     2       'dist=',distval
-            endif
-            distval=
-     1     dist(ix,iy,3,ixr,rightiy1(ix,iy),2)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with right neighbour of ',ix,iy,' (upper point), ',
-     2       'dist=',distval
-           endif
-          endif
-        enddo
-c check left neighbours       
-        do ix=0,nx1
-          ixl=leftix1(ix,iy)
-          if(ixl.lt.-1.or.ixl.gt.nx1) then
-            write(*,*) 'No left neighbour for ',ix,iy
-          elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
-            distval=
-     1     dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with left neighbour of ',ix,iy,' (lower point), ',
-     2       'dist=',distval
-            endif
-            distval=
-     1       dist(ix,iy,2,ixl,leftiy1(ix,iy),3)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with left neighbour of ',ix,iy,' (upper point), ',
-     2       'dist=',distval
-            endif
-          endif
-        enddo
-      enddo
-      do ix=-1,nx1
-c check top neighbours       
-        do iy=-1,ny1-1 
-          iyt=topiy1(ix,iy)
-          if(iyt.lt.-1.or.iyt.gt.ny1) then
-            write(*,*) 'No top neighbour for ',ix,iy
-          elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
-            distval=
-     1       dist(ix,iy,2,topix1(ix,iy),iyt,0)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with top neighbour of ',ix,iy,' (left point), ',
-     2       'dist=',distval
-            endif
-            distval=
-     1       dist(ix,iy,3,topix1(ix,iy),iyt,1)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with top neighbour of ',ix,iy,' (right point), ',
-     2       'dist=',distval
-            endif
-          endif
-        enddo
-c check bottom neighbours       
-        do iy=0,ny1
-          iyb=bottomiy1(ix,iy)
-          if(iyb.lt.-1.or.iyb.gt.ny1) then
-            write(*,*) 'No bottom neighbour for ',ix,iy
-          elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
-            distval=
-     1       dist(ix,iy,0,bottomix1(ix,iy),iyb,2)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with bottom neighbour of ',ix,iy,' (left point), ',
-     2       'dist=',distval
-            endif
-            distval=
-     1       dist(ix,iy,1,bottomix1(ix,iy),iyb,3)
-            if(distval.ne.0) then
-              if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,'(a,2i4,a,a,1p,1g12.4)')
-     1       'Error with bottom neighbour of ',ix,iy,' (right point), ',
-     2       'dist=',distval 
-            endif
-          endif
-        enddo
-      enddo
-      if(errors.eq.0) then
-        write(*,*) 'No errors found in basis geometry'
-      elseif(errors.eq.1) then
-        write(*,*) errors,' error found in the basis geometry'
-      else
-        write(*,*) errors,' errors found in the basis geometry'
-      endif
-      call xertst (errors.eq.0, 'Errors found in basis geometry')
-cxpb  
 
 *   ..test sign of bb3
-      call b2xvsg (n2, bb1(-1,-1,3), 1, 'bb3', '.gt.')
+      call b2xvsg1(nx1, ny1, bb1(-1,-1,3), 1, 'bb3', '.gt.')
 
       write(*,*) 'X regions (from rightix<>ix+1)'
       do iy=ny1,-1,-1
+        zone(-1:nx1)='0'
         ireg=1
         do ix=-1,nx1
-          zone(ix)=ireg
-          if(rightix1(ix,iy).ne.ix+1) ireg=ireg+1
+          if(isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+          if(isGhostCell(cflag(ix,iy,CELLFLAG_TYPE))) then
+            zone(ix)='G'
+          else
+            write(zone(ix),'(i1)') ireg
+            if(rightix1(ix,iy).ne.ix+1) ireg=ireg+1
+          endif
         enddo
-        write(*,'(3276(10i1,1x))') zone
+        write(*,'(3276(10a1,1x))') zone
       enddo
       write(*,*) 'X regions (from connections)'
       do iy=ny1,-1,-1
         ireg=0
-        zone=0
+        zone(-1:nx1)='0'
         do ix=-1,nx1
-          if(zone(ix).eq.0) then
-            ireg=ireg+1
-            zone(ix)=ireg
-            ixr=rightix1(ix,iy)
-            do while(ixr.ne.ix.and.ixr.ge.-1.and.ixr.le.nx1)
-              zone(ixr)=ireg
-              ixr=rightix1(ixr,iy)
-            enddo
-            ixl=leftix1(ix,iy)
-            do while(ixl.ne.ix.and.ixl.ge.-1.and.ixl.le.nx1)
-              zone(ixl)=ireg
-              ixl=leftix1(ixl,iy)
-            enddo
+          if(isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+          if(zone(ix).eq.'0') then
+            if(isGhostCell(cflag(ix,iy,CELLFLAG_TYPE))) then
+              zone(ix) = 'G'
+            else
+              ireg=ireg+1
+              write(zone(ix),'(i1)') ireg
+              ixr=rightix1(ix,iy)
+              iyr=rightiy1(ix,iy)
+              do while(ixr.ne.ix.and.ixr.ge.-1.and.ixr.le.nx1.and.
+     &                 iyr.eq.iy)
+                if(.not.isRealCell(cflag(ixr,iyr,CELLFLAG_TYPE))) exit
+                write(zone(ixr),'(i1)') ireg
+                ixr=rightix1(ixr,iy)
+                if (ixr.ge.-1 .and. ixr.le.nx1)
+     >           iyr=rightiy1(ixr,iy)
+              enddo
+              ixl=leftix1(ix,iy)
+              iyl=leftiy1(ix,iy)
+              do while(ixl.ne.ix.and.ixl.ge.-1.and.ixl.le.nx1.and.
+     &                 iyl.eq.iy)
+                if(.not.isRealCell(cflag(ixl,iyl,CELLFLAG_TYPE))) exit
+                write(zone(ixl),'(i1)') ireg
+                ixl=leftix1(ixl,iy)
+                if (ixl.ge.-1 .and. ixl.le.nx1)
+     >           iyl=leftiy1(ixl,iy)
+              enddo
+            endif
           endif
         enddo
-        write(*,'(3276(10i1,1x))') zone
+        write(*,'(3276(10a1,1x))') zone
       enddo
 
       call subend ()
@@ -969,19 +543,34 @@ cxpb
       end subroutine b2agfs
 c
       subroutine b2gxdr_dummy(local_sonnet, nx, ny, istyle, isymm,
-     & crxs, crys, bp, bt)
+     & crxs, crys, psi, bp, bt, ffbz, wbbc, cflag)
       use b2mod_types
+      use b2mod_version
+      use b2mod_indirect
+     . ,only: GRID_N_CELLFLAGS
+      use b2ag_parameters
+      use carre_constants
+      use b2ag_ghostcells
+      use carre_b2ag
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
       implicit none
       integer nx, ny, istyle, isymm
+      integer :: cflag(0:nx+1,0:ny+1,GRID_N_CELLFLAGS)
       real (kind=R8) ::
      *   crxs(0:nx+1,0:ny+1,0:4),
      1 crys(0:nx+1,0:ny+1,0:4),
      2 bp(0:nx+1,0:ny+1),
-     3 bt(0:nx+1,0:ny+1)
+     3 bt(0:nx+1,0:ny+1),
+     4 psi(0:nx+1,0:ny+1,0:4,0:2),
+     5 ffbz(0:nx+1,0:ny+1,0:3),
+     6 wbbc(0:nx+2,0:ny+2,0:3)
       character*(*) local_sonnet
+
+      ! nnx, nny: dimension of the grid as read from the file
+      ! nx, ny: dimension of the grid as used by B2
+      ! NOTE: the nx, ny here corresponds to nx1, ny1 in b2agfs
   
       integer nnx, nny,
      1 i, j, ix, iy, ixd, iyd, lun, line_length, mx, my, iostat
@@ -990,6 +579,7 @@ c
 #endif
       real (kind=R8) ::
      *  ubr, ubt, ubp, upsi
+      real(kind=R8) :: bb_tmp(0:nx+1,0:ny+1,0:3)
       parameter (line_length=256)
       character*256 meshpath
       character*80 format_string(4)
@@ -1036,19 +626,72 @@ c
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
      1     "Reading the geometry file assuming the 'new' format"
+          call cfverr(lun,grid_version)
           read(lun,*) nnx,nny
-          if(nnx.ne.nx.or.nny.ne.ny) then
-            write(*,*) 'b2gxdr_dummy: nx,ny code and data disagree',
-     1       nx,ny,nnx,nny
-            call xerrab ('Mismatch nx/ny and nnx/nny')
-          endif
-          do iy=0,ny+1
-            do ix=0,nx+1
-              read(lun,*,err=10,iostat=iostat) ixd,iyd,
-     1         (crxs(ix,iy,i),crys(ix,iy,i),i=0,4),
-     2         bp(ix,iy),bt(ix,iy)
-            enddo
-          enddo
+          if (grid_version.lt."01.001.028") then
+             ! Standard (Pre-2012) DG/B2.5-format grid input
+             ! Ghost cells are given, nnx,nny - nx,ny have to be the same
+
+             if(nnx.ne.nx.or.nny.ne.ny) then
+               write(*,*) 'b2gxdr_dummy: nx,ny code and data disagree',
+     1          nx,ny,nnx,nny
+               call xerrab ('Mismatch nx/ny and nnx/nny')
+             endif
+             do iy=0,ny+1
+               do ix=0,nx+1
+                 read(lun,*,err=10,iostat=iostat) ixd,iyd,
+     1            (crxs(ix,iy,i),crys(ix,iy,i),i=0,4),
+     2            bp(ix,iy),bt(ix,iy)
+               enddo
+             enddo
+             ! Set fields not provided by input file
+             psi = 0.0_R8
+             ! We do not get any cell type information from the old style grid input file
+             ! Initially, set all to internal. init_connectivity will then properly mark
+             ! the ghost cells
+             cflag(:,:,1) = GRID_INTERNAL
+             cflag(:,:,2:CARREOUT_NCELLFLAGS) = GRID_UNDEFINED
+          else
+             ! 2011/12 extended grid input with object classification and no ghost cells
+             ! nnx, nny do not match nx, ny here, but will after the guard cells are created
+             do iy=0,nny-1
+                do ix=0,nnx-1
+                   read(lun,*,err=10,iostat=iostat) ixd,iyd,
+     1                  crxs(ix,iy,0),crys(ix,iy,0),psi(ix,iy,0,0),
+     1                  (crxs(ix,iy,i),crys(ix,iy,i),
+     $                   psi(ix,iy,i,0),psi(ix,iy,i,1),
+     $                   psi(ix,iy,i,2),ffbz(ix,iy,i-1),i=1,4),
+     3                  bp(ix,iy),bt(ix,iy),cflag(ix,iy,:)
+                enddo
+             enddo
+
+             call create_guard_cells(nnx, nny, nx, ny, niso, nxiso,
+     $            crxs, crys, psi, bp, bt, ffbz, cflag, .false.)
+             
+!     Compute magnetic field with the same recipe as carre...
+             call carre_b2agbb(nx,ny,cflag, 
+     .            psi(:,:,1:4,0),ffbz,wbbc,bb_tmp, 
+     &            crxs(:,:,1:4),crys(:,:,1:4),
+     $            psi(:,:,1:4,1),psi(:,:,1:4,2),isymm )
+
+!     ...and transfer it to ghost cells, with sanity checks
+             do iy=0,ny+1
+                do ix=0,nx+1
+                   select case( cflag(ix,iy,CELLFLAG_TYPE) )
+                   case(GRID_GUARD)
+                      bp(ix,iy) = bb_tmp(ix,iy,0)
+                      bt(ix,iy) = bb_tmp(ix,iy,2)
+                   case(GRID_INTERNAL, GRID_BOUNDARY)
+                      if (abs(bp(ix,iy) - bb_tmp(ix,iy,0)) > 1e-7 .or.
+     $                    abs(bt(ix,iy) - bb_tmp(ix,iy,2)) > 1e-7) then
+                         write (*,*) "b2agfs: not matching carre bb at",
+     $                        ix, iy
+                      endif
+                   end select
+                enddo
+             enddo
+
+          end if
           close(lun)
         else
           call xerrab('Error in reading geometry file')
@@ -1209,639 +852,3 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
       call xerrab ('b2gxdr_dummy: Premature end in the grid file')
 
       end subroutine b2gxdr_dummy
-c
-      subroutine init_region(nx,ny,nncut,nncutmax,
-     1 leftcut,rightcut,topcut,bottomcut,
-     1 leftix,rightix,rightiy,topix,topiy,bottomiy,
-     2 region,nnreg,resignore,crx,cry,periodic_bc)
-      use b2mod_types
-      implicit none
-      integer nx,ny,nncut,nncutmax
-      integer leftcut(nncutmax),rightcut(nncutmax),
-     1 topcut(nncutmax),bottomcut(nncutmax),
-     1 leftix(-1:nx,-1:ny),rightix(-1:nx,-1:ny),rightiy(-1:nx,-1:ny),
-     1 topix(-1:nx,-1:ny),topiy(-1:nx,-1:ny),bottomiy(-1:nx,-1:ny),
-     2 region(-1:nx,-1:ny,0:2),nnreg(0:2),
-     3 resignore(-1:nx,-1:ny,1:2),
-     4 periodic_bc
-      real (kind=R8) ::
-     1 crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
-c
-c            Core case
-c    ++-----------------------------++
-c    ||                             ||
-c    ||                             ||
-c    ||              1              ||
-c    ||                             ||
-c    ||                             ||
-c    ++-----------------------------++
-c                                
-c    ++-----------------------------++
-c    ||                             ||
-c    ||                             ||
-c    ||1                            ||
-c    ||                             ||
-c    ||                             ||
-c    ++-----------------------------++
-c                                
-c    ++--------------2--------------++
-c    ||                             ||
-c    ||                             ||
-c    ||                             ||
-c    ||                             ||
-c    ||                             ||
-c    ++--------------1--------------++
-c                                                                  
-c
-c Cases with no X-point:
-c region 1 === core
-c
-c                           +++++++++++++++++++++++++
-c
-c            Limiter case
-c    +-------------------------------+
-c    |                               |
-c    |               2               |
-c    |                               |
-c    +/-----------------------------\+
-c    ||                             ||
-c    ||              1              ||
-c    ||                             ||
-c    ++-----------------------------++
-c                                
-c    +-------------------------------+
-c    |                               |
-c    1                               2
-c    |                               |
-c    +/-----------------------------\+
-c    ||                             ||
-c    ||3                            ||
-c    ||                             ||
-c    ++-----------------------------++
-c                                
-c    +---------------3---------------+
-c    |                               |
-c    |                               |
-c    |                               |
-c    +/--------------2--------------\+
-c    ||                             ||
-c    ||                             ||
-c    ||                             ||
-c    ++--------------1--------------++
-c                                                                  
-c
-c Cases with no X-point:
-c region 1 === core
-c region 2 === SOL
-c
-c                           +++++++++++++++++++++++++
-c
-c                                       Periodic BC stellarator island case
-c    +-------+---------------+-------+  ++-----------------------------++
-c    |       :               :       |  ||              5              ||
-c    |       :       2       :       |  +\-----------------------------/+
-c    |       :               :       |  |               2               |
-c    |   3   +---------------+   4   |  +-------+---------------+-------+
-c    |       |               |       |  |       |               |       |
-c    |       |       1       |       |  |   3   |       1       |   4   |
-c    |       |               |       |  |       |               |       |
-c    +-------+---------------+-------+  +-------+---------------+-------+
-c         
-c         
-c    +-------+---------------+-------+  ++-----------------------------++
-c    |       :               :       |  ||7                            ||
-c    |       2               3       |  +\-----------------------------/+
-c    |       :               :       |  |       2               3       |
-c    1       +---------------+       4  1-------+---------------+-------4
-c    |       |               |       |  |       |               |       |
-c    |       |5              |6      |  |       |5              |6      |
-c    |       |               |       |  |       |               |       |
-c    +-------+---------------+-------+  +-------+---------------+-------+
-c         
-c         
-c    +---5---+-------6-------+---7---+  ++--------------6--------------++
-c    |       :               :       |  ||                             ||
-c    |       :               :       |  +\--------------8--------------/+
-c    |       :               :       |  |                               |
-c    |       +-------4-------+       |  +---5---+-------4-------+---7---+
-c    |       |               |       |  |       |               |       |
-c    |       |               |       |  |       |               |       |
-c    |       |               |       |  |       |               |       |
-c    +---1---+-------2-------+---3---+  +---1---+-------2-------+---3---+
-c
-c Cases with one X-point:
-c region 1 === core
-c region 2 === SOL
-c region 3 === inboard divertor
-c region 4 === outboard divertor
-c region 5 === island
-c
-c                           +++++++++++++++++++++++++
-c
-c                      Connected double-null geometry case
-c                                   
-c    +-------+---------------+-------++-------+---------------+-------+
-c    |       :               :       ||       :               :       |
-c    |       :       2       :       ||       :       6       :       |
-c    |       :               :       ||       :               :       |
-c    |   3   +---------------+   4   ||   7   +---------------+   8   |
-c    |       |               |       ||       |               |       |
-c    |       |       1       |       ||       |       5       |       |
-c    |       |               |       ||       |               |       |
-c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
-c    +-------+---------------+-------++-------+---------------+-------+
-c    |       :               :       ||       :               :       |
-c    |       2               3       ||       6               7       |
-c    |       :               :       ||       :               :       |
-c    1       +---------------+       45       +---------------+       8
-c    |       |               |       ||       |               |       |
-c    |       |9              |10     ||       |11             |12     |
-c    |       |               |       ||       |               |       |
-c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
-c    +---5---+-------6-------+---7---++--12---+------13-------+--14---+
-c    |       :               :       ||       :               :       |
-c    |       :               :       ||       :               :       |
-c    |       :               :       ||       :               :       |
-c    |       +-------4-------+       ||       +------11-------+       |
-c    |       |               |       ||       |               |       |
-c    |       |               |       ||       |               |       |
-c    |       |               |       ||       |               |       |
-c    +---1---+-------2-------+---3---++---8---+-------9-------+--10---+
-c
-c Cases with two X-points:
-c region 1 === left core
-c region 2 === left SOL
-c region 3 === left inboard divertor
-c region 4 === left outboard divertor
-c region 5 === right core
-c region 6 === right SOL
-c region 7 === right inboard divertor
-c region 8 === right outboard divertor
-c
-c                           +++++++++++++++++++++++++
-c
-c                      Disconnected double-null geometry case
-c                           (Bottom X-point is active)
-c                                   
-c    +-------+---------------+-------++-------+---------------+-------+
-c    |       :               :       ||       :               :       |
-c    |       :       2       :       ||       :       6       :       |
-c    |       :               +...4...||...7...+               :       |
-c    |       :               |       ||       |               :       |
-c    |...3...+---------------+       ||       +---------------+...8...|
-c    |       |       1       |       ||       |       5       |       |
-c    |       |               |       ||       |               |       |
-c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
-c    +-------+---------------+-------++-------+---------------+-------+
-c    |       :               :       ||       :               :       |
-c    |       2               3       ||       6               7       |
-c    |       :               +.......45.......+               :       |
-c    |       :               |       ||       |13             :       |
-c    1.......+---------------+10     ||       +---------------+.......8
-c    |       |9              |       ||       |11             |12     |
-c    |       |               |       ||       |               |       |
-c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
-c    +---5---+-------6-------+---7---++--12---+------13-------+--14---+
-c    |       :               :       ||       :               :       |
-c    |       :               :       ||       :               :       |
-c    |       :               +.......||.......+               :       |
-c    |       :               |       ||       |               :       |
-c    |.......+-------4-------+       ||       +------11-------+.......|
-c    |       |               |       ||       |               |       |
-c    |       |               |       ||       |               |       |
-c    +---1---+-------2-------+---3---++---8---+-------9-------+--10---+
-c
-c                           - - - - - - - - - - - - - 
-c
-c                      Disconnected double-null geometry case
-c                            (Top X-point is active)
-c                                   
-c    +-------+---------------+-------++-------+---------------+-------+
-c    |       :               :       ||       :               :       |
-c    |       :       2       :       ||       :       6       :       |
-c    |...3...+               :       ||       :               +...8...|
-c    |       |               :       ||       :               |       |
-c    |       +---------------+...4...||...7...+---------------+       |
-c    |       |       1       |       ||       |       5       |       |
-c    |       |               |       ||       |               |       |
-c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
-c    +-------+---------------+-------++-------+---------------+-------+
-c    |       :               :       ||       :               :       |
-c    |       2               3       ||       6               7       |
-c    1.......+               :       ||       :               +.......8
-c    |       |13             :       ||       :               |       |
-c    |       +---------------+.......45.......+---------------+12     |
-c    |       |9              |10     ||       |11             |       |
-c    |       |               |       ||       |               |       |
-c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
-c    +---5---+-------6-------+---7---++--12---+------13-------+--14---+
-c    |       :               :       ||       :               :       |
-c    |       :               :       ||       :               :       |
-c    |.......+               :       ||       :               +.......|
-c    |       |               :       ||       :               |       |
-c    |       +-------4-------+.......||.......+------11-------+       |
-c    |       |               |       ||       |               |       |
-c    |       |               |       ||       |               |       |
-c    +---1---+-------2-------+---3---++---8---+-------9-------+--10---+
-c
-c Cases with two X-points:
-c region 1 === left core
-c region 2 === left SOL
-c region 3 === left inboard divertor
-c region 4 === left outboard divertor
-c region 5 === right core
-c region 6 === right SOL
-c region 7 === right inboard divertor
-c region 8 === right outboard divertor
-c
-
-      integer ix,iy,inseliy,inselix,iyt
-      real (kind=R8) ::
-     * geom_match_dist
-      data geom_match_dist/1.0e-6_R8/
-c
-      real (kind=R8) ::
-     *  dist
-      integer ix1,iy1,ip1,ix2,iy2,ip2
-      dist(ix1,iy1,ip1,ix2,iy2,ip2)=
-     1 sqrt((crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2))**2+
-     2 (cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))**2)
-      logical match
-      match(ix1,iy1,ix2,iy2)=
-     1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
-     2 geom_match_dist
-      intrinsic min, max
-c
-      call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
-      call xertst (geom_match_dist.gt.0.0_R8,
-     &  'faulty argument geom_match_dist')
-c if stellarator island or limiter case, find periodicity domain coordinate
-      if(periodic_bc.eq.1) then
-        if (nncut.eq.1) then    ! stellarator island is on North side
-          inseliy=ny+1
-          inselix=-2
-          do iy=ny,-1,-1
-            do ix=2,0,-1
-              if(match(nx-ix,iy,ix-1,iy)) then
-                inselix=ix-1
-                inseliy=iy
-                exit
-              endif
-            enddo
-          enddo
-        else if (nncut.eq.0) then   ! limited region is on South side
-          inseliy=-2
-          inselix=-2
-          do iy=-1,ny
-            do ix=2,0,-1
-              if(match(nx-ix,iy,ix-1,iy)) then
-                inselix=ix-1
-                inseliy=iy
-                exit
-              endif
-            enddo
-          enddo
-        else
-          call xerrab ('Unexpected geometry!')
-        endif
-      endif
-c
-      region=0
-c volume component
-      if(nx.eq.1) then  ! 1d-radial
-        do iy=-1,ny
-          do ix=-1,nx
-            region(ix,iy,0)=1
-          enddo
-        enddo
-        nnreg(0)=1
-      else if(ny.eq.1) then  ! 1d-parallel
-        do iy=-1,ny
-          do ix=-1,nx
-            region(ix,iy,0)=1
-          enddo
-        enddo
-        nnreg(0)=1
-      else if (nncut.eq.0 .and. periodic_bc.eq.1) then   ! limiter case
-        do iy = -1, inseliy
-          do ix = inselix, nx-1-inselix
-            region(ix,iy,0) = 1
-          enddo
-        enddo
-        do iy = inseliy+1, ny
-          do ix = -1, nx
-            region(ix,iy,0) = 2
-          enddo
-        enddo
-        if(inseliy.eq.ny) then
-           nnreg(0) = 1
-        else
-           nnreg(0) = 2
-        endif
-      else if (nncut.eq.0 .and. periodic_bc.eq.0) then   ! 2-D slab case
-        do iy = -1, ny
-          do ix = -1, nx
-            region(ix,iy,0) = 1
-          end do
-        end do
-        nnreg(0) = 1
-      else
-        if(topcut(1).ge.-1) then
-          if(nncut.eq.1) then
-            do ix=-1,leftcut(1)-1
-              do iy=-1,ny
-                if (periodic_bc.ne.1.or.iy.lt.topcut(1))
-     1           region(ix,iy,0)=3
-                if(periodic_bc.eq.1.and.
-     .           iy.ge.topcut(1).and.iy.lt.inseliy)
-     .           region(ix,iy,0)=2
-                if(periodic_bc.eq.1.and.
-     .           iy.ge.inseliy.and.ix.ge.inselix)
-     .           region(ix,iy,0)=5    
-              enddo
-            enddo
-            do ix=leftcut(1),rightcut(1)-1
-              do iy=bottomcut(1),topcut(1)-1
-                region(ix,iy,0)=1
-              enddo
-              if(periodic_bc.eq.0) then
-                do iy=topcut(1),ny
-                  region(ix,iy,0)=2
-                enddo
-              elseif(periodic_bc.eq.1) then
-                do iy=topcut(1),inseliy-1
-                  region(ix,iy,0)=2
-                enddo
-                do iy=inseliy,ny
-                  region(ix,iy,0)=5
-                enddo
-              endif
-            enddo
-            do ix=rightcut(1),nx
-              do iy=-1,ny
-                if (periodic_bc.eq.0.or.iy.lt.topcut(1))
-     1           region(ix,iy,0)=4
-                if(periodic_bc.eq.1.and.
-     .           iy.ge.topcut(1).and.iy.lt.inseliy)
-     .           region(ix,iy,0)=2
-                if(periodic_bc.eq.1.and.
-     .           iy.ge.inseliy.and.ix.le.nx-1-inselix)
-     .           region(ix,iy,0)=5    
-              enddo
-            enddo
-            if(periodic_bc.eq.1) then
-              nnreg(0)=5
-            else
-              nnreg(0)=4
-            endif
-          elseif(nncut.eq.2) then
-            do ix = -1, leftcut(1)-1
-              do iy = -1, ny
-                region(ix,iy,0)=3
-              enddo
-            enddo
-            do ix = leftcut(1), leftcut(2)-1
-              do iy = max(bottomcut(1),bottomcut(2)), ny
-                if (iy.lt.min(topcut(1),topcut(2))) then
-                  region(ix,iy,0)=1
-                else
-                  region(ix,iy,0)=2
-                endif
-              enddo
-            enddo
-            do iy = -1, ny
-              ix = leftcut(2)            
-              do while (leftix(ix,iy).ne.-2)
-                region(ix,iy,0)=4
-                ix=ix+1
-              enddo
-              ix = rightcut(2)-1
-              do while (rightix(ix,iy).ne.nx+1)
-                region(ix,iy,0)=7
-                ix=ix-1
-              enddo
-            enddo
-            do ix = rightcut(2), rightcut(1)-1
-              do iy = max(bottomcut(1),bottomcut(2)), ny
-                if (iy.lt.min(topcut(1),topcut(2))) then
-                  region(ix,iy,0)=5
-                else
-                  region(ix,iy,0)=6
-                endif
-              enddo
-            enddo
-            do ix = rightcut(1), nx
-              do iy = -1, ny
-                region(ix,iy,0)=8
-              enddo
-            enddo
-            nnreg(0)=8
-          endif
-        endif
-      endif
-      do ix=-1,nx
-        do iy=-1,ny
-          if(region(ix,iy,0).eq.0) then
-            write(*,*) 'REGION not set for ',ix,iy,0
-          endif
-        enddo
-      enddo
-c x-flux component
-      if(nncut.eq.0 .and. periodic_bc.eq.1) then   ! limiter case
-        if(inseliy.eq.ny) then
-           do iy = -1, inseliy
-              region(inselix+1,iy,1)=1
-           enddo
-           nnreg(1)=1
-           do ix = inselix, nx-1-inselix
-              region(topix(ix,-1),topiy(ix,-1),2)=1
-              region(ix,ny,2)=2
-           enddo
-           nnreg(2)=2
-        else
-           do iy = inseliy+1, ny
-              region(rightix(-1,iy),rightiy(-1,iy),1)=1
-              region(nx,iy,1)=2
-           enddo
-           do iy = -1, inseliy
-              region(inselix+1,iy,1)=3
-           enddo
-           nnreg(1)=3
-           do ix = inselix, nx-1-inselix
-              region(topix(ix,-1),topiy(ix,-1),2)=1
-              region(topix(ix,inseliy),topiy(ix,inseliy),2)=2
-           enddo
-           region(:,ny,2)=3
-           nnreg(2)=3        
-        endif
-      elseif(topcut(1).ge.-1) then
-        if(periodic_bc.eq.1) then
-          iyt=inseliy-1
-        else
-          iyt=ny
-        endif
-        do iy=-1,iyt
-          region(rightix(-1,iy),rightiy(-1,iy),1)=1
-          if(nncut.lt.2) then
-            region(nx,iy,1)=4
-          elseif(nncut.eq.2) then
-            do ix = 0, nx-1
-              if(rightix(ix,iy).eq.nx+1) then
-                region(ix,iy,1)=4
-              elseif(leftix(ix,iy).eq.-2) then
-                region(rightix(ix,iy),rightiy(ix,iy),1)=5
-              endif
-            enddo
-            region(nx,iy,1)=8
-          endif
-        enddo
-        do iy=topcut(1),iyt
-          region(leftcut(1),iy,1)=2
-          if(nncut.eq.1) then
-            region(rightcut(1),iy,1)=3
-          elseif(nncut.eq.2) then
-            region(rightcut(1),iy,1)=7
-          endif
-        enddo
-        do iy=bottomcut(1),topcut(1)-1
-          if(nncut.eq.1) then
-            region(leftcut(1),iy,1)=5
-            region(rightcut(1),iy,1)=6
-          elseif(nncut.eq.2) then
-            if(iy.ge.bottomcut(2).and.iy.lt.topcut(2)) then
-              region(leftcut(1),iy,1)=9
-            else
-              region(leftcut(1),iy,1)=13
-            endif
-            region(rightcut(1),iy,1)=12
-          endif
-        enddo
-        if(nncut.eq.2) then
-          do iy=bottomcut(2),topcut(2)-1
-            region(leftcut(2),iy,1)=10
-            if(iy.ge.bottomcut(1).and.iy.lt.topcut(1)) then
-              region(rightcut(2),iy,1)=11
-            else
-              region(rightcut(2),iy,1)=13
-            endif
-          enddo
-          do iy=topcut(2),iyt
-            region(leftcut(2),iy,1)=3
-            region(rightcut(2),iy,1)=6
-          enddo
-        endif
-        if(nncut.eq.1.and.periodic_bc.eq.1) then
-          do iy=iyt+1,ny
-            region(inselix+1,iy,1)=7
-          enddo
-        endif
-        if(nncut.eq.1.and.nnreg(0).eq.4) then    ! SN case
-          nnreg(1)=6
-        elseif(nncut.eq.1.and.nnreg(0).eq.5) then    ! Stellarator island case
-          nnreg(1)=7
-        elseif(nncut.eq.2.and.topcut(1).eq.topcut(2)) then   ! DNC case
-          nnreg(1)=12
-        elseif(nncut.eq.2.and.topcut(1).ne.topcut(2)) then   ! DND case
-          nnreg(1)=13
-        endif
-c y-flux component
-        if(periodic_bc.eq.1) then
-          iyt=topcut(1)
-        else
-          iyt=ny
-        endif
-        do ix=-1,leftcut(1)-1
-          region(topix(ix,-1),topiy(ix,-1),2)=1
-          region(ix,iyt,2)=5
-        enddo
-        if(nncut.lt.2) then
-          do ix=leftcut(1),rightcut(1)-1
-            region(topix(ix,-1),topiy(ix,-1),2)=2
-            region(ix,topcut(1),2)=4
-          enddo
-          if(periodic_bc.eq.1) then
-            do ix=inselix,nx-1-inselix
-              region(ix,ny,2)=6
-              region(ix,inseliy,2)=8
-            enddo
-          else
-            do ix=leftcut(1),rightcut(1)-1
-              region(ix,ny,2)=6
-            enddo
-          endif
-          do ix=rightcut(1),nx
-            region(topix(ix,-1),topiy(ix,-1),2)=3
-            region(ix,iyt,2)=7
-          enddo
-        elseif(nncut.eq.2) then
-          do ix=leftcut(1),leftcut(2)-1
-            region(topix(ix,-1),topiy(ix,-1),2)=2
-            region(ix,min(topcut(1),topcut(2)),2)=4
-            region(ix,ny,2)=6
-          enddo
-          ix = leftcut(2)            
-          do while (leftix(ix,ny/2).ne.-2)
-            region(topix(ix,-1),topiy(ix,-1),2)=3
-            region(ix,ny,2)=7
-            ix=ix+1
-          enddo
-          ix = rightcut(2)-1
-          do while (rightix(ix,ny/2).ne.nx+1)
-            region(topix(ix,-1),topiy(ix,-1),2)=8
-            region(ix,ny,2)=12
-            ix=ix-1
-          enddo
-          do ix = rightcut(2),rightcut(1)-1
-            region(topix(ix,-1),topiy(ix,-1),2)=9
-            region(ix,min(topcut(1),topcut(2)),2)=11
-            region(ix,ny,2)=13
-          enddo
-          do ix = rightcut(1),nx
-            region(topix(ix,-1),topiy(ix,-1),2)=10
-            region(ix,ny,2)=14
-          enddo
-        endif
-        if(periodic_bc.eq.1) then
-          nnreg(2)=8
-        elseif(nncut.lt.2) then
-          nnreg(2)=7
-        elseif(nncut.eq.2) then
-          nnreg(2)=14
-        endif
-      else ! 1-D and 2-D slab cases
-        region(0,:,1)=1
-        region(nx,:,1)=2
-        nnreg(1)=2
-        region(:,0,2)=1
-        region(:,ny,2)=2
-        nnreg(2)=2
-      endif
-c set up region where the residuals should be ignored (none yet)
-      do iy=-1,ny
-        do ix=-1,nx
-          if(region(ix,iy,0).eq.0 .or. 
-     &     leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-     &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
-            resignore(ix,iy,1)=0
-            resignore(ix,iy,2)=0
-          else
-            resignore(ix,iy,1)=1
-            resignore(ix,iy,2)=1
-          endif
-        enddo
-      enddo
-
-      return
-      end subroutine init_region

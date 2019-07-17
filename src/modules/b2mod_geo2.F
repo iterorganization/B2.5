@@ -11,14 +11,19 @@
      *  crx1(:,:,:),
      *  cry1(:,:,:),
      *  ffbz1(:,:,:),
-     *  fpsi1(:,:,:),
+     *  fpsi1(:,:,:,:),
      *  gs1(:,:,:),
      *  hx1(:,:),
      *  hy1(:,:),
+     *  hc1(:,:,:),
+     *  ht1(:,:,:),
      *  qz1(:,:,:),
      *  qc1(:,:,:),
      *  qs1(:,:,:),
+     *  qac1(:,:,:),
+     *  qas1(:,:,:),
      *  pbs1(:,:,:),
+     *  ebc1(:,:,:),
      *  wbbl1(:,:,:),
      *  wbbr1(:,:,:),
      *  wbbv1(:,:,:),
@@ -57,14 +62,19 @@
       allocate(crx1(-1:nxd,-1:nyd,0:3))
       allocate(cry1(-1:nxd,-1:nyd,0:3))
       allocate(ffbz1(-1:nxd,-1:nyd,0:3))
-      allocate(fpsi1(-1:nxd,-1:nyd,0:3))
+      allocate(fpsi1(-1:nxd,-1:nyd,0:3,0:2))
       allocate(gs1(-1:nxd,-1:nyd,0:2))
       allocate(hx1(-1:nxd,-1:nyd))
       allocate(hy1(-1:nxd,-1:nyd))
+      allocate(hc1(-1:nxd,-1:nyd,0:3))
+      allocate(ht1(-1:nxd,-1:nyd,0:1))
       allocate(qz1(-1:nxd,-1:nyd,0:1))
       allocate(qc1(-1:nxd,-1:nyd,0:1))
       allocate(qs1(-1:nxd,-1:nyd,0:1))
+      allocate(qac1(-1:nxd,-1:nyd,0:1))
+      allocate(qas1(-1:nxd,-1:nyd,0:1))
       allocate(pbs1(-1:nxd,-1:nyd,0:1))
+      allocate(ebc1(-1:nxd,-1:nyd,0:1))
       allocate(wbbl1(-1:nxd,-1:nyd,0:3))
       allocate(wbbr1(-1:nxd,-1:nyd,0:3))
       allocate(wbbv1(-1:nxd,-1:nyd,0:3))
@@ -103,10 +113,15 @@
          deallocate(gs1)
          deallocate(hx1)
          deallocate(hy1)
+         deallocate(hc1)
+         deallocate(ht1)
          deallocate(qz1)
          deallocate(qc1)
          deallocate(qs1)
+         deallocate(qac1)
+         deallocate(qas1)
          deallocate(pbs1)
+         deallocate(ebc1)
          deallocate(wbbl1)
          deallocate(wbbr1)
          deallocate(wbbv1)

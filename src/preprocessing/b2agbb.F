@@ -1,18 +1,21 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agbb (nx, ny, vol, hx, hy, qz, fpsi, ffbz, bb)
+      subroutine b2agbb (nx, ny, vol, gs, crx, cry, qz, fpsi, ffbz, bb)
       use b2mod_types
+      use b2mod_indirect
+     , ,only : AverageVertex
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     *  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  qz(-1:nx,-1:ny,0:1), fpsi(-1:nx,-1:ny,0:3),
      &  ffbz(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   bb(-1:nx,-1:ny,0:3)
+     *  bb(-1:nx,-1:ny,0:3)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -36,7 +39,7 @@
 *     nx, ny - integer, input.
 *     See the calling routine for description.
 *
-*     vol, hx, hy, qz - real*8 array, input.
+*     vol, crx, cry, qz - real*8 array, input.
 *     See the calling routine for description.
 *
 *     fpsi - (-1:nx,-1:ny,0:3) real*8 array, input.
@@ -68,11 +71,16 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy
+      integer ix, iy, i, j
       real (kind=R8) ::
-     *   t0
+     *  t0, p0x, p0y
 *   ..procedures
       intrinsic sqrt
+      real (kind=R8) ::
+     *  norm, cornerDist
+      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
+      cornerDist(ix,iy,i,j) = norm (
+     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
       external subini, subend, xertst
 
 *-----------------------------------------------------------------------
@@ -89,17 +97,21 @@
       do iy = -1, ny
        do ix = -1, nx
 *     ..compute magnetic field at cell center
-        t0 = vol(ix,iy)/(hx(ix,iy)*hy(ix,iy)*qz(ix,iy,1))
+        t0 = vol(ix,iy)/gs(ix,iy,2)
         bb(ix,iy,0) =
-     &    (fpsi(ix,iy,2)-fpsi(ix,iy,0)+fpsi(ix,iy,3)-fpsi(ix,iy,1))*
-     &    hx(ix,iy)/(2.0_R8*vol(ix,iy))
+     &   ((fpsi(ix,iy,2)-fpsi(ix,iy,0))*CornerDist(ix,iy,0,2)+
+     &    (fpsi(ix,iy,3)-fpsi(ix,iy,1))*CornerDist(ix,iy,1,3))
+     &   /(2.0_R8*vol(ix,iy))
         bb(ix,iy,1) = 0.0_R8
 *!!     (Note: Consider to introduce nonzero bb(,,1), as below)
 *$$$    bb(ix,iy,1) =
 *$$$ &    -(fpsi(ix,iy,1)-fpsi(ix,iy,0)+fpsi(ix,iy,3)-fpsi(ix,iy,2))*
 *$$$ &    hy(ix,iy)*qz(ix,iy,1)/(2.0_R8*vol(ix,iy))
-        bb(ix,iy,2) = (ffbz(ix,iy,0)+ffbz(ix,iy,1)+ffbz(ix,iy,2)+
-     &    ffbz(ix,iy,3))/(4.0_R8*t0)
+        bb(ix,iy,2) = averageVertex
+     &   (ffbz(ix,iy,0),crx(ix,iy,0),cry(ix,iy,0),
+     1    ffbz(ix,iy,1),crx(ix,iy,1),cry(ix,iy,1),
+     2    ffbz(ix,iy,2),crx(ix,iy,2),cry(ix,iy,2),
+     3    ffbz(ix,iy,3),crx(ix,iy,3),cry(ix,iy,3))/t0
         bb(ix,iy,3) =
      &    sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2+bb(ix,iy,2)**2)
        enddo
@@ -112,4 +124,4 @@
 *-----------------------------------------------------------------------
 *.end b2agbb
 
-      end
+      end subroutine b2agbb

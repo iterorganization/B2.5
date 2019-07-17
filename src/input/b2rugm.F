@@ -15,14 +15,17 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
+     &  fpsi(-1:nx,-1:ny,0:3,0:2), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), 
      &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
      &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx,-1:ny,0:3), 
      &  wbbr(-1:nx,-1:ny,0:3), wbbv(-1:nx,-1:ny,0:3),
      &  wbbc(-1:nx+1,-1:ny+1,0:3), 
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
+     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny),
+     &  hc(-1:nx,-1:ny,0:3), ht(-1:nx,-1:ny,0:1), 
+     &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1), 
+     &  ebc(-1:nx,-1:ny,0:1)
       type(B2GridMap) :: gmap
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -182,20 +185,22 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, idum(0:9)
+      integer n2, ix, iy, i,j, idum(0:9)
       integer iFace, offset
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y
+     *   p0x, p0y, p1x, p1y, t0, t1
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
-     *   trim1, norm, cosang, sinang
+     *   trim1, norm, cosang, sinang, dist
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
       sinang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
       cosang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
+      dist(ix,iy,i,j) = norm (
+     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
       external subini, subend, xertst, cfrure, cfruin
       external intfaceh1, intfacer1, intfacev1
       external b2xgbs, b2xvsg, b2xvgm
@@ -217,7 +222,12 @@
       call cfrure (nget, n2*4, crx, 'crx')
       call cfrure (nget, n2*4, cry, 'cry')
 *   ..read flux functions
-      call cfrure (nget, n2*4, fpsi, 'fpsi')
+      if(b2fgmtry_version.ge.'03.002.000') then
+       call cfrure (nget, n2*12, fpsi, 'fpsi')
+      else
+       call cfrure (nget, n2*4, fpsi(-1,-1,0,0), 'fpsi')
+       fpsi(:,:,:,1:2) = 0.0_R8
+      endif
       call cfrure (nget, n2*4, ffbz, 'ffbz')
 *   ..read magnetic field
       call cfrure (nget, n2*4, bb, 'bb')
@@ -250,28 +260,29 @@ cxpb
        enddo
       endif
       if(b2fgmtry_version.lt.'03.001.000') then
-       qc(:,:,1) = 1.0_R8
-       qs(:,:,1) = 0.0_R8
-       if(b2fgmtry_version.ge.'01.001.030') then
-	 call cfrure_opt (nget, n2, qc(-1,-1,1), 'qcb')
-       end if
-       if (maxval(qc(:,:,1)).eq.1.0_R8 .and. 
-     &     minval(qc(:,:,1)).eq.1.0_R8) then
-        do iy = -1, ny
-         do ix = -1, nx
-          qc(ix,iy,1) = cosang (
-     &      crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
-     &     (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
-     &     (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
-          if(qc(ix,iy,1).le.0.0_R8) then
-           write(*,'(a,1f12.6,2i5)')
-     1      'Problem in b2rugm: qc(ix,iy,1) <= 0',qc(ix,iy,1),ix,iy
-           write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
-           write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
-          endif
-         enddo
+*    ..compute qc and qs at south faces
+cwdk   For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
+cwdk   temporary computation; should go into geometry routines!
+cwk:   this interpolation for backwards compatibility in computation of radial conductances etc.
+       do iy = -1, ny
+        do ix = -1, nx
+         if (bottomiy(ix,iy).eq.-2) then
+          qc(ix,iy,1)=0.0_R8
+         else
+          qc(ix,iy,1) =
+     .    (hy(ix,iy)*qz(ix,iy,1) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     .      qz(bottomix(ix,iy),bottomiy(ix,iy),1))/ 
+     .     (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+          qs(ix,iy,1) =
+     .     (hy(ix,iy)*qz(ix,iy,0) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     .      qz(bottomix(ix,iy),bottomiy(ix,iy),0))/ 
+     .     (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+         endif
         enddo
-       endif
+       enddo
+cwdk   now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
+       qs(:,:,1) = sign(sqrt(1.0_R8 - qc(:,:,1)**2),qs(:,:,1))
+       ! Init qs(:,:,0)
        do iy = -1, ny
         do ix = -1, nx
          qs(ix,iy,0) = sinang (
@@ -347,6 +358,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
      1     leftix,leftiy,rightix,rightiy,
      1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
 *   ..extrapolate magnetic field to edges
+cwdk  to consider: now b2agfs available => use that routine instead!
       do iy = -1, ny
         do ix = -1, nx
           if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) = 
@@ -386,8 +398,6 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
 *   ..compute or read pbs (magnetic field pitch * surface area) at cell faces
       if(b2fgmtry_version.ge.'01.001.063') then                      !srv 15.02.11
         call cfrure (nget, n2*2, pbs, 'pbs')
-      else
-        call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
       endif
       if(b2fgmtry_version.eq.'03.000.006') then
         call cfruin (nget, 1, idum, 'redef_pbs')
@@ -473,6 +483,57 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       if(b2fgmtry_version.ge.'01.001.033') then
         call cfrure_opt (nget, n2, cell_width, 'cell_width')
         call cfrure_opt (nget, n2, cell_height, 'cell_height')
+      endif
+*   ..read  additional geometric parameters for extended grids
+      if(b2fgmtry_version.ge.'03.002.000') then
+        call cfrure(nget, n2*4, hc, 'hc')
+        call cfrure(nget, n2*2, ht, 'ht')
+        call cfrure(nget, n2*2, qac, 'qac')
+        call cfrure(nget, n2*2, qas, 'qas')
+        call cfrure(nget, n2*2, ebc, 'ebc')
+      else
+        hc(:,:,0) = 0.5*hx(:,:)
+        hc(:,:,1) = 0.5*hy(:,:)
+        hc(:,:,2) = 0.5*hx(:,:)
+        hc(:,:,3) = 0.5*hy(:,:)
+        qac(:,:,0) = qc(:,:,0)
+        qas(:,:,0) = qs(:,:,0)
+        qac(:,:,1) = 0.0_R8
+        qas(:,:,1) = 1.0_R8 ! sign !?!
+!WG-TODO: define ebc and ht
+        do iy=-1,ny
+          do ix=-1,nx
+            ! Unit vectors of line between W/E face centers
+            t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
+            t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
+            ebc(ix,iy,0) = t0/norm(t0,t1)
+            ebc(ix,iy,1) = t1/norm(t0,t1)
+
+            ! Length along faces, ht
+            ! Note: this implementation ensures backwards compatibility
+            ! Could be made exact using dist!
+            if (leftix(ix,iy).ne.-2) then
+              ht(ix,iy,0) = 
+     &          0.5_R8*(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))
+
+!WG-TODO              ht(ix,iy,0) = dist(ix,iy,0,2)
+            else
+              ht(ix,iy,0) = 0.0_R8
+            endif
+            if (bottomiy(ix,iy).ne.-2) then
+              ht(ix,iy,1) = 
+     &        0.5_R8*(hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))
+!WG-TODO              ht(ix,iy,1) = dist(ix,iy,0,1)
+            else
+              ht(ix,iy,1) = 0.0_R8
+            endif
+          enddo
+        enddo
+      endif
+      if(b2fgmtry_version.lt.'01.001.063') then                      !srv 15.02.11
+        ! Moved here; b2xgbs now requires cflags and qac
+        call b2xgbs (nx, ny, wbbl, wbbv, gs, qac, pbs,
+     &  leftix, leftiy, bottomix, bottomiy, cflags)
       endif
 *   ..test sign of bb
       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')

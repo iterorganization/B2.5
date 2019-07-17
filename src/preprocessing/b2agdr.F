@@ -10,6 +10,7 @@
       use b2mod_b2cmfs
       use b2mod_b2cmgs
       use b2mod_connectivity
+      use b2ag_parameters
       use b2mod_interp
       use b2mod_grid_mapping
       implicit none
@@ -95,11 +96,7 @@
       integer nxiso1, nxiso2, nyiso1, nyiso2
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
       character line*500
-      real (kind=R8) ::
-     *   parg(0:99)
       integer istyle
-      integer iFace, offset
-      integer, save :: redef_qc = 0, qc_style = 1
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
@@ -298,35 +295,8 @@
       idout = '....'
 
 * ..initialise the geometry
-*   ..read geometry parameters parg
-      read (ninp(0),'(a8)',err=91) id
-      call xertst (streql(id,'*param'),
-     &  'faulty input instead of *param, id='//id)
-      read (ninp(0),*,err=92) parg
-*   ..echo parg
-      write (nout(0),'(/2x,a)') 'The input parameters are:'
-      write (nout(0),*) parg
-*   ..read and echo code internal parameters
-      write (nout(0),'(/2x,a)') 'non-default internal parameters:'
-    1 continue
-       read (ninp(0),'(a)',end=2,err=93) line
-       if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
-       endif
-       goto 1
-    2 continue
-      write (nout(0),'(2x,a)') '(end of list of internal parameters)'
       redef_gmtry = 1 ! Since version 3.0.6, we apply the pbsx correction by default
       call ipgeti ('b2agdr_redef_gmtry', redef_gmtry)
-      call ipgeti ('b2agdr_redef_qc',  redef_qc )
-      call ipgeti ('b2agmt_qc_style',  qc_style )
-      if (redef_qc .eq. 1 .and. qc_style .eq. 1) then
-       write (*,*) 'b2agdr_redef_qc = b2agmt_qc_style = 1'
-       write (*,*) 'Double correction of qc specified; '//
-     &             'only b2agmt_qc_style will apply'
-      endif
 *   ..use parg, obtain isymm and lblgm
       call b2xxid ('b2ag', lblgm(1:60))
       call b2agsi (nx, ny, parg, isymm, lblgm(61:120), istyle)
@@ -341,159 +311,46 @@
      5 periodic_bc,nncut,nncutmax)
       call init_region(nx1,ny1,nncut,nncutmax,
      1 leftcut1,rightcut1,topcut1,bottomcut1,
-     1 leftix1,rightix1,rightiy1,topix1,topiy1,bottomiy1,
-     2 region1,nnreg,resignore1,crx1,cry1,periodic_bc)
-      write(*,*) 'b2agdr0: bb1(nx1,ny1,0) ',bb1(nx1,ny1,0)
-*   ..compute cflags array if not provided by mesh file
-      if(maxval(cflags1).eq.0) then
-        cflags1(1:nx1-2,1:ny1-2,CELLFLAG_TYPE) = GRID_INTERNAL
-        cflags1(0,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
-        cflags1(nx1-1,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
-        cflags1(0:nx1-1,0,CELLFLAG_TYPE) = GRID_BOUNDARY
-        cflags1(0:nx1-1,ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
-        cflags1(-1,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
-        cflags1(nx1,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
-        cflags1(-1:nx1,-1,CELLFLAG_TYPE) = GRID_GUARD
-        cflags1(-1:nx1,ny1,CELLFLAG_TYPE) = GRID_GUARD
-        if (nncut.ge.2) then
-          iy = ny1/2
-          do ix = 1, nx1-2
-            if (rightix1(ix,iy).eq.nx1+1) then
-              cflags1(ix-1,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
-              cflags1(ix,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
-            end if
-            if (leftix1(ix,iy).eq.-2) then
-              cflags1(ix,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
-              cflags1(ix+1,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
-            end if
-          end do
-        end if
-        do iy=-1,ny1
-          do ix=-1,nx1
-            if (cflags1(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY) cycle
-            if (cflags1(leftix1(ix,iy),leftiy1(ix,iy),
-     .                  CELLFLAG_TYPE) == GRID_GUARD) then
-              iFace = CELLFLAG_LEFTFACE
-              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
-              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
-              cflags1(leftix1(ix,iy),leftiy1(ix,iy),
-     .                CELLFLAG_RIGHTFACE) = cflags1(ix, iy, iFace)
-            end if
-            if (cflags1(rightix1(ix,iy),rightiy1(ix,iy),
-     .                  CELLFLAG_TYPE) == GRID_GUARD) then
-              iFace = CELLFLAG_RIGHTFACE
-              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
-              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
-              cflags1(rightix1(ix,iy),rightiy1(ix,iy),
-     .                CELLFLAG_LEFTFACE) = cflags1(ix, iy, iFace)
-            end if
-            if (cflags1(topix1(ix,iy),topiy1(ix,iy),
-     .                  CELLFLAG_TYPE) == GRID_GUARD) then
-              iFace = CELLFLAG_TOPFACE
-              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
-              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
-              cflags1(topix1(ix,iy),topiy1(ix,iy),
-     .                CELLFLAG_BOTTOMFACE) = cflags1(ix, iy, iFace)
-            end if
-            if (cflags1(bottomix1(ix,iy),bottomiy1(ix,iy),
-     .                  CELLFLAG_TYPE) == GRID_GUARD) then
-              iFace = CELLFLAG_BOTTOMFACE
-              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
-              cflags1(ix, iy, iFace) = offset - region(ix, iy, 0)
-              cflags1(bottomix1(ix,iy),bottomiy1(ix,iy),
-     .                CELLFLAG_TOPFACE) = cflags1(ix, iy, iFace)
-            end if
-          end do
-        end do
-      end if
+     2 leftix1,leftiy1,rightix1,rightiy1,
+     3 topix1,topiy1,bottomix1,bottomiy1,
+     4 region1,nnreg,resignore1,crx1,cry1,periodic_bc,cflags1)
+      write(*,*) 'b2agdr0: Average bb1(:,:,0) ',
+     . b2gavg1(nx1,ny1,bb1(-1:nx1,-1:ny1,0))
 *   ..echo lblgm
       write (nout(0),'(/2x,a)') 'label for geometry'
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
 *   ..compute geometry and flux/field functions on auxiliary mesh
-      if(istyle.ge.0) then
-        call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
-      else
-        fpsi1=0.0_R8
-        ffbz1=0.0_R8
-      endif
+*   ..if not provided already by Carre grid
+      if(istyle.ge.0) call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
 *   ..compute metric coefficients on auxiliary mesh
-      call b2agmt (nx1, ny1, isymm, crx1, cry1, vol1,
-     & hx1, hy1, qz1, qc1, qs1, gs1,
-     & cell_width1, cell_height1, leftix1, leftiy1, bottomiy1)
-*   ..improved computation of qc based on interpolation of qz values
-cwdk  attempt to avoid artificial reduction of poloidal contact area at faces for
-cwdk  curvilinear grids; angle between left face and average direction of top/bottom
-cwdk  faces is not representative for orthogonality of left face to field!
-      if (redef_qc.eq.1.and.qc_style.eq.0) then
-        call intfaceh(nx1,ny1,leftix1,leftiy1,vol1,qz1(-1,-1,0),
-     .    qs1(-1,-1,0))
-        call intfacev(nx1,ny1,bottomix1,bottomiy1,vol1,qz1(-1,-1,0),
-     .    qs1(-1,-1,1))
-          qc(:,:,:) = sqrt(1.0_R8 - qs(:,:,:)**2) !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
-      endif
-*    ..interpolate magnetic field to cell faces
-      call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
-      call intfacer1(nx1,ny1,2,rightix1,rightiy1,vol1,bb1,wbbr1)
-      call intfacev1(nx1,ny1,2,bottomix1,bottomiy1,vol1,bb1,wbbv1)
-*    ..extrapolate magnetic field to edges
-      do iy = -1, ny1
-        do ix = -1, nx1
-          if (leftix1(ix,iy).eq.-2) wbbl1(ix,iy,0:2) = bb1(ix,iy,0:2) -
-     &      (wbbr1(ix,iy,0:2)-bb1(ix,iy,0:2))
-          if (rightix1(ix,iy).eq.nx1+1) wbbr1(ix,iy,0:2) = 
-     &     bb1(ix,iy,0:2) - (wbbl1(ix,iy,0:2)-bb1(ix,iy,0:2))
-          if (bottomiy1(ix,iy).eq.-2) wbbv1(ix,iy,0:2) = bb1(ix,iy,0:2)
-     &     - (wbbv1(topix1(ix,iy),topiy1(ix,iy),0:2)-bb1(ix,iy,0:2))
-        enddo
-      enddo
-*   .. correct interpolation of magnetic field for diverted island case
-*      as B is not a periodic quantity
-      if(periodic_bc.eq.1 .and. nncut.ge.1) then
-         do iy = -1, ny1
-           do ix = -1, nx1
-             if(leftix1(ix,iy).ne.ix-1) then
-               if(region1(ix,iy,0).eq.1 .or. region1(ix,iy,0).eq.4) then
-                 wbbl1(ix,iy,0)=bb1(ix,iy,0)-
-     .            (wbbr1(ix,iy,0)-bb1(ix,iy,0))
-                 wbbl1(ix,iy,1)=bb1(ix,iy,1)-
-     .            (wbbr1(ix,iy,1)-bb1(ix,iy,1))
-                 wbbl1(ix,iy,2)=bb1(ix,iy,2)-
-     .            (wbbr1(ix,iy,2)-bb1(ix,iy,2))
-               endif
-             else if(rightix1(ix,iy).ne.ix+1) then
-               if(region1(ix,iy,0).eq.1 .or. region1(ix,iy,0).eq.3) then
-                 wbbr1(ix,iy,0)=bb1(ix,iy,0)-
-     .            (wbbl1(ix,iy,0)-bb1(ix,iy,0))
-                 wbbr1(ix,iy,1)=bb1(ix,iy,1)-
-     .            (wbbl1(ix,iy,1)-bb1(ix,iy,1))
-                 wbbr1(ix,iy,2)=bb1(ix,iy,2)-
-     .            (wbbl1(ix,iy,2)-bb1(ix,iy,2))
-               endif
-             endif
-           enddo
-         enddo
-      endif
-*    ..compute extrapolated wbb.(:,:,3) components
-      wbbl1(:,:,3)=sqrt(wbbl1(:,:,0)**2+wbbl1(:,:,1)**2+wbbl1(:,:,2)**2)
-      wbbr1(:,:,3)=sqrt(wbbr1(:,:,0)**2+wbbr1(:,:,1)**2+wbbr1(:,:,2)**2)
-      wbbv1(:,:,3)=sqrt(wbbv1(:,:,0)**2+wbbv1(:,:,1)**2+wbbv1(:,:,2)**2)
+      call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, vol1,
+     & hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
+     & cell_width1, cell_height1,
+     & leftix1, leftiy1, bottomix1, bottomiy1, 
+     & rightix1, rightiy1, topix1, topiy1, cflags1)
+      call b2agbf (nx1, ny1, isymm, periodic_bc, nncut,
+     & crx1, cry1, fpsi1, ffbz1,
+     & vol1, gs1, qz1, qc1, qs1, bb1, wbbl1, wbbr1, wbbv1, region1,
+     & leftix1, leftiy1, bottomix1, bottomiy1, rightix1, rightiy1,
+     & topix1, topiy1, cflags1)
 *    ..compute pbs1 (magnetic field pitch * surface area) at cell faces
       geometryType = geometryId(nnreg, periodic_bc, topcut1)
-      call b2xgbs1 (nx1, ny1, 
-     1 bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
+      call b2xgbs (nx1, ny1, wbbl1, wbbv1, gs1, qac1, pbs1,
+     &  leftix1, leftiy1, bottomix1, bottomiy1, cflags1)
 *   ..project metric coefficients to proper mesh
       call b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, qz1, qc1, qs1,
+     & vol1, hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
-     & vol, hx, hy, qz, qc, qs,
+     & vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
-     1 leftix1, leftiy1, rightix1, rightiy1,
-     2 topix1, topiy1, bottomix1, bottomiy1,
-     3 leftcut1, rightcut1, bottomcut1, topcut1, cflags1)
+     & leftix1, leftiy1, rightix1, rightiy1,
+     & topix1, topiy1, bottomix1, bottomiy1,
+     & leftcut1, rightcut1, bottomcut1, topcut1,
+     & cflags1)
 *   ..correct pbsx on the proper mesh
       if(redef_gmtry.ne.0) then
         call b2agbs (nx, ny, nncutmax,
@@ -606,9 +463,6 @@ cdpc-debug
 *   ..compute magnetic field on proper mesh
         call b2agbb (nx, ny, vol, hx, hy, qz, 
      &   fpsi, ffbz, bb)
-      else
-        fpsi=0.0_R8
-        ffbz=0.0_R8
       endif
       write(*,*) 'b2agdr2: bb(nx,ny,0) ',bb(nx,ny,0)
       write(*,'()')
@@ -729,7 +583,7 @@ cdpc-debug
 
 * ..output
 *   ..write summary of geometry
-      call b2wfgm (nout(0), idout, nx, ny)
+!      call b2wfgm (nout(0), idout, nx, ny)
 *   ..write version number
       call cfverw (nout(1), newversion)
 *   ..save dimensions
@@ -743,7 +597,7 @@ cdpc-debug
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
       call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qs, gs, pbs, wbbl,
+     &  vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc, gs, pbs, wbbl,
      &  cell_width, cell_height)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx, ny, crx, cry, cflags,

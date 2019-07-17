@@ -1164,7 +1164,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
              gm%vxX(ivx) = crx(ix,iy,0)
              gm%vxY(ivx) = cry(ix,iy,0)
              gm%vxFfbz(ivx) = ffbz(ix,iy,1)
-             gm%vxFpsi(ivx) = fpsi(ix,iy,1)
+             gm%vxFpsi(ivx) = fpsi(ix,iy,1,0)
              do i = 1, mpg%vxCvP(ivx,2)
                ic = mpg%vxCv(mpg%vxCvP(ivx,1) + i - 1)
                gm%vxVol(mpg%vxCvP(ivx,1) + i - 1) = 0.25*gm%cvVol(ic)

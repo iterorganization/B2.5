@@ -11,16 +11,21 @@
      *  crx(:,:,:),
      *  cry(:,:,:),
      *  ffbz(:,:,:),
-     *  fpsi(:,:,:),
+     *  fpsi(:,:,:,:),
      *  gs(:,:,:),
      *  hx(:,:),
      *  hy(:,:),
      *  hz(:,:),                                                     !srv 09.01.01
+     *  hc(:,:,:),
+     *  ht(:,:,:),
      *  qz(:,:,:),
      *  qc(:,:,:),
      *  qs(:,:,:),
+     *  qac(:,:,:),
+     *  qas(:,:,:),
      *  vol(:,:),
      *  pbs(:,:,:), pbshz(:,:,:),                                    !srv 09.01.01
+     *  ebc(:,:,:),
      *  conn(:),
      *  cell_width(:,:),
      *  cell_height(:,:)
@@ -39,17 +44,22 @@
       allocate(crx(-1:nxd,-1:nyd,0:3))
       allocate(cry(-1:nxd,-1:nyd,0:3))
       allocate(ffbz(-1:nxd,-1:nyd,0:3))
-      allocate(fpsi(-1:nxd,-1:nyd,0:3))
+      allocate(fpsi(-1:nxd,-1:nyd,0:3,0:2))
       allocate(gs(-1:nxd,-1:nyd,0:2))
       allocate(hx(-1:nxd,-1:nyd))
       allocate(hy(-1:nxd,-1:nyd))
       allocate(hz(-1:nxd,-1:nyd))                                    !srv 09.01.01
+      allocate(hc(-1:nxd,-1:nyd,0:3))
+      allocate(ht(-1:nxd,-1:nyd,0:1))
       allocate(qz(-1:nxd,-1:nyd,0:1))
       allocate(qc(-1:nxd,-1:nyd,0:1))
       allocate(qs(-1:nxd,-1:nyd,0:1))
+      allocate(qac(-1:nxd,-1:nyd,0:1))
+      allocate(qas(-1:nxd,-1:nyd,0:1))
       allocate(vol(-1:nxd,-1:nyd))
       allocate(pbs(-1:nxd,-1:nyd,0:1))
       allocate(pbshz(-1:nxd,-1:nyd,0:1))                             !srv 09.01.01
+      allocate(ebc(-1:nxd,-1:nyd,0:1))
       allocate(conn(-1:nyd))
       allocate(cell_width(-1:nxd,-1:nyd))
       allocate(cell_height(-1:nxd,-1:nyd))
@@ -75,12 +85,17 @@
         deallocate(hx)
         deallocate(hy)
         deallocate(hz)
+        deallocate(hc)
+        deallocate(ht)
         deallocate(qz)
         deallocate(qc)
         deallocate(qs)
+        deallocate(qac)
+        deallocate(qas)
         deallocate(vol)
         deallocate(pbs)
         deallocate(pbshz)                                            !srv 09.01.01
+        deallocate(ebc)
         deallocate(conn)
         deallocate(cell_width)
         deallocate(cell_height)
@@ -119,7 +134,12 @@
       call cfrure (nread, size(crx), crx, 'crx')
       call cfrure (nread, size(cry), cry, 'cry')
       call cfrure (nread, size(ffbz), ffbz, 'ffbz')
-      call cfrure (nread, size(fpsi), fpsi, 'fpsi')
+      if (b2fplasma_version.ge.'03.002.000') then
+       call cfrure (nread, size(fpsi), fpsi, 'fpsi')
+      else
+       call cfrure (nread, n2*4, fpsi(-1,-1,0,0), 'fpsi')
+       fpsi(:,:,:,1:2) = 0.0_R8
+      endif
       call cfrure (nread, size(gs), gs, 'gs')
       call cfrure (nread, size(hx), hx, 'hx')
       call cfrure (nread, size(hy), hy, 'hy')
