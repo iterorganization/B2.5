@@ -740,7 +740,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 sna_pump(latmscl(ia))   = sna_pump(latmscl(ia)) +
      &             mlcmp(ia,im) * eirpump(nnatmi+im)
                 sna_sptt(latmscl(ia)) = sna_sptt(latmscl(ia)) +
-     &             mlcmp(ia,im) * eirsptm(nnatmi+im)                 
+     &             mlcmp(ia,im) * eirsptm(im)                 
               endif
             enddo            
           end do 
