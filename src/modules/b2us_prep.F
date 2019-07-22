@@ -576,21 +576,21 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 ! for Fcx's and Fcy's
       m%imapFcx= 0 ! 0 means not in use in unstructured
       ici =0
-      do iy = 1, ny
-        do ix = 1, nx+1
-          if(ighostfcx(ix-1,iy-1)==0) then
+      do iy = 0, ny
+        do ix = 0, nx
+          if(ighostfcx(ix,iy)==0) then
             ici = ici + 1          
-            m%imapFcx(ix-1,iy-1) = ici
+            m%imapFcx(ix,iy) = ici
            endif
         enddo
       enddo
 
       m%imapFcy= 0 ! 0 means not in use in unstructured
-      do ix = 1, nx
-        do iy = 1, ny+1
-          if(ighostfcy(ix-1,iy-1)==0) then
+      do ix = 0, nx
+        do iy = 0, ny
+          if(ighostfcy(ix,iy)==0) then
             ici = ici + 1          
-            m%imapFcy(ix-1,iy-1) = ici
+            m%imapFcy(ix,iy) = ici
            endif
         enddo
       enddo
@@ -604,11 +604,11 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 cwdk  might need to add duplicates numbers here...
       m%imapVx= 0 ! 0 means not in use in unstructured
       ici =0
-      do iy = 1, ny+1
-        do ix = 1, nx+1
-          if(ighostvx(ix-1,iy-1)==0) then
+      do iy = 0, ny
+        do ix = 0, nx
+          if(ighostvx(ix,iy)==0) then
             ici = ici + 1          
-            m%imapVx(ix-1,iy-1) = ici
+            m%imapVx(ix,iy) = ici
            endif
         enddo
       enddo
@@ -838,7 +838,7 @@ cwdk  might need to add duplicates numbers here...
               m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
      .                             rightiy(ix-1,iy-1))
               m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
-              m%cvVx(if4) = m%imapVx(rightix(topix(ix-1,iy-1),
+              m%cvVx(if4) = m%imapVx(rightix(topix(ix-1,iy-1), !might not exist?
      .                             topiy(ix-1,iy-1)), 
      .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1)))
             case ( CGEO_TRIA_NOLEFT )  
@@ -1270,13 +1270,10 @@ cwdk  might need to add duplicates numbers here...
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nVmxCv)
 
 ! cell volumes 
-!      do iy = 0, ny-1
-!        do ix = 0, nx-1
       do iy = -1, ny
         do ix = -1, nx
            if(mpg%imapCv(ix,iy)/=0) then           
-             ic = mpg%imapCv(ix,iy)
-!          ic = (ix+1) + iy*nx
+            ic = mpg%imapCv(ix,iy)
 ! b field
             gm%cvBb(ic,0:3) = bb(ix,iy,0:3)
 ! cell center
@@ -1294,243 +1291,77 @@ cwdk  might need to add duplicates numbers here...
         end do
       end do
 
-!      do ix = 0, nx-1
-!        ic = nCi + ix+1
-!        gm%cvBb(ic,0:3) = bb(ix,-1,0:3)
-!        gm%cvX(ic) = 0.25_R8*sum(crx(ix,-1,0:3))
-!        gm%cvY(ic) = 0.25_R8*sum(cry(ix,-1,0:3))
-!        gm%cvSz(ic) = gs(ix,-1,2)
-!        gm%cvHz(ic) = hz(ix,-1)
-!        gm%cvHx(ic) = hx(ix,-1)
-!        gm%cvQgam(ic,0) = qz(ix,-1,1)
-!        gm%cvQgam(ic,1) = -qz(ix,-1,0)
-!        gm%cvVol(ic) = vol(ix,-1)
-!        gm%cvOnedBsq(ic) = OnedBsq(ix,-1)
-!        gm%cvBzb(ic) = bzb(ix,-1)
-
-!        ic = nCi + nx + ix+1
-!        gm%cvBb(ic,0:3) = bb(ix,ny,0:3)
-!        gm%cvX(ic) = 0.25_R8*sum(crx(ix,ny,0:3))
-!        gm%cvY(ic) = 0.25_R8*sum(cry(ix,ny,0:3))
-!        gm%cvSz(ic) = gs(ix,ny,2)
-!        gm%cvHz(ic) = hz(ix,ny)
-!        gm%cvHx(ic) = hx(ix,ny)
-!        gm%cvQgam(ic,0) = qz(ix,ny,1)
-!        gm%cvQgam(ic,1) = -qz(ix,ny,0)
-!        gm%cvVol(ic) = vol(ix,ny)
-!        gm%cvOnedBsq(ic) = OnedBsq(ix,ny)
-!        gm%cvBzb(ic) = bzb(ix,ny)
-!      end do
- 
-!      do iy = 0, ny-1
-!        ic = nCi + 2*nx + iy+1
-!        gm%cvBb(ic,0:3) = bb(-1,iy,0:3)
-!        gm%cvX(ic) = 0.25_R8*sum(crx(-1,iy,0:3))
-!        gm%cvY(ic) = 0.25_R8*sum(cry(-1,iy,0:3))
-!        gm%cvSz(ic) = gs(-1,iy,2)
-!        gm%cvHz(ic) = hz(-1,iy)
-!        gm%cvHx(ic) = hx(-1,iy)
-!        gm%cvQgam(ic,0) = qz(-1,iy,1)
-!        gm%cvQgam(ic,1) = -qz(-1,iy,0)
-!        gm%cvVol(ic) = vol(-1,iy)
-!        gm%cvOnedBsq(ic) = OnedBsq(-1,iy)
-!        gm%cvBzb(ic) = bzb(-1,iy)
-
-!        ic = nCi + 2*nx + ny + iy+1
-!        gm%cvBb(ic,0:3) = bb(nx,iy,0:3)
-!        gm%cvX(ic) = 0.25_R8*sum(crx(nx,iy,0:3))
-!        gm%cvY(ic) = 0.25_R8*sum(cry(nx,iy,0:3))
-!        gm%cvSz(ic) = gs(nx,iy,2)
-!        gm%cvHz(ic) = hz(nx,iy)
-!        gm%cvHx(ic) = hx(nx,iy)
-!        gm%cvQgam(ic,0) = qz(nx,iy,1)
-!        gm%cvQgam(ic,1) = -qz(nx,iy,0)
-!        gm%cvVol(ic) = vol(nx,iy)
-!        gm%cvOnedBsq(ic) = OnedBsq(nx,iy)
-!        gm%cvBzb(ic) = bzb(nx,iy)
-!      end do
-
 ! x faces
-       do iy = 0, ny-1
-         do ix = 1, nx-1
-!           ifc = ix+1 + iy*(nx+1)
-           if(mpg%imapFcx(ix,iy)/=0) then
-             ifc = mpg%imapFcx(ix,iy)
-             gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
-             gm%fcS(ifc) = gs(ix,iy,0)
-             gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
-             gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
-             gm%fcHt(ifc)   = 
-     .         0.5_R8*(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))             !cwdk: computation could be made exact
-             gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
-             gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-             gm%fcQgam(ifc,0) = qc(ix,iy,0)
-             gm%fcQgam(ifc,1) = -qs(ix,iy,0)
-             gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
-     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-             gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
-     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-             gm%fcQbet(ifc,0) = 1.0_R8*
-     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-             gm%fcQbet(ifc,1) = 0.0_R8
-             gm%fcPbs(ifc) = pbs(ix,iy,0)
-             gm%fcPbshz(ifc) = pbshz(ix,iy,0)
-           end if
-         end do
-
-! left boundary face (to guard cells)
-         ix = 0
-!         ifc = ix+1 + iy*(nx+1)
-         if(mpg%imapFcx(ix,iy)/=0) then
-           ifc = mpg%imapFcx(ix,iy)
-           gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
-           gm%fcS(ifc) = gs(ix,iy,0)
-           gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
-           gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
-           gm%fcHt(ifc)   = hy(leftix(ix,iy),leftiy(ix,iy))                   !cwdk: computation could be made exact
-           gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
-           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-           gm%fcQgam(ifc,0) = qc(ix,iy,0)
-           gm%fcQgam(ifc,1) = -qs(ix,iy,0)
-           gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,0) = 1.0_R8*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,1) = 0.0_R8
-           gm%fcPbs(ifc) = pbs(ix,iy,0)
-           gm%fcPbshz(ifc) = pbshz(ix,iy,0)
-         end if
-! right guard cells
-         ix = nx
-!         ifc = ix+1 + iy*(nx+1)
-         if(mpg%imapFcx(ix,iy)/=0) then 
-           ifc = mpg%imapFcx(ix,iy)
-           gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
-           gm%fcS(ifc) = gs(ix,iy,0)
-           gm%fcHc(ifc,1) = 0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy))
-           gm%fcHc(ifc,2) = 0.5_R8*hx(ix,iy)
-           gm%fcHt(ifc)   = hy(ix,iy)                                         !cwdk: computation could be made exact
-           gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
-           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-           gm%fcQgam(ifc,0) = qc(ix,iy,0)
-           gm%fcQgam(ifc,1) = -qs(ix,iy,0)
-           gm%fcQalf(ifc,0) = gm%fcQgam(ifc,0)*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQalf(ifc,1) = gm%fcQgam(ifc,1)*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,0) = 1.0_R8*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,1) = 0.0_R8
-           gm%fcPbs(ifc) = pbs(ix,iy,0)
-           gm%fcPbshz(ifc) = pbshz(ix,iy,0)
-         endif
-       end do
+      do iy = 0, ny
+        do ix = 0, nx
+          if(mpg%imapFcx(ix,iy)/=0) then
+            ifc = mpg%imapFcx(ix,iy)
+            gm%fcBb(ifc,0:3) = wbbl(ix,iy,0:3)
+            gm%fcS(ifc) = gs(ix,iy,0)
+            gm%fcHc(ifc,1) = hc(leftix(ix,iy),leftiy(ix,iy),2)
+            gm%fcHc(ifc,2) = hc(ix,iy,0)
+            gm%fcHt(ifc)   = ht(ix,iy,0)
+            gm%fcVol(ifc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
+            gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
+            gm%fcQgam(ifc,0) = qc(ix,iy,0)
+            gm%fcQgam(ifc,1) = -qs(ix,iy,0)
+            gm%fcQalf(ifc,0) = qac(ix,iy,0)
+            gm%fcQalf(ifc,1) = qas(ix,iy,0)
+            gm%fcQbet(ifc,0) = gm%fcQgam(ifc,0)*gm%fcQalf(ifc,0) + 
+     .                         gm%fcQgam(ifc,1)*gm%fcQalf(ifc,1)
+            gm%fcQbet(ifc,1) = gm%fcQgam(ifc,1)*gm%fcQalf(ifc,0) - 
+     .                         gm%fcQgam(ifc,0)*gm%fcQalf(ifc,1)
+            gm%fcPbs(ifc) = pbs(ix,iy,0)
+            gm%fcPbshz(ifc) = pbshz(ix,iy,0)
+          end if
+        end do
+      end do
 
 ! y faces
-!       allocate (qs(-1:nx,-1:ny,0:1))
-!       call intfacev(nx, ny, bottomix, bottomiy, vol, qz(-1,-1,0),
-!     .               qs(-1,-1,1))
-       do ix = 0, nx-1
-         do iy = 1, ny-1
-!           ifc = nfx + iy+1 + ix*(ny+1)
-           if(mpg%imapFcy(ix,iy)/=0) then
-             ifc = mpg%imapFcy(ix,iy)
-             gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
-             gm%fcS(ifc) = gs(ix,iy,1)
-             gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))       !cwdk: change orientation ??
-             gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
-             gm%fcHt(ifc)   = 
-     .         0.5_R8*(hx(bottomix(ix,iy),bottomiy(ix,iy)) + hx(ix,iy))       !cwdk: computation could be made exact
-             gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),
+      do ix = 0, nx
+        do iy = 0, ny
+          if(mpg%imapFcy(ix,iy)/=0) then
+            ifc = mpg%imapFcy(ix,iy)
+            gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
+            gm%fcS(ifc) = gs(ix,iy,1)
+            gm%fcHc(ifc,1) = hc(bottomix(ix,iy),bottomiy(ix,iy),3)
+            gm%fcHc(ifc,2) = hc(ix,iy,1)
+            gm%fcHt(ifc)   = ht(ix,iy,1)
+            gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),
      .                                    bottomiy(ix,iy))
-             gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-             gm%fcQgam(ifc,0) = qc(ix,iy,1)
-             gm%fcQgam(ifc,1) = qs(ix,iy,1)
-             gm%fcQalf(ifc,0) = 0.0_R8
-             gm%fcQalf(ifc,1) = 1.0_R8*
-     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-             gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
-     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-             gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
-     .                          gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-             gm%fcPbs(ifc) = pbs(ix,iy,1)
-             gm%fcPbshz(ifc) = pbshz(ix,iy,1)
-           end if
-         end do
-
-! lower guard cells
-         iy = 0
-!         ifc = nfx + 1 + ix*(ny+1)
-         if(mpg%imapFcy(ix,iy)/=0) then
-           ifc = mpg%imapFcy(ix,iy)  
-           gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
-           gm%fcS(ifc) = gs(ix,iy,1)
-           gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))
-           gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
-           gm%fcHt(ifc)   = hx(bottomix(ix,iy),bottomiy(ix,iy))               !cwdk: computation could be made exact
-           gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
-           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-           gm%fcQgam(ifc,0) = qc(ix,iy,1)
-           gm%fcQgam(ifc,1) = qs(ix,iy,1)
-           gm%fcQalf(ifc,0) = 0.0_R8
-           gm%fcQalf(ifc,1) = 1.0_R8*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcPbs(ifc) = pbs(ix,iy,1)
-           gm%fcPbshz(ifc) = pbshz(ix,iy,1)
-         endif
-! upper guard cells
-         iy = ny
-!         ifc = nfx + (ix+1)*(ny+1)
-         if(mpg%imapFcy(ix,iy)/=0) then
-           ifc = mpg%imapFcy(ix,iy)
-           gm%fcBb(ifc,0:3) = wbbv(ix,iy,0:3)
-           gm%fcS(ifc) = gs(ix,iy,1)
-           gm%fcHc(ifc,1) = 0.5_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))
-           gm%fcHc(ifc,2) = 0.5_R8*hy(ix,iy)
-           gm%fcHt(ifc)   = hx(ix,iy)                                         !cwdk: computation could be made exact
-           gm%fcVol(ifc,1) = 0.5_R8*vol(bottomix(ix,iy),bottomiy(ix,iy))
-           gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
-           gm%fcQgam(ifc,0) = qc(ix,iy,1)
-           gm%fcQgam(ifc,1) = qs(ix,iy,1)
-           gm%fcQalf(ifc,0) = 0.0_R8
-           gm%fcQalf(ifc,1) = 1.0_R8*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,0) = gm%fcQgam(ifc,1)*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcQbet(ifc,1) = -gm%fcQgam(ifc,0)*
-     .                        gm%fcBb(ifc,0)/abs(gm%fcBb(ifc,0))
-           gm%fcPbs(ifc) = pbs(ix,iy,1)
-           gm%fcPbshz(ifc) = pbshz(ix,iy,1)
-         end if
-       end do      
+            gm%fcVol(ifc,2) = 0.5_R8*vol(ix,iy)
+            gm%fcQgam(ifc,0) = qc(ix,iy,1)
+            gm%fcQgam(ifc,1) = qs(ix,iy,1)
+            gm%fcQalf(ifc,0) = qac(ix,iy,1)
+            gm%fcQalf(ifc,1) = qas(ix,iy,1)
+            gm%fcQbet(ifc,0) = gm%fcQgam(ifc,0)*gm%fcQalf(ifc,0) + 
+     .                         gm%fcQgam(ifc,1)*gm%fcQalf(ifc,1)
+            gm%fcQbet(ifc,1) = gm%fcQgam(ifc,1)*gm%fcQalf(ifc,0) - 
+     .                         gm%fcQgam(ifc,0)*gm%fcQalf(ifc,1)
+            gm%fcPbs(ifc) = pbs(ix,iy,1)
+            gm%fcPbshz(ifc) = pbshz(ix,iy,1)
+          end if
+        end do
+      end do      
 
 ! vertices
-       do iy = 0, ny
-         do ix = 0, nx
-!           ivx = ix+1 + iy*(nx+1)
-           if(mpg%imapVx(ix,iy)/=0) then
-             ivx = mpg%imapVx(ix,iy)
-             gm%vxX(ivx) = crx(ix,iy,0)
-             gm%vxY(ivx) = cry(ix,iy,0)
-             gm%vxFfbz(ivx) = ffbz(ix,iy,1)
-             gm%vxFpsi(ivx) = fpsi(ix,iy,1,0)
-             do i = 1, mpg%vxCvP(ivx,2)
-               ic = mpg%vxCv(mpg%vxCvP(ivx,1) + i - 1)
-               gm%vxVol(mpg%vxCvP(ivx,1) + i - 1) = 0.25*gm%cvVol(ic)
-             end do
-           end if
-         end do
-       end do
-
+      do iy = 0, ny
+        do ix = 0, nx
+          if(mpg%imapVx(ix,iy)/=0) then
+            ivx = mpg%imapVx(ix,iy)
+            gm%vxX(ivx) = crx(ix,iy,0)
+            gm%vxY(ivx) = cry(ix,iy,0)
+            gm%vxFfbz(ivx) = ffbz(ix,iy,0)
+            gm%vxFpsi(ivx) = fpsi(ix,iy,0,0)
+            do i = 1, mpg%vxCvP(ivx,2)
+              ic = mpg%vxCv(mpg%vxCvP(ivx,1) + i - 1)
+              gm%vxVol(mpg%vxCvP(ivx,1) + i - 1) = 0.25*gm%cvVol(ic)
+            end do
+          end if
+        end do
+      end do
  
 ! connection length for core region
-
       gm%fsConn = 0.0_R8
 #ifdef WG_TODO
       do i = 1, nFs 
@@ -1548,126 +1379,6 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
        end if
       end do      
 #endif
-
-*  .. unit vector of the magnetic field in X,Y,Z coorinates
-
-cwdk  cell centers
-cwdk  assumption: poloidal direction is direction of line between 
-cwdk              poloidal face centers (E/W)
-      do iy = 0, ny-1
-        do ix = 0, nx-1
-          if(mpg%imapCv(ix,iy)/=0) then           
-            ic = mpg%imapCv(ix,iy)
-
-
-          ! Construct unit vector in poloidal direction:
-          dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
-     &          (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
-          duy = (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
-     &          (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8
-
-          ! length should be hx; recomputed for safety
-          du  = sqrt(dux**2+duy**2)
-
-          ! implicit assumption: gm%cvBb(ic,1) = 0.0
-          gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
-          gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
-          gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
-
-          endif
-        enddo
-      enddo
-
-      do ix = 0, nx-1
-        ! bottom guard cells
-        iy = -1
-        if(mpg%imapCv(ix,iy)/=0) then           
-          ic = mpg%imapCv(ix,iy)
-        
-        ! Construct unit vector in poloidal direction:
-        dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
-     &        (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
-        duy = (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
-     &        (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8
-
-        ! length should be hx; recomputed for safety
-        du  = sqrt(dux**2+duy**2)
-
-        ! implicit assumption: gm%cvBb(ic,1) = 0.0
-        gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
-        gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
-        gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
-        endif
-
-        ! top guard cells
-        iy = ny
-        if(mpg%imapCv(ix,iy)/=0) then           
-          ic = mpg%imapCv(ix,iy)
-
-        ! Construct unit vector in poloidal direction:
-        dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
-     &        (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
-        duy = (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
-     &        (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8
-
-        ! length should be hx; recomputed for safety
-        du  = sqrt(dux**2+duy**2)
-
-        ! implicit assumption: gm%cvBb(ic,1) = 0.0
-        gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
-        gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
-        gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
-
-        endif
-      end do
- 
-      do iy = 0, ny-1
-        ix = -1
-        if(mpg%imapCv(ix,iy)/=0) then           
-          ic = mpg%imapCv(ix,iy)
-        ! Construct unit vector in poloidal direction:
-        dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
-     &        (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
-        duy = (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
-     &        (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8
-
-        ! length should be hx; recomputed for safety
-        du  = sqrt(dux**2+duy**2)
-
-        ! implicit assumption: gm%cvBb(ic,1) = 0.0
-        gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
-        gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
-        gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
-        endif
-
-        ix = nx
-        if(mpg%imapCv(ix,iy)/=0) then           
-          ic = mpg%imapCv(ix,iy)
-
-        ! Construct unit vector in poloidal direction:
-        dux = (crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
-     &        (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
-        duy = (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
-     &        (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8
-
-        ! length should be hx; recomputed for safety
-        du  = sqrt(dux**2+duy**2)
-
-        ! implicit assumption: gm%cvBb(ic,1) = 0.0
-        gm%cvEb(ic,0) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*dux/du
-        gm%cvEb(ic,1) = gm%cvBb(ic,0)/gm%cvBb(ic,3)*duy/du
-        gm%cvEb(ic,2) = gm%cvBb(ic,2)/gm%cvBb(ic,3)
-
-        endif
-      end do
-
-      ! normalize
-      gm%cvEb(:,0) = gm%cvEb(:,0)/
-     &  sqrt(gm%cvEb(:,0)**2 + gm%cvEb(:,1)**2 + gm%cvEb(:,2)**2)
-      gm%cvEb(:,1) = gm%cvEb(:,1)/
-     &  sqrt(gm%cvEb(:,0)**2 + gm%cvEb(:,1)**2 + gm%cvEb(:,2)**2)
-      gm%cvEb(:,2) = gm%cvEb(:,2)/
-     &  sqrt(gm%cvEb(:,0)**2 + gm%cvEb(:,1)**2 + gm%cvEb(:,2)**2)
 
       end subroutine prep_geometry
 

@@ -53,10 +53,10 @@ cwdk  test for wbb.(:,:,3) switched to .ge.; could be zero in dead cells
        do ix = -1, nx
         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
         if(isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) 
-     &    pbs(ix,iy,0) = gs(ix,iy,0)*qac(ix,iy,0)*wbbl(ix,iy,0)/
+     &    pbs(ix,iy,0) = gs(ix,iy,0)*qac(ix,iy,0)*abs(wbbl(ix,iy,0))/
      &      wbbl(ix,iy,3)
         if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) 
-     &    pbs(ix,iy,1) = gs(ix,iy,1)*qac(ix,iy,1)*wbbv(ix,iy,0)/
+     &    pbs(ix,iy,1) = gs(ix,iy,1)*qac(ix,iy,1)*abs(wbbv(ix,iy,0))/
      &      wbbv(ix,iy,3)
        enddo
       enddo

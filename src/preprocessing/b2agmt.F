@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agmt (nx, ny, isymm, 
-     & crx, cry, fpsi, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
+      subroutine b2agmt (nx, ny, isymm, crx, cry,
+     & fpsi, bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
      & gs, cell_width, cell_height, leftix, leftiy, bottomix, bottomiy, 
      & rightix, rightiy, topix, topiy, cflag)
       use b2mod_types
@@ -22,13 +22,13 @@
      $  cflag(-1:nx,-1:ny,GRID_N_CELLFLAGS) 
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     &  fpsi(-1:nx,-1:ny,0:3,0:2)
+     &  fpsi(-1:nx,-1:ny,0:3,0:2), bb(-1:nx,-1:ny,0:2)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  gs(-1:nx,-1:ny,0:2), qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1),
-     &  ebc(-1:nx,-1:ny,0:1), 
+     &  ebc(-1:nx,-1:ny,0:2), 
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny),
      &  hc(-1:nx,-1:ny,0:3), ht(-1:nx,-1:ny,0:1)
 
@@ -201,7 +201,7 @@
         ! hc(:,:,0:3): distance between cell centroid and face centers
         ! ht(:,:,0:1): length of left and bottom faces
         ! ecc(:,:,0:3,0:1): unit vectors of the centroid-face connections
-        ! ebc(:,:,0:1): unit vector poloidal field in cell center
+        ! ebc(:,:,0:2): unit vector magnetic field field in cell center
 
         cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
         select case (cgeo)
@@ -254,8 +254,8 @@
             ! Assumptions: - internal cells have N and S faces aligned
             !              - for classical grids, the above is true for all cells
             ! Set ebc equal to ecc for numerical accuary
-            ebc(ix,iy,0) = ecc(ix,iy,0,0)
-            ebc(ix,iy,1) = ecc(ix,iy,0,1)
+            ebc(ix,iy,0) = ecc(ix,iy,0,0)*bb(ix,iy,0)/abs(bb(ix,iy,0))
+            ebc(ix,iy,1) = ecc(ix,iy,0,1)*bb(ix,iy,0)/abs(bb(ix,iy,0))
           else
             ! For arbitrary (quad) cells, compute as average between 
             ! poloidal directions at vertices
@@ -444,7 +444,14 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &       (hc(leftix(ix,iy),leftiy(ix,iy),2)+hc(ix,iy,0))
 
           ! Connector line is purely poloidal
-          ecf = ebf
+          ecf(0) = 
+     &       (hc(ix,iy,0)*ecc(leftix(ix,iy),leftiy(ix,iy),2,0)+
+     &        hc(leftix(ix,iy),leftiy(ix,iy),2)*ecc(ix,iy,0,0))/
+     &       (hc(leftix(ix,iy),leftiy(ix,iy),2)+hc(ix,iy,0))
+          ecf(1) =
+     &       (hc(ix,iy,0)*ecc(leftix(ix,iy),leftiy(ix,iy),2,1)+
+     &        hc(leftix(ix,iy),leftiy(ix,iy),2)*ecc(ix,iy,0,1))/
+     &       (hc(leftix(ix,iy),leftiy(ix,iy),2)+hc(ix,iy,0))
 
         else
           ! "Special" faces (not between aligned quads)
@@ -503,10 +510,21 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
 
           ! Implicit assumption made here: internal cells are quads
           ! Standard treatment for magnetically rectangular cells
+          ! First: estimate of ebf by interpolation
+          ebf(0) = 
+     &       (hc(ix,iy,1)*ebc(bottomix(ix,iy),bottomiy(ix,iy),0)+
+     &        hc(bottomix(ix,iy),bottomiy(ix,iy),3)*ebc(ix,iy,0))/
+     &       (hc(bottomix(ix,iy),bottomiy(ix,iy),2)+hc(ix,iy,0))
+          ebf(1) = 
+     &       (hc(ix,iy,1)*ebc(bottomix(ix,iy),bottomiy(ix,iy),1)+
+     &        hc(bottomix(ix,iy),bottomiy(ix,iy),3)*ebc(ix,iy,1))/
+     &       (hc(bottomix(ix,iy),bottomiy(ix,iy),2)+hc(ix,iy,0))
+
           ! Assume perfectly aligned face
-          ! WG-TODO: check for negative poloidal field! qas = -1?
           qac(ix,iy,1) = 0.0_R8
-          qas(ix,iy,1) = 1.0_R8
+          qas(ix,iy,1) = sinang ( ebf(0), ebf(1), 
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0))
+          qas(ix,iy,1) = sign(1.0_R8,qas(ix,iy,1))
 
           ! qc and qs for backwards compatibility
           qc(ix,iy,1) =
@@ -557,6 +575,20 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
           write(*,'(a,4f13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
         endif
        enddo
+      enddo
+*   ..unit vector of total magnetic field
+      ! until this point, ebc was unit vector of poloidal field
+      ! now, correct for toroidal field
+      do iy = -1, ny
+        do ix = -1, nx
+          if (bb(ix,iy,3) == 0.0_R8) then
+            ebc(ix,iy,:) = 0.0_R8
+          else
+            ebc(ix,iy,0) = abs(bb(ix,iy,0))/bb(ix,iy,3)*ebc(ix,iy,0)
+            ebc(ix,iy,1) = abs(bb(ix,iy,0))/bb(ix,iy,3)*ebc(ix,iy,1)
+            ebc(ix,iy,2) = bb(ix,iy,2)/bb(ix,iy,3)
+          endif
+        enddo
       enddo
 *   ..test sign of qz(,,1) and qc(,)
 *     (A negative entry in qz(,,1) corresponds to a left-handed

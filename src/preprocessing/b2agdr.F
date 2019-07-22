@@ -323,7 +323,7 @@
 *   ..if not provided already by Carre grid
       if(istyle.ge.0) call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
 *   ..compute metric coefficients on auxiliary mesh
-      call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, vol1,
+      call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
      & hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
      & cell_width1, cell_height1,
      & leftix1, leftiy1, bottomix1, bottomiy1, 

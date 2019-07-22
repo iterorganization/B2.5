@@ -59,7 +59,7 @@
       allocate(vol(-1:nxd,-1:nyd))
       allocate(pbs(-1:nxd,-1:nyd,0:1))
       allocate(pbshz(-1:nxd,-1:nyd,0:1))                             !srv 09.01.01
-      allocate(ebc(-1:nxd,-1:nyd,0:1))
+      allocate(ebc(-1:nxd,-1:nyd,0:2))
       allocate(conn(-1:nyd))
       allocate(cell_width(-1:nxd,-1:nyd))
       allocate(cell_height(-1:nxd,-1:nyd))

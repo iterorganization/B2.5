@@ -74,7 +74,7 @@
       allocate(qac1(-1:nxd,-1:nyd,0:1))
       allocate(qas1(-1:nxd,-1:nyd,0:1))
       allocate(pbs1(-1:nxd,-1:nyd,0:1))
-      allocate(ebc1(-1:nxd,-1:nyd,0:1))
+      allocate(ebc1(-1:nxd,-1:nyd,0:2))
       allocate(wbbl1(-1:nxd,-1:nyd,0:3))
       allocate(wbbr1(-1:nxd,-1:nyd,0:3))
       allocate(wbbv1(-1:nxd,-1:nyd,0:3))

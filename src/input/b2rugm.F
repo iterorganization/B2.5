@@ -25,7 +25,7 @@
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny),
      &  hc(-1:nx,-1:ny,0:3), ht(-1:nx,-1:ny,0:1), 
      &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1), 
-     &  ebc(-1:nx,-1:ny,0:1)
+     &  ebc(-1:nx,-1:ny,0:2)
       type(B2GridMap) :: gmap
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -188,7 +188,7 @@
       integer n2, ix, iy, i,j, idum(0:9)
       integer iFace, offset
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, t0, t1
+     *   p0x, p0y, p1x, p1y, t0, t1, t2
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -443,28 +443,45 @@ cxpb-end
         call cfrure(nget, n2*2, ht, 'ht')
         call cfrure(nget, n2*2, qac, 'qac')
         call cfrure(nget, n2*2, qas, 'qas')
-        call cfrure(nget, n2*2, ebc, 'ebc')
-      else
+        call cfrure(nget, n2*3, ebc, 'ebc')
+      endif
+*  ..interpolate magnetic field to cell faces
+      call b2agbf (nx, ny, isymm, periodic_bc, nncut,
+     & crx, cry, fpsi, ffbz, vol, gs, qz, qc, qs, bb, wbbl, wbbr, wbbv,
+     & region, leftix, leftiy, bottomix, bottomiy, rightix, rightiy,
+     & topix, topiy, cflags)
+*  ..interpolate magnetic field to cell corners
+      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
+      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
+*  ..init some arrays for classical grids
+      if(b2fgmtry_version.lt.'03.002.000') then
         hc(:,:,0) = 0.5*hx(:,:)
         hc(:,:,1) = 0.5*hy(:,:)
         hc(:,:,2) = 0.5*hx(:,:)
         hc(:,:,3) = 0.5*hy(:,:)
-        qac(:,:,0) = qc(:,:,0)
-        qas(:,:,0) = qs(:,:,0)
+        qac(:,:,0) =  qc(:,:,0)*wbbl(:,:,0)/abs(wbbl(:,:,0))
+        qas(:,:,0) = -qs(:,:,0)*wbbl(:,:,0)/abs(wbbl(:,:,0))
         qac(:,:,1) = 0.0_R8
-        qas(:,:,1) = 1.0_R8 ! sign !?!
-!WG-TODO: define ebc and ht
+        qas(:,:,1) = 1.0_R8*wbbv(:,:,0)/abs(wbbv(:,:,0))
+        ! Initialize ebc and ht for 'classical' grids
         do iy=-1,ny
           do ix=-1,nx
+            ! Unit vector of magnetic field in Cartesian X,Y,Z coordinates
             ! Unit vectors of line between W/E face centers
             t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
             t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
-            ebc(ix,iy,0) = t0/norm(t0,t1)
-            ebc(ix,iy,1) = t1/norm(t0,t1)
+            t2 = norm(t0,t1)
+
+            ebc(ix,iy,0) = bb(ix,iy,0)/bb(ix,iy,3)*t0/t2
+            ebc(ix,iy,1) = bb(ix,iy,0)/bb(ix,iy,3)*t1/t2
+            ebc(ix,iy,2) = bb(ix,iy,2)/bb(ix,iy,3)
 
             ! Length along faces, ht
             ! Note: this implementation ensures backwards compatibility
-            ! Could be made exact using dist!
+            ! Could be made exact using dist, but the loss of backwards
+            ! compatibility
             if (leftix(ix,iy).ne.-2) then
               ht(ix,iy,0) = 
      &          0.5_R8*(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))
@@ -487,16 +504,6 @@ cxpb-end
         call b2xgbs (nx, ny, wbbl, wbbv, gs, qac, pbs,
      &  leftix, leftiy, bottomix, bottomiy, cflags)
       endif
-*  ..interpolate magnetic field to cell faces
-      call b2agbf (nx, ny, isymm, periodic_bc, nncut,
-     & crx, cry, fpsi, ffbz, vol, gs, qz, qc, qs, bb, wbbl, wbbr, wbbv,
-     & region, leftix, leftiy, bottomix, bottomiy, rightix, rightiy,
-     & topix, topiy, cflags)
-*  ..interpolate magnetic field to cell corners
-      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
-     1     leftix,leftiy,rightix,rightiy,
-     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
-      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..test sign of bb
       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.ge.')
       call b2xvsg (n2, wbbl(-1,-1,3), 1, 'wbbl3', '.ge.')

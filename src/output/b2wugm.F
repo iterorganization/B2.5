@@ -18,7 +18,7 @@
      &  hy(-1:nx,-1:ny), hc(-1:nx,-1:ny,0:3), ht(-1:nx,-1:ny,0:1), 
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), 
      &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1),
-     &  ebc(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
+     &  ebc(-1:nx,-1:ny,0:2), gs(-1:nx,-1:ny,0:2),
      &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx,-1:ny,0:3),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -500,7 +500,7 @@ cwdk  additional set of geometric parameters for extended grids
       call cfwure(nput, n2*2, ht, 'ht')
       call cfwure(nput, n2*2, qac, 'qac')
       call cfwure(nput, n2*2, qas, 'qas')
-      call cfwure(nput, n2*2, ebc, 'ebc')
+      call cfwure(nput, n2*3, ebc, 'ebc')
 * ..return
       call subend ()
       return
