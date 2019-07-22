@@ -2067,15 +2067,15 @@ c.. Test consistency with physical edges within the computational domain
       write (iout,'(1x,a,(10(i5,a1,1x)))') 
      .    'eb2spcr= ',(eb2spcr(is),',',is=1,nspecies)
       if (nnmoli > 0)
-     .  write (iout,'(1x,a,(10(l3,a1,1x)))') 
-     .    'lmolscl= ',(lmolscl(is),',',is=1,nnmoli)
+     .  write (iout,'(1x,a,(10(i3,a1,1x)))') 
+     .    'lmolscl(1)= ',(lmolscl(is),',',is=1,nnmoli)
       do is=1,nnmoli
         write (iout,'(1x,a,i2,a,(10(i5,a1,1x)))') 
-     .    'mlcmp(1,',i,')= ',(mlcmp(i,is),',',i=1,nnatmi)
+     .    'mlcmp(1,',is,')= ',(mlcmp(i,is),',',i=1,nnatmi)
       end do
       do is=1,nnatmi
-        write (iout,'(1x,a,i2,a,(10(l3,a1,1x)))') 
-     .    'lstrascl(1,',i,')= ',(lstrascl(i,is),',',i=1,m%nRc)
+        write (iout,'(1x,a,i2,a,(10(i3,a1,1x)))') 
+     .    'lstrascl(1,',is,')= ',(lstrascl(i,is),',',i=1,m%nRc)
       end do
       write (iout,'(1x,a,i5,a1)') 'l_neutrad= ',l_neutrad,','
       write (iout,'(1x,a,es10.2,a1)') 'neut_scl_lim= ',neut_scl_lim,','

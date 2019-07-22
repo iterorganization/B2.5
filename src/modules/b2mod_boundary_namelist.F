@@ -3,6 +3,7 @@
       use b2mod_indirect
       use b2mod_version
       use b2us_map
+      use carre_constants
 cank-20020724 {
 c* Parameters controlling the source scaling procedure are added:
 c*  lcbs          : boundary segments representing the core boundary in B2
@@ -1463,8 +1464,19 @@ c.. Test consistency with region boundaries
       implicit none
       integer, intent(in) :: nx, ny, ns
       type (mapping), intent (inout) :: m
-      integer :: ib, ibc, is, inbc
+      integer :: ib, ibc, is, inbc, noss, ncoss, icoss, iss, indss,
+     .           ix, iy, jcoss
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
+      integer, allocatable :: fcss(:)
+      
+      type fcpart
+        integer :: fcno
+	integer :: vx1, vx2
+	type(fcpart), pointer :: prev, next
+      end type fcpart
+
+      type(fcpart), pointer :: head, tail
+      type(fcpart), pointer :: face
 
       m%nBc   = nbc     ! number of boundary conditions
       m%mxnBc = 0       ! number of cells with imposed BC
@@ -1482,6 +1494,12 @@ c.. Test consistency with region boundaries
      >      bcs(ib) = bcs(ib) + 1
           if (topiy   (bcpos(ib),bcend(ib)  ) .eq. ny+1)
      >      bce(ib) = bce(ib) - 1
+#ifdef CFLAGS
+        elseif (bcchar(ib).eq.'A') then
+! find the number of faces for this boundary condition
+          bcl(ib) = count((cflags(:,:,2:5) >= bcstart(ib)) .and.
+     >                    (cflags(:,:,2:5) <= bcend(ib)))
+#endif
         else
           call xerrab ('bcchar not yet available for WG')
         endif
@@ -1501,8 +1519,9 @@ c.. Test consistency with region boundaries
         if (bcchar(ib).eq.'S') then
           do ibc = 1, bcl(ib)
             inbc = inbc + 1
+    ! number of the corresponding domain face
             m%bcFc(inbc) = 
-     >         m%cvFc(m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1))    ! number of the corresponding domain face
+     >         m%cvFc(m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1))
             m%bcFcOr(inbc) = -1.0_R8
           enddo
         elseif (bcchar(ib).eq.'N') then
@@ -1526,6 +1545,87 @@ c.. Test consistency with region boundaries
      >         m%cvFc(m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1))
             m%bcFcOr(inbc) = 1.0_R8
           enddo
+#ifdef CFLAGS
+        elseif (bcchar(ib).eq.'A') then 
+          noss = bcend(ib) - bcstart(ib) + 1
+	  do iss = 1, noss
+	    indss = bcstart(ib)+iss-1
+!  find all faces belonging to surface structure INDSS
+            ncoss = count(cflags(:,:,2:5) == indss)
+	    allocate (fcss(ncoss))
+	    do iy = -1, ny
+	      do ix = 1, nx
+	        if (count(cflags(ix,iy,2:5) == indss) > 0) then
+		  if (cflags(ix,iy,CELLFLAG_LEFTFACE) == indss) then
+                    icoss = icoss + 1
+		    fcss(icoss) = m%imapFcx(ix,iy)
+                  end if             
+		  if (cflags(ix,iy,CELLFLAG_RIGHTFACE) == indss) then
+                    icoss = icoss + 1
+		    fcss(icoss) = m%imapFcx(ix+1,iy)
+                  end if             
+		  if (cflags(ix,iy,CELLFLAG_BOTTOMFACE) == indss) then
+                    icoss = icoss + 1
+		    fcss(icoss) = m%imapFcy(ix,iy)
+                  end if             
+		  if (cflags(ix,iy,CELLFLAG_TOPFACE) == indss) then
+                    icoss = icoss + 1
+		    fcss(icoss) = m%imapFcy(ix,iy+1)
+                  end if             
+		end if
+	      end do  ! ix
+	    end do  ! iy
+
+! sort face for a continuous surface
+            	    
+            allocate(face)
+	    nullify(face%prev)
+	    nullify(face%next)
+	    face%fcno = fcss(1)
+	    face%vx1 = m%fcVx(face%fcno,1)
+	    face%vx2 = m%fcVx(face%fcno,2)
+            head => face
+	    tail => face
+
+	    do jcoss = 2, noss
+	      do icoss = 2, noss
+	        if (face%vx1 == m%fcVX(fcss(icoss),2)) then
+	          allocate(face) 
+	          nullify(face%prev)
+	          nullify(face%next)
+	          face%fcno = fcss(icoss)
+	          face%vx1 = m%fcVx(face%fcno,1)
+	          face%vx2 = m%fcVx(face%fcno,2)
+	          face%next => head
+		  head => face	
+  		  exit	
+	        end if
+	        if (face%vx2 == m%fcVX(fcss(icoss),1)) then
+	          allocate(face) 
+		  nullify(face%prev)
+	          nullify(face%next)
+	          face%fcno = fcss(icoss)
+	          face%vx1 = m%fcVx(face%fcno,1)
+	          face%vx2 = m%fcVx(face%fcno,2)
+		  face%prev => tail
+		  tail => face
+		  exit		
+	        end if
+              end do  ! icoss
+            end do  ! jcoss
+!
+! store faces in m%bcFc(inbc)...
+            do while (associated(head))
+	      inbc = inbc + 1
+	      m%bcFc(inbc) = head%fcno
+	      tail => head
+	      head => head%next
+	      deallocate (tail)
+	    end do
+
+	    deallocate (fcss)
+	  end do  ! iss	  
+#endif
         else
           call xerrab ('conv_bcparms -- wrong BCCHAR')
         endif

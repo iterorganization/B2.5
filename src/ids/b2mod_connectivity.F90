@@ -288,7 +288,6 @@ module b2mod_connectivity
         &  /), &
         & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
 
-
 contains
 
   !> Computes the standard b2 connectivity information

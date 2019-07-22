@@ -111,7 +111,7 @@
       type(geometry), save :: gm
       type(B2State), save :: state
       type(B2StateExt), save :: state_ext
-      integer :: ntm, is, io_33, io_34, io_35, ico, iel, iel2
+      integer :: ntm, is, io_33, io_34, io_35, ico, iel, iel2, natm_loc
 *   ..procedures
       integer lnblnk
       logical is_comment
@@ -213,6 +213,7 @@
      &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
       call get_nxt(nx, nxtl, nxtr)
 
+      call ipgeti ('use_eirene', use_eirene)	
       call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
@@ -337,9 +338,14 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         bcp_filename=repeat(' ',260)
         bcp_filename(1:22) = 'b2.neutrals.parameters'
         call get_version(bcp_filename,neutrals_version)
+        ntm = 0
+        do is = 0, ns-1
+          if (is_neutral(is)) ntm = ntm+1
+        enddo
+        natm_loc = max(natm, ntm)
         if (neutrals_version.lt.'03.002.000') then
           call alloc_b2mod_neutrals
-     .     (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
+     .     (nx, ny, ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(nx, ny, ns, .false.)
           call conv_rcparms (nx, ny, ns, mpg)
           call write_rcparms(ns,mpg)
@@ -347,7 +353,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
           call calc_mapping_rc(nx, ny, ns, mpg)
         else
           call alloc_b2mod_neutrals (mpg%nCi/2,mpg%nCi/2, ns, 
-     .      natm, nmol, nion, nstraid, nsts, sput_dst)
+     .      natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(ns, mpg, .false.)
         end if
       end if

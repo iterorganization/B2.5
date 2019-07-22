@@ -247,12 +247,8 @@ c
       call intface1(nCv,nFc,ns-1,mpg%fcCv,wght,pl%na,naf)
 
       if (eirene_uub_style.eq.1) then
-*   ..interpolate density to cell faces
-        call intface1(nCv,nFc,ns-1,mpg%fcCv,gm%fcVol,pl%na,naf)
         do is = 0,ns-1
           nafsqalf(1:nFc,0,is) = gm%fcS(1:nFc)*gm%fcQalf(1:nFc,0)*
-     .                           naf(1:nFc,is)+1.E-30_R8
-          nafsqalf(1:nFc,1,is) = gm%fcS(1:nFc)*gm%fcQalf(1:nFc,1)*
      .                           naf(1:nFc,is)+1.E-30_R8
         end do
         if (eirene_background.eq.0) then
@@ -261,27 +257,15 @@ c
 !    .       1.E-30_R8)
           fna_tmp(1:nFc,0,0:ns-1) = dv%fna(1:nFc,0,0:ns-1)/
      .                              nafsqalf(1:nFc,0,0:ns-1)
-!         fna_tmp(1:nFc,1,0:ns-1) = dv%fna(1:nFc,1,0:ns-1)/
-!    .      (gm%fcS(1:nFc)*gm%fcQalf(1:nFc,1)*naf(1:nFc,0:ns-1)+
-!    .      1.E-30_R8)
-          fna_tmp(1:nFc,1,0:ns-1) = dv%fna(1:nFc,1,0:ns-1)/
-     .                              nafsqalf(1:nFc,1,0:ns-1)
         else
 !         fna_tmp(1:nFc,0,0:ns-1) = dv%fna_eir(1:nFc,0,0:ns-1)/
 !    .      (gm%fcS(1:nFc)*gm%fcQalf(1:nFc,0)*naf(1:nFc,0:ns-1)+
 !    .      1.E-30_R8)
           fna_tmp(1:nFc,0,0:ns-1) = dv%fna_eir(1:nFc,0,0:ns-1)/
      .                              nafsqalf(1:nFc,0,0:ns-1)
-!         fna_tmp(1:nFc,1,0:ns-1) = dv%fna_eir(1:nFc,1,0:ns-1)/
-!    .      (gm%fcS(1:nFc)*gm%fcQalf(1:nFc,1)*naf(1:nFc,0:ns-1)+
-!    .      1.E-30_R8)
-          fna_tmp(1:nFc,1,0:ns-1) = dv%fna_eir(1:nFc,1,0:ns-1)/
-     .                              nafsqalf(1:nFc,1,0:ns-1)
         endif
         call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellP,
      .                fna_tmp(:,0,:),uuc)
-        call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellR,
-     .                fna_tmp(:,1,:),vvc)
       end if
 
       do is = 0,ns-1
@@ -672,7 +656,7 @@ c
      .      'Tesla','Tesla','Tesla','(V/m)','(V/m)','(V/m)',
      .      'V','??','??',' ',' ',' ',' '
 
-      write (31,'(2i6)') mpg%nCi, mpg%nFc
+      write (31,'(2i6)') mpg%nCv, mpg%nCi, mpg%nFc
       
       do ic = 1, mpg%nCi
         write (31,'(i7,15es15.7)') ic, teb(ic), neb(ic), 

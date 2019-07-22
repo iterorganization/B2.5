@@ -20,6 +20,7 @@
       use b2us_geo
       use b2us_plasma
       use b2mod_b2cmfs
+      use b2mod_connectivity
       use carre_constants
 
       implicit none
@@ -85,6 +86,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
       subroutine calc_mapping(nx, ny, m)
 #ifdef WG_DEBUG
       use b2us_debug
+     .  , isStructured => isClassicalGrid
 #endif
       implicit none
       type (mapping), intent (inout) :: m
@@ -161,7 +163,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
       iyghostvx = 0
 
 
-#ifdef CFLAGS
+#ifndef CFLAGS
 ! Count internal ghost cells
       icount = 0
       do iy = 1, ny
@@ -174,19 +176,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
             iyghostcv(icount) = iy-1
           endif	
         enddo
-        if (iy == 1) then
-! find position of central cut
-          m%nctcnt = count(leftix(0:nx-1,iy-1) == -2)
-          allocate (m%ictcntrl(m%nctcnt))
-          m%ictcntrl = 0
-          ict = 0
-          do ix = 1, nx
-            if (leftix(ix-1,iy-1) == -2) then
-              ict = ict+1
-              m%ictcntrl(ict) = ix-1
-            end if
-          end do
-        end if
       enddo
       nghostcvi = icount              ! internal ghost cells
       do ix = 0, nx+1
@@ -345,7 +334,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 
 !  no. of cell faces
 
-#ifdef CFLAGS
+#ifndef CFLAGS
 ! Count internal faces in between ghost cells (first x-faces then y-faces)
       icount = 0      
       do iy = 1, ny
@@ -427,7 +416,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 #endif
 
 ! no. of vertices
-#ifdef CFLAGS
+#ifndef CFLAGS
 ! Count internal vertices surrrounded by ghost cells
       icount = 0      
       do iy = 1, ny+1
@@ -519,7 +508,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       m%imapCv= 0 ! 0 means not in use in unstructured
       ici =0
       icg = m%nCi
-#ifdef CFLAGS
+#ifndef CFLAGS
       do iy = 1, ny
         do ix = 1, nx
           if(ighostcv(ix-1,iy-1)==0) then
@@ -709,7 +698,7 @@ cwdk  might need to add duplicates numbers here...
 #endif
 
 
-#ifdef CFLAGS
+#ifndef CFLAGS
 ! no. of faces to be considered for this cell
       m%cvFcP(1:m%nCi,2) = 4
       m%cvFcP(m%nCi+1:m%nCv,2) = 1

@@ -281,6 +281,7 @@
 
       call alloc_mapping (mpg)
 
+! write the mapping information
       call cfruin (iun, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
       call cfruin (iun, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
       call cfruin (iun, mpg%nFc*2,   mpg%fcCv,  'fcCv')

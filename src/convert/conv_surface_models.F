@@ -188,6 +188,7 @@
       do i = 1, ntrg, 12
         ihelp = 0
         read (ineir,'(12i6)') ihelp
+        write (iouteir,'(12i6)') ihelp
         isum = isum + sum(ihelp)
       end do
 !  write target information
@@ -422,6 +423,7 @@
 
       open (newunit=nblk14,file='eirene_block14.dat')
       write (nblk14,'(i6)') ntarg
+      write (nblk14,'(12i6)') (1, i=1,ntarg)
       do i = 1, ntarg
         write (nblk14,'(12i6)') i, jsts(i), 0, 0, 1, 1
       end do
