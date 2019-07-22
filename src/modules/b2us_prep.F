@@ -318,7 +318,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 
 ! find position of central cut
 !WG-TODO: need to generalize for extended meshes! All cells on iy=0 might have -2...
-!      if (classical) then
+      if (classical) then
        iy = 1
        m%nctcnt = count(leftix(0:nx-1,iy-1) == -2)
        allocate (m%ictcntrl(m%nctcnt))
@@ -330,7 +330,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
            m%ictcntrl(ict) = ix-1
          end if
        end do
-!      endif
+      endif
 
 !  no. of cell faces
 
@@ -373,12 +373,9 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
             icount=icount+1
             ixghostfcx(icount) = ix
             iyghostfcx(icount) = iy
-          elseif(((cflags(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE) 
-     .                                    /= GRID_INTERNAL).and.
-     .       (cflags(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE) 
-     .                                    /= GRID_BOUNDARY).and.
-     .       (cflags(ix,iy,CELLFLAG_TYPE) /= GRID_BOUNDARY))) then
+          elseif(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE)).and.
+     .           .not.isRealCell(cflags(leftix(ix,iy),leftiy(ix,iy),
+     .                                 CELLFLAG_TYPE)))then 
             ! Faces between guard cells
             ighostfcx(ix,iy)=1
             icount=icount+1
@@ -398,12 +395,10 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
             icount=icount+1
             ixghostfcy(icount) = ix
             iyghostfcy(icount) = iy
-          elseif(((cflags(bottomix(ix,iy),bottomiy(ix,iy),
-     .                     CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(bottomix(ix,iy),bottomiy(ix,iy),
-     .                     CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .       (cflags(ix,iy,CELLFLAG_TYPE) /= GRID_BOUNDARY))) then
+          elseif(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE)).and.
+     .           .not.isRealCell(cflags(bottomix(ix,iy),bottomiy(ix,iy),
+     .                                 CELLFLAG_TYPE)))then 
+            ! Faces between guard cells
             ighostfcy(ix,iy)=1
             icount=icount+1
             ixghostfcy(icount) = ix
