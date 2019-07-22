@@ -102,15 +102,18 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .           ighostfcy(:,:), ixghostfcy(:), iyghostfcy(:), 
      .           ighostvx(:,:), ixghostvx(:), iyghostvx(:)
       real(R8) :: xco(4), yco(4)
-      logical lfound, swapped
+      logical lfound, swapped, classical
 
 !  assume a structured quadrilateral grid
 
 !  store information for easy back-transformation to structured format
+!WG-TODO: rename this to "isStructuredGrid"?
       m%isClassicalGrid = 1
       m%nx    = nx
       m%ny    = ny
       m%nncut = nncut
+
+      classical = isClassicalGrid(cflags)
 
       write (*,*) 'Creating mapping ...'
 
@@ -276,62 +279,42 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 #else
 ! Count internal ghost cells
       icount = 0
-! Count "corner" points on boundaries, by checking whether it is surrounded by ghosts
-      iy = 0 ! south
-        do ix = 0, nx+1 
-       if (cflags(ix-1,iy-1,CELLFLAG_TYPE) == GRID_GUARD) then
-        if (((rightix(ix-1,iy-1)==nx+1).or.
-     .       (leftix(ix-1,iy-1)==-2)).and.
-     .       (cflags(topix(ix-1,iy-1),topiy(ix-1,iy-1),CELLFLAG_TYPE)==
-     .        GRID_GUARD)) then  
-            icorner(ix-1,iy-1)=1
-            icount=icount+1
-            ixcorner(icount) = ix-1
-            iycorner(icount) = iy-1
+! Count "corner" points, by checking whether it is surrounded by ghosts and/or
+! non-existing cells
+      do iy = -1, ny
+       do ix = -1, nx
+        if (isUnusedCell(cflags(ix, iy, CELLFLAG_TYPE))) cycle
+        ict = 0
+	! Count inexisting neighbors
+        if (rightix(ix,iy)==nx+1) ict = ict+1
+        if (leftix(ix,iy)==-2  )  ict = ict+1
+        if (topiy(ix,iy)==ny+1)   ict = ict+1
+        if (bottomiy(ix,iy)==-2)  ict = ict+1
+        ! Count guard neighbors
+        if (rightix(ix,iy)/=nx+1) then
+         if (cflags(rightix(ix,iy),rightiy(ix,iy),CELLFLAG_TYPE)==
+     .       GRID_GUARD) ict = ict+1
         endif
-       endif	
-      enddo
-      iy = ny+1 ! north
-      do ix = 0, nx+1
-       if (cflags(ix-1,iy-1,CELLFLAG_TYPE)==GRID_GUARD) then
-        if (((rightix(ix-1,iy-1)==nx+1).or.
-     .       (leftix(ix-1,iy-1)==-2)).and.
-     .       (cflags(bottomix(ix-1,iy-1),bottomiy(ix-1,iy-1),
-     .               CELLFLAG_TYPE)==GRID_GUARD)) then
-         icorner(ix-1,iy-1)=1
+        if (leftix(ix,iy)/=-2) then
+         if (cflags(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE)==
+     .       GRID_GUARD) ict = ict+1
+        endif
+        if (topiy(ix,iy)/=ny+1) then
+         if (cflags(topix(ix,iy),topiy(ix,iy),CELLFLAG_TYPE)==
+     .       GRID_GUARD) ict = ict+1
+        endif
+        if (bottomiy(ix,iy)/=-2) then
+         if (cflags(bottomix(ix,iy),bottomiy(ix,iy),CELLFLAG_TYPE)==
+     .       GRID_GUARD) ict = ict+1
+        endif
+        ! Corner if all neighbors are either guard or non-existing
+        if (ict == 4) then
+         icorner(ix,iy)=1
          icount=icount+1
-         ixcorner(icount) = ix-1
-         iycorner(icount) = iy-1
+         ixcorner(icount) = ix
+         iycorner(icount) = iy
         endif
-       endif	
-      enddo
-      ix = 0 ! west
-      do iy = 1, ny 
-       if (cflags(ix-1,iy-1,CELLFLAG_TYPE)==GRID_GUARD) then
-        if (((topiy(ix-1,iy-1)==ny+1).or.
-     .       (bottomiy(ix-1,iy-1)==-2)).and.
-     .      (cflags(rightix(ix-1,iy-1),rightiy(ix-1,iy-1),CELLFLAG_TYPE)
-     .       ==GRID_GUARD)) then
-         icorner(ix-1,iy-1)=1
-         icount=icount+1
-         ixcorner(icount) = ix-1
-         iycorner(icount) = iy-1
-        endif
-       endif	
-      enddo
-      ix = nx+1 ! east
-      do iy = 1, ny 
-       if (cflags(ix-1,iy-1,CELLFLAG_TYPE)==GRID_GUARD) then
-        if (((topiy(ix-1,iy-1)==ny+1).or.
-     .       (bottomiy(ix-1,iy-1)==-2)).and.
-     .      (cflags(leftix(ix-1,iy-1),leftiy(ix-1,iy-1),CELLFLAG_TYPE)==
-     .       GRID_GUARD)) then
-         icorner(ix-1,iy-1)=1
-         icount=icount+1
-         ixcorner(icount) = ix-1
-         iycorner(icount) = iy-1
-        endif
-       endif	
+       enddo
       enddo
       ncorneri = icount
       m%nCi = count( cflags(:, :, CELLFLAG_TYPE) == GRID_INTERNAL)
@@ -342,20 +325,23 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 #endif
 
       write (*,*) 'nCv, nCi, nCg', m%nCv, m%nCi, m%nCg
+      write (*,*) 'ncorneri     ', ncorneri
 
 ! find position of central cut
-      iy = 1
-      m%nctcnt = count(leftix(0:nx-1,iy-1) == -2)
-      allocate (m%ictcntrl(m%nctcnt))
-      m%ictcntrl = 0
-      ict = 0
-      do ix = 1, nx
-        if (leftix(ix-1,iy-1) == -2) then
-          ict = ict+1
-          m%ictcntrl(ict) = ix-1
-        end if
-      end do
-
+!WG-TODO: need to generalize for extended meshes! All cells on iy=0 might have -2...
+!      if (classical) then
+       iy = 1
+       m%nctcnt = count(leftix(0:nx-1,iy-1) == -2)
+       allocate (m%ictcntrl(m%nctcnt))
+       m%ictcntrl = 0
+       ict = 0
+       do ix = 1, nx
+         if (leftix(ix-1,iy-1) == -2) then
+           ict = ict+1
+           m%ictcntrl(ict) = ix-1
+         end if
+       end do
+!      endif
 
 !  no. of cell faces
 
@@ -386,45 +372,59 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
         enddo
       enddo
       nghostfcyi = icount
+      m%nFc = ny*(nx+1) + nx*(ny+1)-nghostfcxi-nghostfcyi
 #else
- ! Count internal faces in between ghost cells (first x-faces then y-faces) or faces from triangles
+! Count internal faces in between ghost cells (first x-faces then y-faces) and degenerate faces from triangles
       icount = 0      
-      do iy = 1, ny
-        do ix = 1, nx+1
-          if(((cflags(ix-2,iy-1,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(ix-2,iy-1,CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .       (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_BOUNDARY))
-     .   .or.(points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
-     .         crx(ix-1,iy-1,2), cry(ix-1,iy-1,2)) )) then
-            ighostfcx(ix-1,iy-1)=1
+      do iy = 0, ny
+        do ix = 0, nx
+          if (leftix(ix,iy).eq.-2) then
+            ! W guard cells, unused cells, degenerate triangle faces
+            ighostfcx(ix,iy)=1
             icount=icount+1
-            ixghostfcx(icount) = ix-1
-            iyghostfcx(icount) = iy-1
+            ixghostfcx(icount) = ix
+            iyghostfcx(icount) = iy
+          elseif(((cflags(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE) 
+     .                                    /= GRID_INTERNAL).and.
+     .       (cflags(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+     .       (cflags(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE) 
+     .                                    /= GRID_BOUNDARY).and.
+     .       (cflags(ix,iy,CELLFLAG_TYPE) /= GRID_BOUNDARY))) then
+            ! Faces between guard cells
+            ighostfcx(ix,iy)=1
+            icount=icount+1
+            ixghostfcx(icount) = ix
+            iyghostfcx(icount) = iy
           endif	
         enddo
       enddo
       nghostfcxi = icount
 
       icount = 0      
-      do ix = 1, nx
-        do iy = 1, ny+1
-          if(((cflags(ix-1,iy-2,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(ix-1,iy-2,CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .       (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_BOUNDARY))
-     .   .or.(points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
-     .         crx(ix-1,iy-1,1), cry(ix-1,iy-1,1)) )) then
-            ighostfcy(ix-1,iy-1)=1
+      do ix = 0, nx
+        do iy = 0, ny
+          if (bottomiy(ix,iy).eq.-2) then
+            ! S guard cells, unused cells, degenerate triangle faces
+            ighostfcy(ix,iy)=1
             icount=icount+1
-            ixghostfcy(icount) = ix-1
-            iyghostfcy(icount) = iy-1
+            ixghostfcy(icount) = ix
+            iyghostfcy(icount) = iy
+          elseif(((cflags(bottomix(ix,iy),bottomiy(ix,iy),
+     .                     CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+     .       (cflags(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+     .       (cflags(bottomix(ix,iy),bottomiy(ix,iy),
+     .                     CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
+     .       (cflags(ix,iy,CELLFLAG_TYPE) /= GRID_BOUNDARY))) then
+            ighostfcy(ix,iy)=1
+            icount=icount+1
+            ixghostfcy(icount) = ix
+            iyghostfcy(icount) = iy
           endif	
         enddo
       enddo
-      nghostfcyi = icount      
+      nghostfcyi = icount
+      m%nFc = 2*(ny+1)*(nx+1) - nghostfcxi - nghostfcyi
 #endif
-      m%nFc = ny*(nx+1) + nx*(ny+1)-nghostfcxi-nghostfcyi
 
 ! no. of vertices
 #ifdef CFLAGS
@@ -443,18 +443,27 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       enddo
       nghostvxi = icount
 #else
-! Count internal vertices surrrounded by ghost cells
+! Count internal vertices surrrounded by ghost cells, and degenerate vertices due
+! to vanishing faces
       icount = 0      
-      do iy = 1, ny+1
-        do ix = 1, nx+1
-          if(((cflags(ix-2,iy-1,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+      do iy = 0, ny
+        do ix = 0, nx
+          if(((cflags(leftix(ix-1,iy-1),leftiy(ix-1,iy-1),CELLFLAG_TYPE)
+     .                                        /= GRID_INTERNAL).and.
      .       (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(ix-2,iy-2,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(ix-1,iy-2,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(ix-2,iy-1,CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
+     .       (cflags(bottomix(ix-1,iy-1),bottomiy(ix-1,iy-1),
+     .                         CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+     .       (cflags(bottomix(leftix(ix-1,iy-1),leftiy(ix-1,iy-1)),
+     .               bottomiy(leftix(ix-1,iy-1),leftiy(ix-1,iy-1)),
+     .                         CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+     .       (cflags(leftix(ix-1,iy-1),leftiy(ix-1,iy-1),CELLFLAG_TYPE)
+     .                                        /= GRID_BOUNDARY).and.
      .       (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .       (cflags(ix-2,iy-2,CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .       (cflags(ix-1,iy-2,CELLFLAG_TYPE) /= GRID_BOUNDARY)).or.
+     .       (cflags(bottomix(leftix(ix-1,iy-1),leftiy(ix-1,iy-1)),
+     .               bottomiy(leftix(ix-1,iy-1),leftiy(ix-1,iy-1)),
+     .                         CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
+     .       (cflags(bottomix(ix-1,iy-1),bottomiy(ix-1,iy-1),
+     .                         CELLFLAG_TYPE) /= GRID_BOUNDARY)).or.
      .       (points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
      .         crx(ix-1,iy-1,2), cry(ix-1,iy-1,2))).or.
      .       (points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
@@ -608,6 +617,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       endif
  
 ! for Vx
+cwdk  might need to add duplicates numbers here...
       m%imapVx= 0 ! 0 means not in use in unstructured
       ici =0
       do iy = 1, ny+1
@@ -791,8 +801,6 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
         do ix = 1, nx
           xco = crx(ix-1,iy-1,0:3)
           yco = cry(ix-1,iy-1,0:3)
-!PB          if(cellGeoType(crx(ix-1,iy-1,0:3),cry(ix-1,iy-1,0:3))== 
-!PB     .       CGEO_QUAD)then
           if(cellGeoType(xco,yco) == CGEO_QUAD)then
             m%cvFcP(1:m%nCi,2) = 4
             m%cvVxP(1:m%nCi,2) = 4
@@ -812,18 +820,16 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
         m%cvVxP(i,1) = m%cvVxP(i-1,1) + m%cvVxP(i-1,2)
       end do
 
-! list of cell faces and vertices for inner cells
+! list of cell faces and vertices for cells
 ! interpolation coefficients for interpolation to cell centers
       nfx = (nx+1)*ny
-      do iy = 1, ny
-        do ix = 1, nx
+      do iy = 0, ny+1
+        do ix = 0, nx+1
           if ((m%imapCv(ix-1,iy-1) /= 0).and.
      .        (m%imapCv(ix-1,iy-1) .le. m%nCi)) then
             ic = m%imapCv(ix-1,iy-1)
             xco = crx(ix-1,iy-1,0:3)
             yco = cry(ix-1,iy-1,0:3)
-!pb            select case 
-!pb     .        ( cellGeoType(crx(ix-1,iy-1,0:3),cry(ix-1,iy-1,0:3)) )
             select case 
      .        ( cellGeoType(xco,yco) ) 
             case ( CGEO_QUAD )  
@@ -866,7 +872,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) = 0.5_R8
               m%intcellR(if3) = 0.5_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
+              m%cvVx(if1) = m%imapVx(ix-1,iy-1)!cwdk is this not the vertex that was thrown out??
               m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
      .                             rightiy(ix-1,iy-1))
               m%cvVx(if3) = m%imapVx(rightix(topix(ix-1,iy-1),
@@ -886,7 +892,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) = 1.0_R8
               m%intcellR(if3) = 0.0_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
+              m%cvVx(if1) = m%imapVx(ix-1,iy-1)!cwdk is this not the vertex that was thrown out??
               m%cvVx(if2) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
               m%cvVx(if3) = m%imapVx(rightix(topix(ix-1,iy-1),
      .                             topiy(ix-1,iy-1)), 
@@ -905,7 +911,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
               m%intcellR(if2) = 0.5_R8
               m%intcellR(if3) = 0.5_R8
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
+              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),!cwdk is this not the vertex that was thrown out??
      .                             rightiy(ix-1,iy-1))
               m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
             case ( CGEO_TRIA_NOTOP )  
@@ -925,11 +931,12 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
               m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
      .                             rightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+              m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))!cwdk is this not the vertex that was thrown out??
             end select
           elseif ((m%imapCv(ix-1,iy-1) /= 0).and.
      .            (m%imapCv(ix-1,iy-1) .gt. m%nCi)) then
-            if (rightix(ix-1,iy-1).eq.nx+1) then
+            if (rightix(ix-1,iy-1).eq.nx+1.and.
+     .          leftix(ix-1,iy-1).ne.-2) then
               ic = m%imapCv(ix-1,iy-1)
               if1 = m%cvFcP(ic,1)
               m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
@@ -938,8 +945,9 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
               if1 = m%cvVxP(ic,1)
               m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
               m%cvVx(if1+1) = 
-     .          m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
-            elseif (leftix(ix-1,iy-1).eq.-2) then
+     .          m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))!cwdk might not exist...
+            elseif (leftix(ix-1,iy-1).eq.-2.and.
+     .              rightix(ix-1,iy-1).ne.nx+1) then
               ic = m%imapCv(ix-1,iy-1)
               if1 = m%cvFcP(ic,1)
               m%cvFc(if1) = m%imapFcx(rightix(ix-1,iy-1),
@@ -949,12 +957,37 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
               if1 = m%cvVxP(ic,1)
               m%cvVx(if1)   = m%imapVx(rightix(ix-1,iy-1),
      .                                 rightiy(ix-1,iy-1))
-              m%cvVx(if1+1) = m%imapVx(rightix(topix(ix-1,iy-1),
+              m%cvVx(if1+1) = m%imapVx(rightix(topix(ix-1,iy-1),!cwdk might not exist... 
      .                                         topiy(ix-1,iy-1)), 
      .                                 rightiy(topix(ix-1,iy-1),
      .                                         topiy(ix-1,iy-1)))
+            elseif (topiy(ix-1,iy-1).eq.ny+1.and.
+     .              bottomiy(ix-1,iy-1).ne.-2) then
+              ic = m%imapCv(ix-1,iy-1)
+              if1 = m%cvFcP(ic,1)
+              m%cvFc(if1) = m%imapFcy(ix-1,iy-1)    
+              m%intcellP(if1) = 1.0_R8
+              m%intcellR(if1) = 1.0_R8
+              if1 = m%cvVxP(ic,1)
+              m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
+              m%cvVx(if1+1) = 
+     .          m%imapVx(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))!cwdk might not exist... 
+            elseif (bottomiy(ix-1,iy-1).eq.-2.and.
+     .              topiy(ix-1,iy-1).ne.ny+1) then
+              ic = m%imapCv(ix-1,iy-1)
+              if1 = m%cvFcP(ic,1)
+              m%cvFc(if1) = m%imapFcy(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+              m%intcellP(if1) = 1.0_R8
+              m%intcellR(if1) = 1.0_R8
+              if1 = m%cvVxP(ic,1)
+              m%cvVx(if1) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+              m%cvVx(if1+1) = 
+     .                        m%imapVx(rightix(topix(ix-1,iy-1),!cwdk might not exist... 
+     .                                         topiy(ix-1,iy-1)), 
+     .                                 rightiy(topix(ix-1,iy-1),
+     .                                         topiy(ix-1,iy-1)))!cwdk might not exist... 
             else
-              call xerrab ('Internal N/S guard cell; not yet available')
+              call xerrab ('Problem with guard cell definition.')
             endif
           endif
         end do
@@ -962,55 +995,6 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 
 #endif
 
-! list of cell faces and vertices for guard cells
-      do ix = 1, nx
-        if(m%imapCv(ix-1,-1) /= 0 ) then
-          ic = m%imapCv(ix-1,-1)
-          m%cvFc(m%cvFcP(ic,1)) = m%imapFcy(topix(ix-1,-1),
-     .                                      topiy(ix-1,-1))
-          m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
-          m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-          m%cvVx(m%cvVxP(ic,1)) = m%imapVx(topix(ix-1,-1),
-     .                                     topiy(ix-1,-1))
-          m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(
-     .               rightix(topix(ix-1,-1),topiy(ix-1,-1)), 
-     .               rightiy(topix(ix-1,-1),topiy(ix-1,-1))) 
-        endif
-        if(m%imapCv(ix-1,ny)/=0) then
-          ic = m%imapCv(ix-1,ny)
-          m%cvFc(m%cvFcP(ic,1)) = m%imapFcy(ix-1,ny)
-          m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
-          m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-          m%cvVx(m%cvVxP(ic,1)) = m%imapVx(ix-1,ny)
-          m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(rightix(ix-1,ny),
-     .                                     rightiy(ix-1,ny))         
-         endif      
-      end do
-
-      do iy = 1, ny
-        if(m%imapCv(-1,iy-1)/=0) then
-          ic = m%imapCv(-1,iy-1)
-          m%cvFc(m%cvFcP(ic,1)) = m%imapFcx(rightix(-1,iy-1),
-     .                                      rightiy(-1,iy-1))
-          m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
-          m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-          m%cvVx(m%cvVxP(ic,1)) = m%imapVx(rightix(-1,iy-1),
-     .                                     rightiy(-1,iy-1))
-          m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(rightix(topix(-1,iy-1),
-     .                                              topiy(-1,iy-1)),
-     .                                      rightiy(topix(-1,iy-1),
-     .                                              topiy(-1,iy-1)))
-        endif 
-        if(m%imapCv(nx,iy-1)/=0) then        
-          ic = m%imapCv(nx,iy-1)
-          m%cvFc(m%cvFcP(ic,1)) = m%imapFcx(nx,iy-1)
-          m%intcellP(m%cvFcP(ic,1)) = 1.0_R8
-          m%intcellR(m%cvFcP(ic,1)) = 1.0_R8
-          m%cvVx(m%cvVxP(ic,1)) = m%imapVx(nx,iy-1)
-          m%cvVx(m%cvVxP(ic,1)+1)= m%imapVx(topix(nx,iy-1),
-     .                                      topiy(nx,iy-1))
-        endif
-      end do
 
 ! listing for every face the two corresponding cells
 ! and the corresponding vertices
@@ -1280,48 +1264,6 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       deallocate (ixghostvx)
       deallocate (iyghostvx)
 
-#ifdef WG_TODO
-! moved to init_mapping!
-
-! setting up connectivity information for the matrix stencil
-! consider writing separate routine/module for matrix setup; is generic
-
-      allocate (indCv(4*4+4+1)) ! max 4 vertices per cell, max 8 cells for each vertex (very conservative)
-      inv = 1
-      do icv = 1, m%nCv
-        m%cvNvP(icv,1) = inv
-        ! init: each cell appears in its own stencil
-        indCv = icv
-        invmx = 1
-        ! list all cells surrounding cell icv, by checking the
-        ! cells connecting to all vertices of cell icv
-        do ivx = 1, m%cvVxP(icv,2)
-          ivx1 = m%cvVx(m%cvVxP(icv,1)+ivx-1)     ! the number in the vertex list
-          indCv(invmx+1:invmx+m%vxCvP(ivx1,2)) =  ! all cells connecting to this vertex
-     .      m%vxCv(m%vxCvP(ivx1,1):m%vxCvP(ivx1,1)+m%vxCvP(ivx1,2)-1)
-          invmx = invmx + m%vxCvP(ivx1,2)
-        enddo
-        ! remove duplicates
-        m%cvNv(m%cvNvP(icv,1)) = indCv(1)
-        i = 1
-        outer: do inv1 = 2, invmx
-          do inv2 = 1, i 
-            if (m%cvNv(m%cvNvP(icv,1)+inv2-1).eq.indCv(inv1)) then
-              ! duplicate element
-              cycle outer
-            endif
-          enddo
-          ! new element found
-          i = i + 1
-          m%cvNv(m%cvNvP(icv,1)+i-1) = indCv(inv1)
-        end do outer
-        ! TODO: sort by cell number, keeping first cell fixed (main diagonal)
-        m%cvNvP(icv,2) = i
-        inv = inv + i
-      enddo
-
-      deallocate(indCv)
-#endif
       return
       end subroutine calc_mapping
 

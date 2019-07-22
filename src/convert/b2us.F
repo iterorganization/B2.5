@@ -208,9 +208,9 @@
       isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read geometry and metric
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+      call b2rugm (ninp(1), nx, ny, isymm, crx, cry, fpsi, ffbz,
+     &  bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, gs, pbs, wbbl,
+     &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
       call get_nxt(nx, nxtl, nxtr)
 
       call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
@@ -225,28 +225,6 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
       hzconst = 1.0_R8                                                   !srv 30.01.10
       hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
-*   ..recompute qc and qs at south faces
-cwdk  For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
-cwdk  temporary computation; should go into geometry routines!
-cwk:  this interpolation for backwards compatibility in computation of radial conductances etc.
-      do ix = -1, nx
-       do iy = -1, ny
-        if (bottomiy(ix,iy).eq.-2) then
-         qc(ix,iy,1)=0.0_R8
-        else
-         qc(ix,iy,1) =
-     .    (hy(ix,iy)*qz(ix,iy,1) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
-     .     qz(bottomix(ix,iy),bottomiy(ix,iy),1))/ 
-     .    (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
-         qs(ix,iy,1) =
-     .    (hy(ix,iy)*qz(ix,iy,0) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
-     .     qz(bottomix(ix,iy),bottomiy(ix,iy),0))/ 
-     .    (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
-        endif
-       enddo
-      enddo
-cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
-      qs(:,:,1) = sign(sqrt(1.0_R8 - qc(:,:,1)**2),qs(:,:,1))
 *   ..read initial state
       call cfruch (ninp(3), 120, lblps, 'label')
       call b2ruzd (ninp(3), b2fstati_version, ns0, 

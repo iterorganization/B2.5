@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2rugm (nget, nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &   wbbc, cell_width, cell_height, gmap)
+      subroutine b2rugm (nget, nx, ny, isymm, crx, cry, fpsi, ffbz,
+     &  bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, gs, pbs, wbbl,
+     &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
       use b2mod_types
       use b2mod_indirect
       use b2mod_version
@@ -11,7 +11,7 @@
       use b2mod_grid_mapping
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nget, nx, ny
+      integer nget, nx, ny, isymm
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
@@ -348,53 +348,6 @@ cxpb-end
           end if
         end do
       end do
-
-*  ..interpolate magnetic field to cell faces
-c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
-      call intfacer1(nx,ny,2,rightix,rightiy,vol,bb,wbbr)
-      call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
-      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
-     1     leftix,leftiy,rightix,rightiy,
-     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
-*   ..extrapolate magnetic field to edges
-cwdk  to consider: now b2agfs available => use that routine instead!
-      do iy = -1, ny
-        do ix = -1, nx
-          if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) = 
-     &     bb(ix,iy,0:2) - (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
-          if (rightix(ix,iy).eq.nx+1) wbbr(ix,iy,0:2) = 
-     &     bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
-          if (bottomiy(ix,iy).eq.-2) wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
-     &     (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
-        enddo
-      enddo
-*   .. correct interpolation of magnetic field for diverted island case
-*      as B is not a periodic quantity
-      if(periodic_bc.eq.1 .and. nncut.ge.1) then
-        do iy = -1, ny
-          do ix = -1, nx
-            if(leftix(ix,iy).ne.ix-1) then
-              if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.4) then
-                wbbl(ix,iy,0)=bb(ix,iy,0)-(wbbr(ix,iy,0)-bb(ix,iy,0))
-                wbbl(ix,iy,1)=bb(ix,iy,1)-(wbbr(ix,iy,1)-bb(ix,iy,1))
-                wbbl(ix,iy,2)=bb(ix,iy,2)-(wbbr(ix,iy,2)-bb(ix,iy,2))
-              endif
-            else if(rightix(ix,iy).ne.ix+1) then
-              if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.3) then
-                wbbr(ix,iy,0)=bb(ix,iy,0)-(wbbl(ix,iy,0)-bb(ix,iy,0))
-                wbbr(ix,iy,1)=bb(ix,iy,1)-(wbbl(ix,iy,1)-bb(ix,iy,1))
-                wbbr(ix,iy,2)=bb(ix,iy,2)-(wbbl(ix,iy,2)-bb(ix,iy,2))
-              endif
-            endif
-          enddo
-        enddo
-      endif
-*   ..compute extrapolated wbb.(:,:,3) components
-      wbbl(:,:,3)=sqrt(wbbl(:,:,0)**2+wbbl(:,:,1)**2+wbbl(:,:,2)**2)
-      wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
-      wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
-      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..compute or read pbs (magnetic field pitch * surface area) at cell faces
       if(b2fgmtry_version.ge.'01.001.063') then                      !srv 15.02.11
         call cfrure (nget, n2*2, pbs, 'pbs')
@@ -515,7 +468,6 @@ cwdk  to consider: now b2agfs available => use that routine instead!
             if (leftix(ix,iy).ne.-2) then
               ht(ix,iy,0) = 
      &          0.5_R8*(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))
-
 !WG-TODO              ht(ix,iy,0) = dist(ix,iy,0,2)
             else
               ht(ix,iy,0) = 0.0_R8
@@ -535,12 +487,22 @@ cwdk  to consider: now b2agfs available => use that routine instead!
         call b2xgbs (nx, ny, wbbl, wbbv, gs, qac, pbs,
      &  leftix, leftiy, bottomix, bottomiy, cflags)
       endif
+*  ..interpolate magnetic field to cell faces
+      call b2agbf (nx, ny, isymm, periodic_bc, nncut,
+     & crx, cry, fpsi, ffbz, vol, gs, qz, qc, qs, bb, wbbl, wbbr, wbbv,
+     & region, leftix, leftiy, bottomix, bottomiy, rightix, rightiy,
+     & topix, topiy, cflags)
+*  ..interpolate magnetic field to cell corners
+      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
+      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..test sign of bb
-      call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
-      call b2xvsg (n2, wbbl(-1,-1,3), 1, 'wbbl3', '.gt.')
-      call b2xvsg (n2, wbbr(-1,-1,3), 1, 'wbbr3', '.gt.')
-      call b2xvsg (n2, wbbv(-1,-1,3), 1, 'wbbv3', '.gt.')
-      call b2xvsg ((nx+3)*(ny+3), wbbc(-1,-1,3), 1, 'wbbc3', '.gt.')
+      call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.ge.')
+      call b2xvsg (n2, wbbl(-1,-1,3), 1, 'wbbl3', '.ge.')
+      call b2xvsg (n2, wbbr(-1,-1,3), 1, 'wbbr3', '.ge.')
+      call b2xvsg (n2, wbbv(-1,-1,3), 1, 'wbbv3', '.ge.')
+      call b2xvsg ((nx+3)*(ny+3), wbbc(-1,-1,3), 1, 'wbbc3', '.ge.')
 *   ..test geometry
       call xertst(maxval(region(-1:nx,-1:ny,1)).gt.0 .or.
      &            minval(region(-1:nx,-1:ny,2)).lt.0,
