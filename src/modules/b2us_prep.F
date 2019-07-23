@@ -102,14 +102,19 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
      .           ighostfcx(:,:), ixghostfcx(:), iyghostfcx(:), 
      .           ighostfcy(:,:), ixghostfcy(:), iyghostfcy(:), 
-     .           ighostvx(:,:), ixghostvx(:), iyghostvx(:)
+     .           ighostvx(:,:), ixghostvx(:), iyghostvx(:),
+     .           locleftix(:,:), locleftiy(:,:), locrightix(:,:),
+     .           locrightiy(:,:), locbottomix(:,:), locbottomiy(:,:),
+     .           loctopix(:,:), loctopiy(:,:),
+     .           ixmapghostvx(:,:), iymapghostvx(:,:)
+
       real(R8) :: xco(4), yco(4)
       logical lfound, swapped, classical
 
 !  assume a structured quadrilateral grid
 
 !  store information for easy back-transformation to structured format
-!WG-TODO: rename this to "isStructuredGrid"?
+!WG-TODO: rename m%isClassicalGrid to "m%isStructuredGrid"?
       m%isClassicalGrid = 1
       m%nx    = nx
       m%ny    = ny
@@ -127,7 +132,6 @@ cwdk      type(B2StateExt), public, save :: state_ext
 !  no. of cells
 ! Count internal ghost cells and "corner" points
 ! Remark in this mapping routine the old B2-numbering is used; do loop over internal cells run from 1->nx, etc. 
-! CTB TO BE DONE ALLOCATE THE NEW ARRAYS
 
 ! Initialize the mapping matrices
       n2 = (nx+2)*(ny+2)
@@ -146,6 +150,16 @@ cwdk      type(B2StateExt), public, save :: state_ext
       allocate (ighostvx(-1:nx,-1:ny))
       allocate (ixghostvx(n2))
       allocate (iyghostvx(n2))
+      allocate (locleftix(-1:nx,-1:ny))
+      allocate (locleftiy(-1:nx,-1:ny)) 
+      allocate (locrightix(-1:nx,-1:ny))
+      allocate (locrightiy(-1:nx,-1:ny)) 
+      allocate (locbottomix(-1:nx,-1:ny)) 
+      allocate (locbottomiy(-1:nx,-1:ny))
+      allocate (loctopix(-1:nx,-1:ny))
+      allocate (loctopiy(-1:nx,-1:ny))
+      allocate (ixmapghostvx(-1:nx,-1:ny)) 
+      allocate (iymapghostvx(-1:nx,-1:ny))
       ighostcv = 0
       icorner = 0
       ixghostcv = 0
@@ -161,7 +175,16 @@ cwdk      type(B2StateExt), public, save :: state_ext
       ighostvx = 0
       ixghostvx = 0
       iyghostvx = 0
-
+      locleftix = -2
+      locleftiy = -2
+      locrightix = -2
+      locrightiy = -2
+      locbottomix = -2
+      locbottomiy = -2
+      loctopix = -2
+      loctopiy = -2
+      ixmapghostvx = -2
+      iymapghostvx = -2
 
 #ifndef CFLAGS
 ! Count internal ghost cells
@@ -317,7 +340,6 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       write (*,*) 'ncorneri     ', ncorneri
 
 ! find position of central cut
-!WG-TODO: need to generalize for extended meshes! All cells on iy=0 might have -2...
       if (classical) then
        iy = 1
        m%nctcnt = count(leftix(0:nx-1,iy-1) == -2)
@@ -427,35 +449,120 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       enddo
       nghostvxi = icount
 #else
+! Make local left/right/top/bottom connectivity
+      do iy = 0, ny+1
+        do ix = 0, nx+1            
+          if(leftix(ix-1,iy-1)==-2) then
+            do icut = 1, nncut
+              if(ix-1==leftcut(icut).and.iy-1<=topcut(icut)) then
+                locleftix(ix-1,iy-1)= rightcut(icut)-1
+                locleftiy(ix-1,iy-1)= leftiy(ix-1,iy-1)
+              elseif(ix-1==rightcut(icut).and.iy-1<=topcut(icut)) then
+                locleftix(ix-1,iy-1)= leftcut(icut)-1
+                locleftiy(ix-1,iy-1)= leftiy(ix-1,iy-1)
+              else
+                locleftix(ix-1,iy-1)= ix-2		
+                locleftiy(ix-1,iy-1)= leftiy(ix-1,iy-1)
+              endif
+            enddo
+          else
+            locleftix(ix-1,iy-1)= leftix(ix-1,iy-1)
+            locleftiy(ix-1,iy-1)= leftiy(ix-1,iy-1)
+          endif
+        enddo
+      enddo
+
+      do iy = 0, ny+1
+        do ix = 0, nx+1            
+          if(rightix(ix-1,iy-1)==nx+1)then
+            do icut = 1, nncut
+              if(ix-1==leftcut(icut)-1.and.iy-1<=topcut(icut)) then
+			    locrightix(ix-1,iy-1)= rightcut(icut)
+                locrightiy(ix-1,iy-1)= rightiy(ix-1,iy-1)
+              elseif(ix-1==rightcut(icut).and.iy-1<=topcut(icut)) then
+			    locrightix(ix-1,iy-1)= leftcut(icut)
+                locrightiy(ix-1,iy-1)= rightiy(ix-1,iy-1)
+              else
+				locrightix(ix-1,iy-1)= ix		
+                locrightiy(ix-1,iy-1)= rightiy(ix-1,iy-1)
+              endif
+            enddo
+          else
+            locrightix(ix-1,iy-1)= rightix(ix-1,iy-1)
+            locrightiy(ix-1,iy-1)= rightiy(ix-1,iy-1)
+          endif
+        enddo
+      enddo
+
+      do iy = 0, ny+1
+        do ix = 0, nx+1            
+          if(bottomiy(ix-1,iy-1)==-2) then
+            locbottomix(ix-1,iy-1)= bottomix(ix-1,iy-1)		
+            locbottomiy(ix-1,iy-1)= iy-2
+          else
+            locbottomix(ix-1,iy-1)= bottomix(ix-1,iy-1)
+            locbottomiy(ix-1,iy-1)= bottomiy(ix-1,iy-1)
+          endif
+        enddo
+      enddo
+
+      do iy = 0, ny+1
+        do ix = 0, nx+1            
+          if(topiy(ix-1,iy-1)==ny+1)then
+            loctopix(ix-1,iy-1)= topix(ix-1,iy-1)	
+            loctopiy(ix-1,iy-1)= iy
+          else
+            loctopix(ix-1,iy-1)= topix(ix-1,iy-1)
+            loctopiy(ix-1,iy-1)= topiy(ix-1,iy-1)
+          endif
+        enddo
+      enddo
+
 ! Count internal vertices surrrounded by ghost cells, and degenerate vertices due
 ! to vanishing faces
       icount = 0      
-      do iy = 0, ny
-        do ix = 0, nx
-          if(((cflags(leftix(ix-1,iy-1),leftiy(ix-1,iy-1),CELLFLAG_TYPE)
-     .                                        /= GRID_INTERNAL).and.
-     .       (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(bottomix(ix-1,iy-1),bottomiy(ix-1,iy-1),
+!ctb      do iy = 0, ny
+!ctb        do ix = 0, nx
+      do iy = 1, ny+1
+        do ix = 1, nx+1
+          if((cflags(locleftix(ix-1,iy-1),locleftiy(ix-1,iy-1),
+     .                CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+     .      (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+     .      (cflags(locbottomix(ix-1,iy-1),locbottomiy(ix-1,iy-1),
+     .                CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+     .      (cflags(locbottomix(leftix(ix-1,iy-1),locleftiy(ix-1,iy-1)),
+     .              locbottomiy(leftix(ix-1,iy-1),locleftiy(ix-1,iy-1)),
      .                         CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(bottomix(leftix(ix-1,iy-1),leftiy(ix-1,iy-1)),
-     .               bottomiy(leftix(ix-1,iy-1),leftiy(ix-1,iy-1)),
-     .                         CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .       (cflags(leftix(ix-1,iy-1),leftiy(ix-1,iy-1),CELLFLAG_TYPE)
-     .                                        /= GRID_BOUNDARY).and.
+     .      (cflags(locleftix(ix-1,iy-1),locleftiy(ix-1,iy-1),
+     .              CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
      .       (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .       (cflags(bottomix(leftix(ix-1,iy-1),leftiy(ix-1,iy-1)),
-     .               bottomiy(leftix(ix-1,iy-1),leftiy(ix-1,iy-1)),
+     .      (cflags(locbottomix(leftix(ix-1,iy-1),locleftiy(ix-1,iy-1)),
+     .              locbottomiy(leftix(ix-1,iy-1),locleftiy(ix-1,iy-1)),
      .                         CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .       (cflags(bottomix(ix-1,iy-1),bottomiy(ix-1,iy-1),
-     .                         CELLFLAG_TYPE) /= GRID_BOUNDARY)).or.
-     .       (points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
-     .         crx(ix-1,iy-1,2), cry(ix-1,iy-1,2))).or.
-     .       (points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
-     .         crx(ix-1,iy-1,1), cry(ix-1,iy-1,1)))) then           
+     .       (cflags(locbottomix(ix-1,iy-1),locbottomiy(ix-1,iy-1),
+     .                         CELLFLAG_TYPE) /= GRID_BOUNDARY))then
             ighostvx(ix-1,iy-1)=1
             icount=icount+1
             ixghostvx(icount) = ix-1
             iyghostvx(icount) = iy-1
+            ixmapghostvx(ix-1,iy-1)= -2
+            iymapghostvx(ix-1,iy-1) = -2
+          elseif (points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
+     .         crx(ix-1,iy-1,2), cry(ix-1,iy-1,2)))then
+            ighostvx(ix-1,iy-1)=1
+            icount=icount+1
+            ixghostvx(icount) = ix-1
+            iyghostvx(icount) = iy-1
+            ixmapghostvx(ix-1,iy-1)= loctopix(ix-1,iy-1)
+            iymapghostvx(ix-1,iy-1) = loctopiy(ix-1,iy-1)
+          elseif (points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
+     .         crx(ix-1,iy-1,1), cry(ix-1,iy-1,1))) then   
+            ighostvx(ix-1,iy-1)=1
+            icount=icount+1
+            ixghostvx(icount) = ix-1
+            iyghostvx(icount) = iy-1
+            ixmapghostvx(ix-1,iy-1)= locrightix(ix-1,iy-1)
+            iymapghostvx(ix-1,iy-1) = locrightiy(ix-1,iy-1)
           endif	
         enddo
       enddo
@@ -617,6 +724,18 @@ cwdk  might need to add duplicates numbers here...
         call xerrab 
      .    ('Inconsistency between counting and mapping in nVx!')
       endif
+
+      do iy = 1, ny+1
+        do ix = 1, nx+1
+          ix2 = ix
+          iy2 = iy
+          do while (ighostvx(ix2-1,iy2-1)==1) 
+            ix2= ixmapghostvx(ix2-1,iy2-1)+1
+            iy2= iymapghostvx(ix2-1,iy2-1)+1   
+          enddo            
+          m%imapVx(ix-1,iy-1)= m%imapVx(ix2-1,iy2-1)
+        enddo
+      enddo
 
 ! store indices of corner coordinates
       m%icornVx = 0
@@ -822,10 +941,11 @@ cwdk  might need to add duplicates numbers here...
               if3 = if2 + 1
               if4 = if3 + 1
               m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
-              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
-     .                              rightiy(ix-1,iy-1))
+              m%cvFc(if2) = m%imapFcx(locrightix(ix-1,iy-1),
+     .                              locrightiy(ix-1,iy-1))
               m%cvFc(if3) = m%imapFcy(ix-1,iy-1)   
-              m%cvFc(if4) = m%imapFcy(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+              m%cvFc(if4) = m%imapFcy(loctopix(ix-1,iy-1),
+     .                                loctopiy(ix-1,iy-1))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
               m%intcellP(if3) = 0.0_R8
@@ -835,20 +955,22 @@ cwdk  might need to add duplicates numbers here...
               m%intcellR(if3) = 1.0_R8
               m%intcellR(if4) = 1.0_R8
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
-     .                             rightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
-              m%cvVx(if4) = m%imapVx(rightix(topix(ix-1,iy-1), !might not exist?
-     .                             topiy(ix-1,iy-1)), 
-     .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1)))
-            case ( CGEO_TRIA_NOLEFT )  
+              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),
+     .                             locrightiy(ix-1,iy-1))
+              m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
+     .                               loctopiy(ix-1,iy-1))
+              m%cvVx(if4) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
+     .                                          loctopiy(ix-1,iy-1)),
+     .         locrightiy(loctopix(ix-1,iy-1),loctopiy(ix-1,iy-1)))
+           case ( CGEO_TRIA_NOLEFT )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
-              m%cvFc(if1) = m%imapFcx(rightix(ix-1,iy-1),
-     .                              rightiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcx(locrightix(ix-1,iy-1),
+     .                              locrightiy(ix-1,iy-1))
               m%cvFc(if2) = m%imapFcy(ix-1,iy-1)   
-              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+              m%cvFc(if3) = m%imapFcy(loctopix(ix-1,iy-1),
+     .                                loctopiy(ix-1,iy-1))
 !CWDK to be computed in b2ag!
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 0.5_R8
@@ -856,38 +978,45 @@ cwdk  might need to add duplicates numbers here...
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) = 0.5_R8
               m%intcellR(if3) = 0.5_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)!cwdk is this not the vertex that was thrown out??
-              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
-     .                             rightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(rightix(topix(ix-1,iy-1),
-     .                             topiy(ix-1,iy-1)), 
-     .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1)))
+              m%cvVx(if1) = m%imapVx(ix-1,iy-1)!cwdk is this not the vertex that was thrown out?? ctb solved?
+
+              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),
+     .                             locrightiy(ix-1,iy-1))
+
+              m%cvVx(if3) = m%imapVx(locrightix(topix(ix-1,iy-1),
+     .                             loctopiy(ix-1,iy-1)), 
+     .                 locrightiy(loctopix(ix-1,iy-1),
+     .                            loctopiy(ix-1,iy-1)))
             case ( CGEO_TRIA_NOBOT )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
               m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
-              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
-     .                              rightiy(ix-1,iy-1))
-              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+              m%cvFc(if2) = m%imapFcx(locrightix(ix-1,iy-1),
+     .                              locrightiy(ix-1,iy-1))
+              m%cvFc(if3) = m%imapFcy(loctopix(ix-1,iy-1),
+     .                                loctopiy(ix-1,iy-1))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
               m%intcellP(if3) = 0.0_R8
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) = 1.0_R8
               m%intcellR(if3) = 0.0_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)!cwdk is this not the vertex that was thrown out??
-              m%cvVx(if2) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(rightix(topix(ix-1,iy-1),
-     .                             topiy(ix-1,iy-1)), 
-     .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1)))
+              m%cvVx(if1) = m%imapVx(ix-1,iy-1)!cwdk is this not the vertex that was thrown out?? ctb solved?
+              m%cvVx(if2) = m%imapVx(loctopix(ix-1,iy-1),
+     .                               loctopiy(ix-1,iy-1))
+              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
+     .                                          loctopiy(ix-1,iy-1)), 
+     .                               locrightiy(loctopix(ix-1,iy-1),
+     .                                          loctopiy(ix-1,iy-1)))
             case ( CGEO_TRIA_NORIGHT )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
               m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
               m%cvFc(if2) = m%imapFcy(ix-1,iy-1)   
-              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+              m%cvFc(if3) = m%imapFcy(loctopix(ix-1,iy-1),
+     .                                loctopiy(ix-1,iy-1))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 0.5_R8
               m%intcellP(if3) = 0.5_R8
@@ -895,16 +1024,17 @@ cwdk  might need to add duplicates numbers here...
               m%intcellR(if2) = 0.5_R8
               m%intcellR(if3) = 0.5_R8
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),!cwdk is this not the vertex that was thrown out??
-     .                             rightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),!cwdk is this not the vertex that was thrown out??ctb solved?
+     .                             locrightiy(ix-1,iy-1))
+              m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
+     .                               loctopiy(ix-1,iy-1))
             case ( CGEO_TRIA_NOTOP )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
               m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
-              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
-     .                              rightiy(ix-1,iy-1))
+              m%cvFc(if2) = m%imapFcx(locrightix(ix-1,iy-1),
+     .                              locrightiy(ix-1,iy-1))
               m%cvFc(if3) = m%imapFcy(ix-1,iy-1)   
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
@@ -913,9 +1043,10 @@ cwdk  might need to add duplicates numbers here...
               m%intcellR(if2) = 1.0_R8
               m%intcellR(if3) = 0.0_R8
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
-     .                             rightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))!cwdk is this not the vertex that was thrown out??
+              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),
+     .                             locrightiy(ix-1,iy-1))
+              m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
+     .                               loctopiy(ix-1,iy-1))!cwdk is this not the vertex that was thrown out?? ctb solved?
             end select
           elseif ((m%imapCv(ix-1,iy-1) /= 0).and.
      .            (m%imapCv(ix-1,iy-1) .gt. m%nCi)) then
@@ -929,24 +1060,24 @@ cwdk  might need to add duplicates numbers here...
               if1 = m%cvVxP(ic,1)
               m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
               m%cvVx(if1+1) = 
-     .          m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))!cwdk might not exist...
-            elseif (leftix(ix-1,iy-1).eq.-2.and.
-     .              rightix(ix-1,iy-1).ne.nx+1) then
+     .          m%imapVx(loctopix(ix-1,iy-1),loctopiy(ix-1,iy-1))!cwdk might not exist...ctb solved?
+            elseif (locleftix(ix-1,iy-1).eq.-2.and.
+     .              locrightix(ix-1,iy-1).ne.nx+1) then
               ic = m%imapCv(ix-1,iy-1)
               if1 = m%cvFcP(ic,1)
-              m%cvFc(if1) = m%imapFcx(rightix(ix-1,iy-1),
-     .                                rightiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcx(locrightix(ix-1,iy-1),
+     .                                locrightiy(ix-1,iy-1))
               m%intcellP(if1) = 1.0_R8
               m%intcellR(if1) = 1.0_R8
               if1 = m%cvVxP(ic,1)
-              m%cvVx(if1)   = m%imapVx(rightix(ix-1,iy-1),
-     .                                 rightiy(ix-1,iy-1))
-              m%cvVx(if1+1) = m%imapVx(rightix(topix(ix-1,iy-1),!cwdk might not exist... 
-     .                                         topiy(ix-1,iy-1)), 
-     .                                 rightiy(topix(ix-1,iy-1),
-     .                                         topiy(ix-1,iy-1)))
-            elseif (topiy(ix-1,iy-1).eq.ny+1.and.
-     .              bottomiy(ix-1,iy-1).ne.-2) then
+              m%cvVx(if1)   = m%imapVx(locrightix(ix-1,iy-1),
+     .                                 locrightiy(ix-1,iy-1))
+              m%cvVx(if1+1) = m%imapVx(locrightix(loctopix(ix-1,iy-1),!cwdk might not exist... 
+     .                                         loctopiy(ix-1,iy-1)), 
+     .                                 locrightiy(loctopix(ix-1,iy-1),
+     .                                         loctopiy(ix-1,iy-1)))
+            elseif (loctopiy(ix-1,iy-1).eq.ny+1.and.
+     .              locbottomiy(ix-1,iy-1).ne.-2) then
               ic = m%imapCv(ix-1,iy-1)
               if1 = m%cvFcP(ic,1)
               m%cvFc(if1) = m%imapFcy(ix-1,iy-1)    
@@ -955,21 +1086,23 @@ cwdk  might need to add duplicates numbers here...
               if1 = m%cvVxP(ic,1)
               m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
               m%cvVx(if1+1) = 
-     .          m%imapVx(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))!cwdk might not exist... 
-            elseif (bottomiy(ix-1,iy-1).eq.-2.and.
-     .              topiy(ix-1,iy-1).ne.ny+1) then
+     .          m%imapVx(locrightix(ix-1,iy-1),locrightiy(ix-1,iy-1))!cwdk might not exist... 
+            elseif (locbottomiy(ix-1,iy-1).eq.-2.and.
+     .              loctopiy(ix-1,iy-1).ne.ny+1) then
               ic = m%imapCv(ix-1,iy-1)
               if1 = m%cvFcP(ic,1)
-              m%cvFc(if1) = m%imapFcy(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcy(loctopix(ix-1,iy-1),
+     .                                loctopiy(ix-1,iy-1))
               m%intcellP(if1) = 1.0_R8
               m%intcellR(if1) = 1.0_R8
               if1 = m%cvVxP(ic,1)
-              m%cvVx(if1) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+              m%cvVx(if1) = m%imapVx(loctopix(ix-1,iy-1),
+     .                               loctopiy(ix-1,iy-1))
               m%cvVx(if1+1) = 
-     .                        m%imapVx(rightix(topix(ix-1,iy-1),!cwdk might not exist... 
-     .                                         topiy(ix-1,iy-1)), 
-     .                                 rightiy(topix(ix-1,iy-1),
-     .                                         topiy(ix-1,iy-1)))!cwdk might not exist... 
+     .                        m%imapVx(locrightix(loctopix(ix-1,iy-1),!cwdk might not exist... 
+     .                                         loctopiy(ix-1,iy-1)), 
+     .                                 locrightiy(topix(ix-1,iy-1),
+     .                                         loctopiy(ix-1,iy-1)))!cwdk might not exist... 
             else
               call xerrab ('Problem with guard cell definition.')
             endif
@@ -987,11 +1120,12 @@ cwdk  might need to add duplicates numbers here...
          do ix = 1, nx+1
            if(m%imapFcx(ix-1,iy-1)/=0) then
              ifc =m%imapFcx(ix-1,iy-1)
-             m%fcCv(ifc,1) = m%imapCv(leftix(ix-1,iy-1),
-     .                                leftiy(ix-1,iy-1))
+             m%fcCv(ifc,1) = m%imapCv(locleftix(ix-1,iy-1),
+     .                                locleftiy(ix-1,iy-1))
              m%fcCv(ifc,2) = m%imapCv(ix-1,iy-1)
              m%fcVx(ifc,1) = m%imapVx(ix-1,iy-1)
-             m%fcVx(ifc,2) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
+             m%fcVx(ifc,2) = m%imapVx(loctopix(ix-1,iy-1),
+     .                                loctopiy(ix-1,iy-1))
            endif  
          end do
        end do
@@ -1004,11 +1138,11 @@ cwdk  might need to add duplicates numbers here...
            if(m%imapFcy(ix-1,iy-1)/=0) then
              ifc =m%imapFcy(ix-1,iy-1)
              m%fcCv(ifc,2) = m%imapCv(ix-1,iy-1)
-             m%fcCv(ifc,1) = m%imapCv(bottomix(ix-1,iy-1),
-     .                                bottomiy(ix-1,iy-1))
+             m%fcCv(ifc,1) = m%imapCv(locbottomix(ix-1,iy-1),
+     .                                locbottomiy(ix-1,iy-1))
              m%fcVx(ifc,2) = m%imapVx(ix-1,iy-1)
-             m%fcVx(ifc,1) = m%imapVx(rightix(ix-1,iy-1),
-     .                                rightiy(ix-1,iy-1))
+             m%fcVx(ifc,1) = m%imapVx(locrightix(ix-1,iy-1),
+     .                                locrightiy(ix-1,iy-1))
            endif
          end do
        end do
@@ -1247,6 +1381,14 @@ cwdk  might need to add duplicates numbers here...
       deallocate (ighostvx)
       deallocate (ixghostvx)
       deallocate (iyghostvx)
+      deallocate (locleftix)
+      deallocate (locleftiy)
+      deallocate (locrightix)
+      deallocate (locrightiy)
+      deallocate (locbottomix)
+      deallocate (locbottomiy)
+      deallocate (loctopix)
+      deallocate (loctopiy)
 
       return
       end subroutine calc_mapping
