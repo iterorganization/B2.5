@@ -572,7 +572,7 @@ contains
                 leftix1(rightix1(ix,iy),rightiy1(ix,iy)) = -2
                 leftiy1(rightix1(ix,iy),rightiy1(ix,iy)) = iy
                 rightix1(ix,iy) = nx1+1
-                rightiy1(ix,iy) = -2
+                rightiy1(ix,iy) = iy
               end if
             end if
           end if
@@ -620,7 +620,7 @@ contains
                 leftix1(rightix1(ix,iy),rightiy1(ix,iy)) = -2
                 leftiy1(rightix1(ix,iy),rightiy1(ix,iy)) = iy
                 rightix1(ix,iy) = nx1+1
-                rightiy1(ix,iy) = -2
+                rightiy1(ix,iy) = iy
               end if
             end if
           end if
