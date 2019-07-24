@@ -94,9 +94,10 @@ cwdk      type(B2StateExt), public, save :: state_ext
       integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc, ic1, ic2, 
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
      .           ivx, ivx1, ivx2, nfx, mxreg, ifs, icv, ireg, istart,
-     .           inv, inv1, inv2, invmx, ifcc, icount, n2,
+     .           inv, inv1, inv2, invmx, ifcc, icount, n2, ix2o,
      .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, 
-     .           nghostvxi, ici, icg, ict, j, itmpx, itmpy
+     .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
+     .           ixb, iyb
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -109,7 +110,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .           ixmapghostvx(:,:), iymapghostvx(:,:)
 
       real(R8) :: xco(4), yco(4)
-      logical lfound, swapped, classical
+      logical lfound, swapped, classical, bound
 
 !  assume a structured quadrilateral grid
 
@@ -452,17 +453,18 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 ! Make local left/right/top/bottom connectivity
       do iy = 0, ny+1
         do ix = 0, nx+1            
-          if(leftix(ix-1,iy-1)==-2) then
+          if ((leftix(ix-1,iy-1)==-2) .or. 
+     .        (leftiy(ix-1,iy-1)==-2)) then
             do icut = 1, nncut
               if(ix-1==leftcut(icut).and.iy-1<=topcut(icut)) then
                 locleftix(ix-1,iy-1)= rightcut(icut)-1
-                locleftiy(ix-1,iy-1)= leftiy(ix-1,iy-1)
+                locleftiy(ix-1,iy-1)= iy-1
               elseif(ix-1==rightcut(icut).and.iy-1<=topcut(icut)) then
                 locleftix(ix-1,iy-1)= leftcut(icut)-1
-                locleftiy(ix-1,iy-1)= leftiy(ix-1,iy-1)
+                locleftiy(ix-1,iy-1)= iy-1
               else
                 locleftix(ix-1,iy-1)= ix-2		
-                locleftiy(ix-1,iy-1)= leftiy(ix-1,iy-1)
+                locleftiy(ix-1,iy-1)= iy-1
               endif
             enddo
           else
@@ -474,17 +476,20 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 
       do iy = 0, ny+1
         do ix = 0, nx+1            
-          if(rightix(ix-1,iy-1)==nx+1)then
+          if((rightix(ix-1,iy-1)==nx+1) .or.
+     .       (rightix(ix-1,iy-1)==-2) .or.
+     .       (rightiy(ix-1,iy-1)==ny+1) .or.
+     .       (rightiy(ix-1,iy-1)==-2)) then
             do icut = 1, nncut
               if(ix-1==leftcut(icut)-1.and.iy-1<=topcut(icut)) then
-			    locrightix(ix-1,iy-1)= rightcut(icut)
-                locrightiy(ix-1,iy-1)= rightiy(ix-1,iy-1)
+                locrightix(ix-1,iy-1)= rightcut(icut)
+                locrightiy(ix-1,iy-1)= iy-1
               elseif(ix-1==rightcut(icut).and.iy-1<=topcut(icut)) then
-			    locrightix(ix-1,iy-1)= leftcut(icut)
-                locrightiy(ix-1,iy-1)= rightiy(ix-1,iy-1)
+                locrightix(ix-1,iy-1)= leftcut(icut)
+                locrightiy(ix-1,iy-1)= iy-1
               else
-				locrightix(ix-1,iy-1)= ix		
-                locrightiy(ix-1,iy-1)= rightiy(ix-1,iy-1)
+                locrightix(ix-1,iy-1)= ix		
+                locrightiy(ix-1,iy-1)= iy-1
               endif
             enddo
           else
@@ -496,8 +501,9 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 
       do iy = 0, ny+1
         do ix = 0, nx+1            
-          if(bottomiy(ix-1,iy-1)==-2) then
-            locbottomix(ix-1,iy-1)= bottomix(ix-1,iy-1)		
+          if((bottomix(ix-1,iy-1)==-2) .or.
+     .       (bottomiy(ix-1,iy-1)==-2)) then
+	    locbottomix(ix-1,iy-1)= ix-1		
             locbottomiy(ix-1,iy-1)= iy-2
           else
             locbottomix(ix-1,iy-1)= bottomix(ix-1,iy-1)
@@ -508,8 +514,11 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 
       do iy = 0, ny+1
         do ix = 0, nx+1            
-          if(topiy(ix-1,iy-1)==ny+1)then
-            loctopix(ix-1,iy-1)= topix(ix-1,iy-1)	
+          if((topix(ix-1,iy-1)==-2) .or.
+     .       (topix(ix-1,iy-1)==nx+1) .or.
+     .       (topiy(ix-1,iy-1)==-2) .or.
+     .       (topiy(ix-1,iy-1)==ny+1)) then
+            loctopix(ix-1,iy-1)= ix-1	
             loctopiy(ix-1,iy-1)= iy
           else
             loctopix(ix-1,iy-1)= topix(ix-1,iy-1)
@@ -525,22 +534,20 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 !ctb        do ix = 0, nx
       do iy = 1, ny+1
         do ix = 1, nx+1
-          if((cflags(locleftix(ix-1,iy-1),locleftiy(ix-1,iy-1),
-     .                CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+          lix = locleftix(ix-1,iy-1)
+          liy = locleftiy(ix-1,iy-1)
+          if((cflags(lix,liy,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
      .      (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
      .      (cflags(locbottomix(ix-1,iy-1),locbottomiy(ix-1,iy-1),
-     .                CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .      (cflags(locbottomix(leftix(ix-1,iy-1),locleftiy(ix-1,iy-1)),
-     .              locbottomiy(leftix(ix-1,iy-1),locleftiy(ix-1,iy-1)),
-     .                         CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .      (cflags(locleftix(ix-1,iy-1),locleftiy(ix-1,iy-1),
+     .              CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+     .      (cflags(locbottomix(lix,liy), locbottomiy(lix,liy),
+     .              CELLFLAG_TYPE) /= GRID_INTERNAL).and.
+     .      (cflags(lix,liy,CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
+     .      (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
+     .      (cflags(locbottomix(lix,liy), locbottomiy(lix,liy),
      .              CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .       (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .      (cflags(locbottomix(leftix(ix-1,iy-1),locleftiy(ix-1,iy-1)),
-     .              locbottomiy(leftix(ix-1,iy-1),locleftiy(ix-1,iy-1)),
-     .                         CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
      .       (cflags(locbottomix(ix-1,iy-1),locbottomiy(ix-1,iy-1),
-     .                         CELLFLAG_TYPE) /= GRID_BOUNDARY))then
+     .               CELLFLAG_TYPE) /= GRID_BOUNDARY))then
             ighostvx(ix-1,iy-1)=1
             icount=icount+1
             ixghostvx(icount) = ix-1
@@ -588,7 +595,8 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 ! corner vertices have only 2;
 ! other vertices on boundaries have only 3; 
 ! each X-point vertex has 8; duplicate X-point vertices for slabs
-      m%nVmxFc = 4 * m%nVx - 4*2*nncut - 2*((nx-1) + (ny-1)) + 2*nncut*4
+!      m%nVmxFc = 4 * m%nVx - 4*2*nncut - 2*((nx-1) + (ny-1)) + 2*nncut*4
+      m%nVmxFc = 4 * (nx+1) * (ny+1) - 2*((nx-1) + (ny-1))
 
 ! max no. of entries in matrix
       m%nCmxNv = 9*m%nCi - 4*nncut + ! internal cells (corners only 8)
@@ -730,10 +738,13 @@ cwdk  might need to add duplicates numbers here...
           ix2 = ix
           iy2 = iy
           do while (ighostvx(ix2-1,iy2-1)==1) 
-            ix2= ixmapghostvx(ix2-1,iy2-1)+1
-            iy2= iymapghostvx(ix2-1,iy2-1)+1   
+            ix2o = ix2
+            ix2= ixmapghostvx(ix2o-1,iy2-1)+1
+            iy2= iymapghostvx(ix2o-1,iy2-1)+1   
+            if ((ix2 == -1) .or. (ix2 == nx+2) .or.
+     .          (iy2 == -1) .or. (iy2 == ny+2)) exit
           enddo            
-          m%imapVx(ix-1,iy-1)= m%imapVx(ix2-1,iy2-1)
+          m%imapVx(ix-1,iy-1)= m%imapVx(max(ix2-1,-1),max(iy2-1,-1))
         enddo
       enddo
 
@@ -842,7 +853,7 @@ cwdk  might need to add duplicates numbers here...
             if2 = if1 + 1
             if3 = if2 + 1
             if4 = if3 + 1
-            m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
+            m%cvFc(if1) = m%imapFcx(ix-1,iy-1) 
             m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
      .                              rightiy(ix-1,iy-1))
             m%cvFc(if3) = m%imapFcy(ix-1,iy-1)   
@@ -862,7 +873,7 @@ cwdk  might need to add duplicates numbers here...
             m%cvVx(if4) = m%imapVx(rightix(topix(ix-1,iy-1),
      .                             topiy(ix-1,iy-1)), 
      .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1)))
-          elseif ((m%imapCv(ix-1,iy-1) /= 0).and.
+        elseif ((m%imapCv(ix-1,iy-1) /= 0).and.
      .            (m%imapCv(ix-1,iy-1) .gt. m%nCi)) then
             if (rightix(ix-1,iy-1).eq.nx+1) then
               ic = m%imapCv(ix-1,iy-1)
@@ -1050,60 +1061,85 @@ cwdk  might need to add duplicates numbers here...
             end select
           elseif ((m%imapCv(ix-1,iy-1) /= 0).and.
      .            (m%imapCv(ix-1,iy-1) .gt. m%nCi)) then
-            if (rightix(ix-1,iy-1).eq.nx+1.and.
-     .          leftix(ix-1,iy-1).ne.-2) then
-              ic = m%imapCv(ix-1,iy-1)
-              if1 = m%cvFcP(ic,1)
-              m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
-              m%intcellP(if1) = 1.0_R8
-              m%intcellR(if1) = 1.0_R8
-              if1 = m%cvVxP(ic,1)
-              m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
-              m%cvVx(if1+1) = 
-     .          m%imapVx(loctopix(ix-1,iy-1),loctopiy(ix-1,iy-1))!cwdk might not exist...ctb solved?
-            elseif (locleftix(ix-1,iy-1).eq.-2.and.
-     .              locrightix(ix-1,iy-1).ne.nx+1) then
-              ic = m%imapCv(ix-1,iy-1)
-              if1 = m%cvFcP(ic,1)
-              m%cvFc(if1) = m%imapFcx(locrightix(ix-1,iy-1),
-     .                                locrightiy(ix-1,iy-1))
-              m%intcellP(if1) = 1.0_R8
-              m%intcellR(if1) = 1.0_R8
-              if1 = m%cvVxP(ic,1)
-              m%cvVx(if1)   = m%imapVx(locrightix(ix-1,iy-1),
-     .                                 locrightiy(ix-1,iy-1))
-              m%cvVx(if1+1) = m%imapVx(locrightix(loctopix(ix-1,iy-1),!cwdk might not exist... 
-     .                                         loctopiy(ix-1,iy-1)), 
-     .                                 locrightiy(loctopix(ix-1,iy-1),
-     .                                         loctopiy(ix-1,iy-1)))
-            elseif (loctopiy(ix-1,iy-1).eq.ny+1.and.
-     .              locbottomiy(ix-1,iy-1).ne.-2) then
-              ic = m%imapCv(ix-1,iy-1)
-              if1 = m%cvFcP(ic,1)
-              m%cvFc(if1) = m%imapFcy(ix-1,iy-1)    
-              m%intcellP(if1) = 1.0_R8
-              m%intcellR(if1) = 1.0_R8
-              if1 = m%cvVxP(ic,1)
-              m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
-              m%cvVx(if1+1) = 
-     .          m%imapVx(locrightix(ix-1,iy-1),locrightiy(ix-1,iy-1))!cwdk might not exist... 
-            elseif (locbottomiy(ix-1,iy-1).eq.-2.and.
-     .              loctopiy(ix-1,iy-1).ne.ny+1) then
-              ic = m%imapCv(ix-1,iy-1)
-              if1 = m%cvFcP(ic,1)
-              m%cvFc(if1) = m%imapFcy(loctopix(ix-1,iy-1),
-     .                                loctopiy(ix-1,iy-1))
-              m%intcellP(if1) = 1.0_R8
-              m%intcellR(if1) = 1.0_R8
-              if1 = m%cvVxP(ic,1)
-              m%cvVx(if1) = m%imapVx(loctopix(ix-1,iy-1),
-     .                               loctopiy(ix-1,iy-1))
-              m%cvVx(if1+1) = 
-     .                        m%imapVx(locrightix(loctopix(ix-1,iy-1),!cwdk might not exist... 
-     .                                         loctopiy(ix-1,iy-1)), 
-     .                                 locrightiy(topix(ix-1,iy-1),
-     .                                         loctopiy(ix-1,iy-1)))!cwdk might not exist... 
-            else
+            bound = .false.
+
+!tb  the vertex numbering might not be consistent for fcVx, to be checked 
+            ixb = bottomix(ix-1,iy-1)
+            iyb = bottomiy(ix-1,iy-1)
+            if ((ixb /= -2) .and. (iyb /= -2) .and. 
+     .          (ixb /= nx+1) .and. (iyb /= ny+1)) then
+              if (cflags(ixb,iyb,CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                ic = m%imapCv(ix-1,iy-1)
+                if1 = m%cvFcP(ic,1)
+                m%cvFc(if1) = m%imapFcy(ix-1,iy-1)    
+                m%intcellP(if1) = 1.0_R8
+                m%intcellR(if1) = 1.0_R8
+                if1 = m%cvVxP(ic,1)
+                m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
+                m%cvVx(if1+1) = 
+     .            m%imapVx(locrightix(ix-1,iy-1),locrightiy(ix-1,iy-1)) !cwdk might not exist... 
+                bound = .true.
+              end if
+            end if
+
+            ixb = topix(ix-1,iy-1)
+            iyb = topiy(ix-1,iy-1)
+            if ((ixb /= -2) .and. (iyb /= -2) .and. 
+     .          (ixb /= nx+1) .and. (iyb /= ny+1)) then
+              if (cflags(ixb,iyb,CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                if (bound) call xerrab('calc_mapping - double boundary')
+                ic = m%imapCv(ix-1,iy-1)
+                if1 = m%cvFcP(ic,1)
+                m%cvFc(if1) = m%imapFcy(ixb,iyb)
+                m%intcellP(if1) = 1.0_R8
+                m%intcellR(if1) = 1.0_R8
+                if1 = m%cvVxP(ic,1)
+                m%cvVx(if1) = m%imapVx(ixb,iyb)
+                m%cvVx(if1+1) = m%imapVx(locrightix(ixb,iyb),!cwdk might not exist... 
+     .                                   locrightiy(ixb,iyb))!cwdk might not exist... 
+                bound = .true.
+              end if
+            end if
+
+            ixb = leftix(ix-1,iy-1)
+            iyb = leftiy(ix-1,iy-1)
+            if ((ixb /= -2) .and. (iyb /= -2) .and. 
+     .          (ixb /= nx+1) .and. (iyb /= ny+1)) then
+              if (cflags(ixb,iyb,CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                if (bound) call xerrab('calc_mapping - double boundary')
+                ic = m%imapCv(ix-1,iy-1)
+                if1 = m%cvFcP(ic,1)
+                m%cvFc(if1) = m%imapFcx(ix-1,iy-1)
+                m%intcellP(if1) = 1.0_R8
+                m%intcellR(if1) = 1.0_R8
+                if1 = m%cvVxP(ic,1)
+                m%cvVx(if1) = m%imapVx(ix-1,iy-1)
+                m%cvVx(if1+1) = m%imapVx(loctopix(ix-1,iy-1),!cwdk might not exist... 
+     .                                   loctopiy(ix-1,iy-1))!cwdk might not exist... 
+                bound = .true.
+              end if
+            end if
+
+            ixb = rightix(ix-1,iy-1)
+            iyb = rightiy(ix-1,iy-1)
+            if ((ixb /= -2) .and. (iyb /= -2) .and. 
+     .          (ixb /= nx+1) .and. (iyb /= ny+1)) then
+              if (cflags(ixb,iyb,CELLFLAG_TYPE) == GRID_BOUNDARY) then
+                if (bound) call xerrab('calc_mapping - double boundary')
+                ic = m%imapCv(ix-1,iy-1)
+                if1 = m%cvFcP(ic,1)
+                m%cvFc(if1) = m%imapFcx(ixb,iyb)
+                m%intcellP(if1) = 1.0_R8
+                m%intcellR(if1) = 1.0_R8
+                if1 = m%cvVxP(ic,1)
+                m%cvVx(if1) = m%imapVx(ixb,iyb)
+                m%cvVx(if1+1) = m%imapVx(loctopix(ixb,iyb),!cwdk might not exist... 
+     .                                   loctopiy(ixb,iyb))!cwdk might not exist... 
+                bound = .true.
+              end if
+            end if
+             
+            if (.not.bound) then
               call xerrab ('Problem with guard cell definition.')
             endif
           endif
