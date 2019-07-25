@@ -48,6 +48,7 @@ cank }
      *   BC_FACES(:,:)
       character*1, allocatable, save ::
      *   BCCHAR(:)
+     *   BC_LIST_CHAR(:,:)
 #else
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
@@ -62,6 +63,7 @@ cank }
       integer, save :: BC_LIST_SIZE(NBCD)
       integer, save :: BC_LIST_X(2*(DEF_NXD+DEF_NYD),NBCD)
       integer, save :: BC_LIST_Y(2*(DEF_NXD+DEF_NYD),NBCD)
+      character, save :: BC_LIST_CHAR(2*(DEF_NXD+DEF_NYD),NBCD)
       integer, save :: BCCON(0:nsdmax-1,NBCD)
       integer, save :: BCMOM(0:nsdmax-1,NBCD)
       integer, save :: BCENE(NBCD)
@@ -94,6 +96,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       real (kind=R8), save :: boundary_time_mod
       real (kind=R8), save :: boundary_time_switch
       integer, save :: bc_elm_count
+      logical, allocatable, save :: isOnFluxBoundary(:,:)
 
       interface read_b2mod_boundary_namelist
         module procedure read_b2mod_boundary_namelist_st
@@ -104,7 +107,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
 
       namelist /boundary/ NBC,CONPAR,MOMPAR,ENEPAR,ENIPAR,POTPAR,
      1 BCPOS,BCSTART,BCEND,BCCON,BCMOM,BCENE,BCENI,BCPOT,
-     1 BC_LIST_SIZE,BC_LIST_X,BC_LIST_Y,
+     1 BC_LIST_SIZE,BC_LIST_X,BC_LIST_Y,BC_LIST_CHAR,
      2 gammai,gammae,lbndusr,lfeedback,
      3 NNISO,NIISO,TEISO,TIISO,PHIISO,NXISO1,NXISO2,NYISO1,NYISO2,
      4 bcchar,
@@ -273,6 +276,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
 #endif
       call xertst (nbcd_in.le.nbcd, 'faulty parameter nbcd_in')
       call xertst (nnisod_in.le.nnisod, 'faulty parameter nnisod_in')
+      allocate(isOnFluxBoundary(-1:nxd,-1:nyd))
 
       nbc=0
       ncbs=0
@@ -284,6 +288,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       bc_list_size=0
       bc_list_x=-2
       bc_list_y=-2
+      bc_list_char=' '
       bccon=0
       bcmom=0
       bcene=0
@@ -342,6 +347,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       deallocate(NIISO)
       deallocate(LCBS)
 #endif
+      deallocate(isOnFluxBoundary)
 
       return
       end subroutine dealloc_b2mod_boundary
@@ -350,8 +356,9 @@ csw 18feb2014 added for correct implementation of boundary conditions
       implicit none
       integer nx, ny, ns
       logical dotest
-      integer is, ib, ic, ix, iy, ixx, iyy
+      integer is, ib, ic, ix, iy, ixx, iyy, iyn
       logical covered, corner, guard_cell, found
+      logical is_flux_surface
 
       logical :: file_ok, todo, assigned
       logical, allocatable :: old_style(:), done(:)
@@ -377,25 +384,68 @@ csw 18feb2014 added for correct implementation of boundary conditions
         allocate(old_style(nbc))
         do ib = 1, nbc
           if (bc_list_size(ib).eq.0) then
-            old_style(ib) = .true.
-            bc_list_size(ib) = bcend(ib) - bcstart(ib) + 1
-            if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S' .or. 
-     &          bcchar(ib).eq.'X') then
-              do ix = bcstart(ib), bcend(ib)
-                bc_list_x(ix-bcstart(ib)+1,ib) =  ix
-              end do
-              bc_list_y(1:bc_list_size(ib),ib) = bcpos(ib)
-            else if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W' .or. 
-     &               bcchar(ib).eq.'Y') then
-              bc_list_x(1:bc_list_size(ib),ib) = bcpos(ib)
-              do iy = bcstart(ib), bcend(ib)
-                bc_list_y(iy-bcstart(ib)+1,ib) =  iy
-              end do
+            if (BCCHAR(ib)=="A") then
+               ! Automatic creation of boundary condition list from structures
+               old_style(ib) = .false.
+               call build_boundary_list( bcstart(ib), bcend(ib),
+     $              bc_list_size(ib),
+     $              bc_list_x(:,ib), bc_list_y(:,ib),
+     $              bc_list_char(:,ib))
+            else
+              ! Automatic creation of boundary condition list from old style cell block definition
+              old_style(ib) = .true.
+              bc_list_size(ib) = bcend(ib) - bcstart(ib) + 1
+              bc_list_char(1:bc_list_size(ib),ib) = bcchar(ib)
+              if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S' .or. 
+     &            bcchar(ib).eq.'X') then
+                do ix = bcstart(ib), bcend(ib)
+                  bc_list_x(ix-bcstart(ib)+1,ib) =  ix
+                end do
+                bc_list_y(1:bc_list_size(ib),ib) = bcpos(ib)
+              else if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W' .or. 
+     &                 bcchar(ib).eq.'Y') then
+                bc_list_x(1:bc_list_size(ib),ib) = bcpos(ib)
+                do iy = bcstart(ib), bcend(ib)
+                  bc_list_y(iy-bcstart(ib)+1,ib) =  iy
+                end do
+              endif
             endif
           else
             old_style(ib) = .false.
           end if
         end do
+      endif
+      isOnFluxBoundary = .false.
+      do ib = 1, nbc
+        IS_FLUX_SURFACE = BCCHAR(IB).EQ.'N' .or. BCCHAR(IB).EQ.'S'
+        IF (BCCHAR(IB).eq.'A') THEN
+          IX = 1
+          IS_FLUX_SURFACE = BC_LIST_CHAR(IX,IB).EQ.'N' .or.
+     .                      BC_LIST_CHAR(IX,IB).EQ.'S'
+          DO WHILE (IS_FLUX_SURFACE .AND. IX.LT.BC_LIST_SIZE(IB))
+            IF (BC_LIST_CHAR(IX,IB).EQ.'N') THEN
+              IY = BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            ELSEIF (BC_LIST_CHAR(IX,IB).EQ.'S') THEN
+              IY = TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            ENDIF
+            IF (BC_LIST_CHAR(IX+1,IB).EQ.'N') THEN
+              IYN = BOTTOMIY(BC_LIST_X(IX+1,IB),BC_LIST_Y(IX+1,IB))
+            ELSEIF (BC_LIST_CHAR(IX+1,IB).EQ.'S') THEN
+              IYN = TOPIY(BC_LIST_X(IX+1,IB),BC_LIST_Y(IX+1,IB))
+            ENDIF
+            IS_FLUX_SURFACE = IS_FLUX_SURFACE .AND.
+     .       IY.EQ.IYN .AND. 
+     .       BC_LIST_CHAR(IX,IB).EQ.BC_LIST_CHAR(IX+1,IB)
+            IX = IX+1
+          END DO
+        END IF
+        IF (IS_FLUX_SURFACE) THEN
+          DO IX = 1, BC_LIST_SIZE(IB)
+            isOnFluxBoundary(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)) = .true.
+          END DO
+        END IF
+      end do
+
 c.. Make a list of core boundaries
         todo=maxval(lcbs).gt.0
         if (.not.todo) then
@@ -409,7 +459,7 @@ c.. Make a list of core boundaries
         allocate(done(nbc))
         done=.false.
         do ib=1,nbc
-          if(bcchar(ib).eq.'S') then
+          if(bcchar(ib).eq.'S' .or. bcchar(ib).eq.'A') then
             if(old_style(ib)) then
               if(on_closed_surface(bcstart(ib),bcpos(ib)) .and.
      .           on_closed_surface(bcend(ib),bcpos(ib))) then
@@ -485,7 +535,7 @@ c.. Make a list of core boundaries
      .     'faulty parameter lcbs')
         enddo
         deallocate(done)
-      endif
+!WG      endif
       if ((.not.file_ok).or.(.not.dotest)) then
         if (.not.file_ok) write(*,*) 'No ',trim(filename)
         write(*,*) 'Testing skipped!'
@@ -925,7 +975,7 @@ c.. Make a list of core boundaries
         allocate(done(nbc))
         done=.false.
         do ib=1,nbc
-          if(bcchar(ib).eq.'S') then
+          if(bcchar(ib).eq.'S' .or. bcchar(ib).eq.'A') then
             ian = m%bcCvP(ib,1)
             ien = m%bcCvP(ib,1) + m%bcCvP(ib,2) - 1
             if (m%cvonClosedSurface(m%bcCv(ian,2)) .and.
@@ -1465,9 +1515,9 @@ c.. Test consistency with region boundaries
       integer, intent(in) :: nx, ny, ns
       type (mapping), intent (inout) :: m
       integer :: ib, ibc, is, inbc, noss, ncoss, icoss, iss, indss,
-     .           ix, iy, jcoss
+     .           ix, iy, jcoss, iFc1, iFc2, i
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
-      integer, allocatable :: fcss(:)
+      integer, allocatable :: fcss(:), fcss2(:)
       
       type fcpart
         integer :: fcno
@@ -1483,6 +1533,15 @@ c.. Test consistency with region boundaries
       do ib = 1, nbc
         bcs(ib) = bcstart(ib)
         bce(ib) = bcend(ib)
+#ifdef CFLAGS
+        if (bcchar(ib).eq.'A') then
+! find the number of faces for this boundary condition
+cwdk need more complex test here; present scheme double counts;
+cwdk also need to correct for degenerate faces?
+          bcl(ib) = count((cflags(:,:,2:5) >= bcstart(ib)) .and.
+     >                    (cflags(:,:,2:5) <= bcend(ib)))
+        else
+#endif
         ! exclude corner cells if present
         if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S') then
           if (leftix (bcstart(ib),bcpos(ib)) .eq. -2)  
@@ -1494,18 +1553,18 @@ c.. Test consistency with region boundaries
      >      bcs(ib) = bcs(ib) + 1
           if (topiy   (bcpos(ib),bcend(ib)  ) .eq. ny+1)
      >      bce(ib) = bce(ib) - 1
-#ifdef CFLAGS
-        elseif (bcchar(ib).eq.'A') then
-! find the number of faces for this boundary condition
-          bcl(ib) = count((cflags(:,:,2:5) >= bcstart(ib)) .and.
-     >                    (cflags(:,:,2:5) <= bcend(ib)))
-#endif
         else
           call xerrab ('bcchar not yet available for WG')
         endif
         bcl(ib) = bce(ib) - bcs(ib) + 1
+#ifdef CFLAGS
+        endif
+#endif
         m%mxnBc = m%mxnBc + bcl(ib)
       enddo
+#ifdef CFLAGS
+      m%mxnBc = m%nCg
+#endif
       if (m%mxnBc .ne. m%nCg ) 
      >  call xerrab ('conv_bcparms -- wrong mxnBc')
 
@@ -1547,12 +1606,15 @@ c.. Test consistency with region boundaries
           enddo
 #ifdef CFLAGS
         elseif (bcchar(ib).eq.'A') then 
+          bcl(ib) = 0
           noss = bcend(ib) - bcstart(ib) + 1
 	  do iss = 1, noss
 	    indss = bcstart(ib)+iss-1
 !  find all faces belonging to surface structure INDSS
             ncoss = count(cflags(:,:,2:5) == indss)
+            if (ncoss.eq.0) cycle
 	    allocate (fcss(ncoss))
+            icoss = 0
 	    do iy = -1, ny
 	      do ix = 1, nx
 	        if (count(cflags(ix,iy,2:5) == indss) > 0) then
@@ -1561,50 +1623,78 @@ c.. Test consistency with region boundaries
 		    fcss(icoss) = m%imapFcx(ix,iy)
                   end if             
 		  if (cflags(ix,iy,CELLFLAG_RIGHTFACE) == indss) then
-                    icoss = icoss + 1
-		    fcss(icoss) = m%imapFcx(ix+1,iy)
+                    if (rightix(ix,iy).ne.nx+1) then
+                      icoss = icoss + 1
+                      fcss(icoss) = 
+     .                  m%imapFcx(rightix(ix,iy),rightiy(ix,iy))
+                    endif
                   end if             
 		  if (cflags(ix,iy,CELLFLAG_BOTTOMFACE) == indss) then
                     icoss = icoss + 1
 		    fcss(icoss) = m%imapFcy(ix,iy)
                   end if             
 		  if (cflags(ix,iy,CELLFLAG_TOPFACE) == indss) then
-                    icoss = icoss + 1
-		    fcss(icoss) = m%imapFcy(ix,iy+1)
+                    if (topiy(ix,iy).ne.ny+1) then
+                      icoss = icoss + 1
+		      fcss(icoss) = m%imapFcy(topix(ix,iy),topiy(ix,iy))
+                    endif
                   end if             
 		end if
 	      end do  ! ix
 	    end do  ! iy
 
+! remove possible duplicate faces from the list, as degenerate faces
+            allocate (fcss2(ncoss))
+            i = 1
+            do while (fcss(i).eq.0)
+              i = i+1
+            enddo
+            fcss2(1) = fcss(i)
+            i = 1
+            outer: do iFc1 = 2, ncoss
+              do iFc2 = 1, i 
+                if (fcss2(iFc2).eq.fcss(iFc1) .or. fcss(iFc1).eq.0) then
+                  ! duplicate element
+                  cycle outer
+                endif
+              enddo
+              ! new element found
+              i = i + 1
+              fcss2(i) = fcss(iFc1)
+            end do outer
+            ncoss = i
+            bcl(ib) = bcl(ib) + ncoss
+            deallocate (fcss)
+
 ! sort face for a continuous surface
-            	    
+#ifdef WG_TODO           	    
             allocate(face)
 	    nullify(face%prev)
 	    nullify(face%next)
-	    face%fcno = fcss(1)
+	    face%fcno = fcss2(1)
 	    face%vx1 = m%fcVx(face%fcno,1)
 	    face%vx2 = m%fcVx(face%fcno,2)
             head => face
 	    tail => face
 
-	    do jcoss = 2, noss
-	      do icoss = 2, noss
-	        if (face%vx1 == m%fcVX(fcss(icoss),2)) then
+	    do jcoss = 2, ncoss
+	      do icoss = 2, ncoss
+	        if (face%vx1 == m%fcVX(fcss2(icoss),2)) then
 	          allocate(face) 
 	          nullify(face%prev)
 	          nullify(face%next)
-	          face%fcno = fcss(icoss)
+	          face%fcno = fcss2(icoss)
 	          face%vx1 = m%fcVx(face%fcno,1)
 	          face%vx2 = m%fcVx(face%fcno,2)
 	          face%next => head
 		  head => face	
   		  exit	
 	        end if
-	        if (face%vx2 == m%fcVX(fcss(icoss),1)) then
+	        if (face%vx2 == m%fcVX(fcss2(icoss),1)) then
 	          allocate(face) 
 		  nullify(face%prev)
 	          nullify(face%next)
-	          face%fcno = fcss(icoss)
+	          face%fcno = fcss2(icoss)
 	          face%vx1 = m%fcVx(face%fcno,1)
 	          face%vx2 = m%fcVx(face%fcno,2)
 		  face%prev => tail
@@ -1617,14 +1707,30 @@ c.. Test consistency with region boundaries
 ! store faces in m%bcFc(inbc)...
             do while (associated(head))
 	      inbc = inbc + 1
-	      m%bcFc(inbc) = head%fcno
+              iFc1 = head%fcno
+	      m%bcFc(inbc) = iFc1
+              if (m%fcCv(iFc1,1) .lt.  m%fcCv(iFc1,2))
+     >          m%bcFcOr(inbc) = 1.0_R8
+              if (m%fcCv(iFc1,1) .gt.  m%fcCv(iFc1,2))
+     >          m%bcFcOr(inbc) = -1.0_R8
 	      tail => head
 	      head => head%next
 	      deallocate (tail)
 	    end do
-
-	    deallocate (fcss)
-	  end do  ! iss	  
+#else
+            do icoss = 1, ncoss
+              inbc = inbc + 1
+              iFc1 = fcss2(icoss)
+              m%bcFc(inbc) = iFc1
+              if (m%fcCv(iFc1,1) .lt.  m%fcCv(iFc1,2))
+     >          m%bcFcOr(inbc) = 1.0_R8
+              if (m%fcCv(iFc1,1) .gt.  m%fcCv(iFc1,2))
+     >          m%bcFcOr(inbc) = -1.0_R8
+            enddo
+#endif
+	    deallocate (fcss2)
+	  end do  ! iss	 
+          m%bcFcP(ib,2) = bcl(ib) 
 #endif
         else
           call xerrab ('conv_bcparms -- wrong BCCHAR')

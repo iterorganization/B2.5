@@ -97,7 +97,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .           inv, inv1, inv2, invmx, ifcc, icount, n2, ix2o,
      .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, 
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
-     .           ixb, iyb
+     .           ixb, iyb, bix, biy
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -536,6 +536,8 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
         do ix = 1, nx+1
           lix = locleftix(ix-1,iy-1)
           liy = locleftiy(ix-1,iy-1)
+          bix = locbottomix(ix-1,iy-1)
+          biy = locbottomiy(ix-1,iy-1)
           if((cflags(lix,liy,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
      .      (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
      .      (cflags(locbottomix(ix-1,iy-1),locbottomiy(ix-1,iy-1),
@@ -554,22 +556,33 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
             iyghostvx(icount) = iy-1
             ixmapghostvx(ix-1,iy-1)= -2
             iymapghostvx(ix-1,iy-1) = -2
-          elseif (points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
-     .         crx(ix-1,iy-1,2), cry(ix-1,iy-1,2)))then
+          elseif (cflags(ix-1,iy-1,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
+     .        points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
+     .                     crx(ix-1,iy-1,2), cry(ix-1,iy-1,2))) then
             ighostvx(ix-1,iy-1)=1
             icount=icount+1
             ixghostvx(icount) = ix-1
             iyghostvx(icount) = iy-1
-            ixmapghostvx(ix-1,iy-1)= loctopix(ix-1,iy-1)
+            ixmapghostvx(ix-1,iy-1) = loctopix(ix-1,iy-1)
             iymapghostvx(ix-1,iy-1) = loctopiy(ix-1,iy-1)
-          elseif (points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
+          elseif (cflags(ix-1,iy-1,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
+     .        points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
      .         crx(ix-1,iy-1,1), cry(ix-1,iy-1,1))) then   
             ighostvx(ix-1,iy-1)=1
             icount=icount+1
             ixghostvx(icount) = ix-1
             iyghostvx(icount) = iy-1
-            ixmapghostvx(ix-1,iy-1)= locrightix(ix-1,iy-1)
+            ixmapghostvx(ix-1,iy-1) = locrightix(ix-1,iy-1)
             iymapghostvx(ix-1,iy-1) = locrightiy(ix-1,iy-1)
+          elseif (cflags(lix,liy,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
+     .        points_match(crx(lix,liy,1), cry(lix,liy,1), 
+     .                     crx(lix,liy,3), cry(lix,liy,3))) then
+            ighostvx(ix-1,iy-1)=1
+            icount=icount+1
+            ixghostvx(icount) = ix-1
+            iyghostvx(icount) = iy-1
+            ixmapghostvx(ix-1,iy-1) = loctopix(ix-1,iy-1)
+            iymapghostvx(ix-1,iy-1) = loctopiy(ix-1,iy-1)
           endif	
         enddo
       enddo
@@ -589,7 +602,8 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 ! max. no. of entries in vxCv (cell list of each vertex)
 ! corner vertices have only 3; 
 ! each X-point vertex has 8; duplicate X-point vertices for slabs
-      m%nVmxCv = 4 * m%nVx - 4*nncut + 2*nncut*4 
+!      m%nVmxCv = 4 * m%nVx - 4*nncut + 2*nncut*4 
+      m%nVmxCv = 4 * (nx+1) * (ny+1) + 2*nncut*4 
 
 ! max. no. of entries is vxFc (face list of each vertex)
 ! corner vertices have only 2;
@@ -744,7 +758,8 @@ cwdk  might need to add duplicates numbers here...
             if ((ix2 == -1) .or. (ix2 == nx+2) .or.
      .          (iy2 == -1) .or. (iy2 == ny+2)) exit
           enddo            
-          m%imapVx(ix-1,iy-1)= m%imapVx(max(ix2-1,-1),max(iy2-1,-1))
+          m%imapVx(ix-1,iy-1)= m%imapVx(min(max(ix2-1,-1),nx),
+     .                                  min(max(iy2-1,-1),ny))
         enddo
       enddo
 
@@ -911,17 +926,20 @@ cwdk  might need to add duplicates numbers here...
       m%cvFcP(m%nCi+1:m%nCv,2) = 1
       m%cvVxP(m%nCi+1:m%nCv,2) = 2
 
-      do iy = 1, ny
-        do ix = 1, nx
-          xco = crx(ix-1,iy-1,0:3)
-          yco = cry(ix-1,iy-1,0:3)
-          if(cellGeoType(xco,yco) == CGEO_QUAD)then
-            m%cvFcP(1:m%nCi,2) = 4
-            m%cvVxP(1:m%nCi,2) = 4
-          else
-            m%cvFcP(1:m%nCi,2) = 3
-            m%cvVxP(1:m%nCi,2) = 3
-          end if
+      do iy = -1, ny
+        do ix = -1, nx
+          if ((m%imapCv(ix,iy) /= 0).and.
+     .        (m%imapCv(ix,iy) .le. m%nCi)) then
+            xco = crx(ix,iy,0:3)
+            yco = cry(ix,iy,0:3)
+            if(cellGeoType(xco,yco) == CGEO_QUAD)then
+              m%cvFcP(m%imapCv(ix,iy),2) = 4
+              m%cvVxP(m%imapCv(ix,iy),2) = 4
+            else
+              m%cvFcP(m%imapCv(ix,iy),2) = 3
+              m%cvVxP(m%imapCv(ix,iy),2) = 3
+            endif
+          endif
         enddo
       enddo
       

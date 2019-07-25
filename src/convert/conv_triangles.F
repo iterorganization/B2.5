@@ -8,7 +8,7 @@
       use b2us_prep
 
 #ifdef B25_EIRENE
-!      use eirmod_module_avltree
+      use eirmod_module_avltree
 #endif
 
       implicit none

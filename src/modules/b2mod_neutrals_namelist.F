@@ -92,7 +92,8 @@ cank }
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:)
       character*1, allocatable, save ::
-     *   CRCSTRA(:)
+     *   CRCSTRA(:),
+     *   RC_LIST_CHAR(:,:)
 #else
       real (kind=R8), save :: RECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: ERECYC(0:nsdmax-1,NSTRAID)
@@ -118,6 +119,7 @@ cank }
       integer, save :: RC_LIST_SIZE(NSTRAID)
       integer, save :: RC_LIST_X(2*(DEF_NXD+DEF_NYD),NSTRAID)
       integer, save :: RC_LIST_Y(2*(DEF_NXD+DEF_NYD),NSTRAID)
+      character, save :: RC_LIST_CHAR(2*(DEF_NXD+DEF_NYD),NSTRAID)
       integer, save :: NRCFACES(NSTRAID)
       integer, save :: RC_FACES(2*(DEF_NXD+DEF_NYD),NSTRAID)
       integer, save :: TARGSP(NSTRAID,ntrack)
@@ -167,7 +169,7 @@ cank }
 
       private :: neutrals
       namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
-     1  rc_list_size, rc_list_x, rc_list_y,
+     1  rc_list_size, rc_list_x, rc_list_y, rc_list_char,
      .  nrcfaces, rc_faces, rc_face_ori,
      4  recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, crcstra,
      .  rf_neut, phys_sput, chem_sput,
@@ -238,6 +240,7 @@ csw 21feb2012
       allocate(RC_LIST_SIZE(NSTRAID))
       allocate(RC_LIST_X(2*(NXD+NYD),NSTRAID))
       allocate(RC_LIST_Y(2*(NXD+NYD),NSTRAID))
+      allocate(RC_LIST_CHAR(2*(NXD+NYD),NSTRAID))
       allocate(NRCFACES(NSTRAID))
       allocate(RC_FACES(2*(NXD+NYD),NSTRAID))
       allocate(RC_FACE_ORI(2*(NXD+NYD),NSTRAID))
@@ -291,6 +294,7 @@ csw 21feb2012
       RC_LIST_SIZE=0
       RC_LIST_X=-2
       RC_LIST_Y=-2
+      RC_LIST_CHAR=' '
       TARGSP=-1
       TARGSP(:,1)=sput_dst
       CHEMSP=.false.
@@ -442,6 +446,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(RC_LIST_SIZE)
       deallocate(RC_LIST_X)
       deallocate(RC_LIST_Y)
+      deallocate(RC_LIST_CHAR)
       deallocate(NRCFACES)
       deallocate(RC_FACES)
       deallocate(RC_FACE_ORI)
@@ -540,18 +545,28 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
         allocate(old_style(nstrat))
         do is = 1, nstrat
           if (rc_list_size(is).eq.0) then
-            old_style(is) = .true.
-            rc_list_size(is) = rcend(is) - rcstart(is) + 1
-            if (crcstra(is).eq.'N' .or. crcstra(is).eq.'S') then
-              do ix = rcstart(is), rcend(is)
-                rc_list_x(ix-rcstart(is)+1,is) =  ix
-              end do
-              rc_list_y(1:rc_list_size(is),is) = rcpos(is)
-            else if (crcstra(is).eq.'E' .or. crcstra(is).eq.'W') then
-              rc_list_x(1:rc_list_size(is),is) = rcpos(is)
-              do ix = rcstart(is), rcend(is)
-                rc_list_y(ix-rcstart(is)+1,is) =  ix
-              end do
+            if (crcstra(is)=="A") then
+                ! Automatic creation of boundary condition list from structures
+              old_style(is) = .false.      
+              call build_boundary_list( rcstart(is), rcend(is),
+     $               rc_list_size(is),
+     $               rc_list_x(:,is), rc_list_y(:,is),
+     $               rc_list_char(:,is))
+            else
+              old_style(is) = .true.
+              rc_list_size(is) = rcend(is) - rcstart(is) + 1
+              rc_list_char(1:rc_list_size(is),is) = crcstra(is)
+              if (crcstra(is).eq.'N' .or. crcstra(is).eq.'S') then
+                do ix = rcstart(is), rcend(is)
+                  rc_list_x(ix-rcstart(is)+1,is) =  ix
+                end do
+                rc_list_y(1:rc_list_size(is),is) = rcpos(is)
+              else if (crcstra(is).eq.'E' .or. crcstra(is).eq.'W') then
+                rc_list_x(1:rc_list_size(is),is) = rcpos(is)
+                do ix = rcstart(is), rcend(is)
+                  rc_list_y(ix-rcstart(is)+1,is) =  ix
+                end do
+              endif
             endif
           else
             old_style(is) = .false.
@@ -1862,9 +1877,22 @@ c.. Test consistency with physical edges within the computational domain
       subroutine conv_rcparms (nx, ny, ns, m)
       use b2mod_indirect
       implicit none
-      integer :: nx, ny, ns, istra, istrac, instra
+      integer :: nx, ny, ns, istra, istrac, instra,
+     .           noss, ncoss, icoss, iss, indss,
+     .           ix, iy, jcoss, iFc1, iFc2, i
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
+      integer, allocatable :: fcss(:), fcss2(:)
       type (mapping), intent (inout) :: m
+
+      type fcpart
+        integer :: fcno
+	integer :: vx1, vx2
+	type(fcpart), pointer :: prev, next
+      end type fcpart
+
+      type(fcpart), pointer :: head, tail
+      type(fcpart), pointer :: face
+
 
       m%nRc   = nstrat  ! number of recycling boundaries
       m%mxnRc = 0       ! number of cells with imposed recycling
@@ -1872,6 +1900,16 @@ c.. Test consistency with physical edges within the computational domain
       do istra = 1, nstrat
         rcs(istra) = rcstart(istra)
         rce(istra) = rcend(istra)
+#ifdef CFLAGS
+        if (crcstra(istra).eq.'A') then
+! find the number of faces for this boundary condition
+cwdk need more complex test here; present scheme double counts;
+cwdk also need to correct for degenerate faces?
+          rcl(istra) = count((cflags(:,:,2:5) >= rcstart(istra)) .and.
+     >                    (cflags(:,:,2:5) <= rcend(istra)))
+          m%mxnRc = m%nCg
+        else
+#endif
         ! exclude corner cells if present
         if (crcstra(istra).eq.'N' .or. crcstra(istra).eq.'S') then
           if (leftix (rcstart(istra),rcpos(istra)) .eq. -2)  
@@ -1893,6 +1931,9 @@ c.. Test consistency with physical edges within the computational domain
         else
           call xerrab ('Wrong CRCSTRA or not yet available for WG')
         endif
+#ifdef CFLAGS
+        endif
+#endif
       enddo
 
       call alloc_mapping_rc (m)
@@ -1929,6 +1970,134 @@ c.. Test consistency with physical edges within the computational domain
      >         m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1))    ! number of the corresponding domain face
             m%rcFcOr(instra) = 1.0_R8
           enddo
+#ifdef CFLAGS
+        elseif (crcstra(istra).eq.'A') then 
+          rcl(istra) = 0
+          noss = rcend(istra) - rcstart(istra) + 1
+	  do iss = 1, noss
+	    indss = rcstart(istra)+iss-1
+!  find all faces belonging to surface structure INDSS
+            ncoss = count(cflags(:,:,2:5) == indss)
+            if (ncoss.eq.0) cycle
+	    allocate (fcss(ncoss))
+            icoss = 0
+	    do iy = -1, ny
+	      do ix = 1, nx
+	        if (count(cflags(ix,iy,2:5) == indss) > 0) then
+		  if (cflags(ix,iy,CELLFLAG_LEFTFACE) == indss) then
+                    icoss = icoss + 1
+		    fcss(icoss) = m%imapFcx(ix,iy)
+                  end if             
+		  if (cflags(ix,iy,CELLFLAG_RIGHTFACE) == indss) then
+                    if (rightix(ix,iy).ne.nx+1) then
+                      icoss = icoss + 1
+                      fcss(icoss) = 
+     .                  m%imapFcx(rightix(ix,iy),rightiy(ix,iy))
+                    endif
+                  end if             
+		  if (cflags(ix,iy,CELLFLAG_BOTTOMFACE) == indss) then
+                    icoss = icoss + 1
+		    fcss(icoss) = m%imapFcy(ix,iy)
+                  end if             
+		  if (cflags(ix,iy,CELLFLAG_TOPFACE) == indss) then
+                    if (topiy(ix,iy).ne.ny+1) then
+                      icoss = icoss + 1
+		      fcss(icoss) = m%imapFcy(topix(ix,iy),topiy(ix,iy))
+                    endif
+                  end if             
+		end if
+	      end do  ! ix
+	    end do  ! iy
+
+! remove possible duplicate faces from the list, as degenerate faces
+            allocate (fcss2(ncoss))
+            i = 1
+            do while (fcss(i).eq.0)
+              i = i+1
+            enddo
+            fcss2(1) = fcss(i)
+            i = 1
+            outer: do iFc1 = 2, ncoss
+              do iFc2 = 1, i 
+                if (fcss2(iFc2).eq.fcss(iFc1) .or. fcss(iFc1).eq.0) then
+                  ! duplicate element
+                  cycle outer
+                endif
+              enddo
+              ! new element found
+              i = i + 1
+              fcss2(i) = fcss(iFc1)
+            end do outer
+            ncoss = i
+            rcl(istra) = rcl(istra) + ncoss
+            deallocate (fcss)
+
+! sort face for a continuous surface
+#ifdef WG_TODO           	    
+            allocate(face)
+	    nullify(face%prev)
+	    nullify(face%next)
+	    face%fcno = fcss2(1)
+	    face%vx1 = m%fcVx(face%fcno,1)
+	    face%vx2 = m%fcVx(face%fcno,2)
+            head => face
+	    tail => face
+
+	    do jcoss = 2, ncoss
+	      do icoss = 2, ncoss
+	        if (face%vx1 == m%fcVX(fcss2(icoss),2)) then
+	          allocate(face) 
+	          nullify(face%prev)
+	          nullify(face%next)
+	          face%fcno = fcss2(icoss)
+	          face%vx1 = m%fcVx(face%fcno,1)
+	          face%vx2 = m%fcVx(face%fcno,2)
+	          face%next => head
+		  head => face	
+  		  exit	
+	        end if
+	        if (face%vx2 == m%fcVX(fcss2(icoss),1)) then
+	          allocate(face) 
+		  nullify(face%prev)
+	          nullify(face%next)
+	          face%fcno = fcss2(icoss)
+	          face%vx1 = m%fcVx(face%fcno,1)
+	          face%vx2 = m%fcVx(face%fcno,2)
+		  face%prev => tail
+		  tail => face
+		  exit		
+	        end if
+              end do  ! icoss
+            end do  ! jcoss
+!
+! store faces in m%rcFc(instra)...
+            do while (associated(head))
+	      instra = instra + 1
+              iFc1 = head%fcno
+	      m%bcFc(instra) = iFc1
+              if (m%fcCv(iFc1,1) .lt.  m%fcCv(iFc1,2))
+     >          m%bcFcOr(instra) = 1.0_R8
+              if (m%fcCv(iFc1,1) .gt.  m%fcCv(iFc1,2))
+     >          m%bcFcOr(instra) = -1.0_R8
+	      tail => head
+	      head => head%next
+	      deallocate (tail)
+	    end do
+#else
+            do icoss = 1, ncoss
+              instra = instra + 1
+              iFc1 = fcss2(icoss)
+              m%rcFc(instra) = iFc1
+              if (m%fcCv(iFc1,1) .lt.  m%fcCv(iFc1,2))
+     >          m%rcFcOr(instra) = 1.0_R8
+              if (m%fcCv(iFc1,1) .gt.  m%fcCv(iFc1,2))
+     >          m%rcFcOr(instra) = -1.0_R8
+            enddo
+#endif
+	    deallocate (fcss2)
+	  end do  ! iss	 
+          m%rcFcP(istra,2) = rcl(istra) 
+#endif
         else
 !          call xerrab ('conv_rcparms -- wrong CRCSTRA')
         endif

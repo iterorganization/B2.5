@@ -327,11 +327,12 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
           call conv_bcparms (nx, ny, ns, mpg)
           call write_bcparms(ns,mpg)
 !pb for testing
-          call calc_mapping_bc(nx, ny, ns, mpg)
+!          call calc_mapping_bc(nx, ny, ns, mpg)
         else
           call alloc_b2mod_boundary(mpg%nCi/2,mpg%nCi/2,ns,nbcd,nnisod)
           call read_b2mod_boundary_namelist(ns, mpg, .false.)
         end if
+        call bc_to_struct(mpg)
       end if
 
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
@@ -350,12 +351,13 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
           call conv_rcparms (nx, ny, ns, mpg)
           call write_rcparms(ns,mpg)
 !pb for testing
-          call calc_mapping_rc(nx, ny, ns, mpg)
+!          call calc_mapping_rc(nx, ny, ns, mpg)
         else
           call alloc_b2mod_neutrals (mpg%nCi/2,mpg%nCi/2, ns, 
      .      natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(ns, mpg, .false.)
         end if
+        call rc_to_struct(mpg)
       end if
 #ifdef B25_EIRENE
       open (unit=33)
