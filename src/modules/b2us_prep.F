@@ -613,10 +613,10 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       m%nVmxFc = 4 * (nx+1) * (ny+1) - 2*((nx-1) + (ny-1))
 
 ! max no. of entries in matrix
-      m%nCmxNv = 9*m%nCi - 4*nncut + ! internal cells (corners only 8)
-     .           6*m%nCg - 8*nncut + ! guard cells (at corners only 5)
-     .           2*8*nncut*4         ! correction for cells around X-points
-
+!      m%nCmxNv = 9*m%nCi - 4*nncut + ! internal cells (corners only 8)
+!     .           6*m%nCg - 8*nncut + ! guard cells (at corners only 5)
+!     .           2*8*nncut*4         ! correction for cells around X-points
+      m%nCmxNv = 9 * (nx+1) * (ny+1)
       write (*,*) 'Mapping defined, with'
       write (*,*) 'nCv, nCi, nCg  = ', m%nCv, m%nCi, m%nCg
       write (*,*) 'nFc, nVx       = ', m%nFc, m%nVx
@@ -1002,11 +1002,11 @@ cwdk  might need to add duplicates numbers here...
      .                                loctopiy(ix-1,iy-1))
 !CWDK to be computed in b2ag!
               m%intcellP(if1) = 1.0_R8
-              m%intcellP(if2) = 0.5_R8
-              m%intcellP(if3) = 0.5_R8
+              m%intcellP(if2) = 0.0_R8
+              m%intcellP(if3) = 1.0_R8
               m%intcellR(if1) = 1.0_R8
-              m%intcellR(if2) = 0.5_R8
-              m%intcellR(if3) = 0.5_R8
+              m%intcellR(if2) = 0.0_R8
+              m%intcellR(if3) = 1.0_R8
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)!cwdk is this not the vertex that was thrown out?? ctb solved?
 
               m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),
@@ -1047,11 +1047,11 @@ cwdk  might need to add duplicates numbers here...
               m%cvFc(if3) = m%imapFcy(loctopix(ix-1,iy-1),
      .                                loctopiy(ix-1,iy-1))
               m%intcellP(if1) = 1.0_R8
-              m%intcellP(if2) = 0.5_R8
-              m%intcellP(if3) = 0.5_R8
+              m%intcellP(if2) = 0.0_R8
+              m%intcellP(if3) = 1.0_R8
               m%intcellR(if1) = 1.0_R8
-              m%intcellR(if2) = 0.5_R8
-              m%intcellR(if3) = 0.5_R8
+              m%intcellR(if2) = 0.0_R8
+              m%intcellR(if3) = 1.0_R8
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
               m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),!cwdk is this not the vertex that was thrown out??ctb solved?
      .                             locrightiy(ix-1,iy-1))

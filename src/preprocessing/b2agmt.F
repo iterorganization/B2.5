@@ -259,10 +259,10 @@
           else
             ! For arbitrary (quad) cells, compute as average between 
             ! poloidal directions at vertices
-            t0 = 0.25_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1) + 
-     &                    fpsi(ix,iy,2,1) + fpsi(ix,iy,3,1))
-            t1 = 0.25_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2) + 
-     &                    fpsi(ix,iy,2,2) + fpsi(ix,iy,3,2))
+            t0 =  0.25_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2) + 
+     &                     fpsi(ix,iy,2,2) + fpsi(ix,iy,3,2))
+            t1 = -0.25_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1) + 
+     &                     fpsi(ix,iy,2,1) + fpsi(ix,iy,3,1))
             ebc(ix,iy,0) = t0/norm(t0,t1)
             ebc(ix,iy,1) = t1/norm(t0,t1)
           endif
@@ -387,10 +387,10 @@ cwdk      4) centroid: average between the intersections with faces
 
           ! Unit vector of poloidal field in cell center
           ! WG-TMP: based on simple geom. avg. (consistency with carre_b2agbb)
-          t0 = 0.25_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1) + 
-     &                  fpsi(ix,iy,2,1) + fpsi(ix,iy,3,1))
-          t1 = 0.25_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2) + 
-     &                  fpsi(ix,iy,2,2) + fpsi(ix,iy,3,2))
+          t0 =  0.25_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2) + 
+     &                   fpsi(ix,iy,2,2) + fpsi(ix,iy,3,2))
+          t1 = -0.25_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1) + 
+     &                   fpsi(ix,iy,2,1) + fpsi(ix,iy,3,1))
           ebc(ix,iy,0) = t0/norm(t0,t1)
           ebc(ix,iy,1) = t1/norm(t0,t1)
 
@@ -456,8 +456,8 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
         else
           ! "Special" faces (not between aligned quads)
           ! Compute local field direction at face from fpsi
-          t0 = 0.5_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,2,1))
-          t1 = 0.5_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,2,2))
+          t0 =  0.5_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,2,2))
+          t1 = -0.5_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,2,1))
           ebf(0) = t0/norm(t0,t1)
           ebf(1) = t1/norm(t0,t1)
 
@@ -522,8 +522,9 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
 
           ! Assume perfectly aligned face
           qac(ix,iy,1) = 0.0_R8
-          qas(ix,iy,1) = sinang ( ebf(0), ebf(1), 
-     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0))
+          qas(ix,iy,1) = sinang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ebf(0), ebf(1))
           qas(ix,iy,1) = sign(1.0_R8,qas(ix,iy,1))
 
           ! qc and qs for backwards compatibility
@@ -535,12 +536,13 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      .     (hy(ix,iy)*qz(ix,iy,0) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
      .      qz(bottomix(ix,iy),bottomiy(ix,iy),0))/ 
      .     (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+          qs(ix,iy,1) = sign(sqrt(1.0_R8 - qc(ix,iy,1)**2),qs(ix,iy,1))
 
         else
           ! "Special" faces (not between aligned quads)
           ! Compute local field direction at face from fpsi
-          t0 = 0.5_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1))
-          t1 = 0.5_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2))
+          t0 =  0.5_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2))
+          t1 = -0.5_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1))
           ebf(0) = t0/norm(t0,t1)
           ebf(1) = t1/norm(t0,t1)
 
@@ -556,15 +558,19 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &       (hc(bottomix(ix,iy),bottomiy(ix,iy),3)+hc(ix,iy,1))
 
           ! angles at bottom face
-          qc(ix,iy,1) = cosang ( ecf(0), ecf(1), 
-     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0))
-          qs(ix,iy,1) = sinang ( ecf(0), ecf(1), 
-     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0))
+          qc(ix,iy,1) = cosang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ecf(0), ecf(1))
+          qs(ix,iy,1) = sinang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ecf(0), ecf(1))
 
-          qac(ix,iy,1) = cosang ( ebf(0), ebf(1), 
-     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0))
-          qas(ix,iy,1) = sinang ( ebf(0), ebf(1), 
-     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0))
+          qac(ix,iy,1) = cosang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ebf(0), ebf(1))
+          qas(ix,iy,1) = sinang (
+     &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
+     &      ebf(0), ebf(1))
 
         endif
 
@@ -596,7 +602,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
 *     this code.)
       call b2xvsg1(nx, ny, qz(-1,-1,1), 1, 'qz1', '.gt.')
       call b2xvsg1(nx, ny, qc(-1,-1,0), 1, 'qc', '.gt.')
-!      call b2xvsg1(nx, ny, qc(-1,-1,1), 1, 'qc', '.gt.')
+      call b2xvsg1(nx, ny, qc(-1,-1,1), 1, 'qc', '.gt.')
 *   ..compute vol, gs
       vol = INVALID_DOUBLE
       gs(:,:,0) = 0.0_R8
