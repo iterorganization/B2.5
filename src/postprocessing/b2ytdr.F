@@ -4633,7 +4633,17 @@ Cxpb then rewrite the entire block
      .                         ISRFM(JMOL),ISRTM(JMOL),ID1M(JMOL),
      .                         NRCM(JMOL),NFOLM(JMOL),NGENM(JMOL)
             NHSTM(JMOL) = 0
-            LKINDM(JMOL) = LMOLSCL(JMOL)
+            IF (LMOLSCL(JMOL).GT.0) THEN
+              LKINDM(JMOL) = LMOLSCL(JMOL)
+            ELSE
+              IF (maxval(MLCMP(1:NATMI,JMOL)).GT.0) THEN
+                DO JATM = 1, NATMI
+                  IF (MLCMP(JATM,JMOL).GT.0) LKINDM(JMOL) = JATM
+                END DO
+              ELSE
+                LKINDM(JMOL) = 0
+              END IF
+            END IF
           ELSE IF (streql(eirene_format,'old')) THEN
             READ (IUNIN,66666) I,TEXTM(JMOL),NMASSM(JMOL),NCHARM(JMOL),
      .                         NPRTM(JMOL),idum(3),
@@ -4768,7 +4778,17 @@ Cxpb then rewrite the entire block
      .                         ISRFI(JION),ISRTI(JION),ID1I(JION),
      .                         NRCI(JION),NFOLI(JION),NGENI(JION)
             NHSTI(JION) = 0
-            LKINDI(JION) = LIONSCL(JION)
+            IF (LIONSCL(JION).GT.0) THEN
+              LKINDI(JION) = LIONSCL(JION)
+            ELSE
+              IF (ISRTI(JION).GT.0.AND.ISRTI(JION).LE.NATMI) THEN
+                LKINDI(JION) = ISRTI(JION)
+              ELSE IF (ISRTI(JION).LT.0.AND.ISRTI(JION).GE.-NMOLI) THEN
+                LKINDI(JION) = LKINDM(-ISRTI(JION))
+              ELSE
+                LKINDI(JION) = 0
+              END IF
+            END IF
           ELSE IF (streql(eirene_format,'old')) THEN
             READ (IUNIN,66666) I,TEXTI(JION),NMASSI(JION),NCHARI(JION),
      .                         NPRTI(JION),NCHRGI(JION),

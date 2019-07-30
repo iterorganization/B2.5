@@ -184,6 +184,10 @@ contains
 #endif
 #endif
 
+        ns = size( na, 3 )
+        nx = ubound( na, 1 )
+        ny = ubound( na, 2 )
+
         !! Preparing database for writing
         !! Through practice it was disclosed that there are some mandatory
         !! steps to be done in order to assure for data to be successfully
@@ -416,10 +420,6 @@ contains
         edge_profiles%ggd( time_sind )%time = time_slice_value
         edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
         edge_sources%source(1)%ggd( time_sind )%time = time_slice_value
-
-        ns = size( na, 3 )
-        nx = ubound( na, 1 )
-        ny = ubound( na, 2 )
 
         !! List of species
         allocate( edge_profiles%ggd( time_sind )%ion( ns ) )
