@@ -199,6 +199,10 @@ contains
 #endif
 #endif
 
+        ns = size( na, 3 )
+        nx = ubound( na, 1 )
+        ny = ubound( na, 2 )
+
         !! Preparing database for writing
         !! Through practice it was disclosed that there are some mandatory
         !! steps to be done in order to assure for data to be successfully
@@ -513,13 +517,10 @@ contains
         edge_sources%source(1)%ggd( time_sind )%time = time_slice_value
 #if IMAS_MINOR_VERSION > 21
         do j = 1, n_process
+          allocate( radiation%process(j)%ggd( num_time_slices ) )
           radiation%process(j)%ggd( time_sind )%time = time_slice_value
         end do
 #endif
-
-        ns = size( na, 3 )
-        nx = ubound( na, 1 )
-        ny = ubound( na, 2 )
 
         !! List of species
         allocate( edge_profiles%ggd( time_sind )%ion( ns ) )
@@ -705,12 +706,12 @@ contains
               end if
             end do
             radiation%process(3)%ggd( time_sind )%neutral( is )%label(1) = &
-                &    textmn( is-1 )
+                &    textmn( j-1 )
             radiation%process(3)%ggd( time_sind )%neutral( is )%ion_index = &
-                &    eb2atcr( lmolscl(is) ) + 1
+                &    eb2atcr( lmolscl(j) ) + 1
             radiation%process(3)%ggd( time_sind )%neutral( is )%multiple_states_flag = 0
             radiation%process(3)%ggd( time_sind )%neutral( is )%state(1)%label(1) = &
-                &    textmn( is-1 )             
+                &    textmn( j-1 )
           end do
 
           !! List of molecular ions

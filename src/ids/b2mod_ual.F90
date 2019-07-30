@@ -70,7 +70,8 @@ contains
             !< database
 
         !! Set data to edge_profiles IDS
-        write(0,*) "Writing to edge_profiles, edge_sources and edge_transport IDS"
+        write(0,*) "Writing to edge_profiles, edge_sources, edge_transport, "// &
+          &  "and radiation IDS"
 
         !! Create and modify new shot/run
         call imas_create_env( treename, shot, run, 0, 0, idx, username, &

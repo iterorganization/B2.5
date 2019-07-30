@@ -324,13 +324,13 @@ c
       solpstop=' '
 #else
 #ifdef NAGFOR
-        call get_environment_variable('SOLPSTOP',
-     .   status=ierror, length=lenval)
-        if (ierror.eq.0) then
-          call get_environment_variable('SOLPSTOP',value=solpstop)
-        elseif (ierror.eq.1) then
-          solpstop=' '
-        endif
+      call get_environment_variable('SOLPSTOP',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('SOLPSTOP',value=solpstop)
+      elseif (ierror.eq.1) then
+        solpstop=' '
+      endif
 #else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
