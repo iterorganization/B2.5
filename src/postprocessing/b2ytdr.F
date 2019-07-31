@@ -5093,6 +5093,17 @@ Cxpb then rewrite the entire block
      .                                     DENSLIM(JPLS),idum(0),
      .                                     NHSTP(JPLS),idum(2),
      .                                     CDENMODEL(JPLS),NRE(JPLS)
+          IF (ISRFP(JPLS).GT.0.AND.ISRFP(JPLS).LE.NATMI) THEN
+            LKINDP(JPLS)=ISRFP(JPLS)
+          ELSE
+            FOUND = .FALSE.
+            DO JATM = 1, NATMI
+              IF (FOUND) CYCLE
+              FOUND = NMASSA(JATM).EQ.NMASSP(JPLS) .AND.
+     &                NCHARA(JATM).EQ.NCHARP(JPLS)
+              IF (FOUND) LKINDP(JPLS)=JATM
+            END DO
+          END IF
           CALL EIRENE_UPPERCASE (CDENMODEL(JPLS))
           DO 512 K=1,NRCP(JPLS)
             IF (ID1P(JPLS).LT.3) THEN
