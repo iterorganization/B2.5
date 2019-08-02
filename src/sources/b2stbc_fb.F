@@ -692,7 +692,7 @@
                case (1) ! local density
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'local_density for sequence ',
      &                    ispecies+1
@@ -727,7 +727,7 @@
                case (2) ! local electron density
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'local_electron_density for sequence ',
      &                    ispecies+1
@@ -758,7 +758,7 @@
                case (3) ! nesepm electron density
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'nesepm_electron_density for sequence ',
      &                    ispecies+1
@@ -779,7 +779,7 @@
                case (4) ! total particle content for that sequence
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'total particle content for sequence ',
      &                    ispecies+1
@@ -812,7 +812,7 @@
                case (5) ! total ion content for that sequence (not including neutrals)
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'total ion content for sequence ',
      &                    ispecies+1
@@ -846,7 +846,7 @@
                case (6) ! neutral particle flux through the core boundary
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'core boundary flux for sequence ',
      &                    ispecies+1
@@ -892,7 +892,7 @@
                case (7) ! relative average concentration of this species at the separatrix
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                 'b2stbc_fb_pre_choice: using ',
      &                 'average separatrix concentration for sequence ',
      &                  ispecies+1
@@ -927,7 +927,7 @@
                case (8) ! relative average concentration of this species on desired domain
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                 'b2stbc_fb_pre_choice: using average ',
      &                 'concentration for sequence ', ispecies+1
                   endif
@@ -972,7 +972,7 @@
                case (1) ! rescale slowed by na_feedback_alpha
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_option: using ',
      &                    'slowed_rescale for sequence ',
      &                    ispecies+1
@@ -987,7 +987,7 @@
                case (2) ! pure rescale
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_option: using ',
      &                    'rescale for sequence ',
      &                    ispecies+1
@@ -999,7 +999,7 @@
                case (3) ! rescale slowed by tanh_log
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_option: using ',
      &                    'tanh_log_rescale for sequence ',
      &                    ispecies+1
@@ -1016,7 +1016,7 @@
                         ! N = A + B*(time-T)
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_option: using ',
      &                    'SOLPS4 linear increase for sequence ',
      &                    ispecies+1
@@ -1065,7 +1065,7 @@
                         ! Nt = A*exp((time-T)*B)
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_option: using ',
      &                    'SOLPS4 exponential decay for sequence ',
      &                    ispecies+1
@@ -1136,7 +1136,7 @@
                case (1) ! gas puff via boundary condition
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_actuator: using ',
      &                    'gas_puff for sequence ',
      &                    ispecies+1
@@ -1186,7 +1186,7 @@
                case (2) ! rescale na
 
                   if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_actuator: using ',
      &                    'rescale for sequence ',
      &                    ispecies+1
@@ -1198,7 +1198,7 @@
                case (3) ! core boundary flux condition
 
                  if(ncall.eq.0) then
-                     write(*,*)
+                     write(*,'(a,a,i3)')
      &                    'b2stbc_fb_pre_actuator: using ',
      &                    'core boundary flux condition for sequence ',
      &                    ispecies+1
