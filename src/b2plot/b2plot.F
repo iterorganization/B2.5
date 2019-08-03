@@ -59,7 +59,7 @@ c 2002-09-11: logic revised
       use eirmod_coutau
      , , only: eirene_dealloc_coutau
       use eirmod_comusr
-     , , only: eirene_alloc_comusr, eirene_dealloc_comusr,
+     , , only: eirene_dealloc_comusr,
      ,         nmassa, nmassm, nmassi
       use eirmod_comprt
      , , only: iunout
@@ -164,8 +164,9 @@ c
       real (kind=R8) ::
      *   movietime(1)
       integer :: iret, frameindex(1), ncidcdf, varid
+      integer ntstepcdf, istepcdf
 #endif
-      integer ntstepcdf, istepcdf, lucdf
+      integer lucdf
       integer itmp, istart, iend,
      * sput_src, refl_model, sput_phys_model,
      * sput_chem_model, sput_phys_col, drift_style
@@ -356,8 +357,10 @@ c
         values(i)=0.0_R8
       end do
       time=tim
+#ifndef NO_CDF
       ntstepcdf=0
       istepcdf=0
+#endif
       lucdf=0
 c
       ns=max(nsd_local,1)
@@ -1223,6 +1226,7 @@ c
       call vesselon(.false.)       ! same for vessel
       call separatrixon(.false.)   ! same for separatrix
       call adjust_axes(.false.)    ! nice axes by default
+      call adjust_bold(.false.)    ! do not bold axes by default
       call set_full_psi_plotting(.false.) ! do not plot against full psi
       call set_norm_psi_plotting(.false.) ! do not plot against normalised psi
       call set_root_psi_plotting(.false.) ! do not plot against root(psi)
@@ -1265,6 +1269,7 @@ c
       bcol=1
       dcol=1
       ecol=1
+      fcol=1
       gcol=1
       hcol=1
       mcol=1
@@ -10644,6 +10649,8 @@ c
           call contourplot(.false.)
         case('nice')     ! toggle whether axes will have nice values
           call adjust_axes(.true.)
+        case('bold')     ! toggle whether to bold the axis labels
+          call adjust_bold(.true.)
         case('sepw')     ! change separatrix line width
           stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -11007,6 +11014,12 @@ c
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           ecol=istack(iistack)
+          call pop_stack(stack_req)
+        case('fcol')     ! colour index for graph frame
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          call set_frame_color(istack(iistack))
+          fcol=istack(iistack)
           call pop_stack(stack_req)
         case('nspe','nspec')    ! new spectrometer
           stack_req=(/3,0,0,0,0,0,0/)
