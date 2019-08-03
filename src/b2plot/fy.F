@@ -283,6 +283,10 @@ c      if(nidim .ne. 2) call line(2)
           elseif(dcol.lt.0) then
              call gsplci(-dcol)
              dcol=dcol-1
+             if (dcol.lt.-17) then
+               dcol=-mod(abs(dcol),17)
+               if (dcol.eq.0) dcol=-17
+             endif
           endif
 #endif
           do iy=iystart,iyend-1
@@ -394,6 +398,10 @@ c      if(nidim .ne. 2) call line(2)
              if(typeofplot.eq.3) dcol=dcol+1
              call gsplci(-dcol)
              dcol=dcol-1
+             if (dcol.lt.-17) then
+               dcol=-mod(abs(dcol),17)
+               if (dcol.eq.0) dcol=-17
+             endif
           endif
 #endif
           do iy=iystart,iyend-1

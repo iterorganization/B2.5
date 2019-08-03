@@ -163,8 +163,9 @@ c
       real (kind=R8) ::
      *   movietime(1)
       integer :: iret, frameindex(1), ncidcdf, varid
+      integer ntstepcdf, istepcdf
 #endif
-      integer ntstepcdf, istepcdf, lucdf
+      integer lucdf
       integer itmp, istart, iend,
      * sput_src, refl_model, sput_phys_model,
      * sput_chem_model, sput_phys_col, drift_style
@@ -354,8 +355,10 @@ c
         values(i)=0.0_R8
       end do
       time=tim
+#ifndef NO_CDF
       ntstepcdf=0
       istepcdf=0
+#endif
       lucdf=0
 c
       ns=max(nsd_local,1)
