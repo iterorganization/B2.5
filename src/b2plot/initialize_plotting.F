@@ -154,6 +154,7 @@ c
       color_map_loaded=.false.
       color_file=' '
       device='psc'
+      bold=.false.
       return
 
       entry set_color_map(sval)
@@ -232,6 +233,10 @@ c
 
       entry set_title_color(iopt)
       gcol=iopt
+      return
+
+      entry set_frame_color(iopt)
+      fcol=iopt
       return
 
       entry set_barlabel_color(iopt)
