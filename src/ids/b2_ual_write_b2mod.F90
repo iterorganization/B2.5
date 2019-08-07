@@ -252,6 +252,10 @@ program b2_ual_write_b2mod
         !< account the energy transported by the particle flux)
     type (ids_radiation) :: radiation !< IDS designed to store
         !< data on radiation emitted by the plasma species
+#if IMAS_MINOR_VERSION > 21
+    type (ids_summary) :: summary !< IDS designed to store
+        !< run summary data
+#endif
 
     !! Dummy variables
     character(len=24) :: shot_string
@@ -343,12 +347,19 @@ program b2_ual_write_b2mod
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
     call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-        &  radiation, tim, dtim )
+        &  radiation, &
+#if IMAS_MINOR_VERSION > 21
+        &  summary, &
+#endif
+        &  tim, dtim )
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
     call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
         &   radiation, &
+#if IMAS_MINOR_VERSION > 21
+        &   summary, &
+#endif
         &   treename, shot, run, idx, username, device, version )
 
     ! call read_ids(treename, shot, run, idx, username, &

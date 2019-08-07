@@ -317,7 +317,7 @@
        write (nout(0),'(/a/a)')
      &   ' Please check the origin of these rate coefficients;'//
      &   ' this program is unable to determine if they stem from',
-     &   ' the ADPAK package, the STRAHL package, ADAS, AMNS, '//
+     &   ' the ADPAK package, the STRAHL package, ADAS, AMNS,'//
      &   ' or from some other source.'
       end select
 *   ..write rtns, rtzmin, rtzmax, rtzn
