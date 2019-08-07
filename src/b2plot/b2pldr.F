@@ -115,7 +115,8 @@
 *   ..read atomic rate data
       call cfverr (ninp(5), b2frates_version)
       call cfruch (ninp(5), 120, lblrc, 'label')
-      call read_b2mod_ppout('rates', ninp(5), lblrc)
+      call get_AM_flag (lblrc, b2frates_flag)
+      call read_b2mod_ppout('rates', ninp(5), b2frates_flag)
       call b2rurc (ninp(5), b2frates_version)
 *   ..test rtns, rtzmin, rtzmax, rtzn
       call xertst (ns.eq.rtns, 'faulty input rtns--wrong rate table?')

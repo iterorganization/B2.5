@@ -2489,16 +2489,17 @@ c conn
 c
 c=======================================================================
 #endif
-      subroutine read_b2mod_ppout(type, ninp, label)
+      subroutine read_b2mod_ppout(type, ninp, flag)
 
       use b2mod_version
       implicit none
 
       integer ninp
       character*(*) type
-      character*(*) label
+      character*8 flag
 
-      external cfruin
+      logical streql
+      external cfruin, streql
 
 c     ------------------------------------------------------------------
 c     READ_B2MOD_PPOUT_DATA reads data for use by ppout.
@@ -2512,7 +2513,7 @@ c   ..initialise
 
 c   ..atomic rates method
       if( type.eq.'rates' ) then
-          if( label(61:64).eq.'ADAS' ) then
+          if( streql(flag,'adas') ) then
 #ifdef JET
               call cfruin(ninp, nspp, isyear, 'ppout')
 #else

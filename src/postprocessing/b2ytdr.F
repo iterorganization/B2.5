@@ -1063,8 +1063,9 @@ c 2002-09-11: logic revised
       nsmax=ns
 *   ..read new atomic rate data
       call cfruch (ninp(4), 120, lblrc, 'label')
+      call get_AM_flag (lblrc, b2frates_flag)
       call alloc_b2mod_ppout(nx1,ny1,ns1)
-      call read_b2mod_ppout('rates', ninp(4), lblrc)
+      call read_b2mod_ppout('rates', ninp(4), b2frates_flag)
       call b2rurc (ninp(4), b2frates_version)
 *   ..save and test rtns, rtzmin, rtzmax, rtzn
       call xertst (ns1.eq.rtns, 'faulty input rtns--wrong rate table?')

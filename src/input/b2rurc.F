@@ -272,3 +272,44 @@
 *-----------------------------------------------------------------------
 *.end b2rurc
       end subroutine b2rurc
+
+      subroutine get_AM_flag (label, flag)
+      implicit none
+      character*120 label
+      character*8 flag
+      integer i, lt(4)
+      logical found
+      logical streql
+      external streql
+
+      flag = 'unknown'
+      found = .false.
+      lt(1) = index(label,'ADPAK')
+      lt(2) = index(label,'STRAHL')
+      lt(3) = index(label,'ADAS')
+      lt(4) = index(label,'AMNS')
+      do i = 1, 4
+        if (lt(i).eq.0) cycle
+        if (found) then
+          flag = 'multiple'
+        else
+          select case (i)
+          case (1)
+            flag = 'adpak'
+          case (2)
+            flag = 'strahl'
+          case (3)
+            flag = 'adas'
+          case (4)
+            flag = 'amns'
+          end select
+        end if
+        found = .true.
+      end do
+      call xertst(.not.streql(flag,'unknown'),
+     . 'Could not identify A&M data package !')
+      call xertst(.not.streql(flag,'multiple'),
+     . 'Ambiguous multiple A&M data package setting !')
+
+      return
+      end

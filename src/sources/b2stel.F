@@ -90,11 +90,11 @@
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
 *   ..procedures
       intrinsic abs
-      logical lnext
+      logical lnext, streql
       real (kind=R8) ::
      *   samax, roxa
       external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
-      external b2xvsg
+      external b2xvsg, streql
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
@@ -132,7 +132,8 @@
        call xertst (0.le.styl0.and.styl0.lt.4,
      &   'faulty internal parameter styl0')
        call ipgeti ('b2stel_fix_recomb_energy', fix_recomb_energy)
-       call xertst (.not.(adpak_used.and.fix_recomb_energy.ne.0),
+       call xertst (.not.(streql(b2frates_flag,'adpak').and.
+     &    fix_recomb_energy.ne.0),
      &   'fix_recomb_energy should not be used with ADPAK rates!')
        if(fix_recomb_energy.ne.0) then
          write(*,*)
@@ -413,7 +414,7 @@ c accounted for)
           rf0 = rxm4*max(0.0_R8,rlqa(ix,iy,1,is))
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
-*      ..if adpak_used, also contains recombination and CX terms
+*      ..for adpak rates, also contains recombination and CX terms
           t0 = phm0*rqa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)       !srv 05.06.18
 *      ..compute electron heat sink
           she0(ix,iy,0) = she0(ix,iy,0)+rf0*t0
