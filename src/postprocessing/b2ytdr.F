@@ -5097,6 +5097,11 @@ Cxpb then rewrite the entire block
      .                                     DENSLIM(JPLS),idum(0),
      .                                     NHSTP(JPLS),idum(2),
      .                                     CDENMODEL(JPLS),NRE(JPLS)
+          IF (NMASSP(JPLS).EQ.9.AND.NCHARP(JPLS).EQ.10.AND.
+     &       (INDEX(TEXTP(JPLS),'Be').GT.0.OR.
+     &        INDEX(TEXTP(JPLS),'BE').GT.0)) THEN ! Correcting a common ANK mistake
+            NCHARP(JPLS)=4
+          END IF
           IF (ISRFP(JPLS).GT.0.AND.ISRFP(JPLS).LE.NATMI) THEN
             LKINDP(JPLS)=ISRFP(JPLS)
           ELSE
