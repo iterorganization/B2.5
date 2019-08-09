@@ -237,10 +237,6 @@ cdjm Jan2017 update particle source components for balance
        enddo
       enddo                                                             !srv 18.09.09 30.01.09 }
 
-*   ..save total heat sources for printout at end of run
-      she = she0
-      shi = shi0
-
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
         call my_out(70,nx,ny,shei,'b2nph9_shei')
 !        do is = 0,ns-1
