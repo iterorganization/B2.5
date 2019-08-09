@@ -87,8 +87,8 @@
         return
       end if
       do i = 1, n
-        result(1) = result(1) + x(1)
-        result(2) = result(2) + y(1)
+        result(1) = result(1) + x(i)
+        result(2) = result(2) + y(i)
       end do
       result(1) = result(1)/real(n)
       result(2) = result(2)/real(n)
@@ -152,7 +152,7 @@
         xv = xv + (x(i)-xm)**2
       end do
       do k = 1, nk
-        do i = 1, nx - nk
+        do i = 1, nx - k
           r(k) = r(k) + (x(i)-xm)*(x(i+k)-xm)
         end do
         r(k) = r(k) / xv
