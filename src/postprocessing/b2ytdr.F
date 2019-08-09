@@ -1063,8 +1063,9 @@ c 2002-09-11: logic revised
       nsmax=ns
 *   ..read new atomic rate data
       call cfruch (ninp(4), 120, lblrc, 'label')
+      call get_AM_flag (lblrc, b2frates_flag)
       call alloc_b2mod_ppout(nx1,ny1,ns1)
-      call read_b2mod_ppout('rates', ninp(4), lblrc)
+      call read_b2mod_ppout('rates', ninp(4), b2frates_flag)
       call b2rurc (ninp(4), b2frates_version)
 *   ..save and test rtns, rtzmin, rtzmax, rtzn
       call xertst (ns1.eq.rtns, 'faulty input rtns--wrong rate table?')
@@ -4636,7 +4637,17 @@ Cxpb then rewrite the entire block
      .                         ISRFM(JMOL),ISRTM(JMOL),ID1M(JMOL),
      .                         NRCM(JMOL),NFOLM(JMOL),NGENM(JMOL)
             NHSTM(JMOL) = 0
-            LKINDM(JMOL) = LMOLSCL(JMOL)
+            IF (LMOLSCL(JMOL).GT.0) THEN
+              LKINDM(JMOL) = LMOLSCL(JMOL)
+            ELSE
+              IF (maxval(MLCMP(1:NATMI,JMOL)).GT.0) THEN
+                DO JATM = 1, NATMI
+                  IF (MLCMP(JATM,JMOL).GT.0) LKINDM(JMOL) = JATM
+                END DO
+              ELSE
+                LKINDM(JMOL) = 0
+              END IF
+            END IF
           ELSE IF (streql(eirene_format,'old')) THEN
             READ (IUNIN,66666) I,TEXTM(JMOL),NMASSM(JMOL),NCHARM(JMOL),
      .                         NPRTM(JMOL),idum(3),
@@ -4771,7 +4782,17 @@ Cxpb then rewrite the entire block
      .                         ISRFI(JION),ISRTI(JION),ID1I(JION),
      .                         NRCI(JION),NFOLI(JION),NGENI(JION)
             NHSTI(JION) = 0
-            LKINDI(JION) = LIONSCL(JION)
+            IF (LIONSCL(JION).GT.0) THEN
+              LKINDI(JION) = LIONSCL(JION)
+            ELSE
+              IF (ISRTI(JION).GT.0.AND.ISRTI(JION).LE.NATMI) THEN
+                LKINDI(JION) = ISRTI(JION)
+              ELSE IF (ISRTI(JION).LT.0.AND.ISRTI(JION).GE.-NMOLI) THEN
+                LKINDI(JION) = LKINDM(-ISRTI(JION))
+              ELSE
+                LKINDI(JION) = 0
+              END IF
+            END IF
           ELSE IF (streql(eirene_format,'old')) THEN
             READ (IUNIN,66666) I,TEXTI(JION),NMASSI(JION),NCHARI(JION),
      .                         NPRTI(JION),NCHRGI(JION),
@@ -5076,6 +5097,22 @@ Cxpb then rewrite the entire block
      .                                     DENSLIM(JPLS),idum(0),
      .                                     NHSTP(JPLS),idum(2),
      .                                     CDENMODEL(JPLS),NRE(JPLS)
+          IF (NMASSP(JPLS).EQ.9.AND.NCHARP(JPLS).EQ.10.AND.
+     &       (INDEX(TEXTP(JPLS),'Be').GT.0.OR.
+     &        INDEX(TEXTP(JPLS),'BE').GT.0)) THEN ! Correcting a common ANK mistake
+            NCHARP(JPLS)=4
+          END IF
+          IF (ISRFP(JPLS).GT.0.AND.ISRFP(JPLS).LE.NATMI) THEN
+            LKINDP(JPLS)=ISRFP(JPLS)
+          ELSE
+            FOUND = .FALSE.
+            DO JATM = 1, NATMI
+              IF (FOUND) CYCLE
+              FOUND = NMASSA(JATM).EQ.NMASSP(JPLS) .AND.
+     &                NCHARA(JATM).EQ.NCHARP(JPLS)
+              IF (FOUND) LKINDP(JPLS)=JATM
+            END DO
+          END IF
           CALL EIRENE_UPPERCASE (CDENMODEL(JPLS))
           DO 512 K=1,NRCP(JPLS)
             IF (ID1P(JPLS).LT.3) THEN

@@ -30,6 +30,9 @@ module b2mod_ual
   public b25_process_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
     &    ids_radiation
+#if IMAS_MINOR_VERSION > 21
+  public ids_summary
+#endif
 #endif
 
 
@@ -40,6 +43,9 @@ contains
     !! edge_transport IDSs.
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport, &
             &   radiation, &
+#if IMAS_MINOR_VERSION > 21
+            &   summary, &
+#endif
             &   treename, shot, run, idx, username, device, version )
         type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
             !< designed to store data on edge plasma profiles  (includes the
@@ -55,7 +61,11 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_radiation), intent(inout) :: radiation !< IDS
-            !< designed to store data about plasma radiation 
+            !< designed to store data about plasma radiation
+#if IMAS_MINOR_VERSION > 21
+        type (ids_summary), intent(inout) :: summary !< IDS
+            !< designed to store run summary data
+#endif
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
             !< (i.e. "edge_profiles" (mandatory) )
         integer, intent(in) :: shot !< The shot number of the database being created
@@ -70,7 +80,13 @@ contains
             !< database
 
         !! Set data to edge_profiles IDS
-        write(0,*) "Writing to edge_profiles, edge_sources and edge_transport IDS"
+#if IMAS_MINOR_VERSION > 21
+        write(0,'(1x,a)') "Writing to edge_profiles, edge_sources, edge_transport, "// &
+          &  "summary and radiation IDS"
+#else
+        write(0,'(1x,a)') "Writing to edge_profiles, edge_sources, edge_transport "// &
+          &  "and radiation IDS"
+#endif
 
         !! Create and modify new shot/run
         call imas_create_env( treename, shot, run, 0, 0, idx, username, &
@@ -89,12 +105,18 @@ contains
         call ids_put( idx, "edge_sources", edge_sources )
         call ids_put( idx, "edge_transport", edge_transport )
         call ids_put( idx, "radiation", radiation )
+#if IMAS_MINOR_VERSION > 21
+        call ids_put( idx, "summary", summary )
+#endif
 
         !! Close IDS
         call ids_deallocate( edge_profiles )
         call ids_deallocate( edge_sources )
         call ids_deallocate( edge_transport )
         call ids_deallocate( radiation )
+#if IMAS_MINOR_VERSION > 21
+        call ids_deallocate( summary )
+#endif
         call imas_close( idx )
 
         write(0,*) "IDS write finished"

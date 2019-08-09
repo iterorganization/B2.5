@@ -81,66 +81,66 @@ c      if(nidim .ne. 2) call line(2)
           ixc = rightcut(1)
         end if
       endif
+      if (iystart.le.jsep) then
+        ixl=ixc
+        ixr=ixc
+      else
+        ixl=ixx
+        ixr=ixx
+      end if
+      ysepl=iystart
+      iy=iystart
+      iniso=.false.
+      do while (ixl.gt.-1 .and. .not.iniso .and.
+     &          leftix(ixl,iy).eq.ixl-1)
+        ixl=ixl-1
+        iniso=.false.
+        do iiso = 1,nniso
+          iniso = iniso .or.
+     &     (ixl.ge.nxiso1(iiso).and.ixl.le.nxiso2(iiso).and.
+     &      iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
+        end do
+      end do
+      if(.not.iniso .and. ixl.ne.-1) then
+        do while (ysepl.lt.iyend .and.
+     &            leftix(ixl,ysepl).ne.ixl-1)
+          ysepl=ysepl+1
+        end do
+      end if
+      if(ysepl.eq.iystart) ysepl=iyend
+      ysepr=iystart
+      iniso=.false.
+      do while (ixr.lt.nx .and. .not.iniso .and.
+     &          rightix(ixr,iy).eq.ixr+1)
+        ixr=ixr+1
+        iniso=.false.
+        do iiso = 1,nniso
+          iniso = iniso .or.
+     &     (ixr.ge.nxiso1(iiso).and.ixr.le.nxiso2(iiso).and.
+     &      iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
+        end do
+      end do
+      if(.not.iniso .and. ixr.ne.nx) then
+        do while(ysepr.lt.iyend .and.
+     &           rightix(ixr,ysepr).ne.ixr+1)
+          ysepr=ysepr+1
+        end do
+      end if
+      if(ysepr.eq.iystart) ysepr=iyend
+      if (iyref.eq.-2) then
+        ysep=min(ysepr,ysepl)
+        if((ysepl.ne.iyend .or. ysepr.ne.iyend) .and.
+     &     (iystart.le.ysep.and.iyend.ge.ysep)) then
+          if (b2plot_debug.ge.6)
+     >      write(6,*) ' ysepr, ysepl : ', ysepr, ysepl
+        endif
+      else
+        ysep=iyref
+      endif
       do is=0,ndim(3,iwrk)-1
         tmpstring1=textwk(is,iwrk)
         lmin=work(ix,iystart,is,iwrk)
         lmax=work(ix,iystart,is,iwrk)
-        if (iyref.eq.-2) then
-          if (iystart.le.jsep) then
-            ixl=ixc
-            ixr=ixc
-          else
-            ixl=ixx
-            ixr=ixx
-          end if
-          ysepl=iystart
-          iy=iystart
-          iniso=.false.
-          do while (ixl.gt.-1 .and. .not.iniso .and.
-     &              leftix(ixl,iy).eq.ixl-1)
-            ixl=ixl-1
-            iniso=.false.
-            do iiso = 1,nniso
-              iniso = iniso .or.
-     &         (ixl.ge.nxiso1(iiso).and.ixl.le.nxiso2(iiso).and.
-     &          iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
-            end do
-          end do
-          if(.not.iniso .and. ixl.ne.-1) then
-            do while (ysepl.lt.iyend .and.
-     &                leftix(ixl,ysepl).ne.ixl-1)
-              ysepl=ysepl+1
-            end do
-          end if
-          if(ysepl.eq.iystart) ysepl=iyend
-          ysepr=iystart
-          iniso=.false.
-          do while (ixr.lt.nx .and. .not.iniso .and.
-     &              rightix(ixr,iy).eq.ixr+1)
-            ixr=ixr+1
-            iniso=.false.
-            do iiso = 1,nniso
-              iniso = iniso .or.
-     &         (ixr.ge.nxiso1(iiso).and.ixr.le.nxiso2(iiso).and.
-     &          iy .ge.nyiso1(iiso).and.iy .le.nyiso2(iiso))
-            end do
-          end do
-          if(.not.iniso .and. ixr.ne.nx) then
-            do while(ysepr.lt.iyend .and.
-     &               rightix(ixr,ysepr).ne.ixr+1)
-              ysepr=ysepr+1
-            end do
-          end if
-          if(ysepr.eq.iystart) ysepr=iyend
-          ysep=min(ysepr,ysepl)
-          if((ysepl.ne.iyend .or. ysepr.ne.iyend) .and.
-     &       (iystart.le.ysep.and.iyend.ge.ysep)) then
-            if (b2plot_debug.ge.6)
-     >        write(6,*) ' ysepr, ysepl : ', ysepr, ysepl
-          endif
-        else
-          ysep=iyref
-        endif
         if(y_transform_l .ne. 0) then
           do iy=iystart,jsep
             wrk(iy)=y_transform(cr(ixc,iy),cz(ixc,iy))
@@ -331,6 +331,10 @@ c      if(nidim .ne. 2) call line(2)
           elseif(dcol.lt.0) then
              call gsplci(-dcol)
              dcol=dcol-1
+             if (dcol.lt.-17) then
+               dcol=-mod(abs(dcol),17)
+               if (dcol.eq.0) dcol=-17
+             end if
           endif
 #endif
           do iy=iystart,iyend-1
@@ -442,6 +446,10 @@ c      if(nidim .ne. 2) call line(2)
              if(typeofplot.eq.3) dcol=dcol+1
              call gsplci(-dcol)
              dcol=dcol-1
+             if (dcol.lt.-17) then
+               dcol=-mod(abs(dcol),17)
+               if (dcol.eq.0) dcol=-17
+             end if
           endif
 #endif
           do iy=iystart,iyend-1
