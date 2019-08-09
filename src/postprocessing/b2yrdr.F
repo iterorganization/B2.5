@@ -97,13 +97,12 @@
       parameter (ndismx=20)
       integer nidis, njdis, idis(0:ndismx-1), jdis(0:ndismx-1)
       integer idum(0:9)
-      logical lt0, lt1, lt2
       integer i, is, is1, nx, ny, ns, ns1
       character id*8, lblrc*120, lblcp*120, cnamip*80, cvalip*80
 *   ..procedures
-      logical streql, strmas
+      logical streql
       external subini, subend, xertst, xerrab, cfverr, cfruch
-      external cfruin, streql, strmas, ipsetc, ipgeti, gacwk, gdawk
+      external cfruin, streql, ipsetc, ipgeti, gacwk, gdawk
       external b2rurc, b2rucp, b2wfr0, b2wfr1, b2wfrc, b2wgrc
 
 *-----------------------------------------------------------------------

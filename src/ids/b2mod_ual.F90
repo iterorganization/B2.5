@@ -29,7 +29,7 @@ module b2mod_ual
   public put_ids_edge
   public b25_process_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-    &    ids_radiation
+    &    ids_radiation, ids_dataset_description
 #if IMAS_MINOR_VERSION > 21
   public ids_summary
 #endif
@@ -42,7 +42,7 @@ contains
     !> Subroutine used to put data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport, &
-            &   radiation, &
+            &   radiation, description, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
@@ -62,6 +62,8 @@ contains
             !< flux)
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
+        type (ids_dataset_description) :: description !< IDS designed to store
+            !< a description of the simulation
 #if IMAS_MINOR_VERSION > 21
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
@@ -80,13 +82,11 @@ contains
             !< database
 
         !! Set data to edge_profiles IDS
-#if IMAS_MINOR_VERSION > 21
         write(0,'(1x,a)') "Writing to edge_profiles, edge_sources, edge_transport, "// &
-          &  "summary and radiation IDS"
-#else
-        write(0,'(1x,a)') "Writing to edge_profiles, edge_sources, edge_transport "// &
-          &  "and radiation IDS"
+#if IMAS_MINOR_VERSION > 21
+          &  "summary, "// &
 #endif
+          &  "dataset_description, and radiation IDS"
 
         !! Create and modify new shot/run
         call imas_create_env( treename, shot, run, 0, 0, idx, username, &
@@ -100,11 +100,14 @@ contains
         ! call ids_put_slice( idx, "edge_profiles", edge_profiles )
         ! call ids_put_slice( idx, "edge_transport", edge_sources )
         ! call ids_put_slice( idx, "edge_transport", edge_transport )
-        ! call ids_put_slice( idx, "radiation", radiation)
+        ! call ids_put_slice( idx, "radiation", radiation )
+        ! call ids_put_slice( idx, "dataset_description", description )
+        ! call ids_put_slice( idx, "summary", summary )
         call ids_put( idx, "edge_profiles", edge_profiles )
         call ids_put( idx, "edge_sources", edge_sources )
         call ids_put( idx, "edge_transport", edge_transport )
         call ids_put( idx, "radiation", radiation )
+        call ids_put( idx, "dataset_description", description )
 #if IMAS_MINOR_VERSION > 21
         call ids_put( idx, "summary", summary )
 #endif
@@ -114,6 +117,7 @@ contains
         call ids_deallocate( edge_sources )
         call ids_deallocate( edge_transport )
         call ids_deallocate( radiation )
+        call ids_deallocate( description )
 #if IMAS_MINOR_VERSION > 21
         call ids_deallocate( summary )
 #endif

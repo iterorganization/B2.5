@@ -94,11 +94,12 @@ contains
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
     subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-            &   radiation, &
+            &   radiation, description, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
-            &   time_IN, time_step_IN, time_slice_ind_IN, num_time_slices_IN )
+            &   time_IN, time_step_IN, shot, run, device, version, &
+            &   time_slice_ind_IN, num_time_slices_IN )
 #       include <git_version_B25.h>
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
             !< store data on edge plasma profiles  (includes the scrape-off
@@ -113,10 +114,14 @@ contains
             !< account the energy transported by the particle flux)
         type (ids_radiation) :: radiation !< IDS designed to store
             !< data on radiation emitted by the plasma species
+        type (ids_dataset_description) :: description !< IDS designed to store
+            !< a description of the simulation
 #if IMAS_MINOR_VERSION > 21
         type (ids_summary) :: summary !< IDS designed to store
             !< run summary data
 #endif
+        integer, intent(in) :: shot, run
+        character(len=24), intent(in) :: device, version
         real(IDS_real), intent(in), optional :: time_IN !< Time
         real(IDS_real), intent(in), optional :: time_step_IN !< Time step
         integer, intent(in), optional :: time_slice_ind_IN
@@ -354,6 +359,20 @@ contains
           edge_sources%time(i) = time - (num_time_slices-i) * time_step
         end do
 
+        !! Preparing dataset_description IDS for writing
+        !! In order to write to IDS database there are next steps that are
+        !! mandatory to do, otherwise there is high change that writing to IDS
+        !! database will fail
+        !! 1. Set homogeneous_time to 0 or 1
+        description%ids_properties%homogeneous_time = homogeneous_time
+        allocate( description%ids_properties%comment(1) )
+        description%ids_properties%comment(1) = "Done by b2_ual_write"
+        !! 2. Allocate description.time and set it to desired values
+        allocate( description%time(num_time_slices) )
+        do i = 1, num_time_slices
+          description%time(i) = time - (num_time_slices-i) * time_step
+        end do
+
 #if IMAS_MINOR_VERSION > 21
         !! Preparing summary IDS for writing
         !! In order to write to IDS database there are next steps that are
@@ -489,6 +508,8 @@ contains
 
         allocate( radiation%ids_properties%source(1) )
         radiation%ids_properties%source = b2frates_flag
+        allocate( description%ids_properties%source(1) )
+        description%ids_properties%source = source
 
         allocate( edge_profiles%ids_properties%provider(1) )
         edge_profiles%ids_properties%provider = usrnam()
@@ -498,6 +519,9 @@ contains
         edge_sources%ids_properties%provider = usrnam()
         allocate( radiation%ids_properties%provider(1) )
         radiation%ids_properties%provider = usrnam()
+        allocate( description%ids_properties%provider(1) )
+        description%ids_properties%provider = usrnam()
+
 #if IMAS_MINOR_VERSION > 21
         allocate( summary%code%name(1) )
         summary%code%name = source
@@ -523,6 +547,9 @@ contains
         allocate( radiation%ids_properties%creation_date(1) )
         radiation%ids_properties%creation_date = &
                 &   date//' '//ctime//' '//' '//zone
+        allocate( description%ids_properties%creation_date(1) )
+        description%ids_properties%creation_date = &
+                &   date//' '//ctime//' '//' '//zone
 #if IMAS_MINOR_VERSION > 21
         allocate( summary%ids_properties%creation_date(1) )
         summary%ids_properties%creation_date = &
@@ -540,6 +567,8 @@ contains
         radiation%ids_properties%version_put%data_dictionary = imas_version
         allocate( summary%ids_properties%version_put%data_dictionary(1) )
         summary%ids_properties%version_put%data_dictionary = imas_version
+        allocate( description%ids_properties%version_put%data_dictionary(1) )
+        description%ids_properties%version_put%data_dictionary = imas_version
 
         allocate( edge_profiles%ids_properties%version_put%access_layer(1) )
         edge_profiles%ids_properties%version_put%access_layer = ual_version
@@ -551,6 +580,8 @@ contains
         radiation%ids_properties%version_put%access_layer = ual_version
         allocate( summary%ids_properties%version_put%access_layer(1) )
         summary%ids_properties%version_put%access_layer = ual_version
+        allocate( description%ids_properties%version_put%access_layer(1) )
+        description%ids_properties%version_put%access_layer = ual_version
 
         allocate( edge_profiles%ids_properties%version_put%access_layer_language(1) )
         edge_profiles%ids_properties%version_put%access_layer_language = 'FORTRAN'
@@ -562,6 +593,21 @@ contains
         radiation%ids_properties%version_put%access_layer_language = 'FORTRAN'
         allocate( summary%ids_properties%version_put%access_layer_language(1) )
         summary%ids_properties%version_put%access_layer_language = 'FORTRAN'
+        allocate( description%ids_properties%version_put%access_layer_language(1) )
+        description%ids_properties%version_put%access_layer_language = 'FORTRAN'
+
+        allocate( description%data_entry%user(1) )
+        description%data_entry%user = usrnam()
+        allocate( description%data_entry%machine(1) )
+        description%data_entry%machine = device
+        allocate( description%data_entry%pulse_type(1) )
+        description%data_entry%pulse_type = "simulation"
+        description%data_entry%pulse = shot
+        description%data_entry%run = run
+        allocate( description%imas_version(1) )
+        description%imas_version = version
+        allocate( description%dd_version(1) )
+        description%dd_version = imas_version
 
         i=index(git_version_B25,'-')
         allocate( summary%tag%name(1) )

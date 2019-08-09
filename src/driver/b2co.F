@@ -37,8 +37,6 @@
      , , only: eirene_init_cinit, fort_lc
       use eirmod_comprt
      , , only: iunout
-      use eirmod_comusr
-     , , only: eirene_alloc_comusr
       use eirmod_eirbra
      & , smo_eir => smo
 #else

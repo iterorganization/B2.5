@@ -29,7 +29,7 @@ program b2_ual_write
     use b2mod_ual    &
      & , only : put_ids_edge, b25_process_ids, &
      &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation
+     &          ids_radiation, ids_dataset_description
 #if IMAS_MINOR_VERSION > 21
     use b2mod_ual    &
      & , only : ids_summary
@@ -78,6 +78,8 @@ program b2_ual_write
         !< account the energy transported by the particle flux)
     type (ids_radiation) :: radiation !< IDS designed to store
         !< data on radiation emitted by the plasma species
+    type (ids_dataset_description) :: description !< IDS designed to store
+        !< a description of the simulation
 #if IMAS_MINOR_VERSION > 21
     type (ids_summary) :: summary !< IDS designed to store
         !< run summary data
@@ -140,16 +142,16 @@ program b2_ual_write
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
     call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-        &  radiation , &
+        &  radiation, description, &
 #if IMAS_MINOR_VERSION > 21
         &  summary, &
 #endif
-        &  tim, dtim )
+        &  tim, dtim, shot, run, device, version )
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
     call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
-        &   radiation, &
+        &   radiation, description, &
 #if IMAS_MINOR_VERSION > 21
         &   summary, &
 #endif
