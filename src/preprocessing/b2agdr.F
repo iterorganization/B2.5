@@ -399,7 +399,7 @@
      .                  CELLFLAG_TYPE) == GRID_GUARD) then
               iFace = CELLFLAG_BOTTOMFACE
               offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
-              cflags1(ix, iy, iFace) = offset - region(ix, iy, 0)
+              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
               cflags1(bottomix1(ix,iy),bottomiy1(ix,iy),
      .                CELLFLAG_TOPFACE) = cflags1(ix, iy, iFace)
             end if
