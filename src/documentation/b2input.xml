@@ -4364,12 +4364,13 @@
 			</switch>
 			<switch>
 				<name>b2ardr_fix_recomb</name>
-				<default>1 for ADAS, 0 otherwise</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
 					When changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
 					This term includes the bremsstrahlung.
 					The '0' option only contains the bremsstrahlung for the is--&gt;is-1 process.
+					Use of this option is still experimental!
 				</description>
 			</switch>
 			<switchgroup>

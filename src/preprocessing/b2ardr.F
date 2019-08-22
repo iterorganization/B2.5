@@ -351,7 +351,7 @@
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
 *   ..internal parameters
       fix_recomb = 0
-      if (streql(flag,'adas')) fix_recomb = 1
+! FIXME: Still experimental:      if (streql(flag,'adas')) fix_recomb = 1
       call ipgeti('b2ardr_fix_cx', fix_cx)
       call ipgeti('b2ardr_fix_recomb', fix_recomb)
       call ipgeti('b2ardr_no_weisheit', no_weisheit)

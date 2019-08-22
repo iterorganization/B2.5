@@ -20,7 +20,7 @@
       use b2mod_neutrals_namelist
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
-     2          b2stbr_sne, ext_sna
+     2          b2stbr_sne
       use b2mod_balance !djm Jan2017
      & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
      &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
@@ -31,7 +31,8 @@
      &          balance_netcdf
 #ifdef B25_EIRENE
       use b2mod_sources
-     , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot
+     , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot,
+     ,          ext_sna
       use eirmod_extrab25
 #endif
       use b2mod_b2cmpa
