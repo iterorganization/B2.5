@@ -208,9 +208,9 @@ cxpb We interpolate according to the area along the segment
           acc_area1(ibnd) = acc_area1(ibnd)/acc_area1(wall_end1(is))
         end do
         acc_area1(wall_end1(is)) = 1.0_R8
-cxpb The contr_area(ibnd,ibnd1) contains the fraction of the plate area from
+cxpb The contr_area(ibnd,ibnd1) array contains the fraction of the plate area from
 cxpb old wall element ibnd that is to be found as part of new wall element ibnd1
-cxpb lb and ub and lower and upper interval bounds
+cxpb lb and ub are lower and upper interval bounds
         ibnd = wall_begin(is)
         lb = 0.0_R8
         ibnd1 = wall_begin1(is)
