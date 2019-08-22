@@ -1703,7 +1703,7 @@ C
       use b2mod_types
       implicit none
       integer nstsi, nx, ny, nx1, ny1, non_commensurate
-      integer NCL, NCL1, NCLM
+      integer NCL, NCL1
       real (kind=R8) :: sarea_res( NCL )
       real (kind=R8) :: sarea1res( NCL1 )
       real (kind=R8) :: area_res_contr( NCL, NCL1 )
