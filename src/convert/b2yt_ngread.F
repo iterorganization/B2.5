@@ -104,11 +104,12 @@ c
       logical ex
 
 *  -- PROCEDURES --
-      integer conformal_convert
+      integer convert_eirdiag, conformal_convert
       character*32 :: get_B25_hash
       logical streql
       EXTERNAL GFSUB2
-      external ipgeti, streql, get_B25_hash, conformal_convert
+      external ipgeti, streql, get_B25_hash
+      external convert_eirdiag, conformal_convert
 #endif
       external subini, subend
 
@@ -1166,26 +1167,26 @@ cank
      .         conformal_convert(non_commensurate,2,
      .         (eirdiag_nds_start(i)+eirdiag_nds_end(i))/2,
      .          eirdiag_nds_srf(i),nx,ny,nx1,ny1,4)
-              eirdiag_nds_start1(i) = min(nx1, 1 +
-     .        conformal_convert(non_commensurate,1,
-     .         eirdiag_nds_start(i),eirdiag_nds_srf(i),nx,ny,nx1,ny1,1))
-              eirdiag_nds_end1(i) = min(nx1, 1 +
-     .        conformal_convert(non_commensurate,1,
-     .         eirdiag_nds_end(i),eirdiag_nds_srf(i),nx,ny,nx1,ny1,3))
+              eirdiag_nds_start1(i) =
+     .         convert_eirdiag(non_commensurate,1,
+     .          eirdiag_nds_start(i),eirdiag_nds_srf(i),nx,ny,nx1,ny1,1)
+              eirdiag_nds_end1(i) =
+     .         convert_eirdiag(non_commensurate,1,
+     .          eirdiag_nds_end(i),eirdiag_nds_srf(i),nx,ny,nx1,ny1,3)
               eirdiag_nds_ind1(i+1) = eirdiag_nds_ind1(i) +
      .         (eirdiag_nds_end1(i) - eirdiag_nds_start1(i) + 1) + 1
             else if (eirdiag_nds_typ(i).eq.2) then
               eirdiag_nds_srf1(i) =
-     .        conformal_convert(non_commensurate,1,
-     .         eirdiag_nds_srf(i),
-     .        (eirdiag_nds_start(i)+eirdiag_nds_end(i))/2,
+     .         conformal_convert(non_commensurate,1,
+     .          eirdiag_nds_srf(i),
+     .         (eirdiag_nds_start(i)+eirdiag_nds_end(i))/2,
      .          nx,ny,nx1,ny1,4)
-              eirdiag_nds_start1(i) = min(ny1, 1 +
-     .        conformal_convert(non_commensurate,2,
-     .         eirdiag_nds_srf(i),eirdiag_nds_start(i),nx,ny,nx1,ny1,0))
-              eirdiag_nds_end1(i) = min(ny1, 1 +
-     .        conformal_convert(non_commensurate,2,
-     .         eirdiag_nds_srf(i),eirdiag_nds_end(i),nx,ny,nx1,ny1,2))
+              eirdiag_nds_start1(i) =
+     .         convert_eirdiag(non_commensurate,2,
+     .          eirdiag_nds_srf(i),eirdiag_nds_start(i),nx,ny,nx1,ny1,0)
+              eirdiag_nds_end1(i) =
+     .         convert_eirdiag(non_commensurate,2,
+     .          eirdiag_nds_srf(i),eirdiag_nds_end(i),nx,ny,nx1,ny1,2)
               eirdiag_nds_ind1(i+1) = eirdiag_nds_ind1(i) +
      .         (eirdiag_nds_end1(i) - eirdiag_nds_start1(i) + 1) + 1
             else if (eirdiag_nds_typ(i).eq.0) then
@@ -1896,6 +1897,123 @@ cxpb lb and ub are lower and upper interval bounds
 
       return
       end subroutine b2yt_res_map
+
+      integer function convert_eirdiag
+     . (non_commensurate,xory,ix,iy,nx,ny,nx1,ny1,iside)
+      use b2mod_geo2
+      use b2mod_indirect
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer non_commensurate,xory,ix,iy,nx,ny,nx1,ny1,iside
+c xory  = 1 : x-direction
+c       = 2 : y-direction
+c iside = 0 : bottom
+c       = 1 : left
+c       = 2 : top
+c       = 3 : right
+c       = 4 : center
+*   ..local variables
+      integer ixpos, iypos, iplg, nsize, nsize1
+      integer resleft(6), resright(6)
+      integer resleft1(6), resright1(6)
+      integer nxtl, nxtr
+      integer nxtl1, nxtr1
+      logical atend
+*   ..procedures
+      integer conformal_convert, convert_position
+      external conformal_convert, convert_position, get_nxt, b2yt_nxt,
+     .         xerrab
+
+      ixpos = ix
+      resleft = nx+2
+      resright= nx+2
+      if (nncut.eq.0) then
+        resleft(1) = 1
+        resright(1)= nx+1
+        resleft1(1) = 1
+        resright1(1)= nx1+1
+      else if (nncut.eq.1) then
+        resleft(1) = 1
+        resright(1)= leftcut(1)
+        resleft(2) = leftcut(1)+1
+        resright(2)= rightcut(1)
+        resleft(3) = rightcut(1)+1
+        resright(3)= nx+1
+        resleft1(1) = 1
+        resright1(1)= leftcut1(1)
+        resleft1(2) = leftcut1(1)+1
+        resright1(2)= rightcut1(1)
+        resleft1(3) = rightcut1(1)+1
+        resright1(3)= nx1+1
+      else if (nncut.eq.2) then
+        call get_nxt(nx, nxtl, nxtr)
+        call b2yt_nxt(nx1, nxtl1, nxtr1)
+        resleft(1) = 1
+        resright(1)= leftcut(1)
+        resleft(2) = leftcut(1)+1
+        resright(2)= leftcut(2)
+        resleft(3) = leftcut(2)+1
+        resright(3)= nxtl
+        resleft(4) = nxtr+1
+        resright(4)= rightcut(2)
+        resleft(5) = rightcut(2)+1
+        resright(5)= rightcut(1)
+        resleft(6) = rightcut(1)+1
+        resright(6)= nx+1
+        resleft1(1) = 1
+        resright1(1)= leftcut1(1)
+        resleft1(2) = leftcut1(1)+1
+        resright1(2)= leftcut1(2)
+        resleft1(3) = leftcut1(2)+1
+        resright1(3)= nxtl1
+        resleft1(4) = nxtr1+1
+        resright1(4)= rightcut1(2)
+        resleft1(5) = rightcut1(2)+1
+        resright1(5)= rightcut1(1)
+        resleft1(6) = rightcut1(1)+1
+        resright1(6)= nx1+1
+      endif
+      iplg = 1
+      do while (ix.gt.resright(iplg).and.iplg.le.5)
+        iplg = iplg+1
+      enddo
+      if (xory.eq.2) then
+        if (iy.eq.0) then
+          convert_eirdiag = 0
+        else if (iy.gt.ny+1) then
+          call xerrab ('Too large IY value in convert_eirdiag')
+          convert_eirdiag = 0
+        else
+          iypos = iy - 1
+          convert_eirdiag = 1 + conformal_convert
+     .     (non_commensurate,2,ixpos,iypos,nx,ny,nx1,ny1,iside)
+        end if
+      else if (xory.eq.1) then
+        if (ix.eq.0) then
+          convert_eirdiag = 0
+        elseif (ix.eq.resleft(iplg)) then
+          convert_eirdiag = resleft1(iplg)
+        elseif (ix.eq.resright(iplg)) then
+          convert_eirdiag = resright1(iplg)
+        elseif (ix.gt.nx+1) then
+          call xerrab ('Too large IX value in convert_eirdiag')
+          convert_eirdiag = 0
+        else
+          ixpos = ix - resleft(iplg)
+          nsize = resright(iplg) - resleft(iplg)
+          nsize1= resright1(iplg)- resleft1(iplg)
+          atend = iside.eq.3
+          convert_eirdiag = resleft1(iplg) +
+     .     convert_position(ixpos,nsize,nsize1,0,atend)
+        endif
+      else
+        call xerrab ('In convert_eirdiag = 0 : xory test failed')
+        convert_eirdiag = 0
+      endif
+
+      return
+      end function convert_eirdiag
+
 
 
 
