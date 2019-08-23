@@ -38,8 +38,6 @@
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_comprt
-      use eirmod_comusr
-     * , only : eirene_alloc_comusr
       use eirmod_braeir
       use eirmod_eirbra
      * , only : eirene_alloc_eirbra, eirene_dealloc_eirbra

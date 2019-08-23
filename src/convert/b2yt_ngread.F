@@ -9,7 +9,7 @@ C
 *
 *  1. PURPOSE
 *
-*     B2YT_NGREAD READS IN AND CONVERTS THE ATOM AND MOLECULE DATA OF 
+*     B2YT_NGREAD READS IN AND CONVERTS THE ATOM AND MOLECULE DATA OF
 *     EIRENE FOR PLOT.
 *
 *
@@ -104,11 +104,12 @@ c
       logical ex
 
 *  -- PROCEDURES --
-      integer conformal_convert
+      integer convert_eirdiag, conformal_convert
       character*32 :: get_B25_hash
       logical streql
       EXTERNAL GFSUB2
-      external ipgeti, streql, get_B25_hash, conformal_convert
+      external ipgeti, streql, get_B25_hash
+      external convert_eirdiag, conformal_convert
 #endif
       external subini, subend
 
@@ -596,7 +597,7 @@ C
       deallocate(srcml1,edissml1)
 
       if ((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
-     &    .and. 
+     &    .and.
      &    (streql(eirene_format,'old').or.streql(eirene_format,'new')))
      & then
         if (jvft44 .ge. 20130210) then
@@ -960,7 +961,7 @@ cank
             call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
      .           wd_old,wd_new,2)
            wlabsrp1(natm1+nmol1+nioni+1:natm1+nmol1+nioni+npls1,i)=
-     .      wd_new(1:npls1) 
+     .      wd_new(1:npls1)
           end do
           do i = 1, nstsi
             wd_old(1:nplsi)=wlabsrp(natmi+nmoli+nioni+1:
@@ -1150,10 +1151,10 @@ cank
 
         if(jvft44 .ge. 20080706) then
           call read_title(44)
-          READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)        
-          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)    
-          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)    
-          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)    
+          READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
+          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)
+          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)
+          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)
           READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi)
           allocate(eirdiag_nds_ind1(nstsi+1))
           allocate(eirdiag_nds_srf1(nstsi))
@@ -1166,26 +1167,26 @@ cank
      .         conformal_convert(non_commensurate,2,
      .         (eirdiag_nds_start(i)+eirdiag_nds_end(i))/2,
      .          eirdiag_nds_srf(i),nx,ny,nx1,ny1,4)
-              eirdiag_nds_start1(i) = min(nx1, 1 +
-     .        conformal_convert(non_commensurate,1,
-     .         eirdiag_nds_start(i),eirdiag_nds_srf(i),nx,ny,nx1,ny1,1))
-              eirdiag_nds_end1(i) = min(nx1, 1 +
-     .        conformal_convert(non_commensurate,1,
-     .         eirdiag_nds_end(i),eirdiag_nds_srf(i),nx,ny,nx1,ny1,3))
+              eirdiag_nds_start1(i) =
+     .         convert_eirdiag(non_commensurate,1,
+     .          eirdiag_nds_start(i),eirdiag_nds_srf(i),nx,ny,nx1,ny1,1)
+              eirdiag_nds_end1(i) =
+     .         convert_eirdiag(non_commensurate,1,
+     .          eirdiag_nds_end(i),eirdiag_nds_srf(i),nx,ny,nx1,ny1,3)
               eirdiag_nds_ind1(i+1) = eirdiag_nds_ind1(i) +
      .         (eirdiag_nds_end1(i) - eirdiag_nds_start1(i) + 1) + 1
             else if (eirdiag_nds_typ(i).eq.2) then
               eirdiag_nds_srf1(i) =
-     .        conformal_convert(non_commensurate,1,
-     .         eirdiag_nds_srf(i),
-     .        (eirdiag_nds_start(i)+eirdiag_nds_end(i))/2,
+     .         conformal_convert(non_commensurate,1,
+     .          eirdiag_nds_srf(i),
+     .         (eirdiag_nds_start(i)+eirdiag_nds_end(i))/2,
      .          nx,ny,nx1,ny1,4)
-              eirdiag_nds_start1(i) = min(ny1, 1 +
-     .        conformal_convert(non_commensurate,2,
-     .         eirdiag_nds_srf(i),eirdiag_nds_start(i),nx,ny,nx1,ny1,0))
-              eirdiag_nds_end1(i) = min(ny1, 1 +
-     .        conformal_convert(non_commensurate,2,
-     .         eirdiag_nds_srf(i),eirdiag_nds_end(i),nx,ny,nx1,ny1,2))
+              eirdiag_nds_start1(i) =
+     .         convert_eirdiag(non_commensurate,2,
+     .          eirdiag_nds_srf(i),eirdiag_nds_start(i),nx,ny,nx1,ny1,0)
+              eirdiag_nds_end1(i) =
+     .         convert_eirdiag(non_commensurate,2,
+     .          eirdiag_nds_srf(i),eirdiag_nds_end(i),nx,ny,nx1,ny1,2)
               eirdiag_nds_ind1(i+1) = eirdiag_nds_ind1(i) +
      .         (eirdiag_nds_end1(i) - eirdiag_nds_start1(i) + 1) + 1
             else if (eirdiag_nds_typ(i).eq.0) then
@@ -1202,26 +1203,26 @@ cank
           WRITE(45,'(12i6)') (eirdiag_nds_srf1(i),i=1,nstsi)
           WRITE(45,'(12i6)') (eirdiag_nds_start1(i),i=1,nstsi)
           WRITE(45,'(12i6)') (eirdiag_nds_end1(i),i=1,nstsi)
-      
+
           NCL=eirdiag_nds_ind(nstsi+1)
           NCL1=eirdiag_nds_ind1(nstsi+1)
           NCLM=max(NCL,NCL1)
           IF(NCL.GT.0) THEN
             IF(.NOT.ALLOCATED(wldna_res))
      >       ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
-     .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
-     .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
+     .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL),
+     .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL),
      .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
      .                wldspt_res(NCL), sarea_res(NCL),
      .                wldspta_res(natmi,NCL), wldsptm_res(nmoli,NCL),
      .                wlpump_res(nspz,NCL) )
- 
+
             call read_title(44)
             READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
             call read_title(44)
             READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natmi),i=1,NCL)
             call read_title(44)
-            READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
+            READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL)
             call read_title(44)
             READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natmi),i=1,NCL)
             call read_title(44)
@@ -1279,9 +1280,9 @@ cank
             allocate(area_res_contr(NCL,NCL1))
             call b2yt_area_res_map ( NCL, NCL1, nstsi, nx, ny, nx1, ny1,
      .       non_commensurate, sarea_res, sarea1res, area_res_contr,
-     .       eirdiag_nds_ind, eirdiag_nds_typ, eirdiag_nds_srf, 
+     .       eirdiag_nds_ind, eirdiag_nds_typ, eirdiag_nds_srf,
      .       eirdiag_nds_start, eirdiag_nds_end,
-     .       eirdiag_nds_ind1, eirdiag_nds_srf1, 
+     .       eirdiag_nds_ind1, eirdiag_nds_srf1,
      .       eirdiag_nds_start1, eirdiag_nds_end1,
      .       gs1 )
             data1res(1:NCL) = ewldrp_res(1:NCL)
@@ -1293,30 +1294,32 @@ cank
             else
               data1res(1:NCL) = wldspt_res(1:NCL)
               call b2yt_res_map ( NCL, NCL1, NCLM,
-     .         area_res_contr, data1res) 
+     .         area_res_contr, data1res)
               wldspt1res(1:NCL1) = data1res(1:NCL1)
             end if
             do is = 1, natmi
               if (iatm1(is).ne.0) then
                 data1res(1:NCL) = wldna_res(is,1:NCL)
                 call b2yt_res_map ( NCL, NCL1, NCLM,
-     .           area_res_contr, data1res) 
+     .           area_res_contr, data1res)
                 wldna1res(iatm1(is),1:NCL1) = data1res(1:NCL1)
                 data1res(1:NCL) = ewlda_res(is,1:NCL)
                 call b2yt_res_map ( NCL, NCL1, NCLM,
-     .           area_res_contr, data1res) 
+     .           area_res_contr, data1res)
                 ewlda1res(iatm1(is),1:NCL1) = data1res(1:NCL1)
                 data1res(1:NCL) = ewldea_res(is,1:NCL)
                 call b2yt_res_map ( NCL, NCL1, NCLM,
-     .           area_res_contr, data1res) 
+     .           area_res_contr, data1res)
                 ewldea1res(iatm1(is),1:NCL1) = data1res(1:NCL1)
-                if (no_sputtering) then
-                  wldspta1res(iatm1(is),:) = 0.0_R8
-                else
-                  data1res(1:NCL) = wldspta_res(is,1:NCL)
-                  call b2yt_res_map ( NCL, NCL1, NCLM,
-     .             area_res_contr, data1res) 
-                  wldspta1res(iatm1(is),1:NCL1) = data1res(1:NCL1)
+                if (jvftnew .ge. 20170328) then
+                  if (no_sputtering) then
+                    wldspta1res(iatm1(is),:) = 0.0_R8
+                  else
+                    data1res(1:NCL) = wldspta_res(is,1:NCL)
+                    call b2yt_res_map ( NCL, NCL1, NCLM,
+     .               area_res_contr, data1res)
+                    wldspta1res(iatm1(is),1:NCL1) = data1res(1:NCL1)
+                  end if
                 end if
               end if
             end do
@@ -1324,27 +1327,29 @@ cank
               if (imol1(is).ne.0) then
                 data1res(1:NCL) = wldnm_res(is,1:NCL)
                 call b2yt_res_map ( NCL, NCL1, NCLM,
-     .           area_res_contr, data1res) 
+     .           area_res_contr, data1res)
                 wldnm1res(imol1(is),1:NCL1) = data1res(1:NCL1)
                 data1res(1:NCL) = ewldm_res(is,1:NCL)
                 call b2yt_res_map ( NCL, NCL1, NCLM,
-     .           area_res_contr, data1res) 
+     .           area_res_contr, data1res)
                 ewldm1res(imol1(is),1:NCL1) = data1res(1:NCL1)
                 data1res(1:NCL) = ewldem_res(is,1:NCL)
                 call b2yt_res_map ( NCL, NCL1, NCLM,
-     .           area_res_contr, data1res) 
+     .           area_res_contr, data1res)
                 ewldem1res(imol1(is),1:NCL1) = data1res(1:NCL1)
                 data1res(1:NCL) = ewldmr_res(is,1:NCL)
                 call b2yt_res_map ( NCL, NCL1, NCLM,
-     .           area_res_contr, data1res) 
+     .           area_res_contr, data1res)
                 ewldmr1res(imol1(is),1:NCL1) = data1res(1:NCL1)
-                if (no_sputtering) then
-                  wldsptm1res(imol1(is),:) = 0.0_R8
-                else
-                  data1res(1:NCL) = wldsptm_res(is,1:NCL)
-                  call b2yt_res_map ( NCL, NCL1, NCLM,
-     .             area_res_contr, data1res) 
-                  wldsptm1res(imol1(is),1:NCL1) = data1res(1:NCL1)
+                if (jvftnew .ge. 20170328) then
+                  if (no_sputtering) then
+                    wldsptm1res(imol1(is),:) = 0.0_R8
+                  else
+                    data1res(1:NCL) = wldsptm_res(is,1:NCL)
+                    call b2yt_res_map ( NCL, NCL1, NCLM,
+     .               area_res_contr, data1res)
+                    wldsptm1res(imol1(is),1:NCL1) = data1res(1:NCL1)
+                  end if
                 end if
               end if
             end do
@@ -1366,11 +1371,11 @@ cank
             WRITE(45,'(6e15.7)') (ewldrp1res(i),i=1,NCL1)
             call write_title(45,'ewldmr_res',ncl1*nmol1)
             WRITE(45,'(6e15.7)') ((ewldmr1res(j,i),j=1,nmol1),i=1,NCL1)
-            if (jvft44.ge.20170228) then
+            if (jvftnew.ge.20170228) then
               call write_title(45,'wldspt_res',ncl1)
               WRITE(45,'(6e15.7)') (wldspt1res(i),i=1,NCL1)
             end if
-            if (jvft44.ge.20170328) then
+            if (jvftnew.ge.20170328) then
               call write_title(45,'wldspta_res',ncl1*natm1)
               WRITE(45,'(6e15.7)')
      .              ((wldspta1res(j,i),j=1,natm1),i=1,NCL1)
@@ -1382,7 +1387,7 @@ cank
                 if (iatm1(k).ne.0) then
                   data1res(1:NCL) = wlpump_res(k,1:NCL)
                   call b2yt_res_map ( NCL, NCL1, NCLM,
-     .             area_res_contr, data1res) 
+     .             area_res_contr, data1res)
                   wlpump1res(iatm1(k),1:NCL1) = data1res(1:NCL1)
                 end if
               end do
@@ -1390,14 +1395,14 @@ cank
                 if (imol1(k).ne.0) then
                   data1res(1:NCL) = wlpump_res(natmi+k,1:NCL)
                   call b2yt_res_map ( NCL, NCL1, NCLM,
-     .             area_res_contr, data1res) 
+     .             area_res_contr, data1res)
                   wlpump1res(natm1+imol1(k),1:NCL1) = data1res(1:NCL1)
                 end if
               end do
               do k = 1, nioni
                 data1res(1:NCL) = wlpump_res(natmi+nmoli+k,1:NCL)
                 call b2yt_res_map ( NCL, NCL1, NCLM,
-     .           area_res_contr, data1res) 
+     .           area_res_contr, data1res)
                 wlpump1res(natm1+nmol1+k,1:NCL1) = data1res(1:NCL1)
               end do
               do i = 1, NCL
@@ -1412,7 +1417,7 @@ cank
               do k = 1, npls1
                 data1res(1:NCL) = wlpump1res(natm1+nmol1+nioni+k,1:NCL)
                 call b2yt_res_map ( NCL, NCL1, NCLM,
-     .           area_res_contr, data1res) 
+     .           area_res_contr, data1res)
                 wlpump1res(natm1+nmol1+nioni+k,1:NCL1) =
      .           data1res(1:NCL1)
               end do
@@ -1633,7 +1638,7 @@ cank
                 call b2xtvc(nx, ny, nx1, ny1,
      &           field, eneutrad1(0,0,iatm1(is)),
      &           nncutmax, non_commensurate,
-     &           nnreg, nncut, periodic_bc, 
+     &           nnreg, nncut, periodic_bc,
      &           jsep, jsep1, region, region1,
      &           leftcut, leftcut1, rightcut, rightcut1,
      &           bottomcut, bottomcut1, topcut, topcut1,
@@ -1695,15 +1700,15 @@ C
 
       subroutine b2yt_area_res_map ( NCL, NCL1, nstsi, nx, ny, nx1, ny1,
      .  non_commensurate, sarea_res, sarea1res, area_res_contr,
-     .  eirdiag_nds_ind, eirdiag_nds_typ, eirdiag_nds_srf, 
+     .  eirdiag_nds_ind, eirdiag_nds_typ, eirdiag_nds_srf,
      .  eirdiag_nds_start, eirdiag_nds_end,
-     .  eirdiag_nds_ind1, eirdiag_nds_srf1, 
+     .  eirdiag_nds_ind1, eirdiag_nds_srf1,
      .  eirdiag_nds_start1, eirdiag_nds_end1,
      .  gs1)
       use b2mod_types
       implicit none
       integer nstsi, nx, ny, nx1, ny1, non_commensurate
-      integer NCL, NCL1, NCLM
+      integer NCL, NCL1
       real (kind=R8) :: sarea_res( NCL )
       real (kind=R8) :: sarea1res( NCL1 )
       real (kind=R8) :: area_res_contr( NCL, NCL1 )
@@ -1719,7 +1724,7 @@ C
 
       real (kind=R8) :: rratio
       external rratio
-      
+
       sarea1res(:) = 0.0_R8
       area_res_contr(:,:) = 0.0_R8
       do i = 1, nstsi
@@ -1784,7 +1789,7 @@ cxpb lb and ub are lower and upper interval bounds
                 area_res_contr(ind,ind1) = 1.0_R8
                 if (mod(ind-eirdiag_nds_ind(i),stride).eq.0)
      .           ind1 = ind1 + 1
-              end do  
+              end do
             else if (nx1.gt.nx) then
               stride = nx1/nx
               ind = eirdiag_nds_ind(i) + 1
@@ -1801,7 +1806,7 @@ cxpb lb and ub are lower and upper interval bounds
               do ind = eirdiag_nds_ind(i) + 1,
      .                 eirdiag_nds_ind(i) + eirdiag_nds_end(i) -
      .                 eirdiag_nds_start(i) + 1
-                ind1 = eirdiag_nds_ind1(i) + ind - eirdiag_nds_ind(i) 
+                ind1 = eirdiag_nds_ind1(i) + ind - eirdiag_nds_ind(i)
                 area_res_contr(ind,ind1) = 1.0_R8
               end do
             else if (ny.gt.ny1) then
@@ -1813,7 +1818,7 @@ cxpb lb and ub are lower and upper interval bounds
                 area_res_contr(ind,ind1) = 1.0_R8
                 if (mod(ind-eirdiag_nds_ind(i),stride).eq.0)
      .           ind1 = ind1 + 1
-              end do  
+              end do
             else if (ny1.gt.ny) then
               stride = ny1/ny
               ind = eirdiag_nds_ind(i) + 1
@@ -1867,7 +1872,7 @@ cxpb lb and ub are lower and upper interval bounds
               lb1 = ub1
             end if
           end do
-        end if       
+        end if
       end do
 
       return
@@ -1896,6 +1901,123 @@ cxpb lb and ub are lower and upper interval bounds
 
       return
       end subroutine b2yt_res_map
+
+      integer function convert_eirdiag
+     . (non_commensurate,xory,ix,iy,nx,ny,nx1,ny1,iside)
+      use b2mod_geo2
+      use b2mod_indirect
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer non_commensurate,xory,ix,iy,nx,ny,nx1,ny1,iside
+c xory  = 1 : x-direction
+c       = 2 : y-direction
+c iside = 0 : bottom
+c       = 1 : left
+c       = 2 : top
+c       = 3 : right
+c       = 4 : center
+*   ..local variables
+      integer ixpos, iypos, iplg, nsize, nsize1
+      integer resleft(6), resright(6)
+      integer resleft1(6), resright1(6)
+      integer nxtl, nxtr
+      integer nxtl1, nxtr1
+      logical atend
+*   ..procedures
+      integer conformal_convert, convert_position
+      external conformal_convert, convert_position, get_nxt, b2yt_nxt,
+     .         xerrab
+
+      ixpos = ix
+      resleft = nx+2
+      resright= nx+2
+      if (nncut.eq.0) then
+        resleft(1) = 1
+        resright(1)= nx+1
+        resleft1(1) = 1
+        resright1(1)= nx1+1
+      else if (nncut.eq.1) then
+        resleft(1) = 1
+        resright(1)= leftcut(1)
+        resleft(2) = leftcut(1)+1
+        resright(2)= rightcut(1)
+        resleft(3) = rightcut(1)+1
+        resright(3)= nx+1
+        resleft1(1) = 1
+        resright1(1)= leftcut1(1)
+        resleft1(2) = leftcut1(1)+1
+        resright1(2)= rightcut1(1)
+        resleft1(3) = rightcut1(1)+1
+        resright1(3)= nx1+1
+      else if (nncut.eq.2) then
+        call get_nxt(nx, nxtl, nxtr)
+        call b2yt_nxt(nx1, nxtl1, nxtr1)
+        resleft(1) = 1
+        resright(1)= leftcut(1)
+        resleft(2) = leftcut(1)+1
+        resright(2)= leftcut(2)
+        resleft(3) = leftcut(2)+1
+        resright(3)= nxtl
+        resleft(4) = nxtr+1
+        resright(4)= rightcut(2)
+        resleft(5) = rightcut(2)+1
+        resright(5)= rightcut(1)
+        resleft(6) = rightcut(1)+1
+        resright(6)= nx+1
+        resleft1(1) = 1
+        resright1(1)= leftcut1(1)
+        resleft1(2) = leftcut1(1)+1
+        resright1(2)= leftcut1(2)
+        resleft1(3) = leftcut1(2)+1
+        resright1(3)= nxtl1
+        resleft1(4) = nxtr1+1
+        resright1(4)= rightcut1(2)
+        resleft1(5) = rightcut1(2)+1
+        resright1(5)= rightcut1(1)
+        resleft1(6) = rightcut1(1)+1
+        resright1(6)= nx1+1
+      endif
+      iplg = 1
+      do while (ix.gt.resright(iplg).and.iplg.le.5)
+        iplg = iplg+1
+      enddo
+      if (xory.eq.2) then
+        if (iy.eq.0) then
+          convert_eirdiag = 0
+        else if (iy.gt.ny+1) then
+          call xerrab ('Too large IY value in convert_eirdiag')
+          convert_eirdiag = 0
+        else
+          iypos = iy - 1
+          convert_eirdiag = 1 + conformal_convert
+     .     (non_commensurate,2,ixpos,iypos,nx,ny,nx1,ny1,iside)
+        end if
+      else if (xory.eq.1) then
+        if (ix.eq.0) then
+          convert_eirdiag = 0
+        elseif (ix.eq.resleft(iplg)) then
+          convert_eirdiag = resleft1(iplg)
+        elseif (ix.eq.resright(iplg)) then
+          convert_eirdiag = resright1(iplg)
+        elseif (ix.gt.nx+1) then
+          call xerrab ('Too large IX value in convert_eirdiag')
+          convert_eirdiag = 0
+        else
+          ixpos = ix - resleft(iplg)
+          nsize = resright(iplg) - resleft(iplg)
+          nsize1= resright1(iplg)- resleft1(iplg)
+          atend = iside.eq.3
+          convert_eirdiag = resleft1(iplg) +
+     .     convert_position(ixpos,nsize,nsize1,0,atend)
+        endif
+      else
+        call xerrab ('In convert_eirdiag = 0 : xory test failed')
+        convert_eirdiag = 0
+      endif
+
+      return
+      end function convert_eirdiag
+
 
 
 

@@ -91,7 +91,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer idum(0:9), ix, iy, geometryType
+      integer idum(0:9), ix, iy
       integer nxiso1, nxiso2, nyiso1, nyiso2
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
       character line*500
@@ -472,7 +472,6 @@ cwdk  faces is not representative for orthogonality of left face to field!
       wbbr1(:,:,3)=sqrt(wbbr1(:,:,0)**2+wbbr1(:,:,1)**2+wbbr1(:,:,2)**2)
       wbbv1(:,:,3)=sqrt(wbbv1(:,:,0)**2+wbbv1(:,:,1)**2+wbbv1(:,:,2)**2)
 *    ..compute pbs1 (magnetic field pitch * surface area) at cell faces
-      geometryType = geometryId(nnreg, isymm, periodic_bc, topcut1)
       call b2xgbs1 (nx1, ny1, 
      1 bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
 *   ..project metric coefficients to proper mesh
