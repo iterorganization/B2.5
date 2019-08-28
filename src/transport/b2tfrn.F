@@ -66,7 +66,8 @@
       real (kind=R8) ::
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrkVx(nVx),
      *   wrk00(nFc,2), wrk11(nFc,2),
-     *   zeff(nCv), c071(nCv), c071f(nCv)                                !srv 13.01.17
+!pb     *   zeff(nCv), c071(nCv), c071f(nCv)                                !srv 13.01.17
+     *   zeff(nCv), c071(nCv), c071f(nFc)                                !srv 13.01.17
       real (kind=R8) :: t0,t1,t2
       save ncall
 *   ..procedures
