@@ -453,20 +453,37 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 ! Make local left/right/top/bottom connectivity
       do iy = 0, ny+1
         do ix = 0, nx+1            
-          if ((leftix(ix-1,iy-1)==-2) .or. 
-     .        (leftiy(ix-1,iy-1)==-2)) then
-            do icut = 1, nncut
-              if(ix-1==leftcut(icut).and.iy-1<=topcut(icut)) then
-                locleftix(ix-1,iy-1)= rightcut(icut)-1
-                locleftiy(ix-1,iy-1)= iy-1
-              elseif(ix-1==rightcut(icut).and.iy-1<=topcut(icut)) then
-                locleftix(ix-1,iy-1)= leftcut(icut)-1
-                locleftiy(ix-1,iy-1)= iy-1
+          if ((leftix(ix-1,iy-1)==-2)) then
+            if (periodic_bc.and.nncut.eq.0) then
+             if (ix == nx+1) then
+              if (rightix(ix-2,iy-1) == 0) then
+               locleftix(ix-1,iy-1)= -1		
+               locleftiy(ix-1,iy-1)= iy-1
               else
-                locleftix(ix-1,iy-1)= ix-2		
-                locleftiy(ix-1,iy-1)= iy-1
+               locleftix(ix-1,iy-1)= ix-2
+               locleftiy(ix-1,iy-1)= iy-1
               endif
-            enddo
+             else
+               locleftix(ix-1,iy-1)= ix-2
+               locleftiy(ix-1,iy-1)= iy-1
+             endif
+            elseif (nncut.gt.0) then
+             do icut = 1, nncut
+               if(ix-1==leftcut(icut).and.iy-1<=topcut(icut)) then
+                 locleftix(ix-1,iy-1)= rightcut(icut)-1
+                 locleftiy(ix-1,iy-1)= iy-1
+               elseif(ix-1==rightcut(icut).and.iy-1<=topcut(icut)) then
+                 locleftix(ix-1,iy-1)= leftcut(icut)-1
+                 locleftiy(ix-1,iy-1)= iy-1
+               else
+                 locleftix(ix-1,iy-1)= ix-2		
+                 locleftiy(ix-1,iy-1)= iy-1
+               endif
+             enddo
+            else
+               locleftix(ix-1,iy-1)= ix-2
+               locleftiy(ix-1,iy-1)= iy-1
+            endif
           else
             locleftix(ix-1,iy-1)= leftix(ix-1,iy-1)
             locleftiy(ix-1,iy-1)= leftiy(ix-1,iy-1)
@@ -476,11 +493,22 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 
       do iy = 0, ny+1
         do ix = 0, nx+1            
-          if((rightix(ix-1,iy-1)==nx+1) .or.
-     .       (rightix(ix-1,iy-1)==-2) .or.
-     .       (rightiy(ix-1,iy-1)==ny+1) .or.
-     .       (rightiy(ix-1,iy-1)==-2)) then
-            do icut = 1, nncut
+          if (rightix(ix-1,iy-1)==nx+1) then
+            if (periodic_bc.and.nncut.eq.0) then
+             if (ix == 0) then
+              if (leftix(ix,iy-1) == nx-1) then
+               locrightix(ix-1,iy-1)= nx		
+               locrightiy(ix-1,iy-1)= iy-1
+              else
+                locrightix(ix-1,iy-1)= ix
+                locrightiy(ix-1,iy-1)= iy-1
+              endif
+             else
+               locrightix(ix-1,iy-1)= ix
+               locrightiy(ix-1,iy-1)= iy-1
+             endif
+            elseif (nncut.gt.0) then
+             do icut = 1, nncut
               if(ix-1==leftcut(icut)-1.and.iy-1<=topcut(icut)) then
                 locrightix(ix-1,iy-1)= rightcut(icut)
                 locrightiy(ix-1,iy-1)= iy-1
@@ -491,7 +519,11 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                 locrightix(ix-1,iy-1)= ix		
                 locrightiy(ix-1,iy-1)= iy-1
               endif
-            enddo
+             enddo
+            else
+              locrightix(ix-1,iy-1)= ix		
+              locrightiy(ix-1,iy-1)= iy-1
+            endif
           else
             locrightix(ix-1,iy-1)= rightix(ix-1,iy-1)
             locrightiy(ix-1,iy-1)= rightiy(ix-1,iy-1)
@@ -501,8 +533,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 
       do iy = 0, ny+1
         do ix = 0, nx+1            
-          if((bottomix(ix-1,iy-1)==-2) .or.
-     .       (bottomiy(ix-1,iy-1)==-2)) then
+          if (bottomiy(ix-1,iy-1)==-2 ) then
 	    locbottomix(ix-1,iy-1)= ix-1		
             locbottomiy(ix-1,iy-1)= iy-2
           else
@@ -514,10 +545,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 
       do iy = 0, ny+1
         do ix = 0, nx+1            
-          if((topix(ix-1,iy-1)==-2) .or.
-     .       (topix(ix-1,iy-1)==nx+1) .or.
-     .       (topiy(ix-1,iy-1)==-2) .or.
-     .       (topiy(ix-1,iy-1)==ny+1)) then
+          if (topiy(ix-1,iy-1)==ny+1) then
             loctopix(ix-1,iy-1)= ix-1	
             loctopiy(ix-1,iy-1)= iy
           else
