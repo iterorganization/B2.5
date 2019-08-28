@@ -97,7 +97,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .           inv, inv1, inv2, invmx, ifcc, icount, n2, ix2o,
      .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, 
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
-     .           ixb, iyb, bix, biy
+     .           ixb, iyb, bix, biy, idb
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -611,6 +611,15 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
             iyghostvx(icount) = iy-1
             ixmapghostvx(ix-1,iy-1) = loctopix(ix-1,iy-1)
             iymapghostvx(ix-1,iy-1) = loctopiy(ix-1,iy-1)
+          elseif (cflags(bix,biy,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
+     .        points_match(crx(bix,biy,2), cry(bix,biy,2), 
+     .                     crx(bix,biy,3), cry(bix,biy,3))) then
+            ighostvx(ix-1,iy-1)=1
+            icount=icount+1
+            ixghostvx(icount) = ix-1
+            iyghostvx(icount) = iy-1
+            ixmapghostvx(ix-1,iy-1) = locrightix(ix-1,iy-1)
+            iymapghostvx(ix-1,iy-1) = locrightiy(ix-1,iy-1)
           endif	
         enddo
       enddo
@@ -644,7 +653,8 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 !      m%nCmxNv = 9*m%nCi - 4*nncut + ! internal cells (corners only 8)
 !     .           6*m%nCg - 8*nncut + ! guard cells (at corners only 5)
 !     .           2*8*nncut*4         ! correction for cells around X-points
-      m%nCmxNv = 9 * (nx+1) * (ny+1)
+!      m%nCmxNv = 9 * (nx+1) * (ny+1) 
+      m%nCmxNv = 9 * (nx+2) * (ny+2)  ! there are 2 guard cells
       write (*,*) 'Mapping defined, with'
       write (*,*) 'nCv, nCi, nCg  = ', m%nCv, m%nCi, m%nCg
       write (*,*) 'nFc, nVx       = ', m%nFc, m%nVx
@@ -1482,7 +1492,7 @@ cwdk  might need to add duplicates numbers here...
 
       implicit none
       integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs, nVmxCv
-      integer :: ix, iy, ic, ifc, nfx, ivx, i, j
+      integer :: ix, iy, ic, ifc, nfx, ivx, i, j, idb, ivx1, ivx2
       real (kind=R8) :: hy1(-1:nx,-1:ny), du, dux, duy
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
@@ -1500,6 +1510,7 @@ cwdk  might need to add duplicates numbers here...
             ic = mpg%imapCv(ix,iy)
 ! b field
             gm%cvBb(ic,0:3) = bb(ix,iy,0:3)
+            gm%cvEb(ic,0:2) = ebc(ix,iy,0:2)
 ! cell center
             gm%cvX(ic) = 0.25_R8*sum(crx(ix,iy,0:3))
             gm%cvY(ic) = 0.25_R8*sum(cry(ix,iy,0:3))
@@ -1569,6 +1580,8 @@ cwdk  might need to add duplicates numbers here...
       end do      
 
 ! vertices
+      gm%vxX = -666.
+      gm%vxY = -666.
       do iy = 0, ny
         do ix = 0, nx
           if(mpg%imapVx(ix,iy)/=0) then
@@ -1584,6 +1597,67 @@ cwdk  might need to add duplicates numbers here...
           end if
         end do
       end do
+
+#ifdef WG_TODO
+      open (newunit=idb,file='debug.out')
+      do ix = 236, 238
+        do iy=8, 12
+          write (idb,'(2i6)') ix, iy
+          write (idb,'(2es17.6)') crx(ix,iy,0),cry(ix,iy,0)
+          write (idb,'(2es17.6)') crx(ix,iy,1),cry(ix,iy,1)
+          write (idb,'(2es17.6)') crx(ix,iy,3),cry(ix,iy,3)
+          write (idb,'(2es17.6)') crx(ix,iy,2),cry(ix,iy,2)
+          write (idb,'(2es17.6)') crx(ix,iy,0),cry(ix,iy,0)
+       end do
+      end do
+
+      write (idb,*) 
+      do ix = 235, 250
+        do iy=5, 12
+          ic = mpg%imapcv(ix,iy)
+          write (idb,'(a,3i6)') 'ix,iy,ic ',ix,iy,ic
+          write (idb,'(a,5i6)') 'cflags ',cflags(ix,iy,:)
+          if (ic == 0) cycle
+          write (idb,*) 'faces '
+          do i = 1,mpg%cvFcP(ic,2)
+            ifc=mpg%cvFc(mpg%cvFcP(ic,1)+i-1)
+            ivx1 = mpg%fcVx(ifc,1)
+            ivx2 = mpg%fcVx(ifc,2)
+            write (idb,'(3i6,4es16.7)') ifc, ivx1, ivx2, 
+     .        gm%vxX(ivx1), gm%vxY(ivx1),
+     .        gm%vxX(ivx2), gm%vxY(ivx2)
+          end do
+          do i = 1, 7
+            write (idb,*) 
+          end do
+        end do
+      end do
+
+      write (idb,*) 
+      write (idb,*) 
+      write (idb,*) ' cell coordinates '
+      do ic = 1, nCv
+        write (idb,'(a,3i6)') 'ic ',ic
+        do i = 1, mpg%cvVxP(ic,2)
+          ivx = mpg%cvVx(mpg%cvVxP(ic,1)+i-1)
+          if (ivx == 0) then
+            write (idb,'(i6)') ivx
+            cycle
+          end if
+          write (idb,'(i6,2es16.7)') ivx, gm%vxX(ivx),gm%vxY(ivx)
+        end do
+        write (idb,*) 
+      end do
+
+      write (idb,*) 
+      write (idb,*) 
+      write (idb,*) ' indices of unset vertices '
+      do i = 1, nVx
+        if (gm%vxX(i)**2+gm%vxY(i)**2 == 2._R8*666._R8*666._R8) 
+     .    write (idb,'(i6,2es16.7)') i, gm%vxX(i),gm%vxY(i)
+      end do
+      close (idb)
+#endif      
  
 ! connection length for core region
       gm%fsConn = 0.0_R8
