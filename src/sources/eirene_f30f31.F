@@ -53,6 +53,8 @@ c
      .   , ncv_eir => ncv
       use eirmod_braeir
       use eirmod_extrab25
+      use b2mod_neutrals_namelist
+     & , only: crcstra
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
