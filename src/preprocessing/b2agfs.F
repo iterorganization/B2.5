@@ -192,7 +192,9 @@
       ! Set up magnetic field and shift coordinates
       do  iy = -1, ny1
         do  ix = -1, nx1
-          if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
+!wdk      also copy data for unused cells; in particular: need vertex coordinates
+!wdk      later on in the mapping
+!          if (isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE))) cycle
           bb1(ix,iy,0)=bp(ix,iy)
           bb1(ix,iy,1)=0.0_R8
           bb1(ix,iy,2)=bt(ix,iy)
