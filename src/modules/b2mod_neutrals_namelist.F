@@ -2033,7 +2033,7 @@ cwdk also need to correct for degenerate faces?
             deallocate (fcss)
 
 ! sort face for a continuous surface
-#ifdef WG_TODO           	    
+#ifndef WG_TODO           	    
             allocate(face)
 	    nullify(face%prev)
 	    nullify(face%next)
@@ -2101,6 +2101,10 @@ cwdk also need to correct for degenerate faces?
         else
 !          call xerrab ('conv_rcparms -- wrong CRCSTRA')
         endif
+! for check in rc_to_struct
+        nrcfaces(istra) = rcl(istra)
+        rc_faces(1:rcl(istra),istra) =
+     .     m%rcFc(m%rcFcP(istra,1):m%rcFcP(istra,1)+m%rcFcP(istra,2)-1)
       enddo     
 
       return

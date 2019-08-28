@@ -853,6 +853,7 @@ cwdk  might need to add duplicates numbers here...
           IF (.NOT. swapped) EXIT
         end do
 
+        icount = 0
         do ic = 1, ncorneri
           icount = icount + 1
           ix = ixcorner(ic)

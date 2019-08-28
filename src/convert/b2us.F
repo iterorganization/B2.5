@@ -105,7 +105,7 @@
       character*72 zeile
 #endif
       logical file_open, file_exists, ex, 
-     .        linq_33, linq_34, linq_35, lcheck
+     .        linq_33, linq_34, linq_35, lcheck, file_exist
 
       type(mapping), save :: mpg
       type(geometry), save :: gm
@@ -334,6 +334,35 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         end if
         call bc_to_struct(mpg)
       end if
+
+#ifdef B25_EIRENE
+      filename='input.dat'
+      call find_file(filename,file_exists)
+      if (file_exists.and.use_eirene.ne.0) then
+        open(unit=45,file=filename)
+        read(45,'(A72)',END=6999) line
+        rewind(45)
+        CALL EIRENE_FIND_PARAM(45)
+        close(45)
+        CALL EIRENE_SET_PARMMOD(1)
+        write(*,*) 'Called FIND_PARAM'
+        write(*,*) ' NSTRA = ',NSTRA
+        write(*,*) '   NFL = ',NFL
+        write(*,*) '  NATM = ',NATM
+        write(*,*) '  NMOL = ',NMOL
+        write(*,*) '  NION = ',NION
+        write(*,*) 'NLIMPS = ',NLIMPS
+        write(*,*) '  NLIM = ',NLIM
+        write(*,*) '  NSTS = ',NSTS
+      endif
+      goto 7000
+ 6999 continue
+      file_exist=.false.
+ 7000 continue
+      if (.not.file_exists) then
+        call xerrab (' b2us -- no Eirene input available')
+      endif
+#endif 
 
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
         bcp_filename=repeat(' ',260)

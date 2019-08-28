@@ -23,6 +23,8 @@ c
       use b2mod_b2plot
       use b2mod_b2cmfs
       use b2mod_constants
+      use b2mod_indirect
+     ,  , only : triangleArea
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
@@ -49,8 +51,8 @@ c
       external subini, subend
 #ifdef B25_EIRENE
       external ipgetr, xertst
-      real (kind=R8) :: triangleArea
-      external triangleArea
+!      real (kind=R8) :: triangleArea
+!      external triangleArea
 *   ..initialisation
       data width /1.0_R8/
       save width

@@ -162,8 +162,11 @@ c*** PFR flow values
      *     wtarg_max(DEF_NCUT) !vk, max target heat flux density
       equivalence (equp_tmp(0,1,1), hlp_pfrf)
       character hlp_hp(npff_tmp)*8,hlp_hb*8,
-     ,  hlp_ha(0:npfrgrpd,ns,npff_tmp)*(lnh_tmp)
-
+     ,     hlp_ha(0:npfrgrpd,ns,npff_tmp)*(lnh_tmp)
+      
+#ifdef B25_EIRENE
+      real(kind=R8) :: g, a, v, t
+#endif
 c*** Neutral-related data on surfaces
 c***                          - by diagnostic surface groups and species
 c***    max. and min. number of tallies, number of species
@@ -1208,10 +1211,10 @@ c*** e the temperature*density*area, v the flux*area
               g=dmb2(i,iy,-ndtm_tmp(j),1)
               t=tmb2(i,iy,-ndtm_tmp(j),1)/ev
             end if !}
-#endif
             d=d+gs(i,is,1)*g
             e=e+gs(i,is,1)*g*t
             v=v+gs(i,is,1)*g*sqrt(max(t,0.0_R8))
+#endif
           end do !}
           if(s.gt.0.0_R8 .and. g.gt.0.0_R8) then !{
             e=e/d

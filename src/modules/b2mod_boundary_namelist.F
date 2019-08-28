@@ -1515,9 +1515,10 @@ c.. Test consistency with region boundaries
       integer, intent(in) :: nx, ny, ns
       type (mapping), intent (inout) :: m
       integer :: ib, ibc, is, inbc, noss, ncoss, icoss, iss, indss,
-     .           ix, iy, jcoss, iFc1, iFc2, i
+     .           ix, iy, jcoss, iFc1, iFc2, i, imn, imx
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
       integer, allocatable :: fcss(:), fcss2(:)
+      logical, allocatable :: lout(:)
       
       type fcpart
         integer :: fcno
@@ -1610,6 +1611,7 @@ cwdk also need to correct for degenerate faces?
           noss = bcend(ib) - bcstart(ib) + 1
 	  do iss = 1, noss
 	    indss = bcstart(ib)+iss-1
+            write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
             ncoss = count(cflags(:,:,2:5) == indss)
             if (ncoss.eq.0) cycle
@@ -1651,6 +1653,8 @@ cwdk also need to correct for degenerate faces?
             enddo
             fcss2(1) = fcss(i)
             i = 1
+            write (*,'(a,4i6)') ' i,fcss2(i),vx1,vx2 ',i,fcss2(i),
+     .           m%fcVx(fcss2(i),1), m%fcVx(fcss2(i),2)
             outer: do iFc1 = 2, ncoss
               do iFc2 = 1, i 
                 if (fcss2(iFc2).eq.fcss(iFc1) .or. fcss(iFc1).eq.0) then
@@ -1661,6 +1665,8 @@ cwdk also need to correct for degenerate faces?
               ! new element found
               i = i + 1
               fcss2(i) = fcss(iFc1)
+              write (*,'(a,4i6)') ' i,fcss2(i),vx1,vx2 ',i,fcss2(i),
+     .           m%fcVx(fcss2(i),1), m%fcVx(fcss2(i),2)
             end do outer
             ncoss = i
             bcl(ib) = bcl(ib) + ncoss
@@ -1677,32 +1683,53 @@ cwdk also need to correct for degenerate faces?
             head => face
 	    tail => face
 
-	    do jcoss = 2, ncoss
+            allocate (lout(ncoss))
+            lout = .false.
+            lout(1) =.true.
+	    do while (count(lout) < ncoss)
 	      do icoss = 2, ncoss
-	        if (face%vx1 == m%fcVX(fcss2(icoss),2)) then
+                if (lout(icoss)) cycle
+                imn = min(m%fcVX(fcss2(icoss),1),m%fcVX(fcss2(icoss),2))
+                imx = max(m%fcVX(fcss2(icoss),1),m%fcVX(fcss2(icoss),2))
+	        if ((head%vx1 == imn) .or. (head%vx1 == imx)) then
 	          allocate(face) 
 	          nullify(face%prev)
 	          nullify(face%next)
 	          face%fcno = fcss2(icoss)
-	          face%vx1 = m%fcVx(face%fcno,1)
-	          face%vx2 = m%fcVx(face%fcno,2)
+	          face%vx1 = imn+imx-head%vx1
+	          face%vx2 = head%vx1
 	          face%next => head
-		  head => face	
+		  head%prev => face	
+ 		  head => face	
+                 lout(icoss) = .true.
   		  exit	
 	        end if
-	        if (face%vx2 == m%fcVX(fcss2(icoss),1)) then
+	        if ((tail%vx2 == imn) .or. (tail%vx2 == imx)) then
 	          allocate(face) 
 		  nullify(face%prev)
 	          nullify(face%next)
 	          face%fcno = fcss2(icoss)
-	          face%vx1 = m%fcVx(face%fcno,1)
-	          face%vx2 = m%fcVx(face%fcno,2)
+	          face%vx1 = tail%vx2
+	          face%vx2 = imn+imx-tail%vx2
 		  face%prev => tail
+                  tail%next => face
 		  tail => face
+                  lout(icoss) = .true.
 		  exit		
 	        end if
               end do  ! icoss
+              if (icoss > ncoss) then
+                write (*,*) 'face list, indss = ',indss
+                do while (associated(head))
+                  write (*,*) head%fcno, head%vx1, head%vx2
+                  tail => head
+                  head => head%next
+                  deallocate (tail)
+                end do
+                call xerrab ('conv_bcparm -- no connecting face found ')
+              end if
             end do  ! jcoss
+            deallocate(lout)
 !
 ! store faces in m%bcFc(inbc)...
             do while (associated(head))
