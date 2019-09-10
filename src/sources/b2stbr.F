@@ -684,24 +684,23 @@ c   --> better solution wanted here..
             end if 
           end do    
 
-cxpb  Add contribution from Eirene core boundary fluxes
-!         do ia = 1, nnatmi
+!  Add contribution from Eirene core boundary fluxes
+          do k = 1, ncns
+            ix = nnlimi + lcns(k)
+            do ia = 1, nnatmi
 !           if (latmscl(ia).eq.b2espcr(is)) then
-!             do k = 1, ncns
-!               ix = nlim + lcns(k)
-!               sna_core(b2espcr(eb2atcr(ia))) = 
-!     &          sna_core(b2espcr(eb2atcr(ia))) -
-!     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
-!               do im = 1, nnmoli
-!                 if (mlcmp(ia,im).gt.0) then
-!                   totfluxn = totfluxn - mlcmp(ia,im) *
-!     &              (wldnm(ix,im,0) - wldrm(ix,im,0)
-!     &                              - wldpm(ix,im,0))
-!                 end if
-!               end do
-!             end do
+              sna_core(latmscl(ia)) = sna_core(latmscl(ia)) -
+     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
+              do im = 1, nnmoli
+                if (mlcmp(ia,im).gt.0) then
+                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) - 
+     &              mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
+     &                              - wldpm(ix,im,0))
+                end if
+              end do
+            end do
 !           end if
-!         end do
+          end do
 
           sna_eir_tot= 0.0_R8
           ext_sna_tot= 0.0_R8
