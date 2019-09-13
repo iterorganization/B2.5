@@ -97,7 +97,7 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .           inv, inv1, inv2, invmx, ifcc, icount, n2, ix2o,
      .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, 
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
-     .           ixb, iyb, bix, biy, idb
+     .           ixb, iyb, bix, biy, idb, lbix, lbiy
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -454,18 +454,14 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       do iy = 0, ny+1
         do ix = 0, nx+1            
           if ((leftix(ix-1,iy-1)==-2)) then
+            locleftix(ix-1,iy-1)= ix-2		
+            locleftiy(ix-1,iy-1)= iy-1
             if (periodic_bc.and.nncut.eq.0) then
              if (ix == nx+1) then
               if (rightix(ix-2,iy-1) == 0) then
                locleftix(ix-1,iy-1)= -1		
                locleftiy(ix-1,iy-1)= iy-1
-              else
-               locleftix(ix-1,iy-1)= ix-2
-               locleftiy(ix-1,iy-1)= iy-1
               endif
-             else
-               locleftix(ix-1,iy-1)= ix-2
-               locleftiy(ix-1,iy-1)= iy-1
              endif
             elseif (nncut.gt.0) then
              do icut = 1, nncut
@@ -475,14 +471,8 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                elseif(ix-1==rightcut(icut).and.iy-1<=topcut(icut)) then
                  locleftix(ix-1,iy-1)= leftcut(icut)-1
                  locleftiy(ix-1,iy-1)= iy-1
-               else
-                 locleftix(ix-1,iy-1)= ix-2		
-                 locleftiy(ix-1,iy-1)= iy-1
                endif
              enddo
-            else
-               locleftix(ix-1,iy-1)= ix-2
-               locleftiy(ix-1,iy-1)= iy-1
             endif
           else
             locleftix(ix-1,iy-1)= leftix(ix-1,iy-1)
@@ -494,18 +484,14 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       do iy = 0, ny+1
         do ix = 0, nx+1            
           if (rightix(ix-1,iy-1)==nx+1) then
+            locrightix(ix-1,iy-1)= ix		
+            locrightiy(ix-1,iy-1)= iy-1
             if (periodic_bc.and.nncut.eq.0) then
              if (ix == 0) then
               if (leftix(ix,iy-1) == nx-1) then
                locrightix(ix-1,iy-1)= nx		
                locrightiy(ix-1,iy-1)= iy-1
-              else
-                locrightix(ix-1,iy-1)= ix
-                locrightiy(ix-1,iy-1)= iy-1
               endif
-             else
-               locrightix(ix-1,iy-1)= ix
-               locrightiy(ix-1,iy-1)= iy-1
              endif
             elseif (nncut.gt.0) then
              do icut = 1, nncut
@@ -515,14 +501,8 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
               elseif(ix-1==rightcut(icut).and.iy-1<=topcut(icut)) then
                 locrightix(ix-1,iy-1)= leftcut(icut)
                 locrightiy(ix-1,iy-1)= iy-1
-              else
-                locrightix(ix-1,iy-1)= ix		
-                locrightiy(ix-1,iy-1)= iy-1
               endif
              enddo
-            else
-              locrightix(ix-1,iy-1)= ix		
-              locrightiy(ix-1,iy-1)= iy-1
             endif
           else
             locrightix(ix-1,iy-1)= rightix(ix-1,iy-1)
@@ -1263,6 +1243,43 @@ cwdk  might need to add duplicates numbers here...
 
        end do
 
+! reduce coordinate problems
+       do iy = 0, ny
+         do ix = 0, nx
+          if (ighostvx(ix,iy) == 1) cycle
+          if (cflags(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL) cycle
+          if (cflags(ix,iy,CELLFLAG_TYPE) == GRID_BOUNDARY) cycle
+          lix = locleftix(ix,iy)
+          liy = locleftiy(ix,iy)
+          bix = locbottomix(ix,iy)
+          biy = locbottomiy(ix,iy)
+          lbix = locbottomix(lix,liy)
+          lbiy = locbottomiy(lix,liy)
+          if ((cflags(lix,liy,CELLFLAG_TYPE) == GRID_INTERNAL) .or.
+     .        (cflags(lix,liy,CELLFLAG_TYPE) == GRID_BOUNDARY)) then
+            crx(ix,iy,0) = crx(lix,liy,1)
+            cry(ix,iy,0) = cry(lix,liy,1)
+            ffbz(ix,iy,0) = ffbz(lix,liy,1)
+            fpsi(ix,iy,0,0) = fpsi(lix,liy,1,0)
+          elseif ((cflags(bix,biy,CELLFLAG_TYPE) == GRID_INTERNAL) .or.
+     .            (cflags(bix,biy,CELLFLAG_TYPE) == GRID_BOUNDARY)) then
+            crx(ix,iy,0) = crx(bix,biy,2)
+            cry(ix,iy,0) = cry(bix,biy,2)
+            ffbz(ix,iy,0) = ffbz(bix,biy,2)
+            fpsi(ix,iy,0,0) = fpsi(bix,biy,2,0)
+          elseif ((cflags(lbix,lbiy,CELLFLAG_TYPE) == GRID_INTERNAL).or.
+     .            (cflags(lbix,lbiy,CELLFLAG_TYPE) == GRID_BOUNDARY))
+     .           then
+            crx(ix,iy,0) = crx(lbix,lbiy,3)
+            cry(ix,iy,0) = cry(lbix,lbiy,3)
+            ffbz(ix,iy,0) = ffbz(lbix,lbiy,3)
+            fpsi(ix,iy,0,0) = fpsi(lbix,lbiy,3,0)
+          else
+            call xerrab ('b2us_prep -- vertex coordinate not specified')
+          end if
+        end do
+      end do
+
 ! listing for every vertex the cell and face numbers
 ! and the starting points in the list
        allocate (indFc(2*m%nFc))
@@ -1579,10 +1596,10 @@ cwdk  might need to add duplicates numbers here...
           end if
         end do
       end do      
-
+      
 ! vertices
-      gm%vxX = -666.
-      gm%vxY = -666.
+      gm%vxX = 0._R8
+      gm%vxY = 0._R8
       do iy = 0, ny
         do ix = 0, nx
           if(mpg%imapVx(ix,iy)/=0) then

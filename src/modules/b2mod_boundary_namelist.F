@@ -1673,7 +1673,7 @@ cwdk also need to correct for degenerate faces?
             deallocate (fcss)
 
 ! sort face for a continuous surface
-#ifdef WG_TODO           	    
+#ifndef WG_TODO           	    
             allocate(face)
 	    nullify(face%prev)
 	    nullify(face%next)
