@@ -309,13 +309,14 @@ c
       NFLAI = NFL
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NATM,NMOL,NION,NSTRA)
       CALL EIRENE_ALLOC_CTRCEI
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #else
       call alloc_b2mod_braeir(nxd,nyd,nsd_local)
-      call alloc_b2mod_eirbra(nxd,nyd,nsd_local,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nxd,nyd,nsd_local,
+     .                        natm,nmol,nion,npls,nstra)
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
@@ -3799,11 +3800,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              if(leftix(ix,iy).ge.-1.and.leftix(ix,iy).le.nx.and.
-     1         rightix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     1         bottomiy(ix,iy).ge.-1.and.bottomiy(ix,iy).le.ny.and.
-     1         topiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny.and.
-     2         region(ix,iy,0).ne.0) then
+              if(isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
                 mach(ix,iy,0)=1.0_R8
               else
                 mach(ix,iy,0)=0.0_R8
@@ -3816,10 +3813,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              if(leftix(ix,iy).lt.-1.or.leftix(ix,iy).gt.nx.or.
-     1         rightix(ix,iy).lt.-1.or.rightix(ix,iy).gt.nx.or.
-     1         bottomiy(ix,iy).lt.-1.or.bottomiy(ix,iy).gt.ny.or.
-     1         topiy(ix,iy).lt.-1.or.topiy(ix,iy).gt.ny) then
+              if(cflags(ix,iy,CELLFLAG_TYPE) == GRID_GUARD) then
                 mach(ix,iy,0)=1.0_R8
               else
                 mach(ix,iy,0)=0.0_R8

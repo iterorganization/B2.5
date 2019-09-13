@@ -34,13 +34,13 @@ module b2mod_grid_mapping
     !> Data structure holding an intermediate grid description to be
     !! transferred into a CPO or IDS
     type B2GridMap
-        integer :: ncv  !< Number of all cells in the domain (2D objects)
-        integer :: nfcx !< Number of x-aligned faces/edges in the domain
+        integer :: nCv  !< Number of all cells in the domain (2D objects)
+        integer :: nFcx !< Number of x-aligned faces/edges in the domain
                         !< (1D objects)
-        integer :: nfcy !< Number of y-aligned faces/edges in the domain
+        integer :: nFcy !< Number of y-aligned faces/edges in the domain
                         !< (1D objects)
-        integer :: nvx  !< Number of all vertices/nodes in the domain
-                        !<(0D objects) (nvx = ( nx+1 )*( ny+1 ) - 1 )
+        integer :: nVx  !< Number of all vertices/nodes in the domain
+                        !<(0D objects) (nVx = ( nx+1 )*( ny+1 ) - 1 )
         integer :: b2nx
         integer :: b2ny
 
@@ -60,10 +60,10 @@ module b2mod_grid_mapping
         integer, dimension(:), allocatable :: mapVxIVx
         integer, dimension(:,:), allocatable :: mapCvI
         integer, dimension(:,:,:), allocatable :: mapFcI !< 3D array of faces
-            !< composing the quadliateral in the list.
+            !< composing the quadrilateral in the list.
             !< gmap%mapFcI( ix, iy, POSITION ), where POSITION is LEFT, BOTTOM,
-            !< RIGHT OR TOP
-        integer, dimension(:,:,:), allocatable ::mapVxI
+            !< RIGHT or TOP
+        integer, dimension(:,:,:), allocatable :: mapVxI
 
         !! Special vertices (x-points)
         integer :: nsv !< Number of special vertices
@@ -89,17 +89,17 @@ module b2mod_grid_mapping
 
 !!$        !! Mapping arrays:
 !!$        !! 1d lists -> 2d B2 data structure ( i -> (ix, iy) )
-!!$        ! b2cv( mapCvix(i), mapCviy(i) ) = cpocv(i)
-!!$        ! b2fc( mapFcix(i), mapFciy(i), mapFciFace(i) ) = cpofc(i)
+!!$        ! b2Cv( mapCvix(i), mapCviy(i) ) = cpoCv(i)
+!!$        ! b2Fc( mapFcix(i), mapFciy(i), mapFciFace(i) ) = cpoFc(i)
 !!$        !! for "normal" faces, mapFcIFace will be LEFT or BOTTOM
 
-!!$        ! b2vx( mapVxix(i), mapVxiy(i), mapVxIVx(i) ) = cpovx(i)
+!!$        ! b2Vx( mapVxix(i), mapVxiy(i), mapVxIVx(i) ) = cpoVx(i)
 !!$        !! for "normal" vertices, mapVxIVx(i) will be 1 (lower left vertex)
 
 !!$        !! 2d B2 data structure -> 1d CPO lists ( (ix, iy) -> i )
-!!$        ! cpocv( mapCvI(ix, iy) ) = b2cv(ix, iy)
-!!$        ! cpofc( mapFcI(ix, iy, iFace) ) = b2fc(ix, iy, iFace)
-!!$        ! cpovx( mapVxI(ix, iy, iVertex) ) = b2vx(ix, iy, iVertex)
+!!$        ! cpoCv( mapCvI(ix, iy) ) = b2Cv(ix, iy)
+!!$        ! cpoFc( mapFcI(ix, iy, iFace) ) = b2Fc(ix, iy, iFace)
+!!$        ! cpoVx( mapVxI(ix, iy, iVertex) ) = b2Vx(ix, iy, iVertex)
 
 contains
 
@@ -107,7 +107,7 @@ contains
 
     !> Set B2GridMap type, intended to be filled with grid geometry information
     !! using b2CreateMap subroutine
-    subroutine allocateB2GridMap( gd, nx, ny, ncv, nfcx, nfcy, nvx )
+    subroutine allocateB2GridMap( gd, nx, ny, nCv, nFcx, nFcy, nVx )
         type(B2GridMap), intent(inout) :: gd    !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
@@ -115,18 +115,18 @@ contains
                                     !< along the first coordinate
         integer, intent(in) ::  ny  !< Specifies the number of interior cells
                                     !< along the second coordinate
-        integer, intent(in) ::  ncv !< Number of all cells (2D objects)
-        integer, intent(in) ::  nfcx    !< Number of x-aligned faces/edges
+        integer, intent(in) ::  nCv     !< Number of all cells (2D objects)
+        integer, intent(in) ::  nFcx    !< Number of x-aligned faces/edges
                                         !< (1D objects)
-        integer, intent(in) ::  nfcy    !< Number of y-aligned faces/edges
+        integer, intent(in) ::  nFcy    !< Number of y-aligned faces/edges
                                         !< (1D objects)
-        integer, intent(in) ::  nvx     !< Number of all vertices/nodes
+        integer, intent(in) ::  nVx     !< Number of all vertices/nodes
                                         !< (0D objects)
 
-        gd%ncv = ncv
-        gd%nfcx = nfcx
-        gd%nfcy = nfcy
-        gd%nvx = nvx
+        gd%nCv = nCv
+        gd%nFcx = nFcx
+        gd%nFcy = nFcy
+        gd%nVx = nVx
 
         gd%b2nx = nx
         gd%b2ny = ny
@@ -138,15 +138,15 @@ contains
         allocate( gd%mapVxI(-1:nx+1, -1:ny+1, 0:3) )
         gd%mapVxI = GRID_UNDEFINED
 
-        allocate( gd%mapCvix(ncv), gd%mapCviy(ncv) )
+        allocate( gd%mapCvix(nCv), gd%mapCviy(nCv) )
         gd%mapCvix = GRID_UNDEFINED
         gd%mapCviy = GRID_UNDEFINED
-        allocate( gd%mapFcix(nfcx+nfcy), gd%mapFciy(nfcx+nfcy),     &
-            &   gd%mapFcIFace(nfcx+nfcy) )
+        allocate( gd%mapFcix(nFcx+nFcy), gd%mapFciy(nFcx+nFcy),     &
+            &     gd%mapFcIFace(nFcx+nFcy) )
         gd%mapFcix = GRID_UNDEFINED
         gd%mapFciy = GRID_UNDEFINED
         gd%mapFcIFace = GRID_UNDEFINED
-        allocate( gd%mapVxix(nvx), gd%mapVxiy(nvx), gd%mapVxIVx(nvx) )
+        allocate( gd%mapVxix(nVx), gd%mapVxiy(nVx), gd%mapVxIVx(nVx) )
         gd%mapVxix = GRID_UNDEFINED
         gd%mapVxiy = GRID_UNDEFINED
         gd%mapVxIVx = GRID_UNDEFINED
@@ -158,7 +158,7 @@ contains
         gd%sviy = GRID_UNDEFINED
         gd%svi = GRID_UNDEFINED
 
-        allocate( gd%mapCvixVx(nvx, 8), gd%mapCviyVx(nvx, 8))
+        allocate( gd%mapCvixVx(nVx, 8), gd%mapCviyVx(nVx, 8))
         gd%mapCvixVx = B2_GRID_UNDEFINED
         gd%mapCviyVx = B2_GRID_UNDEFINED
 
@@ -221,21 +221,21 @@ contains
             !< poloidal (first coordinate) index array
         integer, intent(in) :: bottomiy( -1:nx, -1:ny ) !< Bottom neighbour
             !< radial (second coordinate) index
-        logical, intent(in) :: includeGhostCells    !< Include "fake" cells
+        logical, intent(in) :: includeGhostCells        !< Include "fake" cells
 
         type(B2GridMap), intent(inout) :: gd    !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
 
         !! internal variables
-        integer :: ix   !< x-aligned (poloidal) cell index
-        integer :: iy   !< y-aligned (radial) cell index
-        integer :: ic   !< Cell index
-        integer :: ifcx !< x-aligned face index
-        integer :: ifcy !< y-aligned face index
-        integer :: ivx  !< Vertex/node index
-        integer :: i1   !< Iterator
-        integer :: i2   !< Iterator
+        integer :: ix    !< x-aligned (poloidal) cell index
+        integer :: iy    !< y-aligned (radial) cell index
+        integer :: ic    !< Cell index
+        integer :: iFcx  !< x-aligned face index
+        integer :: iFcy  !< y-aligned face index
+        integer :: iVx   !< Vertex/node index
+        integer :: i1    !< Iterator
+        integer :: i2    !< Iterator
         integer :: nbix
         integer :: nbiy
         integer :: iFace !< Face/edge index
@@ -246,22 +246,22 @@ contains
         !! There is an additional strip of "fake" cells (even faker than
         !! ghost cells) at the top and right to be able to also write out the
         !! ghost cells
-        integer, dimension(-1:nx, -1:ny) :: cvi !< Control volume index
-        integer, dimension(-1:nx, -1:ny, 0:3) :: fcxi   !< x-aligned face index
+        integer, dimension(-1:nx, -1:ny) :: Cvi          !< Control volume index
+        integer, dimension(-1:nx, -1:ny, 0:3) :: Fcxi    !< x-aligned face index
             !< (only BOTTOM and TOP used)
-        integer, dimension(-1:nx, -1:ny, 0:3) :: fcyi   !< Y-aligned face index
+        integer, dimension(-1:nx, -1:ny, 0:3) :: Fcyi    !< y-aligned face index
             !< (only LEFT and RIGHT used)
-        integer, dimension(-1:nx+1, -1:ny+1, 0:3) :: vxi !< vertex index
+        integer, dimension(-1:nx+1, -1:ny+1, 0:3) :: Vxi !< vertex index
 
-        logical :: cvNeeded( (nx + 2) * (ny + 2) )
-        logical :: vxNeeded( (nx + 2) * (ny + 2) * 4)
-        logical :: fcXNeeded( (nx + 2) * (ny + 2) * 2)
-        logical :: fcYNeeded( (nx + 2) * (ny + 2) * 2)
+        logical :: CvNeeded( (nx + 2) * (ny + 2) )
+        logical :: VxNeeded( (nx + 2) * (ny + 2) * 4)
+        logical :: FcXNeeded( (nx + 2) * (ny + 2) * 2)
+        logical :: FcYNeeded( (nx + 2) * (ny + 2) * 2)
 
-        integer :: fcxiReduce((nx + 2) * (ny + 2) * 2)
-        integer :: fcyiReduce((nx + 2) * (ny + 2) * 2)
-        integer :: vxiReduce((nx + 2) * (ny + 2) * 4)
-        integer :: nsector((nx + 2) * (ny + 2) * 4)
+        integer :: FcxiReduce( (nx + 2) * (ny + 2) * 2)
+        integer :: FcyiReduce( (nx + 2) * (ny + 2) * 2)
+        integer :: VxiReduce( (nx + 2) * (ny + 2) * 4)
+        integer :: nsector( (nx + 2) * (ny + 2) * 4)
 
         logical :: cell_done
 
@@ -273,14 +273,14 @@ contains
             !< (y-aligned) positions of special vertices in B2 data structure
         integer, dimension(MAX_SPECIAL_VERTICES) :: svixAlias
         integer, dimension(MAX_SPECIAL_VERTICES) :: sviyAlias
-        integer :: svc  !< Number of special vertices
-        integer :: svcDuplicates    !< number of duplicate special vertices
+        integer :: sVc  !< Number of special vertices
+        integer :: sVcDuplicates    !< number of duplicate special vertices
 
         !! numbers of unique objects
-        integer :: ncv  !< Number of all cells (2D objects)
-        integer :: nfcx !< Number of x-aligned faces/edges (1D objects)
-        integer :: nfcy !< Number of y-aligned faces/edges (1D objects)
-        integer :: nvx  !< Number of all vertices/nodes (0D objects)
+        integer :: nCv  !< Number of all cells (2D objects)
+        integer :: nFcx !< Number of x-aligned faces/edges (1D objects)
+        integer :: nFcy !< Number of y-aligned faces/edges (1D objects)
+        integer :: nVx  !< Number of all vertices/nodes (0D objects)
 
         character(*), parameter :: VERTEX_FILE = 'vertex_data.out'
         character(256) :: VERTEX_FILE_TEMP
@@ -290,37 +290,37 @@ contains
         call logmsg( LOGDEBUG, "b2CreateMap: create map for a nx="  &
             &   //int2str(nx)//", ny="//int2str(ny)//" b2 grid" )
 
-        cvi = GRID_UNDEFINED
-        fcxi = GRID_UNDEFINED
-        fcyi = GRID_UNDEFINED
-        vxi = GRID_UNDEFINED
+        Cvi = GRID_UNDEFINED
+        Fcxi = GRID_UNDEFINED
+        Fcyi = GRID_UNDEFINED
+        Vxi = GRID_UNDEFINED
 
         !! set up initial lexicographic indices
-        ic = 0 !! cvs
-        ifcx = 0 !! x-aligned faces
-        ifcy = 0 !! y-aligned faces
-        ivx = 0 !! vertices
+        ic = 0   !! cells
+        iFcx = 0 !! x-aligned faces
+        iFcy = 0 !! y-aligned faces
+        iVx = 0  !! vertices
         do ix = -1, nx
             do iy = -1, ny
                 !! Cell
                 ic = ic + 1
-                cvi( ix, iy ) = ic
+                Cvi( ix, iy ) = ic
 
                 !! Faces: associate left and bottom face with every cell
                 !! where possible
-                ifcy = ifcy + 1
-                fcyi( ix, iy, LEFT ) = ifcy !! left face
-                ifcx = ifcx + 1
-                fcxi( ix, iy, BOTTOM ) = ifcx !! bottom face
+                iFcy = iFcy + 1
+                Fcyi( ix, iy, LEFT ) = iFcy !! left face
+                iFcx = iFcx + 1
+                Fcxi( ix, iy, BOTTOM ) = iFcx !! bottom face
 
                 !! Vertices: associate bottom left vertex with every cell
                 !! where possible
                 call find_Existing_Vertex_Index( ix, iy, VX_LOWERLEFT, index )
                 if(index == GRID_UNDEFINED) then
-                    ivx = ivx + 1
-                    vxi( ix, iy, VX_LOWERLEFT ) = ivx
+                    iVx = iVx + 1
+                    Vxi( ix, iy, VX_LOWERLEFT ) = iVx
                 else
-                    vxi( ix, iy, VX_LOWERLEFT ) = index
+                    Vxi( ix, iy, VX_LOWERLEFT ) = index
                 end if
             end do
         end do
@@ -335,10 +335,10 @@ contains
                     &   ix, iy, RIGHT, nbix, nbiy )
 
                 if( is_Cell_In_Domain(nx, ny, nbix, nbiy) ) then
-                    fcyi( ix, iy, RIGHT ) = fcyi( nbix, nbiy, LEFT )
+                    Fcyi( ix, iy, RIGHT ) = Fcyi( nbix, nbiy, LEFT )
                 else
-                    ifcy = ifcy + 1
-                    fcyi( ix, iy, RIGHT ) = ifcy
+                    iFcy = iFcy + 1
+                    Fcyi( ix, iy, RIGHT ) = iFcy
                 end if
 
                 !! Top face: bottom face of top neighbour
@@ -348,21 +348,21 @@ contains
                     & ix, iy, TOP, nbix, nbiy)
 
                 if( is_Cell_In_Domain(nx, ny, nbix, nbiy) ) then
-                    fcxi( ix, iy, TOP ) = fcxi( nbix, nbiy, BOTTOM )
+                    Fcxi( ix, iy, TOP ) = Fcxi( nbix, nbiy, BOTTOM )
                 else
-                    ifcx = ifcx + 1
-                    fcxi( ix, iy, TOP ) = ifcx
+                    iFcx = iFcx + 1
+                    Fcxi( ix, iy, TOP ) = iFcx
                 end if
             end do
         end do
 
-        call xertst (count(fcxi(:,:,BOTTOM) == GRID_UNDEFINED) == 0,    &
+        call xertst (count(Fcxi(:,:,BOTTOM) == GRID_UNDEFINED) == 0,    &
             &  "b2CreateMap: there are unnumbered x-aligned faces" )
-        call xertst (count(fcxi(:,:,TOP) == GRID_UNDEFINED) == 0,       &
+        call xertst (count(Fcxi(:,:,TOP) == GRID_UNDEFINED) == 0,       &
             &  "b2CreateMap: there are unnumbered x-aligned faces" )
-        call xertst (count(fcyi(:,:,LEFT) == GRID_UNDEFINED) == 0,      &
+        call xertst (count(Fcyi(:,:,LEFT) == GRID_UNDEFINED) == 0,      &
             &   "b2CreateMap: there are unnumbered y-aligned faces" )
-        call xertst (count(fcyi(:,:,RIGHT) == GRID_UNDEFINED) == 0,     &
+        call xertst (count(Fcyi(:,:,RIGHT) == GRID_UNDEFINED) == 0,     &
             &   "b2CreateMap: there are unnumbered y-aligned faces" )
 
         !! Fill in vertex numbers for remaining vertices
@@ -375,54 +375,54 @@ contains
                 do iCorner = VX_LOWERRIGHT, VX_UPPERRIGHT  ! 1, 3
                     call find_Existing_Vertex_Index( ix, iy, iCorner, index )
                     if( index /= GRID_UNDEFINED ) then
-                        vxi( ix, iy, iCorner ) = index
+                        Vxi( ix, iy, iCorner ) = index
                     else
-                        ivx = ivx + 1
-                        vxi( ix, iy, iCorner ) = ivx
+                        iVx = iVx + 1
+                        Vxi( ix, iy, iCorner ) = iVx
                     end if
                 end do
 
             end do
         end do
 
-        call xertst( count( vxi( -1:nx, -1:ny, 0:3 ) == GRID_UNDEFINED) == 0,   &
+        call xertst( count( Vxi( -1:nx, -1:ny, 0:3 ) == GRID_UNDEFINED) == 0,   &
             & "b2CreateMap: there are unnumbered vertices" )
 
         !! Mark which cells, vertices and faces are needed in 1d lists
-        cvNeeded = .false.
-        fcXNeeded = .false.
-        fcYNeeded = .false.
-        vxNeeded = .false.
+        CvNeeded = .false.
+        FcXNeeded = .false.
+        FcYNeeded = .false.
+        VxNeeded = .false.
         do ix = -1, nx
             do iy = -1, ny
                 if( .not. is_Unneeded_Cell( nx, ny, cflag,  &
                         &   includeGhostCells, ix, iy ) ) then
-                    cvNeeded(cvi(ix, iy)) = .true.
+                    CvNeeded(Cvi(ix, iy)) = .true.
                     do iCorner = 0, 3
-                        vxNeeded(vxi( ix, iy, iCorner ) ) = .true.
+                        VxNeeded(Vxi( ix, iy, iCorner ) ) = .true.
                     end do
-                    fcYNeeded( fcyi( ix, iy, LEFT ) ) = .true.
-                    fcYNeeded( fcyi( ix, iy, RIGHT ) ) = .true.
-                    fcXNeeded( fcxi( ix, iy, BOTTOM ) ) = .true.
-                    fcXNeeded( fcxi( ix, iy, TOP ) ) = .true.
+                    FcYNeeded( Fcyi( ix, iy, LEFT ) ) = .true.
+                    FcYNeeded( Fcyi( ix, iy, RIGHT ) ) = .true.
+                    FcXNeeded( Fcxi( ix, iy, BOTTOM ) ) = .true.
+                    FcXNeeded( Fcxi( ix, iy, TOP ) ) = .true.
                 end if
             end do
         end do
 
         !! search x-points.
-        svc = 0
+        sVc = 0
         do ix = -1, nx
             do iy = -1, ny
                 !! do not do this for unneeded cells, might be not initialized
                 !! This is not perfect, but special vertices are usually inside
                 !! the domain, and there it should be ok.
-                if( .not. cvNeeded( cvi( ix, iy ) ) ) cycle
+                if( .not. CvNeeded( Cvi( ix, iy ) ) ) cycle
 
                 !! test whether vertex is special vertex
                 if( is_Special_Vertex( ix, iy ) ) then
-                    svc = svc + 1
-                    svix( svc ) = ix
-                    sviy( svc ) = iy
+                    sVc = sVc + 1
+                    sVix( sVc ) = ix
+                    sViy( sVc ) = iy
                 end if
 
             end do
@@ -430,68 +430,68 @@ contains
 
         !! identify duplicate special vertices
 
-        svixAlias = 0
-        sviyAlias = 0
-        svcDuplicates = 0
+        sVixAlias = 0
+        sViyAlias = 0
+        sVcDuplicates = 0
 
-        do i1 = 1, svc - 1
+        do i1 = 1, sVc - 1
 
-            ix = svix( i1 )
-            iy = sviy( i1 )
+            ix = sVix( i1 )
+            iy = sViy( i1 )
 
             !! has the point already been identified as unneeded?
-            if( .not. vxNeeded( vxi( ix, iy, VX_LOWERLEFT ) ) ) cycle
+            if( .not. VxNeeded( Vxi( ix, iy, VX_LOWERLEFT ) ) ) cycle
 
                 !! compare with remaining vertices
-                do i2 = i1 + 1, svc
+                do i2 = i1 + 1, sVc
 
                 !! has the point already been identified as unneeded?
-                if( .not. vxNeeded( vxi( svix(i2), sviy(i2),   &
+                if( .not. VxNeeded( Vxi( sVix(i2), sViy(i2),   &
                     &   VX_LOWERLEFT ) ) ) cycle
 
                 if( points_match( crx( ix, iy, 0 ), cry( ix, iy, 0 ),   &
-                    &   crx( svix(i2), sviy(i2), 0 ), cry( svix( i2 ),  &
-                    &   sviy( i2 ), 0 ) ) ) then
+                    &             crx( sVix(i2), sViy(i2), 0 ), &
+                    &             cry( sVix(i2), sViy(i2), 0 ) ) ) then
 
                     !! The special vertex with index i2 is a duplicate of the
                     !! one with index i1.
                     !! Mark as unneeded and set up all references to this point
                     !! as aliased to the first one.
-                    !vxNeeded( vxi(svix(i2), sviy(i2), VX_LOWERLEFT) ) = .false.
-                    ! where (vxi == vxi( svix(i2), sviy(i2), VX_LOWERLEFT ))    &
-                    !    &   vxi = vxi( ix, iy, VX_LOWERLEFT )
+                    ! VxNeeded( Vxi(sVix(i2), sViy(i2), VX_LOWERLEFT) ) = .false.
+                    ! where (Vxi == Vxi( sVix(i2), sViy(i2), VX_LOWERLEFT ))    &
+                    !    &   Vxi = Vxi( ix, iy, VX_LOWERLEFT )
 
-                    svixAlias( i2 ) = ix
-                    sviyAlias( i2 ) = iy
+                    sVixAlias( i2 ) = ix
+                    sViyAlias( i2 ) = iy
                     !! Bookkeeping for diagnostics
-                    svcDuplicates = svcDuplicates + 1
+                    sVcDuplicates = sVcDuplicates + 1
                 end if
             end do
         end do
 
-        if( svc - svcDuplicates .eq. 1 ) then
+        if( sVc - sVcDuplicates .eq. 1 ) then
             call logmsg( LOGDEBUG, "b2CreateMap: found "            &
-                &   //int2str( svc - svcDuplicates )//              &
-                &   " special vertex (x-point), "//int2str( svc )   &
+                &   //int2str( sVc - sVcDuplicates )//              &
+                &   " special vertex (x-point), "//int2str( sVc )   &
                 &   //" including duplicates." )
         else
             call logmsg( LOGDEBUG, "b2CreateMap: found "            &
-                &   //int2str( svc - svcDuplicates )                &
+                &   //int2str( sVc - sVcDuplicates )                &
                 &   //" special vertices (x-points), "              &
-                &   //int2str( svc )//" including duplicates." )
+                &   //int2str( sVc )//" including duplicates." )
         end if
 
         !! number of unique cells
-        !ncv = ( nx + 2 ) * ( ny + 2 ) - count( .not. isNeeded( cvi ) )
-        ncv = count( cvNeeded )
+        !nCv = ( nx + 2 ) * ( ny + 2 ) - count( .not. isNeeded( Cvi ) )
+        nCv = count( CvNeeded )
         !! number of unique faces (x and y direction)
-        nfcx = count( fcXNeeded )
-        nfcy = count( fcYNeeded )
+        nFcx = count( FcXNeeded )
+        nFcy = count( FcYNeeded )
         !! number of unique vertices
-        nvx = count( vxNeeded )
+        nVx = count( VxNeeded )
 
         !! allocate the mapping structure
-        call allocateB2GridMap( gd, nx, ny, ncv, nfcx, nfcy, nvx )
+        call allocateB2GridMap( gd, nx, ny, nCv, nFcx, nFcy, nVx )
 
         !! build the mappings
 
@@ -500,9 +500,9 @@ contains
         gd%mapCvI = GRID_UNDEFINED
         do ix = -1, nx
             do iy = -1, ny
-                if( cvNeeded( cvi( ix, iy ) ) ) then
+                if( cvNeeded( Cvi( ix, iy ) ) ) then
                     ic = ic + 1
-                    call xertst ( ic .le. ncv , &
+                    call xertst ( ic .le. nCv , &
                         & 'b2CreateMap: found more cells than expected' )
                     !! Map CPO -> B2
                     gd%mapCvix( ic ) = ix
@@ -515,22 +515,22 @@ contains
                 end if
             end do
         end do
-        call xertst ( ic == ncv , 'b2CreateMap: found less cells than expected' )
+        call xertst ( ic == nCv , 'b2CreateMap: found less cells than expected' )
 
         !! ...for x faces
         !! first set up numbering
         ic = 0
-        fcxiReduce = GRID_UNDEFINED
-        do i1 = 1, size( fcXNeeded )
-            if( fcXNeeded( i1 ) ) then
+        FcxiReduce = GRID_UNDEFINED
+        do i1 = 1, size( FcXNeeded )
+            if( FcXNeeded( i1 ) ) then
                 ic = ic + 1
-                call xertst ( ic .le. nfcx , &
+                call xertst ( ic .le. nFcx , &
                     & 'b2CreateMap: found more x-aligned faces than expected' )
-                fcxiReduce( i1 ) = ic
+                FcxiReduce( i1 ) = ic
             end if
         end do
         !! sanity check for number of x faces
-        call xertst ( ic == nfcx , &
+        call xertst ( ic == nFcx , &
             & 'b2CreateMap: found less x-aligned faces than expected' )
 
         !! We want a CPO face to point to a LEFT or BOTTOM cell face if possible.
@@ -552,12 +552,12 @@ contains
                         iFace = TOP
                     end if
 
-                    if( fcXNeeded( fcxi( ix, iy, iFace ) ) ) then
+                    if( FcXNeeded( Fcxi( ix, iy, iFace ) ) ) then
                         !if(is_Unneeded_Cell(nx, ny, cflag,  &
                         !   &   includeGhostCells, ix, iy)) cycle
 
                         !! Get the CPO index for this face
-                        ic = fcxiReduce( fcxi( ix, iy, iFace ) )
+                        ic = FcxiReduce( Fcxi( ix, iy, iFace ) )
                         !! Map CPO -> B2
                         if( gd%mapFcix( ic ) == B2_GRID_UNDEFINED) then
                             gd%mapFcix( ic ) = ix
@@ -573,15 +573,15 @@ contains
 
         !! ...for y faces, continue counting the total faces in ic
         !! again, first set up numbering
-        ic = nfcx
-        fcyiReduce = GRID_UNDEFINED
-        do i1 = 1, size( fcYNeeded )
-            if( fcYNeeded( i1 ) ) then
+        ic = nFcx
+        FcyiReduce = GRID_UNDEFINED
+        do i1 = 1, size( FcYNeeded )
+            if( FcYNeeded( i1 ) ) then
                 ic = ic + 1
-                fcyiReduce( i1 ) = ic
+                FcyiReduce( i1 ) = ic
             end if
         end do
-        call xertst( ic == nfcx + nfcy, &
+        call xertst( ic == nFcx + nFcy, &
             & 'b2CreateMap: found less y-aligned faces than expected' )
 
         do iPass = 1, 2
@@ -592,13 +592,13 @@ contains
                     else
                         iFace = RIGHT
                     end if
-                    if( fcYNeeded( fcyi( ix, iy, iFace ) ) ) then
+                    if( FcYNeeded( Fcyi( ix, iy, iFace ) ) ) then
                         !! do not associate with unused cell
                         !if(is_Unneeded_Cell(nx, ny, cflag,  &
                         !   &   includeGhostCells, ix, iy)) cycle
 
                         !! Get the CPO index for this face
-                        ic = fcyiReduce( fcyi( ix, iy, iFace ) )
+                        ic = FcyiReduce( Fcyi( ix, iy, iFace ) )
                         !! Map CPO -> B2
                         if( gd%mapFcix( ic ) == B2_GRID_UNDEFINED) then
                             gd%mapFcix( ic ) = ix
@@ -621,14 +621,14 @@ contains
         !! vertices
         !! Like for faces, first set up unique numbering
         ic = 0
-        vxiReduce = GRID_UNDEFINED
-        do i1 = 1, size( vxNeeded )
-            if( vxNeeded( i1 ) ) then
+        VxiReduce = GRID_UNDEFINED
+        do i1 = 1, size( VxNeeded )
+            if( VxNeeded( i1 ) ) then
                 ic = ic + 1
-                vxiReduce( i1 ) = ic
+                VxiReduce( i1 ) = ic
             end if
         end do
-        call xertst ( ic == nvx , &
+        call xertst ( ic == nVx , &
             & 'b2CreateMap: did not find expected number of vertices' )
 
         gd%mapVxI = GRID_UNDEFINED
@@ -638,8 +638,8 @@ contains
         do iCorner = VX_LOWERLEFT, VX_UPPERRIGHT ! 0, 3
             do ix = -1, nx
                 do iy = -1, ny
-                    if( vxNeeded( vxi( ix, iy, iCorner ) ) ) then
-                        ic = vxiReduce( vxi( ix, iy, iCorner ) )
+                    if( VxNeeded( vxi( ix, iy, iCorner ) ) ) then
+                        ic = VxiReduce( Vxi( ix, iy, iCorner ) )
                         !! Map CPO -> B2
                         if( gd%mapVxix( ic ) == B2_GRID_UNDEFINED ) then
                             gd%mapVxix( ic ) = ix
@@ -656,7 +656,7 @@ contains
         end do
 
         !! sanity check: are all vertices initialized?
-        do ic = 1, nvx
+        do ic = 1, nVx
             if( gd%mapVxix( ic ) == B2_GRID_UNDEFINED ) then
                 call logmsg( LOGWARNING, "b2CreateMap: vertex " &
                     &   //int2str( ic )//" not properly initialized (1)")
@@ -681,7 +681,7 @@ contains
             iy = sviy( ic )
 
             !! has the point already been identified as unneeded?
-            if( .not. vxNeeded( vxi( ix, iy, VX_LOWERLEFT ) ) ) cycle
+            if( .not. VxNeeded( Vxi( ix, iy, VX_LOWERLEFT ) ) ) cycle
 
             !! if it is needed, copy it to the mapping structure
             gd%nsv = gd%nsv + 1
@@ -692,7 +692,7 @@ contains
 
         !! Now fill in missing vertex numbers where possible
         !! FIXME: do the same for the faces?
-        vxi = gd%mapVxI
+        Vxi = gd%mapVxI
         do ix = -1, nx
             do iy = -1, ny
                 do iCorner = VX_LOWERRIGHT, VX_UPPERRIGHT  ! 1, 3
@@ -709,13 +709,13 @@ contains
 
         call logmsg( LOGDEBUG, "b2CreateMap: finished setting up map" )
         call logmsg( LOGDEBUG, "b2CreateMap: map contains  "    &
-            &   //int2str(gd%ncv)//" unique cells")
+            &   //int2str(gd%nCv)//" unique cells")
         call logmsg( LOGDEBUG, "b2CreateMap: map contains  "    &
-            &   //int2str(gd%nfcx)//" unique x-aligned faces")
+            &   //int2str(gd%nFcx)//" unique x-aligned faces")
         call logmsg( LOGDEBUG, "b2CreateMap: map contains  "    &
-            &   //int2str(gd%nfcy)//" unique y-aligned faces")
+            &   //int2str(gd%nFcy)//" unique y-aligned faces")
         call logmsg( LOGDEBUG, "b2CreateMap: map contains  "    &
-            &   //int2str(gd%nvx)//" unique vertices")
+            &   //int2str(gd%nVx)//" unique vertices")
 
         !! Find out how many and which control volumes touch any given vertex
         VERTEX_FILE_TEMP = trim(VERTEX_FILE)
@@ -731,7 +731,7 @@ contains
           do ix = -1, nx
             do iy = -1, ny
                 do iCorner = VX_LOWERLEFT, VX_UPPERRIGHT
-                    if( vxi( ix, iy, iCorner ) == GRID_UNDEFINED ) cycle
+                    if( Vxi( ix, iy, iCorner ) == GRID_UNDEFINED ) cycle
                     nsector ( gd%mapVxI( ix, iy, iCorner) ) = 1
                     gd%mapCvixVx( gd%mapVxI( ix, iy, iCorner), 1 ) = ix
                     gd%mapCviyVx( gd%mapVxI( ix, iy, iCorner), 1 ) = iy
@@ -739,7 +739,7 @@ contains
                         do i2 = -1, ny
                             cell_done = i1 .eq. ix .and. i2 .eq. iy
                             do ic = VX_LOWERLEFT, VX_UPPERRIGHT
-                                if( vxi( i1, i2, ic ) == GRID_UNDEFINED ) cycle
+                                if( Vxi( i1, i2, ic ) == GRID_UNDEFINED ) cycle
                                 if( cell_done ) cycle
                                 if( points_match( crx( ix, iy, iCorner ),   &
                                     &   cry( ix, iy, iCorner ),             &
@@ -804,7 +804,7 @@ contains
             &   stopOnUnneededCells
 
         !! already have index?
-        index = vxi( ix, iy, iCorner )
+        index = Vxi( ix, iy, iCorner )
         if(index /= GRID_UNDEFINED) return
 
         !! Circle through the cells connected to the corner vertex with
@@ -833,7 +833,7 @@ contains
                 if( points_match( crx( ix, iy, iCorner ),                   &
                     &   cry( ix, iy, iCorner ), crx(nix, niy, nICorner ),   &
                     &   cry( nix, niy, nICorner ) ) ) then
-                    index = vxi( nix, niy, nICorner)
+                    index = Vxi( nix, niy, nICorner)
                     if( index /= GRID_UNDEFINED ) return
                 end if
             end do

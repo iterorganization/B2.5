@@ -26,15 +26,28 @@
      *  b2stbr_first_flight_sna_bal(:,:,:),
      *  b2stbc_sna0to1(:,:,:,:),
      *  b2stbc_sna_bal(:,:,:),
+     *  eirene_mc_pael_sne0to1(:,:,:,:),
      *  eirene_mc_papl_sna0to1(:,:,:,:,:),
+     *  eirene_mc_pmel_sne0to1(:,:,:,:),
      *  eirene_mc_pmpl_sna0to1(:,:,:,:,:),
      *  eirene_mc_pipl_sna0to1(:,:,:,:,:),
      *  eirene_mc_pppl_sna0to1(:,:,:,:,:),
      *  eirene_mc_core_sna0to1(:,:,:,:),
+     *  eirene_mc_pael_sne_bal(:,:,:),
      *  eirene_mc_papl_sna_bal(:,:,:,:),
+     *  eirene_mc_pmel_sne_bal(:,:,:),
      *  eirene_mc_pmpl_sna_bal(:,:,:,:),
      *  eirene_mc_pipl_sna_bal(:,:,:,:),
      *  eirene_mc_pppl_sna_bal(:,:,:,:),
+     *  eirene_mc_paat_sna_bal(:,:,:,:),
+     *  eirene_mc_pmat_sna_bal(:,:,:,:),
+     *  eirene_mc_piat_sna_bal(:,:,:,:),
+     *  eirene_mc_paml_sna_bal(:,:,:,:),
+     *  eirene_mc_pmml_sna_bal(:,:,:,:),
+     *  eirene_mc_piml_sna_bal(:,:,:,:),
+     *  eirene_mc_paio_sna_bal(:,:,:,:),
+     *  eirene_mc_pmio_sna_bal(:,:,:,:),
+     *  eirene_mc_piio_sna_bal(:,:,:,:),
      *  eirene_mc_core_sna_bal(:,:,:),
      *  b2stbm_sna0to1(:,:,:,:),
      *  b2stbm_sna_bal(:,:,:),
@@ -68,10 +81,21 @@
      *  b2stbr_bas_sna_bal_av(:,:,:),
      *  b2stbr_first_flight_sna_bal_av(:,:,:),
      *  b2stbc_sna_bal_av(:,:,:),
+     *  eirene_mc_pael_sne_bal_av(:,:,:),
      *  eirene_mc_papl_sna_bal_av(:,:,:,:),
+     *  eirene_mc_pmel_sne_bal_av(:,:,:),
      *  eirene_mc_pmpl_sna_bal_av(:,:,:,:),
      *  eirene_mc_pipl_sna_bal_av(:,:,:,:),
      *  eirene_mc_pppl_sna_bal_av(:,:,:,:),
+     *  eirene_mc_paat_sna_bal_av(:,:,:,:),
+     *  eirene_mc_pmat_sna_bal_av(:,:,:,:),
+     *  eirene_mc_piat_sna_bal_av(:,:,:,:),
+     *  eirene_mc_paml_sna_bal_av(:,:,:,:),
+     *  eirene_mc_pmml_sna_bal_av(:,:,:,:),
+     *  eirene_mc_piml_sna_bal_av(:,:,:,:),
+     *  eirene_mc_paio_sna_bal_av(:,:,:,:),
+     *  eirene_mc_pmio_sna_bal_av(:,:,:,:),
+     *  eirene_mc_piio_sna_bal_av(:,:,:,:),
      *  eirene_mc_core_sna_bal_av(:,:,:),
      *  b2stbm_sna_bal_av(:,:,:),
      *  ext_sna_bal_av(:,:,:),
@@ -327,6 +351,10 @@
      *  b2stbm_shi_bal(:,:),
      *  ext_shi0to3(:,:,:),
      *  ext_shi_bal(:,:),
+     *  b2stel_she_ion0to3(:,:,:),
+     *  b2stel_she_ion_bal(:,:),
+     *  b2stel_she_rec0to3(:,:,:),
+     *  b2stel_she_rec_bal(:,:),
      *  b2stel_shi_ion0to3(:,:,:),
      *  b2stel_shi_ion_bal(:,:),
      *  b2stel_shi_rec0to3(:,:,:),
@@ -374,6 +402,8 @@
      *  eirene_mc_eppl_shi_bal_av(:,:,:),
      *  b2stbm_shi_bal_av(:,:),
      *  ext_shi_bal_av(:,:),
+     *  b2stel_she_ion_bal_av(:,:),
+     *  b2stel_she_rec_bal_av(:,:),
      *  b2stel_shi_ion_bal_av(:,:),
      *  b2stel_shi_rec_bal_av(:,:),
      *  b2stcx_shi_bal_av(:,:),
@@ -808,6 +838,10 @@
       allocate(b2stbm_shi_bal(-1:nxd,-1:nyd))
       allocate(ext_shi0to3(-1:nxd,-1:nyd,0:3))
       allocate(ext_shi_bal(-1:nxd,-1:nyd))
+      allocate(b2stel_she_ion0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stel_she_ion_bal(-1:nxd,-1:nyd))
+      allocate(b2stel_she_rec0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stel_she_rec_bal(-1:nxd,-1:nyd))
       allocate(b2stel_shi_ion0to3(-1:nxd,-1:nyd,0:3))
       allocate(b2stel_shi_ion_bal(-1:nxd,-1:nyd))
       allocate(b2stel_shi_rec0to3(-1:nxd,-1:nyd,0:3))
@@ -842,6 +876,10 @@
       b2stbm_shi_bal=0.0_R8
       ext_shi0to3=0.0_R8
       ext_shi_bal=0.0_R8
+      b2stel_she_ion0to3=0.0_R8
+      b2stel_she_ion_bal=0.0_R8
+      b2stel_she_rec0to3=0.0_R8
+      b2stel_she_rec_bal=0.0_R8
       b2stel_shi_ion0to3=0.0_R8
       b2stel_shi_ion_bal=0.0_R8
       b2stel_shi_rec0to3=0.0_R8
@@ -884,6 +922,8 @@
       allocate(b2stbc_shi_bal_av(-1:nxd,-1:nyd))
       allocate(b2stbm_shi_bal_av(-1:nxd,-1:nyd))
       allocate(ext_shi_bal_av(-1:nxd,-1:nyd))
+      allocate(b2stel_she_ion_bal_av(-1:nxd,-1:nyd))
+      allocate(b2stel_she_rec_bal_av(-1:nxd,-1:nyd))
       allocate(b2stel_shi_ion_bal_av(-1:nxd,-1:nyd))
       allocate(b2stel_shi_rec_bal_av(-1:nxd,-1:nyd))
       allocate(b2stcx_shi_bal_av(-1:nxd,-1:nyd))
@@ -1179,6 +1219,10 @@ cdjm Jan2017 Flux arrays:
       deallocate(b2stbm_shi_bal)
       deallocate(ext_shi0to3)
       deallocate(ext_shi_bal)
+      deallocate(b2stel_she_ion0to3)
+      deallocate(b2stel_she_ion_bal)
+      deallocate(b2stel_she_rec0to3)
+      deallocate(b2stel_she_rec_bal)
       deallocate(b2stel_shi_ion0to3)
       deallocate(b2stel_shi_ion_bal)
       deallocate(b2stel_shi_rec0to3)
@@ -1221,6 +1265,8 @@ cdjm Jan2017 Flux arrays:
       deallocate(b2stbc_shi_bal_av)
       deallocate(b2stbm_shi_bal_av)
       deallocate(ext_shi_bal_av)
+      deallocate(b2stel_she_ion_bal_av)
+      deallocate(b2stel_she_rec_bal_av)
       deallocate(b2stel_shi_ion_bal_av)
       deallocate(b2stel_shi_rec_bal_av)
       deallocate(b2stcx_shi_bal_av)
@@ -1244,7 +1290,8 @@ cdjm Jan2017 Flux arrays:
       return
       end subroutine dealloc_b2mod_balance
 
-      subroutine alloc_b2mod_eirene_sources(nxd,nyd,nsd,nstrad)
+      subroutine alloc_b2mod_eirene_sources
+     &          (nxd,nyd,nsd,natmd,nmold,niond,nstrad)
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_extrab25
@@ -1259,13 +1306,15 @@ cdjm Jan2017 Flux arrays:
       use b2mod_eirdiag
 #endif
       implicit none
-      integer nxd,nyd,nsd,nstrad
+      integer nxd,nyd,nsd,natmd,nmold,niond,nstrad
 *   ..procedures
       intrinsic size
 
 cdjm Jan2017 Eirene arrays for particle balance:
+      allocate(eirene_mc_pael_sne0to1(-1:nxd,-1:nyd,0:1,1:nstrad))
       allocate(
      & eirene_mc_papl_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_pmel_sne0to1(-1:nxd,-1:nyd,0:1,1:nstrad))
       allocate(
      & eirene_mc_pmpl_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1,1:nstrad))
       allocate(
@@ -1274,30 +1323,74 @@ cdjm Jan2017 Eirene arrays for particle balance:
      & eirene_mc_pppl_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1,1:nstrad))
       allocate(
      & eirene_mc_core_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(eirene_mc_pael_sne_bal(-1:nxd,-1:nyd,1:nstrad))
       allocate(eirene_mc_papl_sna_bal(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_pmel_sne_bal(-1:nxd,-1:nyd,1:nstrad))
       allocate(eirene_mc_pmpl_sna_bal(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
       allocate(eirene_mc_pipl_sna_bal(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
       allocate(eirene_mc_pppl_sna_bal(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_paat_sna_bal(-1:nxd,-1:nyd,natmd,1:nstrad))
+      allocate(eirene_mc_pmat_sna_bal(-1:nxd,-1:nyd,natmd,1:nstrad))
+      allocate(eirene_mc_piat_sna_bal(-1:nxd,-1:nyd,natmd,1:nstrad))
+      allocate(eirene_mc_paml_sna_bal(-1:nxd,-1:nyd,nmold,1:nstrad))
+      allocate(eirene_mc_pmml_sna_bal(-1:nxd,-1:nyd,nmold,1:nstrad))
+      allocate(eirene_mc_piml_sna_bal(-1:nxd,-1:nyd,nmold,1:nstrad))
+      allocate(eirene_mc_paio_sna_bal(-1:nxd,-1:nyd,niond,1:nstrad))
+      allocate(eirene_mc_pmio_sna_bal(-1:nxd,-1:nyd,niond,1:nstrad))
+      allocate(eirene_mc_piio_sna_bal(-1:nxd,-1:nyd,niond,1:nstrad))
       allocate(eirene_mc_core_sna_bal(-1:nxd,-1:nyd,0:nsd-1))
+      eirene_mc_pael_sne0to1=0.0_R8
       eirene_mc_papl_sna0to1=0.0_R8
+      eirene_mc_pmel_sne0to1=0.0_R8
       eirene_mc_pmpl_sna0to1=0.0_R8
       eirene_mc_pipl_sna0to1=0.0_R8
       eirene_mc_pppl_sna0to1=0.0_R8
       eirene_mc_core_sna0to1=0.0_R8
+      eirene_mc_pael_sne_bal=0.0_R8
       eirene_mc_papl_sna_bal=0.0_R8
+      eirene_mc_pmel_sne_bal=0.0_R8
       eirene_mc_pmpl_sna_bal=0.0_R8
       eirene_mc_pipl_sna_bal=0.0_R8
       eirene_mc_pppl_sna_bal=0.0_R8
+      eirene_mc_paat_sna_bal=0.0_R8
+      eirene_mc_pmat_sna_bal=0.0_R8
+      eirene_mc_piat_sna_bal=0.0_R8
+      eirene_mc_paml_sna_bal=0.0_R8
+      eirene_mc_pmml_sna_bal=0.0_R8
+      eirene_mc_piml_sna_bal=0.0_R8
+      eirene_mc_paio_sna_bal=0.0_R8
+      eirene_mc_pmio_sna_bal=0.0_R8
+      eirene_mc_piio_sna_bal=0.0_R8
       eirene_mc_core_sna_bal=0.0_R8
 cdjm Jun2017 Time-averaged arrays for particle balance:
+      allocate(eirene_mc_pael_sne_bal_av(-1:nxd,-1:nyd,1:nstrad))
       allocate(
      & eirene_mc_papl_sna_bal_av(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_pmel_sne_bal_av(-1:nxd,-1:nyd,1:nstrad))
       allocate(
      & eirene_mc_pmpl_sna_bal_av(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
       allocate(
      & eirene_mc_pipl_sna_bal_av(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
       allocate(
      & eirene_mc_pppl_sna_bal_av(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(
+     & eirene_mc_paat_sna_bal_av(-1:nxd,-1:nyd,natmd,1:nstrad))
+      allocate(
+     & eirene_mc_pmat_sna_bal_av(-1:nxd,-1:nyd,natmd,1:nstrad))
+      allocate(
+     & eirene_mc_piat_sna_bal_av(-1:nxd,-1:nyd,natmd,1:nstrad))
+      allocate(
+     & eirene_mc_paml_sna_bal_av(-1:nxd,-1:nyd,nmold,1:nstrad))
+      allocate(
+     & eirene_mc_pmml_sna_bal_av(-1:nxd,-1:nyd,nmold,1:nstrad))
+      allocate(
+     & eirene_mc_piml_sna_bal_av(-1:nxd,-1:nyd,nmold,1:nstrad))
+      allocate(
+     & eirene_mc_paio_sna_bal_av(-1:nxd,-1:nyd,niond,1:nstrad))
+      allocate(
+     & eirene_mc_pmio_sna_bal_av(-1:nxd,-1:nyd,niond,1:nstrad))
+      allocate(
+     & eirene_mc_piio_sna_bal_av(-1:nxd,-1:nyd,niond,1:nstrad))
       allocate(
      & eirene_mc_core_sna_bal_av(-1:nxd,-1:nyd,0:nsd-1))
 cdjm Jan2017 Eirene arrays for momentum balance:
@@ -1421,20 +1514,44 @@ cdjm Jun2017 Time-averaged arrays for fluxes and densities:
 
       if(.not.allocated(eirene_mc_papl_sna_bal)) return
 cdjm Jan2017 Eirene arrays for particle balance:
+      deallocate(eirene_mc_pael_sne0to1)
       deallocate(eirene_mc_papl_sna0to1)
+      deallocate(eirene_mc_pmel_sne0to1)
       deallocate(eirene_mc_pmpl_sna0to1)
       deallocate(eirene_mc_pipl_sna0to1)
       deallocate(eirene_mc_pppl_sna0to1)
       deallocate(eirene_mc_core_sna0to1)
+      deallocate(eirene_mc_pael_sne_bal)
       deallocate(eirene_mc_papl_sna_bal)
+      deallocate(eirene_mc_pmel_sne_bal)
       deallocate(eirene_mc_pmpl_sna_bal)
       deallocate(eirene_mc_pipl_sna_bal)
       deallocate(eirene_mc_pppl_sna_bal)
+      deallocate(eirene_mc_paat_sna_bal)
+      deallocate(eirene_mc_pmat_sna_bal)
+      deallocate(eirene_mc_piat_sna_bal)
+      deallocate(eirene_mc_paml_sna_bal)
+      deallocate(eirene_mc_pmml_sna_bal)
+      deallocate(eirene_mc_piml_sna_bal)
+      deallocate(eirene_mc_paio_sna_bal)
+      deallocate(eirene_mc_pmio_sna_bal)
+      deallocate(eirene_mc_piio_sna_bal)
       deallocate(eirene_mc_core_sna_bal)
+      deallocate(eirene_mc_pael_sne_bal_av)
       deallocate(eirene_mc_papl_sna_bal_av)
+      deallocate(eirene_mc_pmel_sne_bal_av)
       deallocate(eirene_mc_pmpl_sna_bal_av)
       deallocate(eirene_mc_pipl_sna_bal_av)
       deallocate(eirene_mc_pppl_sna_bal_av)
+      deallocate(eirene_mc_paat_sna_bal_av)
+      deallocate(eirene_mc_pmat_sna_bal_av)
+      deallocate(eirene_mc_piat_sna_bal_av)
+      deallocate(eirene_mc_paml_sna_bal_av)
+      deallocate(eirene_mc_pmml_sna_bal_av)
+      deallocate(eirene_mc_piml_sna_bal_av)
+      deallocate(eirene_mc_paio_sna_bal_av)
+      deallocate(eirene_mc_pmio_sna_bal_av)
+      deallocate(eirene_mc_piio_sna_bal_av)
       deallocate(eirene_mc_core_sna_bal_av)
 cdjm Jan2017 Eirene arrays for momentum balance:
       deallocate(eirene_mc_mapl_smo0to3)
@@ -1745,6 +1862,7 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       nstrad = size(eirene_mc_eael_she_bal,3)
 
 cdjm Update electron heat sources
+cxpb We also treat the electron particle sources
       do ix=-1,nx
         do iy=-1,ny
           b2stbr_phys_she_bal(ix,iy)=
@@ -1769,6 +1887,12 @@ cdjm Update electron heat sources
      &     b2stbc_she0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
           if (allocated(eirene_mc_eael_she_bal)) then
             do istrai=1,nstrad
+              eirene_mc_pael_sne_bal(ix,iy,istrai)=
+     &         eirene_mc_pael_sne0to1(ix,iy,0,istrai)+
+     &         eirene_mc_pael_sne0to1(ix,iy,1,istrai)*ne(ix,iy)
+              eirene_mc_pmel_sne_bal(ix,iy,istrai)=
+     &         eirene_mc_pmel_sne0to1(ix,iy,0,istrai)+
+     &         eirene_mc_pmel_sne0to1(ix,iy,1,istrai)*ne(ix,iy)
               eirene_mc_eael_she_bal(ix,iy,istrai)=
      &         eirene_mc_eael_she0to3(ix,iy,0,istrai)+
      &         eirene_mc_eael_she0to3(ix,iy,1,istrai)*te(ix,iy)+
@@ -1910,6 +2034,16 @@ cdjm Update ion heat sources
      &     ext_shi0to3(ix,iy,1)*ti(ix,iy)+
      &     ext_shi0to3(ix,iy,2)*ni(ix,iy)+
      &     ext_shi0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2stel_she_ion_bal(ix,iy)=
+     &     b2stel_she_ion0to3(ix,iy,0)+
+     &     b2stel_she_ion0to3(ix,iy,1)*te(ix,iy)+
+     &     b2stel_she_ion0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2stel_she_ion0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          b2stel_she_rec_bal(ix,iy)=
+     &     b2stel_she_rec0to3(ix,iy,0)+
+     &     b2stel_she_rec0to3(ix,iy,1)*te(ix,iy)+
+     &     b2stel_she_rec0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2stel_she_rec0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
           b2stel_shi_ion_bal(ix,iy)=
      &     b2stel_shi_ion0to3(ix,iy,0)+
      &     b2stel_shi_ion0to3(ix,iy,1)*ti(ix,iy)+
@@ -2024,10 +2158,21 @@ cdjm Update ion heat sources
         tot_sna_bal_av=0.0_R8
         resco_av=0.0_R8
         if (allocated(eirene_mc_papl_sna_bal)) then
+          eirene_mc_pael_sne_bal_av=0.0_R8
           eirene_mc_papl_sna_bal_av=0.0_R8
+          eirene_mc_pmel_sne_bal_av=0.0_R8
           eirene_mc_pmpl_sna_bal_av=0.0_R8
           eirene_mc_pipl_sna_bal_av=0.0_R8
           eirene_mc_pppl_sna_bal_av=0.0_R8
+          eirene_mc_paat_sna_bal_av=0.0_R8
+          eirene_mc_pmat_sna_bal_av=0.0_R8
+          eirene_mc_piat_sna_bal_av=0.0_R8
+          eirene_mc_paml_sna_bal_av=0.0_R8
+          eirene_mc_pmml_sna_bal_av=0.0_R8
+          eirene_mc_piml_sna_bal_av=0.0_R8
+          eirene_mc_paio_sna_bal_av=0.0_R8
+          eirene_mc_pmio_sna_bal_av=0.0_R8
+          eirene_mc_piio_sna_bal_av=0.0_R8
           eirene_mc_core_sna_bal_av=0.0_R8
         endif
 *     ..Arrays for momentum balance:
@@ -2132,6 +2277,8 @@ cdjm Update ion heat sources
         endif
         b2stbm_shi_bal_av=0.0_R8
         ext_shi_bal_av=0.0_R8
+        b2stel_she_ion_bal_av=0.0_R8
+        b2stel_she_rec_bal_av=0.0_R8
         b2stel_shi_ion_bal_av=0.0_R8
         b2stel_shi_rec_bal_av=0.0_R8
         b2stcx_shi_bal_av=0.0_R8
@@ -2205,8 +2352,12 @@ cdjm Update ion heat sources
       b2stbc_sna_bal_av = avmlt*b2stbc_sna_bal_av +
      &                    curmlt*b2stbc_sna_bal
       if (allocated(eirene_mc_papl_sna_bal)) then
+        eirene_mc_pael_sne_bal_av = avmlt*eirene_mc_pael_sne_bal_av +
+     &                              curmlt*eirene_mc_pael_sne_bal
         eirene_mc_papl_sna_bal_av = avmlt*eirene_mc_papl_sna_bal_av +
      &                              curmlt*eirene_mc_papl_sna_bal
+        eirene_mc_pmel_sne_bal_av = avmlt*eirene_mc_pmel_sne_bal_av +
+     &                              curmlt*eirene_mc_pmel_sne_bal
         eirene_mc_pmpl_sna_bal_av = avmlt*eirene_mc_pmpl_sna_bal_av +
      &                              curmlt*eirene_mc_pmpl_sna_bal
         eirene_mc_pipl_sna_bal_av = avmlt*eirene_mc_pipl_sna_bal_av +
@@ -2215,6 +2366,24 @@ cdjm Update ion heat sources
      &                              curmlt*eirene_mc_pppl_sna_bal
         eirene_mc_core_sna_bal_av = avmlt*eirene_mc_core_sna_bal_av +
      &                              curmlt*eirene_mc_core_sna_bal
+        eirene_mc_paat_sna_bal_av = avmlt*eirene_mc_paat_sna_bal_av +
+     &                              curmlt*eirene_mc_paat_sna_bal
+        eirene_mc_pmat_sna_bal_av = avmlt*eirene_mc_pmat_sna_bal_av +
+     &                              curmlt*eirene_mc_pmat_sna_bal
+        eirene_mc_piat_sna_bal_av = avmlt*eirene_mc_piat_sna_bal_av +
+     &                              curmlt*eirene_mc_piat_sna_bal
+        eirene_mc_paml_sna_bal_av = avmlt*eirene_mc_paml_sna_bal_av +
+     &                              curmlt*eirene_mc_paml_sna_bal
+        eirene_mc_pmml_sna_bal_av = avmlt*eirene_mc_pmml_sna_bal_av +
+     &                              curmlt*eirene_mc_pmml_sna_bal
+        eirene_mc_piml_sna_bal_av = avmlt*eirene_mc_piml_sna_bal_av +
+     &                              curmlt*eirene_mc_piml_sna_bal
+        eirene_mc_paio_sna_bal_av = avmlt*eirene_mc_paio_sna_bal_av +
+     &                              curmlt*eirene_mc_paio_sna_bal
+        eirene_mc_pmio_sna_bal_av = avmlt*eirene_mc_pmio_sna_bal_av +
+     &                              curmlt*eirene_mc_pmio_sna_bal
+        eirene_mc_piio_sna_bal_av = avmlt*eirene_mc_piio_sna_bal_av +
+     &                              curmlt*eirene_mc_piio_sna_bal
       endif
       b2stbm_sna_bal_av = avmlt*b2stbm_sna_bal_av +
      &                    curmlt*b2stbm_sna_bal
@@ -2433,6 +2602,10 @@ cdjm Update ion heat sources
      &                    curmlt*b2stbm_shi_bal
       ext_shi_bal_av = avmlt*ext_shi_bal_av +
      &                 curmlt*ext_shi_bal
+      b2stel_she_ion_bal_av = avmlt*b2stel_she_ion_bal_av +
+     &                        curmlt*b2stel_she_ion_bal
+      b2stel_she_rec_bal_av = avmlt*b2stel_she_rec_bal_av +
+     &                        curmlt*b2stel_she_rec_bal
       b2stel_shi_ion_bal_av = avmlt*b2stel_shi_ion_bal_av +
      &                        curmlt*b2stel_shi_ion_bal
       b2stel_shi_rec_bal_av = avmlt*b2stel_shi_rec_bal_av +
@@ -2509,7 +2682,7 @@ cdjm Update ion heat sources
       integer nstrad
       integer status
       integer ncid,nxid,nyid,n1id,n2id,n3id,n4id,nsid,nstraid,specid,
-     .        varid,eirnxid,eirnyid,eirnatmid,eirnmolid
+     .        varid,eirnxid,eirnyid,eirnatmid,eirnmolid,eirnionid
       integer vdims(4)
       integer jxi,jxa,jsep
       integer is
@@ -2559,6 +2732,9 @@ cdjm Update ion heat sources
         status=nf_def_dim(ncid,'natm',size(pfluxa_av,3),eirnatmid)
         call check_cdf_status(status)
         status=nf_def_dim(ncid,'nmol',size(pfluxm_av,3),eirnmolid)
+        call check_cdf_status(status)
+        status=nf_def_dim(ncid,'nion',size(eirene_mc_piat_sna_bal,3),
+     &                                                  eirnionid)
         call check_cdf_status(status)
       endif
 
@@ -2844,6 +3020,10 @@ cdjm Update ion heat sources
      &                      b2stbm_shi_bal_av,vdims,2)
       call write_cdf_double(ncid,'ext_shi_bal',
      &                      ext_shi_bal_av,vdims,2)
+      call write_cdf_double(ncid,'b2stel_she_ion_bal',
+     &                      b2stel_she_ion_bal_av,vdims,2)
+      call write_cdf_double(ncid,'b2stel_she_rec_bal',
+     &                      b2stel_she_rec_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stel_shi_ion_bal',
      &                      b2stel_shi_ion_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stel_shi_rec_bal',
@@ -2890,7 +3070,32 @@ cdjm Update ion heat sources
      &                     eirene_mc_mipl_smo_bal_av,vdims,4)
         call write_cdf_double(ncid,'eirene_mc_cppv_smo_bal',
      &                     eirene_mc_cppv_smo_bal_av,vdims,4)
+        vdims(3)=eirnatmid
+        call write_cdf_double(ncid,'eirene_mc_paat_sna_bal',
+     &                     eirene_mc_paat_sna_bal_av,vdims,4)
+        call write_cdf_double(ncid,'eirene_mc_pmat_sna_bal',
+     &                     eirene_mc_pmat_sna_bal_av,vdims,4)
+        call write_cdf_double(ncid,'eirene_mc_piat_sna_bal',
+     &                     eirene_mc_piat_sna_bal_av,vdims,4)
+        vdims(3)=eirnmolid
+        call write_cdf_double(ncid,'eirene_mc_paml_sna_bal',
+     &                     eirene_mc_paml_sna_bal_av,vdims,4)
+        call write_cdf_double(ncid,'eirene_mc_pmml_sna_bal',
+     &                     eirene_mc_pmml_sna_bal_av,vdims,4)
+        call write_cdf_double(ncid,'eirene_mc_piml_sna_bal',
+     &                     eirene_mc_piml_sna_bal_av,vdims,4)
+        vdims(3)=eirnionid
+        call write_cdf_double(ncid,'eirene_mc_paio_sna_bal',
+     &                     eirene_mc_paio_sna_bal_av,vdims,4)
+        call write_cdf_double(ncid,'eirene_mc_pmio_sna_bal',
+     &                     eirene_mc_pmio_sna_bal_av,vdims,4)
+        call write_cdf_double(ncid,'eirene_mc_piio_sna_bal',
+     &                     eirene_mc_piio_sna_bal_av,vdims,4)
         vdims(3)=nstraid
+        call write_cdf_double(ncid,'eirene_mc_pael_sne_bal',
+     &                     eirene_mc_pael_sne_bal_av,vdims,3)
+        call write_cdf_double(ncid,'eirene_mc_pmel_sne_bal',
+     &                     eirene_mc_pmel_sne_bal_av,vdims,3)
         call write_cdf_double(ncid,'eirene_mc_eael_she_bal',
      &                     eirene_mc_eael_she_bal_av,vdims,3)
         call write_cdf_double(ncid,'eirene_mc_emel_she_bal',
@@ -2951,6 +3156,198 @@ cdjm Update ion heat sources
 
       return
       end subroutine write_balance
+
+      subroutine read_balance
+      implicit none
+#ifndef NO_CDF
+#     include <netcdf.inc>
+      integer :: ncid, ndims, nvars, natts, unlimid, status, xtype
+      integer :: ivar, idim
+      integer :: len, vdims(NF_MAX_VAR_DIMS), start(NF_MAX_VAR_DIMS)
+      real (kind=R8), allocatable :: data2(:,:), data3(:,:,:),
+     ,                               data4(:,:,:,:)
+      character*(NF_MAX_NAME) :: varname, dimname
+      character*256 filename
+      logical :: exists
+
+      write(*,*) 'Begin reading balance.nc file'
+
+c access the balance.nc file
+      filename='balance.nc'
+      call find_file(filename,exists)
+      status=nf_open(filename,NF_NOWRITE,ncid)
+      call check_cdf_status(status)
+
+      status=nf_inq(ncid,ndims,nvars,natts,unlimid)
+      call check_cdf_status(status)
+
+c loop over all variables in the file
+c only read a subset of the data as needed by the calling routine(s)
+      do ivar=1,nvars
+        status=nf_inq_var(ncid,ivar,varname,xtype,ndims,vdims,natts)
+        call check_cdf_status(status)
+        do idim=1,ndims
+          status=nf_inq_dim(ncid,vdims(idim),dimname,len)
+          call check_cdf_status(status)
+          vdims(idim)=len
+          start(idim)=1
+        enddo
+        select case (varname)
+        case ('b2stel_she_ion_bal')
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          call check_cdf_status(status)
+          b2stel_she_ion_bal = data2
+          deallocate(data2)
+        case ('b2stel_she_rec_bal')
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          call check_cdf_status(status)
+          b2stel_she_rec_bal = data2
+          deallocate(data2)
+        case ('b2stel_shi_ion_bal')
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          call check_cdf_status(status)
+          b2stel_shi_ion_bal = data2
+          deallocate(data2)
+        case ('b2stel_shi_rec_bal')
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          call check_cdf_status(status)
+          b2stel_shi_rec_bal = data2
+          deallocate(data2)
+        case ('b2npht_shei_bal')
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          call check_cdf_status(status)
+          b2npht_shei_bal = data2
+          deallocate(data2)
+        case ('eirene_mc_pael_sne_bal')
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          call check_cdf_status(status)
+          eirene_mc_pael_sne_bal = data3
+          deallocate(data3)
+        case ('eirene_mc_pmel_sne_bal')
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          call check_cdf_status(status)
+          eirene_mc_pmel_sne_bal = data3
+          deallocate(data3)
+        case ('eirene_mc_eael_she_bal')
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          call check_cdf_status(status)
+          eirene_mc_eael_she_bal = data3
+          deallocate(data3)
+        case ('eirene_mc_emel_she_bal')
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          call check_cdf_status(status)
+          eirene_mc_emel_she_bal = data3
+          deallocate(data3)
+        case ('eirene_mc_eapl_shi_bal')
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          call check_cdf_status(status)
+          eirene_mc_eapl_shi_bal = data3
+          deallocate(data3)
+        case ('eirene_mc_empl_shi_bal')
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          call check_cdf_status(status)
+          eirene_mc_empl_shi_bal = data3
+          deallocate(data3)
+        case ('eirene_mc_papl_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_papl_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_pmpl_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_pmpl_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_paat_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_paat_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_pmat_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_pmat_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_piat_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_piat_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_paml_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_paml_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_pmml_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_pmml_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_piml_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_piml_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_paio_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_paio_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_pmio_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_pmio_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_piio_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_piio_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_mapl_smo_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_mapl_smo_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_mmpl_smo_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_mmpl_smo_bal = data4
+          deallocate(data4)
+        case default
+          continue
+        end select
+      enddo
+
+      status=nf_close(ncid)
+      call check_cdf_status(status)
+#endif
+
+      return
+      end subroutine read_balance
 
 #ifndef NO_CDF
       subroutine write_cdf_double(ncid,varname,var,vdims,ndim)

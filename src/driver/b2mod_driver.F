@@ -1254,12 +1254,12 @@ csw 09oct2012
       NFLAI = NFL
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NATM,NMOL,NION,NSTRA)
       CALL EIRENE_ALLOC_CCOUPL(1)
       CALL EIRENE_ALLOC_CTRCEI
 #else
       call alloc_b2mod_braeir(nx,ny,ns)
-      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nx,ny,ns,natm,nmol,nion,npls,nstra)
 #endif
 
 *   ..read geometry and metric
@@ -1751,6 +1751,7 @@ cxpb initialize the data necessary for boundary conditions
         call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
       endif
       call b2stbr_init (nx, ny, ns, BoRiS)
+      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 #ifdef B25_EIRENE
