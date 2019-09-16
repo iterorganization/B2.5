@@ -523,8 +523,8 @@
 *     (isymm is now stored in the b2cmfs common)                     !xpb 10.08.00
 *   ..read geometry
       call b2rugm (ninp(2), nx, ny, isymm, crx, cry, fpsi, ffbz,
-      &  bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, gs, pbs, wbbl,
-      &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, gs, pbs, wbbl,
+     &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
 
       if(read_b2fstate.ne.0) then
 *  .. copy the data of first n=min(ns0,ns1) species
