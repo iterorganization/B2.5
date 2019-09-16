@@ -700,7 +700,7 @@ cxpb  We must account for the case when the user does not want all bundles
            if (unread) then
 *        ..read default physics common to obtain masses
              call cfruch (ninp(3), 120, lblcp, 'label')
-             call b2rucp (ninp(3), b2fparam_version, nx, ns_pardf)
+             call b2rucp (ninp(3), b2fparam_version, ns_pardf)
              call initialise_potentials(ns_pardf)
              unread = .false.
            endif
