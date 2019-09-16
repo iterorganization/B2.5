@@ -732,8 +732,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
           sna_pump = 0.0_R8
           sna_sptt = 0.0_R8
           do ia = 1, nnatmi
-            is = latmscl(ia)
-            if (is.eq.0) cycle
+            k = latmscl(ia)
+            if (k.eq.0) cycle
             sna_sptt(latmscl(ia)) = sna_sptt(latmscl(ia)) + eirspta(ia)
             sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) + eirpump(ia)
             do im = 1, nnmoli
@@ -754,27 +754,27 @@ cxpb  Add contribution from Eirene core boundary fluxes
 
        
           if ( iout .ne. 0 ) then
-            write(*,'(a5,6a16)') 'ia', 'sna_cor', 'sna_eir_tot',
-     &               'sna_puff', 'sna_pump', 'sna_sptt', 't1'
+            write(*,'(a5,7a16)') 'ia', 'sna_core', 'sna_eir_tot',
+     &  'sna_puff', 'sna_pump', 'sna_sptt', 'sna_ext', 't1'
             do k = 1, nspecies
-              write(*, '(i5, 5es16.7)') k, sna_core(k),  sna_eir_tot(k), 
-     &                 sna_puff(k), sna_pump(k), sna_sptt(k), t1(k)
+              write(*, '(i5, 7es16.7)') k, sna_core(k),  sna_eir_tot(k), 
+     &      sna_puff(k), sna_pump(k), sna_sptt(k), ext_sna_tot(k), t1(k)
             enddo                                  
 
-            write(*,'(a3,2a17)') 'ia', 'dG/sna_eir_tot', 't(ia)'
+            write(*,'(a3,3a17)') 'ia','dG/sna_eir_tot','t1(ia)','t(ia)'
           endif  
 
-          do is = 1, nspecies
-            t01(is) =  sna_corr*( sna_puff(is) + sna_core(is) +  
-     &            sna_sptt(is) - sna_pump(is) + ext_sna_tot(is) ) / 
-     &            sna_eir_tot(is) 
-            t01(is) = t01(is)* ( 1.0_R8 - exp(-c_pumpavr) ) + 
-     &                     exp(-c_pumpavr)*t1(is)
-            t1(is) = t01(is)
-            t(is) = 1.0_R8 + 
-     &              max( min( taumax,t01(is) ), -taumax )       
+          do k = 1, nspecies
+            t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +  
+     &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) / 
+     &            sna_eir_tot(k) 
+            t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) + 
+     &                     exp(-c_pumpavr)*t1(k)
+ !           t1(k) = t01(k)
+            t(k) = 1.0_R8 + 
+     &              max( min( taumax,t1(k) ), -taumax )       
             if ( iout .ne. 0 ) 
-     &       write(*,'(i3,2es17.4)') is, t01(is), t(is)
+     &       write(*,'(i3,3es17.4)') k, t01(k), t1(k), t(k)
           enddo
    
           do is = 0, ns-1
