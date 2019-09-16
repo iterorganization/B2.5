@@ -259,6 +259,38 @@ cxpb
         enddo
        enddo
       endif
+c-xpb-end
+      call cfrure (nget, n2*3, gs, 'gs')
+*   ..read /b2cmgs/
+      call cfruin (nget, 1, idum, 'nlreg')
+      nlreg = idum(0)
+      call xertst (0.le.nlreg.and.nlreg.le.nlrmx, 'faulty input nlreg')
+      call cfruin (nget, nlreg, nlxlo, 'nlxlo')
+      call cfruin (nget, nlreg, nlxhi, 'nlxhi')
+      call cfruin (nget, nlreg, nlylo, 'nlylo')
+      call cfruin (nget, nlreg, nlyhi, 'nlyhi')
+      call cfruin (nget, nlreg, nlloc, 'nlloc')
+cdpc
+      call cfruin (nget, 1, idum, 'nncut')
+      nncut=idum(0)
+      call xertst (0.le.nncut.and.nncut.le.nncutmax,
+     . 'faulty input nncut')
+      call cfruin (nget, nncut, leftcut, 'leftcut')
+      call cfruin (nget, nncut, rightcut, 'rightcut')
+      call cfruin (nget, nncut, topcut, 'topcut')
+      call cfruin (nget, nncut, bottomcut, 'bottomcut')
+      call cfruin (nget, n2, leftix, 'leftix')
+      call cfruin (nget, n2, rightix, 'rightix')
+      call cfruin (nget, n2, topix, 'topix')
+      call cfruin (nget, n2, bottomix, 'bottomix')
+      call cfruin (nget, n2, leftiy, 'leftiy')
+      call cfruin (nget, n2, rightiy, 'rightiy')
+      call cfruin (nget, n2, topiy, 'topiy')
+      call cfruin (nget, n2, bottomiy, 'bottomiy')
+      call cfruin (nget, n2*3, region, 'region')
+      call cfruin (nget, 3, nnreg, 'nnreg')
+      call cfruin (nget, n2*2, resignore, 'resignore')
+cdpc-end
       if(b2fgmtry_version.lt.'03.001.000') then
 *    ..compute qc and qs at south faces
 cwdk   For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
@@ -295,38 +327,6 @@ cwdk   ensure qc(:,:,0)**2 + qs(:,:,0)**2 = 1, in possible event
 cwdk   of improved computation of qc
        qs(:,:,0) = sign(sqrt(1 - qc(:,:,0)**2),qs(:,:,0))
       endif
-c-xpb-end
-      call cfrure (nget, n2*3, gs, 'gs')
-*   ..read /b2cmgs/
-      call cfruin (nget, 1, idum, 'nlreg')
-      nlreg = idum(0)
-      call xertst (0.le.nlreg.and.nlreg.le.nlrmx, 'faulty input nlreg')
-      call cfruin (nget, nlreg, nlxlo, 'nlxlo')
-      call cfruin (nget, nlreg, nlxhi, 'nlxhi')
-      call cfruin (nget, nlreg, nlylo, 'nlylo')
-      call cfruin (nget, nlreg, nlyhi, 'nlyhi')
-      call cfruin (nget, nlreg, nlloc, 'nlloc')
-cdpc
-      call cfruin (nget, 1, idum, 'nncut')
-      nncut=idum(0)
-      call xertst (0.le.nncut.and.nncut.le.nncutmax,
-     . 'faulty input nncut')
-      call cfruin (nget, nncut, leftcut, 'leftcut')
-      call cfruin (nget, nncut, rightcut, 'rightcut')
-      call cfruin (nget, nncut, topcut, 'topcut')
-      call cfruin (nget, nncut, bottomcut, 'bottomcut')
-      call cfruin (nget, n2, leftix, 'leftix')
-      call cfruin (nget, n2, rightix, 'rightix')
-      call cfruin (nget, n2, topix, 'topix')
-      call cfruin (nget, n2, bottomix, 'bottomix')
-      call cfruin (nget, n2, leftiy, 'leftiy')
-      call cfruin (nget, n2, rightiy, 'rightiy')
-      call cfruin (nget, n2, topiy, 'topiy')
-      call cfruin (nget, n2, bottomiy, 'bottomiy')
-      call cfruin (nget, n2*3, region, 'region')
-      call cfruin (nget, 3, nnreg, 'nnreg')
-      call cfruin (nget, n2*2, resignore, 'resignore')
-cdpc-end
 cxpb
       if(b2fgmtry_version.ge.'01.001.000') then
         call cfruin (nget, 1, idum, 'periodic_bc')
