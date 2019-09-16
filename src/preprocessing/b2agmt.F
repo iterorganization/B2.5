@@ -385,8 +385,8 @@ cwdk   poloidal unit vector in cell centers, ebc
         enddo
        enddo
 cwdk   poloidal unit vector at left faces, ebf
-       call intfaceh(nx,ny,leftix,leftiy,vol,ebc(-1,-1,0),ebf(-1,-1,0))
-       call intfaceh(nx,ny,leftix,leftiy,vol,ebc(-1,-1,1),ebf(-1,-1,1))
+       call intfaceh(nx,ny,leftix,leftiy,hx,ebc(-1,-1,0),ebf(-1,-1,0))
+       call intfaceh(nx,ny,leftix,leftiy,hx,ebc(-1,-1,1),ebf(-1,-1,1))
 cwdk   computation of qc
        do iy = -1, ny
         do ix = -1, nx
