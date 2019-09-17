@@ -862,10 +862,10 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
       write(*,*) 'rtqa,rtrd,rtbr'
       do ic=0,ncnct-1
         if(ic.gt.0) then
-         dtmp1(1:ITMAXDprb,1:IDMAXDprb)=
-     .    DPRB(ic,1:ITMAXDprb,1:IDMAXDprb)
+          dtmp1(1:ITMAXDprb,1:IDMAXDprb)=
+     .     DPRB(ic,1:ITMAXDprb,1:IDMAXDprb)
         endif
-         if(ic.lt.ncnct-1) then
+        if(ic.lt.ncnct-1) then
           dtmp2(1:ITMAXDplt,1:IDMAXDplt)=
      .     DPLT(ic+1,1:ITMAXDplt,1:IDMAXDplt)
           dtmp3(1:ITMAXDpot,1:IDMAXDpot)=

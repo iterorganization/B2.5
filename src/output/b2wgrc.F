@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2wgrc (nprt, ns0, nidis, idis, njdis, jdis, rtt, nt,
-     &  rtn, nn, zn, 
+     &  rtn, nn, zn, fix_recomb,
      &  rtlsa, rtlra, rtlqa, rtlcx, rtlza, rtlz2, rtlpt, rtlpi)
       use b2mod_types
       use b2mod_constants
@@ -10,7 +10,7 @@
 #     include "emissivity.constants"
 *   ..input arguments (unchanged on exit)
       integer nprt, ns0, nidis, idis(0:nidis-1), njdis, jdis(0:njdis-1),
-     &  nt, nn
+     &  nt, nn, fix_recomb
       real (kind=R8) ::
      *   rtt(0:nt), rtn(0:nn), zn(0:ns0-1),
      &  rtlsa(0:nt,0:nn,0:ns0-1), rtlra(0:nt,0:nn,0:ns0-1),
@@ -336,6 +336,108 @@
        enddo
        call pagend ()
       enddo
+*   ..plot rtqa (with fix_recomb) as function of rtt for several rtn
+      if (fix_recomb.ne.0) then
+       do ind = 0, njdis-1
+        j = jdis(ind)
+        zmax = maxval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
+        zmin = minval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
+        kmax = int(zmax)
+        kmin = int(zmin)-1
+        kmin = max(kmin, kmax - 8)
+        write (header,'(a,i2,a,1pe9.2)')
+     &   'ENERGY LOSS RATE COEFS(recomb), Z0 =',izn0,', NE =',rtn(j)
+        write (nprt,fmtp) '+rtqa(recomb)', header
+        call pagini (3, rtt(0), rtt(nt), 10.0_R8**kmin, 10.0_R8**kmax,
+     &   'rtt', 'rtqa (fix_recomb)', header)
+        do k = 0, ns0-1
+         do i = 0, nt
+          wt(i) = expu1(rtlqa(i,j,k))-expu1(rtlra(i,j,k))*rtlpi(i,j,k)
+         enddo
+         write (chk,'(i3)') k
+*$$$     call dashdc (chdc//chk, 10, 1)
+         if(real(maxval(wt(0:nt)),R4).gt.0) then
+          call curved_d (rtt, wt, nt+1)
+         endif
+        enddo
+        call pagend ()
+       enddo
+       do ind = 0, njdis-1
+        j = jdis(ind)
+        zmax = maxval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
+        zmin = minval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
+        kmax = int(zmax)
+        kmin = int(zmin)-1
+        kmin = max(kmin, kmax - 8)
+        write (header,'(a,i2,a,1pe9.2)')
+     &   'NEG(ENERGY LOSS RATE COEFS(recomb)), Z0 =',izn0,
+     &                                      ', NE =',rtn(j)
+        write (nprt,fmtp) '-rtqa(recomb)', header
+        call pagini (3, rtt(0), rtt(nt), 10.0_R8**kmin, 10.0_R8**kmax,
+     &   'rtt', '-rtqa (fix_recomb)', header)
+        do k = 0, ns0-1
+         do i = 0, nt
+          wt(i) = -expu1(rtlqa(i,j,k))+expu1(rtlra(i,j,k))*rtlpi(i,j,k)
+         enddo
+         write (chk,'(i3)') k
+*$$$     call dashdc (chdc//chk, 10, 1)
+         if(real(maxval(wt(0:nt)),R4).gt.0) then
+          call curved_d (rtt, wt, nt+1)
+         endif
+        enddo
+        call pagend ()
+       enddo
+*   ..plot rtqa (with fix_recomb) as function of rtn for several rtt
+       do ind = 0, nidis-1
+        i = idis(ind)
+        zmax = maxval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
+        zmin = minval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
+        kmax = int(zmax)
+        kmin = int(zmin)-1
+        kmin = max(kmin, kmax - 8)
+        write (header,'(a,i2,a,1pe9.2)')
+     &   'ENERGY LOSS RATE COEFS(recomb), Z0 =',izn0,', TE =',rtt(i)
+        write (nprt,fmtp) '+rtqa(recomb)', header
+        call pagini (3, rtn(0), rtn(nn), 10.0_R8**kmin, 10.0_R8**kmax,
+     &   'rtn', 'rtqa (fix_recomb)', header)
+        do k = 0, ns0-1
+         do j = 0, nn
+          wn(j) = expu1(rtlqa(i,j,k))-expu1(rtlra(i,j,k))*rtlpi(i,j,k)
+         enddo
+         write (chk,'(i3)') k
+*$$$     call dashdc (chdc//chk, 10, 1)
+         if(real(maxval(wn(0:nn)),R4).gt.0) then
+          call curved_d (rtn, wn, nn+1)
+         endif
+        enddo
+        call pagend ()
+       enddo
+       do ind = 0, nidis-1
+        i = idis(ind)
+        zmax = maxval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
+        zmin = minval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
+        kmax = int(zmax)
+        kmin = int(zmin)-1
+        kmin = max(kmin, kmax - 8)
+        write (header,'(a,i2,a,1pe9.2)')
+     &   'NEG(ENERGY LOSS RATE COEFS(recomb)), Z0 =',izn0,
+     &                                      ', TE =',rtt(i)
+        write (nprt,fmtp) '-rtqa(recomb)', header
+        call pagini (3, rtn(0), rtn(nn), 10.0_R8**kmin, 10.0_R8**kmax,
+     &   'rtn', '-rtqa (fix_recomb)', header)
+        do k = 0, ns0-1
+         do j = 0, nn
+          wn(j) = -expu1(rtlqa(i,j,k))+expu1(rtlra(i,j,k))*rtlpi(i,j,k)
+         enddo
+         write (chk,'(i3)') k
+*$$$     call dashdc (chdc//chk, 10, 1)
+         if(real(maxval(wn(0:nn)),R4).gt.0) then
+          call curved_d (rtn, wn, nn+1)
+         endif
+        enddo
+        call pagend ()
+       enddo
+      endif
 *   ..plot rtcx as function of rtt for several rtn
       do ind = 0, njdis-1
        j = jdis(ind)
