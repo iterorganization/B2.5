@@ -118,7 +118,7 @@
      &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3)
       real (kind=R8), allocatable, save :: t1(:)                        !iyv 07.03.18 }
       real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8,         !srv 12.04.08
-     *                        sna_corr = 0.0_R8                         !iyv 07.03.18                        
+     *                        sna_corr = 0.0_R8                         !iyv 07.03.18
       character chns*3, chk*1                                           !srv 11.09.09 } 23.03.12
       real (kind=R8) ::
      *  lnorm, tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1),

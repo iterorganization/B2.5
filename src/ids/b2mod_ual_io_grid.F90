@@ -1094,7 +1094,9 @@ contains
         !! Internal variables
         integer :: geoId
         integer :: iRegion
+#if GGD_MINOR_VERSION > 8
         integer :: iPrivateB2
+#endif
         integer :: GSubsetCount
         integer :: iType
         integer :: RegionsInSubset(6)
@@ -1128,7 +1130,11 @@ contains
 
         !! Figure out total number of grid subsets
         !! Do generic + private grid subsets
+#if GGD_MINOR_VERSION > 8
         nGSubset = B2_GENERIC_GSUBSET_COUNT + regionCountTotal(geoId)
+#else
+        nGSubset = B2_GENERIC_GSUBSET_COUNT
+#endif
         !! Add pre-defined grid subsets (regions + points)
         select case ( geoId )
         case ( GEOMETRY_LINEAR )
@@ -1249,6 +1255,7 @@ contains
         !! Start counting from end of generic grid subset
         GSubsetCount = B2_GENERIC_GSUBSET_COUNT
 
+#if GGD_MINOR_VERSION > 8
         iPrivateB2 = 0
         !! Cell + face grid subset
         !! These are the "private" B2 regions, so will be given negative
@@ -1295,6 +1302,7 @@ contains
             end do
         end do
         deallocate(indexList2d)
+#endif
 
 !! Do the grid subsets that map directly to B2 regions
         do iSubset = GRID_SUBSET_CORE_CUT, GRID_SUBSET_INNER_TARGET_INACTIVE
@@ -1702,7 +1710,7 @@ contains
         !! Add midplane node grid subsets
         !! Find the core boundary grid subset by looking for its name as
         !! defined in b2mod_connectivity
-        iCoreGS = findGridSubsetByName(grid_ggd, "Core boundary")
+        iCoreGS = findGridSubsetByName(grid_ggd, gridSubsetName( GRID_SUBSET_CORE_BOUNDARY ) )
         !! For double null, we need the outer half of the core boundary
         if (iCoreGS == B2_GRID_UNDEFINED) then
             iCoreGS = findGridSubsetByName(grid_ggd, "Outer core boundary")

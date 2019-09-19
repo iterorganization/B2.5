@@ -57,7 +57,7 @@ module b2mod_ual_io
      & , only : textan, textmn, textin, nxtl, nxtr, jxa, jsep
 #ifdef B25_EIRENE
     use eirmod_comusr &
-    , only : natmi, nmoli, nioni, nmassa, nchara, nchrgi, nchari
+    , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, nprt, nchrgi, nchari
 #else
     use b2mod_b2plot &
     , only : natmi
@@ -76,6 +76,18 @@ module b2mod_ual_io
     use b2mod_ual_io_grid &
      & , only : findGridSubsetByName, GridWriteData, &
      &          b2_IMAS_Fill_Grid_Desc
+#if GGD_MINOR_VERSION < 9
+    use b2mod_ual_io_grid &
+     & , only : GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+     &          GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+     &          GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, GRID_SUBSET_INNER_DIVERTOR_INACTIVE, &
+     &          GRID_SUBSET_SECOND_SEPARATRIX, &
+     &          GRID_SUBSET_OUTER_BAFFLE_INACTIVE, GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+     &          GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+     &          GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+     &          GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
+     &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE
+#endif
     use ids_routines       ! IGNORE
     use ids_schemas        ! IGNORE
 #if IMAS_MINOR_VERSION > 14
@@ -156,6 +168,7 @@ contains
         integer :: ion_label_tlen !< Length of the (trimmed) ion label
         integer :: ns    !< Total number of B2.5 species
         integer :: nsion !< Total number of IDS ion species
+        integer :: nneut !< Total number of IDS neutral species
         integer :: nx    !< Specifies the number of interior cells
                          !< along the first coordinate
         integer :: ny    !< Specifies the number of interior cells
@@ -170,12 +183,13 @@ contains
         integer :: ix     !< Iterator
         integer :: iy     !< Iterator
 #ifdef B25_EIRENE
-        integer :: ii     !< Iterator
+        integer :: ii, jj !< Iterator
 #endif
         integer :: iatm   !< Atom iterator
         integer :: iatm1  !< Hydrogenic atom index in molecule composition
         integer :: iatm2  !< Non-hydrogenic atom index in molecule composition
         integer :: istrai !< Stratum iterator
+        integer :: ntimes !< Number of previous timesteps in IDS
         integer :: is1    !< First ion of an isonuclear sequence
         integer :: is2    !< Last ion of an isonuclear sequence
         integer :: icnt   !< Boundary cell counter
@@ -184,6 +198,8 @@ contains
         integer :: p      !< Dummy integer
         integer, allocatable :: isstat(:) !< Mapping array
                                           !< from B2-Eirene species to IDS neutral states
+        integer, allocatable :: imneut(:) !< Mapping array
+                                          !< from Eirene molecules to IDS neutrals
         integer :: ixpos(4), iypos(4) !< Target positions
         integer :: GeometryType !< Geometry identifier number
         integer :: iGsCoreBoundary  !< Variable to hold Core grid subset base
@@ -515,7 +531,12 @@ contains
         !! Check for edge_transport%model(1)%ggd and edge_sources%source(1)%ggd
         !! is not included as they contain beforehand model(:) / source(:)
         !! structures
-        if( size( edge_profiles%ggd ) .ne. num_time_slices ) then
+        if ( associated( edge_profiles%ggd ) ) then
+           ntimes = size( edge_profiles%ggd )
+        else
+           ntimes = 0
+        end if
+        if( ntimes .ne. num_time_slices ) then
             !! Allocate ggd for number of different time steps
             time_sind = 1
             allocate( edge_profiles%ggd( num_time_slices ) )
@@ -1146,15 +1167,27 @@ contains
                edge_transport%model(1)%ggd( time_sind )%ion( js )%state(1)%z_max = nchari( is )
             end do
 
-            allocate( edge_profiles%ggd( time_sind )%neutral( nspecies + nmoli ) )
-            do i = 1, nsources
-               allocate( edge_sources%source(i)%ggd( time_sind )%neutral( nspecies + nmoli ) )
+            nneut = nspecies
+            do j = 1, nmoli
+               ks = 1
+               do jj = 1, j-1
+                  if ( nmassm(j).eq.nmassm(jj) .and. ncharm(j).eq.ncharm(jj) .and. &
+                     & nprt(j).eq.nprt(jj) .and. lkindm(j).eq.lkindm(jj) ) then
+                     ks = ks + 1
+                  end if
+               end do
+               if (ks.eq.1) nneut = nneut + 1
             end do
-            allocate( edge_transport%model(1)%ggd( time_sind )%neutral( nspecies + nmoli ) )
+            allocate( edge_profiles%ggd( time_sind )%neutral( nneut ) )
+            do i = 1, nsources
+               allocate( edge_sources%source(i)%ggd( time_sind )%neutral( nneut ) )
+            end do
+            allocate( edge_transport%model(1)%ggd( time_sind )%neutral( nneut ) )
 
             !! List of Eirene atoms
             allocate( in_species(nspecies) )
-            allocate( isstat(natmi) )
+            allocate( isstat(natmi+nmoli) )
+            allocate( imneut(nmoli) )
             in_species = .false.
             do is = 1, natmi
                js = latmscl(is)
@@ -1261,23 +1294,50 @@ contains
             end do
 
             !! List of molecules
+            js = nspecies
             do j = 1, nmoli
-               js = nspecies + j
+               ks = 1
+               do jj = 1, j-1
+                  if ( nmassm(j).eq.nmassm(jj) .and. ncharm(j).eq.ncharm(jj) .and. &
+                     & nprt(j).eq.nprt(jj) .and. lkindm(j).eq.lkindm(jj) ) then
+                     ks = ks + 1
+                  end if
+               end do
+               isstat(natmi+j) = ks
+               if (ks.eq.1) then
+                  if (j.gt.1) then
+                     allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( isstat(natmi+j-1) ) )
+                     do i = 1, nsources
+                        allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( isstat(natmi+j-1) ) )
+                     end do
+                     allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( isstat(natmi+j-1) ) )
+                  end if
+                  js = js + 1
+               end if
+               imneut(j) = js
+            end do
+            allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks ) )
+            do i = 1, nsources
+               allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks ) )
+            end do
+            allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks ) )
+
+            js = nspecies
+            do j = 1, nmoli
+               ks = isstat(natmi+j)
+               if (ks.eq.1) js = js + 1
                nelems = count ( mlcmp( 1:natmi, j ) > 0 )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%element( nelems ) )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%label(1) )
-               allocate( edge_profiles%ggd( time_sind )%neutral( js )%state(1) )
-               allocate( edge_profiles%ggd( time_sind )%neutral( js )%state(1)%label(1) )
+               allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
                do i = 1, nsources
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%element( nelems ) )
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%label(1) )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state(1) )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state(1)%label(1) )
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
                end do
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%element( nelems ) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%label(1) )
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state(1) )
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state(1)%label(1) )
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
                i = 0
                do k = 1, natmi
                   if (mlcmp( k, j ) > 0 ) then
@@ -1306,48 +1366,48 @@ contains
                edge_profiles%ggd( time_sind )%neutral( js )%ion_index = &
                    &    eb2atcr( lmolscl(j) ) + 1
                edge_profiles%ggd( time_sind )%neutral( js )%multiple_states_flag = 0
-               edge_profiles%ggd( time_sind )%neutral( js )%state(1)%label = &
+               edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%label = &
                    &    textmn( j-1 )
-               allocate( edge_profiles%ggd( time_sind )%neutral( js )%state(1)% &
+               allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks )% &
                    &      neutral_type%name(1) )
-               allocate( edge_profiles%ggd( time_sind )%neutral( js )%state(1)% &
+               allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks )% &
                    &      neutral_type%description(1) )
-               edge_profiles%ggd( time_sind )%neutral( js )%state(1)%neutral_type%name = &
+               edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%name = &
                    &     "Kinetic"
-               edge_profiles%ggd( time_sind )%neutral( js )%state(1)%neutral_type%index = -1
-               edge_profiles%ggd( time_sind )%neutral( js )%state(1)%neutral_type%description = &
+               edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
+               edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
                    &     "Kinetic neutral molecules from Eirene"
                do i = 1, nsources
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%label = textmn( j-1 )
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%ion_index = &
                       &    eb2atcr( lmolscl(j) ) + 1
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%multiple_states_flag = 0
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state(1)%label = &
+                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%label = &
                       &    textmn( j-1 )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state(1)% &
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )% &
                       &      neutral_type%name(1) )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state(1)% &
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )% &
                       &      neutral_type%description(1) )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state(1)%neutral_type%name = &
+                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%name = &
                       &     "Kinetic"
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state(1)%neutral_type%index = -1
-                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state(1)%neutral_type%description = &
+                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
+                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
                       &     "Kinetic neutral molecules from Eirene"
                end do
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%label = textmn( j-1 )
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%ion_index = &
                    &    eb2atcr( lmolscl(j) ) + 1
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%multiple_states_flag = 0
-               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state(1)%label = &
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%label = &
                    &    textmn( j-1 )
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state(1)% &
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )% &
                    &     neutral_type%name(1) )
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state(1)% &
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )% &
                    &     neutral_type%description(1) )
-               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state(1)%neutral_type%name = &
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%name = &
                    &     "Kinetic"
-               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state(1)%neutral_type%index = -1
-               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state(1)%neutral_type%description = &
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
                    &     "Kinetic neutral molecules from Eirene"
             end do
 #endif
@@ -1463,7 +1523,11 @@ contains
 #if IMAS_MINOR_VERSION > 21
 #ifdef B25_EIRENE
         if (use_eirene.ne.0) then
-          allocate( radiation%process(3)%ggd( time_sind )%neutral( nspecies + nmoli ) )
+          allocate( radiation%process(3)%ggd( time_sind )%neutral( nneut ) )
+          do is = 1, nneut
+             ks = size( edge_profiles%ggd( time_sind )%neutral( is )%state )
+             allocate( radiation%process(3)%ggd( time_sind )%neutral( is )%state( ks ) )
+          end do
 
           !! List of Eirene atoms
           do is = 1, natmi
@@ -1471,7 +1535,6 @@ contains
             ks = isstat(is)
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%element(1) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks ) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%a = nmassa( is )
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%z_n = nchara( is )
@@ -1498,13 +1561,14 @@ contains
           end do
 
           !! List of molecules
+          js = nspecies
           do j = 1, nmoli
-            js = nspecies + j
+            ks = isstat(natmi+j)
+            if (ks.eq.1) js = js + 1
             nelems = count ( mlcmp( 1:natmi, j ) > 0 )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%element( nelems ) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state(1) )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state(1)%label(1) )
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
             i = 0
             do k = 1, natmi
               if (mlcmp( k, j ) > 0 ) then
@@ -1520,16 +1584,16 @@ contains
             radiation%process(3)%ggd( time_sind )%neutral( js )%ion_index = &
                 &    eb2atcr( lmolscl(j) ) + 1
             radiation%process(3)%ggd( time_sind )%neutral( js )%multiple_states_flag = 0
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state(1)%label = &
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label = &
                 &    textmn( j-1 )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state(1)% &
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
                 &     neutral_type%name(1) )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state(1)% &
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
                 &     neutral_type%description(1) )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state(1)%neutral_type%name = &
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%name = &
                 &     "Kinetic"
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state(1)%neutral_type%index = -1
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state(1)%neutral_type%description = &
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
                 &     "Kinetic neutral molecules from Eirene"
           end do
 
@@ -1629,8 +1693,20 @@ contains
                 &   value = ne,                                             &
                 &   time_sind = time_sind )
             !! fne: Electron particle flux
-            tmpFace(:,:,0) = fne(:,:,0)/gs(:,:,0)/qc(:,:)
-            tmpFace(:,:,1) = fne(:,:,1)/gs(:,:,1)
+            do ix = -1, nx
+              do iy = -1, ny
+                if (fne(ix,iy,0).ne.0.0_R8) then
+                  tmpFace(ix,iy,0) = fne(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
+                else
+                  tmpFace(ix,iy,0) = 0.0_R8
+                end if
+                if (fne(ix,iy,1).ne.0.0_R8) then
+                  tmpFace(ix,iy,1) = fne(ix,iy,1)/gs(ix,iy,1)
+                else
+                  tmpFace(ix,iy,1) = 0.0_R8
+                end if
+              end do
+            end do
             call write_face_scalar(                                         &
                 &   val = edge_transport%model(1)%ggd( time_sind )%         &
                 &         electrons%particles%flux,                         &
@@ -1711,8 +1787,20 @@ contains
                         &   value = na(:,:,js),                                   &
                         &   time_sind = time_sind )
             !! fna: Ion particle flux
-                    tmpFace(:,:,0) = fna(:,:,0,js)/gs(:,:,0)/qc(:,:)
-                    tmpFace(:,:,1) = fna(:,:,1,js)/gs(:,:,1)
+                    do ix = -1, nx
+                      do iy = -1, ny
+                        if (fna(ix,iy,0,js).ne.0.0_R8) then
+                          tmpFace(ix,iy,0) = fna(ix,iy,0,js)/gs(ix,iy,0)/qc(ix,iy)
+                        else
+                          tmpFace(ix,iy,0) = 0.0_R8
+                        end if
+                        if (fna(ix,iy,1,js).ne.0.0_R8) then
+                          tmpFace(ix,iy,1) = fna(ix,iy,1,js)/gs(ix,iy,1)
+                        else
+                          tmpFace(ix,iy,1) = 0.0_R8
+                        end if
+                      end do
+                    end do
                     call write_face_scalar(                                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         ion( is )%particles%flux,                   &
@@ -1983,8 +2071,20 @@ contains
                         &   b2CellData = cvsa(:,:,1,js),                        &
                         &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! fmo: Ion momentum flux
-                    tmpFace(:,:,0) = fmo(:,:,0,js)/gs(:,:,0)/qc(:,:)
-                    tmpFace(:,:,1) = fmo(:,:,1,js)/gs(:,:,1)
+                    do ix = -1, nx
+                      do iy = -1, ny
+                        if (fmo(ix,iy,0,js).ne.0.0_R8) then
+                          tmpFace(ix,iy,0) = fmo(ix,iy,0,js)/gs(ix,iy,0)/qc(ix,iy)
+                        else
+                          tmpFace(ix,iy,0) = 0.0_R8
+                        end if
+                        if (fmo(ix,iy,1,js).ne.0.0_R8) then
+                          tmpFace(ix,iy,1) = fmo(ix,iy,1,js)/gs(ix,iy,1)
+                        else
+                          tmpFace(ix,iy,1) = 0.0_R8
+                        end if
+                      end do
+                    end do
                     call write_cell_vector_component(                           &
                         &   vectorComponent = edge_transport%model(1)%          &
                         &                     ggd( time_sind )%ion( is )%       &
@@ -2171,8 +2271,20 @@ contains
                 &         electrons%energy%v,                           &
                 &   value = chve,                                       &
                 &   time_sind = time_sind )
-            tmpFace(:,:,0) = fhe(:,:,0)/gs(:,:,0)/qc(:,:)
-            tmpFace(:,:,1) = fhe(:,:,1)/gs(:,:,1)
+            do ix = -1, nx
+              do iy = -1, ny
+                if (fhe(ix,iy,0).ne.0.0_R8) then
+                  tmpFace(ix,iy,0) = fhe(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
+                else
+                  tmpFace(ix,iy,0) = 0.0_R8
+                end if
+                if (fhe(ix,iy,1).ne.0.0_R8) then
+                  tmpFace(ix,iy,1) = fhe(ix,iy,1)/gs(ix,iy,1)
+                else
+                  tmpFace(ix,iy,1) = 0.0_R8
+                end if
+              end do
+            end do
             call write_face_scalar(                                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux,                        &
@@ -2275,10 +2387,10 @@ contains
 
             !! pe: Electron pressure
             call b2xppe( nx, ny, ne, te, pe)
-            call write_quantity(                                        &
-                &   val = edge_profiles%ggd( time_sind )%electrons%     &
-                &         pressure,                                     &
-                &   value = pe,                                         &
+            call write_quantity(                                      &
+                &   val = edge_profiles%ggd( time_sind )%electrons%   &
+                &         pressure,                                   &
+                &   value = pe,                                       &
                 &   time_sind = time_sind )
 
             !! ti: (Common) Ion Temperature
@@ -2298,12 +2410,24 @@ contains
                  &   value = chvi,                                    &
                  &   time_sind = time_sind )
             !! fhi : Ion heat flux
-            tmpFace(:,:,0) = fhi(:,:,0)/gs(:,:,0)/qc(:,:)
-            tmpFace(:,:,1) = fhi(:,:,1)/gs(:,:,1)
-            call write_face_scalar(                                   &
-                &   val = edge_transport%model(1)%ggd( time_sind )%   &
-                &         total_ion_energy%flux,                      &
-                &   value = tmpFace,                                  &
+            do ix = -1, nx
+              do iy = -1, ny
+                if (fhi(ix,iy,0).ne.0.0_R8) then
+                  tmpFace(ix,iy,0) = fhi(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
+                else
+                  tmpFace(ix,iy,0) = 0.0_R8
+                end if
+                if (fhi(ix,iy,1).ne.0.0_R8) then
+                  tmpFace(ix,iy,1) = fhi(ix,iy,1)/gs(ix,iy,1)
+                else
+                  tmpFace(ix,iy,1) = 0.0_R8
+                end if
+              end do
+            end do
+            call write_face_scalar(                                     &
+                &   val = edge_transport%model(1)%ggd( time_sind )%     &
+                &         total_ion_energy%flux,                        &
+                &   value = tmpFace,                                    &
                 &   time_sind = time_sind )
             call write_cell_scalar(                                     &
                 &   scalar = edge_transport%model(1)%ggd( time_sind )%  &
@@ -2973,87 +3097,189 @@ contains
                        &            state( ks )%particles,                   &
                        &   b2CellData = tmpCv )
                 end do
-                do is = 1, nmoli
-                   js = nspecies + is
-                   tmpCv(-1:nx,-1:ny) = tmb2(0:nx+1,0:ny+1,is,1)/qe
+
+                !! Molecular quantities
+                do js = nspecies+1, nneut
+                   tmpCv(:,:) = 0.0_IDS_real
+                   tmpVx(:,:) = 0.0_IDS_real
+                   tmpFace(:,:,:) = 0.0_IDS_real
+                   do is = 1, nmoli
+                      if (imneut(is).eq.js) then
+                        tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny) + &
+                           &  dmb2(0:nx+1,0:ny+1,is,1)*tmb2(0:nx+1,0:ny+1,is,1)
+                        tmpVx(-1:nx,-1:ny) = tmpVx(-1:nx,-1:ny) + &
+                           &  dmb2(0:nx+1,0:ny+1,is,1)
+                        tmpFace(-1:nx,-1:ny,0) = tmpFace(-1:nx,-1:ny,0) + &
+                           &  pfluxm(0:nx+1,0:ny+1,is,1)
+                        tmpFace(-1:nx,-1:ny,1) = tmpFace(-1:nx,-1:ny,1) + &
+                           &  rfluxm(0:nx+1,0:ny+1,is,1)
+                      end if
+                   end do
+                 !! Molecular pressure
+                   call write_quantity(                                      &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( js )%pressure,                     &
+                       &   value = tmpCv,                                    &
+                       &   time_sind = time_sind )
+                   do ix = -1, nx
+                      do iy = -1, ny
+                         if (tmpVx(ix,iy).gt.0.0_IDS_real) then
+                             tmpCv(ix,iy) = tmpCv(ix,iy)/tmpVx(ix,iy)/qe
+                         else
+                             tmpCv(ix,iy) = 1.0e-6_IDS_real
+                         end if
+                      end do
+                   end do
+                 !! Molecular temperature
                    call write_quantity(                                      &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( js )%temperature,                  &
                        &   value = tmpCv,                                    &
                        &   time_sind = time_sind )
+                 !! Molecular density
                    call write_quantity(                                      &
                        &   val = edge_profiles%ggd( time_sind )%             &
-                       &         neutral( js )%state(1)%temperature,         &
+                       &         neutral( js )%density,                      &
+                       &   value = tmpVx,                                    &
+                       &   time_sind = time_sind )
+                 !! Molecular particular fluxes
+                   call write_face_scalar(                                   &
+                       &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                       &         neutral( js )%particles%flux,               &
+                       &   value = tmpFace,                                  &
+                       &   time_sind = time_sind )
+                 !! Neutral particle energy flux
+                   tmpFace(:,:,:) = 0.0_IDS_real
+                   do is = 1, nmoli
+                      if (imneut(is).eq.js) then
+                        tmpFace(-1:nx,-1:ny,0) = tmpFace(-1:nx,-1:ny,0) + &
+                           &  pefluxm(0:nx+1,0:ny+1,is,1)
+                        tmpFace(-1:nx,-1:ny,1) = tmpFace(-1:nx,-1:ny,1) + &
+                           &  refluxm(0:nx+1,0:ny+1,is,1)
+                      end if
+                   end do
+                   call write_face_scalar(                                   &
+                       &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                       &         neutral( js )%energy%flux,                  &
+                       &   value = tmpFace,                                  &
+                       &   time_sind = time_sind )
+                   tmpCv = 0.0_IDS_real
+                   do istrai = 1, size(eirene_mc_paml_sna_bal,4)
+                      do is = 1, nmoli
+                         if (imneut(is).eq.js) then
+                             tmpCv(:,:) = tmpCv(:,:)                         &
+                          &       + eirene_mc_paml_sna_bal(:,:,is,istrai)    &
+                          &       + eirene_mc_pmml_sna_bal(:,:,is,istrai)    &
+                          &       + eirene_mc_piml_sna_bal(:,:,is,istrai)
+                         end if
+                      end do
+                   end do
+                   tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
+                   call write_cell_scalar(                                   &
+                       &   scalar = edge_sources%source(1)%ggd( time_sind )% &
+                       &            neutral( js )%particles,                 &
+                       &   b2CellData = tmpCv )
+                   tmpCv = 0.0_IDS_real
+                   do istrai = 1, size(eirene_mc_paml_sna_bal,4)
+                      do is = 1, nmoli
+                         if (imneut(is).eq.js) then
+                             tmpCv(:,:) = tmpCv(:,:)                         &
+                                &       + eirene_mc_paml_sna_bal(:,:,is,istrai)
+                         end if
+                      end do
+                   end do
+                   tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
+                   call write_cell_scalar(                                   &
+                       &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                       &            neutral( js )%particles,                 &
+                       &   b2CellData = tmpCv )
+                   tmpCv = 0.0_IDS_real
+                   do istrai = 1, size(eirene_mc_pmml_sna_bal,4)
+                      do is = 1, nmoli
+                         if (imneut(is).eq.js) then
+                             tmpCv(:,:) = tmpCv(:,:)                         &
+                           &      + eirene_mc_pmml_sna_bal(:,:,is,istrai)    &
+                           &      + eirene_mc_piml_sna_bal(:,:,is,istrai)
+                         end if
+                      end do
+                   end do
+                   tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
+                   call write_cell_scalar(                                   &
+                       &   scalar = edge_sources%source(6)%ggd( time_sind )% &
+                       &            neutral( js )%particles,                 &
+                       &   b2CellData = tmpCv )
+                   tmpCv = 0.0_IDS_real
+                   do is = 1, nmoli
+                      if (imneut(is).eq.js) then
+                          tmpCv(-1:nx,-1:ny) = tmpCv(-1:nx,-1:ny)            &
+                             &               + emolrad(0:nx+1,0:ny+1,is,0)
+                      end if
+                   end do
+                   tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
+                   call write_cell_scalar(                                   &
+                       &   scalar = edge_sources%source(12)%                 &
+                       &            ggd( time_sind )%neutral( js )%particles,&
+                       &   b2CellData = tmpCv )
+                end do
+
+                js = nspecies
+                do is = 1, nmoli
+                   ks = isstat(natmi+is)
+                   if (ks.eq.1) js = js + 1
+                   tmpCv(-1:nx,-1:ny) = tmb2(0:nx+1,0:ny+1,is,1)/qe
+                   call write_quantity(                                      &
+                       &   val = edge_profiles%ggd( time_sind )%             &
+                       &         neutral( js )%state( ks )%temperature,      &
                        &   value = tmpCv,                                    &
                        &   time_sind = time_sind )
                    tmpCv(-1:nx,-1:ny) = dmb2(0:nx+1,0:ny+1,is,1)
                    call write_quantity(                                      &
                        &   val = edge_profiles%ggd( time_sind )%             &
-                       &         neutral( js )%density,                      &
-                       &   value = tmpCv,                                    &
-                       &   time_sind = time_sind )
-                   call write_quantity(                                      &
-                       &   val = edge_profiles%ggd( time_sind )%             &
-                       &         neutral( js )%state(1)%density,             &
+                       &         neutral( js )%state( ks )%density,          &
                        &   value = tmpCv,                                    &
                        &   time_sind = time_sind )
                    tmpFace(-1:nx,-1:ny,0) = pfluxm(0:nx+1,0:ny+1,is,1)
                    tmpFace(-1:nx,-1:ny,1) = rfluxm(0:nx+1,0:ny+1,is,1)
                    call write_face_scalar(                                   &
                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
-                       &         neutral( js )%particles%flux,               &
-                       &   value = tmpFace,                                  &
-                       &   time_sind = time_sind )
-                   call write_face_scalar(                                   &
-                       &   val = edge_transport%model(1)%ggd( time_sind )%   &
-                       &         neutral( js )%state(1)%particles%flux,      &
+                       &         neutral( js )%state( ks )%particles%flux,   &
                        &   value = tmpFace,                                  &
                        &   time_sind = time_sind )
                    tmpFace(-1:nx,-1:ny,0) = pefluxm(0:nx+1,0:ny+1,is,1)
                    tmpFace(-1:nx,-1:ny,1) = refluxm(0:nx+1,0:ny+1,is,1)
                    call write_face_scalar(                                   &
                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
-                       &         neutral( js )%energy%flux,                  &
-                       &   value = tmpFace,                                  &
-                       &   time_sind = time_sind )
-                   call write_face_scalar(                                   &
-                       &   val = edge_transport%model(1)%ggd( time_sind )%   &
-                       &         neutral( js )%state(1)%energy%flux,         &
+                       &         neutral( js )%state( ks )%energy%flux,      &
                        &   value = tmpFace,                                  &
                        &   time_sind = time_sind )
                    tmpCv(-1:nx,-1:ny) = dmb2(0:nx+1,0:ny+1,is,1)*tmb2(0:nx+1,0:ny+1,is,1)
                    call write_quantity(                                      &
                        &   val = edge_profiles%ggd( time_sind )%             &
-                       &         neutral( js )%pressure,                     &
-                       &   value = tmpCv,                                    &
-                       &   time_sind = time_sind )
-                   call write_quantity(                                      &
-                       &   val = edge_profiles%ggd( time_sind )%             &
-                       &         neutral( js )%state(1)%pressure,            &
+                       &         neutral( js )%state( ks )%pressure,         &
                        &   value = tmpCv,                                    &
                        &   time_sind = time_sind )
                    tmpCv = 0.0_IDS_real
                    call write_cell_vector_component(                         &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
-                       &                     neutral( js )%state(1)%         &
+                       &                     neutral( js )%state( ks )%      &
                        &                     velocity_diamagnetic,           &
                        &   b2CellData = tmpCv,                               &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
                    call write_cell_vector_component(                         &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
-                       &                     neutral( js )%state(1)%         &
+                       &                     neutral( js )%state( ks )%      &
                        &                     velocity_diamagnetic,           &
                        &   b2CellData = tmpCv,                               &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
                    call write_cell_vector_component(                         &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
-                       &                     neutral( js )%state(1)%         &
+                       &                     neutral( js )%state( ks )%      &
                        &                     velocity_exb,                   &
                        &   b2CellData = tmpCv,                               &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
                    call write_cell_vector_component(                         &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
-                       &                     neutral( js )%state(1)%         &
+                       &                     neutral( js )%state( ks )%      &
                        &                     velocity_exb,                   &
                        &   b2CellData = tmpCv,                               &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
@@ -3067,11 +3293,7 @@ contains
                    tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
                    call write_cell_scalar(                                   &
                        &   scalar = edge_sources%source(1)%ggd( time_sind )% &
-                       &            neutral( js )%particles,                 &
-                       &   b2CellData = tmpCv )
-                   call write_cell_scalar(                                   &
-                       &   scalar = edge_sources%source(1)%ggd( time_sind )% &
-                       &            neutral( js )%state(1)%particles,        &
+                       &            neutral( js )%state( ks )%particles,     &
                        &   b2CellData = tmpCv )
                    tmpCv = 0.0_IDS_real
                    do istrai = 1, size(eirene_mc_paml_sna_bal,4)
@@ -3081,11 +3303,7 @@ contains
                    tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
                    call write_cell_scalar(                                   &
                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
-                       &            neutral( js )%particles,                 &
-                       &   b2CellData = tmpCv )
-                   call write_cell_scalar(                                   &
-                       &   scalar = edge_sources%source(5)%ggd( time_sind )% &
-                       &            neutral( js )%state(1)%particles,        &
+                       &            neutral( js )%state( ks )%particles,     &
                        &   b2CellData = tmpCv )
                    tmpCv = 0.0_IDS_real
                    do istrai = 1, size(eirene_mc_pmml_sna_bal,4)
@@ -3096,20 +3314,13 @@ contains
                    tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
                    call write_cell_scalar(                                   &
                        &   scalar = edge_sources%source(6)%ggd( time_sind )% &
-                       &            neutral( js )%particles,                 &
-                       &   b2CellData = tmpCv )
-                   call write_cell_scalar(                                   &
-                       &   scalar = edge_sources%source(6)%ggd( time_sind )% &
-                       &            neutral( js )%state(1)%particles,        &
+                       &            neutral( js )%state( ks )%particles,     &
                        &   b2CellData = tmpCv )
                    tmpCv(-1:nx,-1:ny) = emolrad(0:nx+1,0:ny+1,is,0)/vol(-1:nx,-1:ny)
                    call write_cell_scalar(                                   &
                        &   scalar = edge_sources%source(12)%                 &
-                       &            ggd( time_sind )%neutral( js )%particles,&
-                       &   b2CellData = tmpCv )
-                   call write_cell_scalar(                                     &
-                       &   scalar = edge_sources%source(12)%ggd( time_sind )%  &
-                       &            neutral( js )%state(1)%particles,          &
+                       &            ggd( time_sind )%neutral( js )%          &
+                       &            state( ks )%particles,                   &
                        &   b2CellData = tmpCv )
                 end do
 #endif
@@ -3165,8 +3376,20 @@ contains
                         &   b2CellData = vaecrb(:,:,1,js),                    &
                         &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! fna: Fluid neutral particle flux
-                    tmpFace(:,:,0) = fna(:,:,0,js)/gs(:,:,0)/qc(:,:)
-                    tmpFace(:,:,1) = fna(:,:,1,js)/gs(:,:,1)
+                    do ix = -1, nx
+                      do iy = -1, ny
+                        if (fna(ix,iy,0,js).ne.0.0_R8) then
+                          tmpFace(ix,iy,0) = fna(ix,iy,0,js)/gs(ix,iy,0)/qc(ix,iy)
+                        else
+                          tmpFace(ix,iy,0) = 0.0_R8
+                        end if
+                        if (fna(ix,iy,1,js).ne.0.0_R8) then
+                          tmpFace(ix,iy,1) = fna(ix,iy,1,js)/gs(ix,iy,1)
+                        else
+                          tmpFace(ix,iy,1) = 0.0_R8
+                        end if
+                      end do
+                    end do
                     call write_face_scalar(                                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( is )%particles%flux,               &
@@ -3239,8 +3462,20 @@ contains
                         &   b2CellData = cvsa(:,:,1,js),                      &
                         &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! fmo: Ion momentum flux
-                    tmpFace(:,:,0) = fmo(:,:,0,js)/gs(:,:,0)/qc(:,:)
-                    tmpFace(:,:,1) = fmo(:,:,1,js)/gs(:,:,1)
+                    do ix = -1, nx
+                      do iy = -1, ny
+                        if (fmo(ix,iy,0,js).ne.0.0_R8) then
+                          tmpFace(ix,iy,0) = fmo(ix,iy,0,js)/gs(ix,iy,0)/qc(ix,iy)
+                        else
+                          tmpFace(ix,iy,0) = 0.0_R8
+                        end if
+                        if (fmo(ix,iy,1,js).ne.0.0_R8) then
+                          tmpFace(ix,iy,1) = fmo(ix,iy,1,js)/gs(ix,iy,1)
+                        else
+                          tmpFace(ix,iy,1) = 0.0_R8
+                        end if
+                      end do
+                    end do
                     call write_cell_vector_component(                         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( is )% &
@@ -3596,11 +3831,9 @@ contains
                   end if
                 end do
                 tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
-#if IMAS_MINOR_VERSION > 24
                 call write_cell_scalar( scalar = radiation%process(3)%        &
                     &   ggd( time_sind )%neutral( js )%emissivity,            &
                     &   b2CellData = tmpCv )
-#endif
               end do
               do is = 1, natmi
                 js = latmscl(is)
@@ -3612,19 +3845,34 @@ contains
                     &   b2CellData = tmpCv )
 #endif
               end do
+              do js = nspecies+1, nneut
+                 tmpCv(:,:) = 0.0_IDS_real
+                 do is = 1, nmoli
+                    if (imneut(is).eq.js) then
+                      do ix = -1, nx
+                        do iy = -1, ny
+                           tmpCv(ix,iy) = tmpCV(ix,iy)-emolrad(ix+1,iy+1,is,0)
+                        end do
+                      end do
+                    end if
+                 end do
+                 tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
+                 call write_cell_scalar( scalar = radiation%process(3)%       &
+                    &   ggd( time_sind )%neutral( js )%emissivity,            &
+                    &   b2CellData = tmpCv )
+              end do
+              js = nspecies
               do is = 1, nmoli
-                js = nspecies + is
+                ks = isstat(natmi+is)
+                if (ks.eq.1) js = js + 1
                 do ix = -1, nx
                   do iy = -1, ny
                     tmpCv(ix,iy) = -emolrad(ix+1,iy+1,is,0) / vol(ix,iy)
                   end do
                 end do
-                call write_cell_scalar( scalar = radiation%process(3)%        &
-                    &   ggd( time_sind )%neutral( js )%emissivity,            &
-                    &   b2CellData = tmpCv )
 #if IMAS_MINOR_VERSION > 24
                 call write_cell_scalar( scalar = radiation%process(3)%        &
-                    &   ggd( time_sind )%neutral( js )%state(1)%emissivity,   &
+                    &   ggd( time_sind )%neutral( js )%state( ks )%emissivity,&
                     &   b2CellData = tmpCv )
 #endif
               end do
@@ -4461,6 +4709,40 @@ contains
             do iSubset = 1, nSubsets
                ndim = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%dimension
                iSubsetID = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%identifier%index
+               if (ndim.eq.IDS_INT_INVALID) then
+                  select case (iSubsetID)
+                  case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+                      & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+                     ndim = 1
+                  case( GRID_SUBSET_FACES, &
+                      & GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_Y_ALIGNED_FACES, &
+                      & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+                      & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+                      & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+                      & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+                      & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+                      & GRID_SUBSET_SECOND_SEPARATRIX, &
+                      & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+                      & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+                      & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+                      & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+                      & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+                      & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+                      & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+                      & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+                      & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+                      & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+                      & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+                      & GRID_SUBSET_INNER_TARGET_INACTIVE )
+                     ndim = 2
+                  case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+                      & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+                      & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+                      & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+                      & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+                     ndim = 3
+                  end select
+               end if
                select case (ndim)
                case ( 1 ) !< Grid subset consists of nodes
                   tmpVx = interpolateToVertices(  &
@@ -4545,6 +4827,40 @@ contains
             do iSubset = 1, nSubsets
                ndim = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%dimension
                iSubsetID = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%identifier%index
+               if (ndim.eq.IDS_INT_INVALID) then
+                  select case (iSubsetID)
+                  case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+                      & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+                     ndim = 1
+                  case( GRID_SUBSET_FACES, &
+                      & GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_Y_ALIGNED_FACES, &
+                      & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+                      & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+                      & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+                      & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+                      & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+                      & GRID_SUBSET_SECOND_SEPARATRIX, &
+                      & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+                      & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+                      & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+                      & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+                      & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+                      & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+                      & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+                      & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+                      & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+                      & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+                      & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+                      & GRID_SUBSET_INNER_TARGET_INACTIVE )
+                     ndim = 2
+                  case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+                      & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+                      & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+                      & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+                      & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+                     ndim = 3
+                  end select
+               end if
                if (ndim.ne.2) cycle
                call write_face_vector( val( iSubset ), value, time_sind, ggdID, iSubsetID, iSubset )
             end do
@@ -4572,6 +4888,40 @@ contains
             do iSubset = 1, nSubsets
                ndim = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%dimension
                iSubsetID = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%identifier%index
+               if (ndim.eq.IDS_INT_INVALID) then
+                  select case (iSubsetID)
+                  case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+                      & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+                     ndim = 1
+                  case( GRID_SUBSET_FACES, &
+                      & GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_Y_ALIGNED_FACES, &
+                      & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+                      & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+                      & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+                      & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+                      & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+                      & GRID_SUBSET_SECOND_SEPARATRIX, &
+                      & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+                      & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+                      & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+                      & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+                      & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+                      & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+                      & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+                      & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+                      & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+                      & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+                      & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+                      & GRID_SUBSET_INNER_TARGET_INACTIVE )
+                     ndim = 2
+                  case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+                      & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+                      & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+                      & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+                      & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+                     ndim = 3
+                  end select
+               end if
                if (ndim.ne.3) cycle
             !! TODO: add checks whether already allocated
 #if IMAS_MINOR_VERSION < 15
@@ -4628,6 +4978,40 @@ contains
             do iSubset = 1, nSubsets
                ndim = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%dimension
                iSubsetID = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%identifier%index
+               if (ndim.eq.IDS_INT_INVALID) then
+                  select case (iSubsetID)
+                  case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+                      & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+                     ndim = 1
+                  case( GRID_SUBSET_FACES, &
+                      & GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_Y_ALIGNED_FACES, &
+                      & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+                      & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+                      & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+                      & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+                      & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+                      & GRID_SUBSET_SECOND_SEPARATRIX, &
+                      & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+                      & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+                      & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+                      & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+                      & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+                      & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+                      & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+                      & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+                      & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+                      & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+                      & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+                      & GRID_SUBSET_INNER_TARGET_INACTIVE )
+                     ndim = 2
+                  case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+                      & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+                      & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+                      & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+                      & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+                     ndim = 3
+                  end select
+               end if
                if (ndim.ne.3) cycle
 #if IMAS_MINOR_VERSION < 15
                idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &

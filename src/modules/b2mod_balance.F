@@ -2733,7 +2733,7 @@ cdjm Update ion heat sources
         call check_cdf_status(status)
         status=nf_def_dim(ncid,'nmol',size(pfluxm_av,3),eirnmolid)
         call check_cdf_status(status)
-        status=nf_def_dim(ncid,'nion',size(eirene_mc_piat_sna_bal,3),
+        status=nf_def_dim(ncid,'nion',size(eirene_mc_paio_sna_bal,3),
      &                                                  eirnionid)
         call check_cdf_status(status)
       endif
