@@ -1624,6 +1624,10 @@ c*** Here only the second pass of correction
                 end if !}
               end if !}
             end do !}
+          else if(crcstra(istrai).eq.'T') then !}{
+            do ls = 1,nnatmi !{
+              hlp_scp(ls,istrai)=1.0_R8
+            end do !}
           end if !}
 c!###{
           if(dbg_eir_mc.gt.0) then !{
