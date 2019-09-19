@@ -234,7 +234,7 @@ c>>>
       NTRC(ntrc_sep) = 79
       fn_ntrc(ntrc_sep) = 'tracing/sepdata.trc'
 
-      ntrc_used = 10
+      ntrc_used = 11
 
       if(ntrc_used.gt.len_ntrc) then
         call xerrab('default: insufficient length of ntrc')
