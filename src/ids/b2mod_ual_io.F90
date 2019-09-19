@@ -184,6 +184,9 @@ contains
         integer :: iy     !< Iterator
 #ifdef B25_EIRENE
         integer :: ii, jj !< Iterator
+        integer, allocatable :: micmp(:,:) !< Composition array for molecular ions
+        character*2 :: compname !< Molecular ion component name
+        logical :: nonumber !< Is there a number for an element in the molecular ion label?
 #endif
         integer :: iatm   !< Atom iterator
         integer :: iatm1  !< Hydrogenic atom index in molecule composition
@@ -275,6 +278,7 @@ contains
         logical match_found, streql
 #ifdef B25_EIRENE
         logical, allocatable :: in_species(:)
+        logical isadigit
 #endif
 #ifdef USE_PXFGETENV
         integer lenval, ierror
@@ -1095,6 +1099,8 @@ contains
 
         if (use_eirene.ne.0) then
 #ifdef B25_EIRENE
+            allocate( micmp( natmi, nioni ) )
+            micmp = 0
             do is = 1, nioni
                js = fluids_list(ns-1) + is
                allocate( edge_profiles%ggd( time_sind )%ion( js )%label(1) )
@@ -1121,7 +1127,50 @@ contains
                   end if
                   if (.not.match_found) j = j+1
                end do
-               nelems = count ( mlcmp( 1:natmi, j ) > 0 )
+               if (match_found) then
+                  micmp( 1:natmi, is ) = mlcmp( 1:natmi, j )
+               else ! No matching molecule, must extract composition from ion name
+                  ! Set default value for variables marking the position of '+'
+                  p = index(ion_label,'+')
+                  ! Loop (backwards) through characters in ion label string
+                  i = p - 1
+                  ii = p - 1
+                  jj = p - 1
+                  do while (i.gt.0)
+                     nonumber = .true.
+                     do while (i.gt.0 .and. isadigit( ion_label(i:i) ) )
+                        i = i - 1
+                        nonumber = .false.
+                     end do
+                     ii = i + 1
+                     if (i.eq.1) then
+                        compname = ion_label(i:i)//' '
+                        iatm = get_atom_number( compname )
+                     else
+                        if (.not.isadigit( ion_label(i-1:i-1) ) ) then
+                           compname = ion_label(i-1:i)
+                           iatm = get_atom_number( compname )
+                           if (iatm.eq.0) then
+                              compname = ion_label(i:i)//' '
+                              iatm = get_atom_number( compname )
+                           else
+                              i = i - 1
+                           end if
+                        else
+                           compname = ion_label(i:i)//' '
+                           iatm = get_atom_number( compname )
+                        end if
+                     end if
+                     if (nonumber) then
+                        micmp( iatm , is ) = 1
+                     else
+                        read( ion_label(ii:jj), * ) micmp( iatm , is )
+                     end if
+                     i = i - 1
+                     jj = i
+                  end do
+               end if
+               nelems = count ( micmp( 1:natmi, is ) > 0 )
                allocate( edge_profiles%ggd( time_sind )%ion( js )%element( nelems ) )
                do i = 1, nsources
                   allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%element( nelems ) )
@@ -1129,7 +1178,7 @@ contains
                allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%element( nelems ) )
                i = 0
                do k = 1, natmi
-                  if ( mlcmp( k, j ) > 0 ) then
+                  if ( micmp( k, is ) > 0 ) then
                      i = i + 1
                      edge_profiles%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                      edge_profiles%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
@@ -1607,21 +1656,11 @@ contains
 
             radiation%process(4)%ggd( time_sind )%ion( js )%state(1)%label = textin( is-1 )
             ion_label = adjustl(textin( is-1 ))
-            j = 1
-            match_found = .false.
-            do while (.not.match_found.and.j.le.nmoli)
-              mol_label = textmn(j-1)
-              mol_label = trim(adjustl(mol_label))//'+'
-              if (streql(ion_label, mol_label)) then
-                match_found = .true.
-              end if
-              if (.not.match_found) j = j+1
-            end do
-            nelems = count ( mlcmp( 1:natmi, j ) > 0 )
+            nelems = count ( micmp( 1:natmi, is ) > 0 )
             allocate( radiation%process(4)%ggd( time_sind )%ion( js )%element( nelems ) )
             i = 0
             do k = 1, natmi
-              if ( mlcmp( k, j ) > 0 ) then
+              if ( micmp( k, is ) > 0 ) then
                 i = i + 1
                 radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                 radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
@@ -4678,9 +4717,28 @@ contains
         summary%code%output_flag( time_sind ) = 0
 #endif
 
+        deallocate(isstat,imneut)
+#ifdef B25_EIRENE
+        deallocate(micmp,in_species)
+#endif
         call logmsg( LOGDEBUG, "b2mod_ual_io.B25_process_ids: done" )
 
         contains
+
+        integer function get_atom_number( compname )
+            implicit none
+            character*2 compname
+            integer is, iatm
+
+            get_atom_number = 0
+            do iatm = 1, natmi
+               if ( get_atom_number > 0 ) cycle
+               is = eb2atcr(iatm)
+               if (streql( is_codes( is ), compname ) ) get_atom_number = iatm
+            end do
+            return
+
+        end function get_atom_number
 
         !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
         !! IMAS IDS data tree node.
