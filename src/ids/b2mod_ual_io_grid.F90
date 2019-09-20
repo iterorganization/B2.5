@@ -431,7 +431,7 @@ contains
         integer cflag( -1:nx, -1:ny, CARREOUT_NCELLFLAGS ) !< Cell flag
         logical, intent(in) :: includeGhostCells    !< Include "fake" cells
         !! Optional B2 measure information
-        real(R8), intent(in), optional :: vol( -1:nx, -1:ny, 0:4) !< Cell volume
+        real(R8), intent(in), optional :: vol( -1:nx, -1:ny) !< Cell volume
         real(R8), intent(in), optional :: gs( -1:nx, -1:ny, 0:2)
         real(R8), intent(in), optional :: qc(-1:nx,-1:ny)   !< Cosine of the
             !< angle between flux line direction and left cell face
@@ -858,7 +858,7 @@ contains
         !! 2D objects: Cells
         ! write(0,*) "num_obj_2D: ", gmap%nCv
         !! Allocate 2D objects
-        allocate( grid_ggd%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)% &
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
             &   object( gmap%nCv ) )
 
         !! Each 2D object has four boundaries
@@ -866,7 +866,7 @@ contains
         do iCv = 1, gmap%nCv
             !! Allocate and set all boundary & connectivity information to
             !! undefined
-            allocate( grid_ggd%space(SPACE_POLOIDALPLANE)%  &
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
                 &   objects_per_dimension(3)%object( iCv )%boundary(4) )
             !! Allocate list of 0D objects forming the 2D object
             !! Four 0D objects (vertices/nodes) form one 2D object (2D cell)
@@ -876,7 +876,7 @@ contains
             !! computational space
             !! FIXME:   this should go into alternate geometry, which is not
             !!          available yet for grid objects
-            allocate( grid_ggd%space(SPACE_POLOIDALPLANE)%  &
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
                 &   objects_per_dimension(3)%object( iCv )%geometry(2) )
             do i = 1, 4
                 !! Boundary to undefined
@@ -904,30 +904,30 @@ contains
             !! Set position in computational space
             ix = gmap%mapCvix( iCv )
             iy = gmap%mapCviy( iCv )
-            grid_ggd%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%geometry(1) = ix
-            grid_ggd%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%geometry(2) = iy
 
             !! Set faces composing the quadrilateral in the list:
             !! left face (y-aligned)
-            grid_ggd%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(1)%index = gmap%mapFcI( ix, iy, LEFT )
             !! bottom face (x-aligned
-            grid_ggd%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(2)%index = gmap%mapFcI( ix, iy, BOTTOM )
             !! right face (y-aligned)
-            grid_ggd%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(3)%index = gmap%mapFcI( ix, iy, RIGHT )
             !! top face (x-aligned)
-            grid_ggd%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(4)%index = gmap%mapFcI( ix, iy, TOP )
             do dir = LEFT, TOP
                 call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy,     &
                     &   topix, topiy, bottomix, bottomiy, ix, iy, dir, nix, niy)
                 if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells,    &
                     &   nix, niy ) ) then
-                    grid_ggd%space(SPACE_POLOIDALPLANE)%            &
+                    grid_ggd%space( SPACE_POLOIDALPLANE )%            &
                         &   objects_per_dimension(3)%object( iCv )% &
                         &   boundary( dir + 1 )%neighbours(1) =     &
                         &   gmap%mapCvI( nix, niy )
@@ -935,8 +935,8 @@ contains
             end do
             !! 2d object measure: cell area
             if (present(vol)) then
-                grid_ggd%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
-                    &   object( iCv )%measure = vol(ix, iy, 1)
+                grid_ggd%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
+                    &   object( iCv )%measure = vol(ix, iy)
             end if
         end do
 
@@ -948,8 +948,8 @@ contains
         !! Fill in x-point indices
         !! In edge_profiles no node for data on x-points was found. There is
         !! hovewer one in equilibrium%boundary%x_point
-        allocate( grid_ggd%space(SPACE_POLOIDALPLANE)%xpoints( gmap%nsv ) )
-        grid_ggd%space(SPACE_POLOIDALPLANE)%xpoints = gmap%svi(1:gmap%nsv)
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%xpoints( gmap%nsv ) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%xpoints = gmap%svi(1:gmap%nsv)
 #endif
 
         !! If requested, add a second space for the toroidal angle
@@ -957,7 +957,7 @@ contains
           if (isymm.eq.0) then
                 call ipgetr ('b2agmt_1d_width', width)
                 call gridSetupStruct1dSpace(                                      &
-                    &   grid_ggd%space(SPACE_TOROIDALANGLE), COORDTYPE_Y,         &
+                    &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_Y,       &
                     &   (/                                                        &
                     &   ( ( width/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )     &
                     &   /),                                                       &
@@ -965,14 +965,14 @@ contains
           else
             if ( TOROIDAL_PERIODIC ) then
                 call gridSetupStruct1dSpace(                                      &
-                    &   grid_ggd%space(SPACE_TOROIDALANGLE), COORDTYPE_PHI,       &
+                    &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_PHI,     &
                     &   (/                                                        &
                     &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL-1 ) &
                     &   /),                                                       &
                     &   .true. ) !! periodic = .true.
             else
                 call gridSetupStruct1dSpace(                                      &
-                    &   grid_ggd%space(SPACE_TOROIDALANGLE), COORDTYPE_PHI,       &
+                    &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_PHI,     &
                     &   (/                                                        &
                     &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )   &
                     &   /),                                                       &
@@ -2410,7 +2410,7 @@ contains
     integer cflag(-1:nx,-1:ny, CARREOUT_NCELLFLAGS)
     logical, intent(in) :: includeGhostCells
     ! Optional B2 measure information
-    real(ITM_R8), intent(in), optional :: vol(-1:nx,-1:ny,0:4), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
+    real(ITM_R8), intent(in), optional :: vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
     real(ITM_R8), save :: width = 1.0_ITM_R8
 
     ! internal
