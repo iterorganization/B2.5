@@ -107,7 +107,8 @@ c     so the standard cleanup routine can still be used (checks on allocation of
 #ifdef B25_EIRENE
         allocate(lkindm(nmol))
         if (.not.allocated(lkindp)) allocate(lkindp(npls))
-        allocate(lkindi(nion))
+        if (.not.allocated(lkindi)) allocate(lkindi(nion))
+ccc        allocate(lkindi(nion))
         allocate(srccrfc(natm,nstra))
         allocate(srcstrn(nstra))
 #endif
