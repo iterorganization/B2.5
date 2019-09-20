@@ -2383,21 +2383,23 @@ contains
                     &            electrons%energy,                          &
                     &   b2CellData = tmpCv )
             end if
-            tmpCv(:,:) = b2stel_she_ion_bal(:,:) / vol(:,:)
-            call write_cell_scalar(                                         &
-                &   scalar = edge_sources%source(7)%ggd( time_sind )%       &
-                &            electrons%energy,                              &
-                &   b2CellData = tmpCv )
-            tmpCv(:,:) = b2stel_she_rec_bal(:,:) / vol(:,:)
-            call write_cell_scalar(                                         &
-                &   scalar = edge_sources%source(8)%ggd( time_sind )%       &
-                &            electrons%energy,                              &
-                &   b2CellData = tmpCv )
-            tmpCv(:,:) = -b2npht_shei_bal(:,:) / vol(:,:)
-            call write_cell_scalar(                                         &
-                &   scalar = edge_sources%source(10)%ggd( time_sind )%      &
-                &            electrons%energy,                              &
-                &   b2CellData = tmpCv )
+            if (balance_netcdf.ne.0) then
+                tmpCv(:,:) = b2stel_she_ion_bal(:,:) / vol(:,:)
+                call write_cell_scalar(                                     &
+                    &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+                tmpCv(:,:) = b2stel_she_rec_bal(:,:) / vol(:,:)
+                call write_cell_scalar(                                     &
+                    &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+                tmpCv(:,:) = -b2npht_shei_bal(:,:) / vol(:,:)
+                call write_cell_scalar(                                     &
+                    &   scalar = edge_sources%source(10)%ggd( time_sind )%  &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+            end if
             tmpCv(:,:) = b2sihs_joule(:,:) / vol(:,:)
             call write_cell_scalar(                                         &
                 &   scalar = edge_sources%source(11)%ggd( time_sind )%      &
@@ -2523,21 +2525,23 @@ contains
                     &            total_ion_energy,                          &
                     &   b2CellData = tmpCv )
             end if
-            tmpCv(:,:) = b2stel_shi_ion_bal(:,:) / vol(:,:)
-            call write_cell_scalar(                                         &
-                &   scalar = edge_sources%source(7)%ggd( time_sind )%       &
-                &            total_ion_energy,                              &
-                &   b2CellData = tmpCv )
-            tmpCv(:,:) = b2stel_shi_rec_bal(:,:) / vol(:,:)
-            call write_cell_scalar(                                         &
-                &   scalar = edge_sources%source(8)%ggd( time_sind )%       &
-                &            total_ion_energy,                              &
-                &   b2CellData = tmpCv )
-            tmpCv(:,:) = b2npht_shei_bal(:,:) / vol(:,:)
-            call write_cell_scalar(                                         &
-                &   scalar = edge_sources%source(10)%ggd( time_sind )%      &
-                &            total_ion_energy,                              &
-                &   b2CellData = tmpCv )
+            if (balance_netcdf.ne.0) then
+                tmpCv(:,:) = b2stel_shi_ion_bal(:,:) / vol(:,:)
+                call write_cell_scalar(                                     &
+                    &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
+                    &            total_ion_energy,                          &
+                    &   b2CellData = tmpCv )
+                tmpCv(:,:) = b2stel_shi_rec_bal(:,:) / vol(:,:)
+                call write_cell_scalar(                                     &
+                    &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
+                    &            total_ion_energy,                          &
+                    &   b2CellData = tmpCv )
+                tmpCv(:,:) = b2npht_shei_bal(:,:) / vol(:,:)
+                call write_cell_scalar(                                     &
+                    &   scalar = edge_sources%source(10)%ggd( time_sind )%  &
+                    &            total_ion_energy,                          &
+                    &   b2CellData = tmpCv )
+            end if
             do is = 1, nsion
                 if (is.le.fluids_list(ns-1)) then
                     js = ions_list(is)

@@ -2915,91 +2915,93 @@ c*** before correction (r), after correction (c), after iteration (i)
             end do !}  ! iy
           end if !}
         end do !}  ! is
-        rf0=RF_NEUT(1)
-        do is=1,nnatmi !{
-          do iy=-1,ny !{
-            do ix=-1,nx !{
-              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &           bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &           region(ix,iy,0).ne.0) then !{
-                t0_a = sna_av_paat(ix+1,iy+1,is,istrai)*
-     *                 tflux(istrai)*
-     *                 recyc_hlp*flux_scale(istrai)/
-     *                 dble(ih_end)
-                t0_m = sna_av_pmat(ix+1,iy+1,is,istrai)*
-     *                 tflux(istrai)*
-     *                 recyc_hlp*flux_scale(istrai)/
-     *                 dble(ih_end)
-                t0_i = sna_av_piat(ix+1,iy+1,is,istrai)*
-     *                 tflux(istrai)*
-     *                 recyc_hlp*flux_scale(istrai)/
-     *                 dble(ih_end)
-                eirene_mc_paat_sna_bal(ix,iy,is,istrai)=
-     *                 eirene_mc_paat_sna_bal(ix,iy,is,istrai)+t0_a
-                eirene_mc_pmat_sna_bal(ix,iy,is,istrai)=
-     *                 eirene_mc_pmat_sna_bal(ix,iy,is,istrai)+t0_m
-                eirene_mc_piat_sna_bal(ix,iy,is,istrai)=
-     *                 eirene_mc_piat_sna_bal(ix,iy,is,istrai)+t0_i
-              end if !}
-            end do !}  ! ix
-          end do !}  ! iy
-        end do !}  ! natmi
-        do is=1,nnmoli !{
-          do iy=-1,ny !{
-            do ix=-1,nx !{
-              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &           bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &           region(ix,iy,0).ne.0) then !{
-                t0_a = sna_av_paml(ix+1,iy+1,is,istrai)*
-     *                 tflux(istrai)*
-     *                 recyc_hlp*flux_scale(istrai)/
-     *                 dble(ih_end)
-                t0_m = sna_av_pmml(ix+1,iy+1,is,istrai)*
-     *                 tflux(istrai)*
-     *                 recyc_hlp*flux_scale(istrai)/
-     *                 dble(ih_end)
-                t0_i = sna_av_piml(ix+1,iy+1,is,istrai)*
-     *                 tflux(istrai)*
-     *                 recyc_hlp*flux_scale(istrai)/
-     *                 dble(ih_end)
-                eirene_mc_paml_sna_bal(ix,iy,is,istrai)=
-     *                 eirene_mc_paml_sna_bal(ix,iy,is,istrai)+t0_a
-                eirene_mc_pmml_sna_bal(ix,iy,is,istrai)=
-     *                 eirene_mc_pmml_sna_bal(ix,iy,is,istrai)+t0_m
-                eirene_mc_piml_sna_bal(ix,iy,is,istrai)=
-     *                 eirene_mc_piml_sna_bal(ix,iy,is,istrai)+t0_i
-              end if !}
-            end do !}  ! ix
-          end do !}  ! iy
-        end do !}  ! nmoli
-        do is=1,nnioni !{
-          do iy=-1,ny !{
-            do ix=-1,nx !{
-              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &           bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &           region(ix,iy,0).ne.0) then !{
-                t0_a = sna_av_paio(ix+1,iy+1,is,istrai)*
-     *                 tflux(istrai)*
-     *                 recyc_hlp*flux_scale(istrai)/
-     *                 dble(ih_end)
-                t0_m = sna_av_pmio(ix+1,iy+1,is,istrai)*
-     *                 tflux(istrai)*
-     *                 recyc_hlp*flux_scale(istrai)/
-     *                 dble(ih_end)
-                t0_i = sna_av_piio(ix+1,iy+1,is,istrai)*
-     *                 tflux(istrai)*
-     *                 recyc_hlp*flux_scale(istrai)/
-     *                 dble(ih_end)
-                eirene_mc_paio_sna_bal(ix,iy,is,istrai)=
-     *                 eirene_mc_paio_sna_bal(ix,iy,is,istrai)+t0_a
-                eirene_mc_pmio_sna_bal(ix,iy,is,istrai)=
-     *                 eirene_mc_pmio_sna_bal(ix,iy,is,istrai)+t0_m
-                eirene_mc_piio_sna_bal(ix,iy,is,istrai)=
-     *                 eirene_mc_piio_sna_bal(ix,iy,is,istrai)+t0_i
-              end if !}
-            end do !}  ! ix
-          end do !}  ! iy
-        end do !}  ! nioni
+        if (balance_netcdf.ne.0) then !{
+          rf0=RF_NEUT(1)
+          do is=1,nnatmi !{
+            do iy=-1,ny !{
+              do ix=-1,nx !{
+                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1.and.
+     &             bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1.and.
+     &             region(ix,iy,0).ne.0) then !{
+                  t0_a = sna_av_paat(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_m = sna_av_pmat(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_i = sna_av_piat(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  eirene_mc_paat_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_paat_sna_bal(ix,iy,is,istrai)+t0_a
+                  eirene_mc_pmat_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_pmat_sna_bal(ix,iy,is,istrai)+t0_m
+                  eirene_mc_piat_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_piat_sna_bal(ix,iy,is,istrai)+t0_i
+                end if !}
+              end do !}  ! ix
+            end do !}  ! iy
+          end do !}  ! natmi
+          do is=1,nnmoli !{
+            do iy=-1,ny !{
+              do ix=-1,nx !{
+                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1.and.
+     &             bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1.and.
+     &             region(ix,iy,0).ne.0) then !{
+                  t0_a = sna_av_paml(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_m = sna_av_pmml(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_i = sna_av_piml(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  eirene_mc_paml_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_paml_sna_bal(ix,iy,is,istrai)+t0_a
+                  eirene_mc_pmml_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_pmml_sna_bal(ix,iy,is,istrai)+t0_m
+                  eirene_mc_piml_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_piml_sna_bal(ix,iy,is,istrai)+t0_i
+                end if !}
+              end do !}  ! ix
+            end do !}  ! iy
+          end do !}  ! nmoli
+          do is=1,nnioni !{
+            do iy=-1,ny !{
+              do ix=-1,nx !{
+                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1.and.
+     &             bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1.and.
+     &             region(ix,iy,0).ne.0) then !{
+                  t0_a = sna_av_paio(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_m = sna_av_pmio(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_i = sna_av_piio(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  eirene_mc_paio_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_paio_sna_bal(ix,iy,is,istrai)+t0_a
+                  eirene_mc_pmio_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_pmio_sna_bal(ix,iy,is,istrai)+t0_m
+                  eirene_mc_piio_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_piio_sna_bal(ix,iy,is,istrai)+t0_i
+                end if !}
+              end do !}  ! ix
+            end do !}  ! iy
+          end do !}  ! nioni
+        end if !}
         do iy=-1,ny !{
           do ix=-1,nx !{
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
