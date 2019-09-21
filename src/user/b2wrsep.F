@@ -120,8 +120,8 @@ c*** Local variables of general use
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
       character*2, allocatable :: hlp_a(:)
 
-      integer, save :: mdf_fnb = 0, style_b2mndt = 0, use_eirene = 0
-      logical, save :: first=.TRUE.
+      integer :: mdf_fnb = 0, style_b2mndt = 0, use_eirene = 0
+      logical :: first=.TRUE.
 
 c*** Procedures
       real (kind=R8) :: hy1

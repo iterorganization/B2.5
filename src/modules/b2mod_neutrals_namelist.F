@@ -1199,9 +1199,8 @@ c.. Test consistency with physical edges within the computational domain
 
       subroutine map_ion_components
       implicit none
-      integer i, j, is
 #ifdef B25_EIRENE
-      integer ij, jj, iatm, p
+      integer i, j, is, ij, jj, iatm, p
       character(len=16) :: ion_label, mol_label
       character(len=2) :: compname
       logical match_found, nonumber, streql, isadigit

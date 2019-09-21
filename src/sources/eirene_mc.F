@@ -205,10 +205,14 @@ csw 26feb2014
 *   ..procedures
       real (kind=R8) :: rratio
       intrinsic min, mod, abs, sqrt, log
-      external subini, subend, xertst, ipgeti, ipgetr, rratio, streql
-      logical lnext, streql
+      external subini, subend, xertst, ipgeti, ipgetr, rratio
+      logical lnext
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
+#ifdef B25_EIRENE
+      logical streql
+      external streql
+#endif
 *   ..initialisation
       data ncall/0/, output_style/1/, saved_volrec_used/.false./,
      .  linearisation/1/, solregno/3/, b2stbc_feedback/0/,
