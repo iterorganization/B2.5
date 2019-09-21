@@ -54,7 +54,7 @@ module b2mod_ual_io
      &          b2stel_shi_ion_bal, b2stel_shi_rec_bal, &
      &          read_balance
     use b2mod_b2plot &
-     & , only : textan, textmn, textin, nxtl, nxtr, jxa, jsep
+     & , only : nxtl, nxtr, jxa, jsep
 #ifdef B25_EIRENE
     use eirmod_comusr &
     , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, nprt, nchrgi, nchari
@@ -177,17 +177,12 @@ contains
         integer :: nelems    !< Number of elements present in a molecule or molecular ion
         integer :: is, js, ks !< Species indices (iterators)
         integer :: iss    !< State index
+        integer :: ii, jj !< Iterators
         integer :: i      !< Iterator
         integer :: j      !< Iterator
         integer :: k      !< Iterator
         integer :: ix     !< Iterator
         integer :: iy     !< Iterator
-#ifdef B25_EIRENE
-        integer :: ii, jj !< Iterator
-        integer, allocatable :: micmp(:,:) !< Composition array for molecular ions
-        character*2 :: compname !< Molecular ion component name
-        logical :: nonumber !< Is there a number for an element in the molecular ion label?
-#endif
         integer :: iatm   !< Atom iterator
         integer :: iatm1  !< Hydrogenic atom index in molecule composition
         integer :: iatm2  !< Non-hydrogenic atom index in molecule composition
@@ -1099,8 +1094,6 @@ contains
 
         if (use_eirene.ne.0) then
 #ifdef B25_EIRENE
-            allocate( micmp( natmi, nioni ) )
-            micmp = 0
             do is = 1, nioni
                js = fluids_list(ns-1) + is
                allocate( edge_profiles%ggd( time_sind )%ion( js )%label(1) )
@@ -1116,60 +1109,6 @@ contains
                allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state(1)%label(1) )
                edge_profiles%ggd( time_sind )%ion( js )%state(1)%label = textin( is-1 )
                edge_transport%model(1)%ggd( time_sind )%ion( js )%state(1)%label = textin( is-1 )
-               ion_label = adjustl(textin( is-1 ))
-               j = 1
-               match_found = .false.
-               do while (.not.match_found.and.j.le.nmoli)
-                  mol_label = textmn(j-1)
-                  mol_label = trim(adjustl(mol_label))//'+'
-                  if (streql(ion_label, mol_label)) then
-                      match_found = .true.
-                  end if
-                  if (.not.match_found) j = j+1
-               end do
-               if (match_found) then
-                  micmp( 1:natmi, is ) = mlcmp( 1:natmi, j )
-               else ! No matching molecule, must extract composition from ion name
-                  ! Set default value for variables marking the position of '+'
-                  p = index(ion_label,'+')
-                  ! Loop (backwards) through characters in ion label string
-                  i = p - 1
-                  ii = p - 1
-                  jj = p - 1
-                  do while (i.gt.0)
-                     nonumber = .true.
-                     do while (i.gt.0 .and. isadigit( ion_label(i:i) ) )
-                        i = i - 1
-                        nonumber = .false.
-                     end do
-                     ii = i + 1
-                     if (i.eq.1) then
-                        compname = ion_label(i:i)//' '
-                        iatm = get_atom_number( compname )
-                     else
-                        if (.not.isadigit( ion_label(i-1:i-1) ) ) then
-                           compname = ion_label(i-1:i)
-                           iatm = get_atom_number( compname )
-                           if (iatm.eq.0) then
-                              compname = ion_label(i:i)//' '
-                              iatm = get_atom_number( compname )
-                           else
-                              i = i - 1
-                           end if
-                        else
-                           compname = ion_label(i:i)//' '
-                           iatm = get_atom_number( compname )
-                        end if
-                     end if
-                     if (nonumber) then
-                        micmp( iatm , is ) = 1
-                     else
-                        read( ion_label(ii:jj), * ) micmp( iatm , is )
-                     end if
-                     i = i - 1
-                     jj = i
-                  end do
-               end if
                nelems = count ( micmp( 1:natmi, is ) > 0 )
                allocate( edge_profiles%ggd( time_sind )%ion( js )%element( nelems ) )
                do i = 1, nsources
@@ -4723,7 +4662,7 @@ contains
 
         deallocate(isstat,imneut)
 #ifdef B25_EIRENE
-        deallocate(micmp,in_species)
+        deallocate(in_species)
 #endif
         call logmsg( LOGDEBUG, "b2mod_ual_io.B25_process_ids: done" )
 

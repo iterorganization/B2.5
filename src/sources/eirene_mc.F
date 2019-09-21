@@ -43,6 +43,10 @@ c  version : 26.07.2002 23:39
       use b2mod_work
       use eirmod_braeir
       use eirmod_eirbra
+      use eirmod_comusr
+     , , only: texts, nsph, nspa, nspam
+      use eirmod_cinit
+     , , only: fort_lc
       use eirmod_extrab25
 #else
       use b2mod_braeir
@@ -136,11 +140,12 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       real (kind=R8), allocatable :: sum_wld(:,:)
 cank }
       character*24 hlp_frm, hlp_frm1, hlp_frm2, hlp_frm3, hlp_frm4
+      character*256 filename
 c      integer lns_hlp
 c      parameter (lns_hlp=4)
 c      integer lis_hlp(lns_hlp)
 c      data lis_hlp / 110, 111, 112, 49 /
-      logical last, saved_volrec_used, na_feedback_on
+      logical ex, last, saved_volrec_used, na_feedback_on
       integer :: igpuff(NSTRAT)
 
       integer output_style, linearisation, ank_mods, save_f31,
@@ -227,6 +232,10 @@ csw 26feb2014
       intrinsic min, mod, abs, sqrt, log
       external subini, subend, xertst, ipgeti, ipgetr, rratio
       logical lnext
+#ifdef B25_EIRENE
+      logical streql
+      external streql
+#endif
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
 *   ..initialisation
@@ -760,9 +769,25 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 csw 25jan2011 LTIME=.false. in eirsrt call
         my_ltime=.false.
 
+        filename=fort_lc//'44'
+        call find_file(filename,ex)
         call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
      *   b2brem,b2rad,b2qie(0),b2vdp,
      1   eirene_step_cpu)
+#ifdef B25_EIRENE
+        if(.not.ex) then
+          do is=1,nnatmi
+            if(streql(textan(is-1),' ')) textan(is-1) = texts(is+nsph)
+          end do
+          do is=1,nnmoli
+            if(streql(textmn(is-1),' ')) textmn(is-1) = texts(is+nspa)
+          end do
+          do is=1,nnioni
+            if(streql(textin(is-1),' ')) textin(is-1) = texts(is+nspam)
+          end do
+          call map_ion_components
+        end if
+#endif
         eircount=1
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
           do while (eircount.le.repeat_first_call)

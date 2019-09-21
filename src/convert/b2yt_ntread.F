@@ -1,7 +1,7 @@
 c
 C RHW 18.08.92:  UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
 C
-*//B2YT_NGREAD//
+*//B2YT_NTREAD//
 *=======================================================================
 *                 S U B R O U T I N E  B 2 Y T _ N G R E A D
 *=======================================================================
@@ -16,7 +16,7 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ntread(natm1, iatm1, nmol1, imol1)
+      subroutine b2yt_ntread(natm1, iatm1, nmol1, imol1, nion1, iion1)
 c
 c  version : 06.11.97 22:11
 c
@@ -38,8 +38,8 @@ c
       implicit none
 
 *  -- INPUT ARGUMENTS --
-      integer natm1, nmol1
-      integer iatm1(natm), imol1(nmol)
+      integer natm1, nmol1, nion1
+      integer iatm1(natm), imol1(nmol), iion1(nion)
 
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
@@ -47,7 +47,7 @@ c
       integer is, i, j, n, jvftnew, io, idummy
       real (kind=R8) :: width
       real (kind=R8), allocatable :: field1(:,:)
-      character*16, allocatable :: textan1(:), textmn1(:)
+      character*16, allocatable :: textan1(:), textmn1(:), textin1(:)
       character*9 filename
       data jvftnew / 20170930 /
 
@@ -98,9 +98,9 @@ C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
       READ (35,*,IOSTAT=IO,ERR=1985) IDUMMY
       IF(IO.NE.0) IDUMMY=0 !VK
       IF (IDUMMY /= NTRII) THEN
-        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
+        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH'
         WRITE (*,*) ' IN ELEMENTS AND NEIGHBOR FILES'
-        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
+        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY'
         call xerrab
      .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'35 files!')
       END IF
@@ -154,19 +154,19 @@ C
 C
       READ(46,*,END=99,ERR=99) idummy,jvft46
       IF (IDUMMY /= NTRII) THEN
-        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
+        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH'
         WRITE (*,*) ' IN GRID AND DATA FILES'
-        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
+        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY'
         call xerrab
      .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'46 files!')
       END IF
       WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_B25_hash()
       READ (46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
-      WRITE(47,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nioni
+      WRITE(47,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
       write(*,'(3a,4i6)')
      . ' Dimensions in ',fort_lc,'46 =   ',ntrii,natmi,nmoli,nioni
       write(*,'(3a,4i6)')
-     . ' Dimensions in ',fort_lc,'46.2 = ',ntrii,natm1,nmol1,nioni
+     . ' Dimensions in ',fort_lc,'46.2 = ',ntrii,natm1,nmol1,nion1
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
@@ -206,8 +206,15 @@ C
 C
       do 13 IS = 1, NIONI
         READ (46,'(A8)',END=99,ERR=99) TEXTIN(IS-1)
-        WRITE(47,'(A8)')               TEXTIN(IS-1)
    13 CONTINUE
+      allocate(textin1(0:nion1-1))
+      do is = 1, nioni
+        if (iion1(is).ne.0) TEXTIN1(iion1(is)-1) = TEXTIN(is-1)
+      end do
+      do is = 1, nion1
+        WRITE(47,'(A8)') TEXTIN1(IS-1)
+      end do
+      deallocate(textin1)
 C
 * data
 * densities
@@ -232,8 +239,13 @@ C
       end do
       call write_title(47,'pdenm',ntrii*nmol1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
-      call write_title(47,'pdeni',ntrii*nioni)
-      write(47,'(6e15.7)') ((PDENI(i,j),j=1,ntrii),i=1,nioni)
+      do is = 1, nioni
+        if (iion1(is).ne.0) then
+          field1(iion1(is),1:ntrii) = pdeni(is,1:ntrii)
+        end if
+      end do
+      call write_title(47,'pdeni',ntrii*nion1)
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nion1)
 
 * average energies
 C
@@ -257,8 +269,13 @@ C
       end do
       call write_title(47,'edenm',ntrii*nmol1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
-      call write_title(47,'edeni',ntrii*nioni)
-      write(47,'(6e15.7)') ((EDENI(i,j),j=1,ntrii),i=1,nioni)
+      do is = 1, nioni
+        if (iion1(is).ne.0) then
+          field1(iion1(is),1:ntrii) = edeni(is,1:ntrii)
+        end if
+      end do
+      call write_title(47,'edeni',ntrii*nion1)
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nion1)
 
 * X-directed velocities
 C
@@ -282,8 +299,13 @@ C
       end do
       call write_title(47,'vxdenm',ntrii*nmol1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
-      call write_title(47,'vxdeni',ntrii*nioni)
-      write(47,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,nioni)
+      do is = 1, nioni
+        if (iion1(is).ne.0) then
+          field1(iion1(is),1:ntrii) = vxdeni(is,1:ntrii)
+        end if
+      end do
+      call write_title(47,'vxdeni',ntrii*nion1)
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nion1)
 
 * Y-directed velocities
 C
@@ -307,8 +329,13 @@ C
       end do
       call write_title(47,'vydenm',ntrii*nmol1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
-      call write_title(47,'vydeni',ntrii*nioni)
-      write(47,'(6e15.7)') ((VYDENI(i,j),j=1,ntrii),i=1,nioni)
+      do is = 1, nioni
+        if (iion1(is).ne.0) then
+          field1(iion1(is),1:ntrii) = vydeni(is,1:ntrii)
+        end if
+      end do
+      call write_title(47,'vydeni',ntrii*nion1)
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nion1)
 
 * Z-directed velocities
 C
@@ -332,8 +359,13 @@ C
       end do
       call write_title(47,'vzdenm',ntrii*nmol1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
-      call write_title(47,'vzdeni',ntrii*nioni)
-      write(47,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,nioni)
+      do is = 1, nioni
+        if (iion1(is).ne.0) then
+          field1(iion1(is),1:ntrii) = vzdeni(is,1:ntrii)
+        end if
+      end do
+      call write_title(47,'vzdeni',ntrii*nion1)
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nion1)
 
 * Triangle volumes
 C

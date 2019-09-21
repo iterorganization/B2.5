@@ -80,9 +80,9 @@ cxpb element: xymap1(ix,iy)
       return
       end subroutine alloc_b2mod_wall2_init
 
-      subroutine alloc_b2mod_wall2(ns1,natm1,nmol,nion,ndepth1)
+      subroutine alloc_b2mod_wall2(ns1,natm1,nmol1,nion1,ndepth1)
       implicit none
-      integer ns1, natm1, nmol, nion, ndepth1
+      integer ns1, natm1, nmol1, nion1, ndepth1
       external subini, subend, xertst
 
       call subini('b2mod_wall2')
@@ -102,13 +102,13 @@ cxpb  Namelist data
      *  erosion1(nwall1,ntrack),
      *  monolayer_erosion1(nwall1,ntrack),
      *  plate_time1(nwall1),
-     *  chemical_sputtering1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  physical_sputtering1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  physical_sputtering_energy1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  RES_sputtering1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  thermal_evaporation1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  backscattering1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  backscattering_energy1(nwall1,0:ns1-1+natm1+nmol+nion))
+     *  chemical_sputtering1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  physical_sputtering1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  physical_sputtering_energy1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  RES_sputtering1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  thermal_evaporation1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  backscattering1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  backscattering_energy1(nwall1,0:ns1-1+natm1+nmol1+nion1))
 
 cxpb Data file material properties
       allocate(
