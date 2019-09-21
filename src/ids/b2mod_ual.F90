@@ -82,7 +82,7 @@ contains
             !< database
 
         !! Set data to edge_profiles IDS
-        write(0,'(1x,a)') "Writing to edge_profiles, edge_sources, edge_transport, "// &
+        write(0,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
 #if IMAS_MINOR_VERSION > 21
           &  "summary, "// &
 #endif

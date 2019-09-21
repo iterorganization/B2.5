@@ -157,6 +157,10 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
 #ifdef JET
       labgeo=lblgm
+#else
+#ifdef IMAS
+      labgeo=lblgm
+#endif
 #endif
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)

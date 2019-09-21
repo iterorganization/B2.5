@@ -2880,6 +2880,15 @@
 					'iter' for input files from SOLPS-ITER runs (no conversion necessary)
 				</description>
 			</switch>
+            <switch>
+			    <name>ids_from_43</name>
+                <default>0</default>
+                <type>integer</type>
+                <description>
+				    This switch is to be used when running the b2_ual_write utility program to obtain an IDS from the SOLPS run results.
+					If set to 1, the IDS will indicate that the results come from a converted SOLPS4.3 run with no additional calculation. By default, the IDS will indicate a SOLPS-ITER run.
+				</description>
+			</switch>
 		</category>
 		<category name="Numerics">
 			<switchgroup>
