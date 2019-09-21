@@ -4,8 +4,6 @@
       use b2mod_diag
       use b2mod_time
       use b2mod_rates
-      use b2mod_b2plot
-     , ,only : textan, textmn
       use b2mod_b2cmpa
       use b2mod_plasma
       use b2mod_indirect

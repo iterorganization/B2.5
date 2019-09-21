@@ -10,10 +10,10 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2plot
-     * , only : textan, textmn, textin, textpl, textwl, textsp, textbl,
-     * textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
-     * cr, cz, natmi, nmoli, nioni, wklng,
-     * solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+     * , only : textpl, textwl, textsp, textbl,
+     *          textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
+     *          cr, cz, natmi, nmoli, nioni, wklng,
+     *          solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_wall
       use b2mod_work
       use b2mod_eirene_globals
