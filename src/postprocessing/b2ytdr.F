@@ -4677,6 +4677,7 @@ Cxpb then rewrite the entire block
               ELSE
                 LKINDM(JMOL) = 0
               END IF
+              LMOLSCL(JMOL) = LKINDM(JMOL)
             END IF
           ELSE IF (streql(eirene_format,'old')) THEN
             READ (IUNIN,66666) I,TEXTM(JMOL),NMASSM(JMOL),NCHARM(JMOL),
@@ -4823,6 +4824,7 @@ Cxpb then rewrite the entire block
               ELSE
                 LKINDI(JION) = 0
               END IF
+              LIONSCL(JION) = LKINDI(JION)
             END IF
           ELSE IF (streql(eirene_format,'old')) THEN
             READ (IUNIN,66666) I,TEXTI(JION),NMASSI(JION),NCHARI(JION),
