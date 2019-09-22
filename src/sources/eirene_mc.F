@@ -1269,7 +1269,7 @@ c!###}
      *               sna_piml(ix,iy,is,istrai)*hlp_scl(ls)
                 end do
                 do is = 1, nnioni
-                  ls=lkindi(is)
+                  ls=lionscl(is)
                   sna_paio(ix,iy,is,istrai)=
      *               sna_paio(ix,iy,is,istrai)*hlp_scl(ls)
                   sna_pmio(ix,iy,is,istrai)=
@@ -1469,7 +1469,7 @@ c>>>
      *               sna_piml(ix,iy,is,istrai)*hlp_scl(ls)
                 end do
                 do is = 1, nnioni
-                  ls = lkindi(is)
+                  ls = lionscl(is)
                   sna_paio(ix,iy,is,istrai)=
      *               sna_paio(ix,iy,is,istrai)*hlp_scl(ls)
                   sna_pmio(ix,iy,is,istrai)=
