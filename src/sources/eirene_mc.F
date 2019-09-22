@@ -1269,7 +1269,7 @@ c!###}
      *               sna_piml(ix,iy,is,istrai)*hlp_scl(ls)
                 end do
                 do is = 1, nnioni
-                  ls=lkindi(is)
+                  ls=lionscl(is)
                   sna_paio(ix,iy,is,istrai)=
      *               sna_paio(ix,iy,is,istrai)*hlp_scl(ls)
                   sna_pmio(ix,iy,is,istrai)=
@@ -1469,7 +1469,7 @@ c>>>
      *               sna_piml(ix,iy,is,istrai)*hlp_scl(ls)
                 end do
                 do is = 1, nnioni
-                  ls = lkindi(is)
+                  ls = lionscl(is)
                   sna_paio(ix,iy,is,istrai)=
      *               sna_paio(ix,iy,is,istrai)*hlp_scl(ls)
                   sna_pmio(ix,iy,is,istrai)=
@@ -1731,7 +1731,7 @@ c*** Here only the second pass of correction
               end do
             end do
             do is = 1, nnioni
-              ls = lkindi(is)
+              ls = lionscl(is)
               do ix=1,nx
                 do iy=1,ny
                   sna_paio(ix,iy,is,istrai)=
