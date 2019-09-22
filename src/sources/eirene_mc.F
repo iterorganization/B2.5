@@ -55,7 +55,7 @@ c  version : 26.07.2002 23:39
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
-      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
+      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir, b2stbc_feedback
       integer, allocatable, save :: feedback_strata(:)
@@ -160,16 +160,16 @@ csw 26feb2014
       real (kind=R8) :: relax
 
       real (kind=R8), save, allocatable ::
-     .   sni_av(:,:,:,:),smo_av(:,:,:,:),sei_av(:,:,:),see_av(:,:,:)
+     .  sni_av(:,:,:,:), smo_av(:,:,:,:), sei_av(:,:,:), see_av(:,:,:)
       real (kind=R8), save, allocatable ::                        !djm Jan2017
-     .   sni_av_papl(:,:,:,:),sni_av_pmpl(:,:,:,:),
-     .   sni_av_pipl(:,:,:,:),sni_av_pppl(:,:,:,:),
-     .   smo_av_mapl(:,:,:,:),smo_av_mmpl(:,:,:,:),
-     .   smo_av_mipl(:,:,:,:),smo_av_cppv(:,:,:,:),
-     .   see_av_eael(:,:,:), see_av_emel(:,:,:),
-     .   see_av_eiel(:,:,:), see_av_epel(:,:,:),
-     .   sei_av_eapl(:,:,:), sei_av_empl(:,:,:),
-     .   sei_av_eipl(:,:,:), sei_av_eppl(:,:,:)
+     .  sni_av_papl(:,:,:,:),sni_av_pmpl(:,:,:,:),
+     .  sni_av_pipl(:,:,:,:),sni_av_pppl(:,:,:,:),
+     .  smo_av_mapl(:,:,:,:),smo_av_mmpl(:,:,:,:),
+     .  smo_av_mipl(:,:,:,:),smo_av_cppv(:,:,:,:),
+     .  see_av_eael(:,:,:), see_av_emel(:,:,:),
+     .  see_av_eiel(:,:,:), see_av_epel(:,:,:),
+     .  sei_av_eapl(:,:,:), sei_av_empl(:,:,:),
+     .  sei_av_eipl(:,:,:), sei_av_eppl(:,:,:)
       real (kind=R8), allocatable, save ::                        !IYS 28.03.12 {
      &  sni_h(:,:,:,:,:),
      &  smo_h(:,:,:,:,:),
@@ -185,18 +185,18 @@ csw 26feb2014
 ! _s is an abbreviation from 'sum'
      &  dab2_h(:,:,:,:,:), dab2_s(:,:,:,:)
       real (kind=R8), save, allocatable ::                        !djm Jan2017
-     &  sni_h_papl(:,:,:,:,:),sni_h_pmpl(:,:,:,:,:),
-     &  sni_h_pipl(:,:,:,:,:),sni_h_pppl(:,:,:,:,:),
-     &  smo_h_mapl(:,:,:,:,:),smo_h_mmpl(:,:,:,:,:),
-     &  smo_h_mipl(:,:,:,:,:),smo_h_cppv(:,:,:,:,:),
+     &  sni_h_papl(:,:,:,:,:), sni_h_pmpl(:,:,:,:,:),
+     &  sni_h_pipl(:,:,:,:,:), sni_h_pppl(:,:,:,:,:),
+     &  smo_h_mapl(:,:,:,:,:), smo_h_mmpl(:,:,:,:,:),
+     &  smo_h_mipl(:,:,:,:,:), smo_h_cppv(:,:,:,:,:),
      &  see_h_eael(:,:,:,:), see_h_emel(:,:,:,:),
      &  see_h_eiel(:,:,:,:), see_h_epel(:,:,:,:),
      &  sei_h_eapl(:,:,:,:), sei_h_empl(:,:,:,:),
      &  sei_h_eipl(:,:,:,:), sei_h_eppl(:,:,:,:),
-     &  sni_s_papl(:,:,:,:),sni_s_pmpl(:,:,:,:),
-     &  sni_s_pipl(:,:,:,:),sni_s_pppl(:,:,:,:),
-     &  smo_s_mapl(:,:,:,:),smo_s_mmpl(:,:,:,:),
-     &  smo_s_mipl(:,:,:,:),smo_s_cppv(:,:,:,:),
+     &  sni_s_papl(:,:,:,:), sni_s_pmpl(:,:,:,:),
+     &  sni_s_pipl(:,:,:,:), sni_s_pppl(:,:,:,:),
+     &  smo_s_mapl(:,:,:,:), smo_s_mmpl(:,:,:,:),
+     &  smo_s_mipl(:,:,:,:), smo_s_cppv(:,:,:,:),
      &  see_s_eael(:,:,:), see_s_emel(:,:,:),
      &  see_s_eiel(:,:,:), see_s_epel(:,:,:),
      &  sei_s_eapl(:,:,:), sei_s_empl(:,:,:),
@@ -1207,8 +1207,8 @@ c!###}
             do ix=1,nx !{
               do iy=1,ny !{
                 do is=0,ns-1 !{
+                  ls=b2eatcr(is)
                   if(.not.is_neutral(is)) then !{
-                    ls=b2eatcr(is)
                     if(lstrascl(istrai,ls).gt.0) then !{
                       sni(ix,iy,fluids_list(is),istrai)=
      *                   sni(ix,iy,fluids_list(is),istrai)*hlp_scl(ls)
@@ -1299,7 +1299,7 @@ c!###}
                   wldra(j,ls,istrai)=wldra(j,ls,istrai)*hlp_scl(ls)
                 end if !}
 c!###{
-c              if(hlp_tt) print '(a,1p,3i4,l3,4e13.5)',
+c               if(hlp_tt) print '(a,1p,3i4,l3,4e13.5)',
 c     ,          ' @@@ istrai,j,ls,log,scl,wldpa,wldna,wldra',
 c     ,          istrai,j,ls,hlp_log,hlp_scl(ls),wldpa(j,ls,istrai),
 c     ,                       wldna(j,ls,istrai),wldra(j,ls,istrai)
@@ -1386,8 +1386,8 @@ c>>>
             do ix=1,nx !{
               do iy=1,ny !{
                 do is=0,ns-1 !{
+                  ls=b2eatcr(is)
                   if(.not.is_neutral(is)) then !{
-                    ls=b2eatcr(is)
                     if(lstrascl(istrai,ls).gt.0) then !{
                       sni(ix,iy,fluids_list(is),istrai)=
      *                 sni(ix,iy,fluids_list(is),istrai)*hlp_scl(ls)
@@ -1611,8 +1611,8 @@ c*** Here only the second pass of correction
             end do !}
 
             do is=0,ns-1 !{
+              ls=b2eatcr(is)
               if(.not.is_neutral(is)) then !{
-                ls=b2eatcr(is)
                 if(lstrascl(istrai,ls).gt.0) then !{
                   do ix=1,nx !{
                     do iy=1,ny !{
@@ -2370,15 +2370,15 @@ c   and apply linearisation
 * by ns
         recyc_hlp=0.0_R8
         do is=0,ns-1 !{
+          j=b2eatcr(is)
+          if(use_recyceir.gt.0) then
+            recyctmp=recyceir(istrai)
+          else
+            recyctmp=recyc(is,istrai)
+          endif
+          recyc_hlp=max(recyc_hlp,recyctmp)
           if(.not.is_neutral(is)) then !{
             ifl=fluids_list(is)
-            j=b2eatcr(is)
-            if(use_recyceir.gt.0) then
-              recyctmp=recyceir(istrai)
-            else
-              recyctmp=recyc(is,istrai)
-            endif
-            recyc_hlp=max(recyc_hlp,recyctmp)
             do iy=-1,ny !{
               do ix=-1,nx !{
                 if(leftix(ix,iy).ne.-2 .and.
@@ -2737,7 +2737,7 @@ c*** before correction (r), after correction (c), after iteration (i)
                   endif
                 end if !}
               end do !}  ! ix
-            end do !}  !iy
+            end do !}  ! iy
           end if !}
         end do !}  ! is
         do iy=-1,ny !{
