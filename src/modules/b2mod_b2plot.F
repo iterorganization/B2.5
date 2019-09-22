@@ -68,9 +68,6 @@
 
 #ifndef PSR
       character*16, allocatable, save ::
-     *  textan(:),
-     *  textmn(:),
-     *  textin(:),
      *  textpl(:),
      *  textplel(:),
      *  textplel2(:,:),
@@ -88,9 +85,6 @@
      *  texttargsp(:)    
 #else
       character*16, save ::
-     *  textan(0:DEF_NATM-1),
-     *  textmn(0:DEF_NMOL-1),
-     *  textin(0:DEF_NION-1),
      *  textpl(0:DEF_NPLS-1),
      *  textplel(0:DEF_NPLS),
      *  textplel2(0:DEF_NPLS,0:DEF_NPLS),
@@ -191,9 +185,6 @@ cank
       allocate(uutraj(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vvtraj(-1:nxd,-1:nyd,0:nsd-1))
 #ifndef PSR
-      allocate(textan(0:natmd-1))
-      allocate(textmn(0:nmold-1))
-      allocate(textin(0:niond-1))
       allocate(textpl(0:nsd-1))
       allocate(textplel(0:nsd))
       allocate(textplel2(0:nsd,0:nsd))
@@ -210,12 +201,6 @@ cank
       allocate(texttrack(0:ntrack))
       allocate(texttargsp(ntrack))
 #else
-      call xertst(natmd .le.DEF_NATM,
-     . 'increase size of textam array')
-      call xertst(nmold .le.DEF_NMOL,
-     . 'increase size of textmn array')
-      call xertst(niond .le.DEF_NION,
-     . 'increase size of textin array')
       call xertst(nsd   .le.DEF_NPLS,
      . 'increase size of textpl array')
       call xertst(wklngd.le.wklng,
@@ -296,9 +281,6 @@ cank
       deallocate(uutraj)
       deallocate(vvtraj)
 #ifndef PSR
-      deallocate(textan)
-      deallocate(textmn)
-      deallocate(textin)
       deallocate(textpl)
       deallocate(textplel)
       deallocate(textplel2)

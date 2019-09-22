@@ -1712,8 +1712,6 @@ cxpb initialize the data necessary for boundary conditions
       else
         call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
       endif
-      call b2stbr_init (nx, ny, ns, BoRiS)
-      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 #ifdef B25_EIRENE
@@ -1730,6 +1728,8 @@ cxpb for neutral fluxes used in b2stbc_phys
         endif
       endif
 #endif
+      call b2stbr_init (nx, ny, ns, BoRiS)
+      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
 c new CDF movie option (1st frame at t=0)
       if(tim.ge.save_cdfmovie_time.and.
      1 delta_cdfmovie_time.gt.0.0_R8) then

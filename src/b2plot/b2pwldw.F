@@ -1438,7 +1438,7 @@ c      print *,'About to write a line:',k,' values'   !###
       if(k.gt.0) write(lun,frmt_hlp) (w_line(i),tab,i=1,k)
       deallocate(w_line)
 c      print *,'TEXTMN*',adjustl(TEXTMN),'*'
-c      print *,'TEXTin*',adjustl(TEXTin),'*'
+c      print *,'TEXTIN*',adjustl(TEXTIN),'*'
 
 c=======================================================================
       end
