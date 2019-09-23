@@ -1692,16 +1692,16 @@ cwdk also need to correct for degenerate faces?
                 imn = min(m%fcVX(fcss2(icoss),1),m%fcVX(fcss2(icoss),2))
                 imx = max(m%fcVX(fcss2(icoss),1),m%fcVX(fcss2(icoss),2))
 	        if ((head%vx1 == imn) .or. (head%vx1 == imx)) then
-	          allocate(face) 
-	          nullify(face%prev)
-	          nullify(face%next)
-	          face%fcno = fcss2(icoss)
-	          face%vx1 = imn+imx-head%vx1
-	          face%vx2 = head%vx1
-	          face%next => head
-		  head%prev => face	
- 		  head => face	
-                 lout(icoss) = .true.
+                  allocate(face) 
+                  nullify(face%prev)
+                  nullify(face%next)
+                  face%fcno = fcss2(icoss)
+                  face%vx1 = imn+imx-head%vx1
+                  face%vx2 = head%vx1
+                  face%next => head
+                  head%prev => face	
+                  head => face	
+                  lout(icoss) = .true.
   		  exit	
 	        end if
 	        if ((tail%vx2 == imn) .or. (tail%vx2 == imx)) then

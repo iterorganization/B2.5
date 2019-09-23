@@ -32,13 +32,6 @@
      .          prep_plasma, prep_plasma_ext,
      .          to_struct_plasma, read_map_geo, write_map_geo
 
-cwdk  eventually: take this outside of a module! (or: make sure this module is
-cwdk  only used at b2mod_driver level)
-cwdk      type(mapping), public, save :: mpg
-cwdk      type(geometry), public, save :: gm
-cwdk      type(B2State), public, save :: state
-cwdk      type(B2StateExt), public, save :: state_ext
-
       contains
 
 ***********************************************************************
@@ -97,20 +90,24 @@ cwdk      type(B2StateExt), public, save :: state_ext
      .           inv, inv1, inv2, invmx, ifcc, icount, n2, ix2o,
      .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, 
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
-     .           ixb, iyb, bix, biy, idb, lbix, lbiy
+     .           ixb, iyb, bix, biy, tix, tiy, rix, riy, idb, 
+     .           lbix, lbiy,
+     .           iunused, nunused, ivxe, nvxe
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
      .           ighostfcx(:,:), ixghostfcx(:), iyghostfcx(:), 
      .           ighostfcy(:,:), ixghostfcy(:), iyghostfcy(:), 
      .           ighostvx(:,:), ixghostvx(:), iyghostvx(:),
-     .           locleftix(:,:), locleftiy(:,:), locrightix(:,:),
-     .           locrightiy(:,:), locbottomix(:,:), locbottomiy(:,:),
+!     .           locleftix(:,:), locleftiy(:,:), 
+     .           locrightix(:,:), locrightiy(:,:),
+!     .           locbottomix(:,:), locbottomiy(:,:),
      .           loctopix(:,:), loctopiy(:,:),
-     .           ixmapghostvx(:,:), iymapghostvx(:,:)
+     .           ixmapghostvx(:,:), iymapghostvx(:,:),
+     .           ixvxe(:), iyvxe(:)
 
       real(R8) :: xco(4), yco(4)
-      logical lfound, swapped, classical, bound
+      logical lfound, swapped, classical, bound, lkeep
 
 !  assume a structured quadrilateral grid
 
@@ -151,16 +148,18 @@ cwdk      type(B2StateExt), public, save :: state_ext
       allocate (ighostvx(-1:nx,-1:ny))
       allocate (ixghostvx(n2))
       allocate (iyghostvx(n2))
-      allocate (locleftix(-1:nx,-1:ny))
-      allocate (locleftiy(-1:nx,-1:ny)) 
+!      allocate (locleftix(-1:nx,-1:ny))
+!      allocate (locleftiy(-1:nx,-1:ny)) 
       allocate (locrightix(-1:nx,-1:ny))
       allocate (locrightiy(-1:nx,-1:ny)) 
-      allocate (locbottomix(-1:nx,-1:ny)) 
-      allocate (locbottomiy(-1:nx,-1:ny))
+!      allocate (locbottomix(-1:nx,-1:ny)) 
+!      allocate (locbottomiy(-1:nx,-1:ny))
       allocate (loctopix(-1:nx,-1:ny))
       allocate (loctopiy(-1:nx,-1:ny))
       allocate (ixmapghostvx(-1:nx,-1:ny)) 
       allocate (iymapghostvx(-1:nx,-1:ny))
+      allocate (ixvxe(n2))
+      allocate (iyvxe(n2))
       ighostcv = 0
       icorner = 0
       ixghostcv = 0
@@ -176,16 +175,18 @@ cwdk      type(B2StateExt), public, save :: state_ext
       ighostvx = 0
       ixghostvx = 0
       iyghostvx = 0
-      locleftix = -2
-      locleftiy = -2
-      locrightix = -2
-      locrightiy = -2
-      locbottomix = -2
-      locbottomiy = -2
-      loctopix = -2
-      loctopiy = -2
+!      locleftix = leftix
+!      locleftiy = leftiy
+      locrightix = rightix
+      locrightiy = rightiy
+!      locbottomix = bottomix
+!      locbottomiy = bottomiy
+      loctopix = topix
+      loctopiy = topiy
       ixmapghostvx = -2
       iymapghostvx = -2
+      ixvxe = -2
+      iyvxe = -2
 
 #ifndef CFLAGS
 ! Count internal ghost cells
@@ -292,11 +293,11 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 #else
 ! Count internal ghost cells
       icount = 0
-! Count "corner" points, by checking whether it is surrounded by ghosts and/or
+! Count "corner" cells, by checking whether it is surrounded by ghosts and/or
 ! non-existing cells
       do iy = -1, ny
        do ix = -1, nx
-        if (isUnusedCell(cflags(ix, iy, CELLFLAG_TYPE))) cycle
+        if (.not.isGhostCell(cflags(ix, iy, CELLFLAG_TYPE))) cycle
         ict = 0
 	! Count inexisting neighbors
         if (rightix(ix,iy)==nx+1) ict = ict+1
@@ -450,6 +451,496 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       enddo
       nghostvxi = icount
 #else
+! Count vertices to be removed
+      iunused = 0
+      icount  = 0
+      nvxe    = 0
+
+! First pass: remove vertices of all unused cells
+      do iy = -1, ny
+        do ix = -1, nx
+          if (isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+            iunused = iunused + 1
+            ighostvx(ix,iy) = 1
+            ixmapghostvx(ix,iy) = -2
+            iymapghostvx(ix,iy) = -2
+          endif
+        enddo
+      enddo
+      nunused = iunused
+
+! Second pass: * treat boundary and guard cells
+!              * add external vertices if needed
+! Note: internal cells: always keep vertex; no special treatment needed
+      do iy = -1, ny
+        do ix = -1, nx
+          if (isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+            ! For boundary cells: keep vertex, except if points coincide
+            if (points_match(crx(ix,iy,0), cry(ix,iy,0), 
+     .                       crx(ix,iy,2), cry(ix,iy,2))) then
+              ! Boundary cell with degenerate W face
+              ! Merge vertex with top neighbor
+              icount = icount + 1
+              ighostvx(ix,iy)   = 1
+!              ixghostvx(icount) = ix
+!              iyghostvx(icount) = iy
+              ixmapghostvx(ix,iy) = topix(ix,iy)
+              iymapghostvx(ix,iy) = topiy(ix,iy)
+            elseif (points_match(crx(ix,iy,0), cry(ix,iy,0), 
+     .                           crx(ix,iy,1), cry(ix,iy,1))) then   
+              ! Boundary cell with degenerate S face
+              ! Merge vertex with right neighbor
+              icount = icount + 1
+              ighostvx(ix,iy)   = 1
+!              ixghostvx(icount) = ix
+!              iyghostvx(icount) = iy
+              ixmapghostvx(ix,iy) = rightix(ix,iy)
+              iymapghostvx(ix,iy) = rightiy(ix,iy)
+            elseif (points_match(crx(ix,iy,1), cry(ix,iy,1), 
+     .                           crx(ix,iy,3), cry(ix,iy,3))) then   
+              ! Boundary cell with degenerate E face
+              ! In 3 cases, need to add a new, external vertex:
+              ! 1) if both N+S neighbors are guard
+              ! 2) if S is guard, and N a boundary cell with degenerate E face
+              ! 3) if N is guard, and S a boundary cell with degenerate E face
+              tix = topix(ix,iy)
+              tiy = topiy(ix,iy)
+              bix = bottomix(ix,iy)
+              biy = bottomiy(ix,iy)
+              if ((isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE)) .and.
+     .             isGhostCell(cflags(bix,biy,CELLFLAG_TYPE))) .or.
+     .            (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE)) .and.
+     .             isBoundaryCell(cflags(bix,biy,CELLFLAG_TYPE)) .and.
+     .             points_match(crx(bix,biy,1), cry(bix,biy,1), 
+     .                          crx(bix,biy,3), cry(bix,biy,3))) .or.
+     .            (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE)) .and.
+     .             isBoundaryCell(cflags(tix,tiy,CELLFLAG_TYPE)) .and.
+     .             points_match(crx(tix,tiy,1), cry(tix,tiy,1), 
+     .                          crx(tix,tiy,3), cry(tix,tiy,3)))) then
+                ! Check whether an external vertex has already been created here
+                lfound = .false.
+                ivxe   = 0
+                do while (.not.lfound .and. ixvxe(ivxe+1) /= -2)
+                  ivxe = ivxe + 1
+                  lfound = lfound.or.
+     .              points_match(crx(ix,iy,3), cry(ix,iy,3),
+     .                           crx(ixvxe(ivxe),iyvxe(ivxe),0), 
+     .                           cry(ixvxe(ivxe),iyvxe(ivxe),0))
+                enddo
+                if (.not.lfound) then
+                  ! Store in an available external cell
+                  nvxe = nvxe + 1
+                  ix2  = ix + 1
+                  iy2  = iy
+                  do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
+                    ix2 = ix2 + 1
+                    if (ix2 == nx+1) then
+                      write (*,*) 'ix, iy = ', ix, iy
+                      call xerrab ('No suitable unused cell found (1).')
+                    endif
+                  enddo
+                  ! Create vertex, assign relevant data
+                  ixvxe(nvxe) = ix2
+                  iyvxe(nvxe) = iy2
+                  nunused = nunused - 1
+                  ighostvx(ix2,iy2) = 0
+                  crx(ix2,iy2,0)    = crx(ix,iy,3)
+                  cry(ix2,iy2,0)    = cry(ix,iy,3)
+                  ffbz(ix2,iy2,0)   = ffbz(ix,iy,3)
+                  fpsi(ix2,iy2,0,:) = fpsi(ix,iy,3,:)
+                  ! adapt local connectivity arrays
+                  locrightix(ix,iy) = ixvxe(nvxe)
+                  locrightiy(ix,iy) = iyvxe(nvxe)
+                  if (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE))) then
+                    locrightix(tix,tiy) = ixvxe(nvxe)
+                    locrightiy(tix,tiy) = iyvxe(nvxe)
+                  endif
+                else
+                  ! adapt local connectivity arrays
+                  locrightix(ix,iy) = ixvxe(ivxe)
+                  locrightiy(ix,iy) = iyvxe(ivxe)
+                  if (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE))) then
+                    locrightix(tix,tiy) = ixvxe(ivxe)
+                    locrightiy(tix,tiy) = iyvxe(ivxe)
+                  endif
+                endif
+!              elseif (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE))) then
+!                ! adapt local connectivity arrays
+!                locrightix(ix,iy) = loctopix(rightix(bix,biy),
+!     .                                       rightiy(bix,biy))
+!                locrightiy(ix,iy) = loctopiy(rightix(bix,biy),
+!     .                                       rightiy(bix,biy))
+!              elseif (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE))) then
+!                ! adapt local connectivity arrays
+!                locrightix(ix,iy) = rightix(tix,tiy)
+!                locrightiy(ix,iy) = rightiy(tix,tiy)
+              endif
+            elseif (points_match(crx(ix,iy,2), cry(ix,iy,2), 
+     .                           crx(ix,iy,3), cry(ix,iy,3))) then   
+              ! Boundary cell with degenerate N face
+              ! In 3 cases, need to add a new, external vertex:
+              ! 1) if both E+W neighbors are guard
+              ! 2) if E is guard, and W a boundary cell with degenerate N face
+              ! 3) if W is guard, and E a boundary cell with degenerate N face
+              lix = leftix(ix,iy)
+              liy = leftiy(ix,iy)
+              rix = rightix(ix,iy)
+              riy = rightiy(ix,iy)
+              if ((isGhostCell(cflags(lix,liy,CELLFLAG_TYPE)) .and.
+     .             isGhostCell(cflags(rix,riy,CELLFLAG_TYPE))) .or.
+     .            (isGhostCell(cflags(lix,liy,CELLFLAG_TYPE)) .and.
+     .             isBoundaryCell(cflags(rix,riy,CELLFLAG_TYPE)) .and.
+     .             points_match(crx(rix,riy,2), cry(rix,riy,2), 
+     .                          crx(rix,riy,3), cry(rix,riy,3))) .or.
+     .            (isGhostCell(cflags(rix,riy,CELLFLAG_TYPE)) .and.
+     .             isBoundaryCell(cflags(lix,liy,CELLFLAG_TYPE)) .and.
+     .             points_match(crx(lix,liy,2), cry(lix,liy,2), 
+     .                          crx(lix,liy,3), cry(lix,liy,3)))) then
+                ! Check whether an external vertex has already been created here
+                lfound = .false.
+                ivxe   = 0
+                do while (.not.lfound .and. ixvxe(ivxe+1) /= -2)
+                  ivxe = ivxe + 1
+                  lfound = lfound.or.
+     .              points_match(crx(ix,iy,3), cry(ix,iy,3),
+     .                           crx(ixvxe(ivxe),iyvxe(ivxe),0), 
+     .                           cry(ixvxe(ivxe),iyvxe(ivxe),0))
+                enddo
+                if (.not.lfound) then
+                  ! Store in an available external cell
+                  nvxe = nvxe + 1
+                  ix2  = ix
+                  iy2  = iy + 1
+                  do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
+                    iy2 = iy2 + 1
+                    if (iy2 == ny+1) then
+                      write (*,*) 'ix, iy = ', ix, iy
+                      call xerrab ('No suitable unused cell found (2).')
+                    endif
+                  enddo
+                  ! Create vertex, assign relevant data
+                  ixvxe(nvxe) = ix2
+                  iyvxe(nvxe) = iy2
+                  nunused = nunused - 1
+                  ighostvx(ix2,iy2) = 0
+                  crx(ix2,iy2,0)    = crx(ix,iy,3)
+                  cry(ix2,iy2,0)    = cry(ix,iy,3)
+                  ffbz(ix2,iy2,0)   = ffbz(ix,iy,3)
+                  fpsi(ix2,iy2,0,:) = fpsi(ix,iy,3,:)
+                  ! adapt local connectivity arrays
+                  loctopix(ix,iy) = ixvxe(nvxe)
+                  loctopiy(ix,iy) = iyvxe(nvxe)
+                  if (isGhostCell(cflags(rix,riy,CELLFLAG_TYPE))) then
+                    loctopix(rix,riy) = ixvxe(nvxe)
+                    loctopiy(rix,riy) = iyvxe(nvxe)
+                  endif
+                else
+                  ! adapt local connectivity arrays
+                  loctopix(ix,iy) = ixvxe(ivxe)
+                  loctopiy(ix,iy) = iyvxe(ivxe)
+                  if (isGhostCell(cflags(rix,riy,CELLFLAG_TYPE))) then
+                    loctopix(rix,riy) = ixvxe(ivxe)
+                    loctopiy(rix,riy) = iyvxe(ivxe)
+                  endif
+                endif
+!              elseif (isGhostCell(cflags(rix,riy,CELLFLAG_TYPE))) then
+!                ! adapt local connectivity arrays
+!                loctopix(ix,iy) = locrightix(topix(lix,liy),
+!     .                                       topiy(lix,liy))
+!                loctopiy(ix,iy) = locrightiy(topix(bix,biy),
+!     .                                       topiy(bix,biy))
+!              elseif (isGhostCell(cflags(lix,liy,CELLFLAG_TYPE))) then
+!                ! adapt local connectivity arrays
+!                loctopix(ix,iy) = topix(rix,riy)
+!                loctopiy(ix,iy) = topiy(rix,riy)
+              endif
+            endif
+          elseif (isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+            if(icorner(ix,iy) == 0) then
+              ! Remove vertex of S/W cells
+              tix = topix(ix,iy)
+              tiy = topiy(ix,iy)
+              if (tiy/=ny+1) then
+                if (isBoundaryCell(cflags(tix,tiy,CELLFLAG_TYPE))) then
+                  ! (ix,iy) is S guard cell; remove
+                  icount = icount + 1
+                  ighostvx(ix,iy)   = 1
+                  ixghostvx(icount) = ix
+                  iyghostvx(icount) = iy
+                  ixmapghostvx(ix,iy) = -2
+                  iymapghostvx(ix,iy) = -2
+                endif
+              endif
+              rix = rightix(ix,iy)
+              riy = rightiy(ix,iy)
+              if (rix/=nx+1) then
+                if (isBoundaryCell(cflags(rix,riy,CELLFLAG_TYPE))) then
+                  ! (ix,iy) is W guard cell; remove
+                  icount = icount + 1
+                  ighostvx(ix,iy)   = 1
+                  ixghostvx(icount) = ix
+                  iyghostvx(icount) = iy
+                  ixmapghostvx(ix,iy) = -2
+                  iymapghostvx(ix,iy) = -2
+                endif
+              endif
+              bix = bottomix(ix,iy)
+              biy = bottomiy(ix,iy)
+              if (biy/=-2) then
+                if (isBoundaryCell(cflags(bix,biy,CELLFLAG_TYPE))) then
+                  ! For N guard cells, check if vertex not already added as an E
+                  ! (special case of corners protruding into the plasma)
+                  ! If so, link to the other vertex
+                  lix = leftix(bix,biy)
+                  liy = leftiy(bix,biy)
+                  if (lix/=-2) then
+                    tix = topix(lix,liy)
+                    tiy = topiy(lix,liy)
+                    if (tiy/=ny+1) then
+                      if (.not.isGhostCell(cflags(tix,tiy,
+     .                         CELLFLAG_TYPE))) then
+                      rix = rightix(tix,tiy)
+                      riy = rightiy(tix,tiy)
+                      if (rix/=nx+1) then 
+                        icount = icount + 1
+                        ighostvx(ix,iy)   = 1
+                        ixghostvx(icount) = ix
+                        iyghostvx(icount) = iy
+                        ixmapghostvx(ix,iy) = rix
+                        iymapghostvx(ix,iy) = riy
+                      endif
+                      endif
+                    endif
+                  endif
+                endif
+              endif
+              lix = leftix(ix,iy)
+              liy = leftiy(ix,iy)
+              if (lix/=-2) then
+                if (isBoundaryCell(cflags(lix,liy,CELLFLAG_TYPE))) then
+                  ! For E guard cells, check if top vertex exists (corners in the geometry)
+                  ! If not, add external vertex
+                  lfound=.false.
+                  tix = topix(lix,liy)
+                  tiy = topiy(lix,liy)
+                  if (tiy/=ny+1) then
+                    rix = rightix(tix,tiy)
+                    riy = rightiy(tix,tiy)
+                    if (rix/=nx+1) lfound=.true.
+                  endif
+                  if (.not.lfound) then 
+                    ! Check whether an external vertex has already been created here
+                    ivxe   = 0
+                    do while (.not.lfound .and. ixvxe(ivxe+1) /= -2)
+                      ivxe = ivxe + 1
+                      lfound = lfound.or.
+     .                  points_match(crx(ix,iy,3), cry(ix,iy,3),
+     .                               crx(ixvxe(ivxe),iyvxe(ivxe),0), 
+     .                               cry(ixvxe(ivxe),iyvxe(ivxe),0))
+                    enddo
+                    if (.not.lfound) then
+                      ! Store in an available external cell
+                      nvxe = nvxe + 1
+                      ix2  = ix
+                      iy2  = iy + 1
+                      do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                 .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
+                        iy2 = iy2 + 1
+                        if (iy2 == ny+1) then
+                          write (*,*) 'ix, iy = ', ix, iy
+                      call xerrab ('No suitable unused cell found (3).')
+                        endif
+                      enddo
+                      ! Create vertex, assign relevant data
+                      ixvxe(nvxe) = ix2
+                      iyvxe(nvxe) = iy2
+                      nunused = nunused - 1
+                      ighostvx(ix2,iy2) = 0
+                      crx(ix2,iy2,0)    = crx(ix,iy,2)
+                      cry(ix2,iy2,0)    = cry(ix,iy,2)
+                      ffbz(ix2,iy2,0)   = ffbz(ix,iy,2)
+                      fpsi(ix2,iy2,0,:) = fpsi(ix,iy,2,:)
+                      ! Adapt local connectivity arrays
+                      loctopix(ix,iy) = ixvxe(nvxe)
+                      loctopiy(ix,iy) = iyvxe(nvxe)
+                    endif
+                  endif
+                endif
+              endif
+            else
+              ! For corners, only keep vertex of NE corners
+              ! Current assumption: CARRE2/b2ag will not create corners for extended cases
+              if ((leftix(ix,iy)   == -2)  .or.
+     .            (bottomiy(ix,iy) == -2)) then
+                ! (ix,iy) is not a NE corner cell; remove
+                icount = icount + 1
+                ighostvx(ix,iy)   = 1
+                ixghostvx(icount) = ix
+                iyghostvx(icount) = iy
+                ixmapghostvx(ix,iy) = -2
+                iymapghostvx(ix,iy) = -2
+              endif
+            endif
+          endif
+        enddo
+      enddo
+      nghostvxi = nunused + icount
+
+! Third pass: adapt local connectivity arrays of boundary cells
+      do iy = -1, ny
+        do ix = -1, nx
+          if (isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+            if (points_match(crx(ix,iy,1), cry(ix,iy,1), 
+     .                       crx(ix,iy,3), cry(ix,iy,3))) then   
+              ! Boundary cell with degenerate E face
+              tix = topix(ix,iy)
+              tiy = topiy(ix,iy)
+              bix = bottomix(ix,iy)
+              biy = bottomiy(ix,iy)
+              if ((isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE)) .and.
+     .             isGhostCell(cflags(bix,biy,CELLFLAG_TYPE))) .or.
+     .            (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE)) .and.
+     .             isBoundaryCell(cflags(bix,biy,CELLFLAG_TYPE)) .and.
+     .             points_match(crx(bix,biy,1), cry(bix,biy,1), 
+     .                          crx(bix,biy,3), cry(bix,biy,3))) .or.
+     .            (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE)) .and.
+     .             isBoundaryCell(cflags(tix,tiy,CELLFLAG_TYPE)) .and.
+     .             points_match(crx(tix,tiy,1), cry(tix,tiy,1), 
+     .                          crx(tix,tiy,3), cry(tix,tiy,3)))) then
+              elseif (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE))) then
+                ! adapt local connectivity arrays
+                locrightix(ix,iy) = loctopix(rightix(bix,biy),
+     .                                       rightiy(bix,biy))
+                locrightiy(ix,iy) = loctopiy(rightix(bix,biy),
+     .                                       rightiy(bix,biy))
+                locrightix(tix,tiy) = loctopix(rightix(bix,biy),
+     .                                         rightiy(bix,biy))
+                locrightiy(tix,tiy) = loctopiy(rightix(bix,biy),
+     .                                         rightiy(bix,biy))
+              elseif (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE))) then
+                ! adapt local connectivity arrays
+                locrightix(ix,iy) = rightix(tix,tiy)
+                locrightiy(ix,iy) = rightiy(tix,tiy)
+              endif
+            elseif (points_match(crx(ix,iy,2), cry(ix,iy,2), 
+     .                           crx(ix,iy,3), cry(ix,iy,3))) then   
+              ! Boundary cell with degenerate N face
+              lix = leftix(ix,iy)
+              liy = leftiy(ix,iy)
+              rix = rightix(ix,iy)
+              riy = rightiy(ix,iy)
+              if ((isGhostCell(cflags(lix,liy,CELLFLAG_TYPE)) .and.
+     .             isGhostCell(cflags(rix,riy,CELLFLAG_TYPE))) .or.
+     .            (isGhostCell(cflags(lix,liy,CELLFLAG_TYPE)) .and.
+     .             isBoundaryCell(cflags(rix,riy,CELLFLAG_TYPE)) .and.
+     .             points_match(crx(rix,riy,2), cry(rix,riy,2), 
+     .                          crx(rix,riy,3), cry(rix,riy,3))) .or.
+     .            (isGhostCell(cflags(rix,riy,CELLFLAG_TYPE)) .and.
+     .             isBoundaryCell(cflags(lix,liy,CELLFLAG_TYPE)) .and.
+     .             points_match(crx(lix,liy,2), cry(lix,liy,2), 
+     .                          crx(lix,liy,3), cry(lix,liy,3)))) then
+              elseif (isGhostCell(cflags(rix,riy,CELLFLAG_TYPE))) then
+                ! adapt local connectivity arrays
+                loctopix(ix,iy) = locrightix(topix(lix,liy),
+     .                                       topiy(lix,liy))
+                loctopiy(ix,iy) = locrightiy(topix(bix,biy),
+     .                                       topiy(bix,biy))
+                loctopix(rix,riy) = locrightix(topix(lix,liy),
+     .                                         topiy(lix,liy))
+                loctopiy(rix,riy) = locrightiy(topix(bix,biy),
+     .                                         topiy(bix,biy))
+              elseif (isGhostCell(cflags(lix,liy,CELLFLAG_TYPE))) then
+                ! adapt local connectivity arrays
+                loctopix(ix,iy) = topix(rix,riy)
+                loctopiy(ix,iy) = topiy(rix,riy)
+              endif
+            endif
+          endif
+        enddo
+      enddo
+
+! Final pass: adapt local connectivity arrays of guard cells
+      do iy = -1, ny
+        do ix = -1, nx
+          if (isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+            if(icorner(ix,iy) == 0) then
+              bix = bottomix(ix,iy)
+              biy = bottomiy(ix,iy)
+              if (biy/=-2) then
+                if (isBoundaryCell(cflags(bix,biy,CELLFLAG_TYPE))) then
+                  ! N guard cell
+                  if (locrightix(ix,iy)==nx+1) then
+                    locrightix(ix,iy) = loctopix(rightix(bix,biy),
+     .                                           rightiy(bix,biy))
+                    locrightiy(ix,iy) = loctopiy(rightix(bix,biy),
+     .                                           rightiy(bix,biy))
+                  endif
+                endif
+              endif
+              lix = leftix(ix,iy)
+              liy = leftiy(ix,iy)
+              if (lix/=-2) then
+                if (isBoundaryCell(cflags(lix,liy,CELLFLAG_TYPE))) then
+                  ! For E guard cells
+                  if (topiy(ix,iy)==ny+1) then
+                    loctopix(ix,iy) = locrightix(topix(lix,liy),
+     .                                           topiy(lix,liy))
+                    loctopiy(ix,iy) = locrightiy(topix(lix,liy),
+     .                                           topiy(lix,liy))
+                  endif
+                endif
+              endif
+            else
+            endif
+          endif
+        enddo
+      enddo
+
+
+! Sanity check
+      do iy = -1, ny
+        do ix = -1, nx
+          if (isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+            if (locrightix(ix,iy)==nx+1) then
+              write (*,*) 'ix, iy = ', ix, iy
+              call xerrab ('Problem in definition locrightix.')
+            endif
+            if (loctopiy(ix,iy)==ny+1) then
+              write (*,*) 'ix, iy = ', ix, iy
+              call xerrab ('Problem in definition loctopiy.')
+            endif
+          elseif (isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+            if(icorner(ix,iy) == 0) then
+              bix = bottomix(ix,iy)
+              biy = bottomiy(ix,iy)
+              if (biy/=-2) then
+                if (isBoundaryCell(cflags(bix,biy,CELLFLAG_TYPE))) then
+                  ! N guard cell
+                  if (locrightix(ix,iy)==nx+1) then
+                    write (*,*) 'ix, iy = ', ix, iy
+                    call xerrab ('Problem in definition locrightix.')
+                  endif
+                endif
+              endif
+              lix = leftix(ix,iy)
+              liy = leftiy(ix,iy)
+              if (lix/=-2) then
+                if (isBoundaryCell(cflags(lix,liy,CELLFLAG_TYPE))) then
+                  ! For E guard cells
+                  if (loctopiy(ix,iy)==ny+1) then
+                    write (*,*) 'ix, iy = ', ix, iy
+                    call xerrab ('Problem in definition loctopiy.')
+                  endif
+                endif
+              endif
+            endif
+          endif
+        enddo
+      enddo
+
+#ifdef WG_RM
 ! Make local left/right/top/bottom connectivity
       do iy = 0, ny+1
         do ix = 0, nx+1            
@@ -546,54 +1037,58 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
           liy = locleftiy(ix-1,iy-1)
           bix = locbottomix(ix-1,iy-1)
           biy = locbottomiy(ix-1,iy-1)
-          if((cflags(lix,liy,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .      (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .      (cflags(locbottomix(ix-1,iy-1),locbottomiy(ix-1,iy-1),
-     .              CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .      (cflags(locbottomix(lix,liy), locbottomiy(lix,liy),
-     .              CELLFLAG_TYPE) /= GRID_INTERNAL).and.
-     .      (cflags(lix,liy,CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .      (cflags(ix-1,iy-1,CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .      (cflags(locbottomix(lix,liy), locbottomiy(lix,liy),
-     .              CELLFLAG_TYPE) /= GRID_BOUNDARY).and.
-     .       (cflags(locbottomix(ix-1,iy-1),locbottomiy(ix-1,iy-1),
-     .               CELLFLAG_TYPE) /= GRID_BOUNDARY))then
+          lbix = locbottomix(lix,liy)
+          lbiy = locbottomiy(lix,liy)
+          if(.not.isRealCell(cflags(ix-1,iy-1,CELLFLAG_TYPE)).and.
+     .       .not.isRealCell(cflags(lix,liy,CELLFLAG_TYPE)).and.
+     .       .not.isRealCell(cflags(bix,biy,CELLFLAG_TYPE)).and.
+     .       .not.isRealCell(cflags(lbix,lbiy,CELLFLAG_TYPE))) then
+cwdk        None of the cells surrounding the vertex touch the domain;
+cwdk        vertex can be removed
             ighostvx(ix-1,iy-1)=1
             icount=icount+1
             ixghostvx(icount) = ix-1
             iyghostvx(icount) = iy-1
             ixmapghostvx(ix-1,iy-1)= -2
             iymapghostvx(ix-1,iy-1) = -2
-          elseif (cflags(ix-1,iy-1,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
+          elseif (isBoundaryCell(cflags(ix-1,iy-1,CELLFLAG_TYPE)).and.
      .        points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
      .                     crx(ix-1,iy-1,2), cry(ix-1,iy-1,2))) then
+cwdk        Boundary cell with degenerate W face;
+cwdk        merge vertex with top neighbor
             ighostvx(ix-1,iy-1)=1
             icount=icount+1
             ixghostvx(icount) = ix-1
             iyghostvx(icount) = iy-1
             ixmapghostvx(ix-1,iy-1) = loctopix(ix-1,iy-1)
             iymapghostvx(ix-1,iy-1) = loctopiy(ix-1,iy-1)
-          elseif (cflags(ix-1,iy-1,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
+          elseif (isBoundaryCell(cflags(ix-1,iy-1,CELLFLAG_TYPE)).and.
      .        points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
-     .         crx(ix-1,iy-1,1), cry(ix-1,iy-1,1))) then   
+     .                     crx(ix-1,iy-1,1), cry(ix-1,iy-1,1))) then   
+cwdk        Boundary cell with degenerate S face;
+cwdk        merge vertex with right neighbor
             ighostvx(ix-1,iy-1)=1
             icount=icount+1
             ixghostvx(icount) = ix-1
             iyghostvx(icount) = iy-1
             ixmapghostvx(ix-1,iy-1) = locrightix(ix-1,iy-1)
             iymapghostvx(ix-1,iy-1) = locrightiy(ix-1,iy-1)
-          elseif (cflags(lix,liy,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
+          elseif (isBoundaryCell(cflags(lix,liy,CELLFLAG_TYPE)).and.
      .        points_match(crx(lix,liy,1), cry(lix,liy,1), 
      .                     crx(lix,liy,3), cry(lix,liy,3))) then
+cwdk        Left neighbor is boundary cell with degenerate E face;
+cwdk        merge vertex with top neighbor
             ighostvx(ix-1,iy-1)=1
             icount=icount+1
             ixghostvx(icount) = ix-1
             iyghostvx(icount) = iy-1
             ixmapghostvx(ix-1,iy-1) = loctopix(ix-1,iy-1)
             iymapghostvx(ix-1,iy-1) = loctopiy(ix-1,iy-1)
-          elseif (cflags(bix,biy,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
+          elseif (isBoundaryCell(cflags(bix,biy,CELLFLAG_TYPE)).and.
      .        points_match(crx(bix,biy,2), cry(bix,biy,2), 
      .                     crx(bix,biy,3), cry(bix,biy,3))) then
+cwdk        Bottom neighbor is boundary cell with degenerate N face;
+cwdk        merge vertex with right neighbor
             ighostvx(ix-1,iy-1)=1
             icount=icount+1
             ixghostvx(icount) = ix-1
@@ -605,7 +1100,9 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       enddo
       nghostvxi = icount
 #endif
-      m%nVx = (nx+1) * (ny+1) - nghostvxi
+#endif
+!      m%nVx = (nx+1) * (ny+1) - nghostvxi
+      m%nVx = (nx+2)*(ny+2) - nghostvxi
 
 ! no. of flux surfaces (conservative estimate)
       m%nFs = max(1,(1 + 2*nncut)*ny)
@@ -694,15 +1191,11 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 #else
       do iy = 0, ny+1
         ixloop: do ix = 0, nx+1
-          if((cflags(ix-1,iy-1,CELLFLAG_TYPE) == GRID_INTERNAL).or.
-     .       (cflags(ix-1,iy-1,CELLFLAG_TYPE) == GRID_BOUNDARY)) then
+          if(isRealCell(cflags(ix-1,iy-1,CELLFLAG_TYPE))) then
             ici = ici + 1          
             m%imapCv(ix-1,iy-1) = ici
-          elseif(cflags(ix-1,iy-1,CELLFLAG_TYPE) == GRID_GUARD) then
-            do ic = 1, ncorneri
-              if ((ixcorner(ic) == ix-1) .and. 
-     .            (iycorner(ic) == iy-1)) cycle ixloop
-            enddo
+          elseif(isGhostCell(cflags(ix-1,iy-1,CELLFLAG_TYPE))) then
+            if (icorner(ix-1,iy-1)/=0) cycle ixloop
             icg = icg+1
             m%imapCv(ix-1,iy-1) = icg
           endif
@@ -722,7 +1215,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
 
 ! for Fcx's and Fcy's
       m%imapFcx= 0 ! 0 means not in use in unstructured
-      ici =0
+      ici = 0
       do iy = 0, ny
         do ix = 0, nx
           if(ighostfcx(ix,iy)==0) then
@@ -765,14 +1258,21 @@ cwdk  might need to add duplicates numbers here...
      .    ('Inconsistency between counting and mapping in nVx!')
       endif
 
+!     assign same vertex number to coinciding vertices
+      write (*,*) 'Merging vertices'
       do iy = 1, ny+1
         do ix = 1, nx+1
+          write (*,*) 'ix, iy = ', ix-1, iy-1
           ix2 = ix
           iy2 = iy
           do while (ighostvx(ix2-1,iy2-1)==1) 
             ix2o = ix2
             ix2= ixmapghostvx(ix2o-1,iy2-1)+1
-            iy2= iymapghostvx(ix2o-1,iy2-1)+1   
+            iy2= iymapghostvx(ix2o-1,iy2-1)+1 
+            write (*,*) 'ix2, iy2, ighost, ixmapghost, iymapghost= ', 
+     .        ix2-1, iy2-1 ,ighostvx(ix2-1,iy2-1), 
+     .                    ixmapghostvx(ix2-1,iy2-1),
+     .                    iymapghostvx(ix2-1,iy2-1)
             if ((ix2 == -1) .or. (ix2 == nx+2) .or.
      .          (iy2 == -1) .or. (iy2 == ny+2)) exit
           enddo            
@@ -780,6 +1280,7 @@ cwdk  might need to add duplicates numbers here...
      .                                  min(max(iy2-1,-1),ny))
         enddo
       enddo
+      write (*,*) 'Merged vertices'
 
 ! store indices of corner coordinates
       m%icornVx = 0
@@ -989,11 +1490,11 @@ cwdk  might need to add duplicates numbers here...
               if3 = if2 + 1
               if4 = if3 + 1
               m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
-              m%cvFc(if2) = m%imapFcx(locrightix(ix-1,iy-1),
-     .                              locrightiy(ix-1,iy-1))
+              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
+     .                                rightiy(ix-1,iy-1))
               m%cvFc(if3) = m%imapFcy(ix-1,iy-1)   
-              m%cvFc(if4) = m%imapFcy(loctopix(ix-1,iy-1),
-     .                                loctopiy(ix-1,iy-1))
+              m%cvFc(if4) = m%imapFcy(topix(ix-1,iy-1),
+     .                                topiy(ix-1,iy-1))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
               m%intcellP(if3) = 0.0_R8
@@ -1003,22 +1504,23 @@ cwdk  might need to add duplicates numbers here...
               m%intcellR(if3) = 1.0_R8
               m%intcellR(if4) = 1.0_R8
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),
-     .                             locrightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
-     .                               loctopiy(ix-1,iy-1))
-              m%cvVx(if4) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)),
-     .         locrightiy(loctopix(ix-1,iy-1),loctopiy(ix-1,iy-1)))
+              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
+     .                               rightiy(ix-1,iy-1))
+              m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),
+     .                               topiy(ix-1,iy-1))
+              m%cvVx(if4) = m%imapVx(locrightix(topix(ix-1,iy-1),
+     .                                          topiy(ix-1,iy-1)),
+     .                               locrightiy(topix(ix-1,iy-1),
+     .                                          topiy(ix-1,iy-1)))
            case ( CGEO_TRIA_NOLEFT )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
-              m%cvFc(if1) = m%imapFcx(locrightix(ix-1,iy-1),
-     .                              locrightiy(ix-1,iy-1))
+              m%cvFc(if1) = m%imapFcx(rightix(ix-1,iy-1),
+     .                                rightiy(ix-1,iy-1))
               m%cvFc(if2) = m%imapFcy(ix-1,iy-1)   
-              m%cvFc(if3) = m%imapFcy(loctopix(ix-1,iy-1),
-     .                                loctopiy(ix-1,iy-1))
+              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),
+     .                                topiy(ix-1,iy-1))
 !CWDK to be computed in b2ag!
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 0.0_R8
@@ -1026,45 +1528,43 @@ cwdk  might need to add duplicates numbers here...
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) = 0.0_R8
               m%intcellR(if3) = 1.0_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)!cwdk is this not the vertex that was thrown out?? ctb solved?
-
-              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),
-     .                             locrightiy(ix-1,iy-1))
-
+              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
+              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
+     .                               rightiy(ix-1,iy-1))
               m%cvVx(if3) = m%imapVx(locrightix(topix(ix-1,iy-1),
-     .                             loctopiy(ix-1,iy-1)), 
-     .                 locrightiy(loctopix(ix-1,iy-1),
-     .                            loctopiy(ix-1,iy-1)))
+     .                                          topiy(ix-1,iy-1)), 
+     .                               locrightiy(topix(ix-1,iy-1),
+     .                                          topiy(ix-1,iy-1)))
             case ( CGEO_TRIA_NOBOT )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
               m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
-              m%cvFc(if2) = m%imapFcx(locrightix(ix-1,iy-1),
-     .                              locrightiy(ix-1,iy-1))
-              m%cvFc(if3) = m%imapFcy(loctopix(ix-1,iy-1),
-     .                                loctopiy(ix-1,iy-1))
+              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
+     .                                rightiy(ix-1,iy-1))
+              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),
+     .                                topiy(ix-1,iy-1))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
               m%intcellP(if3) = 0.0_R8
               m%intcellR(if1) = 1.0_R8
               m%intcellR(if2) = 1.0_R8
               m%intcellR(if3) = 0.0_R8
-              m%cvVx(if1) = m%imapVx(ix-1,iy-1)!cwdk is this not the vertex that was thrown out?? ctb solved?
-              m%cvVx(if2) = m%imapVx(loctopix(ix-1,iy-1),
-     .                               loctopiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)), 
-     .                               locrightiy(loctopix(ix-1,iy-1),
-     .                                          loctopiy(ix-1,iy-1)))
+              m%cvVx(if1) = m%imapVx(ix-1,iy-1)
+              m%cvVx(if2) = m%imapVx(topix(ix-1,iy-1),
+     .                               topiy(ix-1,iy-1))
+              m%cvVx(if3) = m%imapVx(locrightix(topix(ix-1,iy-1),
+     .                                          topiy(ix-1,iy-1)), 
+     .                               locrightiy(topix(ix-1,iy-1),
+     .                                          topiy(ix-1,iy-1)))
             case ( CGEO_TRIA_NORIGHT )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
               m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
               m%cvFc(if2) = m%imapFcy(ix-1,iy-1)   
-              m%cvFc(if3) = m%imapFcy(loctopix(ix-1,iy-1),
-     .                                loctopiy(ix-1,iy-1))
+              m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),
+     .                                topiy(ix-1,iy-1))
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 0.0_R8
               m%intcellP(if3) = 1.0_R8
@@ -1073,16 +1573,16 @@ cwdk  might need to add duplicates numbers here...
               m%intcellR(if3) = 1.0_R8
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
               m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),!cwdk is this not the vertex that was thrown out??ctb solved?
-     .                             locrightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
-     .                               loctopiy(ix-1,iy-1))
+     .                               locrightiy(ix-1,iy-1))
+              m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),
+     .                               topiy(ix-1,iy-1))
             case ( CGEO_TRIA_NOTOP )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
               if3 = if2 + 1
               m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
-              m%cvFc(if2) = m%imapFcx(locrightix(ix-1,iy-1),
-     .                              locrightiy(ix-1,iy-1))
+              m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
+     .                                rightiy(ix-1,iy-1))
               m%cvFc(if3) = m%imapFcy(ix-1,iy-1)   
               m%intcellP(if1) = 1.0_R8
               m%intcellP(if2) = 1.0_R8
@@ -1091,8 +1591,8 @@ cwdk  might need to add duplicates numbers here...
               m%intcellR(if2) = 1.0_R8
               m%intcellR(if3) = 0.0_R8
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),
-     .                             locrightiy(ix-1,iy-1))
+              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
+     .                               rightiy(ix-1,iy-1))
               m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
      .                               loctopiy(ix-1,iy-1))!cwdk is this not the vertex that was thrown out?? ctb solved?
             end select
@@ -1101,11 +1601,11 @@ cwdk  might need to add duplicates numbers here...
             bound = .false.
 
 !tb  the vertex numbering might not be consistent for fcVx, to be checked 
+            ! N guard cell
             ixb = bottomix(ix-1,iy-1)
             iyb = bottomiy(ix-1,iy-1)
-            if ((ixb /= -2) .and. (iyb /= -2) .and. 
-     .          (ixb /= nx+1) .and. (iyb /= ny+1)) then
-              if (cflags(ixb,iyb,CELLFLAG_TYPE) == GRID_BOUNDARY) then
+            if (iyb /= -2) then
+              if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
                 ic = m%imapCv(ix-1,iy-1)
                 if1 = m%cvFcP(ic,1)
                 m%cvFc(if1) = m%imapFcy(ix-1,iy-1)    
@@ -1113,17 +1613,17 @@ cwdk  might need to add duplicates numbers here...
                 m%intcellR(if1) = 1.0_R8
                 if1 = m%cvVxP(ic,1)
                 m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
-                m%cvVx(if1+1) = 
-     .            m%imapVx(locrightix(ix-1,iy-1),locrightiy(ix-1,iy-1)) !cwdk might not exist... 
+                m%cvVx(if1+1) = m%imapVx(locrightix(ix-1,iy-1),
+     .                                   locrightiy(ix-1,iy-1)) !cwdk might not exist... 
                 bound = .true.
               end if
             end if
 
+            ! S guard cell
             ixb = topix(ix-1,iy-1)
             iyb = topiy(ix-1,iy-1)
-            if ((ixb /= -2) .and. (iyb /= -2) .and. 
-     .          (ixb /= nx+1) .and. (iyb /= ny+1)) then
-              if (cflags(ixb,iyb,CELLFLAG_TYPE) == GRID_BOUNDARY) then
+            if (iyb /= ny+1) then
+              if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
                 if (bound) call xerrab('calc_mapping - double boundary')
                 ic = m%imapCv(ix-1,iy-1)
                 if1 = m%cvFcP(ic,1)
@@ -1131,18 +1631,18 @@ cwdk  might need to add duplicates numbers here...
                 m%intcellP(if1) = 1.0_R8
                 m%intcellR(if1) = 1.0_R8
                 if1 = m%cvVxP(ic,1)
-                m%cvVx(if1) = m%imapVx(ixb,iyb)
+                m%cvVx(if1)   = m%imapVx(ixb,iyb)
                 m%cvVx(if1+1) = m%imapVx(locrightix(ixb,iyb),!cwdk might not exist... 
      .                                   locrightiy(ixb,iyb))!cwdk might not exist... 
                 bound = .true.
               end if
             end if
 
+            ! E guard cell
             ixb = leftix(ix-1,iy-1)
             iyb = leftiy(ix-1,iy-1)
-            if ((ixb /= -2) .and. (iyb /= -2) .and. 
-     .          (ixb /= nx+1) .and. (iyb /= ny+1)) then
-              if (cflags(ixb,iyb,CELLFLAG_TYPE) == GRID_BOUNDARY) then
+            if (ixb /= -2) then
+              if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
                 if (bound) call xerrab('calc_mapping - double boundary')
                 ic = m%imapCv(ix-1,iy-1)
                 if1 = m%cvFcP(ic,1)
@@ -1150,18 +1650,18 @@ cwdk  might need to add duplicates numbers here...
                 m%intcellP(if1) = 1.0_R8
                 m%intcellR(if1) = 1.0_R8
                 if1 = m%cvVxP(ic,1)
-                m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-                m%cvVx(if1+1) = m%imapVx(loctopix(ix-1,iy-1),!cwdk might not exist... 
+                m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
+                m%cvVx(if1+1) = m%imapVx(loctopix(ix-1,iy-1),
      .                                   loctopiy(ix-1,iy-1))!cwdk might not exist... 
                 bound = .true.
               end if
             end if
 
+            ! W guard cell
             ixb = rightix(ix-1,iy-1)
             iyb = rightiy(ix-1,iy-1)
-            if ((ixb /= -2) .and. (iyb /= -2) .and. 
-     .          (ixb /= nx+1) .and. (iyb /= ny+1)) then
-              if (cflags(ixb,iyb,CELLFLAG_TYPE) == GRID_BOUNDARY) then
+            if (ixb /= nx+1) then
+              if (isBoundaryCell(cflags(ixb,iyb,CELLFLAG_TYPE))) then
                 if (bound) call xerrab('calc_mapping - double boundary')
                 ic = m%imapCv(ix-1,iy-1)
                 if1 = m%cvFcP(ic,1)
@@ -1169,7 +1669,7 @@ cwdk  might need to add duplicates numbers here...
                 m%intcellP(if1) = 1.0_R8
                 m%intcellR(if1) = 1.0_R8
                 if1 = m%cvVxP(ic,1)
-                m%cvVx(if1) = m%imapVx(ixb,iyb)
+                m%cvVx(if1)   = m%imapVx(ixb,iyb)
                 m%cvVx(if1+1) = m%imapVx(loctopix(ixb,iyb),!cwdk might not exist... 
      .                                   loctopiy(ixb,iyb))!cwdk might not exist... 
                 bound = .true.
@@ -1193,8 +1693,8 @@ cwdk  might need to add duplicates numbers here...
          do ix = 1, nx+1
            if(m%imapFcx(ix-1,iy-1)/=0) then
              ifc =m%imapFcx(ix-1,iy-1)
-             m%fcCv(ifc,1) = m%imapCv(locleftix(ix-1,iy-1),
-     .                                locleftiy(ix-1,iy-1))
+             m%fcCv(ifc,1) = m%imapCv(leftix(ix-1,iy-1),
+     .                                leftiy(ix-1,iy-1))
              m%fcCv(ifc,2) = m%imapCv(ix-1,iy-1)
              m%fcVx(ifc,1) = m%imapVx(ix-1,iy-1)
              m%fcVx(ifc,2) = m%imapVx(loctopix(ix-1,iy-1),
@@ -1211,8 +1711,8 @@ cwdk  might need to add duplicates numbers here...
            if(m%imapFcy(ix-1,iy-1)/=0) then
              ifc =m%imapFcy(ix-1,iy-1)
              m%fcCv(ifc,2) = m%imapCv(ix-1,iy-1)
-             m%fcCv(ifc,1) = m%imapCv(locbottomix(ix-1,iy-1),
-     .                                locbottomiy(ix-1,iy-1))
+             m%fcCv(ifc,1) = m%imapCv(bottomix(ix-1,iy-1),
+     .                                bottomiy(ix-1,iy-1))
              m%fcVx(ifc,2) = m%imapVx(ix-1,iy-1)
              m%fcVx(ifc,1) = m%imapVx(locrightix(ix-1,iy-1),
      .                                locrightiy(ix-1,iy-1))
@@ -1243,33 +1743,29 @@ cwdk  might need to add duplicates numbers here...
 
        end do
 
+#ifdef WG_RM
 ! reduce coordinate problems
        do iy = 0, ny
          do ix = 0, nx
           if (ighostvx(ix,iy) == 1) cycle
-          if (cflags(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL) cycle
-          if (cflags(ix,iy,CELLFLAG_TYPE) == GRID_BOUNDARY) cycle
+          if (isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
           lix = locleftix(ix,iy)
           liy = locleftiy(ix,iy)
           bix = locbottomix(ix,iy)
           biy = locbottomiy(ix,iy)
           lbix = locbottomix(lix,liy)
           lbiy = locbottomiy(lix,liy)
-          if ((cflags(lix,liy,CELLFLAG_TYPE) == GRID_INTERNAL) .or.
-     .        (cflags(lix,liy,CELLFLAG_TYPE) == GRID_BOUNDARY)) then
+          if (isRealCell(cflags(lix,liy,CELLFLAG_TYPE))) then
             crx(ix,iy,0) = crx(lix,liy,1)
             cry(ix,iy,0) = cry(lix,liy,1)
             ffbz(ix,iy,0) = ffbz(lix,liy,1)
             fpsi(ix,iy,0,0) = fpsi(lix,liy,1,0)
-          elseif ((cflags(bix,biy,CELLFLAG_TYPE) == GRID_INTERNAL) .or.
-     .            (cflags(bix,biy,CELLFLAG_TYPE) == GRID_BOUNDARY)) then
+          elseif (isRealCell(cflags(bix,biy,CELLFLAG_TYPE))) then
             crx(ix,iy,0) = crx(bix,biy,2)
             cry(ix,iy,0) = cry(bix,biy,2)
             ffbz(ix,iy,0) = ffbz(bix,biy,2)
             fpsi(ix,iy,0,0) = fpsi(bix,biy,2,0)
-          elseif ((cflags(lbix,lbiy,CELLFLAG_TYPE) == GRID_INTERNAL).or.
-     .            (cflags(lbix,lbiy,CELLFLAG_TYPE) == GRID_BOUNDARY))
-     .           then
+          elseif (isRealCell(cflags(lbix,lbiy,CELLFLAG_TYPE))) then
             crx(ix,iy,0) = crx(lbix,lbiy,3)
             cry(ix,iy,0) = cry(lbix,lbiy,3)
             ffbz(ix,iy,0) = ffbz(lbix,lbiy,3)
@@ -1279,6 +1775,7 @@ cwdk  might need to add duplicates numbers here...
           end if
         end do
       end do
+#endif
 
 ! listing for every vertex the cell and face numbers
 ! and the starting points in the list
@@ -1491,12 +1988,12 @@ cwdk  might need to add duplicates numbers here...
       deallocate (ighostvx)
       deallocate (ixghostvx)
       deallocate (iyghostvx)
-      deallocate (locleftix)
-      deallocate (locleftiy)
+!      deallocate (locleftix)
+!      deallocate (locleftiy)
       deallocate (locrightix)
       deallocate (locrightiy)
-      deallocate (locbottomix)
-      deallocate (locbottomiy)
+!      deallocate (locbottomix)
+!      deallocate (locbottomiy)
       deallocate (loctopix)
       deallocate (loctopiy)
 
