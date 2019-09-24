@@ -557,7 +557,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                     locrightiy(tix,tiy) = iyvxe(nvxe)
                   endif
                   write (*,*)
-     .             'Created extra vertex at ix, iy, crx, cry = ',
+     .             '(1) Created vertex at ix, iy, crx, cry = ',
      .              nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
                 else
                   ! adapt local connectivity arrays
@@ -568,6 +568,20 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                     locrightiy(tix,tiy) = iyvxe(ivxe)
                   endif
                 endif
+              elseif (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE))) then
+                ! adapt local connectivity arrays
+                locrightix(ix,iy) = topix(rightix(bix,biy),
+     .                                    rightiy(bix,biy))
+                locrightiy(ix,iy) = topiy(rightix(bix,biy),
+     .                                    rightiy(bix,biy))
+                locrightix(tix,tiy) = topix(rightix(bix,biy),
+     .                                      rightiy(bix,biy))
+                locrightiy(tix,tiy) = topiy(rightix(bix,biy),
+     .                                      rightiy(bix,biy))
+              elseif (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE))) then
+                ! adapt local connectivity arrays
+                locrightix(ix,iy) = rightix(tix,tiy)
+                locrightiy(ix,iy) = rightiy(tix,tiy)
               endif
             elseif (points_match(crx(ix,iy,2), cry(ix,iy,2), 
      .                           crx(ix,iy,3), cry(ix,iy,3))) then   
@@ -630,7 +644,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                     loctopiy(rix,riy) = iyvxe(nvxe)
                   endif
                   write (*,*)
-     .             'Created extra vertex at ix, iy, crx, cry = ',
+     .             '(2) Created vertex at ix, iy, crx, cry = ',
      .              nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
                 else
                   ! adapt local connectivity arrays
@@ -640,6 +654,82 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                     loctopix(rix,riy) = ixvxe(ivxe)
                     loctopiy(rix,riy) = iyvxe(ivxe)
                   endif
+                endif
+              elseif (isGhostCell(cflags(rix,riy,CELLFLAG_TYPE))) then
+                ! adapt local connectivity arrays
+                loctopix(ix,iy) = rightix(topix(lix,liy),
+     .                                    topiy(lix,liy))
+                loctopiy(ix,iy) = rightiy(topix(lix,liy),
+     .                                    topiy(lix,liy))
+                loctopix(rix,riy) = rightix(topix(lix,liy),
+     .                                      topiy(lix,liy))
+                loctopiy(rix,riy) = rightiy(topix(lix,liy),
+     .                                      topiy(lix,liy))
+              elseif (isGhostCell(cflags(lix,liy,CELLFLAG_TYPE))) then
+                ! adapt local connectivity arrays
+                loctopix(ix,iy) = topix(rix,riy)
+                loctopiy(ix,iy) = topiy(rix,riy)
+              endif
+            else
+              tix = topix(ix,iy)
+              tiy = topiy(ix,iy)
+              rix = rightix(ix,iy)
+              riy = rightiy(ix,iy)
+              if (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE)) .and.
+     .            isGhostCell(cflags(rix,riy,CELLFLAG_TYPE))) then
+                ! Corner; check if top-right vertex exists
+                ! If not, add external vertex
+                if (rightix(tix,tiy)==nx+1) then 
+                    ! Check whether an external vertex has already been created here
+                    ivxe   = 0
+                    do while (.not.lfound .and. ixvxe(ivxe+1) /= -2)
+                      ivxe = ivxe + 1
+                      lfound = lfound.or.
+     .                  points_match(crx(ix,iy,3), cry(ix,iy,3),
+     .                               crx(ixvxe(ivxe),iyvxe(ivxe),0), 
+     .                               cry(ixvxe(ivxe),iyvxe(ivxe),0))
+                    enddo
+                    if (.not.lfound) then
+                      ! Store in an available external cell
+                      nvxe = nvxe + 1
+                      ix2  = tix + 1
+                      iy2  = tiy
+                      do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                 .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
+                        iy2 = iy2 + 1
+                        if (iy2 == ny+1) then
+                          write (*,*) 'ix, iy = ', ix, iy
+                      call xerrab ('No suitable unused cell found (3).')
+                        endif
+                      enddo
+                      ! Create vertex, assign relevant data
+                      ixvxe(nvxe) = ix2
+                      iyvxe(nvxe) = iy2
+                      nunused = nunused - 1
+                      ighostvx(ix2,iy2) = 0
+                      crx(ix2,iy2,0)    = crx(ix,iy,2)
+                      cry(ix2,iy2,0)    = cry(ix,iy,2)
+                      ffbz(ix2,iy2,0)   = ffbz(ix,iy,2)
+                      fpsi(ix2,iy2,0,:) = fpsi(ix,iy,2,:)
+                      ! Adapt local connectivity arrays
+                      locrightix(tix,tiy) = ixvxe(nvxe)
+                      locrightiy(tix,tiy) = iyvxe(nvxe)
+                      loctopix(rix,riy)   = ixvxe(nvxe)
+                      loctopiy(rix,riy)   = iyvxe(nvxe)
+                      write (*,*)
+     .                 '(3) Created vertex at ix, iy, crx, cry = ',
+     .                  nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+                    else
+                      ! Adapt local connectivity arrays
+                      locrightix(tix,tiy) = ixvxe(ivxe)
+                      locrightiy(tix,tiy) = iyvxe(ivxe)
+                      loctopix(rix,riy)   = ixvxe(ivxe)
+                      loctopiy(rix,riy)   = iyvxe(ivxe)
+                    endif
+                else
+                  ! Adapt local connectivity arrays
+                  loctopix(rix,riy)   = rightix(tix,tiy)
+                  loctopiy(rix,riy)   = rightiy(tix,tiy)
                 endif
               endif
             endif
@@ -715,11 +805,18 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                     rix = rightix(tix,tiy)
                     riy = rightiy(tix,tiy)
                     if (rix/=nx+1) lfound=.true.
+                  elseif (topiy(leftix(lix,liy),
+     .                          leftiy(lix,liy))/=ny+1) then
+                    tix = topix(leftix(lix,liy),leftiy(lix,liy))
+                    tiy = topiy(leftix(lix,liy),leftiy(lix,liy))
+                    rix = rightix(tix,tiy)
+                    riy = rightiy(tix,tiy)
+                    if (rix/=nx+1) lfound=.true.
                   endif
                   if (.not.lfound) then 
                     ! Check whether an external vertex has already been created here
                     ivxe   = 0
-                    do while (.not.lfound .and. ixvxe(ivxe+1) /= -2)
+                    do while (.not.lfound .and. ivxe.lt.nvxe)
                       ivxe = ivxe + 1
                       lfound = lfound.or.
      .                  points_match(crx(ix,iy,3), cry(ix,iy,3),
@@ -752,7 +849,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                       loctopix(ix,iy) = ixvxe(nvxe)
                       loctopiy(ix,iy) = iyvxe(nvxe)
                       write (*,*)
-     .                 'Created extra vertex at ix, iy, crx, cry = ',
+     .                 '(4) Created vertex at ix, iy, crx, cry = ',
      .                  nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
                     endif
                   endif
