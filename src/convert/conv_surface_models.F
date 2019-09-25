@@ -463,7 +463,7 @@
 ! find grid lines numbers for neutral source surfaces
       do istra = 1, mpg%nRc
         nsf = nsf + 1
-        if (index('WESN',crcstra(istra)) == 0) cycle
+        if (index('WESNA',crcstra(istra)) == 0) cycle
         select case (crcstra(istra))
         case ('S')
           idim(nsf) = 1
@@ -537,6 +537,11 @@
             if (rcpos(istra) >= mpg%ictcntrl(icut)) 
      .        ipos(nsf) = ipos(nsf) + 1
           end do
+        case ('A')
+          idim(nsf) = 1
+          ipos(nsf) = 1
+          istart(nsf) = 1
+          iend(nsf) = 1
         case ('C','V','T')
         case default
           call xerrab ('Wrong CRCSTRA or not yet available for WG')
@@ -611,7 +616,12 @@
             if (bcpos(ib) >= mpg%ictcntrl(icut)) 
      .        ipos(nsf) = ipos(nsf) + 1
           end do
-         case default
+        case ('A')
+           idim(nsf) = 1
+           ipos(nsf) = 1
+           istart(nsf) = 1
+           iend(nsf) = 1
+        case default
           call xerrab ('Wrong BCCHAR or not yet available for WG')
         end select
       end do bound

@@ -87,7 +87,7 @@
       integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc, ic1, ic2, 
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
      .           ivx, ivx1, ivx2, nfx, mxreg, ifs, icv, ireg, istart,
-     .           inv, inv1, inv2, invmx, ifcc, icount, n2, ix2o,
+     .           inv, inv1, inv2, invmx, ifcc, icount, n2, ix2o, iy2o,
      .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, 
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
      .           ixb, iyb, bix, biy, tix, tiy, rix, riy, idb, 
@@ -1353,6 +1353,7 @@ cwdk  might need to add duplicates numbers here...
           iy2 = iy
           do while (ighostvx(ix2-1,iy2-1)==1) 
             ix2o = ix2
+            iy2o = iy2
             ix2= ixmapghostvx(ix2o-1,iy2-1)+1
             iy2= iymapghostvx(ix2o-1,iy2-1)+1 
             write (*,*) 'ix2, iy2, ighost, ixmapghost, iymapghost= ', 

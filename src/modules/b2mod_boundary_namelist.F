@@ -3,6 +3,7 @@
       use b2mod_indirect
       use b2mod_version
       use b2us_map
+      use b2us_geo
       use carre_constants
 cank-20020724 {
 c* Parameters controlling the source scaling procedure are added:
@@ -1510,24 +1511,15 @@ c.. Test consistency with region boundaries
 
 ***********************************************************************
 
-      subroutine conv_bcparms (nx, ny, ns, m)
+      subroutine conv_bcparms (nx, ny, ns, m, g)
       implicit none
       integer, intent(in) :: nx, ny, ns
       type (mapping), intent (inout) :: m
-      integer :: ib, ibc, is, inbc, noss, ncoss, icoss, iss, indss,
-     .           ix, iy, jcoss, iFc1, iFc2, i, imn, imx
+      type (geometry), intent (inout) :: g
+      integer :: ib, ibc, is, inbc, noss, iss, indss,
+     .           i, iFc, iCv, idb
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
-      integer, allocatable :: fcss(:), fcss2(:)
-      logical, allocatable :: lout(:)
-      
-      type fcpart
-        integer :: fcno
-	integer :: vx1, vx2
-	type(fcpart), pointer :: prev, next
-      end type fcpart
-
-      type(fcpart), pointer :: head, tail
-      type(fcpart), pointer :: face
+      integer, allocatable :: ifchit(:)
 
       m%nBc   = nbc     ! number of boundary conditions
       m%mxnBc = 0       ! number of cells with imposed BC
@@ -1571,6 +1563,7 @@ cwdk also need to correct for degenerate faces?
 
 
       call alloc_mapping_bc (m)
+      open (newunit=idb,file='bound.out')
 
       inbc = 0 ! index in bcCv
       do ib = 1, nbc
@@ -1613,149 +1606,8 @@ cwdk also need to correct for degenerate faces?
 	    indss = bcstart(ib)+iss-1
             write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
-            ncoss = count(cflags(:,:,2:5) == indss)
-            if (ncoss.eq.0) cycle
-	    allocate (fcss(ncoss))
-            icoss = 0
-	    do iy = -1, ny
-	      do ix = 1, nx
-	        if (count(cflags(ix,iy,2:5) == indss) > 0) then
-		  if (cflags(ix,iy,CELLFLAG_LEFTFACE) == indss) then
-                    icoss = icoss + 1
-		    fcss(icoss) = m%imapFcx(ix,iy)
-                  end if             
-		  if (cflags(ix,iy,CELLFLAG_RIGHTFACE) == indss) then
-                    if (rightix(ix,iy).ne.nx+1) then
-                      icoss = icoss + 1
-                      fcss(icoss) = 
-     .                  m%imapFcx(rightix(ix,iy),rightiy(ix,iy))
-                    endif
-                  end if             
-		  if (cflags(ix,iy,CELLFLAG_BOTTOMFACE) == indss) then
-                    icoss = icoss + 1
-		    fcss(icoss) = m%imapFcy(ix,iy)
-                  end if             
-		  if (cflags(ix,iy,CELLFLAG_TOPFACE) == indss) then
-                    if (topiy(ix,iy).ne.ny+1) then
-                      icoss = icoss + 1
-		      fcss(icoss) = m%imapFcy(topix(ix,iy),topiy(ix,iy))
-                    endif
-                  end if             
-		end if
-	      end do  ! ix
-	    end do  ! iy
-
-! remove possible duplicate faces from the list, as degenerate faces
-            allocate (fcss2(ncoss))
-            i = 1
-            do while (fcss(i).eq.0)
-              i = i+1
-            enddo
-            fcss2(1) = fcss(i)
-            i = 1
-            write (*,'(a,4i6)') ' i,fcss2(i),vx1,vx2 ',i,fcss2(i),
-     .           m%fcVx(fcss2(i),1), m%fcVx(fcss2(i),2)
-            outer: do iFc1 = 2, ncoss
-              do iFc2 = 1, i 
-                if (fcss2(iFc2).eq.fcss(iFc1) .or. fcss(iFc1).eq.0) then
-                  ! duplicate element
-                  cycle outer
-                endif
-              enddo
-              ! new element found
-              i = i + 1
-              fcss2(i) = fcss(iFc1)
-              write (*,'(a,4i6)') ' i,fcss2(i),vx1,vx2 ',i,fcss2(i),
-     .           m%fcVx(fcss2(i),1), m%fcVx(fcss2(i),2)
-            end do outer
-            ncoss = i
-            bcl(ib) = bcl(ib) + ncoss
-            deallocate (fcss)
-
-! sort face for a continuous surface
-#ifndef WG_TODO           	    
-            allocate(face)
-	    nullify(face%prev)
-	    nullify(face%next)
-	    face%fcno = fcss2(1)
-	    face%vx1 = m%fcVx(face%fcno,1)
-	    face%vx2 = m%fcVx(face%fcno,2)
-            head => face
-	    tail => face
-
-            allocate (lout(ncoss))
-            lout = .false.
-            lout(1) =.true.
-	    do while (count(lout) < ncoss)
-	      do icoss = 2, ncoss
-                if (lout(icoss)) cycle
-                imn = min(m%fcVX(fcss2(icoss),1),m%fcVX(fcss2(icoss),2))
-                imx = max(m%fcVX(fcss2(icoss),1),m%fcVX(fcss2(icoss),2))
-	        if ((head%vx1 == imn) .or. (head%vx1 == imx)) then
-                  allocate(face) 
-                  nullify(face%prev)
-                  nullify(face%next)
-                  face%fcno = fcss2(icoss)
-                  face%vx1 = imn+imx-head%vx1
-                  face%vx2 = head%vx1
-                  face%next => head
-                  head%prev => face	
-                  head => face	
-                  lout(icoss) = .true.
-  		  exit	
-	        end if
-	        if ((tail%vx2 == imn) .or. (tail%vx2 == imx)) then
-	          allocate(face) 
-		  nullify(face%prev)
-	          nullify(face%next)
-	          face%fcno = fcss2(icoss)
-	          face%vx1 = tail%vx2
-	          face%vx2 = imn+imx-tail%vx2
-		  face%prev => tail
-                  tail%next => face
-		  tail => face
-                  lout(icoss) = .true.
-		  exit		
-	        end if
-              end do  ! icoss
-              if (icoss > ncoss) then
-                write (*,*) 'face list, indss = ',indss
-                do while (associated(head))
-                  write (*,*) head%fcno, head%vx1, head%vx2
-                  tail => head
-                  head => head%next
-                  deallocate (tail)
-                end do
-                call xerrab ('conv_bcparm -- no connecting face found ')
-              end if
-            end do  ! jcoss
-            deallocate(lout)
-!
-! store faces in m%bcFc(inbc)...
-            do while (associated(head))
-	      inbc = inbc + 1
-              iFc1 = head%fcno
-	      m%bcFc(inbc) = iFc1
-              if (m%fcCv(iFc1,1) .lt.  m%fcCv(iFc1,2))
-     >          m%bcFcOr(inbc) = 1.0_R8
-              if (m%fcCv(iFc1,1) .gt.  m%fcCv(iFc1,2))
-     >          m%bcFcOr(inbc) = -1.0_R8
-	      tail => head
-	      head => head%next
-	      deallocate (tail)
-	    end do
-#else
-            do icoss = 1, ncoss
-              inbc = inbc + 1
-              iFc1 = fcss2(icoss)
-              m%bcFc(inbc) = iFc1
-              if (m%fcCv(iFc1,1) .lt.  m%fcCv(iFc1,2))
-     >          m%bcFcOr(inbc) = 1.0_R8
-              if (m%fcCv(iFc1,1) .gt.  m%fcCv(iFc1,2))
-     >          m%bcFcOr(inbc) = -1.0_R8
-            enddo
-#endif
-	    deallocate (fcss2)
+            call find_faces (indss, inbc, nx, ny, ns, bcl(ib), 
+     >                       m%mxnbc,m%bcFc, m%bcFcOr, m, g, idb)
 	  end do  ! iss	 
           m%bcFcP(ib,2) = bcl(ib) 
 #endif
@@ -1763,10 +1615,37 @@ cwdk also need to correct for degenerate faces?
           call xerrab ('conv_bcparms -- wrong BCCHAR')
         endif
       enddo     
-
-      if (inbc .ne. m%nCg ) 
-     >  call xerrab ('conv_bcparms -- problem setting up bc arrays')
-
+      close (idb)
+      
+      if (inbc .ne. m%nCg ) then
+! try to find missing or doubled faces
+        allocate (ifchit(m%nFC))
+        ifchit = 0
+! for all guard cells mark face to plasma cell
+        do i = 1, m%nCg
+          icv = m%nCi + i
+          iFc = m%cvFc(m%cvFcP(icv,1))
+          ifchit(iFc) = ifchit(iFc) + 1
+        end do
+! remove mark from boundary faces
+        do ib = 1, m%nbc
+          do i = 1,  m%bcFcP(ib,2)
+            iFc = m%bcFc(i) 
+            ifchit(iFc) = ifchit(iFc) - 1
+          end do
+        end do
+        if (count(ifchit /= 0) > 0) then
+          write (*,*) 'suspicious faces '
+          do i = 1, m%nFc
+            if (ifchit(i) /= 0) then
+              write (*,*) 'ifc ',i,ifchit(i)
+              write (*,*) 'fcCv ',m%fcCv(i,1),m%fcCv(i,2)
+            end if
+          end do
+        end if
+        
+        call xerrab ('conv_bcparms -- problem setting up bc arrays')
+      end if
       return
       end subroutine conv_bcparms
 

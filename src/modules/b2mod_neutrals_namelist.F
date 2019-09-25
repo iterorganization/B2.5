@@ -33,6 +33,7 @@ cank }
       use b2mod_b2cmfs
       use b2mod_version
       use b2us_map
+      use b2us_geo
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_extrab25
@@ -1874,25 +1875,14 @@ c.. Test consistency with physical edges within the computational domain
 ***********************************************************************
 
 
-      subroutine conv_rcparms (nx, ny, ns, m)
+      subroutine conv_rcparms (nx, ny, ns, m, g)
       use b2mod_indirect
       implicit none
       integer :: nx, ny, ns, istra, istrac, instra,
-     .           noss, ncoss, icoss, iss, indss,
-     .           ix, iy, jcoss, iFc1, iFc2, i
+     .           noss, iss, indss, i, idb
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
-      integer, allocatable :: fcss(:), fcss2(:)
       type (mapping), intent (inout) :: m
-
-      type fcpart
-        integer :: fcno
-	integer :: vx1, vx2
-	type(fcpart), pointer :: prev, next
-      end type fcpart
-
-      type(fcpart), pointer :: head, tail
-      type(fcpart), pointer :: face
-
+      type (geometry), intent (inout) :: g
 
       m%nRc   = nstrat  ! number of recycling boundaries
       m%mxnRc = 0       ! number of cells with imposed recycling
@@ -1937,6 +1927,7 @@ cwdk also need to correct for degenerate faces?
       enddo
 
       call alloc_mapping_rc (m)
+      open (newunit=idb,file='recyc.out')
 
       instra = 0 ! index in rcCv
       do istra = 1, nstrat
@@ -1976,125 +1967,10 @@ cwdk also need to correct for degenerate faces?
           noss = rcend(istra) - rcstart(istra) + 1
 	  do iss = 1, noss
 	    indss = rcstart(istra)+iss-1
+            write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
-            ncoss = count(cflags(:,:,2:5) == indss)
-            if (ncoss.eq.0) cycle
-	    allocate (fcss(ncoss))
-            icoss = 0
-	    do iy = -1, ny
-	      do ix = 1, nx
-	        if (count(cflags(ix,iy,2:5) == indss) > 0) then
-		  if (cflags(ix,iy,CELLFLAG_LEFTFACE) == indss) then
-                    icoss = icoss + 1
-		    fcss(icoss) = m%imapFcx(ix,iy)
-                  end if             
-		  if (cflags(ix,iy,CELLFLAG_RIGHTFACE) == indss) then
-                    if (rightix(ix,iy).ne.nx+1) then
-                      icoss = icoss + 1
-                      fcss(icoss) = 
-     .                  m%imapFcx(rightix(ix,iy),rightiy(ix,iy))
-                    endif
-                  end if             
-		  if (cflags(ix,iy,CELLFLAG_BOTTOMFACE) == indss) then
-                    icoss = icoss + 1
-		    fcss(icoss) = m%imapFcy(ix,iy)
-                  end if             
-		  if (cflags(ix,iy,CELLFLAG_TOPFACE) == indss) then
-                    if (topiy(ix,iy).ne.ny+1) then
-                      icoss = icoss + 1
-		      fcss(icoss) = m%imapFcy(topix(ix,iy),topiy(ix,iy))
-                    endif
-                  end if             
-		end if
-	      end do  ! ix
-	    end do  ! iy
-
-! remove possible duplicate faces from the list, as degenerate faces
-            allocate (fcss2(ncoss))
-            i = 1
-            do while (fcss(i).eq.0)
-              i = i+1
-            enddo
-            fcss2(1) = fcss(i)
-            i = 1
-            outer: do iFc1 = 2, ncoss
-              do iFc2 = 1, i 
-                if (fcss2(iFc2).eq.fcss(iFc1) .or. fcss(iFc1).eq.0) then
-                  ! duplicate element
-                  cycle outer
-                endif
-              enddo
-              ! new element found
-              i = i + 1
-              fcss2(i) = fcss(iFc1)
-            end do outer
-            ncoss = i
-            rcl(istra) = rcl(istra) + ncoss
-            deallocate (fcss)
-
-! sort face for a continuous surface
-#ifndef WG_TODO           	    
-            allocate(face)
-	    nullify(face%prev)
-	    nullify(face%next)
-	    face%fcno = fcss2(1)
-	    face%vx1 = m%fcVx(face%fcno,1)
-	    face%vx2 = m%fcVx(face%fcno,2)
-            head => face
-	    tail => face
-
-	    do jcoss = 2, ncoss
-	      do icoss = 2, ncoss
-	        if (face%vx1 == m%fcVX(fcss2(icoss),2)) then
-	          allocate(face) 
-	          nullify(face%prev)
-	          nullify(face%next)
-	          face%fcno = fcss2(icoss)
-	          face%vx1 = m%fcVx(face%fcno,1)
-	          face%vx2 = m%fcVx(face%fcno,2)
-	          face%next => head
-		  head => face	
-  		  exit	
-	        end if
-	        if (face%vx2 == m%fcVX(fcss2(icoss),1)) then
-	          allocate(face) 
-		  nullify(face%prev)
-	          nullify(face%next)
-	          face%fcno = fcss2(icoss)
-	          face%vx1 = m%fcVx(face%fcno,1)
-	          face%vx2 = m%fcVx(face%fcno,2)
-		  face%prev => tail
-		  tail => face
-		  exit		
-	        end if
-              end do  ! icoss
-            end do  ! jcoss
-!
-! store faces in m%rcFc(instra)...
-            do while (associated(head))
-	      instra = instra + 1
-              iFc1 = head%fcno
-	      m%bcFc(instra) = iFc1
-              if (m%fcCv(iFc1,1) .lt.  m%fcCv(iFc1,2))
-     >          m%bcFcOr(instra) = 1.0_R8
-              if (m%fcCv(iFc1,1) .gt.  m%fcCv(iFc1,2))
-     >          m%bcFcOr(instra) = -1.0_R8
-	      tail => head
-	      head => head%next
-	      deallocate (tail)
-	    end do
-#else
-            do icoss = 1, ncoss
-              instra = instra + 1
-              iFc1 = fcss2(icoss)
-              m%rcFc(instra) = iFc1
-              if (m%fcCv(iFc1,1) .lt.  m%fcCv(iFc1,2))
-     >          m%rcFcOr(instra) = 1.0_R8
-              if (m%fcCv(iFc1,1) .gt.  m%fcCv(iFc1,2))
-     >          m%rcFcOr(instra) = -1.0_R8
-            enddo
-#endif
-	    deallocate (fcss2)
+            call find_faces (indss, instra, nx, ny, ns, rcl(istra), 
+     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, g, idb)
 	  end do  ! iss	 
           m%rcFcP(istra,2) = rcl(istra) 
 #endif
@@ -2106,6 +1982,7 @@ cwdk also need to correct for degenerate faces?
         rc_faces(1:rcl(istra),istra) =
      .     m%rcFc(m%rcFcP(istra,1):m%rcFcP(istra,1)+m%rcFcP(istra,2)-1)
       enddo     
+      close (idb)
 
       return
       end subroutine conv_rcparms
@@ -2225,7 +2102,7 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,es10.2,a1)') 'volrecwt= ',volrecwt,','
 
       write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
-     .   'lsns= ',(abs(lsns(is)),',',is =1,sum(ksns(1:nstrai)))
+     .   'lsns= ',(abs(lsns(is)),',',is =1,max(1,sum(ksns(1:nstrai))))
       write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
      .   'ksns= ',(ksns(is),',',is =1,nstrai)
       if (nnstsi > 0) then

@@ -324,7 +324,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         if (boundary_version.lt.'03.002.000') then
           call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
           call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-          call conv_bcparms (nx, ny, ns, mpg)
+          call conv_bcparms (nx, ny, ns, mpg, gm)
           call write_bcparms(ns,mpg)
 !pb for testing
 !          call calc_mapping_bc(nx, ny, ns, mpg)
@@ -360,7 +360,16 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       file_exist=.false.
  7000 continue
       if (.not.file_exists) then
-        call xerrab (' b2us -- no Eirene input available')
+        nstra=DEF_NSTRA
+        nfl=DEF_NFL
+        natm=DEF_NATM
+        nmol=DEF_NMOL
+        nion=DEF_NION
+        npls=DEF_NPLS
+        nlim=DEF_NLIM
+        nsts=DEF_NSTS
+        nlimps=nlim+nsts
+!        call xerrab (' b2us -- no Eirene input available')
       endif
 #endif 
 
@@ -377,7 +386,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
           call alloc_b2mod_neutrals
      .     (nx, ny, ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(nx, ny, ns, .false.)
-          call conv_rcparms (nx, ny, ns, mpg)
+          call conv_rcparms (nx, ny, ns, mpg, gm)
           call write_rcparms(ns,mpg)
 !pb for testing
 !          call calc_mapping_rc(nx, ny, ns, mpg)
