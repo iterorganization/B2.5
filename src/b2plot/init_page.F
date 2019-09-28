@@ -253,6 +253,20 @@ c     the line format common
         endif
       endif
       dirty_page=.true.
+      if (fcol.gt.1) then
+        call gaseti('CAX',fcol)
+        call gaseti('CLB',fcol)
+        call gaseti('CMJ',fcol)
+        call gaseti('CMN',fcol)
+      end if
+      if (bold) then
+        call gasetr('WAX',3.)
+        call gasetr('WLB',3.)
+        call gasetr('WMJ',3.)
+        call gasetr('WMN',3.)
+        call gstxfp(-30,0)
+        call pcseti('FN',30)
+      end if
 
       CALL SET(0.0*XSIZE+XPOS,1.0*XSIZE+XPOS,
      1 0.0*YSIZE+YPOS,1.0*YSIZE+YPOS,
@@ -334,6 +348,16 @@ c     the line format common
         if (zwidth.ne.1.0) call gslwsc(1.0)
       endif
       CALL CPSETI('MAP - MAPPING FLAG',3)
+      call gaseti('CAX',1)
+      call gaseti('CLB',1)
+      call gaseti('CMJ',1)
+      call gaseti('CMN',1)
+      call gasetr('WAX',1.)
+      call gasetr('WLB',1.)
+      call gasetr('WMJ',1.)
+      call gasetr('WMN',1.)
+      call gstxfp(1,0)
+      call pcseti('FN',0)
 #endif
       return
       end subroutine init_page

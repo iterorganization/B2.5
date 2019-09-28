@@ -117,13 +117,13 @@ cank 960511
      *  nlimi,nstsi,natmi,nmoli,nioni,nlim1
 cank
       integer, save ::
-     *  mcol,scol,vcol,ocol,ecol,acol,zcol,y_transform_l,
+     *  mcol,scol,vcol,ocol,ecol,fcol,acol,zcol,y_transform_l,
      *  dcol,wcol,tcol,hcol,gcol,bcol,xcol,lfsz,expsymbol
 
       logical, save ::
      *  writing_to_file,color_set,use_compile,
      *  set_resignore_regions_to_zero,plotting_wall,map_to_midplane,
-     *  xparallel,plotting_sep,expline
+     *  xparallel,plotting_sep,bold,expline
 
       character*256, save ::
      *  graphlabel(wklng),

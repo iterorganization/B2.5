@@ -6,7 +6,7 @@
      . runtime,partition_colors
 
       integer nx_page,ny_page,ix_page,iy_page,
-     . ncol,zcol,hcol,gcol,bcol,xcol,lfsz,
+     . ncol,zcol,hcol,gcol,bcol,xcol,fcol,lfsz,
      . nofcls,nofecls,nofwcls,noftcls,ncont,
      . fill_option,same_page,ndec,ngraph,wlinlog,nwork,noax,
      . trglinlog
@@ -15,7 +15,7 @@
      . colprt,lalong,labels,contours,grid,trig,wall,intpol,sptrix,
      . contplot,initialised_plotting,logx,logy,logz,target,
      . want_aspect,lzero,label_same_lines,color_map_loaded,
-     . nice_axes
+     . nice_axes,bold
 
       character*256 extralabel,globalheader,device,wallbarlabel,
      . targetbarlabel,color_file
@@ -28,13 +28,13 @@
      . wmin,wmax,trgmin,trgmax,partition_colors,
      . targetbar_left,targetbar_right,
      i nx_page,ny_page,ix_page,iy_page,ncont,fill_option,same_page,
-     . ncol,zcol,hcol,gcol,bcol,xcol,
+     . ncol,zcol,hcol,gcol,bcol,xcol,fcol,
      . nofcls,nofecls,nofwcls,noftcls,lfsz,
      . ndec,ngraph,wlinlog,nwork,noax,trglinlog,
      l dirty_graph,dirty_page,new_page,labels,contours,grid,trig,wall,
      . intpol,sptrix,vessel,outline,contplot,initialised_plotting,
      . colprt,lalong,logx,logy,logz,want_aspect,lzero,label_same_lines,
-     . target,color_map_loaded,nice_axes,
+     . target,color_map_loaded,nice_axes,bold,
      c extralabel,globalheader,device,wallbarlabel,targetbarlabel,
      . color_file
 

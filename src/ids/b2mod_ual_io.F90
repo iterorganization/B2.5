@@ -21,6 +21,7 @@ module b2mod_ual_io
     use b2mod_types
     use b2mod_b2cmpa
     use b2mod_geo
+    use b2mod_diag
     use b2mod_plasma
     use b2mod_constants
     use b2mod_sources
@@ -48,8 +49,8 @@ module b2mod_ual_io
     use ids_utility        ! IGNORE
 #endif
     use ids_grid_common , &     ! IGNORE
-        &   IDS_COORDTYPE_R => COORDTYPE_R,    &
-        &   IDS_COORDTYPE_Z => COORDTYPE_Z,    &
+        &   IDS_COORDTYPE_R => COORDTYPE_R,       &
+        &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
         &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
 #else
 #ifdef ITM_ENVIRONMENT_LOADED
@@ -79,7 +80,6 @@ contains
     subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport, &
             &   time_IN, &
             &   time_step_IN, time_slice_ind_IN, num_time_slices_IN )
-#       include <git_version_B25.h>
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
             !< store data on edge plasma profiles  (includes the scrape-off
             !< layer and possibly part of the confined plasma)
@@ -105,17 +105,18 @@ contains
         character(len=12) :: ion_charge !< Ion charge (e.g. '1', '2', etc.)
         integer :: ion_charge_int !< Ion charge (e.g. 1, 2, etc.)
         integer :: ion_label_tlen !< Length of the (trimmed) ion label
-        integer :: ns   !< Total number of ion species
-        integer :: nx   !< Specifies the number of interior cells
-                        !< along the first coordinate
-        integer :: ny   !< Specifies the number of interior cells
-                        !< along the second coordinate
-        integer :: is   !< Species index (iterator)
-        integer :: i    !< Iterator
-        integer :: j    !< Iterator
-        integer :: k    !< Iterator
-        integer :: o    !< Dummy integer
-        integer :: p    !< Dummy integer
+        integer :: ns     !< Total number of ion species
+        integer :: nx     !< Specifies the number of interior cells
+                          !< along the first coordinate
+        integer :: ny     !< Specifies the number of interior cells
+                          !< along the second coordinate
+        integer :: is     !< Species index (iterator)
+        integer :: i      !< Iterator
+        integer :: j      !< Iterator
+        integer :: k      !< Iterator
+        integer :: ntimes !< Number of previous timesteps in IDS
+        integer :: o      !< Dummy integer
+        integer :: p      !< Dummy integer
         integer :: iGsCoreBoundary  !< Variable to hold Core grid subset base
             !< index, later found by findGridSubsetByName() routine.
         integer :: iGsInnerMidplane !< Variable to hold Inner Midplane grid
@@ -155,6 +156,8 @@ contains
         integer tvalues(8)
         character*16 usrnam
         character*8 imas_version, ual_version
+        character*32 B25_git_version
+        character*32 get_B25_hash
         logical match_found, streql
 #ifdef USE_PXFGETENV
         integer lenval, ierror
@@ -163,7 +166,7 @@ contains
         integer lenval, ierror
 #endif
 #endif
-        external usrnam, streql
+        external usrnam, streql, get_B25_hash
 
         !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
@@ -204,7 +207,7 @@ contains
         !! Set default time step values
         time_sind = 1
         time_slice_value = 0.0_IDS_real
-        time_step = IDS_GRID_UNDEFINED
+        time_step = IDS_REAL_INVALID
         num_time_slices = 1
         !! If present, set time step values
         if( present( time_step_IN ) ) time_step = time_step_IN
@@ -228,7 +231,7 @@ contains
         !! 1. Set homogeneous_time to 0 or 1
         edge_profiles%ids_properties%homogeneous_time = homogeneous_time
         allocate( edge_profiles%ids_properties%comment(1) )
-        edge_profiles%ids_properties%comment(1) = "Done by b2_ual_write_b2mod"
+        edge_profiles%ids_properties%comment(1) = label
         !! 2. Allocate edge_profiles.time and set it to desired values
         allocate( edge_profiles%time(num_time_slices) )
         do i = 1, num_time_slices
@@ -242,7 +245,7 @@ contains
         !! 1. Set homogeneous_time to 0 or 1
         edge_transport%ids_properties%homogeneous_time = homogeneous_time
         allocate( edge_transport%ids_properties%comment(1) )
-        edge_transport%ids_properties%comment(1) = "Done by b2_ual_write_b2mod"
+        edge_transport%ids_properties%comment(1) = label
         !! 2. Allocate edge_transport.time and set it to desired values
         allocate( edge_transport%time(num_time_slices) )
         do i = 1, num_time_slices
@@ -256,7 +259,7 @@ contains
         !! 1. Set homogeneous_time to 0 or 1
         edge_sources%ids_properties%homogeneous_time = homogeneous_time
         allocate( edge_sources%ids_properties%comment(1) )
-        edge_sources%ids_properties%comment(1) = "Done by b2_ual_write_b2mod"
+        edge_sources%ids_properties%comment(1) = label
         !! 2. Allocate edge_sources.time and set it to desired values
         allocate( edge_sources%time(num_time_slices) )
         do i = 1, num_time_slices
@@ -277,7 +280,12 @@ contains
         !! Check for edge_transport%model(1)%ggd and edge_sources%source(1)%ggd
         !! is not included as they contain beforehand model(:) / source(:)
         !! structures
-        if( size( edge_profiles%ggd ) .ne. num_time_slices ) then
+        if ( associated( edge_profiles%ggd ) ) then
+           ntimes = size( edge_profiles%ggd )
+        else
+           ntimes = 0
+        end if
+        if( ntimes .ne. num_time_slices ) then
             !! Allocate ggd for number of different time steps
             time_sind = 1
             allocate( edge_profiles%ggd( num_time_slices ) )
@@ -315,12 +323,13 @@ contains
             allocate( edge_sources%code%version(1) )
             edge_sources%code%version = newversion
 
+            B25_git_version = get_B25_hash()
             allocate( edge_profiles%code%commit(1) )
-            edge_profiles%code%commit = git_version_B25
+            edge_profiles%code%commit = B25_git_version
             allocate( edge_transport%code%commit(1) )
-            edge_transport%code%commit = git_version_B25
+            edge_transport%code%commit = B25_git_version
             allocate( edge_sources%code%commit(1) )
-            edge_sources%code%commit = git_version_B25
+            edge_sources%code%commit = B25_git_version
 
             allocate( edge_profiles%code%repository(1) )
             edge_profiles%code%repository = "git.iter.org"
@@ -542,7 +551,7 @@ contains
             allocate( edge_transport%model(1) )
             allocate( edge_transport%model(1)%ggd( num_time_slices ) )
 
-            !! ne: Electron Density
+            !! ne: Electron density
             call write_quantity(                                            &
                 &   val = edge_profiles%ggd( time_sind )%electrons%density, &
                 &   fluxes = edge_transport%model(1)%ggd( time_sind )%      &
@@ -610,7 +619,7 @@ contains
                 &   flux = fhe,                                         &
                 &   time_sind = time_sind )
 
-            !! ti: Ion Temperature
+            !! ti: (Common) Ion Temperature
             allocate( edge_profiles%ggd( time_sind )%ion(1)%temperature(1) )
             allocate( edge_transport%model(1)%ggd( time_sind )%ion( 1 ) )
             call write_quantity(                                            &
@@ -621,13 +630,13 @@ contains
                 &   flux = fhi,                                             &
                 &   time_sind = time_sind )
 
-            !! po: Electric Potential
+            !! po: Electric potential
             call write_cell_scalar( edge_profiles%ggd( time_sind )% &
                 &   phi_potential, po )
 
             !! B (magnetic field vector)
             !! Compute unit basis vectors along the field directions
-            call compute_Coordinate_Unit_Vectors(crx, cry, e(:,:,:,1), &
+            call compute_Coordinate_Unit_Vectors(crx, cry, e(:,:,:,1),  &
                 &   e(:,:,:,2), e(:,:,:,3))
 
             !! Write the three unit basis vectors
@@ -1432,13 +1441,18 @@ contains
       real(ITM_R8), intent(in) :: value(-1:gmap%b2nx, -1:gmap%b2ny)
       real(ITM_R8), intent(in) :: flux(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
       real(ITM_R8), dimension(:), pointer :: cpodata
+      real(ITM_R8) :: weight(-1:gmap%b2nx, -1:gmap%b2ny, TO_SELF:TO_TOP)
+      integer i
 
       allocate(values(5))
       cpodata => b2ITMTransformDataB2ToCpo( edgecpo%grid, B2_SUBGRID_CELLS, gmap, value )
       call gridWriteData( values(1), B2_SUBGRID_CELLS, cpodata )
       deallocate(cpodata)
       tmpFace = 0.0_ITM_R8
-      call value_on_faces(nx,ny,vol,value,tmpFace)
+      do i = TO_SELF, TO_TOP
+        weight(:,:,i)=vol(:,:)
+      end do
+      call value_on_faces(nx,ny,weight,value,tmpFace)
       cpodata => b2ITMTransformDataB2ToCpo( edgecpo%grid, iSgCore, gmap, tmpFace )
       call gridWriteData( values(2), iSgCore, cpodata )
       deallocate(cpodata)

@@ -59,7 +59,8 @@ c 2002-09-11: logic revised
       use eirmod_coutau
      , , only: eirene_dealloc_coutau
       use eirmod_comusr
-     , , only: eirene_dealloc_comusr, nmassa, nmassm, nmassi
+     , , only: eirene_dealloc_comusr,
+     ,         nmassa, nmassm, nmassi
       use eirmod_comprt
      , , only: iunout
       use eirmod_eirbra
@@ -1172,10 +1173,21 @@ c
       values(2)=maxval(xx)+0.5_R8                        !xmax
       values(3)=minval(yy)                               !ymin
       values(4)=maxval(yy)+0.5_R8                        !ymax
-      values(5)=minval(crx)                              !rmin
-      values(6)=maxval(crx)                              !rmax
-      values(7)=minval(cry)                              !zmin
-      values(8)=maxval(cry)                              !zmax
+#ifdef B25_EIRENE
+      if (ex.and.use_eirene.ne.0) then
+        values(5)=min(minval(crx),minval(xtrian))        !rmin
+        values(6)=max(maxval(crx),maxval(xtrian))        !rmax
+        values(7)=min(minval(cry),minval(ytrian))        !zmin
+        values(8)=max(maxval(cry),maxval(ytrian))        !zmax
+      else
+#endif
+        values(5)=minval(crx)                            !rmin
+        values(6)=maxval(crx)                            !rmax
+        values(7)=minval(cry)                            !zmin
+        values(8)=maxval(cry)                            !zmax
+#ifdef B25_EIRENE
+      end if
+#endif
       values(11)=init_value                              !omin
       values(12)=init_value                              !omax
       values(13)=init_value                              !xref
@@ -1218,6 +1230,7 @@ c
       call vesselon(.false.)       ! same for vessel
       call separatrixon(.false.)   ! same for separatrix
       call adjust_axes(.false.)    ! nice axes by default
+      call adjust_bold(.false.)    ! do not bold axes by default
       call set_midplane_mapping(.false.)  ! do not map to midplane by default
       call wallon(.false.,0,values(14),values(15),1)
       call targeton(.false.,values(32),values(33),1)
@@ -1257,6 +1270,7 @@ c
       bcol=1
       dcol=1
       ecol=1
+      fcol=1
       gcol=1
       hcol=1
       mcol=1
@@ -3768,11 +3782,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              if(leftix(ix,iy).ge.-1.and.leftix(ix,iy).le.nx.and.
-     1         rightix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     1         bottomiy(ix,iy).ge.-1.and.bottomiy(ix,iy).le.ny.and.
-     1         topiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny.and.
-     2         region(ix,iy,0).ne.0) then
+              if(isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
                 mach(ix,iy,0)=1.0_R8
               else
                 mach(ix,iy,0)=0.0_R8
@@ -3785,10 +3795,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              if(leftix(ix,iy).lt.-1.or.leftix(ix,iy).gt.nx.or.
-     1         rightix(ix,iy).lt.-1.or.rightix(ix,iy).gt.nx.or.
-     1         bottomiy(ix,iy).lt.-1.or.bottomiy(ix,iy).gt.ny.or.
-     1         topiy(ix,iy).lt.-1.or.topiy(ix,iy).gt.ny) then
+              if(cflags(ix,iy,CELLFLAG_TYPE) == GRID_GUARD) then
                 mach(ix,iy,0)=1.0_R8
               else
                 mach(ix,iy,0)=0.0_R8
@@ -7468,6 +7475,56 @@ cdpc still in testing phase
             enddo
           enddo
           goto 4049
+        case('etal')     ! read Eirene tally output file onto the Eirene stack
+          stack_req=(/0,0,1,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          arg=spop(sstack,isstack)
+          call find_file(arg,ex)
+          if (.not.ex) then
+            write(*,*) 'Eirene tally file ', trim(arg), ' not found!'
+            return
+          end if
+          nz=0
+          open(99,file=arg,status='old')
+          iewrk=iewrk+1
+          if(iewrk .eq. wklng) call dropeirenestackbottom()
+          nedim(1,iewrk)=ntrii
+ 4001     continue
+          read(99,1028,end=4003)
+          read(99,1028)
+          read(99,'(a)') stmp  ! Tally title
+          read(99,'(a)') stmp1 ! Species name
+          read(99,'(a)') stmp2 ! Units
+          read(99,1028)
+          read(99,1028)
+          read(99,1028)
+          call strip_spaces(stmp2)
+          description=trim(stmp)//' ('//trim(stmp2)//')'
+          textewk(nz,iewrk)=trim(stmp1)
+          do i=1,ntrii
+            read(99,*) j,dummy,eirene_stack(j,nz,iewrk)
+          end do
+          read(99,1028)
+          read(99,1028) ! average value
+          read(99,1028)
+          read(99,1028) ! additional cells
+ 4002     continue
+          read(99,'(a)',end=4003) stmp
+          if (index(stmp,'=').eq.0) then
+            goto 4002
+          else
+            nz=nz+1
+          end if
+          goto 4001
+ 4003     continue
+          nedim(2,iewrk)=nz
+          values(38)=minval(eirene_stack(1:ntrii,0:nz-1,iewrk))
+          values(39)=minval(eirene_stack(1:ntrii,0:nz-1,iewrk))
+          call customise_label(description,eirene_label(iewrk))
+          call set_wallbarlabel(eirene_label(iewrk))
+          if (b2plot_debug.ge.1)
+     .     write(*,'(4a)') 'Copied ',trim(description),
+     .                     ' to Eirene stack from file ',trim(arg)
         case('echor')    ! chord file for Eirene stack data
           stack_req=(/0,0,1,0,1,0,0/)
           if(bad_args(stack_req)) return
@@ -7578,6 +7635,7 @@ cdpc still in testing phase
       END SELECT EFVALUE
 c
       goto 4900
+ 1028 format()
 
  4049 continue
       stack_req=(/0,0,0,0,1,0,0/)
@@ -10561,6 +10619,8 @@ c
           call contourplot(.false.)
         case('nice')     ! toggle whether axes will have nice values
           call adjust_axes(.true.)
+        case('bold')     ! toggle whether to bold the axis labels
+          call adjust_bold(.true.)
         case('sepw')     ! change separatrix line width
           stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -10925,9 +10985,20 @@ c
           if(bad_args(stack_req)) return
           ecol=istack(iistack)
           call pop_stack(stack_req)
+        case('fcol')     ! colour index for graph frame
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          call set_frame_color(istack(iistack))
+          fcol=istack(iistack)
+          call pop_stack(stack_req)
         case('nspe','nspec')    ! new spectrometer
           stack_req=(/3,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
+          is1=istack(iistack-2)
+          if(0.gt.is1.or.is1.ge.ns) then
+            write(*,*) 'Faulty parameter is = ',is1,' for nspec!'
+            return
+          endif
 c     Parameters on istack: <species number> <wavelength in A>
 c     <delta wavelength in A> nspe
           call CalculateEmissivity(istack(iistack-2),
