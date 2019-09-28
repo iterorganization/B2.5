@@ -127,7 +127,6 @@ contains
 #endif
             &   time_IN, time_step_IN, shot, run, device, version, &
             &   time_slice_ind_IN, num_time_slices_IN )
-#       include <git_version_B25.h>
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
             !< store data on edge plasma profiles  (includes the scrape-off
             !< layer and possibly part of the confined plasma)
@@ -270,6 +269,8 @@ contains
         integer tvalues(8)
         character*16 usrnam
         character*8 imas_version, ual_version
+        character*32 B25_git_version
+        character*32 get_B25_hash
         logical match_found, streql
 #ifdef B25_EIRENE
         logical, allocatable :: in_species(:)
@@ -282,7 +283,7 @@ contains
         integer lenval, ierror
 #endif
 #endif
-        external usrnam, streql
+        external usrnam, streql, get_B25_hash
 
         !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
@@ -663,14 +664,15 @@ contains
         allocate( radiation%code%version(1) )
         radiation%code%version = newversion
 
+        B25_git_version = get_B25_hash()
         allocate( edge_profiles%code%commit(1) )
-        edge_profiles%code%commit = git_version_B25
+        edge_profiles%code%commit = B25_git_version
         allocate( edge_transport%code%commit(1) )
-        edge_transport%code%commit = git_version_B25
+        edge_transport%code%commit = B25_git_version
         allocate( edge_sources%code%commit(1) )
-        edge_sources%code%commit = git_version_B25
+        edge_sources%code%commit = B25_git_version
         allocate( radiation%code%commit(1) )
-        radiation%code%commit = git_version_B25
+        radiation%code%commit = B25_git_version
 
         allocate( edge_profiles%code%repository(1) )
         edge_profiles%code%repository = "git.iter.org"
@@ -703,7 +705,7 @@ contains
         allocate( summary%code%version(1) )
         summary%code%version = newversion
         allocate( summary%code%commit(1) )
-        summary%code%commit = git_version_B25
+        summary%code%commit = get_B25_hash()
         allocate( summary%code%repository(1) )
         summary%code%repository = "git.iter.org"
         allocate( summary%ids_properties%provider(1) )
@@ -784,9 +786,9 @@ contains
         allocate( description%dd_version(1) )
         description%dd_version = imas_version
 
-        i=index(git_version_B25,'-')
+        i=index(B25_git_version,'-')
         allocate( summary%tag%name(1) )
-        summary%tag%name = git_version_B25(1:i-1)
+        summary%tag%name = B25_git_version(1:i-1)
         r0 = 0.0_R8
         icnt = 0
         do ix = -1, nx

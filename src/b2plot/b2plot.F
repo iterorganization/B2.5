@@ -11018,6 +11018,11 @@ c
         case('nspe','nspec')    ! new spectrometer
           stack_req=(/3,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
+          is1=istack(iistack-2)
+          if(0.gt.is1.or.is1.ge.ns) then
+            write(*,*) 'Faulty parameter is = ',is1,' for nspec!'
+            return
+          endif
 c     Parameters on istack: <species number> <wavelength in A>
 c     <delta wavelength in A> nspe
           call CalculateEmissivity(istack(iistack-2),
