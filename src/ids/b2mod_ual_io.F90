@@ -827,6 +827,7 @@ contains
         summary%global_quantities%b0%source = source
 #endif
 
+        !! Write grid & grid subsets/subgrids
 #if IMAS_MINOR_VERSION < 15
         call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
             &   edge_profiles%ggd( time_sind )%grid,                        &
