@@ -422,6 +422,7 @@
 !  write target information for Eirene input block 14
 
       open (newunit=nblk14,file='eirene_block14.dat')
+      write (nblk14,'(3i6)') mpg%nCv, mpg%nCi, mpg%nFc
       write (nblk14,'(i6)') ntarg
       write (nblk14,'(12i6)') (1, i=1,ntarg)
       do i = 1, ntarg
