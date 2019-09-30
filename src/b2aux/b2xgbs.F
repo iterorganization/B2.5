@@ -48,6 +48,8 @@ cwdk  test for wbb.(:,:,3) switched to .ge.; could be zero in dead cells
 *   ..test edge values of gs
       call b2xvfx (nx, ny, gs(-1,-1,0), 'gs')
       call b2xvfy (nx, ny, gs(-1,-1,1), 'gs')
+*   ..initialize pbs
+      pbs = 0.0_R8
 *   ..compute pbs(,,0:1)
       do iy = -1, ny
        do ix = -1, nx
