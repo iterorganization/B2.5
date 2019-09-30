@@ -116,18 +116,18 @@
      2    'Ion temperature (eV)',
      3    'Static pressure (Pa)',
      4    'Electron density (m^{-3})',
-     5    'phi (V)',
-     6    'diff.fhe (W)',
-     7    'diff.fhi (W)',
-     8    'diff.fhet (W)',
-     9    'diff.fhit (W)',
-     *    'diff.fhj (W)'/
+     5    'Electric potential (V)',
+     6    '\mtD\dfhe (W)',
+     7    '\mtD\dfhi (W)',
+     8    '\mtD\dfhet (W)',
+     9    '\mtD\dfhit (W)',
+     *    '\mtD\dfhj (W)'/
       data descriptions(21:30) /
-     1    'diff.fch (A)',
-     2    'div.fna (particles/s)',
-     3    'div.fmo (N.s)',
-     4    'div.fhm (W)',
-     5    'div.fhp (W)',
+     1    '\mtD\dfch (A)',
+     2    '\mtD\dfna (#/s)',
+     3    '\mtD\dfmo (N.s)',
+     4    '\mtD\dfhm (W)',
+     5    '\mtD\dfhp (W)',
      6    'Z_{eff}',
      7    'Poloidal velocity (up) (m.s^{-1})',
      8    'Poloidal particle flux (s^{-1})',
@@ -216,7 +216,7 @@
      3    'ua at previous time step (m.s^{-1})',
      4    'po at previous time step (V)',
      5    'Thermal force (proportional to exhp)',
-     6    'Thermal force (proportional to Ti and Te gradients)',
+     6    'Thermal force (proportional to T_{i} and T_{e} gradients)',
      7    'Friction force', 
      8    'Potential energy (eV) (cum. ionisation energy)',
      9    'Ionisation energy (eV)',
@@ -264,7 +264,7 @@
      7    'Poloidal pinch velocity (m.s^{-1})',
      8    'Radial pinch velocity (m.s^{-1})',
      9    'Viscosity (m.kg^{-1}.s^{-1})',
-     *    'Bas'' viscosity piece ()'/
+     *    'Braams viscosity piece (m.kg^{-1}.s^{-1})'/
       data descriptions(151:160) /
      1   'Anomalous conductivity (mho.m^{-1})',
      2   'Thermo-electric coefficient (mho.m^{-1})',
@@ -277,8 +277,8 @@
      9   'pol comp of the total ion diamag vel [wadia.x] (m.s^{-1})',
      *   'rad comp of the total ion diamag vel [wadia.y] (m.s^{-1})'/
       data descriptions(161:170) /
-     1    'pol comp of the ion ExB vel [vaecrb.x] (m.s^{-1})',
-     2    'rad comp of the ion ExB vel [vaecrb.y] (m.s^{-1})',
+     1    'pol comp of the ion E\mU\dB vel [vaecrb.x] (m.s^{-1})',
+     2    'rad comp of the ion E\mU\dB vel [vaecrb.y] (m.s^{-1})',
      3    'fchdia.x',
      4    'fchdia.y',
      5    'Isolating region',
@@ -301,12 +301,12 @@
       data descriptions(181:190) /
      1    'Test ion temperature (eV)',
      2    'Recycling particle source (#/s^{-1})',
-     3    'Recycling parallel momentium source (N)',
+     3    'Recycling parallel momentum source (N)',
      4    'Recycling electron heat source (W)',
      5    'Recycling ion heat source (W)',
      6    'Recycling charge source (A)',
      7    'Boundary particle source (#/s^{-1})',
-     8    'Boundary parallel momentium source (N)',
+     8    'Boundary parallel momentum source (N)',
      9    'Boundary electron heat source (W)',
      *    'Boundary ion heat source (W)'/
       data descriptions(191:200) /
@@ -467,8 +467,8 @@
      1    'Radial current due to inertia and gyroviscosity (A)',
      2    'pol comp of div part of el diamag vel [vedia.x] (m.s^{-1})',
      3    'rad comp of div part of el diamag vel [vedia.y] (m.s^{-1})',
-     4    'pol comp of the electron ExB vel [veecrb.x] (m.s^{-1})',
-     5    'rad comp of the electron ExB vel [veecrb.y] (m.s^{-1})',
+     4    'pol comp of the electron E\mU\dB vel [veecrb.x] (m.s^{-1})',
+     5    'rad comp of the electron E\mU\dB vel [veecrb.y] (m.s^{-1})',
      6    'ixne',
      7    'iyne',
      8    'isne',

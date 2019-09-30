@@ -1641,47 +1641,47 @@ c
           enddo
           call copy(mach,1.0_R8,nz,textbl)
         case('po')
-          description='phi (V)'
+          description='Electric potential (V)'
           nz=1
           call copy(po,1.0_R8,nz,textbl)
         case('dfhe')
-          description='diff.fhe (W)'
+          description='\mtD\dfhe (W)'
           nz=1
           call copy(div_fhe,1.0_R8,nz,textbl)
         case('dfhi')
-          description='diff.fhi (W)'
+          description='\mtD\dfhi (W)'
           nz=1
           call copy(div_fhi,1.0_R8,nz,textbl)
         case('dhet','dfhet')
-          description='diff.fhet (W)'
+          description='\mtD\dfhet (W)'
           nz=1
           call copy(div_fhet,1.0_R8,nz,textbl)
         case('dhit','dfhit')
-          description='diff.fhit (W)'
+          description='\mtD\dfhit (W)'
           nz=1
           call copy(div_fhit,1.0_R8,nz,textbl)
         case('dfhj')
-          description='diff.fhj (W)'
+          description='\mtD\dfhj (W)'
           nz=1
           call copy(div_fhj,1.0_R8,nz,textbl)
         case('dfch')
-          description='diff.fch (A)'
+          description='\mtD\dfch (A)'
           nz=1
           call copy(div_fch,1.0_R8,nz,textbl)
         case('dfna')
-          description='div.fna (particles/s)'
+          description='\mtD\dfna (#/s)'
           nz=ns
           call copy(div_fna,1.0_R8,nz,textpl)
         case('dfmo')
-          description='div.fmo (N.s)'
+          description='\mtD\dfmo (N.s)'
           nz=ns
           call copy(div_fmo,1.0_R8,nz,textpl)
         case('dfhm')
-          description='div.fhm (W)'
+          description='\mtD\dfhm (W)'
           nz=ns
           call copy(div_fhm,1.0_R8,nz,textpl)
         case('dfhp')
-          description='div.fhp (W)'
+          description='\mtD\dfhp (W)'
           nz=ns
           call copy(div_fhp,1.0_R8,nz,textpl)
         case('zeff')
@@ -1748,7 +1748,7 @@ c
           description='Radial ion energy flux [fhity] (W)'
           nz=1
           call copy(fhit(:,:,1),1.0_R8,nz,textbl)
-         case('fhmx')
+        case('fhmx')
           description='Poloidal parallel kinetic energy flux (W)'
           nz=ns
           call copy(fhmx,1.0_R8,nz,textpl)
@@ -2538,8 +2538,8 @@ c
           nz=ns
           call copy(smpr,1.0_R8,nz,textpl)
         case ('smpt')
-          description=
-     &     'Thermal force (proportional to Ti and Te gradients) (N)'
+          description='Thermal force '//
+     .     '(proportional to T_{i} and T_{e} gradients) (N)'
           nz=ns
           call copy(smpt,1.0_R8,nz,textpl)
         case ('smfr')
@@ -3496,7 +3496,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           call copy(mach,1.0_R8,nz,textpl)
         case ('bvis')
-          description='Bas'' viscosity piece (m.kg^{-1}.s^{-1})'
+          description='Braams viscosity piece (m.kg^{-1}.s^{-1})'
           nz=ns
           call copy(bas_vis_piece,1.0_R8,nz,textpl)
         case ('sig')
@@ -3559,13 +3559,13 @@ c     assumes that bb is OK for 1d cases
           call copy(mach,1.0_R8,nz,textpl)
         case ('vexb.x')
           description='pol comp of the ' //
-     *          'ion ExB velocity [vaecrb.x] (m.s^{-1})'
+     *          'ion E\mU\dB velocity [vaecrb.x] (m.s^{-1})'
           nz=ns
           mach(:,:,0:ns-1)=vaecrb(:,:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('vexb.y')
           description='rad comp of the ' //
-     *          'ion ExB velocity [vaecrb.y] (m.s^{-1})'
+     *          'ion E\mU\dB velocity [vaecrb.y] (m.s^{-1})'
           nz=ns
           mach(:,:,0:ns-1)=vaecrb(:,:,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
@@ -3581,12 +3581,12 @@ c     assumes that bb is OK for 1d cases
           call copy(vedia(:,:,1),1.0_R8,nz,textbl)
         case ('veexb.x')
           description='pol comp of the ' //
-     *          'electron ExB velocity [veecrb.x] (m.s^{-1})'
+     *          'electron E\mU\dB velocity [veecrb.x] (m.s^{-1})'
           nz=1
           call copy(veecrb(:,:,0),1.0_R8,nz,textbl)
         case ('veexb.y')
           description='rad comp of the ' //
-     *          'electron ExB velocity [veecrb.y] (m.s^{-1})'
+     *          'electron E\mU\dB velocity [veecrb.y] (m.s^{-1})'
           nz=1
           call copy(veecrb(:,:,1),1.0_R8,nz,textbl)
         case ('cd')
