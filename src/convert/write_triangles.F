@@ -352,8 +352,8 @@
       integer :: ifc, j1, j2, i
         do i = 1, mpg%cvFcP(ic,2)
           ifc = mpg%cvFc(mpg%cvFcP(ic,1)+i-1)
-          j1 = mpg%fcVx(jfc,1) 
-          j2 = mpg%fcVx(jfc,2) 
+          j1 = mpg%fcVx(ifc,1) 
+          j2 = mpg%fcVx(ifc,2) 
           if (((i1 == j1) .and. (i2 == j2)) .or.
      .        ((i1 == j2) .and. (i2 == j1))) return
         end do

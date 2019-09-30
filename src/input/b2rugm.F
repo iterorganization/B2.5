@@ -461,10 +461,13 @@ cxpb-end
         hc(:,:,1) = 0.5*hy(:,:)
         hc(:,:,2) = 0.5*hx(:,:)
         hc(:,:,3) = 0.5*hy(:,:)
-        qac(:,:,0) =  qc(:,:,0)*wbbl(:,:,0)/abs(wbbl(:,:,0))
-        qas(:,:,0) = -qs(:,:,0)*wbbl(:,:,0)/abs(wbbl(:,:,0))
+!pb     qac(:,:,0) =  qc(:,:,0)*wbbl(:,:,0)/abs(wbbl(:,:,0))
+!pb     qas(:,:,0) = -qs(:,:,0)*wbbl(:,:,0)/abs(wbbl(:,:,0))
+        qac(:,:,0) =  qc(:,:,0)*sign(1._R8,wbbl(:,:,0))
+        qas(:,:,0) = -qs(:,:,0)*sign(1._R8,wbbl(:,:,0))
         qac(:,:,1) = 0.0_R8
-        qas(:,:,1) = 1.0_R8*wbbv(:,:,0)/abs(wbbv(:,:,0))
+!pb     qas(:,:,1) = 1.0_R8*wbbv(:,:,0)/abs(wbbv(:,:,0))
+        qas(:,:,1) = 1.0_R8*sign(1._R8,wbbv(:,:,0))
         ! Initialize ebc and ht for 'classical' grids
         do iy=-1,ny
           do ix=-1,nx

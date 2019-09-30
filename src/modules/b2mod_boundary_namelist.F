@@ -1517,7 +1517,7 @@ c.. Test consistency with region boundaries
       type (mapping), intent (inout) :: m
       type (geometry), intent (inout) :: g
       integer :: ib, ibc, is, inbc, noss, iss, indss,
-     .           i, iFc, iCv, idb
+     .           i, iFc, iCv, idb, nbfc
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
       integer, allocatable :: ifchit(:)
 
@@ -1616,6 +1616,12 @@ cwdk also need to correct for degenerate faces?
         endif
       enddo     
       close (idb)
+
+      nbcfaces(1:nbc) = m%bcFcP(1:nbc,2)
+      do ib = 1, nbc
+        nbfc = nbcfaces(ib)
+        bc_faces(1:nbfc,ib) = m%bcFc(m%bcFcP(ib,1):m%bcFcP(ib,1)+nbfc-1)
+      end do
       
       if (inbc .ne. m%nCg ) then
 ! try to find missing or doubled faces
