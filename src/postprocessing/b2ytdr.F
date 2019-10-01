@@ -6784,7 +6784,7 @@ cxpb We now rewrite the modified block 4
             PATH=ADJUSTL(PATH)
             I2=INDEX(PATH,' ')
             FILE=REPEAT(' ',74)
-            FILE(1:)=PATH(1:I2-1)
+            FILE(1:I2-1)=PATH(1:I2-1)
 !            WRITE(IUNOT,'(A80)') ZEILE ! this writes the path
             READ (IUNIN,'(A80)') ZEILE
             IREAD=1
