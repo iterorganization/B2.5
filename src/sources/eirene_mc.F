@@ -62,7 +62,7 @@ c  version : 26.07.2002 23:39
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
-      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
+      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir, b2stbc_feedback
       integer, allocatable, save :: feedback_strata(:)
