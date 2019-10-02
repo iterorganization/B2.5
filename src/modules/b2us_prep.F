@@ -1348,7 +1348,6 @@ cwdk  might need to add duplicates numbers here...
       write (*,*) 'Merging vertices'
       do iy = 1, ny+1
         do ix = 1, nx+1
-          write (*,*) 'ix, iy = ', ix-1, iy-1
           ix2 = ix
           iy2 = iy
           do while (ighostvx(ix2-1,iy2-1)==1) 
@@ -1356,10 +1355,6 @@ cwdk  might need to add duplicates numbers here...
             iy2o = iy2
             ix2= ixmapghostvx(ix2o-1,iy2-1)+1
             iy2= iymapghostvx(ix2o-1,iy2-1)+1 
-            write (*,*) 'ix2, iy2, ighost, ixmapghost, iymapghost= ', 
-     .        ix2-1, iy2-1 ,ighostvx(ix2-1,iy2-1), 
-     .                    ixmapghostvx(ix2-1,iy2-1),
-     .                    iymapghostvx(ix2-1,iy2-1)
             if ((ix2 == -1) .or. (ix2 == nx+2) .or.
      .          (iy2 == -1) .or. (iy2 == ny+2)) exit
           enddo            
@@ -1595,10 +1590,10 @@ cwdk  might need to add duplicates numbers here...
      .                               rightiy(ix-1,iy-1))
               m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),
      .                               topiy(ix-1,iy-1))
-              m%cvVx(if4) = m%imapVx(locrightix(topix(ix-1,iy-1),
-     .                                          topiy(ix-1,iy-1)),
-     .                               locrightiy(topix(ix-1,iy-1),
-     .                                          topiy(ix-1,iy-1)))
+              m%cvVx(if4) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
+     .                                          loctopiy(ix-1,iy-1)),
+     .                               locrightiy(loctopix(ix-1,iy-1),
+     .                                          loctopiy(ix-1,iy-1)))
            case ( CGEO_TRIA_NOLEFT )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
@@ -1618,10 +1613,10 @@ cwdk  might need to add duplicates numbers here...
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
               m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
      .                               rightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(locrightix(topix(ix-1,iy-1),
-     .                                          topiy(ix-1,iy-1)), 
-     .                               locrightiy(topix(ix-1,iy-1),
-     .                                          topiy(ix-1,iy-1)))
+              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
+     .                                          loctopiy(ix-1,iy-1)), 
+     .                               locrightiy(loctopix(ix-1,iy-1),
+     .                                          loctopiy(ix-1,iy-1)))
             case ( CGEO_TRIA_NOBOT )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
@@ -1640,10 +1635,10 @@ cwdk  might need to add duplicates numbers here...
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
               m%cvVx(if2) = m%imapVx(topix(ix-1,iy-1),
      .                               topiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(locrightix(topix(ix-1,iy-1),
-     .                                          topiy(ix-1,iy-1)), 
-     .                               locrightiy(topix(ix-1,iy-1),
-     .                                          topiy(ix-1,iy-1)))
+              m%cvVx(if3) = m%imapVx(locrightix(loctopix(ix-1,iy-1),
+     .                                          loctopiy(ix-1,iy-1)), 
+     .                               locrightiy(loctopix(ix-1,iy-1),
+     .                                          loctopiy(ix-1,iy-1)))
             case ( CGEO_TRIA_NORIGHT )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
@@ -1661,8 +1656,8 @@ cwdk  might need to add duplicates numbers here...
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
               m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),!cwdk is this not the vertex that was thrown out??ctb solved?
      .                               locrightiy(ix-1,iy-1))
-              m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),
-     .                               topiy(ix-1,iy-1))
+              m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
+     .                               loctopiy(ix-1,iy-1))
             case ( CGEO_TRIA_NOTOP )  
               if1 = m%cvFcP(ic,1)
               if2 = if1 + 1
@@ -1678,8 +1673,8 @@ cwdk  might need to add duplicates numbers here...
               m%intcellR(if2) = 1.0_R8
               m%intcellR(if3) = 0.0_R8
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-              m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
-     .                               rightiy(ix-1,iy-1))
+              m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),
+     .                               locrightiy(ix-1,iy-1))
               m%cvVx(if3) = m%imapVx(loctopix(ix-1,iy-1),
      .                               loctopiy(ix-1,iy-1))!cwdk is this not the vertex that was thrown out?? ctb solved?
             end select
