@@ -25,7 +25,7 @@ c
       character*256 solpstop,filenamecat,localarea,copyarea
       integer lnblnk, iend
       logical streql
-      external streql
+      external lnblnk, streql
       logical first
 c
       save first, solpstop
