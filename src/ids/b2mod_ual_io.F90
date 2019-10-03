@@ -816,6 +816,7 @@ contains
             b0 = b0r0 / r0
           end if
         end if
+        !> Careful: Sign convention for magnetic field in IDS is OPPOSITE to that in SOLPS
         if ( b0r0.ne.0.0_IDS_real ) then
           if (streql(device,'iter')) then
             b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
@@ -825,21 +826,21 @@ contains
             i = nint(b0r0_ref/b0r0)
             select case (i)
             case (1)
-              summary%global_quantities%ip%value( time_sind ) = 15.0e6_IDS_real
-              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = 5.3_IDS_real
-              summary%global_quantities%b0%value( time_sind ) = 5.3_IDS_real
+              summary%global_quantities%ip%value( time_sind ) = -15.0e6_IDS_real
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -5.3_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = -5.3_IDS_real
             case (2)
-              summary%global_quantities%ip%value( time_sind ) =  7.5e6_IDS_real
-              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = 2.65_IDS_real
-              summary%global_quantities%b0%value( time_sind ) = 2.65_IDS_real
+              summary%global_quantities%ip%value( time_sind ) =  -7.5e6_IDS_real
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -2.65_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = -2.65_IDS_real
             case (3)
-              summary%global_quantities%ip%value( time_sind ) =  5.0e6_IDS_real
-              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = 1.8_IDS_real
-              summary%global_quantities%b0%value( time_sind ) = 1.8_IDS_real
+              summary%global_quantities%ip%value( time_sind ) =  -5.0e6_IDS_real
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -1.8_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = -1.8_IDS_real
             case default
-              summary%global_quantities%ip%value( time_sind ) = 15.0e6_IDS_real/nint(b0r0_ref/b0r0)
-              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0r0 / 6.2_IDS_real
-              summary%global_quantities%b0%value( time_sind ) = b0r0 / 6.2_IDS_real
+              summary%global_quantities%ip%value( time_sind ) = -15.0e6_IDS_real/nint(b0r0_ref/b0r0)
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0r0 / 6.2_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = -b0r0 / 6.2_IDS_real
             end select
             summary%global_quantities%ip%source = "ITER Baseline q95=3 equilibrium"
             edge_profiles%vacuum_toroidal_field%r0 = 6.2_IDS_real
@@ -847,10 +848,10 @@ contains
           else
             edge_profiles%vacuum_toroidal_field%r0 = r0
             allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
-            edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0
+            edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0
             summary%global_quantities%r0%value = r0
             allocate( summary%global_quantities%b0%value( time_sind ) )
-            summary%global_quantities%b0%value( time_sind ) = b0
+            summary%global_quantities%b0%value( time_sind ) = -b0
           end if
           allocate( summary%global_quantities%r0%source(1) )
           summary%global_quantities%r0%source = source
