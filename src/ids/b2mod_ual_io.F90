@@ -238,7 +238,8 @@ contains
         real(IDS_real) :: time  !< Generic time
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
-        real(IDS_real) :: b0, r0, b0r0, vtor, nisep, nasum, gsum, gmid, gbot, gtop
+        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, &
+            &             vtor, nisep, nasum, gsum, gmid, gbot, gtop
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
         type(ids_generic_grid_dynamic_grid_subset) :: gs_cell
@@ -815,16 +816,47 @@ contains
             b0 = b0r0 / r0
           end if
         end if
-        edge_profiles%vacuum_toroidal_field%r0 = r0
-        allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
-        edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0
-        summary%global_quantities%r0%value = r0
-        allocate( summary%global_quantities%r0%source(1) )
-        summary%global_quantities%r0%source = source
-        allocate( summary%global_quantities%b0%value( time_sind ) )
-        summary%global_quantities%b0%value( time_sind ) = b0
-        allocate( summary%global_quantities%b0%source(1) )
-        summary%global_quantities%b0%source = source
+        if ( b0r0.ne.0.0_IDS_real ) then
+          if (streql(device,'iter')) then
+            b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
+            allocate( summary%global_quantities%ip%value( time_sind ) )
+            allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
+            allocate( summary%global_quantities%b0%value( time_sind ) )
+            i = nint(b0r0_ref/b0r0)
+            select case (i)
+            case (1)
+              summary%global_quantities%ip%value( time_sind ) = 15.0e6_IDS_real
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = 5.3_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = 5.3_IDS_real
+            case (2)
+              summary%global_quantities%ip%value( time_sind ) =  7.5e6_IDS_real
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = 2.65_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = 2.65_IDS_real
+            case (3)
+              summary%global_quantities%ip%value( time_sind ) =  5.0e6_IDS_real
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = 1.8_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = 1.8_IDS_real
+            case default
+              summary%global_quantities%ip%value( time_sind ) = 15.0e6_IDS_real/nint(b0r0_ref/b0r0)
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0r0 / 6.2_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = b0r0 / 6.2_IDS_real
+            end select
+            summary%global_quantities%ip%source = "ITER Baseline q95=3 equilibrium"
+            edge_profiles%vacuum_toroidal_field%r0 = 6.2_IDS_real
+            summary%global_quantities%r0%value = 6.2_IDS_real
+          else
+            edge_profiles%vacuum_toroidal_field%r0 = r0
+            allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
+            edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0
+            summary%global_quantities%r0%value = r0
+            allocate( summary%global_quantities%b0%value( time_sind ) )
+            summary%global_quantities%b0%value( time_sind ) = b0
+          end if
+          allocate( summary%global_quantities%r0%source(1) )
+          summary%global_quantities%r0%source = source
+          allocate( summary%global_quantities%b0%source(1) )
+          summary%global_quantities%b0%source = source
+        end if
 #endif
 
         !! Write grid & grid subsets/subgrids
