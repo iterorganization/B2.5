@@ -1074,7 +1074,9 @@ c.. Test consistency with physical edges within the computational domain
       call map_ion_components
       return
 
+#ifdef USE_MPI
   999 call xerrab ('Error while reading NEUTRALS namelist!')
+#endif
       end subroutine read_neutrals_namelist
 
       subroutine write_b2mod_neutrals_namelist
@@ -1121,7 +1123,9 @@ c.. Test consistency with physical edges within the computational domain
       enddo
 
       return
+#ifdef USE_MPI
   999 call xerrab ('Error while reading NEUTRALS_SAVE namelist!')
+#endif
       end subroutine read_b2mod_neutrals_save
 
       subroutine write_b2mod_neutrals_save(nwrite,edition)

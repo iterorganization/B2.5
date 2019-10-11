@@ -842,6 +842,7 @@ contains
               edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0r0 / 6.2_IDS_real
               summary%global_quantities%b0%value( time_sind ) = -b0r0 / 6.2_IDS_real
             end select
+            allocate( summary%global_quantities%ip%source(1) )
             summary%global_quantities%ip%source = "ITER Baseline q95=3 equilibrium"
             edge_profiles%vacuum_toroidal_field%r0 = 6.2_IDS_real
             summary%global_quantities%r0%value = 6.2_IDS_real
@@ -5650,7 +5651,7 @@ contains
       call gridWriteData( values(2), iSgCore, cpodata )
       deallocate(cpodata)
       tmpVx = interpolateToVertices( gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
-      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgInnerMidplane, gmap, tmpVx  )
+      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgInnerMidplane, gmap, tmpVx )
       call gridWriteData( values(3), iSgInnerMidplane, cpodata )
       deallocate(cpodata)
       cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgOuterMidplane, gmap, tmpVx )

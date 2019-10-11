@@ -597,7 +597,7 @@ contains
                             &   objects_per_dimension(1)%object(iVx)%geometry(2) =  &
                             &   crx( ix, iy, 1)
                     end if
-                    if( iVx .eq. ((nx+1)*(ny+1) - 1) ) exit
+                    if( iVx .eq. gmap%nVx ) exit
                 end if
                 if( iy.eq.ny-1) then
                     iVx = iVx + 1  !! Upper left corners
@@ -634,7 +634,7 @@ contains
                                 &   objects_per_dimension(1)%object( iVx )% &
                                 &   geometry(2) = crx( ix, iy, 3 )
                         end if
-                        if( iVx .eq. ( ( nx+1 )*( ny+1 ) - 1) ) exit
+                        if( iVx .eq. gmap%nVx ) exit
                     end if
                 end if
             end do
@@ -925,9 +925,9 @@ contains
             do dir = LEFT, TOP
                 call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy,     &
                     &   topix, topiy, bottomix, bottomiy, ix, iy, dir, nix, niy)
-                if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells,    &
+                if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells,   &
                     &   nix, niy ) ) then
-                    grid_ggd%space( SPACE_POLOIDALPLANE )%            &
+                    grid_ggd%space( SPACE_POLOIDALPLANE )%          &
                         &   objects_per_dimension(3)%object( iCv )% &
                         &   boundary( dir + 1 )%neighbours(1) =     &
                         &   gmap%mapCvI( nix, niy )
@@ -1661,14 +1661,14 @@ contains
             if (RegionsinSubset(1) == 0) cycle
             GSubsetCount = GSubsetCount + 1
 
-            call logmsg( LOGDEBUG,                                      &
+            call logmsg( LOGDEBUG,                                     &
                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
                &   idsInt2str(GSubsetCount)//": "//                    &
                &   trim(gridSubsetName ( iSubset ))//", iType "//idsInt2str(iType) )
 
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
-               &   grid_ggd%grid_subset( GSubsetCount ),   &
+               &   grid_ggd%grid_subset( GSubsetCount ),    &
                &   iSubset, gridSubsetName ( iSubset )  )
 
             !! Get explicit object list of the grid subset using
@@ -1861,12 +1861,12 @@ contains
 
             nInd = 0
             do ix = 0, gmap%b2nx-1
-                if (isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) nInd = nInd + 1
+                if (isRealCell(cflags(ix,jsep,CELLFLAG_TYPE))) nInd = nInd + 1
             end do
             allocate( indexList2d(nInd, SPACE_COUNT) )
             iInd = 0
             do ix = 0, gmap%b2nx-1
-                if (.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
+                if (.not.isRealCell(cflags(ix,jsep,CELLFLAG_TYPE))) cycle
                 iInd = iInd + 1
                 ind = gmap%mapFcI(ix, jsep, TOP)
                 indexList2d( iInd, SPACE_POLOIDALPLANE ) = ind
@@ -1899,7 +1899,7 @@ contains
 
             nInd = 0
             do ix = 0, gmap%b2nx-1
-                if (isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+                if (isRealCell(cflags(ix,jsep,CELLFLAG_TYPE))) then
                     ireg = region(ix,jsep,0)
                     if (ireg.eq.1 .or. ireg.eq.3 .or. &
                       & ireg.eq.5 .or. ireg.eq.8) then
@@ -1910,7 +1910,7 @@ contains
             allocate( indexList2d(nInd, SPACE_COUNT) )
             iInd = 0
             do ix = 0, gmap%b2nx-1
-                if (.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
+                if (.not.isRealCell(cflags(ix,jsep,CELLFLAG_TYPE))) cycle
                 ireg = region(ix,jsep,0)
                 if (ireg.eq.1 .or. ireg.eq.3 .or. &
                   & ireg.eq.5 .or. ireg.eq.8) then
@@ -1987,7 +1987,7 @@ contains
 
             nInd = 0
             do ix = 0, gmap%b2nx-1
-                if (isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+                if (isRealCell(cflags(ix,jsep,CELLFLAG_TYPE))) then
                     ireg = region(ix,jsep,0)
                     if (ireg.eq.1 .or. ireg.eq.4 .or. &
                       & ireg.eq.5 .or. ireg.eq.7) then
@@ -1998,7 +1998,7 @@ contains
             allocate( indexList2d(nInd, SPACE_COUNT) )
             iInd = 0
             do ix = 0, gmap%b2nx-1
-                if (.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
+                if (.not.isRealCell(cflags(ix,jsep,CELLFLAG_TYPE))) cycle
                 ireg = region(ix,jsep,0)
                 if (ireg.eq.1 .or. ireg.eq.4 .or. &
                   & ireg.eq.5 .or. ireg.eq.7) then

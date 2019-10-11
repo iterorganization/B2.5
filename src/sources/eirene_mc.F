@@ -394,7 +394,7 @@ c not sure this is the right place
         call ipgeti ('eirene_ionising_core', ionising_core)
         if (ionising_core.eq.0)     ! for backward compatibility
      >   call ipgeti ('eirene_ionizing_core', ionising_core)
-        call xertst (ionising_core.gt.0.or.abs(ionising_core).le.nbc,
+        call xertst (ionising_core.ge.-nbc.and.ionising_core.le.1,
      1   'faulty input ionising_core, abs(ionising_core) > NBC')
         call ipgeti ('eirene_ank_mods', ank_mods)
         call ipgeti ('eirene_dpc_fix', dpc_fix)
@@ -430,7 +430,7 @@ csw 26feb2013
      .   'Cannot have simultaneous multiple Eirene averaging schemes!')
         if(nhist.gt.1) call alloc_hist_arrays(nhist)
         if(nrelax.gt.1 .or. nhist.gt.1) call alloc_sum_arrays
-        call xertst(.not.(ank_mods.ne.0 .and. ionising_core.ne.0),
+        call xertst(ank_mods.eq.0.or.ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
         call ipgeti ('eirene_no_sseicorr',no_sseicorr)

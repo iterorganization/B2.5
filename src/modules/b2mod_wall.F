@@ -508,7 +508,9 @@ cxpb Data file material properties
       call xertst(ndepth_nml.le.ndepth .and. ndepth_nml.ge.1,
      . 'Invalid array size NDEPTH_NML!')
       return
+#ifdef USE_MPI
   999 call xerrab ('Error while reading WALL_SAVE namelist!')
+#endif
       end subroutine read_b2mod_wall_namelist
 
       subroutine write_b2mod_wall_namelist(nwrite,nx,ny,ns,edition)
@@ -1099,7 +1101,7 @@ cxpb Normalise surface constituents
             read(99,*) alloy_Cp_B2(ifile)
             read(99,*) alloy_Cp_B3(ifile)
             read(99,*) alloy_Cp_B4(ifile)
-   96       close(99)
+            close(99)
           endif
           filename='Surface_properties/'//trim(layer_alloys(ifile))
           if(open_file(99,filename,

@@ -177,8 +177,6 @@
      &                   (crx(ix,iy,0)+crx(ix,iy,1))/2.0_R8,
      &                   (cry(ix,iy,2)+cry(ix,iy,3))/2.0_R8-
      &                   (cry(ix,iy,0)+cry(ix,iy,1))/2.0_R8) 
-        cell_width(ix,iy) = hx(ix,iy)
-        cell_height(ix,iy) = hy(ix,iy)
         qz(ix,iy,0) = sinang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
@@ -194,6 +192,8 @@
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
         qcb(ix,iy) = 1.0_R8
+        cell_width(ix,iy) = hx(ix,iy)
+        cell_height(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
         if(qz(ix,iy,1).le.0.0_R8) then
           write(*,'(a,1x,1f9.6,2i4)')
      1     'Problem in b2agmt: qz(ix,iy,1) <= 0',qz(ix,iy,1),ix,iy
