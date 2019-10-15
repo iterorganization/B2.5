@@ -136,8 +136,8 @@ contains
         logical, parameter :: B2_WRITE_DATA = .true.
         real(IDS_real),   &
             &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
-        real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2 ), 0:1)
-        real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2 ) )
+        real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
+        real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: time  !< Generic time
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
@@ -475,24 +475,20 @@ contains
             edge_profiles%ggd( time_sind )%ion( is + 1 )%z_ion = ion_charge_int
 
             ! Put mass of ion
-            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%a =     &
-                &   am( is )
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%a = am( is )
 
             ! Put nuclear charge
-            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%z_n =   &
-                &   zn( is )
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%z_n = zn( is )
 
             ! Put number of atoms
             edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%atoms_n = 1
 
             ! Put minimum Z of the charge state bundle
             ! (z_min = z_max = 0 for a neutral)
-            edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%z_min =   &
-                &   zamin( is )
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%z_min = zamin( is )
 
             ! Put maximum Z of the charge state bundle
-            edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%z_max =   &
-                &   zamax( is )
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%state(1)%z_max = zamax( is )
 
         enddo
 
@@ -1156,10 +1152,9 @@ contains
                 !< (in this case 1D vector)
             real(IDS_real), intent(in) ::   &
                 &   b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
-            integer, intent(in) :: gridID                   !< Grid identifier index
-            integer, intent(in), optional :: gridSubsetId   !< Base grid subset
-                                                            !< index
-            real(IDS_real), dimension(:), pointer :: idsdata    !< Dummy array
+            integer, intent(in) :: gridID                    !< Grid identifier index
+            integer, intent(in), optional :: gridSubsetId    !< Base grid subset index
+            real(IDS_real), dimension(:), pointer :: idsdata !< Dummy array
                 !< for holding data field values
             integer, intent(in) :: time_sind    !< General grid description
 

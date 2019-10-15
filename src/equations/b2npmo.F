@@ -382,12 +382,12 @@ cdjm Jan2017 update momentum source components for balance
        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
        fmo(:,:,:,is)=wrkf
-       
+
 cdjm Mar2019 output the total momentum flux and source for balance
        if (balance_netcdf.ne.0) then
          fmo_tot(:,:,:,is)=wrkf
        endif
-      
+
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
        if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 12.07.02 {

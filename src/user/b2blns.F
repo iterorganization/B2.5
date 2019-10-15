@@ -373,7 +373,7 @@ c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) co
                 iyf = BC_LIST_Y(ix,ic)
               else if (BCCHAR(ic).EQ.'W') then
                 ixf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
-                iyf = rightix(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
+                iyf = rightiy(BC_LIST_X(ix,ic),BC_LIST_Y(ix,ic))
               else if (BCCHAR(ic).eq.'E') then
                 ixf = BC_LIST_X(ix,ic)
                 iyf = BC_LIST_Y(ix,ic)
@@ -516,7 +516,6 @@ c<<<
 !     For standalone run take the source of neutrals with the opposite sign
                     flxis(ls) = flxis(ls) - sna(ix,iy,0,is-1) -
      1               sna(ix,iy,1,is-1) * na(ix,iy,is-1) 
-
 !     But be careful: the source due to time derivative should be counted
                     if (hlpdt .gt. 0.0_R8) then
                       flxis(ls) = flxis(ls) -

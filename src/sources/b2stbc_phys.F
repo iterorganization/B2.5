@@ -167,7 +167,8 @@
       parameter (amtol=1.0e-2_R8)
       character chns*3, chk*1                                        !srv 11.07.05
       logical decay_length_ok, fedback_species, core_boundary, ishigh
-      logical, save :: BCCON14_W(NBCD), BCCON14_E(NBCD)              !srv 20.09.17
+      logical, save :: BCCON14(NBCD)                                 !srv 20.09.17
+      logical, save :: consistent
       real (kind=R8) ::
      *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,  !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                 !srv 07.04.00
@@ -520,8 +521,8 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- Moving core tally according to B.C.
 * -- Must be done only once!
 
-        IF (ncall.eq.0 .and. bc_type16_ref.gt.1) THEN
-          IF (BCCHAR(IB).EQ.'S' .AND.
+        IF (ncall.eq.0) THEN
+          IF (BCCHAR(IB).EQ.'S' .AND. bc_type16_ref.gt.1 .AND.
      &       (BCENE(IB).EQ.16.or.BCENE(IB).EQ.17.or.BCENE(IB).EQ.20.or.
      &        BCENI(IB).EQ.16.or.BCENI(IB).EQ.17.or.BCENI(IB).EQ.20))
      &     THEN
@@ -555,6 +556,33 @@ cwdk  now need to recompute full diamagnetic component for ud
      .         '1 radial step.'
             endif
           ENDIF
+
+* -- Consistency checks
+          consistent = .true.
+          bccon14(ib) = .true.
+          IF (BCENE(IB).EQ.15 .OR. BCENI(IB).EQ.15 .OR. BCPOT(IB).EQ.11)
+     .     THEN
+            consistent = BCENE(IB).eq.15 .and. BCENI(IB).eq.15 .and.
+     &                   BCPOT(IB).eq.11
+            DO IS = 0, NS-1
+              IF (IS_NEUTRAL(IS)) CYCLE
+              consistent = consistent .and. BCMOM(IS,IB).EQ.13
+              consistent = consistent .and. BCCON(IS,IB).EQ.14
+              bccon14(ib) = bccon14(ib) .and. BCCON(IS,IB).EQ.14
+            END DO
+          END IF
+          IF (.not.consistent) then
+            write(*,*) 'DRIFT SHEATH BOUNDARY CONDITIONS AT BOUNDARY ',
+     &       IB,' MAY NOT BE CONSISTENT!'
+            WRITE(*,*) 'IT IS RECOMMENDED TO IMPOSE TOGETHER : '
+            WRITE(*,*) 'BCENE/I=15, BCPOT=11, ',
+     &       'with BCMOM=13 and BCCON=14 for all ion species'
+            write(0,*) 'DRIFT SHEATH BOUNDARY CONDITIONS AT BOUNDARY ',
+     &       IB,' MAY NOT BE CONSISTENT!'
+            WRITE(0,*) 'IT IS RECOMMENDED TO IMPOSE TOGETHER : '
+            WRITE(0,*) 'BCENE/I=15, BCPOT=11, ',
+     &       'with BCMOM=13 and BCCON=14 for all ion species'
+          END IF
         ENDIF
 
         call b2stbc_phys_species(IB)
@@ -5476,37 +5504,6 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=15 -- FROM B2STBC_SPB                                        !srv 01.02.09
 
       case (15)
-        if(ncall.eq.0) then                                             !srv 20.09.17 {
-          IF(BCCHAR(IB).EQ.'W') THEN
-            BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
-            DO IS = 0, NS-1
-              IF(.NOT.IS_NEUTRAL(IS)) THEN
-                IF(BCCON(IS,IB).NE.14) THEN
-                  BCCON14_W(IB) = .FALSE.
-                ENDIF
-              ENDIF
-            ENDDO
-            if(BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
-     &      'BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
-            if(.not.BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
-     &      'HAS NOT BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
-          ENDIF
-          IF(BCCHAR(IB).EQ.'E') THEN
-            BCCON14_E(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
-            DO IS = 0, NS-1
-              IF(.NOT.IS_NEUTRAL(IS)) THEN
-                IF(BCCON(IS,IB).NE.14) THEN
-                  BCCON14_E(IB) = .FALSE.
-                ENDIF
-              ENDIF
-            ENDDO
-            if(BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
-     &       'BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
-            if(.not.BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
-     &       'HAS NOT BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
-          ENDIF
-        endif                                                           !srv 20.09.17 }
-
         if(bcene_15_style.eq.0) then
           if(ncall.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
             write(*,'(a,1p,g14.7,a,a,a)')
@@ -5518,7 +5515,7 @@ cxpb code segment analog to b2tfhe
 !            CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
               CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-              if(bccon14_w(ib)) then                                    !srv 20.09.17 {
+              if(bccon14(ib)) then                                      !srv 20.09.17 {
 *    .. apply bcene=15 according to the form of bccon=14
                 t0 = 0.0_R8
                 do is = 0, ns-1
@@ -5560,7 +5557,7 @@ cxpb code segment analog to b2tfhe
 !              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
               CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-              if(bccon14_e(ib)) then                                    !srv 20.09.17 {
+              if(bccon14(ib)) then                                      !srv 20.09.17 {
 *    .. apply bcene=15 according to the form of bccon=14
                 t0 = 0.0_R8
                 do is = 0, ns-1
@@ -5611,7 +5608,7 @@ cxpb code segment analog to b2tfhe
               s1=abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &                   rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)) !srv 18.04.13 {
               vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
-              if(bccon14_w(ib)) then                                    !srv 20.09.17 {
+              if(bccon14(ib)) then                                      !srv 20.09.17 {
 *    .. apply bcene=15 according to the form of bccon=14
                 t0 = 0.0_R8
                 do is = 0, ns-1
@@ -5656,7 +5653,7 @@ cxpb code segment analog to b2tfhe
 !              CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
               s1=abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))          !srv 18.04.13 {
               vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
-              if(bccon14_e(ib)) then                                    !srv 20.09.17 {
+              if(bccon14(ib)) then                                      !srv 20.09.17 {
 *    .. apply bcene=15 according to the form of bccon=14
                 t0 = 0.0_R8
                 do is = 0, ns-1
@@ -7534,34 +7531,6 @@ cxpb          endif
 
       case (15)
         if(ncall.eq.0) then
-          IF(BCCHAR(IB).EQ.'W') THEN
-            BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
-            DO IS = 0, NS-1
-              IF(.NOT.IS_NEUTRAL(IS)) THEN
-                IF(BCCON(IS,IB).NE.14) THEN
-                  BCCON14_W(IB) = .FALSE.
-                ENDIF
-              ENDIF
-            ENDDO
-            if(BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
-     &      'BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
-            if(.not.BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
-     &      'HAS NOT BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
-          ENDIF
-          IF(BCCHAR(IB).EQ.'E') THEN
-            BCCON14_E(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
-            DO IS = 0, NS-1
-              IF(.NOT.IS_NEUTRAL(IS)) THEN
-                IF(BCCON(IS,IB).NE.14) THEN
-                  BCCON14_E(IB) = .FALSE.
-                ENDIF
-              ENDIF
-            ENDDO
-            if(BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
-     &       'BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
-            if(.not.BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
-     &       'HAS NOT BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
-          ENDIF
           call xertst(ENIPAR(IB,1).gt.0.0_R8,
      1       'BCENI = 15, ENIPAR(I,,1) <= 0 not allowed!')              !srv 20.09.17
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
@@ -7574,7 +7543,7 @@ cxpb          endif
 !            CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
             CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &              RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-            if(bccon14_w(ib)) then                                      !srv 20.09.17 {
+            if(bccon14(ib)) then                                        !srv 20.09.17 {
 *    .. apply bceni=15 according to the form of bccon=14
               t0 = 0.0_R8
               do is = 0, ns-1
@@ -7606,7 +7575,7 @@ cxpb          endif
 !            CS=SQRT(bcint(PZ,nx,ny,IY,IB)/bcint(RZ,nx,ny,IY,IB))
             CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      .              RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-            if(bccon14_e(ib)) then                                      !srv 20.09.17 {
+            if(bccon14(ib)) then                                        !srv 20.09.17 {
 *    .. apply bceni=15 according to the form of bccon=14
               t0 = 0.0_R8
               do is = 0, ns-1

@@ -129,9 +129,8 @@ c*** Procedures
 c----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg /
-     1 '  ne_sep','  Te_sep','  Ti_sep',' Zef_sep',
-     2 '  Qt_sep','  Qe_sep','  Qi_sep','Qrad_SOL',
-     3 'Spmp_nom'/
+     1  'ne_sep','Te_sep','Ti_sep'  ,'Zef_sep'  ,'Qt_sep',
+     2  'Qe_sep','Qi_sep','Qrad_SOL', 'Spmp_nom'/
       data hlp_hs /
      1  'ni_sep_','Zi_sep_','Ze_sep_','Gi_sep_','na_sep_',
      2  'Ta_sep_','Ga_sep_','Gp_sep_','pr_sep_','nr_sep_' /

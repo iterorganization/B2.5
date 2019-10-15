@@ -1170,7 +1170,7 @@ c     read in data
       rtz2=-1.0_R8
       rtpi=-1.0_R8
       if(fix_recomb.ne.0) then
-        write(*,*) 'RATAMNS: FIX_RECOMB <> 0 : ',fix_recomb
+        write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb
       endif
 
 #ifdef GOT_AMNSPROTO
@@ -1234,7 +1234,7 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
       if(fix_recomb.eq.0) then
          rtqa(:,:,:)=rtbr(:,:,:)
       else
-         call xerrab ('RATAMNS: fix_recomb <> 0 : Not yet coded!')
+         call xerrab ('RATADAS: fix_recomb <> 0 : Not yet coded!')
       endif
       rtqa(:,:,:)=rtqa(:,:,:)+rtrd(:,:,:)
       do ic=0,nc-1

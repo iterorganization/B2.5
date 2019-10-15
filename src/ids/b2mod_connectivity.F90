@@ -744,7 +744,11 @@ contains
        if(nncut.gt.DEF_NCUT) then
           write(*,*) ' Increase DEF_NCUT in DIMENSIONS.F!'
           write(*,*) ' nncut = ',nncut,' DEF_NCUT = ',DEF_NCUT
+#ifdef BUILDING_CARRE
+          stop 'faulty parameter DEF_NCUT'
+#else
           call xertst (nncut.le.DEF_NCUT,'faulty parameter DEF_NCUT')
+#endif
 
        end if
     end do

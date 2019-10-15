@@ -162,10 +162,10 @@ csw 26feb2014
       real (kind=R8), save, allocatable ::
      .  sni_av(:,:,:,:), smo_av(:,:,:,:), sei_av(:,:,:), see_av(:,:,:)
       real (kind=R8), save, allocatable ::                        !djm Jan2017
-     .  sni_av_papl(:,:,:,:),sni_av_pmpl(:,:,:,:),
-     .  sni_av_pipl(:,:,:,:),sni_av_pppl(:,:,:,:),
-     .  smo_av_mapl(:,:,:,:),smo_av_mmpl(:,:,:,:),
-     .  smo_av_mipl(:,:,:,:),smo_av_cppv(:,:,:,:),
+     .  sni_av_papl(:,:,:,:), sni_av_pmpl(:,:,:,:),
+     .  sni_av_pipl(:,:,:,:), sni_av_pppl(:,:,:,:),
+     .  smo_av_mapl(:,:,:,:), smo_av_mmpl(:,:,:,:),
+     .  smo_av_mipl(:,:,:,:), smo_av_cppv(:,:,:,:),
      .  see_av_eael(:,:,:), see_av_emel(:,:,:),
      .  see_av_eiel(:,:,:), see_av_epel(:,:,:),
      .  sei_av_eapl(:,:,:), sei_av_empl(:,:,:),
@@ -207,12 +207,12 @@ csw 26feb2014
       intrinsic min, mod, abs, sqrt, log
       external subini, subend, xertst, ipgeti, ipgetr, rratio
       logical lnext
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.1.0e-3_R8
 #ifdef B25_EIRENE
       logical streql
       external streql
 #endif
+      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+     &  abs(am(is)-am(js)).lt.1.0e-3_R8
 *   ..initialisation
       data ncall/0/, output_style/1/, saved_volrec_used/.false./,
      .  linearisation/1/, solregno/3/, b2stbc_feedback/0/,
@@ -262,7 +262,7 @@ c not sure this is the right place
         allocate(sum_wld(2,2+NATM))
         allocate(feedback_strata(0:nspecies-1))
         if (balance_netcdf.ne.0) then !djm Jan2017
-          call alloc_b2mod_eirene_sources(nx,ny,ns,nstrat)
+         call alloc_b2mod_eirene_sources(nx,ny,ns,nstrat)
         endif
 
         write(*,*) 'Calling test_couple'

@@ -1115,7 +1115,7 @@ c*** Calculate the neutral flows in PFR
             m=lpfrgrp(i)
             if(m.lt.0) m=nnlimi-m
             if(isrftype(m).ne.-3) then !{
-              write (*,'(a,i4,a,i4)')
+              write (*,'(1x,a,i4,a,i4)')
      .         '#b2usrtrc: wrong type of diagnostic surface. Surface:',
      .          m,',  type: ',isrftype(m)
               write (*,*) 'Check the DG model!!!'
@@ -1517,7 +1517,7 @@ c*** f     :  the associated file name
         warn_tmp=.false.
         if(nv.ne.lv) then !{
           warn_tmp=.true.
-          write(*,'(a,i8,3a,i8)')
+          write(*,'(1x,a,i8,3a,i8)')
      ,     '!!! b2usrtrc: current version ',lv,
      ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. lvmj) then !{
@@ -1535,7 +1535,7 @@ c*** It was a major change of the file format - impossible to continue
           end if !}
         end if !}
         if(na_tmp.ne.npfrgrp) then !{
-          write(*,'(a,i2,3a,i2)')
+          write(*,'(1x,a,i2,3a,i2)')
      ,     '!!! b2usrtrc: current number of PFR surface groups ',
      ,     npfrgrp,
      ,     ' differs from that in the file ',trim(f),' : ',na_tmp
@@ -1543,19 +1543,19 @@ c*** It was a major change of the file format - impossible to continue
         end if !}
         if(npfrgrp.gt.0) then !{
           if(ng_tmp.ne.nglb_tmp) then !{
-            write(*,'(a,i4,3a,i4)')
+            write(*,'(1x,a,i4,3a,i4)')
      ,       '!!! b2usrtrc: current number of global values ',nglb_tmp,
      ,       ' differs from that in the file ',trim(f),' : ',ng_tmp
             filedata(ltrc)=.false.
           end if !}
           if(np_tmp.ne.npff_tmp) then !{
-            write(*,'(a,i2,3a,i2)')
+            write(*,'(1x,a,i2,3a,i2)')
      ,       '!!! b2usrtrc: current number of PFR values ',npff_tmp,
      ,       ' differs from that in the file ',trim(f),' : ',np_tmp
             filedata(ltrc)=.false.
           end if !}
           if(ns_tmp.ne.nspecies) then !{
-            write(*,'(a,i2,3a,i2)')
+            write(*,'(1x,a,i2,3a,i2)')
      ,       '!!! b2usrtrc: current number of species ',nspecies,
      ,       ' differs from that in the file ',trim(f),' : ',ns_tmp
             filedata(ltrc)=.false.
@@ -1614,7 +1614,7 @@ c=======================================================================
       filedata(ltrc)=.false.
       return
 
-   93 write(*,'(4a)') 'b2usrtrc: number of species changed - ',
+   93 write(*,'(1x,4a)') 'b2usrtrc: number of species changed - ',
      ,                'remove the ',trim(f),' tracing file first!'
       filedata(ltrc)=.false.
       return
@@ -1623,7 +1623,7 @@ c=======================================================================
       filedata(ltrc)=.false.
       return
 
-   98 write(*,'(2a,2i8)') 'b2usrtrc: internal error. ',
+   98 write(*,'(1x,2a,2i8)') 'b2usrtrc: internal error. ',
      ,  'Number of columns in the header - ',ntrc_tmp,n
       filedata(ltrc)=.false.
       return

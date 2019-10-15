@@ -32,7 +32,6 @@
 
 *   ..local variables
       integer ncall, ix, iy, ireg
-!      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       save ncall
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::

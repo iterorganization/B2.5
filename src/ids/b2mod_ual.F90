@@ -66,7 +66,7 @@ contains
             !< database
 
         !! Set data to edge_profiles IDS
-        write(0,*) "Writing to edge_profiles, edge_sources, edge_transport, "// &
+        write(0,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
           &  "and radiation IDS"
 
         !! Create and modify new shot/run

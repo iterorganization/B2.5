@@ -667,9 +667,10 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
       endif
 
-      if(maxval(na_feedback_target(0:nspecies-1)).gt.0.0_R8) then
+      if(maxval(na_feedback_target(0:nspecies-1)).gt.0.0_R8 .or.
+     &   maxval(na_feedback_choice(0:nspecies-1)).gt.0) then
 ! we have a request for feedback control of na
-! my idea here is to break the actions into 3 phases
+! the idea here is to break the actions into 3 phases
 ! 1/ calculate something based on the present state of the plasma depending on a
 !    species block based on "na_feedback_choice"
 ! 2/ compare this with the reference value and calculate a change

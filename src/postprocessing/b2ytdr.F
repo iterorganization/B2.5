@@ -5250,7 +5250,7 @@ Cxpb then rewrite the entire block
      .           TDMCR(1,JPLS),TDM_CORONA(JPLS)
           CASE ('COLRAD')
             DO I=1, NRE(JPLS)
-              READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3,E12.4)')
+              READ (IUNIN,'(I6,1X,A6,1X,A4,A9,A3)')
      .           TDMISP(I,JPLS),
      .           TDMFNAME(I,JPLS),TDMH2(I,JPLS), TDMREACTION(I,JPLS),
      .           TDMCR(I,JPLS)

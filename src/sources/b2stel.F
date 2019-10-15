@@ -549,24 +549,14 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stel_sna_rec0to1 = sna0_rec
         b2stel_smq_ion0to3 = smq0_ion
         b2stel_smq_rec0to3 = smq0_rec
-        b2stel_shi_ion0to3=shi0_ion
-        b2stel_shi_rec0to3=shi0_rec
+        b2stel_shi_ion0to3 = shi0_ion
+        b2stel_shi_rec0to3 = shi0_rec
       endif
 
 * ..return
       ncall = ncall+1
       call subend ()
       return
-
-*-----------------------------------------------------------------------
-*.scribbles
-
-*!!   Consider to calculate sna0, she0, shi0 over (-1:nx,-1:ny)
-*     instead of over (0:nx-1,0:ny-1).
-*xpb  Went back to using just (0:nx-1,0:ny-1). Otherwise sources (in
-*xpb  particular recombination sources) in guard cells are not balanced
-*xpb  by anything and this can lead to particle accumulation and
-*xpb  temperature collapse.
 
 *-----------------------------------------------------------------------
 *.end b2stel

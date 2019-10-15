@@ -44,8 +44,6 @@
       real (kind=R8) :: 
      *  dte1(-1:nx,-1:ny), dti1(-1:nx,-1:ny),                             !lk 26.10.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny), tt3(-1:ny)                    !lk 26.10.17
-*   ..procedures
-
       save ncall, stylec, pot_eq
 *   ..procedures
       intrinsic min, max
@@ -106,8 +104,7 @@
           dti = rxf*max(-ti(ix,iy),corti(ix,iy))
          endif
         else if (stylec.eq.1) then
-         ctt = cortt(ix,iy)-
-     &     med(corte(ix,iy),cortt(ix,iy),corti(ix,iy))
+         ctt = cortt(ix,iy)-med(corte(ix,iy),cortt(ix,iy),corti(ix,iy))
          if (solvereg(ireg).and.solvireg(ireg)) then
           dte = rxf*max(-te(ix,iy),corte(ix,iy)+ctt)
           dti = rxf*max(-ti(ix,iy),corti(ix,iy)+ctt)

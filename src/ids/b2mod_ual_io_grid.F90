@@ -485,8 +485,8 @@ contains
         !! Coordinate types
         !! dimension of space = NDIM = size( coordtype )
 
-        allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%geometry_type%name(1) )
-        ggd_grid%space(SPACE_POLOIDALPLANE)%geometry_type%name = 'Poloidal'
+        allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%geometry_type%name(1) )
+        ggd_grid%space( SPACE_POLOIDALPLANE )%geometry_type%name = 'Poloidal'
 
         !! Set the space coordinates, also defining the dimension of the space
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%coordinates_type(NDIM) )
@@ -903,30 +903,30 @@ contains
             !! Set position in computational space
             ix = gmap%mapCvix( iCv )
             iy = gmap%mapCviy( iCv )
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%geometry(1) = ix
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%geometry(2) = iy
 
             !! Set faces composing the quadrilateral in the list:
             !! left face (y-aligned)
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(1)%index = gmap%mapFcI( ix, iy, LEFT )
             !! bottom face (x-aligned
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(2)%index = gmap%mapFcI( ix, iy, BOTTOM )
             !! right face (y-aligned)
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(3)%index = gmap%mapFcI( ix, iy, RIGHT )
             !! top face (x-aligned)
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                 &   object( iCv )%boundary(4)%index = gmap%mapFcI( ix, iy, TOP )
             do dir = LEFT, TOP
                 call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy,     &
                     &   topix, topiy, bottomix, bottomiy, ix, iy, dir, nix, niy)
                 if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells,   &
                     &   nix, niy ) ) then
-                    ggd_grid%space(SPACE_POLOIDALPLANE)%            &
+                    ggd_grid%space( SPACE_POLOIDALPLANE )%          &
                         &   objects_per_dimension(3)%object( iCv )% &
                         &   boundary( dir + 1 )%neighbours(1) =     &
                         &   gmap%mapCvI( nix, niy )
@@ -934,7 +934,7 @@ contains
             end do
             !! 2d object measure: cell area
             if (present(vol)) then
-                ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)%   &
                     &   object( iCv )%measure = vol(ix, iy)
             end if
         end do
@@ -948,7 +948,7 @@ contains
         !! In edge_profiles no node for data on x-points was found. There is
         !! hovewer one in equilibrium%boundary%x_point
         allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%xpoints( gmap%nsv ) )
-        ggd_grid%space(SPACE_POLOIDALPLANE)%xpoints = gmap%svi(1:gmap%nsv)
+        ggd_grid%space( SPACE_POLOIDALPLANE )%xpoints = gmap%svi(1:gmap%nsv)
 #endif
 
         !! If requested, add a second space for the toroidal angle
@@ -956,7 +956,7 @@ contains
           if (isymm.eq.0) then
                 call ipgetr ('b2agmt_1d_width', width)
                 call gridSetupStruct1dSpace(                                      &
-                    &   ggd_grid%space(SPACE_TOROIDALANGLE), COORDTYPE_Y,         &
+                    &   ggd_grid%space( SPACE_TOROIDALANGLE ), COORDTYPE_Y,       &
                     &   (/                                                        &
                     &   ( ( width/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )     &
                     &   /),                                                       &
@@ -964,7 +964,7 @@ contains
           else
             if ( TOROIDAL_PERIODIC ) then
                 call gridSetupStruct1dSpace(                                      &
-                    &   ggd_grid%space(SPACE_TOROIDALANGLE), COORDTYPE_PHI,       &
+                    &   ggd_grid%space( SPACE_TOROIDALANGLE ), COORDTYPE_PHI,     &
                     &   (/                                                        &
                     &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL-1 ) &
                     &   /),                                                       &
@@ -1016,7 +1016,7 @@ contains
         ! ids_dim_2D.object.resize(nCv)
 
         ! Already done
-        allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%  &
+        allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%  &
             &   objects_per_dimension(3)%object( gmap%nCv ) )
 
         !! Get 2D objects geometry (nodes) data from CPO, sort them into more
@@ -1029,7 +1029,7 @@ contains
         do iCv = 1, gmap%nCv
             ix = gmap%mapCvix( iCv )
             iy = gmap%mapCviy( iCv )
-            allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%  &
+            allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%  &
                 &   objects_per_dimension(3)%object(iCv)%nodes(num_nodes_2D) )
 
             edge_idx = gmap%mapFcI( ix, iy, LEFT )
@@ -1166,13 +1166,13 @@ contains
         !! matching the order in ids_grid_common
         !! GRID_SUBSET_NODES: all nodes, one implicit object list
 
-        call createGridSubsetForClass(  ggd_grid,                   &
+        call createGridSubsetForClass( ggd_grid,                    &
             &   ggd_grid%grid_subset( GRID_SUBSET_NODES ),          &
             &   IDS_CLASS_NODE, 1, GRID_SUBSET_NODES, "Nodes",      &
             &   "All nodes (0D objects) in the domain."  )
 
         !! GRID_SUBSET_FACES: all faces, one implicit object list
-        call createGridSubsetForClass(  ggd_grid,                       &
+        call createGridSubsetForClass( ggd_grid,                        &
             &   ggd_grid%grid_subset( GRID_SUBSET_FACES ),              &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1, GRID_SUBSET_FACES,    &
             &   "Faces", "All faces (1D objects) in the domain."  )
@@ -1187,7 +1187,7 @@ contains
         allocate(indexList1d(gmap%nFcx))
         indexList1d = (/ (i, i = 1, gmap%nFcx) /)
         call createExplicitObjectListSingleSpace( ggd_grid,            &
-            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES),    &
+            &   ggd_grid%grid_subset( GRID_SUBSET_X_ALIGNED_FACES ),   &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, indexList1d,            &
             &   IDS_CLASS_POLOIDALRADIAL_FACE, 1)
 
@@ -1227,7 +1227,7 @@ contains
         end if
 
         !! GRID_SUBSET_CELLS: all 2d cells, one implicit object list
-        call createGridSubsetForClass(  ggd_grid,               &
+        call createGridSubsetForClass( ggd_grid,                &
             &   ggd_grid%grid_subset( GRID_SUBSET_CELLS ),      &
             &   IDS_CLASS_CELL, 1, GRID_SUBSET_CELLS, "Cells",  &
             &   "All faces (1D objects) in the domain."  )
@@ -1295,8 +1295,8 @@ contains
                 !! TODO: Currently taking object indices only from space 1
                 !!      ( %space(1) ). Set
                 !!       to search all spaces
-                call createExplicitObjectListSingleSpace( ggd_grid,       &
-                    &   ggd_grid%grid_subset( GSubsetCount ), sum( cls ), &
+                call createExplicitObjectListSingleSpace( ggd_grid,     &
+                    &   ggd_grid%grid_subset( GSubsetCount ), sum(cls), &
                     &   indexList2d(:,1), sum(cls), 1)
             end do
         end do

@@ -6,10 +6,10 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants                                         !srv 23.03.10
-      use b2mod_balance         !djm Jan2017
+      use b2mod_balance                                           !djm Jan2017
      & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf,
      &          b2sigp_pstati0to3, b2sigp_pstate0to3, !djm Jul2018
-     &          b2sigp_smogpi0to3, b2sigp_smogpe0to3, b2sigp_smogpgr0to3      
+     &          b2sigp_smogpi0to3, b2sigp_smogpe0to3, b2sigp_smogpgr0to3
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -317,7 +317,7 @@ cdjm compute b2sigp_pstat0to3 on left cell face
      &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/hx(ix,iy)
               b2sigp_pstate0to3(ix,iy,1) = 0.0_R8
               b2sigp_pstate0to3(ix,iy,2) = 0.0_R8
-              b2sigp_pstate0to3(ix,iy,3) = 0.0_R8              
+              b2sigp_pstate0to3(ix,iy,3) = 0.0_R8
             endif
            enddo
           enddo
@@ -440,6 +440,7 @@ cxpb apply restriction to pressure gradient for minority ions and neutrals
 
 cdjm Jan2017 Store linearised source for balance
       if (balance_netcdf.ne.0) then
+        b2sigp_smogp0to3(-1:nx,-1:ny,0:3,isb)=smbgp
         b2sigp_smogpi0to3(-1:nx,-1:ny,0,isb)=wrk5 !djm Jul2018
         b2sigp_smogpe0to3(-1:nx,-1:ny,0,isb)=wrk6
         b2sigp_smogpgr0to3(-1:nx,-1:ny,0:3,isb)=smbgp-smbgp_b4gr
