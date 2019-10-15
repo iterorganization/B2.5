@@ -83,8 +83,9 @@
       character chns*3
 !     character chk*1                                             !srv 30.06.08
       real (kind=R8) ::
-     *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
-      save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
+     *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0, na_min
+      save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
+     *  na_min
       real (kind=R8) ::
      *  rf0, t0, t1, t2
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
@@ -104,7 +105,7 @@
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,
      &  rxm1/0.0_R8/, rxm2/0.0_R8/,
-     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/
+     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/, na_min/1.0e4_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -114,6 +115,9 @@
       call subini ('b2stel')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       call ipgetr ('b2mndr_na_min', na_min)
+       call xertst (na_min.gt.0.0_R8,
+     &  'faulty internal parameter na_min')
        call ipgetr ('b2stel_rg0', rg0)
        call ipgetr ('b2stel_rg1', rg1)
        call xertst (0.0_R8.le.rg0.and.0.0_R8.le.rg1,
@@ -234,7 +238,7 @@
 !$OMP& shared(ns, nx, ny, nspecies)
 !$OMP& shared(rightix, leftix, topiy, bottomiy, zn)
 !$OMP& shared(region, rlsa, rsa, vol, ne, na, ni, te, ti, am, ua)
-!$OMP& shared(phm0, rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1)
+!$OMP& shared(phm0, rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1, na_min)
 !$OMP& shared(rlra, rra, rpi, rlqa, rqa, rrd, hz)
 !$OMP& shared(sna0_ion, shi0_ion, smq0_ion, she0)
 !$OMP& shared(she0_ion, she0_rec)
@@ -372,7 +376,7 @@
      *                         rf0*t1/(ni(ix,iy,0)*ti(ix,iy))
            rrahi(ix,iy,is) = t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
-           if(fix_recomb.ne.0) then
+           if(fix_recomb.ne.0.and.na(ix,iy,is).le.na_min) then
 c the default treatment is to have the entire ionization potential
 c difference lost, and the only additional cooling rate correction
 c to be the Bremsstrahlung
