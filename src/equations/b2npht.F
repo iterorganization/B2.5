@@ -7,7 +7,7 @@
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,
      &  na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                        !srv 09.07.08
-     &  reshe, reshi, resht, corte, corti, ierr)
+     &  shef, shif, reshe, reshi, resht, corte, corti, ierr)
       use b2mod_types
       use b2mod_indirect
       use b2mod_tallies
@@ -48,7 +48,8 @@
       integer ierr
       real (kind=R8) ::
      &  reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny), resht(-1:nx,-1:ny),
-     &  corte(-1:nx,-1:ny), corti(-1:nx,-1:ny)
+     &  corte(-1:nx,-1:ny), corti(-1:nx,-1:ny),
+     &  shef(-1:nx,-1:ny,0:3), shif(-1:nx,-1:ny,0:3)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -242,6 +243,10 @@ cdjm Jan2017 update particle source components for balance
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
+*   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
+      shef = she0
+*   ..save final ion heat source ignoring equipartition
+      shif = shi0                                                       !srv 10.11.02 }
       if ((solving(4).and.any(solvereg(0:nregionv))).or.
      &                    get_residuals.eq.1) then                   !srv 22.05.18
         call b2ursd (nx, ny, ne, te, she0, fhe, reshe)

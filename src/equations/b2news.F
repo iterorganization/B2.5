@@ -1118,7 +1118,7 @@ c     with diamagnetic drift part                                        !xpb
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 09.07.08 07.07.09
      &     na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                     !srv 09.07.08
-     &     reshe, reshi, wrk0, corte, corti, ier0)
+     &     shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
         endif                                                            !srv 13.10.06 }
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.1) then !srv 13.10.06
           call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,     !srv 05.07.17
@@ -1136,7 +1136,7 @@ c     with diamagnetic drift part                                        !xpb
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 07.06.00 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 27.12.01 28.06.03 30.06.03 07.07.09
      &     na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf,             !srv 31.05.99
-     &     reshe, reshi, wrk0, corte, corti, ier0)                       !srv 31.05.99 10.11.02
+     &     shef, shif, reshe, reshi, wrk0, corte, corti, ier0)           !srv 31.05.99 10.11.02
         endif                                                            !srv 13.10.06 }
         call xertst (ier0.eq.0, 'error return from b2npht')
         if(pot_eq.eq.0) po=0.0_R8     !xpb remove pot. correction if unneeded

@@ -1017,7 +1017,7 @@ contains
         ! ids_dim_2D.object.resize(nCv)
 
         ! Already done
-        allocate( grid_ggd%space(SPACE_POLOIDALPLANE)%  &
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
             &   objects_per_dimension(3)%object( gmap%nCv ) )
 
         !! Get 2D objects geometry (nodes) data from CPO, sort them into more
@@ -1030,7 +1030,7 @@ contains
         do iCv = 1, gmap%nCv
             ix = gmap%mapCvix( iCv )
             iy = gmap%mapCviy( iCv )
-            allocate( grid_ggd%space(SPACE_POLOIDALPLANE)%  &
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
                 &   objects_per_dimension(3)%object(iCv)%nodes(num_nodes_2D) )
 
             edge_idx = gmap%mapFcI( ix, iy, LEFT )

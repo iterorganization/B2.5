@@ -1351,7 +1351,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
       hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
       hzconst = 1.0_R8                                                   !srv 30.01.10
-      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
+      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol(:,:)/gs(:,:,2)           !srv 16.06.09
 *   ..compute pbshz (magnetic field pitch * surface area  at cell faces * hz)
 c      wrk0 = hz*vol
 c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)

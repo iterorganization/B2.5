@@ -119,14 +119,18 @@ c*** Local variables of general use
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
       character*2, allocatable :: hlp_a(:)
+
+      integer :: mdf_fnb = 0, style_b2mndt = 0, use_eirene = 0
+      logical :: first=.TRUE.
+
 c*** Procedures
       real (kind=R8) :: hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 c----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg /
-     1          'ne_sep','Te_sep','Ti_sep'  ,'Zef_sep'  ,'Qt_sep',
-     2          'Qe_sep','Qi_sep','Qrad_SOL', 'Spmp_nom'/
+     1  'ne_sep','Te_sep','Ti_sep'  ,'Zef_sep'  ,'Qt_sep',
+     2  'Qe_sep','Qi_sep','Qrad_SOL', 'Spmp_nom'/
       data hlp_hs /
      1  'ni_sep_','Zi_sep_','Ze_sep_','Gi_sep_','na_sep_',
      2  'Ta_sep_','Ga_sep_','Gp_sep_','pr_sep_','nr_sep_' /
@@ -135,6 +139,20 @@ c----------------------------------------------------------------------
 
       save
 c======================================================================
+
+      if(first_time_step) return
+
+      if(ank_tracing.eq.0) return
+
+      if (first) then
+
+        call ipgeti('b2tfnb_mdf',mdf_fnb)
+        call ipgeti('b2mndt_style',style_b2mndt)
+        call ipgeti('b2mndr_eirene',use_eirene)
+
+        first = .FALSE.
+
+      endif
 
 c*** Initialise the arrays
 c
@@ -198,7 +216,6 @@ c          v=vol(ix,iy)
             do k=1,nfluids(j) !{
               is=is+1
               nisi_tmp(is)=nisi_tmp(is)+v*na(ix,iy,ions_list(is))
-              gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,ions_list(is))
               nisp_tmp(j)=nisp_tmp(j)+v*na(ix,iy,ions_list(is))
               prsr_tmp(j)=prsr_tmp(j)+v*na(ix,iy,ions_list(is))*
      *            (ti(ix,iy)+rza(ix,iy,ions_list(is))*te(ix,iy))
@@ -206,7 +223,13 @@ c          v=vol(ix,iy)
      *             v*na(ix,iy,ions_list(is))*rza(ix,iy,ions_list(is))
               zesp_tmp(j)=zesp_tmp(j)+
      *             v*na(ix,iy,ions_list(is))*rz2(ix,iy,ions_list(is))
-              gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,ions_list(is))
+              if (mdf_fnb .eq. 0 .and. style_b2mndt .eq. 0) then
+                gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,ions_list(is))
+                gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,ions_list(is))
+              else
+                gisi_tmp(is)=gisi_tmp(is)+fna_mdf(ix,iy,1,ions_list(is))
+                gisp_tmp(j)=gisp_tmp(j)+fna_mdf(ix,iy,1,ions_list(is))
+              endif
               do i=0,jsep !{
                 gasp_tmp(j)=gasp_tmp(j)+
      1               sna(ix,i,0,ions_list(is))+

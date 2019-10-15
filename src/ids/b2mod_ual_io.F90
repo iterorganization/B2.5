@@ -158,8 +158,8 @@ contains
             !< checks for correct use of the routine.
 
         !! Internal variables
-        character(len=24) :: ion_label  !< Ion species label (e.g. D+1)
-        character(len=24) :: mol_label  !< Molecule species label (e.g. D2)
+        character(len=132) :: ion_label !< Ion species label (e.g. D+1)
+        character(len=132) :: mol_label  !< Molecule species label (e.g. D2)
         character(len=12) :: ion_charge !< Ion charge (e.g. '1', '2', etc.)
         character(len=24) :: source     !< Code source
         character(len=2)  :: plate_name(4) !< Divertor plate name

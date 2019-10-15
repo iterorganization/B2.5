@@ -39,7 +39,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg 
+      integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg
       real (kind=R8) ::
      *  ctt, dte, dti, t0, t1, t2
       real (kind=R8) :: 

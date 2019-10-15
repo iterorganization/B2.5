@@ -19,7 +19,7 @@
       contains
 
       subroutine alloc_b2mod_geo_corner(nxd,nyd)
-      integer nxd, nyd                                            !srv 04.06.99 
+      integer nxd, nyd                                            !srv 04.06.99
       allocate (OnedBsq(-1:nxd,-1:nyd))
       allocate (OnedBsqc(-1:nxd+1,-1:nyd+1))
       allocate (wbbl(-1:nxd,-1:nyd,0:3))
@@ -34,10 +34,10 @@
       allocate (crdy_c_cell(-1:nxd,-1:nyd))                       !srv 02.05.09
       allocate (bzb(-1:nxd,-1:nyd))                               !srv 13.10.06
 
-      write (*,*) 'Allocated space for b2mod_geo_corner' 
+      write (*,*) 'Allocated space for b2mod_geo_corner'
 
       end subroutine alloc_b2mod_geo_corner
-	 
+
       subroutine dealloc_b2mod_geo_corner
 
       deallocate(OnedBsq)

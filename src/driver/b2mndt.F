@@ -548,8 +548,11 @@ ctmp.dpc
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
      &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09
      &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                  !srv 09.07.08
-     &      reshe, reshi, wrk0, corte, corti, ier0)
+     &      shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
          endif
+*     ..save total heat sources for printout at end of run
+         she = shef
+         shi = shif
 *     ..end intermediate iteration
          istg(1) = istg(1)+1
          goto 2

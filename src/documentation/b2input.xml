@@ -1237,7 +1237,6 @@
 				<name>b2tfhe_vis_q</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!srv 20.11.08</note>
 				<description>
 					Real parameter which multiplies the current driven by heat viscosity effects.
 				</description>
@@ -1682,7 +1681,6 @@
 				<name>b2mndr_hz</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!srv 09.06.08</note>
 				<description>
 					hz has been introduced into the new form of the parallel momentum balance equation. If fac_hz = 0.0 then hz = 1 and old form of equations is used. If fac_hz = 1.0 then new form of equations is used.
 				</description>
@@ -1691,7 +1689,6 @@
 				<name>b2stbr_bas_recycled_neutrals_contr</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!srv 12.04.08</note>
 				<description>
 					Introduced for nulling recycling energy when it is zero.
 				</description>
@@ -2080,7 +2077,6 @@
 				<name>b2tlmv_style</name>
 				<default>1</default>
 				<type>integer</type>
-				<note>!srv 30.05.08</note>
 				<description>
 					if style = 0 then it is applied the origin flux limit to the viscosity else it is applied the SPb flux limit to the viscosity
 				</description>
@@ -3146,7 +3142,6 @@
 				<name>b2tfhe_vis_per</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!srv 20.11.08</note>
 				<description>
 					vis_per is a multiplier to the perpendicular viscosity current.
 					If vis_per.ne.0.0, the electric potential equation is solved by the subroutine b2npp7 using a 7-point stencil.
@@ -3280,7 +3275,6 @@
 				<name>b2trcl_cvsa_mltpl</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!iys 06.12.13</note>
 				<description>
 					Artificial coefficient providing faster convergence to the neoclassical electric field but giving a distortion of the flows in the SOL as a side-effect.
 					Can be applied &lt;&gt;1 during the convergence and turned off for the final stage of calculations. Use with caution.
@@ -4390,7 +4384,6 @@
 				<name>b2ardr_no_smoothing</name>
 				<default>0</default>
 				<type>integer</type>
-				<note>!srv 02.07.12</note>
 				<description>
 					When set to 1, disables the tail smoothing for of rate coefficients to represent the effect of a power-law tail on the distribution function. It has been added for compatibility with SOLPS4.3
 				</description>
@@ -5348,10 +5341,11 @@
 				</description>
 			</switch>
 			<switch>
-				<name>LAYER_NRELCONSTITUENTS</name>
+				<name>LAYER_RELCONSTITUENTS</name>
 				<type>real*8 array of size (NWALL,6+NTRACK)</type>
 				<description>
 					Contains the relative atomic abundances of the various elements present within the surface layer of wall element (iwall). Defaults to 1.0 for the first value, 0.0 otherwise.
+					Replaces LAYER_NRELCONSTITUENTS.
 				</description>
 			</switch>
 		</category>

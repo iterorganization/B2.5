@@ -1238,7 +1238,7 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
       if(fix_recomb.eq.0) then
          rtqa(:,:,:)=rtbr(:,:,:)
       else
-         stop 'Not yet coded'
+         call xerrab ('RATADAS: fix_recomb <> 0 : Not yet coded!')
       endif
       rtqa(:,:,:)=rtqa(:,:,:)+rtrd(:,:,:)
       do ic=0,nc-1

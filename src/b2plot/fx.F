@@ -121,7 +121,7 @@ cxpb : new default behaviour : zero of distance set at ixref
              if (dcol.lt.-17) then
                dcol=-mod(abs(dcol),17)
                if (dcol.eq.0) dcol=-17
-             end if
+             endif
           endif
 #endif
           do ix=ixstart,ixend-1
@@ -213,7 +213,7 @@ cxpb : new default behaviour : zero of distance set at ixref
              if (dcol.lt.-17) then
                dcol=-mod(abs(dcol),17)
                if (dcol.eq.0) dcol=-17
-             end if
+             endif
           endif
 #endif
           do ix=ixstart,ixend-1

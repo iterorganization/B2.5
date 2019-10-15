@@ -110,7 +110,7 @@
      &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),     !IYS 27.01.17
      &  sna_eir_tot(nspecies), sna_puff(nspecies),
      &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),     !iyv 07.03.18 {
-     &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies) 
+     &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies)
 #endif
       real (kind=R8) ::
      &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
@@ -233,7 +233,7 @@
         if( sna_corr .gt. 0.0_R8 ) then
            allocate(t1(1:nspecies))
            t1=0.0_R8
-        endif                                                        !iyv 07.03.18 } 
+        endif                                                        !iyv 07.03.18 }
         call ipgetr ('b2stbr_recycled_neutrals_contr',               !srv 12.04.08
      &                       recycled_neutrals_contr)
         call xertst (0.0_R8.le.recycled_neutrals_contr,
@@ -664,7 +664,7 @@ c   --> better solution wanted here..
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call)
 
-*   ..main part of implementation of method of effective sources (ES) 
+*   ..main part of implementation of method of effective sources (ES)
         if (sna_corr .gt. 0.0_R8 ) then                                  !iyv 07.03.18 {
           if ( iout .ne. 0 )
      >      write(*,*) '******* sna_eir correction calculations *******'
@@ -680,22 +680,21 @@ c   --> better solution wanted here..
                 else
                   sna_core(k) = sna_core(k) + fna(ix,iy,1,is)
                 end if
-              end do 
-            end if 
-          end do    
+              end do
+            end if
+          end do
 
-cxpb  Add contribution from Eirene core boundary fluxes
+!  Add contribution from Eirene core boundary fluxes
 !         do ia = 1, nnatmi
 !           if (latmscl(ia).eq.b2espcr(is)) then
 !             do k = 1, ncns
-!               ix = nlim + lcns(k)
-!               sna_core(b2espcr(eb2atcr(ia))) = 
-!     &          sna_core(b2espcr(eb2atcr(ia))) -
+!               ix = nnlimi + lcns(k)
+!               sna_core(latmscl(ia)) = sna_core(latmscl(ia)) -
 !     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
 !               do im = 1, nnmoli
 !                 if (mlcmp(ia,im).gt.0) then
-!                   totfluxn = totfluxn - mlcmp(ia,im) *
-!     &              (wldnm(ix,im,0) - wldrm(ix,im,0)
+!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) - 
+!     &              mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
 !     &                              - wldpm(ix,im,0))
 !                 end if
 !               end do
@@ -710,22 +709,22 @@ cxpb  Add contribution from Eirene core boundary fluxes
               do is = 0, ns-1
                 if( is_neutral(is) ) cycle
                 k = b2espcr(is)
-                sna_eir_tot(k) = sna_eir_tot(k) + 
-     &           sna0_eir(ix,iy,0,is) + 
+                sna_eir_tot(k) = sna_eir_tot(k) +
+     &           sna0_eir(ix,iy,0,is) +
      &           sna0_eir(ix,iy,1,is)*na(ix,iy,is)
-                ext_sna_tot(k) = ext_sna_tot(k) + ext_sna(ix,iy,is) 
-              enddo     
+                ext_sna_tot(k) = ext_sna_tot(k) + ext_sna(ix,iy,is)
+              enddo
             enddo
-          enddo 
-      
+          enddo
+
           sna_puff =0.0_R8
           do is=1,nstrat
             do ia=1,nnatmi
               if(latmscl(ia).eq.0) cycle
               if(crcstra(is).eq.'C') then
-                if(gpfc(ia,is) .ne. 0.0_R8) sna_puff(latmscl(ia)) = 
+                if(gpfc(ia,is) .ne. 0.0_R8) sna_puff(latmscl(ia)) =
      &           userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
-              end if     
+              end if
             end do
           enddo
 
@@ -741,56 +740,56 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
      &             mlcmp(ia,im) * eirpump(nnatmi+im)
                 sna_sptt(latmscl(ia)) = sna_sptt(latmscl(ia)) +
-     &             mlcmp(ia,im) * eirsptm(im)                 
+     &             mlcmp(ia,im) * eirsptm(im)
               endif
-            enddo            
-          end do 
+            enddo
+          end do
           do ip = 1, nnplsi
             is = latmscl(lkindp(ip))
-            if (is.eq.0) cycle   
-            sna_pump(is) = sna_pump(is) + 
+            if (is.eq.0) cycle
+            sna_pump(is) = sna_pump(is) +
      &                         eirpump(nnatmi+nnmoli+nnioni+ip)
           enddo
 
-       
+
           if ( iout .ne. 0 ) then
             write(*,'(a5,7a16)') 'ia', 'sna_core', 'sna_eir_tot',
      &  'sna_puff', 'sna_pump', 'sna_sptt', 'sna_ext', 't1'
             do k = 1, nspecies
-              write(*, '(i5, 7es16.7)') k, sna_core(k),  sna_eir_tot(k), 
+              write(*, '(i5, 7es16.7)') k, sna_core(k),  sna_eir_tot(k),
      &      sna_puff(k), sna_pump(k), sna_sptt(k), ext_sna_tot(k), t1(k)
-            enddo                                  
+            enddo
 
             write(*,'(a3,3a17)') 'ia','dG/sna_eir_tot','t1(ia)','t(ia)'
-          endif  
+          endif
 
           do k = 1, nspecies
-            t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +  
-     &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) / 
-     &            sna_eir_tot(k) 
-            t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) + 
+            t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
+     &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) /
+     &            sna_eir_tot(k)
+            t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) +
      &                     exp(-c_pumpavr)*t1(k)
  !           t1(k) = t01(k)
-            t(k) = 1.0_R8 + 
-     &              max( min( taumax,t1(k) ), -taumax )       
-            if ( iout .ne. 0 ) 
+            t(k) = 1.0_R8 +
+     &              max( min( taumax,t1(k) ), -taumax )
+            if ( iout .ne. 0 )
      &       write(*,'(i3,3es17.4)') k, t01(k), t1(k), t(k)
           enddo
-   
+
           do is = 0, ns-1
             if( is_neutral(is) ) cycle
             k = b2espcr(is)
 !            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
-            sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k) 
+            sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k)
             sna0_eir(:,:,1,is) = sna0_eir(:,:,1,is)*t(k)
 !            else
 !!            write(*,'(a,i3, a5, i3, a3)')
-!!     &   'Source correction is not applied for sputtered particles k=', 
+!!     &   'Source correction is not applied for sputtered particles k=',
 !!     &       k,  'is=', is, eirtxt(k)
-!          endif   
+!          endif
           enddo
-      
-        end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }     
+
+        end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }
 
 *       compute total eirene sources for averaging
 cwdk only total eirene source are averaged!
@@ -798,9 +797,9 @@ cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_
 cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
 cwdk       down in this routine
         do is = 0, ns-1
-          sna0_eir_tot(:,:,is) = sna0_eir(:,:,0,is) + 
+          sna0_eir_tot(:,:,is) = sna0_eir(:,:,0,is) +
      &      sna0_eir(:,:,1,is)*na(:,:,is)
-          smo0_eir_tot(:,:,is) = smo0_eir(:,:,0,is) + 
+          smo0_eir_tot(:,:,is) = smo0_eir(:,:,0,is) +
      &      smo0_eir(:,:,1,is)*ua(:,:,is) +
      &      smo0_eir(:,:,2,is)*am(is)*mp*na(:,:,is) +
      &      smo0_eir(:,:,3,is)*am(is)*mp*na(:,:,is)*ua(:,:,is)
@@ -813,7 +812,7 @@ cwdk       down in this routine
 *       get averaged sources
         if (ird_aver > 0) then
 
-cwdk if ird_aver > 0, all sources computed by eirene are overwritten (!!!), 
+cwdk if ird_aver > 0, all sources computed by eirene are overwritten (!!!),
 cwdk i.e. fully replaced by the averaged values from b2faveri
           sna0_eir = 0.0_R8
           smo0_eir = 0.0_R8

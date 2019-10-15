@@ -426,7 +426,7 @@ cxpb  normalise the layer constituents relative concentrations
         do i = 1, layer_nconstituents(ibnd)
           sum = sum + layer_nrelconstituents(ibnd,i)
         enddo
-        layer_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))=
+        layer_relconstituents(ibnd,1:layer_nconstituents(ibnd))=
      1   layer_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))/sum
       end do
 
@@ -1089,7 +1089,7 @@ cxpb Normalise surface constituents
             sum = sum + matsurf_nrelconstituents(ibnd,i)
           end do
           do i = 1, matsurf_nconstituents(ibnd)
-            matsurf_nrelconstituents(ibnd,i) =
+            matsurf_relconstituents(ibnd,i) =
      .       matsurf_nrelconstituents(ibnd,i)/sum
           end do
         endif
@@ -1143,8 +1143,8 @@ c normalised weights is 1
 cxpb  Modify surface layer properties for backscattering
       layer_nconstituents(ibnd)=matsurf_nconstituents(ibnd)+ntargsp
 cxpb  Contributions from the bulk
-      layer_nrelconstituents(ibnd,1:matsurf_nconstituents(ibnd))=
-     1  matsurf_nrelconstituents
+      layer_relconstituents(ibnd,1:matsurf_nconstituents(ibnd))=
+     1  matsurf_relconstituents
      .   (ibnd,1:matsurf_nconstituents(ibnd))*
      2  sput_frac(0)
 cxpb  Contributions from the deposited species
@@ -1152,7 +1152,7 @@ cxpb  Contributions from the deposited species
         layer_nzconstituents
      .     (ibnd,matsurf_nconstituents(ibnd)+itrack)=
      1     nint(zn(target_intcode(itrack)))
-        layer_nrelconstituents
+        layer_relconstituents
      .     (ibnd,matsurf_nconstituents(ibnd)+itrack)=
      .      sput_frac(itrack)
       enddo
@@ -1189,7 +1189,7 @@ cxpb  This will need refinement including alloy formation
       nz = matsurf_nconstituents(ibnd)
 cxpb  Contribution from the bulk
       layer_composition(ibnd,1:nz)=
-     2  matsurf_nrelconstituents(ibnd,1:nz)*sput_frac(0)
+     2  matsurf_relconstituents(ibnd,1:nz)*sput_frac(0)
       if (layer_nconstituents(ibnd).eq.nz) return
 cxpb  Inventory of bulk or coating particles
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1252,8 +1252,8 @@ cxpb  Must check if Z of deposited material already exists in bulk
       Tcels = T - 273.15_R8
 
 cxpb First count the bulk contribution
-      frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+      frac=layer_relconstituents(ibnd,1)/
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1293,7 +1293,7 @@ cxpb The bulk or coating surface parameters
       if (layer_nconstituents(ibnd).eq.nz) return
 cxpb Loop over deposited species contributions
       do itrack = 1, ntargsp
-        frac = layer_nrelconstituents(ibnd,nz+itrack)
+        frac = layer_relconstituents(ibnd,nz+itrack)
         a(1) = species_Kappa_A1(itrack)
         a(2) = species_Kappa_A2(itrack)
         a(3) = species_Kappa_A3(itrack)
@@ -1330,8 +1330,8 @@ cxpb Loop over deposited species contributions
       Tcels = T - 273.15_R8
 
 cxpb First count the bulk contribution
-      frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+      frac=layer_relconstituents(ibnd,1)/
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1373,7 +1373,7 @@ cxpb The bulk or coating surface parameters
       if (layer_nconstituents(ibnd).eq.nz) return
 cxpb Loop over deposited species contributions
       do itrack = 1, ntargsp
-        frac = layer_nrelconstituents(ibnd,nz+itrack)
+        frac = layer_relconstituents(ibnd,nz+itrack)
         a(2) = species_Kappa_A2(itrack)
         a(3) = species_Kappa_A3(itrack)
         a(4) = species_Kappa_A4(itrack)
@@ -1412,8 +1412,8 @@ cxpb Loop over deposited species contributions
       Tcels = T - 273.15_R8
 
 cxpb First count the bulk contribution
-      frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+      frac=layer_relconstituents(ibnd,1)/
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1463,7 +1463,7 @@ cxpb The bulk or coating surface parameters
 cxpb Loop over deposited species contributions
       if (layer_nconstituents(ibnd).gt.nz) then
         do itrack = 1, ntargsp
-          frac = layer_nrelconstituents(ibnd,nz+itrack)
+          frac = layer_relconstituents(ibnd,nz+itrack)
           b(1) = species_Cp_B1(itrack)
           b(2) = species_Cp_B2(itrack)
           b(3) = species_Cp_B3(itrack)
@@ -1502,15 +1502,15 @@ cxpb Loop over deposited species contributions
       real (kind=R8) :: layer_value, frac
 
 cxpb First count the bulk contribution
-      frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+      frac=layer_relconstituents(ibnd,1)/
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       layer_emissivity = matsurf_blackbody_emiss(ibnd)*frac
       if (layer_nconstituents(ibnd).eq.nz) return
 cxpb Loop over deposited species contributions
       do itrack = 1, ntargsp
-        frac = layer_nrelconstituents(ibnd,nz+itrack)
+        frac = layer_relconstituents(ibnd,nz+itrack)
         layer_value = species_blackbody_emiss(itrack)
         layer_emissivity = layer_emissivity + layer_value*frac
       end do

@@ -399,7 +399,7 @@ csw 01oct2012 initialize potential if necessary
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
 !$OMP& SHARED(kinrgy, fllim0fna) 
 #endif
-!        do is = 0, ns-1
+!        do is=0,ns-1                                                    !srv 01.10.99
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
           call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)  !srv 01.10.99
@@ -1050,7 +1050,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,             !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
      &  na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                        !srv 31.05.99
-     &  reshe, reshi, wrk0, corte, corti, ier0)                          !srv 31.05.99 10.11.02
+     &  shef, shif, reshe, reshi, wrk0, corte, corti, ier0)              !srv 31.05.99 10.11.02
       endif                                                              !srv 13.10.06 }
       if(mdf_fhe.ne.0 .and. mdf_fhi.ne.0) then                           !srv 13.10.06
 !       if(all(solveee(0:nnreg(0))).and.all(solveei(0:nnreg(0))))        !srv 26.09.12
@@ -1070,7 +1070,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,             !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
      &  na, ua, ue, te, ti, po, ne, ni, fhe, fhi_mdf,                    !srv 31.05.99
-     &  reshe, reshi, wrk0, corte, corti, ier0)                          !srv 31.05.99 10.11.02
+     &  shef, shif, reshe, reshi, wrk0, corte, corti, ier0)              !srv 31.05.99 10.11.02
       endif                                                              !srv 13.10.06 }
       if(mdf_fhe.ne.0 .and. mdf_fhi.eq.0) then                           !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,        !srv 05.07.17
@@ -1079,7 +1079,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,             !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
      &  na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi,                    !srv 31.05.99
-     &  reshe, reshi, wrk0, corte, corti, ier0)                          !srv 31.05.99 10.11.02
+     &  shef, shif, reshe, reshi, wrk0, corte, corti, ier0)              !srv 31.05.99 10.11.02
       endif                                                              !srv 13.10.06 }
 
 csw 16aug2011 init potential
@@ -1154,7 +1154,7 @@ c   recompute particle fluxes
             endif
 !         endif                                                          !srv 22.05.18
         else                                                             !srv 13.10.06 {
-!         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv 22.05.18 
+!         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv 22.05.18
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if(.not.is_neutral(is)) then

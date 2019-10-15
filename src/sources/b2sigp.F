@@ -26,10 +26,8 @@
       real (kind=R8) ::
      * wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      * wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny),                      !djm Jan2017
-     * wrk5(-1:nx,-1:ny), wrk6(-1:nx,-1:ny)                       !srv 28.03.17
-      real (kind=R8) ::                                           !djm Jul2018
-     *   smbgp_b4gr(-1:nx,-1:ny,0:3)
-
+     * wrk5(-1:nx,-1:ny), wrk6(-1:nx,-1:ny),                      !srv 28.03.17
+     * smbgp_b4gr(-1:nx,-1:ny,0:3)                                !djm Jul2018
 *-----------------------------------------------------------------------
 *.documentation
 *
