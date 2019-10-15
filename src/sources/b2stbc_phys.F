@@ -305,7 +305,7 @@
        call ipgeti ('eirene_ionising_core', ionising_core)
        if (ionising_core.eq.0)     ! for backward compatibility
      >   call ipgeti ('eirene_ionizing_core', ionising_core)
-       call xertst (ionising_core.gt.0.or.abs(ionising_core).le.nbc,
+       call xertst (ionising_core.ge.-nbc.and.ionising_core.le.1,
      1   'faulty input ionising_core, abs(ionising_core) > NBC')
       endif
 *   ..set n2

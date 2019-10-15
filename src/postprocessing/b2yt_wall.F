@@ -357,19 +357,19 @@ cxpb For mixed materials, if unspecified, use normal material constituents
      1     matsurf_nconstituents(ibnd)
           layer_nzconstituents(ibnd,1:layer_nconstituents(ibnd))=
      1     matsurf_nzconstituents(ibnd,1:layer_nconstituents(ibnd))
-          layer_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))=
-     1     matsurf_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))
+          layer_relconstituents(ibnd,1:layer_nconstituents(ibnd))=
+     1     matsurf_relconstituents(ibnd,1:layer_nconstituents(ibnd))
         else
           layer_model = .true.
         end if
 cxpb  normalise the layer constituents relative concentrations
         sum = 0.0_R8
         do i = 1, layer_nconstituents(ibnd)
-          sum = sum + layer_nrelconstituents(ibnd,i)
+          sum = sum + layer_relconstituents(ibnd,i)
         enddo
         if (sum.gt.0.0_R8)
-     1   layer_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))=
-     2   layer_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))/sum
+     1   layer_relconstituents(ibnd,1:layer_nconstituents(ibnd))=
+     2   layer_relconstituents(ibnd,1:layer_nconstituents(ibnd))/sum
       end do
 
 cxpb Fill up the new wall arrays
@@ -399,16 +399,16 @@ cxpb the old element with the largest areal contribution
           layer_nconstituents1(ibnd1) = matsurf_nconstituents(imax)
           layer_nzconstituents1(ibnd1,1:layer_nconstituents1(ibnd1)) =
      1     matsurf_nzconstituents(imax,1:layer_nconstituents1(ibnd1))
-          layer_nrelconstituents1(ibnd1,1:layer_nconstituents1(ibnd1)) =
-     1     matsurf_nrelconstituents(imax,1:layer_nconstituents1(ibnd1))
+          layer_relconstituents1(ibnd1,1:layer_nconstituents1(ibnd1)) =
+     1     matsurf_relconstituents(imax,1:layer_nconstituents1(ibnd1))
 cxpb  normalise the layer constituents relative concentrations
           sum = 0.0_R8
           do i = 1, layer_nconstituents1(ibnd1)
-            sum = sum + layer_nrelconstituents1(ibnd1,i)
+            sum = sum + layer_relconstituents1(ibnd1,i)
           enddo
           if (sum.gt.0.0_R8)
-     1     layer_nrelconstituents1(ibnd1,1:layer_nconstituents1(ibnd1))=
-     2     layer_nrelconstituents1(ibnd1,1:layer_nconstituents1(ibnd1))/
+     1     layer_relconstituents1(ibnd1,1:layer_nconstituents1(ibnd1))=
+     2     layer_relconstituents1(ibnd1,1:layer_nconstituents1(ibnd1))/
      3     sum
         end do
       end do  ! nsegments
@@ -444,12 +444,12 @@ cxpb Copy data arrays into new geometry
         track_source = 0.0_R8
         do iw = 1, nbnd
           track_source(iw) =
-     .     layer_nrelconstituents(iw,matsurf_nconstituents(iw)+1)
+     .     layer_relconstituents(iw,matsurf_nconstituents(iw)+1)
         end do
         call b2yt_wall_average(nwall,nwall1,contr_area,plate_area,
      .   track_source,track_data)
         do iw1 = 1, nbnd1
-          layer_nrelconstituents1(iw1,layer_nconstituents1(iw1)) =
+          layer_relconstituents1(iw1,layer_nconstituents1(iw1)) =
      .     track_data(iw1)
         end do
       end if
@@ -479,12 +479,12 @@ cxpb Copy data arrays into new geometry
         track_source = 0.0_R8
         do iw = 1, nbnd
           track_source(iw) =
-     .     layer_nrelconstituents(iw,matsurf_nconstituents(iw)+2)
+     .     layer_relconstituents(iw,matsurf_nconstituents(iw)+2)
         end do
         call b2yt_wall_average(nwall,nwall1,contr_area,plate_area,
      .   track_source,track_data)
         do iw1 = 1, nbnd1
-          layer_nrelconstituents1(iw1,layer_nconstituents1(iw1)) =
+          layer_relconstituents1(iw1,layer_nconstituents1(iw1)) =
      .     track_data(iw1)
         end do
       end if
@@ -517,22 +517,22 @@ cxpb Copy data arrays into new geometry
         track_source = 0.0_R8
         do iw = 1, nbnd
           track_source(iw) =
-     .     layer_nrelconstituents(iw,matsurf_nconstituents(iw)+3)
+     .     layer_relconstituents(iw,matsurf_nconstituents(iw)+3)
         end do
         call b2yt_wall_average(nwall,nwall1,contr_area,plate_area,
      .   track_source,track_data)
         do iw1 = 1, nbnd1
-          layer_nrelconstituents1(iw1,layer_nconstituents1(iw1)) =
+          layer_relconstituents1(iw1,layer_nconstituents1(iw1)) =
      .     track_data(iw1)
         end do
       endif
       do ibnd1 = 1, nbnd1
         sum = 0.0_R8
         do i = 1, layer_nconstituents1(ibnd1)
-          sum = sum + layer_nrelconstituents1(ibnd1,i)
+          sum = sum + layer_relconstituents1(ibnd1,i)
         end do
-        layer_nrelconstituents1(ibnd1,1:layer_nconstituents1(ibnd1))=
-     .   layer_nrelconstituents1(ibnd1,1:layer_nconstituents1(ibnd1))/
+        layer_relconstituents1(ibnd1,1:layer_nconstituents1(ibnd1))=
+     .   layer_relconstituents1(ibnd1,1:layer_nconstituents1(ibnd1))/
      .   sum
       end do
       wall_data = 0.0_R8
@@ -890,8 +890,8 @@ cxpb  Use explicit writing of non-default elements only
      .         'LAYER_NZCONSTITUENTS(',ibnd1,',',i,')=  ',
      .          layer_nzconstituents1(ibnd1,i),','
               write(99,'(a23,i4,a1,i2,a2,1es15.8,a1)')
-     .         'LAYER_NRELCONSTITUENTS(',ibnd1,',',i,')=',
-     .          layer_nrelconstituents1(ibnd1,i),','
+     .         'LAYER_RELCONSTITUENTS(',ibnd1,',',i,')=',
+     .          layer_relconstituents1(ibnd1,i),','
             end do
           end if
           do itrack=1,ntrack

@@ -5300,10 +5300,11 @@
 				</description>
 			</switch>
 			<switch>
-				<name>LAYER_NRELCONSTITUENTS</name>
+				<name>LAYER_RELCONSTITUENTS</name>
 				<type>real*8 array of size (NWALL,6+NTRACK)</type>
 				<description>
 					Contains the relative atomic abundances of the various elements present within the surface layer of wall element (iwall). Defaults to 1.0 for the first value, 0.0 otherwise.
+					Replaces LAYER_NRELCONSTITUENTS.
 				</description>
 			</switch>
 		</category>

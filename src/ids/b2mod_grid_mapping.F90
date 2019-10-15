@@ -765,8 +765,12 @@ contains
                     end do
                 end do
             end do
-         end do
+          end do
+#ifndef BUILDING_CARRE
           VERTEX_FILE_TEMP = trim("../"//VERTEX_FILE)
+#else
+          VERTEX_FILE_TEMP = trim(VERTEX_FILE)
+#endif
           open(unit=VERTEX_UNIT, file=trim(VERTEX_FILE_TEMP))
           write(VERTEX_UNIT,*) gd%mapCvixVx
           write(VERTEX_UNIT,*) gd%mapCviyVx

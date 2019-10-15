@@ -128,7 +128,7 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
      1     'increase DEF_NISO in DIMENSIONS.F')
       call write_b2mod_boundary_namelist
       if(boundary_time_mod.gt.0.0_R8) then
-         bc_elm_count=tim/boundary_time_mod
+         bc_elm_count=int(tim/boundary_time_mod)
       else
          bc_elm_count=0
       endif
@@ -245,7 +245,7 @@ cxpb overwrite the defaults with the namelist data
      3        bc_elm_count
          if(mod(tim,boundary_time_mod).gt.boundary_time_switch.or.
      1        int(tim/boundary_time_mod).gt.bc_elm_count) then
-            bc_elm_count=tim/boundary_time_mod
+            bc_elm_count=int(tim/boundary_time_mod)
             call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
             call xertst (nbc.le.nbcd, 
      1           'increase DEF_NBC in DIMENSIONS.F')
@@ -915,7 +915,9 @@ c.. Test consistency with region boundaries
       end do
       return
 
+#ifdef USE_MPI
   999 call xerrab ('Error while reading BOUNDARY namelist!')
+#endif
       end subroutine read_b2mod_boundary_namelist
 
       subroutine write_b2mod_boundary_namelist

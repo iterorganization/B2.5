@@ -40,7 +40,7 @@ cxpb Data file material properties
      *  layer_nconstituents1(:),
      *  layer_nzconstituents1(:,:)
       real (kind=R8), allocatable, save ::
-     *  layer_nrelconstituents1(:,:)
+     *  layer_relconstituents1(:,:)
       
       integer, allocatable, save ::
      *  xymap1(:,:), wall_begin1(:), wall_end1(:)
@@ -119,7 +119,7 @@ cxpb Data file material properties
      *  layer_nconstituents1(nwall1),
      *  layer_nzconstituents1(nwall1,6+ntrack))
       allocate(
-     *  layer_nrelconstituents1(nwall1,6+ntrack))
+     *  layer_relconstituents1(nwall1,6+ntrack))
       
       inertial_cooling1 = .false.
       target_temp1 = 0.0_R8
@@ -190,7 +190,7 @@ cxpb Data file material properties
      *  layer_nconstituents1,
      *  layer_nzconstituents1)
       deallocate(
-     *  layer_nrelconstituents1)
+     *  layer_relconstituents1)
       
       return
       end subroutine dealloc_b2mod_wall2

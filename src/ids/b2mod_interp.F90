@@ -1314,7 +1314,7 @@ contains
         if (isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
         if (density(ix,iy,0,is).eq.0.0_R8) cycle
         if (density(ix,iy,1,is).eq.0.0_R8) cycle
-	if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
+        if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
           velocity(ix,iy,0,is) = flow(ix,iy,0,is)/ &
            & (gs(ix,iy,0)*qc(ix,iy))/density(ix,iy,0,is)
         elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
@@ -1347,7 +1347,7 @@ contains
               &   velocity(ix,iy,0,is) + &
               &   flow(ix,iy,1,is)/area_to_bottom/density(ix,iy,1,is)
         end if
-	if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
+        if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
           if (pbs(ix,iy,1).eq.0.0_R8) then
             velocity(ix,iy,1,is) = flow(ix,iy,1,is)/gs(ix,iy,1)/ &
                               & density(ix,iy,1,is)
@@ -1490,7 +1490,7 @@ contains
       do ix = -1, nx
         if (isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
 !! poloidal contributions
-  	if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) &
+        if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) &
              & flow(ix,iy,0,is) = flow(ix,iy,0,is) + &
              & vv(ix,iy,0,is)*den(ix,iy,0,is)*gs(ix,iy,0)*qc(ix,iy)
         if ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
@@ -1513,7 +1513,7 @@ contains
              & gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
 
 !! radial contributions
-  	if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
+        if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
           if (pbs(ix,iy,1).eq.0.0_R8) then
             flow(ix,iy,1,is) = flow(ix,iy,1,is) + &
              & vv(ix,iy,1,is)*den(ix,iy,1,is)*gs(ix,iy,1)

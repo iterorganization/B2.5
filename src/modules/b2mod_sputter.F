@@ -755,7 +755,7 @@ c    2     reflect_energy(it,iss,itargsp)/ev
      1        reflect_coefficient(it,iss,itargsp)
           endif
         endif
-        reflect=reflect+reffrac*layer_nrelconstituents(ibnd,isp)
+        reflect=reflect+reffrac*layer_relconstituents(ibnd,isp)
       enddo
       return
       end function reflect
@@ -829,7 +829,7 @@ c     @     reflect_energy2(it,iss,itargsp)/ev
      1       reflect_coefficient2(it,iss,itargsp)
           endif
         endif
-        reflect2=reflect2+reffrac*layer_nrelconstituents(ibnd,isp)
+        reflect2=reflect2+reffrac*layer_relconstituents(ibnd,isp)
       enddo
       return
       end function reflect2
@@ -1266,8 +1266,8 @@ cxpb Contribution from bulk if species is part of bulk
       if (bulk) then
         vappres = 10.0e0_R8**(A/tp + B)
         flxthev = alpha*vappres/sqrt(2.0_R8*pi*am2*mp*tp*KBolt)*
-     .     (layer_nrelconstituents(ibnd,1)/
-     .    matsurf_nrelconstituents(ibnd,1))
+     .     (layer_relconstituents(ibnd,1)/
+     .    matsurf_relconstituents(ibnd,1))
         if (flxthev.le.0.0_R8) then
 c       write(*,*) 'Thermal evaporation < 0, Surface temp = ',tp
           flxthev = 0.0_R8
@@ -1287,7 +1287,7 @@ cxpb Also need to consider alloy contributions
       am2 = atomic_mass(layer_nzconstituents(ibnd,nz+itrack))
       vappres = 10.0e0_R8**(A/tp + B)
       flxthev = flxthev+alpha*vappres/sqrt(2.0_R8*pi*am2*mp*tp*KBolt)*
-     .  layer_nrelconstituents(ibnd,nz+itrack)
+     .  layer_relconstituents(ibnd,nz+itrack)
       qthev = qthev + flxthev * am(is) * mp * matsurf_heat_sublim(ibnd)
 
       return
@@ -1608,8 +1608,8 @@ cxpb   in mixed materials scenarios, the layer_ arrays may vary over time
       sum = 0.0_R8
       do i = 1, layer_nconstituents(ibnd)
         a2 = a2t(layer_nzconstituents(ibnd,i))
-        a2eff = a2eff + layer_nrelconstituents(ibnd,i) * a2
-        sum = sum + layer_nrelconstituents(ibnd,i)
+        a2eff = a2eff + layer_relconstituents(ibnd,i) * a2
+        sum = sum + layer_relconstituents(ibnd,i)
       enddo
       a2 = a2eff / sum
       delta = a1 / a2
@@ -1630,7 +1630,7 @@ c     write(*,*)'delta = ',delta
       do 70 i = 1, layer_nconstituents(ibnd)
         z2 = layer_nzconstituents(ibnd,i)
         a2 = a2t(layer_nzconstituents(ibnd,i))
-        wi = layer_nrelconstituents(ibnd,i)
+        wi = layer_relconstituents(ibnd,i)
         z2eff = z2eff + wi * z2
         a2eff = a2eff + wi * a2
         sum = sum + wi

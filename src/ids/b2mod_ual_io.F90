@@ -78,8 +78,8 @@ contains
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
     subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport, &
-            &   time_IN, &
-            &   time_step_IN, time_slice_ind_IN, num_time_slices_IN )
+            &   time_IN, time_step_IN, &
+            &   time_slice_ind_IN, num_time_slices_IN )
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
             !< store data on edge plasma profiles  (includes the scrape-off
             !< layer and possibly part of the confined plasma)
@@ -101,7 +101,7 @@ contains
             !< checks for correct use of the routine.
 
         !! Internal variables
-        character(len=24) :: ion_label !< Ion species label (e.g. D+1)
+        character(len=132) :: ion_label !< Ion species label (e.g. D+1)
         character(len=12) :: ion_charge !< Ion charge (e.g. '1', '2', etc.)
         integer :: ion_charge_int !< Ion charge (e.g. 1, 2, etc.)
         integer :: ion_label_tlen !< Length of the (trimmed) ion label
@@ -112,8 +112,6 @@ contains
                           !< along the second coordinate
         integer :: is     !< Species index (iterator)
         integer :: i      !< Iterator
-        integer :: j      !< Iterator
-        integer :: k      !< Iterator
         integer :: ntimes !< Number of previous timesteps in IDS
         integer :: o      !< Dummy integer
         integer :: p      !< Dummy integer
@@ -145,9 +143,6 @@ contains
         real(IDS_real) :: time_slice_value   !< Time slice value
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
-        type(ids_generic_grid_dynamic_grid_subset) :: gs_cell
-        type(ids_generic_grid_dynamic_grid_subset) :: gs_face
-        type(ids_generic_grid_dynamic_grid_subset) :: gs_bnd_core
 
         integer, save :: use_eirene = 0
         character*8 date
@@ -158,7 +153,7 @@ contains
         character*8 imas_version, ual_version
         character*32 B25_git_version
         character*32 get_B25_hash
-        logical match_found, streql
+        logical streql
 #ifdef USE_PXFGETENV
         integer lenval, ierror
 #else
@@ -689,8 +684,10 @@ contains
                                                 !< slice identifier
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
                 !< handing data field values
+            integer :: ggdID     !< Grid identifier index
             integer :: ival
 
+            ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             !! Allocate data fields for 5+4 grid subsets
             allocate( val(9) )
 
@@ -704,7 +701,11 @@ contains
 #endif
 
             ival = 1
+#if GGD_MINOR_VERSION > 8
+            call gridWriteData( val( ival ), ggdID, GRID_SUBSET_CELLS, idsdata )
+#else
             call gridWriteData( val( ival ), GRID_SUBSET_CELLS, idsdata )
+#endif
             deallocate( idsdata )
 
             !! Write data for Core Boundary grid subset
@@ -720,7 +721,11 @@ contains
                 &   edge_profiles%grid_ggd( time_sind ), iGsCoreBoundary,   &
                 &   gmap, tmpFace )
 #endif
+#if GGD_MINOR_VERSION > 8
+            call gridWriteData( val( ival ), ggdID, iGsCoreBoundary, idsdata )
+#else
             call gridWriteData( val( ival ), iGsCoreBoundary, idsdata )
+#endif
             deallocate( idsdata )
 
             !! Write data for Inner Midplane grid subset
@@ -736,7 +741,11 @@ contains
                 &   edge_profiles%grid_ggd( time_sind ),        &
                 &   iGsInnerMidplane, gmap, tmpVx )
 #endif
+#if GGD_MINOR_VERSION > 8
+            call gridWriteData( val( ival ), ggdID, iGsInnerMidplane, idsdata )
+#else
             call gridWriteData( val( ival ), iGsInnerMidplane, idsdata )
+#endif
             deallocate( idsdata )
 
             !! Write data for Outer Midplane grid subset
@@ -750,7 +759,11 @@ contains
                 &   edge_profiles%grid_ggd( time_sind ), iGsOuterMidplane,  &
                 &   gmap, tmpVx )
 #endif
+#if GGD_MINOR_VERSION > 8
+            call gridWriteData( val( ival ), ggdID, iGsOuterMidplane, idsdata )
+#else
             call gridWriteData( val( ival ), iGsOuterMidplane, idsdata )
+#endif
             deallocate( idsdata )
 
             !! Write data for Nodes grid subset
@@ -764,14 +777,18 @@ contains
                 &   edge_profiles%grid_ggd( time_sind ), GRID_SUBSET_NODES, &
                 &   gmap, tmpVx )
 #endif
+#if GGD_MINOR_VERSION > 8
+            call gridWriteData( val( ival ), ggdID, GRID_SUBSET_NODES, idsdata )
+#else
             call gridWriteData( val( ival ), GRID_SUBSET_NODES, idsdata )
+#endif
             deallocate( idsdata )
 
             !! Write data on fluxes for y-aligned faces, x-aligned faces
             !! (those two are set as default) and Core boundary grid subset
             allocate( fluxes(2) )
-            call write_face_vector( fluxes(1), flux, time_sind)
-            call write_face_vector( fluxes(2), flux, time_sind, &
+            call write_face_vector( fluxes(1), flux, time_sind, ggdID)
+            call write_face_vector( fluxes(2), flux, time_sind, ggdID, &
                 &   gridSubsetId = iGsCoreBoundary )
 
             !! Write data for Core grid subset
@@ -790,7 +807,11 @@ contains
                 &   grid_ggd( time_sind ), iGsCore, gmap, value )
 #endif
 
+#if GGD_MINOR_VERSION > 8
+            call gridWriteData( val( ival ), ggdID, iGsCore, idsdata )
+#else
             call gridWriteData( val( ival ), iGsCore, idsdata )
+#endif
             deallocate( idsdata )
 
             !! Write data for SOL grid subset
@@ -803,7 +824,11 @@ contains
                 &   grid_ggd( time_sind ), iGsSOL, gmap, value )
 #endif
 
+#if GGD_MINOR_VERSION > 8
+            call gridWriteData( val( ival ), ggdID, iGsSOL, idsdata )
+#else
             call gridWriteData( val( ival ), iGsSOL, idsdata )
+#endif
             deallocate( idsdata )
 
             !! Write data for Inner Divertor grid subset
@@ -815,7 +840,11 @@ contains
             idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles%   &
                 &   grid_ggd( time_sind ), iGsIDivertor, gmap, value )
 #endif
+#if GGD_MINOR_VERSION > 8
+            call gridWriteData( val( ival ), ggdID, iGsIDivertor, idsdata )
+#else
             call gridWriteData( val( ival ), iGsIDivertor, idsdata )
+#endif
             deallocate( idsdata )
 
             !! Write data for Outer Divertor grid subset
@@ -828,7 +857,11 @@ contains
                 &   grid_ggd( time_sind ), iGsODivertor, gmap, value )
 #endif
 
+#if GGD_MINOR_VERSION > 8
+            call gridWriteData( val( ival ), ggdID, iGsODivertor, idsdata )
+#else
             call gridWriteData( val( ival ), iGsODivertor, idsdata )
+#endif
             deallocate( idsdata )
         end subroutine write_quantity
 
@@ -839,6 +872,9 @@ contains
             real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
                 !< handing data field values
+            integer :: ggdID     !< Grid identifier index
+
+            ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             allocate( scalar(1) )
 
             !! TODO: add checks whether already allocated
@@ -851,7 +887,11 @@ contains
                 &   grid_ggd( time_sind ), GRID_SUBSET_CELLS,           &
                 &   gmap, b2CellData )
 #endif
+#if GGD_MINOR_VERSION > 8
+            call gridWriteData( scalar(1), ggdID, GRID_SUBSET_CELLS, idsdata )
+#else
             call gridWriteData( scalar(1), GRID_SUBSET_CELLS, idsdata )
+#endif
             deallocate(idsdata)
         end subroutine write_cell_scalar
 
@@ -872,9 +912,11 @@ contains
             real(IDS_real), intent(in) :: b2CellData(-1:gmap%b2nx, -1:gmap%b2ny)
             real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
                 !< handing data field values
+            integer :: ggdID     !< Grid identifier index
             character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
                                                         !< VEC_ALIGN_RADIAL_ID)
 
+            ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             !! If required, allocate storage
             if ( .not. associated( vectorComponent ) ) then
                 allocate( vectorComponent(1) )
@@ -892,7 +934,7 @@ contains
 #endif
 
             call B2grid_Write_Data_Vector_Components( vectorComponent(1),   &
-                &   GRID_SUBSET_CELLS, vectorID, idsdata )
+                &   ggdID, GRID_SUBSET_CELLS, vectorID, idsdata )
             deallocate(idsdata)
         end subroutine write_cell_vector_component
 
@@ -911,11 +953,12 @@ contains
         !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
         !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
         subroutine B2grid_Write_Data_Vector_Components( idsField_vcomp, &
-                &   grid_subset_index, vectorID, data)
+                &   grid_index, grid_subset_index, vectorID, data)
             type(ids_generic_grid_vector_components), intent(inout) ::  &
                 &   idsField_vcomp
                 !< Type of IDS data structure, designed for handling data
                 !> regarding vector components (parallel, poloidal etc.)
+            integer, intent(in) :: grid_index           !< Grid index
             integer, intent(in) :: grid_subset_index    !< Base grid subset
                                                         !< index
             character(len=*), intent(in) :: vectorID    !< Vector ID (e.g. )
@@ -923,6 +966,9 @@ contains
             real(ids_real), intent(in) :: data(:)   !< Data field to be written
                 !< to IDS data structure leaf that corresponds to specified
                 !< vector component
+
+            !! set grid index
+            idsField_vcomp%grid_index = grid_index
 
             !! set grid subset index
             idsField_vcomp%grid_subset_index = grid_subset_index
@@ -1019,6 +1065,7 @@ contains
 
             !! internal
             integer :: dim, i
+            integer :: ggdId
 
             dim = size(vecdata, 3)
 
@@ -1050,6 +1097,7 @@ contains
             !!      node itself indicates to what vector component
             !!      the data relates to.
 
+            ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             !! Fill in vector component data
             do i = 1, dim
 #ifdef GGD_OLD
@@ -1061,7 +1109,11 @@ contains
                     &   edge_profiles%grid_ggd( time_sind ),        &
                     &   GRID_SUBSET_CELLS, gmap, vecdata(:,:,i-1))
 #endif
+#if GGD_MINOR_VERSION > 8
+                call gridWriteData( vector, ggdId, GRID_SUBSET_CELLS, idsdata )
+#else
                 call gridWriteData( vector, GRID_SUBSET_CELLS, idsdata )
+#endif
                 deallocate(idsdata)
             end do
 
@@ -1097,13 +1149,14 @@ contains
         !!               node itself indicates to what vector component
         !!               the data relates to.
         subroutine write_face_vector( vector, b2FaceData, time_sind,    &
-                &   gridSubsetId )
+                &   gridID, gridSubsetId )
             use ids_grid_data ! IGNORE
             type(ids_generic_grid_scalar), intent(inout) :: vector
                 !< Type of IDS data structure, designed for scalar data handling
                 !< (in this case 1D vector)
             real(IDS_real), intent(in) ::   &
                 &   b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
+            integer, intent(in) :: gridID                   !< Grid identifier index
             integer, intent(in), optional :: gridSubsetId   !< Base grid subset
                                                             !< index
             real(IDS_real), dimension(:), pointer :: idsdata    !< Dummy array
@@ -1121,7 +1174,11 @@ contains
                     &   edge_profiles%grid_ggd( time_sind ),    &
                     &   GRID_SUBSET_Y_ALIGNED_FACES, gmap, b2FaceData)
 #endif
+#if GGD_MINOR_VERSION > 8
+                call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
+#else
                 call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_FACES, idsdata )
+#endif
                 deallocate(idsdata)
 #if IMAS_MINOR_VERSION < 15
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
@@ -1132,7 +1189,11 @@ contains
                     &   edge_profiles%grid_ggd( time_sind ),    &
                     &   GRID_SUBSET_X_ALIGNED_FACES, gmap, b2FaceData)
 #endif
+#if GGD_MINOR_VERSION > 8
+                call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_FACES, idsdata )
+#else
                 call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_FACES, idsdata )
+#endif
                 deallocate(idsdata)
             else
 #if IMAS_MINOR_VERSION < 15
@@ -1144,7 +1205,11 @@ contains
                     &   edge_profiles%grid_ggd( time_sind ),    &
                     &   gridSubsetId, gmap, b2FaceData)
 #endif
+#if GGD_MINOR_VERSION > 8
+                call gridWriteData( vector, gridId, gridSubsetId, idsdata )
+#else
                 call gridWriteData( vector, gridSubsetId, idsdata )
+#endif
                 deallocate(idsdata)
             end if
 
@@ -1457,7 +1522,7 @@ contains
       call gridWriteData( values(2), iSgCore, cpodata )
       deallocate(cpodata)
       tmpVx = interpolateToVertices( gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
-      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgInnerMidplane, gmap, tmpVx  )
+      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgInnerMidplane, gmap, tmpVx )
       call gridWriteData( values(3), iSgInnerMidplane, cpodata )
       deallocate(cpodata)
       cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgOuterMidplane, gmap, tmpVx )
