@@ -21,7 +21,7 @@
      *  cvsa(:,:,:,:),
      *  cthe(:,:,:),
      *  cthi(:,:,:),
-     *  csigin(:,:,:,:,:),                                                 !xpb
+     *  csigin(:,:,:,:,:),                                            !xpb
      *  cvlahz(:,:,:,:),                                              !srv 09.01.01
      *  cvmahz(:,:,:,:),                                              !srv 15.12.05
      *  cvsahz(:,:,:,:),                                              !srv 09.01.01
@@ -89,7 +89,7 @@
       fllim0fhi=0.0_R8
       allocate(fllimvisc(-1:nxd,-1:nyd,0:nsd-1))
       fllimvisc=0.0_R8
-      allocate(fllim_ki(-1:nxd,-1:nyd))                                 !srv 13.01.17 {
+      allocate(fllim_ki(-1:nxd,-1:nyd))                               !srv 13.01.17 {
       allocate(fllim_ke(-1:nxd,-1:nyd))
       allocate(fllim_al(-1:nxd,-1:nyd))
       allocate(fllim_al_c(-1:nxd,-1:nyd))
