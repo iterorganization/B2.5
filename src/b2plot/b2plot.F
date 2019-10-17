@@ -4872,8 +4872,7 @@ c     assumes that bb is OK for 1d cases
           end do
           graphlabel(iwrk)=graphlabel(iwrk-2)
         case('list')     ! list contents of matrix stack
-          stack_req=(/0,0,0,1,0,0,0/)
-          if(bad_args(stack_req)) then
+          if(iwrk.eq.0) then
             write(*,*) 'No data on matrix stack'
             return
           end if
@@ -7112,8 +7111,7 @@ cdpc still in testing phase
           end do
           eirene_label(iewrk)=eirene_label(iewrk-2)
         case('elist')    ! list contents of Eirene stack
-          stack_req=(/0,0,0,0,1,0,0/)
-          if(bad_args(stack_req)) then
+          if(iewrk.eq.0) then
             write(*,*) 'No data on Eirene stack'
             return
           end if
@@ -8740,8 +8738,7 @@ c normalised weights is 1
           wall_label(iwwrk)=wall_label(iwwrk-2)
           call set_wallbarlabel(wall_label(iwwrk))
         case('wlist')    ! list contents of wall stack
-          stack_req=(/0,0,0,0,0,1,0/)
-          if(bad_args(stack_req)) then
+          if(iwwrk.eq.0) then
             write(*,*) 'No data on wall stack'
             return
           end if
@@ -9958,8 +9955,7 @@ c
           target_label(itwrk)=target_label(itwrk-2)
           call set_targetbarlabel(target_label(itwrk))
         case('trglist')  ! list contents of target stack
-          stack_req=(/0,0,0,0,0,0,1/)
-          if(bad_args(stack_req)) then
+          if(itwrk.eq.0) then
             write(*,*) 'No data on target stack'
             return
           end if

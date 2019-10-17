@@ -693,7 +693,7 @@ c   --> better solution wanted here..
 !     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
 !               do im = 1, nnmoli
 !                 if (mlcmp(ia,im).gt.0) then
-!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) - 
+!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) -
 !     &              mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
 !     &                              - wldpm(ix,im,0))
 !                 end if

@@ -1093,8 +1093,8 @@ contains
     subroutine fill_In_GridSubset_Desc
         !! Internal variables
         integer :: geoId
-        integer :: iRegion
 #if GGD_MINOR_VERSION > 8
+        integer :: iRegion
         integer :: iPrivateB2
 #endif
         integer :: GSubsetCount
