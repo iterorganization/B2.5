@@ -284,6 +284,7 @@
       call sfill (n2*2, 0.0_R8, hvi0, 1)
       call sfill (n2*2, 0.0_R8, hve0, 1)
       do is = 0, ns-1
+        k=-1
         max_df0_tmp=0.0_R8
         min_df0_tmp=1.0e30_R8
         if (is_neutral(is).and.zn(is).eq.1.0_R8) then
@@ -310,13 +311,16 @@
               if(is_neutral(is)) then
                 dcx=0.0_R8
                 vcx=0.0_R8
-                do ic = 0, ns-1
-                  dcx = dcx + expu(rlcx(ix,iy,0,ic,k) +
-     &             rlcx(ix,iy,1,ic,k)*log(ti(ix,iy)/(am(is)*ev)))
-                  vcx = vcx + na(ix,iy,ic) * expu(rlcx(ix,iy,0,ic,k) +
-     &             rlcx(ix,iy,1,ic,k)*log(ti(ix,iy)/(am(is)*ev)))
-                enddo
-                lcx=wrk0(ix,iy)/sqrt(am(is))/vcx
+                lcx=1.0e30_R8
+                if (k.ge.0) then
+                  do ic = 0, ns-1
+                    dcx = dcx + expu(rlcx(ix,iy,0,ic,k) +
+     &               rlcx(ix,iy,1,ic,k)*log(ti(ix,iy)/(am(is)*ev)))
+                    vcx = vcx + na(ix,iy,ic) * expu(rlcx(ix,iy,0,ic,k) +
+     &               rlcx(ix,iy,1,ic,k)*log(ti(ix,iy)/(am(is)*ev)))
+                  enddo
+                  lcx=wrk0(ix,iy)/sqrt(am(is))/vcx
+                end if
                 dion=expu(
      2           rlsa(ix,iy,0,is)+
      3           rlsa(ix,iy,1,is)*log(te(ix,iy)/ev))
@@ -324,9 +328,13 @@
                   lion=wrk0(ix,iy)/sqrt(am(is))/ne(ix,iy)/dion
                 else
                   lion=1.0e30_R8
-                endif  
-                din=(wrk0(ix,iy)/sqrt(am(is)))**2/
-     1           (vcx+dion*ne(ix,iy))
+                endif
+                if (vcx.eq.0.0_R8 .and. dion.eq.0.0_R8) then
+                  din=1.0e30_R8
+                else
+                  din=(wrk0(ix,iy)/sqrt(am(is)))**2/
+     1             (vcx+dion*ne(ix,iy))
+                endif
 c               if(lcx.gt.lion) then
 c                 din=lion*wrk0(ix,iy)/sqrt(am(is))
 c               else

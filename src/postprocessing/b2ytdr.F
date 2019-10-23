@@ -263,7 +263,7 @@ c 2002-09-11: logic revised
       integer is0(0:DEF_NSD-1), is1(0:ns-1)
       integer is1beginrange, is1endrange
       integer, allocatable :: iatm1(:), imol1(:), iion1(:), ipls1(:)
-      integer, allocatable :: istra1(:)
+      integer, allocatable :: istra1(:), ipls2(:)
       integer, allocatable :: istmp(:), ns1data(:,:,:), nx1data(:,:,:)
       integer, allocatable :: mlcmp1(:,:)
       integer, allocatable :: ifl1(:), ispecies1(:)
@@ -301,10 +301,10 @@ c 2002-09-11: logic revised
       integer IDIMP, INUMP, IRPTA1, IRPTE1, IRPTA2, IRPTE2, ILEQUI
       integer IRPTA3, IRPTE3
       integer NPHOTI, NPLSI, NNREAC, IPLTA, ILINE
-      integer NATMI1, NREAC1, NSTRA1, NPLSI1
+      integer NATMI1, NREAC1, NREAC2, NRR1, NSTRA1, NPLSI1, NBGK1, NSKIP
       integer IREAD, IEND, IANF, ITOK, IER, ISTS, IH, I3, L, M, JSS
       integer size_mp, size_mt
-      integer ICRM, IPLSS, ISTRA
+      integer ICRM, IPLSS, ISTRA, ISKIP
       integer MAXRAD, NSIGVI, NSIGSI, NSIGCI, NPPLG, NCRM
       integer NSIGV1, NSIGS1, NSIGC1, NLOGIN
       integer NADVI, NADV1, NCLVI, NCLV1, NALVI, NALV1, NADSI, NADS1
@@ -320,7 +320,7 @@ c 2002-09-11: logic revised
       integer NSNVI, NSNV1, NPWIN, NSPTAL
       integer jatm, jmol, jion, jpls, jphot, kint, kmod, iside
       integer isbegin, isend, is1begin, is1end
-      integer NTL, NFR
+      integer NTL
       integer IPOS0, IPOS1, IPOS2
       integer NPRCSF, IPRCSF
       integer NTARG1, ISTEP
@@ -331,7 +331,7 @@ c 2002-09-11: logic revised
       integer iplsbeginrange, iplsendrange
       integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
       integer, allocatable :: NPOINT(:,:), ILIIN(:), IHELP(:), IGJUM0(:)
-      integer, allocatable :: IREAC1(:)
+      integer, allocatable :: IREAC1(:), IREAC2(:)
       integer, allocatable :: NPRTA(:),
      &                        ISRFA(:), ISRTA(:), ID1A(:), NRCA(:),
      &                        IREACA(:,:), IBULKA(:,:),
@@ -444,12 +444,12 @@ c 2002-09-11: logic revised
       integer jatm, jmol
 #endif
       real (kind=R8) ::
-     *  neutral_rescale, BoRiS, divheat, rswitch,
+     *  neutral_rescale, BoRiS, divheat, rswitch, ycur,
      .  scaling_width(nscale), scaling_strength(nscale),
      .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
      .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
      .  elm_time_begin, elm_time_end, elm_time_period,
-     .  sources_time_mod, sources_time_switch,
+     .  sources_time_mod, sources_time_switch, fch_ion_neutral,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
@@ -513,10 +513,11 @@ c 2002-09-11: logic revised
       logical, allocatable :: done(:)
       logical LRPSCUT
       logical in_bundle, charges_match, skip_reac, keep_contr,
-     .        no_sputtering
+     .        no_sputtering, cpath_written
 #endif
       logical todo, wait, same_bundling, same_atoms, non_default
-      logical averaging
+      logical averaging, hydrogen
+      logical ismain_done, ismain0_done, ycur_done
       logical first_pass, do_scale
       logical wall_namelist_used
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
@@ -537,7 +538,7 @@ c 2002-09-11: logic revised
 #endif
       integer conformal_convert
       real (kind=R8) :: cr, cz, cr1, cz1, rratio
-      logical open_file, streql, is_comment
+      logical open_file, streql, is_comment, lnext1
       external subini, subend, xertst, xerrab, cfruch, cfrure, cfwuin,
      &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk,
      &  len_of_digits, open_file, get_jsep, conformal_convert,
@@ -546,6 +547,8 @@ c 2002-09-11: logic revised
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr
       external E01BEF, E01BFF
       intrinsic nint, mod, index, sqrt
+      real (kind=R8) :: amtol
+      parameter (amtol=1.0e-2_R8)
 *   ..initialisation
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
@@ -562,7 +565,8 @@ c 2002-09-11: logic revised
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
       data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
-      data xfrhie_no_drift/1.0_R8/
+      data xfrhie_no_drift/1.0_R8/, ycur/1.0_R8/
+      data fch_ion_neutral/0.0_R8/
       data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
@@ -585,6 +589,8 @@ c 2002-09-11: logic revised
      1 (crx1(ix,iy,0)+crx1(ix,iy,1)+crx1(ix,iy,2)+crx1(ix,iy,3))
       cz1(ix,iy)=0.25_R8*
      1 (cry1(ix,iy,0)+cry1(ix,iy,1)+cry1(ix,iy,2)+cry1(ix,iy,3))
+      lnext1(is,js) = zamax1(is).lt.zamin1(js).and.zn1(is).eq.zn1(js)
+     &  .and.abs(am1(is)-am1(js)).lt.amtol
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -1064,6 +1070,7 @@ c 2002-09-11: logic revised
       allocate(imol1(nmol))
       allocate(iion1(nion))
       allocate(ipls1(npls))
+      allocate(ipls2(npls))
       bundle_frac=0.0_R8
       bundle_contr=0.0_R8
       ispecies1=-1
@@ -1148,6 +1155,10 @@ c 2002-09-11: logic revised
       eb2spcr1=-1
       b2espcr1=-1
       b2eatcr1=-1
+      hydrogen = .false.
+      do ib = 0, ns1-1
+        hydrogen = hydrogen .or. nint(zn1(ib)).eq.1
+      end do
 *   ..compute new state
       call b2xtps (nx, ny, ns, nx1, ny1, ns1, nncutmax,
      &    non_commensurate,
@@ -1354,6 +1365,10 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tvspa_vis_par', b2tvspa_vis_par)
       call ipgeti ('b2ux7p_style', b2ux7p_style)
       if (b2ux7p_style.eq.3) b2ux7p_style = 2
+      call ipgetr ('b2tfnb_ycur', ycur)
+      if (.not.hydrogen) ycur = 0.0_R8
+      call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
+      if (.not.hydrogen) fch_ion_neutral = 0.0_R8
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1386,12 +1401,38 @@ c 2002-09-11: logic revised
         call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
       endif
 *   ..modify b2mn.dat parameters
-      ismain = is1(ismain)
-      ismain0 = is1(ismain0)
-      isfeedback = is1(isfeedback)
+      if (is1(ismain).ne.-1) then
+        ismain = is1(ismain)
+      else
+        is = 0
+        do while (is.lt.ns1-1)
+          if (.not.lnext1(is,is+1)) exit
+          if (lnext1(is,is+1)) is = is + 1
+        end do
+        ismain = is
+      end if
+      if (is1(ismain0).ne.-1) then
+        ismain0 = is1(ismain0)
+      else
+        is = 0
+        ismain0 = -1
+        do while (is.le.ns1-1 .and. ismain0.eq.-1)
+          if (is_neutral1(is)) ismain0 = is
+          is = is + 1
+        end do
+      end if
+      if (is1(isfeedback).ne.-1) then
+        isfeedback = is1(isfeedback)
+      else
+        isfeedback = ismain
+      end if
       ixfb1 = ixfb*rratio(nx1,nx)
       iyfb1 = iyfb*rratio(ny1,ny)
-      isfb = is1(isfb)
+      if (is1(isfb).ne.-1) then
+        isfb = is1(isfb)
+      else
+        isfb = ismain
+      end if
       if (nsmin.gt.ns) then
         ns1min = ns1
       else if (nsmin.lt.0) then
@@ -1585,11 +1626,15 @@ c 2002-09-11: logic revised
 *   ..integer switches
       todo = .true.
       wait = .false.
+      ismain_done = .false.
+      ismain0_done = .false.
       ISWITCHES: select case (cnamip)
         case('b2mndr_ismain')
           iswitch = ismain
+          ismain_done = .true.
         case('b2mwti_ismain0')
           iswitch = ismain0
+          ismain0_done = .true.
         case('b2stbr_sput_dst')
           iswitch = sput_dst
         case('b2stbr_sput_dst2')
@@ -1664,6 +1709,7 @@ c 2002-09-11: logic revised
       end if
 *   ..real switches
       todo = .true.
+      ycur_done = .false.
       RSWITCHES: select case (cnamip)
         case('b2mndr_ixfb')
           rswitch = ixfb1
@@ -1712,6 +1758,11 @@ c 2002-09-11: logic revised
         case ('b2tfhe_vis_par') ! superseding of b2tvspa_vis_par, with above
           wait = b2tvspa_vis_par.ne.1.0_R8 .and.
      &           b2tfhe_vis_par .eq.1.0_R8
+        case ('b2tfnb_ycur')
+          rswitch = ycur
+          ycur_done = .true.
+        case ('b2tfhe_neutral')
+          rswitch = fch_ion_neutral
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
@@ -1730,6 +1781,19 @@ c 2002-09-11: logic revised
       endif
       goto 5
     6 continue
+*   ..overwrite some defaults when no longer appropriate
+      if (ismain.ne.1 .and. .not.ismain_done) then
+        write(hlp_frm,'(a,i1,a)') '(a,i',len_of_digits(ismain),',a)'
+        write(nout(2),hlp_frm)
+     >   '''b2mndr_ismain'''//tab//'''',ismain,''''
+      end if
+      if (ismain0.ne.0 .and. .not.ismain0_done) then
+        write(hlp_frm,'(a,i1,a)') '(a,i',len_of_digits(ismain0),',a)'
+        write(nout(2),hlp_frm)
+     >   '''b2mndr_ismain0'''//tab//'''',ismain0,''''
+      end if
+      if (ycur.ne.1.0_R8 .and. .not.ycur_done)
+     >  write(nout(2),'(a)') '''b2tfnb_ycur'''//tab//'''0.0'''
 
 *  ..rewrite boundary namelist
       filename='b2.boundary.parameters'
@@ -3511,7 +3575,7 @@ cxpb start by identifying the correspondence with the new run species
         iss = 0
         do jmol = 1, nmoli
           if (maxval(mlcmp(1:natm,jmol)).eq.0) then
-            write(6,'(a,i3,a)') 'Composition for molecule ',jmol,
+            write(6,'(1x,a,i3,a)') 'Composition for molecule ',jmol,
      .       ' unknown. Molecule assumed kept.'
             iss = iss + 1
             imol1(jmol) = iss
@@ -3530,8 +3594,8 @@ cxpb start by identifying the correspondence with the new run species
               iss = iss + 1
               imol1(jmol) = iss
             else
-              write(6,*) 'Component ',trim(TEXTA(IATM)),' not mapped.'
-              write(6,*) 'Molecule dropped.'
+              write(6,'(1x,3a,i3,a)') 'Component ',trim(TEXTA(IATM)),
+     &         ' not mapped. Molecule ',JMOL,' dropped.'
             end if
           end if
         end do
@@ -4291,7 +4355,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
                 END IF
                 CALL EIRENE_READ_TOKEN
      .           (REACZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
-                call xertst (ier.eq.0, 'error reading reac2 flag')
+                call xertst (ier.eq.0, 'error reading crc flag')
                 IEND = IEND + ITOK
                 READ (CHR,'(A3)') CRC
               END IF
@@ -4492,6 +4556,8 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             I=INDEX(REACZEILE(16:),'FT')
             IF (I /= 0) THEN
               READ (REACSTR(I+2:),*) idum(0) ! IFTFLG(IR,IFLG)
+            ELSE
+              idum(0) = 0
             END IF
             IF (MOD(idum(0),100) == 10) THEN
               READ (IUNIN,6664) rdum(0) ! CREACD(1,1)
@@ -4518,18 +4584,12 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             WRITE(REAC_LINE(ILINE),'(A96)') REACZEILE
           ENDIF
         ENDIF
-! We now write the new list of reactions
-        WRITE(IUNOT,6666) NREAC1
-        DO I = 1, ILINE
-          WRITE(IUNOT,'(A96)') REAC_LINE(I)
-        END DO
-        deallocate(reac_line)
 *4A.   NEUTRAL ATOMS SPECIES CARDS, NATMI SPECIES
 Cxpb We must read up to section 5 first, to identify ion species
 Cxpb and bundles, compute new bulk ion species indices and only
 Cxpb then rewrite the entire block
   420   CONTINUE
-        READ (IUNIN,*) NATMI   ! last read before possible reassignments
+        READ (IUNIN,*) NATMI
         allocate(NPRTA(NATMI),
      .           ISRFA(NATMI),ISRTA(NATMI),ID1A(NATMI),
      .           NRCA(NATMI))
@@ -5287,34 +5347,43 @@ Cxpb then rewrite the entire block
           END SELECT
  5112   CONTINUE
 cxpb Now we have read the species data and can identify the bundles
+        NBGK1 = 0
         DO 5113 JPLS=1,NPLSI
           found = .false.
           is = 0
           do while (.not.found .and. is.lt.ns1)
-            found = index(TEXTP(JPLS),'(B)').eq.0 .and.
+            found = NPRTP(JPLS).eq.1 .and.
      .       nint(am1(is)).eq.NMASSP(JPLS) .and.
      .       nint(zn1(is)).eq.NCHARP(JPLS) .and.
      .       nint(zamin1(is)).le.NCHRGP(JPLS) .and.
      .       nint(zamax1(is)).ge.NCHRGP(JPLS)
-            if (found) then
+            if (.not.found) then
+              do jmol = 1, nmol1
+                found = found .or. (imol1(jmol).ne.0 .and.
+     .           NMASSM(JMOL).eq.NMASSP(JPLS) .and.
+     .           NCHARM(JMOL).eq.NCHARP(JPLS) .and.
+     .           NCHRGP(JPLS).eq.0 .and. NPRTM(JMOL).eq.NPRTP(JPLS) )
+              end do
+            end if
+            if (found .and. index(TEXTP(JPLS),'(B)').eq.0) then
               eb2ibcr(jpls) = is
             else
               is = is + 1
             endif
           enddo
+          if (found .and. index(TEXTP(JPLS),'(B)').GT.0) then
+            eb2ibcr(jpls) = ns1 + NBGK1
+            NBGK1 = NBGK1 + 1
+          end if
           if (.not.found) then
-            if (index(TEXTP(JPLS),'(B)').GT.0) then
-              eb2ibcr(jpls) = ns1
-              write(*,*) 'Identified BGK species ',
-     .         trim(TEXTP(JPLS)),'.'
-            else
-              eb2ibcr(jpls) = -1
+            eb2ibcr(jpls) = -1
+            if (index(TEXTP(JPLS),'(B)').eq.0) then
               write(*,*) 'Ion species corresponding to ',
      .         trim(TEXTP(JPLS)),' not found! Removing...'
             end if
           end if
  5113   CONTINUE
-        NPLSI1 = (ns1-nspecies1)+(NPLSI-(ns-nspecies))
+        NPLSI1 = (ns1-nspecies1)+NBGK1
         allocate(NCHARP1(NPLSI1))
         allocate(NMASSP1(NPLSI1))
         allocate(NCHRGP1(NPLSI1))
@@ -5362,6 +5431,7 @@ cxpb Now we have read the species data and can identify the bundles
         e_bundle_end = 0
         e_bundle_contr = 0.0_R8
         ipls1 = 0
+        ipls2 = 0
         isp = 0
         ipls = 0
         iplss = 0
@@ -5464,6 +5534,41 @@ cxpb  first one
         ib = ns1-nspecies1
         do JPLS = 1, NPLSI
           if (index(TEXTP(JPLS),'(B)').GT.0) then
+            if (eb2ibcr(JPLS).eq.-1) cycle
+cxpb Need to check whether BGK species will actually be needed
+            found = .false.
+            do jatm = 1, natmi
+              if (iatm1(jatm).eq.0) cycle
+              do k = 1, nrca(jatm)
+                ICRM = B2IDEZ(IBULKA(JATM,K),3,3)
+                found = found .or. ICRM.eq.JPLS
+              end do
+            end do
+            do jmol = 1, nmoli
+              if (imol1(jmol).eq.0) cycle
+              do k = 1, nrcm(jmol)
+                ICRM = B2IDEZ(IBULKM(JMOL,K),3,3)
+                found = found .or. ICRM.eq.JPLS
+              end do
+            end do
+            do jion = 1, nioni
+              if (iion1(jion).eq.0) cycle
+              do k = 1, nrci(jion)
+                ICRM = B2IDEZ(IBULKI(JION,K),3,3)
+                found = found .or. ICRM.eq.JPLS
+              end do
+            end do
+            do ipls = 1, nplsi
+              if (ipls1(ipls).eq.0) cycle
+              do k = 1, nrcp(ipls)
+                ICRM = B2IDEZ(IBULKP(IPLS,K),3,3)
+                found = found .or. ICRM.eq.JPLS
+              end do
+            end do
+            if (.not.found) then
+              eb2ibcr(jpls) = -1
+              cycle
+            end if
             ib = ib + 1
             NMASSP1(ib) = NMASSP(JPLS)
             NCHARP1(ib) = NCHARP(JPLS)
@@ -5477,21 +5582,7 @@ cxpb  first one
             e_bundle_contr(ib,jpls) = 1.0_R8
           end if
         end do
-        write(hlp_frm,'(a,i3,a)') '(a,3x,',nplsi1,'(1x,i4))'
-        write(*,hlp_frm) ' e_bundle_start: ',
-     .   (e_bundle_start(is),is=1,nplsi1)
-        write(*,hlp_frm) ' e_bundle_end  : ',
-     .   (e_bundle_end(is),is=1,nplsi1)
-        if (.not.same_bundling) then
-          write(*,*) 'e_bundle_contr:'
-          write(hlp_frm,'(a,i3,a)') '(3x,',nplsi,'(1x,i4))'
-          write(*,hlp_frm) (is, is = 1, nplsi)
-          write(hlp_frm,'(a,i3,a)') '(i3,',nplsi,'f5.2)'
-          do iss = 1, nplsi1
-            write(*,hlp_frm) iss,
-     .       (e_bundle_contr(iss,is), is = 1, nplsi)
-          end do
-        end if
+        NPLSI1 = ib
 cxpb Must now convert the bulk ion data according to the new bundling
         allocate(TEXTP1(NPLSI1))
         allocate(NPRTP1(NPLSI1))
@@ -5536,7 +5627,7 @@ cxpb Must now convert the bulk ion data according to the new bundling
                   write(TEXTP1(IB)(len+1:len+2),'(i2)') nint(zemin1(IB))
                   len = len + 2
                 endif
-                 write(TEXTP1(IB)(len+1:len+1),'(a1)') '+'
+                write(TEXTP1(IB)(len+1:len+1),'(a1)') '+'
               ELSE
                 if (nint(zemin1(IB)).lt.10) then
                   write(TEXTP1(IB)(len+1:len+1),'(i1)') nint(zemin1(IB))
@@ -5601,14 +5692,14 @@ cxpb Must now convert the bulk ion data according to the new bundling
             done(IS) = .true.
           END IF
         END DO
-        NREAC1 = max(1,maxval(NRE1(1:NPLSI1)))
-        allocate(TDMISP1(NREAC1,NPLSI1))
-        allocate(TDMITP1(NREAC1,NPLSI1))
-        allocate(TDMISTR1(NREAC1,NPLSI1))
-        allocate(TDMFNAME1(NREAC1,NPLSI1))
-        allocate(TDMH21(NREAC1,NPLSI1))
-        allocate(TDMREACTION1(NREAC1,NPLSI1))
-        allocate(TDMCR1(NREAC1,NPLSI1))
+        NRR1 = max(1,maxval(NRE1(1:NPLSI1)))
+        allocate(TDMISP1(NRR1,NPLSI1))
+        allocate(TDMITP1(NRR1,NPLSI1))
+        allocate(TDMISTR1(NRR1,NPLSI1))
+        allocate(TDMFNAME1(NRR1,NPLSI1))
+        allocate(TDMH21(NRR1,NPLSI1))
+        allocate(TDMREACTION1(NRR1,NPLSI1))
+        allocate(TDMCR1(NRR1,NPLSI1))
         DO IB = 1, NPLSI1
           IS = ISP(IB)
           IF (IS.NE.0) THEN
@@ -5700,8 +5791,8 @@ cxpb Must now convert the bulk ion data according to the new bundling
         iss = 0
         do jion = 1, nioni
           if (maxval(micmp(1:natm,jion)).eq.0) then
-            write(6,'(a,i3,a)') 'Composition for molecular ion ',jion,
-     .       ' unknown. Molecular ion assumed kept.'
+            write(6,'(1x,a,i3,a)') 'Composition for molecular ion ',
+     .       jion,' unknown. Molecular ion assumed kept.'
             iss = iss + 1
             iion1(jion) = iss
           else
@@ -5719,8 +5810,9 @@ cxpb Must now convert the bulk ion data according to the new bundling
               iss = iss + 1
               iion1(jion) = iss
             else
-              write(6,*) 'Component ',trim(TEXTA(IATM)),' not mapped.'
-              write(6,*) 'Molecular ion dropped.'
+              write(6,'(1x,5a)') 'Component ',trim(TEXTA(IATM)),
+     .         ' not mapped. Molecular ion ',trim(TEXTI(JION)),
+     .         ' dropped.'
             end if
           end if
         end do
@@ -6120,7 +6212,573 @@ cxpb We now re-compute input data according to the new bundling for block 4
           END DO
          END IF
         END DO
+cxpb We purge the reaction list from ambiguous BGK reactions due to mass degeneracy
+        DO JPLS = 1, NPLSI1
+          IPLS2(JPLS) = JPLS
+        END DO
+        allocate(IREAC2(NREAC1))
+        DO K = 1, NREAC1
+          IREAC2(K) = K
+        END DO
+        NREAC2 = NREAC1
+        DO JATM = 1, NATMI
+          IF (IATM1(JATM).EQ.0) CYCLE
+          K = 1
+          DO WHILE (K .LE. NRCA(JATM))
+            IF (IBGKA(JATM,K).GT.0 .AND. IBGKA(JATM,K).LT.100) THEN
+              I = IREACA(JATM,K)
+              IREAC2(I) = -1
+              ICRM = B2IDEZ(IBULKA(JATM,K),3,3)
+              DO JPLS = 1, NPLSI
+                IF (IPLS1(JPLS).EQ.ICRM) THEN
+                  EB2IBCR(JPLS) =  -1
+                  IPLS2(IPLS1(JPLS)) = 0
+                  IPLS2(IPLS1(JPLS)+1:NPLSI1) =
+     .             IPLS2(IPLS1(JPLS)+1:NPLSI1) - 1
+                  e_bundle_contr(ipls1(jpls),jpls) = 0.0_R8
+                END IF
+              END DO
+              IREACA(JATM,K:NRCA(JATM)-1) = IREACA(JATM,K+1:NRCA(JATM))
+              IBULKA(JATM,K:NRCA(JATM)-1) = IBULKA(JATM,K+1:NRCA(JATM))
+              ISCD1A(JATM,K:NRCA(JATM)-1) = ISCD1A(JATM,K+1:NRCA(JATM))
+              ISCD2A(JATM,K:NRCA(JATM)-1) = ISCD2A(JATM,K+1:NRCA(JATM))
+              ISCD3A(JATM,K:NRCA(JATM)-1) = ISCD3A(JATM,K+1:NRCA(JATM))
+              ISCD4A(JATM,K:NRCA(JATM)-1) = ISCD4A(JATM,K+1:NRCA(JATM))
+              ISCDEA(JATM,K:NRCA(JATM)-1) = ISCDEA(JATM,K+1:NRCA(JATM))
+              IBGKA (JATM,K:NRCA(JATM)-1) = IBGKA (JATM,K+1:NRCA(JATM))
+              EELECA(JATM,K:NRCA(JATM)-1) = EELECA(JATM,K+1:NRCA(JATM))
+              EBULKA(JATM,K:NRCA(JATM)-1) = EBULKA(JATM,K+1:NRCA(JATM))
+              ESCD1A(JATM,K:NRCA(JATM)-1) = ESCD1A(JATM,K+1:NRCA(JATM))
+              ESCD2A(JATM,K:NRCA(JATM)-1) = ESCD2A(JATM,K+1:NRCA(JATM))
+              FREACA(JATM,K:NRCA(JATM)-1) = FREACA(JATM,K+1:NRCA(JATM))
+              EDPOTA(JATM,K:NRCA(JATM)-1) = EDPOTA(JATM,K+1:NRCA(JATM))
+              NRCA(JATM) = NRCA(JATM) - 1
+            ELSE
+              K = K + 1
+            END IF
+          END DO
+        END DO
+        DO JMOL = 1, NMOLI
+          IF (IMOL1(JMOL).EQ.0) CYCLE
+          K = 1
+          DO WHILE (K .LE. NRCM(JMOL))
+            IF (IBGKM(JMOL,K).GT.0 .AND. IBGKM(JMOL,K).LT.100) THEN
+              I = IREACM(JMOL,K)
+              IREAC2(I) = -1
+              ICRM = B2IDEZ(IBULKM(JMOL,K),3,3)
+              DO JPLS = 1, NPLSI
+                IF (IPLS1(JPLS).EQ.ICRM) THEN
+                  EB2IBCR(JPLS) =  -1
+                  IPLS2(IPLS1(JPLS)) = 0
+                  IPLS2(IPLS1(JPLS)+1:NPLSI1) =
+     .             IPLS2(IPLS1(JPLS)+1:NPLSI1) - 1
+                  e_bundle_contr(ipls1(jpls),jpls) = 0.0_R8
+                END IF
+              END DO
+              IREACM(JMOL,K:NRCM(JMOL)-1) = IREACM(JMOL,K+1:NRCM(JMOL))
+              IBULKM(JMOL,K:NRCM(JMOL)-1) = IBULKM(JMOL,K+1:NRCM(JMOL))
+              ISCD1M(JMOL,K:NRCM(JMOL)-1) = ISCD1M(JMOL,K+1:NRCM(JMOL))
+              ISCD2M(JMOL,K:NRCM(JMOL)-1) = ISCD2M(JMOL,K+1:NRCM(JMOL))
+              ISCD3M(JMOL,K:NRCM(JMOL)-1) = ISCD3M(JMOL,K+1:NRCM(JMOL))
+              ISCD4M(JMOL,K:NRCM(JMOL)-1) = ISCD4M(JMOL,K+1:NRCM(JMOL))
+              ISCDEM(JMOL,K:NRCM(JMOL)-1) = ISCDEM(JMOL,K+1:NRCM(JMOL))
+              IBGKM (JMOL,K:NRCM(JMOL)-1) = IBGKM (JMOL,K+1:NRCM(JMOL))
+              EELECM(JMOL,K:NRCM(JMOL)-1) = EELECM(JMOL,K+1:NRCM(JMOL))
+              EBULKM(JMOL,K:NRCM(JMOL)-1) = EBULKM(JMOL,K+1:NRCM(JMOL))
+              ESCD1M(JMOL,K:NRCM(JMOL)-1) = ESCD1M(JMOL,K+1:NRCM(JMOL))
+              ESCD2M(JMOL,K:NRCM(JMOL)-1) = ESCD2M(JMOL,K+1:NRCM(JMOL))
+              FREACM(JMOL,K:NRCM(JMOL)-1) = FREACM(JMOL,K+1:NRCM(JMOL))
+              NRCM(JMOL) = NRCM(JMOL) - 1
+            ELSE
+              K = K + 1
+            END IF
+          END DO
+        END DO
+        DO JION = 1, NIONI
+          IF (IION1(JION).EQ.0) CYCLE
+          K = 1
+          DO WHILE (K .LE. NRCI(JION))
+            IF (IBGKI(JION,K).GT.0 .AND. IBGKI(JION,K).LT.100) THEN
+              I = IREACI(JION,K)
+              IREAC2(I) = -1
+              ICRM = B2IDEZ(IBULKI(JION,K),3,3)
+              DO JPLS = 1, NPLSI
+                IF (IPLS1(JPLS).EQ.ICRM) THEN
+                  EB2IBCR(JPLS) =  -1
+                  IPLS2(IPLS1(JPLS)) = 0
+                  IPLS2(IPLS1(JPLS)+1:NPLSI1) =
+     .             IPLS2(IPLS1(JPLS)+1:NPLSI1) - 1
+                  e_bundle_contr(ipls1(jpls),jpls) = 0.0_R8
+                END IF
+              END DO
+              IREACI(JION,K:NRCI(JION)-1) = IREACI(JION,K+1:NRCI(JION))
+              IBULKI(JION,K:NRCI(JION)-1) = IBULKI(JION,K+1:NRCI(JION))
+              ISCD1I(JION,K:NRCI(JION)-1) = ISCD1I(JION,K+1:NRCI(JION))
+              ISCD2I(JION,K:NRCI(JION)-1) = ISCD2I(JION,K+1:NRCI(JION))
+              ISCD3I(JION,K:NRCI(JION)-1) = ISCD3I(JION,K+1:NRCI(JION))
+              ISCD4I(JION,K:NRCI(JION)-1) = ISCD4I(JION,K+1:NRCI(JION))
+              ISCDEI(JION,K:NRCI(JION)-1) = ISCDEI(JION,K+1:NRCI(JION))
+              IBGKI (JION,K:NRCI(JION)-1) = IBGKI (JION,K+1:NRCI(JION))
+              EELECI(JION,K:NRCI(JION)-1) = EELECI(JION,K+1:NRCI(JION))
+              EBULKI(JION,K:NRCI(JION)-1) = EBULKI(JION,K+1:NRCI(JION))
+              ESCD1I(JION,K:NRCI(JION)-1) = ESCD1I(JION,K+1:NRCI(JION))
+              ESCD2I(JION,K:NRCI(JION)-1) = ESCD2I(JION,K+1:NRCI(JION))
+              FREACI(JION,K:NRCI(JION)-1) = FREACI(JION,K+1:NRCI(JION))
+              NRCI(JION) = NRCI(JION) - 1
+            ELSE
+              K = K + 1
+            END IF
+          END DO
+        END DO
+        DO JPHOT = 1, NPHOTI
+          K = 1
+          DO WHILE (K .LE. NRCPH(JPHOT))
+            IF (IBGKPH(JPHOT,K).GT.0 .AND. IBGKPH(JPHOT,K).LT.100) THEN
+              I = IREACPH(JPHOT,K)
+              IREAC2(I) = -1
+              ICRM = B2IDEZ(IBULKPH(JPHOT,K),3,3)
+              DO JPLS = 1, NPLSI
+                IF (IPLS1(JPLS).EQ.ICRM) THEN
+                  EB2IBCR(JPLS) =  -1
+                  IPLS2(IPLS1(JPLS)) = 0
+                  IPLS2(IPLS1(JPLS)+1:NPLSI1) =
+     .             IPLS2(IPLS1(JPLS)+1:NPLSI1) - 1
+                  e_bundle_contr(ipls1(jpls),jpls) = 0.0_R8
+                END IF
+              END DO
+              IREACPH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         IREACPH(JPHOT,K+1:NRCPH(JPHOT))
+              IBULKPH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         IBULKPH(JPHOT,K+1:NRCPH(JPHOT))
+              ISCD1PH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         ISCD1PH(JPHOT,K+1:NRCPH(JPHOT))
+              ISCD2PH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         ISCD2PH(JPHOT,K+1:NRCPH(JPHOT))
+              ISCD3PH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         ISCD3PH(JPHOT,K+1:NRCPH(JPHOT))
+              ISCD4PH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         ISCD4PH(JPHOT,K+1:NRCPH(JPHOT))
+              ISCDEPH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         ISCDEPH(JPHOT,K+1:NRCPH(JPHOT))
+              IBGKPH (JPHOT,K:NRCPH(JPHOT)-1) =
+     .         IBGKPH (JPHOT,K+1:NRCPH(JPHOT))
+              EELECPH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         EELECPH(JPHOT,K+1:NRCPH(JPHOT))
+              EBULKPH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         EBULKPH(JPHOT,K+1:NRCPH(JPHOT))
+              ESCD1PH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         ESCD1PH(JPHOT,K+1:NRCPH(JPHOT))
+              ESCD2PH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         ESCD2PH(JPHOT,K+1:NRCPH(JPHOT))
+              FREACPH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         FREACPH(JPHOT,K+1:NRCPH(JPHOT))
+              EDPOTPH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         EDPOTPH(JPHOT,K+1:NRCPH(JPHOT))
+              NRCPH(JPHOT) = NRCPH(JPHOT) - 1
+            ELSE
+              K = K + 1
+            END IF
+          END DO
+        END DO
+cxpb We rebuild the reaction list without the purged BGK reactions
+        I = 1
+        NSKIP = 0
+        DO WHILE (I.LE.ILINE)
+         IF (REAC_LINE(I)(1:1).EQ.'*') THEN
+          I = I + 1
+         ELSE
+          IF (INDEX(REAC_LINE(I),'PHOTON').EQ.0) THEN
+            IF (streql(eirene_format,'old').or.
+     &          streql(eirene_format,'new').or.
+     &          streql(eirene_format,'facelift')) then
+              READ (REAC_LINE(I),66661)
+     .              J,FILNAM,H123,REAC,CRC,idum(0:1),DPP,R1MN,R1MX
+              WRITE(REAC_LINE(I),66661)
+     .              J-NSKIP,FILNAM,H123,REAC,CRC,idum(0:1),DPP,R1MN,R1MX
+              R2MN = 0.0_R8
+              R2MX = 0.0_R8
+            ELSE
+              READ (REAC_LINE(I),66661) J,FILNAM,H123
+              WRITE(REAC_LINE(I)(1:15),'(I3,1X,A6,1X,A4)')
+     .         J-NSKIP,FILNAM,H123
+              IEND=16
+C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
+              REAC2=REPEAT(' ',50)
+              IF (INDEX(FILNAM,'CONST')==0) THEN
+                CALL EIRENE_READ_TOKEN
+     .           (REAC_LINE(I)(IEND:),' ',REAC2,ITOK,IER,.FALSE.)
+                call xertst (ier.eq.0, 'error reading reac2 flag')
+                IEND = IEND + ITOK
+!  READ CRC
+                CALL EIRENE_READ_TOKEN
+     .           (REAC_LINE(I)(IEND:),' ',CRC,ITOK,IER,.FALSE.)
+                IEND = IEND + ITOK
+                call xertst (ier.eq.0, 'error reading crc flag')
+              ELSE
+                ITOK = INDEX(ZEILE(IEND:),'FT')
+                IF (ITOK /= 0) THEN
+                  REAC2(1:9) = REAC_LINE(I)(IEND+ITOK:IEND+ITOK+8)
+                  IEND = IEND+ITOK+2
+                END IF
+                CALL EIRENE_READ_TOKEN
+     .           (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.FALSE.)
+                call xertst (ier.eq.0, 'error reading crc flag')
+                IEND = IEND + ITOK
+                READ (CHR,'(A3)') CRC
+              END IF
+!  READ MP
+              CALL EIRENE_READ_TOKEN
+     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.FALSE.)
+              call xertst (ier.eq.0, 'error reading mp flag')
+              IEND = IEND + ITOK
+!  READ MT
+              CALL EIRENE_READ_TOKEN
+     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.FALSE.)
+              call xertst (ier.eq.0, 'error reading mt flag')
+              IEND = IEND + ITOK
+!  READ DPP
+              CALL EIRENE_READ_TOKEN
+     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+              call xertst (ier.eq.0, 'error reading dpp flag')
+              IEND = IEND + ITOK
+!  READ R1MN
+              CALL EIRENE_READ_TOKEN
+     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+              call xertst (ier.eq.0, 'error reading r1mn flag')
+              IEND = IEND + ITOK
+              READ (CHR,'(E12.4)') R1MN
+!  READ R1MX
+              CALL EIRENE_READ_TOKEN
+     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+              call xertst (ier.eq.0, 'error reading r1mx flag')
+              IEND = IEND + ITOK
+              READ (CHR,'(E12.4)') R1MX
+!  READ R2MN
+              CALL EIRENE_READ_TOKEN
+     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+              call xertst (ier.eq.0, 'error reading r2mn flag')
+              IEND = IEND + ITOK
+              READ (CHR,'(E12.4)') R2MN
+!  READ R2MX
+              CALL EIRENE_READ_TOKEN
+     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+              call xertst (ier.eq.0, 'error reading r2mx flag')
+              IEND = IEND + ITOK
+              READ (CHR,'(E12.4)') R2MX
+            END IF
+          ELSE
+            I1=SCAN(REAC_LINE(I),' ')
+            READ (REAC_LINE(I)(1:I1-1),*) J
+            WRITE(hlp_frm,'(a,i1,a)') '(I',I1-1,')'
+            WRITE(REAC_LINE(I)(1:I1-1),hlp_frm) J-NSKIP
+!  READ FILNAM
+            IANF=I1+VERIFY(REAC_LINE(I)(I1+1:),' ')
+            IEND=IANF+SCAN(REAC_LINE(I)(IANF+1:),' ')-1
+            FILNAM(1:IEND-IANF+1)=REAC_LINE(I)(IANF:IEND)
+!  READ H123
+            IANF=IEND+VERIFY(REAC_LINE(I)(IEND+1:),' ')
+            IEND=IANF+SCAN(REAC_LINE(I)(IANF+1:),' ')-1
+            H123='    '
+            H123(1:IEND-IANF+1)=REAC_LINE(I)(IANF:IEND)
+!  READ REAC2
+            IANF=IEND+VERIFY(REAC_LINE(I)(IEND+1:),' ')
+            IEND=IANF+SCAN(REAC_LINE(I)(IANF+1:),' ')-1
+            REAC2=REPEAT(' ',50)
+            REAC2(1:IEND-IANF+1)=REAC_LINE(I)(IANF:IEND)
+            REACSTR=REPEAT(' ',11)
+            IANF=VERIFY(REAC2,' ')
+            IANF=MAX(1,IANF) !VK
+            K=INDEX(REAC2(IANF:),' ')-1
+            IF (K.LT.0) K=lnblnk(REAC2(IANF:))
+            REACSTR(2:K+1)=REAC2(IANF:K+IANF-1)
+          END IF
+          IF (streql(FILNAM,'CONST')) THEN
+            IANF = INDEX(REAC_LINE(I)(16:),'FT')
+            IF (IANF /= 0) THEN
+              READ (REACSTR(IANF+2:),*) idum(0) ! IFTFLG(IR,IFLG)
+            ELSE
+              idum(0) = 0
+            END IF
+            IF (MOD(idum(0),100) == 10) THEN
+              ISKIP = 2
+            ELSE
+              ISKIP = 3
+            END IF
+          ELSE IF (streql(FILNAM,'ADAS')) THEN
+            ISKIP = 2
+          ELSE
+            ISKIP = 1
+          END IF
+          IF (INDEX(H123,'P.').EQ.0) THEN
+            IF (R1MN.GT.0.0_R8) ISKIP = ISKIP + 1
+            IF (R1MX.GT.0.0_R8) ISKIP = ISKIP + 1
+            IF (R2MN.GT.0.0_R8) ISKIP = ISKIP + 1
+            IF (R2MX.GT.0.0_R8) ISKIP = ISKIP + 1
+          END IF
+          IF (IREAC2(J).EQ.-1) THEN
+            DO K = I + ISKIP, ILINE
+              REAC_LINE(K-ISKIP) = REAC_LINE(K)
+            END DO
+            REAC_LINE(ILINE-ISKIP+1:ILINE)=REPEAT(' ',96)
+            NSKIP = NSKIP + 1
+            ILINE = ILINE - ISKIP
+          ELSE
+            IREAC2(J) = J - NSKIP
+            I = I + ISKIP
+          END IF
+         END IF
+        END DO
+        NREAC2 = NREAC1 - NSKIP
+cxpb We reassign the plasma background species ordering
+        ib = ns1-nspecies1
+        do JPLS = 1, NPLSI
+          if (index(TEXTP(JPLS),'(B)').GT.0) then
+            if (eb2ibcr(JPLS).eq.-1) then
+              write(6,'(1x,3a)') 'BGK species ',
+     .         trim(TEXTP(JPLS)),' no longer needed. Removing...'
+              cycle
+            end if
+            ib = ib + 1
+            TEXTP1(ib) = TEXTP(JPLS)
+            NPRTP1(ib) = NPRTP(JPLS)
+            NHSTP1(ib) = NHSTP(JPLS)
+            NRCP1(ib) = NRCP(JPLS)
+            NRE1(ib) = NRE(JPLS)
+            NMASSP1(ib) = NMASSP(JPLS)
+            NCHARP1(ib) = NCHARP(JPLS)
+            NCHRGP1(ib) = NCHRGP(JPLS)
+            ISRFP1(ib) = ISRFP(JPLS)
+            ISRTP1(ib) = ISRTP(JPLS)
+            ID1P1(ib) = ID1P(JPLS)
+            DENSLIM1(ib) = DENSLIM(JPLS)
+            CDENMODEL1(ib) = CDENMODEL(JPLS)
+            zemin1(ib) = NCHRGP(JPLS)
+            zemax1(ib) = NCHRGP(JPLS)
+            ipls1(jpls) = ib
+            isp(ib) = jpls
+            e_bundle_start(ib) = jpls
+            e_bundle_end(ib) = jpls
+            e_bundle_contr(ib,jpls) = 1.0_R8
+          end if
+        end do
+        NPLSI1 = ib
+        write(hlp_frm,'(a,i3,a)') '(a,3x,',nplsi1,'(1x,i4))'
+        write(*,hlp_frm) ' e_bundle_start: ',
+     .   (e_bundle_start(is),is=1,nplsi1)
+        write(*,hlp_frm) ' e_bundle_end  : ',
+     .   (e_bundle_end(is),is=1,nplsi1)
+        if (.not.same_bundling) then
+          write(*,*) 'e_bundle_contr:'
+          write(hlp_frm,'(a,i3,a)') '(3x,',nplsi,'(1x,i4))'
+          write(*,hlp_frm) (is, is = 1, nplsi)
+          write(hlp_frm,'(a,i3,a)') '(i3,',nplsi,'f5.2)'
+          do iss = 1, nplsi1
+            write(*,hlp_frm) iss,
+     .       (e_bundle_contr(iss,is), is = 1, nplsi)
+          end do
+        end if
+cxpb We correct the plasma background species assignments in possibly BGK reactions
+cxpb We correct the EELEC* and ESCD1* values according to the new purged list numbering
+        DO JATM = 1, NATMI
+          DO K = 1, NRCA(JATM)
+            IREACA(JATM,K) = IREAC2(IREACA(JATM,K))
+            M = B2IDEZ(IBULKA(JATM,K),1,2)
+            L = B2IDEZ(IBULKA(JATM,K),2,3)
+            ICRM = B2IDEZ(IBULKA(JATM,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              IBULKA(JATM,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            M = B2IDEZ(ISCD1A(JATM,K),1,2)
+            L = B2IDEZ(ISCD1A(JATM,K),2,3)
+            ICRM = B2IDEZ(ISCD1A(JATM,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              ISCD1A(JATM,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            M = B2IDEZ(ISCD2A(JATM,K),1,2)
+            L = B2IDEZ(ISCD2A(JATM,K),2,3)
+            ICRM = B2IDEZ(ISCD2A(JATM,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              ISCD2A(JATM,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            IF (ID1A(JATM).GE.3) THEN
+              M = B2IDEZ(ISCD3A(JATM,K),1,2)
+              L = B2IDEZ(ISCD3A(JATM,K),2,3)
+              ICRM = B2IDEZ(ISCD3A(JATM,K),3,3)
+              IF (M.EQ.4) THEN   ! we have a bulk ion
+                ISCD3A(JATM,K) = M + 10*L + 100*ipls2(icrm)
+              END IF
+            END IF
+            IF (ID1A(JATM).GE.4) THEN
+              M = B2IDEZ(ISCD4A(JATM,K),1,2)
+              L = B2IDEZ(ISCD4A(JATM,K),2,3)
+              ICRM = B2IDEZ(ISCD4A(JATM,K),3,3)
+              IF (M.EQ.4) THEN   ! we have a bulk ion
+                ISCD4A(JATM,K) = M + 10*L + 100*ipls2(icrm)
+              END IF
+            END IF
+            IF (B2IDEZ(ISCDEA(JATM,K),5,5).eq.3) THEN
+              IR = nint(EELECA(JATM,K))
+              EELECA(JATM,K) = dble(IREAC2(IR))
+            END IF
+            IF (B2IDEZ(ISCDEA(JATM,K),3,5).eq.3) THEN
+              IR = nint(ESCD1A(JATM,K))
+              ESCD1A(JATM,K) = dble(IREAC2(IR))
+            END IF
+          END DO
+        END DO
+        DO JMOL = 1, NMOLI
+          DO K = 1, NRCM(JMOL)
+            IREACM(JMOL,K) = IREAC2(IREACM(JMOL,K))
+            M = B2IDEZ(IBULKM(JMOL,K),1,2)
+            L = B2IDEZ(IBULKM(JMOL,K),2,3)
+            ICRM = B2IDEZ(IBULKM(JMOL,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              IBULKM(JMOL,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            M = B2IDEZ(ISCD1M(JMOL,K),1,2)
+            L = B2IDEZ(ISCD1M(JMOL,K),2,3)
+            ICRM = B2IDEZ(ISCD1M(JMOL,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              ISCD1M(JMOL,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            M = B2IDEZ(ISCD2M(JMOL,K),1,2)
+            L = B2IDEZ(ISCD2M(JMOL,K),2,3)
+            ICRM = B2IDEZ(ISCD2M(JMOL,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              ISCD2M(JMOL,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            IF (ID1M(JMOL).GE.3) THEN
+              M = B2IDEZ(ISCD3M(JMOL,K),1,2)
+              L = B2IDEZ(ISCD3M(JMOL,K),2,3)
+              ICRM = B2IDEZ(ISCD3M(JMOL,K),3,3)
+              IF (M.EQ.4) THEN   ! we have a bulk ion
+                ISCD3M(JMOL,K) = M + 10*L + 100*ipls2(icrm)
+              END IF
+            END IF
+            IF (ID1M(JMOL).GE.4) THEN
+              M = B2IDEZ(ISCD4M(JMOL,K),1,2)
+              L = B2IDEZ(ISCD4M(JMOL,K),2,3)
+              ICRM = B2IDEZ(ISCD4M(JMOL,K),3,3)
+              IF (M.EQ.4) THEN   ! we have a bulk ion
+                ISCD4M(JMOL,K) = M + 10*L + 100*ipls2(icrm)
+              END IF
+            END IF
+            IF (B2IDEZ(ISCDEM(JMOL,K),5,5).eq.3) THEN
+              IR = nint(EELECM(JMOL,K))
+              EELECM(JMOL,K) = dble(IREAC2(IR))
+            END IF
+            IF (B2IDEZ(ISCDEM(JMOL,K),3,5).eq.3) THEN
+              IR = nint(ESCD1M(JMOL,K))
+              ESCD1M(JMOL,K) = dble(IREAC2(IR))
+            END IF
+          END DO
+        END DO
+        DO JION = 1, NIONI
+          DO K = 1, NRCI(JION)
+            IREACI(JION,K) = IREAC2(IREACI(JION,K))
+            M = B2IDEZ(IBULKI(JION,K),1,2)
+            L = B2IDEZ(IBULKI(JION,K),2,3)
+            ICRM = B2IDEZ(IBULKI(JION,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              IBULKI(JION,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            M = B2IDEZ(ISCD1I(JION,K),1,2)
+            L = B2IDEZ(ISCD1I(JION,K),2,3)
+            ICRM = B2IDEZ(ISCD1I(JION,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              ISCD1I(JION,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            M = B2IDEZ(ISCD2I(JION,K),1,2)
+            L = B2IDEZ(ISCD2I(JION,K),2,3)
+            ICRM = B2IDEZ(ISCD2I(JION,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              ISCD2I(JION,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            IF (ID1I(JION).GE.3) THEN
+              M = B2IDEZ(ISCD3I(JION,K),1,2)
+              L = B2IDEZ(ISCD3I(JION,K),2,3)
+              ICRM = B2IDEZ(ISCD3I(JION,K),3,3)
+              IF (M.EQ.4) THEN   ! we have a bulk ion
+                ISCD3I(JION,K) = M + 10*L + 100*ipls2(icrm)
+              END IF
+            ENDIF
+            IF (ID1I(JION).GE.4) THEN
+              M = B2IDEZ(ISCD4I(JION,K),1,2)
+              L = B2IDEZ(ISCD4I(JION,K),2,3)
+              ICRM = B2IDEZ(ISCD4I(JION,K),3,3)
+              IF (M.EQ.4) THEN   ! we have a bulk ion
+                ISCD4I(JION,K) = M + 10*L + 100*ipls2(icrm)
+              END IF
+            ENDIF
+            IF (B2IDEZ(ISCDEI(JION,K),5,5).eq.3) THEN
+              IR = nint(EELECI(JION,K))
+              EELECI(JION,K) = dble(IREAC2(IR))
+            END IF
+            IF (B2IDEZ(ISCDEI(JION,K),3,5).eq.3) THEN
+              IR = nint(ESCD1I(JION,K))
+              ESCD1I(JION,K) = dble(IREAC2(IR))
+            END IF
+          END DO
+        END DO
+        DO JPHOT = 1, NPHOTI
+          DO K = 1, NRCPH(JPHOT)
+            IREACPH(JPHOT,K) = IREAC2(IREACPH(JPHOT,K))
+            M = B2IDEZ(IBULKPH(JPHOT,K),1,2)
+            L = B2IDEZ(IBULKPH(JPHOT,K),2,3)
+            ICRM = B2IDEZ(IBULKPH(JPHOT,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              IBULKPH(JPHOT,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            M = B2IDEZ(ISCD1PH(JPHOT,K),1,2)
+            L = B2IDEZ(ISCD1PH(JPHOT,K),2,3)
+            ICRM = B2IDEZ(ISCD1PH(JPHOT,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              ISCD1PH(JPHOT,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            M = B2IDEZ(ISCD2PH(JPHOT,K),1,2)
+            L = B2IDEZ(ISCD2PH(JPHOT,K),2,3)
+            ICRM = B2IDEZ(ISCD2PH(JPHOT,K),3,3)
+            IF (M.EQ.4) THEN   ! we have a bulk ion
+              ISCD2PH(JPHOT,K) = M + 10*L + 100*ipls2(icrm)
+            END IF
+            IF (ID1PH(JPHOT).GE.3) THEN
+              M = B2IDEZ(ISCD3PH(JPHOT,K),1,2)
+              L = B2IDEZ(ISCD3PH(JPHOT,K),2,3)
+              ICRM = B2IDEZ(ISCD3PH(JPHOT,K),3,3)
+              IF (M.EQ.4) THEN   ! we have a bulk ion
+                ISCD3PH(JPHOT,K) = M + 10*L + 100*ipls2(icrm)
+              END IF
+            ENDIF
+            IF (ID1PH(JPHOT).GE.4) THEN
+              M = B2IDEZ(ISCD4PH(JPHOT,K),1,2)
+              L = B2IDEZ(ISCD4PH(JPHOT,K),2,3)
+              ICRM = B2IDEZ(ISCD4PH(JPHOT,K),3,3)
+              IF (M.EQ.4) THEN   ! we have a bulk ion
+                ISCD4PH(JPHOT,K) = M + 10*L + 100*ipls2(icrm)
+              END IF
+            ENDIF
+            IF (B2IDEZ(ISCDEP(JPLS,K),5,5).eq.3) THEN
+              IR = nint(EELECP(JPLS,K))
+              EELECP(JPLS,K) = dble(IREAC2(IR))
+            END IF
+            IF (B2IDEZ(ISCDEP(JPLS,K),3,5).eq.3) THEN
+              IR = nint(ESCD1P(JPLS,K))
+              ESCD1P(JPLS,K) = dble(IREAC2(IR))
+            END IF
+          END DO
+        END DO
+        DO JPLS = 1, NPLSI
+          DO K = 1, NRCP(JPLS)
+            IREACP(JPLS,K) = IREAC2(IREACP(JPLS,K))
+          END DO
+        END DO
 cxpb We now rewrite the modified block 4
+*4.    REACTIONS
+        WRITE(IUNOT,6666) NREAC2
+        DO I = 1, ILINE
+          WRITE(IUNOT,'(A96)') REAC_LINE(I)
+        END DO
+        deallocate(reac_line)
 *4A.   NEUTRAL ATOMS SPECIES CARDS, NATMI1 SPECIES
         WRITE(IUNOT,6666) NATMI1
         DO 4213 ISS=1,NATMI1
@@ -6755,16 +7413,16 @@ cxpb We now rewrite the modified block 4
         READ (ZEILE,6665) ldum(0) ! NLTRIM
         IREAD=0
         IF (ldum(0)) THEN
+          cpath_written = .false.
           READ (IUNIN,'(A80)') ZEILE
           IREAD=1
           IF (INDEX(ZEILE,'PATH')+INDEX(ZEILE,'path').EQ.0) THEN
-            NFR=0
   615       IF (INDEX(ZEILE,'ON')+INDEX(ZEILE,'on').EQ.0) THEN
               GOTO 620
             ELSE
-              IF (NFR.EQ.0) WRITE(IUNOT,'(A)') 'cpath '//
+              IF (.not.cpath_written) WRITE(IUNOT,'(A)') 'cpath '//
      .             'modules/Eirene/Database/Surfacedata/TRIM/'
-              NFR=NFR+1
+              cpath_written = .true.
               if (index(zeile,'_').gt.0) then
                 write(elname,'(a2)') zeile(1:2)
                 if (elname(2:2).eq.'_') elname(2:2)=' '
@@ -6788,7 +7446,6 @@ cxpb We now rewrite the modified block 4
 !            WRITE(IUNOT,'(A80)') ZEILE ! this writes the path
             READ (IUNIN,'(A80)') ZEILE
             IREAD=1
-            NFR=0
   625       IF (INDEX(ZEILE,'ON')+INDEX(ZEILE,'on').EQ.0) THEN
               GOTO 620
             ELSE
@@ -6796,30 +7453,31 @@ cxpb We now rewrite the modified block 4
               if (index(rfilnm,'_').gt.0) then
                 write(elname,'(a2)') rfilnm(1:2)
                 if (elname(2:2).eq.'_') elname(2:2)=' '
-                if (element_present(natm,natmi,iatm1,elname)) NFR=NFR+1
-              else
-                NFR=NFR+1
               end if
               I=INDEX(RFILNM,ACHAR(13)) !VK
               IF(I.GT.0.AND.I.LE.LEN_TRIM(RFILNM)) RFILNM(I:I)=' ' !VK TO REMOVE \r
               FILE(I2:)=RFILNM
-              IF (NFR.EQ.1) THEN
-                IF (open_file(29,FILE,
-     .           'modules/Eirene/Database/Surfacedata/TRIM')) THEN  ! Path is valid, write it
-                  WRITE(IUNOT,'(A6,A74)') 'cpath ',PATH
+              IF (element_present(natm,natmi,iatm1,elname)) THEN
+                IF (open_file(29,FILE,PATH)) THEN  ! Path is valid, write it
+                  if (.not.cpath_written)
+     >             WRITE(IUNOT,'(A6,A74)') 'cpath ',PATH
+                  cpath_written = .true.
                   close(29)
-                ELSE
+                  WRITE(IUNOT,'(A74)') RFILNM
+                ELSE IF (open_file(29,FILE,
+     .             'modules/Eirene/Database/Surfacedata/TRIM/')) THEN
                   WRITE(6,*)
      .             'Invalid CPATH specification in this environment: '//
      .             'CPATH line replaced'
                   WRITE(IUNOT,'(A)') 'cpath '//
      .             'modules/Eirene/Database/Surfacedata/TRIM/'
+                  cpath_written = .true.
+                  close(29)
+                  WRITE(IUNOT,'(A74)') RFILNM
+                ELSE
+                  WRITE(6,'(3a)') 'Could not find file ',trim(FILE),
+     .             ' in local environment. Removing...'
                 END IF
-                if (element_present(natm,natmi,iatm1,elname))
-     >           WRITE(IUNOT,'(A74)') RFILNM
-              ELSE IF (NFR.GT.0) THEN
-                if (element_present(natm,natmi,iatm1,elname))
-     >           WRITE(IUNOT,'(A74)') RFILNM
               END IF
               READ (IUNIN,'(A80)') ZEILE
               IREAD=1
@@ -6845,25 +7503,25 @@ cxpb We now rewrite the modified block 4
         ENDDO
         WRITE(IUNOT,6664) DATD1(1:NATMI1)
         deallocate(DATD,DATD1)
-        allocate(DMLD(NMOLI),DMLD1(NMOL1))
+        allocate(DMLD(NMOLI),DMLD1(max(1,NMOL1)))
         READ (IUNIN,6664) (DMLD(JMOL),JMOL=1,NMOLI)
-        DMLD1(1:NMOL1) = 0.0_R8
+        DMLD1(1:max(1,NMOL1)) = 0.0_R8
         DO JMOL = 1, NMOLI
           IF (IMOL1(JMOL).NE.0) THEN
             DMLD1(IMOL1(JMOL)) = DMLD(JMOL)
           ENDIF
         ENDDO
-        WRITE(IUNOT,6664) DMLD1(1:NMOL1)
+        WRITE(IUNOT,6664) DMLD1(1:max(1,NMOL1))
         deallocate(DMLD,DMLD1)
-        allocate(DIOD(NIONI),DIOD1(NION1))
+        allocate(DIOD(NIONI),DIOD1(max(1,NION1)))
         READ (IUNIN,6664) (DIOD(JION),JION=1,NIONI)
-        DIOD1(1:NION1) = 0.0_R8
+        DIOD1(1:max(1,NION1)) = 0.0_R8
         DO JION = 1, NIONI
           IF (IION1(JION).NE.0) THEN
             DIOD1(IION1(JION)) = DIOD(JION)
           ENDIF
         ENDDO
-        WRITE(IUNOT,6664) DIOD1(1:NION1)
+        WRITE(IUNOT,6664) DIOD1(1:max(1,NION1))
         deallocate(DIOD,DIOD1)
         allocate(DPLD(NPLSI),DPLD1(NPLSI1))
         READ (IUNIN,6664) (DPLD(JPLS),JPLS=1,NPLSI)
@@ -8284,9 +8942,11 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         ULINE = ZEILE
         CALL EIRENE_UPPERCASE(ULINE)
         IF (INDEX(ULINE,'DEFINE_LINES').GT.0) THEN
-          WRITE(ZEILEN(1),'(A)') ULINE
           READ (IUNIN,6666) NUM_LINES, MOD_ADDV
-          ILINE = 2
+          IF (hydrogen .or. NUM_LINES.GT.0) THEN
+            WRITE(ZEILEN(1),'(A)') ULINE
+            ILINE = 2
+          END IF
           NUM_LINES1 = 0
           allocate(ILBEG(NUM_LINES), ILEND(NUM_LINES))
           DO I = 1, NUM_LINES
@@ -8390,7 +9050,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
               ILEND(I) = ILBEG(I) - 1
             END IF
           END DO          ! NUM_LINES loop
-          IF (NUM_LINES1.GT.0) THEN
+          IF (hydrogen .OR. NUM_LINES1.GT.0) THEN
             WRITE(IUNOT,'(A80)') ZEILEN(1)
             WRITE(ZEILEN(2),6666) NUM_LINES1, MOD_ADDV
             WRITE(IUNOT,'(A80)') ZEILEN(2)
@@ -8402,9 +9062,11 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
           END IF
           deallocate(ILBEG, ILEND)
           ILINE = 1
-          READ (IUNIN,'(A80)') ZEILEN(1)
+          READ (IUNIN,'(A80)') ZEILE
+          WRITE(ZEILEN(1),'(A80)') ZEILE
         ELSE
-          IF (lhalpha.ne.0.or..not.streql(solps_version,'iter')) THEN
+          IF (hydrogen.and.
+     &     (lhalpha.ne.0.or..not.streql(solps_version,'iter'))) THEN
             WRITE(IUNOT,'(A)') "DEFINE_LINES"
             NUM_LINES1 = 0
             MOD_ADDV = 1
@@ -8464,7 +9126,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
      .                    nlstadds,mtreadds,ngwties
         end if
         DO I = 1, ILINE
-          WRITE(IUNOT,'(A72)') ZEILEN(IREAD)
+          WRITE(IUNOT,'(A72)') ZEILEN(I)
         END DO
         READ (IUNIN,'(A80)') ZEILE
         call fix_logical_input(zeile,2)

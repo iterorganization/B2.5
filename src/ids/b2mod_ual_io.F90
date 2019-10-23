@@ -806,6 +806,8 @@ contains
           r0 = r0 / float(icnt)
           if (ffbz(jxa,-1,0).ne.0.0_R8) then
             b0 = ffbz(jxa,-1,0)/r0
+          else if (isymm.eq.0) then
+            b0 = bb(jxa,-1,2)
           else if (isymm.eq.1 .or. isymm.eq.2) then
             b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
                               &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
@@ -815,9 +817,12 @@ contains
                               &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0
             b0 = b0r0 / r0
           end if
+        else
+          b0 = bb(jxa,-1,2)
         end if
-        !> Careful: Sign convention for magnetic field in IDS is OPPOSITE to that in SOLPS
-        if ( b0r0.ne.0.0_IDS_real ) then
+        !> Careful: Sign convention for magnetic field in IDS
+        !>          is OPPOSITE to that in SOLPS toroidal geometries
+        if ( b0.ne.0.0_IDS_real ) then
           if (streql(device,'iter')) then
             b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
             allocate( summary%global_quantities%ip%value( time_sind ) )
@@ -848,11 +853,16 @@ contains
             summary%global_quantities%r0%value = 6.2_IDS_real
           else
             edge_profiles%vacuum_toroidal_field%r0 = r0
-            allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
-            edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0
             summary%global_quantities%r0%value = r0
+            allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
             allocate( summary%global_quantities%b0%value( time_sind ) )
-            summary%global_quantities%b0%value( time_sind ) = -b0
+            if (isymm.ne.0) then
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0
+              summary%global_quantities%b0%value( time_sind ) = -b0
+            else
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0
+              summary%global_quantities%b0%value( time_sind ) = b0
+            end if
           end if
           allocate( summary%global_quantities%r0%source(1) )
           summary%global_quantities%r0%source = source
