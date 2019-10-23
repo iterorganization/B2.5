@@ -1,8 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2spcx (nx, ny, ns, ev, amh0, th0, ne, 
-     *   rlcx0)
+      subroutine b2spcx (nx, ny, ns, ev, amh0, th0, ne, rlcx0)
       use b2mod_types
       use b2mod_b2cmrc
       implicit none

@@ -1126,7 +1126,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
      *             log(neutral_sources_rescale)
-                write(*,'(i3,1p,2e15.8)') is,zamax(is),rtlra(0,0,is+1)
+                write(*,'(i3,1p,2e16.8)') is,zamax(is),rtlra(0,0,is+1)
              endif
            enddo
          else

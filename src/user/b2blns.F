@@ -270,7 +270,11 @@ c<<<
             write(*,hlp_prt) j,(wldpp(j,i,k),i=1,nnplsi)
           end do
           print *
-          print *,'wldpeb, wldpa, wldpm, hlpit_pl:',k
+          if (nnmoli.gt.0) then
+            print *,'wldpeb, wldpa, wldpm, hlpit_pl:',k
+          else
+            print *,'wldpeb, wldpa, hlpit_pl:',k
+          end if
           write (hlp_prt,'(a,i3,a)')
      .     '(1p,i4,',1+nnatmi+nnmoli+nspecies,'e9.2)'
           do j=nnlimi+debug_flags(90),nnlimi+debug_flags(91)

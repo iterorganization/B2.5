@@ -185,6 +185,7 @@
      &   rlcx(-1,-1,0,0,k))
       enddo
 *   ..compute charge exchange rate coefficients
+      rcx = 0.0_R8
       do k = 0, nscx-1
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
      &   rlcx(-1,-1,0,0,k), rcx)

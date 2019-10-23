@@ -436,7 +436,7 @@ c Drift terms
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
             ve(ix,iy) = 0.0e0_R8
-          else     ! ve has been myltiplied by vol*bx/hx
+          else     ! ve has been multiplied by vol*bx/hx
             ve(ix,iy)=fne(ix,iy,0)/nel(ix,iy)
           endif
         enddo
@@ -463,7 +463,7 @@ c Drift terms
                 fne_eir(ix,iy,0)     = 0.0_R8                            !srv 14.07.10
                 fhe_eir(ix,iy,0)     = 0.0_R8                            !srv 14.07.10
                 fhi_eir(ix,iy,0)     = 0.0_R8                            !srv 14.07.10
-              else     ! ve has been myltiplied by vol*bx/hx
+              else     ! ve has been multiplied by vol*bx/hx
                 fle_eir = ve(ix,iy)                                      !srv 14.07.10 {
                 if(drift_style.eq.0) then
                  fle_eir = fle_eir + 0.5_R8*

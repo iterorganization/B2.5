@@ -951,7 +951,11 @@ cxpb
      ,     '(1p,i4,',1+nnatmi+nnmoli,'e11.4)'
           do k=0,nstrat !{
             write(*,'()')
-            print *,'wldna, wldnm, wldra, wldrm:',k
+            if (nnmoli.gt.0) then
+              print *,'wldna, wldnm, wldra, wldrm:',k
+            else
+              print *,'wldna, wldra:',k
+            end if
             write (*,hlp_frm1)
      ,         ('na',i,i=1,nnatmi),('nm',i,i=1,nnmoli),
      ,         ('ra',i,i=1,nnatmi),('rm',i,i=1,nnmoli)
@@ -987,7 +991,11 @@ cxpb
      >         write(*,hlp_frm3) j,(wldpp(j,i,k),i=1,nnplsi)
             end do !}
             write(*,'()')
-            print *,'wldpeb, wldpa, wldpm:',k
+            if (nnmoli.gt.0) then
+              print *,'wldpeb, wldpa, wldpm:',k
+            else
+              print *,'wldpeb, wldpa:',k
+            end if
             do j=nnlimi+1,nnlimi+nnstsi !{
               hlp_pr=wldpeb(j,k).ne.0.0_R8
               do i=1,nnatmi !{
