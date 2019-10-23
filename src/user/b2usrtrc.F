@@ -590,7 +590,7 @@ c!###}
         end if !}
 
 !###{
-        print '(2x,11a10)','ntrc_tmp','nglb_tmp','nspecies','npff_tmp',
+        print '(3x,11a10)','ntrc_tmp','nglb_tmp','nspecies','npff_tmp',
      ,    'npfrgrp','nntrgrp','npfi_tmp','npft_tmp','ndts_tmp',
      ,    'ngl2_tmp','ngl4_tmp'
         print '(11i10)',ntrc_tmp,nglb_tmp,nspecies,npff_tmp,

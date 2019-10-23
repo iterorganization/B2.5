@@ -504,7 +504,7 @@ c 2002-09-11: logic revised
       logical, allocatable :: done(:)
       logical LRPSCUT
       logical in_bundle, charges_match, skip_reac,
-     .        no_sputtering, cpath_written
+     .        no_sputtering, cpath_written, new_path
 #endif
       logical todo, wait, same_bundling, same_atoms, non_default
       logical averaging, hydrogen
@@ -6311,8 +6311,9 @@ cxpb We rebuild the reaction list without the purged BGK reactions
             IF (streql(eirene_format,'old').or.
      &          streql(eirene_format,'new').or.
      &          streql(eirene_format,'facelift')) then
-              READ (REAC_LINE(I),66661)
-     .              J,FILNAM,H123,REAC,CRC,idum(0:1),DPP,R1MN,R1MX
+              READ (REAC_LINE(I)(1:33),'(I3,1X,A6,1X,A4,A9,A3,2I3)')
+     .              J,FILNAM,H123,REAC,CRC,idum(0:1)
+              READ (REAC_LINE(I)(34:),*) DPP,R1MN,R1MX
               WRITE(REAC_LINE(I),66661)
      .              J-NSKIP,FILNAM,H123,REAC,CRC,idum(0:1),DPP,R1MN,R1MX
               R2MN = 0.0_R8
@@ -7321,6 +7322,7 @@ cxpb We now rewrite the modified block 4
         READ (ZEILE,6665) ldum(0) ! NLTRIM
         IREAD=0
         IF (ldum(0)) THEN
+          new_path = .false.
           cpath_written = .false.
           READ (IUNIN,'(A80)') ZEILE
           IREAD=1
@@ -7330,6 +7332,7 @@ cxpb We now rewrite the modified block 4
             ELSE
               IF (.not.cpath_written) WRITE(IUNOT,'(A)') 'cpath '//
      .             'modules/Eirene/Database/Surfacedata/TRIM/'
+              new_path = .true.
               cpath_written = .true.
               if (index(zeile,'_').gt.0) then
                 write(elname,'(a2)') zeile(1:2)
@@ -7364,7 +7367,12 @@ cxpb We now rewrite the modified block 4
               end if
               I=INDEX(RFILNM,ACHAR(13)) !VK
               IF(I.GT.0.AND.I.LE.LEN_TRIM(RFILNM)) RFILNM(I:I)=' ' !VK TO REMOVE \r
-              FILE(I2:)=RFILNM
+              IF (new_path) THEN
+                FILE='modules/Eirene/Database/Surfacedata/TRIM/'//
+     .           trim(RFILNM)
+              ELSE
+                FILE(I2:)=RFILNM
+              END IF
               IF (element_present(natm,natmi,iatm1,elname)) THEN
                 IF (open_file(29,FILE,PATH)) THEN  ! Path is valid, write it
                   if (.not.cpath_written)
@@ -7372,14 +7380,15 @@ cxpb We now rewrite the modified block 4
                   cpath_written = .true.
                   close(29)
                   WRITE(IUNOT,'(A74)') RFILNM
-                ELSE IF (open_file(29,FILE,
-     .             'modules/Eirene/Database/Surfacedata/TRIM/')) THEN
-                  WRITE(6,*)
+                ELSE IF (open_file(29,RFILNM,
+     .             'modules/Eirene/Database/Surfacedata/TRIM')) THEN
+                  if (.not.cpath_written) WRITE(6,*)
      .             'Invalid CPATH specification in this environment: '//
      .             'CPATH line replaced'
-                  WRITE(IUNOT,'(A)') 'cpath '//
+                  if (.not.cpath_written) WRITE(IUNOT,'(A)') 'cpath '//
      .             'modules/Eirene/Database/Surfacedata/TRIM/'
                   cpath_written = .true.
+                  new_path = .true.
                   close(29)
                   WRITE(IUNOT,'(A74)') RFILNM
                 ELSE
