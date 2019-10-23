@@ -304,7 +304,7 @@ c 2002-09-11: logic revised
       integer NATMI1, NREAC1, NREAC2, NRR1, NSTRA1, NPLSI1, NBGK1, NSKIP
       integer IREAD, IEND, IANF, ITOK, IER, ISTS, IH, I3, L, M, JSS
       integer size_mp, size_mt
-      integer ICRM, IPLSS, ISTRA, ISKIP
+      integer ICRM, JPLSS, ISTRA, ISKIP
       integer MAXRAD, NSIGVI, NSIGSI, NSIGCI, NPPLG, NCRM
       integer NSIGV1, NSIGS1, NSIGC1, NLOGIN
       integer NADVI, NADV1, NCLVI, NCLV1, NALVI, NALV1, NADSI, NADS1
@@ -5407,16 +5407,16 @@ cxpb Now we have read the species data and can identify the bundles
         ipls1 = 0
         ipls2 = 0
         isp = 0
-        ipls = 0
-        iplss = 0
+        jpls = 0
+        jplss = 0
         do jatm = 1, nspecies
           if (ispecies1(jatm).eq.-1) then
-            do while (NMASSP(min(nplsi,ipls+1)).eq.
+            do while (NMASSP(min(nplsi,jpls+1)).eq.
      .                NMASSA(b2eatcr(eb2spcr(jatm))) .and.
-     .                NCHARP(min(nplsi,ipls+1)).eq.
+     .                NCHARP(min(nplsi,jpls+1)).eq.
      .                NCHARA(b2eatcr(eb2spcr(jatm))) .and.
-     .                ipls.lt.nplsi)
-              ipls = ipls + 1
+     .                jpls.lt.nplsi)
+              jpls = jpls + 1
             end do
             cycle
           endif
@@ -5426,7 +5426,7 @@ cxpb Now we have read the species data and can identify the bundles
           else
             js = eb2spcr(jatm+1)-1
           endif
-          iplss = eb2spcr1(ispecies1(jatm))-ispecies1(jatm)+1
+          jplss = eb2spcr1(ispecies1(jatm))-ispecies1(jatm)+1
           iss = eb2spcr1(ispecies1(jatm))+1
           jss = iss
           if (jss.lt.ns1-1) then
@@ -5437,15 +5437,15 @@ cxpb Now we have read the species data and can identify the bundles
             end do
           end if
           do i = is, js
-            ipls = ipls+1
-            do while(ipls.lt.nplsi.and.index(textp(ipls),'(B)').gt.0)
-              ipls = ipls+1
+            jpls = jpls+1
+            do while(jpls.lt.nplsi.and.index(textp(jpls),'(B)').gt.0)
+              jpls = jpls+1
             end do
-            if(ipls.eq.nplsi.and.index(textp(ipls),'(B)').gt.0) exit
+            if(jpls.eq.nplsi.and.index(textp(jpls),'(B)').gt.0) exit
             do j = iss, jss
-              if (iplss.lt.nplsi1) then
-                if (NMASSP1(iplss+1).eq.NMASSP(ipls) .and.
-     .              NCHARP1(iplss+1).eq.NCHARP(ipls)) then
+              if (jplss.lt.nplsi1) then
+                if (NMASSP1(jplss+1).eq.NMASSP(jpls) .and.
+     .              NCHARP1(jplss+1).eq.NCHARP(jpls)) then
                   zmin1 = zamin(i)
                   zmax1 = zamax(i)
                   zmin2 = zamin1(j)
@@ -5460,25 +5460,25 @@ cxpb  species if the charge bundle from the old plasma species
 cxpb  is not fully included in the new species and is not the
 cxpb  first one
                     if (.not.(zmin1.gt.zmin2 .and. zmax1.le.zmax2))
-     >               iplss = iplss + 1
-                    ipls1(ipls) = iplss
-                    if (isp(iplss).eq.0) isp(iplss) = ipls
-                    if (e_bundle_start(iplss).eq.0) then
-                      e_bundle_start(iplss) = ipls
-                      e_bundle_end(iplss) = ipls
+     >               jplss = jplss + 1
+                    ipls1(jpls) = jplss
+                    if (isp(jplss).eq.0) isp(jplss) = jpls
+                    if (e_bundle_start(jplss).eq.0) then
+                      e_bundle_start(jplss) = jpls
+                      e_bundle_end(jplss) = jpls
                     else
-                      e_bundle_end(iplss) = ipls
+                      e_bundle_end(jplss) = jpls
                     endif
-                    e_bundle_contr(iplss,ipls) =
+                    e_bundle_contr(jplss,jpls) =
      .               (min(zmax1,zmax2)-max(zmin1,zmin2)+1.0_R8)/
      .               (zmax1-zmin1+1.0_R8)
                   endif
                 else
-                  iplss = iplss + 1
+                  jplss = jplss + 1
                 endif
               else
-                if (NMASSP1(iplss).eq.NMASSP(ipls).and.
-     .              NCHARP1(iplss).eq.NCHARP(ipls)) then
+                if (NMASSP1(jplss).eq.NMASSP(jpls).and.
+     .              NCHARP1(jplss).eq.NCHARP(jpls)) then
                   zmin1 = zamin(i)
                   zmax1 = zamax(i)
                   zmin2 = zamin1(j)
@@ -5488,15 +5488,15 @@ cxpb  first one
      .             (zmax1.ge.zmin2 .and. zmax1.le.zmax2) .or.
      .             (zmin1.le.zmin2 .and. zmax1.ge.zmax2)
                   if (charges_match) then
-                    ipls1(ipls) = iplss
-                    if (isp(iplss).eq.0) isp(iplss) = ipls
-                    if (e_bundle_start(iplss).eq.0) then
-                      e_bundle_start(iplss) = ipls
-                      e_bundle_end(iplss) = ipls
+                    ipls1(jpls) = jplss
+                    if (isp(jplss).eq.0) isp(jplss) = jpls
+                    if (e_bundle_start(jplss).eq.0) then
+                      e_bundle_start(jplss) = jpls
+                      e_bundle_end(jplss) = jpls
                     else
-                      e_bundle_end(iplss) = ipls
+                      e_bundle_end(jplss) = jpls
                     endif
-                    e_bundle_contr(iplss,ipls) =
+                    e_bundle_contr(jplss,jpls) =
      .               (min(zmax1,zmax2)-max(zmin1,zmin2)+1.0_R8)/
      .               (zmax1-zmin1+1.0_R8)
                   endif
@@ -5532,10 +5532,10 @@ cxpb Need to check whether BGK species will actually be needed
                 found = found .or. ICRM.eq.JPLS
               end do
             end do
-            do ipls = 1, nplsi
-              if (ipls1(ipls).eq.0) cycle
-              do k = 1, nrcp(ipls)
-                ICRM = B2IDEZ(IBULKP(IPLS,K),3,3)
+            do jplss = 1, nplsi
+              if (ipls1(jplss).eq.0) cycle
+              do k = 1, nrcp(jplss)
+                ICRM = B2IDEZ(IBULKP(JPLSS,K),3,3)
                 found = found .or. ICRM.eq.JPLS
               end do
             end do
@@ -9137,7 +9137,7 @@ C  SKIP READING REST OF THIS BLOCK
      .     (nplsi,nplsi1,e_bundle_contr,BMASS,BMASS1,3)
           call e_bundle_transmit_i
      .     (nplsi,nplsi1,e_bundle_contr,LKINDP,LKINDP1,3)
-          IPLS = 0
+          JPLS = 0
           DO JATM=1,NSPECIES1
             IS = EB2SPCR1(JATM)+1
             IF (JATM.EQ.NSPECIES1) THEN
@@ -9146,9 +9146,9 @@ C  SKIP READING REST OF THIS BLOCK
               JS = EB2SPCR1(JATM+1)-1
             ENDIF
             DO I = IS, JS
-              IPLS = IPLS + 1
-              IFLB1(IPLS) = IPLS
-              LKINDP1(IPLS) = JATM
+              JPLS = JPLS + 1
+              IFLB1(JPLS) = JPLS
+              LKINDP1(JPLS) = JATM
             ENDDO
           ENDDO
           DO I=1,NPLSI1
