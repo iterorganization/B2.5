@@ -6180,7 +6180,7 @@ cxpb We purge the reaction list from ambiguous BGK reactions due to mass degener
               ESCD1A(JATM,K:NRCA(JATM)-1) = ESCD1A(JATM,K+1:NRCA(JATM))
               ESCD2A(JATM,K:NRCA(JATM)-1) = ESCD2A(JATM,K+1:NRCA(JATM))
               FREACA(JATM,K:NRCA(JATM)-1) = FREACA(JATM,K+1:NRCA(JATM))
-              EDPOTA(JATM,K:NRCA(JATM)-1) = EDPOTA(JATM,K+1:NRCA(JATM))
+              FLDLMA(JATM,K:NRCA(JATM)-1) = FLDLMA(JATM,K+1:NRCA(JATM))
               NRCA(JATM) = NRCA(JATM) - 1
             ELSE
               K = K + 1
@@ -6301,8 +6301,8 @@ cxpb We purge the reaction list from ambiguous BGK reactions due to mass degener
      .         ESCD2PH(JPHOT,K+1:NRCPH(JPHOT))
               FREACPH(JPHOT,K:NRCPH(JPHOT)-1) =
      .         FREACPH(JPHOT,K+1:NRCPH(JPHOT))
-              EDPOTPH(JPHOT,K:NRCPH(JPHOT)-1) =
-     .         EDPOTPH(JPHOT,K+1:NRCPH(JPHOT))
+              FLDLMPH(JPHOT,K:NRCPH(JPHOT)-1) =
+     .         FLDLMPH(JPHOT,K+1:NRCPH(JPHOT))
               NRCPH(JPHOT) = NRCPH(JPHOT) - 1
             ELSE
               K = K + 1
