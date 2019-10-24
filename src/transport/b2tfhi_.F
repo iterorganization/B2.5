@@ -1,6 +1,5 @@
 *-----------------------------------------------------------------------
 *.specification
-csw 2013 added fna_he, cvsa, vadia into argument list
       subroutine b2tfhi_ (nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt,  !srv 13.10.06
      &  balance)                                                        !djm Jan2017
       use b2mod_types
@@ -294,55 +293,21 @@ c  ..set null flux in guard cells  ?
       endif
 #endif
 
+      wght   = 1.0_R8
       flidia = 0.0_R8                                                   !srv 25.01.02 {
-#ifdef WG_TODO
       if(facdriftm.ne.0.0e0_R8) then                                    !srv 18.01.07
        do is = 0, ns-1
         if ( .not.is_neutral(is) ) then
-* ..compute flidiax
-         do iy = -1, ny
-         do ix = 0, nx
-          if(leftix(ix,iy).ne.-2)then                                   !srv 26.11.02
-           flidia(ix,iy,0,0) = flidia(ix,iy,0,0)
-     &       +(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))             !srv 17.05.99 11.03.00 25.01.02 was 5/2
-     &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))               !srv 17.05.99 11.03.00
-     &       *(na(leftix(ix,iy),leftiy(ix,iy),is)                       !srv 17.05.99 11.03.00
-!     &       *bb(leftix(ix,iy),leftiy(ix,iy),2)                        !srv 17.05.99 11.03.00 05.02.05
-!     &       /bb(leftix(ix,iy),leftiy(ix,iy),3)                        !srv 17.05.99 11.03.00 05.02.05
-     &        +na(ix,iy,is)
-!     &        *bb(ix,iy,2)/bb(ix,iy,3)                                 !srv 05.02.05
-     &                    )*0.5e0_R8                                    !srv 17.05.99 11.03.00
-     &       *vadia(ix,iy,0,0,is)*2.5e0_R8*vdia_par                     !srv 17.05.99 11.03.00 21.04.00 13.09.02 18.01.07
-!     &          +(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))         !srv 25.01.02 was 5/2
-!     &           /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-!     &           *(bb(leftix(ix,iy),leftiy(ix,iy),2)
-!     &            /bb(leftix(ix,iy),leftiy(ix,iy),3)
-!     &             +bb(ix,iy,2)/bb(ix,iy,3))*0.5e0_R8
-!     &     *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8
-!     &     *vadia(ix,iy,0,is)
-           flidia(ix,iy,0,1) =
-     &       -(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-     &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-     &       *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))*0.5e0_R8
-     &       *vadia(ix,iy,0,1,is)*2.5e0_R8*vdia_par
-     &       *qs(ix,iy,0)/qc(ix,iy,0)
-          endif                                                         !srv 26.11.02
-         enddo
-         enddo
-* ..compute flidiay
-         do iy = 0, ny
-         do ix = -1, nx
-          flidia(ix,iy,1,1) = flidia(ix,iy,1,1)
-     &        +(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))        !srv 25.01.02 was 5/2
-     &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))         
-     &   *(na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8 
-     &   *vadia(ix,iy,1,1,is)*2.5e0_R8*vdia_par                         !srv 13.09.02 18.01.07
-         enddo
-         enddo
+*      ..interpolate na(:,is) to cell faces
+         call intface(nCv,nFc,mpg%fcCv,wght,pl%na(:,is),nif)
+*      ..compute flidia
+         flidia(:,0) = flidia(:,0) + 2.5e0_R8*vdia_par*
+     &     nif*dv%vadia(:,0,is)*geo%fcS*geo%fcQalf(:,0)
+         flidia(:,1) = flidia(:,1) + 2.5e0_R8*vdia_par*
+     &     nif*dv%vadia(:,1,is)*geo%fcS*geo%fcQalf(:,1)
         endif
        enddo                                                            !srv 25.01.02 }
       endif                                                             !srv 18.01.07
-#endif
 
 #ifdef WG_TODO
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
@@ -357,7 +322,6 @@ c  ..set null flux in guard cells  ?
 #endif
 
 *   ..interpolate ni and ti to cell faces
-      wght = 1.0_R8
       call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0),nif)
       call intface(nCv,nFc,mpg%fcCv,wght,pl%ti,tif)
 

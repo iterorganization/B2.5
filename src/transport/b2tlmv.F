@@ -1,5 +1,5 @@
       subroutine b2tlmv (nCv, nFc, nVx, isb, cflmv, geo, mpg, nb, tb,
-     &   ub, cvsbx, cvsbxhz, fl)                                     !srv 09.01.01
+     &   ub, vsbfx, cvsbx, cvsbxhz, fl)                                     !srv 09.01.01
       use b2mod_types
       use b2mod_b2cmpa
       use b2us_geo
@@ -9,8 +9,8 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  cflmv, nb(nCv), tb(nCv), ub(nCv), cvsbx(nFc), cvsbxhz(nFc),  !srv 09.01.01
-     &  fl(nFc)
+     *  cflmv, nb(nCv), tb(nCv), ub(nCv), vsbfx(nFc), cvsbx(nFc), 
+     *  cvsbxhz(nFc), fl(nFc)
 *     ------------------------------------------------------------------
 *     B2TLMV applies a flux limit to the viscosity.
 *     ------------------------------------------------------------------
@@ -59,6 +59,7 @@
           endif
           cvsbx(iFc) = cvsbx(iFc)/tfl
           cvsbxhz(iFc) = cvsbxhz(iFc)/tfl                            !srv 02.07.08
+          vsbfx(iFc) = vsbfx(iFc)/tfl
           fl(iFc) = tfl
        enddo
 csw 18sep2014 TESTING only (SOLPS4 discr), i.e. switch off mom.flux
@@ -81,6 +82,7 @@ c       fl = 1.0_R8
            endif
            cvsbx(iFc) = cvsbx(iFc)/tfl
            cvsbxhz(iFc) = cvsbxhz(iFc)/tfl
+           vsbfx(iFc) = vsbfx(iFc)/tfl
            fl(iFc) = tfl
          else
            fl(iFc) = 1.0_R8

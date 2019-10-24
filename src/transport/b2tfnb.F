@@ -56,7 +56,6 @@
       integer, save :: vlct_diagno = 1
       integer, save :: meth = 2
       character chns*3                                                   !srv 16.09.02
-      integer, save :: drift_style = 1                                   !srv 21.06.08
       real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
@@ -85,9 +84,9 @@
      *   wrk(nCv), wrkVx(nVx), wpo(nCv), wpb(nCv),
      *   dumm0(nFc,0:1), dumm1(nFc,0:1)
       real (kind=R8) ::
-     *   poc(nVx), ub2dia(nFc,0:1), 
+     *   ub2dia(nFc,0:1), 
      *   nbcor(nVx),                                             !srv 01.10.99 !lk 09.06.11
-     *   nbti(nCv), nbtic(nVx),                          !srv 08.10.04
+     *   nbti(nCv),
      *   nbzb(nCv), nbzbc(nVx),                          !srv 13.05.16
      *   dnb(nFc,0:1), dpb(nFc,0:1),
      *   dpo(nFc,0:1), dnbti(nFc,0:1),
@@ -177,6 +176,11 @@
      &   'cdna1','.ge.')
       endif
 
+*   ..interpolate na and pa to cell faces
+      weight = 1.0_R8
+      call intface(nCv,nFc,mpg%fcCv,weight,pl%na(:,isb),nbf)
+      call intface(nCv,nFc,mpg%fcCv,weight,dv%pa(:,isb),pbf)
+
 *   ..precompute kmpr and its differences
       kmpr = pl % na(:,isb) / dv % pa(:,isb)
       call diff(nCv, nFc, nVx, 0, geo, mpg, kmpr, wrkVx, dkmpr)
@@ -206,198 +210,67 @@ c Drift terms
       dv%fna_mdf(:,:,isb) = 0.0_R8                                                 !srv 19.11.09
       dv%flob  = 0.0_R8
       dv%conb  = 0.0_R8                                                   !srv 13.10.06
-      ub2dia=0.0_R8                                                      !srv 01.10.99
+      ub2dia   = 0.0_R8                                                      !srv 01.10.99
+      if((maxval(dv%facdrift).ne.0.0_R8 .or. 
+     &    maxval(dv%fac_ExB) .ne.0.0_R8) .and.
+     &    minval(rt%rza(:,isb)).gt.0.0_R8) then
+cwdk    in the unstructured solver, we only support drifts defined
+cwdk    on cell faces (drift_style = 1)
+        nbti = pl%na(:,isb)*pl%ti
+        nbzb = pl%na(:,isb)*rt%rza(:,isb)
+*     ..precomputation of gradients on faces
+cwdk    to be checked: now we use inverse volume weighting
+cwdk                   (original code: simple averaging)
+        call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isb),nbcor)
+        call intvertex(nCv,nVx,mpg,geo%vxVol,nbzb,nbzbc)
+        call grad(nCv, nFc, nVx, 0, geo, mpg, pl%po, wrkVx, dpo)
+        call grad(nCv, nFc, nVx, 0, geo, mpg, nbti, wrkVx, dnbti)
+        call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq, 
+     &   geo%vxOnedBsq, dOnedBsq)
+*     ..computation of ExB drift
+cwdk    to be checked: now we use inverse volume weighting
+cwdk                   (original code: simple averaging)
+        wrk  = geo%cvBb(:,2)/geo%cvBb(:,3)**2
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk,wrk0)
+        dv%vaecrb(:,0,isb) = -poleldr*dv%fac_ExB*wrk0*dpo(:,1)
+        dv%vaecrb(:,1,isb) =  radeldr*dv%fac_ExB*wrk0*dpo(:,0)
+*     ..computation of grad-B drift
+cwdk    to be checked: now we use inverse volume weighting
+cwdk                   (original code: simple averaging)
+cwdk    check also treatment of rza for consistency with other drifts
+        wrk  = pl%ti*geo%cvBb(:,2)/(qe*rt%rza(:,isb))
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk,wrk1)
+cwdk    to be checked: interpolation of geometric factors (hy1)
+cwdk                   now consistent between x and y faces
+cwdk                   (and consistent with treatment of other drifts)
+cwdk                   (implicitly through grad-routine)
+        dv%vadia(:,0,isb) =  poldidr*dv%facdrift*wrk1*dOnedBsq(:,1)
+        dv%vadia(:,1,isb) = -raddidr*dv%facdrift*wrk1*dOnedBsq(:,0)
+*     ..computation of diamagnetic drift
+cwdk    to be checked: now we use inverse volume weighting in wkr0
+cwdk                   (original code: simple averaging)
+        call intface(nVx,nFc,mpg%fcVx,weight,nbzbc,wrk1)
+        dv%wadia(:,0,isb) = -dv%facdrift*wrk0*dnbti(:,1)/(wrk1*qe)
+        dv%wadia(:,1,isb) =  dv%facdrift*wrk0*dnbti(:,0)/(wrk1*qe)
+*     ..additional drift variables
+        dv%uadia(:,:,isb) = dv%vaecrb(:,:,isb) + dv%vadia(:,:,isb)
+        ub2dia = dv%vaecrb(:,:,isb) + 2.0_R8*dv%vadia(:,:,isb)
+*     ..computation of P.Sch flows
+cwdk    to be checked: now we use inverse volume weighting
+cwdk                   (original code: volume weighting)
+cwdk                   also: 1/hx or 1/hy1 included in dnbti
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvBzb,wrk0)
+        dv%fnaPSch(:,0,isb) =  PSch*dv%facdrift*wrk0*dnbti(:,1)*nbf/
+     &    (wrk1*qe)*geo%fcS*geo%fcQalf(:,0)
+        dv%fnaPSch(:,1,isb) = -PSch*dv%facdrift*wrk0*dnbti(:,0)*nbf/
+     &    (wrk1*qe)*geo%fcS*geo%fcQalf(:,1)
+!WG_TODO conb terms related to PSch flows
 #ifdef WG_DRIFTS
-      if((maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8)
-     &    .and. minval(zb).gt.0.0_R8) then
-       if(drift_style.eq.0) then                                         !srv 21.06.08
-        call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
-        call intfacev(nx,ny,bottomix,bottomiy,vol,nb*ti,wpb)
-        do iy = -1, ny
-          do ix = -1, nx                                                 !xpb
-cxpb  Must check that we are not at the island X-point or at the mesh edge !xpb
-            if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).ne.iy .and.
-     &         topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
-     &         rightix(ix,iy).ne.nx+1 .and. leftiy(ix,iy).ne.-2 .and.
-     &         region(ix,iy,0).ne.0) then                                !xpb
-cxpb  Standard case
-cwdk correct computation of drift components to always represent the poloidal
-cwdk projection of the drift
-              vbecrb(ix,iy,0,0) = - fac_ExB(ix,iy)*poleldr/hy1(ix,iy)*   !xpb
-     1         bb(ix,iy,2)/bb(ix,iy,3)**2*                               !xpb
-     2         (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))
-              vbdia(ix,iy,0,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/   !xpb
-     1         bb(ix,iy,3)*2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*    !xpb
-     3         (wbbv(topix(ix,iy),topiy(ix,iy),3)-wbbv(ix,iy,3))*
-     &         facdrift(ix,iy)*poldidr                                   !xpb
-              wbdia(ix,iy,0,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)
-     1         /bb(ix,iy,3)/qe/zb(ix,iy)/nb(ix,iy)*
-     2         (wpb(topix(ix,iy),topiy(ix,iy))-wpb(ix,iy))*
-     &         facdrift(ix,iy)
-            else                                                         !xpb
-cxpb  Case of the island X-point cells
-cxpb          vbecrb(ix,iy,0) = - signmf/hy1(ix,iy)*fac_ExB(ix,iy)*      !xpb
-cxpb     1             1.0_R8/bb(ix,iy,3)*                               !xpb
-cxpb     2             ((po(topix(ix,iy),topiy(ix,iy))*vol(ix,iy)+       !xpb
-cxpb     2               po(ix,iy)*vol(topix(ix,iy),topiy(ix,iy)))/      !xpb
-cxpb     2          (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))-wpo(ix,iy)) !xpb
-cxpb          vbdia(ix,iy,0) = - signmf/hy1(ix,iy)*facdrift(ix,iy)*      !xpb
-cxpb     1             1.0_R8/bb(ix,iy,3)*                               !xpb
-cxpb     2             2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*        !xpb
-cxpb     3         ((vol(ix,iy)*bb(topix(ix,iy),topiy(ix,iy),3)+         !xpb
-cxpb     3           vol(topix(ix,iy),topiy(ix,iy))*bb(ix,iy,3))/        !xpb
-cxpb     3              (vol(topix(ix,iy),topiy(ix,iy))+vol(ix,iy))-     !xpb
-cxpb     3              wbbv(ix,iy,3))                                   !xpb
-              vbecrb(ix,iy,0,0) = 0.0_R8                                 !xpb
-              vbdia(ix,iy,0,0) = 0.0_R8                                  !xpb
-              wbdia(ix,iy,0,0) = 0.0_R8
-            endif                                                        !xpb
-            ubdia(ix,iy,0,0) = vbecrb(ix,iy,0,0) + vbdia(ix,iy,0,0)      !srv 17.05.99
-            ub2dia(ix,iy,0,0) = vbecrb(ix,iy,0,0) + 
-     &        2.0_R8*vbdia(ix,iy,0,0)                                    !srv 01.10.99
-          enddo
-        enddo
-        
-        call intfaceh(nx,ny,leftix,leftiy,vol,po,wpo)
-        call intfaceh(nx,ny,leftix,leftiy,vol,nb*ti,wpb)
-        do iy = -1, ny                                                   !xpb
-          do ix = -1, nx
-            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &         region(ix,iy,0).ne.0) then
-             vbecrb(ix,iy,1,1) = fac_ExB(ix,iy)*radeldr/hx(ix,iy)*       !xpb
-     1          bb(ix,iy,2)/bb(ix,iy,3)**2*                              !xpb
-     2         (wpo(rightix(ix,iy),rightiy(ix,iy))-wpo(ix,iy))
-             vbdia(ix,iy,1,1) = facdrift(ix,iy)*raddidr* 
-     &         ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hx(ix,iy))            !xpb
-     &         *(2.0_R8/bb(ix,iy,3)**3)                                  !xpb
-     &         *(wbbr(ix,iy,3)-wbbl(ix,iy,3))                            !xpb
-             wbdia(ix,iy,1,1) = bb(ix,iy,2)
-     &         /(qe*zb(ix,iy)*hx(ix,iy)*nb(ix,iy))                       !xpb
-     &         /bb(ix,iy,3)**2*                                          !xpb
-     2         (wpb(rightix(ix,iy),rightiy(ix,iy))-wpb(ix,iy))*
-     &         facdrift(ix,iy)
-             ubdia(ix,iy,1,1) = vbecrb(ix,iy,1,1) + vbdia(ix,iy,1,1)     !srv 17.05.99
-             ub2dia(ix,iy,1,1) = vbecrb(ix,iy,1,1) + 
-     &         2.0_R8*vbdia(ix,iy,1,1)                                   !srv 01.10.99
-            endif
-          enddo
-        enddo
-
-* drift velocities at walls are extrapolated from those at neighbouring cells
-* drift velocities at iy=ny are extrapolated from those at iy=ny-1       !xpb
-* drift velocities at iy=-1 are extrapolated from those at iy=0          !xpb
-        do ix = -1, nx                                                   !xpb
-          do iy = -1, ny                                                 !xpb
-            if(leftix(ix,iy).eq.-2) then
-              vbecrb(ix,iy,:,:) = 
-     &          vbecrb(rightix(ix,iy),rightiy(ix,iy),:,:)                !xpb
-              vbdia(ix,iy,:,:) = 
-     &          vbdia(rightix(ix,iy),rightiy(ix,iy),:,:)                 !xpb
-              wbdia(ix,iy,:,:) = 
-     &          wbdia(rightix(ix,iy),rightiy(ix,iy),:,:)                 !xpb
-              ubdia(ix,iy,:,:) = vbecrb(ix,iy,:,:) + vbdia(ix,iy,:,:) 
-              ub2dia(ix,iy,:,:) = 
-     &          vbecrb(ix,iy,:,:) + 2.0_R8*vbdia(ix,iy,:,:)  !srv 17.07.08
-            elseif(rightix(ix,iy).eq.nx+1) then                          !xpb
-              vbecrb(ix,iy,:,:) = 
-     &          vbecrb(leftix(ix,iy),leftiy(ix,iy),:,:)                  !xpb
-              vbdia(ix,iy,:,:) = vbdia(leftix(ix,iy),leftiy(ix,iy),:,:)  !xpb
-              wbdia(ix,iy,:,:) = wbdia(leftix(ix,iy),leftiy(ix,iy),:,:)  !xpb
-              ubdia(ix,iy,:,:) = vbecrb(ix,iy,:,:) + vbdia(ix,iy,:,:) 
-              ub2dia(ix,iy,:,:) = 
-     &          vbecrb(ix,iy,:,:) + 2.0_R8*vbdia(ix,iy,:,:)              !srv 17.07.08
-            endif
-            if(topiy(ix,iy).eq.ny+1) then                                !xpb
-              vbecrb(ix,iy,:,:) = 
-     .          vbecrb(bottomix(ix,iy),bottomiy(ix,iy),:,:)              !xpb
-              vbdia(ix,iy,:,:) = 
-     &          vbdia(bottomix(ix,iy),bottomiy(ix,iy),:,:)               !xpb
-              wbdia(ix,iy,:,:) = 
-     &          wbdia(bottomix(ix,iy),bottomiy(ix,iy),:,:)               !xpb
-              ubdia(ix,iy,:,:) = vbecrb(ix,iy,:,:) + vbdia(ix,iy,:,:) 
-              ub2dia(ix,iy,:,:) = 
-     &          vbecrb(ix,iy,:,:) + 2.0_R8*vbdia(ix,iy,:,:)              !srv 17.07.08
-            elseif(bottomiy(ix,iy).eq.-2) then
-              vbecrb(ix,iy,:,:) = vbecrb(topix(ix,iy),topiy(ix,iy),:,:)  !xpb
-              vbdia(ix,iy,:,:) = vbdia(topix(ix,iy),topiy(ix,iy),:,:)    !xpb
-              wbdia(ix,iy,:,:) = wbdia(topix(ix,iy),topiy(ix,iy),:,:)    !xpb
-              ubdia(ix,iy,:,:) = vbecrb(ix,iy,:,:) + vbdia(ix,iy,:,:) 
-              ub2dia(ix,iy,:,:) = 
-     &          vbecrb(ix,iy,:,:) + 2.0_R8*vbdia(ix,iy,:,:)              !srv 17.07.08
-            endif
-          enddo
-        enddo
-
-* turn off side drift flows in guard cells                               !xpb
-        do iy = -1, ny                                                   !xpb
-         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-           vbecrb(ix,iy,1,:) = 0.0_R8                                    !xpb
-           vbdia(ix,iy,1,:) = 0.0_R8                                     !xpb
-           wbdia(ix,iy,1,:) = 0.0_R8                                     !xpb
-           ubdia(ix,iy,1,:) = 0.0_R8                                     !xpb
-           ub2dia(ix,iy,1,:) = 0.0_R8                                    !srv 17.07.08
-          endif
-          if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
-           vbecrb(ix,iy,0,:) = 0.0_R8                                    !xpb
-           vbdia(ix,iy,0,:) = 0.0_R8                                     !xpb
-           wbdia(ix,iy,0,:) = 0.0_R8                                     !xpb
-           ubdia(ix,iy,0,:) = 0.0_R8                                     !xpb
-           ub2dia(ix,iy,0,:) = 0.0_R8                                    !srv 17.07.08
-          endif
-         enddo
-        enddo                                                            !xpb
-       else                                                              !srv 21.06.08 {
-        weight = 1.0e0_R8                                                !lk
-cwdk add computation of 9-point corrections for drifts
-cwdk precomputation of differences on faces
-!lk       call intcor(nx,ny,vol,po,poc)
-!        call intcor(nx,ny,weight,po,poc)                                 !lk 12.12.07
-        nbti=nb*ti
-!lk       call intcor(nx,ny,vol,nbti,nbtic)                              !srv 08.10.04
-!        call intcor(nx,ny,weight,nbti,nbtic)                             !lk 12.12.07
-        nbzb = nb*zb                                                     !srv 13.05.16
-        call intcor(nx,ny,weight,nbzb,nbzbc)                             !srv 13.05.16
-        call diff(nx, ny, hx, hy, weight, qs, po,   dpo)
-        call diff(nx, ny, hx, hy, weight, qs, nbti, dnbti)
-        call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
-!        call diff_p(nx,ny, 1, hx, hy, weight, qs, OnedBsq, OnedBsqc, 
-!     .    dOnedBsq(-1,-1,0,0))
-!        call diff_r(nx,ny, 1, hx, hy, weight, qs, OnedBsq, OnedBsqc, 
-!     .    dOnedBsq(-1,-1,0,1))
+cwkd    velocity restriction and flux limits to be adapted to unstructured solver!
         xcount = 0
         do iy = 0, ny-1
          do ix = 0, nx
           if(leftix(ix,iy).ne.-2) then                                   !srv 26.11.02
-             vbecrb(ix,iy,0,0) = - poleldr*fac_ExB(ix,iy)/               !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
-     1      (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))* ! signmf*     !srv
-     2      (bb(ix,iy,2)/bb(ix,iy,3)**2                                  !srv 05.02.05
-     2         +bb(leftix(ix,iy),leftiy(ix,iy),2)/
-     2          bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*                   !srv 05.02.05
-     2       dpo(ix,iy,0,1)                                              !srv 13.05.16 }
-cwdk computation of radial drifts on poloidal faces
-cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial drift components
-             vbecrb(ix,iy,0,1) =   radeldr*fac_ExB(ix,iy)/
-     1      (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
-     &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
-     &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &       qc(ix,iy,0)*
-     2      (bb(ix,iy,2)/bb(ix,iy,3)**2
-     2         +bb(leftix(ix,iy),leftiy(ix,iy),2)/
-     2          bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*
-     2       dpo(ix,iy,0,0)
-!           vbecrb(ix,iy,0) = - poleldr*fac_ExB(ix,iy)* ! signmf*         !lk 12.12.07 } !srv 11.01.13
-!     1       (hz(ix,iy)*bb(ix,iy,2)
-!     2         +hz(leftix(ix,iy),leftiy(ix,iy))*
-!     3         bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0e0_R8*              
-!     4       (vol(leftix(ix,iy),leftiy(ix,iy))/bb(ix,iy,3)**2      
-!     5         +vol(ix,iy)/bb(leftix(ix,iy),leftiy(ix,iy),3)**2)/    
-!     6         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))*
-!     7         (poc(topix(ix,iy),topiy(ix,iy))-poc(ix,iy))/
-!     8         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))*
-!     9         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))               !lk 12.12.07)
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
              if( abs(vbecrb(ix,iy,0,0)) .gt. 2.0_R8*cssb(ix,iy,0) ) then
                xcount = xcount+1
@@ -425,50 +298,6 @@ cwdk cancelation of some terms in poloidal and radial drift components
      .          sign(2.0_R8*cssb(ix,iy,0),vbecrb(ix,iy,0,1))
              endif
            endif                                                         !iyv 06.02.14  }
-           vbdia(ix,iy,0,0) =    poldidr*facdrift(ix,iy)* ! signmf*      !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
-     &          (ti(leftix(ix,iy),leftiy(ix,iy))                         !srv 05.03.99
-     &           *bb(leftix(ix,iy),leftiy(ix,iy),2)                      !srv 05.02.05
-     &           /(qe*zb(ix,iy)*hy1(leftix(ix,iy),leftiy(ix,iy)))        !srv
-     &          +ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hy1(ix,iy)))*0.5_R8 !srv 05.02.05
-     &         *dOnedBsq(ix,iy,0,1)                                      !srv 05.03.99
-cwdk computation of radial drifts on poloidal faces
-cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial drift components
-           vbdia(ix,iy,0,1) = -  raddidr*facdrift(ix,iy)* ! signmf*
-     &          (ti(leftix(ix,iy),leftiy(ix,iy))
-     &           *bb(leftix(ix,iy),leftiy(ix,iy),2)
-     &           /(qe*zb(ix,iy)*hy1(leftix(ix,iy),leftiy(ix,iy))) 
-     &         +ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hy1(ix,iy)))*0.5_R8*
-     &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
-     &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &       qc(ix,iy,0)
-     &         *dOnedBsq(ix,iy,0,0) 
-           wbdia(ix,iy,0,0) = - facdrift(ix,iy)/                         !srv 13.05.16 {
-     1	    (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
-     2	    (bb(ix,iy,2)/bb(ix,iy,3)**2
-     2        +bb(leftix(ix,iy),leftiy(ix,iy),2)/
-     2         bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*
-     2         dnbti(ix,iy,0,1)/
-     &        (nbzbc(topix(ix,iy),topiy(ix,iy))+nbzbc(ix,iy))*2.0_R8/qe  !srv 13.05.16 }
-cwdk computation of radial drifts on poloidal faces
-cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial drift components
-           wbdia(ix,iy,0,1) =   facdrift(ix,iy)/
-     1	    (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
-     &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
-     &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &       qc(ix,iy,0)*
-     2	    (bb(ix,iy,2)/bb(ix,iy,3)**2
-     2        +bb(leftix(ix,iy),leftiy(ix,iy),2)/
-     2         bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*
-     2         dnbti(ix,iy,0,0)/
-     &        (nbzbc(topix(ix,iy),topiy(ix,iy))+nbzbc(ix,iy))*2.0_R8/qe
-           ubdia(ix,iy,0,0) = vbecrb(ix,iy,0,0) + vbdia(ix,iy,0,0)       !srv 17.05.99
-           ubdia(ix,iy,0,1) = vbecrb(ix,iy,0,1) + vbdia(ix,iy,0,1)
-           ub2dia(ix,iy,0,0) = 
-     &       vbecrb(ix,iy,0,0) + 2.0e0_R8*vbdia(ix,iy,0,0)
-           ub2dia(ix,iy,0,1) = 
-     &       vbecrb(ix,iy,0,1) + 2.0e0_R8*vbdia(ix,iy,0,1)
           endif                                                          !srv 26.11.02
          enddo
         enddo
@@ -488,24 +317,6 @@ cwdk cancelation of some terms in poloidal and radial drift components
         do iy = 0, ny
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then      !srv 26.11.02
-cwdk compuation based on dpo, dOnedBsq, ...
-cwdk as long as y-faces are flux-surface aligned, no actual change in computation
-             vbecrb(ix,iy,1,1) = radeldr*fac_ExB(ix,iy)/                 !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
-     1       (hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))* !signmf*   !srv
-     2       (bb(ix,iy,2)/bb(ix,iy,3)**2                                 !srv 05.02.05
-     2          +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
-     2           bb(bottomix(ix,iy),bottomiy(ix,iy),3)**2)*              !srv 05.02.05
-     2        dpo(ix,iy,1,0)                                             !srv 13.05.16 }
-!           vbecrb(ix,iy,1) = radeldr*fac_ExB(ix,iy)* ! signmf*           !srv 11.01.13 07.06.00 21.04.00 25.08.99 17.05.99
-!     1       (hz(ix,iy)*bb(ix,iy,2)                                      !lk( 12.12.07
-!     2          +hz(bottomix(ix,iy),bottomiy(ix,iy))*
-!     3          bb(bottomix(ix,iy),bottomiy(ix,iy),2))/2.0e0_R8*              
-!     4       (vol(bottomix(ix,iy),bottomiy(ix,iy))/bb(ix,iy,3)**2      
-!     5          +vol(ix,iy)/bb(bottomix(ix,iy),bottomiy(ix,iy),3)**2)/    
-!     6          (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))*
-!     7        (poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))/           !lk 12.12.07)
-!     8          (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
-!     9          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
              if( abs(vbecrb(ix,iy,1,1)) .gt. 2.0_R8*cssb(ix,iy,1) ) then
                ycount = ycount + 1
@@ -521,26 +332,6 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
      .          sign(2.0_R8*cssb(ix,iy,1),vbecrb(ix,iy,1,1))
              endif
            endif                                                         !iyv 06.02.14  }
-           vbdia(ix,iy,1,1) =  -raddidr*facdrift(ix,iy)* ! signmf*       !srv 11.01.13 07.06.00 17.05.99 25.04.00
-     &           (ti(bottomix(ix,iy),bottomiy(ix,iy))                    !srv 05.03.99
-     &           *bb(bottomix(ix,iy),bottomiy(ix,iy),2)                  !srv
-     &           /(qe*zb(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy)))     !srv
-     &           +ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hx(ix,iy)))*0.5_R8 !srv
-     &        *dOnedBsq(ix,iy,1,0)                                       !srv 05.03.99
-           wbdia(ix,iy,1,1) = facdrift(ix,iy)/                           !srv 13.05.16 {
-     1      (hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     2      (bb(ix,iy,2)/bb(ix,iy,3)**2
-     2       +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
-     2       bb(bottomix(ix,iy),bottomiy(ix,iy),3)**2)*
-     2      dnbti(ix,iy,1,0)/
-     &     (nbzbc(rightix(ix,iy),rightiy(ix,iy))+nbzbc(ix,iy))*2.0_R8/qe !srv 13.05.16 }
-
-           ubdia(ix,iy,1,0) = vbecrb(ix,iy,1,0) + vbdia(ix,iy,1,0)
-           ubdia(ix,iy,1,1) = vbecrb(ix,iy,1,1) + vbdia(ix,iy,1,1)       !srv 17.05.99
-           ub2dia(ix,iy,1,0) = 
-     &       vbecrb(ix,iy,1,0) + 2.0e0_R8*vbdia(ix,iy,1,0)
-           ub2dia(ix,iy,1,1) = 
-     &       vbecrb(ix,iy,1,1) + 2.0e0_R8*vbdia(ix,iy,1,1)               !srv 01.10.99
           endif                                                          !srv 26.11.02
          enddo
         enddo
@@ -556,7 +347,6 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
      .         ycount,' time for species ',isb
           end if
         end if
-       endif                                                             !srv 21.06.08 {
 
 *   ..compute P.Sch x-flux                                               !srv 13.10.06 {
        if(PSch_style.eq.0) then                                          !srv 12.11.08
@@ -804,13 +594,8 @@ cwdk cancelation of some terms in poloidal and radial flux components
 	    endif
 	  enddo
         enddo
-      endif                                                             !lk 02.06.11 }
 #endif
-
-*   ..interpolate na and pa to cell faces
-      weight = 1.0_R8
-      call intface(nCv,nFc,mpg%fcCv,weight,pl%na(:,isb),nbf)
-      call intface(nCv,nFc,mpg%fcCv,weight,dv%pa(:,isb),pbf)
+      endif                                                             !lk 02.06.11 }
 
 *   ..compute differences of na and pa at cell faces
 !      call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,isb), wrkVx, dnb)
@@ -1120,86 +905,30 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
 
 
 * ..compute kinetic energy of species
-      vbecrb_ = 0.0_R8
-      wbdia_  = 0.0_R8
-#ifdef WG_DRIFTS
-      if((maxval(dv%facdrift).ne.0.0_R8 .or. maxval(dv%fac_ExB).ne.0.0_R8)
-     &    .and. minval(zb).gt.0.0_R8) then
-        wrk0=0.0_R8  ! compute electric field on the cell faces
-        weight = 1.0e0_R8
-        call grad(nx, ny, hx, hy, weight, qz, qs, po, dpo)
-        do iy=-1,ny  ! compute perpendicular projection V_ExB on the cell centers
-         do ix=-1,nx
-          if(bottomiy(ix,iy).eq.-2) then
-           vbecrb_(ix,iy,0) = dpo(ix,topiy(ix,iy),1,1)
-          elseif(topiy(ix,iy).eq.ny+1) then
-           vbecrb_(ix,iy,0) = dpo(ix,iy,1,1)
-          else
-           vbecrb_(ix,iy,0) = 0.5_R8*
-     &        (dpo(topix(ix,iy),topiy(ix,iy),1,1)+dpo(ix,iy,1,1))
-          endif
-cwdk need full diamagnetic component for energy
-           vbecrb_(ix,iy,0)=-vbecrb_(ix,iy,0)/
-     &       bb(ix,iy,3)
-         enddo
-        enddo
-        call grad(nx, ny, hx, hy, weight, qz, qs, nbti, dnbti) ! compute .... on the cell faces
-        do iy=-1,ny  ! compute perpendicular projection V_dia on the cell centers
-         do ix=-1,nx
-          if(bottomiy(ix,iy).eq.-2) then
-           wbdia_(ix,iy,0)=dnbti(ix,topiy(ix,iy),1,1)
-          elseif(topiy(ix,iy).eq.ny+1) then
-           wbdia_(ix,iy,0)=dnbti(ix,iy,1,1)
-          else
-           wbdia_(ix,iy,0)=0.5_R8*
-     &        (dnbti(topix(ix,iy),topiy(ix,iy),1,1)+dnbti(ix,iy,1,1))
-          endif
-cwdk need full diamagnetic component for energy
-           wbdia_(ix,iy,0)=-wbdia_(ix,iy,0)/
-     &         (zb(ix,iy)*qe*nb(ix,iy)*bb(ix,iy,3))
-         enddo
-        enddo
-
-        ! compute y-component of electric field on the cell faces
-        do iy=-1,ny  ! compute .... on the cell centers
-         do ix=-1,nx
-          if(leftix(ix,iy).eq.-2) then
-           vbecrb_(ix,iy,1)=dpo(rightix(ix,iy),iy,0,0)
-          elseif(rightix(ix,iy).eq.nx+1) then
-           vbecrb_(ix,iy,1)=dpo(ix,iy,0,0)
-          else
-           vbecrb_(ix,iy,1)=0.5_R8*
-     &        (dpo(rightix(ix,iy),rightiy(ix,iy),0,0)+dpo(ix,iy,0,0))
-          endif
-            vbecrb_(ix,iy,1)= vbecrb_(ix,iy,1)*
-     &       bb(ix,iy,2)/bb(ix,iy,3)**2                                 !srv 15.02.12
-         enddo
-        enddo
-
-        do iy=-1,ny  ! compute .... on the cell centers
-         do ix=-1,nx
-          if(leftix(ix,iy).eq.-2) then
-           wbdia_(ix,iy,1)=dnbti(rightix(ix,iy),iy,0,0)
-          elseif(rightix(ix,iy).eq.nx+1) then
-           wbdia_(ix,iy,1)=dnbti(ix,iy,0,0)
-          else
-           wbdia_(ix,iy,1)=0.5_R8*
-     &       (dnbti(rightix(ix,iy),rightiy(ix,iy),0,0)+dnbti(ix,iy,0,0))
-          endif
-          wbdia_(ix,iy,1)=wbdia_(ix,iy,1)/
-     &       (zb(ix,iy)*qe*nb(ix,iy))*bb(ix,iy,2)/bb(ix,iy,3)**2        !srv 15.02.12
-         enddo
-        enddo
-       else
+      if((maxval(dv%facdrift).ne.0.0_R8 .or.
+     &    maxval(dv%fac_ExB) .ne.0.0_R8) .and.
+     &    minval(rt%rza(:,isb)).gt.0.0_R8) then
+*     ..computation ExB drift in cell centers
+        call intcell(nFc,nCv,mpg,mpg%intcellR,dpo(:,1),vbecrb_(:,0))
+        call intcell(nFc,nCv,mpg,mpg%intcellP,dpo(:,0),vbecrb_(:,1))
+        vbecrb_(:,0) = -vbecrb_(:,0)/geo%cvBb(:,3)
+        vbecrb_(:,1) =  vbecrb_(:,1)*geo%cvBb(:,2)/geo%cvBb(:,3)**2
+*     ..computation diamagnetic drift in cell centers
+        call intcell(nFc,nCv,mpg,mpg%intcellR,dnbti(:,1),wbdia_(:,0))
+        call intcell(nFc,nCv,mpg,mpg%intcellP,dnbti(:,0),wbdia_(:,1))
+        wbdia_(:,0) = -wbdia_(:,0)/(qe*nbzb*geo%cvBb(:,3))
+        wbdia_(:,1) =  wbdia_(:,1)*geo%cvBb(:,2)/
+     &    (qe*nbzb*geo%cvBb(:,3)**2)
+      else
         wbdia_ = 0.0_R8
         vbecrb_= 0.0_R8
-       endif
+      endif
 
-      endif                                                             !srv 14.07.10 }
-#endif
       dv%kinrgy(:,isb) = 0.5_R8*am(isb)*mp*pl%ua(:,isb)**2 + 
      .     (xwdia*wbdia_(:,0)+xvecrb*vbecrb_(:,0))**2+                  ! wbdia_ is a value in the cell center
      .     (xwdia*wbdia_(:,1)+xvecrb*vbecrb_(:,1))**2                   ! vbecrb_ is a value in the cell center
+
+
 #ifdef WG_DRIFTS
 *   ..flux correction
 *   ..we rescale the fnb fluxes to have the same integral over the boundaries

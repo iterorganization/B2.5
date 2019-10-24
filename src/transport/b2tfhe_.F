@@ -74,8 +74,7 @@ csw 10oct2012
       character(3) :: charns, charns0
       real (kind=R8), save :: alfTeEh = 0.0_R8                           !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
-!WG_TODO      real (kind=R8) :: csig_stoch(-1:nx,-1:ny),                         !lk 31.01.08 {
-!WG_TODO     &                  fchstoch(-1:nx,-1:ny)
+      real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 {
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 }
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
@@ -87,7 +86,7 @@ csw 10oct2012
      *    fledia(nFc,0:1), c071(nFc)!,                                   !srv 22.11.99 25.01.02
  !WG_TODO    &    zeff(-1:nx,-1:ny)                           !srv 13.01.17
       real (kind=R8) ::
-     *    wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc),
+     *    wrk(nFc,0:1), wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc),
      *    dte(nFc,0:1), dpo(nFc,0:1), dpe(nFc,0:1), wght(nFc,2),
      *    fhe0_mdf(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
       real (kind=R8) :: facdriftm
@@ -182,78 +181,49 @@ csw 10oct2012
 !WG_TODO      avisper = 0.0_R8
 !WG_TODO      bvisper = 0.0_R8
 !WG_TODO      cvisper = 0.0_R8
-!WG_TODO      fchstoch = 0.0_R8
-      fledia = 0.0_R8 
-#ifdef WG_TODO
+      fchstoch     = 0.0_R8
+      csig_stoch   = 0.0_R8
+      fledia       = 0.0_R8 
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nx, ny, ns, facdrift, fac_ExB, ismain, ismain0,
-     &              vol, gs, hx, hy, qz, qc, qs, bb,
-     &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
+      call b2tinnt (nCv, nFc, nVx, ns, geo, mpg, rt, dv%facdrift,
+     &       dv%fac_ExB, ismain, ismain0, pl%te, pl%po, pl%ti, pl%na,
+     &       dv%fna, co%csigin, dv%fchin)                                !srv 11.05.09
 c Drift terms
-*   .. compute x,y-components of divergent part of diamagnetic current
-      call b2tdia(nx, ny, ns, vol, gs, hx, hy, qz, qs, bb,
-     &            pz, fna, uadia, facdrift, fchdia)
+*   ..compute x,y-components of divergent part of diamagnetic current
+      call b2tdia(nCv, nFc, nVx, ns, geo, mpg, dv%pz, dv%fna, dv%uadia,
+     &            dv%facdrift, dv%fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua,
-     &              cvsa_cl, fac_vis, fchvispar)                         !srv 20.09.06 16.10.17
-*   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
+      call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, pl%ua, co%vsaf_cl, 
+     &  dv%fac_vis, dv%fchvispar)
+#ifdef WG_TODO
+*   ..calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,             !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
-*   .. calculate the parallel viscosity current connected with the heat flux
+*   ..calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb, ne2,    !srv 10.10.17
      &             lnlam, te, ti, ni, chci, fchvisq)
-*  ..  calculate inertia current                                         !srv 07.07.99
+*  .. calculate inertia current                                         !srv 07.07.99
       call b2tiner (nx, ny, ns, vol, gs, hx, hy, qs, bb, na, ua,         !srv 22.11.12
      &              facdrift, fchinert)
 #endif
-*  .. calculate the x,y-components of anomalous current
+*   ..calculate the x,y-components of anomalous current
       call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an,pl%po,dv%fchanml)
 #ifdef WG_TODO
-*  .. calculate the y-component of electron current associated with
+*   ..calculate the y-component of electron current associated with
 *     stochastization of magnetic field
       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,     !srv 07.07.14
      &              fchstoch)                                                 !srv 25.01.02 {
+#endif
       if(facdriftm.ne.0.0e0_R8) then                                     !srv 18.01.07
        do is = 0,ns-1                                                    !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
-!         is = ismain   ! 1    ! for is = 1 (za = 1)                     !srv 12.05.11
-* ..compute flediax
-         do iy = -1, ny
-          do ix = 0, nx
-           if(leftix(ix,iy).ne.-2) then                                  !srv 26.11.02
-            fledia(ix,iy,0,0) =
-     &        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))              !srv 25.01.02 was 5/2
-     &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))                !srv 17.05.99 11.03.00
-     &       *vedia(ix,iy,0,0)*vdia_par                                  !srv 17.05.99 11.03.00 21.04.00 25.01.02 18.01.07
-!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
-!     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
-!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
-            fledia(ix,iy,0,1) =
-     &       -(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-     &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-     &       *vedia(ix,iy,0,1)*vdia_par*qs(ix,iy,0)/qc(ix,iy,0)
-!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
-!     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
-!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
-           endif                                                         !srv 26.11.02
-          enddo
-         enddo
-* ..compute flediay
-         do iy = 0, ny
-          do ix = -1, nx
-           fledia(ix,iy,1,1) =
-     &       (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))           !srv 17.05.99 11.03.00 25.01.02 was 5/2
-     &      /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))           !srv 17.05.99 11.03.00
-     &      *vedia(ix,iy,1,1)*vdia_par                                   !srv 17.05.99 11.03.00 18.01.07
-!     1      *(bb(ix,iy,2)/bb(ix,iy,3)+                                   !srv 13.09.02 {
-!     2      bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
-!     3      bb(bottomix(ix,iy),bottomiy(ix,iy),3))/2.0e0_R8              !srv 13.09.02 }
-          enddo
-         enddo                                                           !srv 25.01.02 }
+*      ..compute fledia
+         fledia(:,0) = vdia_par*dv%vedia(:,0)*geo%fcS*geo%fcQalf(:,0)
+         fledia(:,1) = vdia_par*dv%vedia(:,1)*geo%fcS*geo%fcQalf(:,1)
         endif
        enddo
       endif                                                              !srv 18.01.07
-
+#ifdef WG_TODO
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                         .or. iout_b2wdat.eq.4) then               !srv 16.09.02 {
        allocate(
@@ -314,14 +284,13 @@ c Drift terms
      &    (co%chve(:,0) + 2.5e0_R8*fledia(:,0))*nef                    !srv 13.09.02 18.01.07 11.01.13  *signmf
      &    -c071*dv%fch_p(:,0)/qe*fch_pTe                               !srv 30.12.09 13.01.17
        floe0(:,1) = 1.5e0_R8*dv%fne_he(:,1) +                           
-     &    (co%chve(:,1) + 2.5e0_R8*fledia(:,1))*nef !WG_TODO-          !srv 11.05.99
-!WG_TODO      &      5.0e0_R8/3.0e0_R8*fchstoch/qe)
+     &    (co%chve(:,1) + 2.5e0_R8*fledia(:,1))*nef -                  !srv 11.05.99
+     &    5.0e0_R8/3.0e0_R8*fchstoch/qe
 
        floe0_mdf(:,0) = 1.5e0_R8*dv%fne_he(:,0) +                      !srv 13.06.06 {
      &    co%chve(:,0)*nef - c071*dv%fch_p(:,0)/qe*fch_pTe             !srv 30.12.09 13.01.17
        floe0_mdf(:,1) = 1.5e0_R8*dv%fne_he(:,1) +
-     &    co%chve(:,1)*nef !WG_TODO-                                   !srv 11.05.99
-!WG_TODO      &      5.0e0_R8/3.0e0_R8*fchstoch/qe)
+     &    co%chve(:,1)*nef - 5.0e0_R8/3.0e0_R8*fchstoch/qe             !srv 11.05.99
 
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%te,floe0_mdf,
@@ -346,64 +315,30 @@ c Drift terms
      &  dv%floe,dv%cone)
 
 *   ..compute currents
-       dv%fch = dv%fch_p + dv%fchin + dv%fchdia + dv%fchvispar + 
-     &   dv%fchvisq + dv%fchinert +dv%fchanml 
-       dv%fch(:,1) = dv%fch(:,1) + dv%fchvisper(:,1)!WG_TODO + fchstoch
+      dv%fch = dv%fch_p + dv%fchin + dv%fchdia + dv%fchvispar + 
+     &  dv%fchvisq + dv%fchinert +dv%fchanml 
+      dv%fch(:,1) = dv%fch(:,1) + dv%fchvisper(:,1) + fchstoch
 
 *   ..compute conc
-!WG_TODO: add contribution from csigin and cstoch first!
       dumm0 = 0.0e0_R8
-      call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,co%csig,dumm1,dv%conc)
-
-#ifdef WG_TODO
-         if(fch_ion_neutral.ne.0.0e0_R8 ) then                           !srv
-          do is = 0, ns-1                                                !srv 24.06.08 {
-!           if (.not.is_neutral(is)) then
-            if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then          !srv 20.10.17
-             do is0 = 0, ns-1
-              if (is_neutral(is0).and.nint(zn(is0)).eq.1) then           !srv 20.10.17
-               conc(ix,iy,0,0) = conc(ix,iy,0,0) + 
-     &            csigin(ix,iy,0,0,is,is0) !*facdrift                    !srv 07.02.03
-     &          *(wbbl(ix,iy,2)/wbbl(ix,iy,3))**2                        !srv 15.02.11
-              conc(ix,iy,0,1) = conc(ix,iy,0,1)+csigin(ix,iy,0,1,is,is0)
-!     1        *((bb(ix,iy,2)/bb(ix,iy,3))**2+                           !srv 25.02.03 {
-!     2        (bb(leftix(ix,iy),leftiy(ix,iy),2)/
-!     3        bb(leftix(ix,iy),leftiy(ix,iy),3))**2)*0.5e0_R8           !srv 25.02.03 }
-              endif                                                      !srv 20.10.17
-             enddo
-            endif
-          enddo                                                          !srv 24.06.08 }
-         endif                                                           !srv
-        endif                                                            !srv 26.11.02
-       enddo
-      enddo
-
-
-
-        if(fch_ion_neutral.ne.0.0e0_R8 ) then                            !srv
-         do is = 0, ns-1                                                 !srv 24.06.08 {
-!          if (.not.is_neutral(is)) then
-          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then            !srv 20.10.17
-           do is0 = 0, ns-1
-            if (is_neutral(is0).and.nint(zn(is0)).eq.1) then             !srv 20.10.17
-            conc(ix,iy,1,1) = conc(ix,iy,1,1) + csigin(ix,iy,1,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
-            conc(ix,iy,1,0) = conc(ix,iy,1,0) + 
-     &         csigin(ix,iy,1,1,is,is0)*t0
-            endif                                                        !srv 20.10.17
-           enddo
+      wrk   = co%csig
+      if(fch_ion_neutral.ne.0.0e0_R8 ) then
+        do is = 0, ns-1
+          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
+            do is0 = 0, ns-1
+              if (is_neutral(is0).and.nint(zn(is0)).eq.1) then
+                wrk(:,0) = wrk(:,0) + co%csigin(:,0,is,is0)*
+     &            (geo%fcBb(:,2)/geo%fcBb(:,3))**2
+                wrk(:,1) = wrk(:,1) + co%csigin(:,1,is,is0)
+              endif
+            enddo
           endif
-         enddo                                                           !srv 24.06.08 }
-        endif                                                            !srv
-        if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 {
-          conc(ix,iy,1,1) = conc(ix,iy,1,1) + csig_stoch(ix,iy)
-          conc(ix,iy,1,0) = conc(ix,iy,1,0) + csig_stoch(ix,iy)*t0
-        endif                                                            !lk 31.01.08 }
-
-       enddo
-      enddo
-
-
-#endif
+        enddo
+      endif
+      if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 {
+        wrk(:,1) = wrk(:,1) + csig_stoch
+      endif                                                            !lk 31.01.08 }
+      call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,wrk,dumm1,dv%conc)
 
 
 #ifdef WG_TODO
@@ -886,7 +821,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,dv%fchdia(1,1),'b2tfhe__fchdiay')
        call my_out_us(70,nFc,1,dv%fchanml(1,0),'b2tfhe__fchanmlx')
        call my_out_us(70,nFc,1,dv%fchanml(1,1),'b2tfhe__fchanmly')
-!WG_TODO       call my_out_us(70,nFc,1,fchstoch,'b2tfhe__fchstochy')        !lk 31.01.08
+       call my_out_us(70,nFc,1,fchstoch,'b2tfhe__fchstochy')        !lk 31.01.08
        call my_out_us(70,nFc,1,dv%fne_he(1,0),'b2tfhe__fnex')
        call my_out_us(70,nFc,1,dv%fne_he(1,1),'b2tfhe__fney')
        call my_out_us(70,nFc,1,dv%conc(1,0),'b2tfhe__concx')

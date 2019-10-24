@@ -5,7 +5,6 @@
       use b2mod_constants
       use b2us_geo
       use b2us_map
-!      use b2mod_geo_corner
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -34,7 +33,7 @@
       integer iFc
       integer, save :: ncall = 0
       real (kind=R8) ::
-     &  facdriftm, wght(nFc,2), OnedBsqv(nVx), gOnedBsq(nFc,0:1),
+     &  facdriftm, wght(nFc,2), gOnedBsq(nFc,0:1),
      &  pzbbf(nFc)
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
 #ifdef CLASSICAL_CURRENT
@@ -75,8 +74,8 @@ cwdk  option CLASSICAL_CURRENT not yet converted!
         call intface(nCv,nFc,mpg%fcCv,wght,pz*geo%cvBb(:,2),pzbbf)
 
 *     ..compute gradients of OnedBsq on cell faces
-        call grad(nCv, nFc, nVx, 0, geo, mpg, geo%cvOnedBsq, OnedBsqv, 
-     &    gOnedBsq)
+        call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
+     &    geo%vxOnedBsq, gOnedBsq)
 
 *     ..DIVERGENT PART OF DIAMAGNETIC CURRENT
         fchdia(:,0) =  

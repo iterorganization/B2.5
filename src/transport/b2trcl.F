@@ -4,7 +4,7 @@
       subroutine b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,          !srv 23.11.10
      1  geo, mpg, pl, dv, rt, co, st_ext, cvsahz,                        !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
-     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                       !srv 09.01.01
+     4  cthe, cthi, vsaf_cl, cvsa_cl, cvsahz_cl, fllimvisc,                       !srv 09.01.01
      5  csig_cl, calf_cl)                                                !xpb
       use b2mod_types
       use b2mod_constants
@@ -36,6 +36,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      &  csig(nFc,0:1), calf(nFc,0:1),
      &  csigin(nFc,0:1,0:ns-1,0:ns-1),				 !xpb
      &  cthe(nFc,0:ns-1), cthi(nFc,0:ns-1),
+     &  vsaf_cl(nFc,0:1,0:ns-1),
      &  cvsa_cl(nFc,0:1,0:ns-1),
      &  cvsahz_cl(nFc,0:1,0:ns-1),                               !srv 09.01.01
      &  fllimvisc(nFc,0:ns-1), 
@@ -196,6 +197,21 @@ csw 13mar2012
       call sfill (nCv, 1.0_R8, fllim_al_c, 1)
       alfx_c(:) = alf(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
       sigx_c(:) = sig(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
+*   ..interpolate vsa to faces
+      !wdk need to write general routine for volume interpolation like this...
+      !wdk intface_v? intface with mode switch?
+      do is = 0, ns-1
+        do iFc = 1, nFc
+          vsaf_cl(iFc,0,is) =
+     &      (geo%fcVol(iFc,1)*vsa(mpg%fcCv(iFc,1),0,is)+
+     &       geo%fcVol(iFc,2)*vsa(mpg%fcCv(iFc,2),0,is))/
+     &      (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
+          vsaf_cl(iFc,1,is) =
+     &      (geo%fcVol(iFc,1)*vsa(mpg%fcCv(iFc,1),1,is)+
+     &       geo%fcVol(iFc,2)*vsa(mpg%fcCv(iFc,2),1,is))/
+     &      (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
+        enddo
+      enddo
 *   ..incorporate geometry with hz                                    !srv 09.01.01
       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk)
       wrk = geo%fcS*wrk 
@@ -308,6 +324,7 @@ csw 13mar2012
      .               cvsa(ix,iy,0,0,is)*f_luc_et(ix,iy)
                     cvsahz(ix,iy,0,0,is)=
      .               cvsahz(ix,iy,0,0,is)*f_luc_et(ix,iy)                 !srv 02.07.08
+                    !WG_TODO flux limit vsaf_cl here!
                   endif
                 enddo
                 chce(ix,iy,0,0)=chce(ix,iy,0,0)*f_luc_ke(ix,iy)
@@ -340,6 +357,7 @@ csw 13mar2012
                   cvsa(ix,iy,0,0,is)=cvsa(ix,iy,0,0,is)*f_luc_et(ix,iy)
                   cvsahz(ix,iy,0,0,is)=
      .             cvsahz(ix,iy,0,0,is)*f_luc_et(ix,iy)
+                  !WG_TODO flux limit vsaf_cl here!
                 endif
               enddo
               chce(ix,iy,0,0)=chce(ix,iy,0,0)*f_luc_ke(ix,iy)
@@ -427,6 +445,7 @@ csw 13mar2012
             if(.not.is_neutral(is)) then                                  !srv 10.07.02
              cvsa(ix,iy,0,0,is)=cvsa(ix,iy,0,0,is)*f_luc_et(ix,iy)
              cvsahz(ix,iy,0,0,is)=cvsahz(ix,iy,0,0,is)*f_luc_et(ix,iy)
+             !WG_TODO flux limit vsaf_cl here!
             endif                                                         !srv 10.07.02
            enddo
 ! May need to use flux limiting factors calculated on cell faces
@@ -625,8 +644,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       cflmv = cflim(2)
       do is = 0, ns-1
        call b2tlmv (nCv, nFc, nVx, is, cflmv, geo, mpg, pl%na(1,is),
-     &   pl%ti, pl%ua(1,is), cvsa(1,0,is), cvsahz(1,0,is),
-     &   fllimvisc(1,is))
+     &   pl%ti, pl%ua(1,is), co%vsaf_cl(1,0,is), cvsa(1,0,is),
+     &   cvsahz(1,0,is), fllimvisc(1,is))
       enddo
 *   .. save the classical transport coefficients
       csig_cl = csig

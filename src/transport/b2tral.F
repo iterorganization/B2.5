@@ -127,8 +127,8 @@
       call b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,         !srv 23.11.10
      1  geo, mpg, pl, dv, rt, co, st_ext, cvsahz0,                !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0,          !xpb
-     4  co%csigin, co%cthe, co%cthi, co%cvsa_cl, co%cvsahz_cl,    !srv 09.01.01
-     5  co%fllimvisc, co%csig_cl, co%calf_cl)
+     4  co%csigin, co%cthe, co%cthi, co%vsaf_cl, co%cvsa_cl, 
+     5  co%cvsahz_cl, co%fllimvisc, co%csig_cl, co%calf_cl)
 *   ..add to previous contributions=
       ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17 {
       do is = 0, ns-1

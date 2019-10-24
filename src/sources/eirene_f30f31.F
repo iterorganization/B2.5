@@ -330,14 +330,14 @@ c     * guard cell values used for source sampling in infcop
 c     internal cell, old treatment -> grad-B drift only
                 uub(ic,nflai)=max(min(
      1               upb(ic,nflai)*abs(gm%cvBb(ic,0))/gm%cvBb(ic,3)+
-     2               vadiac(ic,0,is)+vaecrbc(ic,0,is),
-     3               ua_max),ua_min)
+     2               (vadiac(ic,0,is)+vaecrbc(ic,0,is))*
+     3               sign(1.0_R8,gm%cvEb(ic,0)),ua_max),ua_min)
               else
 c     internal cell -> full diamagnetic drift
                 uub(ic,nflai)=max(min(
      1               upb(ic,nflai)*abs(gm%cvBb(ic,0))/gm%cvBb(ic,3)+
-     2               wadiac(ic,0,is)+vaecrbc(ic,0,is),
-     3               ua_max),ua_min)
+     2               (wadiac(ic,0,is)+vaecrbc(ic,0,is))*
+     3               sign(1.0_R8,gm%cvEb(ic,0)),ua_max),ua_min)
                  endif
             elseif(eirene_uub_style.eq.1) then
 cwdk  uub computed from face fluxes, and interpolated to cell centers
@@ -362,14 +362,14 @@ c                    (diffusive anomalous contribution zero due to toroidal symm
               if (eirene_background.eq.0) then
 c     internal cell, old treatment -> grad-B drift only (fna)
                 wwb(ic,nflai)=max(min(
-     .            upb(ic,nflai)*abs(gm%cvBb(ic,2))/gm%cvBb(ic,3)-
+     .            upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
      2            (vadiac(ic,0,is)+vaecrbc(ic,0,is))*
      3            gm%cvBb(ic,0)/gm%cvBb(ic,2),
      4            ua_max),ua_min)
               else
 c     internal cell -> full diamagnetic drift
                  wwb(ic,nflai)=max(min(
-     1             upb(ic,nflai)*abs(gm%cvBb(ic,2))/gm%cvBb(ic,3)-
+     1             upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
      2             (wadiac(ic,0,is)+vaecrbc(ic,0,is))*
      3             gm%cvBb(ic,0)/gm%cvBb(ic,2),
      4             ua_max),ua_min)

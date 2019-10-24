@@ -1279,6 +1279,8 @@ c dpc
           if (ncall.eq.0) then
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 14, CONPAR(,,1) <= 0 not allowed!')
+            call xertst(CONPAR(IS,IB,2).gt.0.0_R8,
+     1       'BCCON = 14, CONPAR(,,2) <= 0 not allowed!')
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       ' sound speed flux ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -1290,7 +1292,8 @@ c dpc
             s1 = abs(geo%fcPbs(iFc))
             cs = sqrt(pz(iCv1)/rz(iCv1))
             srw%sna0(iCv1,0,is) = 0.0_R8
-            srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs
+            srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs - 
+     .        co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
             sna0_no_mdf(iCv1,:,is) =
      &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
 !WG_TODO  if (mdf_fnb.ne.0) ; drift contributions...
@@ -3317,6 +3320,15 @@ cxpb  and max(,,) statement for stability
      &         mompar(is,ib,1)*vbnd
             srw%smo0(iCv1,1,IS) = srw%smo0(iCv1,1,IS) -
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)     !srv 07.05.09 }
+            ! Avoid setting to sound speed at very shallow incidence
+            ! Set mom. flux to leakage instead
+            if (abs(geo%fcQalf(iFc,0)).lt.1e-3) then
+              srw%smo0(iCv1,0,is) = 0.0_R8
+              srw%smo0(iCv1,1,is) = 0.0_R8
+!              srw%smo0(iCv1,1,is) = -
+!     &          am(is)*mp*co%dna0(iCv1,is)/conpar(is,ib,2)*
+!     &          pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
+            endif
 cwdk      TODO: drift contributions
           enddo
 
@@ -4653,19 +4665,27 @@ cghgh
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             cs   = sqrt(pz(iCv1)/rz(iCv1))
             t0 = 0.0_R8
+            t1 = 0.0_R8
             do is = 0, ns-1
               t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*
      *          pl%na(iCv1,is)
+              if (.not.is_neutral(is))
+     &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
+     &            pl%na(iCv1,is)
             enddo
             t0 = max(0.0e0_R8, (abs(geo%fcPbs(iFc))*t0*cs -           !srv 05.05.09
      &        dv%fch_p(iFc,0)*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)/qe))  !srv 25.12.06 11.01.13 20.09.17
+            t1 = t1*geo%fcS(iFc)
             if(pot_eq.eq.1) then                                      !srv 27.02.13 {
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                   !srv 11.03.09 {
-     &          (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0                !srv 19.04.13
-              srw%she0(iCv1,0) = srw%she0(iCv1,0) - qe*pl%po(iCv1)*t0 !srv 07.11.12
+     &          (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0 -              !srv 19.04.13
+     &          (enepar(ib,1) + 1.0_R8)*t1                            !wdk to check: correct for gammae?
+              srw%she0(iCv1,0) = srw%she0(iCv1,0) - 
+     &           qe*pl%po(iCv1)*(t0 + t1)                             !srv 07.11.12
             else                                                      !srv 27.02.13
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                   !srv 11.03.09 {
-     &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+3.1_R8)*t0       !srv 19.04.13
+     &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+3.1_R8)*t0 -     !srv 19.04.13
+     &          (enepar(ib,1) + 1.0 + 3.1_R8)*t1                      !wdk to check: correct for gammae?
             endif                                                     !srv 27.02.13 }
           enddo  
 cwdk    Todo: corrections for mdf_fhe, BCCON.ne.14
@@ -6553,15 +6573,19 @@ cxpb          endif
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           t0 = 0.0_R8
+          t1 = 0.0_R8
           do is = 0, ns-1
-            if(.not.is_neutral(is)) 
-     &        t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
+            if(.not.is_neutral(is)) then
+              t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
+              t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*pl%na(iCv1,is)
+            endif
           enddo
-          srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -                     !srv 11.03.09 {
-     &        enipar(ib,1)*t0*cs*abs(geo%fcPbs(iFc))                !srv 19.04.13
+          srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -                         !srv 11.03.09 {
+     &      enipar(ib,1)*t0*cs*abs(geo%fcPbs(iFc)) -                    !srv 19.04.13
+     &     (enipar(ib,2)+1.0_R8)*t1*geo%fcS(iFc) 
 cwdk    Todo: corrections for mdf_fhe, BCCON.ne.14
         enddo  
-        GOTO 40000                                                       !srv 01.02.09 }
+        GOTO 40000                                                      !srv 01.02.09 }
 
 * -- BCENI=16 -- Feedback boundary condition with constant temperature
 

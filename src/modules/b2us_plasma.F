@@ -78,7 +78,7 @@
         ! ne2(:) is electron density, ne2 is elect. den. computed w. squared charge rz2
         ! pa(:,0:ns-1) is partial pressure
         real(R8), allocatable :: ne(:), ni(:,:), ue(:), ne2(:), pa(:,:),
-     .                           lnlam(:)
+     .                           pz(:), lnlam(:)
 
         ! drift velocities, at cell faces
         ! dimensions: fc, direction, species
@@ -112,6 +112,8 @@
           
         real(R8), allocatable :: fllim0fhi(:,:,:), fllimvisc(:,:),
      .                           fllim0fna(:,:,:)
+
+        real(R8), allocatable :: vsaf_cl(:,:,:)
 
         real(R8), allocatable, dimension(:) :: sig0, hce0, hci0, alf0
         real(R8), allocatable, dimension(:,:) :: dpa0, dna0, vsa0, 
@@ -363,6 +365,8 @@ cwdk move to dv
       allocate( coeff % cvsahz_cl( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cvmahz( nFc, 0:1, 0:ns-1 ) )
 
+      allocate( coeff % vsaf_cl( nFc, 0:1, 0:ns-1 ) )
+
       allocate( coeff % cddi( nFc, 0:1, 0:ns-1 ) )
 
       allocate( coeff % cthe( nFc, 0:ns-1 ) )
@@ -373,7 +377,7 @@ cwdk move to dv
       allocate( coeff % fllim0fna( nFc, 0:1, 0:ns-1 ) )      
       allocate( coeff % fllim0fhi( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % fllimvisc( nFc, 0:ns-1 ) )
-            
+
 
 ! moved here from b2coeffwork
       
@@ -436,6 +440,8 @@ cwdk move to dv
       deallocate( coeff % cvsahz )
       deallocate( coeff % cvsahz_cl )
       deallocate( coeff % cvmahz )
+
+      deallocate( coeff % vsaf_cl )
 
       deallocate( coeff % cddi )
 
@@ -546,7 +552,8 @@ cwdk move to dv
       allocate( dv % ne2( nCv ) )    
       allocate( dv % ni( nCv, 0:1 ) )    
       allocate( dv % ue( nCv ) )
-      allocate( dv % pa( nCv, 0:ns-1 ) )    
+      allocate( dv % pa( nCv, 0:ns-1 ) )
+      allocate( dv % pz( nCv ) )
       allocate( dv % lnlam( nCv ) ) 
 
 ! drift flows
@@ -658,6 +665,7 @@ cwdk move to dv
       deallocate( dv % ni )
       deallocate( dv % ue )
       deallocate( dv % pa )
+      deallocate( dv % pz )
       deallocate( dv % lnlam)
 
       deallocate( dv % uadia )

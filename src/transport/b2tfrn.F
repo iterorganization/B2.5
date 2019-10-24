@@ -64,7 +64,7 @@
      &   nef(nFc), nbf(nFc), pbf(nFc), dpb(nFc,0:1), dnete(nFc,0:1),
      &   ve(nFc), weight(nFc,2)
       real (kind=R8) ::
-     *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrkVx(nVx),
+     *   wrk(nCv), wrk0(nFc), wrk1(nFc), wrk2(nFc), wrkVx(nVx),
      *   wrk00(nFc,2), wrk11(nFc,2),
 !pb     *   zeff(nCv), c071(nCv), c071f(nCv)                                !srv 13.01.17
      *   zeff(nCv), c071(nCv), c071f(nFc)                                !srv 13.01.17
@@ -197,56 +197,25 @@ cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
 
       enddo !is
 
-      dv%vedia  = 0.0_R8
-      dv%wedia  = 0.0_R8
-      dv%veecrb = 0.0_R8
-
-#ifdef WG_TODO
 c Drift terms
-      wedia =0.0_R8
-      wedia_=0.0_R8
+      if((maxval(dv%facdrift).ne.0.0_R8 .or. 
+     &    maxval(dv%fac_ExB).ne.0.0_R8)) then
 
-      if((maxval(facdrift).ne.0.0_R8 .or. 
-     &    maxval(fac_ExB).ne.0.0_R8)) then
-        wrk0=1.0_R8  ! compute ... on the cell faces
-        call grad(nx, ny, hx, hy, wrk0, qz, qs, ne*te, dnete)
-        do iy=-1,ny  ! compute ... on the cell centers
-          do ix=-1,nx
-            if(bottomiy(ix,iy).eq.-2) then
-              wedia_(ix,iy,0) = dnete(ix,topiy(ix,iy),1,1)
-            elseif(topiy(ix,iy).eq.ny+1) then
-              wedia_(ix,iy,0) = dnete(ix,iy,1,1)
-            else
-              wedia_(ix,iy,0) = 0.5_R8*
-     &         (dnete(topix(ix,iy),topiy(ix,iy),1,1)+dnete(ix,iy,1,1))
-            endif
-            wedia_(ix,iy,0) = wedia_(ix,iy,0)/
-     &       (qe*ne(ix,iy))*(bb(ix,iy,2)/bb(ix,iy,3)**2)                 !srv 15.02.12
-          enddo
-        enddo
-        call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,0),
-     &                                         wedia(-1,-1,0,0))
-
-        do iy=-1,ny  ! compute .... on the cell centers
-          do ix=-1,nx
-            if(leftix(ix,iy).eq.-2) then
-              wedia_(ix,iy,1) = dnete(rightix(ix,iy),iy,0,0)
-            elseif(rightix(ix,iy).eq.nx+1) then
-              wedia_(ix,iy,1) = dnete(ix,iy,0,0)
-            else
-              wedia_(ix,iy,1) = 0.5_R8*
-     &       (dnete(rightix(ix,iy),rightiy(ix,iy),0,0)+dnete(ix,iy,0,0))
-            endif
-              wedia_(ix,iy,1) = - wedia_(ix,iy,1)/
-     &         (qe*ne(ix,iy))*(bb(ix,iy,2)/bb(ix,iy,3)**2)               !srv 15.02.12
-          enddo
-        enddo
-        call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,1),
-     &                                         wedia(-1,-1,0,1))
-        call intfacev(nx,ny,bottomix,bottomiy,vol,wedia_(-1,-1,1),
-     &                                            wedia(-1,-1,1,1))        !srv 14.07.10 }
+*     ..computation of diamagnetic drift
+cwdk    Note: use implementation consistent with vedia (b2tfed) and
+cwdk          wadia (b2tfnb)
+cwdk          (original code: cell center approach)
+        call grad(nCv, nFc, nVx, 0, geo, mpg, dv%ne*pl%te, wrkVx, dnete)
+        wrk  = geo%cvBb(:,2)/geo%cvBb(:,3)**2
+cwdk    to be checked: now we use inverse volume weighting in wkr0
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk,wrk0)
+        call intvertex(nCv,nVx,mpg,geo%vxVol,dv%ne,wrkVx)
+        call intface(nVx,nFc,mpg%fcVx,weight,wrkVx,wrk1)
+        dv%wedia(:,0) =  wrk0*dnete(:,1)/(wrk1*qe)
+        dv%wedia(:,1) = -wrk0*dnete(:,0)/(wrk1*qe)
+      else
+        dv%wedia =0.0_R8
       endif
-#endif
 
 *   ..compute wrk0
        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,dv%ue,wrk0)

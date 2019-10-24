@@ -203,9 +203,9 @@
 *   ..recompute currents
        call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an, pl%po,
      &   dv%fchanml)
+      call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, pl%ua, co%vsaf_cl, 
+     &  dv%fac_vis, dv%fchvispar)
 #ifdef WG_TODO
-       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,  !srv 20.09.06 {
-     &                       fac_vis, fchvispar)
        call b2tiner (nx, ny, ns, vol,
      &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
 !      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
@@ -213,7 +213,6 @@
 !      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,       !srv 10.10.17
 !     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
 #else
-       dv%fchvispar = 0.0_R8
        dv%fchinert  = 0.0_R8
 #endif 
 csw 30sep2013, added cdpa in call, uadia
