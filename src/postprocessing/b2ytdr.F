@@ -1087,7 +1087,6 @@ c 2002-09-11: logic revised
       zamin1(0:ns1-1) = rtzmin(0:ns1-1)
       zamax1(0:ns1-1) = rtzmax(0:ns1-1)
       zn1(0:ns1-1) = rtzn(0:ns1-1)
-      am1(0:ns1-1) = rtzn(0:ns1-1)*2.0_R8
       is_neutral1(0:ns1-1) =
      .   nint(zamin1(0:ns1-1)).eq.0 .and. nint(zamax1(0:ns1-1)).eq.0
       same_bundling = ns1.eq.ns
@@ -1096,8 +1095,7 @@ c 2002-09-11: logic revised
         same_bundling = same_bundling .and.
      &   nint(zamin1(is)).eq.nint(zamin(is)) .and.
      &   nint(zamax1(is)).eq.nint(zamax(is)) .and.
-     &   nint(zn1(is)).eq.nint(zn(is)) .and.
-     &   nint(am1(is)).eq.nint(am(is))
+     &   nint(zn1(is)).eq.nint(zn(is))
         is = is + 1
       end do
       if (same_bundling) then
@@ -4320,8 +4318,15 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
             IF (streql(eirene_format,'old').or.
      &          streql(eirene_format,'new').or.
      &          streql(eirene_format,'facelift')) then
-              READ (REACZEILE,66661)
-     .            I,FILNAM,H123,REAC,CRC,idum(0:1),DPP,R1MN,R1MX
+              READ (REACZEILE(1:33),'(I3,1X,A6,1X,A4,A9,A3,2I3)')
+     .            I,FILNAM,H123,REAC,CRC,idum(0:1)
+              IF (.not.streql(REACZEILE(34:),' ')) THEN
+                READ (REACZEILE(34:),*) DPP,R1MN,R1MX
+              ELSE
+                DPP = 0.0_R8
+                R1MN = 0.0_R8
+                R1MX = 0.0_R8
+              END IF
               R2MN = 0.0_R8
               R2MX = 0.0_R8
               size_mp = max(2, len_of_digits(idum(0)))
@@ -5185,6 +5190,10 @@ Cxpb then rewrite the entire block
      &       (INDEX(TEXTP(JPLS),'Be').GT.0.OR.
      &        INDEX(TEXTP(JPLS),'BE').GT.0)) THEN ! Correcting a common ANK mistake
             NCHARP(JPLS)=4
+          END IF
+          IF (NMASSP(JPLS).EQ.2.AND.NCHARP(JPLS).EQ.2.AND. ! Correcting another
+     &        NPRTP(JPLS).EQ.1.AND.INDEX(TEXTP(JPLS),'H2').GT.0) THEN
+            NPRTP(JPLS)=2
           END IF
           IF (ISRFP(JPLS).GT.0.AND.ISRFP(JPLS).LE.NATMI) THEN
             LKINDP(JPLS)=ISRFP(JPLS)
@@ -6388,85 +6397,73 @@ cxpb We rebuild the reaction list without the purged BGK reactions
           I = I + 1
          ELSE
           IF (INDEX(REAC_LINE(I),'PHOTON').EQ.0) THEN
-            IF (streql(eirene_format,'old').or.
-     &          streql(eirene_format,'new').or.
-     &          streql(eirene_format,'facelift')) then
-              READ (REAC_LINE(I)(1:33),'(I3,1X,A6,1X,A4,A9,A3,2I3)')
-     .              J,FILNAM,H123,REAC,CRC,idum(0:1)
-              READ (REAC_LINE(I)(34:),*) DPP,R1MN,R1MX
-              WRITE(REAC_LINE(I),66661)
-     .              J-NSKIP,FILNAM,H123,REAC,CRC,idum(0:1),DPP,R1MN,R1MX
-              R2MN = 0.0_R8
-              R2MX = 0.0_R8
-            ELSE
-              READ (REAC_LINE(I),66661) J,FILNAM,H123
-              WRITE(REAC_LINE(I)(1:15),'(I3,1X,A6,1X,A4)')
-     .         J-NSKIP,FILNAM,H123
-              IEND=16
+            READ (REAC_LINE(I),66661) J,FILNAM,H123
+            WRITE(REAC_LINE(I)(1:15),'(I3,1X,A6,1X,A4)')
+     .       J-NSKIP,FILNAM,H123
+            IEND=16
 C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
-              REAC2=REPEAT(' ',50)
-              IF (INDEX(FILNAM,'CONST')==0) THEN
-                CALL EIRENE_READ_TOKEN
-     .           (REAC_LINE(I)(IEND:),' ',REAC2,ITOK,IER,.FALSE.)
-                call xertst (ier.eq.0, 'error reading reac2 flag')
-                IEND = IEND + ITOK
+            REAC2=REPEAT(' ',50)
+            IF (INDEX(FILNAM,'CONST')==0) THEN
+              CALL EIRENE_READ_TOKEN
+     .         (REAC_LINE(I)(IEND:),' ',REAC2,ITOK,IER,.FALSE.)
+              call xertst (ier.eq.0, 'error reading reac2 flag')
+              IEND = IEND + ITOK
 !  READ CRC
-                CALL EIRENE_READ_TOKEN
-     .           (REAC_LINE(I)(IEND:),' ',CRC,ITOK,IER,.FALSE.)
-                IEND = IEND + ITOK
-                call xertst (ier.eq.0, 'error reading crc flag')
-              ELSE
-                ITOK = INDEX(ZEILE(IEND:),'FT')
-                IF (ITOK /= 0) THEN
-                  REAC2(1:9) = REAC_LINE(I)(IEND+ITOK:IEND+ITOK+8)
-                  IEND = IEND+ITOK+2
-                END IF
-                CALL EIRENE_READ_TOKEN
-     .           (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.FALSE.)
-                call xertst (ier.eq.0, 'error reading crc flag')
-                IEND = IEND + ITOK
-                READ (CHR,'(A3)') CRC
+              CALL EIRENE_READ_TOKEN
+     .         (REAC_LINE(I)(IEND:),' ',CRC,ITOK,IER,.FALSE.)
+              IEND = IEND + ITOK
+              call xertst (ier.eq.0, 'error reading crc flag')
+            ELSE
+              ITOK = INDEX(ZEILE(IEND:),'FT')
+              IF (ITOK /= 0) THEN
+                REAC2(1:9) = REAC_LINE(I)(IEND+ITOK:IEND+ITOK+8)
+                IEND = IEND+ITOK+2
               END IF
-!  READ MP
               CALL EIRENE_READ_TOKEN
      .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.FALSE.)
-              call xertst (ier.eq.0, 'error reading mp flag')
+              call xertst (ier.eq.0, 'error reading crc flag')
               IEND = IEND + ITOK
-!  READ MT
-              CALL EIRENE_READ_TOKEN
-     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.FALSE.)
-              call xertst (ier.eq.0, 'error reading mt flag')
-              IEND = IEND + ITOK
-!  READ DPP
-              CALL EIRENE_READ_TOKEN
-     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
-              call xertst (ier.eq.0, 'error reading dpp flag')
-              IEND = IEND + ITOK
-!  READ R1MN
-              CALL EIRENE_READ_TOKEN
-     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
-              call xertst (ier.eq.0, 'error reading r1mn flag')
-              IEND = IEND + ITOK
-              READ (CHR,'(E12.4)') R1MN
-!  READ R1MX
-              CALL EIRENE_READ_TOKEN
-     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
-              call xertst (ier.eq.0, 'error reading r1mx flag')
-              IEND = IEND + ITOK
-              READ (CHR,'(E12.4)') R1MX
-!  READ R2MN
-              CALL EIRENE_READ_TOKEN
-     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
-              call xertst (ier.eq.0, 'error reading r2mn flag')
-              IEND = IEND + ITOK
-              READ (CHR,'(E12.4)') R2MN
-!  READ R2MX
-              CALL EIRENE_READ_TOKEN
-     .         (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
-              call xertst (ier.eq.0, 'error reading r2mx flag')
-              IEND = IEND + ITOK
-              READ (CHR,'(E12.4)') R2MX
+              READ (CHR,'(A3)') CRC
             END IF
+!  READ MP
+            CALL EIRENE_READ_TOKEN
+     .       (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.FALSE.)
+            call xertst (ier.eq.0, 'error reading mp flag')
+            IEND = IEND + ITOK
+!  READ MT
+            CALL EIRENE_READ_TOKEN
+     .       (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.FALSE.)
+            call xertst (ier.eq.0, 'error reading mt flag')
+            IEND = IEND + ITOK
+!  READ DPP
+            CALL EIRENE_READ_TOKEN
+     .       (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+            call xertst (ier.eq.0, 'error reading dpp flag')
+            IEND = IEND + ITOK
+!  READ R1MN
+            CALL EIRENE_READ_TOKEN
+     .       (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+            call xertst (ier.eq.0, 'error reading r1mn flag')
+            IEND = IEND + ITOK
+            READ (CHR,'(E12.4)') R1MN
+!  READ R1MX
+            CALL EIRENE_READ_TOKEN
+     .       (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+            call xertst (ier.eq.0, 'error reading r1mx flag')
+            IEND = IEND + ITOK
+            READ (CHR,'(E12.4)') R1MX
+!  READ R2MN
+            CALL EIRENE_READ_TOKEN
+     .       (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+            call xertst (ier.eq.0, 'error reading r2mn flag')
+            IEND = IEND + ITOK
+            READ (CHR,'(E12.4)') R2MN
+!  READ R2MX
+            CALL EIRENE_READ_TOKEN
+     .       (REAC_LINE(I)(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+            call xertst (ier.eq.0, 'error reading r2mx flag')
+            IEND = IEND + ITOK
+            READ (CHR,'(E12.4)') R2MX
           ELSE
             I1=SCAN(REAC_LINE(I),' ')
             READ (REAC_LINE(I)(1:I1-1),*) J
