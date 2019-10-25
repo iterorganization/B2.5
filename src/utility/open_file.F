@@ -231,27 +231,29 @@ c
 ! level up) and returns a new filename if found, and exist set to true
 ! if the file is found
 
+      integer lnblnk
       character(len=*) filename
       logical exist
+      external lnblnk
 
       inquire(file=filename, exist=exist)
       if(exist) return
 
       inquire(file='../'//filename, exist=exist)
       if(exist) then
-         filename='../'//filename
+         filename='../'//filename(1:lnblnk(filename))
          return
       endif
 
       inquire(file='../baserun/'//filename, exist=exist)
       if(exist) then
-         filename='../baserun/'//filename
+         filename='../baserun/'//filename(1:lnblnk(filename))
          return
       endif
 
       inquire(file='../../baserun/'//filename, exist=exist)
       if(exist) then
-         filename='../../baserun/'//filename
+         filename='../../baserun/'//filename(1:lnblnk(filename))
          return
       endif
 
