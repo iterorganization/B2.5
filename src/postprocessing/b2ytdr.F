@@ -5186,7 +5186,8 @@ Cxpb then rewrite the entire block
      .                                     DENSLIM(JPLS),idum(0),
      .                                     NHSTP(JPLS),idum(2),
      .                                     CDENMODEL(JPLS),NRE(JPLS)
-          IF (NMASSP(JPLS).EQ.9.AND.NCHARP(JPLS).EQ.10.AND.
+          IF (NMASSP(JPLS).EQ.9.AND.
+     &       (NCHARP(JPLS).EQ.10.OR.NCHARP(JPLS).EQ.2).AND.
      &       (INDEX(TEXTP(JPLS),'Be').GT.0.OR.
      &        INDEX(TEXTP(JPLS),'BE').GT.0)) THEN ! Correcting a common ANK mistake
             NCHARP(JPLS)=4
