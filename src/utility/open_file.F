@@ -76,14 +76,14 @@ c
       close(lu)
       filenamecat=solpstop(1:lnblnk(solpstop))//
      1 '/'//filename(1:lnblnk(filename))
-      copyarea=area
       write(*,'(a,a)') 'Trying ',filenamecat(1:lnblnk(filenamecat))
       open(lu,file=filenamecat(1:lnblnk(filenamecat)),
      3 status='old',err=13)
       return
    13 continue
       close(lu)
-      if (.not.streql(localarea,' ')) then
+      copyarea=area
+      if (.not.streql(copyarea,' ')) then
    17   iend=index(copyarea,'|')
         if(iend.eq.0) then
           localarea=copyarea
