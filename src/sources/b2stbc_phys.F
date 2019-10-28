@@ -3314,21 +3314,27 @@ cxpb  and max(,,) statement for stability
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             cs   = sqrt(pz(iCv1)/rz(iCv1))
             s1hz = geo%fcPbshz(iFc)
-            vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+!            vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) - 
+!     &        dv%vaecrb(iFc,0,is) - 
+!     &        dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1)/geo%fcQalf(iFc,0)
+            vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) - 
+     &        (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
+     &         dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
+     &        sign(1.0_R8,geo%fcQalf(iFc,0))*hzf(iFc)*geo%fcS(iFc)
             srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                        !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &         mompar(is,ib,1)*vbnd
             srw%smo0(iCv1,1,IS) = srw%smo0(iCv1,1,IS) -
-     &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)     !srv 07.05.09 }
-            ! Avoid setting to sound speed at very shallow incidence
-            ! Set mom. flux to leakage instead
-            if (abs(geo%fcQalf(iFc,0)).lt.1e-3) then
-              srw%smo0(iCv1,0,is) = 0.0_R8
-              srw%smo0(iCv1,1,is) = 0.0_R8
+     &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)        !srv 07.05.09 }
+!            ! Avoid setting to sound speed at very shallow incidence
+!            ! Set mom. flux to leakage instead
+!            if (abs(geo%fcQalf(iFc,0)).lt.1e-3) then
+!              srw%smo0(iCv1,0,is) = 0.0_R8
+!              srw%smo0(iCv1,1,is) = 0.0_R8
 !              srw%smo0(iCv1,1,is) = -
 !     &          am(is)*mp*co%dna0(iCv1,is)/conpar(is,ib,2)*
 !     &          pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
-            endif
+!            endif
 cwdk      TODO: drift contributions
           enddo
 
