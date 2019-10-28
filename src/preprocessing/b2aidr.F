@@ -704,6 +704,8 @@
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
        enddo
        call b2xpne (nx, ny, ns, rza, na, zero, ne)
+       call sfill (n2*2, 0.0_R8, vedia, 1)
+       call sfill (n2*2, 0.0_R8, veecrb, 1)
 *   ..initialise te, ti, po
        call sfill (n2, ttini*ev, te, 1)
        call sfill (n2, ttini*ev, ti, 1)
