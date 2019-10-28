@@ -3326,15 +3326,15 @@ cxpb  and max(,,) statement for stability
      &         mompar(is,ib,1)*vbnd
             srw%smo0(iCv1,1,IS) = srw%smo0(iCv1,1,IS) -
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)        !srv 07.05.09 }
-!            ! Avoid setting to sound speed at very shallow incidence
-!            ! Set mom. flux to leakage instead
-!            if (abs(geo%fcQalf(iFc,0)).lt.1e-3) then
-!              srw%smo0(iCv1,0,is) = 0.0_R8
-!              srw%smo0(iCv1,1,is) = 0.0_R8
+            ! Avoid setting to sound speed at very shallow incidence
+            ! Set mom. flux to leakage instead
+            if (abs(geo%fcQalf(iFc,0)).lt.1e-3) then
+              srw%smo0(iCv1,0,is) = 0.0_R8
+              srw%smo0(iCv1,1,is) = 0.0_R8
 !              srw%smo0(iCv1,1,is) = -
 !     &          am(is)*mp*co%dna0(iCv1,is)/conpar(is,ib,2)*
 !     &          pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
-!            endif
+            endif
 cwdk      TODO: drift contributions
           enddo
 
