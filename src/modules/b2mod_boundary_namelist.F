@@ -32,6 +32,8 @@ cank }
      *   BCPOS(:), 
      *   BCSTART(:), 
      *   BCEND(:), 
+     *   ABCSTART(:), 
+     *   ABCEND(:), 
      *   BCCON(:,:), 
      *   BCMOM(:,:), 
      *   BCENE(:), 
@@ -49,6 +51,7 @@ cank }
      *   BC_FACES(:,:)
       character*1, allocatable, save ::
      *   BCCHAR(:)
+     *   ACCHAR(:)
      *   BC_LIST_CHAR(:,:)
 #else
       integer NSDMAX
@@ -61,6 +64,8 @@ cank }
       integer, save :: BCPOS(NBCD)
       integer, save :: BCSTART(NBCD)
       integer, save :: BCEND(NBCD)
+      integer, save :: ABCSTART(NBCD)
+      integer, save :: ABCEND(NBCD)
       integer, save :: BC_LIST_SIZE(NBCD)
       integer, save :: BC_LIST_X(2*(DEF_NXD+DEF_NYD),NBCD)
       integer, save :: BC_LIST_Y(2*(DEF_NXD+DEF_NYD),NBCD)
@@ -71,6 +76,7 @@ cank }
       integer, save :: BCENI(NBCD)
       integer, save :: BCPOT(NBCD)
       character*1, save :: BCCHAR(NBCD)
+      character*1, save :: ACCHAR(NBCD)
       integer, save :: NXISO1(NNISOD)
       integer, save :: NXISO2(NNISOD)
       integer, save :: NYISO1(NNISOD)
@@ -113,8 +119,10 @@ csw 18feb2014 added for correct implementation of boundary conditions
      3 NNISO,NIISO,TEISO,TIISO,PHIISO,NXISO1,NXISO2,NYISO1,NYISO2,
      4 bcchar,
      5 boundary_filename,boundary_time_mod,boundary_time_switch,
-     6 lcbs, write_nml_bnd,
-     7 nbcfaces, bc_faces, bc_face_ori
+     6 lcbs, write_nml_bnd
+#ifdef CFLABEL
+     7     ,nbcfaces, bc_faces, bc_face_ori
+#endif      
 
       contains
 
@@ -253,6 +261,8 @@ csw 18feb2014 added for correct implementation of boundary conditions
       allocate(BCPOS(nbcd_in))
       allocate(BCSTART(nbcd_in))
       allocate(BCEND(nbcd_in))
+      allocate(ABCSTART(nbcd_in))
+      allocate(ABCEND(nbcd_in))
       allocate(BC_LIST_SIZE(nbcd_in))
       allocate(BC_LIST_X(2*(NXD+NYD),nbcd_in))
       allocate(BC_LIST_Y(2*(NXD+NYD),nbcd_in))
@@ -262,6 +272,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       allocate(BCENI(nbcd_in))
       allocate(BCPOT(nbcd_in))
       allocate(BCCHAR(nbcd_in))
+      allocate(ACCHAR(nbcd_in))
       allocate(NXISO1(nnisod_in))
       allocate(NXISO2(nnisod_in))
       allocate(NYISO1(nnisod_in))
@@ -283,9 +294,12 @@ csw 18feb2014 added for correct implementation of boundary conditions
       ncbs=0
       lcbs=0
       bcchar=' '
+      acchar=' '
       bcpos=-2
       bcstart=-2
       bcend=-2
+      abcstart=-2
+      abcend=-2
       bc_list_size=0
       bc_list_x=-2
       bc_list_y=-2
@@ -332,6 +346,8 @@ csw 18feb2014 added for correct implementation of boundary conditions
       deallocate(BCPOS)
       deallocate(BCSTART)
       deallocate(BCEND)
+      deallocate(ACSTART)
+      deallocate(ACEND)
       deallocate(BC_LIST_SIZE)
       deallocate(BC_LIST_X)
       deallocate(BC_LIST_Y)
@@ -341,6 +357,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       deallocate(BCENI)
       deallocate(BCPOT)
       deallocate(BCCHAR)
+      deallocate(ACCHAR)
       deallocate(NXISO1)
       deallocate(NXISO2)
       deallocate(NYISO1)
@@ -381,6 +398,11 @@ csw 18feb2014 added for correct implementation of boundary conditions
       else
         call xerrab ('No '//trim(filename))
       endif
+
+      acchar = bcchar
+      abcstart = bcstart
+      abcend = bcend
+      
       if (nbc.gt.0) then
         allocate(old_style(nbc))
         do ib = 1, nbc
@@ -907,7 +929,8 @@ c.. Test consistency with region boundaries
       integer, intent(in) :: ns
       type(mapping), intent(inout) :: m
       logical, intent(in) :: dotest
-      integer is, ib, ic, ix, iy, ixx, iyy
+      integer is, ib, ic, ix, iy, ixx, iyy, noss, iss, indss, idb,
+     >        nbcfc, inbc
       integer :: ian, ien
       logical covered, corner, guard_cell, found
 
@@ -931,6 +954,47 @@ c.. Test consistency with region boundaries
       else
         call xerrab ('No '//trim(filename))
       endif
+
+      acchar = bcchar
+      abcstart = bcstart
+      abcend = bcend
+            
+#ifndef CFLABEL
+      if (nbc > 0) then
+
+        m%nBc = nbc
+        m%mxnBc = count(m%fcLbl /= 0)
+        call alloc_mapping_bc (m)
+        m%bcFcP = 0
+        
+        open (newunit=idb,file='debug_bound.out')
+        inbc = 0
+        do ib = 1, nbc
+          if (bcchar(ib) == 'A') then
+            nbcfc = 0
+            m%bcFcP(ib,1) = inbc +1 
+            noss = bcend(ib) - bcstart(ib) + 1
+            do iss = 1, noss
+              indss = bcstart(ib)+iss-1
+              write (*,*) ' surface index ',indss
+! find all faces belonging to surface structure INDSS
+              call find_faces (indss, inbc, nbcfc, 
+     >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
+            end do              ! iss	 
+!            m%bcFcP(ib,2) = nbcfaces(ib)
+            m%bcFcP(ib,2) = nbcfc
+!            bc_faces(1:nbcfaces(ib),ib) = m%bcFc(m%bcFcP(ib,1):
+!     >           m%bcFcP(ib,1)+nbcfaces(ib)-1)
+!            bc_face_ori(1:nbcfaces(ib),ib) = m%bcFcOr(m%bcFcP(ib,1):
+!     >           m%bcFcP(ib,1)+nbcfaces(ib)-1)            
+          else
+            call xerrab ('BCCHAR /= A ')
+          endif
+        end do
+        close(idb)
+      end if
+!      call bc_to_struct (m)
+#endif      
 
       if (any(bc_list_size > 0))
      .  call xerrab 
@@ -1519,7 +1583,9 @@ c.. Test consistency with region boundaries
       integer :: ib, ibc, is, inbc, noss, iss, indss,
      .           i, iFc, iCv, idb, nbfc
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
+      integer :: minlbl(nbc), maxlbl(nbc)
       integer, allocatable :: ifchit(:)
+      character(1) :: lchar(nbc)
 
       m%nBc   = nbc     ! number of boundary conditions
       m%mxnBc = 0       ! number of cells with imposed BC
@@ -1565,6 +1631,10 @@ cwdk also need to correct for degenerate faces?
       call alloc_mapping_bc (m)
       open (newunit=idb,file='bound.out')
 
+      minlbl = huge(1)
+      maxlbl = -huge(1)
+      lchar = ' '
+      
       inbc = 0 ! index in bcCv
       do ib = 1, nbc
         m%bcFcP(ib,1) = inbc + 1
@@ -1576,6 +1646,9 @@ cwdk also need to correct for degenerate faces?
             m%bcFc(inbc) = 
      >         m%cvFc(m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1))
             m%bcFcOr(inbc) = -1.0_R8
+            minlbl(ib) = min(minlbl(ib),m%fcLbl(m%bcFc(inbc)))
+            maxlbl(ib) = max(maxlbl(ib),m%fcLbl(m%bcFc(inbc)))
+            lchar(ib) = 'A'
           enddo
         elseif (bcchar(ib).eq.'N') then
           do ibc = 1, bcl(ib)
@@ -1583,6 +1656,9 @@ cwdk also need to correct for degenerate faces?
             m%bcFc(inbc) = 
      >         m%cvFc(m%cvFcP(m%imapCv(bcs(ib)+ibc-1,bcpos(ib)),1))
             m%bcFcOr(inbc) = 1.0_R8
+            minlbl(ib) = min(minlbl(ib),m%fcLbl(m%bcFc(inbc)))
+            maxlbl(ib) = max(maxlbl(ib),m%fcLbl(m%bcFc(inbc)))
+            lchar(ib) = 'A'
           enddo
         elseif (bcchar(ib).eq.'W') then
           do ibc = 1, bcl(ib)
@@ -1590,6 +1666,9 @@ cwdk also need to correct for degenerate faces?
             m%bcFc(inbc) = 
      >         m%cvFc(m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1))
             m%bcFcOr(inbc) = -1.0_R8
+            minlbl(ib) = min(minlbl(ib),m%fcLbl(m%bcFc(inbc)))
+            maxlbl(ib) = max(maxlbl(ib),m%fcLbl(m%bcFc(inbc)))
+            lchar(ib) = 'A'
           enddo
         elseif (bcchar(ib).eq.'E') then 
           do ibc = 1, bcl(ib)
@@ -1597,19 +1676,25 @@ cwdk also need to correct for degenerate faces?
             m%bcFc(inbc) =
      >         m%cvFc(m%cvFcP(m%imapCv(bcpos(ib),bcs(ib)+ibc-1),1))
             m%bcFcOr(inbc) = 1.0_R8
+            minlbl(ib) = min(minlbl(ib),m%fcLbl(m%bcFc(inbc)))
+            maxlbl(ib) = max(maxlbl(ib),m%fcLbl(m%bcFc(inbc)))
+            lchar(ib) = 'A'
           enddo
 #ifdef CFLAGS
         elseif (bcchar(ib).eq.'A') then 
+          minlbl(ib) = bcstart(ib)
+          maxlbl(ib) = bcend(ib)
+          lchar(ib) = 'A'
           bcl(ib) = 0
           noss = bcend(ib) - bcstart(ib) + 1
 	  do iss = 1, noss
 	    indss = bcstart(ib)+iss-1
             write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
-            call find_faces (indss, inbc, nx, ny, ns, bcl(ib), 
-     >                       m%mxnbc,m%bcFc, m%bcFcOr, m, g, idb)
+            call find_faces (indss, inbc, bcl(ib), 
+     >                       m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
 	  end do  ! iss	 
-          m%bcFcP(ib,2) = bcl(ib) 
+          m%bcFcP(ib,2) = bcl(ib)
 #endif
         else
           call xerrab ('conv_bcparms -- wrong BCCHAR')
@@ -1617,11 +1702,17 @@ cwdk also need to correct for degenerate faces?
       enddo     
       close (idb)
 
+      acchar(1:nbc) = lchar(1:nbc)
+      abcstart(1:nbc) = minlbl(1:nbc)
+      abcend(1:nbc) = maxlbl(1:nbc)
+
+#ifdef WG_RM      
       nbcfaces(1:nbc) = m%bcFcP(1:nbc,2)
       do ib = 1, nbc
         nbfc = nbcfaces(ib)
         bc_faces(1:nbfc,ib) = m%bcFc(m%bcFcP(ib,1):m%bcFcP(ib,1)+nbfc-1)
       end do
+#endif      
       
       if (inbc .ne. m%nCg ) then
 ! try to find missing or doubled faces
@@ -1673,8 +1764,14 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a)') '&boundary'
       write (iout,'(1x,a,i0)') 'NBC     = ',m%nBc
       write (iout,'(1x,a,(1x,T14,10(2x,4a1)))') 
-     .       'BCCHAR  =  ',(ap,bcchar(ib),ap,',',ib=1,m%nBc)
+     .       'BCCHAR  =  ',(ap,acchar(ib),ap,',',ib=1,m%nBc)
 
+#ifndef CFLABEL
+      write(iout,'(1x,a,(1x,T14,10(i5,a1)))')
+     .       'BCSTART =  ',(abcstart(ib),',',ib=1,m%nBc)
+      write(iout,'(1x,a,(1x,T14,10(i5,a1)))')
+     .       'BCEND  =  ',(abcend(ib),',',ib=1,m%nBc)
+#else      
       write (iout,'(1x,a,(1x,T14,10(1x,i7,a1)))') 
      .       'NBCFACES  =',(m%bcFcP(ib,2),',',ib=1,m%nBc)
       do ib = 1, m%nBc
@@ -1690,7 +1787,8 @@ cwdk also need to correct for degenerate faces?
         write (iout,'(1x,a,i2,a,(1x,T21,10(f5.2,a1,1x)))') 
      .    'BC_FACE_ORI(1,',ib,')= ',(m%bcFcOr(i),',',i=ian,ien)
       end do
-
+#endif
+      
       write (iout,'(1x,a,(1x,T14,10(1x,i9,a1)))') 
      .       'BCENE   =   ',(bcene(ib),',',ib=1,m%nBc)
       write (iout,'(1x,a,(1x,T14,10(es10.2,a1)))') 
@@ -1771,23 +1869,28 @@ cwdk also need to correct for degenerate faces?
       integer :: iout, ian, ien, i
 
       m%nBc = nbc
-      m%mxnBc = sum(nbcfaces(1:nbc))       ! number of cells with imposed BC
-
+!pb   m%mxnBc = sum(nbcfaces(1:nbc))       ! number of cells with imposed BC
+!pb   m%mxnBc = sum(m%bcFcP(1:m%nbc,2))    ! number of cells with imposed BC
+      m%mxnBc = count(m%fcLbl /= 0)
+      
       call alloc_mapping_bc(m)
 
       inbc = 0 ! index in bcCv
       do ib = 1,m%nBc
         m%bcCvP(ib,1) = inbc + 1
-        m%bcCvP(ib,2) = nbcfaces(ib)
-        do ibc = 1, nbcfaces(ib)
+!pb     m%bcCvP(ib,2) = nbcfaces(ib)
+        m%bcCvP(ib,2) = m%bcFcP(ib,2)
+!pb     do ibc = 1, nbcfaces(ib)
+        do ibc = 1, m%bcFcP(ib,2)
           inbc = inbc + 1
-          ifc = bc_faces(ibc,ib)
+!pb       ifc = bc_faces(ibc,ib)
+          ifc = m%bcFc(m%bcFcP(ib,1)+ibc-1)
           ic1 = min(m%fcCv(ifc,1), m%fcCv(ifc,2))
           ic2 = max(m%fcCv(ifc,1), m%fcCv(ifc,2))
           if ((ic1 <= m%nCi) .and. (ic2 >m%nCi)) then
             m%bcCv(inbc,1) = ic2
             m%bcCv(inbc,2) = ic1
-            m%bcFcOr(inbc) = bc_face_ori(ibc,ib)
+!pb         m%bcFcOr(inbc) = bc_face_ori(ibc,ib)
           else
             call xerrab('bc_to_struct -- problem with boundary face') 
           end if

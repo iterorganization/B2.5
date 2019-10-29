@@ -1,24 +1,33 @@
+#ifdef CFLABEL
       subroutine find_faces(indss, inbc, nx, ny, ns,
      .                      bcl, ndfc, Fc, FcOr,
-     .                      m, g, idb)
+     .                      m, idb)
+#else
+      subroutine find_faces(indss, inbc, bcl, ndfc, Fc, FcOr,
+     .                      m, idb)
+#endif
+      
       use b2mod_types
       use b2mod_indirect
       use b2us_map
       use b2us_geo
       use carre_constants
       implicit none
+#ifdef CFLABEL
       integer, intent(in) :: indss, nx, ny, ns, ndfc, idb
+#else
+      integer, intent(in) :: indss, ndfc, idb
+#endif
       integer, intent(inout) :: inbc, bcl
       integer, intent(inout) :: Fc(ndfc)
       real(R8), intent(inout) :: FcOr(ndFc)
       
       type (mapping), intent (inout) :: m
-      type (geometry), intent (inout) :: g
 
       integer :: ncoss, icoss,
      .           ix, iy, iFc1, i, imn, imx, iFc, 
      .           ncout, istart
-      integer, allocatable :: fcss(:)
+      integer, allocatable :: fcss(:), indfc(:)
       logical, allocatable :: lout(:)
       logical, allocatable :: lfchit(:)
       
@@ -33,10 +42,11 @@
 
       
 !  find all faces belonging to surface structure INDSS
+      
+#ifdef CFLABEL
       ncoss = count(cflags(:,:,2:5) == indss)
       if (ncoss.eq.0) return
       allocate (fcss(ncoss))
-      
       if (.not.allocated(lfchit)) allocate (lfchit(m%nFc))
       lfchit = .false.
       icoss = 0
@@ -118,15 +128,24 @@
           end if
         end do                  ! ix
       end do                    ! iy
-      
+     
       do i = 1, icoss
         write (*,'(a,4i6,4es16.7)')' i,fcss(i),vx1,vx2 ',
-     .             i,fcss(i),m%fcVx(fcss(i),1), m%fcVx(fcss(i),2),
-     .             g%vxX(m%fcVx(fcss(i),1)),g%vxY(m%fcVx(fcss(i),1)),
-     .             g%vxX(m%fcVx(fcss(i),2)),g%vxY(m%fcVx(fcss(i),2))
+     .             i,fcss(i),m%fcVx(fcss(i),1), m%fcVx(fcss(i),2)
+!     .           , g%vxX(m%fcVx(fcss(i),1)),g%vxY(m%fcVx(fcss(i),1)),
+!     .             g%vxX(m%fcVx(fcss(i),2)),g%vxY(m%fcVx(fcss(i),2))
       end do
-      
       ncoss = icoss
+#else
+      ncoss = count(m%fcLbl == indss)
+      if (ncoss.eq.0) return
+      allocate (fcss(ncoss))
+      allocate (indfc(m%nFc))
+      indfc = [(i,i=1,m%nFc)]
+      fcss(1:ncoss) = pack(indfc, m%fcLbl == indss)
+      deallocate (indfc)
+#endif
+       
       bcl = bcl + ncoss
 
 ! sort face for a continuous surface
@@ -185,10 +204,10 @@
             write (idb,*) 'face list, indss = ',indss
             do while (associated(head))
               write (*,*) head%fcno, head%vx1, head%vx2
-              write (idb,'(i6,2es16.7)')
-     .             head%vx1,g%vxX(head%vx1),g%vxY(head%vx1)
-              write (idb,'(i6,2es16.7)')
-     .             head%vx2,g%vxX(head%vx2),g%vxY(head%vx2)
+!              write (idb,'(i6,2es16.7)')
+!     .             head%vx1,g%vxX(head%vx1),g%vxY(head%vx1)
+!              write (idb,'(i6,2es16.7)')
+!     .             head%vx2,g%vxX(head%vx2),g%vxY(head%vx2)
               inbc = inbc + 1
               iFc1 = head%fcno
               Fc(inbc) = iFc1
@@ -228,6 +247,6 @@
       end do
 
       deallocate (fcss)
-      deallocate (lfchit)
+      if (allocated(lfchit)) deallocate (lfchit)
       
       end subroutine find_faces

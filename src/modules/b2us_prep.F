@@ -92,7 +92,7 @@
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
      .           ixb, iyb, bix, biy, tix, tiy, rix, riy, idb, 
      .           lbix, lbiy,
-     .           iunused, nunused, ivxe, nvxe
+     .           iunused, nunused, ivxe, nvxe, lbl, ier
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -1325,7 +1325,94 @@ cwdk        merge vertex with right neighbor
         call xerrab 
      .  ('Inconsistency between counting and mapping in nFc!')
       endif
- 
+
+      ier = 0
+      do iy = -1, ny
+        do ix = -1, nx
+          if (any(cflags(ix,iy,CELLFLAG_LEFTFACE:CELLFLAG_TOPFACE)/=0))
+     .      then
+! leftface
+            if (cflags(ix,iy,CELLFLAG_LEFTFACE) /= 0) then
+              lbl = cflags(ix,iy,CELLFLAG_LEFTFACE)
+              iFc = m%imapFcx(ix,iy)
+              if (iFc > 0) then
+                if (m%fcLbl(iFc) == 0) then
+                  m%fcLbl(iFc) = lbl
+                else if (m%fcLbl(iFc) /= lbl) then
+                  write (*,'(a,5i6)')
+     .                 'LEFTFACE: ix,iy,iFc,fcLbl,cflags ',
+     .                 ix,iy,iFc,m%fcLbl(iFc),lbl
+                  ier = ier + 1
+                end if
+              end if
+            end if
+! rightface
+            if (cflags(ix,iy,CELLFLAG_RIGHTFACE) /= 0) then
+              lbl = cflags(ix,iy,CELLFLAG_RIGHTFACE)
+              if (rightix(ix,iy) < nx+1) then
+                iFc = m%imapFcx(rightix(ix,iy),rightiy(ix,iy))
+              else
+                iFc = 0
+              end if
+              if (iFc > 0) then
+                if (m%fcLbl(iFc) == 0) then
+                  m%fcLbl(iFc) = lbl
+                else if (m%fcLbl(iFc) /= lbl) then
+                  write (*,'(a,5i6)')
+     .                 'RIGHTFACE: ix,iy,iFc,fcLbl,cflags ',
+     .                 ix,iy,iFc,m%fcLbl(iFc),lbl
+                  ier = ier + 1
+                end if
+              end if
+            end if
+! bottomface
+            if (cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= 0) then
+              lbl = cflags(ix,iy,CELLFLAG_BOTTOMFACE)
+              iFc = m%imapFcy(ix,iy)
+              if (iFc > 0) then
+                if (m%fcLbl(iFc) == 0) then
+                  m%fcLbl(iFc) = lbl
+                else if (m%fcLbl(iFc) /= lbl) then
+                  write (*,'(a,5i6)')
+     .                 'BOTTOMFACE: ix,iy,iFc,fcLbl,cflags ',
+     .                 ix,iy,iFc,m%fcLbl(iFc),lbl
+                  ier = ier + 1
+                end if
+              end if
+            end if
+! topface
+            if (cflags(ix,iy,CELLFLAG_TOPFACE) /= 0) then
+              lbl = cflags(ix,iy,CELLFLAG_TOPFACE)
+              if (topiy(ix,iy) < ny+1) then
+                iFc = m%imapFcy(topix(ix,iy),topiy(ix,iy))
+              else
+                iFc = 0
+              end if
+              if (iFc > 0) then
+                if (m%fcLbl(iFc) == 0) then
+                  m%fcLbl(iFc) = lbl
+                else if (m%fcLbl(iFc) /= lbl) then
+                  write (*,'(a,5i6)')
+     .                 'TOPFACE: ix,iy,iFc,fcLbl,cflags ',
+     .                 ix,iy,iFc,m%fcLbl(iFc),lbl
+                  ier = ier + 1
+                end if
+              end if
+            end if
+          end if
+        end do
+      end do
+
+      write (*,*) 'face labels set ',count(m%fcLbl /= 0)
+
+      write (*,*) 'face lables '
+      do iFc = 1, m%nFc
+        if (m%fcLbl(iFc) /= 0) write (*,*) iFc, m%fcLbl(iFc)
+      end do
+      
+      if (ier > 0)
+     .  call xerrab ('calc_mapping -- problem with fcLbl')
+      
 ! for Vx
 cwdk  might need to add duplicates numbers here...
       m%imapVx= 0 ! 0 means not in use in unstructured
