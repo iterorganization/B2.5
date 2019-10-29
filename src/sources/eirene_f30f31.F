@@ -54,7 +54,7 @@ c
       use eirmod_braeir
       use eirmod_extrab25
       use b2mod_neutrals_namelist
-     & , only: crcstra
+     & , only: crcstra, rcfe, rcfi
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
@@ -103,7 +103,7 @@ c
      &  uuc(nCv,0:ns-1),vvc(nCv,0:ns-1),nafsqalf(nFc,0:1,0:ns-1)
       integer :: ic, ifc, ian, ien, ntrgdat, ifl, i, istra, ic1, ic2,
      &           iv1, iv2, icp
-      integer, save :: check_target=0
+      integer, save :: check_target=1
       real (kind=R8) :: intface_s
       real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww, pnorm,
      1 pvxs, pvys, pupv, puxs, puys, puxic, puyic, pvxic, pvyic   
@@ -524,17 +524,21 @@ c declared -1:nx,-1:ny
 !     >                                   gm%fcVol,pl%ti)*evi
           trgt(istra)%tet(i) = teb(ic)
           trgt(istra)%tit(i) = tib(ic)
+          trgt(istra)%fe(i) = rcfe(istra)
+#ifdef WG_RM
           if ((crcstra(istra) == 'W') .or.(crcstra(istra) == 'E')) then
             trgt(istra)%fe(i) = 0.5_R8
           else 
             trgt(istra)%fe(i) = 0.0_R8 
           endif
+#endif          
           trgt(istra)%fsh(i) = delta_sheathb(iFc)
           do ifl = 1, nflai
 !            trgt(istra)%dnit(i,ifl) = intface_s(iFc,nCv,nFc,mpg%fcCv,
 !     >                                   gm%fcVol,dnib(1,ifl))
             trgt(istra)%dnit(i,ifl) = dnib(ic,ifl)
             trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*mpg%rcFcOr(ian+i-1)
+            trgt(istra)%fi(i,ifl) = rcfi(istra)
 
             if (check_target > 0) then
               ebx = gm%fcEb(iFc,0)

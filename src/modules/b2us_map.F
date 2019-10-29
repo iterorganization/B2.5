@@ -62,7 +62,9 @@
 
         integer, allocatable :: icornVx(:)             ! corner indices; to be used in converting target information
         integer, allocatable :: ictcntrl(:)            ! indices of central cuts; to be used in converting triangle information
-      end type mapping
+
+        integer, allocatable :: fcLbl(:)               ! (nFc) indicates for each face the corresponding face label
+        end type mapping
 
       contains
 
@@ -117,6 +119,8 @@
         allocate (imapVx(-1:m%nx,-1:m%ny))
 #endif
       endif
+
+      allocate (m%fcLbl(m%nFc))
 
       write (*,*) '=================================='
       write (*,*) 'Mapping allocated'
@@ -186,6 +190,8 @@
 
       endif
 
+      deallocate (m%fcLbl)
+      
       return
       end subroutine dealloc_mapping 
 
@@ -309,6 +315,8 @@
       call cfruin (iun, n2, mpg%imapVx,  'imapVx')
       call cfruin (iun, mpg%nx, mpg%icornVX, 'icornVx')
 
+      call cfruin (iun, mpg%nFc, mpg%fcLbl,'fcLbl')
+
 #ifdef WG_DEBUG
       imapCv  = mpg%imapCv
       imapFcx = mpg%imapFcx
@@ -362,6 +370,8 @@
         call cfwuin (nout, 0, idum, 'imapFcy')
         call cfwuin (nout, 0, idum, 'imapVx')
       endif      
+
+      call cfwuin (nout, mpg%nFc,  mpg%fcLbl,'fcLbl')
 
       return
       end subroutine write_mapping

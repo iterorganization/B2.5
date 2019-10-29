@@ -79,6 +79,8 @@ cank }
      *   RCPOS(:),
      *   RCSTART(:),
      *   RCEND(:),
+     *   ARCSTART(:),
+     *   ARCEND(:),
      *   RC_LIST_SIZE(:),
      *   RC_LIST_X(:,:),
      *   RC_LIST_Y(:,:),
@@ -90,13 +92,16 @@ cank }
      *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
-     2   ngpdata(:)
-     *   accel_ion(:)
-     *   maxw(:),                                      !nh 11.07.18
+     2   ngpdata(:),
+     *   accel_ion(:),
+     *   maxw(:)                                 !nh 11.07.18
+      real (kind=R8), allocatable, save ::
+     *   RCFE(:), RCFI(:)      
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:)
       character*1, allocatable, save ::
      *   CRCSTRA(:),
+     *   ARCSTRA(:),
      *   RC_LIST_CHAR(:,:)
 #else
       real (kind=R8), save :: RECYC(0:nsdmax-1,NSTRAID)
@@ -122,6 +127,8 @@ cank }
       integer, save :: RCPOS(NSTRAID)
       integer, save :: RCSTART(NSTRAID)
       integer, save :: RCEND(NSTRAID)
+      integer, save :: ARCSTART(NSTRAID)
+      integer, save :: ARCEND(NSTRAID)
       integer, save :: RC_LIST_SIZE(NSTRAID)
       integer, save :: RC_LIST_X(2*(DEF_NXD+DEF_NYD),NSTRAID)
       integer, save :: RC_LIST_Y(2*(DEF_NXD+DEF_NYD),NSTRAID)
@@ -141,11 +148,13 @@ cank }
       integer, save :: maxw(NSTRAID)
       integer, save :: lstrascl(NSTRAID,0:natmid)
       character*1, save :: CRCSTRA(NSTRAID)
+      character*1, save :: ARCSTRA(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
      ,  lcns(nstsid), ltns(nstsid),
      ,  lsns(nstraid*DEF_NSRFS), ksns(NSTRAID), msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
+      real (kind=R8), save :: RCFE(NSTRAID), RCFI(NSTRAID)      
 #endif
 
       integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns,
@@ -177,8 +186,11 @@ cank }
 
       private :: neutrals
       namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
+     .  rcfe, rcfi,
      1  rc_list_size, rc_list_x, rc_list_y, rc_list_char,
+#ifdef CFLABEL
      .  nrcfaces, rc_faces, rc_face_ori,
+#endif      
      4  recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, crcstra,
      .  rf_neut, phys_sput, chem_sput,
 #ifndef NO_B2_CHEM_SPUT
@@ -248,6 +260,10 @@ csw 21feb2012
       allocate(RCPOS(NSTRAID))
       allocate(RCSTART(NSTRAID))
       allocate(RCEND(NSTRAID))
+      allocate(ARCSTART(NSTRAID))
+      allocate(ARCEND(NSTRAID))
+      allocate(RCFE(NSTRAID))
+      allocate(RCFI(NSTRAID))
       allocate(RC_LIST_SIZE(NSTRAID))
       allocate(RC_LIST_X(2*(NXD+NYD),NSTRAID))
       allocate(RC_LIST_Y(2*(NXD+NYD),NSTRAID))
@@ -261,6 +277,7 @@ csw 21feb2012
       allocate(NGPDATA(NSTRAID))
       allocate(GPDATA(100,2,NSTRAID))
       allocate(CRCSTRA(NSTRAID))
+      allocate(ARCSTRA(NSTRAID))
       allocate(species_start(NSTRAID))
       allocate(species_end(NSTRAID))
       allocate(maxw(NSTRAID))
@@ -298,12 +315,17 @@ csw 21feb2012
 #endif
       call xertst (natm_in.ge.nspecies, 'faulty parameter natm_in')
       CRCSTRA=' '
+      ARCSTRA=' '
       SPS_ID=' '
       SPS_MTRL=' '
       NSTRAI=0
       RCPOS=-2
       RCSTART=-2
       RCEND=-2
+      ARCSTART=-2
+      ARCEND=-2
+      RCFE = 0.5_R8
+      RCFI = 3.0_R8
       RC_LIST_SIZE=0
       RC_LIST_X=-2
       RC_LIST_Y=-2
@@ -461,6 +483,10 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(RCPOS)
       deallocate(RCSTART)
       deallocate(RCEND)
+      deallocate(ARCSTART)
+      deallocate(ARCEND)
+      deallocate(RCFE)
+      deallocate(RCFI)
       deallocate(RC_LIST_SIZE)
       deallocate(RC_LIST_X)
       deallocate(RC_LIST_Y)
@@ -474,6 +500,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(NGPDATA)
       deallocate(GPDATA)
       deallocate(CRCSTRA)
+      deallocate(ARCSTRA)
       deallocate(species_start)
       deallocate(species_end)
       deallocate(maxw)
@@ -618,6 +645,10 @@ c
         if (crcstra(is).ne.'N' .and. crcstra(is).ne.'S' .and.
      &      crcstra(is).ne.'W' .and. crcstra(is).ne.'E') targsp(is,:)=-1
       end do
+
+      arcstra = crcstra
+      arcstart = rcstart
+      arcend = arcend
 
 *   ..test input
       call xertst (0.le.minval(track_index).and.
@@ -1118,7 +1149,8 @@ c.. Test consistency with physical edges within the computational domain
       type(mapping), intent(inout) :: m
       integer ns
       logical dotest
-      integer is, ic, ix, istra, i, j, k, n, ii(1), itrack
+      integer is, ic, ix, istra, i, j, k, n, ii(1), itrack,
+     >        noss, instra, iss, indss, idb, nrcl
       logical found, side
       intrinsic mod
       real (kind=R8) hlp
@@ -1143,6 +1175,37 @@ c.. Test consistency with physical edges within the computational domain
       else
         call xerrab ('No '//trim(filename))
       endif
+#ifndef CFLABEL
+      if (nstrai > 0) then
+        
+        m%nRc = nstrai
+        m%mxnRc = count(m%fcLbl /= 0)
+        call alloc_mapping_rc (m)
+        m%rcFcP = 0
+        
+        open (newunit=idb,file='debug_neutrals.out')
+        instra = 0
+        do istra = 1, nstrai
+          if (crcstra(istra) == 'A') then
+            nrcl = 0
+            m%rcFcP(istra,1) = instra +1 
+            noss = rcend(istra) - rcstart(istra) + 1
+            do iss = 1, noss
+              indss = rcstart(istra)+iss-1
+              write (*,*) ' surface index ',indss
+! find all faces belonging to surface structure INDSS
+              call find_faces (indss, instra, nrcl, 
+     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
+            end do              ! iss	 
+            m%rcFcP(istra,2) = nrcl
+         elseif ((crcstra(istra) /= 'T') .and. (crcstra(istra) /= 'V')
+     >      .and. (crcstra(istra) /= 'C')) then      
+            call xerrab ('CRCSTRA /= ACTV ')
+          endif
+        end do
+        close(idb)
+      end if
+#endif      
 
       if (any(rc_list_size > 0))
      .  call xerrab 
@@ -1194,6 +1257,10 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
       else
         nstrat = 0
       endif
+
+      arcstra = crcstra
+      arcstart = rcstart
+      arcend = arcend    
 c
       if(chemical_erosion_redep_fac.ne.1.0_R8)
      * write(*,*)
@@ -1790,9 +1857,9 @@ c.. Test consistency with physical edges within the computational domain
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
       type (mapping), intent (inout) :: m
 
-      m%nRc   = nstrat  ! number of recycling boundaries
+      m%nRc   = nstrai  ! number of recycling boundaries
       m%mxnRc = 0       ! number of cells with imposed recycling
-      do istra = 1, nstrat
+      do istra = 1, nstrai
         rcs(istra) = rcstart(istra)
         rce(istra) = rcend(istra)
         ! exclude corner cells if present
@@ -1821,7 +1888,7 @@ c.. Test consistency with physical edges within the computational domain
       call alloc_mapping_rc (m)
 
       instra = 0 ! index in rcCv
-      do istra = 1, nstrat
+      do istra = 1, nstrai
         m%rcCvP(istra,1) = instra + 1
         m%rcCvP(istra,2) = rcl(istra)
         if (crcstra(istra).eq.'S') then
@@ -1872,7 +1939,7 @@ c.. Test consistency with physical edges within the computational domain
       enddo 
 
       open (newunit=iout,file='mapping_rc.testout')
-      write (iout,*) 'nstrat =',m%nRc
+      write (iout,*) 'nstrai =',m%nRc
       write (iout,'(a,/(10i6))') 'rcCvP(1) ',
      .      (m%rcCvP(istra,1),istra=1,m%nRc)
       write (iout,'(a,/(10i6))') 'rcCvP(2) ',
@@ -1901,13 +1968,15 @@ c.. Test consistency with physical edges within the computational domain
       integer :: nx, ny, ns, istra, istrac, instra,
      .           noss, iss, indss, i, idb
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
+      integer :: minlbl(nstrat), maxlbl(nstrat)
+      character(1) :: lchar(nstrat)
       type (mapping), intent (inout) :: m
       type (geometry), intent (inout) :: g
 
-      m%nRc   = nstrat  ! number of recycling boundaries
+      m%nRc   = nstrai  ! number of recycling boundaries
       m%mxnRc = 0       ! number of cells with imposed recycling
 
-      do istra = 1, nstrat
+      do istra = 1, nstrai
         rcs(istra) = rcstart(istra)
         rce(istra) = rcend(istra)
 #ifdef CFLAGS
@@ -1949,8 +2018,13 @@ cwdk also need to correct for degenerate faces?
       call alloc_mapping_rc (m)
       open (newunit=idb,file='recyc.out')
 
+      minlbl = huge(1)
+      maxlbl = -huge(1)
+      lchar = ' '
+      lchar(1:nstrai) = crcstra(1:nstrai)
+
       instra = 0 ! index in rcCv
-      do istra = 1, nstrat
+      do istra = 1, nstrai
         m%rcFcP(istra,1) = instra + 1
         m%rcFcP(istra,2) = rcl(istra)
         if (crcstra(istra).eq.'S') then
@@ -1959,51 +2033,92 @@ cwdk also need to correct for degenerate faces?
             m%rcFc(instra) = m%cvFc(
      >         m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1))    ! number of the corresponding domain face
             m%rcFcOr(instra) = -1.0_R8
+            minlbl(istra) = min(minlbl(istra),m%fcLbl(m%rcFc(instra)))
+            maxlbl(istra) = max(maxlbl(istra),m%fcLbl(m%rcFc(instra)))
+            lchar(istra) = 'A'
           enddo
+          rcfe(istra) = 0.0_R8
+          rcfi(istra) = 2.0_R8
         elseif (crcstra(istra).eq.'N') then
           do istrac = 1, rcl(istra)
             instra = instra + 1
             m%rcFc(instra) = m%cvFc(
      >         m%cvFcP(m%imapCv(rcs(istra)+istrac-1,rcpos(istra)),1))    ! number of the corresponding domain face
             m%rcFcOr(instra) = 1.0_R8
+            minlbl(istra) = min(minlbl(istra),m%fcLbl(m%rcFc(instra)))
+            maxlbl(istra) = max(maxlbl(istra),m%fcLbl(m%rcFc(instra)))
+            lchar(istra) = 'A'
           enddo
+          rcfe(istra) = 0.0_R8
+          rcfi(istra) = 2.0_R8
         elseif (crcstra(istra).eq.'W') then
           do istrac = 1, rcl(istra)
             instra = instra + 1
             m%rcFc(instra) = m%cvFc(
      >         m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1))    ! number of the corresponding domain face
             m%rcFcOr(instra) = -1.0_R8
+            minlbl(istra) = min(minlbl(istra),m%fcLbl(m%rcFc(instra)))
+            maxlbl(istra) = max(maxlbl(istra),m%fcLbl(m%rcFc(instra)))
+            lchar(istra) = 'A'
           enddo
+          rcfe(istra) = 0.5_R8
+          rcfi(istra) = 3.0_R8
         elseif (crcstra(istra).eq.'E') then 
           do istrac = 1, rcl(istra)
             instra = instra + 1
             m%rcFc(instra) = m%cvFc(
      >         m%cvFcP(m%imapCv(rcpos(istra),rcs(istra)+istrac-1),1))    ! number of the corresponding domain face
             m%rcFcOr(instra) = 1.0_R8
+            minlbl(istra) = min(minlbl(istra),m%fcLbl(m%rcFc(instra)))
+            maxlbl(istra) = max(maxlbl(istra),m%fcLbl(m%rcFc(instra)))
+            lchar(istra) = 'A'
           enddo
+          rcfe(istra) = 0.5_R8
+          rcfi(istra) = 3.0_R8
 #ifdef CFLAGS
         elseif (crcstra(istra).eq.'A') then 
+          minlbl(istra) = rcstart(istra)
+          maxlbl(istra) = rcend(istra)
+          lchar(istra) = 'A'
           rcl(istra) = 0
           noss = rcend(istra) - rcstart(istra) + 1
 	  do iss = 1, noss
 	    indss = rcstart(istra)+iss-1
             write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
-            call find_faces (indss, instra, nx, ny, ns, rcl(istra), 
-     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, g, idb)
+            call find_faces (indss, instra, rcl(istra), 
+     >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
 	  end do  ! iss	 
           m%rcFcP(istra,2) = rcl(istra) 
+          rcfe(istra) = 0.5_R8
+          rcfi(istra) = 3.0_R8
 #endif
         else
 !          call xerrab ('conv_rcparms -- wrong CRCSTRA')
         endif
 ! for check in rc_to_struct
+#ifdef WG_RM
         nrcfaces(istra) = rcl(istra)
         rc_faces(1:rcl(istra),istra) =
      .     m%rcFc(m%rcFcP(istra,1):m%rcFcP(istra,1)+m%rcFcP(istra,2)-1)
-      enddo     
+#endif      
+      enddo
       close (idb)
 
+      arcstra(1:nstrai) = lchar(1:nstrai)
+      where (minlbl == huge(1))
+        minlbl = 0
+      end where
+      where (maxlbl == -huge(1))
+        maxlbl = 0
+      end where
+      arcstart(1:nstrai) = minlbl(1:nstrai)
+      arcend(1:nstrai) = maxlbl(1:nstrai)
+
+      if (crcstra(nstrai) == 'T') then
+        arcstart(nstrai) = 0
+        arcend(nstrai) = 0
+      end if
       return
       end subroutine conv_rcparms
 
@@ -2015,26 +2130,30 @@ cwdk also need to correct for degenerate faces?
       integer :: iout, ian, ien, i
 
       m%nRc = nstrai
-      m%mxnRc = sum(nrcfaces(1:nstrai))       ! number of cells with imposed stratum
+!pb   m%mxnRc = sum(nrcfaces(1:nstrai))       ! number of cells with imposed stratum
+      m%mxnRc = sum(m%rcFcP(1:nstrai,2))       ! number of cells with imposed stratum
 
       call alloc_mapping_rc(m)
 
       instra = 0 ! index in rcCv
       do istra = 1,m%nRc
         m%rcCvP(istra,1) = instra + 1
-        m%rcCvP(istra,2) = nrcfaces(istra)
+!pb     m%rcCvP(istra,2) = nrcfaces(istra)
+        m%rcCvP(istra,2) = m%rcFcp(istra,2)
         m%rcFcP(istra,1) = instra + 1
-        m%rcFcP(istra,2) = nrcfaces(istra)
-        do istrac = 1, nrcfaces(istra)
+!pb     m%rcFcP(istra,2) = nrcfaces(istra)
+!pb     do istrac = 1, nrcfaces(istra)
+        do istrac = 1, m%rcFcp(istra,2)
           instra = instra + 1
-          ifc = rc_faces(istrac,istra)
+!pb       ifc = rc_faces(istrac,istra)
+          ifc = m%rcFc(m%rcFcP(istra,1)+istrac-1)
           ic1 = min(m%fcCv(ifc,1), m%fcCv(ifc,2))
           ic2 = max(m%fcCv(ifc,1), m%fcCv(ifc,2))
           if ((ic1 <= m%nCi) .and. (ic2 >m%nCi)) then
             m%rcCv(instra,1) = ic2
             m%rcCv(instra,2) = ic1
-            m%rcFcOr(instra) = rc_face_ori(istrac,istra)
-            m%rcFc(instra) = ifc
+!pb         m%rcFcOr(instra) = rc_face_ori(istrac,istra)
+!pb         m%rcFc(instra) = ifc
           else
             call xerrab('rc_to_struct -- problem with boundary face') 
           end if
@@ -2082,9 +2201,19 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,i0)') 'EIRENE_MOD = ',eirene_mod
 
       write (iout,'(1x,a,i0)') 'NSTRAI     = ',m%nRc
-      write (iout,'(1x,a,(1x,T17,10(2x,4a1)))') 
-     .       'CRCSTRA = ',(ap,crcstra(istra),ap,',',istra=1,m%nRc)
+      write (iout,'(1x,a,(1x,T14,10(2x,4a1)))') 
+     .       'CRCSTRA = ',(ap,arcstra(istra),ap,',',istra=1,m%nRc)
 
+#ifndef CFLABEL
+      write(iout,'(1x,a,(1x,T14,10(i5,a1)))')
+     .       'RCSTART =  ',(arcstart(istra),',',istra=1,m%nRc)
+      write(iout,'(1x,a,(1x,T14,10(i5,a1)))')
+     .       'RCEND  =  ',(arcend(istra),',',istra=1,m%nRc)
+      write(iout,'(1x,a,(1x,T14,10(f6.2,a1,1x)))')
+     .       'RCFE  =  ',(rcfe(istra),',',istra=1,m%nRc)
+      write(iout,'(1x,a,(1x,T14,10(f6.2,a1,1x)))')
+     .       'RCFI  =  ',(rcfi(istra),',',istra=1,m%nRc)
+#else      
       write (iout,'(1x,a,(1x,T17,10(1x,i7,a1)))') 
      .       'NRCFACES =',(m%rcFcP(istra,2),',',istra=1,m%nRc)
       do istra = 1, m%nRc
@@ -2102,7 +2231,8 @@ cwdk also need to correct for degenerate faces?
      .    write (iout,'(1x,a,i2,a,(1x,T20,10(f6.2,a1,1x)))') 
      .    'RC_FACE_ORI(1,',istra,')= ',(m%rcFcOr(i),',',i=ian,ien)
       end do
-
+#endif
+ 
       do istra = 1, m%nRc
         write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
      .    'recyc(0,',istra,')= ',(recyc(is,istra),',',is=0,ns-1)
