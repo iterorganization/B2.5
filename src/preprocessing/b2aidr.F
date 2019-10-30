@@ -627,6 +627,8 @@
         call sfill (n2*4, 0.0_R8, vadia(-1,-1,0,0,is), 1)
         call sfill (n2*4, 0.0_R8, wadia(-1,-1,0,0,is), 1)
         call sfill (n2*4, 0.0_R8, vaecrb(-1,-1,0,0,is), 1)
+        call sfill (n2*4, 0.0_R8, veecrb(-1,-1,0,0), 1)
+        call sfill (n2*4, 0.0_R8, vedia(-1,-1,0,0), 1)
        enddo
        do is = 0, ns-1
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
