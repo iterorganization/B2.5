@@ -627,8 +627,6 @@
         call sfill (n2*4, 0.0_R8, vadia(-1,-1,0,0,is), 1)
         call sfill (n2*4, 0.0_R8, wadia(-1,-1,0,0,is), 1)
         call sfill (n2*4, 0.0_R8, vaecrb(-1,-1,0,0,is), 1)
-        call sfill (n2*4, 0.0_R8, veecrb(-1,-1,0,0), 1)
-        call sfill (n2*4, 0.0_R8, vedia(-1,-1,0,0), 1)
        enddo
        do is = 0, ns-1
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
@@ -709,12 +707,12 @@
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
        enddo
        call b2xpne_old (nx, ny, ns, rza, na, zero, ne)             !srv 20.12.18
+       call sfill (n2*4, 0.0_R8, veecrb, 1)                        !srv 20.12.18
+       call sfill (n2*4, 0.0_R8, vedia, 1)                         !srv 20.12.18
 *   ..initialise te, ti, po
        call sfill (n2, ttini*ev, te, 1)
        call sfill (n2, ttini*ev, ti, 1)
        call sfill (n2, 3.1_R8*ttini, po, 1)
-       call sfill (n2*4, 0.0_R8, veecrb, 1)                     !srv 20.12.18
-       call sfill (n2*4, 0.0_R8, vedia, 1)                      !srv 20.12.18
 *   ..initialise fluxes
        call sfill (n2*4*ns, 0.0_R8, fna, 1)
        call sfill (n2*4*ns, 0.0_R8, fna_mdf, 1)
