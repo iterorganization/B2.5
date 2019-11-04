@@ -17,7 +17,7 @@
         ll=indx(i)
         sum=b(ll)
         b(ll)=b(i)
-        if (ii.ne.-1)then
+        if (ii.ne.-1) then
           do j=ii,i-1
             sum=sum-a(i,j)*b(j)
           enddo

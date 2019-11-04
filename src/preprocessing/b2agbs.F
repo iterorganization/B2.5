@@ -128,7 +128,7 @@
 
 *   ..copying over modified data
       cell_width = hx
-      cell_height = hy
+      cell_height(:,:) = hy(:,:)*qz(:,:,1)
 
 *   ..return
       call subend ()

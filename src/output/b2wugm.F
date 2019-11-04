@@ -397,7 +397,7 @@ cxpb
               endif
             endif
             if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
-              if (region(bottomix(ix,iy),bottomiy(ix,iy),0).ne.0)then
+              if (region(bottomix(ix,iy),bottomiy(ix,iy),0).ne.0) then
                 errors=errors+1
                 write(*,*) 'Bottom neighbour of dead cell ',ix,iy,
      .                     ' alive!'

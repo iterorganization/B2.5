@@ -351,13 +351,13 @@ c-----------------------------------------------------------------------
      &         (iclass.eq.6).or.(iclass.eq.7)) then
                 if(ndash_line.eq.1) then
                     lstan = .true.
-                elseif ((ndash_line.eq.2).and.lptn)then
+                elseif ((ndash_line.eq.2).and.lptn) then
                     lstan = .true.
-                elseif ((ndash_line.eq.2).and.(.not.lptn))then
+                elseif ((ndash_line.eq.2).and.(.not.lptn)) then
                     lres = .true.
-                elseif ((ndash_line.eq.3).and.lptn)then
+                elseif ((ndash_line.eq.3).and.lptn) then
                     lres = .true.
-                elseif ((ndash_line.eq.3).and.(.not.lptn))then
+                elseif ((ndash_line.eq.3).and.(.not.lptn)) then
                     write(i4unit(-1),2002) 'header lines faulty'
                     write(i4unit(-1),2003)
                     call xerrab ('Faulty header lines')
@@ -371,13 +371,13 @@ c-----------------------------------------------------------------------
      &             (iclass.eq.11).or.(iclass.eq.12)) then
                 if(ndash_line.eq.1) then
                     lstan = .true.
-                elseif ((ndash_line.eq.2).and.lptn)then
+                elseif ((ndash_line.eq.2).and.lptn) then
                     lstan = .true.
-                elseif ((ndash_line.eq.2).and.(.not.lptn))then
+                elseif ((ndash_line.eq.2).and.(.not.lptn)) then
                     lres = .true.
-                elseif ((ndash_line.eq.3).and.lptn)then
+                elseif ((ndash_line.eq.3).and.lptn) then
                     lres = .true.
-                elseif ((ndash_line.eq.3).and.(.not.lptn))then
+                elseif ((ndash_line.eq.3).and.(.not.lptn)) then
                     write(i4unit(-1),2002) 'header lines faulty'
                     write(i4unit(-1),2003)
                     call xerrab ('Faulty header lines')
@@ -607,7 +607,7 @@ c           if(lptn) then
                   iblmx = iblmx  + 1
                   if((iclass.eq.4).or.(iclass.eq.5).or.
      &               (iclass.eq.8).or.(iclass.eq.9).or.
-     &               (iclass.eq.10).or.(iclass.eq.11))then
+     &               (iclass.eq.10).or.(iclass.eq.11)) then
                       read(cstrgl,1003) isppr(iblmx),
      &                                  isstgr(iblmx)
                       ispbr(iblmx)=0
@@ -620,7 +620,7 @@ c           if(lptn) then
                   iblmx = iblmx  + 1
                   if((iclass.eq.4).or.(iclass.eq.5).or.
      &               (iclass.eq.8).or.(iclass.eq.9).or.
-     &               (iclass.eq.10).or.(iclass.eq.11))then
+     &               (iclass.eq.10).or.(iclass.eq.11)) then
                       read(cstrgl,1003) isppr(iblmx),
      &                                  isstgr(iblmx)
                       ispbr(iblmx)=0
@@ -650,7 +650,7 @@ c           if(lptn) then
               isppr(iblmx) = 1
               if((iclass.eq.4).or.(iclass.eq.5).or.
      &           (iclass.eq.8).or.(iclass.eq.9).or.
-     &           (iclass.eq.10).or.(iclass.eq.11))then
+     &           (iclass.eq.10).or.(iclass.eq.11)) then
                   ispbr(iblmx) = 0
               else
                   ispbr(iblmx) = 1
@@ -660,15 +660,15 @@ c----------------------------------------------
 c  get the donor mass for classes ccd and prc
 c----------------------------------------------
            dmass   = 0.0_R8
-           if((iclass.eq.3).or.(iclass.eq.5))then
+           if((iclass.eq.3).or.(iclass.eq.5)) then
               if((cstrgl(46:47). eq. 'mh').or.
      &           (cstrgl(46:47). eq. 'md')) then
                       read(cstrgl(49:52),'(f4.2)') dmass
               endif
-              if((dmass.gt.0.0_R8).and.(dnr_ams.eq.0.0_R8))then
+              if((dmass.gt.0.0_R8).and.(dnr_ams.eq.0.0_R8)) then
                   dnr_ams=dmass
                   ldmass = .true.
-              elseif((dmass.gt.0.0_R8).and.(dmass.eq.dnr_ams))then
+              elseif((dmass.gt.0.0_R8).and.(dmass.eq.dnr_ams)) then
                   continue
               else
                   ldmass  = .false.
@@ -1529,9 +1529,9 @@ c  final checks. level i+1 partition components should span
 c  partition i p-values
 c-----------------------------------------------------------------------
 c
-       if (nptnl.ge.2)then
+       if (nptnl.ge.2) then
            do i=2,nptnl
-             if(ncpta(i-1).ne.nptn(i))then
+             if(ncpta(i-1).ne.nptn(i)) then
                  write(i4unit(-1),1001) 'partition level',i,
      &                                  ' count incorrect'
                  write(i4unit(-1),1002)

@@ -54,7 +54,7 @@ c
      &   , DRCOFI )
 
 C
-        if (ifail .gt. 0)   then
+        if (ifail .gt. 0) then
           write (*,3003) ifail,is,iz0,iz1-1
  3003     format (
      >     ' >>> error in dhdata: ifail =',i3,/,
@@ -1092,7 +1092,7 @@ C
      &              (UIDLST .NE. UIDIN)  .OR.
      &              (GRPLST .NE. GRPIN)  .OR.
      &              (TYPLST .NE. TYPIN)  .OR.
-     &              (EXTLST .NE. EXTIN)      )  THEN
+     &              (EXTLST .NE. EXTIN)      ) THEN
 C
                   CALL E3FILE( IUNIT , IZ0IN , IZIN , IRCODE , DSNREQ )
                      IF (IRCODE .EQ. 0) THEN
@@ -2590,7 +2590,7 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
 C EXTRAPOLATE: LOW 'XOUT' VALUE  - IF EXTRAPOLATION SWITCHED ON
 C-----------------------------------------------------------------------
-               ELSEIF (XK .LE. XIN(1))   THEN
+               ELSEIF (XK .LE. XIN(1)) THEN
                   INTER     = 2
                   LINTRP(K) = .FALSE.
                   AGRL(2)   = 0.0_R8

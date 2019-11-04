@@ -47,7 +47,7 @@
             aamax=dum
           endif
         enddo
-        if (j.ne.imax)then
+        if (j.ne.imax) then
           do k=0,n
             dum=a(imax,k)
             a(imax,k)=a(j,k)
