@@ -1168,16 +1168,16 @@ contains
                      i = i + 1
                      edge_profiles%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                      edge_profiles%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-                     edge_profiles%ggd( time_sind )%ion( js )%element( i )%atoms_n = mlcmp(k,j)
+                     edge_profiles%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
                      do ii = 1, nsources
                         edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                         edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
                         edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%atoms_n = &
-                            &   mlcmp(k,j)
+                            &   micmp(k,is)
                      end do
                      edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                      edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-                     edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%atoms_n = mlcmp(k,j)
+                     edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
                   end if
                end do
                edge_profiles%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
@@ -1650,7 +1650,7 @@ contains
                 i = i + 1
                 radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                 radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-                radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%atoms_n = mlcmp(k,j)
+                radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
               end if
             end do
             radiation%process(4)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
