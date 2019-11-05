@@ -124,7 +124,7 @@ contains
     !! interface b2_IMAS_Transform_Data_B2_To_IDS instead.
     function b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetId,  &
             &   gmap, b2CellData, b2FaceData, b2VertexData ) result( idsdata )
-#if IMAS_MINOR_VERSION
+#if IMAS_MINOR_VERSION > 14
         type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else

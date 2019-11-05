@@ -932,7 +932,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                call print_wrong_flows(
      &              'After potential loop: fna(ions) at plates')
             endif
-            if(i.gt.potit) then
+            if(i.gt.potit.and.t0.gt.potok) then
               ierr=10
 cxpb
 cxpb          ierr=0     !testing forcing potit iterations
