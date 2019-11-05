@@ -958,7 +958,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
           i=i+1
         enddo
 
-        if(i.gt.potit) then                                              !srv 22.05.18
+        if(i.gt.potit.and.t0.gt.potok) then                              !srv 22.05.18
           ierr=10
           write(*,*) 'Potential equation not converging'
           call b2news_facdrift_fac_ExB_dec(nx,ny,ramp_slow)
