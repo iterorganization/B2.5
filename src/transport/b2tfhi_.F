@@ -63,8 +63,9 @@
      &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1)
 cpax      
       real (kind=R8) ::
-     *   flidia(nFc,0:1), facdriftm, tiv(nVx),                         !srv 25.01.02
-     *   nif(nFc), tif(nFc), nati2(nCv), dnati2(nFc,0:1)
+     *   flidia(nFc,0:1), facdriftm, tiv(nVx), niv(nVx),                !srv 25.01.02
+     *   nif(nFc), tif(nFc), nati2(nCv), nati2v(nVx),
+     *   dnati2(nFc,0:1), cddi(nFc,0:1)
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
@@ -120,178 +121,63 @@ cpax
        call b2xvsg (nFc, co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
       endif
 
-!WG_TODO      facdriftm = maxval(facdrift)
+*   ..set dummy arrays
+      dumm0 = 0.0_R8
+      dumm1 = 0.0_R8
+
+      facdriftm  = maxval(dv%facdrift)
       dv%fhiPSch = 0.0e0_R8                                                !srv 13.10.06
       dv%coni    = 0.0e0_R8                                                !srv 02.01.07
-#ifdef WG_TODO
+      dv%floi    = 0.0e0_R8
       if(facdriftm.ne.0.0e0_R8) then
-
        do is = 0, ns-1
         if(.not.is_neutral(is)) then
 
-*   ..precompute differences
-         wght = 1.0_R8
-         nati2=na(:,:,is)*ti*ti
-         call diff(nx, ny, hx, hy, wght, qs, nati2, dnati2)
+*   ..precompute face and vertex values of nati2
+         nati2 = pl%na(:,is)*pl%ti*pl%ti
+         call intvertex(nCv,nVx,mpg,geo%vxVol,nati2,nati2v)
+         call grad(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
+         call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,is),niv)
 
-*   ..compute P.Sch heat x-flux                                         !srv 13.10.06 {
-!      iy = -1
-!       do ix = -1, nx
-!         if(leftix(ix,iy).eq.-2) then
-!         fhiPSch(ix,iy,0,0)=0.0e0_R8
-!         else
-!          do is = 0, ns-1
-!           if(za(is) .ne. 0.0e0_R8) then
-!          fhiPSch(ix,iy,0,0) = fhiPSch(ix,iy,0,0) + 0.5e0_R8*(
-!     &    cddi(ix,topiy(ix,iy),1,1,is)*
-!     &    (na(ix,topiy(ix,iy),is)*ti(ix,topiy(ix,iy))**2-
-!     &                        na(ix,iy,is)*ti(ix,iy)**2)+
-!     &    cddi(leftix(ix,iy),topiy(ix,iy),1,1,is)*
-!     &     (na(leftix(ix,iy),topiy(ix,iy),is)*
-!     &      ti(leftix(ix,iy),topiy(ix,iy))**2
-!     &                 -na(leftix(ix,iy),iy,is)*ti(leftix(ix,iy),iy)**2)
-!     &                               )
-!           endif
-!          enddo
-!         endif
-!        enddo
-
-         do iy = 0, ny-1
-          do ix = -1, nx
-           if(leftix(ix,iy).eq.-2) then
-            fhiPSch(ix,iy,0,0:1) = 0.0e0_R8
-            coni(ix,iy,0,0:1,:) = 0.0e0_R8
-           else
-            ixl = leftix(ix,iy)
-            iyl = leftiy(ix,iy)
-            fhiPSch(ix,iy,0,0) = fhiPSch(ix,iy,0,0) + 0.25e0_R8*PSch*(
-     &       cddi(topix(ix,iy),topiy(ix,iy),1,1,is)*
-     &       dnati2(topix(ix,iy),topiy(ix,iy),1,1)+
-     &       cddi(topix(ixl,iyl),topiy(ixl,iyl),1,1,is)*
-     &       dnati2(topix(ixl,iyl),topiy(ixl,iyl),1,1)+
-     &       cddi(ixl,iyl,1,1,is)*
-     &       dnati2(ixl,iyl,1,1)+
-     &       cddi(ix,iy,1,1,is)*
-     &       dnati2(ix,iy,1,1)
-     &                               )
-cwdk computation of radial PSch flux on x-faces
-cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial flux components
-            fhiPSch(ix,iy,0,1) = fhiPsch(ix,iy,0,1) + 0.25e0_R8*PSch*(
-     &       cddi(topix(ix,iy),topiy(ix,iy),1,1,is)*
-     &       dnati2(topix(ix,iy),topiy(ix,iy),1,0)*
-     &       qs(topix(ix,iy),topiy(ix,iy),1)*
-     &      (hy(ix,iy) + hy(topix(ix,iy),topiy(ix,iy)))/
-     &      (hx(ix,iy) + hx(topix(ix,iy),topiy(ix,iy)))+
-     &       cddi(topix(ixl,iyl),topiy(ixl,iyl),1,1,is)*
-     &       dnati2(topix(ixl,iyl),topiy(ixl,iyl),1,0)*
-     &       qs(topix(ixl,iyl),topiy(ixl,iyl),1)*
-     &      (hy(ixl,iyl) + hy(topix(ixl,iyl),topiy(ixl,iyl)))/
-     &      (hx(ixl,iyl) + hx(topix(ixl,iyl),topiy(ixl,iyl)))+
-     &       cddi(ixl,iyl,1,1,is)*
-     &       dnati2(ixl,iyl,1,0)*qs(ixl,iyl,1)*
-     &      (hy(ixl,iyl) + hy(bottomix(ixl,iyl),bottomiy(ixl,iyl)))/
-     &      (hx(ixl,iyl) + hx(bottomix(ixl,iyl),bottomiy(ixl,iyl)))+
-     &       cddi(ix,iy,1,1,is)*
-     &       dnati2(ix,iy,1,0)*qs(ix,iy,1)*
-     &      (hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &      (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))
-     &                               )
-            coni(ix,iy,0,0,1) = coni(ix,iy,0,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
-     *               cddi(ix,iy,1,1,is)*na(ix,iy,is)*ti(ix,iy)
-            coni(ix,iy,0,1,1) = -coni(ix,iy,0,0,1)
-            coni(ix,iy,0,0,2) = coni(ix,iy,0,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
-     &       cddi(ix,iy,1,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
-     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
-            coni(ix,iy,0,1,2) = -coni(ix,iy,0,0,2)
-           endif
-          enddo
-         enddo
-
-!      iy = ny
-!       do ix = -1, nx
-!         if(leftix(ix,iy).eq.-2) then
-!         fhiPSch(ix,iy,0,0)=0.0e0_R8
-!         else
-!          do is = 0, ns-1
-!          fhiPSch(ix,iy,0,0) = fhiPSch(ix,iy,0,0) + 0.5e0_R8*(
-!     &     cddi(leftix(ix,iy),iy,1,1,is)*
-!     &    (na(leftix(ix,iy),iy,is)*ti(leftix(ix,iy),iy)**2
-!     &                         -na(leftix(ix,iy),bottomiy(ix,iy),is)*
-!     &                            ti(leftix(ix,iy),bottomiy(ix,iy))**2)+
-!     &     cddi(ix,iy,1,1,is)*
-!     &    (na(ix,iy,is)*ti(ix,iy)**2
-!     &             -na(ix,bottomiy(ix,iy),is)*ti(ix,bottomiy(ix,iy))**2)
-!     &                               )
-!          enddo
-!         endif
-!        enddo
-
-*   ..compute P.Sch y-flux
-         iy = -1
-         fhiPSch(:,iy,1,0:1)=0.0e0_R8
-         do iy = 0, ny
-          do ix = -1, nx
-!          if(leftix(ix,iy).eq.-2) then
-!          fhiPSch(ix,iy,1,1) = fhiPSch(ix,iy,1,1) - 0.5e0_R8*(
-!     &     cddi(rightix(ix,iy),iy,0,0,is)*
-!     &     (na(rightix(ix,iy),iy,is)*ti(rightix(ix,iy),iy)**2
-!     &                                     -na(ix,iy,is)*ti(ix,iy)**2)+
-!     &     cddi(rightix(ix,iy),bottomiy(ix,iy),0,0,is)*
-!     &     (na(rightix(ix,iy),bottomiy(ix,iy),is)*
-!     &             ti(rightix(ix,iy),bottomiy(ix,iy))**2
-!     &           -na(ix,bottomiy(ix,iy),is)*ti(ix,bottomiy(ix,iy))**2)
-!     &                               )
-!          elseif(rightix(ix,iy).eq.nx+1) then
-!          fhiPSch(ix,iy,1,1) = fhiPSch(ix,iy,1,1) - 0.5e0_R8*(
-!     &     cddi(ix,iy,0,0,is)*(na(ix,iy,is)*ti(ix,iy)**2
-!     &                -na(leftix(ix,iy),iy,is)*ti(leftix(ix,iy),iy)**2)+
-!     &     cddi(ix,bottomiy(ix,iy),0,0,is)*
-!     &     (na(ix,bottomiy(ix,iy),is)*ti((ix),bottomiy(ix,iy))**2
-!     &                         -na(leftix(ix,iy),bottomiy(ix,iy),is)*
-!     &                            ti(leftix(ix,iy),bottomiy(ix,iy))**2)
-!     &                               )
-!          else
-           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-            fhiPSch(ix,iy,1,0:1) = 0.0e0_R8
-            coni(ix,iy,1,0:1,:)  = 0.0e0_R8
-           else
-            ixb = bottomix(ix,iy)
-            iyb = bottomiy(ix,iy)
-            fhiPSch(ix,iy,1,1) = fhiPSch(ix,iy,1,1) - 0.25e0_R8*PSch*(
-     &       cddi(rightix(ix,iy),rightiy(ix,iy),0,0,is)*
-     &        dnati2(rightix(ix,iy),rightiy(ix,iy),0,0)+
-     &       cddi(ix,iy,0,0,is)*dnati2(ix,iy,0,0)+
-     &       cddi(bottomix(ix,iy),bottomiy(ix,iy),0,0,is)*
-     &        dnati2(bottomix(ix,iy),bottomiy(ix,iy),0,0)+
-     &       cddi(rightix(ixb,iyb),rightiy(ixb,iyb),0,0,is)*
-     &        dnati2(rightix(ixb,iyb),rightiy(ixb,iyb),0,0)
-     &                               )
-            coni(ix,iy,1,1,1) = coni(ix,iy,1,1,1)+0.5e0_R8*PSch*     ! 0.25*2 !srv 02.01.07 {
-     &                      cddi(ix,iy,0,0,is)*na(ix,iy,is)*ti(ix,iy)
-            coni(ix,iy,1,1,2) = coni(ix,iy,1,1,2)+0.5e0_R8*PSch*     ! 0.25*2
-     &       cddi(ix,iy,0,0,is)*na(leftix(ix,iy),leftiy(ix,iy),is)*
-     &                        ti(leftix(ix,iy),leftiy(ix,iy))           !srv 02.01.07 }
-           endif
-          enddo
+*   ..compute P.Sch heat flux
+         dv%fhiPSch(:,0) =  2.5_R8*PSch*dv%facdrift*co%cddi(:,0,is)*
+     &    dnati2(:,1)
+         dv%fhiPSch(:,1) = -2.5_R8*PSch*dv%facdrift*co%cddi(:,1,is)*
+     &    dnati2(:,0)
+*     ..linearization coefficients for P.Sch flows
+         cddi(:,0) = -5.0_R8*PSch*dv%facdrift*co%cddi(:,1,is)
+         cddi(:,1) =  5.0_R8*PSch*dv%facdrift*co%cddi(:,0,is)
+         call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cddi,floi0,coni0)
+         do iFc = 1, nFc
+          dv%floi(iFc,0)   = dv%floi(iFc,0) + 
+     &       0.5_R8*floi0(iFc,0)*
+     &      (pl%na(mpg%fcCv(iFc,1),is)+pl%na(mpg%fcCv(iFc,2),is)) -
+     &       coni0(iFc,0)*
+     &      (pl%na(mpg%fcCv(iFc,2),is)-pl%na(mpg%fcCv(iFc,1),is))
+          dv%floi(iFc,1)   = dv%floi(iFc,1) + 
+     &       0.5_R8*floi0(iFc,1)*
+     &      (niv(mpg%fcVx(iFc,1))+niv(mpg%fcVx(iFc,2))) -
+     &       coni0(iFc,1)*
+     &      (niv(mpg%fcVx(iFc,2))-niv(mpg%fcVx(iFc,1)))
+!wdk      For now, directly add these contributions into coni(,,0),
+!wdk      so they are directly added into the stencil.
+!wdk      Might need to move back to dv%coni(,,1) and dedicated treatment
+!wdk      in b2ux9p if we decide to move away from inverse volume weighting
+!wdk      to compute vertex values of drifts!
+          dv%coni(iFc,0,0) = dv%coni(iFc,0,0) +
+     &       0.5_R8*coni0(iFc,0)*
+     &      (pl%na(mpg%fcCv(iFc,1),is)+pl%na(mpg%fcCv(iFc,2),is)) -
+     &       0.25_R8*floi0(iFc,0)*
+     &      (pl%na(mpg%fcCv(iFc,2),is)-pl%na(mpg%fcCv(iFc,1),is))
+          dv%coni(iFc,1,0) = dv%coni(iFc,1,0) +
+     &       0.5_R8*coni0(iFc,1)*
+     &      (niv(mpg%fcVx(iFc,1))+niv(mpg%fcVx(iFc,2))) -
+     &       0.25_R8*floi0(iFc,0)*
+     &      (niv(mpg%fcVx(iFc,2))-niv(mpg%fcVx(iFc,1)))
          enddo
         endif
        enddo
-
-       do iy = -1, ny
-        do ix = 0, nx
-         fhiPSch(ix,iy,:,:) =2.5e0_R8*fhiPSch(ix,iy,:,:)*facdrift(ix,iy)
-         coni(ix,iy,:,:,1:2) = coni(ix,iy,:,:,1:2)*facdrift(ix,iy)           !srv 02.01.07
-        enddo
-       enddo
-
-c  ..set null flux in guard cells  ?
-!      fhiPSch(-1, :,:,:)=0.0e0_R8    ! MODIFY for Double Case 
-!      fhiPSch(nx, :,1,:)=0.0e0_R8
-!      fhiPSch( :,-1,:,:)=0.0e0_R8
-!      fhiPSch( :,ny,0,:)=0.0e0_R8
       endif
-#endif
 
       wght   = 1.0_R8
       flidia = 0.0_R8                                                   !srv 25.01.02 {
@@ -358,8 +244,12 @@ c  ..set null flux in guard cells  ?
       dv%fhi_mdf(:,1)  = fhi0_mdf(:,1) - dv%fhiPSch(:,1)
 
 *   ..compute floi, coni
+      floi0 = dv%floi
+      coni0 = dv%coni(:,:,0)
       call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0_mdf,co%chci,
      &  dv%floi,dv%coni)
+      dv%floi = dv%floi + floi0
+      dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
 
 #ifdef WG_TODO
          if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 17.01.12

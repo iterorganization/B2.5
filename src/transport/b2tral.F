@@ -155,42 +155,21 @@
       call b2saxpy (nFc*2, 1.0_R8, csig0, 1, co%csig, 1)
       call b2saxpy (nFc*2, 1.0_R8, calf0, 1, co%calf, 1)
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
-      co%cddi = 0.0_R8
-#ifdef WG_DRIFTS
       do is = 0, ns-1
        if(.not.is_neutral(is)) then
-        do iy = -1, ny
-         do ix = -1, nx
-          if(leftix(ix,iy).ne.-2) then
-           cddi(ix,iy,0,0,is) =
-     &      +2.0e0_R8*(vol(leftix(ix,iy),leftiy(ix,iy))*
-     &         bzb(leftix(ix,iy),leftiy(ix,iy))
-     &         +vol(ix,iy)*bzb(ix,iy))/
-     &       ((hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
-     &        (hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy)))/
-     &        (rza(ix,iy,is)*qe)
-           cddi(ix,iy,0,1,is) = cddi(ix,iy,0,0,is)
-          endif
-         enddo
-        enddo
-
-        do iy = -1, ny
-         do ix = -1, nx
-          if(bottomiy(ix,iy).ne.-2) then
-           cddi(ix,iy,1,1,is) =
-     &       2.0e0_R8*(vol(bottomix(ix,iy),bottomiy(ix,iy))*
-     &         bzb(bottomix(ix,iy),bottomiy(ix,iy))
-     &         +vol(ix,iy)*bzb(ix,iy))/
-     &       ((hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))*
-     &        (hy(bottomix(ix,iy),bottomiy(ix,iy))+hy(ix,iy)))/
-     &        (rza(ix,iy,is)*qe)
-          endif
-         enddo
-        enddo
-
+        !wdk we use the newly-defined mode = 3 here, for consistency
+        !    with the computation of PSch-flows in b2tfnb and b2tfhe/i
+        !wdk note: factor 1/(qe*rza) might require more careful 
+        !wdk       treatment (check with other drifts in b2tfnb)
+        !wdk also: need to use BzB defined at faces, simular to fcBb?
+        call b2txcx (nCv, nFc, 3, geo, mpg, geo%fcVol, geo%fcS,
+     &   geo%cvBzb/(qe*rt%rza(:,is)), co%cddi(1,0,is))
+        call b2txcy (nCv, nFc, 3, geo, mpg, geo%fcVol, geo%fcS,
+     &   geo%cvBzb/(qe*rt%rza(:,is)), co%cddi(1,1,is))
+       else
+        co%cddi(:,:,is) = 0.0_R8
        endif 
       enddo                                                           !srv 13.10.06 }
-#endif
 *  ..check that we have some particle diffusion
       if (ncall.le.3) then                                            !srv 12.03.12 {
         do is = 0, ns-1

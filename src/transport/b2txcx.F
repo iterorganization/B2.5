@@ -23,7 +23,7 @@
 *   ..subprogram start-up calls
       call subini ('b2txcx')
 *   ..test mode
-      call xertst (-1.le.mode.and.mode.le.2,
+      call xertst (-1.le.mode.and.mode.le.3,
      &  'b2txcx--faulty argument mode')
 
 *   ..compute conx
@@ -64,6 +64,16 @@
      &   (geo%fcHc(iFc,1)*kapx(mpg%fcCv(iFc,1)) + 
      &    geo%fcHc(iFc,2)*kapx(mpg%fcCv(iFc,2)))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
+       enddo
+      else if (mode.eq.3) then
+*    ..use arithmetic averaging (drift formulation)
+       do iFc = 1, nFc
+        conx(iFc) = 
+     &    fcS(iFc)*geo%fcQalf(iFc,0)/
+     &   (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))*
+     &   (geo%fcVol(iFc,1)*kapx(mpg%fcCv(iFc,1)) + 
+     &    geo%fcVol(iFc,2)*kapx(mpg%fcCv(iFc,2)))/
+     &   (geo%fcVol(iFc,1) + geo%fcVol(iFc,2))
        enddo
       endif
 *   ..reset null regions

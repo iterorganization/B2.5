@@ -6,8 +6,6 @@
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_constants
-!      use b2mod_anomalous_transport
-!      use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2us_geo
@@ -78,9 +76,9 @@ csw 10oct2012
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 }
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
-     *   ehx(nFc), ehy(nFc), floe0(nFc,0:1), flomx, alfe0(nFc),
-     &  dia_cur, vis_par, vis_q, vdia_par,                    !srv 17.05.99 11.07.99
-     &  vis_per, floe0_mdf(nFc,0:1)                          !srv 22.11.99 13.10.06 17.06.09
+     *  ehx(nFc), ehy(nFc), floe0(nFc,0:1), cone0(nFc,0:1), flomx,
+     &  alfe0(nFc), dia_cur, vis_par, vis_q, vdia_par,                   !srv 17.05.99 11.07.99
+     &  vis_per, floe0_mdf(nFc,0:1)                                      !srv 22.11.99 13.10.06 17.06.09
       real (kind=R8) ::
      *    fch_ion_neutral, fch_anomalous, fch_inert,                     !srv 30.09.02 07.07.99
      *    fledia(nFc,0:1), c071(nFc)!,                                   !srv 22.11.99 25.01.02
@@ -233,12 +231,10 @@ c Drift terms
        w1=0.0e0_R8; w2=0.0e0_R8; w3=0.0e0_R8; w4=0.0e0_R8; w5=0.0e0_R8;
        w6=0.0e0_R8;
       endif                                                              !srv 16.09.02 }
-
-      call b2tepsch(nx, ny, ns, hx, hy, qs, facdrift, cddi, te, ne, 
-     .  cone, fhePSch)                                                   !srv 16.10.17
-
-      fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 #endif
+      call b2tepsch(nCv, nFc, nVx, ns, geo, mpg, dv%facdrift, co%cddi, 
+     &   pl%te, dv%ne, dv%floe, dv%cone, dv%fhePSch)                     !srv 16.10.17
+
 * ..compute parallel current
       call b2xehx (nCv, nFc, nVx, geo, mpg, pl%te, pl%po, dv%ne, ehx)    !srv 13.01.17 {
       call b2xehy (nCv, nFc, nVx, geo, mpg, pl%te, pl%po, dv%ne, ehy)    !srv 13.01.17
@@ -311,8 +307,12 @@ c Drift terms
      &  alfTeEh*co%calf(:,1)*tefh*ehy
 
 *   ..compute floe, cone
+      floe0 = dv%floe
+      cone0 = dv%cone(:,:,0)
       call calccoef(nCv,nFc,nVx,meth,geo,mpg,floe0_mdf,co%chce,
      &  dv%floe,dv%cone)
+      dv%floe        = dv%floe + floe0
+      dv%cone(:,:,0) = dv%cone(:,:,0) + cone0
 
 *   ..compute currents
       dv%fch = dv%fch_p + dv%fchin + dv%fchdia + dv%fchvispar + 

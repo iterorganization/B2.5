@@ -1,19 +1,19 @@
-      subroutine b2tepsch(nx, ny, ns, hx, hy, qs, facdrift, cddi, te, 
-     &                  ne, cone, fhePSch)
+      subroutine b2tepsch(nCv, nFc, nVx, ns, geo, mpg, facdrift, cddi,
+     &    te, ne, floe, cone, fhePSch)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nCv, nFc, nVx, ns
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     &  facdrift(-1:nx,-1:ny), cddi(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  te(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qs(-1:nx,-1:ny,0:1)
+     &  facdrift(nFc), cddi(nFc,0:1,0:ns-1), te(nCv), ne(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  cone(-1:nx,-1:ny,0:1,0:1,0:2),        !srv 02.01.07
-     &  fhePSch(-1:nx,-1:ny,0:1,0:1)          !srv 13.10.06
+     &  floe(nFc,0:1), cone(nFc,0:1,0:2), fhePSch(nFc,0:1)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -28,12 +28,13 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, ixl, iyl, ixb, iyb
+      integer iFc, is
       integer, save :: ncall = 0
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
-     &  facdriftm, nete2(-1:nx,-1:ny), dnete2(-1:nx,-1:ny,0:1,0:1),
-     &  wght(-1:nx,-1:ny)
+     &  facdriftm, nete2(nCv), nete2v(nVx), dnete2(nFc,0:1), nev(nVx),
+     &  floe0(nFc,0:1), cone0(nFc,0:1), cddi_eff(nFc,0:1),
+     &  dumm0(nFc,0:1)
 *-----------------------------------------------------------------------
 *.computation
 
@@ -44,176 +45,58 @@
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
       end if
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')   
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')   
       
-      fhePSch = 0.0e0_R8                                                 !srv 13.10.06
-      cone    = 0.0e0_R8                                                 !srv 02.01.07
+*   ..set dummy arrays
+      dumm0 = 0.0_R8
+
+      fhePSch   = 0.0e0_R8                                               !srv 13.10.06
+      cone      = 0.0e0_R8                                               !srv 02.01.07
+      floe      = 0.0e0_R8
       facdriftm = maxval(facdrift)
       if(facdriftm.ne.0.0e0_R8) then
-
-*   ..precompute differences
-        wght = 1.0_R8
-        nete2=ne*te*te
-        call diff(nx, ny, hx, hy, wght, qs, nete2, dnete2)
-
-*   ..compute P.Sch heat x-flux                                          !srv 13.10.06 {
-        do is = 0,ns-1                                                   !srv 12.05.11
+       do is = 0,ns-1                                                    !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
-!        is = ismain !  1                                                !srv 12.05.11
-!        iy = -1
-!        do ix = -1, nx
-!         if(leftix(ix,iy).eq.-2) then
-!          fhePSch(ix,iy,0)=0.0e0_R8
-!         else
-!          fhePSch(ix,iy,0)=-0.5e0_R8*(
-!     &     cddi(ix,topiy(ix,iy),1,is)*
-!     &     (ne(ix,topiy(ix,iy))*te(ix,topiy(ix,iy))**2-
-!     &                        ne(ix,iy)*te(ix,iy)**2)+
-!     &     cddi(leftix(ix,iy),topiy(ix,iy),1,is)*
-!     &      (ne(leftix(ix,iy),topiy(ix,iy))*
-!     &      te(leftix(ix,iy),topiy(ix,iy))**2
-!     &                    -ne(leftix(ix,iy),iy)*te(leftix(ix,iy),iy)**2)
-!     &                               )
-!          endif
-!         enddo
 
-         do iy = 0, ny-1
-          do ix = -1, nx
-           if(leftix(ix,iy).eq.-2) then
-            fhePSch(ix,iy,0,0:1)=0.0e0_R8
-           else
-            ixl = leftix(ix,iy)
-            iyl = leftiy(ix,iy)
-            fhePSch(ix,iy,0,0)=-0.25e0_R8*PSch*(
-     &       cddi(topix(ix,iy),topiy(ix,iy),1,1,is)*
-     &       dnete2(topix(ix,iy),topiy(ix,iy),1,1)+
-     &       cddi(topix(ixl,iyl),topiy(ixl,iyl),1,1,is)*
-     &       dnete2(topix(ixl,iyl),topiy(ixl,iyl),1,1)+
-     &       cddi(ixl,iyl,1,1,is)*
-     &       dnete2(ixl,iyl,1,1)+
-     &       cddi(ix,iy,1,1,is)*
-     &       dnete2(ix,iy,1,1)
-     &                               )
-cwdk computation of radial PSch flux on x-faces
-cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial flux components
-            fhePSch(ix,iy,0,1)=-0.25e0_R8*PSch*(
-     &       cddi(topix(ix,iy),topiy(ix,iy),1,1,is)*
-     &       dnete2(topix(ix,iy),topiy(ix,iy),1,0)*
-     &       qs(topix(ix,iy),topiy(ix,iy),1)*
-     &      (hy(ix,iy) + hy(topix(ix,iy),topiy(ix,iy)))/
-     &      (hx(ix,iy) + hx(topix(ix,iy),topiy(ix,iy)))+
-     &       cddi(topix(ixl,iyl),topiy(ixl,iyl),1,1,is)*
-     &       dnete2(topix(ixl,iyl),topiy(ixl,iyl),1,0)*
-     &       qs(topix(ixl,iyl),topiy(ixl,iyl),1)*
-     &      (hy(ixl,iyl) + hy(topix(ixl,iyl),topiy(ixl,iyl)))/
-     &      (hx(ixl,iyl) + hx(topix(ixl,iyl),topiy(ixl,iyl)))+
-     &       cddi(ixl,iyl,1,1,is)*
-     &       dnete2(ixl,iyl,1,0)*qs(ixl,iyl,1)*
-     &      (hy(ixl,iyl) + hy(bottomix(ixl,iyl),bottomiy(ixl,iyl)))/
-     &      (hx(ixl,iyl) + hx(bottomix(ixl,iyl),bottomiy(ixl,iyl)))+
-     &       cddi(ix,iy,1,1,is)*
-     &       dnete2(ix,iy,1,0)*qs(ix,iy,1)*
-     &      (hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &      (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))
-     &                               )
-            cone(ix,iy,0,0,1) = -0.5e0_R8*PSch*cddi(ix,iy,1,1,is)*  ! 0.25*2  !srv 02.01.07
-     *                                             ne(ix,iy)*te(ix,iy)
-            cone(ix,iy,0,1,1) = -cone(ix,iy,0,0,1)
-            cone(ix,iy,0,0,2) = -0.5e0_R8*PSch*cddi(ix,iy,1,1,is)*        ! 0.25*2  !srv 02.01.07
-     &                      ne(bottomix(ix,iy),bottomiy(ix,iy))*
-     &                      te(bottomix(ix,iy),bottomiy(ix,iy))
-            cone(ix,iy,0,1,2) = -cone(ix,iy,0,0,2)
-           endif
-          enddo
-         enddo
+*   ..precompute face and vertex values of nete2
+         nete2 = ne*te*te
+         call intvertex(nCv,nVx,mpg,geo%vxVol,nete2,nete2v)
+         call grad(nCv, nFc, nVx, 1, geo, mpg, nete2, nete2v, dnete2)
+         call intvertex(nCv,nVx,mpg,geo%vxVol,ne,nev)
 
-!         iy = ny
-!          do ix = -1, nx
-!           if(leftix(ix,iy).eq.-2) then
-!            fhePSch(ix,iy,0)=0.0e0_R8
-!           else
-!            fhePSch(ix,iy,0)=-0.5e0_R8*(
-!     &       cddi(leftix(ix,iy),iy,1,is)*
-!     &       (ne(leftix(ix,iy),iy)*te(leftix(ix,iy),iy)**2
-!     &                         -ne(leftix(ix,iy),bottomiy(ix,iy))*
-!     &                            te(leftix(ix,iy),bottomiy(ix,iy))**2)+
-!     &       cddi(ix,iy,1,is)*
-!     &       (ne(ix,iy)*te(ix,iy)**2
-!     &                -ne(ix,bottomiy(ix,iy))*te(ix,bottomiy(ix,iy))**2)
-!     &                               )
-!           endif
-!          enddo
-
-*   ..compute P.Sch y-flux
-         iy = -1
-         fhePSch(:,iy,1,0:1)=0.0e0_R8
-         do iy = 0, ny
-          do ix = -1, nx
-!           if(leftix(ix,iy).eq.-2) then
-!            fhePSch(ix,iy,1) = 0.5e0_R8*(
-!     &       cddi(rightix(ix,iy),iy,0,is)*
-!     &        (ne(rightix(ix,iy),iy)*te(rightix(ix,iy),iy)**2
-!     &                                        -ne(ix,iy)*te(ix,iy)**2)+
-!     &       cddi(rightix(ix,iy),bottomiy(ix,iy),0,is)*
-!     &       (ne(rightix(ix,iy),bottomiy(ix,iy))*
-!     &             te(rightix(ix,iy),bottomiy(ix,iy))**2
-!     &                -ne(ix,bottomiy(ix,iy))*te(ix,bottomiy(ix,iy))**2)
-!     &                               )
-!           elseif(rightix(ix,iy).eq.nx+1) then
-!            fhePSch(ix,iy,1) = 0.5e0_R8*(
-!     &       cddi(ix,iy,0,is)*
-!     &       (ne(ix,iy)*te(ix,iy)**2
-!     &                   -ne(leftix(ix,iy),iy)*te(leftix(ix,iy),iy)**2)+
-!     &       cddi(ix,bottomiy(ix,iy),0,is)*
-!     &       (ne(ix,bottomiy(ix,iy))*te((ix),bottomiy(ix,iy))**2
-!     &                         -ne(leftix(ix,iy),bottomiy(ix,iy))*
-!     &                            te(leftix(ix,iy),bottomiy(ix,iy))**2)
-!     &                               )
-!           else
-           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-            fhePSch(ix,iy,1,0:1) = 0.0e0_R8
-           else
-            ixb = bottomix(ix,iy)
-            iyb = bottomiy(ix,iy)
-            fhePSch(ix,iy,1,1) = 0.25e0_R8*PSch*(
-     &       cddi(rightix(ix,iy),rightiy(ix,iy),0,0,is)*
-     &       dnete2(rightix(ix,iy),rightiy(ix,iy),0,0)+
-     &       cddi(ix,iy,0,0,is)*
-     &       dnete2(ix,iy,0,0)+
-     &       cddi(bottomix(ix,iy),bottomiy(ix,iy),0,0,is)*
-     &       dnete2(bottomix(ix,iy),bottomiy(ix,iy),0,0)+
-     &       cddi(rightix(ixb,iyb),rightiy(ixb,iyb),0,0,is)*
-     &       dnete2(rightix(ixb,iyb),rightiy(ixb,iyb),0,0)
-     &                               )
-            cone(ix,iy,1,1,1) = -0.5e0_R8*PSch*cddi(ix,iy,0,0,is)*     ! 0.25*2 !srv 02.01.07 {
-     &                                      ne(ix,iy)*te(ix,iy)
-            cone(ix,iy,1,1,2) = -0.5e0_R8*PSch*cddi(ix,iy,0,0,is)*     ! 0.25*2
-     &                        ne(leftix(ix,iy),leftiy(ix,iy))*
-     &                        te(leftix(ix,iy),leftiy(ix,iy))          !srv 02.01.07 }
-           endif
-          enddo
-         enddo
-
-         do iy = -1, ny
-          do ix = -1, nx                                               !srv 26.11.02 {
-           fhePSch(ix,iy,:,:) = 
-     &       2.5e0_R8*fhePSch(ix,iy,:,:)*facdrift(ix,iy)
-           cone(ix,iy,:,:,1:2) = cone(ix,iy,:,:,1:2)*facdrift(ix,iy)   !srv 02.01.07
-!           cone(ix,iy,:,2) = cone(ix,iy,:,2)*facdrift(ix,iy)          !srv 02.01.07
-          enddo
+*   ..compute P.Sch heat flux
+         fhePSch(:,0) =  2.5_R8*PSch*facdrift*cddi(:,0,is)*dnete2(:,1)
+         fhePSch(:,1) = -2.5_R8*PSch*facdrift*cddi(:,1,is)*dnete2(:,0)
+*     ..linearization coefficients for P.Sch flows
+         cddi_eff(:,0) = -5.0_R8*PSch*facdrift*cddi(:,1,is)
+         cddi_eff(:,1) =  5.0_R8*PSch*facdrift*cddi(:,0,is)
+         call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cddi_eff,floe0,cone0)
+         do iFc = 1, nFc
+          floe(iFc,0)   = 0.5_R8*floe0(iFc,0)*
+     &      (ne(mpg%fcCv(iFc,1))+ne(mpg%fcCv(iFc,2))) -
+     &       cone0(iFc,0)*
+     &      (ne(mpg%fcCv(iFc,2))-ne(mpg%fcCv(iFc,1)))
+          floe(iFc,1)   = 0.5_R8*floe0(iFc,1)*
+     &      (nev(mpg%fcVx(iFc,1))+nev(mpg%fcVx(iFc,2))) -
+     &       cone0(iFc,1)*
+     &      (nev(mpg%fcVx(iFc,2))-nev(mpg%fcVx(iFc,1)))
+!wdk      For now, directly add these contributions into cone(,,0),
+!wdk      so they are directly added into the stencil.
+!wdk      Might need to move back to cone(,,1) and dedicated treatment
+!wdk      in b2ux9p if we decide to move away from inverse volume weighting
+!wdk      to compute vertex values of drifts!
+          cone(iFc,0,0) = 0.5_R8*cone0(iFc,0)*
+     &      (ne(mpg%fcCv(iFc,1))+ne(mpg%fcCv(iFc,2))) -
+     &       0.25_R8*floe0(iFc,0)*
+     &      (ne(mpg%fcCv(iFc,2))-ne(mpg%fcCv(iFc,1)))
+          cone(iFc,1,0) = 0.5_R8*cone0(iFc,1)*
+     &      (nev(mpg%fcVx(iFc,1))+nev(mpg%fcVx(iFc,2))) -
+     &       0.25_R8*floe0(iFc,0)*
+     &      (nev(mpg%fcVx(iFc,2))-nev(mpg%fcVx(iFc,1)))
          enddo
         endif
        enddo
-
-c  ..set null flux in guard cells  ?
-!      fhePSch(-1, :,:)=0.0e0_R8    ! MODIFY for Double Case 
-!      fhePSch(nx, :,1)=0.0e0_R8
-!      fhePSch( :,-1,:)=0.0e0_R8
-!      fhePSch( :,ny,0)=0.0e0_R8
       endif
 * ..return
       ncall = ncall+1

@@ -23,7 +23,7 @@
 *   ..subprogram start-up calls
       call subini ('b2txcy')
 *   ..test mode
-      call xertst (-1.le.mode.and.mode.le.2,
+      call xertst (-1.le.mode.and.mode.le.3,
      &  'b2txcy--faulty argument mode')
 
 cwdk factor 0.5 (vs. 2.0 in original code)!
@@ -67,6 +67,16 @@ cwdk note that fcHc is typically hx/2 or hy/2!
      &   (geo%fcHc(iFc,1)*kapy(mpg%fcCv(iFc,1)) + 
      &    geo%fcHc(iFc,2)*kapy(mpg%fcCv(iFc,2)))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
+       enddo
+      else if (mode.eq.3) then
+*    ..use arithmetic averaging (drift formulation)
+       do iFc = 1, nFc
+        cony(iFc) = 
+     &    fcS(iFc)*geo%fcQalf(iFc,1)/
+     &   (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))*
+     &   (geo%fcVol(iFc,1)*kapy(mpg%fcCv(iFc,1)) + 
+     &    geo%fcVol(iFc,2)*kapy(mpg%fcCv(iFc,2)))/
+     &   (geo%fcVol(iFc,1) + geo%fcVol(iFc,2))
        enddo
       endif
 *   ..reset null regions
