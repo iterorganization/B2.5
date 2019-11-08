@@ -549,7 +549,7 @@ c*** recyc     : fudge factors for the sources in B2
       do istrai = 1, nstrat !{
         flux_scale(istrai)=1.0_R8
 
-        if(index('WESN',crcstra(istrai)) > 0) then
+        if(index('WESNA',crcstra(istrai)) > 0) then
           do is = species_start(istrai),species_end(istrai) !{
             if(.not.is_neutral(is)) then !{
               do i=1,mpg%rcFcP(istrai,2) !{
