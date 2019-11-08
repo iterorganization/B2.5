@@ -1207,10 +1207,11 @@ c.. Test consistency with physical edges within the computational domain
       integer i, j, is, ij, jj, iatm, p
       character(len=16) :: ion_label, mol_label
       character(len=2) :: compname
-      logical match_found, nonumber, streql, isadigit
+      logical match_found, nonumber, streql, isadigit, todo
       external isadigit, streql
 
       do is = 1, nnioni
+        todo = lionscl(is).eq.0
         ion_label = adjustl(textin(is-1))
         j = 1
         match_found = .false.
@@ -1224,6 +1225,7 @@ c.. Test consistency with physical edges within the computational domain
         end do
         if (match_found) then
           micmp(1:nnatmi,is) = mlcmp(1:nnatmi,j)
+          if (lmolscl(j).ne.0 .and. todo) lionscl(is) = lmolscl(j)
         else ! No matching molecule, must extract composition from ion name
              ! Set default value for variables marking the position of '+'
           p = index(ion_label,'+')
@@ -1261,6 +1263,7 @@ c.. Test consistency with physical edges within the computational domain
             else
               read(ion_label(ij:jj),*) micmp(iatm,is)
             end if
+            if (todo) lionscl(is) = iatm
             i = i - 1
             jj = i
           end do

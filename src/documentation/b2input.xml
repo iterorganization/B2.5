@@ -4785,7 +4785,7 @@
 				<default>0</default>
 				<type>integer array of size (NION)</type>
 				<description>
-					Contains the index of the Eirene atomic species with which the Eirene test ion species (IION) should be scaled.
+					Contains the index of the Eirene atomic species with which the Eirene test ion species (IION) should be scaled. If not provided, LIONSCL will map to LMOLSCL for molecular ions that match an existing declared molecule, or to the first species listed in the name of the molecular ion as declared in the Eirene input file if no matching molecule is found.
 				</description>
 			</switch>
 			<switch>
