@@ -62,7 +62,7 @@ c
 #else
       use b2mod_braeir
       use b2mod_neutrals_namelist
-     & , only: crcstra
+     & , only: crcstra, rcfe, rcfi
 #endif
       implicit none
 #ifndef B25_EIRENE
