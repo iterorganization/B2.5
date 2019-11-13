@@ -33,17 +33,8 @@
       integer iFc
       integer, save :: ncall = 0
       real (kind=R8) ::
-     &  facdriftm, wght(nFc,2), gOnedBsq(nFc,0:1),
-     &  pzbbf(nFc)
+     &  facdriftm, wght(nFc,2), gOnedBsq(nFc,0:1), pzf(nFc)
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
-#ifdef CLASSICAL_CURRENT
-cwdk  option CLASSICAL_CURRENT not yet converted!
-      integer is
-      real (kind=R8) ::
-     *   gampvd(-1:nx,-1:ny), gamrvd(-1:nx,-1:ny),
-     *   gampvdc(-1:nx,-1:ny)
-      external intvertex
-#endif
 *   ..procedures
       intrinsic max, abs
       real (kind=R8) ::
@@ -69,83 +60,21 @@ cwdk  option CLASSICAL_CURRENT not yet converted!
       
       facdriftm = maxval(facdrift)
       if (facdriftm.ne.0.0_R8 .and. dia_cur.ne.0.0e0_R8) then            !srv 16.10.17
+
 *     ..interpolate to faces
         wght = 1.0_R8
-        call intface(nCv,nFc,mpg%fcCv,wght,pz*geo%cvBb(:,2),pzbbf)
+        call intface(nCv,nFc,mpg%fcCv,wght,pz,pzf)
 
 *     ..compute gradients of OnedBsq on cell faces
         call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
      &    geo%vxOnedBsq, gOnedBsq)
 
 *     ..DIVERGENT PART OF DIAMAGNETIC CURRENT
-        fchdia(:,0) =  
-     &     dia_cur*facdrift*pzbbf*gOnedBsq(:,1)*geo%fcS*geo%fcQalf(:,0)
-        fchdia(:,1) = 
-     &    -dia_cur*facdrift*pzbbf*gOnedBsq(:,0)*geo%fcS*geo%fcQalf(:,1)
+        fchdia(:,0) =  dia_cur*facdrift*pzf*
+     &    gOnedBsq(:,1)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,0)
+        fchdia(:,1) = -dia_cur*facdrift*pzf*
+     &    gOnedBsq(:,0)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,1)
 
-#ifdef CLASSICAL_CURRENT
-crfs inertia terms
-        call xerrab ('Not yet adapted to extended grids format')
-
-        gampvd=0.0_R8
-        gamrvd=0.0_R8
-        do is = 0, ns-1
-          if (.not.is_neutral(is)) then
-            do iy = -1, ny
-              do ix = -1, nx
-                if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1.and.
-     &             bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1.and.
-     &             region(ix,iy,0).ne.0)
-     >            gampvd(ix,iy)=gampvd(ix,iy)+am(is)*mp*
-     1            0.5_R8*(fna(ix,iy,0,0,is)*uadia(ix,iy,0,0,is)+
-     2            fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)
-     2            *uadia(rightix(ix,iy),rightiy(ix,iy),0,0,is))
-              enddo
-            enddo
-            do ix = -1, nx
-              do iy = -1, ny
-                if(rightix(ix,iy).ne.nx+1 .and. topiy(ix,iy).ne.ny+1
-     &       .and. leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2
-     &       .and. region(ix,iy,0).ne.0) then
-cxpb  Must check for case of the island X-point
-                  if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then     	 !xpb
-cxpb  Standard case
-                    gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
-     1               0.5_R8*(fna(ix,iy,1,1,is)+
-     2               fna(topix(ix,iy),topiy(ix,iy),1,1,is))*
-     1               0.5_R8*(uadia(ix,iy,0,0,is)+
-     2               uadia(rightix(ix,iy),rightiy(ix,iy),0,0,is))
-                  else                                                   !xpb
-cxpb  Island X-point cells
-                    gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
-     1               fna(ix,iy,1,1,is)*                                    !xpb
-     2               0.5_R8*(uadia(ix,iy,0,0,is)+
-     2               uadia(rightix(ix,iy),rightiy(ix,iy),0,0,is))
-                  endif
-                endif                                           	 !xpb
-              enddo
-            enddo
-          endif
-        enddo
-        call intcor(nx,ny,vol,gampvd,gampvdc)
-        do iy = -1, ny
-          do ix = -1, nx
-            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &         region(ix,iy,0).ne.0) then
-              fchdia(ix,iy,1,1) = fchdia(ix,iy,1,1)+facdrift(ix,iy)*
-     1         0.5_R8/wbbv(ix,iy,3)*
-     2         ((gampvdc(rightix(ix,iy),rightiy(ix,iy))
-     3          -gampvdc(ix,iy))/
-     6         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
-     2         (gamrvd(ix,iy)
-     3          -gamrvd(bottomix(ix,iy),bottomiy(ix,iy)))/
-     8         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy))))
-            endif
-          enddo
-        enddo
-! /* CLASSICAL_CURRENT */
-#endif
       else
         fchdia = 0.0_R8
       endif

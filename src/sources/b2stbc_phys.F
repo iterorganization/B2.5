@@ -89,6 +89,7 @@
       integer, save :: use_astra
       integer, save :: drift_style
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
+      logical once_bcpot12
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
       real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
@@ -113,6 +114,7 @@
      *  uu(nFc,0:ns+st_ext%ns-1),
      *  ud(nFc,0:ns-1), !sx(-1:nx,-1:ny), 
      *  pz(nCv), hzf(nFc), !sxhz(-1:nx,-1:ny),                          !srv 24.08.08
+     *  dOnedBsq(nFc,0:1),
      &  sna0_no_mdf(nCv,0:1,0:ns-1)                             !srv 23.09.08
       real (kind=R8), save ::                                           !srv 16.02.12
      *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
@@ -308,7 +310,7 @@
 
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)!srv 18.01.02
 #ifdef WG_TODO
-*   ..find the average pressure for inner flux surface            !srv 24.03.99
+
       if (istyle_average_pr .eq.0) then                           !srv 08.08.02
        iy = -1                                                    !srv 24.03.99
        pzsum =0.0e0_R8                                            !srv 24.03.99 18.01.02
@@ -454,6 +456,7 @@ cwdk  now need to recompute full diamagnetic component for ud
       once_bcene = .false.
       once_bceni = .false.                                            !srv 16.02.12 }
       once_bcpot = .false.                                            !Solovyev 13.05.14 !srv 29.09.15
+      once_bcpot12 = .false.
 
 * -- LOOP OVER ALL BOUNDARIES
       DO IB=1, NBC
@@ -861,8 +864,19 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
      .        srw%sna0(iCv1,0,is)
             sna0_no_mdf(iCv1,1,is) = sna0_no_mdf(iCv1,1,is) + 
      .        srw%sna0(iCv1,1,is)
-!WG_TODO  if (mdf_fnb.ne.0) : PSch contributions...
-
+            if (mdf_fnb.ne.0) then
+              !wdk Correction now involves vadia instead of ExB velocity
+              !wdk This makes implementation equivalent to mdf_fnb = 0 option
+              t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
+     &           (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
+     &            geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is))*
+     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is)))
+              srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) +
+     &          max(0.0_R8,t0)
+              srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
+     &          min(0.0_R8,t0)/pl%na(iCv1,is)
+            endif
           enddo  
 
           GOTO 10000
@@ -980,15 +994,38 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
 cwdk      Note: now total face area taken. Need to check backwards
 cwdk      compatibility for E/W boundaries
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the plasma cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%sna0(iCv1,0,is) = 0.0_R8
             srw%sna0(iCv1,1,is) = geo%fcS(iFc)*
      &         sqrt((rt%rza(iCv1,is)*pl%te(iCv1)+pl%ti(iCv1))/
      &         (am(is)*mp))*conpar(is,ib,1)
             sna0_no_mdf(iCv1,:,is) =
      &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
-!WG_TODO  if (mdf_fnb.ne.0) ; drift contributions...
+            if (mdf_fnb.eq.0) then
+              srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
+     &          max(0.0e0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*
+     &          (dv%vadia(iFc,0,is) + dv%vaecrb(iFc,0,is)) +
+     &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*
+     &          (dv%vadia(iFc,1,is) + dv%vaecrb(iFc,1,is)))*
+     &          0.5_R8*(pl%na(iCv1,is) + pl%na(iCv2,is))/pl%na(iCv1,is))
+            else
+              srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
+     &          max(0.0e0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vaecrb(iFc,0,is) +
+     &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vaecrb(iFc,1,is))*
+     &          0.5_R8*(pl%na(iCv1,is) + pl%na(iCv2,is))/pl%na(iCv1,is))
+              t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     .          (dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is))
+              if(t0.ge.0.0_R8) then
+                srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) + t0
+              else
+                srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
+     .            t0/pl%na(iCv1,is)
+              endif
+            endif
           enddo  
 
           GOTO 10000
@@ -1294,9 +1331,17 @@ c dpc
             srw%sna0(iCv1,0,is) = 0.0_R8
             srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs - 
      .        co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
-            sna0_no_mdf(iCv1,:,is) =
-     &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
-!WG_TODO  if (mdf_fnb.ne.0) ; drift contributions...
+            sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
+            if (mdf_fnb.ne.0) then
+              t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     .          (dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is))
+              if(t0.ge.0.0_R8) then
+                srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) + t0
+              else
+                srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
+     .            t0/pl%na(iCv1,is)
+              endif
+            endif
           enddo
           GOTO 10000
 
@@ -4320,7 +4365,22 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%she0(iCv1,0) = enepar(iB,1)/US*geo%fcS(iFc)
           srw%she0(iCv1,1) = 0.0_R8
-!WG_TODO  if (mdf_fhe.ne.0) : PSch contributions...
+          if(mdf_fhe.ne.0) then
+            !wdk Correction now involves vedia instead of ExB velocity
+            !wdk This makes implementation equivalent to mdf_f = 0 option
+            srw%she0(iCv1,0) = srw%she0(iCv1,0) +
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &       (dv%fhePSch(iFc,0) + dv%fhePSch(iFc,1))
+            t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*2.5_R8*
+     &        (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vedia(iFc,0) +
+     &         geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vedia(iFc,1))*
+     &         0.5_R8*(dv%ne(iCv1)+dv%ne(iCv2))*
+     &         0.5_R8*(pl%te(iCv1)+pl%te(iCv2))
+            srw%she0(iCv1,0) = srw%she0(iCv1,0) +
+     &        max(0.0_R8,t0)
+            srw%she0(iCv1,1) = srw%she0(iCv1,1) +
+     &        min(0.0_R8,t0)/pl%te(iCv1)
+          endif
         enddo
         GOTO 30000  
 
@@ -4693,8 +4753,13 @@ cghgh
      &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+3.1_R8)*t0 -     !srv 19.04.13
      &          (enepar(ib,1) + 1.0 + 3.1_R8)*t1                      !wdk to check: correct for gammae?
             endif                                                     !srv 27.02.13 }
+            if(mdf_fhe.ne.0) then
+              srw%she0(iCv1,0) = srw%she0(iCv1,0) +
+     &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &          (dv%fhePSch(iFc,0) + dv%fhePSch(iFc,1))
+            endif
           enddo  
-cwdk    Todo: corrections for mdf_fhe, BCCON.ne.14
+cwdk    Todo: corrections for BCCON.ne.14
         elseif(bcene_15_style.eq.1) then
         call xerrab ('BCENE_15_STYLE 1 not adapted for WG')
 #ifdef WG_TODO
@@ -6165,7 +6230,25 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%shi0(iCv1,0) = enipar(iB,1)/US*geo%fcS(iFc)
           srw%shi0(iCv1,1) = 0.0_R8
-!WG_TODO  if (mdf_fhe.ne.0) : PSch contributions...
+          if(mdf_fhi.ne.0) then
+            !wdk Correction now involves vedia instead of ExB velocity
+            !wdk This makes implementation equivalent to mdf_fhi = 0 option
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &       (dv%fhiPSch(iFc,0) + dv%fhiPSch(iFc,1))
+            t0 = 0.0_R8
+            do is=0,ns-1
+              t0 = t0 + mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*2.5_R8*
+     &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
+     &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is))*
+     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is))*
+     &           0.5_R8*(pl%ti(iCv1)+pl%ti(iCv2))
+            end do
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+     &        max(0.0_R8,t0)
+            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) +
+     &        min(0.0_R8,t0)/pl%ti(iCv1)
+          endif
         enddo  
         GOTO 40000
 
@@ -6588,8 +6671,13 @@ cxpb          endif
           enddo
           srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -                         !srv 11.03.09 {
      &      enipar(ib,1)*t0*cs*abs(geo%fcPbs(iFc)) -                    !srv 19.04.13
-     &     (enipar(ib,2)+1.0_R8)*t1*geo%fcS(iFc) 
-cwdk    Todo: corrections for mdf_fhe, BCCON.ne.14
+     &     (enipar(ib,2)+1.0_R8)*t1*geo%fcS(iFc)
+          if(mdf_fhi.ne.0) then
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &        (dv%fhiPSch(iFc,0) + dv%fhiPSch(iFc,1))
+          endif
+cwdk    Todo: corrections for BCCON.ne.14
         enddo  
         GOTO 40000                                                      !srv 01.02.09 }
 
@@ -8256,8 +8344,6 @@ cwdk Todo: seecmodel
 c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 
 41200   continue
-        call xerrab ('b2stbc_phys -- BCPOT = 12 not adapted for WG')
-#ifdef WG_TODO
         if(ncall.eq.0) then
           write(*,'(a,a,a,a,a)') 'Adding contributions ',
      &     'from diamagnetic and inertial currents ',
@@ -8268,62 +8354,66 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
      &                 'istyle_cur_contr_on_S_and_N = 0 or 1'
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
-          else
-            call xertst(on_closed_surface(bc_list_x(1,ib),
-     .                                    bc_list_y(1,ib)),
-     .       'BCPOT=12 intended for core boundaries only!')
           endif
         endif
-        if (BCCHAR(ib).eq.'S') then
-          do ix=1, BC_LIST_SIZE(IB)
-*        for inner surfaces
-            if(maxval(facdrift) .ne. 0.0_R8) then
-              fchy_dia =                                               !srv 01.07.99
-     &          -pzaverage
-     &          *facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*phm0      ! *signmf        !srv 24.03.99 01.07.99 21.04.00 18.01.02 2
-     &          *bzhzaverage                                           !lk 20.11.07 }
-     &          *(OnedBsqc(
-     &            rightix(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))),
-     &            rightiy(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))-
-     &            OnedBsqc(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                     topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))   !srv 01.07.99
-              sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &         sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) + fchy_dia
-              fchy_inertia = 0.0_R8                                     !srv 25.06.03
-              do is = 0, ns-1                                           !srv 25.06.03
-                if(.not.is_neutral(is))then                             !srv 25.06.03
-                  fchy_inertia = fchy_inertia                           !srv 07.04.00 25.06.03
-     &               -0.5e0_R8*am(is)*mp*
-     &                facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*phm1  ! *signmf                 !srv 07.04.00 21.04.00 21.10.02
-     &               *naaverage(is)                                     !lk 20.11.07                       !srv 07.04.00
-     &               *ua2average(is)                                    !srv 07.04.00 15.02.02
-     &               *bzhzaverage                                       !lk 20.11.07
-     &               *(OnedBsqc(
-     &            rightix(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))),
-     &            rightiy(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))-
-     &           OnedBsqc(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))    !srv 07.04.00
-                endif
-              enddo
-              sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &         sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)+fchy_inertia
-            endif
+        !wdk For now, assume this will be the only core boundary
+        if (once_bcpot12) call xerrab ('Problem with BCPOT=12.')
+        once_bcpot12 = .true.
+        if(maxval(dv%facdrift) .ne. 0.0_R8) then
+*       ..pre-compute some quantities
+          call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq, 
+     &      geo%vxOnedBsq, dOnedBsq)
+*       ..find the average pressure for inner flux surface
+          pzsum  = 0.0_R8
+          volsum = 0.0_R8
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            call xertst(mpg%cvOnClosedSurface(iCv1),
+     .       'BCPOT=12 intended for core boundaries only!')
+            !wdk weighting following computation of fchdia
+            pzsum  = pzsum  + geo%fcS(iFc)*(pz(iCv1) + pz(iCv2))
+            volsum = volsum + geo%fcS(iFc)
           enddo
-        else
-          call xerrab ('B2STBC -- BCPOT=12, NOT AVAILABLE FOR N,W,E')
+          pzaverage = 0.5_R8*pzsum/volsum
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            !wdk now uses fcBb(iFc,2) instead of <fcBb(:,2)>; to be checked!
+            fchy_dia = 
+     &       -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &        phm0*pzaverage*dv%facdrift(iFc)*geo%fcBb(iFc,2)*
+     &        dOnedBsq(iFc,0)*geo%fcS(iFc)*geo%fcQalf(iFc,1)
+            srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - fchy_dia
+            fchy_inertia = 0.0_R8                                     !srv 25.06.03
+!WG_TODO            do is = 0, ns-1                                           !srv 25.06.03
+!WG_TODO              if(.not.is_neutral(is))then                             !srv 25.06.03
+!WG_TODO                fchy_inertia = fchy_inertia                           !srv 07.04.00 25.06.03
+!WG_TODO     &             -0.5e0_R8*am(is)*mp*
+!WG_TODO     &              facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*phm1  ! *signmf                 !srv 07.04.00 21.04.00 21.10.02
+!WG_TODO     &             *naaverage(is)                                     !lk 20.11.07                       !srv 07.04.00
+!WG_TODO     &             *ua2average(is)                                    !srv 07.04.00 15.02.02
+!WG_TODO     &             *bzhzaverage                                       !lk 20.11.07
+!WG_TODO     &               *(OnedBsqc(
+!WG_TODO     &            rightix(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+!WG_TODO     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))),
+!WG_TODO     &            rightiy(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+!WG_TODO     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))-
+!WG_TODO     &           OnedBsqc(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+!WG_TODO     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))    !srv 07.04.00
+!WG_TODO                endif
+!WG_TODO              enddo
+!WG_TODO              sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
+!WG_TODO     &         sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)+fchy_inertia
+          enddo
         endif
         goto 50000
-#endif
+
 * -- BCPOT=13 -- Test condition for south private & north regions ! Solovyev 07.04.14
 c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 
 41300   continue
-        call xerrab ('b2stbc_phys -- BCPOT = 13 not adapted for WG')
-#ifdef WG_TODO
         if(ncall.eq.0) then
           write(*,'(a,a,a,a,a)') 'Adding contributions ',
      &     'from all currents ',
@@ -8340,40 +8430,22 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
      .       'BCPOT=13 not intended for core boundaries!')
           endif
         endif
-        if (BCCHAR(ib).eq.'S') then
-          do ix=1, BC_LIST_SIZE(IB)
-*        for PR region
-            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &          sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
-     &           fchdia(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)+
-     &           fchin(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                 topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)+
-     &           fchvispar(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)+
-     &           fchvisq(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                   topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)+
-     &           fchvisper(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)+
-     &           fchinert(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)
-          enddo
-        elseif (BCCHAR(ib).eq.'N') then
-          do ix=1, BC_LIST_SIZE(IB)
-            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &        sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
-     &             fchdia(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)-
-     &             fchin(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)-
-     &             fchvispar(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)-
-     &             fchvisq(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)-
-     &             fchvisper(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)-
-     &             fchinert(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)
-          enddo
-        else
-          call xerrab ('B2STBC -- BCPOT=13, NOT AVAILABLE FOR W,E')
-        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          call xertst(mpg%cvOnClosedSurface(iCv1),
+     .     'BCPOT=13 not intended for core boundaries!')
+          srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - 
+     &      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &     (dv%fchdia(iFc,0)    + dv%fchdia(iFc,1)    +
+     &      dv%fchin(iFc,0)     + dv%fchin(iFc,1)     +
+     &      dv%fchvispar(iFc,0) + dv%fchvispar(iFc,1) +
+     &      dv%fchvisq(iFc,0)   + dv%fchvisq(iFc,1)   +
+     &      dv%fchvisper(iFc,0) + dv%fchvisper(iFc,1) +
+     &      dv%fchinert(iFc,0)  + dv%fchinert(iFc,1))
+        enddo
         goto 50000                                                      !srv 03.03.15 }
-#endif
+
 * -- BCPOT=14 -- Nothing implemented
 
 41400   CONTINUE

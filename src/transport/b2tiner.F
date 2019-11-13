@@ -1,27 +1,24 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tiner (nx, ny, ns, vol, gs, hx, hy, qs, bb, na, ua,!srv 20.09.06 {
-     &                    facdrift, fchinert)                         !srv 22.06.08
+      subroutine b2tiner (nCv, nFc, nVx, ns, geo, mpg, na, ua,
+     &  facdrift, fchinert)
       use b2mod_types
-      use b2mod_boundary_namelist
-      use b2mod_indirect
       use b2mod_constants
-      use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nCv, nFc, nVx, ns
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
-     & na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     1 bb(-1:nx,-1:ny,0:3), facdrift(-1:nx,-1:ny),                    !srv 22.06.08
-     & qs(-1:nx,-1:ny,0:1)
+     &  na(nCv,0:ns-1), ua(nCv,0:ns-1), facdrift(nFc)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &     fchinert(-1:nx,-1:ny,0:1,0:1)
+     &  fchinert(nFc,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -39,19 +36,20 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, n2, ix, iy, ib, is
+      integer ncall, is
       integer, save  :: fch_inert_style = 0                              !srv 19.04.13
       integer, save :: no_current = 0
       integer, save :: guard_flows
       real (kind=R8) ::
-     &  fch_inert, wght(-1:nx,-1:ny), dOnedBsq(-1:nx,-1:ny,0:1,0:1)
+     &  fch_inert, wght(nFc,2), gOnedBsq(nFc,0:1),
+     &  wrk(nCv), wrk0(nFc), wrk1(nFc), wrk2(nFc)
       save ncall, fch_inert
 *   ..procedures
       intrinsic max, abs
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx
 *   ..initialization
-      data ncall/0/, fch_inert/1.0e0_R8/, guard_flows/2/
+      data ncall/0/, fch_inert/1.0e0_R8/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -63,172 +61,55 @@
        call ipgetr ('b2tiner_inert', fch_inert)                           !srv 07.07.99
        call ipgeti ('b2tiner_fch_inert_style', fch_inert_style)           !srv 07.07.99
        call ipgeti ('b2tfhe_no_current', no_current)
-       call ipgeti ('b2news_guard_flows', guard_flows)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
       endif
 c Drift terms
-      fchinert =0.0e0_R8
       if(fch_inert.ne.0.0e0_R8.and.maxval(facdrift).ne.0.0_R8.and.
      .   no_current.eq.0)then                                            !srv 07.07.99
-*       compute differences of OnedBsq on cell faces
-        call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
+
+*     ..compute gradients of OnedBsq on cell faces
+        call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
+     &    geo%vxOnedBsq, gOnedBsq)
+
+*     ..sum of inertia terms
         wght = 1.0_R8
-!        call diff_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
-!     .    dOnedBsq(-1,-1,0,0))
-!        call diff_r(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
-!     .    dOnedBsq(-1,-1,0,1))
+        wrk0 = 0.0_R8
         if(fch_inert_style.eq.0) then	
-         do is = 0, ns-1                                                 !srv 07.07.99
-	  if (.not.is_neutral(is)) then                                  !srv 07.07.99
-*         X-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
-           do iy=0,ny-1							 !srv 07.07.99
-             do ix=0,nx						         !srv 07.07.99
-	        if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02
-               fchinert(ix,iy,0,0)=fchinert(ix,iy,0,0)			 !srv 07.07.99
-     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*     ! signmf*     !srv 23.07.05 11.01.13
-     &          facdrift(ix,iy)*                                         !srv 22.06.08
-     &          (ua(ix,iy,is)**2+ua(leftix(ix,iy),leftiy(ix,iy),is)**2)  !srv 07.07.99 05.02.05 23.07.05
-     &         *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8 !srv 07.07.99
-     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8   !srv 07.07.99
-     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))            !srv 07.07.99
-     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))          !srv 07.07.99
-     &         *dOnedBsq(ix,iy,0,1)                                      !srv 07.07.99
-cwdk computation of radial current on 'poloidal' faces
-cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial current components
-               fchinert(ix,iy,0,1)=fchinert(ix,iy,0,1)
-     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*
-     &          facdrift(ix,iy)*
-     &          (ua(ix,iy,is)**2+ua(leftix(ix,iy),leftiy(ix,iy),is)**2)
-     &         *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
-     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8
-     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))*
-     &         (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
-     &         (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &         qs(ix,iy,0)
-     &         *dOnedBsq(ix,iy,0,0)
-	       endif                                                     !srv 26.11.02
-             enddo							 !srv 07.07.99
-           enddo							 !srv 07.07.99 
-*         Y-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
-           do iy=0,ny								       !srv 07.07.99
-             do ix=0,nx-1						             !srv 07.07.99
-	        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then  !srv 26.11.02
-               fchinert(ix,iy,1,1)=fchinert(ix,iy,1,1)			       !srv 07.07.99
-     &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy) ! signmf*  !srv 07.07.99 21.04.00 22.06.08 11.01.13
-     &          *(                                                       !srv 07.07.99
-     &           na(ix,iy,is)+na(bottomix(ix,iy),bottomiy(ix,iy),is)     !srv 07.07.99
-     &           )/2.0e0_R8                                              !srv 07.07.99
-     &          *0.5e0_R8*(ua(ix,iy,is)**2 +                             !srv 07.07.99 18.02.00 23.07.05
-     &                     ua(bottomix(ix,iy),bottomiy(ix,iy),is)**2)    !srv 07.07.99 23.07.05
-     &          *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
-     &          /2.0e0_R8                                                !srv 07.07.99
-     &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))       !srv 07.07.99
-     &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
-     &          *dOnedBsq(ix,iy,1,0)                                     !srv 07.07.99
-	       endif                                                     !srv 26.11.02
-             enddo							 !srv 07.07.99
-           enddo							 !srv 07.07.99
-          endif                                                          !srv 07.07.99
-         enddo                                                           !srv 07.07.99
+          do is = 0, ns-1
+            if (.not.is_neutral(is)) then
+              wrk = ua(:,is)**2
+              call intface(nCv,nFc,mpg%fcCv,wght,wrk,wrk1)
+              call intface(nCv,nFc,mpg%fcCv,wght,na(:,is),wrk2)
+              wrk0 = wrk0 + am(is)*wrk1*wrk2
+            endif
+          enddo
         elseif(fch_inert_style.eq.1) then
-	 do is = 0, ns-1                                                 !srv 07.07.99
-	  if (.not.is_neutral(is)) then                                  !srv 07.07.99
-*         X-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
-           do iy=0,ny-1							 !srv 07.07.99
-             do ix=0,nx						         !srv 07.07.99
-	        if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02
-               fchinert(ix,iy,0,0)=fchinert(ix,iy,0,0)			 !srv 07.07.99
-     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*     ! signmf*     !srv 23.07.05 11.01.13
-     &          facdrift(ix,iy)*                                         !srv 22.06.08
-     &          (ua(ix,iy,is)**2*na(ix,iy,is)+                           !IYS 01.02.2013
-     &           ua(leftix(ix,iy),leftiy(ix,iy),is)**2*                  !IYS 01.02.2013
-     &          na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
-     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8   !srv 07.07.99
-     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))            !srv 07.07.99
-     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))          !srv 07.07.99
-     &         *dOnedBsq(ix,iy,0,1)                                      !srv 07.07.99
-cwdk computation of radial current on 'poloidal' faces
-cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial current components
-               fchinert(ix,iy,0,1)=fchinert(ix,iy,0,1)
-     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*
-     &          facdrift(ix,iy)*
-     &          (ua(ix,iy,is)**2*na(ix,iy,is)+
-     &           ua(leftix(ix,iy),leftiy(ix,iy),is)**2*
-     &          na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
-     &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8
-     &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-     &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))*
-     &         (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
-     &         (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &         qs(ix,iy,0)
-     &         *dOnedBsq(ix,iy,0,0)
-	       endif                                                     !srv 26.11.02
-             enddo							 !srv 07.07.99
-           enddo							 !srv 07.07.99 
-*         Y-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
-           do iy=0,ny							 !srv 07.07.99
-             do ix=0,nx-1						 !srv 07.07.99
-	        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then!srv 26.11.02
-               fchinert(ix,iy,1,1)=fchinert(ix,iy,1,1)			 !srv 07.07.99
-     &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy) ! signmf*  !srv 07.07.99 21.04.00 22.06.08 11.01.13
-     &          *0.5e0_R8*(na(ix,iy,is)*ua(ix,iy,is)**2 +                !IYS 01.02.2013
-     &          na(bottomix(ix,iy),bottomiy(ix,iy),is)*                  !IYS 01.02.2013
-     &          ua(bottomix(ix,iy),bottomiy(ix,iy),is)**2)               !IYS 01.02.2013 !sv 07.07.99
-     &          *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
-     &          /2.0e0_R8                                                !srv 07.07.99
-     &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))       !srv 07.07.99
-     &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
-     &          *dOnedBsq(ix,iy,1,0)                                     !srv 07.07.99
-	       endif                                                     !srv 26.11.02
-             enddo							 !srv 07.07.99
-           enddo							 !srv 07.07.99
-          endif                                                          !srv 07.07.99
-         enddo                                                           !srv 07.07.99
+          do is = 0, ns-1
+            if (.not.is_neutral(is)) then
+              wrk = na(:,is)*ua(:,is)**2
+              call intface(nCv,nFc,mpg%fcCv,wght,wrk,wrk1)
+              wrk0 = wrk0 + am(is)*wrk1
+            endif
+          enddo
         else
           CALL XERRAB ('B2TINER -- INCORRECT VALUE OF fch_inert_style')
         endif
-      endif                                                              !srv 07.07.99
+        wrk0 = 0.5_R8*mp*wrk0
 
-      if(guard_flows.eq.0) then                                 	 !xpb
-cxpb turn off flows between boundary cells
-        do iy = -1, ny
-          do ix = -1, nx
-            if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-              fchinert(ix,iy,1,1)=0.0_R8
-            endif
-          enddo
-        enddo
+*     ..COMPONENTS OF INERTIA CURRENT
+        fchinert(:,0) =  fch_inert*facdrift*wrk0*
+     &    gOnedBsq(:,1)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,0)
+        fchinert(:,1) = -fch_inert*facdrift*wrk0*
+     &    gOnedBsq(:,0)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,1)
 
-cxpb turn off poloidal flows in core boundary
-        do ix = -1, nx
-          if(on_closed_surface(ix,-1)) then
-            fchinert(ix,-1,0,0) = 0.0_R8
-          endif
-        enddo
+      else
+        fchinert =0.0e0_R8
       endif
 
-*  INTERIOR BOUNDARY AT DEAD REGIONS
-       DO IB=1,NNISO
-	 DO IX=NXISO1(IB), NXISO2(IB)
-	   DO IY=NYISO1(IB), NYISO2(IB)
-	    fchinert(ix,iy,0,0)=0.0e0_R8
-	   end do
-	 end do
-	 DO IX=NXISO1(IB), NXISO2(IB)
-	   DO IY=NYISO1(IB), NYISO2(IB)
-	     fchinert(ix,iy,1,1)=0.0e0_R8
-	   end do
-	 end do
-       end do
 * ..return
       ncall = ncall+1
       call subend ()

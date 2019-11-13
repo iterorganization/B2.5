@@ -205,16 +205,8 @@
      &   dv%fchanml)
       call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, pl%ua, co%vsaf_cl, 
      &  dv%fac_vis, dv%fchvispar)
-#ifdef WG_TODO
-       call b2tiner (nx, ny, ns, vol,
-     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
-!      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
-!     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,       !srv 10.10.17
-!     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
-#else
-       dv%fchinert  = 0.0_R8
-#endif 
+       call b2tiner (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
+     &      dv%facdrift, dv%fchinert)
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt, st_ext)
       endif                                                             !srv 14.07.10 }

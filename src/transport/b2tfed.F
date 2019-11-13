@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfed (nCv, nFc, nVx, geo, mpg, facdrift, fac_ExB,
-     & te, po, vedia, veecrb)
+     & ne, te, po, vedia, veecrb)
       use b2mod_types
       use b2mod_constants
       use b2us_geo
@@ -13,7 +13,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     * facdrift(nFc), fac_ExB(nFc), te(nCv), po(nCv)
+     * facdrift(nFc), fac_ExB(nFc), ne(nCv), te(nCv), po(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vedia(nFc,0:1), veecrb(nFc,0:1)
@@ -32,9 +32,8 @@
       real (kind=R8) ::
      * poleldr, poldidr, radeldr, raddidr
       real (kind=R8) ::
-     * pof(nFc), pov(nVx),
-     * dpo(nFc,0:1), dOnedBsq(nFc,0:1),
-     * wrk(nCv), wrk0(nFc)
+     * pof(nFc), pov(nVx), dpo(nFc,0:1), dOnedBsq(nFc,0:1), nef(nFc),
+     * wrk(nCv), wrk0(nFc), wght(nFc,2)
       save ncall, poleldr, poldidr, radeldr, raddidr
 *   ..procedures
       intrinsic min
@@ -63,6 +62,7 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of te
+       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
       endif
 *   ..test facdrift
@@ -85,17 +85,18 @@ cwdk                   (original code: simple averaging)
         veecrb(:,0) = -poleldr*fac_ExB*wrk0*dpo(:,1)
         veecrb(:,1) =  radeldr*fac_ExB*wrk0*dpo(:,0)
 *     ..computation of grad-B drift
-cwdk    to be checked: now we use inverse volume weighting
-cwdk                   (original code: simple averaging)
-cwdk    check also treatment of rza for consistency with other drifts
-        wrk  = te*geo%cvBb(:,2)/qe
-        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk,wrk0)
+        wght = 1.0_R8
+        wrk  = ne*te/qe
+        call intface(nCv,nFc,mpg%fcCv,wght,wrk,wrk0)
+        call intface(nCv,nFc,mpg%fcCv,wght,ne,nef)
 cwdk    to be checked: interpolation of geometric factors (hy1)
 cwdk                   now consistent between x and y faces
 cwdk                   (and consistent with treatment of other drifts)
 cwdk                   (implicitly through grad-routine)
-        vedia(:,0) = -poldidr*facdrift*wrk0*dOnedBsq(:,1)
-        vedia(:,1) =  raddidr*facdrift*wrk0*dOnedBsq(:,0)
+        vedia(:,0) = -poldidr*facdrift*wrk0*
+     &    geo%fcBb(:,2)*dOnedBsq(:,1)/nef
+        vedia(:,1) =  raddidr*facdrift*wrk0*
+     &    geo%fcBb(:,2)*dOnedBsq(:,0)/nef
       endif
 
 * ..return

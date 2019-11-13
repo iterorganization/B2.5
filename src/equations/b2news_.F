@@ -324,15 +324,9 @@ csw 01oct2012 initialize potential if necessary
       call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an,pl%po,dv%fchanml)
       call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, pl%ua, co%vsaf_cl, 
      &  dv%fac_vis, dv%fchvispar)
+      call b2tiner (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
+     &  dv%facdrift, dv%fchinert)
 #ifdef WG_TODO
-      call b2tiner (nx, ny, ns, vol,
-     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
-!      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
-!     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb, ne2,   !srv 10.10.17
-!     &             lnlam, te, ti, ni, chci, fchvisq)
-
-
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                              !srv 01.10.99
       if(ion_vlct_restrict .ne. 0 ) then                                 !iyv 06.02.14
@@ -345,7 +339,6 @@ csw 01oct2012 initialize potential if necessary
         cssb = 0.0_R8
       endif   
 #else
-      dv%fchinert  = 0.0_R8
       cssb = 0.0_R8
 #endif
                                                            !iyv 06.02.14
@@ -360,7 +353,7 @@ csw 01oct2012 initialize potential if necessary
         enddo                                                            !srv 01.10.99
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, geo, mpg, dv%facdrift, dv%fac_ExB,
-     &      pl%te, pl%po, dv%vedia, dv%veecrb)
+     &      dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
 !      end if                                                            !srv 01.10.99
 
 
@@ -461,16 +454,8 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
       call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an,pl%po,dv%fchanml)
       call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, pl%ua, co%vsaf_cl, 
      &  dv%fac_vis, dv%fchvispar)
-#ifdef WG_TODO
-      call b2tiner (nx, ny, ns, vol,
-     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
-!      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,           !srv 10.10.17
-!     &       po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb, ne2,       !srv 10.10.17
-!     &             lnlam, te, ti, ni, chci, fchvisq)
-#else
-      dv%fchinert  = 0.0_R8
-#endif
+      call b2tiner (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
+     &  dv%facdrift, dv%fchinert)
 *     ..iterate on particle balance
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
@@ -518,7 +503,7 @@ csw 16oct2012 init ier0
       enddo 
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, geo, mpg, dv%facdrift, dv%fac_ExB,
-     &      pl%te, pl%po, dv%vedia, dv%veecrb)
+     &      dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
 
 !WG_TODO      if(iout.ne.0 .or. iout_b2npco.ne.0 .or. iout_b2npc9.ne.0           !srv 16.07.10
 !WG_TODO     &             .or. iout_b2npmo.ne.0 .or. iout_b2npht.ne.0 
@@ -633,13 +618,13 @@ cwdk of potential equation...
      &                      dv%fchanml)
           call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, pl%ua, co%vsaf_cl, 
      &      dv%fac_vis, dv%fchvispar)
-#ifdef WG_TODO
-          call b2tiner (nx, ny, ns, vol,
-     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
+          call b2tiner (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
+     &      dv%facdrift, dv%fchinert)
 !          call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,       !srv 10.10.17
 !     &            po, ti, na, avisper, bvisper, cvisper, fchvisper)
 !          call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,    !srv 10.10.17
 !     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
+#ifdef WG_TODO
           if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
             call b2xprz (nx, ny, ns, mp, am, na, rz)
             call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
@@ -651,7 +636,6 @@ cwdk of potential equation...
             cssb = 0.0_R8
           endif  
 #else
-          dv%fchinert  = 0.0_R8
           cssb = 0.0_R8
 #endif
           do is = 0, ns-1
@@ -667,7 +651,7 @@ cwdk of potential equation...
           enddo
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, geo, mpg, dv%facdrift, dv%fac_ExB,
-     &      pl%te, pl%po, dv%vedia, dv%veecrb)
+     &      dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
 
           write(*,*) 'i,respo',i,t0
           call xertst (ier0.eq.0, 'error return from b2nppo')
@@ -822,7 +806,7 @@ cwdk      need a master-switch to decide to use 9-point stencil...
        enddo
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, geo, mpg, dv%facdrift, dv%fac_ExB,
-     &      pl%te, pl%po, dv%vedia, dv%veecrb)
+     &      dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
 #endif
       endif ! do_2nd_b2npco
 
@@ -843,7 +827,7 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
        enddo                                                             !srv 01.10.99
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, geo, mpg, dv%facdrift, dv%fac_ExB,
-     &      pl%te, pl%po, dv%vedia, dv%veecrb)
+     &      dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
       endif                                                              !srv 28.06.13 }
 
 csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)

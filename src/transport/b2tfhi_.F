@@ -53,6 +53,7 @@
       integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
       integer, save :: b2kin=0, b2vis=0
       integer, save :: meth = 2
+      real (kind=R8), save :: drift_hyb = 0.0_R8
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
@@ -109,6 +110,7 @@ cpax
        call ipgeti ('b2tfhi_flo53', flo53)
        call ipgeti ('b2tfhi_b2kin', b2kin)
        call ipgeti ('b2tfhi_b2vis', b2vis)
+       call ipgetr ('b2tfhi_drift_hyb',drift_hyb)
       endif                                                             !srv
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -248,6 +250,8 @@ cpax
       coni0 = dv%coni(:,:,0)
       call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0_mdf,co%chci,
      &  dv%floi,dv%coni)
+      !wdk now we always add PSch linearization; do we need to condition
+      !    this on mdf /= 0?
       dv%floi = dv%floi + floi0
       dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
 

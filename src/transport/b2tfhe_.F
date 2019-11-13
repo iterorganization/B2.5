@@ -70,6 +70,7 @@ csw 10oct2012
       integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
 
       character(3) :: charns, charns0
+      real (kind=R8), save :: drift_hyb = 0.0_R8
       real (kind=R8), save :: alfTeEh = 0.0_R8                           !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 {
@@ -154,6 +155,7 @@ csw 10oct2012
        call ipgeti ('b2tfhe_hybr2', b2tfhe_hybr2)
        call ipgeti ('b2tfhe_flo53', flo53)
        call ipgeti ('b2sigp_style', style)                               !srv 13.01.17
+       call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
        endif                                                             !srv
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -200,10 +202,10 @@ c Drift terms
 *   ..calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb, ne2,    !srv 10.10.17
      &             lnlam, te, ti, ni, chci, fchvisq)
-*  .. calculate inertia current                                         !srv 07.07.99
-      call b2tiner (nx, ny, ns, vol, gs, hx, hy, qs, bb, na, ua,         !srv 22.11.12
-     &              facdrift, fchinert)
 #endif
+*  .. calculate inertia current                                         !srv 07.07.99
+      call b2tiner (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
+     &      dv%facdrift, dv%fchinert)
 *   ..calculate the x,y-components of anomalous current
       call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an,pl%po,dv%fchanml)
 #ifdef WG_TODO
@@ -311,6 +313,8 @@ c Drift terms
       cone0 = dv%cone(:,:,0)
       call calccoef(nCv,nFc,nVx,meth,geo,mpg,floe0_mdf,co%chce,
      &  dv%floe,dv%cone)
+      !wdk now we always add PSch linearization; do we need to condition
+      !    this on mdf /= 0?
       dv%floe        = dv%floe + floe0
       dv%cone(:,:,0) = dv%cone(:,:,0) + cone0
 

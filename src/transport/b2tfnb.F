@@ -55,6 +55,7 @@
       integer, save :: vlct_diagno = 1
       integer, save :: meth = 2
       character chns*3                                                   !srv 16.09.02
+      real (kind=R8), save :: drift_hyb = 0.0_R8
       real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
@@ -129,6 +130,7 @@
      &   'faulty internal parameter flux_limit_min_ti')
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
           if (no_hybr .eq.1) meth = 0
+        call ipgetr ('b2tfnb_drift_hyb',drift_hyb)
         call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
         call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
         call ipgetr ('b2tfnb_poleldr', poleldr)                          !srv 25.04.00 {
@@ -235,19 +237,18 @@ cwdk                   (original code: simple averaging)
         dv%vaecrb(:,0,isb) = -poleldr*dv%fac_ExB*wrk0*dpo(:,1)
         dv%vaecrb(:,1,isb) =  radeldr*dv%fac_ExB*wrk0*dpo(:,0)
 *     ..computation of grad-B drift
-cwdk    to be checked: now we use inverse volume weighting
-cwdk                   (original code: simple averaging)
-cwdk    check also treatment of rza for consistency with other drifts
-        wrk  = pl%ti/(qe*rt%rza(:,isb))
-        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk,wrk1)
+cwdk    use (na*Ti)_f/na_f for consistency with fchdia
+cwdk    check treatment of rza for consistency with other drifts
+        wrk  = pl%na(:,isb)*pl%ti/(qe*rt%rza(:,isb))
+        call intface(nCv,nFc,mpg%fcCv,weight,wrk,wrk1)
 cwdk    to be checked: interpolation of geometric factors (hy1)
 cwdk                   now consistent between x and y faces
 cwdk                   (and consistent with treatment of other drifts)
 cwdk                   (implicitly through grad-routine)
         dv%vadia(:,0,isb) = 
-     &    poldidr*dv%facdrift*wrk1*dOnedBsq(:,1)*geo%fcBb(:,2)
+     &    poldidr*dv%facdrift*wrk1*dOnedBsq(:,1)*geo%fcBb(:,2)/nbf
         dv%vadia(:,1,isb) = 
-     &   -raddidr*dv%facdrift*wrk1*dOnedBsq(:,0)*geo%fcBb(:,2)
+     &   -raddidr*dv%facdrift*wrk1*dOnedBsq(:,0)*geo%fcBb(:,2)/nbf
 *     ..computation of diamagnetic drift
 cwdk    to be checked: now we use inverse volume weighting in wkr0
 cwdk                   (original code: simple averaging)
@@ -480,23 +481,27 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
      &  xfrhie*wrk2*0.5_R8*abs(geo%fcPbshz)*sqrt(pbf/(am(isb)*mp*nbf))
 
 *   ..compute convective coefficients (poloidal and radial)
-      flo(:,0) = geo%fcPbs*wrk0 + term +
-     &  co%cvla(:,0,isb) + dv%uadia(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
-      flo(:,1) = 
-     &  co%cvla(:,1,isb) + dv%uadia(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
-      flo_mdf(:,0) = geo%fcPbs*wrk0 + term +
-     &  co%cvla(:,0,isb) + dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
-      flo_mdf(:,1) = 
-     &  co%cvla(:,1,isb) + dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
+      flo(:,0) = geo%fcPbs*wrk0 + term + co%cvla(:,0,isb) +
+     &  (drift_hyb*dv%vaecrb(:,0,isb) + dv%vadia(:,0,isb))*
+     &  geo%fcS*geo%fcQalf(:,0)
+      flo(:,1) = co%cvla(:,1,isb) +
+     &  (drift_hyb*dv%vaecrb(:,1,isb) + dv%vadia(:,1,isb))*
+     &  geo%fcS*geo%fcQalf(:,1)
+      flo_mdf(:,0) = geo%fcPbs*wrk0 + term + co%cvla(:,0,isb) +
+     &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
+      flo_mdf(:,1) = co%cvla(:,1,isb) +
+     &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo_he(:,0) = geo%fcPbs*wrk0 + term +
      &  5.0_R8/3.0_R8*co%cvla(:,0,isb) + 
-     &  dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
+     &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_he(:,1)  = 5.0_R8/3.0_R8*co%cvla(:,1,isb) +
-     &  dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
-      flo2dia(:,0) = geo%fcPbshz*wrk0 + termhz +
-     &  co%cvlahz(:,0,isb) + ub2dia(:,0)*geo%fcS*geo%fcQalf(:,0)*wrk3
-      flo2dia(:,1) = 
-     &  co%cvlahz(:,1,isb) + ub2dia(:,1)*geo%fcS*geo%fcQalf(:,1)*wrk3
+     &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
+      flo2dia(:,0) = geo%fcPbshz*wrk0 + termhz + co%cvlahz(:,0,isb) +
+     &  (drift_hyb*dv%vaecrb(:,0,isb) + 2.0_R8*dv%vadia(:,0,isb))*
+     &  geo%fcS*geo%fcQalf(:,0)*wrk3
+      flo2dia(:,1) = co%cvlahz(:,1,isb) +
+     &  (drift_hyb*dv%vaecrb(:,1,isb) + 2.0_R8*dv%vadia(:,1,isb))*
+     &  geo%fcS*geo%fcQalf(:,1)*wrk3
       flo_nodrift(:,0) = co%cvla(:,0,isb) + geo%fcPbs*wrk0 + term
       flo_nodrift(:,1) = co%cvla(:,1,isb)
 
@@ -509,16 +514,25 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
      &     (dv%fchinert(:,1) + dv%fchvispar(:,1) + 
      &      vis_per*dv%fchvisper(:,0) + dv%fchanml(:,1) + 
      &      vis_q*dv%fchvisq(:,1))*ycur/(qe*nbf)
-        flo     = flo     + scur
-        flo_mdf = flo_mdf + scur
-        flo2dia(:,0) = flo2dia(:,0) + scur(:,0)*wrk3
-        flo2dia(:,1) = flo2dia(:,1) + scur(:,1)*wrk3
+        flo     = flo     + drift_hyb*scur
+        flo_mdf = flo_mdf + drift_hyb*scur
+        flo2dia(:,0) = flo2dia(:,0) + drift_hyb*scur(:,0)*wrk3
+        flo2dia(:,1) = flo2dia(:,1) + drift_hyb*scur(:,1)*wrk3
       end if
 
 *   ..apply discretization scheme for density-part of fna_mdf
       call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),flo_mdf,
      &  co%cdna(:,:,isb),fna_mdf0(:,:),dv%fna_32(:,:,isb),
      &  dv%fna_52(:,:,isb))
+     
+      fna_mdf0(:,0) = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
+      fna_mdf0(:,1) = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
+      dv%fna_32(:,0,isb) = dv%fna_32(:,0,isb) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
+      dv%fna_32(:,1,isb) = dv%fna_32(:,1,isb) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
 
 *   ..compute fluxes
       dv%fna(:,0,isb)      = fna_mdf0(:,0) +  
@@ -574,6 +588,10 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
 *   ..compute flob, conb
       call calccoef(nCv,nFc,nVx,meth,geo,mpg,
      &    flo_mdf,co%cdna(:,:,isb),flob0,conb0)
+      flob0(:,0) = flob0(:,0) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))
+      flob0(:,1) = flob0(:,1) + (1.0_R8-drift_hyb)*
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))
       if (mdf_fnb .eq. 0) then
         flob0 = flob0 + flo - flo_mdf
       endif

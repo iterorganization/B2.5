@@ -206,9 +206,8 @@ cwdk    Note: use implementation consistent with vedia (b2tfed) and
 cwdk          wadia (b2tfnb)
 cwdk          (original code: cell center approach)
         call grad(nCv, nFc, nVx, 0, geo, mpg, dv%ne*pl%te, wrkVx, dnete)
-        wrk  = geo%cvBb(:,2)/geo%cvBb(:,3)**2
+        wrk0 = geo%fcBb(:,2)/geo%fcBb(:,3)**2
 cwdk    to be checked: now we use inverse volume weighting in wkr0
-        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk,wrk0)
         call intvertex(nCv,nVx,mpg,geo%vxVol,dv%ne,wrkVx)
         call intface(nVx,nFc,mpg%fcVx,weight,wrkVx,wrk1)
         dv%wedia(:,0) =  wrk0*dnete(:,1)/(wrk1*qe)
