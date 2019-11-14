@@ -203,11 +203,10 @@
 *   ..recompute currents
        call b2tanml (nCv, nFc, ns, geo, mpg, co%csig_an, pl%po,
      &   dv%fchanml)
-      call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, pl%ua, co%vsaf_cl, 
-     &  dv%fac_vis, dv%fchvispar)
+       call b2tvspa (nCv, nFc, nVx, ns, geo, mpg, pl%ua, co%vsaf_cl, 
+     &   dv%fac_vis, dv%fchvispar)
        call b2tiner (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
      &      dv%facdrift, dv%fchinert)
-csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt, st_ext)
       endif                                                             !srv 14.07.10 }
 

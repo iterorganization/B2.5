@@ -524,7 +524,8 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
       call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),flo_mdf,
      &  co%cdna(:,:,isb),fna_mdf0(:,:),dv%fna_32(:,:,isb),
      &  dv%fna_52(:,:,isb))
-     
+
+*   ..add non-hybrid drift contribution
       fna_mdf0(:,0) = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
       fna_mdf0(:,1) = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
@@ -534,7 +535,7 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
       dv%fna_32(:,1,isb) = dv%fna_32(:,1,isb) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
 
-*   ..compute fluxes
+*   ..compute other fluxes
       dv%fna(:,0,isb)      = fna_mdf0(:,0) +  
      &      (flo(:,0) - flo_mdf(:,0))*nbf - co%cdpa(:,0,isb)*dpb(:,0)
       dv%fna(:,1,isb)      = fna_mdf0(:,1) +  

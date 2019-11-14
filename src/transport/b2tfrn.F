@@ -52,6 +52,7 @@
       integer, save :: meth = 2
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       character chns*3                                                   !srv 16.09.02
+      real (kind=R8), save :: drift_hyb = 0.0_R8
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
       real (kind=R8), save :: xfrhie = 1.0_R8                            !srv 05.11.09 30.01.10
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
@@ -109,6 +110,7 @@
           if (no_hybr .eq.1) meth = 0
         call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
         call ipgeti ('b2tfnb_discr_meth', meth)
+        call ipgetr ('b2tfnb_drift_hyb',drift_hyb)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -167,10 +169,10 @@
 
 *   ..compute convective coefficients (poloidal and radial)
        flo_eir(:,0) = geo%fcPbs*wrk0 + term + co%cvla(:,0,is) +
-     &  (xvecrb*dv%vaecrb(:,0,is) + xwdia*dv%wadia(:,0,is))*
+     &  drift_hyb*(xvecrb*dv%vaecrb(:,0,is) + xwdia*dv%wadia(:,0,is))*
      &   geo%fcS*geo%fcQalf(:,0)
        flo_eir(:,1) = co%cvla(:,1,is) + 
-     &  (xvecrb*dv%vaecrb(:,1,is) + xwdia*dv%wadia(:,1,is))*
+     &  drift_hyb*(xvecrb*dv%vaecrb(:,1,is) + xwdia*dv%wadia(:,1,is))*
      &   geo%fcS*geo%fcQalf(:,1)
 
 *   ..add contribution from currents
@@ -185,12 +187,20 @@ cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
      &   (dv%fchinert(:,1) + dv%fchvispar(:,1) + 
      &    vis_per*dv%fchvisper(:,0) + dv%fchanml(:,1) + 
      &    vis_q*dv%fchvisq(:,1))*ycur/(qe*nbf)
-        flo_eir   = flo_eir + scur
+        flo_eir   = flo_eir + drift_hyb*scur
        end if
 
 *   ..apply discretization scheme for density-part of fna_eir
        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,is),flo_eir,
      &  co%cdna(:,:,is),dv%fna_eir(:,:,is),wrk00,wrk11)
+
+*   ..add non-hybrid drift contribution
+       dv%fna_eir(:,0,is) = dv%fna_eir(:,0,is) + (1.0_R8-drift_hyb)*
+     &  ((xvecrb*dv%vaecrb(:,0,is) + xwdia*dv%wadia(:,0,is))*
+     &   geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
+       dv%fna_eir(:,1,is) = dv%fna_eir(:,1,is) + (1.0_R8-drift_hyb)*
+     &  ((xvecrb*dv%vaecrb(:,1,is) + xwdia*dv%wadia(:,1,is))*
+     &   geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
 
 *   ..add contribution from pressure diffusion
        dv%fna_eir(:,:,is)  = dv%fna_eir(:,:,is) - co%cdpa(:,:,is)*dpb

@@ -37,12 +37,11 @@
       
 *   ..local variables
       integer ncall, is
-      integer, save  :: fch_inert_style = 0                              !srv 19.04.13
       integer, save :: no_current = 0
       integer, save :: guard_flows
       real (kind=R8) ::
      &  fch_inert, wght(nFc,2), gOnedBsq(nFc,0:1),
-     &  wrk(nCv), wrk0(nFc), wrk1(nFc), wrk2(nFc)
+     &  wrk(nCv), wrk0(nFc), wrk1(nFc)
       save ncall, fch_inert
 *   ..procedures
       intrinsic max, abs
@@ -59,7 +58,6 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2tiner_inert', fch_inert)                           !srv 07.07.99
-       call ipgeti ('b2tiner_fch_inert_style', fch_inert_style)           !srv 07.07.99
        call ipgeti ('b2tfhe_no_current', no_current)
       endif
 *   ..test nCv, nFc
@@ -78,26 +76,13 @@ c Drift terms
 *     ..sum of inertia terms
         wght = 1.0_R8
         wrk0 = 0.0_R8
-        if(fch_inert_style.eq.0) then	
-          do is = 0, ns-1
-            if (.not.is_neutral(is)) then
-              wrk = ua(:,is)**2
-              call intface(nCv,nFc,mpg%fcCv,wght,wrk,wrk1)
-              call intface(nCv,nFc,mpg%fcCv,wght,na(:,is),wrk2)
-              wrk0 = wrk0 + am(is)*wrk1*wrk2
-            endif
-          enddo
-        elseif(fch_inert_style.eq.1) then
-          do is = 0, ns-1
-            if (.not.is_neutral(is)) then
-              wrk = na(:,is)*ua(:,is)**2
-              call intface(nCv,nFc,mpg%fcCv,wght,wrk,wrk1)
-              wrk0 = wrk0 + am(is)*wrk1
-            endif
-          enddo
-        else
-          CALL XERRAB ('B2TINER -- INCORRECT VALUE OF fch_inert_style')
-        endif
+        do is = 0, ns-1
+          if (.not.is_neutral(is)) then
+            wrk = na(:,is)*ua(:,is)**2
+            call intface(nCv,nFc,mpg%fcCv,wght,wrk,wrk1)
+            wrk0 = wrk0 + am(is)*wrk1
+          endif
+        enddo
         wrk0 = 0.5_R8*mp*wrk0
 
 *     ..COMPONENTS OF INERTIA CURRENT

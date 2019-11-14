@@ -104,6 +104,7 @@
      1  naave, volave, teave, neave, tiave, niave, poave,
      2  vwest, veast, vbnd, totfluxn, totfluxi
      &  ,pzaverage, pzsum, volsum                                       !srv 24.03.99 18.01.02
+     &  ,naua2sum, naua2average(0:ns-1)
      &  ,ua2sum, ua2average(0:ns-1)                                     !srv 07.04.00 15.02.02
      &  ,uasum, uaaverage(0:ns-1)                                       !srv 15.02.02
      &  ,nesum, neaverage, tisum, tiaverage, tesum, teaverage           !srv 15.12.00 25.01.02
@@ -856,6 +857,7 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
           enddo
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) + 
      .        conpar(is,iB,1)/US*geo%fcS(iFc)
@@ -4346,6 +4348,7 @@ cghgh
 
 * -- BCENE=8 -- PRESCRIBE THE TOTAL ELECTRON HEAT FLUX WITH CONSTANT
 *                 FLUX DENSITY
+!wdk BC not recommended for drifts!
 
 20800   CONTINUE
         if(ncall.eq.0) then
@@ -4360,8 +4363,9 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           US   = US + geo%fcS(iFc)
         enddo
-        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%she0(iCv1,0) = enepar(iB,1)/US*geo%fcS(iFc)
           srw%she0(iCv1,1) = 0.0_R8
@@ -4677,10 +4681,25 @@ cghgh
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           srw%she0(iCv1,0) = 0.0_R8
           srw%she0(iCv1,3) = geo%fcS(iFc)*cs*enepar(ib,1)
+          if(mdf_fhe.ne.0) then
+            srw%she0(iCv1,0) = srw%she0(iCv1,0) +
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &       (dv%fhePSch(iFc,0) + dv%fhePSch(iFc,1))
+            t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*2.5_R8*
+     &        (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vedia(iFc,0) +
+     &         geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vedia(iFc,1))*
+     &         0.5_R8*(dv%ne(iCv1)+dv%ne(iCv2))*
+     &         0.5_R8*(pl%te(iCv1)+pl%te(iCv2))
+            srw%she0(iCv1,0) = srw%she0(iCv1,0) +
+     &        max(0.0_R8,t0)
+            srw%she0(iCv1,1) = srw%she0(iCv1,1) +
+     &        min(0.0_R8,t0)/pl%te(iCv1)
+          endif
         enddo  
         GOTO 30000
 
@@ -4728,6 +4747,7 @@ cghgh
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             cs   = sqrt(pz(iCv1)/rz(iCv1))
             t0 = 0.0_R8
@@ -4756,7 +4776,16 @@ cghgh
             if(mdf_fhe.ne.0) then
               srw%she0(iCv1,0) = srw%she0(iCv1,0) +
      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &          (dv%fhePSch(iFc,0) + dv%fhePSch(iFc,1))
+     &         (dv%fhePSch(iFc,0) + dv%fhePSch(iFc,1))
+              t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*2.5_R8*
+     &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vedia(iFc,0) +
+     &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vedia(iFc,1))*
+     &           0.5_R8*(dv%ne(iCv1)+dv%ne(iCv2))*
+     &           0.5_R8*(pl%te(iCv1)+pl%te(iCv2))
+              srw%she0(iCv1,0) = srw%she0(iCv1,0) +
+     &          max(0.0_R8,t0)
+              srw%she0(iCv1,1) = srw%she0(iCv1,1) +
+     &          min(0.0_R8,t0)/pl%te(iCv1)
             endif
           enddo  
 cwdk    Todo: corrections for BCCON.ne.14
@@ -6225,8 +6254,9 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           US   = US + geo%fcS(iFc)
         enddo
-        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%shi0(iCv1,0) = enipar(iB,1)/US*geo%fcS(iFc)
           srw%shi0(iCv1,1) = 0.0_R8
@@ -6608,10 +6638,28 @@ cxpb          endif
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           srw%shi0(iCv1,0) = 0.0_R8
           srw%shi0(iCv1,3) = geo%fcS(iFc)*cs*enipar(ib,1)
+          if(mdf_fhi.ne.0) then
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &       (dv%fhiPSch(iFc,0) + dv%fhiPSch(iFc,1))
+            t0 = 0.0_R8
+            do is=0,ns-1
+              t0 = t0 + mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*2.5_R8*
+     &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
+     &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is))*
+     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is))*
+     &           0.5_R8*(pl%ti(iCv1)+pl%ti(iCv2))
+            end do
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+     &        max(0.0_R8,t0)
+            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) +
+     &        min(0.0_R8,t0)/pl%ti(iCv1)
+          endif
         enddo  
         GOTO 40000
 
@@ -6659,6 +6707,7 @@ cxpb          endif
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           t0 = 0.0_R8
@@ -6675,7 +6724,19 @@ cxpb          endif
           if(mdf_fhi.ne.0) then
             srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &        (dv%fhiPSch(iFc,0) + dv%fhiPSch(iFc,1))
+     &       (dv%fhiPSch(iFc,0) + dv%fhiPSch(iFc,1))
+            t0 = 0.0_R8
+            do is=0,ns-1
+              t0 = t0 + mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*2.5_R8*
+     &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
+     &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is))*
+     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is))*
+     &           0.5_R8*(pl%ti(iCv1)+pl%ti(iCv2))
+            end do
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+     &        max(0.0_R8,t0)
+            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) +
+     &        min(0.0_R8,t0)/pl%ti(iCv1)
           endif
 cwdk    Todo: corrections for BCCON.ne.14
         enddo  
@@ -8373,39 +8434,43 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             call xertst(mpg%cvOnClosedSurface(iCv1),
      .       'BCPOT=12 intended for core boundaries only!')
             !wdk weighting following computation of fchdia
-            pzsum  = pzsum  + geo%fcS(iFc)*(pz(iCv1) + pz(iCv2))
-            volsum = volsum + geo%fcS(iFc)
+            pzsum    = pzsum     + geo%fcS(iFc)*(pz(iCv1) + pz(iCv2))
+            volsum   = volsum    + geo%fcS(iFc)
           enddo
           pzaverage = 0.5_R8*pzsum/volsum
+*       ..find the average na*ua**2, na for inner flux surface
+          do is = 0, ns-1
+            naua2sum  = 0.0e0_R8
+            do ibc = 1, mpg%bcCvP(ib,2)                                ! loop over number of cells in the boundary
+              iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                 ! number of the guard cell
+              iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                 ! number of the domain cell
+              iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                       ! number of the guard cell face
+              naua2sum  = naua2sum + geo%fcS(iFc)*
+     .          (pl%na(iCv1,is)*pl%ua(iCv1,is)**2 +
+     .           pl%na(iCv2,is)*pl%ua(iCv2,is)**2)
+            enddo
+            naua2average(is) = 0.5_R8*naua2sum/volsum
+          enddo
+*       ..compute the source
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-            !wdk now uses fcBb(iFc,2) instead of <fcBb(:,2)>; to be checked!
-            fchy_dia = 
-     &       -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+            !wdk now uses fcBb(iFc,2) instead of <fcBb(:,2)>
+            fchy_dia = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &        phm0*pzaverage*dv%facdrift(iFc)*geo%fcBb(iFc,2)*
      &        dOnedBsq(iFc,0)*geo%fcS(iFc)*geo%fcQalf(iFc,1)
             srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - fchy_dia
-            fchy_inertia = 0.0_R8                                     !srv 25.06.03
-!WG_TODO            do is = 0, ns-1                                           !srv 25.06.03
-!WG_TODO              if(.not.is_neutral(is))then                             !srv 25.06.03
-!WG_TODO                fchy_inertia = fchy_inertia                           !srv 07.04.00 25.06.03
-!WG_TODO     &             -0.5e0_R8*am(is)*mp*
-!WG_TODO     &              facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*phm1  ! *signmf                 !srv 07.04.00 21.04.00 21.10.02
-!WG_TODO     &             *naaverage(is)                                     !lk 20.11.07                       !srv 07.04.00
-!WG_TODO     &             *ua2average(is)                                    !srv 07.04.00 15.02.02
-!WG_TODO     &             *bzhzaverage                                       !lk 20.11.07
-!WG_TODO     &               *(OnedBsqc(
-!WG_TODO     &            rightix(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-!WG_TODO     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))),
-!WG_TODO     &            rightiy(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-!WG_TODO     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))-
-!WG_TODO     &           OnedBsqc(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-!WG_TODO     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))    !srv 07.04.00
-!WG_TODO                endif
-!WG_TODO              enddo
-!WG_TODO              sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-!WG_TODO     &         sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)+fchy_inertia
+            fchy_inertia = 0.0_R8
+            do is = 0, ns-1
+             if(.not.is_neutral(is))then
+              fchy_inertia = fchy_inertia -
+     &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &          phm1*0.5e0_R8*am(is)*mp*naua2average(is)*
+     &          dv%facdrift(iFc)*geo%fcBb(iFc,2)*dOnedBsq(iFc,0)*
+     &          geo%fcS(iFc)*geo%fcQalf(iFc,1)
+             endif
+            enddo
+            srw%sch0(iCv1,0) = srw%sch0(iCv1,0) - fchy_inertia
           enddo
         endif
         goto 50000
