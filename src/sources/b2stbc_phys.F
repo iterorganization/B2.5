@@ -1318,31 +1318,35 @@ c dpc
           if (ncall.eq.0) then
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 14, CONPAR(,,1) <= 0 not allowed!')
-            call xertst(CONPAR(IS,IB,2).gt.0.0_R8,
-     1       'BCCON = 14, CONPAR(,,2) <= 0 not allowed!')
+            call xertst(CONPAR(IS,IB,2).ge.0.0_R8,
+     1       'BCCON = 14, CONPAR(,,2) < 0 not allowed!')
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       ' sound speed flux ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
-          
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             s1 = abs(geo%fcPbs(iFc))
             cs = sqrt(pz(iCv1)/rz(iCv1))
             srw%sna0(iCv1,0,is) = 0.0_R8
-            srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs - 
-     .        co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
+            srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs
+            if (conpar(is,ib,2).gt.0.0_R8) then
+              srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) - 
+     .          co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
+            endif
             sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
             if (mdf_fnb.ne.0) then
               t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     .          (dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is))
-              if(t0.ge.0.0_R8) then
-                srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) + t0
-              else
-                srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
-     .            t0/pl%na(iCv1,is)
-              endif
+     &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
+     &           (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
+     &            geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is))*
+     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is)))
+              srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) +
+     &          max(0.0_R8,t0)
+              srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
+     &          min(0.0_R8,t0)/pl%na(iCv1,is)
             endif
           enddo
           GOTO 10000
@@ -3378,11 +3382,12 @@ cxpb  and max(,,) statement for stability
             if (abs(geo%fcQalf(iFc,0)).lt.1e-3) then
               srw%smo0(iCv1,0,is) = 0.0_R8
               srw%smo0(iCv1,1,is) = 0.0_R8
-!              srw%smo0(iCv1,1,is) = -
-!     &          am(is)*mp*co%dna0(iCv1,is)/conpar(is,ib,2)*
-!     &          pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
+              if (conpar(is,ib,2).gt.0.0_R8) then
+                srw%smo0(iCv1,1,is) = srw%smo0(iCv1,1,is) -
+     &            mompar(is,ib,2)/conpar(is,ib,2)*am(is)*mp*
+     &            co%dna0(iCv1,is)*pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
+              endif
             endif
-cwdk      TODO: drift contributions
           enddo
 
           GOTO 20000                                                   !srv 01.02.09 }
@@ -4755,7 +4760,7 @@ cghgh
             do is = 0, ns-1
               t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*
      *          pl%na(iCv1,is)
-              if (.not.is_neutral(is))
+              if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
      &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
      &            pl%na(iCv1,is)
             enddo
@@ -6715,7 +6720,8 @@ cxpb          endif
           do is = 0, ns-1
             if(.not.is_neutral(is)) then
               t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
-              t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*pl%na(iCv1,is)
+              if (conpar(is,ib,2).gt.0.0_R8)
+     &         t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*pl%na(iCv1,is)
             endif
           enddo
           srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -                         !srv 11.03.09 {
