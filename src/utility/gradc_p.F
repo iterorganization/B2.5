@@ -1,54 +1,51 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine gradc_p(nx, ny, hx, hy, vol, qz, fun, dfunp)
+      subroutine gradc_p(nCv, nFc, nVx, mode, geo, mpg, fun, funv,
+     &  gfunp)
       use b2mod_types
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments
-      integer nx,ny
+      integer nCv, nFc, nVx, mode
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     *   qz(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
+     *   fun(nCv), funv(nVx)
 *   ..output arguments
       real (kind=R8) ::
-     *   dfunp(-1:nx,-1:ny)
+     *   gfunp(nCv)
 *-----------------------------------------------------------------------
 *.documentation
 *
 *     GRADC_P computes gradients of a cell centered quantity fun in the 
-*     poloidal direction, in cell centers. As long as 
-*     the x-direction is aligned with the poloidal direction, these 
-*     gradients are fairly trivial.
+*     poloidal direction, in cell centers. The routine first computes
+*     the gradients on faces, and then interpolates to cell centers.
 *
 *-----------------------------------------------------------------------
 *.declarations
 
 *   ..local variables
-      integer ix,iy
+      real(kind=R8) :: gfunpf(nFc)
 
 *-----------------------------------------------------------------------
 *.computation      
 
-*   ..compute gradients
-      do iy = -1,ny
-        do ix = -1,nx
-          if (leftix(ix,iy).eq.-2) then
-cwdk for now: zero here; consider 1-sided differences if needed?
-            dfunp(ix,iy) = 0.0_R8
-          elseif (rightix(ix,iy).eq.nx+1) then
-cwdk for now: zero here; consider 1-sided differences if needed?
-            dfunp(ix,iy) = 0.0_R8
-          else
-cwdk treatment in N/S guard cells to be considered
-            dfunp(ix,iy) = 
-     &       (fun(rightix(ix,iy),rightiy(ix,iy)) - 
-     &        fun(leftix(ix,iy),leftiy(ix,iy)))/
-     &       (hx(ix,iy) + 0.5_R8*hx(rightix(ix,iy),rightiy(ix,iy)) + 
-     &                    0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy)))
-          endif
-        enddo
-      enddo
+*   ..test mode
+      call xertst (0.le.mode.and.mode.le.1,
+     .  'gradc_p--faulty argument mode')
+
+*   ..interpolate fun to cell vertices, using volume weighted averaging
+      if (mode.eq.0) then
+        call intvertex(nCv,nVx,mpg,geo%vxVol,fun,funv)
+      endif
+
+*   ..compute gradients on faces
+      call grad_p(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfunpf)
+
+*   ..interpolate to centers
+      call intcell(nFc, nCv, mpg, mpg%intcellP, gfunpf,gfunp)
 
 *   ..return
       return

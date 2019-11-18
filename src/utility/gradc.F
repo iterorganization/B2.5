@@ -1,17 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine gradc(nx, ny, hx, hy, vol, qz, fun, dfun)
+      subroutine gradc(nCv, nFc, nVx, mode, geo, mpg, fun, funv, gfun)
       use b2mod_types
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments
-      integer nx,ny
+      integer nCv, nFc, nVx, mode
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     *   qz(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
+     *   fun(nCv), funv(nVx)
 *   ..output arguments
       real (kind=R8) ::
-     *   dfun(-1:nx,-1:ny,0:1)
+     *   gfun(nCv,0:1)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -34,9 +37,18 @@
 *-----------------------------------------------------------------------
 *.computation      
 
+*   ..test mode
+      call xertst (0.le.mode.and.mode.le.1,
+     .  'gradc--faulty argument mode')
+
+*   ..interpolate fun to cell vertices, using volume weighted averaging
+      if (mode.eq.0) then
+        call intvertex(nCv,nVx,mpg,geo%vxVol,fun,funv)
+      endif
+
 *   ..compute poloidal and radial gradients
-      call gradc_p(nx,ny, hx, hy, vol, qz, fun, dfun(-1,-1,0))
-      call gradc_r(nx,ny, hx, hy, vol, qz, fun, dfun(-1,-1,1))
+      call gradc_p(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfun(1,0))
+      call gradc_r(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfun(1,1))
 
 *   ..return
       return

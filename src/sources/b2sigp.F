@@ -218,13 +218,9 @@
         enddo
 #endif
       elseif(style.eq.1) then                                         !srv 02.07.08 {
-*   ..  compute gradients on faces and interpolate to centers
-        wrk2 = nb*ti
-        wrk3 = ne*te
-        call grad_p(nCv, nFc, nVx, 0, geo, mpg, wrk2, wrkv, wrkf)
-        call intcell(nFc,nCv, mpg, mpg%intcellP, wrkf, wrk0)
-        call grad_p(nCv, nFc, nVx, 0, geo, mpg, wrk3, wrkv, wrkf)
-        call intcell(nFc,nCv, mpg, mpg%intcellP, wrkf, wrk1)
+*   ..  compute gradients in cell centers
+        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nb*ti, wrkv, wrk0)
+        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk1)
 * ..compute pressure gradient term
         smbgp = 0.0e0_R8
         wrk5  = 0.0e0_R8
@@ -275,11 +271,9 @@ cdjm compute b2sigp_pstat0to3 on left cell face
         smbgp = 0.0e0_R8
         wrk5  = 0.0e0_R8
         wrk6  = 0.0e0_R8
-*   ..  compute gradients on faces and interpolate to centers
-        call grad_p(nCv, nFc, nVx, 0, geo, mpg, nb*ti, wrkv, wrkf)
-        call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf,wrk0)
-        call grad_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, wrkf)
-        call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf,wrk1)
+*   ..  compute gradients in cell centers
+        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nb*ti, wrkv, wrk0)
+        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, wrk1)
 *   ..  compute smbgp
         do iCv = 1, mpg%nCi
          t0=geo%cvHz(iCv)*geo%cvVol(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)

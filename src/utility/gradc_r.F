@@ -1,72 +1,51 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine gradc_r(nx, ny, hx, hy, vol, qz, fun, dfunr)
+      subroutine gradc_r(nCv, nFc, nVx, mode, geo, mpg, fun, funv,
+     &  gfunr)
       use b2mod_types
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments
-      integer nx,ny,mode
+      integer nCv, nFc, nVx, mode
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     *   qz(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
+     *   fun(nCv), funv(nVx)
 *   ..output arguments
       real (kind=R8) ::
-     *   dfunr(-1:nx,-1:ny)
+     *   gfunr(nCv)
 *-----------------------------------------------------------------------
 *.documentation
 *
 *     GRADC_R computes gradients of a cell centered quantity fun in the 
-*     radial direction, in cell centers. It takes into 
-*     account the corrections for the y-direction not perpendicular to
-*     the poloidal field (9-point stencil).
+*     radial direction, in cell centers. The routine first computes
+*     the gradients on faces, and then interpolates to cell centers.
 *
 *-----------------------------------------------------------------------
 *.declarations
 
 *   ..local variables
-      integer ix,iy
-
-*   ..procedures
-      real (kind=R8) :: hy1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
+      real(kind=R8) :: gfunrf(nFc)
 
 *-----------------------------------------------------------------------
 *.computation      
 
-*   ..compute radial gradients
-      do iy = -1,ny
-        do ix = -1,nx
-          if (bottomiy(ix,iy).eq.-2) then
-cwdk for now:  zero here; consider 1-sided differences if needed?
-            dfunr(ix,iy) = 0.0_R8
-          elseif (topiy(ix,iy).eq.ny+1) then
-cwdk for now:  zero here; consider 1-sided differences if needed?
-            dfunr(ix,iy) = 0.0_R8
-          else
-            if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-cwdk for now: no 9-point corrections in these guard cells;
-cwdk          consider 1-sided differences if needed?
-              dfunr(ix,iy) = 
-     &         (fun(topix(ix,iy),topiy(ix,iy)) - 
-     &          fun(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &         (hy1(ix,iy) + 0.5_R8*hy1(topix(ix,iy),topiy(ix,iy)) +
-     &          0.5_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-            else
-              dfunr(ix,iy) = 
-     &         (fun(topix(ix,iy),topiy(ix,iy)) -
-     &          fun(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &         (hy1(ix,iy) + 0.5_R8*hy1(topix(ix,iy),topiy(ix,iy)) +
-     &          0.5_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy))) - 
-     &          qz(ix,iy,0)/qz(ix,iy,1)*
-     &         (fun(rightix(ix,iy),rightiy(ix,iy)) - 
-     &          fun(leftix(ix,iy),leftiy(ix,iy)))/
-     &         (hx(ix,iy) + 0.5_R8*hx(rightix(ix,iy),rightiy(ix,iy)) + 
-     &                      0.5_R8*hx(leftix(ix,iy),leftiy(ix,iy)))
-            endif
-          endif
-        enddo
-      enddo
+*   ..test mode
+      call xertst (0.le.mode.and.mode.le.1,
+     .  'gradc_r--faulty argument mode')
+
+*   ..interpolate fun to cell vertices, using volume weighted averaging
+      if (mode.eq.0) then
+        call intvertex(nCv,nVx,mpg,geo%vxVol,fun,funv)
+      endif
+
+*   ..compute gradients on faces
+      call grad_r(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfunrf)
+
+*   ..interpolate to centers
+      call intcell(nFc, nCv, mpg, mpg%intcellR, gfunrf,gfunr)
 
 *   ..return
       return

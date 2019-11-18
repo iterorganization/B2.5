@@ -44,7 +44,7 @@
         call intvertex(nCv,nVx,mpg,geo%vxVol,fun,funv)
       endif
 
-*   ..compute poloidal and radial differences
+*   ..compute poloidal and radial gradients
       call grad_p(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfun(1,0))
       call grad_r(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfun(1,1))
 
