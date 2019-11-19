@@ -93,6 +93,7 @@
      *  rxf, BoRiS
       real (kind=R8) ::
      *  nstg_areshe, nstg_areshi, nstg_aresco
+      real (kind=R8), save :: facdrift_start, facExB_start, facvis_start
       save ncall, nstg, moqtlv, moitlv, rxf, itcnt, nsmin, nsmax,        !xpb
      *  density_control, ramp_slow, BoRiS, no_solve,
      *  nstg_areshe, nstg_areshi, nstg_aresco, boundary_namelist
@@ -254,9 +255,13 @@
 c the main initialisation is in b2news --- unfortunately a few routines
 c that need an initial value get called before the first call to b2news
 c therefore initialise here
-        st%dv%fac_ExB = 0.0_R8
-        st%dv%facdrift = 0.0_R8
-        st%dv%fac_vis = 0.0_R8
+cwdk    For unstructured solver, start with simple reading of start-values
+        call ipgetr ('b2news_facExB_start',   facExB_start)
+        call ipgetr ('b2news_facdrift_start', facdrift_start)
+        call ipgetr ('b2news_facvis_start',   facvis_start)
+        st%dv%fac_ExB  = facExB_start
+        st%dv%facdrift = facdrift_start
+        st%dv%fac_vis  = facvis_start
 #ifdef WG_TODO
         call b2news_facdrift_fac_ExB_init(nx,ny,ramp_slow)
 #endif
