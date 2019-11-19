@@ -259,6 +259,7 @@ cwdk                   (original code: simple averaging)
         dv%uadia(:,:,isb) = dv%vaecrb(:,:,isb) + dv%vadia(:,:,isb)
         ub2dia = dv%vaecrb(:,:,isb) + 2.0_R8*dv%vadia(:,:,isb)
 *     ..computation of P.Sch flows
+        call diff(nCv, nFc, nVx, 0, geo, mpg, nbti, wrkVx, dnbti)
         call intface(nVx,nFc,mpg%fcVx,weight,nbcor,wrk1)
         dv%fnaPSch(:,0,isb) =  PSch*dv%facdrift*co%cddi(:,0,isb)*
      &    dnbti(:,1)!*nbf/wrk1
@@ -774,6 +775,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         vbecrb_(:,0) = -vbecrb_(:,0)/geo%cvBb(:,3)
         vbecrb_(:,1) =  vbecrb_(:,1)*geo%cvBb(:,2)/geo%cvBb(:,3)**2
 *     ..computation diamagnetic drift in cell centers
+        call grad(nCv, nFc, nVx, 0, geo, mpg, nbti, wrkVx, dnbti)
         call intcell(nFc,nCv,mpg,mpg%intcellR,dnbti(:,1),wbdia_(:,0))
         call intcell(nFc,nCv,mpg,mpg%intcellP,dnbti(:,0),wbdia_(:,1))
         wbdia_(:,0) = -wbdia_(:,0)/(qe*nbzb*geo%cvBb(:,3))

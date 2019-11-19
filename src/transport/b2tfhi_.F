@@ -138,7 +138,7 @@ cpax
 *   ..precompute face and vertex values of nati2
          nati2 = pl%na(:,is)*pl%ti*pl%ti
          call intvertex(nCv,nVx,mpg,geo%vxVol,nati2,nati2v)
-         call grad(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
+         call diff(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
          call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,is),niv)
 
 *   ..compute P.Sch heat flux
