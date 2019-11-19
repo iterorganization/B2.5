@@ -62,7 +62,7 @@
 *   ..precompute face and vertex values of nete2
          nete2 = ne*te*te
          call intvertex(nCv,nVx,mpg,geo%vxVol,nete2,nete2v)
-         call grad(nCv, nFc, nVx, 1, geo, mpg, nete2, nete2v, dnete2)
+         call diff(nCv, nFc, nVx, 1, geo, mpg, nete2, nete2v, dnete2)
          call intvertex(nCv,nVx,mpg,geo%vxVol,ne,nev)
 
 *   ..compute P.Sch heat flux
