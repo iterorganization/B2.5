@@ -2190,6 +2190,7 @@ cwdk  might need to add duplicates numbers here...
             do i = 1, mpg%vxCvP(ivx,2)
               ic = mpg%vxCv(mpg%vxCvP(ivx,1) + i - 1)
               gm%vxVol(mpg%vxCvP(ivx,1) + i - 1) = 0.25*gm%cvVol(ic)
+!              gm%vxVol(mpg%vxCvP(ivx,1) + i - 1) = 0.25
             end do
           end if
         end do
@@ -2786,6 +2787,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
             st % dv % fna_mdf(ifc,0:1,0:ns-1) = 
      .              fna_mdf(ix,iy,0,0:1,0:ns-1)
             st % dv % fna_he(ifc,0:1,0:ns-1)=fna_he(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_fcor(ifc,0:1,0:ns-1) = 
+     .              fna_fcor(ix,iy,0,0:1,0:ns-1)
+            st % dv % fnaPSch(ifc,0:1,0:ns-1) = 
+     .              fnaPSch(ix,iy,0,0:1,0:ns-1)
             st % dv % fna_32(ifc,0:1,0:ns-1)=fna_32(ix,iy,0,0:1,0:ns-1)
             st % dv % fna_52(ifc,0:1,0:ns-1)=fna_52(ix,iy,0,0:1,0:ns-1)
             st % dv % fna_32nd(ifc,0:1,0:ns-1) = 
@@ -2801,10 +2806,12 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 
             st % dv % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
             st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,0,0:1)
+            st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,0,0:1)
             st % dv % fhet(ifc,0:1) = fhet(ix,iy,0,0:1)
             st % dv % fhe_eir(ifc,0:1) = fhe_eir(ix,iy,0,0:1)
             st % dv % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
             st % dv % fhi_mdf(ifc,0:1) = fhi_mdf(ix,iy,0,0:1)
+            st % dv % fhiPSch(ifc,0:1) = fhiPSch(ix,iy,0,0:1)
             st % dv % fhit(ifc,0:1) = fhit(ix,iy,0,0:1)
             st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,0,0:1)
 
@@ -3661,6 +3668,10 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           fna_mdf(ix,iy,0,0:1,0:ns-1) =
      .            st % dv % fna_mdf(ifc,0:1,0:ns-1)
           fna_he(ix,iy,0,0:1,0:ns-1)  = st % dv % fna_he(ifc,0:1,0:ns-1)
+          fna_fcor(ix,iy,0,0:1,0:ns-1) =
+     .            st % dv % fna_fcor(ifc,0:1,0:ns-1)
+          fnaPSch(ix,iy,0,0:1,0:ns-1) =
+     .            st % dv % fnaPSch(ifc,0:1,0:ns-1)
           fna_32(ix,iy,0,0:1,0:ns-1)  = st % dv % fna_32(ifc,0:1,0:ns-1)
           fna_52(ix,iy,0,0:1,0:ns-1)  = st % dv % fna_52(ifc,0:1,0:ns-1)
           fna_32nd(ix,iy,0,0:1,0:ns-1) = 
@@ -3678,10 +3689,12 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 
           fhe(ix,iy,0,0:1)     = st % dv % fhe(ifc,0:1)
           fhe_mdf(ix,iy,0,0:1) = st % dv % fhe_mdf(ifc,0:1)
+          fhePSch(ix,iy,0,0:1) = st % dv % fhePSch(ifc,0:1)
           fhet(ix,iy,0,0:1)    = st % dv % fhet(ifc,0:1)
           fhe_eir(ix,iy,0,0:1) = st % dv % fhe_eir(ifc,0:1)
           fhi(ix,iy,0,0:1)     = st % dv % fhi(ifc,0:1)
           fhi_mdf(ix,iy,0,0:1) = st % dv % fhi_mdf(ifc,0:1)
+          fhiPSch(ix,iy,0,0:1) = st % dv % fhiPSch(ifc,0:1)
           fhit(ix,iy,0,0:1)    = st % dv % fhit(ifc,0:1)
           fhi_eir(ix,iy,0,0:1) = st % dv % fhi_eir(ifc,0:1)
 
