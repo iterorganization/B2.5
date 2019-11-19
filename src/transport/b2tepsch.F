@@ -66,11 +66,11 @@
          call intvertex(nCv,nVx,mpg,geo%vxVol,ne,nev)
 
 *   ..compute P.Sch heat flux
-         fhePSch(:,0) =  2.5_R8*PSch*facdrift*cddi(:,0,is)*dnete2(:,1)
-         fhePSch(:,1) = -2.5_R8*PSch*facdrift*cddi(:,1,is)*dnete2(:,0)
+         fhePSch(:,0) = -2.5_R8*PSch*facdrift*cddi(:,0,is)*dnete2(:,1)
+         fhePSch(:,1) =  2.5_R8*PSch*facdrift*cddi(:,1,is)*dnete2(:,0)
 *     ..linearization coefficients for P.Sch flows
-         cddi_eff(:,0) = -5.0_R8*PSch*facdrift*cddi(:,1,is)
-         cddi_eff(:,1) =  5.0_R8*PSch*facdrift*cddi(:,0,is)
+         cddi_eff(:,0) =  5.0_R8*PSch*facdrift*cddi(:,1,is)
+         cddi_eff(:,1) = -5.0_R8*PSch*facdrift*cddi(:,0,is)
          call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cddi_eff,floe0,cone0)
          do iFc = 1, nFc
           floe(iFc,0)   = 0.5_R8*floe0(iFc,0)*
