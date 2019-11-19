@@ -4770,13 +4770,13 @@ cghgh
             if(pot_eq.eq.1) then                                      !srv 27.02.13 {
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                   !srv 11.03.09 {
      &          (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0 -              !srv 19.04.13
-     &          (enepar(ib,1) + 1.0_R8)*t1                            !wdk to check: correct for gammae?
+     &           enepar(ib,2)*t1                                      !wdk to check: correct for gammae?
               srw%she0(iCv1,0) = srw%she0(iCv1,0) - 
      &           qe*pl%po(iCv1)*(t0 + t1)                             !srv 07.11.12
             else                                                      !srv 27.02.13
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                   !srv 11.03.09 {
      &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+3.1_R8)*t0 -     !srv 19.04.13
-     &          (enepar(ib,1) + 1.0 + 3.1_R8)*t1                      !wdk to check: correct for gammae?
+     &          (enepar(ib,2) + 3.1_R8)*t1                            !wdk to check: correct for gammae?
             endif                                                     !srv 27.02.13 }
             if(mdf_fhe.ne.0) then
               srw%she0(iCv1,0) = srw%she0(iCv1,0) +
@@ -6726,7 +6726,7 @@ cxpb          endif
           enddo
           srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -                         !srv 11.03.09 {
      &      enipar(ib,1)*t0*cs*abs(geo%fcPbs(iFc)) -                    !srv 19.04.13
-     &     (enipar(ib,2)+1.0_R8)*t1*geo%fcS(iFc)
+     &      enipar(ib,2)*t1*geo%fcS(iFc)
           if(mdf_fhi.ne.0) then
             srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
