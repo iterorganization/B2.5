@@ -518,6 +518,8 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
         flo_mdf = flo_mdf + drift_hyb*scur
         flo2dia(:,0) = flo2dia(:,0) + drift_hyb*scur(:,0)*wrk3
         flo2dia(:,1) = flo2dia(:,1) + drift_hyb*scur(:,1)*wrk3
+      else
+        scur = 0.0_R8
       end if
 
 *   ..apply discretization scheme for density-part of fna_mdf
