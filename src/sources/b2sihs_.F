@@ -270,12 +270,9 @@
 !WG_TODO      endif
       call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)                !srv 11.09.09
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
-      call grad(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, wrkf)
-      call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf(1,0),dpoc(1,0))
-      call intcell(nFc, nCv, mpg, mpg%intcellR, wrkf(1,1),dpoc(1,1))
-      call grad(nCv, nFc, nVx, 0, geo, mpg, geo%cvOnedBsq, wrkv, wrkf)
-      call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(1,0),dOnedBsqc(1,0))
-      call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(1,1),dOnedBsqc(1,1))
+      call gradc(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpoc)
+      call gradc(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
+     &  geo%vxOnedBsq, dOnedBsqc)
       wrkc = geo%cvBb(:,2)*geo%cvVol*                                  !srv 11.01.13
      &    (dpoc(:,1)*dOnedBsqc(:,0) - dpoc(:,0)*dOnedBsqc(:,1))
 !WG_TODO      b2exbe=0.0_R8
