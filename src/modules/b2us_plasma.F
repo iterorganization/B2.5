@@ -174,7 +174,7 @@ cwdk move to dv
   ! Type for data transfer in b2sral
       type B2RatesWork          
         real(R8), allocatable :: rsa(:,:), rra(:,:), rqa(:,:), rrd(:,:),
-     .                           rbr(:,:), rcx(:,:), rqa_ra(:,:)
+     .                           rbr(:,:), rcx(:,:) , rqa_ra(:,:)
       end type B2RatesWork
 
   ! A plasma state snapshot for timestepping. Includes a combination of quantities from above types
@@ -310,6 +310,12 @@ cwdk move to dv
       allocate( plasma % te( nCv ) )
       allocate( plasma % ti( nCv ) )
 
+      plasma % na = 0._R8
+      plasma % ua = 0._R8
+      plasma % po = 0._R8
+      plasma % te = 0._R8
+      plasma % ti = 0._R8
+
       return      
       end subroutine createB2Plasma
 
@@ -334,76 +340,76 @@ cwdk move to dv
 
       if (allocated(coeff % calf)) return
 
-      allocate( coeff % calf( nFc, 0:1 ) )
-      allocate( coeff % calf_cl( nFc, 0:1 ) )
-      allocate( coeff % calf_an( nFc, 0:1 ) )
+      allocate( coeff % calf( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % calf_cl( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % calf_an( nFc, 0:1 ), SOURCE=0._R8 )
       
-      allocate( coeff % csig( nFc, 0:1 ) )
-      allocate( coeff % csig_cl( nFc, 0:1 ) )
-      allocate( coeff % csig_an( nFc, 0:1 ) )
-      allocate( coeff % csigin( nFc, 0:1, 0:ns-1, 0:ns-1 ) )
+      allocate( coeff % csig( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % csig_cl( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % csig_an( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % csigin( nFc, 0:1, 0:ns-1, 0:ns-1 ),SOURCE=0._R8)
       
-      allocate( coeff % chve( nFc, 0:1 ) )
-      allocate( coeff % chce( nFc, 0:1 ) )
-      allocate( coeff % chvemx( nFc ) )
+      allocate( coeff % chve( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % chce( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % chvemx( nFc ), SOURCE=0._R8 )
       
-      allocate( coeff % chvi( nFc, 0:1 ) )
-      allocate( coeff % chci( nFc, 0:1 ) )
-      allocate( coeff % chcb( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % chvimx( nFc ) )
+      allocate( coeff % chvi( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % chci( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % chcb( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % chvimx( nFc ), SOURCE=0._R8 )
       
-      allocate( coeff % cvla( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % cdna( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % cdpa( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % cvsa( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % cvsa_cl( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % cvsa_an( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvla( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cdna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cdpa( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cvsa( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cvsa_cl( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cvsa_an( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
-      allocate( coeff % cvlahz( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % cdnahz( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % cdpahz( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % cvsahz( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % cvsahz_cl( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % cvmahz( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvlahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cdnahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cdpahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cvsahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cvsahz_cl( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cvmahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
-      allocate( coeff % vsaf_cl( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % vsaf_cl( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
-      allocate( coeff % cddi( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cddi( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
-      allocate( coeff % cthe( nFc, 0:ns-1 ) )
-      allocate( coeff % cthi( nFc, 0:ns-1 ) )
+      allocate( coeff % cthe( nFc, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cthi( nFc, 0:ns-1 ), SOURCE=0._R8 )
       
-      allocate( coeff % ceqp( nCv ) )
+      allocate( coeff % ceqp( nCv ), SOURCE=0._R8 )
 
-      allocate( coeff % fllim0fna( nFc, 0:1, 0:ns-1 ) )      
-      allocate( coeff % fllim0fhi( nFc, 0:1, 0:ns-1 ) )
-      allocate( coeff % fllimvisc( nFc, 0:ns-1 ) )
+      allocate( coeff % fllim0fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )      
+      allocate( coeff % fllim0fhi( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % fllimvisc( nFc, 0:ns-1 ), SOURCE=0._R8 )
 
 
 ! moved here from b2coeffwork
       
-      allocate( coeff%dna0( nCv, 0:ns-1 ) )
-      allocate( coeff%dpa0( nCv, 0:ns-1 ) )
-      allocate( coeff%vla0( nCv, 0:1, 0:ns-1 ) )
-      allocate( coeff%vma0( nCv, 0:1, 0:ns-1 ) )
-      allocate( coeff%vsa0( nCv, 0:ns-1 ) )
-      allocate( coeff%hci0( nCv ) )
-      allocate( coeff%hcib( nCv, 0:ns-1 ) )
-      allocate( coeff%hce0( nCv ) )
-      allocate( coeff%sig0( nCv ) )
-      allocate( coeff%alf0( nCv ) )
+      allocate( coeff%dna0( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff%dpa0( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff%vla0( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff%vma0( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff%vsa0( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff%hci0( nCv ), SOURCE=0._R8 )
+      allocate( coeff%hcib( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff%hce0( nCv ), SOURCE=0._R8 )
+      allocate( coeff%sig0( nCv ), SOURCE=0._R8 )
+      allocate( coeff%alf0( nCv ), SOURCE=0._R8 )
 
-      allocate( coeff%fllim_ki( nFc ) )
-      allocate( coeff%fllim_ke( nFc ) )
-      allocate( coeff%fllim_al( nFc ) )
-      allocate( coeff%fllim_al_c( nCv ) )
-      allocate( coeff%f_luc_ke( nFc ) )
-      allocate( coeff%f_luc_ki( nFc ) )
-      allocate( coeff%f_luc_et( nFc ) )
-      allocate( coeff%f_luc_sg( nFc ) )
-      allocate( coeff%f_luc_al( nFc ) )
-      allocate( coeff%alfx_c( nCv ) )
-      allocate( coeff%sigx_c( nCv ) )
+      allocate( coeff%fllim_ki( nFc ), SOURCE=0._R8 )
+      allocate( coeff%fllim_ke( nFc ), SOURCE=0._R8 )
+      allocate( coeff%fllim_al( nFc ), SOURCE=0._R8 )
+      allocate( coeff%fllim_al_c( nCv ), SOURCE=0._R8 )
+      allocate( coeff%f_luc_ke( nFc ), SOURCE=0._R8 )
+      allocate( coeff%f_luc_ki( nFc ), SOURCE=0._R8 )
+      allocate( coeff%f_luc_et( nFc ), SOURCE=0._R8 )
+      allocate( coeff%f_luc_sg( nFc ), SOURCE=0._R8 )
+      allocate( coeff%f_luc_al( nFc ), SOURCE=0._R8 )
+      allocate( coeff%alfx_c( nCv ), SOURCE=0._R8 )
+      allocate( coeff%sigx_c( nCv ), SOURCE=0._R8 )
 
       return
       end subroutine createB2Coeff
@@ -491,97 +497,97 @@ cwdk move to dv
       if (allocated(dv % fch)) return
       
 ! fluxes
-      allocate( dv % fch( nFc, 0:1 ) )
-      allocate( dv % fch_32( nFc, 0:1 ) )
-      allocate( dv % fch_52( nFc, 0:1 ) )
-      allocate( dv % fch_p( nFc, 0:1 ) )
-      allocate( dv % fchdia( nFc, 0:1 ) )
-      allocate( dv % fchin( nFc, 0:1 ) )
-      allocate( dv % fchvispar( nFc, 0:1 ) )
-      allocate( dv % fchvisper( nFc, 0:1 ) )
-      allocate( dv % fchvisq( nFc, 0:1 ) )
-      allocate( dv % fchinert( nFc, 0:1 ) )
-      allocate( dv % fchanml( nFc, 0:1 ) )
-      allocate( dv % fch_pi_c( nCv, 0:1 ) )
-      allocate( dv % fch_pi_f( nFc, 0:1 ) )                        
-      allocate( dv % fne( nFc, 0:1 ) )
-      allocate( dv % fne_he( nFc, 0:1 ) )
-      allocate( dv % fne_32( nFc, 0:1 ) )
-      allocate( dv % fne_52( nFc, 0:1 ) )
+      allocate( dv % fch( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fch_32( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fch_52( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fch_p( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchdia( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchin( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchvispar( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchvisper( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchvisq( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchinert( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchanml( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fch_pi_c( nCv, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fch_pi_f( nFc, 0:1 ), SOURCE=0._R8 )                       
+      allocate( dv % fne( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fne_he( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fne_32( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fne_52( nFc, 0:1 ), SOURCE=0._R8 )
       
-      allocate( dv % fni( nFc, 0:1 ) )
-      allocate( dv % fni_he( nFc, 0:1 ) )
-      allocate( dv % fni_32( nFc, 0:1 ) )
-      allocate( dv % fni_52( nFc, 0:1 ) )
+      allocate( dv % fni( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fni_he( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fni_32( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fni_52( nFc, 0:1 ), SOURCE=0._R8 )
       
-      allocate( dv % fna( nFc, 0:1, 0:ns-1 ) )
-      allocate( dv % fna_mdf( nFc, 0:1 , 0:ns-1 ) )    
-      allocate( dv % fna_he( nFc, 0:1, 0:ns-1 ) )
-      allocate( dv % fna_32( nFc, 0:1, 0:ns-1 ) )
-      allocate( dv % fna_52( nFc, 0:1, 0:ns-1 ) )
-      allocate( dv % fna_32nd( nFc, 0:1, 0:ns-1 ) )
-      allocate( dv % fna_52nd( nFc, 0:1, 0:ns-1 ) )
-      allocate( dv % fnaPSch( nFc, 0:1 , 0:ns-1 ) )
-      allocate( dv % fna_fcor( nFc, 0:1 , 0:ns-1 ) )        
-      allocate( dv % fna_eir( nFc, 0:1, 0:ns-1 ) )
-      allocate( dv % fne_eir( nFc, 0:1 ) )
+      allocate( dv % fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % fna_mdf( nFc, 0:1 , 0:ns-1 ), SOURCE=0._R8 )    
+      allocate( dv % fna_he( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % fna_32( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % fna_52( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % fna_32nd( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % fna_52nd( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % fnaPSch( nFc, 0:1 , 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % fna_fcor( nFc, 0:1 , 0:ns-1 ), SOURCE=0._R8 )        
+      allocate( dv % fna_eir( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % fne_eir( nFc, 0:1 ), SOURCE=0._R8 )
 
-      allocate( dv % fna_nodrift( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % fna_nodrift( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       
-      allocate( dv % fmo( nFc, 0:1, 0:ns-1 ) )
+      allocate( dv % fmo( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
-      allocate( dv % fhe( nFc, 0:1 ) )    
-      allocate( dv % fhe_mdf( nFc, 0:1 ) )    
-      allocate( dv % fhePSch( nFc, 0:1 ) )    
-      allocate( dv % fhet( nFc, 0:1 ) )
-      allocate( dv % fhe_eir( nFc, 0:1 ) )    
-      allocate( dv % fhi( nFc, 0:1 ) )    
-      allocate( dv % fhi_mdf( nFc, 0:1 ) )    
-      allocate( dv % fhiPSch( nFc, 0:1 ) )    
-      allocate( dv % fhit( nFc, 0:1 ) )
-      allocate( dv % fhi_eir( nFc, 0:1 ) )    
-      allocate( dv % fhm( nFc, 0:1, 0:ns-1) ) 
-      allocate( dv % fhp( nFc, 0:1, 0:ns-1) ) 
-      allocate( dv % fhj( nFc, 0:1 ) ) 
-      allocate( dv % fht( nFc, 0:1 ) ) 
+      allocate( dv % fhe( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % fhe_mdf( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % fhePSch( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % fhet( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fhe_eir( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % fhi( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % fhi_mdf( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % fhiPSch( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % fhit( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fhi_eir( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % fhm( nFc, 0:1, 0:ns-1), SOURCE=0._R8 ) 
+      allocate( dv % fhp( nFc, 0:1, 0:ns-1), SOURCE=0._R8 ) 
+      allocate( dv % fhj( nFc, 0:1 ), SOURCE=0._R8 ) 
+      allocate( dv % fht( nFc, 0:1 ), SOURCE=0._R8 ) 
       
 ! kinetic energy
-      allocate( dv % kinrgy( nCv, 0:ns-1 ) )    
+      allocate( dv % kinrgy( nCv, 0:ns-1 ), SOURCE=0._R8 )    
       
 ! derived state quantities
-      allocate( dv % ne( nCv ) )    
-      allocate( dv % ne2( nCv ) )    
-      allocate( dv % ni( nCv, 0:1 ) )    
-      allocate( dv % ue( nCv ) )
-      allocate( dv % pa( nCv, 0:ns-1 ) )
-      allocate( dv % pz( nCv ) )
-      allocate( dv % lnlam( nCv ) ) 
+      allocate( dv % ne( nCv ), SOURCE=0._R8 )    
+      allocate( dv % ne2( nCv ), SOURCE=0._R8 )    
+      allocate( dv % ni( nCv, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % ue( nCv ), SOURCE=0._R8 )
+      allocate( dv % pa( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % pz( nCv ), SOURCE=0._R8 )
+      allocate( dv % lnlam( nCv ), SOURCE=0._R8 ) 
 
 ! drift flows
-      allocate( dv % uadia ( nFc, 0:1, 0:ns-1 ) )
-      allocate( dv % vadia ( nFc, 0:1, 0:ns-1 ) )
-      allocate( dv % wadia ( nFc, 0:1, 0:ns-1 ) )
-      allocate( dv % vaecrb( nFc, 0:1, 0:ns-1 ) )
-      allocate( dv % vedia ( nFc, 0:1 ) )
-      allocate( dv % wedia ( nFc, 0:1 ) )
-      allocate( dv % veecrb( nFc, 0:1 ) )
-      allocate( dv % facdrift (nFc))
-      allocate( dv % fac_ExB  (nFc))
-      allocate( dv % fac_vis   (nFc))
+      allocate( dv % uadia ( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % vadia ( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % wadia ( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % vaecrb( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % vedia ( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % wedia ( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % veecrb( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % facdrift (nFc), SOURCE=0._R8)
+      allocate( dv % fac_ExB  (nFc), SOURCE=0._R8)
+      allocate( dv % fac_vis  (nFc), SOURCE=0._R8)
 
       
 ! numerical coefficients
-      allocate( dv % flob (nFc, 0:1 ) )
-      allocate( dv % conb (nFc, 0:1, 0:4) )
-      allocate( dv % conc( nFc, 0:1 ) )
-      allocate( dv % fllime( nFc ) )    
-      allocate( dv % floe( nFc, 0:1 ) )
-      allocate( dv % floe_noc( nFc, 0:1 ) )
-      allocate( dv % cone( nFc, 0:1, 0:2) )
-      allocate( dv % fllimi( nFc ) )    
-      allocate( dv % floi( nFc, 0:1 ) )
-      allocate( dv % floi_noc( nFc, 0:1 ) )
-      allocate( dv % coni( nFc, 0:1, 0:2 ) )
+      allocate( dv % flob (nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % conb (nFc, 0:1, 0:4), SOURCE=0._R8 )
+      allocate( dv % conc( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fllime( nFc ), SOURCE=0._R8 )    
+      allocate( dv % floe( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % floe_noc( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % cone( nFc, 0:1, 0:2), SOURCE=0._R8 )
+      allocate( dv % fllimi( nFc ), SOURCE=0._R8 )    
+      allocate( dv % floi( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % floi_noc( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % coni( nFc, 0:1, 0:2 ), SOURCE=0._R8 )
       
 ! residuals
       allocate( dv % resmo( nCv, 0:ns-1 ) )
@@ -615,8 +621,8 @@ cwdk move to dv
       dv % corte = 0.0_R8
       dv % corti = 0.0_R8                             !srv 22.05.18 }    
 ! coupling coefficients
-      allocate( dv % pcca( nCv, 0:1, 0:ns-1 ) )
-      allocate( dv % pccm( nCv, 0:1 ) )
+      allocate( dv % pcca( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( dv % pccm( nCv, 0:1 ), SOURCE=0._R8 )
 
       return      
       end subroutine createB2Derivatives
@@ -741,13 +747,13 @@ cwdk move to dv
 
       if (allocated(sr % sch)) return
       
-      allocate( sr % sch( nCv, 0:3 ) )
-      allocate( sr % she( nCv, 0:3 ) )
-      allocate( sr % shi( nCv, 0:3 ) )
-      allocate( sr % smo( nCv, 0:3, 0:ns-1 ) )
-      allocate( sr % smq( nCv, 0:3, 0:ns-1 ) )
-      allocate( sr % sna( nCv, 0:1, 0:ns-1 ) )
-      allocate( sr % sne( nCv, 0:1 ) )
+      allocate( sr % sch( nCv, 0:3 ), SOURCE=0._R8 )
+      allocate( sr % she( nCv, 0:3 ), SOURCE=0._R8 )
+      allocate( sr % shi( nCv, 0:3 ), SOURCE=0._R8 )
+      allocate( sr % smo( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( sr % smq( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( sr % sna( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( sr % sne( nCv, 0:1 ), SOURCE=0._R8 )
 
       return      
       end subroutine createB2Source
@@ -772,12 +778,12 @@ cwdk move to dv
 
       if (allocated(sr_eir % sch)) return
       
-      allocate( sr_eir % sch( nCv, nstra) )
-      allocate( sr_eir % she( nCv, nstra) )
-      allocate( sr_eir % shi( nCv, nstra) )
-      allocate( sr_eir % smo( nCv, 0:ns-1 , nstra) )
-      allocate( sr_eir % sna( nCv, 0:ns-1 , nstra) )
-      allocate( sr_eir % sne( nCv, nstra) )
+      allocate( sr_eir % sch( nCv, nstra), SOURCE=0._R8 )
+      allocate( sr_eir % she( nCv, nstra), SOURCE=0._R8 )
+      allocate( sr_eir % shi( nCv, nstra), SOURCE=0._R8 )
+      allocate( sr_eir % smo( nCv, 0:ns-1 , nstra), SOURCE=0._R8 )
+      allocate( sr_eir % sna( nCv, 0:ns-1 , nstra), SOURCE=0._R8 )
+      allocate( sr_eir % sne( nCv, nstra), SOURCE=0._R8 )
 
       return      
       end subroutine createB2SourceEir
@@ -802,21 +808,21 @@ cwdk move to dv
 
       if (allocated(srw % sch0)) return
       
-      allocate( srw % sch0( nCv, 0:3 ) )
-      allocate( srw % she0( nCv, 0:3 ) )
-      allocate( srw % shi0( nCv, 0:3 ) )
-      allocate( srw % smo0( nCv, 0:3, 0:ns-1 ) )
-      allocate( srw % smq0( nCv, 0:3, 0:ns-1 ) )
-      allocate( srw % sna0( nCv, 0:1, 0:ns-1 ) )
-      allocate( srw % sne0( nCv, 0:1 ) )
+      allocate( srw % sch0( nCv, 0:3 ), SOURCE=0._R8 )
+      allocate( srw % she0( nCv, 0:3 ), SOURCE=0._R8 )
+      allocate( srw % shi0( nCv, 0:3 ), SOURCE=0._R8 )
+      allocate( srw % smo0( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % smq0( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % sna0( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % sne0( nCv, 0:1 ), SOURCE=0._R8 )
 
-      allocate( srw % b2stbm_sch( nCv ) )
-      allocate( srw % b2stbm_she( nCv ) )
-      allocate( srw % b2stbm_shi( nCv ) )
-      allocate( srw % b2stbm_smo( nCv, 0:ns-1 ) )
-      allocate( srw % b2stbm_smq( nCv, 0:ns-1 ) )
-      allocate( srw % b2stbm_sna( nCv, 0:ns-1 ) )
-      allocate( srw % b2stbm_sne( nCv ) )
+      allocate( srw % b2stbm_sch( nCv ), SOURCE=0._R8 )
+      allocate( srw % b2stbm_she( nCv ), SOURCE=0._R8 )
+      allocate( srw % b2stbm_shi( nCv ), SOURCE=0._R8 )
+      allocate( srw % b2stbm_smo( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % b2stbm_smq( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % b2stbm_sna( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % b2stbm_sne( nCv ), SOURCE=0._R8 )
 
       return      
       end subroutine createB2SourceWork
@@ -852,25 +858,25 @@ cwdk move to dv
 
       if (allocated(rt % iscx)) return
       
-      allocate (rt%iscx( 0:rt%nscxmax-1 ) )
+      allocate (rt%iscx( 0:rt%nscxmax-1 ), SOURCE=0 )
 
-      allocate( rt%rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1 ) )
+      allocate( rt%rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1),SOURCE=0._R8)
       
-      allocate( rt%rlqa( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlqa_ra( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlrd( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlbr( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlra( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlsa( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlza( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlz2( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlpt( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlpi( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlqa( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rlrd( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rlbr( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rlra( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rlsa( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rlza( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rlz2( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rlpt( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rlpi( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rlqa_ra( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       
-      allocate( rt%rza( nCv, 0:ns-1 ) )
-      allocate( rt%rz2( nCv, 0:ns-1 ) )
-      allocate( rt%rpt( nCv, 0:ns-1 ) )
-      allocate( rt%rpi( nCv, 0:ns-1 ) )
+      allocate( rt%rza( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rz2( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rpt( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rpi( nCv, 0:ns-1 ), SOURCE=0._R8 )
 
       return
       end subroutine createB2Rates
@@ -882,7 +888,6 @@ cwdk move to dv
       deallocate (rt%iscx )
       deallocate( rt%rlcx )
       deallocate( rt%rlqa )
-      deallocate( rt%rlqa_ra )
       deallocate( rt%rlrd )
       deallocate( rt%rlbr )
       deallocate( rt%rlra )
@@ -895,6 +900,7 @@ cwdk move to dv
       deallocate( rt%rz2 )
       deallocate( rt%rpt )
       deallocate( rt%rpi )
+      deallocate( rt%rlqa_ra )
 
       return      
       end subroutine destroyB2Rates
@@ -906,13 +912,13 @@ cwdk move to dv
 
       if (allocated(rtw % rsa)) return
       
-      allocate( rtw%rsa( nCv, 0:ns-1 ) )
-      allocate( rtw%rra( nCv, 0:ns-1 ) )
-      allocate( rtw%rqa( nCv, 0:ns-1 ) )
-      allocate( rtw%rqa_ra( nCv, 0:ns-1 ) )
-      allocate( rtw%rrd( nCv, 0:ns-1 ) )
-      allocate( rtw%rbr( nCv, 0:ns-1 ) )
-      allocate( rtw%rcx( nCv, 0:ns-1 ) )
+      allocate( rtw%rsa( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw%rra( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw%rqa( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw%rrd( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw%rbr( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw%rcx( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw%rqa_ra( nCv, 0:ns-1 ), SOURCE=0._R8 )
 
       return
       end subroutine createB2RatesWork
@@ -924,10 +930,10 @@ cwdk move to dv
       if ( allocated( rtw%rsa ) ) deallocate( rtw%rsa )
       if ( allocated( rtw%rra ) ) deallocate( rtw%rra )
       if ( allocated( rtw%rqa ) ) deallocate( rtw%rqa )
-      if ( allocated( rtw%rqa_ra ) ) deallocate( rtw%rqa_ra )
       if ( allocated( rtw%rrd ) ) deallocate( rtw%rrd )
       if ( allocated( rtw%rbr ) ) deallocate( rtw%rbr )
       if ( allocated( rtw%rcx ) ) deallocate( rtw%rcx )
+      if ( allocated( rtw%rqa_ra ) ) deallocate( rtw%rqa_ra )
       return
       end subroutine destroyB2RatesWork
       
@@ -937,21 +943,21 @@ cwdk move to dv
 
       if (allocated(snap % na)) return
       
-      allocate( snap % na( nCv, 0:ns-1 ) )
-      allocate( snap % ua( nCv, 0:ns-1 ) )
-      allocate( snap % po( nCv ) )
-      allocate( snap % te( nCv ) )
-      allocate( snap % ti( nCv ) )
+      allocate( snap % na( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % ua( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % po( nCv ), SOURCE=0._R8 )
+      allocate( snap % te( nCv ), SOURCE=0._R8 )
+      allocate( snap % ti( nCv ), SOURCE=0._R8 )
       
-      allocate( snap % ne( nCv ) ) 
-      allocate( snap % ni( nCv, 0:1 ) )    
+      allocate( snap % ne( nCv ), SOURCE=0._R8 ) 
+      allocate( snap % ni( nCv, 0:1 ), SOURCE=0._R8 )    
       
-      allocate( snap % fch( nFc, 0:1 ) )
-      allocate( snap % fna( nFc, 0:1, 0:ns-1 ) )
-      allocate( snap % fhe( nFc, 0:1 ) )    
-      allocate( snap % fhi( nFc, 0:1 ) )    
+      allocate( snap % fch( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( snap % fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % fhe( nFc, 0:1 ), SOURCE=0._R8 )    
+      allocate( snap % fhi( nFc, 0:1 ), SOURCE=0._R8 )    
       
-      allocate( snap % kinrgy( nCv, 0:ns-1 ) )    
+      allocate( snap % kinrgy( nCv, 0:ns-1 ), SOURCE=0._R8 )    
 
       return
       end subroutine createB2PlasmaSnapshot
@@ -983,23 +989,23 @@ cwdk move to dv
 
       if (allocated(diag % srcna)) return
       
-      allocate( diag % srcna( nCv, 0:ns-1 ) )
-      allocate( diag % srcmo( nCv, 0:ns-1 ) )
-      allocate( diag % srcpo( nCv ) )
-      allocate( diag % srche( nCv ) )
-      allocate( diag % srchi( nCv ) )
-      allocate( diag % srcmt( nCv ) )
+      allocate( diag % srcna( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( diag % srcmo( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( diag % srcpo( nCv ), SOURCE=0._R8 )
+      allocate( diag % srche( nCv ), SOURCE=0._R8 )
+      allocate( diag % srchi( nCv ), SOURCE=0._R8 )
+      allocate( diag % srcmt( nCv ), SOURCE=0._R8 )
       
-      allocate( diag % aresco( 0:ns-1 ) )
-      allocate( diag % aresmo( 0:ns-1 ) )
+      allocate( diag % aresco( 0:ns-1 ), SOURCE=0._R8 )
+      allocate( diag % aresmo( 0:ns-1 ), SOURCE=0._R8 )
       
-      allocate( diag % acorpa( 0:ns-1 ) )
-      allocate( diag % acorua( 0:ns-1 ) )
+      allocate( diag % acorpa( 0:ns-1 ), SOURCE=0._R8 )
+      allocate( diag % acorua( 0:ns-1 ), SOURCE=0._R8 )
       
-      allocate( diag % rescoreg(0:nnreg(0), 0:ns-1 ) )
-      allocate( diag % resmoreg(0:nnreg(0), 0:ns-1 ) )
-      allocate( diag % reshereg(0:nnreg(0)) )
-      allocate( diag % reshireg(0:nnreg(0)) )
+      allocate( diag % rescoreg(0:nnreg(0), 0:ns-1 ), SOURCE=0._R8 )
+      allocate( diag % resmoreg(0:nnreg(0), 0:ns-1 ), SOURCE=0._R8 )
+      allocate( diag % reshereg(0:nnreg(0)), SOURCE=0._R8 )
+      allocate( diag % reshireg(0:nnreg(0)), SOURCE=0._R8 )
 
       return
       end subroutine createB2Diagnostic
@@ -1034,12 +1040,12 @@ cwdk move to dv
       if (allocated(update % pa)) return
       
 ! corrections
-      allocate( update % pa( nCv, 0:ns-1 ) )
-      allocate( update % ua( nCv, 0:ns-1 ) )
-      allocate( update % na( nCv, 0:ns-1 ) )
-      allocate( update % po( nCv ) )
-      allocate( update % te( nCv ) )
-      allocate( update % ti( nCv ) )
+      allocate( update % pa( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( update % ua( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( update % na( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( update % po( nCv ), SOURCE=0._R8 )
+      allocate( update % te( nCv ), SOURCE=0._R8 )
+      allocate( update % ti( nCv ), SOURCE=0._R8 )
 
       return      
       end subroutine createB2Update
