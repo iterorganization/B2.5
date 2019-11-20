@@ -3,7 +3,7 @@
 
       subroutine b2wugm (nput, nx, ny, crx, cry, fpsi, ffbz, bb,
      &  vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc, gs, pbs, wbbl,
-     &  cell_width, cell_height)
+     &  wbbc, cell_width, cell_height)
       use b2mod_types
       use b2mod_indirect
       use b2mod_version
@@ -20,6 +20,7 @@
      &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1),
      &  ebc(-1:nx,-1:ny,0:2), gs(-1:nx,-1:ny,0:2),
      &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx,-1:ny,0:3),
+     &  wbbc(-1:nx+1,-1:ny+1,0:3),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
 *     (none)
@@ -494,6 +495,7 @@ cxpb-end
         call cfwuin (nput, 1, idum, 'redef_gmtry')
         call cfwure (nput, n2*4, wbbl, 'wbbl')
       endif
+      call cfwuin(nput, (nx+3)*(ny+3)*4, wbbc, 'wbbc')
 cwdk  additional set of geometric parameters for extended grids
       call cfwuin(nput, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
       call cfwure(nput, n2*4, hc, 'hc')

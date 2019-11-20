@@ -365,6 +365,15 @@ cxpb-end
       else
         redef_gmtry=0
       endif
+      if(b2fgmtry_version.ge.'03.002.000') then
+        call cfrure (nget, (nx+3)*(ny+3)*4, wbbc, 'wbbc')
+      else
+*    ..interpolate magnetic field to cell corners
+        call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
+        wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
+      endif
 *   ..read extended grid cell flags
       cflags = 0
       if(b2fgmtry_version.ge.'01.001.028') then
@@ -437,6 +446,12 @@ cxpb-end
         call cfrure_opt (nget, n2, cell_width, 'cell_width')
         call cfrure_opt (nget, n2, cell_height, 'cell_height')
       endif
+*  ..interpolate magnetic field to cell faces
+      call b2agbf (nx, ny, isymm, periodic_bc, nncut,
+     & crx, cry, fpsi, ffbz, vol, gs, qz, qc, qs, bb, wbbl, wbbr, wbbv,
+     & region, leftix, leftiy, bottomix, bottomiy, rightix, rightiy,
+     & topix, topiy, cflags)
+*  ..init some arrays for classical grids
 *   ..read  additional geometric parameters for extended grids
       if(b2fgmtry_version.ge.'03.002.000') then
         call cfrure(nget, n2*4, hc, 'hc')
@@ -444,29 +459,14 @@ cxpb-end
         call cfrure(nget, n2*2, qac, 'qac')
         call cfrure(nget, n2*2, qas, 'qas')
         call cfrure(nget, n2*3, ebc, 'ebc')
-      endif
-*  ..interpolate magnetic field to cell faces
-      call b2agbf (nx, ny, isymm, periodic_bc, nncut,
-     & crx, cry, fpsi, ffbz, vol, gs, qz, qc, qs, bb, wbbl, wbbr, wbbv,
-     & region, leftix, leftiy, bottomix, bottomiy, rightix, rightiy,
-     & topix, topiy, cflags)
-*  ..interpolate magnetic field to cell corners
-      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
-     1     leftix,leftiy,rightix,rightiy,
-     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
-      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
-*  ..init some arrays for classical grids
-      if(b2fgmtry_version.lt.'03.002.000') then
+      else
         hc(:,:,0) = 0.5*hx(:,:)
         hc(:,:,1) = 0.5*hy(:,:)
         hc(:,:,2) = 0.5*hx(:,:)
         hc(:,:,3) = 0.5*hy(:,:)
-!pb     qac(:,:,0) =  qc(:,:,0)*wbbl(:,:,0)/abs(wbbl(:,:,0))
-!pb     qas(:,:,0) = -qs(:,:,0)*wbbl(:,:,0)/abs(wbbl(:,:,0))
         qac(:,:,0) =  qc(:,:,0)*sign(1._R8,wbbl(:,:,0))
         qas(:,:,0) = -qs(:,:,0)*sign(1._R8,wbbl(:,:,0))
         qac(:,:,1) = 0.0_R8
-!pb     qas(:,:,1) = 1.0_R8*wbbv(:,:,0)/abs(wbbv(:,:,0))
         qas(:,:,1) = 1.0_R8*sign(1._R8,wbbv(:,:,0))
         ! Initialize ebc and ht for 'classical' grids
         do iy=-1,ny
