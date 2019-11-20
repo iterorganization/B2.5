@@ -122,6 +122,8 @@
 
       allocate (m%fcLbl(m%nFc))
 
+      call initialize_mapping (m)
+
       write (*,*) '=================================='
       write (*,*) 'Mapping allocated'
       write (*,*) 'nCv, nCi, nCg', m%nCv, m%nCi, m%nCg
@@ -131,7 +133,65 @@
       write (*,*) '=================================='
 
       return
-      end subroutine alloc_mapping 
+      end subroutine alloc_mapping
+      
+**********************************************************************
+
+      subroutine initialize_mapping (m)
+#ifdef WG_DEBUG
+      use b2us_debug
+#endif
+      implicit none
+      type(mapping), intent(inout) :: m
+
+      m%cvFcP = 0 
+      m%cvFc = 0
+      m%fcCv = 0
+      m%fcVx = 0
+      m%cvVxP = 0
+      m%cvVx = 0
+      m%vxFcP = 0 
+      m%vxFc = 0
+      m%vxCvP = 0  
+      m%vxCv = 0 
+      m%fsCv = 0
+      m%fsCvP = 0
+      m%fsFc = 0
+      m%fsFcP = 0
+      m%fcReg = 0
+      m%cvReg = 0
+      m%cvOnClosedSurface = .false.
+      
+!      m%intfaceV = 0._R8
+!      m%intvertexV = 0._R8
+      m%intcellP = 0._R8
+      m%intcellR = 0_R8
+
+      m%cvNvP = 0
+      m%cvNv = 0
+
+      if (m%isClassicalGrid.eq.1) then
+        m%imapCv = 0
+        m%imapFcx = 0
+        m%imapFcy = 0
+        m%imapVx = 0
+        m%icornVx = 0
+#ifdef WG_DEBUG
+        imapCv = 0
+        imapFcx = 0
+        imapFcy = 0
+        imapVx = 0
+#endif
+      endif
+
+      m%fcLbl = 0
+
+      write (*,*) '=================================='
+      write (*,*) 'Mapping initialized'
+      write (*,*) '=================================='
+
+      return
+      end subroutine initialize_mapping 
 
 **********************************************************************
 
@@ -210,6 +270,12 @@
       allocate (m%bcFc   ( m % mxnBc    ) )
       allocate (m%bcFcOr ( m % mxnBc    ) )
 
+      m%bcCvP = 0
+      m%bcCv = 0
+      m%bcFcP = 0
+      m%bcFc = 0
+      m%bcFcOr = 0._R8
+
       return
       end subroutine alloc_mapping_bc 
 
@@ -245,6 +311,12 @@
       allocate (m%rcFcP  ( m % nRc,   2 ) )
       allocate (m%rcFc   ( m % mxnRc    ) )
       allocate (m%rcFcOr ( m % mxnRc    ) )
+
+      m%rcCvP = 0
+      m%rcCv = 0
+      m%rcFcP = 0
+      m%rcFc = 0
+      m%rcFcOr = 0._R8
 
       return      
       end subroutine alloc_mapping_rc 

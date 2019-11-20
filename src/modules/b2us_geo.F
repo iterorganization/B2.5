@@ -97,9 +97,59 @@
 
 !  flux surface quantites
       allocate (g%fsConn(nFs))
+
+      call initialize_geometry(g)
       
       return
       end subroutine alloc_geometry
+
+***********************************************************************
+
+      subroutine initialize_geometry (g)
+
+      implicit none
+      type(geometry), intent(in out) :: g
+
+!  cell quantites
+      g%cvBb = 0._R8
+      g%cvX = 0._R8
+      g%cvY = 0._R8
+      g%cvSz = 0._R8
+      g%cvHz = 0._R8
+      g%cvHx = 0._R8
+      g%cvQgam = 0._R8
+      g%cvVol = 0._R8
+      g%cvOnedBsq = 0._R8
+      g%cvBzb = 0._R8
+      g%cvEb = 0._R8
+
+!  face quantites
+      g%fcBb = 0._R8
+      g%fcS = 0._R8
+      g%fcHc = 0._R8
+      g%fcHt = 0._R8
+      g%fcVol = 0._R8    
+      g%fcQgam = 0._R8
+      g%fcQalf = 0._R8
+      g%fcQbet = 0._R8
+      g%fcPbs = 0._R8
+      g%fcPbshz = 0._R8
+      g%fcEb = 0._R8
+
+!  vertex quantites
+      g%vxBb = 0._R8
+      g%vxX = 0._R8
+      g%vxY = 0._R8
+      g%vxVol = 0._R8
+      g%vxFfbz = 0._R8
+      g%vxFpsi = 0._R8
+      g%vxOnedBsq = 0._R8
+
+!  flux surface quantites
+      g%fsConn = 0._R8
+      
+      return
+      end subroutine initialize_geometry
 
 ***********************************************************************
 
