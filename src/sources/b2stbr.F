@@ -1207,7 +1207,8 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       if (neutrals_namelist.eq.1 .and. use_eirene.eq.0) then
         do istra = 1, nstrai
           if (crcstra(istra).eq.'S' .or. crcstra(istra).eq.'N' .or.
-     &        crcstra(istra).eq.'W' .or. crcstra(istra).eq.'E') then
+     &        crcstra(istra).eq.'W' .or. crcstra(istra).eq.'E' .or.
+     &        crcstra(istra).eq.'A') then
             write(6,'(a,i2,a)') 'For recycling boundary ',istra,' : '
             do is = 0, ns-1
               if (phys_sput(is,istra).gt.0.0_R8) then
