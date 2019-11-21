@@ -59,13 +59,13 @@
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
       real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8          !srv 02.10.17
       real (kind=R8) ::
-     *   floi0(nFc,0:1), flomx, coni0(nFc,0:1), dti(nFc,0:1), vdia_par,     !srv 17.05.99
+     *   floi0(nFc,0:1), flomx, coni0(nFc,0:1), vdia_par,     !srv 17.05.99
      &   floi0_mdf(nFc,0:1), wght(nFc,2), dumm0(nFc,0:1),
      &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1)
 cpax      
       real (kind=R8) ::
-     *   flidia(nFc,0:1), facdriftm, tiv(nVx), niv(nVx),                !srv 25.01.02
-     *   nif(nFc), tif(nFc), nati2(nCv), nati2v(nVx),
+     *   flidia(nFc,0:1), facdriftm, nif(nFc), tif(nFc),                !srv 25.01.02
+     *   nati(nCv), nati2(nCv), nativ(nVx), nati2v(nVx),
      *   dnati2(nFc,0:1), cddi(nFc,0:1)
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
@@ -135,11 +135,12 @@ cpax
        do is = 0, ns-1
         if(.not.is_neutral(is)) then
 
-*   ..precompute face and vertex values of nati2
+*   ..precompute face and vertex values of nati and nati2
+         nati  = pl%na(:,is)*pl%ti
          nati2 = pl%na(:,is)*pl%ti*pl%ti
+         call intvertex(nCv,nVx,mpg,geo%vxVol,nati,nativ)
          call intvertex(nCv,nVx,mpg,geo%vxVol,nati2,nati2v)
          call diff(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
-         call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,is),niv)
 
 *   ..compute P.Sch heat flux
          dv%fhiPSch(:,0) =  2.5_R8*PSch*dv%facdrift*co%cddi(:,0,is)*
@@ -153,14 +154,14 @@ cpax
          do iFc = 1, nFc
           dv%floi(iFc,0)   = dv%floi(iFc,0) + 
      &       0.5_R8*floi0(iFc,0)*
-     &      (pl%na(mpg%fcCv(iFc,1),is)+pl%na(mpg%fcCv(iFc,2),is)) -
+     &      (nati(mpg%fcCv(iFc,1)) + nati(mpg%fcCv(iFc,2))) -
      &       coni0(iFc,0)*
-     &      (pl%na(mpg%fcCv(iFc,2),is)-pl%na(mpg%fcCv(iFc,1),is))
+     &      (nati(mpg%fcCv(iFc,2)) - nati(mpg%fcCv(iFc,1)))
           dv%floi(iFc,1)   = dv%floi(iFc,1) + 
      &       0.5_R8*floi0(iFc,1)*
-     &      (niv(mpg%fcVx(iFc,1))+niv(mpg%fcVx(iFc,2))) -
+     &      (nativ(mpg%fcVx(iFc,1))+nativ(mpg%fcVx(iFc,2))) -
      &       coni0(iFc,1)*
-     &      (niv(mpg%fcVx(iFc,2))-niv(mpg%fcVx(iFc,1)))
+     &      (nativ(mpg%fcVx(iFc,2))-nativ(mpg%fcVx(iFc,1)))
 !wdk      For now, directly add these contributions into coni(,,0),
 !wdk      so they are directly added into the stencil.
 !wdk      Might need to move back to dv%coni(,,1) and dedicated treatment
@@ -168,14 +169,14 @@ cpax
 !wdk      to compute vertex values of drifts!
           dv%coni(iFc,0,0) = dv%coni(iFc,0,0) +
      &       0.5_R8*coni0(iFc,0)*
-     &      (pl%na(mpg%fcCv(iFc,1),is)+pl%na(mpg%fcCv(iFc,2),is)) -
+     &      (nati(mpg%fcCv(iFc,1))+nati(mpg%fcCv(iFc,2))) -
      &       0.25_R8*floi0(iFc,0)*
-     &      (pl%na(mpg%fcCv(iFc,2),is)-pl%na(mpg%fcCv(iFc,1),is))
+     &      (nati(mpg%fcCv(iFc,2))-nati(mpg%fcCv(iFc,1)))
           dv%coni(iFc,1,0) = dv%coni(iFc,1,0) +
      &       0.5_R8*coni0(iFc,1)*
-     &      (niv(mpg%fcVx(iFc,1))+niv(mpg%fcVx(iFc,2))) -
+     &      (nativ(mpg%fcVx(iFc,1))+nativ(mpg%fcVx(iFc,2))) -
      &       0.25_R8*floi0(iFc,1)*
-     &      (niv(mpg%fcVx(iFc,2))-niv(mpg%fcVx(iFc,1)))
+     &      (nativ(mpg%fcVx(iFc,2))-nativ(mpg%fcVx(iFc,1)))
          enddo
         endif
        enddo
@@ -212,9 +213,6 @@ cpax
 *   ..interpolate ni and ti to cell faces
       call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0),nif)
       call intface(nCv,nFc,mpg%fcCv,wght,pl%ti,tif)
-
-*   ..compute differences of ti
-      call diff(nCv, nFc, nVx, 0, geo, mpg, pl%ti, tiv, dti)
 
 *   ..contributions from currents
       scur(:,0) = 1.5e0_R8/qe*(dv%fchinert(:,0) + dv%fchvispar(:,0)+
