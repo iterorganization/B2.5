@@ -92,7 +92,7 @@
      &      (ne(mpg%fcCv(iFc,2))-ne(mpg%fcCv(iFc,1)))
           cone(iFc,1,0) = 0.5_R8*cone0(iFc,1)*
      &      (nev(mpg%fcVx(iFc,1))+nev(mpg%fcVx(iFc,2))) -
-     &       0.25_R8*floe0(iFc,0)*
+     &       0.25_R8*floe0(iFc,1)*
      &      (nev(mpg%fcVx(iFc,2))-nev(mpg%fcVx(iFc,1)))
          enddo
         endif
