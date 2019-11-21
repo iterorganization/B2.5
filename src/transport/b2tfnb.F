@@ -289,7 +289,7 @@ cwdk                   (original code: simple averaging)
      &      (kmprti(mpg%fcCv(iFc,2))-kmprti(mpg%fcCv(iFc,1)))
           dv%conb(iFc,1,0) = 0.5_R8*conb0(iFc,1)*
      &      (kmprtiv(mpg%fcVx(iFc,1))+kmprtiv(mpg%fcVx(iFc,2))) -
-     &       0.25_R8*flob0(iFc,0)*
+     &       0.25_R8*flob0(iFc,1)*
      &      (kmprtiv(mpg%fcVx(iFc,2))-kmprtiv(mpg%fcVx(iFc,1)))
         enddo
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
@@ -615,7 +615,7 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
         dv%conb(iFc,1,0) = dv%conb(iFc,1,0) + 
      &     0.5_R8*conb0(iFc,1)*
      &     (kmprv(mpg%fcVx(iFc,1))+kmprv(mpg%fcVx(iFc,2))) - 0.25_R8*
-     &     flob0(iFc,0)*(kmprv(mpg%fcVx(iFc,2))-kmprv(mpg%fcVx(iFc,1)))
+     &     flob0(iFc,1)*(kmprv(mpg%fcVx(iFc,2))-kmprv(mpg%fcVx(iFc,1)))
       enddo
 
 *   ..contribution from pressure diffusion
