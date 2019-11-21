@@ -174,7 +174,7 @@ cpax
           dv%coni(iFc,1,0) = dv%coni(iFc,1,0) +
      &       0.5_R8*coni0(iFc,1)*
      &      (niv(mpg%fcVx(iFc,1))+niv(mpg%fcVx(iFc,2))) -
-     &       0.25_R8*floi0(iFc,0)*
+     &       0.25_R8*floi0(iFc,1)*
      &      (niv(mpg%fcVx(iFc,2))-niv(mpg%fcVx(iFc,1)))
          enddo
         endif
