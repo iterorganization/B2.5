@@ -225,7 +225,8 @@ C
           call b2xtvc(nx, ny, nx1, ny1,
      &        field, dab1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
@@ -254,7 +255,8 @@ C
           call b2xtvc(nx, ny, nx1, ny1,
      &        field, tab1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
@@ -269,102 +271,114 @@ C
       do 15 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,dmb2(:,:,is,1))
    15 CONTINUE
-      allocate (dmb1(0:nx1+1,0:ny1+1,nmol1))
-      do is = 1, nmoli
-        if (imol1(is).ne.0) then
-          field(0:nx+1,0:ny+1) = dmb2(0:nx+1,0:ny+1,is,1)
-          call b2xtvc(nx, ny, nx1, ny1,
+      if (nmol1.gt.0) then
+        allocate (dmb1(0:nx1+1,0:ny1+1,nmol1))
+        do is = 1, nmoli
+          if (imol1(is).ne.0) then
+            field(0:nx+1,0:ny+1) = dmb2(0:nx+1,0:ny+1,is,1)
+            call b2xtvc(nx, ny, nx1, ny1,
      &        field, dmb1(0,0,imol1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
-        end if
-      end do
-      call write_title(45,'dmb2',n2*nmol1)
-      call eirene_neutr(45,nx1,ny1,nmol1,dmb1,nx1,ny1,nmol1,1,1)
-      deallocate(dmb1)
+          end if
+        end do
+        call write_title(45,'dmb2',n2*nmol1)
+        call eirene_neutr(45,nx1,ny1,nmol1,dmb1,nx1,ny1,nmol1,1,1)
+        deallocate(dmb1)
+      end if
 
       do 25 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,tmb2(:,:,is,1))
    25 CONTINUE
-      allocate (tmb1(0:nx1+1,0:ny1+1,nmol1))
-      do is = 1, nmoli
-        if (imol1(is).ne.0) then
-          field(0:nx+1,0:ny+1) = tmb2(0:nx+1,0:ny+1,is,1)
-          if (streql(solps_version,'4.3')) then
-            do iy = 0, ny+1
-              do ix = 0, nx+1
-                if (dmb2(ix,iy,is,1).eq.0.0_R8) then
-                  field(ix,iy) = field(ix,iy)*ev
-                end if
+      if (nmol1.gt.0) then
+        allocate (tmb1(0:nx1+1,0:ny1+1,nmol1))
+        do is = 1, nmoli
+          if (imol1(is).ne.0) then
+            field(0:nx+1,0:ny+1) = tmb2(0:nx+1,0:ny+1,is,1)
+            if (streql(solps_version,'4.3')) then
+              do iy = 0, ny+1
+                do ix = 0, nx+1
+                  if (dmb2(ix,iy,is,1).eq.0.0_R8) then
+                    field(ix,iy) = field(ix,iy)*ev
+                  end if
+                end do
               end do
-            end do
-          end if
-          call b2xtvc(nx, ny, nx1, ny1,
+            end if
+            call b2xtvc(nx, ny, nx1, ny1,
      &        field, tmb1(0,0,imol1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
-        end if
-      end do
-      call write_title(45,'tmb2',n2*nmol1)
-      call eirene_neutr(45,nx1,ny1,nmol1,tmb1,nx1,ny1,nmol1,1,1)
-      deallocate(tmb1)
+          end if
+        end do
+        call write_title(45,'tmb2',n2*nmol1)
+        call eirene_neutr(45,nx1,ny1,nmol1,tmb1,nx1,ny1,nmol1,1,1)
+        deallocate(tmb1)
+      end if
 
 * test ions
 C
       do 16 IS = 1, NIONI
         call gfsub2(44,ndx,ndy,nnx,nny,dib2(:,:,is,1))
    16 CONTINUE
-      allocate (dib1(0:nx1+1,0:ny1+1,nion1))
-      do is = 1, nioni
-        if (iion1(is).ne.0) then
-          field(0:nx+1,0:ny+1) = dib2(0:nx+1,0:ny+1,is,1)
-          call b2xtvc(nx, ny, nx1, ny1,
+      if (nion1.gt.0) then
+        allocate (dib1(0:nx1+1,0:ny1+1,nion1))
+        do is = 1, nioni
+          if (iion1(is).ne.0) then
+            field(0:nx+1,0:ny+1) = dib2(0:nx+1,0:ny+1,is,1)
+            call b2xtvc(nx, ny, nx1, ny1,
      &        field, dib1(0,0,iion1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
-        end if
-      end do
-      call write_title(45,'dib2',n2*nion1)
-      call eirene_neutr(45,nx1,ny1,nion1,dib1,nx1,ny1,nion1,1,1)
-      deallocate(dib1)
+          end if
+        end do
+        call write_title(45,'dib2',n2*nion1)
+        call eirene_neutr(45,nx1,ny1,nion1,dib1,nx1,ny1,nion1,1,1)
+        deallocate(dib1)
+      end if
 
       do 26 IS = 1, NIONI
         call gfsub2(44,ndx,ndy,nnx,nny,tib2(:,:,is,1))
    26 CONTINUE
-      allocate (tib1(0:nx1+1,0:ny1+1,nion1))
-      do is = 1, nioni
-        if (iion1(is).ne.0) then
-          field(0:nx+1,0:ny+1) = tib2(0:nx+1,0:ny+1,is,1)
-          if (streql(solps_version,'4.3')) then
-            do iy = 0, ny+1
-              do ix = 0, nx+1
-                if (dib2(ix,iy,is,1).eq.0.0_R8) then
-                  field(ix,iy) = field(ix,iy)*ev
-                end if
+      if (nion1.gt.0) then
+        allocate (tib1(0:nx1+1,0:ny1+1,nion1))
+        do is = 1, nioni
+          if (iion1(is).ne.0) then
+            field(0:nx+1,0:ny+1) = tib2(0:nx+1,0:ny+1,is,1)
+            if (streql(solps_version,'4.3')) then
+              do iy = 0, ny+1
+                do ix = 0, nx+1
+                  if (dib2(ix,iy,is,1).eq.0.0_R8) then
+                    field(ix,iy) = field(ix,iy)*ev
+                  end if
+                end do
               end do
-            end do
-          end if
-          call b2xtvc(nx, ny, nx1, ny1,
+            end if
+            call b2xtvc(nx, ny, nx1, ny1,
      &        field, tib1(0,0,iion1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
-        end if
-      end do
-      call write_title(45,'tib2',n2*nion1)
-      call eirene_neutr(45,nx1,ny1,nion1,tib1,nx1,ny1,nion1,1,1)
-      deallocate(tib1)
+          end if
+        end do
+        call write_title(45,'tib2',n2*nion1)
+        call eirene_neutr(45,nx1,ny1,nion1,tib1,nx1,ny1,nion1,1,1)
+        deallocate(tib1)
+      end if
 
 * neutral atom radial particle flux
 C
@@ -378,7 +392,8 @@ C
           call b2xtfy (nx, ny, nx1, ny1,
      &        field, rfa1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hx1, bottomiy1)
@@ -393,22 +408,25 @@ C
       do 115 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,rfluxm(:,:,is,1))
   115 CONTINUE
-      allocate (rfm1(0:nx1+1,0:ny1+1,nmol1))
-      do is = 1, nmoli
-        if (imol1(is).ne.0) then
-          field(0:nx+1,0:ny+1) = rfluxm(0:nx+1,0:ny+1,is,1)
-          call b2xtfy (nx, ny, nx1, ny1,
+      if (nmol1.gt.0) then
+        allocate (rfm1(0:nx1+1,0:ny1+1,nmol1))
+        do is = 1, nmoli
+          if (imol1(is).ne.0) then
+            field(0:nx+1,0:ny+1) = rfluxm(0:nx+1,0:ny+1,is,1)
+            call b2xtfy (nx, ny, nx1, ny1,
      &        field, rfm1(0,0,imol1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hx1, bottomiy1)
-        end if
-      end do
-      call write_title(45,'rfluxm',n2*nmol1)
-      call eirene_neutr(45,nx1,ny1,nmol1,rfm1,nx1,ny1,nmol1,1,1)
-      deallocate (rfm1)
+          end if
+        end do
+        call write_title(45,'rfluxm',n2*nmol1)
+        call eirene_neutr(45,nx1,ny1,nmol1,rfm1,nx1,ny1,nmol1,1,1)
+        deallocate (rfm1)
+      end if
 
 * neutral atom poloidal particle flux
 C
@@ -422,7 +440,8 @@ C
           call b2xtfx (nx, ny, nx1, ny1,
      &        field, pfa1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hy1, qc1)
@@ -437,22 +456,25 @@ C
       do 215 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pfluxm(:,:,is,1))
   215 CONTINUE
-      allocate (pfm1(0:nx1+1,0:ny1+1,nmol1))
-      do is = 1, nmoli
-        if (imol1(is).ne.0) then
-          field(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,is,1)
-          call b2xtfx (nx, ny, nx1, ny1,
+      if (nmol1.gt.0) then
+        allocate (pfm1(0:nx1+1,0:ny1+1,nmol1))
+        do is = 1, nmoli
+          if (imol1(is).ne.0) then
+            field(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,is,1)
+            call b2xtfx (nx, ny, nx1, ny1,
      &        field, pfm1(0,0,imol1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hy1, qc1)
-        end if
-      end do
-      call write_title(45,'pfluxm',n2*nmol1)
-      call eirene_neutr(45,nx1,ny1,nmol1,pfm1,nx1,ny1,nmol1,1,1)
-      deallocate (pfm1)
+          end if
+        end do
+        call write_title(45,'pfluxm',n2*nmol1)
+        call eirene_neutr(45,nx1,ny1,nmol1,pfm1,nx1,ny1,nmol1,1,1)
+        deallocate (pfm1)
+      end if
 
 * neutral atom radial energy flux
 C
@@ -466,7 +488,8 @@ C
           call b2xtfy (nx, ny, nx1, ny1,
      &        field, refa1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hx1, bottomiy1)
@@ -481,22 +504,25 @@ C
       do 415 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,refluxm(:,:,is,1))
   415 CONTINUE
-      allocate (refm1(0:nx1+1,0:ny1+1,nmol1))
-      do is = 1, nmoli
-        if (imol1(is).ne.0) then
-          field(0:nx+1,0:ny+1) = refluxm(0:nx+1,0:ny+1,is,1)
-          call b2xtfy (nx, ny, nx1, ny1,
+      if (nmol1.gt.0) then
+        allocate (refm1(0:nx1+1,0:ny1+1,nmol1))
+        do is = 1, nmoli
+          if (imol1(is).ne.0) then
+            field(0:nx+1,0:ny+1) = refluxm(0:nx+1,0:ny+1,is,1)
+            call b2xtfy (nx, ny, nx1, ny1,
      &        field, refm1(0,0,imol1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hx1, bottomiy1)
-        end if
-      end do
-      call write_title(45,'refluxm',n2*nmol1)
-      call eirene_neutr(45,nx1,ny1,nmol1,refm1,nx1,ny1,nmol1,1,1)
-      deallocate (refm1)
+          end if
+        end do
+        call write_title(45,'refluxm',n2*nmol1)
+        call eirene_neutr(45,nx1,ny1,nmol1,refm1,nx1,ny1,nmol1,1,1)
+        deallocate (refm1)
+      end if
 
 * neutral atom poloidal energy flux
 C
@@ -510,7 +536,8 @@ C
           call b2xtfx (nx, ny, nx1, ny1,
      &        field, pefa1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hy1, qc1)
@@ -525,22 +552,25 @@ C
       do 515 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pefluxm(:,:,is,1))
   515 CONTINUE
-      allocate (pefm1(0:nx1+1,0:ny1+1,nmol1))
-      do is = 1, nmoli
-        if (imol1(is).ne.0) then
-          field(0:nx+1,0:ny+1) = pefluxm(0:nx+1,0:ny+1,is,1)
-          call b2xtfx (nx, ny, nx1, ny1,
+      if (nmol1.gt.0) then
+        allocate (pefm1(0:nx1+1,0:ny1+1,nmol1))
+        do is = 1, nmoli
+          if (imol1(is).ne.0) then
+            field(0:nx+1,0:ny+1) = pefluxm(0:nx+1,0:ny+1,is,1)
+            call b2xtfx (nx, ny, nx1, ny1,
      &        field, pefm1(0,0,imol1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hy1, qc1)
-        end if
-      end do
-      call write_title(45,'pefluxm',n2*nmol1)
-      call eirene_neutr(45,nx1,ny1,nmol1,pefm1,nx1,ny1,nmol1,1,1)
-      deallocate (pefm1)
+          end if
+        end do
+        call write_title(45,'pefluxm',n2*nmol1)
+        call eirene_neutr(45,nx1,ny1,nmol1,pefm1,nx1,ny1,nmol1,1,1)
+        deallocate (pefm1)
+      end if
 
       call gfsub2(44,ndx,ndy,nnx,nny,emiss(:,:,1,1))
       call gfsub2(44,ndx,ndy,nnx,nny,emissmol(:,:,1,1))
@@ -550,7 +580,8 @@ C
       call b2xtvc(nx, ny, nx1, ny1,
      &        field, emiss1(0,0),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
@@ -558,7 +589,8 @@ C
       call b2xtvc(nx, ny, nx1, ny1,
      &        field, emissmol1(0,0),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
@@ -581,7 +613,8 @@ C
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, srcml1(0,0,imol1(is)),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
@@ -596,7 +629,8 @@ C
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, edissml1(0,0,imol1(is),0),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
@@ -606,10 +640,12 @@ C
         srcml1 = 0.0_R8
         edissml1 = 0.0_R8
       end if
-      call write_title(45,'srcml',n2*nmol1)
-      call eirene_neutr(45,nx1,ny1,nmol1,srcml1,nx1,ny1,nmol1,1,1)
-      call write_title(45,'edissml',n2*nmol1)
-      call eirene_neutr(45,nx1,ny1,nmol1,edissml1,nx1,ny1,nmol1,1,1)
+      if (nmol1.gt.0) then
+        call write_title(45,'srcml',n2*nmol1)
+        call eirene_neutr(45,nx1,ny1,nmol1,srcml1,nx1,ny1,nmol1,1,1)
+        call write_title(45,'edissml',n2*nmol1)
+        call eirene_neutr(45,nx1,ny1,nmol1,edissml1,nx1,ny1,nmol1,1,1)
+      end if
       deallocate(srcml1,edissml1)
 
       if ((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
@@ -750,13 +786,13 @@ cank-960727
             call write_title(45,'ewlda('//stnum//')',nlimps*natm1)
             call wrneutrs(45,ewlda1(1,1,istra),natm1)
             call write_title(45,'wldnm('//stnum//')',nlimps*nmol1)
-            call wrneutrs(45,wldnm1(1,1,istra),nmol1)
+            if (nmol1.gt.0) call wrneutrs(45,wldnm1(1,1,istra),nmol1)
             call write_title(45,'ewldm('//stnum//')',nlimps*nmol1)
-            call wrneutrs(45,ewldm1(1,1,istra),nmol1)
+            if (nmol1.gt.0) call wrneutrs(45,ewldm1(1,1,istra),nmol1)
             call write_title(45,'wldra('//stnum//')',nlimps*natm1)
             call wrneutrs(45,wldra1(1,1,istra),natm1)
             call write_title(45,'wldrm('//stnum//')',nlimps*nmol1)
-            call wrneutrs(45,wldrm1(1,1,istra),nmol1)
+            if (nmol1.gt.0) call wrneutrs(45,wldrm1(1,1,istra),nmol1)
           end do
         end if
         deallocate(wldna1,wldnm1)
@@ -799,7 +835,7 @@ cank-960727
         call write_title(45,'wldpa(0)',nlimps*natm1)
         call wrneutrs(45,wldpa1,natm1)
         call write_title(45,'wldpm(0)',nlimps*nmol1)
-        call wrneutrs(45,wldpm1,nmol1)
+        if (nmol1.gt.0) call wrneutrs(45,wldpm1,nmol1)
         call write_title(45,'wldpeb(0)',nlimps)
         call wrneutrs(45,wldpeb,1)
         call write_title(45,'wldspt(0)',nlimps)
@@ -875,7 +911,7 @@ cank-960727
             call write_title(45,'wldpa('//stnum//')',nlimps*natm1)
             call wrneutrs(45,wldpa1(1,1,istra),natm1)
             call write_title(45,'wldpm('//stnum//')',nlimps*nmol1)
-            call wrneutrs(45,wldpm1(1,1,istra),nmol1)
+            if (nmol1.gt.0) call wrneutrs(45,wldpm1(1,1,istra),nmol1)
             call write_title(45,'wldpeb('//stnum//')',nlimps)
             call wrneutrs(45,wldpeb(1,istra),1)
             call write_title(45,'wldspt('//stnum//')',nlimps)
@@ -884,7 +920,8 @@ cank-960727
               call write_title(45,'wldspta('//stnum//')',nlimps*natm1)
               call wrneutrs(45,wldspta1(1,1,istra),natm1)
               call write_title(45,'wldsptm('//stnum//')',nlimps*nmol1)
-              call wrneutrs(45,wldsptm1(1,1,istra),nmol1)
+              if (nmol1.gt.0)
+     >         call wrneutrs(45,wldsptm1(1,1,istra),nmol1)
             end if
           end do
         end if
@@ -1011,7 +1048,7 @@ cank
      ,                                                       i=1,nlim1)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,nion1),
      ,                                                       i=1,nstsi)
-          k=k+nioni
+          k=k+nion1
           call write_title(45,'wlabsrp(P)',(nnlimi+nnstsi)*npls1)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,npls1)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,npls1),
@@ -1128,7 +1165,8 @@ cank
               call b2xtvc(nx, ny, nx1, ny1,
      &         field, eneutrad1(0,0,iatm1(is)),
      &         nncutmax, non_commensurate,
-     &         nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &         nnreg, nncut, periodic_bc,
+     &         jsep, jsep1, region, region1,
      &         leftcut, leftcut1, rightcut, rightcut1,
      &         bottomcut, bottomcut1, topcut, topcut1,
      &         wrk0)
@@ -1147,40 +1185,46 @@ cank
           do is = 1, nioni
             call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
           end do
-          allocate(emolrad1(0:nx1+1,0:ny1+1,nmol1))
-          do is = 1, nmoli
-            if (imol1(is).ne.0) then
-              field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
-              call b2xtvc(nx, ny, nx1, ny1,
-     &         field, emolrad1(0,0,imol1(is)),
-     &         nncutmax, non_commensurate,
-     &         nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &         leftcut, leftcut1, rightcut, rightcut1,
-     &         bottomcut, bottomcut1, topcut, topcut1,
-     &         wrk0)
-            end if
-          end do
-          call write_title(45,'emolrad',n2*nmol1)
-          call eirene_neutr(45,nx1,ny1,nmol1,emolrad1,
-     .                         nx1,ny1,nmol1,1,1)
-          deallocate(emolrad1)
-          allocate(eionrad1(0:nx1+1,0:ny1+1,nion1))
-          do is = 1, nioni
-            if (iion1(is).ne.0) then
-              field(0:nx+1,0:ny+1) = eionrad(0:nx+1,0:ny+1,is,0)
-              call b2xtvc(nx, ny, nx1, ny1,
-     &         field, eionrad1(0,0,iion1(is)),
-     &         nncutmax, non_commensurate,
-     &         nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &         leftcut, leftcut1, rightcut, rightcut1,
-     &         bottomcut, bottomcut1, topcut, topcut1,
-     &         wrk0)
-            end if
-          end do
-          call write_title(45,'eionrad',n2*nion1)
-          call eirene_neutr(45,nx1,ny1,nion1,eionrad1,
-     .                         nx1,ny1,nion1,1,1)
-          deallocate(eionrad1)
+          if (nmol1.gt.0) then
+            allocate(emolrad1(0:nx1+1,0:ny1+1,nmol1))
+            do is = 1, nmoli
+              if (imol1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, emolrad1(0,0,imol1(is)),
+     &           nncutmax, non_commensurate,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'emolrad',n2*nmol1)
+            call eirene_neutr(45,nx1,ny1,nmol1,emolrad1,
+     .                           nx1,ny1,nmol1,1,1)
+            deallocate(emolrad1)
+          end if
+          if (nion1.gt.0) then
+            allocate(eionrad1(0:nx1+1,0:ny1+1,nion1))
+            do is = 1, nioni
+              if (iion1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = eionrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, eionrad1(0,0,iion1(is)),
+     &           nncutmax, non_commensurate,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'eionrad',n2*nion1)
+            call eirene_neutr(45,nx1,ny1,nion1,eionrad1,
+     .                           nx1,ny1,nion1,1,1)
+            deallocate(eionrad1)
+          end if
         end if
 
         if(jvft44 .ge. 20080706) then
@@ -1699,40 +1743,46 @@ cank
           do is = 1, nioni
             call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
           end do
-          allocate(emolrad1(0:nx1+1,0:ny1+1,nmol1))
-          do is = 1, nmoli
-            if (imol1(is).ne.0) then
-              field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
-              call b2xtvc(nx, ny, nx1, ny1,
-     &         field, emolrad1(0,0,imol1(is)),
-     &         nncutmax, non_commensurate,
-     &         nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &         leftcut, leftcut1, rightcut, rightcut1,
-     &         bottomcut, bottomcut1, topcut, topcut1,
-     &         wrk0)
-            end if
-          end do
-          call write_title(45,'emolrad',n2*nmol1)
-          call eirene_neutr(45,nx1,ny1,nmol1,emolrad1,
-     .                         nx1,ny1,nmol1,1,1)
-          deallocate(emolrad1)
-          allocate(eionrad1(0:nx1+1,0:ny1+1,nion1))
-          do is = 1, nioni
-            if (iion1(is).ne.0) then
-              field(0:nx+1,0:ny+1) = eionrad(0:nx+1,0:ny+1,is,0)
-              call b2xtvc(nx, ny, nx1, ny1,
-     &         field, eionrad1(0,0,iion1(is)),
-     &         nncutmax, non_commensurate,
-     &         nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &         leftcut, leftcut1, rightcut, rightcut1,
-     &         bottomcut, bottomcut1, topcut, topcut1,
-     &         wrk0)
-            end if
-          end do
-          call write_title(45,'eionrad',n2*nion1)
-          call eirene_neutr(45,nx1,ny1,nion1,eionrad1,
-     .                         nx1,ny1,nion1,1,1)
-          deallocate(eionrad1)
+          if (nmol1.gt.0) then
+            allocate(emolrad1(0:nx1+1,0:ny1+1,nmol1))
+            do is = 1, nmoli
+              if (imol1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, emolrad1(0,0,imol1(is)),
+     &           nncutmax, non_commensurate,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'emolrad',n2*nmol1)
+            call eirene_neutr(45,nx1,ny1,nmol1,emolrad1,
+     .                           nx1,ny1,nmol1,1,1)
+            deallocate(emolrad1)
+          end if
+          if (nion1.gt.0) then
+            allocate(eionrad1(0:nx1+1,0:ny1+1,nion1))
+            do is = 1, nioni
+              if (iion1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = eionrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, eionrad1(0,0,iion1(is)),
+     &           nncutmax, non_commensurate,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'eionrad',n2*nion1)
+            call eirene_neutr(45,nx1,ny1,nion1,eionrad1,
+     .                           nx1,ny1,nion1,1,1)
+            deallocate(eionrad1)
+          end if
         end if
       end if
       if(jvft44.ge.960513) nlimi = nlim1

@@ -1127,7 +1127,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
      *             log(neutral_sources_rescale)
-                write(*,'(i3,1p,2e15.8)') is,zamax(is),rtlra(0,0,is+1)
+                write(*,'(i3,1p,2e16.8)') is,zamax(is),rtlra(0,0,is+1)
              endif
            enddo
          else
@@ -1250,7 +1250,8 @@ csw 09oct2012
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NATM,NMOL,NION,NSTRA)
       CALL EIRENE_ALLOC_CCOUPL(1)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
 #else
       call alloc_b2mod_braeir(nx,ny,ns)
       call alloc_b2mod_eirbra(nx,ny,ns,natm,nmol,nion,npls,nstra)

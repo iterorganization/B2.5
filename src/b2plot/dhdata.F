@@ -291,7 +291,7 @@ C
         IFAIL=2
         GOTO 9999
       ENDIF
-      IF (IDMAXD.GT.ITDIMD .OR. ITMAXD.GT.ITDIMD)   THEN
+      IF (IDMAXD.GT.ITDIMD .OR. ITMAXD.GT.ITDIMD) THEN
         if(IDMAXD.GT.ITDIMD)
      1   write(*,*) 'IDMAXD,ITDIMD ',IDMAXD,ITDIMD
         if(ITMAXD.GT.ITDIMD)
@@ -752,7 +752,7 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
 C EXTRAPOLATE: LOW 'XOUT' VALUE  - IF EXTRAPOLATION SWITCHED ON
 C-----------------------------------------------------------------------
-               ELSEIF (XK.LE.XIN(1))   THEN
+               ELSEIF (XK.LE.XIN(1)) THEN
                   INTER   = 2
                   AGRL(2) = 0.0
                   AGRL(4) = 0.0

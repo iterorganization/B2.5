@@ -54,7 +54,7 @@ c
      &   , DRCOFI )
 
 C
-        if (ifail .gt. 0)   then
+        if (ifail .gt. 0) then
           write (*,3003) ifail,is,iz0,iz1-1
  3003     format (
      >     ' >>> error in dhdata: ifail =',i3,/,
@@ -206,8 +206,9 @@ cc    -------------------------------------------------------------------------
       logical streql
       external streql
 
+      ERR = 1
       call GetInfo(NBSEL,CWAVEL,CTYPE,CINDM,LOT)
-      ERR = 0
+      if (NBSEL.gt.0) ERR = 0
       do count=1,id
          IBSELAE(count)=0
          IBSELAR(count)=0
@@ -225,7 +226,7 @@ cc    -------------------------------------------------------------------------
                   IBSELAE(countEX)=count
                   countEX=countEX+1
                   write(*,*)
-     &            'GetIBSEL: selected transition excitation'
+     &            'GetIBSEL: selected excitation transition'
                   write(*,*) 'wavelength:',CWAVEL(count)
                   write(*,*) 'metastable index: ',CINDM(count)
                endif
@@ -235,7 +236,7 @@ cc    -------------------------------------------------------------------------
                   IBSELAR(countRE)=count
                   countRE=countRE+1
                   write(*,*)
-     &            'GetIBSEL: selected transition recombination'
+     &            'GetIBSEL: selected recombination transition'
                   write(*,*) 'wavelength:',CWAVEL(count)
                   write(*,*) 'metastable index: ',CINDM(count)
                endif
@@ -245,7 +246,7 @@ cc    -------------------------------------------------------------------------
                   IBSELAC(countCE)=count
                   countCE=countCE+1
                   write(*,*)
-     &            'GetIBSEL: selected transition charge exchange'
+     &            'GetIBSEL: selected charge exchange transition'
                   write(*,*) 'wavelength:',CWAVEL(count)
                   write(*,*) 'metastable index: ',CINDM(count)
                endif
@@ -254,8 +255,8 @@ cc    -------------------------------------------------------------------------
       enddo
       if ((countEX .eq. 1) .and. (countRE .eq. 1) .and.
      1    (countCE .eq. 1)) then
-         write(*,*) 'GetIBSEL: none selected for'
-         write(*,*) 'ion charge: ',IZIN,' nuclear charge: ',IZ0IN
+         write(*,'(a,i2,a,i2)') 'GetIBSEL: none selected for '//
+     1              'ion charge: ',IZIN,' and nuclear charge: ',IZ0IN
          ERR = 1
       endif
       return
@@ -497,6 +498,7 @@ c     reading data
       call e3file(IUNIT,IZ0IN,IZIN,IRCODE,DSNREQ)
       if (IRCODE .ne. 0) then
          write(*,*) 'GetInfo: ERROR'
+         NBSEL=0
          return
       endif
       call e3data(IUNIT,DSNREQ,NSTORE,NTDIM,NDDIM,
@@ -1090,7 +1092,7 @@ C
      &              (UIDLST .NE. UIDIN)  .OR.
      &              (GRPLST .NE. GRPIN)  .OR.
      &              (TYPLST .NE. TYPIN)  .OR.
-     &              (EXTLST .NE. EXTIN)      )  THEN
+     &              (EXTLST .NE. EXTIN)      ) THEN
 C
                   CALL E3FILE( IUNIT , IZ0IN , IZIN , IRCODE , DSNREQ )
                      IF (IRCODE .EQ. 0) THEN
@@ -1338,39 +1340,39 @@ C
       IDLEN  = INDEX(DSNAME,' ') - 1
       ESYM   = XFESYM( IZ0 )
 C
-         IF (IZ .LT. 0) THEN
-            IRCODE = 6
-         ELSEIF (IZ .LT. 10) THEN
-            WRITE(CZ,1000) IZ
-            IZEND  = 1
-            IRCODE = 0
-         ELSEIF (IZ .LT. 100) THEN
-            WRITE(CZ,1001) IZ
-            IZEND  = 2
-            IRCODE = 0
+      IF (IZ .LT. 0) THEN
+         IRCODE = 6
+      ELSEIF (IZ .LT. 10) THEN
+         WRITE(CZ,1000) IZ
+         IZEND  = 1
+         IRCODE = 0
+      ELSEIF (IZ .LT. 100) THEN
+         WRITE(CZ,1001) IZ
+         IZEND  = 2
+         IRCODE = 0
+      ELSE
+         IRCODE = 6
+      ENDIF
+C
+      IF (IRCODE .EQ. 0) THEN
+C
+         IF ( ESYM(2:2)  .EQ.  ' ' ) THEN
+            DSNAME = DSNAME(1:IDLEN)//ESYM(1:1)//CZ(1:IZEND)//'.dat'
          ELSE
-            IRCODE = 6
+            DSNAME = DSNAME(1:IDLEN)//ESYM(1:2)//CZ(1:IZEND)//'.dat'
+         ENDIF
+         write(*,'(2a)') 'Checking on the existence of ',trim(dsname)
+C
+         call find_file(DSNAME,LEXIST)
+C
+         IF (.NOT.LEXIST) THEN
+            IRCODE = 1
+         ELSE
+            OPEN(UNIT=IUNIT,FILE=DSNAME,STATUS='OLD',ERR=9999)
+            IRCODE = 0
          ENDIF
 C
-         IF (IRCODE .EQ. 0) THEN
-C
-            IF ( ESYM(2:2)  .EQ.  ' ' ) THEN
-               DSNAME = DSNAME(1:IDLEN)//ESYM(1:1)//CZ(1:IZEND)//'.dat'
-            ELSE
-               DSNAME = DSNAME(1:IDLEN)//ESYM(1:2)//CZ(1:IZEND)//'.dat'
-            ENDIF
-            write(*,'(2a)') 'Checking on the existence of ',trim(dsname)
-C
-            call find_file(DSNAME,LEXIST)
-C
-            IF (.NOT.LEXIST) THEN
-               IRCODE = 1
-            ELSE
-               OPEN(UNIT=IUNIT,FILE=DSNAME,STATUS='OLD',ERR=9999)
-               IRCODE = 0
-            ENDIF
-C
-         ENDIF
+      ENDIF
       RETURN
 C
 C-----------------------------------------------------------------------
@@ -2588,7 +2590,7 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
 C EXTRAPOLATE: LOW 'XOUT' VALUE  - IF EXTRAPOLATION SWITCHED ON
 C-----------------------------------------------------------------------
-               ELSEIF (XK .LE. XIN(1))   THEN
+               ELSEIF (XK .LE. XIN(1)) THEN
                   INTER     = 2
                   LINTRP(K) = .FALSE.
                   AGRL(2)   = 0.0_R8
@@ -3074,7 +3076,10 @@ C-----------------------------------------------------------------------
       real (kind=R8) ::
      *   ea(-1:nx,-1:ny)
       integer err
+      integer len_of_digits
       character extension*3,filename*256,MIE*2,MIR*2,MIC*2,stmp*256
+      character textwvl*24, hlp_frm*24
+      external len_of_digits
 c      logical open_file
 
 c     initialising
@@ -3090,7 +3095,7 @@ c      read(99,*) extension,mie,mir,mic
 c      read(99,*) filename
 c      close(99)
 c     calculating the emissivity
-      write(*,*) 'Calculate the emissivity for species ',is
+      write(*,'(a,i2)') 'Calculate the emissivity for species ',is
       filename='filelist.adas.adf15'
       err=0
       call InitADAS(ic,nc,
@@ -3118,10 +3123,15 @@ c  a standard database file may be present
          enddo
       endif
       call copy(ea,1.0_R8,1,textbl)
+      write(hlp_frm,'(a,i2,a,i2,a)')
+     & '(a,i',len_of_digits(iwl),',a,i',len_of_digits(idwl),',a)'
+      write(textwvl,hlp_frm) '(',iwl,'\mS\d',idwl,' A)'
       if(is.lt.ns) then
-        stmp='Emissivity in photons/(m^{3} sr s)'//textpl(is)
+        stmp='Emissivity '//trim(textwvl)//
+     &       ' in photons/(m^{3} sr s)'//textpl(is)
       else
-        stmp='Emissivity in photons/(m^{3} sr s)'//'  '
+        stmp='Emissivity '//trim(textwvl)//
+     &       ' in photons/(m^{3} sr s)'
       endif
       call customise_label(stmp,graphlabel(iwrk))
       deallocate(iae,iar,iac)

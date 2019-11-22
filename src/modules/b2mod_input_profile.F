@@ -524,7 +524,7 @@ cdjm Jan2017 Keep linearised sources for balance
      >   scaling_width(isc) = 0.5_R8*
      .      sqrt((ixwidth(isc)+1.0_R8)*(ixwidth(isc)-1.0_R8)/3.0_R8)
       enddo
-      if (elm_time_period.gt.0.)then
+      if (elm_time_period.gt.0.) then
         elm_time=mod(tim,elm_time_period).ge.elm_time_begin.and.
      &           mod(tim,elm_time_period).le.elm_time_end
       else  

@@ -26,7 +26,6 @@
       use timings
 #endif
       implicit none
-#     include <git_version_B25.h>
 #ifdef USE_MPI
       include 'mpif.h'
 #else
@@ -152,8 +151,11 @@
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
 #endif
+      character*32 B25_git_version
       logical file_open
 *   ..procedures
+      character*32 get_B25_hash
+      external get_B25_hash
       external prgini, prgend, xerset, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
@@ -225,9 +227,10 @@ csw
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers						 !xpb
+      B25_git_version = get_B25_hash()
       call cfverw (nout(0), newversion)
       write(6,'(4a)')
-     &  'Running with VERSION ',newversion,' ', trim(git_version_B25)
+     &  'Running with VERSION ',newversion,' ', trim(B25_git_version)
       call cfverr (ninp(1), b2fgmtry_version)				 !xpb
       call cfverr (ninp(2), b2fparam_version)				 !xpb
       call cfverr (ninp(3), b2fstati_version)				 !xpb

@@ -4767,7 +4767,7 @@
 				<default>0</default>
 				<type>integer array of size (NION)</type>
 				<description>
-					Contains the index of the Eirene atomic species with which the Eirene test ion species (IION) should be scaled.
+					Contains the index of the Eirene atomic species with which the Eirene test ion species (IION) should be scaled. If not provided, LIONSCL will map to LMOLSCL for molecular ions that match an existing declared molecule, or to the first species listed in the name of the molecular ion as declared in the Eirene input file if no matching molecule is found.
 				</description>
 			</switch>
 			<switch>
@@ -5323,10 +5323,11 @@
 				</description>
 			</switch>
 			<switch>
-				<name>LAYER_NRELCONSTITUENTS</name>
+				<name>LAYER_RELCONSTITUENTS</name>
 				<type>real*8 array of size (NWALL,6+NTRACK)</type>
 				<description>
 					Contains the relative atomic abundances of the various elements present within the surface layer of wall element (iwall). Defaults to 1.0 for the first value, 0.0 otherwise.
+					Replaces LAYER_NRELCONSTITUENTS.
 				</description>
 			</switch>
 		</category>

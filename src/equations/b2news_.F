@@ -399,7 +399,7 @@ csw 01oct2012 initialize potential if necessary
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
 !$OMP& SHARED(kinrgy, fllim0fna) 
 #endif
-!        do is = 0, ns-1
+!        do is=0,ns-1                                                    !srv 01.10.99
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
           call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)  !srv 01.10.99
@@ -958,7 +958,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
           i=i+1
         enddo
 
-        if(i.gt.potit) then                                              !srv 22.05.18
+        if(i.gt.potit.and.t0.gt.potok) then                              !srv 22.05.18
           ierr=10
           write(*,*) 'Potential equation not converging'
           call b2news_facdrift_fac_ExB_dec(nx,ny,ramp_slow)
@@ -1154,7 +1154,7 @@ c   recompute particle fluxes
             endif
 !         endif                                                          !srv 22.05.18
         else                                                             !srv 13.10.06 {
-!         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv 22.05.18 
+!         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv 22.05.18
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if(.not.is_neutral(is)) then

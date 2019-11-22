@@ -586,7 +586,7 @@
         wrk0=0.0e0_R8
         wrk1=0.0e0_R8
 
-        if(nncut.eq.2)  then           !iyv 04.02.11
+        if(nncut.eq.2) then            !iyv 04.02.11
           call get_nxt(nx, nxtl, nxtr) ! position of additional targets in DN configuration
           ix1=nxtl    !inner upper
           ix2=nxtr+1  !outer upper

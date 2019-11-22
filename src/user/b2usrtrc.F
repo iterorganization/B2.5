@@ -590,12 +590,12 @@ c!###}
         end if !}
 
 !###{
-        print '(2x,11a10)','ntrc_tmp','nglb_tmp','nspecies','npff_tmp',
-     ,    'npfrgrp','nntrgrp','npfi_tmp','npft_tmp','ndts_tmp',
-     ,    'ngl2_tmp','ngl4_tmp'
-        print '(11i10)',ntrc_tmp,nglb_tmp,nspecies,npff_tmp,
-     ,    npfrgrp,nntrgrp,npfi_tmp,npft_tmp,ndts_tmp,
-     ,    ngl2_tmp,ngl4_tmp
+        write(6,'(3x,11a10)') 'ntrc_tmp','nglb_tmp','nspecies',
+     ,    'npff_tmp','npfrgrp','nntrgrp','npfi_tmp','npft_tmp',
+     ,    'ndts_tmp','ngl2_tmp','ngl4_tmp'
+        write(6,'(11i10)') ntrc_tmp,nglb_tmp,nspecies,
+     ,    npff_tmp,npfrgrp,nntrgrp,npfi_tmp,npft_tmp,
+     ,    ndts_tmp,ngl2_tmp,ngl4_tmp
 !###}
         if(.not.allocated(hlp_out)) then !{
           allocate(hlp_out(ntrc_tmp), hlp_hdr(ntrc_tmp))
@@ -1115,10 +1115,17 @@ c*** Calculate the neutral flows in PFR
             m=lpfrgrp(i)
             if(m.lt.0) m=nnlimi-m
             if(isrftype(m).ne.-3) then !{
-              write (*,'(1x,a,i4,a,i4)')
-     .         '#b2usrtrc: wrong type of diagnostic surface. Surface:',
-     .          m,',  type: ',isrftype(m)
-              write (*,*) 'Check the DG model!!!'
+              if(isrftype(m).eq.0) then !}
+                write (*,'(1x,a,i4,a,i4)')
+     .           '#b2usrtrc: missing type of diagnostic surface. '//
+     .           'Surface:',m,',  type: ',isrftype(m)
+                write (*,*) 'Check for missing Eirene data!!!'
+              else ! }{
+                write (*,'(1x,a,i4,a,i4)')
+     .           '#b2usrtrc: wrong type of diagnostic surface. '//
+     .           'Surface:',m,',  type: ',isrftype(m)
+                write (*,*) 'Check the DG model!!!'
+              endif !}
               hlp_pfrf(k,j,1)=0.0_R8
               go to 30
             end if !}

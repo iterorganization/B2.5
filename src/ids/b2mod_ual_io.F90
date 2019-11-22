@@ -127,7 +127,6 @@ contains
 #endif
             &   time_IN, time_step_IN, shot, run, device, version, &
             &   time_slice_ind_IN, num_time_slices_IN )
-#       include <git_version_B25.h>
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
             !< store data on edge plasma profiles  (includes the scrape-off
             !< layer and possibly part of the confined plasma)
@@ -159,8 +158,8 @@ contains
             !< checks for correct use of the routine.
 
         !! Internal variables
-        character(len=24) :: ion_label  !< Ion species label (e.g. D+1)
-        character(len=24) :: mol_label  !< Molecule species label (e.g. D2)
+        character(len=132) :: ion_label !< Ion species label (e.g. D+1)
+        character(len=132) :: mol_label  !< Molecule species label (e.g. D2)
         character(len=12) :: ion_charge !< Ion charge (e.g. '1', '2', etc.)
         character(len=24) :: source     !< Code source
         character(len=2)  :: plate_name(4) !< Divertor plate name
@@ -239,7 +238,8 @@ contains
         real(IDS_real) :: time  !< Generic time
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
-        real(IDS_real) :: b0, r0, b0r0, vtor, nisep, nasum, gsum, gmid, gbot, gtop
+        real(IDS_real) :: b0, r0, b0r0, b0r0_ref, &
+            &             vtor, nisep, nasum, gsum, gmid, gbot, gtop
         type(B2GridMap) :: gmap !< Data structure holding an
             !< intermediate grid description to be transferred into a CPO or IDS
         type(ids_generic_grid_dynamic_grid_subset) :: gs_cell
@@ -270,6 +270,8 @@ contains
         integer tvalues(8)
         character*16 usrnam
         character*8 imas_version, ual_version
+        character*32 B25_git_version
+        character*32 get_B25_hash
         logical match_found, streql
 #ifdef B25_EIRENE
         logical, allocatable :: in_species(:)
@@ -282,7 +284,7 @@ contains
         integer lenval, ierror
 #endif
 #endif
-        external usrnam, streql
+        external usrnam, streql, get_B25_hash
 
         !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
@@ -663,14 +665,15 @@ contains
         allocate( radiation%code%version(1) )
         radiation%code%version = newversion
 
+        B25_git_version = get_B25_hash()
         allocate( edge_profiles%code%commit(1) )
-        edge_profiles%code%commit = git_version_B25
+        edge_profiles%code%commit = B25_git_version
         allocate( edge_transport%code%commit(1) )
-        edge_transport%code%commit = git_version_B25
+        edge_transport%code%commit = B25_git_version
         allocate( edge_sources%code%commit(1) )
-        edge_sources%code%commit = git_version_B25
+        edge_sources%code%commit = B25_git_version
         allocate( radiation%code%commit(1) )
-        radiation%code%commit = git_version_B25
+        radiation%code%commit = B25_git_version
 
         allocate( edge_profiles%code%repository(1) )
         edge_profiles%code%repository = "git.iter.org"
@@ -703,7 +706,7 @@ contains
         allocate( summary%code%version(1) )
         summary%code%version = newversion
         allocate( summary%code%commit(1) )
-        summary%code%commit = git_version_B25
+        summary%code%commit = get_B25_hash()
         allocate( summary%code%repository(1) )
         summary%code%repository = "git.iter.org"
         allocate( summary%ids_properties%provider(1) )
@@ -784,9 +787,9 @@ contains
         allocate( description%dd_version(1) )
         description%dd_version = imas_version
 
-        i=index(git_version_B25,'-')
+        i=index(B25_git_version,'-')
         allocate( summary%tag%name(1) )
-        summary%tag%name = git_version_B25(1:i-1)
+        summary%tag%name = B25_git_version(1:i-1)
         r0 = 0.0_R8
         icnt = 0
         do ix = -1, nx
@@ -803,6 +806,8 @@ contains
           r0 = r0 / float(icnt)
           if (ffbz(jxa,-1,0).ne.0.0_R8) then
             b0 = ffbz(jxa,-1,0)/r0
+          else if (isymm.eq.0) then
+            b0 = bb(jxa,-1,2)
           else if (isymm.eq.1 .or. isymm.eq.2) then
             b0r0 = bb(jxa,-1,2)*(crx(jxa,-1,0)+crx(jxa,-1,1)+ &
                               &  crx(jxa,-1,2)+crx(jxa,-1,3))/4.0
@@ -812,19 +817,61 @@ contains
                               &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0
             b0 = b0r0 / r0
           end if
+        else
+          b0 = bb(jxa,-1,2)
         end if
-        edge_profiles%vacuum_toroidal_field%r0 = r0
-        allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
-        edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0
-        summary%global_quantities%r0%value = r0
-        allocate( summary%global_quantities%r0%source(1) )
-        summary%global_quantities%r0%source = source
-        allocate( summary%global_quantities%b0%value( time_sind ) )
-        summary%global_quantities%b0%value( time_sind ) = b0
-        allocate( summary%global_quantities%b0%source(1) )
-        summary%global_quantities%b0%source = source
+        !> Careful: Sign convention for magnetic field in IDS
+        !>          is OPPOSITE to that in SOLPS toroidal geometries
+        if ( b0.ne.0.0_IDS_real ) then
+          if (streql(device,'iter')) then
+            b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
+            allocate( summary%global_quantities%ip%value( time_sind ) )
+            allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
+            allocate( summary%global_quantities%b0%value( time_sind ) )
+            i = nint(b0r0_ref/b0r0)
+            select case (i)
+            case (1)
+              summary%global_quantities%ip%value( time_sind ) = -15.0e6_IDS_real
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -5.3_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = -5.3_IDS_real
+            case (2)
+              summary%global_quantities%ip%value( time_sind ) =  -7.5e6_IDS_real
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -2.65_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = -2.65_IDS_real
+            case (3)
+              summary%global_quantities%ip%value( time_sind ) =  -5.0e6_IDS_real
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -1.8_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = -1.8_IDS_real
+            case default
+              summary%global_quantities%ip%value( time_sind ) = -15.0e6_IDS_real/nint(b0r0_ref/b0r0)
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0r0 / 6.2_IDS_real
+              summary%global_quantities%b0%value( time_sind ) = -b0r0 / 6.2_IDS_real
+            end select
+            allocate( summary%global_quantities%ip%source(1) )
+            summary%global_quantities%ip%source = "ITER Baseline q95=3 equilibrium"
+            edge_profiles%vacuum_toroidal_field%r0 = 6.2_IDS_real
+            summary%global_quantities%r0%value = 6.2_IDS_real
+          else
+            edge_profiles%vacuum_toroidal_field%r0 = r0
+            summary%global_quantities%r0%value = r0
+            allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )
+            allocate( summary%global_quantities%b0%value( time_sind ) )
+            if (isymm.ne.0) then
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = -b0
+              summary%global_quantities%b0%value( time_sind ) = -b0
+            else
+              edge_profiles%vacuum_toroidal_field%b0( time_sind ) = b0
+              summary%global_quantities%b0%value( time_sind ) = b0
+            end if
+          end if
+          allocate( summary%global_quantities%r0%source(1) )
+          summary%global_quantities%r0%source = source
+          allocate( summary%global_quantities%b0%source(1) )
+          summary%global_quantities%b0%source = source
+        end if
 #endif
 
+        !! Write grid & grid subsets/subgrids
 #if IMAS_MINOR_VERSION < 15
         call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
             &   edge_profiles%ggd( time_sind )%grid,                        &
@@ -1121,16 +1168,16 @@ contains
                      i = i + 1
                      edge_profiles%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                      edge_profiles%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-                     edge_profiles%ggd( time_sind )%ion( js )%element( i )%atoms_n = mlcmp(k,j)
+                     edge_profiles%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
                      do ii = 1, nsources
                         edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                         edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
                         edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%atoms_n = &
-                            &   mlcmp(k,j)
+                            &   micmp(k,is)
                      end do
                      edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                      edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-                     edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%atoms_n = mlcmp(k,j)
+                     edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
                   end if
                end do
                edge_profiles%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
@@ -1603,7 +1650,7 @@ contains
                 i = i + 1
                 radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                 radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
-                radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%atoms_n = mlcmp(k,j)
+                radiation%process(4)%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
               end if
             end do
             radiation%process(4)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
@@ -5614,7 +5661,7 @@ contains
       call gridWriteData( values(2), iSgCore, cpodata )
       deallocate(cpodata)
       tmpVx = interpolateToVertices( gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
-      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgInnerMidplane, gmap, tmpVx  )
+      cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgInnerMidplane, gmap, tmpVx )
       call gridWriteData( values(3), iSgInnerMidplane, cpodata )
       deallocate(cpodata)
       cpodata => b2ITMTransformDataB2ToCpoVertex( edgecpo%grid, iSgOuterMidplane, gmap, tmpVx )

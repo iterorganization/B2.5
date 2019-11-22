@@ -306,7 +306,7 @@
        call ipgeti ('eirene_ionising_core', ionising_core)
        if (ionising_core.eq.0)     ! for backward compatibility
      >   call ipgeti ('eirene_ionizing_core', ionising_core)
-       call xertst (ionising_core.gt.0.or.abs(ionising_core).le.nbc,
+       call xertst (ionising_core.ge.-nbc.and.ionising_core.le.1,
      1   'faulty input ionising_core, abs(ionising_core) > NBC')
       endif
 *   ..set n2
@@ -2065,17 +2065,17 @@ c dpc
                 SCONPAR(IS) = 0.0_R8
                 DO IBW=IB,NBC
                   if(BCCHAR(IBW).EQ.'S'.and.
-     >               BCCON(IS,IBW).EQ.BCCON(IS,IB))THEN
+     >               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=16: Summed value is ', SCONPAR(IS)
               NAS = 0.0_R8
               VS = 0.0_R8
               DO IBW=IB,NBC
                 if(BCCHAR(IBW).EQ.'S'.and.
-     &             BCCON(IS,IBW).EQ.BCCON(IS,IB))THEN
+     &             BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     NAS = NAS+NA(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),is)
      .                      *VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
@@ -2112,7 +2112,7 @@ c dpc
 !              NAS = NAS *
 !     &         (1.0_R8-max(-bc_ref,min(bc_ref,T0)))
               write(*,'(a,es14.7,a,es14.7,a,es14.7,a,i3)')
-     &         ' BCCON=16: NAS=',NAS,' totflux=',totflux,
+     &         'NAS=',NAS,' totflux=',totflux,
      &         ' SCONPAR=',SCONPAR(IS),' IS=',IS
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
@@ -2250,12 +2250,12 @@ c dpc
                 SCONPAR(IS) = 0.0_R8
                 DO IBW=IB,NBC
                   if(BCCHAR(IBW).EQ.'S'.and.
-     >               BCCON(IS,IBW).EQ.BCCON(IS,IB))THEN
+     >               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=19: Summed value is ', SCONPAR(IS)
               NAS = 0.0_R8
               VS = 0.0_R8
               DO IBW=IB,NBC
@@ -2331,7 +2331,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           max(abs(totfluxn+totfluxi),abs(SCONPAR(IS))))
               write(*,'(a,es14.7,a,es14.7,a,es14.7,a,es14.7,a,es14.7)')
-     *         ' BCCON=19: NAS=',NAS,' totfluxn=',totfluxn,
+     *         'NAS=',NAS,' totfluxn=',totfluxn,
      &         ' totfluxi=',totfluxi,' SCONPAR=',SCONPAR(IS),
      &         ' totfluxn+totfluxi=',totfluxn+totfluxi
               DO IBW=IB,NBC
@@ -2622,12 +2622,12 @@ cxpb Careful here because of BC number clash
                 SCONPAR(IS) = 0.0_R8
                 DO IBW=IB,NBC
                   if(BCCHAR(IBW).EQ.'S'.and.
-     >               BCCON(IS,IBW).EQ.BCCON(IS,IB))THEN
+     >               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=22: Summed value is ', SCONPAR(IS)
               totflux = 0.0_R8
               t0=0.0e0_R8   ! Volume between two surfaces             !lk 12.12.12 {
               t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
@@ -2670,7 +2670,7 @@ cxpb Careful here because of BC number clash
 !              NAS = NA((BCEND(IB)+BCSTART(IB))/2,BCPOS(IB),is) *
 !     &         (1.0_R8-max(-bc_ref,min(bc_ref,T0)))
               write(*,'(a,es14.7,a,es14.7,a,es14.7,a,i3)')
-     .         ' BCCON=22: NAS=',NAS,' totflux=',totflux,
+     .         'NAS=',NAS,' totflux=',totflux,
      &         ' SCONPAR=',SCONPAR(IS),' IS=',IS
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
@@ -2774,7 +2774,7 @@ cxpb Careful here because of BC number clash
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=23: Summed value is ', SCONPAR(IS)
               totfluxn = 0.0_R8
               totfluxi = 0.0_R8
               t0=0.0e0_R8   ! Volume between two surfaces               !lk 12.12.12 {
@@ -2838,7 +2838,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))
               write(*,'(5(a,es14.7))')
-     *          ' BCCON=23: NAS=',NAS,' totfluxn=',totfluxn,
+     *          'NAS=',NAS,' totfluxn=',totfluxn,
      &          ' totfluxi=',totfluxi,' SCONPAR=', SCONPAR(IS),
      &          ' totfluxn+totfluxi=',totfluxn+totfluxi
               DO IBW=IB,NBC
@@ -3145,12 +3145,12 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 SCONPAR(IS) = 0.0_R8
                 DO IBW=IB,NBC
                   if(BCCHAR(IBW).EQ.'S'.and.
-     >               BCCON(IS,IBW).EQ.BCCON(IS,IB))THEN
+     >               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=26: Summed value is ', SCONPAR(IS)
               totflux = 0.0_R8
               t0=0.0e0_R8   ! Volume between two surfaces               !lk 12.12.12 {
               t1=0.0e0_R8   ! Volume-averaged density on previous surface
@@ -3189,7 +3189,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &           (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
      &             max(abs(totflux),abs(SCONPAR(IS))))
               write(*,'(a,es14.7,a,es14.7,a,es14.7,a,i3)')
-     .         ' BCCON=26: NAS=',NAS,' totflux=',totflux,
+     .         'NAS=',NAS,' totflux=',totflux,
      .         ' SCONPAR=',SCONPAR(IS),' IS=',IS
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
@@ -3277,12 +3277,12 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 SCONPAR(IS) = 0.0_R8
                 DO IBW=IB,NBC
                   if(BCCHAR(IBW).EQ.'S'.and.
-     >               BCCON(IS,IBW).EQ.BCCON(IS,IB))THEN
+     >               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
                   endif
                 ENDDO
               endif
-              write(*,*) ' Summed value is ', SCONPAR(IS)
+              write(*,*) 'BCCON=27: Summed value is ', SCONPAR(IS)
               totfluxn = 0.0_R8
               totfluxi = 0.0_R8
               t0=0.0e0_R8   ! Volume between two surfaces              !lk 12.12.12 {
@@ -3363,7 +3363,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))
               write(*,'(5(a,es14.7))')
-     *         ' BCCON=27: NAS=',NAS,' totfluxn=',totfluxn,
+     *         'NAS=',NAS,' totfluxn=',totfluxn,
      &         ' totfluxi=',totfluxi,' SCONPAR=',SCONPAR(IS),
      &         ' totfluxn+totfluxi=',totfluxn+totfluxi
               DO IBW=IB,NBC
@@ -5765,7 +5765,7 @@ cxpb code segment analog to b2tfhe
      &       'Given integrated electron heat flux with constant Te '
 !          write all boundaries with this type of boundary condition
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB))THEN
+              if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB)) THEN
                 write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                    boundary_location(ibw)
                 call xertst(on_closed_surface(BC_LIST_X(1,IBW),
@@ -5793,7 +5793,7 @@ cxpb code segment analog to b2tfhe
                   endif
                 END DO
               endif
-              write(*,*) ' Summed value is ', SENEPAR
+              write(*,*) 'BCENE=16: Summed value is ', SENEPAR
               TES = 0.0_R8
               volsum = 0.0_R8
               DO IBW=IB,NBC
@@ -5846,7 +5846,7 @@ cxpb code segment analog to b2tfhe
      &         (1.0_R8-bc_ref_te*(totflux-SENEPAR)/                     !srv 11.04.13
      &           max(abs(totflux),SENEPAR))
               write(*,'(3(a,es14.7))')
-     &         ' BCENE=16: TES=',TES/ev,' totflux=',totflux,
+     &         'TES=',TES/ev,' totflux=',totflux,
      &         ' SENEPAR=',SENEPAR
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
@@ -7707,7 +7707,7 @@ cxpb          endif
                  endif
                ENDDO
              endif
-             write(*,*) ' Summed value is ', SENIPAR
+             write(*,*) 'BCENI=16: Summed value is ', SENIPAR
              TIS = 0.0_R8
              NIVS = 0.0_R8
              DO IBW=IB,NBC
@@ -7762,7 +7762,7 @@ cxpb          endif
      &         (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/                     !srv 11.04.13
      &           max(abs(totflux),SENIPAR))
              write(*,'(3(a,es14.7))')
-     &         ' BCENI=16: TIS=',TIS/ev,' totflux=',totflux,
+     &         'TIS=',TIS/ev,' totflux=',totflux,
      &         ' SENIPAR=',SENIPAR
              DO IBW=IB,NBC
                IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
@@ -8166,7 +8166,7 @@ cxpb Careful here because of BC number clash
      .     'specified ion temperature ',ENIPAR(IB,1)
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
-            IF (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+            IF (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
               write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                  boundary_location(ibw)
               call xertst(on_closed_surface(BC_LIST_X(1,IBW),
@@ -8211,7 +8211,7 @@ cxpb Careful here because of BC number clash
           if (use_astra.ne.0) THEN
 #ifdef ASTRA
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 ENIPAR(IBW,1) = tib_astra*1.0e3_R8                     !srv 14.06.12
               endif
             ENDDO
@@ -8234,7 +8234,7 @@ cxpb Careful here because of BC number clash
             t2=0.0e0_R8   ! Poloidally volume-averaged electron density in the cell next to boundary
             t3=0.0e0_R8   ! Poloidally volume-averaged electron density in the boundary cell
             DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              IF(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
                   t0=t0 +
      &              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
@@ -8296,7 +8296,7 @@ cxpb Careful here because of BC number clash
      &               ' with constant Ti '
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
-            if (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+            if (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
               write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                  boundary_location(ibw)
               call xertst(on_closed_surface(BC_LIST_X(1,IBW),
@@ -8344,12 +8344,12 @@ cxpb Careful here because of BC number clash
           else
             SENIPAR = 0.0_R8
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 SENIPAR = SENIPAR + ENIPAR(IBW,1)
               endif
             ENDDO
           endif
-          write(*,*) ' Summed value is ', SENIPAR
+          write(*,*) 'BCENI=24: Summed value is ', SENIPAR
 
           IF(BCCHAR(IB).EQ.'S' .and.
      $     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
@@ -8423,7 +8423,7 @@ cxpb Careful here because of BC number clash
      &          (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/
      &            max(abs(totflux),SENIPAR))
             write(*,'(3(a,es14.7))')
-     &        ' BCENI=24: TIS=',TIS/ev,' totflux=',totflux,
+     &        'TIS=',TIS/ev,' totflux=',totflux,
      &        ' SENIPAR=',SENIPAR
             DO IBW=IB,NBC
               IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
@@ -8563,7 +8563,7 @@ cxpb Careful here because of BC number clash
      .     'specified ion temperature ',ENIPAR(IB,1)
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
-            IF (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+            IF (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
               write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                  boundary_location(ibw)
               call xertst(on_closed_surface(BC_LIST_X(1,IBW),
@@ -8588,7 +8588,7 @@ cxpb Careful here because of BC number clash
           if (use_astra.ne.0) THEN
 #ifdef ASTRA
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 ENIPAR(IBW,1) = tib_astra*1.0e3_R8                     !srv 14.06.12
               endif
             ENDDO
@@ -8602,7 +8602,7 @@ cxpb Careful here because of BC number clash
             t0=0.0e0_R8   ! Volume                                     !lk 12.12.12 {
             t1=0.0e0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
             DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              IF(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX= 1, BC_LIST_SIZE(IBW)
                   t0 = t0 +
      .              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
@@ -8654,7 +8654,7 @@ cxpb Careful here because of BC number clash
      &               ' with constant Ti '
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
-            if (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+            if (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
               write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                  boundary_location(ibw)
               call xertst(on_closed_surface(BC_LIST_X(1,IBW),
@@ -8684,19 +8684,19 @@ cxpb Careful here because of BC number clash
             else
               SENIPAR = 0.0_R8
               DO IBW=IB,NBC
-                if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+                if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
                   SENIPAR = SENIPAR + ENIPAR(IBW,1)
                 endif
               ENDDO
             endif
-            write(*,*) ' Summed value is ', SENIPAR
+            write(*,*) 'BCENI=27: Summed value is ', SENIPAR
             TIS = 0.0_R8 ! Poloidally density-averaged ion temperature in the boundary cell
             NIVS = 0.0_R8
             t0=0.0e0_R8   ! Volume                                      !lk 12.12.12 {
             t1=0.0e0_R8   ! Poloidally volume averaged ions temperature in the cell next to boundary
             totflux = 0.0_R8   ! IYS 22.03.2017
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
                   TIS = TIS + TI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
      .                        NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
@@ -8748,7 +8748,7 @@ cxpb Careful here because of BC number clash
      &          (1.0_R8-bc_ref_ti*(totflux-SENIPAR)/
      &            max(abs(totflux),SENIPAR))
             write(*,'(3(a,es14.7))')
-     &        ' BCENI=27: TIS=',TIS/ev,' totflux=',totflux,
+     &        'TIS=',TIS/ev,' totflux=',totflux,
      &        ' SENIPAR=',SENIPAR
             DO IBW=IB,NBC
               IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
@@ -9658,7 +9658,7 @@ c************************************************************* } Solovyev 01.05.
           POS = 0.0_R8                                                  !srv 29.09.15
           VS  = 0.0_R8
           DO IBW=IB,NBC
-            if(BCCHAR(IBW).EQ.'S'.and.BCPOT(IBW).EQ.BCPOT(IB))THEN
+            if(BCCHAR(IBW).EQ.'S'.and.BCPOT(IBW).EQ.BCPOT(IB)) THEN
               DO IX=1, BC_LIST_SIZE(IBW)
                 POS = POS + PO(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
      *                     VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))

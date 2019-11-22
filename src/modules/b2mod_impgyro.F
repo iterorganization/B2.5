@@ -373,7 +373,7 @@ cxpb
       write (*,*) 'b2ig: running impgyro ...'
 
 #ifdef USE_MPI
-      if (mpi_rank.eq.0)then
+      if (mpi_rank.eq.0) then
       call mpi_recv (ep_ir, size(ep_ir), mpi_real8, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       call mpi_recv (im_cc, size(im_cc), mpi_real8, 1, 0,
@@ -391,7 +391,7 @@ cxpb
       end if
 #else
 #ifdef USE_IMPGYRO
-      if (mpi_rank.eq.0)then
+      if (mpi_rank.eq.0) then
       call mpi_recv (ep_ir, size(ep_ir), mpi_real8, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       call mpi_recv (im_cc, size(im_cc), mpi_real8, 1, 0,

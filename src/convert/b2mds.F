@@ -184,7 +184,8 @@ c
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NATM,NMOL,NION,NSTRA)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #else
@@ -1381,7 +1382,7 @@ c
      1   nx+2,ny+2,temp,'')
         forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
      1   tmp(ix,iy,is)=srcml(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:SRCML','/s',nx+2,
+        call mds_put_double_rzns('\TOP.SNAPSHOT:SRCML','A',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
         forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
      1   tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)

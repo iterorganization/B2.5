@@ -788,7 +788,7 @@ C
       DO 12 IX=-1,NX
 CCCCC    JX(IX) = IX
 C
-        IF (ZMAX.GT.0.0)   THEN
+        IF (ZMAX.GT.0.0) THEN
            DO 13 IY=-1,NY
              SIGF = 1.0
              IF (Z(IX,IY).LT.0.0)   SIGF = -1.0

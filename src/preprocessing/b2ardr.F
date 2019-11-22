@@ -114,6 +114,7 @@
       integer i, j, k, nx, ny, ns, is, inuc, fix_cx, rtnt_in, rtnn_in,
      *  no_weisheit, ns_pardf
       integer kstart, kstart1, kend
+      integer, allocatable :: is1(:)
       integer idum(0:9)
       integer, save :: no_smoothing = 0                        !srv 02.07.12
       character lblrc*120, lblcp*120, lblgm*120, cnamip*80, cvalip*80
@@ -129,7 +130,6 @@
      &  wrk(:,:,:)
       save fix_cx, no_weisheit, rtnt_in, rtnn_in
       parameter (lnzero=-1.0e30_R8)
-      logical unread
 *   ..procedures
       intrinsic log, exp
       logical streql, is_comment
@@ -443,10 +443,15 @@
       rtz2=-1.0_R8
       rtpt=-1.0_R8
       rtpi=-1.0_R8
-      unread = .true.
 *   ..initialise species index
       rtns = 0
       is = 0
+      allocate(is1(0:ns_pardf-1))
+      is1 = -1
+*    ..read default physics common to obtain masses and map species data
+      call cfruch (ninp(3), 120, lblcp, 'label')
+      call b2rucp (ninp(3), b2fparam_version, nx, ns_pardf)
+      call initialise_potentials(ns_pardf)
 *   ..loop over nuclear species
       do inuc = 0, nnuc-1
 *    ..compute table
@@ -531,6 +536,14 @@ cxpb  We must account for the case when the user does not want all bundles
         rtns = rtns + kend - kstart + 1
 #endif
        endif
+*    ..get corresponding old species index
+       js = 0
+       do while (nint(zn(js)).ne.nint(rtzn(is)) .and. js.le.ns_pardf)
+         js = js + 1
+       end do
+       do k = kstart, kend
+         is1(is+k-kstart) = js+k-kstart
+       end do
 *    ..correct hydrogen data
        if (nz(inuc).eq.1) then
         if (no_weisheit.eq.0) then
@@ -697,15 +710,8 @@ cxpb  We must account for the case when the user does not want all bundles
            rtlpt(i,j,is) = rtpt(i,j,k)
            rtlpi(i,j,is) = rtpi(i,j,k)
           else
-           if (unread) then
-*        ..read default physics common to obtain masses
-             call cfruch (ninp(3), 120, lblcp, 'label')
-             call b2rucp (ninp(3), b2fparam_version, nx, ns_pardf)
-             call initialise_potentials(ns_pardf)
-             unread = .false.
-           endif
-           rtlpt(i,j,is) = (potmin(is)+potmax(is))/2.0_R8
-           rtlpi(i,j,is) = (potimin(is)+potimax(is))/2.0_R8
+           rtlpt(i,j,is) = (potmin(is1(is))+potmax(is1(is)))/2.0_R8
+           rtlpi(i,j,is) = (potimin(is1(is))+potimax(is1(is)))/2.0_R8
           endif
          enddo
         enddo
@@ -744,6 +750,7 @@ cxpb  We must account for the case when the user does not want all bundles
       deallocate(rtpi)
       deallocate(rtpt)
       deallocate(wrk)
+      deallocate(is1)
 * ..return
       call subend ()
       return

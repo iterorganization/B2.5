@@ -168,7 +168,7 @@
 
 *   ..copying over modified data
       cell_width = hx
-      cell_height = hy
+      cell_height(:,:) = hy(:,:)*qz(:,:,1)
 
       bb(:,:,3)=sqrt(bb(:,:,0)**2+bb(:,:,1)**2+bb(:,:,2)**2)
 

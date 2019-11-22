@@ -100,7 +100,7 @@
         tt2 = 0.0e0_R8
         do iy = -1,ny
           do ix = -1,nx
-            if(on_closed_surface(ix,iy) .and. 
+            if(on_closed_surface(ix,iy) .and.
      *         iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
               tt0(iy) = tt0(iy) + vol(ix,iy)
               tt1(iy) = tt1(iy) + vol(ix,iy)*(nb_(ix,iy)-nb(ix,iy))
@@ -114,7 +114,7 @@
 ! If it happens, cancel the smoothing of the correction for the whole
 ! flux surface where such event happens.
           do ix = -1,nx
-            if(on_closed_surface(ix,iy) .and. 
+            if(on_closed_surface(ix,iy) .and.
      *         iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then    ! IYS 27.03.2019
               t0 = pb(ix,iy)+tt2(iy)/tt0(iy) +
      *         corr_core_dn(isb)*(pb_(ix,iy)-pb(ix,iy)-tt2(iy)/tt0(iy))   ! IYS 19.12.2017

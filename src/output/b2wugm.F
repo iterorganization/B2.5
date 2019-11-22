@@ -397,7 +397,7 @@ cxpb
               endif
             endif
             if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
-              if (region(bottomix(ix,iy),bottomiy(ix,iy),0).ne.0)then
+              if (region(bottomix(ix,iy),bottomiy(ix,iy),0).ne.0) then
                 errors=errors+1
                 write(*,*) 'Bottom neighbour of dead cell ',ix,iy,
      .                     ' alive!'
@@ -490,6 +490,13 @@ cxpb-end
         idum(0)=redef_gmtry
         call cfwuin (nput, 1, idum, 'redef_gmtry')
         call cfwure (nput, n2*4, wbbl, 'wbbl')
+      endif
+      if(newversion.ge.'01.001.028') then
+        call cfwuin (nput, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
+      endif
+      if(newversion.ge.'01.001.033') then
+        call cfwure (nput, n2, cell_width, 'cell_width')
+        call cfwure (nput, n2, cell_height, 'cell_height')
       endif
 * ..return
       call subend ()

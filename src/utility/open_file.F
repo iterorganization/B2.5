@@ -25,7 +25,7 @@ c
       character*256 solpstop,filenamecat,localarea,copyarea
       integer lnblnk, iend
       logical streql
-      external streql
+      external lnblnk, streql
       logical first
 c
       save first, solpstop
@@ -70,36 +70,41 @@ c
       filenamecat='../'//filename(1:lnblnk(filename))
       write(*,'(a,a)') 'Trying ',filenamecat(1:lnblnk(filenamecat))
       open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     1 status='old',err=12,recl=1000010)             !srv 12.05.08 {
+     2 status='old',err=12,recl=1000010)             !srv 12.05.08 {
       return
    12 continue
       close(lu)
-      copyarea=area
-   17 iend=index(copyarea,'|')
-      if(iend.eq.0) then
-         localarea=copyarea
-      else
-         localarea=copyarea(1:iend-1)
-         copyarea(1:256)=copyarea(iend+1:256)
-      endif
+      filenamecat=solpstop(1:lnblnk(solpstop))//
+     1 '/'//filename(1:lnblnk(filename))
+      write(*,'(a,a)') 'Trying ',filenamecat(1:lnblnk(filenamecat))
+      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
+     3 status='old',err=13)
+      return
+   13 continue
       close(lu)
-      if (.not.streql(localarea,' ')) then
+      copyarea=area
+      if (.not.streql(copyarea,' ')) then
+   17   iend=index(copyarea,'|')
+        if(iend.eq.0) then
+          localarea=copyarea
+        else
+          localarea=copyarea(1:iend-1)
+          copyarea(1:256-iend)=copyarea(iend+1:256)
+          copyarea(256-iend+1:256)=repeat(' ',iend)
+        endif
         filenamecat=solpstop(1:lnblnk(solpstop))//
      1   '/'//
      2   localarea(1:lnblnk(localarea))//
      3   '/'//
      4   filename(1:lnblnk(filename))
-      else
-        filenamecat=solpstop(1:lnblnk(solpstop))//
-     1   '/'//
-     2   filename(1:lnblnk(filename))
+        write(*,'(a,a)') 'Trying ',filenamecat(1:lnblnk(filenamecat))
+        open(lu,file=filenamecat(1:lnblnk(filenamecat)),
+     4   status='old',err=20)
+        return
+   20   continue
+        close(lu)
+        if(iend.gt.0) goto 17
       endif
-      write(*,'(a,a)') 'Trying ',filenamecat(1:lnblnk(filenamecat))
-      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     3 status='old',err=20)
-      return
-   20 continue
-      if(iend.gt.0) goto 17
       write(*,'(a,a)') 'Error in opening ',filename(1:lnblnk(filename))
       open_file=.false.
       return
@@ -226,27 +231,29 @@ c
 ! level up) and returns a new filename if found, and exist set to true
 ! if the file is found
 
+      integer lnblnk
       character(len=*) filename
       logical exist
+      external lnblnk
 
       inquire(file=filename, exist=exist)
       if(exist) return
 
       inquire(file='../'//filename, exist=exist)
       if(exist) then
-         filename='../'//filename
+         filename='../'//filename(1:lnblnk(filename))
          return
       endif
 
       inquire(file='../baserun/'//filename, exist=exist)
       if(exist) then
-         filename='../baserun/'//filename
+         filename='../baserun/'//filename(1:lnblnk(filename))
          return
       endif
 
       inquire(file='../../baserun/'//filename, exist=exist)
       if(exist) then
-         filename='../../baserun/'//filename
+         filename='../../baserun/'//filename(1:lnblnk(filename))
          return
       endif
 

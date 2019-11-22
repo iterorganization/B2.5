@@ -241,7 +241,7 @@ cxpb  cells with no bottom neighbour
         elseif (topiy(ix,iy).eq.ny+1) then
 cxpb  cells with no top neighbour
           resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1)
-        elseif (topiy(topix(ix,iy),topiy(ix,iy)).ne.iy)  then
+        elseif (topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then
 cxpb  standard case
          resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1)
      &     -fmb(topix(ix,iy),topiy(ix,iy),1)
