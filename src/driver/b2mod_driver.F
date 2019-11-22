@@ -1345,33 +1345,7 @@ csw 09oct2012
 !
       call alloc_b2mod_tallies(mpg%nnreg,ns)
 #ifdef WG_TODO
-!moved to init_geometry
-*  .. calculate 1/B/B                                                    !sv
-      geo%cvOnedBsq = 1.0_R8/geo%cvBb(:,3)**2
-*  .. interpolate OnedBsq for corners of cell                            !sv
-      call intvertex(nCv,nVx,mpg,geo%cvVol,geo%cvOnedBsq,geo%vxOnedBsq)
-*  .. interpolate magnetic field to cell corners                         !xpb
-      call intvertex1(nCv,nVx,2,mpg,geo%cvVol,geo%cvBb,geo%vxBb)
-*   ..compute extrapolated vxBb(:,3) component
-      ! guarantee that bb(3)=sqrt(bb(0:2)**2)
-      geo%vxBb(:,3) = 
-     .  sqrt(geo%vxBb(:,0)**2+geo%vxBb(:,1)**2+geo%vxBb(:,2)**2)
-*   ..compute hz                                                         !srv 09.01.01  09.06.08 {
-c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
-!      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)              !srv 09.01.01
-      hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
-      hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
-      hzconst = 1.0_R8                                                   !srv 30.01.10
-      geo%cvHz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*geo%cvVol/geo%cvS       !srv 16.06.09
-*   ..compute fcPbshz (magnetic field pitch * surface area  at cell faces * hz)
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrkf)
-      geo%fcPbshz = geo%fcPbs * wrkf
-*   ..modify geometry to recover 5-point stencil
-      if (use_9pt_stencil.eq.0) then
-        call xerrab ('5-point stencil option not yet adapted for UG')
-      endif
-#endif
-#ifdef WG_TODO
+cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 *   ..find the poloidal number of midplane cell as a number of cell with min Bz
       if(nncut.eq.2) then                                            !srv 22.05.09 {
         nmdpl = rightcut(nncut)
@@ -1446,11 +1420,6 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         iy = ny
         crdy_c_cell(ix,iy) = crdy_surf(ix,iy)
       enddo                                                          !srv 02.05.09 }
-#endif
-#ifdef WG_TODO
-!moved to init_geometry
-*   ..compute Bz/B**2 - Bz/<B**2>
-      call b2xbzb (nCv, mpg, geo%cvBb, geo%cvVol, geo%cvBzb)                             !srv 13.10.06 09.06.08 23.07.10}
 #endif
 *   ..read initial state
       call read_plasma_state (ninp(3), ns, mpg%nCv, mpg%nFc, state)
