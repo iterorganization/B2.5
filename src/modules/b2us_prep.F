@@ -2270,15 +2270,17 @@ cwdk  might need to add duplicates numbers here...
         do ix = 0, nx
           if(mpg%imapVx(ix,iy)/=0) then
             ivx = mpg%imapVx(ix,iy)
+            gm%vxBb(ivx,0:3) = wbbc(ix,iy,0:3)
             gm%vxX(ivx) = crx(ix,iy,0)
             gm%vxY(ivx) = cry(ix,iy,0)
             gm%vxFfbz(ivx) = ffbz(ix,iy,0)
             gm%vxFpsi(ivx) = fpsi(ix,iy,0,0)
-            do i = 1, mpg%vxCvP(ivx,2)
-              ic = mpg%vxCv(mpg%vxCvP(ivx,1) + i - 1)
-              gm%vxVol(mpg%vxCvP(ivx,1) + i - 1) = 0.25*gm%cvVol(ic)
+!wdk moved to init_geometry
+!            do i = 1, mpg%vxCvP(ivx,2)
+!              ic = mpg%vxCv(mpg%vxCvP(ivx,1) + i - 1)
+!              gm%vxVol(mpg%vxCvP(ivx,1) + i - 1) = 0.25*gm%cvVol(ic)
 !              gm%vxVol(mpg%vxCvP(ivx,1) + i - 1) = 0.25
-            end do
+!            end do
           end if
         end do
       end do

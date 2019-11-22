@@ -225,22 +225,23 @@
       call cfrure (iun, nCv,   gm%cvVol,  'cvVol')
 
 ! face quantities
+      call cfrure (iun, nFc*4, gm%fcBb,   'fcBb')
       call cfrure (iun, nFc,   gm%fcS,    'fcS')
       call cfrure (iun, nFc*2, gm%fcHc,   'fcHc')
       call cfrure (iun, nFc,   gm%fcHt,   'fcHt')
-      call cfrure (iun, nFc*2, gm%fcVol,  'fcVol')
       call cfrure (iun, nFc*2, gm%fcQgam, 'fcQgam')
       call cfrure (iun, nFc*2, gm%fcQalf, 'fcQalf')
       call cfrure (iun, nFc*2, gm%fcQbet, 'fcQbet')
       call cfrure (iun, nFc,   gm%fcPbs,  'fcPbs')
 
 ! vertex quantities
+      call cfrure (iun, nVx*4, gm%vxBb,   'vxBb')
       call cfrure (iun, nVx,   gm%vxX,    'vxX')
       call cfrure (iun, nVx,   gm%vxY,    'vxY')
-      call cfrure (iun, nVmxCv,gm%vxVol,  'vxVol')
       call cfrure (iun, nVx,   gm%vxFfbz, 'vxFfbz')
       call cfrure (iun, nVx,   gm%vxFpsi, 'vxFpsi')
 
+! flux surface quantities
       call cfrure (iun, nFs,   gm%fsConn, 'fsConn')
 
       return
@@ -267,22 +268,23 @@
       call cfwure (nout, nCv,   gm%cvVol,  'cvVol')
 
 ! face quantities
+      call cfwure (nout, nFc*4, gm%fcBb,   'fcBb')
       call cfwure (nout, nFc,   gm%fcS,    'fcS')
       call cfwure (nout, nFc*2, gm%fcHc,   'fcHc')
       call cfwure (nout, nFc,   gm%fcHt,   'fcHt')
-      call cfwure (nout, nFc*2, gm%fcVol,  'fcVol')
       call cfwure (nout, nFc*2, gm%fcQgam, 'fcQgam')
       call cfwure (nout, nFc*2, gm%fcQalf, 'fcQalf')
       call cfwure (nout, nFc*2, gm%fcQbet, 'fcQbet')
       call cfwure (nout, nFc,   gm%fcPbs,  'fcPbs')
 
 ! vertex quantities
+      call cfwure (nout, nVx*4, gm%vxBb,   'vxBb')
       call cfwure (nout, nVx,   gm%vxX,    'vxX')
       call cfwure (nout, nVx,   gm%vxY,    'vxY')
-      call cfwure (nout, nVmxCv,gm%vxVol,  'vxVol')
       call cfwure (nout, nVx,   gm%vxFfbz, 'vxFfbz')
       call cfwure (nout, nVx,   gm%vxFpsi, 'vxFpsi')
 
+! flux surface quantities
       call cfwure (nout, nFs,   gm%fsConn, 'fsConn')
 
       return
@@ -296,8 +298,10 @@
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nCv, nFc, nVx, nFx, iFc
+      integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv
       integer :: use_9pt_stencil = 1
+      integer :: fcVol_style = 0
+      integer :: vxVol_style = 0
       real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du
       intrinsic maxval
 
@@ -305,27 +309,54 @@
       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')
       call ipgeti ('b2mndr_use_9pt_stencil',use_9pt_stencil)
+      call ipgeti ('b2mndr_fcVol_style',fcVol_style)
+      call ipgeti ('b2mndr_vxVol_style',vxVol_style)
 
       nCv = mpg%nCv
       nFc = mpg%nFc
       nVx = mpg%nVx
 
-*   ..interpolate magnetic field to cell faces and vertices
-      call intface1(nCv,nFc,2,mpg%fcCv,gm%fcVol,gm%cvBb,gm%fcBb)
-      call intvertex1(nCv,nVx,2,mpg,gm%vxVol,gm%cvBb,gm%vxBb)
+*   ..set weights for interpolation to faces
+      if (fcVol_style.eq.0) then
+       ! weights for inverse volume interpolation
+       do iFc = 1, nFc
+         gm%fcVol(iFc,1) = 0.5_R8*gm%cvVol(mpg%fcCv(iFc,1))
+         gm%fcVol(iFc,2) = 0.5_R8*gm%cvVol(mpg%fcCv(iFc,2))
+       enddo
+      elseif (vxVol_style.eq.1) then
+       ! weights for simple averaging
+       do iFc = 1, nFc
+         gm%fcVol(iFc,1) = 0.5_R8
+         gm%fcVol(iFc,2) = 0.5_R8
+       enddo
+      else
+        call xerrab ('wrong value of b2mndr_fcVol_style')
+      endif
 
-*   ..compute fcBb(:,3) and vxBb(:,3) components
-      ! guarantee that bb(:,3)=sqrt(bb(:,0:2)**2)
-      gm%fcBb(:,3) = 
-     .  sqrt(gm%fcBb(:,0)**2 + gm%fcBb(:,1)**2 + gm%fcBb(:,2)**2)
-      gm%vxBb(:,3) = 
-     .  sqrt(gm%vxBb(:,0)**2 + gm%vxBb(:,1)**2 + gm%vxBb(:,2)**2)
+*   ..set weights for interpolation to vertices
+      if (vxVol_style.eq.0) then
+       ! weights for inverse volume interpolation
+       do iVx = 1, nVx
+        do inCv = 1, mpg%vxCvP(iVx,2)
+         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+         gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &     (1._R8/mpg%cvVxP(iCv,2))*gm%cvVol(iCv)
+        enddo
+       enddo
+      elseif (vxVol_style.eq.1) then
+       ! weights based on relative volume fraction
+       do iVx = 1, nVx
+        do inCv = 1, mpg%vxCvP(iVx,2)
+         gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 1._R8/mpg%cvVxP(iCv,2)
+        enddo
+       enddo
+      else
+        call xerrab ('wrong value of b2mndr_vxVol_style')
+      endif
 
 *  .. calculate 1/B/B
       gm%cvOnedBsq = 1.0_R8/gm%cvBb(:,3)**2
-
-*  .. interpolate OnedBsq for corners of cell
-      call intvertex(nCv,nVx,mpg,gm%vxVol,gm%cvOnedBsq,gm%vxOnedBsq) !WG: interpolate 1/cvBb**2, or compute as 1/vxBb**2 ???
+      gm%vxOnedBsq = 1.0_R8/gm%vxBb(:,3)**2
 
 *  .. unit vector of magnetic field in X,Y,Z coordinates at faces
       do iFc = 1, mpg%nFc
