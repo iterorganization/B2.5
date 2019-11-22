@@ -320,7 +320,7 @@
       do ib = 1, nbc
        ! identify core boundaries; assume all core boundaries
        ! form single flux surface
-       iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+       iCv1 = mpg%bcCv(mpg%bcCvP(ib,1),1)
        if (mpg%cvOnClosedSurface(iCv1)) then
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -1373,7 +1373,7 @@ c dpc
             sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
             if (mdf_fnb.ne.0) then
               t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is))) + 
+     &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
      &           (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
      &            geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is))*
      &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is)))

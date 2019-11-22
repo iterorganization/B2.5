@@ -294,13 +294,7 @@ csw
 *   ..write plasma state
       call cfopen(nout(7),'b2fplasma','new','unformatted')
       call cfverw(nout(7), newversion)
-!WG_TODO      call write_b2mod_geo(nout(7))
-!WG_TODO      call write_b2mod_plasma(nout(7))
-!WG_TODO      call write_b2mod_residuals(nout(7))
-!WG_TODO      call write_b2mod_sources(nout(7))
-!WG_TODO      call write_b2mod_transport(nout(7))
-!WG_TODO      call write_b2mod_anomalous_transport(nout(7))
-!WG_TODO      call write_b2mod_neutr_src_scaling(nout(7),nstrat)
+
       close(nout(7))
 #ifdef JET
 *   ..set and write ppout
