@@ -89,7 +89,6 @@
       integer, save :: use_astra
       integer, save :: drift_style
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
-      logical once_bcpot12
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
       real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
@@ -104,7 +103,7 @@
      1  naave, volave, teave, neave, tiave, niave, poave,
      2  vwest, veast, vbnd, totfluxn, totfluxi
      &  ,pzaverage, pzsum, volsum                                       !srv 24.03.99 18.01.02
-     &  ,naua2sum, naua2average(0:ns-1)
+     &  ,naua2sum(0:ns-1), naua2average(0:ns-1)
      &  ,ua2sum, ua2average(0:ns-1)                                     !srv 07.04.00 15.02.02
      &  ,uasum, uaaverage(0:ns-1)                                       !srv 15.02.02
      &  ,nesum, neaverage, tisum, tiaverage, tesum, teaverage           !srv 15.12.00 25.01.02
@@ -310,7 +309,43 @@
       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,hzf)
 
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)!srv 18.01.02
+
+*     ..pre-compute some quantities for core BCs with drifts
+      call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq, 
+     &  geo%vxOnedBsq, dOnedBsq)
+
+      pzsum     = 0.0_R8
+      naua2sum  = 0.0e0_R8
+      volsum    = 0.0_R8
+      do ib = 1, nbc
+       ! identify core boundaries; assume all core boundaries
+       ! form single flux surface
+       iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+       if (mpg%cvOnClosedSurface(iCv1)) then
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+         iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+         iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the domain cell
+         iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+         call xertst(mpg%cvOnClosedSurface(iCv1),
+     .    'BCPOT=12 intended for core boundaries only!')
+         !wdk weighting following computation of fchdia
+*      ..accumulate the average pressure for inner flux surface
+         pzsum    = pzsum  + geo%fcS(iFc)*(pz(iCv1) + pz(iCv2))
+         volsum   = volsum + geo%fcS(iFc)
+*      ..accumulate the average na*ua**2, na for inner flux surface
+         do is = 0, ns-1
+           naua2sum(is)  = naua2sum(is) + geo%fcS(iFc)*
+     .       (pl%na(iCv1,is)*pl%ua(iCv1,is)**2 +
+     .        pl%na(iCv2,is)*pl%ua(iCv2,is)**2)
+         enddo
+        enddo
+       endif
+      enddo
+      pzaverage    = 0.5_R8*pzsum/volsum
+      naua2average = 0.5_R8*naua2sum/volsum
+
 #ifdef WG_TODO
+cwdk code to be removed after full adaption to unstructured solver...
 
       if (istyle_average_pr .eq.0) then                           !srv 08.08.02
        iy = -1                                                    !srv 24.03.99
@@ -457,7 +492,6 @@ cwdk  now need to recompute full diamagnetic component for ud
       once_bcene = .false.
       once_bceni = .false.                                            !srv 16.02.12 }
       once_bcpot = .false.                                            !Solovyev 13.05.14 !srv 29.09.15
-      once_bcpot12 = .false.
 
 * -- LOOP OVER ALL BOUNDARIES
       DO IB=1, NBC
@@ -1339,7 +1373,7 @@ c dpc
             sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
             if (mdf_fnb.ne.0) then
               t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
+     &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is))) + 
      &           (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
      &            geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is))*
      &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is)))
@@ -8470,44 +8504,13 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
           endif
         endif
-        !wdk For now, assume this will be the only core boundary
-        if (once_bcpot12) call xerrab ('Problem with BCPOT=12.')
-        once_bcpot12 = .true.
         if(maxval(dv%facdrift) .ne. 0.0_R8) then
-*       ..pre-compute some quantities
-          call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq, 
-     &      geo%vxOnedBsq, dOnedBsq)
-*       ..find the average pressure for inner flux surface
-          pzsum  = 0.0_R8
-          volsum = 0.0_R8
-          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the domain cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-            call xertst(mpg%cvOnClosedSurface(iCv1),
-     .       'BCPOT=12 intended for core boundaries only!')
-            !wdk weighting following computation of fchdia
-            pzsum    = pzsum     + geo%fcS(iFc)*(pz(iCv1) + pz(iCv2))
-            volsum   = volsum    + geo%fcS(iFc)
-          enddo
-          pzaverage = 0.5_R8*pzsum/volsum
-*       ..find the average na*ua**2, na for inner flux surface
-          do is = 0, ns-1
-            naua2sum  = 0.0e0_R8
-            do ibc = 1, mpg%bcCvP(ib,2)                                ! loop over number of cells in the boundary
-              iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                 ! number of the guard cell
-              iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                 ! number of the domain cell
-              iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                       ! number of the guard cell face
-              naua2sum  = naua2sum + geo%fcS(iFc)*
-     .          (pl%na(iCv1,is)*pl%ua(iCv1,is)**2 +
-     .           pl%na(iCv2,is)*pl%ua(iCv2,is)**2)
-            enddo
-            naua2average(is) = 0.5_R8*naua2sum/volsum
-          enddo
 *       ..compute the source
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            call xertst(mpg%cvOnClosedSurface(iCv1),
+     .       'BCPOT=12 intended for core boundaries only!')
             !wdk now uses fcBb(iFc,2) instead of <fcBb(:,2)>
             fchy_dia = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &        phm0*pzaverage*dv%facdrift(iFc)*geo%fcBb(iFc,2)*
