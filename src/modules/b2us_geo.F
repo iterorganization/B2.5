@@ -347,6 +347,7 @@
        ! weights based on relative volume fraction
        do iVx = 1, nVx
         do inCv = 1, mpg%vxCvP(iVx,2)
+         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 1._R8/mpg%cvVxP(iCv,2)
         enddo
        enddo
@@ -397,6 +398,7 @@
       gm%fcPbshz = gm%fcPbs * gm%fcPbshz
 
 *   ..compute Bz/B**2 - Bz/<B**2>
+      !wdk do we need also vxBzb computed in a consistent way??
       call b2xbzb (nCv, mpg, gm%cvBb, gm%cvVol, gm%cvBzb)
 
 *   ..modify geometry to recover 5-point stencil behavior
