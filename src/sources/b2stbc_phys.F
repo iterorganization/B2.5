@@ -1412,11 +1412,11 @@ cwdk       * need to correct this BC for hybrid scheme
             t1   = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &              geo%fcQbet(iFc,0)
             srw%sna0(iCv1,0,is) =  VBIG*
-     &          co%cdna(iFc,1,is)*t0*pl%na(iCv2,is)
+     &          co%cdna(iFc,1,is)*(t0*pl%na(iCv2,is) - 
+     &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*t1*
+     &         (pl%na(mpg%fcVx(iFc,2),is) - pl%na(mpg%fcVx(iFc,1),is)))
             srw%sna0(iCv1,1,is) = -VBIG*
-     &         (co%cdna(iFc,1,is)*t0 + co%cdna(iFc,1,is)*t1*
-     &         (pl%na(mpg%fcVx(iFc,2),is) - pl%na(mpg%fcVx(iFc,1),is)) -
-     &         CONPAR(is,iB,1)*geo%fcS(iFc)*csb)
+     &         (co%cdna(iFc,1,is)*t0 - CONPAR(is,iB,1)*geo%fcS(iFc)*csb)
             sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
           enddo
           GOTO 10000                                                !srv 25.09.09 }
