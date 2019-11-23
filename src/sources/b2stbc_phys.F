@@ -765,11 +765,24 @@ cwdk      direction was imposed at E/W boundaries (and normal to the
 cwdk      radial direction at N/S - unchanged for aligned grids)
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             srw%sna0(iCv1,0,is) = conpar(is,iB,1)*geo%fcS(iFc)
             srw%sna0(iCv1,1,is) = 0.0_R8
             sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
             sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
+            if (mdf_fnb.ne.0) then
+              !wdk Added correction to make mdf_fnb options equivalent
+              t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
+     &           (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
+     &            geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is))*
+     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is)))
+              srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) +
+     &          max(0.0_R8,t0)
+              srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
+     &          min(0.0_R8,t0)/pl%na(iCv1,is)
+            endif
           enddo  
 
           GOTO 10000
@@ -5611,10 +5624,11 @@ cwdk     * need to correct this BC for hybrid scheme
           t1   = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &            geo%fcQbet(iFc,0)
           srw%she0(iCv1,0) =  VBIG*NE00*EV*
-     &        co%chce(iFc,1)*t0*pl%te(iCv2)
+     &        co%chce(iFc,1)*(t0*pl%te(iCv2) -
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*t1*
+     &       (pl%te(mpg%fcVx(iFc,2)) - pl%te(mpg%fcVx(iFc,1))))
           srw%she0(iCv1,1) = -VBIG*NE00*EV*
-     &       (co%chce(iFc,1)*t0 + co%chce(iFc,1)*t1*
-     &       (pl%te(mpg%fcVx(iFc,2)) - pl%te(mpg%fcVx(iFc,1))) -
+     &       (co%chce(iFc,1)*t0 -
      &       ENEPAR(iB,1)*geo%fcS(iFc)*vte*dv%ne(iCv1))
         enddo
         GOTO 30000
@@ -7377,10 +7391,11 @@ cwdk     * need to correct this BC for hybrid scheme
             endif
           enddo
           srw%shi0(iCv1,0) =  VBIG*NE00*EV*
-     &        co%chci(iFc,1)*t0*pl%ti(iCv2)
+     &        co%chci(iFc,1)*(t0*pl%ti(iCv2) -
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*t1*
+     &       (pl%ti(mpg%fcVx(iFc,2)) - pl%ti(mpg%fcVx(iFc,1))))
           srw%shi0(iCv1,1) = -VBIG*NE00*EV*
-     &       (co%chci(iFc,1)*t0 + co%chci(iFc,1)*t1*
-     &       (pl%ti(mpg%fcVx(iFc,2)) - pl%ti(mpg%fcVx(iFc,1))) -
+     &       (co%chci(iFc,1)*t0 -
      &       ENIPAR(iB,1)*geo%fcS(iFc)*t2)
         enddo
         GOTO 40000                                                   !srv 23.07.10 }
