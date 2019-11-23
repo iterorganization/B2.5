@@ -56,10 +56,10 @@ c                                nreg = 1 there is no such decr.
 c             sigma(4)    the sigmas determine which of the coupling
 c                         terms in the equation for the pfirsch
 c                         schlueter regime are taken into acount.
-c                         sigma(1)= 0,1  is the cross coupling between
+c                         sigma(1)= 0,1  is the cross-coupling between
 c                                     the heat equation and the equation
 c                                     for the third laguerre harm.
-c                         sigma(2)= 0.,1 is the cross coupling between
+c                         sigma(2)= 0.,1 is the cross-coupling between
 c                                     the equation for the third harmonic
 c                                     and the temperature perturb.
 c                         sigma(3)= 0,1 is the energy exchange between

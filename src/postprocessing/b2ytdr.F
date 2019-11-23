@@ -497,6 +497,7 @@ c 2002-09-11: logic revised
       logical, allocatable :: is_neutral1(:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
+      logical LMULPL, LRDMLTI, LRDMLV
       logical, allocatable :: savesigv(:), savesigs(:), savesigc(:)
       logical, allocatable :: NLAVRP(:), NLAVRT(:), NLSYMP(:), NLSYMT(:)
       logical, allocatable :: NLRAY(:)
@@ -3676,7 +3677,8 @@ cxpb  Start reading input.dat file
           call fix_logical_input(zeile,16)
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,NLTRIMESH
+                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
+                                         ! NLTRIMESH
           ELSE
             READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
@@ -3687,7 +3689,8 @@ cxpb  Start reading input.dat file
           call fix_logical_input(zeile,16)
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,NLTRIMESH
+                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
+                                         ! NLTRIMESH
           ELSE
             READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
@@ -3704,9 +3707,8 @@ cxpb  Start reading input.dat file
           ldum(10) = .true.
           ldum(11) = .false.
           ldum(12) = .false.
-        ELSEIF (streql(eirene_format,'old') .or.
-     .          streql(eirene_format,'new')) then
-          ldum(10) = .true.
+        ELSE
+          ldum(10) = .true. ! Make sure we are using the H1RN random generator
         END IF
         filename=fort_lc//'33'
         inquire(file=filename,exist=NLWRMSH)
@@ -4605,6 +4607,8 @@ Cxpb We must read up to section 5 first, to identify ion species
 Cxpb and bundles, compute new bulk ion species indices and only
 Cxpb then rewrite the entire block
   420   CONTINUE
+cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. backgrounds)
+        LMULPL = .FALSE.
         READ (IUNIN,*) NATMI
         allocate(NPRTA(NATMI),
      .           ISRFA(NATMI),ISRTA(NATMI),ID1A(NATMI),
@@ -4667,6 +4671,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEA(JATM,K),IESTMA(JATM,K),
      .                          IBGKA(JATM,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKA(JATM,K) /= 0)
             READ (IUNIN,6664) EELECA(JATM,K),EBULKA(JATM,K),
      .                        ESCD1A(JATM,K),ESCD2A(JATM,K),
      .                        FREACA(JATM,K),EDPOTA(JATM,K)
@@ -4820,6 +4825,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEM(JMOL,K),IESTMM(JMOL,K),
      .                          IBGKM(JMOL,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKM(JMOL,K) /= 0)
             READ (IUNIN,6664) EELECM(JMOL,K),EBULKM(JMOL,K),
      .                        ESCD1M(JMOL,K),ESCD2M(JMOL,K),
      .                        FREACM(JMOL,K)
@@ -4965,6 +4971,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEI(JION,K),IESTMI(JION,K),
      .                          IBGKI(JION,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKI(JION,K) /= 0)
             READ (IUNIN,6664) EELECI(JION,K),EBULKI(JION,K),
      .                        ESCD1I(JION,K),ESCD2I(JION,K),
      .                        FREACI(JION,K)
@@ -5088,6 +5095,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
      .                          IBGKPH(JPHOT,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKPH(JPHOT,K) /= 0)
             READ (IUNIN,6664) EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
      .                        ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
      .                        FREACPH(JPHOT,K),EDPOTPH(JPHOT,K)
@@ -7154,17 +7162,30 @@ cxpb We now rewrite the modified block 4
         WRITE(IUNOT,'(A72)') ZEILE
         IF (ZEILE(1:1) .EQ. '*') GOTO 520
         READ (ZEILE,6666) (INDPRO(J),J=1,12)
+        indpro(2)=indpro2_save
+        DO J=1,12
+          IF (ABS(INDPRO(J)) > 100) INDPRO(J) = MOD(INDPRO(J),100)
+        END DO
         allocate(P0(NPLSI1),P1(NPLSI1),P2(NPLSI1),
      .           P3(NPLSI1),P4(NPLSI1),P5(NPLSI1))
         IF (INDPRO(1).LE.5.AND.NPLSI.GT.0) THEN
           READ (IUNIN,'(A72)') ZEILE ! TE0,TE1,TE2,TE3,TE4,TE5
           WRITE(IUNOT,'(A72)') ZEILE
         END IF
-        IF (IABS(INDPRO(2)).LE.5.AND.NPLSI.GT.0) THEN
-          IF (INDPRO(2).LT.0) THEN
+        INDPRO(2)=IABS(INDPRO(2))
+        NPLSTI = NPLSI
+        IF (INDPRO(2) > 9) NPLSTI=1
+        LRDMLTI=.TRUE.
+        IF ((NPLSI > 1) .AND. (NPLSTI == 1) .AND. LMULPL) THEN
+          LRDMLTI = .FALSE.
+          NPLSTI = NPLSI
+        END IF
+        IF (INDPRO(2) > 9) INDPRO(2) = MOD(INDPRO(2),10)
+        IF (INDPRO(2).LE.5.AND.NPLSI.GT.0) THEN
+          IF (LRDMLTI) THEN
             READ (IUNIN,6664) (TIO(I),TIl(I),TI2(I),TI3(I),TI4(I),TI5(I)
      .                        ,I=1,NPLSI)
-            IF (IABS(INDPRO(2)).EQ.1 .OR. IABS(INDPRO(2)).EQ.3) THEN
+            IF (INDPRO(2).EQ.1 .OR. INDPRO(2).EQ.3) THEN
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,TI0,PO,2)
               call e_bundle_transmit_r
@@ -7177,7 +7198,7 @@ cxpb We now rewrite the modified block 4
      .         (nplsi,nplsi1,e_bundle_contr,TI4,P4,3)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,TI5,P5,3)
-            ELSE IF (IABS(INDPRO(2)).EQ.2) THEN
+            ELSE IF (INDPRO(2).EQ.2) THEN
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,TI0,PO,2)
               call e_bundle_transmit_r
@@ -7261,157 +7282,196 @@ cxpb We now rewrite the modified block 4
      .                        P3(IB),P4(IB),P5(IB)
           ENDDO
         END IF
-        IF (IABS(INDPRO(4)).LE.5) THEN
-          READ (IUNIN,6664) (VX0(I),VX1(I),VX2(I),VX3(I),VX4(I),VX5(I),
+        INDPRO(4)=IABS(INDPRO(4))
+        NPLSV = NPLSI
+        IF (INDPRO(4) > 9) NPLSV = 1
+        LRDMLV=.TRUE.
+        IF ((NPLSI > 1) .AND. (NPLSV == 1) .AND. LMULPL) THEN
+          LRDMLV=.FALSE.
+          NPLSV = NPLSI
+        END IF
+        IF (INDPRO(4) > 9) INDPRO(4) = MOD(INDPRO(4),10)
+        IF (INDPRO(4).LE.5.AND.NPLSI.GT.0) THEN
+          IF (LRDMLV) THEN
+            READ (IUNIN,6664)
+     .           (VX0(I),VX1(I),VX2(I),VX3(I),VX4(I),VX5(I),
+     .                         I=1,NPLSI)
+            IF (INDPRO(4).EQ.1 .OR. INDPRO(4).EQ.3) THEN
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX0,PO,2)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX1,P1,2)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX2,P2,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX3,P3,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX4,P4,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX5,P5,3)
+            ELSE IF (INDPRO(4).EQ.2) THEN
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX0,PO,2)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX1,P1,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX2,P2,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX3,P3,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX4,P4,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX5,P5,3)
+            ELSE
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX0,PO,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX1,P1,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX2,P2,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX3,P3,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX4,P4,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VX5,P5,3)
+            ENDIF
+            DO IB = 1, NPLSI1
+              WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
+     .                          P3(IB),P4(IB),P5(IB)
+            ENDDO
+            READ (IUNIN,6664)
+     .           (VY0(I),VY1(I),VY2(I),VY3(I),VY4(I),VY5(I),
+     .                         I=1,NPLSI)
+            IF (INDPRO(4).EQ.1 .OR. INDPRO(4).EQ.3) THEN
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY0,PO,2)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY1,P1,2)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY2,P2,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY3,P3,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY4,P4,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY5,P5,3)
+            ELSE IF (INDPRO(4).EQ.2) THEN
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY0,PO,2)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY1,P1,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY2,P2,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY3,P3,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY4,P4,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY5,P5,3)
+            ELSE
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY0,PO,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY1,P1,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY2,P2,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY3,P3,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY4,P4,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VY5,P5,3)
+            ENDIF
+            DO IB = 1, NPLSI1
+              WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
+     .                          P3(IB),P4(IB),P5(IB)
+            ENDDO
+            READ (IUNIN,6664)
+     .           (VZ0(I),VZ1(I),VZ2(I),VZ3(I),VZ4(I),VZ5(I),
      .                       I=1,NPLSI)
-          IF (IABS(INDPRO(4)).EQ.1 .OR. IABS(INDPRO(4)).EQ.3) THEN
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX0,PO,2)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX1,P1,2)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX2,P2,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX3,P3,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX4,P4,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX5,P5,3)
-          ELSE IF (IABS(INDPRO(4)).EQ.2) THEN
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX0,PO,2)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX1,P1,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX2,P2,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX3,P3,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX4,P4,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX5,P5,3)
+            IF (INDPRO(4).EQ.1 .OR. INDPRO(4).EQ.3) THEN
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ0,PO,2)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ1,P1,2)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ2,P2,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ3,P3,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ4,P4,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ5,P5,3)
+            ELSE IF (INDPRO(4).EQ.2) THEN
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ0,PO,2)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ1,P1,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ2,P2,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ3,P3,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ4,P4,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ5,P5,3)
+            ELSE
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ0,PO,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ1,P1,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ2,P2,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ3,P3,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ4,P4,3)
+              call e_bundle_transmit_r
+     .         (nplsi,nplsi1,e_bundle_contr,VZ5,P5,3)
+            ENDIF
+            DO IB = 1, NPLSI1
+              WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
+     .                          P3(IB),P4(IB),P5(IB)
+            ENDDO
           ELSE
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX0,PO,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX1,P1,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX2,P2,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX3,P3,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX4,P4,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VX5,P5,3)
-          ENDIF
-          DO IB = 1, NPLSI1
-            WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
-     .                        P3(IB),P4(IB),P5(IB)
-          ENDDO
-          READ (IUNIN,6664) (VY0(I),VY1(I),VY2(I),VY3(I),VY4(I),VY5(I),
-     .                       I=1,NPLSI)
-          IF (IABS(INDPRO(4)).EQ.1 .OR. IABS(INDPRO(4)).EQ.3) THEN
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY0,PO,2)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY1,P1,2)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY2,P2,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY3,P3,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY4,P4,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY5,P5,3)
-          ELSE IF (IABS(INDPRO(4)).EQ.2) THEN
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY0,PO,2)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY1,P1,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY2,P2,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY3,P3,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY4,P4,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY5,P5,3)
-          ELSE
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY0,PO,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY1,P1,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY2,P2,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY3,P3,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY4,P4,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VY5,P5,3)
-          ENDIF
-          DO IB = 1, NPLSI1
-            WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
-     .                        P3(IB),P4(IB),P5(IB)
-          ENDDO
-          READ (IUNIN,6664) (VZ0(I),VZ1(I),VZ2(I),VZ3(I),VZ4(I),VZ5(I),
-     .                       I=1,NPLSI)
-          IF (IABS(INDPRO(4)).EQ.1 .OR. IABS(INDPRO(4)).EQ.3) THEN
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ0,PO,2)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ1,P1,2)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ2,P2,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ3,P3,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ4,P4,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ5,P5,3)
-          ELSE IF (IABS(INDPRO(4)).EQ.2) THEN
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ0,PO,2)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ1,P1,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ2,P2,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ3,P3,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ4,P4,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ5,P5,3)
-          ELSE
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ0,PO,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ1,P1,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ2,P2,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ3,P3,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ4,P4,3)
-            call e_bundle_transmit_r
-     .       (nplsi,nplsi1,e_bundle_contr,VZ5,P5,3)
-          ENDIF
-          DO IB = 1, NPLSI1
-            WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
-     .                        P3(IB),P4(IB),P5(IB)
-          ENDDO
+            READ (IUNIN,'(A80)') ZEILE ! VX0,VX1,VX2,VX3,VX4,VX5
+            WRITE(IUNOT,'(A80)') ZEILE
+            READ (IUNIN,'(A80)') ZEILE ! VY0,VY1,VY2,VY3,VY4,VY5
+            WRITE(IUNOT,'(A80)') ZEILE
+            READ (IUNIN,'(A80)') ZEILE ! VZ0,VZ1,VZ2,VZ3,VZ4,VZ5
+            WRITE(IUNOT,'(A80)') ZEILE
+          END IF
         END IF
         deallocate(P0,P1,P2,P3,P4,P5)
-        IF (INDPRO(5).EQ.5) THEN
+        INDPRO(5)=IABS(INDPRO(5))
+        IF (INDPRO(5).LE.5) THEN
           READ (IUNIN,'(A80)') ZEILE ! B0,B1,B2,B3,B4,B5
           WRITE(IUNOT,'(A80)') ZEILE
         ENDIF
         IF (INDPRO(12).EQ.5) THEN
           READ (IUNIN,'(A80)') ZEILE ! VL0,VL1,VL2,VL3,VL4,VL5
           WRITE(IUNOT,'(A80)') ZEILE
+          CALL EIRENE_UPPERCASE(ZEILE)
           IREAD=1
-          IF (ZEILE(1:3) .NE. '***') IREAD = 0
+          IF (ZEILE(1:3).NE.'***' .AND. ZEILE(1:3).NE.'OPT') IREAD = 0
         ENDIF
+cxpb check for "OPTIONAL" input cards
+        IF (IREAD == 0) THEN
+          READ (IUNIN,'(A80)') ZEILE
+          WRITE(IUNOT,'(A80)') ZEILE
+        END IF
+        IREAD = 1
+        IF (ZEILE(1:3).NE.'***') THEN
+          CALL EIRENE_UPPERCASE(ZEILE)
+          IF (INDEX(ZEILE,'OPTIONAL') > 0) THEN
+            DO
+              READ (IUNIN,'(A80)') ZEILE ! ITAL, IOPT
+              WRITE(IUNOT,'(A80)') ZEILE
+              IF (ZEILE(1:3).EQ.'***') EXIT
+            END DO
+          END IF
+        END IF
 *** 6A. GENERAL DATA FOR REFLECTION MODEL
         IF (IREAD.EQ.0) THEN
           READ (IUNIN,'(A80)') ZEILE

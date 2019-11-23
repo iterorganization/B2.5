@@ -223,7 +223,7 @@
      9    'Ionisation energy (eV)',
      *    'Ionisation energy (eV) [shifted down one]'/
       data descriptions(111:120) /
-     1    'Self pressure force',
+     1    'Self-pressure force',
      2    'Region',
      3    'Parallel momentum source (N)',
      4    'Momentum sources from atomic physics (N)',

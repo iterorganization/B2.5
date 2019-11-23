@@ -2590,7 +2590,7 @@ c
           mach(:,:,ns-1)=0.0_R8
           call copy(mach,1.0_R8,nz,textpl)
         case ('smp')
-          description='Self pressure force'
+          description='Self-pressure force'
           nz=ns
           do is=0,ns-1
             do iy=-1,ny
