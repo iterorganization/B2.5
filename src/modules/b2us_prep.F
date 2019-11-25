@@ -549,6 +549,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                   cry(ix2,iy2,0)    = cry(ix,iy,3)
                   ffbz(ix2,iy2,0)   = ffbz(ix,iy,3)
                   fpsi(ix2,iy2,0,:) = fpsi(ix,iy,3,:)
+                  wbbc(ix2,iy2,:)   = wbbc(ix,iy,:)
                   ! adapt local connectivity arrays
                   locrightix(ix,iy) = ixvxe(nvxe)
                   locrightiy(ix,iy) = iyvxe(nvxe)
@@ -636,6 +637,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                   cry(ix2,iy2,0)    = cry(ix,iy,3)
                   ffbz(ix2,iy2,0)   = ffbz(ix,iy,3)
                   fpsi(ix2,iy2,0,:) = fpsi(ix,iy,3,:)
+                  wbbc(ix2,iy2,:)   = wbbc(ix,iy,:)
                   ! adapt local connectivity arrays
                   loctopix(ix,iy) = ixvxe(nvxe)
                   loctopiy(ix,iy) = iyvxe(nvxe)
@@ -711,6 +713,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                       cry(ix2,iy2,0)    = cry(ix,iy,2)
                       ffbz(ix2,iy2,0)   = ffbz(ix,iy,2)
                       fpsi(ix2,iy2,0,:) = fpsi(ix,iy,2,:)
+                      wbbc(ix2,iy2,:)   = wbbc(ix,iy,:)
                       ! Adapt local connectivity arrays
                       locrightix(tix,tiy) = ixvxe(nvxe)
                       locrightiy(tix,tiy) = iyvxe(nvxe)
@@ -845,6 +848,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                       cry(ix2,iy2,0)    = cry(ix,iy,2)
                       ffbz(ix2,iy2,0)   = ffbz(ix,iy,2)
                       fpsi(ix2,iy2,0,:) = fpsi(ix,iy,2,:)
+                      wbbc(ix2,iy2,:)   = wbbc(ix,iy,:)
                       ! Adapt local connectivity arrays
                       loctopix(ix,iy) = ixvxe(nvxe)
                       loctopiy(ix,iy) = iyvxe(nvxe)
