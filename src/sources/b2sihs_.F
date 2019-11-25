@@ -89,6 +89,8 @@
      &  phm3, phm4, phm5, phm6, phm7, phm8                              !srv 02.06.99 27.12.01 28.08.02
       real (kind=R8) ::
      *   t0, t1, ctaup, coef, czetap, czetae                            !srv 05.07.17
+      real (kind=R8) ::
+     *   fac_ExB_c
 *   ..procedures
       intrinsic min, max, sqrt
       external subini, subend, xertst, ipgeti, ipgetr, sfill
@@ -278,7 +280,9 @@
 !WG_TODO      b2exbe=0.0_R8
 !WG_TODO      b2sihs_exbe=0.0_R8
       do iCv = 1, mpg%nCi
-        t0 = phm5*fac_ExB(iCv)*wrkc(iCv)                         !srv 07.06.00 02.06.99
+!WG_TODO need better solution here...
+        fac_ExB_c = fac_ExB(mpg%cvFc(mpg%cvFcP(iCv,1)))
+        t0 = phm5*fac_ExB_c*wrkc(iCv)                         !srv 07.06.00 02.06.99
         shedd(iCv,0) = shedd(iCv,0)+
      &    (max(0.0e0_R8,t0)+rf0*abs(t0))*ne(iCv)*te(iCv)
         shedd(iCv,3) = shedd(iCv,3)+min(0.0e0_R8,t0)-rf0*abs(t0)
@@ -296,7 +300,9 @@
       do is = 0, ns-1
        if(.not.is_neutral(is)) then
         do iCv = 1, mpg%nCi
-           t0=phm6*fac_ExB(iCv)*
+!WG_TODO need better solution here...
+           fac_ExB_c = fac_ExB(mpg%cvFc(mpg%cvFcP(iCv,1)))
+           t0=phm6*fac_ExB_c*
      &      (na(iCv,is)/ni(iCv,0))*wrkc(iCv)                    !srv 07.06.00 02.06.99
            shidd(iCv,0) = shidd(iCv,0)+
      &      (max(0.0e0_R8,t0)+rf1*abs(t0))*ni(iCv,0)*ti(iCv)
