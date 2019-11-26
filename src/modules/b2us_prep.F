@@ -93,7 +93,7 @@
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
      .           ixb, iyb, bix, biy, tix, tiy, rix, riy, idb, 
      .           lbix, lbiy,
-     .           iunused, nunused, ivxe, nvxe, lbl, ier
+     .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), 
      .           icorner(:,:), ighostcv(:,:),
      .           ixghostcv(:), iyghostcv(:), ixcorner(:), iycorner(:),
@@ -1754,13 +1754,20 @@ cwdk  might need to add duplicates numbers here...
               m%cvFc(if2) = m%imapFcy(ix-1,iy-1)   
               m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),
      .                                topiy(ix-1,iy-1))
-!CWDK to be computed in b2ag!
               m%intcellP(if1) = 1.0_R8
-              m%intcellP(if2) = 0.0_R8
-              m%intcellP(if3) = 1.0_R8
+              m%intcellP(if2) = 
+     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,1,0))/
+     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
+              m%intcellP(if3) = 
+     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
+     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
               m%intcellR(if1) = 1.0_R8
-              m%intcellR(if2) = 0.0_R8
-              m%intcellR(if3) = 1.0_R8
+              m%intcellR(if2) =  
+     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,1,0))/
+     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
+              m%intcellR(if3) = 
+     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
+     .          abs(fpsi(ix-1,iy-1,3,0)-fpsi(ix-1,iy-1,1,0))
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
               m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
      .                               rightiy(ix-1,iy-1))
@@ -1799,11 +1806,19 @@ cwdk  might need to add duplicates numbers here...
               m%cvFc(if3) = m%imapFcy(topix(ix-1,iy-1),
      .                                topiy(ix-1,iy-1))
               m%intcellP(if1) = 1.0_R8
-              m%intcellP(if2) = 0.0_R8
-              m%intcellP(if3) = 1.0_R8
+              m%intcellP(if2) =
+     .          abs(fpsi(ix-1,iy-1,0,0)-fpsi(ix-1,iy-1,3,0))/
+     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
+              m%intcellP(if3) =
+     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
+     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
               m%intcellR(if1) = 1.0_R8
-              m%intcellR(if2) = 0.0_R8
-              m%intcellR(if3) = 1.0_R8
+              m%intcellR(if2) =
+     .          abs(fpsi(ix-1,iy-1,0,0)-fpsi(ix-1,iy-1,3,0))/
+     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
+              m%intcellR(if3) =
+     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,3,0))/
+     .          abs(fpsi(ix-1,iy-1,2,0)-fpsi(ix-1,iy-1,0,0))
               m%cvVx(if1) = m%imapVx(ix-1,iy-1)
               m%cvVx(if2) = m%imapVx(locrightix(ix-1,iy-1),!cwdk is this not the vertex that was thrown out??ctb solved?
      .                               locrightiy(ix-1,iy-1))
@@ -2076,86 +2091,46 @@ cwdk  might need to add duplicates numbers here...
        deallocate (ch)
 
 ! regions (cell volumes)
-      do iy = 0, ny+1
-        do ix = 0, nx+1
-          if(m%imapCv(ix-1,iy-1)/=0) then          
-            ic = m%imapCv(ix-1,iy-1)
-            m%cvReg(ic) = region(ix-1,iy-1,0)
-            m%cvOnClosedSurface(ic) = on_closed_surface(ix-1,iy-1)
+      do iy = -1, ny
+        do ix = -1, nx
+          if(m%imapCv(ix,iy)/=0) then          
+            ic = m%imapCv(ix,iy)
+            m%cvReg(ic) = region(ix,iy,0)
+            m%cvOnClosedSurface(ic) = on_closed_surface(ix,iy)
           endif
         end do
       end do	
 
-!      do ix = 1, nx
-!        ic = m%nCi + ix+1
-!        m%cvReg(ic) = region(ix,-1,0)
-!        m%cvOnClosedSurface(ic) = on_closed_surface(ix,-1)
-!        ic = m%nCi + nx + ix+1
-!        m%cvReg(ic) = region(ix,ny,0)
-!        m%cvOnClosedSurface(ic) = on_closed_surface(ix,ny)
-!      end do
- 
-!      do iy = 0, ny-1
-!        ic = m%nCi + 2*nx + iy+1
-!        m%cvReg(ic) = region(-1,iy,0)
-!        m%cvOnClosedSurface(ic) = on_closed_surface(-1,iy)
-!
-!        ic = m%nCi + 2*nx + ny + iy+1
-!        m%cvReg(ic) = region(nx,iy,0)
-!        m%cvOnClosedSurface(ic) = on_closed_surface(nx,iy)
-!      end do
-
 ! regions (faces)
 ! x faces
-       do iy = 1, ny
-         do ix = 1, nx+1
-           if(m%imapFcx(ix-1,iy-1)/=0) then
-             ifc = m%imapFcx(ix-1,iy-1)
-             m%fcReg(ifc) = region(ix-1,iy-1,1)
+       nfcxReg = maxval(region(-1:nx,-1:ny,1))
+       do iy = 0, ny-1
+         do ix = 0, nx
+           if(m%imapFcx(ix,iy)/=0) then
+             ifc = m%imapFcx(ix,iy)
+             if (region(ix,iy,1) .gt. 0) then
+               m%fcReg(ifc) = region(ix,iy,1)
+             elseif (region(ix,iy,1) .lt. 0) then
+               ! actually a y-face region!
+               m%fcReg(ifc) = abs(region(ix,iy,1)) + nfcxReg
+             endif
            endif
          end do
-
-!       do iy = 0, ny-1
-!         do ix = 1, nx-1
-!           ifc = ix+1 + iy*(nx+1)
-!           m%fcReg(ifc) = region(ix,iy,1)
-!         end do
-
-!! left boundary face (to guard cells)
-!         ix = 0
-!         ifc = ix+1 + iy*(nx+1)
-!         m%fcReg(ifc) = region(ix,iy,1)
-
-! right guard cells
-!         ix = nx
-!         ifc = ix+1 + iy*(nx+1)
-!         m%fcReg(ifc) = region(ix,iy,1)
-        end do
+       end do
 
 ! y faces
-       do ix = 1, nx
-         do iy = 1, ny+1
-           if(m%imapFcy(ix-1,iy-1)/=0) then
-             ifc = m%imapFcy(ix-1,iy-1)
-             m%fcReg(ifc) = region(ix-1,iy-1,2)
+       do ix = 0, nx-1
+         do iy = 0, ny
+           if(m%imapFcy(ix,iy)/=0) then
+             ifc = m%imapFcy(ix,iy)
+             if (region(ix,iy,2) .gt. 0) then
+               m%fcReg(ifc) = region(ix,iy,2) + nfcxReg
+             elseif (region(ix,iy,2) .lt. 0) then
+               ! actually a x-face region!
+               m%fcReg(ifc) = abs(region(ix,iy,2))
+             endif
            end if
          end do
-
-!       do ix = 0, nx-1
-!         do iy = 1, ny-1
-!           ifc = nfx + iy+1 + ix*(ny+1)
-!           m%fcReg(ifc) = region(ix,iy,2)
-!         end do
-
-!! lower guard cells
-!         iy = 0
-!         ifc = nfx + 1 + ix*(ny+1)
-!         m%fcReg(ifc) = region(ix,iy,2)
-
-!! upper guard cells
-!         iy = ny
-!         ifc = nfx + (ix+1)*(ny+1)
-!         m%fcReg(ifc) = region(ix,iy,2)
       end do
 
       mxReg = maxval(m%cvReg(1:m%nCv))
