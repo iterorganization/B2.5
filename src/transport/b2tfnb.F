@@ -19,7 +19,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_geo
-     &   , only : hyl, hxb
+     &   , only : hyl, hxb,hzl,hzv
       use b2mod_balance                                                 !djm Jan2017
      & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
      &          fna_ch, fna_pschused, balance_netcdf
@@ -574,7 +574,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 
 *   ..compute Pfirsch-Schlueter particle fluxes                          !srv 13.10.06
       call b2tnpsch (nx, ny, isb, guard_flows, facdrift, zb, vol,        !srv 02.04.18
-     &  hx, hy, qz, gs, qc, nb, ti, cddb, fnbPSch)
+     &  hx, hy, hzl,hzv,qz, gs, qc, nb, ti, cddb, fnbPSch)
 
       endif
 

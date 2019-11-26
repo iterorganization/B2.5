@@ -14,7 +14,11 @@
      * bzb(:,:),                                                  !srv 13.10.06
      * len_surf(:,:),                                             !srv 02.05.09
      * crdy_surf(:,:),
-     * crdy_c_cell(:,:)                                           !srv 02.05.09
+     * crdy_c_cell(:,:),                                          !srv 02.05.09
+     * bzbl(:,:),                                                !nn
+     * !bzbr(:,:),
+     * bzbv(:,:)
+
 
       contains
 
@@ -33,6 +37,9 @@
       allocate (crdy_surf(-1:nxd,-1:nyd))
       allocate (crdy_c_cell(-1:nxd,-1:nyd))                       !srv 02.05.09
       allocate (bzb(-1:nxd,-1:nyd))                               !srv 13.10.06
+      allocate (bzbv(-1:nxd,-1:nyd))
+      allocate (bzbl(-1:nxd,-1:nyd))
+      !allocate (bzbr(-1:nxd,-1:nyd))
 
       write (*,*) 'Allocated space for b2mod_geo_corner'
 
@@ -53,6 +60,9 @@
       deallocate(crdy_surf)
       deallocate(crdy_c_cell)                                     !srv 02.05.09
       deallocate(bzb)                                             !srv 13.10.06
+      deallocate (bzbv(-1:nxd,-1:nyd))                           !nn
+      deallocate (bzbl(-1:nxd,-1:nyd))
+      !deallocate (bzbr(-1:nxd,-1:nyd))
 
       end subroutine dealloc_b2mod_geo_corner
 
