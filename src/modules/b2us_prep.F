@@ -1468,10 +1468,10 @@ cwdk        merge vertex with right neighbor
       
 ! for Vx
 cwdk  might need to add duplicates numbers here...
-      m%imapVx= 0 ! 0 means not in use in unstructured
-      ici =0
-      do iy = 0, ny
-        do ix = 0, nx
+      m%imapVx = 0 ! 0 means not in use in unstructured
+      ici = 0
+      do iy = -1, ny
+        do ix = -1, nx
           if(ighostvx(ix,iy)==0) then
             ici = ici + 1          
             m%imapVx(ix,iy) = ici
@@ -1486,22 +1486,33 @@ cwdk  might need to add duplicates numbers here...
 
 !     assign same vertex number to coinciding vertices
       write (*,*) 'Merging vertices'
-      do iy = 1, ny+1
-        do ix = 1, nx+1
+      do iy = -1, ny
+        do ix = -1, nx
           ix2 = ix
           iy2 = iy
-          do while (ighostvx(ix2-1,iy2-1)==1) 
+          do while (ighostvx(ix2,iy2)==1) 
             ix2o = ix2
             iy2o = iy2
-            ix2= ixmapghostvx(ix2o-1,iy2-1)+1
-            iy2= iymapghostvx(ix2o-1,iy2-1)+1 
-            if ((ix2 == -1) .or. (ix2 == nx+2) .or.
-     .          (iy2 == -1) .or. (iy2 == ny+2)) exit
+            ix2= ixmapghostvx(ix2o,iy2)
+            iy2= iymapghostvx(ix2o,iy2) 
+            if ((ix2 == -2) .or. (ix2 == nx+1) .or.
+     .          (iy2 == -2) .or. (iy2 == ny+1)) exit
           enddo            
-          m%imapVx(ix-1,iy-1)= m%imapVx(min(max(ix2-1,-1),nx),
-     .                                  min(max(iy2-1,-1),ny))
+          m%imapVx(ix,iy)= m%imapVx(min(max(ix2,-1),nx),
+     .                              min(max(iy2,-1),ny))
         enddo
       enddo
+
+! consistency check
+      do iy = -1, ny
+        do ix = -1, nx
+          if(ighostvx(ix,iy) == 0 .and. m%imapVx(ix,iy) == 0) then
+            write (*,*) 'ix, iy = ', ix, iy
+            call xerrab ('Problem with vertex mapping')
+           endif
+        enddo
+      enddo
+
       write (*,*) 'Merged vertices'
 
 ! store indices of corner coordinates
@@ -1951,53 +1962,63 @@ cwdk  might need to add duplicates numbers here...
          ivx1 = m%imapVx(ix1,iy1)
          ivx2 = m%imapVx(ix2,iy2)
 
-         where (m%imapVx == ivx2)
-           m%imapVx = ivx1
-         end where
+         !wdk Check whether X-point vertices actually match
+         !    (One or both of the vertices might fall outside of domain)
+         if (points_match(crx(ix1,iy1,0), cry(ix1,iy1,0), 
+     .                    crx(ix2,iy2,0), cry(ix2,iy2,0))) then
+           where (m%imapVx == ivx2)
+             m%imapVx = ivx1
+           end where
 
-         where (m%cvVx == ivx2)
-           m%cvVx = ivx1
-         end where
+           where (m%cvVx == ivx2)
+             m%cvVx = ivx1
+           end where
 
-         where (m%fcVx == ivx2)
-           m%fcVx = ivx1
-         end where
-
+           where (m%fcVx == ivx2)
+             m%fcVx = ivx1
+           end where
+           
+           write (*,*) 'X-point ', icut , ' merged.'
+         else
+           write (*,*) 'X-point ', icut , ' not merged!'
+         endif
        end do
 
-#ifdef WG_RM
-! reduce coordinate problems
-       do iy = 0, ny
-         do ix = 0, nx
-          if (ighostvx(ix,iy) == 1) cycle
-          if (isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-          lix = locleftix(ix,iy)
-          liy = locleftiy(ix,iy)
-          bix = locbottomix(ix,iy)
-          biy = locbottomiy(ix,iy)
-          lbix = locbottomix(lix,liy)
-          lbiy = locbottomiy(lix,liy)
-          if (isRealCell(cflags(lix,liy,CELLFLAG_TYPE))) then
-            crx(ix,iy,0) = crx(lix,liy,1)
-            cry(ix,iy,0) = cry(lix,liy,1)
-            ffbz(ix,iy,0) = ffbz(lix,liy,1)
-            fpsi(ix,iy,0,0) = fpsi(lix,liy,1,0)
-          elseif (isRealCell(cflags(bix,biy,CELLFLAG_TYPE))) then
-            crx(ix,iy,0) = crx(bix,biy,2)
-            cry(ix,iy,0) = cry(bix,biy,2)
-            ffbz(ix,iy,0) = ffbz(bix,biy,2)
-            fpsi(ix,iy,0,0) = fpsi(bix,biy,2,0)
-          elseif (isRealCell(cflags(lbix,lbiy,CELLFLAG_TYPE))) then
-            crx(ix,iy,0) = crx(lbix,lbiy,3)
-            cry(ix,iy,0) = cry(lbix,lbiy,3)
-            ffbz(ix,iy,0) = ffbz(lbix,lbiy,3)
-            fpsi(ix,iy,0,0) = fpsi(lbix,lbiy,3,0)
-          else
-            call xerrab ('b2us_prep -- vertex coordinate not specified')
-          end if
-        end do
-      end do
-#endif
+      ! sanity check
+      do ic = 1,m%nCv
+        do ifc = m%cvFcP(ic,1),m%cvFcP(ic,1)+m%cvFcP(ic,2)-1
+          if(m%cvFc(ifc) == 0) then
+            write (*,*) 'ic, ifc = ', ic, ifc
+            call xerrab ('Problem with mapping: undefined face')
+           endif
+        enddo
+        do ivx = m%cvVxP(ic,1),m%cvVxP(ic,1)+m%cvVxP(ic,2)-1
+          if(m%cvVx(ivx) == 0) then
+            write (*,*) 'ic, ivx = ', ic, ivx
+            call xerrab ('Problem with mapping: undefined face')
+           endif
+        enddo
+      enddo
+
+      do ifc = 1,m%nFc
+        if(m%fcCv(ifc,1) == 0) then
+          write (*,*) 'ifc = ', ifc
+          call xerrab ('Problem with mapping: undefined cv1')
+        endif
+        if(m%fcCv(ifc,2) == 0) then
+          write (*,*) 'ifc = ', ifc
+          call xerrab ('Problem with mapping: undefined cv2')
+        endif
+        if(m%fcVx(ifc,1) == 0) then
+          write (*,*) 'ifc = ', ifc
+          call xerrab ('Problem with mapping: undefined vx1')
+        endif
+        if(m%fcVx(ifc,2) == 0) then
+          write (*,*) 'ifc = ', ifc
+          call xerrab ('Problem with mapping: undefined vx2')
+        endif
+      enddo
+
 
 ! listing for every vertex the cell and face numbers
 ! and the starting points in the list
