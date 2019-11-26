@@ -1,6 +1,7 @@
       module b2us_prep
 
       use b2mod_types
+      use b2mod_constants
       use b2mod_geo
       use b2mod_geo_corner
       use b2mod_indirect
@@ -106,7 +107,7 @@
      .           ixmapghostvx(:,:), iymapghostvx(:,:),
      .           ixvxe(:), iyvxe(:)
 
-      real(R8) :: xco(4), yco(4)
+      real(R8) :: xco(4), yco(4), babs
       logical lfound, swapped, classical, bound, lkeep
 
 !  assume a structured quadrilateral grid
@@ -549,7 +550,19 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                   cry(ix2,iy2,0)    = cry(ix,iy,3)
                   ffbz(ix2,iy2,0)   = ffbz(ix,iy,3)
                   fpsi(ix2,iy2,0,:) = fpsi(ix,iy,3,:)
-                  wbbc(ix2,iy2,:)   = wbbc(ix,iy,:)
+!WG_TODO need to recompute field at corner here;
+!WG_TODO tmp: assume isymm = 1 or 2 treatment... (see carre_b2ag.F90)
+!WG_TODO eventually: do this in separate routine later on?
+                  if (isymm.ne.1.and.isymm.ne.2)
+     .              call xerrab('isymm value not yet available')
+                  babs=sqrt(fpsi(ix,iy,3,1)**2+fpsi(ix,iy,3,2)**2)/
+     .              (2.0*pi*crx(ix,iy,3))
+                  wbbc(ix2,iy2,0)   = sign(babs,bb(ix,iy,0))
+                  wbbc(ix2,iy2,1)   = 0.0_R8
+                  wbbc(ix2,iy2,2)   = ffbz(ix,iy,3)/
+     .              (2.0*pi*crx(ix,iy,3))
+                  wbbc(ix2,iy2,3)   = sqrt(wbbc(ix2,iy2,0)**2 +
+     .              wbbc(ix2,iy2,1)**2 + wbbc(ix2,iy2,2)**2)
                   ! adapt local connectivity arrays
                   locrightix(ix,iy) = ixvxe(nvxe)
                   locrightiy(ix,iy) = iyvxe(nvxe)
@@ -637,7 +650,19 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                   cry(ix2,iy2,0)    = cry(ix,iy,3)
                   ffbz(ix2,iy2,0)   = ffbz(ix,iy,3)
                   fpsi(ix2,iy2,0,:) = fpsi(ix,iy,3,:)
-                  wbbc(ix2,iy2,:)   = wbbc(ix,iy,:)
+!WG_TODO need to recompute field at corner here;
+!WG_TODO tmp: assume isymm = 1 or 2 treatment... (see carre_b2ag.F90)
+!WG_TODO eventually: do this in separate routine later on?
+                  if (isymm.ne.1.and.isymm.ne.2)
+     .              call xerrab('isymm value not yet available')
+                  babs=sqrt(fpsi(ix,iy,3,1)**2+fpsi(ix,iy,3,2)**2)/
+     .              (2.0*pi*crx(ix,iy,3))
+                  wbbc(ix2,iy2,0)   = sign(babs,bb(ix,iy,0))
+                  wbbc(ix2,iy2,1)   = 0.0_R8
+                  wbbc(ix2,iy2,2)   = ffbz(ix,iy,3)/
+     .              (2.0*pi*crx(ix,iy,3))
+                  wbbc(ix2,iy2,3)   = sqrt(wbbc(ix2,iy2,0)**2 +
+     .              wbbc(ix2,iy2,1)**2 + wbbc(ix2,iy2,2)**2)
                   ! adapt local connectivity arrays
                   loctopix(ix,iy) = ixvxe(nvxe)
                   loctopiy(ix,iy) = iyvxe(nvxe)
@@ -713,7 +738,19 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                       cry(ix2,iy2,0)    = cry(ix,iy,2)
                       ffbz(ix2,iy2,0)   = ffbz(ix,iy,2)
                       fpsi(ix2,iy2,0,:) = fpsi(ix,iy,2,:)
-                      wbbc(ix2,iy2,:)   = wbbc(ix,iy,:)
+!WG_TODO need to recompute field at corner here;
+!WG_TODO tmp: assume isymm = 1 or 2 treatment... (see carre_b2ag.F90)
+!WG_TODO eventually: do this in separate routine later on?
+                      if (isymm.ne.1.and.isymm.ne.2)
+     .                  call xerrab('isymm value not yet available')
+                      babs=sqrt(fpsi(ix,iy,2,1)**2+fpsi(ix,iy,2,2)**2)/
+     .                  (2.0*pi*crx(ix,iy,2))
+                      wbbc(ix2,iy2,0)   = sign(babs,bb(ix,iy,0))
+                      wbbc(ix2,iy2,1)   = 0.0_R8
+                      wbbc(ix2,iy2,2)   = ffbz(ix,iy,2)/
+     .                  (2.0*pi*crx(ix,iy,2))
+                      wbbc(ix2,iy2,3)   = sqrt(wbbc(ix2,iy2,0)**2 +
+     .                  wbbc(ix2,iy2,1)**2 + wbbc(ix2,iy2,2)**2)
                       ! Adapt local connectivity arrays
                       locrightix(tix,tiy) = ixvxe(nvxe)
                       locrightiy(tix,tiy) = iyvxe(nvxe)
@@ -848,7 +885,19 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
                       cry(ix2,iy2,0)    = cry(ix,iy,2)
                       ffbz(ix2,iy2,0)   = ffbz(ix,iy,2)
                       fpsi(ix2,iy2,0,:) = fpsi(ix,iy,2,:)
-                      wbbc(ix2,iy2,:)   = wbbc(ix,iy,:)
+!WG_TODO need to recompute field at corner here;
+!WG_TODO tmp: assume isymm = 1 or 2 treatment... (see carre_b2ag.F90)
+!WG_TODO eventually: do this in separate routine later on?
+                      if (isymm.ne.1.and.isymm.ne.2)
+     .                  call xerrab('isymm value not yet available')
+                      babs=sqrt(fpsi(ix,iy,2,1)**2+fpsi(ix,iy,2,2)**2)/
+     .                  (2.0*pi*crx(ix,iy,2))
+                      wbbc(ix2,iy2,0)   = sign(babs,bb(ix,iy,0))
+                      wbbc(ix2,iy2,1)   = 0.0_R8
+                      wbbc(ix2,iy2,2)   = ffbz(ix,iy,2)/
+     .                  (2.0*pi*crx(ix,iy,2))
+                      wbbc(ix2,iy2,3)   = sqrt(wbbc(ix2,iy2,0)**2 +
+     .                  wbbc(ix2,iy2,1)**2 + wbbc(ix2,iy2,2)**2)
                       ! Adapt local connectivity arrays
                       loctopix(ix,iy) = ixvxe(nvxe)
                       loctopiy(ix,iy) = iyvxe(nvxe)
