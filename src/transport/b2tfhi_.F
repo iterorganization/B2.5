@@ -53,7 +53,7 @@
       integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
       integer, save :: b2kin=0, b2vis=0
       integer, save :: meth = 2
-      real (kind=R8), save :: drift_hyb = 0.0_R8
+      real (kind=R8), save :: drift_hyb = 1.0_R8
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
