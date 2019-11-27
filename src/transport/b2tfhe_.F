@@ -70,7 +70,7 @@ csw 10oct2012
       integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
 
       character(3) :: charns, charns0
-      real (kind=R8), save :: drift_hyb = 0.0_R8
+      real (kind=R8), save :: drift_hyb = 1.0_R8
       real (kind=R8), save :: alfTeEh = 0.0_R8                           !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 {

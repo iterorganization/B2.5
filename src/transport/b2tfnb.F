@@ -55,7 +55,7 @@
       integer, save :: vlct_diagno = 1
       integer, save :: meth = 2
       character chns*3                                                   !srv 16.09.02
-      real (kind=R8), save :: drift_hyb = 0.0_R8
+      real (kind=R8), save :: drift_hyb = 1.0_R8
       real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
