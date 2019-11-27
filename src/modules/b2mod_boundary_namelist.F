@@ -120,9 +120,6 @@ csw 18feb2014 added for correct implementation of boundary conditions
      4 bcchar,
      5 boundary_filename,boundary_time_mod,boundary_time_switch,
      6 lcbs, write_nml_bnd
-#ifdef CFLABEL
-     7     ,nbcfaces, bc_faces, bc_face_ori
-#endif      
 
       contains
 
@@ -959,7 +956,6 @@ c.. Test consistency with region boundaries
       abcstart = bcstart
       abcend = bcend
             
-#ifndef CFLABEL
       if (nbc > 0) then
 
         m%nBc = nbc
@@ -994,7 +990,6 @@ c.. Test consistency with region boundaries
         close(idb)
       end if
 !      call bc_to_struct (m)
-#endif      
 
       if (any(bc_list_size > 0))
      .  call xerrab 
@@ -1592,7 +1587,6 @@ c.. Test consistency with region boundaries
       do ib = 1, nbc
         bcs(ib) = bcstart(ib)
         bce(ib) = bcend(ib)
-#ifdef CFLAGS
         if (bcchar(ib).eq.'A') then
 ! find the number of faces for this boundary condition
 cwdk need more complex test here; present scheme double counts;
@@ -1600,7 +1594,6 @@ cwdk also need to correct for degenerate faces?
           bcl(ib) = count((cflags(:,:,2:5) >= bcstart(ib)) .and.
      >                    (cflags(:,:,2:5) <= bcend(ib)))
         else
-#endif
         ! exclude corner cells if present
         if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S') then
           if (leftix (bcstart(ib),bcpos(ib)) .eq. -2)  
@@ -1616,14 +1609,10 @@ cwdk also need to correct for degenerate faces?
           call xerrab ('bcchar not yet available for WG')
         endif
         bcl(ib) = bce(ib) - bcs(ib) + 1
-#ifdef CFLAGS
         endif
-#endif
         m%mxnBc = m%mxnBc + bcl(ib)
       enddo
-#ifdef CFLAGS
       m%mxnBc = m%nCg
-#endif
       if (m%mxnBc .ne. m%nCg ) 
      >  call xerrab ('conv_bcparms -- wrong mxnBc')
 
@@ -1680,7 +1669,6 @@ cwdk also need to correct for degenerate faces?
             maxlbl(ib) = max(maxlbl(ib),m%fcLbl(m%bcFc(inbc)))
             lchar(ib) = 'A'
           enddo
-#ifdef CFLAGS
         elseif (bcchar(ib).eq.'A') then 
           minlbl(ib) = bcstart(ib)
           maxlbl(ib) = bcend(ib)
@@ -1695,7 +1683,6 @@ cwdk also need to correct for degenerate faces?
      >                       m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
 	  end do  ! iss	 
           m%bcFcP(ib,2) = bcl(ib)
-#endif
         else
           call xerrab ('conv_bcparms -- wrong BCCHAR')
         endif
@@ -1706,14 +1693,6 @@ cwdk also need to correct for degenerate faces?
       abcstart(1:nbc) = minlbl(1:nbc)
       abcend(1:nbc) = maxlbl(1:nbc)
 
-#ifdef WG_RM      
-      nbcfaces(1:nbc) = m%bcFcP(1:nbc,2)
-      do ib = 1, nbc
-        nbfc = nbcfaces(ib)
-        bc_faces(1:nbfc,ib) = m%bcFc(m%bcFcP(ib,1):m%bcFcP(ib,1)+nbfc-1)
-      end do
-#endif      
-      
       if (inbc .ne. m%nCg ) then
 ! try to find missing or doubled faces
         allocate (ifchit(m%nFC))
@@ -1766,28 +1745,10 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,(1x,T14,10(2x,4a1)))') 
      .       'BCCHAR  =  ',(ap,acchar(ib),ap,',',ib=1,m%nBc)
 
-#ifndef CFLABEL
       write(iout,'(1x,a,(1x,T14,10(i5,a1)))')
      .       'BCSTART =  ',(abcstart(ib),',',ib=1,m%nBc)
       write(iout,'(1x,a,(1x,T14,10(i5,a1)))')
      .       'BCEND  =  ',(abcend(ib),',',ib=1,m%nBc)
-#else      
-      write (iout,'(1x,a,(1x,T14,10(1x,i7,a1)))') 
-     .       'NBCFACES  =',(m%bcFcP(ib,2),',',ib=1,m%nBc)
-      do ib = 1, m%nBc
-        ian = m%bcFcP(ib,1)
-        ien = ian + m%bcFcP(ib,2) - 1
-        write (iout,'(1x,a,i2,a,(1x,T18,10(i7,a1,1x)))')        !srv 04.12.18
-     .    'BC_FACES(1,',ib,')= ',(m%bcFc(i),',',i=ian,ien)
-      end do
-
-      do ib = 1, m%nBc
-        ian = m%bcFcP(ib,1)
-        ien = ian + m%bcFcP(ib,2) - 1
-        write (iout,'(1x,a,i2,a,(1x,T21,10(f5.2,a1,1x)))') 
-     .    'BC_FACE_ORI(1,',ib,')= ',(m%bcFcOr(i),',',i=ian,ien)
-      end do
-#endif
       
       write (iout,'(1x,a,(1x,T14,10(1x,i9,a1)))') 
      .       'BCENE   =   ',(bcene(ib),',',ib=1,m%nBc)

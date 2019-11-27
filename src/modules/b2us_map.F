@@ -348,7 +348,7 @@
 #endif
       implicit none
       integer, intent(in) :: iun
-      integer :: idum(0:9), n2
+      integer :: idum(0:9), n2, nx
       type (mapping), intent (inout) :: mpg
 
 #ifdef WG_DEBUG
@@ -380,12 +380,14 @@
       call cfrure (iun, mpg%nCmxFc,  mpg%intcellR,'intcellR')
 
       n2 = 0
+      nx = 0
       if (mpg%isClassicalGrid == 1) n2 = (mpg%nx+2)*(mpg%ny+2)
+      if (mpg%isClassicalGrid == 1) nx =  mpg%nx
       call cfruin (iun, n2, mpg%imapCv,  'imapCv')
       call cfruin (iun, n2, mpg%imapFcx, 'imapFcx')
       call cfruin (iun, n2, mpg%imapFcy, 'imapFcy')
       call cfruin (iun, n2, mpg%imapVx,  'imapVx')
-      call cfruin (iun, mpg%nx, mpg%icornVX, 'icornVx')
+      call cfruin (iun, nx, mpg%icornVX, 'icornVx')
 
       call cfruin (iun, mpg%nFc, mpg%fcLbl,'fcLbl')
 
