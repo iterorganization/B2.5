@@ -1,11 +1,5 @@
-#ifdef CFLABEL
-      subroutine find_faces(indss, inbc, nx, ny, ns,
-     .                      bcl, ndfc, Fc, FcOr,
-     .                      m, idb)
-#else
       subroutine find_faces(indss, inbc, bcl, ndfc, Fc, FcOr,
      .                      m, idb)
-#endif
       
       use b2mod_types
       use b2mod_indirect
@@ -13,11 +7,7 @@
       use b2us_geo
       use carre_constants
       implicit none
-#ifdef CFLABEL
-      integer, intent(in) :: indss, nx, ny, ns, ndfc, idb
-#else
       integer, intent(in) :: indss, ndfc, idb
-#endif
       integer, intent(inout) :: inbc, bcl
       integer, intent(inout) :: Fc(ndfc)
       real(R8), intent(inout) :: FcOr(ndFc)
@@ -42,101 +32,6 @@
 
       
 !  find all faces belonging to surface structure INDSS
-      
-#ifdef CFLABEL
-      ncoss = count(cflags(:,:,2:5) == indss)
-      if (ncoss.eq.0) return
-      allocate (fcss(ncoss))
-      if (.not.allocated(lfchit)) allocate (lfchit(m%nFc))
-      lfchit = .false.
-      icoss = 0
-      do iy = -1, ny
-        do ix = 0, nx
-          if (count(cflags(ix,iy,2:5) == indss) > 0) then
-! left face 
-            if (cflags(ix,iy,CELLFLAG_LEFTFACE) == indss) then
-              iFc = m%imapFcx(ix,iy)
-              if (iFc == 0) then
-                write (*,*)
-                write (*,*) 'iFc = 0 in '
-                write (*,*) 'ix, iy ',ix,iy
-                write (*,*) 'cflags ',cflags(ix,iy,:)
-                cycle
-              end if
-              if (.not.lfchit(iFc)) then
-                icoss = icoss + 1
-                fcss(icoss) = iFc
-                lfchit(ifc) =.true.
-              end if
-            end if             
-! right face
-            if (cflags(ix,iy,CELLFLAG_RIGHTFACE) == indss) then
-              if (rightix(ix,iy).ne.nx+1) then
-                iFc = m%imapFcx(rightix(ix,iy),rightiy(ix,iy))
-                if (iFc == 0) then
-                  write (*,*)
-                  write (*,*) 'iFc = 0 in '
-                  write (*,*) 'ix, iy ',ix,iy
-                  write (*,*) 'right ix,iy ',
-     .                 rightix(ix,iy),rightiy(ix,iy)
-                  write (*,*) 'cflags ',cflags(ix,iy,:)
-                  cycle
-                end if
-                if (.not.lfchit(iFc)) then
-                  icoss = icoss + 1
-                  fcss(icoss) = iFc
-                  lfchit(ifc) =.true.
-                end if
-              endif
-            end if
-! bottom face                   
-            if (cflags(ix,iy,CELLFLAG_BOTTOMFACE) == indss) then
-              iFc = m%imapFcy(ix,iy)
-              if (iFc == 0) then
-                write (*,*)
-                write (*,*) 'iFc = 0 in '
-                write (*,*) 'ix, iy ',ix,iy
-                write (*,*) 'cflags ',cflags(ix,iy,:)
-                cycle
-              end if
-              if (.not.lfchit(iFc)) then
-                icoss = icoss + 1
-                fcss(icoss) = iFc
-                lfchit(ifc) =.true.
-              end if
-            end if
-! top face                  
-            if (cflags(ix,iy,CELLFLAG_TOPFACE) == indss) then
-              if (topiy(ix,iy).ne.ny+1) then
-                iFc = m%imapFcy(topix(ix,iy),topiy(ix,iy))
-                if (iFc == 0) then
-                  write (*,*)
-                  write (*,*) 'iFc = 0 in '
-                  write (*,*) 'ix, iy ',ix,iy
-                  write (*,*) 'top ix,iy ',
-     .                 topix(ix,iy),topiy(ix,iy)
-                  write (*,*) 'cflags ',cflags(ix,iy,:)
-                  cycle
-                end if
-                if (.not.lfchit(iFc)) then
-                  icoss = icoss + 1
-                  fcss(icoss) = iFc
-                  lfchit(ifc) =.true.
-                end if
-              endif
-            end if             
-          end if
-        end do                  ! ix
-      end do                    ! iy
-     
-      do i = 1, icoss
-        write (*,'(a,4i6,4es16.7)')' i,fcss(i),vx1,vx2 ',
-     .             i,fcss(i),m%fcVx(fcss(i),1), m%fcVx(fcss(i),2)
-!     .           , g%vxX(m%fcVx(fcss(i),1)),g%vxY(m%fcVx(fcss(i),1)),
-!     .             g%vxX(m%fcVx(fcss(i),2)),g%vxY(m%fcVx(fcss(i),2))
-      end do
-      ncoss = icoss
-#else
       ncoss = count(m%fcLbl == indss)
       if (ncoss.eq.0) return
       allocate (fcss(ncoss))
@@ -144,7 +39,6 @@
       indfc = [(i,i=1,m%nFc)]
       fcss(1:ncoss) = pack(indfc, m%fcLbl == indss)
       deallocate (indfc)
-#endif
        
       bcl = bcl + ncoss
 
