@@ -189,109 +189,7 @@
       ixvxe = -2
       iyvxe = -2
 
-#ifndef CFLAGS
-! Count internal ghost cells
-      icount = 0
-      do iy = 1, ny
-        do ix = 1, nx 
-          if((leftix(ix-1,iy-1)==-2).or.(rightix(ix-1,iy-1)==nx+1).or.   
-     .       (bottomiy(ix-1,iy-1)==-2).or.(topiy(ix-1,iy-1)==ny+1)) then  
-            ighostcv(ix-1,iy-1)=1
-            icount=icount+1
-            ixghostcv(icount) = ix-1
-            iyghostcv(icount) = iy-1
-          endif	
-        enddo
-      enddo
-      nghostcvi = icount              ! internal ghost cells
-      do ix = 0, nx+1
-        ighostcv(ix-1,-1)=1
-        ighostcv(ix-1,ny)=1
-      enddo
-      do iy = 1, ny
-        ighostcv(-1,iy-1)=1
-        ighostcv(nx,iy-1)=1
-      enddo
-
-     
-! Count internal "corner" points, by checking whether it is surrounded by ghost cells
-      icount = 0      
-cwdk this loop fails because rightix = nx+1 etc. for internal guard cells
-!      do iy = 1, ny
-!        do ix = 1, nx 
-!          if((ighostcv(ix-1,iy-1)==1).and.
-!     .       (ighostcv(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))==1).and.
-!    .       (ighostcv(leftix(ix-1,iy-1),leftiy(ix-1,iy-1))==1).and.   
-!     .       (ighostcv(bottomix(ix-1,iy-1),bottomiy(ix-1,iy-1))==1).and.
-!     .       (ighostcv(topix(ix-1,iy-1),topiy(ix-1,iy-1))==1)) then  
-!            icorner(ix-1,iy-1)=1
-!            icount=icount+1
-!            ixcorner(icount) = ix-1
-!            iycorner(icount) = iy-1
-!          endif	
-!        enddo
-!      enddo
-cwdk assume corner cells will only appear on edges of nx,ny grid
-! Count "corner" points on boundaries, by checking whether it is surrounded by ghosts
-      iy = 0 ! south
-      do ix = 0, nx+1 
-       if (ighostcv(ix-1,iy-1)==1) then
-        if (((rightix(ix-1,iy-1)==nx+1).or.
-     .       (leftix(ix-1,iy-1)==-2)).and.
-     .      (ighostcv(topix(ix-1,iy-1),topiy(ix-1,iy-1))==1)) then
-         icorner(ix-1,iy-1)=1
-         icount=icount+1
-         ixcorner(icount) = ix-1
-         iycorner(icount) = iy-1
-        endif
-       endif	
-      enddo
-      iy = ny+1 ! north
-      do ix = 0, nx+1
-       if (ighostcv(ix-1,iy-1)==1) then
-        if (((rightix(ix-1,iy-1)==nx+1).or.
-     .       (leftix(ix-1,iy-1)==-2)).and.
-     .      (ighostcv(bottomix(ix-1,iy-1),bottomiy(ix-1,iy-1))==1)) then
-         icorner(ix-1,iy-1)=1
-         icount=icount+1
-         ixcorner(icount) = ix-1
-         iycorner(icount) = iy-1
-        endif
-       endif	
-      enddo
-      ix = 0 ! west
-      do iy = 1, ny 
-       if (ighostcv(ix-1,iy-1)==1) then
-        if (((topiy(ix-1,iy-1)==ny+1).or.
-     .       (bottomiy(ix-1,iy-1)==-2)).and.
-     .      (ighostcv(rightix(ix-1,iy-1),rightiy(ix-1,iy-1))==1)) then
-         icorner(ix-1,iy-1)=1
-         icount=icount+1
-         ixcorner(icount) = ix-1
-         iycorner(icount) = iy-1
-        endif
-       endif	
-      enddo
-      ix = nx+1 ! east
-      do iy = 1, ny 
-       if (ighostcv(ix-1,iy-1)==1) then
-        if (((topiy(ix-1,iy-1)==ny+1).or.
-     .       (bottomiy(ix-1,iy-1)==-2)).and.
-     .      (ighostcv(leftix(ix-1,iy-1),leftiy(ix-1,iy-1))==1)) then
-         icorner(ix-1,iy-1)=1
-         icount=icount+1
-         ixcorner(icount) = ix-1
-         iycorner(icount) = iy-1
-        endif
-       endif	
-      enddo
-      ncorneri = icount
-
-      m%nCi = nx*ny - nghostcvi                      ! internal cells
-      m%nCg = 2*(nx+2) + 2*ny + nghostcvi - ncorneri ! guard cells
-      m%nCv = m%nCi + m%nCg                          ! total number of cells
-
-#else
+! no. of cells
 ! Count internal ghost cells
       icount = 0
 ! Count "corner" cells, by checking whether it is surrounded by ghosts and/or
@@ -337,7 +235,6 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       m%nCg = count( cflags(:, :, CELLFLAG_TYPE) == GRID_GUARD )
      .       - ncorneri
       m%nCv = m%nCi + m%nCg             ! total number of cells
-#endif
 
       write (*,*) 'nCv, nCi, nCg', m%nCv, m%nCi, m%nCg
       write (*,*) 'ncorneri     ', ncorneri
@@ -357,37 +254,7 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
        end do
       endif
 
-!  no. of cell faces
-
-#ifndef CFLAGS
-! Count internal faces in between ghost cells (first x-faces then y-faces)
-      icount = 0      
-      do iy = 1, ny
-        do ix = 1, nx+1
-          if((ighostcv(ix-2,iy-1)==1).and.(ighostcv(ix-1,iy-1)==1))then
-            ighostfcx(ix-1,iy-1)=1
-            icount=icount+1
-            ixghostfcx(icount) = ix-1
-            iyghostfcx(icount) = iy-1
-          endif	
-        enddo
-      enddo
-      nghostfcxi = icount
-
-      icount = 0      
-      do ix = 1, nx
-        do iy = 1, ny+1
-          if((ighostcv(ix-1,iy-2)==1).and.(ighostcv(ix-1,iy-1)==1)) then
-            ighostfcy(ix-1,iy-1)=1
-            icount=icount+1
-            ixghostfcy(icount) = ix-1
-            iyghostfcy(icount) = iy-1
-          endif	
-        enddo
-      enddo
-      nghostfcyi = icount
-      m%nFc = ny*(nx+1) + nx*(ny+1)-nghostfcxi-nghostfcyi
-#else
+! no. of faces
 ! Count internal faces in between ghost cells (first x-faces then y-faces) and degenerate faces from triangles
       icount = 0      
       do iy = 0, ny
@@ -433,25 +300,8 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
       enddo
       nghostfcyi = icount
       m%nFc = 2*(ny+1)*(nx+1) - nghostfcxi - nghostfcyi
-#endif
 
 ! no. of vertices
-#ifndef CFLAGS
-! Count internal vertices surrrounded by ghost cells
-      icount = 0      
-      do iy = 1, ny+1
-        do ix = 1, nx+1
-          if((ighostcv(ix-2,iy-1)==1).and.(ighostcv(ix-1,iy-1)==1).and.
-     .       (ighostcv(ix-2,iy-2)==1).and.(ighostcv(ix-1,iy-2)==1)) then
-            ighostvx(ix-1,iy-1)=1
-            icount=icount+1
-            ixghostvx(icount) = ix-1
-            iyghostvx(icount) = iy-1
-          endif	
-        enddo
-      enddo
-      nghostvxi = icount
-#else
 ! Count vertices to be removed
       iunused = 0
       icount  = 0
@@ -483,8 +333,6 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
               ! Merge vertex with top neighbor
               icount = icount + 1
               ighostvx(ix,iy)   = 1
-!              ixghostvx(icount) = ix
-!              iyghostvx(icount) = iy
               ixmapghostvx(ix,iy) = topix(ix,iy)
               iymapghostvx(ix,iy) = topiy(ix,iy)
             elseif (points_match(crx(ix,iy,0), cry(ix,iy,0), 
@@ -493,8 +341,6 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
               ! Merge vertex with right neighbor
               icount = icount + 1
               ighostvx(ix,iy)   = 1
-!              ixghostvx(icount) = ix
-!              iyghostvx(icount) = iy
               ixmapghostvx(ix,iy) = rightix(ix,iy)
               iymapghostvx(ix,iy) = rightiy(ix,iy)
             elseif (points_match(crx(ix,iy,1), cry(ix,iy,1), 
@@ -1079,168 +925,6 @@ cwdk assume corner cells will only appear on edges of nx,ny grid
         enddo
       enddo
 
-#ifdef WG_RM
-! Make local left/right/top/bottom connectivity
-      do iy = 0, ny+1
-        do ix = 0, nx+1            
-          if ((leftix(ix-1,iy-1)==-2)) then
-            locleftix(ix-1,iy-1)= ix-2		
-            locleftiy(ix-1,iy-1)= iy-1
-            if (periodic_bc.and.nncut.eq.0) then
-             if (ix == nx+1) then
-              if (rightix(ix-2,iy-1) == 0) then
-               locleftix(ix-1,iy-1)= -1		
-               locleftiy(ix-1,iy-1)= iy-1
-              endif
-             endif
-            elseif (nncut.gt.0) then
-             do icut = 1, nncut
-               if(ix-1==leftcut(icut).and.iy-1<=topcut(icut)) then
-                 locleftix(ix-1,iy-1)= rightcut(icut)-1
-                 locleftiy(ix-1,iy-1)= iy-1
-               elseif(ix-1==rightcut(icut).and.iy-1<=topcut(icut)) then
-                 locleftix(ix-1,iy-1)= leftcut(icut)-1
-                 locleftiy(ix-1,iy-1)= iy-1
-               endif
-             enddo
-            endif
-          else
-            locleftix(ix-1,iy-1)= leftix(ix-1,iy-1)
-            locleftiy(ix-1,iy-1)= leftiy(ix-1,iy-1)
-          endif
-        enddo
-      enddo
-
-      do iy = 0, ny+1
-        do ix = 0, nx+1            
-          if (rightix(ix-1,iy-1)==nx+1) then
-            locrightix(ix-1,iy-1)= ix		
-            locrightiy(ix-1,iy-1)= iy-1
-            if (periodic_bc.and.nncut.eq.0) then
-             if (ix == 0) then
-              if (leftix(ix,iy-1) == nx-1) then
-               locrightix(ix-1,iy-1)= nx		
-               locrightiy(ix-1,iy-1)= iy-1
-              endif
-             endif
-            elseif (nncut.gt.0) then
-             do icut = 1, nncut
-              if(ix-1==leftcut(icut)-1.and.iy-1<=topcut(icut)) then
-                locrightix(ix-1,iy-1)= rightcut(icut)
-                locrightiy(ix-1,iy-1)= iy-1
-              elseif(ix-1==rightcut(icut).and.iy-1<=topcut(icut)) then
-                locrightix(ix-1,iy-1)= leftcut(icut)
-                locrightiy(ix-1,iy-1)= iy-1
-              endif
-             enddo
-            endif
-          else
-            locrightix(ix-1,iy-1)= rightix(ix-1,iy-1)
-            locrightiy(ix-1,iy-1)= rightiy(ix-1,iy-1)
-          endif
-        enddo
-      enddo
-
-      do iy = 0, ny+1
-        do ix = 0, nx+1            
-          if (bottomiy(ix-1,iy-1)==-2 ) then
-	    locbottomix(ix-1,iy-1)= ix-1		
-            locbottomiy(ix-1,iy-1)= iy-2
-          else
-            locbottomix(ix-1,iy-1)= bottomix(ix-1,iy-1)
-            locbottomiy(ix-1,iy-1)= bottomiy(ix-1,iy-1)
-          endif
-        enddo
-      enddo
-
-      do iy = 0, ny+1
-        do ix = 0, nx+1            
-          if (topiy(ix-1,iy-1)==ny+1) then
-            loctopix(ix-1,iy-1)= ix-1	
-            loctopiy(ix-1,iy-1)= iy
-          else
-            loctopix(ix-1,iy-1)= topix(ix-1,iy-1)
-            loctopiy(ix-1,iy-1)= topiy(ix-1,iy-1)
-          endif
-        enddo
-      enddo
-
-! Count internal vertices surrrounded by ghost cells, and degenerate vertices due
-! to vanishing faces
-      icount = 0      
-!ctb      do iy = 0, ny
-!ctb        do ix = 0, nx
-      do iy = 1, ny+1
-        do ix = 1, nx+1
-          lix = locleftix(ix-1,iy-1)
-          liy = locleftiy(ix-1,iy-1)
-          bix = locbottomix(ix-1,iy-1)
-          biy = locbottomiy(ix-1,iy-1)
-          lbix = locbottomix(lix,liy)
-          lbiy = locbottomiy(lix,liy)
-          if(.not.isRealCell(cflags(ix-1,iy-1,CELLFLAG_TYPE)).and.
-     .       .not.isRealCell(cflags(lix,liy,CELLFLAG_TYPE)).and.
-     .       .not.isRealCell(cflags(bix,biy,CELLFLAG_TYPE)).and.
-     .       .not.isRealCell(cflags(lbix,lbiy,CELLFLAG_TYPE))) then
-cwdk        None of the cells surrounding the vertex touch the domain;
-cwdk        vertex can be removed
-            ighostvx(ix-1,iy-1)=1
-            icount=icount+1
-            ixghostvx(icount) = ix-1
-            iyghostvx(icount) = iy-1
-            ixmapghostvx(ix-1,iy-1)= -2
-            iymapghostvx(ix-1,iy-1) = -2
-          elseif (isBoundaryCell(cflags(ix-1,iy-1,CELLFLAG_TYPE)).and.
-     .        points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
-     .                     crx(ix-1,iy-1,2), cry(ix-1,iy-1,2))) then
-cwdk        Boundary cell with degenerate W face;
-cwdk        merge vertex with top neighbor
-            ighostvx(ix-1,iy-1)=1
-            icount=icount+1
-            ixghostvx(icount) = ix-1
-            iyghostvx(icount) = iy-1
-            ixmapghostvx(ix-1,iy-1) = loctopix(ix-1,iy-1)
-            iymapghostvx(ix-1,iy-1) = loctopiy(ix-1,iy-1)
-          elseif (isBoundaryCell(cflags(ix-1,iy-1,CELLFLAG_TYPE)).and.
-     .        points_match(crx(ix-1,iy-1,0), cry(ix-1,iy-1,0), 
-     .                     crx(ix-1,iy-1,1), cry(ix-1,iy-1,1))) then   
-cwdk        Boundary cell with degenerate S face;
-cwdk        merge vertex with right neighbor
-            ighostvx(ix-1,iy-1)=1
-            icount=icount+1
-            ixghostvx(icount) = ix-1
-            iyghostvx(icount) = iy-1
-            ixmapghostvx(ix-1,iy-1) = locrightix(ix-1,iy-1)
-            iymapghostvx(ix-1,iy-1) = locrightiy(ix-1,iy-1)
-          elseif (isBoundaryCell(cflags(lix,liy,CELLFLAG_TYPE)).and.
-     .        points_match(crx(lix,liy,1), cry(lix,liy,1), 
-     .                     crx(lix,liy,3), cry(lix,liy,3))) then
-cwdk        Left neighbor is boundary cell with degenerate E face;
-cwdk        merge vertex with top neighbor
-            ighostvx(ix-1,iy-1)=1
-            icount=icount+1
-            ixghostvx(icount) = ix-1
-            iyghostvx(icount) = iy-1
-            ixmapghostvx(ix-1,iy-1) = loctopix(ix-1,iy-1)
-            iymapghostvx(ix-1,iy-1) = loctopiy(ix-1,iy-1)
-          elseif (isBoundaryCell(cflags(bix,biy,CELLFLAG_TYPE)).and.
-     .        points_match(crx(bix,biy,2), cry(bix,biy,2), 
-     .                     crx(bix,biy,3), cry(bix,biy,3))) then
-cwdk        Bottom neighbor is boundary cell with degenerate N face;
-cwdk        merge vertex with right neighbor
-            ighostvx(ix-1,iy-1)=1
-            icount=icount+1
-            ixghostvx(icount) = ix-1
-            iyghostvx(icount) = iy-1
-            ixmapghostvx(ix-1,iy-1) = locrightix(ix-1,iy-1)
-            iymapghostvx(ix-1,iy-1) = locrightiy(ix-1,iy-1)
-          endif	
-        enddo
-      enddo
-      nghostvxi = icount
-#endif
-#endif
-!      m%nVx = (nx+1) * (ny+1) - nghostvxi
       m%nVx = (nx+2)*(ny+2) - nghostvxi
 
 ! no. of flux surfaces (conservative estimate)
@@ -1286,48 +970,6 @@ cwdk        merge vertex with right neighbor
       m%imapCv= 0 ! 0 means not in use in unstructured
       ici =0
       icg = m%nCi
-#ifndef CFLAGS
-      do iy = 1, ny
-        do ix = 1, nx
-          if(ighostcv(ix-1,iy-1)==0) then
-            ici = ici + 1          
-            m%imapCv(ix-1,iy-1) = ici
-          elseif(icorner(ix-1,iy-1)==0) then
-            icg = icg+1
-            m%imapCv(ix-1,iy-1) = icg
-          endif
-        enddo
-      enddo
-
-      iy = 0
-      do ix = 1, nx
-        if(icorner(ix-1,iy-1)==0) then
-          icg = icg+1
-          m%imapCv(ix-1,iy-1) = icg
-        endif
-      enddo
-      iy=ny+1
-      do ix = 1, nx
-        if(icorner(ix-1,iy-1)==0) then
-          icg = icg+1
-          m%imapCv(ix-1,iy-1) = icg
-        endif
-      enddo
-      ix = 0
-      do iy = 1, ny
-        if(icorner(ix-1,iy-1)==0) then
-          icg = icg+1
-          m%imapCv(ix-1,iy-1) = icg
-        endif
-      enddo     
-      ix = nx+1
-      do iy = 1, ny
-        if(icorner(ix-1,iy-1)==0) then
-          icg = icg+1
-          m%imapCv(ix-1,iy-1) = icg
-        endif
-      enddo
-#else
       do iy = 0, ny+1
         ixloop: do ix = 0, nx+1
           if(isRealCell(cflags(ix-1,iy-1,CELLFLAG_TYPE))) then
@@ -1340,8 +982,6 @@ cwdk        merge vertex with right neighbor
           endif
         enddo ixloop
       enddo
-#endif
-     
 
       if (ici /= m%nCi) then
         call xerrab 
@@ -1467,7 +1107,6 @@ cwdk        merge vertex with right neighbor
      .  call xerrab ('calc_mapping -- problem with fcLbl')
       
 ! for Vx
-cwdk  might need to add duplicates numbers here...
       m%imapVx = 0 ! 0 means not in use in unstructured
       ici = 0
       do iy = -1, ny
@@ -1517,20 +1156,6 @@ cwdk  might need to add duplicates numbers here...
 
 ! store indices of corner coordinates
       m%icornVx = 0
-!pb      icount = 1
-!pb      m%icornVx(icount) = m%imapVx(0,0)
-!pb      icount = 2
-!pb      m%icornVx(icount) = m%imapVx(0,ny)
-! check for internal corners
-!      do ix = -1, nx
-!        do iy = -1, ny
-!          if (icorner(ix,iy) == 1) then
-!            icount = icount + 1
-!            m%icornVx(icount) = m%imapVx(ix+1,iy)
-!            write (*,*) icount, ix, iy, m%icornVx(icount)
-!          end if 
-!        end do
-!      end do
       if (ncorneri > 0) then
 !  sort corner points per ix position first
         DO j = ncorneri-1, 1, -1
@@ -1578,10 +1203,6 @@ cwdk  might need to add duplicates numbers here...
           m%icornVx(icount) = m%imapVx(ix,iy)
         end do
       end if
-!pb      icount = icount + 1
-!pb      m%icornVx(icount) = m%imapVx(nx,0)
-!pb      icount = icount + 1
-!pb      m%icornVx(icount) = m%imapVx(nx,ny)
 
 #ifdef WG_DEBUG
       imapCv  = m%imapCv
@@ -1591,90 +1212,6 @@ cwdk  might need to add duplicates numbers here...
 #endif
 
 
-#ifndef CFLAGS
-! no. of faces to be considered for this cell
-      m%cvFcP(1:m%nCi,2) = 4
-      m%cvFcP(m%nCi+1:m%nCv,2) = 1
-
-! no. of vertices to be considered for this cell
-      m%cvVxP(1:m%nCi,2) = 4
-      m%cvVxP(m%nCi+1:m%nCv,2) = 2
-      
-! starting index in the list of cell faces
-! starting index for every cell in the cvVx list and its number of vertices
-      m%cvFcP(1,1) = 1
-      m%cvVxP(1,1) = 1
-      do i=2, m%nCv
-        m%cvFcP(i,1) = m%cvFcP(i-1,1) + m%cvFcP(i-1,2)
-        m%cvVxP(i,1) = m%cvVxP(i-1,1) + m%cvVxP(i-1,2)
-      end do
-
-! list of cell faces and vertices for inner cells
-! interpolation coefficients for interpolation to cell centers
-      nfx = (nx+1)*ny
-      do iy = 1, ny
-        do ix = 1, nx
-          if ((m%imapCv(ix-1,iy-1) /= 0).and.
-     .        (m%imapCv(ix-1,iy-1) .le. m%nCi)) then
-            ic = m%imapCv(ix-1,iy-1)
-            if1 = m%cvFcP(ic,1)
-            if2 = if1 + 1
-            if3 = if2 + 1
-            if4 = if3 + 1
-            m%cvFc(if1) = m%imapFcx(ix-1,iy-1) 
-            m%cvFc(if2) = m%imapFcx(rightix(ix-1,iy-1),
-     .                              rightiy(ix-1,iy-1))
-            m%cvFc(if3) = m%imapFcy(ix-1,iy-1)   
-            m%cvFc(if4) = m%imapFcy(topix(ix-1,iy-1),topiy(ix-1,iy-1))
-            m%intcellP(if1) = 1.0_R8
-            m%intcellP(if2) = 1.0_R8
-            m%intcellP(if3) = 0.0_R8
-            m%intcellP(if4) = 0.0_R8
-            m%intcellR(if1) = 0.0_R8
-            m%intcellR(if2) = 0.0_R8
-            m%intcellR(if3) = 1.0_R8
-            m%intcellR(if4) = 1.0_R8
-            m%cvVx(if1) = m%imapVx(ix-1,iy-1)
-            m%cvVx(if2) = m%imapVx(rightix(ix-1,iy-1),
-     .                             rightiy(ix-1,iy-1))
-            m%cvVx(if3) = m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
-            m%cvVx(if4) = m%imapVx(rightix(topix(ix-1,iy-1),
-     .                             topiy(ix-1,iy-1)), 
-     .                 rightiy(topix(ix-1,iy-1),topiy(ix-1,iy-1)))
-        elseif ((m%imapCv(ix-1,iy-1) /= 0).and.
-     .            (m%imapCv(ix-1,iy-1) .gt. m%nCi)) then
-            if (rightix(ix-1,iy-1).eq.nx+1) then
-              ic = m%imapCv(ix-1,iy-1)
-              if1 = m%cvFcP(ic,1)
-              m%cvFc(if1) = m%imapFcx(ix-1,iy-1)    
-              m%intcellP(if1) = 1.0_R8
-              m%intcellR(if1) = 1.0_R8
-              if1 = m%cvVxP(ic,1)
-              m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
-              m%cvVx(if1+1) = 
-     .          m%imapVx(topix(ix-1,iy-1),topiy(ix-1,iy-1))
-            elseif (leftix(ix-1,iy-1).eq.-2) then
-              ic = m%imapCv(ix-1,iy-1)
-              if1 = m%cvFcP(ic,1)
-              m%cvFc(if1) = m%imapFcx(rightix(ix-1,iy-1),
-     .                                rightiy(ix-1,iy-1))
-              m%intcellP(if1) = 1.0_R8
-              m%intcellR(if1) = 1.0_R8
-              if1 = m%cvVxP(ic,1)
-              m%cvVx(if1)   = m%imapVx(rightix(ix-1,iy-1),
-     .                                 rightiy(ix-1,iy-1))
-              m%cvVx(if1+1) = m%imapVx(rightix(topix(ix-1,iy-1),
-     .                                         topiy(ix-1,iy-1)), 
-     .                                 rightiy(topix(ix-1,iy-1),
-     .                                         topiy(ix-1,iy-1)))
-            else
-              call xerrab ('Internal N/S guard cell; not yet available')
-            endif
-          endif
-        end do
-      end do
-
-#else
 ! no. of faces and vertices to be considered for this cell; only consider all internal and boundary cells are either quadrilateral or triangle
       m%cvFcP(m%nCi+1:m%nCv,2) = 1
       m%cvVxP(m%nCi+1:m%nCv,2) = 2
@@ -1862,7 +1399,7 @@ cwdk  might need to add duplicates numbers here...
                 if1 = m%cvVxP(ic,1)
                 m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
                 m%cvVx(if1+1) = m%imapVx(locrightix(ix-1,iy-1),
-     .                                   locrightiy(ix-1,iy-1)) !cwdk might not exist... 
+     .                                   locrightiy(ix-1,iy-1))
                 bound = .true.
               end if
             end if
@@ -1880,8 +1417,8 @@ cwdk  might need to add duplicates numbers here...
                 m%intcellR(if1) = 1.0_R8
                 if1 = m%cvVxP(ic,1)
                 m%cvVx(if1)   = m%imapVx(ixb,iyb)
-                m%cvVx(if1+1) = m%imapVx(locrightix(ixb,iyb),!cwdk might not exist... 
-     .                                   locrightiy(ixb,iyb))!cwdk might not exist... 
+                m%cvVx(if1+1) = m%imapVx(locrightix(ixb,iyb),
+     .                                   locrightiy(ixb,iyb))
                 bound = .true.
               end if
             end if
@@ -1900,7 +1437,7 @@ cwdk  might need to add duplicates numbers here...
                 if1 = m%cvVxP(ic,1)
                 m%cvVx(if1)   = m%imapVx(ix-1,iy-1)
                 m%cvVx(if1+1) = m%imapVx(loctopix(ix-1,iy-1),
-     .                                   loctopiy(ix-1,iy-1))!cwdk might not exist... 
+     .                                   loctopiy(ix-1,iy-1))
                 bound = .true.
               end if
             end if
@@ -1918,8 +1455,8 @@ cwdk  might need to add duplicates numbers here...
                 m%intcellR(if1) = 1.0_R8
                 if1 = m%cvVxP(ic,1)
                 m%cvVx(if1)   = m%imapVx(ixb,iyb)
-                m%cvVx(if1+1) = m%imapVx(loctopix(ixb,iyb),!cwdk might not exist... 
-     .                                   loctopiy(ixb,iyb))!cwdk might not exist... 
+                m%cvVx(if1+1) = m%imapVx(loctopix(ixb,iyb),
+     .                                   loctopiy(ixb,iyb))
                 bound = .true.
               end if
             end if
@@ -1930,8 +1467,6 @@ cwdk  might need to add duplicates numbers here...
           endif
         end do
       end do
-
-#endif
 
 
 ! listing for every face the two corresponding cells

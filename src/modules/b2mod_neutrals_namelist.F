@@ -181,9 +181,6 @@ cank }
       namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
      .  rcfe, rcfi,
      1  rc_list_size, rc_list_x, rc_list_y, rc_list_char,
-#ifdef CFLABEL
-     .  nrcfaces, rc_faces, rc_face_ori,
-#endif      
      4  recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, crcstra,
      .  rf_neut, phys_sput, chem_sput,
 #ifndef NO_B2_CHEM_SPUT
@@ -1155,7 +1152,6 @@ c.. Test consistency with physical edges within the computational domain
       else
         call xerrab ('No '//trim(filename))
       endif
-#ifndef CFLABEL
       if (nstrai > 0) then
         
         m%nRc = nstrai
@@ -1185,7 +1181,6 @@ c.. Test consistency with physical edges within the computational domain
         end do
         close(idb)
       end if
-#endif      
 
       if (any(rc_list_size > 0))
      .  call xerrab 
@@ -1959,7 +1954,6 @@ c.. Test consistency with physical edges within the computational domain
       do istra = 1, nstrai
         rcs(istra) = rcstart(istra)
         rce(istra) = rcend(istra)
-#ifdef CFLAGS
         if (crcstra(istra).eq.'A') then
 ! find the number of faces for this boundary condition
 cwdk need more complex test here; present scheme double counts;
@@ -1968,7 +1962,6 @@ cwdk also need to correct for degenerate faces?
      >                    (cflags(:,:,2:5) <= rcend(istra)))
           m%mxnRc = m%nCg
         else
-#endif
         ! exclude corner cells if present
         if (crcstra(istra).eq.'N' .or. crcstra(istra).eq.'S') then
           if (leftix (rcstart(istra),rcpos(istra)) .eq. -2)  
@@ -1990,9 +1983,7 @@ cwdk also need to correct for degenerate faces?
         else
           call xerrab ('Wrong CRCSTRA or not yet available for WG')
         endif
-#ifdef CFLAGS
         endif
-#endif
       enddo
 
       call alloc_mapping_rc (m)
@@ -2055,7 +2046,6 @@ cwdk also need to correct for degenerate faces?
           enddo
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8
-#ifdef CFLAGS
         elseif (crcstra(istra).eq.'A') then 
           minlbl(istra) = rcstart(istra)
           maxlbl(istra) = rcend(istra)
@@ -2072,16 +2062,9 @@ cwdk also need to correct for degenerate faces?
           m%rcFcP(istra,2) = rcl(istra) 
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8
-#endif
         else
 !          call xerrab ('conv_rcparms -- wrong CRCSTRA')
         endif
-! for check in rc_to_struct
-#ifdef WG_RM
-        nrcfaces(istra) = rcl(istra)
-        rc_faces(1:rcl(istra),istra) =
-     .     m%rcFc(m%rcFcP(istra,1):m%rcFcP(istra,1)+m%rcFcP(istra,2)-1)
-#endif      
       enddo
       close (idb)
 
@@ -2184,7 +2167,6 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,(1x,T14,10(2x,4a1)))') 
      .       'CRCSTRA = ',(ap,arcstra(istra),ap,',',istra=1,m%nRc)
 
-#ifndef CFLABEL
       write(iout,'(1x,a,(1x,T14,10(i5,a1)))')
      .       'RCSTART =  ',(arcstart(istra),',',istra=1,m%nRc)
       write(iout,'(1x,a,(1x,T14,10(i5,a1)))')
@@ -2193,25 +2175,6 @@ cwdk also need to correct for degenerate faces?
      .       'RCFE  =  ',(rcfe(istra),',',istra=1,m%nRc)
       write(iout,'(1x,a,(1x,T14,10(f6.2,a1,1x)))')
      .       'RCFI  =  ',(rcfi(istra),',',istra=1,m%nRc)
-#else      
-      write (iout,'(1x,a,(1x,T17,10(1x,i7,a1)))') 
-     .       'NRCFACES =',(m%rcFcP(istra,2),',',istra=1,m%nRc)
-      do istra = 1, m%nRc
-        ian = m%rcFcP(istra,1)
-        ien = ian + m%rcFcP(istra,2) - 1
-        if (ien-ian+1 > 0)
-     .    write (iout,'(1x,a,i2,a,(1x,T17,10(i7,a1,1x)))')                                 !srv 04.12.18
-     .    'RC_FACES(1,',istra,')= ',(m%rcFc(i),',',i=ian,ien)
-      end do
-
-      do istra = 1, m%nRc
-        ian = m%rcFcP(istra,1)
-        ien = ian + m%rcFcP(istra,2) - 1
-        if (ien-ian+1 > 0)
-     .    write (iout,'(1x,a,i2,a,(1x,T20,10(f6.2,a1,1x)))') 
-     .    'RC_FACE_ORI(1,',istra,')= ',(m%rcFcOr(i),',',i=ian,ien)
-      end do
-#endif
  
       do istra = 1, m%nRc
         write (iout,'(1x,a,i2,a,(10(f6.2,a1)))') 
