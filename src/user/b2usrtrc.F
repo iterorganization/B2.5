@@ -230,7 +230,7 @@ c-----------------------------------------------------------------------
      ,  hlp_he, hlp_hep, hlp_h, hlp_neu_peak, hlpnw,
      ,  hlp_ne_he_c, hlp_ne_he_s
       real (kind=R8) ::
-     *  d, e, s, x
+     *  a, d, e, g, s, t, x, v
       real (kind=R8) :: pz(-1:nx,-1:ny), xdum(1)
       real (kind=R8) :: stim = 0.0_R8
       real (kind=R8) :: tdummy
