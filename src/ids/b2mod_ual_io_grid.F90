@@ -1010,7 +1010,7 @@ contains
         integer :: loop_count   !< Loop counter
 
 
-        !! Get the list of 0D objects forming the 2D objects and wirte it to IDS
+        !! Get the list of 0D objects forming the 2D objects and write it to IDS
         allocate( objects2Darray( gmap%nCv, 4 ) )
         ! objects2Darray = numpy.array([], dtype='int')
 
