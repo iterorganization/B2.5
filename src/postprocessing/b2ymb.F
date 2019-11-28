@@ -197,7 +197,7 @@
       OUTFILE(3)='Wpls_tg'//trg(KK)//'.dat'
       OUTFILE(4)='tg'//trg(KK)//'_size.dat'
       
-      ! do x_tg file separately to put the x-z coordiantes
+      ! do x_tg file separately to put the x-z coordinates
       INQUIRE (FILE=outfile(1), EXIST=exists)
       if (exists) then
         open (unit=inunit,file=outfile(1),action='readwrite')
