@@ -323,7 +323,7 @@
          gm%fcVol(iFc,1) = 0.5_R8*gm%cvVol(mpg%fcCv(iFc,1))
          gm%fcVol(iFc,2) = 0.5_R8*gm%cvVol(mpg%fcCv(iFc,2))
        enddo
-      elseif (vxVol_style.eq.1) then
+      elseif (fcVol_style.eq.1) then
        ! weights for simple averaging
        do iFc = 1, nFc
          gm%fcVol(iFc,1) = 0.5_R8
