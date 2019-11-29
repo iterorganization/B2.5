@@ -209,18 +209,18 @@ cwdk radial contribution
         t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
         t11 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1/geo%cvVol(mpg%vxCv(mpg%vxCvP(iVx1,1)+inCv-1))
+          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
         enddo
         t22 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1/geo%cvVol(mpg%vxCv(mpg%vxCvP(iVx2,1)+inCv-1))
+          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
         if (solveee(mpg%cvReg(iCv1)).or.solveei(mpg%cvReg(iCv1))) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t11)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
@@ -231,7 +231,7 @@ cwdk radial contribution
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t22)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
@@ -245,7 +245,7 @@ cwdk radial contribution
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t11)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
@@ -256,7 +256,7 @@ cwdk radial contribution
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t22)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
@@ -382,18 +382,18 @@ cwdk radial contribution
         t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
         t11 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1/geo%cvVol(mpg%vxCv(mpg%vxCvP(iVx1,1)+inCv-1))
+          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
         enddo
         t22 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1/geo%cvVol(mpg%vxCv(mpg%vxCvP(iVx2,1)+inCv-1))
+          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
         if (solveee(mpg%cvReg(iCv1))) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t11)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
@@ -404,7 +404,7 @@ cwdk radial contribution
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t22)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
@@ -418,7 +418,7 @@ cwdk radial contribution
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t11)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
@@ -429,7 +429,7 @@ cwdk radial contribution
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t22)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
@@ -550,18 +550,18 @@ cwdk radial contribution
         t2 =   0.5_R8*flo0(iFc,1) - con0(iFc,1,0)
         t11 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx1,2)
-          t11 = t11 + 1/geo%cvVol(mpg%vxCv(mpg%vxCvP(iVx1,1)+inCv-1))
+          t11 = t11 + 1/geo%vxVol(mpg%vxCvP(iVx1,1)+inCv-1)
         enddo
         t22 = 0.0_R8
         do inCv = 1, mpg%vxCvP(iVx2,2)
-          t22 = t22 + 1/geo%cvVol(mpg%vxCv(mpg%vxCvP(iVx2,1)+inCv-1))
+          t22 = t22 + 1/geo%vxVol(mpg%vxCvP(iVx2,1)+inCv-1)
         enddo
         ! contribution to equation of iCv1
         if (solveei(mpg%cvReg(iCv1))) then
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t11)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
@@ -572,7 +572,7 @@ cwdk radial contribution
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t22)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
            aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
@@ -586,7 +586,7 @@ cwdk radial contribution
          ! contribution from iVx1
          do inCv = 1, mpg%vxCvP(iVx1,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx1,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t11)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
@@ -597,7 +597,7 @@ cwdk radial contribution
          ! contribution from iVx2
          do inCv = 1, mpg%vxCvP(iVx2,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx2,1) + inCv - 1)
-          t3  = 1/(geo%cvVol(iCv)*t22)
+          t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
            aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
