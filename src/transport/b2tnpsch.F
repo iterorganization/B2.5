@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tnpsch (nx, ny, isb, guard_flows, facdrift, zb, vol,  !xpb !iyv 06.02.14 02.04.18 {
-     &  hx, hy,hzl,hzv, qz, gs, qc, nb, ti, cddb, fnbPSch)                       !srv 09.01.01 13.10.06
+     &  hx, hy,hzl,hzb, qz, gs, qc, nb, ti, cddb, fnbPSch)                       !srv 09.01.01 13.10.06
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -15,10 +15,10 @@
       integer nx, ny, isb, guard_flows                                   !xpb !srv 08.09.01 !lk 02.06.11
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  nb(-1:nx,-1:ny),  hzl(-1:nx,-1:ny),hzv(-1:nx,-1:ny)              !srv 21.10.10
-     2  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
-     2  facdrift(-1:nx,-1:ny), zb(-1:nx,-1:ny),
-     3  ti(-1:nx,-1:ny), cddb(-1:nx,-1:ny,0:1)                           !srv 13.10.06 !iyv 06.02.14
+     &  nb(-1:nx,-1:ny),  hzl(-1:nx,-1:ny),hzb(-1:nx,-1:ny),              !srv 21.10.10
+     &  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
+     &  facdrift(-1:nx,-1:ny), zb(-1:nx,-1:ny),
+     &  ti(-1:nx,-1:ny), cddb(-1:nx,-1:ny,0:1)                           !srv 13.10.06 !iyv 06.02.14
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  fnbPSch(-1:nx,-1:ny,0:1)
@@ -220,8 +220,8 @@
              fnbPSch(ix,iy,1)= 0.0e0_R8
             else
             fnbPSch(ix,iy,1) = -PSch*                                    !
-     &      (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*bzbv(ix,iy)/
-     &      (qe*zb(ix,iy))*hzv(ix,iy)
+     &      (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*
+     &      bzbv(ix,iy)/(qe*zb(ix,iy))*hzb(ix,iy)
             endif
          enddo
         enddo

@@ -60,8 +60,8 @@
       deallocate(crdy_surf)
       deallocate(crdy_c_cell)                                     !srv 02.05.09
       deallocate(bzb)                                             !srv 13.10.06
-      deallocate (bzbv(-1:nxd,-1:nyd))                           !nn
-      deallocate (bzbl(-1:nxd,-1:nyd))
+      deallocate (bzbv)                           !nn
+      deallocate (bzbl)
       !deallocate (bzbr(-1:nxd,-1:nyd))
 
       end subroutine dealloc_b2mod_geo_corner
