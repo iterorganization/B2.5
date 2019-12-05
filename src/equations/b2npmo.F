@@ -505,7 +505,7 @@ c     ..compare 9-pt stencil matrices
      &        rxf*med(dv%corua(iCv,is),dv%corut(iCv),
      &        dv%corua(iCv,is)+dv%corut(iCv))
           else                                                     !srv 22.05.18  {
-            pl%ua(iCv,is) = pl%ua(iCv,is) + dv%corua(iCv,is)
+            pl%ua(iCv,is) = pl%ua(iCv,is) + rxf*dv%corua(iCv,is)
           endif                                                    !srv 22.05.18  }
         endif
        enddo
