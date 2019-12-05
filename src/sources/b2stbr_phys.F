@@ -327,9 +327,7 @@
      1   istra, b2stbr_phys_sna
 #endif
 * ..recycling model at south boundary
-        if (crcstra(istra).eq.'S' .or. crcstra(istra).eq.'N' .or. 
-     .      crcstra(istra).eq.'W' .or. crcstra(istra).eq.'E' .or. 
-     .      crcstra(istra).eq.'A') then
+        if (crcstra(istra).eq.'A') then
 
 *   ..loop over boundary cells
           do i = 1, mpg%rcCvP(istra,2)

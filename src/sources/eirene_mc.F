@@ -411,11 +411,6 @@ csw 26feb2013
         call ipgeti ('eirene_stab_corr',stab_corr)
       end if !}
 
-#ifdef WG_RM
-      if(ncall.eq.0) then
-        call write_f30(nx, ny)
-      endif
-#endif
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
         call copy_background(nCv,nFc,ns,mpg,geo,pl,dv,BoRiS)
         if(ncall.eq.0.or.save_f31.ne.0) then
@@ -549,7 +544,7 @@ c*** recyc     : fudge factors for the sources in B2
       do istrai = 1, nstrat !{
         flux_scale(istrai)=1.0_R8
 
-        if(index('WESNA',crcstra(istrai)) > 0) then
+        if(crcstra(istrai).eq.'A') then
           do is = species_start(istrai),species_end(istrai) !{
             if(.not.is_neutral(is)) then !{
               do i=1,mpg%rcFcP(istrai,2) !{
@@ -1063,10 +1058,7 @@ c
      .            .and.ank_mods.ne.0) then
         write(hlp_frm1,'(a,i2,a)') '(a,1p,i3,',nnatmi,'e13.5)'
         do istrai=1,nstrat !{
-          if((crcstra(istrai).eq.'W' .or.
-     .        crcstra(istrai).eq.'E' .or.
-     .        crcstra(istrai).eq.'N' .or.
-     .        crcstra(istrai).eq.'S')) then
+          if(crcstra(istrai).eq.'A') then
 
 c*** Recycling stratum
 c*** First, correct the balance between B2 and Eirene sources for the
@@ -2082,10 +2074,7 @@ c***  sclbase : the plasma sources
             else
               recyctmp=recyc(is,istrai)
             endif
-            if(crcstra(istrai).eq.'E' .or.
-     .         crcstra(istrai).eq.'W' .or.
-     .         crcstra(istrai).eq.'N' .or.
-     .         crcstra(istrai).eq.'S' ) then !{
+            if(crcstra(istrai).eq.'A' ) then !{
               sclsrcn(j,istrai)=sclsrcn(j,istrai)+
      +         tfl(istrai,j)*recyctmp
               sclsrcn(0,istrai)=sclsrcn(0,istrai)+

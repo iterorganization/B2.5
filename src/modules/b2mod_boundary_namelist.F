@@ -977,12 +977,7 @@ c.. Test consistency with region boundaries
               call find_faces (indss, inbc, nbcfc, 
      >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
             end do              ! iss	 
-!            m%bcFcP(ib,2) = nbcfaces(ib)
             m%bcFcP(ib,2) = nbcfc
-!            bc_faces(1:nbcfaces(ib),ib) = m%bcFc(m%bcFcP(ib,1):
-!     >           m%bcFcP(ib,1)+nbcfaces(ib)-1)
-!            bc_face_ori(1:nbcfaces(ib),ib) = m%bcFcOr(m%bcFcP(ib,1):
-!     >           m%bcFcP(ib,1)+nbcfaces(ib)-1)            
           else
             call xerrab ('BCCHAR /= A ')
           endif
