@@ -584,18 +584,19 @@ c<<<
      ,                                hlpit, hlpiw, hlpic, hlpid, hlpnp
           print *,'%%# Recycling sources. ls= ',ls
           print '(a4,8x,20(5x,i3,4x))',' %%#',(i,i=1,kst_hlp)
+          write(hlp_frm,'(a,i3,a)') '(1x,a,i3,a,1p,',nstrat,'e12.5)'
           do j=1,nnatmi
             if (latmscl(j).eq.ls) then
-              print '(1x,a,i3,a,1p,20e12.5)','%%# sclrtio(',j,':)= ',
+              write(*,hlp_frm) '%%# sclrtio(',j,':)= ',
      ,                                       (sclrtio(j,i),i=1,nstrat)
-              print '(1x,a,i3,a,1p,20e12.5)','%%# sclstra(',j,':)= ',
+              write(*,hlp_frm) '%%# sclstra(',j,':)= ',
      ,                                       (sclstra(j,i),i=1,nstrat)
             end if
           end do
-          print '(1x,a8,1p,20e12.4)','%%# plasma  ',
-     ,                                      (hlp_pls(i,ls),i=1,kst_hlp)
-          print '(1x,a8,1p,20e12.4)','%%# neutrals',
-     ,                                      (hlp_neu(i,ls),i=1,nstrat)
+          write(hlp_frm,'(a,i3,a)') '(1x,a,1p,',kst_hlp,'e12.5)'
+          write(*,hlp_frm) '%%# plasma  ',(hlp_pls(i,ls),i=1,kst_hlp)
+          write(hlp_frm,'(a,i3,a)') '(1x,a,1p,',nstrat,'e12.5)'
+          write(*,hlp_frm) '%%# neutrals',(hlp_neu(i,ls),i=1,nstrat)
         end if
 c>>>
         flxid_tmp(ls)=hlpid

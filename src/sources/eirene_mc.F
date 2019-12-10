@@ -43,6 +43,7 @@ c  version : 26.07.2002 23:39
       use b2mod_work
       use eirmod_braeir
       use eirmod_eirbra
+      use eirmod_ctrcei
       use eirmod_comusr
      , , only: texts, nsph, nspa, nspam
       use eirmod_cinit
@@ -804,6 +805,9 @@ csw 25jan2011 LTIME=.false. in eirsrt call
           write(*,*) 'Calling post_couple'
           call post_couple(nx,ny,ns,nstrat)
           write(*,*) 'Called post_couple'
+          write(*,*) 'Checking strata correspondence'
+          call strata_check
+          write(*,*) 'Strata correspondence checked!'
         endif
       elseif(.not.main_call) then !}{
         if (ncall.lt.3)
@@ -4446,5 +4450,81 @@ c!###}
       rfluxm_s = 0.0_R8
       dab2_s = 0.0_R8
       end subroutine clear_sum_arrays                            !IYS 28.03.12 }
+
+#ifdef B25_EIRENE
+      subroutine strata_check
+      implicit none
+      integer itrg, jtrg, ntrg, ierror, icnt, is1, is2
+      character*10 hlp_frm
+      logical first
+
+      ntrg = size(rcpos_eir)
+      write(hlp_frm,'(a,i3,a)') '(a,',ntrg,'i5)'
+      ierror = 0
+      jtrg = 0
+      icnt = 0
+      first = .true.
+      do itrg = 1, ntrg
+        if (rcprt_eir(itrg).eq.1) then
+          icnt = 1
+          first = .true.
+          jtrg = jtrg + 1
+          if (is_neutral(species_start(jtrg))) then
+            is1 = fluids_list(species_start(jtrg)+1)
+          else
+            is1 = fluids_list(species_start(jtrg))
+          end if
+          is2 = fluids_list(species_end(jtrg))
+          if (crcstra(jtrg).ne.rcchr_eir(itrg) .or.
+     &        rcpos(jtrg)  .ne.rcpos_eir(itrg) .or.
+     &        rcstart(jtrg).ne.rcbeg_eir(itrg) .or.
+     &        rcend(jtrg)  .ne.rcend_eir(itrg) .or.
+     &        is1          .ne.rcspi_eir(itrg) .or.
+     &        is2          .ne.rcspe_eir(itrg)) ierror = ierror + 1
+        else if (rcprt_eir(itrg).gt.1) then
+          if (first) icnt = 1
+          if (first) jtrg = jtrg + 1
+          if (is_neutral(species_start(jtrg))) then
+            is1 = fluids_list(species_start(jtrg)+1)
+          else
+            is1 = fluids_list(species_start(jtrg))
+          end if
+          is2 = fluids_list(species_end(jtrg))
+          if (crcstra(jtrg).ne.rcchr_eir(itrg) .or.
+     &        rcpos(jtrg)  .ne.rcpos_eir(itrg) .or.
+     &        rcstart(jtrg).le.rcbeg_eir(itrg) .or.
+     &        rcend(jtrg)  .ge.rcend_eir(itrg) .or.
+     &        is1          .ne.rcspi_eir(itrg) .or.
+     &        is2          .ne.rcspe_eir(itrg)) ierror = ierror + 1
+          if (.not.first) icnt = icnt + 1
+          first = icnt.eq.rcprt_eir(itrg)
+        end if
+      end do
+      if (ierror.gt.0) write(*,*)
+     & 'Mismatch between Eirene and B2 recycling strata !'
+      if (trcint.or.ierror.gt.0) then
+        write(*,*)
+        write(*,*) 'From B2:'
+        write(*,*) 'RCCHR = ',crcstra(1:jtrg)
+        write(*,hlp_frm) 'RCPOS = ',rcpos(1:jtrg)
+        write(*,hlp_frm) 'RCSTRT= ',rcstart(1:jtrg)
+        write(*,hlp_frm) 'RCEND = ',rcend(1:jtrg)
+        write(*,hlp_frm) 'SPEC. = ',species_start(1:jtrg)
+        write(*,hlp_frm) ' TO   = ',species_end(1:jtrg)
+        write(*,*)
+        write(*,*) 'From EIRENE:'
+        write(*,*) 'RCCHR = ',rcchr_eir(1:ntrg)
+        write(*,hlp_frm) 'RCPOS = ',rcpos_eir(1:ntrg)
+        write(*,hlp_frm) 'RCSTRT= ',rcbeg_eir(1:ntrg)
+        write(*,hlp_frm) 'RCEND = ',rcend_eir(1:ntrg)
+        write(*,hlp_frm) 'NSPZI = ',rcspi_eir(1:ntrg)
+        write(*,hlp_frm) 'NSPZE = ',rcspe_eir(1:ntrg)
+      end if
+      call xertst(ierror.eq.0,
+     & 'Mismatch between Eirene and B2 recycling strata !')
+
+      return
+      end subroutine strata_check
+#endif
 
       end subroutine eirene_mc

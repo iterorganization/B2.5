@@ -1165,7 +1165,7 @@ c 2002-09-11: logic revised
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
-     &    hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1, 
+     &    hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1,
      &    ne, na, ua, uadia, te, ti,
      &    po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
@@ -1187,7 +1187,7 @@ c 2002-09-11: logic revised
       filename='b2favere'
       call find_file(filename,averaging)
       if (averaging) then
-        call b2yt_average (filename, 
+        call b2yt_average (filename,
      &    nx, ny, ns, nx1, ny1, ns1, nncutmax, non_commensurate,
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
@@ -4990,7 +4990,7 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
               IF (B2IDEZ(ISCDEI(JION,J),3,5).eq.3) THEN
                 IR = nint(ESCD1I(JION,K))
                 ESCD1I(JION,J) = dble(IREAC1(IR))
-              ELSE 
+              ELSE
                 ESCD1I(JION,J) = ESCD1I(JION,K)
               END IF
               ESCD2I(JION,J) = ESCD2I(JION,K)
@@ -5233,6 +5233,7 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
      &        streql(CDENMODEL(JPLS),'FORT.10').OR.
      &        streql(CDENMODEL(JPLS),'FTN10').OR.
      &        streql(CDENMODEL(JPLS),'CONSTANT').OR.
+     &        streql(CDENMODEL(JPLS),'PLANCK').OR.
      &        streql(CDENMODEL(JPLS),'MULTIPLY').OR.
      &        streql(CDENMODEL(JPLS),'BOLTZMANN').OR.
      &        streql(CDENMODEL(JPLS),'CORONA')) THEN
@@ -5254,6 +5255,7 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
      &        streql(CDENMODEL(JPLS),'FORT.10').OR.
      &        streql(CDENMODEL(JPLS),'FTN10').OR.
      &        streql(CDENMODEL(JPLS),'CONSTANT').OR.
+     &        streql(CDENMODEL(JPLS),'PLANCK').OR.
      &        streql(CDENMODEL(JPLS),'MULTIPLY').OR.
      &        streql(CDENMODEL(JPLS),'BOLTZMANN').OR.
      &        streql(CDENMODEL(JPLS),'CORONA')) THEN
@@ -5345,6 +5347,10 @@ cdr LMULPL=TRUE: enforce multiple Ti and V..IN, due to BGK reactions (virt. back
             READ (IUNIN,'(3I6,6X,3E12.4)')
      .           TDMISP(1,JPLS), TDMITP(1,JPLS), TDMISTR(1,JPLS),
      .           TDMPRM(1,JPLS), TDMPRM(2,JPLS), TDMPRM(3,JPLS)
+            TDMITP(1,JPLS)=4
+          CASE ('PLANCK')
+            READ (IUNIN,'(1E12.4)')
+     .           TDMPRM(1,JPLS)
             TDMITP(1,JPLS)=4
           CASE ('BOLTZMANN')
             READ (IUNIN,'(3I6,6X,2E12.4)')
@@ -5747,6 +5753,8 @@ cxpb Must now convert the bulk ion data according to the new bundling
               TDMITP1(1,IB) = TDMITP(1,e_bundle_end(IB))
               TDMISTR1(1,IB) = istra1(TDMISTR1(1,e_bundle_end(IB)))
               TDMPRM1(1:3,IB) = TDMPRM(1:3,e_bundle_end(IB))
+            CASE ('PLANCK')
+              TDMPRM1(1,IB) = TDMPRM(1,e_bundle_end(IB))
             CASE ('BOLTZMANN')
               IF (TDMITP(1,e_bundle_end(IB)).eq.1) THEN
                 TDMISP1(1,IB) = iatm1(TDMISP(1,e_bundle_end(IB)))
@@ -7082,6 +7090,9 @@ cxpb We now rewrite the modified block 4
             WRITE(IUNOT,'(3I6,6X,3E12.4)')
      .           TDMISP1(1,IB), TDMITP1(1,IB), TDMISTR1(1,IB),
      .           TDMPRM1(1,IB), TDMPRM1(2,IB), TDMPRM1(3,IB)
+          CASE ('PLANCK')
+            WRITE(IUNOT,'(1E12.4)')
+     .           TDMPRM1(1,IB)
           CASE ('BOLTZMANN')
             WRITE(IUNOT,'(3I6,6X,2E12.4)')
      .            TDMISP1(1,IB), TDMITP1(1,IB), TDMISTR1(1,IB),
@@ -7165,8 +7176,11 @@ cxpb We now rewrite the modified block 4
         END IF
         INDPRO(2)=IABS(INDPRO(2))
         NPLSTI = NPLSI
-        IF (INDPRO(2) > 9) NPLSTI=1
         LRDMLTI=.TRUE.
+        IF (INDPRO(2) > 9) THEN
+          NPLSTI = 1
+          LRDMLTI=.FALSE.
+        ENDIF
         IF ((NPLSI > 1) .AND. (NPLSTI == 1) .AND. LMULPL) THEN
           LRDMLTI = .FALSE.
           NPLSTI = NPLSI
@@ -7275,8 +7289,11 @@ cxpb We now rewrite the modified block 4
         END IF
         INDPRO(4)=IABS(INDPRO(4))
         NPLSV = NPLSI
-        IF (INDPRO(4) > 9) NPLSV = 1
         LRDMLV=.TRUE.
+        IF (INDPRO(4) > 9) THEN
+          NPLSV = 1
+          LRDMLV=.FALSE.
+        ENDIF
         IF ((NPLSI > 1) .AND. (NPLSV == 1) .AND. LMULPL) THEN
           LRDMLV=.FALSE.
           NPLSV = NPLSI
