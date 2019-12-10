@@ -793,8 +793,8 @@ c*** Inner divertor
             hlp_pi=hlp_pi+hlp*gs(j,iy,1)
           end do !}
 
-c          print '(a,1p,2i4,20e12.3)',' %%## m,n,hlp_si,hlp_hep: ',  !###
-c     ,                                      m,n,hlp_si,hlp_hep      !###
+c          print '(a,1p,2i4,2e12.3)',' %%## m,n,hlp_si,hlp_hep: ',  !###
+c     ,                                     m,n,hlp_si,hlp_hep      !###
 
 c*** Outer divertor
 
@@ -844,8 +844,8 @@ c*** Outer divertor
           hlp_p=hlp_pi+hlp_po
         end if !}
 c<<<
-c        print '(a,1p,2i4,20e12.3)',' %%## m,n,hlp_so,hlp_hep,hlp_p: ',
-c     ,                                    m,n,hlp_so,hlp_hep,hlp_p
+c        print '(a,1p,2i4,3e12.3)',' %%## m,n,hlp_so,hlp_hep,hlp_p: ',
+c     ,                                   m,n,hlp_so,hlp_hep,hlp_p
 c>>>
         if(hlp_s.gt.0.0_R8) then !{
           hlp_ppfr=hlp_p/hlp_s
@@ -986,8 +986,11 @@ c inner target
           hlp_ppwi=max(hlp_ppwi,hlp)
           hlp_s=hlp_s+s
         end do !}
-        js=ltns(1)+nnlimi
-        hlp_ppwi=hlp_ppwi+(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
+        if (use_eirene.ne.0) then !{
+          js=ltns(1)+nnlimi
+          hlp_ppwi=hlp_ppwi+
+     .     (wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
+        end if !}
 c outer target
         hlp_ppwo=0.0_R8
         hlp_s=0.0_R8
@@ -1016,12 +1019,14 @@ c outer target
           hlp_ppwo=max(hlp_ppwo,hlp)
           hlp_s=hlp_s+s
         end do !}
-        js=ltns(nncut*2)+nnlimi  ! iyv 15.05.2015
-        if (ltns(nncut*2).ne.0) then
-          hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
-          hlp_ppwo=hlp_ppwo+(wldnek(js,0)+
-     .                       wldnep(js,0))*hlp_neu_peak/hlp_s
-        end if
+        if (use_eirene.ne.0) then !{
+          js=ltns(nncut*2)+nnlimi  ! iyv 15.05.2015
+          if (ltns(nncut*2).ne.0) then !{
+            hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
+            hlp_ppwo=hlp_ppwo+(wldnek(js,0)+
+     .                         wldnep(js,0))*hlp_neu_peak/hlp_s
+          end if !}
+        end if !}
 
         if(double_null) then !{
           hlp_pwou=0.0_R8
@@ -1053,9 +1058,11 @@ c outer target
             hlp_pwou=max(hlp_pwou,hlp)
             hlp_s=hlp_s+s
           end do !}
-          js=ltns(3)+nnlimi
-          hlp_pwou=hlp_pwou+(wldnek(js,0)+
+          if (use_eirene.ne.0) then !{
+            js=ltns(3)+nnlimi
+            hlp_pwou=hlp_pwou+(wldnek(js,0)+
      +                                 wldnep(js,0))*hlp_neu_peak/hlp_s
+          end if !}
 
           hlp_pwiu=0.0_R8
           ix=nxtl
@@ -1086,10 +1093,12 @@ c outer target
             hlp_pwiu=max(hlp_pwiu,hlp)
             hlp_s=hlp_s+s
           end do !}
-          js=ltns(2)+nnlimi
-          hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
-          hlp_pwiu=hlp_pwiu+(wldnek(js,0)+
+          if (use_eirene.ne.0) then !{
+            js=ltns(2)+nnlimi
+            hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
+            hlp_pwiu=hlp_pwiu+(wldnek(js,0)+
      +                                 wldnep(js,0))*hlp_neu_peak/hlp_s
+          end if !}
         end if !}
       else !}{VK
         call b2usr_loads(nx,ny,ns,nxtl,nxtr,BoRiS,wtarg_max)

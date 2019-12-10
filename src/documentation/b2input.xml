@@ -2709,10 +2709,10 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-                   Output flag to control diagnostics related to use of ion_vlct_restrict switch.
-				   If vlct_diagno.eq.0, the velocity restrictions are applied silently.
-				   If vlct_diagno.eq.1 (default), the user only gets a count of how many times the velocity restriction has been applied for each species, if any.
-				   If vlct_diagno.eq.2, the user gets the full details of where and how large the applied velocity restriction was, if any.
+				  Output flag to control diagnostics related to use of ion_vlct_restrict switch.
+				  If vlct_diagno.eq.0, the velocity restrictions are applied silently.
+				  If vlct_diagno.eq.1 (default), the user only gets a count of how many times the velocity restriction has been applied for each species, if any.
+				  If vlct_diagno.eq.2, the user gets the full details of where and how large the applied velocity restriction was, if any.
 				</description>
 			</switch>
 			<switchgroup>
