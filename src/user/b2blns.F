@@ -10,6 +10,12 @@
       use b2mod_numerics_namelist
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
+
+#ifdef B25_EIRENE
+      use eirmod_clgin
+     ,   , only : iliin
+#endif
+
 #include "DIMENSIONS.F"
 c
 c  version : 22.06.2018 by Ilya Senichenkov
@@ -635,8 +641,12 @@ c*** Flux across the side walls
 
             do j = 1,nnatmi
 
-              if (latmscl(j) .eq. ls) then
-
+              if (latmscl(j) .eq. ls 
+#ifdef B25_EIRENE
+     &                .and. iliin(js) .gt. 0               ! IYS 03.12.2019 Consider non-transparent surfaces only,
+#endif                                                     ! transparent ones should not contribute into balance
+     &               ) then
+                                                                    
                 flxnw(ls) = flxnw(ls) - 
      &                 wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
                 flxnw_rec(ls) = flxnw_rec(ls) + wldpa(js,j,0)           ! IYS 12.01.2018, wldpa(js,j,0) should be zero, since no ion reaches the side wall
@@ -732,7 +742,8 @@ c*** Puffing/seeding rate and recycling source
      &                   mlcmp(ii,j) * wldsptm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_sput is a temporary variable
 
                         if (.not. hlp_pump_counted(j+nnatmi,k)) then
-                          hlp_pump = hlp_pump + wlpump(j+nnatmi,k)  ! BE CAREFUL: hlp_sput is a temporary variable
+                          hlp_pump = hlp_pump + 
+     &                                 mlcmp(ii,j) * wlpump(j+nnatmi,k)  ! BE CAREFUL: hlp_sput is a temporary variable
                           hlp_pump_counted(j+nnatmi,k) = .TRUE.
                         endif
 
@@ -760,7 +771,7 @@ c*** Puffing/seeding rate and recycling source
           
               flxnw_rec(ls) = flxnw_rec(ls) + hlp_rec * recyctmp
               flxnw_sput(ls) = flxnw_sput(ls) + hlp_sput !* recyctmp
-              flxnw(ls) = flxnw(ls) + hlp_nw !* recyctmp
+!              flxnw(ls) = flxnw(ls) + hlp_nw !* recyctmp
               flxnw_pump(ls) = flxnw_pump(ls) + hlp_pump
             endif
 
@@ -793,7 +804,7 @@ c     boundaries should be added to a global balance as a wall recycling source
         flxps(ls) =  flxic(ls) + flxnc(ls) + flxit(ls) + flxnt(ls) +
      &          flxiw(ls) + flxnw(ls) 
         if (use_eirene.ne.0) flxps(ls) = flxps(ls) +
-     &                                   flxnp(ls) + flxex(ls)
+     &                      flxnw_rec(ls) +flxnp(ls) + flxex(ls)
 
 !     End of the loop over isonuclear sequence (ls)
       enddo
