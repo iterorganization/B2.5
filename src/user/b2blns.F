@@ -644,7 +644,8 @@ c*** Flux across the side walls
               if (latmscl(j) .eq. ls 
 #ifdef B25_EIRENE
      &                .and. iliin(js) .gt. 0               ! IYS 03.12.2019 Consider non-transparent surfaces only,
-#endif                                                     ! transparent ones should not contribute into balance
+                                                           ! transparent ones should not contribute into balance
+#endif
      &               ) then
                                                                     
                 flxnw(ls) = flxnw(ls) - 

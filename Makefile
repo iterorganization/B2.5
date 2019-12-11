@@ -733,6 +733,9 @@ ${OBJDIR}/eirmod_cestim.${MOD}:
 ${OBJDIR}/eirmod_cinit.${MOD}:
 	touch ${OBJDIR}/eirmod_cinit.${MOD}
 
+${OBJDIR}/eirmod_clgin.${MOD}:
+	touch ${OBJDIR}/eirmod_clgin.${MOD}
+
 ${OBJDIR}/eirmod_clogau.${MOD}:
 	touch ${OBJDIR}/eirmod_clogau.${MOD}
 
