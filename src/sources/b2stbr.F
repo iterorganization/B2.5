@@ -108,7 +108,7 @@
       real (kind=R8) :: flxtmp(0:nx+1,0:ny+1),
      &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
      &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),     !IYS 27.01.17
-     &  sna_eir_tot(nspecies), sna_puff(nspecies),
+     &  sna_puff(nspecies),  !sna_eir_tot(nspecies), 
      &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),     !iyv 07.03.18 {
      &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies)
 #endif
@@ -702,14 +702,14 @@ c   --> better solution wanted here..
 !           end if
 !          end do
 
-          sna_eir_tot= 0.0_R8
+          sna_eir= 0.0_R8
           ext_sna_tot= 0.0_R8
           do ix=-1, nx
             do iy=-1,ny
               do is = 0, ns-1
                 if( is_neutral(is) ) cycle
                 k = b2espcr(is)
-                sna_eir_tot(k) = sna_eir_tot(k) +
+                sna_eir(k) = sna_eir(k) +
      &           sna0_eir(ix,iy,0,is) +
      &           sna0_eir(ix,iy,1,is)*na(ix,iy,is)
                 ext_sna_tot(k) = ext_sna_tot(k) + ext_sna(ix,iy,is)
@@ -753,20 +753,20 @@ c   --> better solution wanted here..
 
 
           if ( iout .ne. 0 ) then
-            write(*,'(a5,7a16)') 'ia', 'sna_core', 'sna_eir_tot',
+            write(*,'(a5,7a16)') 'ia', 'sna_core', 'sna_eir',
      &  'sna_puff', 'sna_pump', 'sna_sptt', 'sna_ext', 't1'
             do k = 1, nspecies
-              write(*, '(i5, 7es16.7)') k, sna_core(k),  sna_eir_tot(k),
+              write(*, '(i5, 7es16.7)') k, sna_core(k),  sna_eir(k),
      &      sna_puff(k), sna_pump(k), sna_sptt(k), ext_sna_tot(k), t1(k)
             enddo
 
-            write(*,'(a3,3a17)') 'ia','dG/sna_eir_tot','t1(ia)','t(ia)'
+            write(*,'(a3,3a17)') 'ia','dG/sna_eir','t1(ia)','t(ia)'
           endif
 
           do k = 1, nspecies
             t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
      &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) /
-     &            sna_eir_tot(k)
+     &            sna_eir(k)
             t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) +
      &                     exp(-c_pumpavr)*t1(k)
  !           t1(k) = t01(k)
@@ -782,6 +782,18 @@ c   --> better solution wanted here..
 !            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
             sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k)
             sna0_eir(:,:,1,is) = sna0_eir(:,:,1,is)*t(k)
+
+! { IYS 12.01.2018, 
+!      sna_eir = 0.0_R8
+!          if (ank_tracing .gt. 0) then    
+!            do iy = -1, ny
+!              do ix = -1, nx
+                sna_eir(k) = sna_eir(k)*t(k)
+!     &              sna0(ix,iy,0,is) + 
+!     &              sna0(ix,iy,1,is) * na(ix,iy,is)
+!              enddo
+!            enddo
+!          endif     ! IYS 12.01.2018 }
 !            else
 !!            write(*,'(a,i3, a5, i3, a3)')
 !!     &   'Source correction is not applied for sputtered particles k=',
