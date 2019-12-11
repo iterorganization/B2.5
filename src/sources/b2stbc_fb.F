@@ -243,11 +243,12 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ispecies, is0, is_start, is_end,
+      integer ncall, n2, ix, iy, is, ispecies, is0,
 #ifdef B25_EIRENE
      &        i, j, k, l,
 #endif
      &        ib, iss, ixl1, ixr1, ixl2, ixr2, istrai, icount
+      integer, save :: is_start, is_end
       integer, save :: ncall_old, ncall_gap, n_flux_zero
       integer, save :: fhiycore_kinetic_energy, ncallfeedback
       integer, save :: coreregno, coreregn2, solregno,
@@ -1143,7 +1144,7 @@
      &                    ispecies+1
                   endif
 
-                  if((feedback_namelist_used .or. ncall .eq. 0) .and.
+                  if((feedback_namelist_used .and. ncall .eq. 0) .and.
      &                 saved_na_feedback_actuator(ispecies) .eq. 0.0_R8)
      >             then
                     write(message,'(a,i3,a,i2,a)')
