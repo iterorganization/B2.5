@@ -49,6 +49,8 @@ c  version : 26.07.2002 23:39
       use eirmod_cinit
      , , only: fort_lc
       use eirmod_extrab25
+      use eirmod_clgin
+     ,   , only : iliin
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -1055,6 +1057,10 @@ c*** Print the particle fluxes for each stratum and species
                 end do !}
               end if !}
               hlp_log=j.le.nnlimi
+#ifdef B25_EIRENE
+     &                .and. iliin(j) .gt. 0                ! IYS 03.12.2019 Consider non-transparent surfaces only,
+                                                           ! transparent ones should not contribute into balance
+#endif
               if(hlp_log .or. (j.gt.nnlimi .and. j.ne.l_ddt)) then !{
                 if(.not.hlp_log) then !{
                   do i=1,ncns !{
@@ -1324,6 +1330,10 @@ c!###}
               end if !}
 
               hlp_log=j.le.nnlimi
+#ifdef B25_EIRENE
+     &                .and. iliin(j) .gt. 0                ! IYS 03.12.2019 Consider non-transparent surfaces only,
+                                                           ! transparent ones should not contribute into balance
+#endif
               if(.not.hlp_log) then !{
                 do i=1,ncns !{
                   hlp_log=hlp_log .or. j.eq.lcns(i)+nnlimi
@@ -1547,6 +1557,10 @@ c*** Here only the second pass of correction
             do j=1,nnlimi+nnstsi !{
 
               hlp_log=j.le.nnlimi
+#ifdef B25_EIRENE
+     &                .and. iliin(j) .gt. 0                ! IYS 03.12.2019 Consider non-transparent surfaces only,
+                                                           ! transparent ones should not contribute into balance
+#endif
               if(.not.hlp_log) then !{
                 do i=1,ncns !{
                   hlp_log=hlp_log .or. j.eq.lcns(i)+nnlimi
@@ -1810,6 +1824,10 @@ c*** Print the particle fluxes for each stratum and species
               end if !}
 
               hlp_log=j.le.nnlimi
+#ifdef B25_EIRENE
+     &                .and. iliin(j) .gt. 0                ! IYS 03.12.2019 Consider non-transparent surfaces only,
+                                                           ! transparent ones should not contribute into balance
+#endif
               if(hlp_log .or. (j.gt.nnlimi .and. j.ne.l_ddt)) then !{
                 if(.not.hlp_log) then !{
                   do i=1,ncns !{
