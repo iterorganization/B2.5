@@ -143,7 +143,10 @@
          enddo
         enddo
         else
-          do iy = 0, ny
+          nbti=nb*ti
+          weight = 1.0e0_R8  
+          call intcor(nx,ny,weight,nbti,nbtic)
+          do iy = -1, ny
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or.
      &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then
@@ -214,7 +217,7 @@
          enddo
         enddo
         else
-          do iy = 0, ny
+          do iy = -1, ny
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
              fnbPSch(ix,iy,1)= 0.0e0_R8
