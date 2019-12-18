@@ -5293,7 +5293,7 @@ contains
             type(ids_generic_grid_scalar), intent(inout) :: vector
                 !< Type of IDS data structure, designed for scalar data handling
                 !< (in this case 1D vector)
-            real(IDS_real), intent(in) ::   &
+            real(IDS_real), intent(in) :: &
                 &   b2FaceData(-1:gmap%b2nx, -1:gmap%b2ny, 0:1)
             integer, intent(in) :: gridID                    !< Grid identifier index
             integer, intent(in), optional :: gridSubsetID    !< Grid subset identifier index

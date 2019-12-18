@@ -55,7 +55,7 @@ module b2mod_connectivity
     !! Region counts
     !! First dimension: geometry type
     !! Second dimension: region type
-    integer, dimension(0:REGIONTYPE_COUNT-1, 0:GEOMETRY_COUNT-1), parameter ::  &
+    integer, dimension(0:REGIONTYPE_COUNT-1, 0:GEOMETRY_COUNT-1), parameter :: &
         &   regionCounts =  &
         &   reshape( (/     &
         &       1,  0,  0,  & !! GEOMETRY_UNSPECIFIED
@@ -361,7 +361,7 @@ contains
     implicit none
 
     !!   ..input arguments (unchanged on exit)
-    integer, intent(in) ::  nx1, ny1, nncutmax, istyle, periodic_bc
+    integer, intent(in) :: nx1, ny1, nncutmax, istyle, periodic_bc
     real(R8), intent(in) :: geom_match_dist
     real (kind=R8), intent(in) :: &
         & crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3)
@@ -774,7 +774,7 @@ contains
     implicit none
 
     !!   ..input arguments (unchanged on exit)
-    integer, intent(in) ::  nx, ny
+    integer, intent(in) :: nx, ny
     integer cflag(-1:nx,-1:ny,CARREOUT_NCELLFLAGS)
     real (kind=R8), intent(in) :: &
         & crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
@@ -2223,7 +2223,7 @@ contains
             iy = iy - 1
           end do
         end do
-! DN:  We find the contact to the right top PFR wall: y-region 8
+! DN: We find the contact to the right top PFR wall: y-region 8
         do ix = rightcut(2)-1, leftcut(2), -1
           iy = -1
           do while (iy.lt.topcut(2) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)

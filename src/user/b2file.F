@@ -25,7 +25,7 @@ c----------------------------------------------------------------------
 c
       integer ns, nnreg(0:2), it
 c
-      integer, save ::  i, j, k, l, m, n, lf_tmp, nis_tmp
+      integer, save :: i, j, k, l, m, n, lf_tmp, nis_tmp
       integer :: mh_tmp(0:ns-1), nh_tmp, nf_tmp, lvr, lvs, lvt
       parameter (nh_tmp=6, nf_tmp=3)
       logical, save :: ex, op

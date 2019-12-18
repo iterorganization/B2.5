@@ -29,7 +29,7 @@ c
       REAL (kind=R8), allocatable :: 
      .      FEEXGT(:,:), FEEYGT(:,:),
      .      FEIXGT(:,:), FEIYGT(:,:)
-      real (kind=R8), allocatable ::  RADARR(:,:)
+      real (kind=R8), allocatable :: RADARR(:,:)
       real (kind=R8), allocatable :: 
      ,     src_ee(:,:)   , src_ei(:,:),
      ,     src_es(:,:)   , src_ms(:,:),

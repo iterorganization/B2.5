@@ -1852,7 +1852,7 @@ c
      &  vla0(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..common blocks
 *   ..local variables
-      integer, save ::  ncall, n2, ix, iy, is, ir, jxi, jxa, jsep
+      integer, save :: ncall, n2, ix, iy, is, ir, jxi, jxa, jsep
       real (kind=R8), save ::
      *  alpha, min_df0, max_df0,
      *  wb, seglen, perimeter, L_perp
