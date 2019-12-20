@@ -92,9 +92,9 @@ c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOT
 c***                   -erfaat-erfmat-erfiat-erfaml-erfmml-erfiml
 c***    wldnep  :   potential energy released by neutrals. Evaluated as diss_pot_H2*prfaml
 c***    wldna   :   flux of atoms impinging onto the surface. Equal to POTAT
-c***    ewlda   :   their average energy. Equal to EOTAT/POTAT*wldna
+c***    ewlda   :   their average energy. Equal to EOTAT/POTAT
 c***    wldnm   :   flux of molecules impinging onto the surface. Equal to POTML
-c***    ewldm   :   their average energy. Equal to EOTML/POTML*wldnm
+c***    ewldm   :   their average energy. Equal to EOTML/POTML
 c***    wldra   :   flux of reflected atoms. Equal to PRFAAT+PRFMAT+PRFIAT
 c***    wldrm   :   flux of reflected molecules. Equal to PRFAML+PRFMML+PRFIML
 c***    wldpp   :   flux of plasma ions impinging onto the surface. Equal to POTPL
