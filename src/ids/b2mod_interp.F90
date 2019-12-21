@@ -293,11 +293,11 @@ contains
   use b2mod_indirect
   use b2mod_cellhelper
   implicit none
-  integer, intent(in) ::  idir
-  integer, intent(in) ::  nx    !< Specifies the number of interior cells
-                                !< along the first coordinate (poloidal)
-  integer, intent(in) ::  ny    !< Specifies the number of interior cells
-                                !< along the second coordinate (radial)
+  integer, intent(in) :: idir
+  integer, intent(in) :: nx    !< Specifies the number of interior cells
+                               !< along the first coordinate (poloidal)
+  integer, intent(in) :: ny    !< Specifies the number of interior cells
+                               !< along the second coordinate (radial)
   real (kind=R8), intent(in) :: vol(-1:nx,-1:ny,0:4)
   real (kind=R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
   real (kind=R8), intent(in) :: qc(-1:nx,-1:ny) !< Cosine of the angle

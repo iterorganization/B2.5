@@ -111,17 +111,17 @@ contains
         type(B2GridMap), intent(inout) :: gd    !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
-        integer, intent(in) ::  nx  !< Specifies the number of interior cells
-                                    !< along the first coordinate
-        integer, intent(in) ::  ny  !< Specifies the number of interior cells
-                                    !< along the second coordinate
-        integer, intent(in) ::  nCv     !< Number of all cells (2D objects)
-        integer, intent(in) ::  nFcx    !< Number of x-aligned faces/edges
-                                        !< (1D objects)
-        integer, intent(in) ::  nFcy    !< Number of y-aligned faces/edges
-                                        !< (1D objects)
-        integer, intent(in) ::  nVx     !< Number of all vertices/nodes
-                                        !< (0D objects)
+        integer, intent(in) :: nx  !< Specifies the number of interior cells
+                                   !< along the first coordinate
+        integer, intent(in) :: ny  !< Specifies the number of interior cells
+                                   !< along the second coordinate
+        integer, intent(in) :: nCv     !< Number of all cells (2D objects)
+        integer, intent(in) :: nFcx    !< Number of x-aligned faces/edges
+                                       !< (1D objects)
+        integer, intent(in) :: nFcy    !< Number of y-aligned faces/edges
+                                       !< (1D objects)
+        integer, intent(in) :: nVx     !< Number of all vertices/nodes
+                                       !< (0D objects)
 
         gd%nCv = nCv
         gd%nFcx = nFcx

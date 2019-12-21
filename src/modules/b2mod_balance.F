@@ -1571,7 +1571,7 @@ cdjm Jan2017 Eirene arrays for electron heat balance:
       deallocate(eirene_mc_emel_she_bal)
       deallocate(eirene_mc_eiel_she_bal)
       deallocate(eirene_mc_epel_she_bal)
-cdjm Jan2017 Eirene arrays for ion heat balance:      
+cdjm Jan2017 Eirene arrays for ion heat balance:
       deallocate(eirene_mc_eapl_shi0to3)
       deallocate(eirene_mc_empl_shi0to3)
       deallocate(eirene_mc_eipl_shi0to3)

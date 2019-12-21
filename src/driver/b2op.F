@@ -36,12 +36,12 @@
       integer maxfev, mode, mp5n, nfev, nprint
       real (kind=R8) :: epsfcn, factor, ftol, gtol, xtol, zero
 
-      Integer ::  IPARAM(6), LDFJAC
-      Real (kind=R8) :: RPARAM(7)
-      Real (kind=R8), allocatable :: XSCALE(:), FSCALE(:), FVEC(:),
+      integer :: IPARAM(6), LDFJAC
+      real (kind=R8) :: RPARAM(7)
+      real (kind=R8), allocatable :: XSCALE(:), FSCALE(:), FVEC(:),
      &     FJAC(:,:)
       integer :: ipath = 1, ierr
-      Real (kind=R8), allocatable :: hess(:,:), grad(:), eigval(:),
+      real (kind=R8), allocatable :: hess(:,:), grad(:), eigval(:),
      &     eigvec(:,:), wrk1(:), wrk2(:)
 
 *   ..common blocks

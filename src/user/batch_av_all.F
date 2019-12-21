@@ -39,7 +39,7 @@
      .                             e_shi(:,:,:),
      .                             e_sch(:,:,:)
 
-      integer ::  iun, n2, itp, idum(0:2)
+      integer :: iun, n2, itp, idum(0:2)
       integer, save :: naver
 !     integer, save :: ntotdt
       character lble*120

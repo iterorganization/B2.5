@@ -12,7 +12,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpt
 !      use b2mod_plasma
-!     , , only :  po
+!     , , only : po
       use b2mod_transport
      , , only : f_luc_sg, alfx_c, sigx_c                                !srv 08.10.14
       use b2mod_external

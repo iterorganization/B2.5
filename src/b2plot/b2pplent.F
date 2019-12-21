@@ -22,7 +22,7 @@ c***      g   is the emissivity at the grid edge
 c***      h,i characterise radiation profile outside the separatrix
 c***
 c***   The normalisation constant A ensures the correct value of
-c***   the integral:  Qtot = r0rad
+c***   the integral: Qtot = r0rad
 c***
 c*** Output files:
 c***

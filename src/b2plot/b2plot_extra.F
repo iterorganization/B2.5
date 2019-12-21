@@ -177,11 +177,10 @@ c     filling array and computing rate
      1 ne(0:nxd+1,0:nyd+1),te(0:nxd+1,0:nyd+1),
      2 mach(0:nxd+1,0:nyd+1),D11(0:8,0:8)
       CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
-      integer ir,i,j,ii,jj,kk,ix,iy,ifex
+      integer ir,i,j,ii,ix,iy,ifex
       real (kind=R8) ::
      1 rmin,rmax,tef,def,dnnn,tei,dej,fp1,fp2,fp3,
-     2 s01,s02,ds12,expo1,expo2,ccxm1,ccxm2,
-     3 almin,coumin,almax,coumax
+     2 s01,s02,ds12,expo1,expo2,ccxm1,ccxm2,coumin,coumax
       REAL (KIND=R8) :: SLREAC_EXTRAP
       EXTERNAL SLREAC_EXTRAP
 
@@ -244,18 +243,16 @@ c     filling array and computing rate
                 FP2=      (CCXM2-CCXM1)/DS12
                 FP3=0.0_R8
                 IFEX=3
-                ALMIN=RC1MN(IR)
                 COUMIN=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(TEF,ALMIN,COUMIN,IFEX,FP1,FP2,FP3)
+                DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,FP1,FP2,FP3)
               ELSEIF (IF1MN(IR).GT.0) THEN ! use IF1MN asymptotic expression
                 COUMIN=D11(8,0)
                 DO II = 7, 0, -1
                   COUMIN = COUMIN * RC1MN(IR) + D11(II,0)
                 END DO
                 IFEX=IF1MN(IR)
-                ALMIN=RC1MN(IR)
                 COUMIN=EXP(COUMIN)
-                DNNN=SLREAC_EXTRAP(TEF,ALMIN,COUMIN,IFEX,
+                DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,
      .                             FP1L(IR,1),FP1L(IR,2),FP1L(IR,3))
               ELSE
                 DO I=0,8
@@ -280,18 +277,16 @@ c     filling array and computing rate
                 FP2=      (CCXM2-CCXM1)/DS12
                 FP3=0.0_R8
                 IFEX=3
-                ALMAX=RC1MX(IR)
                 COUMAX=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(TEF,ALMAX,COUMAX,IFEX,FP1,FP2,FP3)
+                DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,FP1,FP2,FP3)
               ELSEIF (IF1MX(IR).GT.0) THEN
                 COUMAX=D11(8,0)
                 DO II = 7, 0, -1
                   COUMAX = COUMAX * RC1MX(IR) + D11(II,0)
                 END DO
                 IFEX=IF1MX(IR)
-                ALMAX=RC1MX(IR)
                 COUMAX=EXP(COUMAX)
-                DNNN=SLREAC_EXTRAP(TEF,ALMAX,COUMAX,IFEX,
+                DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,
      .                             FP1R(IR,1),FP1R(IR,2),FP1R(IR,3))
               ELSE
                 DO I=0,8
@@ -341,9 +336,8 @@ c     filling array and computing rate
                 FP2=      (CCXM2-CCXM1)/DS12
                 FP3=0.0_R8
                 IFEX=3
-                ALMIN=RC1MN(IR)
                 COUMIN=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(TEF,ALMIN,COUMIN,IFEX,FP1,FP2,FP3)
+                DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,FP1,FP2,FP3)
               ELSEIF (IF1MN(IR).GT.0) THEN
                 COUMIN=0.0_R8
                 DO I = 0, 8
@@ -354,9 +348,8 @@ c     filling array and computing rate
                   END DO
                 END DO
                 IFEX=IF1MN(IR)
-                ALMIN=RC1MN(IR)
                 COUMIN=EXP(COUMIN)
-                DNNN=SLREAC_EXTRAP(TEF,ALMIN,COUMIN,IFEX,
+                DNNN=SLREAC_EXTRAP(TEF,COUMIN,IFEX,
      .                             FP1L(IR,1),FP1L(IR,2),FP1L(IR,3))
               ENDIF
             ELSEIF (TEF.GT.RC1MX(IR)) THEN
@@ -386,9 +379,8 @@ c     filling array and computing rate
                 FP2=      (CCXM2-CCXM1)/DS12
                 FP3=0.0_R8
                 IFEX=3
-                ALMAX=RC1MX(IR)
                 COUMAX=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(TEF,ALMAX,COUMAX,IFEX,FP1,FP2,FP3)
+                DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,FP1,FP2,FP3)
               ELSEIF (IF1MX(IR).GT.0) THEN
                 COUMAX=0.0_R8
                 DO I = 0, 8
@@ -399,9 +391,8 @@ c     filling array and computing rate
                   END DO
                 END DO
                 IFEX=IF1MX(IR)
-                ALMAX=RC1MX(IR)
                 COUMAX=EXP(COUMAX)
-                DNNN=SLREAC_EXTRAP(TEF,ALMAX,COUMAX,IFEX,
+                DNNN=SLREAC_EXTRAP(TEF,COUMAX,IFEX,
      .                             FP1R(IR,1),FP1R(IR,2),FP1R(IR,3))
               ENDIF
             ELSEIF (DEF.LT.RC2MN(IR)) THEN
@@ -431,9 +422,8 @@ c     filling array and computing rate
                 FP2=      (CCXM2-CCXM1)/DS12
                 FP3=0.0_R8
                 IFEX=3
-                ALMIN=RC2MN(IR)
                 COUMIN=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(DEF,ALMIN,COUMIN,IFEX,FP1,FP2,FP3)
+                DNNN=SLREAC_EXTRAP(DEF,COUMIN,IFEX,FP1,FP2,FP3)
               ELSEIF (IF2MN(IR).GT.0) THEN
                 COUMIN=0.0_R8
                 DO I = 0, 8
@@ -444,9 +434,8 @@ c     filling array and computing rate
                   ENDDO
                 ENDDO
                 IFEX=IF2MN(IR)
-                ALMIN=RC2MN(IR)
                 COUMIN=EXP(COUMIN)
-                DNNN=SLREAC_EXTRAP(DEF,ALMIN,COUMIN,IFEX,
+                DNNN=SLREAC_EXTRAP(DEF,COUMIN,IFEX,
      .                             FP2L(IR,1),FP2L(IR,2),FP2L(IR,3))
               ENDIF
             ELSEIF (DEF.GT.RC2MX(IR)) THEN
@@ -476,9 +465,8 @@ c     filling array and computing rate
                 FP2=      (CCXM2-CCXM1)/DS12
                 FP3=0.0_R8
                 IFEX=3
-                ALMAX=RC2MX(IR)
                 COUMAX=EXP(EXPO1)
-                DNNN=SLREAC_EXTRAP(DEF,ALMAX,COUMAX,IFEX,FP1,FP2,FP3)
+                DNNN=SLREAC_EXTRAP(DEF,COUMAX,IFEX,FP1,FP2,FP3)
               ELSEIF (IF2MX(IR).GT.0) THEN
                 COUMAX=0.0_R8
                 DO I = 0, 8
@@ -489,9 +477,8 @@ c     filling array and computing rate
                   ENDDO
                 ENDDO
                 IFEX=IF2MX(IR)
-                ALMAX=RC2MX(IR)
                 COUMAX=EXP(COUMAX)
-                DNNN=SLREAC_EXTRAP(DEF,ALMAX,COUMAX,IFEX,
+                DNNN=SLREAC_EXTRAP(DEF,COUMAX,IFEX,
      .                             FP2R(IR,1),FP2R(IR,2),FP2R(IR,3))
               ENDIF
             ELSE
@@ -598,11 +585,10 @@ C                                   (ON CREAC(..,J,IR),J=1,9)
 C                   N           =0  ELSE
 C
 #     include <eir_reac.F>
-      real (kind=R8) ::
-     1 CONST, EARRH0, FPARM(3)
+      real(kind=R8) :: CONST, FPARM(3)
       REAL(kind=R8) :: R1MN, R1MX, R2MN, R2MX
       integer IR,I0,ISW,J,IND,INDADD,I,K,IH,IREAC,INDFF,IFLG
-      integer INIP,INEP,IFTFLG(0:5)
+      integer IFTFLG(0:5)
       CHARACTER*80 ZEILE, LAST_TEX, ULINE
       CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
       CHARACTER*1 BACK
@@ -610,10 +596,9 @@ C
       CHARACTER*9 FITFLAG
       CHARACTER*4 CHR, CHRA, BEND
       CHARACTER*3 CH1L, CH1R, CH2L, CH2R
-      CHARACTER*7 C1L, C1R, C2L, C2R, CMR, CEMR
+      CHARACTER*7 C1L, C1R, C2L, C2R
       LOGICAL LCONST
-      LOGICAL :: LGC1MIN,LGC1MAX,LGC2MIN,LGC2MAX,
-     .           LGR1MIN,LGR1MAX,LGR2MIN,LGR2MAX
+      LOGICAL :: LGC1MIN,LGC1MAX,LGC2MIN,LGC2MAX
       logical open_file
       external open_file, subini, subend, xerrab, xertst
 C
@@ -637,12 +622,7 @@ C
       RC1MX(IR) = 0.0_R8
       RC2MN(IR) = 0.0_R8
       RC2MX(IR) = 0.0_R8
-C DEFAULT FITTING PARAMETER RANGE FOR POLYNOMIAL FITS
-      INIP=1
-      INEP=9
 C     Defaults: no asymptotics
-      CMR  = 'MAXRATE'
-      CEMR = 'ELAB'
       CH1L='ll0'
       CH1R='lr0'
       CH2L='ll0'
@@ -897,26 +877,22 @@ c       or the Arrhenius prefactor a-1,b-1,...k-1
           IF (INDEX(ZEILE,CHRA) > 0) THEN
 c  read Arrhenius parameter
             READ (ZEILE((INDFF+8):80),*) EARRH(IR)
-            IF (EARRH(IR).GT.0.0_R8) INIP=0  ! RATHER THAN DEFAULT: INIP=1
             GOTO 3
           ENDIF
 
-C  read only one constant:  (FIT-FLAG = 10, 110, ....)
+C  read only one constant: (FIT-FLAG = 10, 110, ....)
           IF (MOD(IFTFLG(IFLG),100) == 10) THEN
             IND=INDEX(ZEILE,CHR(2:2)) ! position of a,b,...k
             READ (ZEILE((IND+2):80),'(E20.12)') CREAC(1,1,IR)
-            INEP=1    ! RATHER THAN DEFAULT: INEP=9
 C  READ 9 FIT COEFFICIENTS, SEPARATED BY 'CHR' FIXED FORMAT E20.12
 C  THREE LINES WITH THREE DATA PER LINE
 c  READ ONLY THE NON-ZERO PARAMETERS
           ELSE
-            INEP=0
             DO J=0,2
               IND=0
               DO I=1,3
                 INDADD=INDEX(ZEILE((IND+1):80),CHR(2:2))
                 IF (INDADD.EQ.0) GOTO 9
-                INEP=INEP+1
                 IND=IND+INDEX(ZEILE((IND+1):80),CHR(2:2))
                 READ (ZEILE((IND+2):80),'(E20.12)') CREAC(J*3+I,I0,IR)
               ENDDO
@@ -946,7 +922,7 @@ c  read parameter for type of fitting expression from data file
           ENDIF
           READ (29,'(1X)')
           IF (MOD(IFTFLG(IFLG),100) == 10) THEN
-C  IFTFLG = 10, 110,  210,....ETC:  READ ONLY ONE CONSTANT PARAMETER
+C  IFTFLG = 10, 110,  210,....ETC: READ ONLY ONE CONSTANT PARAMETER
             READ (29,*) IH,CREAC(1,1,IR)
             EXIT
           ELSE
@@ -968,15 +944,8 @@ C FOR 1D: ONLY "LEFT1" AND "RIGHT1" ARE USED
 
       IF (ISW.EQ.0) GOTO 2000    ! NO ASYMPTOTICS FOR POTENTIALS
 
-c  INDICATE, IF EXTRAPOLATION INFORMATION (r1mn,.., if1mn,...) IS FOUND ON DATA FILE
-c  DEFAULT:  NO DATA FOUND
-      LGR1MIN=.FALSE.
-      LGR1MAX=.FALSE.
-      LGR2MIN=.FALSE.
-      LGR2MAX=.FALSE.
-
 c  INDICATE, IF EXTRAPOLATION COEFFICIENTS (fp1l,fp1r,fp2l,fp2r) ARE FOUND ON DATA FILE
-c  DEFAULT:  NO DATA FOUND
+c  DEFAULT: NO DATA FOUND
       LGC1MIN=.FALSE.
       LGC1MAX=.FALSE.
       LGC2MIN=.FALSE.
@@ -1033,12 +1002,11 @@ c
         END IF
 c
 c  currently foreseen asymptotic data identifiers in data files:
-c  c1l,c2l,c1r,c2r:  ELABMIN, ELABMAX,
-c                    T1MIN,T1MAX,E2MIN,E2MAX,N2MIN,N2MAX,
-c                    P1MIN,P1MAX,P2MIN,P2MAX
+c  c1l,c2l,c1r,c2r: ELABMIN, ELABMAX,
+c                   T1MIN,T1MAX,E2MIN,E2MAX,N2MIN,N2MAX,
+c                   P1MIN,P1MAX,P2MIN,P2MAX
         IF (INDEX(ULINE,TRIM(C1L)) /= 0) THEN
           CALL SLREAC_READ_RANGE(ULINE,C1L,'EXT-FLG',R1MN,IF1MN(IR))
-          LGR1MIN = .TRUE.
           RC1MN(IR) = LOG(R1MN)
 c  old default: 2nd-order polynomial beyond valid range, with coefs. FPL1
           IF (IF1MN(IR) == 0 .AND. LGC1MIN) IF1MN(IR) = 5
@@ -1047,7 +1015,6 @@ c  default extrapolation from r1mn (by constant continuation) will be: jfex1mn=4
         END IF
         IF (INDEX(ULINE,TRIM(C1R)) /= 0) THEN
           CALL SLREAC_READ_RANGE(ULINE,C1R,'EXT-FLG',R1MX,IF1MX(IR))
-          LGR1MAX = .TRUE.
           RC1MX(IR) = LOG(R1MX)
 c  old default: 2nd-order polynomial beyond valid range, with coefs. FPR1
           IF (IF1MX(IR) == 0 .AND. LGC1MAX) IF1MX(IR) = 5
@@ -1056,7 +1023,6 @@ c  default extrapolation from r1mx (by constant continuation) will be: jfex1mx=4
         END IF
         IF (INDEX(ULINE,TRIM(C2L)) /= 0) THEN
           CALL SLREAC_READ_RANGE(ULINE,C2L,'EXT-FLG',R2MN,IF2MN(IR))
-          LGR2MIN = .TRUE.
           RC2MN(IR) = LOG(R2MN)
 c  old default: 2nd-order polynomial beyond valid range, with coefs. FPL2
           IF (IF2MN(IR) == 0 .AND. LGC2MIN) IF2MN(IR) = 5
@@ -1065,7 +1031,6 @@ c  default extrapolation from r2mn (by constant continuation) will be: jfex2mn=4
         END IF
         IF (INDEX(ULINE,TRIM(C2R)) /= 0) THEN
           CALL SLREAC_READ_RANGE(ULINE,C2R,'EXT-FLG',R2MX,IF2MX(IR))
-          LGR2MAX = .TRUE.
           RC2MX(IR) = LOG(R2MX)
 c  old default: 2nd-order polynomial beyond valid range, with coefs. FPr2
           IF (IF2MX(IR) == 0 .AND. LGC2MAX) IF2MX(IR) = 5
@@ -1129,10 +1094,10 @@ c  This routine:
 c  Reads validity range from atomic data file:
 c  Search in ZEILE for key1, key2 and return: RNG, IFX
 
-c  key1:  'ELABMIN','ELABMAX','T1MIN','T1MAX','E2MIN','E2MAX',
-C         'N2MIN','N2MAX','P1MIN','P1MAX','P1MIN','P1MAX'=,
-C                     read RNG (unformatted, real)
-c  key2:  'EXT-FLG'= ,read IFX (unformatted, integer)
+c  key1: 'ELABMIN','ELABMAX','T1MIN','T1MAX','E2MIN','E2MAX',
+C        'N2MIN','N2MAX','P1MIN','P1MAX','P1MIN','P1MAX'=,
+C                    read RNG (unformatted, real)
+c  key2: 'EXT-FLG'= ,read IFX (unformatted, integer)
 
       CHARACTER(80), INTENT(IN) :: ZEILE
       CHARACTER(7), INTENT(IN) :: KEY1, KEY2
@@ -1164,11 +1129,11 @@ c  key2:  'EXT-FLG'= ,read IFX (unformatted, integer)
 
       END SUBROUTINE SLREAC_READ_RANGE
 
-      FUNCTION SLREAC_EXTRAP(PARM,PARMLIM,FPARLIM,IFLAG,FP1,FP2,FP3)
+      FUNCTION SLREAC_EXTRAP(PARM,FPARLIM,IFLAG,FP1,FP2,FP3)
       use b2mod_types
       IMPLICIT NONE
 
-      REAL(kind=R8), INTENT(IN) :: PARM, PARMLIM, FPARLIM, FP1, FP2, FP3
+      REAL(kind=R8), INTENT(IN) :: PARM, FPARLIM, FP1, FP2, FP3
       INTEGER, INTENT(IN)  :: IFLAG
       REAL(kind=R8)             :: X, EL, SLREAC_EXTRAP
 
@@ -1179,7 +1144,7 @@ C JUST RETURN ZERO BELOW THRESHOLD
 C  JANEV TYPE 1, HIGH ENERGY EXTRAPOLATION OF CROSS-SECTIONS
 C  EXTRAPOLATION AT HIGH ENERGY END FOR REACTIONS WITH A NONZERO THRESHOLD
 C  FP1 SHOULD BE = E_THRESHOLD (EV)
-C  FP2 SCALING FACTOR, SHOULD BE COMPUTED FROM PARMLIM,FPARLIM
+C  FP2 SCALING FACTOR, SHOULD BE COMPUTED FROM FPARLIM
 C  FP3=-N
         EL = EXP(PARM)
         X = EL/FP1

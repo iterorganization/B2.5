@@ -101,11 +101,11 @@ module b2mod_ual_io_grid
         &   (/ 1, 0 /)  !< Object class tuple (ITM class definition): Edge (R, Z)
     integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_PHI_EDGE =    &
         &   (/ 0, 1 /)  !< Object class tuple (ITM class definition): Edge (phi)
-    integer, dimension( SPACE_COUNT_MAX ), parameter ::   &
+    integer, dimension( SPACE_COUNT_MAX ), parameter :: &
         &   CLASS_POLOIDALRADIAL_FACE = (/ 1, 1 /)  !< Object class tuple
         !< (ITM class definition): Poloidal/radial face (in observed existing
         !< CPO cases this class refers to 2D cells)
-    integer, dimension( SPACE_COUNT_MAX ), parameter ::   &
+    integer, dimension( SPACE_COUNT_MAX ), parameter :: &
         &   CLASS_TOROIDAL_FACE = (/ 2, 0 /)    !< Object class tuple
         !< (ITM class definition): Toroidal face
     integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_CELL = (/ 2, 1 /)
@@ -874,8 +874,8 @@ contains
                 &   objects_per_dimension(3)%object( iCv )%nodes(4) )
             !! Also store additional geometry information: position in
             !! computational space
-            !! FIXME:   this should go into alternate geometry, which is not
-            !!          available yet for grid objects
+            !! FIXME: this should go into alternate geometry, which is not
+            !!        available yet for grid objects
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%  &
                 &   objects_per_dimension(3)%object( iCv )%geometry(2) )
             do i = 1, 4

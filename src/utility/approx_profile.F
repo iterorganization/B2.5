@@ -20,7 +20,7 @@
       implicit none
       integer ndat
       character*(*) fnm
-      real (kind=R8) ::  cy(1:ndat), fy(1:ndat)
+      real (kind=R8) :: cy(1:ndat), fy(1:ndat)
       integer iy
       open(70,file=trim(fnm))
       do iy = 1, ndat
@@ -34,7 +34,7 @@
       implicit none
       integer ndat
       character*(*) fnm
-      real (kind=R8) ::  cy(1:ndat), fy(1:ndat)
+      real (kind=R8) :: cy(1:ndat), fy(1:ndat)
       integer iy
       open(70,file=trim(fnm))
       do iy=1,ndat
@@ -47,13 +47,13 @@
       use b2mod_types
       implicit none
       character*(*) fnm
-      integer ::  ndat 
+      integer :: ndat
 !      real (kind=R8) :: coord(-1:n), fun(-1:n)
 
       real (kind=R8) :: r(1:ndat), f(1:ndat), b(1:ndat), c(1:ndat),
      &                  d(1:ndat)
-      integer :: i, iy 
-      
+      integer :: i, iy
+
       open(70,file=trim(fnm))
       do iy = 1, ndat
         read(70,*) r(iy), f(iy)
@@ -61,7 +61,7 @@
       close(70)
       do iy = 1, ndat-1
         call xertst (r(iy).lt. r(iy+1),
-     1	 'Sequence of coordinates in file '//fnm//' is not monotonic')
+     1   'Sequence of coordinates in file '//fnm//' is not monotonic')
       enddo
 
 !      call dcscon (ndat, r, f, ibreak, break, cscoef)
@@ -69,13 +69,13 @@
 !      ideriv = 0
 !      nintv  = ndat-1
 !      call dcs1gd (ideriv, ndat, r, nintv, break, cscoef, pf)
-!      do iy = 1,ndat 
+!      do iy = 1,ndat
 !        pf(iy-2) = dcsval(r(iy), nintv, break, cscoef)
 !        write(*,*) r(iy), pf(iy-2)
 !      enddo
 
 !      CALL DSPLINE(NDAT, R, F, B, C, D)
-*   ..the simplest linear interpolation   
+*   ..the simplest linear interpolation
       do i = 1, ndat-1
         b(i) = (f(i+1)-f(i))/(r(i+1)-r(i))
       enddo
@@ -88,7 +88,7 @@
       subroutine approx_profile_mod(ndat, r, f, b, c, d)                !srv 19.07.10 {
       use b2mod_types
       implicit none
-      integer ::  ndat 
+      integer :: ndat
 !       real (kind=R8) :: coord(-1:n), fun(-1:n)
 
       real (kind=R8) :: r(1:ndat), f(1:ndat), b(1:ndat), c(1:ndat),
@@ -102,13 +102,13 @@
 !      ideriv = 0
 !      nintv  = ndat-1
 !      call dcs1gd (ideriv, ndat, r, nintv, break, cscoef, pf)
-!      do iy = 1,ndat 
+!      do iy = 1,ndat
 !        pf(iy-2) = dcsval(r(iy), nintv, break, cscoef)
 !        write(*,*) r(iy), pf(iy-2)
 !      enddo
 
 !      CALL DSPLINE(NDAT, R, F, B, C, D)
-*   ..the simplest linear interpolation   
+*   ..the simplest linear interpolation
       do i = 1, ndat-1
          b(i) = (f(i+1)-f(i))/(r(i+1)-r(i))
       enddo

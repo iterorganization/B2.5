@@ -11,7 +11,7 @@
      *     a(0:np,0:np),b(0:np)
       integer ::
      *     i,ii,j,ll
-      real (kind=R8) ::  sum
+      real (kind=R8) :: sum
       ii=-1
       do i=0,n
         ll=indx(i)
