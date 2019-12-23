@@ -1247,14 +1247,14 @@ c*** Print the line
         end do !}
         do is=1,natmi !{
           w_line(k+1)=wldna(m,is,0)/segm_area(ils)
-          w_line(k+2)=ewlda(m,is,0)/eV
+          w_line(k+2)=ewlda(m,is,0)
           w_line(k+3)=0.0 !atom density
           w_line(k+4)=0.0 !atom pressure
           k=k+n_hdpr_a
         end do !}
         do is=1,nmoli !{
           w_line(k+1)=wldnm(m,is,0)/segm_area(ils) !molecule flux
-          w_line(k+2)=ewldm(m,is,0)/eV !molecule energy
+          w_line(k+2)=ewldm(m,is,0) !molecule energy
           w_line(k+3)=0.0 !molecule density
           w_line(k+4)=0.0 !molecule pressure
           k=k+n_hdpr_ml
