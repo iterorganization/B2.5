@@ -304,7 +304,6 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
 #endif
         call find_file(filename,ft44)
         do_trg=.true.
-        write(frmt_hlp,'(a7,i5,a11)') '(1p,1x,',n_line_x,'(e12.5,a1))'
         
         n_sfpr_s=1
         if(nspecies.gt.1) n_sfpr_s=nspecies
