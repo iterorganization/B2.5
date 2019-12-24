@@ -1240,6 +1240,16 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        endif
       endif                                                           !srv 11.09.09 }
 
+      if (iout.eq.1 .and. use_eirene.gt.0 ) then   ! IYS to output fluxes seen by Eirene
+       do is = 0, ns-1
+        write (chns,'(i3.3)') is
+        if (.not. is_neutral(is)) then
+        call my_out(70,nx,ny,fna(-1:nx,-1:ny,0,is),'b2stbr_fnax'//chns)
+        call my_out(70,nx,ny,fna(-1:nx,-1:ny,1,is),'b2stbr_fnay'//chns)
+        endif
+       enddo 
+      endif                                                           
+
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
       call subend ()
