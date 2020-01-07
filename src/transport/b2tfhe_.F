@@ -84,11 +84,11 @@ csw 10oct2012
      *    fch_ion_neutral, fch_anomalous, fch_inert,                     !srv 30.09.02 07.07.99
      *    fledia(nFc,0:1), c071(nFc)!,                                   !srv 22.11.99 25.01.02
  !WG_TODO    &    zeff(-1:nx,-1:ny)                           !srv 13.01.17
+      real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8) ::
      *    wrk(nFc,0:1), wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc),
      *    dte(nFc,0:1), dpo(nFc,0:1), dpe(nFc,0:1), wght(nFc,2),
      *    fhe0_mdf(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
-      real (kind=R8) :: facdriftm
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
 
@@ -171,6 +171,7 @@ csw 10oct2012
       endif
 
       facdriftm = maxval(dv%facdrift)
+      fac_ExBm  = maxval(dv%fac_ExB)                                     !srv 23.12.19
       dv%fchin     = 0.0_R8
       dv%fchdia    = 0.0_R8
       dv%fchvispar = 0.0_R8
@@ -326,7 +327,8 @@ c Drift terms
 *   ..compute conc
       dumm0 = 0.0e0_R8
       wrk   = co%csig
-      if(fch_ion_neutral.ne.0.0e0_R8 ) then
+      if(fch_ion_neutral.ne.0.0e0_R8 .and.
+     &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then         !srv 23.12.19
         do is = 0, ns-1
           if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
             do is0 = 0, ns-1
