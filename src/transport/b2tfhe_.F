@@ -111,16 +111,16 @@ csw 10oct2012
      &  tex, tex0, dia_cur, vis_par, vis_q, vdia_par,                    !srv 17.05.99 11.07.99
      &  vis_per, floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf       !srv 22.11.99 13.10.06 17.06.09
       real (kind=R8) ::
-     *    fch_ion_neutral, fch_anomalous, fch_inert,                     !srv 30.09.02 07.07.99
+     *    fch_ion_neutral, fch_anomalous, fch_inert, sig_stoch,          !srv 30.09.02 07.07.99
      *    fledia(-1:nx,-1:ny,0:1),                                       !srv 22.11.99 25.01.02
      &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny), zeff(-1:nx,-1:ny),       !srv 13.01.17
      &    c071(-1:nx,-1:ny)                                              !srv 13.01.17
-      real (kind=R8) :: facdriftm
+      real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
 
       save ncall, fch_ion_neutral, fch_anomalous, dia_cur, fch_inert,    !srv 07.07.99
-     &     vis_par, vis_per, vis_q, vdia_par                             !srv 17.05.99 11.07.99 22.11.99
+     &     vis_par, vis_per, vis_q, vdia_par, sig_stoch                  !srv 17.05.99 11.07.99 22.11.99
 *   ..procedures
       intrinsic max, abs
       real (kind=R8) ::
@@ -137,7 +137,7 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
       data ncall/0/, fch_ion_neutral/0.0e0_R8/, fch_inert/1.0e0_R8/      !srv 07.07.99 22.03.02
      *        , fch_anomalous/1.0e0_R8/                                  !srv 22.03.02
      *        , dia_cur/1.0e0_R8/, vis_par/1.0e0_R8/, vdia_par/1.0e0_R8/ !srv 17.05.99 22.03.02
-     *        , vis_q/1.0e0_R8/, vis_per/1.0e0_R8/                       !srv 11.07.99 22.11.99 22.03.02
+     *        , vis_q/1.0e0_R8/, vis_per/1.0e0_R8/, sig_stoch/1.0_R8/    !srv 11.07.99 22.11.99 22.03.02
 
 *-----------------------------------------------------------------------
 *.computation
@@ -158,14 +158,19 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call ipgetr ('b2tfhe_vdia_par', vdia_par)                         !srv 17.05.99
        call ipgetr ('b2tiner_inert', fch_inert)                          !srv 07.07.99
        call ipgeti ('b2tfhe_lim_flux', lim_flux)                         !srv 04.02.03
+       call ipgetr ('b2tstch_sig', sig_stoch)
        call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31.01.08
-       call xertst(fch_ion_neutral .ne. 0.0e0_R8 .or.                    !srv
-     *             fch_anomalous .ne. 0.0e0_R8 .or.
-     *             vis_q .ne. 0.0_R8 .or. fch_inert .ne. 0.0_R8 .or.
-     *             vis_per .ne. 0.0_R8 .or.
-     *             fch_stochastic .ne. 0.0_R8 .or.
-     *             dia_cur .ne. 0.0e0_R8 .or. vis_par .ne. 0.0_R8,       !srv
-     *             'No radial current terms!')                           !srv
+       call xertst (fch_anomalous.ne.0.0_R8
+     &         .or.(fch_stochastic.ne.0.0_R8.and.sig_stoch.ne.0.0_R8)
+     &         .or.(fch_inert.ne.0.0_R8.and.maxval(facdrift).ne.0.0_R8)
+     &         .or.(vis_q.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8)
+     &         .or.(vis_par.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8)
+     &         .or.(fch_ion_neutral.ne.0.0_R8.and.
+     &                                (maxval(facdrift).ne.0.0_R8.or.
+     &                                 maxval(fac_ExB).ne.0.0_R8))
+     &         .or.(maxval(facdrift).ne.0.0_R8.and.dia_cur.ne.0.0_R8)
+     &         .or.(vis_per.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8),
+     &         'No radial current terms activated!')                     !xpb
        call ipgeti ('b2tfhe_iout', iout)                                 !srv 16.09.02
        call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                  !srv 06.07.06
        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                  !srv 06.07.06
@@ -214,6 +219,7 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
       endif
 
       facdriftm = maxval(facdrift)
+      fac_ExBm  = maxval(fac_ExB)                                        !srv 23.12.19
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
       call b2tinnt (nx, ny, ns, facdrift, fac_ExB, ismain, ismain0,
      &              vol, gs, hx, hy, qz, qc, bb,
@@ -779,7 +785,8 @@ csw 13mar2013 added check upwind (SOLPS4 style)
 !     &  /(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))                  !srv
 !     &  *(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8             !srv 11.10.02 }
          conc(ix,iy,0) = csig(ix,iy,0)
-         if(fch_ion_neutral.ne.0.0e0_R8 ) then                           !srv
+         if(fch_ion_neutral.ne.0.0e0_R8 .and.
+     &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then           !srv 23.12.19
           do is = 0, ns-1                                                !srv 24.06.08 {
 !           if (.not.is_neutral(is)) then
             if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then          !srv 20.10.17
@@ -1025,7 +1032,8 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      7      +fchanml(ix,iy,1)                                            !srv 24.03.07
      8      +fchstoch(ix,iy)                                             !lk 31.01.08
         conc(ix,iy,1) = csig(ix,iy,1)                                    !srv
-        if(fch_ion_neutral.ne.0.0e0_R8 ) then                            !srv
+         if(fch_ion_neutral.ne.0.0e0_R8 .and.
+     &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then           !srv 23.12.19
          do is = 0, ns-1                                                 !srv 24.06.08 {
 !          if (.not.is_neutral(is)) then
           if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then            !srv 20.10.17
