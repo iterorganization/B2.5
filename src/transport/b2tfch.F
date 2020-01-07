@@ -85,6 +85,7 @@
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, t0,
      &   tex, tex0, ehx_po, ehy_po,
      1   flo_vedia, prefactor, floe0_nd, cone0_nd, t0_nd, tex0_nd
+      real (kind=R8) :: facdriftm, fac_ExBm                             !srv 23.12.19
       real (kind=R8) ::                                                 !xpb
      * fch_ion_neutral, fch_anomalous, vis_par, vis_per, sig_stoch,     !xpb
      * ehx_(-1:nx,-1:ny,0:1), ehy_(-1:nx,-1:ny,0:1), zeff(-1:nx,-1:ny)  !srv 13.01.17
@@ -189,6 +190,8 @@
       endif
 
 c Drift terms
+      facdriftm = maxval(facdrift)                                       !srv 23.12.19
+      fac_ExBm  = maxval(fac_ExB)                                        !srv 23.12.19
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
       call b2tinnt (nx, ny, ns, facdrift, fac_ExB, ismain, ismain0,
      &              vol, gs, hx, hy, qz, qc, qs, bb,
@@ -305,7 +308,8 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             fch_52(ix,iy,0,0) = csig_an(ix,iy,0,0)*ehx_po
      &                       -calf(ix,iy,0,0)*tex0_nd
             conc(ix,iy,0,0) = csig(ix,iy,0,0)
-            if(fch_ion_neutral.ne.0.0_R8) then                  	     !xpb
+            if(fch_ion_neutral.ne.0.0_R8 .and.                           !xpb
+     &        (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then        !srv 23.12.19
               do is = 0, ns-1
                 if (.not.is_neutral(is) .and. nint(zn(is)).eq.1) then
                   do is0 = 0, ns-1
@@ -349,7 +353,8 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             fch_52(ix,iy,1,1)=csig_an(ix,iy,1,1)*ehy_po-calf(ix,iy,1,1)*
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy))) 
             conc(ix,iy,1,1) = csig(ix,iy,1,1)
-            if(fch_ion_neutral .ne. 0.0_R8) then                	 !xpb
+            if(fch_ion_neutral .ne. 0.0_R8 .and.                         !xpb
+     &        (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then        !srv 23.12.19
               do is = 0, ns-1
                 if (.not.is_neutral(is)) then
                   do is0 = 0, ns-1
