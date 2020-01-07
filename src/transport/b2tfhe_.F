@@ -119,11 +119,11 @@ csw 10oct2012
      *    fledia(-1:nx,-1:ny,0:1,0:1),                                   !srv 22.11.99 25.01.02
      &    ehx_(-1:nx,-1:ny,0:1), ehy_(-1:nx,-1:ny,0:1),                  !srv 13.01.17
      &    zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                           !srv 13.01.17
+      real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8) ::
      *    wrk0(-1:nx,-1:ny),
      *    dter(-1:nx,-1:ny,0:1), dpor(-1:nx,-1:ny,0:1),
      *    dper(-1:nx,-1:nx,0:1), wght(-1:nx,-1:ny)
-      real (kind=R8) :: facdriftm
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
 
@@ -225,6 +225,7 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
       endif
 
       facdriftm = maxval(facdrift)
+      fac_ExBm  = maxval(fac_ExB)                                        !srv 23.12.19
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
       call b2tinnt (nx, ny, ns, facdrift, fac_ExB, ismain, ismain0,
      &              vol, gs, hx, hy, qz, qc, qs, bb,
@@ -843,7 +844,8 @@ cwdk add computation of 9-point flows
          fch(ix,iy,0,1) = fch(ix,iy,0,1) + fchvisper(ix,iy,0,1)
          conc(ix,iy,0,0) = csig(ix,iy,0,0)
          conc(ix,iy,0,1) = csig(ix,iy,0,1)
-         if(fch_ion_neutral.ne.0.0e0_R8 ) then                           !srv
+         if(fch_ion_neutral.ne.0.0e0_R8  .and.
+     &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then           !srv 23.12.19
           do is = 0, ns-1                                                !srv 24.06.08 {
 !           if (.not.is_neutral(is)) then
             if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then          !srv 20.10.17
@@ -1104,7 +1106,8 @@ cwdk for now, fch(:,:,1,0) should stay zero...
      8      +fchstoch(ix,iy)                                             !lk 31.01.08
         conc(ix,iy,1,1) = csig(ix,iy,1,1)                                !srv
         conc(ix,iy,1,0) = csig(ix,iy,1,1)*t0
-        if(fch_ion_neutral.ne.0.0e0_R8 ) then                            !srv
+        if(fch_ion_neutral.ne.0.0e0_R8  .and.
+     &    (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then            !srv 23.12.19
          do is = 0, ns-1                                                 !srv 24.06.08 {
 !          if (.not.is_neutral(is)) then
           if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then            !srv 20.10.17
