@@ -86,10 +86,13 @@ cank }
      *   RC_FACES(:,:),
      *   TARGSP(:,:),
      *   species_start(:), species_end(:),
+     *   b2species_start(:), b2species_end(:),
      *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
      2   ngpdata(:)
+     *   accel_ion(:)
+     *   maxw(:),                                      !nh 11.07.18
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:)
       character*1, allocatable, save ::
@@ -97,9 +100,11 @@ cank }
      *   RC_LIST_CHAR(:,:)
 #else
       real (kind=R8), save :: RECYC(0:nsdmax-1,NSTRAID)
+      real (kind=R8), save :: B2RECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: ERECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: MRECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: RCION(0:nsdmax-1,NSTRAID)
+      real (kind=R8), save :: e_fc
       real (kind=R8), save :: recyceir(NSTRAID)
       real (kind=R8), save :: USERFLUXPARM(NSTRAID,2)
       real (kind=R8), save :: volrecstart(NSTRAID)
@@ -132,6 +137,8 @@ cank }
       integer, save :: b2espcr(0:nsdmax-1)
       integer, save :: eb2atcr(1:natmid)
       integer, save :: eb2spcr(1:natmid)
+      integer, save :: accel_ion(NSTRAID)
+      integer, save :: maxw(NSTRAID)
       integer, save :: lstrascl(NSTRAID,0:natmid)
       character*1, save :: CRCSTRA(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid),
@@ -181,6 +188,7 @@ cank }
      .  eirene_step_cpu, eirene_step_dt, eirene_mod,
      .  volrecstart, volrecinc, volrecwt,
      .  species_start, species_end,
+     .  maxw,
      5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
      ,  lstrascl, l_neutrad, l_neutflux,
      ,  b2eatcr, b2espcr, eb2spcr, eb2atcr,
@@ -195,7 +203,9 @@ cank }
      6  n_spcsrf, l_spcsrf, sps_id, i_spcsrf, j_spcsrf,
      7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr,
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
-     .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata
+     .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata,
+     .  e_fc,      !mb Franck-condon energy contribution 
+     . accel_ion  !mb flag for ion acceleration through sheat potential
       logical, save :: write_nml_neut = .true.
 
 csw 21feb2012
@@ -253,6 +263,7 @@ csw 21feb2012
       allocate(CRCSTRA(NSTRAID))
       allocate(species_start(NSTRAID))
       allocate(species_end(NSTRAID))
+      allocate(maxw(NSTRAID))
       allocate(b2eatcr(0:nsd-1))
       allocate(b2espcr(0:nsd-1))
       allocate(eb2atcr(natm_in))
@@ -268,6 +279,7 @@ csw 21feb2012
       allocate(lsns(nstra_in*DEF_NSRFS))
       allocate(ksns(nstra_in))
       allocate(msns(2,nstra_in))
+      allocate(accel_ion(NSTRAID))
 #ifndef NO_B2_CHEM_SPUT
       allocate(chemical_sputter_yield(0:nlimps))
 #endif
@@ -326,6 +338,10 @@ cwdk 0% momentum recycling, for backwards compatibility
           ERECYC(is,:)=0.3_R8
         endif
       enddo
+cmb  Default Franck-condon energy is 2eV per atom
+      e_fc= 2.0_R8  
+cmb  Default is to accelerate ions everywhere with sheath potential (target & wall) 
+      accel_ion = 1
       RCION=0.0_R8
       recyceir=1.0_R8
       USERFLUXPARM=0.0_R8
@@ -347,6 +363,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       volrecwt=0.1_R8
       species_start(:)=0
       species_end(:)=nsd-1
+      maxw(:) = 0
       neutrals_filename='b2.neutrals.parameters'
       neutrals_time_mod=0.0_R8
       neutrals_time_switch=0.0_R8
@@ -459,6 +476,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(CRCSTRA)
       deallocate(species_start)
       deallocate(species_end)
+      deallocate(maxw)
       deallocate(b2eatcr)
       deallocate(b2espcr)
       deallocate(eb2atcr)
@@ -726,6 +744,8 @@ c
      &   species_end(istra).lt.ns, 'faulty input species_end')
         call xertst (species_start(istra).le.species_end(istra),
      .   'faulty inputs species_start > species_end')
+        call xertst ((0.eq.maxw(istra)).or.
+     &    (1.eq.maxw(istra)), 'faulty input maxw')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
           call xertst (0.0_R8.le.erecyc(is,istra),

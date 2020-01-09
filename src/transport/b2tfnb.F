@@ -95,6 +95,7 @@
      *   fna_mdf0(nFc,0:1),
      *   cddb(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)                              !lk
+      real (kind=R8) :: term3
       integer :: xcount, ycount
       save ncall, alpha, gamma, flux_limit_min_ti, no_hybr
 *   ..procedures
@@ -540,6 +541,8 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
 *   ..compute other fluxes
       dv%fna(:,0,isb)      = fna_mdf0(:,0) +  
      &      (flo(:,0) - flo_mdf(:,0))*nbf - co%cdpa(:,0,isb)*dpb(:,0)
+
+      term3 = co%cdpa(157,0,0)*dpb(157,0)
       dv%fna(:,1,isb)      = fna_mdf0(:,1) +  
      &      (flo(:,1) - flo_mdf(:,1))*nbf - co%cdpa(:,1,isb)*dpb(:,1)
 

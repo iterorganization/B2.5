@@ -641,6 +641,14 @@
 *     coefficient at electron temperature rtt(i) and electron density
 *     rtn(j), for processes starting from atomic species k. rtrqa has
 *     dimension ev*m**3/s.
+*     rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
+*     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
+*     coefficient at electron temperature rtt(i)
+*     and electron density rtn(j) for processes starting from charge
+*     state k. rtqa_ra only includes the contribution of recombination
+*     which replaces amjuel when EIRENE is not used. rtqa_ra has 
+*     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
 *     logu(rtrcx), where rtrcx is the charge exchange rate coefficient
@@ -1068,6 +1076,7 @@ c     &   'faulty internal parameter density_rescale')
              rtlsa(:,is,:)=rtlsa(:,0,:)
              rtlra(:,is,:)=rtlra(:,0,:)
              rtlqa(:,is,:)=rtlqa(:,0,:)
+             rtlqa_ra(:,is,:)=rtlqa_ra(:,0,:)                        !mb 22.05.18
              rtlcx(:,is,:)=rtlcx(:,0,:)
              rtlrd(:,is,:)=rtlrd(:,0,:)
              rtlbr(:,is,:)=rtlbr(:,0,:)
@@ -1114,6 +1123,7 @@ c     &   'faulty internal parameter density_rescale')
              rtlsa(:,:,is)=rtlsa(:,:,is)+log(rescale_sa(is))
              rtlra(:,:,is)=rtlra(:,:,is)+log(rescale_ra(is))
              rtlqa(:,:,is)=rtlqa(:,:,is)+log(rescale_qa(is))
+             rtlqa_ra(:,:,is)=rtlqa_ra(:,:,is)+log(rescale_qa(is))
              rtlcx(:,:,is)=rtlcx(:,:,is)+log(rescale_cx(is))
              rtlrd(:,:,is)=rtlrd(:,:,is)+log(rescale_rd(is))
              rtlbr(:,:,is)=rtlbr(:,:,is)+log(rescale_br(is))

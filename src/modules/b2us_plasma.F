@@ -165,7 +165,8 @@ cwdk move to dv
         ! nCv, dir, is
         real(R8), allocatable, dimension(:,:,:) :: rlqa, rlrd, rlbr, 
      .                                             rlra, rlsa, rlza, 
-     .                                             rlz2, rlpt, rlpi
+     .                                             rlz2, rlpt, rlpi,
+     .                                             rlqa_ra
         ! nCv, is
         real(R8), allocatable, dimension(:,:) :: rza, rz2, rpt, rpi
       end type B2Rates
@@ -173,7 +174,7 @@ cwdk move to dv
   ! Type for data transfer in b2sral
       type B2RatesWork          
         real(R8), allocatable :: rsa(:,:), rra(:,:), rqa(:,:), rrd(:,:),
-     .                           rbr(:,:), rcx(:,:) 
+     .                           rbr(:,:), rcx(:,:), rqa_ra(:,:)
       end type B2RatesWork
 
   ! A plasma state snapshot for timestepping. Includes a combination of quantities from above types
@@ -856,6 +857,7 @@ cwdk move to dv
       allocate( rt%rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1 ) )
       
       allocate( rt%rlqa( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlqa_ra( nCv, 0:1, 0:ns-1 ) )
       allocate( rt%rlrd( nCv, 0:1, 0:ns-1 ) )
       allocate( rt%rlbr( nCv, 0:1, 0:ns-1 ) )
       allocate( rt%rlra( nCv, 0:1, 0:ns-1 ) )
@@ -880,6 +882,7 @@ cwdk move to dv
       deallocate (rt%iscx )
       deallocate( rt%rlcx )
       deallocate( rt%rlqa )
+      deallocate( rt%rlqa_ra )
       deallocate( rt%rlrd )
       deallocate( rt%rlbr )
       deallocate( rt%rlra )
@@ -906,6 +909,7 @@ cwdk move to dv
       allocate( rtw%rsa( nCv, 0:ns-1 ) )
       allocate( rtw%rra( nCv, 0:ns-1 ) )
       allocate( rtw%rqa( nCv, 0:ns-1 ) )
+      allocate( rtw%rqa_ra( nCv, 0:ns-1 ) )
       allocate( rtw%rrd( nCv, 0:ns-1 ) )
       allocate( rtw%rbr( nCv, 0:ns-1 ) )
       allocate( rtw%rcx( nCv, 0:ns-1 ) )
@@ -920,6 +924,7 @@ cwdk move to dv
       if ( allocated( rtw%rsa ) ) deallocate( rtw%rsa )
       if ( allocated( rtw%rra ) ) deallocate( rtw%rra )
       if ( allocated( rtw%rqa ) ) deallocate( rtw%rqa )
+      if ( allocated( rtw%rqa_ra ) ) deallocate( rtw%rqa_ra )
       if ( allocated( rtw%rrd ) ) deallocate( rtw%rrd )
       if ( allocated( rtw%rbr ) ) deallocate( rtw%rbr )
       if ( allocated( rtw%rcx ) ) deallocate( rtw%rcx )

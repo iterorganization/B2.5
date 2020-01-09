@@ -377,8 +377,8 @@ c accounted for)
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
 *      ..if adpak_used, also contains recombination and CX terms
-          t0 = phm0*rtw%rqa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
-     &                                             pl%na(iCv,is)    !srv 05.06.18
+          t0 = phm0*(rtw%rqa(iCv,is)+rtw%rqa_ra(iCv,is))
+     &         *geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)    !srv 05.06.18
 *      ..compute electron heat sink
           srw%she0(iCv,0) = srw%she0(iCv,0)+rf0*t0
           srw%she0(iCv,3) = srw%she0(iCv,3)-

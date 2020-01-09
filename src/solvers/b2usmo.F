@@ -242,6 +242,15 @@
        call my_out_us(70,nCv,0,corub,name//'_corub')
        call my_out_us(70,nCv,0,pccb(1,0),name//'_pccbx')
        call my_out_us(70,nCv,0,pccb(1,1),name//'_pccby')
+       call my_out_us(70,nCv,0,rob,name//'_rob')
+       call my_out_us(70,nCv,0,pb,name//'_pb')
+       call my_out_us(70,nCv,0,smb(:,0),name//'_smb0')
+       call my_out_us(70,nCv,0,smb(:,1),name//'_smb1')
+       call my_out_us(70,nCv,0,smb(:,2),name//'_smb2')
+       call my_out_us(70,nCv,0,smb(:,3),name//'_smb3')
+       call my_out_us(70,nFc,1,flcb,name//'_flcb')
+       call my_out_us(70,nFc,1,cvsb,name//'_cvsb')
+
       endif                                                           !srv 17.06.02 }
 
 * ..return

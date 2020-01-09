@@ -346,6 +346,8 @@ cdjm Jan2017 update momentum source components for balance
 !WG_TODO         call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
 !WG_TODO       endif
 
+      call my_out_us(70,nFc,1,co%cvsahz(1,:,is),'b2npmo_cvsahz'//chns)
+      call my_out_us(70,nFc,1,flub,'b2npmo_flub'//chns)
 *    ..compute residual
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &            .or.get_residuals.eq.1) then                         !srv 22.05.18
@@ -505,14 +507,16 @@ c     ..compare 9-pt stencil matrices
      &        rxf*med(dv%corua(iCv,is),dv%corut(iCv),
      &        dv%corua(iCv,is)+dv%corut(iCv))
           else                                                     !srv 22.05.18  {
-            pl%ua(iCv,is) = pl%ua(iCv,is) + dv%corua(iCv,is)
+            pl%ua(iCv,is) = pl%ua(iCv,is) + rxf*dv%corua(iCv,is)
           endif                                                    !srv 22.05.18  }
         endif
        enddo
        do iCv = mpg%nCi+1, nCv ! guard cells
         ireg = mpg%cvReg(iCv)
         if (solvemo(is,ireg)) then
-         pl%ua(iCv,is) = pl%ua(iCv,is) + dv%corua(iCv,is)
+         if (rxf.ne.0.0_R8) then    !! when rxf is zero we would like to keep ua constant for debugging purposes
+          pl%ua(iCv,is) = pl%ua(iCv,is) + dv%corua(iCv,is)
+         endif
         endif
        enddo
       enddo

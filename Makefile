@@ -915,7 +915,7 @@ ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
 	-mkdir -p ${OBJDIR}
 endif
 	touch ${OBJDIR}/dependencies
-	${MAKE} tags
+	#${MAKE} tags
 	${MAKE} VERSION
 	${MAKE} local
 	${MAKE} listobj

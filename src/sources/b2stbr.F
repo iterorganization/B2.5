@@ -448,7 +448,7 @@ c   --> better solution wanted here..
         endif
 #endif
         call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
-     &  dtim, BoRiS, geo, mpg, pl, dv, rt, rtw, st_ext, srw,
+     &  dtim, BoRiS, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
      &  tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &  neutral_sources_rescale, core_sources_rescale,  
@@ -1082,6 +1082,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_sputter
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
+      use b2mod_recycle
       use b2us_map
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
@@ -1104,9 +1105,9 @@ c        write(*,*) 'Called neutr_scl'
 
 *   ..local variables
       integer nCg_tmp, ns_tmp
-      integer is, istra
+      integer is, istra,nbnd2
       integer use_eirene, neutrals_namelist
-      integer sput_src, sput_chem_model
+      integer sput_src, sput_chem_model,kul_recycle
       real (kind=R8) :: sput_frc
       logical new_sputter_namelist, catch_up, wall_namelist_used
       character*256 filename
@@ -1115,7 +1116,8 @@ c        write(*,*) 'Called neutr_scl'
       external subini, subend, xertst, xerrab, ipgeti, ipgetr
 *   ..initialisation
       data use_eirene/0/, neutrals_namelist/0/,
-     *  sput_src/1/, sput_chem_model/0/, sput_frc/0.0_R8/
+     *  sput_src/1/, sput_chem_model/0/, sput_frc/0.0_R8/,
+     *  kul_recycle/1/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -1134,6 +1136,7 @@ c        write(*,*) 'Called neutr_scl'
       call ipgeti ('b2stbr_sput_dst3', sput_dst3)
       call ipgetr ('b2stbr_sput_frc', sput_frc)
       call ipgeti ('b2stbr_sput_chem_model', sput_chem_model)
+      call ipgeti ('b2stbr_kul_recycle', kul_recycle)              !mb  12.07.17 
       if(sput_frc.ne.0.0_R8) then
         call xertst (0.le.sput_src.and.sput_src.lt.ns,
      1     'faulty b2stbr_sput_src')
@@ -1274,6 +1277,9 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       nCg_sp = nCg_tmp
       ns_sp = ns_tmp
 #endif
+cmb  Load pre-evaluated integrals for advanced recyling model based on TRIM data
+      nbnd2 = 60 !! TODO
+      if (kul_recycle.eq.1) call read_recycle_DCfnn(ns,nbnd2)            !mb 12.07.17
       call subend ()
       return
 

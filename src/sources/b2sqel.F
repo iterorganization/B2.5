@@ -105,6 +105,8 @@
 *      ..compute heat loss rate coefficient
          rtw%rqa(iCv,is) = phm2*
      &     ev*expu(rt%rlqa(iCv,0,is)+rt%rlqa(iCv,1,is)*wrk0(iCv))
+         rtw%rqa_ra(iCv,is) = phm2*
+     &     ev*expu(rt%rlqa_ra(iCv,0,is)+rt%rlqa_ra(iCv,1,is)*wrk0(iCv))
 *      ..compute line radiation rate coefficient
          rtw%rrd(iCv,is) = phm2*
      &     ev*expu(rt%rlrd(iCv,0,is)+rt%rlrd(iCv,1,is)*wrk0(iCv))

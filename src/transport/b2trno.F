@@ -71,13 +71,14 @@
       character(3) chns                                               !srv 17.06.08
       integer, save :: flux_limit_to_dpa = 1, csig_an_style = 1       !srv 15.06.08
       integer, save :: flux_limit_style = 2                           !srv 07.12.15
+      integer, save :: user_transport = 0                             !mb  11.10.17  
       real (kind=R8), save :: fch_stochastic = 0.0_R8,
      &                        alpha_stoch = 1.0e0_R8                  !srv 17.12.13
       real (kind=R8) ::
      &  csig_stoch(nFc), fchstoch(nFc),                               !lk 31.01.08
      &  chce_stoch(nFc)                                               !srv 20.09.17
       real (kind=R8) ::
-     *  wrk(nFc), wrk1(nFc,2), wrkv(nVx), 
+     *  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrk_afn(nCv),
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),          !srv 09.07.03 30.11.15
      3  flchz(nFc,0:1,0:ns-1),                            !srv 09.07.03 30.11.15
@@ -103,6 +104,7 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall.eq.0) then
+        call ipgeti ('b2tqna_user_transport', user_transport)        !mb  11.10.17
         call ipgetr ('b2trno_pol_anom_scale', pol_anom_scale)
         call ipgeti ('b2tral_mode', mode)
         call ipgeti ('b2trno_flux_limit_to_dpa', flux_limit_to_dpa)
@@ -204,6 +206,23 @@
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%vsa0(1,is), co%cvsahz(1,1,is))                            !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
+
+
+*   ..Correction for advanced fluid neutral model                     !mb 09.10.17
+c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
+      if (user_transport.eq.10) then 
+       do is = 0, ns-1
+         if (is_neutral(is).and.zn(is).eq.1.0_R8) then
+           wrk_afn =  co%dpa0(:,is)*geo%cvbb(:,2)/geo%cvbb(:,3)
+           call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &                 wrk_afn, co%cdpa(1,0,is))   
+           call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
+     &                 wrk_afn, co%cdpahz(1,0,is))
+         endif
+       enddo
+      endif
+
+
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       co%cvsa_an = co%cvsa                                            !srv 04.10.99
       call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 

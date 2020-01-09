@@ -15,7 +15,8 @@
 *     ------------------------------------------------------------------
       integer iFc
       real (kind=R8) ::
-     *   t0, t1
+     *   t0, t1, term1,term2,term3,term4,term5,term6,term7,term8,
+     *   term9,term10,term11,term12
       intrinsic max, sqrt
       external subini, subend, xertst
       external b2xxgs
@@ -55,6 +56,18 @@
      &   (fcVol(iFc,1)*kapx(mpg%fcCv(iFc,1)) + 
      &    fcVol(iFc,2)*kapx(mpg%fcCv(iFc,2)))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
+       term1 = fcVol(iFc,1)
+       term2 = kapx(mpg%fcCv(iFc,1))
+       term3 = fcVol(iFc,2)
+       term4 = kapx(mpg%fcCv(iFc,2))
+       term5 = geo%fcHc(iFc,1)
+       term6 = geo%fcHc(iFc,2)
+       term7 = term1*term2
+       term8 = term3*term4
+       term9 = term7+term8
+       term10 = term5+term6
+       term11 = term10**2
+       term12 = term9/term11
        enddo
       else if (mode.eq.2) then
 *    ..use arithmetic averaging (SOLPS4.0 formulation)
