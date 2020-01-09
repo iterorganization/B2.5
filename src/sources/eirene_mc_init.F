@@ -12,13 +12,6 @@
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-cwdk
-c#ifndef B25_EIRENE                                                   !srv (mail 15.01.08)
-c      call eirene_extrab25_eirdiag_alloc(nxdd,nydd,
-c     .                     natm,nmol,nion,nlimps,nstra,npls)          !srv 14.10.13
-c      call eirene_extrab25_eirpbls_alloc(1,natm,nmol,nion,npls,       !srv 14.10.13
-c     &                                       nstra,nfl)               !srv 03.04.13
-c#endif
 
 cwdk  copy-paste from eirene_extrab25 allocations (Eirene_dummy)
 c     avoids double module definition in case code is compiled with Eirene 
