@@ -1,6 +1,4 @@
-c  savest version:
-c  all tests included
-      subroutine binsearch_0(xx,n,x,i)
+      subroutine binsearch(xx,n,x,i)
 c     ***********************************************************
 c     * ermittlung des Feldindex i mit vorgegebener zahl x,     *
 c     * so dass x zwischen xx(i) und xx(i+1)                    *
@@ -13,6 +11,10 @@ c     * *********************************************************
       integer, intent(out) :: i
       real(kind=R8), intent(in) :: xx(n), x
       integer :: bl, bm, bu
+ 
+c  savest version:
+c  all tests included
+      entry binsearch_0(xx,n,x,i)
  
       bl=0
       bu=n+1
@@ -56,18 +58,11 @@ c  binary search
       end if
 c
       return
-      end subroutine binsearch_0 
+ 
 c  fast version:
 c  we already know: a)  xx is monotonically increasing (not decreasing)
 c                   b)  x  lies between xx(1) and xx(n)
-      subroutine binsearch_2(xx,n,x,i)
-      use B2MOD_TYPES
-      implicit none
- 
-      integer, intent(in) :: n
-      integer, intent(out) :: i
-      real(kind=R8), intent(in) :: xx(n), x
-      integer :: bl, bm, bu
+      entry binsearch_2(xx,n,x,i)
  
       bl=0
       bu=n+1
@@ -85,4 +80,4 @@ c
       i=bl
  
       return
-      end subroutine binsearch_2
+      end

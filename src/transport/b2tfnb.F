@@ -86,9 +86,12 @@
      *   dpo(nFc,0:1), dnbti(nFc,0:1),
      *   nbf(nFc), rzf(nFc),
      *   dOnedBsq(nFc,0:1),
-     *   fna_mdf0(nFc,0:1), flo_factor(nFc,0:1), cdpb(nFc,0:1)
-      real (kind=R8) :: weight(nFc,2)                                    !lk
-      integer :: xcount
+     *   fna_mdf0(nFc,0:1),
+     *   cddb(nFc,0:1)
+      real (kind=R8) :: weight(nFc,2)                              !lk
+      real (kind=R8) :: term3
+      integer :: xcount, ycount
+      save ncall, alpha, gamma, flux_limit_min_ti, no_hybr
 *   ..procedures
       external xertst, ipgeti, ipgetr                                    !xpb
       external b2xvsg, intface, diff
@@ -469,57 +472,41 @@ cwdk                   (original code: simple averaging)
       dv%fna_32(:,0,isb) = dv%fna_32(:,0,isb) + term
 
 *   ..compute other fluxes
-      dv%fna(:,0,isb)      = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf +
-     &  (flo(:,0) - flo_mdf(:,0))*nbf - co%cdpa(:,0,isb)*dpb(:,0)
+      dv%fna(:,0,isb)      = fna_mdf0(:,0) +  
+     &      (flo(:,0) - flo_mdf(:,0))*nbf - co%cdpa(:,0,isb)*dpb(:,0)
 
-      dv%fna(:,1,isb)      = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +
-     &  (flo(:,1) - flo_mdf(:,1))*nbf - co%cdpa(:,1,isb)*dpb(:,1)
+      term3 = co%cdpa(157,0,0)*dpb(157,0)
+      dv%fna(:,1,isb)      = fna_mdf0(:,1) +  
+     &      (flo(:,1) - flo_mdf(:,1))*nbf - co%cdpa(:,1,isb)*dpb(:,1)
 
-      dv%fna_mdf(:,0,isb)  = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf -
-     &   co%cdpa(:,0,isb)*dpb(:,0) - dv%fnaPSch(:,0,isb)
-      dv%fna_mdf(:,1,isb)  = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf -
-     &   co%cdpa(:,1,isb)*dpb(:,1) - dv%fnaPSch(:,1,isb)
+      dv%fna_mdf(:,0,isb)  = fna_mdf0(:,0) - 
+     &      co%cdpa(:,0,isb)*dpb(:,0) - dv%fnaPSch(:,0,isb)
+      dv%fna_mdf(:,1,isb)  = fna_mdf0(:,1) - 
+     &      co%cdpa(:,1,isb)*dpb(:,1) - dv%fnaPSch(:,1,isb)
 
-      dv%fna_fcor(:,0,isb) = fna_mdf0(:,0)*geo%fcHz +
-     &  (1.0_R8-drift_hyb)*geo%fcHz*
-     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf +
-     &  (flo2dia(:,0) - flo_mdf(:,0)*geo%fcHz)*nbf -
-     &   co%cdpahz(:,0,isb)*dpb(:,0)
-      dv%fna_fcor(:,1,isb) = fna_mdf0(:,1)*geo%fcHz +
-     &  (1.0_R8-drift_hyb)*geo%fcHz*
-     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +
-     &  (flo2dia(:,1) - flo_mdf(:,1)*geo%fcHz)*nbf -
-     &   co%cdpahz(:,1,isb)*dpb(:,1)
+      dv%fna_fcor(:,0,isb) = fna_mdf0(:,0)*wrk3 + 
+     &      (flo2dia(:,0) - flo_mdf(:,0)*wrk3)*nbf - 
+     &       co%cdpahz(:,0,isb)*dpb(:,0)
+      dv%fna_fcor(:,1,isb) = fna_mdf0(:,1)*wrk3 + 
+     &      (flo2dia(:,1) - flo_mdf(:,1)*wrk3)*nbf - 
+     &       co%cdpahz(:,1,isb)*dpb(:,1)
 
-      dv%fna_he(:,0,isb)   = fac_he_anom*fna_mdf0(:,0) +
-     &  (1.0_R8-drift_hyb)*
-     &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf +
-     &  (flo_he(:,0) - fac_he_anom*flo_mdf(:,0))*nbf -
-     &  (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
-      dv%fna_he(:,1,isb)   = fac_he_anom*fna_mdf0(:,1) +
-     &  (1.0_R8-drift_hyb)*
-     &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf +
-     &  (flo_he(:,1) - fac_he_anom*flo_mdf(:,1))*nbf -
-     &  (5.0_R8/3.0_R8)*co%cdpa(:,1,isb)*dpb(:,1)
+      dv%fna_he(:,0,isb)   = fna_mdf0(:,0)*(5.0_R8/3.0_R8) + 
+     &      (flo_he(:,0) - (5.0_R8/3.0_R8)*flo_mdf(:,0))*nbf - 
+     &      (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
+      dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*(5.0_R8/3.0_R8) + 
+     &      (flo_he(:,1) - (5.0_R8/3.0_R8)*flo_mdf(:,1))*nbf - 
+     &      (5.0_R8/3.0_R8)*co%cdpa(:,1,isb)*dpb(:,1)
 
-      dv%fna_53(:,0,isb)   = flo_53(:,0)*nbf
-      dv%fna_53(:,1,isb)   = flo_53(:,1)*nbf
+      dv%fna_32(:,0,isb)   = dv%fna_32(:,0,isb) + 
+     &     (flo(:,0) - flo_mdf(:,0))*nbf
+      dv%fna_32(:,1,isb)   = dv%fna_32(:,1,isb) + 
+     &     (flo(:,1) - flo_mdf(:,1))*nbf
 
-      dv%fna_32(:,0,isb)   = dv%fna_32(:,0,isb) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf +
-     &  (flo(:,0) - flo_mdf(:,0))*nbf
-      dv%fna_32(:,1,isb)   = dv%fna_32(:,1,isb) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +
-     &  (flo(:,1) - flo_mdf(:,1))*nbf
-
-      dv%fna_52(:,0,isb)   = dv%fna_52(:,0,isb) -
-     &   co%cdpa(:,0,isb)*dpb(:,0)
-      dv%fna_52(:,1,isb)   = dv%fna_52(:,1,isb) -
-     &   co%cdpa(:,1,isb)*dpb(:,1)
+      dv%fna_52(:,0,isb)   = dv%fna_52(:,0,isb) - 
+     &     co%cdpa(:,0,isb)*dpb(:,0)
+      dv%fna_52(:,1,isb)   = dv%fna_52(:,1,isb) - 
+     &     co%cdpa(:,1,isb)*dpb(:,1)
 
 *   ..apply discretization scheme for density-part of fna_nodrift
       call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),

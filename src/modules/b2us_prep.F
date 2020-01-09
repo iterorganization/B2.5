@@ -3079,7 +3079,7 @@
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
           st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-          st % rt % rlqr(ic,0:1,0:ns-1) = rlqr(ix,iy,0:1,0:ns-1)
+          st % rt % rlqa_ra(ic,0:1,0:ns-1) = rlqa_ra(ix,iy,0:1,0:ns-1)
           st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
           st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
           st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
@@ -3174,7 +3174,7 @@
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
           st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-          st % rt % rlqr(ic,0:1,0:ns-1) = rlqr(ix,iy,0:1,0:ns-1)
+          st % rt % rlqa_ra(ic,0:1,0:ns-1) = rlqa_ra(ix,iy,0:1,0:ns-1)
           st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
           st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
           st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
@@ -3273,7 +3273,7 @@
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
           st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-          st % rt % rlqr(ic,0:1,0:ns-1) = rlqr(ix,iy,0:1,0:ns-1)
+          st % rt % rlqa_ra(ic,0:1,0:ns-1) = rlqa_ra(ix,iy,0:1,0:ns-1)
           st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
           st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
           st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
@@ -3369,7 +3369,7 @@
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
           st % rt % rlrd(ic,0:1,0:ns-1) = rlrd(ix,iy,0:1,0:ns-1)
           st % rt % rlqa(ic,0:1,0:ns-1) = rlqa(ix,iy,0:1,0:ns-1)
-          st % rt % rlqr(ic,0:1,0:ns-1) = rlqr(ix,iy,0:1,0:ns-1)
+          st % rt % rlqa_ra(ic,0:1,0:ns-1) = rlqa_ra(ix,iy,0:1,0:ns-1)
           st % rt % rlra(ic,0:1,0:ns-1) = rlra(ix,iy,0:1,0:ns-1)
           st % rt % rlsa(ic,0:1,0:ns-1) = rlsa(ix,iy,0:1,0:ns-1)
           st % rt % rlza(ic,0:1,0:ns-1) = rlza(ix,iy,0:1,0:ns-1)
@@ -3696,7 +3696,16 @@
       call createB2Plasma( mpg%nCv, ns, st % pl )
       call createB2Derivatives( mpg%nCv, mpg%nFc, ns, st % dv )
 
-!     nfx = (nx+1)*ny
+*   ..allocate modules for structured grid
+      if (.not.allocated(fch))  call alloc_b2mod_plasma(nx,ny,ns)
+      if (.not.allocated(ceqp)) call alloc_b2mod_transport(nx,ny,ns)
+      if (.not.allocated(dna0)) 
+     .    call alloc_b2mod_anomalous_transport(nx,ny,ns)
+      if (.not.allocated(conb))  call alloc_b2mod_work(nx,ny,ns)
+      if (.not.allocated(resco)) call alloc_b2mod_residuals(nx,ny,ns)
+      if (.not.allocated(rlqa))  call alloc_b2mod_rates(nx,ny,ns)
+      if (.not.allocated(rlqa_ra))  call alloc_b2mod_rates(nx,ny,ns)
+      if (.not.allocated(sch))   call alloc_b2mod_sources(nx,ny,ns)
 
       st % ns = ns
       st % ismain = 1
@@ -4184,7 +4193,7 @@
           rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
           rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
           rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-          rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
+          rlqa_ra(ix,iy,0:1,0:ns-1) = st % rt % rlqa_ra(ic,0:1,0:ns-1)
           rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
           rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
           rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
@@ -4196,6 +4205,94 @@
           rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
           rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
           rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+          endif
+        end do
+      end do
+      
+! gueard cells iy = -1 and iy = ny
+      do ix = 0, nx-1
+        iy = -1
+        if(mpg%imapCv(ix,iy)/=0) then
+          ic =  mpg%imapCv(ix,iy)
+
+! B2plasma
+        na(ix,iy,0:ns-1) = st % pl % na(ic,0:ns-1)
+        ua(ix,iy,0:ns-1) = st % pl % ua(ic,0:ns-1)
+        po(ix,iy)        = st % pl % po(ic)
+        te(ix,iy)        = st % pl % te(ic)
+        ti(ix,iy)        = st % pl % ti(ic)
+
+! B2coeff
+        ceqp(ix,iy) = st % co % ceqp(ic)
+
+! from b2coeffwork
+        dna0(ix,iy,0:ns-1)     = st % co % dna0(ic,0:ns-1)
+        dpa0(ix,iy,0:ns-1)     = st % co % dpa0(ic,0:ns-1)
+        vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
+        vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
+        hci0(ix,iy)            = st % co % hci0(ic)
+        hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
+        hce0(ix,iy)            = st % co % hce0(ic)
+        sig0(ix,iy)            = st % co % sig0(ic)
+        alf0(ix,iy)            = st % co % alf0(ic)
+        
+! kinetic energy
+        kinrgy(ix,iy,0:ns-1) = st % dv % kinrgy(ic,0:ns-1)
+     
+! derived state quantities
+        ne(ix,iy)     = st % dv % ne(ic)
+        ne2(ix,iy)    = st % dv % ne2(ic)
+        ni(ix,iy,0:1) = st % dv % ni(ic,0:1)
+!       ue(ix,iy)     = st % dv % ue(ic)
+        
+! residuals
+        resmo(ix,iy,0:ns-1) = st % dv % resmo(ic,0:ns-1)
+        resco(ix,iy,0:ns-1) = st % dv % resco(ic,0:ns-1)
+        respo(ix,iy)        = st % dv % respo(ic)
+        reshe(ix,iy)        = st % dv % reshe(ic)
+        reshi(ix,iy)        = st % dv % reshi(ic)
+!       resht(ix,iy)        = st % dv % resht(ic)
+        resmt(ix,iy)        = st % dv % resmt(ic)
+      
+! corrections
+        corua(ix,iy,0:ns-1) = st % dv % corua(ic,0:ns-1)
+        corpa(ix,iy,0:ns-1) = st % dv % corpa(ic,0:ns-1)
+        corut(ix,iy)        = st % dv % corut(ic)
+        corpo(ix,iy)        = st % dv % corpo(ic)
+!       cortt(ix,iy)        = st % dv % cortt(ic)
+        corte(ix,iy)        = st % dv % corte(ic)
+        corti(ix,iy)        = st % dv % corti(ic)
+      
+! coupling coefficients
+        pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
+        pccm(ix,iy,0,0)        = st % dv % pccm(ic,0)
+        pcca(ix,iy,1,1,0:ns-1) = st % dv % pcca(ic,1,0:ns-1)
+        pccm(ix,iy,1,1)        = st % dv % pccm(ic,1)
+        
+! B2SourceWork
+        sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
+        she(ix,iy,0:3)        = st % sr % she(ic,0:3)
+        shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+        smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
+        smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
+        sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
+       
+! B2rates
+        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
+        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+        rlqa_ra(ix,iy,0:1,0:ns-1) = st % rt % rlqa_ra(ic,0:1,0:ns-1)
+        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
+        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
+        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
+        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
+        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
+        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
+
+        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
+        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
+        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
+        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
 
         iy = ny
@@ -4285,21 +4382,21 @@
           sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
-          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-          rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
-          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-          rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
-          rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
-          rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
-          rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
-          rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
-          rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
-          rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
+        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
+        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+        rlqa_ra(ix,iy,0:1,0:ns-1) = st % rt % rlqa_ra(ic,0:1,0:ns-1)
+        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
+        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
+        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
+        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
+        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
+        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
 
-          rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
-          rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
-          rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
-          rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
+        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
+        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
+        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
       end do
 
@@ -4392,21 +4489,21 @@
           sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
-          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-          rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
-          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-          rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
-          rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
-          rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
-          rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
-          rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
-          rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
-          rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
+        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
+        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+        rlqa_ra(ix,iy,0:1,0:ns-1) = st % rt % rlqa_ra(ic,0:1,0:ns-1)
+        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
+        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
+        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
+        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
+        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
+        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
 
-          rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
-          rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
-          rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
-          rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
+        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
+        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
+        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
 
         ix = nx
@@ -4496,21 +4593,21 @@
           sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
 
 ! B2rates
-          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-          rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
-          rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
-          rlqr(ix,iy,0:1,0:ns-1) = st % rt % rlqr(ic,0:1,0:ns-1)
-          rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
-          rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
-          rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
-          rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
-          rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
-          rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
+        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+        rlrd(ix,iy,0:1,0:ns-1) = st % rt % rlrd(ic,0:1,0:ns-1)
+        rlqa(ix,iy,0:1,0:ns-1) = st % rt % rlqa(ic,0:1,0:ns-1)
+        rlqa_ra(ix,iy,0:1,0:ns-1) = st % rt % rlqa_ra(ic,0:1,0:ns-1)
+        rlra(ix,iy,0:1,0:ns-1) = st % rt % rlra(ic,0:1,0:ns-1)
+        rlsa(ix,iy,0:1,0:ns-1) = st % rt % rlsa(ic,0:1,0:ns-1)
+        rlza(ix,iy,0:1,0:ns-1) = st % rt % rlza(ic,0:1,0:ns-1)
+        rlz2(ix,iy,0:1,0:ns-1) = st % rt % rlz2(ic,0:1,0:ns-1)
+        rlpt(ix,iy,0:1,0:ns-1) = st % rt % rlpt(ic,0:1,0:ns-1)
+        rlpi(ix,iy,0:1,0:ns-1) = st % rt % rlpi(ic,0:1,0:ns-1)
 
-          rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
-          rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
-          rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
-          rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
+        rza(ix,iy,0:ns-1) = st % rt % rza(ic,0:ns-1)
+        rz2(ix,iy,0:ns-1) = st % rt % rz2(ic,0:ns-1)
+        rpt(ix,iy,0:ns-1) = st % rt % rpt(ic,0:ns-1)
+        rpi(ix,iy,0:ns-1) = st % rt % rpi(ic,0:ns-1)
         endif
       end do
 

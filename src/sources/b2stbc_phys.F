@@ -529,10 +529,13 @@ cwdk  now need to recompute full diamagnetic component for ud
         end if
 
 * -- BOUNDARY CONDITIONS FOR CONTINUITY EQUATIONS --
-        select case (BCCON(IS,IB))
-
-        case (0)
-          continue
+          if(BCCON(IS,IB).eq.0) goto 10000
+          GOTO(100,200,300,400,500,600,700,800,900,1000,
+     1     1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,
+     2     2100,2200,2300,2400,2500,2600,2700,2800),
+     .     BCCON(IS,IB)
+          write(*,*) BCCON(IS,IB)
+          call xerrab ('BCCON out of bounds')
 
 * -- BCCON=1 -- PRESCRIBE THE VALUE OF THE DENSITY
 
@@ -2595,7 +2598,48 @@ cxpb  Add contribution from Eirene core boundary fluxes
           ELSE                                                         !srv 16.02.12 }
             CALL XERRAB
      1       ('B2STBC -- BCCON=27 IS AVAILABLE FOR CORE ONLY')
-          ENDIF                                                        !IYS 04.03.2013 }
+          ENDIF
+          GOTO 10000                                                   !IYS 04.03.2013 }
+#endif
+
+* -- BCCON=28 -- PUT SOURCE TERMS TO ZERO
+
+ 2800     CONTINUE
+          if(ncall.eq.0) then
+            IF(BCCHAR(iB).EQ.'S') THEN
+            if(is.eq.ismain.and.use_astra.ne.0) then
+              conpar(is,iB,1) = neb_astra                               !srv 28.07.11
+            endif
+            ENDIF
+            if (conpar(is,iB,1).eq.0.0_R8) then
+              conpar(is,iB,1) = na_min
+              write(*,*) 'Zero density B.C. no longer allowed!'
+              write(*,*) 'Changed to na_min.'
+            endif
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'constant density ',conpar(is,iB,1),' on ',
+     1       BCCHAR(iB),boundary_location(iB),' for species ',is
+            call xertst(conpar(is,iB,1).gt.0.0_R8,
+     1       'BCCON = 1, conpar(,,1) !> 0')
+          endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            srw%sna0(iCv1,0,is) = 0.0_R8
+            srw%sna0(iCv1,1,is) = 0.0_R8
+            sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
+            sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
+          enddo
+          GOTO 10000
+* -- BOUNDARY CONDITIONS FOR PARALLEL MOMENTUM EQUATIONS --
+
+10000     CONTINUE
+          if(BCMOM(IS,IB).eq.0) goto 20000
+          GOTO(10100,10200,10300,10400,10500,
+     1         10600,10700,10800,10900,11000,
+     1         11100,11200,11300,11400,11500,
+     1         11600,11700,11800),BCMOM(IS,IB)      !srv 01.02.09 19.04.13
+          write(*,*) BCMOM(IS,IB)
+          call xerrab ('BCMOM out of bounds')
 
 * -- BCCON=28  Prescribe the flux surface averaged density, with poloidal
 *              perturbation taken from flux tube just inside domain
@@ -3400,25 +3444,24 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      .        (am(is)*mp))*(am(is)*mp)*mompar(is,ib,1)*pl%na(iCv1,is)
           enddo
 
+#endif
+
 * -- BCMOM=18 -- PRESCRIBE ZERO SOURCE TERMS (-> no flux)
 
-        case (18)
-          if(ncall_b2stbc_phys.eq.0) then
-            write(*,'(a,a,a,a,i3)')
-     .       'BCMOM = 18 : specified zero source terms (no flux) on ',
-     .       BCCHAR(IB),boundary_location(ib),' for species ',IS
+11800     CONTINUE
+          if(ncall.eq.0) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'specified parallel velocity ',MOMPAR(IS,IB,1),
+     1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                     ! number of the guard cell
-            srw%smo0(iCv,0,is)= 0.0_R8
-            srw%smo0(iCv,1,is)= 0.0_R8
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            srw%smo0(iCv1,0,is)= 0.0_R8
+            srw%smo0(iCv1,1,is)= 0.0_R8
+
           enddo
 
-        case default
-          write(*,*) BCMOM(IS,IB)
-          call xerrab ('BCMOM out of bounds')
-
-        end select
+          GOTO 20000
 * -- END LOOP OVER SPECIES
       enddo
 

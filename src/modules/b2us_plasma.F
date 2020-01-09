@@ -249,10 +249,10 @@
         ! nCv, dir, ns, 0:nscxmax-1
         real(R8), allocatable :: rlcx(:,:,:,:)
         ! nCv, dir, is
-        real(R8), allocatable, dimension(:,:,:) :: rlqa, rlrd, rlbr,
-     .                                             rlra, rlsa, rlza,
+        real(R8), allocatable, dimension(:,:,:) :: rlqa, rlrd, rlbr, 
+     .                                             rlra, rlsa, rlza, 
      .                                             rlz2, rlpt, rlpi,
-     .                                             rlqr
+     .                                             rlqa_ra
         ! nCv, is
         real(R8), allocatable, dimension(:,:) :: rza, rz2, rpt, rpi
       end type B2Rates
@@ -260,7 +260,7 @@
 ! Type for data transfer in b2sral
       type B2RatesWork
         real(R8), allocatable :: rsa(:,:), rra(:,:), rqa(:,:), rrd(:,:),
-     .                           rbr(:,:), rcx(:,:), rqr(:,:)
+     .                           rbr(:,:), rcx(:,:), rqa_ra(:,:)
       end type B2RatesWork
 
 ! A plasma state snapshot for timestepping. Includes a combination of quantities from above types
@@ -2114,95 +2114,52 @@
       type(B2Rates), intent(inout) :: rt
 
       if (allocated(rt % iscx)) return
-#ifndef LEGACYCOMP
-      allocate (rt % iscx( 0:rt%nscxmax-1 ), SOURCE=0 )
+      
+      allocate (rt%iscx( 0:rt%nscxmax-1 ) )
 
-      allocate( rt % rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1),
-     .                                        SOURCE=0._R8)
+      allocate( rt%rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1 ) )
+      
+      allocate( rt%rlqa( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlqa_ra( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlrd( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlbr( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlra( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlsa( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlza( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlz2( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlpt( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlpi( nCv, 0:1, 0:ns-1 ) )
+      
+      allocate( rt%rza( nCv, 0:ns-1 ) )
+      allocate( rt%rz2( nCv, 0:ns-1 ) )
+      allocate( rt%rpt( nCv, 0:ns-1 ) )
+      allocate( rt%rpi( nCv, 0:ns-1 ) )
 
-      allocate( rt % rlqa( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rlrd( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rlbr( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rlra( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rlsa( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rlza( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rlz2( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rlpt( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rlpi( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rlqr( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-
-      allocate( rt % rza( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rz2( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rpt( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt % rpi( nCv, 0:ns-1 ), SOURCE=0._R8 )
-#else
-      allocate (rt % iscx( 0:rt%nscxmax-1 ) )
-
-      allocate( rt % rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1) )
-
-      allocate( rt % rlqa( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt % rlrd( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt % rlbr( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt % rlra( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt % rlsa( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt % rlza( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt % rlz2( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt % rlpt( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt % rlpi( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt % rlqr( nCv, 0:1, 0:ns-1 ) )
-
-      allocate( rt % rza( nCv, 0:ns-1 ) )
-      allocate( rt % rz2( nCv, 0:ns-1 ) )
-      allocate( rt % rpt( nCv, 0:ns-1 ) )
-      allocate( rt % rpi( nCv, 0:ns-1 ) )
-
-      rt % iscx = 0
-
-      rt % rlcx = 0._R8
-
-      rt % rlqa = 0._R8
-      rt % rlrd = 0._R8
-      rt % rlbr = 0._R8
-      rt % rlra = 0._R8
-      rt % rlsa = 0._R8
-      rt % rlza = 0._R8
-      rt % rlz2 = 0._R8
-      rt % rlpt = 0._R8
-      rt % rlpi = 0._R8
-      rt % rlqr = 0._R8
-
-      rt % rza = 0._R8
-      rt % rz2 = 0._R8
-      rt % rpt = 0._R8
-      rt % rpi = 0._R8
-#endif
       return
       end subroutine createB2Rates
 
 
       subroutine destroyB2Rates( rt )
       type(B2Rates), intent(inout) :: rt
+      
+      deallocate (rt%iscx )
+      deallocate( rt%rlcx )
+      deallocate( rt%rlqa )
+      deallocate( rt%rlqa_ra )
+      deallocate( rt%rlrd )
+      deallocate( rt%rlbr )
+      deallocate( rt%rlra )
+      deallocate( rt%rlsa )
+      deallocate( rt%rlza )
+      deallocate( rt%rlz2 )
+      deallocate( rt%rlpt )
+      deallocate( rt%rlpi )
+      deallocate( rt%rza )
+      deallocate( rt%rz2 )
+      deallocate( rt%rpt )
+      deallocate( rt%rpi )
 
-      if (.not.allocated(rt % iscx)) return
-
-      deallocate( rt % iscx )
-      deallocate( rt % rlcx )
-      deallocate( rt % rlqa )
-      deallocate( rt % rlqr )
-      deallocate( rt % rlrd )
-      deallocate( rt % rlbr )
-      deallocate( rt % rlra )
-      deallocate( rt % rlsa )
-      deallocate( rt % rlza )
-      deallocate( rt % rlz2 )
-      deallocate( rt % rlpt )
-      deallocate( rt % rlpi )
-      deallocate( rt % rza )
-      deallocate( rt % rz2 )
-      deallocate( rt % rpt )
-      deallocate( rt % rpi )
-
-      return
+      return      
       end subroutine destroyB2Rates
 
 
@@ -2211,31 +2168,14 @@
       type(B2RatesWork), intent(inout) :: rtw
 
       if (allocated(rtw % rsa)) return
-#ifndef LEGACYCOMP
-      allocate( rtw % rsa( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw % rra( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw % rqa( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw % rrd( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw % rbr( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw % rcx( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw % rqr( nCv, 0:ns-1 ), SOURCE=0._R8 )
-#else
-      allocate( rtw % rsa( nCv, 0:ns-1 ) )
-      allocate( rtw % rra( nCv, 0:ns-1 ) )
-      allocate( rtw % rqa( nCv, 0:ns-1 ) )
-      allocate( rtw % rrd( nCv, 0:ns-1 ) )
-      allocate( rtw % rbr( nCv, 0:ns-1 ) )
-      allocate( rtw % rcx( nCv, 0:ns-1 ) )
-      allocate( rtw % rqr( nCv, 0:ns-1 ) )
-
-      rtw % rsa = 0._R8
-      rtw % rra = 0._R8
-      rtw % rqa = 0._R8
-      rtw % rrd = 0._R8
-      rtw % rbr = 0._R8
-      rtw % rcx = 0._R8
-      rtw % rqr = 0._R8
-#endif
+      
+      allocate( rtw%rsa( nCv, 0:ns-1 ) )
+      allocate( rtw%rra( nCv, 0:ns-1 ) )
+      allocate( rtw%rqa( nCv, 0:ns-1 ) )
+      allocate( rtw%rqa_ra( nCv, 0:ns-1 ) )
+      allocate( rtw%rrd( nCv, 0:ns-1 ) )
+      allocate( rtw%rbr( nCv, 0:ns-1 ) )
+      allocate( rtw%rcx( nCv, 0:ns-1 ) )
 
       return
       end subroutine createB2RatesWork
@@ -2243,14 +2183,14 @@
 
       subroutine destroyB2RatesWork( rtw )
       type(B2RatesWork), intent(inout) :: rtw
-
-      if ( allocated( rtw % rsa ) ) deallocate( rtw % rsa )
-      if ( allocated( rtw % rra ) ) deallocate( rtw % rra )
-      if ( allocated( rtw % rqa ) ) deallocate( rtw % rqa )
-      if ( allocated( rtw % rrd ) ) deallocate( rtw % rrd )
-      if ( allocated( rtw % rbr ) ) deallocate( rtw % rbr )
-      if ( allocated( rtw % rcx ) ) deallocate( rtw % rcx )
-      if ( allocated( rtw % rqr ) ) deallocate( rtw % rqr )
+      
+      if ( allocated( rtw%rsa ) ) deallocate( rtw%rsa )
+      if ( allocated( rtw%rra ) ) deallocate( rtw%rra )
+      if ( allocated( rtw%rqa ) ) deallocate( rtw%rqa )
+      if ( allocated( rtw%rqa_ra ) ) deallocate( rtw%rqa_ra )
+      if ( allocated( rtw%rrd ) ) deallocate( rtw%rrd )
+      if ( allocated( rtw%rbr ) ) deallocate( rtw%rbr )
+      if ( allocated( rtw%rcx ) ) deallocate( rtw%rcx )
       return
       end subroutine destroyB2RatesWork
 

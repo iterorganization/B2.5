@@ -90,7 +90,9 @@
       integer iCv, iFc, is, mode, k, cvs(2)
       character(3) chns                                               !srv 17.06.08
       integer, save :: flux_limit_style = 2                           !srv 07.12.15
-      integer, save :: set_chcb_0 = 0
+      integer, save :: user_transport = 0                             !mb  11.10.17  
+      real (kind=R8), save :: fch_stochastic = 0.0_R8,
+     &                        alpha_stoch = 1.0e0_R8                  !srv 17.12.13
       real (kind=R8) ::
      &  csig_stoch(nFc),
 #ifdef WG_TODO
@@ -98,7 +100,7 @@
 #endif
      &  chce_stoch(nFc)                                               !srv 20.09.17
       real (kind=R8) ::
-     *  wrk(nFc), wrk1(nFc,2), wrkfc(nFc), wrkc(nCv), wrkcc(nCv), wrk0,
+     *  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrk_afn(nCv),
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),
@@ -122,10 +124,23 @@
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
-      if (ncall_b2trno.eq.0) then
-        if (switch%b2txcx_increase_transp_coefs.gt.1.0_R8)
-     &    set_chcb_0 = 1
-        call ipgeti ('b2trno_set_chcb_0', set_chcb_0)
+      if (ncall.eq.0) then
+        call ipgeti ('b2tqna_user_transport', user_transport)        !mb  11.10.17
+        call ipgetr ('b2trno_pol_anom_scale', pol_anom_scale)
+        call ipgeti ('b2tral_mode', mode)
+        call ipgeti ('b2trno_flux_limit_to_dpa', flux_limit_to_dpa)
+        call ipgeti ('b2trno_csig_an_style', csig_an_style)          !srv 15.06.08
+        call ipgeti ('b2trno_iout', iout)                            !srv 17.06.08
+        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 19.05.10 {
+        call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npmo_iout', iout_b2npmo)
+        call ipgeti ('b2nph9_iout', iout_b2nph9)
+        call ipgeti ('b2npht_iout', iout_b2npht)
+        call ipgeti ('b2npp7_iout', iout_b2npp7)
+        call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 19.05.10 }
+        call ipgetr ('b2tfhe_stochastic', fch_stochastic)            !lk 31.01.08
+        call ipgetr ('b2trno_con_e_stochastic', alpha_stoch)         !lk 31.01.08
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
       end if
 *   ..extensive tests on first few calls
       if (ncall_b2trno.lt.3) then
@@ -252,39 +267,21 @@
      &  co%vsa0(1:nCv,is), co%cvsahz(1:nFc,1,is))
       enddo                                                           !srv 09.01.01
 
+
 *   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
-      if (switch%transport_afn.eq.1) then
+      if (user_transport.eq.10) then 
        do is = 0, ns-1
-         if (is_neutral(is).and.nint(zn(is)).eq.1) then
-           wrkc =  co%dpa0(:,is)*(geo%cvBb(:,2)/geo%cvBb(:,3))**2
-           call b2txcx (nCv, nFc, 0.0_R8,
-     &                  mode, geo, mpg, geo%fcVol, geo%fcS,
-     &                  wrkc, co%cdpa(1:nFc,0,is))
-           call b2txcx (nCv, nFc, 0.0_R8,
-     &                  mode, geo, mpg, wrk1, wrk,
-     &                  wrkc, co%cdpahz(1:nFc,0,is))
+         if (is_neutral(is).and.zn(is).eq.1.0_R8) then
+           wrk_afn =  co%dpa0(:,is)*geo%cvbb(:,2)/geo%cvbb(:,3)
+           call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &                 wrk_afn, co%cdpa(1,0,is))   
+           call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
+     &                 wrk_afn, co%cdpahz(1,0,is))
          endif
        enddo
       endif
-*   ..Correction for Bohm-like diffusion model                          !mb 09.10.17
-c   Bohm
-      if(switch%transport_bohm.eq.1) then
-        do is = 0, ns-1
-          call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, co%dna_bohm(1:nCv,0,is), co%cdna(1:nFc,0,is))
-          call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%dna_bohm(1:nCv,1,is), co%cdna(1:nFc,1,is))
-          call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, co%vsa_bohm(1:nCv,0,is), co%cvsa(1:nFc,0,is))
-          call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%vsa_bohm(1:nCv,1,is), co%cvsa(1:nFc,1,is))
-          call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%vla_bohm(1:nCv,0,is), co%cvla(1:nFc,0,is))
-          call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%vla_bohm(1:nCv,1,is), co%cvla(1:nFc,1,is))
-        enddo
-      endif
+
 
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       co%cvsa_an = co%cvsa                                            !srv 04.10.99

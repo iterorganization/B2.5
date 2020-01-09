@@ -10,7 +10,7 @@
      &  rtlsa(:,:,:),
      &  rtlra(:,:,:),
      &  rtlqa(:,:,:),
-     &  rtlqr(:,:,:),
+     &  rtlqa_ra(:,:,:),
      &  rtlrd(:,:,:),
      &  rtlbr(:,:,:),
      &  rtlcx(:,:,:),
@@ -43,7 +43,7 @@
       allocate(rtlsa(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlra(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlqa(0:rtnt,0:rtnn,0:rtns-1))
-      allocate(rtlqr(0:rtnt,0:rtnn,0:rtns-1))
+      allocate(rtlqa_ra(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlrd(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlbr(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlcx(0:rtnt,0:rtnn,0:rtns-1))
@@ -69,7 +69,7 @@
       deallocate(rtlsa)
       deallocate(rtlra)
       deallocate(rtlqa)
-      deallocate(rtlqr)
+      deallocate(rtlqa_ra)
       deallocate(rtlrd)
       deallocate(rtlbr)
       deallocate(rtlcx)

@@ -690,21 +690,18 @@ c Artificial losses module
 *     electron temperature rtt(i) and electron density rtn(j), for the
 *     process k->k-1. rtrra has dimension m**3/s.
 *      rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies the
-*     logu(rtrqa), where rtrqa is the electron heat loss rate coefficient
-*     at electron temperature rtt(i) and electron density rtn(j) for
-*     processes starting from charge state k, excluding the contributions
-*     coming from potential energy of recombination and other recombination
-*     process contributions. In short, it includes the processes not
-*     accounted for in Eirene.
-*     rtqa has dimension eV*m**3/s.
-*      rtlqr - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqr(i,j,k) specifies the
-*     logu(rtrqr), where rtrqr is the electron heat loss rate
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies
+*     logu(rtrqa), where rtrqa is the electron heat loss rate
+*     coefficient at electron temperature rtt(i) and electron density
+*     rtn(j), for processes starting from atomic species k. rtrqa has
+*     dimension ev*m**3/s.
+*     rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
+*     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
 *     coefficient at electron temperature rtt(i)
 *     and electron density rtn(j) for processes starting from charge
-*     state k. rtqr only includes the contribution of recombination
-*     which replaces AMJUEL when Eirene is not used. rtqr has
+*     state k. rtqa_ra only includes the contribution of recombination
+*     which replaces amjuel when EIRENE is not used. rtqa_ra has 
 *     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
@@ -1164,7 +1161,7 @@ c     &   'faulty internal parameter density_rescale')
              rtlsa(:,is,:)=rtlsa(:,0,:)
              rtlra(:,is,:)=rtlra(:,0,:)
              rtlqa(:,is,:)=rtlqa(:,0,:)
-             rtlqr(:,is,:)=rtlqr(:,0,:)                        !mb 22.05.18
+             rtlqa_ra(:,is,:)=rtlqa_ra(:,0,:)                        !mb 22.05.18
              rtlcx(:,is,:)=rtlcx(:,0,:)
              rtlrd(:,is,:)=rtlrd(:,0,:)
              rtlbr(:,is,:)=rtlbr(:,0,:)
@@ -1211,7 +1208,7 @@ c     &   'faulty internal parameter density_rescale')
              rtlsa(:,:,is)=rtlsa(:,:,is)+log(rescale_sa(is))
              rtlra(:,:,is)=rtlra(:,:,is)+log(rescale_ra(is))
              rtlqa(:,:,is)=rtlqa(:,:,is)+log(rescale_qa(is))
-             rtlqr(:,:,is)=rtlqr(:,:,is)+log(rescale_qa(is))
+             rtlqa_ra(:,:,is)=rtlqa_ra(:,:,is)+log(rescale_qa(is))
              rtlcx(:,:,is)=rtlcx(:,:,is)+log(rescale_cx(is))
              rtlrd(:,:,is)=rtlrd(:,:,is)+log(rescale_rd(is))
              rtlbr(:,:,is)=rtlbr(:,:,is)+log(rescale_br(is))

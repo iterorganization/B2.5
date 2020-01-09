@@ -260,7 +260,8 @@
        call my_out_us(70,nCv,0,smb(:,3),name//'_smb3')
        call my_out_us(70,nFc,1,flcb,name//'_flcb')
        call my_out_us(70,nFc,1,cvsb,name//'_cvsb')
-      endif                                                             !srv 17.06.02 }
+
+      endif                                                           !srv 17.06.02 }
 
 * ..return
       ncall_b2usmo = ncall_b2usmo+1

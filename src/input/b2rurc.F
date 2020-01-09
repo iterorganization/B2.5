@@ -108,6 +108,16 @@
 *     state k. rtqr only includes the contribution of recombination
 *     which replaces AMJUEL when Eirene is not used. rtrqr has
 *     dimension eV*m**3/s.
+
+*     rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
+*     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
+*     coefficient at electron temperature rtt(i)
+*     and electron density rtn(j) for processes starting from charge
+*     state k. rtqa_ra only includes the contribution of recombination
+*     which replaces amjuel when EIRENE is not used. rtqa_ra has 
+*     dimension eV*m**3/s.
+
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
 *     logu(rtrcx), where rtrcx is the charge exchange rate coefficient
@@ -216,14 +226,10 @@
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlsa, 'rtlsa')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlra, 'rtlra')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqa, 'rtlqa')
-      if (version.ge.'03.002.000') then
-        rtlqr = 0.0_R8
-        call cfrure_dep (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqr,
-     .                                                'rtlqa_ra')
-        if (maxval(rtlqr).eq.0.0_R8.and.minval(rtlqr).eq.0.0_R8)
-     >   call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqr, 'rtlqr')
+      if (version.ge.'03.000.007') then
+        call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqa_ra, 'rtlqa_ra')
       else
-        rtlqr = lnzero
+        rtlqa_ra = lnzero
       end if
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlcx, 'rtlcx')
       if(version.ge.'01.001.016') then

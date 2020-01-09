@@ -171,20 +171,20 @@
          else
           rt%rlqa(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlqa(iCv,0,is) =
-     .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlqa(iCv,1,is)*rlte
-         t0 = (1.0_R8-fxne)*rtlqr(ite,ine,is)+
-     &        fxne*rtlqr(ite,ine+1,is)
-         t1 = (1.0_R8-fxne)*rtlqr(ite+1,ine,is)+
-     &        fxne*rtlqr(ite+1,ine+1,is)
+         rt%rlqa(iCv,0,is) =  
+     .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlqa(iCv,1,is)*rlte 
+         t0 = (1.0_R8-fxne)*rtlqa_ra(ite,ine,is)+
+     &        fxne*rtlqa_ra(ite,ine+1,is)
+         t1 = (1.0_R8-fxne)*rtlqa_ra(ite+1,ine,is)+
+     &        fxne*rtlqa_ra(ite+1,ine+1,is)
          tt = (t1-t0)/(rtlt(ite+1)-rtlt(ite))
          if (ltst0) then
-          rt%rlqr(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
+          rt%rlqa_ra(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          else
-          rt%rlqr(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
+          rt%rlqa_ra(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlqr(iCv,0,is) =
-     .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlqr(iCv,1,is)*rlte
+         rt%rlqa_ra(iCv,0,is) =  
+     .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlqa_ra(iCv,1,is)*rlte
 *      ..compute line radiation rate coefficient
          t0 = (1.0_R8-fxne)*rtlrd(ite,ine,is)+
      &        fxne*rtlrd(ite,ine+1,is)
