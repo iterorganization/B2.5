@@ -408,9 +408,7 @@ csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
 c        call eirene_mc_init(nx,ny)
         call eirene_extrab25_alloc_mods
 !pb 13dec2013 eirpbls removed - not needed
-!pb        call eirene_extrab25_eirpbls_init(1,
-!pb     .                       natm,nmol,nion,npls,nstra,0)
-!pb        call eirene_extrab25_eirpbls_init(2,0,0,0,0,nstra,npls)
+!pb        call eirene_extrab25_eirpbls_init(nmol,nion,npls)
 csw 22jul2011
         call eirene_extrab25_iniusr_init(n_spcsrf,l_spcsrf,i_spcsrf,
      .           j_spcsrf,sps_sgrp,sps_absr,sps_trno,sps_trni,

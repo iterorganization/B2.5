@@ -2,6 +2,7 @@
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_parmmod
+      use eirmod_eirbra
       use eirmod_extrab25
 #else
       use b2mod_eirbra
@@ -113,6 +114,7 @@ c     so the standard cleanup routine can still be used (checks on allocation of
         lkindi=0
         srccrfc=0.0_R8
         srcstrn=0.0_R8
+        flxspci=0.0_R8
       endif 
 
       return
