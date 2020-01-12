@@ -173,14 +173,14 @@
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
      .  cum_flo_vadia, cum_flo_vaecrb, flo_vedia, flo_veecrb
-      real (kind=R8) :: hybr, harm, pit, upwind
+!!      real (kind=R8) :: hybr, harm, pit, upwind
       integer ibnd, conduction_only, no_hybr_e, no_hybr_i
       data conduction_only/0/, no_hybr_e/0/, no_hybr_i/0/
       save conduction_only, no_hybr_e, no_hybr_i
-      hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
-      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
-      pit(iCv)=abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
-      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
+!!      hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
+!!      harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
+!!      pit(iCv)=abs(geo%cvBb(iCv,0)/geo%cvBb(iCv,3))
+!!      upwind(flo,t1,t2) = max(flo,0.0_R8)*t1+min(flo,0.0_R8)*t2
 *-----------------------------------------------------------------------
 *.computation
 
@@ -904,10 +904,15 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
               !wdk Correction now involves vadia instead of ExB velocity
               !wdk This makes implementation equivalent to mdf_fnb = 0 option
               t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
-     &           (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
-     &            geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is))*
-     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is)))
+     &          (
+     &            (dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
+     &           (
+     &            geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
+     &            geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is) 
+     &            )*
+     &           0.5_R8*
+     &         (pl%na(iCv1,is)+pl%na(iCv2,is))
+     &           )
               srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) +
      &          max(0.0_R8,t0)
               srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
@@ -1373,10 +1378,12 @@ c dpc
             sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
             if (mdf_fnb.ne.0) then
               t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &          ((dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is))) + 
+     &          (
+     &           (dv%fnaPSch(iFc,0,is) + dv%fnaPSch(iFc,1,is)) + 
      &           (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vadia(iFc,0,is) +
      &            geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vadia(iFc,1,is))*
-     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is)))
+     &           0.5_R8*
+     &         (pl%na(iCv1,is)+pl%na(iCv2,is)))
               srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is) +
      &          max(0.0_R8,t0)
               srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
