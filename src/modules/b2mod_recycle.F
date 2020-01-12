@@ -220,7 +220,7 @@ c     Other initializations
       subroutine CalcIncidentFluxes(iCv,iCn,isign,iCl,
      &            iCr,isn,iscx0,istra,idir,hh,hhn,hhperp,
      &            Phi_app,area,pl,tif,tef,pof,upf,nif,nef,geo,                           
-     &            rt,fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+     &            rt,gradnn,fnnic,fnniv,fmomni,nni,nnwwni,feneni)
 !mb   17.07.17
 c     This routine calculates the incident neutral particle,momentum and energy fluxes based 
 c     on the diffusion approximation (see papers of Niels Horsten).
@@ -237,7 +237,7 @@ c     nif = plasma density on face, isn neutral species index
       integer,intent(in):: iCv,iCn,iCl,iCr, idir,
      &    isn,iscx0,istra
       real (kind=R8),intent(in):: hh, hhn, hhperp,Phi_app, area,
-     2    tif,tef,pof,upf,nif,nef,isign
+     2    tif,tef,pof,upf,nif,nef,isign,gradnn
 c     Output variables: Incident neutral flux has been broken up in two parts:
 c     A constant contribution fnnic and a contribution varying linearly with the 
 c     neutral density fnniv. fmomni: momentum flux of 
@@ -283,6 +283,7 @@ c     Calculate tangental and perpendicular gradients of neutral density at boun
         nnr = 2.0_R8*pl%na(iCv,isn)-pl%na(iCl,isn)
       endif
       dnndyc = 0.5_R8 * (nnr-nnl)/hhperp
+      dnndyc = gradnn
       dnndyv = 0
       dnndy = dnndyc
 !mb   To be adjusted for nine-point stencil
@@ -666,7 +667,7 @@ c     Convert energy flux densities in energy fluxes
       subroutine CalcReflectedFluxes(iCv,iCn,iCl,iCr,isign,
      &            isn,iscx0,istra,iwall,idir,hh,hhn,
      &         hhperp,Phi_app,area,recyc0,pl,tif,tef,pof,upf,nif,                           
-     &           nef,geo,rt,fmomrefl,nnrefl,nnwwnrefl,fenerefl)
+     &           nef,geo,rt,gradnn,fmomrefl,nnrefl,nnwwnrefl,fenerefl)
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
       use b2mod_b2cmpa
@@ -697,7 +698,8 @@ c     Internal variables
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &    rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &    fnni,fnni_nodrifts,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
-     &    dnndy,dnndz,expu,t1,intp_2dtable,intp_2dtable0,tifev,t_av,upf2
+     &   dnndy,dnndz,expu,t1,intp_2dtable,intp_2dtable0,tifev,t_av,upf2,
+     &   gradnn
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2,ix2
 *   ..statement functions
@@ -733,6 +735,7 @@ c     Calculate tangental and perpendicular gradients of neutral density at boun
         nnr = 2.0_R8*pl%na(iCv,isn)-pl%na(iCl,isn)
       endif
       dnndy = 0.5_R8 * (nnr-nnl)/hhperp
+      dnndy = gradnn
 !mb   To be adjusted for nine-point stencil
       dnndz = (pl%na(iCn,isn)-pl%na(iCv,isn))/(0.5_R8*hhn + 0.5_R8 *hh)
       

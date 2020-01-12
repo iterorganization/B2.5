@@ -92,6 +92,8 @@
      *   redep_max, yself_max
       logical l_chem_sput, lcore, match
       integer sput_dst_bulk
+      real (kind=R8) :: gradnn(nCv,0:1),wrkv(nVx)
+
 
 !! for advanced fluid neutral boundary conditios
 *   ..Variables for debugging
@@ -362,10 +364,13 @@
               deallocate(flux_x,flux_y,area)
             endif
 #endif
+            call gradc(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,0), wrkv,
+     &                 gradnn)
             call recycle(
      &           species_start(istra), species_end(istra),
      &           iRc1, iRc2, iFc, mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1),
-     &           Phi_app, lcore)
+     &           Phi_app, lcore,
+     &           gradnn(iRc1,0:1) )
           enddo
 
         endif       ! crcstra(istra)
@@ -509,7 +514,8 @@
 
       contains
 
-      subroutine recycle(nsmin,nsmax,iCv,iCn,iFc,isign,Phi_app,lcore)
+      subroutine recycle(nsmin,nsmax,iCv,iCn,iFc,isign,Phi_app,lcore,
+     &                   gradnn)
 c iCv             number of the guard cell
 c iCn             number of the neighbour cell
 c iFc             number of the guard cell face
@@ -519,10 +525,11 @@ c area            area element
 c lcore           is this a core element?
       implicit none
       integer nsmin, nsmax, iCv, iCn, iFc
-      real (kind=R8) Phi_app, pof, isign
+      real (kind=R8) Phi_app, pof, isign,gradnn(0:1)
       logical lcore, found
 
-      integer is0, is1, is2, is, js, k, iwall, itrack, is0old, idir
+      integer is0, is1, is2, is, js, k, iwall, itrack, is0old, idir,
+     &        idir_inv
       real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf,
      &     sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, eself,
      &     sput_frac_chem_sum, be_frac, be_suppression_factor,
@@ -830,11 +837,15 @@ c*****************     New KU Leuven recycling model for neutrals **************
 c**************************************************************************************
 
 !! preliminary calculations
+
            farea = geo%fcs(iFc) !! area of the face
-           if (crcstra(istra).eq.'E'.or.crcstra(istra).eq.'W') then
+           !!if (crcstra(istra).eq.'E'.or.crcstra(istra).eq.'W') then
+           if (istra.eq.1.or.istra.eq.2) then !! TODO temporary fix for easy backwards compatibility
            idir = 0 !! TODO
+           idir_inv = 1
            else
            idir = 1
+           idir_inv = 0
            endif
 
 !! end of preliminary calculations
@@ -912,10 +923,8 @@ cmb   net neutral energy source from recombination
      &               0.5_R8*am(is0)*mp*pl%ua(iCv,is0)**2)
              endif
              srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
-
-             call GetNeighbours(iCv,iCn,iFc,geo,mpg,
-     &                                      crcstra(istra),iCl,iCr)
-
+             iCl = 21
+             iCr = 22
              if (crcstra(istra).eq.'E'.or.crcstra(istra).eq.'W') then
              hh = geo%cvhx(iCv)
              hhn = geo%cvhx(iCn)
@@ -930,8 +939,8 @@ cmb   net neutral energy source from recombination
              call CalcIncidentFluxes(iCv,iCn,isign,iCl,
      &              iCr,is0,is2,istra,idir,hh,hhn,hhperp,
      &              Phi_app,farea,pl,tif,tef,pof,pl%ua(iCv,1),
-     &              pl%na(iCv,1),dv%ne(iCv),geo,rt,fnnic,fnniv,fmomni,
-     &              nni,nnwwni,feneni)
+     &              pl%na(iCv,1),dv%ne(iCv),geo,rt,gradnn(idir_inv),
+     &              fnnic,fnniv,fmomni,nni,nnwwni,feneni)
              else
              call CalcIncidentFluxesMaxwellian(iCv,is0,isign,istra,
      &            idir,farea,pl,tif,pl%ua(iCv,is0),geo,1,fnnic,fnniv,
@@ -952,7 +961,8 @@ cmb   net momentum sources from neutral particle reflection
      &              is0,is2,istra,iwall,idir,hh,hhn,
      &         hhperp,Phi_app,farea,recyc(is,istra),pl,tif,
      &              tef,pof,pl%ua(iCv,1),pl%na(iCv,1),dv%ne(iCv),
-     &              geo,rt,fmomrefl,nnrefl,nnwwnrefl,fenerefl)
+     &              geo,rt,gradnn(idir_inv),
+     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl)
                else
                  call CalcReflectedFluxesMaxwellian(iCv,isign,is0,
      &              istra,iwall,idir,farea,recyc(is,istra),pl,tif,
