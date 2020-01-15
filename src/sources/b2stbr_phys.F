@@ -542,8 +542,8 @@ c lcore           is this a core element?
      &     fmomrec,fenerec,fenerefl,nnrefl,nnwwnrefl,nnrec,nnwwnrec,
      &     nnsum,nnwwnsum,snan,smon,farea,q_conv,cvsf
 c temporary
-      real (kind=R8) :: hh ,hhn ,hhperp
-      integer ix, iy, iCl, iCr, iyn, ixn, ixl,iyl,ixr,iyr,
+      real (kind=R8) :: hh ,hhn
+      integer ix, iy, iyn, ixn, ixl,iyl,ixr,iyr,
      &        ixf ,iyf
 
 c lvn2
@@ -878,7 +878,7 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
              call CalcRecycledFluxes(iCv,isign,
      &            is0,is2,istra,iwall,idir,
      &            Phi_app,farea,recyc(is,istra),pl,tif,tef,pof,
-     &            pl%ua(iCv,is),pl%na(iCv,is),dv%ne(iCv),geo,t0,          
+     &            pl%na(iCv,is),dv%ne(iCv),geo,t0,          
      &            fmomrec,nnrec,nnwwnrec,fenerec)
              else
                 fmomrec = 0
@@ -910,7 +910,7 @@ cmb   net neutral energy source from recombination
                   q_conv=
      &               isign*(tif*pl%ua(iCv,is)*geo%fcpbs(iFc)*
      &               pl%na(iCv,is)+
-     &               dv%fna(iCv,idir,is0)*0.5_R8*am(is0)*mp*
+     &               dv%fna(iFc,idir,is0)*0.5_R8*am(is0)*mp*
      &               pl%ua(iCv,is0)**2)
 		  cvsf = co%cvsa(iFc,idir,is0)
 		  q_conv =  q_conv -0.5_R8*cvsf*
@@ -921,27 +921,24 @@ cmb   net neutral energy source from recombination
      &               0.5_R8*am(is0)*mp*pl%ua(iCv,is0)**2)
              endif
              srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
-             iCl = 21
-             iCr = 22
-             if (crcstra(istra).eq.'E'.or.crcstra(istra).eq.'W') then
+
+             if (idir.eq.0) then
              hh = geo%cvhx(iCv)
              hhn = geo%cvhx(iCn)
-             hhperp = geo%cvvol(iCv)/(geo%cvhz(iCv)*geo%cvhx(iCv))
              else
              hh = geo%cvvol(iCv)/(geo%cvhz(iCv)*geo%cvhx(iCv))
              hhn = geo%cvvol(iCn)/(geo%cvhz(iCn)*geo%cvhx(iCn))
-             hhperp = geo%cvhx(iCv)
              endif
 
              if (maxw(istra).eq.0) then
-             call CalcIncidentFluxes(iCv,iCn,isign,iCl,
-     &              iCr,is0,is2,istra,idir,hh,hhn,hhperp,
-     &              Phi_app,farea,pl,tif,tef,pof,pl%ua(iCv,1),
-     &              pl%na(iCv,1),dv%ne(iCv),geo,rt,gradnn(idir_inv),
+             call CalcIncidentFluxes(iCv,iCn,isign,
+     &              is0,is2,istra,idir,hh,hhn,
+     &              Phi_app,farea,pl,tif,tef,pof,
+     &              dv%ne(iCv),geo,rt,gradnn(idir_inv),
      &              fnnic,fnniv,fmomni,nni,nnwwni,feneni)
              else
              call CalcIncidentFluxesMaxwellian(iCv,is0,isign,istra,
-     &            idir,farea,pl,tif,pl%ua(iCv,is0),geo,1,fnnic,fnniv,
+     &            idir,farea,pl,tif,geo,1,fnnic,fnniv,
      &            fmomni,nni,nnwwni,feneni)
              endif
 
@@ -955,16 +952,16 @@ cmb   net neutral energy source from recombination
 cmb   net momentum sources from neutral particle reflection
              if (.not.lcore) then
                if (maxw(istra).eq.0) then
-                 call CalcReflectedFluxes(iCv,iCn,iCl,iCr,isign,
+                 call CalcReflectedFluxes(iCv,iCn,isign,
      &              is0,is2,istra,iwall,idir,hh,hhn,
-     &         hhperp,Phi_app,farea,recyc(is,istra),pl,tif,
-     &              tef,pof,pl%ua(iCv,1),pl%na(iCv,1),dv%ne(iCv),
+     &              Phi_app,farea,recyc(is,istra),pl,tif,
+     &              tef,pof,dv%ne(iCv),
      &              geo,rt,gradnn(idir_inv),
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl)
                else
                  call CalcReflectedFluxesMaxwellian(iCv,isign,is0,
      &              istra,iwall,idir,farea,recyc(is,istra),pl,tif,
-     &              pl%ua(iCv,is0),geo,fmomrefl,nnrefl,
+     &              geo,fmomrefl,nnrefl,
      &              nnwwnrefl,fenerefl)
                endif
              else
