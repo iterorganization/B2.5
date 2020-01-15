@@ -346,8 +346,6 @@ cdjm Jan2017 update momentum source components for balance
 !WG_TODO         call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
 !WG_TODO       endif
 
-      call my_out_us(70,nFc,1,co%cvsahz(1,:,is),'b2npmo_cvsahz'//chns)
-      call my_out_us(70,nFc,1,flub,'b2npmo_flub'//chns)
 *    ..compute residual
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &            .or.get_residuals.eq.1) then                         !srv 22.05.18
