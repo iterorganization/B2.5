@@ -42,8 +42,7 @@
 *   ..local variables
       integer iFc
       real (kind=R8) ::
-     *  funf(nFc), dfun(nFc,0:1), funv(nVx), fl, df, t0, t1,con2,
-     *  term1, term2
+     *  funf(nFc), dfun(nFc,0:1), funv(nVx), fl, df, t0, t1
       real (kind=R8), save :: eps = 1.0e-60_R8
 
 *   ..procedures
@@ -82,15 +81,6 @@
      &    upwind(flo(iFc,0),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2))) 
         flow(iFc,0) = 
      &    flowf(iFc,0) - t0*dfun(iFc,0)
-!!        con2 = hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0))
-!!        flowf(iFc,0) =
-!!     &               flo(iFc,0)*funf(iFc)
-!!        flow(iFc,0) = 
-!!     &    flowf(iFc,0) - con2*dfun(iFc,0)
-
-!!        term1 = flo(iFc,0)*funf(iFc)
-!!        term2 = con2*dfun(iFc,0)
-         
 
 *    ..radial flow
         t0 = (hybr(flo(iFc,1),con(iFc,1)*geo%fcQalf(iFc,1)) - 
