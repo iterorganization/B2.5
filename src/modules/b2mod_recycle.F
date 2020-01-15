@@ -217,9 +217,9 @@ c     Other initializations
       end subroutine read_recycle_fnn
 
 
-      subroutine CalcIncidentFluxes(iCv,iCn,isign,iCl,
-     &            iCr,isn,iscx0,istra,idir,hh,hhn,hhperp,
-     &            Phi_app,area,pl,tif,tef,pof,upf,nif,nef,geo,                           
+      subroutine CalcIncidentFluxes(iCv,iCn,isign,
+     &            isn,iscx0,istra,idir,hh,hhn,
+     &            Phi_app,area,pl,tif,tef,pof,nef,geo,                           
      &            rt,gradnn,fnnic,fnniv,fmomni,nni,nnwwni,feneni)
 !mb   17.07.17
 c     This routine calculates the incident neutral particle,momentum and energy fluxes based 
@@ -232,23 +232,21 @@ c     on the diffusion approximation (see papers of Niels Horsten).
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
-c     input variables:upf = plasma parallel velocity on face
-c     nif = plasma density on face, isn neutral species index
-      integer,intent(in):: iCv,iCn,iCl,iCr, idir,
+      integer,intent(in):: iCv,iCn, idir,
      &    isn,iscx0,istra
-      real (kind=R8),intent(in):: hh, hhn, hhperp,Phi_app, area,
-     2    tif,tef,pof,upf,nif,nef,isign,gradnn
+      real (kind=R8),intent(in):: hh, hhn,Phi_app, area,
+     2    tif,tef,pof,nef,isign,gradnn
 c     Output variables: Incident neutral flux has been broken up in two parts:
 c     A constant contribution fnnic and a contribution varying linearly with the 
 c     neutral density fnniv. fmomni: momentum flux of 
 c     incident neutrals.
       real (kind=R8),intent(out):: fnnic,fnniv,fmomni,nni,nnwwni,feneni
 c     Internal variables
-      real (kind=R8):: dnndyc,dnndyv,dnndzc,dnndzv,nnl,nnr,vcx,vion,
+      real (kind=R8):: dnndyc,dnndyv,dnndzc,dnndzv,vcx,vion,
      2    vtot,fnni,fnni_nodrifts,pit,pit2,sina,cosa,mn,nnf,ux,uy,uz,
      3    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,expu,t1,
-     5    dnndy,dnndz,t_av,upf2,mfp,c_th
+     5    dnndy,dnndz,t_av,mfp,c_th,upf
       integer :: ic,ix2 
 *   ..statement functions
       expu(t1) = dim(exp(max(t1,cutll)),cutlo)
@@ -264,26 +262,12 @@ c     a is defined as -t
       cosa = geo%cvQgam(iCv,0)
       sina = geo%cvQgam(iCv,1)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
-      !!upf2 = upf
-      !!upf2 = ua(ixn,iyn,1) !! hard coded, change later
-      upf2 = pl%ua(iCn,1)
-      ux = upf2*pit2
-      uy = -idir*isign*upf2*pit-(1-idir)*sina*isign*upf2*pit
-      uz = -(1-idir)*cosa*isign*upf2*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
+      upf = pl%ua(iCn,1) !!TODO correct species index
+      ux = upf*pit2
+      uy = -idir*isign*upf*pit-(1-idir)*sina*isign*upf*pit
+      uz = -(1-idir)*cosa*isign*upf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
 
-c     Calculate tangental and perpendicular gradients of neutral density at boundary
-      if (iCl.ne.0.and.iCr.ne.0) then 
-        nnl = pl%na(iCl,isn)
-        nnr = pl%na(iCr,isn)
-      elseif (iCl.eq.0) then!  iCv = 0 means a cornercell Extrapolate linearly to corner cell
-        nnl = 2.0_R8*pl%na(iCv,isn)-pl%na(iCr,isn)
-        nnr = pl%na(iCr,isn)
-      else !  Extrapolate linearly to corner cell
-        nnl = pl%na(iCl,isn)
-        nnr = 2.0_R8*pl%na(iCv,isn)-pl%na(iCl,isn)
-      endif
-      dnndyc = 0.5_R8 * (nnr-nnl)/hhperp
-      dnndyc = gradnn
+      dnndyc = -isign*gradnn
       dnndyv = 0
       dnndy = dnndyc
 !mb   To be adjusted for nine-point stencil
@@ -406,13 +390,13 @@ c     Convert energy flux densities in net energy flux contributions
       end subroutine CalcIncidentFluxes
 
       subroutine CalcIncidentFluxesMaxwellian(iCv,isn,isign,istra,
-     &            idir,area,pl,tf,upf,geo,isrc,fnnic,fnniv,fmomni,
+     &            idir,area,pl,tf,geo,isrc,fnnic,fnniv,fmomni,
      &            nni,nnwwni,feneni)
 !nh   08.05.2018
 c     This routine calculates the incident neutral particle fluxes based on 
 c     a truncated Maxwellian for the incident neutrals. These particle fluxes
 c     are necessary for the hybrid delta f model. It is assumed that only the
-c     neutral parallel drift velocity is non-negligible (upf). This has to be
+c     neutral parallel drift velocity is non-negligible (unf). This has to be
 c     adapted. 
       use b2mod_b2cmpa
       use b2us_plasma
@@ -425,7 +409,7 @@ c     isrc is the sign of the source needed for the hybrid delta f method
       type (geometry), intent (in) :: geo
       integer,intent(in) :: iCv, isn, idir, istra,
      &    isrc
-      real (kind=R8),intent(in) :: area, tf, upf, isign
+      real (kind=R8),intent(in) :: area, tf, isign
 c     Output variables: Incident neutral flux has been broken up in two parts:
 c     A constant contribution fnnic and a contribution varying linearly with the 
 c     neutral density fnniv.
@@ -433,7 +417,7 @@ c     neutral density fnniv.
 c     Internal variables
       real (kind=R8):: pit,pit2,sina,cosa,mn,nnf,ux,uy,uz,
      1    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
-     2    fmox,fmoy,fmoz,pn,fmomnip,fmomnit
+     2    fmox,fmoy,fmoz,pn,fmomnip,fmomnit,unf
       integer :: ic 
 *   ..statement functions
       external subini, subend
@@ -449,9 +433,10 @@ c     a is defined as -t
       sina = geo%cvQgam(iCv,1)
 cnh   neutral velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and only neutral parallel
 c     velocity component
-      ux = upf*pit2
-      uy = -idir*isign*upf*pit-(1-idir)*sina*isign*upf*pit
-      uz = -(1-idir)*cosa*isign*upf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
+      unf = pl%ua(iCv,0) !! TODO species index
+      ux = unf*pit2
+      uy = -idir*isign*unf*pit-(1-idir)*sina*isign*unf*pit
+      uz = -(1-idir)*cosa*isign*unf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
 c      call CalcMomentsMaxwellian(uz,tf,mn,i0l,i0r,i1l,i1r,i2l,i2r)     !mb Removed optional arguments. Implementation gave segmentation errors...
@@ -513,7 +498,7 @@ c     Convert energy flux densities in net energy flux contributions
       subroutine CalcRecycledFluxes(iCv,
      &             isign,
      &            isn,iscx0,istra,iwall,idir,
-     &            Phi_app,area,recyc0,pl,tif,tef,pof,upf,nif,nef,
+     &            Phi_app,area,recyc0,pl,tif,tef,pof,nif,nef,
      &            geo,t0,fmomrec,nnrec,nnwwnrec,fenerec)
 !mb   17.07.17
 c     This routine calculates the recycled neutral particle,momentum and energy fluxes based 
@@ -523,7 +508,6 @@ c     on the diffusion approximation (see papers of Niels Horsten).
       use b2us_geo
       use b2us_plasma
       implicit none
-c     input variables:upf = plasma parallel velocity on face
 c     nif = plasma density on face, isn neutral species index
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
@@ -531,7 +515,7 @@ c     nif = plasma density on face, isn neutral species index
       integer, intent(in):: iCv,
      &     idir, isn, iscx0, iwall,istra
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
-     2    tif,tef,pof,upf,nif,nef,t0,isign
+     2    tif,tef,pof,nif,nef,t0,isign
 c     Output variables: Incident neutral flux has been broken up in two parts:
 c     A constant contribution fnnic and a contribution varying linearly with the 
 c     neutral density fnniv. fmomni: momentum flux of 
@@ -544,7 +528,7 @@ c     Internal variables
      &    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &    fmoxc,fmoyc,fmozc,fmomrecp,fmomrect,pnc,fenec,expu,t1,fdni,
-     &    intp_2dtable,intp_2dtable0,tifev
+     &    intp_2dtable,intp_2dtable0,tifev,upf
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
       external subini, subend,intp_2dtable,intp_2dtable0
@@ -559,6 +543,7 @@ c     a is defined as -t
       cosa = geo%cvQgam(iCv,0)
       sina = geo%cvQgam(iCv,1)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
+      upf = pl%ua(iCv,1) !! TODO species index
       ux = upf*pit2
       uy = -idir*isign*upf*pit-(1-idir)*sina*isign*upf*pit
       uz = -(1-idir)*cosa*isign*upf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
@@ -664,9 +649,9 @@ c     Convert energy flux densities in energy fluxes
       return
       end subroutine CalcRecycledFluxes
 
-      subroutine CalcReflectedFluxes(iCv,iCn,iCl,iCr,isign,
+      subroutine CalcReflectedFluxes(iCv,iCn,isign,
      &            isn,iscx0,istra,iwall,idir,hh,hhn,
-     &         hhperp,Phi_app,area,recyc0,pl,tif,tef,pof,upf,nif,                           
+     &            Phi_app,area,recyc0,pl,tif,tef,pof,                           
      &           nef,geo,rt,gradnn,fmomrefl,nnrefl,nnwwnrefl,fenerefl)
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
@@ -679,27 +664,26 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (B2Rates), intent (in) :: rt
-c     input variables:upf = plasma parallel velocity on face
-c     nif = plasma density on face, isn neutral species index
-      integer,intent(in):: iCv, iCn, iCl, iCr, idir,
+
+      integer,intent(in):: iCv, iCn, idir,
      &    isn, iscx0, iwall,istra
-      real (kind=R8),intent(in):: hh, hhn, hhperp,Phi_app, area,recyc0,
-     2    pof,tif,tef,upf,nif,nef,isign
+      real (kind=R8),intent(in):: hh, hhn,Phi_app, area,recyc0,
+     2    pof,tif,tef,nef,isign
 c     Output variables: Incident neutral flux has been broken up in two parts:
 c     A constant contribution fnnic and a contribution varying linearly with the 
 c     neutral density fnniv. fmomni: momentum flux of 
 c     incident neutrals.
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl
 c     Internal variables
-      real (kind=R8):: dnndyc,dnndyv,dnndzc,dnndzv,nnl,nnr,cs,Mj,
+      real (kind=R8):: dnndyc,dnndyv,dnndzc,dnndzv,cs,Mj,
      &    shpottauj,ishpottau,pf,pcorf,pt,vt,vion,vcx,vtot,
      &     pit,pit2,sina,cosa,mn,nnf,ux,uy,uz,
      &    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &    rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &    fnni,fnni_nodrifts,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
-     &   dnndy,dnndz,expu,t1,intp_2dtable,intp_2dtable0,tifev,t_av,upf2,
-     &   gradnn
+     &   dnndy,dnndz,expu,t1,intp_2dtable,intp_2dtable0,tifev,t_av,
+     &   gradnn, upf, nif
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2,ix2
 *   ..statement functions
@@ -708,6 +692,7 @@ c     Internal variables
 
       call subini ('CalcReflectedFluxes')
 c     Initialize/calculate some variables
+      nif = pl%na(iCv,1) !! TODO species index
       nnf = pl%na(iCv,isn)
       mn = am(isn)*mp
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
@@ -716,26 +701,14 @@ c     a is defined as -t
       cosa = geo%cvQgam(iCv,0)
       sina = geo%cvQgam(iCv,1)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
-      !!upf2 = upf
-      !!upf2 = ua(ixn,iyn,1)
-      upf2 = pl%ua(iCn,1)
-      ux = upf2*pit2
-      uy = -idir*isign*upf2*pit-(1-idir)*sina*isign*upf2*pit
-      uz = -(1-idir)*cosa*isign*upf2*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
+!! TODO species index
+      upf = pl%ua(iCn,1) !! even though the parallel velocity on the face should use iCv, we choose iCn because EIRENE also only cells ua in the first internal cell.
+      ux = upf*pit2
+      uy = -idir*isign*upf*pit-(1-idir)*sina*isign*upf*pit
+      uz = -(1-idir)*cosa*isign*upf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
 
 c     Calculate tangental and perpendicular gradients of neutral density at boundary
-      if (iCl.ne.0.and.iCr.ne.0) then 
-        nnl = pl%na(iCl,isn)
-        nnr = pl%na(iCr,isn)
-      elseif (iCl.eq.0) then!  if iCv = 0 it is a corner cell -> Extrapolate linearly to corner cell
-        nnl = 2.0_R8*pl%na(iCv,isn)-pl%na(iCr,isn)
-        nnr = pl%na(iCr,isn)
-      else !  Extrapolate linearly to corner cell
-        nnl = pl%na(iCl,isn)
-        nnr = 2.0_R8*pl%na(iCv,isn)-pl%na(iCl,isn)
-      endif
-      dnndy = 0.5_R8 * (nnr-nnl)/hhperp
-      dnndy = gradnn
+      dnndy = -isign*gradnn
 !mb   To be adjusted for nine-point stencil
       dnndz = (pl%na(iCn,isn)-pl%na(iCv,isn))/(0.5_R8*hhn + 0.5_R8 *hh)
       
@@ -905,7 +878,7 @@ c     Convert energy flux densities in energy fluxes
       end subroutine CalcReflectedFluxes
 
       subroutine CalcReflectedFluxesMaxwellian(iCv,isign,
-     &            isn,istra,iwall,idir,area,recyc0,pl,tf,upf,                          
+     &            isn,istra,iwall,idir,area,recyc0,pl,tf,                          
      &            geo,fmomrefl,nnrefl,nnwwnrefl,fenerefl)
 !nh   11.06.18
 c     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a truncated Maxwellian
@@ -917,9 +890,8 @@ c     for the incident neutrals.
       implicit none
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
-c     Input variables:upf = neutral parallel velocity on face
       integer,intent(in):: iCv, idir, isn, iwall, istra
-      real (kind=R8),intent(in):: area, recyc0, tf, upf,isign
+      real (kind=R8),intent(in):: area, recyc0, tf,isign
 c     Output variables
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl
 c     Internal variables
@@ -929,7 +901,7 @@ c     Internal variables
      &     rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &     rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &     fnni,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
-     &     intp_2dtable,intp_2dtable0,tfev
+     &     intp_2dtable,intp_2dtable0,tfev,unf
       real (kind = R8):: tab(0:nM,0:nT)
       integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
 *   ..statement functions
@@ -945,9 +917,10 @@ c     a is defined as -t
       cosa = geo%cvQgam(iCv,0)
       sina = geo%cvQgam(iCv,1)
 c     Neutral velocity components: toroidal (x),tangential (y), and normal (z)
-      ux = upf*pit2
-      uy = -idir*isign*upf*pit-(1-idir)*sina*isign*upf*pit
-      uz = -(1-idir)*cosa*isign*upf*pit
+      unf = pl%ua(iCv,isn)
+      ux =  unf*pit2
+      uy = -idir*isign*unf*pit-(1-idir)*sina*isign*unf*pit
+      uz = -(1-idir)*cosa*isign*unf*pit
       
 c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tf,mn,i0l,i0r,i1l,i1r,i2l,i2r,
@@ -1226,80 +1199,6 @@ c     int6r = int_{0}^{inf} v^{6} M(v) dv
       return
       end subroutine dealloc_recycle_fnn
 
-
-      subroutine GetNeighbours(iCv,iCn,iFc,geo,mpg,
-     &                                         location,iCl,iCr)
-      use b2mod_b2cmpa
-      use b2us_geo
-      use b2us_map
-      implicit none
-      type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
-      integer, intent(in):: iCv, iCn, iFc
-      integer, intent(out):: iCl, iCr
-      character, intent(in):: location*1 
-*     .. local variables
-      integer ix,iy,nx,ny
-      external subini, subend, xertst
-
-      call subini ('gnbr_subini')
-      call xertst(mpg%isclassicalgrid.eq.1,'only for classical grids')
-      iCl = 1
-      iCr = 1
-      !! in the unstructered solver, guard cells no longer have neighbours. Also the "left", "right", "top" and "bottom" neighbours no longer exist.
-      !! However, for full backwards compatibitliy with  dev_wim_hybr branch, we need them again.
-      !! This process can only be used for classical grids, i.e. grids than can be mapped back to the traditional topologically rectangular grids.
-      !! Moreover, cuts are not taken into account.
-!!      ---------------
-!!       iCl |      |
-!!      ---------------
-!!       iCv | iCn  |
-!!      ---------------
-!!       iCr |      |
-!!      ---------------
-       
-
-        nx = mpg%nx
-        ny = mpg%ny
-        if (location.eq.'W') then
-          ix = -1
-          do iy=-1,ny
-            if (mpg%imapcv(ix,iy).eq.iCv) then
-               iCl = mpg%imapcv(ix,iy+1)
-               iCr = mpg%imapcv(ix,iy-1)
-            endif
-          enddo
-	else if (location.eq.'E') then
-          ix = nx
-          do iy=-1,ny
-            if (mpg%imapcv(ix,iy).eq.iCv) then
-               iCl = mpg%imapcv(ix,iy-1)
-               iCr = mpg%imapcv(ix,iy+1)
-            endif
-          enddo
-	else if (location.eq.'N') then
-          iy = ny
-          do ix=-1,nx
-            if (mpg%imapcv(ix,iy).eq.iCv) then
-               iCl = mpg%imapcv(ix+1,iy)
-               iCr = mpg%imapcv(ix-1,iy)
-            endif
-          enddo
-	else if (location.eq.'S') then
-          iy = -1
-          do ix=-1,nx
-            if (mpg%imapcv(ix,iy).eq.iCv) then
-               iCl = mpg%imapcv(ix-1,iy)
-               iCr = mpg%imapcv(ix+1,iy)
-            endif
-          enddo
-        else
-	  call xerrab('location should be E, W, N or S')
-        endif
-
-      call subend ()
-      return
-      end subroutine GetNeighbours
 
       subroutine read_recycle_DCfnn(nsd,nbnd2)
       use b2mod_b2cmpa
