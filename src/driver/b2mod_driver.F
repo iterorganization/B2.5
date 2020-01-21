@@ -2330,19 +2330,21 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       if(use_mms.ne.0) then                                              !srv 26.02.18 {
         call calc_err(nCv, ns, state % pl, state % dv)
       endif                                                              !srv 26.02.18 }
-      if(use_mms.eq.0) then                                              !srv 29.11.18 {
-       do is = 0,ns-1                                                 
-        write (chns,'(i3.3)') is
-        call my_out_us(70,nCv,0,state%pl%na(1,is),
-     &    'b2mndr_na'//chns//'out')
-        call my_out_us(70,nCv,0,state%pl%ua(1,is),
-     &    'b2mndr_ua'//chns//'out')
-       enddo
-       call my_out_us(70,nCv,0,state%pl%te,'b2mndr_te_out')
-       call my_out_us(70,nCv,0,state%pl%te/ev,'b2mndr_te_eV_out')
-       call my_out_us(70,nCv,0,state%pl%ti,'b2mndr_ti_out')
-       call my_out_us(70,nCv,0,state%pl%ti/ev,'b2mndr_ti_eV_out')
-       call my_out_us(70,nCv,0,state%pl%po,'b2mndr_po_out')                
+      if(iout.ne.0) then 
+        if(use_mms.eq.0) then                                              !srv 29.11.18 {
+         do is = 0,ns-1                                                 
+          write (chns,'(i3.3)') is
+          call my_out_us(70,nCv,0,state%pl%na(1,is),
+     &      'b2mndr_na'//chns//'out')
+          call my_out_us(70,nCv,0,state%pl%ua(1,is),
+     &      'b2mndr_ua'//chns//'out')
+         enddo
+         call my_out_us(70,nCv,0,state%pl%te,'b2mndr_te_out')
+         call my_out_us(70,nCv,0,state%pl%te/ev,'b2mndr_te_eV_out')
+         call my_out_us(70,nCv,0,state%pl%ti,'b2mndr_ti_out')
+         call my_out_us(70,nCv,0,state%pl%ti/ev,'b2mndr_ti_eV_out')
+         call my_out_us(70,nCv,0,state%pl%po,'b2mndr_po_out')      
+       endif          
       endif                                                              !srv 29.11.18 }
 #ifdef WG_TODO
       call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
