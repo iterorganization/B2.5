@@ -33,6 +33,9 @@ module b2mod_ual
 #if IMAS_MINOR_VERSION > 21
   public ids_summary
 #endif
+#if IMAS_MINOR_VERSION > 25
+  public ids_numerics
+#endif
 #endif
 
 
@@ -45,6 +48,9 @@ contains
             &   radiation, description, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+            &   numerics, &
 #endif
             &   treename, shot, run, idx, username, device, version )
         type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
@@ -68,6 +74,10 @@ contains
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
+#if IMAS_MINOR_VERSION > 25
+        type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
+            !< run numerics data
+#endif
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
             !< (i.e. "edge_profiles" (mandatory) )
         integer, intent(in) :: shot !< The shot number of the database being created
@@ -86,6 +96,9 @@ contains
 #if IMAS_MINOR_VERSION > 21
           &  "summary, "// &
 #endif
+#if IMAS_MINOR_VERSION > 25
+          &  "numerics, "// &
+#endif
           &  "dataset_description, and radiation IDS"
 
         !! Create and modify new shot/run
@@ -103,6 +116,7 @@ contains
         ! call ids_put_slice( idx, "radiation", radiation )
         ! call ids_put_slice( idx, "dataset_description", description )
         ! call ids_put_slice( idx, "summary", summary )
+        ! call ids_put_slice( idx, "numerics", numerics )
         call ids_put( idx, "edge_profiles", edge_profiles )
         call ids_put( idx, "edge_sources", edge_sources )
         call ids_put( idx, "edge_transport", edge_transport )
@@ -110,6 +124,9 @@ contains
         call ids_put( idx, "dataset_description", description )
 #if IMAS_MINOR_VERSION > 21
         call ids_put( idx, "summary", summary )
+#endif
+#if IMAS_MINOR_VERSION > 25
+        call ids_put( idx, "numerics", numerics )
 #endif
 
         !! Close IDS
@@ -120,6 +137,9 @@ contains
         call ids_deallocate( description )
 #if IMAS_MINOR_VERSION > 21
         call ids_deallocate( summary )
+#endif
+#if IMAS_MINOR_VERSION > 25
+        call ids_deallocate( numerics )
 #endif
         call imas_close( idx )
 

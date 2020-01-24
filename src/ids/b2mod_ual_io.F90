@@ -125,6 +125,9 @@ contains
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
+#if IMAS_MINOR_VERSION > 25
+            &   numerics, run_start_time_IN, run_end_time_IN, &
+#endif
             &   time_IN, time_step_IN, shot, run, device, version, &
             &   time_slice_ind_IN, num_time_slices_IN )
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
@@ -145,6 +148,11 @@ contains
 #if IMAS_MINOR_VERSION > 21
         type (ids_summary) :: summary !< IDS designed to store
             !< run summary data
+#endif
+#if IMAS_MINOR_VERSION > 25
+        type (ids_numerics) :: numerics !< IDS designed to store
+            !< run numerics data
+        real(IDS_real), intent(in) :: run_start_time_IN, run_end_time_IN !< Run time bounds
 #endif
         integer, intent(in) :: shot, run
         character(len=24), intent(in) :: device, version
@@ -475,6 +483,28 @@ contains
         end do
 #endif
 
+#if IMAS_MINOR_VERSION > 25
+        !! Preparing numerics IDS for writing
+        !! In order to write to IDS database there are next steps that are
+        !! mandatory to do, otherwise there is high change that writing to IDS
+        !! database will fail
+        !! 1. Set homogeneous_time to 0 or 1
+        numerics%ids_properties%homogeneous_time = homogeneous_time
+        allocate( numerics%ids_properties%comment(1) )
+        numerics%ids_properties%comment(1) = label
+        !! 2. Allocate numerics.time and set it to desired values
+        allocate( numerics%time(num_time_slices) )
+        do i = 1, num_time_slices
+          numerics%time(i) = time - (num_time_slices-i) * time_step
+        end do
+        allocate( numerics%time_start(num_time_slices) )
+        numerics%time_start(num_time_slices) = run_start_time_IN
+        allocate( numerics%time_step(num_time_slices) )
+        numerics%time_step(num_time_slices) = time_step
+        allocate( numerics%time_end(num_time_slices) )
+        numerics%time_end(num_time_slices) = run_end_time_IN
+#endif
+
         !! Preparing radiation IDS for writing
         !! In order to write to IDS database there are next steps that are
         !! mandatory to do, otherwise there is high change that writing to IDS
@@ -688,7 +718,10 @@ contains
         radiation%ids_properties%source = b2frates_flag
         allocate( description%ids_properties%source(1) )
         description%ids_properties%source = source
-
+#if IMAS_MINOR_VERSION > 25
+        allocate( numerics%ids_properties%source(1) )
+        numerics%ids_properties%source = source
+#endif
         allocate( edge_profiles%ids_properties%provider(1) )
         edge_profiles%ids_properties%provider = usrnam()
         allocate( edge_transport%ids_properties%provider(1) )
@@ -713,6 +746,11 @@ contains
         summary%ids_properties%provider = usrnam()
 #endif
 
+#if IMAS_MINOR_VERSION > 25
+        allocate( numerics%ids_properties%provider(1) )
+        numerics%ids_properties%provider = usrnam()
+#endif
+
         allocate( edge_profiles%ids_properties%creation_date(1) )
         edge_profiles%ids_properties%creation_date = &
                 &   date//' '//ctime//' '//' '//zone
@@ -733,6 +771,11 @@ contains
         summary%ids_properties%creation_date = &
                 &   date//' '//ctime//' '//' '//zone
 #endif
+#if IMAS_MINOR_VERSION > 25
+        allocate( numerics%ids_properties%creation_date(1) )
+        numerics%ids_properties%creation_date = &
+                &   date//' '//ctime//' '//' '//zone
+#endif
 
 #if IMAS_MINOR_VERSION > 21
         allocate( edge_profiles%ids_properties%version_put%data_dictionary(1) )
@@ -747,6 +790,10 @@ contains
         summary%ids_properties%version_put%data_dictionary = imas_version
         allocate( description%ids_properties%version_put%data_dictionary(1) )
         description%ids_properties%version_put%data_dictionary = imas_version
+#if IMAS_MINOR_VERSION > 25
+        allocate( numerics%ids_properties%version_put%data_dictionary(1) )
+        numerics%ids_properties%version_put%data_dictionary = imas_version
+#endif
 
         allocate( edge_profiles%ids_properties%version_put%access_layer(1) )
         edge_profiles%ids_properties%version_put%access_layer = ual_version
@@ -760,6 +807,10 @@ contains
         summary%ids_properties%version_put%access_layer = ual_version
         allocate( description%ids_properties%version_put%access_layer(1) )
         description%ids_properties%version_put%access_layer = ual_version
+#if IMAS_MINOR_VERSION > 25
+        allocate( numerics%ids_properties%version_put%access_layer(1) )
+        numerics%ids_properties%version_put%access_layer = ual_version
+#endif
 
         allocate( edge_profiles%ids_properties%version_put%access_layer_language(1) )
         edge_profiles%ids_properties%version_put%access_layer_language = 'FORTRAN'
@@ -773,6 +824,10 @@ contains
         summary%ids_properties%version_put%access_layer_language = 'FORTRAN'
         allocate( description%ids_properties%version_put%access_layer_language(1) )
         description%ids_properties%version_put%access_layer_language = 'FORTRAN'
+#if IMAS_MINOR_VERSION > 25
+        allocate( numerics%ids_properties%version_put%access_layer_language(1) )
+        numerics%ids_properties%version_put%access_layer_language = 'FORTRAN'
+#endif
 
         allocate( description%data_entry%user(1) )
         description%data_entry%user = usrnam()
