@@ -20,7 +20,7 @@ c      call eirene_extrab25_eirpbls_alloc(1,natm,nmol,nion,npls,       !srv 14.1
 c     &                                       nstra,nfl)               !srv 03.04.13
 c#endif
 
-cwdk  copy-paste from eirene_extrab25_eirdiag_alloc (Eirene_dummy)
+cwdk  copy-paste from eirene_extrab25 allocations (Eirene_dummy)
 c     avoids double module definition in case code is compiled with Eirene 
       if(.not.allocated(dab2)) then
 #ifdef B25_EIRENE
@@ -103,7 +103,7 @@ c     avoids double module definition in case code is compiled with Eirene
         isrftype=0
       endif
 
-cwdk  copy-paste from eirene_extrab25_eirpbls_alloc (Eirene_dummy, only case im=1)
+cwdk  copy-paste from eirene_extrab25_eirpbls allocations (Eirene_dummy, only case im=1)
 c     avoids double module definition in case code is compiled with Eirene  
 c     Note: all arrays allocated in eirene_extrab25_eirpbls_init (Eirene) are allocated here,
 c     so the standard cleanup routine can still be used (checks on allocation of lkindp)

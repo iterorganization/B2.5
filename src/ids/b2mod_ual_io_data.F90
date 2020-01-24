@@ -58,7 +58,7 @@ contains
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
-        real(IDS_real), intent(in)  :: b2CellData( -1:gmap%b2nx, -1:gmap%b2ny )
+        real(IDS_real), intent(in) :: b2CellData( -1:gmap%b2nx, -1:gmap%b2ny )
         real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
                 !< handing data field values
 
@@ -81,7 +81,7 @@ contains
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
-        real(IDS_real), intent(in) ::   &
+        real(IDS_real), intent(in) ::  &
             &   b2FaceData( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )   !< Face data
             !< given on the 2D B2 data structure
         real(IDS_real), dimension(:), pointer :: idsdata !< Array for

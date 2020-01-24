@@ -42,7 +42,7 @@ c***  hlp_area: area of the corresponding cell face
       integer, allocatable :: ix(:,:), iy(:,:), jx(:,:), jy(:,:)
       integer i,j,k,l,m,i1,i2,is,ns_hlp
       integer ld_hlp(nx_hlp),nc_hlp(nx_hlp)
-      real (kind=R8) ::  d,re,ze,ra,za,rb,zb,z,zz,hlp_area
+      real (kind=R8) :: d,re,ze,ra,za,rb,zb,z,zz,hlp_area
       real (kind=R8), allocatable :: hlp_flx(:)
       character hlp_frmr*100
       character*2, allocatable :: hlp_al(:)

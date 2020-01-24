@@ -67,7 +67,7 @@
      &  cutll, cutlo, t0, phi_app,
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),
      &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
-      real (kind=R8) ::  bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
+      real (kind=R8) :: bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
      &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
       real (kind=R8) ::
      *     hlp, hlp_s, s

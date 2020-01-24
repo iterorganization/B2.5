@@ -182,9 +182,9 @@ c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOT
 c***                   -erfaat-erfmat-erfiat-erfaml-erfmml-erfiml
 c***    wldnep  :   potential energy released by neutrals. Evaluated as diss_pot_H2*prfaml
 c***    wldna   :   flux of atoms impinging onto the surface. Equal to POTAT
-c***    ewlda   :   their average energy. Equal to EOTAT/POTAT*wldna
+c***    ewlda   :   their average energy. Equal to EOTAT/POTAT
 c***    wldnm   :   flux of molecules impinging onto the surface. Equal to POTML
-c***    ewldm   :   their average energy. Equal to EOTML/POTML*wldnm
+c***    ewldm   :   their average energy. Equal to EOTML/POTML
 c***    wldra   :   flux of reflected atoms. Equal to PRFAAT+PRFMAT+PRFIAT
 c***    wldrm   :   flux of reflected molecules. Equal to PRFAML+PRFMML+PRFIML
 c***    wldpp   :   flux of plasma ions impinging onto the surface. Equal to POTPL
@@ -303,7 +303,6 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         filename=fort_lc//'44'
         call find_file(filename,ft44)
         do_trg=.true.
-        write(frmt_hlp,'(a7,i5,a11)') '(1p,1x,',n_line_x,'(e12.5,a1))'
         
         n_sfpr_s=1
         if(nspecies.gt.1) n_sfpr_s=nspecies
@@ -1246,14 +1245,14 @@ c*** Print the line
         end do !}
         do is=1,natmi !{
           w_line(k+1)=wldna(m,is,0)/segm_area(ils)
-          w_line(k+2)=ewlda(m,is,0)/eV
+          w_line(k+2)=ewlda(m,is,0)
           w_line(k+3)=0.0 !atom density
           w_line(k+4)=0.0 !atom pressure
           k=k+n_hdpr_a
         end do !}
         do is=1,nmoli !{
           w_line(k+1)=wldnm(m,is,0)/segm_area(ils) !molecule flux
-          w_line(k+2)=ewldm(m,is,0)/eV !molecule energy
+          w_line(k+2)=ewldm(m,is,0) !molecule energy
           w_line(k+3)=0.0 !molecule density
           w_line(k+4)=0.0 !molecule pressure
           k=k+n_hdpr_ml

@@ -22,44 +22,44 @@ c           determine its standard, resolved and partition organisation.
 c
 c  calling program: various
 c
-c  notes:    (1) A 'standard' adf11 file contains gcr data between one
-c                whole ionisation stage and another whole ionisation
-c                stage.
-c                A 'resolved' (or partial) adf11 file contains gcr data
-c                between a set of metastables of one ionisation stage
-c                and a set of metastables of another ionisation stage.
-c                A resolved file is distinguished from a standard file
-c                by the presence of a 'connection vector' in the adf11
-c                data file header lines.
-c                The connection vector specifies the number of meta-
-c                stables in each ionisation stage which are coupled
-c                together by gcr data.
-c            (2) A 'partitioned' adf11 file contains gcr data between
-c                clumps of ionisation stages or metastables or comb-
-c                inations of the two called 'partitions'.
-c                A 'partition level' is a specification of the
-c                partitions which span all the ionisation stages (and
-c                metastables) of an element.  Successive partition
-c                levels give a hierarchy corresponding to larger
-c                partitions and greater clumping.
-c                A 'superstage' is a set of partitions which are close-
-c                coupled.
-c                There are thus equivalences :
+c  notes: (1) A 'standard' adf11 file contains gcr data between one
+c             whole ionisation stage and another whole ionisation
+c             stage.
+c             A 'resolved' (or partial) adf11 file contains gcr data
+c             between a set of metastables of one ionisation stage
+c             and a set of metastables of another ionisation stage.
+c             A resolved file is distinguished from a standard file
+c             by the presence of a 'connection vector' in the adf11
+c             data file header lines.
+c             The connection vector specifies the number of meta-
+c             stables in each ionisation stage which are coupled
+c             together by gcr data.
+c         (2) A 'partitioned' adf11 file contains gcr data between
+c             clumps of ionisation stages or metastables or comb-
+c             inations of the two called 'partitions'.
+c             A 'partition level' is a specification of the
+c             partitions which span all the ionisation stages (and
+c             metastables) of an element.  Successive partition
+c             levels give a hierarchy corresponding to larger
+c             partitions and greater clumping.
+c             A 'superstage' is a set of partitions which are close-
+c             coupled.
+c             There are thus equivalences :
 c                        ionisation stage   -   superstage
 c                        metastable         -   partition
 c                        ion charge         -   superstage index
-c                A partitioned adf11 file may be standard (with each
-c                superstage comprising only one partition) or resolved.
-c                A partitioned file is distinguished by the presence of
-c                'partition specification block' in the adf11 data
-c                file header lines.
-c            (3) When a partition specification block is present, it
-c                should be ordered from the highest partition level
-c                index to lowest partition level index.  Thus the first
-c                partition in the partition block has the least number
-c                of partitions and the last has the greatest number.
-c            (4) Twelve classes of adf11 data file may be read by the
-c                subroutine as follow:
+c             A partitioned adf11 file may be standard (with each
+c             superstage comprising only one partition) or resolved.
+c             A partitioned file is distinguished by the presence of
+c             'partition specification block' in the adf11 data
+c             file header lines.
+c         (3) When a partition specification block is present, it
+c             should be ordered from the highest partition level
+c             index to lowest partition level index.  Thus the first
+c             partition in the partition block has the least number
+c             of partitions and the last has the greatest number.
+c         (4) Twelve classes of adf11 data file may be read by the
+c             subroutine as follow:
 c
 c                class index    type      GCR data content
 c                -----------    ----      ----------------
@@ -76,11 +76,11 @@ c                   10          zcd       effective charge
 c                   11          ycd       effective squared charge
 c                   12          ecd       effective ionisation potential
 c
-c            (5) A resolved adf11 file, with a connection vector, has a set
-c                of names and pointers at precise positions in the data file
-c                which are recognised.
-c                The names are different for partitioned and unpartitioned
-c                data files as follow:
+c         (5) A resolved adf11 file, with a connection vector, has a set
+c             of names and pointers at precise positions in the data file
+c             which are recognised.
+c             The names are different for partitioned and unpartitioned
+c             data files as follow:
 c
 c                       file      unpartitioned         partitioned
 c                       class        names                 names
@@ -102,12 +102,12 @@ c                       zcd        igrd                  ispb
 c                       ycd        igrd                  ispb
 c                       ecd        igrd                  ispb
 c
-c             (6) In partitioned nomenclature: s=superstage; p=partition;
-c                 b=base (current superstage), p=parent (next up super-
-c                 stage), c=child (next down superstage). Thus arrays
-c                 `iprtr' and `igrd' in old notation are now substituted
-c                 by `isppr' and `ispbr' respectively internally and in
-c                 external naming.
+c         (6) In partitioned nomenclature: s=superstage; p=partition;
+c             b=base (current superstage), p=parent (next up super-
+c             stage), c=child (next down superstage). Thus arrays
+c             `iprtr' and `igrd' in old notation are now substituted
+c             by `isppr' and `ispbr' respectively internally and in
+c             external naming.
 c
 c
 c  subroutine:
@@ -284,8 +284,8 @@ c-----------------------------------------------------------------------
       integer   ifirsta(idword)       , ilasta(idword)
       integer   ispbr(isdimd)         , isppr(isdimd)
 c-----------------------------------------------------------------------
-      real (kind=R8) ::    ddens(iddimd)         , dtev(itdimd)
-      real (kind=R8) ::    drcof(isdimd,itdimd,iddimd)
+      real (kind=R8) :: ddens(iddimd) , dtev(itdimd)
+      real (kind=R8) :: drcof(isdimd,itdimd,iddimd)
 c-----------------------------------------------------------------------
       character cclass(12)*4          , cpatrn(12)*4
       character cptrn1(12)*4          , cptrn2(12)*4
@@ -1266,21 +1266,21 @@ c-----------------------------------------------------------------------
 c
 c  ****************** fortran77 subroutine: xxprtn *********************
 c
-c  purpose:  to read and analyse a partition block in a datafile header
+c  purpose: to read and analyse a partition block in a datafile header
 c
 c  calling program: adas416
 c
-c  notes:  (1) partition levels, partitions and partition components are
-c              labelled starting at 0 (but see (2))
-c          (2) partition level 0 labels the resolved root partition level
-c              partition level 1 labels the unresolved root partition
-c              level.
-c          (3) for an unresolved (standard) file, the partitions are each
-c              ionisation stage from the neutral to the bare nucleus and
-c              they are labelled by the ion charge.  Each partition has
-c              just the one component
-c          (4) distinguish the indexing (starting at 1) from the label
-c              (starting at 0)
+c  notes: (1) partition levels, partitions and partition components are
+c             labelled starting at 0 (but see (2))
+c         (2) partition level 0 labels the resolved root partition level
+c             partition level 1 labels the unresolved root partition
+c             level.
+c         (3) for an unresolved (standard) file, the partitions are each
+c             ionisation stage from the neutral to the bare nucleus and
+c             they are labelled by the ion charge.  Each partition has
+c             just the one component
+c         (4) distinguish the indexing (starting at 1) from the label
+c             (starting at 0)
 c
 c  subroutine:
 c

@@ -12,7 +12,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpt
 !      use b2mod_plasma
-!     , , only :  po
+!     , , only : po
       use b2mod_transport
      , , only : f_luc_sg, alfx_c, sigx_c                                !srv 08.10.14
       use b2mod_external
@@ -363,14 +363,16 @@ c   .. apply flux limit
       if (iout.gt.1) then                                               !srv 05.07.17
         do is = 0,ns-1
           write (chis,'(i3.3)') is
-          call my_out(70,nx,ny,fkabvp(isb, is),
-     &              'b2sifrtf_kabvp_'//chns//'_'//chis)
-          call my_out(70,nx,ny,fkabtf(isb, is),
-     &              'b2sifrtf_kabtf_'//chns//'_'//chis)
-          call my_out(70,nx,ny,fkabtf(is, isb),
-     &              'b2sifrtf_kbatf_'//chns//'_'//chis)
-          call my_out(70,nx,ny,fka(isb),'b2sifrtf_ka_'//chns)
-          call my_out(70,nx,ny,fka(is),'b2sifrtf_kb_'//chis)
+          wrk = fkabvp(isb, is)
+          call my_out(70,nx,ny,wrk,'b2sifrtf_kabvp_'//chns//'_'//chis)
+          wrk = fkabtf(isb, is)
+          call my_out(70,nx,ny,wrk,'b2sifrtf_kabtf_'//chns//'_'//chis)
+          wrk = fkabtf(is, isb)
+          call my_out(70,nx,ny,wrk,'b2sifrtf_kbatf_'//chns//'_'//chis)
+          wrk = fka(isb)
+          call my_out(70,nx,ny,wrk,'b2sifrtf_ka_'//chns)
+          wrk = fka(is)
+          call my_out(70,nx,ny,wrk,'b2sifrtf_kb_'//chis)
         enddo
 
         call my_out(70,nx,ny,f_luc_sg,'b2sifrtf_f_luc_sg')

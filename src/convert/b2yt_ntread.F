@@ -1,5 +1,5 @@
 c
-C RHW 18.08.92:  UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
+C RHW 18.08.92: UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
 C
 *//B2YT_NTREAD//
 *=======================================================================

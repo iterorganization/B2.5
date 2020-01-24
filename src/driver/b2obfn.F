@@ -70,10 +70,10 @@
 
 *   ..local variables
 #ifdef WINDOWS
-      integer(2) ::  iresult
-      logical(4) ::  lresult
+      integer(2) :: iresult
+      logical(4) :: lresult
 #endif
-      logical(4) ::  b2fstate_exist
+      logical(4) :: b2fstate_exist
       integer npoint
       real (kind=R8) :: cpu_s, cpu_f, dif, fcain, fab, shift(1:2)
       character*12 hlp_frm
@@ -358,14 +358,14 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       logical(1) :: l_ne_outer_mdpl
       character(*) :: fnm_ne_outer_mdpl
       integer :: ny, npoint, ndat_ne
-      real (kind=R8) ::  func,
+      real (kind=R8) :: func,
      &   cy_ne_outer_mdpl(-1:ny),
      &   ne_outer_mdpl_mod(-1:ny), b_ne_outer_mdpl_mod(-1:ny),
      & c_ne_outer_mdpl_mod(-1:ny), d_ne_outer_mdpl_mod(-1:ny),
      & cy_ne_outer_mdpl_exp(1:ndat_ne), ne_outer_mdpl_exp(1:ndat_ne)
 
-      integer ::  iy
-      real (kind=R8) ::  dif, nemod, dseval
+      integer :: iy
+      real (kind=R8) :: dif, nemod, dseval
       character(128) :: fmt
 
       fmt="(8x,'y',7x,1x,'"//trim(fnm_ne_outer_mdpl)//"_exp'"//

@@ -533,7 +533,7 @@ c
 *       pi  = ( pi_pp (s=1,...,nsz) ) :  parallel viscosity     in Pa
 *       eta = ( eta_0 (s=1,...,nsz) ) :  parallel visc. coeff.  in Pa s
 *
-*       real: 	min. 8 Bytes precision
+*       real: min. 8 Bytes precision
 *
 *       Subroutines used:
 *       -----------------
