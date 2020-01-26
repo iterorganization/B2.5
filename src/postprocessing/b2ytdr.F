@@ -863,7 +863,7 @@ c 2002-09-11: logic revised
       CALL EIRENE_ALLOC_CESTIM(2)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
-      CALL EIRENE_extrab25_eirpbls_init(1,natm,nmol,nion,npls,nstra,nfl)
+      CALL EIRENE_extrab25_eirpbls_init(nmol,nion,npls)
 #else
       call alloc_b2mod_braeir(nx,ny,ns)
       ex = .false.
@@ -8140,7 +8140,7 @@ C  VELOCITY SPACE DISTRIBUTION
             GOTO 811
           ENDIF
   811   CONTINUE
-*** 9. DATA FOR STATISTIC AND NONANALOG MODEL
+*** 9. DATA FOR STATISTIC AND NON-ANALOG MODEL
         IF (IREAD.EQ.0) THEN
           READ (IUNIN,'(A80)') ZEILE
           WRITE(IUNOT,'(A80)') ZEILE
@@ -8244,8 +8244,13 @@ C  DATA FOR STANDARD DEVIATION
         READ (IUNIN,'(A80)') ZEILE
         WRITE(IUNOT,'(A80)') ZEILE
 cxpb Read first, transform and rewrite
-        READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,
-     .                    NSIGI_BGK,NSIGI_COP,NSIGI_SPC
+        if (streql(eirene_format,'iter') .and.
+     &      b2fstate_version.ge.'03.000.007') then
+          READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,NSIGI_SPC
+        else
+          READ (IUNIN,6666) NSIGVI,NSIGSI,NSIGCI,
+     .                      NSIGI_BGK,NSIGI_COP,NSIGI_SPC
+        endif
         allocate (IGH(NSIGVI), IIH(NSIGVI))
         allocate (IGHW(NSIGSI), IIHW(NSIGSI))
         allocate (IGHC(2,NSIGCI), IIHC(2,NSIGCI))
@@ -8286,8 +8291,7 @@ cxpb Read first, transform and rewrite
           savesigc(J) = IGHC(1,J).NE.0 .AND. IGHC(2,J).NE.0
           if (savesigc(J)) NSIGC1 = NSIGC1 + 1
   915   CONTINUE
-        WRITE(IUNOT,6666) NSIGV1,NSIGS1,NSIGC1,
-     .                    NSIGI_BGK,NSIGI_COP,NSIGI_SPC
+        WRITE(IUNOT,6666) NSIGV1,NSIGS1,NSIGC1,NSIGI_SPC
         DO 9131 J=1,NSIGVI
           if (savesigv(J)) WRITE(IUNOT,6666) IGH(J),IIH(J)
  9131   CONTINUE
