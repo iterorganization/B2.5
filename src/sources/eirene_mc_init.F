@@ -103,11 +103,11 @@ c     Note: all arrays allocated in eirene_extrab25_eirpbls_init (Eirene) are al
 c     so the standard cleanup routine can still be used (checks on allocation of lkindp)
       if(.not.allocated(lkindm)) then 
 #ifdef B25_EIRENE
-        allocate(lkindm(nmol))
+        if (.not.allocated(lkindm)) allocate(lkindm(nmol))
         if (.not.allocated(lkindp)) allocate(lkindp(npls))
         if (.not.allocated(lkindi)) allocate(lkindi(nion))
-        allocate(srccrfc(natm,nstra))
-        allocate(srcstrn(nstra))
+        if (.not.allocated(srccrfc)) allocate(srccrfc(natm,nstra))
+        if (.not.allocated(srcstrn)) allocate(srcstrn(nstra))
 #endif
         lkindm=0
         lkindp=0
