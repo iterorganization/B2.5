@@ -218,24 +218,27 @@ c Drift terms
      & fchstoch)
 
 *   ..compute parallel current
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                        !srv 13.01.17 {
-      if (no_current.ne.1) then
-        if (style.eq.0) then
-          fch_p = 0.0_R8
-        else
-          call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
-        end if
-        if (style.eq.2) then
-          call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
-          call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
-          call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
-        else
-          fch_pi_f = 0.0_R8
-        end if
-        fch_p = fch_p - fch_pi_f
-      else
-        fch_p = 0.0_R8
-      endif                                                             !srv 13.01.17 }
+!      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                        !srv 13.01.17 { !srv 29.01.20 {
+!      if (no_current.ne.1) then
+!        if (style.eq.0) then
+!          fch_p = 0.0_R8
+!        else
+!          call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
+!        end if
+!        if (style.eq.2) then
+!          call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
+!          call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
+!          call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
+!        else
+!          fch_pi_f = 0.0_R8
+!        end if
+!        fch_p = fch_p - fch_pi_f
+!      else
+!        fch_p = 0.0_R8
+!      endif                                                             !srv 13.01.17 } !srv 29.01.20 }
+
+      call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,           !srv 29.01.20
+     &  ehx_, zeff, fch_p)
 
 * ..compute fluxes and linearisation
 *  ..do not forget equivalent code in B2TFHE !!!!!!!!!!!!!!!!!!!!!

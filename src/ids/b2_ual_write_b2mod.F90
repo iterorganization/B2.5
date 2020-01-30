@@ -8,7 +8,7 @@
 !!      b2_ual_write_b2mod code is used to generate b2_ual_write_b2mod.exe
 !!      (main program), which is a post-processor for b2.
 !!      The code reads the plasma grid
-!!      geometry ( full geometry descriptions of all available grid subsets )
+!!      geometry (full geometry descriptions of all available grid subsets)
 !!      and plasma state (electron density/temperature, ion temperature,
 !!      velocity etc.). The code then writes the obtained data to IDS database
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
@@ -46,7 +46,7 @@
 !!      <b> Grid subset IDs </b>:
 !!
 !!      B2.5 ITM routines use grid subset IDs (B2_SUBGRID_UNSPECIFIED,
-!!      B2_SUBGRID_NODES, B2_SUBGRID_CELLS etc.) defined in
+!!      B2_SUBGRID_NODES, B2_SUBGRID_CELLS, etc.) defined in
 !!      @ref b2uw_ualio_grid_desc "b2mod_ual_io_grid.F90", while B2.5 IDS
 !!      uses grid subset IDs defined in IMAS GGD (ids_grid_common.f90).
 !!
@@ -126,12 +126,12 @@
 !!
 !!      The arguments marked with < ... > are the parameters of the IDS database
 !!      where the data is to be stored:
-!!          - \b shot:      The shot number of the database being created
-!!          - \b run:       The run number of the database being created
-!!          - \b username:  Creator/owner of the IMAS IDS database
-!!          - \b device:    Device name of the IMAS IDS database
-!!                          (i. e. solps-iter, iter, aug)
-!!          - \b version:   Major version of the IMAS IDS database
+!!          - \b shot:     The shot number of the database being created
+!!          - \b run:      The run number of the database being created
+!!          - \b username: Creator/owner of the IMAS IDS database
+!!          - \b device:   Device name of the IMAS IDS database
+!!                         (i. e. solps-iter, iter, aug)
+!!          - \b version:  Major version of the IMAS IDS database
 !!
 !!      Example of the command:
 !!      @verbatim

@@ -328,9 +328,9 @@ contains
         endif
         call date_and_time (date, ctime, zone, tvalues)
 #ifdef NAGFOR
-        call get_environment_variable('IMAS_VERSION',status=ierror, length=lenval)
+        call get_environment_variable('IMAS_VERSION',status=ierror,length=lenval)
         if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
-        call get_environment_variable('UAL_VERSION',status=ierror, length=lenval)
+        call get_environment_variable('UAL_VERSION',status=ierror,length=lenval)
         if (ierror.eq.0) call get_environment_variable('UAL_VERSION',value=ual_version)
 #else
 #ifdef USE_PXFGETENV
