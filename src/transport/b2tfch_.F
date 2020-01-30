@@ -2,9 +2,9 @@
 *.specification
 
       subroutine b2tfch_ (nx, ny, ns, ismain, ismain0,                   !srv 09.01.20 {
-     & facdrift, fac_ExB, fac_vis,                                      
+     & facdrift, fac_ExB, fac_vis,
      1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,
-     1 ti, ni, na, fna, uadia, ua, csig, csigin, chci, calf, cvsa_cl, 
+     1 ti, ni, na, fna, uadia, ua, csig, csigin, chci, calf, cvsa_cl,
      & conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
      & fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
       use b2mod_types
@@ -29,7 +29,7 @@
      &   cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),        !srv 16.10.17
      &   lnlam(-1:nx,-1:ny),                                             !srv 13.10.06 01.07.09
      1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     1   qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), 
+     1   qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2   ni(-1:nx,-1:ny), facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      2   fac_vis(-1:nx,-1:ny)
       real (kind=R8) :: cutlo
@@ -37,7 +37,7 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   fch(-1:nx,-1:ny,0:1), fch_p(-1:nx,-1:ny,0:1),
-     &   fchstoch(-1:nx,-1:ny), fchvispar(-1:nx,-1:ny,0:1),      
+     &   fchstoch(-1:nx,-1:ny), fchvispar(-1:nx,-1:ny,0:1),
      &   fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),      !srv 22.11.99 30.09.02
      &   conc(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),         !srv 11.07.99
      2   fchdia(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),      !srv 07.07.99
@@ -170,7 +170,7 @@
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,
      &  ehx_, zeff, fch_p)
 *  .. compute total current without fchstoch, which will be added below
-      fch = fch_p + fchin + fchdia + fchvisper + fchvispar + 
+      fch = fch_p + fchin + fchdia + fchvisper + fchvispar +
      &      fchvisq + fchinert + fchanml
 
 *   ..compute concx

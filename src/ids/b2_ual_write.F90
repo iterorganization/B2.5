@@ -8,7 +8,7 @@
 !!      b2_ual_write code is used to generate b2_ual_write.exe
 !!      (main program), which is intended to be used within SOLPS-GUI.
 !!      The code reads the plasma grid
-!!      geometry ( full geometry descriptions of all available grid subsets )
+!!      geometry (full geometry descriptions of all available grid subsets)
 !!      and plasma state (electron density/temperature, ion temperature,
 !!      velocity etc.). The code then writes the obtained data to IDS database
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
@@ -39,14 +39,14 @@ program b2_ual_write
     use eirmod_extrab25
 #endif
 
+    implicit none
 #ifdef USE_PXFGETENV
     integer lenval, ierror
 #else
 #ifdef NAGFOR
-      integer lenval, ierror
+    integer lenval, ierror
 #endif
 #endif
-    implicit none
 
 #ifndef NO_GETENV
     character(len=24) :: device_env
@@ -84,7 +84,6 @@ program b2_ual_write
     type (ids_summary) :: summary !< IDS designed to store
         !< run summary data
 #endif
-    character*256 systemarg
     character*16 usrnam
     external usrnam
 
@@ -111,7 +110,7 @@ program b2_ual_write
     call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
     call ipgeti( 'b2mndr_run_number', run )
     call xertst( 0.le.run.and.run.le.9999, 'Invalid run number')
-    username=usrnam()
+    username = usrnam()
     call ipgetc( 'b2mndr_user', username )
     call xertst( .not.streql(username,' '), 'User name not defined !')
     device = 'solps-iter'
@@ -131,10 +130,6 @@ program b2_ual_write
 #endif
     call ipgetc( 'b2mndr_device', device )
     call xertst( .not.streql(device,' '), 'Device not defined !')
-    systemarg='imasdb '//trim(device)
-#ifdef IMAS
-    call system(systemarg)
-#endif
 
     write(*,'(a,i8,a,i8,4a)') 'Shot: ', shot, ' Run: ', run, &
         & ' User: ', trim(username), ' Device: ', trim(device)
