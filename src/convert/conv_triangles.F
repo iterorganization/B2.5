@@ -22,16 +22,48 @@
       logical :: inserted
       integer :: nco_old, ic, nnodes, ico, ivx, nelem, iel, i1, i2, i3,
      .           idum, i, nel2, is, jdum, is1, ifc, icv, icut, ixt, iyt,
-     .           iad, ix, iy, ix_b25, nopen, it, isig, iused
+     .           iad, ix, iy, ix_b25, nopen, it, isig, iused, ineir,
+     .           ntrfrm, ismin, ismax, icmin, icmax, cfce(4,3),
+     .           ixl, ixr, iv, icside
+      
       real(R8), allocatable :: xc_old(:), yc_old(:)
       real(R8), allocatable :: xc_new(:), yc_new(:)
       integer, allocatable :: im_old_new(:), elem_new(:,:), 
      .                        im_new_old(:)
       integer, allocatable :: neigh(:,:,:), elem_cv(:), trifc(:,:),
      .                        ixtri(:), iytri(:), bndmdl(:,:),
-     .                        ix_b2_eir(:), ix_eir_b25(:), iy_eir(:)
+     .     ix_b2_eir(:), ix_eir_b25(:), iy_eir(:)
+      integer :: artificial_slab=0
       real(R8) :: xc, yc
       logical :: ffound
+      character(500) :: line
+      type :: tri_elem
+        integer :: itri
+        type(tri_elem), pointer :: next_tri => null()
+      end type tri_elem
+      type :: tri_list
+        type(tri_elem), pointer :: ptri => null()
+      end type tri_list
+      type(tri_list), allocatable :: trias(:,:)
+      type(tri_elem), pointer :: tel
+      
+
+      call ipgeti ('artificial_slab', artificial_slab)	
+
+!  if input.dat exist check which form of fort.33 is used
+      inquire (file='input.dat',exist=ffound)
+      if (ffound) then
+        open (newunit=ineir,file='input.dat')
+        line = repeat(' ',500)
+        do while (index(line,'*** 14') == 0)
+          read (ineir,'(a500)') line
+        end do
+        read (ineir,'(a500)') line
+        read (ineir,'(12i6)') idum, ntrfrm
+        close (ineir)
+      else
+        ntrfrm = 0
+      endif
      
 !  read coordinates from fort.33
       open (unit=33,access='SEQUENTIAL',form='FORMATTED')
@@ -46,8 +78,14 @@
       im_old_new = 0
       im_new_old = 0
 
-      read (33,*) (xc_old(i),i=1,nco_old)
-      read (33,*) (yc_old(i),i=1,nco_old)
+      if (ntrfrm == 0) then
+        read (33,*) (xc_old(i),i=1,nco_old)
+        read (33,*) (yc_old(i),i=1,nco_old)
+      else
+        do i = 1, nco_old
+          read (33,*) idum, xc_old(i), yc_old(i)
+        end do
+      end if
       close (33)
 
 !  now find new coordinate indices
@@ -181,6 +219,9 @@
 
 !  convert plasma cell index from (ixtri,iytri) to icv
       allocate (elem_cv(nelem))
+      if (artificial_slab > 0) then
+        allocate(trias(-1:nx,-1:ny))     
+      end if
 
       do iel = 1, nelem
         if (ixtri(iel) < 0) then
@@ -196,6 +237,15 @@
           else
             icv = mpg%imapCv(ixt,iyt)
             elem_cv(iel) = icv
+          end if
+          if  (artificial_slab) then
+            if ((ixt > -2) .and. (ixt <= nx) .and.
+     .          (iyt > -2) .and. (iyt <= ny)) then
+              allocate (tel)
+              tel%itri = iel
+              tel%next_tri => trias(ixt,iyt)%ptri
+              trias(ixt,iyt)%ptri => tel
+            end if
           end if
         end if
       end do
@@ -254,6 +304,80 @@
         end if
       end do
 
+      if (artificial_slab > 0) then
+        write (*,*) ' artificial slab is used'
+        do icut = 1, nncut
+          do iy = bottomcut(icut)+1, topcut(icut)-1
+           do icside = 1, 2
+             if (icside == 1) then
+               ixr = leftcut(icut)
+               ixl = leftcut(icut)-1
+               icv = mpg%imapcv(ixl,iy)
+! bottom face
+               cfce(1,1:3)=[ mpg%imapVx(ixl,iy), mpg%imapVx(ixr,iy),
+     .                       mpg%imapFCy(ixl,iy) ]
+! right face
+               cfce(2,1:3)=[ mpg%imapVx(ixr,iy), mpg%imapVx(ixr,iy+1),
+     .                       mpg%imapFcx(rightcut(icut),iy) ]
+! top face
+               cfce(3,1:3)=[ mpg%imapVx(ixl,iy+1), mpg%imapVx(ixr,iy+1),
+     .                       mpg%imapFCy(ixr,iy+1) ]
+! left face
+               cfce(4,1:3)=[ mpg%imapVx(ixl,iy), mpg%imapVx(ixl,iy+1),
+     .                       mpg%imapFcx(ixl,iy) ]
+               tel => trias(ixl,iy)%ptri
+             else
+               ixr = rightcut(icut)
+               ixl = rightcut(icut)-1
+               icv = mpg%imapcv(ixl,iy)
+! bottom face
+               cfce(1,1:3)=[ mpg%imapVx(ixl,iy), mpg%imapVx(ixr,iy),
+     .                         mpg%imapFCy(ixl,iy) ]
+! right face
+               cfce(2,1:3)=[ mpg%imapVx(ixr,iy), mpg%imapVx(ixr,iy+1),
+     .                         mpg%imapFcx(leftcut(icut),iy) ]
+! top face
+               cfce(3,1:3)=[ mpg%imapVx(ixl,iy+1), mpg%imapVx(ixr,iy+1),
+     .                         mpg%imapFCy(ixr,iy+1) ]
+! left face
+               cfce(4,1:3)=[ mpg%imapVx(ixl,iy), mpg%imapVx(ixl,iy+1),
+     .                         mpg%imapFcx(ixl,iy) ]
+               tel => trias(ixl,iy)%ptri
+             end if
+            do while (associated(tel))
+              iel = tel%itri
+              write (*,*) ' triangle ',iel,' treated '
+              do is = 1, 3
+                is1 = is + 1
+                if (is1 > 3) is1 = 1
+                if (trifc(is,iel) == 0) then
+                  ismin = min(elem_new(is,iel),elem_new(is1,iel))
+                  ismax = max(elem_new(is,iel),elem_new(is1,iel))
+                  do iv = 1, 4
+                    icmin = min(cfce(iv,1),cfce(iv,2))
+                    icmax = max(cfce(iv,1),cfce(iv,2))
+                    if ((ismin == icmin) .and. (ismax == icmax)) then
+                      ifc = cfce(iv,3) 
+                      if (ifc > 0) then
+                        if (icv == mpg%fcCv(ifc,2)) isig = -1
+                      end if
+                      trifc(is,iel) = isig*ifc
+                      exit
+                    end if
+                  end do
+                end if
+              end do
+              if (count(trifc(1:3,iel) /= 0) == 0) then
+                write (*,*) ' triangle at cut ',iel,' matched no faces '
+              end if
+              tel => tel%next_tri
+            end do
+           end do
+          end do
+        end do
+      end if
+      
+
       allocate (bndmdl(3,nelem))
       bndmdl = 0
 
@@ -261,7 +385,7 @@
       inquire (file='input.dat',exist=ffound)
       if (ffound) then
         call conv_surface_models (nout, mpg, gm, 
-     .     bndmdl, trifc, nelem)
+     .     bndmdl, trifc, elem_cv, nelem)
       else
         call find_nondef_surfaces (nout, mpg, gm, 
      .     elem_new, bndmdl, elem_cv, nelem)

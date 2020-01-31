@@ -1,5 +1,5 @@
       subroutine conv_surface_models (nout, mpg, gm, 
-     .           bndmdl, trifc,nelem)
+     .           bndmdl, trifc, elem_cv, nelem)
 
       use b2mod_types
       use b2mod_boundary_namelist
@@ -13,27 +13,33 @@
       integer, intent(in) :: nout, nelem
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
-      integer, intent(in) :: trifc(3,nelem)
+      integer, intent(in) :: trifc(3,nelem), elem_cv(nelem)
       integer, intent(inout) :: bndmdl(3,nelem)
       character(500) :: line
       integer :: ineir, iouteir, nstsi, ists, i, ier, icut, nd, nsf,
      .           isf, j, ifc, ib, ntrg, ihelp(12), isum, nadmod, nasmod,
-     .           itrg
+     .           itrg, ix, iy, ic, nt, it, is
       integer, allocatable :: idim(:), ipos(:), istart(:), iend(:)
+      integer, allocatable :: ipos_b2(:), indelm(:), tris(:)
       integer, allocatable :: idim_eir(:), ipos_eir(:), 
      .                        istart_eir(:), iend_eir(:), idtrg(:)
       logical :: found,lhelp(60)
+      integer :: artificial_slab=0
 
+      call ipgeti ('artificial_slab', artificial_slab)	
 
       nd = mpg%nRc + mpg%nBc
+      if (artificial_slab > 0) nd = nd + 4*nncut
       allocate (idim(nd))
       allocate (ipos(nd))
+      allocate (ipos_b2(nd))
       allocate (istart(nd))
       allocate (iend(nd))
       allocate (idtrg(nd))
       idtrg = 0
       
-      call find_eirene_numbering(mpg, idim, ipos, istart, iend, nd, nsf)
+      call find_eirene_numbering(mpg, idim, ipos, istart, iend,
+     .                           nd, nsf, ipos_b2)
 
       open (newunit=ineir,file='input.dat',iostat=ier)
       if (ier /= 0) 
@@ -97,6 +103,9 @@
 
 !  find triangles on nondefault standard surfaces
 
+      allocate (indelm(nelem))
+      indelm = (/ (i, i=1,nelem) /)
+
       ntrg = 0
       do ists = 1, nstsi
         found = .false.
@@ -122,7 +131,7 @@
                 ntrg = ntrg + 1
                 idtrg(isf) = -ists
                 exit  ! surface marked
-              else
+              elseif ( isf <= mpg%nRc + mpg%nBc ) then
 !  boundary
                 found = .true.
                 ib = isf - mpg%nRc
@@ -133,11 +142,38 @@
                     bndmdl = -ists
                   end where
                 end do
-                exit  ! surface marked 
+                exit            ! surface marked
+              else if (artificial_slab) then
+                found = .true.
+                ix = ipos_b2(isf)
+                icut = (isf - mpg%nRc - mpg%nBc) / 4 + 1
+                if (mod(isf - mpg%nRc - mpg%nBc,4) == 0) icut = icut - 1
+                do iy = bottomcut(icut)+1, topcut(icut)-1
+                  if (ix <= leftcut(icut)) then
+                    ifc = mpg%imapFcx(leftcut(icut), iy)
+                  else
+                    ifc = mpg%imapFcx(rightcut(icut), iy)
+                  end if
+                  ic = mpg%imapCv(ix,iy)
+                  nt = count(elem_cv == ic)
+                  if (nt > 0) then
+                    allocate(tris(nt))
+                    tris = pack(indelm, elem_cv == ic)
+                    do it = 1, nt
+                      do is = 1, 3
+                        if (abs(trifc(is,tris(it))) == ifc) then
+                          bndmdl(is,tris(it)) = -ists
+                          exit
+                        end if
+                      end do    ! is
+                    end do      ! it
+                    deallocate (tris)
+                  end if
+                end do          ! iy
               end if
             end if
           end if
-        end do
+        end do                  ! isf
 
         if (.not. found) then
           write (*,*) ' Eirene nondefault standard surface ',ists,
@@ -238,12 +274,14 @@
 
       deallocate (idim)
       deallocate (ipos)
+      deallocate (ipos_b2)
       deallocate (istart)
       deallocate (iend)
       deallocate (idim_eir)
       deallocate (ipos_eir)
       deallocate (istart_eir)
       deallocate (iend_eir)
+      deallocate (indelm)
 
       end subroutine conv_surface_models
 
@@ -269,6 +307,10 @@
      .           jt, is, is1, itmin, itmax, ibold, ib, icol,
      .           ntarg, nblk3, nblk14, icut, nd, nsf, istb
       integer, allocatable :: idim(:), ipos(:), istart(:), iend(:) 
+      integer, allocatable :: ipos_b2(:)
+      integer :: artificial_slab=0
+
+      call ipgeti ('artificial_slab', artificial_slab)	
 
 !  set recycling boundary model indicators 
       bndmdl = 0
@@ -368,12 +410,15 @@
       write (nblk3,'(i6)') imodel
 
       nd = mpg%nRc + mpg%nBc
+      if (artificial_slab > 0) nd = nd + 4*nncut
       allocate (idim(nd))
       allocate (ipos(nd))
+      allocate (ipos_b2(nd))
       allocate (istart(nd))
       allocate (iend(nd))
       
-      call find_eirene_numbering(mpg, idim, ipos, istart, iend, nd, nsf)
+      call find_eirene_numbering(mpg, idim, ipos, istart, iend,
+     .                           nd, nsf, ipos_b2)
 
 !  ... from neutral sources
       imodel = 0
@@ -441,7 +486,7 @@
 
 
       subroutine find_eirene_numbering (mpg,
-     .           idim, ipos, istart, iend, nd, nsf)
+     .           idim, ipos, istart, iend, nd, nsf, ipos_b2)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
@@ -455,8 +500,9 @@
       integer, intent(in) :: nd
       integer, intent(out) :: nsf
       integer, intent(out) :: idim(nd), ipos(nd), istart(nd),
-     .                        iend(nd)
-      integer :: icut, istra, ib
+     .                        iend(nd), ipos_b2(nd)
+      integer :: icut, istra, ib, ix
+      integer :: artificial_slab=0
 
       nsf = 0
       idim = -1
@@ -469,6 +515,7 @@
         case ('S')
           idim(nsf) = 1
           ipos(nsf) = rcpos(istra) + 2
+          ipos_b2(nsf) = rcpos(istra)
           istart(nsf) = rcstart(istra) + 1
           iend(nsf) = rcend(istra) + 2
           do icut = 1, nncut
@@ -490,6 +537,7 @@
         case ('N')
           idim(nsf) = 1
           ipos(nsf) = rcpos(istra) + 1
+          ipos_b2(nsf) = rcpos(istra)
           istart(nsf) = rcstart(istra) + 1
           iend(nsf) = rcend(istra) + 2
           do icut = 1, nncut
@@ -511,6 +559,7 @@
         case ('W')
           idim(nsf) = 2
           ipos(nsf) = rcpos(istra) + 2
+          ipos_b2(nsf) = rcpos(istra)
           istart(nsf) = rcstart(istra) + 1
           iend(nsf) = rcend(istra) + 2
           do icut = 1, nncut
@@ -526,6 +575,7 @@
         case ('E')
           idim(nsf) = 2
           ipos(nsf) = rcpos(istra) + 1
+          ipos_b2(nsf) = rcpos(istra)
           istart(nsf) = rcstart(istra) + 1
           iend(nsf) = rcend(istra) + 2
           do icut = 1, nncut
@@ -541,6 +591,7 @@
         case ('A')
           idim(nsf) = 1
           ipos(nsf) = 1
+          ipos_b2(nsf) = 1
           istart(nsf) = 1
           iend(nsf) = 1
         case ('C','V','T')
@@ -556,6 +607,7 @@
         case ('S')
           idim(nsf) = 1
           ipos(nsf) = bcpos(ib) + 2
+          ipos_b2(nsf) = bcpos(ib)
           istart(nsf) = bcstart(ib) + 1
           iend(nsf) = bcend(ib) + 2
           do icut = 1, nncut
@@ -575,6 +627,7 @@
         case ('N')
           idim(nsf) = 1
           ipos(nsf) = bcpos(ib) + 1
+          ipos_b2(nsf) = bcpos(ib)
           istart(nsf) = bcstart(ib) + 1
           iend(nsf) = bcend(ib) + 2
           do icut = 1, nncut
@@ -594,6 +647,7 @@
         case ('W')
           idim(nsf) = 2
           ipos(nsf) = bcpos(ib) + 2
+          ipos_b2(nsf) = bcpos(ib)
           istart(nsf) = bcstart(ib) + 1
           iend(nsf) = bcend(ib) + 2
           do icut = 1, nncut
@@ -607,6 +661,7 @@
         case ('E')
           idim(nsf) = 2
           ipos(nsf) = bcpos(ib) + 1
+          ipos_b2(nsf) = bcpos(ib)
           istart(nsf) = bcstart(ib) + 1
           iend(nsf) = bcend(ib) + 2
           do icut = 1, nncut
@@ -618,15 +673,72 @@
      .        ipos(nsf) = ipos(nsf) + 1
           end do
         case ('A')
-           idim(nsf) = 1
-           ipos(nsf) = 1
-           istart(nsf) = 1
-           iend(nsf) = 1
+          idim(nsf) = 1
+          ipos(nsf) = 1
+          ipos_b2(nsf) = 1
+          istart(nsf) = 1
+          iend(nsf) = 1
         case default
           call xerrab ('Wrong BCCHAR or not yet available for WG')
         end select
       end do bound
 
+!     ... from cuts in case of artificial_slab
+      call ipgeti ('artificial_slab', artificial_slab)
+      
+      if (artificial_slab > 0) then
+        do ib = 1, nncut
+!  right face of cell left of left cut
+          nsf = nsf + 1
+          idim(nsf) = 2
+          ix = leftcut(ib) - 1
+          ipos(nsf) = ix + 2
+          ipos_b2(nsf) = ix
+          istart(nsf) = bottomcut(ib) + 2
+          iend(nsf) = topcut(ib) + 1
+          do icut = 1, nncut
+            if (ix >= leftcut(icut)) ipos(nsf) = ipos(nsf) + 1
+            if (ix >= rightcut(icut)) ipos(nsf) = ipos(nsf) + 1
+          end do
+!  left face of cell right of left  cut
+          nsf = nsf + 1
+          idim(nsf) = 2
+          ix = leftcut(ib)
+          ipos(nsf) = ix + 2
+          ipos_b2(nsf) = ix
+          istart(nsf) = bottomcut(ib) + 2
+          iend(nsf) = topcut(ib) + 1
+          do icut = 1, nncut
+            if (ix > leftcut(icut)) ipos(nsf) = ipos(nsf) + 1
+            if (ix >= rightcut(icut)) ipos(nsf) = ipos(nsf) + 1
+          end do
+!  right face of cell left of right cut
+          nsf = nsf + 1
+          idim(nsf) = 2
+          ix = rightcut(ib) - 1
+          ipos(nsf) = ix + 2
+          ipos_b2(nsf) = ix
+          istart(nsf) = bottomcut(ib) + 2
+          iend(nsf) = topcut(ib) + 1
+          do icut = 1, nncut
+            if (ix >= leftcut(icut)) ipos(nsf) = ipos(nsf) + 1
+            if (ix >= rightcut(icut)) ipos(nsf) = ipos(nsf) + 1
+          end do
+!  left face of cell right of right  cut
+          nsf = nsf + 1
+          idim(nsf) = 2
+          ix = rightcut(ib)
+          ipos(nsf) = ix + 2
+          ipos_b2(nsf) = ix
+          istart(nsf) = bottomcut(ib) + 2
+          iend(nsf) = topcut(ib) + 1
+          do icut = 1, nncut
+            if (ix > leftcut(icut)) ipos(nsf) = ipos(nsf) + 1
+            if (ix > rightcut(icut)) ipos(nsf) = ipos(nsf) + 1
+          end do
+        end do
+      end if
+      
       return
       end subroutine find_eirene_numbering
 
