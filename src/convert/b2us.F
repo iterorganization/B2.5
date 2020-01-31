@@ -422,9 +422,9 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         call write_triangles(nout(0), mpg, gm, nx, ny)
       end if
 #else
-      if (use_eirene.ne.0) then
+!      if (use_eirene.ne.0) then
         call write_triangles(nout(0),mpg, gm, nx, ny)
-      endif
+!      endif
 #endif
 *   ..close other files
       do io=0,size(ninp)-1
