@@ -79,6 +79,9 @@
 #ifdef USE_IMPGYRO
       use b2mod_impgyro !yamoto
 #endif
+#ifdef IMAS
+      use ids_schemas   ! IGNORE
+#endif
       implicit none
 *   ..common blocks
 #     include "DIMENSIONS.F"
@@ -1690,9 +1693,27 @@ c   --> better way doing this is necessary)
 *   ..initialise counters
       itim = 0
       itim_plas = 0
-      if (stim.ge.0.0_R8) tim = stim
+      if (stim.ge.0.0_R8) then
+        tim = stim
+        run_start_time = stim
+      else
+#ifdef IMAS
+        run_start_time = IDS_REAL_INVALID
+#else
+        run_start_time = 0.0_R8
+#endif
+      end if
       call xertst (etim.eq.0.0_R8 .or. etim.gt.tim,
      & 'faulty input etim')
+      if (etim.gt.tim) then
+        run_end_time = etim
+      else
+#ifdef IMAS
+        run_end_time = IDS_REAL_INVALID
+#else
+        run_end_time = 0.0_R8
+#endif
+      end if
       save_plasma_time = tim + delta_plasma_time
       save_cdfmovie_time = tim
 *   ..initialise tracing routines

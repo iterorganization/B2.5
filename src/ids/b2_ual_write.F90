@@ -47,7 +47,6 @@ program b2_ual_write
     integer lenval, ierror
 #endif
 #endif
-
 #ifndef NO_GETENV
     character(len=24) :: device_env
 #endif
@@ -83,6 +82,10 @@ program b2_ual_write
 #if IMAS_MINOR_VERSION > 21
     type (ids_summary) :: summary !< IDS designed to store
         !< run summary data
+#endif
+#if IMAS_MINOR_VERSION > 25
+    type (ids_numerics) :: numerics !< IDS designed to store
+        !< run numerics data
 #endif
     character*16 usrnam
     external usrnam
@@ -141,6 +144,9 @@ program b2_ual_write
 #if IMAS_MINOR_VERSION > 21
         &  summary, &
 #endif
+#if IMAS_MINOR_VERSION > 25
+        &  numerics, run_start_time, run_end_time, &
+#endif
         &  tim, dtim, shot, run, device, version )
 
     !! Create Write the set data to IDSs
@@ -149,6 +155,9 @@ program b2_ual_write
         &   radiation, description, &
 #if IMAS_MINOR_VERSION > 21
         &   summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+        &   numerics, &
 #endif
         &   treename, shot, run, idx, username, device, version )
 
