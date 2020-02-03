@@ -76,6 +76,7 @@
      &                 iout_b2nppo = 0, iout_b2wdat = 0
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: ue_style = 2                                      !srv 17.11.16
+      integer, save :: get_residuals = 0                                 !srv 22.05.18
       real (kind=R8) ::
      *   potok
       integer ncall, n2, is, ier0, i, ix, iy, ireg
@@ -274,6 +275,7 @@ csw 26feb2014 some extra variables
        endif
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
        call ipgeti ('b2sigp_style', ue_style)
+       call ipgeti ('get_residuals', get_residuals)                      !srv 22.05.18
       endif                                                              !srv 02.07.08
 *   ..set n2, zero
       n2 = (nx+2)*(ny+2)
@@ -806,54 +808,59 @@ csw 16oct2012 init ier0
      1    csig, csigin, chci, calf, cvsa_cl,
      &    conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
      &    fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
+        if (solving(3)) then
 *   ..solve the potential equation
-        if (vis_per.eq.0.0e0_R8) then                                    !srv 22.12.19 06.07.00
-          new_matrix = .false.
-          do ireg = 0, nnreg(0)
-            new_matrix = new_matrix.or.
-     &       solvepo(ireg).neqv.last_solve_5(ireg)
-          end do
-          if (new_matrix) call restart_ma28
-          call b2nppo (nx, ny, nnreg(0), solving(3), solvepo, ncall,     !srv 22.05.18
-     &      rxf2, ne, te, conc, sch, po, fch, respo, corpo, ier0)
-            last_solve_5(0:nnreg(0))=solvepo(0:nnreg(0))
-        else
-          call b2npp7 (nx, ny, nnreg(0), solving(3), solvepo, ncall,     !srv 27.01.00 22.05.18
-     &      rxf2, ne, te, conc, avisper, bvisper, cvisper, sch, po,
-     &      fch, respo, corpo, ier0)
-        endif                                                            !srv 06.07.00
-        t0=0.0_R8
-crfs    do iy = 0, ny-1
-        do iy = -1, ny
-crfs      t0 = t0+b2sasum(nx,respo(0,iy),1)
-          t0 = t0+b2sasum(nx+2,respo(-1,iy),1)
-        enddo
-        write(*,*) 'respo before solving',t0
-        call xertst (ier0.eq.0, 'error return from b2nppo')
+          if (vis_per.eq.0.0e0_R8) then                                  !srv 22.12.19 06.07.00
+            new_matrix = .false.
+            do ireg = 0, nnreg(0)
+              new_matrix = new_matrix.or.
+     &         solvepo(ireg).neqv.last_solve_5(ireg)
+            end do
+            if (new_matrix) call restart_ma28
+            call b2nppo (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 22.05.18
+     &        rxf2, ne, te, conc, sch, po, fch, respo, corpo, ier0)
+              last_solve_5(0:nnreg(0))=solvepo(0:nnreg(0))
+          else
+            call b2npp7 (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 27.01.00 22.05.18
+     &        rxf2, ne, te, conc, avisper, bvisper, cvisper, sch, po,
+     &        fch, respo, corpo, ier0)
+          endif                                                          !srv 06.07.00
+          t0=0.0_R8
+crfs      do iy = 0, ny-1
+          do iy = -1, ny
+crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
+            t0 = t0+b2sasum(nx+2,respo(-1,iy),1)
+          enddo
+          write(*,*) 'respo before solving',t0
+          call xertst (ier0.eq.0, 'error return from b2nppo')
 *   ..recompute currents
-        call b2tfch_ (nx, ny, ns, ismain, ismain0, facdrift, fac_ExB,    !srv 09.01.20
-     &    fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
-     1    ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
-     1    csig, csigin, chci, calf, cvsa_cl,
-     &    conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
-     &    fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
+          call b2tfch_ (nx, ny, ns, ismain, ismain0, facdrift, fac_ExB,  !srv 09.01.20
+     &      fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
+     1      ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
+     1      csig, csigin, chci, calf, cvsa_cl,
+     &      conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
+     &      fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
 *   ..compute new residual following the tradition
-        call b2ursd (nx, ny, ne, po, sch, fch, wrk0)
-        t0=0.0_R8
-crfs    do iy = 0, ny-1
-        do iy = -1, ny
-crfs      t0 = t0+b2sasum(nx,wrk0(0,iy),1)
-          t0 = t0+b2sasum(nx+2,wrk0(-1,iy),1)
-        enddo
-        write(*,*) 'respo after solving',t0
-
-       if(iout .ne. 0) then                                              !srv 12.07.05 {
-         write (charns,'(i3.3)') i
-         call my_out(70,nx,ny,respo,'b2news__respo'//charns)
-         call my_out(70,nx,ny,po,'b2news__po'//charns)
-       endif                                                             !srv 12.07.05 }
-
+          call b2ursd (nx, ny, ne, po, sch, fch, wrk0)
+          t0=0.0_R8
+crfs      do iy = 0, ny-1
+          do iy = -1, ny
+crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
+            t0 = t0+b2sasum(nx+2,wrk0(-1,iy),1)
+          enddo
+          write(*,*) 'respo after solving',t0
+        else
+          if(get_residuals.eq.1)
+     &       call b2ursd (nx, ny, ne, po, sch, fch, respo)
+        endif
       endif           ! if pot_eq                                        !srv 13.07.05
+
+      if(iout .ne. 0) then                                               !srv 12.07.05 {
+        write (charns,'(i3.3)') i
+        call my_out(70,nx,ny,respo,'b2news__respo'//charns)
+        call my_out(70,nx,ny,po,'b2news__po'//charns)
+      endif                                                              !srv 12.07.05 }
+
 
       call b2xpen (nx, ny, ns, fna, fne, fch, fhe, fhi, kinrgy, rpt,
      2      te, ti, po, BoRiS, fhm, fhp, fhj, fht)
@@ -936,7 +943,7 @@ c      with diamagnetic drift part                                       !srv 13
      &      te, po, vedia, veecrb)
 *   ..compute heat fluxes
       call b2tfhe_ (nx, ny, ns, facdrift, fac_ExB, vol, hx, hy,          !srv 09.01.20
-     1 qz, te, po, ne, na, vedia, fne, chce, chve, chci, calf,           !srv 17.05.99 11.07.99
+     1 qz, te, po, ne, na, vedia, fne, chce, chve, calf,                 !srv 17.05.99 11.07.99
      & chvemx, cddi, fch_p, fchstoch,
      & floe, cone, fhe, fhe_mdf, fhePSch, .true.)                        !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa

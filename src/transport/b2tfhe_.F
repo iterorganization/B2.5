@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfhe_ (nx, ny, ns, facdrift, fac_ExB, vol, hx, hy,    !srv 23.11.10
-     1 qz, te, po, ne, na, vedia, fne, chce, chve, chci, calf,           !srv 17.05.99
+     1 qz, te, po, ne, na, vedia, fne, chce, chve, calf,                 !srv 17.05.99
      & chvemx, cddi, fch_p, fchstoch, floe, cone,                        !srv 07.07.99 24.03.07
      & fhe, fhe_mdf, fhePSch, balance)                                   !djm Jan2017
       use b2mod_types
@@ -22,15 +22,14 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     &   vol(-1:nx,-1:ny), vedia(-1:nx,-1:ny,0:1),
-     &   fne(-1:nx,-1:ny,0:1), chci(-1:nx,-1:ny,0:1),                    !srv 11.07.99 24.06.08
+     &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
+     &   vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &   qz(-1:nx,-1:ny,0:1), te(-1:nx,-1:ny), po(-1:nx,-1:ny),
+     &   ne(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),
+     &   vedia(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),                   !srv 11.07.99 24.06.08
      &   chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &   calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
-     &   na(-1:nx,-1:ny,0:ns-1),                                         !srv 16.10.17
      &   cddi(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 13.10.06
-     1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     2   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      &   fch_p(-1:nx,-1:ny,0:1), fchstoch(-1:nx,-1:ny)                   !lk 31.01.08 {
       real (kind=R8) :: cutlo
       parameter (cutlo = 1.0e-60_R8)
@@ -1018,8 +1017,6 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,chve(-1,-1,1),'b2tfhe__chvey')
        call my_out(70,nx,ny,calf(-1,-1,0),'b2tfhe__calfx')
        call my_out(70,nx,ny,calf(-1,-1,1),'b2tfhe__calfy')
-       call my_out(70,nx,ny,chci(-1,-1,0),'b2tfhe__chcix')
-       call my_out(70,nx,ny,chci(-1,-1,1),'b2tfhe__chciy')
        call my_out(70,nx,ny,chce(-1,-1,0),'b2tfhe__chcex')
        call my_out(70,nx,ny,chce(-1,-1,1),'b2tfhe__chcey')
        call my_out(70,nx,ny,te,'b2tfhe__te')
