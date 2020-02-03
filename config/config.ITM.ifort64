@@ -91,9 +91,9 @@ IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifndef SOLPS_CPP
 EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif
-LD_UAL  ?= `pkg-config imas-ifort ggd --libs` -lxml2
+LD_UAL  ?= `pkg-config imas-ifort ggd --libs` -lxml2 -lstdc++
 INCMODS += `pkg-config imas-ifort ggd --cflags` 
-IMASLIBS = ${LD_UAL} -lstdc++
+IMASLIBS = ${LD_UAL}
 else
 ifdef ITM_ENVIRONMENT_LOADED
 INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
