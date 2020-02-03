@@ -918,13 +918,8 @@ cmb   net neutral energy source from recombination
 
              srw%shi0(iCv,0) = srw%shi0(iCv,0) + q_conv
 
-             if (idir.eq.0) then
-             hh = geo%cvhx(iCv)
-             hhn = geo%cvhx(iCn)
-             else
-             hh = geo%cvvol(iCv)/(geo%cvhz(iCv)*geo%cvhx(iCv))
-             hhn = geo%cvvol(iCn)/(geo%cvhz(iCn)*geo%cvhx(iCn))
-             endif
+             hh =  2.0_R8*geo%fcHc(iFc,1)
+             hhn = 2.0_R8*geo%fcHc(iFc,2)
 
              if (maxw(istra).eq.0) then
              call CalcIncidentFluxes(iCv,iCn,iFc,isign,
