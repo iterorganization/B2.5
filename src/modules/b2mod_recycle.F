@@ -217,7 +217,7 @@ c     Other initializations
       end subroutine read_recycle_fnn
 
 
-      subroutine CalcIncidentFluxes(iCv,iCn,isign,
+      subroutine CalcIncidentFluxes(iCv,iCn,iFc,isign,
      &            isn,iscx0,istra,idir,hh,hhn,
      &            Phi_app,area,pl,tif,tef,pof,nef,geo,                           
      &            rt,gradnn,fnnic,fnniv,fmomni,nni,nnwwni,feneni)
@@ -232,7 +232,7 @@ c     on the diffusion approximation (see papers of Niels Horsten).
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
-      integer,intent(in):: iCv,iCn, idir,
+      integer,intent(in):: iCv,iCn, iFc,idir,
      &    isn,iscx0,istra
       real (kind=R8),intent(in):: hh, hhn,Phi_app, area,
      2    tif,tef,pof,nef,isign,gradnn
@@ -259,8 +259,8 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%cvQgam(iCv,0)
-      sina = geo%cvQgam(iCv,1)
+      cosa = geo%fcQalf(iFc,0)
+      sina = geo%fcQalf(iFc,1)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCn,1) !!TODO correct species index
       ux = upf*pit2
@@ -389,7 +389,7 @@ c     Convert energy flux densities in net energy flux contributions
       return
       end subroutine CalcIncidentFluxes
 
-      subroutine CalcIncidentFluxesMaxwellian(iCv,isn,isign,istra,
+      subroutine CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
      &            idir,area,pl,tf,geo,isrc,fnnic,fnniv,fmomni,
      &            nni,nnwwni,feneni)
 !nh   08.05.2018
@@ -407,7 +407,7 @@ c     isn is the neutral species index
 c     isrc is the sign of the source needed for the hybrid delta f method
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
-      integer,intent(in) :: iCv, isn, idir, istra,
+      integer,intent(in) :: iCv, iFc, isn, idir, istra,
      &    isrc
       real (kind=R8),intent(in) :: area, tf, isign
 c     Output variables: Incident neutral flux has been broken up in two parts:
@@ -429,8 +429,8 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%cvQgam(iCv,0)
-      sina = geo%cvQgam(iCv,1)
+      cosa = geo%fcQalf(iFc,0)
+      sina = geo%fcQalf(iFc,1)
 cnh   neutral velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and only neutral parallel
 c     velocity component
       unf = pl%ua(iCv,0) !! TODO species index
@@ -495,7 +495,7 @@ c     Convert energy flux densities in net energy flux contributions
 
 
 
-      subroutine CalcRecycledFluxes(iCv,
+      subroutine CalcRecycledFluxes(iCv,iFc,
      &             isign,
      &            isn,iscx0,istra,iwall,idir,
      &            Phi_app,area,recyc0,pl,tif,tef,pof,nif,nef,
@@ -512,7 +512,7 @@ c     nif = plasma density on face, isn neutral species index
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
 !!      type (B2Rates), intent (in) :: rt
-      integer, intent(in):: iCv,
+      integer, intent(in):: iCv,iFc,
      &     idir, isn, iscx0, iwall,istra
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    tif,tef,pof,nif,nef,t0,isign
@@ -540,8 +540,8 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%cvQgam(iCv,0)
-      sina = geo%cvQgam(iCv,1)
+      cosa = geo%fcQalf(iFc,0)
+      sina = geo%fcQalf(iFc,1)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCv,1) !! TODO species index
       ux = upf*pit2
@@ -649,7 +649,7 @@ c     Convert energy flux densities in energy fluxes
       return
       end subroutine CalcRecycledFluxes
 
-      subroutine CalcReflectedFluxes(iCv,iCn,isign,
+      subroutine CalcReflectedFluxes(iCv,iCn,iFc,isign,
      &            isn,iscx0,istra,iwall,idir,hh,hhn,
      &            Phi_app,area,recyc0,pl,tif,tef,pof,                           
      &           nef,geo,rt,gradnn,fmomrefl,nnrefl,nnwwnrefl,fenerefl)
@@ -665,7 +665,7 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (geometry), intent (in) :: geo
       type (B2Rates), intent (in) :: rt
 
-      integer,intent(in):: iCv, iCn, idir,
+      integer,intent(in):: iCv, iCn, iFc, idir,
      &    isn, iscx0, iwall,istra
       real (kind=R8),intent(in):: hh, hhn,Phi_app, area,recyc0,
      2    pof,tif,tef,nef,isign
@@ -698,8 +698,8 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%cvQgam(iCv,0)
-      sina = geo%cvQgam(iCv,1)
+      cosa = geo%fcQalf(iFc,0)
+      sina = geo%fcQalf(iFc,1)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
 !! TODO species index
       upf = pl%ua(iCn,1) !! even though the parallel velocity on the face should use iCv, we choose iCn because EIRENE also only cells ua in the first internal cell.
@@ -877,7 +877,7 @@ c     Convert energy flux densities in energy fluxes
       return
       end subroutine CalcReflectedFluxes
 
-      subroutine CalcReflectedFluxesMaxwellian(iCv,isign,
+      subroutine CalcReflectedFluxesMaxwellian(iCv,iFc,isign,
      &            isn,istra,iwall,idir,area,recyc0,pl,tf,                          
      &            geo,fmomrefl,nnrefl,nnwwnrefl,fenerefl)
 !nh   11.06.18
@@ -890,7 +890,7 @@ c     for the incident neutrals.
       implicit none
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
-      integer,intent(in):: iCv, idir, isn, iwall, istra
+      integer,intent(in):: iCv, iFc, idir, isn, iwall, istra
       real (kind=R8),intent(in):: area, recyc0, tf,isign
 c     Output variables
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl
@@ -916,6 +916,8 @@ c     Initialize/calculate some variables
 c     a is defined as -t
       cosa = geo%cvQgam(iCv,0)
       sina = geo%cvQgam(iCv,1)
+      cosa = geo%fcQalf(iFc,0)
+      sina = geo%fcQalf(iFc,1)
 c     Neutral velocity components: toroidal (x),tangential (y), and normal (z)
       unf = pl%ua(iCv,isn)
       ux =  unf*pit2
