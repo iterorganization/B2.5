@@ -421,17 +421,17 @@ cwdk     note: qc in left ghosts unchanged
       else if (isymm.eq.1 .or. isymm.eq.2) then
         hzl(:,:) = pi * (crx(:,:,0)+crx(:,:,2))
         hzb(:,:) = pi * (crx(:,:,0)+crx(:,:,1))
-        hzc(-1:nx,-1:ny) = pi * crx(:,:,0)
-        hzc(nx+1,-1:ny)  = pi * crx(nx,-1:ny,1)
-        hzc(-1:nx,ny+1)  = pi * crx(-1:nx,ny,2)
-        hzc(nx+1,ny+1)   = pi * crx(nx,ny,3)
+        hzc(-1:nx,-1:ny) = 2.0_R8 * pi * crx(:,:,0)
+        hzc(nx+1,-1:ny)  = 2.0_R8 * pi * crx(nx,-1:ny,1)
+        hzc(-1:nx,ny+1)  = 2.0_R8 * pi * crx(-1:nx,ny,2)
+        hzc(nx+1,ny+1)   = 2.0_R8 * pi * crx(nx,ny,3)
       else if (isymm.eq.3 .or. isymm.eq.4) then
         hzl(:,:) = pi * (cry(:,:,0)+cry(:,:,2))
         hzb(:,:) = pi * (cry(:,:,0)+cry(:,:,1))
-        hzc(-1:nx,-1:ny) = pi * cry(:,:,0)
-        hzc(nx+1,-1:ny)  = pi * cry(nx,-1:ny,1)
-        hzc(-1:nx,ny+1)  = pi * cry(-1:nx,ny,2)
-        hzc(nx+1,ny+1)   = pi * cry(nx,ny,3)
+        hzc(-1:nx,-1:ny) = 2.0_R8 * pi * cry(:,:,0)
+        hzc(nx+1,-1:ny)  = 2.0_R8 * pi * cry(nx,-1:ny,1)
+        hzc(-1:nx,ny+1)  = 2.0_R8 * pi * cry(-1:nx,ny,2)
+        hzc(nx+1,ny+1)   = 2.0_R8 * pi * cry(nx,ny,3)
       end if
       if (redef_gmtry.eq.0) then
 *  ..old treatment: interpolate magnetic field to cell faces : overwrite wbbl
