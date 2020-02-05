@@ -264,8 +264,8 @@ c     a is defined as -t
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCn,1) !!TODO correct species index
       ux = upf*pit2
-      uy = -idir*isign*upf*pit-(1-idir)*sina*isign*upf*pit
-      uz = -(1-idir)*cosa*isign*upf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
+      uy = -sina*isign*upf*pit
+      uz = -cosa*isign*upf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
 
       dnndyc = -isign*gradnn
       dnndyv = 0
@@ -435,8 +435,8 @@ cnh   neutral velocities toroidal (x),tangential (y), and normal (z) to boundary
 c     velocity component
       unf = pl%ua(iCv,0) !! TODO species index
       ux = unf*pit2
-      uy = -idir*isign*unf*pit-(1-idir)*sina*isign*unf*pit
-      uz = -(1-idir)*cosa*isign*unf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
+      uy = -sina*isign*unf*pit
+      uz = -cosa*isign*unf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
 c      call CalcMomentsMaxwellian(uz,tf,mn,i0l,i0r,i1l,i1r,i2l,i2r)     !mb Removed optional arguments. Implementation gave segmentation errors...
@@ -545,8 +545,10 @@ c     a is defined as -t
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCv,1) !! TODO species index
       ux = upf*pit2
-      uy = -idir*isign*upf*pit-(1-idir)*sina*isign*upf*pit
-      uz = -(1-idir)*cosa*isign*upf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
+!!      uy = -idir*isign*upf*pit-(1-idir)*sina*isign*upf*pit
+      uy = -sina*isign*upf*pit
+!!      uz = -(1-idir)*cosa*isign*upf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
+      uz = -cosa*isign*upf*pit
 c       ion particle flux density
       fdni= -(1-idir)*nif*uz + idir*t0/area
 
@@ -704,8 +706,8 @@ cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary 
 !! TODO species index
       upf = pl%ua(iCn,1) !! even though the parallel velocity on the face should use iCv, we choose iCn because EIRENE also only cells ua in the first internal cell.
       ux = upf*pit2
-      uy = -idir*isign*upf*pit-(1-idir)*sina*isign*upf*pit
-      uz = -(1-idir)*cosa*isign*upf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
+      uy = -sina*isign*upf*pit
+      uz = -cosa*isign*upf*pit !mb poloidal direction supposedly coincides with normal direction (5-point stencil)
 
 c     Calculate tangental and perpendicular gradients of neutral density at boundary
       dnndy = -isign*gradnn
@@ -921,8 +923,8 @@ c     a is defined as -t
 c     Neutral velocity components: toroidal (x),tangential (y), and normal (z)
       unf = pl%ua(iCv,isn)
       ux =  unf*pit2
-      uy = -idir*isign*unf*pit-(1-idir)*sina*isign*unf*pit
-      uz = -(1-idir)*cosa*isign*unf*pit
+      uy = -sina*isign*unf*pit
+      uz = -cosa*isign*unf*pit
       
 c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tf,mn,i0l,i0r,i1l,i1r,i2l,i2r,
