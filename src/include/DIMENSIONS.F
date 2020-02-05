@@ -10,10 +10,10 @@
 !
 
 ! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-#define DEF_NXD 128
+#define DEF_NXD 200
 #define DEF_NCUT 4
 #define DEF_ISOEXTRA 0
-#define DEF_NYD 36
+#define DEF_NYD 100
 #define DEF_NPHID 1
 #define DEF_NSTRA (5*DEF_NCUT/2+2)*DEF_NATM+1
 #define DEF_NFL DEF_NSD
