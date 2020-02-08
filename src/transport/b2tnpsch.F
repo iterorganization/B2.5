@@ -142,7 +142,7 @@
           endif
          enddo
         enddo
-        else
+        else                                                            !nn
           nbti=nb*ti
           weight = 1.0e0_R8  
           call intcor(nx,ny,weight,nbti,nbtic)
@@ -216,7 +216,7 @@
           endif
          enddo
         enddo
-        else
+        else                                                            !nn
           do iy = -1, ny
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
