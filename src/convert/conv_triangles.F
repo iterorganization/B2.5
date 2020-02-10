@@ -33,7 +33,7 @@
       integer, allocatable :: neigh(:,:,:), elem_cv(:), trifc(:,:),
      .                        ixtri(:), iytri(:), bndmdl(:,:),
      .     ix_b2_eir(:), ix_eir_b25(:), iy_eir(:)
-      integer :: artificial_slab=0
+      integer :: artificial_slab=0,overwrite_ntrfrm_1=0
       real(R8) :: xc, yc
       logical :: ffound
       character(500) :: line
@@ -49,6 +49,7 @@
       
 
       call ipgeti ('artificial_slab', artificial_slab)	
+      call ipgeti ('overwrite_ntrfrm_1', overwrite_ntrfrm_1)	
 
 !  if input.dat exist check which form of fort.33 is used
       inquire (file='input.dat',exist=ffound)
@@ -63,6 +64,10 @@
         close (ineir)
       else
         ntrfrm = 0
+      endif
+      
+      if (overwrite_ntrfrm_1.eq.1) then
+         ntrfrm = 1
       endif
      
 !  read coordinates from fort.33
