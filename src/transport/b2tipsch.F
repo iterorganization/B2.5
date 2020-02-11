@@ -145,11 +145,12 @@
         nati2 = 0.0
         do is = 0, ns-1
           if(.not.is_neutral(is)) then
+            print *, is
             nati2(:,:,is)=na(:,:,is)*(ti(:,:)/qe)*ti(:,:)
           endif
         enddo
         call intcor1(nx,ny,ns-1,weight,nati2,nati2c)
-
+        print *, 'intcore done'
         do iy = -1, ny
          do ix = -1, nx
           if(topix(ix,iy).gt.nx .or. topiy(ix,iy).gt.ny) then
@@ -166,13 +167,18 @@
           endif
           enddo
         enddo
+        print *, 'psch x done'
       endif
 
-      coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
+      do is = 0, ns-1
+          if(.not.is_neutral(is)) then
+            coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
      &               cddi(ix,iy,1,is)*na(ix,iy,is)*ti(ix,iy)
-      coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
+            coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
      &      cddi(ix,iy,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
+          endif
+      enddo
 !      iy = ny
 !       do ix = -1, nx
 !         if(leftix(ix,iy).eq.-2) then
@@ -253,6 +259,7 @@
          enddo
         enddo
       else
+        print *,'psch y start'
         do iy = -1, ny
          do ix = -1, nx
           if(rightiy(ix,iy).gt.ny .or. rightix(ix,iy).gt.nx) then
@@ -269,6 +276,7 @@
           endif
           enddo
         enddo
+        print *, 'psch y done'
       endif
 
 
