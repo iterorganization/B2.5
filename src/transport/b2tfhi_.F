@@ -857,7 +857,7 @@ cwdk add computation of 9-point fluxes
             fhi_mdf(ix,iy,0,1) = floi9_mdf*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8 - 
      &         0.5_R8*abs(floi9_mdf)*dti - coni9_mdf*dtir(ix,iy,0) -
-     &         fhiPSch(ix,iy,0,1) 
+     &         fhiPSch(ix,iy,0,1)
 cwdk
             if (balance.and.
      &          (balance_netcdf.ne.0).and.
@@ -1131,6 +1131,9 @@ csw 13mar2013 added check upwind (SOLPS4)
      &         (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
      &         -(coni0_mdf-0.5_R8*abs(floi0_mdf))*dtir(ix,iy,1)
      &      -fhiPSch(ix,iy,1,1)                                            !srv 13.10.06 }
+         fhi(ix,iy,1,0)     = 0.0_R8                                       !srv 29.01.20
+         fhi_mdf(ix,iy,1,0) = 0.0_R8                                       !srv 29.01.20
+
          if (balance.and.
      &       (balance_netcdf.ne.0).and.
      &       (mdf_fhi.eq.0)) then !djm Jan2017
