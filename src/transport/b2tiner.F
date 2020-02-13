@@ -62,11 +62,11 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2tiner_inert', fch_inert)                         !srv 07.07.99
-       call ipgeti ('b2tiner_fch_inert_style', fch_inert_style)         !srv 07.07.99
        call ipgeti ('b2tfhe_no_current', no_current)
        call ipgeti ('b2news_guard_flows', guard_flows)
        call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
        if (drift_style.eq.2 .and. redef_gmtry .eq. 1) fch_inert_style=2  !IYS 11.02.2020
+       call ipgeti ('b2tiner_fch_inert_style', fch_inert_style)         !srv 07.07.99
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')

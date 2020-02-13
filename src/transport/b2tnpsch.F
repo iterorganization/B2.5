@@ -1,22 +1,23 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tnpsch (nx, ny, isb, guard_flows, facdrift, zb, vol,  !xpb !iyv 06.02.14 02.04.18 {
-     &  hx, hy,hzl,hzb, qz, gs, qc, nb, ti, cddb, fnbPSch)                       !srv 09.01.01 13.10.06
+      subroutine b2tnpsch (nx, ny, isb, guard_flows, facdrift, zb,   !xpb !iyv 06.02.14 02.04.18 {
+     &   nb, ti, cddb, fnbPSch)                       !srv 09.01.01 13.10.06
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
+      use b2mod_geo
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, guard_flows                                   !xpb !srv 08.09.01 !lk 02.06.11
       real (kind=R8) ::
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  nb(-1:nx,-1:ny),  hzl(-1:nx,-1:ny),hzb(-1:nx,-1:ny),              !srv 21.10.10
-     &  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
+ !    *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  nb(-1:nx,-1:ny),!  hzl(-1:nx,-1:ny),hzb(-1:nx,-1:ny),              !srv 21.10.10
+!     &  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
      &  facdrift(-1:nx,-1:ny), zb(-1:nx,-1:ny),
      &  ti(-1:nx,-1:ny), cddb(-1:nx,-1:ny,0:1)                           !srv 13.10.06 !iyv 06.02.14
 *   ..output arguments (unspecified on entry)
@@ -44,6 +45,7 @@
      &        ixl, iyl, ixb, iyb                                         !srv 13.10.06
       integer, save :: iout = 0                                          !srv 02.04.18
       integer, save :: PSch_style = 1                                    !srv 12.11.08
+      integer, save :: drift_style = 1                                   !IYS 11.02.2020
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: PSch = 1.0_R8                              !srv 17.01.07
       real (kind=R8) ::
@@ -72,7 +74,9 @@
         call ipgeti ('b2news_area_fix', area_fix)
         call ipgeti ('b2tnpsch_iout', iout)                              !srv 02.04.18
         call ipgetr ('b2tfnb_PSch', PSch)                                !srv 17.01.07
-        call ipgeti ('b2tfnb_PSch_style', PSch_style)                    !srv 12.11.08
+        call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
+        if (drift_style.eq.2 .and. redef_gmtry .eq. 1) PSch_style=2       !IYS 11.02.2020
+        call ipgeti ('b2tfnb_PSch_style', PSch_style)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then

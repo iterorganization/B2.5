@@ -1,6 +1,6 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2tipsch (nx, ny, ns, facdrift, vol, hx, hy, qz,       !srv 02.04.18 {
+      subroutine b2tipsch (nx, ny, ns, facdrift, !vol, hx, hy,       !srv 02.04.18 {
      1  na, ti, cddi, coni, fhiPSch)                                    !srv 13.10.06
       use b2mod_types
       use b2mod_boundary_namelist
@@ -12,13 +12,13 @@
       use b2mod_geo_corner
      &  , only : bzbl,bzbv
       use b2mod_geo
-     &   , only : hzl,hzb
+!     &   , only : hzl,hzb
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *  facdrift(-1:nx,-1:ny),  vol(-1:nx,-1:ny),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),          !srv 13.10.06
+     *  facdrift(-1:nx,-1:ny), ! vol(-1:nx,-1:ny),
+!     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),          !srv 13.10.06
      1  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
      &  cddi(-1:nx,-1:ny,0:1,0:ns-1),
      &  nati2c(-1:nx,-1:ny,0:ns-1),nati2(-1:nx,-1:ny,0:ns-1)
@@ -50,6 +50,7 @@
       integer, save :: iout = 0
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       integer, save :: PSch_style = 1
+      integer, save :: drift_style = 1                                   !IYS 11.02.2020
       real (kind=R8) ::
      *   facdriftm                                                      !srv 25.01.02
       save ncall
@@ -69,6 +70,8 @@
       if (ncall.eq.0) then                                              !srv
        call ipgeti ('b2tipsch_iout', iout)                              !srv 16.09.02
        call ipgetr ('b2tfhi_PSch', PSch)                                !srv 17.01.07
+       call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
+       if (drift_style.eq.2 .and. redef_gmtry .eq. 1) PSch_style=2       !IYS 11.02.2020
        call ipgeti ('b2tfnb_PSch_style', PSch_style)
       endif                                                             !srv
 *   ..set n2
@@ -140,17 +143,17 @@
          enddo
         enddo
       else
-        print *,'b2tipsch style=2'
+!        print *,'b2tipsch style=2'
         weight = 1.0e0_R8
         nati2 = 0.0
         do is = 0, ns-1
           if(.not.is_neutral(is)) then
-            print *, is
-            nati2(:,:,is)=na(:,:,is)*(ti(:,:)/qe)*ti(:,:)
+!            print *, is
+            nati2(:,:,is)=na(:,:,is)*ti(:,:)*ti(:,:)
           endif
         enddo
         call intcor1(nx,ny,ns-1,weight,nati2,nati2c)
-        print *, 'intcore done'
+!        print *, 'intcore done'
         do iy = -1, ny
          do ix = -1, nx
           if(topix(ix,iy).gt.nx .or. topiy(ix,iy).gt.ny) then
@@ -161,13 +164,13 @@
               if(.not.is_neutral(is)) then
                 fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) + 
      &          PSch*(nati2c(topix(ix,iy),topiy(ix,iy),is)-
-     &          nati2c(ix,iy,is))/rza(ix,iy,is)*bzbl(ix,iy)*hzl(ix,iy)
+     &       nati2c(ix,iy,is))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
               endif
             enddo
           endif
           enddo
         enddo
-        print *, 'psch x done'
+!        print *, 'psch x done'
       endif
 
       do is = 0, ns-1
@@ -259,7 +262,7 @@
          enddo
         enddo
       else
-        print *,'psch y start'
+!        print *,'psch y start'
         do iy = -1, ny
          do ix = -1, nx
           if(rightiy(ix,iy).gt.ny .or. rightix(ix,iy).gt.nx) then
@@ -270,13 +273,13 @@
               if(.not.is_neutral(is)) then
                 fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 
      &          PSch*(nati2c(rightix(ix,iy),rightiy(ix,iy),is)-
-     &          nati2c(ix,iy,is))/rza(ix,iy,is)*bzbl(ix,iy)*hzl(ix,iy)
+     &       nati2c(ix,iy,is))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
               endif
             enddo
           endif
           enddo
         enddo
-        print *, 'psch y done'
+!        print *, 'psch y done'
       endif
 
 

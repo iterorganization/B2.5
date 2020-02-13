@@ -145,7 +145,7 @@ c-rfs     1 minval(fni(-1,:,0)),maxval(fni(-1,:,0))
        call b2xvff (nx, ny, chvi, 'chvi')
       endif
 
-      call b2tipsch (nx, ny, ns, facdrift, vol, hx, hy, qz,             !srv 02.04.18
+      call b2tipsch (nx, ny, ns, facdrift, !vol, hx, hy,                 !srv 02.04.18
      1  na, ti, cddi, coni, fhiPSch)                                    !srv 13.10.06
 
       facdriftm = maxval(facdrift)

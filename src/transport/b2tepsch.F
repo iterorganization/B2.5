@@ -38,6 +38,7 @@
       integer ix, iy, is, ixl, iyl, ixb, iyb
       integer, save :: ncall = 0
       integer, save :: PSch_style = 1
+      integer, save :: drift_style = 1                                   !IYS 11.02.2020
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
      &  facdriftm
@@ -50,6 +51,8 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
+       call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
+       if (drift_style.eq.2 .and. redef_gmtry .eq. 1) PSch_style=2       !IYS 11.02.2020
        call ipgeti ('b2tfnb_PSch_style', PSch_style)
       end if
 *   ..test nx, ny
@@ -62,7 +65,7 @@
 *   ..compute P.Sch heat x-flux                                          !srv 13.10.06 {
         do is = 0,ns-1                                                   !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
-        print *, 'style=0'
+!        print *, 'style=0'
         if((PSch_style.eq.0).or.(PSch_style.eq.1)) then
          do iy = 0, ny-1
           do ix = -1, nx
@@ -92,8 +95,8 @@
           !print *,fhePSch(:,iy,0)
          enddo
         else
-          print *,'style=2'
-          nete2(:,:)=ne(:,:)*(te(:,:)/qe)*te(:,:)
+!          print *,'style=2'
+          nete2(:,:)=ne(:,:)*te(:,:)*te(:,:)
           weight = 1.0e0_R8
           call intcor(nx,ny,weight,nete2,nete2c)
           do iy = -1, ny
@@ -104,7 +107,7 @@
               else
                 fhePSch(ix,iy,0) = -PSch*                                    !
      &          (nete2c(topix(ix,iy),topiy(ix,iy))-nete2c(ix,iy))*
-     &          bzbl(ix,iy)*hzl(ix,iy)
+     &          bzbl(ix,iy)*hzl(ix,iy)/qe
 
       !           print *, iy,ix,topiy(ix,iy),topix(ix,iy)
       !           print *, nete2c(topix(ix,iy),topiy(ix,iy)),
@@ -171,7 +174,7 @@
             else
               fhePSch(ix,iy,1) = PSch*                                  
      &        (nete2c(rightix(ix,iy),rightiy(ix,iy))-nete2c(ix,iy))*
-     &        bzbv(ix,iy)*hzb(ix,iy)
+     &        bzbv(ix,iy)*hzb(ix,iy)/qe
             endif
            enddo
           enddo
