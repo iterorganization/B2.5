@@ -102,7 +102,7 @@
      &           topix(ix,iy).lt.(-1) .or. topiy(ix,iy).lt.(-1)) then
                 fhePSch(ix,iy,0)= 0.0e0_R8
               else
-                fhePSch(ix,iy,0) = PSch*                                    !
+                fhePSch(ix,iy,0) = -PSch*                                    !
      &          (nete2c(topix(ix,iy),topiy(ix,iy))-nete2c(ix,iy))*
      &          bzbl(ix,iy)*hzl(ix,iy)
 
@@ -169,7 +169,7 @@
      &       rightiy(ix,iy).lt.(-1) .or. rightix(ix,iy).lt.(-1)) then
              fhePSch(ix,iy,1)= 0.0e0_R8
             else
-              fhePSch(ix,iy,1) = -PSch*                                  
+              fhePSch(ix,iy,1) = PSch*                                  
      &        (nete2c(rightix(ix,iy),rightiy(ix,iy))-nete2c(ix,iy))*
      &        bzbv(ix,iy)*hzb(ix,iy)
             endif
