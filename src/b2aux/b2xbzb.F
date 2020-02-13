@@ -1,10 +1,12 @@
-      subroutine b2xbzb (nx, ny, bb, vol, bzb)              !srv 13.10.06 23.07.10 {
+      subroutine b2xbzb (nx, ny, bb,wbbv,wbbl,vol,bzb,bzbv,bzbl)              !srv 13.10.06 23.07.10 {
       use b2mod_types
       use b2mod_indirect
       implicit none
       integer nx, ny
       real (kind=R8) ::
-     *   bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), bzb(-1:nx,-1:ny)
+     *   bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), bzb(-1:nx,-1:ny),
+     & bzbl(-1:nx,-1:ny),bzbv(-1:nx,-1:ny),wbbl(-1:nx,-1:ny,0:3), 
+     & wbbv(-1:nx,-1:ny,0:3)
 *     ------------------------------------------------------------------
 *     B2XBZB calculates Bz/B**2 - Bz/<B**2>.
 *     ------------------------------------------------------------------
@@ -26,10 +28,18 @@
       enddo
       if(volsum.gt.0.0_R8) then
         bzb = bbsum/volsum
+        bzbl = wbbl(:,:,2)/wbbl(:,:,3)**2 - wbbl(:,:,2)/bzb
+        bzbv = wbbv(:,:,2)/wbbv(:,:,3)**2 - wbbv(:,:,2)/bzb
         bzb = bb(:,:,2)/bb(:,:,3)**2 - bb(:,:,2)/bzb
       else
         bzb = 0.0_R8
+        bzbl = 0.0_R8
+        bzbv = 0.0_R8
       endif
+
+
+      !bzbl,bzbr
+
 
 *$$$  call subend ()
       return

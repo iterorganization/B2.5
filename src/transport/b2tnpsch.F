@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tnpsch (nx, ny, isb, guard_flows, facdrift, zb, vol,  !xpb !iyv 06.02.14 02.04.18 {
-     &  hx, hy, qz, gs, qc, nb, ti, cddb, fnbPSch)                       !srv 09.01.01 13.10.06
+     &  hx, hy,hzl,hzb, qz, gs, qc, nb, ti, cddb, fnbPSch)                       !srv 09.01.01 13.10.06
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -15,10 +15,10 @@
       integer nx, ny, isb, guard_flows                                   !xpb !srv 08.09.01 !lk 02.06.11
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  nb(-1:nx,-1:ny),                                                 !srv 21.10.10
-     2  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
-     2  facdrift(-1:nx,-1:ny), zb(-1:nx,-1:ny),
-     3  ti(-1:nx,-1:ny), cddb(-1:nx,-1:ny,0:1)                           !srv 13.10.06 !iyv 06.02.14
+     &  nb(-1:nx,-1:ny),  hzl(-1:nx,-1:ny),hzb(-1:nx,-1:ny),              !srv 21.10.10
+     &  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
+     &  facdrift(-1:nx,-1:ny), zb(-1:nx,-1:ny),
+     &  ti(-1:nx,-1:ny), cddb(-1:nx,-1:ny,0:1)                           !srv 13.10.06 !iyv 06.02.14
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  fnbPSch(-1:nx,-1:ny,0:1)
@@ -114,7 +114,7 @@
           endif
          enddo
         enddo
-       else
+       else if(PSch_style.eq.1) then
         weight = 1.0e0_R8                                               !lk
         nbti=nb*ti
         call intcor(nx,ny,weight,nbti,nbtic)                            !lk 12.12.07
@@ -140,6 +140,22 @@
      &      *(nb(ix,iy)+nb(ixl,iyl))/(nbcor(ix,iy)+                     !lk 09.06.11
      &      nbcor(topix(ix,iy),topiy(ix,iy)))                           !lk 09.06.11
           endif
+         enddo
+        enddo
+        else                                                            !nn
+          nbti=nb*ti
+          weight = 1.0e0_R8  
+          call intcor(nx,ny,weight,nbti,nbtic)
+          do iy = -1, ny
+           do ix = -1, nx
+            if(leftix(ix,iy).eq.-2 .or.
+     &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then
+             fnbPSch(ix,iy,0)= 0.0e0_R8
+            else
+            fnbPSch(ix,iy,0) = PSch*                                    !
+     &      (nbtic(topix(ix,iy),topiy(ix,iy))-nbtic(ix,iy))*bzbl(ix,iy)/
+     &      (qe*zb(ix,iy))*hzl(ix,iy)
+            endif
          enddo
         enddo
        endif
@@ -177,7 +193,7 @@
           endif
          enddo
         enddo
-       else
+       else if(PSch_style.eq.1) then
         do iy = 0, ny
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
@@ -198,6 +214,18 @@
      &      *(nb(ix,iy)+nb(ixb,iyb))/(nbcor(ix,iy)+                     !lk 09.06.11
      &      nbcor(rightix(ix,iy),rightiy(ix,iy)))                       !lk 09.06.11
           endif
+         enddo
+        enddo
+        else                                                            !nn
+          do iy = -1, ny
+           do ix = -1, nx
+            if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+             fnbPSch(ix,iy,1)= 0.0e0_R8
+            else
+            fnbPSch(ix,iy,1) = -PSch*                                    !
+     &      (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*
+     &      bzbv(ix,iy)/(qe*zb(ix,iy))*hzb(ix,iy)
+            endif
          enddo
         enddo
        endif

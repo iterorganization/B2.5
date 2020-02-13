@@ -1421,7 +1421,8 @@ csw 09oct2012
       enddo                                                          !srv 02.05.09 }
 *
 *   ..compute Bz/B**2 - Bz/<B**2>
-      call b2xbzb (nx, ny, bb, vol, bzb)                             !srv 13.10.06 09.06.08 23.07.10}
+      !call b2xbzb (nx, ny, bb, vol, bzb)                             !srv 13.10.06 09.06.08 23.07.10}
+      call b2xbzb (nx, ny, bb,wbbv,wbbl,vol,bzb,bzbv,bzbl)            !nn
 *   ..read initial state
       call b2rups (ninp(3), nx, ny, ns0, ne, na, ua, uadia, te, ti, po,
      &  fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,

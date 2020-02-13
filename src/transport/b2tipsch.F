@@ -9,6 +9,10 @@
       use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_geo_corner
+     &  , only : bzbl,bzbv
+      use b2mod_geo
+     &   , only : hzl,hzb
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -16,10 +20,12 @@
      *  facdrift(-1:nx,-1:ny),  vol(-1:nx,-1:ny),
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),          !srv 13.10.06
      1  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
-     &  cddi(-1:nx,-1:ny,0:1,0:ns-1)
+     &  cddi(-1:nx,-1:ny,0:1,0:ns-1),
+     &  nati2c(-1:nx,-1:ny,0:ns-1),nati2(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   fhiPSch(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2)            !srv 13.10.06
+     &   fhiPSch(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2),           !srv 13.10.06
+     &   weight(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -43,7 +49,7 @@
       integer ncall, n2, ix, iy, is, ib, ixl, iyl, ixb, iyb
       integer, save :: iout = 0
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
-
+      integer, save :: PSch_style = 1
       real (kind=R8) ::
      *   facdriftm                                                      !srv 25.01.02
       save ncall
@@ -63,6 +69,7 @@
       if (ncall.eq.0) then                                              !srv
        call ipgeti ('b2tipsch_iout', iout)                              !srv 16.09.02
        call ipgetr ('b2tfhi_PSch', PSch)                                !srv 17.01.07
+       call ipgeti ('b2tfnb_PSch_style', PSch_style)
       endif                                                             !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -99,45 +106,79 @@
 !          enddo
 !         endif
 !        enddo
-
-      do iy = 0, ny-1
-       do ix = -1, nx
-        if(leftix(ix,iy).eq.-2) then
-         fhiPSch(ix,iy,0) = 0.0e0_R8
-         coni(ix,iy,0,:) = 0.0e0_R8
-        else
-         do is = 0, ns-1
-          if(.not.is_neutral(is)) then
-          ixl = leftix(ix,iy)
-          iyl = leftiy(ix,iy)
-          fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) + 0.25e0_R8*PSch*(
-     &    cddi(topix(ix,iy),topiy(ix,iy),1,is)*
-     &     (na(topix(ix,iy),topiy(ix,iy),is)*
+      if((PSch_style.eq.0).or.(PSch_style.eq.1)) then
+        do iy = 0, ny-1
+         do ix = -1, nx
+          if(leftix(ix,iy).eq.-2) then
+           fhiPSch(ix,iy,0) = 0.0e0_R8
+           coni(ix,iy,0,:) = 0.0e0_R8
+          else
+           do is = 0, ns-1
+            if(.not.is_neutral(is)) then
+            ixl = leftix(ix,iy)
+            iyl = leftiy(ix,iy)
+            fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) + 0.25e0_R8*PSch*(
+     &      cddi(topix(ix,iy),topiy(ix,iy),1,is)*
+     &      (na(topix(ix,iy),topiy(ix,iy),is)*
      &      ti(topix(ix,iy),topiy(ix,iy))**2-na(ix,iy,is)*ti(ix,iy)**2)+
-     &    cddi(topix(ixl,iyl),topiy(ixl,iyl),1,is)*
-     &     (na(topix(ixl,iyl),topiy(ixl,iyl),is)*
+     &      cddi(topix(ixl,iyl),topiy(ixl,iyl),1,is)*
+     &      (na(topix(ixl,iyl),topiy(ixl,iyl),is)*
      &      ti(topix(ixl,iyl),topiy(ixl,iyl))**2
      &                -na(ixl,iyl,is)*ti(ixl,iyl)**2)+
-     &    cddi(ixl,iyl,1,is)*
-     &    (na(ixl,iyl,is)*ti(ixl,iyl)**2
+     &      cddi(ixl,iyl,1,is)*
+     &      (na(ixl,iyl,is)*ti(ixl,iyl)**2
      &                     -na(bottomix(ixl,iyl),bottomiy(ixl,iyl),is)*
      &                      ti(bottomix(ixl,iyl),bottomiy(ixl,iyl))**2)+
-     &    cddi(ix,iy,1,is)*
-     &    (na(ix,iy,is)*ti(ix,iy)**2
+     &      cddi(ix,iy,1,is)*
+     &      (na(ix,iy,is)*ti(ix,iy)**2
      &             -na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &              ti(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                               )
-          coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
-     *               cddi(ix,iy,1,is)*na(ix,iy,is)*ti(ix,iy)
-          coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
-     &     cddi(ix,iy,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
-     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
+            endif
+           enddo
           endif
          enddo
-        endif
-       enddo
-      enddo
+        enddo
+      else
+        print *,'b2tipsch style=2'
+        weight = 1.0e0_R8
+        nati2 = 0.0
+        do is = 0, ns-1
+          if(.not.is_neutral(is)) then
+            print *, is
+            nati2(:,:,is)=na(:,:,is)*(ti(:,:)/qe)*ti(:,:)
+          endif
+        enddo
+        call intcor1(nx,ny,ns-1,weight,nati2,nati2c)
+        print *, 'intcore done'
+        do iy = -1, ny
+         do ix = -1, nx
+          if(topix(ix,iy).gt.nx .or. topiy(ix,iy).gt.ny) then
+            fhiPSch(ix,iy,0) = 0.0e0_R8
+            coni(ix,iy,0,:) = 0.0e0_R8
+          else
+            do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+                fhiPSch(ix,iy,0) = fhiPSch(ix,iy,0) + 
+     &          PSch*(nati2c(topix(ix,iy),topiy(ix,iy),is)-
+     &          nati2c(ix,iy,is))/rza(ix,iy,is)*bzbl(ix,iy)*hzl(ix,iy)
+              endif
+            enddo
+          endif
+          enddo
+        enddo
+        print *, 'psch x done'
+      endif
 
+      do is = 0, ns-1
+          if(.not.is_neutral(is)) then
+            coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
+     &               cddi(ix,iy,1,is)*na(ix,iy,is)*ti(ix,iy)
+            coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
+     &      cddi(ix,iy,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
+     &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
+          endif
+      enddo
 !      iy = ny
 !       do ix = -1, nx
 !         if(leftix(ix,iy).eq.-2) then
@@ -156,67 +197,88 @@
 !          enddo
 !         endif
 !        enddo
-
+      if((PSch_style.eq.0).or.(PSch_style.eq.1)) then
 *   ..compute P.Sch y-flux
-      iy = -1
-      fhiPSch(:,iy,1)=0.0e0_R8
-      do iy = 0, ny
-       do ix = -1, nx
-        do is = 0, ns-1
-!          if(leftix(ix,iy).eq.-2) then
-!          fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 0.5e0_R8*(
-!     &     cddi(rightix(ix,iy),iy,0,is)*
-!     &     (na(rightix(ix,iy),iy,is)*ti(rightix(ix,iy),iy)**2
-!     &                                     -na(ix,iy,is)*ti(ix,iy)**2)+
-!     &     cddi(rightix(ix,iy),bottomiy(ix,iy),0,is)*
-!     &     (na(rightix(ix,iy),bottomiy(ix,iy),is)*
-!     &             ti(rightix(ix,iy),bottomiy(ix,iy))**2
-!     &           -na(ix,bottomiy(ix,iy),is)*ti(ix,bottomiy(ix,iy))**2)
-!     &                               )
-!          elseif(rightix(ix,iy).eq.nx+1) then
-!          fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 0.5e0_R8*(
-!     &     cddi(ix,iy,0,is)*(na(ix,iy,is)*ti(ix,iy)**2
-!     &                -na(leftix(ix,iy),iy,is)*ti(leftix(ix,iy),iy)**2)+
-!     &     cddi(ix,bottomiy(ix,iy),0,is)*
-!     &     (na(ix,bottomiy(ix,iy),is)*ti((ix),bottomiy(ix,iy))**2
-!     &                         -na(leftix(ix,iy),bottomiy(ix,iy),is)*
-!     &                            ti(leftix(ix,iy),bottomiy(ix,iy))**2)
-!     &                               )
-!          else
-         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-          fhiPSch(ix,iy,1) = 0.0e0_R8
-          coni(ix,iy,1,:)  = 0.0e0_R8
-         else
-          ixb = bottomix(ix,iy)
-          iyb = bottomiy(ix,iy)
-          fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 0.25e0_R8*PSch*(
-     &     cddi(rightix(ix,iy),rightiy(ix,iy),0,is)*
+        iy = -1
+        fhiPSch(:,iy,1)=0.0e0_R8
+        do iy = 0, ny
+         do ix = -1, nx
+          do is = 0, ns-1
+  !          if(leftix(ix,iy).eq.-2) then
+  !          fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 0.5e0_R8*(
+  !     &     cddi(rightix(ix,iy),iy,0,is)*
+  !     &     (na(rightix(ix,iy),iy,is)*ti(rightix(ix,iy),iy)**2
+  !     &                                     -na(ix,iy,is)*ti(ix,iy)**2)+
+  !     &     cddi(rightix(ix,iy),bottomiy(ix,iy),0,is)*
+  !     &     (na(rightix(ix,iy),bottomiy(ix,iy),is)*
+  !     &             ti(rightix(ix,iy),bottomiy(ix,iy))**2
+  !     &           -na(ix,bottomiy(ix,iy),is)*ti(ix,bottomiy(ix,iy))**2)
+  !     &                               )
+  !          elseif(rightix(ix,iy).eq.nx+1) then
+  !          fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 0.5e0_R8*(
+  !     &     cddi(ix,iy,0,is)*(na(ix,iy,is)*ti(ix,iy)**2
+  !     &                -na(leftix(ix,iy),iy,is)*ti(leftix(ix,iy),iy)**2)+
+  !     &     cddi(ix,bottomiy(ix,iy),0,is)*
+  !     &     (na(ix,bottomiy(ix,iy),is)*ti((ix),bottomiy(ix,iy))**2
+  !     &                         -na(leftix(ix,iy),bottomiy(ix,iy),is)*
+  !     &                            ti(leftix(ix,iy),bottomiy(ix,iy))**2)
+  !     &                               )
+  !          else
+           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+            fhiPSch(ix,iy,1) = 0.0e0_R8
+            coni(ix,iy,1,:)  = 0.0e0_R8
+           else
+            ixb = bottomix(ix,iy)
+            iyb = bottomiy(ix,iy)
+            fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 0.25e0_R8*PSch*(
+     &      cddi(rightix(ix,iy),rightiy(ix,iy),0,is)*
      &      (na(rightix(ix,iy),rightiy(ix,iy),is)*
      &       ti(rightix(ix,iy),rightiy(ix,iy))**2
      &                                     -na(ix,iy,is)*ti(ix,iy)**2)+
-     &     cddi(ix,iy,0,is)*(na(ix,iy,is)*ti(ix,iy)**2
+     &      cddi(ix,iy,0,is)*(na(ix,iy,is)*ti(ix,iy)**2
      &                -na(leftix(ix,iy),leftiy(ix,iy),is)*
      &                 ti(leftix(ix,iy),leftiy(ix,iy))**2)+
-     &     cddi(bottomix(ix,iy),bottomiy(ix,iy),0,is)*
+     &      cddi(bottomix(ix,iy),bottomiy(ix,iy),0,is)*
      &      (na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &       ti(bottomix(ix,iy),bottomiy(ix,iy))**2
      &                         -na(leftix(ixb,iyb),leftiy(ixb,iyb),is)*
      &                          ti(leftix(ixb,iyb),leftiy(ixb,iyb))**2)+
-     &     cddi(rightix(ixb,iyb),rightiy(ixb,iyb),0,is)*
+     &      cddi(rightix(ixb,iyb),rightiy(ixb,iyb),0,is)*
      &      (na(rightix(ixb,iyb),rightiy(ixb,iyb),is)*
      &       ti(rightix(ixb,iyb),rightiy(ixb,iyb))**2
      &             -na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &              ti(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                               )
-          coni(ix,iy,1,1) = coni(ix,iy,1,1)+0.5e0_R8*PSch*     ! 0.25*2 !srv 02.01.07 {
+            coni(ix,iy,1,1) = coni(ix,iy,1,1)+0.5e0_R8*PSch*     ! 0.25*2 !srv 02.01.07 {
      &                      cddi(ix,iy,0,is)*na(ix,iy,is)*ti(ix,iy)
-          coni(ix,iy,1,2) = coni(ix,iy,1,2)+0.5e0_R8*PSch*     ! 0.25*2
+            coni(ix,iy,1,2) = coni(ix,iy,1,2)+0.5e0_R8*PSch*     ! 0.25*2
      &       cddi(ix,iy,0,is)*na(leftix(ix,iy),leftiy(ix,iy),is)*
      &                        ti(leftix(ix,iy),leftiy(ix,iy))           !srv 02.01.07 }
-         endif
+           endif
+          enddo
+         enddo
         enddo
-       enddo
-      enddo
+      else
+        print *,'psch y start'
+        do iy = -1, ny
+         do ix = -1, nx
+          if(rightiy(ix,iy).gt.ny .or. rightix(ix,iy).gt.nx) then
+            fhiPSch(ix,iy,1) = 0.0e0_R8
+            coni(ix,iy,1,:)  = 0.0e0_R8
+          else
+            do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+                fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) - 
+     &          PSch*(nati2c(rightix(ix,iy),rightiy(ix,iy),is)-
+     &          nati2c(ix,iy,is))/rza(ix,iy,is)*bzbl(ix,iy)*hzl(ix,iy)
+              endif
+            enddo
+          endif
+          enddo
+        enddo
+        print *, 'psch y done'
+      endif
+
 
       do iy = -1, ny
        do ix = 0, nx
