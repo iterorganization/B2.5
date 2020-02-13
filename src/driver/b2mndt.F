@@ -325,8 +325,7 @@ ctmp.dpc
      &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
-          call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,   !srv 05.06.18
-     &     te, po, vedia, veecrb)
+          call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) ! vol, hx, hy, qz, bb,   !srv 05.06.18
           src_ni=0.0_R8
           src_ne=0.0_R8
           src_mo=0.0_R8
@@ -503,8 +502,7 @@ ctmp.dpc
      &          .false.)                                                 !djm Jan2017
            end do
 *      ..compute electron drift velocities
-           call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &      te, po, vedia, veecrb)
+           call b2tfed (nx, ny, facdrift, fac_ExB,te,po,vedia,veecrb)
 *      ..compute other fluxes
            call b2xpen (nx, ny, ns,
      1      fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,

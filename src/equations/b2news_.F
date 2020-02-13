@@ -431,8 +431,7 @@ csw 01oct2012 initialize potential if necessary
 #endif
 #endif
 *      ..compute electron drift velocities
-        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &   te, po, vedia, veecrb)
+        call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 !      end if                                                            !srv 01.10.99
 
 csw 10dec2012: added extra call if wanted/not-wanted (SOLPS4 has an
@@ -939,8 +938,7 @@ c      with diamagnetic drift part                                       !srv 13
       call b2xpfi (nx, ny, ns, fna_32nd, fni_32)                         !xpb
       call b2xpfi (nx, ny, ns, fna_52nd, fni_52)                         !xpb
 *   ..compute electron drift velocities
-      call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &      te, po, vedia, veecrb)
+      call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *   ..compute heat fluxes
       call b2tfhe_ (nx, ny, ns, facdrift, fac_ExB, vol, hx, hy,          !srv 09.01.20
      1 qz, te, po, ne, na, vedia, fne, chce, chve, calf,                 !srv 17.05.99 11.07.99
@@ -1165,8 +1163,7 @@ c   recompute particle fluxes
         endif                                                            !srv 13.10.06 }
        enddo
 *      ..compute electron drift velocities
-       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &  te, po, vedia, veecrb)
+       call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
       endif ! do_2nd_b2npco
 
 csw 06dec2012 finally re-evaluate particle fluxes
@@ -1199,8 +1196,7 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &   .false.)                                                        !djm Jan2017
        enddo                                                             !srv 01.10.99
 *      ..compute electron drift velocities
-       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &  te, po, vedia, veecrb)
+       call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
       endif                                                              !srv 28.06.13 }
 
 csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)

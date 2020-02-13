@@ -342,8 +342,7 @@
 *   ..re-compute source terms if necessary                               !xpb
         if((wrong_flow .and. ipass.ne.0) .or. ncall.eq.0) then           !xpb
 *      ..compute electron drift velocities
-          call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,   !srv 05.06.18
-     &     te, po, vedia, veecrb)
+          call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *     ..re-compute source linearisation                                  !xpb
           call b2sral (nx, ny, ns, nxtl, nxtr,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
@@ -436,8 +435,7 @@
         call timer%stop("parallel")
 #endif
 *      ..compute electron drift velocities
-        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &    te, po, vedia, veecrb)
+        call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *     ..re-compute source linearisation                                  !xpb
         call b2sral (nx, ny, ns, nxtl, nxtr,
      &    nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
@@ -759,8 +757,7 @@ cxpb
      &          'Before potential loop: fna(ions) at plates')
         endif
 *      ..compute electron drift velocities
-        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &    te, po, vedia, veecrb)
+        call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *   ..re-compute ne, ni
         call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
         call nancheck(nx, ny, ne, 'b2news(ne): after call to b2xpne')
@@ -806,7 +803,7 @@ cxpb
      >         write(*,*) 'b2news [a][32|52] ',
      1         maxval(abs(fna-fna_32-fna_52)), maxval(abs(fna))
               call b2tfed (nx, ny, facdrift, fac_ExB,
-     &         vol, hx, hy, qz, bb,
+!     &         vol, hx, hy, qz, bb,
      &         te, po, vedia, veecrb)
               call b2tfch (nx, ny, ns, ismain, ismain0,
      1         guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,           !xpb
@@ -1042,8 +1039,7 @@ c     with diamagnetic drift part                                        !xpb
      >   write(*,*) 'b2news [a][32|52] ',
      1   maxval(abs(fna-fna_32-fna_52)), maxval(abs(fna))
 *   ..compute heat fluxes
-        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &   te, po, vedia, veecrb)
+        call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
         call b2tfch (nx, ny, ns, ismain, ismain0,
      1   guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,                 !xpb
      1   vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,        !xpb
