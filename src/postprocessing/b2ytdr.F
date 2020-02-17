@@ -474,7 +474,7 @@ c 2002-09-11: logic revised
       character*74 PATH, FILE, RFILNM
       character HANDLE*6
       character FILNAM*8,H123*4,REAC*9,REAC2*50,CRC*3,CHR*12
-      character ELNAME*2,MOLNAME*8,IONNAME*8,REACSTR*11
+      character ELNAME*2,MOLNAME*8,IONNAME*8,REACSTR*11,BUNDLING*60
       character FNAME*6,FRATIO*6
       character*8 eirene_format
       character*8 varname, spcname
@@ -4534,10 +4534,15 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             end if
           ENDIF
           IF (INDEX(REACZEILE,'ADAS') .NE. 0) THEN
-            READ (IUNIN,'(4X,A2,1X,I3)') ELNAME,idum(0)
+            READ (IUNIN,'(4X,A2,1X,I3,2X,A60)') ELNAME,idum(0),BUNDLING
             if (.not.skip_reac) then
               ILINE = ILINE+1
-              WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3)') ELNAME,idum(0)
+              if (same_bundling) then
+                WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3,2X,A)')
+     .                                   ELNAME,idum(0),trim(BUNDLING)
+              else
+                WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3)') ELNAME,idum(0)
+              end if
             end if
           ENDIF
           IF (INDEX(H123,'P.').EQ.0) THEN  !PVK

@@ -330,9 +330,11 @@ csw 26feb2014 some extra variables
 
 csw 01oct2012 initialize potential if necessary
       if (pot_eq.eq.0) then                                              !srv 13.07.05 {
-        po   =0.0e0_R8
+        po = 0.0_R8
+        fchstoch = 0.0_R8
       else if (pot_eq.eq.2) then
         po(:,:)=3.1_R8*te(:,:)/qe
+        fchstoch = 0.0_R8
       endif
 
       if (ramp_call .or. ncall.eq.0) then

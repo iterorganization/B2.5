@@ -112,7 +112,7 @@ program b2_ual_write
     call ipgeti( 'b2mndr_shot_number', shot )
     call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
     call ipgeti( 'b2mndr_run_number', run )
-    call xertst( 0.le.run.and.run.le.9999, 'Invalid run number')
+    call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
     username = usrnam()
     call ipgetc( 'b2mndr_user', username )
     call xertst( .not.streql(username,' '), 'User name not defined !')
