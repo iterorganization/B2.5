@@ -1038,6 +1038,8 @@ c
      2 bp(0:nx+1,0:ny+1),bt(0:nx+1,0:ny+1),
      3 fpsi(0:nx+1,0:ny+1,0:3),ffbz(0:nx+1,0:ny+1,0:3)
       character*(*) local_sonnet
+ 
+      logical no_flux_data            ! IYS 21.02.2020
 
       integer nnx, nny,
      1 i, j, ix, iy, ixd, iyd, lun, line_length, mx, my, iostat
@@ -1175,7 +1177,8 @@ c
             go to 20
           end if
 
-          ffbz = 2.0_R8 * pi * ubr  ! IYS 14.05.2019
+
+
 c----------------------------------------------------------------------
           if(ubr.eq.0.0_R8) then
             write(*,*) 'b2gxdr_dummy: the value of R*Btor undefined.'
@@ -1300,16 +1303,35 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
           end if
           fpsi=0.0_R8
           ffbz=0.0_R8
+
+          write(*,*) "Somebody has filled ffbz with zeros"
+          write(*,*) " ... and is going to read it from some file again"
+
+! IYS 21.02.2020
+! I slept little last night, so I could not find a solution without 'GOTO' here
+! Sorry for that ...
           read(lun,'(a)',end=210) uline
-          backspace (lun)
-          do iy=0,ny+1
-            do ix=0,nx+1
-              read(lun,*,err=10) ixd,iyd,
+          no_flux_data = .FALSE.
+          GOTO 211    ! Wenn es meine Wille gaebe...
+  210     no_flux_data = .TRUE.
+  211     if (no_flux_data) then
+            ffbz = 2.0_R8 * pi * ubr  ! IYS 14.05.2019
+            write(*,*) "No flux data is found the 'old' format file"
+            write(*,*) "Trying to recover ffbz using RTOR*BTOR"
+          else
+            backspace (lun)
+            do iy=0,ny+1
+              do ix=0,nx+1
+                read(lun,*,err=10) ixd,iyd,
      1         (fpsi(ix,iy,i),i=0,3),(ffbz(ix,iy,i),i=0,3)
+              end do
             end do
-          end do
-  210     continue
+          endif
           close(lun)
+! IYS 21.02.2020 ... being wanted to sleep
+
+
+
         else
           call xerrab('Error in reading geometry file')
         endif
@@ -1323,9 +1345,9 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
       write(*,*) 'ix=',ix,' iy=',iy,' ixd=',ixd,' iyd=',iyd
       call xerrab ('Error in reading grid file')
 
-  710 format(18x,e17.0,14x,e17.0,1x,e17.0)
-  720 format(32x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
-  721 format(30x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
+  710 format(18x,e17.10,14x,e17.10,1x,e17.10)
+  720 format(32x,e17.10,1x,e17.10,8x,e17.10,1x,e17.10)
+  721 format(30x,e17.10,1x,e17.10,8x,e17.10,1x,e17.10)
 
   990 continue
       write(*,*) 'Error: i,j ',i,j
