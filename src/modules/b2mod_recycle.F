@@ -29,7 +29,8 @@ c     Boolean to indicate whether trim data is present for species/material comb
      &  rmx1(:,:,:,:,:),rmx2(:,:,:,:,:),rmy1(:,:,:,:,:),rmy2(:,:,:,:,:),
      &  rmz1(:,:,:,:,:),rmz2(:,:,:,:,:),re1(:,:,:,:,:),re2(:,:,:,:,:),
      &  rp11(:,:,:,:,:),rp12(:,:,:,:,:),rp21(:,:,:,:,:),
-     &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:)
+     &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:),
+     &  M_dummy(:), T_dummy(:), shpottau_dummy(:)        !nh 21.02.2020
 
       real (kind = R8),save ::     
      &  cutlo, cutll
@@ -50,7 +51,8 @@ c      integer nmax, itargsp, ic, i
       logical open_file, found
 
       character*10::fnn_version
-      character lblfnn*120 
+      character lblfnn*120
+      character lblfnn_dummy*120              !nh 21.02.2020
       character*2 target_code(0:nbnd-1)
 cmb size cannot become bigger than nsd-1?
 c#ifndef PSR
@@ -174,10 +176,21 @@ c             Read label
               dT(:) = 1.0_R8/(T(1:nT)-T(0:nT-1))
                
             else
-              call xertst(nM.eq.idum(0).and.nT.eq.idum(1).and.
-     &          nshpottau.eq.idum(2), 
+              call xertst((nM.eq.idum(0)-1).and.(nT.eq.idum(1)-1).and.
+     &          (nshpottau.eq.idum(2)-1), 
      &          'read_recycle_fnn: all .fnn files should have'//
      &          ' same matrix dimensions')
+    
+cnh  After checking the dimensions of M, T and shpottau, we should skip the 
+c    first lines in the .fnn file. They are allocated to dummy variables.
+              allocate(M_dummy(0:nM))
+              allocate(T_dummy(0:nT))
+              allocate(shpottau_dummy(0:nshpottau))
+              
+              call cfruch (96,120,lblfnn_dummy,'label')
+              call cfrure (96, nM+1, M_dummy, 'M')
+              call cfrure (96, nT+1, T_dummy, 'T')
+              call cfrure (96, nshpottau+1, shpottau_dummy, 'shpottau')
 
             endif
 
@@ -1209,6 +1222,7 @@ c     int6r = int_{0}^{inf} v^{6} M(v) dv
       deallocate(target_index)
       deallocate(recycle_index)
       deallocate(M,T,shpottau,rc1,rc2,rmx1,rmx2,rmy1,rmy2,rmz1,rmz2)
+      deallocate(M_dummy,T_dummy,shpottau_dummy)  !nh 21.02.2020
       deallocate(re1,re2,rp11,rp12,rp21,rp22,rp31,rp32)
       recycle_initialised=.false.
       return
