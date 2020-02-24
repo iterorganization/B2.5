@@ -9199,9 +9199,9 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
           READ (ZEILEN(ILINE+2),6666) NSPTAL
           READ (IUNIN,'(A72)') ZEILEN(ILINE+3) ! NSPSTR(I),NSPSPZ(I),
                                                ! NSPINI(I),NSPEND(I),
-                                               ! NSPBLC(I),NSPADD(I),MASLOC
+                                               ! NSPBLC(I),NSPADD(I)
           READ (ZEILEN(ILINE+3),6666) idum(0:6)
-          READ (IUNIN,'(A72)') ZEILEN(ILINE+4) ! EMIN1(I),EMAX1(I)
+          READ (IUNIN,'(A72)') ZEILEN(ILINE+4) ! EMIN1(I),EMAX1(I),ESHIFT(I)
           READ (IUNIN,'(A72)') ZEILEN(ILINE+5) ! IPIVOT(I),XPIVOT,YPIVOT,ZPIVOT
           READ (IUNIN,'(A72)') ZEILEN(ILINE+6) ! ICHORD(I),XCHORD,YCHORD,ZCHORD
           IF (.not.savestratum(idum(0))) idum(0) = -1

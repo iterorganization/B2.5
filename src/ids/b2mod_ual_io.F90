@@ -841,6 +841,13 @@ contains
         description%imas_version = version
         allocate( description%dd_version(1) )
         description%dd_version = imas_version
+        description%simulation%time_step = time_step_IN
+        description%simulation%time_current = time_IN
+        description%simulation%workflow = source
+#if IMAS_MINOR_VERSION > 25
+        description%simulation%time_begin = run_start_time_IN
+        description%simulation%time_end = run_end_time_IN
+#endif
 
         i=index(B25_git_version,'-')
         allocate( summary%tag%name(1) )
