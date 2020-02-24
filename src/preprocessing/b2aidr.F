@@ -478,7 +478,7 @@
       read (ninp(1),*,err=92) (naini(is),is=0,ns-1)
       call b2xvsg (ns, naini, 1, 'naini', '.gt.')
 *   ..read and test ttini
-*     (ttini is provided in units of ev)
+*     (ttini is provided in units of eV)
       read (ninp(1),'(a8)',err=91) id
       call xertst (streql(id,'*ttini'),
      &  'faulty input id instead of *ttini, id='//id)
