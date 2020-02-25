@@ -1598,7 +1598,9 @@ c     Calculate rate coefficients at boundary
       deallocate(target_index)
       deallocate(recycle_index)
       deallocate(M,T,shpottau,rc1,rc2,rmx1,rmx2,rmy1,rmy2,rmz1,rmz2)
-      deallocate(M_dummy,T_dummy,shpottau_dummy)  !nh 21.02.2020
+      if (allocated(M_dummy)) then
+        deallocate(M_dummy,T_dummy,shpottau_dummy)  !nh 21.02.2020
+      endif
       deallocate(re1,re2,rp11,rp12,rp21,rp22,rp31,rp32)
       deallocate(fna_mol)   !nh 30.03.21
       recycle_initialised=.false.
