@@ -259,7 +259,7 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%fcQalf(iFc,0)
+      cosa = -geo%fcQalf(iFc,0)
       sina = -geo%fcQalf(iFc,1)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCn,1) !!TODO correct species index
@@ -429,7 +429,7 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%fcQalf(iFc,0)
+      cosa = -geo%fcQalf(iFc,0)
       sina = -geo%fcQalf(iFc,1)
 cnh   neutral velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and only neutral parallel
 c     velocity component
@@ -540,7 +540,7 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%fcQalf(iFc,0)
+      cosa = -geo%fcQalf(iFc,0)
       sina = -geo%fcQalf(iFc,1)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCv,1) !! TODO species index
@@ -700,7 +700,7 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%fcQalf(iFc,0)
+      cosa = -geo%fcQalf(iFc,0)
       sina = -geo%fcQalf(iFc,1)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
 !! TODO species index
@@ -916,7 +916,7 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%fcQalf(iFc,0)
+      cosa = -geo%fcQalf(iFc,0)
       sina = -geo%fcQalf(iFc,1)
 c     Neutral velocity components: toroidal (x),tangential (y), and normal (z)
       unf = pl%ua(iCv,isn)
