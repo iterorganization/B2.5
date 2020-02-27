@@ -1602,7 +1602,6 @@ c     Calculate rate coefficients at boundary
         deallocate(M_dummy,T_dummy,shpottau_dummy)  !nh 21.02.2020
       endif
       deallocate(re1,re2,rp11,rp12,rp21,rp22,rp31,rp32)
-      deallocate(fna_mol)   !nh 30.03.21
       recycle_initialised=.false.
       return
       end subroutine dealloc_recycle_fnn
