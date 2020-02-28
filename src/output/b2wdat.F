@@ -394,8 +394,8 @@
       call my_out(70,nx,ny,gs(-1,-1,1),'gsy')
       call my_out(70,nx,ny,gs(-1,-1,2),'gsz')
 
-      call my_out(70,nx,ny,qz(-1,-1,0),'qz0cost')
-      call my_out(70,nx,ny,qz(-1,-1,1),'qz1sint')
+      call my_out(70,nx,ny,qz(-1,-1,0),'qz0sint')
+      call my_out(70,nx,ny,qz(-1,-1,1),'qz1cost')
 
       call my_out(70,nx,ny,wbbl(-1,-1,0),'bbxl')
       call my_out(70,nx,ny,wbbl(-1,-1,2),'bbzl')
