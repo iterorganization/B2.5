@@ -3,7 +3,7 @@ C     SUBROUTINES FOR B2PLOT COMMAND TRAJ
 C     =======================================================================
 C
 C     This routine is used to plot trajectories of particles using the
-C     velocity fields uutraj and vvtraj from B2SXDR. To call this routine
+C     velocity fields uu and vv. To call this routine
 C     one must specify at least 8 parameters: ixmin, iymin, ixmax, iymax,
 C     # of particles, 1 or 0 for movie or lines, species indices (at least
 C     one), and last but not least the total number of species indices one 
@@ -15,7 +15,7 @@ C     cell (95,35) (northeast corner) as lines for hydrogen (0=H).
 C     Note that the cell and species indices start at zero!
 C     The number of time steps (plots) is given by the "t_#p" command.
 C     The total flight time of the particles is given by the "t_pt" command. 
-C     The velocity fields uutraj and vvtraj can be overwritten using the
+C     The velocity fields uu and vv can be overwritten using the
 C     "uuse" and "vvse" commands. Their defaults values are ua and fna/na/sy
 C     respectively. If the number of particles is positive, then the
 C     particles are born randomly, with the probability of being born in a
@@ -24,11 +24,11 @@ C     can be changed by calling "traj" with a negative number of particles.
 C     Then the weighting function is whatever field is on top of the matrix
 C     stack. For example, this set of commands does the following:
 C     fnax na m/ psxperp 0 zsel uuse  ! uutraj set to poloidal neutral flow velocity
-C     fnay na m/ psy 0 zsel vvse  ! vvtraj set to radial neutral flow velocity
-C     1000 t_#p                   ! 1000 time steps
-C     1e-4 t_pt                   ! followed for a total time of 1.e-4 s.
-C     na 0 zsel                   ! weighted with neutral density
-C     0 0 0 0 -1000 0 0 1 traj    ! over the entire physical domain (0 0 0 0)
+C     fnay na m/ psy 0 zsel vvse      ! vvtraj set to radial neutral flow velocity
+C     1000 t_#p                       ! 1000 time steps
+C     1e-4 t_pt                       ! followed for a total time of 1.e-4 s.
+C     na 0 zsel                       ! weighted with neutral density
+C     0 0 0 0 -1000 0 0 1 traj        ! over the entire physical domain (0 0 0 0)
 C               ! 1000 particles using non-default weighting function (-1000)
 C               ! trajectories plotted (0)
 C               ! for species 0 (=H neutrals) (0)
@@ -83,7 +83,7 @@ c     the traj common
       real (kind=R8) ::
      *   globaltime                     !plottime
 
-c                                       !number of particles per cell:
+c                                       !number of particles per cell
       integer ialt,jalt                 !position in computational domain
       integer ipx(1:npart),ipy(1:npart),ips(1:npart)
       integer ipx_start(1:npart),ipy_start(1:npart)
@@ -98,7 +98,7 @@ c                                       !number of particles per cell:
       real (kind=R8) ::
      *   deltat                         !timestep between plots
       logical ls_active(0:ns-1)         !species active?
-      integer isclvl(0:ns-1)
+      integer isclvl(0:ns-1),iscol(0:ns-1)
       character*16 texttraj(1:ns)
 
       integer zaehler,zaehler2,ip,randzaehler
@@ -115,7 +115,6 @@ c                                       !number of particles per cell:
      *   cpu_start, cpu_end
 
       integer destmode                     !mode for destroying
-c     parameter (destmode=2)               !hardwired to 2
 
       integer is,np
       real (kind=R8) ::
@@ -140,6 +139,7 @@ c     parameter (destmode=2)               !hardwired to 2
 #endif
 
       oocol=-1
+      iscol=-1
 #ifndef NO_CDF
 #ifdef CDF_MOVIE
       if(moviename .eq. ' ') then
@@ -175,9 +175,9 @@ c     Getting the values for globaltime and deltat
 
 c     writing callup information
       if (iarg(6) .eq. 1) then
-         if (b2plot_debug.ge.2) write(*,*)'MOVIE'
+         if (b2plot_debug.ge.2) write(*,*) 'MOVIE'
       else
-         if (b2plot_debug.ge.2) write(*,*)'TRAJECTORIES'
+         if (b2plot_debug.ge.2) write(*,*) 'TRAJECTORIES'
       endif
       if(iarg(1) .eq. 0 .or. iarg(2) .eq. 0 .or. 
      1   iarg(3) .eq. 0 .or. iarg(4) .eq. 0) then
@@ -191,15 +191,16 @@ c     writing callup information
       if(iarg(3) .eq. 0 .or. iarg(3) .ge. nx) iarg(3)=nx-1
       if(iarg(4) .eq. 0 .or. iarg(4) .ge. ny) iarg(4)=ny-1
       if (b2plot_debug.ge.2)
-     + write(*,*)'plottime in seconds (default=5.0e-4): ', globaltime
+     + write(*,*) 'plottime in seconds (default=5.0e-4): ', globaltime
       if (b2plot_debug.ge.2) 
-     + write(*,*)'number of plots (default=10): ', nplot  
+     + write(*,*) 'number of plots (default=10): ', nplot
 
 c     getting the species numbers
       do is=0,ns-1
         ls_active(is)=.false.
       enddo
       do zaehler=0,iarg(specnum)-1
+        iscol(iarg(7+zaehler))=zaehler+1
         ls_active(iarg(7+zaehler))=.true.
         texttraj(zaehler+1)=textpl(iarg(7+zaehler))
       enddo
@@ -210,7 +211,7 @@ c     find weighting function for the particle positions
      >   write(*,*) 'weighting randomiser with volume'
         call weightarray(warr,vol,
      1         ls_active,iarg(1),iarg(3),iarg(2),iarg(4),1)
-      else if (iwrk .gt. 0) then    !user defined weighting
+      else if (iwrk .gt. 0) then    !user-defined weighting
         if (b2plot_debug.ge.1) 
      >   write(*,*) 'weighting randomiser user defined'
         call weightarray(warr,work(-1,-1,0,iwrk),
@@ -269,27 +270,27 @@ c     generate beginning positions
         p_z_start(ip)=p_z(ip)
       enddo
 
-C-----Producing the arrays of side-middle-points. The arrays are named
+C-----Producing the arrays of side middle-points. The arrays are named
 C     clr (center line radial) and clz (center line z) respectively.
 
       do zaehler=-1,nx
         do zaehler2=-1,ny
           clr(zaehler,zaehler2,1)=crx(zaehler,zaehler2,1)+
-     +            (crx(zaehler,zaehler2,3)-crx(zaehler,zaehler2,1))/2
+     +            (crx(zaehler,zaehler2,3)-crx(zaehler,zaehler2,1))/2.
           clz(zaehler,zaehler2,1)=cry(zaehler,zaehler2,1)+
-     +            (cry(zaehler,zaehler2,3)-cry(zaehler,zaehler2,1))/2
+     +            (cry(zaehler,zaehler2,3)-cry(zaehler,zaehler2,1))/2.
           clr(zaehler,zaehler2,2)=crx(zaehler,zaehler2,3)+
-     +            (crx(zaehler,zaehler2,2)-crx(zaehler,zaehler2,3))/2
+     +            (crx(zaehler,zaehler2,2)-crx(zaehler,zaehler2,3))/2.
           clz(zaehler,zaehler2,2)=cry(zaehler,zaehler2,3)+
-     +            (cry(zaehler,zaehler2,2)-cry(zaehler,zaehler2,3))/2
+     +            (cry(zaehler,zaehler2,2)-cry(zaehler,zaehler2,3))/2.
           clr(zaehler,zaehler2,3)=crx(zaehler,zaehler2,2)+
-     +            (crx(zaehler,zaehler2,0)-crx(zaehler,zaehler2,2))/2
+     +            (crx(zaehler,zaehler2,0)-crx(zaehler,zaehler2,2))/2.
           clz(zaehler,zaehler2,3)=cry(zaehler,zaehler2,2)+
-     +            (cry(zaehler,zaehler2,0)-cry(zaehler,zaehler2,2))/2
+     +            (cry(zaehler,zaehler2,0)-cry(zaehler,zaehler2,2))/2.
           clr(zaehler,zaehler2,4)=crx(zaehler,zaehler2,0)+
-     +            (crx(zaehler,zaehler2,1)-crx(zaehler,zaehler2,0))/2
+     +            (crx(zaehler,zaehler2,1)-crx(zaehler,zaehler2,0))/2.
           clz(zaehler,zaehler2,4)=cry(zaehler,zaehler2,0)+
-     +            (cry(zaehler,zaehler2,1)-cry(zaehler,zaehler2,0))/2
+     +            (cry(zaehler,zaehler2,1)-cry(zaehler,zaehler2,0))/2.
         enddo
       enddo
 
@@ -318,7 +319,6 @@ c     initialise graphics
         call additional_elements(nx,ny,.true.) !draws mesh/separatrix/etc... if wanted 
         call specieslblbar(iarg(specnum),isclvl,texttraj)
       endif
-!      call GFLAS2(1)
       call GFLAS2                              ! sv 27.02.01
       call GFLAS3(1)
 
@@ -517,7 +517,7 @@ c     TRAJECTORIES:
           randzaehler=0
           do ip=1,np
             if (ipy(ip).gt.ny-1 .or. ipy(ip).lt.0 .or.  
-     +                ipx(ip).gt.nx-1 .or. ipx(ip).lt.0) then
+     +          ipx(ip).gt.nx-1 .or. ipx(ip).lt.0) then
               randzaehler=randzaehler+1
             else
               rrold=p_r(ip)
@@ -525,8 +525,8 @@ c     TRAJECTORIES:
               call trajectories(p_r(ip),p_z(ip),ipx(ip),
      +         ipy(ip),ips(ip),deltat,clr,clz)
               if(iarg(specnum).ne.1) then
-                icol=ips(ip)+1
-                if(icol.ne.oocol .and. color_set) then
+                icol=iscol(ips(ip))
+                if(icol.ne.oocol .and. icol.ne.-1 .and. color_set) then
                   call lastd
                   call gsplci(icol)
                   oocol=icol
@@ -613,7 +613,7 @@ C      :)
 
          call intersection(wall,tdist,vz,vr,rre,zre,ii,jj,laufende)
          if (laufende .and. b2plot_debug.ge.12) then
-            write(*,*)uutraj(ii,jj,l),vvtraj(ii,jj,l),vr,vz
+            write(*,*) uutraj(ii,jj,l),vvtraj(ii,jj,l),vr,vz
          endif
 
 C      We now know through which wall it goes (wall=xy) and how
@@ -692,9 +692,9 @@ CXPB     location of the next computational cell.
 
          if(schritte .eq. 10000) then
            if (b2plot_debug.ge.1) 
-     .      write(*,*)'Particle had to be killed to save time.'
+     .      write(*,*) 'Particle had to be killed to save time.'
            if (b2plot_debug.ge.1) 
-     .      write(*,*)'A new one will be created to take its place.'
+     .      write(*,*) 'A new one will be created to take its place.'
            ii=-1
            jj=-1
          endif
@@ -1203,7 +1203,7 @@ c add particle of species is in cell (ix,iy)
                   zre=g05caf(3.1_R8)*(zmax-zmin)+zmin
 #else
                   rre=g05kaf(IGEN,ISEED)*(rmax-rmin)+rmin
-                  rre=g05kaf(IGEN,ISEED)*(zmax-zmin)+zmin
+                  zre=g05kaf(IGEN,ISEED)*(zmax-zmin)+zmin
 #endif
                   gefunden=inside_rectangle(rre,zre,
      1             crx(ix,iy,1),cry(ix,iy,1),
