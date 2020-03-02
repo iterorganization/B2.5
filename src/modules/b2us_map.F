@@ -118,6 +118,18 @@
         allocate (imapFcy(-1:m%nx,-1:m%ny))
         allocate (imapVx(-1:m%nx,-1:m%ny))
 #endif
+      else
+        allocate (m%imapCv(0,0))
+        allocate (m%imapFcx(0,0))
+        allocate (m%imapFcy(0,0))
+        allocate (m%imapVx(0,0))
+        allocate (m%icornVx(0))
+#ifdef WG_DEBUG
+        allocate (imapCv(0,0))
+        allocate (imapFcx(0,0))
+        allocate (imapFcy(0,0))
+        allocate (imapVx(0,0))
+#endif
       endif
 
       allocate (m%fcLbl(m%nFc))
