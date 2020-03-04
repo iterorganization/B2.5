@@ -590,7 +590,7 @@
 					These switches server as identification for the simulation. They can be inherited from SOLPS-GUI:
 					Run number : The number of the run. Must be positive and no more than a 4-digit integer (i.e. span from 0 to 9999).
 					Shot number : Shot number identifying the run. Defaults to the last number found in shotnumber.history, or 0 if the file is not found.
-					Device : The device where the simulation was run.
+					Database : IMAS IDS database name (supersedes Device). Defaults to 'solps-iter' if $DEVICE if undefined.
 					User : The user who ran the simulation.
 				</description>
 				<switch>
@@ -602,6 +602,11 @@
 					<name>b2mndr_shot_number</name>
 					<type>integer</type>
 					<default>0</default>
+				</switch>
+				<switch>
+					<name>b2mndr_database</name>
+					<default>$(DEVICE)</default>
+					<type>string</type>
 				</switch>
 				<switch>
 					<name>b2mndr_device</name>
