@@ -153,7 +153,7 @@
 *     We apply a 'fudge factor' in order to represent the density
 *     dependence of the ionisation rate coefficient for hydrogen only.
 *     The fudge factor attempts to reproduce the data of Janev.
-*     These issues should be re-considered.
+*     These issues should be reconsidered.
 *
 *-----------------------------------------------------------------------
 *.declarations

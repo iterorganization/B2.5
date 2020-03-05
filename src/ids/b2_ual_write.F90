@@ -87,6 +87,10 @@ program b2_ual_write
     type (ids_numerics) :: numerics !< IDS designed to store
         !< run numerics data
 #endif
+    character(len=24) :: shot_string
+    character(len=24) :: run_string
+    character(len=24) :: argName
+    integer narg, cptArg
     character*16 usrnam
     external usrnam
 
@@ -110,12 +114,9 @@ program b2_ual_write
     call read_b2mod_transport(56)
 
     call ipgeti( 'b2mndr_shot_number', shot )
-    call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
     call ipgeti( 'b2mndr_run_number', run )
-    call xertst( 0.le.run.and.run.le.9999, 'Invalid run number')
     username = usrnam()
     call ipgetc( 'b2mndr_user', username )
-    call xertst( .not.streql(username,' '), 'User name not defined !')
     device = 'solps-iter'
 #ifndef NO_GETENV
     device_env = ' '
@@ -132,6 +133,32 @@ program b2_ual_write
     if (.not.streql(device_env,' ')) device = device_env
 #endif
     call ipgetc( 'b2mndr_device', device )
+    ! Check for optional command line arguments
+    ! which will supersede input from b2mn.dat if present
+    narg = command_argument_count()
+    do cptArg = 1, narg
+      call get_command_argument( cptArg, argName )
+      select case( adjustl( argName ) )
+        case("--shot","-s")
+          call get_command_argument( cptArg + 1, shot_string )
+          !! Transform dummy string variable to integer
+          read( shot_string, *) shot
+        case("--run","-r")
+          call get_command_argument( cptArg + 1, run_string )
+          !! Transform dummy string variable to integer
+          read( run_string, *) run
+        case("--username","-u")
+          call get_command_argument( cptArg + 1, username )
+        case("--device","-d")
+          call get_command_argument( cptArg + 1, device )
+        case("--version","-v")
+          call get_command_argument( cptArg + 1, version )
+      end select
+    end do
+
+    call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
+    call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
+    call xertst( .not.streql(username,' '), 'User name not defined !')
     call xertst( .not.streql(device,' '), 'Device not defined !')
 
     write(*,'(a,i8,a,i8,4a)') 'Shot: ', shot, ' Run: ', run, &

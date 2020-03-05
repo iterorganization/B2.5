@@ -474,7 +474,7 @@ c 2002-09-11: logic revised
       character*74 PATH, FILE, RFILNM
       character HANDLE*6
       character FILNAM*8,H123*4,REAC*9,REAC2*50,CRC*3,CHR*12
-      character ELNAME*2,MOLNAME*8,IONNAME*8,REACSTR*11
+      character ELNAME*2,MOLNAME*8,IONNAME*8,REACSTR*11,BUNDLING*60
       character FNAME*6,FRATIO*6
       character*8 eirene_format
       character*8 varname, spcname
@@ -4534,10 +4534,15 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             end if
           ENDIF
           IF (INDEX(REACZEILE,'ADAS') .NE. 0) THEN
-            READ (IUNIN,'(4X,A2,1X,I3)') ELNAME,idum(0)
+            READ (IUNIN,'(4X,A2,1X,I3,2X,A60)') ELNAME,idum(0),BUNDLING
             if (.not.skip_reac) then
               ILINE = ILINE+1
-              WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3)') ELNAME,idum(0)
+              if (same_bundling) then
+                WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3,2X,A)')
+     .                                   ELNAME,idum(0),trim(BUNDLING)
+              else
+                WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3)') ELNAME,idum(0)
+              end if
             end if
           ENDIF
           IF (INDEX(H123,'P.').EQ.0) THEN  !PVK
@@ -9203,9 +9208,9 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
           READ (ZEILEN(ILINE+2),6666) NSPTAL
           READ (IUNIN,'(A72)') ZEILEN(ILINE+3) ! NSPSTR(I),NSPSPZ(I),
                                                ! NSPINI(I),NSPEND(I),
-                                               ! NSPBLC(I),NSPADD(I),MASLOC
+                                               ! NSPBLC(I),NSPADD(I)
           READ (ZEILEN(ILINE+3),6666) idum(0:6)
-          READ (IUNIN,'(A72)') ZEILEN(ILINE+4) ! EMIN1(I),EMAX1(I)
+          READ (IUNIN,'(A72)') ZEILEN(ILINE+4) ! EMIN1(I),EMAX1(I),ESHIFT(I)
           READ (IUNIN,'(A72)') ZEILEN(ILINE+5) ! IPIVOT(I),XPIVOT,YPIVOT,ZPIVOT
           READ (IUNIN,'(A72)') ZEILEN(ILINE+6) ! ICHORD(I),XCHORD,YCHORD,ZCHORD
           IF (.not.savestratum(idum(0))) idum(0) = -1

@@ -413,14 +413,18 @@ contains
         type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
             !< data in edge plasma profiles  (includes the scrape-off layer and
             !<  possibly part of the confined plasma)
+        integer :: status
 
         gridSubset_index = 3
 
         !! Open input datafile from local database
         write (0,*) "Started reading input IDS", idx, shot, run
 
-        call imas_open_env('treename', shot, run, idx, username, device, version )
-        call ids_get(idx, "edge_profiles", edge_profiles)
+        call imas_open_env('treename', shot, run, idx, username, &
+            &   device, version, status )
+        call xertst ( status.eq.0, 'Error opening IMAS database !')
+        call ids_get(idx, "edge_profiles", edge_profiles, status)
+        call xertst ( status.eq.0, 'Error opening edge_profiles IDS !')
 
         write(0,*) "homogeneous_time = ",   &
             &   edge_profiles%ids_properties%homogeneous_time
@@ -437,7 +441,8 @@ contains
 #endif
         ! write(0,*) "Time = ", edge_profiles%time(1)
         call ids_deallocate( edge_profiles )
-        call imas_close( idx )
+        call imas_close( idx, status )
+        call xertst ( status.eq.0, 'Error closing IMAS database !')
         write (0,*) "Finished reading input IDS"
 
     end subroutine read_ids

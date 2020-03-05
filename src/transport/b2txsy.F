@@ -9,7 +9,7 @@
 *     ------------------------------------------------------------------
 *     B2TXSY computes the integrals over cell y-faces of a function
 *     that is provided on the cells.
-*!!   (Re-consider specification and use of this routine for the case
+*!!   (Reconsider specification and use of this routine for the case
 *     of a non-orthogonal grid.)
 *     ------------------------------------------------------------------
       integer ix, iy
