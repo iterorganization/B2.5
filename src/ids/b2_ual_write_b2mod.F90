@@ -213,9 +213,15 @@
 program b2_ual_write_b2mod
 
     use b2mod_main
-    use b2mod_ual
+    use b2mod_ual    &
+     & , only : put_ids_edge, b25_process_ids, &
+     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &          ids_radiation, ids_dataset_description
+#if IMAS_MINOR_VERSION > 21
+    use b2mod_ual    &
+     & , only : ids_summary
+#endif
     use b2mod_grid_mapping
-    use b2mod_ual_io
 #if IMAS_MINOR_VERSION < 15
     use ids_grid_examples       ! IGNORE
 #endif
@@ -398,6 +404,8 @@ contains
     !> Example subroutine for reading edge_profiles IDS
     !! with Fortran90
     subroutine read_ids( treename, shot, run, idx, username, database, version )
+        use b2mod_ual_io
+        implicit none
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
         integer, intent(in) :: shot !< The shot number of the database being created
         integer, intent(in) :: run  !< The run number of the database being created
