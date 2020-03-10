@@ -303,7 +303,7 @@ c 2002-09-11: logic revised
       integer NPHOTI, NPLSI, NNREAC, IPLTA, ILINE
       integer NATMI1, NREAC1, NREAC2, NRR1, NSTRA1, NPLSI1, NBGK1, NSKIP
       integer IREAD, IEND, IANF, ITOK, IER, ISTS, IH, I3, L, M, JSS
-      integer size_mp, size_mt
+      integer size_mp, size_mt, nc, maxne, quote_count, iquote, iyear
       integer ICRM, JPLSS, ISTRA, ISKIP
       integer MAXRAD, NSIGVI, NSIGSI, NSIGCI, NPPLG, NCRM
       integer NSIGV1, NSIGS1, NSIGC1, NLOGIN
@@ -468,17 +468,20 @@ c 2002-09-11: logic revised
       character*80 ZEILE, ULINE, ZEILEN(100)
       character*96, allocatable :: REAC_LINE(:)
       character*98 REACZEILE
+      character*80 MESSAGE
       character*24 TXTSPC, TXTUNT, TEXTLA
       character*72 TXTMOL, TXTION, TXTPLS, TXTPHOT, TXTCRM
       character*72 TITLE5, CHRTAL
       character*74 PATH, FILE, RFILNM
       character HANDLE*6
-      character FILNAM*8,H123*4,REAC*9,REAC2*50,CRC*3,CHR*12
+      character FILNAM*8,H123*4,REAC*9,REAC2*50,CRC*3,CHR*12,SS*2
       character ELNAME*2,MOLNAME*8,IONNAME*8,REACSTR*11,BUNDLING*60
-      character FNAME*6,FRATIO*6
+      character FNAME*6,FRATIO*6,YEAR*2,EB*2,Bdescr*8
+      character*4 CDUM(7)
       character*8 eirene_format
       character*8 varname, spcname
       character*2 stratum_number
+      character*256 adasfile
       data eirene_format / 'iter' /
       character*8, allocatable ::
      .  TEXTM(:), TEXTI(:), TEXTP(:), TEXTPH(:)
@@ -539,10 +542,10 @@ c 2002-09-11: logic revised
 #endif
       integer conformal_convert
       real (kind=R8) :: cr, cz, cr1, cz1, rratio
-      logical open_file, streql, is_comment, lnext1
+      logical open_file, silent_open, streql, is_comment, lnext1
       external subini, subend, xertst, xerrab, cfruch, cfrure, cfwuin,
-     &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk,
-     &  len_of_digits, open_file, get_jsep, conformal_convert,
+     &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk, len_of_digits,
+     &  open_file, silent_open, get_jsep, conformal_convert,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr
@@ -4532,7 +4535,66 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
                 WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3,2X,A)')
      .                                   ELNAME,idum(0),trim(BUNDLING)
               else
-                WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3)') ELNAME,idum(0)
+                nc=get_atomic_number(elname)
+                filename='ratadas.filelist'
+                call find_file(filename,ex)
+                if(silent_open(97,filename,
+     .             'data.local|modules/B2.5/Database',adasfile)) then !{
+                  read(97,*) ZEILE
+                  read(97,*) maxne
+                  if (nc.gt.maxne) then !{
+                    write(*,*) 'ADAStables: element number',nc,
+     .                            'not supported!'
+                    call xerrab ('Unsupported ADAS element')
+                  endif !}
+c     jump over the preceding lines
+                  do i=1,nc-1 !{
+                    read(97,*) ZEILE
+                  enddo !}
+c     now read the relevant line
+                  read(97,'(a80)') ZEILE
+                  quote_count = 0
+                  iquote = index(ZEILE,'''')
+                  do while (iquote.gt.0) !{
+                    quote_count=quote_count+1
+                    if (index(ZEILE(iquote+1:80),'''').ne.0) then !{
+                      iquote = index(ZEILE(iquote+1:80),'''') + iquote
+                    else !}{
+                      iquote = 0
+                    endif !}
+                  enddo !}
+                  if (quote_count.eq.16) then !{
+                    read(ZEILE,*) CDUM(1:7),SS
+                  else if (quote_count.eq.18) then !}{
+                    read(ZEILE,*) CDUM(1:7),SS,Bdescr
+                  else !}{
+                    call xerrab
+     .               ('Incomplete line found in ratadas.filelist!')
+                  endif !}
+                  close(97)
+                  if(CDUM(6).ne.'none') then !{
+                    read(CDUM(6),*) iyear
+                  else !}{
+                    message = 'Could not find Zav data for '//SS
+                    call xerrab (message)
+                  end if !}
+                  if (iyear.gt.100) then !{
+                    write(EB,'(i2.2)') mod(iyear,100)
+                    iyear = iyear/100
+                  end if !}
+                  write(YEAR,'(i2.2)') iyear
+                  WRITE(REAC_LINE(ILINE-1)(20:21),'(A2)') YEAR
+                  if (streql(Bdescr,' ')) then !{
+                    WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3)')
+     .                                                    ELNAME,idum(0)
+                  else !}{
+                    BUNDLING=EB//'_'//trim(Bdescr)
+                    WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3,2X,A)')
+     .                                   ELNAME,idum(0),trim(BUNDLING)
+                  end if !}
+                else !}{
+                  WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3)') ELNAME,idum(0)
+                end if !}
               end if
             end if
           ENDIF
