@@ -1202,8 +1202,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
          enddo
         endif
-        wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*ti+
-     &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*ti*ne
+        wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*te+
+     &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*te*ne
         call my_out(70,nx,ny,wrk0,'b2stbr_she_eir')
         wrk0=shi0_eir(:,:,0)+shi0_eir(:,:,1)*ti+
      &       shi0_eir(:,:,2)*ni(:,:,0)+shi0_eir(:,:,3)*ti*ni(:,:,0)
