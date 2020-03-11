@@ -774,6 +774,7 @@ c   --> better solution wanted here..
      &              max( min( taumax,t1(k) ), -taumax )
             if ( iout .ne. 0 )
      &       write(*,'(i3,3es17.4)') k, t01(k), t1(k), t(k)
+            sna_eir(k) = sna_eir(k)*t(k)
           enddo
 
           do is = 0, ns-1
@@ -788,7 +789,7 @@ c   --> better solution wanted here..
 !          if (ank_tracing .gt. 0) then    
 !            do iy = -1, ny
 !              do ix = -1, nx
-                sna_eir(k) = sna_eir(k)*t(k)
+!                sna_eir(k) = sna_eir(k)*t(k)
 !     &              sna0(ix,iy,0,is) + 
 !     &              sna0(ix,iy,1,is) * na(ix,iy,is)
 !              enddo
@@ -1214,8 +1215,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
          enddo
         endif
-        wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*ti+
-     &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*ti*ne
+        wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*te+
+     &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*te*ne
         call my_out(70,nx,ny,wrk0,'b2stbr_she_eir')
         wrk0=shi0_eir(:,:,0)+shi0_eir(:,:,1)*ti+
      &       shi0_eir(:,:,2)*ni(:,:,0)+shi0_eir(:,:,3)*ti*ni(:,:,0)
