@@ -186,7 +186,7 @@ c
      *   rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 c
-      logical ex, cflag, found
+      logical ex, cflag, found, eirc_done
       logical open_file, streql
       integer len_of_digits
       real (kind=R8) ::
@@ -364,6 +364,7 @@ c
       istepcdf=0
 #endif
       lucdf=0
+      eirc_done=.false.
 c
       ns=max(nsd_local,1)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',ns,'i3)'
@@ -5438,7 +5439,8 @@ c     assumes that bb is OK for 1d cases
           values(33)=rstack(irstack)
           write(target_label(itwrk),'(1pe15.8)') rpop(rstack,irstack)
           call set_targetbarlabel(target_label(itwrk))
-        case('eirc')     ! add the Eirene atomic densities to the b2 values
+        case('eirc')     ! add the Eirene atomic quantities to the b2 values
+          if (eirc_done) return
           stack_req=(/0,0,0,0,0,0,0/)
           if(b2plot_debug.ge.12)
      &     write(*,*) iistack,irstack,isstack,iwrk,iwwrk,stack_req
@@ -5473,13 +5475,36 @@ c     assumes that bb is OK for 1d cases
      &           '  (',iss,' & ',is,')'
                 do iy=-1,ny
                   do ix=-1,nx
+                    if (maxval(abs(pfluxa)).gt.0.0_R8) then
+                      fna(ix,iy,0,iss)=fna(ix,iy,0,iss)+
+     &                 pfluxa(ix+1,iy+1,is,1)*gs(ix,iy,0)*qz(ix,iy,1)
+                      fnax(ix,iy,iss)=fna(ix,iy,0,iss)
+                      fna(ix,iy,1,iss)=fna(ix,iy,1,iss)+
+     &                 rfluxa(ix+1,iy+1,is,1)*gs(ix,iy,1)
+                      fnay(ix,iy,iss)=fna(ix,iy,1,iss)
+                      ua(ix,iy,iss)=(ua(ix,iy,iss)*na(ix,iy,iss)+
+     &                  pfluxa(ix+1,iy+1,is,1)*bb(ix,iy,0)/bb(ix,iy,3))/
+     &                 (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
+                      uutraj(ix,iy,iss)=ua(ix,iy,iss)
+                      up(ix,iy,iss)=(up(ix,iy,iss)*na(ix,iy,iss)+
+     &                  pfluxa(ix+1,iy+1,is,1))/
+     &                 (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
+                      arrowx(ix,iy,iss)=up(ix,iy,iss)
+                      vv(ix,iy,iss)=(vv(ix,iy,iss)*na(ix,iy,iss)+
+     &                      rfluxa(ix+1,iy+1,is,1))/
+     &                     (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
+                      arrowy(ix,iy,iss)=vv(ix,iy,iss)
+                      vvtraj(ix,iy,iss)=vv(ix,iy,iss)
+                    endif
                     na(ix,iy,iss)=na(ix,iy,iss)+
      &                            dab2(ix+1,iy+1,is,1)
+                    ro(ix,iy,iss)=am(iss)*mp*na(ix,iy,iss)
                   enddo
                 enddo
               endif
             enddo
           enddo
+          eirc_done=.true.
           return
         case('nese')     ! set ne from matrix stack
           stack_req=(/0,0,0,1,0,0,0/)

@@ -90,8 +90,8 @@ ifndef SOLPS_CPP
 EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif
 ifdef USE_MPI
-LD_UAL  := `pkg-config imas-gfortran --libs` -L/work/imas/opt/EasyBuild/software/GGD/1.9.1-GCC-6.4.0-2.28-DD-3.26.0/lib -lggd
-INCMODS += `pkg-config imas-gfortran --cflags` -I/work/imas/opt/EasyBuild/software/GGD/1.9.1-GCC-6.4.0-2.28-DD-3.26.0/include
+LD_UAL  := `pkg-config imas-gfortran --libs` -L/work/imas/opt/EasyBuild/software/GGD/1.9.1-GCC-6.4.0-2.28-DD-3.27.0/lib -lggd
+INCMODS += `pkg-config imas-gfortran --cflags` -I/work/imas/opt/EasyBuild/software/GGD/1.9.1-GCC-6.4.0-2.28-DD-3.27.0/include
 else
 LD_UAL  ?= `pkg-config imas-pgi ggd --libs`
 INCMODS += `pkg-config imas-pgi ggd --cflags`

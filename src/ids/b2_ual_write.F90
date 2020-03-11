@@ -57,7 +57,7 @@ program b2_ual_write
     character(len=24) :: treename   !< The name of the IMAS IDS database
         !< (i.e. "edge_profiles" (mandatory) )
     character(len=24) :: username   !< Creator/owner of the IMAS IDS database
-    character(len=24) :: device     !< Device name of the IMAS IDS database
+    character(len=24) :: database   !< IMAS IDS database name
         !< (i. e. solps-iter, iter, aug)
     character(len=24) :: version    !< Major version of the IMAS IDS database
     integer :: idx  !< The returned identifier to be used in the subsequent
@@ -113,11 +113,11 @@ program b2_ual_write
     call read_b2mod_sources(56)
     call read_b2mod_transport(56)
 
-    call ipgeti( 'b2mndr_shot_number', shot )
-    call ipgeti( 'b2mndr_run_number', run )
+    call ipgeti('b2mndr_shot_number', shot )
+    call ipgeti('b2mndr_run_number', run )
     username = usrnam()
-    call ipgetc( 'b2mndr_user', username )
-    device = 'solps-iter'
+    call ipgetc('b2mndr_user', username )
+    database = 'solps-iter'
 #ifndef NO_GETENV
     device_env = ' '
 #ifdef NAGFOR
@@ -130,9 +130,10 @@ program b2_ual_write
     call getenv ('DEVICE', device_env)
 #endif
 #endif
-    if (.not.streql(device_env,' ')) device = device_env
+    if (.not.streql(device_env,' ')) database = device_env
 #endif
-    call ipgetc( 'b2mndr_device', device )
+    call ipgetc('b2mndr_device', database )
+    call ipgetc('b2mndr_database', database )
     ! Check for optional command line arguments
     ! which will supersede input from b2mn.dat if present
     narg = command_argument_count()
@@ -149,8 +150,8 @@ program b2_ual_write
           read( run_string, *) run
         case("--username","-u")
           call get_command_argument( cptArg + 1, username )
-        case("--device","-d")
-          call get_command_argument( cptArg + 1, device )
+        case("--database","--device","-d")
+          call get_command_argument( cptArg + 1, database )
         case("--version","-v")
           call get_command_argument( cptArg + 1, version )
       end select
@@ -159,10 +160,10 @@ program b2_ual_write
     call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
     call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
     call xertst( .not.streql(username,' '), 'User name not defined !')
-    call xertst( .not.streql(device,' '), 'Device not defined !')
+    call xertst( .not.streql(database,' '), 'Database not defined !')
 
     write(*,'(a,i8,a,i8,4a)') 'Shot: ', shot, ' Run: ', run, &
-        & ' User: ', trim(username), ' Device: ', trim(device)
+        & ' User: ', trim(username), ' Database: ', trim(database)
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
@@ -174,7 +175,7 @@ program b2_ual_write
 #if IMAS_MINOR_VERSION > 25
         &  numerics, run_start_time, run_end_time, &
 #endif
-        &  tim, dtim, shot, run, device, version )
+        &  tim, dtim, shot, run, database, version )
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
@@ -186,7 +187,7 @@ program b2_ual_write
 #if IMAS_MINOR_VERSION > 25
         &   numerics, &
 #endif
-        &   treename, shot, run, idx, username, device, version )
+        &   treename, shot, run, idx, username, database, version )
 
 end program b2_ual_write
 

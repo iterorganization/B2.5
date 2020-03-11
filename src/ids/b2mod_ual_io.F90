@@ -128,7 +128,7 @@ contains
 #if IMAS_MINOR_VERSION > 25
             &   numerics, run_start_time_IN, run_end_time_IN, &
 #endif
-            &   time_IN, time_step_IN, shot, run, device, version, &
+            &   time_IN, time_step_IN, shot, run, database, version, &
             &   time_slice_ind_IN, num_time_slices_IN )
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
             !< store data on edge plasma profiles  (includes the scrape-off
@@ -155,7 +155,7 @@ contains
         real(IDS_real), intent(in) :: run_start_time_IN, run_end_time_IN !< Run time bounds
 #endif
         integer, intent(in) :: shot, run
-        character(len=24), intent(in) :: device, version
+        character(len=24), intent(in) :: database, version
         real(IDS_real), intent(in), optional :: time_IN !< Time
         real(IDS_real), intent(in), optional :: time_step_IN !< Time step
         integer, intent(in), optional :: time_slice_ind_IN
@@ -832,7 +832,7 @@ contains
         allocate( description%data_entry%user(1) )
         description%data_entry%user = usrnam()
         allocate( description%data_entry%machine(1) )
-        description%data_entry%machine = device
+        description%data_entry%machine = database
         allocate( description%data_entry%pulse_type(1) )
         description%data_entry%pulse_type = "simulation"
         description%data_entry%pulse = shot
@@ -885,7 +885,7 @@ contains
         !> Careful: Sign convention for magnetic field in IDS
         !>          is OPPOSITE to that in SOLPS toroidal geometries
         if ( b0.ne.0.0_IDS_real ) then
-          if (streql(device,'iter')) then
+          if (streql(database,'iter')) then
             b0r0_ref = 5.3_IDS_real * 6.2_IDS_real
             allocate( summary%global_quantities%ip%value( time_sind ) )
             allocate( edge_profiles%vacuum_toroidal_field%b0( time_sind ) )

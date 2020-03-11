@@ -52,7 +52,7 @@ contains
 #if IMAS_MINOR_VERSION > 25
             &   numerics, &
 #endif
-            &   treename, shot, run, idx, username, device, version )
+            &   treename, shot, run, idx, username, database, version )
         type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
             !< designed to store data on edge plasma profiles  (includes the
             !< scrape-off layer and possibly part of the confined plasma)
@@ -86,7 +86,7 @@ contains
             !< data access operation
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
             !< database
-        character(len=24), intent(in) :: device     !< Device name of the IMAS IDS database
+        character(len=24), intent(in) :: database   !< IMAS database name
             !< (i. e. solps-iter, iter, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
             !< database
@@ -104,13 +104,13 @@ contains
 
         !! Create and modify new shot/run
         call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-            device, version, status )
+            database, version, status )
         call xertst( status.eq.0, 'Error opening IMAS database !')
 
         !! Or open and modify existing shot/run (might work much faster than
         !! imas_create_env)
         ! call imas_open_env(treename, shot, run, idx, username, &
-        !  device, version, status )
+        !  database, version, status )
 
         !! Put data to IDS
         ! call ids_put_slice( idx, "edge_profiles", edge_profiles, status )
@@ -162,7 +162,7 @@ contains
     !> Routine to open UAL database.
     !! @note For IMAS IDS is recommended use of IMAS GGD library routine
     !! "exampleOpenIDS"
-    subroutine open_ual( idx, shot, run, time, user, tokamak, dataversion,  &
+    subroutine open_ual( idx, shot, run, time, user, database, dataversion,  &
         &   doCreate, useHdf5, nmlFile )
         integer, intent(out) :: idx !< The returned identifier to be used in the
                                     !< subsequent data access operation
@@ -177,8 +177,8 @@ contains
                                                 !! returned
         character(*), intent(in), optional :: user  !< Creator/owner of the
                                                     !< database
-        character(*), intent(in), optional :: tokamak !< Device name of the
-            !< database (i. e. solps-iter, iter, aug)
+        character(*), intent(in), optional :: database !< Database name
+                                                       !< (i. e. solps-iter, iter, aug)
         character(*), intent(in), optional :: dataversion   !< Major version of
                                                             !< the database
         logical, intent(in), optional :: doCreate
@@ -217,7 +217,7 @@ contains
         if( present( shot ) ) lShot = shot
         if( present( run ) ) lRun = run
         if( present( user ) ) lUser = user
-        if( present( tokamak ) ) lTokamak = tokamak
+        if( present( database ) ) lTokamak = database
         if( present( dataversion ) ) lDataversion = dataversion
         if( present( doCreate ) ) lDoCreate = doCreate
         if( present( useHdf5 ) ) lUseHdf5 = useHdf5
