@@ -334,7 +334,9 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
       write_nml_user = .false.
       call alloc_b2mod_wall_init(nx,ny,nncut)
+#ifdef WG_TODO
       call init_wall(nx,ny)
+#endif
       if (use_eirene.eq.0) then
         nnatmi = 0
         nnmoli = 0

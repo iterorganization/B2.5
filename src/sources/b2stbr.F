@@ -1255,7 +1255,12 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       call alloc_b2mod_wall_init(nx,ny,nncut)
       call alloc_b2mod_wall(ns,natm,nmol,nion)
       call init_wall(nx,ny)
+#endif
+
+      call alloc_b2mod_wall(ns,natm,nmol,nion)
+      call init_wall(mpg)
       call read_b2mod_wall_namelist(99,'    ',wall_namelist_used)
+#ifdef WG_TODO
       call xertst (ndepth_nml.gt.1.or.plate_model.eq.0,
      .   'Inconsistent values of ndepth_nml and plate_model')
       call get_wall_data (nx,ny,ns,BoRiS,wall_namelist_used)
@@ -1278,9 +1283,11 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       nCg_sp = nCg_tmp
       ns_sp = ns_tmp
 #endif
+
 cmb  Load pre-evaluated integrals for advanced recyling model based on TRIM data
       nbnd2 = 60 !! TODO
-      if (kul_recycle.eq.1) call read_recycle_DCfnn(ns,nbnd2)            !mb 12.07.17
+!!      if (kul_recycle.eq.1) call read_recycle_DCfnn(ns,nbnd2)            !mb 12.07.17
+      if (kul_recycle.eq.1) call read_recycle_fnn(ns,nbnd2)            !mb 12.07.17
       call subend ()
       return
 
