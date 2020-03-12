@@ -394,8 +394,9 @@
         else
           cssb = 0.0_R8
         endif                                                            !iyv 06.02.14
+#ifndef NO_OPENMP_B2NEWS_LOOP1
 #ifdef WITH_FTIMINGS
-      call timer%start("parallel")
+        call timer%start("parallel")
 #endif
 !! FR possible loop (1) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none) FIRSTPRIVATE(flob, conb, pb)
@@ -407,7 +408,8 @@
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
-!$OMP& SHARED(kinrgy, fllim0fna) 
+!$OMP& SHARED(kinrgy, fllim0fna)
+#endif
 !        do is = 0, ns-1
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
@@ -430,10 +432,12 @@
      1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .true.)               !djm Jan2017
         enddo
+#ifndef NO_OPENMP_B2NEWS_LOOP1
 !$OMP END PARALLEL DO
 !! FR end of loop (1)
 #ifdef WITH_FTIMINGS
         call timer%stop("parallel")
+#endif
 #endif
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -530,8 +534,9 @@ cxpb
      &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
+#ifndef NO_OPENMP_B2NEWS_LOOP2
 #ifdef WITH_FTIMINGS
-      call timer%start("parallel")
+        call timer%start("parallel")
 #endif
 !!FR Possible loop (2) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none)
@@ -564,6 +569,7 @@ cxpb
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
 !$OMP& SHARED(rxf0, sna, pcca, resco, corpa, b2stbr_sna, b2stbm_sna) 
 !$OMP& SHARED(ext_sna, use_b2npc9)
+#endif
 !        do is = 0, ns-1
         do is = nsmin, nsmax-1
 *    ..DPC
@@ -749,10 +755,12 @@ cxpb
      1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)           !djm Jan2017
 !          endif                                                         !srv 22.05.18
         enddo
+#ifndef NO_OPENMP_B2NEWS_LOOP2
 !$OMP END PARALLEL DO
 !! FR End of loop (2)
 #ifdef WITH_FTIMINGS
-      call timer%stop("parallel")
+        call timer%stop("parallel")
+#endif
 #endif
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
            call print_wrong_flows(
@@ -942,8 +950,9 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                 else
                   cssb = 0.0_R8
                 endif                                                    !iyv 06.02.14
+#ifndef NO_OPENMP_B2NEWS_LOOP3
 #ifdef WITH_FTIMINGS
-      call timer%start("parallel")
+                call timer%start("parallel")
 #endif
 !! FR possible loop (3) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none) LASTPRIVATE(flob, conb, pb)
@@ -955,7 +964,8 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
 !$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
-!$OMP& SHARED(kinrgy, fllim0fna) 
+!$OMP& SHARED(kinrgy, fllim0fna)
+#endif
 !                do is = 0, ns-1
                 do is = nsmin, nsmax-1
 *    ..compute partial pressure
@@ -980,10 +990,12 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      1             fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)     !djm Jan2017
                 enddo
+#ifndef NO_OPENMP_B2NEWS_LOOP3
 !$OMP END PARALLEL DO
 !!FR End of loop (3)
 #ifdef WITH_FTIMINGS
-      call timer%stop("parallel")
+                call timer%stop("parallel")
+#endif
 #endif
                 if(wrong_flow .or. ipass.ne.0) then                      !xpb
                    call print_wrong_flows(
@@ -1091,18 +1103,22 @@ c     with diamagnetic drift part                                        !xpb
              endif
            end do
          end do
+#ifndef NO_OPENMP_B2NEWS_LOOP4
 #ifdef WITH_FTIMINGS
-      call timer%start("parallel")
+         call timer%start("parallel")
 #endif
 !!FR loop (4) over ns suitable for OpenMP parallelisation
 !$OMP PARALLEL DO DEFAULT(none) SHARED(rza,ua,na,ns) REDUCTION(+:ue)
+#endif
          do is=0,ns-1
            ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
          enddo
+#ifndef NO_OPENMP_B2NEWS_LOOP4
 !$OMP END PARALLEL DO
 !!FR end of loop (4)
 #ifdef WITH_FTIMINGS
-      call timer%stop("parallel")
+         call timer%stop("parallel")
+#endif
 #endif
          ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
          ue(:,:)=ue(:,:)/ne(:,:)

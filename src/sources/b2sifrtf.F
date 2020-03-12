@@ -68,7 +68,7 @@
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
-#ifdef NO_OPENMP_B2NPMO 
+#ifdef NO_OPENMP_B2NPMO
       !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
 #endif
       character chns*3, chis*3
@@ -101,7 +101,7 @@
       !$OMP THREADPRIVATE(ncall, styl0, phm0, phm1, phm2, phm3)
 #endif
       data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
-     &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/ 
+     &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -173,18 +173,18 @@
 #ifndef NO_OPENMP_B2SIFRTF
 !$OMP PARALLEL DO IF (.not. OMP_IN_PARALLEL())
 !$OMP& DEFAULT(NONE)
+!$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
+!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
+!$OMP& SHARED(rz2, am, zetap, na, ua)
 #ifdef NO_OPENMP_B2NPMO
 !$OMP& PRIVATE(phm0, styl0)
 #else
 !$OMP& SHARED(phm0, styl0)
 #endif
-!$OMP& PRIVATE(KabVp, ix, iy, coef, t0)
-!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix) 
-!$OMP& SHARED(rz2, am, zetap, na, ua)
 !$OMP& REDUCTION(+: smbfrial)
 #endif
       do is = 0, ns-1
-       if(isb.ne.is .and. 
+       if(isb.ne.is .and.
      &    .not.is_neutral(isb).and. .not.is_neutral(is)) then
         KabVp=fkabvp(isb,is)
 *     ..contribution from friction between ions
@@ -197,16 +197,16 @@
            t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
            if (styl0.eq.0) then
              smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbfrial(ix,iy,1) = smbfrial(ix,iy,1)-coef*t0
+             smbfrial(ix,iy,1) = smbfrial(ix,iy,1)+(-coef*t0)
            else if (styl0.eq.1) then
              smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)-
-     &                           coef*t0/roxa(ix,iy,isb)
+             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
+     &                       roxa(ix,iy,isb))
            else if (styl0.eq.2) then
              smbfrial(ix,iy,2) = smbfrial(ix,iy,2)+coef*t0*ua(ix,iy,is)/
      &                       roxa(ix,iy,isb)
-             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)-coef*t0/
-     &                       roxa(ix,iy,isb)
+             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
+     &                       roxa(ix,iy,isb))
            endif
           endif
          enddo
@@ -260,22 +260,22 @@
       if (do_parallel) call timer%start("parallel")
 #endif
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALLEL DO IF (.not.OMP_IN_PARALLEL()) 
+!$OMP PARALLEL DO IF (.not.OMP_IN_PARALLEL())
 !$OMP& DEFAULT(NONE)
-#ifdef NO_OPENMP_B2NPMO
-!$OMP& PRIVATE(phm3)
-#else
-!$OMP& SHARED(phm3)
-#endif
-!$OMP& PRIVATE(KabVp, Kbatf, Kabtf, ka, kb, ix, iy, coef, t0)
+!$OMP& PRIVATE(KabVp, Kbatf, Kabtf, ka, kb, is, ix, iy, coef, t0)
 !$OMP& PRIVATE(calfab, delti, jabmax, fllim_al_ab)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
 !$OMP& SHARED(on_closed_surface)
+ifdef NO_OPENMP_B2NPMO
+!$OMP& PRIVATE(phm3)
+#else
+!$OMP& SHARED(phm3)
+#endif
 !$OMP& REDUCTION(+: smbtfial)
 #endif
       do is = 0, ns-1
-       if(isb.ne.is .and. 
+       if(isb.ne.is .and.
      &    .not.is_neutral(isb) .and. .not.is_neutral(is)) then
         Kabtf = fkabtf(isb,is)
         Kbatf = fkabtf(is,isb)
@@ -286,7 +286,7 @@
         do iy = 0, ny-1
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-c      .. calculations could be simplified 
+c      .. calculations could be simplified
 c      .. but we did not do it in order to have the same formulae as manual
            calfab = zetap(ix,iy)/sqrt(mp)*
      &          qe*(na(ix,iy,isb)+na(ix,iy,is))*
@@ -340,9 +340,9 @@ c   .. apply flux limit
             b2sifr_smotfea0to3(ix,iy,0:3,isb)=vol(ix,iy)*hz(ix,iy)*
      &                                        smbtfea(ix,iy,0:3)
           enddo
-        enddo 
+        enddo
       endif
-        
+
       if (iout.ne.0) then !  .or. iout_b2wdat.eq.4) then                !srv 05.07.17
         write (chns,'(i3.3)') isb
 
@@ -397,18 +397,18 @@ c   .. apply flux limit
 
       function fkabvp(a, b)
       implicit none
-      integer a, b 
+      integer a, b
       real (kind=R8) :: fkabvp(-1:nx,-1:ny)
-      if((a.eq.ismain) .and. (b.ne.a) .and. 
+      if((a.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=cimp1
-      elseif((b.eq.ismain) .and. (a.ne.b) .and. 
+      elseif((b.eq.ismain) .and. (a.ne.b) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=cimp1
-      elseif((a.ne.b .and. a.ne.ismain) .and. (b.ne.ismain) .and. 
+      elseif((a.ne.b .and. a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=1.0_R8
-      elseif((a.eq.b) .and. 
+      elseif((a.eq.b) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=0.0_R8
       else
@@ -419,12 +419,12 @@ c   .. apply flux limit
 
       function fkabtf(a, b)
       implicit none
-      integer a, b 
+      integer a, b
       real (kind=R8) :: fkabtf(-1:nx,-1:ny)
-      if((b.eq.ismain) .and. (b.ne.a) .and. 
+      if((b.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabtf=cimp2
-      elseif((a.ne.ismain) .and. (b.ne.ismain) .and. 
+      elseif((a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabtf=0.0_R8
       elseif((a.eq.ismain)) then
@@ -437,7 +437,7 @@ c   .. apply flux limit
 
       function fka(a)
       implicit none
-      integer a 
+      integer a
       real (kind=R8) :: fka(-1:nx,-1:ny)
       integer r
       fka = 0.0_R8

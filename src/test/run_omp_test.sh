@@ -107,7 +107,7 @@ function run_test {
 
 DATESTAMP=$(datestamp)
 
-# run B2 with 1 and 48 cores
+# run B2 with 1 and MAX_THREADS cores
 run_test $SOURCEDIR test1_$DATESTAMP $STEPS 1
 run_test $SOURCEDIR test2_$DATESTAMP $STEPS $MAX_THREADS
 
