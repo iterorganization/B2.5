@@ -9238,7 +9238,9 @@ cxpb as they no longer necessarily point to the same species
           call b2yt_wall_final(nout(5),nx1,ny1,ns1)
         else
 *  ..in the absence of a namelist, put in defaults
+#ifdef WG_TODO
           call get_wall_data(nx,ny,ns,BoRiS,wall_namelist_used)
+#endif
         endif ! wall_namelist_used
 *  ..read in the namelist data
         if(sputter_namelist_used) then

@@ -17,7 +17,9 @@
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
       call alloc_b2mod_wall_init(nx,ny,nncut)
       call alloc_b2mod_wall2_init(nncut1,nx1,ny1,nlim,nsts)
+#ifdef WG_TODO
       call init_wall(nx,ny)
+#endif
 cxpb Establish numbering of boundary wall cells
 cxpb We must avoid corner cells and dead cells
       nbnd1 = 0

@@ -776,7 +776,9 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
       call alloc_b2mod_wall_init(nx,ny,nncut)
       call alloc_b2mod_wall(ns,natm,nmol,nion)
+#ifdef WG_TODO
       call init_wall(nx,ny)
+#endif
       call read_b2mod_wall_namelist(99,'    ',found)
       allocate(wall_tmp(1:nwall,0:nsd_local-1), 
      *   trg_tmp(1:nwall,1:ndepth_nml))
@@ -790,7 +792,9 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         texttrack(i)=' Deposited '//trim(track_species(i))
         texttargsp(i)=' '//trim(track_species(i))
       end do
+#ifdef WG_TODO
       call get_wall_data(nx,ny,ns,BoRiS,found)
+#endif
       hy1(:,:)=hy(:,:)*qz(:,:,1)
 cxpb  We now use the data already computed in init_wall
       do ibnd = 1, nbnd
