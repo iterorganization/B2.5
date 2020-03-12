@@ -617,7 +617,9 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
       call alloc_b2mod_wall_init(nx,ny,nncut)
       call alloc_b2mod_wall(ns,natm,nmol,nion)
+#ifdef WG_TODO
       call init_wall(nx,ny)
+#endif
       call read_b2mod_wall_namelist(99,'    ',ex)
       call xertst (ndepth_nml.gt.1.or.plate_model.eq.0,
      .  'Inconsistent values of ndepth_nml and plate_model')

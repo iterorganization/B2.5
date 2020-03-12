@@ -1,4 +1,4 @@
-      subroutine init_wall(nx,ny)
+      subroutine init_wall(mpg)
       use b2mod_types
       use b2mod_geo
       use b2mod_rates
@@ -11,12 +11,13 @@
       use b2mod_b2cmpb
       use b2mod_b2cmfs
       use b2mod_external
+      use b2us_map
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
       implicit none
-
-      integer nx, ny, ns
+      type (mapping), intent(in) :: mpg
+      integer nCv, ns
       real (kind=R8) :: BoRiS
 
       integer ix, iy, is, ixn, iyn, idir, ireg
@@ -55,6 +56,7 @@
       parameter (onemeps =  1.0_R8 - 1.0e-5_R8)
 
       call subini('init_wall')
+#ifdef WG_TODO
       allocate(imapx_tmp(nwall), imapy_tmp(nwall))
       allocate(xymap_tmp(-1:DEF_NXD,-1:DEF_NYD))
       call ipgeti('init_wall_debug', debug_init_wall)
@@ -374,8 +376,12 @@ cxpb  Test namelist input
           end do
         end do
       end if
+
+#endif
+
 cxpb Fill up array data not given in namelist
       layer_composition = 0.0_R8
+      nbnd = mpg%nCg
       do ibnd = 1, nbnd
         if (backplate_temp(ibnd).eq.0.0_R8)
      .      backplate_temp(ibnd) = plate_temp
@@ -389,6 +395,8 @@ cxpb Fill up array data not given in namelist
      .      bulk_material_name(ibnd)(1:1) = 'C'   ! Graphite
       enddo
 
+
+#ifdef WG_TODO
 cxpb Read material data
       call ipgeti('b2stbr_sput_dst', sput_dst)
       call xertst(sput_dst.lt.ns,
@@ -916,6 +924,8 @@ cxpb Use 1-D equilibrium profile
          call xerrab('Invalid iy')
       endif
       end subroutine check_ok
+
+#endif
 
       end subroutine init_wall
 
