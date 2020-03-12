@@ -124,11 +124,11 @@ c#endif
       trimrecyc_present = .false.
       do is=0,isp
         do it=0,itm
-!!          filename = 
-!!     1     recycle_code(is)(1:len_trim(recycle_code(is)))//
-!!     2     target_code(it)(1:len_trim(target_code(it)))//
-!!     3     '.fnn'
-          filename = 'DC.fnn'
+          filename = 
+     1     recycle_code(is)(1:len_trim(recycle_code(is)))//
+     2     target_code(it)(1:len_trim(target_code(it)))//
+     3     '.fnn'
+!!          filename = 'DC.fnn'
           call lower_case(filename)
           if(open_file(96,filename,
      1      'data.local/trim.data/refl.data|' // 
@@ -259,8 +259,10 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = -geo%fcQalf(iFc,0)
-      sina = -geo%fcQalf(iFc,1)
+      cosa = geo%fcQalf(iFc,0)
+      sina = geo%fcQalf(iFc,1)
+!!      cosa = 1.0_R8
+!!      sina = 0.0_R8
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCn,1) !!TODO correct species index
       ux = upf*pit2
@@ -294,8 +296,8 @@ c      call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r)     !mb Rem
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
 c     Incident particle flux density
-      uy = 0.0_R8
-      uz = 0.0_R8
+!!      uy = 0.0_R8
+!!      uz = 0.0_R8
       fnnic = vcx/vtot**2*(dnndyc*uy*i1l+
      2   dnndzc*i2l)
       fnniv = vcx/vtot*(-i1l+
@@ -304,8 +306,8 @@ c     Incident particle flux density
 c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
 c     of TRIM tables. Only toroidal drift remains!
-      uy = 0.0_R8
-      uz = 0.0_R8
+!!      uy = 0.0_R8
+!!      uz = 0.0_R8
 
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
@@ -378,9 +380,12 @@ c     Convert particle flux densities in fluxes
       fnniv = fnniv*area
 
 c     Calculate incident poloidal momentum flux of neutrals
-      fmomnip = (1-idir)*isign*(fmoz*cosa + fmoy*sina)* !East/West contribution
-     2   area +(1-idir)*isign*pn*area+
-     3   idir*isign*fmoy*area ! South/North contribution
+!      fmomnip = (1-idir)*isign*(fmoz*cosa + fmoy*sina)* !East/West contribution
+!     2   area +(1-idir)*isign*pn*area+
+!     3   idir*isign*fmoy*area ! South/North contribution
+      fmomnip = isign*(fmoz*cosa + fmoy*sina)*
+     2   area +isign*pn*area+
+     3   isign*fmoy*area 
       fmomnit = -fmox*area
       fmomni = pit*fmomnip + pit2*fmomnit         
 c     Convert energy flux densities in net energy flux contributions
@@ -429,8 +434,10 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = -geo%fcQalf(iFc,0)
-      sina = -geo%fcQalf(iFc,1)
+      cosa = geo%fcQalf(iFc,0)
+      sina = geo%fcQalf(iFc,1)
+!      cosa = 1.0_R8
+!      sina = 0.0_R8
 cnh   neutral velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and only neutral parallel
 c     velocity component
       unf = pl%ua(iCv,0) !! TODO species index
@@ -540,8 +547,10 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = -geo%fcQalf(iFc,0)
-      sina = -geo%fcQalf(iFc,1)
+      cosa = geo%fcQalf(iFc,0)
+      sina = geo%fcQalf(iFc,1)
+!      cosa = 1.0_R8
+ !     sina = 0.0_R8
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCv,1) !! TODO species index
       ux = upf*pit2
@@ -555,8 +564,8 @@ c       ion particle flux density
 c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
 c     of TRIM tables. Only toroidal drift remains!
-      uy = 0.0_R8
-      uz = 0.0_R8
+!!      uy = 0.0_R8
+!!      uz = 0.0_R8
 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
 c      call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r)     !mb Removed optional arguments. Implementation gave segmentation errors...
@@ -700,8 +709,10 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = -geo%fcQalf(iFc,0)
-      sina = -geo%fcQalf(iFc,1)
+      cosa = geo%fcQalf(iFc,0)
+      sina = geo%fcQalf(iFc,1)
+!     cosa = 1.0_R8
+!      sina = 0.0_R8
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
 !! TODO species index
       upf = pl%ua(iCn,1) !! even though the parallel velocity on the face should use iCv, we choose iCn because EIRENE also only cells ua in the first internal cell.
@@ -738,8 +749,8 @@ c     Calculate incident particle flux density
 c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
 c     of TRIM tables. Only toroidal drift remains!
-      uy = 0.0_R8
-      uz = 0.0_R8
+!!      uy = 0.0_R8
+!!      uz = 0.0_R8
 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
 c      call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r)     !mb Removed optional arguments. Implementation gave segmentation errors...
@@ -916,8 +927,10 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = -geo%fcQalf(iFc,0)
-      sina = -geo%fcQalf(iFc,1)
+      cosa = geo%fcQalf(iFc,0)
+      sina = geo%fcQalf(iFc,1)
+!      cosa = 1.0_R8
+!      sina = 0.0_R8
 c     Neutral velocity components: toroidal (x),tangential (y), and normal (z)
       unf = pl%ua(iCv,isn)
       ux =  unf*pit2
@@ -934,8 +947,8 @@ c     Calculate incident particle flux density
 c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
 c     of TRIM tables. Only toroidal drift remains!
-      uy = 0.0_R8
-      uz = 0.0_R8
+!!      uy = 0.0_R8
+!!      uz = 0.0_R8
 
 
 c     Interpolate tables to find recycling values
