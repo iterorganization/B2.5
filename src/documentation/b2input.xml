@@ -1703,7 +1703,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					When set to '0.0', the old form of the electron heat flux calculation is used. It is recommended to use 1.0.
+					When set to '1.0', the old form of the electron heat flux calculation is used and b2tfhe_fch_pTe should be set to '0.0'. It is recommended to use 0.0.
 				</description>
 			</switch>
 			<switch>
@@ -1711,7 +1711,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					When set to '1.0', the new form of the electron heat flux calculation is used. It is recommended to use 1.0.
+					When set to '1.0', the new form of the electron heat flux calculation is used and b2tfhe_alfTeEh should be set to '0.0'. It is recommended to use 1.0.
 				</description>
 			</switch>
 			<switch>
@@ -2083,7 +2083,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					if style = 0 then it is applied the origin flux limit to the viscosity else it is applied the SPb flux limit to the viscosity
+					If style = 0 then the original form of the viscosity flux limit is used, otherwise the SPb flux limit is used.
 				</description>
 			</switch>
 			<switch>
