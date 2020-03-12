@@ -38,11 +38,11 @@ c     Boolean to indicate whether trim data is present for species/material comb
 
       contains
 
-      subroutine read_recycle_fnn(nsd,nbnd2)
+      subroutine read_recycle_fnn(nsd)
       use b2mod_b2cmpa
       use b2mod_elements
       implicit none
-      integer,intent(in):: nsd,nbnd2
+      integer,intent(in):: nsd
       character*256 filename
       integer ib, isp, is, il,it,itm,ndata
 c      integer nmax, itargsp, ic, i
@@ -51,7 +51,7 @@ c      integer nmax, itargsp, ic, i
 
       character*10::fnn_version
       character lblfnn*120 
-      character*2 target_code(0:nbnd2-1)
+      character*2 target_code(0:nbnd-1)
 cmb size cannot become bigger than nsd-1?
 c#ifndef PSR
 c      character*2 recycle_code(0:nsd-1+6)
@@ -69,7 +69,7 @@ c#endif
 !!     ny1 = nyd
       ns1 = nsd
       allocate(recycle_index(0:nsd-1))
-      allocate(target_index(0:nbnd2-1))
+      allocate(target_index(0:nbnd-1))
 cmb   Check how many different recycled species there are
       recycle_index=-1
       recycle_code='  '
@@ -98,7 +98,7 @@ cmb   Mixed materials not taken into account.
       target_index=-1
       target_code='  '
       itm=-1
-      do ib=0,nbnd2-1
+      do ib=0,nbnd-1
         do it=0,itm
           if(surface_material_name(ib+1).eq.target_code(it)) then !mb ibnd = iwall = ib+1 (arrays shifted)
             target_index(ib)=it
@@ -1215,113 +1215,7 @@ c     int6r = int_{0}^{inf} v^{6} M(v) dv
       end subroutine dealloc_recycle_fnn
 
 
-      subroutine read_recycle_DCfnn(nsd,nbnd2)
-      use b2mod_b2cmpa
-      use b2mod_elements
-      implicit none
-      character*256 filename
-      integer,intent(in):: nsd,nbnd2
-      integer ib, isp, is, il,it,itm,ndata
-c      integer nmax, itargsp, ic, i
-      integer idum(0:9)
-      logical open_file, found
 
-      character*10::fnn_version
-      character lblfnn*120 
-      character*2 target_code(0:nbnd2-1)
-cmb size cannot become bigger than nsd-1?
-c#ifndef PSR
-c      character*2 recycle_code(0:nsd-1+6)
-      character*2 recycle_code(0:nsd-1)
-c#else
-c      character*2 recycle_code(0:100)
-c#endif
-      external open_file, ipgeti
-      external subini, subend, cfrure, cfruin, machsfr
-      real (kind=R8) ::
-     *  machsfr
-      if(recycle_initialised) return
-      call subini ('read_recycle_DCfnn')
-          is = 0
-	  it = 0
-          isp = 0
-          itm = 0
-          filename = 'DC.fnn'
-          call lower_case(filename)
-          if(open_file(96,filename,
-     1      'data.local/trim.data/refl.data|' // 
-     2      'modules/B2.5/Database/trim.data/refl.data')) then
-            call cfverr (96,fnn_version)
-            call cfruin (96, 3, idum, 'nm,nt,nshpottau')
-c           Allocate arrays with sizes from first read data file
-              nM = idum(0)-1
-              nT = idum(1)-1
-              nshpottau = idum(2)-1
-              ndata = (nM+1)*(nT+1)*(nshpottau+1)
-c             ALLOCATE ARRAYS
-              allocate(M(0:nM))
-              allocate(T(0:nT))
-              allocate(dM(0:nM-1))
-              allocate(dT(0:nT-1))
-              allocate(shpottau(0:nshpottau))
-              allocate(rc1(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rc2(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rmx1(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rmx2(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rmy1(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rmy2(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rmz1(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rmz2(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(re1(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(re2(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rp11(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rp12(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rp21(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rp22(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rp31(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-              allocate(rp32(0:nM,0:nT,0:nshpottau,0:isp,0:itm))
-c             Read label
-              call cfruch (96,120,lblfnn,'label')
-              call cfrure (96, nM+1, M, 'M')
-              call cfrure (96, nT+1, T, 'T')
-              call cfrure (96, nshpottau+1, shpottau, 'shpottau')
-              dM(:) = 1.0_R8/(M(1:nM)-M(0:nM-1))
-              dT(:) = 1.0_R8/(T(1:nT)-T(0:nT-1))
-               
-
-
-c         Read preintegrated recycling coefficient contributions          
-          call cfrure (96,ndata,rc1(:,:,:,is,it),'r1')
-          call cfrure (96,ndata,rc2(:,:,:,is,it),'r2')
-          call cfrure (96,ndata,rmx1(:,:,:,is,it),'rmx1')
-          call cfrure (96,ndata,rmx2(:,:,:,is,it),'rmx2')
-          call cfrure (96,ndata,rmy1(:,:,:,is,it),'rmy1')
-          call cfrure (96,ndata,rmy2(:,:,:,is,it),'rmy2')
-          call cfrure (96,ndata,rmz1(:,:,:,is,it),'rmz1')
-          call cfrure (96,ndata,rmz2(:,:,:,is,it),'rmz2')
-          call cfrure (96,ndata,re1(:,:,:,is,it),'re1')
-          call cfrure (96,ndata,re2(:,:,:,is,it),'re2')
-          call cfrure (96,ndata,rp11(:,:,:,is,it),'rp11')
-          call cfrure (96,ndata,rp12(:,:,:,is,it),'rp12')
-          call cfrure (96,ndata,rp21(:,:,:,is,it),'rp21')
-          call cfrure (96,ndata,rp22(:,:,:,is,it),'rp22')
-          call cfrure (96,ndata,rp31(:,:,:,is,it),'rp31')
-          call cfrure (96,ndata,rp32(:,:,:,is,it),'rp32')
-          close(96)
-          else
-c         Use standard recycling model for this species/wall combination
-            write(*,*) 'No TRIM recycling data for ',
-     1       recycle_code(is),' onto ',target_code(it)
-          endif
-c     Other initializations
-*     ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
-
-      recycle_initialised=.true.
-      call subend ()
-      return
-      end subroutine read_recycle_DCfnn
 
       end module b2mod_recycle
 
