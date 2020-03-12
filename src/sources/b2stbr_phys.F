@@ -912,7 +912,8 @@ cmb   net neutral energy source from recombination
      &             (dv%fna(iFc,0,is0)+dv%fna(iFc,1,is0))
      &             *0.5_R8*am(is0)*mp*
      &             pl%ua(iCv,is0)**2)
-             cvsf = co%cvsa(iFc,0,is0)+co%cvsa(iFc,1,is0)
+             cvsf = (co%cvsa(iFc,0,is0)*geo%fcQalf(iFc,0)+
+     &               co%cvsa(iFc,1,is0)*geo%fcQalf(iFc,1))
              q_conv =  q_conv -0.5_R8*cvsf*
      &               (pl%ua(iCv,is0)**2-pl%ua(iCn,is0)**2)
 
