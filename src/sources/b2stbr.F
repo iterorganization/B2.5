@@ -1285,9 +1285,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
 #endif
 
 cmb  Load pre-evaluated integrals for advanced recyling model based on TRIM data
-      nbnd2 = 60 !! TODO
-!!      if (kul_recycle.eq.1) call read_recycle_DCfnn(ns,nbnd2)            !mb 12.07.17
-      if (kul_recycle.eq.1) call read_recycle_fnn(ns,nbnd2)            !mb 12.07.17
+      if (kul_recycle.eq.1) call read_recycle_fnn(ns)            !mb 12.07.17
       call subend ()
       return
 
