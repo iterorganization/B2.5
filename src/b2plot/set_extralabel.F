@@ -51,6 +51,7 @@ C ===================================================================
           if(locallabel(icpos+1:icpos+1).eq.'n') goto 40
           if(locallabel(icpos+1:icpos+1).eq.'h') goto 50
           if(locallabel(icpos+1:icpos+1).eq.'t') goto 60
+          if(locallabel(icpos+1:icpos+1).eq.'m') goto 70
         endif
         if(locallabel(icpos:icpos+1).eq.'^{') goto 80
         if(locallabel(icpos:icpos+1).eq.'_{') goto 90
@@ -98,6 +99,11 @@ C ===================================================================
       goto 10
    60 continue ! resize font 70%
       tmp(jcpos:jcpos+4)='@Z50@'
+      icpos=icpos+2
+      jcpos=jcpos+5
+      goto 10
+   70 continue ! switch to math font
+      tmp(jcpos:jcpos+4)='@F18@'
       icpos=icpos+2
       jcpos=jcpos+5
       goto 10

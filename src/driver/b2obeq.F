@@ -71,10 +71,10 @@
 
 *   ..local variables
 #ifdef WINDOWS
-      integer(2) ::  iresult
-      logical(4) ::  lresult
+      integer(2) :: iresult
+      logical(4) :: lresult
 #endif
-      logical(4) ::  b2fstate_exist
+      logical(4) :: b2fstate_exist
       integer npoint
       real (kind=R8) :: cpu_s, cpu_f, func, fcain, fab, shift
       character*12 hlp_frm

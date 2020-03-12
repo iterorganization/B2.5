@@ -34,7 +34,7 @@
       use eirmod_ctrcei
       use eirmod_braeir
       use eirmod_cinit
-     , , only: eirene_init_cinit
+     , , only: eirene_init_cinit, fort_lc
       use eirmod_comprt
      , , only: iunout
       use eirmod_eirbra
@@ -273,6 +273,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       call get_boundary_namelist
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,file_exists)
       if (file_exists.and.use_eirene.ne.0) then
@@ -324,14 +325,15 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       nioni = nion
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #else
       call alloc_b2mod_braeir(nx,ny,ns)
-      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nx,ny,ns,natm,nmol,nion,npls,nstra)
 #endif
       call alloc_b2mod_elements(ns,zn,am)
       call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
@@ -353,11 +355,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       else
 #ifdef B25_EIRENE
         extension=savefile(lnblnk(savefile)-3:lnblnk(savefile))
-#ifndef HPUX
-        filename='fort.44.'//extension
-#else
-        filename='ftn44.'//extension
-#endif
+        filename=fort_lc//'44.'//extension
         call find_file(filename,file_exists)
 #else
         file_exists = .false.

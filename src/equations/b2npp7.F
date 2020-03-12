@@ -130,7 +130,7 @@
         wrk0=sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
      &       sch(:,:,3)*ne*po
         call my_out(70,nx,ny,wrk0,'b2npp7_sch')
-      endif                                                          !srv 11.09.09 }
+      endif                                                         !srv 11.09.09 }
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xertst)
       ierr = 0

@@ -48,7 +48,7 @@
 *     of the arrays: (-1:nx,-1:ny) now versus (0:nx+1,0:ny+1) in the
 *     old code; and for quantities defined on cell faces, in the
 *     new code it is the first column or the first row of the array
-*     that must contain zeros whereas in the old code it is the last
+*     that must contain zeroes whereas in the old code it is the last
 *     column or row.
 *
 *

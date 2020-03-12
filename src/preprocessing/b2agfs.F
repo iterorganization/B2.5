@@ -187,16 +187,20 @@
           bb1(ix,iy,1)=0
           bb1(ix,iy,2)=bt(ic)
           bb1(ix,iy,3)=sqrt(bp(ic)*bp(ic)+bt(ic)*bt(ic))
-          crx1(ix,iy,1)=crxs(ic+2*n2)*xrescale+xoffset  	 ! bottom right
+          crx1(ix,iy,1)=crxs(ic+2*n2)*xrescale+xoffset   ! bottom right
           cry1(ix,iy,1)=crys(ic+2*n2)*yrescale+yoffset
-          crx1(ix,iy,3)=crxs(ic+4*n2)*xrescale+xoffset  	 ! top right
+          crx1(ix,iy,3)=crxs(ic+4*n2)*xrescale+xoffset   ! top right
           cry1(ix,iy,3)=crys(ic+4*n2)*yrescale+yoffset
-          crx1(ix,iy,2)=crxs(ic+3*n2)*xrescale+xoffset  	 ! top left
+          crx1(ix,iy,2)=crxs(ic+3*n2)*xrescale+xoffset   ! top left
           cry1(ix,iy,2)=crys(ic+3*n2)*yrescale+yoffset
-          crx1(ix,iy,0)=crxs(ic+1*n2)*xrescale+xoffset  	 ! bottom left
+          crx1(ix,iy,0)=crxs(ic+1*n2)*xrescale+xoffset   ! bottom left
           cry1(ix,iy,0)=crys(ic+1*n2)*yrescale+yoffset
-          if(Bt_adjust.eq.1 .and. xoffset.ne.0.0_R8) then
-            bb1(ix,iy,2)=bt(ic)*crxs(ic)/(crxs(ic)+xoffset)
+          if (Bt_adjust.eq.1) then
+            if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
+              bb1(ix,iy,2)=bt(ic)*crxs(ic)/(crxs(ic)+xoffset)
+            else if (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
+              bb1(ix,iy,2)=bt(ic)*crys(ic)/(crys(ic)+yoffset)
+            end if
             bb1(ix,iy,0)=bp(ic)/bt(ic)*bb1(ix,iy,2)
             bb1(ix,iy,3)=sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
           endif
@@ -208,15 +212,51 @@
           ffbz1(ix,iy,1)=ffbz(ic+1*n2)
           ffbz1(ix,iy,2)=ffbz(ic+2*n2)
           ffbz1(ix,iy,3)=ffbz(ic+3*n2)
+          if (Bt_adjust.eq.1) then
+            if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
+              fpsi1(ix,iy,0)=fpsi(ic)/crxs(ic+1*n2)*
+     .                               (crxs(ic+1*n2)+xoffset)
+              fpsi1(ix,iy,1)=fpsi(ic+1*n2)/crxs(ic+2*n2)*
+     .                                    (crxs(ic+2*n2)+xoffset)
+              fpsi1(ix,iy,2)=fpsi(ic+2*n2)/crxs(ic+3*n2)*
+     .                                    (crxs(ic+3*n2)+xoffset)
+              fpsi1(ix,iy,3)=fpsi(ic+3*n2)/crxs(ic+4*n2)*
+     .                                    (crxs(ic+4*n2)+xoffset)
+            else if (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
+              fpsi1(ix,iy,0)=fpsi(ic)/crys(ic+1*n2)*
+     .                               (crys(ic+1*n2)+yoffset)
+              fpsi1(ix,iy,1)=fpsi(ic+1*n2)/crys(ic+2*n2)*
+     .                                    (crys(ic+2*n2)+yoffset)
+              fpsi1(ix,iy,2)=fpsi(ic+2*n2)/crys(ic+3*n2)*
+     .                                    (crys(ic+3*n2)+yoffset)
+              fpsi1(ix,iy,3)=fpsi(ic+3*n2)/crys(ic+4*n2)*
+     .                                    (crys(ic+4*n2)+yoffset)
+            end if
+          end if
           ic=ic+1
         enddo
       enddo
       bb1(:,:,0)=bb1(:,:,0)*Bt_rescale*pit_rescale
       bb1(:,:,1)=bb1(:,:,1)*Bt_rescale*pit_rescale
+      fpsi1(:,:,:)=fpsi1(:,:,:)*Bt_rescale*pit_rescale
       if (Bt_reversal.eq.1) then
         bb1(:,:,2)=-bb1(:,:,2)*Bt_rescale
+        if (isymm.eq.0) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale
+        else if (isymm.eq.1.or.isymm.eq.2) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale*xrescale
+        else if (isymm.eq.3.or.isymm.eq.4) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale*yrescale
+        end if
       else
         bb1(:,:,2)=bb1(:,:,2)*Bt_rescale
+        if (isymm.eq.0) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale
+        else if (isymm.eq.1.or.isymm.eq.2) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale*xrescale
+        else if (isymm.eq.3.or.isymm.eq.4) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale*yrescale
+        end if
       endif
       bb1(:,:,3)=sqrt(bb1(:,:,0)**2+bb1(:,:,1)**2+bb1(:,:,2)**2)
 !!! FIXME: For now, until the cflag array is provided by the mesh generator
@@ -428,19 +468,19 @@ cxpb  reconnect the guard cells on both sides of the island.
           write(*,*) 'ix,iy,iyb',i,inselbot,inseltop
           bottomiy1(nx1-1-i,inselbot)=inseltop
           write(*,*) 'ix,iy,iyb',nx1-1-i,inselbot,inseltop
-          if(inselbot.gt.-1) then   	 ! connected region on North side
-            topix1(i,inselbot-1)=nx1-1-i 	 ! connect to the other side
-            topiy1(i,inselbot-1)=inselbot-1       ! of the island
+          if(inselbot.gt.-1) then                  ! connected region on North side
+            topix1(i,inselbot-1)=nx1-1-i           ! connect to the other side
+            topiy1(i,inselbot-1)=inselbot-1        ! of the island
             write(*,*) 'ix,iy,ixt,iyt',i,inselbot-1,nx1-1-i,inselbot-1
-            topix1(nx1-1-i,inselbot-1)=i 	 ! connect to the other side
-            topiy1(nx1-1-i,inselbot-1)=inselbot-1 ! of the island
+            topix1(nx1-1-i,inselbot-1)=i           ! connect to the other side
+            topiy1(nx1-1-i,inselbot-1)=inselbot-1  ! of the island
             write(*,*) 'ix,iy,ixt,iyt',nx1-1-i,inselbot-1,i,inselbot-1
           end if
-          if(inseltop.lt.ny1) then   	 ! connected region on South side
-            bottomix1(i,inseltop+1)=nx1-1-i       ! connect to the other side
-            bottomiy1(i,inseltop+1)=inseltop+1    ! of the limited SOL
+          if(inseltop.lt.ny1) then                 ! connected region on South side
+            bottomix1(i,inseltop+1)=nx1-1-i        ! connect to the other side
+            bottomiy1(i,inseltop+1)=inseltop+1     ! of the limited SOL
             write(*,*) 'ix,iy,ixb,iyb',i,inseltop+1,nx1-1-i,inseltop+1
-            bottomix1(nx1-1-i,inseltop+1)=i 	 ! connect to the other side
+            bottomix1(nx1-1-i,inseltop+1)=i        ! connect to the other side
             bottomiy1(nx1-1-i,inseltop+1)=inseltop+1 ! of the limited SOL
             write(*,*) 'ix,iy,ixb,iyb',nx1-1-i,inseltop+1,i,inseltop+1
 cxpb  Remove neighbours for guard cells next to tangency point
@@ -1041,7 +1081,7 @@ c
       i=-1
       j=-1
       lun=96
-      meshpath = 'data.local/meshes|data/meshes'
+      meshpath = 'data.local/meshes'
 #ifdef JET
       device = 'jet'
 #else
@@ -1098,7 +1138,7 @@ c
         else
           call xerrab('Error in reading geometry file')
         endif
-      elseif(istyle.eq.-2) then  	 !xpb  SONNET-format geometry input
+      elseif(istyle.eq.-2) then   !xpb  SONNET-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/DivGeo/device/'//trim(device)
         if(open_file(lun,local_sonnet,meshpath)) then
@@ -1151,7 +1191,9 @@ c
           end if
    32     continue
           first_read = .false.
-          uop = i.le.5 .and. j.le.1 .and. .false.
+#ifdef DBG
+          uop = i.le.5 .and. j.le.1
+#endif
           if(uop) then
             print *,'*3* ',i,j,crxs(i,j,3),crys(i,j,3)
             print *,'*4* ',i,j,crxs(i,j,4),crys(i,j,4)
@@ -1171,8 +1213,15 @@ c
             endif
           end if
           read (lun,710,end=990) upsi,crxs(i,j,0),crys(i,j,0)
-          read (lun,720,end=990) crxs(i,j,1),crys(i,j,1),
-     ,     crxs(i,j,2),crys(i,j,2)
+          read (lun,'(a)',end=990) uline
+          if (uline(32:32).eq.'(') then
+            read (uline,720) crxs(i,j,1),crys(i,j,1),
+     ,        crxs(i,j,2),crys(i,j,2)
+          else if (uline(30:30).eq.'(') then
+            read (uline,721) crxs(i,j,1),crys(i,j,1),
+     ,        crxs(i,j,2),crys(i,j,2)
+          end if
+          read (lun,'()')
           if(uop) then
             print *,'*0* ',i,j,crxs(i,j,0),crys(i,j,0)
             print *,'*1* ',i,j,crxs(i,j,1),crys(i,j,1)
@@ -1254,11 +1303,9 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
       write(*,*) 'ix=',ix,' iy=',iy,' ixd=',ixd,' iyd=',iyd
       call xerrab ('Error in reading grid file')
 
-  700 format(19x,i3,1x,i3,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
-  701 format(19x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
-  702 format(21x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
   710 format(18x,e17.0,14x,e17.0,1x,e17.0)
-  720 format(32x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0/)
+  720 format(32x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
+  721 format(30x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
 
   990 continue
       write(*,*) 'Error: i,j ',i,j

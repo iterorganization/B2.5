@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2npc11 (nx, ny, fac_vis, guard_flows, zb,              !srv 05.07.08 02.04.18 {
-     &  nregionv, solving, solvcreg, ua_solve, solvmreg, itcnt, isb, 
+     &  nregionv, solving, solvcreg, ua_solve, solvmreg, itcnt, isb,
      &  rxf, vol, pbs, flob, conb, snb,                                  !srv 22.01.02 13.10.06
      &  pccb, po, ti, pb, nb, ub, fnb, rescb, corpb, ierr)
       use b2mod_types
@@ -10,7 +10,8 @@
       use b2mod_indirect
       use b2mod_openmp
       use b2mod_balance
-     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+     & ,only : update_balance_sources_particles, balance_netcdf,     !djm Jan2017
+     &         tot_sna0to1, fna_tot                                  !djm Mar2019
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb              !srv 05.07.08
@@ -20,7 +21,7 @@
      &  conb(-1:nx,-1:ny,0:1,0:4), snb(-1:nx,-1:ny,0:1),             !srv 13.10.06
      &  pccb(-1:nx,-1:ny,0:1), fnb(-1:nx,-1:ny,0:1),
      &  po(-1:nx,-1:ny), ti(-1:nx,-1:ny), zb(-1:nx,-1:ny)
-      logical solving, solvcreg(0:nregionv), ua_solve,                  !srv 22.05.18
+      logical solving, solvcreg(0:nregionv), ua_solve,               !srv 22.05.18
      &  solvmreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -142,6 +143,8 @@
 
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
+        tot_sna0to1(:,:,:,isb)=snb !djm Mar2019
+        fna_tot(:,:,:,isb)=fnb     !djm Mar2019
         call update_balance_sources_particles(nx,ny,isb,nb)
       endif
 

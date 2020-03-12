@@ -9,7 +9,8 @@
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_balance
-     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+     & ,only : update_balance_sources_particles, balance_netcdf,     !djm Jan2017
+     &         tot_sna0to1, fna_tot                                  !djm Mar2019
       use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -19,7 +20,7 @@
      &  flob(-1:nx,-1:ny,0:1),
      &  conb(-1:nx,-1:ny,0:1,0:4), snb(-1:nx,-1:ny,0:1),             !srv 13.10.06
      &  pccb(-1:nx,-1:ny,0:1), fnb(-1:nx,-1:ny,0:1)
-      logical solving, solvcreg(0:nregionv), ua_solve,                  !srv 22.05.18
+      logical solving, solvcreg(0:nregionv), ua_solve,               !srv 22.05.18
      &  solvmreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -147,6 +148,8 @@
 
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
+        tot_sna0to1(:,:,:,isb)=snb !djm Mar2019
+        fna_tot(:,:,:,isb)=fnb     !djm Mar2019 
         call update_balance_sources_particles(nx,ny,isb,nb)
       endif
 
@@ -170,13 +173,13 @@ cdjm Jan2017 update particle source components for balance
       write (chns,'(i3.3)') isb
       if(solving.and.any(solvcreg(0:nnreg(0)))) then                    !srv 22.05.18
         call b2usc9 (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, !srv 13.10.06 26.09.12
-     &    pbs, nb, pb, snb(-1,-1,1), flob, conb, pccb(-1,-1,1), rescb,  
-     &    corpb, aa9, '_b2usc9_'//chns)                                 !srv 18.05.02 02.04.18
+     &   pbs, nb, pb, snb(-1,-1,1), flob, conb, pccb(-1,-1,1), rescb,  
+     &   corpb, aa9, '_b2usc9_'//chns)                                  !srv 18.05.02 02.04.18
 *   ..apply correction
         call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
-     &    vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                   !IYS 19.12.2017
+     &   vol, corpb, pccb(-1,-1,0), pb, nb, ub, isb)                    !IYS 19.12.2017
         if(guard_flows.eq.2 .or.                                        !srv 06.07.08 {
-     &      (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 06.07.08 {
+     &    (is_neutral(isb) .and. use_eirene.ne.0)) then                 !srv 06.07.08 {
 *   ..replace the incorrect corner values by the interpolated values    !srv 30.04.08 {
           iy=-1                                                         !srv 27.06.08 {
           do ix = -1, nx

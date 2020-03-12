@@ -52,6 +52,7 @@ c
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
+      use eirmod_cinit, only: fort_lc
 #endif
 #else
       use b2mod_braeir
@@ -534,6 +535,9 @@ c
 #else
       use ctrig    ! IGNORE
 #endif
+      use eirmod_cinit, only: fort_lc
+#else
+      use b2mod_eirbra, only: fort_lc
 #endif
       implicit none
       integer nx,ny
@@ -544,6 +548,7 @@ c
      &        nxiso1(nncutmax),nxiso2(nncutmax),
      &        nyiso1(nncutmax),nyiso2(nncutmax)
 
+      character*7 filename
       character*54 format_string(4)
       integer, save :: new_format
       logical ex
@@ -562,21 +567,13 @@ c
       data format_string/ '(1P,4E15.7)', '(1P,4E16.8)',
      .                       '(4E15.7)',    '(4E16.8)'/
 
-#ifndef HPUX
-      inquire(file='fort.30',exist=ex)
+      filename=fort_lc//'30'
+      inquire(file=filename,exist=ex)
       if (ex) then
-        write(*,*)
-     .   'Skipping writing fort.30 because file already present'
+        write(*,*) 'Skipping writing '//trim(filename)//
+     .   ' because file already present'
         return
       endif
-#else
-      inquire(file='ftn30',exist=ex)
-      if (ex) then
-        write(*,*)
-     .   'Skipping writing ftn30 because file already present'
-        return
-      endif
-#endif
       nniso=nncut-1
       if(nncut.eq.1) then
         if (nnreg(0).eq.1) then
@@ -626,11 +623,8 @@ c
 
 #ifdef B25_EIRENE
 cxpb Deduce from fort.33 triangle vertices files which format precision to use
-#ifndef HPUX
-      if (open_file(33,'fort.33','')) then
-#else
-      if (open_file(33,'ftn33','')) then
-#endif
+      filename=fort_lc//'33'
+      if (open_file(33,trim(filename),'')) then
         rewind(33)
         read(33,*,end=933,err=933) idum
         if (nrknot.eq.0) nrknot = idum
@@ -654,18 +648,12 @@ cxpb Deduce from fort.33 triangle vertices files which format precision to use
             else if (exp_location-dot_location.eq.9) then
               new_format = 2
             else
-#ifndef HPUX
-              call xerrab ('Unrecognized format (1) in fort.33 file')
-#else
-              call xerrab ('Unrecognized format (1) in ftn33 file')
-#endif
+              call xerrab
+     .         ('Unrecognized format (1) in '//fort_lc//'33 file')
             end if
           else
-#ifndef HPUX
-            call xerrab ('Unrecognized format (2) in fort.33 file')
-#else
-            call xerrab ('Unrecognized format (2) in ftn33 file')
-#endif
+            call xerrab
+     .       ('Unrecognized format (2) in '//fort_lc//'33 file')
           end if
 cxpb Now deal with older files without the 1P in the format string
 cxpb If the 1P was missing in the format, the numbers will start with 0
@@ -687,13 +675,8 @@ cxpb If the 1P was missing in the format, the numbers will start with 0
         new_format = 2
       end if
 #endif
-#ifndef HPUX
-      write(*,'(a,a)')
-     . 'Writing fort.30 with ', format_string(new_format)
-#else
-      write(*,'(a,a)')
-     . 'Writing ftn30 with ', format_string(new_format)
-#endif
+      write(*,'(4a)')
+     . 'Writing ',fort_lc,'30 with ', format_string(new_format)
       rewind(30)
       write (30,*) 'Geometry from B2'
       write (30,*) ' '

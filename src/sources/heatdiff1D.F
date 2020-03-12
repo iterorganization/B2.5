@@ -809,7 +809,7 @@ c           Surface Interactions, Special Issue, NUCLEAR FUSION,
 c           IAEA, Vienna, (1984) 55-61.
 c  Table of A and B for some first wall materials in Fusion research:
 c  (Ref (2) above).
-c  (note that A and B are provided such that the vappres is in Pascals.
+c  (note that A and B are provided such that the vappres is in Pascals).
 c  element    |  A       |  B      |
 c  Aluminum   | -16165   | 10.91   |
 c  Beryllium  | -16720   | 11.61   |

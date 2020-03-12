@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=354,nfns=209,nsparameters=32,nelabels=36,
+      parameter(nlabels=357,nfns=212,nsparameters=32,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -98,8 +98,9 @@
      8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      ,
      9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
      *  'flke'    , 'flki'    , 'flal'    , 'flalc'   , 'b2eatcr' /
-      data labels(351:354) /
-     1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    /
+      data labels(351:357) /
+     1  'fnex'    , 'fney'    , 'psi'     , 'ffbz'    , 'pz'      ,
+     2  'molrad'  , 'ionrad'  /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -116,18 +117,18 @@
      2    'Ion temperature (eV)',
      3    'Static pressure (Pa)',
      4    'Electron density (m^{-3})',
-     5    'phi (V)',
-     6    'diff.fhe (W)',
-     7    'diff.fhi (W)',
-     8    'diff.fhet (W)',
-     9    'diff.fhit (W)',
-     *    'diff.fhj (W)'/
+     5    'Electric potential (V)',
+     6    '\mtD\dfhe (W)',
+     7    '\mtD\dfhi (W)',
+     8    '\mtD\dfhet (W)',
+     9    '\mtD\dfhit (W)',
+     *    '\mtD\dfhj (W)'/
       data descriptions(21:30) /
-     1    'diff.fch (A)',
-     2    'div.fna (particles/s)',
-     3    'div.fmo (N.s)',
-     4    'div.fhm (W)',
-     5    'div.fhp (W)',
+     1    '\mtD\dfch (A)',
+     2    '\mtD\dfna (#/s)',
+     3    '\mtD\dfmo (N.s)',
+     4    '\mtD\dfhm (W)',
+     5    '\mtD\dfhp (W)',
      6    'Z_{eff}',
      7    'Poloidal velocity (up) (m.s^{-1})',
      8    'Poloidal particle flux (s^{-1})',
@@ -205,7 +206,7 @@
      3    'Nuclear charge (e)',
      4    'Poloidal mass flux (kg/s)',
      5    'Radial mass flux (kg/s)',
-     6    'Dynamic pressure (Pa)',
+     6    'Dynamic plasma pressure (Pa)',
      7    'Connection length (m)',
      8    'CR (m)',
      9    'CZ (m)',
@@ -216,13 +217,13 @@
      3    'ua at previous time step (m.s^{-1})',
      4    'po at previous time step (V)',
      5    'Thermal force (proportional to exhp)',
-     6    'Thermal force (proportional to Ti and Te gradients)',
+     6    'Thermal force (proportional to T_{i} and T_{e} gradients)',
      7    'Friction force', 
      8    'Potential energy (eV) (cum. ionisation energy)',
      9    'Ionisation energy (eV)',
      *    'Ionisation energy (eV) [shifted down one]'/
       data descriptions(111:120) /
-     1    'Self pressure force',
+     1    'Self-pressure force',
      2    'Region',
      3    'Parallel momentum source (N)',
      4    'Momentum sources from atomic physics (N)',
@@ -264,7 +265,7 @@
      7    'Poloidal pinch velocity (m.s^{-1})',
      8    'Radial pinch velocity (m.s^{-1})',
      9    'Viscosity (m.kg^{-1}.s^{-1})',
-     *    'Bas'' viscosity piece ()'/
+     *    'Braams viscosity piece (m.kg^{-1}.s^{-1})'/
       data descriptions(151:160) /
      1   'Anomalous conductivity (mho.m^{-1})',
      2   'Thermo-electric coefficient (mho.m^{-1})',
@@ -277,8 +278,8 @@
      9   'pol comp of the total ion diamag vel [wadia.x] (m.s^{-1})',
      *   'rad comp of the total ion diamag vel [wadia.y] (m.s^{-1})'/
       data descriptions(161:170) /
-     1    'pol comp of the ion ExB vel [vaecrb.x] (m.s^{-1})',
-     2    'rad comp of the ion ExB vel [vaecrb.y] (m.s^{-1})',
+     1    'pol comp of the ion E\mU\dB vel [vaecrb.x] (m.s^{-1})',
+     2    'rad comp of the ion E\mU\dB vel [vaecrb.y] (m.s^{-1})',
      3    'fchdia.x',
      4    'fchdia.y',
      5    'Isolating region',
@@ -301,12 +302,12 @@
       data descriptions(181:190) /
      1    'Test ion temperature (eV)',
      2    'Recycling particle source (#/s^{-1})',
-     3    'Recycling parallel momentium source (N)',
+     3    'Recycling parallel momentum source (N)',
      4    'Recycling electron heat source (W)',
      5    'Recycling ion heat source (W)',
      6    'Recycling charge source (A)',
      7    'Boundary particle source (#/s^{-1})',
-     8    'Boundary parallel momentium source (N)',
+     8    'Boundary parallel momentum source (N)',
      9    'Boundary electron heat source (W)',
      *    'Boundary ion heat source (W)'/
       data descriptions(191:200) /
@@ -467,8 +468,8 @@
      1    'Radial current due to inertia and gyroviscosity (A)',
      2    'pol comp of div part of el diamag vel [vedia.x] (m.s^{-1})',
      3    'rad comp of div part of el diamag vel [vedia.y] (m.s^{-1})',
-     4    'pol comp of the electron ExB vel [veecrb.x] (m.s^{-1})',
-     5    'rad comp of the electron ExB vel [veecrb.y] (m.s^{-1})',
+     4    'pol comp of the electron E\mU\dB vel [veecrb.x] (m.s^{-1})',
+     5    'rad comp of the electron E\mU\dB vel [veecrb.y] (m.s^{-1})',
      6    'ixne',
      7    'iyne',
      8    'isne',
@@ -485,11 +486,14 @@
      8    'Thermo-electric classical flux limit factor',
      9    'Thermo-electric coefficient limit factor',
      *    'Eirene atomic species index'/
-      data descriptions(351:354) /
+      data descriptions(351:357) /
      1    'Poloidal electron flux (s^{-1})',
      2    'Radial electron flux (s^{-1})',
      3    'Poloidal magnetic flux function (Wb)',
-     4    'Toroidal magnetic flux function (Wb)'/
+     4    'Toroidal magnetic flux function (Wb)',
+     5    'Plasma pressure (Pa)',
+     6    'Power loss due to molecule radiation (W)',
+     7    'Power loss due to molecular ion radiation (W)'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
      2    3,      3,      3,      3,      3,
@@ -567,8 +571,9 @@
      8    2,      2,      3,      3,      2,
      9    2,      2,      2,      2,      2,
      *    2,      2,      2,      2,      3/
-      data dimensions(351:354) /
-     1    2,      2,      2,      2/
+      data dimensions(351:357) /
+     1    2,      2,      2,      2,      2,
+     2    3,      3/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
@@ -613,9 +618,10 @@
      8 'sprt' , 'list' , 'acol' , 'dcol'   , 'wcol'  ,
      9 'tcol' , 'lfsz' , 'zwid' , 'psxperp', 'expl'  ,
      * 'exps' , 'mdims', 'itoe' , 'rtoe'   , 'stoe'  /
-      data fns(201:209) /
+      data fns(201:212) /
      1 'trigmesh', 'earox', 'earoy', 'earow', 'nice' ,
-     2 'glsz' , 'mpsi' , 'fpsi' , 'rpsi'   /
+     2 'glsz' , 'mpsi' , 'fpsi' , 'rpsi'   , 'etal'  ,
+     3 'fcol' , 'bold' /
       data wlabels /
      1 'wallarea', 'ei'      , 'wallflux', 'wallhflx', 'r1'      ,
      2 'r2'      , 'z1'      , 'z2'      , 'walltemp', 'plathick',

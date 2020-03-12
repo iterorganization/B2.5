@@ -267,7 +267,7 @@ c                                 fna_eir, fne_eir, fhe_eir, fhi_eir,
 c                                 fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
 c                                 fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c                                 vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
-c    Version 03.000.006  29.06.19 New default model b2sigp_style.eq.2
+c    Version 03.000.006  29.06.18 New default model b2sigp_style.eq.2
 c                                 Added redef_pbs switch to b2fgmtry file
 c                                 Added cflim(3:4) flux limit factors for
 c                                 thermo-electric coefficient and friction terms

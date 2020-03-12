@@ -132,9 +132,6 @@
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
-           if(guard_flows.eq.2 .and.
-     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
          t0 = sna(ix,iy,0,is)+sna(ix,iy,1,is)*na(ix,iy,is)
          sna(ix,iy,0,is) =
      &     max(sna(ix,iy,0,is),(1.0_R8+rf0)*t0,-rf0*t0)

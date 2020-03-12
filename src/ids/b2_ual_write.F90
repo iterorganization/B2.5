@@ -8,7 +8,7 @@
 !!      b2_ual_write code is used to generate b2_ual_write.exe
 !!      (main program), which is intended to be used within SOLPS-GUI.
 !!      The code reads the plasma grid
-!!      geometry ( full geometry descriptions of all available grid subsets )
+!!      geometry (full geometry descriptions of all available grid subsets)
 !!      and plasma state (electron density/temperature, ion temperature,
 !!      velocity etc.). The code then writes the obtained data to IDS database
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
@@ -28,17 +28,25 @@ program b2_ual_write
     use b2mod_grid_mapping
     use b2mod_ual    &
      & , only : put_ids_edge, b25_process_ids, &
-     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport
+     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &          ids_radiation, ids_dataset_description
+#if IMAS_MINOR_VERSION > 21
+    use b2mod_ual    &
+     & , only : ids_summary
+#endif
+#ifdef B25_EIRENE
+    use eirmod_comusr
+    use eirmod_extrab25
+#endif
 
+    implicit none
 #ifdef USE_PXFGETENV
     integer lenval, ierror
 #else
 #ifdef NAGFOR
-      integer lenval, ierror
+    integer lenval, ierror
 #endif
 #endif
-    implicit none
-
 #ifndef NO_GETENV
     character(len=24) :: device_env
 #endif
@@ -49,7 +57,7 @@ program b2_ual_write
     character(len=24) :: treename   !< The name of the IMAS IDS database
         !< (i.e. "edge_profiles" (mandatory) )
     character(len=24) :: username   !< Creator/owner of the IMAS IDS database
-    character(len=24) :: device     !< Device name of the IMAS IDS database
+    character(len=24) :: database   !< IMAS IDS database name
         !< (i. e. solps-iter, iter, aug)
     character(len=24) :: version    !< Major version of the IMAS IDS database
     integer :: idx  !< The returned identifier to be used in the subsequent
@@ -67,7 +75,22 @@ program b2_ual_write
         !< data on edge plasma transport. Energy terms correspond to the
         !< full kinetic energy equation (i.e. the energy flux takes into
         !< account the energy transported by the particle flux)
-    character*256 systemarg
+    type (ids_radiation) :: radiation !< IDS designed to store
+        !< data on radiation emitted by the plasma species
+    type (ids_dataset_description) :: description !< IDS designed to store
+        !< a description of the simulation
+#if IMAS_MINOR_VERSION > 21
+    type (ids_summary) :: summary !< IDS designed to store
+        !< run summary data
+#endif
+#if IMAS_MINOR_VERSION > 25
+    type (ids_numerics) :: numerics !< IDS designed to store
+        !< run numerics data
+#endif
+    character(len=24) :: shot_string
+    character(len=24) :: run_string
+    character(len=24) :: argName
+    integer narg, cptArg
     character*16 usrnam
     external usrnam
 
@@ -77,15 +100,24 @@ program b2_ual_write
     write (*,*) 'Starting b2mn init'
     call b2mn_init
     ! call b2mn_step(0)
+#ifdef B25_EIRENE
+    CALL EIRENE_ALLOC_COMUSR(1)
+    call eirene_extrab25_eirpbls_init(nmol,nion,npls)
+#endif
+    ! read plasma state
+    call cfopen(56,'b2fplasma','old','unformatted')
+    call cfverr(56, b2fplasma_version)
+    call read_b2mod_geo(nx, ny, 56)
+    call read_b2mod_plasma(nx, ny, ns, 56)
+    call read_b2mod_residuals(56)
+    call read_b2mod_sources(56)
+    call read_b2mod_transport(56)
 
-    call ipgeti( 'b2mndr_shot_number', shot )
-    call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
-    call ipgeti( 'b2mndr_run_number', run )
-    call xertst( 0.le.run.and.run.le.9999, 'Invalid run number')
-    username=usrnam()
-    call ipgetc( 'b2mndr_user', username )
-    call xertst( .not.streql(username,' '), 'User name not defined !')
-    device = 'solps-iter'
+    call ipgeti('b2mndr_shot_number', shot )
+    call ipgeti('b2mndr_run_number', run )
+    username = usrnam()
+    call ipgetc('b2mndr_user', username )
+    database = 'solps-iter'
 #ifndef NO_GETENV
     device_env = ' '
 #ifdef NAGFOR
@@ -98,26 +130,64 @@ program b2_ual_write
     call getenv ('DEVICE', device_env)
 #endif
 #endif
-    if (.not.streql(device_env,' ')) device = device_env
+    if (.not.streql(device_env,' ')) database = device_env
 #endif
-    call ipgetc( 'b2mndr_device', device )
-    call xertst( .not.streql(device,' '), 'Device not defined !')
-    systemarg='imasdb '//trim(device)
-#ifdef IMAS
-    call system(systemarg)
-#endif
+    call ipgetc('b2mndr_device', database )
+    call ipgetc('b2mndr_database', database )
+    ! Check for optional command line arguments
+    ! which will supersede input from b2mn.dat if present
+    narg = command_argument_count()
+    do cptArg = 1, narg
+      call get_command_argument( cptArg, argName )
+      select case( adjustl( argName ) )
+        case("--shot","-s")
+          call get_command_argument( cptArg + 1, shot_string )
+          !! Transform dummy string variable to integer
+          read( shot_string, *) shot
+        case("--run","-r")
+          call get_command_argument( cptArg + 1, run_string )
+          !! Transform dummy string variable to integer
+          read( run_string, *) run
+        case("--username","-u")
+          call get_command_argument( cptArg + 1, username )
+        case("--database","--device","-d")
+          call get_command_argument( cptArg + 1, database )
+        case("--version","-v")
+          call get_command_argument( cptArg + 1, version )
+      end select
+    end do
+
+    call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
+    call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
+    call xertst( .not.streql(username,' '), 'User name not defined !')
+    call xertst( .not.streql(database,' '), 'Database not defined !')
 
     write(*,'(a,i8,a,i8,4a)') 'Shot: ', shot, ' Run: ', run, &
-        & ' User: ', trim(username), ' Device: ', trim(device)
+        & ' User: ', trim(username), ' Database: ', trim(database)
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    call B25_process_ids( edge_profiles, edge_sources, edge_transport )
+    call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+        &  radiation, description, &
+#if IMAS_MINOR_VERSION > 21
+        &  summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+        &  numerics, run_start_time, run_end_time, &
+#endif
+        &  tim, dtim, shot, run, database, version )
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,  &
-        &   shot, run, idx, username, device, version )
+    call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
+        &   radiation, description, &
+#if IMAS_MINOR_VERSION > 21
+        &   summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+        &   numerics, &
+#endif
+        &   treename, shot, run, idx, username, database, version )
 
 end program b2_ual_write
 

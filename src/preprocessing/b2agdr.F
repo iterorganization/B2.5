@@ -10,7 +10,6 @@
       use b2mod_b2cmfs
       use b2mod_b2cmgs
       use b2mod_connectivity
-      use b2mod_interp
       use b2mod_grid_mapping
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -91,7 +90,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer idum(0:9), ix, iy, geometryType
+      integer idum(0:9), ix, iy
       integer nxiso1, nxiso2, nyiso1, nyiso2
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
       character line*500
@@ -99,6 +98,7 @@
      *   parg(0:99)
       integer istyle
       integer iFace, offset
+      integer, save :: redef_qc = 0, qc_style = 1
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
@@ -319,6 +319,13 @@
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
       redef_pbs = 1 ! In version 3.0.6, we apply the pbsx correction by default
       call ipgeti ('b2agdr_redef_pbs', redef_pbs)
+      call ipgeti ('b2agdr_redef_qc',  redef_qc )
+      call ipgeti ('b2agmt_qc_style',  qc_style )
+      if (redef_qc .eq. 1 .and. qc_style .eq. 1) then
+       write (*,*) 'b2agdr_redef_qc = b2agmt_qc_style = 1'
+       write (*,*) 'Double correction of qc specified; '//
+     &             'only b2agmt_qc_style will apply'
+      endif
 *   ..use parg, obtain isymm and lblgm
       call b2xxid ('b2ag', lblgm(1:60))
       call b2agsi (nx, ny, parg, isymm, lblgm(61:120), istyle)
@@ -391,7 +398,7 @@
      .                  CELLFLAG_TYPE) == GRID_GUARD) then
               iFace = CELLFLAG_BOTTOMFACE
               offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
-              cflags1(ix, iy, iFace) = offset - region(ix, iy, 0)
+              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
               cflags1(bottomix1(ix,iy),bottomiy1(ix,iy),
      .                CELLFLAG_TOPFACE) = cflags1(ix, iy, iFace)
             end if
@@ -402,11 +409,24 @@
       write (nout(0),'(/2x,a)') 'label for geometry'
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
 *   ..compute geometry and flux/field functions on auxiliary mesh
-      if(istyle.ge.0) call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
+      if(istyle.ge.0) then
+        call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
+      else
+        fpsi1=0.0_R8
+        ffbz1=0.0_R8
+      endif
 *   ..compute metric coefficients on auxiliary mesh
       call b2agmt (nx1, ny1, isymm, crx1, cry1, vol1,
      & hx1, hy1, qz1, qc1, qcb1, gs1,
-     & cell_width1, cell_height1, leftix1, bottomiy1)
+     & cell_width1, cell_height1, leftix1, leftiy1, bottomiy1)
+*   ..improved computation of qc based on interpolation of qz values
+cwdk  attempt to avoid artificial reduction of poloidal contact area at faces for
+cwdk  curvilinear grids; angle between left face and average direction of top/bottom
+cwdk  faces is not representative for orthogonality of left face to field!
+      if (redef_qc.eq.1.and.qc_style.eq.0) then
+        call intfaceh(nx1,ny1,leftix1,leftiy1,vol1,qz1(-1,-1,1),
+     .    qc1(-1,-1))
+      endif
 *    ..interpolate magnetic field to cell faces
       call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
       call intfacer1(nx1,ny1,2,rightix1,rightiy1,vol1,bb1,wbbr1)
@@ -454,7 +474,6 @@
       wbbr1(:,:,3)=sqrt(wbbr1(:,:,0)**2+wbbr1(:,:,1)**2+wbbr1(:,:,2)**2)
       wbbv1(:,:,3)=sqrt(wbbv1(:,:,0)**2+wbbv1(:,:,1)**2+wbbv1(:,:,2)**2)
 *    ..compute pbs1 (magnetic field pitch * surface area) at cell faces
-      geometryType = geometryId(nnreg, periodic_bc, topcut1)
       call b2xgbs1 (nx1, ny1, 
      1 bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
 *   ..project metric coefficients to proper mesh
@@ -579,7 +598,11 @@ cdpc-debug
 *   ..compute geometry and flux/field functions on proper mesh
         call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
 *   ..compute magnetic field on proper mesh
-        call b2agbb (nx, ny, vol, hx, hy, qz, fpsi, ffbz, bb)
+        call b2agbb (nx, ny, vol, hx, hy, qz, 
+     &   fpsi, ffbz, bb)
+      else
+        fpsi=0.0_R8
+        ffbz=0.0_R8
       endif
       write(*,*) 'b2agdr2: bb(nx,ny,0) ',bb(nx,ny,0)
       write(*,'()')

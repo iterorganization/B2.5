@@ -87,7 +87,7 @@
      5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
      6  ue(-1:nx,-1:ny), zeff(-1:nx,-1:ny), pz(-1:nx,-1:ny),             !srv 05.07.17
      7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny),
-     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
+     &  rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),                          !iyv 06.02.14
      &  fchstoch(-1:nx,-1:ny)                                            !srv 17.12.13
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
@@ -207,7 +207,7 @@
 *----------------------------------------------------
 * An alternative to the 'no_solve' switch for controlling of the 
 * solving of equations is to use the SOLVEMO, SOLVECO, SOLVEEE, SOLVEEI, 
-* SOLVEPO, SOLVEMT, SOLVEET array from b2.numerics.parameters.
+* SOLVEPO, SOLVEMT, SOLVEET arrays from b2.numerics.parameters.
 * Please consult the code documentation.
 
        solving(1:4)=no_solve.eq.0
@@ -386,9 +386,9 @@
      &               lnlam, te, ti, ni, chci, fchvisq)
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
-          call b2xpro (nx, ny, ns, mp, am, na, ro)
-          call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-          wrk0(:,:)=sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+          call b2xprz (nx, ny, ns, mp, am, na, rz)
+          call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+          wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
           call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
           call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,cssb(-1,-1,1))
         else
@@ -650,7 +650,8 @@ cxpb
             call hbout('b2ne_npco   ',nx,ny,ns,te,'te',ti,'ti',
      &       na,'na',ua,'ua',na,'na',ua,'ua')
           endif
-!        if (solving(2)) then                           !srv 22.05.18             if (all(solveco(is,0:nnreg(0)))) then 
+!        if (solving(2)) then                           !srv 22.05.18
+!        if (all(solveco(is,0:nnreg(0)))) then
 *    ..perform iteration
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
@@ -708,7 +709,7 @@ cxpb
      &               solveco(is,ireg).neqv.last_solve_9(ireg)
                   end do
                   if(new_matrix) call restart_ma28_for_9
-                  call b2npc9 (nx, ny, guard_flows, nnreg(0),  
+                  call b2npc9 (nx, ny, guard_flows, nnreg(0),
      &             solving(2), solvedum, solving(1), solvedm2, ncall,    !srv 22.05.18
      &             is, rxf0, vol, pbs,
      &             flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
@@ -724,7 +725,7 @@ cxpb
                 end do
                 if(new_matrix) call restart_ma28
                 call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
-     &           solvedum, solving(1), solvedm2, ncall, is, rxf0, vol, 
+     &           solvedum, solving(1), solvedm2, ncall, is, rxf0, vol,
      &           pbs, flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
      &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
@@ -752,7 +753,7 @@ cxpb
      1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)           !djm Jan2017
-!          endif                                                        !srv 22.05.18
+!          endif                                                         !srv 22.05.18
         enddo
 #ifndef NO_OPENMP_B2NEWS_LOOP2
 !$OMP END PARALLEL DO
@@ -784,7 +785,7 @@ cxpb
      .       qe, te, nep, ne, wrk0)
             call b2saxpy (n2, 1.0_R8, wrk0, 1, po, 1)
           endif
-          if(.not.wrong_flow) then                                      !xpb !srv 22.05.18
+          if(.not.wrong_flow) then                                       !xpb !srv 22.05.18
 *   ..iterate several times on the potential equation                    !xpb
             i=0                                                          !xpb
             t0=1.0e40_R8                                                 !xpb
@@ -895,7 +896,7 @@ cxpb
                   end do
                   if (new_matrix.and.ncall.ne.0) call restart_ma28
                   call b2nppo (nx, ny, nnreg(0), solving(3), solvepo,    !srv 22.05.18
-     &             ncall, rxf2,ne, te, conc, sch, po, fch, wrk0, wrk1,
+     &             ncall, rxf2, ne, te, conc, sch, po, fch, wrk0, wrk1,
      &             ier0)
                   last_solve_5(0:nnreg(0)) = solvepo(0:nnreg(0))
                 else
@@ -938,10 +939,10 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      &             na,'na',ua,'ua',resmo,'resmo',corua,'corua')
                 endif
                 if(ion_vlct_restrict .ne. 0 ) then                       !iyv 06.02.14
-                  call b2xpro (nx, ny, ns, mp, am, na, ro)
-                  call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
+                  call b2xprz (nx, ny, ns, mp, am, na, rz)
+                  call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
                   wrk0(:,:)=
-     &                 sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+     &                 sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
                   call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,
      &                        cssb(-1,-1,0))
                   call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,
@@ -1026,7 +1027,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                call print_wrong_flows(
      &              'After potential loop: fna(ions) at plates')
             endif
-            if(i.gt.potit) then
+            if(i.gt.potit.and.t0.gt.potok) then
               ierr=10
 cxpb
 cxpb          ierr=0     !testing forcing potit iterations
@@ -1133,7 +1134,7 @@ c     with diamagnetic drift part                                        !xpb
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 09.07.08 07.07.09
      &     na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                     !srv 09.07.08
-     &     reshe, reshi, wrk0, corte, corti, ier0)
+     &     shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
         endif                                                            !srv 13.10.06 }
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.1) then !srv 13.10.06
           call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,     !srv 05.07.17
@@ -1151,7 +1152,7 @@ c     with diamagnetic drift part                                        !xpb
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 07.06.00 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 27.12.01 28.06.03 30.06.03 07.07.09
      &     na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf,             !srv 31.05.99
-     &     reshe, reshi, wrk0, corte, corti, ier0)                       !srv 31.05.99 10.11.02
+     &     shef, shif, reshe, reshi, wrk0, corte, corti, ier0)           !srv 31.05.99 10.11.02
         endif                                                            !srv 13.10.06 }
         call xertst (ier0.eq.0, 'error return from b2npht')
         if(pot_eq.eq.0) po=0.0_R8     !xpb remove pot. correction if unneeded

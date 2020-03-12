@@ -17,7 +17,9 @@
 *     ------------------------------------------------------------------
       integer i, ix
       intrinsic max
+#ifndef NO_OPENMP_SFILL
       logical do_parallel
+#endif
       integer ibase
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------

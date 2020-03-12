@@ -7,7 +7,9 @@
       use b2mod_indirect
       use b2mod_constants                                         !srv 23.03.10
       use b2mod_balance                                           !djm Jan2017
-     & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf
+     & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf,
+     &          b2sigp_pstati0to3, b2sigp_pstate0to3, !djm Jul2018
+     &          b2sigp_smogpi0to3, b2sigp_smogpe0to3, b2sigp_smogpgr0to3
       use b2mod_openmp
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -24,8 +26,8 @@
       real (kind=R8) ::
      * wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      * wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny),                      !djm Jan2017
-     * wrk5(-1:nx,-1:ny), wrk6(-1:nx,-1:ny)                       !srv 28.03.17
-
+     * wrk5(-1:nx,-1:ny), wrk6(-1:nx,-1:ny),                      !srv 28.03.17
+     * smbgp_b4gr(-1:nx,-1:ny,0:3)                                !djm Jul2018
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -279,6 +281,14 @@ cdjm compute b2sigp_pstat0to3 on left cell face
               b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
               b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
               b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,0,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,3,isb) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,0) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,1) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,2) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,3) = 0.0_R8
             else
               t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
               b2sigp_pstat0to3(ix,iy,0,isb) =
@@ -293,6 +303,24 @@ cdjm compute b2sigp_pstat0to3 on left cell face
               b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
               b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
               b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,0,isb) =
+     &         t0*(wrk2(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
+     &             wrk2(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &             (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/hx(ix,iy)
+              b2sigp_pstati0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,3,isb) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,0) =
+     &         t0*(rzb(leftix(ix,iy),leftiy(ix,iy))*
+     &             nb(leftix(ix,iy),leftiy(ix,iy))/
+     &             ne(leftix(ix,iy),leftiy(ix,iy))*
+     &             wrk3(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
+     &             rzb(ix,iy)*nb(ix,iy)/ne(ix,iy)*
+     &             wrk3(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/hx(ix,iy)
+              b2sigp_pstate0to3(ix,iy,1) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,2) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,3) = 0.0_R8
             endif
            enddo
           enddo
@@ -375,6 +403,7 @@ cdjm compute b2sigp_pstat0to3 on left cell face
         endif
       endif                                                           !srv 02.07.08 }
 
+      smbgp_b4gr=smbgp !djm Jul2018
 cxpb apply restriction to pressure gradient for minority ions and neutrals
       if (style.ne.0 .and. pressure_restriction.eq.1) then
        do iy = -1, ny                                                 !lk 23.06.17{  
@@ -424,6 +453,9 @@ cxpb apply restriction to pressure gradient for minority ions and neutrals
 cdjm Jan2017 Store linearised source for balance
       if (balance_netcdf.ne.0) then
         b2sigp_smogp0to3(-1:nx,-1:ny,0:3,isb)=smbgp
+        b2sigp_smogpi0to3(-1:nx,-1:ny,0,isb)=wrk5 !djm Jul2018
+        b2sigp_smogpe0to3(-1:nx,-1:ny,0,isb)=wrk6
+        b2sigp_smogpgr0to3(-1:nx,-1:ny,0:3,isb)=smbgp-smbgp_b4gr
       endif
 
 * ..return

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2wfpj (nprt, idout, nx, ny, ns, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch, ne, ni, pr, ro, fne, fni, wrk0)
+     &  fna, fhe, fhi, fch, ne, ni, pr, ro, rz, fne, fni, wrk0)
       use b2mod_types
       use b2mod_rates
       use b2mod_constants
@@ -18,7 +18,8 @@
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
-     &  ro(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     &  ro(-1:nx,-1:ny), rz(-1:nx,-1:ny),
+     &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
@@ -57,7 +58,7 @@
 *     See the calling routine for description.
 *
 *     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
-*     ne, ni, pr, ro, fne, fni - real*8 array, input.
+*     ne, ni, pr, ro, rz, fne, fni - real*8 array, input.
 *     See the calling routine for description.
 *
 *     wrk0 - (-1:nx,-1:ny) real*8 array, workspace.
@@ -107,10 +108,11 @@
 *   ..test plasma state
       call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-*   ..test sign of ni, pr, ro
+*   ..test sign of ni, pr, ro, rz
       call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
       call b2xvsg (n2, pr, 1, 'pr', '.gt.')
       call b2xvsg (n2, ro, 1, 'ro', '.gt.')
+      call b2xvsg (n2, rz, 1, 'rz', '.gt.')
 *   ..test edge values of fne, fni
       call b2xvff (nx, ny, fne, 'fne')
       call b2xvff (nx, ny, fni, 'fni')

@@ -8,7 +8,7 @@
 !!      b2_ual_write_b2mod code is used to generate b2_ual_write_b2mod.exe
 !!      (main program), which is a post-processor for b2.
 !!      The code reads the plasma grid
-!!      geometry ( full geometry descriptions of all available grid subsets )
+!!      geometry (full geometry descriptions of all available grid subsets)
 !!      and plasma state (electron density/temperature, ion temperature,
 !!      velocity etc.). The code then writes the obtained data to IDS database
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
@@ -46,7 +46,7 @@
 !!      <b> Grid subset IDs </b>:
 !!
 !!      B2.5 ITM routines use grid subset IDs (B2_SUBGRID_UNSPECIFIED,
-!!      B2_SUBGRID_NODES, B2_SUBGRID_CELLS etc.) defined in
+!!      B2_SUBGRID_NODES, B2_SUBGRID_CELLS, etc.) defined in
 !!      @ref b2uw_ualio_grid_desc "b2mod_ual_io_grid.F90", while B2.5 IDS
 !!      uses grid subset IDs defined in IMAS GGD (ids_grid_common.f90).
 !!
@@ -120,23 +120,22 @@
 !!
 !!      @verbatim
 !!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
-!!          --shot <shot> --run <run> --username <username> --device <device> --version <version>
-!!          --step <step>
+!!          --shot <shot> --run <run> --username <username> --database <database>
+!!          --version <version> --step <step>
 !!      @endverbatim
 !!
 !!      The arguments marked with < ... > are the parameters of the IDS database
 !!      where the data is to be stored:
-!!          - \b shot:      The shot number of the database being created
-!!          - \b run:       The run number of the database being created
-!!          - \b username:  Creator/owner of the IMAS IDS database
-!!          - \b device:    Device name of the IMAS IDS database
-!!                          (i. e. solps-iter, iter, aug)
-!!          - \b version:   Major version of the IMAS IDS database
+!!          - \b shot:     The shot number of the database being created
+!!          - \b run:      The run number of the database being created
+!!          - \b username: Creator/owner of the IMAS IDS database
+!!          - \b database: IMAS IDS database name (i. e. solps-iter, iter, aug)
+!!          - \b version:  Major version of the IMAS IDS database
 !!
 !!      Example of the command:
 !!      @verbatim
 !!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
-!!          --shot 1512 --run 6 --username penkod --device solps-iter --version 3 --step 250
+!!          --shot 1512 --run 6 --username penkod --database solps-iter --version 3 --step 250
 !!      @endverbatim
 !!
 !!      \b References:
@@ -177,8 +176,7 @@
 !!      @subsection b2uw_b2mod_pv    Parameters/variables
 !!      @note   see also routine \b b2cdcv
 !!
-!!      @param  device - Device name of the IMAS IDS database
-!!              (i. e. solps-iter, iter, aug)
+!!      @param  database - IMAS IDS database name (i. e. solps-iter, iter, aug)
 !!      @param  edge_profiles - IDS designed to store data on edge plasma
 !!              profiles  (includes the scrape-off layer and possibly part
 !!              of the confined plasma)
@@ -215,10 +213,16 @@
 program b2_ual_write_b2mod
 
     use b2mod_main
-    use b2mod_ual
+    use b2mod_ual    &
+     & , only : put_ids_edge, b25_process_ids, &
+     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &          ids_radiation, ids_dataset_description
+#if IMAS_MINOR_VERSION > 21
+    use b2mod_ual    &
+     & , only : ids_summary
+#endif
     use b2mod_grid_mapping
-    use b2mod_ual_io
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
     use ids_grid_examples       ! IGNORE
 #endif
 
@@ -228,7 +232,7 @@ program b2_ual_write_b2mod
     character(len=24) :: treename   !< The name of the IMAS IDS database
         !< (i.e. "edge_profiles" (mandatory) )
     character(len=24) :: username   !< Creator/owner of the IMAS IDS database
-    character(len=24) :: device     !< Device name of the IMAS IDS database
+    character(len=24) :: database   !< IMAS IDS database name
         !< (i. e. solps-iter, iter, aug)
     character(len=24) :: version    !< Major version of the IMAS IDS database
     integer :: idx  !< The returned identifier to be used in the subsequent
@@ -250,6 +254,18 @@ program b2_ual_write_b2mod
         !< data on edge plasma transport. Energy terms correspond to the
         !< full kinetic energy equation (i.e. the energy flux takes into
         !< account the energy transported by the particle flux)
+    type (ids_radiation) :: radiation !< IDS designed to store
+        !< data on radiation emitted by the plasma species
+    type (ids_dataset_description) :: description !< IDS designed to store
+        !< a description of the simulation
+#if IMAS_MINOR_VERSION > 21
+    type (ids_summary) :: summary !< IDS designed to store
+        !< run summary data
+#endif
+#if IMAS_MINOR_VERSION > 25
+    type (ids_numerics) :: numerics !< IDS designed to store
+        !< run numerics data
+#endif
 
     !! Dummy variables
     character(len=24) :: shot_string
@@ -287,8 +303,8 @@ program b2_ual_write_b2mod
                     read( run_string, *) run
                 case("--username")
                     call get_command_argument( cptArg + 1, username )
-                case("--device")
-                    call get_command_argument( cptArg + 1, device )
+                case("--device","--database")
+                    call get_command_argument( cptArg + 1, database )
                 case("--version")
                     call get_command_argument( cptArg + 1, version )
                 case("--step")
@@ -297,23 +313,23 @@ program b2_ual_write_b2mod
                     read( num_step_string, *) num_step
             end select
         end do
-    !! If not at least shot, run, username and device were defined display
+    !! If not at least shot, run, username, and database were defined, display
     !! the error message and and a full command example
     else if( narg .lt. 8 ) then
         write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
-            & shot, run, user, device and version variables must&
+            & shot, run, user, database and version variables must&
             & be defined. Example (terminal): "
         write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
             &b2_ual_write_b2mod.exe --shot 1 --run 1 --username penkod&
-            &  --device solps-iter --version 3 --step 250"
+            &  --database solps-iter --version 3 --step 250"
         call exit(0)
     else
         write(0,*) "ERROR! In order to run b2_ual_write_b2mod input IDS&
-            & shot, run, user, device and version variables must&
+            & shot, run, user, database and version variables must&
             & be defined. Example (terminal): "
         write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
             &b2_ual_write_b2mod.exe --shot 1512 --run 6 --username penkod&
-            &  --device solps-iter --version 3 --step 250"
+            &  --database solps-iter --version 3 --step 250"
         call exit(0)
     end if
 
@@ -340,15 +356,30 @@ program b2_ual_write_b2mod
 
     !! Process B2.5 data and set it to IMAS IDS
     write(*,*) "START B25_process_ids"
-    call B25_process_ids( edge_profiles, edge_sources, edge_transport )
+    call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+        &  radiation, description, &
+#if IMAS_MINOR_VERSION > 21
+        &  summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+        &  numerics, run_start_time, run_end_time, &
+#endif
+        &  tim, dtim, shot, run, database, version )
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, treename,   &
-        &   shot, run, idx, username, device, version )
+    call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
+        &   radiation, description, &
+#if IMAS_MINOR_VERSION > 21
+        &   summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+        &   numerics, &
+#endif
+        &   treename, shot, run, idx, username, database, version )
 
     ! call read_ids(treename, shot, run, idx, username, &
-    !                                     & device, version )
+    !                                     & database, version )
 
 contains
 
@@ -372,13 +403,15 @@ contains
 
     !> Example subroutine for reading edge_profiles IDS
     !! with Fortran90
-    subroutine read_ids( treename, shot, run, idx, username, device, version )
+    subroutine read_ids( treename, shot, run, idx, username, database, version )
+        use b2mod_ual_io
+        implicit none
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
         integer, intent(in) :: shot !< The shot number of the database being created
         integer, intent(in) :: run  !< The run number of the database being created
-        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
+        integer, intent(out) :: idx !< The returned identifier to be used in the subsequent
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS database
-        character(len=24), intent(in) :: device !< Device name of the IMAS IDS database
+        character(len=24), intent(in) :: database   !< IMAS IDS database name
             !< (i. e. solps-iter, iter, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS database
         !! Internal variables
@@ -386,18 +419,22 @@ contains
         type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
             !< data in edge plasma profiles  (includes the scrape-off layer and
             !<  possibly part of the confined plasma)
+        integer :: status
 
         gridSubset_index = 3
 
         !! Open input datafile from local database
         write (0,*) "Started reading input IDS", idx, shot, run
 
-        call imas_open_env('treename', shot, run, idx, username, device, version )
-        call ids_get(idx, "edge_profiles", edge_profiles)
+        call imas_open_env('treename', shot, run, idx, username, &
+            &   database, version, status )
+        call xertst ( status.eq.0, 'Error opening IMAS database !')
+        call ids_get(idx, "edge_profiles", edge_profiles, status)
+        call xertst ( status.eq.0, 'Error opening edge_profiles IDS !')
 
         write(0,*) "homogeneous_time = ",   &
             &   edge_profiles%ids_properties%homogeneous_time
-#ifdef GGD_OLD
+#if IMAS_MINOR_VERSION < 15
         write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
             &   grid_subset(gridSubset_index)%identifier%name
         write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &
@@ -410,7 +447,8 @@ contains
 #endif
         ! write(0,*) "Time = ", edge_profiles%time(1)
         call ids_deallocate( edge_profiles )
-        call imas_close( idx )
+        call imas_close( idx, status )
+        call xertst ( status.eq.0, 'Error closing IMAS database !')
         write (0,*) "Finished reading input IDS"
 
     end subroutine read_ids

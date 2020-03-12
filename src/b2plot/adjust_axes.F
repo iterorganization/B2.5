@@ -12,3 +12,17 @@ c
       endif
       return
       end subroutine adjust_axes
+c
+      subroutine adjust_bold(onflag)
+      use b2mod_types
+#include "graphics_vars.h"
+      logical onflag
+      if(onflag) then
+        bold=.not.bold
+        write (*,*) 'bold state changed'
+      else
+        bold=.false.
+        write (*,*) 'graphs plotted with normal labels'
+      endif
+      return
+      end subroutine adjust_bold

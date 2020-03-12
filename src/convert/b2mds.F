@@ -10,10 +10,10 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2plot
-     * , only : textan, textmn, textin, textpl, textwl, textsp, textbl,
-     * textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
-     * cr, cz, natmi, nmoli, nioni, wklng,
-     * solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+     * , only : textpl, textwl, textsp, textbl,
+     *          textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
+     *          cr, cz, natmi, nmoli, nioni, wklng,
+     *          solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_wall
       use b2mod_work
       use b2mod_eirene_globals
@@ -34,7 +34,7 @@
       use b2mod_version
 #ifdef B25_EIRENE
       use eirmod_cinit
-     * , only : eirene_init_cinit
+     * , only : eirene_init_cinit, fort_lc
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_comprt
@@ -133,6 +133,7 @@ c Function to check the correct parameters!
 c
       call subini('b2mds')
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
       if (ex) then
@@ -181,14 +182,16 @@ c
 #endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #else
       call alloc_b2mod_braeir(nxd,nyd,nsd_local)
-      call alloc_b2mod_eirbra(nxd,nyd,nsd_local,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nxd,nyd,nsd_local,
+     1 natm,nmol,nion,npls,nstra)
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
@@ -563,11 +566,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call get_wall_data(nx,ny,ns,BoRiS,ex)
 
 #ifdef B25_EIRENE
-#ifndef HPUX
-      filename='fort.44'
-#else
-      filename='ftn44'
-#endif
+      filename=fort_lc//'44'
       call find_file(filename,ex)
 #else
       ex = .false.
@@ -775,8 +774,9 @@ c 23: fht definition changed to 5/2 formulation
 c 24: removed drift velocity contributions from kinrgy
 c 25: debugged indexing error for eneutrad
 c 26: using total field for computing dspar
+c 27: Added EMOLRAD and EIONRAD arrays
 
-      dbversion=26
+      dbversion=27
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -1382,11 +1382,15 @@ c
      1   nx+2,ny+2,temp,'')
         forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
      1   tmp(ix,iy,is)=srcml(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:SRCML','/s',nx+2,
+        call mds_put_double_rzns('\TOP.SNAPSHOT:SRCML','A',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
         forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
      1   tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)
         call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
+     1   ny+2,nmoli,tmp,'TEXTMN','')
+        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1   tmp(ix,iy,is)=emolrad(ix+1,iy+1,is+1,1)
+        call mds_put_double_rzns('\TOP.SNAPSHOT:EMOLRAD','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
       endif
 #endif
@@ -1399,6 +1403,10 @@ c
         forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
      1   tmp(ix,iy,is)=tib2(ix+1,iy+1,is+1,1)/ev
         call mds_put_double_rzns('\TOP.SNAPSHOT:TIB2','eV',nx+2,
+     1   ny+2,nioni,tmp,'TEXTIN','')
+        forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
+     1   tmp(ix,iy,is)=eionrad(ix+1,iy+1,is+1,1)
+        call mds_put_double_rzns('\TOP.SNAPSHOT:EIONRAD','W',nx+2,
      1   ny+2,nioni,tmp,'TEXTIN','')
       endif
 #endif

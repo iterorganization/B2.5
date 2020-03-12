@@ -68,7 +68,6 @@ C
 
       integer nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi,isrftype(nlimps)
       integer lkindp(npls), lkindm(nmol), lkindi(nion)
-      logical lhalpha,lvib
 c
       common /eirdiag/ dab2,dmb2,dib2,tab2,tmb2,tib2,
      1 rfluxa,rfluxm,refluxa,refluxm,
@@ -84,7 +83,6 @@ c
      2 lkindp,lkindm,lkindi,
      3 eirdiag_nds_ind,eirdiag_nds_typ,eirdiag_nds_srf,
      4 eirdiag_nds_start,eirdiag_nds_end,
-     l lhalpha,lvib,
      c eirtxt
 c
 #ifndef NO_SAVE

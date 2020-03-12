@@ -19,6 +19,7 @@
      & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
      &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
      &          b2stel_she0to3,
+     &          b2stel_she_ion0to3, b2stel_she_rec0to3,
      &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
      &          balance_netcdf
 #ifdef ASTRA
@@ -81,20 +82,22 @@
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
       character chns*3
-!     character chk*1
+!     character chk*1                                             !srv 30.06.08
       real (kind=R8) ::
      *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       real (kind=R8) ::
-     *  rf0, t0, t1
+     *  rf0, t0, t1, t2
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
+      real (kind=R8) :: she0_ion(-1:nx,-1:ny,0:3),
+     &                  she0_rec(-1:nx,-1:ny,0:3)
 *   ..procedures
       intrinsic abs
-      logical lnext
+      logical lnext, streql
       real (kind=R8) ::
      *   samax, roxa
       external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
-      external b2xvsg
+      external b2xvsg, streql
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
@@ -132,7 +135,8 @@
        call xertst (0.le.styl0.and.styl0.lt.4,
      &   'faulty internal parameter styl0')
        call ipgeti ('b2stel_fix_recomb_energy', fix_recomb_energy)
-       call xertst (.not.(adpak_used.and.fix_recomb_energy.ne.0),
+       call xertst (.not.(streql(b2frates_flag,'adpak').and.
+     &    fix_recomb_energy.ne.0),
      &   'fix_recomb_energy should not be used with ADPAK rates!')
        if(fix_recomb_energy.ne.0) then
          write(*,*)
@@ -199,6 +203,8 @@
       call sfill (n2*4*ns, 0.0_R8, smq0_ion, 1)
       call sfill (n2*4*ns, 0.0_R8, smq0_rec, 1)
       call sfill (n2*4, 0.0_R8, she0, 1)
+      call sfill (n2*4, 0.0_R8, she0_ion, 1)
+      call sfill (n2*4, 0.0_R8, she0_rec, 1)
       call sfill (n2*4, 0.0_R8, shi0_ion, 1)
       call sfill (n2*4, 0.0_R8, shi0_rec, 1)
 *   ..compute sources due to ionisation
@@ -231,17 +237,19 @@
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
-!$OMP PARALLEL DO default(none), private(ix, iy, is, rf0, t0, t1)
+!$OMP PARALLEL DO default(none), private(ix, iy, is, rf0, t0, t1, t2)
 !$OMP& shared(ns, nx, ny, nspecies)
 !$OMP& shared(rightix, leftix, topiy, bottomiy, zn)
 !$OMP& shared(region, rlsa, rsa, vol, ne, na, ni, te, ti, am, ua)
 !$OMP& shared(phm0, rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1)
 !$OMP& shared(rlra, rra, rpi, rlqa, rqa, rrd, hz)
 !$OMP& shared(sna0_ion, shi0_ion, smq0_ion, she0)
-!$OMP& shared(sna0_rec, shi0_rec, smq0_rec)
+!$OMP& shared(she0_ion, she0_rec)
+!$OMP& shared(sna0_rec, shi0_rec, smq0_rec, b2stel_she0to3)
 !$OMP& shared(rsana, rsahi, rsamo, rrana, rrahi, rqahe, rramo, rbr)
 !$OMP& shared(rqrad, rqbrm, zamax, zamin)
 !$OMP& shared(fix_recomb_energy, styl0, BoRiS, is_neutral)
+!$OMP& shared(balance_netcdf)
 !$OMP& reduction(+:b2rad, b2brem)
 #endif
       do iy = -1, ny
@@ -265,6 +273,11 @@
      &       rf0*t0*na(ix,iy,is)
             sna0_ion(ix,iy,1,is) = sna0_ion(ix,iy,1,is)-(1.0_R8+rf0)*t0  !srv 11.09.09 }
             rsana(ix,iy,is) = t0*na(ix,iy,is)
+*       ..compute electron energy sink
+            t2 = t0*rpi(ix,iy,is)*ev
+            she0_ion(ix,iy,0) = she0_ion(ix,iy,0)+(1.0_R8+rf0)*t2
+            she0_ion(ix,iy,3) = shi0_ion(ix,iy,3)-
+     &                          rf0*t2/(ne(ix,iy)*te(ix,iy))
 *       ..compute atom heat source
             t1 = t0*na(ix,iy,is)*(1.0_R8-BoRiS)*
      &       ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
@@ -329,11 +342,11 @@
              rsamo(ix,iy,is+1) = rsamo(ix,iy,is+1)-t1*ua(ix,iy,is)
            endif
           enddo
-        endif
-       enddo
+         endif
+        enddo
 *   ..compute sources due to recombination
-       do is = 1, ns-1
-        if (lnext(is-1,is)) then
+        do is = 1, ns-1
+         if (lnext(is-1,is)) then
 *     ..particle source and heat source
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
@@ -352,6 +365,11 @@
            sna0_rec(ix,iy,1,is-1) = sna0_rec(ix,iy,1,is-1)-           !srv 11.09.09 {
      &      rf0*t0*na(ix,iy,is)/na(ix,iy,is-1)
            rrana(ix,iy,is) = t0*na(ix,iy,is)
+*       ..compute electron heat source
+           t2 = t0*na(ix,iy,is)*rpi(ix,iy,is)*ev
+           she0_rec(ix,iy,0) = she0_rec(ix,iy,0)+(1.0_R8+rf0)*t2
+           she0_rec(ix,iy,0) = she0_rec(ix,iy,3)-
+     &                         rf0*t2/(ne(ix,iy)*te(ix,iy))
 *       ..compute atom heat source
            t1 = t0*na(ix,iy,is)*(1.0_R8-BoRiS)*
      &       ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
@@ -412,12 +430,17 @@ c accounted for)
           rf0 = rxm4*max(0.0_R8,rlqa(ix,iy,1,is))
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
-*      ..if adpak_used, also contains recombination and CX terms
+*      ..for adpak rates, also contains recombination and CX terms
           t0 = phm0*rqa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)       !srv 05.06.18
 *      ..compute electron heat sink
           she0(ix,iy,0) = she0(ix,iy,0)+rf0*t0
           she0(ix,iy,3) = she0(ix,iy,3)-
      &     (1.0_R8+rf0)*t0/(ne(ix,iy)*te(ix,iy))
+          if (balance_netcdf.ne.0) then
+            b2stel_she0to3(ix,iy,0,is) = rf0*t0
+            b2stel_she0to3(ix,iy,3,is) =
+     &           -(1.0_R8+rf0)*t0/(ne(ix,iy)*te(ix,iy))
+          endif
           rqahe(ix,iy,is) = rqahe(ix,iy,is) + t0
 *      ..compute line radiation rate for is->any
           t0 = phm0*rrd(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)      !srv 05.06.18
@@ -579,25 +602,16 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stel_sna_rec0to1 = sna0_rec
         b2stel_smq_ion0to3 = smq0_ion
         b2stel_smq_rec0to3 = smq0_rec
-        b2stel_she0to3=she0
-        b2stel_shi_ion0to3=shi0_ion
-        b2stel_shi_rec0to3=shi0_rec
+        b2stel_shi_ion0to3 = shi0_ion
+        b2stel_shi_rec0to3 = shi0_rec
+        b2stel_she_ion0to3 = she0_ion
+        b2stel_she_rec0to3 = she0_rec
       endif
 
 * ..return
       ncall = ncall+1
       call subend ()
       return
-
-*-----------------------------------------------------------------------
-*.scribbles
-
-*!!   Consider to calculate sna0, she0, shi0 over (-1:nx,-1:ny)
-*     instead of over (0:nx-1,0:ny-1).
-*xpb  Went back to using just (0:nx-1,0:ny-1). Otherwise sources (in
-*xpb  particular recombination sources) in guard cells are not balanced
-*xpb  by anything and this can lead to particle accumulation and
-*xpb  temperature collapse.
 
 *-----------------------------------------------------------------------
 *.end b2stel

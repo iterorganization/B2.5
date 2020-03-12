@@ -55,6 +55,6 @@
 #define DEF_NREAC 60
 #define DEF_NREI 70
 #define DEF_NREC DEF_NATM
-#define DEF_NREL 8
+#define DEF_NREL (DEF_NATM+DEF_NMOL)*(DEF_NATM+DEF_NMOL)
 
 #endif

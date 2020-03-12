@@ -214,7 +214,7 @@ c       write(*,*) 'ncharged',ncharged
      1     (atan(1.0e8_R8)-atan(-xscal*xpos))
 c       write(*,*) 'b2t21t:ix,iy,cond,fac',ix,iy,cond,fac
 
-          if( ifail .eq. 0 )  then
+          if( ifail .eq. 0 ) then
 c            poloidal heat flux and heat conduction coefficient
 c              --------------------------------------------------
 
@@ -462,7 +462,7 @@ c         write(*,*) 'wwpp',wwpp
      *       cond)
 c         write(*,*) 'b2t21v:ix,iy,cond',ix,iy,cond
 
-            if( ifail .eq. 0 )  then
+            if( ifail .eq. 0 ) then
 
               ncharged=0
               do i=0,ns-1
@@ -533,7 +533,7 @@ c
 *       pi  = ( pi_pp (s=1,...,nsz) ) :  parallel viscosity     in Pa
 *       eta = ( eta_0 (s=1,...,nsz) ) :  parallel visc. coeff.  in Pa s
 *
-*       real: 	min. 8 Bytes precision
+*       real: min. 8 Bytes precision
 *
 *       Subroutines used:
 *       -----------------
@@ -676,21 +676,21 @@ c  ---------------------------------------------------------------------
       call f01aaf(a, 2*ns, 2*ns, inva, 2*ns, wk1, ifail)
 #else
       call f07adf(2*ns, 2*ns, a, 2*ns, IPIV, ifail)
-      if( ifail .eq. 0 )  then
+      if( ifail .eq. 0 ) then
         call f06qff('General', 2*ns, 2*ns, a, 2*ns, inva, 2*ns)
         call f07ajf(2*ns, inva, 2*ns, IPIV, wk1, 2*ns, ifail)
       endif
 #endif
 #else
       call sgetrf(2*ns, 2*ns, a, 2*ns, IPIV, ifail)
-      if( ifail .eq. 0 )  then
+      if( ifail .eq. 0 ) then
         inva(1:2*ns,1:2*ns) = a(1:2*ns,1:2*ns)
         call sgetri(2*ns, inva, 2*ns, IPIV, wk1, 2*ns, ifail)
       endif
 #endif
       cond=condval(a,2*ns,ifail)
 
-      if( ifail .ne. 0 )  return
+      if( ifail .ne. 0 ) return
       
       do i=1,ns
         x(i) = inva(i,1)*p(1)*ww(1)
@@ -947,14 +947,14 @@ c  ---------------------------------------------------------------------
       call f01aaf(a, 2*ns, 2*ns, inva, 2*ns, wk1, ifail)
 #else
       call f07adf(2*ns, 2*ns, a, 2*ns, IPIV, ifail)
-      if( ifail .eq. 0 )  then
+      if( ifail .eq. 0 ) then
         call f06qff('General', 2*ns, 2*ns, a, 2*ns, inva, 2*ns)
         call f07ajf(2*ns, inva, 2*ns, IPIV, wk1, 2*ns, ifail)
       endif
 #endif
 #else
       call sgetrf(2*ns, 2*ns, a, 2*ns, IPIV, ifail)
-      if( ifail .eq. 0 )  then
+      if( ifail .eq. 0 ) then
         inva(1:2*ns,1:2*ns) = a(1:2*ns,1:2*ns)
         call sgetri(2*ns, inva, 2*ns, IPIV, wk1, 2*ns, ifail)
       endif
@@ -1063,7 +1063,7 @@ c  ---------------------------------------------------------------------
      *                     ( h1 - h(n1(j)+l)/mm(j) )
      *                   + g(i,j,3)*i1*i2 * (mu(i,j)/tt(i,j))**2 *
      *                     ( hh1 - hh(n1(j)+l)/mm(j) )
-              if( i.eq.1 .or. j.eq.1 )  then
+              if( i.eq.1 .or. j.eq.1 ) then
                 r(n1(i)+k) = r(n1(i)+k) + g(i,j,1)*i1*i2*
      *                                      (up(n1(i)+k)-up(n1(j)+l))
               end if

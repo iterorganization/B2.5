@@ -94,7 +94,7 @@
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, nasum, na0sum, 
      &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),                            !srv 11.10.02
-     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)         !iyv 06.02.14
+     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)         !iyv 06.02.14
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, b2sasum, samax
@@ -160,7 +160,6 @@
        test_residual=nstg_areshe.gt.0.0_R8.or.nstg_areshi.gt.0.0_R8.or.
      &               nstg_aresco.gt.0.0_R8
        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 06.02.14
-       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
        call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)            !srv 31.01.07 {
        call xertst (1.le.ntim_step_out,
      &   'faulty internal parameter ntim_step_out')                   !srv 31.01.07 }
@@ -470,9 +469,9 @@ ctmp.dpc
            goto 3
          else if (ntim.eq.0) then ! compute derived quantities
            if(ion_vlct_restrict .ne. 0 ) then                            !iyv 06.02.14
-             call b2xpro (nx, ny, ns, mp, am, na, ro)
-             call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-             wrk0(:,:)=sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+             call b2xprz (nx, ny, ns, mp, am, na, rz)
+             call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+             wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
              call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
              call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,
      &                     cssb(-1,-1,1))
@@ -549,8 +548,11 @@ ctmp.dpc
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
      &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09
      &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                  !srv 09.07.08
-     &      reshe, reshi, wrk0, corte, corti, ier0)
+     &      shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
          endif
+*     ..save total heat sources for printout at end of run
+         she = shef
+         shi = shif
 *     ..end intermediate iteration
          istg(1) = istg(1)+1
          goto 2

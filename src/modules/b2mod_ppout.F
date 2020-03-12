@@ -36,7 +36,7 @@ C 2002.11.01
      *  dm(:,:),
      *  rsepx(:),    zsepx(:),
      *  zmass(:),    sqezrad(:,:,:),
-     *  ro(:,:),   pr(:,:), pmach(:,:,:),
+     *  rz(:,:),     pz(:,:), pmach(:,:,:),
      *  rbcore(:),   zbcore(:),
      *  rbwall(:,:), zbwall(:,:),
      *  rtemp(:)
@@ -56,6 +56,10 @@ c   ..functions
 
       real (kind=R8) ::
      *  vdot, vlen, thetasepx
+#else
+#ifdef IMAS
+      character*120, save :: labgeo
+#endif
 #endif
 
       contains
@@ -121,8 +125,8 @@ c   ..allocate
       allocate(izch(1:nsd))
       allocate(izs2is(1:nsd))
       allocate(sqezrad(-1:nxd,-1:nyd,1:nsd))
-      allocate(ro(-1:nxd,-1:nyd))   ! was wrongly declared with nsd as well
-      allocate(pr(-1:nxd,-1:nyd))   ! was wrongly declared with nsd as well
+      allocate(rz(-1:nxd,-1:nyd))   ! was wrongly declared with nsd as well
+      allocate(pz(-1:nxd,-1:nyd))   ! was wrongly declared with nsd as well
       allocate(pmach(-1:nxd,-1:nyd,0:nsd-1))  ! was 1:nsd
 
       allocate(itagdv(-1:nxd,-1:nyd))
@@ -173,8 +177,8 @@ c   ..deallocate
       deallocate(izch)
       deallocate(izs2is)
       deallocate(sqezrad)
-      deallocate(ro)
-      deallocate(pr)
+      deallocate(rz)
+      deallocate(pz)
       deallocate(pmach)
 
       deallocate(itagdv)
@@ -287,17 +291,17 @@ c   ..collect non-dominant species
       nz = nspp - nzs - 2
 
 c   ..mach number of each species
-      ro    = 0.0_R8
-      pr    = 0.0_R8
+      rz    = 0.0_R8
+      pz    = 0.0_R8
       pmach = 0.0_R8
 
-      call b2xppr( nxpp, nypp, nspp, ne, na, te, ti, pr )
-      call b2xpro( nxpp, nypp, nspp, mp, am, na, ro )
+      call b2xppz( nxpp, nypp, nspp, ne, na, te, ti, pz )
+      call b2xprz( nxpp, nypp, nspp, mp, am, na, rz )
       call b2xzef( nx, ny, ns, rz2, na, ne, zeff)
 
       do is = 0, nspp - 1
          call b2xpmc( nxpp, nypp
-     *              , ua(-1,-1,is), pr(-1,-1), ro(-1,-1)
+     *              , ua(-1,-1,is), pz(-1,-1), rz(-1,-1)
      *              , pmach(-1,-1,is) )
       enddo
 
@@ -2489,16 +2493,17 @@ c conn
 c
 c=======================================================================
 #endif
-      subroutine read_b2mod_ppout(type, ninp, label)
+      subroutine read_b2mod_ppout(type, ninp, flag)
 
       use b2mod_version
       implicit none
 
       integer ninp
       character*(*) type
-      character*(*) label
+      character*8 flag
 
-      external cfruin
+      logical streql
+      external cfruin, streql
 
 c     ------------------------------------------------------------------
 c     READ_B2MOD_PPOUT_DATA reads data for use by ppout.
@@ -2512,7 +2517,7 @@ c   ..initialise
 
 c   ..atomic rates method
       if( type.eq.'rates' ) then
-          if( label(61:64).eq.'ADAS' ) then
+          if( streql(flag,'adas') ) then
 #ifdef JET
               call cfruin(ninp, nspp, isyear, 'ppout')
 #else

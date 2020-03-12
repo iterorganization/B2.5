@@ -15,7 +15,7 @@
      3 leftcut1, rightcut1, bottomcut1, topcut1,
      $ cflags1)
       use b2mod_types
-      use b2mod_interp
+      use b2mod_b2cmfs
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
@@ -151,7 +151,7 @@
      *   t0, t1, t2, t3, t4, t5
       logical iniso, error
       integer i, j
-      integer pbs_from_basis_mesh, geometryType
+      integer pbs_from_basis_mesh
       real (kind=R8) ::
      *   p0x, p0y
 *   ..procedures
@@ -855,7 +855,6 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
         wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
 *   ..compute pbs (magnetic field pitch * surface area) at cell faces
-        geometryType = geometryId(nnreg, periodic_bc, topcut)
         call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
       endif
 

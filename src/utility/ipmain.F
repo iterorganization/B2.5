@@ -34,6 +34,7 @@
       parameter (iptinc=233, iptbmx=377, ipgtmx=400, xdmx=0.8_R8)
       character ipnam(0:iptbmx-1)*80, ipval(0:iptbmx-1)*80, cnam0*80
       integer ipstat(0:iptbmx-1)
+      logical prohib
       save ipcnt, ipnam, ipval, ipstat
 *   ..procedures
       intrinsic mod, ichar
@@ -85,16 +86,12 @@
 *    ..extend the table
        call xertst (ipcnt.lt.xdmx*iptbmx,
      &   'ipsetc--error, internal parameter table overflow')
-#ifdef _OPENMP
-!$OMP CRITICAL(ipsetc_lock)
-#endif
+       !$OMP CRITICAL(ipsetc_lock)
        ipnam(ip) = cnam0
        ipval(ip) = cval
        ipstat(ip) = 0
        ipcnt = ipcnt+1
-#ifdef _OPENMP
-!$OMP END CRITICAL(ipsetc_lock)
-#endif
+       !$OMP END CRITICAL(ipsetc_lock)
       endif
       return
 *     ------------------------------------------------------------------
@@ -121,9 +118,7 @@
        call xertst (ipstat(ip).lt.ipgtmx,
      &   'ipgetc--error, entry is read too often: '//cnam0)
        cval = ipval(ip)
-#ifdef _OPENMP
-!$OMP ATOMIC
-#endif
+       !$OMP ATOMIC
        ipstat(ip) = ipstat(ip)+1
       else
 *      (no action, return cval unchanged)
@@ -133,53 +128,44 @@
 !srv 15.09.15 {
       entry ipprhp ()
       do ip = 0, iptbmx-1
-        if (ipnam(ip).eq.'b2trcl_conductive limit') then
+        prohib = .true.
+        select case (ipnam(ip))
+        case ('b2trcl_conductive limit')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Use b2trcl_conductive_limit instead'
-          call xerrab
-     &     ('Prohibited "b2trcl_conductive limit" switch usage!')
-        endif
-        if (ipnam(ip).eq.'b2mndr_na0eps') then
+        case ('b2mndr_na0eps')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &      trim(ipnam(ip)),'Use b2mndr_na_min and b2mndr_na_new'
-          call xerrab ('Prohibited "b2mndr_na0eps" switch usage!')
-        endif
-        if (ipnam(ip).eq.'b2tfnb_xfrhiehz') then
+        case ('b2tfnb_xfrhiehz')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Use b2tfnb_xfrhie instead'
-          call xerrab
-     &     ('Prohibited "b2tfnb_xfrhiehz" switch usage!')
-        endif
-        if (ipnam(ip).eq.'b2tfnb_xfrhie_no_drift') then
+        case ('b2tfnb_xfrhie_no_drift')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Use b2tfnb_xfrhie instead'
-          call xerrab
-     &     ('Prohibited "b2tfnb_xfrhie_no_drift" switch usage!')
-        endif
-        if (ipnam(ip).eq.'b2news_coriolis') then
+        case ('b2news_coriolis')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete'
-          call xerrab
-     &     ('Prohibited "b2news_coriolis" switch usage!')
-        endif
-        if (ipnam(ip).eq.'b2news_vis_per') then
+        case ('b2news_vis_per')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Use b2tfhe_vis_per instead'
-          call xerrab
-     &     ('Prohibited "b2news_vis_per" switch usage!')
-        endif
-        if (ipnam(ip).eq.'b2tvspa_vis_par') then
+        case ('b2tvspa_vis_par')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Use b2tfhe_vis_par instead'
-          call xerrab
-     &     ('Prohibited "b2tvspa_vis_par" switch usage!')
-        endif
-        if (ipnam(ip).eq.'b2npmo_modvis') then
+        case ('b2npmo_modvis')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete'
-          call xerrab
-     &     ('Prohibited "b2npmo_modvis" switch usage!')
-        endif
+        case ('eirene_lhalpha')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use "DEFINE_LINES" in block 12 '//
+     &     'of Eirene input file instead'
+        case ('eirene_lvib')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now deprecated'
+        case default
+          prohib = .false.
+        end select
+        if (prohib) call xerrab
+     &      ('Prohibited "'//trim(ipnam(ip))//'" switch usage!')
       enddo
       return
 !srv 15.09.15 }

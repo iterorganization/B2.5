@@ -761,8 +761,8 @@ c Be suppression of chemical sputtering
      &         sput_frac_chem_sum
         endif
 cxpb  Contributions from the bulk
-        layer_nrelconstituents(iwall,1:matsurf_nconstituents(iwall))=
-     1    matsurf_nrelconstituents
+        layer_relconstituents(iwall,1:matsurf_nconstituents(iwall))=
+     1    matsurf_relconstituents
      .    (iwall,1:matsurf_nconstituents(iwall))*
      2   sput_frac(0)
 cxpb  Contributions from the deposited species
@@ -770,7 +770,7 @@ cxpb  Contributions from the deposited species
            layer_nzconstituents
      .      (iwall,matsurf_nconstituents(iwall)+itrack)=
      1      nint(zn(target_intcode(itrack)))
-           layer_nrelconstituents
+           layer_relconstituents
      .      (iwall,matsurf_nconstituents(iwall)+itrack)=
      .      sput_frac(itrack)
         enddo

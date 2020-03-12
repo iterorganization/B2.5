@@ -607,8 +607,14 @@
 *     B2XPPR computes the total pressure, pr:
 *       pr(,) = ne(,)*te(,) + (sum is :: na(,,is)*ti(,)) .
 *
+*     B2XPPZ computes the plasma pressure, pz:
+*       pz(,) = ne(,)*te(,) + (sum is :: na(,,is)*ti(,), not including neutrals).
+*
 *     B2XPRO computes the mass density, ro:
 *       ro(,) = (sum is :: am(is)*mp*na(,,is)) .
+*
+*     B2XPRZ computes the ion mass density, rz:
+*       rz(,) = (sum is :: am(is)*mp*na(,,is), including only charged species).
 *
 *     B2XPVE computes the parallel electron velocity on cell centers.
 *

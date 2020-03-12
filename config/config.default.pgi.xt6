@@ -33,7 +33,7 @@ FCOPTS = -O3
 LDOPTS =
 endif
 
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 FCOPTS += -mp=nonuma
 LDOPTS += -mp=nonuma
 endif

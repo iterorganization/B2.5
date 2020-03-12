@@ -97,13 +97,12 @@
       parameter (ndismx=20)
       integer nidis, njdis, idis(0:ndismx-1), jdis(0:ndismx-1)
       integer idum(0:9)
-      logical lt0, lt1, lt2
       integer i, is, is1, nx, ny, ns, ns1
       character id*8, lblrc*120, lblcp*120, cnamip*80, cvalip*80
 *   ..procedures
-      logical streql, strmas
+      logical streql
       external subini, subend, xertst, xerrab, cfverr, cfruch
-      external cfruin, streql, strmas, ipsetc, ipgeti, gacwk, gdawk
+      external cfruin, streql, ipsetc, ipgeti, gacwk, gdawk
       external b2rurc, b2rucp, b2wfr0, b2wfr1, b2wfrc, b2wgrc
 
 *-----------------------------------------------------------------------
@@ -248,6 +247,7 @@
       call b2rucp (ninp(2), b2fparam_version, nx, ns)
 *   ..read label
       call cfruch (ninp(1), 120, lblrc, 'label')
+      call get_AM_flag (lblrc, b2frates_flag)
 *   ..write label
       write (nout(0),'(/4x,a/4x,a)') lblrc(1:60), lblrc(61:120)
 *   ..read output control
@@ -289,7 +289,7 @@
 *   ..read atomic rate data
       write(*,*) 'ns1 =',ns1
       call alloc_b2mod_ppout(nx,ny,ns1)
-      call read_b2mod_ppout('rates', ninp(1), lblrc)
+      call read_b2mod_ppout('rates', ninp(1), b2frates_flag)
       call b2rurc (ninp(1), b2frates_version)
 *   ..check input data
       do i = 0, nidis-1
@@ -303,22 +303,20 @@
 *   ..write credit
 *     (Look for 'adpak', 'strahl' or 'adas' as a substring of the label to
 *     decide what credit to write. This is not a rigorous test!)
-      lt0 = strmas(lblrc,'adpak')
-      lt1 = strmas(lblrc,'strahl')
-      lt2 = strmas(lblrc,'adas')
-      if (lt0.and..not.lt1.and..not.lt2) then
+      select case (b2frates_flag)
+      case ('adpak')
        call b2wfr0 (nout(0))
-      else if (lt1.and..not.lt0.and..not.lt2) then
+      case ('strahl')
        call b2wfr1 (nout(0))
-      else if (lt2.and..not.lt0.and..not.lt1) then
+      case ('adas')
        call b2wfr2 (nout(0))
-      else
+      case default
        write (nout(0),'(/a/a)')
      &   ' Please check the origin of these rate coefficients;'//
      &   ' this program is unable to determine if they stem from',
-     &   ' the ADPAK package, the STRAHL package, or from some'//
-     &   ' other source.'
-      endif
+     &   ' the ADPAK package, the STRAHL package, ADAS,'//
+     &   ' or from some other source.'
+      end select
 *   ..write rtns, rtzmin, rtzmax, rtzn
       write (nout(0),'(/2x,a,i3)')
      &  'number of species in this table: ',rtns

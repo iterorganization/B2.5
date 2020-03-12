@@ -31,7 +31,7 @@
      *  flux_limit_min_ti
       save ncall, alpha, gamma, flux_limit_min_ti, hcimx_flag
 *   ..initialisation
-      data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/,
+      data ncall/0/, alpha/1.0_R8/, gamma/1.0_R8/,
      *     flux_limit_min_ti/0.0_R8/, hcimx_flag/1/
 *   ..procedures
       intrinsic max, abs, sqrt

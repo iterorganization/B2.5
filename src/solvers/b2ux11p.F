@@ -158,20 +158,20 @@
        itpar = itcnt*iters
        call xerrab ('b2ux11p: Style 0 is not implemented')
        if (in_parallel()) then
-         stop 'STOP: iluter not parallelised, re-run in serial'
+        stop 'STOP: iluter not parallelised, re-run in serial'
        else
-         call iluter (nx+2, ny+2, aa11, resfun, iters, acpar, itpar,
-     &    corfun, nrmc, aaf, wrk0, wrk1, wrk2)
+        call iluter (nx+2, ny+2, aa11, resfun, iters, acpar, itpar,
+     &   corfun, nrmc, aaf, wrk0, wrk1, wrk2)
        endif
       else if (style.eq.1) then
 *    ..use slv5pt
        iters = 1
        call xerrab ('b2ux11p: Style 1 is not implemented')
        if (in_parallel()) then
-         stop 'STOP: slv5pt not parallelised, re-run in serial'
+        stop 'STOP: slv5pt not parallelised, re-run in serial'
        else
-         call slv5pt (nx+2, ny+2, aa11, resfun, iters, corfun, nrmc,
-     &    min(nx+2,ny+2), aaf, wrk0, iwrk)
+        call slv5pt (nx+2, ny+2, aa11, resfun, iters, corfun, nrmc,
+     &   min(nx+2,ny+2), aaf, wrk0, iwrk)
        endif
       else if (style.eq.2) then
        call cpu_time(c_start)

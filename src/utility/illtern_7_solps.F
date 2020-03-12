@@ -26,9 +26,9 @@ c
 
       logical lfirst
       integer ncall, nwrite_fmt, nwrite_bnr                           !sv 29.05.02
-      integer       ::  path                                          !sv 29.05.02
-      integer, save ::  nltrsol = 2                                   !sv 29.05.02
-!      real (kind=R8) :: time_begin, time_end                          !sv 29.05.02
+      integer       :: path                                           !sv 29.05.02
+      integer, save :: nltrsol = 2                                    !sv 29.05.02
+!      real (kind=R8) :: time_begin, time_end                         !sv 29.05.02
       save lfirst, ncall, nwrite_fmt, nwrite_bnr                      !sv 29.05.02
       data lfirst /.true./, ncall /0/, nwrite_fmt /0/, nwrite_bnr /0/ !sv 29.05.02
 

@@ -14,7 +14,9 @@
       use b2mod_sources
      1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
      2          smpr, smpt, smfr, smcf
-      use b2mod_balance
+      use b2mod_balance !djm Jan2017
+     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
+     2          balance_netcdf, tot_smo0to3, fmo_tot
       use b2mod_plasma
      & , only : fmo, fchanml, facdrift, fac_ExB                        !srv 25.09.17 15.04.19
       use b2mod_numerics_namelist
@@ -22,11 +24,50 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_openmp
+#ifdef _OPENMP
+      use b2mod_balance
+     1 ,only : b2stbr_phys_smo_bal, b2stbr_phys_smo0to3,
+     2         b2stbr_bas_smo_bal, b2stbr_bas_smo0to3,
+     3         b2stbc_smo_bal, b2stbc_smo0to3,
+     4         eirene_mc_mapl_smo_bal, eirene_mc_mapl_smo0to3,
+     5         eirene_mc_mmpl_smo_bal, eirene_mc_mmpl_smo0to3,
+     6         eirene_mc_mipl_smo_bal, eirene_mc_mipl_smo0to3,
+     7         eirene_mc_cppv_smo_bal, eirene_mc_cppv_smo0to3,
+     8         b2stbm_smo_bal, b2stbm_smo0to3,
+     9         ext_smo_bal, ext_smo0to3,
+     *         tot_smo_bal, tot_smo0to3,
+     *         b2stel_smq_ion_bal, b2stel_smq_ion0to3,
+     1         b2stel_smq_rec_bal, b2stel_smq_rec0to3,
+     2         b2stcx_smq_bal, b2stcx_smq0to3,
+     3         b2srsm_smo_bal, b2srsm_smo0to3,
+     4         b2srdt_smo_bal, b2srdt_smo0to3,
+     5         b2srst_smo_bal, b2srst_smo0to3,
+     6         b2sifr_smoch_bal, b2sifr_smoch0to3,
+     &         b2sifr_smotf_ehxp0to3, b2sifr_smotf_ehxp_bal,
+     &         b2sifr_smotf_cthe0to3, b2sifr_smotf_cthe_bal,
+     &         b2sifr_smotf_cthi0to3, b2sifr_smotf_cthi_bal,
+     &         b2sifr_smofrea_bal, b2sifr_smofrea0to3,
+     &         b2sifr_smofria_bal, b2sifr_smofria0to3,
+     &         b2sifr_smotfea_bal, b2sifr_smotfea0to3,
+     &         b2sifr_smotfia_bal, b2sifr_smotfia0to3,
+     8         b2sigp_smogp_bal, b2sigp_smogp0to3,
+     &         b2sigp_smogpi_bal, b2sigp_smogpi0to3,
+     &         b2sigp_smogpe_bal, b2sigp_smogpe0to3,
+     &         b2sigp_smogpgr_bal, b2sigp_smogpgr0to3,
+     9         b2sigp_pstat_bal, b2sigp_pstat0to3,
+     &         b2sigp_pstati_bal, b2sigp_pstati0to3,
+     &         b2sigp_pstate_bal, b2sigp_pstate0to3,
+     *         b2siav_smovh_bal, b2siav_smovh0to3,
+     1         b2siav_smovv_bal, b2siav_smovv0to3,
+     2         b2sicf_smo_bal, b2sicf_smo0to3,
+     3         b2sian_smo_bal, b2sian_smo0to3,
+     4         b2nxdv_smo_bal, b2nxdv_smo0to3
 #ifndef NO_OPENMP_B2NPMO
       use b2mod_b2cmpt
       use b2mod_b2cmgs
       use b2mod_transport
      & , only : f_luc_sg, alfx_c, sigx_c
+#endif
 #endif
 #ifdef WITH_FTIMINGS
       use timings
@@ -112,8 +153,8 @@
      *  flubv(-1:nx,-1:ny,0:1),                                        !srv 11.09.09
      3  wrkf(-1:nx,-1:ny,0:1), aa5(-1:nx,-1:ny,-2:2),
      4  smb(-1:nx,-1:ny,0:3), flcb(-1:nx,-1:ny,0:1),
-     5  cvcb(-1:nx,-1:ny,0:1), ro(-1:nx,-1:ny),
-     6  pr(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
+     5  cvcb(-1:nx,-1:ny,0:1), ro(-1:nx,-1:ny), rz(-1:nx,-1:ny),
+     6  pr(-1:nx,-1:ny), pz(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
      7  ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
      8  ehxp(-1:nx,-1:ny), smt(-1:nx,-1:ny,0:3), cst,                  !srv 17.01.14
      9  flct(-1:nx,-1:ny,0:1), wrk1(-1:nx,-1:ny), wrks(-1:nx,-1:ny),
@@ -132,13 +173,15 @@
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
-     *  med
+     *  med, roxa
       external subini, subend, xertst, ipgetr, sfill, b2scopy,
      &  b2sscal, b2saxpy
-      external b2xvsg, b2xvff, b2xpne, b2xpro, b2xppr,
+      external
+     &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,
      &  b2sifr, b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
+      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/, rxg/1.0e6_R8/, diagno/0/
 
@@ -233,12 +276,14 @@
         call b2xvsg (n2, smq(-1,-1,3,is), 1, 'smq 3', '.le.')
        enddo
       endif
-*   ..compute ne, ne2, ro, pr
+*   ..compute ne, ne2, ro, rz, pr, pz
       call b2xpni (nx, ny, ns, na, ni)
       call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
       call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
       call b2xpro (nx, ny, ns, mp, am, na, ro)
+      call b2xprz (nx, ny, ns, mp, am, na, rz)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
+      call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !srv 13.01.17 {
       call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
       do iy = -1, ny
@@ -335,6 +380,7 @@
 !$OMP& SHARED(eirene_mc_cppv_smo_bal, eirene_mc_cppv_smo0to3)
 !$OMP& SHARED(b2stbm_smo_bal, b2stbm_smo0to3)
 !$OMP& SHARED(ext_smo_bal, ext_smo0to3)
+!$OMP& SHARED(tot_smo_bal, tot_smo0to3)
 !$OMP& SHARED(b2stel_smq_ion_bal, b2stel_smq_ion0to3)
 !$OMP& SHARED(b2stel_smq_rec_bal, b2stel_smq_rec0to3)
 !$OMP& SHARED(b2stcx_smq_bal, b2stcx_smq0to3)
@@ -342,14 +388,26 @@
 !$OMP& SHARED(b2srdt_smo_bal, b2srdt_smo0to3)
 !$OMP& SHARED(b2srst_smo_bal, b2srst_smo0to3)
 !$OMP& SHARED(b2sifr_smoch_bal, b2sifr_smoch0to3)
-!$OMP& SHARED(b2sifr_smotf_bal, b2sifr_smotf0to3)
+!$OMP& SHARED(b2sifr_smotf_ehxp0to3, b2sifr_smotf_ehxp_bal)
+!$OMP& SHARED(b2sifr_smotf_cthe0to3, b2sifr_smotf_cthe_bal)
+!$OMP& SHARED(b2sifr_smotf_cthi0to3, b2sifr_smotf_cthi_bal)
+!$OMP& SHARED(b2sifr_smofrea_bal, b2sifr_smofrea0to3)
+!$OMP& SHARED(b2sifr_smofria_bal, b2sifr_smofria0to3)
+!$OMP& SHARED(b2sifr_smotfea_bal, b2sifr_smotfea0to3)
+!$OMP& SHARED(b2sifr_smotfia_bal, b2sifr_smotfia0to3)
 !$OMP& SHARED(b2sigp_smogp_bal, b2sigp_smogp0to3)
+!$OMP& SHARED(b2sigp_smogpi_bal, b2sigp_smogpi0to3)
+!$OMP& SHARED(b2sigp_smogpe_bal, b2sigp_smogpe0to3)
+!$OMP& SHARED(b2sigp_smogpgr_bal, b2sigp_smogpgr0to3)
 !$OMP& SHARED(b2sigp_pstat_bal, b2sigp_pstat0to3)
+!$OMP& SHARED(b2sigp_pstati_bal, b2sigp_pstati0to3)
+!$OMP& SHARED(b2sigp_pstate_bal, b2sigp_pstate0to3)
 !$OMP& SHARED(b2siav_smovh_bal, b2siav_smovh0to3)
 !$OMP& SHARED(b2siav_smovv_bal, b2siav_smovv0to3)
 !$OMP& SHARED(b2sicf_smo_bal, b2sicf_smo0to3)
 !$OMP& SHARED(b2sian_smo_bal, b2sian_smo0to3)
 !$OMP& SHARED(b2nxdv_smo_bal, b2nxdv_smo0to3)
+!$OMP& SHARED(fmo_tot)
 !$OMP& SHARED(nlreg, nlloc, nlxlo, nlxhi, nlylo, nlyhi) 
 !$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim)
 #ifndef GFORTRAN
@@ -378,6 +436,18 @@
            do ix =-1,nx
              smbch(ix,iy,0:3) = vol(ix,iy)*hz(ix,iy)*smbch(ix,iy,0:3)
              smbtf(ix,iy,0:3) = vol(ix,iy)*hz(ix,iy)*smbtf(ix,iy,0:3)
+             smfr(ix,iy,is) = vol(ix,iy)*hz(ix,iy)*(
+     &        ( smbfrea(ix,iy,0) + smbfria(ix,iy,0) ) +
+     &        ( smbfrea(ix,iy,1) + smbfria(ix,iy,1) ) * ua(ix,iy,is) +
+     &        ( smbfrea(ix,iy,2) + smbfria(ix,iy,2) ) * roxa(ix,iy,is) +
+     &        ( smbfrea(ix,iy,3) + smbfria(ix,iy,3) ) * ua(ix,iy,is) *
+     &                                                  roxa(ix,iy,is) )
+             smpt(ix,iy,is) = vol(ix,iy)*hz(ix,iy)*(
+     &        ( smbtfea(ix,iy,0) + smbtfia(ix,iy,0) ) +
+     &        ( smbtfea(ix,iy,1) + smbtfia(ix,iy,1) ) * ua(ix,iy,is) +
+     &        ( smbtfea(ix,iy,2) + smbtfia(ix,iy,2) ) * roxa(ix,iy,is) +
+     &        ( smbtfea(ix,iy,3) + smbtfia(ix,iy,3) ) * ua(ix,iy,is) *
+     &                                                  roxa(ix,iy,is) )
            enddo
          enddo
        else
@@ -399,7 +469,7 @@
      &    wrk0, wrk1, wrk2)                                            !srv 01.07.09
         endif                                                          !srv 26.10.08 }
        endif
-*    ..compute pressure gradient term
+*     ..compute pressure gradient term
        call b2sigp (nx, ny, is, rza(-1,-1,is), vol, hx, hz, bb,  
      &   na(-1,-1,is), ti, ne, te, po, smbgp, wrk0, wrk1, wrk2)        !srv 02.07.08
 *    ..compute flub
@@ -449,16 +519,24 @@
 
 cdjm Jan2017 update momentum source components for balance
        if (balance_netcdf.ne.0) then
+         tot_smo0to3(:,:,:,is)=smb !djm Mar2019
          call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
        endif
 
 *    ..compute residual
-      if((solving.and.any(solvemo(is,0:nnreg(0))))
+       if((solving.and.any(solvemo(is,0:nnreg(0))))
      &            .or.get_residuals.eq.1) then                         !srv 22.05.18
-       call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
+        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
-       fmo(:,:,:,is)=wrkf
-      endif                                                            !srv 22.05.18
+        fmo(:,:,:,is)=wrkf
+
+cdjm Mar2019 output the total momentum flux and source for balance
+        if (balance_netcdf.ne.0) then
+         fmo_tot(:,:,:,is)=wrkf
+        endif
+
+       endif                                                           !srv 22.05.18
+
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
        if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 12.07.02 {
@@ -533,7 +611,7 @@ c    ..compare 5-pt stencil matrices
         if (new_matrix) call restart_ma28
 *    ..compute correction
         call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
-     &   vol, hx, hz, bb, rob, pb, ua(-1,-1,is),                       !srv 09.01.01
+     &   vol, hx, hz, bb, rob, rob, pb, pb, ua(-1,-1,is),              !srv 09.01.01
      &   smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
      &   pcca(-1,-1,0,is), aa5, wrk1, 'b2usmo_'//chns)
         last_solve_5(0:nnreg(0)) = solvemo(is,0:nnreg(0))
@@ -574,7 +652,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
        endif                                                           !srv 22.05.18
       enddo
 #ifndef NO_OPENMP_B2NPMO
-!$OMP END PARALLEL DO
+      !$OMP END PARALLEL DO
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
 #endif
@@ -592,7 +670,7 @@ csw 21feb2014, execute simultaneous corrections always
        end do
        if (new_matrix) call restart_ma28
        call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,         !srv 04.07.08
-     &  vol, hx, hz, bb, ro, pr, wrk0, smt, flct, cvct,                !srv 09.01.01
+     &  vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,        !srv 09.01.01
      &  resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')          !srv 06.04.07
        last_solve_5(0:nnreg(0)) = solvemt(0:nnreg(0))
       else
@@ -630,7 +708,7 @@ csw 21feb2014, execute simultaneous corrections always
           do ix = -1,nx
             do is = 0, ns-1
               if (.not.is_neutral(is)) then
-                cst=sqrt(pr(ix,iy)/ro(ix,iy))                          !iyv 03.02.14
+                cst=sqrt(pz(ix,iy)/rz(ix,iy))                          !iyv 03.02.14
 !                cst=sqrt( (ti(ix,iy)+te(ix,iy)*rza(ix,iy,is))/
 !     *                                              ( am(is)*mp ))
                 if( abs(ua(ix,iy,is)) .gt. 3.0_R8*cst ) then

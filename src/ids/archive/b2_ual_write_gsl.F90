@@ -398,7 +398,7 @@ contains
         !! Internal variables
         character(len=256) :: rdline
         character(len=256) :: rdstring
-        integer ::  cfcount, stat
+        integer :: cfcount, stat
         integer :: cf_sizes(array_size)
         integer, dimension(:), allocatable :: read_additional_sizes
 
@@ -492,7 +492,7 @@ contains
         integer, allocatable :: cellsNodesList(:,:)
         integer, allocatable :: edgeIndicesRepeat(:)
         !! TODO: get time out from b2fstate
-        ! real(B2R8)    ::  time
+        ! real(B2R8) :: time
         real(IDS_real) :: time  !< Generic time
         real(IDS_real), allocatable :: nodesGeoList(:,:)
         real(IDS_real) :: scalarCells(2)

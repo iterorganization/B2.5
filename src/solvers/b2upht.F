@@ -45,8 +45,7 @@
       real (kind=R8) :: 
      *  dte1(-1:nx,-1:ny), dti1(-1:nx,-1:ny),                             !lk 26.10.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny), tt3(-1:ny)                    !lk 26.10.17
-*   ..procedures
-
+      integer, save :: nrings, jxi, jxa, jsep
       save ncall, stylec, pot_eq
 *   ..procedures
       intrinsic min, max
@@ -55,7 +54,7 @@
       external subini, subend, xertst, ipgeti, b2xvsg
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
-      data ncall/0/, stylec/0/, pot_eq/1/
+      data ncall/0/, stylec/0/, pot_eq/1/, nrings/0/
 *!!   (stylec is a numerical switch, needs experiments)
 
 *-----------------------------------------------------------------------
@@ -68,7 +67,9 @@
       n2=(nx+2)*(ny+2)
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       call get_jsep(nx,ny,jxi,jxa,jsep)
        call ipgeti ('b2upht_stylec', stylec)
+       call ipgeti ('nrings_for_no_speedup_averaging', nrings)     ! IYS 27.03.2019
        call xertst (0.le.stylec, 'faulty internal parameter stylec')
        call ipgeti ('b2news_poteq', pot_eq)
       endif
@@ -132,7 +133,7 @@
         dti1(ix,iy) = dti
 *   ..smooth the correction for inner flux surfaces      !lk 26.10.2017{
         if(on_closed_surface(ix,iy) .and. 
-     *                                 bottomiy(ix,iy).ne.-2) then
+     *     iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
           tt0(iy) = tt0(iy) + vol(ix,iy)*ni(ix,iy,1)
           tt1(iy) = tt1(iy) + vol(ix,iy)*ni(ix,iy,1)*dti1(ix,iy)
           tt2(iy) = tt2(iy) + vol(ix,iy)*ne(ix,iy)
@@ -145,7 +146,7 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if(on_closed_surface(ix,iy) .and. 
-     *                                 bottomiy(ix,iy).ne.-2) then
+     *     iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
           dti1(ix,iy) = tt1(iy)/tt0(iy) +
      *         corr_core_dt*(dti1(ix,iy)-tt1(iy)/tt0(iy))    ! IYS 19.12.2017
           dte1(ix,iy) = tt3(iy)/tt2(iy) +
@@ -160,7 +161,7 @@
         if (solvereg(ireg)) te(ix,iy) = max(1.0e-5_R8*ev,te(ix,iy)+dte)   !xpb
         if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
      &      leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 
+     &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1
      &                            .and. add_te_corr_to_po(ireg)) then
                             po(ix,iy) = po(ix,iy)+dte/qe
         else if (pot_eq.eq.2) then

@@ -128,8 +128,8 @@
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..read atomic rate data
       call cfruch (ninp(6), 120, lblrc, 'label')
-      adpak_used = index(lblrc,'ADPAK').gt.0
-      call read_b2mod_ppout('rates', ninp(6), lblrc)
+      call get_AM_flag (lblrc, b2frates_flag)
+      call read_b2mod_ppout('rates', ninp(6), b2frates_flag)
       call b2rurc (ninp(6), b2frates_version)
 *   ..test rtns, rtzmin, rtzmax, rtzn
       call xertst (ns.eq.rtns, 'faulty input rtns--wrong rate table?')
@@ -173,6 +173,7 @@
      &   rlcx(-1,-1,0,0,k))
       enddo
 *   ..compute charge exchange rate coefficients
+      rcx = 0.0_R8
       do k = 0, nscx-1
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
      &   rlcx(-1,-1,0,0,k), rcx)

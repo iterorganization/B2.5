@@ -92,7 +92,7 @@ c     It is not allowed to bundle neutral and charged states together.
                 enddo
                 iss = iss + 1
               enddo
-              is=is+zn(is)
+              is=is+nint(zn(is))
               deallocate(pdum)
             else
               potimin(is)=0.0_R8

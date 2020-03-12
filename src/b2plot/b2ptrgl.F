@@ -24,6 +24,9 @@ c======================================================================
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_ccona
+      use eirmod_cinit
+#else
+      use b2mod_eirbra
 #endif
       implicit none
 #include <DIMENSIONS.F>
@@ -89,9 +92,9 @@ c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOT
 c***                   -erfaat-erfmat-erfiat-erfaml-erfmml-erfiml
 c***    wldnep  :   potential energy released by neutrals. Evaluated as diss_pot_H2*prfaml
 c***    wldna   :   flux of atoms impinging onto the surface. Equal to POTAT
-c***    ewlda   :   their average energy. Equal to EOTAT/POTAT*wldna
+c***    ewlda   :   their average energy. Equal to EOTAT/POTAT
 c***    wldnm   :   flux of molecules impinging onto the surface. Equal to POTML
-c***    ewldm   :   their average energy. Equal to EOTML/POTML*wldnm
+c***    ewldm   :   their average energy. Equal to EOTML/POTML
 c***    wldra   :   flux of reflected atoms. Equal to PRFAAT+PRFMAT+PRFIAT
 c***    wldrm   :   flux of reflected molecules. Equal to PRFAML+PRFMML+PRFIML
 c***    wldpp   :   flux of plasma ions impinging onto the surface. Equal to POTPL
@@ -192,11 +195,7 @@ c*** which are calculated in Eirene.
       print *,'ers_factor,lrdlsp= ',ers_factor,lrdlsp
 #endif
       tab=char(9)
-#ifndef HPUX
-      filename='fort.44'
-#else
-      filename='ftn44'
-#endif
+      filename=fort_lc//'44'
       call find_file(filename,ft44)
 
 c----------------------------------------------------------------------
@@ -1318,12 +1317,8 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
             end if
           end do !loop on targets
         else
-          print *, 'b2ptrgl, no sputtering calculated:',
-#ifndef HPUX
-     ,     ' track_species=0 or no fort.44 file available'
-#else
-     ,     ' track_species=0 or no ftn44 file available'
-#endif
+          print '(4a)', 'b2ptrgl, no sputtering calculated:',
+     ,     ' track_species=0 or no ',fort_lc,'44 file available'
         end if
 
         l=1

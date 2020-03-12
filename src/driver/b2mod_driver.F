@@ -51,12 +51,14 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_cinit
-     * , only : eirene_init_cinit
+     * , only : eirene_init_cinit, fort_lc
       use eirmod_ccoupl
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_comprt
      , ,only: iunout
+      use eirmod_comusr
+     , ,only: eirene_alloc_comusr
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
@@ -76,6 +78,9 @@
 #endif
 #ifdef USE_IMPGYRO
       use b2mod_impgyro !yamoto
+#endif
+#ifdef IMAS
+      use ids_schemas   ! IGNORE
 #endif
       implicit none
 *   ..common blocks
@@ -1128,7 +1133,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
      *             log(neutral_sources_rescale)
-                write(*,'(i3,1p,2e15.8)') is,zamax(is),rtlra(0,0,is+1)
+                write(*,'(i3,1p,2e16.8)') is,zamax(is),rtlra(0,0,is+1)
              endif
            enddo
          else
@@ -1209,6 +1214,7 @@ csw 09oct2012
 #endif
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
+        CALL EIRENE_DEFAULTS_USR
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
         CALL EIRENE_SET_PARMMOD(1)
@@ -1239,6 +1245,7 @@ csw 09oct2012
         N3RD=DEF_NPHID
         NREAC=7
         IUNOUT=6
+        CALL EIRENE_DEFAULTS_USR
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_INIT_CINIT
@@ -1249,13 +1256,14 @@ csw 09oct2012
       endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NATM,NMOL,NION,NSTRA)
       CALL EIRENE_ALLOC_CCOUPL(1)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
 #else
       call alloc_b2mod_braeir(nx,ny,ns)
-      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nx,ny,ns,natm,nmol,nion,npls,nstra)
 #endif
 
 *   ..read geometry and metric
@@ -1347,7 +1355,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
       hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
       hzconst = 1.0_R8                                                   !srv 30.01.10
-      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
+      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol(:,:)/gs(:,:,2)           !srv 16.06.09
 *   ..compute pbshz (magnetic field pitch * surface area  at cell faces * hz)
 c      wrk0 = hz*vol
 c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
@@ -1723,9 +1731,27 @@ c   --> better way doing this is necessary)
 *   ..initialise counters
       itim = 0
       itim_plas = 0
-      if (stim.ge.0.0_R8) tim = stim
+      if (stim.ge.0.0_R8) then
+        tim = stim
+        run_start_time = stim
+      else
+#ifdef IMAS
+        run_start_time = IDS_REAL_INVALID
+#else
+        run_start_time = 0.0_R8
+#endif
+      end if
       call xertst (etim.eq.0.0_R8 .or. etim.gt.tim,
      & 'faulty input etim')
+      if (etim.gt.tim) then
+        run_end_time = etim
+      else
+#ifdef IMAS
+        run_end_time = IDS_REAL_INVALID
+#else
+        run_end_time = 0.0_R8
+#endif
+      end if
       save_plasma_time = tim + delta_plasma_time
       save_cdfmovie_time = tim
 *   ..initialise tracing routines
@@ -1746,15 +1772,10 @@ cxpb initialize the data necessary for boundary conditions
       else
         call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
       endif
-      call b2stbr_init (nx, ny, ns, BoRiS)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 #ifdef B25_EIRENE
-#ifndef HPUX
-      filename='fort.44'
-#else
-      filename='ftn44'
-#endif
+      filename=fort_lc//'44'
       call find_file(filename,ex)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
@@ -1767,6 +1788,8 @@ cxpb for neutral fluxes used in b2stbc_phys
         endif
       endif
 #endif
+      call b2stbr_init (nx, ny, ns, BoRiS)
+      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
 c new CDF movie option (1st frame at t=0)
       if(tim.ge.save_cdfmovie_time.and.
      1 delta_cdfmovie_time.gt.0.0_R8) then
@@ -1991,11 +2014,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         end do
 *    ..produce time dependent file
         if (save_f31.lt.0) then
-#ifndef HPUX
-          write(fort31name,'(a,i8.8)') 'fort.31.', itim
-#else
-          write(fort31name,'(a,i8.8)') 'ftn31.', itim
-#endif
+          write(fort31name,'(a,i8.8)') fort_lc//'31.', itim
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
           call copy_background(nx, ny, ns, BoRiS)
@@ -2177,14 +2196,16 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) then
             call write_f44(savefile(13:16))
-#ifndef HPUX
-            inquire(file='fort.13',exist=found)
+            filename=fort_lc//'13'
+            inquire(file=filename,exist=found)
             if (found) then
 #ifdef WINDOWS
-              systemarg='copy fort.13 fort.13.'//savefile(13:16)//
+              systemarg='copy '//trim(filename)//' '//
+     &                           trim(filename)//'.'//savefile(13:16)//
      &        ' > nul'
 #else
-              systemarg='cp fort.13 fort.13.'//savefile(13:16)
+              systemarg='cp '//trim(filename)//' '//
+     &                         trim(filename)//'.'//savefile(13:16)
 #endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)
@@ -2192,13 +2213,16 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
               call system(systemarg)
 #endif
             endif
-            inquire(file='fort.15',exist=found)
+            filename=fort_lc//'14'
+            inquire(file=filename,exist=found)
             if (found) then
 #ifdef WINDOWS
-              systemarg='copy fort.15 fort.15.'//savefile(13:16)//
+              systemarg='copy '//trim(filename)//' '//
+     &                           trim(filename)//'.'//savefile(13:16)//
      &        ' > nul'
 #else
-              systemarg='cp fort.15 fort.15.'//savefile(13:16)
+              systemarg='cp '//trim(filename)//' '//
+     &                         trim(filename)//'.'//savefile(13:16)
 #endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)
@@ -2206,14 +2230,16 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
               call system(systemarg)
 #endif
             endif
-#else
-            inquire(file='ftn13',exist=found)
+            filename=fort_lc//'15'
+            inquire(file=filename,exist=found)
             if (found) then
 #ifdef WINDOWS
-              systemarg='copy ftn13 ftn13.'//savefile(13:16)//
+              systemarg='copy '//trim(filename)//' '//
+     &                           trim(filename)//'.'//savefile(13:16)//
      &        ' > nul'
 #else
-              systemarg='cp ftn13 ftn13.'//savefile(13:16)
+              systemarg='cp '//trim(filename)//' '//
+     &                         trim(filename)//'.'//savefile(13:16)
 #endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)
@@ -2221,21 +2247,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
               call system(systemarg)
 #endif
             endif
-            inquire(file='ftn15',exist=found)
-            if (found) then
-#ifdef WINDOWS
-              systemarg='copy ftn15 ftn15.'//savefile(13:16)//
-     &        ' > nul'
-#else
-              systemarg='cp ftn15 ftn15.'//savefile(13:16)
-#endif
-#ifdef NAGFOR
-              call system(systemarg, status, ierror)
-#else
-              call system(systemarg)
-#endif
-            endif
-#endif
           endif
 #endif
           close(nout(6))

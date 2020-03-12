@@ -478,7 +478,7 @@
       read (ninp(1),*,err=92) (naini(is),is=0,ns-1)
       call b2xvsg (ns, naini, 1, 'naini', '.gt.')
 *   ..read and test ttini
-*     (ttini is provided in units of ev)
+*     (ttini is provided in units of eV)
       read (ninp(1),'(a8)',err=91) id
       call xertst (streql(id,'*ttini'),
      &  'faulty input id instead of *ttini, id='//id)
@@ -550,7 +550,7 @@
        allocate(zcdum(0:idum(2)-1,0:4))
        call cfruch (ninp(3), 120, lblps, 'label')
        call b2ruzd (ninp(3), b2fstate_version, idum(2),
-     &  zcdum(0,1), zcdum(0,2), zcdum(0,3), zcdum(0,4), .false.)
+     &   zcdum(0,1), zcdum(0,2), zcdum(0,3), zcdum(0,4), .false.)
        do is = 0, min(ns,idum(2))-1
         call xertst (ltst(zcdum(is,1),zamin(is)),
      &  'faulty data for zamin')
@@ -704,6 +704,8 @@
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
        enddo
        call b2xpne (nx, ny, ns, rza, na, zero, ne)
+       call sfill (n2*2, 0.0_R8, vedia, 1)
+       call sfill (n2*2, 0.0_R8, veecrb, 1)
 *   ..initialise te, ti, po
        call sfill (n2, ttini*ev, te, 1)
        call sfill (n2, ttini*ev, ti, 1)

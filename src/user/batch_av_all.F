@@ -39,8 +39,9 @@
      .                             e_shi(:,:,:),
      .                             e_sch(:,:,:)
 
-      integer ::  iun, n2, itp, idum(0:2)
-      integer, save :: naver, ntotdt
+      integer :: iun, n2, itp, idum(0:2)
+      integer, save :: naver
+!     integer, save :: ntotdt
       character lble*120
 
       n2 = (nx+2)*(ny+2)

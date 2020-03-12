@@ -77,7 +77,7 @@ cxpb  DISCONTINUOUS across the cut in the case of diverted island geometries
             elseif((periodic_bc.ne.1 .or. leftix(ix,iy).eq.ix-1         !xpb
      &         .or. region(ix,iy,0).eq.5 .or. nncut.eq.0) .and.
      &        leftix(ix,iy).ne.-2 .and.
-     &        bottomiy(leftix(ix,iy),leftiy(ix,iy)).ne.-2)  then        !xpb
+     &        bottomiy(leftix(ix,iy),leftiy(ix,iy)).ne.-2) then         !xpb
               corner(ix,iy)=(
      1           centre(ix,iy)*
      2           vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
@@ -97,7 +97,7 @@ cxpb  DISCONTINUOUS across the cut in the case of diverted island geometries
             elseif((periodic_bc.ne.1 .or. leftix(ix,iy).eq.ix-1         !xpb
      &         .or. region(ix,iy,0).eq.5 .or. nncut.eq.0) .and.
      &        leftix(ix,iy).ne.-2 .and.
-     &        leftix(bottomix(ix,iy),bottomiy(ix,iy)).ne.-2)  then      !xpb
+     &        leftix(bottomix(ix,iy),bottomiy(ix,iy)).ne.-2) then       !xpb
               corner(ix,iy)=(
      1           centre(ix,iy)*
      2           vol(leftix(bottomix(ix,iy),bottomiy(ix,iy)),

@@ -12,11 +12,9 @@ module b2mod_ual
 
     use b2mod_types
 #ifdef IMAS
-    use b2mod_ual_io &
-     & , only : b25_process_ids, ids_put, ids_deallocate, &
-     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport
+    use b2mod_ual_io
 #else
-# ifdef ITM
+# ifdef ITM_ENVIRONMENT_LOADED
     use euITM_schemas  ! IGNORE
     use euITM_routines ! IGNORE
 # endif
@@ -30,7 +28,14 @@ module b2mod_ual
 #ifdef IMAS
   public put_ids_edge
   public b25_process_ids
-  public ids_edge_profiles, ids_edge_sources, ids_edge_transport
+  public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+    &    ids_radiation, ids_dataset_description
+#if IMAS_MINOR_VERSION > 21
+  public ids_summary
+#endif
+#if IMAS_MINOR_VERSION > 25
+  public ids_numerics
+#endif
 #endif
 
 
@@ -39,58 +44,115 @@ contains
 #ifdef IMAS
     !> Subroutine used to put data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
-    subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport,   &
-            &   treename, shot, run, idx, username, device, version )
-        type(ids_edge_profiles), intent(inout)  :: edge_profiles    !< IDS
+    subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport, &
+            &   radiation, description, &
+#if IMAS_MINOR_VERSION > 21
+            &   summary, &
+#endif
+#if IMAS_MINOR_VERSION > 25
+            &   numerics, &
+#endif
+            &   treename, shot, run, idx, username, database, version )
+        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
             !< designed to store data on edge plasma profiles  (includes the
             !< scrape-off layer and possibly part of the confined plasma)
-        type (ids_edge_sources), intent(inout)  :: edge_sources     !< IDS
+        type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
             !< designed to store data on edge plasma sources. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
-        type (ids_edge_transport), intent(inout)  :: edge_transport !< IDS
+        type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
             !< designed to store  data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
+        type (ids_radiation), intent(inout) :: radiation !< IDS
+            !< designed to store data about plasma radiation
+        type (ids_dataset_description) :: description !< IDS designed to store
+            !< a description of the simulation
+#if IMAS_MINOR_VERSION > 21
+        type (ids_summary), intent(inout) :: summary !< IDS
+            !< designed to store run summary data
+#endif
+#if IMAS_MINOR_VERSION > 25
+        type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
+            !< run numerics data
+#endif
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
             !< (i.e. "edge_profiles" (mandatory) )
         integer, intent(in) :: shot !< The shot number of the database being created
         integer, intent(in) :: run  !< The run number of the database being created
-        integer, intent(in) :: idx  !< The returned identifier to be used in the subsequent
+        integer, intent(out) :: idx  !< The returned identifier to be used in the subsequent
             !< data access operation
         character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
             !< database
-        character(len=24), intent(in) :: device     !< Device name of the IMAS IDS database
+        character(len=24), intent(in) :: database   !< IMAS database name
             !< (i. e. solps-iter, iter, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
             !< database
+        integer :: status
 
         !! Set data to edge_profiles IDS
-        write(0,*) "Writing to edge_profiles, edge_sources and edge_transport IDS"
+        write(0,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
+#if IMAS_MINOR_VERSION > 21
+          &  "summary, "// &
+#endif
+#if IMAS_MINOR_VERSION > 25
+          &  "numerics, "// &
+#endif
+          &  "dataset_description, and radiation IDS"
 
         !! Create and modify new shot/run
         call imas_create_env( treename, shot, run, 0, 0, idx, username, &
-            device, version )
+            database, version, status )
+        call xertst( status.eq.0, 'Error opening IMAS database !')
 
         !! Or open and modify existing shot/run (might work much faster than
         !! imas_create_env)
-        ! call imas_open_env('treename', shot, run, idx, username, device, version )
+        ! call imas_open_env(treename, shot, run, idx, username, &
+        !  database, version, status )
 
         !! Put data to IDS
-        ! call ids_put_slice( idx, "edge_profiles", edge_profiles )
-        ! call ids_put_slice( idx, "edge_transport", edge_sources )
-        ! call ids_put_slice( idx, "edge_transport", edge_transport )
-        call ids_put( idx, "edge_profiles", edge_profiles )
-        call ids_put( idx, "edge_sources", edge_sources )
-        call ids_put( idx, "edge_transport", edge_transport )
+        ! call ids_put_slice( idx, "edge_profiles", edge_profiles, status )
+        ! call ids_put_slice( idx, "edge_transport", edge_sources, status )
+        ! call ids_put_slice( idx, "edge_transport", edge_transport, status )
+        ! call ids_put_slice( idx, "radiation", radiation, status )
+        ! call ids_put_slice( idx, "dataset_description", description, status )
+        ! call ids_put_slice( idx, "summary", summary, status )
+        ! call ids_put_slice( idx, "numerics", numerics, status )
+        call ids_put( idx, "edge_profiles", edge_profiles, status )
+        call xertst( status.eq.0, 'Error putting edge_profiles IDS !')
+        call ids_put( idx, "edge_sources", edge_sources, status )
+        call xertst( status.eq.0, 'Error putting edge_sources IDS !')
+        call ids_put( idx, "edge_transport", edge_transport, status )
+        call xertst( status.eq.0, 'Error putting edge_transport IDS !')
+        call ids_put( idx, "radiation", radiation, status )
+        call xertst( status.eq.0, 'Error putting radiation IDS !')
+        call ids_put( idx, "dataset_description", description, status )
+        call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+#if IMAS_MINOR_VERSION > 21
+        call ids_put( idx, "summary", summary, status )
+        call xertst( status.eq.0, 'Error putting summary IDS !')
+#endif
+#if IMAS_MINOR_VERSION > 25
+        call ids_put( idx, "numerics", numerics, status )
+        call xertst( status.eq.0, 'Error putting numerics IDS !')
+#endif
 
         !! Close IDS
         call ids_deallocate( edge_profiles )
         call ids_deallocate( edge_sources )
         call ids_deallocate( edge_transport )
-        call imas_close( idx )
+        call ids_deallocate( radiation )
+        call ids_deallocate( description )
+#if IMAS_MINOR_VERSION > 21
+        call ids_deallocate( summary )
+#endif
+#if IMAS_MINOR_VERSION > 25
+        call ids_deallocate( numerics )
+#endif
+        call imas_close( idx, status )
+        call xertst( status.eq.0, 'Error closing IMAS database !')
 
         write(0,*) "IDS write finished"
 
@@ -100,7 +162,7 @@ contains
     !> Routine to open UAL database.
     !! @note For IMAS IDS is recommended use of IMAS GGD library routine
     !! "exampleOpenIDS"
-    subroutine open_ual( idx, shot, run, time, user, tokamak, dataversion,  &
+    subroutine open_ual( idx, shot, run, time, user, database, dataversion,  &
         &   doCreate, useHdf5, nmlFile )
         integer, intent(out) :: idx !< The returned identifier to be used in the
                                     !< subsequent data access operation
@@ -115,8 +177,8 @@ contains
                                                 !! returned
         character(*), intent(in), optional :: user  !< Creator/owner of the
                                                     !< database
-        character(*), intent(in), optional :: tokamak !< Device name of the
-            !< database (i. e. solps-iter, iter, aug)
+        character(*), intent(in), optional :: database !< Database name
+                                                       !< (i. e. solps-iter, iter, aug)
         character(*), intent(in), optional :: dataversion   !< Major version of
                                                             !< the database
         logical, intent(in), optional :: doCreate
@@ -130,9 +192,10 @@ contains
 
         integer :: lRefshot = 0, lRefrun = 0
 #ifdef IMAS
+        integer :: lStatus = 0
         character(32) :: lTreename = "ids"
 #else
-# ifdef ITM
+# ifdef ITM_ENVIRONMENT_LOADED
         character(32) :: lTreename = "euitm"
 # else
         character(32) :: lTreename = "none"
@@ -154,7 +217,7 @@ contains
         if( present( shot ) ) lShot = shot
         if( present( run ) ) lRun = run
         if( present( user ) ) lUser = user
-        if( present( tokamak ) ) lTokamak = tokamak
+        if( present( database ) ) lTokamak = database
         if( present( dataversion ) ) lDataversion = dataversion
         if( present( doCreate ) ) lDoCreate = doCreate
         if( present( useHdf5 ) ) lUseHdf5 = useHdf5
@@ -192,31 +255,50 @@ contains
         if( lDoCreate) then
 #ifdef IMAS
             if( lUseHdf5) then
+# if UAL_MAJOR_VERSION < 4
                 call imas_create_hdf5(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
+# else
+                call xerrab ('HDF5 IMAS format not supported with UAL v4!')
+# endif
             else
                 if( openEnv) then
                     call imas_create_env(lTreename, lShot, lRun, lRefshot,  &
-                        &   lRefrun, idx, lUser, lTokamak, lDataversion)
+                        &   lRefrun, idx, lUser, lTokamak, lDataversion,    &
+                        &   lStatus)
+                    call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
                 else
+# if UAL_MAJOR_VERSION < 4
                     call imas_create(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
+# else
+                    call xerrab ('Must define username!')
+# endif
                 end if
             end if
         else
             if( lUseHdf5) then
+# if UAL_MAJOR_VERSION < 4
                 call imas_open_hdf5(lTreename, lShot, lRun, idx)
+# else
+                call xerrab ('HDF5 IMAS format not supported with UAL v4!')
+# endif
             else
                 if( openEnv) then
                     call imas_open_env(lTreename, lShot, lRun, idx, lUser, &
-                        &   lTokamak, lDataversion)
+                        &   lTokamak, lDataversion, lStatus)
+                    call xertst ( lStatus.eq.0, 'Error opening IMAS database !')
                 else
+# if UAL_MAJOR_VERSION < 4
                     call imas_open(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
+# else
+                    call xerrab ('Must define username!')
+# endif
                 end if
             end if
 #else
-#ifdef ITM
+# ifdef ITM_ENVIRONMENT_LOADED
             if( lUseHdf5) then
                 call euITM_create_hdf5(lTreename, lShot, lRun, lRefshot, &
                         &   lRefrun, idx)
@@ -241,9 +323,9 @@ contains
                         &   lRefrun, idx)
                 end if
             end if
-#else
+# else
             idx = 0
-#endif
+# endif
 #endif
         end if
 
@@ -259,13 +341,15 @@ contains
     subroutine close_ual(idx)
         integer, intent(in) :: idx  !< The returned identifier to be used in the
                                 !< subsequent data access operation
-
 #ifdef IMAS
-        call imas_close(idx)
+        integer :: status
+
+        call imas_close(idx, status)
+        call xertst ( status.eq.0, 'Error closing IMAS database !')
 #else
-#ifdef ITM
+# ifdef ITM_ENVIRONMENT_LOADED
         call euITM_close(idx)
-#endif
+# endif
 #endif
     end subroutine close_ual
 

@@ -18,7 +18,7 @@
      &  wldpp(:,:,:), wldpa(:,:,:),
      &  wldpm(:,:,:), wldpeb(:,:),
      &  wldspt(:,:), wldspta(:,:,:), wldsptm(:,:,:),
-     &  eneutrad(:,:,:,:),
+     &  eneutrad(:,:,:,:), emolrad(:,:,:,:), eionrad(:,:,:,:),
      &  wlarea(:), wlabsrp(:,:),
      &  wldna_res(:,:),     !incident atom flux
      &  wldnm_res(:,:),     !incident molecule flux
@@ -70,7 +70,6 @@ C
       integer nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi
       integer, allocatable :: isrftype(:)
       integer, allocatable :: lkindp(:), lkindm(:), lkindi(:)
-      logical lhalpha,lvib
 c
 c*** Volume data:
 c***	srcml	:   power loss due to molecules, including
@@ -90,7 +89,9 @@ c***	wldpm	:   flux of resulting molecules
 c***	wldpeb	:   power carried away by these atoms and molecules
 c***	wldspt	:   flux of sputtered wall material
 c***	isrftype:   surface type (iliin in Eirene)
-c***    eneutrad:   power radiated due to neutrals (only atoms at the moment)
+c***    eneutrad:   power radiated due to neutral atoms
+c***    emolrad :   power radiated due to molecules
+c***    eionrad :   power radiated due to molecular ions
 c
 
       contains
@@ -135,6 +136,8 @@ c
       allocate(wldspta(nlimps,natmd,0:nstrad))
       allocate(wldsptm(nlimps,nmold,0:nstrad))
       allocate(eneutrad(0:nxd+1,0:nyd+1,natmd,0:nstrad))
+      allocate(emolrad(0:nxd+1,0:nyd+1,nmold,0:nstrad))
+      allocate(eionrad(0:nxd+1,0:nyd+1,niond,0:nstrad))
       allocate(wlarea(nlimps))
       allocate(wlabsrp(natmd+nmold+niond+nplsd,nlimps))
       allocate(wldna_res(natmd,nsgmx))
@@ -201,6 +204,8 @@ c
       deallocate(wldspta)
       deallocate(wldsptm)
       deallocate(eneutrad)
+      deallocate(emolrad)
+      deallocate(eionrad)
       deallocate(wlarea)
       deallocate(wlabsrp)
       deallocate(wldna_res)

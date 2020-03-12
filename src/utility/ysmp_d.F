@@ -29,11 +29,11 @@ C
 C    THE NONZERO ENTRIES OF THE MATRIX M ARE STORED ROW-BY-ROW IN THE
 C    ARRAY A.  TO IDENTIFY THE INDIVIDUAL NONZERO ENTRIES IN EACH ROW,
 C    WE NEED TO KNOW IN WHICH COLUMN EACH ENTRY LIES.  THESE COLUMN
-C    INDICES ARE STORED IN THE ARRAY JA;  I.E., IF  A(K) = M(I,J),  THEN
+C    INDICES ARE STORED IN THE ARRAY JA;  I.E., IF  A(K) = M(I,J), THEN
 C    JA(K) = J.  TO IDENTIFY THE INDIVIDUAL ROWS, WE NEED TO KNOW WHERE
 C    EACH ROW STARTS.  THESE ROW POINTERS ARE STORED IN THE ARRAY IA;
 C    I.E., IF M(I,J) IS THE FIRST NONZERO ENTRY (STORED) IN THE I-TH ROW
-C    AND  A(K) = M(I,J),  THEN  IA(I) = K.  MOREOVER, IA(N+1) POINTS TO
+C    AND  A(K) = M(I,J), THEN  IA(I) = K.  MOREOVER, IA(N+1) POINTS TO
 C    THE FIRST LOCATION FOLLOWING THE LAST ELEMENT IN THE LAST ROW.
 C    THUS, THE NUMBER OF ENTRIES IN THE I-TH ROW IS  IA(I+1) - IA(I),
 C    THE NONZERO ENTRIES IN THE I-TH ROW ARE STORED CONSECUTIVELY IN
@@ -130,7 +130,7 @@ C
         INTEGER  N, NNZ, IA(N+1), JA(NNZ), P(N), IP(N), NSP, ISP(NSP),   !srv 11.01.07
      *      PATH, FLAG, V, L, HEAD, TMP, Q
 C...        REAL  A(1)
-        real (kind=R8) ::  A(NNZ)
+        real (kind=R8) :: A(NNZ)
         LOGICAL  DFLAG
         INTEGER  MAX, NEXT                                               !srv 11.01.07
 C
@@ -664,11 +664,11 @@ C
 C    THE NONZERO ENTRIES OF THE MATRIX M ARE STORED ROW-BY-ROW IN THE
 C    ARRAY A.  TO IDENTIFY THE INDIVIDUAL NONZERO ENTRIES IN EACH ROW,
 C    WE NEED TO KNOW IN WHICH COLUMN EACH ENTRY LIES.  THESE COLUMN
-C    INDICES ARE STORED IN THE ARRAY JA;  I.E., IF  A(K) = M(I,J),  THEN
+C    INDICES ARE STORED IN THE ARRAY JA;  I.E., IF  A(K) = M(I,J), THEN
 C    JA(K) = J.  TO IDENTIFY THE INDIVIDUAL ROWS, WE NEED TO KNOW WHERE
 C    EACH ROW STARTS.  THESE ROW POINTERS ARE STORED IN THE ARRAY IA;
 C    I.E., IF M(I,J) IS THE FIRST NONZERO ENTRY (STORED) IN THE I-TH ROW
-C    AND  A(K) = M(I,J),  THEN  IA(I) = K.  MOREOVER, IA(N+1) POINTS TO
+C    AND  A(K) = M(I,J), THEN  IA(I) = K.  MOREOVER, IA(N+1) POINTS TO
 C    THE FIRST LOCATION FOLLOWING THE LAST ELEMENT IN THE LAST ROW.
 C    THUS, THE NUMBER OF ENTRIES IN THE I-TH ROW IS  IA(I+1) - IA(I),
 C    THE NONZERO ENTRIES IN THE I-TH ROW ARE STORED CONSECUTIVELY IN
@@ -806,7 +806,7 @@ C
      *     ESP, PATH, FLAG, Q, MARK, D, U, TMP, UMAX
 C        REAL  A(1),  B(1),  Z(1),  RSP(1)
 C        DATA  RATIO/1/
-        real (kind=R8) ::  A(NNZ),  B(N),  Z(N),  RSP(NSP)
+        real (kind=R8) :: A(NNZ), B(N), Z(N), RSP(NSP)
         INTEGER IJU, IU, IL, JL, JU, JUMAX                               !srv 11.01.07
         integer, save :: RATIO = kind(1.0e0_R8)/kind(1)                  !srv 11.01.07
 C
@@ -901,7 +901,7 @@ C
      *     UMAX, IL(N), JL(N), FLAG, VJ
         INTEGER K, J, JMIN, JMAX, I, NEXTI, ILI, MU, JUMUJ               !srv 11.01.07
 C        REAL  A(NNZ), D(N), U(UMAX),  DK, UKIDI
-         real (kind=R8) ::  A(NNZ),  D(N), U(UMAX), DK, UKIDI            !srv 11.01.07
+         real (kind=R8) :: A(NNZ), D(N), U(UMAX), DK, UKIDI              !srv 11.01.07
 #ifdef DBG
          real (kind=R8) :: product
          real (kind=R8), save :: cutlo
@@ -1025,7 +1025,7 @@ C***********************************************************************
         IMPLICIT NONE                                                    !srv 11.01.07
         INTEGER  N, UMAX, JUMAX, P(N),  IJU(N), JU(JUMAX), IU(N+1)
 C        REAL D(N), U(N), Z(N), B(N), TMP(N), TMPK, SUM
-        real (kind=R8) ::  D(N), U(UMAX), Z(N), B(N), TMP(N), TMPK, SUM  !srv 11.01.07
+        real (kind=R8) :: D(N), U(UMAX), Z(N), B(N), TMP(N), TMPK, SUM   !srv 11.01.07
         INTEGER K, JMIN, JMAX, MU, I, J
 C
 C  ADDITIONAL PARAMETERS
@@ -1105,10 +1105,10 @@ C            DIAGONAL ELEMENTS AT THE BEGINNING OF THE ROW
 C
 C-----------------------------------------------------------------------
 C
-        INTEGER  N, NNZ, IP(N), IA(N+1), JA(NNZ), Q(N), R(NNZ)
+        INTEGER N, NNZ, IP(N), IA(N+1), JA(NNZ), Q(N), R(NNZ)
 C...        REAL A(NNZ), AK
-        real (kind=R8) ::  A(NNZ), AK
-        LOGICAL  DFLAG
+        real (kind=R8) :: A(NNZ), AK
+        LOGICAL DFLAG
         INTEGER I, J, K, JAK, JDUMMY, JMIN, JMAX, ILAST                  !srv 11.01.07
 C
 C
@@ -1303,10 +1303,10 @@ C    LUK IS THE NUMBER OF NONZERO ENTRIES IN THE K-TH ROW
 C
 C-----------------------------------------------------------------------
 C
-        INTEGER  N, NNZ,  JUMAX,                                  !srv 27.02.17
-     *     P(N), IP(N), IA(N+1), JA(NNZ), IJU(N), JU(JUMAX), IU(N+1),
-     *     Q(N), MARK(N), JL(N), FLAG, TAG, VJ, QM
-        LOGICAL  CLIQUE
+        INTEGER N, NNZ,  JUMAX,                                   !srv 27.02.17
+     *    P(N), IP(N), IA(N+1), JA(NNZ), IJU(N), JU(JUMAX), IU(N+1),
+     *    Q(N), MARK(N), JL(N), FLAG, TAG, VJ, QM
+        LOGICAL CLIQUE
         INTEGER JUMIN, JUPTR, I, J, K, M, LUK, JMIN, JMAX, LMAX,  !srv 11.01.07
      *     LUI
 C

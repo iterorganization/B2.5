@@ -237,7 +237,7 @@ cxpb
         corpb(ix,iy) = corpb(ix,iy)*rscal(pb(ix,iy))
        enddo
       enddo
-      
+
       if (iout.ne.0) then                                              !srv 17.06.02 {
        if (in_parallel()) then
         if (ncall==0) then
