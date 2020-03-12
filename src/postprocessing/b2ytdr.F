@@ -7558,7 +7558,6 @@ cxpb check for "OPTIONAL" input cards
         READ (ZEILE,6665) ldum(0) ! NLTRIM
         IREAD=0
         IF (ldum(0)) THEN
-          NFR = 0
           new_path = .false.
           cpath_written = .false.
           READ (IUNIN,'(A80)') ZEILE
@@ -7574,13 +7573,11 @@ cxpb check for "OPTIONAL" input cards
               if (index(zeile,'_').gt.0) then
                 write(elname,'(a2)') zeile(1:2)
                 if (elname(2:2).eq.'_') elname(2:2)=' '
-                if (element_present(natm,natmi,iatm1,elname)) NFR=NFR+1
+                if (element_present(natm,natmi,iatm1,elname))
+     >           WRITE(IUNOT,'(A80)') ZEILE
               else
-                NFR=NFR+1
+                WRITE(IUNOT,'(A80)') ZEILE
               end if
-              IF (NFR.EQ.1) WRITE(IUNOT,'(A)') 'cpath '//
-     &         'modules/Eirene/Database/Surfacedata/TRIM/'
-              WRITE(IUNOT,'(A80)') ZEILE
               READ (IUNIN,'(A80)') ZEILE
               IREAD=1
               GOTO 615

@@ -41,10 +41,14 @@ ifdef USE_EIRENE
   endif
 endif
 ifdef SOLPS_MPI
-  USE_MPI ?= -DUSE_MPI
+  ifndef USE_MPI
+    USE_MPI = -DUSE_MPI
+  endif
 endif
 ifdef SOLPS_OPENMP
-  USE_OPENMP ?= -D_OPENMP
+  ifndef USE_OPENMP
+    USE_OPENMP = -D_OPENMP
+  endif
 endif
 
 # Default prefix for OBJDIR: standalone
