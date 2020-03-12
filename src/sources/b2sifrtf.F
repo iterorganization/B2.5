@@ -267,7 +267,7 @@
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
 !$OMP& SHARED(on_closed_surface)
-ifdef NO_OPENMP_B2NPMO
+#ifdef NO_OPENMP_B2NPMO
 !$OMP& PRIVATE(phm3)
 #else
 !$OMP& SHARED(phm3)
