@@ -515,7 +515,7 @@ c     Convert energy flux densities in net energy flux contributions
 
 
 
-      subroutine CalcRecycledFluxes(iCv,iFc,
+      subroutine CalcRecycledFluxes(iCv,nCi,iFc,
      &             isign,
      &            isn,iscx0,istra,iwall,idir,
      &            Phi_app,area,recyc0,pl,tif,tef,pof,nif,nef,
@@ -532,7 +532,7 @@ c     nif = plasma density on face, isn neutral species index
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
 !!      type (B2Rates), intent (in) :: rt
-      integer, intent(in):: iCv,iFc,
+      integer, intent(in):: iCv, nCi, iFc,
      &     idir, isn, iscx0, iwall,istra
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    tif,tef,pof,nif,nef,t0,isign
@@ -591,10 +591,8 @@ c       Isothermal speed of sound and Mach number
       cs = sqrt(2.0_R8*tif/mn)
       Mj = abs(ux)/cs
       tifev = tif/eV
-      !!is = recycle_index(isn) TODO
-      !!it = target_index(iwall-1)
-      it = 0 !! TODO
-      is = 0 
+      is = recycle_index(isn) 
+      it = target_index(iCv-nCi)
 c       Shpottau value: sheath_potential devided by tau (Ti/Te)
       shpottauj = accel_ion(istra)*qe*(pof-phi_app)/tif
 c       For now, neirest neigbour interpolation for shpottau
@@ -673,7 +671,7 @@ c     Convert energy flux densities in energy fluxes
       return
       end subroutine CalcRecycledFluxes
 
-      subroutine CalcReflectedFluxes(iCv,iCn,iFc,isign,
+      subroutine CalcReflectedFluxes(iCv,iCn,nCi,iFc,isign,
      &            isn,iscx0,istra,iwall,idir,hh,hhn,
      &            Phi_app,area,recyc0,pl,tif,tef,pof,                           
      &           nef,geo,rt,gradnn,fmomrefl,nnrefl,nnwwnrefl,fenerefl)
@@ -689,7 +687,7 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (geometry), intent (in) :: geo
       type (B2Rates), intent (in) :: rt
 
-      integer,intent(in):: iCv, iCn, iFc, idir,
+      integer,intent(in):: iCv, iCn, nCi, iFc, idir,
      &    isn, iscx0, iwall,istra
       real (kind=R8),intent(in):: hh, hhn,Phi_app, area,recyc0,
      2    pof,tif,tef,nef,isign
@@ -776,8 +774,8 @@ c       Isothermal speed of sound and Mach number
       cs = sqrt(2.0_R8*tif/mn)
       Mj = abs(ux)/cs
       tifev = tif/eV
-      is = 0 !! TODO
-      it = 0
+      is = recycle_index(isn)
+      it = target_index(iCv-nCi)
       ispt = 0 ! Neutrals are not accelerated to sheath
 c       Interpolate
       tab = rc1(:,:,ispt,is,it)
@@ -903,7 +901,7 @@ c     Convert energy flux densities in energy fluxes
       return
       end subroutine CalcReflectedFluxes
 
-      subroutine CalcReflectedFluxesMaxwellian(iCv,iFc,isign,
+      subroutine CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,idir,area,recyc0,pl,tf,                          
      &            geo,fmomrefl,nnrefl,nnwwnrefl,fenerefl)
 !nh   11.06.18
@@ -916,7 +914,7 @@ c     for the incident neutrals.
       implicit none
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
-      integer,intent(in):: iCv, iFc, idir, isn, iwall, istra
+      integer,intent(in):: iCv, nCi, iFc, idir, isn, iwall, istra
       real (kind=R8),intent(in):: area, recyc0, tf,isign
 c     Output variables
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl
@@ -970,7 +968,7 @@ c     Isothermal speed of sound and Mach number
       Mj = abs(ux)/cs
       tfev = tf/eV
       is = recycle_index(isn)
-      it = target_index(iwall-1)
+      it = target_index(iCv-nCi)
       ispt = 0 ! Neutrals are not accelerated to sheath
 c       Interpolate
       tab = rc1(:,:,ispt,is,it)
