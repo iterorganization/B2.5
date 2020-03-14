@@ -230,9 +230,12 @@ cxpb  Geometric information
       return
       end subroutine alloc_b2mod_wall_init
 
-      subroutine alloc_b2mod_wall(ns,natm,nmol,nion)
+      subroutine alloc_b2mod_wall(ns)
       implicit none
-      integer ns, natm, nmol, nion
+      integer ns
+#ifdef WG_TODO
+      integer  natm, nmol, nion
+#endif
       external subini, subend, xertst
 
       call subini('b2mod_wall')
@@ -255,6 +258,7 @@ cxpb  Namelist data
      *  erosion(nwall,ntrack),
      *  monolayer_erosion(nwall,ntrack),
      *  plate_time(nwall),
+#ifdef WG_TODO
      *  chemical_sputtering(nwall,0:ns-1+natm+nmol+nion),
      *  physical_sputtering(nwall,0:ns-1+natm+nmol+nion),
      *  physical_sputtering_energy(nwall,0:ns-1+natm+nmol+nion),
@@ -262,6 +266,7 @@ cxpb  Namelist data
      *  thermal_evaporation(nwall,0:ns-1+natm+nmol+nion),
      *  backscattering(nwall,0:ns-1+natm+nmol+nion),
      *  backscattering_energy(nwall,0:ns-1+natm+nmol+nion))
+#endif
 
       allocate(
      *  surface_material_name(nwall),

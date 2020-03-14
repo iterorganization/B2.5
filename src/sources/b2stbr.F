@@ -1253,11 +1253,11 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       write(*,*) 'Calling alloc_b2mod_wall'
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
       call alloc_b2mod_wall_init(nx,ny,nncut)
-      call alloc_b2mod_wall(ns,natm,nmol,nion)
+      call alloc_b2mod_wall(ns)
       call init_wall(nx,ny)
 #endif
 
-      call alloc_b2mod_wall(ns,natm,nmol,nion)
+      call alloc_b2mod_wall(ns)
       call init_wall(mpg)
       call read_b2mod_wall_namelist(99,'    ',wall_namelist_used)
 #ifdef WG_TODO

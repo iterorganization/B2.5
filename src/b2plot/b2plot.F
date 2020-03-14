@@ -774,9 +774,9 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
+#ifdef WG_TODO
       call alloc_b2mod_wall_init(nx,ny,nncut)
       call alloc_b2mod_wall(ns,natm,nmol,nion)
-#ifdef WG_TODO
       call init_wall(nx,ny)
 #endif
       call read_b2mod_wall_namelist(99,'    ',found)

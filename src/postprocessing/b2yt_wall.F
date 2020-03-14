@@ -14,10 +14,10 @@
       external subini, subend, xertst, get_nxt
 
       call subini('b2yt_wall_init')
+#ifdef WG_TODO
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
       call alloc_b2mod_wall_init(nx,ny,nncut)
       call alloc_b2mod_wall2_init(nncut1,nx1,ny1,nlim,nsts)
-#ifdef WG_TODO
       call init_wall(nx,ny)
 #endif
 cxpb Establish numbering of boundary wall cells
@@ -302,8 +302,9 @@ cxpb lb and ub and lower and upper interval bounds
       external E01BEF, E01BFF
 
       call subini('b2yt_wall')
+#ifdef WG_TODO
       call alloc_b2mod_wall(ns,natm,nmol,nion)
-      
+#endif
       filename='b2.wall_save.parameters'
       call find_file(filename,wall_namelist_used)
       if(wall_namelist_used) then
