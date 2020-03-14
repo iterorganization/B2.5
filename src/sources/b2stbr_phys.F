@@ -875,7 +875,7 @@ cmb   net momentum sources from neutral particle recombination
 c            Calculate recycled neutral particle flux (assuming thin boundary cells)
              if (.not.lcore) then
    
-             call CalcRecycledFluxes(iCv,iFc,isign,
+             call CalcRecycledFluxes(iCv,mpg%nCi,iFc,isign,
      &            is0,is2,istra,iwall,idir,
      &            Phi_app,farea,recyc(is,istra),pl,tif,tef,pof,
      &            pl%na(iCv,is),dv%ne(iCv),geo,t0,          
@@ -944,14 +944,15 @@ cmb   net neutral energy source from recombination
 cmb   net momentum sources from neutral particle reflection
              if (.not.lcore) then
                if (maxw(istra).eq.0) then
-                 call CalcReflectedFluxes(iCv,iCn,iFc,isign,
+                 call CalcReflectedFluxes(iCv,iCn,mpg%nCi, iFc,isign,
      &              is0,is2,istra,iwall,idir,hh,hhn,
      &              Phi_app,farea,recyc(is,istra),pl,tif,
      &              tef,pof,dv%ne(iCv),
      &              geo,rt,gradnn(idir_inv),
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl)
                else
-                 call CalcReflectedFluxesMaxwellian(iCv,iFc,isign,is0,
+                 call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
+     &              isign,is0,
      &              istra,iwall,idir,farea,recyc(is,istra),pl,tif,
      &              geo,fmomrefl,nnrefl,
      &              nnwwnrefl,fenerefl)
