@@ -108,7 +108,7 @@
      .           ixvxe(:), iyvxe(:)
 
       real(R8) :: xco(4), yco(4), babs
-      logical lfound, swapped, classical, bound, lkeep
+      logical lfound, swapped, classical, bound, lkeep, cellError
 
 !  assume a structured quadrilateral grid
 
@@ -320,12 +320,86 @@
       enddo
       nunused = iunused
 
-! Second pass: * treat boundary and guard cells
-!              * add external vertices if needed
-! Note: internal cells: always keep vertex; no special treatment needed
+! Second pass: add external vertices if needed
       do iy = -1, ny
         do ix = -1, nx
-          if (isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE))) then
+          if (cflags(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL) then
+            ! Regular internal cell
+            ! Need to add a new, external vertex if both
+            ! E a boundary cell with degenerate N face and
+            ! N a boundary cell with degenerate E face
+            tix = topix(ix,iy)
+            tiy = topiy(ix,iy)
+            rix = rightix(ix,iy)
+            riy = rightiy(ix,iy)
+            if (isBoundaryCell(cflags(tix,tiy,CELLFLAG_TYPE)) .and.
+     .           points_match(crx(tix,tiy,1), cry(tix,tiy,1), 
+     .                        crx(tix,tiy,3), cry(tix,tiy,3)) .and.
+     .          isBoundaryCell(cflags(rix,riy,CELLFLAG_TYPE)) .and.
+     .           points_match(crx(rix,riy,2), cry(rix,riy,2), 
+     .                        crx(rix,riy,3), cry(rix,riy,3))) then
+              ! Check whether an external vertex has already been created here
+              lfound = .false.
+              ivxe   = 0
+              do while (.not.lfound .and. ivxe.lt.nvxe)
+                ivxe = ivxe + 1
+                lfound = lfound.or.
+     .            points_match(crx(ix,iy,3), cry(ix,iy,3),
+     .                         crx(ixvxe(ivxe),iyvxe(ivxe),0), 
+     .                         cry(ixvxe(ivxe),iyvxe(ivxe),0))
+              enddo
+              if (.not.lfound) then
+                ! Store in an available external cell
+                nvxe = nvxe + 1
+                ix2  = ix + 1
+                iy2  = iy
+                do while ((ighostvx(ix2,iy2) == 0) .or.
+     .              .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
+                  ix2 = ix2 + 1
+                  if (ix2 == nx+1) then
+                    write (*,*) 'ix, iy = ', ix, iy
+                    call xerrab ('No suitable unused cell found (0).')
+                  endif
+                enddo
+                ! Create vertex, assign relevant data
+                ixvxe(nvxe) = ix2
+                iyvxe(nvxe) = iy2
+                nunused = nunused - 1
+                ighostvx(ix2,iy2) = 0
+                crx(ix2,iy2,0)    = crx(ix,iy,3)
+                cry(ix2,iy2,0)    = cry(ix,iy,3)
+                ffbz(ix2,iy2,0)   = ffbz(ix,iy,3)
+                fpsi(ix2,iy2,0,:) = fpsi(ix,iy,3,:)
+!WG_TODO need to recompute field at corner here;
+!WG_TODO tmp: assume isymm = 1 or 2 treatment... (see carre_b2ag.F90)
+!WG_TODO eventually: do this in separate routine later on?
+                if (isymm.ne.1.and.isymm.ne.2)
+     .            call xerrab('isymm value not yet available')
+                babs=sqrt(fpsi(ix,iy,3,1)**2+fpsi(ix,iy,3,2)**2)/
+     .            (2.0*pi*crx(ix,iy,3))
+                wbbc(ix2,iy2,0)   = sign(babs,bb(ix,iy,0))
+                wbbc(ix2,iy2,1)   = 0.0_R8
+                wbbc(ix2,iy2,2)   = ffbz(ix,iy,3)/
+     .            (2.0*pi*crx(ix,iy,3))
+                wbbc(ix2,iy2,3)   = sqrt(wbbc(ix2,iy2,0)**2 +
+     .            wbbc(ix2,iy2,1)**2 + wbbc(ix2,iy2,2)**2)
+                ! adapt local connectivity arrays
+                locrightix(tix,tiy) = ixvxe(nvxe)
+                locrightiy(tix,tiy) = iyvxe(nvxe)
+                loctopix(rix,riy)   = ixvxe(nvxe)
+                loctopiy(rix,riy)   = iyvxe(nvxe)
+                write (*,*)
+     .           '(1) Created vertex at ix, iy, crx, cry = ',
+     .            nvxe, ix, iy, crx(ix2,iy2,0), cry(ix2,iy2,0)
+              else
+                ! adapt local connectivity arrays
+                locrightix(tix,tiy) = ixvxe(ivxe)
+                locrightiy(tix,tiy) = iyvxe(ivxe)
+                loctopix(rix,riy)   = ixvxe(ivxe)
+                loctopiy(rix,riy)   = iyvxe(ivxe)
+              endif
+            endif
+          elseif (isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE))) then
             ! For boundary cells: keep vertex, except if points coincide
             if (points_match(crx(ix,iy,0), cry(ix,iy,0), 
      .                       crx(ix,iy,2), cry(ix,iy,2))) then
@@ -430,18 +504,18 @@
                 endif
               elseif (isGhostCell(cflags(tix,tiy,CELLFLAG_TYPE))) then
                 ! adapt local connectivity arrays
-                locrightix(ix,iy) = topix(rightix(bix,biy),
-     .                                    rightiy(bix,biy))
-                locrightiy(ix,iy) = topiy(rightix(bix,biy),
-     .                                    rightiy(bix,biy))
-                locrightix(tix,tiy) = topix(rightix(bix,biy),
-     .                                      rightiy(bix,biy))
-                locrightiy(tix,tiy) = topiy(rightix(bix,biy),
-     .                                      rightiy(bix,biy))
+                locrightix(ix,iy) = loctopix(locrightix(bix,biy),
+     .                                        locrightiy(bix,biy))
+                locrightiy(ix,iy) = loctopiy(locrightix(bix,biy),
+     .                                       locrightiy(bix,biy))
+                locrightix(tix,tiy) = loctopix(locrightix(bix,biy),
+     .                                         locrightiy(bix,biy))
+                locrightiy(tix,tiy) = loctopiy(locrightix(bix,biy),
+     .                                         locrightiy(bix,biy))
               elseif (isGhostCell(cflags(bix,biy,CELLFLAG_TYPE))) then
                 ! adapt local connectivity arrays
-                locrightix(ix,iy) = rightix(tix,tiy)
-                locrightiy(ix,iy) = rightiy(tix,tiy)
+                locrightix(ix,iy) = locrightix(tix,tiy)
+                locrightiy(ix,iy) = locrightiy(tix,tiy)
               endif
             elseif (points_match(crx(ix,iy,2), cry(ix,iy,2), 
      .                           crx(ix,iy,3), cry(ix,iy,3))) then   
@@ -530,18 +604,18 @@
                 endif
               elseif (isGhostCell(cflags(rix,riy,CELLFLAG_TYPE))) then
                 ! adapt local connectivity arrays
-                loctopix(ix,iy) = rightix(topix(lix,liy),
-     .                                    topiy(lix,liy))
-                loctopiy(ix,iy) = rightiy(topix(lix,liy),
-     .                                    topiy(lix,liy))
-                loctopix(rix,riy) = rightix(topix(lix,liy),
-     .                                      topiy(lix,liy))
-                loctopiy(rix,riy) = rightiy(topix(lix,liy),
-     .                                      topiy(lix,liy))
+                loctopix(ix,iy) = locrightix(loctopix(lix,liy),
+     .                                       loctopiy(lix,liy))
+                loctopiy(ix,iy) = locrightiy(loctopix(lix,liy),
+     .                                       loctopiy(lix,liy))
+                loctopix(rix,riy) = locrightix(loctopix(lix,liy),
+     .                                         loctopiy(lix,liy))
+                loctopiy(rix,riy) = locrightiy(loctopix(lix,liy),
+     .                                         loctopiy(lix,liy))
               elseif (isGhostCell(cflags(lix,liy,CELLFLAG_TYPE))) then
                 ! adapt local connectivity arrays
-                loctopix(ix,iy) = topix(rix,riy)
-                loctopiy(ix,iy) = topiy(rix,riy)
+                loctopix(ix,iy) = loctopix(rix,riy)
+                loctopiy(ix,iy) = loctopiy(rix,riy)
               endif
             else
               tix = topix(ix,iy)
@@ -885,16 +959,27 @@
 
 
 ! Sanity check
+      cellError=.false.
       do iy = -1, ny
         do ix = -1, nx
           if (isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
-            if (locrightix(ix,iy)==nx+1) then
-              write (*,*) 'ix, iy = ', ix, iy
-              call xerrab ('Problem in definition locrightix.')
+            if ((locrightix(ix,iy)==nx+1) .or.
+     .          (locrightiy(ix,iy)==ny+1)) then
+              write (*,*) 'Real cell ix, iy = ', ix, iy
+              write (*,*) 'locrightix, locrightiy = ',
+     .          locrightix(ix,iy),
+     .          locrightiy(ix,iy)
+              cellError=.true.
+!              call xerrab ('Problem in definition locrightix.')
             endif
-            if (loctopiy(ix,iy)==ny+1) then
-              write (*,*) 'ix, iy = ', ix, iy
-              call xerrab ('Problem in definition loctopiy.')
+            if ((loctopix(ix,iy)==nx+1) .or.
+     .          (loctopiy(ix,iy)==ny+1)) then
+              write (*,*) 'Real cell ix, iy = ', ix, iy
+              write (*,*) 'loctopix, loctopiy = ',
+     .          loctopix(ix,iy),
+     .          loctopiy(ix,iy)
+              cellError=.true.
+!              call xerrab ('Problem in definition loctopiy.')
             endif
           elseif (isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) then
             if(icorner(ix,iy) == 0) then
@@ -903,9 +988,14 @@
               if (biy/=-2) then
                 if (isBoundaryCell(cflags(bix,biy,CELLFLAG_TYPE))) then
                   ! N guard cell
-                  if (locrightix(ix,iy)==nx+1) then
-                    write (*,*) 'ix, iy = ', ix, iy
-                    call xerrab ('Problem in definition locrightix.')
+                  if ((locrightix(ix,iy)==nx+1) .or.
+     .                (locrightiy(ix,iy)==ny+1)) then
+                   write (*,*) 'Ghost cell ix, iy = ', ix, iy
+                   write (*,*) 'locrightix, locrightiy = ',
+     .               locrightix(ix,iy),
+     .               locrightiy(ix,iy)
+                   cellError=.true.
+!                    call xerrab ('Problem in definition locrightix.')
                   endif
                 endif
               endif
@@ -914,9 +1004,14 @@
               if (lix/=-2) then
                 if (isBoundaryCell(cflags(lix,liy,CELLFLAG_TYPE))) then
                   ! For E guard cells
-                  if (loctopiy(ix,iy)==ny+1) then
-                    write (*,*) 'ix, iy = ', ix, iy
-                    call xerrab ('Problem in definition loctopiy.')
+                  if ((loctopix(ix,iy)==nx+1) .or.
+     .                (loctopiy(ix,iy)==ny+1)) then
+                   write (*,*) 'Ghost cell ix, iy = ', ix, iy
+                   write (*,*) 'loctopix, loctopiy = ',
+     .               loctopix(ix,iy),
+     .               loctopiy(ix,iy)
+                   cellError=.true.
+!                    call xerrab ('Problem in definition loctopiy.')
                   endif
                 endif
               endif
@@ -924,6 +1019,9 @@
           endif
         enddo
       enddo
+
+      if (cellError)
+     .  call xerrab ('Problem in definition local connectivity.')
 
       m%nVx = (nx+2)*(ny+2) - nghostvxi
 
