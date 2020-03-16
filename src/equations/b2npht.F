@@ -154,7 +154,8 @@
       else
        call b2sihs_ (nCv, nFc, nVx, ns, geo, mpg, BoRiS, ismain, 
      &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%po, 
-     &  dv%ne, dv%ni, dv%fne, dv%fch, co%cvsa, she0, shi0)
+     &  dv%ne, dv%ni, dv%fna_fcor, dv%fne, dv%fch, co%cvsa, co%cvsahz,
+     &  co%cvsahz_cl, she0, shi0)
       endif
       call b2saxpy (nCv*4, 1.0e0_R8, sr%she, 1, she0, 1)
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shi, 1, shi0, 1)
@@ -253,7 +254,7 @@ cdjm Jan2017 update particle source components for balance
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
         call b2usht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,
-     &  rxg, pcm1, dv%ne, dv%ni, pl%te, pl%ti,
+     &  rxg, dv%ne, dv%ni, pl%te, pl%ti,
      &  dv%floe, dv%cone, dv%floi, dv%coni, dv%pccm(1,1), she0, shi0, 
      &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%cortt, dv%corte, 
      &  dv%corti, wrkf, wrkc, aa)
