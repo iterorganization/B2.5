@@ -198,10 +198,10 @@
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
-         pccb(iCv,0) = (geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv))*    !srv 09.01.01
-     .    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)/aa(mpg%cvNvP(iCv,1))          !srv 11.01.13
-         pccb(iCv,1) = (geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv))*    !srv 09.01.01
-     .    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)/aad0(iCv)                     !srv 11.01.13
+         pccb(iCv,0) = geo%cvVol(iCv)*geo%cvHz(iCv)*                    !srv 09.01.01
+     .    abs(geo%cvBb(iCv,0))/(geo%cvBb(iCv,3)*aa(mpg%cvNvP(iCv,1)))   !srv 11.01.13
+         pccb(iCv,1) = geo%cvVol(iCv)*geo%cvHz(iCv)*                    !srv 09.01.01
+     .    abs(geo%cvBb(iCv,0))/(geo%cvBb(iCv,3)*aad0(iCv))              !srv 11.01.13
         else
          resmb(iCv) = 0.0_R8   ! take opportunity to correct RHS
         endif
