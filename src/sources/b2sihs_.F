@@ -3,12 +3,9 @@
 
       subroutine b2sihs_ (nCv, nFc, nVx, ns, geo, mpg, BoRiS, ismain, 
      &  fac_ExB, lnlam, na, ua, ue, te, ti, po, ne, ni,
-     &  fne, fch, cvsa, she0, shi0)
+     &  fna_fcor, fne, fch, cvsa, cvsahz, cvsahz_cl, she0, shi0)
       use b2mod_types
-!      use b2mod_rates
-!      use b2mod_sources
       use b2mod_tallies
-!      use b2mod_geo_corner
       use b2mod_anomalous_transport
       use b2mod_constants
       use b2mod_b2cmfs
@@ -31,7 +28,9 @@
      *  fac_ExB(nFc), na(nCv,0:ns-1), ua(nCv,0:ns-1), ue(nCv),        !srv 05.03.11
      &  te(nCv), ti(nCv), po(nCv), ne(nCv), ni(nCv,0:1), lnlam(nCv)   !srv 07.05.08 01.07.09
       real (kind=R8) ::
-     *  fne(nFc,0:1), fch(nFc,0:1), cvsa(nFc,0:1,0:ns-1)
+     *  fna_fcor(nFc,0:1,0:ns-1), fne(nFc,0:1), fch(nFc,0:1),
+     *  cvsa(nFc,0:1,0:ns-1), cvsahz(nFc,0:1,0:ns-1),
+     *  cvsahz_cl(nFc,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   she0(nCv,0:3), shi0(nCv,0:3)
@@ -58,15 +57,18 @@
       integer, save :: istyle_Joule_heating = 1                         !srv 17.01.14
       integer, save :: b2sigp_style = 2                                 !srv 05.07.17
       integer, save :: use_eirene = 0
-      integer, save :: style_int_vel = 0                              !srv 01.04.19
+      integer, save :: style_int_vel = 0                                !srv 01.04.19
+      integer, save :: style_visc = 0
       real (kind=R8), save :: eps = 1.0e-60_R8
       real (kind=R8) ::
      *  vti32(nCv)
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
-     &  phm4, phm5, phm6, wrkc(nCv), wrkf(nFc,0:1), wrkv(nVx),      !srv 02.06.99
-     &  phm7, phm8, wrkc1(nCv),                                  !srv 28.08.02
-     &  dpoc(nCv,0:1), dOnedBsqc(nCv,0:1), visc(nCv,0:1)
+     &  phm4, phm5, phm6, wrkc(nCv), wrkf(nFc,0:1), wrkf1(nFc,0:1),
+     &  wrkv(nVx),                      !srv 02.06.99
+     &  phm7, phm8, wrkc1(nCv),                                         !srv 28.08.02
+     &  dpoc(nCv,0:1), dOnedBsqc(nCv,0:1), visc(nCv,0:1),
+     &  dumm0(nFc,0:1), dumm1(nFc,0:1)
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 {
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nCv)  !lk 31.01.08 }
       real (kind=R8) :: 
@@ -150,6 +152,7 @@
        call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('b2sihs_style_int_vel', style_int_vel)         !srv 01.04.19
+       call ipgeti ('b2sihs_style_visc', style_visc)
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -326,20 +329,43 @@
 !WG_TODO      b2sihs_visa=0.0_R8
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
-        call diff(nCv, nFc, nVx, 0, geo, mpg, ua(1,is), wrkv, wrkf)
-        wrkf(:,0) = cvsa(:,0,is)/(geo%fcQalf(:,0)+eps)*wrkf(:,0)**2
-        wrkf(:,1) = cvsa(:,1,is)/(geo%fcQalf(:,1)+eps)*wrkf(:,1)**2
-        call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(1,0),visc(1,0))
-        call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(1,1),visc(1,1))
+        if (style_visc.eq.0) then
+         call diff(nCv, nFc, nVx, 0, geo, mpg, ua(1,is), wrkv, wrkf)
+         wrkf = cvsa(:,:,is)/(geo%fcQalf+eps)*wrkf**2
+         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(1,0),visc(1,0))
+         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(1,1),visc(1,1))
+        else
+         !wdk use effective viscous terms from the hybrid scheme
+         !wdk avoids excessive heating in convection-dominated regions
+         !wdk (improved total energy conservation at discretized level)
+         !wdk Work-around for consistency with momentum equation:
+         !wdk   apply hybrid scheme to cvsahz first, then
+         !wdk   correct with factor cvsa/cvsahz
+         wrkf = am(is)*mp*fna_fcor(:,:,is)
+         call b2nxfv (nCv, nFc, nVx, is, geo, mpg, cvsahz_cl(1,0,is), 
+     &    wrkf1)
+         wrkf = wrkf + wrkf1
+         call calcflow(nCv,nFc,nVx,2,geo,mpg,ua(1,is),wrkf,
+     &     cvsahz(1,0,is),dumm0,dumm1,wrkf1)
+         call diff(nCv, nFc, nVx, 0, geo, mpg, ua(1,is), wrkv, wrkf)
+         wrkf = -wrkf*wrkf1*cvsa(:,:,is)/((geo%fcQalf + eps)*
+     &    (cvsahz(:,:,is) + eps))
+         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(1,0),visc(1,0))
+         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(1,1),visc(1,1))
+        endif
         do iCv = 1, mpg%nCi
            t0 = phm2*(1.0_R8-BoRiS)*visc(iCv,0)
            t1 = phm8*(1.0_R8-BoRiS)*visc(iCv,1)
-           shivc(iCv,0) = shivc(iCv,0)+(1.0e0_R8+rf2)*t0
-           shivc(iCv,3) = shivc(iCv,3)-
-     &                        rf2*t0/(ni(iCv,0)*ti(iCv))
-           shiva(iCv,0) = shiva(iCv,0)+(1.0e0_R8+rf2)*t1
-           shiva(iCv,3) = shiva(iCv,3)-
-     &                        rf2*t1/(ni(iCv,0)*ti(iCv))
+           if (t0.lt.0.0_R8) write (*,*) 
+     &      'Warning, negative cl. visc. heating in cell iCv = ',iCv
+           if (t1.lt.0.0_R8) write (*,*) 
+     &      'Warning, negative an. visc. heating in cell iCv = ',iCv
+           shivc(iCv,0) = shivc(iCv,0)+(max(0.0e0_R8,t0)+rf2*abs(t0))
+           shivc(iCv,3) = shivc(iCv,3)+
+     &        (min(0.0e0_R8,t0)-rf2*abs(t0))/(ni(iCv,0)*ti(iCv))
+           shiva(iCv,0) = shiva(iCv,0)+(max(0.0e0_R8,t1)+rf2*abs(t1))
+           shiva(iCv,3) = shiva(iCv,3)+
+     &        (min(0.0e0_R8,t1)-rf2*abs(t1))/(ni(iCv,0)*ti(iCv))
 !WG_TODO           b2visa(mpg%cvReg(iCv))=b2visa(mpg%cvReg(iCv))+t0+t1
 !WG_TODO           b2sihs_visa(iCv)=b2sihs_visa(iCv)+t0+t1
         enddo

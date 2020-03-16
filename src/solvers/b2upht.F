@@ -43,7 +43,7 @@
       integer ncall, stylec, pot_eq, iCv, is, ireg
       real (kind=R8) ::
      *  ctt, dte(nCv), dti(nCv), t0, t1, t2,
-     *  wrk(nCv), wrkf(nFc), wrkv(nVx)
+     *  wrk(nCv), wrk0(nCv), wrkv(nVx)
       save ncall, stylec, pot_eq
 *   ..procedures
       intrinsic min, max
@@ -128,11 +128,8 @@
         if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv))	 !xpb
       enddo
 *   ..adjust ua
-      wrk = ne*dte + ni(:,0)*dti
-      call diff_p (nCv, nFc, nVx, 0, geo, mpg, wrk, wrkv, wrkf)
-cwdk: now: interpolate wrkf from faces to centers
-cwdk  needed: "distribute" wrkf to centers based on volume
-      call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf, wrk)
+      wrk0 = ne*dte + ni(:,0)*dti
+      call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, wrk)
       if (ua_solve) then
        do iCv = 1, mpg%nCi
         ireg = mpg%cvReg(iCv)

@@ -54,16 +54,16 @@
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: drift_hyb = 0.0_R8
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
-      real (kind=R8), save :: xfrhie = 1.0_R8                            !srv 05.11.09 30.01.10
+      real (kind=R8), save :: pcm1 = 1.0_R8                              !srv 05.11.09 30.01.10
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
       real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8           !srv 02.10.17
       real (kind=R8) ::
-     *   flo_eir(nFc,0:1), scur(nFc,0:1), term(nFc), fle_eir(nFc,0:1),   !srv 14.07.10
+     *   flo_eir(nFc,0:1), scur(nFc,0:1), fle_eir(nFc,0:1),   !srv 14.07.10
      &   floe_eir(nFc,0:1), floi_eir(nFc,0:1)
       real (kind=R8) :: 
-     &   nef(nFc), nbf(nFc), pbf(nFc), dpb(nFc,0:1), dnete(nFc,0:1),
-     &   ve(nFc), weight(nFc,2)
+     &   nef(nFc), nbf(nFc), pbf(nFc), dpb(nFc,0:1), dpbc(nCv),
+     &   dnete(nFc,0:1), ve(nFc), weight(nFc,2)
       real (kind=R8) ::
      *   wrk(nCv), wrk0(nFc), wrk1(nFc), wrk2(nFc), wrkVx(nVx),
      *   wrk00(nFc,2), wrk11(nFc,2),
@@ -93,7 +93,7 @@
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                          !srv 30.12.09
-        call ipgetr ('b2tfnb_xfrhie', xfrhie)
+        call ipgetr ('b2npco_pcm1', pcm1)
         call ipgetr ('b2tfrn_xvecrb', xvecrb)                            !srv 27.01.12
         call ipgetr ('b2tfrn_xwdia', xwdia)                              !srv 27.01.12
         call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
@@ -131,44 +131,14 @@
 
 *   ..compute differences of pb
        call diff(nCv, nFc, nVx, 0, geo, mpg, dv%pa(:,is), wrkVx, dpb)
+       call gradc_p(nCv, nFc, nVx, 1, geo, mpg, dv%pa(:,is), wrkVx,
+     &  dpbc)
 
 *   ..compute wrk0
        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,is),wrk0)
 
-*   ..compute wrk1
-       do iFc = 1, nFc
-        wrk1(iFc) = 0.5_R8*
-     &    (dv%pa(mpg%fcCv(iFc,2),is)-dv%pa(mpg%fcCv(iFc,1),is))/
-     &    (dv%pa(mpg%fcCv(iFc,2),is)+dv%pa(mpg%fcCv(iFc,1),is))
-       enddo
-!       call b2xxgs (nx, ny, 0.0_R8, wrk1, 1)
-
-*   ..compute wrk2
-!WG_TODO
-!WG_TODO       do iy = -1, ny
-!WG_TODO        do ix = -1, nx
-!WG_TODO         if(leftix(ix,iy).eq.-2) then
-!WG_TODO          wrk2(ix,iy) = 0.0_R8
-!WG_TODO         elseif(leftix(leftix(ix,iy),leftiy(ix,iy)).eq.-2) then
-!WG_TODO          wrk2(ix,iy) = 0.0_R8
-!WG_TODO         elseif(rightix(ix,iy).eq.nx+1) then
-!WG_TODO          wrk2(ix,iy) = 0.0_R8
-!WG_TODO         else
-!WG_TODO          wrk2(ix,iy) = wrk1(leftix(ix,iy),leftiy(ix,iy))-
-!WG_TODO     &     2.0_R8*wrk1(ix,iy)+wrk1(rightix(ix,iy),rightiy(ix,iy))
-!WG_TODO         endif
-!WG_TODO        enddo
-!WG_TODO       enddo
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, wrk2, 1)
-!cwdk detailed computation of V_corr_dpc to be checked... tmp: 0
-!cwdk still need a volume ratio at the end of term and termhz, to make
-!cwdk it zero on faces with guard cells.
-       wrk2 = 0.0_R8
-       term = 
-     &   xfrhie*wrk2*0.5_R8*abs(geo%fcPbs)*sqrt(pbf/(am(is)*mp*nbf))
-
 *   ..compute convective coefficients (poloidal and radial)
-       flo_eir(:,0) = geo%fcPbs*wrk0 + term + co%cvla(:,0,is) +
+       flo_eir(:,0) = geo%fcPbs*wrk0 + co%cvla(:,0,is) +
      &  drift_hyb*(xvecrb*dv%vaecrb(:,0,is) + xwdia*dv%wadia(:,0,is))*
      &   geo%fcS*geo%fcQalf(:,0)
        flo_eir(:,1) = co%cvla(:,1,is) + 
@@ -203,7 +173,19 @@ cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
      &   geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
 
 *   ..add contribution from pressure diffusion
-       dv%fna_eir(:,:,is)  = dv%fna_eir(:,:,is) - co%cdpa(:,:,is)*dpb
+       dv%fna_eir(:,:,is) = dv%fna_eir(:,:,is) - co%cdpa(:,:,is)*dpb
+
+*   ..add Rhie-Chow term
+       do iFc = 1, nFc
+        wrk1(iFc) = pcm1*0.5_R8*geo%fcPbs(iFc)*
+     &   (dv%pcca(mpg%fcCv(iFc,1),1,is)*pl%na(mpg%fcCv(iFc,1),is) +
+     &    dv%pcca(mpg%fcCv(iFc,2),1,is)*pl%na(mpg%fcCv(iFc,2),is))/
+     &   (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
+        wrk2(iFc) = 0.5_R8*geo%fcQgam(iFc,0)*
+     &   (dpbc(mpg%fcCv(iFc,1)) + dpbc(mpg%fcCv(iFc,2)))*
+     &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
+       enddo
+       dv%fna_eir(:,0,is) = dv%fna_eir(:,0,is) - wrk1*(dpb(:,0) - wrk2)
 
       enddo !is
 
