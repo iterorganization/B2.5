@@ -90,6 +90,7 @@
       integer, save :: drift_style
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
+      real (kind=R8) , save :: Qalfmin = 1.0e-3_R8
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
       real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
      &                         scurpar
@@ -214,6 +215,7 @@
         call ipgeti ('b2stbc_type21_ref', bc_type21_ref)
         call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
         call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
+        call ipgetr ('b2stbc_Qalfmin', Qalfmin)
         call ipgetr ('b2mndr_na_min', na_min)
         call ipgetr ('b2mndr_na_new', na_new)
         call xertst (0.0_R8.lt.na_min, 'faulty parameter na_min')
@@ -3426,7 +3428,7 @@ cxpb  and max(,,) statement for stability
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)        !srv 07.05.09 }
             ! Avoid setting to sound speed at very shallow incidence
             ! Set mom. flux to leakage instead
-            if (abs(geo%fcQalf(iFc,0)).lt.1e-3) then
+            if (abs(geo%fcQalf(iFc,0)).lt.Qalfmin) then
               srw%smo0(iCv1,0,is) = 0.0_R8
               srw%smo0(iCv1,1,is) = 0.0_R8
               if (conpar(is,ib,2).gt.0.0_R8) then
