@@ -62,11 +62,8 @@
       call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
 
 * ..implement the correction
-*   ..compute wrk0
-      call diff_p (nCv, nFc, nVx, 0, geo, mpg, corpb, wrkv, wrk0)
-cwdk: now: interpolate wrk0 from faces to centers
-cwdk  needed: "distribute" wrk0 to centers based on volume
-      call intcell(nFc, nCv, mpg, mpg%intcellP, wrk0,wrk)
+*   ..compute wrk
+      call gradc_p(nCv, nFc, nVx, 0, geo, mpg, corpb, wrkv, wrk)
 *   ..compute new pb and nb
       do iCv = 1, nCv
         if (0.0_R8.le.corpb(iCv)) then

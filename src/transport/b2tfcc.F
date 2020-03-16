@@ -23,21 +23,21 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, is
+      integer ncall, is, iFc
       real (kind=R8) ::
-     *   xfac
+     *   xfac, pcm1
       real (kind=R8) ::
      *   nwe(nCv), nwi(nCv), nwef(nFc), nwif(nFc),
      *   dnwe(nFc,0:1), dnwi(nFc,0:1), tef(nFc), tif(nFc),
      *   wght(nFc,2), wrkVx(nVx),
      *   floe(nFc,0:1), cone(nFc,0:1), floe0(nFc,0:1), cone0(nFc,0:1),
      *   floi(nFc,0:1), coni(nFc,0:1), floi0(nFc,0:1), coni0(nFc,0:1)
-      save ncall, xfac
+      save ncall, xfac, pcm1
 *   ..procedures
       external subini, subend, xertst, ipgetr
       external b2xvsg, b2xvff, diff, intface
 *   ..initialisation
-      data ncall/0/, xfac/1.0_R8/
+      data ncall/0/, xfac/1.0_R8/, pcm1/1.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -49,6 +49,8 @@
       if (ncall.eq.0) then
        call ipgetr ('b2tfcc_xfac', xfac)
        call xertst (0.le.xfac, 'faulty internal parameter xfac')
+       call ipgetr ('b2npht_pcm1', pcm1)
+       call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -109,6 +111,51 @@ cwdk   subsequently (use same work arrays nw, dnw, nwf, flo, con, flo0, con0)
        dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
 
       enddo
+
+*  ..add contributions from Rhie-Chow term
+
+*   ..pre-compute radial differences
+      call diff(nCv, nFc, nVx, 0, geo, mpg, dv%ni(1,0), wrkVx, dnwi)
+      call diff(nCv, nFc, nVx, 0, geo, mpg, dv%ne, wrkVx, dnwe)
+
+*   ..interpolate nwe and nwi to cell faces
+      call intface(nCv,nFc,mpg%fcCv,wght,dv%ne,nwef)
+      call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(1,0),nwif)
+
+      do iFc = 1, nFc
+        cone(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
+     &   (dv%pccm(mpg%fcCv(iFc,1),1)*
+     &    dv%ne(mpg%fcCv(iFc,1))*pl%te(mpg%fcCv(iFc,1)) +
+     &    dv%pccm(mpg%fcCv(iFc,2),1)*
+     &    dv%ne(mpg%fcCv(iFc,2))*pl%te(mpg%fcCv(iFc,2)) )
+        coni(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
+     &   (dv%pccm(mpg%fcCv(iFc,1),1)*
+     &    dv%ni(mpg%fcCv(iFc,1),0)*pl%ti(mpg%fcCv(iFc,1))  +
+     &    dv%pccm(mpg%fcCv(iFc,2),1)*
+     &    dv%ni(mpg%fcCv(iFc,2),0)*pl%ti(mpg%fcCv(iFc,2)) )
+      enddo
+
+*   ..compute poloidal/radial coefficients for pressure diffusion term
+      floe(:,0) = -cone(:,0)*dnwe(:,0)
+      floi(:,0) = -coni(:,0)*dnwi(:,0)
+      cone(:,0) =  cone(:,0)*nwef
+      coni(:,0) =  coni(:,0)*nwif
+
+      floe(:,1) = 0.0_R8
+      floi(:,1) = 0.0_R8
+      cone(:,1) = 0.0_R8
+      coni(:,1) = 0.0_R8
+
+*   ..compute coefficients for stencil
+      call calccoef(nCv,nFc,nVx,0,geo,mpg,floe,cone,floe0,cone0)
+      call calccoef(nCv,nFc,nVx,0,geo,mpg,floi,coni,floi0,coni0)
+
+*   ..add to previous contributions
+      dv%floe        = dv%floe        + floe0
+      dv%cone(:,:,0) = dv%cone(:,:,0) + cone0
+
+      dv%floi        = dv%floi        + floi0
+      dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
 
 * ..return
       ncall = ncall+1

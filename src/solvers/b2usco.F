@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2usco (nCv, nFc, nVx, isb, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
-     &   solvereg, itcnt, rxg, pcm1, nb, pb, snbv, flob, conb,
+     &   solvereg, itcnt, rxg, nb, pb, snbv, flob, conb,
      &   pccb1, rescb, corpb, aa, name)                              !srv 18.05.02
       use b2mod_types
       use b2us_geo
@@ -14,7 +14,7 @@
       type (mapping), intent (in) :: mpg
       logical solvereg(0:nregionv)      
       real (kind=R8) ::
-     *   rxg, pcm1, nb(nCv), pb(nCv), snbv(nCv), flob(nFc,0:1),
+     *   rxg, nb(nCv), pb(nCv), snbv(nCv), flob(nFc,0:1),
      &   conb(nFc,0:1,0:4), pccb1(nCv), rescb(nCv)
       character*(*) name
 *   ..output arguments (unspecified on entry)
@@ -88,10 +88,9 @@
       endif                                                              !srv 06.07.06 }
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-*   ..test itcnt, rxg, pcm1
+*   ..test itcnt, rxg
       call xertst (0.le.itcnt, 'faulty argument itcnt')
       call xertst (0.lt.rxg, 'faulty argument rxg')
-      call xertst (0.le.pcm1, 'faulty argument pcm1')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of nb, pb
@@ -128,10 +127,8 @@ cwdk need calccoeff here...
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from flob(:,0), conb(:,0,:) ('5-point' contributions)
-        t1 = - 0.5_R8*flob(iFc,0) - (conb(iFc,0,0)+pcm1*wrk0(iFc))
-     &       - conb(iFc,0,2)                                       !srv 13.10.06
-        t2 =   0.5_R8*flob(iFc,0) - (conb(iFc,0,0)+pcm1*wrk0(iFc))
-     &       - conb(iFc,0,1)                                       !srv 13.10.06 
+        t1 = - 0.5_R8*flob(iFc,0) - conb(iFc,0,0) - conb(iFc,0,2)
+        t2 =   0.5_R8*flob(iFc,0) - conb(iFc,0,0) - conb(iFc,0,1)
         if (solvereg(mpg%cvReg(iCv1))) then
          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - 
      &     t1*rscal(pb(iCv1))          

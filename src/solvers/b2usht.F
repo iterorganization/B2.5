@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2usht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,
-     &  rxg, pcm1, ne, ni, te, ti,
+     &  rxg, ne, ni, te, ti,
      &  floe, cone, floi, coni, pccm1, she, shi, ceqp,
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa)
       use b2mod_types
@@ -15,7 +15,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  rxg, pcm1, ne(nCv), ni(nCv,0:1), te(nCv), ti(nCv),
+     *  rxg, ne(nCv), ni(nCv,0:1), te(nCv), ti(nCv),
      &  floe(nFc,0:1), floi(nFc,0:1),
      &  cone(nFc,0:1,0:2), coni(nFc,0:1,0:2),         !srv 02.01.07
      &  pccm1(nCv)
@@ -97,10 +97,9 @@
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
-*   ..test itcnt, rxg, pcm1
+*   ..test itcnt, rxg
       call xertst (0.le.itcnt, 'faulty argument itcnt')
       call xertst (0.lt.rxg, 'faulty argument rxg')
-      call xertst (0.le.pcm1, 'faulty argument pcm1')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of ne, ni, te, ti
@@ -131,33 +130,8 @@
       if (new_matrix.or..true.) call restart_ma28_for_us
 * ..total heat correction equation
 *   ..compute flo0, con0
-      do iFc = 1, nFc                                                 !srv 26.11.02 {
-!WG_TODO there was a loop here to check whether or not the ion/
-!WG_TODO electron energy equation is solved in the cell 
-!WG_TODO -> still to be added! 
-!WG_TODO However, need to check both neighboring cells for this
-!WG_TODO (not just a single one as in the original code), not 
-!WG_TODO obvious how to do this
-cwdk poloidal contribution
-        t0 = 2.5_R8*geo%fcPbs(iFc)*pcm1*                            !srv 02.01.07 {
-     &   (pccm1(mpg%fcCv(iFc,1))*
-     &   (ne(mpg%fcCv(iFc,1))*te(mpg%fcCv(iFc,1))+
-     &    ni(mpg%fcCv(iFc,1),0)*ti(mpg%fcCv(iFc,1)))+
-     &    pccm1(mpg%fcCv(iFc,2))*
-     &   (ne(mpg%fcCv(iFc,2))*te(mpg%fcCv(iFc,2))+
-     &    ni(mpg%fcCv(iFc,2),0)*ti(mpg%fcCv(iFc,2))))/2.0_R8        !srv 02.01.07 }
-!WG_TODO: correct linearization into flo0/con0 for misaligned faces
-!WG_TODO: need calccoeff here...
-        flo0(iFc,0) = floe(iFc,0)+floi(iFc,0)
-     &   -t0*(ne(mpg%fcCv(iFc,2))+ni(mpg%fcCv(iFc,2),0)- 
-     &        ne(mpg%fcCv(iFc,1))-ni(mpg%fcCv(iFc,1),0))            !srv 02.01.07 }
-        con0(iFc,0,0) = cone(iFc,0,0)+coni(iFc,0,0)                 !srv 02.01.07
-     &   +(t0/2.0_R8)*(ne(mpg%fcCv(iFc,1))+ne(mpg%fcCv(iFc,2))+
-     &                 ni(mpg%fcCv(iFc,1),0)+ni(mpg%fcCv(iFc,2),0)) !srv 02.01.07 }
-cwdk radial contribution
-        flo0(iFc,1)   = floe(iFc,1)   + floi(iFc,1)
-        con0(iFc,1,0) = cone(iFc,1,0) + coni(iFc,1,0)
-      enddo
+      flo0        = floe + floi
+      con0(:,:,0) = cone(:,:,0) + coni(:,:,0)
 *   ..initialize matrix to zero
       aa = 0.0e0_R8
 *   ..compute the nine-point matrix
@@ -321,23 +295,8 @@ cwdk radial contribution
       end do
       if (new_matrix.or..true.) call restart_ma28_for_us
 *   ..compute flo0, con0
-      do iFc = 1, nFc
-cwdk poloidal contribution
-cwdk need calccoeff here...
-        t0 = 1.25_R8*geo%fcPbs(iFc)*pcm1*                             !srv 02.01.07 {
-     &   (pccm1(mpg%fcCv(iFc,1))*
-     &   (ne(mpg%fcCv(iFc,1))*te(mpg%fcCv(iFc,1)))+
-     &    pccm1(mpg%fcCv(iFc,2))*
-     &   (ne(mpg%fcCv(iFc,2))*te(mpg%fcCv(iFc,2))))                   !srv 02.01.07 }
-!WG_TODO: correct linearization into flo0/con0 for misaligned faces
-        flo0(iFc,0) = floe(iFc,0)
-     &   -t0*(ne(mpg%fcCv(iFc,2))-ne(mpg%fcCv(iFc,1)))                !srv 02.01.07 }
-        con0(iFc,0,0) = cone(iFc,0,0)                                 !srv 02.01.07
-     &   +(t0/2.0_R8)*(ne(mpg%fcCv(iFc,1))+ne(mpg%fcCv(iFc,2)))       !srv 02.01.07 }
-cwdk radial contribution
-        flo0(iFc,1)   = floe(iFc,1)
-        con0(iFc,1,0) = cone(iFc,1,0)
-      enddo
+      flo0        = floe
+      con0(:,:,0) = cone(:,:,0)
 *   ..initialize matrix to zero
       aa = 0.0e0_R8
 *   ..compute the nine-point matrix
@@ -490,23 +449,8 @@ cwdk radial contribution
       end do
       if (new_matrix.or..true.) call restart_ma28_for_us
 *   ..compute flo0, con0
-      do iFc = 1, nFc
-cwdk poloidal contribution
-cwdk need calccoeff here...
-        t0 = 1.25_R8*geo%fcPbs(iFc)*pcm1*                             !srv 02.01.07 {
-     &   (pccm1(mpg%fcCv(iFc,1))*
-     &   (ni(mpg%fcCv(iFc,1),0)*ti(mpg%fcCv(iFc,1)))+
-     &    pccm1(mpg%fcCv(iFc,2))*
-     &   (ni(mpg%fcCv(iFc,2),0)*ti(mpg%fcCv(iFc,2))))                 !srv 02.01.07 }
-!WG_TODO: correct linearization into flo0/con0 for misaligned faces
-        flo0(iFc,0) = floi(iFc,0)
-     &   -t0*(ni(mpg%fcCv(iFc,2),0)-ni(mpg%fcCv(iFc,1),0))            !srv 02.01.07 }
-        con0(iFc,0,0) = coni(iFc,0,0)                                 !srv 02.01.07
-     &   +(t0/2.0_R8)*(ni(mpg%fcCv(iFc,1),0)+ni(mpg%fcCv(iFc,2),0))   !srv 02.01.07 }
-cwdk radial contribution
-        flo0(iFc,1)   = floi(iFc,1)
-        con0(iFc,1,0) = coni(iFc,1,0)
-      enddo
+      flo0        = floi
+      con0(:,:,0) = coni(:,:,0)
 *   ..initialize matrix to zero
       aa = 0.0e0_R8
 *   ..compute the nine-point matrix

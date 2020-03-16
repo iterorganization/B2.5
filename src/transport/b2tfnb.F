@@ -69,7 +69,7 @@
      *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1), 
      *   flo2dia(nFc,0:1), flo_he(nFc,0:1), 
      *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
-     *   flux_limit_min_ti, xfrhie, term(nFc), termhz(nFc),
+     *   flux_limit_min_ti, pcm1, term(nFc), termhz(nFc),
      *   flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1), fl
       real (kind=R8) :: 
      &   vbecrb_(nCv,0:1), wbdia_(nCv,0:1),
@@ -88,22 +88,22 @@
      *   nbcor(nVx),                                             !srv 01.10.99 !lk 09.06.11
      *   nbti(nCv),
      *   nbzb(nCv), nbzbc(nVx),                          !srv 13.05.16
-     *   dnb(nFc,0:1), dpb(nFc,0:1),
+     *   dnb(nFc,0:1), dpb(nFc,0:1), dpbc(nCv), dpbm(nFc),
      *   dpo(nFc,0:1), dnbti(nFc,0:1),
      *   nbf(nFc), pbf(nFc),
      *   dOnedBsq(nFc,0:1),
      *   fna_mdf0(nFc,0:1),
-     *   cddb(nFc,0:1)
+     *   cddb(nFc,0:1), cdpb(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)                              !lk
       real (kind=R8) :: term3
       integer :: xcount, ycount
-      save ncall, alpha, gamma, flux_limit_min_ti, no_hybr
+      save ncall, pcm1, alpha, gamma, flux_limit_min_ti, no_hybr
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr                    !xpb
       external b2xvsg, b2xvff, intface, diff
       intrinsic abs, max, min, mod, sqrt, sign
 *   ..initialisation
-      data ncall/0/, xfrhie/1.0_R8/, alpha/0.0_R8/, gamma/2.0_R8/, 
+      data ncall/0/, pcm1/1.0_R8/, alpha/0.0_R8/, gamma/2.0_R8/, 
      *     flux_limit_min_ti/0.0_R8/, no_hybr/0/
 
 *-----------------------------------------------------------------------
@@ -116,9 +116,8 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-        call ipgetr ('b2tfnb_xfrhie', xfrhie)
-        call xertst (0.0_R8.le.xfrhie,
-     &   'faulty internal parameter xfrhie')
+        call ipgetr ('b2npco_pcm1', pcm1)
+        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
         call ipgetr ('b2tfnb_alpha', alpha)
         call xertst (0.0_R8.le.alpha,
      &   'faulty internal parameter alpha')
@@ -438,9 +437,11 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
 #endif
       endif                                                             !lk 02.06.11 }
 
-*   ..compute differences of na and pa at cell faces
-!      call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,isb), wrkVx, dnb)
+*   ..compute differences of pa at cell faces and poloidal gradients
+*     at cell centers
       call diff(nCv, nFc, nVx, 0, geo, mpg, dv%pa(:,isb), wrkVx, dpb)
+      call gradc_p(nCv, nFc, nVx, 1, geo, mpg, dv%pa(:,isb), wrkVx,
+     &  dpbc)
 
 *   ..interpolate cvHz ('hz') to cell faces
       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk3)
@@ -450,61 +451,29 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
 *   ..interpolate ua to cell faces
       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,isb),wrk0)
 
-*   ..compute wrk1
-      do iFc = 1, nFc
-        wrk1(iFc) = 0.5_R8*
-     &    (dv%pa(mpg%fcCv(iFc,2),isb)-dv%pa(mpg%fcCv(iFc,1),isb))/
-     &    (dv%pa(mpg%fcCv(iFc,2),isb)+dv%pa(mpg%fcCv(iFc,1),isb))
-      enddo
-!      call b2xxgs (nx, ny, 0.0_R8, wrk1, 1)
-*   ..compute wrk2
-!      do iy = -1, ny
-!       do ix = -1, nx
-!        if(leftix(ix,iy).eq.-2) then
-!         wrk2(ix,iy) = 0.0_R8
-!        elseif(leftix(leftix(ix,iy),leftiy(ix,iy)).eq.-2) then
-!         wrk2(ix,iy) = 0.0_R8
-!        elseif(rightix(ix,iy).eq.nx+1) then
-!         wrk2(ix,iy) = 0.0_R8
-!        else
-!         wrk2(ix,iy) = wrk1(leftix(ix,iy),leftiy(ix,iy))-
-!     &    2.0_R8*wrk1(ix,iy)+wrk1(rightix(ix,iy),rightiy(ix,iy))
-!        endif
-!       enddo
-!      enddo
-!      call b2xxgs (nx, ny, 0.0_R8, wrk2, 1)
-!cwdk detailed computation of V_corr_dpc to be checked... tmp: 0
-!cwdk still need a volume ratio at the end of term and termhz, to make
-!cwdk it zero on faces with guard cells.
-      wrk2 = 0.0_R8
-      term   = 
-     &  xfrhie*wrk2*0.5_R8*abs(geo%fcPbs)*sqrt(pbf/(am(isb)*mp*nbf))
-      termhz = 
-     &  xfrhie*wrk2*0.5_R8*abs(geo%fcPbshz)*sqrt(pbf/(am(isb)*mp*nbf))
-
 *   ..compute convective coefficients (poloidal and radial)
-      flo(:,0) = geo%fcPbs*wrk0 + term + co%cvla(:,0,isb) +
+      flo(:,0) = geo%fcPbs*wrk0 + co%cvla(:,0,isb) +
      &  (drift_hyb*dv%vaecrb(:,0,isb) + dv%vadia(:,0,isb))*
      &  geo%fcS*geo%fcQalf(:,0)
       flo(:,1) = co%cvla(:,1,isb) +
      &  (drift_hyb*dv%vaecrb(:,1,isb) + dv%vadia(:,1,isb))*
      &  geo%fcS*geo%fcQalf(:,1)
-      flo_mdf(:,0) = geo%fcPbs*wrk0 + term + co%cvla(:,0,isb) +
+      flo_mdf(:,0) = geo%fcPbs*wrk0 + co%cvla(:,0,isb) +
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_mdf(:,1) = co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
-      flo_he(:,0) = geo%fcPbs*wrk0 + term +
+      flo_he(:,0) = geo%fcPbs*wrk0 +
      &  5.0_R8/3.0_R8*co%cvla(:,0,isb) + 
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_he(:,1)  = 5.0_R8/3.0_R8*co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
-      flo2dia(:,0) = geo%fcPbshz*wrk0 + termhz + co%cvlahz(:,0,isb) +
+      flo2dia(:,0) = geo%fcPbshz*wrk0 + co%cvlahz(:,0,isb) +
      &  (drift_hyb*dv%vaecrb(:,0,isb) + 2.0_R8*dv%vadia(:,0,isb))*
      &  geo%fcS*geo%fcQalf(:,0)*wrk3
       flo2dia(:,1) = co%cvlahz(:,1,isb) +
      &  (drift_hyb*dv%vaecrb(:,1,isb) + 2.0_R8*dv%vadia(:,1,isb))*
      &  geo%fcS*geo%fcQalf(:,1)*wrk3
-      flo_nodrift(:,0) = co%cvla(:,0,isb) + geo%fcPbs*wrk0 + term
+      flo_nodrift(:,0) = co%cvla(:,0,isb) + geo%fcPbs*wrk0
       flo_nodrift(:,1) = co%cvla(:,1,isb)
 
 *   ..add contribution from currents
@@ -538,6 +507,23 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf
       dv%fna_32(:,1,isb) = dv%fna_32(:,1,isb) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf
+
+*   ..add Rhie-Chow term
+      do iFc = 1, nFc
+        cdpb(iFc,0) = pcm1*0.5_R8*geo%fcPbs(iFc)*
+     &   (dv%pcca(mpg%fcCv(iFc,1),1,isb)*pl%na(mpg%fcCv(iFc,1),isb) +
+     &    dv%pcca(mpg%fcCv(iFc,2),1,isb)*pl%na(mpg%fcCv(iFc,2),isb))/
+     &   (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))
+        dpbm(iFc) = 0.5_R8*geo%fcQgam(iFc,0)*
+     &   (dpbc(mpg%fcCv(iFc,1)) + dpbc(mpg%fcCv(iFc,2)))*
+     &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
+      enddo
+      cdpb(:,1) = 0.0_R8
+      term   = -cdpb(:,0)*(dpb(:,0) - dpbm)
+      termhz = -cdpb(:,0)*(dpb(:,0) - dpbm)*wrk3
+
+      fna_mdf0(:,0)      = fna_mdf0(:,0) + term
+      dv%fna_32(:,0,isb) = dv%fna_32(:,0,isb) + term
 
 *   ..compute other fluxes
       dv%fna(:,0,isb)      = fna_mdf0(:,0) +  
@@ -583,9 +569,11 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
 
 *   ..compute _nodrift fluxes
       dv%fna_nodrift(:,0,isb) = dv%fna_nodrift(:,0,isb) - 
-     &      co%cdpa(:,0,isb)*dpb(:,0)
+     &      co%cdpa(:,0,isb)*dpb(:,0) + term
       dv%fna_nodrift(:,1,isb) = dv%fna_nodrift(:,1,isb) - 
      &      co%cdpa(:,1,isb)*dpb(:,1)
+
+      dv%fna_32nd(:,0,isb) = dv%fna_32nd(:,0,isb) + term
 
       dv%fna_52nd(:,0,isb) = dv%fna_52nd(:,0,isb) - 
      &      co%cdpa(:,0,isb)*dpb(:,0)
@@ -621,9 +609,9 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
      &     flob0(iFc,1)*(kmprv(mpg%fcVx(iFc,2))-kmprv(mpg%fcVx(iFc,1)))
       enddo
 
-*   ..contribution from pressure diffusion
-      call calccoef(nCv,nFc,nVx,2,geo,mpg,
-     &  dumm0,co%cdpa(:,:,isb),flob0,conb0)
+*   ..contribution from pressure diffusion and Rhie-Chow term
+      cdpb = cdpb + co%cdpa(:,:,isb)
+      call calccoef(nCv,nFc,nVx,2,geo,mpg,dumm0,cdpb,flob0,conb0)
       dv%flob = dv%flob + flob0                                     !wdk flob0 should be zero here
       dv%conb(:,:,0) = dv%conb(:,:,0) + conb0
       dv%conb(:,0,1) = conb0(:,0)*kmprtif                           !wdk is this needed? correct? probably always zero?
@@ -688,11 +676,11 @@ cwdk to be considered: con_mdf, con_2dia not easily recoverable?
 cwdk should this be conb in general? (but without the rescaling for pressure)
        call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,isb), wrkVx, dnb) 
        wrk1 = geo%fcPbs*wrk0*nbf
-       wrk2 = term*nbf
+       wrk2 = term
        wrk3 = dv%vaecrb(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)
 !       wrk4 = -con_2dia*dnb(:,0)
        wrk5 = -co%cdpa(:,0,isb)*dpb(:,0)
-       wrk6 = termhz*nbf
+       wrk6 = termhz
 !       wrk7 = -con_mdf*dnb(:,0)
        wrk8 = co%cvla(:,0,isb)*nbf
        if(.not. is_neutral(isb)) then
@@ -706,6 +694,8 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        endif
        call my_out_us(70,nFc,1,wrk1,'b2tfnb_bxuanax'//chns)
        call my_out_us(70,nFc,1,wrk2,'b2tfnb_dpccornax'//chns)
+       call my_out_us(70,nFc,1,dpb(1,0),'b2tfnb_dpb'//chns)
+       call my_out_us(70,nFc,1,dpbm,'b2tfnb_dpbm'//chns)
        if (iout_b2wdat .ne. 4) 
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_dpccorhznax'//chns)            !srv 05.11.09
        if (iout.eq.1) 
