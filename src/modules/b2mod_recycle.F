@@ -233,7 +233,8 @@ c     Other initializations
       subroutine CalcIncidentFluxes(iCv,iCn,iFc,isign,
      &            isn,iscx0,istra,idir,hh,hhn,
      &            Phi_app,area,pl,tif,tef,pof,nef,geo,                           
-     &            rt,gradnn,fnnic,fnniv,fmomni,nni,nnwwni,feneni)
+     &            rt,gradnn,use_uy_uz,sign_cosa,sign_sina,
+     &            fnnic,fnniv,fmomni,nni,nnwwni,feneni)
 !mb   17.07.17
 c     This routine calculates the incident neutral particle,momentum and energy fluxes based 
 c     on the diffusion approximation (see papers of Niels Horsten).
@@ -246,7 +247,7 @@ c     on the diffusion approximation (see papers of Niels Horsten).
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
       integer,intent(in):: iCv,iCn, iFc,idir,
-     &    isn,iscx0,istra
+     &    isn,iscx0,istra, use_uy_uz,sign_cosa, sign_sina
       real (kind=R8),intent(in):: hh, hhn,Phi_app, area,
      2    tif,tef,pof,nef,isign,gradnn
 c     Output variables: Incident neutral flux has been broken up in two parts:
@@ -272,8 +273,8 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%fcQalf(iFc,0)
-      sina = geo%fcQalf(iFc,1)
+      cosa = sign_cosa*geo%fcQalf(iFc,0)
+      sina = sign_sina*geo%fcQalf(iFc,1)
 !!      cosa = 1.0_R8
 !!      sina = 0.0_R8
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
@@ -309,8 +310,10 @@ c      call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r)     !mb Rem
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
 c     Incident particle flux density
-!!      uy = 0.0_R8
-!!      uz = 0.0_R8
+      if (use_uy_uz.eq.0) then
+      uy = 0.0_R8
+      uz = 0.0_R8
+      endif
       fnnic = vcx/vtot**2*(dnndyc*uy*i1l+
      2   dnndzc*i2l)
       fnniv = vcx/vtot*(-i1l+
@@ -374,19 +377,7 @@ c     Incident total energy flux density of neutrals
 
 
 
-c     Only if flux has right sign
-      if (fnni.le.0.0_R8) then
-        write (*,*) 'warning iCv=', iCv
-        fnnic = 0.0_R8
-        fnniv = 0.0_R8
-        fmox = 0.0_R8
-        fmoy = 0.0_R8
-        fmoz = 0.0_R8
-        pn = 0.0_R8
-        nni = 0.0_R8
-        nnwwni = 0.0_R8
-        feneni = 0.0_R8
-      endif
+
 
 c     Convert particle flux densities in fluxes
       fnnic = fnnic*area
@@ -403,12 +394,22 @@ c     Calculate incident poloidal momentum flux of neutrals
       fmomni = pit*fmomnip + pit2*fmomnit         
 c     Convert energy flux densities in net energy flux contributions
       feneni = -feneni*area
+
+c     If flux has incorrect sign, resort to Maxwellian distribution for BC's
+      if (fnni.le.0.0_R8) then
+        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
+     &            idir,area,pl,tif,geo,1,sign_cosa,sign_sina,
+     &            fnnic,fnniv,fmomni,
+     &            nni,nnwwni,feneni)
+      endif
+
       call subend ()
       return
       end subroutine CalcIncidentFluxes
 
       subroutine CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
-     &            idir,area,pl,tf,geo,isrc,fnnic,fnniv,fmomni,
+     &            idir,area,pl,tf,geo,isrc,sign_cosa,sign_sina,
+     &            fnnic,fnniv,fmomni,
      &            nni,nnwwni,feneni)
 !nh   08.05.2018
 c     This routine calculates the incident neutral particle fluxes based on 
@@ -426,7 +427,7 @@ c     isrc is the sign of the source needed for the hybrid delta f method
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       integer,intent(in) :: iCv, iFc, isn, idir, istra,
-     &    isrc
+     &    isrc, sign_cosa, sign_sina
       real (kind=R8),intent(in) :: area, tf, isign
 c     Output variables: Incident neutral flux has been broken up in two parts:
 c     A constant contribution fnnic and a contribution varying linearly with the 
@@ -447,10 +448,8 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%fcQalf(iFc,0)
-      sina = geo%fcQalf(iFc,1)
-!      cosa = 1.0_R8
-!      sina = 0.0_R8
+      cosa = sign_cosa*geo%fcQalf(iFc,0)
+      sina = sign_sina*geo%fcQalf(iFc,1)
 cnh   neutral velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and only neutral parallel
 c     velocity component
       unf = pl%ua(iCv,0) !! TODO species index
@@ -519,7 +518,8 @@ c     Convert energy flux densities in net energy flux contributions
      &             isign,
      &            isn,iscx0,istra,iwall,idir,
      &            Phi_app,area,recyc0,pl,tif,tef,pof,nif,nef,
-     &            geo,t0,fmomrec,nnrec,nnwwnrec,fenerec)
+     &            geo,t0,sign_cosa, sign_sina, use_uy_uz, 
+     &            fmomrec,nnrec,nnwwnrec,fenerec)
 !mb   17.07.17
 c     This routine calculates the recycled neutral particle,momentum and energy fluxes based 
 c     on the diffusion approximation (see papers of Niels Horsten).
@@ -533,7 +533,8 @@ c     nif = plasma density on face, isn neutral species index
       type (geometry), intent (in) :: geo
 !!      type (B2Rates), intent (in) :: rt
       integer, intent(in):: iCv, nCi, iFc,
-     &     idir, isn, iscx0, iwall,istra
+     &     idir, isn, iscx0, iwall,istra, sign_cosa, sign_sina,
+     &     use_uy_uz
       real (kind=R8),intent(in):: Phi_app, area,recyc0,
      2    tif,tef,pof,nif,nef,t0,isign
 c     Output variables: Incident neutral flux has been broken up in two parts:
@@ -560,10 +561,8 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%fcQalf(iFc,0)
-      sina = geo%fcQalf(iFc,1)
-!      cosa = 1.0_R8
- !     sina = 0.0_R8
+      cosa = sign_cosa*geo%fcQalf(iFc,0)
+      sina = sign_sina*geo%fcQalf(iFc,1)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
       upf = pl%ua(iCv,1) !! TODO species index
       ux = upf*pit2
@@ -577,8 +576,10 @@ c       ion particle flux density
 c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
 c     of TRIM tables. Only toroidal drift remains!
-!!      uy = 0.0_R8
-!!      uz = 0.0_R8
+      if (use_uy_uz.eq.0) then
+      uy = 0.0_R8
+      uz = 0.0_R8
+      endif
 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
 c      call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r)     !mb Removed optional arguments. Implementation gave segmentation errors...
@@ -674,7 +675,9 @@ c     Convert energy flux densities in energy fluxes
       subroutine CalcReflectedFluxes(iCv,iCn,nCi,iFc,isign,
      &            isn,iscx0,istra,iwall,idir,hh,hhn,
      &            Phi_app,area,recyc0,pl,tif,tef,pof,                           
-     &           nef,geo,rt,gradnn,fmomrefl,nnrefl,nnwwnrefl,fenerefl)
+     &            nef,geo,rt,gradnn,
+     &            sign_cosa, sign_sina, use_uy_uz,
+     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl)
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
       use b2mod_b2cmpa
@@ -688,7 +691,8 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (B2Rates), intent (in) :: rt
 
       integer,intent(in):: iCv, iCn, nCi, iFc, idir,
-     &    isn, iscx0, iwall,istra
+     &    isn, iscx0, iwall,istra,
+     &    sign_cosa, sign_sina, use_uy_uz
       real (kind=R8),intent(in):: hh, hhn,Phi_app, area,recyc0,
      2    pof,tif,tef,nef,isign
 c     Output variables: Incident neutral flux has been broken up in two parts:
@@ -720,10 +724,8 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%fcQalf(iFc,0)
-      sina = geo%fcQalf(iFc,1)
-!     cosa = 1.0_R8
-!      sina = 0.0_R8
+      cosa = sign_cosa*geo%fcQalf(iFc,0)
+      sina = sign_sina*geo%fcQalf(iFc,1)
 cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary assuming absence of 9-point stencil and drifts
 !! TODO species index
       upf = pl%ua(iCn,1) !! even though the parallel velocity on the face should use iCv, we choose iCn because EIRENE also only cells ua in the first internal cell.
@@ -760,8 +762,10 @@ c     Calculate incident particle flux density
 c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
 c     of TRIM tables. Only toroidal drift remains!
-!!      uy = 0.0_R8
-!!      uz = 0.0_R8
+      if (use_uy_uz.eq.0) then
+        uy = 0.0_R8
+        uz = 0.0_R8
+      endif
 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
 c      call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r)     !mb Removed optional arguments. Implementation gave segmentation errors...
@@ -878,16 +882,7 @@ c     reflected total energy flux density of neutrals
      2     1.0_R8/vtot*dnndz*re2i*cs**4)
       fene = fene + pt*fnni_nodrifts*E_fc*ev
 
-      if (fnni.le.0.0_R8) then
-        write (*,*) 'WARNING wrong signs reflected neutrals model'
-        fmox = 0.0_R8
-        fmoy = 0.0_R8
-        fmoz = 0.0_R8
-        nnrefl = 0.0_R8
-        nnwwnrefl = 0.0_R8
-        pn = 0.0_R8
-        fene = 0.0_R8
-      endif
+
 
 c     Calculate reflected poloidal momentum flux of neutrals
       fmomreflp = -(1-idir)*isign*(fmoz*cosa + fmoy*sina)* !East/West contribution
@@ -897,13 +892,22 @@ c     Calculate reflected poloidal momentum flux of neutrals
       fmomrefl = pit*fmomreflp + pit2*fmomreflt         
 c     Convert energy flux densities in energy fluxes
       fenerefl = fene*area
+
+!!    resort to maxwellian distribution of incident flux has wrong sign
+      if (fnni.le.0.0_R8) then
+        call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
+     &            isn,istra,iwall,idir,area,recyc0,pl,tif,                          
+     &            geo,sign_cosa, sign_sina, use_uy_uz,
+     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl)
+      endif
       call subend ()
       return
       end subroutine CalcReflectedFluxes
 
       subroutine CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,idir,area,recyc0,pl,tf,                          
-     &            geo,fmomrefl,nnrefl,nnwwnrefl,fenerefl)
+     &            geo,sign_cosa, sign_sina, use_uy_uz,
+     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl)
 !nh   11.06.18
 c     This routine calculates the reflected neutral particle, momentum and energy fluxes with incident neutral flux based on a truncated Maxwellian
 c     for the incident neutrals.
@@ -914,8 +918,10 @@ c     for the incident neutrals.
       implicit none
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
-      integer,intent(in):: iCv, nCi, iFc, idir, isn, iwall, istra
+      integer,intent(in):: iCv, nCi, iFc, idir, isn, iwall, istra,
+     &                            sign_cosa, sign_sina, use_uy_uz
       real (kind=R8),intent(in):: area, recyc0, tf,isign
+
 c     Output variables
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl
 c     Internal variables
@@ -938,10 +944,8 @@ c     Initialize/calculate some variables
       pit = geo%cvbb(iCv,0)/geo%cvbb(iCv,3)
       pit2 = geo%cvbb(iCv,2)/geo%cvbb(iCv,3)
 c     a is defined as -t
-      cosa = geo%fcQalf(iFc,0)
-      sina = geo%fcQalf(iFc,1)
-!      cosa = 1.0_R8
-!      sina = 0.0_R8
+      cosa = sign_cosa*geo%fcQalf(iFc,0)
+      sina = sign_sina*geo%fcQalf(iFc,1)
 c     Neutral velocity components: toroidal (x),tangential (y), and normal (z)
       unf = pl%ua(iCv,isn)
       ux =  unf*pit2
@@ -958,8 +962,10 @@ c     Calculate incident particle flux density
 c     Assume poloidal and radial drifts are zero for momentum and energy
 c     equations to reduce the dimensionality of the pre-evaluates integrals
 c     of TRIM tables. Only toroidal drift remains!
-!!      uy = 0.0_R8
-!!      uz = 0.0_R8
+      if (use_uy_uz.eq.0) then
+      uy = 0.0_R8
+      uz = 0.0_R8
+      endif
 
 
 c     Interpolate tables to find recycling values
