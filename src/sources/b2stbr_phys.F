@@ -105,6 +105,8 @@
      3   senirec(nCv,0:ns-1),
      4   senini(nCv,0:ns-1),
      5   senirem(nCv,0:ns-1)
+      integer, save :: use_uy_uz = 0,
+     &  sign_cosa = 1, sign_sina = 1
 
       parameter (amtol=1.0e-2_R8)
 *   ..procedures
@@ -149,6 +151,9 @@
       if (ncall.eq.0) then                                          !srv 22.08.08 {
        write(*,*) ' First call of b2stbr_phys' 
        call ipgeti ('b2stbr_kul_recycle', kul_recycle)
+       call ipgetr ('b2stbr_sign_cosa', sign_cosa)
+       call ipgetr ('b2stbr_sign_sina', sign_sina)
+       call ipgeti ('b2stbr_use_uy_uz', use_uy_uz)
        call ipgeti ('b2stbr_phys_iout', iout)                       !srv 11.07.05
        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
@@ -878,7 +883,8 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
              call CalcRecycledFluxes(iCv,mpg%nCi,iFc,isign,
      &            is0,is2,istra,iwall,idir,
      &            Phi_app,farea,recyc(is,istra),pl,tif,tef,pof,
-     &            pl%na(iCv,is),dv%ne(iCv),geo,t0,          
+     &            pl%na(iCv,is),dv%ne(iCv),geo,t0,  
+     &            sign_cosa, sign_sina, use_uy_uz,        
      &            fmomrec,nnrec,nnwwnrec,fenerec)
              else
                 fmomrec = 0
@@ -927,10 +933,12 @@ cmb   net neutral energy source from recombination
      &              is0,is2,istra,idir,hh,hhn,
      &              Phi_app,farea,pl,tif,tef,pof,
      &              dv%ne(iCv),geo,rt,gradnn(idir_inv),
+     &              use_uy_uz, sign_cosa, sign_sina, 
      &              fnnic,fnniv,fmomni,nni,nnwwni,feneni)
              else
              call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,istra,
-     &            idir,farea,pl,tif,geo,1,fnnic,fnniv,
+     &            idir,farea,pl,tif,geo,1,sign_cosa,sign_sina,
+     &            fnnic,fnniv,
      &            fmomni,nni,nnwwni,feneni)
              endif
 
@@ -949,13 +957,14 @@ cmb   net momentum sources from neutral particle reflection
      &              Phi_app,farea,recyc(is,istra),pl,tif,
      &              tef,pof,dv%ne(iCv),
      &              geo,rt,gradnn(idir_inv),
+     &              sign_cosa, sign_sina, use_uy_uz,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl)
                else
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
      &              istra,iwall,idir,farea,recyc(is,istra),pl,tif,
-     &              geo,fmomrefl,nnrefl,
-     &              nnwwnrefl,fenerefl)
+     &              geo,sign_cosa, sign_sina, use_uy_uz,
+     &              fmomrefl,nnrefl,nnwwnrefl,fenerefl)
                endif
              else
              fmomrefl = 0
