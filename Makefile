@@ -8,7 +8,7 @@ endif
 
 SRCB2   = ${PWD}
 SRCDIR  = ${SRCB2}/src
-DOCDIR  = ${SRCDIR}/documentation
+DOCDIR  = ${SRCDIR}/documentationgit_vers
 PYTHON  = python
 
 MAKES = ${SRCB2}/Makefile
@@ -907,7 +907,7 @@ ${OBJDIR}/LISTOBJ: listobj
 VERSION: ${SRCDIR}/include/git_version_B25.h
 
 ${SRCDIR}/include/git_version_B25.h: force
-	@echo "      character*32 :: git_version_B25 = '`git describe --dirty --always`'" > ${SRCDIR}/include/git_version_new.h
+	@echo "      character*32 :: git_version_B25='`git describe --dirty --always`'" > ${SRCDIR}/include/git_version_new.h
 	@if cmp -s ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; then rm ${SRCDIR}/include/git_version_new.h; else mv ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; fi
 
 ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
