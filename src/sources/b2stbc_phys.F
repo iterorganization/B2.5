@@ -3056,47 +3056,25 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=5 -- PRESCRIBE THE PARALLEL MOMENTUM FLUX PER UNIT AREA
 
 10500     CONTINUE
-          call xerrab ('b2stbc_phys -- BCMOM = 5 not adapted for WG')
-#ifdef WG_TODO
           if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'parallel momentum flux per unit area ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
-          IF(BCCHAR(IB).EQ.'S') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         MOMPAR(IS,IB,1)*SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=0.0_R8
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'N') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         MOMPAR(IS,IB,1)*
-     1         SYHZ(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .              BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=0.0_R8
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'W') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     1         MOMPAR(IS,IB,1)*SXHZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=0.0_R8
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'E') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     .         MOMPAR(IS,IB,1)*
-     1         SXHZ(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=0.0_R8
-            end do
-          ELSE
-            CALL XERRAB
-     1       ('B2STBC -- BCMOM=5, OPTION NOT AVAILABLE')
-          ENDIF
+cwdk      Possible backwards-compatibility issue: 
+cwdk      In the unstructured solver, we impose flux per unit area normal
+cwdk      to the surface/boundary. 
+cwdk      In the original code, the flux per unit area in the poloidal
+cwdk      direction was imposed at E/W boundaries (and normal to the 
+cwdk      radial direction at N/S - unchanged for aligned grids)
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            srw%smo0(iCv1,0,is) = mompar(is,iB,1)*geo%fcS(iFc)*hzf(iFc)
+            srw%smo0(iCv1,1,is) = 0.0_R8
+          enddo  
           GOTO 20000
-#endif
+
 * -- BCMOM=6 -- PRESCRIBE THE TOTAL PARALLEL MOMENTUM FLUX FOR A
 *                 CONSTANT PARALLEL VELOCITY
 
