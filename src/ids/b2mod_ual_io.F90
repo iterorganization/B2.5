@@ -843,6 +843,7 @@ contains
         description%dd_version = imas_version
         description%simulation%time_step = time_step_IN
         description%simulation%time_current = time_IN
+        allocate( description%simulation%workflow(1) )
         description%simulation%workflow = source
 #if IMAS_MINOR_VERSION > 25
         description%simulation%time_begin = run_start_time_IN
