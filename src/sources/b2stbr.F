@@ -1105,7 +1105,7 @@ c        write(*,*) 'Called neutr_scl'
 
 *   ..local variables
       integer nCg_tmp, ns_tmp
-      integer is, istra,nbnd2
+      integer is, istra
       integer use_eirene, neutrals_namelist
       integer sput_src, sput_chem_model,kul_recycle
       real (kind=R8) :: sput_frc
@@ -1284,8 +1284,8 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       ns_sp = ns_tmp
 #endif
 
-cmb  Load pre-evaluated integrals for advanced recyling model based on TRIM data
-      if (kul_recycle.eq.1) call read_recycle_fnn(ns)            !mb 12.07.17
+cmb  Load pre-evaluated integrals for advanced recyling mocdel based on TRIM data
+      if (kul_recycle.eq.1) call read_recycle_fnn(ns,mpg%nCg)            !mb 12.07.17
       call subend ()
       return
 

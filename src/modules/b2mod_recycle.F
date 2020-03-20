@@ -39,11 +39,11 @@ c     Boolean to indicate whether trim data is present for species/material comb
 
       contains
 
-      subroutine read_recycle_fnn(nsd)
+      subroutine read_recycle_fnn(nsd,nbnd)
       use b2mod_b2cmpa
       use b2mod_elements
       implicit none
-      integer,intent(in):: nsd
+      integer,intent(in):: nsd, nbnd
       character*256 filename
       integer ib, isp, is, il,it,itm,ndata
 c      integer nmax, itargsp, ic, i
@@ -384,12 +384,9 @@ c     Convert particle flux densities in fluxes
       fnniv = fnniv*area
 
 c     Calculate incident poloidal momentum flux of neutrals
-!      fmomnip = (1-idir)*isign*(fmoz*cosa + fmoy*sina)* !East/West contribution
-!     2   area +(1-idir)*isign*pn*area+
-!     3   idir*isign*fmoy*area ! South/North contribution
-      fmomnip = isign*(fmoz*cosa + fmoy*sina)*
-     2   area +isign*pn*area+
-     3   isign*fmoy*area 
+      fmomnip = (1-idir)*isign*(fmoz*cosa + fmoy*sina)* !East/West contribution
+     2   area +(1-idir)*isign*pn*area+
+     3   idir*isign*fmoy*area ! South/North contribution
       fmomnit = -fmox*area
       fmomni = pit*fmomnip + pit2*fmomnit         
 c     Convert energy flux densities in net energy flux contributions
@@ -593,7 +590,7 @@ c       Isothermal speed of sound and Mach number
       Mj = abs(ux)/cs
       tifev = tif/eV
       is = recycle_index(isn) 
-      it = target_index(iCv-nCi)
+      it = target_index(iCv-nCi-1)
 c       Shpottau value: sheath_potential devided by tau (Ti/Te)
       shpottauj = accel_ion(istra)*qe*(pof-phi_app)/tif
 c       For now, neirest neigbour interpolation for shpottau
@@ -779,7 +776,7 @@ c       Isothermal speed of sound and Mach number
       Mj = abs(ux)/cs
       tifev = tif/eV
       is = recycle_index(isn)
-      it = target_index(iCv-nCi)
+      it = target_index(iCv-nCi-1)
       ispt = 0 ! Neutrals are not accelerated to sheath
 c       Interpolate
       tab = rc1(:,:,ispt,is,it)
@@ -974,7 +971,7 @@ c     Isothermal speed of sound and Mach number
       Mj = abs(ux)/cs
       tfev = tf/eV
       is = recycle_index(isn)
-      it = target_index(iCv-nCi)
+      it = target_index(iCv-nCi-1)
       ispt = 0 ! Neutrals are not accelerated to sheath
 c       Interpolate
       tab = rc1(:,:,ispt,is,it)
