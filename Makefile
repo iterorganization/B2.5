@@ -8,7 +8,7 @@ endif
 
 SRCB2   = ${PWD}
 SRCDIR  = ${SRCB2}/src
-DOCDIR  = ${SRCDIR}/documentationgit_vers
+DOCDIR  = ${SRCDIR}/documentation
 PYTHON  = python
 
 MAKES = ${SRCB2}/Makefile
