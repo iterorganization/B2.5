@@ -26,7 +26,7 @@ cxpb We must avoid corner cells and dead cells
       nsegments = 0
 
 cxpb  We follow the same order as in init_wall
-cxpb  Starting for HFS lower corner and going clockwise around the plasma
+cxpb  Starting for lower left corner and going clockwise around the plasma
 cxpb  keeping the plasma to our right (but we are moving in the guard cells!)
 cxpb  First fill up the b2cmpb needed data
       cbirso = 0

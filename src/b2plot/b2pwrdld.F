@@ -165,10 +165,10 @@ c*** After rlcomp, the radiation loads are stored in radld (rdload.inc)
 c*** in the first ntrg elements, in the order given by the ltrg array.
 c*** We need them put in wldrdld (b2mod_b2plot_wall_loading.F) in the
 c*** positions just after lppp, in the following order:
-c***  inner target, cells ny-1 to lytg;
+c***  Western target, cells ny-1 to lytg;
 c*** [ inner top target, cells lytg to ny-1;
 c***   outer top target, cells ny-1 to lytg ];
-c***  outer target, cells lytg to ny-1
+c***  Eastern target, cells lytg to ny-1
 c*** Normalisation per unit area is also done here.
 c
       k=0

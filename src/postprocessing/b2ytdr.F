@@ -519,10 +519,10 @@ c 2002-09-11: logic revised
       integer lnblnk, len_of_digits, trace_convert
 #ifdef B25_EIRENE
       integer transform_tally, b2idez, convert_eirene
-      logical isaletter
+      logical isaletter, silent_open
       logical species_present, element_present, molecule_present,
      &        testion_present
-      external isaletter, b2idez, convert_eirene
+      external isaletter, b2idez, convert_eirene, silent_open
       external species_present, element_present, molecule_present,
      &         testion_present
       intrinsic iabs, min0
@@ -531,8 +531,8 @@ c 2002-09-11: logic revised
       real (kind=R8) :: cr, cz, cr1, cz1, rratio
       logical open_file, streql, is_comment, lnext1
       external subini, subend, xertst, xerrab, cfruch, cfrure, cfwuin,
-     &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk,
-     &  len_of_digits, open_file, get_jsep, conformal_convert,
+     &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk, len_of_digits,
+     &  open_file, get_jsep, conformal_convert,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr

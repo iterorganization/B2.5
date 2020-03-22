@@ -595,15 +595,15 @@
         do iy=-1,ny
           do is = 0, ns-1
             if(.not.is_neutral(is)) then          !iyv 07.02.11
-! pr_inner
+! pr_West
               wrk1(-1,iy)=wrk1(-1,iy)+na(-1,iy,is)*
      &         (rza(-1,iy,is)*te(-1,iy)+ti(-1,iy))
-! pr_outer
+! pr_East
               wrk1(0,iy)=wrk1(0,iy)+na(nx,iy,is)*
      &         (rza(nx,iy,is)*te(nx,iy)+ti(nx,iy))
-! ro_inner
+! ro_West
               wrk1(1,iy) = wrk1(1,iy)+am(is)*mp*na(-1,iy,is)
-! ro_outer
+! ro_East
               wrk1(2,iy) = wrk1(2,iy)+am(is)*mp*na(nx,iy,is)
 
               if(nncut.eq.2) then !{    !iyv 04.02.11
@@ -621,13 +621,13 @@
             endif
           enddo
 
-! qe inner
+! qe West
           phi_app = get_phi_applied(boundary_namelist,-1,iy)
           wrk0(-1,iy)=hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*    !srv 19.04. 13
      &     ( te(-1,iy)*(2.0e0_R8)+qe*po(-1,iy)*(1.0_R8-gammae) )*
      &     ( ne(-1,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(-1,iy)/me)*
      &     expu2(max(-50.0_R8, -qe*(po(-1,iy)-phi_app)/te(-1,iy))) )
-! qe outer
+! qe East
           phi_app = get_phi_applied(boundary_namelist,nx,iy)
           wrk0(0,iy)=hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*    !srv 19.04. 13
      &     ( te(nx,iy)*(2.0e0_R8)+qe*po(nx,iy)*(1.0_R8-gammae) )*
@@ -640,7 +640,7 @@
               wrk0(2,iy)=wrk0(2,iy)+na(nx,iy,is)
            endif
          enddo
-! qi inner
+! qi West
          wrk0(3,iy)=2.5e0_R8*
      &               hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(-1,iy)*wrk0(1,iy)*sqrt(wrk1(-1,iy)/wrk1(1,iy))
@@ -650,7 +650,7 @@
 !  does not disturb the guard cells and all the fluid sources related to neutrals
 !  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
 
-! qi outer
+! qi East
          wrk0(4,iy)=2.5e0_R8*
      &               hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(nx,iy)*wrk0(2,iy)*sqrt(wrk1(0,iy)/wrk1(2,iy))
@@ -879,15 +879,15 @@
      &          'Energy e-flux to outer lower plate     =',es11.3/
      &          'Energy i-flux to outer lower plate     =',es11.3//
 
-     &          'Energy e-flux to inner low plate       =',es11.3/
-     &          'Energy i-flux to inner low plate       =',es11.3/
+     &          'Energy e-flux to inner lower plate     =',es11.3/
+     &          'Energy i-flux to inner lower plate     =',es11.3/
      &          'Energy e-flux to inner upper plate     =',es11.3/
      &          'Energy i-flux to inner upper plate     =',es11.3//
 
      &          'Total Energy flux to outer upper plate =',es11.3/
-     &          'Total Energy flux to outer low plate   =',es11.3/
+     &          'Total Energy flux to outer lower plate =',es11.3/
      &          'Total Energy flux to inner upper plate =',es11.3/
-     &          'Total Energy flux to inner low plate   =',es11.3/ )
+     &          'Total Energy flux to inner lower plate =',es11.3/ )
 
       else
 
@@ -904,12 +904,12 @@
         write(70,51) qe_out_sum, qi_out_sum, q_out_sum,
      &               qe_inn_sum, qi_inn_sum, q_inn_sum
 
-   51   format(/'Energy e-flux to outer plate      =',es11.3/
-     &          'Energy i-flux to outer plate      =',es11.3/
-     &          'Total Energy flux to outer plate  =',es11.3/
-     &          'Energy e-flux to inner plate      =',es11.3/
-     &          'Energy i-flux to inner plate      =',es11.3//
-     &          'Total Energy flux to inner plate  =',es11.3/)
+   51   format(/'Energy e-flux to Eastern plate      =',es11.3/
+     &          'Energy i-flux to Eastern plate      =',es11.3/
+     &          'Total Energy flux to Eastern plate  =',es11.3/
+     &          'Energy e-flux to Western plate      =',es11.3/
+     &          'Energy i-flux to Western plate      =',es11.3//
+     &          'Total Energy flux to Western plate  =',es11.3/)
       endif
       close(70)
 

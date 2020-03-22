@@ -77,10 +77,10 @@ c***            (1,j) means PFR edge of target j
 c***            if not specified, jedg[io][12] are used
 c*** mtrgedge : list of segments to be linked to the target edges
 c***            if not specified, ltrgedge or jedg[io][12] are used
-c*** jedgi1   : inner edge of inner target => jedge(1)
-c*** jedgi2   : inner edge of outer target => jedge(2)
-c*** jedgo1   : outer edge of inner target => jedge(3) (SN) or jedge(5) (DN)
-c*** jedgo2   : outer edge of outer target => jedge(4) (SN) or jedge(6) (DN)
+c*** jedgi1   : inner edge of Western target => jedge(1)
+c*** jedgi2   : inner edge of Eastern target => jedge(2)
+c*** jedgo1   : outer edge of Western target => jedge(3) (SN) or jedge(5) (DN)
+c*** jedgo2   : outer edge of Eastern target => jedge(4) (SN) or jedge(6) (DN)
 c*** jedgi3   : inner edge of upper inner target => jedge(3)
 c*** jedgi4   : inner edge of upper outer target => jedge(4)
 c*** jedgo3   : outer edge of upper inner target => jedge(7)

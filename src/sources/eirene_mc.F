@@ -882,10 +882,10 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
      .        is,istrai)
           end do
         end do
-        write(*,*) 'Summed inner target data : '
+        write(*,*) 'Summed Western target data : '
         write(*,*)
      .   'wldnek, wldnep, wldna = ', sum_wld(1,1:2+nnatmi)
-        write(*,*) 'Summed outer target data : '
+        write(*,*) 'Summed Eastern target data : '
         write(*,*)
      .   'wldnek, wldnep, wldna = ', sum_wld(2,1:2+nnatmi)
       endif

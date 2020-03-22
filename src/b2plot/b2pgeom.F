@@ -15,7 +15,7 @@ c***  gm_SOL.dat magnetic surfaces in first SOL
 c***  gm_SOL_i.dat magnetic surfaces in inner second SOL for DDN
 c***  gm_SOL_o.dat magnetic surfaces in outer second SOL for DDN
 c***  gm_PFR.dat magnetic surfaces in lower PFR
-c***  gm_PFR_u.dat magnetic surfaces in upperer PFR for DN
+c***  gm_PFR_u.dat magnetic surfaces in upper PFR for DN
 c***  gm_core.dat magnetic surfaces in the core part of the grid
 c***
 c*** For CDN, no gm_sep.dat or gm_SOL.dat is created.

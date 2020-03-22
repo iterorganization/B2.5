@@ -91,7 +91,7 @@
 				<name>cbregs</name>
 				<default>None</default>
 				<description>
-					specifies the number of regions where boundary conditions will be specified the 'south' boundary is broken into three pieces with one quarter of the cells in the first region, half ofthe cells in the second, and the remaining quarter in the third region (inner target private flux, core, outerprivate flux). This is geometry-dependent information the code will check against the mesh connectivity and return an error if the two do not match the 'north', 'west' and 'east' are not broken up, and correspond to the SOL boundary, inner target andouter target, respectively. For double-null cases, the north boundary should be split into two sections
+					specifies the number of regions where boundary conditions will be specified the 'south' boundary is broken into three pieces with one quarter of the cells in the first region, half of the cells in the second, and the remaining quarter in the third region (Western target private flux, core, Eastern target private flux). This is geometry-dependent information the code will check against the mesh connectivity and return an error if the two do not match the 'north', 'west' and 'east' are not broken up, and correspond to the SOL boundary, inner (outer) target and outer (inner) target, respectively for lower (upper) single-null topologies. For double-null cases, the north boundary should be split into two sections.
 				</description>
 			</switch>
 			<switch>
@@ -269,7 +269,8 @@
 				<type>integer</type>
 				<description>
 					Cell index, on the basis mesh, of the last poloidal ring before the separatrix. Can only be provided for slab geometries, otherwise calculated from geometry:
-					Single-null : jsep=topcut1(1)-1. Double-null : jsep=min(topcut1(1),topcut1(2))-1.
+					Single-null : jsep=topcut(1)-1
+					Double-null : jsep=min(topcut(1),topcut(2))-1
 					Default for straight geometries : jsep=ny/2
 				</description>
 			</switch>
@@ -6843,7 +6844,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (inner divertor, edge closest to target). If non-positive, counted backwards from the X-point location in the lower PFR, from the inner upper target in the upper PFR, from the lower outer target in the outer SOL, and from the inner upper target in the inner SOL.
+					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (Western divertor, edge closest to target). If non-positive, counted backwards from the X-point location in the lower PFR, from the inner upper target in the upper PFR, from the lower outer target in the outer SOL, and from the inner upper target in the inner SOL.
 				</description>
 			</switch>
 			<switch>
@@ -6851,7 +6852,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (outer divertor, edge closest to target). If non-positive, counted backwards from the outer lower target in the lower PFR, from the lower outer target in the outer SOL, from the upper outer target in the upper PFR, and from the inner upper target in the inner SOL.
+					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (Eastern divertor, edge closest to target). If non-positive, counted backwards from the outer lower target in the lower PFR, from the lower outer target in the outer SOL, from the upper outer target in the upper PFR, and from the inner upper target in the inner SOL.
 				</description>
 			</switch>
 			<switch>
@@ -6859,7 +6860,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (inner side, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
+					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (Western divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
 				</description>
 			</switch>
 			<switch>
@@ -6867,7 +6868,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (outer divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
+					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (Eastern divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
 				</description>
 			</switch>
 			<switch>
