@@ -108,19 +108,19 @@ c      print *,'b2prdn >> ',unm
         lppp=ll/3
       case (9:13)
         if (streql(u,unms(9))) then
-c*** Inner edge of inner target
+c*** Inner edge of Western target (inner for LSN, outer for USN)
           call resimi(i)
           luswch=1
         else if (streql(u,unms(10))) then
-c*** Inner edge of outer target
+c*** Inner edge of Eastern target (outer for LSN, inner for USN)
           call resimi(i)
           luswch=2
         else if (streql(u,unms(11))) then
-c*** Outer edge of inner target
+c*** Outer edge of Western target (inner for LSN, outer for USN)
           call resimi(i)
           luswch=3
         else if (streql(u,unms(12))) then
-c*** Outer edge of outer target
+c*** Outer edge of Eastern target (outer for LSN, inner for USN)
           call resimi(i)
           luswch=4
         end if

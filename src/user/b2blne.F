@@ -64,7 +64,7 @@ c***     pwr_plsm pwtpl   plasma to the target
 c***     pwr_neut pwtnu   neutrals to the target
 c***     pwr_ionz pwtio   ionisation energy to the target
 c***     pwr_diss pwtds   dissociation energy to the target
-c***   suffices: il, ol, iu, ou, wl for inner an outer targets and wall
+c***   suffices: il, ol, iu, ou, wl for inner and outer targets and wall
 c-----------------------------------------------------------------------
 c*** Global values
       integer nglb_tmp, ng_tmp
