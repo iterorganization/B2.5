@@ -10,6 +10,7 @@ c=======================================================================
       use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_plasma
+      use b2mod_indirect
       use b2mod_b2plot_wall_loading
       implicit none
       integer lun
@@ -53,6 +54,7 @@ c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
       do j=1,ntrgts !{
         jj=j
         if(j.eq.ntrgts) jj=ntrgsx
+        if(.not.LSN) jj=ntrgsx+1-j
         open(lun,file=ftrg(jj))
         write(fmt_peak,710) tab,ns,tab
 c        print *,trim(fmt_peak)  !###

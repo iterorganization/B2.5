@@ -915,7 +915,11 @@
 
       ishift = 0
 
-      open(70,file=trim(folder)//'table_low_inner.dat')        !srv 26.09.17
+      if (LSN) then
+        open(70,file=trim(folder)//'table_lower_inner.dat')    !srv 26.09.17
+      else
+        open(70,file=trim(folder)//'table_lower_outer.dat')    !srv 26.09.17
+      endif
       write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
@@ -935,7 +939,11 @@
       enddo
       close(70)
 
-      open(70,file=trim(folder)//'table_low_outer.dat')        !srv 26.09.17
+      if(LSN) then
+        open(70,file=trim(folder)//'table_lower_outer.dat')      !srv 26.09.17
+      else
+        open(70,file=trim(folder)//'table_lower_inner.dat')      !srv 26.09.17
+      endif
       write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
@@ -1001,8 +1009,12 @@
 !______________________________________________________________________________ !iyv 15.10.09 }
 
       if(iout.eq.2) then                                  !srv 06.05.09 {
-*   ..write crdy_c_cell, crdy_c_cell_abs [mm], ne, te, ti, js at inner
-        open(70,file=trim(folder)//'inner.dat')           !srv 26.09.17
+*   ..write crdy_c_cell, crdy_c_cell_abs [mm], ne, te, ti, js at Western edge
+        if(LSN) then
+          open(70,file=trim(folder)//'inner.dat')         !srv 26.09.17
+        else
+          open(70,file=trim(folder)//'outer.dat')         !srv 26.09.17
+        endif
         do iy = -1,ny                                     !srv 03.04.13 {
           iw = 0
           do ix = -1,nx
@@ -1035,7 +1047,11 @@
         enddo
         close(70)
 
-        open(70,file=trim(folder)//'outer.dat')           !srv 26.09.17
+        if (LSN) then
+          open(70,file=trim(folder)//'outer.dat')         !srv 26.09.17
+        else
+          open(70,file=trim(folder)//'inner.dat')         !srv 26.09.17
+        endif
         do iy = -1,ny                                     !srv 03.04.13 {
          iw = 0
          do ix = -1,nx
@@ -1089,13 +1105,25 @@
 
        open(70,file=trim(folder)//'separatrix_location_on_plate.dat')   !srv 26.09.17
        ix = -1
-       write(70,"(1x,a,12es14.6)")
-     &  ' Separatrix Location on Inner Lower =',
-     &    cry(ix+ishift,mintopcut,0)
+       if (LSN) then
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Inner Lower =',
+     &      cry(ix+ishift,mintopcut,0)
+       else
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Outer Upper =',
+     &      cry(ix+ishift,mintopcut,0)
+       endif
        ix = nx
-       write(70,"(1x,a,12es14.6)")
-     &  ' Separatrix Location on Outer Lower =',
-     &    crx(ix-ishift,mintopcut,0)
+       if (LSN) then
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Outer Lower =',
+     &      crx(ix-ishift,mintopcut,0)
+       else
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Inner Upper =',
+     &      crx(ix-ishift,mintopcut,0)
+       endif
        do ix = -1,nx
          if(leftix(ix,mintopcut).eq.-2 .and. ix.gt.-1) then
            write(70,"(1x,a,12es14.6)")
@@ -1114,8 +1142,12 @@
      &    crx(ix-ishift,mintopcut,0)
        close(70)
 
-*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at inner
-       open(70,file=trim(folder)//'inner_na_ua.dat')              !srv 03.04.13 { 26.09.17
+*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at Western edge
+       if (LSN) then
+         open(70,file=trim(folder)//'inner_na_ua.dat')            !srv 03.04.13 { 26.09.17
+       else
+         open(70,file=trim(folder)//'outer_na_ua.dat')            !srv 03.04.13 { 26.09.17
+       endif
        write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
        do iy = -1,ny
          iw = 0
@@ -1143,8 +1175,12 @@
       enddo
       close(70)
 
-*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at outer
-      open(70,file=trim(folder)//'outer_na_ua.dat')       !srv 26.09.17
+*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at Eastern edge
+      if (LSN) then
+        open(70,file=trim(folder)//'outer_na_ua.dat')       !srv 26.09.17
+      else
+        open(70,file=trim(folder)//'inner_na_ua.dat')       !srv 26.09.17
+      endif
       do iy = -1,ny
         iw = 0
         do ix = -1,nx

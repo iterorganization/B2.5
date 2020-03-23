@@ -1119,13 +1119,10 @@ contains
         integer :: iInd    !< indexList iterator
         integer :: isize
         integer :: jxi, jxa, jsep, nxtl, nxtr
-        logical :: LSN
 
         geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
         call get_jsep( nx, ny, jxi, jxa, jsep )
         call get_nxt ( nx, nxtl, nxtr )
-        if ( geoId == GEOMETRY_SN ) &
-           &   LSN = ( crx(nx-1,jsep,VX_UPPERRIGHT) > crx(0,jsep,VX_UPPERLEFT) )
 
         !! Figure out total number of grid subsets
         !! Do generic + private grid subsets
@@ -1374,9 +1371,17 @@ contains
                 case ( GRID_SUBSET_MAIN_CHAMBER_WALL, GRID_SUBSET_MAIN_WALL )
                     RegionsinSubset(1) = 3
                 case ( GRID_SUBSET_OUTER_TARGET )
-                    RegionsinSubset(1) = 2
+                    if (LSN) then
+                      RegionsinSubset(1) = 2
+                    else
+                      RegionsinSubset(1) = 1
+                    end if
                 case ( GRID_SUBSET_INNER_TARGET )
-                    RegionsinSubset(1) = 1
+                    if (LSN) then
+                      RegionsinSubset(1) = 1
+                    else
+                      RegionsinSubset(1) = 2
+                    end if
                 case ( GRID_SUBSET_CORE_CUT )
                     RegionsinSubset(1) = 3
                 end select
@@ -2118,7 +2123,7 @@ contains
 
         !! Outer strikepoint
         select case ( geoId )
-           case ( GEOMETRY_SN )
+           case ( GEOMETRY_SN, GEOMETRY_LIMITER )
               if (LSN) then
                   ix = gmap%b2nx - 1
                   iVx = VX_LOWERRIGHT
@@ -2127,7 +2132,7 @@ contains
                   iVx = VX_LOWERLEFT
               end if
            case ( GEOMETRY_LINEAR, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, &
-               &  GEOMETRY_STELLARATORISLAND, GEOMETRY_LIMITER )
+               &  GEOMETRY_STELLARATORISLAND )
               ix = gmap%b2nx - 1
               iVx = VX_LOWERRIGHT
            case ( GEOMETRY_DDN_TOP )
@@ -2168,7 +2173,7 @@ contains
 
         !! Inner strikepoint
         select case ( geoId )
-           case ( GEOMETRY_SN )
+           case ( GEOMETRY_SN, GEOMETRY_LIMITER )
               if (LSN) then
                   ix = 0
                   iVx = VX_LOWERLEFT
@@ -2177,7 +2182,7 @@ contains
                   iVx = VX_LOWERRIGHT
               end if
            case ( GEOMETRY_LINEAR, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, &
-               &  GEOMETRY_STELLARATORISLAND, GEOMETRY_LIMITER )
+               &  GEOMETRY_STELLARATORISLAND )
               ix = 0
               iVx = VX_LOWERLEFT
            case ( GEOMETRY_DDN_TOP )
