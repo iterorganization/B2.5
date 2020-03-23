@@ -88,6 +88,7 @@ c=======================================================================
       character*8 TEXTA(DEF_NATM)
 #else
       real (kind=R8) :: pump, pumptot
+      character*13 species_name
 #endif
       integer lun,izn,iln
       real (kind=R8) :: BoRiS
@@ -541,7 +542,8 @@ c carlis calculation of total pumped fluxes
               end if
             end do
             pumptot=pumptot+pump
-            print *,'Pumped ',trim(adjustl(textpl(is))),
+            call species(is,species_name,.false.)
+            print *,'Pumped ',trim(adjustl(species_name)),
      ,              ': ',pump,' (1/s)'
           end if
         end do

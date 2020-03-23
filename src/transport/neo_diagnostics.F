@@ -115,14 +115,24 @@
      1 write(*,*) '  NEOART: banana plateau + Pfirsch-Schlueter'
       if(ic.eq.4)
      1 write(*,*) '  NEOART: all'
-      if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
-        ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+      if(nnreg(0).eq.4) then
+        if(LSN) then
+          ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        else
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+        endif
+        iyref=2*topcut(1)/3
+      elseif(nnreg(0).eq.5) then
+        ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
         iyref=2*topcut(1)/3
       elseif(nnreg(0).eq.8) then
         ixref=(rightcut(1)+rightcut(2))/2
         iyref=2*min(topcut(1),topcut(2))/3
+      elseif(nnreg(0).eq.2) then
+        ixref=nx/2
+        iyref=2*topcut(1)/3
       else
-        ixref=3*nx/4
+        ixref=nx/2
         iyref=ny/2
       endif
       call ipgeti ('set_transport_ixref', ixref)
