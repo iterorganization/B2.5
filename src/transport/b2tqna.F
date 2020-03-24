@@ -502,7 +502,7 @@ c lvn1
 
 *    ..For now, no flux limiters imposed.
 *    ..For now, no neutral-neutral collisions inlcuded
-
+              vcx2 = vcx2 + dion2*dv%ne(iCv)
               vsa0(iCv,is2) = pl%na(iCv,is2)*pl%ti(iCv)/
      &         (vcx2) 
               hcib(iCv,is2) = 2.5_R8*pl%na(iCv,is2)*pl%ti(iCv)/
