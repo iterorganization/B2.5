@@ -157,7 +157,7 @@
       real (kind=R8), save :: stim = 0.0_R8
       character*(NF_MAX_NAME) :: dimname(NF_MAX_VAR_DIMS)
       logical ex
-      character*256 filename
+      character*256, save :: filename
 #endif
 *   ..procedures
       logical lnext
