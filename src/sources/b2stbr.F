@@ -176,7 +176,7 @@
      3     neutrals_namelist, therm_evap, sput_res,
      5     sput_chem_model, reflection_on, sputter_energy_on,
      8     b2wall_netcdf, sput_frac_flag,
-     9     potential_at_guard_cell,
+     9     potential_at_guard_cell, filename,
      1     sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      4     sput_mixed_alpha, sput_mixed_beta, redep_alpha
       data ncall/0/, sput_src/1/, sput_frc/0.0_R8/,
