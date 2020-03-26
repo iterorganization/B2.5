@@ -2,11 +2,12 @@
 *.specification
 
       subroutine b2sigp (nCv, nFc, nVx, isb, geo, mpg, rzb, nb, ti,
-     &  ne, te, po, smbgp, wrk0, wrk1, wrk2)
+     &  tn, ne, te, po, smbgp, wrk0, wrk1, wrk2)
       use b2mod_types
       use b2mod_constants                                         !srv 23.03.10
       use b2us_geo
       use b2us_map
+      use b2mod_b2cmpa
 !WG_TODO      use b2mod_balance                                           !djm Jan2017
 !WG_TODO     & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf
       implicit none
@@ -16,7 +17,7 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  rzb(nCv), 
-     &  nb(nCv), ti(nCv),
+     &  nb(nCv), ti(nCv), tn(nCv), 
      &  ne(nCv), te(nCv), po(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -25,7 +26,8 @@
       real (kind=R8) ::
      * wrk0(nCv), wrk1(nCv), wrk2(nCv),
      * wrk3(nCv), wrk4(nCv),                      !djm Jan2017
-     * wrk5(nCv), wrk6(nCv)                       !srv 28.03.17
+     * wrk5(nCv), wrk6(nCv),                       !srv 28.03.17
+     * tb(nCv)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -47,6 +49,7 @@
       real (kind=R8) :: phm0 = 1.0_R8                                 !srv 26.06.18
       real (kind=R8) ::
      *   t0, wrkf(nFc), wrkv(nVx)
+      integer, save :: tn_style = 0
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -70,6 +73,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)                      !srv 11.09.09
        call ipgeti ('b2news_poteq', pot_eq)                          !srv 23.03.10
        call ipgeti ('b2tfhe_no_current', no_current)
+       call ipgeti ('b2n_tn_style',tn_style)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
       endif
@@ -80,9 +84,17 @@
 *    ..test sign of nb, ti, ne, te, rzb
        call b2xvsg (nCv, nb, 1, 'nb', '.gt.')
        call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, ti, 1, 'tn', '.gt.')
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, rzb, 1, 'rzb', '.ge.')
+      endif
+
+* ..choose the correct temperature
+      if (is_neutral(isb)) then
+	tb = tn !! tn = ti if no separate neutral energy equation is solved
+      else
+	tb = ti
       endif
 
       if (phm0.ne.0.0_R8) then                                     !srv 26.06.18
@@ -98,7 +110,7 @@
            wrk1(ix,iy) = 0.0_R8
            wrk2(ix,iy) = rzb(ix,iy)*nb(ix,iy)/ne(ix,iy)
           else
-           wrk0(ix,iy) = nb(ix,iy)*ti(ix,iy)-
+           wrk0(ix,iy) = nb(ix,iy)*tb(ix,iy)-
      &      nb(leftix(ix,iy),leftiy(ix,iy))*
      &      ti(leftix(ix,iy),leftiy(ix,iy))
            wrk1(ix,iy) = ne(ix,iy)*te(ix,iy)-
@@ -219,7 +231,7 @@
 #endif
       elseif(style.eq.1) then                                         !srv 02.07.08 {
 *   ..  compute gradients in cell centers
-        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nb*ti, wrkv, wrk0)
+        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nb*tb, wrkv, wrk0)
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk1)
 * ..compute pressure gradient term
         smbgp = 0.0e0_R8
@@ -272,7 +284,7 @@ cdjm compute b2sigp_pstat0to3 on left cell face
         wrk5  = 0.0e0_R8
         wrk6  = 0.0e0_R8
 *   ..  compute gradients in cell centers
-        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nb*ti, wrkv, wrk0)
+        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nb*tb, wrkv, wrk0)
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, wrk1)
 *   ..  compute smbgp
         do iCv = 1, mpg%nCi

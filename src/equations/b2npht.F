@@ -64,13 +64,14 @@
       real (kind=R8) ::
      * aa(mpg%nCmxNv), wrkf(nFc,0:1),                !srv 02.01.07
      1 wrkc(nFc,0:1,0:2), cortt(nCv),               !srv 02.01.07
-     2 she0(nCv,0:3), shi0(nCv,0:3),
+     2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                            !srv 18.09.09
      4 shef(nCv,0:3), shif(nCv,0:3)                     !srv 10.11.02
       integer, save :: iout = 0, iout_b2wdat = 0                        !srv 17.07.05
       integer, save :: mdf_fhe = 0, mdf_fhi = 0
       integer, save :: style = 1                                        !srv 09.07.08
       integer, save :: get_residuals = 0                                !srv 22.05.18
+      integer, save :: tn_style = 0                               
       character chns*3                                                  !srv 17.07.05
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
@@ -118,6 +119,7 @@
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
        call ipgeti ('b2tfhi_mdf', mdf_fhi) 
        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
+       call ipgeti ('b2mn_tn_style', tn_style)                
       endif
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -133,6 +135,7 @@
        call b2xvsg (nCv, sr%she(1,2), 1, 'she2', '.ge.')
        call b2xvsg (nCv, sr%she(1,3), 1, 'she3', '.le.')
        call b2xvsg (nCv, sr%shi(1,0), 1, 'shi0', '.ge.')
+       call b2xvsg (nCv, sr%shi(1,0), 1, 'shn0', '.ge.')
        call b2xvsg (nCv, sr%shi(1,1), 1, 'shi1', '.le.')
        call b2xvsg (nCv, sr%shi(1,2), 1, 'shi2', '.ge.')
        call b2xvsg (nCv, sr%shi(1,3), 1, 'shi3', '.le.')
@@ -153,12 +156,13 @@
 #endif
       else
        call b2sihs_ (nCv, nFc, nVx, ns, geo, mpg, BoRiS, ismain, 
-     &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%po, 
-     &  dv%ne, dv%ni, dv%fna_fcor, dv%fne, dv%fch, co%cvsa, co%cvsahz,
-     &  co%cvsahz_cl, she0, shi0)
+     &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%tn, 
+     &  pl%po, dv%ne, dv%ni, dv%fna_fcor, dv%fne, dv%fch, co%cvsa, 
+     &  co%cvsahz, co%cvsahz_cl, she0, shi0, shn0)
       endif
       call b2saxpy (nCv*4, 1.0e0_R8, sr%she, 1, she0, 1)
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shi, 1, shi0, 1)
+      call b2saxpy (nCv*4, 1.0e0_R8, sr%shn, 1, shn0, 1)
 #ifdef WG_TODO
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
@@ -267,6 +271,10 @@ cdjm Jan2017 update particle source components for balance
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
+
+      if (tn_style.le.1) then  !! if we solve a combined ion-neutral (tn_style.eq.0) or pure ion (tn_style.eq.1) energy equation,
+        pl%tn = pl%ti          !! tn must be exactly equal to ti.
+      endif
 
       if (iout.eq.1) then
         do is = 0, ns-1

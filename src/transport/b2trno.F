@@ -300,10 +300,10 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
 *   .. apply flux limit to neutrals contribution to cdpa
         wrk = 1.0_R8
         call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na, pl%te, 
-     &    pl%ti, rt%rza, co%cdpa, flc) !srv 09.07.03 30.11.15
+     &    pl%ti, pl%tn, rt%rza, co%cdpa, flc) !srv 09.07.03 30.11.15
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk)
         call b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, wrk, pl%na, pl%te, 
-     &    pl%ti, rt%rza, co%cdpahz, flchz) 
+     &    pl%ti, pl%tn, rt%rza, co%cdpahz, flchz) 
       endif                                                               !srv 15.06.08 }
 
 *   ..apply flux limit to neutrals contribution to chcb

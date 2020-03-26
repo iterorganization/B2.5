@@ -122,7 +122,7 @@
 
 *    ..compute partial pressure
        call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te, pl%ti, 
-     &   dv%pa(1,is))
+     &   pl%tn, is, dv%pa(1,is))
 
 *   ..interpolate na and pa to cell faces
        weight = 1.0_R8

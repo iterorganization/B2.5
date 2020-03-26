@@ -164,6 +164,18 @@
         sr%shi(iCv,2) = max(sr%shi(iCv,2),(1.0_R8+rf2)*t0,-rf2*t0)
         sr%shi(iCv,3) = (1.0_R8/ti(iCv))*
      &    min(sr%shi(iCv,3)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+
+*     ..modify shn(,,0:1)
+        t0 = sr%shn(iCv,0)+sr%shn(iCv,1)*ti(iCv)
+        sr%shn(iCv,0) = max(sr%shn(iCv,0),(1.0_R8+rf2)*t0,-rf2*t0)
+        sr%shn(iCv,1) = (1.0_R8/ti(iCv))*
+     &    min(sr%shn(iCv,1)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+*     ..modify shn(,,2:3)
+        t0 = sr%shn(iCv,2)+sr%shn(iCv,3)*ti(iCv)
+        sr%shn(iCv,2) = max(sr%shn(iCv,2),(1.0_R8+rf2)*t0,-rf2*t0)
+        sr%shn(iCv,3) = (1.0_R8/ti(iCv))*
+     &    min(sr%shn(iCv,3)*ti(iCv),-rf2*t0,(1.0_R8+rf2)*t0)
+
 *     ..make sch(,,1) negative
         sr%sch(iCv,0) = sr%sch(iCv,0)+max(0.0_R8,sr%sch(iCv,1))*po(iCv)
         sr%sch(iCv,1) = min(sr%sch(iCv,1),0.0_R8)

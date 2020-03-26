@@ -49,7 +49,8 @@
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo = 0, iout_b2npp7 = 0,
-     &                 iout_b2nppo = 0, iout_b2wdat = 0
+     &                 iout_b2nppo = 0, iout_b2wdat = 0,
+     &                 tn_style = 0
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *   phm0, phm1, phm3, phm4, phm5, t0, ttim
@@ -57,7 +58,7 @@
       save ncall, phm0, phm1, phm3, phm4, phm5, use_eirene           !xpb
       real (kind=R8) :: !djm Jan2017
      &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1), 
-     &  shetmp(nCv,0:3), shitmp(nCv,0:3)
+     &  shetmp(nCv,0:3), shitmp(nCv,0:3), shntmp(nCv,0:3)
 *   ..procedures
       external subini, subend, xertst, ipgetr
       external b2xvsg
@@ -91,6 +92,7 @@
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)                     !srv 11.09.09 }
         call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
+        call ipgeti ('b2mn_tn_style', tn_style)                  
       endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
@@ -113,6 +115,7 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
       smotmp = sr%smo
       shetmp = sr%she
       shitmp = sr%shi
+!!      shntmp = sr%shn
 
 * ..include the contributions from dtim
 *   ..modify snadt
@@ -169,7 +172,13 @@ csw 24feb2014 check for guard cell (SOLPS4)
           t0 = (phm3/ttim)*geo%cvVol(iCv)
           sr%shi(iCv,0) = sr%shi(iCv,0)+
      &     1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          sr%shn(iCv,0) = sr%shn(iCv,0)+
+     &     1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+
           if (BoRiS.eq.1.0_R8) then
+            if (tn_style.ne.0) then
+              call xerrab('BoRiS only with default energy eq.')
+            endif
             do is = 0, ns-1
               sr%shi(iCv,0) = sr%shi(iCv,0)+t0*
      &         kinrgy0(iCv,is)*na0(iCv,is)
@@ -181,6 +190,10 @@ csw 24feb2014 check for guard cell (SOLPS4)
 *         shidt(iCv,1) = (unchanged)
 *         shidt(iCv,2) = (otherwise unchanged)
           sr%shi(iCv,3) = sr%shi(iCv,3)-1.5_R8*t0
+
+*         shndt(iCv,1) = (unchanged)
+*         shndt(iCv,2) = (otherwise unchanged)
+          sr%shn(iCv,3) = sr%shn(iCv,3)-1.5_R8*t0
       enddo
       do iCv = 1, nCv
 csw 24feb2014 check for guard cell (SOLPS4)

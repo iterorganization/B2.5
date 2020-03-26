@@ -383,18 +383,20 @@
 *    ..compute sources due to charge exchange
 *      (parallel momentum source must be pure friction)
         call b2stcx (nCv, nFc, ns, iscx(k), ismain, BoRiS, geo, mpg,
-     &    pl%na, pl%ua, pl%ti, dv%ni, rtw%rcx, srw%sna0, srw%smq0, 
-     &    srw%shi0)       !srv 07.07.09
+     &    pl%na, pl%ua, pl%ti, pl%tn,  dv%ni, rtw%rcx, srw%sna0, 
+     &    srw%smq0, srw%shi0, srw%shn0)       !srv 07.07.09
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
          call b2xzdd (nCv, 1, mpg, srw%sna0(1,0,is))
          call b2xzdd (nCv, 3, mpg, srw%smq0(1,0,is))
         enddo
         call b2xzdd (nCv, 3, mpg, srw%shi0)
+        call b2xzdd (nCv, 3, mpg, srw%shn0)
 *    ..add to previous contributions
         call b2saxpy (nCv*2*ns, 1.0_R8, srw%sna0, 1, sr%sna, 1)
         call b2saxpy (nCv*4*ns, 1.0_R8, srw%smq0, 1, sr%smq, 1)
         call b2saxpy (nCv*4, 1.0_R8, srw%shi0, 1, sr%shi, 1)
+        call b2saxpy (nCv*4, 1.0_R8, srw%shn0, 1, sr%shn, 1)
 *      (no contribution to she, sne or sch)
         if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
           write(*,*) 'Summing cx sources over hydrogenic neutrals'

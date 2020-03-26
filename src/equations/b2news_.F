@@ -139,7 +139,7 @@
       integer, save :: do_2nd_b2npco_call = 0
       integer, save :: re_eval_prtls_fluxes = 0                        !srv 28.06.13
       integer, save :: nhist = 0, neutr_avg = 0, nrelax = 0, nstg2 = 0
-      integer, save :: use_eirene = 0
+      integer, save :: use_eirene = 0, tn_style = 0
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -223,6 +223,8 @@
        call ipgeti ('b2news_no_b2sral_call', no_b2sral_call)
        call ipgeti ('b2news_do_2nd_b2npco_call', do_2nd_b2npco_call)
        call ipgeti ('b2news_re_eval_prtls_fluxes', re_eval_prtls_fluxes) !srv 28.06.13
+
+       call ipgeti ('b2mn_tn_style', tn_style)
 
 csw 26feb2014 some extra variables
        call ipgeti ('b2mndr_eirene', use_eirene)
@@ -346,7 +348,7 @@ csw 01oct2012 initialize potential if necessary
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
           call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,
-     &      pl%ti, dv%pa(1,is))                                   !srv 01.10.99
+     &      pl%ti, pl%tn, is, dv%pa(1,is))                                   !srv 01.10.99
 *    ..compute particle flux
           call b2tfnb (nCv, nFc, nVx, is, ismain, geo, mpg, pl,
      &      dv, co, rt, .true.)
@@ -355,7 +357,6 @@ csw 01oct2012 initialize potential if necessary
         call b2tfed (nCv, nFc, nVx, geo, mpg, dv%facdrift, dv%fac_ExB,
      &      dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
 !      end if                                                            !srv 01.10.99
-
 
 csw 10dec2012: added extra call if wanted/not-wanted (SOLPS4 has an
 c   extra call at this place within internal iteration)
@@ -413,7 +414,6 @@ c   extra call at this place within internal iteration)
         call b2srst (nCv, ns, mpg, pl%na, pl%ua, pl%te,   !srv 01.07.08
      &    pl%ti, pl%po, dv%ne, dv%ni, sr)
       endif
-
       if (ue_style.eq.2 .or. iout.ne.0)
 *   ..compute ue, electron parallel velocity
      > call b2xpve (nCv, nFc, ns, geo, mpg, qe, rt%rza, rt%rz2, 
@@ -465,7 +465,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
         enddo
 *    ..compute partial pressure
         call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te, 
-     &    pl%ti, dv%pa(1,is))
+     &    pl%ti, pl%tn, is, dv%pa(1,is))
 *    ..compute particle flux
         call b2tfnb (nCv, nFc, nVx, is, ismain, geo, mpg, pl, dv,
      &    co, rt, .true.)
@@ -489,7 +489,6 @@ csw 16oct2012 init ier0
           call xertst (ier0.eq.0, 'error return from b2npco')
           last_solve_9(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
 !        endif                                                            !srv 13.10.06 } 22.05.18
-
         do iCv = 1, nCv
           pl%na(iCv,is)=max(pl%na(iCv,is),na_min) ! abs(na(ix,iy,is))    !srv 24.04.09
         enddo
@@ -538,7 +537,6 @@ csw 16oct2012 init ier0
         call my_out_us(70,nCv,0,co%ceqp,'b2news__ceqp')
       endif                                                              !srv 12.07.05 }
 
-
       if (pot_eq.eq.0) then                                              !srv 13.07.05 {
         pl%po = 0.0e0_R8
       else if (pot_eq.eq.2) then                                         !srv 11.01.12
@@ -565,8 +563,8 @@ csw 16oct2012 init ier0
           call b2tfhe_ (nCv, nFc, nVx, ns, ismain, ismain0, geo, mpg, 
      &      pl, dv, co, rt, .false.)                                                     !djm Jan2017
           call b2xpen (nCv, nFc, ns, mpg, dv%fna, dv%fne, dv%fch, 
-     &      dv%fhe, dv%fhi, dv%kinrgy, rt%rpt, pl%te, pl%ti, pl%po,
-     &      BoRiS, dv%fhm, dv%fhp, dv%fhj, dv%fht)
+     &      dv%fhe, dv%fhi, dv%fhn, dv%kinrgy, rt%rpt, pl%te, pl%ti,
+     &      pl%tn, pl%po, BoRiS, dv%fhm, dv%fhp, dv%fhj, dv%fht)
 *    ..perform iteration
           t0=0.0_R8
           if (i.eq.0) then
@@ -641,7 +639,7 @@ cwdk of potential equation...
           do is = 0, ns-1
 *    ..compute partial pressure
             call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,
-     &      pl%ti, dv%pa(1,is))
+     &      pl%ti, pl%tn, is, dv%pa(1,is))
 *    ..re-compute particle flux
 #ifdef DBG
             write(*,*) 'is, za(is) ',is, (zamin(is)+zamax(is))/2.0_R8
@@ -701,9 +699,14 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  .true.)                                                          !djm Jan2017
        dv%floi_noc = dv%floi                                             !srv 24.10.02
        dv%floe_noc = dv%floe                                             !srv 24.10.02
+
+      if (tn_style.ne.0) then !! if tn_style.ne.0 fhn should be exactly zero.
+        call b2xvsg (nCv, dv%fhn, 1, 'fhn', '.eq.')
+      endif
+
       call b2xpen (nCv, nFc, ns, mpg, dv%fna, dv%fne, dv%fch, 
-     &  dv%fhe, dv%fhi, dv%kinrgy, rt%rpt, pl%te, pl%ti, pl%po,
-     &  BoRiS, dv%fhm, dv%fhp, dv%fhj, dv%fht)
+     &  dv%fhe, dv%fhi, dv%fhn, dv%kinrgy, rt%rpt, pl%te, pl%ti, pl%tn, 
+     &  pl%po, BoRiS, dv%fhm, dv%fhp, dv%fhj, dv%fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
       call b2tfcc (nCv, nFc, nVx, ns, geo, mpg, pl, dv, co, rt)
       if(ue_style.ne.2) then
@@ -820,7 +823,7 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
 *    ..compute partial pressure
 !pb        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)    !srv 01.10.99
         call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te,              !srv 01.10.99
-     &    pl%ti, dv%pa(1,is))
+     &    pl%ti, pl%tn, is, dv%pa(1,is))
 *    ..compute particle flux
         call b2tfnb (nCv, nFc, nVx, is, ismain, geo, mpg, pl, dv,
      &  co, rt, .false.)
@@ -842,7 +845,6 @@ csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
 * ..return
       ierr = 0
 99999 continue
-
       ncall = ncall+1
       call subend ()
       return

@@ -52,11 +52,12 @@
       call xertst (1.le.ns, 'faulty argument ns')
 
 * ..test state
-*   ..test sign of ne, na, te, ti
+*   ..test sign of ne, na, te, ti, tn
       call b2xvsg (nCv, dv % ne, 1, 'ne', '.gt.')
       call b2xvsg (nCv*ns, pl % na, 1, 'na', '.gt.')
       call b2xvsg (nCv, pl % te, 1, 'te', '.gt.')
       call b2xvsg (nCv, pl % ti, 1, 'ti', '.gt.')
+      call b2xvsg (nCv, pl % tn, 1, 'tn', '.gt.')
       call b2xvsg (nCv*ns, dv%kinrgy, 1, 'kinrgy', '.ge.')
 
 * ..return
