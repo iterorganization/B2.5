@@ -301,7 +301,7 @@
       integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv
       integer :: use_9pt_stencil = 1
       integer :: fcVol_style = 0
-      integer :: vxVol_style = 0
+      integer :: vxVol_style = 1
       real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du
       intrinsic maxval
 
@@ -348,7 +348,28 @@
        do iVx = 1, nVx
         do inCv = 1, mpg%vxCvP(iVx,2)
          iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 1._R8/mpg%cvVxP(iCv,2)
+         if (iCv.le.mpg%nCi) then
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 1._R8/mpg%cvVxP(iCv,2)
+         else
+          ! Make sure guard cells dominate in the interpolation
+          ! to vertices => use volume
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &      (1._R8/mpg%cvVxP(iCv,2))*gm%cvVol(iCv)
+         endif
+        enddo
+       enddo
+      elseif (vxVol_style.eq.2) then
+       ! assign 1/4, except guard cells
+       do iVx = 1, nVx
+        do inCv = 1, mpg%vxCvP(iVx,2)
+         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+         if (iCv.le.mpg%nCi) then
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
+         else
+          ! Make sure guard cells dominate in the interpolation
+          ! to vertices => use volume
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+         endif
         enddo
        enddo
       else
