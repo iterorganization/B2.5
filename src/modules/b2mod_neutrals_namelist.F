@@ -96,7 +96,7 @@ cank }
      *   accel_ion(:),
      *   maxw(:)                                 !nh 11.07.18
       real (kind=R8), allocatable, save ::
-     *   RCFE(:), RCFI(:)      
+     *   RCFE(:), RCFI(:), e_fc   
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:)
       character*1, allocatable, save ::
@@ -2224,6 +2224,14 @@ cwdk also need to correct for degenerate faces?
         write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
      .   'ltns= ',(ltns(is),',',is =1,nnstsi)
       end if
+
+      write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))') 
+     .   'maxw= ',(maxw(is),',',is =1,nstrai)
+
+      write (iout,'(1x,a,(1x,T12,10(i5,a1,1x)))') 
+     .   'accel_ion= ',(accel_ion(is),',',is =1,nstrai)
+
+      write (iout,'(1x,a,f10.7,a1)') 'e_fc=',e_fc,','
 
       write (iout,'(1x,a,(10(i5,a1,1x)))') 
      .    'b2espcr= ',(b2espcr(is),',',is=0,ns-1)
