@@ -1,5 +1,5 @@
       subroutine b2tlc0 (nCv, nFc, nVx, ns, geo, mpg, fcHz, na, te, 
-     &  ti, rza, cdpa, flc)
+     &  ti, tn, rza, cdpa, flc)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -11,7 +11,8 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  na(nCv,0:ns-1), te(nCv), ti(nCv), rza(nCv,0:ns-1), fcHz(nFc)
+     *  na(nCv,0:ns-1), te(nCv), ti(nCv), tn(nCv), rza(nCv,0:ns-1),
+     *  fcHz(nFc)
 *   ..input and output arguments
       real (kind=R8) ::
      *  cdpa(nFc,0:1,0:ns-1)
@@ -56,7 +57,7 @@
        do is = 0, ns-1
         if (is_neutral(is)) then
 *    ..compute partial pressure
-         call b2xppb (nCv, rza(1,is), na(1,is), te, ti, pb)
+         call b2xppb (nCv, rza(1,is), na(1,is), te, ti, tn, is, pb) !! 
 *    ..compute differences of partial pressure
          call diff (nCv, nFc, nVx, 0, geo, mpg, pb, pbv, dpbf)
          do iFc = 1, nFc

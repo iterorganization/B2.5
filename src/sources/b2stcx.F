@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stcx (nCv, nFc, ns, is0, ismain, BoRiS, geo, mpg, na,!srv 09.01.01
-     &  ua, ti, ni, rcx, sna0, smq0, shi0)        !srv 07.07.09
+      subroutine b2stcx (nCv, nFc, ns, is0, ismain, BoRiS, geo, mpg,  !srv 09.01.01
+     &  na, ua, ti, tn, ni, rcx, sna0, smq0, shi0, shn0)        !srv 07.07.09
       use b2mod_types
       use b2mod_constants
 !      use b2mod_tallies
@@ -22,11 +22,12 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  BoRiS, na(nCv,0:ns-1), ua(nCv,0:ns-1), ti(nCv), ni(nCv,0:1),
-     *  rcx(nCv,0:ns-1)
+     *  BoRiS, na(nCv,0:ns-1), ua(nCv,0:ns-1), ti(nCv), tn(nCv),
+     *   ni(nCv,0:1), rcx(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  sna0(nCv,0:1,0:ns-1), smq0(nCv,0:3,0:ns-1), shi0(nCv,0:3)
+     *  sna0(nCv,0:1,0:ns-1), smq0(nCv,0:3,0:ns-1), shi0(nCv,0:3),
+     *  shn0(nCv,0:3)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -45,10 +46,10 @@
       integer, save :: iout = 0, !iout_b2wdat = 0,                      !srv 30.06.08 11.09.09
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0
+     &                 iout_b2npmo =0, tn_style = 0
       character chns*3, chcx*3, chk*1                                   !srv 11.09.09
       real (kind=R8) ::
-     *  rg0, t0, t1, t2, du0, du1
+     *  rg0, t0, t1, t2, du0, du1, tkin, t1i, t1n
       real (kind=R8) :: wrk0(nCv)
       save ncall, styl0, rg0
 *   ..procedures
@@ -84,6 +85,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                       !srv 11.09.09 }
+       call ipgeti ('b2mn_tn_style', tn_style)                       
 !       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
       endif
 *   ..test nCv, nFc, ns
@@ -99,6 +101,7 @@
        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
        call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
        call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, tn, 1, 'tn', '.gt.')
        call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
 *    ..test rate coefficients
        do is = 1, ns-1
@@ -122,6 +125,7 @@ ctmp.dpc
       call sfill (nCv*2*ns, 0.0_R8, sna0, 1)
       call sfill (nCv*4*ns, 0.0_R8, smq0, 1)
       call sfill (nCv*4, 0.0_R8, shi0, 1)
+      call sfill (nCv*4, 0.0_R8, shn0, 1)
 *   ..compute sources due to charge exchange
       do is = 1, ns-1
        if (lnext(is-1,is)) then
@@ -162,13 +166,31 @@ ctmp.dpc
 *       ..compute atom heat source
            du0 = ua(iCv,is)-ua(iCv,is-1)
            du1 = ua(iCv,is0)-ua(iCv,is0+1)
-           t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
-     &      (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
-     &       ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
-     &      (1.0_R8-BoRiS)
-           shi0(iCv,0) = shi0(iCv,0)+t1
+          if (tn_style.eq.0) then
+            t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
+     &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
+     &        ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
+     &        (1.0_R8-BoRiS)
+             shi0(iCv,0) = shi0(iCv,0)+t1
+          elseif (tn_style.eq.1) then
+            !! AFN_TODO
+            call xerrab('pure ion energy equation not yet available')
+          else
+            tkin = (mp/4.0_R8)*
+     &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
+     &        ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
+            t1i = t0*na(iCv,is0)*na(iCv,is)*
+     &            (1.5_R8*(tn(iCv)-ti(iCv)) + tkin)
+            t1n = t0*na(iCv,is0)*na(iCv,is)*
+     &            (1.5_R8*(ti(iCv)-tn(iCv)) + tkin)
+            shi0(iCv,0) = shi0(iCv,0)+t1i
+            shn0(iCv,0) = shn0(iCv,0)+t1n
+          endif
+
 !WG_TODO           rcxhi(iCv,is)=rcxhi(iCv,is)+t1
 !WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
+
+
           endif
         enddo
 *     ..parallel momentum source

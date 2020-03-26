@@ -209,7 +209,8 @@
       call b2xpne (nCv, ns, rt%rz2, pl%na, st_ext%ne2, dv%ne2)
       call b2xpro (nCv, ns, mp, am, pl%na, ro, st_ext)
       call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
-      call b2xppr (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pr, st_ext)
+      call b2xppr (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pl%tn, pr, 
+     &             st_ext)
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
       call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext)                      !srv 13.01.17 {
       call b2xzmf (nCv, ns, ismain, rt%rz2, pl%na, zmff)
@@ -255,7 +256,8 @@
 *    ..compute rob, pb
        call b2scopy (nCv, pl%na(1,is), 1, rob, 1)
        call b2sscal (nCv, am(is)*mp, rob, 1)
-       call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te, pl%ti, pb)
+       call b2xppb (nCv, rt%rza(1,is), pl%na(1,is), pl%te, pl%ti, 
+     &               pl%ti, is, pb)
 *    ..compute extended friction term
 !WG_TODO : friction not yet implemented
        smbch = 0.0e0_R8
@@ -296,8 +298,8 @@
 #endif
 *    ..compute pressure gradient term
        call b2sigp (nCv, nFc, nVx, is, geo, mpg, rt%rza(1,is),
-     &   pl%na(1,is), pl%ti, dv%ne, pl%te, pl%po, smbgp, wrk0, wrk1,
-     &   wrk2)
+     &   pl%na(1,is), pl%ti, pl%tn, dv%ne, pl%te, pl%po, smbgp, wrk0, 
+     &   wrk1, wrk2)
 *    ..compute flub
        call b2scopy (nFc*2, dv%fna_fcor(1,0,is), 1, flub, 1)
        call b2sscal (nFc*2, am(is)*mp, flub, 1)
@@ -576,7 +578,6 @@ c     ..compare 9-pt stencil matrices
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
-
 * ..return
       ncall = ncall+1
       call subend ()

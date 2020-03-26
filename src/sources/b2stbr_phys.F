@@ -78,7 +78,7 @@
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0,
-     &                 kul_recycle = 0
+     &                 kul_recycle = 0, tn_style = 0
       character chns*3, chk*1                                        !srv 11.07.05
       character*15 hlp_frm
       integer, allocatable :: flux_x(:), flux_y(:)
@@ -162,6 +162,7 @@
        call ipgeti ('b2nppo_iout', iout_b2nppo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2nphe_iout', iout_b2npht)                     !srv 11.09.09 }
+       call ipgeti ('b2mn_tn_style', tn_style)                    
       endif                                                         !srv 22.08.08 }
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -190,6 +191,7 @@
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, pl%tn, 1, 'tn', '.gt.')
       endif
 #ifdef WG_TODO
       if(new_sputter_namelist) then
@@ -373,7 +375,7 @@
      &           species_start(istra), species_end(istra),
      &           iRc1, iRc2, iFc, mpg%rcFcOr(mpg%rcCvP(istra,1)+i-1),
      &           Phi_app, lcore,
-     &           gradnn(iRc1,0:1) )
+     &           gradnn(iRc2,0:1) )
           enddo
 
         endif       ! crcstra(istra)
@@ -533,10 +535,10 @@ c lcore           is this a core element?
 
       integer is0, is1, is2, is, js, k, iwall, itrack, is0old, idir,
      &        idir_inv
-      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf,
-     &     sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, eself,
-     &     sput_frac_chem_sum, be_frac, be_suppression_factor,
-     &     ytmp, ztmp, wrk(ndepth_nml),t0
+      real (kind=R8) :: tef, tif, tnf, taf, zaf(0:ns-1), rpf(0:ns-1), 
+     &     ptf, sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, 
+     &     eself, sput_frac_chem_sum, be_frac, 
+     &     be_suppression_factor, ytmp, ztmp, wrk(ndepth_nml),t0
       real (kind=R8) mass_density, local_reflection
       character*13 hlp_frm
       external mass_density
@@ -694,6 +696,9 @@ cdpc-end
       tif = (pl%ti(mpg%fcCv(iFc,1))*geo%fcHc(iFc,2)+
      &       pl%ti(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
      &      (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
+      tnf = (pl%tn(mpg%fcCv(iFc,1))*geo%fcHc(iFc,2)+
+     &       pl%tn(mpg%fcCv(iFc,2))*geo%fcHc(iFc,1))/
+     &      (geo%fcHc(iFc,1)+geo%fcHc(iFc,2))
       if (potential_at_guard_cell.eq.1) then
 !        write(6,*) 'Potential taken at guard cell (phys)'
         pof = pl%po(iCv)
@@ -843,8 +848,8 @@ c*******************************************************************************
 
            farea = geo%fcs(iFc) !! area of the face
            !!if (crcstra(istra).eq.'E'.or.crcstra(istra).eq.'W') then
-           if (istra.eq.1.or.istra.eq.2) then !! TODO temporary fix for easy backwards compatibility
-           idir = 0 !! TODO
+           if (istra.eq.1.or.istra.eq.2) then !! AFN_TODO temporary fix for easy backwards compatibility
+           idir = 0 !!
            idir_inv = 1
            else
            idir = 1
@@ -902,18 +907,22 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
              nnwwnsum = nnwwnsum + nnwwnrec
 cmb   net neutral energy source from recombination
 
+             if (tn_style.eq.0) then
+               srw%shi0(iCv,0) = srw%shi0(iCv,0) + fenerec
+             elseif (tn_style.eq.1) then
+               !! neutral energy boundary conditions are not used
+             else 
+               srw%shn0(iCv,0) = srw%shn0(iCv,0) + fenerec
+             endif
 
-             srw%shi0(iCv,0) = srw%shi0(iCv,0) + fenerec
-
-
-           else !! this else belongs to "if(.not.(is.eq.is0))", hence is will be neutral here
+           else !! this else belongs to "if(.not.(is.eq.is0))", hence 'is' will be neutral here
 
 
 !!         A conversion is necessary because the BC implemented below were devloped in a code that uses a total energy equation,
 !!         while B2.5 uses internal energy equations.
 
              q_conv=
-     &             isign*(tif*pl%ua(iCv,is)*geo%fcpbs(iFc)*
+     &             isign*(tnf*pl%ua(iCv,is)*geo%fcpbs(iFc)*
      &             pl%na(iCv,is)+
      &             (dv%fna(iFc,0,is0)+dv%fna(iFc,1,is0))
      &             *0.5_R8*am(is0)*mp*
@@ -931,13 +940,13 @@ cmb   net neutral energy source from recombination
              if (maxw(istra).eq.0) then
              call CalcIncidentFluxes(iCv,iCn,iFc,isign,
      &              is0,is2,istra,idir,hh,hhn,
-     &              Phi_app,farea,pl,tif,tef,pof,
+     &              Phi_app,farea,pl,tif,tnf,tef,pof,
      &              dv%ne(iCv),geo,rt,gradnn(idir_inv),
      &              use_uy_uz, sign_cosa, sign_sina, 
      &              fnnic,fnniv,fmomni,nni,nnwwni,feneni)
              else
              call CalcIncidentFluxesMaxwellian(iCv,iFc,is0,isign,istra,
-     &            idir,farea,pl,tif,geo,1,sign_cosa,sign_sina,
+     &            idir,farea,pl,tnf,geo,1,sign_cosa,sign_sina,
      &            fnnic,fnniv,
      &            fmomni,nni,nnwwni,feneni)
              endif
@@ -954,7 +963,7 @@ cmb   net momentum sources from neutral particle reflection
                if (maxw(istra).eq.0) then
                  call CalcReflectedFluxes(iCv,iCn,mpg%nCi, iFc,isign,
      &              is0,is2,istra,iwall,idir,hh,hhn,
-     &              Phi_app,farea,recyc(is,istra),pl,tif,
+     &              Phi_app,farea,recyc(is,istra),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,rt,gradnn(idir_inv),
      &              sign_cosa, sign_sina, use_uy_uz,
@@ -962,7 +971,7 @@ cmb   net momentum sources from neutral particle reflection
                else
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
-     &              istra,iwall,idir,farea,recyc(is,istra),pl,tif,
+     &              istra,iwall,idir,farea,recyc(is,istra),pl,tnf,
      &              geo,sign_cosa, sign_sina, use_uy_uz,
      &              fmomrefl,nnrefl,nnwwnrefl,fenerefl)
                endif
@@ -983,7 +992,13 @@ cmb   net momentum sources from neutral particle reflection
              nnsum = nnsum + nni + nnrefl
              nnwwnsum = nnwwnsum + nnwwni + nnwwnrefl
 
-             srw%shi0(iCv,0) = srw%shi0(iCv,0) + feneni + fenerefl   
+             if (tn_style.eq.0) then
+               srw%shi0(iCv,0) = srw%shi0(iCv,0) + feneni + fenerefl   
+             elseif (tn_style.eq.1) then
+               !! neutral energy boundary conditions are not used
+             else
+               srw%shn0(iCv,0) = srw%shn0(iCv,0) + feneni + fenerefl   
+             endif
 
            endif
            if(is.eq.nsmax) then   !! see DivOpt, BoundaryConditionSources line 3342
