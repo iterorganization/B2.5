@@ -49,7 +49,7 @@
       integer k
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0                                
+     &                 iout_b2npmo =0, tn_style = 0                                
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
@@ -96,6 +96,7 @@
         call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 11.09.09 }
         call ipgeti ('b2srsm_diagno', diagno)
         call ipgeti ('b2srsm_enable', enable)
+        call ipgeti ('b2mn_tn_style', tn_style)
         if(enable.eq.0) then
           write(*,*) 'b2srsm disabled'
         endif
@@ -241,6 +242,10 @@ c check ion energy
      &              cor_ei(ix,iy)*(1.0_R8/hlp-1.0_R8)
                 endif
               endif
+c check neutral energy
+          if (tn_style.ne.0) then
+            call xerrab('b2srsm not developed for tn_style.ne.0')
+          endif
 c check electron energy
               invtimescale =
      1         abs(sr%she(ix,iy,0) + sr%she(ix,iy,1)*te(ix,iy) + 

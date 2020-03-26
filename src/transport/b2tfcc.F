@@ -24,14 +24,14 @@
 
 *   ..local variables
       integer ncall, is, iFc
+      integer, save :: tn_style = 0
       real (kind=R8) ::
      *   xfac, pcm1
       real (kind=R8) ::
-     *   nwe(nCv), nwi(nCv), nwef(nFc), nwif(nFc),
-     *   dnwe(nFc,0:1), dnwi(nFc,0:1), tef(nFc), tif(nFc),
+     *   nw(nCv), nwf(nFc),
+     *   dnw(nFc,0:1), tef(nFc), tif(nFc), tnf(nFc),
      *   wght(nFc,2), wrkVx(nVx),
-     *   floe(nFc,0:1), cone(nFc,0:1), floe0(nFc,0:1), cone0(nFc,0:1),
-     *   floi(nFc,0:1), coni(nFc,0:1), floi0(nFc,0:1), coni0(nFc,0:1)
+     *   flo(nFc,0:1), con(nFc,0:1), flo0(nFc,0:1), con0(nFc,0:1)
       save ncall, xfac, pcm1
 *   ..procedures
       external subini, subend, xertst, ipgetr
@@ -51,6 +51,7 @@
        call xertst (0.le.xfac, 'faulty internal parameter xfac')
        call ipgetr ('b2npht_pcm1', pcm1)
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
+       call ipgeti ('b2mn_tn_style', tn_style)
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -70,92 +71,190 @@
       wght = 1.0_R8
       call intface(nCv,nFc,mpg%fcCv,wght,pl%te,tef)
       call intface(nCv,nFc,mpg%fcCv,wght,pl%ti,tif)
+      call intface(nCv,nFc,mpg%fcCv,wght,pl%tn,tnf)
 
-* ..correct floe, cone, floi, coni
 
-      do is = 0, ns-1
+* ..correct floe, cone, floi, coni, flon, conn
+
+
 
 cwdk   Note: could reduce memory by doing ion and electron contributions
 cwdk   subsequently (use same work arrays nw, dnw, nwf, flo, con, flo0, con0)
 
-*    ..pre-compute radial differences
-       nwi = pl%na(:,is)*(rt%rza(:,is) + 1.0_R8)
-       nwe = pl%na(:,is)*(rt%rza(:,is) + 1.0_R8)*rt%rza(:,is)
-       call diff(nCv, nFc, nVx, 0, geo, mpg, nwi, wrkVx, dnwi)
-       call diff(nCv, nFc, nVx, 0, geo, mpg, nwe, wrkVx, dnwe)
 
-*    ..interpolate nwe and nwi to cell faces
-       call intface(nCv,nFc,mpg%fcCv,wght,nwe,nwef)
-       call intface(nCv,nFc,mpg%fcCv,wght,nwi,nwif)
+c electrons: nw = nwe, dnw = dnwe, nwf = nwef, flo = floe, con = cone, flo0 = floe0, con0 = cone0
+      do is = 0, ns-1
+
+*    ..pre-compute radial differences
+       nw = pl%na(:,is)*(rt%rza(:,is) + 1.0_R8)*rt%rza(:,is)
+       call diff(nCv, nFc, nVx, 0, geo, mpg, nw, wrkVx, dnw)
+
+*    ..interpolate nwe to cell faces
+       call intface(nCv,nFc,mpg%fcCv,wght,nw,nwf)
 
 *    ..compute poloidal/radial coefficients for pressure diffusion term
-       floe(:,0) = -xfac*2.5_R8*co%cdpa(:,0,is)*dnwe(:,0)*tef
-       floe(:,1) = -xfac*2.5_R8*co%cdpa(:,1,is)*dnwe(:,1)*tef
-       cone(:,0) =  xfac*2.5_R8*co%cdpa(:,0,is)*nwef*tef
-       cone(:,1) =  xfac*2.5_R8*co%cdpa(:,1,is)*nwef*tef
-
-       floi(:,0) = -xfac*2.5_R8*co%cdpa(:,0,is)*dnwi(:,0)*tif
-       floi(:,1) = -xfac*2.5_R8*co%cdpa(:,1,is)*dnwi(:,1)*tif
-       coni(:,0) =  xfac*2.5_R8*co%cdpa(:,0,is)*nwif*tif
-       coni(:,1) =  xfac*2.5_R8*co%cdpa(:,1,is)*nwif*tif
+       flo(:,0) = -xfac*2.5_R8*co%cdpa(:,0,is)*dnw(:,0)*tef
+       flo(:,1) = -xfac*2.5_R8*co%cdpa(:,1,is)*dnw(:,1)*tef
+       con(:,0) =  xfac*2.5_R8*co%cdpa(:,0,is)*nwf*tef
+       con(:,1) =  xfac*2.5_R8*co%cdpa(:,1,is)*nwf*tef
 
 *    ..compute coefficients for stencil
-       call calccoef(nCv,nFc,nVx,0,geo,mpg,floe,cone,floe0,cone0)
-       call calccoef(nCv,nFc,nVx,0,geo,mpg,floi,coni,floi0,coni0)
+       call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
 
 *    ..add to previous contributions
-       dv%floe        = dv%floe        + floe0
-       dv%cone(:,:,0) = dv%cone(:,:,0) + cone0
-
-       dv%floi        = dv%floi        + floi0
-       dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
-
-      enddo
+       dv%floe        = dv%floe        + flo0
+       dv%cone(:,:,0) = dv%cone(:,:,0) + con0
+      enddo !! end loop over species
 
 *  ..add contributions from Rhie-Chow term
 
 *   ..pre-compute radial differences
-      call diff(nCv, nFc, nVx, 0, geo, mpg, dv%ni(1,0), wrkVx, dnwi)
-      call diff(nCv, nFc, nVx, 0, geo, mpg, dv%ne, wrkVx, dnwe)
+      call diff(nCv, nFc, nVx, 0, geo, mpg, dv%ne, wrkVx, dnw)
 
 *   ..interpolate nwe and nwi to cell faces
-      call intface(nCv,nFc,mpg%fcCv,wght,dv%ne,nwef)
-      call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(1,0),nwif)
+      call intface(nCv,nFc,mpg%fcCv,wght,dv%ne,nwf)
 
       do iFc = 1, nFc
-        cone(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
+        con(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
      &   (dv%pccm(mpg%fcCv(iFc,1),1)*
      &    dv%ne(mpg%fcCv(iFc,1))*pl%te(mpg%fcCv(iFc,1)) +
      &    dv%pccm(mpg%fcCv(iFc,2),1)*
      &    dv%ne(mpg%fcCv(iFc,2))*pl%te(mpg%fcCv(iFc,2)) )
-        coni(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
-     &   (dv%pccm(mpg%fcCv(iFc,1),1)*
-     &    dv%ni(mpg%fcCv(iFc,1),0)*pl%ti(mpg%fcCv(iFc,1))  +
-     &    dv%pccm(mpg%fcCv(iFc,2),1)*
-     &    dv%ni(mpg%fcCv(iFc,2),0)*pl%ti(mpg%fcCv(iFc,2)) )
       enddo
 
 *   ..compute poloidal/radial coefficients for pressure diffusion term
-      floe(:,0) = -cone(:,0)*dnwe(:,0)
-      floi(:,0) = -coni(:,0)*dnwi(:,0)
-      cone(:,0) =  cone(:,0)*nwef
-      coni(:,0) =  coni(:,0)*nwif
+      flo(:,0) = -con(:,0)*dnw(:,0)
+      con(:,0) =  con(:,0)*nwf
 
-      floe(:,1) = 0.0_R8
-      floi(:,1) = 0.0_R8
-      cone(:,1) = 0.0_R8
-      coni(:,1) = 0.0_R8
+      flo(:,1) = 0.0_R8
+      con(:,1) = 0.0_R8
 
 *   ..compute coefficients for stencil
-      call calccoef(nCv,nFc,nVx,0,geo,mpg,floe,cone,floe0,cone0)
-      call calccoef(nCv,nFc,nVx,0,geo,mpg,floi,coni,floi0,coni0)
+      call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
 
 *   ..add to previous contributions
-      dv%floe        = dv%floe        + floe0
-      dv%cone(:,:,0) = dv%cone(:,:,0) + cone0
+      dv%floe        = dv%floe        + flo0
+      dv%cone(:,:,0) = dv%cone(:,:,0) + con0
 
-      dv%floi        = dv%floi        + floi0
-      dv%coni(:,:,0) = dv%coni(:,:,0) + coni0
+
+
+c ions/neutrals
+
+      do is = 0, ns-1
+
+*    ..pre-compute radial differences
+       nw = pl%na(:,is)*(rt%rza(:,is) + 1.0_R8)
+       call diff(nCv, nFc, nVx, 0, geo, mpg, nw, wrkVx, dnw)
+
+
+*    ..interpolate nwe to cell faces
+       call intface(nCv,nFc,mpg%fcCv,wght,nw,nwf)
+
+
+*    ..compute poloidal/radial coefficients for pressure diffusion term
+       if (.not.is_neutral(is)) then
+         flo(:,0) = -xfac*2.5_R8*co%cdpa(:,0,is)*dnw(:,0)*tif
+         flo(:,1) = -xfac*2.5_R8*co%cdpa(:,1,is)*dnw(:,1)*tif
+         con(:,0) =  xfac*2.5_R8*co%cdpa(:,0,is)*nwf*tif
+         con(:,1) =  xfac*2.5_R8*co%cdpa(:,1,is)*nwf*tif
+       else
+         flo(:,0) = -xfac*2.5_R8*co%cdpa(:,0,is)*dnw(:,0)*tnf !! in case of default energy equation Tn = Ti
+         flo(:,1) = -xfac*2.5_R8*co%cdpa(:,1,is)*dnw(:,1)*tnf
+         con(:,0) =  xfac*2.5_R8*co%cdpa(:,0,is)*nwf*tnf
+         con(:,1) =  xfac*2.5_R8*co%cdpa(:,1,is)*nwf*tnf
+       endif
+
+*    ..compute coefficients for stencil
+       call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
+
+
+*    ..add to previous contributions
+c the logic statements could be simplified but for now this is not done to improve readability
+       if (tn_style.eq.0) then !! default combined ion-neutral energy equation, include both ions and neutrals in "ion" terms.
+         dv%floi        = dv%floi        + flo0
+         dv%coni(:,:,0) = dv%coni(:,:,0) + con0
+       elseif (tn_style.eq.1) then !! pure ion energy equation, only add ion contributions
+         if (.not.is_neutral(is)) then
+           dv%floi        = dv%floi        + flo0
+           dv%coni(:,:,0) = dv%coni(:,:,0) + con0
+         endif
+       elseif (tn_style.eq.2) then !! separate ion and neutral energy equation, split contributions
+         if (.not.is_neutral(is)) then
+           dv%floi        = dv%floi        + flo0
+           dv%coni(:,:,0) = dv%coni(:,:,0) + con0
+         else
+           dv%flon        = dv%flon        + flo0
+           dv%conn(:,:,0) = dv%conn(:,:,0) + con0
+         endif
+       else
+         call xerrab('invalid tn_style switch number')
+       endif
+
+
+*  ..add contributions from Rhie-Chow term
+
+*   ..pre-compute radial differences
+      call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(1,is), wrkVx, dnw)
+
+*    ..interpolate nwe to cell faces
+       call intface(nCv,nFc,mpg%fcCv,wght,nw,nwf)
+
+      if (.not.is_neutral(is)) then
+        do iFc = 1, nFc
+          con(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
+     &     (dv%pccm(mpg%fcCv(iFc,1),1)*
+     &      pl%na(mpg%fcCv(iFc,1),is)*pl%ti(mpg%fcCv(iFc,1))  +
+     &      dv%pccm(mpg%fcCv(iFc,2),1)*
+     &      pl%na(mpg%fcCv(iFc,2),0)*pl%ti(mpg%fcCv(iFc,2)) )
+        enddo
+      else
+        do iFc = 1, nFc
+          con(:,0) = pcm1*1.25_R8*abs(geo%fcPbs(iFc))*
+     &     (dv%pccm(mpg%fcCv(iFc,1),1)*
+     &      pl%na(mpg%fcCv(iFc,1),0)*pl%tn(mpg%fcCv(iFc,1))  +
+     &      dv%pccm(mpg%fcCv(iFc,2),1)*
+     &      pl%na(mpg%fcCv(iFc,2),0)*pl%tn(mpg%fcCv(iFc,2)) )
+        enddo
+      endif
+
+*   ..compute poloidal/radial coefficients for pressure diffusion term
+      flo(:,0) = -con(:,0)*dnw(:,0)
+      con(:,0) =  con(:,0)*nwf
+
+      flo(:,1) = 0.0_R8
+      con(:,1) = 0.0_R8
+
+*   ..compute coefficients for stencil
+      call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
+
+
+
+*    ..add to previous contributions
+c the logic statements could be simplified but for now this is not done to improve readability
+       if (tn_style.eq.0) then !! default combined ion-neutral energy equation, include both ions and neutrals in "ion" terms.
+         dv%floi        = dv%floi        + flo0
+         dv%coni(:,:,0) = dv%coni(:,:,0) + con0
+       elseif (tn_style.eq.1) then !! pure ion energy equation, only add ion contributions
+         if (.not.is_neutral(is)) then
+           dv%floi        = dv%floi        + flo0
+           dv%coni(:,:,0) = dv%coni(:,:,0) + con0
+         endif
+       elseif (tn_style.eq.2) then !! separate ion and neutral energy equation, split contributions
+         if (.not.is_neutral(is)) then
+           dv%floi        = dv%floi        + flo0
+           dv%coni(:,:,0) = dv%coni(:,:,0) + con0
+         else
+           dv%flon        = dv%flon        + flo0
+           dv%conn(:,:,0) = dv%conn(:,:,0) + con0
+         endif
+       else
+         call xerrab('invalid tn_style switch number')
+       endif
+
+
+
+      enddo
+
 
 * ..return
       ncall = ncall+1

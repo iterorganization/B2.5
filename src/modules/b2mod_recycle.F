@@ -232,7 +232,7 @@ c     Other initializations
 
       subroutine CalcIncidentFluxes(iCv,iCn,iFc,isign,
      &            isn,iscx0,istra,idir,hh,hhn,
-     &            Phi_app,area,pl,tif,tef,pof,nef,geo,                           
+     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,                           
      &            rt,gradnn,use_uy_uz,sign_cosa,sign_sina,
      &            fnnic,fnniv,fmomni,nni,nnwwni,feneni)
 !mb   17.07.17
@@ -249,7 +249,7 @@ c     on the diffusion approximation (see papers of Niels Horsten).
       integer,intent(in):: iCv,iCn, iFc,idir,
      &    isn,iscx0,istra, use_uy_uz,sign_cosa, sign_sina
       real (kind=R8),intent(in):: hh, hhn,Phi_app, area,
-     2    tif,tef,pof,nef,isign,gradnn
+     2    tif,tnf,tef,pof,nef,isign,gradnn
 c     Output variables: Incident neutral flux has been broken up in two parts:
 c     A constant contribution fnnic and a contribution varying linearly with the 
 c     neutral density fnniv. fmomni: momentum flux of 
@@ -293,7 +293,7 @@ cmb   plasma velocities toroidal (x),tangential (y), and normal (z) to boundary 
 c     Calculate rate coefficients at boundary
       vcx=0.0_R8
       do ic = 0, pl%ns-1
-        t_av = (tif+tif)/2.0_R8
+        t_av = (tif+tnf)/2.0_R8
         vcx = vcx + pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,iscx0) +
      &   rt%rlcx(iCv,1,ic,iscx0)*log(t_av/(am(isn)*ev)))
       enddo
@@ -301,7 +301,7 @@ c     Calculate rate coefficients at boundary
      2 rt%rlsa(iCv,0,isn)+
      3 rt%rlsa(iCv,1,isn)*log(tef/ev))*nef
       vtot =vion + vcx
-      c_th = sqrt(tif/mn)
+      c_th = sqrt(tnf/mn)
       mfp = c_th/vtot
 
 c     Calculate the moments of a truncated drifting Maxwellian distribution
@@ -394,10 +394,16 @@ c     Convert energy flux densities in net energy flux contributions
 
 c     If flux has incorrect sign, resort to Maxwellian distribution for BC's
       if (fnni.le.0.0_R8) then
-        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
-     &            idir,area,pl,tif,geo,1,sign_cosa,sign_sina,
-     &            fnnic,fnniv,fmomni,
-     &            nni,nnwwni,feneni)
+!!        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
+!!     &            idir,area,pl,tif,geo,1,sign_cosa,sign_sina,
+!!     &            fnnic,fnniv,fmomni,
+!!     &            nni,nnwwni,feneni)
+        fnnic  = 0.0_R8
+        fnniv  = 0.0_R8
+        fmomni = 0.0_R8
+        nni    = 0.0_R8
+        nnwwni = 0.0_R8
+        feneni = 0.0_R8
       endif
 
       call subend ()
@@ -671,7 +677,7 @@ c     Convert energy flux densities in energy fluxes
 
       subroutine CalcReflectedFluxes(iCv,iCn,nCi,iFc,isign,
      &            isn,iscx0,istra,iwall,idir,hh,hhn,
-     &            Phi_app,area,recyc0,pl,tif,tef,pof,                           
+     &            Phi_app,area,recyc0,pl,tif,tnf,tef,pof,                           
      &            nef,geo,rt,gradnn,
      &            sign_cosa, sign_sina, use_uy_uz,
      &            fmomrefl,nnrefl,nnwwnrefl,fenerefl)
@@ -691,7 +697,7 @@ c     This routine calculates the reflected neutral particle,momentum and energy
      &    isn, iscx0, iwall,istra,
      &    sign_cosa, sign_sina, use_uy_uz
       real (kind=R8),intent(in):: hh, hhn,Phi_app, area,recyc0,
-     2    pof,tif,tef,nef,isign
+     2    pof,tif,tnf,tef,nef,isign
 c     Output variables: Incident neutral flux has been broken up in two parts:
 c     A constant contribution fnnic and a contribution varying linearly with the 
 c     neutral density fnniv. fmomni: momentum flux of 
@@ -739,7 +745,7 @@ c     Calculate tangental and perpendicular gradients of neutral density at boun
 c     Calculate rate coefficients at boundary
       vcx=0.0_R8
       do ic = 0, pl%ns-1
-        t_av = (tif+tif)/2.0_R8
+        t_av = (tif+tnf)/2.0_R8
         vcx = vcx + pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,iscx0) +
      &   rt%rlcx(iCv,1,ic,iscx0)*log(t_av/(am(isn)*ev)))
       enddo
@@ -892,10 +898,14 @@ c     Convert energy flux densities in energy fluxes
 
 !!    resort to maxwellian distribution of incident flux has wrong sign
       if (fnni.le.0.0_R8) then
-        call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
-     &            isn,istra,iwall,idir,area,recyc0,pl,tif,                          
-     &            geo,sign_cosa, sign_sina, use_uy_uz,
-     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl)
+!!        call CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
+!!     &            isn,istra,iwall,idir,area,recyc0,pl,tif,                          
+!!     &            geo,sign_cosa, sign_sina, use_uy_uz,
+!!     &            fmomrefl,nnrefl,nnwwnrefl,fenerefl)
+             fmomrefl = 0.0_R8
+             nnrefl = 0.0_R8
+             nnwwnrefl = 0.0_R8
+             fenerefl = 0.0_R8
       endif
       call subend ()
       return

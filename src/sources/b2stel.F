@@ -58,19 +58,20 @@
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0
+     &                 iout_b2npmo =0, tn_style = 0
       character chns*3, chk*1                                           !srv 30.06.08
       real (kind=R8) ::
      *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
      *  fix_recomb_energy
       real (kind=R8) ::
-     *  rf0, t0, t1
+     *  rf0, t0, t1, tkin, t1i, t1n
       real (kind=R8) :: wrk0(nCv)
       real (kind=R8) ::
      *  sna0_ion(nCv,0:1,0:ns-1), sna0_rec(nCv,0:1,0:ns-1),
      *  smq0_ion(nCv,0:3,0:ns-1), smq0_rec(nCv,0:3,0:ns-1),
-     &  shi0_ion(nCv,0:3),        shi0_rec(nCv,0:3)
+     &  shi0_ion(nCv,0:3),        shi0_rec(nCv,0:3),
+     &  shn0_ion(nCv,0:3),        shn0_rec(nCv,0:3)
 *   ..procedures
       intrinsic abs
       logical lnext
@@ -137,6 +138,7 @@
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 11.09.09 }
        call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
+       call ipgeti ('b2mn_tn_style', tn_style)
       endif
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nx, ny')
@@ -153,6 +155,7 @@
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, pl%tn, 1, 'tn', '.gt.')
 *   ..test facdrift, fac_ExB
       call xertst (0.0_R8.le.minval(dv%facdrift) .and.
      &     1.0_R8.ge.maxval(dv%facdrift), 'faulty argument facdrift')
@@ -178,6 +181,8 @@
       call sfill (nCv*4, 0.0_R8, srw%she0, 1)
       call sfill (nCv*4, 0.0_R8, shi0_ion, 1)
       call sfill (nCv*4, 0.0_R8, shi0_rec, 1)
+      call sfill (nCv*4, 0.0_R8, shn0_ion, 1)
+      call sfill (nCv*4, 0.0_R8, shn0_rec, 1)
 *   ..compute sources due to ionisation
       rsanareg=0.0_R8
       rsahireg=0.0_R8
@@ -207,12 +212,32 @@
            rsanareg(mpg%cvReg(iCv),is)=rsanareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
-           t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
-     &       ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
-     &       ((pl%ua(iCv,is)-pl%ua(iCv,is+1))**2)
-           shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1
-           shi0_ion(iCv,3) = shi0_ion(iCv,3)-
+           if (tn_style.eq.0) then
+             t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
+     &         ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
+     &         ((pl%ua(iCv,is)-pl%ua(iCv,is+1))**2)
+             shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1
+             shi0_ion(iCv,3) = shi0_ion(iCv,3)-
      &                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
+           elseif (tn_style.eq.1) then
+               !! AFN_TODO
+               call xerrab('pure ion energy equation not yet available')
+           else
+	     tkin = (am(is)+am(is+1))/2.0_R8*(mp/2.0_R8)*
+     &         (pl%ua(iCv,is)-pl%ua(iCv,is+1))**2
+             t1i = t0*pl%na(iCv,is)*(1.5_R8*pl%tn(iCv) + tkin)
+             t1n = t0*pl%na(iCv,is)*(-1.5_R8*pl%tn(iCv))
+             shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1i
+             shi0_ion(iCv,3) = shi0_ion(iCv,3)-
+     &                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
+	     shn0_ion(iCv,0) = shn0_ion(iCv,0)+(1.0_R8+rf0)*t1n
+             shn0_ion(iCv,3) = shn0_ion(iCv,3)-
+     &                         rf0*t1n/(dv%ni(iCv,0)*pl%ti(iCv)) 
+           !! neutrals that ionize have energy according to Tn, but source scaling is still based on ti and ni.
+           endif
+
+
+
 !WG_TODO           rsahi(iCv,is) = t1
            rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1
           endif
@@ -305,13 +330,31 @@
            rranareg(mpg%cvReg(iCv),is)=rranareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
+           if (tn_style.eq.0) then !! combined ion-neutral (default)
            t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
      &       ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
      &       ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
            shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1
            shi0_rec(iCv,3) = shi0_rec(iCv,3)-
      *                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
+           elseif (tn_style.eq.1) then !! pure ion
+              !! AFN_TODO
+               call xerrab('pure ion energy equation not yet available')
+           else !! separate ion-neutral
+	     tkin = (am(is)+am(is-1))/2.0_R8*(mp/2.0_R8)*
+     &              ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
+             t1i = t0*pl%na(iCv,is)*(-1.5_R8*pl%ti(iCv))
+             t1n = t0*pl%na(iCv,is)*(+1.5_R8*pl%ti(iCv)+tkin)
+	     shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1i
+             shi0_rec(iCv,3) = shi0_rec(iCv,3)-
+     *                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
+	     shn0_rec(iCv,0) = shn0_rec(iCv,0)+(1.0_R8+rf0)*t1n
+             shn0_rec(icv,3) = shn0_rec(iCv,3)-
+     *                         rf0*t1n/(dv%ni(iCv,0)*pl%ti(iCv))
+           endif
 !WG_TODO           rrahi(iCv,is) = t1
+
+
            rrahireg(mpg%cvReg(iCv),is)=rrahireg(mpg%cvReg(iCv),is)+t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
            if(fix_recomb_energy.ne.0) then
@@ -413,6 +456,7 @@ c accounted for)
       srw%sna0 = sna0_ion + sna0_rec
       srw%smq0 = smq0_ion + smq0_rec
       srw%shi0 = shi0_ion + shi0_rec
+      srw%shn0 = shn0_ion + shn0_rec
 
 #ifdef ASTRA
       do is = 0, ns-1                                                 !srv 28.07.11 {
