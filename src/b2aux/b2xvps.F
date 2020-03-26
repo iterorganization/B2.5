@@ -57,7 +57,7 @@
       call b2xvsg (nCv*ns, pl % na, 1, 'na', '.gt.')
       call b2xvsg (nCv, pl % te, 1, 'te', '.gt.')
       call b2xvsg (nCv, pl % ti, 1, 'ti', '.gt.')
-      call b2xvsg (nCv, pl % tn, 1, 'tn', '.gt.')
+      call b2xvsg (nCv, pl % tn, 1, 'tn', '.ge.')
       call b2xvsg (nCv*ns, dv%kinrgy, 1, 'kinrgy', '.ge.')
 
 * ..return
