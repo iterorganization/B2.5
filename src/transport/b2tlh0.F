@@ -1,4 +1,4 @@
-      subroutine b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, na, ti,
+      subroutine b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, na, tn,
      & chcb, fllim0fhi)
       use b2mod_types
       use b2mod_constants
@@ -11,7 +11,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  na(nCv,0:ns-1), ti(nCv),
+     *  na(nCv,0:ns-1), tn(nCv),
      1  chcb(nFc,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -26,13 +26,13 @@
       real (kind=R8), allocatable :: w1(:)
       character charns*3                                          !srv 13.01.04 }
       real (kind=R8) ::
-     *  alpha, gamma, t0, t1, t2, t3, dti, vthi, maxfluxlimit(0:1),
-     *  flux_limit_min_ti, tiv(nVx), dtif(nFc,0:1)
+     *  alpha, gamma, t0, t1, t2, t3, dtn, vthi, maxfluxlimit(0:1),
+     *  flux_limit_min_tn, tnv(nVx), dtnf(nFc,0:1)
       real (kind=R8), save :: cutlo = 1.0e-60_R8
-      save ncall, alpha, gamma, flux_limit_min_ti
+      save ncall, alpha, gamma, flux_limit_min_tn
 *   ..initialisation
       data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/,
-     *     flux_limit_min_ti/0.0_R8/
+     *     flux_limit_min_tn/0.0_R8/
 *   ..procedures
       intrinsic max, abs, sqrt
       external subini, subend, xertst, ipgetr, ipgeti
@@ -48,8 +48,8 @@
         call xertst (0.0_R8.le.alpha, 'invalid input parameter alpha')
         call ipgetr ('b2tlh0_gamma', gamma)
         call xertst (0.0_R8.lt.gamma, 'invalid input parameter gamma')
-        call ipgetr ('b2tlh0_flux_limit_min_ti', flux_limit_min_ti)
-        flux_limit_min_ti=flux_limit_min_ti*ev
+        call ipgetr ('b2tlh0_flux_limit_min_ti', flux_limit_min_tn) !! do not change name of switch for compatibility with existing input files?
+        flux_limit_min_tn=flux_limit_min_tn*ev
         call ipgeti ('b2tlh0_iout', iout)                         !srv 13.01.04
       endif
 
@@ -58,27 +58,27 @@
 
       if (alpha.ne.0.0_R8) then
 *   .. compute differences of temperature
-       call diff(nCv, nFc, nVx, 0, geo, mpg, ti, tiv, dtif)
+       call diff(nCv, nFc, nVx, 0, geo, mpg, tn, tnv, dtnf)
        do is = 0, ns-1
         if (is_neutral(is)) then
          do iFc = 1, nFc
-          t0 = (ti(mpg%fcCv(iFc,1))    + ti(mpg%fcCv(iFc,2)))/2.0_R8
+          t0 = (tn(mpg%fcCv(iFc,1))    + tn(mpg%fcCv(iFc,2)))/2.0_R8
           t1 = (na(mpg%fcCv(iFc,1),is) + na(mpg%fcCv(iFc,2),is))/2.0_R8
 *   .. compute neutral heat conductivity flux limit in poloidal direction
-          dti = abs(chcb(iFc,0,is)*dtif(iFc,0))
+          dtn = abs(chcb(iFc,0,is)*dtnf(iFc,0))
           vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*
      &      geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))
           t2 = 1.0_R8/(1.0_R8 + 
-     .      (dti/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
+     .      (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
           chcb(iFc,0,is) = chcb(iFc,0,is)*t2
 	  fllim0fhi(iFc,0,is) = t2
           maxfluxlimit(0)=max(maxfluxlimit(0),t2)
 *   .. compute neutral heat conductivity flux limit in radial diretion
-          dti = abs(chcb(iFc,1,is)*dtif(iFc,1))
+          dtn = abs(chcb(iFc,1,is)*dtnf(iFc,1))
           vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*
      &      geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))
           t2 = 1.0_R8/(1.0_R8 +
-     .      (dti/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
+     .      (dtn/(alpha*vthi*t1*t0 + cutlo))**gamma)**(1.0_R8/gamma)
           chcb(iFc,1,is) = chcb(iFc,1,is)*t2
 	  fllim0fhi(iFc,1,is) = t2
           maxfluxlimit(1)=max(maxfluxlimit(1),t2)

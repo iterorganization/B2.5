@@ -3,7 +3,7 @@
 
       subroutine b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, geo, 
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
-     &   hcib, hce0, sig0, alf0, hvi0, hve0)
+     &   hcn0, hcib, hce0, sig0, alf0, hvi0, hve0)
       use b2mod_types
       use b2mod_transport_namelist
 !      use b2mod_input_profile
@@ -36,7 +36,7 @@
       real (kind=R8) ::
      *  dna0(nCv,0:ns-1), dpa0(nCv,0:ns-1),
      &  vla0(nCv,0:1,0:ns-1), vsa0(nCv,0:ns-1),
-     &  hci0(nCv), hcib(nCv,0:ns-1),
+     &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1),
      &  vma0(nCv,0:1,0:ns-1)                              !srv 15.12.05
       real (kind=R8) ::
      *  hce0(nCv), sig0(nCv), alf0(nCv),
@@ -102,7 +102,8 @@
       integer ncall, iCv, iFc, is, ic, k, new_df0, ixref, diagno,
      1  transport_namelist, user_transport, transport_inputfile,
      2  jsep, jxi, jxa
-      integer, save :: model_sig = 0, iout = 0, iout_b2wdat = 0   !srv 02.12.04
+      integer, save :: model_sig = 0, iout = 0, iout_b2wdat = 0,   !srv 02.12.04
+     *                 tn_style = 0
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  ballooning, bb_ref, ballooning_rescale, pfr_rescale,
@@ -136,10 +137,7 @@
 *   ..statement functions
       addup(t0,t1)=t0+t1
       expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-c lvn3
-*   ..local variables for future sbroutine set_transport_kul
-      integer is2, k2
-      real (kind=R8) :: dcx2,vcx2, ic2, dion2
+
 *-----------------------------------------------------------------------
 *.computation
 * ..preliminaries
@@ -202,6 +200,7 @@ c lvn3
         call ipgeti ('b2tqna_model_sig', model_sig)               !srv 02.12.04
         call ipgeti ('b2tqna_iout', iout)                         !srv 10.11.09
         call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
+        call ipgeti ('b2mn_tn_style', tn_style)                  
       else
         if(transport_namelist.eq.1.and.
      1   transport_time_mod.gt.0.0_R8) then
@@ -268,6 +267,7 @@ c lvn3
 *   ..compute dna0, dpa0, vla0, vma0, vsa0, hci0
 *     (initialise hci0 to 0)
       call sfill (nCv, 0.0_R8, hci0, 1)
+      call sfill (nCv, 0.0_R8, hcn0, 1)
       call sfill (nCv*ns, 0.0_R8, dna0, 1)
       call sfill (nCv*ns, 0.0_R8, dpa0, 1)
       call sfill (nCv*ns*2, 0.0_R8, vla0, 1)
@@ -470,68 +470,19 @@ cxpb Corrected for dimensionality
       endif                                                           !srv 10.11.09 }
 
 c lvn1
-      if(user_transport.eq.10) then                                   !mb 24.04.2017
-!!        call set_transport_kul(nCv, nFc)
-!!, nVx, ns, nscx, nscxmax, iscx, geo, 
-!!     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
 
-      	do is2 = 0, ns-1
-	  if (is_neutral(is2).and.zn(is2).eq.1.0_R8) then
-            k2=0
-            do while (iscx(k2).ne.is2 .and. k2.lt.nscx)
-              k2 = k2+1
-            enddo
-
-            call xertst (k2.lt.nscx, 'CX species index not found!')
-          endif
-          do iCv = 1, nCv
-            if (is_neutral(is2).and.zn(is2).eq.1.0_R8) then !! only for H D T
-              dcx2=0.0_R8
-              vcx2=0.0_R8
-              do ic2 = 0, ns-1
-                dcx2 = dcx2 + expu(rt%rlcx(iCv,0,ic2,k2) +
-     &            rt%rlcx(iCv,1,ic2,k2)*log(pl%ti(iCv)/(am(is2)*ev)))
-                vcx2 = vcx2 + pl%na(iCv,ic2) * 
-     &            expu(rt%rlcx(iCv,0,ic2,k2) +
-     &            rt%rlcx(iCv,1,ic2,k2)*log(pl%ti(iCv)/(am(is2)*ev)))
-              enddo
-              dion2=expu(
-     2         rt%rlsa(iCv,0,is2)+
-     3         rt%rlsa(iCv,1,is2)*log(pl%te(iCv)/ev))
-              dpa0(iCv,is2)=1.0_R8/mp/am(is2)/(vcx2+dion2*dv%ne(iCv))
-
-*    ..For now, no flux limiters imposed.
-*    ..For now, no neutral-neutral collisions inlcuded
-              vcx2 = vcx2 + dion2*dv%ne(iCv)
-              vsa0(iCv,is2) = pl%na(iCv,is2)*pl%ti(iCv)/
-     &         (vcx2) 
-              hcib(iCv,is2) = 2.5_R8*pl%na(iCv,is2)*pl%ti(iCv)/
-     &         (mp*am(is2)*(vcx2))
-              hci0(iCv) = hci0(iCv)+hcib(iCv,is2)
-            endif
-          enddo
-
-*   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-        if (is_neutral(is2).and.zn(is2).eq.1.0_R8) then
-          if (ANY( dna0(:,is2)/=0 )) then
-            write(*,*) 'Warning: '//
-     .       'dna0 is not zero for neutrals'//
-     .       'Recommended choice is zero!'
-          endif
-          if (ANY( vla0(:,:,is2)/=0 )) then
-            write(*,*) 'Warning: '//
-     .       'vla0 is not zero for neutrals'//
-     .       'Recommended choice is zero!'
-          endif
-          if (ANY( vma0(:,:,is2)/=0 )) then
-            write(*,*) 'Warning: '//
-     .       'vma0 is not zero for neutrals'//
-     .       'Recommended choice is zero!'
-          endif
-        endif 
-
-	enddo
+      if (user_transport.eq.0) then
+        !! the default transport model calculated above is used. Nothing to do.
+      elseif (user_transport.eq.10) then                              !mb 24.04.2017
+        call set_transport_kul(nCv, nFc,
+     &   nVx, ns, nscx, iscx, cutlo, cutll, tn_style, geo, 
+     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
+     &   hcn0,hcib)
+      else
+        call xerrab('transport model undefined or not yet converted')
       endif
+
+
 
 #ifdef WG_TODO
       if(user_transport.eq.0) then
@@ -3504,53 +3455,8 @@ c      close(14)
 
       end subroutine set_transport_neo
 
-c lvn2
-c**************************************************************************************
-c*****************     New KU Leuven transport model for neutrals *********************
-c**************************************************************************************
-c      subroutine set_transport_kul(nCv, nFc)
-!!, nVx, ns, nscx, nscxmax, iscx, geo, 
- !!    &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
- !!    &   hcib, hce0, sig0, alf0, hvi0, hve0)
-c      use b2mod_types
-c      use b2mod_indirect
-c      use b2mod_constants
-c      use b2mod_b2cmpa
-c      use b2mod_b2cmpt
-c      use b2mod_rates
-c      use b2mod_transport_namelist
-c      use b2us_geo
-c      use b2us_map
-c      use b2us_plasma
-c      implicit none
 
-c*   ..input arguments (unchanged on exit)
-c      integer nCv, nFc
-c      call subini ('set_transport_kul')
-!!, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
-!!      type (geometry), intent (in) :: geo
-!!      type (mapping), intent (in) :: mpg
-!!      type (B2Plasma), intent (in) :: pl
-!!      type (B2Derivatives), intent (inout) :: dv
-!!      type (B2Rates), intent (in) :: rt
-!!      type (B2StateExt), intent (in) :: st_ext
-!!*   ..output arguments (unspecified on entry)
-!!      real (kind=R8) ::
-!!     *  dna0(nCv,0:ns-1), dpa0(nCv,0:ns-1),
-!!     &  vla0(nCv,0:1,0:ns-1), vsa0(nCv,0:ns-1),
-!!     &  hci0(nCv), hcib(nCv,0:ns-1),
-!!     &  vma0(nCv,0:1,0:ns-1)                              !srv 15.12.05
-!!      real (kind=R8) ::
-!!     *  hce0(nCv), sig0(nCv), alf0(nCv),
-!!     &  hvi0(nCv,0:1), hve0(nCv,0:1)
-!!*   ..workspace arguments (unspecified on entry and on exit)
-!!      real (kind=R8) ::
-!!     *  wrk0(nCv)
 
-c*   ..return
-c      call subend ()
-c      return
-c      end subroutine set_transport_kul
 
 
 
@@ -3616,4 +3522,131 @@ c      end subroutine set_transport_kul
 
       end subroutine set_profile                                      !srv 01.03.07 }
 #endif
+
+c**************************************************************************************
+c*****************     New KU Leuven transport model for neutrals *********************
+c**************************************************************************************
+      subroutine set_transport_kul(nCv, nFc,
+     &            nVx, ns, nscx, iscx, cutlo, cutll, tn_style, geo, 
+     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
+     &   hcn0,hcib)
+      use b2mod_types
+      use b2mod_indirect
+      use b2mod_constants
+      use b2mod_b2cmpa
+      use b2mod_b2cmpt
+      use b2mod_rates
+      use b2mod_transport_namelist
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
+      implicit none
+
+*   ..input arguments (unchanged on exit)
+      integer nCv, nFc, nVx, ns, nscx, iscx(0:nscxmax-1)
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Rates), intent (in) :: rt
+      type (B2StateExt), intent (in) :: st_ext
+      real (kind=R8) :: cutlo, cutll, t0, t_av
+      real (kind=R8) :: expu
+*   ..input/output arguments
+      real (kind=R8), intent(inout) ::
+     &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1)
+*   ..output arguments (unspecified on entry)
+      real (kind=R8) ::
+     *  dna0(nCv,0:ns-1), dpa0(nCv,0:ns-1),
+     &  vla0(nCv,0:1,0:ns-1), vsa0(nCv,0:ns-1),
+     &  vma0(nCv,0:1,0:ns-1)                              !srv 15.12.05
+*   ..workspace arguments (unspecified on entry and on exit)
+      real (kind=R8) ::
+     *  wrk0(nCv), dcx, vcx, dion
+      integer is, k, ic, iCv, tn_style
+*   ..statement functions
+      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
+
+*   ..subprogram start-up calls
+      call subini ('set_transport_kul')
+      hci0 = 0 !! AFN_TODO be carefull: in multi-species cases hci0 could already have plasma contributions that should not be removed.
+      hcn0 = 0 !! this now works because plasma contribution is only added afterwards?
+               !! we keep 
+      	do is = 0, ns-1
+	  if (is_neutral(is).and.zn(is).eq.1.0_R8) then
+            k=0
+            do while (iscx(k).ne.is .and. k.lt.nscx)
+              k = k+1
+            enddo
+
+            call xertst (k.lt.nscx, 'CX species index not found!')
+          endif
+
+          do iCv = 1, nCv
+            if (is_neutral(is).and.zn(is).eq.1.0_R8) then !! only for H D T
+              dcx=0.0_R8
+              vcx=0.0_R8
+              do ic = 0, ns-1
+                t_av = 0.5_R8*(pl%ti(iCv)+pl%tn(iCv))
+                dcx = dcx + expu(rt%rlcx(iCv,0,ic,k) +
+     &            rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
+                vcx = vcx + pl%na(iCv,ic) * 
+     &            expu(rt%rlcx(iCv,0,ic,k) +
+     &            rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
+              enddo
+              dion=expu(
+     2         rt%rlsa(iCv,0,is)+
+     3         rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
+              dpa0(iCv,is)=1.0_R8/mp/am(is)/(vcx+dion*dv%ne(iCv))
+
+*    ..For now, no flux limiters imposed.
+*    ..For now, no neutral-neutral collisions inlcuded
+              vcx = vcx + dion*dv%ne(iCv)
+              vsa0(iCv,is) = pl%na(iCv,is)*pl%tn(iCv)/
+     &         (vcx) 
+              hcib(iCv,is) = 2.5_R8*pl%na(iCv,is)*pl%tn(iCv)/
+     &         (mp*am(is)*(vcx))
+              
+            endif
+          enddo !! end loop over cells
+
+
+
+*   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
+        if (is_neutral(is).and.zn(is).eq.1.0_R8) then
+          if (ANY( dna0(:,is)/=0 )) then
+            write(*,*) 'Warning: '//
+     .       'dna0 is not zero for neutrals'//
+     .       'Recommended choice is zero!'
+          endif
+          if (ANY( vla0(:,:,is)/=0 )) then
+            write(*,*) 'Warning: '//
+     .       'vla0 is not zero for neutrals'//
+     .       'Recommended choice is zero!'
+          endif
+          if (ANY( vma0(:,:,is)/=0 )) then
+            write(*,*) 'Warning: '//
+     .       'vma0 is not zero for neutrals'//
+     .       'Recommended choice is zero!'
+          endif
+        endif 
+      enddo !! end loop over species
+
+c recompute hci0 and hcn0
+      do is =0, ns-1
+        do iCv = 1, nCv
+          if (tn_style.eq.0) then     !! default combined ion-neutral, add neutral contribution to "total" hci0
+            hci0(iCv) = hci0(iCv)+hcib(iCv,is)
+          elseif (tn_style.eq.1) then !! pure ion energy equation, do not add neutral contribution
+c          do nothing
+          else                        !! separate ion-neutral energy equation, add neutral contribution to new hcn0
+            hcn0(iCv) = hcn0(iCv)+hcib(iCv,is)
+          endif
+        enddo
+      enddo 
+
+*   ..return
+      call subend ()
+      return
+      end subroutine set_transport_kul
 

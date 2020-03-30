@@ -67,7 +67,8 @@
       integer, save :: iout = 0, iout_b2wdat = 0,                     !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
+     &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
+     &                 tn_style = 0
       character(3) chns                                               !srv 17.06.08
       integer, save :: flux_limit_to_dpa = 1, csig_an_style = 1       !srv 15.06.08
       integer, save :: flux_limit_style = 2                           !srv 07.12.15
@@ -120,6 +121,7 @@
         call ipgetr ('b2tfhe_stochastic', fch_stochastic)            !lk 31.01.08
         call ipgetr ('b2trno_con_e_stochastic', alpha_stoch)         !lk 31.01.08
         call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
+        call ipgeti ('b2mn_tn_style', tn_style)                  
       end if
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -152,7 +154,8 @@
 *   ..compute differential anomalous transport coefficients
       call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, geo, mpg,
      &  pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0, co%vma0, co%vsa0,
-     &  co%hci0, co%hcib, co%hce0, co%sig0, co%alf0, hvi0, hve0)
+     &  co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0, co%alf0, hvi0, 
+     &  hve0)
 *   ..incorporate geometry
       do is = 0, ns-1
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
@@ -307,11 +310,23 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
       endif                                                               !srv 15.06.08 }
 
 *   ..apply flux limit to neutrals contribution to chcb
-      call b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ti,
+      call b2tlh0 (nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%tn,
      &  co%chcb, co%fllim0fhi)
        co%chci = 0.0_R8
+       co%chcn = 0.0_R8
       do is = 0, ns-1
-        co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
+c the logic statements below could be simplfied but for now we go for readability
+        if (tn_style.eq.0) then                             !! default combined ion-neutral energy equation
+          co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
+        elseif (tn_style.eq.1.and..not.is_neutral(is)) then !! pure ion energy equation, only ion contributions
+          co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
+        else                                                !! separate ion-neutral energy equation
+          if (.not.is_neutral(is)) then
+            co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
+          else
+            co%chcn(:,:) = co%chcn(:,:) + co%chcb(:,:,is)
+          endif
+        endif
       enddo 
 
 *    ..test sign of chce, chci
@@ -319,6 +334,8 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
       call b2xvsg (nFc, co%chce(:,1)*geo%fcQalf(:,1), 1, 'chce', '.ge.')
       call b2xvsg (nFc, co%chci(:,0)*geo%fcQalf(:,0), 1, 'chci', '.ge.')
       call b2xvsg (nFc, co%chci(:,1)*geo%fcQalf(:,1), 1, 'chci', '.ge.')
+      call b2xvsg (nFc, co%chcn(:,0)*geo%fcQalf(:,0), 1, 'chcn', '.ge.')
+      call b2xvsg (nFc, co%chcn(:,1)*geo%fcQalf(:,1), 1, 'chcn', '.ge.')
 
       if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
      &                  .or. iout_b2wdat.eq.4) then                  !srv 19.05.10 {
