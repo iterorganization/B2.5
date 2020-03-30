@@ -87,7 +87,7 @@
       integer, save :: style = 1, guard_flows = 2                        !srv 18.06.08
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
-      integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
+      integer, save :: ion_vlct_restrict = 0, tn_style = 0                             !iyv 06.02.14
       integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
       real (kind=R8) ::
      *  rxf, BoRiS
@@ -220,6 +220,7 @@
        if (boundary_namelist.ge.1) then
 !WG_TODO         call catchup_b2mod_boundary(ns,mpg,tim)
        endif
+!!       call ipgeti ('b2mn_tn_style', tn_style) !! AFN_TODO
       endif
 *   ..test nCv, nFc, ns, ismain
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -262,6 +263,16 @@ cwdk    For unstructured solver, start with simple reading of start-values
         st%dv%fac_ExB  = facExB_start
         st%dv%facdrift = facdrift_start
         st%dv%fac_vis  = facvis_start
+
+c checks for use of new energy equations
+       if (tn_style.ne.0) then
+         call xertst(0.0_R8.eq.facExB_start,
+     &        'new energy equations not compatible with ExB drifts')
+         call xertst(0.0_R8.eq.facdrift_start,
+     &        'new energy equations not compatible with drifts')
+         call xertst(ns.eq.2,
+     &        'new energy equations only for single species')
+       endif
 #ifdef WG_TODO
         call b2news_facdrift_fac_ExB_init(nx,ny,ramp_slow)
 #endif
