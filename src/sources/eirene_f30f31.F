@@ -735,8 +735,13 @@ c
 csw 2013 corrected
 c      nxx=nxdd
 c      nyy=nydd
+#ifdef B25_EIRENE
       nxx=ndx
       nyy=ndy
+#else
+      nxx=nx
+      nyy=ny
+#endif
 
       write(*,*) 'NX, NY, NFLAI = ',nx,ny,nflai
       rewind(31)
