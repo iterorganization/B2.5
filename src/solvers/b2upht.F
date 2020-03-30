@@ -3,8 +3,8 @@
 
       subroutine b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
      &  po_solve, ua_solve, solvereg, solvireg, solvtreg, solvpreg,      !srv 22.05.18
-     &  solvmreg, rxf, pcm0, cortt, corte, corti,
-     &  pccm0, na, ua, te, ti, po, ne, ni)
+     &  solvmreg, rxf, pcm0, cortt, corte, corti, cortn,
+     &  pccm0, na, ua, te, ti, tn, po, ne, ni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -17,7 +17,7 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  rxf, pcm0, cortt(nCv), corte(nCv),
-     &  corti(nCv), pccm0(nCv)
+     &  corti(nCv), cortn(nCv), pccm0(nCv)
       logical po_solve, ua_solve,
      &  solvereg(0:nregionv), solvireg(0:nregionv),
      &  solvtreg(0:nregionv),                             !srv 22.05.18
@@ -25,7 +25,7 @@
 *   ..input/output arguments
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
-     &  te(nCv), ti(nCv), po(nCv),
+     &  te(nCv), ti(nCv), tn(nCv), po(nCv),
      &  ne(nCv), ni(nCv,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------

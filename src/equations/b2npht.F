@@ -135,13 +135,17 @@
        call b2xvsg (nCv, sr%she(1,2), 1, 'she2', '.ge.')
        call b2xvsg (nCv, sr%she(1,3), 1, 'she3', '.le.')
        call b2xvsg (nCv, sr%shi(1,0), 1, 'shi0', '.ge.')
-       call b2xvsg (nCv, sr%shi(1,0), 1, 'shn0', '.ge.')
        call b2xvsg (nCv, sr%shi(1,1), 1, 'shi1', '.le.')
        call b2xvsg (nCv, sr%shi(1,2), 1, 'shi2', '.ge.')
        call b2xvsg (nCv, sr%shi(1,3), 1, 'shi3', '.le.')
+       call b2xvsg (nCv, sr%shn(1,0), 1, 'shn0', '.ge.')
+       call b2xvsg (nCv, sr%shn(1,1), 1, 'shn1', '.le.')
+       call b2xvsg (nCv, sr%shn(1,2), 1, 'shn2', '.ge.')
+       call b2xvsg (nCv, sr%shn(1,3), 1, 'shn3', '.le.')
 *    ..test sign of te, ti
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, pl%tn, 1, 'tn', '.gt.')
       endif
 
 * ..main computation
@@ -195,6 +199,23 @@ cdjm Jan2017 update particle source components for balance
      &     dv%fhi_mdf, dv%reshi)
         endif
       endif                                                             !srv 22.05.18
+
+
+c residuals for seperate neutral energy equation
+      if (tn_style.eq.2) then   !! separate neutral energy equation
+                                !! AFN_TODO add solven in b2mod_numerics
+        if (mdf_fhe.eq.0) then
+          call b2ursd (nCv, nFc, geo, mpg, dv%ni, pl%ti, shn0, dv%fhn,
+     &     dv%reshn)
+        else
+          call xerrab('non-default energy equations not yet developed', 
+     &                 'for mdf fluxes')
+        endif
+      else
+        dv%reshn = 0.0_R8         !! this is needed becuase reshn is added to the total energy equation
+      endif
+
+
       
       do iCv = 1, mpg%nCi
         shei(iCv) = co%ceqp(iCv)*dv%ne(iCv)*dv%ni(iCv,0)/
@@ -220,7 +241,7 @@ cdjm Jan2017 update particle source components for balance
      &    .or.get_residuals.eq.1) dv%reshi = dv%reshi + shei
       if (solving(4).and.any(solvereg(0:nregionv)).and.            ! if total equation is not solved then resmt = 0            
      &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
-     &   dv%resht = dv%reshe + dv%reshi                                 !srv 22.05.18 }
+     &   dv%resht = dv%reshe + dv%reshi + dv%reshn                                !srv 22.05.18 }
       
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
         call my_out_us(70,nCv,0,shei,'b2npht_shei')
@@ -258,15 +279,18 @@ cdjm Jan2017 update particle source components for balance
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
         call b2usht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,
-     &  rxg, dv%ne, dv%ni, pl%te, pl%ti,
-     &  dv%floe, dv%cone, dv%floi, dv%coni, dv%pccm(1,1), she0, shi0, 
-     &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%cortt, dv%corte, 
-     &  dv%corti, wrkf, wrkc, aa)
+     &  rxg, dv%ne, dv%ni, pl%te, pl%ti, pl%tn,
+     &  dv%floe, dv%cone, dv%floi, dv%coni, dv%flon, dv%conn,
+     &  dv%pccm(1,1), she0, shi0, shn0,
+     &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%reshn,
+     &  dv%cortt, dv%corte, 
+     &  dv%corti, dv%cortn, wrkf, wrkc, aa)
 *   ..apply correction
         call b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
      &  solving(3), solving(1), solvereg, solvireg, solvtreg, solvpreg, !srv 22.05.18
-     &  solvmreg, rxf, pcm0, dv%cortt, dv%corte, dv%corti,
-     &  dv%pccm(1,0), pl%na, pl%ua, pl%te, pl%ti, pl%po, dv%ne, dv%ni)
+     &  solvmreg, rxf, pcm0, dv%cortt, dv%corte, dv%corti, dv%cortn,
+     &  dv%pccm(1,0), pl%na, pl%ua, pl%te, pl%ti, pl%tn, pl%po, 
+     &  dv%ne, dv%ni)
       endif
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)
