@@ -3,11 +3,8 @@
       implicit none
       contains
       logical function in_parallel()
-#ifdef _OPENMP
-      in_parallel = OMP_IN_PARALLEL()
-#else
       in_parallel = .false.
-#endif
+!$      in_parallel = OMP_IN_PARALLEL()
       end function
 
       integer function get_num_threads()
