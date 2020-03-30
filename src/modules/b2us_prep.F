@@ -1981,6 +1981,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
             st % pl % po(ic) = po(ix,iy)
             st % pl % te(ic) = te(ix,iy)
             st % pl % ti(ic) = ti(ix,iy)
+            st % pl % tn(ic) = ti(ix,iy)
 
 ! B2coeff
             st % co % ceqp(ic) = ceqp(ix,iy)
@@ -2068,6 +2069,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % pl % po(ic) = po(ix,iy)
           st % pl % te(ic) = te(ix,iy)
           st % pl % ti(ic) = ti(ix,iy)
+          st % pl % tn(ic) = ti(ix,iy)
 
 ! B2coeff
           st % co % ceqp(ic) = ceqp(ix,iy)
@@ -2151,6 +2153,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % pl % po(ic) = po(ix,iy)
           st % pl % te(ic) = te(ix,iy)
           st % pl % ti(ic) = ti(ix,iy)
+          st % pl % tn(ic) = ti(ix,iy)
         
 ! B2coeff
           st % co % ceqp(ic) = ceqp(ix,iy)
@@ -2238,6 +2241,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % pl % po(ic) = po(ix,iy)
           st % pl % te(ic) = te(ix,iy)
           st % pl % ti(ic) = ti(ix,iy)
+          st % pl % tn(ic) = ti(ix,iy)
         
 ! B2coeff
           st % co % ceqp(ic) = ceqp(ix,iy)
@@ -2322,6 +2326,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           st % pl % po(ic) = po(ix,iy)
           st % pl % te(ic) = te(ix,iy)
           st % pl % ti(ic) = ti(ix,iy)
+          st % pl % tn(ic) = ti(ix,iy)
         
 ! B2coeff
           st % co % ceqp(ic) = ceqp(ix,iy)
