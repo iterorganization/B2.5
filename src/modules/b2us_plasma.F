@@ -101,7 +101,7 @@
      .                                           calf_cl
         real(R8), dimension(:,:,:,:), allocatable :: csigin
         real(R8), dimension(:,:), allocatable :: chve, chce
-        real(R8), dimension(:,:), allocatable :: chvi, chci
+        real(R8), dimension(:,:), allocatable :: chvi, chci, chcn
         real(R8), dimension(:), allocatable :: chvemx, chvimx
         real(R8), allocatable :: cvla(:,:,:), cdna(:,:,:), 
      .                           cdpa(:,:,:), cvsa(:,:,:),
@@ -118,7 +118,8 @@
 
         real(R8), allocatable :: vsaf_cl(:,:,:)
 
-        real(R8), allocatable, dimension(:) :: sig0, hce0, hci0, alf0
+        real(R8), allocatable, dimension(:) :: sig0, hce0, hci0, hcn0,
+     .                                         alf0
         real(R8), allocatable, dimension(:,:) :: dpa0, dna0, vsa0, 
      .                                           hcib
         real(R8), allocatable, dimension(:,:,:) :: vla0, vma0
@@ -320,7 +321,7 @@ cwdk move to dv
       plasma % po = 0._R8
       plasma % te = 0._R8
       plasma % ti = 0._R8
-      plasma % tn = 0._R8
+      plasma % tn = plasma % ti
 
       return      
       end subroutine createB2Plasma
@@ -362,6 +363,7 @@ cwdk move to dv
       
       allocate( coeff % chvi( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % chci( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % chcn( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % chcb( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % chvimx( nFc ), SOURCE=0._R8 )
       
@@ -401,6 +403,7 @@ cwdk move to dv
       allocate( coeff%vma0( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff%vsa0( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff%hci0( nCv ), SOURCE=0._R8 )
+      allocate( coeff%hcn0( nCv ), SOURCE=0._R8 )
       allocate( coeff%hcib( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff%hce0( nCv ), SOURCE=0._R8 )
       allocate( coeff%sig0( nCv ), SOURCE=0._R8 )
@@ -438,6 +441,7 @@ cwdk move to dv
       
       deallocate( coeff % chvi )
       deallocate( coeff % chci )
+      deallocate( coeff % chcn )
       deallocate( coeff % chcb )
       deallocate( coeff % chvimx )
       
@@ -475,6 +479,7 @@ cwdk move to dv
       deallocate( coeff%vma0 )
       deallocate( coeff%vsa0 )
       deallocate( coeff%hci0 )
+      deallocate( coeff%hcn0 )
       deallocate( coeff%hcib )
       deallocate( coeff%hce0 )
       deallocate( coeff%sig0 )

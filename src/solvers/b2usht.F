@@ -2,9 +2,11 @@
 *.specification
 
       subroutine b2usht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt,
-     &  rxg, ne, ni, te, ti,
-     &  floe, cone, floi, coni, pccm1, she, shi, ceqp,
-     &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa)
+     &  rxg, ne, ni, te, ti, tn, 
+     &  floe, cone, floi, coni, flon, conn,
+     &  pccm1, she, shi, shn, ceqp,
+     &  resht, reshe, reshi, reshn,
+     &  cortt, corte, corti, cortn, flo0, con0, aa)
       use b2mod_types
       use b2mod_numerics_namelist
       use b2us_geo
@@ -15,16 +17,16 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  rxg, ne(nCv), ni(nCv,0:1), te(nCv), ti(nCv),
-     &  floe(nFc,0:1), floi(nFc,0:1),
-     &  cone(nFc,0:1,0:2), coni(nFc,0:1,0:2),         !srv 02.01.07
+     *  rxg, ne(nCv), ni(nCv,0:1), te(nCv), ti(nCv), tn(nCv), 
+     &  floe(nFc,0:1), floi(nFc,0:1), flon(nFc,0:1),
+     &  cone(nFc,0:1,0:2), coni(nFc,0:1,0:2), conn(nFc,0:1,0:2),       !srv 02.01.07
      &  pccm1(nCv)
       real (kind=R8) ::
-     *  she(nCv,0:3), shi(nCv,0:3), ceqp(nCv), 
-     &  resht(nCv), reshe(nCv), reshi(nCv)
+     *  she(nCv,0:3), shi(nCv,0:3), shn(nCv,0:3), ceqp(nCv), 
+     &  resht(nCv), reshe(nCv), reshi(nCv), reshn(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   cortt(nCv), corte(nCv), corti(nCv)
+     *   cortt(nCv), corte(nCv), corti(nCv), cortn(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  flo0(nFc,0:1), con0(nFc,0:1,0:2), aa(mpg%nCmxNv)

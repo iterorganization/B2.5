@@ -105,7 +105,7 @@
      4  ce1(nCv), ce2(nCv),
      5  cimp1(nCv), cimp2(nCv),
      6  zetap(nCv), zetae(nCv),
-     7  gti(nFc), gte(nFc),                            !srv 13.01.17 }
+     7  gti(nFc), gte(nFc), gtn(nCv),                   !srv 13.01.17 }
      8  wrkf0(nFc), wrkf1(nFc),
      9  kt_neo(nCv) !WG_TODO: kt_neo eventually will come through transport...
       real (kind=R8) ::
@@ -188,6 +188,7 @@
        enddo
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, pl%tn, 1, 'tn', '.gt.')
 *    ..test sign of cvsa
        do is = 0, ns-1
         call b2xvsg (nFc,co%cvsa(:,0,is)*geo%fcQalf(:,0),1,
@@ -231,6 +232,7 @@
       zetae = czetae*(pl%te/ev)*sqrt(pl%te/ev)/dv%lnlam
 *   ..compute gti,gte
       call grad_p(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, gti)
+      call grad_p(nCv, nFc, nVx, 0, geo, mpg, pl%tn, wrkv, gtn)
       call grad_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, gte)
 *   ..compute ehxp
       if(style.ne.2) then 
@@ -268,6 +270,8 @@
        smbtfea = 0.0_R8
 #ifdef WG_TODO       
        if(style.eq.2) then                                             !srv 13.01.17
+         if (tn_style.ne.0) then
+           call xerrab('b2sifr not developed for non-default energy eq')
          call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,        !srv 05.07.17
      &    ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2,   !srv 05.07.17
      &    cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,      !srv 05.07.17

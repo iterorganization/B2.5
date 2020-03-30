@@ -84,7 +84,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
       integer, save :: iout = 0, iout_b2wdat = 0,                      !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
-     &                 integral_modeling = 1
+     &                 integral_modeling = 1, tn_style = 0
       character(3) chns, chns0                                        !srv 17.06.08
       integer mintopcut                                               !lk 19.09.07  
       integer mode
@@ -158,6 +158,7 @@ csw 13mar2012
         call ipgeti ('b2trcl_core_cond_limit', core_cond_limit)
         call ipgeti ('b2trcl_integral_modeling', integral_modeling)  !srv 01.11.11
         call ipgeti ('b2sigp_style', style)                          !srv 13.01.17
+        call ipgeti ('b2mn_tn_style', tn_style)                         
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -540,6 +541,9 @@ csw 13mar2012
       wrk = chce(:,0)                                                   !srv 13.01.1
 
       if(conductive_limit.ne.0) then                                      !srv 16.06.08 {
+        if (tn_style.ne.0) then
+          call xerrab('flux limiters not yet developed for tn_style>0')
+        endif
 *   .. pre-compute poloidal differences of te, ti
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dte)
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dti)

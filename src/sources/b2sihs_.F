@@ -393,25 +393,25 @@
            shiva(iCv,0) = shiva(iCv,0)+(max(0.0e0_R8,t1)+rf2*abs(t1))
            shiva(iCv,3) = shiva(iCv,3)+
      &        (min(0.0e0_R8,t1)-rf2*abs(t1))/(ni(iCv,0)*ti(iCv))
-           if (tn_style.eq.0) then
-             shi0(iCv,0) = shi0(iCv,0) + shivc(iCv,0) + shiva(iCv,0)
-             shi0(iCv,3) = shi0(iCv,3) + shivc(iCv,3) + shiva(iCv,3)
-           elseif (tn_style.eq.1) then
-             if (.not.is_neutral(is)) then
-               shi0(iCv,0) = shi0(iCv,0) + shivc(iCv,0) + shiva(iCv,0)
-               shi0(iCv,3) = shi0(iCv,3) + shivc(iCv,3) + shiva(iCv,3)
-             endif
-           elseif (tn_style.eq.2) then
-             if (.not.is_neutral(is)) then
-               shi0(iCv,0) = shi0(iCv,0) + shivc(iCv,0) + shiva(iCv,0)
-               shi0(iCv,3) = shi0(iCv,3) + shivc(iCv,3) + shiva(iCv,3)
-             else
-               shn0(iCv,0) = shn0(iCv,0) + shivc(iCv,0) + shiva(iCv,0)
-               shn0(iCv,3) = shn0(iCv,3) + shivc(iCv,3) + shiva(iCv,3)
-             endif
-           else
-             call xerrab('invalid tn_style number')
-           endif
+!           if (tn_style.eq.0) then
+!             shi0(iCv,0) = shi0(iCv,0) + shivc(iCv,0) + shiva(iCv,0)
+!             shi0(iCv,3) = shi0(iCv,3) + shivc(iCv,3) + shiva(iCv,3)
+!           elseif (tn_style.eq.1) then
+!             if (.not.is_neutral(is)) then
+!               shi0(iCv,0) = shi0(iCv,0) + shivc(iCv,0) + shiva(iCv,0)
+!               shi0(iCv,3) = shi0(iCv,3) + shivc(iCv,3) + shiva(iCv,3)
+!             endif
+!           elseif (tn_style.eq.2) then
+!             if (.not.is_neutral(is)) then
+!               shi0(iCv,0) = shi0(iCv,0) + shivc(iCv,0) + shiva(iCv,0)
+!               shi0(iCv,3) = shi0(iCv,3) + shivc(iCv,3) + shiva(iCv,3)
+!             else
+!               shn0(iCv,0) = shn0(iCv,0) + shivc(iCv,0) + shiva(iCv,0)
+!               shn0(iCv,3) = shn0(iCv,3) + shivc(iCv,3) + shiva(iCv,3)
+!             endif
+!           else
+!             call xerrab('invalid tn_style number')
+!           endif
 !WG_TODO           b2visa(mpg%cvReg(iCv))=b2visa(mpg%cvReg(iCv))+t0+t1
 !WG_TODO           b2sihs_visa(iCv)=b2sihs_visa(iCv)+t0+t1
         enddo
@@ -420,8 +420,8 @@
 !WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        b2sihs_visa0to3 = shivc+shiva
 !WG_TODO      endif
-!!      call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)                !srv 11.09.09
-!!      call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)                !srv 11.09.09
+      call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)                !srv 11.09.09
+      call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)                !srv 11.09.09
 
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
 *     in case of small impurity amount see below for b2sigp_style.ne.2

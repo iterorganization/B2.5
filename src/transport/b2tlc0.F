@@ -61,7 +61,7 @@
 *    ..compute differences of partial pressure
          call diff (nCv, nFc, nVx, 0, geo, mpg, pb, pbv, dpbf)
          do iFc = 1, nFc
-           t0 = (ti(mpg%fcCv(iFc,1)) + ti(mpg%fcCv(iFc,2)))/2.0_R8
+           t0 = (tn(mpg%fcCv(iFc,1)) + tn(mpg%fcCv(iFc,2)))/2.0_R8
            t1 = (na(mpg%fcCv(iFc,1),is) + na(mpg%fcCv(iFc,2),is))/2.0_R8
 *    ..poloidal
            dpb = abs(cdpa(iFc,0,is)*dpbf(iFc,0))

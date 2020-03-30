@@ -52,7 +52,7 @@
       integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
       integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
       integer, save :: b2kin=0, b2vis=0
-      integer, save :: meth = 2
+      integer, save :: meth = 2, tn_style = 0
       real (kind=R8), save :: drift_hyb = 1.0_R8
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
@@ -64,7 +64,8 @@
      &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1)
 cpax      
       real (kind=R8) ::
-     *   flidia(nFc,0:1), facdriftm, nif(nFc), tif(nFc),                !srv 25.01.02
+     *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
+     *   tif(nFc), tnf(nFc),
      *   nati(nCv), nati2(nCv), nativ(nVx), nati2v(nVx),
      *   dnati2(nFc,0:1), cddi(nFc,0:1)
 #ifdef WG_TODO
@@ -111,6 +112,7 @@ cpax
        call ipgeti ('b2tfhi_b2kin', b2kin)
        call ipgeti ('b2tfhi_b2vis', b2vis)
        call ipgetr ('b2tfhi_drift_hyb',drift_hyb)
+       call ipgeti ('b2mn_tn_style', tn_style)
       endif                                                             !srv
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -211,8 +213,17 @@ cpax
 #endif
 
 *   ..interpolate ni and ti to cell faces
-      call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0),nif)
+
       call intface(nCv,nFc,mpg%fcCv,wght,pl%ti,tif)
+      call intface(nCv,nFc,mpg%fcCv,wght,pl%tn,tnf)        !! in case of default energy equation, tn will be equal to ti
+
+      if (tn_style.eq.0) then                              !! default combined ion-neutral energy equation
+        call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0),nif)
+      else                                                 !! pure ion and separate ion-neutral energy equation
+        call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,1),nif)
+        call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0)-dv%ni(:,1),nnf)
+      endif
+
 
 *   ..contributions from currents
       scur(:,0) = 1.5e0_R8/qe*(dv%fchinert(:,0) + dv%fchvispar(:,0)+
