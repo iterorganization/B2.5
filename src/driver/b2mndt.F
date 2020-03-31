@@ -588,7 +588,7 @@ ctmp.dpc
 *      ..compute energy sources
            solving = .false.
            call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,  !srv 05.07.17
-     &      solveee, solveei, solvepo, solvemo,
+     &      solveee, solveei, solveen, solvepo, solvemo,
      &      rxf, BoRiS, fac_ExB, hx, hy, qz, qs, vol, bb,
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
      &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09
