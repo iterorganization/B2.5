@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2npht (nCv, nFc, nVx, ns, geo, mpg, nregionv, itcnt, !srv 05.07.17
-     &  ismain, solving, solvereg, solvireg, solvtreg, solvpreg,       !srv 22.05.18
-     &  solvmreg, rxf, BoRiS, pl, dv, co, sr, ierr)
+     &  ismain, solving, solvereg, solvireg, solvnreg, solvtreg,        !srv 22.05.18
+     &  solvpreg, solvmreg, rxf, BoRiS, pl, dv, co, sr, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -22,7 +22,7 @@
      *  rxf, BoRiS
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv), 
-     *  solvtreg(0:nregionv),                                          !srv 22.05.18
+     *  solvnreg(0:nregionv), solvtreg(0:nregionv),                                          !srv 22.05.18
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
@@ -287,7 +287,8 @@ c residuals for seperate neutral energy equation
      &  dv%corti, dv%cortn, wrkf, wrkc, aa)
 *   ..apply correction
         call b2upht (nCv, nFc, nVx, ns, geo, mpg, nregionv, 
-     &  solving(3), solving(1), solvereg, solvireg, solvtreg, solvpreg, !srv 22.05.18
+     &  solving(3), solving(1), solvereg, solvireg, solvnreg, solvtreg,  !srv 22.05.18
+     &  solvpreg,
      &  solvmreg, rxf, pcm0, dv%cortt, dv%corte, dv%corti, dv%cortn,
      &  dv%pccm(1,0), pl%na, pl%ua, pl%te, pl%ti, pl%tn, pl%po, 
      &  dv%ne, dv%ni)

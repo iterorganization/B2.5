@@ -726,8 +726,8 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 
 *   ..iterate on heat balance
       call b2npht (nCv, nFc, nVx, ns, geo, mpg, mpg%nnreg(0), ncall,
-     &  ismain, solving, solveee, solveei, solveet, solvepo, solvemo,       !srv 22.05.18
-     &  rxf3, BoRiS, pl, dv, co, sr, ier0)
+     &  ismain, solving, solveee, solveei, solveen, solveet, solvepo,       !srv 22.05.18
+     &  solvemo, rxf3, BoRiS, pl, dv, co, sr, ier0)
 
 csw 16aug2011 init potential 
       if(pot_eq.eq.0) pl%po=0.0_R8                                          !srv 13.07.05

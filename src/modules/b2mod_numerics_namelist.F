@@ -8,6 +8,7 @@
      *   dtmo(:,:),
      *   dtee(:),
      *   dtei(:)
+     *   dten(:)
       logical, allocatable, save ::
      *   solveco(:,:),
      *   solvemo(:,:),
@@ -15,6 +16,7 @@
      *   solvepo(:),
      *   solveee(:),
      *   solveei(:),
+     *   solveen(:),
      *   solveet(:),
      *   last_solve_5(:),
      *   last_solve_9(:)
@@ -33,6 +35,7 @@
       logical, save :: solvepo(0:CVREGMAX)
       logical, save :: solveee(0:CVREGMAX)
       logical, save :: solveei(0:CVREGMAX)
+      logical, save :: solveen(0:CVREGMAX)
       logical, save :: solveet(0:CVREGMAX)
       logical, save :: last_solve_5(0:CVREGMAX)
       logical, save :: last_solve_9(0:CVREGMAX)
@@ -50,7 +53,7 @@
       logical, save :: write_nml_num = .true.
       namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
-     2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveet,        !srv 22.05.18
+     2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveen,solveet,        !srv 22.05.18
      3 write_nml_num,numerics_filename,numerics_time_mod,
      $ numerics_time_switch
 
@@ -76,6 +79,7 @@
       allocate(solvepo(0:nnreg(0)))
       allocate(solveee(0:nnreg(0)))
       allocate(solveei(0:nnreg(0)))
+      allocate(solveen(0:nnreg(0)))
       allocate(solveet(0:nnreg(0)))
       allocate(last_solve_5(0:nnreg(0)))
       allocate(last_solve_9(0:nnreg(0)))
@@ -97,6 +101,7 @@
       solvepo=.true.
       solveee=.true.
       solveei=.true.
+      solveen=.true.
       solveet=.true.
       last_solve_5=.true.
       last_solve_9=.true.
@@ -126,6 +131,7 @@
       deallocate(solvepo)
       deallocate(solveee)
       deallocate(solveei)
+      deallocate(solveen)
       deallocate(solveet)
       deallocate(last_solve_5)
       deallocate(last_solve_9)
@@ -143,6 +149,7 @@
       integer iCv, is, ireg
       real (kind=R8) :: ttf
       character*260 filename
+
 
       filename=numerics_filename
       call find_file(filename,file_ok)
