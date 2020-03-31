@@ -88,6 +88,7 @@
       integer, save :: pot_eq = 1                                       !srv 27.02.13
       integer, save :: use_astra
       integer, save :: drift_style
+      integer, save :: tn_style = 0
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
@@ -261,6 +262,7 @@
         call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
         call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
         call ipgeti ('eirene_sheath_pot',eirene_sheath_pot)
+        call ipgeti ('b2mn_tn_style',tn_style)
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -4495,16 +4497,14 @@ cghgh
 * -- BCENE=9 -- PRESCRIBE THE DECAY LENGTH FOR THE ELECTRON TEMPERATURE
 
 20900   CONTINUE
-          call xerrab ('b2stbc_phys -- BCENE = 9 not adapted for WG')
-#ifdef WG_TODO
+ !!         call xerrab ('b2stbc_phys -- BCENE = 9 not adapted for WG')
+
         if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron temperature decay length ',ENEPAR(IB,1),
      1     ' on ',BCCHAR(IB),boundary_location(ib)
           call xertst(ENEPAR(IB,1).ne.0.0_R8,
      1     'BCENE = 9, ENEPAR(,1) = 0')
-!          call xertst(all(BCCON(0:NS-1,IB).EQ.9),
-!     1     'Should use BCCON(IS,IB).EQ.9 together with BCENE=9 ')       !srv 16.07.12
           ism = 0
           do is = 0, ns-1
             if (bccon(is,ib).ne.9.and..not.is_neutral(is)) then
@@ -4523,8 +4523,28 @@ cghgh
      &         'Please ensure that this boundary condition '//
      &         'is consistent with density boundary conditions'  !srv 21.09.12
             end if
+            if(mdf_fhe.ne.0) then                              
+              call xerrab('BCENE=9 not yet for mdf')
+            endif
           enddo
         endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          sy = geo%fcS(iFc)
+          srw%she0(iCv1,0) = 0.0_R8
+          srw%she0(iCv1,1) = -co%hce0(iCv1)/enepar(ib,1)*
+     &                    sy
+          do is = 0, ns-1
+            srw%she0(iCv1,0) = srw%she0(iCv1,0) + rt%rza(iCv1,is)*
+     &                     2.5_R8*pl%te(iCv1)*srw%sna0(iCv1,0,is)
+            srw%she0(iCv1,1) = srw%she0(iCv1,1) + rt%rza(iCv1,is)*
+     &                     2.5_R8*srw%sna0(iCv1,1,is)*pl%na(iCv1,is)
+          enddo !! end species loop
+        enddo   !! end loop over cells
+        GOTO 30000
+#ifdef WG_TODO
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
@@ -6390,8 +6410,7 @@ cghgh
 * -- BCENI=9 -- PRESCRIBE THE DECAY LENGTH FOR THE ION TEMPERATURE
 
 30900   CONTINUE
-        call xerrab ('b2stbc_phys -- BCENI = 9 not adapted for WG')
-#ifdef WG_TODO
+
         if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion temperature decay length ',ENIPAR(IB,1),' on ',
@@ -6409,8 +6428,6 @@ cghgh
             end if
           end do
           if (.not.decay_length_ok) then
-!          call xertst(all(BCCON(0:NS-1,IB).EQ.9),
-!     1     'Should use BCCON(IS,IB).EQ.9 together with BCENI=9 ')       !srv 16.07.12
             write(0,*)
      &       'Should use BCENI.EQ.9 together with BCCON=9'
             write(*,*)
@@ -6419,7 +6436,30 @@ cghgh
      &                 'Please ensure that this boundary condition '//
      &                 'is consistent with density boundary condition'  !srv 21.09.12
           endif
+          if (mdf_fhi.ne.0) then
+            call xerrab('BCENI = 9 not yet imlemented for mdf')
+          endif
+          if (tn_style.ne.0) then
+            call xerrab('BCENI = 9 not yet imlemented for non-default',
+     &                   'energy equations')
+          endif
         endif
+        do ibc = 1, mpg%bcCvP(ib,2)
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          sy = geo%fcS(iFc)
+          srw%shi0(iCv1,0) = 0.0_R8
+          srw%shi0(iCv1,1) = -co%hci0(iCv1)/enipar(ib,1)*
+     &                    sy
+          do is = 0, ns-1
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) + 
+     &                     2.5_R8*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
+            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) + 
+     &                     2.5_R8*pl%na(iCv1,is)*srw%sna0(iCv1,1,is)
+          enddo !! end species loop
+        enddo   !! end boundary cell loop
+        GOTO 40000
+#ifdef WG_TODO
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
@@ -6502,7 +6542,7 @@ cxpb          endif
         ELSE
           CALL XERRAB ('B2STBC -- BCENI=9, NOT AVAILABLE FOR W,E')
         ENDIF
-        GOTO 40000
+
 #endif
 * -- BCENI=10 -- Feedback option for core
 
