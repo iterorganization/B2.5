@@ -92,14 +92,14 @@ contains
             !     ..compute magnetic field at cell center
             if (isymm.ne.0) then
 !WG         WG-TMP back to simple averaging for consistency later on (b2agmt)  
-              centroid(0) = 0.25_R8*(crx(ix,iy,0) + crx(ix,iy,1) + &
-     &                               crx(ix,iy,2) + crx(ix,iy,3))
-              centroid(1) = 0.25_R8*(cry(ix,iy,0) + cry(ix,iy,1) + &
-     &                               cry(ix,iy,2) + cry(ix,iy,3))
-!WG              centroid=quadCentroid(crx(ix,iy,0),cry(ix,iy,0),  &
-!WG     &                              crx(ix,iy,1),cry(ix,iy,1),  &
-!WG     &                              crx(ix,iy,2),cry(ix,iy,2),  &
-!WG     &                              crx(ix,iy,3),cry(ix,iy,3))
+!WG              centroid(0) = 0.25_R8*(crx(ix,iy,0) + crx(ix,iy,1) + &
+!WG     &                               crx(ix,iy,2) + crx(ix,iy,3))
+!WG              centroid(1) = 0.25_R8*(cry(ix,iy,0) + cry(ix,iy,1) + &
+!WG     &                               cry(ix,iy,2) + cry(ix,iy,3))
+              centroid=quadCentroid(crx(ix,iy,0),cry(ix,iy,0),  &
+     &                              crx(ix,iy,1),cry(ix,iy,1),  &
+     &                              crx(ix,iy,2),cry(ix,iy,2),  &
+     &                              crx(ix,iy,3),cry(ix,iy,3))
               if (isymm.eq.1 .or. isymm.eq.2) then
                 t0=2.0*pi*centroid(0)
               elseif (isymm.eq.3 .or. isymm.eq.4) then

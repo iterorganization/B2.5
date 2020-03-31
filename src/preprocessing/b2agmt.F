@@ -427,12 +427,9 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &      leftix(ix,iy).eq.NO_CONNECTIVITY) cycle
 
         ! unit vectors at left faces (not re-normalized)
-        if ((cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .and.
-     &       cflag(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE) == 
-     &       GRID_INTERNAL) .or. classical ) then 
+        if (classical) then 
           
-          ! Implicit assumption made here: internal cells are quads
-          ! Standard treatment for magnetically rectangular cells
+          ! Inverse distance interpolation
           ! Backwards compatible
           ebf(0) = 
      &       (hc(ix,iy,0)*ebc(leftix(ix,iy),leftiy(ix,iy),0)+
@@ -443,7 +440,9 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &        hc(leftix(ix,iy),leftiy(ix,iy),2)*ebc(ix,iy,1))/
      &       (hc(leftix(ix,iy),leftiy(ix,iy),2)+hc(ix,iy,0))
 
-          ! Connector line is purely poloidal
+          ! (Same) inverse distance interpolation;
+          ! Connector line is purely poloidal: ecc = +- ebc
+          ! for classical grids!
           ecf(0) = 
      &       (hc(ix,iy,0)*ecc(leftix(ix,iy),leftiy(ix,iy),2,0)+
      &        hc(leftix(ix,iy),leftiy(ix,iy),2)*ecc(ix,iy,0,0))/
@@ -452,6 +451,27 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &       (hc(ix,iy,0)*ecc(leftix(ix,iy),leftiy(ix,iy),2,1)+
      &        hc(leftix(ix,iy),leftiy(ix,iy),2)*ecc(ix,iy,0,1))/
      &       (hc(leftix(ix,iy),leftiy(ix,iy),2)+hc(ix,iy,0))
+
+        elseif (cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .and.
+     &       cflag(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE) == 
+     &       GRID_INTERNAL) then
+          ! Faces between "regular" internal cells, assumed to 
+          ! be quads with N/S faces aligned to magnetic field.
+          ! Compute local field direction at face from fpsi
+          t0 =  0.5_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,2,2))
+          t1 = -0.5_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,2,1))
+          ebf(0) = t0/norm(t0,t1)
+          ebf(1) = t1/norm(t0,t1)
+
+          ! Connector line is purely poloidal: equal to ebf,
+          ! but possibly with sign difference
+          t0 = ebf(0)*(cry(ix,iy,2) - cry(ix,iy,0)) -
+     &         ebf(1)*(crx(ix,iy,2) - crx(ix,iy,0))
+          if (t0.ge.0.0_R8) then
+            ecf = ebf
+          else
+            ecf = -ebf
+          endif
 
         else
           ! "Special" faces (not between aligned quads)
@@ -504,9 +524,11 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
      &      bottomiy(ix,iy).eq.NO_CONNECTIVITY) cycle
 
         ! unit vectors at bottom faces (not re-normalized)
-        if ((cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .and.
+        if ((cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .or.
      &       cflag(bottomix(ix,iy),bottomiy(ix,iy),CELLFLAG_TYPE) == 
-     &       GRID_INTERNAL) .or. classical ) then 
+     &       GRID_INTERNAL) .or.
+     &       cflag(ix,iy,CELLFLAG_BOTTOMFACE) == -21 .or.
+     &       classical ) then 
 
           ! Implicit assumption made here: internal cells are quads
           ! Standard treatment for magnetically rectangular cells
