@@ -98,8 +98,6 @@
       integer, save :: ird_aver = 0
       integer, save :: use_mms = 0                                   !srv 26.02.18
       integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
-      integer, save :: use_9pt_stencil = 1
-      integer, save :: use_unstructured_grid = 0
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
@@ -1221,9 +1219,6 @@ csw 09oct2012
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
-       call ipgeti ('b2mndr_use_9pt_stencil',use_9pt_stencil)
-       call ipgeti ('b2mndr_use_unstructured_grid',
-     &               use_unstructured_grid)
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
