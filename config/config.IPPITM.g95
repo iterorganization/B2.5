@@ -16,7 +16,8 @@ ifndef LD_SONNET
   LD_SONNET  = -L${SOLPSLIB} -lsonnet
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
+DEFINES += -DDOFLUSH # -DNO_CDF
 
 CPP = /lib/cpp -C -traditional
 CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
@@ -60,7 +61,7 @@ GGD_MINOR_VERSION ?= $(shell echo ${EBVERSIONGGD} | cut d '.' -f2 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut d '.' -f2 )
 ifndef SOLPS_CPP
-EQUIVS   += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif
 LD_UAL   ?= `pkg-config imas-lowlevel imas-g95 --libs`
 INCMODS   = -B${IMAS_PREFIX}/include/gfortran

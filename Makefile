@@ -176,6 +176,7 @@ endif
 # OpenMP parallelization, in order to that, just compile without OpenMP
 # compiler options (ifort -qopenmp or similar)
 
+ifdef USE_OPENMP
 #DEFINES += -DNO_OPENMP_B2XPFE
 DEFINES += -DNO_OPENMP_B2SIFRTF
 #DEFINES += -DNO_OPENMP_B2SIHS
@@ -198,6 +199,7 @@ DEFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
 #DEFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
 #DEFINES += -DNO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
 DEFINES += -DNO_OPENMP_B2NPMO
+endif
 
 VHEAD =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
