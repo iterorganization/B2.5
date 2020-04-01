@@ -4,10 +4,7 @@ LD_MSCL   ?= -L${MSCL_ROOT}/lib -lmscl
 LD_NCARG  ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
 LD_NETCDF ?= -L${NCDIR}/lib -lnetcdff
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
-ifndef SOLPS_CPP
-EQUIVS += -DPGF90
-endif
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
 CPP = /lib/cpp -C -traditional
 CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
@@ -16,27 +13,63 @@ LINK_MOD =
 
 ifdef USE_MPI
 FC = mpif90
+LD = mpif90
 else
 ifdef USE_IMPGYRO
 FC = mpif90
+LD = mpif90
 else
 FC = pgf90
+LD = pgf90
 endif
 endif
 
-ifdef SOLPS_DEBUG
-FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
-LDOPTS = -g -C
+ifeq (${FC},mpif90)
+ifndef SOLPS_CPP
+DEFINES += -DGFORTRAN
 else
-FCOPTS = -O2 -Mbackslash
-FCOPTS = -fast -Mbackslash
-FCOPTS = -fast -Mvect=nofuse -Mbackslash
-LDOPTS =
+DEFINES := $(shell echo ${SOLPS_CPP} | sed -e 's:PGF90:GFORTRAN:' -e 's: -DNOQUAD::')
+DEFINES += ${B25_DEFINES}
 endif
-
+OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
+INCMOD   = -B
+DBLOPTION = -Ad
+GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
+GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
+DEFINES += -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
+FCOPTS = -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
+ifdef SOLPS_DEBUG
+FCOPTS += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
+else
+FCOPTS += -O2
+endif
+ifdef USE_OPENMP
+FCOPTS += -fopenmp
+LDOPTS += -fopenmp
+endif
+else
+ifndef SOLPS_CPP
+DEFINES += -DPGF90
+endif
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "pgf90 [0-9]*" | cut -d ' ' -f 2 )
+DEFINES += -DCOMPILER_MAJOR_VERSION=${COMPILER_MAJOR_VERSION}
+OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+INCMOD   = -I
+DBLOPTION =
+FCOPTS   = -Mbackslash
+LDOPTS   = -tp px # "-tp px" to fix a compiler bug at JET
+ifdef SOLPS_DEBUG
+FCOPTS  += -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
+LDOPTS  += -g -C
+else
+#FCOPTS  += -O2
+#FCOPTS  += -fast
+FCOPTS  += -fast -Mvect=nofuse
+endif
 ifdef USE_OPENMP
 FCOPTS += -mp=nonuma
 LDOPTS += -mp=nonuma
+endif
 endif
 
 ifdef IMAS_VERSION
@@ -45,20 +78,23 @@ GGD_MINOR_VERSION ?= $(shell echo ${EBVERSIONGGD} | cut -d '.' -f2 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifndef SOLPS_CPP
-EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif
+ifeq (${FC},mpif90)
+LD_UAL  := `pkg-config imas-lowlevel imas-gfortran --libs`
+INCMODS += -I${IMAS_PREFIX}/include/gfortran
+IMASLIBS = ${LD_UAL} -lggd-gfortran
+else
 LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
 INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
 IMASLIBS = ${LD_UAL} -lggd-pgi
 endif
+endif
 
 DBLFC = ${FC}
-DBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
 
-INCMOD = -I
 MOD = mod
-OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 
@@ -68,8 +104,6 @@ LDLIBES = ${LD_NAG} ${LD_NETCDF} -lpgsse1 -lpgsse2
 ifdef LD_CATALYST
 CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
-
-LD = pgf90
 
 LCPP = ${LD_SONNET}
 

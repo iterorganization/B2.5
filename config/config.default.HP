@@ -22,11 +22,11 @@ endif
   FCOPTS = -I4 -R4 +E4 -O
  endif
  ifeq ($(realkind),8)
-  EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 \
+  EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal \
    -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
   FCOPTS = -I4 -R8 +autodblpad +E4 -O
  endif
- EQUIVS += -DHPUX
+ DEFINES += -DHPUX
  FC = fort77
  CPP = /lib/cpp
  CPPOPTS = -C -P -I$(srcdir) $(EQUIVS)

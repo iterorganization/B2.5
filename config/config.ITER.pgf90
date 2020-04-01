@@ -9,18 +9,7 @@ LD_NAG    ?= -L${SOLPSLIB} -lblaslapack
 endif
 LD_SONNET ?= -L${SOLPSLIB} -lsonnet -lstdc++
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
-ifndef SOLPS_CPP
-ifdef USE_MPI
-EQUIVS += -DGFORTRAN
-else
-ifdef USE_IMPGYRO
-EQUIVS += -DGFORTRAN
-else
-EQUIVS += -DPGF90
-endif
-endif
-endif
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
 CPP = /lib/cpp -C -traditional -ffreestanding
 SED = sed s:\#PREC\#:d:g
@@ -29,38 +18,58 @@ LINK_MOD =
 ifdef USE_MPI
 FC = mpif90
 LD = mpif90
-OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
-DEFINES := $(shell echo ${SOLPS_CPP} | sed -e 's:PGF90:GFORTRAN:' -e 's: -DNOQUAD::')
-DEFINES += ${B25_DEFINES}
-INCMOD = -B
 else
 ifdef USE_IMPGYRO
 FC = mpif90
 LD = mpif90
-OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
-INCMOD = -B
 else
 FC = pgf90
 LD = pgf90
-OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-INCMOD = -I
-ifdef SOLPS_DEBUG
-FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
-LDOPTS = -g -C -tp px # "-tp px" to fix a compiler bug at JET
-else
-FCOPTS = -O2 -Mbackslash
-FCOPTS = -fast -Mbackslash
-FCOPTS = -fast -Mvect=nofuse -Mbackslash
-LDOPTS = -tp px # "-tp px" to fix a compiler bug at JET
-endif
 endif
 endif
 
+ifeq (${FC},mpif90)
+ifndef SOLPS_CPP
+DEFINES += -DGFORTRAN
+else
+DEFINES := $(shell echo ${SOLPS_CPP} | sed -e 's:PGF90:GFORTRAN:' -e 's: -DNOQUAD::')
+DEFINES += ${B25_DEFINES}
+endif
+OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
+INCMOD   = -B
+GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
+GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
+DEFINES += -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
+FCOPTS  = -fPIC -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans ${MPI_CPP}
+LDOPTS  = -fPIC
+ifdef SOLPS_DEBUG
+FCOPTS += -g -gdwarf-2 -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
+else
+FCOPTS += -O2
+endif
 ifdef USE_OPENMP
-ifdef USE_MPI
 FCOPTS += -fopenmp
 LDOPTS += -fopenmp
+endif
 else
+ifndef SOLPS_CPP
+DEFINES += -DPGF90
+endif
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "pgf90 [0-9]*" | cut -d ' ' -f 2 )
+DEFINES += -DCOMPILER_MAJOR_VERSION=${COMPILER_MAJOR_VERSION}
+OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+INCMOD   = -I
+FCOPTS   = -Mbackslash
+LDOPTS   = -tp px # "-tp px" to fix a compiler bug at JET
+ifdef SOLPS_DEBUG
+FCOPTS  += -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
+LDOPTS  += -g -C
+else
+#FCOPTS  += -O2
+#FCOPTS  += -fast
+FCOPTS  += -fast -Mvect=nofuse
+endif
+ifdef USE_OPENMP
 FCOPTS += -mp=nonuma
 LDOPTS += -mp=nonuma
 endif
@@ -87,9 +96,9 @@ GGD_MINOR_VERSION ?= $(shell echo ${EBVERSIONGGD} | cut -d '.' -f2 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifndef SOLPS_CPP
-EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif
-ifdef USE_MPI
+ifeq (${FC},mpif90)
 LD_UAL  := `pkg-config imas-gfortran --libs` -L/work/imas/opt/EasyBuild/software/GGD/1.9.1-GCC-6.4.0-2.28-DD-3.27.0/lib -lggd
 INCMODS += `pkg-config imas-gfortran --cflags` -I/work/imas/opt/EasyBuild/software/GGD/1.9.1-GCC-6.4.0-2.28-DD-3.27.0/include
 else
