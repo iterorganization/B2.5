@@ -38,12 +38,11 @@ endif
 endif
 
 ifeq (${FC},mpif90)
-DEFINES += -DGFORTRAN
 OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
 INCMOD   = -B
 GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
-DEFINES += -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
+DEFINES += -DGFORTRAN -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION} -DNOQUAD -DNO_IEEE
 FCOPTS  += ${MPI_CPP}
 LDOPTS  += ${LD_MPI}
 ifdef USE_OPENMP
