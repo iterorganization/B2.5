@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2rups (nget, nx, ny, ns,
-     &  ne, na, ua, uadia, te, ti, po,
+     &  ne, na, ua, uadia, te, ti, tn, po,
      &  fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
@@ -23,7 +23,8 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
+     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), tn(-1:nx,-1:ny),
+     &  po(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
      1  fch_32(-1:nx,-1:ny,0:1,0:1), fch_52(-1:nx,-1:ny,0:1,0:1),
@@ -340,6 +341,7 @@
 *   ..common blocks
 *   ..local variables
       integer n2, is
+      integer, save :: conv_tn = 0
       real (kind=R8) :: time(1), zero(-1:nx,-1:ny),
      &  floc(-1:nx,-1:ny,0:1), flocs(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..procedures
@@ -356,6 +358,7 @@
       n2 = (nx+2)*(ny+2)
       zero = 0.0_R8
 *   ..test nget
+      call ipgeti('b2mn_convert_tn',conv_tn)
       call xertst (1.le.nget, 'faulty argument nget')
 *   ..test nx, ny, ns
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -386,6 +389,12 @@
       endif                                                     !xpb
       call cfrure (nget, n2, te, 'te')
       call cfrure (nget, n2, ti, 'ti')
+      
+      if (conv_tn.ne.0) then
+        call cfrure (nget, n2, tn, 'tn')
+      else
+        tn = ti
+      endif
       call cfrure (nget, n2, po, 'po')
 *   ..read fluxes
       if(b2fstat_version.ge.'03.001.000') then

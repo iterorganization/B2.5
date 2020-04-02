@@ -19,7 +19,7 @@
      *  pb(:,:),
      *  po(:,:),  po0(:,:),  pop(:,:),
      *  te(:,:),  te0(:,:),  tep(:,:),
-     *  ti(:,:),  ti0(:,:),  tip(:,:),
+     *  ti(:,:),  ti0(:,:),  tip(:,:), tn(:,:), 
      *  ua(:,:,:),  ua0(:,:,:),  uap(:,:,:),
      *  uadia(:,:,:,:,:),  fchdia(:,:,:,:),
      *  fch_p(:,:,:,:), fch_pi_c(:,:,:,:), fch_pi_f(:,:,:,:),            !srv 10.06.08 { 13.01.17
@@ -121,6 +121,7 @@
       allocate(te0(-1:nxd,-1:nyd))
       allocate(tep(-1:nxd,-1:nyd))
       allocate(ti(-1:nxd,-1:nyd))
+      allocate(tn(-1:nxd,-1:nyd))
       allocate(ti0(-1:nxd,-1:nyd))
       allocate(tip(-1:nxd,-1:nyd))
       allocate(ua(-1:nxd,-1:nyd,0:nsd-1))
@@ -218,6 +219,7 @@
       deallocate(te0)
       deallocate(tep)
       deallocate(ti)
+      deallocate(tn)
       deallocate(ti0)
       deallocate(tip)
       deallocate(ua)
