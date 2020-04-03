@@ -1499,7 +1499,7 @@
 			  <default>0.01</default>
 			  <type>real</type>
 			  <description>
-				Under-relaxation factor used for feedback scheme in boundary condition types BCCON=16,19,22,23,26, and 27.
+				Under-relaxation factor used for feedback scheme in boundary condition types BCCON = 16, 19, 22, 23, 26, and 27.
 			  </description>
 			</switch>
 			<switch>
@@ -1507,7 +1507,7 @@
 			  <default>0.01</default>
 			  <type>real</type>
 			  <description>
-				Under-relaxation factor used for feedback scheme in boundary condition type BCENE=16 (with bcene_16_style.eq.1).
+				Under-relaxation factor used for feedback scheme in boundary condition type BCENE = 16 (with bcene_16_style.eq.1).
 			  </description>
 			</switch>
 			<switch>
@@ -1515,7 +1515,7 @@
 			  <default>0.01</default>
 			  <type>real</type>
 			  <description>
-				Under-relaxation factor used for feedback scheme in boundary condition types BCENI=16 (with bceni_16_style.eq.1), 24, and 27.
+				Under-relaxation factor used for feedback scheme in boundary condition types BCENI = 16 (with bceni_16_style.eq.1), 24, and 27.
 			  </description>
 			</switch>
 			<switch>
@@ -2337,22 +2337,22 @@
 					This multiplication is to only take place for charged species.
 				</description>
 			</switch>
-			<switch>
-				<name>eirene_lhalpha</name>
-				<default>1</default>
-				<type>integer</type>
+			<switchgroup>
+			  <name>eirene_l*</name>
 				<description>
 					Deprecated. Use "DEFINE_LINES" in block 12 of Eirene input file instead.
 				</description>
-			</switch>
-			<switch>
-				<name>eirene_lvib</name>
-				<default>1</default>
-				<type>integer</type>
-				<description>
-					Deprecated. Use "DEFINE_LINES" in block 12 of Eirene input file instead.
-				</description>
-			</switch>
+				<switch>
+				  <name>eirene_lhalpha</name>
+				  <default>1</default>
+				  <type>integer</type>
+				</switch>
+				<switch>
+				  <name>eirene_lvib</name>
+				  <default>1</default>
+				  <type>integer</type>
+				</switch>
+			</switchgroup>
 			<switch>
 				<name>eirene_repeat_first_call</name>
 				<default>1</default>
@@ -6531,6 +6531,14 @@
 				<description>
 					Indicates whether the continuity equation for species (is) is to be solved in region (ireg). Subservient to 'no_solve' switch.
 				</description>
+			</switch>
+			<switch>
+			  <name>SOLVEMT</name>
+			  <default>.true.</default>
+			  <type>logical array of size (0:NREG)</type>
+			  <description>
+				Indicates whether the total parallel momentum equation is to be solved in region (ireg). For the total parallel momentum equation to be solved in a region, all momentum equations in the range defined by 'b2news_nsmin' and 'b2news_nsmax' must have SOLVEMO true in that region. Subservient to 'no_solve' switch. It is important to note that the 'b2news_no_solve' switch allows for solving or not all momentum equations together as a whole, along with the total equation.
+			  </description>
 			</switch>
 			<switch>
 				<name>SOLVEMO</name>
