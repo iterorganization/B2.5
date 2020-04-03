@@ -743,7 +743,7 @@
 					no_solve.eq.-8 will activate the heat equations only. These can be combined. For example, no_solve.eq.-3 will activate the parallel momentum and particle conservation equations.
 					If the no_solve switch requires an equation not to be solved, the settings in the corresponding solvexx arrays from b2.numerics.parameters are moot.
 					The latter are reserved for fine-tuning numerical diagnostics.
-					If wishing to toggle whether to solve or not to solve each equation separately, one should set, in the b2.numerics.parameters input file, the SOLVEMO, SOLVECO, SOLVEE, SOLVEEI and SOLVEPO arrays, respectively, for each of the parallel momentum equations, the total momentum equation, each density equation, the electron and ion heat equations, and the total energy equation.
+					If wishing to toggle whether to solve or not to solve each equation separately, one should set, in the b2.numerics.parameters input file, the SOLVEMO, SOLVEMT, SOLVECO, SOLVEE, SOLVEEI, SOLVEET and SOLVEPO arrays, respectively, for each of the parallel momentum equations, the total momentum equation, each density equation, the electron and ion heat equations, and the total energy equation.
 					The table below shows which combination of equations will be solved	depending on the value of switch 'b2news_no_solve'
 					*----------------------------------------------------
 					*        | value |  co  |  mo  |  he  |  hi  |  po  |
@@ -1481,6 +1481,30 @@
 			  </description>
 			</switch>
 			<switch>
+			  <name>b2stbc_bc_ref</name>
+			  <default>0.01</default>
+			  <type>real</type>
+			  <description>
+				Under-relaxation factor used for feedback scheme in boundary condition types BCCON = 16, 19, 22, 23, 26, and 27.
+			  </description>
+			</switch>
+			<switch>
+			  <name>b2stbc_bc_ref_te</name>
+			  <default>0.01</default>
+			  <type>real</type>
+			  <description>
+				Under-relaxation factor used for feedback scheme in boundary condition type BCENE = 16 (with bcene_16_style.eq.1).
+			  </description>
+			</switch>
+			<switch>
+			  <name>b2stbc_bc_ref_ti</name>
+			  <default>0.01</default>
+			  <type>real</type>
+			  <description>
+				Under-relaxation factor used for feedback scheme in boundary condition types BCENI = 16 (with bceni_16_style.eq.1), 24, and 27.
+			  </description>
+			</switch>
+			<switch>
 				<name>b2stbc_secmodel</name>
 				<default>0</default>
 				<type>integer</type>
@@ -1675,7 +1699,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					When set to '0.0', the old form of the electron heat flux calculation is used. It is recommended to use 1.0.
+					When set to '1.0', the old form of the electron heat flux calculation is used and b2tfhe_fch_pTe should be set to '0.0'. It is recommended to use 0.0.
 				</description>
 			</switch>
 			<switch>
@@ -1683,7 +1707,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					When set to '1.0', the new form of the electron heat flux calculation is used. It is recommended to use 1.0.
+					When set to '1.0', the new form of the electron heat flux calculation is used and b2tfhe_alfTeEh should be set to '0.0'. It is recommended to use 1.0.
 				</description>
 			</switch>
 			<switch>
@@ -2015,12 +2039,12 @@
 				</description>
 				<switch>
 					<name>b2tlc0_alpha</name>
-					<default>0.0</default>
+					<default>1.0</default>
 					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2tlc0_gamma</name>
-					<default>2.0</default>
+					<default>1.0</default>
 					<type>real</type>
 				</switch>
 			</switchgroup>
@@ -2036,12 +2060,12 @@
 				</description>
 				<switch>
 					<name>b2tlh0_alpha</name>
-					<default>0.0</default>
+					<default>1.0</default>
 					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2tlh0_gamma</name>
-					<default>2.0</default>
+					<default>1.0</default>
 					<type>real</type>
 				</switch>
 				<switch>
@@ -2055,7 +2079,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					if style = 0 then it is applied the origin flux limit to the viscosity else it is applied the SPb flux limit to the viscosity
+					If style = 0 then the original form of the viscosity flux limit is used, otherwise the SPb flux limit is used.
 				</description>
 			</switch>
 			<switch>
@@ -2287,22 +2311,22 @@
 					This multiplication is to only take place for charged species.
 				</description>
 			</switch>
-			<switch>
-				<name>eirene_lhalpha</name>
-				<default>1</default>
-				<type>integer</type>
+			<switchgroup>
+			  <name>eirene_l*</name>
 				<description>
-					If 0 then no calculation of halpha in wneutral, otherwise halpha is calculated
+					Deprecated. Use "DEFINE_LINES" in block 12 of Eirene input file instead.
 				</description>
-			</switch>
-			<switch>
-				<name>eirene_lvib</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If 0 then the sigadd4 (molecular ions) and sigadd5 (negative ions) contributions to the halpha in wneutral are not included, otherwise they are
-				</description>
-			</switch>
+				<switch>
+				  <name>eirene_lhalpha</name>
+				  <default>1</default>
+				  <type>integer</type>
+				</switch>
+				<switch>
+				  <name>eirene_lvib</name>
+				  <default>1</default>
+				  <type>integer</type>
+				</switch>
+			</switchgroup>
 			<switch>
 				<name>eirene_repeat_first_call</name>
 				<default>1</default>
@@ -2708,10 +2732,10 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-                   Output flag to control diagnostics related to use of ion_vlct_restrict switch.
-				   If vlct_diagno.eq.0, the velocity restrictions are applied silently.
-				   If vlct_diagno.eq.1 (default), the user only gets a count of how many times the velocity restriction has been applied for each species, if any.
-				   If vlct_diagno.eq.2, the user gets the full details of where and how large the applied velocity restriction was, if any.
+				  Output flag to control diagnostics related to use of ion_vlct_restrict switch.
+				  If vlct_diagno.eq.0, the velocity restrictions are applied silently.
+				  If vlct_diagno.eq.1 (default), the user only gets a count of how many times the velocity restriction has been applied for each species, if any.
+				  If vlct_diagno.eq.2, the user gets the full details of where and how large the applied velocity restriction was, if any.
 				</description>
 			</switch>
 			<switchgroup>
@@ -3591,6 +3615,14 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
+			<switch>
+			  <name>nrings_for_no_speedup_averaging</name>
+			  <default>0</default>
+			  <type>integer</type>
+			  <description>
+				Number of poloidal rings in the confined region (counted from the separatrix towards the core boundary) where the speed-up method of the partial flux surface averaging (CORR_CORE_DN and CORR_CORE_DT) should not be used.
+			  </description>
+			</switch>
 			<switch>
 				<name>b2stbc_istyle_cur_contr_on_S_and_N</name>
 				<default>2</default>
@@ -4750,7 +4782,7 @@
 				<default>0</default>
 				<type>integer array of size (NION)</type>
 				<description>
-					Contains the index of the Eirene atomic species with which the Eirene test ion species (IION) should be scaled.
+					Contains the index of the Eirene atomic species with which the Eirene test ion species (IION) should be scaled. If not provided, LIONSCL will map to LMOLSCL for molecular ions that match an existing declared molecule, or to the first species listed in the name of the molecular ion as declared in the Eirene input file if no matching molecule is found.
 				</description>
 			</switch>
 			<switch>
@@ -6456,6 +6488,14 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>SOLVEMT</name>
+			  <default>.true.</default>
+			  <type>logical array of size (0:NREG)</type>
+			  <description>
+				Indicates whether the total parallel momentum equation is to be solved in region (ireg). For the total parallel momentum equation to be solved in a region, all momentum equations in the range defined by 'b2news_nsmin' and 'b2news_nsmax' must have SOLVEMO true in that region. Subservient to 'no_solve' switch. It is important to note that the 'b2news_no_solve' switch allows for solving or not all momentum equations together as a whole, along with the total equation.
+			  </description>
+			</switch>
+			<switch>
 				<name>SOLVEMO</name>
 				<default>.true.</default>
 				<type>logical array of size (0:NS-1,0:NREG)</type>
@@ -6488,6 +6528,14 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>SOLVEET</name>
+			  <default>.true.</default>
+			  <type>logical array of size (0:NREG)</type>
+			  <description>
+				Indicates whether the total energy equation is to be solved in region (ireg). For the equation to be solved in region (ireg), both SOLVEEE and SOLVEEI must be true in that region. Subservient to 'no_solve' switch. It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with total energy equation, as a group.
+			  </description>
+			</switch>
+			<switch>
 				<name>TIME_FACTOR_REQUIRED</name>
 				<default>0.1</default>
 				<type>real*8</type>
@@ -6516,7 +6564,7 @@
 				<default>1.0</default>
 				<type>real*8 array of size (0:NS-1)</type>
 				<description>
-				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a.
+				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 				  See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
 				</description>
 			</switch>
@@ -6525,7 +6573,7 @@
 				<default>1.0</default>
 				<type>real*8</type>
 				<description>
-				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions.
+				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
 				</description>
 			</switch>
