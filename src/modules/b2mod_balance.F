@@ -3360,7 +3360,7 @@ c only read a subset of the data as needed by the calling routine(s)
 *   ..local variables
       integer status,varid
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -3386,7 +3386,7 @@ c only read a subset of the data as needed by the calling routine(s)
 *   ..local variables
       integer status,varid
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -3412,7 +3412,7 @@ c only read a subset of the data as needed by the calling routine(s)
 *   ..local variables
       integer status,varid
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -3437,7 +3437,7 @@ c only read a subset of the data as needed by the calling routine(s)
 *   ..local variables
       integer status,varid
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -3463,7 +3463,7 @@ c only read a subset of the data as needed by the calling routine(s)
 *   ..local variables
       integer status,varid
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable

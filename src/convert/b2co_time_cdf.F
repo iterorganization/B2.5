@@ -1,4 +1,4 @@
-      subroutine b2co_time_cdf(nx, ny, ns, tim)
+      subroutine b2co_time_cdf(nx, ny, ns, tim, batch_only)
       use b2mod_types
       use b2mod_geo
       use b2mod_mwti
@@ -9,6 +9,7 @@
 #endif
       integer nx, ny, ns
       real (kind=R8) :: tim
+      logical :: batch_only
       integer :: jxi, jxa, jsep
       integer :: iylstrt, iyistrt, iyastrt, iyrstrt,
      1           iylend,  iyiend,  iyaend,  iyrend
@@ -84,16 +85,14 @@
       nyi  = iyiend  - iyistrt  + 1
       nc = max(nncut,1)
       nbatch = int((tim/dtim)/ntim_batch) + 1
-
-c access the b2time.nc file
+c access the b2time.nc or b2batch.nc file
       filename='b2time.nc'
+      if (batch_only) filename='b2batch.nc'
       call find_file(filename,exists)
       status=nf_open(filename,NF_NOWRITE,ncid)
       call check_cdf_status(status)
-
       status=nf_inq(ncid,ndims,nvars,natts,unlimid)
       call check_cdf_status(status)
-
       itim=0
       ibatch=0
       nastep=0
@@ -203,7 +202,7 @@ c find the time and batch vector sizes
         end if
       end do
 
-c prepare the b2time.nc.xxxx file
+c prepare the b2time.nc.xxxx or b2batch.nc.xxxx file
 #ifdef NO_GETENV
       extension='xxxx'
 #else
@@ -225,12 +224,12 @@ c prepare the b2time.nc.xxxx file
       extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
 #endif
 #endif
-      filename='b2time.nc.'//extension
+      filename=trim(filename)//'.'//extension
       status=nf_create(trim(filename),NF_NOCLOBBER,ncid2)
       call check_cdf_status(status)
       call b2crtimecdf(filename, nx, ny, nybl, nytl, nytr, nybr,
-     .                 nya, nyi, nc, ns, nbatch, write_2d, ncid2,
-     .                 .false., iret)
+     .                 nya, nyi, nc, ns, write_2d, ncid2,
+     .                 batch_only, iret)
       status=nf_open(trim(filename),NF_WRITE,ncid2)
       call check_cdf_status(status)
 
