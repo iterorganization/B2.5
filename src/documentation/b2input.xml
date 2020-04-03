@@ -6060,6 +6060,7 @@
 						6: neutral particle flux through the core boundary.
 						7: relative average concentration of this species at the separatrix.
                                                 8: relative average concentration of this species averaged over the rectangle of cells[IX1:IX2,IY1:IY2].
+                                                9: inner midplane separatrix electron density.
 				</description>
 			</switch>
 			<switch>
