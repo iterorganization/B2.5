@@ -92,6 +92,9 @@
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
+      integer, save :: cdf_default = 0    ! used for setting a default NetCDF format
+      integer, save :: cdf_old_format
+      integer       :: iret
       real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
@@ -125,6 +128,7 @@
      3  dt_min, dt_max, max_delta
       real (kind=R8), save :: xcur = 0.0_R8, ycur = 1.0_R8
 #ifndef NO_CDF
+#     include <netcdf.inc>
       integer ncid
 #endif
 #ifdef CATALYST
@@ -1192,6 +1196,42 @@ csw 09oct2012
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
+       call ipgeti ('b2mndr_cdf_default', cdf_default)
+#ifndef NO_CDF
+       if (cdf_default .eq. 0) then        ! not set
+         write(*,*) 'Using the default NetCDF format'
+       else if (cdf_default .eq. 1) then   ! NetCDF classic
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_classic,cdf_old_format)
+         write(*,*) 'Using the NetCDF classic format'
+       else if (cdf_default .eq. 2) then   ! NetCDF 64bit
+#ifdef NC_64BIT_OFFSET
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_64bit_offset,
+     1    cdf_old_format)
+         write(*,*) 'Using the NetCDF 64bit offset format'
+#else
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_64bit,cdf_old_format)
+         write(*,*) 'Using the NetCDF 64bit format'
+#endif
+       else if (cdf_default .eq. 3) then   ! NetCDF netcdf4
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_netcdf4,cdf_old_format)
+         write(*,*) 'Using the NetCDF netcdf4 format'
+       else if (cdf_default .eq. 4) then   ! NetCDF netcdf4_classic
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_netcdf4_classic,
+     1    cdf_old_format)
+         write(*,*) 'Using the NetCDF netcdf4_classic format'
+       else if (cdf_default .eq. 5) then   ! NetCDF 64bit_data
+#ifdef NC_64BIT_DATA
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_64bit_data,cdf_old_format)
+         write(*,*) 'Using the NetCDF 64bit_data format'
+#else
+         write(*,*) 'NetCDF 64bit_data format unavailable'
+         write(*,*) 'Reverting to NetCDF 64bit format'
+         iret=NF_SET_DEFAULT_FORMAT(nf_format_64bit,cdf_old_format)
+#endif
+       else
+         call xerrab('b2mndr_cdf_default not in range 1::5')
+       endif
+#endif
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -2392,7 +2432,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call tallies(nx,ny,ns,BoRiS)
         endif
       endif
-*   ..create netcdf file containing everything for balance postprocessing routines !djm Jan2017
+*   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
         call write_balance(nx,ny,ns)

@@ -1,6 +1,6 @@
 # Test whether necessary variables are set
-NCDIR      ?= /tokp/work/dpc/SOLPS-ITER/NETCDF
-LD_NETCDF  ?= -L${NCDIR}/lib -lnetcdf
+NCDIR      ?= ${NETCDF_HOME}
+LD_NETCDF  ?= -L${NCDIR}/lib -lnetcdff
 MSCL_ROOT  ?= /tokp/work/dpc/SOLPS-ITER/mscl
 LD_MSCL    ?= -L${MSCL_ROOT} -lmscl
 GLI_HOME   ?= /tokp/work/dpc/SOLPS-ITER/gks

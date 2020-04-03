@@ -2963,7 +2963,7 @@ cdjm Update ion heat sources
 *   ..local variables
       integer status,varid
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -2989,7 +2989,7 @@ cdjm Update ion heat sources
 *   ..local variables
       integer status,varid
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -3015,7 +3015,7 @@ cdjm Update ion heat sources
 *   ..local variables
       integer status,varid
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -3040,7 +3040,7 @@ cdjm Update ion heat sources
 *   ..local variables
       integer status,varid
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -3066,7 +3066,7 @@ cdjm Update ion heat sources
 *   ..local variables
       integer status,varid
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
