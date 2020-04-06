@@ -1435,8 +1435,8 @@ c
 c Cases with one X-point:
 c region 1 === core
 c region 2 === SOL
-c region 3 === inboard divertor
-c region 4 === outboard divertor
+c region 3 === Western divertor (inboard for LSN, outboard for USN)
+c region 4 === Eastern divertor (outboard for LSN, inboard for USN)
 c region 5 === island
 c
 c                           +++++++++++++++++++++++++

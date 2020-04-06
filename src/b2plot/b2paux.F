@@ -50,7 +50,7 @@ c*** ig = -12 :
 c***
 c***  Produces a file with coordinates of the grid cell centers and
 c***  the plasma parameters (densities, temperatures, fluid velocities)
-c***  in the outer divertor - for H. Wuerz
+c***  in the Eastern divertor - for H. Wuerz
 c***
 c*** ig = -11 :
 c***

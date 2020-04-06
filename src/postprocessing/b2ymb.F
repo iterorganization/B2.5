@@ -59,9 +59,9 @@
       NAMELIST /OUTPUT/
      . NPOINTS, LPOINTS, NPLOTS
       print*,"############## README ############"
-      print*,"Starting b2ymb. Update the input file b2ymb.dat 
-     .with the desired inlet temperature and then choose 
-     .between inner [i] our outer [o] target"
+      print*,"Starting b2ymb. Update the input file b2ymb.dat "//
+     .       "with the desired inlet temperature and then choose "//
+     .       "between inner [i] or outer [o] target"
       read (*,*) ss
       if (streql(trim(ss),trg(1))) then
          KK=1

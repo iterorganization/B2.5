@@ -4,7 +4,7 @@ c  version : 07.11.97 13:22
 c
 c======================================================================
 c*** Calculates the radiation power load onto the targets
-c*** rdl(i,1,:) corresponds to the inner and rdl(i,2,:) to the outer target
+c*** rdl(i,1,:) corresponds to the West and rdl(i,2,:) to the East target
 c*** Last index 0 is a sum over all species
 c*** Power is in W/m**2 (previously, MW/m**2)
 c======================================================================
@@ -33,9 +33,9 @@ c     ,             'lppp','nwldprt','lytg','nytg','nadsrc','add_rad',
 c     ,                   l2pwinp,lppp,nwldprt,lytg,nytg,nadsrc,add_rad
 c        print '(a/(16i5))','Shadowing structure',
 c     ,                                   (lwldlis(i,1),i=1,nwldlis(1))
-c        print '(a/(5(2f8.3,1x)))','Inner target',
+c        print '(a/(5(2f8.3,1x)))','West target',
 c     ,                  (pp1(1,lppp+i),pp1(2,lppp+i),i=1,nytg)
-c        print '(a/(5(2f8.3,1x)))','Outer target',
+c        print '(a/(5(2f8.3,1x)))','East target',
 c     ,                (pp1(1,lppp+nytg+i),pp1(2,lppp+nytg+i),i=1,nytg)
 c
 c>>>
@@ -87,9 +87,9 @@ c*** Calculate the load
 #endif
         l2rdldt=.true.
 #ifdef DBG
-        print '(a/(1p,5e17.4))','Inner target: load',
+        print '(a/(1p,5e17.4))','West target: load',
      ,    (wldrdld(lppp+i+1),i=0,ny-1)
-        print '(a/(1p,5e17.4))','Outer target: load',
+        print '(a/(1p,5e17.4))','East target: load',
      ,    (wldrdld(lppp+ny+i+1),i=0,ny-1)
 #endif
       end if !}

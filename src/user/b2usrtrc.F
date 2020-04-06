@@ -68,21 +68,21 @@ c***    He_thrpt  hlp_hetp   He throughput
 c***                                       (PFR - by group and species)
 c***    PFRflx    hlp_pfrf   net nuclei flux through each surface group
 c***                              (neutral data - by group and species)
-c***    n_        hlp_dndts  neutral density                    [1/m**3]
-c***    P_        hlp_prdts  neutral pressure                   [Pa]
-c***    T_        hlp_tmdts  neutral temperature                [eV]
-c***    j_        hlp_fxdts  impinging neutral flux           [1/m**2/s]
-c***    G_        hlp_fldts  neutral flux pumped out            [1/s]
-c***    S_        hlp_stdts  technical pumping speed (albedo)   [m**3/s]
-c***    s_        hlp_sedts  effective pumping speed (G/n)      [m**3/s]
+c***    n_        hlp_dndts  neutral density                      [1/m**3]
+c***    P_        hlp_prdts  neutral pressure                     [Pa]
+c***    T_        hlp_tmdts  neutral temperature                  [eV]
+c***    j_        hlp_fxdts  impinging neutral flux               [1/m**2/s]
+c***    G_        hlp_fldts  neutral flux pumped out              [1/s]
+c***    S_        hlp_stdts  technical pumping speed (albedo)     [m**3/s]
+c***    s_        hlp_sedts  effective pumping speed (G/n)        [m**3/s]
 c***                              (PFR interface - by side and species)
-c***    PFRi_area hlp_w      PFR interface area, inner          [m**2]
-c***    PFRi_n_   hlp_dnpfs  average neutral density, inner     [1/m**3]
-c***    PFRi_T_   hlp_tmpfs  average neutral temperature, inner [eV]
+c***    PFRi_area hlp_w      PFR interface area, inner            [m**2]
+c***    PFRi_n_   hlp_dnpfs  average neutral density, inner       [1/m**3]
+c***    PFRi_T_   hlp_tmpfs  average neutral temperature, inner   [eV]
 c***    PFRi_v_   hlp_vlpfs  average neutral flow velocity, inner [m/s]
-c***    PFRo_area hlp_w      PFR interface area, outer          [m**2]
-c***    PFRo_n_   hlp_dnpfs  average neutral density, outer     [1/m**3]
-c***    PFRo_T_   hlp_tmpfs  average neutral temperature, outer [eV]
+c***    PFRo_area hlp_w      PFR interface area, outer            [m**2]
+c***    PFRo_n_   hlp_dnpfs  average neutral density, outer       [1/m**3]
+c***    PFRo_T_   hlp_tmpfs  average neutral temperature, outer   [eV]
 c***    PFRo_v_   hlp_vlpfs  average neutral flow velocity, outer [m/s]
 c***    DoD_il    hlp_dodil  min. DoD, inner lower divertor
 c***    DoD_ol    hlp_dodol  min. DoD, outer lower divertor
@@ -463,7 +463,7 @@ c***  (ipfc_tmp, jpfc_tmp)
         hlp_w=0
         if(lpfrs_pmp.ne.0) then !{
 
-c*** Inner divertor
+c*** Western divertor
 
           m=lpfrb_i
           if(m.le.0) then !{
@@ -490,7 +490,7 @@ c*** Inner divertor
           ipfc_tmp(1)=m
           jpfc_tmp(1)=n
 
-c*** Outer divertor
+c*** Eastern divertor
 
           m=lpfrt_o
           if(m.le.0) then !{
@@ -749,7 +749,7 @@ c-----------------------------------------------------------------------
         hlp_so=0.0_R8
         if(lpfrs_pmp.ne.0) then !{
 
-c*** Inner divertor
+c*** Western divertor
 
           m=lpfrb_i
           if(m.le.0) then !{
@@ -796,7 +796,7 @@ c*** Inner divertor
 c          print '(a,1p,2i4,2e12.3)',' %%## m,n,hlp_si,hlp_hep: ',  !###
 c     ,                                     m,n,hlp_si,hlp_hep      !###
 
-c*** Outer divertor
+c*** Eastern divertor
 
           m=lpfrt_o
           if(m.le.0) then !{
@@ -957,7 +957,7 @@ c*** Calculate the peak powers to the targets
 c***  (assuming a peaking factor of hlp_neu_peak for neutrals)
 
       if(l_neutflux.lt.0 .or. use_eirene.eq.0) then !{ VK
-c inner target
+c West target
         hlp_ppwi=0.0_R8
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
@@ -991,7 +991,7 @@ c inner target
           hlp_ppwi=hlp_ppwi+
      .     (wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
         end if !}
-c outer target
+c East target
         hlp_ppwo=0.0_R8
         hlp_s=0.0_R8
         do iy=0,ny-1 !{

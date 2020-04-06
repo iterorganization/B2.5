@@ -69,7 +69,7 @@ cxpb We must avoid corner cells and dead cells
       nsegments = 0
       itrack_0 = 0
 
-cxpb  We start from the HFS lower corner and go clockwise around the plasma
+cxpb  We start from the lower left corner and go clockwise around the plasma
 cxpb  keeping the plasma to our right (but we are moving in the guard cells!)
 cxpb  Northern boundaries (excluding diverted island)
       iy = ny

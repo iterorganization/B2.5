@@ -429,7 +429,7 @@
        if (nncut.ge.1) then
         ixa = 0
         ixb = leftcut(1)-1
-        ixp = rightcut(1)                 ! position on LFS
+        ixp = rightcut(1)                 ! position on opposite side of X-point
         ixc = 0
         ixd = leftcut1(1)-1
         do ix = ixa, ixb
