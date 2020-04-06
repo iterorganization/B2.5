@@ -112,7 +112,7 @@ c*** Global values
      ,     (equg_tmp(17), hlp_heoc), (equg_tmp(18), hlp_heos),
      ,     (equg_tmp(19), hlp_hens), (equg_tmp(20), hlp_henc),
      ,     (equg_tmp(21), hlp_dttp), (equg_tmp(22), hlp_hetp)
-      character hlp_hg(nglb_tmp)*8
+      character hlp_hg(nglb_tmp)*8, hlp_lb(nglb_tmp)*8
       integer ngl2_tmp
       parameter (ngl2_tmp=4)
       real (kind=R8) ::
@@ -122,7 +122,7 @@ c*** Global values
       equivalence (equg2_tmp(1), hlp_dod),
      ,     (equg2_tmp(1),  hlp_dodil), (equg2_tmp(2),  hlp_dodol),
      ,     (equg2_tmp(3),  hlp_dodiu), (equg2_tmp(4),  hlp_dodou)
-      character hlp_hg2(ngl2_tmp)*8
+      character hlp_hg2(ngl2_tmp)*8, hlp_lb2(ngl2_tmp)*8
       integer ngl3_tmp, mgl3_tmp
       parameter (ngl3_tmp=4)
       integer kgl3_tmp(ngl3_tmp) 
@@ -134,7 +134,7 @@ c*** Global values
       equivalence (equg3_tmp(1), hlp_isat),
      ,     (equg3_tmp(1),  hlp_istil), (equg3_tmp(2),  hlp_istol),
      ,     (equg3_tmp(3),  hlp_istiu), (equg3_tmp(4),  hlp_istou)
-      character hlp_hg3(ngl3_tmp)*10
+      character hlp_hg3(ngl3_tmp)*10, hlp_lb3(ngl3_tmp)
       integer ngl4_tmp
       parameter (ngl4_tmp=3)
 c     integer kgl4_tmp(2)
@@ -1340,10 +1340,20 @@ c=======================================================================
       if(first_out .and. filedata(ltrc)) then !{
 
 c*** Prepare the headers, markers, and padding data for the output file
-
+        if (LSN) then
+          hlp_lb=hlp_hg
+        else
+          hlp_lb(1)=hlp_hg(1)
+          hlp_lb(2)=hlp_hg(3)
+          hlp_lb(3)=hlp_hg(2)
+          hlp_lb(4:6)=hlp_hg(4:6)
+          hlp_lb(7)=hlp_hg(8)
+          hlp_lb(8)=hlp_hg(7)
+          hlp_lb(9:nglb_tmp)=hlp_lb(9:nglb_tmp)
+        endif
         ex=nglb_tmp.lt.ntrc_tmp
         if(ex) hlp_hdr(1)='time'
-        if(ex) hlp_hdr(2:nglb_tmp+1)=hlp_hg
+        if(ex) hlp_hdr(2:nglb_tmp+1)=hlp_lb
         n=nglb_tmp+1
         i0=0
         if(npfrgrp.le.1) i0=1
@@ -1382,7 +1392,9 @@ c*** Prepare the headers, markers, and padding data for the output file
         end do !}
         do k=1,npfi_tmp !{
           n=n+1
-          hlp_hdr(n)='PFR'//trim(hlp_hs(k))//'_area'
+          js=k
+          if (.not.LSN) js=npfi_tmp+1-k
+          hlp_hdr(n)='PFR'//trim(hlp_hs(js))//'_area'
           do j=1,ndts_tmp !{
             ex = ex .and. n+npft_tmp.le.ntrc_tmp
             do i=1,npft_tmp !{
@@ -1391,15 +1403,27 @@ c*** Prepare the headers, markers, and padding data for the output file
               else !}{
                 hlp_m=adjustl(eirtxt(nnatmi-ndtm_tmp(j)))
               end if !}
-              if(ex) hlp_hdr(n+i)='PFR'//trim(hlp_hs(k))//'_'//
+              if(ex) hlp_hdr(n+i)='PFR'//trim(hlp_hs(js))//'_'//
      /             trim(hlp_hr(i))//'_'//trim(hlp_m)
             end do !}
             n=n+npft_tmp
           end do !}
         end do !}
+        if (LSN) then
+          hlp_lb2 = hlp_hg2
+        else
+          hlp_lb2(1)=hlp_hg2(4)
+          hlp_lb2(2)=hlp_hg2(3)
+        endif
         ex=ex .and. n+ngl2_tmp.le.ntrc_tmp
-        if(ex) hlp_hdr(n+1:n+ngl2_tmp)=hlp_hg2
+        if(ex) hlp_hdr(n+1:n+ngl2_tmp)=hlp_lb2
         n=n+ngl2_tmp
+        if (LSN) then
+          hlp_lb3 = hlp_hg3
+        else
+          hlp_lb3(1)=hlp_hg3(4)
+          hlp_lb3(2)=hlp_hg3(3)
+        endif
         ex=ex .and. n+mgl3_tmp.le.ntrc_tmp
 c        print *,'###b ex,mgl3_tmp,n,ntrc_tmp=',ex,mgl3_tmp,n,ntrc_tmp !###
         if(ex .and. mgl3_tmp.gt.0) then !{
@@ -1408,7 +1432,7 @@ c        print *,'###b ex,mgl3_tmp,n,ntrc_tmp=',ex,mgl3_tmp,n,ntrc_tmp !###
             if(itg_tmp(k).ne.-2) then !{
               n=n+1
               i=i+1
-              hlp_hdr(n)=hlp_hg3(k)
+              hlp_hdr(n)=hlp_lb3(k)
             end if !}
           end do !}
           if(i.ne.mgl3_tmp) then !{
@@ -1611,10 +1635,10 @@ c     /                                      'i3,8h(1h'//tab//',a)))'
         hlp_frf='(9h(5h#time,,i3,8h(1h'//tab//',a)))'
         write(hlp_frm,hlp_frf) ng_tmp+np_tmp*(na_tmp+1-i0)*ns_tmp
         if(npfrgrp.gt.0) then !{
-          write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp),
+          write(lun,hlp_frm) (hlp_lb(i),i=1,ng_tmp),
      ,        (((hlp_ha(i,j,k),i=i0,npfrgrp),j=1,nspecies),k=1,npff_tmp)
         else !}{
-          write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp)
+          write(lun,hlp_frm) (hlp_lb(i),i=1,ng_tmp)
         end if !}
 c        print *,'b2usrtrc frm:',hlp_frm  !###
       end if !}
@@ -1725,7 +1749,7 @@ c*** Limiter case
       allocate(hlp_out(ntrc_tmp))
       ex=nglb_tmp.lt.ntrc_tmp
       if(ex) hlp_hdr(1)='time'
-      if(ex) hlp_hdr(2:nglb_tmp+1)=hlp_hg
+      if(ex) hlp_hdr(2:nglb_tmp+1)=hlp_lb
       n=nglb_tmp+1
       i0=0
       if(npfrgrp.le.1) i0=1
@@ -1769,7 +1793,9 @@ c*** Limiter case
       end do !}
       do k=1,npfi_tmp !{
         n=n+1
-        hlp_hdr(n)='PFR'//trim(hlp_hs(k))//'_area'
+        js=k
+        if (.not.LSN) js=npfi_tmp+1-k
+        hlp_hdr(n)='PFR'//trim(hlp_hs(js))//'_area'
         do j=1,ndts_tmp !{
           ex = ex .and. n+npft_tmp.le.ntrc_tmp
           do i=1,npft_tmp !{
@@ -1778,14 +1804,14 @@ c*** Limiter case
             else !}{
               hlp_m=adjustl(textmn(-ndtm_tmp(j)-1))
             end if !}
-            if(ex) hlp_hdr(n+i)='PFR'//trim(hlp_hs(k))//'_'//
+            if(ex) hlp_hdr(n+i)='PFR'//trim(hlp_hs(js))//'_'//
      /                                 trim(hlp_hr(i))//'_'//trim(hlp_m)
           end do !}
           n=n+npft_tmp
         end do !}
       end do !}
       ex=ex .and. n+ngl2_tmp.le.ntrc_tmp
-      if(ex) hlp_hdr(n+1:n+ngl2_tmp)=hlp_hg2
+      if(ex) hlp_hdr(n+1:n+ngl2_tmp)=hlp_lb2
       n=n+ngl2_tmp
       mgl3_tmp=0
       itg_tmp(1)=0
@@ -1806,7 +1832,7 @@ c*** Limiter case
           if(itg_tmp(k).ne.-2) then !{
             n=n+1
             i=i+1
-            hlp_hdr(n)=hlp_hg3(k)
+            hlp_hdr(n)=hlp_lb3(k)
           end if !}
         end do !}
         if(i.ne.mgl3_tmp) then !{
