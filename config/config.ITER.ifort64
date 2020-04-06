@@ -11,7 +11,7 @@ LD_SONNET ?= -L${SOLPSLIB} -lsonnet -lstdc++
 EQUIVS     = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Ds2min=d2min
 DEFINES   += -DGRREAL=4 -DDOFLUSH # -DNO_CDF
 ifndef SOLPS_CPP
-DEFINES   += -DNAG22 -DNO_F01AAF
+DEFINES   += -DNAG22 -DNO_F01AAF -DMDSPLUS
 endif
 
 CPP        = /lib/cpp -traditional
