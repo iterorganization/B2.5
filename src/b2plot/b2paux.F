@@ -156,6 +156,7 @@ c
       real (kind=R8) :: hlp_a, hlp_m, hlp_n, hlp_p, hlp_s(3), hlp_ms(3),
      . mass, vel, vth
       character*2, allocatable :: hlp_al(:)
+      character*5 :: trg_lbl
       character*11, allocatable :: hlp_sg(:)
       character hlp_frmr*600
       integer, allocatable :: mz_hlp(:)
@@ -208,7 +209,9 @@ c-----------------------------------------------------------------------
         do i=1,nmoli
           hlp_ml(i)=wldrm(nlim+ltns(1),i,0)+wldpm(nlim+ltns(1),i,0)
         end do
-        write(lun, frm) 'inner',(hlp_pi(i),i=1,nspecies),
+        trg_lbl = 'inner'
+        if (.not.LSN) trg_lbl = 'outer'
+        write(lun, frm) trg_lbl,(hlp_pi(i),i=1,nspecies),
      ,    (wldna(nlim+ltns(1),i,0),i=1,natmi),
      ,    (wldnm(nlim+ltns(1),i,0),i=1,nmoli),
      ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
@@ -220,7 +223,9 @@ c-----------------------------------------------------------------------
          do i=1,nmoli
           hlp_ml(i)=wldrm(nlim+ltns(2),i,0)+wldpm(nlim+ltns(2),i,0)
          end do
-         write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
+         trg_lbl = 'outer'
+         if (.not.LSN) trg_lbl = 'inner'
+         write(lun, frm) trg_lbl,(hlp_po(i),i=1,nspecies),
      ,    (wldna(nlim+ltns(2),i,0),i=1,natmi),
      ,    (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
      ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),

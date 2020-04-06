@@ -6346,7 +6346,7 @@ cdpc still in testing phase
           write(hlp_frm,'(a,i3,a)') '(2i4,1p,',nz,'(1x,1e12.5))'
           do iy=iy1,iy2
             do ix=ix1,ix2
-              write(99,hlp_frm) ix,iy,work(ix,iy,0:nz-1,iwrk)
+              write(99,hlp_frm) ix,iy,(work(ix,iy,i,iwrk),i=0,nz-1)
             enddo
           enddo
           close(99)

@@ -50,7 +50,7 @@ c*** use the zone index to label the plot zone
           fn_hlp='wlld_'//lblwldpt(il)(1:l)//'.dat'
         end if !}
 c*** Open the file and write the heading line
-        print *,'About to open :',fn_hlp,':'
+        print *,'About to open : ',fn_hlp,' :'
         open(lun_w,file=fn_hlp,err=20)
         write(lun_w,'(a,i2,2a)') '#Wall loading zone ',il,' : ',label
 
