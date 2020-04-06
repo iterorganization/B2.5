@@ -1489,15 +1489,8 @@ contains
     integer :: dims(2)
     real (kind=R8) :: dvals(1)
     ! Create and enter define mode
-    if (batch_only) then
-      iret = nf_open(trim(filename),NCWRITE,ncid)
-      call check_cdf_status(iret)
-      iret = nf_redef(ncid)
-      call check_cdf_status(iret)
-    else
-      iret = nf_create(trim(filename), or(ncclob,nf_netcdf4), ncid)
-      call check_cdf_status(iret)
-    endif
+    iret = nf_create(trim(filename), or(ncclob,nf_netcdf4), ncid)
+    call check_cdf_status(iret)
     ! define dimensions
     if (.not.batch_only) then
       iret = nf_def_dim(ncid, 'nx', nx+2, nxdim)
