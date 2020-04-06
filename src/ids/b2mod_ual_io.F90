@@ -4375,21 +4375,28 @@ contains
         allocate( summary%boundary%type%source(1) )
         summary%boundary%type%source = source
         allocate( summary%boundary%strike_point_inner_r%value( time_sind ) )
-        summary%boundary%strike_point_inner_r%value( time_sind ) = crx(-1,topcut(1),3)
-        allocate( summary%boundary%strike_point_inner_r%source(1) )
-        summary%boundary%strike_point_inner_r%source = source
         allocate( summary%boundary%strike_point_inner_z%value( time_sind ) )
-        summary%boundary%strike_point_inner_z%value( time_sind ) = cry(-1,topcut(1),3)
-        allocate( summary%boundary%strike_point_inner_z%source(1) )
-        summary%boundary%strike_point_inner_z%source = source
         allocate( summary%boundary%strike_point_outer_r%value( time_sind ) )
-        summary%boundary%strike_point_outer_r%value( time_sind ) = crx(nx,topcut(1),1)
-        allocate( summary%boundary%strike_point_outer_r%source(1) )
-        summary%boundary%strike_point_outer_r%source = source
         allocate( summary%boundary%strike_point_outer_z%value( time_sind ) )
-        summary%boundary%strike_point_outer_z%value( time_sind ) = cry(nx,topcut(1),1)
+        if (LSN) then
+          summary%boundary%strike_point_inner_r%value( time_sind ) = crx(-1,topcut(1),1)
+          summary%boundary%strike_point_inner_z%value( time_sind ) = cry(-1,topcut(1),1)
+          summary%boundary%strike_point_outer_r%value( time_sind ) = crx(nx,topcut(1),0)
+          summary%boundary%strike_point_outer_z%value( time_sind ) = cry(nx,topcut(1),0)
+        else
+          summary%boundary%strike_point_inner_r%value( time_sind ) = crx(nx,topcut(1),0)
+          summary%boundary%strike_point_inner_z%value( time_sind ) = cry(nx,topcut(1),0)
+          summary%boundary%strike_point_outer_r%value( time_sind ) = crx(-1,topcut(1),1)
+          summary%boundary%strike_point_outer_z%value( time_sind ) = cry(-1,topcut(1),1)
+        endif
         allocate( summary%boundary%strike_point_outer_z%source(1) )
         summary%boundary%strike_point_outer_z%source = source
+        allocate( summary%boundary%strike_point_inner_r%source(1) )
+        summary%boundary%strike_point_inner_r%source = source
+        allocate( summary%boundary%strike_point_inner_z%source(1) )
+        summary%boundary%strike_point_inner_z%source = source
+        allocate( summary%boundary%strike_point_outer_r%source(1) )
+        summary%boundary%strike_point_outer_r%source = source
 
         allocate( summary%fusion%power%value( time_sind ) )
         summary%fusion%power%value( time_sind ) = fusion_power

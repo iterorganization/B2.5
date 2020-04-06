@@ -959,6 +959,28 @@
                   enddo
                   na_feedback_current = na_feedback_current/sum_e
 
+               case (9) ! inner midplane electron density
+
+                  if(ncall.eq.0) then
+                     write(*,'(a,a,i3)')
+     &                    'b2stbc_fb_pre_choice: using ',
+     &                    'inner_midplance_electron_density'//
+     &                    'for sequence ',
+     &                    ispecies+1
+                  endif
+
+                  na_feedback_current = 0.5_R8 *
+     *                 (ne(jxi,jsep)+
+     *                 ne(topix(jxi,jsep),topiy(jxi,jsep)))
+                  is_start=-1
+                  is_end=-1
+                  do is=0, ns-1
+                     if(b2espcr(is).eq.ispecies+1) then
+                        if(is_start.eq.-1) is_start=is
+                        is_end=is
+                     endif
+                  enddo
+
                case default
                   write(*,*) 'na feedback_choice not coded ',
      &                 na_feedback_choice(ispecies)
