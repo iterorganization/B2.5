@@ -1,9 +1,9 @@
 # Test whether necessary variables are set
 ifndef NCDIR
-  NCDIR      = /pfs/work/g2dpc/SOLPS-ITER/NETCDF
+  NCDIR      = /cineca/prod/opt/libraries/netcdff/4.4.4/intel--pe-xe-2017--binary
 endif
 ifndef LD_NETCDF
-  LD_NETCDF  = -L${NCDIR}/lib -lnetcdf
+  LD_NETCDF  = -L${NCDIR}/lib -lnetcdff
 endif
 ifndef MSCL_ROOT
   MSCL_ROOT  = /pfs/work/g2dpc/SOLPS-ITER/mscl
