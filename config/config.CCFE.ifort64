@@ -20,7 +20,7 @@ SED      = sed s:\#PREC\#:d:g
 SED      =
 LINK_MOD = 
 
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2)
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 ifdef USE_MPI
 FC       = mpif90

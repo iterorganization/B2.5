@@ -10,7 +10,7 @@ LD_SONNET ?= -L${SOLPSLIB} -lsonnet -lstdc++
 
 EQUIVS     = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH -Ds2min=d2min # -DNO_CDF -DNO_PROCESS
 ifndef SOLPS_CPP
-EQUIVS    += -DNAG22 -DNO_F01AAF
+EQUIVS    += -DNAG22 -DNO_F01AAF -DMDSPLUS
 endif
 
 CPP        = /lib/cpp -traditional
@@ -37,7 +37,7 @@ FC         = ifort
 endif
 endif
 
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2)
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
