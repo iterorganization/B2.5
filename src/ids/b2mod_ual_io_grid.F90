@@ -476,11 +476,13 @@ contains
 
         allocate( ggd_grid%space( SPACE_COUNT ) )
 
+#if IMAS_MINOR_VERSION > 19
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%identifier%name(1) )
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%identifier%description(1) )
         ggd_grid%space( SPACE_POLOIDALPLANE )%identifier%name = "Standard grid"
         ggd_grid%space( SPACE_POLOIDALPLANE )%identifier%index = 1
         ggd_grid%space( SPACE_POLOIDALPLANE )%identifier%description = labgeo
+#endif
 
         !! Coordinate types
         !! dimension of space = NDIM = size( coordtype )
