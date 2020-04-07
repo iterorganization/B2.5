@@ -3,7 +3,7 @@
 
       subroutine b2sihs_ (nCv, nFc, nVx, ns, geo, mpg, BoRiS, ismain, 
      &  fac_ExB, lnlam, na, ua, ue, te, ti, po, ne, ni,
-     &  fna_fcor, fne, fch, cvsa, cvsahz, cvsahz_cl, she0, shi0)
+     &  fna_fcor, fne, fch, cvsa, cvsahz_eff, she0, shi0)
       use b2mod_types
       use b2mod_tallies
       use b2mod_anomalous_transport
@@ -29,8 +29,7 @@
      &  te(nCv), ti(nCv), po(nCv), ne(nCv), ni(nCv,0:1), lnlam(nCv)   !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  fna_fcor(nFc,0:1,0:ns-1), fne(nFc,0:1), fch(nFc,0:1),
-     *  cvsa(nFc,0:1,0:ns-1), cvsahz(nFc,0:1,0:ns-1),
-     *  cvsahz_cl(nFc,0:1,0:ns-1)
+     *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   she0(nCv,0:3), shi0(nCv,0:3)
@@ -64,7 +63,7 @@
      *  vti32(nCv)
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
-     &  phm4, phm5, phm6, wrkc(nCv), wrkf(nFc,0:1), wrkf1(nFc,0:1),
+     &  phm4, phm5, phm6, wrkc(nCv), wrkf(nFc,0:1), hzf(nFc),
      &  wrkv(nVx),                      !srv 02.06.99
      &  phm7, phm8, wrkc1(nCv),                                         !srv 28.08.02
      &  dpoc(nCv,0:1), dOnedBsqc(nCv,0:1), visc(nCv,0:1),
@@ -335,37 +334,24 @@
          call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(1,0),visc(1,0))
          call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(1,1),visc(1,1))
         else
-         !wdk use effective viscous terms from the hybrid scheme
+         !wdk use effective viscous momentum terms from the hybrid scheme
          !wdk avoids excessive heating in convection-dominated regions
          !wdk (improved total energy conservation at discretized level)
-         !wdk Work-around for consistency with momentum equation:
-         !wdk   apply hybrid scheme to cvsahz first, then
-         !wdk   correct with factor cvsa/cvsahz
-         wrkf = am(is)*mp*fna_fcor(:,:,is)
-         call b2nxfv (nCv, nFc, nVx, is, geo, mpg, cvsahz_cl(1,0,is), 
-     &    wrkf1)
-         wrkf = wrkf + wrkf1
-         call calcflow(nCv,nFc,nVx,2,geo,mpg,ua(1,is),wrkf,
-     &     cvsahz(1,0,is),dumm0,dumm1,wrkf1)
+         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,hzf)
          call diff(nCv, nFc, nVx, 0, geo, mpg, ua(1,is), wrkv, wrkf)
-         wrkf = -wrkf*wrkf1*cvsa(:,:,is)/((geo%fcQalf + eps)*
-     &    (cvsahz(:,:,is) + eps))
+         wrkf = cvsahz_eff(:,:,is)/(geo%fcQalf+eps)*wrkf**2
+         wrkf(:,0) = wrkf(:,0)/hzf
+         wrkf(:,1) = wrkf(:,1)/hzf
          call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(1,0),visc(1,0))
          call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(1,1),visc(1,1))
         endif
         do iCv = 1, mpg%nCi
            t0 = phm2*(1.0_R8-BoRiS)*visc(iCv,0)
            t1 = phm8*(1.0_R8-BoRiS)*visc(iCv,1)
-           if (t0.lt.0.0_R8) write (*,*) 
-     &      'Warning, negative cl. visc. heating in cell iCv = ',iCv
-           if (t1.lt.0.0_R8) write (*,*) 
-     &      'Warning, negative an. visc. heating in cell iCv = ',iCv
-           shivc(iCv,0) = shivc(iCv,0)+(max(0.0e0_R8,t0)+rf2*abs(t0))
-           shivc(iCv,3) = shivc(iCv,3)+
-     &        (min(0.0e0_R8,t0)-rf2*abs(t0))/(ni(iCv,0)*ti(iCv))
-           shiva(iCv,0) = shiva(iCv,0)+(max(0.0e0_R8,t1)+rf2*abs(t1))
-           shiva(iCv,3) = shiva(iCv,3)+
-     &        (min(0.0e0_R8,t1)-rf2*abs(t1))/(ni(iCv,0)*ti(iCv))
+           shivc(iCv,0) = shivc(iCv,0)+(1.0e0_R8+rf2)*t0
+           shivc(iCv,3) = shivc(iCv,3)-rf2*t0/(ni(iCv,0)*ti(iCv))
+           shiva(iCv,0) = shiva(iCv,0)+(1.0e0_R8+rf2)*t1
+           shiva(iCv,3) = shiva(iCv,3)-rf2*t1/(ni(iCv,0)*ti(iCv))
 !WG_TODO           b2visa(mpg%cvReg(iCv))=b2visa(mpg%cvReg(iCv))+t0+t1
 !WG_TODO           b2sihs_visa(iCv)=b2sihs_visa(iCv)+t0+t1
         enddo

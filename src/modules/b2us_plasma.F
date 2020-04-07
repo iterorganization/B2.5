@@ -106,7 +106,7 @@
      .                           cdpahz(:,:,:), cvsahz(:,:,:),
      .                           cddi(:,:,:), cvsahz_cl(:,:,:),
      .                           chcb(:,:,:), cvsa_an(:,:,:),
-     .                           cvmahz(:,:,:)
+     .                           cvmahz(:,:,:), cvsahz_eff(:,:,:)
         real(R8), allocatable :: cthe(:,:), cthi(:,:), cvsa_cl(:,:,:)
         real(R8), allocatable :: ceqp(:)
           
@@ -369,6 +369,7 @@ cwdk move to dv
       allocate( coeff % cdpahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsahz_cl( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cvsahz_eff( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvmahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
       allocate( coeff % vsaf_cl( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
@@ -445,6 +446,7 @@ cwdk move to dv
       deallocate( coeff % cdpahz )
       deallocate( coeff % cvsahz )
       deallocate( coeff % cvsahz_cl )
+      deallocate( coeff % cvsahz_eff )
       deallocate( coeff % cvmahz )
 
       deallocate( coeff % vsaf_cl )
