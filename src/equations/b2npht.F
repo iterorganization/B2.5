@@ -168,8 +168,8 @@ c make sure fhn is zero when not solving a separate neutral energy equation
       else
        call b2sihs_ (nCv, nFc, nVx, ns, geo, mpg, BoRiS, ismain, 
      &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%tn, 
-     &  pl%po, dv%ne, dv%ni, dv%fna_fcor, dv%fne, dv%fch, co%cvsa, 
-     &  co%cvsahz, co%cvsahz_cl, she0, shi0, shn0)
+     &  pl%po, dv%ne, dv%ni, dv%fna_fcor, dv%fne, dv%fch, co%cvsa,
+     &  co%cvsahz_eff, she0, shi0, shn0)
       endif
       call b2saxpy (nCv*4, 1.0e0_R8, sr%she, 1, she0, 1)
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shi, 1, shi0, 1)
