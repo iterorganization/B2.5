@@ -22,8 +22,16 @@ module b2mod_ual_io_data
 
     use b2mod_grid_mapping
 #ifdef IMAS
+#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 14
     use b2mod_ual_io_grid &
-     & , only : ids_generic_grid_aos3_root, IDS_real, GridObject, &
+     & , only : ids_generic_grid_aos3_root
+#else
+    use b2mod_ual_io_grid &
+     & , only : ids_generic_grid_dynamic
+#endif
+    use b2mod_ual_io_grid &
+     & , only : IDS_real, GridObject, &
      &          getGridSubsetObject, SPACE_POLOIDALPLANE, &
      &          GridWriteData, IDS_CLASS_CELL, IDS_CLASS_NODE, &
      &          IDS_CLASS_POLOIDALRADIAL_FACE
@@ -208,6 +216,7 @@ contains
         end do
     end function b2_IMAS_Transform_Data_B2_To_IDS_General
 
+#endif
 #else
 #ifdef ITM_ENVIRONMENT_LOADED
 

@@ -37,6 +37,7 @@ module b2mod_ual_io
 
     !! UAL Access
 #ifdef IMAS
+#if IMAS_MINOR_VERSION > 11
     !! B2/CPO Mapping
     use b2mod_ual_io_data &
      & , only : b2_IMAS_Transform_Data_B2_To_IDS, &
@@ -44,14 +45,17 @@ module b2mod_ual_io
     use b2mod_ual_io_grid &
      & , only : findGridSubsetByName, GridWriteData, &
      &          b2_IMAS_Fill_Grid_Desc
+#endif
     use ids_routines       ! IGNORE
 #if IMAS_MINOR_VERSION > 14
     use ids_utility        ! IGNORE
 #endif
+#if IMAS_MINOR_VERSION > 11
     use ids_grid_common , &     ! IGNORE
         &   IDS_COORDTYPE_R => COORDTYPE_R,       &
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
         &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
+#endif
 #else
 #ifdef ITM_ENVIRONMENT_LOADED
     use euITM_schemas   ! IGNORE
@@ -64,6 +68,10 @@ module b2mod_ual_io
 
 #ifdef IMAS
 
+#if IMAS_MINOR_VERSION < 9
+  integer, parameter :: IDS_REAL = R8
+  real(kind=R8), parameter :: IDS_REAL_INVALID = -9.0E40_R8
+#endif
   logical, parameter, private :: INCLUDE_GHOST_CELLS = .false.
 
 contains
@@ -333,6 +341,7 @@ contains
             allocate( edge_sources%code%repository(1) )
             edge_sources%code%repository = "git.iter.org"
 
+#if IMAS_MINOR_VERSION > 14
             allocate( edge_profiles%ids_properties%provider(1) )
             edge_profiles%ids_properties%provider = usrnam()
             allocate( edge_transport%ids_properties%provider(1) )
@@ -349,7 +358,7 @@ contains
             allocate( edge_sources%ids_properties%creation_date(1) )
             edge_sources%ids_properties%creation_date = &
                 &   date//' '//ctime//' '//' '//zone
-
+#endif
 #if IMAS_MINOR_VERSION > 21
             allocate( edge_profiles%ids_properties%version_put%data_dictionary(1) )
             edge_profiles%ids_properties%version_put%data_dictionary = imas_version
@@ -375,6 +384,7 @@ contains
         end if
 
         !! Write grid & grid subsets/subgrids
+#if IMAS_MINOR_VERSION > 11
 #if IMAS_MINOR_VERSION < 15
         call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
             &   edge_profiles%ggd( time_sind )%grid,                        &
@@ -413,6 +423,7 @@ contains
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#endif
 #endif
 
         !! Allocate and set time slice value
@@ -481,7 +492,11 @@ contains
             edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%z_n = zn( is )
 
             ! Put number of atoms
+#if IMAS_MINOR_VERSION < 15
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%multiplicity = 1.0_R8
+#else
             edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%atoms_n = 1
+#endif
 
             ! Put minimum Z of the charge state bundle
             ! (z_min = z_max = 0 for a neutral)
@@ -494,6 +509,7 @@ contains
 
         !! Write plasma state
         if ( B2_WRITE_DATA ) then
+#if IMAS_MINOR_VERSION > 11
             call logmsg( LOGDEBUG, &
             &   "b2mod_ual_io.B25_process_ids: writing plasma state" )
 
@@ -651,6 +667,10 @@ contains
                 &   vectorComponent = edge_profiles%ggd( time_sind )%e_field, &
                 &   b2CellData = bb(:,:,0:2),                                 &
                 &   vectorID = "diamagnetic" )
+#else
+            call logmsg( LOGINFO, &
+            &   "b2mod_ual_io.B25_process_ids: GGD not available, no plasma state writing" )
+#endif
         end if
 
         allocate( edge_profiles%code%output_flag( time_sind ) )
@@ -664,6 +684,7 @@ contains
 
         contains
 
+#if IMAS_MINOR_VERSION > 11
         !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
         !! IMAS IDS data tree node.
         subroutine write_quantity( val, fluxes, value, flux, time_sind )
@@ -683,7 +704,11 @@ contains
             integer :: ggdID     !< Grid identifier index
             integer :: ival
 
+#if IMAS_MINOR_VERSION < 15
+            ggdId = edge_profiles%ggd(time_sind)%grid%identifier%index
+#else
             ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
+#endif
             !! Allocate data fields for 5+4 grid subsets
             allocate( val(9) )
 
@@ -870,7 +895,11 @@ contains
                 !< handing data field values
             integer :: ggdID     !< Grid identifier index
 
+#if IMAS_MINOR_VERSION < 15
+            ggdId = edge_profiles%ggd(time_sind)%grid%identifier%index
+#else
             ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
+#endif
             allocate( scalar(1) )
 
             !! TODO: add checks whether already allocated
@@ -912,7 +941,11 @@ contains
             character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
                                                         !< VEC_ALIGN_RADIAL_ID)
 
+#if IMAS_MINOR_VERSION < 15
+            ggdId = edge_profiles%ggd(time_sind)%grid%identifier%index
+#else
             ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
+#endif
             !! If required, allocate storage
             if ( .not. associated( vectorComponent ) ) then
                 allocate( vectorComponent(1) )
@@ -1048,7 +1081,7 @@ contains
             end select
 
         end subroutine B2grid_Write_Data_Vector_Components
-
+#endif
 #if 0
         !> Write a vector B2 cell quantity to a complexgrid_vector
         subroutine write_cell_vector( vector, align, alignid, vecdata )
@@ -1115,7 +1148,7 @@ contains
 
         end subroutine write_cell_vector
 #endif
-
+#if IMAS_MINOR_VERSION > 11
         !> Write a vector B2 face quantity to a ids_generic_grid_vector
         !! @note    ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
         !!          vector%align and vector%alignid:
@@ -1209,6 +1242,7 @@ contains
             end if
 
         end subroutine write_face_vector
+#endif
     end subroutine B25_process_ids
 
     !> From the B2 grid, compute the coordinate unit vectors
