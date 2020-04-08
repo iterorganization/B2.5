@@ -31,7 +31,7 @@ CPP      = /lib/cpp -C -traditional -ffreestanding
 CPPOPTS  = -C -P -I${srcdir} ${EQUIVS}
 SED      = sed s:\#PREC\#:d:g
 SED      =
-LINK_MOD = 
+LINK_MOD =
 
 ifdef USE_MPI
 FC       = mpiifort
@@ -67,7 +67,7 @@ endif
 
 DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
-DBLSED   = 
+DBLSED   =
 
 INCMOD   = -I
 MOD      = mod
@@ -96,14 +96,26 @@ endif
 
 ifdef IMAS_VERSION
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-GGD_MINOR_VERSION ?= $(shell echo ${EBVERSIONGGD} | cut -d '.' -f2 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 15; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL  ?= `pkg-config imas-ifort ggd --libs` -lxml2 -lstdc++
+INCMODS += `pkg-config imas-ifort ggd --cflags`
+else
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL  ?= `pkg-config imas-ifort --libs` -lggd-ifort -lxml2 -lstdc++
+INCMODS += `pkg-config imas-ifort --cflags`
+else
+GGD_MINOR_VERSION ?= 0
+LD_UAL  ?= `pkg-config imas-lowlevel imas-ifort --libs` -lxml2 -lstdc++
+INCMODS += `pkg-config imas-lowlevel imas-ifort --cflags`
+endif
+endif
 ifndef SOLPS_CPP
 DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif
-LD_UAL  ?= `pkg-config imas-ifort ggd --libs` -lxml2 -lstdc++
-INCMODS += `pkg-config imas-ifort ggd --cflags` 
 IMASLIBS = ${LD_UAL}
 else
 ifdef ITM_ENVIRONMENT_LOADED

@@ -70,8 +70,8 @@ else
 FCOPTS  += -fast -Mvect=nofuse
 endif
 ifdef USE_OPENMP
-FCOPTS += -mp=nonuma
-LDOPTS += -mp=nonuma
+FCOPTS  += -mp=nonuma
+LDOPTS  += -mp=nonuma
 endif
 endif
 
@@ -91,19 +91,42 @@ CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
 ifdef IMAS_VERSION
+GGD_VERSION ?= ${EBVERSIONGGD}
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-GGD_MINOR_VERSION ?= $(shell echo ${EBVERSIONGGD} | cut -d '.' -f2 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-ifndef SOLPS_CPP
-DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
-endif
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
 ifeq (${FC},mpif90)
-LD_UAL  := `pkg-config imas-gfortran --libs` -L/work/imas/opt/EasyBuild/software/GGD/1.9.1-GCC-6.4.0-2.28-DD-3.27.0/lib -lggd
-INCMODS += `pkg-config imas-gfortran --cflags` -I/work/imas/opt/EasyBuild/software/GGD/1.9.1-GCC-6.4.0-2.28-DD-3.27.0/include
+LD_UAL  := `pkg-config imas-gfortran --libs` -L/work/imas/opt/EasyBuild/software/GGD/1.9.0-GCC-6.4.0-2.28/lib -lggd
+INCMODS += `pkg-config imas-gfortran --cflags` -I/work/imas/opt/EasyBuild/software/GGD/1.9.0-GCC-6.4.0-2.28/include
 else
 LD_UAL  ?= `pkg-config imas-pgi ggd --libs`
 INCMODS += `pkg-config imas-pgi ggd --cflags`
+endif
+else
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+ifeq (${FC},mpif90)
+LD_UAL  := `pkg-config imas-gfortran --libs` -lggd-gfortran
+INCMODS += `pkg-config imas-gfortran --cflags`
+else
+LD_UAL  ?= `pkg-config imas-pgi --libs` -lggd-pgi
+INCMODS += `pkg-config imas-pgi --cflags`
+endif
+else
+GGD_MINOR_VERSION ?= 0
+ifeq (${FC},mpif90)
+LD_UAL  := `pkg-config imas-lowlevel imas-gfortran --libs`
+INCMODS += `pkg-config imas-lowlevel imas-gfortran --cflags`
+else
+LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
+INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
+endif
+endif
+endif
+ifndef SOLPS_CPP
+EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif
 IMASLIBS = ${LD_UAL}
 endif

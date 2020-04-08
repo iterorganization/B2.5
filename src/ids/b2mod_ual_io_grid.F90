@@ -22,15 +22,22 @@ module b2mod_ual_io_grid
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
     use b2mod_constants , B2_PI => PI
 #ifdef IMAS
+#if IMAS_MINOR_VERSION > 11
     use ids_string        & ! IGNORE
      & , only : idsInt2str
     use ids_grid_subgrid  & ! IGNORE
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
      &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
      &          CreateExplicitObjectListSingleSpace
+#if IMAS_MINOR_VERSION < 15
+   use ids_grid_object    & ! IGNORE
+     & , only : ids_generic_grid_dynamic
+#else
+   use ids_grid_object    & ! IGNORE
+     & , only : ids_generic_grid_aos3_root
+#endif
     use ids_grid_object   & ! IGNORE
-     & , only : ids_generic_grid_aos3_root, IDS_real, &
-     &          ids_generic_grid_dynamic_grid_subset, &
+     & , only : ids_generic_grid_dynamic_grid_subset, IDS_real, &
      &          GRID_SUBSET_NODES, GRID_SUBSET_FACES, &
      &          GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_X_POINTS, &
      &          GRID_SUBSET_Y_ALIGNED_FACES, GRID_SUBSET_CELLS, &
@@ -39,6 +46,7 @@ module b2mod_ual_io_grid
      & , only : GridWriteData, GridSetupStruct1dSpace
     use ids_grid_common     & ! IGNORE
      & , IDS_GRID_UNDEFINED => GRID_UNDEFINED
+#endif
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
@@ -376,6 +384,7 @@ contains
 
 #ifdef IMAS
 
+#if IMAS_MINOR_VERSION > 11
     !> Routine that fills in a grid description which is part of a IMAS IDS
     !! using the given grid data and prepared mappings
     subroutine b2_IMAS_Fill_Grid_Desc( gmap, grid_ggd, nx, ny, crx, cry,    &
@@ -2383,6 +2392,7 @@ contains
             &   "find_Midplane_Cells: did not find outer midplane position")
     end subroutine find_Midplane_Cells
 
+#endif
 #else
 #ifdef ITM_ENVIRONMENT_LOADED
 
