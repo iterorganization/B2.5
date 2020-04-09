@@ -1129,7 +1129,7 @@ contains
             ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             !! Fill in vector component data
             do i = 1, dim
-#ifdef GGD_OLD
+#if GGD_MINOR_VERSION < 9
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(        &
                     &   edge_profiles%ggd( time_sind )%grid,        &
                     &   GRID_SUBSET_CELLS, gmap, vecdata(:,:,i-1))
