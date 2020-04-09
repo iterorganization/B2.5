@@ -400,16 +400,28 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
 #endif
       call ipgeti ('b2mndr_b2time', b2time)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
-      if (todo.and.(b2time.gt.0 .or. ntim_batch.gt.0)) then
+      if (todo.and.b2time.gt.0) then
         filename='b2time.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(nx, ny, ns, tim)
+          call b2co_time_cdf(nx, ny, ns, tim, .false.)
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
      .               'no b2time.nc file found'
+        end if
+      end if
+      if (todo.and.ntim_batch.gt.0) then
+        filename='b2batch.nc'
+        call find_file(filename,file_exists)
+        if(file_exists) then
+          write(*,*) 'Truncating ', trim(filename)
+          call b2co_time_cdf(nx, ny, ns, tim, .true.)
+          write(*,*) 'Returned from b2co_time_cdf'
+        else
+          write(*,*) 'Skipped calling b2co_time_cdf because '//
+     .               'no b2batch.nc file found'
         end if
       end if
       call ipgeti ('b2stbr_b2wall_netcdf', b2wall_netcdf)

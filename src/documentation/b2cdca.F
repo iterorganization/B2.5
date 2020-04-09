@@ -129,7 +129,7 @@
 *     and cfwuin for integer variables, and cfrure and cfwure for real
 *     variables.
 *     The un*formatted files could easily be replaced by files written
-*     using 'netCDF' or 'HDF' routines if either one of those packages
+*     using 'NetCDF' or 'HDF' routines if either one of those packages
 *     is desired as a standard interface.
 *
 *   ..Concerning internal documentation.
