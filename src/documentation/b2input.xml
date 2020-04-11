@@ -7146,7 +7146,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (-1:NX,-1:NY,0:NS-1,1:2)</type>
 				<description>
-					Contains the physical sputtering yield of species (is) at position (ix,iy) in element (:,:,:,1) and the chemical sputtering yield in element (:,:,:,2).
+					Contains the chemical sputtering yield of species (is) at position (ix,iy) in element (:,:,:,1) and the physical sputtering yield in element (:,:,:,2).
 				</description>
 			</switch>
 			<switch>
@@ -7154,7 +7154,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (-1:NX,-1:NY,0:NS-1,1:2)</type>
 				<description>
-					Contains the energy physical sputtering yield of species (is) at position (ix,iy) in element (:,:,:,1) and the energy chemical sputtering yield in element(:,:,:,2).
+					Contains the energy chemical sputtering yield of species (is) at position (ix,iy) in element (:,:,:,1) and the energy physical sputtering yield in element(:,:,:,2).
 				</description>
 			</switch>
 		</category>
