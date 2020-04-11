@@ -22,22 +22,31 @@ CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 LINK_MOD = 
 
-ifdef USE_MPI
-FC = mpif90
-else
-ifdef USE_IMPGYRO
-FC = mpif90
-else
 FC = pgf90
-endif
-endif
 
+ifndef SOLPS_CPP
+DEFINES += -DPGF90
+endif
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "pgf90 [0-9]*" | cut -d ' ' -f 2 )
+DEFINES += -DCOMPILER_MAJOR_VERSION=${COMPILER_MAJOR_VERSION}
+OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+INCMOD   = -I
+FCOPTS   = -Mbackslash -tp=amd64
+LDOPTS   = -tp px # "-tp px" to fix a compiler bug at JET
 ifdef SOLPS_DEBUG
-FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff -tp=amd64
-LDOPTS = -g -C -tp px # "-tp px" to fix a compiler bug at JET
+FCOPTS  += -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
+LDOPTS  += -g -C
 else
-FCOPTS = -fast -Mvect=nofuse -Mbackslash -tp=amd64
-LDOPTS = -tp px # "-tp px" to fix a compiler bug at JET
+FCOPTS  += -fast -Mvect=nofuse
+endif
+ifdef USE_OPENMP
+FCOPTS  += -mp=nonuma
+LDOPTS  += -mp=nonuma
+endif
+ifdef USE_MPI
+FCOPTS  += -Mmpi=mpich
+INCMODS += ${MPI_CPP}
+LDOPTS  += ${LD_MPI}
 endif
 
 ifdef IMAS_VERSION

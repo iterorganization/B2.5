@@ -26,22 +26,31 @@ CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED =
 LINK_MOD = 
 
-ifdef USE_MPI
-FC = mpif90
-else
-ifdef USE_IMPGYRO
-FC = mpif90
-else
 FC = pgf90
-endif
-endif
 
+ifndef SOLPS_CPP
+DEFINES += -DPGF90
+endif
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "pgf90 [0-9]*" | cut -d ' ' -f 2 )
+DEFINES += -DCOMPILER_MAJOR_VERSION=${COMPILER_MAJOR_VERSION}
+OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+INCMOD   = -I
+FCOPTS   = -Mbackslash -Kieee
+LDOPTS   = -Kieee
 ifdef SOLPS_DEBUG
-FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
-LDOPTS = -g -C -Kieee
+FCOPTS  += -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
+LDOPTS  += -g -C
 else
-FCOPTS = -fast -Mbackslash -Kieee
-LDOPTS = -Kieee
+FCOPTS  += -fast
+endif
+ifdef USE_OPENMP
+FCOPTS += -mp=nonuma
+LDOPTS += -mp=nonuma
+endif
+ifdef USE_MPI
+FCOPTS  += -Mmpi=mpich
+INCMODS += ${MPI_CPP}
+LDOPTS  += ${LD_MPI}
 endif
 
 ifdef IMAS_VERSION
@@ -86,11 +95,7 @@ ifdef LD_CATALYST
 CXXFLAGS = -std=c++11 $(shell paraview-config --include)
 endif
 
-ifdef USE_MPI
-LD = mpif90
-else
 LD = pgf90
-endif
 
 LCPP = ${LD_SONNET}
 

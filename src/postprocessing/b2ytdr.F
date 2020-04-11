@@ -2433,11 +2433,7 @@ c 2002-09-11: logic revised
           ad1spec(:,:,:)=-5
         end if
         open(99,file=trim(filename))
-#ifdef USE_MPI
         read(99,transport,err=999)
-#else
-        read(99,transport)
-#endif
         close(99)
         if(same_bundling.and.nx.eq.nx1.and.ny.eq.ny1) then
           if (first_pass) then
@@ -2753,11 +2749,7 @@ cxpb We must ensure we have not already listed this additional species
         filename = sources_filename
         call find_file(filename,ex)
         open(92,file=trim(filename))
-#ifdef USE_MPI
         read(92,profile,err=999)
-#else
-        read(92,profile)
-#endif
         close(92)
         write(*,*) 'Writing ',trim(new_filename)
         write(nout(5),'(a)') trim(new_filename)
@@ -3425,11 +3417,7 @@ cxpb This will need to be checked !!!
         rescale_br=1.0_R8
         open(99,file=filename)
         write(*,*) 'Reading '//trim(filename)
-#ifdef USE_MPI
         read(99,atomic_physics_rescale,err=999)
-#else
-        read(99,atomic_physics_rescale)
-#endif
         close(99)
         write(*,*) 'Read '//trim(filename)
         call xertst (min(
@@ -10329,11 +10317,7 @@ cxpb as they no longer necessarily point to the same species
           filename='b2.sputter_save.parameters'
           call find_file(filename,ex)
           open(99,file=filename)
-#ifdef USE_MPI
           read(99,sputter_save,err=999)
-#else
-          read(99,sputter_save)
-#endif
           close(99)
 *  ..convert the sputter namelist data
           natmm = max(natm,natm1)
