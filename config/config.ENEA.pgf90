@@ -42,6 +42,11 @@ ifdef USE_OPENMP
 FCOPTS += -mp=nonuma
 LDOPTS += -mp=nonuma
 endif
+ifdef USE_MPI
+FCOPTS  += -Mmpi=mpich
+INCMODS += ${MPI_CPP}
+LDOPTS  += ${LD_MPI}
+endif
 
 ifdef IMAS_VERSION
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
