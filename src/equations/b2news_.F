@@ -95,7 +95,8 @@
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
      3  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), zeff(-1:nx,-1:ny),          !srv 05.07.17
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
-     &  zero(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)                         !lk 31.01.08 {
+     &  zero(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny),                        !lk 31.01.08 {
+     &  fna_53(-1:nx,-1:ny,0:1,0:ns-1), fne_53(-1:nx,-1:ny,0:1)
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical inverted_ua, new_matrix
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                   !srv 09.07.99
@@ -421,7 +422,7 @@ csw 01oct2012 initialize potential if necessary
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), fna_53(-1,-1,0,is),
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .true.)                                                         !djm Jan2017
         enddo                                                            !srv 01.10.99
@@ -628,7 +629,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), fna_53(-1,-1,0,is),
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .true.)                                                         !djm Jan2017
 !        call b2tfco (nx, ny, is, na(-1,-1,is), te, ti, pb,
@@ -744,7 +745,7 @@ csw 16oct2012 init ier0
      1   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),fna_53(-1,-1,0,is),
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .false.)                                                        !djm Jan2017
       enddo
@@ -862,10 +863,6 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         call my_out(70,nx,ny,po,'b2news__po'//charns)
       endif                                                              !srv 12.07.05 }
 
-
-      call b2xpen (nx, ny, ns, fna, fne, fch, fhe, fhi, kinrgy, rpt,
-     2      te, ti, po, BoRiS, fhm, fhp, fhj, fht)
-
       if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
         call b2xprz (nx, ny, ns, mp, am, na, rz)
         call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
@@ -917,6 +914,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &       fna_mdf(-1,-1,0,is),                                        !srv 13.10.06
      &       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &       fna_53(-1,-1,0,is),
      &       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &       .false.)                                                    !djm Jan2017
           enddo
@@ -932,6 +930,8 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 c      with diamagnetic drift part                                       !srv 13.05.99
       call b2xpfe (nx, ny, ns, ns_ext, qe,
      . rza, za_ext, fna_he, fa_ext, fch_p, fne)                          !srv 13.05.99 21.01.00 11.10.02
+      call b2xpfe (nx, ny, ns, ns_ext, qe,
+     . rza, za_ext, fna_53, fa_ext, fch_p, fne_53)                       !ajs 06.04.20
       call b2xpfe (nx, ny, ns, ns_ext, qe,
      1 rza, za_ext, fna_32nd, fa_ext, fch_32, fne_32)
       call b2xpfe (nx, ny, ns, 0, qe,
@@ -955,8 +955,12 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        floi_noc = floi                                                   !srv 24.10.02
        floe_noc = floe                                                   !srv 24.10.02
       call b2xpen (nx, ny, ns,
-     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2 fhm, fhp, fhj, fht)
+     1 fna, fne, fna_53, fne_53, fch, fhe, fhi, kinrgy, rpt, te, ti,
+     2 po, BoRiS, fhm, fhp, fhj, fht)
+      if (iout_b2wdat.eq.4) then
+       call my_out(70,nx,ny,fht(-1,-1,0),'b2news__fhtx')
+       call my_out(70,nx,ny,fht(-1,-1,1),'b2news__fhty')
+      endif
 *   ..add contribution from cdpa to floe, cone, floi, coni
       call b2tfcc (nx, ny, ns, na, te, ti, cdpa, floe, cone,
      &  floi, coni)
@@ -1072,7 +1076,7 @@ c   recompute particle fluxes
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), fna_53(-1,-1,0,is),
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .true.)                                                        !djm Jan2017
 
@@ -1193,7 +1197,7 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), fna_53(-1,-1,0,is),
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .false.)                                                        !djm Jan2017
        enddo                                                             !srv 01.10.99

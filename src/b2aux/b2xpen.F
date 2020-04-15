@@ -1,5 +1,5 @@
-      subroutine b2xpen (nx, ny, ns,
-     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
+      subroutine b2xpen (nx, ny, ns, fna, fne, 
+     1 fna_53, fne_53, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
       use b2mod_types
       use b2mod_indirect
@@ -8,11 +8,13 @@
       integer nx, ny, ns
 ! inputs
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
-     *  fne(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     1  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1),
-     2  kinrgy(-1:nx,-1:ny,0:ns-1), rpt(-1:nx,-1:ny,0:ns-1),
-     3  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny), BoRiS
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1), 
+     *  fne(-1:nx,-1:ny,0:1), fna_53(-1:nx,-1:ny,0:1,0:ns-1),
+     1  fne_53(-1:nx,-1:ny,0:1),
+     2  fch(-1:nx,-1:ny,0:1),
+     2  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1),
+     3  kinrgy(-1:nx,-1:ny,0:ns-1), rpt(-1:nx,-1:ny,0:ns-1),
+     4  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny), BoRiS
 ! outputs
       real (kind=R8) ::
      &  fhm(-1:nx,-1:ny,0:1,0:ns-1), fhp(-1:nx,-1:ny,0:1,0:ns-1),
@@ -39,13 +41,13 @@ c calculate additional fluxes (fhj, fhm, fhp)
           if(leftix(ix,iy).ge.-1) then
             fhj(ix,iy,0)=-fch(ix,iy,0)*
      1       (po(ix,iy)+po(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
-            fnt(ix,iy,0)=fne(ix,iy,0)*
+            fnt(ix,iy,0)=fne_53(ix,iy,0)*
      1       (te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
           endif
           if(bottomiy(ix,iy).ge.-1) then
             fhj(ix,iy,1)=-fch(ix,iy,1)*
      1       (po(ix,iy)+po(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
-            fnt(ix,iy,1)=fne(ix,iy,1)*
+            fnt(ix,iy,1)=fne_53(ix,iy,1)*
      1       (te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
           endif
         enddo
@@ -58,7 +60,7 @@ c calculate additional fluxes (fhj, fhm, fhp)
      2         (kinrgy(leftix(ix,iy),leftiy(ix,iy),is)+kinrgy(ix,iy,is))
               fhp(ix,iy,0,is)=0.5_R8*fna(ix,iy,0,is)*
      2         (rpt(leftix(ix,iy),leftiy(ix,iy),is)+rpt(ix,iy,is))*ev
-              fnt(ix,iy,0)=fnt(ix,iy,0)+0.5_R8*fna(ix,iy,0,is)*
+              fnt(ix,iy,0)=fnt(ix,iy,0)+0.5_R8*fna_53(ix,iy,0,is)*
      2         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
             endif
             if(bottomiy(ix,iy).ge.-1) then
@@ -68,7 +70,7 @@ c calculate additional fluxes (fhj, fhm, fhp)
               fhp(ix,iy,1,is)=0.5_R8*fna(ix,iy,1,is)*
      2         (rpt(bottomix(ix,iy),bottomiy(ix,iy),is)+
      1          rpt(ix,iy,is))*ev
-              fnt(ix,iy,1)=fnt(ix,iy,1)+0.5_R8*fna(ix,iy,1,is)*
+              fnt(ix,iy,1)=fnt(ix,iy,1)+0.5_R8*fna_53(ix,iy,1,is)*
      2         (ti(bottomix(ix,iy),bottomiy(ix,iy))+
      1          ti(ix,iy))
             endif

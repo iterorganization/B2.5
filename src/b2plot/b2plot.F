@@ -43,6 +43,7 @@ c 2002-09-11: logic revised
       use b2mod_b2cmpb
       use b2mod_ranges
       use b2mod_external
+      use b2mod_version  ! ajs 07.04.20
 #ifdef NAGF95
       use f90_unix       ! IGNORE
 #endif
@@ -540,9 +541,12 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
-      call b2xpen (nx, ny, ns,
-     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2 fhm, fhp, fhj, fht)
+!ajs 07.04.20 only recalculate in older version, now in b2mod_plasma
+      if (b2fplasma_version.lt.'03.000.007') then
+        call b2xpen (nx, ny, ns,
+     1    fna, fne, fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti,
+     2    po, BoRiS, fhm, fhp, fhj, fht)
+      endif
 c calculate divergences of the various fluxes
       do is=0,ns-1
         do iy=-1,ny

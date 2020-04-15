@@ -88,7 +88,8 @@
      6  ue(-1:nx,-1:ny), zeff(-1:nx,-1:ny), pz(-1:nx,-1:ny),             !srv 05.07.17
      7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny),
      &  rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),                          !iyv 06.02.14
-     &  fchstoch(-1:nx,-1:ny)                                            !srv 17.12.13
+     &  fchstoch(-1:nx,-1:ny),                                           !srv 17.12.13
+     &  fna_53(-1:nx,-1:ny,0:1,0:ns-1)
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical new_matrix
@@ -427,6 +428,7 @@
      &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                      !srv 13.10.06
      1    flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &    fna_53(-1,-1,0,is),
      2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .true.)               !djm Jan2017
         enddo
 !$OMP END PARALLEL DO
@@ -636,6 +638,7 @@ cxpb
      &     fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                     !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1     fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &     fna_53(-1,-1,0,is),
      1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .true.)              !djm Jan2017
           if (ncall.eq.ncallout) then
             write(*,*) 'ncall,is',ncall,is
@@ -744,6 +747,7 @@ cxpb
      &       fnaPSch(-1,-1,0,is),fna_mdf(-1,-1,0,is),                    !srv 13.10.06
      1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &       fna_53(-1,-1,0,is),
      1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)           !djm Jan2017
 !          endif                                                         !srv 22.05.18
         enddo
@@ -828,8 +832,8 @@ cxpb
      3         fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,          !srv 13.10.06
      &         .false.)                                                  !djm Jan2017
               call b2xpen (nx, ny, ns,
-     1         fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2         fhm, fhp, fhj, fht)
+     1         fna, fne, fna ,fne ,fch, fhe, fhi, kinrgy, rpt, te,       !ajs 07.04.20
+     2         ti, po, BoRiS, fhm, fhp, fhj, fht)
               if(recalculate_contributions.ne.0) then
 *     ..update sources                                                   !xpb
                 call b2sral (nx, ny, ns, nxtl, nxtr,
@@ -975,6 +979,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      &             fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),             !srv 13.10.06
      1             flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1             fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &             fna_53(-1,-1,0,is),
      &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)     !djm Jan2017
                 enddo
 !$OMP END PARALLEL DO
@@ -1062,8 +1067,8 @@ c     with diamagnetic drift part                                        !xpb
      3   fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,                !srv 13.10.06
      &   .true.)                                                         !djm Jan2017
         call b2xpen (nx, ny, ns,
-     1   fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2   fhm, fhp, fhj, fht)
+     1   fna, fne, fna,fne,fch, fhe, fhi, kinrgy, rpt, te, ti,     !ajs 07.04.20
+     2   po, BoRiS, fhm, fhp, fhj, fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
         call b2tfcc (nx, ny, ns, na, te, ti, cdpa, floe, cone,
      &   floi, coni)
