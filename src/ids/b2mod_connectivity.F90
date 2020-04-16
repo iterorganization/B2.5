@@ -158,25 +158,25 @@ module b2mod_connectivity
         & & ! GEOMETRY_SN Single null
         &   'Core                            ',                         &
         &   'SOL                             ',                         &
-        &   'Inner divertor                  ',                         &
-        &   'Outer divertor                  ',                         &
+        &   'Western divertor                ',                         &
+        &   'Eastern divertor                ',                         &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                     &
         & &
-        &   'Inner target                    ',                         &
-        &   'Inner throat                    ',                         &
-        &   'Outer throat                    ',                         &
-        &   'Outer target                    ',                         &
+        &   'Western target                  ',                         &
+        &   'Western throat                  ',                         &
+        &   'Eastern throat                  ',                         &
+        &   'Eastern target                  ',                         &
         &   'Core cut                        ',                         &
         &   'PFR cut                         ',                         &
         &   UU, UU, UU, UU, UU, UU, UU, UU,                             &
         & &
-        &   'Inner PFR wall                  ',                         &
+        &   'Western PFR wall                ',                         &
         &   'Core boundary                   ',                         &
-        &   'Outer PFR wall                  ',                         &
+        &   'Eastern PFR wall                ',                         &
         &   'Separatrix                      ',                         &
-        &   'Inner baffle                    ',                         &
+        &   'Western baffle                  ',                         &
         &   'Main chamber wall               ',                         &
-        &   'Outer baffle                    ',                         &
+        &   'Eastern baffle                  ',                         &
         &   UU, UU, UU, UU, UU, UU, UU,                                 &
         & & ! GEOMETRY_CDN Connected double null
         &   'Inner core                      ',                         &
@@ -990,8 +990,8 @@ contains
     ! Cases with one X-point:
     ! region 1 === core
     ! region 2 === SOL
-    ! region 3 === inboard divertor
-    ! region 4 === outboard divertor
+    ! region 3 === Western divertor (inboard for LSN, outboard for USN)
+    ! region 4 === Eastern divertor (outboard for LSN, inboard for USN)
     ! region 5 === island
     !
     !                           +++++++++++++++++++++++++
@@ -1886,12 +1886,12 @@ contains
         enddo
       end if  ! DN
       do iy=topcut(1),iyt
-! We find the location of the inner divertor throat: x-region 2
+! We find the location of the Western divertor throat: x-region 2
         geoType = cellGeoType(crx(leftcut(1),iy,:), cry(leftcut(1),iy,:))
         if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE)) &
                  & .and. geoType /= CGEO_TRIA_NOLEFT) &
      &   region(leftcut(1),iy,1) = 2
-! We find the location of the outer divertor throat: x-region 3 (1 X-point) or 7 (2 X-points)
+! We find the location of the Eastern divertor throat: x-region 3 (1 X-point) or 7 (2 X-points)
         geoType = cellGeoType(crx(rightcut(1),iy,:), cry(rightcut(1),iy,:))
         if (isRealCell(cflag(rightcut(1),iy,CELLFLAG_TYPE)) &
                  & .and. geoType /= CGEO_TRIA_NOLEFT) &

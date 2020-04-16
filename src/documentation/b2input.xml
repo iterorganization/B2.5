@@ -91,7 +91,7 @@
 				<name>cbregs</name>
 				<default>None</default>
 				<description>
-					specifies the number of regions where boundary conditions will be specified the 'south' boundary is broken into three pieces with one quarter of the cells in the first region, half ofthe cells in the second, and the remaining quarter in the third region (inner target private flux, core, outerprivate flux). This is geometry-dependent information the code will check against the mesh connectivity and return an error if the two do not match the 'north', 'west' and 'east' are not broken up, and correspond to the SOL boundary, inner target andouter target, respectively. For double-null cases, the north boundary should be split into two sections
+					specifies the number of regions where boundary conditions will be specified the 'south' boundary is broken into three pieces with one quarter of the cells in the first region, half of the cells in the second, and the remaining quarter in the third region (Western target private flux, core, Eastern target private flux). This is geometry-dependent information the code will check against the mesh connectivity and return an error if the two do not match the 'north', 'west' and 'east' are not broken up, and correspond to the SOL boundary, inner (outer) target and outer (inner) target, respectively for lower (upper) single-null topologies. For double-null cases, the north boundary should be split into two sections.
 				</description>
 			</switch>
 			<switch>
@@ -249,8 +249,12 @@
 				<type>integer</type>
 				<description>
 					Cell index, on the basis mesh, of the outer midplane. Default value depends on geometry:
-					Single-null : jxa=rightcut1(1)-(rightcut1(1)-leftcut1(1))/4, i.e. three quarters of the way between the two cuts.
-					Double-null : jxa=(rightcut1(1)+rightcut1(2))/2, i.e. halfway between the two outer cuts. Straight geometry : jxa=3*nx/4
+					Lower Single-null  : jxa=rightcut(1)-(rightcut(1)-leftcut(1))/4, i.e. three quarters of the way between the two cuts.
+					Upper Single-null  : jxa=leftcut(1)+(rightcut(1)-leftcut(1))/4, i.e. one quarter of the way between the two cuts.
+					Stellarator island : jxa=leftcut(1)+(rightcut(1)-leftcut(1))/2, i.e. midway between the two cuts.
+					Double-null        : jxa=(rightcut(1)+rightcut(2))/2, i.e. halfway between the two outer cuts.
+					Limiter geometry   : jxa=nx/2
+					Straight geometry  : jxa=nx/2
 				</description>
 			</switch>
 			<switch>
@@ -259,8 +263,12 @@
 				<type>integer</type>
 				<description>
 					Cell index, on the basis mesh, of the inner midplane. Default value depends on geometry:
-					Single-null : jxi=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4, i.e. one quarter of the way between the two cuts. Double-null : jxi=(leftcut1(1)+leftcut1(2))/2, i.e. halfway between the two inner cuts.
-					Straight geometry : jxi=nx/4
+					Lower Single-null  : jxi=leftcut(1)+(rightcut(1)-leftcut(1))/4, i.e. one quarter of the way between the two cuts.
+					Upper Single-null  : jxi=rightcut(1)-(rightcut(1)-leftcut(1))/4, i.e. three quarters of the way between the two cuts.
+					Stellarator island : jxi=leftcut(1)+(rightcut(1)-leftcut(1))/4, i.e. one quarter of the way between the two cuts.
+					Double-null        : jxi=(leftcut(1)+leftcut(2))/2, i.e. halfway between the two inner cuts.
+					Limiter geometry   : jxi=nx/4
+					Straight geometry  : jxi=nx/4
 				</description>
 			</switch>
 			<switch>
@@ -269,7 +277,9 @@
 				<type>integer</type>
 				<description>
 					Cell index, on the basis mesh, of the last poloidal ring before the separatrix. Can only be provided for slab geometries, otherwise calculated from geometry:
-					Single-null : jsep=topcut1(1)-1. Double-null : jsep=min(topcut1(1),topcut1(2))-1.
+					Single-null : jsep=topcut(1)-1
+					Stellarator : jsep=topcut(1)-1
+					Double-null : jsep=min(topcut(1),topcut(2))-1
 					Default for straight geometries : jsep=ny/2
 				</description>
 			</switch>
@@ -1482,7 +1492,7 @@
 			  <default>0.01</default>
 			  <type>real</type>
 			  <description>
-				Under-relaxation factor used for feedback scheme in boundary condition types BCCON=16,19,22,23,26, and 27.
+				Under-relaxation factor used for feedback scheme in boundary condition types BCCON = 16, 19, 22, 23, 26, and 27.
 			  </description>
 			</switch>
 			<switch>
@@ -1490,7 +1500,7 @@
 			  <default>0.01</default>
 			  <type>real</type>
 			  <description>
-				Under-relaxation factor used for feedback scheme in boundary condition type BCENE=16 (with bcene_16_style.eq.1).
+				Under-relaxation factor used for feedback scheme in boundary condition type BCENE = 16 (with bcene_16_style.eq.1).
 			  </description>
 			</switch>
 			<switch>
@@ -1498,7 +1508,7 @@
 			  <default>0.01</default>
 			  <type>real</type>
 			  <description>
-				Under-relaxation factor used for feedback scheme in boundary condition types BCENI=16 (with bceni_16_style.eq.1), 24, and 27.
+				Under-relaxation factor used for feedback scheme in boundary condition types BCENI = 16 (with bceni_16_style.eq.1), 24, and 27.
 			  </description>
 			</switch>
 			<switch>
@@ -1696,7 +1706,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					When set to '0.0', the old form of the electron heat flux calculation is used. It is recommended to use 1.0.
+					When set to '1.0', the old form of the electron heat flux calculation is used and b2tfhe_fch_pTe should be set to '0.0'. It is recommended to use 0.0.
 				</description>
 			</switch>
 			<switch>
@@ -1704,7 +1714,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					When set to '1.0', the new form of the electron heat flux calculation is used. It is recommended to use 1.0.
+					When set to '1.0', the new form of the electron heat flux calculation is used and b2tfhe_alfTeEh should be set to '0.0'. It is recommended to use 1.0.
 				</description>
 			</switch>
 			<switch>
@@ -1754,8 +1764,12 @@
 				<type>integer</type>
 				<description>
 					Poloidal index (on the basis mesh) of the reference surface for the flux-scaled transport model. The default value is the outer midplane, computed as such (see b2mwti_jxa in Geometry section or set_transport_ixref below):
-					Single-null : ixref=rightcut1(1)-(rightcut1(1)-leftcut1(1))/4.
-					Double-null : ixref=(rightcut1(1)+rightcut1(2))/2. Straight geometry : ixref=3*nx/4.
+					Lower Single-null  : ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+					Upper Single-null  : ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+					Stellarator island : ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
+					Double-null        : ixref=(rightcut(1)+rightcut(2))/2
+					Limiter geometry   : ixref=nx/2
+					Straight geometry  : ixref=nx/2
 					The flux-scaled transport model is used in conjunction with scaling factors listed in column (7) of the transport coefficients description in input files b2ah.dat and b2mn.dat.
 				</description>
 			</switch>
@@ -1763,16 +1777,24 @@
 				<name>b2tqna_user_transport...</name>
 				<description>
 					The last switch is subservient to b2tqna_user_transport, and only used if user_transport.ne.0. When this is the case, the electron perpendicular heat diffusivity and anomalous perpendicular particle transport coefficient are scaled so as to maintain the required_te_gradient (in units of eV/m), at the location (ixref,iyref) on the basis mesh. The default position of the reference cell is on the outer midplane, sligthly inside the separatrix, as follows:
-					Configuration |     ixref                    |     iyref
-					---------------+------------------------------+----------------------
-					Single-null   | rightcut1(1)-                | 2*topcut1(1)/3
-					| (rightcut1(1)-leftcut1(1))/4 |
-					|                              |
-					Double-null   | (rightcut1(1)+rightcut1(2))/2| 2*min(topcut1(1),
-					|                              | topcut1(2))/3
-					|                              |
-					Straight      | 3*nx/4                       | ny/2
-					|                              |
+					|Configuration|     ixref                    |     iyref
+					--------------+------------------------------+----------------------
+					|Single-null  | rightcut(1)-                 | 2*topcut(1)/3
+					| (lower)     | (rightcut(1)-leftcut(1))/4   |
+					|             |                              |
+					|Single-null  | leftcut(1)+                  | 2*topcut(1)/3
+					| (upper)     | (rightcut(1)-leftcut(1))/4   |
+					|             |                              |
+					|Stellarator  | leftcut(1)+                  | 2*topcut(1)/3
+					| island      | (rightcut(1)-leftcut(1))/2   |
+					|             |                              |
+					|Double-null  | (rightcut(1)+rightcut(2))/2  | 2*min(topcut(1),
+					|             |                              |       topcut(2))/3
+					|             |                              |
+					|Limiter      | nx/2                         | 2*topcut(1)/3
+					|             |                              |
+					|Straight     | nx/2                         | ny/2
+
 					The transport_eta switches are activated when user_transport.eq.3 and allow modifications of the electron heat conductivity according to a constant eta (Grad Te / Grad Ne) model. See routine set_transport_eta code for details.
 					A model for disruption transport coefficients is available with user_transport.eq.7. See routine set_transport_disruption code for details.
 					The value user_transport.eq.8 activates the neoclassical model for computation of the transport coefficients in the core. See routine set_transport_neo and subroutines called for details. Implemented from the NEOART package.
@@ -2076,7 +2098,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					if style = 0 then it is applied the origin flux limit to the viscosity else it is applied the SPb flux limit to the viscosity
+					If style = 0 then the original form of the viscosity flux limit is used, otherwise the SPb flux limit is used.
 				</description>
 			</switch>
 			<switch>
@@ -2308,22 +2330,22 @@
 					This multiplication is to only take place for charged species.
 				</description>
 			</switch>
-			<switch>
-				<name>eirene_lhalpha</name>
-				<default>1</default>
-				<type>integer</type>
+			<switchgroup>
+			  <name>eirene_l*</name>
 				<description>
 					Deprecated. Use "DEFINE_LINES" in block 12 of Eirene input file instead.
 				</description>
-			</switch>
-			<switch>
-				<name>eirene_lvib</name>
-				<default>1</default>
-				<type>integer</type>
-				<description>
-					Deprecated. Use "DEFINE_LINES" in block 12 of Eirene input file instead.
-				</description>
-			</switch>
+				<switch>
+				  <name>eirene_lhalpha</name>
+				  <default>1</default>
+				  <type>integer</type>
+				</switch>
+				<switch>
+				  <name>eirene_lvib</name>
+				  <default>1</default>
+				  <type>integer</type>
+				</switch>
+			</switchgroup>
 			<switch>
 				<name>eirene_repeat_first_call</name>
 				<default>1</default>
@@ -2499,7 +2521,7 @@
 				<default>500</default>
 				<type>integer</type>
 				<description>
-					If ntim_batch.gt.0, number of iterations used to compute batch averages.
+					If ntim_batch.gt.0, number of iterations used to compute batch averages, written out in 'b2batch.nc'.
 				</description>
 			</switch>
 			<switch>
@@ -2657,9 +2679,18 @@
 				<name>b2stbr_*_netcdf</name>
 				<description>
 					If tallies_netcdf.ne.0, the file 'b2tallies.nc' is created, which contains the regional tallies in CDF format. If b2mndr_stim.lt.0, data from the current run is appended to the existing b2tallies.nc file, otherwise the file is overwritten.
+					If b2mndt_av_ntim_batch.gt.0, the file 'b2batch.nc' is created, which contains the batch averages of the tallies.
 					If b2wall_netcdf.ne.0, the file 'b2wall.nc' is created, which contains the wall tallies in CDF format [written every b2wall_netcdf main calls]. If b2mndr_stim.lt.0, data from the current run is appended to the existing b2wall.nc file, otherwise the file is overwritten.
 					If balance_netcdf.ne.0, the file 'balance.nc' is created, which contains all of the arrays required by the balance post-processing routines, in CDF format.
 					If balance_average.ne.0, the balance arrays are averaged over all b2mndr_ntim timesteps.
+					The NetCDF files are written using the format selected by means of the b2mndr_cdf_default switch. The possible formats are:
+					0: local NetCDF library default
+					1: NetCDF classic format
+					2: 64 bit format
+					3: NetCDF4 format
+					4: NetCDF4 classic format
+					5: 64 bit data format.
+					Format availability depends on local NetCDF library implementation.
 				</description>
 				<switch>
 					<name>tallies_netcdf</name>
@@ -2680,6 +2711,11 @@
 					<name>balance_average</name>
 					<default>0</default>
 					<type>integer</type>
+				</switch>
+				<switch>
+				  <name>b2mndr_cdf_default</name>
+				  <default>0</default>
+				  <type>integer</type>
 				</switch>
 			</switchgroup>
 			<switch>
@@ -6020,6 +6056,7 @@
 						6: neutral particle flux through the core boundary.
 						7: relative average concentration of this species at the separatrix.
                                                 8: relative average concentration of this species averaged over the rectangle of cells[IX1:IX2,IY1:IY2].
+                                                9: inner midplane separatrix electron density.
 				</description>
 			</switch>
 			<switch>
@@ -6478,6 +6515,14 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>SOLVEMT</name>
+			  <default>.true.</default>
+			  <type>logical array of size (0:NREG)</type>
+			  <description>
+				Indicates whether the total parallel momentum equation is to be solved in region (ireg). For the total parallel momentum equation to be solved in a region, all momentum equations in the range defined by 'b2news_nsmin' and 'b2news_nsmax' must have SOLVEMO true in that region. Subservient to 'no_solve' switch. It is important to note that the 'b2news_no_solve' switch allows for solving or not all momentum equations together as a whole, along with the total equation.
+			  </description>
+			</switch>
+			<switch>
 				<name>SOLVEMO</name>
 				<default>.true.</default>
 				<type>logical array of size (0:NS-1,0:NREG)</type>
@@ -6898,7 +6943,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (inner divertor, edge closest to target). If non-positive, counted backwards from the X-point location in the lower PFR, from the inner upper target in the upper PFR, from the lower outer target in the outer SOL, and from the inner upper target in the inner SOL.
+					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (Western divertor, edge closest to target). If non-positive, counted backwards from the X-point location in the lower PFR, from the inner upper target in the upper PFR, from the lower outer target in the outer SOL, and from the inner upper target in the inner SOL.
 				</description>
 			</switch>
 			<switch>
@@ -6906,7 +6951,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (outer divertor, edge closest to target). If non-positive, counted backwards from the outer lower target in the lower PFR, from the lower outer target in the outer SOL, from the upper outer target in the upper PFR, and from the inner upper target in the inner SOL.
+					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (Eastern divertor, edge closest to target). If non-positive, counted backwards from the outer lower target in the lower PFR, from the lower outer target in the outer SOL, from the upper outer target in the upper PFR, and from the inner upper target in the inner SOL.
 				</description>
 			</switch>
 			<switch>
@@ -6914,7 +6959,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (inner side, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
+					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (Western divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
 				</description>
 			</switch>
 			<switch>
@@ -6922,7 +6967,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (outer divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
+					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (Eastern divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
 				</description>
 			</switch>
 			<switch>
@@ -7116,7 +7161,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (-1:NX,-1:NY,0:NS-1,1:2)</type>
 				<description>
-					Contains the physical sputtering yield of species (is) at position (ix,iy) in element (:,:,:,1) and the chemical sputtering yield in element (:,:,:,2).
+					Contains the chemical sputtering yield of species (is) at position (ix,iy) in element (:,:,:,1) and the physical sputtering yield in element (:,:,:,2).
 				</description>
 			</switch>
 			<switch>
@@ -7124,7 +7169,7 @@
 				<default>0.0</default>
 				<type>real*8 array of size (-1:NX,-1:NY,0:NS-1,1:2)</type>
 				<description>
-					Contains the energy physical sputtering yield of species (is) at position (ix,iy) in element (:,:,:,1) and the energy chemical sputtering yield in element(:,:,:,2).
+					Contains the energy chemical sputtering yield of species (is) at position (ix,iy) in element (:,:,:,1) and the energy physical sputtering yield in element(:,:,:,2).
 				</description>
 			</switch>
 		</category>

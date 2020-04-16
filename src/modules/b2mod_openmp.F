@@ -25,7 +25,7 @@
      &  get_num_threads(),' threads.'
 #else
       write(*,*) 'B2.5 running in serial mode, without ',
-     &  'OpenMP threads.'
+     & 'OpenMP threads.'
 #endif
       end subroutine
 

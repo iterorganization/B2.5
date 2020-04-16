@@ -76,7 +76,7 @@ c
       hlp_p=0.0_R8
       hlp_s=0.0_R8
 c
-c*** Inner divertor
+c*** Western edge (inner target for LSN, outer target for USN, lower inner target for DN)
       hlp_pi=0.0_R8
       hlp_si=0.0_R8
       if (lpfrb_i.ge.0) then
@@ -111,7 +111,7 @@ c*** Inner divertor
         hlp_pi(0)=hlp_pi(0)+hlp*gs(j,0,1)
       end do
 c
-c*** Outer divertor
+c*** Eastern edge (outer target for LSN, inner target for USN, lower outer target for DN)
       hlp_po=0.0_R8
       hlp_so=0.0_R8
       if (lpfrt_o.ge.0) then

@@ -2392,18 +2392,24 @@ c
      2                hy1(ix,iy)
             endif
           end do
-          write(*,*) 'Midplane pressure: ',sumjxa
-          write(*,*) 'Inner target:      ',suml(1)
-          write(*,*) 'Outer target:      ',sumr(1)
-          write(*,*) 'Pressure drop (inner & outer): ',
-     1             suml(1)/sumjxa,sumr(1)/sumjxa
-          if(nnreg(0).eq.8) then
-            write(*,*) 'Second X-point: '
-            write(*,*) 'Midplane pressure: ',sumjxi
-            write(*,*) 'Inner target:      ',suml(2)
-            write(*,*) 'Outer target:      ',sumr(2)
+          if(nnreg(0).le.5) then
+            write(*,*) 'Midplane pressure: ',sumjxa
+            write(*,*) 'Western target:    ',suml(1)
+            write(*,*) 'Eastern target:    ',sumr(1)
             write(*,*) 'Pressure drop (inner & outer): ',
-     1             suml(2)/sumjxi,sumr(2)/sumjxi
+     1             suml(1)/sumjxa,sumr(1)/sumjxa
+          else if(nnreg(0).eq.8) then
+            write(*,*) 'Outer midplane pressure: ',sumjxa
+            write(*,*) 'Outer top target:        ',suml(2)
+            write(*,*) 'Outer bottom target:     ',sumr(1)
+            write(*,*) 'Pressure drop (top & bottom): ',
+     1             suml(2)/sumjxa,sumr(1)/sumjxa
+            write(*,*) ' '
+            write(*,*) 'Inner midplane pressure: ',sumjxi
+            write(*,*) 'Inner top target:        ',sumr(2)
+            write(*,*) 'Inner bottom target:     ',suml(1)
+            write(*,*) 'Pressure drop (top & bottom): ',
+     1             sumr(2)/sumjxi,suml(1)/sumjxi
           endif
           call copy(mach,1.0_R8,nz,textbl)
         case ('conn')
@@ -6362,7 +6368,7 @@ cdpc still in testing phase
           write(hlp_frm,'(a,i3,a)') '(2i4,1p,',nz,'(1x,1e12.5))'
           do iy=iy1,iy2
             do ix=ix1,ix2
-              write(99,hlp_frm) ix,iy,work(ix,iy,0:nz-1,iwrk)
+              write(99,hlp_frm) ix,iy,(work(ix,iy,i,iwrk),i=0,nz-1)
             enddo
           enddo
           close(99)

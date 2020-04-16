@@ -576,6 +576,7 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
       do j=1,ntrgts !{
         jj=j
         if(j.eq.ntrgts) jj=ntrgsx
+        if(.not.LSN) jj=ntrgsx+1-jj
         open(lun,file=ftrg(jj,1))
         write(fmt_peak,710) nclm_ld,tab
         write(lun,740) 'Target loading - ',trg_label(jj),label
@@ -730,6 +731,11 @@ c
         if(j.eq.1 .or. ntrgts.eq.4) then !{
           open(lun,file=fn_hlp)
           write(lun,740) 'Peak powers ',pkl_label(j),label
+          if(.not.LSN) then
+            i3=i2
+            i2=i1
+            i1=i3
+          endif
           i3=i2-i1
           if (i3.eq.0 .and. ntrgts.eq.1) i3=1
           wpk_tt(0)=max(wpk_tt(i1),wpk_tt(i2))
@@ -761,10 +767,10 @@ c
      ,      tab,'peak_tei',tl,tab,'peak_nei',tl
           end if
           write(lun,fmt_peak) tim,
-     ,     (wpk_tt(i),i=i1,i2,i3), wpk_tt(0), (wlc_tt(i),i=1,2),
-     ,     (wpk_rd(i),i=i1,i2,i3), wpk_rd(0), (wlc_rd(i),i=1,2),
-     ,     (wpk_pl(i),i=i1,i2,i3), wpk_pl(0), (wlc_pl(i),i=1,2),
-     ,     (wpk_nu(i),i=i1,i2,i3), wpk_nu(0), (wlc_nu(i),i=1,2),
+     ,     (wpk_tt(i),i=i1,i2,i3), wpk_tt(0), (wlc_tt(i),i=i1,i2,i3),
+     ,     (wpk_rd(i),i=i1,i2,i3), wpk_rd(0), (wlc_rd(i),i=i1,i2,i3),
+     ,     (wpk_pl(i),i=i1,i2,i3), wpk_pl(0), (wlc_pl(i),i=i1,i2,i3),
+     ,     (wpk_nu(i),i=i1,i2,i3), wpk_nu(0), (wlc_nu(i),i=i1,i2,i3),
      ,     (wpk_te(i),i=i1,i2,i3),
      ,     (wpk_ne(i),i=i1,i2,i3)
           close (lun)
@@ -952,6 +958,10 @@ c!###}
 !###}
       end do !}
       hlp_trg(ntrgts)=trg_short(ntrgsx)
+      if(.not.LSN) then
+        hlp_trg(1)=trg_short(ntrgsx)
+        hlp_trg(ntrgts)=trg_short(1)
+      end if
       fn_hlp=fsumm(4)
       tl=' '
       open(lun,file=fn_hlp)
@@ -1353,6 +1363,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           nx_hlp=ltrgpos(j)+l
           jj=j
           if(j.eq.ntrgts) jj=ntrgsx
+          if(.not.LSN) jj=ntrgsx+1-jj
           open(lun,file=ftrg(jj,2))
           if (do_sput(j)) then
             nclm_er=2+3*natmi+nspecies+2*ntrgts+2*nmoli
@@ -1459,8 +1470,13 @@ c
         open(lun,file=fsumm(2))
         write(lun,*) 'Target erosion summary: ',label
         write(lun,*)
-        write(lun,'(12x,3(a1,a12))')
+        if (LSN) then
+          write(lun,'(12x,3(a1,a12))')
      -                   (tab,trg_label(i),i=1,ntrgsx,k),tab,'total   '
+        else
+          write(lun,'(12x,3(a1,a12))')
+     -                   (tab,trg_label(i),i=ntrgsx,1,-k),tab,'total   '
+        endif
         write(fmt_peak,730) ntrgts+1,tab
   730   format('(1p,1x,a12,',i3,'(1h',a1,',e12.4))')
         write(lun,*) 'Particle fluxes [1/s]'

@@ -30,6 +30,7 @@
      *  cflags(:,:,:)
       logical, allocatable, save ::
      *  on_closed_surface(:,:)
+      logical, save :: LSN
 
       logical, save :: b2mod_indirect_allocated = .false.
 
@@ -64,6 +65,7 @@
       leftcut     = nxd+1
       redef_gmtry = 0
       cflags      = 0
+      LSN = .true.
       b2mod_indirect_allocated = .true.
 
       return

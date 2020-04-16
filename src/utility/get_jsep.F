@@ -25,14 +25,26 @@
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
       call xertst (geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
+      LSN = .true.
       if(nnreg(0).eq.1) then
         jxi=nx/4
-        jxa=3*nx/4
+        jxa=nx/2
         jsep=ny/2
         call ipgeti ('b2mwti_jsep',jsep)
-      elseif(nnreg(0).eq.4 .or. nnreg(0).eq.5) then
+      elseif(nnreg(0).eq.4) then
+        if (cry(leftcut(1)+1,topcut(1),0).lt.
+     .      cry(leftcut(1)+1,0,0)) then ! LSN topology
+          jxi=leftcut(1)+(rightcut(1)-leftcut(1))/4
+          jxa=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        else ! USN topology
+          LSN = .false.
+          jxi=rightcut(1)-(rightcut(1)-leftcut(1))/4
+          jxa=leftcut(1)+(rightcut(1)-leftcut(1))/4
+        end if
+        jsep=topcut(1)-1
+      elseif(nnreg(0).eq.5) then
         jxi=leftcut(1)+(rightcut(1)-leftcut(1))/4
-        jxa=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        jxa=leftcut(1)+(rightcut(1)-leftcut(1))/2
         jsep=topcut(1)-1
       elseif(nnreg(0).eq.8) then
         jxi=(leftcut(1)+leftcut(2))/2
@@ -50,6 +62,8 @@
             endif
           enddo
         enddo
+        topcut(1)=jsep+1
+        LSN=crx(-1,ny,1).lt.crx(nx,ny,0)
       else
         call xerrab ('Invalid number of regions!')
       endif
@@ -62,6 +76,7 @@
       call xertst (-1.le.jxa.and.jxa.le.nx,
      2 'faulty internal parameter jxa')
       write(*,*) 'jxi, jxa, jsep : ', jxi, jxa, jsep
+      if (.not.LSN) write(*,*) 'Detected USN-like topology'
 
       call subend ()
       return

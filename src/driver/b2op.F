@@ -8,9 +8,6 @@
       use b2mod_par_opt
 
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -48,9 +45,6 @@
 
 *   ..local variables
       character*12 hlp_frm
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
 
 *   ..procedures
       external b2obfn, b2obeq, b2oblm
@@ -61,16 +55,6 @@
 *.computation
 *
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2op_mpi_child'
-      endif
-#endif
       call prgini ('b2op')
 *   .. get experimental data
 *   .. for inner lower
@@ -654,10 +638,6 @@
      &   deallocate(cy_ti_outer_mdpl_exp, ti_outer_mdpl_exp) 
 
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2op'
 
 *-----------------------------------------------------------------------

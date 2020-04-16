@@ -622,7 +622,7 @@ c   ..copy the grid to start extending the grid
          enddo
       enddo
 
-c   ..add a row of extra cells at each target (inner then outer)
+c   ..add a row of extra cells at each target (West then East)
 c     by linear extrapolation
       do it = 1 , 2
 
@@ -661,7 +661,7 @@ c     by linear extrapolation
 
       enddo
 
-c   ..add a further row of extra cells at each target (inner then outer)
+c   ..add a further row of extra cells at each target (West then East)
 c     by extrapolating, parallel to sepx outer boundary, to zmin
       iys = topcut(1)
 

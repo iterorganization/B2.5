@@ -69,6 +69,7 @@ module b2mod_ual_io
     use b2mod_ual_io_grid &
      & , only : INCLUDE_GHOST_CELLS
 #ifdef IMAS
+#if IMAS_MINOR_VERSION > 11
     !! B2/CPO Mapping
     use b2mod_ual_io_data &
      & , only : b2_IMAS_Transform_Data_B2_To_IDS, &
@@ -76,6 +77,7 @@ module b2mod_ual_io
     use b2mod_ual_io_grid &
      & , only : findGridSubsetByName, GridWriteData, &
      &          b2_IMAS_Fill_Grid_Desc
+#endif
 #if GGD_MINOR_VERSION < 9
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_BETWEEN_SEPARATRICES, &
@@ -93,10 +95,12 @@ module b2mod_ual_io
 #if IMAS_MINOR_VERSION > 14
     use ids_utility        ! IGNORE
 #endif
+#if IMAS_MINOR_VERSION > 11
     use ids_grid_common , &     ! IGNORE
         &   IDS_COORDTYPE_R => COORDTYPE_R,       &
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
         &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
+#endif
 #else
 #ifdef ITM_ENVIRONMENT_LOADED
     use euITM_schemas   ! IGNORE
@@ -108,6 +112,11 @@ module b2mod_ual_io
   implicit none
 
 #ifdef IMAS
+
+#if IMAS_MINOR_VERSION < 9
+  integer, parameter :: IDS_REAL = R8
+  real(kind=R8), parameter :: IDS_REAL_INVALID = -9.0E40_R8
+#endif
 
 contains
 
@@ -722,6 +731,7 @@ contains
         allocate( numerics%ids_properties%source(1) )
         numerics%ids_properties%source = source
 #endif
+#if IMAS_MINOR_VERSION > 14
         allocate( edge_profiles%ids_properties%provider(1) )
         edge_profiles%ids_properties%provider = usrnam()
         allocate( edge_transport%ids_properties%provider(1) )
@@ -828,6 +838,7 @@ contains
         allocate( numerics%ids_properties%version_put%access_layer_language(1) )
         numerics%ids_properties%version_put%access_layer_language = 'FORTRAN'
 #endif
+#endif
 
         allocate( description%data_entry%user(1) )
         description%data_entry%user = usrnam()
@@ -843,6 +854,7 @@ contains
         description%dd_version = imas_version
         description%simulation%time_step = time_step_IN
         description%simulation%time_current = time_IN
+        allocate( description%simulation%workflow(1) )
         description%simulation%workflow = source
 #if IMAS_MINOR_VERSION > 25
         description%simulation%time_begin = run_start_time_IN
@@ -934,6 +946,7 @@ contains
 #endif
 
         !! Write grid & grid subsets/subgrids
+#if IMAS_MINOR_VERSION > 11
 #if IMAS_MINOR_VERSION < 15
         call b2_IMAS_Fill_Grid_Desc( gmap,                                  &
             &   edge_profiles%ggd( time_sind )%grid,                        &
@@ -981,6 +994,7 @@ contains
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#endif
 #endif
 #endif
 
@@ -1111,8 +1125,13 @@ contains
             edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
 
             ! Put number of atoms
-            edge_profiles%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
+#if IMAS_MINOR_VERSION < 15
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%multiplicity = 1.0_R8
+            edge_transport%model(1)%ggd( time_sind )%ion( js)%element(1)%multiplicity = 1.0_R8
+#else
+            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%atoms_n = 1
             edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
+#endif
 
             ! Put neutral index
             edge_profiles%ggd( time_sind )%ion( js )%neutral_index = b2eatcr(is)
@@ -1145,7 +1164,11 @@ contains
                 edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%z_n = zn( is )
 
                 ! Put number of atoms
+#if IMAS_MINOR_VERSION < 15
+                edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%multiplicity = 1.0_R8
+#else
                 edge_sources%source(i)%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
+#endif
 
                 ! Put neutral index
                 edge_sources%source(i)%ggd( time_sind )%ion( js )%neutral_index = b2eatcr(is)
@@ -1230,16 +1253,29 @@ contains
                      i = i + 1
                      edge_profiles%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                      edge_profiles%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
+#if IMAS_MINOR_VERSION < 15
+                     edge_profiles%ggd( time_sind )%ion( js )%element( i )%multiplicity = micmp(k,is)
+#else
                      edge_profiles%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
+#endif
                      do ii = 1, nsources
                         edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                         edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
+#if IMAS_MINOR_VERSION < 15
+                        edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%multiplicity = &
+                            &   micmp(k,is)
+#else
                         edge_sources%source(ii)%ggd( time_sind )%ion( js )%element( i )%atoms_n = &
                             &   micmp(k,is)
+#endif
                      end do
                      edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%a = nmassa(k)
                      edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%z_n = nchara(k)
+#if IMAS_MINOR_VERSION < 15
+                     edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%multiplicity = micmp(k,is)
+#else
                      edge_transport%model(1)%ggd( time_sind )%ion( js )%element( i )%atoms_n = micmp(k,is)
+#endif
                   end if
                end do
                edge_profiles%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
@@ -1307,7 +1343,11 @@ contains
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%label(1) )
                edge_profiles%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
                edge_profiles%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
+#if IMAS_MINOR_VERSION < 15
+               edge_profiles%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1.0_R8
+#else
                edge_profiles%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
+#endif
                call species( is, edge_profiles%ggd( time_sind )%neutral( js )%label, &
                    &         .false. )
                edge_profiles%ggd( time_sind )%neutral( js )%ion_index = fluids_list( is+1 )
@@ -1316,7 +1356,11 @@ contains
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%label(1) )
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
+#if IMAS_MINOR_VERSION < 15
+                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1.0_R8
+#else
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
+#endif
                   call species( is, edge_sources%source(i)%ggd( time_sind )%neutral( js )%label, &
                      &          .false. )
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%ion_index = fluids_list( is+1 )
@@ -1325,7 +1369,11 @@ contains
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%label(1) )
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
+#if IMAS_MINOR_VERSION < 15
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1.0_R8
+#else
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
+#endif
                call species( is, edge_transport%model(1)%ggd( time_sind )%neutral( js )%label, &
                    &         .false. )
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%ion_index = fluids_list( is+1 )
@@ -1442,8 +1490,13 @@ contains
                       edge_profiles%ggd( time_sind )%neutral( js )%element(i)%a = nmassa( k )
                       edge_profiles%ggd( time_sind )%neutral( js )%element(i)%z_n = &
                          &   nchara( k )
+#if IMAS_MINOR_VERSION < 15
+                      edge_profiles%ggd( time_sind )%neutral( js )%element(i)%multiplicity = &
+                         &   mlcmp(k,j)
+#else
                       edge_profiles%ggd( time_sind )%neutral( js )%element(i)%atoms_n = &
                          &   mlcmp(k,j)
+#endif
                       do icnt = 1, nsources
                          edge_sources%source(icnt)%ggd( time_sind )%neutral( js )%element(i)%a = &
                             &   nmassa( k )
@@ -1455,8 +1508,13 @@ contains
                       edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%a = nmassa( k )
                       edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%z_n = &
                          &   nchara( k )
+#if IMAS_MINOR_VERSION < 15
+                      edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%multiplicity = &
+                         &   mlcmp(k,j)
+#else
                       edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(i)%atoms_n = &
                          &   mlcmp(k,j)
+#endif
                    end if
                end do
                edge_profiles%ggd( time_sind )%neutral( js )%label = textmn( j-1 )
@@ -1522,7 +1580,11 @@ contains
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%state(1)%label(1) )
                edge_profiles%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
                edge_profiles%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
+#if IMAS_MINOR_VERSION < 15
+               edge_profiles%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1
+#else
                edge_profiles%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
+#endif
                call species( is, edge_profiles%ggd( time_sind )%neutral( js )%label, &
                    &         .false. )
                edge_profiles%ggd( time_sind )%neutral( js )%ion_index = fluids_list( is+1 )
@@ -1546,7 +1608,11 @@ contains
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%z_n = &
                      &   zn( is )
+#if IMAS_MINOR_VERSION < 15
+                  edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1.0_R8
+#else
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
+#endif
                   call species( is, edge_sources%source(i)%ggd( time_sind )%neutral( js )%label, &
                      &   .false. )
                   edge_sources%source(i)%ggd( time_sind )%neutral( js )%ion_index = &
@@ -1570,7 +1636,11 @@ contains
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state(1)%label(1) )
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%z_n = zn( is )
+#if IMAS_MINOR_VERSION < 15
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%multiplicity = 1
+#else
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
+#endif
                call species( is, edge_transport%model(1)%ggd( time_sind )%neutral( js )%label, &
                    &         .false. )
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%ion_index = fluids_list( is+1 )
@@ -1735,6 +1805,7 @@ contains
 
         !! Write plasma state
         if ( B2_WRITE_DATA ) then
+#if IMAS_MINOR_VERSION > 11
             call logmsg( LOGDEBUG, &
             &   "b2mod_ual_io.B25_process_ids: writing plasma state" )
 
@@ -3999,6 +4070,10 @@ contains
             end if
 #endif
 #endif
+#else
+            call logmsg( LOGINFO, &
+            &   "b2mod_ual_io.B25_process_ids: GGD not available, no plasma state writing" )
+#endif
         end if
 
 #if IMAS_MINOR_VERSION > 21
@@ -4374,21 +4449,28 @@ contains
         allocate( summary%boundary%type%source(1) )
         summary%boundary%type%source = source
         allocate( summary%boundary%strike_point_inner_r%value( time_sind ) )
-        summary%boundary%strike_point_inner_r%value( time_sind ) = crx(-1,topcut(1),3)
-        allocate( summary%boundary%strike_point_inner_r%source(1) )
-        summary%boundary%strike_point_inner_r%source = source
         allocate( summary%boundary%strike_point_inner_z%value( time_sind ) )
-        summary%boundary%strike_point_inner_z%value( time_sind ) = cry(-1,topcut(1),3)
-        allocate( summary%boundary%strike_point_inner_z%source(1) )
-        summary%boundary%strike_point_inner_z%source = source
         allocate( summary%boundary%strike_point_outer_r%value( time_sind ) )
-        summary%boundary%strike_point_outer_r%value( time_sind ) = crx(nx,topcut(1),1)
-        allocate( summary%boundary%strike_point_outer_r%source(1) )
-        summary%boundary%strike_point_outer_r%source = source
         allocate( summary%boundary%strike_point_outer_z%value( time_sind ) )
-        summary%boundary%strike_point_outer_z%value( time_sind ) = cry(nx,topcut(1),1)
+        if (LSN) then
+          summary%boundary%strike_point_inner_r%value( time_sind ) = crx(-1,topcut(1),1)
+          summary%boundary%strike_point_inner_z%value( time_sind ) = cry(-1,topcut(1),1)
+          summary%boundary%strike_point_outer_r%value( time_sind ) = crx(nx,topcut(1),0)
+          summary%boundary%strike_point_outer_z%value( time_sind ) = cry(nx,topcut(1),0)
+        else
+          summary%boundary%strike_point_inner_r%value( time_sind ) = crx(nx,topcut(1),0)
+          summary%boundary%strike_point_inner_z%value( time_sind ) = cry(nx,topcut(1),0)
+          summary%boundary%strike_point_outer_r%value( time_sind ) = crx(-1,topcut(1),1)
+          summary%boundary%strike_point_outer_z%value( time_sind ) = cry(-1,topcut(1),1)
+        endif
         allocate( summary%boundary%strike_point_outer_z%source(1) )
         summary%boundary%strike_point_outer_z%source = source
+        allocate( summary%boundary%strike_point_inner_r%source(1) )
+        summary%boundary%strike_point_inner_r%source = source
+        allocate( summary%boundary%strike_point_inner_z%source(1) )
+        summary%boundary%strike_point_inner_z%source = source
+        allocate( summary%boundary%strike_point_outer_r%source(1) )
+        summary%boundary%strike_point_outer_r%source = source
 
         allocate( summary%fusion%power%value( time_sind ) )
         summary%fusion%power%value( time_sind ) = fusion_power
@@ -4804,6 +4886,7 @@ contains
 
         end function get_atom_number
 
+#if IMAS_MINOR_VERSION > 11
         !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
         !! IMAS IDS data tree node.
         subroutine write_quantity( val, value, time_sind )
@@ -4823,14 +4906,55 @@ contains
             integer :: ndim      !< Grid subset dimension
             integer :: i         !< Iterator
 
+#if IMAS_MINOR_VERSION < 15
+            ggdId = edge_profiles%ggd(time_sind)%grid%identifier%index
+            !! Assign 5+4 grid subsets
+            nSubsets = 9
+#else
             ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             nSubsets = size(edge_profiles%grid_ggd(time_sind)%grid_subset)
+#endif
             !! Allocate data fields for grid subsets
             allocate( val(nSubsets) )
 
             do iSubset = 1, nSubsets
+#if IMAS_MINOR_VERSION < 15
+               select case (iSubset)
+                  case (1)
+                    iSubsetID = GRID_SUBSET_CELLS
+                    ndim = 3
+                  case (2)
+                    iSubsetID = iGsCoreBoundary
+                    ndim = 2
+                  case (3)
+                    iSubsetID = iGsInnerMidplane
+                    ndim = 1
+                  case (4)
+                    iSubsetID = iGsOuterMidplane
+                    ndim = 1
+                  case (5)
+                    iSubsetID = GRID_SUBSET_NODES
+                    ndim = 1
+                  case (6)
+                    iSubsetID = iGsCore
+                    ndim = 3
+                  case (7)
+                    iSubsetID = iGsSOL
+                    ndim = 3
+                  case (8)
+                    iSubsetID = iGsIDivertor
+                    ndim = 3
+                  case (9)
+                    iSubsetID = iGsODivertor
+                    ndim = 3
+                  case default
+                    iSubsetID = iSubset
+                    ndim = IDS_INT_INVALID
+               end select
+#else
                ndim = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%dimension
                iSubsetID = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%identifier%index
+#endif
                if (ndim.eq.IDS_INT_INVALID) then
                   select case (iSubsetID)
                   case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
@@ -4870,12 +4994,12 @@ contains
                   tmpVx = interpolateToVertices(  &
                      &   gmap%b2nx, gmap%b2ny, VX_LOWERLEFT, value )
 #if IMAS_MINOR_VERSION < 15
-                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex( &
-                     &   edge_profiles%ggd( time_sind )%grid,        &
-                     &   iSubset, gmap, tmpVx )
+                  idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(            &
+                     &   edge_profiles%ggd( time_sind )%grid, iGsOuterMidplane,  &
+                     &   gmap, tmpVx )
 #else
                   idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex( &
-                     &   edge_profiles%grid_ggd( time_sind ),        &
+                     &   edge_profiles%grid_ggd( time_sind ),         &
                      &   iSubset, gmap, tmpVx )
 #endif
 #if GGD_MINOR_VERSION > 8
@@ -4941,14 +5065,33 @@ contains
             integer :: ggdID     !< Grid identifier index
             integer :: ndim      !< Grid subset dimension
 
+#if IMAS_MINOR_VERSION < 15
+            ggdId = edge_profiles%ggd(time_sind)%grid%identifier%index
+            nSubsets = 2
+#else
             ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             nSubsets = size(edge_profiles%grid_ggd(time_sind)%grid_subset)
+#endif
             !! Allocate data fields for grid subsets
             allocate( val(nSubsets) )
 
             do iSubset = 1, nSubsets
+#if IMAS_MINOR_VERSION < 15
+               select case (iSubset)
+                  case (1)
+                    iSubsetID = GRID_SUBSET_X_ALIGNED_FACES
+                    ndim = 2
+                  case (2)
+                    iSubsetID = GRID_SUBSET_Y_ALIGNED_FACES
+                    ndim = 2
+                  case default
+                    iSubsetID = iSubset
+                    ndim = IDS_INT_INVALID
+               end select
+#else
                ndim = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%dimension
                iSubsetID = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%identifier%index
+#endif
                if (ndim.eq.IDS_INT_INVALID) then
                   select case (iSubsetID)
                   case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
@@ -5002,14 +5145,24 @@ contains
             integer :: iSubsetID !< Grid subset identifier index
             integer :: ggdID     !< Grid identifier index
 
+#if IMAS_MINOR_VERSION < 15
+            ggdId = edge_profiles%ggd(time_sind)%grid%identifier%index
+            nSubsets = 1
+#else
             ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             nSubsets = size(edge_profiles%grid_ggd(time_sind)%grid_subset)
+#endif
             !! Allocate data fields for grid subsets
             allocate( scalar(nSubsets) )
 
             do iSubset = 1, nSubsets
+#if IMAS_MINOR_VERSION < 15
+               ndim = 3
+               iSubsetID = GRID_SUBSET_CELLS
+#else
                ndim = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%dimension
                iSubsetID = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%identifier%index
+#endif
                if (ndim.eq.IDS_INT_INVALID) then
                   select case (iSubsetID)
                   case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
@@ -5045,6 +5198,7 @@ contains
                   end select
                end if
                if (ndim.ne.3) cycle
+
             !! TODO: add checks whether already allocated
 #if IMAS_MINOR_VERSION < 15
                idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
@@ -5090,16 +5244,26 @@ contains
             integer :: ndim      !< Grid subset dimension
             integer :: ggdID     !< Grid identifier index
 
+#if IMAS_MINOR_VERSION < 15
+            ggdId = edge_profiles%ggd(time_sind)%grid%identifier%index
+            nSubsets = 1
+#else
             ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             nSubsets = size(edge_profiles%grid_ggd(time_sind)%grid_subset)
+#endif
             !! If required, allocate storage
             if ( .not. associated( vectorComponent ) ) then
                 allocate( vectorComponent(nSubsets) )
             end if
 
             do iSubset = 1, nSubsets
+#if IMAS_MINOR_VERSION < 15
+               ndim = 3
+               iSubsetID = GRID_SUBSET_CELLS
+#else
                ndim = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%dimension
                iSubsetID = edge_profiles%grid_ggd(time_sind)%grid_subset(iSubset)%identifier%index
+#endif
                if (ndim.eq.IDS_INT_INVALID) then
                   select case (iSubsetID)
                   case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
@@ -5265,7 +5429,7 @@ contains
             end select
 
         end subroutine B2grid_Write_Data_Vector_Components
-
+#endif
 #if 0
         !> Write a vector B2 cell quantity to a complexgrid_vector
         subroutine write_cell_vector( vector, align, alignid, vecdata )
@@ -5313,7 +5477,7 @@ contains
             ggdId = edge_profiles%grid_ggd(time_sind)%identifier%index
             !! Fill in vector component data
             do i = 1, dim
-#ifdef GGD_OLD
+#if GGD_MINOR_VERSION < 9
                 idsdata => b2_IMAS_Transform_Data_B2_To_IDS(        &
                     &   edge_profiles%ggd( time_sind )%grid,        &
                     &   GRID_SUBSET_CELLS, gmap, vecdata(:,:,i-1))
@@ -5332,7 +5496,7 @@ contains
 
         end subroutine write_cell_vector
 #endif
-
+#if IMAS_MINOR_VERSION > 11
         !> Write a vector B2 face quantity to a ids_generic_grid_vector
         !! @note    ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
         !!          vector%align and vector%alignid:
@@ -5427,6 +5591,7 @@ contains
             end if
 
         end subroutine write_face_vector
+#endif
     end subroutine B25_process_ids
 
     !> From the B2 grid, compute the coordinate unit vectors

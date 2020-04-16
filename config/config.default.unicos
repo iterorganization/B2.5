@@ -12,7 +12,8 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-EQUIVS = -DNO_CDF
+EQUIVS =
+DEFINES += -DNO_CDF
 
 CPP = /usr/lib/gpp -F
 CPPOPTS = -C -P -N -I$(srcdir) $(EQUIVS)

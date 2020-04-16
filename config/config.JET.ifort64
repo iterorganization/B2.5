@@ -12,7 +12,8 @@ ifndef LD_NAG
   $(error LD_NAG not defined)
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
+EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
+DEFINES += -DGRREAL=4 -DDOFLUSH # -DNO_CDF
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 CPPOPTS  = -C -P -I${srcdir} ${EQUIVS}
@@ -30,14 +31,25 @@ FC       = ifort
 endif
 endif
 
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2)
-
+ifeq (${FC},mpif90)
+OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
+INCMOD   = -B
+GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
+GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
+DEFINES += -DGFORTRAN -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
+ifdef USE_OPENMP
+FCOPTS  += -fopenmp
+LDOPTS  += -fopenmp
+endif
+else
+INCMOD   = -I
+OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
 FCOPTS   = -O2
 endif
-
 ifdef USE_OPENMP
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
 FCOPTS  += -qopenmp
@@ -47,18 +59,16 @@ FCOPTS  += -openmp
 LDOPTS  += -openmp
 endif
 endif
-
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
 LDOPTS  += -i_dynamic
+endif
 endif
 
 DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
 DBLSED   = 
 
-INCMOD   = -I
 MOD      = mod
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD      = ar rucv
 
@@ -71,15 +81,41 @@ endif
 
 ifdef IMAS_VERSION
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-GGD_MINOR_VERSION ?= $(shell echo ${EBVERSIONGGD} | cut -d '.' -f2 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-ifndef SOLPS_CPP
-EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+ifeq (${FC},mpif90)
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL  := `pkg-config imas-gfortran ggd --libs`
+else
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL  := `pkg-config imas-gfortran --libs` -lggd-gfortran
+else
+GGD_MINOR_VERSION ?= 0
+LD_UAL  := `pkg-config imas-lowlevel imas-gfortran --libs`
 endif
+endif
+INCMODS += -I${IMAS_PREFIX}/include/gfortran
+else
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL  ?= `pkg-config imas-ifort ggd --libs`
+else
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL  ?= `pkg-config imas-ifort --libs` -lggd-ifort
+else
+GGD_MINOR_VERSION ?= 0
 LD_UAL  ?= `pkg-config imas-lowlevel imas-ifort --libs`
+endif
+endif
 INCMODS += -I${IMAS_PREFIX}/include/ifort
-IMASLIBS = ${LD_UAL} -lggd-ifort
+endif
+ifndef SOLPS_CPP
+DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+endif
+IMASLIBS = ${LD_UAL}
 endif
 
 #wd: removed; seems to be unused

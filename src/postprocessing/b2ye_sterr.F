@@ -80,6 +80,11 @@
       M = NN/30
       if (first_call) then
         write (*,*) ' Size of groups overlapping batches: ',M
+        if (NN.lt.30) then
+          write (*,*)' This should be at least 1, please continue',
+     ,               'averaging procedure'
+          call xerrab('Insufficient number of batches')
+        endif
         if (M.lt.30) then
           write (*,*) ' Preferably, this should be larger than 30, ',
      ,                'consider continue the averaging'
@@ -101,6 +106,7 @@
       ncutoff = 30
       ifail = 0
       check = .true.
+      nfit = 0
       CALL G13ABF(meanbatch, NN, NN-ncutoff, meansamplebis, varbatchbis,
      .            rho, STAT, IFAIL )
 *     --- for fit only take samples before the first one that is

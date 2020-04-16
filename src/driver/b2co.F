@@ -45,9 +45,6 @@
      & , smo_eir => smo
 #endif
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 #include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
@@ -74,9 +71,6 @@
 #endif
       integer ninp(0:5), nout(0:7), ns0, idum(0:9), io
       integer iflag
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
 #ifndef NAGF95
 #ifndef NAGFOR
       integer iargc
@@ -112,16 +106,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2co_mpi_child'
-      endif
-#endif
       call prgini ('b2co')
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
@@ -401,16 +385,28 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
 #endif
       call ipgeti ('b2mndr_b2time', b2time)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
-      if (todo.and.(b2time.gt.0 .or. ntim_batch.gt.0)) then
+      if (todo.and.b2time.gt.0) then
         filename='b2time.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(nx, ny, ns, tim)
+          call b2co_time_cdf(nx, ny, ns, tim, .false.)
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
      .               'no b2time.nc file found'
+        end if
+      end if
+      if (todo.and.ntim_batch.gt.0) then
+        filename='b2batch.nc'
+        call find_file(filename,file_exists)
+        if(file_exists) then
+          write(*,*) 'Truncating ', trim(filename)
+          call b2co_time_cdf(nx, ny, ns, tim, .true.)
+          write(*,*) 'Returned from b2co_time_cdf'
+        else
+          write(*,*) 'Skipped calling b2co_time_cdf because '//
+     .               'no b2batch.nc file found'
         end if
       end if
       call ipgeti ('b2stbr_b2wall_netcdf', b2wall_netcdf)
@@ -474,10 +470,6 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       call dealloc_b2mod_wall_init
       call dealloc_anomalous_transport
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2co'
 
 *-----------------------------------------------------------------------
