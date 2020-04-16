@@ -92,7 +92,7 @@
       integer n2, istg(0:2), is, k
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
-     &  acorte, acorti, acorpo, nasum, na0sum, 
+     &  acorte, acorti, acorpo, nasum, na0sum,
      &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),                            !srv 11.10.02
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
      &  fna_53(-1:nx,-1:ny,0:1,0:ns-1),fne_53(-1:nx,-1:ny,0:1)
@@ -498,7 +498,7 @@ ctmp.dpc
      &          fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),
      &          fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),
      &          flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     &          fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
+     &          fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &          fna_53(-1,-1,0,is),
      &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &          .false.)                                                 !djm Jan2017

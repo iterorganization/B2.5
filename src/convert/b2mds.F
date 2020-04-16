@@ -307,8 +307,8 @@ c
      2   potimin(is),potimax(is),potmin(is),potmax(is)
       end do
       call alloc_b2mod_elements(ns, zn, am)
-c calculate additional fluxes (fhj, fhm, fhp, fht) 
-!ajs 07.04.20 only recalculate in older version, now in b2mod_plasma 
+c calculate additional fluxes (fhj, fhm, fhp, fht)
+!ajs 07.04.20 only recalculate in older version, now in b2mod_plasma
       if (b2fplasma_version.lt.'03.000.007') then
         call b2xpen (nx, ny, ns,
      1    fna, fne, fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti,
@@ -778,6 +778,7 @@ c 24: removed drift velocity contributions from kinrgy
 c 25: debugged indexing error for eneutrad
 c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
+c 28: Corrected calculation of fht, now using fn[ae]_53
 
       dbversion=27
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)

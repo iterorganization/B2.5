@@ -1,4 +1,4 @@
-      subroutine b2xpen (nx, ny, ns, fna, fne, 
+      subroutine b2xpen (nx, ny, ns, fna, fne,
      1 fna_53, fne_53, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
       use b2mod_types
@@ -8,7 +8,7 @@
       integer nx, ny, ns
 ! inputs
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), 
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
      *  fne(-1:nx,-1:ny,0:1), fna_53(-1:nx,-1:ny,0:1,0:ns-1),
      1  fne_53(-1:nx,-1:ny,0:1),
      2  fch(-1:nx,-1:ny,0:1),
@@ -20,7 +20,7 @@
      &  fhm(-1:nx,-1:ny,0:1,0:ns-1), fhp(-1:nx,-1:ny,0:1,0:ns-1),
      1  fhj(-1:nx,-1:ny,0:1), fht(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
-*     B2XPEN computes contributions to the total energy fluxes, 
+*     B2XPEN computes contributions to the total energy fluxes,
 *     as well as the total energy fluxes
 *     The contributions from external species are not included and must
 *     be added explicitly in the calling routine when needed.

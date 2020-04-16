@@ -48,7 +48,7 @@
      *  fnb(-1:nx,-1:ny,0:1), fnb_32(-1:nx,-1:ny,0:1),
      1  fnb_52(-1:nx,-1:ny,0:1), fnb_nodrift(-1:nx,-1:ny,0:1),
      1  fnb_32nd(-1:nx,-1:ny,0:1), fnb_52nd(-1:nx,-1:ny,0:1),
-     1  fnb_53(-1:nx,-1:ny,0:1),					!ajs 06.04.20
+     1  fnb_53(-1:nx,-1:ny,0:1),                                        !ajs 06.04.20
      1  flob(-1:nx,-1:ny,0:1), fnb_fcor(-1:nx,-1:ny,0:1),               !srv 01.10.99
      2  fnb_he(-1:nx,-1:ny,0:1),                                        !srv 21.01.00
      &  fnbPSch(-1:nx,-1:ny,0:1), fnb_mdf(-1:nx,-1:ny,0:1),             !srv 13.10.06
@@ -802,8 +802,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          fnb_nodrift(ix,iy,0) = 0.0_R8
          fnb_32nd(ix,iy,0)    = 0.0_R8
          fnb_52nd(ix,iy,0)    = 0.0_R8
-	 fnb_53(ix,iy,0)      = 0.0_R8
-         flob(ix,iy,0)        = 0.0_R8					!ajs 06.04.20
+         fnb_53(ix,iy,0)      = 0.0_R8
+         flob(ix,iy,0)        = 0.0_R8                                  !ajs 06.04.20
          fnb_fcor(ix,iy,0)    = 0.0_R8                                  !srv 01.10.99
          fnb_he(ix,iy,0)      = 0.0_R8                                  !srv 21.01.00
          fnb_mdf(ix,iy,0)     = 0.0_R8                                  !srv 13.10.06
@@ -853,7 +853,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
      7     hx(leftix(ix,iy),leftiy(ix,iy)))                             !srv 17.07.08 }
-	  flo_53  = pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +		!ajs 06.04.20 Part of the convective flow added in total energy flux
+          flo_53 = pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +               !ajs 06.04.20 Part of the convective flow added in total energy flux
      1     (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
      2     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      3     +vol(leftix(ix,iy),leftiy(ix,iy))/
@@ -884,7 +884,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      5     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
 
-	  flo_53  = pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +		!ajs 06.04.20 Part of the convective flow added in total energy flux
+          flo_53 = pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +               !ajs 06.04.20 Part of the convective flow added in total energy flux
      1     vbecrb(ix,iy,0)*
      2     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      3      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
@@ -905,7 +905,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0)+                         !srv 13.09.02 { 01.07.05 20.01.11
      &     pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +                       !iyv 30.05.08 !srv 03.10.08
      &     vbecrb(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)                        !IYS 04.03.2019
-	  flo_53  = pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +		!ajs 06.04.20 Part of the convective flow added in total energy flux
+          flo_53 = pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +               !ajs 06.04.20 Part of the convective flow added in total energy flux
      1     vbecrb(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)
           flo2dia = cvlbhz(ix,iy,0)+pbshz(ix,iy,0)*wrk0(ix,iy)+
      & termhz(ix,iy) + ub2dia(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)*hzl(ix,iy) !IYS 04.03.2019 - 11.02.2020
@@ -1161,7 +1161,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
            flob(ix,iy,0) = flob(ix,iy,0) / t0
            conb(ix,iy,0,0:4) = conb(ix,iy,0,0:4) / t0                   !srv 13.10.06 {
            fnb_he(ix,iy,0)   = fnb_he(ix,iy,0)/t0
-	   fnb_53(ix,iy,0)   = fnb_53(ix,iy,0)/t0			!ajs 06.04.20
+           fnb_53(ix,iy,0)   = fnb_53(ix,iy,0)/t0                       !ajs 06.04.20
            fnb_fcor(ix,iy,0) = fnb_fcor(ix,iy,0)/t0
            fnb_mdf(ix,iy,0) = fnb_mdf(ix,iy,0)/t0
            fnbPSch(ix,iy,0)  = fnbPSch(ix,iy,0)/t0                      !srv 13.10.06 }
@@ -1267,7 +1267,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          fnb_nodrift(ix,iy,1) = 0.0_R8
          fnb_32nd(ix,iy,1)    = 0.0_R8
          fnb_52nd(ix,iy,1)    = 0.0_R8
-	 fnb_53(ix,iy,1)      = 0.0_R8					!ajs 06.04.20
+         fnb_53(ix,iy,1)      = 0.0_R8                                  !ajs 06.04.20
          flob(ix,iy,1)        = 0.0_R8
          fnb_fcor(ix,iy,1)    = 0.0_R8                                  !srv 01.10.99
          fnb_he(ix,iy,1)      = 0.0_R8                                  !srv 21.01.00
@@ -1324,11 +1324,11 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
      &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-          flo_53 =  0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)	!ajs 06.04.20
+          flo_53 = 0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)        !ajs 06.04.20
      &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
      &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-         elseif (drift_style.eq.1 .or. redef_gmtry.eq.0) then          !srv 21.06.08 {
+         elseif (drift_style.eq.1 .or. redef_gmtry.eq.0) then           !srv 21.06.08 {
            flo = cvlb(ix,iy,1)+ubdia(ix,iy,1)*
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/          !srv 01.03.00
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))           !srv 01.03.00
@@ -1348,7 +1348,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
            flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1)+vbecrb(ix,iy,1)*        !srv 13.09.02 ( 20.01.11
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
- 	   flo_53 = vbecrb(ix,iy,1)*        				!ajs 06.04.20
+           flo_53 = vbecrb(ix,iy,1)*                                    !ajs 06.04.20
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
          elseif (drift_style.eq.2 .and. redef_gmtry.eq.1) then          !IYS 04.03.2019 - 11.02.2020
@@ -1364,7 +1364,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       scur
            flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1)+
      &      vbecrb(ix,iy,1)*gs(ix,iy,1)          !IYS 04.03.2019        !srv 13.09.02 ( 20.01.11
- 	   flo_53 = vbecrb(ix,iy,1)*gs(ix,iy,1)
+           flo_53 = vbecrb(ix,iy,1)*gs(ix,iy,1)
          endif                                                          !srv 21.06.08 }
          flo_nodrift = cvlb(ix,iy,1)
          if (no_hybr.eq.0) then
@@ -1419,7 +1419,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &     cdpb(ix,iy,1)*(pb(ix,iy)
      &                   -pb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &                    fnbPSch(ix,iy,1) + vsprcur                    !srv 13.10.06 } 02.04.18
-	  fnb_53(ix,iy,1)  = flo_53*(nb(bottomix(ix,iy),bottomiy(ix,iy))!ajs 06.04.20
+          fnb_53(ix,iy,1) = flo_53*(nb(bottomix(ix,iy),bottomiy(ix,iy)) !ajs 06.04.20
      &          +nb(ix,iy))/2.0_R8
           if (balance.and.(balance_netcdf.ne.0)) then
 cdjm Jan2017 store components of fnb for balance
@@ -1566,7 +1566,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       con_nodrift*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -cdpb(ix,iy,1)*(pb(ix,iy)
      &                     -pb(bottomix(ix,iy),bottomiy(ix,iy)))
-	   fnb_53(ix,iy,1) = flo_53*(nb(bottomix(ix,iy),bottomiy(ix,iy))!ajs 06.04.20
+           fnb_53(ix,iy,1) = flo_53*(nb(bottomix(ix,iy),bottomiy(ix,iy))!ajs 06.04.20
      &          +nb(ix,iy))/2.0_R8
            conb(ix,iy,1,0) =                                            !srv 13.10.06
      &      con(ix,iy)*(kmpr(bottomix(ix,iy),bottomiy(ix,iy))+
@@ -1589,7 +1589,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           fnb_52nd(ix,iy,1) = fnb_52nd(ix,iy,1) / t0
           flob(ix,iy,1) = flob(ix,iy,1) / t0
           conb(ix,iy,1,0:4) = conb(ix,iy,1,0:4) / t0                    !srv 13.10.06 {
-          fnb_he(ix,iy,1)   = fnb_he(ix,iy,1)/t0			!ajs 06.04.20
+          fnb_he(ix,iy,1)   = fnb_he(ix,iy,1)/t0                        !ajs 06.04.20
           fnb_53(ix,iy,1)   = fnb_53(ix,iy,1)/t0
           fnb_fcor(ix,iy,1) = fnb_fcor(ix,iy,1)/t0
           fnb_mdf(ix,iy,1) = fnb_mdf(ix,iy,1)/t0
@@ -1761,7 +1761,7 @@ cxpb turn off poloidal flows in core boundary
             fnb_nodrift(ix,iy,1) = 0.0_R8
             fnb_fcor(ix,iy,1)    = 0.0_R8
             fnb_he(ix,iy,1)      = 0.0_R8
-	    fnb_53(ix,iy,1)      = 0.0_R8				!ajs 06.04.20
+            fnb_53(ix,iy,1)      = 0.0_R8                               !ajs 06.04.20
             fnb_mdf(ix,iy,1)     = 0.0_R8
             flob(ix,iy,1)        = 0.0_R8
             conb(ix,iy,1,0:2)    = 0.0_R8
@@ -1794,7 +1794,7 @@ cxpb turn off poloidal flows in core boundary
           fnb_nodrift(:,iy,0) = 0.0_R8
           fnb_fcor(:,iy,0)    = 0.0_R8
           fnb_he(:,iy,0)      = 0.0_R8
-	  fnb_53(:,iy,0)      = 0.0_R8					!ajs 06.04.20
+          fnb_53(:,iy,0)      = 0.0_R8                                  !ajs 06.04.20
           fnb_mdf(:,iy,0)     = 0.0_R8
           flob(:,iy,0)        = 0.0_R8
           conb(:,iy,0,0:2)    = 0.0_R8
@@ -1823,7 +1823,7 @@ csw 18feb2014 remove fluxes between guard cells
             fnb_52nd(ix,iy,0)=0.0_R8
             fnb_fcor(ix,iy,0)=0.0_R8
             fnb_he(ix,iy,0)=0.0_R8
-	    fnb_53(ix,iy,0)= 0.0_R8					!ajs 06.04.20
+            fnb_53(ix,iy,0)=0.0_R8                                      !ajs 06.04.20
             fnb_mdf(ix,iy,0)=0.0_R8
             flob(ix,iy,0)=0.0_R8
             vbecrb(ix,iy,0)=0.0_R8
@@ -1851,7 +1851,7 @@ csw 18feb2014 remove fluxes between guard cells
             fnb_52nd(ix,iy,1)=0.0_R8
             fnb_fcor(ix,iy,1)=0.0_R8
             fnb_he(ix,iy,1)=0.0_R8
-	    fnb_53(ix,iy,1)= 0.0_R8					!ajs 06.04.20
+            fnb_53(ix,iy,1)=0.0_R8                                      !ajs 06.04.20
             fnb_mdf(ix,iy,1)=0.0_R8
             flob(ix,iy,1)=0.0_R8
             vbecrb(ix,iy,1)=0.0_R8

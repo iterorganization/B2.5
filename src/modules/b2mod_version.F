@@ -275,4 +275,5 @@ c                                 Added flux limit coefficients to b2mod_transpo
 c    Version 03.000.007  01.07.19 Added fix_recomb to b2frates
 c                                 Replaced redef_pbs by redef_gmtry in b2fgmtry
 c                                 Added wbbl to b2fgmtry
+c                                 Added (corrected) fht, fhj, fhm, fhp to b2fplasma
 c

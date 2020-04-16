@@ -1067,7 +1067,7 @@ c     with diamagnetic drift part                                        !xpb
      3   fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,                !srv 13.10.06
      &   .true.)                                                         !djm Jan2017
         call b2xpen (nx, ny, ns,
-     1   fna, fne, fna,fne,fch, fhe, fhi, kinrgy, rpt, te, ti,     !ajs 07.04.20
+     1   fna, fne, fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti,         !ajs 07.04.20
      2   po, BoRiS, fhm, fhp, fhj, fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
         call b2tfcc (nx, ny, ns, na, te, ti, cdpa, floe, cone,
