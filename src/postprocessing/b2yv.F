@@ -22,9 +22,6 @@
       use DFLIB    ! IGNORE
 #endif
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -54,9 +51,6 @@
 #endif
 
       integer ninp(0:5), nout(0:7), nx, ny, ns, ns0, idum(0:9), io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       character lblmn*120, title*64
       character hlp_frm*22
       logical file_open
@@ -70,16 +64,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2yv_mpi_child'
-      endif
-#endif
       call prgini ('b2yv')
 *   ..open files
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -290,10 +274,6 @@
       deallocate (M)
 * ..end of computation
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2yv'
 
 *-----------------------------------------------------------------------

@@ -222,7 +222,8 @@ program b2_ual_write_b2mod
      & , only : ids_summary
 #endif
     use b2mod_grid_mapping
-#if IMAS_MINOR_VERSION < 15
+#if IMAS_MINOR_VERSION < 15 && IMAS_MINOR_VERSION > 11
+    use b2mod_ual_io
     use ids_grid_examples       ! IGNORE
 #endif
 

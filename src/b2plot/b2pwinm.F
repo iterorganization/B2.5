@@ -119,10 +119,10 @@ c*** Coordinates of the additional source points
         addsrc_xy(2,i)=0.001_R8*add_srci(2,i)
        end do
 c----------------------------------------------------------------------
-c*** 10: Inner edge of inner target
-c*** 11: Inner edge of outer target
-c*** 12: Outer edge of inner target
-c*** 13: Outer edge of outer target
+c*** 10: Inner edge of Western target
+c*** 11: Inner edge of Eastern target
+c*** 12: Outer edge of Western target
+c*** 13: Outer edge of Eastern target
 c*** 14: Values for the target edges
       case (10:14)
        if(i.le.13) then

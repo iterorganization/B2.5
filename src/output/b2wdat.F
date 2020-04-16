@@ -595,15 +595,15 @@
         do iy=-1,ny
           do is = 0, ns-1
             if(.not.is_neutral(is)) then          !iyv 07.02.11
-! pr_inner
+! pr_West
               wrk1(-1,iy)=wrk1(-1,iy)+na(-1,iy,is)*
      &         (rza(-1,iy,is)*te(-1,iy)+ti(-1,iy))
-! pr_outer
+! pr_East
               wrk1(0,iy)=wrk1(0,iy)+na(nx,iy,is)*
      &         (rza(nx,iy,is)*te(nx,iy)+ti(nx,iy))
-! ro_inner
+! ro_West
               wrk1(1,iy) = wrk1(1,iy)+am(is)*mp*na(-1,iy,is)
-! ro_outer
+! ro_East
               wrk1(2,iy) = wrk1(2,iy)+am(is)*mp*na(nx,iy,is)
 
               if(nncut.eq.2) then !{    !iyv 04.02.11
@@ -621,13 +621,13 @@
             endif
           enddo
 
-! qe inner
+! qe West
           phi_app = get_phi_applied(boundary_namelist,-1,iy)
           wrk0(-1,iy)=hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*    !srv 19.04. 13
      &     ( te(-1,iy)*(2.0e0_R8)+qe*po(-1,iy)*(1.0_R8-gammae) )*
      &     ( ne(-1,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(-1,iy)/me)*
      &     expu2(max(-50.0_R8, -qe*(po(-1,iy)-phi_app)/te(-1,iy))) )
-! qe outer
+! qe East
           phi_app = get_phi_applied(boundary_namelist,nx,iy)
           wrk0(0,iy)=hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*    !srv 19.04. 13
      &     ( te(nx,iy)*(2.0e0_R8)+qe*po(nx,iy)*(1.0_R8-gammae) )*
@@ -640,7 +640,7 @@
               wrk0(2,iy)=wrk0(2,iy)+na(nx,iy,is)
            endif
          enddo
-! qi inner
+! qi West
          wrk0(3,iy)=2.5e0_R8*
      &               hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(-1,iy)*wrk0(1,iy)*sqrt(wrk1(-1,iy)/wrk1(1,iy))
@@ -650,7 +650,7 @@
 !  does not disturb the guard cells and all the fluid sources related to neutrals
 !  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
 
-! qi outer
+! qi East
          wrk0(4,iy)=2.5e0_R8*
      &               hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(nx,iy)*wrk0(2,iy)*sqrt(wrk1(0,iy)/wrk1(2,iy))
@@ -879,15 +879,15 @@
      &          'Energy e-flux to outer lower plate     =',es11.3/
      &          'Energy i-flux to outer lower plate     =',es11.3//
 
-     &          'Energy e-flux to inner low plate       =',es11.3/
-     &          'Energy i-flux to inner low plate       =',es11.3/
+     &          'Energy e-flux to inner lower plate     =',es11.3/
+     &          'Energy i-flux to inner lower plate     =',es11.3/
      &          'Energy e-flux to inner upper plate     =',es11.3/
      &          'Energy i-flux to inner upper plate     =',es11.3//
 
      &          'Total Energy flux to outer upper plate =',es11.3/
-     &          'Total Energy flux to outer low plate   =',es11.3/
+     &          'Total Energy flux to outer lower plate =',es11.3/
      &          'Total Energy flux to inner upper plate =',es11.3/
-     &          'Total Energy flux to inner low plate   =',es11.3/ )
+     &          'Total Energy flux to inner lower plate =',es11.3/ )
 
       else
 
@@ -904,18 +904,22 @@
         write(70,51) qe_out_sum, qi_out_sum, q_out_sum,
      &               qe_inn_sum, qi_inn_sum, q_inn_sum
 
-   51   format(/'Energy e-flux to outer plate      =',es11.3/
-     &          'Energy i-flux to outer plate      =',es11.3/
-     &          'Total Energy flux to outer plate  =',es11.3/
-     &          'Energy e-flux to inner plate      =',es11.3/
-     &          'Energy i-flux to inner plate      =',es11.3//
-     &          'Total Energy flux to inner plate  =',es11.3/)
+   51   format(/'Energy e-flux to Eastern plate      =',es11.3/
+     &          'Energy i-flux to Eastern plate      =',es11.3/
+     &          'Total Energy flux to Eastern plate  =',es11.3/
+     &          'Energy e-flux to Western plate      =',es11.3/
+     &          'Energy i-flux to Western plate      =',es11.3//
+     &          'Total Energy flux to Western plate  =',es11.3/)
       endif
       close(70)
 
       ishift = 0
 
-      open(70,file=trim(folder)//'table_low_inner.dat')        !srv 26.09.17
+      if (LSN) then
+        open(70,file=trim(folder)//'table_lower_inner.dat')    !srv 26.09.17
+      else
+        open(70,file=trim(folder)//'table_lower_outer.dat')    !srv 26.09.17
+      endif
       write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
@@ -935,7 +939,11 @@
       enddo
       close(70)
 
-      open(70,file=trim(folder)//'table_low_outer.dat')        !srv 26.09.17
+      if(LSN) then
+        open(70,file=trim(folder)//'table_lower_outer.dat')      !srv 26.09.17
+      else
+        open(70,file=trim(folder)//'table_lower_inner.dat')      !srv 26.09.17
+      endif
       write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
@@ -1001,8 +1009,12 @@
 !______________________________________________________________________________ !iyv 15.10.09 }
 
       if(iout.eq.2) then                                  !srv 06.05.09 {
-*   ..write crdy_c_cell, crdy_c_cell_abs [mm], ne, te, ti, js at inner
-        open(70,file=trim(folder)//'inner.dat')           !srv 26.09.17
+*   ..write crdy_c_cell, crdy_c_cell_abs [mm], ne, te, ti, js at Western edge
+        if(LSN) then
+          open(70,file=trim(folder)//'inner.dat')         !srv 26.09.17
+        else
+          open(70,file=trim(folder)//'outer.dat')         !srv 26.09.17
+        endif
         do iy = -1,ny                                     !srv 03.04.13 {
           iw = 0
           do ix = -1,nx
@@ -1035,7 +1047,11 @@
         enddo
         close(70)
 
-        open(70,file=trim(folder)//'outer.dat')           !srv 26.09.17
+        if (LSN) then
+          open(70,file=trim(folder)//'outer.dat')         !srv 26.09.17
+        else
+          open(70,file=trim(folder)//'inner.dat')         !srv 26.09.17
+        endif
         do iy = -1,ny                                     !srv 03.04.13 {
          iw = 0
          do ix = -1,nx
@@ -1089,13 +1105,25 @@
 
        open(70,file=trim(folder)//'separatrix_location_on_plate.dat')   !srv 26.09.17
        ix = -1
-       write(70,"(1x,a,12es14.6)")
-     &  ' Separatrix Location on Inner Lower =',
-     &    cry(ix+ishift,mintopcut,0)
+       if (LSN) then
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Inner Lower =',
+     &      cry(ix+ishift,mintopcut,0)
+       else
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Outer Upper =',
+     &      cry(ix+ishift,mintopcut,0)
+       endif
        ix = nx
-       write(70,"(1x,a,12es14.6)")
-     &  ' Separatrix Location on Outer Lower =',
-     &    crx(ix-ishift,mintopcut,0)
+       if (LSN) then
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Outer Lower =',
+     &      crx(ix-ishift,mintopcut,0)
+       else
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix Location on Inner Upper =',
+     &      crx(ix-ishift,mintopcut,0)
+       endif
        do ix = -1,nx
          if(leftix(ix,mintopcut).eq.-2 .and. ix.gt.-1) then
            write(70,"(1x,a,12es14.6)")
@@ -1114,8 +1142,12 @@
      &    crx(ix-ishift,mintopcut,0)
        close(70)
 
-*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at inner
-       open(70,file=trim(folder)//'inner_na_ua.dat')              !srv 03.04.13 { 26.09.17
+*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at Western edge
+       if (LSN) then
+         open(70,file=trim(folder)//'inner_na_ua.dat')            !srv 03.04.13 { 26.09.17
+       else
+         open(70,file=trim(folder)//'outer_na_ua.dat')            !srv 03.04.13 { 26.09.17
+       endif
        write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
        do iy = -1,ny
          iw = 0
@@ -1143,8 +1175,12 @@
       enddo
       close(70)
 
-*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at outer
-      open(70,file=trim(folder)//'outer_na_ua.dat')       !srv 26.09.17
+*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at Eastern edge
+      if (LSN) then
+        open(70,file=trim(folder)//'outer_na_ua.dat')       !srv 26.09.17
+      else
+        open(70,file=trim(folder)//'inner_na_ua.dat')       !srv 26.09.17
+      endif
       do iy = -1,ny
         iw = 0
         do ix = -1,nx

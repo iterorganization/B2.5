@@ -686,14 +686,24 @@ cdpc
 *   ..subprogram start-up calls
       call subini ('set_transport')
       if (ncall.eq.0) then
-        if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
-          ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        if(nnreg(0).eq.4) then
+          if (LSN) then
+            ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+          else
+            ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+          endif
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.5) then
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3
+        elseif(nnreg(0).eq.2) then
+          ixref=nx/2
+          iyref=2*topcut(1)/3
         else
-          ixref=3*nx/4
+          ixref=nx/2
           iyref=ny/2
         endif
         call ipgeti ('set_transport_ixref', ixref)
@@ -1756,14 +1766,24 @@ c
       if (ncall.eq.0) then
         call alloc_b2mod_transport_models(nx, ny, ns)
         call read_b2mod_transport_models(99,'    ',models_found)
-        if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
-          ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        if(nnreg(0).eq.4) then
+          if(LSN) then
+            ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+          else
+            ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+          endif
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.5) then
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3
+        elseif(nnreg(0).eq.2) then
+          ixref=nx/2
+          iyref=2*topcut(1)/3
         else
-          ixref=3*nx/4
+          ixref=nx/2
           iyref=ny/2
         endif
         call ipgeti ('set_transport_ixref', ixref)
@@ -2496,14 +2516,24 @@ c*** We only apply this in the outer SOL region
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call alloc_b2mod_transport_disruption(nx,ny)
-        if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
-          ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        if(nnreg(0).eq.4) then
+          if (LSN) then
+            ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+          else
+            ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+          endif
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.5) then
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3
+        elseif(nnreg(0).eq.2) then
+          ixref=nx/2
+          iyref=2*topcut(1)/3
         else
-          ixref=3*nx/4
+          ixref=nx/2
           iyref=ny/2
         endif
         call ipgeti ('set_transport_ixref', ixref)
@@ -2682,14 +2712,24 @@ c*** We only apply this in the outer SOL region
       if (ncall.eq.0) then
 *   ..neoclassical transport only valid for single charge states
 *     bundled charge states yet to be implemented
-        if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
-          ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        if(nnreg(0).eq.4) then
+          if (LSN) then
+            ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+          else
+            ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+          endif
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.5) then
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3
+        elseif(nnreg(0).eq.2) then
+          ixref=nx/2
+          iyref=2*topcut(1)/3
         else
-          ixref=3*nx/4
+          ixref=nx/2
           iyref=ny/2
         endif
         call ipgeti ('set_transport_ixref', ixref)

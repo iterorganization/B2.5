@@ -20,7 +20,7 @@
 *  1. purpose
 *
 *     B2NXFV calculates the convective term due to new form of ion  
-*     viscosity term in the momentum correction  equation.
+*     viscosity term in the momentum correction equation.
 *
 *-----------------------------------------------------------------------
 *.declarations

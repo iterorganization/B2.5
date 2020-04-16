@@ -5,7 +5,7 @@ c version : 22.09.2000 00:03
 c=======================================================================
 c***  Produces a file with coordinates of the grid cell centers and
 c***  the plasma parameters (density, temperatures, fluid velocity)
-c***  in the outer divertor - for H. Wuerz
+c***  in the Eastern divertor - for H. Wuerz
 c***
 c*** Output files:
 c***

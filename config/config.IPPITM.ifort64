@@ -24,7 +24,8 @@ ifndef LD_NAG
   LD_NAG     = -L${NAGDIR} -lnag
 endif
 
-EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS
+EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
+DEFINES += -DGRREAL=4 -DDOFLUSH # -DNO_CDF
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 CPPOPTS  = -C -P -I${srcdir} ${EQUIVS}
@@ -42,7 +43,7 @@ FC       = ifort
 endif
 endif
 
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2)
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
@@ -91,13 +92,23 @@ endif
 
 ifdef IMAS_VERSION
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-GGD_MINOR_VERSION ?= $(shell echo ${EBVERSIONGGD} | cut -d '.' -f2 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-ifndef SOLPS_CPP
-EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
-endif
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL  ?= `pkg-config imas-ifort ggd --libs`
+else
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL  ?= `pkg-config imas-ifort --libs` -lggd-ifort
+else
+GGD_MINOR_VERSION ?= 0
 LD_UAL  ?= `pkg-config imas-lowlevel imas-ifort --libs`
+endif
+endif
+ifndef SOLPS_CPP
+DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+endif
 INCMODS += -I${IMAS_PREFIX}/include/ifort
 LDLIBES += ${LD_UAL}
 endif
