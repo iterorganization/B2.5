@@ -1,4 +1,4 @@
-      subroutine b2xpen (nx, ny, ns, fna, fne, 
+      subroutine b2xpen (nx, ny, ns, fna, fne,
      1 fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa, rpt, te, ti, po,
      2 BoRiS, fhm, fhp, fhj, fht)
       use b2mod_types
