@@ -780,7 +780,7 @@ c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
 c 28: Corrected calculation of fht, now using fn[ae]_53
 
-      dbversion=27
+      dbversion=28
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
