@@ -1046,6 +1046,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2ytdr_jsep1</name>
+				<default>nx1/2</default>
+				<type>integer</type>
+				<description>
+					Radial index of separatrix in the converted grid. Must be specified within b2yt.dat. Only applies when converting linear geometries.
+				</description>
+			</switch>
+			<switch>
 				<name>b2ytdr_ndepth1</name>
 				<default>ndepth_nml</default>
 				<type>integer</type>
@@ -3861,6 +3869,8 @@
 				<name>b2mndr_*fb*</name>
 				<description>
 					Experimental: allows for density feedback of the number of electrons accompanying species 'isfb' at location (ixfb,iyfb).
+					For USN topologies, the default value for ixfb is 3*nx/8.
+					For all others, it is 5*nx/8.
 					Note that ixfb and iyfb are real numbers!
 				</description>
 				<switch>
@@ -3870,7 +3880,7 @@
 				</switch>
 				<switch>
 					<name>b2mndr_ixfb</name>
-					<default>5*nx/8</default>
+					<default>See description</default>
 					<type>real</type>
 				</switch>
 				<switch>
@@ -7037,7 +7047,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Location of the pump. 0 no pump at all (default), 1 - lower PFR, 2 - outer SOL, 3 - upper PFR, 4 - inner SOL
+					Location of the pump. 0 no pump at all (default), 1 - SN of lower DN PFR, 2 - (outer) SOL, 3 - upper DN PFR, 4 - inner SOL for DN
 				</description>
 			</switch>
 			<switch>

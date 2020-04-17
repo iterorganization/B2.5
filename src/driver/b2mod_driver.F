@@ -1182,17 +1182,6 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .  'Currents assignment to ions only supported for single '//
      .  'hydrogenic species!')
 *
-       ixfb=rratio(5*nx,8)
-       iyfb=rratio(ny,2)
-       isfb=ismain
-       call ipgetr ('b2mndr_ixfb', ixfb)
-       call ipgetr ('b2mndr_iyfb', iyfb)
-       call ipgeti ('b2mndr_isfb', isfb)
-       call ipgetr ('b2mndr_ne_wanted', ne_wanted)
-       call ipgetr ('b2mndr_ne_wanted_time', ne_wanted_time)
-       call ipgetr ('b2mndr_ne_wanted_mod_time', ne_wanted_mod_time)
-       call xertst (0.le.isfb.and.isfb.lt.ns,
-     &   'faulty internal parameter isfb')
        call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
        call xertst (0.0_R8.le.fac_hz .and. 1.0_R8.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
@@ -1310,6 +1299,9 @@ csw 09oct2012
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
+      call alloc_b2mod_tallies(nnreg,ns)
+      call get_jsep(nx,ny,jxi,jxa,jsep)
+      call get_nxt(nx, nxtl, nxtr)
       call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
       if (b2mndr_redef_pbs.ne.0) then
         if (redef_pbs.eq.1) then
@@ -1325,6 +1317,21 @@ csw 09oct2012
         endif
       endif
 ! can only be calculated after the indirect arrays have been read
+      if (LSN) then
+        ixfb=rratio(5*nx,8)
+      else
+        ixfb=rratio(3*nx,8)
+      endif
+      iyfb=rratio(ny,2)
+      isfb=ismain
+      call ipgetr ('b2mndr_ixfb', ixfb)
+      call ipgetr ('b2mndr_iyfb', iyfb)
+      call ipgeti ('b2mndr_isfb', isfb)
+      call ipgetr ('b2mndr_ne_wanted', ne_wanted)
+      call ipgetr ('b2mndr_ne_wanted_time', ne_wanted_time)
+      call ipgetr ('b2mndr_ne_wanted_mod_time', ne_wanted_mod_time)
+      call xertst (0.le.isfb.and.isfb.lt.ns,
+     &   'faulty internal parameter isfb')
       ix1=int(ixfb)
       call xertst(0.le.ix1.and.ix1.lt.nx, 'faulty ixfb (1)')
       iy1=int(iyfb)
@@ -1351,9 +1358,6 @@ csw 09oct2012
       write(*,*) 'iy# ', iy1, iy2, iy3, iy4, iy5
       write(*,*) 'ax,ay ', ax, ay
 !
-      call alloc_b2mod_tallies(nnreg,ns)
-      call get_jsep(nx,ny,jxi,jxa,jsep)
-      call get_nxt(nx, nxtl, nxtr)
       if (bb(jxa,jsep,2).ne.0.0_R8) then
         signmf = bb(jxa,jsep,2)/abs(bb(jxa,jsep,2))
       else

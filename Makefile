@@ -114,9 +114,12 @@ endif
 
 ifdef MDSPLUS_DIR
 ifndef LD_MDSPLUS
-LD_MDSPLUS=-L${MDSPLUS_DIR}/lib -lMdsLib_client
+LD_MDSPLUS ?= -L${MDSPLUS_DIR}/lib -lMdsLib_client
 endif
 INCLUDE += -I${MDSPLUS_DIR}/include
+ifndef SOLPS_CPP
+DEFINES += -DMDSPLUS
+endif
 endif
 
 # If compiling with Paraview Catalyst
