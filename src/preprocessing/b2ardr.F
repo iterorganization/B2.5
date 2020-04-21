@@ -111,6 +111,7 @@
       integer iyear(0:nnucm-1), npart(0:nnucm-1)
       integer izpmin(0:nzmax), izpmax(0:nzmax)
       character flag*8
+      character*32 ADAS_git_version
       integer i, j, k, nx, ny, ns, is, js, inuc, fix_cx,
      *  rtnt_in, rtnn_in, no_weisheit, fix_recomb, ns_pardf
       integer kstart, kstart1, kend
@@ -133,10 +134,11 @@
 *   ..procedures
       intrinsic log, exp
       logical streql, is_comment
+      character*32 get_ADAS_hash
       external subini, subend, xertst, xerrab, streql, cfwuch
       external ratstr, ratadp, ratwei, rattai, ratprt, cfruch
       external b2xxid, b2arin, b2wfr0, b2wfr1, b2wurc, b2rucp
-      external cfverr, cfruin, is_comment
+      external cfverr, cfruin, is_comment, get_ADAS_hash
 *   ..initialisation
       data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/32/,
      & fix_recomb/0/
@@ -368,8 +370,9 @@
        lblrc(61:120) = 'STRAHL rate coefficients, courtesy of'//
      &   ' K. Behringer'
       else if (streql(flag,'adas')) then
-       lblrc(61:120) = 'ADAS rate coefficients, courtesy of'//
-     &   ' H. Summers'
+       ADAS_git_version = get_ADAS_hash()
+       lblrc(61:120) = 'ADAS '//trim(ADAS_git_version)//
+     &   ' rate coefficients, from M. O Mullane'
 #ifdef ITM
       else if (streql(flag,'amns')) then
        lblrc(61:120) = 'AMNS rate coefficients, courtesy of'//
@@ -510,7 +513,7 @@ cxpb  We must account for the case when the user does not want all bundles
        else if (streql(flag,'amns')) then
         call ratamns (nout(0), nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr, rtzz, rtz2, rtpt, rtpi,
-     &    iyear(inuc), fix_recomb,
+     &    fix_recomb,
      &    npart(inuc), izpmin(0:nz(inuc)), izpmax(0:nz(inuc)))
 cxpb  We must account for the case when the user does not want all bundles
         kstart = 0

@@ -175,8 +175,9 @@ contains
             !< checks for correct use of the routine.
 
         !! Internal variables
+        character(len=120) :: AM_label  !< Description of A&M data source
         character(len=132) :: ion_label !< Ion species label (e.g. D+1)
-        character(len=132) :: mol_label  !< Molecule species label (e.g. D2)
+        character(len=132) :: mol_label !< Molecule species label (e.g. D2)
         character(len=12) :: ion_charge !< Ion charge (e.g. '1', '2', etc.)
         character(len=24) :: source     !< Code source
         character(len=2)  :: plate_name(4) !< Divertor plate name
@@ -288,7 +289,9 @@ contains
         character*16 usrnam
         character*8 imas_version, ual_version
         character*32 B25_git_version
+        character*32 ADAS_git_version
         character*32 get_B25_hash
+        character*32 get_ADAS_hash
         logical match_found, streql
 #ifdef B25_EIRENE
         logical, allocatable :: in_species(:)
@@ -301,7 +304,7 @@ contains
         integer lenval, ierror
 #endif
 #endif
-        external usrnam, streql, get_B25_hash
+        external usrnam, streql, get_B25_hash, get_ADAS_hash
 
         !! ===  SET UP IDS ===
         write(0,*) "Setting data for edge_profiles IDS"
@@ -712,7 +715,13 @@ contains
         allocate( edge_sources%code%commit(1) )
         edge_sources%code%commit = B25_git_version
         allocate( radiation%code%commit(1) )
-        radiation%code%commit = B25_git_version
+        if (streql(b2frates_flag,'adas')) then
+          ADAS_git_version = get_ADAS_hash()
+          radiation%code%commit = 'B25 : '//trim(B25_git_version)// &
+                           &  ' + ADAS : '//trim(ADAS_git_version)
+        else
+          radiation%code%commit = B25_git_version
+        endif
 
         allocate( edge_profiles%code%repository(1) )
         edge_profiles%code%repository = "git.iter.org"
@@ -724,7 +733,7 @@ contains
         radiation%code%repository = "git.iter.org"
 
         allocate( radiation%ids_properties%source(1) )
-        radiation%ids_properties%source = b2frates_flag
+        radiation%ids_properties%source = AM_label
         allocate( description%ids_properties%source(1) )
         description%ids_properties%source = source
 #if IMAS_MINOR_VERSION > 25
@@ -1126,10 +1135,10 @@ contains
 
             ! Put number of atoms
 #if IMAS_MINOR_VERSION < 15
-            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%multiplicity = 1.0_R8
-            edge_transport%model(1)%ggd( time_sind )%ion( js)%element(1)%multiplicity = 1.0_R8
+            edge_profiles%ggd( time_sind )%ion( js )%element(1)%multiplicity = 1.0_R8
+            edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%multiplicity = 1.0_R8
 #else
-            edge_profiles%ggd( time_sind )%ion( is + 1 )%element(1)%atoms_n = 1
+            edge_profiles%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
             edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1)%atoms_n = 1
 #endif
 

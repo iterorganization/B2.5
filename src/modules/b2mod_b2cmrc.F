@@ -20,6 +20,9 @@
       integer, allocatable, save ::
      &  rtyr(:)
       character*8, save :: b2frates_flag
+#ifdef IMAS
+      character*120, save :: AM_label
+#endif
 
       contains
 
