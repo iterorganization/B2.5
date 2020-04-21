@@ -589,7 +589,7 @@
         if(nncut.eq.2) then            !iyv 04.02.11
           call get_nxt(nx, nxtl, nxtr) ! position of additional targets in DN configuration
           ix1=nxtl    !inner upper
-          ix2=nxtr+1  !outer upper
+          ix2=nxtr    !outer upper
         endif
 
         do iy=-1,ny
@@ -765,16 +765,16 @@
 
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
-          s=gs(ix2,iy,0)
+          s=gs(ix2+1,iy,0)
           hlp=0.0_R8
           do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix2,iy,0,is)*(
-     .       (rpt(ix2,iy,is)*hx(ix2-1,iy)+
-     .        rpt(ix2-1,iy,is)*hx(ix2,iy))/
-     .       (hx(ix2-1,iy)+hx(ix2,iy))*ev+(1.0_R8-BoRiS)*
-     .      ((kinrgy(ix2,iy,is)+ti(ix2,iy))*hx(ix2-1,iy)+
-     .       (kinrgy(ix2-1,iy,is)+ti(ix2-1,iy))*hx(ix2,iy))/
-     .       (hx(ix2-1,iy)+hx(ix2,iy))))
+            hlp=hlp+abs(fna(ix2+1,iy,0,is)*(
+     .       (rpt(ix2,iy,is)*hx(ix2+1,iy)+
+     .        rpt(ix2+1,iy,is)*hx(ix2,iy))/
+     .       (hx(ix2+1,iy)+hx(ix2,iy))*ev+(1.0_R8-BoRiS)*
+     .      ((kinrgy(ix2,iy,is)+ti(ix2,iy))*hx(ix2+1,iy)+
+     .       (kinrgy(ix2+1,iy,is)+ti(ix2+1,iy))*hx(ix2,iy))/
+     .       (hx(ix2+1,iy)+hx(ix2,iy))))
           end do !}
           hlp=hlp/s
           wrk0(14,iy) = hlp + wrk0(8,iy) + wrk0(12,iy)
@@ -955,7 +955,7 @@
      &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
      &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
      &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
-     &     abs(bb(ixx+ishift,iy,0))/bb(ixx-ishift,iy,3) *
+     &     abs(bb(ixx-ishift,iy,0))/bb(ixx-ishift,iy,3) *
      &     na(ixx-ishift,iy,ismain) *
      &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
      &     wrk0(0,iy)/1.0e6_R8, wrk0(4,iy)/1.0e6_R8, wrk0(6,iy)/1.0e6_R8
@@ -972,14 +972,14 @@
         do iy = 0,ny
           ixx=ix1
           write(70,"( 1x,9es14.6)")                              !srv 03.04.13
-     &     crdy_c_cell(ixx+ishift,iy),
-     &     0.5_R8*( crx(ixx+ishift,iy,0) + crx(ixx+ishift,iy,2) ),
-     &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,ne(ixx+ishift,iy),
+     &     crdy_c_cell(ixx-ishift,iy),
+     &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
+     &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
 
-     &     qe * hy1(ixx+ishift,iy)/hy(ixx+ishift,iy) *
-     &     abs(bb(ixx+ishift,iy,0))/bb(ixx+ishift,iy,3) *
-     &     na(ixx+ishift,iy,ismain) *
-     &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(am(ismain)*mp)),
+     &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
+     &     abs(bb(ixx-ishift,iy,0))/bb(ixx-ishift,iy,3) *
+     &     na(ixx-ishift,iy,ismain) *
+     &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
      &     wrk0(7,iy)/1.0e6_R8, wrk0(11,iy)/1.0e6_R8,
      &     wrk0(13,iy)/1.0e6_R8
         enddo
@@ -993,13 +993,13 @@
         do iy = 0,ny
           ixx=ix2
           write(70,"( 1x,9es14.6)")                               !srv 03.04.13
-     &     crdy_c_cell(ixx-ishift,iy),
-     &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
-     &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
-     &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
-     &     abs(bb(ixx+ishift,iy,0))/bb(ixx-ishift,iy,3) *
-     &     na(ixx-ishift,iy,ismain) *
-     &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
+     &     crdy_c_cell(ixx+ishift,iy),
+     &     0.5_R8*( crx(ixx+ishift,iy,0) + crx(ixx+ishift,iy,2) ),
+     &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,ne(ixx+ishift,iy),
+     &     qe * hy1(ixx+ishift,iy)/hy(ixx+ishift,iy) *
+     &     abs(bb(ixx+ishift,iy,0))/bb(ixx+ishift,iy,3) *
+     &     na(ixx+ishift,iy,ismain) *
+     &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(am(ismain)*mp)),
      &     wrk0(8,iy)/1.0e6_R8, wrk0(12,iy)/1.0e6_R8,
      &     wrk0(14,iy)/1.0e6_R8
         enddo

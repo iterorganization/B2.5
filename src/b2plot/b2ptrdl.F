@@ -9,13 +9,14 @@ c*** Last index 0 is a sum over all species
 c*** Power is in W/m**2 (previously, MW/m**2)
 c======================================================================
       use b2mod_types
+      use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_b2plot_wall_loading
       implicit none
 #     include <DIMENSIONS.F>
       real (kind=R8) ::
      *   rdl(0:ny-1,ntrgsx,0:DEF_NATM)
-      integer i,j,k,l,m
+      integer i,j,k,l,m,n
 c======================================================================
 c*** If the load is already calculated, just fill in the output array
 c
@@ -96,6 +97,11 @@ c*** Calculate the load
 c----------------------------------------------------------------------
 c*** Arrange the output data
 
+#ifdef B25_EIRENE
+      n=natmi
+#else
+      n=nspecies
+#endif
       k=nytg
       l=1
       do j=1,max(1,ntrgts/2) !{
@@ -103,7 +109,7 @@ c*** Arrange the output data
           rdl(i,l,0)=wldrdld(lppp+k-i+lytg)
           rdl(i,l+1,0)=wldrdld(lppp+k+1+i-lytg)
           if(lrdlsp) then !{
-            do m=1,natmi !{
+            do m=1,n !{
               rdl(i,l,m)=wldrdlsp(lppp+k-i+lytg,m)
               rdl(i,l+1,m)=wldrdlsp(lppp+k+1+i-lytg,m)
             end do !}

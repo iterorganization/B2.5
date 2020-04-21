@@ -104,6 +104,7 @@ cxpb  Compute position of additional targets in DN configuration
      &            nxtr.lt.nx)
           nxtr=nxtr+1
         enddo
+        write(*,*) 'nxtl, nxtr : ', nxtl, nxtr
       endif
 
       call subend ()

@@ -244,10 +244,10 @@ c*** Prepare the list of grid indices for the target flux faces
       endif
       k=2
       if(ntrgts.eq.4) then
-        ltrgpos(2)=nxtl
+        ltrgpos(2)=nxtl-1
         lseppos(2)=topcut(2)-1
         lpfrpos(2)=leftcut(2)
-        ltrgpos(3)=nxtr+1
+        ltrgpos(3)=nxtr
         lseppos(3)=topcut(2)-1
         lpfrpos(3)=rightcut(2)-1
         k=4

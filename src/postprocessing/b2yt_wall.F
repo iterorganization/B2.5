@@ -16,7 +16,8 @@
       real (kind=R8) :: ub, lb, ub1, lb1
       integer, allocatable :: iseg1(:)
       logical, allocatable :: flip_segment(:)
-      external subini, subend, xertst, get_nxt
+      real (kind=R8) :: rratio
+      external subini, subend, xertst, get_nxt, rratio
 
       call subini('b2yt_wall_init')
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
@@ -45,19 +46,19 @@ cxpb  First fill up the b2cmpb needed data
       call xertst (cbnrso+cbnrno+cbnrwe+cbnrea.le.cbnrmx,
      &  'faulty parameter cbnrmx')
       if (nncut.eq.1) then
-        cbrbrk(cbirso) = real(leftcut1(1))/real(nx1)
-        cbrbrk(cbirso+1) = real(rightcut1(1))/real(nx1)
+        cbrbrk(cbirso) = rratio(leftcut1(1),nx1)
+        cbrbrk(cbirso+1) = rratio(rightcut1(1),nx1)
       else if (nncut.eq.2) then
         call b2yt_nxt(nx1,nxtl1,nxtr1)
-        cbrbrk(cbirso) = real(leftcut1(1))/real(nx1)
-        cbrbrk(cbirso+1) = real(rightcut1(2))/real(nx1)
-        cbrbrk(cbirso+2) = real(nxtl1)/real(nx1)
-        cbrbrk(cbirso+3) = real(leftcut1(2))/real(nx1)
-        cbrbrk(cbirso+4) = real(rightcut1(2))/real(nx1)
+        cbrbrk(cbirso  ) = rratio(leftcut1(1),nx1)
+        cbrbrk(cbirso+1) = rratio(rightcut1(2),nx1)
+        cbrbrk(cbirso+2) = rratio(nxtl1,nx1)
+        cbrbrk(cbirso+3) = rratio(leftcut1(2),nx1)
+        cbrbrk(cbirso+4) = rratio(rightcut1(2),nx1)
       endif
       cbrbrk(cbirso+cbnrso-1) = 2.00_R8
       if (nncut.eq.2) then
-        cbrbrk(cbirno) = real(nxtl1)/real(nx1)
+        cbrbrk(cbirno) = rratio(nxtl1,nx1)
       endif
       cbrbrk(cbirno+cbnrno-1) = 2.00_R8
       cbrbrk(cbirwe:cbirwe+cbnrwe-1) = 2.00_R8
