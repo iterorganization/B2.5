@@ -226,7 +226,7 @@ c***  sfpr_a    : list of active atoms
 c***  sfpr_m    : list of active materials
 
       integer n_hdpr_c,n_hdpr_t,n_hdpr_s,n_hdpr_a,n_hdpr_sp,n_sfpr_s,
-     ,  m_hdpr,m_hdln,n_hdpr_ml,n_hdpr_er,n_srfs_m
+     ,  m_hdpr,m_hdln,n_hdpr_ml,n_hdpr_er,n_srfs_m,nclm_na,nclm_nm
       parameter
      , (n_hdpr_c=10, n_hdpr_t=4, n_hdpr_s=2, n_hdpr_a=4, n_hdpr_sp=2,
      ,  n_hdpr_er=2, m_hdpr=5, n_hdpr_ml=4, n_srfs_m=8,
@@ -308,15 +308,20 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         
         n_sfpr_s=1
         if(nspecies.gt.1) n_sfpr_s=nspecies
-#ifndef B25_EIRENE      
-        do ia=1,natmi
-          TEXTA(ia)=adjustl(TEXTAN(ia-1))
-        end do
-#endif
         do is=1,n_sfpr_s !{
           sfpr_s(is)=adjustl(species_list(is))
         end do !}
-        do ia=1,natmi
+#ifndef B25_EIRENE
+        nclm_na=nspecies
+        nclm_nm=0   
+        do ia=1,nspecies
+          TEXTA(ia)=species_list(ia)
+        end do
+#else
+        nclm_na=natmi
+        nclm_nm=nmoli
+#endif
+        do ia=1,nclm_na
           sfpr_a(ia)=adjustl(TEXTA(ia))
         end do
 c        print *,'First call. format:',frmt_hlp,':'                  !###
@@ -485,8 +490,8 @@ c carlis evaluate number of sputtered atoms and molecules
           write(*,*) 'Sputtered species : ',(sfpr_sp(i),i=1,n_sfpr_sp)
         end if !}
         n_line_x=n_hdpr_c+n_hdpr_t+
-     ,           n_hdpr_s*n_sfpr_s+natmi*n_hdpr_a+
-     ,           n_hdpr_ml*nmoli+n_hdpr_sp*n_sfpr_sp+
+     ,           n_hdpr_s*n_sfpr_s+nclm_na*n_hdpr_a+
+     ,           n_hdpr_ml*nclm_nm+n_hdpr_sp*n_sfpr_sp+
      ,           n_hdpr_er*n_sfpr_er
         write(frmt_hlp,'(a7,i5,a11)') '(1p,1x,',n_line_x,'(e12.5,a1))'
 c carlis calculation of total pumped fluxes
@@ -854,7 +859,7 @@ c              write(*,'(1p,12e10.2)') (wwi(i),i=1,ntrgts)
             end do !} loop over active species
 
 c*** Atomic fluxes and energies
-            do iatm=1,natmi !{
+            do iatm=1,nclm_na !{
               l=1
               u=-1
               do j=1,ntrgts !{
@@ -1138,7 +1143,7 @@ c*** Print the column headers
             k=k+l+m+2
           end do !}
         end do !}
-        do i=1,natmi !{
+        do i=1,nclm_na !{
           m=len_trim(sfpr_a(i))
           do j=1,n_hdpr_a !{
             l=len_trim(hdpr_a(j))
@@ -1147,7 +1152,7 @@ c*** Print the column headers
             k=k+l+m+2
           end do !}
         end do !}
-        do i=1,nmoli !{
+        do i=1,nclm_nm !{
           ssmol=textmn(i-1)
           ssmol=adjustl(ssmol)
           m=len_trim(ssmol)
@@ -1207,6 +1212,7 @@ c        print *,hdr_line(1:k-1)
      .   'density of neutral atoms of species XX [1/m^3]'
         write(lun,740) 'pa_XX',tab,
      .   'pressure of neutral atoms of species XX [Pa]'
+#ifdef B25_EIRENE
         write(lun,740) 'flxm_XX',tab,
      .   'incident flux of molecules XX [1/m^2/s]'
         write(lun,740) 'Eavm_XX',tab,
@@ -1215,6 +1221,7 @@ c        print *,hdr_line(1:k-1)
      .   'density of molecules XX [1/m^3]'
         write(lun,740) 'pm_XX',tab,
      .   'pressure of molecules XX [Pa]'
+#endif
         write(lun,740) 'ersne_XX',tab,
      .   'net erosion of wall material XX [mm/y]'
         write(lun,740) 'ersng_XX',tab,
@@ -1246,14 +1253,14 @@ c*** Print the line
           w_line(k+2)=0.0 !average ion energy
           k=k+n_hdpr_s
         end do !}
-        do is=1,natmi !{
+        do is=1,nclm_na !{
           w_line(k+1)=wldna(m,is,0)/segm_area(ils)
           w_line(k+2)=ewlda(m,is,0)
           w_line(k+3)=0.0 !atom density
           w_line(k+4)=0.0 !atom pressure
           k=k+n_hdpr_a
         end do !}
-        do is=1,nmoli !{
+        do is=1,nclm_nm !{
           w_line(k+1)=wldnm(m,is,0)/segm_area(ils) !molecule flux
           w_line(k+2)=ewldm(m,is,0) !molecule energy
           w_line(k+3)=0.0 !molecule density
@@ -1367,14 +1374,14 @@ c        print *,'itrg,iy=',itrg,iy
           w_line(k+2)=eiitrg(iy,itrg,is)/eV
           k=k+n_hdpr_s
         end do !}
-        do is=1,natmi !{
+        do is=1,nclm_na !{
           w_line(k+1)=faitrg(iy,itrg,is)
           w_line(k+2)=eaitrg(iy,itrg,is)/eV
           w_line(k+3)=naitrg(iy,itrg,is)
           w_line(k+4)=paitrg(iy,itrg,is)
           k=k+n_hdpr_a
         end do !}
-        do is=1,nmoli !{
+        do is=1,nclm_nm !{
           w_line(k+1)=fmitrg(iy,itrg,is) !molecule flux
           w_line(k+2)=emitrg(iy,itrg,is)/eV !molecule energy
           w_line(k+3)=nmitrg(iy,itrg,is) !molecule density
