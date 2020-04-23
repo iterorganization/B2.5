@@ -33,7 +33,8 @@
       integer, allocatable :: neigh(:,:,:), elem_cv(:), trifc(:,:),
      .                        ixtri(:), iytri(:), bndmdl(:,:),
      .     ix_b2_eir(:), ix_eir_b25(:), iy_eir(:)
-      integer :: artificial_slab=0,overwrite_ntrfrm_1=0
+      integer :: artificial_slab=0, overwrite_ntrfrm = 0,
+     .            is_narrow_grid = 0
       real(R8) :: xc, yc
       logical :: ffound
       character(500) :: line
@@ -49,7 +50,8 @@
       
 
       call ipgeti ('artificial_slab', artificial_slab)	
-      call ipgeti ('overwrite_ntrfrm_1', overwrite_ntrfrm_1)	
+      call ipgeti ('overwrite_ntrfrm', overwrite_ntrfrm)	
+      call ipgeti ('is_narrow_grid',is_narrow_grid)
 
 !  if input.dat exist check which form of fort.33 is used
       inquire (file='input.dat',exist=ffound)
@@ -66,9 +68,6 @@
         ntrfrm = 0
       endif
       
-      if (overwrite_ntrfrm_1.eq.1) then
-         ntrfrm = 1
-      endif
      
 !  read coordinates from fort.33
       open (unit=33,access='SEQUENTIAL',form='FORMATTED')
@@ -82,6 +81,10 @@
       allocate (im_new_old(nco_old+nncut))
       im_old_new = 0
       im_new_old = 0
+
+      if (overwrite_ntrfrm.eq.1) then
+        ntrfrm = 1
+      endif
 
       if (ntrfrm == 0) then
         read (33,*) (xc_old(i),i=1,nco_old)
@@ -123,11 +126,21 @@
         call EIRENE_insert (baum, xc_old(ico), yc_old(ico), 
      .                      0._R8, 1._R8, ic, inserted)
         IF (INSERTED) THEN
-          NNODES=NNODES+1
-          xc_new(NNODES) = xc_old(ico)
-          yc_new(NNODES) = yc_old(ico)
-          im_old_new(ico) = nnodes
-          im_new_old(nnodes) = ico
+          if (is_narrow_grid) then
+            !! if we have a narrow grid, this should not happen because every node of the eirene triangle grid should be in th plasma grid.
+            !! therefore this has to do with round-off error of faulty input files. Therefore these cells are printend.
+            write(*,*) '------------'
+            write(*,*) 'faulty node', ico
+            write(*,*) 'x = ', xc_old(ico)
+            write(*,*) 'y = ', yc_old(ico)
+            write(*,*) '------------'
+          else
+            NNODES=NNODES+1
+            xc_new(NNODES) = xc_old(ico)
+            yc_new(NNODES) = yc_old(ico)
+            im_old_new(ico) = nnodes
+            im_new_old(nnodes) = ico
+          endif
         else
           im_old_new(ico) = ic
           im_new_old(ic) = ico
