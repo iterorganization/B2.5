@@ -32,7 +32,7 @@
       integer ncall
       real (kind=R8) ::  phm0 = 1.0_R8                                  !srv 06.12.18
       real (kind=R8) ::
-     *   ft, wrkv(nVx), dloghz(nFc)                                     !srv 16.10.17
+     *   ft, dloghz(nFc)                                                !srv 16.10.17
       save ncall
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
@@ -63,7 +63,8 @@
       ft = 4.0_R8/3.0_R8
 *   ..compute flubvx
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then         !srv 26.10.08
-        call diff_p(nCv,nFc,nVx,0,geo,mpg,log(geo%cvHz),wrkv,dloghz)
+        call diff_p(nCv,nFc,nVx,1,geo,mpg,log(geo%cvHz),log(geo%vxHz),
+     .    dloghz)
         flubv(:,0) = phm0*ft*cvsbhz_cl(:,0)*dloghz                    !srv 06.12.18
         flubv(:,1) = 0.0_R8
       else
