@@ -9,7 +9,7 @@
      .          init_geometry
 
       type, public :: geometry
-        
+
 !  cell quantites
         real (kind=R8), allocatable  :: cvBb(:,:)      ! Magnetic field: (nCv,0:3) Bx, By, Bz, |B|
         real (kind=R8), allocatable  :: cvX(:)         ! X-co of cell center
@@ -28,16 +28,20 @@
         real (kind=R8), allocatable  :: fcS(:)         ! Total cell face area
         real (kind=R8), allocatable  :: fcHc(:,:)      ! Lengths between cell face center and neighboring cell centers ("connector" direction)
         real (kind=R8), allocatable  :: fcHt(:)        ! Lengths along cell face ("tangential" direction)
+        real (kind=R8), allocatable  :: fcHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: fcVol(:,:)     ! Part of volume of neighboring cell centers associated with the face; for interpolation
         real (kind=R8), allocatable  :: fcQgam(:,:)    ! Cosine (:,0) and sine (:,1) of gamma
         real (kind=R8), allocatable  :: fcQalf(:,:)    ! Cosine (:,0) and sine (:,1) of alpha
         real (kind=R8), allocatable  :: fcQbet(:,:)    ! Cosine (:,0) and sine (:,1) of beta
         real (kind=R8), allocatable  :: fcPbs(:)       ! Magnetic contact area
         real (kind=R8), allocatable  :: fcPbshz(:)     ! Magnetic contact area * hz (at faces)
-        real (kind=R8), allocatable  :: fcEb(:,:)      ! 
+        real (kind=R8), allocatable  :: fcEb(:,:)      !
+
+!  vertex quantities
         real (kind=R8), allocatable  :: vxBb(:,:)      ! Magnetic field: (nVx,0:3) to be recomputed at vertices (Bx,By,Bz,|B|)
         real (kind=R8), allocatable  :: vxX(:)         ! X-co of vertex
         real (kind=R8), allocatable  :: vxY(:)         ! Y-co of vertex
+        real (kind=R8), allocatable  :: vxHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: vxVol(:)       ! Part of volume of surrounding cell centers associated with the vertex; for interpolation
         real (kind=R8), allocatable  :: vxFfbz(:)      !
         real (kind=R8), allocatable  :: vxFpsi(:)      ! 
@@ -78,6 +82,7 @@
       allocate (g%fcS(nFc))
       allocate (g%fcHc(nFc,1:2))
       allocate (g%fcHt(nFc))
+      allocate (g%fcHz(nFc))
       allocate (g%fcVol(nFc,1:2))      
       allocate (g%fcQgam(nFc,0:1))
       allocate (g%fcQalf(nFc,0:1))
@@ -90,6 +95,7 @@
       allocate (g%vxBb(nVx,0:3))
       allocate (g%vxX(nVx))
       allocate (g%vxY(nVx))
+      allocate (g%vxHz(nVx))
       allocate (g%vxVol(nVmxCv))
       allocate (g%vxFfbz(nVx))
       allocate (g%vxFpsi(nVx))
@@ -128,6 +134,7 @@
       g%fcS = 0._R8
       g%fcHc = 0._R8
       g%fcHt = 0._R8
+      g%fcHz = 0._R8
       g%fcVol = 0._R8    
       g%fcQgam = 0._R8
       g%fcQalf = 0._R8
@@ -140,6 +147,7 @@
       g%vxBb = 0._R8
       g%vxX = 0._R8
       g%vxY = 0._R8
+      g%vxHz = 0._R8
       g%vxVol = 0._R8
       g%vxFfbz = 0._R8
       g%vxFpsi = 0._R8
@@ -178,6 +186,7 @@
       deallocate (g%fcS)
       deallocate (g%fcHc)
       deallocate (g%fcHt)
+      deallocate (g%fcHz)
       deallocate (g%fcVol)      
       deallocate (g%fcQgam)
       deallocate (g%fcQalf)
@@ -190,6 +199,7 @@
       deallocate (g%vxBb)
       deallocate (g%vxX)
       deallocate (g%vxY)
+      deallocate (g%vxHz)
       deallocate (g%vxVol)
       deallocate (g%vxFfbz)
       deallocate (g%vxFpsi)
@@ -294,23 +304,32 @@
 
       subroutine init_geometry (mpg, gm)
       use b2mod_constants
+      use b2mod_b2cmfs
+     &  , only : isymm
       use b2us_map
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv
       integer :: use_9pt_stencil = 1
+      integer :: fcHz_style = 0
+      integer :: vxHz_style = 0
       integer :: fcVol_style = 0
-      integer :: vxVol_style = 1
-      real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du
+      integer :: vxVol_style = 2
+      real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du, width
       intrinsic maxval
+      data width /1.0_R8/
+      save width
 
       call ipgetr ('b2mndr_hz', fac_hz)
       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')
+      call ipgeti ('b2mndr_fcHz_style',fcHz_style)
+      call ipgeti ('b2mndr_vxHz_style',vxHz_style)
       call ipgeti ('b2mndr_use_9pt_stencil',use_9pt_stencil)
       call ipgeti ('b2mndr_fcVol_style',fcVol_style)
       call ipgeti ('b2mndr_vxVol_style',vxVol_style)
+      call ipgetr ('b2agmt_1d_width', width)
 
       nCv = mpg%nCv
       nFc = mpg%nFc
@@ -414,9 +433,40 @@
       hzconst = 1.0_R8
       gm%cvHz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*gm%cvVol/gm%cvSz
 
-*   ..compute fcPbshz (magnetic field pitch * cell face area * hz)
-      call intface(nCv,nFc,mpg%fcCv,gm%fcVol,gm%cvHz,gm%fcPbshz)
-      gm%fcPbshz = gm%fcPbs * gm%fcPbshz
+*   ..compute fcHz and fcPbshz
+      if (fcHz_style.eq.0) then
+        call intface(nCv,nFc,mpg%fcCv,gm%fcVol,gm%cvHz,gm%fcHz)
+      else
+        if (isymm.eq.0) then
+          gm%fcHz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*width
+        elseif (isymm.eq.1 .or. isymm.eq.2) then
+          do iFc = 1, mpg%nFc
+            gm%fcHz(iFc) = hzconst*(1.0e0_R8-fac_hz)+fac_hz*
+     &        pi*(gm%vxX(mpg%fcVx(iFc,1))+gm%vxX(mpg%fcVx(iFc,2)))
+          enddo
+        else if (isymm.eq.3 .or. isymm.eq.4) then
+          do iFc = 1, mpg%nFc
+            gm%fcHz(iFc) = hzconst*(1.0e0_R8-fac_hz)+fac_hz*
+     &        pi*(gm%vxY(mpg%fcVx(iFc,1))+gm%vxY(mpg%fcVx(iFc,2)))
+          enddo
+        endif
+      endif
+      gm%fcPbshz = gm%fcPbs * gm%fcHz
+
+*   ..compute vxHz
+      if (fcHz_style.eq.0) then
+        call intvertex(nCv,nVx,mpg,gm%vxVol,gm%cvHz,gm%vxHz)
+      else
+        if (isymm.eq.0) then
+          gm%vxHz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*width
+        elseif (isymm.eq.1 .or. isymm.eq.2) then
+          gm%vxHz = hzconst*(1.0e0_R8-fac_hz)+
+     &      fac_hz*2.0_R8*pi*gm%vxX
+        else if (isymm.eq.3 .or. isymm.eq.4) then
+          gm%vxHz = hzconst*(1.0e0_R8-fac_hz)+
+     &      fac_hz*2.0_R8*pi*gm%vxY
+        endif
+      endif
 
 *   ..compute Bz/B**2 - Bz/<B**2>
       !wdk do we need also vxBzb computed in a consistent way??

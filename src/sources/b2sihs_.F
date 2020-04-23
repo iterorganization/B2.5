@@ -63,7 +63,7 @@
      *  vti32(nCv)
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
-     &  phm4, phm5, phm6, wrkc(nCv), wrkf(nFc,0:1), hzf(nFc),
+     &  phm4, phm5, phm6, wrkc(nCv), wrkf(nFc,0:1),
      &  wrkv(nVx),                      !srv 02.06.99
      &  phm7, phm8, wrkc1(nCv),                                         !srv 28.08.02
      &  dpoc(nCv,0:1), dOnedBsqc(nCv,0:1), visc(nCv,0:1),
@@ -337,11 +337,10 @@
          !wdk use effective viscous momentum terms from the hybrid scheme
          !wdk avoids excessive heating in convection-dominated regions
          !wdk (improved total energy conservation at discretized level)
-         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,hzf)
          call diff(nCv, nFc, nVx, 0, geo, mpg, ua(1,is), wrkv, wrkf)
          wrkf = cvsahz_eff(:,:,is)/(geo%fcQalf+eps)*wrkf**2
-         wrkf(:,0) = wrkf(:,0)/hzf
-         wrkf(:,1) = wrkf(:,1)/hzf
+         wrkf(:,0) = wrkf(:,0)/geo%fcHz
+         wrkf(:,1) = wrkf(:,1)/geo%fcHz
          call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(1,0),visc(1,0))
          call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(1,1),visc(1,1))
         endif

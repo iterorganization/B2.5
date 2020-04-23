@@ -114,7 +114,7 @@
      *  wdia(nCv), wrk0(nCv),
      *  uu(nFc,0:ns+st_ext%ns-1),
      *  ud(nFc,0:ns-1), !sx(-1:nx,-1:ny), 
-     *  pz(nCv), hzf(nFc), !sxhz(-1:nx,-1:ny),                          !srv 24.08.08
+     *  pz(nCv), !sxhz(-1:nx,-1:ny),                          !srv 24.08.08
      *  dOnedBsq(nFc,0:1),
      &  sna0_no_mdf(nCv,0:1,0:ns-1)                             !srv 23.09.08
       real (kind=R8), save ::                                           !srv 16.02.12
@@ -306,9 +306,6 @@
       PBIG=UP00
 
       sna0_no_mdf = 0.0_R8
-
-*  .. interpolate hz to faces
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,hzf)
 
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)!srv 18.01.02
 
@@ -2803,9 +2800,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%smo0(iCv1,0,is)=
-     .         VBIG*NE00*am(is)*mompar(is,ib,1)*geo%fcS(iFc)*hzf(iFc)
+     .         VBIG*NE00*am(is)*mompar(is,ib,1)*geo%fcS(iFc)*
+     .         geo%fcHz(iFc)
             srw%smo0(iCv1,1,is)=
-     .        -VBIG*NE00*am(is)*geo%fcS(iFc)*hzf(iFc)
+     .        -VBIG*NE00*am(is)*geo%fcS(iFc)*geo%fcHz(iFc)
           enddo
 
           GOTO 20000
@@ -2825,11 +2823,11 @@ cwdk      Tmp: in "connector" direction - ok for orthogonal grids
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%smo0(iCv1,0,is)=
-     .         VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)*
+     .         VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)*
      .         (mompar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)) + 
      .          pl%ua(iCv2,is))
             srw%smo0(iCv1,1,is)=
-     .        -VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
+     .        -VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
           enddo
 
           GOTO 20000
@@ -3070,7 +3068,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-            srw%smo0(iCv1,0,is) = mompar(is,iB,1)*geo%fcS(iFc)*hzf(iFc)
+            srw%smo0(iCv1,0,is) = mompar(is,iB,1)*geo%fcS(iFc)*
+     .        geo%fcHz(iFc)
             srw%smo0(iCv1,1,is) = 0.0_R8
           enddo  
           GOTO 20000
@@ -3093,9 +3092,10 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%smo0(iCv1,0,is)=
-     .         VBIG*NE00*am(is)*bv_ua(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
+     .         VBIG*NE00*am(is)*bv_ua(iCv1,is)*geo%fcS(iFc)*
+     .         geo%fcHz(iFc)
             srw%smo0(iCv1,1,is)=
-     .        -VBIG*NE00*am(is)*geo%fcS(iFc)*hzf(iFc)
+     .        -VBIG*NE00*am(is)*geo%fcS(iFc)*geo%fcHz(iFc)
           enddo
           GOTO 20000
 
@@ -3398,7 +3398,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) - 
      &        (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
      &         dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
-     &        sign(1.0_R8,geo%fcQalf(iFc,0))*hzf(iFc)*geo%fcS(iFc)
+     &        sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*geo%fcS(iFc)
             srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                        !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &         mompar(is,ib,1)*vbnd
@@ -3412,7 +3412,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
               if (conpar(is,ib,2).gt.0.0_R8) then
                 srw%smo0(iCv1,1,is) = srw%smo0(iCv1,1,is) -
      &            mompar(is,ib,2)/conpar(is,ib,2)*am(is)*mp*
-     &            co%dna0(iCv1,is)*pl%na(iCv1,is)*geo%fcS(iFc)*hzf(iFc)
+     &            co%dna0(iCv1,is)*pl%na(iCv1,is)*geo%fcS(iFc)*
+     &            geo%fcHz(iFc)
               endif
             endif
           enddo
@@ -3435,7 +3436,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             srw%smo0(iCv1,1,IS) = 0.0_R8
             srw%smo0(iCv1,2,IS) = 0.0_R8
             srw%smo0(iCv1,3,IS) = srw%smo0(iCv1,3,IS) + 
-     &         MOMPAR(IS,IB,2)*geo%fcS(iFc)*hzf(iFc) + MOMPAR(IS,IB,1)*
+     &         MOMPAR(IS,IB,2)*geo%fcS(iFc)*geo%fcHz(iFc) +
+     &         MOMPAR(IS,IB,1)*
      &         max(0.0e0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &         dv%fna_fcor(iFc,1,is))/pl%na(iCv1,is)
           enddo

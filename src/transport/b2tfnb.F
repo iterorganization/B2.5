@@ -51,6 +51,7 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
       integer, save :: pflux_cor = 1                                     !srv 05.03.16
       integer, save :: PSch_style = 1                                    !srv 12.11.08
+      integer, save :: style_int_vel = 0
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: vlct_diagno = 1
       integer, save :: meth = 2
@@ -160,6 +161,7 @@
         call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
         call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
         call ipgeti ('b2tfnb_discr_meth', meth)
+        call ipgeti ('b2tfnb_style_int_vel', style_int_vel)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -442,13 +444,14 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
       call gradc_p(nCv, nFc, nVx, 1, geo, mpg, dv%pa(:,isb), wrkVx,
      &  dpbc)
 
-*   ..interpolate cvHz ('hz') to cell faces
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk3)
-
 * ..poloidal fluxes
 
 *   ..interpolate ua to cell faces
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,isb),wrk0)
+      if(style_int_vel.eq.0) then
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,isb),wrk0)
+      else
+        call intface(nCv,nFc,mpg%fcCv,geo%fcHc,pl%ua(:,isb),wrk0)
+      endif
 
 *   ..compute convective coefficients (poloidal and radial)
       flo(:,0) = geo%fcPbs*wrk0 + co%cvla(:,0,isb) +
@@ -468,10 +471,10 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo2dia(:,0) = geo%fcPbshz*wrk0 + co%cvlahz(:,0,isb) +
      &  (drift_hyb*dv%vaecrb(:,0,isb) + 2.0_R8*dv%vadia(:,0,isb))*
-     &  geo%fcS*geo%fcQalf(:,0)*wrk3
+     &  geo%fcS*geo%fcQalf(:,0)*geo%fcHz
       flo2dia(:,1) = co%cvlahz(:,1,isb) +
      &  (drift_hyb*dv%vaecrb(:,1,isb) + 2.0_R8*dv%vadia(:,1,isb))*
-     &  geo%fcS*geo%fcQalf(:,1)*wrk3
+     &  geo%fcS*geo%fcQalf(:,1)*geo%fcHz
       flo_nodrift(:,0) = co%cvla(:,0,isb) + geo%fcPbs*wrk0
       flo_nodrift(:,1) = co%cvla(:,1,isb)
 
@@ -486,8 +489,8 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
      &      vis_q*dv%fchvisq(:,1))*ycur/(qe*nbf)
         flo     = flo     + drift_hyb*scur
         flo_mdf = flo_mdf + drift_hyb*scur
-        flo2dia(:,0) = flo2dia(:,0) + drift_hyb*scur(:,0)*wrk3
-        flo2dia(:,1) = flo2dia(:,1) + drift_hyb*scur(:,1)*wrk3
+        flo2dia(:,0) = flo2dia(:,0) + drift_hyb*scur(:,0)*geo%fcHz
+        flo2dia(:,1) = flo2dia(:,1) + drift_hyb*scur(:,1)*geo%fcHz
       else
         scur = 0.0_R8
       end if
@@ -519,7 +522,7 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
       enddo
       cdpb(:,1) = 0.0_R8
       term   = -cdpb(:,0)*(dpb(:,0) - dpbm)
-      termhz = -cdpb(:,0)*(dpb(:,0) - dpbm)*wrk3
+      termhz = -cdpb(:,0)*(dpb(:,0) - dpbm)*geo%fcHz
 
       fna_mdf0(:,0)      = fna_mdf0(:,0) + term
       dv%fna_32(:,0,isb) = dv%fna_32(:,0,isb) + term
@@ -535,11 +538,11 @@ cwkd    velocity restriction and flux limits to be adapted to unstructured solve
       dv%fna_mdf(:,1,isb)  = fna_mdf0(:,1) - 
      &      co%cdpa(:,1,isb)*dpb(:,1) - dv%fnaPSch(:,1,isb)
 
-      dv%fna_fcor(:,0,isb) = fna_mdf0(:,0)*wrk3 + 
-     &      (flo2dia(:,0) - flo_mdf(:,0)*wrk3)*nbf - 
+      dv%fna_fcor(:,0,isb) = fna_mdf0(:,0)*geo%fcHz + 
+     &      (flo2dia(:,0) - flo_mdf(:,0)*geo%fcHz)*nbf - 
      &       co%cdpahz(:,0,isb)*dpb(:,0)
-      dv%fna_fcor(:,1,isb) = fna_mdf0(:,1)*wrk3 + 
-     &      (flo2dia(:,1) - flo_mdf(:,1)*wrk3)*nbf - 
+      dv%fna_fcor(:,1,isb) = fna_mdf0(:,1)*geo%fcHz + 
+     &      (flo2dia(:,1) - flo_mdf(:,1)*geo%fcHz)*nbf - 
      &       co%cdpahz(:,1,isb)*dpb(:,1)
 
       dv%fna_he(:,0,isb)   = fna_mdf0(:,0)*(5.0_R8/3.0_R8) + 
@@ -705,8 +708,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        wrk6 = dv%vadia(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)
        if(.not. is_neutral(isb)) 
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianax'//chns)
-       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk3)
-       wrk6 = dv%vadia(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)*wrk3
+       wrk6 = dv%vadia(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)*geo%fcHz
        if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
      &   call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianahzx'//chns)
        call my_out_us(70,nFc,1,dv%fna_fcor(1,0,isb),
@@ -746,8 +748,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        wrk6 = dv%vadia(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)
        if(.not. is_neutral(isb)) 
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianay'//chns)
-       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk3)
-       wrk6 = dv%vadia(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)*wrk3 
+       wrk6 = dv%vadia(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)*geo%fcHz
        if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianahzy'//chns)
       call my_out_us(70,nFc,1,dv%fna_fcor(1,1,isb),

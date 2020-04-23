@@ -213,8 +213,7 @@ csw 13mar2012
         enddo
       enddo
 *   ..incorporate geometry with hz                                    !srv 09.01.01
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,geo%cvHz,wrk)
-      wrk = geo%fcS*wrk 
+      wrk = geo%fcS*geo%fcHz
       do iFc = 1, nFc
         wrk1(iFc,1) = geo%fcVol(iFc,1)*geo%cvHz(mpg%fcCv(iFc,1))
         wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
@@ -369,7 +368,7 @@ csw 13mar2012
         enddo
       else if (lluciani.eq.3) then  ! new formulation
 *   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
-        call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)                   !srv 01.07.09
+        call b2ttia (nCv, ns, ti, rz2, ne2, lnlam, tauia)                   !srv 01.07.09
 *   .. calculate inverse aspect ratio and collisionality parameter nu_star   
         tt0 = 0.0e0_R8
         tt1 = 0.0e0_R8
