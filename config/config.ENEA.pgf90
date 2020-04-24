@@ -22,7 +22,7 @@ AMNS = ${shell echo ~amnsdata/public/library/4.09a/lib/pgi}
 MODINCLUDE += -I${AMNS} -I${UAL}/fortraninterface/amd64_pgi
 
 CPP = /lib/cpp -C -traditional
-CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 LINK_MOD = 
 

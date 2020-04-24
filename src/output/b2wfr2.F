@@ -9,6 +9,7 @@
 *$$$  call subini ('b2wfr2')
       write (nprt,101)
       write (nprt,102)
+      write (nprt,'()')
 *$$$  call subend ()
       return
 *     ------------------------------------------------------------------

@@ -718,7 +718,7 @@ contains
         if (streql(b2frates_flag,'adas')) then
           ADAS_git_version = get_ADAS_hash()
           radiation%code%commit = 'B25 : '//trim(B25_git_version)// &
-                           &  ' + ADAS :'//trim(ADAS_git_version)
+                           &  ' + ADAS : '//trim(ADAS_git_version)
         else
           radiation%code%commit = B25_git_version
         endif

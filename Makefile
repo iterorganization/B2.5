@@ -117,9 +117,12 @@ endif
 
 ifdef MDSPLUS_DIR
 ifndef LD_MDSPLUS
-LD_MDSPLUS=-L${MDSPLUS_DIR}/lib -lMdsLib_client
+LD_MDSPLUS ?= -L${MDSPLUS_DIR}/lib -lMdsLib_client
 endif
 INCLUDE += -I${MDSPLUS_DIR}/include
+ifndef SOLPS_CPP
+DEFINES += -DMDSPLUS
+endif
 endif
 
 # If compiling with Paraview Catalyst
@@ -1007,7 +1010,7 @@ VERSION: ${SRCDIR}/include/git_version_B25.h
 ${SRCDIR}/include/git_version_B25.h: force
 	@echo "      character*32 :: git_version_B25 = '`git describe --dirty --always`'" > ${SRCDIR}/include/git_version_new.h
 ifdef SOLPS_CPP
-	@echo "      character*32 :: git_version_ADAS = '`git -C $${SOLPSTOP}/modules/adas describe --dirty --always`'" >> ${SRCDIR}/include/git_version_new.h
+	@echo "      character*32 :: git_version_ADAS = '`( cd $${SOLPSTOP}/modules/adas ; git describe --dirty --always)`'" >> ${SRCDIR}/include/git_version_new.h
 else
 	@echo "      character*32 :: git_version_ADAS = '0.0.0-0-g0000000'" >> ${SRCDIR}/include/git_version_new.h
 endif

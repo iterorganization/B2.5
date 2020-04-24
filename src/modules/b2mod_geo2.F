@@ -44,6 +44,7 @@
      *  region1(:,:,:),
      *  resignore1(:,:,:),
      *  cflags1(:,:,:)
+      logical, save :: LSN1
 
       type(B2GridMap), save :: gmap1
 
@@ -89,6 +90,7 @@
       allocate(region1(-1:nxd,-1:nyd,0:2))
       allocate(resignore1(-1:nxd,-1:nyd,1:2))
       allocate(cflags1(-1:nxd,-1:nyd,GRID_N_CELLFLAGS))
+      LSN1 = .true.
       b2mod_geo2_allocated = .true.
       end subroutine alloc_b2mod_geo2
 

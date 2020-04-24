@@ -124,8 +124,8 @@
       integer iyear(0:nnucm-1), npart(0:nnucm-1)
       integer izpmin(0:nzmax), izpmax(0:nzmax)
       character flag*8
-      integer i, j, k, nx, ny, ns, is, js, inuc,
-     *  fix_cx, rtnt_in, rtnn_in, no_weisheit, ns_pardf
+      integer i, j, k, nx, ny, ns, is, js, inuc, fix_cx,
+     *  rtnt_in, rtnn_in, no_weisheit, ns_pardf
       integer kstart, kstart1, kend
       integer, allocatable :: is1(:)
       integer idum(0:9)

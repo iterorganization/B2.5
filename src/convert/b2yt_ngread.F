@@ -18,9 +18,9 @@ C
 
       subroutine b2yt_ngread(solps_version, eirene_format, nx1, ny1,
      . natm1, iatm1, nmol1, imol1, nion1, iion1, npls1, ipls1, nfla,
-     . no_sputtering, savestratum, non_commensurate, e_bundle_contr,
-     . jsep1, region1, leftcut1, rightcut1, bottomcut1, topcut1,
-     . bottomiy1,
+     . no_sputtering, savestratum, non_commensurate, flip,
+     . e_bundle_contr, jsep1, region1,
+     . leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
      . hx, hy, qc, hx1, hy1, qc1, gs1)
 c
 c  version : 06.11.97 22:11
@@ -53,7 +53,7 @@ c
      *  gs1(-1:nx1,-1:ny1,0:2)
       character*4 solps_version
       character*8 eirene_format
-      logical savestratum(0:nstraid), no_sputtering
+      logical flip, savestratum(0:nstraid), no_sputtering
 
 *  -- LOCAL SCALARS --
       integer is, nplsi
@@ -224,7 +224,7 @@ C
           field(0:nx+1,0:ny+1) = dab2(0:nx+1,0:ny+1,is,1)
           call b2xtvc(nx, ny, nx1, ny1,
      &        field, dab1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -254,7 +254,7 @@ C
           end if
           call b2xtvc(nx, ny, nx1, ny1,
      &        field, tab1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -278,7 +278,7 @@ C
             field(0:nx+1,0:ny+1) = dmb2(0:nx+1,0:ny+1,is,1)
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, dmb1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -310,7 +310,7 @@ C
             end if
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, tmb1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -335,7 +335,7 @@ C
             field(0:nx+1,0:ny+1) = dib2(0:nx+1,0:ny+1,is,1)
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, dib1(0,0,iion1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -367,7 +367,7 @@ C
             end if
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, tib1(0,0,iion1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -391,7 +391,7 @@ C
           field(0:nx+1,0:ny+1) = rfluxa(0:nx+1,0:ny+1,is,1)
           call b2xtfy (nx, ny, nx1, ny1,
      &        field, rfa1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -415,7 +415,7 @@ C
             field(0:nx+1,0:ny+1) = rfluxm(0:nx+1,0:ny+1,is,1)
             call b2xtfy (nx, ny, nx1, ny1,
      &        field, rfm1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -439,7 +439,7 @@ C
           field(0:nx+1,0:ny+1) = pfluxa(0:nx+1,0:ny+1,is,1)
           call b2xtfx (nx, ny, nx1, ny1,
      &        field, pfa1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -463,7 +463,7 @@ C
             field(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,is,1)
             call b2xtfx (nx, ny, nx1, ny1,
      &        field, pfm1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -487,7 +487,7 @@ C
           field(0:nx+1,0:ny+1) = refluxa(0:nx+1,0:ny+1,is,1)
           call b2xtfy (nx, ny, nx1, ny1,
      &        field, refa1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -511,7 +511,7 @@ C
             field(0:nx+1,0:ny+1) = refluxm(0:nx+1,0:ny+1,is,1)
             call b2xtfy (nx, ny, nx1, ny1,
      &        field, refm1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -535,7 +535,7 @@ C
           field(0:nx+1,0:ny+1) = pefluxa(0:nx+1,0:ny+1,is,1)
           call b2xtfx (nx, ny, nx1, ny1,
      &        field, pefa1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -559,7 +559,7 @@ C
             field(0:nx+1,0:ny+1) = pefluxm(0:nx+1,0:ny+1,is,1)
             call b2xtfx (nx, ny, nx1, ny1,
      &        field, pefm1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -579,7 +579,7 @@ C
       field(0:nx+1,0:ny+1) = emiss(0:nx+1,0:ny+1,1,1)
       call b2xtvc(nx, ny, nx1, ny1,
      &        field, emiss1(0,0),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -588,7 +588,7 @@ C
       field(0:nx+1,0:ny+1) = emissmol(0:nx+1,0:ny+1,1,1)
       call b2xtvc(nx, ny, nx1, ny1,
      &        field, emissmol1(0,0),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -612,7 +612,7 @@ C
             field(0:nx+1,0:ny+1) = srcml(0:nx+1,0:ny+1,is,1)
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, srcml1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -628,7 +628,7 @@ C
             field(0:nx+1,0:ny+1) = edissml(0:nx+1,0:ny+1,is,1)
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, edissml1(0,0,imol1(is),0),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -1164,7 +1164,7 @@ cank
               field(0:nx+1,0:ny+1) = eneutrad(0:nx+1,0:ny+1,is,0)
               call b2xtvc(nx, ny, nx1, ny1,
      &         field, eneutrad1(0,0,iatm1(is)),
-     &         nncutmax, non_commensurate,
+     &         nncutmax, non_commensurate, flip,
      &         nnreg, nncut, periodic_bc,
      &         jsep, jsep1, region, region1,
      &         leftcut, leftcut1, rightcut, rightcut1,
@@ -1192,7 +1192,7 @@ cank
                 field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
                 call b2xtvc(nx, ny, nx1, ny1,
      &           field, emolrad1(0,0,imol1(is)),
-     &           nncutmax, non_commensurate,
+     &           nncutmax, non_commensurate, flip,
      &           nnreg, nncut, periodic_bc,
      &           jsep, jsep1, region, region1,
      &           leftcut, leftcut1, rightcut, rightcut1,
@@ -1212,7 +1212,7 @@ cank
                 field(0:nx+1,0:ny+1) = eionrad(0:nx+1,0:ny+1,is,0)
                 call b2xtvc(nx, ny, nx1, ny1,
      &           field, eionrad1(0,0,iion1(is)),
-     &           nncutmax, non_commensurate,
+     &           nncutmax, non_commensurate, flip,
      &           nnreg, nncut, periodic_bc,
      &           jsep, jsep1, region, region1,
      &           leftcut, leftcut1, rightcut, rightcut1,
@@ -1698,7 +1698,7 @@ cank
                 field(0:nx+1,0:ny+1) = eneutrad(0:nx+1,0:ny+1,is,0)
                 call b2xtvc(nx, ny, nx1, ny1,
      &           field, eneutrad1(0,0,iatm1(is)),
-     &           nncutmax, non_commensurate,
+     &           nncutmax, non_commensurate, flip,
      &           nnreg, nncut, periodic_bc,
      &           jsep, jsep1, region, region1,
      &           leftcut, leftcut1, rightcut, rightcut1,
@@ -1722,7 +1722,7 @@ cank
                 field(0:nx+1,0:ny+1) = eneutrad(0:nx+1,0:ny+1,is,0)
                 call b2xtvc(nx, ny, nx1, ny1,
      &           field, eneutrad1(0,0,iatm1(is)),
-     &           nncutmax, non_commensurate,
+     &           nncutmax, non_commensurate, flip,
      &           nnreg, nncut, periodic_bc,
      &           jsep, jsep1, region, region1,
      &           leftcut, leftcut1, rightcut, rightcut1,
@@ -1750,7 +1750,7 @@ cank
                 field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
                 call b2xtvc(nx, ny, nx1, ny1,
      &           field, emolrad1(0,0,imol1(is)),
-     &           nncutmax, non_commensurate,
+     &           nncutmax, non_commensurate, flip,
      &           nnreg, nncut, periodic_bc,
      &           jsep, jsep1, region, region1,
      &           leftcut, leftcut1, rightcut, rightcut1,
@@ -1770,7 +1770,7 @@ cank
                 field(0:nx+1,0:ny+1) = eionrad(0:nx+1,0:ny+1,is,0)
                 call b2xtvc(nx, ny, nx1, ny1,
      &           field, eionrad1(0,0,iion1(is)),
-     &           nncutmax, non_commensurate,
+     &           nncutmax, non_commensurate, flip,
      &           nnreg, nncut, periodic_bc,
      &           jsep, jsep1, region, region1,
      &           leftcut, leftcut1, rightcut, rightcut1,
