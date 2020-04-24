@@ -192,6 +192,9 @@
       call cfverr (ninp(4), b2frates_version)
       call cfruch (ninp(4), 120, lblrc, 'label')
       call get_AM_flag (lblrc, b2frates_flag)
+#ifdef IMAS
+      AM_label = lblrc
+#endif
       call read_b2mod_ppout('rates', ninp(4), b2frates_flag)
       call b2rurc (ninp(4), b2frates_version)
 *   ..test rtns, rtzmin, rtzmax, rtzn

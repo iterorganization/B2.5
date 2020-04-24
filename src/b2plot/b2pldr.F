@@ -43,7 +43,6 @@
       data ismain/1/, external_species/0/
 *   ..procedures
       logical ltst, is_comment, cfendf
-      intrinsic sqrt
       external subini, subend, xertst, xerrab, is_comment
       external cfruch, cfruin, cfverr, b2rfcp, ipgeti, cfendf
       external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc

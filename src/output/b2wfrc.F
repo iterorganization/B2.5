@@ -2,13 +2,13 @@
 *.specification
 
       subroutine b2wfrc (nprt, ns0, nidis, idis, njdis, jdis, rtt, nt,
-     &  rtn, nn, zamin, zamax, zn, fix_recomb,
+     &  rtn, nn, zamin, zamax, zn, fix_recomb, zmax_recomb,
      &  rtlsa, rtlra, rtlqa, rtlcx, rtlza, rtlz2, rtlpt, rtlpi)
       use b2mod_types
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, ns0, nidis, idis(0:nidis-1), njdis, 
-     &  jdis(0:njdis-1), nt, nn, fix_recomb
+     &  jdis(0:njdis-1), nt, nn, fix_recomb, zmax_recomb
       real (kind=R8) ::
      *  rtt(0:nt), rtn(0:nn), 
      &  zamin(0:ns0-1), zamax(0:ns0-1), zn(0:ns0-1),
@@ -224,6 +224,7 @@
 *   ..write rtqa (with fix_recomb) as function of rtn for several rtt
       if (fix_recomb.ne.0) then
        do k = 0, ns0-1
+        if (nint(zn(k)).gt.zmax_recomb) cycle
         do ind = 0, nidis-1
          i = idis(ind)
          write (nprt,102) 'rtqa[with fix_recomb](',i,',0:nn,',k,')',

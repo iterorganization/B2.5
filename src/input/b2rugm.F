@@ -433,7 +433,7 @@ cwdk     note: qc in left ghosts unchanged
         hzc(-1:nx,ny+1)  = 2.0_R8 * pi * cry(-1:nx,ny,2)
         hzc(nx+1,ny+1)   = 2.0_R8 * pi * cry(nx,ny,3)
       end if
-      if (redef_gmtry.eq.0) then
+      if (redef_gmtry.eq.0.or.b2fgmtry_version.le.'03.000.006') then
 *  ..old treatment: interpolate magnetic field to cell faces : overwrite wbbl
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)

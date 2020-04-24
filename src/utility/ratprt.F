@@ -334,6 +334,7 @@
        enddo
       enddo
 
+      write (nprt,'()')
 * ..return
       call subend ()
       return

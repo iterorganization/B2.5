@@ -69,6 +69,9 @@ EXT_IMPGYRO = .ig
 endif
 ifdef SOLPS_DEBUG
 EXT_DEBUG = .debug
+IMAS_AMNS_DEBUG = yes
+else
+IMAS_AMNS_DEBUG = no
 endif
 
 # Directory where objectcode/binaries will be created
@@ -256,9 +259,10 @@ endif
 PROG_GE = b2pl.exe
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe b2ymb.exe b2yrp.exe b2ydm.exe
 PROG_MN = b2mn.exe b2mnastra.exe
+PROG_AM = b2ar.exe
 PROG_XD = b2xd.exe
 PROG_OE = b2ag.exe b2co.exe b2fu.exe b2ts.exe b2uf.exe b2ye.exe b2yt.exe calc_atomic_data.exe
-PROG_OT = b2ah.exe b2ai.exe b2ar.exe b2yi_gnuplot.exe b2yh.exe b2yv.exe b2fgmtry_mod.exe b2plasmastate_inspect.exe
+PROG_OT = b2ah.exe b2ai.exe b2yi_gnuplot.exe b2yh.exe b2yv.exe b2fgmtry_mod.exe b2plasmastate_inspect.exe
 PROG_90 = check_b2_output.exe
 PROG_OP = b2op.exe
 PROG_OQ = b2mn_opt.exe
@@ -267,14 +271,15 @@ PROG_ID = b2_ual_write.exe b2_ual_write_b2mod.exe
 PROG_TT = test_shrink_label.exe
 PROG_NC = nc2text_simple.exe
 
-EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT}}
-EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
+EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT}}
+EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_90} ${PROG_ID}}
 
 GEEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_GE}}
 GREXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_GR}}
 XDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_XD}}
 MNEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MN}}
+AMEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_AM}}
 OEEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OE}}
 OTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OT}}
 O9EXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_90}}
@@ -287,9 +292,9 @@ NCEXE = ${patsubst %.exe, ${NCODIR}/%.exe, ${PROG_NC}}
 
 .PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force test nc2text_simple
 
-DEFAULT: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${GEEXE} ${GREXE}
-ALL: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${GEEXE} ${GREXE} ${XDEXE}
-NOPLOT: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${O9EXE}
+DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${GEEXE} ${GREXE}
+ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${GEEXE} ${GREXE} ${XDEXE}
+NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
 ifdef MDSPLUS_DIR
 DEFAULT: ${MDEXE}
 ALL: ${MDEXE}
@@ -784,6 +789,9 @@ endif
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
+${AMEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${IMASLIBS} ${LDLIBES} ${LDOPTSend}
+
 ${OEEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
 
@@ -998,6 +1006,11 @@ VERSION: ${SRCDIR}/include/git_version_B25.h
 
 ${SRCDIR}/include/git_version_B25.h: force
 	@echo "      character*32 :: git_version_B25 = '`git describe --dirty --always`'" > ${SRCDIR}/include/git_version_new.h
+ifdef SOLPS_CPP
+	@echo "      character*32 :: git_version_ADAS = '`git -C $${SOLPSTOP}/modules/adas describe --dirty --always`'" >> ${SRCDIR}/include/git_version_new.h
+else
+	@echo "      character*32 :: git_version_ADAS = '0.0.0-0-g0000000'" >> ${SRCDIR}/include/git_version_new.h
+endif
 	@if cmp -s ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; then rm ${SRCDIR}/include/git_version_new.h; else mv ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; fi
 
 ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
@@ -1055,6 +1068,7 @@ echo:
 	@echo EX90LIST=${EX90LIST}
 	@echo GREXE=${GREXE}
 	@echo MNEXE=${MNEXE}
+	@echo AMEXE=${AMEXE}
 	@echo XDEXE=${XDEXE}
 	@echo OTEXE=${OTEXE}
 	@echo O9EXE=${O9EXE}

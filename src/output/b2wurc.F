@@ -173,7 +173,8 @@
       end if
       if (version.ge.'03.000.007') then
         idum(0) = fix_recomb
-        call cfwuin (nput, 1, idum, 'fix_recomb')
+        idum(1) = zmax_recomb
+        call cfwuin (nput, 2, idum, 'fix_recomb,zmax_recomb')
       end if
 
 * ..return

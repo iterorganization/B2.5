@@ -376,7 +376,7 @@ c*** Power loading:
         ixend(3,1)=nxtr
         ixstart(2,2)=leftcut(2)
         ixend(2,2)=nxtl
-        ixstart(2,2)=rightcut(2)-1
+        ixstart(3,2)=rightcut(2)-1
         ixend(3,2)=nxtr
       endif
 c
