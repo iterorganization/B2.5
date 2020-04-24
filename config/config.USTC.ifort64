@@ -12,8 +12,8 @@ LD_NAG      ?= -L${NAGDIR} -lnag
 EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 DEFINES += -DGRREAL=4 -DDOFLUSH # -DNO_CDF
 
-CPP      = /lib/cpp -C -traditional
-CPPOPTS  = -C -P -I${srcdir} ${EQUIVS}
+CPP      = /lib/cpp -traditional -ffreestanding
+CPPOPTS  = -P -I${srcdir} ${EQUIVS}
 SED      = sed s:\#PREC\#:d:g
 SED      =
 LINK_MOD = 
@@ -47,7 +47,7 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives
 ifndef SOLPS_DEBUG
-FCOPTS  += -O2 -vec_report0
+FCOPTS  += -O2
 else
 FCOPTS  += -g -C -traceback -debug all -check all
 endif
@@ -65,6 +65,7 @@ LDOPTS  += -openmp
 endif
 endif
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+FCOPTS  += -vec_report0
 LDOPTS  += -i_dynamic
 endif
 endif

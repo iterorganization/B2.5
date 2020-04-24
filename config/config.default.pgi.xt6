@@ -19,7 +19,7 @@ DEFINES += -D_OPENMP
 endif
 
 CPP = cpp -C -traditional
-CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 SED =
 LINK_MOD = 
