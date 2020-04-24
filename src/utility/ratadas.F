@@ -1,7 +1,7 @@
 c     -------------------------------------------------------------------------
 c     subroutine ratadas(nput,nc,rtt,rtnt,rtn,rtnn,
 c                        rtsa,rtra,rtqa,rtcx,rtrd,rtbr,rtzz,rtz2,rtpt,rtpi,
-c                        iyear,fix_recomb,ncnct,izpmin,izpmax)
+c                        iyear,fix_recomb,zmax_recomb,ncnct,izpmin,izpmax)
 c     -------------------------------------------------------------------------
 c     INPUT: integer nput:     unit number for b2ar.prt output
 c            integer nc:       nuclear charge
@@ -10,6 +10,7 @@ c            integer rtnt:     number of temperatures
 c            real (kind=R8) :: rtn(0:rtnn): densities in m**-3
 c            integer rtnn:     number of densities
 c            integer fix_recomb apply fix to include PRB
+c            integer zmax_recomb apply fix only to zn up to zmax_recomb
 c     OUTPUT: real*8 rtsa(0:rtnt,0:rtnn,0:nc): ionisation r.c. in m**3/s
 c             real (kind=R8) :: rtra(0:rtnt,0:rtnn,0:nc): recombination r.c. in m**3/s
 c             real (kind=R8) :: rtqa(0:rtnt,0:rtnn,0:nc): electron heat loss r.c.
@@ -31,7 +32,7 @@ c             integer ncnct     number of partitions
 c             integer izpmin()  array of lowest charge state of partition
 c             integer izpmax()  array of highest charge state of partition
 c     -------------------------------------------------------------------------
-c     The paths to the ADAS files are taken from the file ratadas.filelist 
+c     The paths to the ADAS files are taken from the file ratadas.filelist
 c     -------------------------------------------------------------------------
 c     970826 bhs
 c     -------------------------------------------------------------------------
@@ -39,7 +40,8 @@ c     -------------------------------------------------------------------------
       subroutine ratadas(nput,nc,rtt,rtnt,rtn,rtnn,
      &                   rtsa,rtra,rtqa,rtcx,rtrd,rtbr,
      &                   rtzz,rtz2,rtpt,rtpi,
-     &                   iyear,fix_recomb,ncnct,izpmin,izpmax)
+     &                   iyear,fix_recomb,zmax_recomb,
+     &                   ncnct,izpmin,izpmax)
       use b2mod_types
       use b2mod_constants
       use b2mod_solpstop
@@ -51,7 +53,7 @@ c     INPUT
       integer nc
       integer rtnt
       integer rtnn
-      integer fix_recomb
+      integer fix_recomb, zmax_recomb
       real (kind=R8) ::
      *   rtt(0:rtnt)
       real (kind=R8) ::
@@ -191,9 +193,16 @@ c     ionisation potentials
       rtzz=-1.0_R8
       rtz2=-1.0_R8
       rtpi=-1.0_R8
-      if(fix_recomb.ne.0) then 
-        write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb 
-      endif 
+      if(fix_recomb.ne.0.and.zmax_recomb.gt.0) then
+        write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb,
+     .            ' UP TO ZN = ', zmax_recomb
+        write(nput,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb,
+     .            ' UP TO ZN = ', zmax_recomb
+      else if(fix_recomb.ne.0.and.zmax_recomb.eq.0) then
+        write(*,*) 'RATADAS: FIX_RECOMB <> 0 set but ZMAX_RECOMB = 0 !'
+        write(nput,*)
+     .             'RATADAS: FIX_RECOMB <> 0 set but ZMAX_RECOMB = 0 !'
+      endif
       do ic = 1, itdimd
         Tdummy(ic) = (-1.0_R8+5.0_R8*(ic-1.0_R8)/(itdimd-1.0_R8))
       enddo
@@ -219,10 +228,12 @@ c     reading in filename and mass
           uidin=trim(solpstop()) // '/' // trim(uidin(10:))
         endif
         write(*,'(a,a)') 'ADAS UIDIN changed to ',trim(UIDIN)
+        write(nput,'(a,a)') 'ADAS UIDIN changed to ',trim(UIDIN)
       endif
       read(99,*) maxne
       if (nc.gt.maxne) then
          write(*,*) 'ADAStables: element number',nc,'not supported!'
+         write(nput,*) 'ADAStables: element number',nc,'not supported!'
          return
       endif
 c     jump over the preceding lines
@@ -416,58 +427,74 @@ c     ADAS file names
       write(*,*) 'Using ADAS files:'
       if (SUBDIRrec.ne.'none') then
         write(*,'(a)') trim(fnrec)
+        write(nput,'(a)') trim(fnrec)
       else
         write(*,*) 'Skipping recombination data'
+        write(nput,*) 'Skipping recombination data'
       endif
       if (SUBDIRion.ne.'none') then
         write(*,'(a)') trim(fnion)
+        write(nput,'(a)') trim(fnion)
       else
         write(*,*) 'Skipping ionisation data'
+        write(nput,*) 'Skipping ionisation data'
       endif
       if (SUBDIRcex.ne.'none') then
         write(*,'(a)') trim(fncex)
+        write(nput,'(a)') trim(fncex)
       else
         write(*,*) 'Skipping charge exchange data'
+        write(nput,*) 'Skipping charge exchange data'
       endif
       if (SUBDIRprb.ne.'none') then
         write(*,'(a)') trim(fnprb)
+        write(nput,'(a)') trim(fnprb)
       else
         write(*,*) 'Skipping continuum radiation data'
+        write(nput,*) 'Skipping continuum radiation data'
       endif
       if (SUBDIRplt.ne.'none') then
         write(*,'(a)') trim(fnplt)
+        write(nput,'(a)') trim(fnplt)
       else
         write(*,*) 'Skipping line radiation data'
+        write(nput,*) 'Skipping line radiation data'
       endif
       if (SUBDIRzav.ne.'none') then
         write(*,'(a)') trim(fnzav)
+        write(nput,'(a)') trim(fnzav)
       else
         write(*,*) 'Skipping effective charge data'
+        write(nput,*) 'Skipping effective charge data'
       endif
       if (SUBDIRza2.ne.'none') then
         write(*,'(a)') trim(fnza2)
+        write(nput,'(a)') trim(fnza2)
       else
         write(*,*) 'Skipping effective square charge data'
+        write(nput,*) 'Skipping effective square charge data'
       endif
       if (SUBDIRpot.ne.'none') then
         write(*,'(a)') trim(fnpot)
+        write(nput,'(a)') trim(fnpot)
       else
         write(*,*) 'Skipping effective ionisation potential data'
+        write(nput,*) 'Skipping effective ionisation potential data'
       endif
 
 
 c     reading in data, recombination
       if(SUBDIRrec.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting recombination to zero'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting recombination to zero'
         IDMAXDrec=iddimd
         ITMAXDrec=itdimd
         DDENSDrec(1:IDMAXDrec)=Ddummy(1:IDMAXDrec)
         DTEVDrec(1:ITMAXDrec)=Tdummy(1:ITMAXDrec)
         DREC=-74.0_R8
-      else 
+      else
      . if(silent_open(99,fnrec,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for recombination'
@@ -484,12 +511,17 @@ c     reading in data, recombination
         if (IZMAX.ne.nc) then
           write(*,*) 'ADAS tables: wrong element.'
           write(*,*) 'reading file: ',fnrec
+          write(nput,*) 'ADAS tables: wrong element.'
+          write(nput,*) 'reading file: ',fnrec
           return
         endif
         if ((IDMAXDrec.gt.iddimd).or.(ITMAXDrec.gt.itdimd)) then
           write(*,*) 'ADAS tables: dimensions too big.'
           write(*,*) 'Change iddimd and itdimd in source code.'
           write(*,*) 'reading file: ',fnrec
+          write(nput,*) 'ADAS tables: dimensions too big.'
+          write(nput,*) 'Change iddimd and itdimd in source code.'
+          write(nput,*) 'reading file: ',fnrec
           return
         endif
         close(99)
@@ -498,16 +530,16 @@ c     reading in data, recombination
       endif
 c     reading in data, ionisation
       if(SUBDIRion.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting ionisation to zero'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting ionisation to zero'
         IDMAXDion=iddimd
         ITMAXDion=itdimd
         DDENSDion(1:IDMAXDion)=Ddummy(1:IDMAXDion)
         DTEVDion(1:ITMAXDion)=Tdummy(1:ITMAXDion)
         DION=-74.0_R8
-      else 
+      else
      . if(silent_open(99,fnion,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for ionisation'
@@ -524,30 +556,35 @@ c     reading in data, ionisation
         if (IZMAX.ne.nc) then
           write(*,*) 'ADAS tables: wrong element.'
           write(*,*) 'reading file: ',fnion
+          write(nput,*) 'ADAS tables: wrong element.'
+          write(nput,*) 'reading file: ',fnion
           return
         endif
         if ((IDMAXDion.gt.iddimd).or.(ITMAXDion.gt.itdimd)) then
           write(*,*) 'ADAS tables: dimensions too big.'
           write(*,*) 'Change iddimd and itdimd in source code.'
           write(*,*) 'reading file: ',fnion
+          write(nput,*) 'ADAS tables: dimensions too big.'
+          write(nput,*) 'Change iddimd and itdimd in source code.'
+          write(nput,*) 'reading file: ',fnion
           return
         endif
-        close(99) 
+        close(99)
       else
         goto 990
       endif
 c     reading in data, charge exchange
       if(SUBDIRcex.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting charge exchange to zero'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting charge exchange to zero'
         IDMAXDcex=iddimd
         ITMAXDcex=itdimd
         DDENSDcex(1:IDMAXDcex)=Ddummy(1:IDMAXDcex)
         DTEVDcex(1:ITMAXDcex)=Tdummy(1:ITMAXDcex)
         DCEX=-74.0_R8
-      else 
+      else
      . if(silent_open(99,fncex,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for charge exchange'
@@ -564,30 +601,35 @@ c     reading in data, charge exchange
         if (IZMAX.ne.nc) then
           write(*,*) 'ADAS tables: wrong element.'
           write(*,*) 'reading file: ',fncex
+          write(nput,*) 'ADAS tables: wrong element.'
+          write(nput,*) 'reading file: ',fncex
           return
         endif
         if ((IDMAXDcex.gt.iddimd).or.(ITMAXDcex.gt.itdimd)) then
           write(*,*) 'ADAS tables: dimensions too big.'
           write(*,*) 'Change iddimd and itdimd in source code.'
           write(*,*) 'reading file: ',fncex
+          write(nput,*) 'ADAS tables: dimensions too big.'
+          write(nput,*) 'Change iddimd and itdimd in source code.'
+          write(nput,*) 'reading file: ',fncex
           return
         endif
-        close(99) 
+        close(99)
       else
         goto 990
       endif
 c     reading in data, bremsstrahlung + radiative recombination contribution
       if(SUBDIRprb.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting continuum radiation to zero'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting continuum radiation to zero'
         IDMAXDprb=iddimd
         ITMAXDprb=itdimd
         DDENSDprb(1:IDMAXDprb)=Ddummy(1:IDMAXDprb)
         DTEVDprb(1:ITMAXDprb)=Tdummy(1:ITMAXDprb)
         DPRB=-74.0_R8
-      else 
+      else
      . if(silent_open(99,fnprb,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for bremsstrahlung'
@@ -604,30 +646,35 @@ c     reading in data, bremsstrahlung + radiative recombination contribution
         if (IZMAX.ne.nc) then
           write(*,*) 'ADAS tables: wrong element.'
           write(*,*) 'reading file: ',fnprb
+          write(nput,*) 'ADAS tables: wrong element.'
+          write(nput,*) 'reading file: ',fnprb
           return
         endif
         if ((IDMAXDprb.gt.iddimd).or.(ITMAXDprb.gt.itdimd)) then
           write(*,*) 'ADAS tables: dimensions too big.'
           write(*,*) 'Change iddimd and itdimd in source code.'
           write(*,*) 'reading file: ',fnprb
+          write(nput,*) 'ADAS tables: dimensions too big.'
+          write(nput,*) 'Change iddimd and itdimd in source code.'
+          write(nput,*) 'reading file: ',fnprb
           return
         endif
-        close(99) 
+        close(99)
       else
         goto 990
       endif
 c     reading in data, line radiation
       if(SUBDIRplt.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting line radiation to zero'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting line radiation to zero'
         IDMAXDplt=iddimd
         ITMAXDplt=itdimd
         DDENSDplt(1:IDMAXDplt)=Ddummy(1:IDMAXDplt)
         DTEVDplt(1:ITMAXDplt)=Tdummy(1:ITMAXDplt)
         DPLT=-74.0_R8
-      else 
+      else
      . if(silent_open(99,fnplt,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for line radiation'
@@ -644,23 +691,28 @@ c     reading in data, line radiation
         if (IZMAX.ne.nc) then
           write(*,*) 'ADAS tables: wrong element.'
           write(*,*) 'reading file: ',fnplt
+          write(nput,*) 'ADAS tables: wrong element.'
+          write(nput,*) 'reading file: ',fnplt
           return
         endif
         if ((IDMAXDplt.gt.iddimd).or.(ITMAXDplt.gt.itdimd)) then
           write(*,*) 'ADAS tables: dimensions too big.'
           write(*,*) 'Change iddimd and itdimd in source code.'
           write(*,*) 'reading file: ',fnplt
+          write(nput,*) 'ADAS tables: dimensions too big.'
+          write(nput,*) 'Change iddimd and itdimd in source code.'
+          write(nput,*) 'reading file: ',fnplt
           return
         endif
-        close(99) 
+        close(99)
       else
         goto 990
       endif
 c     reading in data, effective charge
       if(SUBDIRzav.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting default effective charge'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting default effective charge'
         IDMAXDzav=iddimd
         ITMAXDzav=itdimd
@@ -672,7 +724,7 @@ c     reading in data, effective charge
           izpmin(ic) = ic
           izpmax(ic) = ic
         enddo
-      else 
+      else
      . if(silent_open(99,fnzav,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective charge'
@@ -689,23 +741,28 @@ c     reading in data, effective charge
         if (IZMAX.ne.nc) then
           write(*,*) 'ADAS tables: wrong element.'
           write(*,*) 'reading file: ',fnzav
+          write(nput,*) 'ADAS tables: wrong element.'
+          write(nput,*) 'reading file: ',fnzav
           return
         endif
         if ((IDMAXDzav.gt.iddimd).or.(ITMAXDzav.gt.itdimd)) then
           write(*,*) 'ADAS tables: dimensions too big.'
           write(*,*) 'Change iddimd and itdimd in source code.'
           write(*,*) 'reading file: ',fnzav
+          write(nput,*) 'ADAS tables: dimensions too big.'
+          write(nput,*) 'Change iddimd and itdimd in source code.'
+          write(nput,*) 'reading file: ',fnzav
           return
         endif
         close(99)
         do ic = 1, ncnct
           izpmin(ic-1) = iptnca(1,ic,1)
           izpmax(ic-1) = iptnca(1,ic,nptnc(1,ic))
-        enddo 
+        enddo
       else
-        write(*,*) 
+        write(*,*)
      .   'Using default values for effective charge'
-        write(nput,*) 
+        write(nput,*)
      .   'Using default values for effective charge'
         IDMAXDzav=IDMAXDplt
         ITMAXDzav=ITMAXDplt
@@ -720,16 +777,16 @@ c     reading in data, effective charge
       endif
 c     reading in data, effective square charge
       if(SUBDIRza2.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting default effective square charge'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting default effective square charge'
         IDMAXDza2=iddimd
         ITMAXDza2=itdimd
         DDENSDza2(1:IDMAXDza2)=Ddummy(1:IDMAXDza2)
         DTEVDza2(1:ITMAXDza2)=Tdummy(1:ITMAXDza2)
         DZA2=-1.0_R8
-      else 
+      else
      . if(silent_open(99,fnza2,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective square charge'
@@ -746,19 +803,24 @@ c     reading in data, effective square charge
         if (IZMAX.ne.nc) then
           write(*,*) 'ADAS tables: wrong element.'
           write(*,*) 'reading file: ',fnza2
+          write(nput,*) 'ADAS tables: wrong element.'
+          write(nput,*) 'reading file: ',fnza2
           return
         endif
         if ((IDMAXDza2.gt.iddimd).or.(ITMAXDza2.gt.itdimd)) then
           write(*,*) 'ADAS tables: dimensions too big.'
           write(*,*) 'Change iddimd and itdimd in source code.'
           write(*,*) 'reading file: ',fnza2
+          write(nput,*) 'ADAS tables: dimensions too big.'
+          write(nput,*) 'Change iddimd and itdimd in source code.'
+          write(nput,*) 'reading file: ',fnza2
           return
         endif
-        close(99) 
+        close(99)
       else
-        write(*,*) 
+        write(*,*)
      .   'Using default values for effective square charge'
-        write(nput,*) 
+        write(nput,*)
      .   'Using default values for effective square charge'
         IDMAXDza2=IDMAXDplt
         ITMAXDza2=ITMAXDplt
@@ -768,16 +830,16 @@ c     reading in data, effective square charge
       endif
 c     reading in data, effective ionisation potential
       if(SUBDIRpot.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting default effective ionisation potential'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting default effective ionisation potential'
         IDMAXDpot=iddimd
         ITMAXDpot=itdimd
         DDENSDpot(1:IDMAXDpot)=Ddummy(1:IDMAXDpot)
         DTEVDpot(1:ITMAXDpot)=Tdummy(1:ITMAXDpot)
         DPOT=-1.0_R8
-      else 
+      else
      . if(silent_open(99,fnpot,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective ionisation potential'
@@ -794,19 +856,24 @@ c     reading in data, effective ionisation potential
         if (IZMAX.ne.nc) then
           write(*,*) 'ADAS tables: wrong element.'
           write(*,*) 'reading file: ',fnpot
+          write(nput,*) 'ADAS tables: wrong element.'
+          write(nput,*) 'reading file: ',fnpot
           return
         endif
         if ((IDMAXDpot.gt.iddimd).or.(ITMAXDpot.gt.itdimd)) then
           write(*,*) 'ADAS tables: dimensions too big.'
           write(*,*) 'Change iddimd and itdimd in source code.'
           write(*,*) 'reading file: ',fnpot
+          write(nput,*) 'ADAS tables: dimensions too big.'
+          write(nput,*) 'Change iddimd and itdimd in source code.'
+          write(nput,*) 'reading file: ',fnpot
           return
         endif
-        close(99) 
+        close(99)
       else
-        write(*,*) 
+        write(*,*)
      .   'Using default values for effective ionisation potential'
-        write(nput,*) 
+        write(nput,*)
      .   'Using default values for effective ionisation potential'
         IDMAXDpot=IDMAXDplt
         ITMAXDpot=ITMAXDplt
@@ -828,6 +895,7 @@ c     reading in data, ionisation potentials
       close(99)
 c     filling rtsa(ionisation)
       write(*,*) 'rtsa'
+      write(nput,*) 'rtsa'
       do ic=0,ncnct-2
         dtmp1(1:ITMAXDion,1:IDMAXDion)=
      .   DION(ic+1,1:ITMAXDion,1:IDMAXDion)
@@ -844,6 +912,7 @@ c     filling rtsa(ionisation)
       enddo
 c     filling rtra(recombination)
       write(*,*) 'rtra'
+      write(nput,*) 'rtra'
       do ic=1,ncnct-1
         dtmp1(1:ITMAXDrec,1:IDMAXDrec)=
      .   DREC(ic,1:ITMAXDrec,1:IDMAXDrec)
@@ -860,6 +929,7 @@ c     filling rtra(recombination)
       enddo
 c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrahlung)
       write(*,*) 'rtqa,rtrd,rtbr'
+      write(nput,*) 'rtqa,rtrd,rtbr'
       do ic=0,ncnct-1
         if(ic.gt.0) then
           dtmp1(1:ITMAXDprb,1:IDMAXDprb)=
@@ -877,27 +947,27 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
             logD=log10(rtn(cD)/1.0e6_R8)
             rtrd(cT,cD,ic)=0.0_R8
             rtbr(cT,cD,ic)=1.69e-38_R8/qe*ic**2*sqrt(rtt(cT))
-            if(fix_recomb.eq.0) then 
-              rtqa(cT,cD,ic)=rtbr(cT,cD,ic) 
-            else 
-              if(ic.gt.0) then 
-                call int2d(DTMP1(1:itdimd,1:iddimd),itdimd,iddimd, 
-     1           DTEVDprb,ITMAXDprb,DDENSDprb,IDMAXDprb, 
-     2           logT,logD,ans) 
-                rtqa(cT,cD,ic)=10.0_R8**(ans-6.0_R8)/qe 
-                if(rtqa(cT,cD,ic).ge.rtbr(cT,cD,ic)) then 
-                  rtrd(cT,cD,ic)=rtqa(cT,cD,ic)-rtbr(cT,cD,ic) 
-                else 
-                  rtbr(cT,cD,ic)=rtqa(cT,cD,ic) 
+            if(fix_recomb.eq.0.or.nc.gt.zmax_recomb) then
+              rtqa(cT,cD,ic)=rtbr(cT,cD,ic)
+            else
+              if(ic.gt.0) then
+                call int2d(DTMP1(1:itdimd,1:iddimd),itdimd,iddimd,
+     1           DTEVDprb,ITMAXDprb,DDENSDprb,IDMAXDprb,
+     2           logT,logD,ans)
+                rtqa(cT,cD,ic)=10.0_R8**(ans-6.0_R8)/qe
+                if(rtqa(cT,cD,ic).ge.rtbr(cT,cD,ic)) then
+                  rtrd(cT,cD,ic)=rtqa(cT,cD,ic)-rtbr(cT,cD,ic)
+                else
+                  rtbr(cT,cD,ic)=rtqa(cT,cD,ic)
                   rtrd(cT,cD,ic)=0.0_R8
-                endif 
-c there should also be an electron heating term corresponding to 
-c ip(ic-1)*rtra(cT,cD,ic) but this could make the cooling rate negative and 
+                endif
+c there should also be an electron heating term corresponding to
+c ip(ic-1)*rtra(cT,cD,ic) but this could make the cooling rate negative and
 c so is included explicitly in b2stel if fix_recomb is nonzero
-              else 
-                rtqa(cT,cD,ic)=0.0_R8 
-              endif 
-            endif 
+              else
+                rtqa(cT,cD,ic)=0.0_R8
+              endif
+            endif
             if(ic.lt.ncnct-1) then
               call int2d(DTMP2(1:itdimd,1:iddimd),itdimd,iddimd,
      1         DTEVDplt,ITMAXDplt,DDENSDplt,IDMAXDplt,
@@ -918,6 +988,7 @@ c so is included explicitly in b2stel if fix_recomb is nonzero
       enddo
 c     filling rtcx(charge exchange)
       write(*,*) 'rtcx'
+      write(nput,*) 'rtcx'
       do ic=1,ncnct-1
         dtmp1(1:ITMAXDcex,1:IDMAXDcex)=
      .   DCEX(ic,1:ITMAXDcex,1:IDMAXDcex)
@@ -934,6 +1005,7 @@ c     filling rtcx(charge exchange)
       enddo
 c     filling rtzz(effective charge)
       write(*,*) 'rtzz'
+      write(nput,*) 'rtzz'
       do ic=0,ncnct-1
         dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
      .   DZAV(ic+1,1:ITMAXDzav,1:IDMAXDzav)
@@ -950,6 +1022,7 @@ c     filling rtzz(effective charge)
       enddo
 c     filling rtz2(effective square charge)
       write(*,*) 'rtz2'
+      write(nput,*) 'rtz2'
       do ic=0,ncnct-1
         dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
      .   DZA2(ic+1,1:ITMAXDzav,1:IDMAXDzav)
@@ -966,6 +1039,7 @@ c     filling rtz2(effective square charge)
       enddo
 c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisation potential)
       write(*,*) 'rtpt,rtpi'
+      write(nput,*) 'rtpt,rtpi'
       do ic=0,ncnct-1
         do cT=0,rtnt
           dtmp1(1:ITMAXDpot,1:IDMAXDpot)=
@@ -986,7 +1060,7 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
           rtpt(0:rtnt,0:rtnn,ic)=rtpi(0:rtnt,0:rtnn,ic)
         endif
       enddo
-      
+
       call subend ()
       return
 
@@ -995,22 +1069,35 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
 
       end subroutine ratadas
 
-#ifdef ITM
-      subroutine ratamns(nput,nc,rtt,rtnt,rtn,rtnn,
+      subroutine ratamns(nput,nc,am0,am1,rtt,rtnt,rtn,rtnn,
      &                   rtsa,rtra,rtqa,rtcx,rtrd,rtbr,
      &                   rtzz,rtz2,rtpt,rtpi,
-     &                   iyear,fix_recomb,ncnct,izpmin,izpmax)
+     &                   fix_recomb,zmax_recomb,
+     &                   ncnct,izpmin,izpmax)
+#ifdef IMAS
+      use b2mod_types
+#ifdef AMNS
+      use amns_types       ! IGNORE
+      use amns_module      ! IGNORE
+      use b2mod_constants
+     &     , only : qe
+#endif
+#else
+#ifdef ITM
 #ifdef GOT_AMNSPROTO
       use amns_types       ! IGNORE
 !!      use amns_constants   ! IGNORE
       use amns_module      ! IGNORE
       use euitm_routines   ! IGNORE
+      use b2mod_constants
+     &     , only : qe
 #else
       use b2mod_types
 #endif
-      use b2mod_constants
-     &     , only : qe
-      use b2mod_solpstop
+#else
+      use b2mod_types
+#endif
+#endif
 
       implicit none
 
@@ -1019,7 +1106,8 @@ c     INPUT
       integer nc
       integer rtnt
       integer rtnn
-      integer fix_recomb
+      integer fix_recomb, zmax_recomb
+      real (kind=R8) :: am0, am1
       real (kind=R8) ::
      *   rtt(0:rtnt)
       real (kind=R8) ::
@@ -1045,7 +1133,7 @@ c     OUTPUT:
      *   rtpt(0:rtnt,0:rtnn,0:nc)
       real (kind=R8) ::
      *   rtpi(0:rtnt,0:rtnn,0:nc)
-      integer iyear, ncnct
+      integer ncnct
       integer izpmin(0:nc), izpmax(0:nc)
 c     LOCAL VARIABLES:
       real (kind=R8) ::
@@ -1053,7 +1141,22 @@ c     LOCAL VARIABLES:
 c     read in data
       integer ic, itnt, itnn
 
-
+#ifdef IMAS
+#ifdef AMNS
+      type (amns_handle_type), save :: amns
+      type (amns_handle_rx_type) ::
+     &    amns_rc(0:nc), amns_ei(0:nc), amns_cx(0:nc), amns_br(0:nc),
+     &    amns_lr(0:nc), amns_ze(0:nc), amns_ze2(0:nc), amns_eip(0:nc)
+      type (amns_version_type) :: amns_database
+      type (amns_reaction_type) :: rc_rx, ei_rx, cx_rx, br_rx,
+     &     lr_rx, ze_rx, ze2_rx, eip_rx
+      type (amns_reactants_type) :: species(0:nc)
+      type (amns_query_type) :: query
+      type (amns_answer_type) :: answer
+      type (amns_set_type) :: set
+#endif
+#else
+#ifdef ITM
 #ifdef GOT_AMNSPROTO
       type (amns_handle_type), save :: amns
       type (amns_handle_rx_type) ::
@@ -1066,21 +1169,22 @@ c     read in data
       type (amns_query_type) :: query
       type (amns_answer_type) :: answer
       type (amns_set_type) :: set
-      character (len=80) :: format
 #endif
-
-      logical silent_open
-      external silent_open
+#endif
+#endif
+      character (len=80) :: format
 
 *   ..subprogram start-up calls
       call subini ('ratamns')
-
-#ifdef GOT_AMNSPROTO
-      write(*,*) 'ITM AMNSPROTO data used (via UAL)'
-      call ITM_AMNS_SETUP(amns)
-      query%string='version'
-      call ITM_AMNS_QUERY(amns,query,answer)
-      write(*,*) 'AMNS data base version = ',trim(answer%string)
+cxpb Zero masses are required for older AMNS versions
+      call xertst (0.0_R8.le.am0,'faulty neutral CX species mass!')
+      call xertst (0.0_R8.le.am1,'faulty reactant species mass!')
+      format=
+     & '(''ZN = '',f5.2,'', IS = '',i3,'', RX = '',a,'', SRC = '',a)'
+#ifdef IMAS
+#ifdef AMNS
+      write(*,*) 'IMAS AMNS data used (via UAL)'
+      call IMAS_AMNS_SETUP(amns)
       rc_rx%string='RC'
       ei_rx%string='EI'
       cx_rx%string='CX'
@@ -1089,21 +1193,132 @@ c     read in data
       ze_rx%string='ZE'
       ze2_rx%string='ZE2'
       eip_rx%string='EIP'
-      format=
-     & '(''ZN = '',f5.2,'', IS = '',i3,'', RX = '',a,'', SRC = '',a)'
       query%string='source'
       do ic=0, nc
-         allocate(species(ic)%components(1))
-         species(ic)%components(1)%ZN=nc
-         species(ic)%components(1)%ZA=ic
-         species(ic)%components(1)%MI=-1
+         allocate(species(ic)%components(4))
+         species(ic)%components(1) = amns_reactant_type(nc,ic,am1,0)
       enddo
       do ic=0, nc-1
+         species(ic)%components(2) = amns_reactant_type(0,-1,0,0)
+         species(ic)%components(3) = amns_reactant_type(nc,ic+1,am1,1)
+         species(ic)%components(4) = amns_reactant_type(0,-1,0,1)
+         call IMAS_AMNS_SETUP_TABLE(amns, ei_rx,
+     &        species(ic), amns_ei(ic))
+         call IMAS_AMNS_QUERY_TABLE(amns_ei(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(ei_rx%string), trim(answer%string)
+      enddo
+      do ic=1, nc
+         species(ic)%components(2) = amns_reactant_type(0,-1,0,0)
+         species(ic)%components(3) = amns_reactant_type(nc,ic-1,am1,1)
+         species(ic)%components(4) = amns_reactant_type(0,-1,0,1)
+         call IMAS_AMNS_SETUP_TABLE(amns, rc_rx,
+     &        species(ic), amns_rc(ic))
+         call IMAS_AMNS_QUERY_TABLE(amns_rc(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(rc_rx%string), trim(answer%string)
+         species(ic)%components(2) = amns_reactant_type(1,0,am0,0)
+         species(ic)%components(4) = amns_reactant_type(1,1,am0,1)
+         call IMAS_AMNS_SETUP_TABLE(amns, cx_rx,
+     &        species(ic), amns_cx(ic))
+         call IMAS_AMNS_QUERY_TABLE(amns_cx(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(cx_rx%string), trim(answer%string)
+      enddo
+      do ic=0,nc
+         deallocate(species(ic)%components)
+         allocate(species(ic)%components(2))
+         species(ic)%components(1) = amns_reactant_type(nc,ic,am1,0)
+         species(ic)%components(2) = amns_reactant_type(nc,ic,am1,1)
+      enddo
+      do ic=0, nc-1
+         call IMAS_AMNS_SETUP_TABLE(amns, lr_rx,
+     &        species(ic), amns_lr(ic))
+         call IMAS_AMNS_QUERY_TABLE(amns_lr(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(lr_rx%string), trim(answer%string)
+      enddo
+      do ic=1, nc
+         call IMAS_AMNS_SETUP_TABLE(amns, br_rx,
+     &        species(ic), amns_br(ic))
+         call IMAS_AMNS_QUERY_TABLE(amns_br(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(br_rx%string), trim(answer%string)
+      enddo
+      do ic=0, nc
+         call IMAS_AMNS_SETUP_TABLE(amns, ze_rx,
+     &        species(ic), amns_ze(ic))
+         call IMAS_AMNS_QUERY_TABLE(amns_ze(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(ze_rx%string), trim(answer%string)
+         call IMAS_AMNS_SETUP_TABLE(amns, ze2_rx,
+     &        species(ic), amns_ze2(ic))
+         call IMAS_AMNS_QUERY_TABLE(amns_ze2(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(ze2_rx%string), trim(answer%string)
+         call IMAS_AMNS_SETUP_TABLE(amns, eip_rx,
+     &        species(ic), amns_eip(ic))
+         call IMAS_AMNS_QUERY_TABLE(amns_eip(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(eip_rx%string), trim(answer%string)
+         deallocate(species(ic)%components)
+      enddo
+#else
+      call xerrab ('No IMAS AMNS data available')
+#endif
+#else
+#ifdef ITM
+#ifdef GOT_AMNSPROTO
+      write(*,*) 'ITM AMNSPROTO data used (via UAL)'
+      write(nput,*) 'ITM AMNSPROTO data used (via UAL)'
+      call ITM_AMNS_SETUP(amns)
+      rc_rx%string='RC'
+      ei_rx%string='EI'
+      cx_rx%string='CX'
+      br_rx%string='BR'
+      lr_rx%string='LR'
+      ze_rx%string='ZE'
+      ze2_rx%string='ZE2'
+      eip_rx%string='EIP'
+      query%string='source'
+      do ic=0, nc
+         allocate(species(ic)%components(4))
+         species(ic)%components(1) = amns_reactant_type(nc,ic,am1,0)
+      enddo
+      do ic=0, nc-1
+         species(ic)%components(2) = amns_reactant_type(0,-1,0,0)
+         species(ic)%components(3) = amns_reactant_type(nc,ic+1,am1,1)
+         species(ic)%components(4) = amns_reactant_type(0,-1,0,1)
          call ITM_AMNS_SETUP_TABLE(amns, ei_rx,
      &        species(ic), amns_ei(ic))
          call ITM_AMNS_QUERY_TABLE(amns_ei(ic),query,answer)
          write(*,format) species(ic)%components(1)%ZN,
      &        ic, trim(ei_rx%string), trim(answer%string)
+      enddo
+      do ic=1, nc
+         species(ic)%components(2) = amns_reactant_type(0,-1,0,0)
+         species(ic)%components(3) = amns_reactant_type(nc,ic-1,am1,1)
+         species(ic)%components(4) = amns_reactant_type(0,-1,0,1)
+         call ITM_AMNS_SETUP_TABLE(amns, rc_rx,
+     &        species(ic), amns_rc(ic))
+         call ITM_AMNS_QUERY_TABLE(amns_rc(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(rc_rx%string), trim(answer%string)
+         species(ic)%components(2) = amns_reactant_type(1,0,am0,0)
+         species(ic)%components(4) = amns_reactant_type(1,1,am0,1)
+         call ITM_AMNS_SETUP_TABLE(amns, cx_rx,
+     &        species(ic), amns_cx(ic))
+         call ITM_AMNS_QUERY_TABLE(amns_cx(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(cx_rx%string), trim(answer%string)
+      enddo
+      do ic=0,nc
+         deallocate(species(ic)%components)
+         allocate(species(ic)%components(2))
+         species(ic)%components(1) = amns_reactant_type(nc,ic,am1,0)
+         species(ic)%components(2) = amns_reactant_type(nc,ic,am1,1)
+      enddo
+      do ic=0, nc-1
          call ITM_AMNS_SETUP_TABLE(amns, lr_rx,
      &        species(ic), amns_lr(ic))
          call ITM_AMNS_QUERY_TABLE(amns_lr(ic),query,answer)
@@ -1111,21 +1326,11 @@ c     read in data
      &        ic, trim(lr_rx%string), trim(answer%string)
       enddo
       do ic=1, nc
-         call ITM_AMNS_SETUP_TABLE(amns, rc_rx,
-     &        species(ic), amns_rc(ic))
-         call ITM_AMNS_QUERY_TABLE(amns_rc(ic),query,answer)
-         write(*,format) species(ic)%components(1)%ZN,
-     &        ic, trim(rc_rx%string), trim(answer%string)
          call ITM_AMNS_SETUP_TABLE(amns, br_rx,
      &        species(ic), amns_br(ic))
          call ITM_AMNS_QUERY_TABLE(amns_br(ic),query,answer)
          write(*,format) species(ic)%components(1)%ZN,
      &        ic, trim(br_rx%string), trim(answer%string)
-         call ITM_AMNS_SETUP_TABLE(amns, cx_rx,
-     &        species(ic), amns_cx(ic))
-         call ITM_AMNS_QUERY_TABLE(amns_cx(ic),query,answer)
-         write(*,format) species(ic)%components(1)%ZN,
-     &        ic, trim(cx_rx%string), trim(answer%string)
       enddo
       do ic=0, nc
          call ITM_AMNS_SETUP_TABLE(amns, ze_rx,
@@ -1143,10 +1348,12 @@ c     read in data
          call ITM_AMNS_QUERY_TABLE(amns_eip(ic),query,answer)
          write(*,format) species(ic)%components(1)%ZN,
      &        ic, trim(eip_rx%string), trim(answer%string)
+         deallocate(species(ic)%components)
       enddo
-!!!    stop
 #else
-      write(*,*) 'No ITM-AMNS data available'
+      call xerrab ('No ITM-AMNS data available')
+#endif
+#endif
 #endif
       do itnn=0, rtnn
          do itnt=0, rtnt
@@ -1169,46 +1376,48 @@ c     read in data
       rtzz=-1.0_R8
       rtz2=-1.0_R8
       rtpi=-1.0_R8
-      if(fix_recomb.ne.0) then
-        write(*,*) 'RATAMNS: FIX_RECOMB <> 0 : ',fix_recomb
+      if(fix_recomb.ne.0.and.zmax_recomb.gt.0) then
+        write(*,*) 'RATAMNS: FIX_RECOMB <> 0 : ',fix_recomb,
+     .            ' UP TO ZN = ',zmax_recomb
       endif
 
-#ifdef GOT_AMNSPROTO
+#ifdef IMAS
+#ifdef AMNS
 c     filling rtsa(ionisation)
       write(*,*) 'rtsa'
       do ic=0,nc-1
-         call ITM_AMNS_RX(amns_ei(ic),rtsa(:,:,ic),loc_te,loc_ne)
-         call ITM_AMNS_FINISH_TABLE(amns_ei(ic))
+         call IMAS_AMNS_RX(amns_ei(ic),rtsa(:,:,ic),loc_te,loc_ne)
+         call IMAS_AMNS_FINISH_TABLE(amns_ei(ic))
       enddo
 c     filling rtra(recombination)
       write(*,*) 'rtra'
       do ic=1,nc
-         call ITM_AMNS_RX(amns_rc(ic),rtra(:,:,ic),loc_te,loc_ne)
-         call ITM_AMNS_FINISH_TABLE(amns_rc(ic))
+         call IMAS_AMNS_RX(amns_rc(ic),rtra(:,:,ic),loc_te,loc_ne)
+         call IMAS_AMNS_FINISH_TABLE(amns_rc(ic))
       enddo
 c     filling rtcx(charge exchange)
       write(*,*) 'rtcx'
       do ic=1,nc
-         call ITM_AMNS_RX(amns_cx(ic),rtcx(:,:,ic),loc_te,loc_ne)
-         call ITM_AMNS_FINISH_TABLE(amns_cx(ic))
+         call IMAS_AMNS_RX(amns_cx(ic),rtcx(:,:,ic),loc_te,loc_ne)
+         call IMAS_AMNS_FINISH_TABLE(amns_cx(ic))
       enddo
 c     filling rtzz(effective charge)
       write(*,*) 'rtzz'
       do ic=0,nc
-         call ITM_AMNS_RX(amns_ze(ic),rtzz(:,:,ic),loc_te,loc_ne)
-         call ITM_AMNS_FINISH_TABLE(amns_ze(ic))
+         call IMAS_AMNS_RX(amns_ze(ic),rtzz(:,:,ic),loc_te,loc_ne)
+         call IMAS_AMNS_FINISH_TABLE(amns_ze(ic))
       enddo
 c     filling rtz2(effective square charge)
       write(*,*) 'rtz2'
       do ic=0,nc
-         call ITM_AMNS_RX(amns_ze2(ic),rtz2(:,:,ic),loc_te,loc_ne)
-         call ITM_AMNS_FINISH_TABLE(amns_ze2(ic))
+         call IMAS_AMNS_RX(amns_ze2(ic),rtz2(:,:,ic),loc_te,loc_ne)
+         call IMAS_AMNS_FINISH_TABLE(amns_ze2(ic))
       enddo
 c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisation potential)
       write(*,*) 'rtpt,rtpi'
       do ic=0,nc
-         call ITM_AMNS_RX(amns_eip(ic),rtpi(:,:,ic),loc_te,loc_ne)
-         call ITM_AMNS_FINISH_TABLE(amns_eip(ic))
+         call IMAS_AMNS_RX(amns_eip(ic),rtpi(:,:,ic),loc_te,loc_ne)
+         call IMAS_AMNS_FINISH_TABLE(amns_eip(ic))
          if (ic.gt.0) then
             rtpt(0:rtnt,0:rtnn,ic)=
      1           rtpt(0:rtnt,0:rtnn,ic-1)+rtpi(0:rtnt,0:rtnn,ic)
@@ -1227,11 +1436,89 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
          enddo
       enddo
       do ic=0,nc-1
+         call IMAS_AMNS_RX(amns_lr(ic),rtrd(:,:,ic),loc_te,loc_ne)
+         call IMAS_AMNS_FINISH_TABLE(amns_lr(ic))
+      enddo
+      rtrd=rtrd/qe
+      if(fix_recomb.eq.0.or.nc.gt.zmax_recomb) then
+         rtqa(:,:,:)=rtbr(:,:,:)
+      else
+         call xerrab ('RATAMNS: fix_recomb <> 0 : Not yet coded!')
+      endif
+      rtqa(:,:,:)=rtqa(:,:,:)+rtrd(:,:,:)
+      do ic=0,nc-1
+         rtqa(:,:,ic)=rtqa(:,:,ic)+rtsa(:,:,ic)*rtpi(:,:,ic+1)
+      enddo
+      call IMAS_AMNS_FINISH(amns)
+#endif
+#else
+#ifdef ITM
+#ifdef GOT_AMNSPROTO
+c     filling rtsa(ionisation)
+      write(*,*) 'rtsa'
+      write(nput,*) 'rtsa'
+      do ic=0,nc-1
+         call ITM_AMNS_RX(amns_ei(ic),rtsa(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_ei(ic))
+      enddo
+c     filling rtra(recombination)
+      write(*,*) 'rtra'
+      write(nput,*) 'rtra'
+      do ic=1,nc
+         call ITM_AMNS_RX(amns_rc(ic),rtra(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_rc(ic))
+      enddo
+c     filling rtcx(charge exchange)
+      write(*,*) 'rtcx'
+      write(nput,*) 'rtcx'
+      do ic=1,nc
+         call ITM_AMNS_RX(amns_cx(ic),rtcx(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_cx(ic))
+      enddo
+c     filling rtzz(effective charge)
+      write(*,*) 'rtzz'
+      write(nput,*) 'rtzz'
+      do ic=0,nc
+         call ITM_AMNS_RX(amns_ze(ic),rtzz(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_ze(ic))
+      enddo
+c     filling rtz2(effective square charge)
+      write(*,*) 'rtz2'
+      write(nput,*) 'rtz2'
+      do ic=0,nc
+         call ITM_AMNS_RX(amns_ze2(ic),rtz2(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_ze2(ic))
+      enddo
+c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisation potential)
+      write(*,*) 'rtpt,rtpi'
+      write(nput,*) 'rtpt,rtpi'
+      do ic=0,nc
+         call ITM_AMNS_RX(amns_eip(ic),rtpi(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_eip(ic))
+         if (ic.gt.0) then
+            rtpt(0:rtnt,0:rtnn,ic)=
+     1           rtpt(0:rtnt,0:rtnn,ic-1)+rtpi(0:rtnt,0:rtnn,ic)
+         else
+            rtpt(0:rtnt,0:rtnn,ic)=rtpi(0:rtnt,0:rtnn,ic)
+         endif
+      enddo
+c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrahlung)
+      write(*,*) 'rtqa,rtrd,rtbr'
+      write(nput,*) 'rtqa,rtrd,rtbr'
+      do ic=0,nc
+         do itnn=0, rtnn
+            do itnt=0, rtnt
+               rtbr(itnt,itnn,ic) =
+     &              1.69e-38_R8/qe*ic**2*sqrt(rtt(itnt))
+            enddo
+         enddo
+      enddo
+      do ic=0,nc-1
          call ITM_AMNS_RX(amns_lr(ic),rtrd(:,:,ic),loc_te,loc_ne)
          call ITM_AMNS_FINISH_TABLE(amns_lr(ic))
       enddo
       rtrd=rtrd/qe
-      if(fix_recomb.eq.0) then
+      if(fix_recomb.eq.0.or.nc.gt.zmax_recomb) then
          rtqa(:,:,:)=rtbr(:,:,:)
       else
          call xerrab ('RATAMNS: fix_recomb <> 0 : Not yet coded!')
@@ -1242,8 +1529,9 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
       enddo
       call ITM_AMNS_FINISH(amns)
 #endif
+#endif
+#endif
 
       call subend ()
       return
       end subroutine ratamns
-#endif

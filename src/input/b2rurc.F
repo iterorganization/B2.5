@@ -222,10 +222,12 @@
         enddo
       endif
       if (version.ge.'03.000.007') then
-        call cfruin (nget, 1, idum, 'fix_recomb')
+        call cfruin (nget, 2, idum, 'fix_recomb,zmax_recomb')
         fix_recomb = idum(0)
+        zmax_recomb = idum(1)
       else
         fix_recomb = 0 ! corresponding to the default pre-3.0.7 version
+        zmax_recomb = 1
       endif 
 
 * ..test rate coefficients

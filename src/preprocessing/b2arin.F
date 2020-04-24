@@ -77,7 +77,7 @@
 *
 *     flag - character*8, output.
 *     flag specifies which code is to be used to calculate the rate
-*     coefficients. Its value may be 'adpak' or 'strahl'.
+*     coefficients. Its value may be 'adpak', 'strahl', 'adas' or 'amns'.
 *
 *     tailep - real.
 *     tailep specifies a smoothing parameter for the temperature
@@ -154,10 +154,8 @@
        flag = 'strahl'
       else if (streql(flag0,'adas')) then
        flag = 'adas'
-#ifdef ITM
       else if (streql(flag0,'amns')) then
        flag = 'amns'
-#endif
       else
        call xerrab ('faulty input flag, flag='//flag0)
       endif

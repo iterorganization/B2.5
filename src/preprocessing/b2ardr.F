@@ -6,6 +6,19 @@
       use b2mod_version
       use b2mod_b2cmrc
       use b2mod_b2cmpa
+#ifdef IMAS
+#ifdef AMNS
+      use amns_types       ! IGNORE
+      use amns_module      ! IGNORE
+#endif
+#else
+#ifdef ITM
+#ifdef GOT_AMNSPROTO
+      use amns_types       ! IGNORE
+      use amns_module      ! IGNORE
+#endif
+#endif
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1)
@@ -111,16 +124,18 @@
       integer iyear(0:nnucm-1), npart(0:nnucm-1)
       integer izpmin(0:nzmax), izpmax(0:nzmax)
       character flag*8
-      integer i, j, k, nx, ny, ns, is, js, inuc,
-     *  fix_cx, rtnt_in, rtnn_in, no_weisheit, ns_pardf
+      integer i, j, k, nx, ny, ns, is, js, inuc, fix_cx,
+     *  rtnt_in, rtnn_in, no_weisheit, ns_pardf
       integer kstart, kstart1, kend
       integer, allocatable :: is1(:)
       integer idum(0:9)
       integer, save :: no_smoothing = 0                        !srv 02.07.12
+      integer, save :: ismain0 = 0
       character lblrc*120, lblcp*120, lblgm*120, cnamip*80, cvalip*80
+      character*32 ADAS_git_version
       character line*500
       real (kind=R8) ::
-     *  lnzero, tailep, tlo, thi, nlo, nhi, cxcoef
+     *  lnzero, tailep, tlo, thi, nlo, nhi, cxcoef, am0, am1
       real (kind=R8), allocatable ::
      &  rtsa(:,:,:), rtra(:,:,:),
      &  rtqa(:,:,:), rtcx(:,:,:),
@@ -128,15 +143,33 @@
      &  rtz2(:,:,:), rtpt(:,:,:),
      &  rtzz(:,:,:), rtpi(:,:,:),
      &  wrk(:,:,:)
+#ifdef IMAS
+#ifdef AMNS
+      type (amns_handle_type), save :: amns
+      type (amns_query_type) :: query
+      type (amns_answer_type) :: answer
+#else
+      character*5, save :: git_version_amns = '0.0.0'
+#endif
+#else
+#ifdef ITM
+#ifndef GOT_AMNSPROTO
+      character*5, save :: git_version_amns = '0.0.0'
+#endif
+#else
+      character*5, save :: git_version_amns = '0.0.0'
+#endif
+#endif
       save fix_cx, no_weisheit, rtnt_in, rtnn_in
       parameter (lnzero=-1.0e30_R8)
 *   ..procedures
       intrinsic log, exp
       logical streql, is_comment
+      character*32 get_ADAS_hash
       external subini, subend, xertst, xerrab, streql, cfwuch
       external ratstr, ratadp, ratwei, rattai, ratprt, cfruch
       external b2xxid, b2arin, b2wfr0, b2wfr1, b2wurc, b2rucp
-      external cfverr, cfruin, is_comment
+      external cfverr, cfruin, is_comment, get_ADAS_hash
 *   ..initialisation
       data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/32/
 *-----------------------------------------------------------------------
@@ -351,10 +384,15 @@
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
 *   ..internal parameters
       fix_recomb = 0
+      zmax_recomb = 1
 ! FIXME: Still experimental:      if (streql(flag,'adas')) fix_recomb = 1
       call ipgeti('b2ardr_fix_cx', fix_cx)
       call ipgeti('b2ardr_fix_recomb', fix_recomb)
+      call ipgeti('b2ardr_zmax_recomb', zmax_recomb)
       call ipgeti('b2ardr_no_weisheit', no_weisheit)
+      call ipgeti('b2mwti_ismain0', ismain0)
+      call xertst(0.le.ismain0 .and. ismain0.lt.ns_pardf,
+     &            'faulty argument ismain0')
       call ipgeti('b2ardr_rtnt', rtnt_in)
       call xertst(0.lt.rtnt_in, 'faulty argument rtnt_in')
       call ipgeti('b2ardr_rtnn', rtnn_in)
@@ -369,12 +407,25 @@
        lblrc(61:120) = 'STRAHL rate coefficients, courtesy of'//
      &   ' K. Behringer'
       else if (streql(flag,'adas')) then
-       lblrc(61:120) = 'ADAS rate coefficients, courtesy of'//
-     &   ' M. O Mullane'
+       ADAS_git_version = get_ADAS_hash()
+       lblrc(61:120) = 'ADAS '//trim(ADAS_git_version)//
+     &   ' rate coefficients, from M. O Mullane'
+#ifdef IMAS
+      else if (streql(flag,'amns')) then
+#ifdef AMNS
+       call IMAS_AMNS_SETUP(amns)
+       lblrc(61:120) = 'IMAS AMNS rate coefficients, version = '//
+     &   trim(git_version_amns)
+       call IMAS_AMNS_FINISH(amns)
+#else
+       call xerrab ('No IMAS AMNS data available')
+#endif
+#else
 #ifdef ITM
       else if (streql(flag,'amns')) then
        lblrc(61:120) = 'AMNS rate coefficients, courtesy of'//
      &   ' EFDA-TF-ITM'
+#endif
 #endif
       else
        call xerrab ('faulty data flag; flag='//flag)
@@ -389,6 +440,8 @@
        call b2wfr1 (nout(0))
       else if (streql(flag,'adas')) then
        call b2wfr2 (nout(0))
+      else if (streql(flag,'amns')) then
+       call b2wfr3 (nout(0))
       endif
 *   ..compute and test ns
       ns = 0
@@ -452,8 +505,14 @@
       call cfruch (ninp(3), 120, lblcp, 'label')
       call b2rucp (ninp(3), b2fparam_version, nx, ns_pardf)
       call initialise_potentials(ns_pardf)
+      am0 = am(ismain0)
 *   ..loop over nuclear species
       do inuc = 0, nnuc-1
+       am1 = 0.0_R8
+       do k = 0, ns_pardf-1
+         if (am1.ne.0.0_R8) cycle
+         if (nint(zn(k)).eq.nz(inuc)) am1 = am(k)
+       end do
 *    ..compute table
        if (streql(flag,'adpak')) then
         fix_recomb = 0  ! must be set to zero as ADPAK rates are incompatible
@@ -488,7 +547,7 @@
        else if (streql(flag,'adas')) then
         call ratadas (nout(0), nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr, rtzz, rtz2, rtpt, rtpi,
-     &    iyear(inuc), fix_recomb,
+     &    iyear(inuc), fix_recomb, zmax_recomb,
      &    npart(inuc), izpmin(0:nz(inuc)), izpmax(0:nz(inuc)))
 cxpb  We must account for the case when the user does not want all bundles
         kstart = 0
@@ -509,11 +568,15 @@ cxpb  We must account for the case when the user does not want all bundles
          rtzn(is+k-kstart) = real(nz(inuc))
         enddo
         rtns = rtns + kend - kstart + 1
-#ifdef ITM
        else if (streql(flag,'amns')) then
-        call ratamns (nout(0), nz(inuc), rtt, rtnt, rtn, rtnn,
+        if (git_version_amns.lt.'1.3.2') then
+         am0 = 0.0_R8
+         am1 = 0.0_R8
+        endif
+        call ratamns (nout(0), nz(inuc), am0, am1,
+     &    rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr, rtzz, rtz2, rtpt, rtpi,
-     &    iyear(inuc), fix_recomb,
+     &    fix_recomb, zmax_recomb,
      &    npart(inuc), izpmin(0:nz(inuc)), izpmax(0:nz(inuc)))
 cxpb  We must account for the case when the user does not want all bundles
         kstart = 0
@@ -534,7 +597,6 @@ cxpb  We must account for the case when the user does not want all bundles
          rtzn(is+k-kstart) = real(nz(inuc))
         enddo
         rtns = rtns + kend - kstart + 1
-#endif
        endif
 *    ..get corresponding old species index
        js = 0

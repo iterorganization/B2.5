@@ -13,8 +13,8 @@ c======================================================================
       integer lun
       parameter (lun=96)
       integer i
-      logical open_file
-      character*16 ufile
+      logical open_file, file_ok
+      character*24 ufile
       external b2pwinm, open_file, subini, subend, xerrab
 c======================================================================
 c*** This routine works once
@@ -51,6 +51,7 @@ c
       immed=.false.
       mimp=lun
       ufile='param.dg'
+      call find_file(ufile,file_ok)
 c      open(lun,file=ufile,status='old',err=998)
       if(.not.open_file(lun,ufile,'/modules/Uinp/')) then
         l2pwinp=.false.

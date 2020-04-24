@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2wgrc (nprt, ns0, nidis, idis, njdis, jdis, rtt, nt,
-     &  rtn, nn, zn, fix_recomb,
+     &  rtn, nn, zn, fix_recomb, zmax_recomb,
      &  rtlsa, rtlra, rtlqa, rtlcx, rtlza, rtlz2, rtlpt, rtlpi)
       use b2mod_types
       use b2mod_constants
@@ -10,7 +10,7 @@
 #     include "emissivity.constants"
 *   ..input arguments (unchanged on exit)
       integer nprt, ns0, nidis, idis(0:nidis-1), njdis, jdis(0:njdis-1),
-     &  nt, nn, fix_recomb
+     &  nt, nn, fix_recomb, zmax_recomb
       real (kind=R8) ::
      *   rtt(0:nt), rtn(0:nn), zn(0:ns0-1),
      &  rtlsa(0:nt,0:nn,0:ns0-1), rtlra(0:nt,0:nn,0:ns0-1),
@@ -337,7 +337,7 @@
        call pagend ()
       enddo
 *   ..plot rtqa (with fix_recomb) as function of rtt for several rtn
-      if (fix_recomb.ne.0) then
+      if (fix_recomb.ne.0.and.izn0.le.zmax_recomb) then
        do ind = 0, njdis-1
         j = jdis(ind)
         zmax = maxval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)

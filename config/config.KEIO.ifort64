@@ -60,6 +60,7 @@ LDOPTS  += -openmp
 endif
 endif
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+FCOPTS  += -vec_report0
 LDOPTS  += -i_dynamic
 endif
 endif

@@ -1,34 +1,19 @@
 # Test whether necessary variables are set
-ifndef NCDIR
-  NCDIR      = /tokp/work/dpc/SOLPS-ITER/NETCDF
-endif
-ifndef LD_NETCDF
-  LD_NETCDF  = -L${NCDIR}/lib -lnetcdf
-endif
-ifndef MSCL_ROOT
-  MSCL_ROOT  = /tokp/work/dpc/SOLPS-ITER/mscl
-endif
-ifndef LD_MSCL
-  LD_MSCL    = -L${MSCL_ROOT} -lmscl
-endif
-ifndef NCARG_ROOT
-  NCARG_ROOT = /tokp/work/dpc/SOLPS-ITER/NCARG
-endif
-ifndef LD_NCARG
-  LD_NCARG   = -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
-endif
-ifndef NAGDIR
-  NAGDIR     = /tokp/work/dpc/SOLPS-ITER/nag
-endif
-ifndef LD_NAG
-  LD_NAG     = -L${NAGDIR} -lnag
-endif
+NCDIR       ?= /tokp/work/dpc/SOLPS-ITER/NETCDF
+LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdf
+MSCL_ROOT   ?= /tokp/work/dpc/SOLPS-ITER/mscl
+LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
+NCARG_ROOT  ?= /tokp/work/dpc/SOLPS-ITER/NCARG
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
+NAGDIR      ?= /tokp/work/dpc/SOLPS-ITER/nag
+LD_NAG      ?= -L${NAGDIR} -lnag
+MDSPLUS_DIR ?= /tokp/work/dpc/SOLPS-ITER/MDSPLUS
 
 EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 DEFINES += -DGRREAL=4 -DDOFLUSH # -DNO_CDF
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
-CPPOPTS  = -C -P -I${srcdir} ${EQUIVS}
+CPPOPTS  = -P -I${srcdir} ${EQUIVS}
 SED      = sed s:\#PREC\#:d:g
 SED      =
 LINK_MOD = 
@@ -62,6 +47,7 @@ endif
 endif
 
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+FCOPTS  += -vec_report0
 LDOPTS  += -i_dynamic
 endif
 
@@ -96,7 +82,7 @@ IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-LD_UAL  ?= `pkg-config imas-ifort ggd --libs`
+LD_UAL  ?= `pkg-config imas-ifort ggd amns --libs`
 else
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
@@ -107,7 +93,7 @@ LD_UAL  ?= `pkg-config imas-lowlevel imas-ifort --libs`
 endif
 endif
 ifndef SOLPS_CPP
-DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+DEFINES += -DIMAS -DAMNS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif
 INCMODS += -I${IMAS_PREFIX}/include/ifort
 LDLIBES += ${LD_UAL}

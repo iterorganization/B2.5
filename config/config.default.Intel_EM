@@ -21,7 +21,7 @@ DEFINES += -DDOFLUSH -DUSE_CDF_B2STIME -DNO_LONG_LINES # -DNO_CDF
 
 FC       = ifort
 CPP      = /lib/cpp -C -traditional
-CPPOPTS  = -C -P -I${srcdir} ${EQUIVS}
+CPPOPTS  = -P -I${srcdir} ${EQUIVS}
 
 #FCOPTS   = -Ad -Am -X9 -fw -Kfast,eval -x- -O -M${OBJDIR}
 #FCOPTS   = -r8 -O0 -check -g -traceback -save -fpconstant -ftz

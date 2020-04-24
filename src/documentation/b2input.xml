@@ -1039,6 +1039,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2ytdr_jsep1</name>
+				<default>nx1/2</default>
+				<type>integer</type>
+				<description>
+					Radial index of separatrix in the converted grid. Must be specified within b2yt.dat. Only applies when converting linear geometries.
+				</description>
+			</switch>
+			<switch>
 				<name>b2ytdr_ndepth1</name>
 				<default>ndepth_nml</default>
 				<type>integer</type>
@@ -2664,6 +2672,7 @@
 				<description>
 					Index of the species used to create the 'dp3d?.last10' diagnostic files.
 					Defaults to the neutral species associated with ismain. If no such species is declared, the default will be set to ismain. Is expected to either correspond to a neutral species or to ismain.
+					Can also be used in b2ar.dat to specify the index of the main neutral CX species when resorting to the AMNS database (starting from version 1.3.2).
 					If ismain is also defaulted, then will be 0.
 				</description>
 			</switch>
@@ -3844,6 +3853,8 @@
 				<name>b2mndr_*fb*</name>
 				<description>
 					Experimental: allows for density feedback of the number of electrons accompanying species 'isfb' at location (ixfb,iyfb).
+					For USN topologies, the default value for ixfb is 3*nx/8.
+					For all others, it is 5*nx/8.
 					Note that ixfb and iyfb are real numbers!
 				</description>
 				<switch>
@@ -3853,7 +3864,7 @@
 				</switch>
 				<switch>
 					<name>b2mndr_ixfb</name>
-					<default>5*nx/8</default>
+					<default>See description</default>
 					<type>real</type>
 				</switch>
 				<switch>
@@ -4412,17 +4423,26 @@
 					When set to 1, disables the tail smoothing for of rate coefficients to represent the effect of a power-law tail on the distribution function. It has been added for compatibility with SOLPS4.3
 				</description>
 			</switch>
-			<switch>
-				<name>b2ardr_fix_recomb</name>
-				<default>0</default>
-				<type>integer</type>
+			<switchgroup>
+				<name>b2ardr_*_recomb</name>
 				<description>
-					When changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
+					When fix_recomb is changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
 					This term includes the bremsstrahlung.
 					The '0' option only contains the bremsstrahlung for the is--&gt;is-1 process.
+					The correction is only applied for isonuclear sequences with nuclear charge up to zmax_recomb, inclusive.
 					Use of this option is still experimental!
 				</description>
-			</switch>
+				<switch>
+				  <name>b2ardr_fix_recomb</name>
+				  <default>0</default>
+				  <type>integer</type>
+				</switch>
+				<switch>
+				  <name>b2ardr_zmax_recomb</name>
+				  <default>1</default>
+				  <type>integer</type>
+				</switch>
+			</switchgroup>
 			<switchgroup>
 				<name>b2ardr_rtn.</name>
 				<description>
@@ -7019,7 +7039,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Location of the pump. 0 no pump at all (default), 1 - lower PFR, 2 - outer SOL, 3 - upper PFR, 4 - inner SOL
+					Location of the pump. 0 no pump at all (default), 1 - SN of lower DN PFR, 2 - (outer) SOL, 3 - upper DN PFR, 4 - inner SOL for DN
 				</description>
 			</switch>
 			<switch>

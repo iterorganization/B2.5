@@ -12,8 +12,8 @@ c----------------------------------------------------------------------
 #include "impcon.inc"
       integer lun
       parameter (lun=96)
-      logical open_file
-      character*16 ufile
+      logical open_file, file_ok
+      character*24 ufile
       external b2prdn, open_file
 c----------------------------------------------------------------------
 c*** Set up the input routine
@@ -21,6 +21,7 @@ c
       immed=.false.
       mimp=lun
       ufile='param.dg'
+      call find_file(ufile,file_ok)
 c      open(lun,file=ufile,status='old',err=998)
       if(open_file(lun,ufile,'modules/Uinp')) then
 c*** ... and read the data from dg

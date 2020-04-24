@@ -19,7 +19,7 @@ DEFINES += -DNAGFOR
 endif
 
 CPP = /lib/cpp -C
-CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
 FC = /afs/ipp-garching.mpg.de/@sys/bin/f90

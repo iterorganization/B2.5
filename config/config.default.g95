@@ -19,7 +19,7 @@ EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Ds
 DEFINES += -DDOFLUSH # -DNO_CDF
 
 CPP = /lib/cpp -C -traditional
-CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 SED =
 LINK_MOD = 

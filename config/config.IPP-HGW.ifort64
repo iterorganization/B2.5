@@ -16,7 +16,7 @@ EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -
 DEFINES += -DGRREAL=4 -DDOFLUSH # -DNO_CDF
 
 CPP      = /lib/cpp -C -traditional
-CPPOPTS  = -C -P -I${srcdir} ${EQUIVS}
+CPPOPTS  = -P -I${srcdir} ${EQUIVS}
 SED      = sed s:\#PREC\#:d:g
 SED      =
 LINK_MOD = 
@@ -48,7 +48,7 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
-FCOPTS   = -O2 -vec_report0
+FCOPTS   = -O2
 endif
 ifdef USE_OPENMP
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
@@ -60,6 +60,7 @@ LDOPTS  += -openmp
 endif
 endif
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+FCOPTS  += -vec_report0
 LDOPTS  += -i_dynamic
 endif
 endif
@@ -86,7 +87,7 @@ IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifeq (${FC},mpif90)
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-LD_UAL  := `pkg-config imas-gfortran ggd --libs`
+LD_UAL  := `pkg-config imas-gfortran ggd amns --libs`
 else
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
@@ -100,7 +101,7 @@ INCMODS += -I${IMAS_PREFIX}/include/gfortran
 else
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-LD_UAL  ?= `pkg-config imas-ifort ggd --libs`
+LD_UAL  ?= `pkg-config imas-ifort ggd amns --libs`
 else
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
@@ -113,7 +114,7 @@ endif
 INCMODS += -I${IMAS_PREFIX}/include/ifort
 endif
 ifndef SOLPS_CPP
-DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+DEFINES += -DIMAS -DAMNS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif
 IMASLIBS = ${LD_UAL}
 endif

@@ -272,7 +272,7 @@ c                                 Added redef_pbs switch to b2fgmtry file
 c                                 Added cflim(3:4) flux limit factors for
 c                                 thermo-electric coefficient and friction terms
 c                                 Added flux limit coefficients to b2mod_transport
-c    Version 03.000.007  01.07.19 Added fix_recomb to b2frates
+c    Version 03.000.007  01.07.19 Added fix_recomb and zmax_recomb to b2frates
 c                                 Replaced redef_pbs by redef_gmtry in b2fgmtry
 c                                 Added wbbl to b2fgmtry
 c                                 Added (corrected) fht, fhj, fhm, fhp to b2fplasma

@@ -1,20 +1,13 @@
 # Test whether necessary variables are set
-ifndef LD_MSCL
- LD_MSCL = -L${MSCL_ROOT} -lmscl
-endif
-ifndef LD_NCARG
-  LD_NCARG = -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
-endif
-ifndef LD_NAG
-  LD_NAG = -L${SOLPSLIB} -lblaslapack
-endif
-ifndef LD_NETCDF
-  NCDIR      = /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/NETCDF
-  LD_NETCDF  = 
-endif
-ifndef LD_SONNET
-  LD_SONNET  = -L${SOLPSLIB} -lsonnet
-endif
+MSCL_ROOT   ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/mscl
+MDSPLUS_DIR ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/MDSPLUS
+NCARG_ROOT  ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/NCARG
+LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
+LD_NAG      ?= -L${SOLPSLIB} -lblaslapack
+NCDIR       ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/NETCDF
+LD_NETCDF   ?=
+LD_SONNET   ?= -L${SOLPSLIB} -lsonnet
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 DEFINES += -DDOFLUSH # -DNO_CDF
@@ -23,7 +16,7 @@ CPP = /lib/cpp -C -traditional -ffreestanding
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 SED =
-LINK_MOD = 
+LINK_MOD =
 
 FC = g95
 
@@ -36,7 +29,7 @@ endif
 DBLFC = ${FC}
 DDBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED = 
+DBLSED =
 
 INCMOD = -I
 MOD = mod
