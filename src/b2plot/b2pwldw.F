@@ -670,13 +670,15 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
      .                      fhi_ext(k+1-l,iy,0)
                 do is=0,ns-1 !{
                   if (.not.is_neutral(is).or.ft44) then
-                    wo=wo+fna(k+1-l,iy,0,is)*rpt(kk,iy,is)*ev
+                    wo=wo+fhp(k+1-l,iy,0,is)
                   else
-                    wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,is)
-     *               *(1.0_R8-BoRiS)*(ti(kk,iy)+kinrgy(kk,iy,is))
+                    wnutrg(iy,j)=wnutrg(iy,j)+(1.0_R8-BoRiS)*
+     *               (fhm(k+1-l,iy,0,is)+
+     *                fna(k+1-l,iy,0,is)*ti(kk,iy))
                   end if
-                  whtpl(iy,j)=whtpl(iy,j)+fna(k+1-l,iy,0,is)
-     *             *(1.0_R8-BoRiS)*(ti(kk,iy)+kinrgy(kk,iy,is))
+                  whtpl(iy,j)=whtpl(iy,j)+(1.0_R8-BoRiS)*
+     *               (fhm(k+1-l,iy,0,is)+
+     *                fna(k+1-l,iy,0,is)*ti(kk,iy))
 c carlis 31jan2017  added ti as suggested by sw in b2blne.
                 end do !}
                 do is=0,ns_ext-1 !{

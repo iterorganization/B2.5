@@ -9,7 +9,7 @@
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
      &  fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,        !srv 13.10.06 25.12.06 23.10.09
-     &  fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
+     &  fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      &  fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,         !xpb
@@ -62,6 +62,7 @@
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_32(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_52(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
+     &  fhm(-1:nx,-1:ny,0:1,0:ns-1), fht(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),              !srv 11.10.02 21.10.02 {
      &  fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
@@ -303,7 +304,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      .  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,            !srv 16.02.12
+     &  fhe, fhi, fhe_mdf, fhi_mdf, fhm, fch, fne, fni, fna_fcor,       !srv 16.02.12
      &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  fchanml,
@@ -348,8 +349,9 @@ csw 30sep2013, added cdpa in call, uadia
 *   ..compute special contributions (boundaries and recycling)
       call b2stbr (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy, te, ti,
-     &  po, ne, ni, fna, fna_mdf, fhe, fhi, fch, fne, fni, rsa, bb,    !iyv 07.03.18
+     &  vol, hx, hy, hz, gs, qz, pbs, na, ua,
+     &  te, ti, po, ne, ni,
+     &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa, bb,            !iyv 07.03.18
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
 *   ..zero out contributions in dead cells
       do is = 0, ns-1

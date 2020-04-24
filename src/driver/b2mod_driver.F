@@ -1675,6 +1675,13 @@ c   --> better way doing this is necessary)
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
       endif
+c calculate additional fluxes (fhj, fhm, fhp, fht)
+!ajs 07.04.20 only recalculate in older version, now in b2mod_plasma
+      if (b2fplasma_version.lt.'03.000.007') then
+        call b2xpen (nx, ny, ns,
+     1    fna, fne, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
+     2    te, ti, po, BoRiS, fhm, fhp, fhj, fht)
+      endif
 *   ..rewrite input file with inverted velocity
       if(inverse_ua.ne.0) then                                           !srv 04.02.15 {
         call cfopen (70,'b2fstati_with-ua','new','un*formatted')
@@ -2351,7 +2358,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
-      call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
+      call b2wdat (nx, ny, ns, ismain, ismain0)                          !srv 05.10.01
       if (use_astra.ne.0) then
        call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
        call write_b2_to_astra(nx, ny, ns, ismain, ismain0, nout(8))      !srv 28.07.11 19.09.11

@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2stbr_phys (nx, ny, ns, nscx, iscx,
-     &  dtim, BoRiS, vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
-     &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
+     &  dtim, BoRiS, vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
+     &  te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle,
      &  neutral_sources_rescale, core_sources_rescale,  
@@ -48,8 +48,7 @@
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1), 
-     &  f_redep(-1:nx,-1:ny,0:ns-1)
+     &  fht(-1:nx,-1:ny,0:1), f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
      *  neutral_sources_rescale, core_sources_rescale, 
      &  sput_chem_alpha, sput_phys_alpha, alpha,
@@ -95,7 +94,7 @@
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
       real (kind=R8) ::
      *   amtol, t0, t1, t2, t3, b2stbr_phys_sna(0:ns-1), 
-     *   qin, qel, surface_temp,
+     *   qpl, qex, surface_temp,
      *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
      *   lnorm, deposition_error(ntrack), reflection_max, 
      *   redep_max, yself_max
@@ -653,7 +652,7 @@ c lcore           is this a core element?
       logical lcore, found
 
       integer is0, is1, is2, is, js, k, iwall, itrack
-      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf,
+      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), ptf,
      &     sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, eself,
      &     sput_frac_chem_sum, be_frac, be_suppression_factor,
      &     ytmp, ztmp, wrk(ndepth_nml)
@@ -807,26 +806,18 @@ cdpc-end
       endif
       zaf(0:ns-1) = 
      & (rza(ix,iy,0:ns-1)*hhn+rza(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      rpf(0:ns-1) = 
-     & (rpt(ix,iy,0:ns-1)*hhn+rpt(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      qin = max(0.0_R8,isign*(fhi(ixf,iyf,idir)+
-     &                        fhi_ext(ixf,iyf,idir)))/area
-      do is=0,ns-1
-         qin=qin+max(0.0_R8,isign*fna(ixf,iyf,idir,is))
-     &        *((kinrgy(ix,iy,is)+tif)*(1.0_R8-BoRiS) + rpf(is)*ev)/area
-      enddo
+      qpl = max(0.0_R8,isign*fht(ixf,iyf,idir))/area
+      qex = max(0.0_R8,isign*fhi_ext(ixf,iyf,idir))/area
       do is=0,ns_ext-1
          ptf =
      &    (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/(hhn+hh)
          taf =
      &    (ta_ext(ix,iy,is)*hhn+ta_ext(ixn,iyn,is)*hh)/(hhn+hh)
-         qin=qin+max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))
+         qex = qex + max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))
      &        *((0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+taf)*
      &          (1.0_R8-BoRiS)
      &          + ptf*ev)/area
       enddo
-      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir)+
-     &  fne(ixf,iyf,idir)*tef*(1.0_R8-BoRiS)))/area
       if(lcore) then
          surface_temp = 0.0_R8
       else
@@ -835,12 +826,12 @@ cdpc-end
             call xerrab ('Invalid iwall setting!')
          endif
          if (plate_model.eq.0) then
-            call heatdiff0D(iwall,qin,qel,surface_temp)
+            call heatdiff0D(iwall,qpl+qex,surface_temp)
             target_temp(iwall,1) = surface_temp
          else if (plate_model.eq.1) then
             if (main_call) then
               wrk(1:ndepth_nml) = target_temp(iwall,1:ndepth_nml)
-              call heatdiff1D(iwall,ns,qin+qel,
+              call heatdiff1D(iwall,ns,qpl+qex,
      .           dtim*plate_time_factor(iwall),wrk,output)
               target_temp(iwall,1:ndepth_nml) = wrk(1:ndepth_nml)
             end if

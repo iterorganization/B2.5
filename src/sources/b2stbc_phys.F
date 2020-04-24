@@ -4,9 +4,9 @@
      1  BoRiS, facdrift, fac_ExB,
      1  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, na, ua,     !srv 24.08.08
      1  uadia, vedia, vadia, veecrb, vaecrb,
-     &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc, fna, fna_mdf, !srv 28.10.02
+     &  te, ti, po, ne, ni, floe_noc, floi_noc, fna, fna_mdf,         !srv 28.10.02
      1  fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,      !srv 13.10.06
-     &  fhe, fhi, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch,
+     &  fhe, fhi, fhm, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch,
      &  fch, fne, fni,                                                !srv 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,!srv 21.10.02
      &  fchanml,
@@ -55,11 +55,10 @@
      &  vedia(-1:nx,-1:ny,0:1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  veecrb(-1:nx,-1:ny,0:1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1)
+     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_32(-1:nx,-1:ny,0:1,0:ns-1),
-     *  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
+     *  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1), fhm(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_52(-1:nx,-1:ny,0:1,0:ns-1), fni_32(-1:nx,-1:ny,0:1),
      &  fni_52(-1:nx,-1:ny,0:1), fne_32(-1:nx,-1:ny,0:1),
      &  fne_52(-1:nx,-1:ny,0:1), fhe(-1:nx,-1:ny,0:1),
@@ -5908,10 +5907,7 @@ cxpb code segment analog to b2tfhe
             if (bc_type16_kinetic_energy.eq.1) then
               do is = 0, ns-1
                 totflux=totflux+(1.0_R8-BoRiS)*
-     .           fna(bc_type16_ix,bc_type16_iy,1,is)*0.5_R8*
-     .           (kinrgy(bc_type16_ix,bc_type16_iy,is)+
-     .            kinrgy(bottomix(bc_type16_ix,bc_type16_iy),
-     .                   bottomiy(bc_type16_ix,bc_type16_iy),is))
+     .           fhm(bc_type16_ix,bc_type16_iy,1,is)
               enddo
               do is = 0, ns_ext-1
                 totflux=totflux+(1.0_R8-BoRiS)*
@@ -6815,8 +6811,7 @@ cxpb code segment analog to b2tfhi
             if (BoRiS.eq.1.0_R8) then
               do is = 0, ns-1
                 t2 = dim ( coni0,
-     .           abs(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
-     .                  fna(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is))*
+     .           abs(fhm(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is))*
      .           max(0.0_R8,
      .            min(ti(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
@@ -6825,8 +6820,7 @@ cxpb code segment analog to b2tfhi
      .                ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))))
                 w1 = w1 +
-     .            upwind(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
-     .                   fna(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is),
+     .            upwind(fhm(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is),
      .             ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
      .             ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))
@@ -6965,10 +6959,9 @@ cxpb code segment analog to b2tfhi
             if (BoRiS.eq.1.0_R8) then
               do is = 0, ns-1
                 t2 = dim ( coni0,
-     .           abs(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
-     .            fna(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,is))*
-     .           max(0.0_R8,
+     .           abs(fhm(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,is))
+     .           *max(0.0_R8,
      .            min(ti(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))))/
@@ -6976,10 +6969,9 @@ cxpb code segment analog to b2tfhi
      .                ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))))
                 w1 = w1 +
-     .            upwind(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
-     .                fna(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                    topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                    1,is),
+     .            upwind(fhm(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                       topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                       1,is),
      .             ti(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .             ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
@@ -7638,10 +7630,7 @@ cxpb          endif
              if (bc_type16_kinetic_energy.eq.1) then
                do is = 0, ns-1
                  totflux=totflux+(1.0_R8-BoRiS)*
-     .            fna(bc_type16_ix,bc_type16_iy,1,is)*0.5_R8*
-     .            (kinrgy(bc_type16_ix,bc_type16_iy,is)+
-     .             kinrgy(bottomix(bc_type16_ix,bc_type16_iy),
-     .                    bottomiy(bc_type16_ix,bc_type16_iy),is))
+     .            fhm(bc_type16_ix,bc_type16_iy,1,is)
                enddo
              endif
              t0 = t0 +

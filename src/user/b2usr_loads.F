@@ -1,7 +1,7 @@
 C
 CVK CORRECT CALCULATION OF THE HEAT LOADS IN B2
 C
-      subroutine b2usr_loads(nx,ny,ns,nxtl,nxtr,BoRiS,wtarg_max)
+      subroutine b2usr_loads(nx,ny,nxtl,nxtr,BoRiS,wtarg_max)
       use b2mod_types
       use b2mod_geo
       use b2mod_rates
@@ -15,7 +15,7 @@ C
       IMPLICIT NONE
 #     include <DIMENSIONS.F>
 
-      integer nx, ny, ns, nxtl, nxtr
+      integer nx, ny, nxtl, nxtr
       real (kind=R8) :: BoRiS
 
       INTEGER,PARAMETER :: NTRGM=DEF_NCUT
@@ -84,17 +84,12 @@ C AREAS OF THE SURFACE ELEMENTS
         call b2neut_eng(wnutrg(0,j),wnutpr(0,j),ny,shift(j))
         wtarg_max(j)=0.0_R8
         do iy=0,ny-1
-          hlp=abs(fhe(k+l,iy,0)+fhi(k+l,iy,0)+fhi_ext(k+l,iy,0))
-          do is=0,ns-1
-            hlp=hlp+abs(fna(k+l,iy,0,is)*(rpt(k,iy,is)*ev+
-     .                 (1.0_R8-BoRiS)*(kinrgy(k,iy,is)+ti(k,iy))))
-          end do
+          hlp=abs(fht(k+l,iy,0)+fhi_ext(k+l,iy,0))
           do is=0,ns_ext-1
             hlp=hlp+abs(fa_ext(k+l,iy,0,is)*(pt_ext(k,iy,is)*ev+
      .                 (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
      .                  ua_ext(k,iy,is)**2+ta_ext(k,iy,is))))
           end do
-          hlp=hlp+(1.0_R8-BoRiS)*fne(k+l,iy,0)*te(k,iy)
           hlp=hlp/strg(iy,j)
           wtarg(iy,j)=hlp+wnutrg(iy,j)-wnutpr(iy,j)
           if(wtarg(iy,j).gt.wtarg_max(j)) wtarg_max(j)=wtarg(iy,j)

@@ -3,8 +3,9 @@
 
       subroutine b2stbr (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy,
-     &  te, ti, po, ne, ni, fna, fna_mdf, fhe, fhi, fch, fne, fni, rsa, !iyv 07.03.18
+     &  vol, hx, hy, hz, gs, qz, pbs, na, ua,
+     &  te, ti, po, ne, ni,
+     &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa,
      &  bb, sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
       use b2mod_wall
@@ -58,11 +59,11 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)
+     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),    !iyv 07.03.18
-     &  fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
+     &  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1),
+     &  fht(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      &  rsa(-1:nx,-1:ny,0:ns-1), bb(-1:nx,-1:ny,0:3)
       logical main_call
@@ -473,8 +474,8 @@ c   --> better solution wanted here..
           shitmp=shi0
         endif
         call b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
+     &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
+     &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   neutral_sources_rescale, core_sources_rescale,
@@ -502,8 +503,8 @@ c   --> better solution wanted here..
           shitmp=shi0
         endif
         call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
+     &   vol, hx, hy, gs, qz, pbs, na, ua,
+     &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,

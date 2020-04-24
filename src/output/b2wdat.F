@@ -1,4 +1,4 @@
-      subroutine b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)     !srv 05.10.01
+      subroutine b2wdat (nx, ny, ns, ismain, ismain0)     !srv 05.10.01
       use b2mod_types
       use b2mod_constants
       use b2mod_geo
@@ -27,7 +27,6 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
-      real (kind=R8) :: BoRiS
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -712,17 +711,9 @@
       hlp_s=0.0_R8
       do iy=0,ny-1 !{
         s=gs(0,iy,0)
-        hlp=0.0_R8
-        do is=0,ns-1 !{
-          hlp=hlp+abs(fna(0,iy,0,is)*(
-     .     (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
-     .     (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
-     .    ((kinrgy(0,iy,is)+ti(0,iy))*hx(-1,iy)+
-     .     (kinrgy(-1,iy,is)+ti(-1,iy))*hx(0,iy))/
-     .     (hx(-1,iy)+hx(0,iy))))
-        end do !}
-        hlp=hlp/s
-        wrk0(5,iy) = hlp + wrk0(-1,iy) + wrk0(3,iy)
+        hlp=fht(0,iy,0)
+        hlp=abs(hlp)/s
+        wrk0(5,iy) = hlp
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
@@ -734,18 +725,10 @@
 #endif
       hlp_s=0.0_R8
       do iy=0,ny-1 !{
-        hlp=0.0_R8
         s=gs(nx,iy,0)
-        do is=0,ns-1 !{
-          hlp=hlp+abs(fna(nx,iy,0,is)*(
-     .     (rpt(nx,iy,is)*hx(nx-1,iy)+rpt(nx-1,iy,is)*hx(nx,iy))/
-     .     (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
-     .    ((kinrgy(nx,iy,is)+ti(nx,iy))*hx(nx-1,iy)+
-     .     (kinrgy(nx-1,iy,is)+ti(nx-1,iy))*hx(nx,iy))/
-     .     (hx(nx-1,iy)+hx(nx,iy))))
-        end do !}
-        hlp=hlp/s
-        wrk0(6,iy) = hlp + wrk0(0,iy) + wrk0(4,iy)
+        hlp=fht(nx,iy,0)
+        hlp=abs(hlp)/s
+        wrk0(6,iy) = hlp
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
@@ -766,18 +749,9 @@
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
           s=gs(ix2+1,iy,0)
-          hlp=0.0_R8
-          do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix2+1,iy,0,is)*(
-     .       (rpt(ix2,iy,is)*hx(ix2+1,iy)+
-     .        rpt(ix2+1,iy,is)*hx(ix2,iy))/
-     .       (hx(ix2+1,iy)+hx(ix2,iy))*ev+(1.0_R8-BoRiS)*
-     .      ((kinrgy(ix2,iy,is)+ti(ix2,iy))*hx(ix2+1,iy)+
-     .       (kinrgy(ix2+1,iy,is)+ti(ix2+1,iy))*hx(ix2,iy))/
-     .       (hx(ix2+1,iy)+hx(ix2,iy))))
-          end do !}
-          hlp=hlp/s
-          wrk0(14,iy) = hlp + wrk0(8,iy) + wrk0(12,iy)
+          hlp=fht(ix2+1,iy,0)
+          hlp=abs(hlp)/s
+          wrk0(14,iy) = hlp
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
@@ -790,19 +764,10 @@
 ! inner upper target
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
-          hlp=0.0_R8
           s=gs(ix1,iy,0)
-          do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix1,iy,0,is)*(
-     .       (rpt(ix1,iy,is)*hx(ix1-1,iy)+
-     .        rpt(ix1-1,iy,is)*hx(ix1,iy))/
-     .       (hx(ix1-1,iy)+hx(ix1,iy))*ev+(1.0_R8-BoRiS)*
-     .      ((kinrgy(ix1,iy,is)+ti(ix1,iy))*hx(ix1-1,iy)+
-     .       (kinrgy(ix1-1,iy,is)+ti(ix1-1,iy))*hx(ix1,iy))/
-     .       (hx(ix1-1,iy)+hx(ix1,iy))))
-          end do !}
-          hlp=hlp/s
-          wrk0(13,iy) = hlp + wrk0(7,iy) + wrk0(11,iy)
+          hlp=fht(ix1,iy,0)
+          hlp=abs(hlp)/s
+          wrk0(13,iy) = hlp
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
@@ -1431,16 +1396,6 @@
      &       Total_energy_flux_i(iy) + fhi(ix,iy,1)
             Total_energy_flux_i_mdf(iy) =
      &       Total_energy_flux_i_mdf(iy) + fhi_mdf(ix,iy,1)
-!            do is = 0, ns-1                                       ! ask Rozhansky
-!              kintmp =
-!     .        ((kinrgy(ix,iy,is)+ti(ix,iy))*
-!     .          hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-!     .         (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
-!     .          ti(bottomix(ix,iy),bottomiy(ix,iy)))*hy1(ix,iy))/
-!     .         (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-!              Total_energy_flux_i(iy) =
-!     &         Total_energy_flux_i(iy) + kintmp*(1.0_R8-BoRiS)
-!            enddo
           endif
         enddo
         write (70,'(1x,i4,2es18.7)')

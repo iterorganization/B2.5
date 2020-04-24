@@ -77,7 +77,7 @@ c*** Global values
      *     equg_tmp(nglb_tmp)
       real (kind=R8) ::
      *     hlp_nesp, hlp_tesp, hlp_tisp, hlp_zesp, hlp_qtsp, hlp_qesp,
-     ,     hlp_qisp, hlp_qrsl, hlp_spmn, kintmp
+     ,     hlp_qisp, hlp_qrsl, hlp_spmn
       equivalence
      ,     (equg_tmp(1),  hlp_nesp), (equg_tmp(2),  hlp_tesp),
      ,     (equg_tmp(3),  hlp_tisp), (equg_tmp(4),  hlp_zesp),
@@ -123,9 +123,6 @@ c*** Local variables of general use
       integer :: mdf_fnb = 0, style_b2mndt = 0, use_eirene = 0
       logical :: first=.TRUE.
 
-c*** Procedures
-      real (kind=R8) :: hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 c----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg /
@@ -204,13 +201,7 @@ c          v=vol(ix,iy)
           hlp_qesp=hlp_qesp+fhe(ix,iy,1)
           hlp_qisp=hlp_qisp+fhi(ix,iy,1)
           do is=0,ns-1
-            kintmp =
-     .      ((kinrgy(ix,iy,is)+ti(ix,iy))*
-     .        hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .       (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     .        ti(bottomix(ix,iy),bottomiy(ix,iy)))*hy1(ix,iy))/
-     .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-            hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,iy,1,is)
+            hlp_qisp=hlp_qisp+(1.0_R8-BoRiS)*fhm(ix,iy,1,is)
           enddo
           is=0
           do j=1,nspecies !{

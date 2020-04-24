@@ -2121,13 +2121,7 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              fetx(ix,iy)=fhe(ix,iy,0)+fhi(ix,iy,0)+fhi_ext(ix,iy,0)
-              do is=0,ns-1
-                fetx(ix,iy)=fetx(ix,iy)+
-     .           rpt(ix,iy,is)*ev*fna(ix,iy,0,is)+
-     .          (ti(ix,iy)*fna(ix,iy,0,is)+
-     1           fhm(ix,iy,0,is))*(1.0_R8-BoRiS)
-              end do
+              fetx(ix,iy)=fht(ix,iy,0)-fhj(ix,iy,0)+fhi_ext(ix,iy,0)
               do is=0,ns_ext-1
                 fetx(ix,iy)=fetx(ix,iy)+
      .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,0,is)+
@@ -2142,13 +2136,7 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              fety(ix,iy)=fhe(ix,iy,1)+fhi(ix,iy,1)+fhi_ext(ix,iy,1)
-              do is=0,ns-1
-                fety(ix,iy)=fety(ix,iy)+
-     1           rpt(ix,iy,is)*ev*fna(ix,iy,1,is)+
-     1          (ti(ix,iy)*fna(ix,iy,1,is)+
-     1           fhm(ix,iy,1,is))*(1.0_R8-BoRiS)
-              end do
+              fety(ix,iy)=fht(ix,iy,1)-fhj(ix,iy,1)+fhi_ext(ix,iy,1)
               do is=0,ns_ext-1
                 fety(ix,iy)=fety(ix,iy)+
      .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,1,is)+

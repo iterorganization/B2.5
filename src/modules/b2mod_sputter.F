@@ -1299,10 +1299,10 @@ c  surface assuming a 1-D steady state, heat diffusion with a
 c  thermal conductivity that varies with temperature as
 c   K(T) = 1/(KA * T + KB)
 
-      subroutine heatdiff0D(ibnd,qin,qel,Tp)
+      subroutine heatdiff0D(ibnd,Qtot,Tp)
       implicit none
       integer ibnd
-      real (kind=R8) :: qin, qel, Qtot, TL, L, K, KB, KA, Tp, Tc, Td
+      real (kind=R8) :: Qtot, TL, L, K, KB, KA, Tp, Tc, Td
       real (kind=R8), save :: cutll, cutlo
       logical, save  :: lfirst, coating
       !$OMP THREADPRIVATE(coating)
@@ -1317,13 +1317,12 @@ c   K(T) = 1/(KA * T + KB)
       data lfirst /.true./
 
 c  Inputs:
-c  qin -> incident ion heat flux (Joules/m^2/sec)
-c  qel -> incident electron heat flux (Joules/m^2/sec)
-c  TL -> Temperature at x=L (x=0 is plasma facing surface,
-c                            x=L is the cold end).
-c  L  -> Thickness of the target plate (m).
-c  KB -> parameter in the expression for conductivity (see above)
-c  KA -> parameter in the expression for conductivity (see above)
+c  Qtot -> incident heat flux (Joules/m^2/sec)
+c  TL   -> Temperature at x=L (x=0 is plasma facing surface,
+c                              x=L is the cold end).
+c  L    -> Thickness of the target plate (m).
+c  KB   -> parameter in the expression for conductivity (see above)
+c  KA   -> parameter in the expression for conductivity (see above)
 
 c  Outputs:
 c  Tp -> Surface temperature (at x=0) (in Kelvins).
@@ -1354,7 +1353,6 @@ c  Consider adding the option of layer_thermal_contact
         Tp = TL
         return
       endif
-      Qtot = qel + qin
       coating = coating_thickness(ibnd).gt.0.0_R8 .and.
      . (coating_thickness(ibnd)+layer_thickness(ibnd)).gt.0.0_R8
       if (.not. coating) then

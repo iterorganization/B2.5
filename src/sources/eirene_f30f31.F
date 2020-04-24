@@ -80,9 +80,6 @@ c
      1 na_min/0.0_R8/, na_max/1.0e30_R8/,
      2 ncall/0/, eirene_extrapolate/1/,
      & eirene_uub_style/0/, print_minmax/0/, eirene_background/1/
-      real (kind=R8) :: kintmp
-      real (kind=R8) :: hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
       real (kind=R8) :: vdrift,
      &  vaecrbc(-1:nx,-1:ny,0:1,0:ns-1), wadiac(-1:nx,-1:ny,0:1,0:ns-1),
      &  vadiac(-1:nx,-1:ny,0:1,0:ns-1), wrk(-1:nx,-1:ny)
@@ -194,15 +191,8 @@ c
           if(rightix(ix-1,iy).ne.nx+1) then
             feixb(ix,iy+1)=fhi(rightix(ix-1,iy),rightiy(ix-1,iy),0)
             do is=0,ns-1
-              kintmp =
-     .        ((kinrgy(rightix(ix-1,iy),rightiy(ix-1,iy),is)+
-     .          ti(rightix(ix-1,iy),rightiy(ix-1,iy)))*
-     .          hx(ix-1,iy)+
-     .         (kinrgy(ix-1,iy,is)+ti(ix-1,iy))*
-     .          hx(rightix(ix-1,iy),rightiy(ix-1,iy)))/
-     .         (hx(ix-1,iy)+hx(rightix(ix-1,iy),rightiy(ix-1,iy)))
-              feixb(ix,iy+1)=feixb(ix,iy+1)+kintmp*(1.0_R8-BoRiS)
-     .         *fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)
+              feixb(ix,iy+1)=feixb(ix,iy+1)+(1.0_R8-BoRiS)
+     .         *fhm(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)
             enddo
             feexb(ix,iy+1)=fhe(rightix(ix-1,iy),rightiy(ix-1,iy),0)
           else
@@ -218,18 +208,7 @@ c
         do ix=-1,nx
           feiyb(ix+1,iy)=fhi(ix,iy,1)
           do is=0,ns-1
-            if (bottomiy(ix,iy).ne.-2) then
-              kintmp =
-     .        ((kinrgy(ix,iy,is)+ti(ix,iy))*
-     .          hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .         (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     .          ti(bottomix(ix,iy),bottomiy(ix,iy)))*hy1(ix,iy))/
-     .         (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-            else
-              kintmp = kinrgy(ix,iy,is)+ti(ix,iy)
-            endif
-            feiyb(ix+1,iy)=feiyb(ix+1,iy)+kintmp*(1.0_R8-BoRiS)
-     .       *fna(ix,iy,1,is)
+            feiyb(ix+1,iy)=feiyb(ix+1,iy)+(1.0_R8-BoRiS)*fhm(ix,iy,1,is)
           enddo
           feeyb(ix+1,iy)=fhe(ix,iy,1)
         enddo

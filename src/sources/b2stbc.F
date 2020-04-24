@@ -7,7 +7,7 @@
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                 !srv 28.10.02
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
-     &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,            !srv 16.02.12
+     &  fhe, fhi, fhe_mdf, fhi_mdf, fhm, fch, fne, fni, fna_fcor,       !srv 16.02.12
      &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  fchanml,
@@ -53,7 +53,7 @@
      &  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      &  fhe(-1:nx,-1:ny,0:1), fhe_mdf(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fhi_mdf(-1:nx,-1:ny,0:1),
-     &  fch(-1:nx,-1:ny,0:1),
+     &  fch(-1:nx,-1:ny,0:1), fhm(-1:nx,-1:ny,0:1,0:ns-1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      &  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),              !srv 11.10.02 21.10.02 {
      &  fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
@@ -393,7 +393,7 @@
 
          if(lfeedback.or.b2stbc_feedback.ne.0)
      1        call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
-     1        vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
+     1        vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fhm, fch,
      &        sna0, smo0, she0, shi0, sch0, sne0, 
      &        main_call, diagno)
 
@@ -401,10 +401,10 @@
         call b2stbc_phys(nx, ny, ns, ismain, ismain0,
      1   BoRiS, facdrift, fac_ExB, vol, crx, hx, hy, hz, qz, qc, gs,     !srv 24.08.08
      1   pbs, pbshz, bb, na, ua, uadia, vedia, vadia, veecrb, vaecrb,
-     2   te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc, fna, fna_mdf,   !srv 28.10.02
+     2   te, ti, po, ne, ni, floe_noc, floi_noc, fna, fna_mdf,           !srv 28.10.02
      1   fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,        !srv 13.10.06
-     &   fhe, fhi, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch, fch,    !srv 16.02.12
-     &   fne, fni,                                                       !srv 13.10.06
+     &   fhe, fhi, fhm, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch,    !srv 16.02.12
+     &   fch, fne, fni,                                                  !srv 13.10.06
      &   fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &   fchanml,
      &   cdna, chce, chve, chci, chvi, calf,                             !srv 25.09.09
@@ -444,8 +444,8 @@
      &       'b2stbc: wrong_flow returned from b2stbc_bas'
       endif
       if(lfeedback.or.b2stbc_feedback.ne.0)
-     1 call b2stbc_fb_post(nx, ny, ns, ismain, BoRiS,
-     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
+     1 call b2stbc_fb_post(nx, ny, ns, ismain,
+     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch,
      &	sna0, smo0, she0, shi0, sch0, sne0, 
      &  main_call, diagno)
 
