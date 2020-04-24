@@ -9228,7 +9228,7 @@ c normalised weights is 1
         case('wlld')     ! ANK wall loading
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call b2pwld(istack(iistack),ismain,ismain0,BoRiS)
+          call b2pwld(istack(iistack),BoRiS)
           call pop_stack(stack_req)
         case('woff')     ! turn off wall plots
           call walloff

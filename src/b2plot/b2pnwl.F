@@ -1,4 +1,4 @@
-      subroutine b2pnwl(*)
+      subroutine b2pnwl(iret)
 c
 c  version : 11.11.97 20:52
 c
@@ -18,6 +18,7 @@ c======================================================================
 #endif
       implicit none
 #include <DIMENSIONS.F>
+      integer iret
 c*** Local variables
 c
       integer lun
@@ -48,7 +49,9 @@ c*** Set the default values
       npumplis=0
       nwldprt=0
 c*** Read the data from dg files
-      call b2pinp(*999)
+      iret=0
+      call b2pinp(iret)
+      if(iret.eq.1) goto 999
 c*** Re-order jedge data if less than ntrgsx targets
       if (ntrgsa.lt.ntrgsx) then
         do i=1,ntrgsa
@@ -341,7 +344,7 @@ c     end if
   710 format(1x,a2,a20,':',1p,2e14.3)
       return
 c----------------------------------------------------------------------
-  999 return 1
+  999 return
 c----------------------------------------------------------------------
       end subroutine b2pnwl
 c

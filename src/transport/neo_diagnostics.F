@@ -31,8 +31,6 @@
      *   dn_neo(-1:nx,-1:ny,0:ns), chi_neo(-1:nx,-1:ny,0:ns),
      &   vn_neo(-1:nx,-1:ny,0:ns), vw_neo(-1:nx,-1:ny,0:ns)
 
-      integer ::
-     *  nar,nzm
 *     nints=number of intervals for integration
       integer nints
       parameter (nints=10)
@@ -203,8 +201,6 @@
       enddo
 
 *   ..split species into species and charge states
-      nar=ns
-      nzm=nzdecl-1
       do ispecies=0,ns
         ncl(ispecies)=0
         do istate=0,nzdecl-1

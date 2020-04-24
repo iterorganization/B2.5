@@ -1,4 +1,4 @@
-      subroutine b2ptrgl(ismain,ismain0,BoRiS)
+      subroutine b2ptrgl(BoRiS)
 c
 c  version : 07.04.98 13:12
 c
@@ -30,11 +30,12 @@ c======================================================================
 #endif
       implicit none
 #include <DIMENSIONS.F>
-      integer ismain, ismain0
       real (kind=R8) :: BoRiS
       integer lun
       parameter (lun=96)
-#ifndef B25_EIRENE
+#ifdef B25_EIRENE
+      integer eb2atm(nspecies)
+#else
       real (kind=R8) :: EionH2
       parameter (EionH2=15.4_R8)
       character*8 TEXTA(DEF_NATM)
@@ -124,7 +125,6 @@ c***    ewldmr_res  :   energy due to recombination of atoms into molecules. ()P
      ,   sjt_w(0:ntrgsx,DEF_NATM), fpt_out(4*DEF_NATM),
      ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx),sptmass,
      ,   sn_t,spt_out(2),mol_out(2*DEF_NMOL)
-      integer eb2atm(nspecies)
       character*11 spt_str(2,ntrgsx),fpt_str(4*DEF_NATM)
       character*15 mol_str(2,DEF_NMOL)
       character*10 ssmol,ssion
@@ -1053,7 +1053,7 @@ c            eb2atm will be [1 4 2 3]
       do ia=1,nspecies
         TEXTA(ia)=species_list(ia)
       end do
-#endif
+#else
       do ia=1,nspecies !initialize
         eb2atm(ia)=ia
       end do
@@ -1064,6 +1064,7 @@ c            eb2atm will be [1 4 2 3]
           end if
         end do
       end do
+#endif
       write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,i3))'
       write(6,hlp_frm) 'eb2spcr',(eb2spcr(is),is=1,nspecies)
       write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,a2))'
@@ -1124,7 +1125,6 @@ c        end do
 c        do is=1,ns-nspecies
 c          print *,'is,wldpp(js,is,0)',is,wldpp(js,is,0)
 c        end do
-c        print *,'ismain,ismain0',ismain,ismain0
         u=-1.0_R8
         l=1
         do j=1,ntrgts !{

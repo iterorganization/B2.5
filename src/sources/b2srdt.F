@@ -133,7 +133,7 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
 !$OMP& shared(nx,ny,ns,iftimbound,is_neutral,time_factor)
 !$OMP& shared(leftix,rightix,bottomiy,topiy,region)
 !$OMP& shared(guard_flows,use_eirene,dtim,dtco,dtmo,dtee,dtei)
-!$OMP& shared(phm0,phm1,phm3,phm4,phm5,boris,kinrgy0)
+!$OMP& shared(phm0,phm1,phm3,phm4,phm5,BoRiS,kinrgy0)
 !$OMP& shared(vol,na0,ne0,ni0,ua0,ti0,te0,hz,am)
 ! these are the result arrays:
 !$OMP& shared(snadt,smodt,shedt,shidt,schdt,snedt)

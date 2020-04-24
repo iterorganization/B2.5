@@ -10,7 +10,7 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_geo_corner
-     &  , only : bzbl,bzbv
+     &  , only : bzbl
       use b2mod_geo
 !     &   , only : hzl,hzb
       implicit none

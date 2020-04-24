@@ -76,7 +76,7 @@
 *   ..produce output
       call b2wsax (nsav, nx, ny, ns, lblgm, crx, cry, bb, vol,
      &  hx, hy, qz, qc, qcb, gs, pbs, cell_width, cell_height,
-     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ne2, rz2, pr, uac)
+     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, rz2, pr, uac)
 
 * ..return
       call subend ()
