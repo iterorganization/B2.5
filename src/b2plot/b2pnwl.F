@@ -51,7 +51,7 @@ c*** Set the default values
 c*** Read the data from dg files
       iret=0
       call b2pinp(iret)
-      if(iret.eq.1) goto 999
+      if (iret.eq.1) goto 999
 c*** Re-order jedge data if less than ntrgsx targets
       if (ntrgsa.lt.ntrgsx) then
         do i=1,ntrgsa
@@ -92,7 +92,8 @@ c*** The shadowing structure must be closed, therefore it starts from
 c*** an arbitrary point.
 
       lwldstrt(1)=iabs(lwldlis(1,1))
-      call b2pwsrt(*999)
+      call b2pwsrt(iret)
+      if (iret.eq.1) goto 999
 cc<<<
 c      print *,'After b2pwsrt',nwldprt
 c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
@@ -350,7 +351,7 @@ c----------------------------------------------------------------------
 c
 c
 c======================================================================
-      subroutine b2pwsrt(*)
+      subroutine b2pwsrt(iret)
 c
 c*** sort the lists of target sections to simply connected chains
 c----------------------------------------------------------------------
@@ -373,6 +374,7 @@ c
       use b2mod_eirdiag
 #endif
       implicit none
+      integer iret
 #include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
@@ -412,7 +414,7 @@ c      end do
 cc%%%
       no_fort44=maxval(p1).eq.0.0_R8 .and. minval(p1).eq.0.0_R8 .and.
      &          maxval(p2).eq.0.0_R8 .and. minval(p2).eq.0.0_R8
-
+      iret=0
       do il=1,nwldprt
         is=lwldstrt(il)
         if(is .gt. lppp  .or.  is .le. 0) then
