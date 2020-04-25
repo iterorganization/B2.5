@@ -1451,7 +1451,7 @@
 					Type 21 also applies to the electric potential boundary condition.
 					It scales the feedback strength according to the value of the variable on the ring type21_ref steps inside.
 					When type16_ref.gt.1, then the position where the core flux tallies are computed moves along with the boundary condition.
-					If type16_kinetic_energy.eq.1, then the parallel kinetic energy flux is included in the ion heat flux component of type 16 and 17 boundary conditions.
+					If type16_kinetic_energy.eq.1, then the energy flux due to kinetic energy transport and viscous terms is included in the ion heat flux component of type 16 and 17 boundary conditions.
 				</description>
 				<switch>
 					<name>b2stbc_type13_ref</name>
