@@ -10829,6 +10829,7 @@ cxpb as they no longer necessarily point to the same species
         call ipgetr ('b2stbr_plate_thick', plate_thick)
         call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
 *  ..initialize arrays used jointly
+        call alloc_b2mod_wall(ns,natm,nmol,nion)
         call b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts,flip)
 *  ..convert some wall arrays
         if(wall_namelist_used) then

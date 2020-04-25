@@ -1520,7 +1520,7 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
 *   initialize and/or read running averages
       if ((iav_run > 0) .or. (ird_aver > 0)) then
         lrer = (ird_aver == 0)
-        call run_av_init (iav_cont, nx, ny, ns,.true.,lrer)
+        call run_av_init (iav_cont, nx, ny, ns, .true., lrer)
       end if
 
 *   get averaged plasma profiles
