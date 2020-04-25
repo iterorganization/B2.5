@@ -6829,7 +6829,8 @@ cxpb code segment analog to b2tfhi
      .                   fna(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is),
      .             ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
-     .             ti(bc_list_x(ix,ib),bc_list_y(ix,ib))) - t2 *
+     .             ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))
+     .             - t2 *
      .            (ti(bc_list_x(ix,ib),bc_list_y(ix,ib)) -
      .             ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
@@ -6981,10 +6982,11 @@ cxpb code segment analog to b2tfhi
      .                    1,is),
      .             ti(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .             ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))) - t2 *
+     .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
+     .             - t2 *
      .            (ti(bc_list_x(ix,ib),bc_list_y(ix,ib)) -
      .             ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))))
+     .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
               end do
             end if
             if (no_hybr_i.eq.0) then

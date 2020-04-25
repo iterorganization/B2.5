@@ -85,7 +85,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ib, is, is0
+      integer ncall, n2, ix, iy, ib, is
       integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0
@@ -99,7 +99,7 @@ csw 10oct2012
       integer, save :: b2_upwind = 0
       integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
 
-      character(3) :: charns, charns0
+      character(3) :: charns
       real (kind=R8), save :: alfTeEh = 0.0_R8                           !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny),                         !lk 31.01.08 {

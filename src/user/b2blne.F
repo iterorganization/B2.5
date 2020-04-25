@@ -406,7 +406,7 @@ c>>>
 #ifdef B25_EIRENE
       do ic=1,nstrat !{
         if(crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W' .or.
-     .               crcstra(ic).eq.'N' .or. crcstra(ic).eq.'S') then !{
+     .     crcstra(ic).eq.'N' .or. crcstra(ic).eq.'S') then !{
           l=msns(1,ic)
           m=msns(2,ic)
           hlp=0.0_R8

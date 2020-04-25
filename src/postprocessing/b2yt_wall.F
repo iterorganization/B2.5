@@ -303,7 +303,6 @@ cxpb lb and ub are lower and upper interval bounds
       external E01BEF, E01BFF
 
       call subini('b2yt_wall')
-      call alloc_b2mod_wall(ns,natm,nmol,nion)
 
       filename='b2.wall_save.parameters'
       call find_file(filename,wall_namelist_used)

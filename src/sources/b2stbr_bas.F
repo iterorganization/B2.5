@@ -548,11 +548,11 @@ cdpc
      2           (1.0_R8-cbrec(0,is,ireg))*t0
          endif
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
-     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*cbrec(0,is,ireg)*t0
          if (is2.ne.-1) shi0_ff(ix,iy,is2) = shi0_ff(ix,iy,is2)+
      &        recycled_neutrals_contr*max(
-     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*cbrec(0,is,ireg)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
          if(.not.lcore) then     ! xpb: no sputtering in core!

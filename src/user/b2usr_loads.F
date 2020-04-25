@@ -98,7 +98,7 @@ C AREAS OF THE SURFACE ELEMENTS
           hlp=hlp/strg(iy,j)
           wtarg(iy,j)=hlp+wnutrg(iy,j)-wnutpr(iy,j)
           if(wtarg(iy,j).gt.wtarg_max(j)) wtarg_max(j)=wtarg(iy,j)
-csw 02jan2017 corrected flip of l variable (i.e.put it AFTER iy loop)
+csw 02jan2017 corrected flip of l variable (i.e. put it AFTER iy loop)
         end do
         l=1-l
       end do
