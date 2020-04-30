@@ -574,13 +574,18 @@ csw 11oct2012 added check on Coriolis force (taken from b2news())
 !!FR Possible loop (2) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none)
 !$OMP& PRIVATE(ier0, solvedum, solvedm2, ix, iy, ireg)
-!$OMP& LASTPRIVATE(new_matrix)
+!$OMP& PRIVATE(new_matrix)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
 !$OMP& LASTPRIVATE(pb, flob, conb)
 #ifndef GFORTRAN
 #ifndef PGF90
+#ifndef CRAY
 !$OMP& COPYIN(last_solve_5, last_solve_7)
 !$OMP& COPYIN(last_solve_9, last_solve_11)
+#else
+!$OMP& PRIVATE(last_solve_5, last_solve_7)
+!$OMP& PRIVATE(last_solve_9, last_solve_11)
+#endif
 #else
 !$OMP& PRIVATE(last_solve_5, last_solve_7)
 !$OMP& PRIVATE(last_solve_9, last_solve_11)

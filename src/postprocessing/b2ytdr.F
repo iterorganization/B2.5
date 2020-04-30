@@ -4,15 +4,17 @@ c Unfortunately the Juelich compiler complains with error message
 c    (E) The STRICT/NOSTRICT option may only be specified for OPT(3).  STRICT is assumed.
 c so this optimisation is disabled by default.
 c 2002-09-11: logic revised
-#ifdef IBMaix
-#ifdef NO_OPT
-@process nooptimize
-#endif
-#endif
 *-----------------------------------------------------------------------
 *.specification
 
       subroutine b2ytdr (ninp, nout, nx1, ny1)
+#ifdef NO_OPT
+#ifdef CRAY
+!DIR$ OPTIMIZE (-O0 -hfp0)
+#else
+!DIR$ NOOPTIMIZE
+#endif
+#endif
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
@@ -66,9 +68,10 @@ c 2002-09-11: logic revised
       use eirmod_ctrcei
       use eirmod_eirbra
       use eirmod_extrab25
-     , ,only: msrfclsx, mgwtiesx, lkindp, lkindm, lkindi, texta,
+     , ,only: lkindp, lkindm, lkindi, texta,
      ,        eirene_extrab25_eirpbls_init, eirene_extrab25_wneuinit,
      ,        eirene_extrab25_cleanup
+      use eirmod_solps
       use eirmod_clogau
       use b2mod_b2plot
      , ,only : nstsi

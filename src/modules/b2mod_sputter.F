@@ -1799,7 +1799,7 @@ c  gamma( 0 , x ) = - eibar( - x )      for x < 0
           f = 1.0_R8
           t = - z
    20     q = t + p
-          if ( abs(p-q) - conver ) 30,30,22
+          if ( (abs(p-q) - conver).le.0.0_R8 ) goto 30
    22     p = q
           t = - z * f * t
           f = f + 1.0_R8

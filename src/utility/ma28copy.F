@@ -589,7 +589,8 @@ c perform some validity checks on iold and jold.
    30     inew = iw1(iold,1)
           jnew = iw1(jold,2)
 c are we in a valid block and is it diagonal or off-diagonal?
-          if (iw1(inew,3)-iw1(jnew,3)) 40, 60, 50
+          if ((iw1(inew,3)-iw1(jnew,3)).eq.0) goto 60
+          if ((iw1(inew,3)-iw1(jnew,3)).gt.0) goto 50
    40     iflag = -13
           if (lp.ne.0) write (lp,99998) iold, jold
           go to 180
@@ -607,7 +608,8 @@ c binary search of ordered list  .. element in l part of row.
           do 100 jdummy=1,n
             midpt = (j1+j2)/2
             jcomp = iabs(icn(midpt)+0)
-            if (jnew-jcomp) 80, 130, 90
+            if ((jnew-jcomp).eq.0) goto 130
+            if ((jnew-jcomp).gt.0) goto 90
    80       j2 = midpt
             go to 100
    90       j1 = midpt
@@ -1281,7 +1283,8 @@ c a pass with l equal to 2 is only performed in the case of singularity.
             do 330 nz=nz2,n
               if (jcost.le.int((nz-1),I8)**2) go to 420               !srv 26.02.11 12.03.15
               ijfir = ifirst(nz)
-              if (ijfir) 230, 220, 240
+              if (ijfir.lt.0) goto 230
+              if (ijfir.gt.0) goto 240
   220         if (ll.eq.1) nzmin = nz + 1
               go to 330
   230         ll = 2
@@ -1870,7 +1873,8 @@ c     ordering arrays.
             go to 890
   850       ifir = ifirst(nz)
             ifirst(nz) = i
-            if (ifir) 860, 880, 870
+            if (ifir.eq.0) goto 880
+            if (ifir.gt.0) goto 870
   860       lastr(i) = ifir
             nextr(i) = 0
             go to 890
@@ -1921,7 +1925,8 @@ c adjust column ordering arrays.
             go to 970
   924       ifir = ifirst(nz)
             lastc(j) = 0
-            if (ifir) 930, 940, 950
+            if (ifir.eq.0) goto 940
+            if (ifir.gt.0) goto 950
   930       ifirst(nz) = -j
             ifir = -ifir
             lastc(ifir) = j

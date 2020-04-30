@@ -1352,18 +1352,20 @@ cdpc split logical and data
       K  = MOD(KL/169, 178) + 1
       L  = MOD(KL, 169)
 *
-      DO 300 II= 1, 97
+      DO II= 1, 97
          S= 0.0_R8
          T= 0.5_R8
-         DO 250 JJ= 1,24
+         DO JJ= 1,24
             M = MOD(MOD(I*J,179)*K, 179)
             I = J
             J = K
             K = M
             L = MOD(53*L+1, 169)
             IF ( MOD(L*M,64)  .GE.  32) S = S + T
-  250       T = 0.5_R8*T
-  300 U(II) = S
+            T = 0.5_R8*T
+         END DO
+         U(II) = S
+      END DO
       C  =   362436.0_R8/16777216.0_R8
       CD =  7654321.0_R8/16777216.0_R8
       CM = 16777213.0_R8/16777216.0_R8
