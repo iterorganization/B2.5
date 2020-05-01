@@ -84,7 +84,7 @@ ifdef USE_EIRENE
 endif
 ifdef SOLPSTOP
 NCSDIR = ${SOLPSTOP}/scripts/nc2text_simple
-NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_IMPGYRO}${EXT_DEBUG}
+NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_OPENMP}${EXT_MPI}${EXT_IMPGYRO}${EXT_DEBUG}
 ifdef LD_NETCDF
   NC2TXT = $(shell echo `which nc2text`)
 endif
@@ -234,10 +234,6 @@ ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 MODLIST += ${MODLOCAL}/*.F
 MODLISTF += ${MODLOCAL}/*.F
 endif
-ifdef LD_CATALYST
-MODLIST += ${SRCDIR}/catalyst/*.F90
-MODLISTF90 += ${SRCDIR}/catalyst/*.F90
-endif
 MODLIST += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
 MODLISTF += ${SRCDIR}/*/b2mod_*.F
 MODLISTF90 += ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
@@ -260,11 +256,11 @@ ALLOBJS = ${OBJS:%.o=${OBJDIR}/%.o}
 endif
 
 PROG_GE = b2pl.exe
-PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe b2ymb.exe b2yrp.exe b2ydm.exe
+PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe
 PROG_MN = b2mn.exe b2mnastra.exe
 PROG_AM = b2ar.exe
 PROG_XD = b2xd.exe
-PROG_OE = b2ag.exe b2co.exe b2fu.exe b2ts.exe b2uf.exe b2ye.exe b2yt.exe calc_atomic_data.exe
+PROG_OE = b2ag.exe b2co.exe b2fu.exe b2ts.exe b2uf.exe b2ye.exe b2yt.exe b2ymb.exe b2yrp.exe b2ydm.exe calc_atomic_data.exe
 PROG_OT = b2ah.exe b2ai.exe b2yi_gnuplot.exe b2yh.exe b2yv.exe b2fgmtry_mod.exe b2plasmastate_inspect.exe
 PROG_90 = check_b2_output.exe
 PROG_OP = b2op.exe
@@ -293,7 +289,7 @@ IDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_ID}}
 TTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_TT}}
 NCEXE = ${patsubst %.exe, ${NCODIR}/%.exe, ${PROG_NC}}
 
-.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force test nc2text_simple
+.PHONY: DEFAULT NOPLOT ALL VERSION mods clean depend listobj tags echo local force test nc2text_simple
 
 DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${GEEXE} ${GREXE}
 ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE} ${GEEXE} ${GREXE} ${XDEXE}
@@ -313,7 +309,7 @@ DEFAULT: ${IDEXE}
 ids: ${IDEXE}
 NOPLOT: ${IDEXE}
 endif
-ifdef SOLPSTOP
+ifdef SOLPS_CPP
 ifdef LD_NETCDF
 DEFAULT: ${NCEXE}
 ALL: ${NCEXE}
@@ -329,7 +325,7 @@ MODLISTF+=${SRCEIR}/modules/*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.
 MODLISTF90+=${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
 MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a ${EIRDIR}/ioflush.o
 else
-# MNEXTRA=${EIRDIR}/eirmod_balanced_strategy.o ${EIRDIR}/eirmod_braeir.o ${EIRDIR}/eirmod_brascl.o ${EIRDIR}/eirmod_braspoi.o ${EIRDIR}/eirmod_cadgeo.o ${EIRDIR}/eirmod_cai.o ${EIRDIR}/eirmod_calstr_buffered.o ${EIRDIR}/eirmod_ccona.o ${EIRDIR}/eirmod_ccoupl.o ${EIRDIR}/eirmod_ccrm.o ${EIRDIR}/eirmod_cestim.o ${EIRDIR}/eirmod_cfplk.o ${EIRDIR}/eirmod_cgeom.o ${EIRDIR}/eirmod_cgrid.o ${EIRDIR}/eirmod_cgrptl.o ${EIRDIR}/eirmod_cinit.o ${EIRDIR}/eirmod_clast.o ${EIRDIR}/eirmod_clgin.o ${EIRDIR}/eirmod_clogau.o ${EIRDIR}/eirmod_comnnl.o ${EIRDIR}/eirmod_comprt.o ${EIRDIR}/eirmod_comsig.o ${EIRDIR}/eirmod_comsou.o ${EIRDIR}/eirmod_comspl.o ${EIRDIR}/eirmod_comusr.o ${EIRDIR}/eirmod_comxs.o ${EIRDIR}/eirmod_coutau.o ${EIRDIR}/eirmod_cpes.o ${EIRDIR}/eirmod_cpl3d.o ${EIRDIR}/eirmod_cplmsk.o ${EIRDIR}/eirmod_cplot.o ${EIRDIR}/eirmod_cpolyg.o ${EIRDIR}/eirmod_crand.o ${EIRDIR}/eirmod_crech.o ${EIRDIR}/eirmod_cref.o ${EIRDIR}/eirmod_crefmod.o ${EIRDIR}/eirmod_csdvi.o ${EIRDIR}/eirmod_csdvi_bgk.o ${EIRDIR}/eirmod_csdvi_cop.o ${EIRDIR}/eirmod_cspei.o ${EIRDIR}/eirmod_cspez.o ${EIRDIR}/eirmod_cstep.o ${EIRDIR}/eirmod_ctetra.o ${EIRDIR}/eirmod_ctext.o ${EIRDIR}/eirmod_ctrcei.o ${EIRDIR}/eirmod_ctrig.o ${EIRDIR}/eirmod_ctsurf.o ${EIRDIR}/eirmod_cupd.o ${EIRDIR}/eirmod_cvarusr.o ${EIRDIR}/eirmod_czt1.o ${EIRDIR}/eirmod_eirbra.o ${EIRDIR}/eirmod_eirdiag.o ${EIRDIR}/eirmod_infcop.o ${EIRDIR}/eirmod_module_avltree.o ${EIRDIR}/eirmod_mpi.o ${EIRDIR}/eirmod_octree.o ${EIRDIR}/eirmod_parmmod.o ${EIRDIR}/eirmod_precision.o
+# MNEXTRA=${EIRDIR}/eirmod_balanced_strategy.o ${EIRDIR}/eirmod_braeir.o ${EIRDIR}/eirmod_brascl.o ${EIRDIR}/eirmod_braspoi.o ${EIRDIR}/eirmod_cadgeo.o ${EIRDIR}/eirmod_cai.o ${EIRDIR}/eirmod_calstr_buffered.o ${EIRDIR}/eirmod_ccona.o ${EIRDIR}/eirmod_ccoupl.o ${EIRDIR}/eirmod_ccrm.o ${EIRDIR}/eirmod_cestim.o ${EIRDIR}/eirmod_cfplk.o ${EIRDIR}/eirmod_cgeom.o ${EIRDIR}/eirmod_cgrid.o ${EIRDIR}/eirmod_cgrptl.o ${EIRDIR}/eirmod_cinit.o ${EIRDIR}/eirmod_clast.o ${EIRDIR}/eirmod_clgin.o ${EIRDIR}/eirmod_clogau.o ${EIRDIR}/eirmod_comnnl.o ${EIRDIR}/eirmod_comprt.o ${EIRDIR}/eirmod_comsig.o ${EIRDIR}/eirmod_comsou.o ${EIRDIR}/eirmod_comspl.o ${EIRDIR}/eirmod_comusr.o ${EIRDIR}/eirmod_comxs.o ${EIRDIR}/eirmod_coutau.o ${EIRDIR}/eirmod_cpes.o ${EIRDIR}/eirmod_cpl3d.o ${EIRDIR}/eirmod_cplmsk.o ${EIRDIR}/eirmod_cplot.o ${EIRDIR}/eirmod_cpolyg.o ${EIRDIR}/eirmod_crand.o ${EIRDIR}/eirmod_crech.o ${EIRDIR}/eirmod_cref.o ${EIRDIR}/eirmod_crefmod.o ${EIRDIR}/eirmod_csdvi.o ${EIRDIR}/eirmod_csdvi_bgk.o ${EIRDIR}/eirmod_csdvi_cop.o ${EIRDIR}/eirmod_cspei.o ${EIRDIR}/eirmod_cspez.o ${EIRDIR}/eirmod_cstep.o ${EIRDIR}/eirmod_ctetra.o ${EIRDIR}/eirmod_ctext.o ${EIRDIR}/eirmod_ctrcei.o ${EIRDIR}/eirmod_ctrig.o ${EIRDIR}/eirmod_ctsurf.o ${EIRDIR}/eirmod_cupd.o ${EIRDIR}/eirmod_cvarusr.o ${EIRDIR}/eirmod_czt1.o ${EIRDIR}/eirmod_eirbra.o ${EIRDIR}/eirmod_eirdiag.o ${EIRDIR}/eirmod_infcop.o ${EIRDIR}/eirmod_module_avltree.o ${EIRDIR}/eirmod_mpi.o ${EIRDIR}/eirmod_octree.o ${EIRDIR}/eirmod_parmmod.o ${EIRDIR}/eirmod_precision.o ${EIRDIR}/eirmod_solps.o
 # EXCLUDELIST += ${patsubst ${OBJDIR}/%.o, %.o, ${MNEXTRA} }
 endif
 ifdef LD_CATALYST
@@ -337,9 +333,10 @@ VPATH += :${SRCDIR}/catalyst
 FFPATH += :${SRCDIR}/catalyst
 endif
 
-MODULES = ${patsubst %.F %.f %.F90 %.f90,%.o,${shell echo ${MODLIST} } }
-MODMODS = ${MODULES:%.o=${OBJDIR}/%.${MOD}}
+IDSMODS = ${PROG_ID:%.exe=${OBJDIR}/%.${MOD}}
+MODULES = ${patsubst %.f90,%.o,${patsubst %.F90,%.o,${patsubst %.f,%.o,${patsubst %.F,%.o,${shell basename -a ${MODLIST} } } } } }
 MODOBJS = ${MODULES:%.o=${OBJDIR}/%.o}
+MODMODS = $(filter-out ${IDSMODS},${MODOBJS:%.o=%.${MOD}})
 SOLPS4OBJS = ${patsubst ${SOLPS4}/%.F,${OBJDIR}/%.o,${shell echo ${S4LIST} } }
 EIR4MODS = ${patsubst ${EIR4}/%.F,${OBJDIR}/%.${MOD},${shell echo ${E4LIST} } }
 EIR4OBJS = ${patsubst ${EIR4}/%.F,${OBJDIR}/%.o,${shell echo ${E4LIST} } }
@@ -349,6 +346,8 @@ LIBOBJS = $(filter-out ${MODOBJS},${ALLOBJS})
 else
 LIBOBJS = ${ALLOBJS}
 endif
+
+mods : ${MODMODS}
 
 ${DOCDIR}/b2cdci.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdci.py
 	-cd ${DOCDIR}; ${PYTHON} b2cdci.py || echo "! Error building b2cdci.F from b2input.xml" > ${DOCDIR}/b2cdci.F
@@ -546,6 +545,9 @@ ${OBJDIR}/eirmod_parmmod.${MOD}:
 
 ${OBJDIR}/eirmod_precision.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_precision.${MOD} ${OBJDIR}
+
+${OBJDIR}/eirmod_solps.${MOD}:
+	ln -sf ${EIRDIR}/eirmod_solps.${MOD} ${OBJDIR}
 endif
 
 ${OBJDIR}/eirmod_extrab25.o:
@@ -724,6 +726,9 @@ ${OBJDIR}/eirmod_parmmod.o:
 
 ${OBJDIR}/eirmod_precision.o:
 	ln -sf ${EIRDIR}/eirmod_precision.o ${OBJDIR}
+
+${OBJDIR}/eirmod_solps.o:
+	ln -sf ${EIRDIR}/eirmod_solps.o ${OBJDIR}
 else
 ${OBJDIR}/eirmod_balanced_strategy.${MOD}:
 	touch ${OBJDIR}/eirmod_balanced_strategy.${MOD}
@@ -785,6 +790,9 @@ ${OBJDIR}/eirmod_mpi.${MOD}:
 ${OBJDIR}/eirmod_parmmod.${MOD}:
 	touch ${OBJDIR}/eirmod_parmmod.${MOD}
 
+${OBJDIR}/eirmod_solps.${MOD}:
+	touch ${OBJDIR}/eirmod_solps.${MOD}
+
 ${OBJDIR}/eirmod_precision.${MOD}:
 	ln -s ${OBJDIR}/precision.${MOD} ${OBJDIR}/eirmod_precision.${MOD}
 endif
@@ -808,7 +816,7 @@ ${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
 
 ${O9EXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES}
 
 ${GEEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${GRLIBES} ${LDLIBES} ${LDOPTSend}
@@ -828,7 +836,7 @@ ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${TTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
 
-${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${MAKES}
+${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/nc2text_simple.o ${MAKES}
 ifdef LD_NETCDF
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
 	@-ln -sf ${NCEXE} ${NCODIR}/nc2text_simple
@@ -1076,6 +1084,7 @@ echo:
 	@echo OTEXE=${OTEXE}
 	@echo O9EXE=${O9EXE}
 	@echo IDEXE=${IDEXE}
+	@echo NCEXE=${NCEXE}
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
 

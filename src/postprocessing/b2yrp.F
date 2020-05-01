@@ -39,7 +39,7 @@
       CHARACTER*(1) :: trg(2),ss
       data trg /'i','o'/
       LOGICAL :: exists
-      logical streql,pippo
+      logical streql
       external streql
 
 !##########################################################################
@@ -58,7 +58,7 @@
 
       NAMELIST /OUTPUT/
      . NPOINTS, LPOINTS, NPLOTS
-      
+
       print*,"############## README ############"
       print*,"Starting b2yrp. Update the input file b2yrp.dat "//
      .       "with the desired inlet temperature and then choose "//
@@ -73,7 +73,7 @@
          innout=0
          print *,'outer reflector plate chosen'
       endif
-     
+
       open(unit=inunit,file=infile0,status='old',action='read')
       READ(INUNIT,NML=GEOMETRY)
       READ(INUNIT,NML=MESH)
@@ -104,14 +104,14 @@
       open(unit=inunit,file=infile,status='old',action='read')
       NLINE=0
       NSKIP=0
- 5    READ(INUNIT,*,END=15) ss !File is of unknown length, so first count the number of lines
-         if (streql(ss,'#')) then 
+    5 READ(INUNIT,*,END=15) ss !File is of unknown length, so first count the number of lines
+         if (streql(ss,'#')) then
            NSKIP=NSKIP+1 ! header line, skip this one
          else
            NLINE = NLINE +1
          end if
       GO TO 5
- 15   CLOSE(INUNIT)
+   15 CLOSE(INUNIT)
 
       ALLOCATE(MM(NLINE,4))     ! then allocate variable size and read again storing the values. First column will be x coordinate,
                              ! second the total  heat flux, the third the radiation heat flux and the fourth  the number of points
@@ -125,31 +125,31 @@
           READ(INUNIT,*) MM(II,1:2), dummy, dummy, MM(II,3) !The data in the file are x, Wtot, Wrad, Wpart, Wpls...
       ENDDO
       CLOSE(INUNIT)
-      
+
       ! read wlly to get coordinates
       NSKIP=0
       INFILE='wlly_'//trg(KK)//'rp.dat'
       open(unit=inunit,file=infile,status='old',action='read')
- 8    READ(INUNIT,*,END=18) ss 
-         if (streql(ss,'#')) then 
+    8 READ(INUNIT,*,END=18) ss
+         if (streql(ss,'#')) then
            NSKIP=NSKIP+1 ! header line, skip this one
          end if
       GO TO 8
- 18   CLOSE(INUNIT)     
+   18 CLOSE(INUNIT)
       allocate(rr(nline+1),zz(nline+1),dd(nline+1))
       open(unit=inunit,file=infile,status='old',action='read')
       do ii=1,nskip
          READ(INUNIT,*) ss
       end do
       DO II=1,NLINE+1
-         READ(INUNIT,*) rr(ii), zz(ii) 
+         READ(INUNIT,*) rr(ii), zz(ii)
       ENDDO
       CLOSE(INUNIT)
       dd(1)=0.0
       do ii=2,nline+1
         dd(ii)=dd(ii-1)+sqrt((rr(ii)-rr(ii-1))**2+(zz(ii)-zz(ii-1))**2)
       end do
-      
+
       !Interpolate the data on a coordinate vector with spatial x coordinates with a distance equal to the tile poloidal length
       target_length=mm(nline,1)-mm(1,1)
       ntiles=nint(target_length/p_length)
@@ -236,20 +236,17 @@
 !##########################################################################
       implicit none
 
+      integer, intent(in) :: nData, nVal
       real, intent(in) :: xData(nData), yData(nData), xVal(nVal)
       real, intent(out) :: yVal(nVal)
       integer :: inputIndex, dataIndex
-      integer, intent(in) :: nData, nVal
-      real :: minXdata, maxXData, weight
+      real :: weight
 
-      minXData = xData(1)
-      maxXData = xData(nData)
       dataIndex=1
-
 
       do inputIndex = 1, nVal
 
- 1       if(xData(dataIndex+1).le.xVal(inputIndex)) then
+    1    if(xData(dataIndex+1).le.xVal(inputIndex)) then
             dataIndex=dataIndex+1
             goto 1
           endif

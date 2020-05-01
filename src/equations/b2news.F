@@ -545,8 +545,13 @@ cxpb
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
 #ifndef GFORTRAN
 #ifndef PGF90
+#ifndef CRAY
 !$OMP& COPYIN(last_solve_5, last_solve_9) 
 !$OMP& COPYIN(last_solve_7, last_solve_11)
+#else
+!$OMP& PRIVATE(last_solve_5, last_solve_7)
+!$OMP& PRIVATE(last_solve_9, last_solve_11)
+#endif
 #else
 !$OMP& PRIVATE(last_solve_5, last_solve_7)
 !$OMP& PRIVATE(last_solve_9, last_solve_11)
