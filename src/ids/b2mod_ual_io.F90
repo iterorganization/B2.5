@@ -139,6 +139,9 @@ contains
 #endif
             &   time_IN, time_step_IN, shot, run, database, version, &
             &   time_slice_ind_IN, num_time_slices_IN )
+#ifdef NO_OPT
+!DIR$ NOOPTIMIZE
+#endif
         type (ids_edge_profiles) :: edge_profiles    !< IDS designed to
             !< store data on edge plasma profiles  (includes the scrape-off
             !< layer and possibly part of the confined plasma)

@@ -561,7 +561,8 @@ C----FOR EACH VERTEX VI IN EK
         DO 10 ILP=1,ILPMAX
           I = L(I)
           VI = V(I)
-          IF (LAST(VI))  1, 10, 8
+          IF (LAST(VI).EQ.0) GOTO 10
+          IF (LAST(VI).GT.0) GOTO 8
 C
 C------IF VI NEITHER PROTOTYPE NOR DUPLICATE VERTEX, THEN MERGE ELEMENTS
 C------TO COMPUTE DEGREE
@@ -1401,7 +1402,8 @@ C--------SEARCH LAST ROW SAVED FOR FIRST NONZERO ENTRY IN K-TH ROW ...
             I = Q(K)
             IF (JUMIN.GT.JUPTR)  GO TO 12
             DO 11 JMIN=JUMIN,JUPTR
-              IF (JU(JMIN)-I)  11, 13, 12
+              IF ((JU(JMIN)-I).EQ.0) GOTO 13
+              IF ((JU(JMIN)-I).GT.0) GOTO 12
    11       CONTINUE
    12       GO TO 15
 C
