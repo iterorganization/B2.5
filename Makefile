@@ -231,10 +231,6 @@ ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 MODLIST += ${MODLOCAL}/*.F
 MODLISTF += ${MODLOCAL}/*.F
 endif
-ifdef LD_CATALYST
-MODLIST += ${SRCDIR}/catalyst/*.F90
-MODLISTF90 += ${SRCDIR}/catalyst/*.F90
-endif
 MODLIST += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
 MODLISTF += ${SRCDIR}/*/b2mod_*.F
 MODLISTF90 += ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
