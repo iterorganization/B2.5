@@ -3770,7 +3770,7 @@ cxpb  Start reading input.dat file
         ELSE
           IF (streql(eirene_format,'old')) THEN
             READ (ZEILE,6666) idum(0:5)  ! NMACH,NMODE,NTIME,NFILE,NITER,lfrm15
-            idum(0) = 0
+            idum(0) = -1
             idum(5) = idum(4)
             idum(4) = 1
             idum(6) = 1
@@ -3779,6 +3779,7 @@ cxpb  Start reading input.dat file
           ELSE
             READ (ZEILE,6666) idum(0:8)  ! NPRLL,NMODE,NTCPU,NFILE,NITER0,NITER,
                                          ! NTIME0,NTIME,NFULLRUN
+            if (b2fstate_version.le.'03.000.006') idum(0)=-1
           END IF
           NMODE = idum(1)
           nfilek = b2idez(idum(3),4,5)
