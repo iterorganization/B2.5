@@ -10092,8 +10092,8 @@ c end of implementation
      &             fchinert(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)
           END DO
         ENDIF
-      else if (BCPOT(IB).eq.0.or.BCPOT(IB).eq.5.or.BCPOT(IB).eq.8)
-     &   then                                                        !srv 27.03.14
+      else if (pot_eq.eq.1.and.
+     &        (BCPOT(IB).eq.0.or.BCPOT(IB).eq.5.or.BCPOT(IB).eq.8)) then !srv 27.03.14
         if(ncall.eq.0) then
           IF (BCCHAR(IB).EQ.'S') THEN
             IF (on_closed_surface(bc_list_x(1,ib),
