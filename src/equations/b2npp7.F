@@ -101,6 +101,10 @@
        call b2xvff (nx, ny, fch, 'fch')
       endif
 
+      if(iout .eq. 1) then                !srv 11.09.09 {
+        call my_out(70,nx,ny,po,'b2npp7_po0')
+      endif                                                       !srv 11.09.09 }
+
 * ..main computation
 *   ..compute residual
       if((solving.and.any(solvereg(0:nregionv))).or.

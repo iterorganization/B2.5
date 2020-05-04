@@ -743,8 +743,8 @@ c*** Puffing/seeding rate and recycling source
      &                   mlcmp(ii,j) * wldsptm(k,j,ic) * sclstra(ii,ic)  ! BE CAREFUL: hlp_sput is a temporary variable
 
                         if (.not. hlp_pump_counted(j+nnatmi,k)) then
-                          hlp_pump = hlp_pump +
-     &                     mlcmp(ii,j) * wlpump(j+nnatmi,k)  ! BE CAREFUL: hlp_sput is a temporary variable
+                          hlp_pump = hlp_pump + 
+     &                                 mlcmp(ii,j) * wlpump(j+nnatmi,k)  ! BE CAREFUL: hlp_sput is a temporary variable
                           hlp_pump_counted(j+nnatmi,k) = .TRUE.
                         endif
 

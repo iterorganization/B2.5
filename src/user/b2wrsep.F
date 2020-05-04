@@ -77,7 +77,7 @@ c*** Global values
      *     equg_tmp(nglb_tmp)
       real (kind=R8) ::
      *     hlp_nesp, hlp_tesp, hlp_tisp, hlp_zesp, hlp_qtsp, hlp_qesp,
-     ,     hlp_qisp, hlp_qrsl, hlp_spmn, kintmp
+     ,     hlp_qisp, hlp_qrsl, hlp_spmn
       equivalence
      ,     (equg_tmp(1),  hlp_nesp), (equg_tmp(2),  hlp_tesp),
      ,     (equg_tmp(3),  hlp_tisp), (equg_tmp(4),  hlp_zesp),
@@ -123,14 +123,12 @@ c*** Local variables of general use
       integer :: mdf_fnb = 0, style_b2mndt = 0, use_eirene = 0
       logical :: first=.TRUE.
 
-c*** Procedures
-      real (kind=R8) :: hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 c----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg /
-     1  'ne_sep','Te_sep','Ti_sep'  ,'Zef_sep'  ,'Qt_sep',
-     2  'Qe_sep','Qi_sep','Qrad_SOL', 'Spmp_nom'/
+     1 '  ne_sep','  Te_sep','  Ti_sep',' Zef_sep',
+     2 '  Qt_sep','  Qe_sep','  Qi_sep','Qrad_SOL',
+     3 'Spmp_nom'/
       data hlp_hs /
      1  'ni_sep_','Zi_sep_','Ze_sep_','Gi_sep_','na_sep_',
      2  'Ta_sep_','Ga_sep_','Gp_sep_','pr_sep_','nr_sep_' /
@@ -203,13 +201,7 @@ c          v=vol(ix,iy)
           hlp_qesp=hlp_qesp+fhe(ix,iy,1)
           hlp_qisp=hlp_qisp+fhi(ix,iy,1)
           do is=0,ns-1
-            kintmp =
-     .      ((kinrgy(ix,iy,is)+ti(ix,iy))*
-     .        hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .       (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     .        ti(bottomix(ix,iy),bottomiy(ix,iy)))*hy1(ix,iy))/
-     .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-            hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,iy,1,is)
+            hlp_qisp=hlp_qisp+(1.0_R8-BoRiS)*fhm(ix,iy,1,is)
           enddo
           is=0
           do j=1,nspecies !{
@@ -508,6 +500,10 @@ c*** New file
         write(lun,'(2a)') '#  ',label
 
         hlp_frf='(9h(5h#time,,i3,9h(1h'//tab//',a8),,'     //
+     /          'i3,12h(1h'//tab//',a7,a2),,'              //
+     /          'i3,21h(1h'//tab//',a8,a2,i2.2,1h+)))'
+
+        hlp_frf='(16h(1h#,11x,4htime,,i3,9h(1h'//tab//',a8),,'     //
      /          'i3,12h(1h'//tab//',a7,a2),,'              //
      /          'i3,21h(1h'//tab//',a8,a2,i2.2,1h+)))'
 

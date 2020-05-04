@@ -16,6 +16,10 @@
      *  hx(:,:),
      *  hy(:,:),
      *  hz(:,:),                                                     !srv 09.01.01
+     *  hyl(:,:),						     ! IYS 04.03.2019
+     *  hxb(:,:),						     ! IYS 04.03.2019
+     *  hzl(:,:),						     ! IYS 04.04.2019
+     *  hzb(:,:),						     ! IYS 04.04.2019
      *  qz(:,:,:),
      *  qc(:,:),
      *  qcb(:,:),
@@ -42,6 +46,10 @@
       allocate(fpsi(-1:nxd,-1:nyd,0:3))
       allocate(gs(-1:nxd,-1:nyd,0:2))
       allocate(hx(-1:nxd,-1:nyd))
+      allocate(hyl(-1:nxd,-1:nyd))
+      allocate(hxb(-1:nxd,-1:nyd))
+      allocate(hzl(-1:nxd,-1:nyd))
+      allocate(hzb(-1:nxd,-1:nyd))
       allocate(hy(-1:nxd,-1:nyd))
       allocate(hz(-1:nxd,-1:nyd))                                    !srv 09.01.01
       allocate(qz(-1:nxd,-1:nyd,0:1))
@@ -74,6 +82,10 @@
         deallocate(gs)
         deallocate(hx)
         deallocate(hy)
+        deallocate(hyl)
+        deallocate(hxb)
+        deallocate(hzl)
+        deallocate(hzb)
         deallocate(hz)
         deallocate(qz)
         deallocate(qc)

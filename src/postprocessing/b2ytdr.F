@@ -4,15 +4,17 @@ c Unfortunately the Juelich compiler complains with error message
 c    (E) The STRICT/NOSTRICT option may only be specified for OPT(3).  STRICT is assumed.
 c so this optimisation is disabled by default.
 c 2002-09-11: logic revised
-#ifdef IBMaix
-#ifdef NO_OPT
-@process nooptimize
-#endif
-#endif
 *-----------------------------------------------------------------------
 *.specification
 
       subroutine b2ytdr (ninp, nout, nx1, ny1)
+#ifdef NO_OPT
+#ifdef CRAY
+!DIR$ OPTIMIZE (-O0 -hfp0)
+#else
+!DIR$ NOOPTIMIZE
+#endif
+#endif
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
@@ -66,9 +68,10 @@ c 2002-09-11: logic revised
       use eirmod_ctrcei
       use eirmod_eirbra
       use eirmod_extrab25
-     , ,only: msrfclsx, mgwtiesx, lkindp, lkindm, lkindi, texta,
+     , ,only: lkindp, lkindm, lkindi, texta,
      ,        eirene_extrab25_eirpbls_init, eirene_extrab25_wneuinit,
      ,        eirene_extrab25_cleanup
+      use eirmod_solps
       use eirmod_clogau
       use b2mod_b2plot
      , ,only : nstsi
@@ -161,13 +164,14 @@ c 2002-09-11: logic revised
       integer ismain, ismain0, isfeedback, isfb
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
-      integer iy_nocoreExB, bc_type16_ref, bc_type20_ref
-      integer ixref1, iyref1
+      integer iy_nocoreExB, nrings, bc_type16_ref, bc_type20_ref
+      integer pfrregno1, pfrregno2, solregno
+      integer ixref1, iyref1, nrings1
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
-      integer mw_ix1, mw_ix2, mw_jxa, mw_jsep
-      integer mw_jxa1, mw_jsep1
+      integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, iyped
+      integer mw_jxa1, mw_jsep1, iyped1
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
       integer indx, indy, indx1, indy1
       integer coriolis, lhalpha
@@ -233,7 +237,7 @@ c 2002-09-11: logic revised
      6 fna_321(:,:,:,:), fna_521(:,:,:,:),
      7 vaecrb1(:,:,:,:), vadia1(:,:,:,:), wadia1(:,:,:,:),
      8 sputter_yield_yt(:,:,:,:), sputter_yield2_yt(:,:,:,:),
-     9 sputter_tmp(:,:), cftmp(:),
+     9 sputter_tmp(:,:), cftmp(:), dttmp(:),
      . bundle_contr(:,:), bundle_frac(:,:), x1data(:,:,:,:),
      1 s1data(:,:,:,:), t1data(:,:,:,:), eta_hce_mult1(:),
      2 recyc1(:,:), mrecyc1(:,:), erecyc1(:,:), rcion1(:,:),
@@ -252,9 +256,17 @@ c 2002-09-11: logic revised
      5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
      7 na_feedback_time1(:), gpdata1(:,:,:)
+      real (kind=R8) ::
+     & cbsna1(0:7,0:ns-1,0:cbnrmx-1),
+     & cbsmo1(0:7,0:ns-1,0:cbnrmx-1),
+     & cbshi1(0:7,0:ns-1,0:cbnrmx-1),
+     & cbshe1(0:7,0:cbnrmx-1), cbsch1(0:7,0:cbnrmx-1)
+      real (kind=R8) ::
+     * cbrec1(0:7,0:ns-1,0:cbnrmx-1),
+     & cbmsa1(0:7,0:cbnrmx-1), cbmsb1(0:7,0:ns-1,0:cbnrmx-1)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nxm, nym, natmm, nmolm, nionm, nwallm
-      integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
+      integer i, j, k, kk, ix, iy, is, ib, ireg, ireg1, len, nsns
       integer ib1, ib2, ifl, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1, iss
       integer itrack1, itrack2, itrack3
@@ -494,10 +506,10 @@ c 2002-09-11: logic revised
       character*3, allocatable :: TDMCR(:,:), TDMCR1(:,:)
 #endif
       character*10, allocatable :: species_name(:)
-      logical found, ex, l_chem_sput, is_core_boundary
+      logical found, ex, l_chem_sput, is_core_boundary, flip
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical time_dep_puff1(nstraid)
-      logical, allocatable :: is_neutral1(:)
+      logical, allocatable :: is_neutral1(:), solvtmp(:,:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
       logical LMULPL, LRDMLTI, LRDMLV
@@ -525,6 +537,7 @@ c 2002-09-11: logic revised
       logical first_pass, do_scale
       logical wall_namelist_used
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
+      logical region_flags1(NNREGMAX,nkind_coeff)
       logical poloidal_scaling(nscale), prdone, axdone, spdone
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
@@ -562,8 +575,10 @@ c 2002-09-11: logic revised
       data atomic_physics_rescale_flag/0/
       data itrack1/-1/, itrack2/-1/, itrack3/-1/
       data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
+      data pfrregno1/0/, pfrregno2/2/, solregno/3/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
-      data iy_nocoreExB/-2/, bc_type16_ref/1/, bc_type20_ref/1/
+      data iy_nocoreExB/-2/, nrings/0/
+      data bc_type16_ref/1/, bc_type20_ref/1/
       data mw_jxa/-1/, mw_jsep/-1/
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
@@ -911,17 +926,27 @@ c 2002-09-11: logic revised
         call cfruin (70, 1, idum, 'isymm')
 *   ..read old geometry and metric
         call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &   bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &   cell_width, cell_height, gmap)
+        call get_jsep(nx,ny,jxi,jxa,jsep)
+        flip = LSN.neqv.LSN1
+        if (flip) then
+          if (LSN) then
+            write(*,*) 'Mapping LSN to USN topology'
+          else
+            write(*,*) 'Mapping USN to LSN topology'
+          end if
+        end if
         if (non_commensurate.eq.1) then
-        call xertst (nnreg(0).eq.nnreg1(0) .and. nncut.eq.nncut1 .and.
-     &   periodic_bc.eq.periodic_bc1,
-     &   'Non-commensurate translation requires the same topology!')
-        if (nncut.eq.2) call xertst(
-     .   (topcut(1).eq.topcut(2) .and. topcut1(1).eq.topcut1(2)) .or.
-     .   (topcut(1).lt.topcut(2) .and. topcut1(1).lt.topcut1(2)) .or.
-     .   (topcut(1).gt.topcut(2) .and. topcut1(1).gt.topcut1(2)),
-     .   'Non-commensurate translation requires the same DN topology!')
+         call xertst (nnreg(0).eq.nnreg1(0) .and. nncut.eq.nncut1 .and.
+     &    periodic_bc.eq.periodic_bc1,
+     &    'Non-commensurate translation requires the same topology!')
+         if (nncut.eq.2) call xertst(
+     .    (topcut(1).eq.topcut(2) .and. topcut1(1).eq.topcut1(2)) .or.
+     .    (topcut(1).lt.topcut(2) .and. topcut1(1).lt.topcut1(2)) .or.
+     .    (topcut(1).gt.topcut(2) .and. topcut1(1).gt.topcut1(2)),
+     .    'Non-commensurate translation requires the same DN topology!')
         end if
         close(70)
         if (b2fgmtry_oldversion.ne.b2fgmtry_newversion) then
@@ -930,14 +955,17 @@ c 2002-09-11: logic revised
       else if (nx.eq.nx1 .and. ny.eq.ny1) then
 *   ..easy case where we keep the same grid geometry
 *   ..simply re-read the file to populate the b2mod_geo arrays
+        flip = .false.
         rewind(ninp(3))
         call cfverr (ninp(3), b2fgmtry_oldversion)
         call cfruin (ninp(3), 2, idum, 'nx,ny')
         call cfruch (ninp(3), 120, lblgm, 'label')
         call cfruin (ninp(3), 1, idum, 'isymm')
         call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &   bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &   cell_width, cell_height, gmap)
+        call get_jsep(nx,ny,jxi,jxa,jsep)
       endif
       if (invert_bpol.eq.1) then
         bb(:,:,0) = -bb(:,:,0)
@@ -972,11 +1000,10 @@ c 2002-09-11: logic revised
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
         call b2wugm (nout(6), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &   vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &   vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
      &   cell_width, cell_height)
         close(nout(6))
       endif
-      call get_jsep(nx,ny,jxi,jxa,jsep)
       call get_nxt(nx,nxtl,nxtr)
 *   ..read plasma state
       call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
@@ -1069,6 +1096,8 @@ c 2002-09-11: logic revised
       allocate(eb2ibcr(npls))
       allocate(ispecies1(natm))
       allocate(ifl1(ns1))
+      allocate(solvtmp(0:ns-1,0:nnreg(0)))
+      allocate(dttmp(0:nnreg(0)))
       allocate(cftmp(0:nsm-1))
       allocate(istmp(0:nsm-1))
       allocate(iatm1(natm))
@@ -1164,7 +1193,7 @@ c 2002-09-11: logic revised
       end do
 *   ..compute new state
       call b2xtps (nx, ny, ns, nx1, ny1, ns1, nncutmax,
-     &    non_commensurate,
+     &    non_commensurate, flip,
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
@@ -1191,7 +1220,8 @@ c 2002-09-11: logic revised
       call find_file(filename,averaging)
       if (averaging) then
         call b2yt_average (filename,
-     &    nx, ny, ns, nx1, ny1, ns1, nncutmax, non_commensurate,
+     &    nx, ny, ns, nx1, ny1, ns1, nncutmax,
+     &    non_commensurate, flip,
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
@@ -1284,6 +1314,7 @@ c 2002-09-11: logic revised
 *   ..read default physics common
       call cfruch (ninp(8), 120, lblcp, 'label')
       call b2rucp (ninp(8), b2fparam_version, nx, ns)
+      if (flip) call b2rucp_flip(ns)
 *   ..now we treat b2mn.dat
 *   ..rewrite b2mn.dat into b2mn.dat.2
       write(*,*) 'Writing transformed switches file b2mn.dat.2'
@@ -1294,7 +1325,7 @@ c 2002-09-11: logic revised
      . '*label          (lblmn, character*60; free format)'
       write(nout(2),*) '''',trim(lblmn(61:120)),''''
       call b2ytcp (ninp(2), nout(2), ns, ns1,
-     . zamin1, zamax1, zn1, am1, is_neutral1, bundle_frac)
+     . zamin1, zamax1, zn1, am1, is_neutral1, bundle_frac, flip)
 *   ..read and echo code internal parameters from b2mn.dat
       write (nout(0),'(/2x,a)')
      . 'non-default internal parameters from b2mn.dat:'
@@ -1325,7 +1356,11 @@ c 2002-09-11: logic revised
       call ipgeti ('b2mwti_ismain0', ismain0)
       call ipgeti ('b2news_nsmin', nsmin)
       call ipgeti ('b2news_nsmax', nsmax)
-      ixfb=rratio(5*nx,8)
+      if (LSN) then
+        ixfb=rratio(5*nx,8)
+      else
+        ixfb=rratio(3*nx,8)
+      end if
       iyfb=rratio(ny,2)
       isfb=ismain
       call ipgetr ('b2mndr_ixfb', ixfb)
@@ -1337,10 +1372,16 @@ c 2002-09-11: logic revised
       call ipgeti ('b2stbr_sput_dst3', sput_dst3)
       call xertst (sput_dst2.lt.ns, 'faulty b2stbr_sput_dst2')
       call xertst (sput_dst3.lt.ns, 'faulty b2stbr_sput_dst3')
+      call ipgeti ('nrings_for_no_speedup_averaging', nrings)
       call ipgeti ('b2news_iy_nocoreExB', iy_nocoreExB)
       call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
       call ipgeti ('b2stbc_type20_ref', bc_type20_ref)
       call ipgeti ('b2stbc_isfeedback', isfeedback)
+      call ipgeti ('b2stbc_pfrregno1', pfrregno1)
+      call ipgeti ('b2stbc_pfrregno2', pfrregno2)
+      call ipgeti ('b2stbc_solregno', solregno)
+      iyped = jsep/2
+      call ipgeti ('b2stbc_iyped', iyped)
       call ipgeti ('b2mwti_jxi', jxi)
       call ipgeti ('b2mwti_jxa', jxa)
       call ipgeti ('b2tqna_ixref', ixref)
@@ -1429,7 +1470,11 @@ c 2002-09-11: logic revised
       else
         isfeedback = ismain
       end if
-      ixfb1 = ixfb*rratio(nx1,nx)
+      if (.not.flip) then
+        ixfb1 = ixfb*rratio(nx1,nx)
+      else
+        ixfb1 = nx1-ixfb*rratio(nx1,nx)
+      end if
       iyfb1 = iyfb*rratio(ny1,ny)
       if (is1(isfb).ne.-1) then
         isfb = is1(isfb)
@@ -1553,6 +1598,20 @@ c 2002-09-11: logic revised
           itrack3 = 0
         endif
       endif
+      if (nnreg(0).eq.1 .and. jsep.ne.ny/2 .and. jsep1.eq.ny1/2)
+     .  jsep1 = conformal_convert(non_commensurate,2,
+     .                            jxa,jsep,nx,ny,nx1,ny1,2)
+      if (nrings.ne.0) then
+        nrings1 = jsep1 - conformal_convert
+     .   (non_commensurate,2,jxa,jsep-nrings,nx,ny,nx1,ny1,0)
+      else
+        nrings1 = 0
+      endif
+      if (flip) then
+        pfrregno1 = cbirso+cbnrso-1-(pfrregno1-cbirso)
+        pfrregno2 = cbirso+cbnrso-1-(pfrregno2-cbirso)
+        solregno  = cbirno+cbnrno-1-(solregno -cbirno)
+      endif
       if (iy_nocoreExB.gt.-2) iy_nocoreExB = conformal_convert
      .  (non_commensurate,2,jxa,iy_nocoreExB,nx,ny,nx1,ny1,2)
       bc_type16_ref = 2 + conformal_convert
@@ -1560,17 +1619,19 @@ c 2002-09-11: logic revised
       bc_type20_ref = 2 + conformal_convert
      .  (non_commensurate,2,jxa,bc_type20_ref-2,nx,ny,nx1,ny1,2)
       if (ixref.ge.0) then
-        ixref1=conformal_convert
+        ixref1 = conformal_convert
      .   (non_commensurate,1,ixref,iyref,nx,ny,nx1,ny1,4)
       else
-        ixref1=jxa1
+        ixref1 = jxa1
       endif
       if (iyref.ge.0) then
-        iyref1=conformal_convert
+        iyref1 = conformal_convert
      .   (non_commensurate,2,ixref,iyref,nx,ny,nx1,ny1,4)
       else
-        iyref1=jsep1
+        iyref1 = jsep1
       endif
+      iyped1 = conformal_convert
+     .   (non_commensurate,2,jxa,iyped,nx,ny,nx1,ny1,4)
       iy11 = conformal_convert
      .   (non_commensurate,2,ix1,iy1,nx,ny,nx1,ny1,0)
       iy21 = conformal_convert
@@ -1644,8 +1705,16 @@ c 2002-09-11: logic revised
           iswitch = sput_dst2
         case('b2stbr_sput_dst3')
           iswitch = sput_dst3
+        case('b2stbr_solregno')
+          iswitch = solregno
+        case('b2stbr_pfrregno1')
+          iswitch = pfrregno1
+        case('b2stbr_pfrregno2')
+          iswitch = pfrregno2
         case('b2stbc_isfeedback')
           iswitch = isfeedback
+        case('nrings_for_no_speedup_averaging')
+          iswitch = nrings1
         case('b2news_iy_nocoreExB')
           iswitch = iy_nocoreExB
         case('b2stbc_type16_ref')
@@ -1680,6 +1749,10 @@ c 2002-09-11: logic revised
           iswitch = jxa1
         case('b2mwti_jxi')
           iswitch = jxi1
+        case('b2mwti_jsep')
+          iswitch = jsep1
+        case('b2stbc_iyped')
+          iswitch = iyped1
         case('b2news_nsmin')
           iswitch = ns1min
         case('b2news_nsmax')
@@ -1691,12 +1764,19 @@ c 2002-09-11: logic revised
         case('b2trcl_conductive limit')
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
+        case('b2agdr_redef_pbs')
+          cnamip = 'b2agdr_redef_gmtry'
+          todo = .false.
         case('b2news_coriolis','b2npht_style_shei',
      &                         'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
         case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
-     &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib')
+     &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib',
+     &       'b2mndr_redef_pbs')
+          todo = .false.
+          wait = .true.
+        case('b2stel_fix_recomb_energy')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
@@ -1951,6 +2031,7 @@ c 2002-09-11: logic revised
               end do
             end if
           else if (bcchar(ib).eq.'W') then
+            if (flip) bcchar(ib)='E'
             bcpos1(ib) = conformal_convert(non_commensurate,
      .       1,bcpos(ib),bcstart(ib),nx,ny,nx1,ny1,3)
             bcstart1(ib) = conformal_convert(non_commensurate,
@@ -1983,6 +2064,7 @@ c 2002-09-11: logic revised
               end do
             end if
           else if (bcchar(ib).eq.'E') then
+            if (flip) bcchar(ib)='W'
             bcpos1(ib) = conformal_convert(non_commensurate,
      .       1,bcpos(ib),bcstart(ib),nx,ny,nx1,ny1,1)
             bcstart1(ib) = conformal_convert(non_commensurate,
@@ -2303,9 +2385,9 @@ c 2002-09-11: logic revised
             cftmp(0:ns-1)=parm_dpa(0:ns-1)
             call convert_bundle_r
      .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-          parm_dpa(0:ns1-1)=cftmp(0:ns1-1)
-          write(99,hlp_frm)
-     .     'FLAG_DPA=',flag_dpa,',',' PARM_DPA=',parm_dpa(0:ns1-1)
+            parm_dpa(0:ns1-1)=cftmp(0:ns1-1)
+            write(99,hlp_frm)
+     .       'FLAG_DPA=',flag_dpa,',',' PARM_DPA=',parm_dpa(0:ns1-1)
           endif
           if(flag_vla.ne.0) then
             cftmp(0:ns-1)=parm_vla(0:ns-1)
@@ -2394,7 +2476,7 @@ c 2002-09-11: logic revised
           close(99)
         end if
         if (.not.streql(transport_filename,'b2.transport.parameters'))
-     >  then
+     >   then
           first_pass = .false.
           new_filename =
      .     transport_filename(1:lnblnk(transport_filename))//'.2'
@@ -2586,11 +2668,16 @@ cxpb We must ensure we have not already listed this additional species
             do_scale = .false.
             do ireg = 1, nnreg(0)
               do_scale = do_scale .or. .not.region_flags(ireg,j)
+              region_flags1(ireg,j) = region_flags(ireg,j)
             enddo
+            if (flip) then
+              region_flags1(3,j) = region_flags(4,j)
+              region_flags1(4,j) = region_flags(3,j)
+            endif
             write(hlp_frm, '(a,i1,a)') '(1x,a,i1,a,',nnreg(0),'l1,a)'
             if (do_scale) write(99,hlp_frm)
      .       'REGION_FLAGS(1,',j,')=',
-     .       (region_flags(ireg,j),ireg=1,nnreg(0)),','
+     .       (region_flags1(ireg,j),ireg=1,nnreg(0)),','
           enddo
           write(99,'(1x,a,l1,a)') 'NO_PFLUX=',no_pflux,','
           if(transport_time_mod.gt.0.0_R8) then
@@ -3298,44 +3385,65 @@ cxpb This will need to be checked !!!
           if(minval(dtco(0:ns-1,0:nnreg(0))).ne.1.0_R8 .or.
      &       maxval(dtco(0:ns-1,0:nnreg(0))).ne.1.0_R8) then
             do ireg = 0, nnreg(0)
-              cftmp(0:ns-1)=dtco(0:ns-1,ireg)
+              ireg1 = ireg
+              if (flip .and. ireg.eq.3) ireg1 = 4
+              if (flip .and. ireg.eq.4) ireg1 = 3
+              cftmp(0:ns-1)=dtco(0:ns-1,ireg1)
               call convert_bundle_r
      .         (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-              dtco(0:ns1-1,ireg)=cftmp(0:ns1-1)
+              dtco(0:ns1-1,ireg1)=cftmp(0:ns1-1)
               write(99,hlp_frm)
-     .         'DTCO(0,',ireg,')=',(dtco(is,ireg),is=0,ns1-1)
+     .         'DTCO(0,',ireg1,')=',(dtco(is,ireg1),is=0,ns1-1)
             enddo
           endif
           if(minval(dtmo(0:ns-1,0:nnreg(0))).ne.1.0_R8 .or.
      &       maxval(dtmo(0:ns-1,0:nnreg(0))).ne.1.0_R8) then
             do ireg = 0, nnreg(0)
-              cftmp(0:ns-1)=dtmo(0:ns-1,ireg)
+              ireg1 = ireg
+              if (flip .and. ireg.eq.3) ireg1 = 4
+              if (flip .and. ireg.eq.4) ireg1 = 3
+              cftmp(0:ns-1)=dtmo(0:ns-1,ireg1)
               call convert_bundle_r
      .         (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-              dtmo(0:ns1-1,ireg)=cftmp(0:ns1-1)
+              dtmo(0:ns1-1,ireg1)=cftmp(0:ns1-1)
               write(99,hlp_frm)
-     .         'DTMO(0,',ireg,')=',(dtmo(is,ireg),is=0,ns1-1)
+     .         'DTMO(0,',ireg1,')=',(dtmo(is,ireg1),is=0,ns1-1)
             enddo
           endif
           write(hlp_frm,'(a,i2,a)')
      .     '(1x,a,1p,',nnreg(0)+1,'(1x,g10.3,'',''))'
+          dttmp(0:nnreg(0)) = dtee(0:nnreg(0))
+          if (flip) then
+            dttmp(3) = dtee(4)
+            dttmp(4) = dtee(3)
+          endif
           if(minval(dtee(0:nnreg(0))).ne.1.0_R8 .or.
      &       maxval(dtee(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
-     .     'DTEE=',(dtee(ireg),ireg=0,nnreg(0))
+     .     'DTEE=',(dttmp(ireg),ireg=0,nnreg(0))
+          dttmp(0:nnreg(0)) = dtei(0:nnreg(0))
+          if (flip) then
+            dttmp(3) = dtei(4)
+            dttmp(4) = dtei(3)
+          endif
           if(minval(dtei(0:nnreg(0))).ne.1.0_R8 .or.
      &       maxval(dtei(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
-     .     'DTEI=',(dtei(ireg),ireg=0,nnreg(0))
+     .     'DTEI=',(dttmp(ireg),ireg=0,nnreg(0))
           write(hlp_frm,'(a,i3,a)') '(1x,a,i2,a,',ns1,'l1,a)'
           do ireg = 0, nnreg(0)
             todo = .false.
             do is = 0, ns-1
               todo = todo .or. .not.solveco(is,ireg)
             enddo
+            solvtmp = solveco
+            if (flip) then
+              solvtmp(:,3) = solveco(:,4)
+              solvtmp(:,4) = solveco(:,3)
+            endif
             if (todo) then
               call convert_bundle_l(ns1,ns,nsm,is_neutral1,bundle_frac,
-     .         solveco(0,ireg))
+     .         solvtmp(0,ireg))
               write(99,hlp_frm)
-     .         'SOLVECO(0,',ireg,')=',(solveco(is,ireg),is=0,ns1-1),','
+     .         'SOLVECO(0,',ireg,')=',(solvtmp(is,ireg),is=0,ns1-1),','
             endif
           enddo
           do ireg = 0, nnreg(0)
@@ -3343,32 +3451,74 @@ cxpb This will need to be checked !!!
             do is = 0, ns-1
               todo = todo .or. .not.solvemo(is,ireg)
             enddo
+            solvtmp = solvemo
+            if (flip) then
+              solvtmp(:,3) = solvemo(:,4)
+              solvtmp(:,4) = solvemo(:,3)
+            endif
             if (todo) then
               call convert_bundle_l(ns1,ns,nsm,is_neutral1,bundle_frac,
-     .         solvemo(0,ireg))
+     .         solvtmp(0,ireg))
               write(99,hlp_frm)
-     .         'SOLVEMO(0,',ireg,')=',(solvemo(is,ireg),is=0,ns1-1),','
+     .         'SOLVEMO(0,',ireg,')=',(solvtmp(is,ireg),is=0,ns1-1),','
             endif
           enddo
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nnreg(0)+1,'l1,a)'
           todo = .false.
           do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solvemt(ireg)
+          enddo
+          solvtmp(0,:) = solvemt(:)
+          if (flip) then
+            solvtmp(0,3) = solvemt(4)
+            solvtmp(0,4) = solvemt(3)
+          endif
+          if (todo) write(99,hlp_frm)
+     .      'SOLVEMT=',(solvtmp(0,ireg),is=0,nnreg(0)),','
+          todo = .false.
+          do ireg = 0, nnreg(0)
             todo = todo .or. .not.solvepo(ireg)
           enddo
+          solvtmp(0,:) = solvepo(:)
+          if (flip) then
+            solvtmp(0,3) = solvepo(4)
+            solvtmp(0,4) = solvepo(3)
+          endif
           if (todo) write(99,hlp_frm)
-     .      'SOLVEPO=',(solvepo(ireg),is=0,nnreg(0)),','
+     .      'SOLVEPO=',(solvtmp(0,ireg),is=0,nnreg(0)),','
           todo = .false.
           do ireg = 0, nnreg(0)
             todo = todo .or. .not.solveee(ireg)
           enddo
+          solvtmp(0,:) = solveee(:)
+          if (flip) then
+            solvtmp(0,3) = solveee(4)
+            solvtmp(0,4) = solveee(3)
+          endif
           if (todo) write(99,hlp_frm)
-     .     'SOLVEEE=',(solveee(ireg),is=0,nnreg(0)),','
+     .     'SOLVEEE=',(solvtmp(0,ireg),is=0,nnreg(0)),','
           todo = .false.
           do ireg = 0, nnreg(0)
             todo = todo .or. .not.solveei(ireg)
           enddo
+          solvtmp(0,:) = solveei(:)
+          if (flip) then
+            solvtmp(0,3) = solveei(4)
+            solvtmp(0,4) = solveei(3)
+          endif
           if (todo) write(99,hlp_frm)
-     .     'SOLVEEI=',(solveei(ireg),is=0,nnreg(0)),','
+     .     'SOLVEEI=',(solvtmp(0,ireg),is=0,nnreg(0)),','
+          todo = .false.
+          do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solveet(ireg)
+          enddo
+          solvtmp(0,:) = solveet(:)
+          if (flip) then
+            solvtmp(0,3) = solveet(4)
+            solvtmp(0,4) = solveet(3)
+          endif
+          if (todo) write(99,hlp_frm)
+     .     'SOLVEET=',(solvtmp(0,ireg),is=0,nnreg(0)),','
           if(numerics_time_mod.gt.0.0_R8) then
             write(99,'(1x,a,a,a)')
      .       'NUMERICS_FILENAME=''',trim(numerics_filename),''','
@@ -3620,7 +3770,7 @@ cxpb  Start reading input.dat file
         ELSE
           IF (streql(eirene_format,'old')) THEN
             READ (ZEILE,6666) idum(0:5)  ! NMACH,NMODE,NTIME,NFILE,NITER,lfrm15
-            idum(0) = 0
+            idum(0) = -1
             idum(5) = idum(4)
             idum(4) = 1
             idum(6) = 1
@@ -3629,6 +3779,7 @@ cxpb  Start reading input.dat file
           ELSE
             READ (ZEILE,6666) idum(0:8)  ! NPRLL,NMODE,NTCPU,NFILE,NITER0,NITER,
                                          ! NTIME0,NTIME,NFULLRUN
+            if (b2fstate_version.le.'03.000.006') idum(0)=-1
           END IF
           NMODE = idum(1)
           nfilek = b2idez(idum(3),4,5)
@@ -7419,6 +7570,10 @@ cxpb We now rewrite the modified block 4
      .         (nplsi,nplsi1,e_bundle_contr,VY4,P4,3)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VY5,P5,3)
+              if (flip) then
+                P0 = -P0
+                P1 = -P1
+              end if
             ELSE IF (INDPRO(4).EQ.2) THEN
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VY0,PO,2)
@@ -7432,6 +7587,7 @@ cxpb We now rewrite the modified block 4
      .         (nplsi,nplsi1,e_bundle_contr,VY4,P4,3)
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VY5,P5,3)
+              if (flip) P0 = -P0
             ELSE
               call e_bundle_transmit_r
      .         (nplsi,nplsi1,e_bundle_contr,VY0,PO,3)
@@ -8169,19 +8325,37 @@ C  VELOCITY SPACE DISTRIBUTION
           READ (IUNIN,6666) idum(0:1) ! INI,INE
           WRITE(IUNOT,6666) idum(0:1)
   812     READ (IUNIN,'(A80)') ZEILE
-          WRITE(IUNOT,'(A80)') ZEILE
           IF (ZEILE(1:3).EQ.'CH3') THEN
+            WRITE(IUNOT,'(A80)') ZEILE
             GOTO 812
           ELSEIF (ZEILE(1:1).EQ.'T') THEN
+            READ(ZEILE(2:72),66664) jpls,rdum(0:1) ! IDION,TE,TI
+            if (ipls1(jpls).ne.0) then
+              WRITE(ZEILE(2:72),66664) ipls1(jpls),rdum(0:1)
+              WRITE(IUNOT,'(A80)') ZEILE
+            end if
             GOTO 812
           ELSEIF (ZEILE(1:1).EQ.'D') THEN
+            READ(ZEILE(2:72),66664) jpls,rdum(0)   ! IDION,DI
+            if (ipls1(jpls).ne.0) then
+              WRITE(ZEILE(2:72),66664) ipls1(jpls),rdum(0)
+              WRITE(IUNOT,'(A80)') ZEILE
+            end if
             GOTO 812
           ELSEIF ((ZEILE(1:1).EQ.'V'.AND.ZEILE(2:2).NE.'L')
      .         .OR.ZEILE(1:1).EQ.'M') THEN
+            READ(ZEILE(2:72),66664) jpls,rdum(0:2) ! IDION,VX,VY,VZ
+            if (ipls1(jpls).ne.0) then
+              if (flip) rdum(1)=-rdum(1)
+              WRITE(ZEILE(2:72),66664) ipls1(jpls),rdum(0:2)
+              WRITE(IUNOT,'(A80)') ZEILE
+            end if
             GOTO 812
           ELSEIF (ZEILE(1:2).EQ.'VL') THEN
+            WRITE(IUNOT,'(A80)') ZEILE
             GOTO 812
           ELSEIF (ZEILE(1:1).EQ.'*') THEN
+            WRITE(IUNOT,'(A80)') ZEILE
             IREAD=1
             GOTO 811
           ENDIF
@@ -9591,6 +9765,7 @@ C  NUMBER OF TARGETS ON B2 SURFACES: NTARGI
                   ELSE IF (NINCT(I,J).EQ.-1) THEN
                     iside = 1
                   ENDIF
+                  if (flip) NINCT(I,J)=-NINCT(I,J)
                   idum(1) = convert_eirene(non_commensurate,2,
      .             (NTIN(I,J)+NTEN(I,J))/2,NDT(I,J)+1,
      .             nx,ny,nx1,ny1,iside)-1
@@ -9802,12 +9977,12 @@ cxpb  Convert fort.44 file if needed
           allocate(epls_map(ns1-nspecies1,ns-nspecies))
           epls_map(1:ns1-nspecies1,1:ns-nspecies)=
      &     e_bundle_contr(1:ns1-nspecies1,1:ns-nspecies)
-          call b2yt_ngread(solps_version, eirene_format,
-     &     nx1, ny1, natmi1, iatm1, nmol1, imol1, nion1, iion1,
-     &     ns1-nspecies1, ipls1, npls, no_sputtering,
-     &     savestratum, non_commensurate, epls_map,
-     &     jsep1, region1, leftcut1, rightcut1, bottomcut1, topcut1,
-     &     bottomiy1,
+          call b2yt_ngread(solps_version, eirene_format, nx1, ny1,
+     &     natmi1, iatm1, nmol1, imol1, nion1, iion1,
+     &     ns1-nspecies1, ipls1, npls,
+     &     no_sputtering, savestratum, non_commensurate, flip,
+     &     epls_map, jsep1, region1,
+     &     leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
      &     hx, hy, qc, hx1, hy1, qc1, gs1)
           write(nout(5),'(a)') fort_lc//'44.2'
           deallocate(epls_map)
@@ -10043,6 +10218,7 @@ cxpb  Convert fort.46 file if needed
               end do
             end if
           else if (crcstra(ib).eq.'W') then
+            if (flip) crcstra(ib)='E'
             rcpos1(ib1) = conformal_convert(non_commensurate,
      .       1,rcpos(ib),rcstart(ib),nx,ny,nx1,ny1,3)
             rcstart1(ib1) = conformal_convert(non_commensurate,
@@ -10075,6 +10251,7 @@ cxpb  Convert fort.46 file if needed
               end do
             end if
           else if (crcstra(ib).eq.'E') then
+            if (flip) crcstra(ib)='W'
             rcpos1(ib1) = conformal_convert(non_commensurate,
      .       1,rcpos(ib),rcstart(ib),nx,ny,nx1,ny1,1)
             rcstart1(ib1) = conformal_convert(non_commensurate,
@@ -10665,7 +10842,8 @@ cxpb as they no longer necessarily point to the same species
         call ipgetr ('b2stbr_plate_thick', plate_thick)
         call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
 *  ..initialize arrays used jointly
-        call b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts)
+        call alloc_b2mod_wall(ns,natm,nmol,nion)
+        call b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts,flip)
 *  ..convert some wall arrays
         if(wall_namelist_used) then
           call b2yt_wall(nx1,ny1,ns,ns1,
@@ -10826,10 +11004,17 @@ cxpb as they no longer necessarily point to the same species
      >       write(99,*) 'SAVED_CBSNA_CORE=',saved_cbsna_core,','
             if (saved_cbsch_core.ne.0.0_R8)
      >       write(99,*) 'SAVED_CBSCH_CORE=',saved_cbsch_core,','
-            if (saved_cbsna_pfr1.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSNA_PFR1=',saved_cbsna_pfr1,','
-            if (saved_cbsna_pfr2.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSNA_PFR2=',saved_cbsna_pfr2,','
+            if (.not.flip) then
+              if (saved_cbsna_pfr1.ne.0.0_R8)
+     >         write(99,*) 'SAVED_CBSNA_PFR1=',saved_cbsna_pfr1,','
+              if (saved_cbsna_pfr2.ne.0.0_R8)
+     >         write(99,*) 'SAVED_CBSNA_PFR2=',saved_cbsna_pfr2,','
+            else
+              if (saved_cbsna_pfr2.ne.0.0_R8)
+     >         write(99,*) 'SAVED_CBSNA_PFR1=',saved_cbsna_pfr2,','
+              if (saved_cbsna_pfr1.ne.0.0_R8)
+     >         write(99,*) 'SAVED_CBSNA_PFR2=',saved_cbsna_pfr1,','
+            end if
             if (saved_cbsna_sol.ne.0.0_R8)
      >       write(99,*) 'SAVED_CBSNA_SOL= ',saved_cbsna_sol,','
             write(hlp_frm,'(a,i2,a)')
@@ -10878,6 +11063,15 @@ cxpb as they no longer necessarily point to the same species
         if (vacuum_communication.ne.0) write(99,'(a,i2,a)')
      .   'VACUUM_COMMUNICATION=',vacuum_communication,','
         write (hlp_frm,'(a,i2,a)') '(a,',nvac,'(i2,'',''))'
+        if (flip) then
+          do ib=1,nvac
+            if (vacuum_communication_nreg(ib).eq.3) then
+              vacuum_communication_nreg(ib) = 4
+            else if (vacuum_communication_nreg(ib).eq.4) then
+              vacuum_communication_nreg(ib) = 3
+            end if
+          end do
+        end if
         if (maxval(vacuum_communication_nreg).ne.0 .or.
      &      minval(vacuum_communication_nreg).ne.0) write(99,hlp_frm)
      .   'VACUUM_COMMUNICATION_NREG=',
@@ -11085,6 +11279,7 @@ cxpb as they no longer necessarily point to the same species
         end if
         write(99,'(1x,a,i2,a)') 'LPFRS_PMP=',LPFRS_PMP,','
         if (lpfrb_i.ne.0) then
+         if (.not.flip) then
           if (lpfrb_i.gt.0) then
             ix = conformal_convert(non_commensurate,1,
      .       lpfrb_i, 0, nx, ny, nx1, ny1, 1)
@@ -11106,8 +11301,24 @@ cxpb as they no longer necessarily point to the same species
      .       nxtl-1+lpfrb_i, ny-1, nx, ny, nx1, ny1, 1)
             write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(nxtl1-1-ix),','
           end if
+         else
+          if (lpfrb_i.gt.0) then
+            ix = conformal_convert(non_commensurate,1,
+     .       lpfrb_i, 0, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRB_O=',ix,','
+          else if (lpfrs_pmp.eq.1) then
+            ix = conformal_convert(non_commensurate,1,
+     .       leftcut(1)-1+lpfrb_i, 0, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(ix-rightcut1(1)),','
+          else if (lpfrs_pmp.eq.2) then
+            ix = conformal_convert(non_commensurate,1,
+     .       nx-1+lpfrb_i, ny-1, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-ix,','
+          end if
+         end if
         end if
         if (lpfrb_o.ne.0) then
+         if (.not.flip) then
           if (lpfrb_o.gt.0) then
             ix = conformal_convert(non_commensurate,1,
      .       lpfrb_o, 0, nx, ny, nx1, ny1, 3)
@@ -11129,8 +11340,24 @@ cxpb as they no longer necessarily point to the same species
      .       nxtl-1+lpfrb_o, ny-1, nx, ny, nx1, ny1, 3)
             write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(nxtl1-1-ix),','
           end if
+         else
+          if (lpfrb_o.gt.0) then
+            ix = conformal_convert(non_commensurate,1,
+     .       lpfrb_o, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRB_I=',ix,','
+          else if (lpfrs_pmp.eq.1) then
+            ix = conformal_convert(non_commensurate,1,
+     .       nx-1+lpfrb_o, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(leftcut1(1)-1-ix),','
+          else if (lpfrs_pmp.eq.2) then
+            ix = conformal_convert(non_commensurate,1,
+     .       nx-1+lpfrb_o, ny-1, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(nx1-1-ix),','
+          end if
+         end if
         end if
         if (lpfrt_i.ne.0) then
+         if (.not.flip) then
           if (lpfrt_i.gt.0) then
             ix = conformal_convert(non_commensurate,1,
      .       lpfrt_i, 0, nx, ny, nx1, ny1, 3)
@@ -11152,8 +11379,24 @@ cxpb as they no longer necessarily point to the same species
      .       nxtl-1+lpfrt_i, ny-1, nx, ny, nx1, ny1, 3)
             write(99,'(1x,a,i5,a)') 'LPFRT_I=',-(nxtl1-1-ix),','
           end if
+         else
+          if (lpfrt_i.gt.0) then
+            ix = conformal_convert(non_commensurate,1,
+     .       lpfrt_i, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRT_O=',ix,','
+          else if (lpfrs_pmp.eq.1) then
+            ix = conformal_convert(non_commensurate,1,
+     .       leftcut(1)-1+lpfrt_i, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRT_O=',-(ix-rightcut1(1)),','
+          else if (lpfrs_pmp.eq.2) then
+            ix = conformal_convert(non_commensurate,1,
+     .       nx-1+lpfrt_i, ny-1, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRT_O=',-(nx1-1-ix),','
+          end if
+         end if
         end if
         if (lpfrt_o.ne.0) then
+         if (.not.flip) then
           if (lpfrt_o.gt.0) then
             ix = conformal_convert(non_commensurate,1,
      .       lpfrt_o, 0, nx, ny, nx1, ny1, 1)
@@ -11175,6 +11418,21 @@ cxpb as they no longer necessarily point to the same species
      .       nxtr+1-lpfrt_o, ny-1, nx, ny, nx1, ny1, 3)
             write(99,'(1x,a,i5,a)') 'LPFRT_O=',-(ix-nxtr1-1),','
           end if
+         else
+          if (lpfrt_o.gt.0) then
+            ix = conformal_convert(non_commensurate,1,
+     .       lpfrt_o, 0, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRT_I=',ix,','
+          else if (lpfrs_pmp.eq.1) then
+            ix = conformal_convert(non_commensurate,1,
+     .       rightcut(1)-lpfrt_o, 0, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRT_I=',-(leftcut1(1)-1-ix),','
+          else if (lpfrs_pmp.eq.2) then
+            ix = conformal_convert(non_commensurate,1,
+     .       nx-1+lpfrt_o, ny-1, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRT_I=',-(nx1-1-ix),','
+          end if
+         end if
         end if
         if (fusion_power.ne.0.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)') 'FUSION_POWER=',fusion_power,','
@@ -11318,29 +11576,60 @@ cxpb as they no longer necessarily point to the same species
           end if
         end if
         do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
+          ireg1 = ireg
+          if (flip) then
+            if (ireg.ge.cbirso .and. ireg.le.cbirso+cbnrso-1) then
+              ireg1 = cbirso+cbnrso-1 - (i - cbirso)
+            elseif (ireg.ge.cbirno .and. ireg.le.cbirno+cbnrno-1) then
+              ireg1 = cbirno+cbnrno-1 - (i - cbirno)
+            elseif (ireg.ge.cbirwe .and. ireg.le.cbirwe+cbnrwe-1) then
+              ireg1 = i + cbnrea
+            elseif (ireg.ge.cbirea .and. ireg.le.cbirea+cbnrea-1) then
+              ireg1 = i - cbnrwe
+            end if
+          end if
           do i = 0, 7
             cftmp(0:ns-1) = cbsna(i,0:ns-1,ireg)
             call convert_bundle_r
      .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-            cbsna(i,0:ns1-1,ireg) = cftmp(0:ns1-1)
+            cbsna1(i,0:ns1-1,ireg1) = cftmp(0:ns1-1)
             cftmp(0:ns-1) = cbsmo(i,0:ns-1,ireg)
             call convert_bundle_r
      .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-            cbsmo(i,0:ns1-1,ireg) = cftmp(0:ns1-1)
+            cbsmo1(i,0:ns1-1,ireg1) = cftmp(0:ns1-1)
             cftmp(0:ns-1) = cbshi(i,0:ns-1,ireg)
             call convert_bundle_r
      .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-            cbshi(i,0:ns1-1,ireg) = cftmp(0:ns1-1)
+            cbshi1(i,0:ns1-1,ireg1) = cftmp(0:ns1-1)
             cftmp(0:ns-1) = cbrec(i,0:ns-1,ireg)
             call convert_bundle_r
      .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-            cbrec(i,0:ns1-1,ireg) = cftmp(0:ns1-1)
+            cbrec1(i,0:ns1-1,ireg1) = cftmp(0:ns1-1)
             cftmp(0:ns-1) = cbmsb(i,0:ns-1,ireg)
             call convert_bundle_r
      .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-            cbmsb(i,0:ns1-1,ireg) = cftmp(0:ns1-1)
+            cbmsb1(i,0:ns1-1,ireg1) = cftmp(0:ns1-1)
           enddo
+          cbshe1(i,ireg1) = cbshe(i,ireg)
+          cbsch1(i,ireg1) = cbsch(i,ireg)
+          cbmsa1(i,ireg1) = cbmsa(i,ireg)
         enddo
+        cbsna(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1) =
+     .   cbsna1(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1)
+        cbsmo(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1) =
+     .   cbsmo1(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1)
+        cbshi(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1) =
+     .   cbshi1(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1)
+        cbshe(0:7,0:cbnrso+cbnrno+cbnrwe+cbnrea-1) =
+     .   cbshe1(0:7,0:cbnrso+cbnrno+cbnrwe+cbnrea-1)
+        cbsch(0:7,0:cbnrso+cbnrno+cbnrwe+cbnrea-1) =
+     .   cbsch1(0:7,0:cbnrso+cbnrno+cbnrwe+cbnrea-1)
+        cbrec(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1) =
+     .   cbrec1(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1)
+        cbmsa(0:7,0:cbnrso+cbnrno+cbnrwe+cbnrea-1) =
+     .   cbmsa1(0:7,0:cbnrso+cbnrno+cbnrwe+cbnrea-1)
+        cbmsb(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1) =
+     .   cbmsb1(0:7,0:ns-1,0:cbnrso+cbnrno+cbnrwe+cbnrea-1)
         do i = 0, 7
           cftmp(0:ns-1) = cfdf0(i,0:ns-1)
           call convert_bundle_r
@@ -11481,6 +11770,8 @@ cxpb as they no longer necessarily point to the same species
       deallocate(eb2ibcr)
       deallocate(ispecies1)
       deallocate(ifl1)
+      deallocate(solvtmp)
+      deallocate(dttmp)
       deallocate(cftmp)
       deallocate(istmp)
       deallocate(iatm1)
@@ -11633,13 +11924,14 @@ c       = 4 : center
       integer eirleft1(6), eirright1(6)
       integer nxtl, nxtr
       integer nxtl1, nxtr1
-      logical atend
+      logical atend, flip
 *   ..procedures
       integer conformal_convert, convert_position
       external conformal_convert, convert_position, get_nxt, b2yt_nxt,
      .         xerrab
 cxpb Do not forget that in Eirene X is Radial and Y is poloidal !
 
+      flip = LSN.neqv.LSN1
       iypos = ix-1 ! Eirene IX is B2 IY
       eirleft = nx+7
       eirright= nx+7
@@ -11705,22 +11997,39 @@ cxpb Do not forget that in Eirene X is Radial and Y is poloidal !
      .     (non_commensurate,2,ixpos,iypos,nx,ny,nx1,ny1,iside)
         end if
       else if (xory.eq.2) then
-        if (iy.eq.0) then
-          convert_eirene = 0
-        elseif (iy.eq.eirleft(iplg)) then
-          convert_eirene = eirleft1(iplg)
-        elseif (iy.eq.eirright(iplg)) then
-          convert_eirene = eirright1(iplg)
-        elseif (iy.gt.nx+max(1,nncut*3)) then
+        if (iy.gt.nx+max(1,nncut*3)) then
           call xerrab ('Too large IY value in convert_eirene')
           convert_eirene = 0
-        else
-          ixpos = iy - eirleft(iplg)
-          nsize = eirright(iplg) - eirleft(iplg)
-          nsize1= eirright1(iplg)- eirleft1(iplg)
-          atend = iside.eq.3
-          convert_eirene = eirleft1(iplg) +
-     .     convert_position(ixpos,nsize,nsize1,0,atend)
+        else if (.not.flip) then
+          if (iy.eq.0) then
+            convert_eirene = 0
+          elseif (iy.eq.eirleft(iplg)) then
+            convert_eirene = eirleft1(iplg)
+          elseif (iy.eq.eirright(iplg)) then
+            convert_eirene = eirright1(iplg)
+          else
+            ixpos = iy - eirleft(iplg)
+            nsize = eirright(iplg) - eirleft(iplg)
+            nsize1= eirright1(iplg)- eirleft1(iplg)
+            atend = iside.eq.3
+            convert_eirene = eirleft1(iplg) +
+     .       convert_position(ixpos,nsize,nsize1,0,atend)
+          endif
+        else ! USN/LSN inversion case
+          if (iy.eq.0) then
+            convert_eirene = eirright1(3)
+          elseif (iy.eq.eirleft(iplg)) then
+            convert_eirene = eirright1(4-iplg)
+          elseif (iy.eq.eirright(iplg)) then
+            convert_eirene = eirleft1(4-iplg)
+          else
+            ixpos = eirright(iplg) - iy
+            nsize = eirright(iplg) - eirleft(iplg)
+            nsize1= eirright1(4-iplg)- eirleft1(4-iplg)
+            atend = iside.eq.1
+            convert_eirene = eirleft1(4-iplg) +
+     .       convert_position(ixpos,nsize,nsize1,0,atend)
+          endif
         endif
       else
         call xerrab ('In convert_eirene = 0 : xory test failed')
@@ -11740,7 +12049,7 @@ cxpb Do not forget that in Eirene X is Radial and Y is poloidal !
 *   ..local variables
       integer ireg, ipos, nsize, nsize1
       integer ixiso, ixiso1, inseliy, inseliy1, nxtr, nxtl, nxtr1, nxtl1
-      logical atend
+      logical atend, flip
 *   ..procedures
       integer convert_position
       external convert_position, get_nxt, b2yt_nxt
@@ -11753,11 +12062,17 @@ c       = 1 : left
 c       = 2 : top
 c       = 3 : right
 c       = 4 : center
+c If mapping for LSN to USN, or vice-versa, invert the poloidal indexing order
 
       atend = (xory.eq.1 .and. iside.eq.3) .or.
      &        (xory.eq.2 .and. iside.eq.2)
+      flip = LSN.neqv.LSN1
       if (xory.eq.1) then
-        ipos = ix
+        if (.not.flip) then
+          ipos = ix
+        else
+          ipos = nx-1-ix
+        end if
         nsize = nx
         nsize1 = nx1
       else if (xory.eq.2) then
@@ -11854,42 +12169,22 @@ c       = 4 : center
          inseliy = -2
          inseliy1 = -2
         endif
-        if (xory.eq.1) then   ! do other easy ix cases
-         if (ix.eq.0) then
-          conformal_convert=0
-         else if (ix.eq.leftcut(1)-1) then
-          conformal_convert=leftcut1(1)-1
-         else if (ix.eq.leftcut(1)) then
-          conformal_convert=leftcut1(1)
-         else if (ix.eq.leftcut(2)-1) then
-          conformal_convert=leftcut1(2)-1
-         else if (ix.eq.leftcut(2)) then
-          conformal_convert=leftcut1(2)
-         else if (ix.eq.rightcut(1)-1) then
-          conformal_convert=rightcut1(1)-1
-         else if (ix.eq.rightcut(1)) then
-          conformal_convert=rightcut1(1)
-         else if (ix.eq.rightcut(2)-1) then
-          conformal_convert=rightcut1(2)-1
-         else if (ix.eq.rightcut(2)) then
-          conformal_convert=rightcut1(2)
-         else if (ix.eq.nx-1) then
-          conformal_convert=nx1-1
-         else if (ix.eq.ixiso-1) then
+        if (xory.eq.1) then   ! do other easy ix cases first
+         if (ix.eq.ixiso-1) then
           conformal_convert=ixiso1-1
          else if (ix.eq.ixiso) then
           conformal_convert=ixiso1
          else if (ix.eq.ixiso+1) then
           conformal_convert=ixiso1+1
-         else if (nncut.eq.0 .and. periodic_bc.le.0) then  ! 2-D slab case
-          nsize = nx
-          nsize1 = nx1
-          conformal_convert = convert_position(ix,nsize,nsize1,0,atend)
-         else if (nncut.eq.0 .and. ireg.eq.1) then    ! limiter core region
-          nsize = nx
-          nsize1 = nx1
-          conformal_convert = convert_position(ix,nsize,nsize1,3,atend)
-         else if (periodic_bc.eq.1 .and. ireg.eq.2) then  ! limiter or island SOL
+         else if (ix.eq.leftcut(2)-1) then
+          conformal_convert=leftcut1(2)-1
+         else if (ix.eq.leftcut(2)) then
+          conformal_convert=leftcut1(2)
+         else if (ix.eq.rightcut(2)-1) then
+          conformal_convert=rightcut1(2)-1
+         else if (ix.eq.rightcut(2)) then
+          conformal_convert=rightcut1(2)
+         else if (nncut.eq.0 .and. periodic_bc.le.0) then ! 2-D slab case
           nsize = nx
           nsize1 = nx1
           conformal_convert = convert_position(ix,nsize,nsize1,0,atend)
@@ -11897,16 +12192,11 @@ c       = 4 : center
           nsize = nx
           nsize1 = nx1
           conformal_convert = convert_position(ix,nsize,nsize1,3,atend)
-         else if (ix.gt.0 .and. ix.lt.leftcut(1)-1) then
-          nsize = leftcut(1)
-          nsize1 = leftcut1(1)
-          conformal_convert = convert_position(ix,nsize,nsize1,1,atend)
-         else if (nncut.eq.1 .and.
-     .            ix.gt.leftcut(1) .and. ix.lt.rightcut(1)-1) then
-          nsize = rightcut(1)-leftcut(1)
-          nsize1 = rightcut1(1)-leftcut1(1)
-          conformal_convert = leftcut1(1) +
-     .     convert_position(ix-leftcut(1),nsize,nsize1,3,atend)
+         else if (periodic_bc.eq.1 .and.
+     &            nncut.eq.1 .and. ireg.eq.2) then        ! island SOL
+          nsize = nx
+          nsize1 = nx1
+          conformal_convert = convert_position(ix,nsize,nsize1,0,atend)
          else if (nncut.eq.2 .and.
      .            ix.gt.leftcut(1) .and. ix.lt.leftcut(2)-1) then
           nsize = leftcut(2)-leftcut(1)
@@ -11931,14 +12221,98 @@ c       = 4 : center
           nsize1 = rightcut1(1)-rightcut1(2)
           conformal_convert = rightcut1(2) +
      .     convert_position(ix-rightcut(2),nsize,nsize1,3,atend)
-         else if (ix.gt.rightcut(1) .and. ix.lt.nx-1) then
-          nsize = nx-rightcut(1)-1
-          nsize1 = nx1-rightcut1(1)-1
-          conformal_convert = rightcut1(1) +
-     .     convert_position(ix-rightcut(1),nsize,nsize1,2,atend)
-         else
-          write(*,*) 'ix conformal conversion not successful !'
-          conformal_convert = -2
+         else if (.not.flip) then
+          if (ix.eq.0) then
+            conformal_convert=0
+          else if (ix.eq.leftcut(1)-1) then
+           conformal_convert=leftcut1(1)-1
+          else if (ix.eq.leftcut(1)) then
+           conformal_convert=leftcut1(1)
+          else if (ix.eq.rightcut(1)-1) then
+           conformal_convert=rightcut1(1)-1
+          else if (ix.eq.rightcut(1)) then
+           conformal_convert=rightcut1(1)
+          else if (ix.eq.nx-1) then
+           conformal_convert=nx1-1
+          else if (nncut.eq.0 .and.
+     &             periodic_bc.eq.1 .and. ireg.eq.1) then  ! limiter core region
+           nsize = nx
+           nsize1 = nx1
+           conformal_convert = convert_position(ix,nsize,nsize1,3,atend)
+          else if (nncut.eq.0 .and.
+     &             periodic_bc.eq.1 .and. ireg.eq.2) then  ! limiter SOL
+           nsize = nx
+           nsize1 = nx1
+           conformal_convert = convert_position(ix,nsize,nsize1,0,atend)
+          else if (ix.gt.0 .and. ix.lt.leftcut(1)-1) then
+           nsize = leftcut(1)
+           nsize1 = leftcut1(1)
+           conformal_convert = convert_position(ix,nsize,nsize1,1,atend)
+          else if (nncut.eq.1 .and.
+     .            ix.gt.leftcut(1) .and. ix.lt.rightcut(1)-1) then
+           nsize = rightcut(1)-leftcut(1)
+           nsize1 = rightcut1(1)-leftcut1(1)
+           conformal_convert = leftcut1(1) +
+     .      convert_position(ix-leftcut(1),nsize,nsize1,3,atend)
+          else if (ix.gt.rightcut(1) .and. ix.lt.nx-1) then
+           nsize = nx-rightcut(1)-1
+           nsize1 = nx1-rightcut1(1)-1
+           conformal_convert = rightcut1(1) +
+     .      convert_position(ix-rightcut(1),nsize,nsize1,2,atend)
+          else
+           write(*,*) 'ix conformal conversion not successful !'
+           conformal_convert = -2
+          endif
+         else ! Cases where we flip between USN and LSN
+          if (ix.eq.0) then
+            conformal_convert=nx1-1
+          else if (ix.eq.leftcut(1)-1) then
+           conformal_convert=rightcut1(1)
+          else if (ix.eq.leftcut(1)) then
+           conformal_convert=rightcut1(1)-1
+          else if (ix.eq.rightcut(1)-1) then
+           conformal_convert=leftcut1(1)
+          else if (ix.eq.rightcut(1)) then
+           conformal_convert=leftcut1(1)-1
+          else if (ix.eq.nx-1) then
+           conformal_convert=0
+          else if (nncut.eq.0 .and.
+     &             periodic_bc.eq.1 .and. ireg.eq.1) then  ! limiter core region
+           nsize = nx
+           nsize1 = nx1
+           ipos = nx-1-ix
+           conformal_convert =
+     .      convert_position(ipos,nsize,nsize1,3,atend)
+          else if (nncut.eq.0 .and.
+     &             periodic_bc.eq.1 .and. ireg.eq.2) then  ! limiter SOL
+           nsize = nx
+           nsize1 = nx1
+           ipos = nx-1-ix
+           conformal_convert =
+     &      convert_position(ipos,nsize,nsize1,0,atend)
+          else if (ix.gt.0 .and. ix.lt.leftcut(1)-1) then
+           nsize = leftcut(1)
+           nsize1 = nx1-rightcut1(1)-1
+           ipos = leftcut(1)-1-ix
+           conformal_convert = rightcut1(1) +
+     &      convert_position(ipos,nsize,nsize1,2,atend)
+          else if (nncut.eq.1 .and.
+     .            ix.gt.leftcut(1) .and. ix.lt.rightcut(1)-1) then
+           nsize = rightcut(1)-leftcut(1)
+           nsize1 = rightcut1(1)-leftcut1(1)
+           ipos = rightcut(1)-1-ix
+           conformal_convert = leftcut1(1) +
+     .      convert_position(ipos,nsize,nsize1,3,atend)
+          else if (ix.gt.rightcut(1) .and. ix.lt.nx-1) then
+           nsize = nx-rightcut(1)-1
+           nsize1 = leftcut1(1)
+           ipos = nx-1-ix
+           conformal_convert =
+     .      convert_position(ipos,nsize,nsize1,1,atend)
+          else
+           write(*,*) 'ix conformal conversion not successful !'
+           conformal_convert = -2
+          endif
          endif
         else if (xory.eq.2) then   ! do other easy iy cases
          if (iy.eq.0) then

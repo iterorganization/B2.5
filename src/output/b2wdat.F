@@ -1,4 +1,4 @@
-      subroutine b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)     !srv 05.10.01
+      subroutine b2wdat (nx, ny, ns, ismain, ismain0)     !srv 05.10.01
       use b2mod_types
       use b2mod_constants
       use b2mod_geo
@@ -27,7 +27,6 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
-      real (kind=R8) :: BoRiS
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -589,7 +588,7 @@
         if(nncut.eq.2) then            !iyv 04.02.11
           call get_nxt(nx, nxtl, nxtr) ! position of additional targets in DN configuration
           ix1=nxtl    !inner upper
-          ix2=nxtr+1  !outer upper
+          ix2=nxtr    !outer upper
         endif
 
         do iy=-1,ny
@@ -712,17 +711,9 @@
       hlp_s=0.0_R8
       do iy=0,ny-1 !{
         s=gs(0,iy,0)
-        hlp=0.0_R8
-        do is=0,ns-1 !{
-          hlp=hlp+abs(fna(0,iy,0,is)*(
-     .     (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
-     .     (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
-     .    ((kinrgy(0,iy,is)+ti(0,iy))*hx(-1,iy)+
-     .     (kinrgy(-1,iy,is)+ti(-1,iy))*hx(0,iy))/
-     .     (hx(-1,iy)+hx(0,iy))))
-        end do !}
-        hlp=hlp/s
-        wrk0(5,iy) = hlp + wrk0(-1,iy) + wrk0(3,iy)
+        hlp=fht(0,iy,0)
+        hlp=abs(hlp)/s
+        wrk0(5,iy) = hlp
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
@@ -734,18 +725,10 @@
 #endif
       hlp_s=0.0_R8
       do iy=0,ny-1 !{
-        hlp=0.0_R8
         s=gs(nx,iy,0)
-        do is=0,ns-1 !{
-          hlp=hlp+abs(fna(nx,iy,0,is)*(
-     .     (rpt(nx,iy,is)*hx(nx-1,iy)+rpt(nx-1,iy,is)*hx(nx,iy))/
-     .     (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
-     .    ((kinrgy(nx,iy,is)+ti(nx,iy))*hx(nx-1,iy)+
-     .     (kinrgy(nx-1,iy,is)+ti(nx-1,iy))*hx(nx,iy))/
-     .     (hx(nx-1,iy)+hx(nx,iy))))
-        end do !}
-        hlp=hlp/s
-        wrk0(6,iy) = hlp + wrk0(0,iy) + wrk0(4,iy)
+        hlp=fht(nx,iy,0)
+        hlp=abs(hlp)/s
+        wrk0(6,iy) = hlp
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
@@ -765,19 +748,10 @@
 
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
-          s=gs(ix2,iy,0)
-          hlp=0.0_R8
-          do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix2,iy,0,is)*(
-     .       (rpt(ix2,iy,is)*hx(ix2-1,iy)+
-     .        rpt(ix2-1,iy,is)*hx(ix2,iy))/
-     .       (hx(ix2-1,iy)+hx(ix2,iy))*ev+(1.0_R8-BoRiS)*
-     .      ((kinrgy(ix2,iy,is)+ti(ix2,iy))*hx(ix2-1,iy)+
-     .       (kinrgy(ix2-1,iy,is)+ti(ix2-1,iy))*hx(ix2,iy))/
-     .       (hx(ix2-1,iy)+hx(ix2,iy))))
-          end do !}
-          hlp=hlp/s
-          wrk0(14,iy) = hlp + wrk0(8,iy) + wrk0(12,iy)
+          s=gs(ix2+1,iy,0)
+          hlp=fht(ix2+1,iy,0)
+          hlp=abs(hlp)/s
+          wrk0(14,iy) = hlp
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
@@ -790,19 +764,10 @@
 ! inner upper target
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
-          hlp=0.0_R8
           s=gs(ix1,iy,0)
-          do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix1,iy,0,is)*(
-     .       (rpt(ix1,iy,is)*hx(ix1-1,iy)+
-     .        rpt(ix1-1,iy,is)*hx(ix1,iy))/
-     .       (hx(ix1-1,iy)+hx(ix1,iy))*ev+(1.0_R8-BoRiS)*
-     .      ((kinrgy(ix1,iy,is)+ti(ix1,iy))*hx(ix1-1,iy)+
-     .       (kinrgy(ix1-1,iy,is)+ti(ix1-1,iy))*hx(ix1,iy))/
-     .       (hx(ix1-1,iy)+hx(ix1,iy))))
-          end do !}
-          hlp=hlp/s
-          wrk0(13,iy) = hlp + wrk0(7,iy) + wrk0(11,iy)
+          hlp=fht(ix1,iy,0)
+          hlp=abs(hlp)/s
+          wrk0(13,iy) = hlp
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
@@ -955,7 +920,7 @@
      &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
      &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
      &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
-     &     abs(bb(ixx+ishift,iy,0))/bb(ixx-ishift,iy,3) *
+     &     abs(bb(ixx-ishift,iy,0))/bb(ixx-ishift,iy,3) *
      &     na(ixx-ishift,iy,ismain) *
      &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
      &     wrk0(0,iy)/1.0e6_R8, wrk0(4,iy)/1.0e6_R8, wrk0(6,iy)/1.0e6_R8
@@ -972,14 +937,14 @@
         do iy = 0,ny
           ixx=ix1
           write(70,"( 1x,9es14.6)")                              !srv 03.04.13
-     &     crdy_c_cell(ixx+ishift,iy),
-     &     0.5_R8*( crx(ixx+ishift,iy,0) + crx(ixx+ishift,iy,2) ),
-     &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,ne(ixx+ishift,iy),
+     &     crdy_c_cell(ixx-ishift,iy),
+     &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
+     &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
 
-     &     qe * hy1(ixx+ishift,iy)/hy(ixx+ishift,iy) *
-     &     abs(bb(ixx+ishift,iy,0))/bb(ixx+ishift,iy,3) *
-     &     na(ixx+ishift,iy,ismain) *
-     &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(am(ismain)*mp)),
+     &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
+     &     abs(bb(ixx-ishift,iy,0))/bb(ixx-ishift,iy,3) *
+     &     na(ixx-ishift,iy,ismain) *
+     &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
      &     wrk0(7,iy)/1.0e6_R8, wrk0(11,iy)/1.0e6_R8,
      &     wrk0(13,iy)/1.0e6_R8
         enddo
@@ -993,13 +958,13 @@
         do iy = 0,ny
           ixx=ix2
           write(70,"( 1x,9es14.6)")                               !srv 03.04.13
-     &     crdy_c_cell(ixx-ishift,iy),
-     &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
-     &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
-     &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
-     &     abs(bb(ixx+ishift,iy,0))/bb(ixx-ishift,iy,3) *
-     &     na(ixx-ishift,iy,ismain) *
-     &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
+     &     crdy_c_cell(ixx+ishift,iy),
+     &     0.5_R8*( crx(ixx+ishift,iy,0) + crx(ixx+ishift,iy,2) ),
+     &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,ne(ixx+ishift,iy),
+     &     qe * hy1(ixx+ishift,iy)/hy(ixx+ishift,iy) *
+     &     abs(bb(ixx+ishift,iy,0))/bb(ixx+ishift,iy,3) *
+     &     na(ixx+ishift,iy,ismain) *
+     &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(am(ismain)*mp)),
      &     wrk0(8,iy)/1.0e6_R8, wrk0(12,iy)/1.0e6_R8,
      &     wrk0(14,iy)/1.0e6_R8
         enddo
@@ -1431,16 +1396,6 @@
      &       Total_energy_flux_i(iy) + fhi(ix,iy,1)
             Total_energy_flux_i_mdf(iy) =
      &       Total_energy_flux_i_mdf(iy) + fhi_mdf(ix,iy,1)
-!            do is = 0, ns-1                                       ! ask Rozhansky
-!              kintmp =
-!     .        ((kinrgy(ix,iy,is)+ti(ix,iy))*
-!     .          hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-!     .         (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
-!     .          ti(bottomix(ix,iy),bottomiy(ix,iy)))*hy1(ix,iy))/
-!     .         (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-!              Total_energy_flux_i(iy) =
-!     &         Total_energy_flux_i(iy) + kintmp*(1.0_R8-BoRiS)
-!            enddo
           endif
         enddo
         write (70,'(1x,i4,2es18.7)')
@@ -1689,6 +1644,28 @@
        call my_out(70,nx,ny,wrk0,'hy1')                                !srv 07.11.12
        call my_out(70,nx,ny,vol,'vol')
        call my_out(70,nx,ny,pbs(-1,-1,0),'pbsx')
+
+       call my_out(70,nx,ny,wbbl(-1,-1,0),'bbxl')
+       call my_out(70,nx,ny,wbbl(-1,-1,2),'bbzl')
+       call my_out(70,nx,ny,wbbl(-1,-1,3),'bbl')
+       call my_out(70,nx,ny,wbbr(-1,-1,0),'bbxr')
+       call my_out(70,nx,ny,wbbr(-1,-1,2),'bbzr')
+       call my_out(70,nx,ny,wbbr(-1,-1,3),'bbr')
+       call my_out(70,nx,ny,wbbv(-1,-1,0),'bbxv')
+       call my_out(70,nx,ny,wbbv(-1,-1,2),'bbzv')
+       call my_out(70,nx,ny,wbbv(-1,-1,3),'bbv')
+       call my_out(70,nx,ny,wbbc(-1:nx,-1:ny,0),'bbxc')
+       call my_out(70,nx,ny,wbbc(-1:nx,-1:ny,2),'bbzc')
+       call my_out(70,nx,ny,wbbc(-1:nx,-1:ny,3),'bbc')
+       call my_out(70,nx,ny,hxb,'hxb')
+       call my_out(70,nx,ny,hyl,'hyl')
+       call my_out(70,nx,ny,hzl,'hzl')
+       call my_out(70,nx,ny,hzb,'hzb')
+       call my_out(70,nx,ny,gs(-1,-1,0),'gsx')
+       call my_out(70,nx,ny,gs(-1,-1,1),'gsy')
+       call my_out(70,nx,ny,gs(-1,-1,2),'gsz')
+       call my_out(70,nx,ny,qz(-1,-1,0),'qz0cost')
+       call my_out(70,nx,ny,qz(-1,-1,1),'qz1sint')
 
 c     calculate coordinates of cell centre
        wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))      !srv 18.12.14 {

@@ -3,8 +3,8 @@
 
       subroutine b2yt_average (filename,
      &  nx, ny, ns, nx1, ny1, ns1, nncutmax,
-     &  non_commensurate, nnreg, nncut, periodic_bc, jsep, jsep1,
-     &  region, region1,
+     &  non_commensurate, flip,
+     &  nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &  leftcut, leftcut1, rightcut, rightcut1,
      &  bottomcut, bottomcut1, topcut, topcut1,
      &  bundle_frac, naver, ntotdt,
@@ -44,6 +44,7 @@
      . e_smo(-1:nx,-1:ny,0:3,0:ns-1),
      . e_she(-1:nx,-1:ny,0:3), e_shi(-1:nx,-1:ny,0:3),
      . e_sch(-1:nx,-1:ny,0:3)
+      logical flip
 *   ..output arguments (unspecified on entry)
       integer naver, ntotdt
       real (kind=R8) ::
@@ -125,7 +126,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2xtps')
+      call subini ('b2yt_average')
 *   ..test nx, ny, ns, nx1, ny1, ns1
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -238,28 +239,28 @@
           if (bundle_frac(is1,is).ge.1.0_R8) then  ! simple case
             call b2xtvc (nx, ny, nx1, ny1,
      &        na_mean(-1,-1,is), na1_mean(-1,-1,is1),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
             call b2xtvc (nx, ny, nx1, ny1,
      &        e_na(-1,-1,is), e_na1(-1,-1,is1),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
             call b2xtvc (nx, ny, nx1, ny1,
      &        ua_mean(-1,-1,is), ua1_mean(-1,-1,is1),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
             call b2xtvc (nx, ny, nx1, ny1,
      &        e_ua(-1,-1,is), e_ua1(-1,-1,is1),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
@@ -267,14 +268,14 @@
             do i = 0, 1
               call b2xtvc (nx, ny, nx1, ny1,
      &          sna_mean(-1,-1,i,is), sna1_mean(-1,-1,i,is1),
-     &          nncutmax, non_commensurate,
+     &          nncutmax, non_commensurate, flip,
      &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &          leftcut, leftcut1, rightcut, rightcut1,
      &          bottomcut, bottomcut1, topcut, topcut1,
      &          wrk0)
               call b2xtvc (nx, ny, nx1, ny1,
      &          e_sna(-1,-1,i,is), e_sna1(-1,-1,i,is1),
-     &          nncutmax, non_commensurate,
+     &          nncutmax, non_commensurate, flip,
      &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &          leftcut, leftcut1, rightcut, rightcut1,
      &          bottomcut, bottomcut1, topcut, topcut1,
@@ -283,14 +284,14 @@
             do i = 0, 3
               call b2xtvc (nx, ny, nx1, ny1,
      &          smo_mean(-1,-1,i,is), smo1_mean(-1,-1,i,is1),
-     &          nncutmax, non_commensurate,
+     &          nncutmax, non_commensurate, flip,
      &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &          leftcut, leftcut1, rightcut, rightcut1,
      &          bottomcut, bottomcut1, topcut, topcut1,
      &          wrk0)
               call b2xtvc (nx, ny, nx1, ny1,
      &          e_smo(-1,-1,i,is), e_smo1(-1,-1,i,is1),
-     &          nncutmax, non_commensurate,
+     &          nncutmax, non_commensurate, flip,
      &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &          leftcut, leftcut1, rightcut, rightcut1,
      &          bottomcut, bottomcut1, topcut, topcut1,
@@ -298,28 +299,28 @@
             end do
           else if (bundle_frac(is1,is).gt.0.0_R8) then
             call b2xtvc (nx, ny, nx1, ny1, na_mean(-1,-1,is), wrk1,
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        na1_mean(-1,-1,is1), 1)
             call b2xtvc (nx, ny, nx1, ny1, ua_mean(-1,-1,is), wrk1,
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        ua1_mean(-1,-1,is1), 1)
             call b2xtvc (nx, ny, nx1, ny1, e_na(-1,-1,is), wrk1,
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        e_na1(-1,-1,is1), 1)
             call b2xtvc (nx, ny, nx1, ny1, e_ua(-1,-1,is), wrk1,
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
@@ -327,14 +328,14 @@
      &        e_ua1(-1,-1,is1), 1)
             do i = 0, 1
               call b2xtvc (nx, ny, nx1, ny1, sna_mean(-1,-1,i,is), wrk1,
-     &          nncutmax, non_commensurate,
+     &          nncutmax, non_commensurate, flip,
      &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &          leftcut, leftcut1, rightcut, rightcut1,
      &          bottomcut, bottomcut1, topcut, topcut1, wrk0)
               call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &          sna1_mean(-1,-1,i,is1), 1)
               call b2xtvc (nx, ny, nx1, ny1, e_sna(-1,-1,i,is), wrk1,
-     &          nncutmax, non_commensurate,
+     &          nncutmax, non_commensurate, flip,
      &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &          leftcut, leftcut1, rightcut, rightcut1,
      &          bottomcut, bottomcut1, topcut, topcut1, wrk0)
@@ -343,14 +344,14 @@
             end do
             do i = 0, 3
               call b2xtvc (nx, ny, nx1, ny1, smo_mean(-1,-1,i,is), wrk1,
-     &          nncutmax, non_commensurate,
+     &          nncutmax, non_commensurate, flip,
      &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &          leftcut, leftcut1, rightcut, rightcut1,
      &          bottomcut, bottomcut1, topcut, topcut1, wrk0)
               call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &          smo1_mean(-1,-1,i,is1), 1)
               call b2xtvc (nx, ny, nx1, ny1, e_smo(-1,-1,i,is), wrk1,
-     &          nncutmax, non_commensurate,
+     &          nncutmax, non_commensurate, flip,
      &          nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &          leftcut, leftcut1, rightcut, rightcut1,
      &          bottomcut, bottomcut1, topcut, topcut1, wrk0)
@@ -364,44 +365,44 @@
         endif
       enddo
       call b2xtvc (nx, ny, nx1, ny1, te_mean, te1_mean,
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
       call b2xtvc (nx, ny, nx1, ny1, ti_mean, ti1_mean,
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
       call b2xtvc (nx, ny, nx1, ny1, po_mean, po1_mean,
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
       call b2xtvc (nx, ny, nx1, ny1, e_te, e_te1,
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
       call b2xtvc (nx, ny, nx1, ny1, e_ti, e_ti1,
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
       call b2xtvc (nx, ny, nx1, ny1, e_po, e_po1,
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
       do i = 0, 1
         call b2xtvc (nx, ny, nx1, ny1,
      &        sne_mean(-1,-1,i), sne1_mean(-1,-1,i),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
         call b2xtvc (nx, ny, nx1, ny1, e_sne(-1,-1,i), e_sne1(-1,-1,i),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
@@ -409,34 +410,34 @@
       do i = 0, 3
         call b2xtvc (nx, ny, nx1, ny1,
      &        she_mean(-1,-1,i), she1_mean(-1,-1,i),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
         call b2xtvc (nx, ny, nx1, ny1, e_she(-1,-1,i), e_she1(-1,-1,i),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
         call b2xtvc (nx, ny, nx1, ny1,
      &        shi_mean(-1,-1,i), shi1_mean(-1,-1,i),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
         call b2xtvc (nx, ny, nx1, ny1, e_shi(-1,-1,i), e_shi1(-1,-1,i),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
         call b2xtvc (nx, ny, nx1, ny1,
      &        sch_mean(-1,-1,i), sch1_mean(-1,-1,i),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
         call b2xtvc (nx, ny, nx1, ny1, e_sch(-1,-1,i), e_sch1(-1,-1,i),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)

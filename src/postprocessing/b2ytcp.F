@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2ytcp (nget, nput, ns, ns1,
-     * zamin1, zamax1, zn1, am1, is_neutral1, bundle_frac)
+     * zamin1, zamax1, zn1, am1, is_neutral1, bundle_frac, flip)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -15,7 +15,7 @@
       real (kind=R8) ::
      *  zamin1(0:ns1-1), zamax1(0:ns1-1), zn1(0:ns1-1), am1(0:ns1-1),
      *  bundle_frac(0:ns1-1,0:ns-1)
-      logical is_neutral1(0:ns1-1)
+      logical is_neutral1(0:ns1-1), flip
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -86,7 +86,7 @@
 *     It will hold that 0.le.zamin(is).le.zamax(is), 0.lt.zn(is) and
 *     0.lt.am(is). It is required that neutral species not be bundled
 *     with charged species.
-*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is) 
+*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 *     are undefined.
 *
 *     /b2cmpb/ - input/output.
@@ -289,9 +289,11 @@
 *.declarations
 
 *   ..local variables
-      integer is, is0, i, ir0, ireg, mode, nsm
+      integer is, is0, i, ir0, ireg, ireg1, mode, nsm
+      integer cbirwe1, cbirea1, cbnrwe1, cbnrea1
       real (kind=R8) :: zpdum(0:ns-1,0:3)
       real (kind=R8) :: cftmp(0:nsdecl-1)
+      real (kind=R8) :: cbrbrk1(0:cbnrmx-1), dist
       character id*8, id0*8, id1*72
       character*(*) fmt0, fmt1
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
@@ -334,6 +336,11 @@
       mode = -1
 *   ..initialise nsm
       nsm = max(ns,ns1)
+*   ..initialise flipped values
+      cbnrwe1 = cbnrwe
+      cbnrea1 = cbnrea
+      cbirwe1 = cbirwe
+      cbirea1 = cbirea
 *   ..start of loop
     1 continue
 *   ..read id
@@ -372,7 +379,7 @@
         read (nget,*,err=92) id0, (zpdum(is,i),i=0,3)
         read (id0,'(i8)',err=93) is0
         call xertst (is0.eq.is, 'faulty input under *specs')
-        oldversion = oldversion .and. 
+        oldversion = oldversion .and.
      &   nint(zpdum(is,0)**2).eq.nint(zpdum(is,3)) .and.
      &   zpdum(is,1) .gt. 0.0_R8
        enddo
@@ -397,22 +404,22 @@
          call xertst (0.0_R8.le.zamin(is).and.zamin(is).le.zamax(is),
      .    'faulty input range zamin, zamax')
          call xertst (0.0_R8.lt.zn(is), 'faulty input zn')
-         call xertst (zamin(is).eq.nint(zamin(is)), 
+         call xertst (zamin(is).eq.nint(zamin(is)),
      .    'faulty input zamin; not integer')
-         call xertst (zamax(is).eq.nint(zamax(is)), 
+         call xertst (zamax(is).eq.nint(zamax(is)),
      .    'faulty input zamax; not integer')
-         call xertst (zn(is).eq.nint(zn(is)), 
+         call xertst (zn(is).eq.nint(zn(is)),
      .    'faulty input zn; not integer')
          call xertst (0.0_R8.lt.am(is), 'faulty input am')
          if (is_neutral(is)) then
-           call xertst (0.0_R8.eq.zamax(is), 
+           call xertst (0.0_R8.eq.zamax(is),
      .      'no bundling of neutral species allowed')
          endif
        enddo
 *   ..write species data
        write (nput,'(a)')
      &  '*specs      zamin    zamax    zn      am'
-       write (nput,fmt0) 
+       write (nput,fmt0)
      &  (is,zamin1(is),zamax1(is),zn1(is),am1(is),is=0,ns1-1)
       else if (streql(id,'*cbregs')) then
 *    ..test mode
@@ -438,6 +445,43 @@
      &   (cbrbrk(ir0),ir0=cbirea,cbirea+cbnrea-1)
        call xertst (streql(id0,'east').and.1.le.cbnrea.and.
      &   cbirea+cbnrea.le.cbnrmx, 'faulty input under *cbregs')
+*   ..flip East and West data if needed (similar code to b2rucp_flip)
+       if (flip) then
+        if (cbnrso.eq.3) then
+         ireg = cbirso
+         i = cbirso + cbnrso - 1
+         cbrbrk1(ireg) = min(1.0_R8,cbrbrk(i))-cbrbrk(i-1)
+         ireg = cbirso + cbnrso - 1
+         i = cbirso
+         cbrbrk1(ireg-1) = 1.0_R8 - cbrbrk(i)
+        end if
+        do i = cbirno, cbirno+cbnrno-1
+         ireg = cbirno+cbnrno-1 - (i - cbirno)
+         if (i.gt.cbirno) then
+          dist = cbrbrk(i+1) - cbrbrk(i)
+         else
+          dist = cbrbrk(i)
+         endif
+         dist = min(1.0_R8,dist)
+         if (ireg.lt.cbirno+cbnrno-1) cbrbrk1(ireg) = 1.0_R8 - dist
+         cbrbrk1(ireg) = cbrbrk(i)
+        end do
+        cbnrwe1 = cbnrea
+        cbnrea1 = cbnrwe
+        cbirwe1 = cbirwe
+        cbirea1 = cbirwe1 + cbnrwe1
+        do i = cbirwe, cbirwe+cbnrwe-1
+         ireg = cbirea1 + i - cbirwe
+         cbrbrk1(ireg) = cbrbrk(i)
+        end do
+        do i = cbirea, cbirea+cbnrea-1
+         ireg = cbirwe1 + i - cbirea
+         cbrbrk1(ireg) = cbrbrk(i)
+        end do
+        do ireg = cbirwe1, cbirwe1+cbnrwe1+cbnrea1+1
+         cbrbrk(ireg) = cbrbrk1(ireg)
+        end do
+       end if
 *   ..write region specs
        write (nput,'(a)')
      &  '*cbregs   nr    breakpoints'
@@ -446,9 +490,11 @@
        write (nput,'(1x,a,t12,i2,(t17,7f9.3))')
      &  '''north''', cbnrno, (cbrbrk(ireg),ireg=cbirno,cbirno+cbnrno-1)
        write (nput,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''west''', cbnrwe, (cbrbrk(ireg),ireg=cbirwe,cbirwe+cbnrwe-1)
+     &  '''west''', cbnrwe1,
+     &             (cbrbrk(ireg),ireg=cbirwe1,cbirwe1+cbnrwe1-1)
        write (nput,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''east''', cbnrea, (cbrbrk(ireg),ireg=cbirea,cbirea+cbnrea-1)
+     &  '''east''', cbnrea1,
+     &             (cbrbrk(ireg),ireg=cbirea1,cbirea1+cbnrea1-1)
       else if (streql(id,'*region')) then
 *    ..test mode
        call xertst (mode.eq.1, 'unexpected header '//id)
@@ -457,26 +503,40 @@
        if (cbirso.le.ireg.and.ireg.lt.cbirso+cbnrso) then
         call xertst (streql(id1(1:5),'south'),
      &    'faulty input under *region: '//trim(id1))
-        write (nput,'(a/2x,i2,2x,a)') '*region', ireg, 
+        if (flip) then
+          if (ireg.eq.cbirso) ireg1 = cbirso+cbnrso-1
+          if (ireg.eq.cbirso+cbnrso-1) ireg1 = cbirso
+        end if
+        write (nput,'(a/2x,i2,2x,a)') '*region', ireg1,
      &    ''''//trim(id1)//''''
        else if (cbirno.le.ireg.and.ireg.lt.cbirno+cbnrno) then
         call xertst (streql(id1(1:5),'north'),
      &    'faulty input under *region: '//trim(id1))
-        write (nput,'(a/2x,i2,2x,a)') '*region', ireg, 
+        if (flip) ireg1 = cbirno+cbnrno-1 - (ireg - cbirno)
+        write (nput,'(a/2x,i2,2x,a)') '*region', ireg1,
      &    ''''//trim(id1)//''''
        else if (cbirwe.le.ireg.and.ireg.lt.cbirwe+cbnrwe) then
         call xertst (streql(id1(1:4),'west'),
      &    'faulty input under *region: '//trim(id1))
-        write (nput,'(a/2x,i2,2x,a)') '*region', ireg,
-     &    ''''//trim(id1)//''''
+        if (flip) then
+          write (id1(1:4),'(a4)') 'east'
+          ireg1 = cbirea1 + ireg - cbirea
+        end if
+        write (nput,'(a/2x,i2,2x,a)') '*region', ireg1,
+     &      ''''//trim(id1)//''''
        else if (cbirea.le.ireg.and.ireg.lt.cbirea+cbnrea) then
         call xertst (streql(id1(1:4),'east'),
      &    'faulty input under *region: '//trim(id1))
-        write (nput,'(a/2x,i2,2x,a)') '*region', ireg,
+        if (flip) then
+          write (id1(1:4),'(a4)') 'west'
+          ireg1 = cbirwe1 + ireg - cbirwe
+        end if
+        write (nput,'(a/2x,i2,2x,a)') '*region', ireg1,
      &    ''''//trim(id1)//''''
        else
         call xerrab ('faulty input under *region: out-of-range')
        endif
+       if (flip) ireg = ireg1
       else if (streql(id,'*cbsna')) then
 *    ..test mode and ireg
        call xertst (mode.eq.1, 'unexpected header '//id)
@@ -820,6 +880,12 @@
       goto 1
 *   ..end-of-file exit
     2 continue
+      if (flip) then
+        cbnrwe = cbnrwe1
+        cbnrea = cbnrea1
+        cbirwe = cbirwe1
+        cbirea = cbirea1
+      endif
 
 * ..return
       call subend ()

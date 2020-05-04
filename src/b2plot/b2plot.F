@@ -4,12 +4,14 @@ c Unfortunately the Juelich compiler complains with error message
 c    (E) The STRICT/NOSTRICT option may only be specified for OPT(3).  STRICT is assumed.
 c so this optimisation is disabled by default.
 c 2002-09-11: logic revised
-#ifdef IBMaix
-#ifdef NO_OPT
-@process nooptimize
-#endif
-#endif
       subroutine b2plot(nxd,nyd,nsd_local)
+#ifdef NO_OPT
+#ifdef CRAY
+!DIR$ OPTIMIZE (-O0 -hfp0)
+#else
+!DIR$ NOOPTIMIZE
+#endif
+#endif
       use b2mod_types
       use b2mod_geo
       use b2mod_work
@@ -43,6 +45,7 @@ c 2002-09-11: logic revised
       use b2mod_b2cmpb
       use b2mod_ranges
       use b2mod_external
+      use b2mod_version  ! ajs 07.04.20
 #ifdef NAGF95
       use f90_unix       ! IGNORE
 #endif
@@ -540,9 +543,12 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
-      call b2xpen (nx, ny, ns,
-     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2 fhm, fhp, fhj, fht)
+!ajs 07.04.20 only recalculate in older version, now in b2mod_plasma
+      if (b2fplasma_version.lt.'03.000.007') then
+        call b2xpen (nx, ny, ns,
+     1    fna, fne, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
+     2    te, ti, po, BoRiS, fhm, fhp, fhj, fht)
+      endif
 c calculate divergences of the various fluxes
       do is=0,ns-1
         do iy=-1,ny
@@ -2117,13 +2123,7 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              fetx(ix,iy)=fhe(ix,iy,0)+fhi(ix,iy,0)+fhi_ext(ix,iy,0)
-              do is=0,ns-1
-                fetx(ix,iy)=fetx(ix,iy)+
-     .           rpt(ix,iy,is)*ev*fna(ix,iy,0,is)+
-     .          (ti(ix,iy)*fna(ix,iy,0,is)+
-     1           fhm(ix,iy,0,is))*(1.0_R8-BoRiS)
-              end do
+              fetx(ix,iy)=fht(ix,iy,0)-fhj(ix,iy,0)+fhi_ext(ix,iy,0)
               do is=0,ns_ext-1
                 fetx(ix,iy)=fetx(ix,iy)+
      .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,0,is)+
@@ -2138,13 +2138,7 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              fety(ix,iy)=fhe(ix,iy,1)+fhi(ix,iy,1)+fhi_ext(ix,iy,1)
-              do is=0,ns-1
-                fety(ix,iy)=fety(ix,iy)+
-     1           rpt(ix,iy,is)*ev*fna(ix,iy,1,is)+
-     1          (ti(ix,iy)*fna(ix,iy,1,is)+
-     1           fhm(ix,iy,1,is))*(1.0_R8-BoRiS)
-              end do
+              fety(ix,iy)=fht(ix,iy,1)-fhj(ix,iy,1)+fhi_ext(ix,iy,1)
               do is=0,ns_ext-1
                 fety(ix,iy)=fety(ix,iy)+
      .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,1,is)+
@@ -9224,7 +9218,7 @@ c normalised weights is 1
         case('wlld')     ! ANK wall loading
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call b2pwld(istack(iistack),ismain,ismain0,BoRiS)
+          call b2pwld(istack(iistack),BoRiS)
           call pop_stack(stack_req)
         case('woff')     ! turn off wall plots
           call walloff

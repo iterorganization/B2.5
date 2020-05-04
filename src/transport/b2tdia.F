@@ -5,6 +5,8 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
+      use b2mod_geo
+     &   , only : hyl, hxb                 ! IYS 04.03.2019
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -35,6 +37,7 @@
       real (kind=R8) ::
      &  facdriftm
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
+      integer, save :: drift_style = 1                                   !IYS 11.02.2020
 #ifdef CLASSICAL_CURRENT
       integer is
       real (kind=R8) :: hy1,
@@ -57,6 +60,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then                                               !srv
        call ipgetr ('b2tfhe_dia_cur', dia_cur)                           !srv
+       call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
       end if
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -81,9 +85,11 @@
       if (facdriftm.ne.0.0_R8 .and. dia_cur.ne.0.0e0_R8) then            !srv 16.10.17
 *       X-COMPONENT OF DIVERGENT PART OF DIAMAGNETIC CURRENT
 
+        if (drift_style.ne.2 .or. redef_gmtry.eq.0) then                 !IYS 11.02.2020
+
 !         do iy=-1,ny
-        do iy=0,ny-1
-          do ix=0,nx
+         do iy=0,ny-1
+           do ix=0,nx
             if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
              fchdia(ix,iy,0)=fchdia(ix,iy,0)+
      &                       dia_cur*facdrift(ix,iy)* ! signmf*          !srv 25.04.00 05.02.05 11.01.13 16.10.17
@@ -101,13 +107,13 @@
 !     &      /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))            !srv
 !     &      *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))      !srv
             endif                                                        !srv 26.11.02
-          enddo
-        enddo
+           enddo
+         enddo
 
 *       Y-COMPONENT OF DIVERGENT PART OF DIAMAGNETIC CURRENT
 
-        do iy=0,ny
-          do ix=0,nx-1
+         do iy=0,ny
+           do ix=0,nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
 !           do ix=-1,nx                                                  !srv
 !             fchdia(ix,iy,1)=fchdia(ix,iy,1) - dia_cur*signmf*          !srv 25.04.00 21.04.00 21.03.02
@@ -135,8 +141,39 @@
 !     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))        !srv
 !     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))  !srv
             endif                                                        !srv 26.11.02
-          enddo                                                          !srv
-        enddo                                                            !srv
+           enddo                                                          !srv
+         enddo                                                            !srv
+
+        else  ! drift_style                                              !IYS 11.02.2020
+
+         do iy=0,ny-1
+           do ix=0,nx
+            if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
+             fchdia(ix,iy,0)=fchdia(ix,iy,0)+
+     &                       dia_cur*facdrift(ix,iy)* ! signmf*          !srv 25.04.00 05.02.05 11.01.13 16.10.17
+     &     0.5e0_R8 * (pz(ix,iy) + pz(leftix(ix,iy),leftiy(ix,iy))) *    ! IYS 04.03.2019
+     &       gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)
+     &      *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))
+            endif                                                        !srv 26.11.02
+           enddo
+         enddo
+
+*       Y-COMPONENT OF DIVERGENT PART OF DIAMAGNETIC CURRENT
+
+         do iy=0,ny
+           do ix=0,nx-1
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
+            fchdia(ix,iy,1)= - dia_cur*facdrift(ix,iy)* ! signmf*       !srv 25.04.00 21.04.00 21.03.02 11.01.13
+     &   0.5e0_R8 * (pz(ix,iy) + pz(bottomix(ix,iy),bottomiy(ix,iy))) *  ! IYS 04.03.2019
+     &         gs(ix,iy,1) * wbbv(ix,iy,2) / hxb(ix,iy)
+     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))   !srv
+            endif                                                        !srv 26.11.02
+           enddo                                                          !srv
+         enddo                                                            !srv
+
+        endif  ! drift_style                                              !IYS 11.02.2020
+
+  
 
 #ifdef CLASSICAL_CURRENT
 crfs inertia terms

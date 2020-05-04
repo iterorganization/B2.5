@@ -317,8 +317,8 @@
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
-      redef_pbs = 1 ! In version 3.0.6, we apply the pbsx correction by default
-      call ipgeti ('b2agdr_redef_pbs', redef_pbs)
+      redef_gmtry = 1 ! Since version 3.0.6, we apply the pbsx correction by default
+      call ipgeti ('b2agdr_redef_gmtry', redef_gmtry)
       call ipgeti ('b2agdr_redef_qc',  redef_qc )
       call ipgeti ('b2agmt_qc_style',  qc_style )
       if (redef_qc .eq. 1 .and. qc_style .eq. 1) then
@@ -411,9 +411,6 @@
 *   ..compute geometry and flux/field functions on auxiliary mesh
       if(istyle.ge.0) then
         call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
-      else
-        fpsi1=0.0_R8
-        ffbz1=0.0_R8
       endif
 *   ..compute metric coefficients on auxiliary mesh
       call b2agmt (nx1, ny1, isymm, crx1, cry1, vol1,
@@ -490,10 +487,11 @@ cwdk  faces is not representative for orthogonality of left face to field!
      2 topix1, topiy1, bottomix1, bottomiy1,
      3 leftcut1, rightcut1, bottomcut1, topcut1, cflags1)
 *   ..correct pbsx on the proper mesh
-      if(redef_pbs.ne.0) then
-        call b2agbs (nx, ny, nncutmax, leftix, rightix, region,
-     1   bb, wbbl, gs, qz, qc, hx, hy, vol, pbs,
-     2   cell_width, cell_height)
+      if(redef_gmtry.ne.0) then
+        call b2agbs (nx, ny, nncutmax,
+     1   leftix, rightix, rightiy, bottomiy, topiy, region, crx, cry,
+     1   ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
+     2   pbs, cell_width, cell_height)
       end if
 *   ..establish an isolated region if needed
       call ipgeti('b2agdr_nxiso1', nxiso1)
@@ -598,11 +596,7 @@ cdpc-debug
 *   ..compute geometry and flux/field functions on proper mesh
         call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
 *   ..compute magnetic field on proper mesh
-        call b2agbb (nx, ny, vol, hx, hy, qz, 
-     &   fpsi, ffbz, bb)
-      else
-        fpsi=0.0_R8
-        ffbz=0.0_R8
+        call b2agbb (nx, ny, vol, hx, hy, qz, fpsi, ffbz, bb)
       endif
       write(*,*) 'b2agdr2: bb(nx,ny,0) ',bb(nx,ny,0)
       write(*,'()')
@@ -737,7 +731,7 @@ cdpc-debug
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
       call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
      &  cell_width, cell_height)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx, ny, crx, cry, cflags,

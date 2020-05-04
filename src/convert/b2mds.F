@@ -308,9 +308,12 @@ c
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
-      call b2xpen (nx, ny, ns,
-     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2 fhm, fhp, fhj, fht)
+!ajs 07.04.20 only recalculate in older version, now in b2mod_plasma
+      if (b2fplasma_version.lt.'03.000.007') then
+        call b2xpen (nx, ny, ns,
+     1    fna, fne, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
+     2    te, ti, po, BoRiS, fhm, fhp, fhj, fht)
+      endif
       if(allocated(fhi_ext)) fht=fht+fhi_ext
       do is=0,ns_ext-1
         do iy=-1,ny
@@ -775,8 +778,9 @@ c 24: removed drift velocity contributions from kinrgy
 c 25: debugged indexing error for eneutrad
 c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
+c 28: Corrected calculation of fht, now using fn[ae]_53
 
-      dbversion=27
+      dbversion=28
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)

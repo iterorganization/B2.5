@@ -3,8 +3,9 @@
 
       subroutine b2stbr (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy,
-     &  te, ti, po, ne, ni, fna, fna_mdf, fhe, fhi, fch, fne, fni, rsa, !iyv 07.03.18
+     &  vol, hx, hy, hz, gs, qz, pbs, na, ua,
+     &  te, ti, po, ne, ni,
+     &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa,
      &  bb, sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
       use b2mod_wall
@@ -58,11 +59,11 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)
+     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),    !iyv 07.03.18
-     &  fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
+     &  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1),
+     &  fht(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      &  rsa(-1:nx,-1:ny,0:ns-1), bb(-1:nx,-1:ny,0:3)
       logical main_call
@@ -473,8 +474,8 @@ c   --> better solution wanted here..
           shitmp=shi0
         endif
         call b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
+     &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
+     &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   neutral_sources_rescale, core_sources_rescale,
@@ -502,8 +503,8 @@ c   --> better solution wanted here..
           shitmp=shi0
         endif
         call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
+     &   vol, hx, hy, gs, qz, pbs, na, ua,
+     &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,
@@ -685,22 +686,22 @@ c   --> better solution wanted here..
           end do
 
 !  Add contribution from Eirene core boundary fluxes
-!         do ia = 1, nnatmi
+!          do k = 1, ncns
+!            ix = nnlimi + lcns(k)
+!            do ia = 1, nnatmi
 !           if (latmscl(ia).eq.b2espcr(is)) then
-!             do k = 1, ncns
-!               ix = nnlimi + lcns(k)
-!               sna_core(latmscl(ia)) = sna_core(latmscl(ia)) -
+!              sna_core(latmscl(ia)) = sna_core(latmscl(ia)) -
 !     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
-!               do im = 1, nnmoli
-!                 if (mlcmp(ia,im).gt.0) then
-!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) -
+!              do im = 1, nnmoli
+!                if (mlcmp(ia,im).gt.0) then
+!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) - 
 !     &              mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
 !     &                              - wldpm(ix,im,0))
-!                 end if
-!               end do
-!             end do
+!                end if
+!              end do
+!            end do
 !           end if
-!         end do
+!          end do
 
           sna_eir= 0.0_R8
           ext_sna_tot= 0.0_R8
@@ -1240,6 +1241,16 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         call my_out(70,nx,ny,b2stbr_sch,'b2stbr_sch')
        endif
       endif                                                           !srv 11.09.09 }
+
+      if (iout.eq.1 .and. use_eirene.gt.0 ) then   ! IYS to output fluxes seen by Eirene
+       do is = 0, ns-1
+        write (chns,'(i3.3)') is
+        if (.not. is_neutral(is)) then
+        call my_out(70,nx,ny,fna(-1:nx,-1:ny,0,is),'b2stbr_fnax'//chns)
+        call my_out(70,nx,ny,fna(-1:nx,-1:ny,1,is),'b2stbr_fnay'//chns)
+        endif
+       enddo 
+      endif                                                           
 
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1

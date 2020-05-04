@@ -88,7 +88,8 @@
      6  ue(-1:nx,-1:ny), zeff(-1:nx,-1:ny), pz(-1:nx,-1:ny),             !srv 05.07.17
      7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny),
      &  rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),                          !iyv 06.02.14
-     &  fchstoch(-1:nx,-1:ny)                                            !srv 17.12.13
+     &  fchstoch(-1:nx,-1:ny),                                           !srv 17.12.13
+     &  fna_53(-1:nx,-1:ny,0:1,0:ns-1)
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical new_matrix
@@ -342,8 +343,7 @@
 *   ..re-compute source terms if necessary                               !xpb
         if((wrong_flow .and. ipass.ne.0) .or. ncall.eq.0) then           !xpb
 *      ..compute electron drift velocities
-          call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,   !srv 05.06.18
-     &     te, po, vedia, veecrb)
+          call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *     ..re-compute source linearisation                                  !xpb
           call b2sral (nx, ny, ns, nxtl, nxtr,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
@@ -353,9 +353,9 @@
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
      &     fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,     !srv 13.10.06 25.12.06 23.10.09
-     &     fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch, fchdia, fchin,
-     &     fch_p, fchvispar, fchvisper, fchvisq, fchinert,               !srv 21.10.02
-     &     fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &     fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
+     &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
+     &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &     cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,      !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
@@ -407,8 +407,8 @@
 !$OMP& SHARED(cddi, cvlahz, cvmahz, cdnahz, cdpahz, fchvispar)
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
-!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
-!$OMP& SHARED(kinrgy, fllim0fna)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
+!$OMP& SHARED(kinrgy, fllim0fna) 
 #endif
 !        do is = 0, ns-1
         do is = nsmin, nsmax-1
@@ -430,6 +430,7 @@
      &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                      !srv 13.10.06
      1    flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &    fna_53(-1,-1,0,is),
      2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .true.)               !djm Jan2017
         enddo
 #ifndef NO_OPENMP_B2NEWS_LOOP1
@@ -440,8 +441,7 @@
 #endif
 #endif
 *      ..compute electron drift velocities
-        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &    te, po, vedia, veecrb)
+        call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *     ..re-compute source linearisation                                  !xpb
         call b2sral (nx, ny, ns, nxtl, nxtr,
      &    nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
@@ -451,7 +451,7 @@
      &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                !srv 28.10.02
      &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,      !srv 13.10.06 25.12.06 23.10.09
-     &    fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
+     &    fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &    cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,       !xpb
@@ -545,8 +545,13 @@ cxpb
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
 #ifndef GFORTRAN
 #ifndef PGF90
+#ifndef CRAY
 !$OMP& COPYIN(last_solve_5, last_solve_9) 
 !$OMP& COPYIN(last_solve_7, last_solve_11)
+#else
+!$OMP& PRIVATE(last_solve_5, last_solve_7)
+!$OMP& PRIVATE(last_solve_9, last_solve_11)
+#endif
 #else
 !$OMP& PRIVATE(last_solve_5, last_solve_7)
 !$OMP& PRIVATE(last_solve_9, last_solve_11)
@@ -565,7 +570,7 @@ cxpb
 !$OMP& SHARED(cddi, cvlahz, cvmahz, cdnahz, cdpahz, fchvispar)
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
-!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
 !$OMP& SHARED(rxf0, sna, pcca, resco, corpa, b2stbr_sna, b2stbm_sna) 
 !$OMP& SHARED(ext_sna, use_b2npc9)
@@ -644,6 +649,7 @@ cxpb
      &     fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                     !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1     fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &     fna_53(-1,-1,0,is),
      1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .true.)              !djm Jan2017
           if (ncall.eq.ncallout) then
             write(*,*) 'ncall,is',ncall,is
@@ -749,9 +755,10 @@ cxpb
      &       fchvispar, fchvisper, fchinert, fchanml, fchvisq,           !srv 20.09.06
      1       fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),                   !xpb
      &       fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                   !srv 01.10.99 21.01.00
-     &       fnaPSch(-1,-1,0,is),fna_mdf(-1,-1,0,is),                    !srv 13.10.06
+     &       fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                   !srv 13.10.06
      1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &       fna_53(-1,-1,0,is),
      1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)           !djm Jan2017
 !          endif                                                         !srv 22.05.18
         enddo
@@ -767,8 +774,7 @@ cxpb
      &          'Before potential loop: fna(ions) at plates')
         endif
 *      ..compute electron drift velocities
-        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &    te, po, vedia, veecrb)
+        call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
 *   ..re-compute ne, ni
         call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
         call nancheck(nx, ny, ne, 'b2news(ne): after call to b2xpne')
@@ -814,7 +820,7 @@ cxpb
      >         write(*,*) 'b2news [a][32|52] ',
      1         maxval(abs(fna-fna_32-fna_52)), maxval(abs(fna))
               call b2tfed (nx, ny, facdrift, fac_ExB,
-     &         vol, hx, hy, qz, bb,
+!     &         vol, hx, hy, qz, bb,
      &         te, po, vedia, veecrb)
               call b2tfch (nx, ny, ns, ismain, ismain0,
      1         guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,           !xpb
@@ -839,8 +845,8 @@ cxpb
      3         fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,          !srv 13.10.06
      &         .false.)                                                  !djm Jan2017
               call b2xpen (nx, ny, ns,
-     1         fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2         fhm, fhp, fhj, fht)
+     1         fna, fne, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa,      !ajs 07.04.20
+     2         rpt, te, ti, po, BoRiS, fhm, fhp, fhj, fht)
               if(recalculate_contributions.ne.0) then
 *     ..update sources                                                   !xpb
                 call b2sral (nx, ny, ns, nxtl, nxtr,
@@ -852,7 +858,8 @@ cxpb
      &           te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,         !srv 28.10.02
      &           fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &           fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift,       !srv 13.10.06 25.12.06 23.10.09
-     &           fna_he, fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
+     &           fna_he, fhe, fhi, fhm, fht,
+     &           fnaPSch, fhePSch, fhiPSch, fch,
      &           fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,    !srv 21.10.02
      &           fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &           cdna, cdpa, cvsa_cl, cvla, chce,
@@ -963,8 +970,8 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
 !$OMP& SHARED(cddi, cvlahz, cvmahz, cdnahz, cdpahz, fchvispar)
 !$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
 !$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
-!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
-!$OMP& SHARED(kinrgy, fllim0fna)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd, fna_53)
+!$OMP& SHARED(kinrgy, fllim0fna) 
 #endif
 !                do is = 0, ns-1
                 do is = nsmin, nsmax-1
@@ -988,6 +995,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      &             fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),             !srv 13.10.06
      1             flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1             fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &             fna_53(-1,-1,0,is),
      &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)     !djm Jan2017
                 enddo
 #ifndef NO_OPENMP_B2NEWS_LOOP3
@@ -1054,8 +1062,7 @@ c     with diamagnetic drift part                                        !xpb
      >   write(*,*) 'b2news [a][32|52] ',
      1   maxval(abs(fna-fna_32-fna_52)), maxval(abs(fna))
 *   ..compute heat fluxes
-        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &   te, po, vedia, veecrb)
+        call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
         call b2tfch (nx, ny, ns, ismain, ismain0,
      1   guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,                 !xpb
      1   vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,        !xpb
@@ -1078,8 +1085,9 @@ c     with diamagnetic drift part                                        !xpb
      3   fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,                !srv 13.10.06
      &   .true.)                                                         !djm Jan2017
         call b2xpen (nx, ny, ns,
-     1   fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2   fhm, fhp, fhj, fht)
+     1   fna, fne, fna, fne, fch, fhe, fhi, kinrgy,
+     1   ua, cvsa, rpt, te, ti,                                          !ajs 07.04.20
+     2   po, BoRiS, fhm, fhp, fhj, fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
         call b2tfcc (nx, ny, ns, na, te, ti, cdpa, floe, cone,
      &   floi, coni)

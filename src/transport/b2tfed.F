@@ -1,19 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
+      subroutine b2tfed (nx, ny, facdrift, fac_ExB, 
      & te, po, vedia, veecrb)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_geo
       use b2mod_geo_corner
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
      * facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-     * vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     * qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
+!     * vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+!     * qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -79,7 +80,9 @@ c Drift terms
       vedia=0.0_R8                                              	 !xpb
       veecrb=0.0_R8                                             	 !xpb
       if(maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8) then !xpb
-        if(drift_style.eq.0) then ! 5.0 treatment
+ 
+       if(drift_style.eq.0) then ! 5.0 treatment
+
           call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
           do iy = -1, ny
             do ix = -1, nx                                        	 !xpb
@@ -160,7 +163,7 @@ cxpb  Standard case
             enddo
           enddo                                                   	 !xpb
 
-       else  ! 5.2 drift treatment
+       elseif (drift_style.eq.1 .or. redef_gmtry.eq.0) then     ! 5.2 drift treatment
 
          weight = 1.0e0_R8                                               !lk   
          call intcor(nx,ny,weight,po,poc)                                !lk 12.12.07
@@ -202,6 +205,46 @@ cxpb  Standard case
              endif
            enddo
          enddo
+
+       elseif (drift_style.eq.2 .and. redef_gmtry.eq.1) then              ! IYS 11.02.2020
+
+         weight = 1.0e0_R8                                               !lk   
+         call intcor(nx,ny,weight,po,poc)                                !lk 12.12.07
+         do iy = 0, ny-1
+           do ix = 0, nx
+             if(leftix(ix,iy).ne.-2) then                                !srv 26.11.02
+               veecrb(ix,iy,0) = - poleldr*fac_ExB(ix,iy)                  !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
+     2              *(poc(topix(ix,iy),topiy(ix,iy))-poc(ix,iy))*        !srv 13.05.16 }
+     &           wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2/hyl(ix,iy)/qc(ix,iy)   ! IYS 04.03.2019
+               vedia(ix,iy,0) = -poldidr*facdrift(ix,iy)* ! signmf*      !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
+     &           0.5_R8 * (te(leftix(ix,iy),leftiy(ix,iy)) + te(ix,iy))
+     &           * wbbl(ix,iy,2) / (qe * hyl(ix,iy) * qc(ix,iy))         ! IYS 04.03.2019
+     &           *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv 05.03.99
+             endif
+           enddo
+         enddo
+
+         do iy = 0, ny 
+           do ix = 0, nx-1
+             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
+               veecrb(ix,iy,1) = radeldr*fac_ExB(ix,iy)                  !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
+     2           *(poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))        !srv 13.05.16 }
+     &           * wbbv(ix,iy,2) / (wbbv(ix,iy,3))**2 / hxb(ix,iy)       ! IYS 04.03.2019
+               vedia(ix,iy,1) =  raddidr*facdrift(ix,iy)* ! signmf*      !srv 11.01.13 07.06.00 17.05.99 25.04.00
+     &           (te(bottomix(ix,iy),bottomiy(ix,iy)) + te(ix,iy))*
+     &           0.5_R8*wbbv(ix,iy,2) / (qe * hxb(ix,iy))                ! IYS 04.03.2019
+     &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv 05.03.99
+             endif
+           enddo
+         enddo
+
+       else         ! drift_style                                    ! IYS 11.02.2020 {                            
+
+         write(*,fmt="(2(a20,i4))") 'drift_style = ',drift_style,
+     &      'redef_gmtry = ',redef_gmtry
+         CALL XERRAB (
+     &   'faulty definition of drift_style and redef_gmtry, ' // 
+     &   'or logical mistake occured')
 
        endif
 

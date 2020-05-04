@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_fb_post (nx, ny, ns, ismain, BoRiS,
-     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
+      subroutine b2stbc_fb_post (nx, ny, ns, ismain,
+     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch,
      &  sna0, smo0, she0, shi0, sch0, sne0,
      &  main_call, diagno)
       use b2mod_types
@@ -16,16 +16,14 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
-      real (kind=R8) :: BoRiS,
+      real (kind=R8) ::
      *  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
-      real (kind=R8) ::
-     *  kinrgy(-1:nx,-1:ny,0:ns-1)
+     *  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -193,7 +191,7 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_fb_pre (nx, ny, ns, ismain, BoRiS,
-     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
+     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fhm, fch,
      &  sna0, smo0, she0, shi0, sch0, sne0,
      &  main_call, diagno)
       use b2mod_types
@@ -220,10 +218,8 @@
      *  na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
-      real (kind=R8) ::
-     *  kinrgy(-1:nx,-1:ny,0:ns-1)
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhm(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -1411,9 +1407,7 @@
             if (fhiycore_kinetic_energy.eq.1) then
               do is = 0, ns-1
                 fhiycurr=fhiycurr+(1.0_R8-BoRiS)*
-     .           fna(topix(ix,-1),topiy(ix,-1),1,is)*0.5_R8*
-     .           (kinrgy(topix(ix,-1),topiy(ix,-1),is)+
-     .            kinrgy(ix,-1,is))
+     .           fhm(topix(ix,-1),topiy(ix,-1),1,is)
               enddo
             endif
           endif

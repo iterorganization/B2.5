@@ -67,6 +67,7 @@
       else
         call xerrab ('Invalid number of regions!')
       endif
+      write(*,*) 'jxi, jxa, jsep : ', jxi, jxa, jsep
       call xertst (-1.le.jsep.and.jsep.le.ny,
      2  'faulty parameter jsep')
       call ipgeti ('b2mwti_jxi',jxi)
@@ -75,7 +76,6 @@
       call ipgeti ('b2mwti_jxa',jxa)
       call xertst (-1.le.jxa.and.jxa.le.nx,
      2 'faulty internal parameter jxa')
-      write(*,*) 'jxi, jxa, jsep : ', jxi, jxa, jsep
       if (.not.LSN) write(*,*) 'Detected USN-like topology'
 
       call subend ()
@@ -104,6 +104,7 @@ cxpb  Compute position of additional targets in DN configuration
      &            nxtr.lt.nx)
           nxtr=nxtr+1
         enddo
+        write(*,*) 'nxtl, nxtr : ', nxtl, nxtr
       endif
 
       call subend ()

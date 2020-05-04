@@ -1,6 +1,7 @@
-      subroutine b2pinp(*)
+      subroutine b2pinp(iret)
       use b2mod_types
       implicit none
+      integer iret
 #include <DIMENSIONS.F>
 c
 c  version : 11.11.97 21:29
@@ -12,15 +13,17 @@ c----------------------------------------------------------------------
 #include "impcon.inc"
       integer lun
       parameter (lun=96)
-      logical open_file
-      character*16 ufile
+      logical open_file, file_ok
+      character*24 ufile
       external b2prdn, open_file
 c----------------------------------------------------------------------
 c*** Set up the input routine
 c
+      iret=0
       immed=.false.
       mimp=lun
       ufile='param.dg'
+      call find_file(ufile,file_ok)
 c      open(lun,file=ufile,status='old',err=998)
       if(open_file(lun,ufile,'modules/Uinp')) then
 c*** ... and read the data from dg
@@ -32,7 +35,8 @@ c*** ... and read the data from dg
       return
 c----------------------------------------------------------------------
   998 print *,'Error opening the file ',ufile
-      return 1
+      iret=1
+      return
 c----------------------------------------------------------------------
       end subroutine b2pinp
 c

@@ -27,11 +27,23 @@
      &  'faulty argument geom_match_dist')
       if(nnreg(0).eq.1) then
         jxi1=nx1/4
-        jxa1=3*nx1/4
+        jxa1=nx1/2
         jsep1=ny1/2
-      elseif(nnreg(0).eq.4 .or. nnreg(0).eq.5) then
+        call ipgeti ('b2ytdr_jsep1',jsep1)
+      elseif(nnreg(0).eq.4) then
+        if (cry1(leftcut1(1)+1,topcut1(1),0).lt.
+     .      cry1(leftcut1(1)+1,0,0)) then ! LSN topology
+          jxi1=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4
+          jxa1=rightcut1(1)-(rightcut1(1)-leftcut1(1))/4
+        else ! USN topology
+          LSN1 = .false.
+          jxi1=rightcut1(1)-(rightcut1(1)-leftcut1(1))/4
+          jxa1=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4
+        end if
+        jsep1=topcut1(1)-1
+      elseif(nnreg(0).eq.5) then
         jxi1=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4
-        jxa1=rightcut1(1)-(rightcut1(1)-leftcut1(1))/4
+        jxa1=leftcut1(1)+(rightcut1(1)-leftcut1(1))/2
         jsep1=topcut1(1)-1
       elseif(nnreg(0).eq.8) then
         jxi1=(leftcut1(1)+leftcut1(2))/2
@@ -49,16 +61,19 @@
             endif
           enddo
         enddo
+        topcut1(1)=jsep1+1
+        LSN1=crx1(-1,ny1,1).lt.crx1(nx1,ny1,0)
       else
         call xerrab ('Invalid number of regions!')
       endif
-      call xertst (-1.le.jsep1.and.jsep1.le.ny1,
-     2  'faulty parameter jsep')
-      call xertst (-1.le.jxi1.and.jxi1.le.nx1,
-     2 'faulty internal parameter jxi')
-      call xertst (-1.le.jxa1.and.jxa1.le.nx1,
-     2 'faulty internal parameter jxa')
       write(*,*) 'jxi1, jxa1, jsep1 : ', jxi1, jxa1, jsep1
+      call xertst (-1.le.jsep1.and.jsep1.le.ny1,
+     2  'faulty parameter jsep1')
+      call xertst (-1.le.jxi1.and.jxi1.le.nx1,
+     2 'faulty internal parameter jxi1')
+      call xertst (-1.le.jxa1.and.jxa1.le.nx1,
+     2 'faulty internal parameter jxa1')
+      if (.not.LSN1) write(*,*) 'Converting to a USN-like topology'
 
       call subend ()
       return

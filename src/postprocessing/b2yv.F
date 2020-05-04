@@ -14,6 +14,7 @@
       use b2mod_ma28
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_b2cmfs
       use b2mod_elements
 #ifdef WINDOWS
 ! AVDef is the AViz module file
@@ -37,7 +38,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer :: icase, ix, iy, isymm, is
+      integer :: icase, ix, iy, is
       integer :: lbc, ubc, lbr, ubr
       real(kind=R4), allocatable :: M(:,:)
       character(1) :: key
@@ -119,7 +120,8 @@
       call alloc_b2mod_indirect(nx,ny,nncutmax)                       !srv 25.11.02
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 *   ..read plasma state
       call cfverr(ninp(4), b2fplasma_version)

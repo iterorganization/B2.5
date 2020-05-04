@@ -849,7 +849,7 @@
       idum(0) = 1
       call cfwuin (nout(2), 1, idum, 'isymm') 
       call b2wugm (nout(2), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
      &  cell_width, cell_height)
 
       open(91,file='core_boundary.txt')

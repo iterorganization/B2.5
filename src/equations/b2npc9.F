@@ -153,6 +153,14 @@ cdjm Jan2017 update particle source components for balance
         call update_balance_sources_particles(nx,ny,isb,nb)
       endif
 
+      if (iout.ne.0) then                                             !srv 12.07.02 {
+        write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,pb,'b2npc9_pa0_'//chns)
+        call my_out(70,nx,ny,nb,'b2npc9_na0_'//chns)
+        wrk0=snb(:,:,0)+nb*snb(:,:,1)
+        call my_out(70,nx,ny,wrk0,'b2npc9_sna_input'//chns)
+      endif
+
 * ..particle balance
 *   ..compute residual
       if((solving.and.any(solvcreg(0:nnreg(0))))

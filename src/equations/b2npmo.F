@@ -412,7 +412,11 @@
 !$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim)
 #ifndef GFORTRAN
 #ifndef PGF90
+#ifndef CRAY
 !$OMP& COPYIN(last_solve_5)
+#else
+!$OMP& PRIVATE(last_solve_5)
+#endif
 #else
 !$OMP& PRIVATE(last_solve_5)
 #endif

@@ -310,11 +310,13 @@
        call b2wfr1 (nout(0))
       case ('adas')
        call b2wfr2 (nout(0))
+      case ('amns')
+       call b2wfr3 (nout(0))
       case default
        write (nout(0),'(/a/a)')
      &   ' Please check the origin of these rate coefficients;'//
      &   ' this program is unable to determine if they stem from',
-     &   ' the ADPAK package, the STRAHL package, ADAS,'//
+     &   ' the ADPAK package, the STRAHL package, ADAS, AMNS,'//
      &   ' or from some other source.'
       end select
 *   ..write rtns, rtzmin, rtzmax, rtzn
@@ -347,12 +349,13 @@
        endif
 *    ..display table
        call b2wfrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
-     &   rtnt, rtn, rtnn, rtzmin(is), rtzmax(is), rtzn(is), 
+     &   rtnt, rtn, rtnn, rtzmin(is), rtzmax(is), rtzn(is),
+     &   fix_recomb, zmax_recomb,
      &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
        call b2wgrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
-     &   rtnt, rtn, rtnn, rtzn(is), rtlsa(0,0,is),
-     &   rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
+     &   rtnt, rtn, rtnn, rtzn(is), fix_recomb, zmax_recomb,
+     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
 *    ..increment and loop
        is = is1

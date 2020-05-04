@@ -92,9 +92,10 @@
       integer n2, istg(0:2), is, k
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
-     &  acorte, acorti, acorpo, nasum, na0sum, 
+     &  acorte, acorti, acorpo, nasum, na0sum,
      &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),                            !srv 11.10.02
-     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)         !iyv 06.02.14
+     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
+     &  fna_53(-1:nx,-1:ny,0:1,0:ns-1), fne_53(-1:nx,-1:ny,0:1)
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, b2sasum, samax
@@ -325,8 +326,7 @@ ctmp.dpc
      &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
-          call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,   !srv 05.06.18
-     &     te, po, vedia, veecrb)
+          call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) ! vol, hx, hy, qz, bb,   !srv 05.06.18
           src_ni=0.0_R8
           src_ne=0.0_R8
           src_mo=0.0_R8
@@ -350,7 +350,7 @@ ctmp.dpc
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
      &     fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,     !srv 13.10.06 25.12.06 23.10.09
-     &     fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
+     &     fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &     cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,      !xpb
@@ -499,16 +499,18 @@ ctmp.dpc
      &          fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),
      &          flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &          fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &          fna_53(-1,-1,0,is),
      &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &          .false.)                                                 !djm Jan2017
            end do
 *      ..compute electron drift velocities
-           call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
-     &      te, po, vedia, veecrb)
+           call b2tfed (nx, ny, facdrift, fac_ExB,te,po,vedia,veecrb)
 *      ..compute other fluxes
+           call b2xpfe (nx, ny, ns, ns_ext, qe,
+     &      rza, za_ext, fna_53, fa_ext, fch_p, fne_53)                  !ajs 06.04.20
            call b2xpen (nx, ny, ns,
-     1      fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2      fhm, fhp, fhj, fht)
+     1      fna, fne, fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa,
+     2      rpt, te, ti, po, BoRiS, fhm, fhp, fhj, fht)
 *      ..compute ue, electron parallel velocity
            ue=0.0_R8
            do iy=-1,ny

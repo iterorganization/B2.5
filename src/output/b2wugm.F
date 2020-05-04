@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2wugm (nput, nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl,
      &  cell_width, cell_height)
       use b2mod_types
       use b2mod_indirect
@@ -17,7 +17,7 @@
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      &  qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
-     &  pbs(-1:nx,-1:ny,0:1), wbbc(-1:nx+1,-1:ny+1,0:3),
+     &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx+1,-1:ny+1,0:3),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
 *     (none)
@@ -483,9 +483,13 @@ cxpb-end
       if(newversion.ge.'01.001.063') then          !srv 15.02.11
         call cfwure (nput, n2*2, pbs, 'pbs')
       endif
-      if(newversion.ge.'03.000.006') then
-        idum(0)=redef_pbs
+      if(newversion.eq.'03.000.006') then
+        idum(0)=redef_gmtry
         call cfwuin (nput, 1, idum, 'redef_pbs')
+      elseif(newversion.ge.'03.000.007') then
+        idum(0)=redef_gmtry
+        call cfwuin (nput, 1, idum, 'redef_gmtry')
+        call cfwure (nput, n2*4, wbbl, 'wbbl')
       endif
       if(newversion.ge.'01.001.028') then
         call cfwuin (nput, n2*GRID_N_CELLFLAGS, cflags, 'cflags')

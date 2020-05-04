@@ -15,6 +15,7 @@
      *  gs1(:,:,:),
      *  hx1(:,:),
      *  hy1(:,:),
+     *  hz1(:,:),
      *  qz1(:,:,:),
      *  qc1(:,:),
      *  qcb1(:,:),
@@ -43,6 +44,7 @@
      *  region1(:,:,:),
      *  resignore1(:,:,:),
      *  cflags1(:,:,:)
+      logical, save :: LSN1
 
       type(B2GridMap), save :: gmap1
 
@@ -61,6 +63,7 @@
       allocate(gs1(-1:nxd,-1:nyd,0:2))
       allocate(hx1(-1:nxd,-1:nyd))
       allocate(hy1(-1:nxd,-1:nyd))
+      allocate(hz1(-1:nxd,-1:nyd))
       allocate(qz1(-1:nxd,-1:nyd,0:1))
       allocate(qc1(-1:nxd,-1:nyd))
       allocate(qcb1(-1:nxd,-1:nyd))
@@ -87,6 +90,7 @@
       allocate(region1(-1:nxd,-1:nyd,0:2))
       allocate(resignore1(-1:nxd,-1:nyd,1:2))
       allocate(cflags1(-1:nxd,-1:nyd,GRID_N_CELLFLAGS))
+      LSN1 = .true.
       b2mod_geo2_allocated = .true.
       end subroutine alloc_b2mod_geo2
 
@@ -103,6 +107,7 @@
          deallocate(gs1)
          deallocate(hx1)
          deallocate(hy1)
+         deallocate(hz1)
          deallocate(qz1)
          deallocate(qc1)
          deallocate(qcb1)

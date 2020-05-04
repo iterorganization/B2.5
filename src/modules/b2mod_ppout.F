@@ -2509,7 +2509,7 @@ c     ------------------------------------------------------------------
 c     READ_B2MOD_PPOUT_DATA reads data for use by ppout.
 c     (in) type  = rates --- read atomic rates data for use by ppout.
 c     (in) ninp  = stream number
-c     (in) label = special label data
+c     (in) flag  = special label data
 c     ------------------------------------------------------------------
 
 c   ..initialise

@@ -1,35 +1,40 @@
 # Test whether necessary variables are set
-ifndef LD_MSCL
-  $(error LD_MSCL not defined)
+LD_MSCL   ?= -L${SOLPSLIB} -lmscl
+ifdef USE_MPI
+LD_NETCDF ?= `pkg-config netcdf-parallel-fortran --libs`
+ifdef USE_OPENMP
+LD_NAG    ?= `pkg-config sci_mpi_mp --libs`
+else
+LD_NAG    ?= `pkg-config sci_mpi --libs`
 endif
-ifndef LD_NCARG
-  $(error LD_NCARG not defined)
+else
+LD_NETCDF ?= `pkg-config netcdf-fortran --libs`
+ifdef USE_OPENMP
+LD_NAG    ?= `pkg-config sci_mp --libs`
+else
+LD_NAG    ?= `pkg-config sci --libs`
 endif
-ifndef LD_NAG
-  $(error LD_NAG not defined)
-endif
-ifndef LD_NETCDF
-  $(error LD_NETCDF not defined)
 endif
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
-DEFINES += -DDOFLUSH -DNO_IEEE # -DNO_CDF
+DEFINES += -DDOFLUSH -DNO_IEEE -DNO_OPT
 ifndef SOLPS_CPP
 DEFINES += -DGFORTRAN
 endif
 
-CPP = /lib/cpp -traditional -ffreestanding
+CPP = /lib/cpp -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 SED =
 LINK_MOD = 
 
-FC = gfortran
+FC = ftn
 
+FCOPTS = -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 ifdef SOLPS_DEBUG
-FCOPTS = -g -fbounds-check -fno-second-underscore -fbacktrace -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
+FCOPTS += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
 else
-FCOPTS = -O2 -fno-second-underscore -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
+FCOPTS += -O2
 endif
 
 ifdef USE_OPENMP
@@ -78,12 +83,17 @@ INCMODS  = -I${IMAS_PREFIX}/include/gfortran
 IMASLIBS = ${LD_UAL}
 endif
 
+ifdef USE_MPI
+INCMODS += ${MPI_CPP}
+LDLIBES += ${LD_MPI}
+endif
+
 ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = $(FC)
-# LDOPTS = -Bstatic
+LDOPTS += -dynamic -fpic -mcmodel=medium
 
 LCPP = ${LD_SONNET}
 

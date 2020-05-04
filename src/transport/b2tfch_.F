@@ -32,8 +32,6 @@
      1   qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2   ni(-1:nx,-1:ny), facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      2   fac_vis(-1:nx,-1:ny)
-      real (kind=R8) :: cutlo
-      parameter (cutlo = 1.0e-60_R8)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   fch(-1:nx,-1:ny,0:1), fch_p(-1:nx,-1:ny,0:1),
@@ -78,7 +76,6 @@
       save ncall, fch_ion_neutral, fch_anomalous, dia_cur, fch_inert,    !srv 07.07.99
      &     vis_par, vis_per, vis_q, sig_stoch                            !srv 17.05.99 11.07.99 22.11.99
 *   ..procedures
-      intrinsic max, abs
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization

@@ -24,7 +24,7 @@
       integer, allocatable, save :: imapx_tmp(:), imapy_tmp(:)
       integer, allocatable, save :: xymap_tmp(:,:)
       integer, save :: debug_init_wall
-      real (kind=R8) :: qin, qel, normal_r, normal_z, torl,
+      real (kind=R8) :: qpl, qex, normal_r, normal_z, torl,
      *  xa, ya, xa2, ya2, xb, yb, xo, yo, nhalf_r, nhalf_z, nhalf,
      *  xap, yap, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
      *  dist, distp, dint, sum,
@@ -716,28 +716,18 @@ cxpb Set constant temperature
 cxpb Compute incoming heat flux
             if (bottomiy(imapx(ibnd),imapy(ibnd)).eq.-2) then
 cxpb          South boundary
-              qin = max(0.0_R8,
-     &           -fhi(topix(imapx(ibnd),imapy(ibnd)),
+              qpl = max(0.0_R8,
+     &           -fht(topix(imapx(ibnd),imapy(ibnd)),
      &                topiy(imapx(ibnd),imapy(ibnd)),1))/
      &            gs(topix(imapx(ibnd),imapy(ibnd)),
      &               topiy(imapx(ibnd),imapy(ibnd)),1)
-              qin = qin + max(0.0_R8,
+              qex = max(0.0_R8,
      &           -fhi_ext(topix(imapx(ibnd),imapy(ibnd)),
      &                topiy(imapx(ibnd),imapy(ibnd)),1))/
      &            gs(topix(imapx(ibnd),imapy(ibnd)),
      &               topiy(imapx(ibnd),imapy(ibnd)),1)
-              do is=0,ns-1
-                qin=qin+max(0.0_R8,
-     &             -fna(topix(imapx(ibnd),imapy(ibnd)),
-     &                  topiy(imapx(ibnd),imapy(ibnd)),1,is))
-     &             /gs(topix(imapx(ibnd),imapy(ibnd)),
-     &                 topiy(imapx(ibnd),imapy(ibnd)),1)*
-     &             ((kinrgy(imapx(ibnd),imapy(ibnd),is)+
-     &                   ti(imapx(ibnd),imapy(ibnd)))*(1.0_R8-BoRiS) +
-     &              rpt(imapx(ibnd),imapy(ibnd),is)*ev)
-              enddo
               do is=0,ns_ext-1
-                qin=qin+max(0.0_R8,
+                qex = qex + max(0.0_R8,
      &             -fa_ext(topix(imapx(ibnd),imapy(ibnd)),
      &                     topiy(imapx(ibnd),imapy(ibnd)),1,is))
      &             /gs(topix(imapx(ibnd),imapy(ibnd)),
@@ -747,62 +737,34 @@ cxpb          South boundary
      &               ta_ext(imapx(ibnd),imapy(ibnd),is))*(1.0_R8-BoRiS)
      &              +pt_ext(imapx(ibnd),imapy(ibnd),is)*ev)
               enddo
-              qel = max(0.0_R8,
-     &           -(fhe(topix(imapx(ibnd),imapy(ibnd)),
-     &                topiy(imapx(ibnd),imapy(ibnd)),1)+
-     &            (1.0_R8-BoRiS)*fne(topix(imapx(ibnd),imapy(ibnd)),
-     &                topiy(imapx(ibnd),imapy(ibnd)),1)*
-     &                te(imapx(ibnd),imapy(ibnd))))/
-     &            gs(topix(imapx(ibnd),imapy(ibnd)),
-     &               topiy(imapx(ibnd),imapy(ibnd)),1)
             else if (topiy(imapx(ibnd),imapy(ibnd)).eq.ny+1) then
 cxpb          North boundary
-              qin = max(0.0_R8,fhi(imapx(ibnd),imapy(ibnd),1))
+              qpl = max(0.0_R8,fht(imapx(ibnd),imapy(ibnd),1))
      &           /gs(imapx(ibnd),imapy(ibnd),1)
-              qin = qin + max(0.0_R8,fhi_ext(imapx(ibnd),imapy(ibnd),1))
+              qex = max(0.0_R8,fhi_ext(imapx(ibnd),imapy(ibnd),1))
      &           /gs(imapx(ibnd),imapy(ibnd),1)
-              do is=0,ns-1
-                qin=qin+max(0.0_R8,fna(imapx(ibnd),imapy(ibnd),1,is))
-     &             /gs(imapx(ibnd),imapy(ibnd),1)*
-     &            ((kinrgy(imapx(ibnd),imapy(ibnd),is)+
-     &              ti(imapx(ibnd),imapy(ibnd)))*(1.0_R8-BoRiS) +
-     &              rpt(imapx(ibnd),imapy(ibnd),is)*ev)
-              enddo
               do is=0,ns_ext-1
-                qin=qin+max(0.0_R8,fa_ext(imapx(ibnd),imapy(ibnd),1,is))
+                qex = qex + max(0.0_R8,
+     &              fa_ext(imapx(ibnd),imapy(ibnd),1,is))
      &             /gs(imapx(ibnd),imapy(ibnd),1)*
      &             ((0.5_R8*am_ext(is)*mp*
      &              ua_ext(imapx(ibnd),imapy(ibnd),is)**2+
      &              ta_ext(imapx(ibnd),imapy(ibnd),is))*(1.0_R8-BoRiS)
      &             +pt_ext(imapx(ibnd),imapy(ibnd),is)*ev)
               enddo
-              qel = max(0.0_R8,fhe(imapx(ibnd),imapy(ibnd),1)+
-     &          (1.0_R8-BoRiS)*fne(imapx(ibnd),imapy(ibnd),1)*
-     &                          te(imapx(ibnd),imapy(ibnd)))
-     &                         /gs(imapx(ibnd),imapy(ibnd),1)
             else if (leftix(imapx(ibnd),imapy(ibnd)).eq.-2) then
 cxpb          West boundary
-              qin = max(0.0_R8,-fhi(rightix(imapx(ibnd),imapy(ibnd)),
-     &                          rightiy(imapx(ibnd),imapy(ibnd)),0))
+              qpl = max(0.0_R8,-fht(rightix(imapx(ibnd),imapy(ibnd)),
+     &                              rightiy(imapx(ibnd),imapy(ibnd)),0))
      &           /gs(rightix(imapx(ibnd),imapy(ibnd)),
      &               rightiy(imapx(ibnd),imapy(ibnd)),0)
-              qin = qin + max(0.0_R8,
+              qex = max(0.0_R8,
      &                 -fhi_ext(rightix(imapx(ibnd),imapy(ibnd)),
      &                          rightiy(imapx(ibnd),imapy(ibnd)),0))
      &           /gs(rightix(imapx(ibnd),imapy(ibnd)),
      &               rightiy(imapx(ibnd),imapy(ibnd)),0)
-              do is=0,ns-1
-                qin=qin+max(0.0_R8,
-     &             -fna(rightix(imapx(ibnd),imapy(ibnd)),
-     &                  rightiy(imapx(ibnd),imapy(ibnd)),0,is))
-     &              /gs(rightix(imapx(ibnd),imapy(ibnd)),
-     &                  rightiy(imapx(ibnd),imapy(ibnd)),0)*
-     &             ((kinrgy(imapx(ibnd),imapy(ibnd),is)+
-     &                   ti(imapx(ibnd),imapy(ibnd)))*(1.0_R8-BoRiS) +
-     &              rpt(imapx(ibnd),imapy(ibnd),is)*ev)
-              enddo
               do is=0,ns_ext-1
-                qin=qin+max(0.0_R8,
+                qex = qex + max(0.0_R8,
      &             -fa_ext(rightix(imapx(ibnd),imapy(ibnd)),
      &                     rightiy(imapx(ibnd),imapy(ibnd)),0,is))
      &              /gs(rightix(imapx(ibnd),imapy(ibnd)),
@@ -812,32 +774,14 @@ cxpb          West boundary
      &              ta_ext(imapx(ibnd),imapy(ibnd),is))*(1.0_R8-BoRiS)
      &             +pt_ext(imapx(ibnd),imapy(ibnd),is)*ev)
               enddo
-              qel = max(0.0_R8,
-     &           -(fhe(rightix(imapx(ibnd),imapy(ibnd)),
-     &                 rightiy(imapx(ibnd),imapy(ibnd)),0)+
-     &             fne(rightix(imapx(ibnd),imapy(ibnd)),
-     &                 rightiy(imapx(ibnd),imapy(ibnd)),0)*
-     &              te(rightix(imapx(ibnd),imapy(ibnd)),
-     &                 rightiy(imapx(ibnd),imapy(ibnd)))*
-     &             (1.0_R8-BoRiS)))
-     &           /gs(rightix(imapx(ibnd),imapy(ibnd)),
-     &               rightiy(imapx(ibnd),imapy(ibnd)),0)
             else if (rightix(imapx(ibnd),imapy(ibnd)).eq.nx+1) then
 cxpb          East boundary
-              qin = max(0.0_R8,fhi(imapx(ibnd),imapy(ibnd),0))
+              qpl = max(0.0_R8,fht(imapx(ibnd),imapy(ibnd),0))
      &           /gs(imapx(ibnd),imapy(ibnd),0)
-              qin = qin + max(0.0_R8,fhi_ext(imapx(ibnd),imapy(ibnd),0))
+              qex = max(0.0_R8,fhi_ext(imapx(ibnd),imapy(ibnd),0))
      &           /gs(imapx(ibnd),imapy(ibnd),0)
-              do is=0,ns-1
-                qin = qin +
-     &             max(0.0_R8,fna(imapx(ibnd),imapy(ibnd),0,is))
-     &             /gs(imapx(ibnd),imapy(ibnd),0)*
-     &            ((kinrgy(imapx(ibnd),imapy(ibnd),is)+
-     &              ti(imapx(ibnd),imapy(ibnd)))*(1.0_R8-BoRiS) +
-     &              rpt(imapx(ibnd),imapy(ibnd),is)*ev)
-              enddo
               do is=0,ns_ext-1
-                qin = qin +
+                qex = qex +
      &             max(0.0_R8,fa_ext(imapx(ibnd),imapy(ibnd),0,is))
      &             /gs(imapx(ibnd),imapy(ibnd),0)*
      &            ((0.5_R8*am_ext(is)*mp*
@@ -845,14 +789,10 @@ cxpb          East boundary
      &              ta_ext(imapx(ibnd),imapy(ibnd),is))*(1.0_R8-BoRiS)
      &             +pt_ext(imapx(ibnd),imapy(ibnd),is)*ev)
               enddo
-              qel = max(0.0_R8,fhe(imapx(ibnd),imapy(ibnd),0)+
-     &                         fne(imapx(ibnd),imapy(ibnd),0)*
-     &                         te(imapx(ibnd),imapy(ibnd))*
-     &          (1.0_R8-BoRiS))/gs(imapx(ibnd),imapy(ibnd),0)
             endif
 cxpb Use 1-D equilibrium profile
             wrk(1:ndepth_nml) = target_temp(ibnd,1:ndepth_nml)
-            call heatdiff1D(ibnd,ns,qin+qel,0.0_R8,wrk,output)
+            call heatdiff1D(ibnd,ns,qpl+qex,0.0_R8,wrk,output)
             target_temp(ibnd,1:ndepth_nml) = wrk(1:ndepth_nml)
           endif   ! plate_option
         enddo   !  ibnd

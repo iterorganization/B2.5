@@ -384,6 +384,12 @@
         call cfrure (nread, size(fchvisq), fchvisq, 'fchvisq')
         call cfrure (nread, size(fchinert), fchinert, 'fchinert')
       endif
+      if(b2fplasma_version.ge.'03.000.007') then
+        call cfrure (nread, size(fht), fht, 'fht')
+        call cfrure (nread, size(fhj), fhj, 'fhj')
+        call cfrure (nread, size(fhm), fhm, 'fhm')
+        call cfrure (nread, size(fhp), fhp, 'fhp')
+      endif
 
       return
       end subroutine read_b2mod_plasma
@@ -476,7 +482,12 @@
         call cfwure (nwrite, size(fchvisq), fchvisq, 'fchvisq')
         call cfwure (nwrite, size(fchinert), fchinert, 'fchinert')
       endif
-
+      if(newversion.ge.'03.000.007') then
+        call cfwure (nwrite, size(fht), fht, 'fht')
+        call cfwure (nwrite, size(fhj), fhj, 'fhj')
+        call cfwure (nwrite, size(fhm), fhm, 'fhm')
+        call cfwure (nwrite, size(fhp), fhp, 'fhp')
+      endif
       return
       end subroutine write_b2mod_plasma
 
