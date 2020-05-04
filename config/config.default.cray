@@ -28,7 +28,7 @@ endif
 ifdef SOLPS_DEBUG
 FCOPTS += -O0 -hfp0 -g -G0 -K trap=divz -K trap=fp -Rb
 else
-FCOPTS += -O3 -hfp3
+FCOPTS += -O2 -hfp2
 endif
 OBJDEST = -ef -em -J${OBJDIR}
 INCMOD = -p

@@ -136,7 +136,7 @@
        call b2xvff (nx, ny, chvi, 'chvi')
       endif
 
-      call b2tipsch (nx, ny, ns, facdrift, vol, hx, hy, qz,
+      call b2tipsch (nx, ny, ns, facdrift, !vol, hx, hy,
      1  na, ti, cddi, coni, fhiPSch)
       
       fhi_mdf = 0.0e0_R8                                              !srv 13.10.06
