@@ -30,8 +30,10 @@
       function get_stacksize_s()
       character*12 get_stacksize_s
       character*12 stacksize
-      stacksize = '128 MB'
+      logical streql
+      external streql
       call getenv ('OMP_STACKSIZE', stacksize)
+      if (streql(stacksize,' ')) stacksize = '128 MB'
       get_stacksize_s = trim(stacksize)
 #endif
       end function

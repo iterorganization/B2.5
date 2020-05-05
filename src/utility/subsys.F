@@ -38,7 +38,7 @@
       call timer%start(srname)
 #endif
 #ifdef _OPENMP
-      if (get_num_threads().gt.1) return !!FR do not do the stack tracing if running in parallel
+      if (get_num_threads().gt.1.or.in_parallel()) return !!FR do not do the stack tracing if running in parallel
 #endif
 *   ..test nchs
       call xertst (nchs.ne.nchmx, 'subini--error, nchs.eq.nchmx')
@@ -58,7 +58,7 @@ cxpb      write(*,'(a,a8,i3)') 'subini: ',trim(srname),nchs
       call timer%stop()
 #endif
 #ifdef _OPENMP
-      if (get_num_threads().gt.1) return  !!FR do not do the stack tracing if running in parallel
+      if (get_num_threads().gt.1.or.in_parallel()) return  !!FR do not do the stack tracing if running in parallel
 #endif
 *   ..test nchs
       call xertst (nchs.gt.0, 'subend--error, nchs.le.0')
