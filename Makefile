@@ -311,9 +311,9 @@ NOPLOT: ${IDEXE}
 endif
 ifdef SOLPS_CPP
 ifdef LD_NETCDF
-DEFAULT: ${NCEXE}
-ALL: ${NCEXE}
-NOPLOT: ${NCEXE}
+DEFAULT: ${NCEXE} ${NCODIR}/nc2text
+ALL: ${NCEXE} ${NCODIR}/nc2text
+NOPLOT: ${NCEXE} ${NCODIR}/nc2text
 endif
 endif
 MAIN: VERSION ${MNEXE}
@@ -849,6 +849,8 @@ ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cd
 	@${BLD} $@ ${LIBOBJS}
 
 test:	${TTEXE}
+
+${NCODIR}/nc2text: nc2text_simple
 
 nc2text_simple: ${NCEXE}
 
