@@ -850,7 +850,9 @@ ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cd
 
 test:	${TTEXE}
 
-nc2text: nc2text_simple
+nc2text: ${NCODIR}/nc2text
+
+${NCODIR}/nc2text: ${NCODIR}/nc2text_simple
 	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
 
 nc2text_simple: ${NCEXE}
