@@ -239,7 +239,7 @@ IDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_ID}}
 TTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_TT}}
 NCEXE = ${patsubst %.exe, ${NCODIR}/%.exe, ${PROG_NC}}
 
-.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force test nc2text_simple
+.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force test nc2text_simple nc2text
 
 DEFAULT: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE}
 ALL: VERSION ${MNEXE} ${OEEXE} ${OTEXE} ${GEEXE} ${GREXE} ${XDEXE}
@@ -261,9 +261,9 @@ NOPLOT: ${IDEXE}
 endif
 ifdef SOLPSTOP
 ifdef LD_NETCDF
-DEFAULT: ${NCEXE} ${NCODIR}/nc2text
-ALL: ${NCEXE} ${NCODIR}/nc2text
-NOPLOT: ${NCEXE} ${NCODIR}/nc2text
+DEFAULT: ${NCEXE} nc2text
+ALL: ${NCEXE} nc2text
+NOPLOT: ${NCEXE} nc2text
 endif
 endif
 MAIN: VERSION ${MNEXE}
@@ -791,7 +791,8 @@ ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cd
 
 test:	${TTEXE}
 
-${NCODIR}/nc2text: nc2text_simple
+nc2text: nc2text_simple
+	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
 
 nc2text_simple: ${NCEXE}
 
