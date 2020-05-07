@@ -19,7 +19,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_geo
-     &   , only : hyl, hxb, hzl
+     &   , only : hyl, hxb, hzl, hzb
       use b2mod_balance                                                 !djm Jan2017
      & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
      &          fna_ch, fna_pschused, balance_netcdf
@@ -112,7 +112,8 @@
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      *   wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny), wrk5(-1:nx,-1:ny),       !srv 11.09.09
      *   wrk6(-1:nx,-1:ny), wrk7(-1:nx,-1:ny), wrk8(-1:nx,-1:ny),       !srv 11.09.09 !iys 17.04.12
-     &   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
+     &   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), wrk(-1:nx,-1:ny),
+     &   wrk9(-1:nx,-1:ny)                                              ! IYS 07.05.2020
       real (kind=R8) ::
      *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1),                     !srv 01.10.99 !lk 09.06.11
      *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                         !srv 08.10.04
@@ -704,7 +705,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &        kmprti, cddb, conb)
 
 *   ..compute Pfirsch-Schlueter particle fluxes                          !srv 13.10.06
-      call b2tnpsch (nx, ny, isb, guard_flows, facdrift, zb,            !srv 02.04.18
+       call b2tnpsch (nx, ny, isb, guard_flows, facdrift, zb,            !srv 02.04.18
      &   nb, ti, cddb, fnbPSch)
 
       endif
@@ -835,18 +836,28 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &    (mb*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))))*
      &    min(vol(leftix(ix,iy),leftiy(ix,iy)),vol(ix,iy))/
      &    (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
+
+         if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+           scur =
+     &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
+     &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
+     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
+         else
+           scur = 0.0_R8
+         end if
+
          if(drift_style.eq.0)then                                       !srv 21.06.08
           flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy)+     !srv 20.06.08
      1     (ubdia(ix,iy,0)+ubdia(leftix(ix,iy),leftiy(ix,iy),0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
-     7     hx(leftix(ix,iy),leftiy(ix,iy)))
+     7     hx(leftix(ix,iy),leftiy(ix,iy))) + scur
           flo_mdf = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+             !srv 17.07.08 {
      &      term(ix,iy) +                                               !iyv 19.04.07
      1     (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
-     7     hx(leftix(ix,iy),leftiy(ix,iy)))                             !srv 17.07.08 }
+     7     hx(leftix(ix,iy),leftiy(ix,iy))) + scur                            !srv 17.07.08 }
           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0)+                         !srv 13.09.02 { 01.07.05 20.01.11
      &     pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +                       !iyv 30.05.08 !srv 03.10.08
      1     (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
@@ -864,7 +875,10 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      5     2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hx(ix,iy)
      6     +hz(leftix(ix,iy),leftiy(ix,iy))*
      7     vol(leftix(ix,iy),leftiy(ix,iy))/
-     8     hx(leftix(ix,iy),leftiy(ix,iy)))
+     8     hx(leftix(ix,iy),leftiy(ix,iy))) + scur*
+     &     (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &     hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
+     &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+
      &                  term(ix,iy)                                     !srv 20.06.08
          elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then      !srv 21.06.08 {
@@ -872,12 +886,12 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &      term(ix,iy) +                                               !iyv 19.04.07
      4      ubdia(ix,iy,0)*
      5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/              !srv 01.03.00
-     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 01.03.00
+     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))) + scur          !srv 01.03.00
           flo_mdf = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+             !srv 13.10.06 {
      &      term(ix,iy) +                                               !iyv 19.04.07
      &      vbecrb(ix,iy,0)*
      &      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
-     &      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
+     &      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))) + scur
           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0)+                         !srv 13.09.02 { 01.07.05 20.01.11
      &     pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +                       !iyv 30.05.08 !srv 03.10.08
      4     vbecrb(ix,iy,0)*
@@ -889,44 +903,39 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      2     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      3      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
           flo2dia = cvlbhz(ix,iy,0)+pbshz(ix,iy,0)*wrk0(ix,iy)+
-     &      termhz(ix,iy) + ub2dia(ix,iy,0)*
-     &     (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
-     &      hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
-     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                  !srv it is correct. Keep in mind hz*vol/hx and interpolation of hz
+     &      termhz(ix,iy) + 
+     &   (ub2dia(ix,iy,0) / (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                  !srv it is correct. Keep in mind hz*vol/hx and interpolation of hz
+     &      + scur / (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy))))
+     &      *(hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &      hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))
+
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy) +
      &                  term(ix,iy)                                     !srv 20.06.08 20.10.09
          elseif (drift_style .eq. 2 .and. redef_gmtry .eq. 1) then      !IYS 04.03.2019 - 11.02.2020
           flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+                 !srv 01.07.05
      &      term(ix,iy) +                                               !iyv 19.04.07
-     &      ubdia(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)                        !IYS 04.03.2019
+     &      ubdia(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy) + scur                 !IYS 04.03.2019
           flo_mdf = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+             !srv 13.10.06 {
      &      term(ix,iy) +                                               !iyv 19.04.07
-     &      vbecrb(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)                       !IYS 04.03.2019
+     &      vbecrb(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy) + scur                !IYS 04.03.2019
           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0)+                         !srv 13.09.02 { 01.07.05 20.01.11
      &     pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +                       !iyv 30.05.08 !srv 03.10.08
      &     vbecrb(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)                        !IYS 04.03.2019
           flo_53 = pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +               !ajs 06.04.20 Part of the convective flow added in total energy flux
      1     vbecrb(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)
           flo2dia = cvlbhz(ix,iy,0)+pbshz(ix,iy,0)*wrk0(ix,iy)+
-     & termhz(ix,iy) + ub2dia(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)*hzl(ix,iy) !IYS 04.03.2019 - 11.02.2020
+     &     termhz(ix,iy) + 
+     &     (ub2dia(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy) + scur)*hzl(ix,iy)    ! IYS 04.03.2019 - 11.02.2020
 !     &      *(hz(ix,iy) + hz(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8       !IYS 04.03.2019 - 11.02.2020
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy) +
      &                  term(ix,iy)                                     !srv 20.06.08 20.10.09
          endif                                                          !srv 21.06.08 }
-         if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
-           scur =
-     &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
-     &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
-     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
-         else
-           scur = 0.0_R8
-         end if
-         flo = flo + scur
-         flo_mdf = flo_mdf + scur
-         flo2dia = flo2dia + scur*
-     &    (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
-     &     hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
-     &    (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+!         flo = flo + scur
+!         flo_mdf = flo_mdf + scur
+!         flo2dia = flo2dia + scur*
+!     &    (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
+!     &     hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
+!     &    (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
          if (no_hybr.eq.0) then
            if(no_Ptncr_x_co.eq.0) then                                  !srv 13.10.06 {
              con_mdf(ix,iy)  = hybr(flo_mdf,cdnb(ix,iy,0))
@@ -1229,31 +1238,60 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
           wrk6(ix,iy) = 0.0_R8
+          wrk9(ix,iy) = 0.0_R8
          else
-          wrk6(ix,iy) = vbdia(ix,iy,0)*
-     5     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
-     6     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
-         endif
-        enddo
-       enddo
-       if(.not. is_neutral(isb))
-     &  call my_out(70,nx,ny,wrk6,'b2tfnb_vadianax'//chns)
-        do iy = -1, ny
-         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2) then
-           wrk6(ix,iy) = 0.0_R8
-          else
+          if (drift_style.eq.0) then
+           wrk6(ix,iy) = 
+     &      (ubdia(ix,iy,0)+vbdia(leftix(ix,iy),leftiy(ix,iy),0))/
+     5      2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
+     6      +vol(leftix(ix,iy),leftiy(ix,iy))/
+     7      hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+           wrk9(ix,iy) = 
+     &      (vbdia(ix,iy,0)+vbdia(leftix(ix,iy),leftiy(ix,iy),0))/
+     5      2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hx(ix,iy)
+     6      +hz(leftix(ix,iy),leftiy(ix,iy))*
+     7      vol(leftix(ix,iy),leftiy(ix,iy))/
+     8      hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+          elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then
            wrk6(ix,iy) = vbdia(ix,iy,0)*
+     5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
+     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+           wrk9(ix,iy) = vbdia(ix,iy,0)*
      5      (hz(ix,iy)*vol(ix,iy)+hz(leftix(ix,iy),leftiy(ix,iy))
      5      *vol(leftix(ix,iy),leftiy(ix,iy)))/
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
      &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+          elseif (drift_style .eq. 2 .and. redef_gmtry .eq. 1) then
+           wrk6(ix,iy) = vbdia(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)*     ! IYS 07.05.2020
+     &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+           wrk9(ix,iy)= vbdia(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy)*hzl(ix,iy)     ! IYS 07.05.2020
+     &      *(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           endif
-         enddo
+         endif
         enddo
-        if(.not. is_neutral(isb) .and. (iout_b2wdat.eq.4 .and. balance))
-     &   call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzx'//chns)
+       enddo
+       if(.not. is_neutral(isb)) then
+        call my_out(70,nx,ny,wrk6,'b2tfnb_vadianax'//chns)
+        call my_out(70,nx,ny,wrk9,'b2tfnb_vadianahzx'//chns)
+       endif
+!        do iy = -1, ny
+!         do ix = -1, nx
+!          if(leftix(ix,iy).eq.-2) then
+!           wrk6(ix,iy) = 0.0_R8
+!          else
+!           wrk6(ix,iy) = vbdia(ix,iy,0)*
+!     5      (hz(ix,iy)*vol(ix,iy)+hz(leftix(ix,iy),leftiy(ix,iy))
+!     5      *vol(leftix(ix,iy),leftiy(ix,iy)))/
+!     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+!     &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+!          endif
+!         enddo
+!        enddo
+!        if(.not. is_neutral(isb) .and. (iout_b2wdat.eq.4 .and. balance))
+!     &   call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzx'//chns)
         call my_out(70,nx,ny,fnb_fcor(-1,-1,0),'b2tfnb_fnb_fcorx'//chns)
       endif                                                             !srv 11.09.09 }
 
@@ -1357,11 +1395,11 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
            flo_mdf = cvlb(ix,iy,1)+vbecrb(ix,iy,1)*gs(ix,iy,1)          !IYS 04.03.2019, srv 01.06.06 {
      &      +scur
            flo2dia = cvlbhz(ix,iy,1)+                                   !IYS 04.03.2019
-     &       ub2dia(ix,iy,1)*gs(ix,iy,1)*hzl(ix,iy) +                   !IYS 04.03.2019
-     &      (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
-     &       hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
-     &      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &       scur
+     &       (ub2dia(ix,iy,1)*gs(ix,iy,1) + scur) * hzb(ix,iy)          !IYS 04.03.2019
+!     &      (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+!     &       hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
+!     &      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
+!     &       scur
            flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1)+
      &      vbecrb(ix,iy,1)*gs(ix,iy,1)          !IYS 04.03.2019        !srv 13.09.02 ( 20.01.11
            flo_53 = vbecrb(ix,iy,1)*gs(ix,iy,1)
@@ -1650,35 +1688,65 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
       if((iout_b2npmo.ne.0 .and. balance) .or. 
      &     (iout_b2wdat.eq.4 .and. balance) .or. iout.eq.1) then
        write(chns,'(i3.3)') isb
+       write(*,*) 'b2tfnb: isb = ',isb,' drift_style = ',drift_style,
+     &   ' redef_gmtry = ', redef_gmtry
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
            wrk6(ix,iy) = 0.0_R8
+           wrk9(ix,iy) = 0.0_R8
          else
+          if (drift_style.eq.0) then
+           wrk6(ix,iy) = 0.5_R8*(vbdia(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
+     &      +vbdia(bottomix(ix,iy),bottomiy(ix,iy),1)*
+     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
+     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+           wrk9(ix,iy) = 
+     &       (vbdia(ix,iy,1)+vbdia(bottomix(ix,iy),bottomiy(ix,iy),1))
+     &       /2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hy1(ix,iy)+           !srv 01.10.99 09.01.01
+     &        hz(bottomix(ix,iy),bottomiy(ix,iy))
+     5                        *vol(bottomix(ix,iy),bottomiy(ix,iy))/
+     &        hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+          elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then
            wrk6(ix,iy) = vbdia(ix,iy,1)*
-     5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+     5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+           wrk9(ix,iy) = vbdia(ix,iy,1)*
+     5      (hz(ix,iy)*vol(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy))
+     5      *vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
      &      (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+          elseif (drift_style .eq. 2 .and. redef_gmtry .eq. 1) then
+            wrk6(ix,iy) = vbdia(ix,iy,1)*gs(ix,iy,1)*
+     &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+            wrk9(ix,iy) = vbdia(ix,iy,1)*gs(ix,iy,1)*hzb(ix,iy)*
+     &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+          endif
          endif
         enddo
        enddo
-       if(.not. is_neutral(isb))
-     &  call my_out(70,nx,ny,wrk6,'b2tfnb_vadianay'//chns)
-       do iy = -1, ny
-        do ix = -1, nx
-         if(bottomiy(ix,iy).eq.-2) then
-          wrk6(ix,iy) = 0.0_R8
-         else
-          wrk6(ix,iy) = vbdia(ix,iy,1)*
-     5     (hz(ix,iy)*vol(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy))
-     5     *vol(bottomix(ix,iy),bottomiy(ix,iy)))/
-     6     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &     (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
-         endif
-        enddo
-       enddo
-       if(.not. is_neutral(isb) .and. (iout_b2wdat.eq.4 .and. balance))
-     &  call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzy'//chns)
+       if(.not. is_neutral(isb)) then
+        call my_out(70,nx,ny,wrk6,'b2tfnb_vadianay'//chns)
+        call my_out(70,nx,ny,wrk9,'b2tfnb_vadianahzy'//chns)
+       endif
+!       do iy = -1, ny
+!        do ix = -1, nx
+!         if(bottomiy(ix,iy).eq.-2) then
+!          wrk6(ix,iy) = 0.0_R8
+!         else
+!          wrk6(ix,iy) = vbdia(ix,iy,1)*
+!     5     (hz(ix,iy)*vol(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy))
+!     5     *vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+!     6     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+!     &     (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+!         endif
+!        enddo
+!       enddo
+!       if(.not. is_neutral(isb) .and. (iout_b2wdat.eq.4 .and. balance))
+!     &  call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzy'//chns)
        call my_out(70,nx,ny,fnb_fcor(-1,-1,1),'b2tfnb_fnb_fcory'//chns)
       endif                                                             !srv 11.09.09 }
 
