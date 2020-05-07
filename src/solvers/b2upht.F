@@ -105,11 +105,11 @@
           dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
          endif
          if (solvereg(ireg).and.solvireg(ireg).and.solvnreg(ireg)) then
-          dtn = rxf*max(-tn(iCv),(cortn(iCv)+cortt(iCv))/2.0_R8)
+          dtn(iCv) = rxf*max(-tn(iCv),(cortn(iCv)+cortt(iCv))/2.0_R8)
          elseif (solvnreg(ireg)) then
-          dtn = rxf*max(-tn(iCv),cortn(iCv))
+          dtn(iCv) = rxf*max(-tn(iCv),cortn(iCv))
          else 
-          dtn=0.0_R8
+          dtn(iCv) = 0.0_R8
          endif
         else if (stylec.eq.1) then
 
