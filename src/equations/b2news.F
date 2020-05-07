@@ -282,6 +282,7 @@
         call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
      &   na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)                !srv 16.06.08
 *   ..compute transport coefficients
+#ifdef WG_TODO
         call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,            !srv 23.11.10
      1   bb, conn, vol, gs, hx, hy, hz, qz, qc, qs, pbs, crx, cry,
      .   bzb, lnlam,                                                     !srv 13.10.06 01.07.09
@@ -295,6 +296,7 @@
           call hbout('b2ne_npmo   ',nx,ny,ns,te,'te',ti,'ti',
      &     na,'na',ua,'ua',resmo,'resmo',corua,'corua')
         endif
+#endif
 *   ..re-compute source terms if necessary                               !xpb
         if((wrong_flow .and. ipass.ne.0) .or. ncall.eq.0) then           !xpb
 *     ..re-compute source linearisation                                  !xpb
