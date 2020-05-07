@@ -2749,6 +2749,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           po(ix,iy)        = st % pl % po(ic)
           te(ix,iy)        = st % pl % te(ic) 
           ti(ix,iy)        = st % pl % ti(ic) 
+          tn(ix,iy)        = st % pl % tn(ic) 
 
 ! B2coeff
           ceqp(ix,iy) = st % co % ceqp(ic)
@@ -2759,6 +2760,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
           vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
           hci0(ix,iy)            = st % co % hci0(ic)
+          hcn0(ix,iy)            = st % co % hcn0(ic)
           hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
           hce0(ix,iy)            = st % co % hce0(ic) 
           sig0(ix,iy)            = st % co % sig0(ic)
@@ -2779,6 +2781,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           respo(ix,iy)        = st % dv % respo(ic)
           reshe(ix,iy)        = st % dv % reshe(ic)
           reshi(ix,iy)        = st % dv % reshi(ic)
+          reshn(ix,iy)        = st % dv % reshn(ic)
 !         resht(ix,iy)        = st % dv % resht(ic)
           resmt(ix,iy)        = st % dv % resmt(ic)
       
@@ -2790,6 +2793,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 !         cortt(ix,iy)        = st % dv % cortt(ic)
           corte(ix,iy)        = st % dv % corte(ic)
           corti(ix,iy)        = st % dv % corti(ic)
+          cortn(ix,iy)        = st % dv % cortn(ic)
       
 ! coupling coefficients
           pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
@@ -2801,6 +2805,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
           she(ix,iy,0:3)        = st % sr % she(ic,0:3)
           shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+          shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
           smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
           smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
           sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -2837,6 +2842,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         po(ix,iy)        = st % pl % po(ic)
         te(ix,iy)        = st % pl % te(ic)
         ti(ix,iy)        = st % pl % ti(ic)
+        tn(ix,iy)        = st % pl % tn(ic)
 
 ! B2coeff
         ceqp(ix,iy) = st % co % ceqp(ic)
@@ -2847,6 +2853,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
         vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
         hci0(ix,iy)            = st % co % hci0(ic)
+        hcn0(ix,iy)            = st % co % hcn0(ic)
         hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
@@ -2867,6 +2874,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         respo(ix,iy)        = st % dv % respo(ic)
         reshe(ix,iy)        = st % dv % reshe(ic)
         reshi(ix,iy)        = st % dv % reshi(ic)
+        reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
       
@@ -2878,6 +2886,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 !       cortt(ix,iy)        = st % dv % cortt(ic)
         corte(ix,iy)        = st % dv % corte(ic)
         corti(ix,iy)        = st % dv % corti(ic)
+        cortn(ix,iy)        = st % dv % cortn(ic)
       
 ! coupling coefficients
         pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
@@ -2889,6 +2898,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+        shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -2921,6 +2931,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         po(ix,iy)        = st % pl % po(ic)
         te(ix,iy)        = st % pl % te(ic)
         ti(ix,iy)        = st % pl % ti(ic)
+        tn(ix,iy)        = st % pl % tn(ic)
         
 ! B2coeff
         ceqp(ix,iy) = st % co % ceqp(ic)
@@ -2931,6 +2942,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
         vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
         hci0(ix,iy)            = st % co % hci0(ic)
+        hcn0(ix,iy)            = st % co % hcn0(ic)
         hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
@@ -2951,6 +2963,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         respo(ix,iy)        = st % dv % respo(ic)
         reshe(ix,iy)        = st % dv % reshe(ic)
         reshi(ix,iy)        = st % dv % reshi(ic)
+        reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
       
@@ -2962,6 +2975,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 !       cortt(ix,iy)        = st % dv % cortt(ic)
         corte(ix,iy)        = st % dv % corte(ic)
         corti(ix,iy)        = st % dv % corti(ic)
+        cortn(ix,iy)        = st % dv % cortn(ic)
       
 ! coupling coefficients
         pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
@@ -2973,6 +2987,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+        shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3008,6 +3023,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         po(ix,iy)        = st % pl % po(ic)
         te(ix,iy)        = st % pl % te(ic)
         ti(ix,iy)        = st % pl % ti(ic)
+        tn(ix,iy)        = st % pl % tn(ic)
         
 ! B2coeff
         ceqp(ix,iy) = st % co % ceqp(ic)
@@ -3018,6 +3034,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
         vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
         hci0(ix,iy)            = st % co % hci0(ic)
+        hcn0(ix,iy)            = st % co % hcn0(ic)
         hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
@@ -3038,6 +3055,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         respo(ix,iy)        = st % dv % respo(ic)
         reshe(ix,iy)        = st % dv % reshe(ic)
         reshi(ix,iy)        = st % dv % reshi(ic)
+        reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
       
@@ -3049,6 +3067,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 !       cortt(ix,iy)        = st % dv % cortt(ic)
         corte(ix,iy)        = st % dv % corte(ic)
         corti(ix,iy)        = st % dv % corti(ic)
+        cortn(ix,iy)        = st % dv % cortn(ic)
       
 ! coupling coefficients
         pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
@@ -3060,6 +3079,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+        shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3092,6 +3112,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         po(ix,iy)        = st % pl % po(ic)
         te(ix,iy)        = st % pl % te(ic)
         ti(ix,iy)        = st % pl % ti(ic)
+        tn(ix,iy)        = st % pl % tn(ic)
         
 ! B2coeff
         ceqp(ix,iy) = st % co % ceqp(ic)
@@ -3102,6 +3123,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         vla0(ix,iy,0:1,0:ns-1) = st % co % vla0(ic,0:1,0:ns-1)
         vsa0(ix,iy,0:ns-1)     = st % co % vsa0(ic,0:ns-1)
         hci0(ix,iy)            = st % co % hci0(ic)
+        hcn0(ix,iy)            = st % co % hcn0(ic)
         hcib(ix,iy,0:ns-1)     = st % co % hcib(ic,0:ns-1)
         hce0(ix,iy)            = st % co % hce0(ic)
         sig0(ix,iy)            = st % co % sig0(ic)
@@ -3122,6 +3144,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         respo(ix,iy)        = st % dv % respo(ic)
         reshe(ix,iy)        = st % dv % reshe(ic)
         reshi(ix,iy)        = st % dv % reshi(ic)
+        reshn(ix,iy)        = st % dv % reshn(ic)
 !       resht(ix,iy)        = st % dv % resht(ic)
         resmt(ix,iy)        = st % dv % resmt(ic)
       
@@ -3133,6 +3156,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 !       cortt(ix,iy)        = st % dv % cortt(ic)
         corte(ix,iy)        = st % dv % corte(ic)
         corti(ix,iy)        = st % dv % corti(ic)
+        cortn(ix,iy)        = st % dv % cortn(ic)
       
 ! coupling coefficients
         pcca(ix,iy,0,0,0:ns-1) = st % dv % pcca(ic,0,0:ns-1)
@@ -3144,6 +3168,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
         sch(ix,iy,0:3)        = st % sr % sch(ic,0:3)
         she(ix,iy,0:3)        = st % sr % she(ic,0:3)
         shi(ix,iy,0:3)        = st % sr % shi(ic,0:3)
+        shn(ix,iy,0:3)        = st % sr % shn(ic,0:3)
         smo(ix,iy,0:3,0:ns-1) = st % sr % smo(ic,0:3,0:ns-1)
         smq(ix,iy,0:3,0:ns-1) = st % sr % smq(ic,0:3,0:ns-1)
         sna(ix,iy,0:1,0:ns-1) = st % sr % sna(ic,0:1,0:ns-1)
@@ -3381,6 +3406,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           fhet(ix,iy,0,0:1)    = st % dv % fhet(ifc,0:1)
           fhe_eir(ix,iy,0,0:1) = st % dv % fhe_eir(ifc,0:1)
           fhi(ix,iy,0,0:1)     = st % dv % fhi(ifc,0:1)
+          fhn(ix,iy,0,0:1)     = st % dv % fhn(ifc,0:1)
           fhi_mdf(ix,iy,0,0:1) = st % dv % fhi_mdf(ifc,0:1)
           fhiPSch(ix,iy,0,0:1) = st % dv % fhiPSch(ifc,0:1)
           fhit(ix,iy,0,0:1)    = st % dv % fhit(ifc,0:1)
@@ -3512,6 +3538,7 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
           fhet(ix,iy,1,0:1)    = st % dv % fhet(ifc,0:1)
           fhe_eir(ix,iy,1,0:1) = st % dv % fhe_eir(ifc,0:1)
           fhi(ix,iy,1,0:1)     = st % dv % fhi(ifc,0:1)
+          fhn(ix,iy,1,0:1)     = st % dv % fhn(ifc,0:1)
           fhi_mdf(ix,iy,1,0:1) = st % dv % fhi_mdf(ifc,0:1)
           fhiPSch(ix,iy,1,0:1) = st % dv % fhiPSch(ifc,0:1)
           fhit(ix,iy,1,0:1)    = st % dv % fhit(ifc,0:1)
@@ -3585,7 +3612,8 @@ cwdk  there is an implicit assumption of field-alignment of fcHc(ifc,:) here!
 
 *   ..write plasma state
       call b2wups (nout_st, nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  ti, tn, po, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p, 
+     &  kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
