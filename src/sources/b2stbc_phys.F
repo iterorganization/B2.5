@@ -89,6 +89,8 @@
       integer, save :: use_astra
       integer, save :: drift_style
       integer, save :: tn_style = 0
+      integer, save :: kul_recycle
+      real (kind=R8) :: hcz0(nCv)
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
@@ -263,6 +265,7 @@
         call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
         call ipgeti ('eirene_sheath_pot',eirene_sheath_pot)
         call ipgeti ('b2mn_tn_style',tn_style)
+        call ipgeti ('b2stbr_kul_recycle',kul_recycle)               ! for consistency with b2stbr recycling model for narrow grids from KU Leuven.
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -315,6 +318,16 @@
 *     ..pre-compute some quantities for core BCs with drifts
       call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq, 
      &  geo%vxOnedBsq, dOnedBsq)
+
+*     ..pre-compute hcz0 (heat conductivity of all charged states)
+      hcz0 = 0.0_R8
+      do is = 0, ns-1
+        if (.not.is_neutral(is)) then
+          do iCv = 1,nCv
+            hcz0(iCv) = hcz0(iCv) + co%hcib(iCv,is)
+          enddo
+        endif
+      enddo
 
       pzsum     = 0.0_R8
       naua2sum  = 0.0e0_R8
@@ -940,15 +953,32 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
 * -- BCCON=9 -- PRESCRIBE THE DECAY LENGTH FOR THE DENSITY
 
   900     CONTINUE
-          call xerrab ('b2stbc_phys -- BCCON = 9 not adapted for WG')
-#ifdef WG_TODO
           if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'density decay length ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(CONPAR(IS,IB,1).ne.0.0_R8,
      1       'B2STBC -- BCCON=9, CONPAR(,,1) = 0')
+          if (mdf_fhi.ne.0) then
+            call xerrab('BCCON = 9 not yet imlemented for mdf')
           endif
+          endif
+          
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+	    iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            sy = geo%fcS(iFc)
+
+	    srw%sna0(iCv1,0,is) = 0.0_R8
+            srw%sna0(iCv1,1,is) = -(co%dna0(iCv1,is)+co%dpa0(iCv1,is)*
+     &             (rt%rza(iCv1,is)*pl%te(iCv1)+pl%ti(iCv1)))/
+     &             conpar(is,ib,1)*sy
+
+          enddo
+          GOTO 10000
+#ifdef WG_TODO
+
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=0.0_R8
@@ -1036,7 +1066,7 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
           ELSE
             CALL XERRAB ('B2STBC -- BCCON=9, NOT AVAILABLE FOR W,E')
           ENDIF
-          GOTO 10000
+
 #endif
 * -- BCCON=10 -- leakage option for density, recommended for cases with drifts
 
@@ -6449,8 +6479,13 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           sy = geo%fcS(iFc)
           srw%shi0(iCv1,0) = 0.0_R8
+          if (kul_recycle.ne.1) then !! default, include also contribution from fluid neutrals in hci0.
           srw%shi0(iCv1,1) = -co%hci0(iCv1)/enipar(ib,1)*
      &                    sy
+          else
+          srw%shi0(iCv1,1) = -hcz0(iCv1)/enipar(ib,1)*
+     &                    sy
+          endif
           do is = 0, ns-1
             srw%shi0(iCv1,0) = srw%shi0(iCv1,0) + 
      &                     2.5_R8*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
